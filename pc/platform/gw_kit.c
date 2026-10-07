@@ -1184,6 +1184,11 @@ int gw_Kit_TexAddGX(const char *key, const uint8_t *img, size_t img_size, int w,
  * Memory: an icon is 64x56x4 = 14 KB, a portrait 136x188x4 = 102 KB; 192 slots are at most 19.6 MB (192 portraits), about 0.85 MB for one
  * character select (30 icons and 4 portraits). */
 static unsigned hsd_logged_formats;
+/* The overlay uploads a slot's texture once per generation and aurora has no call to free or overwrite one (aurora_imgui_add_texture only), so every reassignment
+ * of a used slot leaks one upload for the life of the process. The leak is BOUNDED instead: after KT_HSD_REASSIGN_MAX reassignments no slot is reassigned any
+ * more and a new image answers -1 (the letters stand in). A warm pool means a normal session never gets near it. The real fix is an update-in-place call in aurora. */
+#define KT_HSD_REASSIGN_MAX 384
+static int hsd_reassigned;
 
 int gw_Kit_TexAddHsd(const char *key, int gx_fmt, const uint8_t *img, size_t img_size, int w, int h,
                      int tlut_fmt, const uint8_t *tlut, int tlut_n) {
@@ -1213,6 +1218,16 @@ int gw_Kit_TexAddHsd(const char *key, int gx_fmt, const uint8_t *img, size_t img
         }
         if (lru < 0) { free(px); return -1; }
         slot = lru;
+    }
+    if (hsd_gen[slot] > 0) {                                           /* a slot that was uploaded before: reusing it leaks that upload */
+        if (hsd_reassigned >= KT_HSD_REASSIGN_MAX) {
+            free(px);
+            if (hsd_reassigned == KT_HSD_REASSIGN_MAX) { hsd_reassigned++; gw_log("ui: disc art: the pool reached its reassignment limit (%d); new images show their letters", KT_HSD_REASSIGN_MAX); }
+            return -1;
+        }
+        hsd_reassigned++;
+    }
+    if (kt[KT_HSD_BASE + slot] != NULL) {
         free(kt[KT_HSD_BASE + slot]->rgba);
         free(kt[KT_HSD_BASE + slot]);
         kt[KT_HSD_BASE + slot] = NULL;
@@ -1621,7 +1636,7 @@ static int test_kit_discart(void) {
     /* a CI8 tile: 8x4 texels, palette entries 0 and 1 (RGB5A3: opaque red, opaque blue) */
     for (i = 0; i < 32; i++) ci8[i] = (uint8_t)(i & 1);
     tl[0] = 0xFC; tl[1] = 0x00; tl[2] = 0x80; tl[3] = 0x1F;                /* 1 11111 00000 00000 ; 1 00000 00000 11111 */
-    gw_Kit_TexDropHsd();
+    gw_Kit_TexDropHsd(); hsd_reassigned = 0;
     a = gw_Kit_TexAddHsd("t:ci8", 9, ci8, 32, 8, 4, 2, tl, 2);
     if (a < 0) { gw_test_fail("CI8 with an RGB5A3 palette did not decode"); return 1; }
     { const uint8_t *px = gw_Kit_TexPixels(a);
@@ -1642,7 +1657,7 @@ static int test_kit_discart(void) {
     if (gw_Kit_TexPixels(KT_HSD_BASE + KT_HSD_MAX) != NULL || gw_Kit_TexPixels(KT_HSD_BASE + 100) != NULL) { gw_test_fail("an empty slot has pixels"); return 1; }
     /* RGB5A3 portrait-sized images (136x188; GX tiles are 4x4 so the rows round up to 192): four decodes a frame, 400 of them. The pool
      * holds 192; nothing is evicted that was drawn or requested in the last two frames; a refused request is -1 */
-    gw_Kit_TexDropHsd();
+    gw_Kit_TexDropHsd(); hsd_reassigned = 0;
     for (i = 0; i < KT_HSD_MAX; i++) g0 += hsd_gen[i];
     for (c = 0; c < 400; c++) {
         gw_Kit_TexHsdFrame(c / 4);
@@ -1654,14 +1669,20 @@ static int test_kit_discart(void) {
     for (i = 0; i < KT_HSD_MAX; i++) g1 += hsd_gen[i];
     if (g1 - g0 <= KT_HSD_MAX) { gw_test_fail("slot_pool_evicts: a full pool never reassigned a slot"); return 1; }
     /* a slot drawn this frame is not taken: fill the pool within one frame, then one more is refused */
-    gw_Kit_TexDropHsd();
+    gw_Kit_TexDropHsd(); hsd_reassigned = 0;
     gw_Kit_TexHsdFrame(1000);
     for (c = 0; c < KT_HSD_MAX; c++) { snprintf(key, sizeof key, "t:q%d", c); if (gw_Kit_TexAddHsd(key, 5, big, 136 * 192 * 2, 8, 8, 0, NULL, 0) < 0) { gw_test_fail("the pool refused before it was full"); return 1; } }
     if (gw_Kit_TexAddHsd("t:one-more", 5, big, 136 * 192 * 2, 8, 8, 0, NULL, 0) != -1) { gw_test_fail("a slot used this frame was reassigned"); return 1; }
     gw_Kit_TexHsdFrame(1002);
     i = gw_Kit_TexAddHsd("t:one-more", 5, big, 136 * 192 * 2, 8, 8, 0, NULL, 0);
     if (i < 0) { gw_test_fail("a slot unused for two frames was not reassigned"); return 1; }
-    gw_Kit_TexDropHsd();
+    /* the GPU-leak bound: with the budget nearly spent, the pool refuses a reuse instead of leaking one more upload (the letters stand in) */
+    gw_Kit_TexDropHsd(); hsd_reassigned = KT_HSD_REASSIGN_MAX - 2;
+    for (c = 0; c < 2; c++) { snprintf(key, sizeof key, "t:b%d", c); if (gw_Kit_TexAddHsd(key, 5, big, 136 * 192 * 2, 8, 8, 0, NULL, 0) < 0) { gw_test_fail("a reuse inside the budget was refused"); return 1; } }
+    snprintf(key, sizeof key, "t:b%d", 99);
+    if (gw_Kit_TexAddHsd(key, 5, big, 136 * 192 * 2, 8, 8, 0, NULL, 0) != -1) { gw_test_fail("a reuse past the budget was accepted"); return 1; }
+    if (gw_Kit_TexAddHsd("t:b0", 5, big, 136 * 192 * 2, 8, 8, 0, NULL, 0) < 0) { gw_test_fail("an image already in the pool was refused once the budget was spent"); return 1; }
+    gw_Kit_TexDropHsd(); hsd_reassigned = 0;
     if (gw_Kit_TexHsdCount() != 0 || gw_Kit_TexPixels(i) != NULL) { gw_test_fail("TexDropHsd left slots behind"); return 1; }
     /* the model slots and file textures are untouched by the pool */
     if (gw_Kit_TexCount() >= KT_HSD_BASE) { gw_test_fail("the dense texture count reached the disc-art block"); return 1; }

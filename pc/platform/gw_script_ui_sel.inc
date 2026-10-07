@@ -41,6 +41,16 @@ static void gs_sel_q_push(int kind, int a, int b) {
     gs_sel.qn++;
 }
 
+/* 1 when gw_Ui_SelOpen would succeed now: Atlas is on, no select is open, a slot is free. The game side asks BEFORE it routes a mode's state into the frontend
+ * scene, so a refusal leaves the retail native screen (not the legacy kit's). */
+int gw_Ui_SelCanOpen(void) {
+    int i;
+    if (!gw_Ui_Ready()) return 0;
+    if (gs_sel.h >= 0 && gs_sel_get(gs_sel.h) != NULL) return 0;
+    for (i = 0; i < GS_UI_SLOTS; i++) if (!gs_ui_slot[i].used) return 1;
+    return 0;
+}
+
 int gw_Ui_SelOpen(int kind, int match_type, const char *t0, const char *t1, const char *title) {
     int i, slot = -1;
     GsUiSlot *u;
@@ -257,6 +267,9 @@ int gw_Ui_SelPoll(int h, int *kind, int *a, int *b) {
 int gw_Ui_ArtDecode(const char *key, int gx_fmt, const void *img, int size, int w, int h, int tlut_fmt, const void *tlut, int tlut_n) {
     return gw_Kit_TexAddHsd(key, gx_fmt, (const uint8_t *) img, size < 0 ? 0u : (size_t) size, w, h, tlut_fmt, (const uint8_t *) tlut, tlut_n);
 }
+
+/* the disc art is dropped when the roster it was decoded for changed (a mod toggled): the key names a fighter or a stage, not a disc, and the disc is fixed for the process */
+void gw_Ui_ArtDrop(void) { gw_Kit_TexDropHsd(); }
 
 /* ---- the mouse over a select screen: the same priming rules as at_mouse_events (the first sample only primes; off the picture is never an event;
  * a button held from the previous scene does not click), but the events keep what they hit: a tile, a card, a tab, a key hint, the wheel ---- */

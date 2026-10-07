@@ -828,9 +828,13 @@ void gmFrontend_ModeSelect(struct GameModeState* state, int sss, const char* nam
 void gmFrontend_AtlasSelect(struct GameModeState* state, int sss, const char* name)
 {
     extern int Ui_Ready(void);
+    extern int Ui_SelCanOpen(void);
     extern int Ui_CssKnown(int match_type);
     extern int Settings_Int(const char* key, int dflt);
-    if (state == NULL || Ui_Ready() == 0) {
+    extern int Frontend_NativeSelect(void);
+    /* Asked BEFORE the state is routed: if the Atlas screen could not open (Atlas off, no fonts, a select already open, no free slot) or MELEE_NATIVE_CSS=1 keeps the retail
+     * screens, the state stays on the retail native screen. Routing first and failing later would leave the LEGACY kit's screen, which was only ever tested for VS and Training. */
+    if (state == NULL || Ui_Ready() == 0 || Ui_SelCanOpen() == 0 || Frontend_NativeSelect() != 0) {
         return;
     }
     if (!sss) {
@@ -850,7 +854,9 @@ void gmFrontend_AtlasSelect(struct GameModeState* state, int sss, const char* na
     } else {
         fe_ats_sss = gm_GetGameModeStateEnterData(state);
     }
-    fe_sel_mode_pending = name;
+    if (name != NULL) {
+        fe_sel_mode_pending = name; /* a name another entry (the LAB's ModeSelect) already queued is never wiped by a mode that has none */
+    }
     state->info.scene_kind = GS_FRONTEND;
 }
 
@@ -1681,7 +1687,7 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
         fe.next_menus = false;
         fe.loading = false;
         fe_sel_css = (CSSData*) fe_ats_css;
-        fe_sel_sss = (SSSData*) fe_ats_sss;
+        fe_sel_sss = fe_ats_sss != NULL ? (SSSData*) fe_ats_sss : &gmVsMelee_SssData;
         fe_sel_training = false;
         fe_sel_mode = fe_sel_mode_pending;
         fe_sel_mode_pending = NULL;
@@ -1695,6 +1701,10 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
         fe_sel_sss = (SSSData*) fe_train_sss;
         fe_sel_training = true;
     }
+    /* The registrations are used up by now (fe_sel_* hold what the scene needs): a later scene (Training's, VS's, the LAB's) must never match a stale one. The next CSS or SSS state registers
+     * its own, in its on_enter, just before this runs. */
+    fe_ats_css = NULL;
+    fe_ats_sss = NULL;
     if (fe.next_menus) {
         fe.next_menus = false;
         fe.canvas = HSD_SisLib_803A611C(0, NULL, 0x13, 0x14, 0, FE_GX_LINK, 10, 0);

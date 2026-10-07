@@ -119,6 +119,7 @@ int gw_Kit_DrawPoly4(const float x[4], const float y[4], uint32_t rgba) { (void)
 int gw_Kit_DrawImage(int tex, float x, float y, float w, float h, uint32_t rgba, int flip, float shear) { (void) tex; (void) x; (void) y; (void) w; (void) h; (void) rgba; (void) flip; (void) shear; g_quads++; return 1; }
 void gw_Kit_SetTracking(float px) { g_track = px; }
 static int g_hsd_frame; void gw_Kit_TexHsdFrame(int frame) { g_hsd_frame = frame; }
+static int g_hsd_drops; void gw_Kit_TexDropHsd(void) { g_hsd_drops++; }
 int gw_Kit_TexAddHsd(const char *key, int gx_fmt, const uint8_t *img, size_t img_size, int w, int h, int tlut_fmt, const uint8_t *tlut, int tlut_n) { (void) key; (void) gx_fmt; (void) img; (void) img_size; (void) w; (void) h; (void) tlut_fmt; (void) tlut; (void) tlut_n; return -1; }
 int gw_Kit_QuadCount(void) { return g_quads; }
 int gw_Kit_QuadRoom(void) { return 16000; }

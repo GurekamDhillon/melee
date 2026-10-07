@@ -31,6 +31,7 @@ extern int Ui_SelPoll(int h, int* kind, int* a, int* b);
 extern int Ui_SelCols(int h);
 extern void Ui_SelProgress(int h, int permille);
 extern int Settings_Int(const char* key, int dflt);
+extern void Ui_ArtDrop(void);
 extern int Ui_ArtDecode(const char* key, int gx_fmt, const void* img, int size, int w, int h, int tlut_fmt, const void* tlut, int tlut_n);
 
 extern int Ui_CssOpen(int match_type, int online, int teams);
@@ -95,7 +96,7 @@ static struct {
     int ntab;       ///< the tabs submitted: position -> model tab id
     int tabid[4];
     int art_ck, art_cos, art_tex;
-} fas;
+} fas = { 0, 0, -1, 0, -1, -1 };   /* no handle (a zero would name one), no cells submitted, no entering port */
 
 static bool fas_active(void) { return fas.active != 0; }
 
@@ -292,6 +293,17 @@ static void fas_crumbs(int mt, const char** t0, const char** t1)
 
 /* ---- the character select ------------------------------------------------------------------------- */
 
+/* The art is keyed by fighter or stage, not by disc: the disc is fixed for the life of the process, but the roster is not (a mod toggled changes which fighter or stage
+ * a key names). When the list this select shows is not the one the art in the pool was decoded for, the pool is dropped first. kind 0: fighters, 1: stages. */
+static void fas_art_identity(int kind, int sig)
+{
+    static int last[2];
+    if (last[kind] != 0 && last[kind] != sig) {
+        Ui_ArtDrop();
+    }
+    last[kind] = sig == 0 ? 1 : sig;
+}
+
 static int fas_open_css(void)
 {
     CSSData* css = fcs.css;
@@ -307,6 +319,13 @@ static int fas_open_css(void)
     if (!Ui_CssOpen(mt, fcs.online ? 1 : 0, fcs.teams)) {
         return 0; /* no profile for this match type: the screen it had stays; never guess */
     }
+    {
+        int sig = fcs.n * 7919 + Geno_DefineCount() * 104729, k;
+        for (k = 0; k < fcs.n; k++) {
+            sig = sig * 31 + fcs.ck[k] + 1;
+        }
+        fas_art_identity(0, sig);
+    }
     Ui_CssPair(CKind_Zelda, CKind_Seak);
     Ui_CssCostumes(CKind_Seak, fs_costumes(CKind_Seak));
     Ui_CssSheikOk(fs_sheik_ok() ? 1 : 0);
@@ -320,13 +339,11 @@ static int fas_open_css(void)
         Ui_CssPort(p, fcs.p[p].kind, fcs.p[p].ck, fcs.p[p].costume, fcs.p[p].cpu_lv, fcs.p[p].team);
     }
     fas.enter = -1;
-    fs_preload_only = -1;
     if (fcs.training) {
         Ui_CssTraining(fcs.train_h);
     } else if (Ui_CssGet(FA_CG_ENTERING, 0)) {
         fas.enter = css->unk_0x0 >= 1 && css->unk_0x0 <= 4 ? (int) css->unk_0x0 - 1 : 0;
         Ui_CssEntering(fas.enter);
-        fs_preload_only = fas.enter; /* Event, Classic, Stadium...: the mode filled the other entries (Sandbag, the Multi-Man, the opponents) */
     }
     fas_crumbs(mt, &t0, &t1);
     if (fcs.online) {
@@ -335,7 +352,11 @@ static int fas_open_css(void)
     }
     fas.h = Ui_SelOpen(FA_SEL_CSS, mt, t0, t1, fcs.online ? "PICK A FIGHTER" : "FIGHTERS");
     if (fas.h < 0) {
-        return 0;
+        fas.enter = -1;
+        return 0; /* the legacy screen runs, and its preload writes every port as it always did */
+    }
+    if (fas.enter >= 0) {
+        fs_preload_only = fas.enter; /* Event, Classic, Stadium...: the mode filled the other entries (Sandbag, the Multi-Man, the opponents); set only now the screen is up */
     }
     OSReport("frontend: character select - Atlas, %d fighters, match type %d\n", fcs.n, mt);
     return 1;
@@ -557,6 +578,13 @@ static int fas_open_sss(void)
 {
     const char *t0, *t1;
     int i, mt = fe_sel_training ? 0x17 : 0;
+    {
+        int sig = fcs.ns * 7919, k;
+        for (k = 0; k < fcs.ns; k++) {
+            sig = sig * 31 + fcs.st_ext[k] + 2;
+        }
+        fas_art_identity(1, sig);
+    }
     Ui_SssOpen(0);
     Ui_SssStagesBegin();
     for (i = 0; i < fcs.ns; i++) {

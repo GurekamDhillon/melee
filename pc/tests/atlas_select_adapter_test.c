@@ -93,6 +93,7 @@ static int g_images;
 int gw_Kit_DrawImage(int tex, float x, float y, float w, float h, uint32_t rgba, int flip, float shear) { (void) tex; (void) x; (void) y; (void) w; (void) h; (void) rgba; (void) flip; (void) shear; g_quads++; g_images++; return 1; }
 void gw_Kit_SetTracking(float px) { g_track = px; }
 static int g_hsd_frame; void gw_Kit_TexHsdFrame(int frame) { g_hsd_frame = frame; }
+static int g_hsd_drops; void gw_Kit_TexDropHsd(void) { g_hsd_drops++; }
 int gw_Kit_TexAddHsd(const char *key, int gx_fmt, const uint8_t *img, size_t img_size, int w, int h, int tlut_fmt, const uint8_t *tlut, int tlut_n)
 { (void) gx_fmt; (void) img; (void) img_size; (void) w; (void) h; (void) tlut_fmt; (void) tlut; (void) tlut_n; g_art_calls++; snprintf(g_art_key, sizeof g_art_key, "%s", key); return g_art_ret; }
 int gw_Kit_QuadCount(void) { return g_quads; }
@@ -393,6 +394,28 @@ static void css_open_vs(int n, int online)
     gw_Ui_CssRosterEnd();
     gw_Ui_CssCols(8);
 }
+/* the game side asks BEFORE it routes a mode into the frontend scene: a refusal leaves the retail native screen */
+static void can_open_before_routing(void)
+{
+    int i, h;
+    reset_ui();
+    CHECK(gw_Ui_SelCanOpen() == 1);
+    h = open_css(); CHECK(h >= 0 && gw_Ui_SelCanOpen() == 0);                  /* one select at a time */
+    gw_Ui_SelClose(h); CHECK(gw_Ui_SelCanOpen() == 1);
+    gs_ui_atlas_env = 0; CHECK(gw_Ui_SelCanOpen() == 0); gs_ui_atlas_env = 1;  /* MELEE_ATLAS=0 */
+    for (i = 0; i < GS_UI_SLOTS; i++) { gs_ui_slot[i].used = 1; gs_ui_slot[i].owner = GS_UI_ENGINE; }
+    CHECK(gw_Ui_SelCanOpen() == 0);                                            /* no free slot */
+    reset_ui();
+    CHECK(gw_Ui_SelCanOpen() == 1);
+    /* the answer is the open's answer: whenever CanOpen says yes an open succeeds */
+    h = open_css(); CHECK(h >= 0); gw_Ui_SelClose(h);
+}
+static void art_drop_reaches_the_kit(void)
+{
+    int before = g_hsd_drops;
+    gw_Ui_ArtDrop();
+    CHECK(g_hsd_drops == before + 1);
+}
 static void known_match_types(void)
 {
     int mt;
@@ -495,7 +518,7 @@ int main(void)
     lua_newtable(L); gs_push_ui(L); lua_setfield(L, -2, "ui"); lua_setglobal(L, "gd");
     filled_and_drawn(); closed_on_every_exit(); owner_native_vs_mod(); mouse_port(); poll_is_big_endian(); fields_land_where_the_render_reads_them();
     art_decode_goes_to_the_kit(); atlas_off_or_no_roles_keeps_the_legacy_drawing(); stack_full_refuses(); held_menu_and_hold_do_not_matter();
-    known_match_types(); css_through_the_shims(); css_zelda_sheik_and_online_through_the_shims(); css_mouse_through_the_shims(); sss_through_the_shims();
+    can_open_before_routing(); art_drop_reaches_the_kit(); known_match_types(); css_through_the_shims(); css_zelda_sheik_and_online_through_the_shims(); css_mouse_through_the_shims(); sss_through_the_shims();
     lua_close(L);
     ATLAS_DONE("atlas select adapter");
 }

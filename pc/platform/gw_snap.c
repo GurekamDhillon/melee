@@ -1717,6 +1717,13 @@ void gw_snap_xlog(int frame) {
                 snprintf(dumpdir, sizeof dumpdir, ".");
             }
         }
+        {   /* the floating-point environment the simulation runs in: x87 control word and MXCSR (rounding, FTZ, DAZ) */
+            unsigned short cw = 0;
+            unsigned int mx = 0;
+            __asm__ volatile("fnstcw %0" : "=m"(cw));
+            __asm__ volatile("stmxcsr %0" : "=m"(mx));
+            gw_log("xhash: fpu control word %04x, mxcsr %08x", (unsigned) cw, mx);
+        }
         log = fopen(path, "w");
         if (log == NULL) {
             gw_log("xhash: cannot open %s", path);

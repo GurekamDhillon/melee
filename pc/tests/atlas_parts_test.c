@@ -410,9 +410,80 @@ static void shared_helpers_on_step1_parts(void)
       CHECK(!texts_inside(narrow)); }
 }
 
+/* ---- step 3, Task 5: offer card, port card, strip, banner, toast, link ---- */
+static AtOffer offer_fixture(void)
+{
+    AtOffer c; memset(&c, 0, sizeof c);
+    c.model = 7; c.ring = 9; c.rgba = 0xF07474FFu;
+    snprintf(c.name, sizeof c.name, "%s", "Lingering Burning Red Drive of the Long Name");
+    snprintf(c.rule, sizeof c.rule, "%s", "Aerial hits set Burning for 3 s and Burning targets take 12% more damage from you.");
+    snprintf(c.tag, sizeof c.tag, "%s", "+ MERGE");
+    return c;
+}
+static void offer_card_style(void)
+{
+    AtSink s = rec_sink(); AtOffer c = offer_fixture();
+    AtRect r = { 40.0f, 120.0f, 168.0f, 196.0f };                    /* three cards across the 640 primary */
+    CHECK(at_part_offer_min_h() <= r.h);
+    at_part_offer(&s, &FAKE, r, &c, AT_ST_REST, AT_C_P1);
+    CHECK(no_focus_cues());
+    CHECK(corners_clear(r, 5.0f));
+    CHECK(texts_inside((AtRect){ r.x + 8.0f, r.y, r.w - 16.0f, r.h }));
+    CHECK(texts_legible());
+    CHECK(REC.nm == 1);                                               /* the model, once */
+    s = rec_sink();
+    at_part_offer(&s, &FAKE, r, &c, AT_ST_FOCUS, AT_C_P2);
+    CHECK(focus_cues_at(r, 1) == 3);
+    CHECK(count_color(AT_C_P2) == 8);                                 /* brackets take the seat's colour */
+    c.model = -1; c.letter = 'P';                                     /* a keystone offer: an arch stone with its letter */
+    s = rec_sink();
+    at_part_offer(&s, &FAKE, r, &c, AT_ST_REST, AT_C_P1);
+    CHECK(REC.nm == 0 && find_text("P") != NULL && corners_clear(r, 5.0f));
+    s = rec_sink();                                                   /* the smallest card keeps everything inside */
+    r.h = at_part_offer_min_h();
+    at_part_offer(&s, &FAKE, r, &c, AT_ST_REST, 0);
+    CHECK(corners_clear(r, 5.0f) && texts_inside((AtRect){ r.x + 8.0f, r.y, r.w - 16.0f, r.h }));
+    s = rec_sink(); c.model = 7; r.h = 196.0f;
+    at_part_offer(&s, &FAKE, r, &c, AT_ST_DISABLED, 0);
+    CHECK(no_focus_cues());
+}
+static void hud_parts_never_focus(void)
+{
+    AtSink s = rec_sink(); AtPortCard pc = { 2, "FALCO", 147, 3, 0 }; AtStrip st; int i;
+    AtRect r = { 420.0f, 16.0f, 188.0f, 44.0f };
+    AtRect sr = { 24.0f, 16.0f, 240.0f, 20.0f }, br = { 170.0f, 150.0f, 300.0f, 34.0f }, tr = { 400.0f, 16.0f, 216.0f, 44.0f };
+    memset(&st, 0, sizeof st); st.n_pips = 6; st.n_keys = 7;
+    for (i = 0; i < 6; i++) { st.pip_fill[i] = 0xF07474FFu; st.pip_ring[i] = AT_C_SUN; }
+    for (i = 0; i < 7; i++) { st.key_letter[i] = (char) ('A' + i); st.key_rgba[i] = 0xB872F0FFu; }
+    snprintf(st.wait, sizeof st.wait, "%s", "2 waiting");
+    at_part_port_card(&s, &FAKE, r, &pc);
+    CHECK(no_focus_cues() && corners_clear(r, 5.0f) && texts_inside(r) && count_color(AT_C_P2) >= 1 && texts_legible());
+    s = rec_sink(); at_part_strip(&s, &FAKE, sr, &st);
+    CHECK(no_focus_cues() && texts_inside(sr) && texts_legible());
+    CHECK(find_text("+1") != NULL);                                    /* six stones, then +n */
+    s = rec_sink(); at_part_banner(&s, &FAKE, br, 'A', "Collect the drives", -1.0f);
+    CHECK(no_focus_cues() && corners_clear(br, 5.0f) && texts_inside(br) && texts_legible());
+    CHECK(count_color(AT_C_PAD_A) >= 1);                               /* the A glyph: press A to collect */
+    s = rec_sink(); at_part_banner(&s, &FAKE, br, 'A', "Hold Z + Down to leave", 0.4f);
+    CHECK(no_focus_cues() && corners_clear(br, 5.0f) && texts_inside(br));
+    s = rec_sink(); at_part_toast(&s, &FAKE, tr, 0xB872F0FFu, "SKYWARD ASSEMBLED", "Your aerials gain Haste for 2 s and chain Burning onward.", 0.5f);
+    CHECK(no_focus_cues() && corners_clear(tr, 5.0f) && texts_inside(tr) && texts_legible());
+    CHECK(REC.nt == 2);                                                /* one title, one rule line: never more */
+}
+static void link_is_flat(void)
+{
+    AtSink s = rec_sink();
+    at_part_link(&s, 10.0f, 10.0f, 110.0f, 60.0f, 2.0f, AT_C_JADE);
+    CHECK(REC.np == 1 && REC.p[0].rgba == AT_C_JADE);
+    s = rec_sink();
+    at_part_link(&s, 10.0f, 10.0f, 10.0f, 10.0f, 2.0f, AT_C_JADE);
+    CHECK(REC.np == 0);                                                /* a zero-length link draws nothing */
+}
+
 int main(void)
 {
     plates(); rows(); values(); tabs_and_tags();
     cells(); hints_and_chrome(); explainer_note_dialog(); fix_round1(); fix_round2(); shared_helpers_on_step1_parts();
+    offer_card_style(); hud_parts_never_focus(); link_is_flat();
     ATLAS_DONE("atlas parts");
 }

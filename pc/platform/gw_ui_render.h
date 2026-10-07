@@ -25,6 +25,17 @@ void at_render(const AtScreen *sc, const AtView *v, float canvas_w, double now_m
 void at_render_ex(const AtScreen *sc, const AtView *v, float canvas_w, double now_ms, int reduced,
                   const AtTextOps *o, const AtSink *s, AtHits *hits, AtRenderInfo *info);
 
+/* The one place the primary pane's list and tiles geometry lives (the renderer, hit testing and the host's scroll all call it).
+ * at_list_visible: the rows of a list that fit the primary pane. at_tiles_geometry: the rectangle of every tile (the count is
+ * returned; a tile scrolled out of the window has h = 0) and of the More labels (m[0..n_more)). The _ex form takes the first
+ * visible row, and reports the visible and total rows and the More strip's rectangle. */
+int at_list_visible(const AtLayout *L);
+int at_tiles_geometry(const AtScreen *sc, const AtLayout *L, AtRect *tiles, int cap, AtRect *more, int more_cap);
+int at_tiles_geometry_ex(const AtScreen *sc, const AtLayout *L, int scroll, AtRect *tiles, int cap, AtRect *more, int more_cap,
+                         int *rows_visible, int *rows_total, AtRect *strip);
+/* the first visible tile row that keeps the focused tile in view */
+int at_tiles_scroll(const AtScreen *sc, const AtLayout *L, int focus_index, int scroll);
+
 #ifdef __cplusplus
 }
 #endif

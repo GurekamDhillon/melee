@@ -119,7 +119,7 @@ int main(void)
     LUA_IS("return (gd.ui.focus('t.list'))", "one");
     LUA_IS("return gd.ui.feed('t.list','down')", "true");
     LUA_IS("return (gd.ui.focus('t.list'))", "two");
-    LUA_HAS("return gd.ui.screen{id='t.bad', primary={kind='tiles'}}", "not supported");
+    LUA_HAS("return gd.ui.screen{id='t.bad', primary={kind='wheel'}}", "not supported");
     LUA_HAS("return gd.ui.feed('t.list','sideways')", "unknown intent");
     LUA_IS("return gd.ui.note{text='hi', kind='ok'}", "true");
     LUA_IS("return gd.ui.dialog{title='T', text='body', actions={{'A','Yes'},{'B','No'}}, on=function(b) DIALOG=b end}", "true");

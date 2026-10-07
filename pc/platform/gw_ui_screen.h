@@ -13,21 +13,24 @@ extern "C" {
 #define AT_MAX_ITEMS 32
 #define AT_MAX_KEYS 6
 #define AT_MAX_WITH 4
+#define AT_MAX_MORE 4
 #define AT_ID 24
 #define AT_STR 64
 #define AT_TEXT 160
 #define AT_NO_MODEL (-1)
 
-enum { AT_PRIMARY_LIST = 1, AT_PRIMARY_GRID = 2 };
+enum { AT_PRIMARY_LIST = 1, AT_PRIMARY_GRID = 2, AT_PRIMARY_TILES = 3, AT_PRIMARY_DISPLAY = 4 };
 enum { AT_CELL_LOCKED = 1, AT_CELL_EMPTY = 2, AT_CELL_MERGE = 4, AT_CELL_NEW = 8, AT_CELL_SELECTED = 16, AT_CELL_DISABLED = 32 };
 enum { AT_VAL_NONE, AT_VAL_TOGGLE, AT_VAL_CHOICE, AT_VAL_SLIDER, AT_VAL_TEXT, AT_VAL_COUNTER };
 
 typedef struct { char id[AT_ID]; char name[AT_STR]; int model, ring; unsigned flags; int index, pips; char origin; unsigned rgba; char letter; } AtCell;
 typedef struct { char id[AT_ID]; char title[AT_STR]; char count[24]; char note[AT_STR]; int cols, n, stones; AtCell cells[AT_MAX_CELLS]; } AtBlock;
-typedef struct { char id[AT_ID]; char label[AT_STR]; char sub[AT_STR]; unsigned flags; int vkind, on; char text[AT_STR]; int vmin, vmax, vval; } AtItem;
+typedef struct { char id[AT_ID]; char label[AT_STR]; char sub[AT_STR]; unsigned flags; int vkind, on; char text[AT_STR]; int vmin, vmax, vval;
+               char icon[AT_ID]; char tag[16]; char badge[8]; char numeral[6]; } AtItem;   /* icon, tag, badge, numeral: tiles (hubs, the main menu) */
 typedef struct { char btn; char label[AT_STR]; int fn_label, fn_when; } AtKey;
 typedef struct { int has; char label[24]; int model_a, model_b, model_out; char text[AT_STR]; } AtFooter;
-typedef struct { int has; int media_model, media_ring; char kicker[AT_STR], title[AT_STR], what[AT_TEXT]; int n_with, with_model[AT_MAX_WITH]; char from_text[AT_STR]; int warn; } AtExplainer;
+typedef struct { int has; int media_model, media_ring; char kicker[AT_STR], title[AT_STR], what[AT_TEXT]; int n_with, with_model[AT_MAX_WITH]; char from_text[AT_STR]; int warn;
+               char with_text[AT_MAX_WITH][24]; int n_with_text; } AtExplainer;   /* with_text: tags such as "Melee", "Rules" */
 
 typedef struct {
     char id[AT_ID * 2];
@@ -36,6 +39,8 @@ typedef struct {
     int primary, preset, chapter;
     AtBlock blocks[AT_MAX_BLOCKS]; int n_blocks;
     AtItem items[AT_MAX_ITEMS]; int n_items;
+    int tile_cols;                                   /* tiles: 1 (main menu: big rows) or 2 (hubs); 0 = by count: <= 3 items -> 1, else 2 */
+    AtItem more[AT_MAX_MORE]; int n_more;            /* tiles: the small More row under the tiles */
     AtFooter footer;
     AtKey keys[AT_MAX_KEYS]; int n_keys;
     char counter[AT_STR]; int fn_counter;
@@ -62,6 +67,7 @@ const char *at_screen_block_id(const AtScreen *s, int block);
 const char *at_screen_cell_id(const AtScreen *s, AtFocusPos p);                                 /* NULL when invalid */
 AtFocusPos at_screen_refocus(const AtScreen *s, const char *block_id, const char *cell_id, AtFocusPos old);
 int at_cell_accepts(const AtScreen *s, AtFocusPos p);                                           /* 0 for a disabled or missing cell */
+int at_screen_tile_cols(const AtScreen *s);                                                     /* the columns a tiles screen uses: 1 or 2 */
 int at_screen_wants_pad(const AtScreen *s);                                                     /* 0 when the script feeds its own pad input */
 
 #ifdef __cplusplus

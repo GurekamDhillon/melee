@@ -210,6 +210,69 @@ void at_part_row(const AtSink *s, const AtTextOps *o, AtRect r, const AtItem *it
     }
 }
 
+/* A hub tile or a main-menu row. Focus is three cues at once: the plate lifts 2 px, its front edge turns ember, and a 4 px tick
+ * stands at the left below the chamfer. Selected adds a jade bar and never moves. Nothing is drawn inside a cut-away corner. */
+void at_part_tile(const AtSink *s, const AtTextOps *o, AtRect r, const AtItem *it, int state, int big)
+{
+    unsigned face = AT_C_PLATE2, edge = AT_C_EDGE2, txt = AT_C_TEXT2;
+    float e = 3.0f, y = r.y, lx, right, avail, tagw = 0.0f;
+    int disabled = state == AT_ST_DISABLED || (it->flags & AT_CELL_DISABLED), focus = state == AT_ST_FOCUS && !disabled;
+    int role = big ? AT_R_TITLE : AT_R_CAP20, tone = AT_TAG_PLAIN;
+    const char *tag = it->tag[0] != '\0' ? it->tag : it->badge;
+    AtRect pr;
+    if (disabled) { face = AT_C_PLATE; txt = AT_C_DIM; }
+    else if (focus) { face = AT_C_LIFT; edge = AT_C_EMBER; txt = AT_C_IVORY; y -= 2.0f; }
+    else if (state == AT_ST_PRESS) { face = AT_C_PLATE; edge = AT_C_EMBER_D; txt = AT_C_IVORY; e = 1.0f; y += 1.0f; }
+    pr.x = r.x; pr.y = y; pr.w = r.w; pr.h = r.h;
+    at_plate(s, pr, face, edge, e, (float) AT_PX_CH_S);
+    if (focus) at_poly_rect(s, r.x, y + (float) AT_PX_CH_S, 4.0f, r.h - e - (float) AT_PX_CH_S, AT_C_EMBER);
+    if (state == AT_ST_PRESS) at_poly_rect(s, r.x, y + (float) AT_PX_CH_S, 4.0f, r.h - e - (float) AT_PX_CH_S, AT_C_EMBER_D);
+    if ((it->flags & AT_CELL_SELECTED) || state == AT_ST_SELECTED) at_poly_rect(s, r.x + (float) AT_PX_CH_S, y + r.h - 3.0f, r.w - 2.0f * (float) AT_PX_CH_S, 3.0f, AT_C_JADE);
+    lx = r.x + 14.0f;
+    right = r.x + r.w - 15.0f;                                       /* 10 px of padding plus the chamfer: clear of the bottom-right cut */
+    if (big && it->numeral[0] != '\0') {                              /* the numeral badge: 30 x 30, a 5 px chamfer, inside the plate */
+        AtRect b;
+        b.x = lx; b.y = y + (r.h - e - 30.0f) * 0.5f; b.w = 30.0f; b.h = 30.0f;
+        at_plate(s, b, focus ? AT_C_EMBER : AT_C_GROUND, focus ? AT_C_EMBER : AT_C_GROUND, 0.0f, (float) AT_PX_CH_S);
+        fit_text(s, o, AT_R_NUM14, it->numeral, b.x + b.w * 0.5f, mid_base(b.y, b.h, AT_R_NUM14), focus ? AT_C_INK : AT_C_MUTED, AT_ALIGN_CENTER, b.w - 4.0f);
+        lx += 30.0f + 12.0f;
+    }
+    if (tag[0] != '\0') {
+        tone = strcmp(tag, "MOD") == 0 ? AT_TAG_JADE : (it->tag[0] == '\0' ? AT_TAG_EMBER : AT_TAG_PLAIN);
+        tagw = twidth(o, AT_R_CAP12, tag) + 16.0f;
+        if (tagw > r.w * 0.4f) tagw = r.w * 0.4f;
+        at_part_tag(s, o, right - tagw, y + (r.h - e - 20.0f) * 0.5f, tag, tone, tagw);
+        avail = right - tagw - 8.0f - lx;
+    } else {
+        avail = right - lx;
+    }
+    fit_text(s, o, role, it->label, lx, mid_base(y, r.h - e, role), txt, AT_ALIGN_LEFT, avail);
+}
+
+/* The More strip: a 1 px outline that skips both chamfers, the word MORE, then n quiet labels. The focused label lifts 2 px,
+ * its front edge turns ember and a 4 px tick stands at its left. */
+void at_part_more(const AtSink *s, const AtTextOps *o, AtRect r, const AtItem *items, int n, int focus)
+{
+    float slot, x0 = r.x + 70.0f;
+    int i;
+    outline_ch(s, r, 1.0f, (float) AT_PX_CH_S, AT_C_LINE);
+    fit_text(s, o, AT_R_CAP12, "MORE", r.x + 14.0f, mid_base(r.y, r.h, AT_R_CAP12), AT_C_MUTED, AT_ALIGN_LEFT, 48.0f);
+    if (n < 1) return;
+    slot = (r.w - 70.0f) / (float) n;
+    for (i = 0; i < n; i++) {
+        float sx = x0 + (float) i * slot, ly = r.y + 4.0f, lh = r.h - 8.0f, aw = slot - 8.0f;
+        int on = i == focus && !(items[i].flags & AT_CELL_DISABLED);
+        unsigned ink = (items[i].flags & AT_CELL_DISABLED) ? AT_C_DIM : (on ? AT_C_IVORY : AT_C_TEXT2);
+        if (on) {
+            ly -= 2.0f;
+            at_poly_rect(s, sx, ly, aw, lh - 2.0f, AT_C_LIFT);
+            at_poly_rect(s, sx, ly + lh - 4.0f, aw, 2.0f, AT_C_EMBER);        /* the front edge */
+            at_poly_rect(s, sx, ly, 4.0f, lh - 4.0f, AT_C_EMBER);             /* the tick */
+        }
+        fit_text(s, o, AT_R_CAP14, items[i].label, sx + 12.0f, mid_base(ly, lh - 2.0f, AT_R_CAP14), ink, AT_ALIGN_LEFT, aw - 16.0f);
+    }
+}
+
 /* Tabs fit inside r.w: the names step down one role (CAP16 to CAP14), then are truncated in proportion; when even the
  * padding and counts do not fit, the counts are dropped, and a name with no room left is not drawn. */
 void at_part_tabs(const AtSink *s, const AtTextOps *o, AtRect r, const char *const *names, const int *counts, int n, int active, int focus_tab)

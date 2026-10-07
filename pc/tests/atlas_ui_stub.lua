@@ -91,6 +91,9 @@ function Stub.new(opts)
   local out, p = {}, d.primary
   if p.kind == 'grid' then
    for _, b in ipairs(p.blocks) do for i, c in ipairs(b.cells or {}) do out[#out + 1] = { block = b.id, id = c.id, cell = c, index = i } end end
+  elseif p.kind == 'tiles' then
+   for i, it in ipairs(p.items) do out[#out + 1] = { block = 'tiles', id = it.id, cell = it, index = i } end
+   for i, it in ipairs(p.more or {}) do out[#out + 1] = { block = 'more', id = it.id, cell = it, index = i } end
   else
    for i, it in ipairs(p.items) do out[#out + 1] = { block = 'list', id = it.id, cell = it, index = i } end
   end
@@ -131,8 +134,18 @@ function Stub.new(opts)
      seen[c.id] = true
     end
    end
-  elseif p.kind == 'list' then
+  elseif p.kind == 'list' or p.kind == 'tiles' then
    local n = #(p.items or {})
+   if p.kind == 'tiles' then
+    if p.cols ~= nil and p.cols ~= 0 and p.cols ~= 1 and p.cols ~= 2 then fail('tiles: cols must be 1 or 2') end
+    if #(p.more or {}) > L.more then fail(('tiles: at most %d more items (%d given)'):format(L.more, #p.more)) end
+    for mi, it in ipairs(p.more or {}) do
+     if type(it) ~= 'table' then fail(('more item %d is not a table'):format(mi)) end
+     check_id(('more item %d'):format(mi), it.id)
+     if seen[it.id] then fail('duplicate item id "' .. it.id .. '"') end
+     seen[it.id] = true
+    end
+   end
    if n < 1 or n > L.items then fail(('a list needs 1 to %d items (it has %d)'):format(L.items, n)) end
    for ii, it in ipairs(p.items) do
     if type(it) ~= 'table' then fail(('item %d is not a table'):format(ii)) end
@@ -149,7 +162,7 @@ function Stub.new(opts)
     end
    end
   else
-   fail(('primary kind "%s" is not supported here (grid or list)'):format(tostring(p.kind)))
+   fail(('primary kind "%s" is not supported here (grid, list or tiles)'):format(tostring(p.kind)))
   end
   local ex = d.explainer
   if type(ex) == 'string' then

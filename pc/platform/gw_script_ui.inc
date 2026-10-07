@@ -469,15 +469,20 @@ static void gs_ui_event(int slot, const AtEvent *e) {
     if (gs_ui_value_event(slot, e)) { u->explain_dirty = 1; return; }
     nb = at_screen_focus_blocks(&u->sc, fb);
     if (e->type == AT_EV_MOVE) u->view.focus = at_focus_move(fb, nb, u->view.focus, e->a, 1);
-    else if (e->type == AT_EV_SCROLL && u->sc.primary == AT_PRIMARY_LIST) u->view.focus = at_focus_move(fb, nb, u->view.focus, e->a < 0 ? AT_DIR_UP : AT_DIR_DOWN, 0);
+    else if (e->type == AT_EV_SCROLL && (u->sc.primary == AT_PRIMARY_LIST || u->sc.primary == AT_PRIMARY_TILES)) u->view.focus = at_focus_move(fb, nb, u->view.focus, e->a < 0 ? AT_DIR_UP : AT_DIR_DOWN, 0);
     else if (e->type == AT_EV_FOCUS) {
         AtFocusPos p;
         p.block = e->a; p.index = e->b;
         if (at_screen_cell_id(&u->sc, p) != NULL) u->view.focus = p;
     }
     if (u->sc.primary == AT_PRIMARY_LIST && u->view.focus.index >= 0) {
-        int visible = (int) ((362.0f - 28.0f) / 39.0f);
-        u->view.scroll = at_list_scroll(u->view.focus.index, u->view.scroll, visible, u->sc.n_items);
+        AtLayout pl;
+        at_layout(640.0f, u->sc.preset, &pl);                    /* the pane's height does not depend on the width */
+        u->view.scroll = at_list_scroll(u->view.focus.index, u->view.scroll, at_list_visible(&pl), u->sc.n_items);
+    } else if (u->sc.primary == AT_PRIMARY_TILES && u->view.focus.index >= 0) {
+        AtLayout pl;
+        at_layout(640.0f, u->sc.preset, &pl);
+        u->view.scroll = at_tiles_scroll(&u->sc, &pl, u->view.focus.block == 0 ? u->view.focus.index : -1, u->view.scroll);
     }
     cid = at_screen_cell_id(&u->sc, u->view.focus);
     bid = at_screen_block_id(&u->sc, u->view.focus.block);

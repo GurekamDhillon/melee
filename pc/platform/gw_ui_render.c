@@ -64,6 +64,7 @@ static void hit_add(HitCtx *c, AtRect r, int kind, int a, int b)
     h->n++;
 }
 
+
 static void draw_header(const AtScreen *sc, const AtLayout *L, const AtTextOps *o, const AtSink *s)
 {
     const char *items[4];
@@ -166,10 +167,82 @@ static void draw_grid(const AtScreen *sc, const AtView *v, const AtLayout *L, co
     }
 }
 
+int at_list_visible(const AtLayout *L) { return (int) floor((L->primary.h - 28.0f) / 39.0f); }
+
+int at_tiles_geometry_ex(const AtScreen *sc, const AtLayout *L, int scroll, AtRect *tiles, int cap, AtRect *more, int more_cap,
+                         int *rows_visible, int *rows_total, AtRect *strip_out)
+{
+    const float gy = 6.0f, gx = 8.0f, pad = 12.0f;
+    float x0 = L->primary.x + pad, iw = L->primary.w - 2.0f * pad, y0 = L->primary.y + pad, avail = L->primary.h - 2.0f * pad;
+    int cols = at_screen_tile_cols(sc), big = cols == 1, rows = (sc->n_items + cols - 1) / cols, i, vis;
+    float th = big ? 56.0f : 62.0f, more_h = sc->n_more > 0 ? 34.0f + gy : 0.0f, tw, bottom;
+    if (rows > 0 && (float) rows * th + (float) (rows - 1) * gy + more_h > avail) {
+        th = (float) floor((avail - more_h - (float) (rows - 1) * gy) / (float) rows);
+        if (th < 44.0f) th = 44.0f;
+    }
+    vis = th + gy > 0.0f ? (int) floor((avail - more_h + gy) / (th + gy)) : rows;
+    if (vis > rows) vis = rows;
+    if (vis < 1) vis = 1;
+    if (scroll > rows - vis) scroll = rows - vis;
+    if (scroll < 0) scroll = 0;
+    tw = (iw - (float) (cols - 1) * gx) / (float) cols;
+    for (i = 0; i < sc->n_items && i < cap; i++) {
+        int r = i / cols - scroll;
+        if (r < 0 || r >= vis) { tiles[i].x = x0; tiles[i].y = y0; tiles[i].w = 0.0f; tiles[i].h = 0.0f; continue; }
+        tiles[i].x = x0 + (float) (i % cols) * (tw + gx); tiles[i].y = y0 + (float) r * (th + gy); tiles[i].w = tw; tiles[i].h = th;
+    }
+    bottom = y0 + (float) (vis > 0 ? vis : 0) * (th + gy) - (vis > 0 ? gy : 0.0f);
+    if (rows < 1) bottom = y0;
+    if (sc->n_more > 0) {
+        float sy = bottom + gy, slot = (iw - 70.0f) / (float) sc->n_more;
+        if (strip_out != NULL) { strip_out->x = x0; strip_out->y = sy; strip_out->w = iw; strip_out->h = 34.0f; }
+        for (i = 0; i < sc->n_more && i < more_cap; i++) {
+            more[i].x = x0 + 70.0f + (float) i * slot; more[i].y = sy; more[i].w = slot; more[i].h = 34.0f;
+        }
+    }
+    if (rows_visible != NULL) *rows_visible = vis;
+    if (rows_total != NULL) *rows_total = rows;
+    return sc->n_items < cap ? sc->n_items : cap;
+}
+
+int at_tiles_geometry(const AtScreen *sc, const AtLayout *L, AtRect *tiles, int cap, AtRect *more, int more_cap)
+{
+    return at_tiles_geometry_ex(sc, L, 0, tiles, cap, more, more_cap, NULL, NULL, NULL);
+}
+
+int at_tiles_scroll(const AtScreen *sc, const AtLayout *L, int focus_index, int scroll)
+{
+    AtRect t[AT_MAX_ITEMS], m[AT_MAX_MORE];
+    int vis = 1, rows = 1, cols = at_screen_tile_cols(sc);
+    at_tiles_geometry_ex(sc, L, 0, t, AT_MAX_ITEMS, m, AT_MAX_MORE, &vis, &rows, NULL);
+    if (focus_index < 0) return scroll < 0 ? 0 : scroll;
+    return at_list_scroll(focus_index / cols, scroll, vis, rows);
+}
+
+static void draw_tiles(const AtScreen *sc, const AtView *v, const AtLayout *L, const AtTextOps *o, const AtSink *s, HitCtx *hc)
+{
+    AtRect t[AT_MAX_ITEMS], m[AT_MAX_MORE];
+    AtRect strip;
+    int i, cols = at_screen_tile_cols(sc), vis, rows, first = v->scroll < 0 ? 0 : v->scroll;
+    memset(&strip, 0, sizeof strip);
+    at_tiles_geometry_ex(sc, L, first, t, AT_MAX_ITEMS, m, AT_MAX_MORE, &vis, &rows, &strip);
+    for (i = 0; i < sc->n_items; i++) {
+        const AtItem *it = &sc->items[i];
+        int st = (it->flags & AT_CELL_DISABLED) ? AT_ST_DISABLED : (v->focus.block == 0 && v->focus.index == i) ? AT_ST_FOCUS : (it->flags & AT_CELL_SELECTED) ? AT_ST_SELECTED : AT_ST_REST;
+        if (t[i].h <= 0.0f) continue;
+        at_part_tile(s, o, t[i], it, st, cols == 1);
+        hit_add(hc, t[i], AT_HIT_CELL, 0, i);
+    }
+    if (sc->n_more > 0) {
+        at_part_more(s, o, (AtRect){ strip.x, strip.y, strip.w, strip.h }, sc->more, sc->n_more, v->focus.block == 1 ? v->focus.index : -1);
+        for (i = 0; i < sc->n_more; i++) hit_add(hc, m[i], AT_HIT_CELL, 1, i);
+    }
+}
+
 static void draw_list(const AtScreen *sc, const AtView *v, const AtLayout *L, const AtTextOps *o, const AtSink *s, HitCtx *hc)
 {
     float x0 = L->primary.x + 12.0f, y0 = L->primary.y + 14.0f, iw = L->primary.w - 24.0f;
-    int visible = (int) floor((L->primary.h - 28.0f) / 39.0f), first = v->scroll < 0 ? 0 : v->scroll, i;   /* the host keeps v->scroll valid */
+    int visible = at_list_visible(L), first = v->scroll < 0 ? 0 : v->scroll, i;   /* the host keeps v->scroll valid */
     for (i = first; i < sc->n_items && i < first + visible; i++) {
         AtRect r;
         r.x = x0; r.y = y0 + (float) (i - first) * 39.0f; r.w = iw; r.h = 34.0f;
@@ -222,6 +295,7 @@ void at_render_ex(const AtScreen *sc, const AtView *v, float canvas_w, double no
     draw_header(sc, &L, o, s);
     at_plate(s, L.primary, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH);
     if (sc->primary == AT_PRIMARY_GRID) draw_grid(sc, v, &L, o, s, &hc);
+    else if (sc->primary == AT_PRIMARY_TILES) draw_tiles(sc, v, &L, o, s, &hc);
     else draw_list(sc, v, &L, o, s, &hc);
     if (sc->preset != AT_PRESET_NONE) at_part_explainer(s, o, L.explainer, &v->ex);
     draw_keys(sc, v, &L, o, s, &hc);

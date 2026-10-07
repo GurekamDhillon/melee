@@ -197,7 +197,7 @@ void at_part_row(const AtSink *s, const AtTextOps *o, AtRect r, const AtItem *it
         vw = fit_text(s, o, AT_R_CAP12, "NOT NOW", right, mid_base(y, r.h - e, AT_R_CAP12), AT_C_DIM, AT_ALIGN_RIGHT, vmax_w);
     } else switch (it->vkind) {
     case AT_VAL_TOGGLE: vw = part_toggle(s, o, right, cy, it->on); break;
-    case AT_VAL_CHOICE: vw = part_choice(s, o, right, cy, it->text, focus, vmax_w); break;
+    case AT_VAL_CHOICE: case AT_VAL_STEPPER: vw = part_choice(s, o, right, cy, it->text, focus, vmax_w); break;      /* a stepper draws what a choice draws: the arrows and the text */
     case AT_VAL_SLIDER:
         vw = part_slider(s, right, cy, it->vmin, it->vmax, it->vval, focus);
         if (it->text[0] != '\0') {                                      /* the game's own readout ("45%") left of the ticks */
@@ -674,14 +674,20 @@ void at_part_explainer(const AtSink *s, const AtTextOps *o, AtRect r, const AtEx
         at_part_tag(s, o, x, y, e->now_text, AT_TAG_PLAIN, w);
         y += 30.0f;
     }
-    if (e->n_with > 0 && y + 44.0f <= bottom) {                          /* a label, then its content under it, so a narrow pane still fits */
+    if ((e->n_with > 0 || e->n_with_text > 0) && y + 44.0f <= bottom) {   /* a label, then its content under it, so a narrow pane still fits */
+        float ty = y + 16.0f;
         at_text(s, o, AT_R_CAP12, "WITH", x, y + 11.0f, AT_C_DIM, AT_ALIGN_LEFT, 0.0f);
         for (i = 0; i < e->n_with; i++) {
             float cx = x + 26.0f * (float) i;
-            at_poly_rect(s, cx, y + 16.0f, 22.0f, 22.0f, AT_C_GROUND2);
-            if (e->with_model[i] != AT_NO_MODEL) s->model(s->user, e->with_model[i], AT_NO_MODEL, cx + 1.0f, y + 17.0f, 20.0f, 20.0f, 0, 0);
+            at_poly_rect(s, cx, ty, 22.0f, 22.0f, AT_C_GROUND2);
+            if (e->with_model[i] != AT_NO_MODEL) s->model(s->user, e->with_model[i], AT_NO_MODEL, cx + 1.0f, ty + 1.0f, 20.0f, 20.0f, 0, 0);
         }
-        y += 44.0f;
+        if (e->n_with > 0) ty += 26.0f;
+        for (i = 0; i < e->n_with_text && ty + 20.0f <= bottom - 44.0f; i++) {   /* tags: the words of a thing (a mode's keys); the 44 px left over keep room for FROM; one that does not fit is left off */
+            at_part_tag(s, o, x, ty, e->with_text[i], AT_TAG_PLAIN, w);
+            ty += 24.0f;
+        }
+        y = e->n_with_text > 0 ? ty + 6.0f : y + 44.0f;
     }
     if (e->from_text[0] != '\0' && y + 40.0f <= bottom) {
         at_text(s, o, AT_R_CAP12, "FROM", x, y + 11.0f, AT_C_DIM, AT_ALIGN_LEFT, 0.0f);

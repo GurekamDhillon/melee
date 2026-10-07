@@ -284,6 +284,7 @@ static const FeMenu fm_menus_atlas[] = {
 };
 
 static bool fa_page_from_main; ///< the Mods page was entered from the Atlas main menu: B returns to MAIN > MODS
+static bool fa_mods_door;      ///< ... and, under Atlas, that entry shows the Atlas MODS screen (the host's, gw_script_ui_mods.inc) instead of the Settings MODS tab
 
 static const FeMenu* fm_find(int kind)
 {

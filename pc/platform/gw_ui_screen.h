@@ -29,8 +29,10 @@ extern "C" {
 enum { AT_PRIMARY_LIST = 1, AT_PRIMARY_GRID = 2, AT_PRIMARY_TILES = 3, AT_PRIMARY_DISPLAY = 4, AT_PRIMARY_CARDS = 5 };   /* the plan says CARDS = 3; 3 is TILES */
 enum { AT_CELL_LOCKED = 1, AT_CELL_EMPTY = 2, AT_CELL_MERGE = 4, AT_CELL_NEW = 8, AT_CELL_SELECTED = 16, AT_CELL_DISABLED = 32,
        AT_CELL_BANNED = 64, AT_CELL_PICKED = 128, AT_CELL_UNSET = 256, AT_CELL_P1 = 512 };   /* 64 and up: strike marks, drawing only (step 6 sets them) */
+enum { AT_BD_GROUND, AT_BD_WORLD };
 enum { AT_CARD_OPEN = 1, AT_CARD_CLOSED = 2, AT_CARD_READY = 4, AT_CARD_FOCUS = 8 };   /* AtPortCard.flags */
-enum { AT_VAL_NONE, AT_VAL_TOGGLE, AT_VAL_CHOICE, AT_VAL_SLIDER, AT_VAL_TEXT, AT_VAL_COUNTER };
+enum { AT_VAL_NONE, AT_VAL_TOGGLE, AT_VAL_CHOICE, AT_VAL_SLIDER, AT_VAL_TEXT, AT_VAL_COUNTER,
+       AT_VAL_STEPPER };   /* stepper: left and right change it (on.change reports the direction), A runs the row (on.accept); the script owns its text */
 /* AtItem.iflags: A steps a slider (+1 step) like the legacy rule; a readout (a value shown, never changed); a confirm-worthy action; a disabled row (its `reason` shows) */
 enum { AT_ITEM_A_STEPS = 1, AT_ITEM_RO = 2, AT_ITEM_DANGER = 4, AT_ITEM_DISABLED = 8 };
 
@@ -85,6 +87,9 @@ typedef struct {
     int has_countdown, countdown;                    /* seconds shown at the trail's right end (0:45, rose under 10 s). The script re-registers it once a second */
     int pause;                                       /* kind = "pause": a screen the retail pause takeover may push (a list primary; offline only) */
     int persist;                                     /* persist = true: the screen is not closed when the scene it was opened in ends (only its owner closes it) */
+    int backdrop;                                    /* AT_BD_*: the opaque ground (the default) or a translucent scrim over the frozen game (the LAB's pause menu) */
+    int fn_tab1;                                     /* on.tab as a Lua reference PLUS ONE: 0 = none (a record built by the engine is zeroed, and 0 is a valid reference) */
+    int tab0;                                        /* the tab a Lua screen asked for, 0-based */
     int fn_provide, fn_accept, fn_back, fn_alt[3], fn_focus, fn_change, fn_open, fn_close, fn_page, fn_start;
     int warnings;
 } AtScreen;

@@ -488,7 +488,13 @@ void at_render_ex(const AtScreen *sc, const AtView *v, float canvas_w, double no
     hc.hits = v->dialog.open ? NULL : hits;                              /* an open dialog is the only thing the mouse can reach */
     hc.dropped = 0;
     at_layout(canvas_w, sc->preset, &L);
-    at_poly_rect(s, 0.0f, 0.0f, L.canvas.w, 480.0f, AT_C_GROUND);
+    if (sc->backdrop == AT_BD_WORLD) {                                    /* over the frozen game: a scrim that ramps in on the UI clock (a cut with Reduced Motion), never the ground */
+        AtTween wt;
+        at_tween_start(&wt, v->opened_ms, 100.0, reduced);
+        at_poly_rect(s, 0.0f, 0.0f, L.canvas.w, 480.0f, (AT_C_SCRIM & 0xFFFFFF00u) | (unsigned) ((float) (AT_C_SCRIM & 0xFFu) * at_tween_value(&wt, now) + 0.5f));
+    } else {
+        at_poly_rect(s, 0.0f, 0.0f, L.canvas.w, 480.0f, AT_C_GROUND);
+    }
     if (sc->primary == AT_PRIMARY_DISPLAY) {                              /* a display screen: no header, no pane, no hits, no key strip */
         at_part_title(s, o, &L, sc, now, reduced, NULL);
     } else {
@@ -540,7 +546,7 @@ void at_render_ex(const AtScreen *sc, const AtView *v, float canvas_w, double no
     }
     at_tween_start(&open, v->opened_ms, 100.0, reduced);
     k = 1.0f - at_tween_value(&open, now);                               /* the screen fades in from the ground colour */
-    if (k > 0.004f) at_poly_rect(s, 0.0f, 0.0f, L.canvas.w, 480.0f, (AT_C_GROUND & 0xFFFFFF00u) | (unsigned) (k * 255.0f + 0.5f));
+    if (sc->backdrop != AT_BD_WORLD && k > 0.004f) at_poly_rect(s, 0.0f, 0.0f, L.canvas.w, 480.0f, (AT_C_GROUND & 0xFFFFFF00u) | (unsigned) (k * 255.0f + 0.5f));
     if (info != NULL) {
         info->entries = cn.entries; info->dropped = cn.dropped; info->hits_dropped = hc.dropped;
         info->warned = cn.warned; info->capped = cn.capped;

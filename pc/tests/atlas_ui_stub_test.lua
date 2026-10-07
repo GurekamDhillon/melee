@@ -447,6 +447,62 @@ do
   raises(function() S.screen{ id = 'demo.bad4', primary = { kind = 'list', items = { { id = 'a', label = 'A', value = { kind = 'choice', options = { 'a', 5 } } } } } } end, 'options', 'an option that is not a string is refused')
 end
 
+-- Atlas step 7: the stepper, tabs, the world backdrop, WITH tags, entries under lab.pause and mods.self, the readout, track and chip parts, tokens
+do
+  local s = Stub.new({ caller = 'geno-lab/main', owner_mod = 'geno-lab' })
+  local one = { { id = 'a', label = 'A' } }
+  local got = {}
+  -- a stepper: left and right report their direction, A is an accept (never an on.change)
+  s.screen({ id = 'geno-lab.step', primary = { kind = 'list', items = { { id = 'st', label = 'Focus', value = { kind = 'stepper', text = 'P1' } }, { id = 'tg', label = 'T', value = { kind = 'toggle', on = false } } } },
+    on = { change = function(id, v) got[#got + 1] = id .. '=' .. tostring(v) end, accept = function(c) got[#got + 1] = 'accept ' .. c end } })
+  s.open('geno-lab.step')
+  s.engine_press('geno-lab.step', 'right'); s.engine_press('geno-lab.step', 'left'); s.engine_press('geno-lab.step', 'accept')
+  check(table.concat(got, ',') == 'st=1,st=-1,accept st', 'a stepper reports left and right, and A is an accept (got ' .. table.concat(got, ',') .. ')')
+  -- tabs and the world backdrop
+  local TB = {}
+  s.screen({ id = 'geno-lab.t', backdrop = 'world', tabs = { { name = 'ONE' }, { name = 'TWO' }, { name = 'THREE' } }, tab = 2,
+    primary = { kind = 'list', items = one }, on = { tab = function(i) TB[#TB + 1] = i end, page = function() TB[#TB + 1] = 'page' end } })
+  s.open('geno-lab.t')
+  check(s.tab('geno-lab.t') == 2, 'the screen starts on the tab it asked for')
+  s.engine_press('geno-lab.t', 'r'); s.engine_press('geno-lab.t', 'r'); s.engine_press('geno-lab.t', 'l')
+  check(table.concat(TB, ',') == '3,1,3', 'L and R move the tab and tell on.tab, wrapping; on.page is not called when there are tabs (got ' .. table.concat(TB, ',') .. ')')
+  raises(function() s.screen({ id = 'geno-lab.t0', tabs = {}, primary = { kind = 'list', items = one } }) end, 'tabs', 'an empty tabs list is refused')
+  local many = {}
+  for i = 1, Stub.limits.tabs + 1 do many[i] = { name = 'T' .. i } end
+  raises(function() s.screen({ id = 'geno-lab.t9', tabs = many, primary = { kind = 'list', items = one } }) end, 'tabs', 'more tabs than the record holds are refused')
+  raises(function() s.screen({ id = 'geno-lab.bd', backdrop = 'sky', primary = { kind = 'list', items = one } }) end, 'backdrop', 'backdrop is ground or world')
+  local NT = {}
+  s.screen({ id = 'geno-lab.nt', primary = { kind = 'list', items = one }, on = { tab = function() NT[#NT + 1] = 'tab' end, page = function(d) NT[#NT + 1] = 'page' .. d end } })
+  s.open('geno-lab.nt'); s.engine_press('geno-lab.nt', 'r')
+  check(table.concat(NT, ',') == 'page1', 'a screen without tabs: R still reaches on.page (got ' .. table.concat(NT, ',') .. ')')
+  raises(function() s.screen({ id = 'geno-lab.w', primary = { kind = 'list', items = one }, explainer = { with = { 'a', 'b', 'c', 'd', 'e' } } }) end, 'WITH', 'five WITH tags are refused')
+  -- entries: lab.pause belongs to geno-lab, mods.self is filed under the mod's own id
+  s.register_entry({ id = 'geno-lab.extra', parent = 'lab.pause', label = 'Extra', action = 'script' })
+  local other = Stub.new({ caller = 'tools/main', owner_mod = 'tools' })
+  other.register_entry({ id = 'tools.dummy', parent = 'lab.pause', label = 'Dummy', opens = 'tools.screen' })
+  other.register_entry({ id = 'tools.settings', parent = 'mods.self', label = 'Settings', opens = 'tools.settings' })
+  raises(function() other.register_entry({ id = 'tools.other', parent = 'mods.sora', label = 'X', opens = 'tools.x' }) end, 'mods.self', "another mod's detail screen is not yours to fill")
+  check(other.entries['tools.settings'].parent == 'mods.tools', 'mods.self is filed under mods.<mod id>')
+  raises(function() other.entries('lab.pause') end, 'not yours', 'a mod that does not own lab.pause cannot read it')
+  raises(function() other.activate('tools.dummy') end, 'not yours', 'nor activate an entry under it')
+  check(#s.entries('lab.pause') == 1 and s.entries('lab.pause')[1].id == 'geno-lab.extra' and s.entries('lab.pause')[1].blurb == '', 'entries(parent) lists what the registry shows under a parent the caller owns')
+  raises(function() s.entries('solo') end, 'not yours', 'a parent the caller does not own')
+  check(#other.entries('mods.tools') == 1, 'a mod may read its own detail screen entries')
+  check(s.activate('geno-lab.extra') == false and s.activated == 'geno-lab.extra' and s.activate('nope') == false, 'activate goes through the registry; an unknown id is false')
+  -- the new HUD parts and their limits
+  check(s.hud({ id = 'geno-lab.hud', zones = { top_left = { { kind = 'readout', title = 'P1', rows = { { label = 'Motion', value = 'Wait' } } } },
+                bottom_center = { { kind = 'track', len = 26, now = 5, spans = {}, marks = {} } }, bottom_left = { { kind = 'chips', items = { { text = 'FRAMES' } } } } } }), 'a readout, a track and a chip strip register')
+  local rows = {}
+  for i = 1, 17 do rows[i] = { label = 'r', value = 'v' } end
+  raises(function() s.hud({ id = 'geno-lab.hud', zones = { top_left = { { kind = 'readout', rows = rows } } } }) end, 'at most 16 rows', 'a readout has at most 16 rows')
+  raises(function() s.hud({ id = 'geno-lab.hud', zones = { top_left = { { kind = 'readout', rows = { 5 } } } } }) end, 'not a table', 'a readout row is a table')
+  local marks = {}
+  for i = 1, 25 do marks[i] = { frame = i, kind = 'gfx' } end
+  raises(function() s.hud({ id = 'geno-lab.hud', zones = { bottom_center = { { kind = 'track', marks = marks } } } }) end, 'at most 16 spans and 24 marks', 'a track has at most 24 marks')
+  -- tokens
+  check(s.token('ember') == 0xFF7A3DFF and s.token('nope') == nil and s.token(5) == nil, 'the stub reads the tokens file (ember is ' .. tostring(s.token('ember')) .. ')')
+end
+
 local off = Stub.new({ available = false }); check(select(1, off.available()) == false, 'an unavailable stub says so')
 print(('atlas ui stub: %d checks, %d failed'):format(count, fails))
 os.exit(fails == 0 and 0 or 1)

@@ -91,6 +91,9 @@ static int fss_tab_of_page(int page)
 
 static int fss_kind_of(const FrontendScreen* s)
 {
+    if (fss_page_of(s) == FSP_MODS && fa_mods_door) {
+        return FSS_K_MODS; /* the Atlas MODS screen: the host builds its rows from the mods API, nothing here is a table */
+    }
     if (fss_page_of(s) >= 0) {
         return FSS_K_TABS;
     }
@@ -170,6 +173,8 @@ static int fss_open(const FrontendScreen* s)
         t0 = "VERSUS"; t1 = "RULES"; title = "MORE RULES";
     } else if (kind == FSS_K_MATCH) {
         t0 = "VERSUS"; t1 = "MELEE"; title = "MATCH SETUP";
+    } else if (kind == FSS_K_MODS) {
+        title = "MODS";
     } else {
         t0 = "SETTINGS"; t1 = "CONTROLS"; title = "REMAP";
     }
@@ -239,6 +244,7 @@ static void fss_back(void)
     sfxBack();
     switch (fss.kind) {
     case FSS_K_TABS:
+    case FSS_K_MODS:
         fe.leaving = 2; /* the menus, on the item fe_settings_from_menus recorded */
         break;
     case FSS_K_HOWTO:
@@ -533,6 +539,19 @@ static bool fss_frame(void)
     }
     if (fss.kind == FSS_K_TABS) {
         fss.tab = fss_tab_of_page(fss_page_of(s));
+    }
+    if (fss.kind == FSS_K_MODS) {
+        /* the host owns the whole screen (rows, tabs, notes, keys, the explainer); this side feeds the pad and takes the one event it needs, B */
+        if (fe.frames >= 4) { /* let the button that brought us here go */
+            fss_feed_pad();
+        }
+        while ((ev = Ui_SetPoll(fss.h, &slot, &arg)) != 0) {
+            fss_event(ev, slot, arg);
+            if (fe.screen != s) {
+                break;
+            }
+        }
+        return true;
     }
     fss_erase_answer();
     if (fss.kind == FSS_K_REMAP) {

@@ -19,7 +19,8 @@ local function read_limits()
    local text = f:read('a'); f:close()
    local L = {}
    for name, v in text:gmatch('#define%s+AT_MAX_(%u[%u_]*)%s+(%d+)') do L[name:lower()] = tonumber(v) end   -- items = the native record (64); items_lua = the Lua door (32)
-   L.id = tonumber(text:match('#define%s+AT_ID%s+(%d+)'))     -- a block, cell or item id holds AT_ID - 1 characters; a screen id twice that
+   L.id = tonumber(text:match('#define%s+AT_ID%s+(%d+)'))
+   L.with = tonumber(text:match('#define%s+AT_MAX_WITH%s+(%d+)'))     -- a block, cell or item id holds AT_ID - 1 characters; a screen id twice that
    L.str = tonumber(text:match('#define%s+AT_STR%s+(%d+)'))
    L.text = tonumber(text:match('#define%s+AT_TEXT%s+(%d+)'))
    local v = io.open((p:gsub('gw_ui_screen%.h$', 'gw_ui_val.h')))
@@ -74,7 +75,7 @@ function Stub.new(opts)
  local L = Stub.limits
  local ui = { screens = {}, stack = {}, views = {}, fed = {}, notes = {}, dialogs = {}, refreshed = 0, _f = {}, _owner = {}, _rows = {},
   available_ok = opts.available ~= false, caller = opts.caller or (opts.mod and (opts.mod .. '/main')) or 'console', owner_mod = opts.owner_mod or opts.mod,
-  held = {}, _prev = {} }
+  held = {}, _prev = {}, _tab = {} }
  if opts.shared then   -- two callers over ONE engine: the screens, the stack and the views are the engine's, not the caller's
   for _, k in ipairs({ 'screens', 'stack', 'views', '_f', '_owner', '_rows', 'fed' }) do ui[k] = opts.shared[k] end
  end
@@ -180,7 +181,7 @@ function Stub.new(opts)
       local o = it.value.options
       if type(o) ~= 'table' or #o < 1 or #o > L.opts then fail(('item "%s": choice options are 1 to %d strings'):format(it.id, L.opts)) end
       for _, s in ipairs(o) do if type(s) ~= 'string' then fail('item "' .. it.id .. '": choice options are strings') end end
-     elseif k ~= 'toggle' and k ~= 'choice' and k ~= 'text' and k ~= 'counter' then
+     elseif k ~= 'toggle' and k ~= 'choice' and k ~= 'stepper' and k ~= 'text' and k ~= 'counter' then
       fail(('item "%s": unknown value kind "%s"'):format(it.id, tostring(k)))
      end
     end
@@ -211,6 +212,17 @@ function Stub.new(opts)
    local b = k[1] or k.btn
    if not BUTTONS[b] then fail(('key hint %d: unknown button "%s" (A B X Y Z L R START)'):format(i, tostring(b))) end
   end
+  if d.backdrop ~= nil and d.backdrop ~= 'ground' and d.backdrop ~= 'world' then fail('backdrop is "ground" or "world"') end
+  if d.tabs ~= nil then
+   if type(d.tabs) ~= 'table' or #d.tabs < 1 or #d.tabs > L.tabs then fail(('tabs is 1 to %d entries'):format(L.tabs)) end
+   for i, tb in ipairs(d.tabs) do if type(tb) ~= 'table' then fail(('tab %d is not a table'):format(i)) end end
+  end
+  if type(ex) == 'table' and ex.with ~= nil then
+   if type(ex.with) ~= 'table' then fail('explainer: with is a list') end
+   local tags = 0
+   for _, w in ipairs(ex.with) do if type(w) == 'string' then tags = tags + 1 end end
+   if tags > L.with then fail(('explainer: at most %d WITH tags'):format(L.with)) end
+  end
   local port = d.port or 1
   if type(port) ~= 'number' or port < 1 or port > 4 then fail('port is 1 to 4') end
   if not ui.screens[d.id] then
@@ -220,6 +232,8 @@ function Stub.new(opts)
   end
   local old = ui.screens[d.id] and ui._f[d.id]
   ui.screens[d.id] = d
+  if d.tabs and not ui._tab[d.id] then ui._tab[d.id] = math.max(1, math.min(#d.tabs, d.tab or 1)) end   -- a re-registration keeps the tab the player is on
+  if not d.tabs then ui._tab[d.id] = nil end
   ui._owner[d.id] = ui._owner[d.id] or ui.caller
   ui._rows[d.id] = {}
   ui.refreshed = ui.refreshed + 1
@@ -295,6 +309,7 @@ function Stub.new(opts)
   ui.dialogs[#ui.dialogs + 1] = t; return true
  end
  function ui.state() return { depth = #ui.stack, top = top(), roles_ok = ui.available_ok } end
+ function ui.tab(id) own(id); return ui._tab[id] end   -- the active tab (1-based), nil for a screen with none
 
  -- ---- the engine's part -------------------------------------------------------------------------------------
  -- the explainer table as the engine keeps it: fields cut to their buffers (AT_STR 63, AT_TEXT 159), a warning when cut
@@ -416,7 +431,7 @@ function Stub.new(opts)
   local d, f = ui.screens[id], ui._f[id]
   local it = row_of(d, f)
   local v = it and type(it.value) == 'table' and it.value or nil
-  if not v or disabled(it) or (v.kind ~= 'toggle' and v.kind ~= 'choice' and v.kind ~= 'slider') then return false end
+  if not v or disabled(it) or (v.kind ~= 'toggle' and v.kind ~= 'choice' and v.kind ~= 'stepper' and v.kind ~= 'slider') then return false end
   if how ~= 'accept' and how ~= 'left' and how ~= 'right' then return false end
   local st = row_state(d, it)
   local arg
@@ -427,6 +442,9 @@ function Stub.new(opts)
    if n < 2 then return true end
    st.val = ((st.val + (how == 'left' and -1 or 1)) % n + n) % n; arg = st.val
   elseif v.kind == 'choice' then arg = (how == 'left') and -1 or 1
+  elseif v.kind == 'stepper' then
+   if how == 'accept' then return false end                         -- A runs the row (on.accept); only left and right change it
+   arg = (how == 'left') and -1 or 1
   else
    if how == 'accept' then return false end
    local lo, hi = v.min or 0, v.max or 100
@@ -452,6 +470,14 @@ function Stub.new(opts)
   elseif kind == 'x' or kind == 'y' or kind == 'z' then fn = on.alt and on.alt[kind:upper()]
   elseif kind == 'start' then fn = on.start
   elseif kind == 'l' or kind == 'r' then
+   if d.tabs then                                                    -- tabs: the engine moves the tab and tells the script; it never picks what is on one
+    local n = #d.tabs
+    local tb = ((ui._tab[id] or 1) - 1 + (kind == 'l' and -1 or 1)) % n + 1
+    ui._tab[id] = tb
+    if on.tab then apply(on.tab(tb), ui._owner[id]) end
+    if ui.screens[id] and top() == id then ui.refresh(id) end
+    return true
+   end
    if not on.page then return false end
    local r = on.page(kind == 'l' and -1 or 1, f and f.cell, f and f.block)
    if ui.screens[id] and top() == id then ui.refresh(id) end   -- the engine refreshes the top screen only (gs_ui_tick), never one a handler closed
@@ -493,14 +519,25 @@ function Stub.new(opts)
  -- ---- entries: gd.ui.entry, on_entry, and the engine's part of choosing one ----------------------------------------------
  -- An entry as mod.json "menus" declares it (the host reads the manifest; a test registers it here). It validates what
  -- at_menus_parse and at_reg_add validate (a label, the id namespace, a built-in parent, opens or action = "script").
- local PARENTS = { main = true, solo = true, versus = true, settings = true }   -- the parents a menu draws today (online, mods, more, settings.<page> are refused)
+ local PARENTS = { main = true, solo = true, versus = true, settings = true, ['lab.pause'] = true }   -- the parents a menu draws today (online, mods, more, settings.<page> are refused); lab.pause is the LAB's pause menu
  ui.entries, ui.hooks, ui.netplay = {}, {}, false
+ -- at_reg_owner: who may read and activate a parent's entries
+ local function owner_of(parent)
+  if parent == 'lab.pause' then return 'geno-lab' end
+  local m = type(parent) == 'string' and parent:match('^mods%.(.+)$')
+  if m and m ~= 'self' then return m end
+  return ''
+ end
+ ui.owner_of = owner_of
  function ui.register_entry(e)
   local function bad(msg) error('entry "' .. tostring(e.id) .. '": ' .. msg, 2) end
   if type(e.id) ~= 'string' or e.id == '' then error('an entry needs an id', 2) end
   if type(e.label) ~= 'string' or e.label == '' then bad('an entry needs a label') end
-  if not PARENTS[e.parent] then bad('no menu shows parent "' .. tostring(e.parent) .. '" yet') end
   local mod = ui.owner_mod
+  if e.parent == 'mods.self' and mod then e = setmetatable({ parent = 'mods.' .. mod }, { __index = e }) end       -- a mod's own settings entry: filed under its id
+  if type(e.parent) == 'string' and e.parent:match('^mods%.') then
+   if not mod or e.parent ~= 'mods.' .. mod then bad('a mod\'s settings entry goes under mods.self, not under "' .. e.parent .. '"') end
+  elseif not PARENTS[e.parent] then bad('no menu shows parent "' .. tostring(e.parent) .. '" yet') end
   if mod and not (e.id == mod or e.id:sub(1, #mod + 1) == mod .. '.') then bad('the id of a mod entry is "' .. mod .. '" or starts with "' .. mod .. '."') end
   if not (e.action == 'script' or e.opens) then bad('an entry needs opens or action "script"') end
   if ui.entries[e.id] then bad('the id is already registered') end
@@ -526,6 +563,24 @@ function Stub.new(opts)
   end
   table.sort(out)
   return out
+ end
+ -- gd.ui.entries(parent): the visible entries under a parent the caller's mod owns (the registry's visibility and netplay rules), as { id, label, blurb, mod, badge }
+ setmetatable(ui.entries, { __call = function(_, parent)
+  if owner_of(parent) == '' or owner_of(parent) ~= ui.owner_mod then error(('gd.ui.entries: "%s" is not yours'):format(tostring(parent)), 2) end
+  local out = {}
+  for _, id in ipairs(ui.entries_under(parent)) do
+   local e = ui.entries[id]
+   out[#out + 1] = { id = e.id, label = e.label, blurb = e.blurb or '', mod = e.mod or '', badge = e.badge or '' }
+  end
+  return out
+ end })
+ -- gd.ui.activate(id): the registry activates one visible entry under a parent the caller owns
+ function ui.activate(id)
+  local e = ui.entries[id]
+  if e and (owner_of(e.parent) == '' or owner_of(e.parent) ~= ui.owner_mod) then error(('gd.ui.activate: "%s" is not yours'):format(tostring(id)), 2) end
+  if not e then return false end
+  ui.activated = id
+  return ui.engine_activate(id)
  end
  -- the engine's part: choosing an entry. "opens" pushes the mod's own screen; "script" runs the mod's hooks.on_entry(id) and applies {push=}.
  function ui.engine_activate(id)
@@ -555,7 +610,7 @@ function Stub.new(opts)
  ui.netplay = opts.netplay and true or false
  local ZONES = { top_left = true, top_center = true, top_right = true, bottom_left = true, bottom_center = true, bottom_right = true }
  local ZONE_ORDER = { 'top_left', 'top_center', 'top_right', 'bottom_left', 'bottom_center', 'bottom_right' }
- local KINDS = { strip = true, banner = true, card = true, note = true, port_card = true, timer = true, toast = true }
+ local KINDS = { strip = true, banner = true, card = true, note = true, port_card = true, timer = true, toast = true, readout = true, track = true, chips = true }
  local ELEMENTS = { 'hud.damage', 'hud.stock', 'hud.timer', 'hud.nametag', 'hud.magnify', 'hud.coin', 'hud.prize', 'hud.hazard', 'pause.panel' }
  local ELEMENT = {}
  for _, e in ipairs(ELEMENTS) do ELEMENT[e] = true end
@@ -596,10 +651,16 @@ function Stub.new(opts)
    if #list > PER_ZONE then hud_err(('zone %s holds at most %d parts (%d given)'):format(z, PER_ZONE, #list)) end
    zones[z] = {}
    for i, p in ipairs(list) do
-    if not KINDS[p.kind] or p.kind == 'toast' then hud_err(('part %d of %s has the unknown kind "%s" (strip, banner, card, note, port_card, timer)'):format(i, z, tostring(p.kind))) end
+    if not KINDS[p.kind] or p.kind == 'toast' then hud_err(('part %d of %s has the unknown kind "%s" (strip, banner, card, note, port_card, timer, readout, track, chips)'):format(i, z, tostring(p.kind))) end
     if p.kind == 'port_card' and not (type(p.port) == 'number' and p.port >= 1 and p.port <= 4) then hud_err('a port_card needs port 1 to 4') end
     if p.kind == 'strip' and (#(p.pips or {}) > 8 or #(p.keys or {}) > 8) then hud_err('a strip shows at most 8 slot pips and 8 keystones') end
     if p.kind == 'card' and #(p.lines or {}) > 3 then hud_err('a card shows at most 3 lines') end
+    if p.kind == 'readout' then
+     if #(p.rows or {}) > 16 then hud_err('a readout has at most 16 rows') end
+     for ri, r in ipairs(p.rows or {}) do if type(r) ~= 'table' then hud_err(('readout row %d is not a table'):format(ri)) end end
+    end
+    if p.kind == 'track' and (#(p.spans or {}) > 16 or #(p.marks or {}) > 24) then hud_err('a track has at most 16 spans and 24 marks') end
+    if p.kind == 'chips' and #(p.items or {}) > 12 then hud_err('a chip strip has at most 12 chips') end
     local c = {}; for k, v in pairs(p) do c[k] = v end
     if c.kind == 'note' then c.until_s = ui.now + math.max(0.5, math.min(15, c.seconds or 4)) end
     zones[z][i] = c
@@ -736,6 +797,24 @@ function Stub.new(opts)
    ui.paused, ui.pauser, ui.takeover, ui.unpause_req = false, nil, false, false
    if ui.pause_pushed then local keep = ui.caller; ui.caller = 'console'; ui.close(ui.pause_pushed); ui.caller = keep; ui.pause_pushed = nil end
   end
+ end
+
+ -- gd.ui.token(name): a colour token as 0xRRGGBBAA, nil when there is none (the file the generator reads: menu/atlas/tokens.json)
+ local tokens
+ function ui.token(name)
+  if not tokens then
+   tokens = {}
+   local here = (arg and arg[0] or ''):gsub('\\', '/'):gsub('[^/]*$', '')
+   for _, p in ipairs({ here .. '../../../menu/atlas/tokens.json', 'menu/atlas/tokens.json', '../../menu/atlas/tokens.json', (os.getenv('GW_ROOT') or '.') .. '/menu/atlas/tokens.json' }) do
+    local fh = io.open(p)
+    if fh then
+     local text = fh:read('a'); fh:close()
+     for k, v in (text:match('"colours"%s*:%s*(%b{})') or ''):gmatch('"([%w%-]+)"%s*:%s*(%d+)') do tokens[k] = math.tointeger(tonumber(v)) end
+     break
+    end
+   end
+  end
+  return tokens[tostring(name)]
  end
 
  return ui

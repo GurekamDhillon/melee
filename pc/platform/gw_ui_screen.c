@@ -121,6 +121,7 @@ static int read_item(const AtvArena *a, int in, int i, AtItem *dst, AtScreen *o,
                     FAIL("gd.ui.screen: item \"%s\": slider step must be a whole number of at least 1", it->id);
                 it->vstep = (int) d;
             } }
+        else if (strcmp(vk, "stepper") == 0) it->vkind = AT_VAL_STEPPER;
         else if (strcmp(vk, "text") == 0) it->vkind = AT_VAL_TEXT;
         else if (strcmp(vk, "counter") == 0) it->vkind = AT_VAL_COUNTER;
         else FAIL("gd.ui.screen: item \"%s\": unknown value kind \"%s\"", it->id, vk);
@@ -175,6 +176,11 @@ int at_screen_from_val(const AtvArena *a, int root, const char *owner, AtScreen 
     o->pause = strcmp(atv_strv(a, atv_get(a, root, "kind"), ""), "pause") == 0;
     if (o->pause && o->primary != AT_PRIMARY_LIST) FAIL("gd.ui.screen: a pause screen has a list primary");
     o->persist = atv_boolv(a, atv_get(a, root, "persist"), 0);
+    {
+        const char *bd = atv_strv(a, atv_get(a, root, "backdrop"), "ground");
+        if (strcmp(bd, "world") == 0) o->backdrop = AT_BD_WORLD;
+        else if (strcmp(bd, "ground") != 0) FAIL("gd.ui.screen: backdrop is \"ground\" or \"world\"");
+    }
 
     if (o->primary == AT_PRIMARY_CARDS) {
         int cards = atv_get(a, prim, "cards"), nc2 = atv_len(a, cards);
@@ -364,8 +370,26 @@ int at_screen_from_val(const AtvArena *a, int root, const char *owner, AtScreen 
     o->port = get_int(a, root, "port", 1);
     if (o->port < 1 || o->port > 4) FAIL("gd.ui.screen: port is 1 to 4");
 
+    {
+        int tabs = atv_get(a, root, "tabs"), nt, ti;
+        if (atv_kind(a, tabs) == ATV_TABLE) {
+            nt = atv_len(a, tabs);
+            if (nt < 1 || nt > AT_MAX_TABS) FAIL("gd.ui.screen: tabs is 1 to %d entries", AT_MAX_TABS);
+            for (ti = 0; ti < nt; ti++) {
+                int tt = atv_at(a, tabs, ti + 1);
+                if (atv_kind(a, tt) != ATV_TABLE) FAIL("gd.ui.screen: tab %d is not a table", ti + 1);
+                get_str(a, tt, "name", o->tabs[ti].name, (int) sizeof o->tabs[ti].name, &o->warnings);
+                o->tabs[ti].count = get_int(a, tt, "count", -1);
+            }
+            o->n_tabs = nt;
+            o->tab0 = get_int(a, root, "tab", 1) - 1;
+            if (o->tab0 < 0) o->tab0 = 0;
+            if (o->tab0 >= nt) o->tab0 = nt - 1;
+        } else if (tabs >= 0 && atv_kind(a, tabs) != ATV_NIL) FAIL("gd.ui.screen: tabs is a list of tables");
+    }
     on = atv_get(a, root, "on");
     if (atv_kind(a, on) == ATV_TABLE) {
+        o->fn_tab1 = get_fn(a, on, "tab") + 1;
         o->fn_accept = get_fn(a, on, "accept");
         o->fn_back = get_fn(a, on, "back");
         o->fn_focus = get_fn(a, on, "focus");
@@ -412,6 +436,7 @@ int at_explainer_from_val(const AtvArena *a, int t, AtExplainer *e, char *err, i
     }
     from = atv_get(a, t, "from");
     if (atv_kind(a, from) == ATV_TABLE) get_str(a, from, "text", e->from_text, AT_STR, &e->warn);
+    if (atv_kind(a, atv_get(a, t, "well")) == ATV_BOOL && !atv_boolv(a, atv_get(a, t, "well"), 1)) e->no_well = 1;   /* well = false: no picture (a row with nothing to show) */
     return 1;
 }
 
@@ -423,6 +448,7 @@ int at_screen_fn_refs(const AtScreen *s, int *out, int cap)
     all[na++] = s->fn_provide; all[na++] = s->fn_accept; all[na++] = s->fn_back; all[na++] = s->fn_focus;
     all[na++] = s->fn_change; all[na++] = s->fn_open; all[na++] = s->fn_close; all[na++] = s->fn_counter;
     all[na++] = s->fn_alt[0]; all[na++] = s->fn_alt[1]; all[na++] = s->fn_alt[2]; all[na++] = s->fn_page; all[na++] = s->fn_start;
+    if (s->fn_tab1 > 0) all[na++] = s->fn_tab1 - 1;
     for (i = 0; i < na; i++) if (all[i] >= 0 && n < cap) out[n++] = all[i];
     for (i = 0; i < s->n_keys; i++) {
         if (s->keys[i].fn_label >= 0 && n < cap) out[n++] = s->keys[i].fn_label;

@@ -1849,6 +1849,7 @@ static void fe_settings_from_menus(int page)
     if (page == FSP_MODS) {
         fsm_fill();
     }
+    fa_mods_door = Ui_Ready() && fa_page_from_main && page == FSP_MODS; /* the main menu's MODS row; the Settings MODS tab keeps its table until the owner has looked */
     fe_settings_apply_online();
     fe_ol_note[0] = 0; /* a notice from the last page stays behind */
     fe.screen = &fe_screen_settings[page];

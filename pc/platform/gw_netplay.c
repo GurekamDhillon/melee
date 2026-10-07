@@ -68,6 +68,7 @@ static const char *np_global_describe(void) {
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h> /* fma: the libm call gwtool lowers every double multiply-add to (np_numerics_fingerprint) */
 #ifndef _WIN32
 #include <SDL3/SDL_clipboard.h>
 #endif
@@ -2027,6 +2028,148 @@ static uint64_t np_exe_hash(void) {
     return n > 0 && n < sizeof path ? gw_net_hash_file(path, 0) : 0;
 }
 
+/* ---- the build identity the handshake compares ---------------------------------------------------------
+ *
+ * Until 0.2.0 this was a hash of the executable FILE, so a Windows PE and a Linux ELF built from one commit always
+ * refused each other ("different melee-pc.exe build"). Two builds can play each other when they compute the same
+ * game, and that has two halves:
+ *
+ *   SOURCES   what the game is built from. tools/port/build_id.py hashes the checkout's simulation-relevant files
+ *             (line endings normalised, the generated bridge left out) into pc/platform/gw_build_id.h at build time:
+ *             the same on every platform that builds the same bytes, different the moment a source is modified.
+ *   NUMERICS  how the compiler and the C library rounded them. Measured here, at run time: the game's own math
+ *             functions (MSL sinf/cosf/tanf, atan2f..., the Gekko estimate instructions), the native shims whose float
+ *             arithmetic the simulation can see (sqrtf, GXProject) and the two libm calls game code reaches (fma and
+ *             fmodf) are run on fixed inputs and their results hashed. A build whose floating point is not bit for bit
+ *             the same - x87 where the other has SSE, another libm - gets another number and is refused at the
+ *             handshake instead of desyncing in the middle of a match.
+ *
+ * Both halves are folded into one 64-bit word, the same field the exe hash used (no packet changes, protocol 5).
+ * A build with no header (compiled by hand, outside build.sh / build_linux.sh) falls back to the old whole-file
+ * hash, which only ever matches the identical file. The log line says which halves went into the word. */
+#if defined(__has_include)
+#if __has_include("gw_build_id.h")
+#include "gw_build_id.h"
+#endif
+#endif
+
+extern float gw_sinf(float), gw_cosf(float), gw_tanf(float), gw_atanf(float), gw_acosf(float), gw_asinf(float),
+    gw_expf(float), gw_sqrtf(float);
+extern float gw_atan2f(float, float), gw_powf(float, float), gw_fmodf(float, float);
+extern double gw___frsqrte(double), gw___fres(double);
+extern void gw_xplat_GXProject(float x, float y, float z, const float mtx[3][4], const float *pm, const float *vp,
+                               float *sx, float *sy, float *sz);
+
+#ifdef GW_BUILD_SOURCE_HASH
+/* tools/port/check_build_id.py looks for this string in the linked executable: a build that was not compiled with the
+ * current gw_build_id.h is stopped at the end of build.sh / build_linux.sh. Referenced below so the linker keeps it. */
+const char gw_build_id_marker[] = "GWBUILDID:" GW_BUILD_SOURCE_HEX;
+#endif
+
+static uint64_t np_fp_mix(uint64_t h, uint32_t v) {
+    h ^= v;
+    h *= 0x100000001b3ull;
+    return h ^ (h >> 29);
+}
+
+static uint32_t np_fp_bits(float f) {
+    uint32_t u;
+    memcpy(&u, &f, 4);
+    return u;
+}
+
+static uint64_t np_numerics_fingerprint(void) {
+    volatile float vx, vy;
+    volatile double vd;
+    uint64_t h = 0xcbf29ce484222325ull;
+    uint32_t s = 0x2545F491u;
+    int i;
+    for (i = 0; i < 1536; ++i) {
+        float x, y, r;
+        double d, e;
+        s = s * 1664525u + 1013904223u;
+        x = (float)((int32_t)(s >> 8) - 0x800000) / 524288.0f; /* -16 .. 16 */
+        s = s * 1664525u + 1013904223u;
+        y = (float)((int32_t)(s >> 8) - 0x800000) / 524288.0f;
+        vx = x;
+        vy = y;
+        x = vx;
+        y = vy;
+        h = np_fp_mix(h, np_fp_bits(gw_sinf(x)));
+        h = np_fp_mix(h, np_fp_bits(gw_cosf(x)));
+        h = np_fp_mix(h, np_fp_bits(gw_tanf(x * 0.09f)));
+        h = np_fp_mix(h, np_fp_bits(gw_atan2f(y, x)));
+        h = np_fp_mix(h, np_fp_bits(gw_atanf(x)));
+        r = x * (1.0f / 17.0f); /* -0.94 .. 0.94 */
+        h = np_fp_mix(h, np_fp_bits(gw_acosf(r)));
+        h = np_fp_mix(h, np_fp_bits(gw_asinf(r)));
+        h = np_fp_mix(h, np_fp_bits(gw_expf(x * 0.25f)));
+        h = np_fp_mix(h, np_fp_bits(gw_powf(y < 0 ? -y : y, 0.5f)));
+        h = np_fp_mix(h, np_fp_bits(gw_sqrtf(x * x + y * y)));
+        h = np_fp_mix(h, np_fp_bits(gw_fmodf(x * 7.0f, y + 17.5f)));
+        d = (double)x * 1.0000001 + 3.0e-7;
+        vd = d < 0 ? -d : d;
+        e = gw___frsqrte(vd + 1.0e-3);
+        h = np_fp_mix(h, (uint32_t)(np_fp_bits((float)e)));
+        e = gw___fres(vd + 1.0e-3);
+        h = np_fp_mix(h, (uint32_t)(np_fp_bits((float)e)));
+        /* the libm call gwtool lowers every double multiply-add to */
+        vd = fma((double)x, (double)y, (double)gw_sinf(y));
+        d = vd;
+        {
+            uint64_t db;
+            memcpy(&db, &d, 8);
+            h = np_fp_mix(h, (uint32_t)(db >> 32));
+            h = np_fp_mix(h, (uint32_t)db);
+        }
+        /* single-precision arithmetic: the same expression chain GXProject uses, one rounding per operation */
+        {
+            float mtx[3][4], pm[7], vp[6], sx, sy, sz;
+            int k;
+            for (k = 0; k < 12; ++k) {
+                s = s * 1664525u + 1013904223u;
+                mtx[k / 4][k % 4] = (float)((int32_t)(s >> 8) - 0x800000) / 1048576.0f;
+            }
+            pm[0] = (i & 1) ? 1.0f : 0.0f;
+            pm[1] = 1.7320508f; pm[2] = 0.0f; pm[3] = 2.2f; pm[4] = 0.0f; pm[5] = -1.0006f; pm[6] = -0.2f;
+            vp[0] = 0.0f; vp[1] = 0.0f; vp[2] = 640.0f; vp[3] = 480.0f; vp[4] = 0.0f; vp[5] = 1.0f;
+            gw_xplat_GXProject(x, y, r, mtx, pm, vp, &sx, &sy, &sz);
+            h = np_fp_mix(h, np_fp_bits(sx));
+            h = np_fp_mix(h, np_fp_bits(sy));
+            h = np_fp_mix(h, np_fp_bits(sz));
+        }
+    }
+    return h;
+}
+
+/* the word the handshake carries; cached, and logged once */
+static uint64_t np_build_id(void) {
+    static uint64_t id;
+    static int done;
+    if (!done) {
+        uint64_t numerics = np_numerics_fingerprint();
+#ifdef GW_BUILD_SOURCE_HASH
+        uint64_t src = GW_BUILD_SOURCE_HASH;
+        uint64_t h = 0xcbf29ce484222325ull;
+        int i;
+        for (i = 0; i < 64; i += 8) {
+            h = np_fp_mix(h, (uint32_t)((src >> i) & 0xFF));
+            h = np_fp_mix(h, (uint32_t)((numerics >> i) & 0xFF));
+        }
+        id = h == 0 ? 1 : h;
+        gw_log("netplay: build id %016llx = sources %016llx (%s, %d files, %s) + numerics %016llx", (unsigned long long)id,
+               (unsigned long long)src, GW_BUILD_SOURCE_DESC, GW_BUILD_SOURCE_FILES, gw_build_id_marker, (unsigned long long)numerics);
+#else
+        id = np_exe_hash();
+        gw_log("netplay: build id %016llx = the executable file (no gw_build_id.h: built outside build.sh); numerics %016llx",
+               (unsigned long long)id, (unsigned long long)numerics);
+#endif
+        done = 1;
+    }
+    return id;
+}
+
+
 /* Start hosting or joining with the current setup. 0 on success (the connection proceeds in
  * Netplay_Poll), -1 with np.status saying why. */
 static int np_start_session(const gw_net_addr *peer_in, uint32_t bind_ip);
@@ -2118,7 +2261,7 @@ static int np_start_session(const gw_net_addr *peer_in, uint32_t bind_ip) {
     gw_net_config cfg;
     gw_net_addr peer = *peer_in;
     memset(&cfg, 0, sizeof cfg);
-    cfg.exe_hash = np_exe_hash();
+    cfg.exe_hash = np_build_id();
     /* delta: the disc image is no longer compared. Only GLOBAL game data must match (PlCo.dat's
        global tables, ItCo.dat, the m-ex feature flags); fighters and stages are matched one by
        one by content identity and the match offers only what both have (gw_mexid.h). So a mod

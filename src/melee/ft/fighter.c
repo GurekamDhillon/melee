@@ -4232,3 +4232,62 @@ void Fighter_BenchSetupMatrices(void)
     }
 }
 #endif
+
+#if defined(TARGET_PC)
+/* MELEE_XHASH_LOG (pc/platform/gw_snap.c, the cross-platform state digest): every region of simulation-owned memory a Windows and a
+ * Linux build of one commit must hold identically - each fighter's whole struct, its GObj and every joint of its tree, and the same for
+ * every item and projectile - handed to the native side as guest addresses. The tag names the object, not the address, so two builds'
+ * regions pair up. Diagnostic only; nothing here changes state. */
+static void ftRb_XTree(int tagbase, HSD_GObj* g)
+{
+    extern void Snap_XRegion(int tag, u32 va, u32 len);
+    HSD_JObj* st[64];
+    HSD_JObj* jo;
+    int sp = 0, n = 0;
+    if (g == NULL || g->hsd_obj == NULL) {
+        return;
+    }
+    st[sp++] = (HSD_JObj*) g->hsd_obj;
+    while (sp > 0 && n < 400) {
+        jo = st[--sp];
+        Snap_XRegion(tagbase + n, (u32) jo, 0x84); /* not +0x84, the id key: it can hold a native stack address */
+        ++n;
+        if (jo->next != NULL && sp < 63) st[sp++] = jo->next;
+        if (jo->child != NULL && sp < 63 && !(jo->flags & JOBJ_INSTANCE)) st[sp++] = jo->child;
+    }
+}
+
+void RB_XRegions(void)
+{
+    extern void Snap_XRegion(int tag, u32 va, u32 len);
+    HSD_GObj* g;
+    int i, j, n = 0;
+    for (i = 0; i < 6; i++) {
+        for (j = 0; j < 2; j++) {
+            g = Player_GetEntityAtIndex(i, j);
+            if (g == NULL || g->user_data == NULL) {
+                continue;
+            }
+            /* x2144..x2164 are AXDriver voice ids: the audio engine's handles, which differ between platforms and are not state */
+            Snap_XRegion(0x010000 + (i * 2 + j) * 0x100, (u32) g->user_data, 0x2144);
+            Snap_XRegion(0x010001 + (i * 2 + j) * 0x100, (u32) g->user_data + 0x2164, (u32) sizeof(Fighter) - 0x2164);
+            Snap_XRegion(0x020000 + (i * 2 + j) * 0x100, (u32) g, 0x40);
+            ftRb_XTree(0x030000 + (i * 2 + j) * 0x1000, g);
+        }
+    }
+    for (g = HSD_GObjPLinkHead != NULL ? HSD_GObjPLinkHead[HSD_GOBJ_PLINK_ITEM] : NULL; g != NULL && n < 64; g = g->next, n++) {
+        if (g->user_data == NULL) {
+            continue;
+        }
+        /* xD64..xD7C hold sound handles (sfx_unk1/2, xD6C, ...): the audio engine's ids, not state */
+        Snap_XRegion(0x040000 + n * 0x100, (u32) g->user_data, 0xD64);
+        /* the kind-specific union xDD4_itemVar..xFCC is left out: some kinds keep a sound handle in it (a Dream Land item at
+         * +0xDE8 differed by 0x10, one voice slot, between a Windows and a Linux run while nothing else did) and the union has
+         * no per-kind map to mask only those words */
+        Snap_XRegion(0x040001 + n * 0x100, (u32) g->user_data + 0xD7C, 0xDD4 - 0xD7C);
+        Snap_XRegion(0x040002 + n * 0x100, (u32) g->user_data + 0xFCC, (u32) sizeof(Item) - 0xFCC);
+        Snap_XRegion(0x050000 + n * 0x100, (u32) g, 0x40);
+        ftRb_XTree(0x060000 + n * 0x1000, g);
+    }
+}
+#endif

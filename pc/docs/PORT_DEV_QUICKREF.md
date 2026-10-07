@@ -126,6 +126,9 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | `MELEE_FPS=u` / `MELEE_FPS=120` | uncapped / capped interpolated presentation; realtime logic remains 60 Hz |
 | `MELEE_MODS_DIR=<path>` | parent of mod folders; use a Windows path (`pwd -W` in Git Bash), not `/c/...` |
 | `MELEE_TURBO_HASHLOG=<path>` | optional per-match-frame full snapshot hash CSV for realtime/turbo parity checks |
+| `MELEE_XHASH_LOG=<csv>` | cross-platform state digest, one row per live match frame: `frame,rb,wide,mem,glob` (RB_GameHash; every fighter's and item's struct/GObj/joint tree with heap addresses and sound ids masked; masked MEM1; masked game globals). Words that point into the image are masked so a Windows and a Linux run compare (`tools/xplat/`, `docs/xplat-netplay.md` in the workspace). Needs no write-watch, so it runs on Linux |
+| `MELEE_XHASH_DUMP_FRAMES=a,b` / `_DUMP_DIR` | also write the masked MEM1 / globals / regions of those frames for `tools/xplat/xhash_diff.py` |
+| `MELEE_XHASH_SKIP=lo-hi,...` / `_PTR=lo-hi` / `_MEM_EVERY=N` | MEM1 ranges hashed as zero (audio blocks, thread contexts); the masked pointer range (default 10000000-20000000); compute the expensive `mem`/`glob` columns every Nth frame only |
 | `MELEE_TEST_SEED=<integer>` | fix the boot RNG seed for scripted parity checks; otherwise use OSGetTick |
 | `MELEE_ATLAS=0` | the legacy menus and the retail title exactly as before; absent or anything else = the Atlas menus (the front door: title, main menu, hubs) |
 | `MELEE_ATLAS_SCENES=<kind>:<retail\|overlay\|replace>,...` | development override of the Atlas scene policy table (`pc/platform/gw_ui_policy.c`); ignored under `MELEE_ATLAS=0` |

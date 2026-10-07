@@ -1061,6 +1061,39 @@ void gw_GXSetViewportJitter(f32 left, f32 top, f32 wd, f32 ht, f32 nearz, f32 fa
   GXSetViewportJitter(left, top, wd, ht, nearz, farz, field);
 }
 
+/* GXProject, owned here instead of forwarded to Aurora's. It is pure float arithmetic whose result reaches the
+ * simulation (Camera_LogicToScreen -> the fighters' offscreen flag, via lbVector_WorldToScreen), so every build
+ * must round it the same way. Aurora's copy is whatever its own compiler flags make it: on the 32-bit Linux
+ * build, plain `clang -m32` evaluates each float operation on the x87 stack at extended precision and the
+ * result differs from the Windows build's in the last bit (seen as a 1-ulp difference in the name tags' screen
+ * positions between a Windows and a Linux run of one commit; tools/xplat). The expressions are Aurora's
+ * (lib/dolphin/gx/GXTransform.cpp), operation for operation, with contraction forbidden: single-precision SSE
+ * arithmetic, one rounding per operation, everywhere. */
+#pragma STDC FP_CONTRACT OFF
+void gw_xplat_GXProject(f32 x, f32 y, f32 z, const f32 mtx[3][4], const f32 *pm, const f32 *vp, f32 *sx,
+                               f32 *sy, f32 *sz) {
+  f32 px, py, pz;
+  f32 xc, yc, zc, wc;
+  px = mtx[0][3] + ((mtx[0][2] * z) + ((mtx[0][0] * x) + (mtx[0][1] * y)));
+  py = mtx[1][3] + ((mtx[1][2] * z) + ((mtx[1][0] * x) + (mtx[1][1] * y)));
+  pz = mtx[2][3] + ((mtx[2][2] * z) + ((mtx[2][0] * x) + (mtx[2][1] * y)));
+  if (pm[0] == 0.0f) {
+    xc = (px * pm[1]) + (pz * pm[2]);
+    yc = (py * pm[3]) + (pz * pm[4]);
+    zc = pm[6] + (pz * pm[5]);
+    wc = 1.0f / -pz;
+  } else {
+    xc = pm[2] + (px * pm[1]);
+    yc = pm[4] + (py * pm[3]);
+    zc = pm[6] + (pz * pm[5]);
+    wc = 1.0f;
+  }
+  *sx = (vp[2] / 2.0f) + (vp[0] + (wc * (xc * vp[2] / 2.0f)));
+  *sy = (vp[3] / 2.0f) + (vp[1] + (wc * (-yc * vp[3] / 2.0f)));
+  *sz = vp[5] + (wc * (zc * (vp[5] - vp[4])));
+}
+#pragma STDC FP_CONTRACT ON
+
 void gw_GXProject(f32 x, f32 y, f32 z, const void *mtx, const void *pm, const void *vp, f32 *sx,
                   f32 *sy, f32 *sz) {
   f32 native_mtx[3][4];
@@ -1070,7 +1103,7 @@ void gw_GXProject(f32 x, f32 y, f32 z, const void *mtx, const void *pm, const vo
   gw_read_mtx(native_mtx, mtx);
   gw_read_f32v(native_pm, pm, GX_PROJECTION_SZ);
   gw_read_f32v(native_vp, vp, 6);
-  GXProject(x, y, z, native_mtx, native_pm, native_vp, &nx, &ny, &nz);
+  gw_xplat_GXProject(x, y, z, native_mtx, native_pm, native_vp, &nx, &ny, &nz);
   gw_wf32(sx, nx);
   gw_wf32(sy, ny);
   gw_wf32(sz, nz);

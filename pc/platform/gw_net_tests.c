@@ -422,7 +422,7 @@ static int refuse_case(int which, const char *needle) {
   free(s);
   return rv;
 }
-static int test_refuse_exe(void)  { return refuse_case(0, "melee-pc.exe"); }
+static int test_refuse_exe(void)  { return refuse_case(0, "different game build"); } /* was "melee-pc.exe": the build id is no longer the executable file */
 static int test_refuse_iso(void)  { return refuse_case(1, "disc"); }
 /* the host's global-data components travel in the refusal so the guest can name the difference */
 static int test_refuse_mods(void) { return refuse_case(2, "different global game data; host has: plco#12ab,itco#34cd"); }

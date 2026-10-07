@@ -1546,6 +1546,304 @@ uint64_t gw_snap_frame_hash(int frame) {
     return s != NULL ? s->hash : 0;
 }
 
+/* ---- the cross-platform state digest (MELEE_XHASH_LOG, MELEE_XHASH_DUMP_FRAMES) ------------------
+ *
+ * A Windows exe and a Linux ELF of one commit hold the same game state, except for words that are
+ * addresses INSIDE the image (function pointers, pointers to .data): the two images lay their code
+ * out differently. This digest hashes MEM1 and the game's globals with every 32-bit word in
+ * [XH_LO, XH_HI) replaced by a constant, so two platforms' per-frame values can be compared. It is a
+ * diagnostic (it needs no write-watch, so it runs on Linux), never part of the handshake.
+ *
+ *   MELEE_XHASH_LOG=<csv>          one row per live match frame: frame, the rollback checksum
+ *                                  (RB_GameHash), the masked MEM1 digest, the masked globals digest
+ *   MELEE_XHASH_MEM_EVERY=N        compute the (expensive) mem and glob columns only every Nth frame; 0 in between
+ *   MELEE_XHASH_DUMP_FRAMES=a,b,c  at those frames also write the masked images, for xhash_diff.py
+ *   MELEE_XHASH_DUMP_DIR=<dir>     where (default: beside the log)
+ *   MELEE_XHASH_PTR=lo-hi          the masked word range (hex), default 10000000-20000000
+ *   MELEE_XHASH_SKIP=a-b,c-d       MEM1 address ranges (hex) hashed and dumped as zero: state that is not the
+ *                                  simulation's and differs by platform (native stack pointers in OSThread
+ *                                  contexts, the audio engine's voice blocks)
+ */
+#define XH_MAX_DUMPS 64
+static uint32_t xh_lo = 0x10000000u, xh_hi = 0x20000000u;
+static struct {
+    uint32_t lo, hi; /* MEM1 byte range [lo, hi) hashed as zero (and dumped as zero) */
+} xh_skip[256];
+static int xh_nskip;
+
+/* game memory and game globals are BIG-endian (gwtool swaps every access): a pointer reads swapped */
+static inline uint32_t xh_bswap(uint32_t v) {
+    return (v >> 24) | ((v >> 8) & 0xFF00u) | ((v << 8) & 0xFF0000u) | (v << 24);
+}
+
+/* heapptr: also mask words that point into MEM1's heaps (>= 0x80003000). Which cell of a pool or heap an object got is
+ * not state - the audio engine allocates from the same heaps on its own clock, so two healthy builds hand out different
+ * addresses - and the rollback checksum never hashes a pointer for that reason. */
+static int xh_heapptr;
+static uint64_t xh_words(const uint8_t *p, size_t n, uint64_t h) {
+    size_t i;
+    for (i = 0; i + 4 <= n; i += 4) {
+        uint32_t v;
+        memcpy(&v, p + i, 4);
+        if (xh_bswap(v) >= xh_lo && xh_bswap(v) < xh_hi) {
+            v = 0xA5A5A5A5u;
+        } else if (xh_heapptr && xh_bswap(v) >= 0x80003000u && xh_bswap(v) < 0x80000000u + gw_mem1_size) {
+            v = 0xA6A6A6A6u;
+        }
+        h = (h ^ v) * 0x100000001b3ull;
+        h ^= h >> 29;
+    }
+    for (; i < n; ++i) {
+        h = (h ^ p[i]) * 0x100000001b3ull;
+    }
+    return h;
+}
+
+
+/* MEM1 page `pg` with the skip ranges zeroed, into tmp (4 KB) */
+static const uint8_t *xh_page(uint32_t pg, uint8_t *tmp) {
+    const uint8_t *src = (const uint8_t *) (uintptr_t) (0x80000000u + pg * SN_PAGE);
+    uint32_t va = 0x80000000u + pg * SN_PAGE;
+    int k, copied = 0;
+    for (k = 0; k < xh_nskip; ++k) {
+        if (xh_skip[k].lo < va + SN_PAGE && va < xh_skip[k].hi) {
+            uint32_t lo = xh_skip[k].lo > va ? xh_skip[k].lo : va;
+            uint32_t hi = xh_skip[k].hi < va + SN_PAGE ? xh_skip[k].hi : va + SN_PAGE;
+            if (!copied) {
+                memcpy(tmp, src, SN_PAGE);
+                copied = 1;
+            }
+            memset(tmp + (lo - va), 0, hi - lo);
+        }
+    }
+    return copied ? tmp : src;
+}
+
+static uint64_t xh_name_hash(const char *s) {
+    uint64_t h = 0xcbf29ce484222325ull;
+    while (*s) {
+        h = (h ^ (uint8_t) *s++) * 0x100000001b3ull;
+    }
+    return h;
+}
+
+static void xh_mask_copy(uint8_t *dst, const uint8_t *src, size_t n) {
+    size_t i;
+    memcpy(dst, src, n);
+    for (i = 0; i + 4 <= n; i += 4) {
+        uint32_t v;
+        memcpy(&v, dst + i, 4);
+        if (xh_bswap(v) >= xh_lo && xh_bswap(v) < xh_hi) {
+            v = 0xA5A5A5A5u;
+            memcpy(dst + i, &v, 4);
+        } else if (xh_heapptr && xh_bswap(v) >= 0x80003000u && xh_bswap(v) < 0x80000000u + gw_mem1_size) {
+            v = 0xA6A6A6A6u;
+            memcpy(dst + i, &v, 4);
+        }
+    }
+}
+
+/* the simulation-owned regions game code hands over (fighter.c RB_XRegions) */
+typedef struct {
+    uint32_t tag, va, len;
+} XhReg;
+static XhReg xh_reg[4096];
+static int xh_nreg;
+void gw_Snap_XRegion(int tag, uint32_t va, uint32_t len) {
+    if (xh_nreg < 4096 && va >= 0x80000000u && len != 0 && va - 0x80000000u + len <= gw_mem1_size) {
+        xh_reg[xh_nreg].tag = (uint32_t) tag;
+        xh_reg[xh_nreg].va = va;
+        xh_reg[xh_nreg].len = len;
+        xh_nreg++;
+    }
+}
+
+void gw_snap_xlog(int frame) {
+    static FILE *log;
+    static int tried;
+    static int dumps[XH_MAX_DUMPS], ndumps;
+    static int mem_every = 1;
+    static char dumpdir[512];
+    extern uint32_t gw_RB_GameHash(void);
+    extern void gw_RB_XRegions(void);
+    uint64_t mem = 0, glob = 0, wide = 0;
+    uint32_t pg;
+    int i;
+    if (!tried) {
+        const char *path = getenv("MELEE_XHASH_LOG"), *v;
+        tried = 1;
+        if (path == NULL || *path == '\0') {
+            return;
+        }
+        if (gw_snap_open(0) != 0) {
+            gw_log("xhash: cannot open the snapshot machinery (no map?)");
+            return;
+        }
+        v = getenv("MELEE_XHASH_PTR");
+        if (v != NULL) {
+            unsigned lo, hi;
+            if (sscanf(v, "%x-%x", &lo, &hi) == 2) {
+                xh_lo = lo;
+                xh_hi = hi;
+            }
+        }
+        v = getenv("MELEE_XHASH_MEM_EVERY");
+        if (v != NULL && atoi(v) > 1) {
+            mem_every = atoi(v);
+        }
+        v = getenv("MELEE_XHASH_SKIP");
+        while (v != NULL && *v != '\0' && xh_nskip < 256) {
+            unsigned lo, hi;
+            int used = 0;
+            if (sscanf(v, "%x-%x%n", &lo, &hi, &used) < 2 || used == 0) {
+                break;
+            }
+            xh_skip[xh_nskip].lo = lo;
+            xh_skip[xh_nskip].hi = hi;
+            xh_nskip++;
+            v += used;
+            if (*v == ',') {
+                v++;
+            }
+        }
+        v = getenv("MELEE_XHASH_DUMP_FRAMES");
+        while (v != NULL && *v != '\0' && ndumps < XH_MAX_DUMPS) {
+            char *end;
+            long f = strtol(v, &end, 10);
+            if (end == v) {
+                break;
+            }
+            dumps[ndumps++] = (int) f;
+            v = *end == ',' ? end + 1 : end;
+        }
+        v = getenv("MELEE_XHASH_DUMP_DIR");
+        if (v != NULL && *v != '\0') {
+            snprintf(dumpdir, sizeof dumpdir, "%s", v);
+        } else {
+            char *sl;
+            snprintf(dumpdir, sizeof dumpdir, "%s", path);
+            sl = strrchr(dumpdir, '/');
+            if (strrchr(dumpdir, '\\') > sl) {
+                sl = strrchr(dumpdir, '\\');
+            }
+            if (sl != NULL) {
+                *sl = '\0';
+            } else {
+                snprintf(dumpdir, sizeof dumpdir, ".");
+            }
+        }
+        {   /* the floating-point environment the simulation runs in: x87 control word and MXCSR (rounding, FTZ, DAZ) */
+            unsigned short cw = 0;
+            unsigned int mx = 0;
+            __asm__ volatile("fnstcw %0" : "=m"(cw));
+            __asm__ volatile("stmxcsr %0" : "=m"(mx));
+            gw_log("xhash: fpu control word %04x, mxcsr %08x", (unsigned) cw, mx);
+        }
+        log = fopen(path, "w");
+        if (log == NULL) {
+            gw_log("xhash: cannot open %s", path);
+            return;
+        }
+        fprintf(log, "frame,rb,wide,mem,glob\n");
+        gw_log("xhash: %s (masking words in %08x-%08x, %d skipped range(s)), %d dump frame(s)", path, xh_lo, xh_hi, xh_nskip, ndumps);
+    }
+    if (log == NULL || !sn.enabled) {
+        return;
+    }
+    if (mem_every > 1 && frame % mem_every != 0) {
+        goto xh_cols; /* only the cheap columns this frame */
+    }
+    for (pg = 0; pg < gw_mem1_size / SN_PAGE; ++pg) {
+        uint8_t tmp[SN_PAGE];
+        uint64_t h = xh_words(xh_page(pg, tmp), SN_PAGE, 0x12345678ull + pg);
+        mem += h * 0x9E3779B97F4A7C15ull + pg;
+    }
+    for (i = 0; i < sn.nsyms; ++i) {
+        const GwSnapSym *s = &sn.syms[i];
+        if (s->len == 0 || s->len > 0x400000 || !sn_game_object(s->obj, s->name)) {
+            continue;
+        }
+        glob += (xh_words((const uint8_t *) (uintptr_t) s->va, s->len, xh_name_hash(s->name)) ^ xh_name_hash(s->name)) *
+                0x9E3779B97F4A7C15ull;
+    }
+xh_cols:
+    xh_nreg = 0;
+    gw_RB_XRegions();
+    xh_heapptr = 1;
+    for (i = 0; i < xh_nreg; ++i) {
+        wide += xh_words((const uint8_t *) (uintptr_t) xh_reg[i].va, xh_reg[i].len, 0x9E3779B9ull + xh_reg[i].tag) * 0x9E3779B97F4A7C15ull;
+    }
+    xh_heapptr = 0;
+    fprintf(log, "%d,%08X,%016llX,%016llX,%016llX\n", frame, (unsigned) gw_RB_GameHash(), (unsigned long long) wide,
+            (unsigned long long) mem, (unsigned long long) glob);
+    fflush(log);
+    for (i = 0; i < ndumps; ++i) {
+        if (dumps[i] == frame) {
+            char p[600];
+            FILE *f;
+            uint8_t *buf = (uint8_t *) malloc(gw_mem1_size);
+            snprintf(p, sizeof p, "%s/xh_%d.mem1", dumpdir, frame);
+            f = fopen(p, "wb");
+            if (f != NULL && buf != NULL) {
+                uint32_t q;
+                uint8_t tmp[SN_PAGE];
+                for (q = 0; q < gw_mem1_size / SN_PAGE; ++q) {
+                    xh_mask_copy(buf + (size_t) q * SN_PAGE, xh_page(q, tmp), SN_PAGE);
+                }
+                fwrite(buf, 1, gw_mem1_size, f);
+                fclose(f);
+            }
+            free(buf);
+            snprintf(p, sizeof p, "%s/xh_%d.glob", dumpdir, frame);
+            f = fopen(p, "wb");
+            if (f != NULL) {
+                int k;
+                for (k = 0; k < sn.nsyms; ++k) {
+                    const GwSnapSym *s = &sn.syms[k];
+                    uint8_t *gb;
+                    uint32_t n;
+                    if (s->len == 0 || s->len > 0x400000 || !sn_game_object(s->obj, s->name)) {
+                        continue;
+                    }
+                    gb = (uint8_t *) malloc(s->len);
+                    if (gb == NULL) {
+                        continue;
+                    }
+                    xh_mask_copy(gb, (const uint8_t *) (uintptr_t) s->va, s->len);
+                    n = (uint32_t) strlen(s->name);
+                    fwrite(&n, 4, 1, f);
+                    fwrite(s->name, 1, n, f);
+                    fwrite(&s->len, 4, 1, f);
+                    fwrite(gb, 1, s->len, f);
+                    free(gb);
+                }
+                fclose(f);
+            }
+            snprintf(p, sizeof p, "%s/xh_%d.regs", dumpdir, frame);
+            f = fopen(p, "wb");
+            xh_heapptr = 1;
+            if (f != NULL) {
+                int k;
+                for (k = 0; k < xh_nreg; ++k) {
+                    uint8_t *rb = (uint8_t *) malloc(xh_reg[k].len);
+                    if (rb == NULL) {
+                        continue;
+                    }
+                    xh_mask_copy(rb, (const uint8_t *) (uintptr_t) xh_reg[k].va, xh_reg[k].len);
+                    fwrite(&xh_reg[k].tag, 4, 1, f);
+                    fwrite(&xh_reg[k].len, 4, 1, f);
+                    fwrite(&xh_reg[k].va, 4, 1, f);
+                    fwrite(rb, 1, xh_reg[k].len, f);
+                    free(rb);
+                }
+                fclose(f);
+            }
+            xh_heapptr = 0;
+            gw_log("xhash: dumped frame %d to %s", frame, dumpdir);
+        }
+    }
+}
+
 /* ---- curated gameplay hash (MELEE_SYNCTEST_CURATED=1) --------------------------------------------
  *
  * The strict SyncTest compares every byte of MEM1 and the game's globals (with the render-owned

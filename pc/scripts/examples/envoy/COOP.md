@@ -132,7 +132,7 @@ Mod (these reach a real player, solo or co-op):
 5. **"sim_commit journal memory budget exhausted"** after about 3500 frames in a stage with six fighters: every frame re-sent twelve overlay and hit-rule
    operations (2.4 KB each, kept for the rewind journal under a 128 MiB budget). A run now sends them only when they change (cheap signatures, a full refresh
    every 120 frames) and rebuilds the blob every tenth frame; the LAB is unchanged.
-6. **"ran too long" in a publication** (2 M instructions or 50 ms per callback; 20 errors switch the whole script off, which hung a co-op run at NG+3): probe
+6. **"ran too long" in a publication** (2 M instructions per callback (and 500 ms of wall time; the wall limit was 50 ms when this was written); 20 errors switch the whole script off, which hung a co-op run at NG+3): probe
    engines re-derived every build from scratch. The derivation memo is now shared between engines (content key, pool, context), `mod_budget.build/values`
    have a bounded content memo, the equipped part of the memo key is cached; a publication that still runs out of budget is **deferred and retried**
    (log line + on-screen "Build update delayed"), a refused one is retried twice then dropped **loudly** (log + toast), and a hosted run republishes from its bags.
@@ -166,7 +166,7 @@ each place one machine sees both players' choices at once and how online differs
    at phase 0, so a per-frame call silently becomes the every-frame attack: a "set once" call that does not restart a running cycle is wanted.
 5. Afterimages: `afterimage_add` and `echo_afterimage` refuse with "paired afterimages must share surface and blend for warm traversal" when two
    builds each want a picture. Needed: allow differing surface/blend per fighter. Mitigation built: earned-picture retries every 90 frames.
-6. **Per-callback script budget** (2 M instructions or 50 ms; 20 errors unload the script): a co-op frame hook does two seats' work plus four opponents' rolls and a
+6. **Per-callback script budget** (2 M instructions, 500 ms wall backstop since 2026-10-06, 50 ms before; 20 errors unload the script): a co-op frame hook does two seats' work plus four opponents' rolls and a
    publication. Needed: a budget the host script may raise for its own callbacks, or a yield point for long checks, and a way to learn the remaining budget (the
    mod cannot count instructions: no `debug`, no `os`). Built around it: shared memo, deferral and retry.
 7. **`sim_commit` limits**: the blob is capped at 16 KiB and the journal costs 2.4 KB per operation per frame under a 128 MiB budget. A run has no rewind but pays for

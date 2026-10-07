@@ -186,6 +186,14 @@ T.test('reward with a free slot: the grid shows blocks and A equips into the fir
  assert(has(s,'equipped into slot 2:') and has(s,'declined'))
  press(host,'back');assert(not host.screen.active and s.releases==1 and has(s,'reward moment done (done)'))
 end)
+T.test('an equipped drive: A is Unequip (it empties the slot, as X does), X is To bag; the labels are not the same word',function()
+ local s,g,mods,host=start_run();stage(host,{stage=2})
+ local a,b,c=table.unpack(distinct_plain(host,3))
+ assert(host:stage_reward(2,0,false));host.offers={a,b};host.screen:close();host:bag()
+ assert(host:bag():place(2,c));s.holds=0;present(host,{a,b});host.holding=true
+ local cell;for _,bl in ipairs(host.screen.blocks) do if bl.id=='eq' then for _,x in ipairs(bl.cells) do if x.ref and x.ref.index==2 and not x.empty then cell=x end end end end
+ assert(cell and cell.actions.A=='Unequip' and cell.actions.X=='To bag',cell and (tostring(cell.actions.A)..'/'..tostring(cell.actions.X)))
+end)
 T.test('FINDING: bag full and slot 6 empty: A equips into the free slot, X refuses plainly, the timeout takes it too',function()
  local s,g,mods,host=start_run();stage(host,{stage=10});host:bag().context={depth=10,loop=0};host.mods:set_context({depth=10,loop=0})
  assert(host:bag():slots()==6)

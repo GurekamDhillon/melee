@@ -109,7 +109,7 @@ return function(D)
    blocks[#blocks+1]={id='koffer',title='KEYSTONE: ONE',cols=#h.key_offers,rows=1,band=1,cells=cells}
   end
   local eq=self:eq_cells('eq')
-  for i,c in ipairs(eq) do if c.ref.where and not c.empty then c.actions={A=room and 'To bag' or false,X=room and 'To bag' or false} end end
+  for i,c in ipairs(eq) do if c.ref.where and not c.empty then c.actions={A=room and 'Unequip' or false,X=room and 'To bag' or false} end end
   blocks[#blocks+1]={id='eq',title=('EQUIPPED %d/%d'):format(h:equipped_count(),b:slots()),cols=6,rows=1,band=2,cells=eq}
   local bag=self:bag_cells('bag')
   for i,c in ipairs(bag) do

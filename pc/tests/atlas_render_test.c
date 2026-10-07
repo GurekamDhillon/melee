@@ -174,6 +174,12 @@ static void overlays_and_fade(void)
     snprintf(V.note.text, AT_STR, "old"); V.note.until_ms = 5000.0;
     at_render(&SC, &V, 640.0f, 11000.0, 0, &FAKE, &s, &HITS);
     CHECK(find_text("old") == NULL);                                         /* an expired note is not drawn */
+    s = rec_sink(); bag_fixture();                                           /* D2: a long note never covers the trail's title */
+    snprintf(V.note.text, AT_STR, "Press Y again to discard this drive, B to cancel."); V.note.kind = AT_NOTE_INFO; V.note.from_ms = 10000.0; V.note.until_ms = 13000.0;
+    at_render(&SC, &V, 640.0f, 11000.0, 0, &FAKE, &s, &HITS);
+    { const RecText *ti = find_text(SC.title), *nt = NULL; int i;
+      for (i = 0; i < REC.nt; i++) if (strncmp(REC.t[i].s, "Press Y", 7) == 0) nt = &REC.t[i];
+      CHECK(ti != NULL && nt != NULL && (nt->base > 56.0f || nt->x - 38.0f >= ti->x + FAKE.width(FAKE.user, AT_R_CAP20, SC.title))); }   /* beside it with room, or below the rule */
     s = rec_sink(); bag_fixture();
     V.dialog.open = 1; V.dialog.n = 2; snprintf(V.dialog.title, AT_STR, "DISCARD?"); snprintf(V.dialog.body, AT_TEXT, "Gone for good.");
     V.dialog.btn[0] = 'A'; snprintf(V.dialog.label[0], 24, "Discard"); V.dialog.btn[1] = 'B'; snprintf(V.dialog.label[1], 24, "Cancel");

@@ -174,15 +174,17 @@ void at_part_row(const AtSink *s, const AtTextOps *o, AtRect r, const AtItem *it
 {
     unsigned face = AT_C_PLATE2, edge = AT_C_EDGE2, txt = AT_C_TEXT2, val = AT_C_MUTED;
     float e = 3.0f, y = r.y, right, cy, vw = 0.0f, lx, avail;
-    int disabled = state == AT_ST_DISABLED || (it->flags & AT_CELL_DISABLED), focus = state == AT_ST_FOCUS && !disabled;
+    int disabled = state == AT_ST_DISABLED || (it->flags & AT_CELL_DISABLED);
+    int focus = state == AT_ST_FOCUS && !disabled, dfocus = state == AT_ST_FOCUS && disabled;   /* a focused disabled row: its own cue */
     AtRect pr;
-    if (disabled) { face = AT_C_PLATE; txt = AT_C_DIM; val = AT_C_DIM; }
+    if (dfocus) { face = AT_C_PLATE; edge = AT_C_EMBER; txt = AT_C_DIM; val = AT_C_DIM; y -= 2.0f; }   /* disabled look kept (plate, dim), lifted with an ember edge */
+    else if (disabled) { face = AT_C_PLATE; txt = AT_C_DIM; val = AT_C_DIM; }
     else if (focus) { face = AT_C_LIFT; edge = AT_C_EMBER; txt = AT_C_IVORY; val = AT_C_IVORY; y -= 2.0f; }
     else if (state == AT_ST_PRESS) { face = AT_C_PLATE; edge = AT_C_EMBER_D; txt = AT_C_IVORY; e = 1.0f; y += 1.0f; }
     pr.x = r.x; pr.y = y; pr.w = r.w; pr.h = r.h;
     at_plate(s, pr, face, edge, e, (float) AT_PX_CH_S);
     /* the tick starts below the chamfer so it never squares off the cut corner */
-    if (focus) at_poly_rect(s, r.x, y + (float) AT_PX_CH_S, 4.0f, r.h - e - (float) AT_PX_CH_S, AT_C_EMBER);
+    if (focus || dfocus) at_poly_rect(s, r.x, y + (float) AT_PX_CH_S, 4.0f, r.h - e - (float) AT_PX_CH_S, AT_C_EMBER);
     if (state == AT_ST_PRESS) at_poly_rect(s, r.x, y + (float) AT_PX_CH_S, 4.0f, r.h - e - (float) AT_PX_CH_S, AT_C_EMBER_D);
     if (it->flags & AT_CELL_SELECTED) at_poly_rect(s, r.x + r.w - 4.0f, y, 4.0f, r.h - e, AT_C_JADE);
     right = r.x + r.w - 12.0f - ((it->flags & AT_CELL_SELECTED) ? 6.0f : 0.0f);
@@ -273,7 +275,7 @@ float at_part_tag(const AtSink *s, const AtTextOps *o, float x, float y, const c
 
 void at_part_cell(const AtSink *s, const AtTextOps *o, AtRect r, const AtCell *c, int state, unsigned focus_rgba)
 {
-    int disabled = state == AT_ST_DISABLED || (c->flags & AT_CELL_DISABLED), focus = state == AT_ST_FOCUS && !disabled;
+    int disabled = state == AT_ST_DISABLED || (c->flags & AT_CELL_DISABLED), focus = state == AT_ST_FOCUS;   /* a focused disabled or locked cell keeps its dim face and gains the cues */
     int press = state == AT_ST_PRESS && !disabled, has_model = c->model != AT_NO_MODEL;
     float y = focus ? r.y - 2.0f : press ? r.y + 1.0f : r.y, cc = (float) AT_PX_CH_XS;
     AtRect pr;
@@ -289,9 +291,10 @@ void at_part_cell(const AtSink *s, const AtTextOps *o, AtRect r, const AtCell *c
             glyph_lock(s, r.x + r.w * 0.5f, y + r.h * 0.5f, AT_C_DIM);
         } else if (has_model) {
             at_poly_rect(s, r.x + r.w * 0.18f, y + r.h * 0.77f, r.w * 0.64f, r.h * 0.12f, 0x00000073u);   /* the floor shadow */
-            s->model(s->user, c->model, c->ring, r.x + 3.0f, y + 3.0f, r.w - 6.0f, r.h - 8.0f, focus, disabled ? 1 : 0);
+            s->model(s->user, c->model, c->ring, r.x + 3.0f, y + 3.0f, r.w - 6.0f, r.h - 8.0f, focus && !disabled, disabled ? 1 : 0);
         } else {
-            fit_text(s, o, AT_R_BODY12, c->name, r.x + r.w * 0.5f, y + r.h - 8.0f, disabled ? AT_C_DIM : AT_C_IVORY, AT_ALIGN_CENTER, r.w - 6.0f);
+            /* pips take their own strip along the bottom edge; the name sits above it, never under them */
+            fit_text(s, o, AT_R_BODY12, c->name, r.x + r.w * 0.5f, y + r.h - (c->pips > 0 ? 16.0f : 8.0f), disabled ? AT_C_DIM : AT_C_IVORY, AT_ALIGN_CENTER, r.w - 6.0f);
         }
         if (c->index > 0) {
             char num[12];
@@ -308,7 +311,8 @@ void at_part_cell(const AtSink *s, const AtTextOps *o, AtRect r, const AtCell *c
         }
         if (c->pips > 0) {
             int p;
-            for (p = 0; p < c->pips; p++) at_poly_rect(s, r.x + r.w - 20.0f - 7.0f * (float) (c->pips - 1 - p), y + r.h - 12.0f, 5.0f, 5.0f, AT_C_JADE);
+            float px = r.x + (r.w - (7.0f * (float) c->pips - 2.0f)) * 0.5f;                /* centred along the bottom edge */
+            for (p = 0; p < c->pips; p++) at_poly_rect(s, px + 7.0f * (float) p, y + r.h - 9.0f, 5.0f, 5.0f, AT_C_JADE);
         }
         if (c->flags & (AT_CELL_MERGE | AT_CELL_SELECTED)) outline_ch(s, pr, 2.0f, cc, AT_C_JADE);
         if (c->flags & AT_CELL_MERGE) {

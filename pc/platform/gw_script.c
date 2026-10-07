@@ -27,6 +27,7 @@ static void gs_earned_release(unsigned owner); /* gw_script_earned.inc */
 #include "gw_perf.h"
 #include "gw_profiler.h"
 #include "gw_hang.h"
+#include "gw_script_budget.h"
 #include "gw_shader.h"
 #include "shim_vi.h"
 #include "../geno/geno.h" /* GENO_VERSION, for the state library header */
@@ -641,8 +642,8 @@ static void *gs_alloc(void *ud, void *ptr, size_t osize, size_t nsize) {
 static void gs_count_hook(lua_State *L, lua_Debug *ar) {
     (void) ar;
     gw_hang_instructions();
-    gs.budget -= 1000;
-    if (gs.budget < 0 || (!gw_turbo_enabled() && gs_now_ms() > gs.deadline)) {
+    gs.budget -= GW_SCRIPT_HOOK_STEP;
+    if (gw_script_budget_tripped((long) gs.budget, gs_now_ms(), gs.deadline, gw_turbo_enabled())) {
         gs.budget = 0; /* keep failing until control is back with the engine */
         luaL_error(L, "ran too long (limit: %d instructions or %d ms per call)",
                    (int) gs.budget_per_call, (int) gs.ms_per_call);
@@ -7372,16 +7373,16 @@ static void gs_init(void) {
         gw_log("script: MELEE_LAB: the Geno Lab is requested for this session");
     }
     v = getenv("MELEE_SCRIPT_BUDGET");
-    gs.budget_per_call = (v != NULL && atoi(v) > 0) ? atoi(v) : 2000000;
+    gs.budget_per_call = (v != NULL && atoi(v) > 0) ? atoi(v) : GW_SCRIPT_BUDGET_INSTR;
     v = getenv("MELEE_SCRIPT_MS");
-    gs.ms_per_call = (v != NULL && atoi(v) > 0) ? atoi(v) : 50.0;
+    gs.ms_per_call = (v != NULL && atoi(v) > 0) ? atoi(v) : GW_SCRIPT_BUDGET_MS;
 
     gs.L = lua_newstate(gs_alloc, NULL);
     if (gs.L == NULL) {
         gw_log("script: could not create the Lua state");
         return;
     }
-    lua_sethook(gs.L, gs_count_hook, LUA_MASKCOUNT, 1000);
+    lua_sethook(gs.L, gs_count_hook, LUA_MASKCOUNT, GW_SCRIPT_HOOK_STEP);
     gs_build_base(gs.L);
     /* the console: a pseudo-script with its own persistent environment */
     gs.console = gs_alloc_script();

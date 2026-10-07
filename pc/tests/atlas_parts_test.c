@@ -52,6 +52,12 @@ static void rows(void)
     s = rec_sink(); it.flags = AT_CELL_SELECTED;
     at_part_row(&s, &FAKE, r, &it, AT_ST_REST);
     CHECK(count_color(AT_C_JADE) == 1);                                    /* selected: the jade bar */
+    /* D1: a focused disabled row keeps the disabled look (dim text, plate) and gains the lift and the ember edge and tick */
+    s = rec_sink(); it.flags = AT_CELL_DISABLED;
+    at_part_row(&s, &FAKE, r, &it, AT_ST_FOCUS);
+    top = 1e9f; for (i = 0; i < REC.np; i++) if (poly_miny(&REC.p[i]) < top) top = poly_miny(&REC.p[i]);
+    CHECK_NEAR(top, 98.0f);
+    CHECK(REC.t[0].rgba == AT_C_DIM && count_color(AT_C_EMBER) == 2 && count_color(AT_C_LIFT) == 0);
 }
 
 static void values(void)
@@ -137,6 +143,14 @@ static void cells(void)
     c = mk_cell("Cell", 7, 0); c.pips = 3; c.origin = 'G'; c.index = 2;
     s = rec_sink(); at_part_cell(&s, &FAKE, r, &c, AT_ST_REST, 0);
     CHECK(find_text("G") != NULL && find_text("2") != NULL && count_color(AT_C_JADE) == 3 + 1 /* pips + origin mark */);
+    { /* D2: the pips sit in a strip below the name, inside the cell, and clear of it */
+      const RecText *nm = NULL; float pip_top = 1e9f; int i;
+      c = mk_cell("Jigglypuff", AT_NO_MODEL, 0); c.pips = 3;
+      s = rec_sink(); at_part_cell(&s, &FAKE, r, &c, AT_ST_REST, 0);
+      nm = find_text("Jigglypuff"); if (nm == NULL) nm = &REC.t[0];
+      for (i = 0; i < REC.np; i++) if (REC.p[i].rgba == AT_C_JADE) { if (poly_miny(&REC.p[i]) < pip_top) pip_top = poly_miny(&REC.p[i]); CHECK(poly_maxx(&REC.p[i]) <= r.x + r.w && poly_minx(&REC.p[i]) >= r.x); }
+      CHECK(count_color(AT_C_JADE) == 3 && nm->base + 2.0f <= pip_top);       /* the name's baseline (plus descent) ends above the first pip */
+    }
     c = mk_cell("Mr. Game & Watch", AT_NO_MODEL, 0);                        /* no model: the name, fitted into the cell */
     s = rec_sink(); at_part_cell(&s, &FAKE, r, &c, AT_ST_REST, 0);
     CHECK(REC.nt == 1 && REC.t[0].role == AT_R_BODY12 && REC.t[0].align == AT_ALIGN_CENTER);
@@ -357,6 +371,9 @@ static void fix_round2(void)
     CHECK(REC.m[0].dim == 1 && REC.m[0].focused == 0);
     s = rec_sink(); at_part_cell(&s, &FAKE, r, &c, AT_ST_DISABLED, AT_C_P2);
     CHECK(count_color(AT_C_P2) == 0);                                       /* a disabled cell takes no focus */
+    c = mk_cell("Slot", AT_NO_MODEL, AT_CELL_LOCKED);                      /* a focused locked cell (it takes focus and explains itself) shows the cues */
+    s = rec_sink(); at_part_cell(&s, &FAKE, r, &c, AT_ST_FOCUS, AT_C_P2);
+    CHECK(count_color(AT_C_P2) == 8 && count_color(AT_C_EMBER) >= 1);
     /* a focused dialog button: lift 2, an ember front edge and tick, four brackets */
     { AtDialog d; AtRect b[2];
       memset(&d, 0, sizeof d);

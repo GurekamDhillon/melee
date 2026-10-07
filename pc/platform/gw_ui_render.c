@@ -64,16 +64,18 @@ static void hit_add(HitCtx *c, AtRect r, int kind, int a, int b)
     h->n++;
 }
 
-static void draw_header(const AtScreen *sc, const AtLayout *L, const AtTextOps *o, const AtSink *s)
+static float draw_header(const AtScreen *sc, const AtLayout *L, const AtTextOps *o, const AtSink *s)   /* returns where the trail ends */
 {
     const char *items[4];
+    float end;
     int n = 0, i;
     for (i = 0; i < sc->n_parents && n < 3; i++) items[n++] = sc->parent[i];
     items[n++] = sc->title;
-    at_part_trail(s, o, L->trail, items, n);
+    end = at_part_trail(s, o, L->trail, items, n);
     if (L->wide) at_part_rail(s, o, L->rail, sc->chapter);
     else at_part_chapter(s, o, L->chapter, sc->chapter);
     at_poly_rect(s, L->rule.x, L->rule.y, L->rule.w, 1.0f, AT_C_LINE);
+    return end;
 }
 
 /* ---- the grid: blocks stacked, scrolling by whole rows (global row = rows of the blocks above + the row in its block) ---- */
@@ -210,7 +212,7 @@ void at_render_ex(const AtScreen *sc, const AtView *v, float canvas_w, double no
     AtSink cs;
     const AtSink *s = &cs;
     HitCtx hc;
-    float k;
+    float k, trail_end;
     memset(&cn, 0, sizeof cn);
     cn.inner = out;
     cs.user = &cn; cs.poly = cnt_poly; cs.text = cnt_text; cs.model = cnt_model;
@@ -219,7 +221,7 @@ void at_render_ex(const AtScreen *sc, const AtView *v, float canvas_w, double no
     hc.dropped = 0;
     at_layout(canvas_w, sc->preset, &L);
     at_poly_rect(s, 0.0f, 0.0f, L.canvas.w, 480.0f, AT_C_GROUND);
-    draw_header(sc, &L, o, s);
+    trail_end = draw_header(sc, &L, o, s);
     at_plate(s, L.primary, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH);
     if (sc->primary == AT_PRIMARY_GRID) draw_grid(sc, v, &L, o, s, &hc);
     else draw_list(sc, v, &L, o, s, &hc);
@@ -229,7 +231,12 @@ void at_render_ex(const AtScreen *sc, const AtView *v, float canvas_w, double no
         AtRect r;
         float w = o->width(o->user, AT_R_BODY14, v->note.text) + 54.0f, right = L.wide ? L.header.x + L.header.w : L.chapter.x - 12.0f;
         if (w > 300.0f) w = 300.0f;
-        r.x = right - w; r.y = 22.0f; r.w = w; r.h = 30.0f;
+        r.y = 22.0f;
+        if (w > right - (trail_end + 16.0f)) {                         /* it would cover the trail's title: it drops under the rule instead */
+            right = L.header.x + L.header.w;
+            r.y = L.rule.y + 6.0f;
+        }
+        r.x = right - w; r.w = w; r.h = 30.0f;
         at_part_note(s, o, r, v->note.text, v->note.kind, v->note.until_ms > v->note.from_ms ? (float) ((v->note.until_ms - now) / (v->note.until_ms - v->note.from_ms)) : 0.0f);
     }
     if (v->dialog.open) {

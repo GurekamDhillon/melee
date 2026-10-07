@@ -4250,7 +4250,7 @@ static void ftRb_XTree(int tagbase, HSD_GObj* g)
     st[sp++] = (HSD_JObj*) g->hsd_obj;
     while (sp > 0 && n < 400) {
         jo = st[--sp];
-        Snap_XRegion(tagbase + n, (u32) jo, 0x88);
+        Snap_XRegion(tagbase + n, (u32) jo, 0x84); /* not +0x84, the id key: it can hold a native stack address */
         ++n;
         if (jo->next != NULL && sp < 63) st[sp++] = jo->next;
         if (jo->child != NULL && sp < 63 && !(jo->flags & JOBJ_INSTANCE)) st[sp++] = jo->child;

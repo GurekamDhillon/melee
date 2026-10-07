@@ -96,7 +96,7 @@ return function(D)
    local mo=D.run_screen.model_opts;if w[1] then mo.yaw=w[1] end;if w[2] then mo.pitch=w[2] end;if w[3] then mo.margin=w[3] end
    g.log(('uxmodel: yaw %s pitch %s margin %s'):format(mo.yaw,mo.pitch,mo.margin));return true end,'look tuning: how a drive model sits in its cell: uxmodel [yaw] [pitch] [margin]')
   g.command('uxbag',function() if self.running then self.screen:open('bag') end;return true end,'open the run bag screen')
-  g.command('uxatlas',function(a) if D.atlas_bag then D.atlas_bag.set(a~='off');g.log('uxatlas: the bag screen draws through gd.ui '..((a=='off') and 'off' or 'on')..' (from the next time the bag opens)') end;return true end,'draw the bag screen through the Atlas parts (gd.ui): uxatlas [on|off]')
+  g.command('uxatlas',function(a) if D.atlas_bag then D.atlas_bag.set(a~='off');g.log('uxatlas: the Envoy screens and HUD draw through gd.ui '..((a=='off') and 'off' or 'on')..' (from the next time a screen opens; envoy ui legacy on forces the legacy ones back)') end;return true end,'draw the bag screen through the Atlas parts (gd.ui): uxatlas [on|off]')
   return self
  end
  function H:log(text) self.g.log('envoy rules: '..(self.seat and ('P'..self.seat.port..' ') or '')..text) end

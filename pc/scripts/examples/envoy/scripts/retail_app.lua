@@ -108,6 +108,15 @@ return function(D)
    -- The rule host switch: Classic / Adventure runs install the pool, bag, slots, opponent rolls and looks
    -- instead of the companion-stat templates. Takes effect on the next run; the rule host is the DEFAULT (since the readability split);
    -- `envoy rules off` keeps the older companion-stat route reachable.
+   -- `envoy ui legacy [on|off]` (Atlas step 3): force every Envoy screen and the HUD back to the legacy code, whatever `uxatlas` says (for the look).
+   -- Atlas itself is switched on with `uxatlas on` (off by default until the owner has seen the screens).
+   if arg=='ui' or arg:match('^ui%s') then
+    local v=arg:match('^ui%s+legacy%s+(%a+)%s*$')
+    if v=='on' or v=='off' then D.atlas_kit.set_legacy(v=='on')
+    elseif arg~='ui' and arg~='ui legacy' then return false,'usage: envoy ui legacy [on|off]' end
+    self.g.log(('envoy: Atlas screens are %s; legacy override is %s (envoy ui legacy on|off; uxatlas on|off switches Atlas)'):format(D.atlas_kit.setting.on and 'on' or 'off',D.atlas_kit.legacy.on and 'ON' or 'off'))
+    return true
+   end
    if arg=='devui' or arg=='devui on' or arg=='devui off' then
     if arg~='devui' then D.mod_tuning.set_dev_ui(arg=='devui on');if self.retail.host then self.retail.host.hud.m=nil end end
     self.g.log('envoy: developer overlay is '..(D.mod_tuning.dev_ui() and 'ON' or 'off'));return true

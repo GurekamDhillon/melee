@@ -239,4 +239,17 @@ T.test('each final drive is one row with its one rule in the explainer', functio
   assert(ex.what ~= '' and not ex.what:find('\n') and ex.kicker:find('FINAL BUILD', 1, true), 'its one rule: ' .. tostring(ex.what))
 end)
 
+-- ---- Task 18 part A: the legacy switch ------------------------------------------------------------------------------------------
+
+T.test('envoy ui legacy on|off forces the legacy screens back and forth; the default is Atlas off', function()
+  local s, a, ui = fixture()
+  assert(a:command('ui legacy on') == true and K.legacy.on == true and not K.enabled(a.g), 'legacy on: every Atlas screen is off')
+  show(a, 'setup'); assert(a.menu.atlas == nil and #ui.stack == 0 and a.menu.screen == 'setup', 'the legacy setup')
+  assert(a:command('ui legacy off') == true and K.legacy.on == false and K.enabled(a.g), 'legacy off: back to Atlas')
+  local ok, why = a:command('ui sideways'); assert(ok == false and why:find('usage', 1, true))
+  assert(a:command('ui') == true, 'status')
+  local K2 = T.module('atlas_kit', {})
+  assert(K2.setting.on == false and K2.legacy.on == false, 'off by default until the owner has seen the screens')
+end)
+
 T.done()

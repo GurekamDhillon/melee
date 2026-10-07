@@ -54,6 +54,11 @@ static int gs_ui_menu_held_by = -2;   /* gd.ui.hold_menu: the script index holdi
 static unsigned gs_ui_script_close_frame; /* the tick a script's screen last closed (+1): a press of that frame is not the menu's */
 static unsigned gs_ui_frame; /* gs_ui_tick calls: the 'same frame' of an uncovered engine screen */
 static int gs_ui_reduced; /* gw_Settings_Int("reduced_motion") read once per draw pass */
+static AtRetail gs_ui_retail;                                    /* the retail takeover's mask (spec 6.8); empty by default */
+static AtPause gs_ui_pause = { 0, -1, 0, 0 };                    /* the retail pause as Atlas sees it */
+static int gs_ui_pause_changed;                                  /* a retail pause began or ended: the tick pushes or pops the pause screen */
+static int gs_ui_pause_slot = -1;                                /* the screen gd.ui.pause_screen named (latest call wins) */
+static int gs_ui_pause_pushed = -1;                              /* the screen the tick pushed for the running pause, -1 none */
 
 /* ---- fonts: the Atlas roles by name, resolved once ------------------------------------------------ */
 static int gs_ui_roles_ok(void) {
@@ -400,6 +405,8 @@ static void gs_ui_free_slot(int i) {
     GsUiSlot *u = &gs_ui_slot[i];
     int was_top = at_stack_top(&gs_ui_stack) == i;
     while (at_stack_remove(&gs_ui_stack, i)) {}                    /* open pushes again, so a duplicate entry may exist */
+    if (gs_ui_pause_slot == i) gs_ui_pause_slot = -1;
+    if (gs_ui_pause_pushed == i) gs_ui_pause_pushed = -1;
     gs_ui_unref_screen(gs.L, &u->sc);
     if (u->dialog_fn >= 0) luaL_unref(gs.L, LUA_REGISTRYINDEX, u->dialog_fn);
     memset(u, 0, sizeof *u);
@@ -555,6 +562,21 @@ static void gs_ui_tick(void) {
     GsUiSlot *u;
     gs_ui_frame++;
     gs_ui_overlay_try();
+    if (gs_ui_pause_changed) {                  /* a retail pause began or ended: push or pop the named pause screen (a push is presentation only) */
+        gs_ui_pause_changed = 0;
+        if (gs_ui_pause.paused && gs_ui_pause.takeover && gs_ui_pause_slot >= 0 && gs_ui_slot[gs_ui_pause_slot].used && gs_ui_slot[gs_ui_pause_slot].sc.pause &&
+            gs_ui_usable(gs_ui_slot[gs_ui_pause_slot].owner)) {
+            gs_ui_slot[gs_ui_pause_slot].sc.port = gs_ui_pause.pauser + 1;                       /* the pausing port drives it */
+            if (gs_ui_open_screen(gs_ui_pause_slot)) gs_ui_pause_pushed = gs_ui_pause_slot;
+        } else if (!gs_ui_pause.paused && gs_ui_pause_pushed >= 0) {
+            int s = gs_ui_pause_pushed;
+            gs_ui_pause_pushed = -1;
+            if (gs_ui_slot[s].used) {
+                if (at_stack_top(&gs_ui_stack) == s) gs_ui_close_screen(s);
+                else at_stack_remove(&gs_ui_stack, s);
+            }
+        }
+    }
     top = at_stack_top(&gs_ui_stack);
     if (top < 0) return;
     u = &gs_ui_slot[top];
@@ -1091,9 +1113,6 @@ static void gs_ui_reg_boot(void) {
  * Game code calls these unprefixed (Ui_RetailHidden, Ui_RetailPause, Ui_TakeUnpause; melee/CLAUDE.md "The shim boundary"). The mask is
  * EMPTY by default: with every source empty each guard's code path is retail's own. It reads 0 while netplay or rollback is on, so
  * nothing retail is ever hidden online, and a guard never skips a proc, only a render callback or a panel's visibility. */
-static AtRetail gs_ui_retail;
-static AtPause gs_ui_pause = { 0, -1, 0, 0 };
-static int gs_ui_pause_changed;        /* a retail pause began or ended: the tick pushes or pops the pause screen */
 static int gs_ui_retail_env_done;
 
 static int gs_ui_online(void) { return gs_ui_netplay(); }
@@ -1700,7 +1719,35 @@ static int gs_ui_slot_arg(lua_State *L, int idx) {
     return s;
 }
 
-static int l_ui_open(lua_State *L) { lua_pushboolean(L, gs_ui_open_screen(gs_ui_slot_arg(L, 1))); return 1; }
+static int l_ui_open(lua_State *L) {
+    int s = gs_ui_slot_arg(L, 1);
+    if (gs_ui_slot[s].sc.pause && gs_ui_online()) { lua_pushboolean(L, 0); return 1; }          /* a pause screen is never opened online */
+    lua_pushboolean(L, gs_ui_open_screen(s));
+    return 1;
+}
+
+/* gd.ui.pause_screen(id | nil): the caller's own pause screen (kind = "pause") that the retail pause pushes while the takeover is on.
+ * The latest call wins; nil clears the named screen when it is the caller's. With the takeover off (the default) nothing is pushed. */
+static int l_ui_pause_screen(lua_State *L) {
+    if (lua_isnoneornil(L, 1)) {
+        if (gs_ui_pause_slot >= 0 && gs_ui_may_touch(gs_ui_pause_slot)) gs_ui_pause_slot = -1;
+        lua_pushboolean(L, gs_ui_pause_slot < 0);
+        return 1;
+    } else {
+        int s = gs_ui_slot_arg(L, 1);
+        if (!gs_ui_slot[s].sc.pause) return luaL_error(L, "gd.ui.pause_screen: \"%s\" is not a pause screen (kind = \"pause\")", gs_ui_slot[s].sc.id);
+        gs_ui_pause_slot = s;
+        lua_pushboolean(L, 1);
+        return 1;
+    }
+}
+
+/* gd.ui.unpause() -> true when the request was accepted: paused, offline, none pending. The game side takes it at its next unpause check
+ * (Ui_TakeUnpause) and runs retail's own unpause routine for the pauser. One-shot; never online. */
+static int l_ui_unpause(lua_State *L) {
+    lua_pushboolean(L, at_pause_request_unpause(&gs_ui_pause, gs_ui_online()));
+    return 1;
+}
 
 /* gd.ui.forget(id): close it if it is on the stack (on.close runs first), release every Lua reference it holds, free its slot. */
 static int l_ui_forget(lua_State *L) {
@@ -1849,7 +1896,7 @@ static const luaL_Reg gs_ui_funcs[] = {
     {"available", l_ui_available}, {"screen", l_ui_screen}, {"open", l_ui_open}, {"close", l_ui_close},
     {"feed", l_ui_feed}, {"focus", l_ui_focus}, {"set_focus", l_ui_set_focus}, {"note", l_ui_note},
     {"dialog", l_ui_dialog}, {"state", l_ui_state}, {"entry", l_ui_entry}, {"hold_menu", l_ui_hold_menu}, {"forget", l_ui_forget}, {"hud", l_ui_hud}, {"hud_clear", l_ui_hud_clear}, {"toast", l_ui_toast},
-    {"retail_hide", l_ui_retail_hide}, {"retail", l_ui_retail}, {NULL, NULL}};
+    {"retail_hide", l_ui_retail_hide}, {"retail", l_ui_retail}, {"pause_screen", l_ui_pause_screen}, {"unpause", l_ui_unpause}, {NULL, NULL}};
 
 static void gs_push_ui(lua_State *L) {
     lua_newtable(L);

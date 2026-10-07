@@ -46,6 +46,8 @@ typedef struct {
     AtKey keys[AT_MAX_KEYS]; int n_keys;
     char counter[AT_STR]; int fn_counter;
     int input_feed, port;
+    int pause;                                       /* kind = "pause": a screen the retail pause takeover may push (a list primary; offline only) */
+    int persist;                                     /* persist = true: the screen is not closed when the scene it was opened in ends (only its owner closes it) */
     int fn_provide, fn_accept, fn_back, fn_alt[3], fn_focus, fn_change, fn_open, fn_close, fn_page, fn_start;
     int warnings;
 } AtScreen;

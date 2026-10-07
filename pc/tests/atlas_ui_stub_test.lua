@@ -287,6 +287,25 @@ do
   local ng = Stub.new({ mod = 'envoy', gameplay = false })
   raises(function() ng.retail_hide({ 'hud.stock' }) end, 'gameplay mod script', 'a non-gameplay script may not hide retail')
 end
+-- Atlas step 3, Task 8: pause screens in the stand-in
+do
+  local u = Stub.new({ mod = 'envoy' })
+  raises(function() u.screen({ id = 'envoy.p', kind = 'pause', primary = { kind = 'grid', blocks = { { id = 'b', cols = 1, cells = {} } } } }) end, 'a pause screen has a list primary', 'a pause screen is a list')
+  u.screen({ id = 'envoy.pause', kind = 'pause', primary = { kind = 'list', items = { { id = 'resume', label = 'Resume' } } } })
+  u.screen({ id = 'envoy.plain', primary = { kind = 'list', items = { { id = 'a', label = 'A' } } } })
+  raises(function() u.pause_screen('envoy.plain') end, 'not a pause screen', 'only a pause screen is named')
+  check(u.pause_screen('envoy.pause') and u.pause_slot == 'envoy.pause', 'the pause screen is named')
+  check(u.unpause() == false, 'unpause needs a pause')
+  u.retail_pause(1, true); check(u.state().top == nil, 'takeover off: nothing is pushed'); u.retail_pause(1, false)
+  u.pause_wanted = true; u.retail_pause(1, true)
+  check(u.state().top == 'envoy.pause' and u.screens['envoy.pause'].port == 2 and u.retail().takeover and u.retail().pauser == 1, 'takeover on: pushed, driven by the pauser')
+  check(u.unpause() == true and u.unpause() == false and u.take_unpause() == 1 and u.take_unpause() == nil, 'unpause is one-shot and names the pauser')
+  u.retail_pause(1, false); check(u.state().top == nil and u.take_unpause() == nil, 'popped when retail unpaused; no request leaks')
+  u.netplay = true; u.retail_pause(0, true)
+  check(u.state().top == nil and u.unpause() == false and u.take_unpause() == nil, 'never online')
+  check(u.open('envoy.pause') == false, 'a pause screen does not open online')
+  u.retail_pause(0, false)
+end
 local off = Stub.new({ available = false }); check(select(1, off.available()) == false, 'an unavailable stub says so')
 print(('atlas ui stub: %d checks, %d failed'):format(count, fails))
 os.exit(fails == 0 and 0 or 1)

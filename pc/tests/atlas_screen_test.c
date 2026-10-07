@@ -309,6 +309,25 @@ static void tiles_screen(void)
     CHECK(at_screen_from_val(A, tiles_desc(0, 4, 0), NULL, &sc, err, sizeof err) && at_screen_tile_cols(&sc) == 2);
 }
 
+static void pause_and_persist(void)
+{
+    char err[160]; AtScreen sc; int root, prim, items, it, grid;
+    root = atv_table(A); S(root, "id", "envoy.pause"); S(root, "kind", "pause");
+    prim = atv_table(A); S(prim, "kind", "list"); items = atv_table(A); it = atv_table(A); S(it, "id", "resume"); S(it, "label", "Resume"); atv_push(A, items, it);
+    atv_set(A, prim, "items", items); atv_set(A, root, "primary", prim);
+    CHECK(at_screen_from_val(A, root, "envoy", &sc, err, sizeof err) && sc.pause == 1 && sc.persist == 0);
+    B(root, "persist", 1);
+    CHECK(at_screen_from_val(A, root, "envoy", &sc, err, sizeof err) && sc.persist == 1);
+    atv_init(A);                                                       /* a pause screen with a grid primary is refused */
+    root = atv_table(A); S(root, "id", "envoy.pause"); S(root, "kind", "pause");
+    prim = atv_table(A); S(prim, "kind", "grid"); grid = atv_table(A); atv_set(A, prim, "blocks", grid); atv_set(A, root, "primary", prim);
+    CHECK(!at_screen_from_val(A, root, "envoy", &sc, err, sizeof err) && strstr(err, "a pause screen has a list primary") != NULL);
+    atv_init(A);                                                       /* any other kind is an ordinary screen */
+    root = atv_table(A); S(root, "id", "envoy.x"); prim = atv_table(A); S(prim, "kind", "list"); items = atv_table(A); it = atv_table(A); S(it, "id", "a"); atv_push(A, items, it);
+    atv_set(A, prim, "items", items); atv_set(A, root, "primary", prim);
+    CHECK(at_screen_from_val(A, root, "envoy", &sc, err, sizeof err) && sc.pause == 0);
+}
+
 int main(void)
 {
     A = (AtvArena *) malloc(sizeof *A);
@@ -318,6 +337,7 @@ int main(void)
     atv_init(A); tiles_screen();
     atv_init(A); explainer();
     atv_init(A); refocus();
+    atv_init(A); pause_and_persist();
     atv_init(A); accept_semantics();
     atv_init(A); hardening();
     atv_init(A); page_start_change();

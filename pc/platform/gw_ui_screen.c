@@ -137,6 +137,9 @@ int at_screen_from_val(const AtvArena *a, int root, const char *owner, AtScreen 
         if (o->tile_cols < 0 || o->tile_cols > 2) FAIL("gd.ui.screen: tiles: cols must be 1 or 2");
     }
     else FAIL("gd.ui.screen: primary kind \"%s\" is not supported here (grid, list or tiles)", kind);
+    o->pause = strcmp(atv_strv(a, atv_get(a, root, "kind"), ""), "pause") == 0;
+    if (o->pause && o->primary != AT_PRIMARY_LIST) FAIL("gd.ui.screen: a pause screen has a list primary");
+    o->persist = atv_boolv(a, atv_get(a, root, "persist"), 0);
 
     if (o->primary == AT_PRIMARY_GRID) {
         blocks = atv_get(a, prim, "blocks");

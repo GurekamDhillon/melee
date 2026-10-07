@@ -118,6 +118,7 @@ function Stub.new(opts)
   local p = d.primary
   if type(p) ~= 'table' then fail('"' .. d.id .. '" has no primary') end
   local seen = {}
+  if d.kind == 'pause' and p.kind ~= 'list' then fail('a pause screen has a list primary') end
   if p.kind == 'grid' then
    local n = #(p.blocks or {})
    if n < 1 or n > L.blocks then fail(('a grid needs 1 to %d blocks (it has %d)'):format(L.blocks, n)) end
@@ -213,6 +214,7 @@ function Stub.new(opts)
 
  function ui.open(id)
   own(id)
+  if ui.screens[id].kind == 'pause' and ui.netplay then return false end        -- a pause screen is never opened online
   if top() == id then return false end                                          -- already on top is a refusal (at_stack_push)
   ui.stack[#ui.stack + 1] = id; prime(); ui.refresh(id); return true
  end
@@ -603,6 +605,37 @@ function Stub.new(opts)
     for _, p in ipairs(list) do if p.kind ~= 'toast' and p.kind ~= 'note' then keep[#keep + 1] = p end end
     h.zones[z] = keep
    end
+  end
+ end
+
+ -- ---- the pause screen and the retail pause takeover (gw_script_ui.inc; the takeover is off unless ui.pause_wanted) ----------------------------
+ ui.paused, ui.pauser, ui.takeover, ui.pause_wanted, ui.pause_slot, ui.pause_pushed, ui.unpause_req = false, nil, false, false, nil, nil, false
+ function ui.pause_screen(id)
+  if id == nil then if ui.pause_slot and may_touch(ui.pause_slot) then ui.pause_slot = nil end; return ui.pause_slot == nil end
+  own(id)
+  if ui.screens[id].kind ~= 'pause' then error(('gd.ui.pause_screen: "%s" is not a pause screen (kind = "pause")'):format(id), 2) end
+  ui.pause_slot = id; return true
+ end
+ function ui.unpause()
+  if not ui.paused or ui.netplay or ui.unpause_req then return false end
+  ui.unpause_req = true; return true
+ end
+ -- the game's part: the one-shot request, taken at the next unpause check (offline only)
+ function ui.take_unpause()
+  if ui.netplay or not ui.paused or not ui.unpause_req then return nil end
+  ui.unpause_req = false; return ui.pauser
+ end
+ -- the retail pause began (on) or ended (not on): the tick pushes or pops the named pause screen
+ function ui.retail_pause(port, on)
+  if on then
+   ui.paused, ui.pauser, ui.takeover, ui.unpause_req = true, port, ui.pause_wanted and not ui.netplay, false
+   if ui.takeover and ui.pause_slot and ui.screens[ui.pause_slot] then
+    ui.screens[ui.pause_slot].port = port + 1
+    local keep = ui.caller; ui.caller = 'console'; if ui.open(ui.pause_slot) then ui.pause_pushed = ui.pause_slot end; ui.caller = keep
+   end
+  else
+   ui.paused, ui.pauser, ui.takeover, ui.unpause_req = false, nil, false, false
+   if ui.pause_pushed then local keep = ui.caller; ui.caller = 'console'; ui.close(ui.pause_pushed); ui.caller = keep; ui.pause_pushed = nil end
   end
  end
 

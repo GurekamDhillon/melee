@@ -80,7 +80,8 @@ int gw_ScriptGame_ModelRefOwned(int a, int b, int c, int d) { (void) a; (void) b
 int gw_Script_StageResourceOwner(void) { return 0; }
 static int gs_sm_emit(int asset, const GsmParams *p, int clip, const char **why) { (void) asset; (void) p; (void) clip; (void) why; g_models++; return 0; }
 void gw_script_pad_state(int ch, unsigned *b, int *sx, int *sy, int *cx, int *cy, int *tl, int *tr) { (void) ch; *b = 0; *sx = *sy = *cx = *cy = *tl = *tr = 0; }
-unsigned gw_script_pad_raw_buttons(int ch) { (void) ch; return g_pad; }
+static int g_pad_only = -1;   /* >= 0: only that channel holds g_pad (a pause screen reads the pausing port's pad) */
+unsigned gw_script_pad_raw_buttons(int ch) { return (g_pad_only < 0 || ch == g_pad_only) ? g_pad : 0u; }
 static float g_mx = -1000.0f, g_my = -1000.0f; static int g_mbuttons;
 void gw_Mouse_ScriptRead(float *x, float *y, int *buttons, float *wheel) { *x = g_mx; *y = g_my; *buttons = g_mbuttons; *wheel = 0.0f; }
 float gw_Console_ScriptWidth(void) { return 640.0f; }
@@ -576,6 +577,53 @@ static void atlas_console_command(void)
     CHECK(gs_ui_console("keepout on", out, sizeof out) == 0 && gs_ui_keepout_show == 1 && gs_ui_console("keepout off", out, sizeof out) == 0 && gs_ui_keepout_show == 0);
     CHECK(gs_ui_console("hud", out, sizeof out) == 0);
     CHECK(gs_ui_console("wobble", out, sizeof out) == -1);
+}
+
+/* ---- Atlas step 3, Task 8: the pause screen and the takeover (off by default; as a mod script, through the tick) ---- */
+static void pause_takeover(void)
+{
+    hud_reset();
+    gs_ui_pause_slot = gs_ui_pause_pushed = -1; gs_ui_pause_changed = 0;
+    CHECK(run_as_script(1,
+        "assert(gd.ui.screen{id='envoy.pause', kind='pause', trail={title='PAUSED'}, primary={kind='list', items={{id='resume', label='Resume'}}},"
+        " on={accept=function(c) if c=='resume' then gd.ui.unpause() end end}}); assert(gd.ui.pause_screen('envoy.pause'))") == 0);
+    CHECK(run_as_script(1, "assert(not pcall(gd.ui.pause_screen, 'envoy.nope'))") == 0);
+    CHECK(run_as_script(2, "assert(not pcall(gd.ui.pause_screen, 'envoy.pause'))") == 0);                      /* another script's screen */
+    g_pause_wanted = 0; gw_Ui_RetailPause(1, 1); gs.cur = -1; gs_ui_tick();
+    CHECK(at_stack_top(&gs_ui_stack) < 0);                                    /* takeover off (the default): nothing pushed */
+    gw_Ui_RetailPause(1, 0); gs_ui_tick();
+    g_pause_wanted = 1; g_pad_only = 1; gw_Ui_RetailPause(1, 1); gs_ui_tick();
+    CHECK(at_stack_top(&gs_ui_stack) == gs_ui_find("envoy.pause") && gs_ui_slot[gs_ui_find("envoy.pause")].sc.port == 2);   /* the pauser's port drives it */
+    CHECK(run_as_script(1, "assert(gd.ui.state().top == 'envoy.pause')") == 0);
+    g_pad = 0; gs_ui_tick(); g_pad = AT_PAD_A; gs_ui_tick(); g_pad = 0; gs_ui_tick();                           /* the pauser presses A on Resume */
+    CHECK(gw_Ui_TakeUnpause() == 1 && gw_Ui_TakeUnpause() == -1);            /* one-shot, and it names the pauser */
+    gw_Ui_RetailPause(1, 0); gs_ui_tick();
+    CHECK(at_stack_top(&gs_ui_stack) < 0);                                    /* popped when retail unpaused */
+    g_pad_only = 0;                                                           /* another port's A does not drive it */
+    g_pause_wanted = 1; gw_Ui_RetailPause(1, 1); gs_ui_tick();
+    g_pad = AT_PAD_A; gs_ui_tick(); g_pad = 0; gs_ui_tick(); g_pad = AT_PAD_A; gs_ui_tick(); g_pad = 0;
+    CHECK(gw_Ui_TakeUnpause() == -1);
+    g_pad_only = -1;
+    gw_Ui_RetailPause(1, 0); gs_ui_tick();
+    g_netplay = 1; gw_Ui_RetailPause(1, 1); gs_ui_tick();
+    CHECK(at_stack_top(&gs_ui_stack) < 0 && gw_Ui_TakeUnpause() == -1);      /* never online */
+    CHECK(run_as_script(1, "assert(gd.ui.open('envoy.pause') == false)") == 0);                                 /* and a pause screen does not open online */
+    gw_Ui_RetailPause(1, 0); gs_ui_tick(); g_netplay = 0; g_pause_wanted = 0;
+    CHECK(run_as_script(1, "assert(gd.ui.unpause() == false)") == 0);         /* not paused */
+    /* a request is one-shot and offline-only through the binding too */
+    g_pause_wanted = 1; gw_Ui_RetailPause(2, 1);
+    CHECK(run_as_script(1, "assert(gd.ui.unpause() == true); assert(gd.ui.unpause() == false)") == 0);
+    gw_Ui_RetailPause(2, 0); gs_ui_tick(); g_pause_wanted = 0;
+    CHECK(gw_Ui_TakeUnpause() == -1);                                         /* a request never leaks into the next pause */
+    /* a scene that ends mid-pause leaves no pause and no screen behind */
+    g_pause_wanted = 1; gw_Ui_RetailPause(1, 1); gs_ui_tick();
+    CHECK(at_stack_top(&gs_ui_stack) >= 0);
+    gs_ui_scene_changed(); gs_ui_tick();
+    CHECK(at_stack_top(&gs_ui_stack) < 0 && !gs_ui_pause.paused);
+    g_pause_wanted = 0;
+    /* a screen forgotten or a script unloaded clears the name */
+    CHECK(run_as_script(1, "assert(gd.ui.forget('envoy.pause'))") == 0 && gs_ui_pause_slot == -1);
+    reset_ui();
 }
 
 /* ---- Atlas step 2, Task 6: entries at run time (driven as the engine and as the mod, not as the console) ---- */
@@ -1169,7 +1217,7 @@ int main(void)
     engine_slot_survives_tick(); engine_slot_not_released_by_script_unload(); uncover_primes_engine_screen(); native_intents_are_primed(); polled_event_is_big_endian_for_the_game();
     intents_from_any_port(); engine_screen_covered_takes_no_intent(); scene_exit_closes_scene_screens(); console_cannot_touch_engine();
     mod_cannot_take_engine_id(); commit_without_change_does_not_rebuild(); engine_focus_is_the_games_cursor(); engine_close_and_queue();
-    eight_slots_with_engine(); forget_frees_a_slot(); retail_shims(); hud_basics(); retail_mask_ownership(); toasts_and_notes_leave_with_the_scene(); console_is_not_the_test(); atlas_console_command();
+    eight_slots_with_engine(); forget_frees_a_slot(); retail_shims(); hud_basics(); retail_mask_ownership(); toasts_and_notes_leave_with_the_scene(); console_is_not_the_test(); atlas_console_command(); pause_takeover();
     entry_opens_pushes_mod_screen(); entry_script_runs_on_entry_as_the_mod(); entry_finds_the_script_with_on_entry(); entry_missing_screen_refused(); entry_from_other_script_cannot_hide();
     entry_hidden_in_netplay(); entry_screen_closed_on_scene_exit(); entry_mod_unloaded(); builtin_entries_register();
     after_places_a_mod_entry_among_builtins(); credits_screen(); held_menu_takes_no_intent(); menu_blocked_by_a_mod_screen();

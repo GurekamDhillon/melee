@@ -10,7 +10,8 @@
 typedef struct { float x[4], y[4]; unsigned rgba; } RecPoly;
 typedef struct { float x, base; char s[160]; int role; unsigned rgba; int align; } RecText;
 typedef struct { int model, ring; float x, y, w, h; int focused, dim; } RecModel;
-typedef struct { RecPoly p[REC_POLYS]; int np; RecText t[512]; int nt; RecModel m[64]; int nm; } Rec;
+typedef struct { int tex; float x, y, w, h; unsigned rgba; } RecImage;
+typedef struct { RecPoly p[REC_POLYS]; int np; RecText t[512]; int nt; RecModel m[64]; int nm; RecImage im[64]; int ni; } Rec;
 static Rec REC;
 
 static void rec_poly(void *u, const float x[4], const float y[4], unsigned c)
@@ -29,11 +30,22 @@ static void rec_model(void *u, int model, int ring, float x, float y, float w, f
     Rec *r = (Rec *) u;
     if (r->nm < 64) { RecModel *m = &r->m[r->nm++]; m->model = model; m->ring = ring; m->x = x; m->y = y; m->w = w; m->h = h; m->focused = focused; m->dim = dim; }
 }
+#ifdef AT_SINK_HAS_IMAGE
+static void rec_image(void *u, int tex, float x, float y, float w, float h, unsigned c)
+{
+    Rec *r = (Rec *) u;
+    if (r->ni < 64) { RecImage *m = &r->im[r->ni++]; m->tex = tex; m->x = x; m->y = y; m->w = w; m->h = h; m->rgba = c; }
+}
+#endif
 static AtSink rec_sink(void)
 {
     AtSink s;
     memset(&REC, 0, sizeof REC);
+    memset(&s, 0, sizeof s);
     s.user = &REC; s.poly = rec_poly; s.text = rec_text; s.model = rec_model;
+#ifdef AT_SINK_HAS_IMAGE
+    s.image = rec_image;
+#endif
     return s;
 }
 static float poly_area(const RecPoly *p)

@@ -2,6 +2,8 @@
 #include "../platform/gw_script_data_io.h"
 #include <assert.h>
 #include <direct.h>
+#include "turbo_rule_test.inc"
+#include "turbo_net_test.inc"
 int main(int argc,char** argv)
 {
     char path[1024], *buf; size_t n; const char* err; FILE* f;
@@ -20,5 +22,8 @@ int main(int argc,char** argv)
     snprintf(path,sizeof path,"%s/unreadable",argv[1]);assert(_mkdir(path)==0);
     assert(gs_data_exists_path(path,&err)==1);
     assert(!gs_data_read_path(path,&buf,&n,&err) && strcmp(err,"missing"));
-    puts("engine gap real data-file fixtures PASS");return 0;
+    puts("engine gap real data-file fixtures PASS");
+    turbo_rule_native_test();
+    turbo_net_native_test();
+    return 0;
 }

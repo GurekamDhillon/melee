@@ -194,3 +194,6 @@ fabric.properties
 *.hps
 *.thp
 *.gci
+
+# Worktree-local native fixtures (no disc or game launch).
+.native-tests/

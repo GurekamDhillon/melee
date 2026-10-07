@@ -6,8 +6,8 @@ library only; run `python tools/make_drives.py` to regenerate `models/`). Nothin
 a game, a model file or another project; the shapes are plain geometry (pyramids, extruded polygons, an icosahedron)
 and the textures are arithmetic colour ramps. An asset-only mod (`kind: misc`): no script.
 
-It is a drop-in for `envoy_drives_sa2`: the same file names, so Envoy adopts it by changing the mod name in
-`drive_models.lua` (see the audit's `ADOPT.md` for the exact lines).
+Envoy loads these models (`drive_models.lua`: `V.MOD='envoy_drives'`). The earlier local-only `envoy_drives_sa2` models (Sonic
+Adventure 2 assets, never shipped) are deprecated (owner, 2026-10-07): nothing loads them, and the release guards still refuse them.
 
 ## Files (`models/`)
 

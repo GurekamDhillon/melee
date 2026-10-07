@@ -22,7 +22,8 @@
 #include "gw_ui_item.h"
 
 #define GS_SET_Q 32
-enum { GS_SETEV_CHANGE = 1, GS_SETEV_ACCEPT = 2, GS_SETEV_BACK = 3, GS_SETEV_TAB = 4, GS_SETEV_FOCUS = 5, GS_SETEV_ALT = 6 };   /* = FSS_EV_* (gmfrontend_atlas_table.h) */
+enum { GS_SETEV_CHANGE = 1, GS_SETEV_ACCEPT = 2, GS_SETEV_BACK = 3, GS_SETEV_TAB = 4, GS_SETEV_FOCUS = 5, GS_SETEV_ALT = 6,
+       GS_SETEV_MOVE = 7, GS_SETEV_PAGE = 8 };   /* = FSS_EV_* (gmfrontend_atlas_table.h); MOVE (arg = AT_DIR_*) and PAGE (arg = -1 or 1), both with slot -1, are the data screens' only (gw_script_ui_data.inc) */
 enum { GS_SET_TABS, GS_SET_REMAP, GS_SET_HOWTO, GS_SET_ERASE, GS_SET_RULES, GS_SET_MORERULES, GS_SET_MATCH, GS_SET_ONLINE };
 
 static struct {
@@ -31,6 +32,7 @@ static struct {
     struct { int type, a, b; } q[GS_SET_Q];
     int qn;
     int frozen;              /* every event is dropped (text entry, a capture) */
+    int data;                /* a data screen (gw_script_ui_data.inc): the game owns the cursor, so a move or a page is an event, never applied here */
     int answer;              /* a dialog's answer: 0 pending, 1 the first button, 2 the second (taken once) */
     int pending;             /* the rows were submitted again: the focus is resolved by id before anyone reads it */
     char fid[AT_ID];         /* the focused row's id before the resubmit */
@@ -110,6 +112,7 @@ static void gs_set_event(GsUiSlot *u, const AtEvent *e) {
     f = u->view.focus.index;
     switch (e->type) {
     case AT_EV_MOVE:
+        if (gs_set.data) { gs_set_push(GS_SETEV_MOVE, -1, e->a); break; }
         if (e->a == AT_DIR_UP || e->a == AT_DIR_DOWN) {
             if (u->sc.n_items < 1) return;
             nb = at_screen_focus_blocks(&u->sc, fb);
@@ -122,12 +125,14 @@ static void gs_set_event(GsUiSlot *u, const AtEvent *e) {
         if (e->a == 0) gs_set_move_to(u, e->b);
         break;
     case AT_EV_ACCEPT:
+        if (gs_set.data && f >= 0 && f < u->sc.n_items && (u->sc.items[f].iflags & AT_ITEM_DISABLED)) break;   /* a locked data row: nothing happens */
         if (f >= 0 && f < u->sc.n_items) gs_set_push(GS_SETEV_ACCEPT, f, 0);
         break;
     case AT_EV_BACK:
         gs_set_push(GS_SETEV_BACK, -1, 0);
         break;
     case AT_EV_PAGE:
+        if (gs_set.data) { gs_set_push(GS_SETEV_PAGE, -1, e->a < 0 ? -1 : 1); break; }
         if (u->sc.n_tabs > 1) {
             int t = u->view.tab + (e->a < 0 ? -1 : 1);
             t = (t % u->sc.n_tabs + u->sc.n_tabs) % u->sc.n_tabs;
@@ -161,7 +166,7 @@ static void gs_set_mouse(GsUiSlot *u) {
     } else {
         int row = kind == AT_HIT_CELL ? b : -1;
         if (row >= 0 && (moved || left)) gs_set_move_to(u, row);
-        if (left && row >= 0) gs_set_push(GS_SETEV_ACCEPT, row, 0);
+        if (left && row >= 0 && !(gs_set.data && (u->sc.items[row].iflags & AT_ITEM_DISABLED))) gs_set_push(GS_SETEV_ACCEPT, row, 0);
         else if (left && kind == AT_HIT_TAB) gs_set_push(GS_SETEV_TAB, -1, a);
         else if (left && kind == AT_HIT_KEY) {
             AtEvent e;
@@ -175,7 +180,9 @@ static void gs_set_mouse(GsUiSlot *u) {
         if (right) gs_set_push(GS_SETEV_BACK, -1, 0);
         if ((int) wheel != 0) {
             int dir = wheel > 0 ? 1 : -1;
-            if (row >= 0 && gs_set_steppable(&u->sc.items[row])) {   /* the wheel steps the hovered value ... */
+            if (gs_set.data) {                                       /* a data list: the game moves its own cursor (the wheel stops at the ends, as the legacy list did) */
+                gs_set_push(GS_SETEV_MOVE, -1, dir > 0 ? AT_DIR_UP : AT_DIR_DOWN);
+            } else if (row >= 0 && gs_set_steppable(&u->sc.items[row])) {   /* the wheel steps the hovered value ... */
                 gs_set_move_to(u, row);
                 gs_set_push(GS_SETEV_CHANGE, row, dir);
             } else if (u->sc.n_items > 0) {                          /* ... and scrolls the list over anything else (clamped, as the legacy wheel was) */

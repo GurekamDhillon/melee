@@ -2017,3 +2017,4 @@ static void gs_push_ui(lua_State *L) {
 #include "gw_script_ui_sel.inc"
 #include "gw_script_ui_set.inc"
 #include "gw_script_ui_room.inc"
+#include "gw_script_ui_data.inc"

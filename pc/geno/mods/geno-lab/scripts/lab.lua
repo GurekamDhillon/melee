@@ -270,6 +270,14 @@ local function in_mode(id) return mode().id == id end
 local focus = 1
 local log_lines = {} -- {frame, text, color}
 local LOG_MAX = 8
+-- The retail HUD, measured in the game (640x480 canvas, the 4:3 band centred on a wider canvas; the same rectangles as gw_ui_hud.c): the damage
+-- plates and stocks (40,356,560,100) and the timer (246,44,168,40). The overlays below sit clear of them (Atlas proof D8).
+local RETAIL_PLATES_TOP = 356
+local RETAIL_TIMER_BOTTOM = 84
+local function drill_y()   -- the drill panel sits under the retail timer; with the INSPECT readouts up (two 200 px panels, y 16 to 222) it drops below them
+  if mode().id == "inspect" and T("info") then return 230 end
+  return RETAIL_TIMER_BOTTOM
+end
 local held = {}
 local history_on = false
 local notice, notice_until = nil, 0
@@ -1452,11 +1460,18 @@ end
 
 local function draw_log()
   if #log_lines == 0 then return end
-  local h = 26 + #log_lines * 13
-  local x, y, w = 8, 446 - h, 420
+  -- The panel ends above the retail stocks and percent, so it may not grow down. With the Atlas HUD up the mode chips sit just above the retail HUD (24 px, 8 px
+  -- gap), so it ends above them and shows five lines (the readouts above end at y 222); without it the old strip is below the retail HUD and six fit.
+  local hud = menu.ui.hud_on and menu.ui.hud_on()
+  local bottom = RETAIL_PLATES_TOP - 6 - (hud and 32 or 0)
+  local first = math.max(1, #log_lines - (hud and 4 or 5))
+  local n = #log_lines - first + 1
+  local h = 26 + n * 13
+  local x, y, w = 8, bottom - h, 420
   panel(x, y, w, h, "EVENTS")
-  for i, l in ipairs(log_lines) do
-    local yy = y + 28 + (i - 1) * 13
+  for i = first, #log_lines do
+    local l = log_lines[i]
+    local yy = y + 28 + (i - first) * 13
     txt(x + 44, yy, tostring(l[1]), "caption", DISABLED, "right")
     txt(x + 52, yy, l[2], "caption", l[3], "left", w - 62)
   end
@@ -2743,7 +2758,9 @@ end
 local RB_KIND_COL = { synctest = ACCENT, fake = 0x4D8DFFFF, netplay = GOLD }
 draw_rollbacks = function()
   local r = gd.rollbacks(240)
-  local x, y, w, h = 332, 36, 300, 104
+  local sa = gd.safe_area and gd.safe_area() or { w = 640, right = 640 }
+  -- top right of the canvas, below the retail timer and the mode notice (top centre): it used to start at y 36 and sat over both
+  local x, y, w, h = sa.right - 8 - 300, RETAIL_TIMER_BOTTOM + 36, 300, 104
   panel(x, y, w, h, "ROLLBACKS")
   if r.total == 0 and r.mismatch == nil then
     txt(x + 12, y + 34, "none yet: netplay, SyncTest or MELEE_RB_FAKE", "caption", DISABLED)
@@ -4857,7 +4874,9 @@ function LD.draw_drill()
     local main = r.d.score == "streak" and string.format("streak %d  best %d", r.streak, r.best_streak)
       or string.format("%d / %d  %d%%", r.ok, r.n, r.n > 0 and math.floor(100 * r.ok / r.n + 0.5) or 0)
     local w = 300
-    local x, y = 320 - w / 2, 84
+    local sa = gd.safe_area and gd.safe_area() or { w = 640, right = 640 }
+    -- centred on the canvas, under the retail timer; with the INSPECT readouts up it drops below them (they are 200 wide in both top corners)
+    local x, y = sa.w / 2 - w / 2, drill_y()
     quad(x, y, w, 40, GLASS, SHEAR)
     quad(x - 2, y, 4, 40, GOLD, SHEAR)
     stxt(x + 14, y + 17, r.d.name:upper(), "row", GOLD)
@@ -4867,7 +4886,8 @@ function LD.draw_drill()
     if e then txt(x + w - 12, y + 33, e.text, "caption", e.ok and OK or DANGER, "right", 150) end
   elseif last and gd.time() < last.until_t then
     local L = last
-    local x, y, w = 170, 150, 300
+    local sa = gd.safe_area and gd.safe_area() or { w = 640, right = 640 }
+    local x, y, w = sa.w / 2 - 150, 150, 300
     local h = 70 + math.min(#L.log, 6) * 14
     panel(x, y, w, h, "RESULTS", GOLD)
     stxt(x + 12, y + 40, L.d.name:upper(), "row", BONE)

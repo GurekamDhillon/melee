@@ -93,6 +93,8 @@ function Stub.new(opts)
   local out, p = {}, d.primary
   if p.kind == 'grid' then
    for _, b in ipairs(p.blocks) do for i, c in ipairs(b.cells or {}) do out[#out + 1] = { block = b.id, id = c.id, cell = c, index = i } end end
+  elseif p.kind == 'cards' then
+   for i, c in ipairs(p.cards) do out[#out + 1] = { block = 'cards', id = c.id, cell = c, index = i } end
   elseif p.kind == 'tiles' then
    for i, it in ipairs(p.items) do out[#out + 1] = { block = 'tiles', id = it.id, cell = it, index = i } end
    for i, it in ipairs(p.more or {}) do out[#out + 1] = { block = 'more', id = it.id, cell = it, index = i } end
@@ -137,6 +139,16 @@ function Stub.new(opts)
      seen[c.id] = true
     end
    end
+  elseif p.kind == 'cards' then
+   local n = #(p.cards or {})
+   if n > L.cards then fail(('at most %d cards (%d given)'):format(L.cards, n)) end
+   if n < 1 then fail(('a cards screen needs 1 to %d cards'):format(L.cards)) end
+   for ci, c in ipairs(p.cards) do
+    if type(c) ~= 'table' then fail(('card %d is not a table'):format(ci)) end
+    check_id(('card %d'):format(ci), c.id)
+    if seen[c.id] then fail('duplicate card id ' .. c.id) end
+    seen[c.id] = true
+   end
   elseif p.kind == 'list' or p.kind == 'tiles' then
    local n = #(p.items or {})
    if p.kind == 'tiles' then
@@ -165,8 +177,18 @@ function Stub.new(opts)
     end
    end
   else
-   fail(('primary kind "%s" is not supported here (grid, list or tiles)'):format(tostring(p.kind)))
+   fail(('primary kind "%s" is not supported here (grid, list, tiles or cards)'):format(tostring(p.kind)))
   end
+  ui.links_skipped = ui.links_skipped or {}
+  if p.kind == 'grid' and p.links then
+   if #p.links > L.links then fail(('at most %d links (%d given)'):format(L.links, #p.links)) end
+   local skipped = 0
+   for _, lk in ipairs(p.links) do
+    if not (seen[lk.a] and seen[lk.b]) or lk.a == lk.b then skipped = skipped + 1 end
+   end
+   ui.links_skipped[d.id] = skipped
+  end
+  if d.countdown ~= nil and type(d.countdown) ~= 'number' then fail('countdown is a number of seconds') end
   local ex = d.explainer
   if type(ex) == 'string' then
    if ex ~= 'none' then fail('explainer must be a table or "none"') end

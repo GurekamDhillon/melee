@@ -29,7 +29,7 @@ extern int gw_Settings_Int(const char *key, int dflt); /* gw_settings.c:138; the
 #define GS_UI_ENGINE (-2) /* GsUiSlot.owner for a native screen (the menus, the title, Credits): drawn from a record the game fills, no Lua */
 
 typedef struct {
-    int used, owner, explain_dirty, dialog_fn, warned, render_warned, ex_warned;
+    int used, owner, explain_dirty, dialog_fn, warned, render_warned, ex_warned, links_warned;
     int scene;              /* the scene kind that was current when it was pushed (gw_Ui_SceneExit closes it with that scene) */
     int rebuilds;           /* an engine screen: how many times its record was replaced */
     unsigned primed_frame;  /* an engine screen: the tick it became the top again (an intent in that same frame is dropped) */
@@ -1708,6 +1708,7 @@ static int l_ui_screen(lua_State *L) {
     u->sc = gs_ui_scratch;
     u->used = 1;
     u->owner = gs.cur;
+    if (u->sc.links_skipped > 0 && !u->links_warned) { u->links_warned = 1; gw_log("ui: %s: %d grid link(s) name a missing cell and are skipped", u->sc.id, u->sc.links_skipped); }
     if (replace) u->view.focus = at_screen_refocus(&u->sc, old_block[0] ? old_block : NULL, old_cell[0] ? old_cell : NULL, old);
     else { AtFocusBlock fb[AT_MAX_BLOCKS]; u->view.focus = at_focus_first(fb, at_screen_focus_blocks(&u->sc, fb)); }
     u->explain_dirty = 1;

@@ -18,12 +18,18 @@ extern "C" {
 #define AT_STR 64
 #define AT_TEXT 160
 #define AT_NO_MODEL (-1)
+#define AT_MAX_CARDS 4
+#define AT_MAX_LINKS 16
 
-enum { AT_PRIMARY_LIST = 1, AT_PRIMARY_GRID = 2, AT_PRIMARY_TILES = 3, AT_PRIMARY_DISPLAY = 4 };
+enum { AT_PRIMARY_LIST = 1, AT_PRIMARY_GRID = 2, AT_PRIMARY_TILES = 3, AT_PRIMARY_DISPLAY = 4, AT_PRIMARY_CARDS = 5 };   /* the plan says CARDS = 3; 3 is TILES */
 enum { AT_CELL_LOCKED = 1, AT_CELL_EMPTY = 2, AT_CELL_MERGE = 4, AT_CELL_NEW = 8, AT_CELL_SELECTED = 16, AT_CELL_DISABLED = 32 };
 enum { AT_VAL_NONE, AT_VAL_TOGGLE, AT_VAL_CHOICE, AT_VAL_SLIDER, AT_VAL_TEXT, AT_VAL_COUNTER };
 
 typedef struct { char id[AT_ID]; char name[AT_STR]; int model, ring; unsigned flags; int index, pips; char origin; unsigned rgba; char letter; } AtCell;
+/* an offer card: a model well (or, when model < 0 and letter != 0, a keystone arch stone with its letter), the name, ONE rule, a tag */
+typedef struct { int model, ring; char name[AT_STR]; char rule[AT_TEXT]; char tag[24]; int tag_tone; unsigned rgba; char letter; } AtOffer;
+typedef struct { char id[AT_ID]; int disabled; AtOffer offer; } AtCardRec;
+typedef struct { char a[AT_ID], b[AT_ID]; unsigned rgba; } AtLink;      /* a grid link between two cells, by cell id */
 typedef struct { char id[AT_ID]; char title[AT_STR]; char count[24]; char note[AT_STR]; int cols, n, stones; AtCell cells[AT_MAX_CELLS]; } AtBlock;
 typedef struct { char id[AT_ID]; char label[AT_STR]; char sub[AT_STR]; unsigned flags; int vkind, on; char text[AT_STR]; int vmin, vmax, vval;
                char icon[AT_ID]; char tag[16]; char badge[8]; char numeral[6]; } AtItem;   /* icon, tag, badge, numeral: tiles (hubs, the main menu) */
@@ -46,6 +52,9 @@ typedef struct {
     AtKey keys[AT_MAX_KEYS]; int n_keys;
     char counter[AT_STR]; int fn_counter;
     int input_feed, port;
+    AtCardRec cards[AT_MAX_CARDS]; int n_cards;      /* primary kind "cards": one row of offer cards */
+    AtLink links[AT_MAX_LINKS]; int n_links, links_skipped;   /* a grid: lines drawn between cells under them; one naming a missing cell is skipped and counted */
+    int has_countdown, countdown;                    /* seconds shown at the trail's right end (0:45, rose under 10 s). The script re-registers it once a second */
     int pause;                                       /* kind = "pause": a screen the retail pause takeover may push (a list primary; offline only) */
     int persist;                                     /* persist = true: the screen is not closed when the scene it was opened in ends (only its owner closes it) */
     int fn_provide, fn_accept, fn_back, fn_alt[3], fn_focus, fn_change, fn_open, fn_close, fn_page, fn_start;

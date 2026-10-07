@@ -45,7 +45,7 @@ void  at_part_note(const AtSink *s, const AtTextOps *o, AtRect r, const char *te
 int   at_part_dialog(const AtSink *s, const AtTextOps *o, float canvas_w, const AtDialog *d, float rise, AtRect btn[2]);
 
 /* step 3: the offer card and the in-match HUD parts (HUD parts never take focus and never draw a focus cue) */
-typedef struct { int model, ring; char name[AT_STR]; char rule[AT_TEXT]; char tag[24]; int tag_tone; unsigned rgba; char letter; } AtOffer;
+/* AtOffer (an offer card's content) lives in gw_ui_screen.h: the cards primary holds them */
 typedef struct { int port; char name[AT_STR]; int percent, stocks, cpu; } AtPortCard;
 typedef struct { int n_pips; unsigned pip_fill[8], pip_ring[8]; int n_keys; char key_letter[8]; unsigned key_rgba[8]; char wait[24]; } AtStrip;
 /* an offer card: a model well (or a keystone arch stone with its letter when model < 0 and letter != 0), the name, ONE rule (two lines at most), a bottom tag */

@@ -328,6 +328,74 @@ static void pause_and_persist(void)
     CHECK(at_screen_from_val(A, root, "envoy", &sc, err, sizeof err) && sc.pause == 0);
 }
 
+static int card_desc(int cards_list, const char *id, const char *name, int disabled)
+{
+    int c = atv_table(A);
+    S(c, "id", id); S(c, "name", name); S(c, "rule", "One short rule."); N(c, "model", 7);
+    if (disabled) B(c, "disabled", 1);
+    atv_push(A, cards_list, c);
+    return c;
+}
+static int cards_root(int n, int disabled_second)
+{
+    int root = atv_table(A), prim = atv_table(A), cards = atv_table(A), i;
+    char id[16];
+    S(root, "id", "envoy.reward"); S(prim, "kind", "cards");
+    for (i = 0; i < n; i++) { snprintf(id, sizeof id, "offer:%d", i + 1); card_desc(cards, id, "Drive", i == 1 && disabled_second); }
+    atv_set(A, prim, "cards", cards); atv_set(A, root, "primary", prim);
+    return root;
+}
+static void cards_and_countdown(void)
+{
+    char err[160]; AtScreen sc; AtFocusBlock fb[AT_MAX_BLOCKS]; AtFocusPos p;
+    int root = cards_root(3, 1), nb;
+    CHECK(at_screen_from_val(A, root, "envoy", &sc, err, sizeof err) && sc.primary == AT_PRIMARY_CARDS && sc.n_cards == 3);
+    CHECK_STR(sc.cards[0].id, "offer:1"); CHECK(sc.cards[0].offer.model == 7 && sc.cards[1].disabled == 1);
+    nb = at_screen_focus_blocks(&sc, fb);
+    CHECK(nb == 1 && fb[0].n == 3 && fb[0].cols == 3);                       /* one block named cards, one row */
+    CHECK_STR(at_screen_block_id(&sc, 0), "cards");
+    p = at_focus_first(fb, nb);
+    CHECK(p.block == 0 && p.index == 0 && strcmp(at_screen_cell_id(&sc, p), "offer:1") == 0);
+    p = at_focus_move(fb, nb, p, AT_DIR_RIGHT, 1); CHECK(p.index == 1);
+    p = at_focus_move(fb, nb, p, AT_DIR_RIGHT, 1); p = at_focus_move(fb, nb, p, AT_DIR_RIGHT, 1); CHECK(p.index == 0);   /* right wraps */
+    p = at_focus_move(fb, nb, p, AT_DIR_LEFT, 1); CHECK(p.index == 2);                                                   /* and so does left */
+    p.index = 1; CHECK(!at_cell_accepts(&sc, p));                              /* a disabled card does not accept */
+    p.index = 0; CHECK(at_cell_accepts(&sc, p));
+    p = at_screen_refocus(&sc, "cards", "offer:3", p); CHECK(p.index == 2);
+    atv_init(A);
+    CHECK(!at_screen_from_val(A, cards_root(5, 0), "envoy", &sc, err, sizeof err) && strstr(err, "at most 4 cards") != NULL);   /* a fifth card is refused */
+    atv_init(A);
+    { int r = cards_root(2, 0), c0 = atv_at(A, atv_get(A, atv_get(A, r, "primary"), "cards"), 1); S(c0, "tag_tone", "jade"); N(c0, "rgba", (double) 0xB872F0FFu); S(c0, "letter", "P");
+      CHECK(at_screen_from_val(A, r, "envoy", &sc, err, sizeof err) && sc.cards[0].offer.tag_tone == 1 && sc.cards[0].offer.rgba == 0xB872F0FFu && sc.cards[0].offer.letter == 'P'); }
+    atv_init(A);
+    { int r = cards_root(2, 0), c1 = atv_at(A, atv_get(A, atv_get(A, r, "primary"), "cards"), 2); S(c1, "id", "offer:1");   /* a second id of the same name */
+      (void) c1; CHECK(at_screen_from_val(A, r, "envoy", &sc, err, sizeof err)); }                                          /* the first id wins in a table: no twin */
+    atv_init(A);
+    { int r = cards_root(2, 0); N(r, "countdown", 45);
+      CHECK(at_screen_from_val(A, r, "envoy", &sc, err, sizeof err) && sc.has_countdown == 1 && sc.countdown == 45);
+      atv_init(A); r = cards_root(2, 0);
+      CHECK(at_screen_from_val(A, r, "envoy", &sc, err, sizeof err) && sc.has_countdown == 0);
+      atv_init(A); r = cards_root(2, 0); N(r, "countdown", -3);
+      CHECK(at_screen_from_val(A, r, "envoy", &sc, err, sizeof err) && sc.countdown == 0); }
+}
+static void grid_links(void)
+{
+    char err[160]; AtScreen sc; int root, i, prim, links, l1, l2, l3;
+    atv_init(A);
+    root = bag("envoy.bag"); prim = atv_get(A, root, "primary"); links = atv_table(A);
+    l1 = atv_table(A); S(l1, "a", "eq:2"); S(l1, "b", "bag:1"); N(l1, "rgba", (double) 0x7A5CF0FFu); atv_push(A, links, l1);
+    l2 = atv_table(A); S(l2, "a", "eq:1"); S(l2, "b", "nope:9"); atv_push(A, links, l2);              /* a missing cell: skipped, counted */
+    l3 = atv_table(A); S(l3, "a", "eq:1"); S(l3, "b", "eq:1"); atv_push(A, links, l3);                /* a cell to itself: skipped too */
+    atv_set(A, prim, "links", links);
+    CHECK(at_screen_from_val(A, root, "envoy", &sc, err, sizeof err) && sc.n_links == 1 && sc.links_skipped == 2);
+    CHECK_STR(sc.links[0].a, "eq:2"); CHECK_STR(sc.links[0].b, "bag:1"); CHECK(sc.links[0].rgba == 0x7A5CF0FFu);
+    atv_init(A);
+    root = bag("envoy.bag"); prim = atv_get(A, root, "primary"); links = atv_table(A);
+    for (i = 0; i < 17; i++) { l1 = atv_table(A); S(l1, "a", "eq:1"); S(l1, "b", "eq:2"); atv_push(A, links, l1); }
+    atv_set(A, prim, "links", links);
+    CHECK(!at_screen_from_val(A, root, "envoy", &sc, err, sizeof err) && strstr(err, "at most 16 links") != NULL);
+}
+
 int main(void)
 {
     A = (AtvArena *) malloc(sizeof *A);
@@ -338,6 +406,8 @@ int main(void)
     atv_init(A); explainer();
     atv_init(A); refocus();
     atv_init(A); pause_and_persist();
+    atv_init(A); cards_and_countdown();
+    atv_init(A); grid_links();
     atv_init(A); accept_semantics();
     atv_init(A); hardening();
     atv_init(A); page_start_change();

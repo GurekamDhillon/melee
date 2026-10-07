@@ -30,6 +30,8 @@ void at_render_ex(const AtScreen *sc, const AtView *v, float canvas_w, double no
  * returned; a tile scrolled out of the window has h = 0) and of the More labels (m[0..n_more)). The _ex form takes the first
  * visible row, and reports the visible and total rows and the More strip's rectangle. */
 int at_list_visible(const AtLayout *L);
+/* the rectangle of every offer card of a cards screen (the count is returned), for the renderer, hit testing and tests */
+int at_cards_geometry(const AtScreen *sc, const AtLayout *L, AtRect *out, int cap);
 int at_tiles_geometry(const AtScreen *sc, const AtLayout *L, AtRect *tiles, int cap, AtRect *more, int more_cap);
 int at_tiles_geometry_ex(const AtScreen *sc, const AtLayout *L, int scroll, AtRect *tiles, int cap, AtRect *more, int more_cap,
                          int *rows_visible, int *rows_total, AtRect *strip);

@@ -315,6 +315,27 @@ do
   u.open('envoy.drop'); u.open('envoy.keep'); u.scene_exit()
   check(u.state().top == 'envoy.keep' and u.state().depth == 1 and closed == 1, 'a scene exit closes an ordinary screen and leaves a persist screen')
 end
+-- Atlas step 3, Task 9: the cards primary, grid links and the countdown in the stand-in
+do
+  local u = Stub.new({ mod = 'envoy' })
+  local function card(i, extra) local c = { id = 'offer:' .. i, name = 'Drive', rule = 'One rule.' }; for k, v in pairs(extra or {}) do c[k] = v end; return c end
+  check(u.screen({ id = 'envoy.reward', countdown = 8, primary = { kind = 'cards', cards = { card(1), card(2, { disabled = true }), card(3) } } }), 'a cards screen registers')
+  local c, b = u.focus('envoy.reward'); check(c == 'offer:1' and b == 'cards', 'one block named cards, focus on the first card')
+  raises(function() u.screen({ id = 'envoy.r5', primary = { kind = 'cards', cards = { card(1), card(2), card(3), card(4), card(5) } } }) end, 'at most 4 cards', 'a fifth card is refused')
+  raises(function() u.screen({ id = 'envoy.r0', primary = { kind = 'cards', cards = {} } }) end, 'needs 1 to', 'no cards is refused')
+  raises(function() u.screen({ id = 'envoy.rd', primary = { kind = 'cards', cards = { card(1), card(1) } } }) end, 'duplicate card id', 'card ids are unique')
+  raises(function() u.screen({ id = 'envoy.rc', countdown = 'soon', primary = { kind = 'cards', cards = { card(1) } } }) end, 'countdown', 'the countdown is a number')
+  u.open('envoy.reward'); u.set_focus('envoy.reward', 'cards', 'offer:2')
+  local fired = 0
+  u.screens['envoy.reward'].on = { accept = function() fired = fired + 1 end }
+  check(u.engine_press('envoy.reward', 'accept') == false and fired == 0, 'a disabled card does not accept')
+  u.set_focus('envoy.reward', 'cards', 'offer:3'); u.engine_press('envoy.reward', 'accept'); check(fired == 1, 'an enabled card accepts')
+  local g = { id = 'envoy.swap', primary = { kind = 'grid', blocks = { { id = 'eq', cols = 2, cells = { { id = 'eq:1' }, { id = 'eq:2' } } }, { id = 'bag', cols = 1, cells = { { id = 'bag:1' } } } },
+    links = { { a = 'eq:1', b = 'bag:1' }, { a = 'eq:1', b = 'nope' } } } }
+  check(u.screen(g) and u.links_skipped['envoy.swap'] == 1, 'a link naming a missing cell is skipped and counted')
+  g.primary.links = {}; for i = 1, 17 do g.primary.links[i] = { a = 'eq:1', b = 'eq:2' } end
+  raises(function() u.screen(g) end, 'at most 16 links', 'at most 16 links')
+end
 local off = Stub.new({ available = false }); check(select(1, off.available()) == false, 'an unavailable stub says so')
 print(('atlas ui stub: %d checks, %d failed'):format(count, fails))
 os.exit(fails == 0 and 0 or 1)

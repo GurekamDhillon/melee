@@ -73,7 +73,8 @@ int gw_Script_StageResourceOwner(void) { return 0; }
 static int gs_sm_emit(int asset, const GsmParams *p, int clip, const char **why) { (void) asset; (void) p; (void) clip; (void) why; g_models++; return 0; }
 void gw_script_pad_state(int ch, unsigned *b, int *sx, int *sy, int *cx, int *cy, int *tl, int *tr) { (void) ch; *b = 0; *sx = *sy = *cx = *cy = *tl = *tr = 0; }
 unsigned gw_script_pad_raw_buttons(int ch) { (void) ch; return g_pad; }
-void gw_Mouse_ScriptRead(float *x, float *y, int *buttons, float *wheel) { *x = -1000.0f; *y = -1000.0f; *buttons = 0; *wheel = 0.0f; }
+static float g_mx = -1000.0f, g_my = -1000.0f; static int g_mbuttons;
+void gw_Mouse_ScriptRead(float *x, float *y, int *buttons, float *wheel) { *x = g_mx; *y = g_my; *buttons = g_mbuttons; *wheel = 0.0f; }
 float gw_Console_ScriptWidth(void) { return 640.0f; }
 int gw_Settings_Int(const char *k, int d) { (void) k; return d; }
 static void gs_prof_setfuncs(lua_State *L, const luaL_Reg *funcs, const char *prefix) { (void) prefix; luaL_setfuncs(L, funcs, 0); }
@@ -87,7 +88,8 @@ static double gs_kit_optnum(lua_State *L, int t, const char *k, double def)
     lua_pop(L, 1);
     return v;
 }
-int gw_Kit_Available(void) { return 1; }
+static int g_kit_up = 1;
+int gw_Kit_Available(void) { return g_kit_up; }
 const char *gw_Kit_Why(void) { return ""; }
 static const char *g_missing_page;   /* a page the kit failed to load, or NULL */
 const char *gw_Kit_RoleMissingPage(int role) { (void) role; return g_missing_page; }
@@ -551,6 +553,102 @@ static void menu_blocked_by_a_mod_screen(void)
     CHECK(gw_Ui_MenuBlocked() == 0);
 }
 
+/* ---- Task 12: the title as an overlay ---- */
+static void title_reset(void)
+{
+    reset_ui();
+    gs_ui_roles_state = 0; g_kit_up = 1; g_missing_page = NULL; gs_ui_overlay_kind = -1; gs_ui_atlas_env = 1;
+}
+static void title_pushed_on_scene_begin(void)
+{
+    int slot;
+    title_reset();
+    gs.scene_kind = 0;                                   /* GS_TITLE */
+    gw_Ui_SceneBegin(0);
+    slot = gs_ui_find("title");
+    CHECK(slot >= 0 && at_stack_top(&gs_ui_stack) == slot);
+    CHECK(gs_ui_slot[slot].owner == GS_UI_ENGINE && gs_ui_slot[slot].sc.primary == AT_PRIMARY_DISPLAY && gs_ui_slot[slot].scene == 0);
+    CHECK_STR(gs_ui_slot[slot].sc.hero, "GD'S MELEE"); CHECK_STR(gs_ui_slot[slot].sc.prompt, "PRESS START");
+    gw_Ui_SceneBegin(1);                                 /* any other scene: retail, nothing pushed (the new scene is current) */
+    gw_Ui_SceneExit(0);
+    gs.scene_kind = 1;
+    CHECK(gs_ui_stack.n == 0 && gs_ui_find("title") < 0);
+}
+static void title_takes_no_input(void)
+{
+    int t, b, i, slot, n0;
+    title_reset();
+    gs.scene_kind = 0; gw_Ui_SceneBegin(0);
+    slot = gs_ui_find("title"); n0 = gs_ui_stack.n;
+    gw_Ui_Intent(AT_EV_ACCEPT, 0); gw_Ui_Intent(AT_EV_BACK, 0); gw_Ui_Intent(AT_EV_MOVE, AT_DIR_DOWN);
+    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);
+    gs.cur = -1;
+    gs_ui_tick();
+    g_mx = 320.0f; g_my = 240.0f; g_mbuttons = 3;       /* a click and a right click on the title */
+    gs_ui_tick(); gs_ui_tick();
+    g_mx = g_my = -1000.0f; g_mbuttons = 0;
+    g_pad = AT_PAD_A | AT_PAD_START; gs_ui_tick(); g_pad = 0; gs_ui_tick();
+    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);
+    CHECK(gs_ui_stack.n == n0 && at_stack_top(&gs_ui_stack) == slot);
+    gs.key_now[VK_RETURN] = 1; gs.key_now[VK_ESCAPE] = 1; gs_ui_tick(); gs_ui_tick(); gs.key_now[VK_RETURN] = gs.key_now[VK_ESCAPE] = 0;
+    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0 && gs_ui_stack.n == n0);
+}
+static void title_waits_for_roles(void)
+{
+    title_reset();
+    gs.scene_kind = 0; g_kit_up = 0;
+    gw_Ui_SceneBegin(0);
+    CHECK(gs_ui_find("title") < 0);                      /* the kit is not up yet: the retail title shows */
+    gs.cur = -1; gs_ui_tick();
+    CHECK(gs_ui_find("title") < 0);
+    g_kit_up = 1;
+    gs_ui_tick();                                        /* the first tick where the roles are ready, and the scene is still the title */
+    CHECK(gs_ui_find("title") >= 0 && gs_ui_slot[gs_ui_find("title")].owner == GS_UI_ENGINE);
+    title_reset();
+    gs.scene_kind = 0; g_kit_up = 0; gw_Ui_SceneBegin(0);
+    gs.scene_kind = 1; g_kit_up = 1; gs_ui_tick();       /* the scene ended before the roles came up: never pushed */
+    CHECK(gs_ui_find("title") < 0);
+}
+static void title_without_roles_stays_retail(void)
+{
+    title_reset();
+    gs.scene_kind = 0; g_missing_page = "atlas_caps.png";   /* the Atlas font page did not load: roles are missing for good */
+    gw_Ui_SceneBegin(0);
+    CHECK(gs_ui_find("title") < 0);
+    g_missing_page = NULL; gs_ui_tick(); gs_ui_tick();
+    CHECK(gs_ui_find("title") < 0 && gs_ui_roles_state < 0);
+    g_missing_page = NULL;
+}
+static void title_retail_when_off(void)
+{
+    title_reset();
+    gs.scene_kind = 0; gs_ui_atlas_env = 0;              /* MELEE_ATLAS=0 */
+    CHECK(gw_Ui_ScenePolicy(0) == AT_POLICY_RETAIL);
+    gw_Ui_SceneBegin(0); gs_ui_tick();
+    CHECK(gs_ui_find("title") < 0 && gs_ui_stack.n == 0);
+    CHECK(gw_Ui_Ready() == 0);
+    gs_ui_atlas_env = 1;
+    CHECK(gw_Ui_ScenePolicy(0) == AT_POLICY_OVERLAY && gw_Ui_ScenePolicy(1) == AT_POLICY_RETAIL);
+}
+static void title_popped_on_scene_exit(void)
+{
+    title_reset();
+    gs.scene_kind = 0; gw_Ui_SceneBegin(0);
+    CHECK(gs_ui_stack.n == 1);
+    gw_Ui_SceneExit(0);
+    CHECK(gs_ui_stack.n == 0 && gs_ui_engine_slots() == 0);
+    gs.scene_kind = 1;
+}
+static void title_and_menu_together(void)
+{
+    title_reset();
+    gs.scene_kind = 0; gw_Ui_SceneBegin(0);
+    engine_menu("main", 5);                              /* the title's scene is still current in this test: the front door holds two engine slots at most */
+    CHECK(gs_ui_engine_slots() == 2);
+    gw_Ui_SceneExit(0);
+    CHECK(gs_ui_stack.n == 0);
+}
+
 int main(void)
 {
     lua_State *L = luaL_newstate();
@@ -822,5 +920,7 @@ int main(void)
     entry_opens_pushes_mod_screen(); entry_script_runs_on_entry_as_the_mod(); entry_missing_screen_refused(); entry_from_other_script_cannot_hide();
     entry_hidden_in_netplay(); entry_screen_closed_on_scene_exit(); entry_mod_unloaded(); builtin_entries_register();
     credits_screen(); held_menu_takes_no_intent(); menu_blocked_by_a_mod_screen();
+    title_pushed_on_scene_begin(); title_takes_no_input(); title_waits_for_roles(); title_without_roles_stays_retail(); title_retail_when_off();
+    title_popped_on_scene_exit(); title_and_menu_together();
     ATLAS_DONE("atlas binding");
 }

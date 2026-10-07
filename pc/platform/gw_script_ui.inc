@@ -56,9 +56,12 @@ static int gs_ui_reduced; /* gw_Settings_Int("reduced_motion") read once per dra
 static int gs_ui_roles_ok(void) {
     int r;
     if (gs_ui_roles_state != 0) return gs_ui_roles_state > 0;
+    if (!gw_Kit_Available()) {                                      /* not latched: the kit may come up later (the title can be the first scene) */
+        snprintf(gs_ui_why, sizeof gs_ui_why, "%s", gw_Kit_Why());
+        return 0;
+    }
     gs_ui_roles_state = -1;
-    snprintf(gs_ui_why, sizeof gs_ui_why, "%s", gw_Kit_Available() ? "" : gw_Kit_Why());
-    if (!gw_Kit_Available()) return 0;
+    gs_ui_why[0] = '\0';
     for (r = 0; r < AT_R_COUNT; r++) {
         const char *missing;
         gs_ui_role_idx[r] = gw_Kit_Role(at_role(r)->name);
@@ -473,6 +476,7 @@ static int gs_ui_value_event(int slot, const AtEvent *e) {
 
 static void gs_ui_engine_event(int slot, const AtEvent *e);
 static void gs_ui_fix_scroll(GsUiSlot *u);
+static void gs_ui_overlay_try(void);
 
 static void gs_ui_event(int slot, const AtEvent *e) {
     GsUiSlot *u = &gs_ui_slot[slot];
@@ -540,6 +544,8 @@ static void gs_ui_tick(void) {
     double now = gs_now_ms();
     GsUiSlot *u;
     gs_ui_frame++;
+    gs_ui_overlay_try();
+    top = at_stack_top(&gs_ui_stack);
     if (top < 0) return;
     u = &gs_ui_slot[top];
     if (!u->used) {
@@ -671,7 +677,9 @@ static void gs_ui_engine_event(int slot, const AtEvent *e) {
     GsUiSlot *u = &gs_ui_slot[slot];
     AtFocusBlock fb[AT_MAX_BLOCKS];
     AtFocusPos before = u->view.focus;
-    int nb = at_screen_focus_blocks(&u->sc, fb);
+    int nb;
+    if (u->sc.primary == AT_PRIMARY_DISPLAY) return;                  /* the title takes no input, from anything: retail reads the pad */
+    nb = at_screen_focus_blocks(&u->sc, fb);
     if (e->type == AT_EV_MOVE) u->view.focus = at_focus_move(fb, nb, u->view.focus, e->a, 1);
     else if (e->type == AT_EV_SCROLL) u->view.focus = at_focus_move(fb, nb, u->view.focus, e->a < 0 ? AT_DIR_UP : AT_DIR_DOWN, 0);
     else if (e->type == AT_EV_FOCUS) {
@@ -919,6 +927,39 @@ static int gs_ui_engine_slots(void) {
     int i, n = 0;
     for (i = 0; i < GS_UI_SLOTS; i++) if (gs_ui_slot[i].used && gs_ui_slot[i].owner == GS_UI_ENGINE) n++;
     return n;
+}
+
+/* ---- scene policy OVERLAY: the title (spec 6.8) ------------------------------------------------------------------------------
+ * At scene begin, a scene the policy table marks OVERLAY gets its engine display screen pushed over the retail scene, which runs
+ * unchanged (START, the attract loop and the debug path stay retail's). The screen has no input and is closed with the scene
+ * (gw_Ui_SceneExit). If the Atlas roles are not up yet (the kit loads late) it is pushed on the first tick where they are, provided
+ * that scene is still current; if they are missing (no ui/ pages) the scene stays retail, with one log line. */
+static int gs_ui_overlay_kind = -1;
+
+static void gs_ui_overlay_try(void) {
+    const char *screen;
+    if (gs_ui_overlay_kind < 0) return;
+    if (gs_ui_overlay_kind != gs.scene_kind) { gs_ui_overlay_kind = -1; return; }          /* that scene is over */
+    if (!atlas_env_on()) { gs_ui_overlay_kind = -1; return; }
+    if (!gs_ui_roles_ok()) {
+        if (gs_ui_roles_state < 0) {                                                      /* missing for good, not merely late */
+            gw_log("ui: scene %d stays retail: the Atlas roles are missing (%s)", gs_ui_overlay_kind, gs_ui_why);
+            gs_ui_overlay_kind = -1;
+        }
+        return;
+    }
+    screen = at_policy_screen(gs_ui_overlay_kind);
+    gs_ui_overlay_kind = -1;
+    if (screen == NULL || strcmp(screen, "title") != 0) return;
+    if (!gw_Ui_Begin("title", AT_PRIMARY_DISPLAY, 0, "")) return;
+    /* no version symbol exists in the host (grep GW_VERSION in pc/platform finds none): the foot texts are empty */
+    gw_Ui_Display("GD'S MELEE", "PRESS START", "", "");
+    gw_Ui_Commit(-1, -1);
+}
+
+void gw_Ui_SceneBegin(int scene_kind) {
+    gs_ui_overlay_kind = (gw_Ui_ScenePolicy(scene_kind) == AT_POLICY_OVERLAY && at_policy_screen(scene_kind) != NULL) ? scene_kind : -1;
+    gs_ui_overlay_try();
 }
 
 /* ---- the Credits screen (MAIN MENU > More > Credits): a host-native list, B closes it here ---------------------------------

@@ -7479,6 +7479,7 @@ void gw_Script_SceneBegin(int scene_kind) {
     }
     gs.camera_completion = gw_Camera_ScriptCompletion();
     gs.scene_kind = scene_kind;
+    gw_Ui_SceneBegin(scene_kind); /* a scene the policy table marks OVERLAY (the title) gets its Atlas screen */
     gs.scene_epoch++;
     gs_launch_begin();
     gs_item_track_count = 0;

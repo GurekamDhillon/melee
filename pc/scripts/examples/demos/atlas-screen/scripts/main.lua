@@ -1,4 +1,4 @@
--- Atlas screens (gd.ui): a list with every value widget, and a grid with cells, an explainer and key hints. Each on.* handler is used once.
+-- Atlas screens (gd.ui): a list with every value widget, and a grid with cells, an explainer and key hints. Every on.* handler is shown (some on both screens).
 -- F7 opens or closes it. A or left/right change a row (on.change), X a corner note, Y a dialog, START a note (on.start),
 -- L or R (Tab on the keyboard) switch list and grid (on.page), B closes. Mouse: hover focuses, click is A, right click is B.
 -- Presentation only: it works online. Valid under the validator: ids under 24 characters, none repeated, slider min below max.
@@ -31,7 +31,7 @@ function list_desc()
       { id = 'closed', label = 'Closed', disabled = true } } },
     explainer = { width = 'normal', provide = function(cid)
       return { kicker = 'ROW', title = cid:upper(), what = 'A or left/right changes it, X for a note, Y for a dialog, R for the grid.', from = { text = 'Atlas demo' } } end },
-    keys = { { 'A', 'Change' }, { 'X', 'Note' }, { 'Y', 'Dialog' }, { 'R', 'Grid' }, { 'START', 'Note' }, { 'B', 'Close' } },
+    keys = { { 'A', 'Change' }, { 'B', 'Close' }, { 'X', 'Note' }, { 'Y', 'Dialog' }, { 'R', 'Grid' }, { 'START', 'Note' } },
     counter = function(cid) return cid end,
     on = {
       change = on_change,
@@ -60,7 +60,7 @@ function grid_desc()
       { id = 'b', title = 'SPARE', cols = 4, cells = b } } },
     explainer = { width = 'narrow', provide = function(cid, bid)
       return { kicker = bid:upper(), title = cid:upper(), what = 'A cell shows only its name or model. The rule shows here, for the focus.', from = { text = 'Demo data' } } end },
-    keys = { { 'A', 'Pick' }, { 'L', 'List' }, { 'B', 'Close' } },
+    keys = { { 'A', 'Pick' }, { 'B', 'Close' }, { 'L', 'List' } },
     on = { accept = function(cid) ui.note{ text = 'Picked ' .. cid, kind = 'info' } end, back = function() return { pop = true } end,
       page = function() show('list') end } }
 end

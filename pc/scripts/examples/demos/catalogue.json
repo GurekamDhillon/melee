@@ -1080,7 +1080,7 @@
     "category": "demo",
     "new": true,
     "in_game": false,
-    "controls": "F7 opens and closes; D-pad or arrows move; A or left/right change a row; X note; Y dialog; START note; L or R (Tab) switch list and grid; B close; mouse hover, click, right click, wheel",
+    "controls": "F7 opens and closes; D-pad or arrows move; A or left/right change a row; X note; Y dialog; START note (X, Y and START are pad-only, or click the hint); L or R (Tab) switch list and grid; B close; mouse hover, click, right click, wheel",
     "setup": []
   }
 ]

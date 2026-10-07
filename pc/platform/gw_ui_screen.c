@@ -464,7 +464,7 @@ int at_screen_focus_blocks(const AtScreen *s, AtFocusBlock *fb)
         fb[0].col0 = 0; fb[0].row0 = 0; fb[0].cols = 1; fb[0].n = s->n_items; fb[0].exists = NULL;
         return 1;
     }
-    if (s->primary == AT_PRIMARY_DISPLAY) return 0;
+    if (s->primary == AT_PRIMARY_DISPLAY || s->primary == AT_PRIMARY_FRAME) return 0;
     if (s->primary == AT_PRIMARY_CARDS) {                                  /* one row of cards: left and right move between them, and wrap */
         fb[0].col0 = 0; fb[0].row0 = 0; fb[0].cols = s->n_cards > 0 ? s->n_cards : 1; fb[0].n = s->n_cards; fb[0].exists = NULL;
         return 1;
@@ -564,7 +564,7 @@ int at_cell_accepts(const AtScreen *s, AtFocusPos p)
     return !(at_block_cell(&s->blocks[p.block], p.index)->flags & AT_CELL_DISABLED);
 }
 
-int at_screen_wants_pad(const AtScreen *s) { return !s->input_feed && s->primary != AT_PRIMARY_DISPLAY; }
+int at_screen_wants_pad(const AtScreen *s) { return !s->input_feed && s->primary != AT_PRIMARY_DISPLAY && s->primary != AT_PRIMARY_FRAME; }   /* a framed screen never reads the pad: retail does */
 
 /* ---- cell storage: inline (the Lua door, up to AT_MAX_CELLS) or native (adapter-owned, up to AT_MAX_EXT_CELLS) ---- */
 int at_block_count(const AtBlock *b)

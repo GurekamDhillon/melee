@@ -1,4 +1,5 @@
 #include "gw_ui_render.h"
+#include "gw_ui_frame.h"
 #include "gw_ui_room.h"
 #include "gw_ui_stack.h"
 #include "gw_ui_tokens.h"
@@ -470,6 +471,50 @@ static void draw_keys(const AtScreen *sc, const AtView *v, const AtLayout *L, co
     if (v->counter[0]) at_text(s, o, AT_R_NUM16, v->counter, L->keys.x + L->keys.w, base, AT_C_DIM, AT_ALIGN_RIGHT, 0.0f);
 }
 
+/* A framed screen (gw_ui_frame.h): opaque plates in the ground colour around a window onto the retail scene, a thin line just outside the window's
+ * edge, and the chrome on the plates. NOTHING is drawn inside the window: the retail 3D shows through it. No focus and no hit rectangles: retail owns
+ * the pad and the mouse is not supported here. A chrome slot that would sit on the window is dropped (the counter then rides in the explainer's
+ * kicker). There is no open fade: the retail scene fades in by itself, and a cut keeps Reduced Motion exact. */
+static void render_frame(const AtScreen *sc, const AtView *v, const AtLayout *L, const AtTextOps *o, const AtSink *s)
+{
+    AtFrameRect win;
+    AtFrameSlots sl;
+    AtRect pl[4], hole;
+    HitCtx hc;
+    int n, i;
+    win.x = sc->has_frame ? sc->frame_x : 0.0f; win.y = sc->has_frame ? sc->frame_y : 0.0f;
+    win.w = sc->has_frame ? sc->frame_w : 0.0f; win.h = sc->has_frame ? sc->frame_h : 0.0f;
+    hole = at_frame_hole(L, win);
+    n = at_frame_plates(L, win, pl);
+    at_frame_slots(L, win, sc->preset >= AT_PRESET_NARROW && sc->preset <= AT_PRESET_WIDE ? L->explainer.w : 0.0f, &sl);
+    for (i = 0; i < n; i++) at_poly_rect(s, pl[i].x, pl[i].y, pl[i].w, pl[i].h, AT_C_GROUND);
+    if (hole.w > 0.5f && hole.h > 0.5f) {                               /* the window's edge: up to four lines just OUTSIDE it, where a plate is there */
+        float lx = hole.x >= 2.0f ? hole.x - 2.0f : hole.x, rx = hole.x + hole.w + 2.0f <= L->canvas.w ? hole.x + hole.w + 2.0f : hole.x + hole.w;
+        if (hole.y >= 2.0f) at_poly_rect(s, lx, hole.y - 2.0f, rx - lx, 2.0f, AT_C_LINE2);
+        if (hole.y + hole.h + 2.0f <= 480.0f) at_poly_rect(s, lx, hole.y + hole.h, rx - lx, 2.0f, AT_C_LINE2);
+        if (hole.x >= 2.0f) at_poly_rect(s, hole.x - 2.0f, hole.y, 2.0f, hole.h, AT_C_LINE2);
+        if (hole.x + hole.w + 2.0f <= L->canvas.w) at_poly_rect(s, hole.x + hole.w, hole.y, 2.0f, hole.h, AT_C_LINE2);
+    }
+    if (sl.have_trail) {
+        const char *items[4];
+        int ni = 0;
+        for (i = 0; i < sc->n_parents && ni < 3; i++) items[ni++] = sc->parent[i];
+        items[ni++] = sc->title;
+        at_part_trail(s, o, sl.trail, items, ni);
+        if (L->rule.y + 1.0f <= hole.y || hole.w <= 0.5f) at_poly_rect(s, L->rule.x, L->rule.y, L->rule.w, 1.0f, AT_C_LINE);
+    }
+    if (sc->preset != AT_PRESET_NONE && sl.have_explainer) {
+        AtExplainer ex = v->ex;
+        if (!sl.have_keys && v->counter[0] != '\0') snprintf(ex.kicker, sizeof ex.kicker, "%s", v->counter);   /* no key strip to carry it */
+        ex.no_well = 1;
+        at_part_explainer(s, o, sl.explainer, &ex);
+    }
+    if (sl.have_keys) {
+        hc.hits = NULL; hc.dropped = 0;                                  /* key hints are information, never clickable */
+        draw_keys(sc, v, L, o, s, &hc);
+    }
+}
+
 void at_render_ex(const AtScreen *sc, const AtView *v, float canvas_w, double now, int reduced,
                   const AtTextOps *o, const AtSink *out, AtHits *hits, AtRenderInfo *info)
 {
@@ -489,6 +534,11 @@ void at_render_ex(const AtScreen *sc, const AtView *v, float canvas_w, double no
     hc.hits = v->dialog.open ? NULL : hits;                              /* an open dialog is the only thing the mouse can reach */
     hc.dropped = 0;
     at_layout(canvas_w, sc->preset, &L);
+    if (sc->primary == AT_PRIMARY_FRAME) {                                /* no ground, no focus, no hits (hits->n is already 0) */
+        render_frame(sc, v, &L, o, s);
+        if (info != NULL) { info->entries = cn.entries; info->dropped = cn.dropped; info->hits_dropped = 0; info->warned = cn.warned; info->capped = cn.capped; }
+        return;
+    }
     if (sc->backdrop == AT_BD_WORLD) {                                    /* over the frozen game: a scrim that ramps in on the UI clock (a cut with Reduced Motion), never the ground */
         AtTween wt;
         at_tween_start(&wt, v->opened_ms, 100.0, reduced);

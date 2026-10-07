@@ -26,7 +26,7 @@ extern "C" {
 #define AT_MAX_CARDS 4
 #define AT_MAX_LINKS 16
 
-enum { AT_PRIMARY_LIST = 1, AT_PRIMARY_GRID = 2, AT_PRIMARY_TILES = 3, AT_PRIMARY_DISPLAY = 4, AT_PRIMARY_CARDS = 5, AT_PRIMARY_ROOM = 6 };   /* the plan says CARDS = 3; 3 is TILES. ROOM: native only (the online room, gw_ui_room.c); Lua cannot ask for it */
+enum { AT_PRIMARY_LIST = 1, AT_PRIMARY_GRID = 2, AT_PRIMARY_TILES = 3, AT_PRIMARY_DISPLAY = 4, AT_PRIMARY_CARDS = 5, AT_PRIMARY_ROOM = 6, AT_PRIMARY_FRAME = 7 };   /* the plan says CARDS = 3; 3 is TILES. ROOM: native only (the online room, gw_ui_room.c); Lua cannot ask for it. FRAME: native only (gw_ui_frame.h), chrome around a window onto a retail scene: no ground, no focus, no hits */
 enum { AT_CELL_LOCKED = 1, AT_CELL_EMPTY = 2, AT_CELL_MERGE = 4, AT_CELL_NEW = 8, AT_CELL_SELECTED = 16, AT_CELL_DISABLED = 32,
        AT_CELL_BANNED = 64, AT_CELL_PICKED = 128, AT_CELL_UNSET = 256, AT_CELL_P1 = 512 };   /* 64 and up: strike marks, drawing only (step 6 sets them) */
 enum { AT_BD_GROUND, AT_BD_WORLD };
@@ -82,6 +82,7 @@ typedef struct {
     AtKey keys[AT_MAX_KEYS]; int n_keys;
     char counter[AT_STR]; int fn_counter;
     int input_feed, port;
+    int has_frame; float frame_x, frame_y, frame_w, frame_h;   /* primary kind FRAME: the window in the 640x480 retail canvas (gw_ui_frame.h) */
     AtCardRec cards[AT_MAX_CARDS]; int n_cards;      /* primary kind "cards": one row of offer cards */
     AtLink links[AT_MAX_LINKS]; int n_links, links_skipped;   /* a grid: lines drawn between cells under them; one naming a missing cell is skipped and counted */
     int has_countdown, countdown;                    /* seconds shown at the trail's right end (0:45, rose under 10 s). The script re-registers it once a second */

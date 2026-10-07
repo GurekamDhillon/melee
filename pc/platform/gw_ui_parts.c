@@ -326,43 +326,64 @@ void at_part_tabs(const AtSink *s, const AtTextOps *o, AtRect r, const char *con
     at_part_tabs_ex(s, o, r, names, counts, n, active, focus_tab, NULL);
 }
 
+/* A short word for a tab that has no room for its name: the names the Atlas screens use have a fixed short form, any other name loses its tail (no ellipsis:
+ * "VIDEO" cut to "VID..." read as nothing). A name of five characters or fewer is its own short form. */
+static void tab_short(const char *name, char *out, size_t cap)
+{
+    static const char *const T[][2] = { { "CONTROLS", "CTRL" }, { "ONLINE", "ONLN" }, { "DISPLAY", "DISP" }, { "DRILLS", "DRILL" }, { "STATES", "STATE" },
+                                        { "INSTALLED", "INST" }, { "CONFLICTS", "CONF" }, { "RETAIL", "RETL" }, { "ADDED", "ADDED" } };
+    size_t i, chars = 0, cut = 0;
+    for (i = 0; i < sizeof T / sizeof T[0]; i++) if (strcmp(name, T[i][0]) == 0) { snprintf(out, cap, "%s", T[i][1]); return; }
+    for (i = 0; name[i] != ' '; i++) if (((unsigned char) name[i] & 0xC0) != 0x80) { if (chars == 4) cut = i; chars++; }
+    if (chars <= 5) cut = i;                                         /* five characters or fewer: the name itself */
+    snprintf(out, cap, "%.*s", (int) (cut < cap - 1 ? cut : cap - 1), name);
+}
+
+/* The strip never cuts a name to a stub. In order, the first that fits wins: every full name at 16, at 14; then the open tab whole and the others as short words
+ * (14, with the padding as is, then tighter, then without the counts, then tighter again); then short words everywhere. Only if even that is too wide do the names shrink and cut. */
 void at_part_tabs_ex(const AtSink *s, const AtTextOps *o, AtRect r, const char *const *names, const int *counts, int n, int active, int focus_tab, AtRect *out)
 {
-    float x = r.x, bottom = r.y + r.h, gaps = n > 1 ? 2.0f * (float) (n - 1) : 0.0f, fixed, names_w, scale = 1.0f;
-    int i, role = AT_R_CAP16, with_counts = counts != NULL, pass;
+    static const struct { int role, shorts, all_short, with_counts; float pad; } ATT[] = {
+        { AT_R_CAP16, 0, 0, 1, 28.0f }, { AT_R_CAP14, 0, 0, 1, 28.0f }, { AT_R_CAP14, 1, 0, 1, 28.0f }, { AT_R_CAP14, 1, 0, 1, 16.0f },
+        { AT_R_CAP14, 1, 0, 0, 16.0f }, { AT_R_CAP14, 1, 0, 0, 12.0f }, { AT_R_CAP14, 1, 0, 0, 10.0f }, { AT_R_CAP14, 1, 1, 0, 10.0f } };
+    char disp[AT_MAX_TABS][32];
+    float x = r.x, bottom = r.y + r.h, gaps = n > 1 ? 2.0f * (float) (n - 1) : 0.0f, fixed = 0.0f, names_w = 0.0f, scale = 1.0f, pad = 28.0f;
+    int i, role = AT_R_CAP16, with_counts = counts != NULL, a, chosen = -1;
+    if (n > AT_MAX_TABS) n = AT_MAX_TABS;
     if (out != NULL) memset(out, 0, sizeof *out * (size_t) (n > 0 ? n : 0));
-    for (pass = 0; pass < 3; pass++) {
+    for (a = 0; a < (int) (sizeof ATT / sizeof ATT[0]); a++) {
+        role = ATT[a].role; pad = ATT[a].pad; with_counts = counts != NULL && ATT[a].with_counts;
         fixed = gaps; names_w = 0.0f;
         for (i = 0; i < n; i++) {
             char num[16];
-            snprintf(num, sizeof num, "%d", counts != NULL ? counts[i] : 0);
-            fixed += 28.0f + (with_counts ? twidth(o, AT_R_NUM12, num) + 6.0f : 0.0f);
-            names_w += twidth(o, role, names[i]);
+            if (ATT[a].shorts && (ATT[a].all_short || i != active)) tab_short(names[i], disp[i], sizeof disp[i]); else snprintf(disp[i], sizeof disp[i], "%s", names[i]);
+            snprintf(num, sizeof num, "%d", with_counts ? counts[i] : 0);
+            fixed += pad + (with_counts ? twidth(o, AT_R_NUM12, num) + 6.0f : 0.0f);
+            names_w += twidth(o, role, disp[i]);
         }
+        chosen = a;
         if (fixed + names_w <= r.w) break;
-        if (pass == 0) role = AT_R_CAP14;
-        else if (pass == 1 && with_counts && r.w - fixed < 8.0f * (float) n) with_counts = 0;
-        else break;
     }
+    (void) chosen;
     if (fixed + names_w > r.w) scale = names_w > 0.0f && r.w > fixed ? (r.w - fixed) / names_w : 0.0f;
     for (i = 0; i < n; i++) {
         char num[16], fit[200];
         int fr = role;
-        float tw = twidth(o, role, names[i]), cw = 0.0f, w, h = i == active ? 30.0f : 26.0f, y = bottom - h, nw, e = 3.0f;
+        float tw = twidth(o, role, disp[i]), cw = 0.0f, w, h = i == active ? 30.0f : 26.0f, y = bottom - h, nw, e = 3.0f;
         int draw_name;
         unsigned face = i == active ? AT_C_PLATE : AT_C_GROUND2;
         if (i == focus_tab) y -= 2.0f;                                    /* the focused tab lifts like a focused row */
         snprintf(num, sizeof num, "%d", with_counts ? counts[i] : 0);
         if (with_counts) cw = twidth(o, AT_R_NUM12, num) + 6.0f;
         draw_name = tw * scale >= 8.0f;
-        if (draw_name) { fr = at_fit(o, role, names[i], tw * scale, fit, sizeof fit); nw = twidth(o, fr, fit); } else nw = 0.0f;
-        w = nw + cw + 28.0f;
+        if (draw_name) { fr = at_fit(o, role, disp[i], tw * scale, fit, sizeof fit); nw = twidth(o, fr, fit); } else nw = 0.0f;
+        w = nw + cw + pad;
         if (x + w > r.x + r.w) w = r.x + r.w - x;
         if (w <= 0.0f) break;
         at_poly_rect(s, x, y, w, h, face);
         if (out != NULL) { out[i].x = x; out[i].y = bottom - 30.0f; out[i].w = w; out[i].h = 30.0f; }   /* the hit area is the tall tab: one rectangle that does not move with focus */
-        if (draw_name) at_text(s, o, fr, fit, x + 14.0f, mid_base(y, h, fr), i == active ? AT_C_IVORY : AT_C_MUTED, AT_ALIGN_LEFT, 0.0f);
-        if (with_counts) at_text(s, o, AT_R_NUM12, num, x + 14.0f + nw + 6.0f, mid_base(y, h, AT_R_NUM12), i == active ? AT_C_EMBER : AT_C_DIM, AT_ALIGN_LEFT, 0.0f);
+        if (draw_name) at_text(s, o, fr, fit, x + pad * 0.5f, mid_base(y, h, fr), i == active ? AT_C_IVORY : AT_C_MUTED, AT_ALIGN_LEFT, 0.0f);
+        if (with_counts) at_text(s, o, AT_R_NUM12, num, x + pad * 0.5f + nw + 6.0f, mid_base(y, h, AT_R_NUM12), i == active ? AT_C_EMBER : AT_C_DIM, AT_ALIGN_LEFT, 0.0f);
         if (i == focus_tab) {                                             /* three cues: the lift, an ember front edge, an ember tick */
             at_poly_rect(s, x, y + h - e, w, e, AT_C_EMBER);
             at_poly_rect(s, x, y, 4.0f, h - e, AT_C_EMBER);

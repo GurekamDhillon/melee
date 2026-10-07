@@ -339,7 +339,7 @@ end
 -- Atlas step 3, Task 19: the two demo mods run against the stand-in (their own main.lua, loaded with a fake gd)
 local function load_demo(path, mod, opts)
   opts = opts or {}
-  local u = Stub.new({ mod = mod, netplay = opts.netplay })
+  local u = Stub.new({ mod = mod, netplay = opts.netplay, available = opts.available })
   local keys, logs = {}, {}
   local env = setmetatable({ gd = { ui = u, log = function(t) logs[#logs + 1] = t end, key_pressed = function(k) local v = keys[k]; keys[k] = nil; return v end,
     player = function(p) return opts.players and opts.players[p] end } }, { __index = _G })
@@ -371,7 +371,8 @@ do
 end
 do
   local env, u = load_demo('pc/scripts/examples/demos/atlas-pause/scripts/main.lua', 'demo_atlas_pause')
-  env.on_load()
+  check(env.on_load == nil, 'the engine has no on_load hook: registering from one never ran (Atlas proof D6)')
+  env.on_tick()
   check(u.pause_slot == 'demo_atlas_pause.pause' and u.screens['demo_atlas_pause.pause'].kind == 'pause', 'the pause screen is registered and named')
   u.retail_pause(0, true); check(u.state().top == nil, 'takeover off: nothing changes')
   u.retail_pause(0, false)
@@ -381,6 +382,13 @@ do
   check(u.take_unpause() == 0, 'Resume asks the engine to unpause the pauser')
   u.retail_pause(0, false)
   env.on_unload(); check(u.pause_slot == nil, 'unloading clears the name')
+  -- the roles load a frame after the scripts: unavailable first, named on the first tick it is available, and logged
+  local env3, u3, _, logs3 = load_demo('pc/scripts/examples/demos/atlas-pause/scripts/main.lua', 'demo_atlas_pause', { available = false })
+  env3.on_tick(); check(u3.pause_slot == nil, 'ui unavailable: not named yet')
+  u3.available_ok = true; env3.on_tick()
+  check(u3.pause_slot == 'demo_atlas_pause.pause', 'named on the first tick the Atlas screens are ready')
+  local named = false; for _, l in ipairs(logs3) do if l:find('named demo_atlas_pause.pause', 1, true) then named = true end end
+  check(named, 'and the "named" line is logged')
 end
 -- Atlas step 5, Task 3: gd.ui step, options, set_value and value. Run as a MOD caller, never only as the console.
 do

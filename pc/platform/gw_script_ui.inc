@@ -756,9 +756,32 @@ static void gs_ui_q_push(int type, int block, int index) {
     gs_ui_qn++;
 }
 
+/* the height of a list screen's pane (a tab strip shortens it; the pane's height does not depend on the canvas width) */
+static float gs_ui_list_pane_h(const GsUiSlot *u) {
+    AtLayout pl;
+    float ph;
+    at_layout(640.0f, u->sc.preset, &pl);
+    ph = pl.primary.h;
+    if (u->sc.n_tabs > 0) { AtSplit sp; at_layout_split(&pl, 1, AT_BAND_NONE, &sp); ph = sp.grid.h; }
+    return ph;
+}
+
+/* A list that was just replaced by a shorter one: pull the window back while the row above it still reaches the last row, so the list never ends in empty
+ * space (the LAB library's second page, Atlas proof D9) */
+static void gs_ui_trim_scroll(GsUiSlot *u) {
+    float ph;
+    int s;
+    if (u->sc.primary != AT_PRIMARY_LIST || u->sc.n_items < 1) return;
+    ph = gs_ui_list_pane_h(u);
+    s = u->view.scroll < 0 ? 0 : u->view.scroll;
+    while (s > 0 && (s - 1) + at_list_window(&u->sc, ph, s - 1) >= u->sc.n_items) s--;
+    u->view.scroll = s;
+}
+
 /* the scroll offset that keeps the focused cell in the pane (shared by script and engine screens) */
 static void gs_ui_fix_scroll(GsUiSlot *u) {
     AtLayout pl;
+    if (u->sc.primary == AT_PRIMARY_LIST && u->view.scroll >= (u->sc.n_items > 0 ? u->sc.n_items : 1)) u->view.scroll = u->sc.n_items > 0 ? u->sc.n_items - 1 : 0;   /* a shorter list than the one it replaced (Atlas proof D9) */
     if (u->view.focus.index < 0) return;
     at_layout(640.0f, u->sc.preset, &pl);                          /* the pane's height does not depend on the width */
     if (u->sc.primary == AT_PRIMARY_LIST) {                        /* the window counts group headings, and a tab strip shortens the pane */
@@ -1020,8 +1043,17 @@ int gw_Ui_TopIsEngine(const char *id) {
 
 /* a scene ends: every screen pushed during it goes (the menu's, a mod's opened from a menu entry), except a mod screen that says
  * persist = true (Envoy's reward, swap and bag screens span the ladder's VS-to-VS scenes: the owner closes them, or its unload does) */
-void gw_Ui_SceneExit(int scene_kind) {
+void gw_Ui_SceneExitTo(int scene_kind, int next_kind) {
     int i, any = 0;
+    if (next_kind >= 0 && at_policy_ends_run(next_kind)) {         /* the next scene is outside any run (menu, game over, credits ...): a persistent screen has nothing left to span (Atlas proof D12) */
+        for (i = 0; i < GS_UI_SLOTS; i++) {
+            GsUiSlot *u = &gs_ui_slot[i];
+            if (!u->used || u->owner == GS_UI_ENGINE || !u->sc.persist || !gs_ui_find_on_stack(i)) continue;
+            gw_log("ui: screen %s (persist) closed: scene %d begins and it is outside a run", u->sc.id, next_kind);
+            gs_ui_close_screen(i);
+            any = 1;
+        }
+    }
     for (i = 0; i < GS_UI_SLOTS; i++) {
         GsUiSlot *u = &gs_ui_slot[i];
         if (!u->used || u->scene != scene_kind || !gs_ui_find_on_stack(i)) continue;
@@ -1036,6 +1068,7 @@ void gw_Ui_SceneExit(int scene_kind) {
     gs_ui_menu_held_by = -2;                                       /* a hold lasts for the scene that took it */
     if (any) gs_ui_after_close();
 }
+void gw_Ui_SceneExit(int scene_kind) { gw_Ui_SceneExitTo(scene_kind, -1); }
 
 /* how many engine screens hold a slot (the front door uses at most two at once: the menu and the title) */
 static int gs_ui_engine_slots(void) {
@@ -1458,11 +1491,13 @@ static void gs_ui_hud_draw(void) {
     memset(&sink, 0, sizeof sink);                                            /* every AtSink op is set or NULL (AtSink.image arrived with the select) */
     sink.user = NULL; sink.poly = gs_ui_poly; sink.text = gs_ui_text; sink.model = gs_ui_model_draw; sink.image = gs_ui_image;
     if (gs_ui_keepout_show) {
+        int ko_first = gw_Kit_QuadCount();
         for (i = 0; i < ko.n; i++) {                                              /* 1 px outlines, for measuring them against the retail HUD */
             AtRect r = ko.r[i];
             at_poly_rect(&sink, r.x, r.y, r.w, 1.0f, AT_C_ROSE); at_poly_rect(&sink, r.x, r.y + r.h - 1.0f, r.w, 1.0f, AT_C_ROSE);
             at_poly_rect(&sink, r.x, r.y, 1.0f, r.h, AT_C_ROSE); at_poly_rect(&sink, r.x + r.w - 1.0f, r.y, 1.0f, r.h, AT_C_ROSE);
         }
+        gs_kit_record(ko_first, gw_Kit_QuadCount() - ko_first);                   /* the quads are only drawn if a draw entry covers them (Atlas proof D7) */
     }
     for (i = 0; i < GS_UI_HUDS; i++) {
         int first, quads;
@@ -1878,6 +1913,7 @@ static int l_ui_screen(lua_State *L) {
     if (u->sc.links_skipped > 0 && !u->links_warned) { u->links_warned = 1; gw_log("ui: %s: %d grid link(s) name a missing cell and are skipped", u->sc.id, u->sc.links_skipped); }
     if (replace) u->view.focus = at_screen_refocus(&u->sc, old_block[0] ? old_block : NULL, old_cell[0] ? old_cell : NULL, old);
     else { AtFocusBlock fb[AT_MAX_BLOCKS]; u->view.focus = at_focus_first(fb, at_screen_focus_blocks(&u->sc, fb)); }
+    if (replace) { gs_ui_fix_scroll(u); gs_ui_trim_scroll(u); }    /* the new rows may be fewer: the window moves with the focus, or the list drew empty (Atlas proof D9: the LAB library's second page) */
     u->explain_dirty = 1;
     if (replace && old_port != u->sc.port && at_stack_top(&gs_ui_stack) == slot) gs_ui_prime(slot);   /* the new port's buttons held now must be released first */
     lua_pushboolean(L, 1);
@@ -1992,7 +2028,7 @@ static int l_ui_set_focus(lua_State *L) {
     AtFocusPos p = at_screen_refocus(&u->sc, luaL_checkstring(L, 2), luaL_checkstring(L, 3), u->view.focus);
     const char *c = at_screen_cell_id(&u->sc, p);
     int ok = c != NULL && strcmp(c, lua_tostring(L, 3)) == 0;
-    if (ok) { u->view.focus = p; u->explain_dirty = 1; }
+    if (ok) { u->view.focus = p; u->explain_dirty = 1; gs_ui_fix_scroll(u); }   /* the window follows the focus the script moved */
     lua_pushboolean(L, ok);
     return 1;
 }

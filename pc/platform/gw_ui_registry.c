@@ -3,9 +3,19 @@
 #include <stdio.h>
 #include <string.h>
 
-static void rlog(AtRegistry *r, const char *fmt, const char *a, const char *b)
+#include <stdarg.h>
+
+/* printf-checked: a format with more conversions than arguments crashed the game at the main menu (Atlas proof D4). */
+#if defined(__GNUC__) || defined(__clang__)
+__attribute__((format(printf, 2, 3)))
+#endif
+static void rlog(AtRegistry *r, const char *fmt, ...)
 {
-    if (r->nlog < 4) snprintf(r->log[r->nlog++], sizeof r->log[0], fmt, a, b);
+    va_list ap;
+    if (r->nlog >= 4) return;
+    va_start(ap, fmt);
+    vsnprintf(r->log[r->nlog++], sizeof r->log[0], fmt, ap);
+    va_end(ap);
 }
 
 void at_reg_init(AtRegistry *r) { memset(r, 0, sizeof *r); }
@@ -51,7 +61,7 @@ int at_reg_add(AtRegistry *r, const AtEntry *in)
     if (ml > 0 && !at_reg_parent_rendered(e->parent)) { rlog(r, "entry \"%s\": no menu shows parent \"%s\" yet (main, solo, versus, settings, mods.self and lab.pause only)", e->id, e->parent); return 0; }
     if (e->id[0] == '\0') { rlog(r, "entry in parent \"%s\"%s: it has no id", e->parent, ""); return 0; }
     if (ml > 0 && !(strcmp(e->id, e->mod) == 0 || (strncmp(e->id, e->mod, ml) == 0 && e->id[ml] == '.' && e->id[ml + 1] != '\0'))) {
-        rlog(r, "entry \"%s\": the id of a mod entry is \"%s\" or starts with \"%s.\"", e->id, e->mod); return 0;
+        rlog(r, "entry \"%s\": the id of a mod entry is \"%s\" or starts with \"%s.\"", e->id, e->mod, e->mod); return 0;
     }
     for (i = 0; i < r->n; i++) {
         if (strcmp(r->e[i].id, e->id) == 0 && strcmp(r->e[i].parent, e->parent) == 0) { rlog(r, "entry \"%s\": the id is already registered%s", e->id, ""); return 0; }

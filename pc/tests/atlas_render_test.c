@@ -729,6 +729,40 @@ static void world_backdrop(void)
     CHECK(REC.p[0].rgba == AT_C_GROUND);                                        /* the default is unchanged */
 }
 
+/* Atlas proof D10: a tab strip too narrow for the full names never cuts a name to "VID..." or a single letter: the open tab keeps its whole name,
+ * the others a short word, at every width and with the rail. Settings has six tabs, the LAB pause eight, the MODS list two with counts. */
+static void tab_labels_fit(void)
+{
+    static const char *const SETT[] = { "VIDEO", "AUDIO", "CONTROLS", "ONLINE", "GAME", "MODS" };
+    static const char *const LAB[] = { "PLAY", "DISPLAY", "DUMMY", "STATES", "TOOLS", "DRILLS", "MODS", "EXIT" };
+    static const char *const MODS[] = { "INSTALLED", "CONFLICTS" };
+    static const struct { const char *const *names; int n, counts; } SETS[] = { { SETT, 6, 0 }, { LAB, 8, 0 }, { MODS, 2, 1 } };
+    static const float WIDTHS[] = { 640.0f, 853.0f, 1140.0f };
+    int set, w, active, k, i;
+    for (set = 0; set < 3; set++) for (w = 0; w < 3; w++) for (active = 0; active < SETS[set].n; active++) {
+        AtSink s;
+        value_fixture();
+        SC.n_tabs = SETS[set].n; SC.chapter = 1;
+        for (i = 0; i < SC.n_tabs; i++) { snprintf(SC.tabs[i].name, 24, "%s", SETS[set].names[i]); SC.tabs[i].count = SETS[set].counts ? (i == 0 ? 129 : 2) : -1; }
+        V.tab = active;
+        s = rec_sink(); at_render(&SC, &V, WIDTHS[w], 10000.0, 1, &O, &s, &HITS);
+        for (k = 0; k < HITS.n; k++) {
+            const RecText *hit = NULL;
+            int tab;
+            if (HITS.h[k].kind != AT_HIT_TAB) continue;
+            tab = HITS.h[k].a;
+            CHECK(HITS.h[k].r.w > 0.0f);
+            for (i = 0; i < REC.nt; i++) if (REC.t[i].x >= HITS.h[k].r.x - 0.01f && REC.t[i].x < HITS.h[k].r.x + HITS.h[k].r.w && REC.t[i].base > HITS.h[k].r.y && REC.t[i].base < HITS.h[k].r.y + HITS.h[k].r.h + 1.0f && REC.t[i].role != AT_R_NUM12) { hit = &REC.t[i]; break; }
+            CHECK(hit != NULL);
+            if (hit == NULL) continue;
+            CHECK(strstr(hit->s, "\xE2\x80\xA6") == NULL && strstr(hit->s, "...") == NULL && strlen(hit->s) >= 3);         /* never cut, never a stub */
+            if (tab == active) CHECK(strcmp(hit->s, SETS[set].names[tab]) == 0);                                         /* the open tab is whole */
+            else CHECK(strcmp(hit->s, SETS[set].names[tab]) == 0 || (hit->s[0] == SETS[set].names[tab][0] && strlen(hit->s) <= 5));                                          /* a short word of its name */
+            CHECK(HITS.h[k].r.x + HITS.h[k].r.w <= WIDTHS[w] + 0.01f);
+        }
+    }
+}
+
 int main(void)
 {
     world_backdrop();
@@ -737,5 +771,6 @@ int main(void)
     tabs_and_band_render(); ext_cells_in_render(); cursors_per_port(); sink_without_image_op_in_render();
     cards_screen(); countdown_colour_and_trail(); links_under_cells();
     value_rows_style(); value_row_signals(); headings_and_tabs(); list_window_with_headings(); sixty_four_rows(); dialog_focused_button_cues();
+    tab_labels_fit();
     ATLAS_DONE("atlas render");
 }

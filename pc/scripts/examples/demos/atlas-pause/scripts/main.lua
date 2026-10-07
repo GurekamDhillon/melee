@@ -22,13 +22,22 @@ local function describe()
       back = function() gd.log('demo_atlas_pause: back -> ' .. tostring(ui.unpause())) end } }
 end
 
-function on_load()
-  if not ui.available() then return end
+-- There is no on_load hook (the engine calls on_tick, on_scene, on_unload ...): the demo's old on_load never ran, so the screen was never named
+-- (Atlas proof D6). The Atlas roles also load a frame after the scripts, so ui.available() is false at first: register on the first tick it is true.
+local named = false
+local function register()
+  if named then return true end
+  if not ui.available() then return false end
   ui.screen(describe())
   ui.pause_screen(ID)
+  named = true
   gd.log('demo_atlas_pause: named ' .. ID .. ' as the pause takeover screen (it shows only with MELEE_ATLAS_PAUSE=1)')
+  return true
 end
 
+function on_tick() register() end   -- until it succeeds; then a no-op
+
 function on_unload()
-  if ui.available() then pcall(ui.pause_screen, nil) end
+  if named and ui.available() then pcall(ui.pause_screen, nil) end
+  named = false
 end

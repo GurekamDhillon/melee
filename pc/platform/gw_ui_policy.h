@@ -15,6 +15,10 @@ typedef struct { int scene_kind; int policy; const char *screen; } AtPolicyRow;
 int at_policy_for(int scene_kind, int atlas_on, const char *env_override);
 /* the engine screen id the default table names for that scene kind, or NULL */
 const char *at_policy_screen(int scene_kind);
+/* 1 when entering this scene kind ends a mod's run: the title, the menus, the game over, the movies and the credits. A screen that says persist = true spans a run's
+ * scenes (the ladder's VS-to-VS), so it is closed when one of these begins; every other scene (VS, results, the stage and character selects, the 1P intros and
+ * cutscenes) is part of a run. An unknown kind (negative) is no run's end. */
+int at_policy_ends_run(int scene_kind);
 
 #ifdef __cplusplus
 }

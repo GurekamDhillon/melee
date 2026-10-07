@@ -31,7 +31,7 @@ function on_frame()
     if r and r.phase==0 and r.pass~=nil then
       finished=true
       assert(expired,'forward run did not observe window expiry')
-      assert(r.pass and r.diff==0,'typed armour rewind differs: '..tostring(r.diff)..' '..tostring(r.text))
+      assert(r.pass and r.diff_compared==0,'typed armour rewind differs: '..tostring(r.diff)..' '..tostring(r.text))
       local rows=assert(gd.fighter_armor(1),'restored typed read unavailable')
       assert(#rows==6,'typed armour lost on restore')
       local found={}

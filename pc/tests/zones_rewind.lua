@@ -18,7 +18,7 @@ function on_frame()
     local r=gd.rewind_test_result()
     if r.phase==0 and r.pass~=nil then
       finished=true
-      assert(r.pass and r.diff==0,'zone rewind differs: '..tostring(r.diff)..' '..r.text)
+      assert(r.pass and r.diff_compared==0,'zone rewind differs: '..tostring(r.diff)..' '..r.text)
       assert(#gd.zones()==2,'zone definitions lost on restore')
       assert(#gd.zones_at(1)>=1,'membership lost on restore')
       gd.log('zones rewind PASS: 0 differing bytes',enter,exit)

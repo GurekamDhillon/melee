@@ -106,7 +106,8 @@ return function(D)
  function R:roll_step(job,attempts)
   local strength,seed,stage,port,context,role,target,rand=job.strength,job.seed,job.stage,job.port,job.context,job.role,job.target,job.rand
   local best,distance=job.best,job.distance
-  while job.attempt<=self.candidates and attempts>0 and not job.found do
+  local top=job.relaxed and job.top2 or job.top1 or self.candidates -- a one-call roll splits its few tries over both passes (R:run)
+  while job.attempt<=top and attempts>0 and not job.found do
    local attempt=job.attempt;job.attempt=attempt+1;attempts=attempts-1
    local candidate=P.context(context)
    if attempt>0 then
@@ -129,20 +130,41 @@ return function(D)
    end
    job.best,job.distance=best,distance
   end
-  if job.attempt<=self.candidates and not job.found then return nil end
+  if job.attempt<=top and not job.found then return nil end
   -- The curve bounds ordinary play. A strength it cannot reach (a LAB build far above the depth) gets a second
   -- pass with the old unbanded rolls instead of a refusal; a normal run never reaches this.
   if not job.found and not job.relaxed and not job.cap and (not best or best.strength<target*self.band[1] or best.strength>target*self.band[2]) then
-   job.relaxed=true;job.attempt=1;return nil
+   job.relaxed=true;job.attempt=1;job.top2=job.top2 or self.candidates;return nil
   end
   assert(best,'no valid independent opponent build')
-  assert(best.strength<=target*self.band[2] and (job.cap or best.strength>=target*self.band[1]),'requested strength unreachable by bounded same-pool search')
+  -- Both passes spent and the band still missed: the best-effort record (logged), not a refusal.
+  if not job.found and not job.cap and best.strength<target*self.band[1] then return self:settle(job) end
+  assert(best.strength<=target*self.band[2] and (job.cap or best.strength>=target*self.band[1] or best.capped),'requested strength unreachable by bounded same-pool search')
   self:validate(best);return best
  end
- function R:roll(strength,seed,stage,port,context,role)
-  local job=self:roll_job(strength,seed,stage,port,context,role)
-  local r;repeat r=self:roll_step(job,math.huge) until r
-  return r
+ -- One script call is limited to 2M instructions or 500 ms and a candidate build costs up to ~45k, so a roll made in ONE call (the console's `foe roll`) gets `sync_attempts` candidates in all, across both passes. The old roll() ran the whole 128 + 128 search, which blew the budget for
+ -- seeds whose target was not met early (the depth 12 / loop 3 normal roll of seed 2144865533, 2026-10-06). Out of tries it settles for the best
+ -- candidate so far: its strength is within the upper band always (the empty build is candidate 0), and below the lower band the record is marked
+ -- `capped` (the same marking a held-down early opponent gets), so it validates. R.log (set by the host) says when it fell back.
+ R.sync_attempts=32;R.hopeless=.5
+ function R:settle(job)
+  local best=assert(job.best,'no valid independent opponent build')
+  -- Best-effort is for a roll that came up short, not for a request the pool cannot come near (a LAB 1e12): that is still refused.
+  assert(best.strength>=job.target*self.hopeless,'requested strength unreachable by bounded same-pool search')
+  if best.strength<job.target*self.band[1] then best.capped=true end
+  if self.log then self.log(('foe roll: fell back to the best of %d tries (%s / strength %.2f for target %.2f%s)'):format(job.attempt,job.role or 'normal',best.strength,job.target,best.capped and ', below the band' or '')) end
+  self:validate(best);return best
+ end
+ function R:run(job,limit)
+  local r;limit=limit or self.sync_attempts
+  if limit<2*self.candidates then job.top1=limit//4;job.top2=limit-limit//4 end
+  for _=1,limit+1 do r=self:roll_step(job,1);if r then return r end end -- +1: the switch to the relaxed pass takes a call but no try
+  return self:settle(job)
+ end
+ -- roll() is the full search (at most 2 x `candidates` tries, then the logged best-effort); the console passes `tries` = R.sync_attempts so that
+ -- the whole roll fits one script call.
+ function R:roll(strength,seed,stage,port,context,role,held,tries)
+  return self:run(self:roll_job(strength,seed,stage,port,context,role,held),tries or 2*self.candidates+2)
  end
  return R
 end

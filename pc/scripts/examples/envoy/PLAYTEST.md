@@ -430,12 +430,12 @@ drive give rare 1313358071
 drive give unique 1784243822
 drive give rare 2116403131
 ```
-Resume; open bag, equip all six; choose Frozen Oath, Pyromancer and Still Heart; close/resume.
+Resume; open bag, equip all six; choose Frozen Oath, Bulwark and Sprinter (Pyromancer excludes Frozen Oath; Still Heart is retired); close/resume.
 ```text
 foe roll - 2144865533 2
 foe fight 2
 ```
-The late records are tier11, include Glass Core and unlock all three keys. Strength226.890 versus257.161; model4/4 attacks. For a boss/final boss, clear/commit before `foe roll - 2144865533 2 boss` or `foe roll - 2144865533 2 finalboss`. Expected strengths287.690/348.456 and modeled4/3 or3/3 attacks. Recreate a fresh stock between directions; statuses, healing, spacing and ledge triggers change actual results.
+The late records are tier11, include Glass Core and unlock all three keys. The opponent's target is your strength times the difficulty factor (opponent edge .010 per effective depth, capped at +25%; the old plan's .003 is gone), so the figures in this section are order-of-magnitude, not pinned (the 2026-10-03 pair was 226.890 versus 257.161; model4/4 attacks). A console `foe roll` is one script call, so it tries at most `sync_attempts` (32) candidates and, if the band is missed, settles for the best one with a `foe roll: fell back` log line. For a boss/final boss, clear/commit before `foe roll - 2144865533 2 boss` or `foe roll - 2144865533 2 finalboss`. Expected strengths287.690/348.456 and modeled4/3 or3/3 attacks. Recreate a fresh stock between directions; statuses, healing, spacing and ledge triggers change actual results.
 
 FD seeds compensate the model fixtures' stage0/12 against gd.match().stage's internal FD kind37, preserving the exact independent rolled build. Verified by codec equality, not assumed from the external stage ID. Model/player fixtures use sample401 early and sample12 late.
 

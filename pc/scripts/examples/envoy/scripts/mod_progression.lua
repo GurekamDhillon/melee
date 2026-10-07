@@ -11,6 +11,10 @@ return function()
   depth=depth or 0;loop=loop or 0;assert(integer(depth) and integer(loop),'depth/loop must be bounded nonnegative integers')
   return {depth=depth,loop=loop}
  end
+ -- The boss hands, by the engine's own fighter kinds (src/melee/ft/forward.h: CKind_MasterH 0x1A = 26, CKind_CrezyH 0x1E = 30; the same two the
+ -- engine's ScriptGame_SetPercent holds at 1 HP). Giga Bowser (29) is an ordinary percent fighter and is not one. The one helper every boss rule asks.
+ P.boss_hands={[26]=true,[30]=true}
+ function P.is_boss_hand(char) return P.boss_hands[char]==true end
  function P.effective(c) c=P.context(c);return c.depth+13*c.loop end
  -- A run's own length sets the New Game+ offset: effective depth = stage + 13 x units x loop, so the loop never starts below the
  -- run's last stage. Classic has 11 stages (one unit, 13); Adventure has 22 (two units, 26). The stage is NOT capped: depth follows

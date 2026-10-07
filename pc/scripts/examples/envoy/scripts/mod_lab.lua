@@ -511,8 +511,8 @@ return function(D)
    elseif self.hit_owned[p] then ops[#ops+1]={op='hit_rules',port=p,rules={},status_bits=0} end
    local damage=self.engine.damage[p]
    -- A boss's remaining HP is its stamina minus its damage and the game ends the fight when it reaches 0. Only a hit can start the boss's
-   -- death, so (char 26 / 27: Master Hand, Crazy Hand) a damage-over-time tick (burn) must never take a boss's damage up: it would end the fight with the boss alive (the 2026-10-05 softlock). The same rule now also holds in the engine, at the one percent-write choke point (ScriptGame_SetPercent: a write can leave a hand at 1 HP, never 0), because this guard missed the Crazy Hand that arrived mid-fight on 2026-10-06 (its `life` entry did not exist yet).
-   if players[p] and damage and damage>0 and (((life[p] or {}).char or players[p].char)==26 or ((life[p] or {}).char or players[p].char)==27) then
+   -- death, so (Master Hand 26, Crazy Hand 30: mod_progression.is_boss_hand) a damage-over-time tick (burn) must never take a boss's damage up: it would end the fight with the boss alive (the 2026-10-05 softlock). The same rule now also holds in the engine, at the one percent-write choke point (ScriptGame_SetPercent: a write can leave a hand at 1 HP, never 0), because this guard missed the Crazy Hand that arrived mid-fight on 2026-10-06 (its `life` entry did not exist yet).
+   if players[p] and damage and damage>0 and D.mod_progression.is_boss_hand((life[p] or {}).char or players[p].char) then
     self.boss_dot_skipped=(self.boss_dot_skipped or 0)+1
     if self.boss_dot_skipped==1 then self.g.log('envoy: damage over time does not hurt a boss (only hits do)') end
     damage=nil

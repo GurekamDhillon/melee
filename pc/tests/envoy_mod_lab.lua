@@ -342,6 +342,8 @@ T.test('a burn tick raises an ordinary fighter damage but never a boss damage (o
   return before,s.players[2].percent,s
  end
  local b0,b1=burned(2);assert(b1>b0,'an ordinary fighter burns: '..b0..' -> '..b1)
- for _,boss in ipairs({26,27}) do local c0,c1,s=burned(boss);assert(c1==c0,'boss char '..boss..' must not burn: '..c0..' -> '..c1) end
+ -- the engine kinds: CKind_MasterH 0x1A = 26, CKind_CrezyH 0x1E = 30 (27 is the Male Wireframe, a plain fighter)
+ local g0,g1=burned(29);assert(g1>g0,'Giga Bowser (29) is an ordinary percent fighter and burns')
+ for _,boss in ipairs({26,30}) do local c0,c1,s=burned(boss);assert(c1==c0,'boss char '..boss..' must not burn: '..c0..' -> '..c1) end
 end)
 T.done()

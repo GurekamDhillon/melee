@@ -43,8 +43,8 @@ return function(D)
     local held;if self.held and self.lab.drives then local b=self.lab.drives.bag;local n=0;for i=1,b:slots() do if b.equipped[i] then n=n+1 end end;held={drives=n,keystones=#(b.keystones or {})} end
     if self.sliced then self:roll_begin(p,strength,seed,stage,w[5] or 'normal',held);self.lab.enabled=true;return end -- debug: the search runs a few attempts per frame (the host's way), not in one call
     local r
-    if held then local job=self.roller:roll_job(strength,seed,stage,p,D.mod_progression.context(self.lab.engine.context),w[5] or 'normal',held);repeat r=self.roller:roll_step(job,math.huge) until r
-    else r=self.roller:roll(strength,seed,stage,p,D.mod_progression.context(self.lab.engine.context),w[5] or 'normal') end
+    self.roller.log=self.g.log
+    r=self.roller:roll(strength,seed,stage,p,D.mod_progression.context(self.lab.engine.context),w[5] or 'normal',held,self.roller.sync_attempts)
     self.lab.display:warm(self.lab.engine);assert(not self.lab.display.error,'shader warmup unavailable')
     self.pending[#self.pending+1]={op='roll',record=r};self.seed=seed;self.stage=stage
    else error('usage: foe roll|clear|list|stand|fight') end

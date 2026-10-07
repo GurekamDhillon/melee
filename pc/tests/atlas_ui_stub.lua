@@ -18,7 +18,7 @@ local function read_limits()
   if f then
    local text = f:read('a'); f:close()
    local L = {}
-   for name, v in text:gmatch('#define%s+AT_MAX_(%u+)%s+(%d+)') do L[name:lower()] = tonumber(v) end
+   for name, v in text:gmatch('#define%s+AT_MAX_(%u[%u_]*)%s+(%d+)') do L[name:lower()] = tonumber(v) end   -- items = the native record (64); items_lua = the Lua door (32)
    L.id = tonumber(text:match('#define%s+AT_ID%s+(%d+)'))     -- a block, cell or item id holds AT_ID - 1 characters; a screen id twice that
    L.str = tonumber(text:match('#define%s+AT_STR%s+(%d+)'))
    L.text = tonumber(text:match('#define%s+AT_TEXT%s+(%d+)'))
@@ -75,6 +75,9 @@ function Stub.new(opts)
  local ui = { screens = {}, stack = {}, views = {}, fed = {}, notes = {}, dialogs = {}, refreshed = 0, _f = {}, _owner = {}, _rows = {},
   available_ok = opts.available ~= false, caller = opts.caller or (opts.mod and (opts.mod .. '/main')) or 'console', owner_mod = opts.owner_mod or opts.mod,
   held = {}, _prev = {} }
+ if opts.shared then   -- two callers over ONE engine: the screens, the stack and the views are the engine's, not the caller's
+  for _, k in ipairs({ 'screens', 'stack', 'views', '_f', '_owner', '_rows', 'fed' }) do ui[k] = opts.shared[k] end
+ end
  local function fail(msg) error('gd.ui.screen: ' .. msg, 3) end
  local function check_id(what, id)
   if type(id) ~= 'string' or id == '' then fail(what .. ' has no id') end
@@ -161,7 +164,7 @@ function Stub.new(opts)
      seen[it.id] = true
     end
    end
-   if n < 1 or n > L.items then fail(('a list needs 1 to %d items (it has %d)'):format(L.items, n)) end
+   if n < 1 or n > L.items_lua then fail(('a list needs 1 to %d items (it has %d)'):format(L.items_lua, n)) end
    for ii, it in ipairs(p.items) do
     if type(it) ~= 'table' then fail(('item %d is not a table'):format(ii)) end
     check_id(('item %d'):format(ii), it.id)
@@ -171,6 +174,12 @@ function Stub.new(opts)
      local k = it.value.kind
      if k == 'slider' then
       if not ((it.value.min or 0) < (it.value.max or 100)) then fail('item "' .. it.id .. '": slider min must be below max') end
+      local st = it.value.step
+      if st ~= nil and (math.type(st) ~= 'integer' or st < 1) then fail('item "' .. it.id .. '": slider step must be a whole number of at least 1') end
+     elseif k == 'choice' and it.value.options ~= nil then
+      local o = it.value.options
+      if type(o) ~= 'table' or #o < 1 or #o > L.opts then fail(('item "%s": choice options are 1 to %d strings'):format(it.id, L.opts)) end
+      for _, s in ipairs(o) do if type(s) ~= 'string' then fail('item "' .. it.id .. '": choice options are strings') end end
      elseif k ~= 'toggle' and k ~= 'choice' and k ~= 'text' and k ~= 'counter' then
       fail(('item "%s": unknown value kind "%s"'):format(it.id, tostring(k)))
      end
@@ -349,7 +358,59 @@ function Stub.new(opts)
   for _, it in ipairs(d.primary.items) do if it.id == f.cell then return it end end
  end
 
- -- A toggle flips, a slider steps by max(1, (max - min) // 20) and clamps, a choice reports its direction; on.change(id, value).
+ -- the live value of a row (what the engine keeps; a registration starts it from the description, re-registering resets it)
+ local function row_state(d, it)
+  local v = it.value
+  local st = ui._rows[d.id][it.id]
+  if not st then
+   local val = v.value or 0
+   if v.kind == 'slider' then val = math.max(v.min or 0, math.min(v.max or 100, val)) end
+   if v.kind == 'choice' and v.options then val = math.max(0, math.min(#v.options - 1, val)) end
+   st = { on = v.on and true or false, val = val, text = v.text }
+   ui._rows[d.id][it.id] = st
+  end
+  return st
+ end
+ local function item_of(id, item)
+  for _, it in ipairs(ui.screens[id].primary.items or {}) do if it.id == item then return it end end
+ end
+
+ -- gd.ui.set_value(id, item, v): in place, no re-registration, no on.change, the focus stays; false for an unknown item or a wrong-typed value
+ function ui.set_value(id, item, val)
+  own(id)
+  local it = item_of(id, item)
+  if not it or type(it.value) ~= 'table' then return false end
+  local v, st = it.value, row_state(ui.screens[id], it)
+  if v.kind == 'toggle' then
+   if type(val) ~= 'boolean' then return false end
+   st.on = val
+  elseif v.kind == 'slider' then
+   if math.type(val) ~= 'integer' then return false end
+   st.val = math.max(v.min or 0, math.min(v.max or 100, val))
+  elseif v.kind == 'choice' and v.options then
+   if math.type(val) ~= 'integer' or val < 0 or val >= #v.options then return false end
+   st.val = val
+  elseif v.kind == 'choice' or v.kind == 'text' or v.kind == 'counter' then
+   if type(val) ~= 'string' then return false end
+   st.text = (clip(val, L.str))
+  else
+   return false
+  end
+  return true
+ end
+ -- gd.ui.value(id, item): a boolean (toggle), an integer (slider, an options choice's index) or a string; nil for an unknown item
+ function ui.value(id, item)
+  own(id)
+  local it = item_of(id, item)
+  if not it or type(it.value) ~= 'table' then return nil end
+  local v, st = it.value, row_state(ui.screens[id], it)
+  if v.kind == 'toggle' then return st.on end
+  if v.kind == 'slider' or (v.kind == 'choice' and v.options) then return st.val end
+  return st.text or ''
+ end
+
+ -- A toggle flips, a slider steps by its step (default max(1, (max - min) // 20)) and clamps, a choice with options wraps and reports its index,
+ -- a choice without options reports its direction; on.change(id, value).
  -- Returns true when the event was a value event (even at a slider's end, where nothing is reported).
  function ui.engine_row(id, how)
   local d, f = ui.screens[id], ui._f[id]
@@ -357,15 +418,19 @@ function Stub.new(opts)
   local v = it and type(it.value) == 'table' and it.value or nil
   if not v or disabled(it) or (v.kind ~= 'toggle' and v.kind ~= 'choice' and v.kind ~= 'slider') then return false end
   if how ~= 'accept' and how ~= 'left' and how ~= 'right' then return false end
-  local st = ui._rows[id][it.id]
-  if not st then st = { on = v.on and true or false, val = v.value or 0 }; ui._rows[id][it.id] = st end
+  local st = row_state(d, it)
   local arg
   if v.kind == 'toggle' then st.on = not st.on; arg = st.on
+  elseif v.kind == 'choice' and v.options then   -- the engine owns the choice: it wraps over the options and reports the INDEX
+   local n = #v.options
+   if how == 'accept' then return false end
+   if n < 2 then return true end
+   st.val = ((st.val + (how == 'left' and -1 or 1)) % n + n) % n; arg = st.val
   elseif v.kind == 'choice' then arg = (how == 'left') and -1 or 1
   else
    if how == 'accept' then return false end
    local lo, hi = v.min or 0, v.max or 100
-   local step = math.max(1, (hi - lo) // 20)
+   local step = v.step or math.max(1, (hi - lo) // 20)
    local nv = math.max(lo, math.min(hi, math.max(lo, math.min(hi, st.val)) + (how == 'left' and -step or step)))
    if nv == math.max(lo, math.min(hi, st.val)) then return true end
    st.val = nv; arg = nv
@@ -382,6 +447,7 @@ function Stub.new(opts)
   if kind == 'accept' then
    if row_of(d, f) and ui.engine_row(id, 'accept') then return true end
    fn = on.accept
+  elseif kind == 'left' or kind == 'right' then return (ui.engine_row(id, kind))
   elseif kind == 'back' then fn = on.back
   elseif kind == 'x' or kind == 'y' or kind == 'z' then fn = on.alt and on.alt[kind:upper()]
   elseif kind == 'start' then fn = on.start

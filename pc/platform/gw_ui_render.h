@@ -30,6 +30,10 @@ void at_render_ex(const AtScreen *sc, const AtView *v, float canvas_w, double no
  * returned; a tile scrolled out of the window has h = 0) and of the More labels (m[0..n_more)). The _ex form takes the first
  * visible row, and reports the visible and total rows and the More strip's rectangle. */
 int at_list_visible(const AtLayout *L);
+/* A list pane with group headings (22 px each) and 39 px rows: how many rows fit from `first` in a pane of height pane_h, and the first row that keeps `focus`
+ * in view. With no groups the window is exactly at_list_visible's. A list with tabs has the shorter pane (at_layout_split). */
+int at_list_window(const AtScreen *sc, float pane_h, int first);
+int at_list_scroll_to(const AtScreen *sc, float pane_h, int focus, int scroll);
 /* the rectangle of every offer card of a cards screen (the count is returned), for the renderer, hit testing and tests */
 int at_cards_geometry(const AtScreen *sc, const AtLayout *L, AtRect *out, int cap);
 int at_tiles_geometry(const AtScreen *sc, const AtLayout *L, AtRect *tiles, int cap, AtRect *more, int more_cap);

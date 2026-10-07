@@ -17,4 +17,9 @@
 /* 24FE4C */ void mnDataDel_8024FE4C(u8);
 /* 250170 */ void mnDataDel_80250170(void);
 
+#if defined(TARGET_PC)
+/* Atlas Erase Data: category 0 to 5 (pc/platform/gw_ui_erase.h) without the retail screen animations; the caller has asked the player */
+void mnDataDel_Erase(int category);
+#endif
+
 #endif

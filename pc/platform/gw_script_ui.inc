@@ -18,6 +18,7 @@
 #include "gw_ui_policy.h"
 #include "gw_ui_hud.h"
 #include "gw_ui_registry.h"
+#include "gw_ui_item.h"
 #include "gw_ui_retail.h"
 #include "gw_ui_render.h"
 #include "gw_ui_stack.h"
@@ -35,6 +36,7 @@ typedef struct {
     unsigned primed_frame;  /* an engine screen: the tick it became the top again (an intent in that same frame is dropped) */
     int self_close;         /* an engine screen the host runs alone (Credits): B closes it here, no event reaches the game */
     int native_sel;         /* a select screen (gw_script_ui_sel.inc): its cells are in adapter storage, the mouse is read there */
+    int native_set;         /* the settings screens (gw_script_ui_set.inc): rows filled by the table walker, keys and mouse read there, the pad fed as intents */
     AtScreen sc;
     AtView view;
     AtHits hits;
@@ -387,7 +389,7 @@ static int gs_ui_open_screen(int slot) {
     int owner = u->owner;
     AtStackEntry *top;
     { int t = at_stack_top(&gs_ui_stack);                          /* no mod screen over a select: it owns the pad and the cursors of every port */
-      if (t >= 0 && gs_ui_slot[t].native_sel) { gw_log("ui: screen %s not opened: a select screen is on top", u->sc.id); return 0; } }
+      if (t >= 0 && (gs_ui_slot[t].native_sel || gs_ui_slot[t].native_set)) { gw_log("ui: screen %s not opened: a select or settings screen is on top", u->sc.id); return 0; } }
     if (!at_stack_push(&gs_ui_stack, slot)) return 0;
     top = at_stack_top_entry(&gs_ui_stack);
     if (top != NULL && top->focus.block >= 0 && u->view.focus.block < 0) u->view.focus = top->focus;
@@ -485,13 +487,16 @@ static int gs_ui_value_event(int slot, const AtEvent *e) {
         it->on = !it->on; is_bool = 1; val = it->on;
     } else if (it->vkind == AT_VAL_CHOICE) {
         dir = left ? -1 : 1; val = dir;
+        if (it->n_opts > 0) {                                     /* options: the engine owns the choice; it wraps, shows the option and reports the INDEX */
+            if (!at_item_apply(AT_VAL_CHOICE, 0, it->n_opts - 1, 1, it->vval, dir, &nv)) return 1;   /* one option: nothing to change to */
+            it->vval = nv; val = nv;
+            snprintf(it->text, sizeof it->text, "%s", it->opt[nv]);
+        }
     } else {
-        if (accept) return 0;                                     /* a slider is stepped, not accepted */
-        step = (it->vmax - it->vmin) / 20; if (step < 1) step = 1;
-        nv = it->vval + (left ? -step : step);
-        if (nv < it->vmin) nv = it->vmin;
-        if (nv > it->vmax) nv = it->vmax;
-        if (nv == it->vval) return 1;                             /* at the end: nothing changed, nothing to report */
+        if (accept && !(it->iflags & AT_ITEM_A_STEPS)) return 0;  /* a slider is stepped, not accepted (unless the row says A steps it) */
+        step = it->vstep > 0 ? it->vstep : (it->vmax - it->vmin) / 20;   /* the script's step, else the Lua rule */
+        if (step < 1) step = 1;
+        if (!at_item_apply(AT_VAL_SLIDER, it->vmin, it->vmax, step, it->vval, left ? -1 : 1, &nv)) return 1;   /* at the end: nothing changed, nothing to report */
         it->vval = nv; val = nv;
     }
     if (u->sc.fn_change >= 0 && gs_may_run(u->owner) && gs_ui_usable(u->owner)) {
@@ -510,6 +515,8 @@ static void gs_ui_engine_event(int slot, const AtEvent *e);
 static void gs_ui_fix_scroll(GsUiSlot *u);
 static void gs_ui_overlay_try(void);
 static void gs_sel_tick(GsUiSlot *u);
+static void gs_set_tick(GsUiSlot *u);
+static void gs_set_resolve(GsUiSlot *u);
 
 static void gs_ui_event(int slot, const AtEvent *e) {
     GsUiSlot *u = &gs_ui_slot[slot];
@@ -604,6 +611,7 @@ static void gs_ui_tick(void) {
     if (!gs_ui_usable(u->owner)) { gs_ui_release(u->owner); return; }   /* switched off or unloaded: its screens go (never an engine screen) */
     if (!gs_may_run(u->owner)) return;
     if (u->native_sel) { gs_sel_tick(u); return; }                      /* a select screen: its own mouse path; the pad is the game's */
+    if (u->native_set) { gs_set_tick(u); return; }                      /* the settings: the keys and the mouse here, the pad is the game's (gw_Ui_SetIntent) */
     if (at_screen_wants_pad(&u->sc) || top == gs_ui_pause_pushed) {   /* a pause screen the takeover pushed reads the pausing port's pad itself, whatever its input says */
         int sx, sy;
         unsigned b = gs_ui_pad_read(u, &sx, &sy);
@@ -638,7 +646,7 @@ static void gs_ui_draw(void) {
     if (top < 0 || !gs_ui_roles_ok()) return;
     u = &gs_ui_slot[top];
     if (!u->used || !gs_ui_usable(u->owner)) return;
-    if (u->owner == GS_UI_ENGINE && !u->native_sel && gs_ui_menu_held_by != -2) return;   /* held: a script's own menu is drawn over the frontend instead */
+    if (u->owner == GS_UI_ENGINE && !u->native_sel && !u->native_set && gs_ui_menu_held_by != -2) return;   /* held: a script's own menu is drawn over the frontend instead */
     if (gw_Kit_QuadRoom() < AT_SCREEN_QUAD_CAP) {
         if (!u->warned) { u->warned = 1; gw_log("ui: %s not drawn: only %d quads left this frame", u->sc.id, gw_Kit_QuadRoom()); }
         return;
@@ -653,6 +661,7 @@ static void gs_ui_draw(void) {
     memset(&info, 0, sizeof info);
     first = gw_Kit_QuadCount();
     gs_ui_stat.canvas_w = gw_Console_ScriptWidth();
+    if (u->native_set) gs_set_resolve(u);                          /* the rows were submitted again: the focus is valid before it is drawn */
     gs_ui_reduced = gw_Settings_Int("reduced_motion", 0) != 0;
     at_render_ex(&u->sc, &u->view, gs_ui_stat.canvas_w, gs_now_ms(), gs_ui_reduced, &ops, &sink, &u->hits, &info);
     gw_Kit_SetTracking(0.0f);                                     /* belt and braces: no draw leaves tracking set */
@@ -715,7 +724,11 @@ static void gs_ui_fix_scroll(GsUiSlot *u) {
     AtLayout pl;
     if (u->view.focus.index < 0) return;
     at_layout(640.0f, u->sc.preset, &pl);                          /* the pane's height does not depend on the width */
-    if (u->sc.primary == AT_PRIMARY_LIST) u->view.scroll = at_list_scroll(u->view.focus.index, u->view.scroll, at_list_visible(&pl), u->sc.n_items);
+    if (u->sc.primary == AT_PRIMARY_LIST) {                        /* the window counts group headings, and a tab strip shortens the pane */
+        float ph = pl.primary.h;
+        if (u->sc.n_tabs > 0) { AtSplit sp; at_layout_split(&pl, 1, AT_BAND_NONE, &sp); ph = sp.grid.h; }
+        u->view.scroll = at_list_scroll_to(&u->sc, ph, u->view.focus.index, u->view.scroll);
+    }
     else if (u->sc.primary == AT_PRIMARY_TILES) u->view.scroll = at_tiles_scroll(&u->sc, &pl, u->view.focus.block == 0 ? u->view.focus.index : -1, u->view.scroll);
 }
 
@@ -820,7 +833,7 @@ static void gs_ui_fill_item(AtItem *it, const char *id, const char *label, const
 }
 
 void gw_Ui_Tile(const char *id, const char *label, const char *tag, const char *numeral, int flags) {
-    if (!gs_ui_scratch_live || gs_ui_scratch.n_items >= AT_MAX_ITEMS) return;
+    if (!gs_ui_scratch_live || gs_ui_scratch.n_items >= AT_MAX_ITEMS_LUA) return;   /* the documented 32, though the record now holds AT_MAX_ITEMS for the native settings */
     gs_ui_fill_item(&gs_ui_scratch.items[gs_ui_scratch.n_items++], id, label, tag, numeral, flags);
 }
 
@@ -929,7 +942,7 @@ void gw_Ui_Intent(int type, int a) {
     GsUiSlot *u;
     if (top < 0) return;
     u = &gs_ui_slot[top];
-    if (!u->used || u->owner != GS_UI_ENGINE || u->native_sel) return;   /* a script's screen on top: the menu takes no input; a select reads the pads itself */
+    if (!u->used || u->owner != GS_UI_ENGINE || u->native_sel || u->native_set) return;   /* a script's screen on top: the menu takes no input; a select reads the pads itself, the settings take gw_Ui_SetIntent */
     if (gs_ui_menu_held_by != -2) return;                          /* held by a script (gd.ui.hold_menu): no input either */
     if (u->primed_frame == gs_ui_frame + 1) return;                 /* the press that uncovered it is not its own */
     if (!gs_may_run(GS_UI_ENGINE)) return;
@@ -1838,6 +1851,71 @@ static int l_ui_set_focus(lua_State *L) {
     return 1;
 }
 
+/* ---- gd.ui.set_value / gd.ui.value: a row's live value, set and read in place (no re-registration, no on.change, the focus stays).
+ * The same owner check every gd.ui call uses (gs_ui_slot_arg: "belongs to another script", "belongs to the engine"). ---- */
+static AtItem *gs_ui_find_item(GsUiSlot *u, const char *id) {
+    int i;
+    if (u->sc.primary != AT_PRIMARY_LIST && u->sc.primary != AT_PRIMARY_TILES) return NULL;
+    for (i = 0; i < u->sc.n_items; i++) if (strcmp(u->sc.items[i].id, id) == 0) return &u->sc.items[i];
+    return NULL;
+}
+
+static int l_ui_set_value(lua_State *L) {
+    int s = gs_ui_slot_arg(L, 1), ok = 0;
+    GsUiSlot *u = &gs_ui_slot[s];
+    AtItem *it = gs_ui_find_item(u, luaL_checkstring(L, 2));
+    if (it != NULL) {
+        switch (it->vkind) {
+        case AT_VAL_TOGGLE:
+            if (lua_type(L, 3) == LUA_TBOOLEAN) { it->on = lua_toboolean(L, 3) != 0; ok = 1; }
+            break;
+        case AT_VAL_SLIDER:
+            if (lua_isinteger(L, 3)) {
+                lua_Integer v = lua_tointeger(L, 3);
+                it->vval = v < it->vmin ? it->vmin : v > it->vmax ? it->vmax : (int) v;
+                ok = 1;
+            }
+            break;
+        case AT_VAL_CHOICE:
+            if (it->n_opts > 0) {
+                if (lua_isinteger(L, 3) && lua_tointeger(L, 3) >= 0 && lua_tointeger(L, 3) < it->n_opts) {
+                    it->vval = (int) lua_tointeger(L, 3);
+                    snprintf(it->text, sizeof it->text, "%s", it->opt[it->vval]);
+                    ok = 1;
+                }
+                break;
+            }
+            /* fall through: a choice without options shows the text it is given */
+        case AT_VAL_TEXT:
+        case AT_VAL_COUNTER:
+            if (lua_type(L, 3) == LUA_TSTRING) { snprintf(it->text, sizeof it->text, "%s", lua_tostring(L, 3)); ok = 1; }
+            break;
+        default: break;
+        }
+        if (ok) u->explain_dirty = 1;                              /* an explainer that names the value is asked again */
+    }
+    lua_pushboolean(L, ok);
+    return 1;
+}
+
+static int l_ui_value(lua_State *L) {
+    int s = gs_ui_slot_arg(L, 1);
+    AtItem *it = gs_ui_find_item(&gs_ui_slot[s], luaL_checkstring(L, 2));
+    if (it == NULL) { lua_pushnil(L); return 1; }
+    switch (it->vkind) {
+    case AT_VAL_TOGGLE: lua_pushboolean(L, it->on != 0); break;
+    case AT_VAL_SLIDER: lua_pushinteger(L, it->vval); break;
+    case AT_VAL_CHOICE:
+        if (it->n_opts > 0) { lua_pushinteger(L, it->vval); break; }
+        lua_pushstring(L, it->text);
+        break;
+    case AT_VAL_TEXT:
+    case AT_VAL_COUNTER: lua_pushstring(L, it->text); break;
+    default: lua_pushnil(L); break;
+    }
+    return 1;
+}
+
 static int l_ui_note(lua_State *L) {
     int top = at_stack_top(&gs_ui_stack);
     GsUiSlot *u;
@@ -1922,7 +2000,7 @@ static int l_ui_state(lua_State *L) {
 
 static const luaL_Reg gs_ui_funcs[] = {
     {"available", l_ui_available}, {"screen", l_ui_screen}, {"open", l_ui_open}, {"close", l_ui_close},
-    {"feed", l_ui_feed}, {"focus", l_ui_focus}, {"set_focus", l_ui_set_focus}, {"note", l_ui_note},
+    {"feed", l_ui_feed}, {"focus", l_ui_focus}, {"set_focus", l_ui_set_focus}, {"set_value", l_ui_set_value}, {"value", l_ui_value}, {"note", l_ui_note},
     {"dialog", l_ui_dialog}, {"state", l_ui_state}, {"entry", l_ui_entry}, {"hold_menu", l_ui_hold_menu}, {"forget", l_ui_forget}, {"hud", l_ui_hud}, {"hud_clear", l_ui_hud_clear}, {"toast", l_ui_toast},
     {"retail_hide", l_ui_retail_hide}, {"retail", l_ui_retail}, {"pause_screen", l_ui_pause_screen}, {"unpause", l_ui_unpause}, {NULL, NULL}};
 
@@ -1932,3 +2010,4 @@ static void gs_push_ui(lua_State *L) {
 }
 
 #include "gw_script_ui_sel.inc"
+#include "gw_script_ui_set.inc"

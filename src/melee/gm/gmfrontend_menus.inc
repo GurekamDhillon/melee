@@ -36,7 +36,7 @@
  */
 
 enum { FM_HUB, FM_LIST };
-enum { FA_SUB, FA_MODE, FA_NATIVE, FA_MATCH_SETUP, FA_ONLINE, FA_PAGE, FA_ENTRY }; ///< FA_ENTRY (arg k): a registry entry of a mod, shown in the legacy SOLO hub
+enum { FA_SUB, FA_MODE, FA_NATIVE, FA_MATCH_SETUP, FA_ONLINE, FA_PAGE, FA_ENTRY, FA_RULES }; ///< FA_ENTRY (arg k): a registry entry of a mod, shown in the legacy SOLO hub
 #define SEL_VS_ONLINE 0x40 ///< not a vanilla selection: VERSUS > ONLINE is the port's
 #define SEL_MAIN_ONLINE 0x44 ///< not a vanilla selection: the Atlas main menu's ONLINE (VERSUS no longer lists it)
 #define SEL_MAIN_MODS 0x45   ///< not a vanilla selection: the Atlas main menu's MODS (the Settings > Mods page)
@@ -177,15 +177,16 @@ static const FeMenuItem fm_main_atlas[] = {
     { "VERSUS", "Up to four players. Your rules, your stage.", NULL, SEL_MAIN_VS, FA_SUB, MENU_KIND_VS },
     { "ONLINE", "Play someone over the internet: host a room or join one.", NULL, SEL_MAIN_ONLINE, FA_ONLINE, GM_VS },
     { "MODS", "Turn mods on or off, and see what each one adds.", NULL, SEL_MAIN_MODS, FA_PAGE, 4 },
-    { "SETTINGS", "Video, audio, controls, online, mods and the game's options.", NULL, SEL_MAIN_SETTINGS, FA_SUB,
-      MENU_KIND_SETTINGS },
+    /* the tabbed settings screen (gmfrontend_atlas_set.inc), opened at VIDEO through fe_settings_from_menus(0); B returns to this item. The legacy tree keeps its list. */
+    { "SETTINGS", "Video, audio, controls, online, game options and mods.", NULL, SEL_MAIN_SETTINGS, FA_PAGE, 0 },
 };
 
 static const FeMenuItem fm_vs_atlas[] = {
     { "MELEE", "Up to four players. Your rules, your stage.", NULL, SEL_VS_MELEE, FA_MATCH_SETUP, GM_VS },
     { "TOURNAMENT", "A bracket for up to 64 players.", NULL, SEL_VS_TOURNAMENT, FA_MODE, GM_TOURNAMENT },
     { "SPECIAL MELEE", "Melee with a twist.", NULL, SEL_VS_SPECIAL, FA_SUB, MENU_KIND_SPECIAL },
-    { "RULES", "Stock, time, items and stages.", NULL, SEL_VS_RULES, FA_NATIVE },
+    /* the Atlas Rules screen (value rows over GameRules: gmfrontend_settings.inc fe_items_rules); the legacy fm_vs keeps the game's own screen */
+    { "RULES", "Stock, time, items and stages.", NULL, SEL_VS_RULES, FA_RULES },
     { "NAME ENTRY", "Make a name tag.", NULL, SEL_VS_NAME, FA_NATIVE },
 };
 
@@ -427,7 +428,7 @@ static struct {
     int frames;               ///< frames since this screen opened
     int ready_at;             ///< input accepted from this frame
     int leave_at;             ///< the pending action happens at this fp frame, 0 none
-    int pend_kind;            ///< 0 none, 1 open menu, 2 game mode, 3 native, 4 match setup
+    int pend_kind;            ///< 0 none, 1 open menu, 2 game mode, 3 native, 4 match setup, 5 online, 6 settings page, 7 rules
     int pend_a, pend_b;
     int fade;                 ///< scene fade, FM_FADE = black
     bool fading_out;
@@ -1348,6 +1349,10 @@ static void fm_do_pending(void)
         OSReport("frontend: -> SETTINGS page %d\n", fm.pend_a);
         fe_settings_from_menus(fm.pend_a);
         return;
+    case 7:
+        OSReport("frontend: -> VERSUS > RULES\n");
+        fe_rules_from_menus();
+        return;
     }
 }
 
@@ -1411,6 +1416,9 @@ static void fm_confirm(void)
         fm.pend_kind = 6;
         fm.pend_a = it->arg;
         fa_page_from_main = Ui_Ready() && m->kind == MENU_KIND_MAIN;
+        break;
+    case FA_RULES:
+        fm.pend_kind = 7;
         break;
     }
     if (fp.motion_ok) {

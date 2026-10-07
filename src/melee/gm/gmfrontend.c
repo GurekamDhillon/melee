@@ -97,41 +97,7 @@
 
 /* ---- the toolkit's data ------------------------------------------------------------------- */
 
-typedef enum FrontendItemKind {
-    FE_ACTION,
-    FE_CHOICE,
-    FE_SLIDER,
-    FE_TOGGLE,
-} FrontendItemKind;
-
-typedef enum FrontendAction {
-    FE_DO_CONTINUE, ///< go on to the mode the rule interrupted
-    FE_DO_BACK,     ///< return to the mode the player came from
-    FE_DO_CALL,     ///< run the item's `call` (the screen stays)
-} FrontendAction;
-
-typedef struct FrontendItem {
-    u8 kind;   ///< ::FrontendItemKind
-    u8 action; ///< ::FrontendAction, for FE_ACTION
-    const char* label;
-    const char* help;
-    int (*get)(void);
-    void (*set)(int);
-    int min, max, step;
-    const char* const* options;         ///< FE_CHOICE labels, index = value - min
-    void (*format)(int value, char* out); ///< FE_SLIDER text; default "%d"
-    int (*visible)(void);               ///< NULL = always shown
-    void (*call)(void);                 ///< FE_DO_CALL
-    int (*enabled)(void);               ///< NULL = enabled; a disabled row shows greyed, A bumps
-} FrontendItem;
-
-typedef struct FrontendScreen {
-    const char* title;
-    const char* subtitle;
-    const FrontendItem* items;
-    int n_items;
-    int art; ///< a room screen drawn from its layout (gmfrontend_online.inc: FL_*), 0 = rows
-} FrontendScreen;
+#include "gmfrontend_items.h" /* FrontendItem, FrontendScreen: shared with the native tests of the Atlas table walker (gmfrontend_atlas_table.h) */
 
 typedef struct FrontendRule {
     u8 from;
@@ -1196,6 +1162,9 @@ static void fe_tex_quad(FeTex* t, float x, float y, float w, float h, GXColor c)
 static void fe_match_setup_from_menus(void);
 static void fe_online_from_menus(void);
 static void fe_settings_from_menus(int page);
+static void fe_settings_resume_game(void);
+static void fe_rules_from_menus(void);
+static void fe_rules_resume(void);
 static bool fe_is_settings(const FrontendScreen* s);
 static bool fe_is_controls_help(const FrontendScreen* s);
 static int fm_back_kind = -1, fm_back_sel; ///< backing out of a frontend scene lands on this menu item
@@ -1214,6 +1183,7 @@ static bool fm_back_to_online_item; ///< backing out of ONLINE lands on its VS h
 #include "gmfrontend_select.inc"
 #include "gmfrontend_atlas_select.inc"
 #include "gmfrontend_settings.inc"
+#include "gmfrontend_atlas_set.inc"
 
 /* Legacy panels, rows and buttons share the grid too. The source grid uses
  * their old display sizes, preserving UV placement at those sizes exactly. */
@@ -1296,6 +1266,14 @@ bool gmFrontend_NativeReturn(int kind, int sel)
 {
     if (!fe_menus_on() || !fm_replaced(kind)) {
         return false;
+    }
+    if (Ui_Ready() != 0 && kind == MENU_KIND_SETTINGS && sel == SEL_SETTINGS_LANG) {
+        fe_settings_resume_game(); /* Atlas: back to the tabs, on GAME at Language (the legacy list is the MELEE_ATLAS=0 destination) */
+        return true;
+    }
+    if (Ui_Ready() != 0 && kind == MENU_KIND_VS && sel == SEL_VS_RULES) {
+        fe_rules_resume(); /* Atlas: the game's own Rules screen (Item and Stage Switches) backs out to the Atlas Rules screen */
+        return true;
     }
     OSReport("frontend: native screen backs out to (kind %d, sel %d) - back to the menus\n", kind,
              sel);
@@ -1795,6 +1773,10 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
 /* Show another screen in the same scene: the rows, title and subtitle follow. */
 static void fe_switch_screen(const FrontendScreen* s)
 {
+    if (fss_intercepts(s)) {
+        fss_switch(s); /* the Atlas settings are up: fss_frame moves the host to this screen on the same frame */
+        return;
+    }
     if (s->art != 0 || (fe.screen != NULL && fe.screen->art != 0)) {
         /* to or from a room screen: the model is rebuilt either way */
         const FrontendScreen* from = fe.screen;
@@ -1876,13 +1858,35 @@ static void fe_settings_from_menus(int page)
     fe.next_menus = false;
     fm_back_kind = MENU_KIND_SETTINGS;
     fm_back_sel = 0x41 + page;
-    if (fa_page_from_main && page == FSP_MODS) {
-        /* the Atlas main menu's MODS row: B returns to MAIN > MODS, not the Settings list */
+    if (Ui_Ready()) {
+        /* Atlas: the pages are the tabs of one screen, entered from the main menu's SETTINGS row (or its MODS row, the first boot, the Language return): B returns to that
+           main-menu item, not to a Settings list. MELEE_ATLAS=0 keeps the legacy list. */
         fm_back_kind = MENU_KIND_MAIN;
-        fm_back_sel = SEL_MAIN_MODS;
+        fm_back_sel = SEL_MAIN_SETTINGS;
+        if (fa_page_from_main && page == FSP_MODS) {
+            fm_back_sel = SEL_MAIN_MODS; /* the Atlas main menu's MODS row: B returns to MAIN > MODS */
+        }
     }
     fa_page_from_main = false;
     fm_leave_scene(GM_FRONTEND);
+}
+
+/* The game's Language screen backs out (gmFrontend_NativeReturn) to the tabbed settings, on the GAME tab with the focus on the Language row: the same fields
+ * fe_settings_from_menus sets, with no menus scene in between (the caller leaves GM_MENU for GM_FRONTEND). */
+static void fe_settings_resume_game(void)
+{
+    OSReport("frontend: the Language screen backs out to SETTINGS > GAME, on Language\n");
+    fe_settings_apply_online();
+    fe_ol_note[0] = 0;
+    fe.screen = &fe_screen_settings[FSP_GAMEPLAY];
+    fe.continue_to = GM_MENU;
+    fe.back_to = GM_MENU;
+    fe.reported = GM_MENU;
+    fe.next_menus = false;
+    fm_back_kind = MENU_KIND_MAIN;
+    fm_back_sel = SEL_MAIN_SETTINGS;
+    fa_page_from_main = false;
+    fss.want_label = "Language";
 }
 
 static void fe_change(const FrontendItem* it, int dir)
@@ -2077,6 +2081,11 @@ void gm_Scene_Frontend_OnFrame(void)
         fe.hl_y += ((float) (fe.cursor - fe.scroll) - fe.hl_y) * 0.35F;
     }
 
+    /* the Atlas settings pages (tabs, rows, events: gmfrontend_atlas_set.inc). After the Controls_Menu heartbeat above, never before it. */
+    if (fss_frame()) {
+        return;
+    }
+
     if (fe.screen->art != 0) {
         fl_frame(); /* a room screen: its own input and model */
         return;
@@ -2189,6 +2198,7 @@ void gm_Scene_Frontend_OnExit(void* exit_data)
 {
     int slot;
     (void) exit_data;
+    fss_exit(); /* the host closes the settings screen with the scene (Ui_SceneExit) */
     if (fm.active) {
         fm_scene_exit();
         return;

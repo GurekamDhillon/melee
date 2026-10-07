@@ -237,10 +237,10 @@ static void draw_grid(const AtScreen *sc, const AtView *v, const AtLayout *L, co
 static void draw_tabs(const AtScreen *sc, const AtView *v, AtRect r, const AtTextOps *o, const AtSink *s, HitCtx *hc)
 {
     const char *names[AT_MAX_TABS];
-    int counts[AT_MAX_TABS], i, n = sc->n_tabs > AT_MAX_TABS ? AT_MAX_TABS : sc->n_tabs;
+    int counts[AT_MAX_TABS], i, n = sc->n_tabs > AT_MAX_TABS ? AT_MAX_TABS : sc->n_tabs, with_counts = 1;
     AtRect rects[AT_MAX_TABS];
-    for (i = 0; i < n; i++) { names[i] = sc->tabs[i].name; counts[i] = sc->tabs[i].count; }
-    at_part_tabs_ex(s, o, r, names, counts, n, v->tab, -1, rects);
+    for (i = 0; i < n; i++) { names[i] = sc->tabs[i].name; counts[i] = sc->tabs[i].count; if (counts[i] < 0) with_counts = 0; }   /* a count below zero: tabs with no numbers (settings) */
+    at_part_tabs_ex(s, o, r, names, with_counts ? counts : NULL, n, v->tab, -1, rects);
     for (i = 0; i < n; i++) if (rects[i].w > 0.0f) hit_add(hc, rects[i], AT_HIT_TAB, i, 0);
 }
 
@@ -392,15 +392,56 @@ static void draw_tiles(const AtScreen *sc, const AtView *v, const AtLayout *L, c
     }
 }
 
-static void draw_list(const AtScreen *sc, const AtView *v, const AtLayout *L, const AtTextOps *o, const AtSink *s, HitCtx *hc)
+/* A heading precedes row i when it names a group the row before it does not (the first row too). Headings are not rows: no focus, no hit rectangle. */
+static int heading_before(const AtScreen *sc, int i)
 {
-    float x0 = L->primary.x + 12.0f, y0 = L->primary.y + 14.0f, iw = L->primary.w - 24.0f;
-    int visible = at_list_visible(L), first = v->scroll < 0 ? 0 : v->scroll, i;   /* the host keeps v->scroll valid */
-    for (i = first; i < sc->n_items && i < first + visible; i++) {
+    return sc->items[i].group[0] != '\0' && (i == 0 || strcmp(sc->items[i].group, sc->items[i - 1].group) != 0);
+}
+
+/* The rows of a list that fit a pane of height pane_h starting at `first`: a row costs 39 px (34 and a 5 px gap), a heading 22 px, with 14 px
+ * above and below. With no groups this is exactly floor((pane_h - 28) / 39), the legacy at_list_visible. */
+int at_list_window(const AtScreen *sc, float pane_h, int first)
+{
+    float avail = pane_h - 28.0f, used = 0.0f;
+    int i, n = 0;
+    if (first < 0) first = 0;
+    for (i = first; i < sc->n_items; i++) {
+        float cost = 39.0f + (heading_before(sc, i) ? 22.0f : 0.0f);
+        if (used + cost > avail + 0.001f) break;
+        used += cost;
+        n++;
+    }
+    return n;
+}
+
+/* the first visible row that keeps `focus` in the window (never moves the window when the focus is already in it) */
+int at_list_scroll_to(const AtScreen *sc, float pane_h, int focus, int scroll)
+{
+    if (sc->n_items < 1) return 0;
+    if (focus < 0) focus = 0;
+    if (focus >= sc->n_items) focus = sc->n_items - 1;
+    if (scroll < 0) scroll = 0;
+    if (scroll > focus) scroll = focus;
+    while (scroll < focus && focus >= scroll + at_list_window(sc, pane_h, scroll)) scroll++;
+    return scroll;
+}
+
+static void draw_list(const AtScreen *sc, const AtView *v, AtRect pane, const AtTextOps *o, const AtSink *s, HitCtx *hc)
+{
+    float x0 = pane.x + 12.0f, y = pane.y + 14.0f, iw = pane.w - 24.0f;
+    int first = v->scroll < 0 ? 0 : v->scroll, count = at_list_window(sc, pane.h, first), i;   /* the host keeps v->scroll valid */
+    for (i = first; i < sc->n_items && i < first + count; i++) {
         AtRect r;
-        r.x = x0; r.y = y0 + (float) (i - first) * 39.0f; r.w = iw; r.h = 34.0f;
+        if (heading_before(sc, i)) {
+            float tw = o->width(o->user, AT_R_CAP12, sc->items[i].group);
+            at_text(s, o, AT_R_CAP12, sc->items[i].group, x0 + 2.0f, y + 14.0f, AT_C_MUTED, AT_ALIGN_LEFT, iw * 0.5f);
+            if (iw * 0.5f > tw + 16.0f) at_poly_rect(s, x0 + tw + 14.0f, y + 9.0f, iw - tw - 14.0f, 1.0f, AT_C_LINE);
+            y += 22.0f;
+        }
+        r.x = x0; r.y = y; r.w = iw; r.h = 34.0f;
         at_part_row(s, o, r, &sc->items[i], (v->focus.index == i) ? AT_ST_FOCUS : AT_ST_REST);
         hit_add(hc, r, AT_HIT_CELL, 0, i);
+        y += 39.0f;
     }
 }
 
@@ -463,11 +504,15 @@ void at_render_ex(const AtScreen *sc, const AtView *v, float canvas_w, double no
             if (sc->band == AT_BAND_MATCHUP) draw_loading(v, sp.grid, o, s);
             if (sc->band != AT_BAND_NONE) draw_band(sc, v, sp.band, o, s, &hc);
         } else {
-            at_plate(s, L.primary, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH);
+            AtSplit lsp;
+            int list_tabs = sc->primary == AT_PRIMARY_LIST && sc->n_tabs > 0;      /* a list with tabs (the settings pages): the strip hangs on the pane's top edge */
+            if (list_tabs) at_layout_split(&L, 1, AT_BAND_NONE, &lsp);
+            at_plate(s, list_tabs ? lsp.grid : L.primary, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH);
             if (sc->primary == AT_PRIMARY_GRID) draw_grid(sc, v, &L, o, s, &hc);
             else if (sc->primary == AT_PRIMARY_TILES) draw_tiles(sc, v, &L, o, s, &hc);
             else if (sc->primary == AT_PRIMARY_CARDS) draw_cards(sc, v, &L, o, s, &hc);
-            else draw_list(sc, v, &L, o, s, &hc);
+            else draw_list(sc, v, list_tabs ? lsp.grid : L.primary, o, s, &hc);
+            if (list_tabs) draw_tabs(sc, v, lsp.tabs, o, s, &hc);
         }
         if (sc->preset != AT_PRESET_NONE) at_part_explainer(s, o, L.explainer, &v->ex);
         draw_keys(sc, v, &L, o, s, &hc);

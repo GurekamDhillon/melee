@@ -13,7 +13,9 @@ extern "C" {
 #define AT_MAX_EXT_CELLS 256          /* a native grid block's capacity (stages: 256), in adapter-owned storage */
 #define AT_MAX_TABS 6
 #define AT_MAX_CURSORS 4
-#define AT_MAX_ITEMS 32
+#define AT_MAX_ITEMS 64               /* a list: the MODS page has up to 41 rows, the remap inputs 22 (the Lua door keeps AT_MAX_ITEMS_LUA) */
+#define AT_MAX_ITEMS_LUA 32           /* the Lua door's documented limit for a list */
+#define AT_MAX_OPTS 8                 /* the options of a choice row (each cut at 23 characters) */
 #define AT_MAX_KEYS 6
 #define AT_MAX_WITH 4
 #define AT_MAX_MORE 4
@@ -29,6 +31,8 @@ enum { AT_CELL_LOCKED = 1, AT_CELL_EMPTY = 2, AT_CELL_MERGE = 4, AT_CELL_NEW = 8
        AT_CELL_BANNED = 64, AT_CELL_PICKED = 128, AT_CELL_UNSET = 256, AT_CELL_P1 = 512 };   /* 64 and up: strike marks, drawing only (step 6 sets them) */
 enum { AT_CARD_OPEN = 1, AT_CARD_CLOSED = 2, AT_CARD_READY = 4, AT_CARD_FOCUS = 8 };   /* AtPortCard.flags */
 enum { AT_VAL_NONE, AT_VAL_TOGGLE, AT_VAL_CHOICE, AT_VAL_SLIDER, AT_VAL_TEXT, AT_VAL_COUNTER };
+/* AtItem.iflags: A steps a slider (+1 step) like the legacy rule; a readout (a value shown, never changed); a confirm-worthy action; a disabled row (its `reason` shows) */
+enum { AT_ITEM_A_STEPS = 1, AT_ITEM_RO = 2, AT_ITEM_DANGER = 4, AT_ITEM_DISABLED = 8 };
 
 /* tex: a disc-art texture slot, or -1 for none (a record built from Lua sets -1: a zeroed cell must never name texture 0); abbr: the two-letter
  * frame text drawn when there is no art. */
@@ -44,12 +48,18 @@ typedef struct { int model, ring; char name[AT_STR]; char rule[AT_TEXT]; char ta
 typedef struct { char id[AT_ID]; int disabled; AtOffer offer; } AtCardRec;
 typedef struct { char a[AT_ID], b[AT_ID]; unsigned rgba; } AtLink;      /* a grid link between two cells, by cell id */
 typedef struct { char id[AT_ID]; char label[AT_STR]; char sub[AT_STR]; unsigned flags; int vkind, on; char text[AT_STR]; int vmin, vmax, vval;
-               char icon[AT_ID]; char tag[16]; char badge[8]; char numeral[6]; } AtItem;   /* icon, tag, badge, numeral: tiles (hubs, the main menu) */
+               char icon[AT_ID]; char tag[16]; char badge[8]; char numeral[6];   /* icon, tag, badge, numeral: tiles (hubs, the main menu) */
+               int vstep;                    /* a slider's step (0: the Lua rule, (max - min) / 20, at least 1) */
+               int n_opts; char opt[AT_MAX_OPTS][24];   /* a choice the ENGINE owns (it wraps and shows opt[value - vmin]); n_opts 0: the owner's text and direction events */
+               char group[24];               /* a heading drawn above this row when it differs from the previous row's (headings are not rows: never focused) */
+               char reason[48];              /* a disabled row says why under its label ("Connect a controller to this port first." is 40) */
+               unsigned iflags; } AtItem;    /* AT_ITEM_* */
 typedef struct { char btn; char label[AT_STR]; int fn_label, fn_when; } AtKey;
 typedef struct { int has; char label[24]; int model_a, model_b, model_out; char text[AT_STR]; } AtFooter;
 typedef struct { int has; int media_model, media_ring; char kicker[AT_STR], title[AT_STR], what[AT_TEXT]; int n_with, with_model[AT_MAX_WITH]; char from_text[AT_STR]; int warn;
                char with_text[AT_MAX_WITH][24]; int n_with_text;   /* with_text: tags such as "Melee", "Rules" */
-               int media_tex; char media_abbr[3]; char stepper_label[16], stepper_text[24]; int stepper; } AtExplainer;   /* media_tex: a disc-art slot, -1 none; stepper: a "< 1 / 4 >" line (costume) */
+               int media_tex; char media_abbr[3]; char stepper_label[16], stepper_text[24]; int stepper;
+               int no_well; char now_text[AT_STR]; } AtExplainer;   /* no_well: no media well (a settings row has no picture); now_text: "NOW 200%" drawn as a tag under the rule */   /* media_tex: a disc-art slot, -1 none; stepper: a "< 1 / 4 >" line (costume) */
 
 typedef struct {
     char id[AT_ID * 2];

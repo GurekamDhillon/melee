@@ -144,9 +144,11 @@ static float part_toggle(const AtSink *s, const AtTextOps *o, float right, float
     return 2.0f * w;
 }
 
-static float part_choice(const AtSink *s, const AtTextOps *o, float right, float cy, const char *text, int focus)
+static float part_choice(const AtSink *s, const AtTextOps *o, float right, float cy, const char *text, int focus, float max_w)
 {
-    float tw = twidth(o, AT_R_ROW16, text), mid = tw < 44.0f ? 44.0f : tw, total = 16.0f + 6.0f + mid + 6.0f + 16.0f, x = right - total;
+    float tw = twidth(o, AT_R_ROW16, text), mid = tw < 44.0f ? 44.0f : tw, total, x;
+    if (max_w > 0.0f && mid > max_w - 44.0f) mid = max_w - 44.0f > 44.0f ? max_w - 44.0f : 44.0f;    /* a long option is fitted, not allowed to cover the label */
+    total = 16.0f + 6.0f + mid + 6.0f + 16.0f; x = right - total;
     unsigned bg = focus ? AT_C_EMBER : AT_C_GROUND, fg = focus ? AT_C_INK : AT_C_MUTED;
     at_poly_rect(s, x, cy - 9.0f, 16.0f, 18.0f, bg);
     tri(s, x + 11.0f, cy - 4.0f, x + 5.0f, cy, x + 11.0f, cy + 4.0f, fg);
@@ -173,7 +175,7 @@ static float part_slider(const AtSink *s, float right, float cy, int vmin, int v
 void at_part_row(const AtSink *s, const AtTextOps *o, AtRect r, const AtItem *it, int state)
 {
     unsigned face = AT_C_PLATE2, edge = AT_C_EDGE2, txt = AT_C_TEXT2, val = AT_C_MUTED;
-    float e = 3.0f, y = r.y, right, cy, vw = 0.0f, lx, avail;
+    float e = 3.0f, y = r.y, right, cy, vw = 0.0f, lx, avail, vmax_w;
     int disabled = state == AT_ST_DISABLED || (it->flags & AT_CELL_DISABLED);
     int focus = state == AT_ST_FOCUS && !disabled, dfocus = state == AT_ST_FOCUS && disabled;   /* a focused disabled row: its own cue */
     AtRect pr;
@@ -189,23 +191,32 @@ void at_part_row(const AtSink *s, const AtTextOps *o, AtRect r, const AtItem *it
     if (it->flags & AT_CELL_SELECTED) at_poly_rect(s, r.x + r.w - 4.0f, y, 4.0f, r.h - e, AT_C_JADE);
     right = r.x + r.w - 12.0f - ((it->flags & AT_CELL_SELECTED) ? 6.0f : 0.0f);
     cy = y + (r.h - e) * 0.5f;
-    switch (it->vkind) {
+    lx = r.x + 12.0f;
+    vmax_w = (right - lx) * 0.55f;                                      /* a value never takes more than this of the row: the label keeps the rest */
+    if (disabled && it->reason[0] == '\0') {                            /* disabled with no reason given: still words, not only a dim */
+        vw = fit_text(s, o, AT_R_CAP12, "NOT NOW", right, mid_base(y, r.h - e, AT_R_CAP12), AT_C_DIM, AT_ALIGN_RIGHT, vmax_w);
+    } else switch (it->vkind) {
     case AT_VAL_TOGGLE: vw = part_toggle(s, o, right, cy, it->on); break;
-    case AT_VAL_CHOICE: vw = part_choice(s, o, right, cy, it->text, focus); break;
-    case AT_VAL_SLIDER: vw = part_slider(s, right, cy, it->vmin, it->vmax, it->vval, focus); break;
+    case AT_VAL_CHOICE: vw = part_choice(s, o, right, cy, it->text, focus, vmax_w); break;
+    case AT_VAL_SLIDER:
+        vw = part_slider(s, right, cy, it->vmin, it->vmax, it->vval, focus);
+        if (it->text[0] != '\0') {                                      /* the game's own readout ("45%") left of the ticks */
+            float tw = fit_text(s, o, AT_R_NUM14, it->text, right - vw - 8.0f, mid_base(y, r.h - e, AT_R_NUM14), val, AT_ALIGN_RIGHT, vmax_w - vw - 8.0f);
+            vw += tw > 0.0f ? tw + 8.0f : 0.0f;
+        }
+        break;
     case AT_VAL_TEXT:
     case AT_VAL_COUNTER:
-        at_text(s, o, AT_R_NUM14, it->text, right, mid_base(y, r.h - e, AT_R_NUM14), val, AT_ALIGN_RIGHT, 0.0f);
-        vw = twidth(o, AT_R_NUM14, it->text);
+        vw = fit_text(s, o, AT_R_NUM14, it->text, right, mid_base(y, r.h - e, AT_R_NUM14), val, AT_ALIGN_RIGHT, vmax_w);
         break;
     default: break;
     }
-    lx = r.x + 12.0f;
     avail = right - lx - vw - 8.0f;
     {                                                                   /* no room: fit_text draws nothing rather than unfitted text */
-        if (it->sub[0] != '\0') {
+        const char *sub = (disabled && it->reason[0] != '\0') ? it->reason : it->sub;     /* a disabled row says why under its label */
+        if (sub[0] != '\0') {
             fit_text(s, o, AT_R_ROW16, it->label, lx, y + 15.0f, txt, AT_ALIGN_LEFT, avail);
-            fit_text(s, o, AT_R_BODY12, it->sub, lx, y + r.h - e - 4.0f, AT_C_MUTED, AT_ALIGN_LEFT, avail);
+            fit_text(s, o, AT_R_BODY12, sub, lx, y + r.h - e - 4.0f, AT_C_MUTED, AT_ALIGN_LEFT, avail);
         } else {
             fit_text(s, o, AT_R_ROW16, it->label, lx, mid_base(y, r.h - e, AT_R_ROW16), txt, AT_ALIGN_LEFT, avail);
         }
@@ -627,8 +638,9 @@ void at_part_explainer(const AtSink *s, const AtTextOps *o, AtRect r, const AtEx
     int n, i, clamped = 0;
     at_plate(s, r, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH);
     if (!e->has) return;
-    at_poly_rect(s, x, y, w, 96.0f, AT_C_GROUND2);                       /* the media well */
-    if (e->media_model != AT_NO_MODEL) {
+    if (!e->no_well) at_poly_rect(s, x, y, w, 96.0f, AT_C_GROUND2);      /* the media well */
+    if (e->no_well) {
+    } else if (e->media_model != AT_NO_MODEL) {
         s->model(s->user, e->media_model, e->media_ring, x + 8.0f, y + 4.0f, w - 16.0f, 88.0f, 1, 0);
     } else if (e->media_abbr[0] != '\0') {                              /* a disc-art portrait (136x188, kept in its aspect), or its frame's letters */
         float ph = 88.0f, pw = ph * 136.0f / 188.0f;
@@ -639,7 +651,7 @@ void at_part_explainer(const AtSink *s, const AtTextOps *o, AtRect r, const AtEx
             if (twidth(o, AT_R_CAP12, "DISC ART") <= w - 16.0f) at_text(s, o, AT_R_CAP12, "DISC ART", x + w * 0.5f, y + 78.0f, AT_C_DIM, AT_ALIGN_CENTER, 0.0f);
         }
     }
-    y += 106.0f;
+    y += e->no_well ? 0.0f : 106.0f;
     fit_text(s, o, AT_R_CAP14, e->kicker, x, y + 11.0f, AT_C_JADE, AT_ALIGN_LEFT, w);
     y += 18.0f;
     fit_text(s, o, AT_R_TITLE, e->title, x, y + 24.0f, AT_C_IVORY, AT_ALIGN_LEFT, w);
@@ -658,6 +670,10 @@ void at_part_explainer(const AtSink *s, const AtTextOps *o, AtRect r, const AtEx
         y += 18.0f;
     }
     y += 8.0f;
+    if (e->now_text[0] != '\0' && y + 24.0f <= bottom) {                  /* what the row reads now: a tag, never colour alone */
+        at_part_tag(s, o, x, y, e->now_text, AT_TAG_PLAIN, w);
+        y += 30.0f;
+    }
     if (e->n_with > 0 && y + 44.0f <= bottom) {                          /* a label, then its content under it, so a narrow pane still fits */
         at_text(s, o, AT_R_CAP12, "WITH", x, y + 11.0f, AT_C_DIM, AT_ALIGN_LEFT, 0.0f);
         for (i = 0; i < e->n_with; i++) {

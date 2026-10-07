@@ -76,7 +76,7 @@ int gw_Ui_DataOpen(const char *id, const char *t0, const char *t1, const char *t
     gs_set.gen = (gs_set.gen + 1) & 0xFFFFF;
     gs_set.h = (gs_set.gen << 8) | slot;
     gs_set.data = 1;
-    gw_log("ui: data screen %s open (native)", sc->id);
+    gw_log("ui: data screen %s open (native)", sc->id); /* OK-NOTEXT: an authored screen id */
     return gs_set.h;
 }
 
@@ -123,6 +123,8 @@ int gw_Ui_DataWindow(void) { return AT_DATA_ROWS; }
 int gw_Ui_DataFirst(int total, int per, int focus, int first) { return at_data_first(total, per, focus, first); }
 const char *gw_Ui_EnvData(void) { const char *e = getenv("MELEE_ATLAS_DATA"); return e != NULL ? e : ""; }
 int gw_Ui_NetplayActive(void) { return gs_ui_netplay(); }
+/* MELEE_ATLAS_TEXTPROBE=1: the data adapter logs, once, per retail text source, how many strings, characters and glyphs do not decode (counts only) */
+int gw_Ui_EnvProbe(void) { const char *e = getenv("MELEE_ATLAS_TEXTPROBE"); return e != NULL && strcmp(e, "1") == 0; }
 
 /* ---- rows through the pure models (the game passes what the retail getters returned) ---- */
 

@@ -85,6 +85,8 @@ int main(void)
     in.p[0].percent = 5; in.p[0].stocks = 1; in.p[0].kos = 0; in.p[0].falls = 2;   /* a tie: the same place, "2nd" for both */
     at_results_build(&r, &in);
     CHECK(at_results_rows(&r, names, rows, 4) == 3 && strcmp(rows[1].value, "2nd") == 0 && strcmp(rows[2].value, "2nd") == 0);
+    at_results_confirm(&r, 3, AT_RC_START);                                                          /* a confirmed human says so; the others do not */
+    CHECK(at_results_rows(&r, names, rows, 4) == 3 && strncmp(rows[2].sub, "READY  ", 7) == 0 && strncmp(rows[1].sub, "READY", 5) != 0);
     CHECK(at_results_rows(&r, names, rows, 2) == 2);                                                 /* never past the caller's room */
     CHECK(at_results_rows(&r, names, rows, 0) == 0);
     CHECK_STR(at_place_word(1), "1st"); CHECK_STR(at_place_word(2), "2nd"); CHECK_STR(at_place_word(3), "3rd"); CHECK_STR(at_place_word(4), "4th"); CHECK_STR(at_place_word(0), "");

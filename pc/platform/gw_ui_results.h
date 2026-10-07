@@ -21,7 +21,7 @@ typedef struct { AtResPlayer players[4]; int n, humans, canceled, exit_frames, d
 void at_results_build(AtResults *r, const AtResInput *in);
 void at_results_confirm(AtResults *r, int port, int kind);
 int  at_results_done(const AtResults *r);
-/* the rows by place (ties by port): "P2 CPU  Marth", WINNER or "2nd", "4 KOs, 1 fall, 87%". names[port] may be "" or NULL. Returns the count (at most cap). */
+/* the rows by place (ties by port): "P2 CPU  Marth", WINNER or "2nd", "4 KOs, 1 fall, 87%", with "READY  " in front once that human has confirmed. names[port] may be "" or NULL. Returns the count (at most cap). */
 int  at_results_rows(const AtResults *r, const char *const names[4], AtDataRow *rows, int cap);
 const char *at_place_word(int place);   /* "1st" .. "4th", "" outside */
 #ifdef __cplusplus

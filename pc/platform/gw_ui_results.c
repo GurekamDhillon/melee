@@ -95,7 +95,8 @@ int at_results_rows(const AtResults *r, const char *const names[4], AtDataRow *r
         snprintf(o->label, AT_STR, "P%d%s%s%s", p->port + 1, p->pkind == AT_PK_HUMAN ? "" : " CPU", nm[0] != '\0' ? "  " : "", nm);
         if (p->winner) { o->flags |= AT_DR_WIN; snprintf(o->value, AT_STR, "%s", "WINNER"); }
         else snprintf(o->value, AT_STR, "%s", at_place_word(p->place));
-        snprintf(o->sub, AT_STR, "%d KO%s, %d fall%s, %d%%", p->kos, p->kos == 1 ? "" : "s", p->falls, p->falls == 1 ? "" : "s", p->percent);
+        snprintf(o->sub, AT_STR, "%s%d KO%s, %d fall%s, %d%%", (p->confirmed && p->pkind == AT_PK_HUMAN) ? "READY  " : "", p->kos, p->kos == 1 ? "" : "s", p->falls,
+                 p->falls == 1 ? "" : "s", p->percent);
     }
     return n;
 }

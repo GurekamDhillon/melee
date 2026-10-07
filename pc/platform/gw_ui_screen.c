@@ -54,8 +54,11 @@ static int button_char(const char *s)
 
 void at_view_init(AtView *v)
 {
+    int i;
     memset(v, 0, sizeof *v);
     v->focus.block = v->focus.index = -1;
+    v->ex.media_tex = -1;
+    for (i = 0; i < AT_MAX_CURSORS; i++) { v->cursor[i].block = 0; v->cursor[i].index = -1; v->cursor[i].card = -1; }
 }
 
 /* one list or tiles item (i of dst); the duplicate check runs over dst[0..i) */
@@ -187,6 +190,7 @@ int at_screen_from_val(const AtvArena *a, int root, const char *owner, AtScreen 
                 }
                 w = atv_strv(a, atv_get(a, cn, "letter"), "");
                 c->letter = w[0];
+                c->tex = -1;                                                       /* no disc art through the Lua door */
                 c->flags = read_flags(a, atv_get(a, cn, "flags"));
             }
         }
@@ -282,6 +286,7 @@ int at_explainer_from_val(const AtvArena *a, int t, AtExplainer *e, char *err, i
     int media, with, from, i, n;
     memset(e, 0, sizeof *e);
     e->media_model = e->media_ring = AT_NO_MODEL;
+    e->media_tex = -1;
     (void) err; (void) errcap;
     if (atv_kind(a, t) != ATV_TABLE) return 1;
     e->has = 1;
@@ -341,7 +346,7 @@ int at_screen_focus_blocks(const AtScreen *s, AtFocusBlock *fb)
     }
     for (b = 0; b < s->n_blocks; b++) {
         fb[b].col0 = 0; fb[b].row0 = row; fb[b].cols = s->blocks[b].cols > 0 ? s->blocks[b].cols : 1;
-        fb[b].n = s->blocks[b].n; fb[b].exists = NULL;
+        fb[b].n = at_block_count(&s->blocks[b]); fb[b].exists = NULL;
         row += (fb[b].n + fb[b].cols - 1) / fb[b].cols;
     }
     return s->n_blocks;
@@ -371,11 +376,13 @@ const char *at_screen_block_id(const AtScreen *s, int block)
 
 const char *at_screen_cell_id(const AtScreen *s, AtFocusPos p)
 {
+    const AtCell *c;
     if (s->primary == AT_PRIMARY_TILES) { const AtItem *it = tiles_cell(s, p); return it != NULL ? it->id : NULL; }
     if (s->primary == AT_PRIMARY_DISPLAY) return NULL;
     if (s->primary == AT_PRIMARY_LIST) return (p.block == 0 && p.index >= 0 && p.index < s->n_items) ? s->items[p.index].id : NULL;
-    if (p.block < 0 || p.block >= s->n_blocks || p.index < 0 || p.index >= s->blocks[p.block].n) return NULL;
-    return s->blocks[p.block].cells[p.index].id;
+    if (p.block < 0 || p.block >= s->n_blocks) return NULL;
+    c = at_block_cell(&s->blocks[p.block], p.index);
+    return c != NULL ? c->id : NULL;
 }
 
 AtFocusPos at_screen_refocus(const AtScreen *s, const char *block_id, const char *cell_id, AtFocusPos old)
@@ -398,12 +405,13 @@ AtFocusPos at_screen_refocus(const AtScreen *s, const char *block_id, const char
     }
     for (b = 0; block_id != NULL && cell_id != NULL && b < s->n_blocks; b++) {
         if (strcmp(s->blocks[b].id, block_id) != 0) continue;
-        for (i = 0; i < s->blocks[b].n; i++) if (strcmp(s->blocks[b].cells[i].id, cell_id) == 0) { p.block = b; p.index = i; return p; }
+        for (i = 0; i < at_block_count(&s->blocks[b]); i++) if (strcmp(at_block_cell(&s->blocks[b], i)->id, cell_id) == 0) { p.block = b; p.index = i; return p; }
     }
     for (b = 0; block_id != NULL && b < s->n_blocks; b++) {          /* the cell is gone: the same block, the same place, clamped */
-        if (strcmp(s->blocks[b].id, block_id) != 0 || s->blocks[b].n < 1) continue;
+        int bn = at_block_count(&s->blocks[b]);
+        if (strcmp(s->blocks[b].id, block_id) != 0 || bn < 1) continue;
         p.block = b;
-        p.index = old.index < 0 ? 0 : (old.index >= s->blocks[b].n ? s->blocks[b].n - 1 : old.index);
+        p.index = old.index < 0 ? 0 : (old.index >= bn ? bn - 1 : old.index);
         return p;
     }
     return at_focus_first(fb, nb);
@@ -414,7 +422,34 @@ int at_cell_accepts(const AtScreen *s, AtFocusPos p)
     if (at_screen_cell_id(s, p) == NULL) return 0;
     if (s->primary == AT_PRIMARY_TILES) return !(tiles_cell(s, p)->flags & AT_CELL_DISABLED);
     if (s->primary == AT_PRIMARY_LIST) return !(s->items[p.index].flags & AT_CELL_DISABLED);
-    return !(s->blocks[p.block].cells[p.index].flags & AT_CELL_DISABLED);
+    return !(at_block_cell(&s->blocks[p.block], p.index)->flags & AT_CELL_DISABLED);
 }
 
 int at_screen_wants_pad(const AtScreen *s) { return !s->input_feed && s->primary != AT_PRIMARY_DISPLAY; }
+
+/* ---- cell storage: inline (the Lua door, up to AT_MAX_CELLS) or native (adapter-owned, up to AT_MAX_EXT_CELLS) ---- */
+int at_block_count(const AtBlock *b)
+{
+    if (b->ext != NULL) return b->ext_n < 0 ? 0 : (b->ext_n > AT_MAX_EXT_CELLS ? AT_MAX_EXT_CELLS : b->ext_n);
+    return b->n < 0 ? 0 : (b->n > AT_MAX_CELLS ? AT_MAX_CELLS : b->n);
+}
+
+const AtCell *at_block_cell(const AtBlock *b, int i)
+{
+    if (i < 0 || i >= at_block_count(b)) return NULL;
+    return b->ext != NULL ? &b->ext[i] : &b->cells[i];
+}
+
+int at_screen_copy(AtScreen *dst, const AtScreen *src)
+{
+    int b;
+    for (b = 0; b < AT_MAX_BLOCKS; b++) if (src->blocks[b].ext != NULL) return 0;   /* every block, not only the used ones */
+    *dst = *src;
+    return 1;
+}
+
+void at_screen_clear_ext(AtScreen *s)
+{
+    int b;
+    for (b = 0; b < AT_MAX_BLOCKS; b++) { s->blocks[b].ext = NULL; s->blocks[b].ext_n = 0; }
+}

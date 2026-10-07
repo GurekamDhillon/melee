@@ -53,6 +53,16 @@ typedef struct {
  * content at most 1140 wide and centred; 32 px margins inside it. */
 void at_layout(float canvas_w, int preset, AtLayout *out);
 
+/* The primary pane split for a screen with tabs and a band (the character select): the tab strip (30) hangs on the pane's top edge, the band
+ * (56 for port cards, 40 for the matchup strip) sits at the bottom of the primary place with a 12 px gap above it, and the grid pane is
+ * what is left. A strip that is not wanted has h = 0. Everything keeps the primary place's x and width. */
+enum { AT_BAND_NONE = 0, AT_BAND_CARDS = 1, AT_BAND_MATCHUP = 2 };   /* the strip between the primary pane and the keys */
+typedef struct { AtRect tabs, grid, band; } AtSplit;
+void at_layout_split(const AtLayout *L, int has_tabs, int band, AtSplit *out);
+/* How many columns a grid of `width` px takes: as many cells of at least min_cell as fit, and more when a cell would be wider than max_cell
+ * (a wider window gives more columns, never bigger cells), but never so many that a cell drops under min_cell. At least 1. */
+int at_grid_cols(float width, float min_cell, float max_cell, float gap);
+
 /* The first visible row of a scrolling list that keeps `focus` inside a window of `visible` rows. */
 int at_list_scroll(int focus, int scroll, int visible, int n);
 

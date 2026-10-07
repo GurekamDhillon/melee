@@ -93,8 +93,34 @@ static void scroll(void)
     CHECK(at_list_scroll(3, 9, 5, 4) == 0);       /* never scrolls past the end */
 }
 
+static void split_and_cols(void)
+{
+    AtLayout L; AtSplit sp;
+    at_layout(640.0f, AT_PRESET_NORMAL, &L);
+    at_layout_split(&L, 1, AT_BAND_CARDS, &sp);
+    CHECK(sp.tabs.h == 30.0f && sp.tabs.y == L.primary.y);
+    CHECK(sp.band.h == 56.0f && sp.band.y + sp.band.h <= 428.0f + 0.01f);                  /* inside the body, above the keys */
+    CHECK(sp.grid.y >= sp.tabs.y + sp.tabs.h && sp.grid.y + sp.grid.h <= sp.band.y - 12.0f + 0.01f);
+    CHECK(sp.grid.x == L.primary.x && sp.grid.w == L.primary.w);
+    CHECK(sp.band.x == L.primary.x && sp.band.w == L.primary.w && sp.tabs.x == L.primary.x && sp.tabs.w == L.primary.w);
+    at_layout_split(&L, 0, AT_BAND_NONE, &sp); CHECK(sp.tabs.h == 0.0f && sp.band.h == 0.0f && sp.grid.h == L.primary.h && sp.grid.y == L.primary.y);
+    at_layout_split(&L, 1, AT_BAND_MATCHUP, &sp); CHECK(sp.band.h == 40.0f && sp.tabs.h == 30.0f);
+    at_layout_split(&L, 0, AT_BAND_CARDS, &sp); CHECK(sp.tabs.h == 0.0f && sp.grid.y == L.primary.y && sp.grid.y + sp.grid.h <= sp.band.y - 12.0f + 0.01f);
+    /* the wide layout keeps its rail: the split follows the primary pane, not the body */
+    at_layout(1140.0f, AT_PRESET_NORMAL, &L); at_layout_split(&L, 1, AT_BAND_CARDS, &sp);
+    CHECK(sp.grid.x == L.primary.x && sp.grid.w == L.primary.w && sp.band.x == L.primary.x);
+    /* columns: the cell size stays between min and max; wider windows give more columns, never bigger cells */
+    CHECK(at_grid_cols(344.0f, 36.0f, 56.0f, 8.0f) == 8);                                     /* 640 wide, normal explainer: the mockup's 8 */
+    CHECK(at_grid_cols(344.0f, 36.0f, 56.0f, 8.0f) <= at_grid_cols(700.0f, 36.0f, 56.0f, 8.0f));
+    CHECK(at_grid_cols(10.0f, 36.0f, 56.0f, 8.0f) == 1);                                      /* never zero */
+    { float w; for (w = 100.0f; w < 1200.0f; w += 7.0f) {                                     /* the cell is never past max, nor under min once there is room for two */
+        int n = at_grid_cols(w, 36.0f, 56.0f, 8.0f); float cell = (w - (float) (n - 1) * 8.0f) / (float) n, next = (w - (float) n * 8.0f) / (float) (n + 1);
+        CHECK(n >= 1 && (n == 1 || cell >= 36.0f - 0.01f));
+        CHECK(cell <= 56.0f + 0.01f || next < 36.0f); } }                                    /* over max only where one more column would drop under min */
+}
+
 int main(void)
 {
-    roles(); fit(); wrap(); layout(); scroll();
+    roles(); fit(); wrap(); layout(); scroll(); split_and_cols();
     ATLAS_DONE("atlas layout");
 }

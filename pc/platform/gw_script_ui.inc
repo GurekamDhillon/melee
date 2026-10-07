@@ -43,6 +43,11 @@ static GsUiSlot gs_ui_slot[GS_UI_SLOTS];
 static AtStack gs_ui_stack;
 static AtvArena gs_ui_arena;
 static AtScreen gs_ui_scratch;
+/* The slot assignment goes through at_screen_copy, which refuses a record whose cells live in adapter storage (a native screen): a copied
+ * pointer would outlive its pool. The scratch record the Lua door and the engine menus fill never has any, so this always copies. */
+static void gs_ui_put_screen(AtScreen *dst) {
+    if (!at_screen_copy(dst, &gs_ui_scratch)) gw_log("ui: a screen with native cell storage cannot be copied into a slot; not stored");
+}
 static int gs_ui_role_idx[AT_R_COUNT];
 static int gs_ui_roles_state; /* 0 not tried, 1 every Atlas role found and every page loaded, -1 missing */
 static char gs_ui_why[160];   /* the reason when it is -1 */
@@ -729,6 +734,7 @@ static void gs_ui_scratch_reset(void) {
     memset(&gs_ui_scratch, 0, sizeof gs_ui_scratch);
     memset(&gs_ui_scratch_ex, 0, sizeof gs_ui_scratch_ex);
     gs_ui_scratch_ex.media_model = gs_ui_scratch_ex.media_ring = AT_NO_MODEL;
+    gs_ui_scratch_ex.media_tex = -1;
     gs_ui_scratch.fn_provide = gs_ui_scratch.fn_accept = gs_ui_scratch.fn_back = gs_ui_scratch.fn_focus = gs_ui_scratch.fn_change =
         gs_ui_scratch.fn_open = gs_ui_scratch.fn_close = gs_ui_scratch.fn_counter = gs_ui_scratch.fn_page = gs_ui_scratch.fn_start = -1;
     gs_ui_scratch.fn_alt[0] = gs_ui_scratch.fn_alt[1] = gs_ui_scratch.fn_alt[2] = -1;
@@ -836,7 +842,7 @@ int gw_Ui_Commit(int focus_block, int focus_index) {
         u->dialog_fn = -1;
         u->used = 1;
         u->owner = GS_UI_ENGINE;
-        u->sc = gs_ui_scratch;
+        gs_ui_put_screen(&u->sc);
         gs_ui_engine_view(u);
     } else {
         u = &gs_ui_slot[slot];
@@ -847,7 +853,7 @@ int gw_Ui_Commit(int focus_block, int focus_index) {
             AtFocusPos old = u->view.focus;
             snprintf(b, sizeof b, "%s", bid != NULL ? bid : "");
             snprintf(c, sizeof c, "%s", cid != NULL ? cid : "");
-            memcpy(&u->sc, &gs_ui_scratch, sizeof u->sc);
+            gs_ui_put_screen(&u->sc);
             u->view.focus = at_screen_refocus(&u->sc, b[0] ? b : NULL, c[0] ? c : NULL, old);
             u->rebuilds++;
         }
@@ -1280,7 +1286,7 @@ static int l_ui_screen(lua_State *L) {
         u->dialog_fn = -1;
     }
     old_port = u->sc.port;
-    u->sc = gs_ui_scratch;
+    gs_ui_put_screen(&u->sc);
     u->used = 1;
     u->owner = gs.cur;
     if (replace) u->view.focus = at_screen_refocus(&u->sc, old_block[0] ? old_block : NULL, old_cell[0] ? old_cell : NULL, old);

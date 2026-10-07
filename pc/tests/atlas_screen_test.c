@@ -309,6 +309,47 @@ static void tiles_screen(void)
     CHECK(at_screen_from_val(A, tiles_desc(0, 4, 0), NULL, &sc, err, sizeof err) && at_screen_tile_cols(&sc) == 2);
 }
 
+static void ext_cells_never_copied(void)
+{
+    static AtScreen a, b; static AtCell pool[AT_MAX_EXT_CELLS];
+    memset(&a, 0, sizeof a); memset(pool, 0, sizeof pool);
+    a.primary = AT_PRIMARY_GRID; a.n_blocks = 1; a.blocks[0].ext = pool; a.blocks[0].ext_n = 200;
+    CHECK(at_block_count(&a.blocks[0]) == 200);
+    CHECK(at_block_cell(&a.blocks[0], 199) == &pool[199] && at_block_cell(&a.blocks[0], 200) == NULL && at_block_cell(&a.blocks[0], -1) == NULL);
+    CHECK(at_screen_copy(&b, &a) == 0);                             /* a native screen is never copied: the pointer would outlive the pool */
+    at_screen_clear_ext(&a); CHECK(a.blocks[0].ext == NULL && at_block_count(&a.blocks[0]) == 0);
+    a.blocks[0].n = 3; CHECK(at_screen_copy(&b, &a) == 1 && b.blocks[0].n == 3);  /* an inline screen copies */
+    CHECK(at_block_cell(&b.blocks[0], 2) == &b.blocks[0].cells[2] && at_block_cell(&b.blocks[0], 3) == NULL);
+    /* ext_n past the pool is clamped: a bad count never indexes past AT_MAX_EXT_CELLS */
+    a.blocks[0].ext = pool; a.blocks[0].ext_n = 100000; CHECK(at_block_count(&a.blocks[0]) == AT_MAX_EXT_CELLS);
+    a.blocks[0].ext_n = -5; CHECK(at_block_count(&a.blocks[0]) == 0);
+    /* the focus blocks read the native count */
+    { AtFocusBlock fb[AT_MAX_BLOCKS]; AtFocusPos in = { 0, 128 }, out = { 0, 129 };
+      a.blocks[0].ext_n = 129; a.blocks[0].cols = 8; CHECK(at_screen_focus_blocks(&a, fb) == 1 && fb[0].n == 129 && fb[0].cols == 8);
+      CHECK(at_screen_cell_id(&a, in) != NULL && at_screen_cell_id(&a, out) == NULL); }
+}
+static void lua_door_unchanged(void)
+{
+    /* a Lua description with 13 more cells in one block is still refused, with the old message (documented limit 12) */
+    char err[160]; static AtScreen s;
+    int sc = bag("x.big"), bk = atv_at(A, atv_get(A, atv_get(A, sc, "primary"), "blocks"), 1), cells = atv_get(A, bk, "cells"), i;
+    for (i = 0; i < 13; i++) { char id[16]; snprintf(id, sizeof id, "c%d", i); atv_push(A, cells, cell(id, "N", -1, 0, 0)); }
+    CHECK(at_screen_from_val(A, sc, "x", &s, err, sizeof err) == 0 && strstr(err, "12") != NULL);
+    /* a Lua cell has no disc art and no native storage: tex is -1 and ext is NULL, so a zeroed record can never draw texture 0 */
+    sc = bag("x.ok");
+    CHECK(at_screen_from_val(A, sc, "x", &s, err, sizeof err) == 1);
+    CHECK(s.blocks[0].ext == NULL && s.blocks[0].cells[0].tex == -1 && s.n_tabs == 0 && s.band == AT_BAND_NONE && s.grid_cols_auto == 0);
+}
+static void tabs_and_cursors(void)
+{
+    AtView v; AtExplainer e; char err[8];
+    at_view_init(&v);
+    CHECK(v.tab == 0 && v.cursor[0].active == 0 && v.cursor[3].active == 0 && v.progress == 0 && v.ex.media_tex == -1);
+    CHECK(v.cursor[0].card == -1 && v.cursor[0].block == 0 && v.cursor[0].index == -1);
+    CHECK(at_explainer_from_val(A, -1, &e, err, sizeof err) == 1 && e.has == 0 && e.media_tex == -1 && e.stepper == 0);
+    CHECK(AT_MAX_CELLS == 12 && AT_MAX_EXT_CELLS == 256 && AT_MAX_TABS == 6 && AT_MAX_CURSORS == 4);
+}
+
 int main(void)
 {
     A = (AtvArena *) malloc(sizeof *A);
@@ -321,6 +362,9 @@ int main(void)
     atv_init(A); accept_semantics();
     atv_init(A); hardening();
     atv_init(A); page_start_change();
+    atv_init(A); ext_cells_never_copied();
+    atv_init(A); lua_door_unchanged();
+    atv_init(A); tabs_and_cursors();
     free(A);
     ATLAS_DONE("atlas screen");
 }

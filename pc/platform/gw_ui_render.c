@@ -87,7 +87,7 @@ static int cols_of(const AtBlock *bk) { return bk->cols > 0 ? bk->cols : 1; }
 static int grid_rows(const AtScreen *sc)
 {
     int b, n = 0;
-    for (b = 0; b < sc->n_blocks; b++) n += (sc->blocks[b].n + cols_of(&sc->blocks[b]) - 1) / cols_of(&sc->blocks[b]);
+    for (b = 0; b < sc->n_blocks; b++) n += (at_block_count(&sc->blocks[b]) + cols_of(&sc->blocks[b]) - 1) / cols_of(&sc->blocks[b]);
     return n;
 }
 
@@ -100,7 +100,7 @@ static int grid_pass(const AtScreen *sc, const AtView *v, const GridBox *g, cons
     int b, i, row0 = 0, last = first - 1, stop = 0;
     for (b = 0; b < sc->n_blocks && !stop; b++) {
         const AtBlock *bk = &sc->blocks[b];
-        int cols = cols_of(bk), rows = (bk->n + cols - 1) / cols, start = first > row0 ? first - row0 : 0, r;
+        int bn = at_block_count(bk), cols = cols_of(bk), rows = (bn + cols - 1) / cols, start = first > row0 ? first - row0 : 0, r;
         float cw = bk->stones ? 34.0f : g->cell, ch = bk->stones ? 38.0f : g->cell;
         if (rows > 0 && start >= rows) { row0 += rows; continue; }       /* wholly scrolled off the top */
         if (y + 26.0f + (rows > 0 ? ch : 0.0f) > g->bottom) break;
@@ -115,19 +115,19 @@ static int grid_pass(const AtScreen *sc, const AtView *v, const GridBox *g, cons
         ry0 = y;
         for (r = start; r < rows; r++) {
             if (y + ch > g->bottom) { stop = 1; break; }
-            if (emit) for (i = r * cols; i < bk->n && i < (r + 1) * cols; i++) {
+            if (emit) for (i = r * cols; i < bn && i < (r + 1) * cols; i++) {
                 AtRect rc;
                 int st = (v->focus.block == b && v->focus.index == i) ? AT_ST_FOCUS : AT_ST_REST;
                 rc.x = g->x0 + (float) (i % cols) * (cw + gap); rc.y = y; rc.w = cw; rc.h = ch;
-                if (bk->stones) at_part_stone(s, o, rc, &bk->cells[i], st, v->port_rgba);
-                else at_part_cell(s, o, rc, &bk->cells[i], st, v->port_rgba);
+                if (bk->stones) at_part_stone(s, o, rc, at_block_cell(bk, i), st, v->port_rgba);
+                else at_part_cell(s, o, rc, at_block_cell(bk, i), st, v->port_rgba);
                 hit_add(hc, rc, AT_HIT_CELL, b, i);
             }
             last = row0 + r;
             y += ch + gap;
         }
-        if (emit && bk->stones && bk->note[0] && bk->n > 0) {               /* beside the first placed row, after the stones of that row */
-            int per = bk->n < cols ? bk->n : cols;
+        if (emit && bk->stones && bk->note[0] && bn > 0) {                  /* beside the first placed row, after the stones of that row */
+            int per = bn < cols ? bn : cols;
             float nx = g->x0 + (float) per * (cw + gap) + 8.0f;
             at_text(s, o, AT_R_BODY14, bk->note, nx, ry0 + 24.0f, AT_C_TEXT2, AT_ALIGN_LEFT, g->x0 + g->iw - nx);
         }
@@ -150,7 +150,7 @@ static void draw_grid(const AtScreen *sc, const AtView *v, const AtLayout *L, co
     if (g.cell < 24.0f) g.cell = 24.0f;
     for (b = 0; b < sc->n_blocks; b++) {
         if (v->focus.block == b && v->focus.index >= 0) fr = row0 + v->focus.index / cols_of(&sc->blocks[b]);
-        row0 += (sc->blocks[b].n + cols_of(&sc->blocks[b]) - 1) / cols_of(&sc->blocks[b]);
+        row0 += (at_block_count(&sc->blocks[b]) + cols_of(&sc->blocks[b]) - 1) / cols_of(&sc->blocks[b]);
     }
     first = v->scroll < 0 ? 0 : v->scroll;
     if (first >= total) first = total > 0 ? total - 1 : 0;

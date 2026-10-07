@@ -136,3 +136,25 @@ int at_list_scroll(int focus, int scroll, int visible, int n)
     if (scroll > n - visible) scroll = n - visible;
     return scroll < 0 ? 0 : scroll;
 }
+
+void at_layout_split(const AtLayout *L, int has_tabs, int band, AtSplit *o)
+{
+    const float gap = 12.0f;
+    float tabs_h = has_tabs ? 30.0f : 0.0f, band_h = band == 2 ? 40.0f : (band == 1 ? 56.0f : 0.0f), top = L->primary.y, bottom = L->primary.y + L->primary.h;
+    o->tabs = (AtRect){ L->primary.x, top, L->primary.w, tabs_h };
+    o->band = (AtRect){ L->primary.x, bottom - band_h, L->primary.w, band_h };
+    o->grid = (AtRect){ L->primary.x, top + tabs_h, L->primary.w, bottom - band_h - (band_h > 0.0f ? gap : 0.0f) - (top + tabs_h) };
+    if (o->grid.h < 0.0f) o->grid.h = 0.0f;
+}
+
+int at_grid_cols(float width, float min_cell, float max_cell, float gap)
+{
+    int n = (int) floor((double) ((width + gap) / (min_cell + gap)));
+    if (n < 1) n = 1;
+    while (n < 512) {                                                  /* a cell wider than max: one more column, while the next still fits min */
+        float cell = (width - (float) (n - 1) * gap) / (float) n, next = (width - (float) n * gap) / (float) (n + 1);
+        if (cell <= max_cell || next < min_cell) break;
+        n++;
+    }
+    return n;
+}

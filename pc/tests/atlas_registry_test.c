@@ -96,6 +96,13 @@ static void namespace_rule(void)
     CHECK(at_reg_add(&r, &own) == 1);                                   /* the mod's own id is allowed */
     CHECK(at_reg_add(&r, &bad) == 0);                                   /* another name is not */
     CHECK(at_reg_add(&r, &pre) == 0);                                   /* a longer name that merely starts with the id is not */
+    /* Atlas proof D4: the refusal's log line has three conversions; it once had two arguments and crashed the main menu */
+    {
+        AtRegistry q; AtEntry row = E("lab-tool", "lab-tool-row", "lab.pause", "ROW", "", 0);
+        at_reg_init(&q);
+        CHECK(at_reg_add(&q, &row) == 0 && q.nlog == 1);
+        CHECK(strcmp(q.log[0], "entry \"lab-tool-row\": the id of a mod entry is \"lab-tool\" or starts with \"lab-tool.\"") == 0);
+    }
 }
 static void label_cap(void)
 {

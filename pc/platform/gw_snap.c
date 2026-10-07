@@ -1568,7 +1568,7 @@ uint64_t gw_snap_frame_hash(int frame) {
 static uint32_t xh_lo = 0x10000000u, xh_hi = 0x20000000u;
 static struct {
     uint32_t lo, hi; /* MEM1 byte range [lo, hi) hashed as zero (and dumped as zero) */
-} xh_skip[64];
+} xh_skip[256];
 static int xh_nskip;
 
 /* game memory and game globals are BIG-endian (gwtool swaps every access): a pointer reads swapped */
@@ -1692,7 +1692,7 @@ void gw_snap_xlog(int frame) {
             mem_every = atoi(v);
         }
         v = getenv("MELEE_XHASH_SKIP");
-        while (v != NULL && *v != '\0' && xh_nskip < 64) {
+        while (v != NULL && *v != '\0' && xh_nskip < 256) {
             unsigned lo, hi;
             int used = 0;
             if (sscanf(v, "%x-%x%n", &lo, &hi, &used) < 2 || used == 0) {

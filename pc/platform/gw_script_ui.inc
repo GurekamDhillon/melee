@@ -886,10 +886,18 @@ void gw_Ui_Intent(int type, int a) {
     gs_ui_engine_event(top, &e);
 }
 
+/* The three out-parameters are the GAME's locals (guest memory, big-endian, the retargeted code reads them with byte swaps), so a plain
+ * native store arrives swapped: FOCUS (2) read as 0x02000000, matched no event and every menu was dead. They are written big-endian. */
+static void gs_ui_put_be32(int *p, int v) {
+    unsigned u = (unsigned) v;
+    u = (u >> 24) | ((u >> 8) & 0xFF00u) | ((u << 8) & 0xFF0000u) | (u << 24);
+    memcpy(p, &u, sizeof u);
+}
+
 int gw_Ui_PollEvent(int *type, int *block, int *index) {
     int i;
     if (gs_ui_qn <= 0) return 0;
-    *type = gs_ui_q[0].type; *block = gs_ui_q[0].block; *index = gs_ui_q[0].index;
+    gs_ui_put_be32(type, gs_ui_q[0].type); gs_ui_put_be32(block, gs_ui_q[0].block); gs_ui_put_be32(index, gs_ui_q[0].index);
     for (i = 1; i < gs_ui_qn; i++) gs_ui_q[i - 1] = gs_ui_q[i];
     gs_ui_qn--;
     return 1;
@@ -1106,15 +1114,20 @@ const char *gw_Ui_EntryField(const char *parent, int k, const char *field) {
     return "";
 }
 
-/* the first live script of mod `mod` (its script id is "<mod>/<name>"), or -1 */
-static int gs_ui_mod_script(const char *mod) {
+/* The live script of mod `mod` (its script id is "<mod>/<name>") that defines the hook `hook`, else the first live script of the mod, or -1.
+ * A mod is every .lua of its scripts/ folder, each its own script (Envoy: app, atlas_bag, ... main), and a hook such as on_entry is a global of ONE
+ * of them: taking just the first script found a mod whose on_entry lives in main.lua "has no on_entry". */
+static int gs_ui_mod_script(const char *mod, const char *hook) {
     size_t ml = strlen(mod);
-    int i;
+    int i, first = -1;
     if (ml == 0) return -1;
     for (i = 0; i < gs.n; i++) {
-        if (gs.s[i].used && !gs.s[i].disabled && strncmp(gs.s[i].id, mod, ml) == 0 && gs.s[i].id[ml] == '/') return i;
+        if (gs.s[i].used && !gs.s[i].disabled && strncmp(gs.s[i].id, mod, ml) == 0 && gs.s[i].id[ml] == '/') {
+            if (first < 0) first = i;
+            if (hook != NULL && gs_get_hook(i, hook)) { lua_pop(gs.L, 1); return i; }
+        }
     }
-    return -1;
+    return first;
 }
 
 static int gs_ui_script_in_mod(int script, const char *mod) {
@@ -1132,7 +1145,7 @@ int gw_Ui_EntryActivate(const char *parent, int k) {
     if (k < 0 || k >= n) { gw_log("ui: entry %s/%d refused: not available now", parent, k); return 0; }
     e = c[k];
     if (e->builtin) return 0;                                       /* a native row: the adapter runs it itself */
-    owner = gs_ui_mod_script(e->mod);
+    owner = gs_ui_mod_script(e->mod, e->action == AT_ENTRY_OPENS ? NULL : "on_entry");
     if (owner < 0) { gw_log("ui: entry %s refused: no running script of mod %s", e->id, e->mod); return 0; }
     if (e->action == AT_ENTRY_OPENS) {
         int s = gs_ui_find(e->opens);

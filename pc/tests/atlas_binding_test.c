@@ -55,9 +55,11 @@ static int gs_pcall(int script, int nargs, int nres, const char *what)
     gs.cur = old;
     return rc;
 }
+static int g_no_hook[8];                              /* scripts that define no hooks (the rest share the one global table) */
 static int gs_get_hook(int i, const char *name)       /* the hooks live in one global table here */
 {
     if (!gs.s[i].used || gs.s[i].disabled) return 0;
+    if (g_no_hook[i]) return 0;
     lua_getglobal(gs.L, name);
     if (lua_isfunction(gs.L, -1)) return 1;
     lua_pop(gs.L, 1);
@@ -128,12 +130,27 @@ static const char *lua(const char *code)
 
 
 /* ---- Atlas step 2, Task 5: engine-owned screens (driven the way their real owner drives them) ---- */
+/* gw_Ui_PollEvent writes the game's locals, which are big-endian guest memory: poll_ev reads them back as native ints (the game does the
+ * same with its byte-swapped loads). Reading them raw is the bug this guards: FOCUS (2) arrived as 0x02000000 and no menu answered. */
+static unsigned bswap_u(unsigned v) { return (v >> 24) | ((v >> 8) & 0xFF00u) | ((v << 8) & 0xFF0000u) | (v << 24); }
+static int poll_ev(int *t, int *b, int *i)
+{
+    int r = gw_Ui_PollEvent(t, b, i);
+    if (r) {
+        *t = (int) bswap_u((unsigned) *t);
+        *b = (int) bswap_u((unsigned) *b);
+        *i = (int) bswap_u((unsigned) *i);
+    }
+    return r;
+}
+
 static void reset_ui(void)
 {
     int i;
     for (i = 0; i < GS_UI_SLOTS; i++) { memset(&gs_ui_slot[i], 0, sizeof gs_ui_slot[i]); gs_ui_slot[i].dialog_fn = -1; }
     memset(&gs_ui_stack, 0, sizeof gs_ui_stack);
     gs_ui_qn = 0; g_pad = 0; gs.cur = 0; gs.scene_kind = -1;
+    memset(g_no_hook, 0, sizeof g_no_hook);
     for (i = 1; i < 8; i++) gs.s[i].used = 0;       /* the earlier tests' scripts: each test here names its own */
     g_netplay = 0;
 }
@@ -143,6 +160,7 @@ static void fake_script(int i, const char *mod)
     gs.s[i].used = 1; gs.s[i].disabled = 0;
 }
 static void fake_script_off(int i) { gs.s[i].used = 0; }
+static void fake_script_named(int i, const char *id) { snprintf(gs.s[i].id, sizeof gs.s[i].id, "%s", id); gs.s[i].used = 1; gs.s[i].disabled = 0; }
 static void fake_pad_hold(int port, unsigned bit) { (void) port; g_pad = bit; }
 static int t_lua(const char *code) { return strncmp(lua(code), "ERR", 3) != 0; }
 static const char *t_lua_err(void) { return g_last; }
@@ -182,6 +200,22 @@ static void engine_slot_not_released_by_script_unload(void)
     gs_ui_tick(); gs_ui_tick();
     CHECK(gw_Ui_TopIsEngine("main") == 1);
 }
+/* The regression for the dead Atlas menus: the game reads the polled event through byte-swapped loads, so the host must store big-endian.
+ * A raw read of a FOCUS (2) / accept (3) event must give the swapped value, and the swapped read the real one. */
+static void polled_event_is_big_endian_for_the_game(void)
+{
+    int t = 0, b = 0, i = 0;
+    unsigned char *raw = (unsigned char *) &t;
+    reset_ui();
+    engine_menu("main", 5);
+    gs_ui_tick();
+    gs_ui_tick();
+    gw_Ui_Intent(AT_EV_MOVE, AT_DIR_DOWN);                                   /* the focus moves: a FOCUS event for the game */
+    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 1);
+    CHECK(raw[0] == 0 && raw[1] == 0 && raw[2] == 0 && raw[3] == AT_EV_FOCUS);   /* big-endian: the low byte last, as PowerPC lays it out */
+    CHECK((int) bswap_u((unsigned) t) == AT_EV_FOCUS && (int) bswap_u((unsigned) i) == 1);
+}
+
 static void uncover_primes_engine_screen(void)
 {
     int t, b, i;
@@ -195,10 +229,10 @@ static void uncover_primes_engine_screen(void)
     gs_ui_tick();
     CHECK(gw_Ui_TopIsEngine("main") == 1);
     gw_Ui_Intent(AT_EV_BACK, 0);                  /* ... the game's menu input of that same frame is the same press: dropped */
-    while (gw_Ui_PollEvent(&t, &b, &i)) CHECK(t != AT_EV_BACK);
+    while (poll_ev(&t, &b, &i)) CHECK(t != AT_EV_BACK);
     gs_ui_tick();                                 /* the next frame: an intent is the menu's own again */
     gw_Ui_Intent(AT_EV_BACK, 0);
-    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 1 && t == AT_EV_BACK);
+    CHECK(poll_ev(&t, &b, &i) == 1 && t == AT_EV_BACK);
 }
 static void native_intents_are_primed(void)
 {
@@ -206,13 +240,13 @@ static void native_intents_are_primed(void)
     reset_ui();
     gw_Ui_Intent(AT_EV_ACCEPT, 0);                /* an intent before the screen exists is dropped */
     engine_menu("main", 5);
-    while (gw_Ui_PollEvent(&t, &b, &i)) if (t == AT_EV_ACCEPT) accepts++;
+    while (poll_ev(&t, &b, &i)) if (t == AT_EV_ACCEPT) accepts++;
     CHECK(accepts == 0);
     gw_Ui_Intent(AT_EV_MOVE, AT_DIR_DOWN);
-    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 1 && t == AT_EV_FOCUS && b == 0 && i == 1);
+    CHECK(poll_ev(&t, &b, &i) == 1 && t == AT_EV_FOCUS && b == 0 && i == 1);
     gw_Ui_Intent(AT_EV_ACCEPT, 0);
-    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 1 && t == AT_EV_ACCEPT && i == 1);
-    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);
+    CHECK(poll_ev(&t, &b, &i) == 1 && t == AT_EV_ACCEPT && i == 1);
+    CHECK(poll_ev(&t, &b, &i) == 0);
 }
 static void intents_from_any_port(void)
 {
@@ -224,7 +258,7 @@ static void intents_from_any_port(void)
     CHECK(at_screen_wants_pad(&gs_ui_slot[gs_ui_find("main")].sc) == 0);
     gs.cur = -1;
     fake_pad_hold(1, AT_PAD_A); gs_ui_tick(); gs_ui_tick();       /* a held A on the pad does nothing by itself */
-    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);
+    CHECK(poll_ev(&t, &b, &i) == 0);
 }
 static void engine_screen_covered_takes_no_intent(void)
 {
@@ -234,9 +268,9 @@ static void engine_screen_covered_takes_no_intent(void)
     fake_script(3, "envoy");
     gs.cur = 3; t_lua("gd.ui.screen{ id='envoy.s', primary={kind='list', items={{id='a', label='A'}}} }; gd.ui.open('envoy.s')");
     gw_Ui_Intent(AT_EV_ACCEPT, 0);
-    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);
+    CHECK(poll_ev(&t, &b, &i) == 0);
     gw_Ui_Intent(AT_EV_MOVE, AT_DIR_DOWN);
-    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);
+    CHECK(poll_ev(&t, &b, &i) == 0);
 }
 static void scene_exit_closes_scene_screens(void)
 {
@@ -306,9 +340,9 @@ static void engine_focus_is_the_games_cursor(void)
     f = gs_ui_slot[gs_ui_find("main")].view.focus;
     CHECK(f.block == 0 && f.index == 3);
     gw_Ui_Intent(AT_EV_MOVE, AT_DIR_UP);
-    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 1 && t == AT_EV_FOCUS && i == 2);
+    CHECK(poll_ev(&t, &b, &i) == 1 && t == AT_EV_FOCUS && i == 2);
     gw_Ui_Intent(AT_EV_MOVE, AT_DIR_UP);
-    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 1 && t == AT_EV_FOCUS && i == 1);
+    CHECK(poll_ev(&t, &b, &i) == 1 && t == AT_EV_FOCUS && i == 1);
     gw_Ui_Begin("main", AT_PRIMARY_TILES, 0, "MAIN MENU"); gw_Ui_Cols(1);        /* a record that changes keeps the focused cell by id */
     { int k; char tid[16]; for (k = 4; k >= 0; k--) { snprintf(tid, sizeof tid, "t%d", k); gw_Ui_Tile(tid, tid, "", "", 0); } }
     gw_Ui_Key('A', "Open"); gw_Ui_Key('B', "Title");
@@ -329,14 +363,14 @@ static void engine_close_and_queue(void)
     gw_Ui_Intent(AT_EV_BACK, 0);
     gw_Ui_Close("main");
     CHECK(gw_Ui_TopIsEngine(NULL) == 0 && gs_ui_find("main") < 0);
-    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);                      /* a closed screen's events are stale */
+    CHECK(poll_ev(&t, &b, &i) == 0);                      /* a closed screen's events are stale */
     gw_Ui_Close("main");                                          /* closing what is not there is quiet */
     engine_menu("main", 5);
     gw_Ui_Begin("solo", AT_PRIMARY_TILES, 1, "SOLO"); gw_Ui_Tile("a", "A", "MOD", "", 0); gw_Ui_Tile("b", "B", "", "", AT_CELL_DISABLED); gw_Ui_Commit(0, 0);
     gw_Ui_Intent(AT_EV_MOVE, AT_DIR_RIGHT);
-    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 1 && t == AT_EV_FOCUS && i == 1);
+    CHECK(poll_ev(&t, &b, &i) == 1 && t == AT_EV_FOCUS && i == 1);
     gw_Ui_Intent(AT_EV_ACCEPT, 0);                                /* a disabled tile does not accept */
-    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);
+    CHECK(poll_ev(&t, &b, &i) == 0);
 }
 static void eight_slots_with_engine(void)
 {
@@ -398,6 +432,18 @@ static void entry_script_runs_on_entry_as_the_mod(void)
     fake_script(3, "envoy");
     gs.cur = 3; t_lua("on_entry = nil"); gs.cur = -1;
     CHECK(gw_Ui_EntryActivate("solo", 0) == 0);
+}
+/* A mod is every .lua of its scripts/ folder, one script each (Envoy: app, atlas_bag, ... main), and on_entry is defined in ONE of them. The entry must
+ * reach that one, not the first script of the mod (envoy/app had no on_entry: "mod envoy has no on_entry" on the first real click). */
+static void entry_finds_the_script_with_on_entry(void)
+{
+    reset_ui(); reg_boot_with("{\"menus\":[{\"id\":\"envoy\",\"parent\":\"solo\",\"label\":\"ENVOY\",\"action\":\"script\"}]}", "envoy");
+    fake_script_named(3, "envoy/app"); fake_script_named(4, "envoy/main");
+    g_no_hook[3] = 1;                                        /* the first script of the mod defines nothing */
+    gs.cur = 4; t_lua("function on_entry(id) ENTRY_SEEN = id; return nil end");
+    gs.cur = -1; g_last_pcall_owner = -9;
+    CHECK(gw_Ui_EntryActivate("solo", 0) == 1);
+    CHECK(last_pcall_owner() == 4);                           /* the script that has it, called as that script */
 }
 static void entry_missing_screen_refused(void)
 {
@@ -502,17 +548,17 @@ static void credits_screen(void)
     }
     gw_Ui_Intent(AT_EV_MOVE, AT_DIR_DOWN);                                       /* focus moves inside Credits: the explainer follows, nothing reaches the game */
     CHECK(strcmp(gs_ui_slot[slot].view.ex.title, "Aurora") == 0);
-    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);
+    CHECK(poll_ev(&t, &b, &i) == 0);
     gw_Ui_Intent(AT_EV_ACCEPT, 0);
-    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);
+    CHECK(poll_ev(&t, &b, &i) == 0);
     gw_Ui_Intent(AT_EV_BACK, 0);                                                 /* B pops it ... */
     CHECK(gw_Ui_TopIsEngine("main") == 1 && gs_ui_find("more.credits") < 0);
-    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);                                     /* ... and the main menu does not see that B */
+    CHECK(poll_ev(&t, &b, &i) == 0);                                     /* ... and the main menu does not see that B */
     gw_Ui_Intent(AT_EV_BACK, 0);                                                 /* the same frame: the press that closed Credits is not the menu's */
-    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);
+    CHECK(poll_ev(&t, &b, &i) == 0);
     gs_ui_tick();
     gw_Ui_Intent(AT_EV_BACK, 0);
-    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 1 && t == AT_EV_BACK);
+    CHECK(poll_ev(&t, &b, &i) == 1 && t == AT_EV_BACK);
 }
 
 /* ---- Task 11: gd.ui.hold_menu and the legacy menu's gate ---- */
@@ -525,7 +571,7 @@ static void held_menu_takes_no_intent(void)
     gs.cur = 4; CHECK(t_lua("return gd.ui.hold_menu(true)"));       /* any script may hold it ... */
     CHECK(gw_Ui_TopIsEngine("main") == 0 && gw_Ui_MenuBlocked() == 1);
     gw_Ui_Intent(AT_EV_ACCEPT, 0);
-    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);                          /* ... and the held menu takes no intent */
+    CHECK(poll_ev(&t, &b, &i) == 0);                          /* ... and the held menu takes no intent */
     gs.cur = 3; CHECK(t_lua("return gd.ui.hold_menu(false)"));        /* another script cannot release it */
     CHECK(gw_Ui_TopIsEngine("main") == 0);
     gs.cur = 4; CHECK(t_lua("return gd.ui.hold_menu(false)"));
@@ -581,17 +627,17 @@ static void title_takes_no_input(void)
     gs.scene_kind = 0; gw_Ui_SceneBegin(0);
     slot = gs_ui_find("title"); n0 = gs_ui_stack.n;
     gw_Ui_Intent(AT_EV_ACCEPT, 0); gw_Ui_Intent(AT_EV_BACK, 0); gw_Ui_Intent(AT_EV_MOVE, AT_DIR_DOWN);
-    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);
+    CHECK(poll_ev(&t, &b, &i) == 0);
     gs.cur = -1;
     gs_ui_tick();
     g_mx = 320.0f; g_my = 240.0f; g_mbuttons = 3;       /* a click and a right click on the title */
     gs_ui_tick(); gs_ui_tick();
     g_mx = g_my = -1000.0f; g_mbuttons = 0;
     g_pad = AT_PAD_A | AT_PAD_START; gs_ui_tick(); g_pad = 0; gs_ui_tick();
-    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);
+    CHECK(poll_ev(&t, &b, &i) == 0);
     CHECK(gs_ui_stack.n == n0 && at_stack_top(&gs_ui_stack) == slot);
     gs.key_now[VK_RETURN] = 1; gs.key_now[VK_ESCAPE] = 1; gs_ui_tick(); gs_ui_tick(); gs.key_now[VK_RETURN] = gs.key_now[VK_ESCAPE] = 0;
-    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0 && gs_ui_stack.n == n0);
+    CHECK(poll_ev(&t, &b, &i) == 0 && gs_ui_stack.n == n0);
 }
 static void title_waits_for_roles(void)
 {
@@ -926,11 +972,11 @@ int main(void)
     g_pad = 0; gs_ui_tick(); g_pad = AT_PAD_A; gs_ui_tick(); g_pad = 0;
     LUA_IS("return #PT", "1");
     LUA_IS("while gd.ui.state().top do gd.ui.close() end return 'clear'", "clear");
-    engine_slot_survives_tick(); engine_slot_not_released_by_script_unload(); uncover_primes_engine_screen(); native_intents_are_primed();
+    engine_slot_survives_tick(); engine_slot_not_released_by_script_unload(); uncover_primes_engine_screen(); native_intents_are_primed(); polled_event_is_big_endian_for_the_game();
     intents_from_any_port(); engine_screen_covered_takes_no_intent(); scene_exit_closes_scene_screens(); console_cannot_touch_engine();
     mod_cannot_take_engine_id(); commit_without_change_does_not_rebuild(); engine_focus_is_the_games_cursor(); engine_close_and_queue();
     eight_slots_with_engine();
-    entry_opens_pushes_mod_screen(); entry_script_runs_on_entry_as_the_mod(); entry_missing_screen_refused(); entry_from_other_script_cannot_hide();
+    entry_opens_pushes_mod_screen(); entry_script_runs_on_entry_as_the_mod(); entry_finds_the_script_with_on_entry(); entry_missing_screen_refused(); entry_from_other_script_cannot_hide();
     entry_hidden_in_netplay(); entry_screen_closed_on_scene_exit(); entry_mod_unloaded(); builtin_entries_register();
     after_places_a_mod_entry_among_builtins(); credits_screen(); held_menu_takes_no_intent(); menu_blocked_by_a_mod_screen();
     title_pushed_on_scene_begin(); title_takes_no_input(); title_waits_for_roles(); title_without_roles_stays_retail(); title_retail_when_off();

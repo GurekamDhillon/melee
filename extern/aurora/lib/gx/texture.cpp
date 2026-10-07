@@ -839,6 +839,30 @@ void evict_copy_texture(const void* dest) noexcept {
   texture::invalidate_bindings();
 }
 
+// The texture formats resolve_static_texture / convert_texture can decode (GC formats and the PC-native ones).
+static bool is_static_texture_format(u32 format) noexcept {
+  switch (format) {
+  case GX_TF_I4:
+  case GX_TF_I8:
+  case GX_TF_IA4:
+  case GX_TF_IA8:
+  case GX_TF_RGB565:
+  case GX_TF_RGB5A3:
+  case GX_TF_RGBA8:
+  case GX_TF_C4:
+  case GX_TF_C8:
+  case GX_TF_C14X2:
+  case GX_TF_CMPR:
+  case GX_TF_R8_PC:
+  case GX_TF_RG8_PC:
+  case GX_TF_RGBA8_PC:
+  case GX_TF_BC1_PC:
+    return true;
+  default:
+    return false;
+  }
+}
+
 void resolve_sampled_textures(const ShaderInfo& info) noexcept {
   ZoneScoped;
   apply_pending_invalidations();
@@ -873,6 +897,23 @@ void resolve_sampled_textures(const ShaderInfo& info) noexcept {
       }
     } else if (copyRef != nullptr) {
       handle = copyRef->handle;
+    } else if (obj.has_data() && !is_static_texture_format(obj.format())) {
+      // A texmap the draw samples holds a texobj no GXInitTexObj made (stale or never loaded: the format is
+      // not one GX has). Hardware would sample whatever bytes are there; killing the process is strictly worse.
+      // Leave the handle empty (the draw samples the same fallback as a texmap with no data) and say so once.
+      static std::array<bool, MaxTextures> badFormatWarned{};
+      if (!badFormatWarned[i]) {
+        badFormatWarned[i] = true;
+        std::string stages;
+        for (u32 t = 0; t < g_gxState.numTevStages; ++t) {
+          stages += fmt::format(" s{}(coord={},map={})", t, underlying(g_gxState.tevStages[t].texCoordId),
+                                underlying(g_gxState.tevStages[t].texMapId));
+        }
+        Log.warn("texmap {} is sampled but holds a texobj with unknown format {} ({}x{}, data {}); sampling "
+                 "nothing. numTexGens {} ; tev:{}",
+                 i, static_cast<u32>(obj.format()), obj.width(), obj.height(), obj.data, g_gxState.numTexGens,
+                 stages);
+      }
     } else if (obj.has_data()) {
       handle = texture::resolve_static_texture(obj);
     }

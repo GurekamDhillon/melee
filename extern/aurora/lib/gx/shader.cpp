@@ -1,4 +1,6 @@
 #include <xxhash.h>
+#include <algorithm>
+#include <array>
 #include <cstdlib>
 #include "../gfx/hash.hpp"
 #include "../gfx/types.hpp"
@@ -1335,8 +1337,41 @@ std::string build_shader_source(const ShaderConfig& config, uint32_t normalAttac
       vtxXfrAttrs += fmt::format("\n    var tc{} = vec4f({}, 1.0);", i, nbt_slice_local(NbtSlice::B));
     } else if (tcg.src == GX_TG_TANGENT) {
       vtxXfrAttrs += fmt::format("\n    var tc{} = vec4f({}, 1.0);", i, nbt_slice_local(NbtSlice::T));
-    } else
-      UNLIKELY FATAL("unhandled tcg src {}", underlying(tcg.src));
+    } else {
+      // GX_MAX_TEXGENSRC is what a texgen the game never configured holds (GXSetNumTexGens / GXSetTevOrder
+      // can name a texcoord that no GXSetTexCoordGen filled). On hardware that is undefined, not illegal:
+      // the draw samples whatever the XF row held. Killing the process is strictly worse, so source the
+      // texcoord from (0,0) and say so once, with enough state to find the draw.
+      static std::array<std::array<bool, GX_MAX_TEXGENSRC + 1>, MaxTexCoord> srcWarned{};
+      const auto badSrc = std::min<u32>(static_cast<u32>(underlying(tcg.src)), GX_MAX_TEXGENSRC);
+      if (!srcWarned[i][badSrc]) {
+        srcWarned[i][badSrc] = true;
+        std::string stages;
+        for (u32 t = 0; t < config.tevStageCount; ++t) {
+          const auto& st = config.tevStages[t];
+          stages += fmt::format(" s{}(coord={},map={},chan={},c={}/{}/{}/{},a={}/{}/{}/{},ind={} mtx={} wrap={}/{} add={})", t,
+                                underlying(st.texCoordId), underlying(st.texMapId), underlying(st.channelId),
+                                underlying(st.colorPass.a), underlying(st.colorPass.b), underlying(st.colorPass.c),
+                                underlying(st.colorPass.d), underlying(st.alphaPass.a), underlying(st.alphaPass.b),
+                                underlying(st.alphaPass.c), underlying(st.alphaPass.d), underlying(st.indTexStage),
+                                underlying(st.indTexMtxId), underlying(st.indTexWrapS), underlying(st.indTexWrapT),
+                                st.indTexAddPrev);
+        }
+        std::string tcg_set;
+        for (u32 t = 0; t < MaxTexCoord; ++t) {
+          if (config.tcgs[t].src != GX_MAX_TEXGENSRC) {
+            tcg_set += fmt::format(" tcg{}(src={})", t, underlying(config.tcgs[t].src));
+          }
+        }
+        Log.warn("tcg: texcoord {} is sampled but its texgen source is {} (unset or unsupported) - substituting "
+                 "(0,0). tev:{} ; texgens set:{} ; indStages {} (ind0 coord={} map={}) ; surfaceProgram {} ; lineMode {} ; "
+                 "chans {}",
+                 i, underlying(tcg.src), stages, tcg_set, config.numIndStages, underlying(config.indStages[0].texCoordId),
+                 underlying(config.indStages[0].texMapId), config.surfaceProgram, config.lineMode,
+                 config.colorChannels[0].lightingEnabled);
+      }
+      vtxXfrAttrs += fmt::format("\n    var tc{} = vec4f(0.0, 0.0, 1.0, 1.0);", i);
+    }
     if (tcg.type == GX_TG_MTX2x4 || tcg.type == GX_TG_MTX3x4) {
       if (info.indexAttr.test(GX_VA_TEX0MTXIDX + i)) {
         vtxXfrAttrs += fmt::format("\n    var tc{0}_tmp = tc{0} * ubuf.postex_mtx[in_texmtxidx{0} / 3u];", i);

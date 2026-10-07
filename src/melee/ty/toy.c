@@ -64,14 +64,16 @@
  * exactly the retail one. The panel at link 0x33 (the backdrop the Start button cycles) and the viewer, stand, lights and TyMnBg are never guarded: that
  * is the retail 3D and what it stands against. */
 extern int Ui_RetailHidden(int id); /* pc/platform/gw_script_ui.inc */
+extern int tyList_PcActive(void);   /* tylist.c: the full-screen list is up; the guards stand down, Atlas draws nothing over it */
+extern void tyList_PcSetActive(int on);
 static void Toy_RenderPanelGuarded(HSD_GObj* gobj, int pass)
 {
-    if (Ui_RetailHidden(AT_RE_TOY_PANEL)) return;
+    if (!tyList_PcActive() && Ui_RetailHidden(AT_RE_TOY_PANEL)) return;
     HSD_GObj_JObjCallback(gobj, pass);
 }
 static void Toy_RenderInfoGuarded(HSD_GObj* gobj, int pass)
 {
-    if (Ui_RetailHidden(AT_RE_TOY_INFO)) return;
+    if (!tyList_PcActive() && Ui_RetailHidden(AT_RE_TOY_INFO)) return;
     HSD_SObjLib_803A49E0(gobj, pass);
 }
 #define TOY_PANEL_RENDER Toy_RenderPanelGuarded
@@ -6466,6 +6468,9 @@ void Toy_Scene_OnEnter(void* arg0)
     _Toy_sbss_804D6EA2 = 0;
     _Toy_sbss_804D6E50 = 0;
     _Toy_sbss_804D6EA1 = 0;
+#if defined(TARGET_PC)
+    tyList_PcSetActive(0); /* a Gallery entry starts in the viewer */
+#endif
 
     if (DbLevel >= DbLKind_DebugRom) {
         /* Check Z button */
@@ -6879,7 +6884,8 @@ void Toy_803127D4(void)
 #if defined(TARGET_PC)
 /* Atlas step 10: readbacks for the framed scenes (src/melee/gm/gmfrontend_atlas_toy.inc). Numbers only, read-only, called from the scene's own
  * on_frame wrapper while the scene is live. what: 0 the trophy count (Toy_GetTrophyTotal), 1 the selected list index, 2 the selected trophy's id,
- * 3 the Gallery's state (0 shelf, 1 and 3 moving, 2 examining), 4 retail's exit request (set by B or START; the scene frees its state next). -1 when
+ * 3 the viewer's state (0 shelf, 1 and 3 moving, 2 examining), 4 retail's exit request (set by B or START; the scene frees its state next), 5 the
+ * full-screen trophy list is up (tylist.c; the viewer's state means nothing then). -1 when
  * the state is not there. */
 int Toy_PcReadback(int what)
 {
@@ -6896,6 +6902,8 @@ int Toy_PcReadback(int what)
         return mode != NULL ? (int) mode->x61 : -1;
     case 4:
         return (int) ((TyModeState*) Toy_804A284C)->x4;
+    case 5:
+        return tyList_PcActive();
     }
     return -1;
 }

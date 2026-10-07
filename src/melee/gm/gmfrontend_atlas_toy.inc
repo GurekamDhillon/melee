@@ -19,6 +19,10 @@
 
 _Static_assert(GS_TOY_GALLERY == 11 && GS_TOY_LOTTERY == 12 && GS_TOY_COLLECTION == 13, "gw_ui_policy.c scene kinds 11, 12 and 13 must be these");
 
+/* the scenes the owner skipped (movies, staff roll, memory card) keep their kinds in atlas_policy_test.c, which asserts they have no mask and no chrome id */
+_Static_assert(GS_MOVIE_OPENING == 0x1C && GS_MOVIE_END == 0x1D && GS_MOVIE_HOWTO == 0x1E && GS_MOVIE_OMAKE15 == 0x1F && GS_MEMCARD == 0x2A && GS_STAFFROLL == 0x2B,
+               "pc/tests/atlas_policy_test.c names the skipped scenes by these numbers");
+
 extern int Ui_FrameBegin(const char* id, const char* title, int x, int y, int w, int h);
 extern void Ui_ToyChrome(int index, int count, const char* name, const char* desc, const char* series);
 extern void Ui_LotChrome(int coins, int bet);
@@ -103,6 +107,12 @@ static void fat_gallery_submit(void)
 {
     int state = Toy_PcReadback(3);
     const int* w = FAT_GALLERY_WIN;
+    if (Toy_PcReadback(5) != 0) {
+        /* the Gallery is two retail screens; B in the viewer opens the full-screen trophy LIST (tylist.c). Atlas frames the viewer only: over the list the
+         * plates would hide retail's list, so the chrome is closed while the list is up (and its 2D guards stand down) and comes back with the viewer. */
+        Ui_Close("toy.gallery");
+        return;
+    }
     if (!Ui_FrameBegin("toy.gallery", "GALLERY", w[0], w[1], w[2], w[3])) {
         return;
     }
@@ -110,11 +120,11 @@ static void fat_gallery_submit(void)
     Ui_Trail("COLLECTION");
     /* the numbers are retail's; the strings are empty (see TEXT above), so the explainer says TROPHY n and the counter n / total */
     Ui_ToyChrome(Toy_PcReadback(1), Toy_PcReadback(0), "", "", "");
-    /* the hints are exactly what retail's pad does (toy.c _Toy_80309404): on the shelf A, X or Y examine and B leaves; while examining B goes back
-     * to the shelf. Between the two (the camera moving) retail reads nothing. */
+    /* the hints are exactly what retail's pad does (toy.c _Toy_80309404): on the shelf A, X or Y examine and B opens the list; while examining B goes
+     * back to the shelf. Between the two (the camera moving) retail reads nothing. */
     if (state == 0) {
         Ui_Key('A', "Examine");
-        Ui_Key('B', "Back");
+        Ui_Key('B', "List");
     } else if (state == 2) {
         Ui_Key('B', "Back");
     }
@@ -125,6 +135,12 @@ static void fat_lottery_submit(void)
 {
     int coins = tyFigupon_PcReadback(0), busy = tyFigupon_PcReadback(2);
     const int* w = FAT_LOTTERY_WIN;
+    if (busy != 0) {
+        /* a draw is running (x5C = 1 to 9): the coin drop, the lever and the popup that shows the real trophy model are the one piece of this scene that
+         * must stay retail and complete, and where they sit is not known: the chrome is closed for the draw and comes back after it. */
+        Ui_Close("toy.lottery");
+        return;
+    }
     if (!Ui_FrameBegin("toy.lottery", "LOTTERY", w[0], w[1], w[2], w[3])) {
         return;
     }
@@ -132,14 +148,12 @@ static void fat_lottery_submit(void)
     Ui_Trail("COLLECTION");
     Ui_LotChrome(coins, tyFigupon_PcReadback(1));
     /* retail's pad (tyfigupon.c _tyFigupon_80316C24): up and down (or Y and X, the stick, the d-pad) set the bet, Z the largest bet, A (or L, R,
-     * START) draws, B first lowers the bet to 1 and then leaves. While a draw runs retail reads nothing, and the popup is retail's own. */
-    if (busy == 0) {
-        if (coins > 0) {
-            Ui_Key('A', "Draw");
-            Ui_Key('Z', "Most coins");
-        }
-        Ui_Key('B', "Back");
+     * START) draws, B first lowers the bet to 1 and then leaves. */
+    if (coins > 0) {
+        Ui_Key('A', "Draw");
+        Ui_Key('Z', "Most coins");
     }
+    Ui_Key('B', "Back");
     Ui_Commit(-1, -1);
 }
 

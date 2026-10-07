@@ -31,6 +31,16 @@
 #include <sysdolphin/baselib/tobj.h>
 #include <sysdolphin/baselib/wobj.h>
 
+#if defined(TARGET_PC)
+/* Atlas step 10 (the framed Trophy Gallery): the Gallery is two retail screens, the 3D viewer (toy.c) and THIS full-screen list. B in the viewer opens the
+ * list (tyList_803147C4), A or START in the list returns to the viewer, B in the list leaves the scene (both through _tyList_803148E4). The framed chrome
+ * is for the viewer only: while the list is up Atlas draws nothing and retail's 2D guards stand down. This flag is the port's own bookkeeping, set and cleared
+ * where retail begins and ends the list; no retail state is read from it or written through it. */
+static int tyList_pc_active;
+int tyList_PcActive(void) { return tyList_pc_active; }
+void tyList_PcSetActive(int on) { tyList_pc_active = on; }
+#endif
+
 /* 312834 */ static char* _tyList_80312834(char* buf, u32 num);
 /* 312904 */ static void _tyList_80312904(void*, s8);
 /* 312BAC */ static void _tyList_80312BAC(TyListState* state, s8 arg1);
@@ -974,6 +984,9 @@ void tyList_803147C4(void)
     u8 new_var;
     HSD_GObj** gobj;
 
+#if defined(TARGET_PC)
+    tyList_pc_active = 1;
+#endif
     memzero(&_tyList_804A2D6C, sizeof(_tyList_804A2D6C));
     _tyList_8031457C();
     memzero(&_tyList_804A2D84, sizeof(_tyList_804A2D84));
@@ -1016,6 +1029,9 @@ void _tyList_803148E4(s32 arg0)
 
     gobj_2C4 = _tyList_804A2D84;
     archive = (TyArchiveData*) Toy_sbss_804D6ED8;
+#if defined(TARGET_PC)
+    tyList_pc_active = 0;
+#endif
 
     if (Toy_GetTrophyTotal() != 0) {
         if (arg0 != 0) {

@@ -8,7 +8,7 @@ route). Vanilla disc, offline. Controller: A / B / X / Y, D-pad or stick. See ME
 
 ## The developer overlay (off by default)
 `envoy devui on|off` (or the `ENVOY_DEVUI=1` environment flag where the mod can read it) is ONE predicate (`mod_tuning.dev_ui()`). On it shows: the
-strength percentage and the depth text on the build strip, the strip's flash text (a modifier's name, "Build ready"), the opponent-strength figure on
+strength index (`x1.56`) and the depth text on the build strip, the strip's flash text (a modifier's name, "Build ready"), the opponent-strength figure on
 the opponent card, the mod's teaching and error panels ("Technique rule fired", "Build update refused"; they are always in the log), the Modifier LAB
 text box and the Drive LAB card. Owed on the engine side (not in the mod): the FLY readout, the LAB mod's default mode and a settings key for the switch.
 

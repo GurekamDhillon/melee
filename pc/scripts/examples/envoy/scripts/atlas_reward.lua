@@ -75,7 +75,7 @@ return function(D)
   if type(c.icon)=='table' and c.icon.kind=='model' then ex.media={model=c.icon.asset,ring=c.icon.ring} end
   local label=c.actions and c.actions.A;local t=label and TAG[label]
   if t then ex['with']={t[3]} end
-  if block.id=='koffer' then ex.from={text=(D.keystones.family_names[D.keystones.family(c.ref.id)] or 'Wild')..' keystone'}
+  if block.id=='koffer' then ex.from={text=(D.keystones.family_names[D.keystones.family(c.ref.id)] or 'Wild')..' keystone, permanent this run'}
   elseif lines[1] then ex.from={text=lines[1]} end
   return ex
  end

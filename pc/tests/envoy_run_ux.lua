@@ -415,7 +415,7 @@ T.test('the build strip model shows pips, strength as a percentage and keystones
  host.hud:model();local m=host.hud.m;assert(#m.pips==4 and m.pips[1] and not m.pips[2] and #m.keys==1)
  assert(host.hud.flash_left==0,'no flash text in play (only the out-of-bounds notice)')
  -- the developer overlay (envoy devui on) brings the figures back
- D.mod_tuning.set_dev_ui(true);host.hud.m=nil;d=host.hud:dump()[1];assert(d:find('%+%d+%%') and d:find('Depth 0',1,true) and not d:find('Strength x',1,true),d)
+ D.mod_tuning.set_dev_ui(true);host.hud.m=nil;d=host.hud:dump()[1];assert(d:find('x%d+%.%d') and d:find('Depth 0',1,true) and not d:find('Strength x',1,true),d)
  host.hud:flash('Build ready');assert(host.hud.flash_left>0);D.mod_tuning.set_dev_ui(false);host.hud:clear()
  host.hud:flash('Build ready');assert(host.hud.flash_left==0,'a flash is not shown in play');host.hud:flash('Out of bounds: a stock is lost',true);assert(host.hud.flash_left>0,'the out-of-bounds notice always shows')
 end)
@@ -674,5 +674,47 @@ T.test('the Atlas bag over the real RunScreen: described, focus by id, A merges 
  D.atlas_bag.set(false)
  local s2,g2,m2,h2=start_run();stage(h2);g2.ui=Stub.new();give(h2,mergeable(h2));h2.screen:open('bag')
  assert(h2.screen.atlas==nil,'switched off, the legacy bag opens untouched');h2.screen:press('back')
+end)
+-- ---- signalling for the lane-made rules (2026-10-07): each rule is told to the player where it bites ----------------------------------
+T.test('keystones are permanent: the start panel, the offer detail and the pick card all say so',function()
+ local s,g,mods,host=start_run()
+ local lines=host.hud.toasts[1].lines;local last=lines[#lines]
+ assert((last.text or last):find('permanent',1,true),'the run-start panel ends with the keystone rule')
+ -- an offered keystone's detail line
+ stage(host,{stage=4,kind='bonus',opponents={}});host:stage_reward(4,0,false)
+ assert(#host.key_offers>=0)
+ local id=host.key_offers[1];if id then
+  local ok=host:take_keystone(id);assert(ok)
+  assert(host.hud.card and host.hud.card.title:find('Keystone',1,true) and host.hud.card.lines[1]:find('Permanent',1,true),'picking one says it is permanent')
+ end
+ host.screen:close()
+end)
+T.test('a pickup that fills the build warns BEFORE a drive is replaced; a roomy build does not',function()
+ local s,g,mods,host=start_run();stage(host)
+ local b=host:bag();local loot=host.mods.drives.loot
+ local function roll(n) return loot:roll(5000+n*17,host.mods.engine.context) end
+ -- not full: no warning
+ host:picked_up(roll(1));assert(host.hud.card and not host.hud.card.lines[1]:find('replaces',1,true),'room left: no warning')
+ -- fill every slot and the bag but one place, then pick up one more that cannot merge
+ fill_slots(host);while #b.items<b:capacity()-1 do assert(b:give(roll(100+#b.items)));host:touch() end
+ local last;for n=300,500 do local r=roll(n);local plan=host:plan_gain(r);if plan.action=='bag' then last=r;break end end
+ assert(last,'a drive that goes to the bag');host:picked_up(last)
+ assert(host:build_full() and host.hud.card.lines[1]:find('Bag full: the next drive replaces one',1,true),host.hud.card.lines[1])
+end)
+T.test('a clear that pays no reward says so at the next stage start, with the count to the next one',function()
+ local s,g,mods,host=start_run()
+ stage(host,{stage=0});assert(host:stage_reward(0,0,false)==false)
+ stage(host,{stage=1});host.since=0;host:frame()   -- not ready: nothing yet
+ assert(host.hud.card==nil)
+ for _=1,40 do host:frame() end
+ assert(host.hud.card and host.hud.card.title=='No reward this stage' and host.hud.card.lines[1]=='Next one: in 2 stages.',host.hud.card and host.hud.card.lines[1])
+ assert(host:next_reward_line(1)=='The next stage pays one.' and host:next_reward_line(2)=='Next one: in 3 stages.')
+end)
+T.test('the tour hooks: uxgain card shows the pickup note (and the full-bag warning); uxnoreward shows the no-reward note',function()
+ local s,g,mods,host=start_run();stage(host)
+ s.commands.uxgain('2 card');assert(host.hud.card and host.hud.card.title:find('Picked up',1,true) or host.hud.card.title:find('Merged',1,true))
+ s.commands.uxgain('full');assert(host:build_full() and host.hud.card.lines[1]:find('Bag full: the next drive replaces one',1,true),host.hud.card.lines[1])
+ s.commands.uxnoreward('1');assert(host.hud.card.title=='No reward this stage' and host.hud.card.lines[1]=='The next stage pays one.')
+ s.commands.uxnoreward('0');assert(host.hud.card.lines[1]=='Next one: in 2 stages.')
 end)
 T.done()

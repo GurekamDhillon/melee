@@ -59,6 +59,13 @@ T.test('quiet HUD caps hold at the busiest moment', function()
   assert(e.ui.hud_calls < 6)
 end)
 
+T.test('the collect banner shows the seconds left when the older hold counts them down', function()
+  local e = start(); e.host.holding_end = true; e.host.hold_banner = 'Collect the drives  22 s'; tick(e)
+  local b = parts(hud(e), 'banner', 'top_center')[1]
+  assert(b and b.text == 'Collect the drives  22 s' and b.button == 'A', 'the countdown is on the banner')
+  e.host.hold_banner = 'Collect the drives  21 s'; tick(e)
+  assert(parts(hud(e), 'banner')[1].text == 'Collect the drives  21 s', 'the next second re-describes it')
+end)
 T.test('the collect banner carries the A glyph; the payout banner its leave progress', function()
   local e = start()
   e.host.holding_end = true; e.host.hold_banner = 'Collect the drives'; tick(e)

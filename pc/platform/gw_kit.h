@@ -107,7 +107,7 @@ int gw_Kit_TexAddHsd(const char *key, int gx_fmt, const uint8_t *img, size_t img
 void gw_Kit_TexHsdFrame(int frame);   /* the host calls it once per frame: the eviction clock */
 void gw_Kit_TexDropHsd(void);         /* frees the whole disc-art pool (a disc or mod change); a scene exit does not call it: the pool stays warm */
 int gw_Kit_TexHsdCount(void);
-int gw_Kit_TexGeneration(int tex);    /* disc-art slots: how often the slot was reassigned (the overlay re-uploads when it moves); 0 otherwise */
+int gw_Kit_TexGeneration(int tex);    /* disc-art slots: how often the slot was reassigned (the overlay updates its GPU owner); 0 otherwise */
 #define GW_KIT_TEX_MAX 576            /* every texture index is below this (the overlay sizes its upload table by it) */
 
 /* ---- the frame's draw list ------------------------------------------------------------------ */

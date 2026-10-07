@@ -91,11 +91,36 @@ static int read_item(const AtvArena *a, int in, int i, AtItem *dst, AtScreen *o,
     if (atv_kind(a, vt) == ATV_TABLE) {
         vk = atv_strv(a, atv_get(a, vt, "kind"), "");
         if (strcmp(vk, "toggle") == 0) { it->vkind = AT_VAL_TOGGLE; it->on = atv_boolv(a, atv_get(a, vt, "on"), 0); }
-        else if (strcmp(vk, "choice") == 0) it->vkind = AT_VAL_CHOICE;
+        else if (strcmp(vk, "choice") == 0) {
+            int ot = atv_get(a, vt, "options");
+            it->vkind = AT_VAL_CHOICE;
+            if (atv_kind(a, ot) != ATV_NIL) {                       /* options: the ENGINE owns the choice (it wraps, shows opt[value], reports the index) */
+                int n = atv_kind(a, ot) == ATV_TABLE ? atv_len(a, ot) : 0, k;
+                if (n < 1 || n > AT_MAX_OPTS) FAIL("gd.ui.screen: item \"%s\": choice options are 1 to %d strings", it->id, AT_MAX_OPTS);
+                for (k = 0; k < n; k++) {
+                    int e = atv_at(a, ot, k + 1);
+                    if (atv_kind(a, e) != ATV_STR) FAIL("gd.ui.screen: item \"%s\": choice options are strings", it->id);
+                    if ((int) strlen(atv_strv(a, e, "")) >= 24) o->warnings++;
+                    snprintf(it->opt[k], sizeof it->opt[k], "%s", atv_strv(a, e, ""));
+                }
+                it->n_opts = n; it->vmin = 0; it->vmax = n - 1;
+                it->vval = get_int(a, vt, "value", 0);
+                if (it->vval < 0) it->vval = 0;
+                if (it->vval > it->vmax) it->vval = it->vmax;
+                snprintf(it->text, sizeof it->text, "%s", it->opt[it->vval]);
+                return 1;
+            }
+        }
         else if (strcmp(vk, "slider") == 0) { it->vkind = AT_VAL_SLIDER; it->vmin = get_int(a, vt, "min", 0); it->vmax = get_int(a, vt, "max", 100); it->vval = get_int(a, vt, "value", 0);
             if (it->vmin >= it->vmax) FAIL("gd.ui.screen: item \"%s\": slider min must be below max", it->id);
             if (it->vval < it->vmin) it->vval = it->vmin;
-            if (it->vval > it->vmax) it->vval = it->vmax; }
+            if (it->vval > it->vmax) it->vval = it->vmax;
+            if (atv_kind(a, atv_get(a, vt, "step")) != ATV_NIL) {
+                double d = atv_numv(a, atv_get(a, vt, "step"), 0.0);
+                if (atv_kind(a, atv_get(a, vt, "step")) != ATV_NUM || d != d || d < 1.0 || d > 1.0e9 || d != (double) (int) d)
+                    FAIL("gd.ui.screen: item \"%s\": slider step must be a whole number of at least 1", it->id);
+                it->vstep = (int) d;
+            } }
         else if (strcmp(vk, "text") == 0) it->vkind = AT_VAL_TEXT;
         else if (strcmp(vk, "counter") == 0) it->vkind = AT_VAL_COUNTER;
         else FAIL("gd.ui.screen: item \"%s\": unknown value kind \"%s\"", it->id, vk);

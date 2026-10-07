@@ -382,6 +382,71 @@ do
   u.retail_pause(0, false)
   env.on_unload(); check(u.pause_slot == nil, 'unloading clears the name')
 end
+-- Atlas step 5, Task 3: gd.ui step, options, set_value and value. Run as a MOD caller, never only as the console.
+do
+  local S = Stub.new{ caller = 'demo.mod', owner_mod = 'demo', available = true }
+  S.screen{ id = 'demo.set', trail = { title = 'T' }, primary = { kind = 'list', items = {
+    { id = 'vol', label = 'Volume', value = { kind = 'slider', min = -1, max = 50, step = 1, value = 3 } },
+    { id = 'fps', label = 'FPS', value = { kind = 'choice', options = { 'Off', 'FPS', 'Perf' }, value = 0 } },
+    { id = 'on',  label = 'On',  value = { kind = 'toggle', on = false } },
+    { id = 'who', label = 'Who', value = { kind = 'text', text = 'P1' } },
+    { id = 'old', label = 'Old', value = { kind = 'choice', text = 'x' } } } },
+    keys = { { 'B', 'Back' } }, on = { back = function() return { pop = true } end } }
+  check(S.value('demo.set', 'vol') == 3, 'value reads the slider')
+  check(S.set_value('demo.set', 'vol', 99) == true and S.value('demo.set', 'vol') == 50, 'set_value clamps a slider')
+  check(S.set_value('demo.set', 'vol', 'x') == false, 'a wrong-typed value is refused, not coerced')
+  check(S.set_value('demo.set', 'vol', 1.5) == false, 'a slider takes an integer')
+  check(S.set_value('demo.set', 'fps', 2) == true and S.value('demo.set', 'fps') == 2, 'a choice takes an index')
+  check(S.set_value('demo.set', 'fps', 3) == false and S.value('demo.set', 'fps') == 2, 'an index past the options is refused and changes nothing')
+  check(S.set_value('demo.set', 'fps', -1) == false, 'a negative index is refused')
+  check(S.set_value('demo.set', 'on', true) == true and S.value('demo.set', 'on') == true, 'toggle')
+  check(S.set_value('demo.set', 'on', 1) == false, 'a toggle takes a boolean, not a number')
+  check(S.set_value('demo.set', 'who', 'P2') == true and S.value('demo.set', 'who') == 'P2', 'text row')
+  check(S.set_value('demo.set', 'who', 5) == false, 'a text row takes a string')
+  check(S.set_value('demo.set', 'old', 'y') == true and S.value('demo.set', 'old') == 'y', 'a choice without options shows the string it is given')
+  check(S.set_value('demo.set', 'nope', 1) == false and S.value('demo.set', 'nope') == nil, 'unknown item')
+  raises(function() return S.set_value('no.such', 'vol', 1) end, 'no screen', 'an unknown screen raises')
+  -- ownership: another script's screen is refused for a mod caller
+  local T = Stub.new{ caller = 'other.mod', owner_mod = 'other', available = true, shared = S }
+  raises(function() return T.set_value('demo.set', 'vol', 1) end, 'belongs to another script', 'set_value on another script\'s screen raises')
+  raises(function() return T.value('demo.set', 'vol') end, 'belongs to another script', 'value on another script\'s screen raises')
+  local C = Stub.new{ available = true, shared = S }
+  check(C.set_value('demo.set', 'vol', 7) == true and C.value('demo.set', 'vol') == 7, 'the console may touch any script screen')
+  -- the engine's rule through engine_press: step 1, not (max - min) // 20 = 2
+  S.set_value('demo.set', 'vol', 50)
+  S.engine_focus('demo.set', 'list', 'vol'); S.engine_press('demo.set', 'right')
+  check(S.value('demo.set', 'vol') == 50, 'already at max 50: a step right clamps and says nothing')
+  S.engine_press('demo.set', 'left')
+  check(S.value('demo.set', 'vol') == 49, 'a slider with step 1 moves by 1, not by (max - min) // 20 = 2')
+  -- an options choice: the engine wraps it and reports the index
+  local got = {}
+  S.screen{ id = 'demo.opts', primary = { kind = 'list', items = {
+    { id = 'fps', label = 'FPS', value = { kind = 'choice', options = { 'Off', 'FPS', 'Perf' }, value = 2 } },
+    { id = 'dz', label = 'DZ', value = { kind = 'slider', min = 0, max = 100, value = 50 } } } },
+    on = { change = function(id, v) got[#got + 1] = id .. '=' .. tostring(v) end } }
+  S.engine_focus('demo.opts', 'list', 'fps')
+  S.engine_press('demo.opts', 'right'); S.engine_press('demo.opts', 'right'); S.engine_press('demo.opts', 'left')
+  check(table.concat(got, ',') == 'fps=0,fps=1,fps=0', 'an options choice wraps (2 -> 0), steps and reports the index, never the direction')
+  check(S.value('demo.opts', 'fps') == 0, 'and the value shows it')
+  got = {}
+  S.engine_focus('demo.opts', 'list', 'dz'); S.engine_press('demo.opts', 'right')
+  check(table.concat(got, ',') == 'dz=55', 'a slider without step keeps the Lua rule (100 // 20 = 5)')
+  -- set_value does not call on.change and does not move the focus
+  got = {}
+  S.set_value('demo.opts', 'dz', 10)
+  local f1 = S.focus('demo.opts')
+  check(#got == 0 and f1 == 'dz', 'set_value reports nothing and keeps the focus')
+  -- a re-registration is data again: the value goes back to the description
+  S.screen{ id = 'demo.opts', primary = { kind = 'list', items = { { id = 'dz', label = 'DZ', value = { kind = 'slider', min = 0, max = 100, value = 20 } } } } }
+  check(S.value('demo.opts', 'dz') == 20, 'registering again replaces the live value')
+  -- options validation
+  raises(function() S.screen{ id = 'demo.bad1', primary = { kind = 'list', items = { { id = 'a', label = 'A', value = { kind = 'choice', options = {} } } } } } end, 'options', 'an empty options list is refused')
+  local nine = {}; for i = 1, 9 do nine[i] = 'o' .. i end
+  raises(function() S.screen{ id = 'demo.bad2', primary = { kind = 'list', items = { { id = 'a', label = 'A', value = { kind = 'choice', options = nine } } } } } end, 'options', 'nine options are refused')
+  raises(function() S.screen{ id = 'demo.bad3', primary = { kind = 'list', items = { { id = 'a', label = 'A', value = { kind = 'slider', min = 0, max = 10, step = 0 } } } } } end, 'step', 'a step below 1 is refused')
+  raises(function() S.screen{ id = 'demo.bad4', primary = { kind = 'list', items = { { id = 'a', label = 'A', value = { kind = 'choice', options = { 'a', 5 } } } } } } end, 'options', 'an option that is not a string is refused')
+end
+
 local off = Stub.new({ available = false }); check(select(1, off.available()) == false, 'an unavailable stub says so')
 print(('atlas ui stub: %d checks, %d failed'):format(count, fails))
 os.exit(fails == 0 and 0 or 1)

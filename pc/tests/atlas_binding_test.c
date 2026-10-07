@@ -1010,6 +1010,67 @@ static void after_places_a_mod_entry_among_builtins(void)
     CHECK(gw_Ui_EntryBuiltin("settings", "online", "ONLINE", 0) == 1 && gw_Ui_EntryBuiltin("main", "online", "ONLINE", 0) == 1);   /* the same name under two menus */
 }
 
+/* ---- Atlas step 5, Task 3: gd.ui step, options, set_value and value (always as a mod caller; the console is the exception, not the test) ---- */
+static void value_api_as_a_mod(void)
+{
+    const char *reg =
+        "CH={}; assert(gd.ui.screen{id='envoy.set', primary={kind='list', items={"
+        "{id='vol',label='Volume',value={kind='slider',min=-1,max=50,step=1,value=3}},"
+        "{id='fps',label='FPS',value={kind='choice',options={'Off','FPS','Perf'},value=0}},"
+        "{id='on',label='On',value={kind='toggle',on=false}},"
+        "{id='who',label='Who',value={kind='text',text='P1'}},"
+        "{id='old',label='Old',value={kind='choice',text='x'}},"
+        "{id='dz',label='DZ',value={kind='slider',min=0,max=100,value=50}}}},"
+        "on={change=function(id,v) CH[#CH+1]=id..'='..tostring(v) end}})";
+    AtItem *vol, *fps;
+    reset_ui();
+    fake_script(1, "envoy"); fake_script_named(2, "other/main");
+    CHECK(run_as_script(1, reg) == 0);
+    CHECK(run_as_script(1, "assert(gd.ui.value('envoy.set','vol')==3); assert(gd.ui.value('envoy.set','fps')==0); assert(gd.ui.value('envoy.set','on')==false); assert(gd.ui.value('envoy.set','who')=='P1')") == 0);
+    CHECK(run_as_script(1, "assert(gd.ui.set_value('envoy.set','vol',99)==true); assert(gd.ui.value('envoy.set','vol')==50)") == 0);       /* clamped */
+    CHECK(run_as_script(1, "assert(gd.ui.set_value('envoy.set','vol','x')==false); assert(gd.ui.set_value('envoy.set','vol',1.5)==false); assert(gd.ui.value('envoy.set','vol')==50)") == 0);
+    CHECK(run_as_script(1, "assert(gd.ui.set_value('envoy.set','fps',2)==true); assert(gd.ui.value('envoy.set','fps')==2); assert(gd.ui.set_value('envoy.set','fps',3)==false); assert(gd.ui.set_value('envoy.set','fps',-1)==false); assert(gd.ui.value('envoy.set','fps')==2)") == 0);
+    CHECK(run_as_script(1, "assert(gd.ui.set_value('envoy.set','on',true)==true); assert(gd.ui.value('envoy.set','on')==true); assert(gd.ui.set_value('envoy.set','on',1)==false)") == 0);
+    CHECK(run_as_script(1, "assert(gd.ui.set_value('envoy.set','who','P2')==true); assert(gd.ui.value('envoy.set','who')=='P2'); assert(gd.ui.set_value('envoy.set','who',5)==false)") == 0);
+    CHECK(run_as_script(1, "assert(gd.ui.set_value('envoy.set','old','y')==true); assert(gd.ui.value('envoy.set','old')=='y')") == 0);
+    CHECK(run_as_script(1, "assert(gd.ui.set_value('envoy.set','nope',1)==false); assert(gd.ui.value('envoy.set','nope')==nil)") == 0);
+    CHECK(run_as_script(1, "local ok,e=pcall(gd.ui.set_value,'no.such','vol',1); assert(not ok and e:find('no screen'))") == 0);
+    CHECK(run_as_script(1, "assert(#CH==0)") == 0);                                                                                      /* set_value never calls on.change */
+    /* the screen record holds the value, set in place: the text a choice shows is the option's */
+    vol = &gs_ui_slot[gs_ui_find("envoy.set")].sc.items[0]; fps = &gs_ui_slot[gs_ui_find("envoy.set")].sc.items[1];
+    CHECK(vol->vkind == AT_VAL_SLIDER && vol->vval == 50 && vol->vstep == 1);
+    CHECK(fps->vkind == AT_VAL_CHOICE && fps->n_opts == 3 && fps->vval == 2 && strcmp(fps->text, "Perf") == 0 && strcmp(fps->opt[1], "FPS") == 0);
+    /* another script: refused, with the documented message */
+    CHECK(run_as_script(2, "local ok,e=pcall(gd.ui.set_value,'envoy.set','vol',1); assert(not ok and e:find('belongs to another script'))") == 0);
+    CHECK(run_as_script(2, "local ok,e=pcall(gd.ui.value,'envoy.set','vol'); assert(not ok and e:find('belongs to another script'))") == 0);
+    CHECK(run_as_script(1, "assert(gd.ui.value('envoy.set','vol')==50)") == 0);                                                          /* and it changed nothing */
+    /* the console may touch a script's screen */
+    CHECK(run_as_console("assert(gd.ui.set_value('envoy.set','dz',20)==true); assert(gd.ui.value('envoy.set','dz')==20)") == 0);
+    /* the engine's rule, through the real event path (feed): step 1, an options choice wraps and reports the INDEX */
+    CHECK(run_as_script(1, "assert(gd.ui.open('envoy.set')); assert(gd.ui.set_value('envoy.set','vol',50)); CH={}; gd.ui.feed('envoy.set','right'); assert(#CH==0)") == 0);   /* held at max: nothing said */
+    CHECK(run_as_script(1, "gd.ui.feed('envoy.set','left'); assert(table.concat(CH,',')=='vol=49' and gd.ui.value('envoy.set','vol')==49)") == 0);      /* step 1, not (51 // 20) = 2 */
+    CHECK(run_as_script(1, "CH={}; gd.ui.feed('envoy.set','down'); assert(gd.ui.set_value('envoy.set','fps',2)); gd.ui.feed('envoy.set','right'); gd.ui.feed('envoy.set','right'); gd.ui.feed('envoy.set','left'); assert(table.concat(CH,',')=='fps=0,fps=1,fps=0')") == 0);
+    CHECK(run_as_script(1, "assert(gd.ui.value('envoy.set','fps')==0)") == 0);
+    CHECK(strcmp(gs_ui_slot[gs_ui_find("envoy.set")].sc.items[1].text, "Off") == 0);                                                      /* the shown text followed */
+    CHECK(run_as_script(1, "CH={}; gd.ui.feed('envoy.set','down'); gd.ui.feed('envoy.set','down'); gd.ui.feed('envoy.set','down'); gd.ui.feed('envoy.set','right'); assert(table.concat(CH,',')=='old=1')") == 0);   /* options-less choice: the direction, as before */
+    CHECK(run_as_script(1, "CH={}; gd.ui.feed('envoy.set','down'); gd.ui.set_value('envoy.set','dz',50); gd.ui.feed('envoy.set','right'); assert(table.concat(CH,',')=='dz=55')") == 0);    /* no step: the Lua rule, 100 // 20 */
+    CHECK(run_as_script(1, "assert(gd.ui.value('envoy.set','vol')==49)") == 0);
+    /* an engine screen is never a script's to read or write */
+    CHECK(engine_menu("main", 3) == 1);
+    CHECK(run_as_script(1, "local ok,e=pcall(gd.ui.set_value,'main','t0',1); assert(not ok and e:find('belongs to the engine'))") == 0);
+    CHECK(run_as_script(1, "local ok,e=pcall(gd.ui.value,'main','t0'); assert(not ok and e:find('belongs to the engine'))") == 0);
+    CHECK(run_as_console("local ok,e=pcall(gd.ui.value,'main','t0'); assert(not ok and e:find('belongs to the engine'))") == 0);
+    /* descriptions: options and step are validated */
+    CHECK(run_as_script(1, "local ok,e=pcall(gd.ui.screen,{id='envoy.b1',primary={kind='list',items={{id='a',label='A',value={kind='choice',options={}}}}}}); assert(not ok and e:find('options'))") == 0);
+    CHECK(run_as_script(1, "local ok,e=pcall(gd.ui.screen,{id='envoy.b2',primary={kind='list',items={{id='a',label='A',value={kind='choice',options={'1','2','3','4','5','6','7','8','9'}}}}}}); assert(not ok and e:find('options'))") == 0);
+    CHECK(run_as_script(1, "local ok,e=pcall(gd.ui.screen,{id='envoy.b3',primary={kind='list',items={{id='a',label='A',value={kind='slider',min=0,max=10,step=0}}}}}); assert(not ok and e:find('step'))") == 0);
+    CHECK(run_as_script(1, "local ok,e=pcall(gd.ui.screen,{id='envoy.b4',primary={kind='list',items={{id='a',label='A',value={kind='choice',options={'a',5}}}}}}); assert(not ok and e:find('options'))") == 0);
+    CHECK(run_as_script(1, "assert(gd.ui.screen{id='envoy.b5',primary={kind='list',items={{id='a',label='A',value={kind='choice',options={string.rep('x',40)}}}}}})") == 0);   /* a long option is cut at 23, never refused */
+    CHECK(strlen(gs_ui_slot[gs_ui_find("envoy.b5")].sc.items[0].opt[0]) == 23 && strlen(gs_ui_slot[gs_ui_find("envoy.b5")].sc.items[0].text) == 23);
+    CHECK(run_as_script(1, "local t={}; for i=1,33 do t[i]={id='r'..i,label='R'} end; local ok,e=pcall(gd.ui.screen,{id='envoy.b6',primary={kind='list',items=t}}); assert(not ok and e:find('1 to 32'))") == 0);   /* the Lua door keeps 32 */
+    reset_ui();
+}
+
 int main(void)
 {
     lua_State *L = luaL_newstate();
@@ -1283,5 +1344,6 @@ int main(void)
     after_places_a_mod_entry_among_builtins(); credits_screen(); held_menu_takes_no_intent(); menu_blocked_by_a_mod_screen();
     title_pushed_on_scene_begin(); title_takes_no_input(); title_waits_for_roles(); title_without_roles_stays_retail(); title_retail_when_off();
     title_popped_on_scene_exit(); title_and_menu_together();
+    value_api_as_a_mod();
     ATLAS_DONE("atlas binding");
 }

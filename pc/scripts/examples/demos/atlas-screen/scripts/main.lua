@@ -4,7 +4,7 @@
 -- Presentation only: it works online. Valid under the validator: ids under 24 characters, none repeated, slider min below max.
 local ui = gd.ui
 local MODES = { 'Window', 'Borderless', 'Full' }
-local state = { sync = true, mode = 1, vol = 40, shown = 'list' }
+local state = { sync = true, mode = 1, vol = 40, shown = 'list' }   -- mode is an index into MODES (0-based on the wire: the engine owns an options choice)
 local LIST, GRID = 'demo_atlas_screen.list', 'demo_atlas_screen.grid'
 local list_desc, grid_desc
 
@@ -14,19 +14,20 @@ local function show(name)               -- swap the top screen for the other one
   if name == 'list' then ui.screen(list_desc()); ui.open(LIST) else ui.screen(grid_desc()); ui.open(GRID) end
 end
 
-local function on_change(id, value)      -- a toggle gives true/false, a slider its number, a choice -1 or +1
+local function on_change(id, value)      -- a toggle gives true/false, a slider its number, a choice with options its 0-based INDEX
   if id == 'sync' then state.sync = value
   elseif id == 'vol' then state.vol = value
-  elseif id == 'mode' then state.mode = (state.mode - 1 + value) % #MODES + 1 end
-  ui.screen(list_desc())
+  elseif id == 'mode' then state.mode = value + 1 end
+  -- no re-registration: the engine already shows the new value. gd.ui.value reads it back (and set_value would write it).
+  ui.note{ text = id .. ' is now ' .. tostring(ui.value(LIST, id)), kind = 'info', seconds = 1.5 }
 end
 
 function list_desc()
   return { id = LIST, trail = { 'SOLO', title = 'ATLAS DEMO' }, chapter = 1,
     primary = { kind = 'list', items = {
       { id = 'sync', label = 'Sync', value = { kind = 'toggle', on = state.sync } },
-      { id = 'mode', label = 'Mode', sub = 'A or left/right steps the choice', value = { kind = 'choice', text = MODES[state.mode] } },
-      { id = 'vol', label = 'Volume', value = { kind = 'slider', min = 0, max = 100, value = state.vol } },
+      { id = 'mode', label = 'Mode', sub = 'A or left/right steps the choice (engine-owned options)', value = { kind = 'choice', options = MODES, value = state.mode - 1 } },
+      { id = 'vol', label = 'Volume', sub = 'steps of 5', value = { kind = 'slider', min = 0, max = 100, step = 5, value = state.vol } },
       { id = 'code', label = 'Code', value = { kind = 'text', text = 'ABC-123' } },
       { id = 'closed', label = 'Closed', disabled = true } } },
     explainer = { width = 'normal', provide = function(cid)
@@ -35,7 +36,7 @@ function list_desc()
     counter = function(cid) return cid end,
     on = {
       change = on_change,
-      accept = function(cid) ui.note{ text = 'Pressed A on ' .. cid, kind = 'info' } end,
+      accept = function(cid) ui.set_value(LIST, 'code', 'ACCEPT-' .. cid:sub(1, 3)); ui.note{ text = 'Pressed A on ' .. cid .. ' (set_value changed the Code row)', kind = 'info' } end,
       back = function() return { pop = true } end,
       page = function() show('grid') end,
       start = function() ui.note{ text = 'START reached on.start', kind = 'warn' } end,

@@ -18,6 +18,7 @@
 #include "gw_ui_policy.h"
 #include "gw_ui_hud.h"
 #include "gw_ui_registry.h"
+#include "gw_ui_item.h"
 #include "gw_ui_retail.h"
 #include "gw_ui_render.h"
 #include "gw_ui_stack.h"
@@ -485,13 +486,16 @@ static int gs_ui_value_event(int slot, const AtEvent *e) {
         it->on = !it->on; is_bool = 1; val = it->on;
     } else if (it->vkind == AT_VAL_CHOICE) {
         dir = left ? -1 : 1; val = dir;
+        if (it->n_opts > 0) {                                     /* options: the engine owns the choice; it wraps, shows the option and reports the INDEX */
+            if (!at_item_apply(AT_VAL_CHOICE, 0, it->n_opts - 1, 1, it->vval, dir, &nv)) return 1;   /* one option: nothing to change to */
+            it->vval = nv; val = nv;
+            snprintf(it->text, sizeof it->text, "%s", it->opt[nv]);
+        }
     } else {
-        if (accept) return 0;                                     /* a slider is stepped, not accepted */
-        step = (it->vmax - it->vmin) / 20; if (step < 1) step = 1;
-        nv = it->vval + (left ? -step : step);
-        if (nv < it->vmin) nv = it->vmin;
-        if (nv > it->vmax) nv = it->vmax;
-        if (nv == it->vval) return 1;                             /* at the end: nothing changed, nothing to report */
+        if (accept && !(it->iflags & AT_ITEM_A_STEPS)) return 0;  /* a slider is stepped, not accepted (unless the row says A steps it) */
+        step = it->vstep > 0 ? it->vstep : (it->vmax - it->vmin) / 20;   /* the script's step, else the Lua rule */
+        if (step < 1) step = 1;
+        if (!at_item_apply(AT_VAL_SLIDER, it->vmin, it->vmax, step, it->vval, left ? -1 : 1, &nv)) return 1;   /* at the end: nothing changed, nothing to report */
         it->vval = nv; val = nv;
     }
     if (u->sc.fn_change >= 0 && gs_may_run(u->owner) && gs_ui_usable(u->owner)) {
@@ -1842,6 +1846,71 @@ static int l_ui_set_focus(lua_State *L) {
     return 1;
 }
 
+/* ---- gd.ui.set_value / gd.ui.value: a row's live value, set and read in place (no re-registration, no on.change, the focus stays).
+ * The same owner check every gd.ui call uses (gs_ui_slot_arg: "belongs to another script", "belongs to the engine"). ---- */
+static AtItem *gs_ui_find_item(GsUiSlot *u, const char *id) {
+    int i;
+    if (u->sc.primary != AT_PRIMARY_LIST && u->sc.primary != AT_PRIMARY_TILES) return NULL;
+    for (i = 0; i < u->sc.n_items; i++) if (strcmp(u->sc.items[i].id, id) == 0) return &u->sc.items[i];
+    return NULL;
+}
+
+static int l_ui_set_value(lua_State *L) {
+    int s = gs_ui_slot_arg(L, 1), ok = 0;
+    GsUiSlot *u = &gs_ui_slot[s];
+    AtItem *it = gs_ui_find_item(u, luaL_checkstring(L, 2));
+    if (it != NULL) {
+        switch (it->vkind) {
+        case AT_VAL_TOGGLE:
+            if (lua_type(L, 3) == LUA_TBOOLEAN) { it->on = lua_toboolean(L, 3) != 0; ok = 1; }
+            break;
+        case AT_VAL_SLIDER:
+            if (lua_isinteger(L, 3)) {
+                lua_Integer v = lua_tointeger(L, 3);
+                it->vval = v < it->vmin ? it->vmin : v > it->vmax ? it->vmax : (int) v;
+                ok = 1;
+            }
+            break;
+        case AT_VAL_CHOICE:
+            if (it->n_opts > 0) {
+                if (lua_isinteger(L, 3) && lua_tointeger(L, 3) >= 0 && lua_tointeger(L, 3) < it->n_opts) {
+                    it->vval = (int) lua_tointeger(L, 3);
+                    snprintf(it->text, sizeof it->text, "%s", it->opt[it->vval]);
+                    ok = 1;
+                }
+                break;
+            }
+            /* fall through: a choice without options shows the text it is given */
+        case AT_VAL_TEXT:
+        case AT_VAL_COUNTER:
+            if (lua_type(L, 3) == LUA_TSTRING) { snprintf(it->text, sizeof it->text, "%s", lua_tostring(L, 3)); ok = 1; }
+            break;
+        default: break;
+        }
+        if (ok) u->explain_dirty = 1;                              /* an explainer that names the value is asked again */
+    }
+    lua_pushboolean(L, ok);
+    return 1;
+}
+
+static int l_ui_value(lua_State *L) {
+    int s = gs_ui_slot_arg(L, 1);
+    AtItem *it = gs_ui_find_item(&gs_ui_slot[s], luaL_checkstring(L, 2));
+    if (it == NULL) { lua_pushnil(L); return 1; }
+    switch (it->vkind) {
+    case AT_VAL_TOGGLE: lua_pushboolean(L, it->on != 0); break;
+    case AT_VAL_SLIDER: lua_pushinteger(L, it->vval); break;
+    case AT_VAL_CHOICE:
+        if (it->n_opts > 0) { lua_pushinteger(L, it->vval); break; }
+        lua_pushstring(L, it->text);
+        break;
+    case AT_VAL_TEXT:
+    case AT_VAL_COUNTER: lua_pushstring(L, it->text); break;
+    default: lua_pushnil(L); break;
+    }
+    return 1;
+}
+
 static int l_ui_note(lua_State *L) {
     int top = at_stack_top(&gs_ui_stack);
     GsUiSlot *u;
@@ -1926,7 +1995,7 @@ static int l_ui_state(lua_State *L) {
 
 static const luaL_Reg gs_ui_funcs[] = {
     {"available", l_ui_available}, {"screen", l_ui_screen}, {"open", l_ui_open}, {"close", l_ui_close},
-    {"feed", l_ui_feed}, {"focus", l_ui_focus}, {"set_focus", l_ui_set_focus}, {"note", l_ui_note},
+    {"feed", l_ui_feed}, {"focus", l_ui_focus}, {"set_focus", l_ui_set_focus}, {"set_value", l_ui_set_value}, {"value", l_ui_value}, {"note", l_ui_note},
     {"dialog", l_ui_dialog}, {"state", l_ui_state}, {"entry", l_ui_entry}, {"hold_menu", l_ui_hold_menu}, {"forget", l_ui_forget}, {"hud", l_ui_hud}, {"hud_clear", l_ui_hud_clear}, {"toast", l_ui_toast},
     {"retail_hide", l_ui_retail_hide}, {"retail", l_ui_retail}, {"pause_screen", l_ui_pause_screen}, {"unpause", l_ui_unpause}, {NULL, NULL}};
 

@@ -611,9 +611,9 @@ static void fs_css_finish(int go)
                 if (s->kind == FS_CPU) {
                     pl->cpu_level = (u8) s->cpu_lv;
                 }
-                OSReport("frontend: character select - P%d %s ck %d costume %d%s\n", p + 1,
+                OSReport("frontend: character select - P%d %s ck %d costume %d%s cpu level %d\n", p + 1,
                          s->kind == FS_HMN ? "human" : "CPU", ck, pl->color,
-                         s->ck == FS_CK_RANDOM ? " (random)" : "");
+                         s->ck == FS_CK_RANDOM ? " (random)" : "", s->kind == FS_CPU ? (int) pl->cpu_level : 0);
             }
             fs_preload_players(css);
             css->pending_scene_change = 1;

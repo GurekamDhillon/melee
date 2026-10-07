@@ -1082,5 +1082,27 @@
     "in_game": false,
     "controls": "F7 opens and closes; D-pad or arrows move; A or left/right change a row; X note; Y dialog; START note (X, Y and START are pad-only, or click the hint); L or R (Tab) switch list and grid; B close; mouse hover, click, right click, wheel",
     "setup": []
+  },
+  {
+    "id": "demo_atlas_hud",
+    "path": "demos/atlas-hud",
+    "title": "Atlas HUD layer (gd.ui.hud)",
+    "api": "gd.ui.hud, gd.ui.toast, gd.ui.hud_clear, gd.ui.retail_hide, gd.ui.retail",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "F7 shows or clears the HUD and sends a toast; F8 steps the retail mask: none, hud.damage, hud.stock, both (logged). Console: atlas keepout on|off, atlas hud",
+    "setup": []
+  },
+  {
+    "id": "demo_atlas_pause",
+    "path": "demos/atlas-pause",
+    "title": "Atlas pause screen (kind = pause)",
+    "api": "gd.ui.screen kind pause, gd.ui.pause_screen, gd.ui.unpause",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "Run with MELEE_ATLAS_PAUSE=1; START in a LAB match pushes the list (Resume asks for the unpause); without it nothing changes",
+    "setup": []
   }
 ]

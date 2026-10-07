@@ -336,6 +336,52 @@ do
   g.primary.links = {}; for i = 1, 17 do g.primary.links[i] = { a = 'eq:1', b = 'eq:2' } end
   raises(function() u.screen(g) end, 'at most 16 links', 'at most 16 links')
 end
+-- Atlas step 3, Task 19: the two demo mods run against the stand-in (their own main.lua, loaded with a fake gd)
+local function load_demo(path, mod, opts)
+  opts = opts or {}
+  local u = Stub.new({ mod = mod, netplay = opts.netplay })
+  local keys, logs = {}, {}
+  local env = setmetatable({ gd = { ui = u, log = function(t) logs[#logs + 1] = t end, key_pressed = function(k) local v = keys[k]; keys[k] = nil; return v end,
+    player = function(p) return opts.players and opts.players[p] end } }, { __index = _G })
+  local chunk = assert(loadfile(prefix .. path, 't', env)); chunk()
+  return env, u, keys, logs
+end
+do
+  local env, u, keys, logs = load_demo('pc/scripts/examples/demos/atlas-hud/scripts/main.lua', 'demo_atlas_hud', { players = { { cpu = false }, { cpu = true }, nil } })
+  keys.F7 = true; env.on_tick()
+  local h = u.huds['demo_atlas_hud/main']
+  check(h and h.id == 'demo_atlas_hud.hud', 'F7 shows the HUD')
+  check(#h.zones.top_left == 1 and h.zones.top_left[1].kind == 'strip' and #h.zones.top_right == 2, 'a strip, a port card for the human port and the toast')
+  check(h.zones.top_right[1].kind == 'toast' and h.zones.top_right[2].kind == 'port_card' and h.zones.top_right[2].port == 1, 'the toast on top of the port card')
+  check(h.zones.top_center[1].kind == 'banner' and h.zones.top_center[1].button == 'A' and h.zones.bottom_left[1].kind == 'note', 'a banner with the A glyph, a note')
+  check(u.hud_caps(h.zones), 'inside the quiet-HUD caps')
+  local want = { '', 'hud.damage', 'hud.stock', 'hud.damage,hud.stock', '' }
+  for i = 1, 4 do
+    keys.F8 = true; env.on_tick()
+    local got = table.concat(u.retail().hidden, ',')
+    check(got == want[i + 1], 'F8 step ' .. i .. ' hides [' .. got .. ']')
+  end
+  keys.F8 = true; env.on_tick(); check(table.concat(u.retail().hidden, ',') == 'hud.damage', 'and round again')
+  keys.F7 = true; env.on_tick(); check(u.huds['demo_atlas_hud/main'] == nil, 'F7 clears it')
+  local env2, u2, keys2, logs2 = load_demo('pc/scripts/examples/demos/atlas-hud/scripts/main.lua', 'demo_atlas_hud', { netplay = true })
+  keys2.F7 = true; env2.on_tick(); keys2.F8 = true; env2.on_tick(); keys2.F8 = true; env2.on_tick()
+  check(u2.huds['demo_atlas_hud/main'] ~= nil and #u2.retail().hidden == 0, 'online the HUD draws and nothing is hidden')
+  local refused = false; for _, l in ipairs(logs2) do if l:find('refused', 1, true) then refused = true end end
+  check(refused, 'the refusal is logged, not raised')
+end
+do
+  local env, u = load_demo('pc/scripts/examples/demos/atlas-pause/scripts/main.lua', 'demo_atlas_pause')
+  env.on_load()
+  check(u.pause_slot == 'demo_atlas_pause.pause' and u.screens['demo_atlas_pause.pause'].kind == 'pause', 'the pause screen is registered and named')
+  u.retail_pause(0, true); check(u.state().top == nil, 'takeover off: nothing changes')
+  u.retail_pause(0, false)
+  u.pause_wanted = true; u.retail_pause(0, true)
+  check(u.state().top == 'demo_atlas_pause.pause', 'takeover on: the demo\'s list')
+  u.engine_press('demo_atlas_pause.pause', 'accept')
+  check(u.take_unpause() == 0, 'Resume asks the engine to unpause the pauser')
+  u.retail_pause(0, false)
+  env.on_unload(); check(u.pause_slot == nil, 'unloading clears the name')
+end
 local off = Stub.new({ available = false }); check(select(1, off.available()) == false, 'an unavailable stub says so')
 print(('atlas ui stub: %d checks, %d failed'):format(count, fails))
 os.exit(fails == 0 and 0 or 1)

@@ -2,7 +2,9 @@
 local prefix = io.open('pc/tests/atlas_ui_stub.lua') and '' or 'melee/'
 local Stub = dofile(prefix .. 'pc/tests/atlas_ui_stub.lua')
 local T = dofile(prefix .. 'pc/tests/envoy_testlib.lua')
-local A = assert(loadfile(T.root .. 'atlas_bag.lua'))()({})
+local D = {}
+D.atlas_kit = assert(loadfile(T.root .. 'atlas_kit.lua'))()(D)
+local A = assert(loadfile(T.root .. 'atlas_bag.lua'))()(D)
 local ID = 'envoy.bag'
 
 local function drive(i, extra)
@@ -255,7 +257,7 @@ end)
 
 T.test('when the engine refuses the screen it is logged once, with the reason, and the legacy bag stays', function()
   local S, ui, log = fake(); A.set(true)
-  A.logged = {}
+  D.atlas_kit.logged = {}
   ui.screen = function() error('gd.ui.screen: too many screens (8)') end
   assert(A.attach(S) == false and S.atlas == nil)
   local S2 = fake(); S2.g.ui = ui; S2.host.log = S.host.log

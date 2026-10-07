@@ -347,7 +347,7 @@ static void tabs_and_cursors(void)
     CHECK(v.tab == 0 && v.cursor[0].active == 0 && v.cursor[3].active == 0 && v.progress == 0 && v.ex.media_tex == -1);
     CHECK(v.cursor[0].card == -1 && v.cursor[0].block == 0 && v.cursor[0].index == -1);
     CHECK(at_explainer_from_val(A, -1, &e, err, sizeof err) == 1 && e.has == 0 && e.media_tex == -1 && e.stepper == 0);
-    CHECK(AT_MAX_CELLS == 12 && AT_MAX_EXT_CELLS == 256 && AT_MAX_TABS == 6 && AT_MAX_CURSORS == 4);
+    CHECK(AT_MAX_CELLS == 12 && AT_MAX_EXT_CELLS == 256 && AT_MAX_TABS == 8 && AT_MAX_CURSORS == 4);
 }
 
 static void pause_and_persist(void)

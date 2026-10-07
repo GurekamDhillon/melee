@@ -96,8 +96,8 @@ static void errors(void)
     CHECK(!at_screen_from_val(A, atv_str(A, "x"), NULL, &sc, err, sizeof err));
     CHECK(!at_screen_from_val(A, bag("other.bag"), "envoy", &sc, err, sizeof err));        /* a mod's ids start with its own id */
     CHECK(strstr(err, "envoy.") != NULL);
-    root = atv_table(A); S(root, "id", "m.x"); prim = atv_table(A); S(prim, "kind", "tiles"); atv_set(A, root, "primary", prim);
-    CHECK(!at_screen_from_val(A, root, NULL, &sc, err, sizeof err)); CHECK(strstr(err, "tiles") != NULL);
+    root = atv_table(A); S(root, "id", "m.x"); prim = atv_table(A); S(prim, "kind", "wheel"); atv_set(A, root, "primary", prim);
+    CHECK(!at_screen_from_val(A, root, NULL, &sc, err, sizeof err)); CHECK(strstr(err, "wheel") != NULL);
     root = atv_table(A); S(root, "id", "m.x"); prim = atv_table(A); S(prim, "kind", "grid"); blocks = atv_table(A);
     for (b = 0; b < 7; b++) atv_push(A, blocks, block("b", "B", 2, 0));
     atv_set(A, prim, "blocks", blocks); atv_set(A, root, "primary", prim);
@@ -278,12 +278,44 @@ static void page_start_change(void)
     CHECK(n == 3);
 }
 
+static int tiles_desc(int cols, int nitems, int nmore)
+{
+    int root = atv_table(A), prim = atv_table(A), items = atv_table(A), more = atv_table(A), i;
+    S(root, "id", "m.hub");
+    S(prim, "kind", "tiles"); N(prim, "cols", cols);
+    for (i = 0; i < nitems; i++) { int it = atv_table(A); char id[8]; snprintf(id, sizeof id, "t%d", i); S(it, "id", id); S(it, "label", id); S(it, "tag", "MOD"); S(it, "numeral", "II"); atv_push(A, items, it); }
+    for (i = 0; i < nmore; i++) { int it = atv_table(A); char id[8]; snprintf(id, sizeof id, "m%d", i); S(it, "id", id); S(it, "label", id); atv_push(A, more, it); }
+    atv_set(A, prim, "items", items); if (nmore > 0) atv_set(A, prim, "more", more);
+    atv_set(A, root, "primary", prim);
+    return root;
+}
+static void tiles_screen(void)
+{
+    static AtScreen sc;
+    char err[160];
+    AtFocusBlock fb[AT_MAX_BLOCKS];
+    CHECK(at_screen_from_val(A, tiles_desc(2, 5, 3), NULL, &sc, err, sizeof err));
+    CHECK(sc.primary == AT_PRIMARY_TILES && sc.tile_cols == 2 && sc.n_items == 5 && sc.n_more == 3);
+    CHECK_STR(sc.items[1].tag, "MOD"); CHECK_STR(sc.items[1].numeral, "II"); CHECK_STR(sc.more[2].id, "m2");
+    CHECK(at_screen_focus_blocks(&sc, fb) == 2 && fb[0].cols == 2 && fb[1].cols == 3 && fb[1].row0 == 3);
+    CHECK_STR(at_screen_block_id(&sc, 1), "more");
+    { AtFocusPos old = { 1, 2 }, p = at_screen_refocus(&sc, "more", "m1", old); CHECK(p.block == 1 && p.index == 1); }
+    { AtFocusPos p = { 1, 0 }; CHECK(at_cell_accepts(&sc, p)); }
+    CHECK(!at_screen_from_val(A, tiles_desc(3, 5, 0), NULL, &sc, err, sizeof err)); CHECK(strstr(err, "tiles: cols must be 1 or 2") != NULL);
+    CHECK(!at_screen_from_val(A, tiles_desc(2, 5, 5), NULL, &sc, err, sizeof err)); CHECK(strstr(err, "more") != NULL);
+    CHECK(at_screen_from_val(A, tiles_desc(2, 2, 4), NULL, &sc, err, sizeof err));
+    CHECK(sc.n_more == 4);
+    CHECK(at_screen_from_val(A, tiles_desc(0, 3, 0), NULL, &sc, err, sizeof err) && at_screen_tile_cols(&sc) == 1);   /* 0: by count */
+    CHECK(at_screen_from_val(A, tiles_desc(0, 4, 0), NULL, &sc, err, sizeof err) && at_screen_tile_cols(&sc) == 2);
+}
+
 int main(void)
 {
     A = (AtvArena *) malloc(sizeof *A);
     atv_init(A); parse_bag();
     atv_init(A); errors();
     atv_init(A); list_screen();
+    atv_init(A); tiles_screen();
     atv_init(A); explainer();
     atv_init(A); refocus();
     atv_init(A); accept_semantics();

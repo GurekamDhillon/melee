@@ -65,6 +65,12 @@ const char *gw_Mods_Description(int i);  /* "" when none */
 const char *gw_Mods_Requires(int i);     /* comma-separated ids, "" when none */
 int gw_Mods_Find(const char *id);        /* index of `id` (case-insensitive), or -1 */
 
+/* Atlas menu entries a mod.json "menus" array declares (docs/scripting.md). Active mods only: an inactive mod has none.
+ * field: "id" "parent" "label" "blurb" "icon" "after" "opens" "action" ("script" or "opens") "online" ("true"/"false"). */
+int gw_Mods_MenuCount(int i);
+const char *gw_Mods_MenuField(int i, int k, const char *field);
+const char *gw_Mods_MenuSummary(int i);  /* "adds Solo > Envoy", or "" */
+
 int gw_Mods_IsActive(int i);             /* 1 = mounted THIS boot */
 int gw_Mods_Status(int i);               /* GW_MOD_* for this boot */
 const char *gw_Mods_StatusText(int i);   /* short human text for the status, e.g. "needs ace-base" */

@@ -1247,7 +1247,7 @@ function on_tick()
   else gd.input_mask(1,15);return end
  end
  if demo and not ready and not launching then demo=false;launch();return end
- if gd.tbd_request(true) then launch();return end
+ -- the main-menu tile that set gd.tbd_request was removed in script API 2; start a run with the rogue_start command
  local match=gd.match()
  if launching and (not match.active or match.frame<=90) then launch_seen=true end
  if launching and launch_seen and match.active and match.frame>90 and gd.player(1) and (not launched_combat or gd.player(2)) then launching=false;ready=true;gd.set_stocks(1,BASE_STOCKS);if gd.player(2) then gd.set_stocks(2,BASE_STOCKS) end;if pending_begin then begin(true) else pause_menu(menu=='error' and 'error' or 'collection') end end
@@ -1717,6 +1717,8 @@ gd.command('rogue_route',function(arg)
  gd.log('rogue_route diag_version='..tostring(d.diag_version)..' schema='..tostring(d.schema_version)..' seed='..seed..' rooms='..tostring(d.rooms)..' spine='..tostring(d.spine)..' fallback='..tostring(d.fallback_used)..' admissible='..tostring(d.manifest_admissible)..' signature='..tostring(d.topology_signature)..' refusal='..tostring(d.refusal))
 end)
 gd.command('rogue_start',function() if not ready then demo=true end end)
+-- SOLO > ROGUELITE (mod.json menus, script API 2): the entry that replaced the removed main-menu TBD tile; it runs what rogue_start runs.
+function on_entry(id) if id=='roguelite' and not ready then demo=true end end
 gd.command('rogue_map',function()
  local map,why=campaign and campaign:route_map() or nil,nil
  if not map then gd.log('rogue_map unavailable: '..tostring(why or 'no active campaign'));return end

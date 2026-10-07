@@ -22,12 +22,14 @@
 #endif
 
 #include <stdio.h>
+#include "gw_ui_menus_json.h"
 #include <stdlib.h>
 #include <string.h>
 
 #define GW_MODS_ID_MAX 64
 #define GW_MODS_TEXT_MAX 128
 #define GW_MODS_LIST_MAX 8 /* requires / conflicts entries per mod */
+#define GW_MODS_MENUS_MAX 6 /* "menus" entries read per mod (the registry takes 6 per parent) */
 
 typedef struct gw_mod {
     char id[GW_MODS_ID_MAX];
@@ -51,6 +53,9 @@ typedef struct gw_mod {
     char status_text[GW_MODS_TEXT_MAX];
     uint64_t file_sum; /* order-independent sum of per-file digests the overlay reported */
     int nfiles;
+    AtEntry *menus;     /* mod.json "menus" (at most GW_MODS_MENUS_MAX), malloc'd only when the mod declares some */
+    int nmenus;
+    char menu_summary[GW_MODS_TEXT_MAX];
     char engine_miss[GW_MODS_TEXT_MAX]; /* mod.json "engine": the first feature this build lacks ("" = none) */
 } gw_mod;
 
@@ -293,6 +298,36 @@ static int mod_parse_json(gw_mod *m, const char *text) {
     return *p == '}' ? 0 : -1;
 }
 
+/* mod.json "menus": entries for the Atlas registry. Read here, used only while the mod is active (gw_Mods_Menu*). */
+static const char *menu_parent_name(const char *parent) {
+    static const struct { const char *id, *name; } names[] = { { "main", "Main" }, { "solo", "Solo" }, { "versus", "Versus" }, { "online", "Online" },
+                                                              { "mods", "Mods" }, { "settings", "Settings" }, { "more", "More" } };
+    size_t i;
+    for (i = 0; i < sizeof names / sizeof names[0]; ++i) if (strcmp(parent, names[i].id) == 0) return names[i].name;
+    return parent;
+}
+
+static void mod_load_menus(gw_mod *m, const char *text) {
+    char err[96];
+    AtEntry tmp[GW_MODS_MENUS_MAX];
+    int n = at_menus_parse(text, m->id, tmp, GW_MODS_MENUS_MAX, err, sizeof err);
+    if (n < 0) {
+        gw_log("gw: mods: %s/mod.json menus: %s - no menu entries", m->id, err);
+        return;
+    }
+    if (err[0] != '\0') gw_log("gw: mods: %s/mod.json %s", m->id, err);
+    if (n == 0) return;
+    m->menus = (AtEntry *) malloc((size_t) n * sizeof(AtEntry));
+    if (m->menus == NULL) return;
+    memcpy(m->menus, tmp, (size_t) n * sizeof(AtEntry));
+    m->nmenus = n;
+    snprintf(m->menu_summary, sizeof m->menu_summary, "adds %s > %s", menu_parent_name(tmp[0].parent), tmp[0].label);
+    if (n > 1) {
+        size_t l = strlen(m->menu_summary);
+        snprintf(m->menu_summary + l, sizeof m->menu_summary - l, " and %d more", n - 1);
+    }
+}
+
 /* ---- scanning -------------------------------------------------------------------------------- */
 
 static int mod_cmp_id(const void *a, const void *b) {
@@ -324,6 +359,8 @@ static void mod_load_meta(gw_mod *m, const char *moddir) {
     if (text != NULL) {
         if (mod_parse_json(m, text) != 0) {
             gw_log("gw: mods: %s/mod.json is not valid JSON - read what parsed, ignored the rest", m->id);
+        } else {
+            mod_load_menus(m, text);
         }
         free(text);
     }
@@ -793,6 +830,32 @@ const char *gw_Mods_Requires(int i) { MOD_STR(requires_text); }
 const char *gw_Mods_StatusText(int i) { MOD_STR(status_text); }
 const char *gw_Mods_PayloadDir(int i) { MOD_STR(payload); }
 int gw_Mods_Find(const char *id) { return id != NULL ? set_find(boot(), id) : -1; }
+
+/* ---- Atlas menu entries (mod.json "menus"): an inactive mod adds nothing ------------------------------------ */
+int gw_Mods_MenuCount(int i) {
+    gw_mod *m = mod_at(boot(), i);
+    return (m != NULL && m->status == GW_MOD_ACTIVE) ? m->nmenus : 0;
+}
+const char *gw_Mods_MenuField(int i, int k, const char *field) {
+    gw_mod *m = mod_at(boot(), i);
+    const AtEntry *e;
+    if (field == NULL || m == NULL || m->status != GW_MOD_ACTIVE || k < 0 || k >= m->nmenus) return "";
+    e = &m->menus[k];
+    if (strcmp(field, "id") == 0) return e->id;
+    if (strcmp(field, "parent") == 0) return e->parent;
+    if (strcmp(field, "label") == 0) return e->label;
+    if (strcmp(field, "blurb") == 0) return e->blurb;
+    if (strcmp(field, "icon") == 0) return e->icon;
+    if (strcmp(field, "after") == 0) return e->after;
+    if (strcmp(field, "opens") == 0) return e->opens;
+    if (strcmp(field, "action") == 0) return e->action == AT_ENTRY_SCRIPT ? "script" : "opens";
+    if (strcmp(field, "online") == 0) return e->online ? "true" : "false";
+    return "";
+}
+const char *gw_Mods_MenuSummary(int i) {
+    gw_mod *m = mod_at(boot(), i);
+    return (m != NULL && m->status == GW_MOD_ACTIVE) ? m->menu_summary : "";
+}
 
 int gw_Mods_IsActive(int i) {
     gw_mod *m = mod_at(boot(), i);

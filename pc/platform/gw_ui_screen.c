@@ -58,6 +58,43 @@ void at_view_init(AtView *v)
     v->focus.block = v->focus.index = -1;
 }
 
+/* one list or tiles item (i of dst); the duplicate check runs over dst[0..i) */
+static int read_item(const AtvArena *a, int in, int i, AtItem *dst, AtScreen *o, int is_more, char *err, int errcap)
+{
+    int k, vt;
+    AtItem *it = &dst[i];
+    const char *vk, *what = is_more ? "more item" : "item";
+    if (atv_kind(a, in) != ATV_TABLE) FAIL("gd.ui.screen: %s %d is not a table", what, i + 1);
+    if (id_too_long(a, in)) FAIL("gd.ui.screen: %s %d: id is too long (%d characters at most)", what, i + 1, AT_ID - 1);
+    get_str(a, in, "id", it->id, AT_ID, &o->warnings);
+    if (it->id[0] == '\0') FAIL("gd.ui.screen: %s %d has no id", what, i + 1);
+    for (k = 0; k < i; k++) if (strcmp(dst[k].id, it->id) == 0) FAIL("gd.ui.screen: duplicate item id \"%s\"", it->id);
+    if (is_more) for (k = 0; k < o->n_items; k++) if (strcmp(o->items[k].id, it->id) == 0) FAIL("gd.ui.screen: duplicate item id \"%s\"", it->id);
+    get_str(a, in, "label", it->label, AT_STR, &o->warnings);
+    get_str(a, in, "sub", it->sub, AT_STR, &o->warnings);
+    get_str(a, in, "icon", it->icon, AT_ID, &o->warnings);
+    get_str(a, in, "tag", it->tag, 16, &o->warnings);
+    get_str(a, in, "badge", it->badge, 8, &o->warnings);
+    get_str(a, in, "numeral", it->numeral, 6, &o->warnings);
+    if (atv_boolv(a, atv_get(a, in, "disabled"), 0)) it->flags |= AT_CELL_DISABLED;
+    if (atv_boolv(a, atv_get(a, in, "selected"), 0)) it->flags |= AT_CELL_SELECTED;
+    vt = atv_get(a, in, "value");
+    if (atv_kind(a, vt) == ATV_TABLE) {
+        vk = atv_strv(a, atv_get(a, vt, "kind"), "");
+        if (strcmp(vk, "toggle") == 0) { it->vkind = AT_VAL_TOGGLE; it->on = atv_boolv(a, atv_get(a, vt, "on"), 0); }
+        else if (strcmp(vk, "choice") == 0) it->vkind = AT_VAL_CHOICE;
+        else if (strcmp(vk, "slider") == 0) { it->vkind = AT_VAL_SLIDER; it->vmin = get_int(a, vt, "min", 0); it->vmax = get_int(a, vt, "max", 100); it->vval = get_int(a, vt, "value", 0);
+            if (it->vmin >= it->vmax) FAIL("gd.ui.screen: item \"%s\": slider min must be below max", it->id);
+            if (it->vval < it->vmin) it->vval = it->vmin;
+            if (it->vval > it->vmax) it->vval = it->vmax; }
+        else if (strcmp(vk, "text") == 0) it->vkind = AT_VAL_TEXT;
+        else if (strcmp(vk, "counter") == 0) it->vkind = AT_VAL_COUNTER;
+        else FAIL("gd.ui.screen: item \"%s\": unknown value kind \"%s\"", it->id, vk);
+        get_str(a, vt, "text", it->text, AT_STR, &o->warnings);
+    }
+    return 1;
+}
+
 int at_screen_from_val(const AtvArena *a, int root, const char *owner, AtScreen *o, char *err, int errcap)
 {
     int prim, blocks, items, i, j, k, ex, keys, on, alt, nb, nc, n;
@@ -94,7 +131,12 @@ int at_screen_from_val(const AtvArena *a, int root, const char *owner, AtScreen 
     kind = atv_strv(a, atv_get(a, prim, "kind"), "");
     if (strcmp(kind, "grid") == 0) o->primary = AT_PRIMARY_GRID;
     else if (strcmp(kind, "list") == 0) o->primary = AT_PRIMARY_LIST;
-    else FAIL("gd.ui.screen: primary kind \"%s\" is not supported here (grid or list)", kind);
+    else if (strcmp(kind, "tiles") == 0) {
+        o->primary = AT_PRIMARY_TILES;
+        o->tile_cols = get_int(a, prim, "cols", 0);
+        if (o->tile_cols < 0 || o->tile_cols > 2) FAIL("gd.ui.screen: tiles: cols must be 1 or 2");
+    }
+    else FAIL("gd.ui.screen: primary kind \"%s\" is not supported here (grid, list or tiles)", kind);
 
     if (o->primary == AT_PRIMARY_GRID) {
         blocks = atv_get(a, prim, "blocks");
@@ -164,33 +206,14 @@ int at_screen_from_val(const AtvArena *a, int root, const char *owner, AtScreen 
         n = atv_len(a, items);
         if (n < 1 || n > AT_MAX_ITEMS) FAIL("gd.ui.screen: a list needs 1 to %d items (it has %d)", AT_MAX_ITEMS, n);
         o->n_items = n;
-        for (i = 0; i < n; i++) {
-            int in = atv_at(a, items, i + 1), vt;
-            AtItem *it = &o->items[i];
-            const char *vk;
-            if (atv_kind(a, in) != ATV_TABLE) FAIL("gd.ui.screen: item %d is not a table", i + 1);
-            if (id_too_long(a, in)) FAIL("gd.ui.screen: item %d: id is too long (%d characters at most)", i + 1, AT_ID - 1);
-            get_str(a, in, "id", it->id, AT_ID, &o->warnings);
-            if (it->id[0] == '\0') FAIL("gd.ui.screen: item %d has no id", i + 1);
-            for (k = 0; k < i; k++) if (strcmp(o->items[k].id, it->id) == 0) FAIL("gd.ui.screen: duplicate item id \"%s\"", it->id);
-            get_str(a, in, "label", it->label, AT_STR, &o->warnings);
-            get_str(a, in, "sub", it->sub, AT_STR, &o->warnings);
-            if (atv_boolv(a, atv_get(a, in, "disabled"), 0)) it->flags |= AT_CELL_DISABLED;
-            if (atv_boolv(a, atv_get(a, in, "selected"), 0)) it->flags |= AT_CELL_SELECTED;
-            vt = atv_get(a, in, "value");
-            if (atv_kind(a, vt) == ATV_TABLE) {
-                vk = atv_strv(a, atv_get(a, vt, "kind"), "");
-                if (strcmp(vk, "toggle") == 0) { it->vkind = AT_VAL_TOGGLE; it->on = atv_boolv(a, atv_get(a, vt, "on"), 0); }
-                else if (strcmp(vk, "choice") == 0) it->vkind = AT_VAL_CHOICE;
-                else if (strcmp(vk, "slider") == 0) { it->vkind = AT_VAL_SLIDER; it->vmin = get_int(a, vt, "min", 0); it->vmax = get_int(a, vt, "max", 100); it->vval = get_int(a, vt, "value", 0);
-                    if (it->vmin >= it->vmax) FAIL("gd.ui.screen: item \"%s\": slider min must be below max", it->id);
-                    if (it->vval < it->vmin) it->vval = it->vmin;
-                    if (it->vval > it->vmax) it->vval = it->vmax; }
-                else if (strcmp(vk, "text") == 0) it->vkind = AT_VAL_TEXT;
-                else if (strcmp(vk, "counter") == 0) it->vkind = AT_VAL_COUNTER;
-                else FAIL("gd.ui.screen: item \"%s\": unknown value kind \"%s\"", it->id, vk);
-                get_str(a, vt, "text", it->text, AT_STR, &o->warnings);
-            }
+        for (i = 0; i < n; i++)
+            if (!read_item(a, atv_at(a, items, i + 1), i, o->items, o, 0, err, errcap)) return 0;
+        if (o->primary == AT_PRIMARY_TILES) {
+            int more = atv_get(a, prim, "more"), nm = atv_len(a, more);
+            if (nm > AT_MAX_MORE) FAIL("gd.ui.screen: tiles: at most %d more items (%d given)", AT_MAX_MORE, nm);
+            o->n_more = nm;
+            for (i = 0; i < nm; i++)
+                if (!read_item(a, atv_at(a, more, i + 1), i, o->more, o, 1, err, errcap)) return 0;
         }
     }
 
@@ -272,8 +295,13 @@ int at_explainer_from_val(const AtvArena *a, int t, AtExplainer *e, char *err, i
     }
     with = atv_get(a, t, "with");
     n = atv_len(a, with);
-    for (i = 0; i < n && e->n_with < AT_MAX_WITH; i++) {
+    for (i = 0; i < n && (e->n_with < AT_MAX_WITH || e->n_with_text < AT_MAX_WITH); i++) {
         int w = atv_at(a, with, i + 1);
+        if (atv_kind(a, w) == ATV_STR) {                                    /* a tag such as "Melee" or "Rules" */
+            if (e->n_with_text < AT_MAX_WITH) snprintf(e->with_text[e->n_with_text++], sizeof e->with_text[0], "%s", atv_strv(a, w, ""));
+            continue;
+        }
+        if (e->n_with >= AT_MAX_WITH) continue;
         e->with_model[e->n_with++] = atv_kind(a, w) == ATV_TABLE ? get_model(a, w, "model") : to_model(get_int_of(a, w));
     }
     from = atv_get(a, t, "from");
@@ -304,6 +332,13 @@ int at_screen_focus_blocks(const AtScreen *s, AtFocusBlock *fb)
         fb[0].col0 = 0; fb[0].row0 = 0; fb[0].cols = 1; fb[0].n = s->n_items; fb[0].exists = NULL;
         return 1;
     }
+    if (s->primary == AT_PRIMARY_DISPLAY) return 0;
+    if (s->primary == AT_PRIMARY_TILES) {
+        int cols = at_screen_tile_cols(s), rows = (s->n_items + cols - 1) / cols, nb = 0;
+        fb[0].col0 = 0; fb[0].row0 = 0; fb[0].cols = cols; fb[0].n = s->n_items; fb[0].exists = NULL; nb = 1;
+        if (s->n_more > 0) { fb[1].col0 = 0; fb[1].row0 = rows; fb[1].cols = s->n_more; fb[1].n = s->n_more; fb[1].exists = NULL; nb = 2; }
+        return nb;
+    }
     for (b = 0; b < s->n_blocks; b++) {
         fb[b].col0 = 0; fb[b].row0 = row; fb[b].cols = s->blocks[b].cols > 0 ? s->blocks[b].cols : 1;
         fb[b].n = s->blocks[b].n; fb[b].exists = NULL;
@@ -312,14 +347,32 @@ int at_screen_focus_blocks(const AtScreen *s, AtFocusBlock *fb)
     return s->n_blocks;
 }
 
+int at_screen_tile_cols(const AtScreen *s)
+{
+    if (s->tile_cols == 1 || s->tile_cols == 2) return s->tile_cols;
+    return s->n_items <= 3 ? 1 : 2;
+}
+
+/* the item array a tiles block names: block 0 the tiles, block 1 the More row */
+static const AtItem *tiles_cell(const AtScreen *s, AtFocusPos p)
+{
+    if (p.block == 0 && p.index >= 0 && p.index < s->n_items) return &s->items[p.index];
+    if (p.block == 1 && p.index >= 0 && p.index < s->n_more) return &s->more[p.index];
+    return NULL;
+}
+
 const char *at_screen_block_id(const AtScreen *s, int block)
 {
+    if (s->primary == AT_PRIMARY_TILES) return block == 0 ? "tiles" : (block == 1 && s->n_more > 0 ? "more" : NULL);
+    if (s->primary == AT_PRIMARY_DISPLAY) return NULL;
     if (s->primary == AT_PRIMARY_LIST) return block == 0 ? "list" : NULL;
     return (block >= 0 && block < s->n_blocks) ? s->blocks[block].id : NULL;
 }
 
 const char *at_screen_cell_id(const AtScreen *s, AtFocusPos p)
 {
+    if (s->primary == AT_PRIMARY_TILES) { const AtItem *it = tiles_cell(s, p); return it != NULL ? it->id : NULL; }
+    if (s->primary == AT_PRIMARY_DISPLAY) return NULL;
     if (s->primary == AT_PRIMARY_LIST) return (p.block == 0 && p.index >= 0 && p.index < s->n_items) ? s->items[p.index].id : NULL;
     if (p.block < 0 || p.block >= s->n_blocks || p.index < 0 || p.index >= s->blocks[p.block].n) return NULL;
     return s->blocks[p.block].cells[p.index].id;
@@ -330,6 +383,14 @@ AtFocusPos at_screen_refocus(const AtScreen *s, const char *block_id, const char
     AtFocusBlock fb[AT_MAX_BLOCKS];
     int nb = at_screen_focus_blocks(s, fb), b, i;
     AtFocusPos p = { -1, -1 };
+    if (s->primary == AT_PRIMARY_TILES) {
+        for (i = 0; cell_id != NULL && i < s->n_items; i++) if (strcmp(s->items[i].id, cell_id) == 0) { p.block = 0; p.index = i; return p; }
+        for (i = 0; cell_id != NULL && i < s->n_more; i++) if (strcmp(s->more[i].id, cell_id) == 0) { p.block = 1; p.index = i; return p; }
+        if (block_id != NULL && strcmp(block_id, "more") == 0 && s->n_more > 0) { p.block = 1; p.index = old.index < 0 ? 0 : (old.index >= s->n_more ? s->n_more - 1 : old.index); return p; }
+        if (s->n_items > 0) { p.block = 0; p.index = old.block == 0 && old.index >= 0 ? (old.index >= s->n_items ? s->n_items - 1 : old.index) : 0; }
+        return p;
+    }
+    if (s->primary == AT_PRIMARY_DISPLAY) return p;
     if (s->primary == AT_PRIMARY_LIST) {
         for (i = 0; cell_id != NULL && i < s->n_items; i++) if (strcmp(s->items[i].id, cell_id) == 0) { p.block = 0; p.index = i; return p; }
         if (s->n_items > 0) { p.block = 0; p.index = old.index < 0 ? 0 : (old.index >= s->n_items ? s->n_items - 1 : old.index); }
@@ -351,8 +412,9 @@ AtFocusPos at_screen_refocus(const AtScreen *s, const char *block_id, const char
 int at_cell_accepts(const AtScreen *s, AtFocusPos p)
 {
     if (at_screen_cell_id(s, p) == NULL) return 0;
+    if (s->primary == AT_PRIMARY_TILES) return !(tiles_cell(s, p)->flags & AT_CELL_DISABLED);
     if (s->primary == AT_PRIMARY_LIST) return !(s->items[p.index].flags & AT_CELL_DISABLED);
     return !(s->blocks[p.block].cells[p.index].flags & AT_CELL_DISABLED);
 }
 
-int at_screen_wants_pad(const AtScreen *s) { return !s->input_feed; }
+int at_screen_wants_pad(const AtScreen *s) { return !s->input_feed && s->primary != AT_PRIMARY_DISPLAY; }

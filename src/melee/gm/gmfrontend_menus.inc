@@ -36,9 +36,10 @@
  */
 
 enum { FM_HUB, FM_LIST };
-enum { FA_SUB, FA_MODE, FA_NATIVE, FA_MATCH_SETUP, FA_ONLINE, FA_PAGE, FA_TBD };
-#define SEL_MAIN_TBD 0x43
+enum { FA_SUB, FA_MODE, FA_NATIVE, FA_MATCH_SETUP, FA_ONLINE, FA_PAGE, FA_ENTRY }; ///< FA_ENTRY (arg k): a registry entry of a mod, shown in the legacy SOLO hub
 #define SEL_VS_ONLINE 0x40 ///< not a vanilla selection: VERSUS > ONLINE is the port's
+#define SEL_MAIN_ONLINE 0x44 ///< not a vanilla selection: the Atlas main menu's ONLINE (VERSUS no longer lists it)
+#define SEL_MAIN_MODS 0x45   ///< not a vanilla selection: the Atlas main menu's MODS (the Settings > Mods page)
 #define SEL_1P_LAB 0x42    ///< not a vanilla selection: SOLO > LAB (the Geno Lab, private build)
 #define FMF_PORT 1  ///< gm_801677E8(the port that pressed A) before acting, as vanilla does
 #define FMF_NOSFX 2 ///< no sfxForward (Data > Sound Test stops the music instead)
@@ -62,12 +63,41 @@ typedef struct FeMenu {
     const char* title;
     const FeMenuItem* items;
     int n;
+    const char* atlas_id; ///< the Atlas screen id (gmfrontend_atlas.inc); NULL = the legacy hub or list only
 } FeMenu;
 
 #define FM_N(a) ((int) (sizeof a / sizeof a[0]))
 
+/* The Atlas adapter (gmfrontend_atlas.inc, included after this file) and its host shims (pc/platform/gw_script_ui.inc). */
+extern int Ui_Ready(void);
+extern int Ui_MenuBlocked(void);
+extern int Ui_OpenCredits(void);
+extern int Ui_Begin(const char* id, int primary, int chapter, const char* title);
+extern void Ui_Cols(int cols);
+extern void Ui_Trail(const char* parent);
+extern void Ui_Tile(const char* id, const char* label, const char* tag, const char* numeral, int flags);
+extern void Ui_More(const char* id, const char* label);
+extern void Ui_Explain(const char* kicker, const char* title, const char* what);
+extern void Ui_Key(int button, const char* label);
+extern int Ui_Commit(int focus_block, int focus_index);
+extern void Ui_Intent(int type, int a);
+extern int Ui_PollEvent(int* type, int* block, int* index);
+extern void Ui_Close(const char* id);
+extern int Ui_EntryCount(const char* parent);
+extern const char* Ui_EntryField(const char* parent, int k, const char* field);
+extern int Ui_EntryActivate(const char* parent, int k);
+extern int Ui_EntryBuiltin(const char* parent, const char* id, const char* label, int native_arg);
+struct FeMenu;
+static bool fa_on(const struct FeMenu* m);
+static bool fa_frame(u32 pad);
+static void fa_sync(void);
+static void fa_open_reset(const struct FeMenu* m, int sel);
+static void fa_scene_exit(void);
+static void fa_register_builtins(const struct FeMenu* m);
+struct FeMenuItem;
+static const char* fa_item_id(const struct FeMenuItem* it);
+
 static const FeMenuItem fm_main[] = {
-    { "SUPERTIME ENVOY", "Explore, fight and evolve your build.", "ico_adventure", SEL_MAIN_TBD, FA_TBD },
     { "SOLO", "Classic, Adventure, events, training and more.", "ico_solo", SEL_MAIN_1P, FA_SUB,
       MENU_KIND_1P },
     { "VERSUS", "Up to four players. Your rules, your stage.", "ico_versus", SEL_MAIN_VS, FA_SUB,
@@ -139,6 +169,26 @@ static const FeMenuItem fm_vs[] = {
     { "NAME ENTRY", "Make a name tag.", "ico_names", SEL_VS_NAME, FA_NATIVE },
 };
 
+/* The Atlas main menu (spec 13.2): Solo, Versus, Online, Mods, Settings; Collection, Data and Credits are its More strip (drawn by
+ * the adapter, not FeMenuItems). VERSUS no longer lists ONLINE. The legacy tree above stays for MELEE_ATLAS=0. Icons are NULL:
+ * Atlas draws no icons, and the legacy hub underneath is hidden. */
+static const FeMenuItem fm_main_atlas[] = {
+    { "SOLO", "Classic, Adventure, events, training and more.", NULL, SEL_MAIN_1P, FA_SUB, MENU_KIND_1P },
+    { "VERSUS", "Up to four players. Your rules, your stage.", NULL, SEL_MAIN_VS, FA_SUB, MENU_KIND_VS },
+    { "ONLINE", "Play someone over the internet: host a room or join one.", NULL, SEL_MAIN_ONLINE, FA_ONLINE, GM_VS },
+    { "MODS", "Turn mods on or off, and see what each one adds.", NULL, SEL_MAIN_MODS, FA_PAGE, 4 },
+    { "SETTINGS", "Video, audio, controls, online, mods and the game's options.", NULL, SEL_MAIN_SETTINGS, FA_SUB,
+      MENU_KIND_SETTINGS },
+};
+
+static const FeMenuItem fm_vs_atlas[] = {
+    { "MELEE", "Up to four players. Your rules, your stage.", NULL, SEL_VS_MELEE, FA_MATCH_SETUP, GM_VS },
+    { "TOURNAMENT", "A bracket for up to 64 players.", NULL, SEL_VS_TOURNAMENT, FA_MODE, GM_TOURNAMENT },
+    { "SPECIAL MELEE", "Melee with a twist.", NULL, SEL_VS_SPECIAL, FA_SUB, MENU_KIND_SPECIAL },
+    { "RULES", "Stock, time, items and stages.", NULL, SEL_VS_RULES, FA_NATIVE },
+    { "NAME ENTRY", "Make a name tag.", NULL, SEL_VS_NAME, FA_NATIVE },
+};
+
 static const FeMenuItem fm_special[] = {
     { "CAMERA MODE", "Take pictures during the match.", NULL, SEL_SPECIAL_VS_CAMERA, FA_MODE,
       GM_CAMERA_MODE },
@@ -202,32 +252,48 @@ static const FeMenuItem fm_records[] = {
 };
 
 static const FeMenu fm_menus[] = {
-    { MENU_KIND_MAIN, FM_HUB, SEL_MAIN_VS, 0xFF, 0, 0, "MAIN MENU", fm_main, FM_N(fm_main) },
+    { MENU_KIND_MAIN, FM_HUB, SEL_MAIN_VS, 0xFF, 0, 0, "MAIN MENU", fm_main, FM_N(fm_main), NULL },
     { MENU_KIND_1P, FM_HUB, SEL_1P_REG, MENU_KIND_MAIN, SEL_MAIN_1P, 1, "SOLO", fm_1p,
-      FM_N(fm_1p) },
+      FM_N(fm_1p), "solo" },
     { MENU_KIND_REG, FM_HUB, SEL_REG_CLASSIC, MENU_KIND_1P, SEL_1P_REG, 1, "REGULAR MATCH",
-      fm_reg, FM_N(fm_reg) },
+      fm_reg, FM_N(fm_reg), "solo.regular" },
     { MENU_KIND_STADIUM, FM_HUB, SEL_STADIUM_TARGET, MENU_KIND_1P, SEL_1P_STADIUM, 0,
-      "STADIUM", fm_stadium, FM_N(fm_stadium) },
+      "STADIUM", fm_stadium, FM_N(fm_stadium), "solo.stadium" },
     { MENU_KIND_MULTI_VS, FM_LIST, 0, MENU_KIND_STADIUM, SEL_STADIUM_MULTIMAN, 0,
-      "MULTI-MAN MELEE", fm_multi, FM_N(fm_multi) },
+      "MULTI-MAN MELEE", fm_multi, FM_N(fm_multi), "solo.multiman" },
     { MENU_KIND_VS, FM_HUB, SEL_VS_MELEE, MENU_KIND_MAIN, SEL_MAIN_VS, 0, "VERSUS", fm_vs,
-      FM_N(fm_vs) },
+      FM_N(fm_vs), NULL },
     { MENU_KIND_SPECIAL, FM_LIST, 0, MENU_KIND_VS, SEL_VS_SPECIAL, 0, "SPECIAL MELEE",
-      fm_special, FM_N(fm_special) },
+      fm_special, FM_N(fm_special), "versus.special" },
     { MENU_KIND_TOY, FM_HUB, SEL_TOY_COLLECTION, MENU_KIND_MAIN, SEL_MAIN_TOY, 1,
-      "COLLECTION", fm_toy, FM_N(fm_toy) },
+      "COLLECTION", fm_toy, FM_N(fm_toy), "more.collection" },
     { MENU_KIND_SETTINGS, FM_LIST, 0, MENU_KIND_MAIN, SEL_MAIN_SETTINGS, 0, "SETTINGS",
-      fm_settings, FM_N(fm_settings) },
+      fm_settings, FM_N(fm_settings), "settings" },
     { MENU_KIND_DATA, FM_HUB, SEL_DATA_RECORDS, MENU_KIND_MAIN, SEL_MAIN_DATA, 0, "DATA",
-      fm_data, FM_N(fm_data) },
+      fm_data, FM_N(fm_data), "more.data" },
     { MENU_KIND_RECORDS, FM_LIST, 0, MENU_KIND_DATA, SEL_DATA_RECORDS, 0, "RECORDS",
-      fm_records, FM_N(fm_records) },
+      fm_records, FM_N(fm_records), "more.records" },
 };
+
+/* The two rows that differ under Atlas (the main menu has Online and Mods; Versus lost Online). fm_find prefers them. */
+static const FeMenu fm_menus_atlas[] = {
+    { MENU_KIND_MAIN, FM_HUB, SEL_MAIN_VS, 0xFF, 0, 0, "MAIN MENU", fm_main_atlas, FM_N(fm_main_atlas), "main" },
+    { MENU_KIND_VS, FM_HUB, SEL_VS_MELEE, MENU_KIND_MAIN, SEL_MAIN_VS, 0, "VERSUS", fm_vs_atlas, FM_N(fm_vs_atlas),
+      "versus" },
+};
+
+static bool fa_page_from_main; ///< the Mods page was entered from the Atlas main menu: B returns to MAIN > MODS
 
 static const FeMenu* fm_find(int kind)
 {
     int i;
+    if (Ui_Ready()) {
+        for (i = 0; i < FM_N(fm_menus_atlas); i++) {
+            if (fm_menus_atlas[i].kind == kind) {
+                return &fm_menus_atlas[i];
+            }
+        }
+    }
     for (i = 0; i < FM_N(fm_menus); i++) {
         if (fm_menus[i].kind == kind) {
             return &fm_menus[i];
@@ -246,10 +312,6 @@ static bool fm_replaced(int kind)
  * (mnhyaku.c) and cycles through all six with no check. */
 static bool fm_visible(const FeMenu* m, const FeMenuItem* it)
 {
-    if (m->kind == MENU_KIND_MAIN && it->sel == SEL_MAIN_TBD) {
-        extern int Script_TbdAvailable(void);
-        return Script_TbdAvailable() != 0;
-    }
     if (m->kind == MENU_KIND_MULTI_VS) {
         return true;
     }
@@ -315,8 +377,14 @@ static void fm_position_for(u8 previous_mode, u8* kind, u8* sel)
         /* backing out of ONLINE (or its rooms): the VS hub, on ONLINE */
         fm_back_to_online_item = false;
         if (previous_mode == GM_VS && rules->force_main_menu == 0) {
-            *kind = MENU_KIND_VS;
-            *sel = SEL_VS_ONLINE;
+            if (Ui_Ready()) {
+                /* Atlas: Online is a main-menu row, so B from it lands there */
+                *kind = MENU_KIND_MAIN;
+                *sel = SEL_MAIN_ONLINE;
+            } else {
+                *kind = MENU_KIND_VS;
+                *sel = SEL_VS_ONLINE;
+            }
             return;
         }
     }
@@ -884,6 +952,63 @@ static void fm_close(void)
     fp.ok = false;
 }
 
+/* MELEE_ATLAS=0: the legacy SOLO hub lists the registry's `solo` entries (a mod's mod.json "menus") after its own tiles, so a mod's
+ * entry exists in both arrangements. A mutable copy of the menu: the static table stays const. */
+static FeMenuItem fm_dyn_items[FM_MAX_VIS];
+static FeMenu fm_dyn_menu;
+static char fm_dyn_label[FM_MAX_VIS][24];
+static char fm_dyn_desc[FM_MAX_VIS][164];
+
+static const FeMenu* fm_with_entries(const FeMenu* m, const char* parent)
+{
+    int n, i = 0, k, j, mods = 0;
+    bool used[FM_MAX_VIS];
+    fa_register_builtins(m);
+    n = Ui_EntryCount(parent);
+    for (k = 0; k < n; k++) {
+        if (Ui_EntryField(parent, k, "tag")[0] != '\0') {
+            mods++;
+        }
+    }
+    if (mods == 0 || m->n >= FM_MAX_VIS) {
+        return m;
+    }
+    memset(used, 0, sizeof used);
+    /* the registry's order: the menu's own rows and the mods' entries, as each entry's `after` places them */
+    for (k = 0; k < n && i < FM_MAX_VIS; k++) {
+        if (Ui_EntryField(parent, k, "tag")[0] == '\0') {
+            const char* eid = Ui_EntryField(parent, k, "id");
+            for (j = 0; j < m->n; j++) {
+                if (!used[j] && strcmp(fa_item_id(&m->items[j]), eid) == 0) {
+                    used[j] = true;
+                    fm_dyn_items[i++] = m->items[j];
+                    break;
+                }
+            }
+        } else {
+            fp_copy(fm_dyn_label[i], Ui_EntryField(parent, k, "label"), (int) sizeof fm_dyn_label[i]);
+            fp_copy(fm_dyn_desc[i], Ui_EntryField(parent, k, "blurb"), (int) sizeof fm_dyn_desc[i]);
+            fm_dyn_items[i].label = fm_dyn_label[i];
+            fm_dyn_items[i].desc = fm_dyn_desc[i];
+            fm_dyn_items[i].icon = NULL;
+            fm_dyn_items[i].sel = (u8) (0x50 + k); /* not a vanilla selection */
+            fm_dyn_items[i].act = FA_ENTRY;
+            fm_dyn_items[i].arg = (u8) k;          /* the registry child index: Ui_EntryActivate(parent, k) */
+            fm_dyn_items[i].flags = 0;
+            i++;
+        }
+    }
+    for (j = 0; j < m->n && i < FM_MAX_VIS; j++) {
+        if (!used[j]) {
+            fm_dyn_items[i++] = m->items[j];
+        }
+    }
+    fm_dyn_menu = *m;
+    fm_dyn_menu.items = fm_dyn_items;
+    fm_dyn_menu.n = i;
+    return &fm_dyn_menu;
+}
+
 static int fm_rows_joint = -1;
 static int fm_scroll;
 
@@ -893,6 +1018,9 @@ static void fm_open(const FeMenu* m, int sel)
     const FjNode* L;
     const FjNode* M;
     int i, section = fm_section_of(m->kind);
+    if (!Ui_Ready() && m->kind == MENU_KIND_1P) {
+        m = fm_with_entries(m, "solo"); /* a mod's SOLO entry, in the legacy hub too */
+    }
     kit_load();
     ff_load();
     fm.menu = m;
@@ -1006,6 +1134,7 @@ static void fm_open(const FeMenu* m, int sel)
     fm.ready_at = 8;
     fm.leave_at = 0;
     fm.pend_kind = 0;
+    fa_open_reset(m, sel);
     OSReport("frontend: menu %s (kind %d, %s), %d of %d items shown, cursor on \"%s\"%s%s\n",
              m->title, m->kind, m->style == FM_HUB ? "hub" : "list", fm.nvis, m->n,
              fm.nvis > 0 ? m->items[fm.vis[fm.cursor]].label : "-",
@@ -1219,12 +1348,6 @@ static void fm_do_pending(void)
         OSReport("frontend: -> SETTINGS page %d\n", fm.pend_a);
         fe_settings_from_menus(fm.pend_a);
         return;
-    case 7: {
-        extern void Script_TbdRequest(void);
-        Script_TbdRequest();
-        fm.fading_out = true;
-        return;
-    }
     }
 }
 
@@ -1249,6 +1372,11 @@ static void fm_confirm(void)
         lbAudioAx_800236DC();
     }
     OSReport("frontend: confirm \"%s\" on %s\n", it->label, m->title);
+    if (it->act == FA_ENTRY) {
+        /* a mod's entry: its screen opens over the menu, or its on_entry runs (gd.ui; the legacy menu takes no input while it is up) */
+        Ui_EntryActivate("solo", it->arg);
+        return;
+    }
     switch (it->act) {
     case FA_SUB:
         fm.pend_kind = 1;
@@ -1282,9 +1410,7 @@ static void fm_confirm(void)
     case FA_PAGE:
         fm.pend_kind = 6;
         fm.pend_a = it->arg;
-        break;
-    case FA_TBD:
-        fm.pend_kind = 7;
+        fa_page_from_main = Ui_Ready() && m->kind == MENU_KIND_MAIN;
         break;
     }
     if (fp.motion_ok) {
@@ -1417,7 +1543,8 @@ static void fm_scene_enter(void)
 
 static void fm_scene_frame(void)
 {
-    u32 in;
+    u32 in, pad_in;
+    bool blocked;
     fm.frames++;
     if (fm.fading_out) {
         if (++fm.fade >= FM_FADE) {
@@ -1446,9 +1573,15 @@ static void fm_scene_frame(void)
                fm_first_boot()) {
         /* the first boot: SETTINGS > CONTROLS once (plug in, test, how to play online) */
     } else if (fm.leave_at == 0 && !fm.fading_out && fm.frames >= fm.ready_at && fm.nvis > 0) {
-        in = mn_80229624(4) | fms_menu_bits();
-        {
-            /* the mouse: pointing moves the cursor, a click selects, the wheel scrolls a list */
+        pad_in = mn_80229624(4);
+        in = pad_in | fms_menu_bits();
+        blocked = Ui_MenuBlocked() != 0;
+        if (blocked) {
+            /* a mod's screen is up over this menu (or holds it): the menu takes no input, whichever press closed that screen included */
+            pad_in = in = 0;
+        } else if (!fa_on(fm.menu)) {
+            /* the mouse: pointing moves the cursor, a click selects, the wheel scrolls a list
+               (under Atlas the host reads the mouse for its own screen instead) */
             int hov = fm_mouse_slot();
             if (hov >= 0 && (fms.moved || fms.click) && !(in & MenuInput_Confirm)) {
                 fm_go(hov);
@@ -1464,12 +1597,16 @@ static void fm_scene_frame(void)
         }
         /* L+R+START anywhere but Main: back to the main menu, as mnMain_Scene_OnFrame does
            (it reloads GM_MENU with force_main_menu set, which routes here) */
-        if (mn_8022F218() && fm.menu->kind != MENU_KIND_MAIN) {
+        if (blocked) {
+            /* nothing: see above */
+        } else if (mn_8022F218() && fm.menu->kind != MENU_KIND_MAIN) {
             lbAudioAx_80023694();
             sfxBack();
             mn_8022F268();
             fe.reported = GM_MENU;
             fm_leave_scene(GM_MENU);
+        } else if (fa_frame(pad_in)) {
+            /* Atlas handled the frame: its events became fm_go / fm_confirm / fm_back (gmfrontend_atlas.inc) */
         } else if (in & MenuInput_Confirm) {
             fm_confirm();
         } else if (in & MenuInput_Back) {
@@ -1479,6 +1616,7 @@ static void fm_scene_frame(void)
         }
     }
     fm_mirror_flow();
+    fa_sync(); /* after a pending action: the Atlas screen of the menu that is open now */
     fp_evaluate(fp.frame);
     fm_clip_rows();
     fm_texts_update();
@@ -1486,6 +1624,7 @@ static void fm_scene_frame(void)
 
 static void fm_scene_exit(void)
 {
+    fa_scene_exit();
     fm_close();
     fm.active = false;
 }

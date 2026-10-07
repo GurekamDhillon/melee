@@ -276,6 +276,9 @@ return function(D)
    end
   end
   function A:tick()
+   if self.menu_held and not self.visible then   -- the legacy menu closed: the native menu under it takes input again
+    if self.g.ui and self.g.ui.hold_menu then pcall(self.g.ui.hold_menu,false) end;self.menu_held=nil
+   end
    self:scene_watch()
    if self.coop and self.coop.active then return end
    if self.retail_request then
@@ -373,6 +376,52 @@ return function(D)
    if self.retail.items[e.item] then self.retail.items[e.item]=nil;return end
    if self.retail.active then return end
    return old.item_expire(self,e)
+  end
+  -- ---- SOLO > ENVOY (Atlas step 2). mod.json "menus" names the entry; the host calls on_entry("envoy") (generated into main.lua by
+  -- tools/port/envoy_bundle.py) when the player picks it. It opens a small Atlas screen in front of the native menu; Envoy's own
+  -- screens become Atlas in step 3. "ENVOY MENU" is the legacy Envoy menu: while it is up the native menu is held (gd.ui.hold_menu).
+  local ENTRY_ID='envoy.entry'
+  local ENTRY_ROWS={
+   {id='classic',label='START CLASSIC',what='A Classic run: the retail ladder with your drives, bag and keystones.'},
+   {id='adventure',label='START ADVENTURE',what='An Adventure run: the retail side-scrolling stages with the same build.'},
+   {id='menu',label='ENVOY MENU',what='Your companion, the garden, records and settings: the full Envoy menu.'},
+   {id='back',label='BACK',what='Return to Solo.'}}
+  function A:entry_available()
+   local ui=self.g.ui
+   if type(ui)~='table' or type(ui.available)~='function' or type(ui.screen)~='function' then return false end
+   return (ui.available()) and true or false
+  end
+  function A:entry(id)
+   if id~='envoy' then return nil end
+   local m=self.g.match();if m and m.netplay then return nil end
+   if not self:entry_available() then self.g.log('envoy: the Atlas menus are unavailable; open the Envoy menu with the console command: envoy menu');return nil end
+   local app=self
+   local items,what={},{}
+   for _,r in ipairs(ENTRY_ROWS) do items[#items+1]={id=r.id,label=r.label};what[r.id]=r end
+   local ok,err=pcall(function() self.g.ui.screen{
+    id=ENTRY_ID,chapter=1,trail={'SOLO',title='ENVOY'},
+    primary={kind='list',items=items},
+    explainer={width='normal',provide=function(cell) local r=what[cell] or ENTRY_ROWS[1];return {kicker='ENVOY',title=r.label,what=r.what} end},
+    keys={{'A','Open'},{'B','Back'}},
+    on={accept=function(cell) return app:entry_accept(cell) end,back=function() return {pop=true} end}} end)
+   if not ok then self.g.log('envoy: the entry screen was refused: '..tostring(err));return nil end
+   return {push=ENTRY_ID}
+  end
+  function A:entry_accept(cell)
+   if cell=='classic' or cell=='adventure' then
+    self.menu.run_type=cell
+    local ok,why=self:start_retail(cell)
+    if not ok then
+     if self.g.ui.note then pcall(self.g.ui.note,{text=tostring(why or 'The run did not start'),kind='warn'}) end
+     return nil
+    end
+    return {pop=true}
+   elseif cell=='menu' then
+    self:command('menu')
+    if self.g.ui.hold_menu then pcall(self.g.ui.hold_menu,true);self.menu_held=true end
+    return {pop=true}
+   end
+   return {pop=true}
   end
  end
  return M

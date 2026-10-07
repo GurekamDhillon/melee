@@ -14,15 +14,23 @@
  * so a value can never reach another script's text or the legacy menus. The kit adds the spacing after the last
  * glyph too (a width is n x tracking wider), so gs_ui_width reports the visible width and gs_ui_text shifts a
  * centred or right-aligned run by half or all of one gap to put the visible glyphs where the parts asked. */
+#include "gw_mods.h"
+#include "gw_ui_policy.h"
+#include "gw_ui_registry.h"
 #include "gw_ui_render.h"
 #include "gw_ui_stack.h"
 
 extern int gw_Settings_Int(const char *key, int dflt); /* gw_settings.c:138; the Reduced Motion row writes "reduced_motion" */
 
 #define GS_UI_SLOTS 8
+#define GS_UI_ENGINE (-2) /* GsUiSlot.owner for a native screen (the menus, the title, Credits): drawn from a record the game fills, no Lua */
 
 typedef struct {
     int used, owner, explain_dirty, dialog_fn, warned, render_warned, ex_warned;
+    int scene;              /* the scene kind that was current when it was pushed (gw_Ui_SceneExit closes it with that scene) */
+    int rebuilds;           /* an engine screen: how many times its record was replaced */
+    unsigned primed_frame;  /* an engine screen: the tick it became the top again (an intent in that same frame is dropped) */
+    int self_close;         /* an engine screen the host runs alone (Credits): B closes it here, no event reaches the game */
     AtScreen sc;
     AtView view;
     AtHits hits;
@@ -39,15 +47,21 @@ static int gs_ui_role_idx[AT_R_COUNT];
 static int gs_ui_roles_state; /* 0 not tried, 1 every Atlas role found and every page loaded, -1 missing */
 static char gs_ui_why[160];   /* the reason when it is -1 */
 static struct { double sum, max; int frames, quads; float canvas_w; } gs_ui_stat;
+static int gs_ui_menu_held_by = -2;   /* gd.ui.hold_menu: the script index holding the native menu, -2 none */
+static unsigned gs_ui_script_close_frame; /* the tick a script's screen last closed (+1): a press of that frame is not the menu's */
+static unsigned gs_ui_frame; /* gs_ui_tick calls: the 'same frame' of an uncovered engine screen */
 static int gs_ui_reduced; /* gw_Settings_Int("reduced_motion") read once per draw pass */
 
 /* ---- fonts: the Atlas roles by name, resolved once ------------------------------------------------ */
 static int gs_ui_roles_ok(void) {
     int r;
     if (gs_ui_roles_state != 0) return gs_ui_roles_state > 0;
+    if (!gw_Kit_Available()) {                                      /* not latched: the kit may come up later (the title can be the first scene) */
+        snprintf(gs_ui_why, sizeof gs_ui_why, "%s", gw_Kit_Why());
+        return 0;
+    }
     gs_ui_roles_state = -1;
-    snprintf(gs_ui_why, sizeof gs_ui_why, "%s", gw_Kit_Available() ? "" : gw_Kit_Why());
-    if (!gw_Kit_Available()) return 0;
+    gs_ui_why[0] = '\0';
     for (r = 0; r < AT_R_COUNT; r++) {
         const char *missing;
         gs_ui_role_idx[r] = gw_Kit_Role(at_role(r)->name);
@@ -191,10 +205,11 @@ static int gs_ui_find(const char *id) {
 }
 
 /* A script that is unloaded or switched off (gs_report) runs nothing: not a handler, not a dialog. */
-static int gs_ui_usable(int owner) { return owner >= 0 && owner < gs.n && gs.s[owner].used && !gs.s[owner].disabled; }
+static int gs_ui_usable(int owner) { return owner == GS_UI_ENGINE || (owner >= 0 && owner < gs.n && gs.s[owner].used && !gs.s[owner].disabled); }
 
 /* A screen belongs to the script that registered it; only that script (and the console) may drive it. */
-static int gs_ui_may_touch(int slot) { return gs.cur == gs.console || gs_ui_slot[slot].owner == gs.cur; }
+/* An engine screen belongs to the engine alone: no script, and not the console, may open, close, feed or replace it. */
+static int gs_ui_may_touch(int slot) { return gs_ui_slot[slot].owner != GS_UI_ENGINE && (gs.cur == gs.console || gs_ui_slot[slot].owner == gs.cur); }
 
 /* the mod id of the running script (the part of "envoy/main" before the slash); NULL for the console */
 static const char *gs_ui_owner_mod(char *buf, int cap) {
@@ -335,6 +350,7 @@ static void gs_ui_prime(int slot) {
     memset(&u->pad, 0, sizeof u->pad);
     memset(&u->keys, 0, sizeof u->keys);
     memset(&u->mouse, 0, sizeof u->mouse);
+    if (u->owner == GS_UI_ENGINE) u->primed_frame = gs_ui_frame + 1;  /* an intent of this same frame is the press that closed the screen above */
     if (at_screen_wants_pad(&u->sc)) {
         unsigned b = gs_ui_pad_read(u, &sx, &sy);
         (void) at_pad_events(&u->pad, b, sx, sy, now, ev, 0);
@@ -355,6 +371,7 @@ static int gs_ui_open_screen(int slot) {
     u->view.opened_ms = gs_now_ms();
     u->view.port_rgba = 0;
     u->explain_dirty = 1;
+    u->scene = gs.scene_kind;
     gs_ui_prime(slot);
     gw_log("ui: screen %s open (%d blocks, %d items)", u->sc.id, u->sc.n_blocks, u->sc.n_items);
     if (u->sc.fn_open >= 0 && gs_ui_call(slot, u->sc.fn_open, "", "", 1)) gs_ui_apply_result(owner);
@@ -366,14 +383,19 @@ static void gs_ui_close_screen(int slot) {
     AtStackEntry *top = at_stack_top_entry(&gs_ui_stack);
     if (top != NULL && top->screen == slot) { top->focus = u->view.focus; top->scroll = u->view.scroll; }
     if (!at_stack_remove(&gs_ui_stack, slot)) return;
+    if (u->owner != GS_UI_ENGINE) gs_ui_script_close_frame = gs_ui_frame + 1;
     if (u->sc.fn_close >= 0 && gs_ui_call(slot, u->sc.fn_close, "", "", 1)) lua_pop(gs.L, 1);
     gw_log("ui: screen %s closed", u->sc.id);
     if (at_stack_top(&gs_ui_stack) >= 0 && gs_ui_slot[at_stack_top(&gs_ui_stack)].used) gs_ui_prime(at_stack_top(&gs_ui_stack));
 }
 
 /* a script unloaded or switched off: its screens and their references go */
+static void gs_ui_reg_release_script(int script);
 static void gs_ui_release(int script) {
     int i;
+    if (script < 0) return;                                        /* an engine screen is never released by a script's unload */
+    if (gs_ui_menu_held_by == script) gs_ui_menu_held_by = -2;      /* a script that goes takes its hold with it */
+    gs_ui_reg_release_script(script);                                        /* an engine screen is never released by a script's unload */
     for (i = 0; i < GS_UI_SLOTS; i++) {
         GsUiSlot *u = &gs_ui_slot[i];
         int was_top;
@@ -452,6 +474,10 @@ static int gs_ui_value_event(int slot, const AtEvent *e) {
     return 1;
 }
 
+static void gs_ui_engine_event(int slot, const AtEvent *e);
+static void gs_ui_fix_scroll(GsUiSlot *u);
+static void gs_ui_overlay_try(void);
+
 static void gs_ui_event(int slot, const AtEvent *e) {
     GsUiSlot *u = &gs_ui_slot[slot];
     int owner = u->owner;
@@ -460,6 +486,7 @@ static void gs_ui_event(int slot, const AtEvent *e) {
     const char *cid, *bid;
     char cell[AT_ID], block[AT_ID];
     int nb, alt;
+    if (owner == GS_UI_ENGINE) { gs_ui_engine_event(slot, e); return; }
     if (u->view.dialog.open) {                                    /* a dialog takes every event until it is answered */
         if (e->type == AT_EV_ACCEPT) gs_ui_dialog_press(slot, 'A');
         else if (e->type == AT_EV_BACK) gs_ui_dialog_press(slot, 'B');
@@ -469,16 +496,13 @@ static void gs_ui_event(int slot, const AtEvent *e) {
     if (gs_ui_value_event(slot, e)) { u->explain_dirty = 1; return; }
     nb = at_screen_focus_blocks(&u->sc, fb);
     if (e->type == AT_EV_MOVE) u->view.focus = at_focus_move(fb, nb, u->view.focus, e->a, 1);
-    else if (e->type == AT_EV_SCROLL && u->sc.primary == AT_PRIMARY_LIST) u->view.focus = at_focus_move(fb, nb, u->view.focus, e->a < 0 ? AT_DIR_UP : AT_DIR_DOWN, 0);
+    else if (e->type == AT_EV_SCROLL && (u->sc.primary == AT_PRIMARY_LIST || u->sc.primary == AT_PRIMARY_TILES)) u->view.focus = at_focus_move(fb, nb, u->view.focus, e->a < 0 ? AT_DIR_UP : AT_DIR_DOWN, 0);
     else if (e->type == AT_EV_FOCUS) {
         AtFocusPos p;
         p.block = e->a; p.index = e->b;
         if (at_screen_cell_id(&u->sc, p) != NULL) u->view.focus = p;
     }
-    if (u->sc.primary == AT_PRIMARY_LIST && u->view.focus.index >= 0) {
-        int visible = (int) ((362.0f - 28.0f) / 39.0f);
-        u->view.scroll = at_list_scroll(u->view.focus.index, u->view.scroll, visible, u->sc.n_items);
-    }
+    gs_ui_fix_scroll(u);
     cid = at_screen_cell_id(&u->sc, u->view.focus);
     bid = at_screen_block_id(&u->sc, u->view.focus.block);
     snprintf(cell, sizeof cell, "%s", cid != NULL ? cid : "");
@@ -519,6 +543,9 @@ static void gs_ui_tick(void) {
     AtEvent ev[16];
     double now = gs_now_ms();
     GsUiSlot *u;
+    gs_ui_frame++;
+    gs_ui_overlay_try();
+    top = at_stack_top(&gs_ui_stack);
     if (top < 0) return;
     u = &gs_ui_slot[top];
     if (!u->used) {
@@ -526,7 +553,7 @@ static void gs_ui_tick(void) {
         if (at_stack_top(&gs_ui_stack) >= 0 && gs_ui_slot[at_stack_top(&gs_ui_stack)].used) gs_ui_prime(at_stack_top(&gs_ui_stack));
         return;
     }
-    if (!gs_ui_usable(u->owner)) { gs_ui_release(u->owner); return; }   /* switched off or unloaded: its screens go */
+    if (!gs_ui_usable(u->owner)) { gs_ui_release(u->owner); return; }   /* switched off or unloaded: its screens go (never an engine screen) */
     if (!gs_may_run(u->owner)) return;
     if (at_screen_wants_pad(&u->sc)) {
         int sx, sy;
@@ -547,7 +574,7 @@ static void gs_ui_tick(void) {
         n = at_mouse_events(&u->mouse, x, y, buttons, (int) wheel, &u->hits, ev, 16);
         for (i = 0; i < n && at_stack_top(&gs_ui_stack) == top; i++) gs_ui_event(top, &ev[i]);
     }
-    if (at_stack_top(&gs_ui_stack) == top && u->explain_dirty) gs_ui_refresh_view(top);
+    if (at_stack_top(&gs_ui_stack) == top && u->explain_dirty && u->owner != GS_UI_ENGINE) gs_ui_refresh_view(top);
 }
 
 /* the draw pass: called from gs_finish_draw after the scripts' on_draw hooks */
@@ -562,12 +589,13 @@ static void gs_ui_draw(void) {
     if (top < 0 || !gs_ui_roles_ok()) return;
     u = &gs_ui_slot[top];
     if (!u->used || !gs_ui_usable(u->owner)) return;
+    if (u->owner == GS_UI_ENGINE && gs_ui_menu_held_by != -2) return;   /* held: a script's own menu is drawn over the frontend instead */
     if (gw_Kit_QuadRoom() < AT_SCREEN_QUAD_CAP) {
         if (!u->warned) { u->warned = 1; gw_log("ui: %s not drawn: only %d quads left this frame", u->sc.id, gw_Kit_QuadRoom()); }
         return;
     }
     old = gs.cur;
-    gs.cur = u->owner;
+    if (u->owner != GS_UI_ENGINE) gs.cur = u->owner;                   /* an engine screen draws as whoever is running */
     QueryPerformanceCounter(&t0);
     ops.width = gs_ui_width; ops.user = NULL;
     sink.user = NULL; sink.poly = gs_ui_poly; sink.text = gs_ui_text; sink.model = gs_ui_model_draw;
@@ -594,7 +622,589 @@ static void gs_ui_draw(void) {
     gs.cur = old;
 }
 
+/* ---- engine-owned screens (the native menus, the title, Credits) ------------------------------------------------
+ * A screen whose owner is GS_UI_ENGINE has no Lua in it. The game side (src/melee/gm/gmfrontend_atlas.inc) describes it each
+ * frame through the gw_Ui_* shims (game code calls them as Ui_*): Begin fills a scratch record, Commit replaces the slot's record
+ * only when it differs. Its events do not go to handlers: they are queued and the game polls them (gw_Ui_PollEvent). The cursor is
+ * the game's: Commit puts the focus where the game says, and a focus event only reports where the engine moved it.
+ *
+ * Who may do what: the engine (these functions) opens, closes, feeds and replaces its screens; a script, another script and the
+ * console are refused ("belongs to the engine", gs_ui_may_touch and the guards in the Lua functions); an unloaded script's
+ * release never reaches an engine slot; gw_Ui_SceneExit closes every screen pushed during a scene that ends. */
+
+static struct { int type, block, index; } gs_ui_q[16];
+static int gs_ui_qn;
+static AtExplainer gs_ui_scratch_ex;
+static int gs_ui_scratch_live;        /* a gw_Ui_Begin without its Commit yet */
+static int gs_ui_atlas_env = -1;      /* MELEE_ATLAS: absent or anything but "0" is on */
+
+static int gs_ui_find_on_stack(int slot) {
+    int i;
+    for (i = 0; i < gs_ui_stack.n; i++) if (gs_ui_stack.e[i].screen == slot) return 1;
+    return 0;
+}
+
+static int atlas_env_on(void) {
+    if (gs_ui_atlas_env < 0) {
+        const char *e = getenv("MELEE_ATLAS");
+        gs_ui_atlas_env = !(e != NULL && strcmp(e, "0") == 0);
+        gw_log("ui: Atlas menus %s (MELEE_ATLAS)", gs_ui_atlas_env ? "on" : "off");
+    }
+    return gs_ui_atlas_env;
+}
+
+static void gs_ui_q_push(int type, int block, int index) {
+    if (gs_ui_qn >= 16) return;                                    /* the game drains it every frame; a full queue drops the newest */
+    gs_ui_q[gs_ui_qn].type = type; gs_ui_q[gs_ui_qn].block = block; gs_ui_q[gs_ui_qn].index = index;
+    gs_ui_qn++;
+}
+
+/* the scroll offset that keeps the focused cell in the pane (shared by script and engine screens) */
+static void gs_ui_fix_scroll(GsUiSlot *u) {
+    AtLayout pl;
+    if (u->view.focus.index < 0) return;
+    at_layout(640.0f, u->sc.preset, &pl);                          /* the pane's height does not depend on the width */
+    if (u->sc.primary == AT_PRIMARY_LIST) u->view.scroll = at_list_scroll(u->view.focus.index, u->view.scroll, at_list_visible(&pl), u->sc.n_items);
+    else if (u->sc.primary == AT_PRIMARY_TILES) u->view.scroll = at_tiles_scroll(&u->sc, &pl, u->view.focus.block == 0 ? u->view.focus.index : -1, u->view.scroll);
+}
+
+static void gs_ui_credits_view(GsUiSlot *u);
+static void gs_ui_free_engine_slot(int slot);
+static void gs_ui_after_close(void);
+
+/* an engine screen's event: the view moves, the game is told through the queue */
+static void gs_ui_engine_event(int slot, const AtEvent *e) {
+    GsUiSlot *u = &gs_ui_slot[slot];
+    AtFocusBlock fb[AT_MAX_BLOCKS];
+    AtFocusPos before = u->view.focus;
+    int nb;
+    if (u->sc.primary == AT_PRIMARY_DISPLAY) return;                  /* the title takes no input, from anything: retail reads the pad */
+    nb = at_screen_focus_blocks(&u->sc, fb);
+    if (e->type == AT_EV_MOVE) u->view.focus = at_focus_move(fb, nb, u->view.focus, e->a, 1);
+    else if (e->type == AT_EV_SCROLL) u->view.focus = at_focus_move(fb, nb, u->view.focus, e->a < 0 ? AT_DIR_UP : AT_DIR_DOWN, 0);
+    else if (e->type == AT_EV_FOCUS) {
+        AtFocusPos p;
+        p.block = e->a; p.index = e->b;
+        if (at_screen_cell_id(&u->sc, p) != NULL) u->view.focus = p;
+    }
+    gs_ui_fix_scroll(u);
+    if (u->self_close) {                                           /* Credits: the host's own screen, the game is told nothing */
+        if (e->type == AT_EV_BACK) { gs_ui_free_engine_slot(slot); gs_ui_after_close(); return; }
+        if (u->view.focus.block != before.block || u->view.focus.index != before.index) gs_ui_credits_view(u);
+        return;
+    }
+    if (u->view.focus.block != before.block || u->view.focus.index != before.index) {
+        gs_ui_q_push(AT_EV_FOCUS, u->view.focus.block, u->view.focus.index);
+        return;
+    }
+    if (e->type == AT_EV_ACCEPT) {
+        if (at_cell_accepts(&u->sc, u->view.focus)) gs_ui_q_push(AT_EV_ACCEPT, u->view.focus.block, u->view.focus.index);
+    } else if (e->type == AT_EV_BACK) {
+        gs_ui_q_push(AT_EV_BACK, u->view.focus.block, u->view.focus.index);
+    } else if (e->type == AT_EV_ALT) {
+        gs_ui_q_push(AT_EV_ALT, e->a, u->view.focus.index);          /* block = the button: 'X' 'Y' 'Z' */
+    }
+}
+
+static void gs_ui_free_engine_slot(int slot) {
+    GsUiSlot *u = &gs_ui_slot[slot];
+    at_stack_remove(&gs_ui_stack, slot);
+    gw_log("ui: screen %s closed (engine)", u->sc.id);
+    memset(u, 0, sizeof *u);
+    u->dialog_fn = -1;
+}
+
+static void gs_ui_after_close(void) {
+    int top = at_stack_top(&gs_ui_stack);
+    gs_ui_qn = 0;                                                  /* events of the screen that went are stale */
+    if (top >= 0 && gs_ui_slot[top].used) gs_ui_prime(top);
+}
+
+int gw_Ui_Ready(void) { return gs_ui_roles_ok() && atlas_env_on(); }
+
+/* the scene policy for a scene kind (RETAIL 0, OVERLAY 1, REPLACE 2): the table, MELEE_ATLAS and MELEE_ATLAS_SCENES (gw_ui_policy.h) */
+int gw_Ui_ScenePolicy(int scene_kind) { return at_policy_for(scene_kind, atlas_env_on(), getenv("MELEE_ATLAS_SCENES")); }
+
+static void gs_ui_scratch_reset(void) {
+    memset(&gs_ui_scratch, 0, sizeof gs_ui_scratch);
+    memset(&gs_ui_scratch_ex, 0, sizeof gs_ui_scratch_ex);
+    gs_ui_scratch_ex.media_model = gs_ui_scratch_ex.media_ring = AT_NO_MODEL;
+    gs_ui_scratch.fn_provide = gs_ui_scratch.fn_accept = gs_ui_scratch.fn_back = gs_ui_scratch.fn_focus = gs_ui_scratch.fn_change =
+        gs_ui_scratch.fn_open = gs_ui_scratch.fn_close = gs_ui_scratch.fn_counter = gs_ui_scratch.fn_page = gs_ui_scratch.fn_start = -1;
+    gs_ui_scratch.fn_alt[0] = gs_ui_scratch.fn_alt[1] = gs_ui_scratch.fn_alt[2] = -1;
+    gs_ui_scratch.preset = AT_PRESET_NORMAL;
+    gs_ui_scratch.port = 1;
+    gs_ui_scratch.input_feed = 1;                                  /* the game feeds the merged menu input of every port (gw_Ui_Intent) */
+}
+
+int gw_Ui_Begin(const char *id, int primary, int chapter, const char *title) {
+    if (!gw_Ui_Ready() || id == NULL || id[0] == '\0') return 0;
+    gs_ui_scratch_reset();
+    snprintf(gs_ui_scratch.id, sizeof gs_ui_scratch.id, "%s", id);
+    snprintf(gs_ui_scratch.title, sizeof gs_ui_scratch.title, "%s", title != NULL ? title : id);
+    gs_ui_scratch.primary = primary;
+    gs_ui_scratch.chapter = chapter < 0 ? 0 : (chapter > 5 ? 5 : chapter);
+    gs_ui_scratch_live = 1;
+    return 1;
+}
+
+/* the tile columns: 1 (the main menu's big rows) or 2 (hubs); 0 lets the count decide */
+void gw_Ui_Cols(int cols) {
+    if (gs_ui_scratch_live && cols >= 0 && cols <= 2) gs_ui_scratch.tile_cols = cols;
+}
+
+void gw_Ui_Trail(const char *parent) {
+    if (!gs_ui_scratch_live || parent == NULL || gs_ui_scratch.n_parents >= 3) return;
+    snprintf(gs_ui_scratch.parent[gs_ui_scratch.n_parents++], AT_STR, "%s", parent);
+}
+
+static void gs_ui_fill_item(AtItem *it, const char *id, const char *label, const char *tag, const char *numeral, int flags) {
+    memset(it, 0, sizeof *it);
+    snprintf(it->id, sizeof it->id, "%s", id != NULL ? id : "");
+    snprintf(it->label, sizeof it->label, "%s", label != NULL ? label : "");
+    snprintf(it->tag, sizeof it->tag, "%s", tag != NULL ? tag : "");
+    snprintf(it->numeral, sizeof it->numeral, "%s", numeral != NULL ? numeral : "");
+    it->flags = (unsigned) flags;
+}
+
+void gw_Ui_Tile(const char *id, const char *label, const char *tag, const char *numeral, int flags) {
+    if (!gs_ui_scratch_live || gs_ui_scratch.n_items >= AT_MAX_ITEMS) return;
+    gs_ui_fill_item(&gs_ui_scratch.items[gs_ui_scratch.n_items++], id, label, tag, numeral, flags);
+}
+
+void gw_Ui_More(const char *id, const char *label) {
+    if (!gs_ui_scratch_live || gs_ui_scratch.n_more >= AT_MAX_MORE) return;
+    gs_ui_fill_item(&gs_ui_scratch.more[gs_ui_scratch.n_more++], id, label, "", "", 0);
+}
+
+void gw_Ui_Explain(const char *kicker, const char *title, const char *what) {
+    if (!gs_ui_scratch_live) return;
+    gs_ui_scratch_ex.has = 1;
+    snprintf(gs_ui_scratch_ex.kicker, sizeof gs_ui_scratch_ex.kicker, "%s", kicker != NULL ? kicker : "");
+    snprintf(gs_ui_scratch_ex.title, sizeof gs_ui_scratch_ex.title, "%s", title != NULL ? title : "");
+    snprintf(gs_ui_scratch_ex.what, sizeof gs_ui_scratch_ex.what, "%s", what != NULL ? what : "");
+}
+
+void gw_Ui_ExplainWith(const char *tag) {
+    if (!gs_ui_scratch_live || tag == NULL || gs_ui_scratch_ex.n_with_text >= AT_MAX_WITH) return;
+    snprintf(gs_ui_scratch_ex.with_text[gs_ui_scratch_ex.n_with_text++], sizeof gs_ui_scratch_ex.with_text[0], "%s", tag);
+}
+
+void gw_Ui_Key(int button, const char *label) {
+    AtKey *k;
+    if (!gs_ui_scratch_live || gs_ui_scratch.n_keys >= AT_MAX_KEYS || label == NULL) return;
+    k = &gs_ui_scratch.keys[gs_ui_scratch.n_keys++];
+    k->btn = (char) button;
+    snprintf(k->label, sizeof k->label, "%s", label);
+    k->fn_label = k->fn_when = -1;
+}
+
+/* a display screen (the title): no pane, no explainer, no hits, no pad */
+void gw_Ui_Display(const char *hero, const char *prompt, const char *foot_left, const char *foot_right) {
+    if (!gs_ui_scratch_live) return;
+    gs_ui_scratch.primary = AT_PRIMARY_DISPLAY;
+    gs_ui_scratch.preset = AT_PRESET_NONE;
+    snprintf(gs_ui_scratch.hero, sizeof gs_ui_scratch.hero, "%s", hero != NULL ? hero : "");
+    snprintf(gs_ui_scratch.prompt, sizeof gs_ui_scratch.prompt, "%s", prompt != NULL ? prompt : "");
+    snprintf(gs_ui_scratch.foot_left, sizeof gs_ui_scratch.foot_left, "%s", foot_left != NULL ? foot_left : "");
+    snprintf(gs_ui_scratch.foot_right, sizeof gs_ui_scratch.foot_right, "%s", foot_right != NULL ? foot_right : "");
+}
+
+/* the view's key hints and explainer follow the record: refreshed whenever the record or the explainer changes */
+static void gs_ui_engine_view(GsUiSlot *u) {
+    int i;
+    memcpy(&u->view.ex, &gs_ui_scratch_ex, sizeof u->view.ex);
+    for (i = 0; i < u->sc.n_keys; i++) {
+        snprintf(u->view.key_label[i], AT_STR, "%s", u->sc.keys[i].label);
+        u->view.key_shown[i] = u->sc.keys[i].label[0] != '\0';
+    }
+    u->explain_dirty = 0;
+}
+
+int gw_Ui_Commit(int focus_block, int focus_index) {
+    int slot, i;
+    GsUiSlot *u;
+    if (!gs_ui_scratch_live) return 0;
+    gs_ui_scratch_live = 0;
+    slot = gs_ui_find(gs_ui_scratch.id);
+    if (slot < 0) {
+        for (i = 0; i < GS_UI_SLOTS; i++) if (!gs_ui_slot[i].used) { slot = i; break; }
+        if (slot < 0) { gw_log("ui: no free screen slot for the engine screen %s", gs_ui_scratch.id); return 0; }
+        u = &gs_ui_slot[slot];
+        memset(u, 0, sizeof *u);
+        at_view_init(&u->view);
+        u->dialog_fn = -1;
+        u->used = 1;
+        u->owner = GS_UI_ENGINE;
+        u->sc = gs_ui_scratch;
+        gs_ui_engine_view(u);
+    } else {
+        u = &gs_ui_slot[slot];
+        if (u->owner != GS_UI_ENGINE) { gw_log("ui: the engine screen id %s is a script's screen; not replaced", gs_ui_scratch.id); return 0; }
+        if (memcmp(&u->sc, &gs_ui_scratch, sizeof u->sc) != 0) {
+            const char *bid = at_screen_block_id(&u->sc, u->view.focus.block), *cid = at_screen_cell_id(&u->sc, u->view.focus);
+            char b[AT_ID], c[AT_ID];
+            AtFocusPos old = u->view.focus;
+            snprintf(b, sizeof b, "%s", bid != NULL ? bid : "");
+            snprintf(c, sizeof c, "%s", cid != NULL ? cid : "");
+            memcpy(&u->sc, &gs_ui_scratch, sizeof u->sc);
+            u->view.focus = at_screen_refocus(&u->sc, b[0] ? b : NULL, c[0] ? c : NULL, old);
+            u->rebuilds++;
+        }
+        if (!u->self_close && (memcmp(&u->view.ex, &gs_ui_scratch_ex, sizeof u->view.ex) != 0 || u->explain_dirty)) gs_ui_engine_view(u);
+    }
+    if (focus_block >= 0) {                                        /* the game's cursor is the truth */
+        AtFocusPos p;
+        p.block = focus_block; p.index = focus_index;
+        if (at_screen_cell_id(&u->sc, p) != NULL) u->view.focus = p;
+    }
+    gs_ui_fix_scroll(u);
+    u->scene = gs.scene_kind;
+    if (!gs_ui_find_on_stack(slot)) {
+        if (at_stack_push(&gs_ui_stack, slot)) {                   /* not gs_ui_open_screen: a screen the engine opens is not "uncovered" */
+            u->view.opened_ms = gs_now_ms();
+            gw_log("ui: screen %s open (engine; %d items)", u->sc.id, u->sc.n_items);
+            memset(&u->keys, 0, sizeof u->keys);
+            memset(&u->mouse, 0, sizeof u->mouse);
+        }
+    }
+    return at_stack_top(&gs_ui_stack) == slot;
+}
+
+void gw_Ui_Intent(int type, int a) {
+    int top = at_stack_top(&gs_ui_stack);
+    AtEvent e;
+    GsUiSlot *u;
+    if (top < 0) return;
+    u = &gs_ui_slot[top];
+    if (!u->used || u->owner != GS_UI_ENGINE) return;              /* a script's screen on top: the menu takes no input */
+    if (gs_ui_menu_held_by != -2) return;                          /* held by a script (gd.ui.hold_menu): no input either */
+    if (u->primed_frame == gs_ui_frame + 1) return;                 /* the press that uncovered it is not its own */
+    if (!gs_may_run(GS_UI_ENGINE)) return;
+    memset(&e, 0, sizeof e);
+    e.type = type; e.a = a;
+    gs_ui_engine_event(top, &e);
+}
+
+int gw_Ui_PollEvent(int *type, int *block, int *index) {
+    int i;
+    if (gs_ui_qn <= 0) return 0;
+    *type = gs_ui_q[0].type; *block = gs_ui_q[0].block; *index = gs_ui_q[0].index;
+    for (i = 1; i < gs_ui_qn; i++) gs_ui_q[i - 1] = gs_ui_q[i];
+    gs_ui_qn--;
+    return 1;
+}
+
+void gw_Ui_Close(const char *id) {
+    int s = id != NULL ? gs_ui_find(id) : -1;
+    if (s < 0 || gs_ui_slot[s].owner != GS_UI_ENGINE) return;
+    gs_ui_free_engine_slot(s);
+    gs_ui_after_close();
+}
+
+int gw_Ui_TopIsEngine(const char *id) {
+    int top = at_stack_top(&gs_ui_stack);
+    if (top < 0 || !gs_ui_slot[top].used || gs_ui_slot[top].owner != GS_UI_ENGINE || gs_ui_menu_held_by != -2) return 0;
+    return id == NULL || strcmp(gs_ui_slot[top].sc.id, id) == 0;
+}
+
+/* a scene ends: every screen pushed during it goes (the menu's, a mod's opened from a menu entry) */
+void gw_Ui_SceneExit(int scene_kind) {
+    int i, any = 0;
+    for (i = 0; i < GS_UI_SLOTS; i++) {
+        GsUiSlot *u = &gs_ui_slot[i];
+        if (!u->used || u->scene != scene_kind || !gs_ui_find_on_stack(i)) continue;
+        any = 1;
+        if (u->owner == GS_UI_ENGINE) gs_ui_free_engine_slot(i);
+        else gs_ui_close_screen(i);                                 /* a mod's screen: on.close runs, the screen stays registered */
+    }
+    gs_ui_menu_held_by = -2;                                       /* a hold lasts for the scene that took it */
+    if (any) gs_ui_after_close();
+}
+
+/* how many engine screens hold a slot (the front door uses at most two at once: the menu and the title) */
+static int gs_ui_engine_slots(void) {
+    int i, n = 0;
+    for (i = 0; i < GS_UI_SLOTS; i++) if (gs_ui_slot[i].used && gs_ui_slot[i].owner == GS_UI_ENGINE) n++;
+    return n;
+}
+
+/* ---- scene policy OVERLAY: the title (spec 6.8) ------------------------------------------------------------------------------
+ * At scene begin, a scene the policy table marks OVERLAY gets its engine display screen pushed over the retail scene, which runs
+ * unchanged (START, the attract loop and the debug path stay retail's). The screen has no input and is closed with the scene
+ * (gw_Ui_SceneExit). If the Atlas roles are not up yet (the kit loads late) it is pushed on the first tick where they are, provided
+ * that scene is still current; if they are missing (no ui/ pages) the scene stays retail, with one log line. */
+static int gs_ui_overlay_kind = -1;
+
+static void gs_ui_overlay_try(void) {
+    const char *screen;
+    if (gs_ui_overlay_kind < 0) return;
+    if (gs_ui_overlay_kind != gs.scene_kind) { gs_ui_overlay_kind = -1; return; }          /* that scene is over */
+    if (!atlas_env_on()) { gs_ui_overlay_kind = -1; return; }
+    if (!gs_ui_roles_ok()) {
+        if (gs_ui_roles_state < 0) {                                                      /* missing for good, not merely late */
+            gw_log("ui: scene %d stays retail: the Atlas roles are missing (%s)", gs_ui_overlay_kind, gs_ui_why);
+            gs_ui_overlay_kind = -1;
+        }
+        return;
+    }
+    screen = at_policy_screen(gs_ui_overlay_kind);
+    gs_ui_overlay_kind = -1;
+    if (screen == NULL || strcmp(screen, "title") != 0) return;
+    if (!gw_Ui_Begin("title", AT_PRIMARY_DISPLAY, 0, "")) return;
+    /* no version symbol exists in the host (grep GW_VERSION in pc/platform finds none): the foot texts are empty */
+    gw_Ui_Display("GD'S MELEE", "PRESS START", "", "");
+    gw_Ui_Commit(-1, -1);
+}
+
+void gw_Ui_SceneBegin(int scene_kind) {
+    gs_ui_overlay_kind = (gw_Ui_ScenePolicy(scene_kind) == AT_POLICY_OVERLAY && at_policy_screen(scene_kind) != NULL) ? scene_kind : -1;
+    gs_ui_overlay_try();
+}
+
+/* ---- the Credits screen (MAIN MENU > More > Credits): a host-native list, B closes it here ---------------------------------
+ * The rows are CREDITS.md's: each outside project we use or learned from, with its author, licence and link. Nothing here is
+ * invented; the last row sends the player to the whole file. A row's short line is the list's sub; the link and what we drew
+ * on are the explainer's text for the focused row. */
+typedef struct { const char *label, *sub, *what; } GsCredit;
+static const GsCredit gs_credits[] = {
+    { "doldecomp/melee", "the doldecomp contributors", "github.com/doldecomp/melee. The matching decompilation the port is built from." },
+    { "Aurora", "encounter. MIT", "github.com/encounter/aurora. The GameCube SDK reimplementation the port renders through." },
+    { "Project Slippi", "Fizzi and the Project Slippi team", "slippi.gg. The replay format, rollback practice and UCF codes the port follows." },
+    { "m-ex", "akaneia and contributors", "github.com/akaneia/m-ex. The content mod the port's m-ex layer follows; consulted, never copied (it publishes no licence)." },
+    { "Lua 5.4", "Lua.org, PUC-Rio", "lua.org. The scripting language embedded in the port." },
+    { "Barlow Condensed", "Jeremy Tribby. SIL OFL 1.1", "github.com/jpt/barlow. The caps labels and titles of the Atlas menus." },
+    { "Source Sans 3", "Adobe. SIL OFL 1.1", "github.com/adobe-fonts/source-sans. The menus' body text." },
+    { "Hasklug", "Nerd Fonts. SIL OFL 1.1", "github.com/ryanoasis/nerd-fonts. The menus' numerals." },
+    { "SDL", "the SDL contributors. zlib", "github.com/libsdl-org/SDL. Controller buttons, axes and device polling." },
+    { "Dawn and Tint", "Google. BSD-3-Clause", "dawn.googlesource.com/dawn. The WebGPU backend and the shader validation." },
+    { "Tracy", "Bartosz Taudul. BSD-3-Clause", "github.com/wolfpld/tracy. The optional development profiler client." },
+    { "GGPO", "Tony Cannon", "ggpo.net. The rollback vocabulary; ideas only, the netcode is our own." },
+    { "melee-pc", "999sian and contributors", "github.com/999sian/melee-pc. Rollback snapshot design; ideas only." },
+    { "MeleeVS", "Joyastick", "github.com/Joyastick/melee-pc-TagFighter. Benching and reserve fighters; ideas only." },
+    { "Project M and Project+", "their development teams", "github.com/Fracture17/ProjectMCodes. Turbo mode prior art; ideas only, our code is original." },
+    { "Blender", "the Blender Foundation. GPL", "blender.org. Modelling and animating our original fighter art." },
+    { "glTF 2.0", "Khronos", "khronos.org/gltf. The model interchange format of the authored-fighter converter." },
+    { "HSDLib", "Ploaj", "github.com/Ploaj/HSDLib. Writes the converter's model files." },
+    { "Playwright", "Microsoft. Apache 2.0", "playwright.dev. Renders the menu mockups and the README art." },
+    { "Path of Exile", "Grinding Gear Games", "pathofexile.com. The model for Envoy's loot; ideas only." },
+    { "Super Smash Bros. Ultimate", "Nintendo, Bandai Namco, Sora Ltd.", "Design reference for the companion and stage switching; ideas only." },
+    { "and more", "see CREDITS.md", "Every project, finding and idea we use or learned from is in CREDITS.md." },
+};
+
+static void gs_ui_credits_view(GsUiSlot *u) {
+    int i = u->view.focus.index;
+    memset(&u->view.ex, 0, sizeof u->view.ex);
+    u->view.ex.media_model = u->view.ex.media_ring = AT_NO_MODEL;
+    if (i < 0 || i >= (int) (sizeof gs_credits / sizeof gs_credits[0])) return;
+    u->view.ex.has = 1;
+    snprintf(u->view.ex.kicker, sizeof u->view.ex.kicker, "CREDITS");
+    snprintf(u->view.ex.title, sizeof u->view.ex.title, "%s", gs_credits[i].label);
+    snprintf(u->view.ex.what, sizeof u->view.ex.what, "%s", gs_credits[i].what);
+}
+
+/* push the Credits screen over the main menu (the game's More > Credits calls this) */
+int gw_Ui_OpenCredits(void) {
+    int i, slot;
+    if (!gw_Ui_Begin("more.credits", AT_PRIMARY_LIST, 0, "CREDITS")) return 0;
+    gw_Ui_Trail("MAIN MENU");
+    for (i = 0; i < (int) (sizeof gs_credits / sizeof gs_credits[0]) && i < AT_MAX_ITEMS; i++) {
+        AtItem *it = &gs_ui_scratch.items[gs_ui_scratch.n_items++];
+        memset(it, 0, sizeof *it);
+        snprintf(it->id, sizeof it->id, "c%d", i);
+        snprintf(it->label, sizeof it->label, "%s", gs_credits[i].label);
+        snprintf(it->sub, sizeof it->sub, "%s", gs_credits[i].sub);
+    }
+    gw_Ui_Key('B', "Back");
+    gs_ui_scratch_ex.has = 0;
+    if (!gw_Ui_Commit(0, 0)) return 0;
+    slot = gs_ui_find("more.credits");
+    if (slot < 0) return 0;
+    gs_ui_slot[slot].self_close = 1;
+    gs_ui_credits_view(&gs_ui_slot[slot]);
+    return 1;
+}
+
+/* ---- entries at run time: the registry, gd.ui.entry, on_entry ------------------------------------------------------
+ * The registry (gw_ui_registry.c) holds the menu tree's entries: the built-ins the adapter registers (gw_Ui_EntryBuiltin) and what
+ * each ACTIVE mod's mod.json "menus" declares (read once, on the first use). The native menu shows an entry as a MOD tile; choosing
+ * it comes back here (gw_Ui_EntryActivate): an "opens" entry pushes the mod's own registered screen, a "script" entry runs the
+ * mod's on_entry(id) as that mod (its budget, its owner). A switched-off or unloaded mod's entries leave with it. An entry is
+ * never shown, nor activated, over a netplay session unless it says "online": true. */
+
+static AtRegistry gs_ui_reg;
+static int gs_ui_reg_booted;
+
+static int gs_ui_netplay(void) { return gw_RB_Enabled() || gw_Netplay_Enabled(); }
+
+static void gs_ui_reg_log(void) {
+    int i;
+    for (i = 0; i < gs_ui_reg.nlog; i++) gw_log("ui: registry: %s", gs_ui_reg.log[i]);
+    gs_ui_reg.nlog = 0;
+}
+
+static void gs_ui_reg_boot(void) {
+    int i, k;
+    if (gs_ui_reg_booted) return;
+    gs_ui_reg_booted = 1;
+    at_reg_init(&gs_ui_reg);
+    for (i = 0; i < gw_Mods_Count(); i++) {
+        for (k = 0; k < gw_Mods_MenuCount(i); k++) {
+            AtEntry e;
+            memset(&e, 0, sizeof e);
+            snprintf(e.mod, sizeof e.mod, "%s", gw_Mods_Id(i));
+            snprintf(e.id, sizeof e.id, "%s", gw_Mods_MenuField(i, k, "id"));
+            snprintf(e.parent, sizeof e.parent, "%s", gw_Mods_MenuField(i, k, "parent"));
+            snprintf(e.label, sizeof e.label, "%s", gw_Mods_MenuField(i, k, "label"));
+            snprintf(e.blurb, sizeof e.blurb, "%s", gw_Mods_MenuField(i, k, "blurb"));
+            snprintf(e.icon, sizeof e.icon, "%s", gw_Mods_MenuField(i, k, "icon"));
+            snprintf(e.after, sizeof e.after, "%s", gw_Mods_MenuField(i, k, "after"));
+            snprintf(e.opens, sizeof e.opens, "%s", gw_Mods_MenuField(i, k, "opens"));
+            e.action = strcmp(gw_Mods_MenuField(i, k, "action"), "script") == 0 ? AT_ENTRY_SCRIPT : AT_ENTRY_OPENS;
+            e.online = strcmp(gw_Mods_MenuField(i, k, "online"), "true") == 0;
+            e.visible = 1;
+            at_reg_add(&gs_ui_reg, &e);
+        }
+    }
+    gs_ui_reg_log();
+}
+
+/* a built-in entry (the adapter registers the native tree's rows that mods place themselves relative to) */
+int gw_Ui_EntryBuiltin(const char *parent, const char *id, const char *label, int native_arg) {
+    AtEntry e;
+    int ok;
+    gs_ui_reg_boot();
+    memset(&e, 0, sizeof e);
+    snprintf(e.parent, sizeof e.parent, "%s", parent != NULL ? parent : "");
+    snprintf(e.id, sizeof e.id, "%s", id != NULL ? id : "");
+    snprintf(e.label, sizeof e.label, "%s", label != NULL ? label : "");
+    e.action = AT_ENTRY_NATIVE; e.native_arg = native_arg; e.visible = 1; e.online = 1; e.builtin = 1;
+    ok = at_reg_add(&gs_ui_reg, &e);
+    gs_ui_reg_log();
+    return ok;
+}
+
+int gw_Ui_EntryCount(const char *parent) {
+    const AtEntry *c[AT_REG_VISIBLE_PER_PARENT];
+    gs_ui_reg_boot();
+    return parent != NULL ? at_reg_children(&gs_ui_reg, parent, gs_ui_netplay(), c, AT_REG_VISIBLE_PER_PARENT) : 0;
+}
+
+/* only mod entries are tiles the adapter adds after its own rows, so k counts the visible children as a whole */
+const char *gw_Ui_EntryField(const char *parent, int k, const char *field) {
+    const AtEntry *c[AT_REG_VISIBLE_PER_PARENT];
+    int n;
+    gs_ui_reg_boot();
+    if (parent == NULL || field == NULL) return "";
+    n = at_reg_children(&gs_ui_reg, parent, gs_ui_netplay(), c, AT_REG_VISIBLE_PER_PARENT);
+    if (k < 0 || k >= n) return "";
+    if (strcmp(field, "id") == 0) return c[k]->id;
+    if (strcmp(field, "label") == 0) return c[k]->label;
+    if (strcmp(field, "blurb") == 0) return c[k]->blurb;
+    if (strcmp(field, "badge") == 0) return c[k]->badge;
+    if (strcmp(field, "tag") == 0) return c[k]->builtin ? "" : "MOD";
+    return "";
+}
+
+/* the first live script of mod `mod` (its script id is "<mod>/<name>"), or -1 */
+static int gs_ui_mod_script(const char *mod) {
+    size_t ml = strlen(mod);
+    int i;
+    if (ml == 0) return -1;
+    for (i = 0; i < gs.n; i++) {
+        if (gs.s[i].used && !gs.s[i].disabled && strncmp(gs.s[i].id, mod, ml) == 0 && gs.s[i].id[ml] == '/') return i;
+    }
+    return -1;
+}
+
+static int gs_ui_script_in_mod(int script, const char *mod) {
+    size_t ml = strlen(mod);
+    return script >= 0 && script < gs.n && ml > 0 && strncmp(gs.s[script].id, mod, ml) == 0 && gs.s[script].id[ml] == '/';
+}
+
+int gw_Ui_EntryActivate(const char *parent, int k) {
+    const AtEntry *c[AT_REG_VISIBLE_PER_PARENT];
+    const AtEntry *e;
+    int n, owner;
+    gs_ui_reg_boot();
+    if (parent == NULL) return 0;
+    n = at_reg_children(&gs_ui_reg, parent, gs_ui_netplay(), c, AT_REG_VISIBLE_PER_PARENT);   /* the netplay rule is the list's own */
+    if (k < 0 || k >= n) { gw_log("ui: entry %s/%d refused: not available now", parent, k); return 0; }
+    e = c[k];
+    if (e->builtin) return 0;                                       /* a native row: the adapter runs it itself */
+    owner = gs_ui_mod_script(e->mod);
+    if (owner < 0) { gw_log("ui: entry %s refused: no running script of mod %s", e->id, e->mod); return 0; }
+    if (e->action == AT_ENTRY_OPENS) {
+        int s = gs_ui_find(e->opens);
+        if (s < 0 || !gs_ui_script_in_mod(gs_ui_slot[s].owner, e->mod) || !gs_ui_usable(gs_ui_slot[s].owner)) {
+            gw_log("ui: entry %s refused: mod %s has not registered the screen %s", e->id, e->mod, e->opens);
+            return 0;
+        }
+        return gs_ui_open_screen(s);
+    }
+    if (!gs_may_run(owner) || !gs_get_hook(owner, "on_entry")) { gw_log("ui: entry %s refused: mod %s has no on_entry", e->id, e->mod); return 0; }
+    lua_pushstring(gs.L, e->id);
+    if (gs_pcall(owner, 1, 1, "on_entry") != 0) return 0;
+    gs_ui_apply_result(owner);                                      /* {push = "<mod>.<screen>"} opens one of the mod's own screens */
+    return 1;
+}
+
+/* a script unloaded: its mod's entries go too, unless another script of the mod is still running */
+static void gs_ui_reg_release_script(int script) {
+    char mod[64];
+    char *slash;
+    int i;
+    if (script < 0 || script >= gs.n) return;
+    snprintf(mod, sizeof mod, "%s", gs.s[script].id);
+    slash = strchr(mod, '/');
+    if (slash == NULL) return;
+    *slash = '\0';
+    for (i = 0; i < gs.n; i++) if (i != script && gs.s[i].used && !gs.s[i].disabled && gs_ui_script_in_mod(i, mod)) return;
+    at_reg_drop_mod(&gs_ui_reg, mod);
+}
+
+/* gd.ui.entry(id, { visible = bool, badge = "NEW" or "" }): true when the calling script's mod owns that entry */
+static int l_ui_entry(lua_State *L) {
+    char owner[64];
+    const char *mod = gs_ui_owner_mod(owner, sizeof owner), *badge = NULL;
+    int visible = -1, ok;
+    const char *id = luaL_checkstring(L, 1);
+    gs_ui_reg_boot();
+    if (lua_istable(L, 2)) {
+        lua_getfield(L, 2, "visible");
+        if (lua_isboolean(L, -1)) visible = lua_toboolean(L, -1);
+        lua_pop(L, 1);
+        lua_getfield(L, 2, "badge");
+        if (lua_type(L, -1) == LUA_TSTRING) badge = lua_tostring(L, -1);
+        lua_pop(L, 1);
+    }
+    ok = mod != NULL && at_reg_set(&gs_ui_reg, mod, id, visible, badge);
+    lua_pushboolean(L, ok);
+    return 1;
+}
+
+/* 1 when the native menu must take no input: a script's screen is on top, a script holds it (gd.ui.hold_menu), or a script's screen closed
+ * in this very tick (its B is not the menu's). The legacy menus (MELEE_ATLAS=0) ask this; the Atlas adapter is covered by gw_Ui_Intent. */
+int gw_Ui_MenuBlocked(void) {
+    int top = at_stack_top(&gs_ui_stack);
+    if (gs_ui_menu_held_by != -2 || gs_ui_script_close_frame == gs_ui_frame + 1) return 1;
+    return top >= 0 && gs_ui_slot[top].used && gs_ui_slot[top].owner != GS_UI_ENGINE;
+}
+
 /* ---- the Lua functions -------------------------------------------------------------------------------- */
+/* gd.ui.hold_menu(on): a script that draws its own menu over a native one (Envoy's legacy menu over the frontend) holds the native
+ * menu: it takes no input and draws nothing while held. Only the holder (or the console) releases it; a hold ends when the script
+ * unloads or the scene ends. Returns whether the menu is held. */
+static int l_ui_hold_menu(lua_State *L) {
+    if (lua_toboolean(L, 1)) {
+        if (gs.cur >= 0) gs_ui_menu_held_by = gs.cur;
+    } else if (gs_ui_menu_held_by == gs.cur || gs.cur == gs.console) {
+        gs_ui_menu_held_by = -2;
+    }
+    lua_pushboolean(L, gs_ui_menu_held_by != -2);
+    return 1;
+}
+
 static int l_ui_available(lua_State *L) {
     int ok = gs_ui_roles_ok();
     lua_pushboolean(L, ok);
@@ -602,9 +1212,16 @@ static int l_ui_available(lua_State *L) {
     return 2;
 }
 
+/* ids the engine's own screens use: no dot (main, solo, title, settings, versus), or under more. solo. versus. settings. */
+static int gs_ui_reserved_id(const char *id) {
+    return strchr(id, '.') == NULL || strncmp(id, "more.", 5) == 0 || strncmp(id, "solo.", 5) == 0 || strncmp(id, "versus.", 7) == 0 ||
+           strncmp(id, "settings.", 9) == 0;
+}
+
 static int l_ui_screen(lua_State *L) {
     char err[200], owner[64];
     int root, slot, nkeep, keep[40], replace = 0, old_port = 0;
+    const char *om;
     GsUiSlot *u;
     AtFocusPos old;
     char old_block[AT_ID], old_cell[AT_ID];
@@ -615,9 +1232,14 @@ static int l_ui_screen(lua_State *L) {
         gs_ui_unref_arena_except(L, NULL, 0);
         return luaL_error(L, "gd.ui.screen: the description is too large or nested too deeply");
     }
-    if (!at_screen_from_val(&gs_ui_arena, root, gs_ui_owner_mod(owner, sizeof owner), &gs_ui_scratch, err, sizeof err)) {
+    om = gs_ui_owner_mod(owner, sizeof owner);
+    if (!at_screen_from_val(&gs_ui_arena, root, om, &gs_ui_scratch, err, sizeof err)) {
         gs_ui_unref_arena_except(L, NULL, 0);
         return luaL_error(L, "%s", err);
+    }
+    if (om == NULL && gs_ui_reserved_id(gs_ui_scratch.id)) {                 /* the console may not take an id the engine's menus use */
+        gs_ui_unref_arena_except(L, NULL, 0);
+        return luaL_error(L, "gd.ui.screen: \"%s\" belongs to the engine", gs_ui_scratch.id);
     }
     nkeep = at_screen_fn_refs(&gs_ui_scratch, keep, 40);
     gs_ui_unref_arena_except(L, keep, nkeep);                     /* every reference the screen does not keep goes */
@@ -631,6 +1253,7 @@ static int l_ui_screen(lua_State *L) {
         }
     }
     u = &gs_ui_slot[slot];
+    if (u->used && u->owner == GS_UI_ENGINE) { gs_ui_unref_screen(L, &gs_ui_scratch); return luaL_error(L, "gd.ui.screen: \"%s\" belongs to the engine", u->sc.id); }
     if (u->used) {
         if (u->owner != gs.cur) { gs_ui_unref_screen(L, &gs_ui_scratch); return luaL_error(L, "gd.ui.screen: \"%s\" belongs to another script", u->sc.id); }
         replace = 1;
@@ -658,6 +1281,7 @@ static int l_ui_screen(lua_State *L) {
 static int gs_ui_slot_arg(lua_State *L, int idx) {
     int s = gs_ui_find(luaL_checkstring(L, idx));
     if (s < 0) luaL_error(L, "gd.ui: no screen \"%s\"", lua_tostring(L, idx));
+    if (gs_ui_slot[s].owner == GS_UI_ENGINE) luaL_error(L, "gd.ui: screen \"%s\" belongs to the engine", lua_tostring(L, idx));
     if (!gs_ui_may_touch(s)) luaL_error(L, "gd.ui: screen \"%s\" belongs to another script", lua_tostring(L, idx));
     return s;
 }
@@ -800,7 +1424,7 @@ static int l_ui_state(lua_State *L) {
 static const luaL_Reg gs_ui_funcs[] = {
     {"available", l_ui_available}, {"screen", l_ui_screen}, {"open", l_ui_open}, {"close", l_ui_close},
     {"feed", l_ui_feed}, {"focus", l_ui_focus}, {"set_focus", l_ui_set_focus}, {"note", l_ui_note},
-    {"dialog", l_ui_dialog}, {"state", l_ui_state}, {NULL, NULL}};
+    {"dialog", l_ui_dialog}, {"state", l_ui_state}, {"entry", l_ui_entry}, {"hold_menu", l_ui_hold_menu}, {NULL, NULL}};
 
 static void gs_push_ui(lua_State *L) {
     lua_newtable(L);

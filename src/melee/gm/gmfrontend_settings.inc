@@ -49,6 +49,7 @@ extern const char* Mods_Name(int i);
 extern const char* Mods_Description(int i);
 extern const char* Mods_Kind(int i);
 extern const char* Mods_StatusText(int i);
+extern const char* Mods_MenuSummary(int i); ///< "adds Solo > Envoy" from a mod.json menus array; "" for none or an inactive mod
 extern int Mods_IsEnabled(int i);
 extern int Mods_SetEnabled(int i, int on);
 extern int Mods_Save(void);
@@ -507,6 +508,7 @@ static void fsm_fill(void)
         if (i < fsm_n) {
             const char* d = Mods_Description(i);
             const char* st = Mods_StatusText(i);
+            const char* adds = Mods_MenuSummary(i);
             char* h = fsm_help[i];
             h[0] = 0;
             fsm_cat(h, Mods_Kind(i));
@@ -514,6 +516,11 @@ static void fsm_fill(void)
                 fsm_cat(h, " (");
                 fsm_cat(h, st);
                 fsm_cat(h, ")");
+            }
+            if (adds != NULL && adds[0] != 0) {
+                /* what the mod puts in the menus, ahead of its own description */
+                fsm_cat(h, " - ");
+                fsm_cat(h, adds);
             }
             if (d != NULL && d[0] != 0) {
                 fsm_cat(h, " - ");

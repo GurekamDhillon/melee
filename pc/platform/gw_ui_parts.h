@@ -26,6 +26,11 @@ void  at_plate(const AtSink *s, AtRect r, unsigned face, unsigned edge_rgba, flo
 void  at_text(const AtSink *s, const AtTextOps *o, int role, const char *str, float x, float base, unsigned rgba, int align, float max_w);
 
 void  at_part_row(const AtSink *s, const AtTextOps *o, AtRect r, const AtItem *it, int state);
+void  at_part_tile(const AtSink *s, const AtTextOps *o, AtRect r, const AtItem *it, int state, int big);   /* a hub tile; big: a main-menu row with a numeral badge */
+void  at_part_more(const AtSink *s, const AtTextOps *o, AtRect r, const AtItem *items, int n, int focus);   /* the quiet More strip; focus -1: none */
+/* The title's face: the wordmark, PC PORT between two rules, the pulsing prompt plate, the footers. Draws no hit rectangle.
+ * prompt_out (may be NULL) receives the prompt plate's rectangle. */
+void  at_part_title(const AtSink *s, const AtTextOps *o, const AtLayout *L, const AtScreen *sc, double now_ms, int reduced, AtRect *prompt_out);
 void  at_part_tabs(const AtSink *s, const AtTextOps *o, AtRect r, const char *const *names, const int *counts, int n, int active, int focus_tab);
 float at_part_tag(const AtSink *s, const AtTextOps *o, float x, float y, const char *text, int tone, float max_w);   /* returns its width */
 void  at_part_cell(const AtSink *s, const AtTextOps *o, AtRect r, const AtCell *c, int state, unsigned focus_rgba);

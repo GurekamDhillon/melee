@@ -4,7 +4,8 @@
 -- label / counter refresh, accept / back / alt / page / start dispatch, value rows (on.change), {pop=}/{push=} results, a
 -- held-button model of the pad, and the ownership rule (a screen belongs to the script that registered it).
 --
--- What it does NOT model: layout, drawing, the quad budget, mouse and keyboard, the 8-slot table, and the Lua registry.
+-- What it does NOT model: layout, drawing, the quad budget, mouse and keyboard, the 8-slot table, the Lua registry, and the entry
+-- registry's caps and ordering (6 per mod per parent, 12 visible, `after`): those are gw_ui_registry.c's, tested by atlas-registry.
 -- Everything in the conversion arena IS modelled (node, entry and string-pool ceilings and the depth limit), because a stand-in
 -- that accepts a description the engine refuses defeats its purpose.
 local Stub = {}
@@ -91,6 +92,9 @@ function Stub.new(opts)
   local out, p = {}, d.primary
   if p.kind == 'grid' then
    for _, b in ipairs(p.blocks) do for i, c in ipairs(b.cells or {}) do out[#out + 1] = { block = b.id, id = c.id, cell = c, index = i } end end
+  elseif p.kind == 'tiles' then
+   for i, it in ipairs(p.items) do out[#out + 1] = { block = 'tiles', id = it.id, cell = it, index = i } end
+   for i, it in ipairs(p.more or {}) do out[#out + 1] = { block = 'more', id = it.id, cell = it, index = i } end
   else
    for i, it in ipairs(p.items) do out[#out + 1] = { block = 'list', id = it.id, cell = it, index = i } end
   end
@@ -131,8 +135,18 @@ function Stub.new(opts)
      seen[c.id] = true
     end
    end
-  elseif p.kind == 'list' then
+  elseif p.kind == 'list' or p.kind == 'tiles' then
    local n = #(p.items or {})
+   if p.kind == 'tiles' then
+    if p.cols ~= nil and p.cols ~= 0 and p.cols ~= 1 and p.cols ~= 2 then fail('tiles: cols must be 1 or 2') end
+    if #(p.more or {}) > L.more then fail(('tiles: at most %d more items (%d given)'):format(L.more, #p.more)) end
+    for mi, it in ipairs(p.more or {}) do
+     if type(it) ~= 'table' then fail(('more item %d is not a table'):format(mi)) end
+     check_id(('more item %d'):format(mi), it.id)
+     if seen[it.id] then fail('duplicate item id "' .. it.id .. '"') end
+     seen[it.id] = true
+    end
+   end
    if n < 1 or n > L.items then fail(('a list needs 1 to %d items (it has %d)'):format(L.items, n)) end
    for ii, it in ipairs(p.items) do
     if type(it) ~= 'table' then fail(('item %d is not a table'):format(ii)) end
@@ -149,7 +163,7 @@ function Stub.new(opts)
     end
    end
   else
-   fail(('primary kind "%s" is not supported here (grid or list)'):format(tostring(p.kind)))
+   fail(('primary kind "%s" is not supported here (grid, list or tiles)'):format(tostring(p.kind)))
   end
   local ex = d.explainer
   if type(ex) == 'string' then
@@ -364,6 +378,68 @@ function Stub.new(opts)
    if top() ~= id then break end                -- the top screen changed: the rest of this tick's input is dropped
    ui.engine_press(id, PAD[b])
   end
+ end
+
+ -- gd.ui.hold_menu(on): a script holds the native menu (no input, no drawing); only the holder or the console releases it
+ function ui.hold_menu(on)
+  if on then if not is_console() then ui.held_by=ui.caller end
+  elseif ui.held_by==ui.caller or is_console() then ui.held_by=nil end
+  return ui.held_by~=nil
+ end
+
+ -- ---- entries: gd.ui.entry, on_entry, and the engine's part of choosing one ----------------------------------------------
+ -- An entry as mod.json "menus" declares it (the host reads the manifest; a test registers it here). It validates what
+ -- at_menus_parse and at_reg_add validate (a label, the id namespace, a built-in parent, opens or action = "script").
+ local PARENTS = { main = true, solo = true, versus = true, settings = true }   -- the parents a menu draws today (online, mods, more, settings.<page> are refused)
+ ui.entries, ui.hooks, ui.netplay = {}, {}, false
+ function ui.register_entry(e)
+  local function bad(msg) error('entry "' .. tostring(e.id) .. '": ' .. msg, 2) end
+  if type(e.id) ~= 'string' or e.id == '' then error('an entry needs an id', 2) end
+  if type(e.label) ~= 'string' or e.label == '' then bad('an entry needs a label') end
+  if not PARENTS[e.parent] then bad('no menu shows parent "' .. tostring(e.parent) .. '" yet') end
+  local mod = ui.owner_mod
+  if mod and not (e.id == mod or e.id:sub(1, #mod + 1) == mod .. '.') then bad('the id of a mod entry is "' .. mod .. '" or starts with "' .. mod .. '."') end
+  if not (e.action == 'script' or e.opens) then bad('an entry needs opens or action "script"') end
+  if ui.entries[e.id] then bad('the id is already registered') end
+  ui.entries[e.id] = { id = e.id, parent = e.parent, label = e.label:sub(1, 18), opens = e.opens, action = e.action, online = e.online and true or false,
+                       visible = true, badge = '', mod = mod }
+  return true
+ end
+ -- gd.ui.entry(id, { visible =, badge = }): true when the caller's mod owns that entry
+ function ui.entry(id, t)
+  local e = ui.entries[id]
+  if not e or is_console() or not ui.owner_mod or e.mod ~= ui.owner_mod then return false end
+  if type(t) == 'table' then
+   if type(t.visible) == 'boolean' then e.visible = t.visible end
+   if type(t.badge) == 'string' then e.badge = t.badge end
+  end
+  return true
+ end
+ -- what the player sees under `parent`: visible entries; a netplay session hides the ones without online under versus and online
+ function ui.entries_under(parent)
+  local out = {}
+  for _, e in pairs(ui.entries) do
+   if e.parent == parent and e.visible and not (ui.netplay and (parent == 'versus' or parent == 'online') and not e.online) then out[#out + 1] = e.id end
+  end
+  table.sort(out)
+  return out
+ end
+ -- the engine's part: choosing an entry. "opens" pushes the mod's own screen; "script" runs the mod's hooks.on_entry(id) and applies {push=}.
+ function ui.engine_activate(id)
+  local e = ui.entries[id]
+  if not e or not e.visible then return false end
+  if ui.netplay and (e.parent == 'versus' or e.parent == 'online') and not e.online then return false end
+  if e.action == 'script' then
+   local fn = ui.hooks.on_entry
+   if type(fn) ~= 'function' then return false end
+   apply(fn(id), ui.hooks.owner or ui.caller)           -- the hook's owner: the mod's script (default: the stub's caller)
+   return true
+  end
+  if ui.screens[e.opens] and tostring(ui._owner[e.opens]):match('^([^/]+)') == e.mod then
+   local keep = ui.caller; ui.caller = 'console'; ui.open(e.opens); ui.caller = keep
+   return true
+  end
+  return false
  end
 
  return ui

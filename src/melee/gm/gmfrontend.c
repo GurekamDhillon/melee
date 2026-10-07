@@ -1162,6 +1162,7 @@ static bool fm_back_to_online_item; ///< backing out of ONLINE lands on its VS h
 #include "gmfrontend_panel.inc"
 #include "gmfrontend_mouse.inc"
 #include "gmfrontend_menus.inc"
+#include "gmfrontend_atlas.inc"
 #include "gmfrontend_kitlist.inc"
 #include "gmfrontend_online.inc"
 #include "gmfrontend_select.inc"
@@ -1814,6 +1815,12 @@ static void fe_settings_from_menus(int page)
     fe.next_menus = false;
     fm_back_kind = MENU_KIND_SETTINGS;
     fm_back_sel = 0x41 + page;
+    if (fa_page_from_main && page == FSP_MODS) {
+        /* the Atlas main menu's MODS row: B returns to MAIN > MODS, not the Settings list */
+        fm_back_kind = MENU_KIND_MAIN;
+        fm_back_sel = SEL_MAIN_MODS;
+    }
+    fa_page_from_main = false;
     fm_leave_scene(GM_FRONTEND);
 }
 

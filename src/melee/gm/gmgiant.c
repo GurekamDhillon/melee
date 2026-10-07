@@ -111,6 +111,12 @@ void gm_801B8FB8(GameModeState* scene)
 {
     gmVsMelee_EnterCss(scene, &gmMainLib_804D3EE0->modes.table[GmVsMode_Giant],
                        4);
+#if defined(TARGET_PC)
+    {
+        extern void gmFrontend_AtlasSelect(GameModeState * state, int sss, const char* name);
+        gmFrontend_AtlasSelect(scene, 0, NULL); /* the Atlas select, when it can run; else the retail screen */
+    }
+#endif
 }
 
 void gm_801B8FE4(GameModeState* scene)
@@ -122,6 +128,12 @@ void gm_801B900C(GameModeState* scene)
 {
     gmVsMelee_EnterSss(scene,
                        &gmMainLib_804D3EE0->modes.table[GmVsMode_Giant]);
+#if defined(TARGET_PC)
+    {
+        extern void gmFrontend_AtlasSelect(GameModeState * state, int sss, const char* name);
+        gmFrontend_AtlasSelect(scene, 1, NULL); /* the Atlas select, when it can run; else the retail screen */
+    }
+#endif
 }
 
 void gm_801B9034(GameModeState* scene)

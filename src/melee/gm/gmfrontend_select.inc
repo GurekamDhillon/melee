@@ -554,12 +554,17 @@ static int fs_random_ck(void)
  * (mncharsel.c every frame, mnstagesel.c on start). Without it nothing is preloaded, and the
  * match loads each fighter's animation file on demand into the ARAM heap - which a VS state
  * leaves at ~160 KB, so any fighter ended in lbMemory's "memp_kouho" assert. */
+static int fs_preload_only = -1; ///< a one-player mode (the Atlas select): only this port's entry is written; the mode preloaded its opponents itself
+
 static void fs_preload_players(const CSSData* css)
 {
     struct GameCache* cache = &lbDvd_GetPreloadCacheScene()->game_cache;
     int p;
     for (p = 0; p < 4; p++) {
         const PlayerInitData* pl = &css->vs.start.players[p];
+        if (fs_preload_only >= 0 && p != fs_preload_only) {
+            continue;
+        }
         if (pl->slot_type == Gm_PKind_Human || pl->slot_type == Gm_PKind_Cpu) {
             cache->entries[p].char_id = pl->ckind;
             cache->entries[p].color = pl->color;

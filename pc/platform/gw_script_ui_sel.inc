@@ -305,6 +305,9 @@ static int gs_selm_swap(void *u, int ck) { (void) u; return ck >= 0 && ck == gs_
 static int gs_selm_sheik_ok_op(void *u) { (void) u; return gs_selm_sheik_ok; }
 static const AtCssOps gs_selm_ops = { 0, gs_selm_costumes, gs_selm_random, gs_selm_swap, gs_selm_sheik_ok_op };
 
+/* 1 when the match type has a profile (the adapter asks before it routes a mode's state into the frontend scene) */
+int gw_Ui_CssKnown(int match_type) { return at_css_profile(match_type) != NULL; }
+
 /* 1 when the match type has a profile and the model is open; 0 when it has none (the caller keeps the retail screen: never guess) */
 int gw_Ui_CssOpen(int match_type, int online, int teams) {
     const AtCssProfile *p = at_css_profile(match_type);

@@ -116,6 +116,12 @@ void gm_801BA10C(GameModeState* scene)
 {
     VsModeData* data = &gmMainLib_804D3EE0->modes.table[GmVsMode_SingleButton];
     gmVsMelee_EnterCss(scene, data, 8);
+#if defined(TARGET_PC)
+    {
+        extern void gmFrontend_AtlasSelect(GameModeState * state, int sss, const char* name);
+        gmFrontend_AtlasSelect(scene, 0, NULL); /* the Atlas select, when it can run; else the retail screen */
+    }
+#endif
 }
 
 void gm_801BA138(GameModeState* scene)
@@ -128,6 +134,12 @@ void gm_801BA160(GameModeState* scene)
 {
     VsModeData* data = &gmMainLib_804D3EE0->modes.table[GmVsMode_SingleButton];
     gmVsMelee_EnterSss(scene, data);
+#if defined(TARGET_PC)
+    {
+        extern void gmFrontend_AtlasSelect(GameModeState * state, int sss, const char* name);
+        gmFrontend_AtlasSelect(scene, 1, NULL); /* the Atlas select, when it can run; else the retail screen */
+    }
+#endif
 }
 
 void gm_801BA188(GameModeState* scene)

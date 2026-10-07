@@ -67,6 +67,12 @@ void gm_801B91C8(GameModeState* state)
     css->ko_counts = 0;
     css->vs = *vs;
     lbDvd_SetupVsPreloadCache();
+#if defined(TARGET_PC)
+    {
+        extern void gmFrontend_AtlasSelect(GameModeState * state, int sss, const char* name);
+        gmFrontend_AtlasSelect(state, 0, NULL); /* the Atlas select, when it can run; else the retail screen */
+    }
+#endif
 }
 
 void gm_801B922C(GameModeState* scene)
@@ -79,6 +85,12 @@ void gm_801B9254(GameModeState* scene)
 {
     gmVsMelee_EnterSss(scene,
                        &gmMainLib_804D3EE0->modes.table[GmVsMode_Stamina]);
+#if defined(TARGET_PC)
+    {
+        extern void gmFrontend_AtlasSelect(GameModeState * state, int sss, const char* name);
+        gmFrontend_AtlasSelect(scene, 1, NULL); /* the Atlas select, when it can run; else the retail screen */
+    }
+#endif
 }
 
 void gm_801B927C(GameModeState* state)

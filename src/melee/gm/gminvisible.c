@@ -126,6 +126,12 @@ void onEnterCss(GameModeState* state)
 {
     VsModeData* vs = &gmMainLib_804D3EE0->modes.table[GmVsMode_Invisible];
     gmVsMelee_EnterCss(state, vs, VS_INVISIBLE);
+#if defined(TARGET_PC)
+    {
+        extern void gmFrontend_AtlasSelect(GameModeState * state, int sss, const char* name);
+        gmFrontend_AtlasSelect(state, 0, NULL); /* the Atlas select, when it can run; else the retail screen */
+    }
+#endif
 }
 
 void onExitCss(GameModeState* state)
@@ -138,6 +144,12 @@ void onEnterSss(GameModeState* state)
 {
     gmVsMelee_EnterSss(state,
                        &gmMainLib_804D3EE0->modes.table[GmVsMode_Invisible]);
+#if defined(TARGET_PC)
+    {
+        extern void gmFrontend_AtlasSelect(GameModeState * state, int sss, const char* name);
+        gmFrontend_AtlasSelect(state, 1, NULL); /* the Atlas select, when it can run; else the retail screen */
+    }
+#endif
 }
 
 void onExitSss(GameModeState* state)

@@ -638,6 +638,8 @@ static SSSData* fe_sel_sss;
 static bool fe_sel_training;
 static void* fe_train_css; ///< Training's CSS state data, registered by gmFrontend_TrainingSelect
 static void* fe_train_sss;
+static void* fe_ats_css; ///< a mode's CSS / SSS state data, registered by gmFrontend_AtlasSelect (Classic, Event, Stadium and the special melees)
+static void* fe_ats_sss;
 /* A mode that asked for the kit's select with its own name (gmFrontend_ModeSelect): the SOLO
  * section and "SOLO / <name>" breadcrumbs instead of VERSUS / MELEE. Set for the next VS-data
  * select scene only; NULL = plain VS. */
@@ -809,6 +811,44 @@ void gmFrontend_ModeSelect(struct GameModeState* state, int sss, const char* nam
     (void) sss;
     if (state == NULL) {
         return;
+    }
+    fe_sel_mode_pending = name;
+    state->info.scene_kind = GS_FRONTEND;
+}
+
+/* THE ONE ENTRY POINT of the Atlas character and stage select for the modes that have their own CSS / SSS state: each state's on_enter calls it
+ * once, after the mode filled its own data (gm_801B06B0, gmVsMelee_EnterCss...). When the Atlas select can run it routes the state into the
+ * frontend scene (the same scene VS mode's select runs in; the adapter, gmfrontend_atlas_select.inc, draws it); otherwise it does nothing and the
+ * state keeps the retail screen exactly as it was. Never guesses: a match type with no profile, MELEE_ATLAS=0 and a missing Atlas font set all
+ * leave the retail screen.
+ * HELD: Classic, Adventure and All-Star (0xB to 0xD) and the Stadium modes (0xF to 0x16) are routed only with the setting atlas_select_solo
+ * (MELEE_ATLAS_SELECT_SOLO=1). The retail screens show what the Atlas one does not yet: the difficulty and stock-count controls of the first
+ * three, and each fighter's record on the Stadium screens (mncharsel.c, the match_type cases at 5548 to 5950). Silently dropping them is not
+ * acceptable; they come back with the value rows of step 5. Event (0xE) shows nothing extra and is routed whenever the Atlas screen can run. */
+void gmFrontend_AtlasSelect(struct GameModeState* state, int sss, const char* name)
+{
+    extern int Ui_Ready(void);
+    extern int Ui_CssKnown(int match_type);
+    extern int Settings_Int(const char* key, int dflt);
+    if (state == NULL || Ui_Ready() == 0) {
+        return;
+    }
+    if (!sss) {
+        CSSData* css = (CSSData*) gm_GetGameModeStateEnterData(state);
+        int mt;
+        if (css == NULL) {
+            return;
+        }
+        mt = (int) css->match_type;
+        if (!Ui_CssKnown(mt)) {
+            return;
+        }
+        if (((mt >= 0xB && mt <= 0xD) || (mt >= 0xF && mt <= 0x16)) && Settings_Int("atlas_select_solo", 0) == 0) {
+            return;
+        }
+        fe_ats_css = css;
+    } else {
+        fe_ats_sss = gm_GetGameModeStateEnterData(state);
     }
     fe_sel_mode_pending = name;
     state->info.scene_kind = GS_FRONTEND;
@@ -1634,6 +1674,16 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
         fe_sel_sss = &gmVsMelee_SssData;
         fe_sel_training = false;
         fe_sel_mode = fe_sel_mode_pending; /* a named mode's select, once */
+        fe_sel_mode_pending = NULL;
+    } else if (enter_data != NULL && (enter_data == fe_ats_css || enter_data == fe_ats_sss)) {
+        /* a mode's own CSS / SSS state (Classic, Event, Stadium), routed here by gmFrontend_AtlasSelect */
+        fe.screen = enter_data == fe_ats_css ? &fe_screen_css : &fe_screen_sss;
+        fe.next_menus = false;
+        fe.loading = false;
+        fe_sel_css = (CSSData*) fe_ats_css;
+        fe_sel_sss = (SSSData*) fe_ats_sss;
+        fe_sel_training = false;
+        fe_sel_mode = fe_sel_mode_pending;
         fe_sel_mode_pending = NULL;
     } else if (enter_data != NULL && (enter_data == fe_train_css || enter_data == fe_train_sss)) {
         /* Training's CSS / SSS state, routed here by gmFrontend_TrainingSelect: the same

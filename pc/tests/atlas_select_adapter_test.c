@@ -388,6 +388,12 @@ static void css_open_vs(int n, int online)
     gw_Ui_CssRosterEnd();
     gw_Ui_CssCols(8);
 }
+static void known_match_types(void)
+{
+    int mt;
+    for (mt = 0; mt <= 0x17; mt++) CHECK(gw_Ui_CssKnown(mt) == 1);
+    CHECK(gw_Ui_CssKnown(AT_MT_LOBBY) == 1 && gw_Ui_CssKnown(0x18) == 0 && gw_Ui_CssKnown(-1) == 0 && gw_Ui_CssKnown(0xFF) == 0);
+}
 static void css_through_the_shims(void)
 {
     char buf[96];
@@ -484,7 +490,7 @@ int main(void)
     lua_newtable(L); gs_push_ui(L); lua_setfield(L, -2, "ui"); lua_setglobal(L, "gd");
     filled_and_drawn(); closed_on_every_exit(); owner_native_vs_mod(); mouse_port(); poll_is_big_endian(); fields_land_where_the_render_reads_them();
     art_decode_goes_to_the_kit(); atlas_off_or_no_roles_keeps_the_legacy_drawing(); stack_full_refuses(); held_menu_and_hold_do_not_matter();
-    css_through_the_shims(); css_zelda_sheik_and_online_through_the_shims(); css_mouse_through_the_shims(); sss_through_the_shims();
+    known_match_types(); css_through_the_shims(); css_zelda_sheik_and_online_through_the_shims(); css_mouse_through_the_shims(); sss_through_the_shims();
     lua_close(L);
     ATLAS_DONE("atlas select adapter");
 }

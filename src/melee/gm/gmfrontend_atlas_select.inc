@@ -314,11 +314,13 @@ static int fas_open_css(void)
         Ui_CssPort(p, fcs.p[p].kind, fcs.p[p].ck, fcs.p[p].costume, fcs.p[p].cpu_lv, fcs.p[p].team);
     }
     fas.enter = -1;
+    fs_preload_only = -1;
     if (fcs.training) {
         Ui_CssTraining(fcs.train_h);
     } else if (Ui_CssGet(FA_CG_ENTERING, 0)) {
         fas.enter = css->unk_0x0 >= 1 && css->unk_0x0 <= 4 ? (int) css->unk_0x0 - 1 : 0;
         Ui_CssEntering(fas.enter);
+        fs_preload_only = fas.enter; /* Event, Classic, Stadium...: the mode filled the other entries (Sandbag, the Multi-Man, the opponents) */
     }
     fas_crumbs(mt, &t0, &t1);
     fas.h = Ui_SelOpen(FA_SEL_CSS, mt, t0, t1, "FIGHTERS");
@@ -693,6 +695,7 @@ static void fas_frame(void)
 /* the scene ends: the host closes every screen of it too (Ui_SceneExit), this only makes sure the handle is gone */
 static void fas_exit(void)
 {
+    fs_preload_only = -1;
     if (fas.h >= 0) {
         Ui_SelClose(fas.h);
     }

@@ -112,6 +112,12 @@ void gm_801BA704(GameModeState* scene)
 {
     gmVsMelee_EnterCss(
         scene, &gmMainLib_804D3EE0->modes.table[GmVsMode_Lightning], 9);
+#if defined(TARGET_PC)
+    {
+        extern void gmFrontend_AtlasSelect(GameModeState * state, int sss, const char* name);
+        gmFrontend_AtlasSelect(scene, 0, NULL); /* the Atlas select, when it can run; else the retail screen */
+    }
+#endif
 }
 
 void gm_801BA730(GameModeState* scene)
@@ -124,6 +130,12 @@ void gm_801BA758(GameModeState* scene)
 {
     gmVsMelee_EnterSss(scene,
                        &gmMainLib_804D3EE0->modes.table[GmVsMode_Lightning]);
+#if defined(TARGET_PC)
+    {
+        extern void gmFrontend_AtlasSelect(GameModeState * state, int sss, const char* name);
+        gmFrontend_AtlasSelect(scene, 1, NULL); /* the Atlas select, when it can run; else the retail screen */
+    }
+#endif
 }
 
 void gm_801BA780(GameModeState* scene)

@@ -56,6 +56,8 @@ void gmFrontend_SelectScene(struct GameModeState* state, int sss);
 void gmFrontend_TrainingSelect(struct GameModeState* state, int sss);
 /* A VS-machinery mode's CSS / SSS always on the kit, named `name` in the SOLO section (Geno LAB). */
 void gmFrontend_ModeSelect(struct GameModeState* state, int sss, const char* name);
+/* A mode's CSS / SSS state asks for the Atlas select (once, from its on_enter, after the mode filled its data). A refusal leaves the retail screen. */
+void gmFrontend_AtlasSelect(struct GameModeState* state, int sss, const char* name);
 
 #endif
 

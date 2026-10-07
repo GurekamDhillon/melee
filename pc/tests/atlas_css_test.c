@@ -295,9 +295,51 @@ static void finish_state(void)
     CHECK(c.ops->random_ck(c.ops->user, &c) == c.ck[0]);                                                  /* the caller rolls Random through the op */
 }
 
+/* Task 10: what each group's finish hands the (unchanged, game-side) legacy writer. The writer (fs_css_finish) writes slot_type, ckind, color, cpu_level and team of the
+ * ports that are in, marks the others NA, and never touches stocks or nametag (tools/port/test_css_hooks.py pins that on the source); the model's contract is that
+ * at FINISH_GO the ports are exactly what the mode asked for. Each group is checked with its own profile. */
+static void finish_leaves_mode_fields_group1(void)
+{
+    AtCss c; int mt;
+    for (mt = 0; mt <= 0xA; mt++) {                                      /* the VS family: four ports, CPUs, teams from the rules */
+        fresh(&c, mt, 0, 1, 29);
+        c.p[0].ck = 3; c.p[0].costume = 1; c.p[1].kind = AT_CSS_CPU; c.p[1].ck = 8; c.p[1].cpu_lv = 5; c.p[1].team = 2;
+        c.p[2].kind = AT_CSS_HMN; c.p[2].ck = AT_CK_NONE;                 /* a human with no fighter blocks */
+        CHECK(!(press(&c, 0, AT_CI_START, 0, 100) & AT_CE_FINISH_GO) && !c.done);
+        c.p[2].kind = AT_CSS_OFF;
+        CHECK(press(&c, 0, AT_CI_START, 0, 101) & AT_CE_FINISH_GO);
+        CHECK(c.p[0].kind == AT_CSS_HMN && c.p[0].ck == 3 && c.p[0].costume == 1 && c.p[1].kind == AT_CSS_CPU && c.p[1].ck == 8 && c.p[1].cpu_lv == 5 && c.p[1].team == 2);
+        CHECK(c.p[2].kind == AT_CSS_OFF && c.p[3].kind == AT_CSS_OFF && c.teams == 1);
+    }
+    fresh(&c, 0x17, 0, 0, 29);                                           /* Training and the LAB profile: the human and the dummy, nothing else */
+    c.p[0].ck = 5; press(&c, 0, AT_CI_START, 0, 102);
+    CHECK(c.done && c.p[0].kind == AT_CSS_HMN && c.p[0].ck == 5 && c.p[1].kind == AT_CSS_CPU && c.p[1].ck == AT_CK_RANDOM && c.p[2].kind == AT_CSS_OFF && c.p[3].kind == AT_CSS_OFF);
+}
+static void finish_leaves_mode_fields_one_player(void)
+{
+    AtCss c; int mt, port;
+    for (mt = 0xB; mt <= 0x16; mt++) {                                    /* Classic, Adventure, All-Star, Event, every Stadium mode */
+        for (port = 0; port < 4; port++) {
+            fresh(&c, mt, 0, 0, 29);
+            at_css_set_entering(&c, port);
+            c.p[port].cur = 6; press(&c, port, AT_CI_A, 0, 110);
+            CHECK(c.p[port].ck == 6);
+            CHECK(press(&c, port, AT_CI_START, 0, 111) & AT_CE_FINISH_GO);
+            CHECK(c.p[port].kind == AT_CSS_HMN && c.p[port].ck == 6);     /* the slot the exit handler reads: its fighter and costume */
+            CHECK(at_css_count_in(&c) == 1);                              /* nobody else is in: the legacy writer marks every other port NA */
+        }
+        fresh(&c, mt, 0, 0, 29); at_css_set_entering(&c, 1);              /* Back: B twice leaves; the state's exit handler sees pending_scene_change 2 */
+        press(&c, 1, AT_CI_B, 0, 120); CHECK(press(&c, 1, AT_CI_B, 0, 121) & AT_CE_FINISH_BACK);
+    }
+    /* a one-player mode that arrives with a fighter already chosen (the mode's last pick) can start at once */
+    fresh(&c, 0xB, 0, 0, 29); at_css_set_entering(&c, 0); c.p[0].ck = 9; c.p[0].costume = 2;
+    CHECK(press(&c, 0, AT_CI_START, 0, 130) & AT_CE_FINISH_GO);
+    CHECK(c.p[0].ck == 9 && c.p[0].costume == 2);
+}
+
 int main(void)
 {
     ports_join(); legacy_rules_pick_undo_back(); legacy_rules_cards(); legacy_rules_costume(); legacy_rules_start();
-    profile_rules(); legacy_rules_zelda(); tabs_visible(); ports_leave(); lobby_rules(); mouse_rules(); finish_state();
+    profile_rules(); legacy_rules_zelda(); tabs_visible(); ports_leave(); lobby_rules(); mouse_rules(); finish_state(); finish_leaves_mode_fields_group1(); finish_leaves_mode_fields_one_player();
     ATLAS_DONE("atlas css");
 }

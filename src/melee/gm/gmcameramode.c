@@ -130,6 +130,12 @@ void gm_801B254C(GameModeState* state)
     lbDvd_SetupVsPreloadCache();
     temp_r30_2->mode_kind = GM_CAMERA_MODE;
     lbDvd_80018254();
+#if defined(TARGET_PC)
+    {
+        extern void gmFrontend_AtlasSelect(GameModeState * state, int sss, const char* name);
+        gmFrontend_AtlasSelect(state, 0, NULL); /* the Atlas select, when it can run; else the retail screen */
+    }
+#endif
 }
 
 void gm_801B25D4(GameModeState* state)
@@ -166,6 +172,12 @@ void gm_801B26AC(GameModeState* state)
     sss = gm_GetGameModeStateEnterData(state);
     sss->vs = *vs;
     gm_80167FC4(sss);
+#if defined(TARGET_PC)
+    {
+        extern void gmFrontend_AtlasSelect(GameModeState * state, int sss, const char* name);
+        gmFrontend_AtlasSelect(state, 1, NULL); /* the Atlas select, when it can run; else the retail screen */
+    }
+#endif
 }
 
 void gm_801B2704(GameModeState* arg0)

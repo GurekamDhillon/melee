@@ -66,7 +66,7 @@ int at_room_render(const AtRoomView *v, const AtLayout *L, const AtTextOps *o, c
 /* Input for the room screens. The PAD is not here: the game side reads its own pad bits, exactly as before. Keyboard and
  * mouse become intents, and the adapter turns each intent into the menu bit the equivalent pad press has. */
 enum { AT_RI_NONE, AT_RI_UP, AT_RI_DOWN, AT_RI_LEFT, AT_RI_RIGHT, AT_RI_ACCEPT, AT_RI_BACK, AT_RI_START, AT_RI_COPY, AT_RI_PASTE,
-       AT_RI_PAGE_L, AT_RI_PAGE_R, AT_RI_STAGE_AT, AT_RI_CODE_SLOT };
+       AT_RI_PAGE_L, AT_RI_PAGE_R, AT_RI_STAGE_AT, AT_RI_CODE_SLOT, AT_RI_STAGE_CLICK };   /* STAGE_CLICK: arg = stage; cursor there AND confirm, as one (applied only if both can be) */
 typedef struct { int kind, arg; } AtRoomIntent;
 int at_room_key_intents(AtKeys *k, unsigned mask, double now_ms, AtRoomIntent *out, int cap);
 int at_room_mouse_intents(const AtRoomView *v, AtMouse *m, float x, float y, int buttons, int wheel, const AtHits *hits, AtRoomIntent *out, int cap);

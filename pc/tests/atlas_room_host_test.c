@@ -134,7 +134,9 @@ static void lifetime(void)
     CHECK(gw_Ui_RoomSetStr("code", "WXYZ") == 1 && gw_Ui_RoomSetInt("host", 1) == 1);
     CHECK(gw_Ui_RoomSetInt("no_such_key", 1) == 0 && gw_Ui_RoomSetStr("no_such_key", "x") == 0);
     CHECK(strcmp(RV()->code, "WXYZ") == 0 && RV()->host == 1);
-    CHECK(gw_Ui_RoomBegin("lobby") == 1 && strcmp(RV()->code, "WXYZ") == 0);          /* the same kind again: nothing restarts */
+    CHECK(gw_Ui_RoomBegin("lobby") == 1 && strcmp(RV()->code, "WXYZ") == 0);          /* the same kind again: the view stays */
+    gs_room.q[0].kind = AT_RI_ACCEPT; gs_room.qn = 1; gs_room.frozen = 1;
+    CHECK(gw_Ui_RoomBegin("lobby") == 1 && gs_room.qn == 0 && gs_room.frozen == 0);    /* ...but a stale intent and a freeze do not survive a re-open */
     CHECK(gw_Ui_RoomBegin("wait") == 1);                                              /* another kind: a fresh view, the same slot */
     CHECK(room_slot() == u && RV()->code[0] == '\0' && RV()->kind == AT_ROOM_WAIT && strcmp(u->sc.id, "online.wait") == 0);
     gw_Ui_RoomSetStr("code", "ABCD");
@@ -294,10 +296,10 @@ static void intents(void)
         CHECK(n == 1 && strcmp(name, "stage_at") == 0);                               /* hover onto an open stage on my turn: the cursor, nothing else */
         CHECK(gw_Ui_RoomPollName(name, sizeof name, &arg) == 0);
         g_mbuttons = 1; gs_room_tick(u); g_mbuttons = 0;
-        CHECK(gw_Ui_RoomPollName(name, sizeof name, &arg) == 1 && strcmp(name, "stage_at") == 0);
+        CHECK(gw_Ui_RoomPollName(name, sizeof name, &arg) == 1 && strcmp(name, "stage_click") == 0);
         memcpy(raw, &arg, 4);                                                         /* the arg is big-endian in the game's local */
         CHECK(raw[0] == 0 && raw[1] == 0 && raw[2] == 0 && raw[3] == 3);
-        CHECK(gw_Ui_RoomPollName(name, sizeof name, &arg) == 1 && strcmp(name, "accept") == 0);
+        CHECK(gw_Ui_RoomPollName(name, sizeof name, &arg) == 0);                      /* the click is one intent, not a move and a confirm */
         gs_room_tick(u);
     }
     /* the queue is bounded: a held-down storm of presses keeps 16 and drops the rest, never overruns */

@@ -226,6 +226,9 @@ static void consume(Model *m, AtRoomIntent in)
     const AtRoomView *v = m->v;
     switch (in.kind) {
     case AT_RI_STAGE_AT: m->cursor = in.arg; break;
+    case AT_RI_STAGE_CLICK:                       /* the adapter applies it only on my stage turn on an open stage: cursor there, then confirm */
+        if (v->my_stage_turn && in.arg >= 0 && in.arg < v->n_stages && v->st[in.arg].open) { m->cursor = in.arg; emit(m, "STAGE_ACT", m->cursor); }
+        break;
     case AT_RI_RIGHT: m->cursor = (m->cursor + 1) % v->n_stages; break;
     case AT_RI_LEFT: m->cursor = (m->cursor + v->n_stages - 1) % v->n_stages; break;
     case AT_RI_ACCEPT:
@@ -286,7 +289,7 @@ static void intents(void)
         for (i = 0; i < n; i++) consume(&mouse, in[i]);
         CHECK(mouse.n == 0);                                                       /* ...and does nothing netplay-visible */
         n = mouse_step(&rv, &m, tx, ty, 1, 0, in, 8);                              /* left click */
-        CHECK(n == 2 && in[0].kind == AT_RI_STAGE_AT && in[1].kind == AT_RI_ACCEPT);
+        CHECK(n == 1 && in[0].kind == AT_RI_STAGE_CLICK && in[0].arg == 3);       /* one intent: the cursor move and the confirm travel together, so the adapter can drop both */
         for (i = 0; i < n; i++) consume(&mouse, in[i]);
         memset(&kbd, 0, sizeof kbd); kbd.v = &rv; kbd.cursor = 1;
         n = at_room_key_intents(&k, AT_KEY_RIGHT, 0.0, in, 8); for (i = 0; i < n; i++) consume(&kbd, in[i]);
@@ -296,6 +299,18 @@ static void intents(void)
         CHECK(pad.n == 1 && strcmp(pad.out[0].act, "STAGE_ACT") == 0 && pad.out[0].arg == 3);
         CHECK(same(&pad, &mouse));                                                 /* pad, mouse and keyboard: one netplay-visible action */
         CHECK(kbd.n == 1 && strcmp(kbd.out[0].act, "STAGE_ACT") == 0);
+    }
+    /* a click on a stage that is not open does nothing at all (it must not move the cursor and confirm a different stage) */
+    {
+        int t4 = -1;
+        rv.st[4].open = 0; draw_room(&rv, 640.0f);
+        for (i = 0; i < RH.n; i++) if (RH.h[i].a == AT_RH_STAGE && RH.h[i].b == 4) t4 = i;
+        CHECK(t4 >= 0);
+        memset(&m, 0, sizeof m);
+        mouse_step(&rv, &m, tx_of(t4), ty_of(t4), 0, 0, in, 8);
+        n = mouse_step(&rv, &m, tx_of(t4), ty_of(t4), 0, 0, in, 8); CHECK(n == 0);                  /* hover: nothing */
+        n = mouse_step(&rv, &m, tx_of(t4), ty_of(t4), 1, 0, in, 8); CHECK(n == 0);                  /* click: nothing */
+        rv.st[4].open = 1; draw_room(&rv, 640.0f);
     }
     /* hover alone: 100 pointer moves over every rectangle with no button, nothing netplay-visible; a resting pointer is silent */
     {
@@ -409,8 +424,8 @@ static void intents(void)
     n = at_room_key_intents(&k, AT_KEY_TAB | AT_KEY_SHIFT, 60.0, in, 8); CHECK(n == 1 && in[0].kind == AT_RI_PAGE_L);
     /* every intent has a distinct name, and the names are the ones the adapter's table reads */
     {
-        static const char *const want[] = { "none", "up", "down", "left", "right", "accept", "back", "start", "copy", "paste", "page_l", "page_r", "stage_at", "code_slot" };
-        for (i = 0; i <= AT_RI_CODE_SLOT; i++) CHECK(strcmp(at_room_intent_name(i), want[i]) == 0);
+        static const char *const want[] = { "none", "up", "down", "left", "right", "accept", "back", "start", "copy", "paste", "page_l", "page_r", "stage_at", "code_slot", "stage_click" };
+        for (i = 0; i <= AT_RI_STAGE_CLICK; i++) CHECK(strcmp(at_room_intent_name(i), want[i]) == 0);
         CHECK(strcmp(at_room_intent_name(99), "?") == 0 && strcmp(at_room_intent_name(-1), "?") == 0);
     }
 }

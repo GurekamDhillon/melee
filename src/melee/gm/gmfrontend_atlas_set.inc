@@ -464,6 +464,32 @@ static void fss_feed_pad(void)
     }
 }
 
+/* ONLINE PLAY under Atlas: the explainer is a few lines wide, so three rows say their help shorter than the legacy rows do (the legacy strings in fe_items_online
+ * are untouched and MELEE_ATLAS=0 shows them as before). tools/port/check_atlas_online_text.py lints this table with the rows' labels. */
+static const struct {
+    const char* label;
+    const char* help;
+} fss_online_help[] = {
+    { "Stage List", "Rooms you host: the legal six, or every stage you both have." },
+    { "Turbo", "Rooms you host: a connected hit can be cancelled. Never in Random." },
+    { "Envoy", "Rooms you host: an Envoy set with a build each. Never in Random." },
+};
+
+/* the Atlas explainer text of the focused ONLINE PLAY row, or NULL to use the row's own help */
+static const char* fss_online_what(const FrontendScreen* s)
+{
+    int slot = Ui_SetFocused(fss.h), k;
+    if (fss.kind != FSS_K_ONLINE || slot < 0 || slot >= fss.vis.n || fss.vis.idx[slot] >= FSS_SYNTH) {
+        return NULL;
+    }
+    for (k = 0; k < (int) (sizeof fss_online_help / sizeof fss_online_help[0]); k++) {
+        if (strcmp(s->items[fss.vis.idx[slot]].label, fss_online_help[k].label) == 0) {
+            return fss_online_help[k].help;
+        }
+    }
+    return NULL;
+}
+
 /* the legacy notice line ("Saved.", "Controllers recalibrated...") becomes the host's note, once */
 static void fss_forward_note(void)
 {
@@ -610,7 +636,7 @@ static bool fss_frame(void)
         if (fss.kind == FSS_K_REMAP) {
             fss_remap_view();
         } else {
-            Ui_SetExplain(fss.h, 0, 0, 0, 0, "");
+            Ui_SetExplain(fss.h, 0, 0, fss_online_what(s), 0, "");
         }
         fss_hints(s);
         fss_forward_note();

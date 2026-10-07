@@ -554,11 +554,11 @@ static const FrontendItem fe_items_online[] = {
       NULL, 0, 0, 0, NULL, NULL, NULL, fe_ol_join },
     { FE_ACTION, FE_DO_CALL, "Random Opponent", "Play whoever else is looking right now.", NULL,
       NULL, 0, 0, 0, NULL, NULL, NULL, fe_ol_random },
-    { FE_CHOICE, 0, "Stage List", "Rooms you host: the legal six, or every stage you both have.",
+    { FE_CHOICE, 0, "Stage List", "Stages in rooms you host: the legal six, or every stage you both have.",
       fe_np_get_stage_mode, fe_np_set_stage_mode, 0, 1, 1, fe_np_stage_modes },
-    { FE_CHOICE, 0, "Turbo", "Rooms you host: a connected hit can be cancelled. Never in Random.",
+    { FE_CHOICE, 0, "Turbo", "Rooms you host: a connected hit can be cancelled into most moves.",
       fe_np_get_turbo, fe_np_set_turbo, 0, 1, 1, fe_np_turbo_modes },
-    { FE_CHOICE, 0, "Envoy", "Rooms you host: an Envoy set with a build each. Never in Random.",
+    { FE_CHOICE, 0, "Envoy", "Rooms you host: a best-of set where each player fights with an Envoy build and picks a reward between games.",
       fe_np_get_envoy, fe_np_set_envoy, 0, 1, 1, fe_np_envoy_modes },
     { FE_SLIDER, 0, "Stocks", "Stocks per game, in rooms you host.", fe_np_get_stocks,
       fe_np_set_stocks, 1, 9, 1 },
@@ -1795,7 +1795,7 @@ static void fe_switch_screen(const FrontendScreen* s)
             fl_open(s->art);
             return;
         }
-        Ui_RoomEnd(); /* leaving a room screen for the rows: the host's room screen goes with it */
+        fa_room_end(); /* leaving a room screen for the rows: the host's room screen goes with it */
         fl.on = false;
         fp_free_textures();
         fp.ok = false;

@@ -72,7 +72,11 @@ int gw_Ui_RoomBegin(const char *kind) {
     GsUiSlot *u = gs_room_get();
     AtScreen *sc;
     if (!gw_Ui_Ready() || k == 0) return 0;
-    if (u != NULL && gs_room.rv.kind == k) return 1;
+    if (u != NULL && gs_room.rv.kind == k) {                       /* the same kind again (a re-open): the view stays, a stale intent and a freeze do not */
+        gs_room.qn = 0;
+        gs_room.frozen = 0;
+        return 1;
+    }
     if (u == NULL) {
         if (gw_Ui_SelCanOpen() == 0) return 0;                        /* a select or the settings are up (it also checks the room: none is) */
         for (i = 0; i < GS_UI_SLOTS; i++) if (!gs_ui_slot[i].used) { slot = i; break; }

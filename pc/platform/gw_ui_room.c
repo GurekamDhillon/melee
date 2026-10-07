@@ -467,8 +467,8 @@ int at_room_mouse_intents(const AtRoomView *v, AtMouse *m, float x, float y, int
             if (b != AT_RI_NONE) PUT(b, 0);
         } else if (h->kind == AT_HIT_ROOM) {
             switch (h->a) {
-            case AT_RH_STAGE:                                  /* as the legacy click: cursor there, then confirm; only on my stage turn (a click on a tile in the ready phase must not ready me) */
-                if (v->my_stage_turn && h->b >= 0 && h->b < v->n_stages) { PUT(AT_RI_STAGE_AT, h->b); PUT(AT_RI_ACCEPT, 0); }
+            case AT_RH_STAGE:                                  /* cursor there AND confirm, as ONE intent; only on my stage turn (a tile click in the ready phase must not ready me) and only on an open stage (a click on a closed one must not confirm another) */
+                if (v->my_stage_turn && h->b >= 0 && h->b < v->n_stages && v->st[h->b].open) PUT(AT_RI_STAGE_CLICK, h->b);
                 break;
             case AT_RH_ACTION: PUT(AT_RI_ACCEPT, 0); break;
             case AT_RH_LEAVE: PUT(AT_RI_BACK, 0); break;
@@ -492,6 +492,6 @@ int at_room_mouse_intents(const AtRoomView *v, AtMouse *m, float x, float y, int
 
 const char *at_room_intent_name(int kind)
 {
-    static const char *const names[] = { "none", "up", "down", "left", "right", "accept", "back", "start", "copy", "paste", "page_l", "page_r", "stage_at", "code_slot" };
+    static const char *const names[] = { "none", "up", "down", "left", "right", "accept", "back", "start", "copy", "paste", "page_l", "page_r", "stage_at", "code_slot", "stage_click" };
     return kind >= 0 && kind < (int) (sizeof names / sizeof names[0]) ? names[kind] : "?";
 }

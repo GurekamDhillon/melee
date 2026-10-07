@@ -57,7 +57,7 @@ static void fa_room_begin(int art);
 static void fa_room_submit(void);
 static u32 fa_room_bits(void);
 static void fa_room_grid(int n, int starters);
-extern void Ui_RoomEnd(void);
+static void fa_room_end(void);
 extern void Ui_RoomFreeze(int on);
 static int fa_code_slot_req = -1; /* a mouse click on a code slot, for fl_frame_code to act on */
 
@@ -2087,7 +2087,7 @@ static void fl_build(void)
 static void fl_open(int art)
 {
     if (art != FL_CODE && art != FL_WAIT && art != FL_LOBBY) {
-        Ui_RoomEnd(); /* the loading screen, the character and stage select: no Atlas room is attached (before the select asks the host for its slot) */
+        fa_room_end(); /* the loading screen, the character and stage select: no Atlas room is attached (before the select asks the host for its slot) */
     }
     if (art == FL_CSS) {
         fs_css_open(fe_sel_css != NULL ? fe_sel_css : &gmVsMelee_CssData);
@@ -2512,7 +2512,7 @@ static void fl_frame(void)
         return;
     }
     if (fa_room_on()) {
-        Ui_RoomFreeze(fe.frames < 4 || fe.leaving != 0); /* the host drops its events with the legacy gate below: a click in those frames is not queued for later */
+        Ui_RoomFreeze(fe.frames < 4); /* the host drops its events with the legacy gate below: a click in those frames is not queued for later (a leaving screen is frozen by fa_room_leaving) */
         room_bits = fa_room_bits();
     }
     if (fe.frames >= 4) { /* let the button that brought us here go */
@@ -2568,7 +2568,7 @@ static void fl_frame_anim(void)
 
 static void fl_exit(void)
 {
-    Ui_RoomEnd();
+    fa_room_end();
     fas_exit();
     fa_close(); /* the select screens' archives */
     if (fl.on) {

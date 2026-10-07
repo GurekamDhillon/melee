@@ -30,6 +30,13 @@ _Static_assert(LB_MAX_UI_STAGES == 32, "pc/platform/gw_ui_room.h AT_ROOM_STAGES 
 
 static bool fa_room_on(void) { return Ui_RoomOpen() != 0; }
 
+/* The one way a room screen is detached: the host's screen goes, and a code-slot click that was never applied goes with it. */
+static void fa_room_end(void)
+{
+    fa_code_slot_req = -1;
+    Ui_RoomEnd();
+}
+
 static void fa_room_begin(int art)
 {
     Ui_RoomBegin(art == FL_CODE ? "code" : art == FL_WAIT ? "wait" : "lobby");
@@ -142,9 +149,11 @@ static void fa_room_submit(void)
 {
     char b[FE_STR];
     int i, n, s = 0;
-    fa_room_begin(fl.art);
     if (!fa_room_on()) {
-        return;
+        fa_room_begin(fl.art); /* fl_open attached it; this only retries after a refusal (a re-open clears the host's ring, so it is never called per frame) */
+        if (!fa_room_on()) {
+            return;
+        }
     }
     fa_room_common();
     if (fl.art == FL_CODE) {
@@ -200,6 +209,7 @@ static void fa_room_submit(void)
 /* A screen that is leaving: the legacy fade is drawn by the game under the host's quads, so the host fades its own screen out. */
 static void fa_room_leaving(void)
 {
+    Ui_RoomFreeze(1); /* a leaving screen takes no input: the host drops its ring */
     Ui_RoomSetInt("fade_out", FE_FADE_FRAMES > 0 ? (1000 * fe.fade) / FE_FADE_FRAMES : 1000);
     Ui_RoomFrame();
 }
@@ -224,11 +234,21 @@ static u32 fa_room_bits(void)
         else if (strcmp(n, "page_l") == 0) bits |= MenuInput_LTrigger;
         else if (strcmp(n, "page_r") == 0) bits |= MenuInput_RTrigger;
         else if (strcmp(n, "stage_at") == 0) {
-            if (fl.art == FL_LOBBY && fl_my_stage_turn() && arg >= 0 && arg < Netplay_LobbyInfo(9)) {
+            if (fl.art == FL_LOBBY && fl_my_stage_turn() && arg >= 0 && arg < Netplay_LobbyInfo(9) && fl_stage_open(arg)) {
                 if (fl.cur != arg) {
                     sfxMove();
                 }
                 fl.cur = arg; /* the legacy mouse set the cursor the same way, then confirmed */
+            }
+        } else if (strcmp(n, "stage_click") == 0) {
+            /* a click: the cursor there AND the confirm, applied together or not at all. Not on my stage turn (it ended this frame), or a stage that is not
+               open, it does nothing: the legacy cursor would move to another stage and the confirm would strike THAT one. */
+            if (fl.art == FL_LOBBY && fl_my_stage_turn() && arg >= 0 && arg < Netplay_LobbyInfo(9) && fl_stage_open(arg)) {
+                if (fl.cur != arg) {
+                    sfxMove();
+                }
+                fl.cur = arg;
+                bits |= MenuInput_Confirm;
             }
         } else if (strcmp(n, "code_slot") == 0) {
             if (fl.art == FL_CODE) {

@@ -799,7 +799,7 @@ return function(D)
   if self.enabled and self:allowed() and not self:replaying() and self.display.tick then self.display:tick(self.engine) end
   return self.drives and self.drives.menu.active or false
  end
- function L:scene() if D.menu_input then D.menu_input.reset() end;self:reset();self.display=D.mod_display.new(self.g,self.engine) end -- scene invalidates shader handles
+ function L:scene() if D.atlas_hud then D.atlas_hud.reset_key() end;if D.menu_input then D.menu_input.reset() end;self:reset();self.display=D.mod_display.new(self.g,self.engine) end -- scene invalidates shader handles
  function L:draw()
   self:net_draw()
   if self.drives and self.drives.menu.active then self.drives:draw();return end

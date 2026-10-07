@@ -69,7 +69,10 @@ return function(D)
  end
 
  local function fit_rule(S,name,rule) return K.fit_rule(S,name,rule,'atlas bag') end
- function A.rules(lines) return K.rules(lines) end
+ function A.rules(lines,cell)
+  local kind=cell and cell.ref and cell.ref.kind
+  return K.rules(lines,(kind=='key' or kind=='koffer') and 1 or 2)
+ end
 
  -- what the explainer shows for one cell: the drive's name line, ONE rule (and "RULE k OF n" when there are several)
  function A.explainer(self,cid,bid)
@@ -79,12 +82,14 @@ return function(D)
   local idx=cid:match(':(%d+)$')
   local ex={kicker=(KICKER[bid] or bid:upper())..(bid~='key' and idx and (' '..idx) or ''),title=c.name or ''}
   if c.empty or (c.ref and c.ref.kind=='locked') then ex.what=lines[1] or '';return ex end
-  local rules=A.rules(lines)
+  local rules=A.rules(lines,c)
   local k=K.rule_index(self,cid,#rules)
   if #rules>1 then ex.kicker=ex.kicker..' - RULE '..k..' OF '..#rules end
   ex.what=rules[k] and fit_rule(S,c.name,rules[k]) or ''
   if type(c.icon)=='table' and c.icon.kind=='model' then ex.media={model=c.icon.asset,ring=c.icon.ring} end
-  if lines[1] then ex.from={text=lines[1]} end
+  if c.ref and c.ref.kind=='key' then   -- a keystone has no name line: FROM is its family line, the first line after the rule
+   local seen=false;for _,l in ipairs(lines) do if l=='' then seen=true elseif seen then ex.from={text=l};break end end
+  elseif lines[1] then ex.from={text=lines[1]} end
   return ex
  end
 
@@ -92,7 +97,7 @@ return function(D)
  local function rule_count(self,cid)
   local c=self.cells[cid]
   if not c or c.empty or (c.ref and c.ref.kind=='locked') then return 0 end
-  return #A.rules(c.lines or self.S:detail_lines(c))
+  return #A.rules(c.lines or self.S:detail_lines(c),c)
  end
 
  function A.describe(S,self)

@@ -170,4 +170,25 @@ T.test('the run end takes the HUD down', function()
   assert(hud(e) == nil, 'cleared with the run')
 end)
 
+T.test('a sync error turns the Atlas HUD off for good: the legacy HUD stays', function()
+  local e = start(); tick(e); assert(D.atlas_hud.on(e.host) and hud(e))
+  e.host.hud.model = function() error('boom') end
+  tick(e)
+  assert(e.host.hud.atlas_failed == true, 'the failure was recorded')
+  assert(D.atlas_hud.on(e.host) == false, 'on() is false now, so Hd:draw draws the legacy HUD')
+  local logged = false; for _, l in ipairs(e.s.logs) do if l:find('atlas hud failed', 1, true) then logged = true end end
+  assert(logged, 'and logged once')
+end)
+
+T.test('a scene change describes the HUD again, so a live note is re-sent', function()
+  local e = start(); tick(e)
+  e.host.hud:show_card('Merged!', { 'Lingering got stronger' }); tick(e)
+  local n = e.ui.hud_calls
+  tick(e, 30); assert(e.ui.hud_calls == n, 'quiet: nothing re-described')
+  e.mods:scene()                                   -- the engine cleared the toasts and notes with the scene
+  tick(e)
+  assert(e.ui.hud_calls == n + 1, 'the next sync described it again')
+  assert(parts(hud(e), 'note', 'bottom_left')[1], 'the note is back')
+end)
+
 T.done()

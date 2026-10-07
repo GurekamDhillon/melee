@@ -252,4 +252,16 @@ T.test('envoy ui legacy on|off forces the legacy screens back and forth; the def
   assert(K2.setting.on == false and K2.legacy.on == false, 'off by default until the owner has seen the screens')
 end)
 
+T.test('the takeover owns the pause screen: Envoy\'s START route neither pushes nor feeds it again', function()
+  local s, a, ui = playing()
+  D.atlas_pause.ensure(a); ui.pause_wanted = true; ui.retail_pause(0, true)
+  assert(top(ui) == 'envoy.pause' and #ui.stack == 1, 'pushed by the takeover')
+  local fed = #ui.fed
+  a.menu:input('start', a:context())               -- Envoy's own route shows the same pause
+  assert(#ui.stack == 1, 'not pushed twice')
+  a.menu:input('down', a:context()); a.menu:input('accept', a:context())
+  assert(#ui.fed == fed, 'the legacy events are not fed: the engine reads the pad itself')
+  ui.retail_pause(0, false)
+end)
+
 T.done()

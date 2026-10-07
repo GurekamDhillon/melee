@@ -1281,8 +1281,7 @@ void gm_DoUnpauseChecksAndRoutine(VsSceneController* arg0, int arg1)
     {   /* the Atlas pause's Resume (offline only; a one-shot request for the pauser). Read here and not in
          * gm_GetPlayerPressingUnpause: that inline is also read every paused frame for the no-contest buttons and would eat it. */
         extern int Ui_TakeUnpause(void); /* pc/platform/gw_script_ui.inc */
-        int req = Ui_TakeUnpause();
-        if (i == -1) i = req;
+        if (i == -1) i = Ui_TakeUnpause();   /* only when no port pressed START this frame */
     }
 #endif
 

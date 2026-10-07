@@ -26,6 +26,7 @@ static int g_logs_render;      /* log lines about a render budget */
 static unsigned g_pad;         /* the buttons the stand-in pad holds (the raw GC bits) */
 static char g_last[512];       /* the last lua() result */
 static int g_logs_ex;          /* log lines about an explainer */
+static int g_logs_full;        /* log lines about a full screen pool */
 
 void gw_log(const char *fmt, ...)
 {
@@ -36,6 +37,7 @@ void gw_log(const char *fmt, ...)
     va_end(ap);
     if (strstr(buf, "render budget") != NULL) g_logs_render++;
     if (strstr(buf, "explainer") != NULL) g_logs_ex++;
+    if (strstr(buf, "pool is full") != NULL) g_logs_full++;
 }
 static int gs_may_run(int i) { (void) i; return g_may_run; }
 static int g_netplay, g_last_pcall_owner;
@@ -647,6 +649,39 @@ static void persist_screens_span_scenes(void)
     reset_ui();
 }
 
+static void takeover_pause_screen_reads_the_pad_itself(void)
+{
+    hud_reset();
+    gs_ui_pause_slot = gs_ui_pause_pushed = -1; gs_ui_pause_changed = 0;
+    /* Envoy's pause screen is input = 'feed': the takeover path has no feeder, so the engine reads the pausing port's pad for it */
+    CHECK(run_as_script(1,
+        "UNP=0; assert(gd.ui.screen{id='envoy.pause', kind='pause', input='feed', primary={kind='list', items={{id='resume', label='Resume'}}},"
+        " on={accept=function() UNP=UNP+1; gd.ui.unpause() end}}); assert(gd.ui.pause_screen('envoy.pause'))") == 0);
+    g_pause_wanted = 1; g_pad_only = 1; g_pad = 0;
+    gw_Ui_RetailPause(1, 1); gs.cur = -1; gs_ui_tick();
+    CHECK(at_stack_top(&gs_ui_stack) == gs_ui_find("envoy.pause"));
+    g_pad = 0; gs_ui_tick(); g_pad = AT_PAD_A; gs_ui_tick(); g_pad = 0; gs_ui_tick();
+    CHECK(run_as_script(1, "assert(UNP == 1)") == 0);                          /* A reached the handler although the screen is input = feed */
+    CHECK(gw_Ui_TakeUnpause() == 1);
+    gw_Ui_RetailPause(1, 0); gs_ui_tick();
+    /* an ordinary feed screen still does not read the pad */
+    CHECK(run_as_script(1, "assert(gd.ui.screen{id='envoy.f', input='feed', primary={kind='list', items={{id='a', label='A'}}}, on={accept=function() UNP=UNP+10 end}}); assert(gd.ui.open('envoy.f'))") == 0);
+    g_pad = 0; gs_ui_tick(); g_pad = AT_PAD_A; gs_ui_tick(); g_pad = 0; gs_ui_tick();
+    CHECK(run_as_script(1, "assert(UNP == 1)") == 0);
+    g_pad_only = -1; g_pause_wanted = 0;
+    reset_ui();
+}
+static void full_pool_is_said_once(void)
+{
+    int i; char lua[256];
+    reset_ui(); fake_script(1, "envoy"); g_logs_full = 0; gs_ui_full_warned = 0;
+    for (i = 0; i < 16; i++) { snprintf(lua, sizeof lua, "assert(gd.ui.screen{id='envoy.p%d', primary={kind='list', items={{id='a', label='A'}}}})", i); CHECK(run_as_script(1, lua) == 0); }
+    CHECK(run_as_script(1, "assert(not pcall(gd.ui.screen, {id='envoy.x1', primary={kind='list', items={{id='a', label='A'}}}}))") == 0);
+    CHECK(run_as_script(1, "assert(not pcall(gd.ui.screen, {id='envoy.x2', primary={kind='list', items={{id='a', label='A'}}}}))") == 0);
+    CHECK(g_logs_full == 1);                                                   /* refused twice, logged once */
+    reset_ui();
+}
+
 /* ---- Atlas step 2, Task 6: entries at run time (driven as the engine and as the mod, not as the console) ---- */
 #include "gw_ui_menus_json.h"
 static void reg_boot_with(const char *json, const char *mod)
@@ -1238,7 +1273,7 @@ int main(void)
     engine_slot_survives_tick(); engine_slot_not_released_by_script_unload(); uncover_primes_engine_screen(); native_intents_are_primed(); polled_event_is_big_endian_for_the_game();
     intents_from_any_port(); engine_screen_covered_takes_no_intent(); scene_exit_closes_scene_screens(); console_cannot_touch_engine();
     mod_cannot_take_engine_id(); commit_without_change_does_not_rebuild(); engine_focus_is_the_games_cursor(); engine_close_and_queue();
-    eight_slots_with_engine(); forget_frees_a_slot(); retail_shims(); hud_basics(); retail_mask_ownership(); toasts_and_notes_leave_with_the_scene(); console_is_not_the_test(); atlas_console_command(); pause_takeover(); persist_screens_span_scenes();
+    eight_slots_with_engine(); forget_frees_a_slot(); retail_shims(); hud_basics(); retail_mask_ownership(); toasts_and_notes_leave_with_the_scene(); console_is_not_the_test(); atlas_console_command(); pause_takeover(); persist_screens_span_scenes(); takeover_pause_screen_reads_the_pad_itself(); full_pool_is_said_once();
     entry_opens_pushes_mod_screen(); entry_script_runs_on_entry_as_the_mod(); entry_finds_the_script_with_on_entry(); entry_missing_screen_refused(); entry_from_other_script_cannot_hide();
     entry_hidden_in_netplay(); entry_screen_closed_on_scene_exit(); entry_mod_unloaded(); builtin_entries_register();
     after_places_a_mod_entry_among_builtins(); credits_screen(); held_menu_takes_no_intent(); menu_blocked_by_a_mod_screen();

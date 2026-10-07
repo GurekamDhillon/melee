@@ -84,14 +84,18 @@ return function(D)
   if mt and mt.netplay then return false end   -- Envoy does not pause online
   if m.atlas and m.atlas.screen=='pause' then return true end
   if not P.register(app) then return false end
+  -- the retail pause takeover already pushed this screen and the engine reads the pausing port's pad itself: do not push it twice or feed it twice
+  local own=false
+  if app.g.ui.retail then local ok,r=pcall(app.g.ui.retail);own=ok and type(r)=='table' and r.paused==true and r.takeover==true end
   m.atlas={screen='pause',
    input=function(action)
+    if own then return nil end   -- the engine drives it from the pad
     if DIRS[action] or action=='accept' then pcall(app.g.ui.feed,BASE,action)
     elseif action=='back' or action=='start' then P.resume(app) end
     return nil
    end,
    close=function() pcall(app.g.ui.close,BASE) end}
-  app.g.ui.open(BASE)
+  if not own then app.g.ui.open(BASE) end
   return true
  end
 

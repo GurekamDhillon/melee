@@ -38,9 +38,10 @@ return function(D)
  end
 
  -- the rule lines of a cell: the legacy detail lines after the drive's name line, up to the first blank line
- function K.rules(lines)
+ -- `from` is the first line to read: 2 for a drive (line 1 is its name line), 1 for a keystone (its lines are the rule itself)
+ function K.rules(lines,from)
   local rules={}
-  for i=2,#lines do local l=lines[i];if l=='' then break end;rules[#rules+1]=l end
+  for i=from or 2,#lines do local l=lines[i];if l=='' then break end;rules[#rules+1]=l end
   return rules
  end
 

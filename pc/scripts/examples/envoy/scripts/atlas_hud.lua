@@ -30,6 +30,7 @@ return function(D)
  -- Atlas draws this HUD: gd.ui.hud exists, the switch is on, and the developer overlay is off (it keeps the legacy draw whole)
  function U.on(host)
   local g=host.g
+  if host.hud and host.hud.atlas_failed then return false end   -- a sync error: the legacy HUD stays
   if not K.enabled(g) or type(g.ui.hud)~='function' then return false end
   if D.run_hud and D.run_hud.dev_ui and D.run_hud.dev_ui() then return false end
   return true
@@ -159,7 +160,9 @@ return function(D)
   U.seats={};U.key=nil;U.shown[g]=nil
   if type(g.ui)=='table' and type(g.ui.hud_clear)=='function' then pcall(g.ui.hud_clear) end
  end
- -- the test and scene hook: forget every cache (a new scene's HUD is described afresh)
+ -- the scene hook: the engine cleared the HUD's toasts and notes, so the next sync describes it again (a live note is re-sent)
+ function U.reset_key() U.key=nil end
+ -- the test hook: forget every cache (a new scene's HUD is described afresh)
  function U.reset() U.seats={};U.key=nil;U.shown={} end
 
  return U

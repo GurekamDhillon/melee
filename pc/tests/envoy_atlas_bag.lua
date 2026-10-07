@@ -328,4 +328,20 @@ T.test('opened with Z still held (the Z+START chord): the first rule shows; rele
   A.detach(S); A.set(false)
 end)
 
+T.test('a held keystone explains its effect (it has no name line), with its family as FROM, and a multi-line keystone pages', function()
+  local S, ui = fake(); A.set(true); A.attach(S)
+  ui.engine_focus(ID, 'key', 'key:1')
+  local ex = ui.views[ID].explainer
+  assert(ex.what == 'Keystone rule line.' and ex.from and ex.from.text == 'Purple keystone.', 'what=' .. tostring(ex.what) .. ' from=' .. tostring(ex.from and ex.from.text))
+  local btn = {}; for _, k in ipairs(ui.views[ID].keys) do btn[k[1]] = k[2] end
+  assert(btn.Z == nil, 'one rule: no More hint')
+  S.blocks = blocks(); S.blocks[3].cells[1].lines = { 'Effect one.', 'Effect two.', '', 'Purple keystone.' }; S:refresh()
+  ui.engine_focus(ID, 'bag', 'bag:1'); ui.engine_focus(ID, 'key', 'key:1')
+  ex = ui.views[ID].explainer
+  assert(ex.kicker:find('RULE 1 OF 2', 1, true) and ex.what == 'Effect one.', ex.kicker)
+  btn = {}; for _, k in ipairs(ui.views[ID].keys) do btn[k[1]] = k[2] end
+  assert(btn.Z == 'More', 'two rules: More')
+  A.set(false)
+end)
+
 T.done()

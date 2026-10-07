@@ -58,7 +58,8 @@ static AtRetail gs_ui_retail;                                    /* the retail t
 static AtPause gs_ui_pause = { 0, -1, 0, 0 };                    /* the retail pause as Atlas sees it */
 static int gs_ui_pause_changed;                                  /* a retail pause began or ended: the tick pushes or pops the pause screen */
 static int gs_ui_pause_slot = -1;                                /* the screen gd.ui.pause_screen named (latest call wins) */
-static int gs_ui_pause_pushed = -1;                              /* the screen the tick pushed for the running pause, -1 none */
+static int gs_ui_pause_pushed = -1;
+static int gs_ui_full_warned;                                    /* the full-pool refusal is logged once */                              /* the screen the tick pushed for the running pause, -1 none */
 
 /* ---- fonts: the Atlas roles by name, resolved once ------------------------------------------------ */
 static int gs_ui_roles_ok(void) {
@@ -359,7 +360,7 @@ static void gs_ui_prime(int slot) {
     memset(&u->keys, 0, sizeof u->keys);
     memset(&u->mouse, 0, sizeof u->mouse);
     if (u->owner == GS_UI_ENGINE) u->primed_frame = gs_ui_frame + 1;  /* an intent of this same frame is the press that closed the screen above */
-    if (at_screen_wants_pad(&u->sc)) {
+    if (at_screen_wants_pad(&u->sc) || slot == gs_ui_pause_pushed) {
         unsigned b = gs_ui_pad_read(u, &sx, &sy);
         (void) at_pad_events(&u->pad, b, sx, sy, now, ev, 0);
     }
@@ -587,7 +588,7 @@ static void gs_ui_tick(void) {
     }
     if (!gs_ui_usable(u->owner)) { gs_ui_release(u->owner); return; }   /* switched off or unloaded: its screens go (never an engine screen) */
     if (!gs_may_run(u->owner)) return;
-    if (at_screen_wants_pad(&u->sc)) {
+    if (at_screen_wants_pad(&u->sc) || top == gs_ui_pause_pushed) {   /* a pause screen the takeover pushed reads the pausing port's pad itself, whatever its input says */
         int sx, sy;
         unsigned b = gs_ui_pad_read(u, &sx, &sy);
         n = at_pad_events(&u->pad, b, sx, sy, now, ev, 16);
@@ -1686,6 +1687,7 @@ static int l_ui_screen(lua_State *L) {
         int i;
         for (i = 0; i < GS_UI_SLOTS; i++) if (!gs_ui_slot[i].used) { slot = i; break; }
         if (slot < 0) {
+            if (!gs_ui_full_warned) { gs_ui_full_warned = 1; gw_log("ui: the screen pool is full (%d): %s was refused (gd.ui.forget frees a slot)", GS_UI_SLOTS, gs_ui_scratch.id); }
             gs_ui_unref_screen(L, &gs_ui_scratch);
             return luaL_error(L, "gd.ui.screen: too many screens (%d)", GS_UI_SLOTS);
         }

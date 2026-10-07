@@ -795,6 +795,13 @@ static void framed_screen(void)
         s = rec_sink(); at_render(&sc, &vw, widths[i], 5000.0, 0, &FAKE, &s, &hits);
         CHECK(REC.np == np_first);
     }
+    /* MELEE_ATLAS_FRAME_OUTLINE: the edge is ember (four lines), still outside the window */
+    { int e0, e1;
+      frame_fixture(&sc, &vw, fr.x, fr.y, fr.w, fr.h); at_layout(640.0f, AT_PRESET_NARROW, &L); hole = at_frame_hole(&L, fr);
+      s = rec_sink(); at_render(&sc, &vw, 640.0f, 1000.0, 0, &FAKE, &s, &hits); e0 = count_color(AT_C_EMBER);
+      sc.frame_outline = 1;
+      s = rec_sink(); at_render(&sc, &vw, 640.0f, 1000.0, 0, &FAKE, &s, &hits); e1 = count_color(AT_C_EMBER);
+      CHECK(e1 == e0 + 4 && !quad_in_hole(hole)); }
     /* a window over the key strip: the strip is dropped, the counter rides in the explainer's kicker */
     { AtFrameRect big = { 120, 60, 400, 380 };
       frame_fixture(&sc, &vw, big.x, big.y, big.w, big.h);

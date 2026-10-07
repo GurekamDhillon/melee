@@ -82,7 +82,7 @@ typedef struct {
     AtKey keys[AT_MAX_KEYS]; int n_keys;
     char counter[AT_STR]; int fn_counter;
     int input_feed, port;
-    int has_frame; float frame_x, frame_y, frame_w, frame_h;   /* primary kind FRAME: the window in the 640x480 retail canvas (gw_ui_frame.h) */
+    int has_frame, frame_outline; float frame_x, frame_y, frame_w, frame_h;   /* primary kind FRAME: the window in the 640x480 retail canvas (gw_ui_frame.h) */
     AtCardRec cards[AT_MAX_CARDS]; int n_cards;      /* primary kind "cards": one row of offer cards */
     AtLink links[AT_MAX_LINKS]; int n_links, links_skipped;   /* a grid: lines drawn between cells under them; one naming a missing cell is skipped and counted */
     int has_countdown, countdown;                    /* seconds shown at the trail's right end (0:45, rose under 10 s). The script re-registers it once a second */

@@ -539,6 +539,7 @@ static void retail_mask_ownership(void)
     CHECK(gw_Ui_RetailHidden(AT_RE_HUD_DAMAGE));
     CHECK(run_as_script(2, "assert(not pcall(gd.ui.retail_hide, {'hud.stock'}))") == 0);                   /* another script */
     CHECK(run_as_script(1, "assert(not pcall(gd.ui.retail_hide, {'hud.timer'}))") == 0);                   /* never the clock */
+    CHECK(run_as_script(1, "local ok, e = pcall(gd.ui.retail_hide, {'toy.panel'}); assert(not ok and e:find('toy'))") == 0);   /* nor a trophy scene's piece (policy only) */
     CHECK(run_as_script(1, "assert(not pcall(gd.ui.retail_hide, {'hud.bogus'}))") == 0);
     g_netplay = 1; CHECK(!gw_Ui_RetailHidden(AT_RE_HUD_DAMAGE));                                            /* online: shown */
     CHECK(run_as_script(1, "assert(not pcall(gd.ui.retail_hide, {'hud.damage'}))") == 0);
@@ -1202,6 +1203,140 @@ static void step7_entries(void)
     at_reg_init(&gs_ui_reg);
 }
 
+/* ---- step 10: the framed trophy scenes (the host half: gw_script_ui_toy.inc) ---- */
+static void toy_reset(void)
+{
+    title_reset();
+    memset(&gs_ui_retail, 0, sizeof gs_ui_retail);
+    gs_ui_retail_env_done = 1;                                      /* the environment source stays empty here */
+    _putenv_s("MELEE_ATLAS_SCENES", "");
+    gs_ui_frame_env_done = 0; gs_ui_frame_win_set = 0; gs_ui_frame_outline = 0;
+    _putenv_s("MELEE_ATLAS_FRAME_WIN", ""); _putenv_s("MELEE_ATLAS_FRAME_OUTLINE", "");
+}
+static void toy_mask_is_set_before_enter_and_replaced_by_the_next_scene(void)
+{
+    const unsigned panel_info = (1u << AT_RE_TOY_PANEL) | (1u << AT_RE_TOY_INFO);
+    toy_reset();
+    gw_Ui_ScenePolicyMask(11, 1);                                      /* the default row is RETAIL: nothing hidden */
+    CHECK(!gw_Ui_RetailHidden(AT_RE_TOY_PANEL) && !gw_Ui_RetailHidden(AT_RE_TOY_INFO) && !gw_Ui_RetailHidden(AT_RE_TOY_TEXT));
+    _putenv_s("MELEE_ATLAS_SCENES", "11:overlay");
+    gw_Ui_ScenePolicyMask(11, 1);                                      /* the Gallery as an overlay: the panel and the info frame, not the text (no decoder yet) */
+    CHECK(gw_Ui_RetailHidden(AT_RE_TOY_PANEL) && gw_Ui_RetailHidden(AT_RE_TOY_INFO) && !gw_Ui_RetailHidden(AT_RE_TOY_TEXT));
+    CHECK(gs_ui_retail.src[AT_RS_POLICY] == panel_info && gw_Ui_ToyTextOk(11) == 0);
+    CHECK(!gw_Ui_RetailHidden(AT_RE_HUD_DAMAGE) && !gw_Ui_RetailHidden(AT_RE_PAUSE_PANEL));   /* nothing else moved */
+    g_netplay = 1;
+    CHECK(!gw_Ui_RetailHidden(AT_RE_TOY_PANEL) && gw_Ui_NetplayActive() == 1);                /* online: shown, and the guard says a session is on */
+    g_netplay = 0;
+    CHECK(gw_Ui_NetplayActive() == 0);
+    gw_Ui_ScenePolicyMask(1, 1);                                       /* the next scene's own call replaces it: nothing is left over */
+    CHECK(gs_ui_retail.src[AT_RS_POLICY] == 0 && !gw_Ui_RetailHidden(AT_RE_TOY_PANEL));
+    gw_Ui_ScenePolicyMask(12, 1); CHECK(gs_ui_retail.src[AT_RS_POLICY] == 0);                    /* the Lottery and the Collection hide nothing */
+    gw_Ui_ScenePolicyMask(13, 1); CHECK(gs_ui_retail.src[AT_RS_POLICY] == 0);
+    gs_ui_atlas_env = 0; gw_Ui_ScenePolicyMask(11, 1);                 /* MELEE_ATLAS=0 beats the override */
+    CHECK(gs_ui_retail.src[AT_RS_POLICY] == 0);
+    gs_ui_atlas_env = 1;
+    gw_Ui_ScenePolicyMask(11, 0);                                   /* no window to frame (unmeasured, no override): nothing is hidden for chrome that will not draw */
+    CHECK(gs_ui_retail.src[AT_RS_POLICY] == 0 && !gw_Ui_RetailHidden(AT_RE_TOY_PANEL));
+    gs_ui_frame_win_set = 1;                                        /* MELEE_ATLAS_FRAME_WIN gives a window: the scene is framed and the mask follows */
+    gw_Ui_ScenePolicyMask(11, 0);
+    CHECK(gs_ui_retail.src[AT_RS_POLICY] == panel_info);
+    gs_ui_frame_win_set = 0; gw_Ui_ScenePolicyMask(1, 1);
+    at_retail_set(&gs_ui_retail, AT_RS_ENV, 1u << AT_RE_HUD_DAMAGE);   /* the policy source never touches the other sources */
+    gw_Ui_ScenePolicyMask(11, 1); gw_Ui_ScenePolicyMask(1, 1);
+    CHECK(gs_ui_retail.src[AT_RS_ENV] == (1u << AT_RE_HUD_DAMAGE));
+    CHECK((at_retail_script_allowed() & panel_info) == 0);          /* a mod cannot hide them */
+    toy_reset();
+}
+static void toy_submit_gallery(int idx, int count, const char *keylabel)
+{
+    CHECK(gw_Ui_FrameBegin("toy.gallery", "GALLERY", 40, 70, 330, 350) == 1);
+    gw_Ui_Trail("MAIN MENU"); gw_Ui_Trail("COLLECTION");
+    gw_Ui_ToyChrome(idx, count, "", "", "");
+    gw_Ui_Key('B', keylabel);
+    gw_Ui_Commit(-1, -1);
+}
+static void toy_frame_screen_is_chrome_only(void)
+{
+    int t, b, i, slot, n0, quads0;
+    toy_reset();
+    gs.scene_kind = 11; gs.cur = -1;
+    toy_submit_gallery(6, 293, "Back");
+    slot = gs_ui_find("toy.gallery");
+    CHECK(slot >= 0 && at_stack_top(&gs_ui_stack) == slot);
+    CHECK(gs_ui_slot[slot].owner == GS_UI_ENGINE && gs_ui_slot[slot].sc.primary == AT_PRIMARY_FRAME && gs_ui_slot[slot].scene == 11);
+    CHECK(gs_ui_slot[slot].sc.has_frame && gs_ui_slot[slot].sc.frame_w == 330.0f && gs_ui_slot[slot].sc.input_feed == 1);
+    CHECK(at_screen_wants_pad(&gs_ui_slot[slot].sc) == 0);
+    CHECK_STR(gs_ui_slot[slot].view.ex.title, "TROPHY 7"); CHECK_STR(gs_ui_slot[slot].view.ex.kicker, "TROPHY");
+    CHECK_STR(gs_ui_slot[slot].view.counter, "7 / 293"); CHECK_STR(gs_ui_slot[slot].view.key_label[0], "Back");
+    /* no input from anything: retail owns the pad, and the mouse and the keyboard do nothing here */
+    n0 = gs_ui_stack.n;
+    gw_Ui_Intent(AT_EV_ACCEPT, 0); gw_Ui_Intent(AT_EV_BACK, 0); gw_Ui_Intent(AT_EV_MOVE, AT_DIR_DOWN);
+    CHECK(poll_ev(&t, &b, &i) == 0);
+    gs_ui_tick();
+    g_mx = 60.0f; g_my = 440.0f; g_mbuttons = 3; gs_ui_tick(); gs_ui_tick(); g_mx = g_my = -1000.0f; g_mbuttons = 0;   /* a click on the key hint */
+    g_pad = AT_PAD_A | AT_PAD_B | AT_PAD_START; gs_ui_tick(); g_pad = 0; gs_ui_tick();
+    gs.key_now[VK_RETURN] = 1; gs.key_now[VK_ESCAPE] = 1; gs_ui_tick(); gs_ui_tick(); gs.key_now[VK_RETURN] = gs.key_now[VK_ESCAPE] = 0;
+    CHECK(poll_ev(&t, &b, &i) == 0 && gs_ui_stack.n == n0 && at_stack_top(&gs_ui_stack) == slot);
+    /* drawn: quads go out, and no hit rectangle exists */
+    quads0 = g_quads; gs_ui_draw();
+    CHECK(g_quads > quads0 && gs_ui_slot[slot].hits.n == 0);
+    /* frame after frame with the same content: the record is not rebuilt; a changed hint and a changed counter reach the view (they are not the explainer) */
+    { int rebuilds = gs_ui_slot[slot].rebuilds;
+      toy_submit_gallery(6, 293, "Back"); CHECK(gs_ui_slot[slot].rebuilds == rebuilds);
+      toy_submit_gallery(7, 293, "Leave");
+      CHECK(gs_ui_slot[slot].rebuilds == rebuilds + 1 && strcmp(gs_ui_slot[slot].view.key_label[0], "Leave") == 0 && strcmp(gs_ui_slot[slot].view.counter, "8 / 293") == 0);
+      CHECK(strcmp(gs_ui_slot[slot].view.ex.title, "TROPHY 8") == 0); }
+    CHECK(gs_ui_stack.n == n0);                                     /* one screen, however many frames */
+    gw_Ui_SceneExit(11);                                            /* the scene ends: the chrome goes with it */
+    CHECK(gs_ui_stack.n == 0 && gs_ui_find("toy.gallery") < 0 && gs_ui_engine_slots() == 0);
+    toy_reset();
+}
+static void toy_frame_events_ring_is_empty_at_begin(void)
+{
+    int t, b, i;
+    toy_reset();
+    gs.scene_kind = 11; gs.cur = -1;
+    gs_ui_q_push(AT_EV_ACCEPT, 0, 0);                               /* a stale event of the menu that launched the scene */
+    toy_submit_gallery(0, 5, "Back");
+    CHECK(poll_ev(&t, &b, &i) == 0);                                /* a framed scene begins with an empty ring */
+    gw_Ui_SceneExit(11);
+    toy_reset();
+}
+static void toy_frame_off_and_window_override(void)
+{
+    int slot;
+    toy_reset();
+    gs.scene_kind = 11;
+    gs_ui_atlas_env = 0;                                            /* MELEE_ATLAS=0: nothing is submitted */
+    CHECK(gw_Ui_FrameBegin("toy.gallery", "GALLERY", 40, 70, 330, 350) == 0);
+    gw_Ui_ToyChrome(0, 5, "", "", ""); gw_Ui_LotChrome(5, 1); gw_Ui_CollChrome(5);   /* shims with no Begin are no-ops */
+    CHECK(gw_Ui_Commit(-1, -1) == 0 && gs_ui_find("toy.gallery") < 0 && gs_ui_stack.n == 0);
+    gs_ui_atlas_env = 1;
+    /* an unmeasured window (w 0) is NOT drawn (a whole-canvas plate would blank the retail scene): nothing is submitted, the shims after it are no-ops */
+    CHECK(gw_Ui_FrameBegin("toy.lottery", "LOTTERY", 0, 0, 0, 0) == 0); gw_Ui_LotChrome(12, 3);
+    CHECK(gw_Ui_Commit(-1, -1) == 0 && gs_ui_find("toy.lottery") < 0 && gs_ui_stack.n == 0);
+    CHECK(gw_Ui_FrameBegin("toy.lottery", "LOTTERY", 40, 70, 330, 350) == 1); gw_Ui_LotChrome(12, 3); gw_Ui_Commit(-1, -1);
+    slot = gs_ui_find("toy.lottery");
+    CHECK(slot >= 0 && gs_ui_slot[slot].sc.has_frame && strcmp(gs_ui_slot[slot].view.ex.title, "12 COINS") == 0 && strcmp(gs_ui_slot[slot].view.counter, "BET 3 / 12") == 0);
+    gw_Ui_SceneExit(11);
+    /* MELEE_ATLAS_FRAME_WIN overrides every window, an unmeasured one too; a bad value is ignored */
+    gs_ui_frame_env_done = 0; _putenv_s("MELEE_ATLAS_FRAME_WIN", "10,20,100,200"); _putenv_s("MELEE_ATLAS_FRAME_OUTLINE", "1");
+    CHECK(gw_Ui_FrameBegin("toy.gallery", "GALLERY", 0, 0, 0, 0) == 1); gw_Ui_Commit(-1, -1);
+    CHECK(gs_ui_slot[gs_ui_find("toy.gallery")].sc.frame_w == 100.0f);
+    gw_Ui_SceneExit(11);
+    CHECK(gw_Ui_FrameBegin("toy.collection", "COLLECTION", 40, 70, 330, 350) == 1); gw_Ui_CollChrome(293); gw_Ui_Commit(-1, -1);
+    slot = gs_ui_find("toy.collection");
+    CHECK(slot >= 0 && gs_ui_slot[slot].sc.has_frame && gs_ui_slot[slot].sc.frame_x == 10.0f && gs_ui_slot[slot].sc.frame_h == 200.0f && gs_ui_slot[slot].sc.frame_outline == 1);
+    CHECK(strcmp(gs_ui_slot[slot].view.counter, "293 TROPHIES") == 0 && strcmp(gs_ui_slot[slot].view.ex.title, "TROPHY ROOM") == 0);
+    gw_Ui_SceneExit(11);
+    gs_ui_frame_env_done = 0; gs_ui_frame_win_set = 0; _putenv_s("MELEE_ATLAS_FRAME_WIN", "10,20,700,200");   /* past the canvas: ignored */
+    CHECK(gw_Ui_FrameBegin("toy.collection", "COLLECTION", 40, 70, 330, 350) == 1);
+    CHECK(gs_ui_scratch.frame_x == 40.0f && gs_ui_scratch.frame_w == 330.0f);
+    gw_Ui_Commit(-1, -1);
+    gw_Ui_SceneExit(11);
+    toy_reset();
+}
+
 int main(void)
 {
     lua_State *L = luaL_newstate();
@@ -1477,5 +1612,6 @@ int main(void)
     title_popped_on_scene_exit(); title_and_menu_together();
     value_api_as_a_mod(); engine_builder_obeys_the_lua_cap();
     step7_stepper_tabs_backdrop(); step7_hud_parts(); step7_token(); step7_entries();
+    toy_mask_is_set_before_enter_and_replaced_by_the_next_scene(); toy_frame_screen_is_chrome_only(); toy_frame_events_ring_is_empty_at_begin(); toy_frame_off_and_window_override();
     ATLAS_DONE("atlas binding");
 }

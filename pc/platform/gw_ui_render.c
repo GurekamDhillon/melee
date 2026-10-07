@@ -482,6 +482,7 @@ static void render_frame(const AtScreen *sc, const AtView *v, const AtLayout *L,
     AtRect pl[4], hole;
     HitCtx hc;
     int n, i;
+    unsigned edge = sc->frame_outline ? AT_C_EMBER : AT_C_LINE2;   /* MELEE_ATLAS_FRAME_OUTLINE: the edge in ember, to compare with the retail model by looking */
     win.x = sc->has_frame ? sc->frame_x : 0.0f; win.y = sc->has_frame ? sc->frame_y : 0.0f;
     win.w = sc->has_frame ? sc->frame_w : 0.0f; win.h = sc->has_frame ? sc->frame_h : 0.0f;
     hole = at_frame_hole(L, win);
@@ -490,10 +491,10 @@ static void render_frame(const AtScreen *sc, const AtView *v, const AtLayout *L,
     for (i = 0; i < n; i++) at_poly_rect(s, pl[i].x, pl[i].y, pl[i].w, pl[i].h, AT_C_GROUND);
     if (hole.w > 0.5f && hole.h > 0.5f) {                               /* the window's edge: up to four lines just OUTSIDE it, where a plate is there */
         float lx = hole.x >= 2.0f ? hole.x - 2.0f : hole.x, rx = hole.x + hole.w + 2.0f <= L->canvas.w ? hole.x + hole.w + 2.0f : hole.x + hole.w;
-        if (hole.y >= 2.0f) at_poly_rect(s, lx, hole.y - 2.0f, rx - lx, 2.0f, AT_C_LINE2);
-        if (hole.y + hole.h + 2.0f <= 480.0f) at_poly_rect(s, lx, hole.y + hole.h, rx - lx, 2.0f, AT_C_LINE2);
-        if (hole.x >= 2.0f) at_poly_rect(s, hole.x - 2.0f, hole.y, 2.0f, hole.h, AT_C_LINE2);
-        if (hole.x + hole.w + 2.0f <= L->canvas.w) at_poly_rect(s, hole.x + hole.w, hole.y, 2.0f, hole.h, AT_C_LINE2);
+        if (hole.y >= 2.0f) at_poly_rect(s, lx, hole.y - 2.0f, rx - lx, 2.0f, edge);
+        if (hole.y + hole.h + 2.0f <= 480.0f) at_poly_rect(s, lx, hole.y + hole.h, rx - lx, 2.0f, edge);
+        if (hole.x >= 2.0f) at_poly_rect(s, hole.x - 2.0f, hole.y, 2.0f, hole.h, edge);
+        if (hole.x + hole.w + 2.0f <= L->canvas.w) at_poly_rect(s, hole.x + hole.w, hole.y, 2.0f, hole.h, edge);
     }
     if (sl.have_trail) {
         const char *items[4];

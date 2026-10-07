@@ -67,6 +67,7 @@ static struct {
     bool refocus;          ///< set the focus by id after the next submit (a tab switch)
     int last_result;       ///< the remap result last told as a note
     int hint_sig;          ///< the key hint set last sent (a function of the focused row's kind); -1 none, so the set is sent when it changes, not every frame
+    bool note_dialog;      ///< ONLINE PLAY: a long failure notice is up as a dialog, awaiting its OK
 } fss = { -1, 0, 0, -1, { -1, -1, -1, -1, -1, -1 }, { 0 }, -1, NULL, false, 0, -1 };
 static FssRemap fssr;
 
@@ -111,6 +112,9 @@ static int fss_kind_of(const FrontendScreen* s)
     }
     if (s == &fe_screen_vs_setup) {
         return FSS_K_MATCH;
+    }
+    if (s == &fe_screen_online) {
+        return FSS_K_ONLINE; /* ONLINE PLAY: Host, Join, Random Opponent and the rules (step 6) */
     }
     return -1;
 }
@@ -170,6 +174,8 @@ static int fss_open(const FrontendScreen* s)
         t0 = "VERSUS"; t1 = "RULES"; title = "MORE RULES";
     } else if (kind == FSS_K_MATCH) {
         t0 = "VERSUS"; t1 = "MELEE"; title = "MATCH SETUP";
+    } else if (kind == FSS_K_ONLINE) {
+        t0 = "VERSUS"; title = "ONLINE PLAY";
     } else {
         t0 = "SETTINGS"; t1 = "CONTROLS"; title = "REMAP";
     }
@@ -184,6 +190,7 @@ static int fss_open(const FrontendScreen* s)
     fss.shown_tab = -1;
     fss.erase_cat = -1;
     fss.hint_sig = -1;
+    fss.note_dialog = false;
     for (i = 0; i < FSS_TABS; i++) {
         fss.tab_focus[i] = -1;
     }
@@ -253,6 +260,7 @@ static void fss_back(void)
         break;
     case FSS_K_RULES:
     case FSS_K_MATCH:
+    case FSS_K_ONLINE:
         fe.leaving = 2; /* the menus: VERSUS on RULES (fe_rules_set_screen), or where MATCH SETUP came from */
         break;
     case FSS_K_MORERULES:
@@ -460,7 +468,14 @@ static void fss_feed_pad(void)
 static void fss_forward_note(void)
 {
     if (fe_ol_note[0] != '\0') {
-        Ui_SetNote(fss.h, fe_ol_note, fe_ol_note_bad ? 1 : 3); /* AT_NOTE_WARN, AT_NOTE_INFO (gw_ui_parts.h) */
+        if (fss.kind == FSS_K_ONLINE && fe_ol_note_bad && strlen(fe_ol_note) > 60) {
+            /* a server sentence or a room closing is too long for the corner note: a dialog says it whole, and OK dismisses it */
+            Ui_SetDialog(fss.h, "CONNECTION PROBLEM", fe_ol_note, "OK", "", 1);
+            fss.note_dialog = true;
+        } else {
+            /* AT_NOTE_ERR for a failed connection, AT_NOTE_WARN for another warning, AT_NOTE_INFO (gw_ui_parts.h) */
+            Ui_SetNote(fss.h, fe_ol_note, fe_ol_note_bad ? (fss.kind == FSS_K_ONLINE ? 2 : 1) : 3);
+        }
         fe_ol_note[0] = '\0';
     }
 }
@@ -535,6 +550,9 @@ static bool fss_frame(void)
         fss.tab = fss_tab_of_page(fss_page_of(s));
     }
     fss_erase_answer();
+    if (fss.note_dialog && Ui_SetDialogAnswer(fss.h) != 0) {
+        fss.note_dialog = false;
+    }
     if (fss.kind == FSS_K_REMAP) {
         frozen = fss_remap_frame(); /* the heartbeat, START+B, the result, the release wait */
         fssr_bindings(&fssr);

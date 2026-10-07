@@ -172,6 +172,9 @@ static void one_native_at_a_time(void)
     CHECK(h >= 0);
     CHECK(gw_Ui_RoomBegin("code") == 0 && gw_Ui_RoomOpen() == 0);                      /* nor the room over the settings */
     gw_Ui_SetClose(h);
+    h = gw_Ui_SetOpen(GS_SET_ONLINE, 0, "VERSUS", "", "ONLINE PLAY");                  /* ONLINE PLAY is the settings door's kind 7, in the Online chapter */
+    CHECK(h >= 0 && strcmp(gs_ui_slot[h & 0xFF].sc.id, "online.play") == 0 && gs_ui_slot[h & 0xFF].sc.chapter == 3);
+    gw_Ui_SetClose(h);
     CHECK(gw_Ui_RoomBegin("code") == 1);
     gw_Ui_RoomEnd();
     reset_ui();

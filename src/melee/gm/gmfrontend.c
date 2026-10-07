@@ -554,11 +554,11 @@ static const FrontendItem fe_items_online[] = {
       NULL, 0, 0, 0, NULL, NULL, NULL, fe_ol_join },
     { FE_ACTION, FE_DO_CALL, "Random Opponent", "Play whoever else is looking right now.", NULL,
       NULL, 0, 0, 0, NULL, NULL, NULL, fe_ol_random },
-    { FE_CHOICE, 0, "Stage List", "Stages in rooms you host: the legal six, or every stage you both have.",
+    { FE_CHOICE, 0, "Stage List", "Rooms you host: the legal six, or every stage you both have.",
       fe_np_get_stage_mode, fe_np_set_stage_mode, 0, 1, 1, fe_np_stage_modes },
-    { FE_CHOICE, 0, "Turbo", "Rooms you host: a connected hit can be cancelled into most moves.",
+    { FE_CHOICE, 0, "Turbo", "Rooms you host: a connected hit can be cancelled. Never in Random.",
       fe_np_get_turbo, fe_np_set_turbo, 0, 1, 1, fe_np_turbo_modes },
-    { FE_CHOICE, 0, "Envoy", "Rooms you host: a best-of set where each player fights with an Envoy build and picks a reward between games.",
+    { FE_CHOICE, 0, "Envoy", "Rooms you host: an Envoy set with a build each. Never in Random.",
       fe_np_get_envoy, fe_np_set_envoy, 0, 1, 1, fe_np_envoy_modes },
     { FE_SLIDER, 0, "Stocks", "Stocks per game, in rooms you host.", fe_np_get_stocks,
       fe_np_set_stocks, 1, 9, 1 },
@@ -1166,6 +1166,7 @@ static void fe_settings_resume_game(void);
 static void fe_rules_from_menus(void);
 static void fe_rules_resume(void);
 static bool fe_is_settings(const FrontendScreen* s);
+static void fss_close(void); /* gmfrontend_atlas_set.inc */
 static bool fe_is_controls_help(const FrontendScreen* s);
 static int fm_back_kind = -1, fm_back_sel; ///< backing out of a frontend scene lands on this menu item
 static void fe_load_begin(void);
@@ -1180,6 +1181,7 @@ static bool fm_back_to_online_item; ///< backing out of ONLINE lands on its VS h
 #include "gmfrontend_atlas.inc"
 #include "gmfrontend_kitlist.inc"
 #include "gmfrontend_online.inc"
+#include "gmfrontend_atlas_online.inc"
 #include "gmfrontend_select.inc"
 #include "gmfrontend_atlas_select.inc"
 #include "gmfrontend_settings.inc"
@@ -1785,6 +1787,7 @@ static void fe_switch_screen(const FrontendScreen* s)
         fe.scroll = 0;
         fe.n_vis = 0;
         if (s->art != 0) {
+            fss_close(); /* the Atlas ONLINE PLAY screen (a native screen) goes before a room screen asks the host for its own slot */
             if (from == NULL || from->art == 0) {
                 fk_exit(); /* the rows' model goes; the room screen builds its own */
                 fe_kit = false;
@@ -1792,6 +1795,7 @@ static void fe_switch_screen(const FrontendScreen* s)
             fl_open(s->art);
             return;
         }
+        Ui_RoomEnd(); /* leaving a room screen for the rows: the host's room screen goes with it */
         fl.on = false;
         fp_free_textures();
         fp.ok = false;
@@ -2063,6 +2067,10 @@ void gm_Scene_Frontend_OnFrame(void)
             gm_801A4B60();
         }
         if (fe.screen->art != 0) {
+            if (fa_room_on()) {
+                fa_room_leaving(); /* under Atlas no frontend model was built: only the host's fade */
+                return;
+            }
             fp.frame++;
             fp_evaluate(fp.frame);
             return;

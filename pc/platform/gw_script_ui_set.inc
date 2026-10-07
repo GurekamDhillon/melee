@@ -23,7 +23,7 @@
 
 #define GS_SET_Q 32
 enum { GS_SETEV_CHANGE = 1, GS_SETEV_ACCEPT = 2, GS_SETEV_BACK = 3, GS_SETEV_TAB = 4, GS_SETEV_FOCUS = 5, GS_SETEV_ALT = 6 };   /* = FSS_EV_* (gmfrontend_atlas_table.h) */
-enum { GS_SET_TABS, GS_SET_REMAP, GS_SET_HOWTO, GS_SET_ERASE, GS_SET_RULES, GS_SET_MORERULES, GS_SET_MATCH };
+enum { GS_SET_TABS, GS_SET_REMAP, GS_SET_HOWTO, GS_SET_ERASE, GS_SET_RULES, GS_SET_MORERULES, GS_SET_MATCH, GS_SET_ONLINE };
 
 static struct {
     int gen;                 /* the handle generation: bumped per open */
@@ -211,14 +211,14 @@ int gw_Ui_SetCanOpen(void) {
     return 0;
 }
 
-/* kind 0: the tabbed pages, 1: the remap editor, 2: the how-to page, 3: the erase screen, 4: VERSUS > RULES, 5: MORE RULES, 6: MATCH SETUP (4 to 6 are the Versus chapter's). t0 and t1: the trail's parents (SETTINGS > CONTROLS), title: the screen's name.
+/* kind 0: the tabbed pages, 1: the remap editor, 2: the how-to page, 3: the erase screen, 4: VERSUS > RULES, 5: MORE RULES, 6: MATCH SETUP (4 to 6 are the Versus chapter's), 7: ONLINE PLAY (the Online chapter's rows: Host, Join, Random Opponent and the rules). t0 and t1: the trail's parents (SETTINGS > CONTROLS), title: the screen's name.
  * Returns a handle, or -1 (roles missing, MELEE_ATLAS=0, another native screen open, no free slot: the caller keeps the legacy drawing). */
 int gw_Ui_SetOpen(int kind, int active_tab, const char *t0, const char *t1, const char *title) {
     int i, slot = -1;
     GsUiSlot *u;
     AtScreen *sc;
-    static const char *const ids[7] = { "settings.tabs", "settings.remap", "settings.howto", "settings.erase", "settings.rules", "settings.morerules", "settings.match" };
-    if (!gw_Ui_Ready() || kind < GS_SET_TABS || kind > GS_SET_MATCH) return -1;
+    static const char *const ids[8] = { "settings.tabs", "settings.remap", "settings.howto", "settings.erase", "settings.rules", "settings.morerules", "settings.match", "online.play" };
+    if (!gw_Ui_Ready() || kind < GS_SET_TABS || kind > GS_SET_ONLINE) return -1;
     if (gs_set_is_open() || gs_room_is_open() || gw_Ui_SelCanOpen() == 0) return -1;     /* one native screen at a time: the stack has one top */
     for (i = 0; i < GS_UI_SLOTS; i++) if (!gs_ui_slot[i].used) { slot = i; break; }
     if (slot < 0) { gw_log("ui: no free screen slot for the settings screen"); return -1; }
@@ -237,7 +237,7 @@ int gw_Ui_SetOpen(int kind, int active_tab, const char *t0, const char *t1, cons
     snprintf(sc->title, sizeof sc->title, "%s", title != NULL ? title : sc->id);
     if (t0 != NULL && t0[0] != '\0') snprintf(sc->parent[sc->n_parents++], AT_STR, "%s", t0);
     if (t1 != NULL && t1[0] != '\0') snprintf(sc->parent[sc->n_parents++], AT_STR, "%s", t1);
-    sc->chapter = kind >= GS_SET_RULES ? 2 : 5;                    /* the Versus chapter for the rules screens, the settings chapter otherwise (fa_chapter_of) */
+    sc->chapter = kind == GS_SET_ONLINE ? 3 : kind >= GS_SET_RULES ? 2 : 5;                    /* the Versus chapter for the rules screens, the settings chapter otherwise (fa_chapter_of) */
     sc->primary = AT_PRIMARY_LIST;
     sc->preset = AT_PRESET_NORMAL;                                 /* the explainer shows the focused row's help and value */
     sc->port = 1;

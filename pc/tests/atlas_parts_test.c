@@ -1,6 +1,8 @@
+#define AT_SINK_HAS_IMAGE
 #include "atlas_check.h"
 #include "atlas_fake.h"
 #include "atlas_rec.h"
+#include "atlas_style.h"
 #include "../platform/gw_ui_tokens.h"
 
 static void plates(void)
@@ -412,9 +414,134 @@ static void fix_round2(void)
       CHECK(adv < 400.0f); }
 }
 
+static const AtTextOps O = { fake_width, NULL };
+
+static void sink_without_image_is_safe(void)
+{
+    AtSink s = rec_sink(); AtCell c; AtRect r = { 40, 100, 40, 40 };
+    memset(&c, 0, sizeof c); c.model = AT_NO_MODEL; c.tex = 7; snprintf(c.abbr, sizeof c.abbr, "%s", "FO");
+    s.image = NULL;                                                   /* a sink with no image op */
+    at_part_cell(&s, &O, r, &c, AT_ST_REST, AT_C_P1);                /* must not crash and must fall back to the abbreviation */
+    CHECK(find_text("FO") != NULL && REC.ni == 0);
+    at_sink_image(&s, 3, 0, 0, 10, 10, 0xFFFFFFFFu); CHECK(REC.ni == 0);   /* the helper is NULL-safe too */
+    s = rec_sink(); at_sink_image(&s, -1, 0, 0, 10, 10, 0xFFFFFFFFu); CHECK(REC.ni == 0);   /* and refuses a negative texture */
+}
+static void image_cell(void)
+{
+    AtSink s = rec_sink(); AtCell c; AtRect r = { 40, 100, 40, 40 };
+    memset(&c, 0, sizeof c); c.model = AT_NO_MODEL; c.tex = 7; snprintf(c.abbr, sizeof c.abbr, "%s", "FO");
+    at_part_cell(&s, &O, r, &c, AT_ST_REST, AT_C_P1);
+    CHECK(REC.ni == 1 && REC.im[0].tex == 7);
+    CHECK(REC.im[0].x >= r.x && REC.im[0].y >= r.y && REC.im[0].x + REC.im[0].w <= r.x + r.w + 0.01f && REC.im[0].y + REC.im[0].h <= r.y + r.h + 0.01f);   /* inside the cell */
+    CHECK_NEAR(REC.im[0].w / REC.im[0].h, 64.0f / 56.0f);                      /* an icon keeps its 64x56 aspect */
+    c.tex = -1;                                                       /* no art: the frame and the abbreviation, no image */
+    { AtSink s2 = rec_sink(); at_part_cell(&s2, &O, r, &c, AT_ST_REST, AT_C_P1); CHECK(REC.ni == 0 && find_text("FO") != NULL); }
+    { AtRect wide = { 40, 100, 80, 56 }; AtSink s2 = rec_sink(); at_part_cell(&s2, &O, wide, &c, AT_ST_REST, AT_C_P1);   /* the word only where it fits the cell */
+      CHECK(find_text("DISC ART") != NULL && sty_text_inside(wide, 0) == -1); }
+    { AtSink s2 = rec_sink(); at_part_cell(&s2, &O, r, &c, AT_ST_REST, AT_C_P1); CHECK(find_text("DISC ART") == NULL); }   /* never squeezed into a small cell */
+    /* a cell with no abbreviation never draws an image, even with a texture number: a zeroed record cannot show texture 0 */
+    memset(&c, 0, sizeof c); c.model = AT_NO_MODEL; snprintf(c.name, sizeof c.name, "%s", "Drive");
+    { AtSink s2 = rec_sink(); at_part_cell(&s2, &O, r, &c, AT_ST_REST, AT_C_P1); CHECK(REC.ni == 0); }
+}
+static void cell_style(void)
+{
+    AtSink s; AtCell c; AtRect r = { 40, 100, 40, 40 }; StySig a, b;
+    memset(&c, 0, sizeof c); c.model = AT_NO_MODEL; snprintf(c.abbr, sizeof c.abbr, "%s", "FO"); c.tex = -1;
+    s = rec_sink(); at_poly_rect(&s, 0, 0, 640, 480, AT_C_PLATE); at_part_cell(&s, &O, r, &c, AT_ST_REST, AT_C_P1);
+    CHECK(sty_chamfer(r, 3.0f, AT_C_PLATE) == 0);                    /* the cell's 3 px chamfers show the pane under it */
+    CHECK(sty_text_inside(r, 0) == -1);
+    s = rec_sink(); at_part_cell(&s, &O, r, &c, AT_ST_REST, AT_C_P1); a = sty_sig(0);
+    s = rec_sink(); at_part_cell(&s, &O, r, &c, AT_ST_FOCUS, AT_C_P1); b = sty_sig(0);
+    CHECK(sty_focus_cues(a, b) == 3);
+    c.flags = AT_CELL_LOCKED; s = rec_sink(); at_part_cell(&s, &O, r, &c, AT_ST_DISABLED, AT_C_P1);
+    CHECK(find_text("FO") != NULL && texts_legible() && count_color(AT_C_DIM) >= 4);   /* locked: the word and the lock glyph, not only dimmed */
+    CHECK(sty_text_inside(r, 0) == -1);
+    c.flags = AT_CELL_DISABLED; s = rec_sink(); at_part_cell(&s, &O, r, &c, AT_ST_DISABLED, AT_C_P1);
+    CHECK(find_text("FO") != NULL && texts_legible() && sty_text_inside(r, 0) == -1);
+    CHECK(count_color(AT_C_ROSE) >= 1);                              /* a disabled art cell is struck through (a shape), not only dimmed */
+}
+static void port_cards(void)
+{
+    AtSink s; AtPortCard pc[4]; AtRect r = { 32, 372, 140, 56 }; int p;
+    memset(pc, 0, sizeof pc);
+    for (p = 0; p < 4; p++) {
+        pc[p].port = p; pc[p].kind = 1; snprintf(pc[p].name, sizeof pc[p].name, "%s", "SORA"); snprintf(pc[p].sub, sizeof pc[p].sub, "Costume 1");
+        snprintf(pc[p].abbr, sizeof pc[p].abbr, "%s", "SO"); pc[p].ck_tex = -1;
+        s = rec_sink(); at_poly_rect(&s, 0, 0, 640, 480, AT_C_GROUND);
+        at_part_port_card(&s, &O, r, &pc[p], 0);
+        CHECK(sty_chamfer(r, 5.0f, AT_C_GROUND) == 0);
+        CHECK(sty_text_inside(r, 0) == -1);
+        CHECK(find_text("SORA") != NULL);
+    }
+    { int shape[4]; for (p = 0; p < 4; p++) { AtSink s2 = rec_sink(); shape[p] = at_port_mark(&s2, 50, 50, 12, p, AT_C_P1); CHECK(shape[p] == REC.np); } CHECK(sty_shapes_distinct(shape) == 1); }
+    /* every port's numeral is drawn (colour is never the only signal) */
+    { char want[2] = { 0, 0 }; for (p = 0; p < 4; p++) { AtSink s2 = rec_sink(); want[0] = (char) ('1' + p); at_part_port_card(&s2, &O, r, &pc[p], 0); CHECK(find_text(want) != NULL); } }
+    /* each port's top edge is its own colour */
+    { static const unsigned col[4] = { AT_C_P1, AT_C_P2, AT_C_P3, AT_C_P4 }; for (p = 0; p < 4; p++) { AtSink s2 = rec_sink(); at_part_port_card(&s2, &O, r, &pc[p], 0); CHECK(count_color(col[p]) >= 2); } }
+    /* CPU: the word CPU, a level */
+    pc[1].kind = 2; pc[1].cpu_lv = 9; { AtSink s2 = rec_sink(); at_part_port_card(&s2, &O, r, &pc[1], 0); CHECK(find_text("CPU") != NULL && find_text("LV 9") != NULL && sty_text_inside(r, 0) == -1); }
+    /* an open slot and a closed one say so in words */
+    pc[2].kind = 0; { AtSink s2 = rec_sink(); at_part_port_card(&s2, &O, r, &pc[2], 0); CHECK(find_text("OPEN") != NULL && find_text("SORA") == NULL); }
+    pc[2].flags = AT_CARD_CLOSED; { AtSink s2 = rec_sink(); at_part_port_card(&s2, &O, r, &pc[2], 0); CHECK(find_text("CLOSED") != NULL && find_text("OPEN") == NULL); }
+    /* a focused card shows the three cues; an open focused card on a wide slot says how to join */
+    { StySig a, b; AtSink s2; pc[3].kind = 1;
+      s2 = rec_sink(); at_part_port_card(&s2, &O, r, &pc[3], 0); a = sty_sig(0);
+      s2 = rec_sink(); at_part_port_card(&s2, &O, r, &pc[3], 1); b = sty_sig(0);
+      CHECK(sty_focus_cues(a, b) == 3);
+      pc[2].flags = AT_CARD_OPEN; s2 = rec_sink(); at_part_port_card(&s2, &O, r, &pc[2], 1); CHECK(find_text("Press A to join") != NULL && sty_text_inside(r, 0) == -1);
+      s2 = rec_sink(); at_part_port_card(&s2, &O, r, &pc[2], 0); CHECK(find_text("Press A to join") == NULL); }
+    /* a narrow card never lets text outside it */
+    { AtRect nr = { 32, 372, 90, 56 }; pc[0].kind = 1; snprintf(pc[0].name, sizeof pc[0].name, "%s", "CAPTAIN FALCON THE FIRST"); { AtSink s2 = rec_sink(); at_part_port_card(&s2, &O, nr, &pc[0], 1); CHECK(sty_text_inside(nr, 0) == -1 && texts_legible()); } }
+}
+static void matchup_strip(void)
+{
+    AtPortCard c[2]; AtRect r = { 32, 380, 400, 40 }; AtSink s;
+    memset(c, 0, sizeof c);
+    c[0].port = 0; c[0].kind = 1; snprintf(c[0].name, AT_STR, "%s", "SORA"); c[1].port = 1; c[1].kind = 2; snprintf(c[1].name, AT_STR, "%s", "KIRBY");
+    s = rec_sink(); at_poly_rect(&s, 0, 0, 640, 480, AT_C_GROUND); at_part_matchup(&s, &O, r, c, 2, -1);
+    CHECK(find_text("SORA") != NULL && find_text("KIRBY") != NULL && find_text("VS") != NULL && sty_text_inside(r, 0) == -1 && texts_legible());
+    CHECK(sty_chamfer(r, 5.0f, AT_C_GROUND) == 0);
+    s = rec_sink(); at_part_matchup(&s, &O, r, c, 2, 1); CHECK(count_color(AT_C_EMBER) >= 1);          /* the picker's card carries the ember mark */
+    s = rec_sink(); at_part_matchup(&s, &O, r, c, 2, -1); CHECK(count_color(AT_C_EMBER) == 0);
+    { AtRect nr = { 32, 380, 150, 40 }; s = rec_sink(); at_part_matchup(&s, &O, nr, c, 2, -1); CHECK(sty_text_inside(nr, 0) == -1); }   /* narrow: names fit or drop */
+    s = rec_sink(); at_part_matchup(&s, &O, r, c, 0, -1); CHECK(REC.nt == 0);                          /* nothing to show: only the plate */
+}
+static void explainer_art_and_stepper(void)
+{
+    AtRect pane = { 412.0f, 66.0f, 196.0f, 362.0f };
+    AtExplainer e; AtSink s; int i;
+    memset(&e, 0, sizeof e);
+    e.has = 1; e.media_model = AT_NO_MODEL; e.media_ring = AT_NO_MODEL; e.media_tex = 12; snprintf(e.media_abbr, sizeof e.media_abbr, "%s", "FX");
+    snprintf(e.kicker, sizeof e.kicker, "FIGHTER"); snprintf(e.title, sizeof e.title, "FOX");
+    snprintf(e.what, sizeof e.what, "Fast and light.");
+    snprintf(e.stepper_label, sizeof e.stepper_label, "COSTUME"); snprintf(e.stepper_text, sizeof e.stepper_text, "2 / 4"); e.stepper = 1;
+    s = rec_sink(); at_part_explainer(&s, &O, pane, &e);
+    CHECK(REC.ni == 1 && REC.im[0].tex == 12 && REC.im[0].x >= pane.x && REC.im[0].x + REC.im[0].w <= pane.x + pane.w);   /* the portrait, inside the well */
+    CHECK_NEAR(REC.im[0].w / REC.im[0].h, 136.0f / 188.0f);
+    CHECK(find_text("COSTUME") != NULL && find_text("2 / 4") != NULL && find_text("Fast and light.") != NULL && texts_legible());
+    for (i = 0; i < REC.nt; i++) CHECK(REC.t[i].base <= pane.y + pane.h - 12.0f + 0.01f && REC.t[i].x >= pane.x);
+    CHECK(sty_text_inside(pane, 0) == -1);
+    e.media_tex = -1; s = rec_sink(); at_part_explainer(&s, &O, pane, &e);
+    CHECK(REC.ni == 0 && find_text("FX") != NULL && find_text("DISC ART") != NULL && sty_text_inside(pane, 0) == -1);   /* no art: the letters and the word */
+    memset(&e, 0, sizeof e); e.has = 1; e.media_model = AT_NO_MODEL; e.media_ring = AT_NO_MODEL; e.media_tex = 0;       /* a zeroed explainer never names texture 0 */
+    s = rec_sink(); at_part_explainer(&s, &O, pane, &e); CHECK(REC.ni == 0);
+    s = rec_sink(); at_part_explainer(&s, &O, (AtRect){ 448.0f, 66.0f, 160.0f, 362.0f }, &e); CHECK(REC.ni == 0);
+}
+static void two_cursors_one_cell(void)
+{
+    AtSink s = rec_sink(); AtRect r = { 40, 100, 40, 40 };
+    at_cell_brackets(&s, r, AT_C_P1, 0, 2); at_cell_brackets(&s, r, AT_C_P2, 1, 2);
+    CHECK(count_color(AT_C_P1) == 8 && count_color(AT_C_P2) == 8);          /* four brackets of two strokes each, per port */
+    { float a = REC.p[0].x[0], b = REC.p[8].x[0]; CHECK(a != b); }          /* the two sets do not sit on top of each other */
+    s = rec_sink(); at_cell_brackets(&s, r, AT_C_P1, 0, 1); { float a = REC.p[0].x[0]; CHECK(a < r.x); }   /* one cursor: outside the cell, as the focus brackets are */
+    { int slot; for (slot = 0; slot < 4; slot++) { AtSink s2 = rec_sink(); int i; at_cell_brackets(&s2, r, AT_C_P1, slot, 4);
+        for (i = 0; i < REC.np; i++) CHECK(poly_minx(&REC.p[i]) >= r.x - 0.01f && poly_maxx(&REC.p[i]) <= r.x + r.w + 0.01f && poly_miny(&REC.p[i]) >= r.y - 0.01f && poly_maxy(&REC.p[i]) <= r.y + r.h + 0.01f); } }   /* four ports: all inside */
+}
+
 int main(void)
 {
     plates(); rows(); values(); tabs_and_tags();
     cells(); hints_and_chrome(); explainer_note_dialog(); fix_round1(); fix_round2();
+    sink_without_image_is_safe(); image_cell(); cell_style(); port_cards(); matchup_strip(); two_cursors_one_cell(); explainer_art_and_stepper();
     ATLAS_DONE("atlas parts");
 }

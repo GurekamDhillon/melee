@@ -312,8 +312,14 @@ void at_part_title(const AtSink *s, const AtTextOps *o, const AtLayout *L, const
  * padding and counts do not fit, the counts are dropped, and a name with no room left is not drawn. */
 void at_part_tabs(const AtSink *s, const AtTextOps *o, AtRect r, const char *const *names, const int *counts, int n, int active, int focus_tab)
 {
+    at_part_tabs_ex(s, o, r, names, counts, n, active, focus_tab, NULL);
+}
+
+void at_part_tabs_ex(const AtSink *s, const AtTextOps *o, AtRect r, const char *const *names, const int *counts, int n, int active, int focus_tab, AtRect *out)
+{
     float x = r.x, bottom = r.y + r.h, gaps = n > 1 ? 2.0f * (float) (n - 1) : 0.0f, fixed, names_w, scale = 1.0f;
     int i, role = AT_R_CAP16, with_counts = counts != NULL, pass;
+    if (out != NULL) memset(out, 0, sizeof *out * (size_t) (n > 0 ? n : 0));
     for (pass = 0; pass < 3; pass++) {
         fixed = gaps; names_w = 0.0f;
         for (i = 0; i < n; i++) {
@@ -343,6 +349,7 @@ void at_part_tabs(const AtSink *s, const AtTextOps *o, AtRect r, const char *con
         if (x + w > r.x + r.w) w = r.x + r.w - x;
         if (w <= 0.0f) break;
         at_poly_rect(s, x, y, w, h, face);
+        if (out != NULL) { out[i].x = x; out[i].y = bottom - 30.0f; out[i].w = w; out[i].h = 30.0f; }   /* the hit area is the tall tab: one rectangle that does not move with focus */
         if (draw_name) at_text(s, o, fr, fit, x + 14.0f, mid_base(y, h, fr), i == active ? AT_C_IVORY : AT_C_MUTED, AT_ALIGN_LEFT, 0.0f);
         if (with_counts) at_text(s, o, AT_R_NUM12, num, x + 14.0f + nw + 6.0f, mid_base(y, h, AT_R_NUM12), i == active ? AT_C_EMBER : AT_C_DIM, AT_ALIGN_LEFT, 0.0f);
         if (i == focus_tab) {                                             /* three cues: the lift, an ember front edge, an ember tick */
@@ -369,10 +376,35 @@ float at_part_tag(const AtSink *s, const AtTextOps *o, float x, float y, const c
     return w;
 }
 
-void at_part_cell(const AtSink *s, const AtTextOps *o, AtRect r, const AtCell *c, int state, unsigned focus_rgba)
+/* A disc-art cell's face (a cell with an abbreviation): the texture inside the cell keeping the icon's 64x56 aspect; with no art (or a sink with
+ * no image op) the flat frame's two letters, and the words DISC ART where they fit. Locked or disabled art is dimmed AND marked: the lock
+ * glyph for a locked cell, a slash across a disabled one (a shape, not only a colour). */
+static void cell_art(const AtSink *s, const AtTextOps *o, AtRect r, float y, const AtCell *c, int locked, int disabled)
+{
+    int dim = locked || disabled, drawn = 0;
+    float ix = r.x + 3.0f, iy = y + 3.0f, iw = r.w - 6.0f, ih = r.h - 6.0f;
+    if (c->tex >= 0 && s->image != NULL && iw > 0.0f && ih > 0.0f) {
+        float w = iw, h = iw * 56.0f / 64.0f;
+        if (h > ih) { h = ih; w = ih * 64.0f / 56.0f; }
+        at_sink_image(s, c->tex, ix + (iw - w) * 0.5f, iy + (ih - h) * 0.5f, w, h, dim ? 0xFFFFFF66u : 0xFFFFFFFFu);
+        drawn = 1;
+    }
+    if (!drawn) {
+        float base = y + r.h * (locked ? 0.40f : 0.5f) + 5.0f;
+        int word = !locked && twidth(o, AT_R_CAP12, "DISC ART") <= r.w - 6.0f;
+        if (word) base = y + r.h * 0.5f;
+        at_text(s, o, AT_R_CAP14, c->abbr, r.x + r.w * 0.5f, base, dim ? AT_C_DIM : AT_C_IVORY, AT_ALIGN_CENTER, 0.0f);
+        if (word) at_text(s, o, AT_R_CAP12, "DISC ART", r.x + r.w * 0.5f, y + r.h - 8.0f, AT_C_DIM, AT_ALIGN_CENTER, 0.0f);
+    }
+    if (locked) glyph_lock(s, r.x + r.w * 0.5f, y + r.h * 0.72f, AT_C_DIM);
+    else if (disabled) poly4(s, ix + 1.0f, iy + ih, ix + 3.0f, iy + ih, ix + iw, iy, ix + iw - 2.0f, iy, AT_C_ROSE);   /* the slash */
+}
+
+/* draw_brackets 0: the caller draws the cursors' brackets itself (several ports on one cell: at_cell_brackets) */
+void at_part_cell_ex(const AtSink *s, const AtTextOps *o, AtRect r, const AtCell *c, int state, unsigned focus_rgba, int draw_brackets)
 {
     int disabled = state == AT_ST_DISABLED || (c->flags & AT_CELL_DISABLED), focus = state == AT_ST_FOCUS;   /* a focused disabled or locked cell keeps its dim face and gains the cues */
-    int press = state == AT_ST_PRESS && !disabled, has_model = c->model != AT_NO_MODEL;
+    int press = state == AT_ST_PRESS && !disabled, has_model = c->model != AT_NO_MODEL, art = c->abbr[0] != '\0';
     float y = focus ? r.y - 2.0f : press ? r.y + 1.0f : r.y, cc = (float) AT_PX_CH_XS;
     AtRect pr;
     pr.x = r.x; pr.y = y; pr.w = r.w; pr.h = r.h;
@@ -383,7 +415,9 @@ void at_part_cell(const AtSink *s, const AtTextOps *o, AtRect r, const AtCell *c
     } else {
         unsigned face = (c->flags & AT_CELL_LOCKED) || disabled || press ? AT_C_PLATE : (focus ? AT_C_LIFT : (has_model ? AT_C_GROUND2 : AT_C_PLATE2));
         at_plate(s, pr, face, focus ? AT_C_EMBER : press ? AT_C_EMBER_D : AT_C_EDGE2, press ? 1.0f : 3.0f, cc);
-        if (c->flags & AT_CELL_LOCKED) {
+        if (art && !has_model) {
+            cell_art(s, o, r, y, c, (c->flags & AT_CELL_LOCKED) != 0, disabled && !(c->flags & AT_CELL_LOCKED));
+        } else if (c->flags & AT_CELL_LOCKED) {
             glyph_lock(s, r.x + r.w * 0.5f, y + r.h * 0.5f, AT_C_DIM);
         } else if (has_model) {
             at_poly_rect(s, r.x + r.w * 0.18f, y + r.h * 0.77f, r.w * 0.64f, r.h * 0.12f, 0x00000073u);   /* the floor shadow */
@@ -416,7 +450,12 @@ void at_part_cell(const AtSink *s, const AtTextOps *o, AtRect r, const AtCell *c
             fit_text(s, o, AT_R_CAP12, "+ MERGE", r.x + r.w * 0.5f, y + r.h - 7.0f, AT_C_INK, AT_ALIGN_CENTER, r.w - 4.0f);
         }
     }
-    if (focus) brackets(s, pr, focus_rgba != 0 ? focus_rgba : AT_C_EMBER);
+    if (focus && draw_brackets) brackets(s, pr, focus_rgba != 0 ? focus_rgba : AT_C_EMBER);
+}
+
+void at_part_cell(const AtSink *s, const AtTextOps *o, AtRect r, const AtCell *c, int state, unsigned focus_rgba)
+{
+    at_part_cell_ex(s, o, r, c, state, focus_rgba, 1);
 }
 
 void at_part_stone(const AtSink *s, const AtTextOps *o, AtRect r, const AtCell *c, int state, unsigned focus_rgba)
@@ -539,12 +578,30 @@ void at_part_explainer(const AtSink *s, const AtTextOps *o, AtRect r, const AtEx
     at_plate(s, r, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH);
     if (!e->has) return;
     at_poly_rect(s, x, y, w, 96.0f, AT_C_GROUND2);                       /* the media well */
-    if (e->media_model != AT_NO_MODEL) s->model(s->user, e->media_model, e->media_ring, x + 8.0f, y + 4.0f, w - 16.0f, 88.0f, 1, 0);
+    if (e->media_model != AT_NO_MODEL) {
+        s->model(s->user, e->media_model, e->media_ring, x + 8.0f, y + 4.0f, w - 16.0f, 88.0f, 1, 0);
+    } else if (e->media_abbr[0] != '\0') {                              /* a disc-art portrait (136x188, kept in its aspect), or its frame's letters */
+        float ph = 88.0f, pw = ph * 136.0f / 188.0f;
+        if (pw > w - 16.0f) { pw = w - 16.0f; ph = pw * 188.0f / 136.0f; }
+        if (e->media_tex >= 0 && s->image != NULL) at_sink_image(s, e->media_tex, x + (w - pw) * 0.5f, y + 4.0f + (88.0f - ph) * 0.5f, pw, ph, 0xFFFFFFFFu);
+        else {
+            at_text(s, o, AT_R_TITLE, e->media_abbr, x + w * 0.5f, y + 48.0f, AT_C_DIM, AT_ALIGN_CENTER, w - 16.0f);
+            if (twidth(o, AT_R_CAP12, "DISC ART") <= w - 16.0f) at_text(s, o, AT_R_CAP12, "DISC ART", x + w * 0.5f, y + 78.0f, AT_C_DIM, AT_ALIGN_CENTER, 0.0f);
+        }
+    }
     y += 106.0f;
     fit_text(s, o, AT_R_CAP14, e->kicker, x, y + 11.0f, AT_C_JADE, AT_ALIGN_LEFT, w);
     y += 18.0f;
     fit_text(s, o, AT_R_TITLE, e->title, x, y + 24.0f, AT_C_IVORY, AT_ALIGN_LEFT, w);
     y += 36.0f;
+    if (e->stepper && y + 26.0f <= bottom) {                             /* a stepper line: "COSTUME   < 2 / 4 >" (the costume's turn is X and Y) */
+        float tw = twidth(o, AT_R_NUM14, e->stepper_text), cx = x + w - 14.0f - tw * 0.5f - 12.0f;
+        fit_text(s, o, AT_R_CAP12, e->stepper_label, x, y + 13.0f, AT_C_MUTED, AT_ALIGN_LEFT, cx - tw * 0.5f - 26.0f - x);
+        tri(s, cx - tw * 0.5f - 8.0f, y + 4.0f, cx - tw * 0.5f - 14.0f, y + 10.0f, cx - tw * 0.5f - 8.0f, y + 16.0f, AT_C_EMBER);
+        at_text(s, o, AT_R_NUM14, e->stepper_text, cx, y + 15.0f, AT_C_IVORY, AT_ALIGN_CENTER, 0.0f);
+        tri(s, cx + tw * 0.5f + 8.0f, y + 4.0f, cx + tw * 0.5f + 14.0f, y + 10.0f, cx + tw * 0.5f + 8.0f, y + 16.0f, AT_C_EMBER);
+        y += 26.0f;
+    }
     n = at_wrap(o, AT_R_BODY14, e->what, w, 4, lines, &clamped);
     for (i = 0; i < n && y + 18.0f <= bottom; i++) {
         at_text(s, o, AT_R_BODY14, lines[i], x, y + 13.0f, AT_C_IVORY, AT_ALIGN_LEFT, 0.0f);
@@ -642,4 +699,145 @@ int at_part_dialog(const AtSink *s, const AtTextOps *o, float canvas_w, const At
         bx -= 8.0f;
     }
     return nb;
+}
+
+/* ---- the character select's parts: the image op, port marks and cards, the matchup strip, per-port brackets ------------------------- */
+
+void at_sink_image(const AtSink *s, int tex, float x, float y, float w, float h, unsigned rgba)
+{
+    if (s->image != NULL && tex >= 0) s->image(s->user, tex, x, y, w, h, rgba);
+}
+
+/* A port's mark: its shape tells it apart without colour (1 circle, 2 square, 3 hexagon, 4 diamond). Returns the polys used, which differ
+ * per shape (circle 4, square 1, hexagon 3, diamond 2): the style checks use the count to see that no two ports share a shape. */
+int at_port_mark(const AtSink *s, float cx, float cy, float r, int port, unsigned rgba)
+{
+    if (port == 0) {                                                         /* an octagon as four quads fanned from the centre */
+        float px[8], py[8];
+        int k;
+        for (k = 0; k < 8; k++) {
+            double a = (22.5 + 45.0 * k) * 3.14159265358979 / 180.0;
+            px[k] = cx + r * (float) cos(a);
+            py[k] = cy + r * (float) sin(a);
+        }
+        for (k = 0; k < 4; k++) poly4(s, cx, cy, px[2 * k], py[2 * k], px[2 * k + 1], py[2 * k + 1], px[(2 * k + 2) % 8], py[(2 * k + 2) % 8], rgba);
+        return 4;
+    }
+    if (port == 1) {                                                         /* a square */
+        at_poly_rect(s, cx - r * 0.85f, cy - r * 0.85f, r * 1.7f, r * 1.7f, rgba);
+        return 1;
+    }
+    if (port == 2) {                                                         /* a flat-topped hexagon: a rectangle and two triangles */
+        float hx = r * 0.5f, hy = r * 0.866f;
+        poly4(s, cx - hx, cy - hy, cx + hx, cy - hy, cx + hx, cy + hy, cx - hx, cy + hy, rgba);
+        tri(s, cx - r, cy, cx - hx, cy - hy, cx - hx, cy + hy, rgba);
+        tri(s, cx + r, cy, cx + hx, cy + hy, cx + hx, cy - hy, rgba);
+        return 3;
+    }
+    tri(s, cx, cy - r, cx + r, cy, cx - r, cy, rgba);                        /* a diamond: two triangles */
+    tri(s, cx - r, cy, cx + r, cy, cx, cy + r, rgba);
+    return 2;
+}
+
+static unsigned port_colour(int port) { return port == 0 ? AT_C_P1 : port == 1 ? AT_C_P2 : port == 2 ? AT_C_P3 : AT_C_P4; }
+
+/* The brackets of one cursor on a cell. A lone cursor draws them outside the cell, as the focus brackets are; when several ports share the
+ * cell each takes an inset of 2 + 3 * slot px inside it, so their sets never sit on top of each other. */
+static void brackets_off(const AtSink *s, AtRect r, unsigned c, float off, float leg)
+{
+    float x0 = r.x - off, y0 = r.y - off, x1 = r.x + r.w + off, y1 = r.y + r.h + off;
+    at_poly_rect(s, x0, y0, leg, 2.0f, c);              at_poly_rect(s, x0, y0, 2.0f, leg, c);
+    at_poly_rect(s, x1 - leg, y0, leg, 2.0f, c);        at_poly_rect(s, x1 - 2.0f, y0, 2.0f, leg, c);
+    at_poly_rect(s, x0, y1 - 2.0f, leg, 2.0f, c);       at_poly_rect(s, x0, y1 - leg, 2.0f, leg, c);
+    at_poly_rect(s, x1 - leg, y1 - 2.0f, leg, 2.0f, c); at_poly_rect(s, x1 - 2.0f, y1 - leg, 2.0f, leg, c);
+}
+
+void at_cell_brackets(const AtSink *s, AtRect r, unsigned rgba, int slot, int of)
+{
+    float half = (r.w < r.h ? r.w : r.h) * 0.5f, inset, leg = 9.0f;
+    if (of <= 1) { brackets_off(s, r, rgba, 4.0f, leg); return; }
+    if (slot < 0) slot = 0;
+    inset = 2.0f + 3.0f * (float) slot;
+    if (leg > half - inset - 1.0f) leg = half - inset - 1.0f;
+    if (leg < 3.0f) leg = 3.0f;
+    brackets_off(s, r, rgba, -inset, leg);
+}
+
+static const char *team_word(int team) { return team == 1 ? "RED" : team == 2 ? "BLUE" : team == 3 ? "GREEN" : NULL; }
+
+/* One port's card, 56 high in the band: a 3 px top edge in the port's colour, the port's mark with its numeral, the fighter's name and a line
+ * under it. A CPU says CPU in a tag and its level; an open slot says OPEN (and, when focused and wide enough, how to join); a closed one CLOSED.
+ * Focus lifts it 2 px, turns the front edge ember and puts the four brackets on it in the port's colour. */
+void at_part_port_card(const AtSink *s, const AtTextOps *o, AtRect r, const AtPortCard *c, int focus)
+{
+    unsigned tint = port_colour(focus >= 1 ? (focus - 1) & 3 : c->port & 3);   /* focus: 0 none, else 1 + the port whose cursor is on the card */
+    unsigned col = c->kind == 2 ? AT_C_CPU : port_colour(c->port & 3), face = c->kind == 0 ? AT_C_GROUND2 : AT_C_PLATE2;
+    float e = 3.0f, y = focus ? r.y - 2.0f : r.y, cx, cy, lx, right, avail;
+    char num[2], lv[12];
+    AtRect pr;
+    pr.x = r.x; pr.y = y; pr.w = r.w; pr.h = r.h;
+    at_plate(s, pr, face, focus ? AT_C_EMBER : AT_C_EDGE2, e, (float) AT_PX_CH_S);
+    at_poly_rect(s, r.x + (float) AT_PX_CH_S, y, r.w - (float) AT_PX_CH_S, 3.0f, col);        /* the top edge, clear of the cut corner */
+    if (focus) at_poly_rect(s, r.x, y + (float) AT_PX_CH_S, 4.0f, r.h - e - (float) AT_PX_CH_S, AT_C_EMBER);
+    cx = r.x + 21.0f; cy = y + 3.0f + (r.h - 3.0f - e) * 0.5f;
+    at_port_mark(s, cx, cy, 11.0f, c->port & 3, c->kind == 0 ? AT_C_LINE2 : col);
+    num[0] = (char) ('1' + (c->port & 3)); num[1] = '\0';
+    at_text(s, o, AT_R_CAP14, num, cx, mid_base(cy - 11.0f, 22.0f, AT_R_CAP14), AT_C_INK, AT_ALIGN_CENTER, 0.0f);
+    lx = r.x + 38.0f;
+    right = r.x + r.w - 10.0f;                                             /* clear of the bottom-right cut */
+    avail = right - lx;
+    if (c->kind == 0) {
+        fit_text(s, o, AT_R_ROW16, (c->flags & AT_CARD_CLOSED) ? "CLOSED" : "OPEN", lx, y + 3.0f + 22.0f, AT_C_MUTED, AT_ALIGN_LEFT, avail);
+        if (focus && !(c->flags & AT_CARD_CLOSED) && avail >= twidth(o, AT_R_BODY12, "Press A to join")) fit_text(s, o, AT_R_BODY12, "Press A to join", lx, y + r.h - e - 8.0f, AT_C_DIM, AT_ALIGN_LEFT, avail);
+        if (focus) brackets_off(s, pr, tint, 4.0f, 9.0f);
+        return;
+    }
+    {
+        float tagw = 0.0f;
+        const char *tw = team_word(c->team);
+        if (c->kind == 2) {                                                /* the word CPU, in a tag: never grey alone */
+            tagw = at_part_tag(s, o, right - twidth(o, AT_R_CAP12, "CPU") - 16.0f, y + 6.0f, "CPU", AT_TAG_PLAIN, avail * 0.5f);
+        } else if (c->flags & AT_CARD_READY) {
+            tagw = at_part_tag(s, o, right - twidth(o, AT_R_CAP12, "READY") - 16.0f, y + 6.0f, "READY", AT_TAG_JADE, avail * 0.5f);
+        }
+        fit_text(s, o, AT_R_ROW16, c->name, lx, y + 3.0f + 22.0f, AT_C_IVORY, AT_ALIGN_LEFT, avail - (tagw > 0.0f ? tagw + 6.0f : 0.0f));
+        lv[0] = '\0';
+        if (c->kind == 2 && c->cpu_lv > 0) snprintf(lv, sizeof lv, "LV %d", c->cpu_lv);
+        if (lv[0] != '\0') {
+            float dw = twidth(o, AT_R_NUM12, lv);
+            at_text(s, o, AT_R_NUM12, lv, lx, y + r.h - e - 8.0f, AT_C_MUTED, AT_ALIGN_LEFT, 0.0f);
+            if (c->sub[0] != '\0') fit_text(s, o, AT_R_BODY12, c->sub, lx + dw + 8.0f, y + r.h - e - 8.0f, AT_C_MUTED, AT_ALIGN_LEFT, avail - dw - 8.0f);
+        } else if (c->sub[0] != '\0') {
+            fit_text(s, o, AT_R_BODY12, c->sub, lx, y + r.h - e - 8.0f, AT_C_MUTED, AT_ALIGN_LEFT, avail - (tw != NULL ? twidth(o, AT_R_CAP12, tw) + 14.0f : 0.0f));
+        }
+        if (tw != NULL) {                                                  /* the team's word, with its tone, at the right of the sub line */
+            float w = twidth(o, AT_R_CAP12, tw) + 16.0f;
+            if (w <= avail * 0.5f) at_part_tag(s, o, right - w, y + r.h - e - 24.0f, tw, c->team == 1 ? AT_TAG_ROSE : c->team == 3 ? AT_TAG_JADE : AT_TAG_PLAIN, w);
+        }
+    }
+    if (focus) brackets_off(s, pr, tint, 4.0f, 9.0f);
+}
+
+/* The matchup strip (40 high): the fighters in a row, each a small mark, the numeral and the name, with VS between. picker is the index of the
+ * card whose turn it is (it carries an ember underline), or -1. A name that does not fit steps down and is cut; with no room it is dropped. */
+void at_part_matchup(const AtSink *s, const AtTextOps *o, AtRect r, const AtPortCard *c, int n, int picker)
+{
+    float slot, vs = n > 1 ? 30.0f : 0.0f, x;
+    int i;
+    at_plate(s, r, AT_C_PLATE, AT_C_EDGE2, 3.0f, (float) AT_PX_CH_S);
+    if (n < 1) return;
+    slot = (r.w - 24.0f - vs * (float) (n - 1)) / (float) n;
+    x = r.x + 12.0f;
+    for (i = 0; i < n; i++) {
+        unsigned col = c[i].kind == 2 ? AT_C_CPU : port_colour(c[i].port & 3);
+        float cy = r.y + (r.h - 3.0f) * 0.5f;
+        char num[2];
+        at_port_mark(s, x + 10.0f, cy, 9.0f, c[i].port & 3, col);
+        num[0] = (char) ('1' + (c[i].port & 3)); num[1] = '\0';
+        at_text(s, o, AT_R_CAP12, num, x + 10.0f, mid_base(cy - 9.0f, 18.0f, AT_R_CAP12), AT_C_INK, AT_ALIGN_CENTER, 0.0f);
+        fit_text(s, o, AT_R_CAP14, c[i].name, x + 26.0f, mid_base(r.y, r.h - 3.0f, AT_R_CAP14), AT_C_IVORY, AT_ALIGN_LEFT, slot - 26.0f);
+        if (i == picker) at_poly_rect(s, x, r.y + r.h - 3.0f - 3.0f, slot, 3.0f, AT_C_EMBER);
+        x += slot;
+        if (i + 1 < n) { at_text(s, o, AT_R_CAP12, "VS", x + vs * 0.5f, mid_base(r.y, r.h - 3.0f, AT_R_CAP12), AT_C_DIM, AT_ALIGN_CENTER, 0.0f); x += vs; }
+    }
 }

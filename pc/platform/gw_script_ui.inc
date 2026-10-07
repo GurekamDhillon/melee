@@ -116,6 +116,12 @@ static void gs_ui_text(void *u, float x, float base, const char *s, int role, un
     gw_Kit_SetTracking(0.0f);
 }
 
+/* a disc-art texture (gw_Kit_TexAddHsd's slot) or any kit texture: drawn modulated by the tint, in order with the other quads */
+static void gs_ui_image(void *u, int tex, float x, float y, float w, float h, unsigned rgba) {
+    (void) u;
+    gw_Kit_DrawImage(tex, x, y, w, h, rgba, 0, 0.0f);
+}
+
 /* a model handle (a gd.model_load token) to its asset slot, or -1 when it is stale: a cell then draws nothing */
 static int gs_ui_model_asset(int token) {
     int i;
@@ -603,7 +609,8 @@ static void gs_ui_draw(void) {
     if (u->owner != GS_UI_ENGINE) gs.cur = u->owner;                   /* an engine screen draws as whoever is running */
     QueryPerformanceCounter(&t0);
     ops.width = gs_ui_width; ops.user = NULL;
-    sink.user = NULL; sink.poly = gs_ui_poly; sink.text = gs_ui_text; sink.model = gs_ui_model_draw;
+    memset(&sink, 0, sizeof sink);
+    sink.user = NULL; sink.poly = gs_ui_poly; sink.text = gs_ui_text; sink.model = gs_ui_model_draw; sink.image = gs_ui_image;
     memset(&info, 0, sizeof info);
     first = gw_Kit_QuadCount();
     gs_ui_stat.canvas_w = gw_Console_ScriptWidth();

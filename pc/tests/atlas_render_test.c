@@ -1,7 +1,9 @@
 #include <stdlib.h>
+#define AT_SINK_HAS_IMAGE
 #include "atlas_check.h"
 #include "atlas_fake.h"
 #include "atlas_rec.h"
+#include "atlas_style.h"
 #include "../platform/gw_ui_render.h"
 #include "../platform/gw_ui_tokens.h"
 
@@ -348,9 +350,101 @@ static void stone_note_per_row(void)
     CHECK(n == 1);
 }
 
+static const AtTextOps O = { fake_width, NULL };
+static AtCell POOL[AT_MAX_EXT_CELLS];
+
+/* a native-style screen: n cells in one ext block, 3 tabs, the cards band (what the character select adapter will submit) */
+static void native_fixture(int n)
+{
+    int i;
+    memset(&SC, 0, sizeof SC); at_view_init(&V); memset(POOL, 0, sizeof POOL);
+    SC.primary = AT_PRIMARY_GRID; SC.preset = AT_PRESET_NORMAL; SC.n_blocks = 1; SC.grid_cols_auto = 1; SC.band = AT_BAND_CARDS;
+    SC.blocks[0].ext = POOL; SC.blocks[0].ext_n = n; SC.blocks[0].cols = 0;
+    snprintf(SC.title, sizeof SC.title, "%s", "FIGHTERS");
+    SC.n_tabs = 3; snprintf(SC.tabs[0].name, 24, "ALL"); SC.tabs[0].count = n; snprintf(SC.tabs[1].name, 24, "RETAIL"); SC.tabs[1].count = n > 3 ? n - 3 : n; snprintf(SC.tabs[2].name, 24, "ADDED"); SC.tabs[2].count = 3;
+    for (i = 0; i < n; i++) { snprintf(POOL[i].id, AT_ID, "f%d", i); POOL[i].model = AT_NO_MODEL; POOL[i].tex = -1; snprintf(POOL[i].abbr, 3, "%c%c", 'A' + i % 26, 'A' + (i / 3) % 26); }
+    for (i = 0; i < 4; i++) { SC.cards[i].port = i; SC.cards[i].kind = i == 0 ? 1 : 0; SC.cards[i].ck_tex = -1; }
+    snprintf(SC.cards[0].name, AT_STR, "%s", "FOX"); snprintf(SC.cards[0].abbr, 3, "%s", "FO");
+}
+
+static void tabs_and_band_render(void)
+{
+    AtSink s; int i, cells = 0, tabs = 0, cards = 0;
+    AtLayout L; AtSplit sp;
+    native_fixture(29);
+    s = rec_sink(); at_render(&SC, &V, 640.0f, 1000.0, 1, &O, &s, &HITS);
+    CHECK(find_text("ALL") != NULL && find_text("RETAIL") != NULL && find_text("ADDED") != NULL);
+    CHECK(texts_legible());
+    at_layout(640.0f, AT_PRESET_NORMAL, &L); at_layout_split(&L, 1, AT_BAND_CARDS, &sp);
+    for (i = 0; i < HITS.n; i++) {
+        cells += HITS.h[i].kind == AT_HIT_CELL; tabs += HITS.h[i].kind == AT_HIT_TAB; cards += HITS.h[i].kind == AT_HIT_CARD;
+        if (HITS.h[i].kind == AT_HIT_CELL) CHECK(HITS.h[i].r.y + HITS.h[i].r.h <= sp.band.y - 12.0f + 0.5f);        /* above the band */
+        if (HITS.h[i].kind == AT_HIT_CELL) CHECK(HITS.h[i].r.y >= sp.grid.y && HITS.h[i].r.x >= sp.grid.x - 0.01f);   /* below the tabs */
+        if (HITS.h[i].kind == AT_HIT_CARD) CHECK(HITS.h[i].r.y >= sp.band.y - 0.01f && HITS.h[i].r.y + HITS.h[i].r.h <= sp.band.y + sp.band.h + 0.01f);
+    }
+    CHECK(cells == 29 && tabs == 3 && cards == 4);                                                                 /* 29 fighters fit at 640 without scrolling */
+    CHECK(count_color(AT_C_P1) >= 1 && count_color(AT_C_P2) >= 1 && count_color(AT_C_P3) >= 1 && count_color(AT_C_P4) >= 1);   /* every port's mark is on the band */
+    CHECK(find_text("OPEN") != NULL && find_text("FOX") != NULL);
+}
+static void ext_cells_in_render(void)
+{
+    AtSink s; AtRenderInfo info; int i, k = 0;
+    native_fixture(129);
+    s = rec_sink(); at_render_ex(&SC, &V, 640.0f, 1000.0, 1, &O, &s, &HITS, &info);
+    for (i = 0; i < HITS.n; i++) if (HITS.h[i].kind == AT_HIT_CELL) k++;
+    CHECK(k > 0 && k < 129 && info.capped == 0 && info.hits_dropped == 0);              /* a long roster scrolls and draws only the visible rows */
+    V.cursor[0].active = 1; V.cursor[0].block = 0; V.cursor[0].index = 100; V.cursor[0].card = -1;
+    s = rec_sink(); at_render_ex(&SC, &V, 640.0f, 1000.0, 1, &O, &s, &HITS, &info);     /* a cursor past the first rows scrolls the grid to show it */
+    { int seen = 0; for (i = 0; i < HITS.n; i++) if (HITS.h[i].kind == AT_HIT_CELL && HITS.h[i].b == 100) seen = 1; CHECK(seen); }
+}
+/* the hit rectangle of a tile (kind CELL, index idx) or a card (kind CARD, a = idx), grown by 8 px for the lift and the brackets */
+static AtRect area_of(int kind, int idx)
+{
+    AtRect r = { 0, 0, 0, 0 }; int i;
+    for (i = 0; i < HITS.n; i++) if (HITS.h[i].kind == kind && (kind == AT_HIT_CELL ? HITS.h[i].b == idx : HITS.h[i].a == idx)) { r = HITS.h[i].r; r.x -= 8; r.y -= 8; r.w += 16; r.h += 16; }
+    return r;
+}
+static void cursors_per_port(void)
+{
+    AtSink s; int i; StySig a, b; AtRect tile, card;
+    native_fixture(29);
+    s = rec_sink(); at_render(&SC, &V, 640.0f, 1000.0, 1, &O, &s, &HITS); tile = area_of(AT_HIT_CELL, 5); card = area_of(AT_HIT_CARD, 1); a = sty_sig_in(0, tile);
+    V.cursor[0].active = 1; V.cursor[0].block = 0; V.cursor[0].index = 5; V.cursor[0].card = -1;
+    s = rec_sink(); at_render(&SC, &V, 640.0f, 1000.0, 1, &O, &s, &HITS); b = sty_sig_in(0, tile);
+    CHECK(sty_focus_cues(a, b) == 3);                                                    /* one cursor: lift, ember edge, brackets */
+    CHECK(count_color(AT_C_P1) >= 8);                                                    /* its brackets in port 1's colour */
+    V.cursor[1].active = 1; V.cursor[1].block = 0; V.cursor[1].index = 5; V.cursor[1].card = -1;
+    s = rec_sink(); at_render(&SC, &V, 640.0f, 1000.0, 1, &O, &s, &HITS);
+    CHECK(count_color(AT_C_P2) >= 8);                                                    /* two cursors on one tile: both sets are drawn */
+    V.cursor[1].index = 9;
+    s = rec_sink(); at_render(&SC, &V, 640.0f, 1000.0, 1, &O, &s, &HITS);
+    CHECK(count_color(AT_C_P1) >= 8 && count_color(AT_C_P2) >= 8);                       /* two cursors on two tiles */
+    V.cursor[1].active = 0; V.cursor[0].card = 1; V.cursor[0].index = -1;                /* port 1 on the second card */
+    s = rec_sink(); at_render(&SC, &V, 640.0f, 1000.0, 1, &O, &s, &HITS);
+    CHECK(sty_focus_cues(sty_sig_in(0, tile), sty_sig_in(0, tile)) == 0);
+    b = sty_sig_in(0, card);
+    CHECK(b.ember_polys >= 2 && count_color(AT_C_P1) >= 8 + 2);                          /* the card has the ember edge and tick, and port 1's brackets */
+    V.cursor[0].card = -1; V.cursor[0].index = 5;
+    s = rec_sink(); at_render(&SC, &V, 640.0f, 1000.0, 1, &O, &s, &HITS);
+    CHECK(sty_sig_in(0, tile).ember_polys >= 1 && sty_sig_in(0, card).ember_polys == 0);   /* back on the grid: the tile is focused again, the card is not */
+    (void) i;
+}
+static void sink_without_image_op_in_render(void)
+{
+    AtSink s; int i;
+    native_fixture(29);
+    for (i = 0; i < 29; i++) POOL[i].tex = 3;                                           /* art everywhere ... */
+    s = rec_sink(); s.image = NULL;                                                      /* ... but a sink that cannot draw it */
+    at_render(&SC, &V, 640.0f, 1000.0, 1, &O, &s, &HITS);
+    CHECK(REC.ni == 0 && find_text("AA") != NULL);                                       /* the letters stand in: no blank tile */
+    s = rec_sink(); at_render(&SC, &V, 640.0f, 1000.0, 1, &O, &s, &HITS);
+    CHECK(REC.ni == 29);                                                                 /* and with the op, one image per tile */
+}
+
 int main(void)
 {
     budget_and_legibility(); focus_cues(); long_strings(); hits_at_widths(); list_screen(); overlays_and_fade();
     budget_enforced(); hits_stay_in_table(); tall_grid(); zero_cols(); dialog_suppresses_hits(); long_key_hints(); stone_note_per_row();
+    tabs_and_band_render(); ext_cells_in_render(); cursors_per_port(); sink_without_image_op_in_render();
     ATLAS_DONE("atlas render");
 }

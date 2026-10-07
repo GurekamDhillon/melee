@@ -10,9 +10,9 @@ extern "C" {
 enum { AT_EV_NONE, AT_EV_MOVE, AT_EV_FOCUS, AT_EV_ACCEPT, AT_EV_BACK, AT_EV_ALT, AT_EV_PAGE, AT_EV_SCROLL, AT_EV_START };
 typedef struct { int type, a, b; } AtEvent;   /* MOVE a=dir; FOCUS a=block b=index; ALT a='X'|'Y'|'Z'; PAGE a=-1|+1; SCROLL a=-1|+1 */
 
-enum { AT_HIT_CELL = 1, AT_HIT_KEY = 2, AT_HIT_DIALOG = 3 };
-typedef struct { AtRect r; int kind, a, b; } AtHit;   /* CELL a=block b=index; KEY and DIALOG a=button char ('A'.., 'S' = START) */
-#define AT_MAX_HITS 96
+enum { AT_HIT_CELL = 1, AT_HIT_KEY = 2, AT_HIT_DIALOG = 3, AT_HIT_TAB = 4, AT_HIT_CARD = 5 };
+typedef struct { AtRect r; int kind, a, b; } AtHit;   /* CELL a=block b=index; KEY and DIALOG a=button char ('A'.., 'S' = START); TAB a=tab index; CARD a=port card index */
+#define AT_MAX_HITS 192   /* a 1140-wide character select: 11 columns x 6 rows of tiles, the tabs, the cards and the keys */
 typedef struct { AtHit h[AT_MAX_HITS]; int n; } AtHits;
 
 enum { AT_PAD_LEFT = 0x0001, AT_PAD_RIGHT = 0x0002, AT_PAD_DOWN = 0x0004, AT_PAD_UP = 0x0008, AT_PAD_Z = 0x0010, AT_PAD_R = 0x0020,

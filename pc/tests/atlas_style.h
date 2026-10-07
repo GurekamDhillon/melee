@@ -51,6 +51,25 @@ static StySig sty_sig(int from_poly)
     return s;
 }
 
+/* The signature of only the polys that lie wholly inside `area` (a whole screen's own polys include the ground at y = 0, which hides any lift):
+ * compare a part's rectangle, grown by the lift and the brackets, between two renders of a whole screen. */
+static StySig sty_sig_in(int from_poly, AtRect area)
+{
+    StySig s;
+    int i, k, inside;
+    s.miny = 1.0e9f; s.ember_polys = 0; s.polys = 0;
+    for (i = from_poly; i < REC.np; i++) {
+        inside = 1;
+        for (k = 0; k < 4; k++)
+            if (REC.p[i].x[k] < area.x - 0.01f || REC.p[i].x[k] > area.x + area.w + 0.01f || REC.p[i].y[k] < area.y - 0.01f || REC.p[i].y[k] > area.y + area.h + 0.01f) inside = 0;
+        if (!inside) continue;
+        s.polys++;
+        if (REC.p[i].rgba == AT_C_EMBER) s.ember_polys++;
+        for (k = 0; k < 4; k++) if (REC.p[i].y[k] < s.miny) s.miny = REC.p[i].y[k];
+    }
+    return s;
+}
+
 /* 4.6: three cues at once. The same part drawn at rest and focused: it is lifted by 2 px, the ember edge appears, and a tick or
  * four brackets add at least eight polys. The brackets may be tinted with a port's colour (4.6: on a shared screen), so they are
  * counted by number, not by colour; the tick is the ember one. Returns how many of the three hold. */

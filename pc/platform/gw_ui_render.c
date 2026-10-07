@@ -43,6 +43,11 @@ static void cnt_model(void *u, int model, int ring, float x, float y, float w, f
     Counter *c = (Counter *) u;
     if (spend(c, AT_MODEL_COST)) c->inner->model(c->inner->user, model, ring, x, y, w, h, focused, dim);
 }
+static void cnt_image(void *u, int tex, float x, float y, float w, float h, unsigned rgba)
+{
+    Counter *c = (Counter *) u;
+    if (spend(c, 1)) at_sink_image(c->inner, tex, x, y, w, h, rgba);
+}
 
 /* a sink that draws nothing: measures a part's advance before it is placed */
 static void nul_poly(void *u, const float x[4], const float y[4], unsigned rgba) { (void) u; (void) x; (void) y; (void) rgba; }
@@ -80,16 +85,30 @@ static float draw_header(const AtScreen *sc, const AtLayout *L, const AtTextOps 
 
 /* ---- the grid: blocks stacked, scrolling by whole rows (global row = rows of the blocks above + the row in its block) ---- */
 
-typedef struct { float x0, iw, top, bottom, cell; } GridBox;
+typedef struct { float x0, iw, top, bottom, cell; int acols; } GridBox;   /* acols > 0: the renderer chose the columns (grid_cols_auto) */
 
-static int cols_of(const AtBlock *bk) { return bk->cols > 0 ? bk->cols : 1; }
+static int cols_in(const GridBox *g, const AtBlock *bk) { return g->acols > 0 ? g->acols : (bk->cols > 0 ? bk->cols : 1); }
 
-static int grid_rows(const AtScreen *sc)
+/* a native block with no title takes no title row (the character select has tabs instead); every other block keeps its 26 px row */
+static float title_h(const AtBlock *bk) { return (bk->ext != NULL && bk->title[0] == '\0') ? 0.0f : 26.0f; }
+
+static int grid_rows(const AtScreen *sc, const GridBox *g)
 {
     int b, n = 0;
-    for (b = 0; b < sc->n_blocks; b++) n += (at_block_count(&sc->blocks[b]) + cols_of(&sc->blocks[b]) - 1) / cols_of(&sc->blocks[b]);
+    for (b = 0; b < sc->n_blocks; b++) n += (at_block_count(&sc->blocks[b]) + cols_in(g, &sc->blocks[b]) - 1) / cols_in(g, &sc->blocks[b]);
     return n;
 }
+
+/* the cursors on a grid cell: the ports whose cursor is on it, in port order. Fills slot_port[] and returns how many. */
+static int cursors_on(const AtView *v, int block, int index, int *slot_port)
+{
+    int p, n = 0;
+    for (p = 0; p < AT_MAX_CURSORS; p++)
+        if (v->cursor[p].active && v->cursor[p].card < 0 && v->cursor[p].block == block && v->cursor[p].index == index) slot_port[n++] = p;
+    return n;
+}
+
+static unsigned port_rgba(int port) { return port == 0 ? AT_C_P1 : port == 1 ? AT_C_P2 : port == 2 ? AT_C_P3 : AT_C_P4; }
 
 /* One pass from global row `first`. Only a block's title with at least one whole row (or an empty block's title) that fits is
  * placed. Returns the last whole row placed (first - 1 if none). With emit set it draws and records hits. */
@@ -100,27 +119,33 @@ static int grid_pass(const AtScreen *sc, const AtView *v, const GridBox *g, cons
     int b, i, row0 = 0, last = first - 1, stop = 0;
     for (b = 0; b < sc->n_blocks && !stop; b++) {
         const AtBlock *bk = &sc->blocks[b];
-        int bn = at_block_count(bk), cols = cols_of(bk), rows = (bn + cols - 1) / cols, start = first > row0 ? first - row0 : 0, r;
-        float cw = bk->stones ? 34.0f : g->cell, ch = bk->stones ? 38.0f : g->cell;
+        int bn = at_block_count(bk), cols = cols_in(g, bk), rows = (bn + cols - 1) / cols, start = first > row0 ? first - row0 : 0, r;
+        float cw = bk->stones ? 34.0f : g->cell, ch = bk->stones ? 38.0f : g->cell, th = title_h(bk);
         if (rows > 0 && start >= rows) { row0 += rows; continue; }       /* wholly scrolled off the top */
-        if (y + 26.0f + (rows > 0 ? ch : 0.0f) > g->bottom) break;
-        if (emit) {
+        if (y + th + (rows > 0 ? ch : 0.0f) > g->bottom) break;
+        if (emit && th > 0.0f) {
             float tw = o->width(o->user, AT_R_CAP14, bk->title);
             float cnw = bk->count[0] ? o->width(o->user, AT_R_NUM12, bk->count) : 0.0f;
             at_text(s, o, AT_R_CAP14, bk->title, g->x0, y + 14.0f, AT_C_MUTED, AT_ALIGN_LEFT, g->iw - cnw - 16.0f);
             if (bk->count[0]) at_text(s, o, AT_R_NUM12, bk->count, g->x0 + g->iw, y + 14.0f, AT_C_DIM, AT_ALIGN_RIGHT, 0.0f);
             if (g->x0 + tw + 10.0f < g->x0 + g->iw - cnw - 10.0f) at_poly_rect(s, g->x0 + tw + 10.0f, y + 9.0f, g->iw - tw - cnw - 20.0f, 1.0f, AT_C_LINE);
         }
-        y += 26.0f;
+        y += th;
         ry0 = y;
         for (r = start; r < rows; r++) {
             if (y + ch > g->bottom) { stop = 1; break; }
             if (emit) for (i = r * cols; i < bn && i < (r + 1) * cols; i++) {
                 AtRect rc;
-                int st = (v->focus.block == b && v->focus.index == i) ? AT_ST_FOCUS : AT_ST_REST;
+                int ports[AT_MAX_CURSORS], nc = cursors_on(v, b, i, ports);
+                int st = ((v->focus.block == b && v->focus.index == i) || nc > 0) ? AT_ST_FOCUS : AT_ST_REST;
                 rc.x = g->x0 + (float) (i % cols) * (cw + gap); rc.y = y; rc.w = cw; rc.h = ch;
                 if (bk->stones) at_part_stone(s, o, rc, at_block_cell(bk, i), st, v->port_rgba);
-                else at_part_cell(s, o, rc, at_block_cell(bk, i), st, v->port_rgba);
+                else if (nc <= 1) at_part_cell(s, o, rc, at_block_cell(bk, i), st, nc == 1 ? port_rgba(ports[0]) : v->port_rgba);
+                else {                                                    /* several ports on one tile: the cues once, one set of brackets each */
+                    int k;
+                    at_part_cell_ex(s, o, rc, at_block_cell(bk, i), st, 0, 0);
+                    for (k = 0; k < nc; k++) at_cell_brackets(s, rc, port_rgba(ports[k]), k, nc);
+                }
                 hit_add(hc, rc, AT_HIT_CELL, b, i);
             }
             last = row0 + r;
@@ -141,16 +166,22 @@ static void draw_grid(const AtScreen *sc, const AtView *v, const AtLayout *L, co
 {
     GridBox g;
     const float gap = 8.0f;
-    int b, maxc = 1, total = grid_rows(sc), first, fr = -1, row0 = 0, it;
+    int b, maxc = 1, total, first, fr = -1, row0 = 0, it, p;
     g.x0 = L->primary.x + 12.0f; g.iw = L->primary.w - 24.0f; g.top = L->primary.y + 12.0f;
     g.bottom = L->primary.y + L->primary.h - 12.0f - (sc->footer.has ? 48.0f + 8.0f : 0.0f);
-    for (b = 0; b < sc->n_blocks; b++) if (!sc->blocks[b].stones && cols_of(&sc->blocks[b]) > maxc) maxc = cols_of(&sc->blocks[b]);
+    g.acols = sc->grid_cols_auto ? at_grid_cols(g.iw, 36.0f, 56.0f, gap) : 0;
+    for (b = 0; b < sc->n_blocks; b++) if (!sc->blocks[b].stones && cols_in(&g, &sc->blocks[b]) > maxc) maxc = cols_in(&g, &sc->blocks[b]);
     g.cell = (float) floor((g.iw - (float) (maxc - 1) * gap) / (float) maxc);
     if (g.cell > 56.0f) g.cell = 56.0f;
     if (g.cell < 24.0f) g.cell = 24.0f;
-    for (b = 0; b < sc->n_blocks; b++) {
-        if (v->focus.block == b && v->focus.index >= 0) fr = row0 + v->focus.index / cols_of(&sc->blocks[b]);
-        row0 += (at_block_count(&sc->blocks[b]) + cols_of(&sc->blocks[b]) - 1) / cols_of(&sc->blocks[b]);
+    total = grid_rows(sc, &g);
+    for (p = -1; p < AT_MAX_CURSORS && fr < 0; p++) {                     /* the legacy focus first, then the lowest port's cursor on the grid */
+        int cb = p < 0 ? v->focus.block : (v->cursor[p].active && v->cursor[p].card < 0 ? v->cursor[p].block : -1), ci = p < 0 ? v->focus.index : v->cursor[p].index;
+        row0 = 0;
+        for (b = 0; b < sc->n_blocks; b++) {
+            if (cb == b && ci >= 0) { fr = row0 + ci / cols_in(&g, &sc->blocks[b]); break; }
+            row0 += (at_block_count(&sc->blocks[b]) + cols_in(&g, &sc->blocks[b]) - 1) / cols_in(&g, &sc->blocks[b]);
+        }
     }
     first = v->scroll < 0 ? 0 : v->scroll;
     if (first >= total) first = total > 0 ? total - 1 : 0;
@@ -165,6 +196,41 @@ static void draw_grid(const AtScreen *sc, const AtView *v, const AtLayout *L, co
         AtRect f;
         f.x = g.x0; f.y = L->primary.y + L->primary.h - 12.0f - 48.0f; f.w = g.iw; f.h = 48.0f;
         at_part_footer(s, o, f, &sc->footer);
+    }
+}
+
+/* The strip over the pane: the tab names with their counts, and one hit rectangle per tab (a = the tab index). */
+static void draw_tabs(const AtScreen *sc, const AtView *v, AtRect r, const AtTextOps *o, const AtSink *s, HitCtx *hc)
+{
+    const char *names[AT_MAX_TABS];
+    int counts[AT_MAX_TABS], i, n = sc->n_tabs > AT_MAX_TABS ? AT_MAX_TABS : sc->n_tabs;
+    AtRect rects[AT_MAX_TABS];
+    for (i = 0; i < n; i++) { names[i] = sc->tabs[i].name; counts[i] = sc->tabs[i].count; }
+    at_part_tabs_ex(s, o, r, names, counts, n, v->tab, -1, rects);
+    for (i = 0; i < n; i++) if (rects[i].w > 0.0f) hit_add(hc, rects[i], AT_HIT_TAB, i, 0);
+}
+
+/* The band: four port cards in equal columns, or the matchup strip. A card is focused when a port's cursor is on it (card = its index);
+ * the brackets take that port's colour. A card's hit rectangle is its slot. */
+static void draw_band(const AtScreen *sc, const AtView *v, AtRect r, const AtTextOps *o, const AtSink *s, HitCtx *hc)
+{
+    if (sc->band == AT_BAND_CARDS) {
+        const float gap = 8.0f;
+        float w = (r.w - 3.0f * gap) / 4.0f;
+        int i, p;
+        for (i = 0; i < 4; i++) {
+            AtRect rc;
+            int focus = 0;
+            rc.x = r.x + (float) i * (w + gap); rc.y = r.y; rc.w = w; rc.h = r.h;
+            for (p = 0; p < AT_MAX_CURSORS && focus == 0; p++) if (v->cursor[p].active && v->cursor[p].card == i) focus = 1 + p;
+            at_part_port_card(s, o, rc, &sc->cards[i], focus);
+            hit_add(hc, rc, AT_HIT_CARD, i, 0);
+        }
+    } else if (sc->band == AT_BAND_MATCHUP) {
+        AtPortCard shown[4];
+        int i, n = 0, picker = -1;
+        for (i = 0; i < 4; i++) if (sc->cards[i].kind != 0) { if (sc->cards[i].flags & AT_CARD_FOCUS) picker = n; shown[n++] = sc->cards[i]; }
+        at_part_matchup(s, o, r, shown, n, picker);
     }
 }
 
@@ -258,6 +324,7 @@ static void draw_keys(const AtScreen *sc, const AtView *v, const AtLayout *L, co
     AtSink nul;
     float x = L->keys.x, base = L->keys.y + 18.0f, adv, limit = L->keys.x + L->keys.w;
     int i;
+    memset(&nul, 0, sizeof nul);
     nul.user = NULL; nul.poly = nul_poly; nul.text = nul_text; nul.model = nul_model;
     if (v->counter[0]) limit -= o->width(o->user, AT_R_NUM16, v->counter) + 16.0f;
     adv = at_part_hint(&nul, o, x, base, 'M', "Move");
@@ -287,7 +354,9 @@ void at_render_ex(const AtScreen *sc, const AtView *v, float canvas_w, double no
     float k, trail_end = 0.0f;
     memset(&cn, 0, sizeof cn);
     cn.inner = out;
+    memset(&cs, 0, sizeof cs);
     cs.user = &cn; cs.poly = cnt_poly; cs.text = cnt_text; cs.model = cnt_model;
+    cs.image = out->image != NULL ? cnt_image : NULL;                   /* no image op below: the parts see none and draw the letters instead */
     hits->n = 0;
     hc.hits = v->dialog.open ? NULL : hits;                              /* an open dialog is the only thing the mouse can reach */
     hc.dropped = 0;
@@ -297,10 +366,21 @@ void at_render_ex(const AtScreen *sc, const AtView *v, float canvas_w, double no
         at_part_title(s, o, &L, sc, now, reduced, NULL);
     } else {
         trail_end = draw_header(sc, &L, o, s);
-        at_plate(s, L.primary, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH);
-        if (sc->primary == AT_PRIMARY_GRID) draw_grid(sc, v, &L, o, s, &hc);
-        else if (sc->primary == AT_PRIMARY_TILES) draw_tiles(sc, v, &L, o, s, &hc);
-        else draw_list(sc, v, &L, o, s, &hc);
+        if (sc->primary == AT_PRIMARY_GRID && (sc->n_tabs > 0 || sc->band != AT_BAND_NONE)) {   /* the character select: tabs over the pane, a band under it */
+            AtSplit sp;
+            AtLayout gl = L;
+            at_layout_split(&L, sc->n_tabs > 0, sc->band, &sp);
+            gl.primary = sp.grid;
+            at_plate(s, sp.grid, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH);
+            draw_grid(sc, v, &gl, o, s, &hc);
+            if (sc->n_tabs > 0) draw_tabs(sc, v, sp.tabs, o, s, &hc);
+            if (sc->band != AT_BAND_NONE) draw_band(sc, v, sp.band, o, s, &hc);
+        } else if (sc->primary == AT_PRIMARY_GRID) { at_plate(s, L.primary, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH); draw_grid(sc, v, &L, o, s, &hc); }
+        else {
+            at_plate(s, L.primary, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH);
+            if (sc->primary == AT_PRIMARY_TILES) draw_tiles(sc, v, &L, o, s, &hc);
+            else draw_list(sc, v, &L, o, s, &hc);
+        }
         if (sc->preset != AT_PRESET_NONE) at_part_explainer(s, o, L.explainer, &v->ex);
         draw_keys(sc, v, &L, o, s, &hc);
     }

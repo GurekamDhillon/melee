@@ -12,6 +12,9 @@ typedef struct AtSink {
     void (*poly)(void *u, const float x[4], const float y[4], unsigned rgba);                 /* a flat convex quad */
     void (*text)(void *u, float x, float base, const char *s, int role, unsigned rgba, int align, float max_w);
     void (*model)(void *u, int model, int ring, float x, float y, float w, float h, int focused, int dim);
+    /* A texture (a kit texture slot) drawn into x, y, w, h, tinted by rgba. NULL draws nothing: every constructor sets it or zeroes the struct,
+     * and callers go through at_sink_image, which refuses a NULL op and a negative texture. */
+    void (*image)(void *u, int tex, float x, float y, float w, float h, unsigned rgba);
 } AtSink;
 
 enum { AT_ALIGN_LEFT = 0, AT_ALIGN_CENTER = 1, AT_ALIGN_RIGHT = 2 };   /* the same numbers as GW_KIT_ALIGN_* */
@@ -32,8 +35,18 @@ void  at_part_more(const AtSink *s, const AtTextOps *o, AtRect r, const AtItem *
  * prompt_out (may be NULL) receives the prompt plate's rectangle. */
 void  at_part_title(const AtSink *s, const AtTextOps *o, const AtLayout *L, const AtScreen *sc, double now_ms, int reduced, AtRect *prompt_out);
 void  at_part_tabs(const AtSink *s, const AtTextOps *o, AtRect r, const char *const *names, const int *counts, int n, int active, int focus_tab);
+/* the same, and out[0..n) receives each tab's hit rectangle (the active, tall tab: it does not move with focus; w = 0 for a tab with no room) */
+void  at_part_tabs_ex(const AtSink *s, const AtTextOps *o, AtRect r, const char *const *names, const int *counts, int n, int active, int focus_tab, AtRect *out);
 float at_part_tag(const AtSink *s, const AtTextOps *o, float x, float y, const char *text, int tone, float max_w);   /* returns its width */
 void  at_part_cell(const AtSink *s, const AtTextOps *o, AtRect r, const AtCell *c, int state, unsigned focus_rgba);
+/* at_part_cell, with the focus brackets optional (0: the caller draws one set per cursor with at_cell_brackets). A cell with an abbreviation is a
+ * disc-art cell: its texture when tex >= 0 and the sink has an image op, else the frame with the two letters (and DISC ART where it fits). */
+void  at_part_cell_ex(const AtSink *s, const AtTextOps *o, AtRect r, const AtCell *c, int state, unsigned focus_rgba, int draw_brackets);
+void  at_sink_image(const AtSink *s, int tex, float x, float y, float w, float h, unsigned rgba);
+int   at_port_mark(const AtSink *s, float cx, float cy, float r, int port, unsigned rgba);   /* the shape: returns the polys used (circle 4, square 1, hexagon 3, diamond 2) */
+void  at_part_port_card(const AtSink *s, const AtTextOps *o, AtRect r, const AtPortCard *c, int focus);   /* focus: 0 none, else 1 + the port whose cursor is on the card (its brackets take that colour) */
+void  at_part_matchup(const AtSink *s, const AtTextOps *o, AtRect r, const AtPortCard *c, int n, int picker);
+void  at_cell_brackets(const AtSink *s, AtRect r, unsigned rgba, int slot, int of);        /* four registration brackets; slot/of offsets several ports on one cell */
 void  at_part_stone(const AtSink *s, const AtTextOps *o, AtRect r, const AtCell *c, int state, unsigned focus_rgba);
 float at_part_hint(const AtSink *s, const AtTextOps *o, float x, float base, char btn, const char *label);        /* returns its advance */
 float at_part_trail(const AtSink *s, const AtTextOps *o, AtRect r, const char *const *items, int n);              /* returns the end x */

@@ -41,6 +41,16 @@ int main(void)
       s = rec_sink(); at_part_row(&s, &OPS, row, &it, AT_ST_FOCUS); b = sty_sig(0);
       CHECK(sty_focus_cues(a, b) == 3);
       CHECK(sty_focus_cues(a, a) == 0); }                                  /* identical draws have no cue: the check can fail */
+    /* the same cues read out of a whole render by area: the ground's own polys do not hide the lift, a part elsewhere does not count */
+    { AtItem it; AtSink s; AtRect row = { 40, 100, 300, 34 }, area = { 30, 90, 320, 50 }, other = { 40, 300, 300, 34 };
+      memset(&it, 0, sizeof it); snprintf(it.label, sizeof it.label, "%s", "Stocks");
+      s = rec_sink(); at_poly_rect(&s, 0, 0, 640, 480, AT_C_GROUND); at_part_row(&s, &OPS, row, &it, AT_ST_REST); at_part_row(&s, &OPS, other, &it, AT_ST_FOCUS); a = sty_sig_in(0, area);
+      s = rec_sink(); at_poly_rect(&s, 0, 0, 640, 480, AT_C_GROUND); at_part_row(&s, &OPS, row, &it, AT_ST_FOCUS); at_part_row(&s, &OPS, other, &it, AT_ST_FOCUS); b = sty_sig_in(0, area);
+      CHECK(sty_focus_cues(a, b) == 3);
+      CHECK(sty_focus_cues(sty_sig(0), sty_sig(0)) == 0);
+      s = rec_sink(); at_poly_rect(&s, 0, 0, 640, 480, AT_C_GROUND); at_part_row(&s, &OPS, row, &it, AT_ST_REST); at_part_row(&s, &OPS, other, &it, AT_ST_REST); a = sty_sig_in(0, area);
+      s = rec_sink(); at_poly_rect(&s, 0, 0, 640, 480, AT_C_GROUND); at_part_row(&s, &OPS, row, &it, AT_ST_REST); at_part_row(&s, &OPS, other, &it, AT_ST_FOCUS); b = sty_sig_in(0, area);
+      CHECK(sty_focus_cues(a, b) == 0); }                                  /* a focus outside the area is not a cue inside it */
     /* a cell: the cues are lift, ember edge and four brackets */
     { AtCell c; AtSink s; AtRect cell = { 40, 100, 40, 40 };
       memset(&c, 0, sizeof c); c.model = AT_NO_MODEL; snprintf(c.name, sizeof c.name, "%s", "FOX");

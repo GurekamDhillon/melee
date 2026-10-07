@@ -642,11 +642,11 @@ static void fss_erase_ask(int category);
 FSE_ASK(0) FSE_ASK(1) FSE_ASK(2) FSE_ASK(3) FSE_ASK(4) FSE_ASK(5)
 #undef FSE_ASK
 static const FrontendItem fe_items_erase[] = {
-    { FE_ACTION, FE_DO_CALL, "Data set 1", "Erase this part of your save data. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fse_ask0, NULL, NULL, "ERASE (ASKS FIRST)" },
-    { FE_ACTION, FE_DO_CALL, "Data set 2", "Erase this part of your save data. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fse_ask1, NULL, NULL, "ERASE (ASKS FIRST)" },
-    { FE_ACTION, FE_DO_CALL, "Data set 3", "Erase this part of your save data. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fse_ask2, NULL, NULL, "ERASE (ASKS FIRST)" },
-    { FE_ACTION, FE_DO_CALL, "Data set 4", "Erase this part of your save data. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fse_ask3, NULL, NULL, "ERASE (ASKS FIRST)" },
-    { FE_ACTION, FE_DO_CALL, "Data set 5", "Erase this part of your save data. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fse_ask4, NULL, NULL, "ERASE (ASKS FIRST)" },
+    { FE_ACTION, FE_DO_CALL, "Unlocked Fighters", "Lock the fighters you have unlocked again. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fse_ask0, NULL, NULL, "ERASE (ASKS FIRST)" },
+    { FE_ACTION, FE_DO_CALL, "Unlocked Stages", "Lock the stages you have unlocked again. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fse_ask1, NULL, NULL, "ERASE (ASKS FIRST)" },
+    { FE_ACTION, FE_DO_CALL, "Data set 3", "Erase this part of your save data (counters kept per fighter and overall; the game gives it no name). You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fse_ask2, NULL, NULL, "ERASE (ASKS FIRST)" },
+    { FE_ACTION, FE_DO_CALL, "Fighters and Name Tags", "Reset every fighter's saved data and every name tag. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fse_ask3, NULL, NULL, "ERASE (ASKS FIRST)" },
+    { FE_ACTION, FE_DO_CALL, "Trophies", "Take back the trophies you have collected. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fse_ask4, NULL, NULL, "ERASE (ASKS FIRST)" },
     { FE_ACTION, FE_DO_CALL, "Everything", "Erase all of your save data and start over; your language stays. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fse_ask5, NULL, NULL, "ERASE (ASKS FIRST)" },
 };
 static const FrontendScreen fe_screen_erase = {

@@ -42,7 +42,9 @@ static void labels_are_honest(void)
 {
     int c, d;
     CHECK_STR(at_erase_label(5), "Everything");                                         /* the sixth operation resets every row (retail animates all six as erased) */
-    for (c = 0; c < 5; c++) { char want[24]; snprintf(want, sizeof want, "Data set %d", c + 1); CHECK_STR(at_erase_label(c), want); }   /* no name is claimed that the calls do not make certain */
+    CHECK_STR(at_erase_label(0), "Unlocked Fighters"); CHECK_STR(at_erase_label(1), "Unlocked Stages"); CHECK_STR(at_erase_label(3), "Fighters and Name Tags"); CHECK_STR(at_erase_label(4), "Trophies");
+    CHECK_STR(at_erase_label(2), "Data set 3");                                         /* named only where the calls make it certain: the fighter counters and the save region of case 2 have no name in the decomp */
+    (void) c;
     for (c = 0; c < 6; c++) {
         CHECK(strlen(at_erase_label(c)) < 24);
         for (d = c + 1; d < 6; d++) CHECK(strcmp(at_erase_label(c), at_erase_label(d)) != 0);

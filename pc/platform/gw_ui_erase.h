@@ -69,7 +69,7 @@ static int at_erase_call(int category, int k)
 
 static const char *at_erase_label(int category)
 {
-    static const char *const names[6] = { "Data set 1", "Data set 2", "Data set 3", "Data set 4", "Data set 5", "Everything" };
+    static const char *const names[6] = { "Unlocked Fighters", "Unlocked Stages", "Data set 3", "Fighters and Name Tags", "Trophies", "Everything" };
     return (category >= 0 && category < 6) ? names[category] : "";
 }
 

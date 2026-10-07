@@ -416,6 +416,11 @@ static void freeze_swallows_everything(void)
     CHECK(spoll(h, &s, &a) == GS_SETEV_ACCEPT && s == 2);               /* a fresh press does */
     gw_Ui_SetIntent(h, AT_EV_BACK, 0); CHECK(spoll(h, &s, &a) == GS_SETEV_BACK);
     gw_Ui_Freeze(h, 1); gw_Ui_Freeze(h, 1); gw_Ui_Freeze(h, 0); gw_Ui_Freeze(h, 0); CHECK(gs_set.frozen == 0);   /* idempotent */
+    /* a Back or Enter that arrived in the frame a capture or edit began is not delivered later: freezing clears the ring and a frozen poll delivers nothing */
+    gs_set.qn = 0; settle(); gw_Ui_SetIntent(h, AT_EV_BACK, 0); gw_Ui_SetIntent(h, AT_EV_ACCEPT, 0); CHECK(gs_set.qn == 2);
+    gw_Ui_Freeze(h, 1); CHECK(gs_set.qn == 0 && spoll(h, &s, &a) == 0);
+    gs_set_push(GS_SETEV_BACK, -1, 0); CHECK(spoll(h, &s, &a) == 0);                 /* even an event pushed while frozen is not delivered */
+    gw_Ui_Freeze(h, 0); gs_set.qn = 0;
     gw_Ui_SetClose(h);
     gw_Ui_Freeze(h, 1); CHECK(gs_set.frozen == 0);                      /* a closed handle freezes nothing */
 }

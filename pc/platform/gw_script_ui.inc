@@ -833,7 +833,7 @@ static void gs_ui_fill_item(AtItem *it, const char *id, const char *label, const
 }
 
 void gw_Ui_Tile(const char *id, const char *label, const char *tag, const char *numeral, int flags) {
-    if (!gs_ui_scratch_live || gs_ui_scratch.n_items >= AT_MAX_ITEMS) return;
+    if (!gs_ui_scratch_live || gs_ui_scratch.n_items >= AT_MAX_ITEMS_LUA) return;   /* the documented 32, though the record now holds AT_MAX_ITEMS for the native settings */
     gs_ui_fill_item(&gs_ui_scratch.items[gs_ui_scratch.n_items++], id, label, tag, numeral, flags);
 }
 

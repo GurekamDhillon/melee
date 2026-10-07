@@ -480,6 +480,7 @@ void gw_Ui_Freeze(int h, int on) {
     on = on != 0;
     if (on == gs_set.frozen) return;
     gs_set.frozen = on;
+    if (on) gs_set.qn = 0;                                         /* a Back or Enter that arrived in the frame the freeze began must not leak out after it */
     if (!on) gs_ui_prime((int) (u - gs_ui_slot));
 }
 
@@ -498,7 +499,7 @@ void gw_Ui_SetIntent(int h, int type, int a) {
 /* the next event: its type (GS_SETEV_*, 0 none); slot and arg are the game's locals, written big-endian */
 int gw_Ui_SetPoll(int h, int *slot, int *arg) {
     int type, i;
-    if (gs_set_get(h) == NULL || gs_set.qn <= 0) return 0;
+    if (gs_set_get(h) == NULL || gs_set.qn <= 0 || gs_set.frozen) return 0;   /* nothing is delivered while frozen */
     type = gs_set.q[0].type;
     gs_ui_put_be32(slot, gs_set.q[0].a); gs_ui_put_be32(arg, gs_set.q[0].b);
     for (i = 1; i < gs_set.qn; i++) gs_set.q[i - 1] = gs_set.q[i];

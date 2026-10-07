@@ -246,6 +246,7 @@ static void fss_back(void)
         break;
     case FSS_K_ERASE:
         fss_switch(&fe_screen_settings[FSP_GAMEPLAY]);
+        fss.want_label = "Erase Data..."; /* back on the row that opened it */
         break;
     case FSS_K_REMAP:
         fcr_back(); /* Controls_Cancel, Controls_Menu(-1), and back to CONTROLS through fe_switch_screen */
@@ -491,7 +492,7 @@ static void fss_hints(const FrontendScreen* s)
 {
     char spec[64];
     int slot = Ui_SetFocused(fss.h), vk = FSS_VK_NONE, disabled = 0, tabs = fss_ntabs() > 0 ? 1 : 0, sig;
-    if (fss.kind == FSS_K_REMAP && fss.tab == 0) {
+    if (fss.kind == FSS_K_REMAP && fss.tab == 0 && slot >= 0 && slot < fss.vis.n && fss.vis.idx[slot] >= FSS_SYNTH) {   /* an input row; the Controller choice rows get the ordinary hints */
         sig = 1000 + (fcr_also ? 1 : 0);
         if (sig != fss.hint_sig) {
             Ui_SetKeys(fss.h, fcr_also ? "A:Rebind,X:Also,L:Page,B:Back" : "A:Rebind,X:Swap,L:Page,B:Back");

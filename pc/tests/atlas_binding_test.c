@@ -1071,6 +1071,19 @@ static void value_api_as_a_mod(void)
     reset_ui();
 }
 
+/* the incremental builder (gw_Ui_Tile) holds AT_MAX_ITEMS_LUA rows, the documented 32, though the record holds 64 */
+static void engine_builder_obeys_the_lua_cap(void)
+{
+    int i;
+    char id[12];
+    reset_ui();
+    CHECK(gw_Ui_Begin("capmenu", AT_PRIMARY_TILES, 0, "CAP") == 1);
+    for (i = 0; i < 40; i++) { snprintf(id, sizeof id, "t%d", i); gw_Ui_Tile(id, id, "", "", 0); }
+    gw_Ui_Commit(0, 0);
+    CHECK(gs_ui_slot[gs_ui_find("capmenu")].sc.n_items == AT_MAX_ITEMS_LUA && AT_MAX_ITEMS_LUA == 32);
+    reset_ui();
+}
+
 int main(void)
 {
     lua_State *L = luaL_newstate();
@@ -1344,6 +1357,6 @@ int main(void)
     after_places_a_mod_entry_among_builtins(); credits_screen(); held_menu_takes_no_intent(); menu_blocked_by_a_mod_screen();
     title_pushed_on_scene_begin(); title_takes_no_input(); title_waits_for_roles(); title_without_roles_stays_retail(); title_retail_when_off();
     title_popped_on_scene_exit(); title_and_menu_together();
-    value_api_as_a_mod();
+    value_api_as_a_mod(); engine_builder_obeys_the_lua_cap();
     ATLAS_DONE("atlas binding");
 }

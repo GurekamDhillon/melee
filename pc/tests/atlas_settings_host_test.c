@@ -230,7 +230,7 @@ static void filled_and_drawn(void)
     h = gw_Ui_SetOpen(4, 0, "VERSUS", "", "RULES"); CHECK(h >= 0 && gw_Ui_TopIsEngine("settings.rules") == 1 && slot_of(h)->sc.chapter == 2); gw_Ui_SetClose(h);
     h = gw_Ui_SetOpen(5, 0, "VERSUS", "RULES", "MORE RULES"); CHECK(h >= 0 && gw_Ui_TopIsEngine("settings.morerules") == 1); gw_Ui_SetClose(h);
     h = gw_Ui_SetOpen(6, 0, "VERSUS", "MELEE", "MATCH SETUP"); CHECK(h >= 0 && gw_Ui_TopIsEngine("settings.match") == 1 && slot_of(h)->sc.chapter == 2); gw_Ui_SetClose(h);
-    CHECK(gw_Ui_SetOpen(7, 0, "", "", "") == -1 && gw_Ui_SetOpen(-1, 0, "", "", "") == -1);
+    CHECK(gw_Ui_SetOpen(8, 0, "", "", "") == -1 && gw_Ui_SetOpen(-1, 0, "", "", "") == -1);   /* 7 is the MODS screen now (atlas_mods_door_test.c) */
     h = gw_Ui_SetOpen(0, 4, "MAIN MENU", "", "SETTINGS"); CHECK(slot_of(h)->view.tab == 4); gw_Ui_SetClose(h);   /* opens on a given tab */
 }
 

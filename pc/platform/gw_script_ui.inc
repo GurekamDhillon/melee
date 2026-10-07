@@ -37,6 +37,7 @@ typedef struct {
     int self_close;         /* an engine screen the host runs alone (Credits): B closes it here, no event reaches the game */
     int native_sel;         /* a select screen (gw_script_ui_sel.inc): its cells are in adapter storage, the mouse is read there */
     int native_set;         /* the settings screens (gw_script_ui_set.inc): rows filled by the table walker, keys and mouse read there, the pad fed as intents */
+    int native_mods;        /* the MODS screen (gw_script_ui_mods.inc), a settings-door screen whose rows come from the mods model; unlike the others it may be covered by a mod's screen */
     AtScreen sc;
     AtView view;
     AtHits hits;
@@ -389,7 +390,7 @@ static int gs_ui_open_screen(int slot) {
     int owner = u->owner;
     AtStackEntry *top;
     { int t = at_stack_top(&gs_ui_stack);                          /* no mod screen over a select: it owns the pad and the cursors of every port */
-      if (t >= 0 && (gs_ui_slot[t].native_sel || gs_ui_slot[t].native_set)) { gw_log("ui: screen %s not opened: a select or settings screen is on top", u->sc.id); return 0; } }
+      if (t >= 0 && (gs_ui_slot[t].native_sel || (gs_ui_slot[t].native_set && !gs_ui_slot[t].native_mods))) { gw_log("ui: screen %s not opened: a select or settings screen is on top", u->sc.id); return 0; } }
     if (!at_stack_push(&gs_ui_stack, slot)) return 0;
     top = at_stack_top_entry(&gs_ui_stack);
     if (top != NULL && top->focus.block >= 0 && u->view.focus.block < 0) u->view.focus = top->focus;
@@ -1594,15 +1595,9 @@ static int gs_ui_script_in_mod(int script, const char *mod) {
     return script >= 0 && script < gs.n && ml > 0 && strncmp(gs.s[script].id, mod, ml) == 0 && gs.s[script].id[ml] == '/';
 }
 
-int gw_Ui_EntryActivate(const char *parent, int k) {
-    const AtEntry *c[AT_REG_VISIBLE_PER_PARENT];
-    const AtEntry *e;
-    int n, owner;
-    gs_ui_reg_boot();
-    if (parent == NULL) return 0;
-    n = at_reg_children(&gs_ui_reg, parent, gs_ui_netplay(), c, AT_REG_VISIBLE_PER_PARENT);   /* the netplay rule is the list's own */
-    if (k < 0 || k >= n) { gw_log("ui: entry %s/%d refused: not available now", parent, k); return 0; }
-    e = c[k];
+/* the entry `e` of the registry is chosen: an "opens" entry pushes the mod's own registered screen, a "script" entry runs the mod's on_entry(id) as that mod */
+static int gs_ui_activate_entry(const AtEntry *e) {
+    int owner;
     if (e->builtin) return 0;                                       /* a native row: the adapter runs it itself */
     owner = gs_ui_mod_script(e->mod, e->action == AT_ENTRY_OPENS ? NULL : "on_entry");
     if (owner < 0) { gw_log("ui: entry %s refused: no running script of mod %s", e->id, e->mod); return 0; }
@@ -1619,6 +1614,37 @@ int gw_Ui_EntryActivate(const char *parent, int k) {
     if (gs_pcall(owner, 1, 1, "on_entry") != 0) return 0;
     gs_ui_apply_result(owner);                                      /* {push = "<mod>.<screen>"} opens one of the mod's own screens */
     return 1;
+}
+
+int gw_Ui_EntryActivate(const char *parent, int k) {
+    const AtEntry *c[AT_REG_VISIBLE_PER_PARENT];
+    int n;
+    gs_ui_reg_boot();
+    if (parent == NULL) return 0;
+    n = at_reg_children(&gs_ui_reg, parent, gs_ui_netplay(), c, AT_REG_VISIBLE_PER_PARENT);   /* the netplay rule is the list's own */
+    if (k < 0 || k >= n) { gw_log("ui: entry %s/%d refused: not available now", parent, k); return 0; }
+    return gs_ui_activate_entry(c[k]);
+}
+
+/* the entry with this id, when the registry lists it as visible right now (the visibility, cap and netplay rules are the list's own), else NULL */
+static const AtEntry *gs_ui_entry_visible(const char *id) {
+    const AtEntry *c[AT_REG_VISIBLE_PER_PARENT];
+    int i, j, n;
+    gs_ui_reg_boot();
+    if (id == NULL || id[0] == '\0') return NULL;
+    for (i = 0; i < gs_ui_reg.n; i++) {
+        if (strcmp(gs_ui_reg.e[i].id, id) != 0) continue;
+        n = at_reg_children(&gs_ui_reg, gs_ui_reg.e[i].parent, gs_ui_netplay(), c, AT_REG_VISIBLE_PER_PARENT);
+        for (j = 0; j < n; j++) if (c[j] == &gs_ui_reg.e[i]) return c[j];
+    }
+    return NULL;
+}
+
+/* gd.ui.activate and the MODS screen's settings door: one entry by id, through the same path a menu tile takes */
+static int gs_ui_activate_id(const char *id) {
+    const AtEntry *e = gs_ui_entry_visible(id);
+    if (e == NULL) { gw_log("ui: entry %s refused: not available now", id != NULL ? id : ""); return 0; }
+    return gs_ui_activate_entry(e);
 }
 
 /* a script unloaded: its mod's entries go too, unless another script of the mod is still running */
@@ -2011,3 +2037,4 @@ static void gs_push_ui(lua_State *L) {
 
 #include "gw_script_ui_sel.inc"
 #include "gw_script_ui_set.inc"
+#include "gw_script_ui_mods.inc"

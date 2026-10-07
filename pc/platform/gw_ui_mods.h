@@ -14,6 +14,7 @@ extern "C" {
 
 #define AT_MODS_MAX 256                 /* GW_MODS_MAX in gw_mods.h */
 #define AT_MODS_WINDOW AT_MAX_ITEMS     /* rows the record holds */
+#define AT_MODS_DETAIL_VISIBLE 8        /* the detail has no tab strip: (362 - 28) / 39 */
 #define AT_MODS_VISIBLE 7               /* rows the list shows under its tab strip: (362 - 42 - 28) / 39 */
 /* the same meaning as GW_MOD_*; the real accessor maps them, so no number is shared */
 enum { AT_MOD_ACTIVE, AT_MOD_OFF, AT_MOD_MISSING_DEP, AT_MOD_CONFLICT };

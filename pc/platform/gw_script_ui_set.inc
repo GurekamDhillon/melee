@@ -23,7 +23,10 @@
 
 #define GS_SET_Q 32
 enum { GS_SETEV_CHANGE = 1, GS_SETEV_ACCEPT = 2, GS_SETEV_BACK = 3, GS_SETEV_TAB = 4, GS_SETEV_FOCUS = 5, GS_SETEV_ALT = 6 };   /* = FSS_EV_* (gmfrontend_atlas_table.h) */
-enum { GS_SET_TABS, GS_SET_REMAP, GS_SET_HOWTO, GS_SET_ERASE, GS_SET_RULES, GS_SET_MORERULES, GS_SET_MATCH };
+enum { GS_SET_TABS, GS_SET_REMAP, GS_SET_HOWTO, GS_SET_ERASE, GS_SET_RULES, GS_SET_MORERULES, GS_SET_MATCH, GS_SET_MODS };
+static void gs_mods_open(GsUiSlot *u);                              /* gw_script_ui_mods.inc, included after this file */
+static void gs_mods_event(GsUiSlot *u, const AtEvent *e);
+static void gs_mods_tick(GsUiSlot *u);
 
 static struct {
     int gen;                 /* the handle generation: bumped per open */
@@ -99,6 +102,7 @@ static void gs_set_event(GsUiSlot *u, const AtEvent *e) {
     AtFocusBlock fb[AT_MAX_BLOCKS];
     int nb, f;
     gs_set_resolve(u);
+    if (u->native_mods) { if (!gs_set.frozen) gs_mods_event(u, e); return; }   /* the MODS screen: its model applies the event itself */
     if (u->view.dialog.open) {                                     /* a dialog takes every event until it is answered; B is always the second button */
         AtDialog *d = &u->view.dialog;
         if (e->type == AT_EV_ACCEPT) gs_set_answer(u, d->btn[d->focus] == 'A' ? 1 : 2);
@@ -195,6 +199,7 @@ static void gs_set_tick(GsUiSlot *u) {
     AtEvent ev[16];
     int n, i;
     gs_set_resolve(u);
+    if (u->native_mods) { if (!gs_set.frozen) gs_mods_tick(u); return; }
     if (gs_set.frozen) return;                                     /* no event, and no state kept: Freeze(0) primes from what is held then */
     n = at_key_events(&u->keys, gs_ui_key_mask(), gs_now_ms(), ev, 16);
     for (i = 0; i < n; i++) gs_set_event(u, &ev[i]);
@@ -211,14 +216,14 @@ int gw_Ui_SetCanOpen(void) {
     return 0;
 }
 
-/* kind 0: the tabbed pages, 1: the remap editor, 2: the how-to page, 3: the erase screen, 4: VERSUS > RULES, 5: MORE RULES, 6: MATCH SETUP (4 to 6 are the Versus chapter's). t0 and t1: the trail's parents (SETTINGS > CONTROLS), title: the screen's name.
+/* kind 0: the tabbed pages, 1: the remap editor, 2: the how-to page, 3: the erase screen, 4: VERSUS > RULES, 5: MORE RULES, 6: MATCH SETUP (4 to 6 are the Versus chapter's), 7: MODS (its rows are the model's, gw_script_ui_mods.inc). t0 and t1: the trail's parents (SETTINGS > CONTROLS), title: the screen's name.
  * Returns a handle, or -1 (roles missing, MELEE_ATLAS=0, another native screen open, no free slot: the caller keeps the legacy drawing). */
 int gw_Ui_SetOpen(int kind, int active_tab, const char *t0, const char *t1, const char *title) {
     int i, slot = -1;
     GsUiSlot *u;
     AtScreen *sc;
-    static const char *const ids[7] = { "settings.tabs", "settings.remap", "settings.howto", "settings.erase", "settings.rules", "settings.morerules", "settings.match" };
-    if (!gw_Ui_Ready() || kind < GS_SET_TABS || kind > GS_SET_MATCH) return -1;
+    static const char *const ids[8] = { "settings.tabs", "settings.remap", "settings.howto", "settings.erase", "settings.rules", "settings.morerules", "settings.match", "mods.list" };
+    if (!gw_Ui_Ready() || kind < GS_SET_TABS || kind > GS_SET_MODS) return -1;
     if (gs_set_is_open() || gw_Ui_SelCanOpen() == 0) return -1;     /* one native screen at a time: the stack has one top */
     for (i = 0; i < GS_UI_SLOTS; i++) if (!gs_ui_slot[i].used) { slot = i; break; }
     if (slot < 0) { gw_log("ui: no free screen slot for the settings screen"); return -1; }
@@ -247,6 +252,7 @@ int gw_Ui_SetOpen(int kind, int active_tab, const char *t0, const char *t1, cons
     { int gen = gs_set.gen; memset(&gs_set, 0, sizeof gs_set); gs_set.gen = gen; }   /* a clean state; the generation only grows */
     gs_set.h = -1;
     gs_set.pending = 1; gs_set.fidx = -1;                          /* the first rows put the focus on the first row */
+    if (kind == GS_SET_MODS) { gs_set.pending = 0; gs_mods_open(u); }   /* the model builds the record: nothing is submitted row by row */
     if (!at_stack_push(&gs_ui_stack, slot)) { memset(u, 0, sizeof *u); u->dialog_fn = -1; return -1; }
     u->view.opened_ms = gs_now_ms();
     memset(&u->mouse, 0, sizeof u->mouse);                         /* the first sample only primes: a button held from the menu does not click here */

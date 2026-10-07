@@ -301,7 +301,7 @@ static int mod_parse_json(gw_mod *m, const char *text) {
 /* mod.json "menus": entries for the Atlas registry. Read here, used only while the mod is active (gw_Mods_Menu*). */
 static const char *menu_parent_name(const char *parent) {
     static const struct { const char *id, *name; } names[] = { { "main", "Main" }, { "solo", "Solo" }, { "versus", "Versus" }, { "online", "Online" },
-                                                              { "mods", "Mods" }, { "settings", "Settings" }, { "more", "More" } };
+                                                              { "mods", "Mods" }, { "settings", "Settings" }, { "more", "More" }, { "lab.pause", "LAB pause" } };
     size_t i;
     for (i = 0; i < sizeof names / sizeof names[0]; ++i) if (strcmp(parent, names[i].id) == 0) return names[i].name;
     return parent;
@@ -321,10 +321,20 @@ static void mod_load_menus(gw_mod *m, const char *text) {
     if (m->menus == NULL) return;
     memcpy(m->menus, tmp, (size_t) n * sizeof(AtEntry));
     m->nmenus = n;
-    snprintf(m->menu_summary, sizeof m->menu_summary, "adds %s > %s", menu_parent_name(tmp[0].parent), tmp[0].label);
-    if (n > 1) {
-        size_t l = strlen(m->menu_summary);
-        snprintf(m->menu_summary + l, sizeof m->menu_summary - l, " and %d more", n - 1);
+    {   /* the summary names what the mod adds to the menus: its own settings entry (parent mods.self) is not one of those */
+        int first = -1, shown = 0, k;
+        for (k = 0; k < n; ++k) {
+            if (strncmp(tmp[k].parent, "mods.", 5) == 0) continue;
+            if (first < 0) first = k;
+            shown++;
+        }
+        if (first >= 0) {
+            snprintf(m->menu_summary, sizeof m->menu_summary, "adds %s > %s", menu_parent_name(tmp[first].parent), tmp[first].label);
+            if (shown > 1) {
+                size_t l = strlen(m->menu_summary);
+                snprintf(m->menu_summary + l, sizeof m->menu_summary - l, " and %d more", shown - 1);
+            }
+        }
     }
 }
 
@@ -827,6 +837,24 @@ const char *gw_Mods_Pack(int i) { MOD_STR(pack); }
 const char *gw_Mods_Description(int i) { MOD_STR(desc); }
 const char *gw_Mods_Autostart(int i) { MOD_STR(autostart); }
 const char *gw_Mods_Requires(int i) { MOD_STR(requires_text); }
+/* comma-separated ids this mod lists as conflicts (its own list; a conflict also works from the other side). Four results stay valid at once: the Atlas MODS screen
+ * asks a few rows at a time. */
+const char *gw_Mods_Conflicts(int i) {
+    static char ring[4][GW_MODS_LIST_MAX * (GW_MODS_ID_MAX + 1)];
+    static int next;
+    gw_mod *m = mod_at(boot(), i);
+    char *out = ring[next++ & 3];
+    size_t used = 0;
+    int j;
+    out[0] = '\0';
+    if (m == NULL) return out;
+    for (j = 0; j < m->ncon; ++j) {
+        int w = snprintf(out + used, sizeof ring[0] - used, "%s%s", j ? "," : "", m->con[j]);
+        if (w < 0 || (size_t) w >= sizeof ring[0] - used) break;
+        used += (size_t) w;
+    }
+    return out;
+}
 const char *gw_Mods_StatusText(int i) { MOD_STR(status_text); }
 const char *gw_Mods_PayloadDir(int i) { MOD_STR(payload); }
 int gw_Mods_Find(const char *id) { return id != NULL ? set_find(boot(), id) : -1; }

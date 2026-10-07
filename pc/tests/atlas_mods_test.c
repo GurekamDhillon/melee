@@ -401,6 +401,17 @@ static void detail(void)
     /* the six-entry cap: six adds fit the record with everything else */
     fixture(); FM[2].nadds = 3; snprintf(FM[2].adds[1], 64, "%s", "Versus > Envoy Online"); snprintf(FM[2].adds[2], 64, "%s", "Online > Envoy Room");
     dopen(&s, 2); CHECK(SC.n_items <= AT_MAX_ITEMS);
+    /* ten rows (folder, requires, conflicts, six adds, settings) do not all fit: the focus is always in the rows shown, down to the last */
+    fixture(); FM[2].nadds = 3; snprintf(FM[2].adds[1], 64, "%s", "Versus > Envoy Online"); snprintf(FM[2].adds[2], 64, "%s", "Online > Envoy Room");
+    dopen(&s, 2);
+    for (i = 0; i < SC.n_items + 2; i++) {
+        static AtHits hits; AtRenderInfo info; AtSink sk = rec_sink(); int k, on = 0;
+        CHECK(VW.focus.index >= VW.scroll && VW.focus.index < VW.scroll + AT_MODS_DETAIL_VISIBLE);
+        at_render_ex(&SC, &VW, 640.0f, 1000.0, 0, &FAKE, &sk, &hits, &info);
+        for (k = 0; k < hits.n; k++) if (hits.h[k].kind == AT_HIT_CELL && hits.h[k].b == VW.focus.index) on = 1;
+        CHECK(on);
+        dpress(&s, ev(AT_EV_MOVE, AT_DIR_DOWN, 0));
+    }
     /* a long list and long names are cut by the fit rule inside their rows */
     fixture(); memset(FM[3].con, 'c', 63); FM[3].con[63] = '\0';
     dopen(&s, 3);

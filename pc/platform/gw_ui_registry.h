@@ -21,6 +21,7 @@ typedef struct { AtEntry e[AT_REG_MAX]; int n; char log[4][96]; int nlog; } AtRe
 
 void at_reg_init(AtRegistry *r);
 int  at_reg_is_parent(const char *id);
+const char *at_reg_owner(const char *parent);                       /* the mod id whose script may read and activate this parent's entries ("" none): lab.pause is geno-lab's, mods.<id> is <id>'s */
 int  at_reg_parent_rendered(const char *id);                        /* the parents a menu draws today; a mod entry under another is refused */                              /* the built-in nodes, spec section 8.1 */
 /* 1 added; 0 refused, with one line in r->log (the first four are kept). mod "" = a built-in entry. */
 int  at_reg_add(AtRegistry *r, const AtEntry *e);

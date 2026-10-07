@@ -402,7 +402,7 @@ int at_mods_detail_build(const AtModsSrc *s, const AtModsDetail *d, AtScreen *sc
         add_row(sc, "settings", slabel, "Opens the mod's own settings screen.");
     vw->focus.block = 0;
     vw->focus.index = d->sel >= 0 && d->sel < sc->n_items ? d->sel : 0;
-    vw->scroll = 0;
+    vw->scroll = vw->focus.index >= AT_MODS_DETAIL_VISIBLE ? vw->focus.index - AT_MODS_DETAIL_VISIBLE + 1 : 0;   /* up to ten rows: the focus is always one of the rows shown */
     vw->ex.has = 1;
     snprintf(vw->ex.kicker, sizeof vw->ex.kicker, "%s", buf);
     snprintf(vw->ex.title, sizeof vw->ex.title, "%s", name);

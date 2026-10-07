@@ -57,6 +57,36 @@ static void unknown_parent(void)
     { AtEntry s = E("envoy", "envoy", "settings", "S", "", 0); CHECK(at_reg_add(&r, &s) == 1); }
     CHECK(at_reg_parent_rendered("solo") && at_reg_parent_rendered("main") && at_reg_parent_rendered("versus") && !at_reg_parent_rendered("online"));
 }
+/* Atlas step 7: lab.pause is the LAB's pause menu (offline, geno-lab owns it); mods.self is a mod's own settings entry, filed under mods.<its id> */
+static void step7_parents(void)
+{
+    AtRegistry r; const AtEntry *c[32]; int i, added = 0;
+    AtEntry lab = E("tools", "tools.dummy", "lab.pause", "Dummy tool", "", 0), self = E("envoy", "envoy.settings", "mods.self", "Settings", "", 0);
+    AtEntry other = E("envoy", "envoy.other", "mods.sora", "X", "", 0), builtin = E("", "mods.self.b", "mods.self", "B", "", 0);
+    AtEntry pause = E("tools", "tools.p", "pause", "P", "", 0);
+    at_reg_init(&r);
+    CHECK(at_reg_add(&r, &lab) == 1 && at_reg_children(&r, "lab.pause", 0, c, 32) == 1 && strcmp(c[0]->id, "tools.dummy") == 0);
+    CHECK(at_reg_children(&r, "lab.pause", 1, c, 32) == 1);               /* the LAB is offline only, so the netplay rule has nothing to hide here: the LAB never opens online */
+    CHECK(at_reg_add(&r, &self) == 1);                                    /* mods.self is rewritten to mods.envoy */
+    CHECK(at_reg_children(&r, "mods.envoy", 0, c, 32) == 1 && strcmp(c[0]->id, "envoy.settings") == 0 && strcmp(c[0]->parent, "mods.envoy") == 0);
+    CHECK(at_reg_children(&r, "mods.self", 0, c, 32) == 0);
+    CHECK(at_reg_add(&r, &other) == 0 && strstr(r.log[r.nlog - 1], "mods.self") != NULL);   /* another mod's detail screen is not yours to fill */
+    CHECK(at_reg_add(&r, &builtin) == 0);                                 /* nor may a built-in entry use it */
+    CHECK(at_reg_add(&r, &pause) == 0);                                   /* the retail pause is still a later step */
+    CHECK_STR(at_reg_owner("lab.pause"), "geno-lab");
+    CHECK_STR(at_reg_owner("mods.envoy"), "envoy");
+    CHECK_STR(at_reg_owner("mods.self"), "");
+    CHECK_STR(at_reg_owner("solo"), "");
+    CHECK_STR(at_reg_owner("mods"), "");
+    CHECK(at_reg_is_parent("lab.pause") && at_reg_is_parent("mods.self") && at_reg_is_parent("mods.envoy") && !at_reg_is_parent("mods.") && !at_reg_is_parent("lab"));
+    CHECK(at_reg_parent_rendered("lab.pause") && at_reg_parent_rendered("mods.envoy") && !at_reg_parent_rendered("mods") && !at_reg_parent_rendered("pause"));
+    /* the caps count here as everywhere: 6 per mod per parent, 12 visible */
+    at_reg_init(&r);
+    for (i = 0; i < 9; i++) { char id[24]; AtEntry e; snprintf(id, sizeof id, "tools.t%d", i); e = E("tools", id, "lab.pause", "T", "", 0); added += at_reg_add(&r, &e); }
+    CHECK(added == AT_REG_PER_MOD_PARENT);
+    for (i = 0; i < 9; i++) { char id[24], mod[16]; AtEntry e; snprintf(mod, sizeof mod, "m%d", i); snprintf(id, sizeof id, "m%d.x", i); e = E(mod, id, "lab.pause", "T", "", 0); at_reg_add(&r, &e); }
+    CHECK(at_reg_children(&r, "lab.pause", 0, c, 32) == AT_REG_VISIBLE_PER_PARENT);
+}
 static void namespace_rule(void)
 {
     AtRegistry r; AtEntry ok = E("envoy", "envoy.daily", "solo", "DAILY", "", 0), bad = E("envoy", "lab", "solo", "LAB", "", 0),
@@ -188,7 +218,7 @@ static void roguelite_manifest(void)
 }
 int main(void)
 {
-    order(); order_ties_and_missing_after(); caps(); unknown_parent(); namespace_rule(); label_cap(); disabled_mod_adds_nothing(); online_hidden(); set_visibility(); duplicate_id(); same_id_in_two_parents();
+    order(); order_ties_and_missing_after(); caps(); unknown_parent(); step7_parents(); namespace_rule(); label_cap(); disabled_mod_adds_nothing(); online_hidden(); set_visibility(); duplicate_id(); same_id_in_two_parents();
     menus_parse_ok(); menus_parse_rejects(); menus_into_registry(); envoy_manifest(); roguelite_manifest();
     ATLAS_DONE("atlas-registry");
 }

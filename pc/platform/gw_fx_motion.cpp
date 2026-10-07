@@ -65,6 +65,13 @@ bool valid(const GwMotionOptions& o){
     if(o.speed<0||o.speed>100||o.scale<0.25f||o.scale>2||o.curve<0.25f||o.curve>4||o.width<0.05f||o.width>24||o.taper<0||o.taper>4||o.intensity<0||o.intensity>1)return false;
     for(const float* color:{o.tint,o.tail,o.edge})for(int i=0;i<4;++i)if(!std::isfinite(color[i])||color[i]<0||color[i]>1)return false;
     for(float f:o.params)if(!std::isfinite(f)||f<0||f>10)return false;
+    if(o.palette_count<0||o.palette_count>GW_MOTION_PALETTE||o.gradient_count<0||o.gradient_count==1||o.gradient_count>GW_MOTION_GRADIENT)return false;
+    for(const auto& color:o.palette)for(float f:color)if(!std::isfinite(f)||f<0||f>1)return false;
+    for(const auto& color:o.gradient)for(float f:color)if(!std::isfinite(f)||f<0||f>1)return false;
+    const float variety[]={o.hue_shift,o.scale_falloff,o.pulse[0],o.pulse[1],o.hue_drift,o.hue_span,o.swell};
+    for(float f:variety)if(!std::isfinite(f))return false;
+    if(std::abs(o.hue_shift)>360||std::abs(o.scale_falloff)>1||o.pulse[0]<0||o.pulse[0]>20||o.pulse[1]<0||o.pulse[1]>1||
+       std::abs(o.hue_drift)>720||std::abs(o.hue_span)>720||o.swell<-1||o.swell>4)return false;
     for(float f:o.offset)if(!std::isfinite(f)||std::abs(f)>100)return false;
     if(o.anchor==1&&(o.index<0||o.index>4))return false;
     if(o.anchor==4&&o.item<=0)return false;
@@ -130,13 +137,17 @@ void begin_callback(const void* data,uint32_t size){
         float strength=fade(age,o.lifetime,o.curve)*o.intensity*b.intensity;
         if(strength<=0)continue;
         Matrix inv;if(!inverse(p->view,inv)){++skipped;continue;}
-        auto world=identity();world[0]=world[5]=world[10]=o.scale;
+        // Per-copy variety (presentation only): older copies may shrink/grow, and take their own palette entry or hue.
+        const float scale=std::clamp(o.scale*(1-o.scale_falloff*float(n-1)/float(o.copies)),0.1f,3.f);
+        auto world=identity();world[0]=world[5]=world[10]=scale;
         Point shift=o.follow?b.root-p->root:Point{};
-        world[3]=p->root.x*(1-o.scale)+shift.x+o.offset[0];
-        world[7]=p->root.y*(1-o.scale)+shift.y+o.offset[1];
-        world[11]=p->root.z*(1-o.scale)+shift.z+o.offset[2];
+        world[3]=p->root.x*(1-scale)+shift.x+o.offset[0];
+        world[7]=p->root.y*(1-scale)+shift.y+o.offset[1];
+        world[11]=p->root.z*(1-scale)+shift.z+o.offset[2];
         auto delta=multiply(b.view,multiply(world,inv));
         float params[20]{};memcpy(params+4,o.tint,16);memcpy(params+8,o.tail,16);
+        if(o.palette_count>0)memcpy(params+4,o.palette[(n-1)%o.palette_count],16);
+        if(o.hue_shift!=0){hue_rotate(params+4,o.hue_shift*float(n-1));hue_rotate(params+8,o.hue_shift*float(n-1));}
         params[7]*=strength;
         if(!aurora::gx::motion::replay_group(p->draws,delta,params)){++skipped;diagnose(o.port,o.sub,aurora::gx::motion::last_failure());continue;}
         copy_draws+=pose_draws(*p);
@@ -215,7 +226,7 @@ struct Sample { Emitter emitter;Point point;int index,valid,element,entity,costu
 struct World {Matrix view;int frame,count;float intensity;Sample samples[MaxTracer*5];};
 void world_callback(const void* data,uint32_t size){
     MotionProfile profile(0x4d4f0003,"motion/ribbons");
-    if(size<offsetof(World,samples))return;World w{};memcpy(&w,data,std::min(size,uint32_t(sizeof w)));
+    if(size<offsetof(World,samples))return;static World w;memcpy(&w,data,std::min(size,uint32_t(sizeof w)));
     if(w.count<0||w.count>MaxTracer*5||size!=offsetof(World,samples)+w.count*sizeof(Sample))return;
     int present=int(aurora::gfx::current_frame());
     if(ribbon_frame_tag!=present){ribbon_frame_tag=present;ribbon_frame_vertices=0;}
@@ -340,7 +351,7 @@ extern "C" void gw_motion_prepare_ribbons(void){GXAuroraMotionCallback(ribbon_wa
 extern "C" void gw_MotionWorldDraw(int view){
     if(after_count)GXAuroraMotionCallback(finish_callback,nullptr,0);
     if(!tracer_count)return;
-    World w{};w.frame=logic_frame;w.intensity=global_intensity;
+    static World w;w.count=0;w.frame=logic_frame;w.intensity=global_intensity;
     for(int i=0;i<12;++i)w.view[i]=gw_rf32(reinterpret_cast<const char*>(uintptr_t(uint32_t(view)))+i*4);
     auto flush=[&](){if(w.count)GXAuroraMotionCallback(world_callback,&w,uint32_t(offsetof(World,samples)+w.count*sizeof(Sample)));w.count=0;};
     for(auto& e:registry)if(e.handle&&e.o.kind==2){

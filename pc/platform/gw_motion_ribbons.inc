@@ -101,13 +101,17 @@ void build_ribbon(const History<Point,GW_MOTION_HISTORY>& h,int frame,const GwMo
             Point side{tangent.y*forward.z-tangent.z*forward.y,tangent.z*forward.x-tangent.x*forward.z,tangent.x*forward.y-tangent.y*forward.x};
             float len=std::sqrt(distance2(side,{}));if(len<1e-6f)continue;
             float normalized_age=(age+1-t)/o.length;
-            side=side*(o.width*0.5f*std::pow(std::max(0.f,1-normalized_age),o.taper)/len);
+            side=side*(o.width*0.5f*width_profile(normalized_age,o.taper,o.swell)/len);
             edges.push_back({p-side,p+side,normalized_age});
         }
     }
+    const float seconds=float(frame)/60.f; // logic-frame clock: deterministic, never wall time
     auto vertex=[&](Point p,float age,float across){
         RibbonVertex v{};v.position[0]=p.x;v.position[1]=p.y;v.position[2]=p.z;v.position[3]=1;
-        for(int k=0;k<4;++k)v.color[k]=tint[k]*(1-age)+o.tail[k]*age;
+        if(o.gradient_count>=2)gradient_sample(o.gradient,o.gradient_count,age,v.color);
+        else for(int k=0;k<4;++k)v.color[k]=tint[k]*(1-age)+o.tail[k]*age;
+        if(o.hue_drift!=0||o.hue_span!=0)hue_rotate(v.color,o.hue_drift*seconds+o.hue_span*age);
+        v.color[3]*=pulse_factor(o.pulse[0],o.pulse[1],seconds,age);
         v.color[3]*=intensity*o.intensity;v.uv[0]=1-age;v.uv[1]=across;return v;
     };
     for(size_t i=1;i<edges.size();++i){

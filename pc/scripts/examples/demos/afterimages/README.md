@@ -15,3 +15,6 @@ been run or visually accepted. Changing a fighter material/costume may require
 another warm pass. Copies are unfogged; silhouette/gradient need no material
 textures. A sampled mutable copy texture degrades own-look to a silhouette.
 Held items are retained with the whole pose; warm after equipping a new item.
+
+Per-copy colour: P cycles a palette (off, rainbow, gold/blue, ember: copy n takes entry n and the palette replaces the
+status tint), H the hue shift per copy (0, 25, 60, -40, 120 degrees), E the echo scale (off, shrinking, growing).

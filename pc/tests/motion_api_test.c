@@ -35,4 +35,40 @@ int before=calls;
 run(L,"assert(not pcall(gd.tracer_hitboxes,1,{port=2}),'conflicting port accepted');assert(not pcall(gd.tracer_add,{shader='fire\\0ignored'}),'NUL shader accepted');assert(not pcall(gd.tracer_add,{anchor='right_hand\\0ignored'}),'NUL anchor accepted');assert(not pcall(gd.afterimage_add,1,{trigger='always\\0ignored',debug=true}),'NUL trigger accepted')");
 run(L,"assert(not pcall(gd.tracer_add,{anchor={hitbox=4294967296}}),'oversized hitbox accepted');assert(not pcall(gd.tracer_add,{anchor={hitbox=-4294967296}}),'negative oversized hitbox accepted');assert(not pcall(gd.tracer_add,{anchor={joint='right_hand\\0ignored'}}),'nested NUL joint accepted')");
 assert(calls==before);run(L,"assert(gd.tracer_add{anchor={joint='right_hand'}})");assert(saved.index==-2);
-lua_close(L);puts("motion production Lua parser: limits, fixture owner/stale checks, explicit port and NUL/integer refusal PASS");return 0;}
+/* Colour variety options: ranges, shapes, finiteness, clearing, partial set keeps the rest. */
+run(L,"p=assert(gd.afterimage_add(2,{palette={{1,0,0,1},{0,1,0,0.5}},hue_shift=-45,scale_falloff=0.5}))");
+assert(saved.port==2&&saved.palette_count==2&&saved.palette[1][1]==1&&saved.palette[1][3]==0.5f&&saved.hue_shift==-45&&saved.scale_falloff==0.5f);
+run(L,"assert(gd.afterimage_set(p,{copies=4}))");assert(saved.palette_count==2&&saved.copies==4); /* a partial set keeps the palette */
+run(L,"assert(gd.afterimage_set(p,{palette={}}))");assert(saved.palette_count==0&&saved.palette[0][0]==0&&saved.palette[1][1]==0);
+run(L,"assert(gd.afterimage_set(p,{palette={{1,1,1,1},{1,1,1,1},{1,1,1,1},{1,1,1,1},{1,1,1,1},{1,1,1,1}}}))");assert(saved.palette_count==6);
+before=calls;
+run(L,"assert(not pcall(gd.afterimage_set,p,{palette={{1,0,0}}}),'short colour accepted');"
+      "assert(not pcall(gd.afterimage_set,p,{palette={{1,0,0,2}}}),'colour above 1 accepted');"
+      "assert(not pcall(gd.afterimage_set,p,{palette={{1,0,0,0/0}}}),'nan colour accepted');"
+      "assert(not pcall(gd.afterimage_set,p,{palette={{1,1,1,1},{1,1,1,1},{1,1,1,1},{1,1,1,1},{1,1,1,1},{1,1,1,1},{1,1,1,1}}}),'7 palette colours accepted');"
+      "assert(not pcall(gd.afterimage_set,p,{palette=5}),'palette scalar accepted');"
+      "assert(not pcall(gd.afterimage_set,p,{palette={5}}),'palette number entry accepted');"
+      "assert(not pcall(gd.afterimage_set,p,{hue_shift=361}),'hue_shift 361 accepted');"
+      "assert(not pcall(gd.afterimage_set,p,{hue_shift=1/0}),'inf hue_shift accepted');"
+      "assert(not pcall(gd.afterimage_set,p,{scale_falloff=1.5}),'falloff 1.5 accepted')");
+assert(calls==before);
+run(L,"g=assert(gd.tracer_add{gradient={{1,0,0,1},{0,1,0,1},{0,0,1,0}},pulse={4,0.6},hue_drift=90,hue_span=-180,swell=1.5,params={1,2,0.5,2}})");
+assert(saved.gradient_count==3&&saved.gradient[2][2]==1&&saved.pulse[0]==4&&saved.pulse[1]==0.6f&&saved.hue_drift==90&&saved.hue_span==-180&&saved.swell==1.5f&&saved.params[1]==2);
+run(L,"assert(gd.tracer_set(g,{shader='glow'}))");assert(saved.gradient_count==3&&saved.shader==1);
+run(L,"assert(gd.tracer_set(g,{gradient={}}))");assert(saved.gradient_count==0&&saved.gradient[2][2]==0);
+run(L,"assert(gd.tracer_set(g,{gradient={{0,0,0,1},{1,1,1,1},{1,1,1,1},{1,1,1,1}}}))");assert(saved.gradient_count==4);
+before=calls;
+run(L,"assert(not pcall(gd.tracer_set,g,{gradient={{1,0,0,1}}}),'one-stop gradient accepted');"
+      "assert(not pcall(gd.tracer_set,g,{gradient={{1,0,0,1},{1,1,1,1},{1,1,1,1},{1,1,1,1},{1,1,1,1}}}),'5-stop gradient accepted');"
+      "assert(not pcall(gd.tracer_set,g,{pulse={4}}),'short pulse accepted');"
+      "assert(not pcall(gd.tracer_set,g,{pulse={21,0.5}}),'pulse rate 21 accepted');"
+      "assert(not pcall(gd.tracer_set,g,{pulse={4,1.5}}),'pulse depth 1.5 accepted');"
+      "assert(not pcall(gd.tracer_set,g,{pulse={4,0/0}}),'nan pulse accepted');"
+      "assert(not pcall(gd.tracer_set,g,{hue_drift=721}),'hue_drift 721 accepted');"
+      "assert(not pcall(gd.tracer_set,g,{hue_span=-721}),'hue_span -721 accepted');"
+      "assert(not pcall(gd.tracer_set,g,{swell=4.5}),'swell 4.5 accepted');"
+      "assert(not pcall(gd.tracer_set,g,{swell=-1.5}),'swell -1.5 accepted');"
+      "assert(not pcall(gd.tracer_set,g,{swell=0/0}),'nan swell accepted');"
+      "assert(not pcall(gd.tracer_set,g,{gradient={{1,0,0,1},{1,1,1,'x'}}}),'string colour accepted')");
+assert(calls==before);
+lua_close(L);puts("motion production Lua parser: limits, fixture owner/stale checks, explicit port, NUL/integer refusal and colour-variety options PASS");return 0;}

@@ -5004,7 +5004,7 @@ end
     if not it then return nil end
     local d = it.desc
     if type(d) == "function" then d = d() end
-    local ex = { kicker = TABS[menu.tab].name, title = clip(it.label, 24), what = clip(d or "", 159), from = { text = "Geno LAB" }, well = false }
+    local ex = { kicker = TABS[menu.tab].name, title = clip(it.label, 24), what = clip(d or "", 159), from = { text = it.mod or "Geno LAB" }, well = false }
     if it.preview == "mode" then
       local tags, md = {}, mode()
       for _, t in ipairs(md.t) do if #tags < 4 then tags[#tags + 1] = clip(t.k .. " " .. t.label, 19) end end
@@ -5052,7 +5052,13 @@ end
     UI.dialog({
       title = "Delete state?", text = clip(row.name ~= "" and row.name or row.file, 60) .. " is removed from the library.",
       actions = { { "A", "Delete" }, { "B", "Keep" } },
-      on = function(b) if b == "A" then lib_delete(row) after() end end,
+      on = function(b)
+        if b == "A" then
+          lib_delete(row)
+          after()
+          if menu.open and opened then UI.set_focus(SCREEN, "list", row_id(menu.tab, math.min(menu.sel[menu.tab] or 1, #shown))) end   -- a neighbour of the deleted row, never nothing
+        end
+      end,
     })
     return nil
   end
@@ -5079,6 +5085,26 @@ end
     UI.tab(SCREEN, menu.tab) -- a console command may have moved the tab: the engine keeps the player's tab across a re-registration
   end
 
+  -- other mods' tools: the entries registered under lab.pause become the rows of a MODS tab, added once when there are any; activating one is the registry's act
+  local function mod_items()
+    local out = {}
+    local okl, list = pcall(UI.entries, "lab.pause")
+    for _, e in ipairs(okl and list or {}) do
+      local entry = e
+      out[#out + 1] = {
+        label = clip(entry.label, 40), desc = entry.blurb ~= "" and entry.blurb or "A tool added by another mod.", mod = entry.mod,
+        run = function() UI.activate(entry.id) end,
+      }
+    end
+    return out
+  end
+  local function ensure_mods_tab()
+    if UI == nil or UI.entries == nil then return end
+    for _, t in ipairs(TABS) do if t.name == "MODS" then return end end
+    local okl, list = pcall(UI.entries, "lab.pause")
+    if okl and #list > 0 then table.insert(TABS, #TABS, { name = "MODS", icon = "lab_modes", items = mod_items }) end
+  end
+
   menu.ui.on = function() return opened end
   menu.ui.refresh = function()
     if opened then
@@ -5092,6 +5118,7 @@ end
     local ok, why = UI.available()
     if not ok then gd.log("Geno Lab: the Atlas menu is not available (" .. tostring(why) .. "); using the old menu") return end
     state_page = 1
+    ensure_mods_tab()
     opened = true
     local good, err = pcall(function()
       register()

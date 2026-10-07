@@ -699,7 +699,96 @@ do
   end
   expect(#long == 0, "every row description is 110 characters or less; too long: " .. table.concat(long, "; "))
   lab("menu close"); lab("ui off")
--- (Tasks 8 and 9 add their checks above this closing end: one block, one preamble, no new file-scope local)
+
+  -- ---- Task 8: the library, other mods' tools, lifetime, ownership, online ----
+  lab("ui on")
+  menu = upv(cmdfn, "menu")
+
+  -- 1. the saved-state library is paged: 60 states do not fit a 32-row record
+  local gen, lib_rows = 1, {}
+  for i = 1, 60 do lib_rows[i] = { name = "State " .. i, file = "s" .. i, saved = "today", what = "Fox v Falco", ok = true, frame = i } end
+  gd.state_gen = function() return gen end
+  gd.state_list = function() return lib_rows end
+  gd.state_delete = function(file)
+    for i, r in ipairs(lib_rows) do if r.file == file then table.remove(lib_rows, i) gen = gen + 1 return true end end
+    return false, "no such state"
+  end
+  lab("menu"); cmdfn("menu states")
+  expect(#rows() <= 32 and row("Library page") ~= nil and row("Library page").value.text == "1 / 3", "STATES with 60 saved states: at most 32 rows and a page row reading 1 / 3")
+  focus_on("Library page"); ui.engine_row(SCREEN, "right")
+  expect(row("Library page").value.text == "2 / 3" and row("State 26") ~= nil and row("State 1") == nil, "right turns the page: the second page starts at state 26")
+  ui.engine_row(SCREEN, "left"); ui.engine_row(SCREEN, "left")
+  expect(row("Library page").value.text == "3 / 3", "and wraps round to the last page")
+  ui.engine_row(SCREEN, "right")
+  -- 2. delete: Y asks in a dialog, B keeps, A deletes, and the focus lands on a neighbour (never on nothing)
+  focus_on("State 3")
+  ui.engine_press(SCREEN, "y")
+  expect(#ui.dialogs == 1 and ui.dialogs[1].actions[1][2] == "Delete", "Y on a saved state asks first, in a dialog")
+  ui.dialogs[1].on("B")
+  expect(#lib_rows == 60 and row("State 3") ~= nil, "B (Keep) deletes nothing")
+  ui.engine_press(SCREEN, "y")
+  ui.dialogs[#ui.dialogs].on("A")
+  expect(#lib_rows == 59 and row("State 3") == nil, "A (Delete) removes it from the library")
+  expect(ui.focus(SCREEN) ~= nil and (ui.focus(SCREEN) == row("State 4").id or ui.focus(SCREEN) == row("State 2").id), "the focus is on a neighbour after the delete")
+  expect(ui.state().top == SCREEN, "the screen is still open")
+  focus_on("Quick save"); local nd = #ui.dialogs; ui.engine_press(SCREEN, "y")
+  expect(#ui.dialogs == nd, "Y on a row with no delete asks nothing")
+  lab("menu close")
+
+  -- 2b. an empty library is just the fixed rows
+  lib_rows = {}; gen = gen + 1
+  lab("menu"); cmdfn("menu states")
+  expect(#rows() >= 4 and row("Library page") == nil, "no saved states: no page row")
+  lab("menu close")
+
+  -- 3. other mods' tools: entries under lab.pause appear as a tab, activating one is the registry's act
+  lab("menu"); local n_tabs0 = #desc().tabs; lab("menu close")
+  ui.entries["tools.extra"] = { id = "tools.extra", parent = "lab.pause", label = "Extra tool", blurb = "Does a thing.", mod = "tools", opens = "tools.screen", visible = true, badge = "" }
+  lab("menu")
+  local has_mods = false
+  for _, t in ipairs(desc().tabs) do if t.name == "MODS" then has_mods = true end end
+  expect(has_mods and #desc().tabs == n_tabs0 + 1, "an entry under lab.pause adds a MODS tab")
+  cmdfn("menu mods"); focus_on("Extra tool"); press("accept")
+  expect(ui.activated == "tools.extra", "A on the entry activates it through the registry")
+  local e = desc().explainer.provide(row("Extra tool").id)
+  expect(e and e.from.text == "tools" and e.what == "Does a thing.", "the explainer's FROM names the mod that added it")
+  lab("menu close")
+  lab("menu"); lab("menu close")
+  local mods_tabs = 0
+  for _, t in ipairs(TABS) do if t.name == "MODS" then mods_tabs = mods_tabs + 1 end end
+  expect(mods_tabs == 1, "the MODS tab is added once however often the menu opens")
+
+  -- 4. ownership: the screen belongs to geno-lab; another script cannot touch it; the console bypass is not what the tests ran as
+  lab("menu")
+  expect(ui._owner[SCREEN] == "geno-lab" and ui.caller == "geno-lab", "these checks ran as the script geno-lab (not as the developer console)")
+  lab("menu close")
+
+  -- 5. the Atlas menu falls back when gd.ui is not available (fonts missing): the legacy menu opens instead
+  ui.available_ok = false
+  lab("menu")
+  expect(menu.open and closed(), "gd.ui not available: the legacy menu opens and no screen is registered")
+  lab("menu close"); ui.available_ok = true
+
+  -- 6. offline only: online the menu does not open at all, and the Atlas path refuses even when called directly
+  local real = gd.match
+  gd.match = function() return { active = true, frame = now, netplay = true } end
+  lab("menu")
+  expect(not menu.open and closed(), "online: the LAB menu does not open")
+  menu.ui.open(1)
+  expect(closed(), "online: the Atlas path refuses to open")
+  gd.match = real
+
+  -- 7. a screen left open when the match ends is closed by on_match_start (a new match, a hot reload of the script)
+  lab("menu")
+  expect(ui.state().top == SCREEN, "open again")
+  env.on_match_start()
+  expect(closed() and not menu.open, "a new match closes a screen left open")
+  -- 8. the script reloaded while a screen is registered: the new instance opens its own screen cleanly
+  lab("menu"); chunk(); env.on_match_start()                        -- the reload re-registers the console command through gd.command
+  lab("ui on"); lab("menu")
+  expect(ui.state().top == SCREEN and #rows() >= 1, "after a reload the screen opens again from the new instance")
+  lab("menu close"); lab("ui off")
+-- (Task 9 adds its checks above this closing end: one block, one preamble, no new file-scope local)
 end
 for k in pairs(unknown) do u[#u + 1] = k end
 print("gd functions stubbed as no-ops: " .. table.concat(u, " "))

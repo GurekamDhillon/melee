@@ -111,6 +111,20 @@ T.test('START at the retail results screen and on a stage start already held doe
  s.pad={};a:tick();assert(a.menu.screen=='playing');s.pad={START=true};a:tick()
  assert(a.menu.screen=='pause' and s.paused,'a fresh START during the stage must still open the pause menu')
 end)
+T.test('a team stage is decided when its foes are out, though the human CPU teammate still has stocks (Atlas proof D11)',function()
+ local s,a=fixture(true);assert(a:command('start'));a:retail_event('stage_start',s.mode)
+ local pl={[1]={stocks=3,team=0},[2]={stocks=2,team=0},[3]={stocks=1,team=1}};a.g.player=function(p) return pl[p] end
+ s.pad={};a:tick();a:tick();assert(a.menu.screen=='playing' and not a.results_up,'a live foe: not decided')
+ pl[3].stocks=0;a:tick();assert(a.results_up,'the foe is out; the teammate still stands: decided')
+ s.pad={START=true};a:tick();assert(a.menu.screen=='playing' and not s.paused,'START at the team stage results reached the game, not the Envoy pause')
+ -- an engine without teams (no team field): a foe-less field still counts the old way
+ a:retail_event('stage_start',s.mode);pl={[1]={stocks=3},[2]={stocks=1}};s.pad={};a:tick();a:tick();assert(not a.results_up);pl[2].stocks=0;a:tick();assert(a.results_up)
+end)
+T.test('a clear the game accepted closes a pause Envoy opened a few frames before (Atlas proof D11)',function()
+ local s,a=fixture(true);assert(a:command('start'));a:retail_event('stage_start',s.mode)
+ s.pad={};a:tick();a:tick();s.pad={START=true};a:tick();assert(a.menu.screen=='pause' and s.paused,'a live stage pauses')
+ a:retail_event('stage_clear',s.mode);assert(a.menu.screen~='pause' and not s.paused,'the pause did not outlive the stage it was opened in: '..a.menu.screen)
+end)
 T.test('the results screen is read from game state: a decided stage ignores START, a live one still pauses',function()
  local s,a=fixture(true);assert(a:command('start'));a:retail_event('stage_start',s.mode)
  local pl={[1]={stocks=3},[2]={stocks=1}};a.g.player=function(p) return pl[p] end

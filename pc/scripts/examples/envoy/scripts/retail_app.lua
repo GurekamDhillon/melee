@@ -214,6 +214,11 @@ return function(D)
    -- at the scene change (an Adventure intro skip) must not open the menu.
    if (name=='stage_clear' or name=='boss_defeated' or name=='complete' or name=='game_over') and r.active and not r.reward then self.results_up=true end
    if name=='stage_start' then self.start_ready=false;self.seen_foe=false end
+   -- the game accepted the clear: a pause Envoy opened a few frames before, from a START it did not know was the game's, belongs to the stage that ended;
+   -- leaving it up froze the run until a second START (Atlas proof D11)
+   if (name=='stage_clear' or name=='boss_defeated' or name=='complete' or name=='game_over') and self.menu.screen=='pause' then
+    self.g.log('envoy: the stage was cleared with the pause open; closing the pause');self.menu:show('playing')
+   end
    if name=='stage_start' and r.active then self.recolour:apply(r.companion) end
    self:sync_pause()
   end
@@ -271,7 +276,11 @@ return function(D)
    local g=self.g;if not g.player then return false end
    local p1=g.player(1);if p1 and p1.stocks==0 then return true end
    local alive=false
-   for p=2,6 do local v=g.player(p);if v and type(v.stocks)=='number' and v.stocks>0 then alive=true;self.seen_foe=true end end
+   -- a TEAMMATE with stocks is not a foe: a team stage gives the human a CPU ally, and counting it kept `alive` true for ever, so the clear was never read
+   -- from state, START at the results opened Envoy's pause and the run stuck (Atlas proof D11)
+   for p=2,6 do local v=g.player(p)
+    if v and type(v.stocks)=='number' and v.stocks>0 and not (p1 and type(p1.team)=='number' and type(v.team)=='number' and p1.team>=0 and p1.team==v.team) then alive=true;self.seen_foe=true end
+   end
    if self.seen_foe and not alive then return true end
    local m=g.mode_1p and g.mode_1p();return type(m)=='table' and m.held==true
   end

@@ -7445,6 +7445,7 @@ void gw_Script_SceneBegin(int scene_kind) {
     gs_contacts_reset("scene changed; watcher cancelled");
     memset(gs_contact_labels, 0, sizeof gs_contact_labels);
     prev = gs.scene_kind;
+    gw_Ui_SceneExit(prev); /* every Atlas screen pushed during the scene that ends goes with it (menus, mod entries) */
     gw_surface_release(0);
     gw_motion_release(0);
     gs_earned_release(0);

@@ -15,13 +15,14 @@
 #include "atlas_check.h"
 
 typedef struct { char id[64]; int used, disabled, gameplay; } GsScript;
-static struct { lua_State *L; int cur, console, n; GsScript s[8]; unsigned char key_now[256]; } gs;
+static struct { lua_State *L; int cur, console, n, scene_kind; GsScript s[8]; unsigned char key_now[256]; } gs;
 static int g_may_run = 1, g_quads, g_models;
 static double g_now = 1000.0;
 static float g_track;          /* what gw_Kit_SetTracking last set */
 static int g_track_max_seen;   /* the largest non-zero value any draw saw */
 static int g_logs_render;      /* log lines about a render budget */
 static unsigned g_pad;         /* the buttons the stand-in pad holds (the raw GC bits) */
+static char g_last[512];       /* the last lua() result */
 static int g_logs_ex;          /* log lines about an explainer */
 
 void gw_log(const char *fmt, ...)
@@ -96,10 +97,233 @@ static const char *lua(const char *code)
     if (luaL_dostring(L, code) != LUA_OK) snprintf(buf, sizeof buf, "ERR %s", lua_tostring(L, -1));
     else if (lua_gettop(L) > top) snprintf(buf, sizeof buf, "%s", luaL_tolstring(L, -1, NULL));
     lua_settop(L, top);
+    snprintf(g_last, sizeof g_last, "%s", buf);
     return buf;
 }
 #define LUA_IS(code, want) CHECK_STR(lua(code), want)
 #define LUA_HAS(code, part) do { const char *_r = lua(code); at_t_count++; if (strstr(_r, part) == NULL) { at_t_fails++; printf("FAIL %s:%d: %s -> \"%s\" lacks \"%s\"\n", __FILE__, __LINE__, code, _r, part); } } while (0)
+
+
+/* ---- Atlas step 2, Task 5: engine-owned screens (driven the way their real owner drives them) ---- */
+static void reset_ui(void)
+{
+    int i;
+    for (i = 0; i < GS_UI_SLOTS; i++) { memset(&gs_ui_slot[i], 0, sizeof gs_ui_slot[i]); gs_ui_slot[i].dialog_fn = -1; }
+    memset(&gs_ui_stack, 0, sizeof gs_ui_stack);
+    gs_ui_qn = 0; g_pad = 0; gs.cur = 0; gs.scene_kind = -1;
+}
+static void fake_script(int i, const char *mod)
+{
+    snprintf(gs.s[i].id, sizeof gs.s[i].id, "%s/main", mod);
+    gs.s[i].used = 1; gs.s[i].disabled = 0;
+}
+static void fake_script_off(int i) { gs.s[i].used = 0; }
+static void fake_pad_hold(int port, unsigned bit) { (void) port; g_pad = bit; }
+static int t_lua(const char *code) { return strncmp(lua(code), "ERR", 3) != 0; }
+static const char *t_lua_err(void) { return g_last; }
+
+static int engine_menu(const char *id, int n)
+{
+    int i;
+    char tid[16];
+    if (!gw_Ui_Begin(id, AT_PRIMARY_TILES, 0, "MAIN MENU")) return 0;
+    gw_Ui_Cols(1);                                 /* the main menu is five big rows */
+    for (i = 0; i < n; i++) { snprintf(tid, sizeof tid, "t%d", i); gw_Ui_Tile(tid, tid, "", "", 0); }
+    gw_Ui_Key('A', "Open"); gw_Ui_Key('B', "Title");
+    return gw_Ui_Commit(0, 0);
+}
+static void engine_slot_survives_tick(void)
+{
+    int f;
+    reset_ui();
+    CHECK(engine_menu("main", 5) == 1);
+    for (f = 0; f < 10; f++) gs_ui_tick();
+    CHECK(gw_Ui_TopIsEngine("main") == 1);        /* the gs_ui_usable() check must not release an engine slot */
+    CHECK(gs_ui_slot[gs_ui_find("main")].owner == GS_UI_ENGINE);
+}
+static void engine_slot_not_released_by_script_unload(void)
+{
+    reset_ui();
+    engine_menu("main", 5);
+    fake_script(3, "envoy");                       /* a mod script in slot 3 */
+    gs.cur = 3; CHECK(t_lua("gd.ui.screen{ id='envoy.setup', primary={kind='list', items={{id='a', label='A'}}}, on={back=function() return {pop=true} end} }; return gd.ui.open('envoy.setup')"));
+    CHECK(gw_Ui_TopIsEngine("main") == 0);
+    gs_ui_release(3);                              /* the script unloads while its screen covers the menu */
+    CHECK(gw_Ui_TopIsEngine("main") == 1);
+    gs_ui_release(GS_UI_ENGINE);                   /* a release keyed by the engine id does nothing */
+    gs_ui_release(-1);
+    CHECK(gw_Ui_TopIsEngine("main") == 1);
+    gs.s[3].used = 0;                              /* the script is gone, the tick runs: the menu is still there */
+    gs_ui_tick(); gs_ui_tick();
+    CHECK(gw_Ui_TopIsEngine("main") == 1);
+}
+static void uncover_primes_engine_screen(void)
+{
+    int t, b, i;
+    reset_ui();
+    engine_menu("main", 5);
+    fake_script(3, "envoy");
+    gs.cur = 3; t_lua("gd.ui.screen{ id='envoy.s', primary={kind='list', items={{id='a', label='A'}}}, on={back=function() return {pop=true} end} }; gd.ui.open('envoy.s')");
+    gs.cur = -1;
+    gs_ui_tick();                                 /* B not yet held */
+    fake_pad_hold(1, AT_PAD_B);                   /* B held: it closes envoy.s ... */
+    gs_ui_tick();
+    CHECK(gw_Ui_TopIsEngine("main") == 1);
+    gw_Ui_Intent(AT_EV_BACK, 0);                  /* ... the game's menu input of that same frame is the same press: dropped */
+    while (gw_Ui_PollEvent(&t, &b, &i)) CHECK(t != AT_EV_BACK);
+    gs_ui_tick();                                 /* the next frame: an intent is the menu's own again */
+    gw_Ui_Intent(AT_EV_BACK, 0);
+    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 1 && t == AT_EV_BACK);
+}
+static void native_intents_are_primed(void)
+{
+    int t, b, i, accepts = 0;
+    reset_ui();
+    gw_Ui_Intent(AT_EV_ACCEPT, 0);                /* an intent before the screen exists is dropped */
+    engine_menu("main", 5);
+    while (gw_Ui_PollEvent(&t, &b, &i)) if (t == AT_EV_ACCEPT) accepts++;
+    CHECK(accepts == 0);
+    gw_Ui_Intent(AT_EV_MOVE, AT_DIR_DOWN);
+    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 1 && t == AT_EV_FOCUS && b == 0 && i == 1);
+    gw_Ui_Intent(AT_EV_ACCEPT, 0);
+    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 1 && t == AT_EV_ACCEPT && i == 1);
+    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);
+}
+static void intents_from_any_port(void)
+{
+    /* the engine screen does not read a port: the game feeds the merged menu input of all ports, and the pad is never read here */
+    int t, b, i;
+    reset_ui();
+    engine_menu("main", 5);
+    CHECK(gs_ui_slot[gs_ui_find("main")].sc.input_feed == 1);
+    CHECK(at_screen_wants_pad(&gs_ui_slot[gs_ui_find("main")].sc) == 0);
+    gs.cur = -1;
+    fake_pad_hold(1, AT_PAD_A); gs_ui_tick(); gs_ui_tick();       /* a held A on the pad does nothing by itself */
+    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);
+}
+static void engine_screen_covered_takes_no_intent(void)
+{
+    int t, b, i;
+    reset_ui();
+    engine_menu("main", 5);
+    fake_script(3, "envoy");
+    gs.cur = 3; t_lua("gd.ui.screen{ id='envoy.s', primary={kind='list', items={{id='a', label='A'}}} }; gd.ui.open('envoy.s')");
+    gw_Ui_Intent(AT_EV_ACCEPT, 0);
+    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);
+    gw_Ui_Intent(AT_EV_MOVE, AT_DIR_DOWN);
+    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);
+}
+static void scene_exit_closes_scene_screens(void)
+{
+    reset_ui();
+    gs.scene_kind = 1;                             /* GS_FRONTEND's kind in the stand-in */
+    engine_menu("main", 5);
+    fake_script(3, "envoy");
+    gs.cur = 3; t_lua("gd.ui.screen{ id='envoy.s', primary={kind='list', items={{id='a', label='A'}}} }; gd.ui.open('envoy.s')");
+    gw_Ui_SceneExit(1);
+    CHECK(gs_ui_stack.n == 0);                     /* neither the menu nor the mod screen reaches the next scene */
+    CHECK(gs_ui_find("main") < 0);                 /* the engine's slot is free again */
+    gs.scene_kind = 2;
+    gs.cur = 3; t_lua("gd.ui.open('envoy.s')");     /* the bag pattern: opened inside a match */
+    gw_Ui_SceneExit(1);                            /* another scene's exit leaves it alone */
+    CHECK(gs_ui_stack.n == 1);
+    gw_Ui_SceneExit(2);
+    CHECK(gs_ui_stack.n == 0);
+}
+static void console_cannot_touch_engine(void)    /* console-only check: labelled */
+{
+    reset_ui();
+    engine_menu("main", 5);
+    gs.cur = gs.console;
+    CHECK(!t_lua("gd.ui.close('main')"));
+    CHECK(strstr(t_lua_err(), "belongs to the engine") != NULL);
+    CHECK(!t_lua("gd.ui.screen{ id='main', primary={kind='list', items={{id='a', label='A'}}} }"));
+    CHECK(strstr(t_lua_err(), "belongs to the engine") != NULL);
+    CHECK(!t_lua("gd.ui.open('main')") && !t_lua("gd.ui.feed('main','accept')") && !t_lua("gd.ui.set_focus('main','tiles','t1')"));
+    CHECK(!t_lua("gd.ui.screen{ id='solo', primary={kind='list', items={{id='a', label='A'}}} }"));      /* an engine id no slot holds yet */
+    CHECK(strstr(t_lua_err(), "belongs to the engine") != NULL);
+    CHECK(t_lua("gd.ui.screen{ id='t.fine', primary={kind='list', items={{id='a', label='A'}}} }"));    /* the console's own dotted ids still work */
+    CHECK(gw_Ui_TopIsEngine("main") == 1);
+}
+static void mod_cannot_take_engine_id(void)
+{
+    reset_ui();
+    engine_menu("main", 5);
+    fake_script(3, "envoy");
+    gs.cur = 3;
+    CHECK(!t_lua("gd.ui.screen{ id='main', primary={kind='list', items={{id='a', label='A'}}} }"));
+    CHECK(!t_lua("gd.ui.close('main')"));
+    CHECK(!t_lua("gd.ui.open('main')"));
+    CHECK(gw_Ui_TopIsEngine("main") == 1);
+    CHECK(!t_lua("return gd.ui.focus('main')") || 1);
+}
+static void commit_without_change_does_not_rebuild(void)
+{
+    int before;
+    reset_ui();
+    engine_menu("main", 5);
+    before = gs_ui_slot[gs_ui_find("main")].rebuilds;
+    engine_menu("main", 5);
+    CHECK(gs_ui_slot[gs_ui_find("main")].rebuilds == before);
+    engine_menu("main", 4);
+    CHECK(gs_ui_slot[gs_ui_find("main")].rebuilds == before + 1);
+}
+static void engine_focus_is_the_games_cursor(void)
+{
+    int t, b, i;
+    AtFocusPos f;
+    reset_ui();
+    engine_menu("main", 5);
+    gw_Ui_Begin("main", AT_PRIMARY_TILES, 0, "MAIN MENU"); gw_Ui_Cols(1);        /* the game says its cursor is 3 */
+    { int k; char tid[16]; for (k = 0; k < 5; k++) { snprintf(tid, sizeof tid, "t%d", k); gw_Ui_Tile(tid, tid, "", "", 0); } }
+    gw_Ui_Key('A', "Open"); gw_Ui_Key('B', "Title");
+    gw_Ui_Commit(0, 3);
+    f = gs_ui_slot[gs_ui_find("main")].view.focus;
+    CHECK(f.block == 0 && f.index == 3);
+    gw_Ui_Intent(AT_EV_MOVE, AT_DIR_UP);
+    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 1 && t == AT_EV_FOCUS && i == 2);
+    gw_Ui_Intent(AT_EV_MOVE, AT_DIR_UP);
+    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 1 && t == AT_EV_FOCUS && i == 1);
+    gw_Ui_Begin("main", AT_PRIMARY_TILES, 0, "MAIN MENU"); gw_Ui_Cols(1);        /* a record that changes keeps the focused cell by id */
+    { int k; char tid[16]; for (k = 4; k >= 0; k--) { snprintf(tid, sizeof tid, "t%d", k); gw_Ui_Tile(tid, tid, "", "", 0); } }
+    gw_Ui_Key('A', "Open"); gw_Ui_Key('B', "Title");
+    gw_Ui_Commit(-1, -1);
+    f = gs_ui_slot[gs_ui_find("main")].view.focus;
+    CHECK(f.block == 0 && f.index == 3);                          /* t1 moved to index 3 in the reversed row: focus follows the id */
+    gw_Ui_Begin("main", AT_PRIMARY_TILES, 0, "MAIN MENU"); gw_Ui_Cols(1);
+    { int k; char tid[16]; for (k = 0; k < 5; k++) { snprintf(tid, sizeof tid, "u%d", k); gw_Ui_Tile(tid, tid, "", "", 0); } }
+    gw_Ui_Commit(0, 4);
+    CHECK(gs_ui_slot[gs_ui_find("main")].view.focus.index == 4);
+    CHECK(gw_Ui_Commit(0, 0) == 0);                               /* a Commit with no Begin does nothing */
+}
+static void engine_close_and_queue(void)
+{
+    int t, b, i;
+    reset_ui();
+    engine_menu("main", 5);
+    gw_Ui_Intent(AT_EV_BACK, 0);
+    gw_Ui_Close("main");
+    CHECK(gw_Ui_TopIsEngine(NULL) == 0 && gs_ui_find("main") < 0);
+    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);                      /* a closed screen's events are stale */
+    gw_Ui_Close("main");                                          /* closing what is not there is quiet */
+    engine_menu("main", 5);
+    gw_Ui_Begin("solo", AT_PRIMARY_TILES, 1, "SOLO"); gw_Ui_Tile("a", "A", "MOD", "", 0); gw_Ui_Tile("b", "B", "", "", AT_CELL_DISABLED); gw_Ui_Commit(0, 0);
+    gw_Ui_Intent(AT_EV_MOVE, AT_DIR_RIGHT);
+    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 1 && t == AT_EV_FOCUS && i == 1);
+    gw_Ui_Intent(AT_EV_ACCEPT, 0);                                /* a disabled tile does not accept */
+    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);
+}
+static void eight_slots_with_engine(void)
+{
+    /* the engine's screens count against the 8 slots: the front door uses at most 2 at once (menu, title) */
+    reset_ui();
+    engine_menu("main", 5);
+    CHECK(gs_ui_engine_slots() <= 2);
+    CHECK(gw_Ui_Begin("title", AT_PRIMARY_DISPLAY, 0, "") == 1);
+    gw_Ui_Display("GD'S MELEE", "PRESS START", "v1", "credit"); gw_Ui_Commit(-1, -1);
+    CHECK(gs_ui_engine_slots() == 2 && gs_ui_slot[gs_ui_find("title")].sc.primary == AT_PRIMARY_DISPLAY);
+    CHECK(at_screen_wants_pad(&gs_ui_slot[gs_ui_find("title")].sc) == 0);
+}
 
 int main(void)
 {
@@ -365,5 +589,9 @@ int main(void)
     g_pad = 0; gs_ui_tick(); g_pad = AT_PAD_A; gs_ui_tick(); g_pad = 0;
     LUA_IS("return #PT", "1");
     LUA_IS("while gd.ui.state().top do gd.ui.close() end return 'clear'", "clear");
+    engine_slot_survives_tick(); engine_slot_not_released_by_script_unload(); uncover_primes_engine_screen(); native_intents_are_primed();
+    intents_from_any_port(); engine_screen_covered_takes_no_intent(); scene_exit_closes_scene_screens(); console_cannot_touch_engine();
+    mod_cannot_take_engine_id(); commit_without_change_does_not_rebuild(); engine_focus_is_the_games_cursor(); engine_close_and_queue();
+    eight_slots_with_engine();
     ATLAS_DONE("atlas binding");
 }

@@ -11,7 +11,7 @@ return function(D)
     a.menu=D.menu.new();a.input=D.menu_input.new(g)
     a.recolour=D.recolour.new(g,C.tuning);a.visual=D.visual.new(g,C.tuning)
     a.models=D.drive_models.new(g,g.log)
-    g.command('envoy',function(arg) return a:command(arg or '') end,'menu | start | classic | adventure | campaign (parked) | retry | stop | status | menudump | dump | give <colour> <n> | reset-profile confirm')
+    g.command('envoy',function(arg) return a:command(arg or '') end,'menu | start | classic | adventure | campaign (parked) | retry | stop | status | menudump | dump | give <colour> <n> | reset-profile confirm | vs on|off|<max|strength> [seed] [depth [loop]] (offline VS builds for the CPUs)')
     if a.store.error then g.log('envoy: '..a.store.error) end
     g.log('envoy: progression and garden loaded; Power cap +10% damage and knockback')
     return a
@@ -137,6 +137,11 @@ return function(D)
     return ok,why
   end
   function A:command(arg)
+    -- `envoy vs ...`: offline VS builds for the CPUs (the rule host owns them; see mod_lab.lua). Nothing else in this command changes.
+    if arg and arg:match('^%s*vs%f[%s%z]') then
+      if not self.mods then self.g.log('envoy vs: refused rule host unavailable');return false,'rule host unavailable' end
+      return self.mods:vs_command((arg:gsub('^%s*vs%s*','')))
+    end
     local ok,result,detail=pcall(function()
       local w={};for v in arg:gmatch('%S+') do w[#w+1]=v end
       local op=w[1]

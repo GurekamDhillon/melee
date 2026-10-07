@@ -51,6 +51,15 @@ static void fas_exit(void);
 static int fs_stage_art_tex(int ext);
 static int fs_tex_fit(const char* id, int tex, float x0, float y0, float x1, float y1, const float* rgb);
 static void fs_drop_borrowed(void);
+/* the Atlas drawing of these screens (gmfrontend_atlas_online.inc, included after this file) */
+static bool fa_room_on(void);
+static void fa_room_begin(int art);
+static void fa_room_submit(void);
+static u32 fa_room_bits(void);
+static void fa_room_grid(int n, int starters);
+static void fa_room_end(void);
+extern void Ui_RoomFreeze(int on);
+static int fa_code_slot_req = -1; /* a mouse click on a code slot, for fl_frame_code to act on */
 
 /* THE LOADING SCREEN (FL_LOAD, loading_layout.json): who fights where, and the warm-up's
  * progress. VS mode's loading state (after the SSS) and the online lobby (after its countdown)
@@ -918,6 +927,10 @@ static void fl_grid_layout(void)
     }
     flg.starters = s;
     c = n - s;
+    if (fa_room_on()) {
+        fa_room_grid(n, s); /* Atlas: the host's grid model, so the cursor moves through the grid that is drawn */
+        return;
+    }
     if (n <= 6 && c == 0) {
         /* the layout's big tiles (fl_build_lobby places them): positions for the cursor only */
         flg.kind = FL_GRID_TEMPLATE;
@@ -2073,6 +2086,9 @@ static void fl_build(void)
 
 static void fl_open(int art)
 {
+    if (art != FL_CODE && art != FL_WAIT && art != FL_LOBBY) {
+        fa_room_end(); /* the loading screen, the character and stage select: no Atlas room is attached (before the select asks the host for its slot) */
+    }
     if (art == FL_CSS) {
         fs_css_open(fe_sel_css != NULL ? fe_sel_css : &gmVsMelee_CssData);
     } else if (art == FL_SSS) {
@@ -2113,6 +2129,9 @@ static void fl_open(int art)
             fl_pending_note[0] = 0;
         }
     }
+    if (art == FL_CODE || art == FL_WAIT || art == FL_LOBBY) {
+        fa_room_begin(art); /* the host attaches its room screen, or refuses and the legacy model draws */
+    }
 }
 
 /* Join a Room: a fresh code entry (a code typed before stays, a failed join's marks do not). */
@@ -2149,6 +2168,13 @@ static void fl_frame_code(u32 in)
     bool edited = false;
     for (i = 0; i < 4; i++) before[i] = Netplay_CodeChar(i);
     before[4] = Netplay_CodeSlot();
+    if (fa_code_slot_req >= 0) { /* Atlas: a click on a slot moves there, one step at a time, as the arrows do */
+        int d = fa_code_slot_req - Netplay_CodeSlot();
+        fa_code_slot_req = -1;
+        while (d != 0 && Netplay_CodeMove(d > 0 ? 1 : -1)) {
+            d += d > 0 ? -1 : 1;
+        }
+    }
     if (in & MenuInput_Left) {
         if (Netplay_CodeMove(-1)) sfxMove(); else fl.bump_until = fl.frames + 8;
     } else if (in & MenuInput_Right) {
@@ -2383,7 +2409,7 @@ static void fl_frame_lobby(u32 in)
     if (fl_reconnecting()) {
         return;
     }
-    if (fms.click && !fms_over_footer() && !fl_my_stage_turn()) {
+    if (!fa_room_on() && fms.click && !fms_over_footer() && !fl_my_stage_turn()) {
         /* the mouse: a click readies, or opens the character pick, as A does */
         if (p == LBP_READY) in |= MenuInput_AButton;
         else if (fl_can_pick_char()) in |= MenuInput_Confirm;
@@ -2419,7 +2445,7 @@ static void fl_frame_lobby(u32 in)
         else if (in & MenuInput_Right) c = fl_step_open(c, 1);
         else if (in & MenuInput_Up) c = fl_step_row(c, -1);
         else if (in & MenuInput_Down) c = fl_step_row(c, 1);
-        {
+        if (!fa_room_on()) {
             /* the mouse: pointing at an open stage moves there, a click acts on the stage
                under it, the wheel turns the page */
             int h = fl_mouse_tile(c);
@@ -2479,14 +2505,18 @@ static void fl_frame_load(void)
 
 static void fl_frame(void)
 {
-    u32 in = 0;
+    u32 in = 0, room_bits = 0;
     fl.frames++;
     if (fas_active() && (fl.art == FL_CSS || fl.art == FL_SSS)) {
         fas_frame(); /* the Atlas select: its own pads, mouse, models and drawing; nothing of the legacy panels is built */
         return;
     }
+    if (fa_room_on()) {
+        Ui_RoomFreeze(fe.frames < 4); /* the host drops its events with the legacy gate below: a click in those frames is not queued for later (a leaving screen is frozen by fa_room_leaving) */
+        room_bits = fa_room_bits();
+    }
     if (fe.frames >= 4) { /* let the button that brought us here go */
-        in = mn_80229624(4) | fms_menu_bits(); /* the mouse: right click B, the hints */
+        in = mn_80229624(4) | (fa_room_on() ? room_bits : fms_menu_bits()); /* the pad: the retail read, as ever; the mouse (and Atlas keyboard): bits */
     }
     switch (fl.art) {
     case FL_CODE: fl_frame_code(in); break;
@@ -2503,6 +2533,10 @@ static void fl_frame(void)
     }
     if (fe.screen == NULL || fe.screen->art != fl.art || fe.leaving != 0) {
         return; /* switched away (fe_switch_screen rebuilt) or leaving */
+    }
+    if (fa_room_on() && (fl.art == FL_CODE || fl.art == FL_WAIT || fl.art == FL_LOBBY)) {
+        fa_room_submit(); /* Atlas: one view a frame, no model to rebuild */
+        return;
     }
     {
         char sig[sizeof fl.sig];
@@ -2534,6 +2568,7 @@ static void fl_frame_anim(void)
 
 static void fl_exit(void)
 {
+    fa_room_end();
     fas_exit();
     fa_close(); /* the select screens' archives */
     if (fl.on) {

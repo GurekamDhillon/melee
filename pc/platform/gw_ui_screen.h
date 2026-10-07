@@ -26,7 +26,7 @@ extern "C" {
 #define AT_MAX_CARDS 4
 #define AT_MAX_LINKS 16
 
-enum { AT_PRIMARY_LIST = 1, AT_PRIMARY_GRID = 2, AT_PRIMARY_TILES = 3, AT_PRIMARY_DISPLAY = 4, AT_PRIMARY_CARDS = 5 };   /* the plan says CARDS = 3; 3 is TILES */
+enum { AT_PRIMARY_LIST = 1, AT_PRIMARY_GRID = 2, AT_PRIMARY_TILES = 3, AT_PRIMARY_DISPLAY = 4, AT_PRIMARY_CARDS = 5, AT_PRIMARY_ROOM = 6 };   /* the plan says CARDS = 3; 3 is TILES. ROOM: native only (the online room, gw_ui_room.c); Lua cannot ask for it */
 enum { AT_CELL_LOCKED = 1, AT_CELL_EMPTY = 2, AT_CELL_MERGE = 4, AT_CELL_NEW = 8, AT_CELL_SELECTED = 16, AT_CELL_DISABLED = 32,
        AT_CELL_BANNED = 64, AT_CELL_PICKED = 128, AT_CELL_UNSET = 256, AT_CELL_P1 = 512 };   /* 64 and up: strike marks, drawing only (step 6 sets them) */
 enum { AT_BD_GROUND, AT_BD_WORLD };
@@ -94,6 +94,7 @@ typedef struct {
     int warnings;
 } AtScreen;
 
+struct AtRoomView;
 typedef struct { char text[AT_STR]; int kind; double from_ms, until_ms; } AtNote;
 typedef struct { int open; char title[AT_STR]; char body[AT_TEXT]; int n; char btn[2]; char label[2][24]; int focus; double from_ms; } AtDialog;
 typedef struct {
@@ -103,6 +104,7 @@ typedef struct {
     struct { int active, block, index, card; } cursor[AT_MAX_CURSORS];   /* one per port on a shared screen: card -1 = on the grid, else the band's card */
     int tab;                                          /* the active tab */
     int progress;                                     /* 0..1000, the loading bar */
+    const struct AtRoomView *room;                    /* borrowed: the online room's view, set by the host every frame, NULL when the screen is released */
 } AtView;
 
 /* 1 ok; 0 with the reason in err. owner_mod: the mod id every screen id must start with (NULL or "" for none). */

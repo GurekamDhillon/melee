@@ -367,6 +367,9 @@ static void pause_and_persist(void)
     root = atv_table(A); S(root, "id", "envoy.x"); prim = atv_table(A); S(prim, "kind", "list"); items = atv_table(A); it = atv_table(A); S(it, "id", "a"); atv_push(A, items, it);
     atv_set(A, prim, "items", items); atv_set(A, root, "primary", prim);
     CHECK(at_screen_from_val(A, root, "envoy", &sc, err, sizeof err) && sc.pause == 0);
+    atv_init(A);                                                       /* the online room is native only: Lua cannot ask for kind "room" */
+    root = atv_table(A); S(root, "id", "envoy.room"); prim = atv_table(A); S(prim, "kind", "room"); atv_set(A, root, "primary", prim);
+    CHECK(!at_screen_from_val(A, root, "envoy", &sc, err, sizeof err) && strstr(err, "is not supported here") != NULL);
 }
 
 static int card_desc(int cards_list, const char *id, const char *name, int disabled)

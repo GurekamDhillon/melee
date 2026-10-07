@@ -234,7 +234,11 @@ return function(D)
   -- the pad's Z: the legacy input does not read it, so its poll is wrapped for the life of the screen
   local inp=S.input
   if type(inp)=='table' and type(inp.poll)=='function' then
-   self.input_poll=rawget(inp,'poll');local poll=inp.poll;local z_prev=false
+   self.input_poll=rawget(inp,'poll');local poll=inp.poll
+   -- the bag opens with the Z+START chord, so Z is normally still held now: start from the held state, as the legacy S:open does
+   -- for the buttons it uses (previous.x, previous.y, ...), so only a fresh press of Z steps the rule
+   local z_prev=false
+   do local ok,p=pcall(g.pad,inp.port or 1,true);if ok and type(p)=='table' and p.Z then z_prev=true end end
    inp.poll=function(i,...)
     local out=poll(i,...)
     local ok,p=pcall(g.pad,i.port or 1,true)

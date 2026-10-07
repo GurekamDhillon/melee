@@ -307,4 +307,23 @@ T.test('attaching twice is refused', function()
   A.set(false)
 end)
 
+T.test('opened with Z still held (the Z+START chord): the first rule shows; release and press Z for the second', function()
+  local S, ui = fake(); A.set(true)
+  local pad = { Z = true }
+  S.g.pad = function() return pad end
+  local Input = {}; function Input.poll() return {} end
+  S.input = setmetatable({ port = 1 }, { __index = Input })
+  S.blocks = blocks(); S.blocks[2].cells[1].lines = { 'Magic drive: Double', 'First rule.', 'Second rule.', '', 'x' }
+  assert(A.attach(S))
+  ui.engine_focus(ID, 'bag', 'bag:2'); ui.engine_focus(ID, 'bag', 'bag:1')
+  assert(#S.input:poll() == 0, 'Z is still held from the chord: no "more" on the first poll')
+  assert(#S.input:poll() == 0, 'nor on the next')
+  assert(ui.views[ID].explainer.what == 'First rule.', 'the first rule is shown: ' .. tostring(ui.views[ID].explainer.what))
+  pad.Z = nil; assert(#S.input:poll() == 0, 'released')
+  pad.Z = true; local out = S.input:poll()
+  assert(#out == 1 and out[1] == 'more', 'pressed: more')
+  S:press(out[1]); ui.refresh(ID); assert(ui.views[ID].explainer.what == 'Second rule.', 'the second rule is shown')
+  A.detach(S); A.set(false)
+end)
+
 T.done()

@@ -23,7 +23,7 @@
 
 #define GS_SET_Q 32
 enum { GS_SETEV_CHANGE = 1, GS_SETEV_ACCEPT = 2, GS_SETEV_BACK = 3, GS_SETEV_TAB = 4, GS_SETEV_FOCUS = 5, GS_SETEV_ALT = 6,
-       GS_SETEV_MOVE = 7, GS_SETEV_PAGE = 8 };   /* = FSS_EV_* (gmfrontend_atlas_table.h); MOVE (arg = AT_DIR_*) and PAGE (arg = -1 or 1), both with slot -1, are the data screens' only (gw_script_ui_data.inc) */
+       GS_SETEV_MOVE = 7, GS_SETEV_PAGE = 8 };   /* = FSS_EV_* (gmfrontend_atlas_table.h); MOVE (arg = AT_DIR_*; slot -1 from the pad and keys, 1 from the wheel) and PAGE (arg = -1 or 1, slot -1), are the data screens' only (gw_script_ui_data.inc) */
 enum { GS_SET_TABS, GS_SET_REMAP, GS_SET_HOWTO, GS_SET_ERASE, GS_SET_RULES, GS_SET_MORERULES, GS_SET_MATCH, GS_SET_ONLINE };
 
 static struct {
@@ -180,8 +180,8 @@ static void gs_set_mouse(GsUiSlot *u) {
         if (right) gs_set_push(GS_SETEV_BACK, -1, 0);
         if ((int) wheel != 0) {
             int dir = wheel > 0 ? 1 : -1;
-            if (gs_set.data) {                                       /* a data list: the game moves its own cursor (the wheel stops at the ends, as the legacy list did) */
-                gs_set_push(GS_SETEV_MOVE, -1, dir > 0 ? AT_DIR_UP : AT_DIR_DOWN);
+            if (gs_set.data) {                                       /* a data list: the game moves its own cursor; slot 1 says it was the wheel (the adapter stops it at the ends; keys and the pad send slot -1 and wrap) */
+                gs_set_push(GS_SETEV_MOVE, 1, dir > 0 ? AT_DIR_UP : AT_DIR_DOWN);
             } else if (row >= 0 && gs_set_steppable(&u->sc.items[row])) {   /* the wheel steps the hovered value ... */
                 gs_set_move_to(u, row);
                 gs_set_push(GS_SETEV_CHANGE, row, dir);
@@ -260,7 +260,7 @@ int gw_Ui_SetOpen(int kind, int active_tab, const char *t0, const char *t1, cons
     u->primed_frame = gs_ui_frame + 1;                             /* an intent of this very frame is the press that opened the screen */
     gs_set.gen = (gs_set.gen + 1) & 0xFFFFF;
     gs_set.h = (gs_set.gen << 8) | slot;
-    gw_log("ui: settings screen %s open (native)", sc->id);
+    gw_log("ui: settings screen %s open (native)", sc->id); /* OK-NOTEXT: an authored screen id */
     return gs_set.h;
 }
 

@@ -266,7 +266,7 @@ static void keys_and_mouse_on_a_data_list(void)
     reset_data();
     h = open_data(); events_window(h, 0, 9, 7); gw_Ui_SetFocus(h, "r0"); gw_Ui_SetKeys(h, "A:Start,B:Back"); settle(); draw_once();
     gs.key_now[VK_DOWN] = 1; gs_ui_tick(); gs.key_now[VK_DOWN] = 0; gs_ui_tick();
-    CHECK(spoll(h, &s, &a) == GS_SETEV_MOVE && a == AT_DIR_DOWN && strcmp(focused_id(h), "r0") == 0);
+    CHECK(spoll(h, &s, &a) == GS_SETEV_MOVE && a == AT_DIR_DOWN && s == -1 && strcmp(focused_id(h), "r0") == 0);   /* keys send slot -1 (they wrap) */
     gs.key_now[VK_TAB] = 1; gs_ui_tick(); gs.key_now[VK_TAB] = 0; gs_ui_tick(); CHECK(spoll(h, &s, &a) == GS_SETEV_PAGE && a == 1);
     gs.key_now[VK_RETURN] = 1; gs_ui_tick(); gs.key_now[VK_RETURN] = 0; gs_ui_tick(); CHECK(spoll(h, &s, &a) == GS_SETEV_ACCEPT && s == 0);
     gs.key_now[VK_ESCAPE] = 1; gs_ui_tick(); gs.key_now[VK_ESCAPE] = 0; gs_ui_tick(); CHECK(spoll(h, &s, &a) == GS_SETEV_BACK);
@@ -283,8 +283,8 @@ static void keys_and_mouse_on_a_data_list(void)
     g_mbuttons = 1; gs_ui_tick(); g_mbuttons = 0; gs_ui_tick();
     CHECK(spoll(h, &s, &a) == 0);                                                  /* a click on a disabled item does nothing */
     g_mbuttons = 2; gs_ui_tick(); g_mbuttons = 0; gs_ui_tick(); CHECK(spoll(h, &s, &a) == GS_SETEV_BACK);   /* a right click is back */
-    g_mwheel = 1.0f; gs_ui_tick(); g_mwheel = 0.0f; gs_ui_tick(); CHECK(spoll(h, &s, &a) == GS_SETEV_MOVE && a == AT_DIR_UP);       /* the wheel is the adapter's move, not the host's */
-    g_mwheel = -1.0f; gs_ui_tick(); g_mwheel = 0.0f; gs_ui_tick(); CHECK(spoll(h, &s, &a) == GS_SETEV_MOVE && a == AT_DIR_DOWN);
+    g_mwheel = 1.0f; gs_ui_tick(); g_mwheel = 0.0f; gs_ui_tick(); CHECK(spoll(h, &s, &a) == GS_SETEV_MOVE && a == AT_DIR_UP && s == 1);       /* the wheel is the adapter's move, not the host's; slot 1 says it was the wheel */
+    g_mwheel = -1.0f; gs_ui_tick(); g_mwheel = 0.0f; gs_ui_tick(); CHECK(spoll(h, &s, &a) == GS_SETEV_MOVE && a == AT_DIR_DOWN && s == 1);
     g_mx = g_my = -1000.0f; gs_ui_tick();
     gw_Ui_SetClose(h);
 }
@@ -330,17 +330,19 @@ static void poll_and_decoder_write_big_endian(void)
     CHECK(raw[4] == 0xFF && raw[5] == 0xFF && raw[6] == 0xFF && raw[7] == 0xFF);            /* -1 is 0xFFFFFFFF either way round */
     gw_Ui_SetClose(h);
     /* the text decoder's five counts: the game reads them with byte-swapped loads too */
-    { static const unsigned char G[8] = { 0x20, 0x41, 0x20, 0x62, 0x20, 0x37, 0x20, 0x00 }, S[8] = { 0x82, 0x60, 0x82, 0x82, 0x82, 0x56, 0x81, 0x40 };   /* invented */
+    { static unsigned char G[0x240] = { 0x20, 0x41, 0x20, 0x62, 0x20, 0x37, 0x20, 0x00 }, S[0x240] = { 0x82, 0x60, 0x82, 0x82, 0x82, 0x56, 0x81, 0x40 };   /* invented, the rest zero */
       const unsigned char sis[] = { 12, 255, 0, 0, 0x20, 0x41, 0x2F, 0xFF, 0x20, 0x62, 0 };
       unsigned char st[20]; char out[16];
       memset(st, 0xEE, sizeof st);
-      CHECK(gw_Ui_SisDecode(G, S, 4, sis, out, sizeof out, (int *) st) == 3);
+      gw_Ui_SisTables(G, S);   /* the host decodes with 0x120 pairs: the invented tables are padded */
+      CHECK(gw_Ui_SisDecode(sis, (int) sizeof sis, out, sizeof out, (int *) st) == 3);
       CHECK(strcmp(out, "A?b") == 0);
       CHECK(st[0] == 0 && st[1] == 0 && st[2] == 0 && st[3] == 3);                         /* chars 3 */
       CHECK(st[4] == 0 && st[7] == 1);                                                      /* unknown 1 */
       CHECK(st[11] == 1);                                                                   /* controls 1 */
       CHECK(st[15] == 0 && st[19] == 0);                                                    /* jumps 0, bad 0 */
-      CHECK(gw_Ui_SisDecode(G, S, 4, sis, out, sizeof out, NULL) == 3);                     /* no stats wanted */ }
+      CHECK(gw_Ui_SisDecode(sis, (int) sizeof sis, out, sizeof out, NULL) == 3);
+      CHECK(gw_Ui_SisDecode(sis, 6, out, sizeof out, (int *) st) == 1 && st[19] == 1);                  /* a length that cuts the stream: bad (the last count, big-endian) */                     /* no stats wanted */ }
 }
 
 static void rows_through_the_models(void)

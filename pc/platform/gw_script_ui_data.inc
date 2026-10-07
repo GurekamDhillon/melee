@@ -255,9 +255,13 @@ const char *gw_Ui_TagText(const unsigned char *bytes) {
 }
 
 /* ---- the retail text decoder (gw_ui_retailtext.c): the tables and the stream are game memory read as bytes, the text goes only into the caller's buffer ---- */
-int gw_Ui_SisDecode(const unsigned char *glyph, const unsigned char *sjis, int npairs, const unsigned char *sis, char *out, int cap, int *st5) {
+/* the font tables (HSD_SisLib_8040C680 and lbl_8040C8C0) are given once, so a decode takes few arguments; npairs is the atlas's 0x120 */
+static const unsigned char *gs_sis_glyph, *gs_sis_sjis;
+void gw_Ui_SisTables(const unsigned char *glyph, const unsigned char *sjis) { gs_sis_glyph = glyph; gs_sis_sjis = sjis; }
+/* len: the readable bytes from the string's start to the end of the archive's data (the game side knows it); every read is bounded by it */
+int gw_Ui_SisDecode(const unsigned char *sis, int len, char *out, int cap, int *st5) {
     AtSisStats st;
-    int r = at_sis_decode(glyph, sjis, npairs, sis, out, cap, &st);
+    int r = at_sis_decode(gs_sis_glyph, gs_sis_sjis, 0x120, sis, len, out, cap, &st);
     if (st5 != NULL) {
         gs_ui_put_be32(&st5[0], st.chars); gs_ui_put_be32(&st5[1], st.unknown); gs_ui_put_be32(&st5[2], st.controls);
         gs_ui_put_be32(&st5[3], st.jumps); gs_ui_put_be32(&st5[4], st.bad);

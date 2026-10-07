@@ -1720,6 +1720,19 @@ void fn_801771C0(ResultsData* data)
     }
 }
 
+#if defined(TARGET_PC)
+/* The Atlas Results stand-in (gmfrontend_atlas_data.inc) needs the retail winner (fn_801771C0 sets data->x6 from the summary) without touching the scene's own
+ * statics: it runs on a scratch ResultsData that holds only the summary pointer. A read; the retail scene does not use it. */
+int gmResult_PcWinner(MatchEnd* me)
+{
+    static ResultsData scratch;
+    memzero(&scratch, sizeof(scratch));
+    scratch.x94 = me;
+    fn_801771C0(&scratch);
+    return (int) scratch.x6;
+}
+#endif
+
 static inline void gmResultLoadArchive(ResultsData* data)
 {
     lbl_804D65B8 = lbArchive_80016DBC("GmRst", &data->pnlsce, "pnlsce",

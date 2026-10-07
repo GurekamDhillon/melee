@@ -35,17 +35,21 @@ int at_sjis_to_utf8(unsigned hi, unsigned lo, char out[5])
     return 1;
 }
 
-int at_sis_decode(const unsigned char *lg, const unsigned char *ls, int npairs, const unsigned char *s, char *out, int cap, AtSisStats *st)
+int at_sis_decode(const unsigned char *lg, const unsigned char *ls, int npairs, const unsigned char *s, int len, char *out, int cap, AtSisStats *st)
 {
     AtSisStats z; int i = 0, n = 0, steps = 0;
     memset(&z, 0, sizeof z);
     if (cap <= 0 || out == NULL) { if (st) *st = z; return 0; }
     out[0] = '\0';
-    if (s == NULL || lg == NULL || ls == NULL) { if (st) *st = z; return 0; }
+    if (s == NULL || lg == NULL || ls == NULL || len <= 0) { if (st) *st = z; return 0; }
     while (steps++ < 1024) {
-        unsigned op = s[i];
+        unsigned op;
+        if (i >= len) { z.bad++; break; }                                   /* ran out before a terminator */
+        op = s[i];
         if (op >= 0x20) {
-            unsigned g = ((unsigned) s[i] << 8) | s[i + 1];
+            unsigned g;
+            if (i + 2 > len) { z.bad++; break; }                            /* a cut glyph */
+            g = ((unsigned) s[i] << 8) | s[i + 1];
             char u[5]; int k, ok = 0;
             i += 2;
             for (k = 0; k < npairs; k++)
@@ -58,6 +62,7 @@ int at_sis_decode(const unsigned char *lg, const unsigned char *ls, int npairs, 
         if (op == 0) break;
         if (op == 8 || op == 9) { z.jumps++; break; }
         if (OPERANDS[op] < 0) { z.bad++; break; }
+        if (i + 1 + OPERANDS[op] > len) { z.bad++; break; }                 /* its operand bytes are cut */
         if (op == 3 && n + 1 < cap) { out[n++] = '\n'; out[n] = '\0'; z.chars++; }
         i += 1 + OPERANDS[op];
         z.controls++;

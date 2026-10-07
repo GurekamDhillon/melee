@@ -5,7 +5,8 @@
  * screen takes the row, the frontend scene stays loaded (no scene change), the menu keeps its cursor and B returns to it. So the position protocol
  * (MenuKind, selection), the SEL_* numbers and gmFrontend_NativeReturn are untouched, and no table row changed. MELEE_ATLAS=0, a netplay session, or a
  * screen left out of MELEE_ATLAS_DATA (a word list: events,name,sound,messages,bonus,misc,vsrec; empty or "all" is every one; "none" is none) runs the retail
- * screen exactly as before. The word "notext" (for example MELEE_ATLAS_DATA=all,notext) never opens the disc's text archive: every row keeps its authored label.
+ * screen exactly as before. The word "notext" never opens the disc's text archive: every row keeps its authored label. On its own it means every screen, without text; with screen words it
+ * narrows nothing (MELEE_ATLAS_DATA=sound,notext is the Sound Test without text).
  *
  * ONE DOOR. The screens are drawn by the host's data door (pc/platform/gw_script_ui_data.inc, over the settings door): one engine-owned native list screen with
  * a handle. THE ADAPTER OWNS THE CURSOR AND THE WINDOW: lists are longer than the host's window (up to 120 tags), so up, down and the wheel arrive as MOVE
@@ -14,8 +15,9 @@
  * FOCUS or ACCEPT with a window-relative slot; the window's first row is added here. An accept on a locked row is dropped by the host; this file checks again.
  *
  * READ-ONLY. A data screen writes nothing to the save by looking at it. Events write the selection only when the player starts one (gm_801BEB74, as the retail
- * list does); Sound Test sets no volume (it reads the saved ones and applies them to the live mixer, as retail does); Records, Messages, Bonus and Name Entry's
- * list write nothing. tools/port/test_fe_atlas_data.py allow-lists the game calls that write.
+ * list does); Sound Test sets no volume (it reads the saved ones and applies them to the live mixer, as retail does) and stores the heard-track flag
+ * (gmMainLib_8015ED68) for a track lbAudioAx_80023090 flags, exactly as the retail screen does (toy.c reads it for the Trophy Gallery music); Records, Messages,
+ * Bonus and Name Entry's list write nothing. tools/port/test_fe_atlas_data.py allow-lists the game calls that write.
  *
  * RETAIL TEXT. Words that live on the disc (event names and descriptions, message bodies, sound names, bonus lines) are SIS streams. They are decoded at run
  * time, per string, into a bounded buffer (fad_sis_text), drawn, and never stored in a file, a log or the repo; a string with any glyph the Latin decoder does not
@@ -61,7 +63,8 @@ extern int Ui_RankBuild(int n);
 extern int Ui_RankAt(int k);
 extern void Ui_RowTag(int h, int slot, int tag, const unsigned char* bytes, int index);
 extern const char* Ui_TagText(const unsigned char* bytes);
-extern int Ui_SisDecode(const u8* glyph, const u8* sjis, int npairs, const u8* sis, char* out, int cap, int* st5);
+extern void Ui_SisTables(const u8* glyph, const u8* sjis);
+extern int Ui_SisDecode(const u8* sis, int len, char* out, int cap, int* st5);
 extern void Ui_ResBegin(int outcome, int is_teams, int canceled);
 extern void Ui_ResPlayer(int port, int pkind, int ckind, int stocks, int kos, int falls);
 extern void Ui_ResPlayer2(int port, int percent, int team, int winner, const char* name);
@@ -74,6 +77,7 @@ extern int Ui_ResFill(int h);
 extern s32 mnInfo_80251A08(s32 id);                      /* mninfo.c: message id -> unlocked */
 extern void un_802FE3F8(int id, int base, s16* idx, s16* idx2); /* ifprize.c: message id -> its SIS index */
 extern int mnInfoBonus_PcKind(int i);                    /* mninfobonus.c (TARGET_PC): the retail bonus table, 0x100 at its end */
+extern int gmResult_PcWinner(MatchEnd* me);         /* gmresult.c (TARGET_PC): fn_801771C0's winner index (data->x6) for a summary, no scene state touched */
 extern s32 mnEvent_8024CE74(void);                       /* mnevent.c: the last page start of the event list (a scroll bound) */
 extern unsigned int mnCount_GetRowValue_Number(int row); /* mncount.c */
 extern int mnCount_GetRowValue_Character(int row);       /* mncount.c: a fighter, or SELKIND_COUNT for nobody */
@@ -147,20 +151,71 @@ static u8** fad_sis_tab;
 
 static bool fad_has(const char* hay, const char* needle);
 
+static int fad_sis_n;        ///< the table's slot count (see fad_sis_open); every index is checked against it
+static bool fad_sis_failed;  ///< the archive or its symbol is missing: remembered, so it is not reopened for every string
+
+/* the string at slot idx, and how many bytes of the archive's data lie from its start to the end: NULL when the slot is empty or its pointer is not inside the data */
+static const u8* fad_sis_stream(int idx, int* len)
+{
+    const u8* p;
+    const u8* base;
+    int size;
+    if (fad_sis_tab == NULL || idx < 0 || idx >= fad_sis_n) {
+        return NULL;
+    }
+    base = fad_sis_arc->data;
+    size = (int) fad_sis_arc->header.data_size;
+    p = (const u8*) fad_sis_tab[idx];
+    if (p == NULL || p < base || p >= base + size) {
+        return NULL;
+    }
+    *len = (int) ((base + size) - p);
+    return p;
+}
+
 static bool fad_sis_open(void)
 {
+    const u8* base;
+    int size, k, n;
+    const u8* lowest = NULL;
     if (fad_sis_tab != NULL) {
         return true;
     }
-    if (fad_has(Ui_EnvData(), "notext")) {
+    if (fad_sis_failed || fad_has(Ui_EnvData(), "notext")) {
         return false; /* MELEE_ATLAS_DATA=...,notext: never open the disc's text archive; every row keeps its authored label */
     }
     fad_sis_arc = HSD_SisLib_803A945C(lbLang_IsSavedLanguageUS() ? "SdMenu.usd" : "SdMenu.dat"); /* what mnmain.c:3019 opens for the menu scene */
     if (fad_sis_arc == NULL) {
+        fad_sis_failed = true;
         return false;
     }
     fad_sis_tab = (u8**) HSD_ArchiveGetPublicAddress(fad_sis_arc, "SIS_MenuData");
-    return fad_sis_tab != NULL;
+    base = fad_sis_arc->data;
+    size = (int) fad_sis_arc->header.data_size;
+    n = 0;
+    if (fad_sis_tab != NULL) {
+        /* the table is an array of pointers and the first string starts where it ends: its length is the distance to the lowest pointer among the first slots */
+        for (k = 0; k < 64; k++) {
+            const u8* p = (const u8*) fad_sis_tab[k];
+            if (p != NULL && p >= base && p < base + size && (lowest == NULL || p < lowest)) {
+                lowest = p;
+            }
+        }
+        if (lowest != NULL && lowest > (const u8*) fad_sis_tab) {
+            n = (int) ((lowest - (const u8*) fad_sis_tab) / 4);
+        }
+    }
+    if (fad_sis_tab == NULL || n <= 0 || n > size / 4) {
+        HSD_SisLib_803A947C(fad_sis_arc); /* the symbol is missing or the table has no readable end: close the archive and do not try again */
+        fad_sis_arc = NULL;
+        fad_sis_tab = NULL;
+        fad_sis_failed = true;
+        OSReport("frontend: Atlas data: the text archive has no usable SIS table; rows keep their authored labels\n");
+        return false;
+    }
+    fad_sis_n = n;
+    Ui_SisTables(HSD_SisLib_8040C680, lbl_8040C8C0);
+    return true;
 }
 
 static void fad_sis_close(void)
@@ -170,24 +225,32 @@ static void fad_sis_close(void)
     }
     fad_sis_arc = NULL;
     fad_sis_tab = NULL;
+    fad_sis_n = 0;
 }
 
 /* 1 when string sis_idx decoded with no unknown glyph, no jump and no bad opcode; 0 when partly or not decodable (the caller then uses its authored label).
- * out always holds what came out (never logged). A newline becomes a space: a row and the explainer wrap by themselves. */
+ * out always holds what came out (never logged). A newline becomes a space: a row and the explainer wrap by themselves. A string longer than the room is cut
+ * with "..." (and then still counts as decoded). */
 static int fad_sis_text(int sis_idx, char* out, int cap)
 {
     int st[5];
-    int i;
+    int i, len = 0, n;
+    const u8* p;
     out[0] = '\0';
-    if (sis_idx < 0 || sis_idx >= 0x600 || !fad_sis_open() || fad_sis_tab[sis_idx] == NULL) {
+    if (!fad_sis_open() || (p = fad_sis_stream(sis_idx, &len)) == NULL) {
         return 0;
     }
     st[0] = st[1] = st[2] = st[3] = st[4] = 0;
-    Ui_SisDecode(HSD_SisLib_8040C680, lbl_8040C8C0, 0x120, (const u8*) fad_sis_tab[sis_idx], out, cap, st);
+    n = Ui_SisDecode(p, len, out, cap, st);
     for (i = 0; out[i] != '\0'; i++) {
         if (out[i] == '\n') {
             out[i] = ' ';
         }
+    }
+    if (st[0] > n && n >= 4) { /* more characters than fit: the cut is shown */
+        out[n - 3] = '.';
+        out[n - 2] = '.';
+        out[n - 1] = '.';
     }
     return st[1] == 0 && st[3] == 0 && st[4] == 0 && out[0] != '\0';
 }
@@ -199,9 +262,11 @@ static void fad_sis_selfcheck(void)
     u8 buf[0x100];
     char back[32];
     int st[5];
+    int n;
     st[0] = st[1] = st[2] = st[3] = st[4] = 0;
-    HSD_SisLib_803A67EC(buf, (u8*) probe);
-    Ui_SisDecode(HSD_SisLib_8040C680, lbl_8040C8C0, 0x120, buf, back, sizeof back, st);
+    n = HSD_SisLib_803A67EC(buf, (u8*) probe);
+    Ui_SisTables(HSD_SisLib_8040C680, lbl_8040C8C0);
+    Ui_SisDecode(buf, n + 1, back, sizeof back, st);
     OSReport("frontend: sis round trip %s (chars %d, unknown %d, bad %d)\n", strcmp(back, probe) == 0 ? "ok" : "FAILED", st[0], st[1], st[4]); /* OK-NOTEXT */
 }
 
@@ -213,12 +278,13 @@ static void fad_probe_range(const char* source, int first, int count, int step)
     int st[5];
     int n = 0, c = 0, u = 0, k;
     for (k = 0; k < count; k++) {
-        int idx = first + k * step;
-        if (idx < 0 || idx >= 0x600 || fad_sis_tab[idx] == NULL) {
+        int len = 0;
+        const u8* p = fad_sis_stream(first + k * step, &len);
+        if (p == NULL) {
             continue;
         }
         st[0] = st[1] = st[2] = st[3] = st[4] = 0;
-        Ui_SisDecode(HSD_SisLib_8040C680, lbl_8040C8C0, 0x120, (const u8*) fad_sis_tab[idx], buf, sizeof buf, st);
+        Ui_SisDecode(p, len, buf, sizeof buf, st);
         n++;
         c += st[0];
         u += st[1];
@@ -246,11 +312,21 @@ static void fad_text_probe(void)
     fad_sis_close();
 }
 
-/* a one-line copy of text into the explainer's room, never longer than the field (the host clamps and adds "..." too) */
+/* a copy of text that fits cap, with "..." where it was cut (the host clamps again with its own field and does the same) */
 static const char* fad_clip(const char* text, char* out, int cap)
 {
+    int n = (int) strlen(text);
+    if (n < cap) {
+        strcpy(out, text);
+        return out;
+    }
     strncpy(out, text, (size_t) (cap - 1));
     out[cap - 1] = '\0';
+    if (cap > 4) {
+        out[cap - 4] = '.';
+        out[cap - 3] = '.';
+        out[cap - 2] = '.';
+    }
     return out;
 }
 
@@ -592,6 +668,9 @@ static bool fad_snd_accept(int i)
         } else if (act == 1 || act == 3) { /* play, or switch to this row */
             lbAudioAx_80024614(gm_801601C4(gmMainLib_8015ED74())); /* the saved music volume, read not written */
             lbAudioAx_80023F28((s32) data_2[text_ids[i]].idx);
+            if (lbAudioAx_80023090((int) data_2[text_ids[i]].idx) != 0) {
+                gmMainLib_8015ED68((ssize_t) data_2[text_ids[i]].idx); /* as mnSoundTest_PlaySampleAnim does: the save remembers this track as heard (toy.c reads it for the Trophy Gallery music) */
+            }
             fad_snd.playing = i;
         }
     } else if (i >= 0 && i < FAD_SND_GROUPS) {
@@ -902,14 +981,21 @@ static void fad_read_env(void)
 {
     const char* e;
     int i;
+    bool any = false;
     if (fad.env_read) {
         return;
     }
     fad.env_read = true;
     e = Ui_EnvData(); /* the string of MELEE_ATLAS_DATA, "" when unset */
+    for (i = 1; i < FD_COUNT; i++) { /* a list with no screen word in it (empty, "all", or only "notext") means every screen */
+        const FadScreen* s = fad_find(i);
+        if (s != NULL && fad_has(e, s->word)) {
+            any = true;
+        }
+    }
     for (i = 1; i < FD_COUNT; i++) {
         const FadScreen* s = fad_find(i);
-        if (s != NULL && (e[0] == '\0' || fad_has(e, "all") || fad_has(e, s->word)) && !fad_has(e, "none")) {
+        if (s != NULL && (!any || fad_has(e, "all") || fad_has(e, s->word)) && !fad_has(e, "none")) {
             fad.enabled |= 1u << i;
         }
     }
@@ -1041,8 +1127,16 @@ static void fad_event(const FadScreen* s, int type, int slot, int arg)
             break;
         }
         if (fad.total > 0 && (arg == FSS_DIR_UP || arg == FSS_DIR_DOWN)) {
-            fad.focus = arg == FSS_DIR_UP ? (fad.focus > 0 ? fad.focus - 1 : fad.total - 1) : (fad.focus < fad.total - 1 ? fad.focus + 1 : 0); /* over the whole list */
-            sfxMove();
+            if (slot == 1) { /* the mouse wheel (the host sends slot 1; keys and the pad send -1): it stops at the ends, as the other lists' wheel does */
+                int to = arg == FSS_DIR_UP ? fad.focus - 1 : fad.focus + 1;
+                if (to >= 0 && to < fad.total) {
+                    fad.focus = to;
+                    sfxMove();
+                }
+            } else {
+                fad.focus = arg == FSS_DIR_UP ? (fad.focus > 0 ? fad.focus - 1 : fad.total - 1) : (fad.focus < fad.total - 1 ? fad.focus + 1 : 0); /* the pad and keys wrap over the whole list */
+                sfxMove();
+            }
         }
         break;
     case FAD_EV_ACCEPT: {
@@ -1192,6 +1286,7 @@ static void fad_scene_exit(void)
  */
 static int far_frames;
 static int far_wait;
+static int far_card_frames; ///< frames since the card appeared: retail starts the exit countdown only after the card's frame 50 (fn_80178050)
 static int far_h = -1;
 static bool far_started;
 static bool far_cancel;
@@ -1229,6 +1324,7 @@ static void far_enter(void* arg)
     int i, j;
     far_frames = 0;
     far_wait = 0;
+    far_card_frames = 0;
     far_h = -1;
     far_started = false;
     far_winner = -1;
@@ -1253,13 +1349,16 @@ static void far_enter(void* arg)
         fas_fighter_name(p->ckind, name, sizeof name);
         Ui_ResPlayer(i, p->pkind, p->ckind, p->stocks, (int) p->x20, falls);
         Ui_ResPlayer2(i, p->percent, p->team, far_is_winner(me, i) ? 1 : 0, name);
-        if (far_winner < 0 && far_is_winner(me, i)) {
-            far_winner = i;
-            far_win_ck = p->ckind;
-            far_win_ft = p->ftkind;
-            far_win_team = p->team;
-            far_rumble = p->pkind == Gm_PKind_Human && !far_cancel && p->x3_b6;
-        }
+    }
+    far_winner = gmResult_PcWinner((MatchEnd*) me); /* the retail winner (x6): the announcer, the victory theme and the rumble follow it, as in gm_Scene_Results_OnEnter */
+    if (far_winner >= 0 && far_winner < 4 && me->player_standings[far_winner].pkind != 3) {
+        const MatchPlayerData* w = &me->player_standings[far_winner];
+        far_win_ck = w->ckind;
+        far_win_ft = w->ftkind;
+        far_win_team = w->team;
+        far_rumble = w->pkind == Gm_PKind_Human && !far_cancel && w->x3_b6;
+    } else {
+        far_winner = -1;
     }
     Ui_ResCommit();
     if (!far_cancel && far_winner >= 0) {
@@ -1318,7 +1417,8 @@ static void far_frame(void)
     }
     {
         int done = Ui_ResDone();
-        if (done >= 0) {
+        far_card_frames++;
+        if (done >= 0 && far_card_frames > 50) {
             if (far_wait++ >= done) {
                 gm_801A4B60(); /* the retail exit: the mode's next state decides what follows */
             }

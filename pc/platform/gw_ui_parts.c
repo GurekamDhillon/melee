@@ -377,12 +377,20 @@ float at_part_tag(const AtSink *s, const AtTextOps *o, float x, float y, const c
 }
 
 /* A disc-art cell's face (a cell with an abbreviation): the texture inside the cell keeping the icon's 64x56 aspect; with no art (or a sink with
- * no image op) the flat frame's two letters, and the words DISC ART where they fit. Locked or disabled art is dimmed AND marked: the lock
- * glyph for a locked cell, a slash across a disabled one (a shape, not only a colour). */
+ * no image op) the flat frame's two letters, and the words DISC ART where they fit. A cell that is tall enough (a stage's) and has a name carries
+ * its name on a plate along the bottom, wrapped to two lines at most in the smallest caps role. Locked or disabled art is dimmed AND marked: the
+ * lock glyph for a locked cell, a slash across a disabled one (a shape, not only a colour). */
 static void cell_art(const AtSink *s, const AtTextOps *o, AtRect r, float y, const AtCell *c, int locked, int disabled)
 {
-    int dim = locked || disabled, drawn = 0;
-    float ix = r.x + 3.0f, iy = y + 3.0f, iw = r.w - 6.0f, ih = r.h - 6.0f;
+    int dim = locked || disabled, drawn = 0, nl = 0;
+    char lines[2][96];
+    float plate_h = 0.0f, ix = r.x + 3.0f, iy = y + 3.0f, iw = r.w - 6.0f, ih;
+    if (c->name[0] != '\0' && r.h >= 52.0f) {
+        int clamped = 0;
+        nl = at_wrap(o, AT_R_CAP12, c->name, r.w - 8.0f, 2, lines, &clamped);
+        plate_h = nl >= 2 ? 29.0f : 17.0f;
+    }
+    ih = r.h - 6.0f - plate_h;
     if (c->tex >= 0 && s->image != NULL && iw > 0.0f && ih > 0.0f) {
         float w = iw, h = iw * 56.0f / 64.0f;
         if (h > ih) { h = ih; w = ih * 64.0f / 56.0f; }
@@ -390,14 +398,55 @@ static void cell_art(const AtSink *s, const AtTextOps *o, AtRect r, float y, con
         drawn = 1;
     }
     if (!drawn) {
-        float base = y + r.h * (locked ? 0.40f : 0.5f) + 5.0f;
-        int word = !locked && twidth(o, AT_R_CAP12, "DISC ART") <= r.w - 6.0f;
+        float mid = iy + ih * 0.5f, base = mid + (locked ? -4.0f : 5.0f);
+        int word = !locked && plate_h == 0.0f && twidth(o, AT_R_CAP12, "DISC ART") <= r.w - 6.0f;
         if (word) base = y + r.h * 0.5f;
         at_text(s, o, AT_R_CAP14, c->abbr, r.x + r.w * 0.5f, base, dim ? AT_C_DIM : AT_C_IVORY, AT_ALIGN_CENTER, 0.0f);
         if (word) at_text(s, o, AT_R_CAP12, "DISC ART", r.x + r.w * 0.5f, y + r.h - 8.0f, AT_C_DIM, AT_ALIGN_CENTER, 0.0f);
     }
-    if (locked) glyph_lock(s, r.x + r.w * 0.5f, y + r.h * 0.72f, AT_C_DIM);
+    if (nl > 0) {                                                        /* the name plate: along the bottom, clear of the 3 px edge and both chamfers */
+        int k;
+        at_poly_rect(s, r.x + 3.0f, y + r.h - 3.0f - plate_h, r.w - 6.0f, plate_h, 0x0B0D12D9u);
+        for (k = 0; k < nl; k++)
+            fit_text(s, o, AT_R_CAP12, lines[k], r.x + r.w * 0.5f, y + r.h - 3.0f - plate_h + 13.0f + 12.0f * (float) k, dim ? AT_C_DIM : AT_C_IVORY, AT_ALIGN_CENTER, r.w - 8.0f);
+    }
+    if (locked) glyph_lock(s, r.x + r.w * 0.5f, iy + ih * 0.62f, AT_C_DIM);
     else if (disabled) poly4(s, ix + 1.0f, iy + ih, ix + 3.0f, iy + ih, ix + iw, iy, ix + iw - 2.0f, iy, AT_C_ROSE);   /* the slash */
+}
+
+/* The strike and ban marks the lobby asks for through cell flags (drawing only: the decisions are not made here). BANNED: two bars across the
+ * tile and the word BAN. PICKED: an ember ring and the word PICK. Unless UNSET, the numeral and shape of the port that struck or picked it sit
+ * at the top left (AT_CELL_P1: port 1, else port 2). Words that do not fit the tile are left out; the bars and the ring remain. */
+static unsigned port_colour(int port);
+static void cell_marks(const AtSink *s, const AtTextOps *o, AtRect r, float y, const AtCell *c)
+{
+    int banned = (c->flags & AT_CELL_BANNED) != 0, picked = (c->flags & AT_CELL_PICKED) != 0 && !banned;
+    float x0 = r.x + 3.0f, y0 = y + 3.0f, x1 = r.x + r.w - 3.0f, y1 = y + r.h - 3.0f, t = 3.0f;
+    AtRect pr;
+    pr.x = r.x; pr.y = y; pr.w = r.w; pr.h = r.h;
+    if (!banned && !picked) return;
+    if (banned) {
+        poly4(s, x0, y0, x0 + t, y0, x1, y1, x1 - t, y1, AT_C_ROSE);
+        poly4(s, x1 - t, y0, x1, y0, x0 + t, y1, x0, y1, AT_C_ROSE);
+    } else {
+        outline_ch(s, pr, 2.0f, (float) AT_PX_CH_XS, AT_C_EMBER);
+    }
+    {
+        const char *word = banned ? "BAN" : "PICK";
+        float ww = twidth(o, AT_R_CAP12, word) + 8.0f;
+        if (ww <= r.w - 6.0f) {
+            float wx = r.x + (r.w - ww) * 0.5f, wy = y + (r.h - 14.0f) * 0.5f - 2.0f;
+            at_poly_rect(s, wx, wy, ww, 14.0f, banned ? AT_C_INK : AT_C_EMBER);
+            at_text(s, o, AT_R_CAP12, word, r.x + r.w * 0.5f, wy + 11.0f, banned ? AT_C_ROSE : AT_C_INK, AT_ALIGN_CENTER, 0.0f);
+        }
+    }
+    if (!(c->flags & AT_CELL_UNSET) && r.w >= 30.0f) {
+        int port = (c->flags & AT_CELL_P1) ? 0 : 1;
+        char num[2];
+        num[0] = (char) ('1' + port); num[1] = '\0';
+        at_port_mark(s, r.x + 11.0f, y + 11.0f, 7.0f, port, port_colour(port));
+        at_text(s, o, AT_R_CAP12, num, r.x + 11.0f, y + 15.0f, AT_C_INK, AT_ALIGN_CENTER, 0.0f);
+    }
 }
 
 /* draw_brackets 0: the caller draws the cursors' brackets itself (several ports on one cell: at_cell_brackets) */
@@ -444,6 +493,7 @@ void at_part_cell_ex(const AtSink *s, const AtTextOps *o, AtRect r, const AtCell
             float px = r.x + (r.w - (7.0f * (float) c->pips - 2.0f)) * 0.5f;                /* centred along the bottom edge */
             for (p = 0; p < c->pips; p++) at_poly_rect(s, px + 7.0f * (float) p, y + r.h - 9.0f, 5.0f, 5.0f, AT_C_JADE);
         }
+        if (c->flags & (AT_CELL_BANNED | AT_CELL_PICKED)) cell_marks(s, o, r, y, c);
         if (c->flags & (AT_CELL_MERGE | AT_CELL_SELECTED)) outline_ch(s, pr, 2.0f, cc, AT_C_JADE);
         if (c->flags & AT_CELL_MERGE) {
             at_poly_rect(s, r.x, y + r.h - 18.0f, r.w, 15.0f, AT_C_JADE);

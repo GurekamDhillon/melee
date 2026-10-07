@@ -167,12 +167,15 @@ static void draw_grid(const AtScreen *sc, const AtView *v, const AtLayout *L, co
     GridBox g;
     const float gap = 8.0f;
     int b, maxc = 1, total, first, fr = -1, row0 = 0, it, p;
+    float cmin, cmax;
     g.x0 = L->primary.x + 12.0f; g.iw = L->primary.w - 24.0f; g.top = L->primary.y + 12.0f;
     g.bottom = L->primary.y + L->primary.h - 12.0f - (sc->footer.has ? 48.0f + 8.0f : 0.0f);
-    g.acols = sc->grid_cols_auto ? at_grid_cols(g.iw, 36.0f, 56.0f, gap) : 0;
+    cmin = sc->grid_cell_min > 0 ? (float) sc->grid_cell_min : 36.0f; cmax = sc->grid_cell_max > 0 ? (float) sc->grid_cell_max : 56.0f;
+    if (cmax < cmin) cmax = cmin;
+    g.acols = sc->grid_cols_auto ? at_grid_cols(g.iw, cmin, cmax, gap) : 0;
     for (b = 0; b < sc->n_blocks; b++) if (!sc->blocks[b].stones && cols_in(&g, &sc->blocks[b]) > maxc) maxc = cols_in(&g, &sc->blocks[b]);
     g.cell = (float) floor((g.iw - (float) (maxc - 1) * gap) / (float) maxc);
-    if (g.cell > 56.0f) g.cell = 56.0f;
+    if (g.cell > cmax) g.cell = cmax;
     if (g.cell < 24.0f) g.cell = 24.0f;
     total = grid_rows(sc, &g);
     for (p = -1; p < AT_MAX_CURSORS && fr < 0; p++) {                     /* the legacy focus first, then the lowest port's cursor on the grid */

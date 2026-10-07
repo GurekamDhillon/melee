@@ -60,6 +60,7 @@ typedef struct {
     int band;                                        /* AT_BAND_*: port cards or the matchup strip under the pane */
     AtPortCard cards[4];
     int grid_cols_auto;                              /* 1: the renderer picks the grid's columns from the pane's width (at_grid_cols) */
+    int grid_cell_min, grid_cell_max;                /* auto columns: the tile size range in px (0: 36 and 56, the character select's; the stage select uses 54 and 72) */
     AtKey keys[AT_MAX_KEYS]; int n_keys;
     char counter[AT_STR]; int fn_counter;
     int input_feed, port;

@@ -20,7 +20,7 @@ static const AtCssProfile T[] = {
     { 0xB, 2, 1, 0, 0, 1, 1, 0, 0, 0, 0 },
     { 0xC, 2, 1, 0, 0, 1, 1, 0, 0, 0, 0 },
     { 0xD, 2, 1, 0, 0, 1, 1, 0, 0, 0, 0 },
-    /* Event (gm_801BA938 only presets the opponents in the preload cache: it filters nothing the player picks) */
+    /* Event (the retail Event setup only presets the opponents in the preload cache: it filters nothing the player picks) */
     { 0xE, 3, 1, 0, 0, 1, 1, 0, 0, 0, 0 },
     /* Stadium: Target Test, Home-Run, Multi-Man 10 and 100, 3-Minute, 15-Minute, Endless, Cruel */
     { 0xF, 4, 1, 0, 0, 1, 1, 0, 0, 0, 0 },

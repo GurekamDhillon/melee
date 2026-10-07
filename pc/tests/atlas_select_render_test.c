@@ -195,9 +195,68 @@ static void entries_stay_bounded(void)
     CHECK(info.capped == 0 && info.entries < AT_SCREEN_QUAD_WARN && info.hits_dropped == 0);
 }
 
+/* the stage select: up to 256 stages, no explainer, bigger tiles with the stage's name under its picture */
+static void build_stage_screen(int n)
+{
+    int i;
+    memset(&SC, 0, sizeof SC); at_view_init(&V); memset(POOL, 0, sizeof POOL);
+    snprintf(SC.id, sizeof SC.id, "%s", "select.sss"); snprintf(SC.title, sizeof SC.title, "%s", "STAGES");
+    snprintf(SC.parent[0], AT_STR, "%s", "VERSUS"); snprintf(SC.parent[1], AT_STR, "%s", "MELEE"); SC.n_parents = 2; SC.chapter = 2;
+    SC.primary = AT_PRIMARY_GRID; SC.preset = AT_PRESET_NONE; SC.grid_cols_auto = 1; SC.grid_cell_min = 54; SC.grid_cell_max = 72; SC.band = AT_BAND_NONE;
+    SC.n_blocks = 1; snprintf(SC.blocks[0].id, AT_ID, "%s", "stages"); SC.blocks[0].ext = POOL; SC.blocks[0].ext_n = n;
+    SC.n_tabs = 3; snprintf(SC.tabs[0].name, 24, "ALL"); SC.tabs[0].count = n; snprintf(SC.tabs[1].name, 24, "RETAIL"); SC.tabs[1].count = n - 20; snprintf(SC.tabs[2].name, 24, "ADDED"); SC.tabs[2].count = 20;
+    for (i = 0; i < n; i++) {
+        snprintf(POOL[i].id, AT_ID, "s%d", i); POOL[i].model = AT_NO_MODEL; POOL[i].ring = AT_NO_MODEL; POOL[i].tex = -1;
+        POOL[i].abbr[0] = (char) ('A' + i % 26); POOL[i].abbr[1] = (char) ('A' + (i / 26) % 26);
+        snprintf(POOL[i].name, AT_STR, "%s", i % 3 == 0 ? "Peach's Castle" : i % 3 == 1 ? "Yoshi's Story" : "Fountain of Dreams and a very long name");
+    }
+    SC.keys[0].btn = 'A'; snprintf(SC.keys[0].label, AT_STR, "%s", "Choose"); SC.keys[1].btn = 'B'; snprintf(SC.keys[1].label, AT_STR, "%s", "Back"); SC.n_keys = 2;
+    V.key_shown[0] = V.key_shown[1] = 1; snprintf(V.key_label[0], AT_STR, "%s", "Choose"); snprintf(V.key_label[1], AT_STR, "%s", "Back");
+    V.cursor[0].active = 1; V.cursor[0].block = 0; V.cursor[0].index = 0; V.cursor[0].card = -1;
+}
+static void stages_256(void)
+{
+    static const int widths[] = { 640, 1140 };
+    int wi, i;
+    for (wi = 0; wi < 2; wi++) {
+        AtSink s; AtRenderInfo info; int cells = 0; AtLayout L; AtSplit sp;
+        build_stage_screen(256);
+        s = rec_sink(); at_render_ex(&SC, &V, (float) widths[wi], 1000.0, 1, &O, &s, &HITS, &info);
+        CHECK(info.capped == 0 && info.entries < AT_SCREEN_QUAD_WARN && info.hits_dropped == 0 && texts_legible());
+        at_layout((float) widths[wi], AT_PRESET_NONE, &L); at_layout_split(&L, 1, AT_BAND_NONE, &sp);
+        for (i = 0; i < HITS.n; i++) {
+            const AtHit *h = &HITS.h[i];
+            if (h->kind != AT_HIT_CELL) continue;
+            cells++;
+            CHECK(h->r.w >= 54.0f - 0.01f && h->r.w <= 72.0f + 0.01f && h->r.h == h->r.w);
+            CHECK(h->r.x >= sp.grid.x && h->r.x + h->r.w <= sp.grid.x + sp.grid.w && h->r.y >= sp.grid.y && h->r.y + h->r.h <= sp.grid.y + sp.grid.h);
+        }
+        CHECK(cells > 0 && cells < 256);                                                     /* a long list scrolls */
+        /* a stage tile shows its name plate (two lines at most, inside the tile) with the letters above it */
+        { int k, seen = 0;
+          for (k = 0; k < HITS.n; k++) if (HITS.h[k].kind == AT_HIT_CELL && HITS.h[k].b == 0) {
+              const AtRect r = HITS.h[k].r; int j;
+              for (j = 0; j < REC.nt; j++) {
+                  const RecText *t = &REC.t[j]; float w = fake_width(NULL, t->role, t->s), left = t->x - (t->align == AT_ALIGN_CENTER ? w * 0.5f : 0.0f);
+                  if (t->base >= r.y - 2.0f && t->base <= r.y + r.h + 2.0f && left >= r.x - 0.01f && left + w <= r.x + r.w + 0.01f) seen++;
+              }
+              CHECK(seen >= 3);                                                                /* abbreviation and at least one name line inside the tile */
+          } }
+        { int lines = 0; AtRect r0 = { 0, 0, 0, 0 };
+          for (i = 0; i < HITS.n; i++) if (HITS.h[i].kind == AT_HIT_CELL && HITS.h[i].b == 0) r0 = HITS.h[i].r;
+          for (i = 0; i < REC.nt; i++) if (REC.t[i].role == AT_R_CAP12 && REC.t[i].base > r0.y + r0.h * 0.5f && REC.t[i].base <= r0.y + r0.h && REC.t[i].x >= r0.x && REC.t[i].x <= r0.x + r0.w) lines++;
+          CHECK(lines >= 1 && lines <= 2); }
+    }
+    /* the lobby marks cells: ban and pick flags on stage tiles stay inside the budget and legible */
+    { AtSink s; AtRenderInfo info; build_stage_screen(100); for (i = 0; i < 100; i += 3) POOL[i].flags = AT_CELL_BANNED | (i % 2 ? AT_CELL_P1 : 0u);
+      for (i = 1; i < 100; i += 7) POOL[i].flags = AT_CELL_PICKED | AT_CELL_P1;
+      s = rec_sink(); at_render_ex(&SC, &V, 640.0f, 1000.0, 1, &O, &s, &HITS, &info);
+      CHECK(info.capped == 0 && info.entries < AT_SCREEN_QUAD_WARN && texts_legible() && find_text("BAN") != NULL); }
+}
+
 int main(void)
 {
     rosters_at_three_widths(); hits_follow_layout(); placeholder_when_no_art(); style_of_the_screen(); focus_on_a_cell_has_three_cues();
-    long_roster_scroll_follows_cursor(); entries_stay_bounded();
+    long_roster_scroll_follows_cursor(); entries_stay_bounded(); stages_256();
     ATLAS_DONE("atlas select render");
 }

@@ -527,6 +527,37 @@ static void explainer_art_and_stepper(void)
     s = rec_sink(); at_part_explainer(&s, &O, pane, &e); CHECK(REC.ni == 0);
     s = rec_sink(); at_part_explainer(&s, &O, (AtRect){ 448.0f, 66.0f, 160.0f, 362.0f }, &e); CHECK(REC.ni == 0);
 }
+/* the strike and ban marks (drawing only): each says what it is in words or a shape, stays inside the cell, and never relies on colour alone */
+static void strike_marks(void)
+{
+    AtCell c; AtRect r = { 40, 100, 56, 56 }; AtSink s; StySig a, b;
+    memset(&c, 0, sizeof c); c.model = AT_NO_MODEL; c.tex = -1; snprintf(c.abbr, sizeof c.abbr, "%s", "PC"); snprintf(c.name, sizeof c.name, "%s", "Peach's Castle");
+    s = rec_sink(); at_poly_rect(&s, 0, 0, 640, 480, AT_C_PLATE); at_part_cell(&s, &O, r, &c, AT_ST_REST, AT_C_P1);
+    CHECK(find_text("PC") != NULL && sty_text_inside(r, 0) == -1 && sty_chamfer(r, 3.0f, AT_C_PLATE) == 0);   /* the plain stage cell: letters, a name plate, inside */
+    CHECK(REC.nt >= 2 && texts_legible());
+    s = rec_sink(); at_part_cell(&s, &O, r, &c, AT_ST_REST, AT_C_P1); a = sty_sig(0);
+    /* banned: the word BAN, a crossing in a shape, text inside the cell */
+    c.flags = AT_CELL_BANNED | AT_CELL_P1;
+    s = rec_sink(); at_poly_rect(&s, 0, 0, 640, 480, AT_C_PLATE); at_part_cell(&s, &O, r, &c, AT_ST_REST, AT_C_P1);
+    CHECK(find_text("BAN") != NULL && count_color(AT_C_ROSE) >= 2 && sty_text_inside(r, 0) == -1 && texts_legible() && sty_chamfer(r, 3.0f, AT_C_PLATE) == 0);
+    CHECK(find_text("1") != NULL);                                                          /* the port that struck it: its numeral ... */
+    { AtSink s2 = rec_sink(); at_part_cell(&s2, &O, r, &c, AT_ST_REST, AT_C_P1); CHECK(REC.np > a.polys); }   /* ... and its shape */
+    c.flags = AT_CELL_BANNED;                                                                /* the other port */
+    s = rec_sink(); at_part_cell(&s, &O, r, &c, AT_ST_REST, AT_C_P1); CHECK(find_text("2") != NULL && find_text("1") == NULL && find_text("BAN") != NULL);
+    c.flags = AT_CELL_BANNED | AT_CELL_UNSET;                                                /* struck by nobody known: the word, no numeral */
+    s = rec_sink(); at_part_cell(&s, &O, r, &c, AT_ST_REST, AT_C_P1); CHECK(find_text("BAN") != NULL && find_text("1") == NULL && find_text("2") == NULL);
+    /* picked: the ember ring (a shape) and the word PICK, the picker's numeral */
+    c.flags = AT_CELL_PICKED | AT_CELL_P1;
+    s = rec_sink(); at_part_cell(&s, &O, r, &c, AT_ST_REST, AT_C_P1); b = sty_sig(0);
+    CHECK(b.ember_polys >= 4 && find_text("PICK") != NULL && find_text("1") != NULL && sty_text_inside(r, 0) == -1 && texts_legible());
+    CHECK(find_text("BAN") == NULL);
+    /* a small cell: the words are dropped when they do not fit, never squeezed under 12 px or out of the cell */
+    { AtRect small = { 40, 100, 36, 36 }; c.flags = AT_CELL_BANNED | AT_CELL_P1; s = rec_sink(); at_part_cell(&s, &O, small, &c, AT_ST_REST, AT_C_P1);
+      CHECK(sty_text_inside(small, 0) == -1 && texts_legible() && count_color(AT_C_ROSE) >= 2); }   /* the crossing still says it */
+    /* ban and focus together: the three cues remain */
+    c.flags = AT_CELL_BANNED | AT_CELL_P1; s = rec_sink(); at_part_cell(&s, &O, r, &c, AT_ST_REST, AT_C_P1); a = sty_sig(0);
+    s = rec_sink(); at_part_cell(&s, &O, r, &c, AT_ST_FOCUS, AT_C_P2); b = sty_sig(0); CHECK(sty_focus_cues(a, b) == 3);
+}
 static void two_cursors_one_cell(void)
 {
     AtSink s = rec_sink(); AtRect r = { 40, 100, 40, 40 };
@@ -542,6 +573,6 @@ int main(void)
 {
     plates(); rows(); values(); tabs_and_tags();
     cells(); hints_and_chrome(); explainer_note_dialog(); fix_round1(); fix_round2();
-    sink_without_image_is_safe(); image_cell(); cell_style(); port_cards(); matchup_strip(); two_cursors_one_cell(); explainer_art_and_stepper();
+    sink_without_image_is_safe(); image_cell(); cell_style(); port_cards(); matchup_strip(); two_cursors_one_cell(); explainer_art_and_stepper(); strike_marks();
     ATLAS_DONE("atlas parts");
 }

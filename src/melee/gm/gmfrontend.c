@@ -1166,6 +1166,7 @@ static bool fm_back_to_online_item; ///< backing out of ONLINE lands on its VS h
 #include "gmfrontend_kitlist.inc"
 #include "gmfrontend_online.inc"
 #include "gmfrontend_select.inc"
+#include "gmfrontend_atlas_select.inc"
 #include "gmfrontend_settings.inc"
 
 /* Legacy panels, rows and buttons share the grid too. The source grid uses

@@ -44,6 +44,10 @@ static void fs_build_sss(void);
 static void fs_css_sig(char* sig);
 static void fs_sss_sig(char* sig);
 static void fa_close(void);
+static int fas_open(int art);   /* the Atlas select (gmfrontend_atlas_select.inc) */
+static bool fas_active(void);
+static void fas_frame(void);
+static void fas_exit(void);
 static int fs_stage_art_tex(int ext);
 static int fs_tex_fit(const char* id, int tex, float x0, float y0, float x1, float y1, const float* rgb);
 static void fs_drop_borrowed(void);
@@ -2079,6 +2083,9 @@ static void fl_open(int art)
         fl_load_init();
     }
     fl.art = art;
+    if (art == FL_CSS || art == FL_SSS) {
+        fas_open(art); /* the Atlas drawing of the select, when it can run: the legacy drawing stays off while it does */
+    }
     fl.frames = 0;
     fl.sig[0] = '\0';
     fl.toast[0] = '\0';
@@ -2474,6 +2481,10 @@ static void fl_frame(void)
 {
     u32 in = 0;
     fl.frames++;
+    if (fas_active() && (fl.art == FL_CSS || fl.art == FL_SSS)) {
+        fas_frame(); /* the Atlas select: its own pads, mouse, models and drawing; nothing of the legacy panels is built */
+        return;
+    }
     if (fe.frames >= 4) { /* let the button that brought us here go */
         in = mn_80229624(4) | fms_menu_bits(); /* the mouse: right click B, the hints */
     }
@@ -2519,6 +2530,7 @@ static void fl_frame_anim(void)
 
 static void fl_exit(void)
 {
+    fas_exit();
     fa_close(); /* the select screens' archives */
     if (fl.on) {
         fp_free_textures();

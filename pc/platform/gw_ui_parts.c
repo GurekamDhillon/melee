@@ -638,8 +638,9 @@ void at_part_explainer(const AtSink *s, const AtTextOps *o, AtRect r, const AtEx
     int n, i, clamped = 0;
     at_plate(s, r, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH);
     if (!e->has) return;
-    at_poly_rect(s, x, y, w, 96.0f, AT_C_GROUND2);                       /* the media well */
-    if (e->media_model != AT_NO_MODEL) {
+    if (!e->no_well) at_poly_rect(s, x, y, w, 96.0f, AT_C_GROUND2);      /* the media well */
+    if (e->no_well) {
+    } else if (e->media_model != AT_NO_MODEL) {
         s->model(s->user, e->media_model, e->media_ring, x + 8.0f, y + 4.0f, w - 16.0f, 88.0f, 1, 0);
     } else if (e->media_abbr[0] != '\0') {                              /* a disc-art portrait (136x188, kept in its aspect), or its frame's letters */
         float ph = 88.0f, pw = ph * 136.0f / 188.0f;
@@ -650,7 +651,7 @@ void at_part_explainer(const AtSink *s, const AtTextOps *o, AtRect r, const AtEx
             if (twidth(o, AT_R_CAP12, "DISC ART") <= w - 16.0f) at_text(s, o, AT_R_CAP12, "DISC ART", x + w * 0.5f, y + 78.0f, AT_C_DIM, AT_ALIGN_CENTER, 0.0f);
         }
     }
-    y += 106.0f;
+    y += e->no_well ? 0.0f : 106.0f;
     fit_text(s, o, AT_R_CAP14, e->kicker, x, y + 11.0f, AT_C_JADE, AT_ALIGN_LEFT, w);
     y += 18.0f;
     fit_text(s, o, AT_R_TITLE, e->title, x, y + 24.0f, AT_C_IVORY, AT_ALIGN_LEFT, w);
@@ -669,6 +670,10 @@ void at_part_explainer(const AtSink *s, const AtTextOps *o, AtRect r, const AtEx
         y += 18.0f;
     }
     y += 8.0f;
+    if (e->now_text[0] != '\0' && y + 24.0f <= bottom) {                  /* what the row reads now: a tag, never colour alone */
+        at_part_tag(s, o, x, y, e->now_text, AT_TAG_PLAIN, w);
+        y += 30.0f;
+    }
     if (e->n_with > 0 && y + 44.0f <= bottom) {                          /* a label, then its content under it, so a narrow pane still fits */
         at_text(s, o, AT_R_CAP12, "WITH", x, y + 11.0f, AT_C_DIM, AT_ALIGN_LEFT, 0.0f);
         for (i = 0; i < e->n_with; i++) {

@@ -58,7 +58,8 @@ typedef struct { char btn; char label[AT_STR]; int fn_label, fn_when; } AtKey;
 typedef struct { int has; char label[24]; int model_a, model_b, model_out; char text[AT_STR]; } AtFooter;
 typedef struct { int has; int media_model, media_ring; char kicker[AT_STR], title[AT_STR], what[AT_TEXT]; int n_with, with_model[AT_MAX_WITH]; char from_text[AT_STR]; int warn;
                char with_text[AT_MAX_WITH][24]; int n_with_text;   /* with_text: tags such as "Melee", "Rules" */
-               int media_tex; char media_abbr[3]; char stepper_label[16], stepper_text[24]; int stepper; } AtExplainer;   /* media_tex: a disc-art slot, -1 none; stepper: a "< 1 / 4 >" line (costume) */
+               int media_tex; char media_abbr[3]; char stepper_label[16], stepper_text[24]; int stepper;
+               int no_well; char now_text[AT_STR]; } AtExplainer;   /* no_well: no media well (a settings row has no picture); now_text: "NOW 200%" drawn as a tag under the rule */   /* media_tex: a disc-art slot, -1 none; stepper: a "< 1 / 4 >" line (costume) */
 
 typedef struct {
     char id[AT_ID * 2];

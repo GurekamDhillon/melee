@@ -237,10 +237,10 @@ static void draw_grid(const AtScreen *sc, const AtView *v, const AtLayout *L, co
 static void draw_tabs(const AtScreen *sc, const AtView *v, AtRect r, const AtTextOps *o, const AtSink *s, HitCtx *hc)
 {
     const char *names[AT_MAX_TABS];
-    int counts[AT_MAX_TABS], i, n = sc->n_tabs > AT_MAX_TABS ? AT_MAX_TABS : sc->n_tabs;
+    int counts[AT_MAX_TABS], i, n = sc->n_tabs > AT_MAX_TABS ? AT_MAX_TABS : sc->n_tabs, with_counts = 1;
     AtRect rects[AT_MAX_TABS];
-    for (i = 0; i < n; i++) { names[i] = sc->tabs[i].name; counts[i] = sc->tabs[i].count; }
-    at_part_tabs_ex(s, o, r, names, counts, n, v->tab, -1, rects);
+    for (i = 0; i < n; i++) { names[i] = sc->tabs[i].name; counts[i] = sc->tabs[i].count; if (counts[i] < 0) with_counts = 0; }   /* a count below zero: tabs with no numbers (settings) */
+    at_part_tabs_ex(s, o, r, names, with_counts ? counts : NULL, n, v->tab, -1, rects);
     for (i = 0; i < n; i++) if (rects[i].w > 0.0f) hit_add(hc, rects[i], AT_HIT_TAB, i, 0);
 }
 

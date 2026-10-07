@@ -680,12 +680,37 @@ static void sixty_four_rows(void)
     CHECK(HITS.n >= 5 && HITS.n < AT_MAX_HITS && find_text("Mod 41") != NULL);        /* the 41st mod is on screen when focused */
 }
 
+/* Atlas step 5: a dialog's focused button shows the three cues (lift, ember edge and tick, plus brackets); the settings' Cancel-first dialog relies on it */
+static void dialog_focused_button_cues(void)
+{
+    AtSink s;
+    AtDialog d;
+    AtRect b[2], area;
+    StySig rest, foc;
+    int f;
+    memset(&d, 0, sizeof d);
+    snprintf(d.title, sizeof d.title, "ERASE DATA"); snprintf(d.body, sizeof d.body, "This cannot be undone.");
+    d.open = 1; d.n = 2; d.btn[0] = 'A'; d.btn[1] = 'B'; snprintf(d.label[0], 24, "Erase"); snprintf(d.label[1], 24, "Cancel");
+    for (f = 0; f < 2; f++) {
+        int other = 1 - f;
+        d.focus = other;
+        s = rec_sink(); at_part_dialog(&s, &O, 640.0f, &d, 0.0f, b);
+        area.x = b[f].x - 3.0f; area.y = b[f].y - 3.0f; area.w = b[f].w + 6.0f; area.h = b[f].h + 6.0f;   /* the lift (2 px) is inside; a neighbour's brackets are not */
+        rest = sty_sig_in(0, area);
+        d.focus = f;
+        s = rec_sink(); at_part_dialog(&s, &O, 640.0f, &d, 0.0f, b);
+        foc = sty_sig_in(0, area);
+        CHECK(sty_focus_cues(rest, foc) == 3);
+        CHECK(texts_legible());
+    }
+}
+
 int main(void)
 {
     budget_and_legibility(); focus_cues(); long_strings(); hits_at_widths(); list_screen(); overlays_and_fade();
     budget_enforced(); hits_stay_in_table(); tall_grid(); zero_cols(); dialog_suppresses_hits(); long_key_hints(); stone_note_per_row();
     tabs_and_band_render(); ext_cells_in_render(); cursors_per_port(); sink_without_image_op_in_render();
     cards_screen(); countdown_colour_and_trail(); links_under_cells();
-    value_rows_style(); value_row_signals(); headings_and_tabs(); list_window_with_headings(); sixty_four_rows();
+    value_rows_style(); value_row_signals(); headings_and_tabs(); list_window_with_headings(); sixty_four_rows(); dialog_focused_button_cues();
     ATLAS_DONE("atlas render");
 }

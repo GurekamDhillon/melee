@@ -14,6 +14,8 @@
 #include "gw_ui_css.h"
 #include "gw_ui_sss.h"
 
+static int gs_set_is_open(void);   /* gw_script_ui_set.inc: the settings screens are native too, and only one native screen exists */
+
 static struct {
     int gen;                 /* the handle generation: bumped per open */
     int h;                   /* the open handle, or -1 */
@@ -47,6 +49,7 @@ int gw_Ui_SelCanOpen(void) {
     int i;
     if (!gw_Ui_Ready()) return 0;
     if (gs_sel.h >= 0 && gs_sel_get(gs_sel.h) != NULL) return 0;
+    if (gs_set_is_open()) return 0;                                /* the settings are the one native screen */
     for (i = 0; i < GS_UI_SLOTS; i++) if (!gs_ui_slot[i].used) return 1;
     return 0;
 }
@@ -58,6 +61,7 @@ int gw_Ui_SelOpen(int kind, int match_type, const char *t0, const char *t1, cons
     (void) match_type;
     if (!gw_Ui_Ready() || kind < GS_SEL_CSS || kind > GS_SEL_LOAD) return -1;            /* roles missing or MELEE_ATLAS=0: the caller keeps the legacy drawing */
     if (gs_sel.h >= 0 && gs_sel_get(gs_sel.h) != NULL) return -1;                          /* one select at a time: the stack has one top */
+    if (gs_set_is_open()) return -1;                                                        /* and not over the settings, which are native too */
     for (i = 0; i < GS_UI_SLOTS; i++) if (!gs_ui_slot[i].used) { slot = i; break; }
     if (slot < 0) { gw_log("ui: no free screen slot for the select screen"); return -1; }
     u = &gs_ui_slot[slot];

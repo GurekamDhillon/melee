@@ -662,7 +662,71 @@ void gw_GXCopyTex(void *dest, u8 clear) {
 
 /* ---- geometry ----------------------------------------------------------------------------- */
 
+/* ---- indirect-stage guard ------------------------------------------------------------------
+ * Retail leaves indirect texturing ARMED after the fighter refraction draw whenever its reset is skipped:
+ * lbRefract_80022998 (src/melee/lb/lbrefract.c:641-650) sets GXSetNumIndStages(1) and
+ * GXSetTevIndirect(stage 0, ITM_0, ITB_ST) with indirect texcoord 0, and only lbRefract_800225D4 /
+ * lbRefract_DObjDispReset undo it (GXSetTevDirect + GXSetNumIndStages(0)); ftCo_800C8AF0 calls the first only
+ * while fp->x2226_b5 is still set. A later draw with no texgens (an untextured quad) then has an indirect
+ * stage reading texcoord 0, which on a GameCube is whatever the XF last held. Aurora builds its shader from
+ * the register state and treats a sampled texcoord with no texgen as FATAL (lib/gx/shader.cpp:1339
+ * "unhandled tcg src 21"), after having already written that configuration to pipeline_cache.db
+ * (2026-10-05, see _build/audit-20261003/motion-crash).
+ *
+ * The shim sees every one of these calls, so it tracks the few fields that decide it and, at the next
+ * draw, turns an indirect stage whose texcoord was never generated back into a direct one
+ * (GXSetTevDirect), logging once per stage. On hardware the result of such a stage is undefined; direct is what
+ * the game meant. Aurora's own state is never read: this mirrors lib/gx/shader_info.cpp's rule (an indirect
+ * stage is live when numIndStages > its indirect stage and it has a matrix, a wrap or add-previous; the
+ * texcoords it reads must have a texgen: id < numTexGens and generated at least once, since Aurora keeps
+ * texgen slots across draws). Direct GX calls that bypass this file (gw_script_items_draw.inc) do not
+ * touch indirect state except to turn it off. */
+#define GW_GX_TEV_MAX 16
+#define GW_GX_IND_MAX 4
+static struct {
+  u32 num_texgens;
+  u32 texgen_seen; /* bit per texcoord: a texgen was written at least once since GXInit */
+  u32 num_tev;
+  u32 num_ind;
+  u8 ind_coord[GW_GX_IND_MAX];
+  u8 tev_coord[GW_GX_TEV_MAX]; /* the texcoord the TEV stage's order names (hardware: 3 bits; NULL reads 0) */
+  u8 tev_ind_stage[GW_GX_TEV_MAX];
+  u8 tev_ind_live[GW_GX_TEV_MAX]; /* matrix, wrap or add-previous set */
+  u8 tev_ind_matrix[GW_GX_TEV_MAX];
+} gw_gx_ind;
+static unsigned gw_gx_ind_neutralized;
+
+static void gw_gx_ind_reset(void) { memset(&gw_gx_ind, 0, sizeof gw_gx_ind); }
+
+static int gw_gx_texcoord_generated(u32 coord) {
+  return coord < 8u && coord < gw_gx_ind.num_texgens && (gw_gx_ind.texgen_seen & (1u << coord)) != 0;
+}
+
+static void gw_gx_guard_indirect(void) {
+  u32 s;
+  if (gw_gx_ind.num_ind == 0) return;
+  for (s = 0; s < gw_gx_ind.num_tev && s < GW_GX_TEV_MAX; ++s) {
+    u32 ind_stage;
+    if (!gw_gx_ind.tev_ind_live[s]) continue;
+    ind_stage = gw_gx_ind.tev_ind_stage[s];
+    if (ind_stage >= gw_gx_ind.num_ind) continue;
+    if (gw_gx_texcoord_generated(gw_gx_ind.tev_coord[s]) &&
+        (!gw_gx_ind.tev_ind_matrix[s] || gw_gx_texcoord_generated(gw_gx_ind.ind_coord[ind_stage])))
+      continue;
+    if (gw_gx_ind_neutralized++ < 8)
+      gw_log("gx: indirect TEV stage %u reads texcoord %u/%u but only %u texgen(s) are set up - drawn direct "
+             "instead (a leaked refraction setup; Aurora would abort on it)",
+             (unsigned)s, (unsigned)gw_gx_ind.tev_coord[s], (unsigned)gw_gx_ind.ind_coord[ind_stage],
+             (unsigned)gw_gx_ind.num_texgens);
+    GXSetTevDirect((GXTevStageID)s);
+    gw_gx_ind.tev_ind_live[s] = 0;
+    gw_gx_ind.tev_ind_matrix[s] = 0;
+  }
+}
+
+
 void gw_GXBegin(u32 type, u32 vtxfmt, u16 nverts) {
+  gw_gx_guard_indirect();
   int64_t start = gw_perf_gx_begin();
   ++gw_gx_prim_count;
   GXBegin((GXPrimitive)type, (GXVtxFmt)vtxfmt, nverts);
@@ -681,6 +745,7 @@ void gw_GXCallDisplayList(void *list, u32 nbytes) {
     return;
   }
   ++gw_gx_dlist_count;
+  gw_gx_guard_indirect();
   int64_t start = gw_perf_gx_begin();
   GXCallDisplayList(list, nbytes);
   gw_perf_gx_end(start);
@@ -700,10 +765,14 @@ void gw_GXSetPointSize(u8 point_size, u32 tex_offsets) {
   GXSetPointSize(point_size, (GXTexOffset)tex_offsets);
 }
 
-void gw_GXSetNumTexGens(u8 n) { GXSetNumTexGens(n); }
+void gw_GXSetNumTexGens(u8 n) {
+  gw_gx_ind.num_texgens = n;
+  GXSetNumTexGens(n);
+}
 
 void gw_GXSetTexCoordGen2(u32 dst_coord, u32 func, u32 src_param, u32 mtx, u8 normalize,
                           u32 pt_texmtx) {
+  if (dst_coord < 8u) gw_gx_ind.texgen_seen |= 1u << dst_coord;
   GXSetTexCoordGen2((GXTexCoordID)dst_coord, (GXTexGenType)func, (GXTexGenSrc)src_param, mtx,
                     (GXBool)normalize, pt_texmtx);
 }
@@ -1114,7 +1183,10 @@ void gw_GXSetChanMatColor(u32 chan, GXColor color) {
 
 /* ---- TEV ---------------------------------------------------------------------------------- */
 
-void gw_GXSetNumTevStages(u8 n) { GXSetNumTevStages(n); }
+void gw_GXSetNumTevStages(u8 n) {
+  gw_gx_ind.num_tev = n;
+  GXSetNumTevStages(n);
+}
 
 void gw_GXSetTevOp(u32 id, u32 mode) { GXSetTevOp((GXTevStageID)id, (GXTevMode)mode); }
 
@@ -1174,6 +1246,7 @@ void gw_GXSetTevSwapModeTable(u32 table, u32 red, u32 green, u32 blue, u32 alpha
 }
 
 void gw_GXSetTevOrder(u32 stage, u32 coord, u32 map, u32 color) {
+  if (stage < GW_GX_TEV_MAX) gw_gx_ind.tev_coord[stage] = (u8)(coord >= 8u ? 0u : coord);
   GXSetTevOrder((GXTevStageID)stage, (GXTexCoordID)coord, (GXTexMapID)map, (GXChannelID)color);
 }
 
@@ -1185,7 +1258,14 @@ void gw_GXSetZTexture(u32 op, u32 format, u32 bias) {
   GXSetZTexture((GXZTexOp)op, (GXTexFmt)format, bias);
 }
 
-void gw_GXSetTevDirect(u32 stage) { GXSetTevDirect((GXTevStageID)stage); }
+void gw_GXSetTevDirect(u32 stage) {
+  if (stage < GW_GX_TEV_MAX) {
+    gw_gx_ind.tev_ind_live[stage] = 0;
+    gw_gx_ind.tev_ind_matrix[stage] = 0;
+    gw_gx_ind.tev_ind_stage[stage] = 0;
+  }
+  GXSetTevDirect((GXTevStageID)stage);
+}
 
 /* Aurora does not implement GXSetTevClampMode (a GC-only register); nothing in the WebGPU pipeline
  * depends on it. */
@@ -1197,9 +1277,13 @@ void gw_GXSetTevClampMode(u32 stage, u32 mode) {
 
 /* ---- indirect stages ---------------------------------------------------------------------- */
 
-void gw_GXSetNumIndStages(u8 n) { GXSetNumIndStages(n); }
+void gw_GXSetNumIndStages(u8 n) {
+  gw_gx_ind.num_ind = n;
+  GXSetNumIndStages(n);
+}
 
 void gw_GXSetIndTexOrder(u32 ind_stage, u32 tex_coord, u32 tex_map) {
+  if (ind_stage < GW_GX_IND_MAX) gw_gx_ind.ind_coord[ind_stage] = (u8)(tex_coord >= 8u ? 0u : tex_coord);
   GXSetIndTexOrder((GXIndTexStageID)ind_stage, (GXTexCoordID)tex_coord, (GXTexMapID)tex_map);
 }
 
@@ -1215,6 +1299,11 @@ void gw_GXSetIndTexMtx(u32 mtx_id, const void *offset, s8 scale_exp) {
 
 void gw_GXSetTevIndirect(u32 tev_stage, u32 ind_stage, u32 format, u32 bias_sel, u32 matrix_sel,
                          u32 wrap_s, u32 wrap_t, u8 add_prev, u8 utc_lod, u32 alpha_sel) {
+  if (tev_stage < GW_GX_TEV_MAX) {
+    gw_gx_ind.tev_ind_stage[tev_stage] = (u8)(ind_stage & 3u);
+    gw_gx_ind.tev_ind_matrix[tev_stage] = matrix_sel != GX_ITM_OFF;
+    gw_gx_ind.tev_ind_live[tev_stage] = matrix_sel != GX_ITM_OFF || wrap_s != GX_ITW_OFF || wrap_t != GX_ITW_OFF || add_prev;
+  }
   GXSetTevIndirect((GXTevStageID)tev_stage, (GXIndTexStageID)ind_stage, (GXIndTexFormat)format,
                    (GXIndTexBiasSel)bias_sel, (GXIndTexMtxID)matrix_sel, (GXIndTexWrap)wrap_s,
                    (GXIndTexWrap)wrap_t, (GXBool)add_prev, (GXBool)utc_lod,
@@ -1362,7 +1451,10 @@ void gw_GXSetCullMode(u32 mode) { GXSetCullMode((GXCullMode)mode); }
 
 /* ---- manage ------------------------------------------------------------------------------- */
 
-GXFifoObj *gw_GXInit(void *base, u32 size) { return GXInit(base, size); }
+GXFifoObj *gw_GXInit(void *base, u32 size) {
+  gw_gx_ind_reset();
+  return GXInit(base, size);
+}
 
 void gw_GXPixModeSync(void) { GXPixModeSync(); }
 

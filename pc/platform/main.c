@@ -262,6 +262,8 @@ static const char *gw_cache_path(void) {
   return buf;
 }
 
+#include "gw_pcache_guard.inc"
+
 /* This executable's folder, with a trailing separator - where the pipeline seed sits. */
 static const char *gw_exe_dir(void) {
   static char buf[MAX_PATH];
@@ -399,6 +401,8 @@ int main(int argc, char *argv[]) {
   gw_prof_init();
   aurora_profiler_set_sink(gw_aurora_profiler_sink, NULL);
   aurora_profiler_enable(gw_prof_active() != 0);
+  /* Aurora replays every persisted pipeline at boot and aborts on one it cannot build: drop such rows first. */
+  (void)gw_pcache_guard_run(config.cachePath);
   AuroraInfo info = aurora_initialize(argc, argv, &config);
   gw_log("prof: GPU timestamps %s (D3D11 has no Dawn timestamp feature; opt into D3D12 for supported adapters)",
          aurora_profiler_gpu_available() ? "available" : "unavailable");

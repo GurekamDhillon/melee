@@ -130,6 +130,9 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | `MELEE_ATLAS=0` | the legacy menus and the retail title exactly as before; absent or anything else = the Atlas menus (the front door: title, main menu, hubs) |
 | `MELEE_ATLAS_SCENES=<kind>:<retail\|overlay\|replace>,...` | development override of the Atlas scene policy table (`pc/platform/gw_ui_policy.c`); ignored under `MELEE_ATLAS=0` |
 | `MELEE_ATLAS_RETAIL=<ids>` | the Atlas retail takeover's environment source: hide retail HUD elements (`hud.damage hud.stock hud.timer hud.nametag hud.magnify hud.coin hud.prize hud.hazard pause.panel`, comma separated, or `all`). Empty by default; reads 0 while netplay or rollback is on; logs `ui: retail elements hidden by MELEE_ATLAS_RETAIL: ...` once. Console: `atlas retail <ids\|clear>` |
+| `MELEE_ATLAS_FRAME_WIN=x,y,w,h` | Atlas step 10, development: the window of every framed trophy scene (Gallery, Lottery, Collection), in the 640x480 retail canvas. Without it (and without a measured rectangle in `gmfrontend_atlas_toy.inc`, none yet) a scene with `MELEE_ATLAS_SCENES=<11\|12\|13>:overlay` draws no chrome and hides no retail piece |
+| `MELEE_ATLAS_FRAME_OUTLINE=1` | draws the framed screen's window edge in the ember colour, to compare it with where retail puts the model by looking |
+| `MELEE_ATLAS_TOYPROBE=1` | logs, once per trophy scene entry, `frontend: toyprobe ...` lines with numbers only (trophy count, selection, coins, GX link counts); never text |
 | `MELEE_ATLAS_PAUSE=1` | the Atlas pause takeover: a retail pause (START in a VS-style match, offline) pushes the screen a script named with `gd.ui.pause_screen`. Off unless this or the setting `atlas_pause` is on; never in a netplay match |
 | `MELEE_WINDOW_X/Y` | window position; may be negative. Applied at creation, so no flash |
 | `MELEE_WINDOW_W/H` | window size (Aurora clamps to at least 640x480) |

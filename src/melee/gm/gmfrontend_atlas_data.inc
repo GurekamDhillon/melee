@@ -92,6 +92,7 @@ extern bool IsNameListFull(void);
 extern u8 gm_801BEB80(void);
 extern void gm_801BEB74(u8 slot);
 extern bool gm_801BEB8C(u8 slot);
+extern void gm_801BA8FC(void); /* loads GmEvent.dat's sqEventInitDataLevelTbl, which gm_801BEB8C reads */
 extern u8 gm_801BEBA8(u8 slot);
 
 /* mnsoundtest.c's tables (globals there): 80 tracks (text id, music id) and 30 sound groups */
@@ -382,6 +383,7 @@ static int fad_ev_total(void)
 static void fad_ev_open(void)
 {
     int i;
+    gm_801BA8FC(); /* the event table (gm_804D6900) is loaded by the event mode's OnLoad, which has not run on a fresh start: gm_801BEB8C read NULL */
     /* retail reaches display index (the page start bound) + 8; a debug build reaches all (mnEvent_8024CE74, mnevent.c) */
     fad_ev_last = Ui_EventLastOpen(mnEvent_8024CE74(), DbLevel > DbLKind_DebugDevelop);
     fad_ev_text_ok = fad_sis_open();

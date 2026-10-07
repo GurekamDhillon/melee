@@ -28,20 +28,24 @@ static const FrontendItem tbl_fe_items_howto_online[] = {
 };
 static const int nopts_fe_items_howto_online[] = { 0, 0, 0, 0, 0, 0 };
 static const FrontendItem tbl_fe_items_set_controls[] = {
-    { FE_ACTION, FE_DO_CALL, "Remap Controller", "Choose a game input, then press the controller input you want.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, gen_call, NULL, NULL, NULL },
-    { FE_SLIDER, 0, "Port 1", "What port 1 reads right now: press buttons and move the sticks to test them.", gen_get, NULL, 0, 0, 0, NULL, gen_fmt, NULL, NULL, NULL, NULL, NULL },
-    { FE_SLIDER, 0, "Port 2", "What port 2 reads right now.", gen_get, NULL, 0, 0, 0, NULL, gen_fmt, NULL, NULL, NULL, NULL, NULL },
-    { FE_SLIDER, 0, "Port 3", "What port 3 reads right now.", gen_get, NULL, 0, 0, 0, NULL, gen_fmt, NULL, NULL, NULL, NULL, NULL },
-    { FE_SLIDER, 0, "Port 4", "What port 4 reads right now.", gen_get, NULL, 0, 0, 0, NULL, gen_fmt, NULL, NULL, NULL, NULL, NULL },
-    { FE_ACTION, FE_DO_CALL, "GameCube Adapter", "A recalibrates every controller's sticks.", NULL, NULL, 0, 0, 0, NULL, gen_fmt, NULL, gen_call, NULL, NULL, NULL },
-    { FE_SLIDER, 0, "Stick Dead Zone", "Xbox, PlayStation and other controllers: how far a stick moves before it counts.", gen_get, gen_set, 0, 40, 2, NULL, gen_fmt, gen_vis, NULL, NULL, NULL, NULL },
-    { FE_ACTION, FE_DO_CALL, "How to Play Online", "Rooms, codes, random opponents and the lobby, in six steps.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, gen_call, NULL, NULL, NULL },
-    { FE_SLIDER, 0, "Controller Panel", "Hotkey: what each port reads; with an adapter, also recalibrates.", gen_get, NULL, 0, 0, 0, NULL, gen_fmt, NULL, NULL, NULL, NULL, NULL },
-    { FE_SLIDER, 0, "Overlays Back", "Hotkey: puts every overlay back on screen.", gen_get, NULL, 0, 0, 0, NULL, gen_fmt, NULL, NULL, NULL, NULL, NULL },
-    { FE_SLIDER, 0, "Console", "Hotkey: the command console.", gen_get, NULL, 0, 0, 0, NULL, gen_fmt, NULL, NULL, NULL, NULL, NULL },
-    { FE_SLIDER, 0, "Mouse", "Menus take the mouse too (the wheel scrolls); matches never do.", gen_get, NULL, 0, 0, 0, NULL, gen_fmt, NULL, NULL, NULL, NULL, NULL },
+    { FE_ACTION, FE_DO_CALL, "Remap Controller", "Choose a game input, then press the controller input you want.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, gen_call, NULL, NULL, "CONTROLLERS" },
+    { FE_SLIDER, 0, "Port 1", "What port 1 reads right now: press buttons and move the sticks to test them.", gen_get, NULL, 0, 0, 0, NULL, gen_fmt, NULL, NULL, NULL, NULL, "CONTROLLERS" },
+    { FE_SLIDER, 0, "Port 2", "What port 2 reads right now.", gen_get, NULL, 0, 0, 0, NULL, gen_fmt, NULL, NULL, NULL, NULL, "CONTROLLERS" },
+    { FE_SLIDER, 0, "Port 3", "What port 3 reads right now.", gen_get, NULL, 0, 0, 0, NULL, gen_fmt, NULL, NULL, NULL, NULL, "CONTROLLERS" },
+    { FE_SLIDER, 0, "Port 4", "What port 4 reads right now.", gen_get, NULL, 0, 0, 0, NULL, gen_fmt, NULL, NULL, NULL, NULL, "CONTROLLERS" },
+    { FE_ACTION, FE_DO_CALL, "GameCube Adapter", "A recalibrates every controller's sticks.", NULL, NULL, 0, 0, 0, NULL, gen_fmt, NULL, gen_call, NULL, NULL, "CONTROLLERS" },
+    { FE_SLIDER, 0, "Stick Dead Zone", "Xbox, PlayStation and other controllers: how far a stick moves before it counts.", gen_get, gen_set, 0, 40, 2, NULL, gen_fmt, gen_vis, NULL, NULL, NULL, "CONTROLLERS" },
+    { FE_TOGGLE, 0, "Rumble, Port 1", "Send rumble to port 1 during matches (a name tag keeps its own setting). The remap editor's Rumble is per controller profile.", gen_get, gen_set, 0, 1, 1, NULL, NULL, gen_vis, NULL, NULL, NULL, "RUMBLE" },
+    { FE_TOGGLE, 0, "Rumble, Port 2", "Send rumble to port 2 during matches (a name tag keeps its own setting).", gen_get, gen_set, 0, 1, 1, NULL, NULL, gen_vis, NULL, NULL, NULL, "RUMBLE" },
+    { FE_TOGGLE, 0, "Rumble, Port 3", "Send rumble to port 3 during matches (a name tag keeps its own setting).", gen_get, gen_set, 0, 1, 1, NULL, NULL, gen_vis, NULL, NULL, NULL, "RUMBLE" },
+    { FE_TOGGLE, 0, "Rumble, Port 4", "Send rumble to port 4 during matches (a name tag keeps its own setting).", gen_get, gen_set, 0, 1, 1, NULL, NULL, gen_vis, NULL, NULL, NULL, "RUMBLE" },
+    { FE_ACTION, FE_DO_CALL, "How to Play Online", "Rooms, codes, random opponents and the lobby, in six steps.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, gen_call, NULL, NULL, "HELP AND HOTKEYS" },
+    { FE_SLIDER, 0, "Controller Panel", "Hotkey: what each port reads; with an adapter, also recalibrates.", gen_get, NULL, 0, 0, 0, NULL, gen_fmt, NULL, NULL, NULL, NULL, "HELP AND HOTKEYS" },
+    { FE_SLIDER, 0, "Overlays Back", "Hotkey: puts every overlay back on screen.", gen_get, NULL, 0, 0, 0, NULL, gen_fmt, NULL, NULL, NULL, NULL, "HELP AND HOTKEYS" },
+    { FE_SLIDER, 0, "Console", "Hotkey: the command console.", gen_get, NULL, 0, 0, 0, NULL, gen_fmt, NULL, NULL, NULL, NULL, "HELP AND HOTKEYS" },
+    { FE_SLIDER, 0, "Mouse", "Menus take the mouse too (the wheel scrolls); matches never do.", gen_get, NULL, 0, 0, 0, NULL, gen_fmt, NULL, NULL, NULL, NULL, "HELP AND HOTKEYS" },
 };
-static const int nopts_fe_items_set_controls[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+static const int nopts_fe_items_set_controls[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 static const char *const opts_fe_items_set_online_3[] = { "Competitive", "All Stages" };
 static const char *const opts_fe_items_set_online_4[] = { "Off", "On" };
 static const char *const opts_fe_items_set_online_5[] = { "Off", "On" };
@@ -54,22 +58,33 @@ static const FrontendItem tbl_fe_items_set_online[] = {
     { FE_CHOICE, 0, "Envoy", "Rooms you host: an Envoy set with a build each. Never in Random.", gen_get, gen_set, 0, 1, 1, opts_fe_items_set_online_5, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 static const int nopts_fe_items_set_online[] = { 0, 0, 0, 2, 2, 2 };
-static const char *const opts_fe_items_set_gameplay_2[] = { "Time", "Stock", "Coin", "Bonus" };
-static const char *const opts_fe_items_set_gameplay_5[] = { "None", "Very Low", "Low", "Medium", "High", "Very High" };
-static const char *const opts_fe_items_set_gameplay_7[] = { "Off", "Auto", "On" };
+static const char *const opts_fe_items_set_gameplay_3[] = { "Time", "Stock", "Coin", "Bonus" };
+static const char *const opts_fe_items_set_gameplay_6[] = { "None", "Very Low", "Low", "Medium", "High", "Very High" };
+static const char *const opts_fe_items_set_gameplay_8[] = { "Off", "Auto", "On" };
 static const FrontendItem tbl_fe_items_set_gameplay[] = {
-    { FE_TOGGLE, 0, "Turbo (Versus)", "A connected hit can be cancelled into most moves. Local Versus only.", gen_get, gen_set, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-    { FE_TOGGLE, 0, "Unlock Everything", "Every fighter, stage and option, without touching the save.", gen_get, gen_set, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-    { FE_CHOICE, 0, "Mode", "How a VS match is won.", gen_get, gen_set, 0, 3, 1, opts_fe_items_set_gameplay_2, NULL, NULL, NULL, NULL, NULL, NULL },
-    { FE_SLIDER, 0, "Stocks", "Lives each player starts with.", gen_get, gen_set, 1, 99, 1, NULL, NULL, gen_vis, NULL, NULL, NULL, NULL },
-    { FE_SLIDER, 0, "Time Limit", "0 plays without a clock.", gen_get, gen_set, 0, 99, 1, NULL, gen_fmt, NULL, NULL, NULL, NULL, NULL },
-    { FE_CHOICE, 0, "Items", "How often items appear.", gen_get, gen_set, -1, 4, 1, opts_fe_items_set_gameplay_5, NULL, NULL, NULL, NULL, NULL, NULL },
-    { FE_SLIDER, 0, "Damage Ratio", "How far hits send fighters.", gen_get, gen_set, 5, 20, 1, NULL, gen_fmt, NULL, NULL, NULL, NULL, NULL },
-    { FE_CHOICE, 0, "Handicap", "Auto evens out winners and losers.", gen_get, gen_set, 0, 2, 1, opts_fe_items_set_gameplay_7, NULL, NULL, NULL, NULL, NULL, NULL },
-    { FE_TOGGLE, 0, "Friendly Fire", "Team attacks hit teammates.", gen_get, gen_set, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-    { FE_TOGGLE, 0, "Pause", "Allow pausing during the match.", gen_get, gen_set, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { FE_TOGGLE, 0, "Turbo (Versus)", "A connected hit can be cancelled into most moves. Local Versus only.", gen_get, gen_set, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "OPTIONS" },
+    { FE_TOGGLE, 0, "Unlock Everything", "Every fighter, stage and option, without touching the save.", gen_get, gen_set, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "OPTIONS" },
+    { FE_ACTION, FE_DO_CALL, "Language", "English or Japanese. A opens the game's own screen; coming back returns here.", NULL, NULL, 0, 0, 0, NULL, gen_fmt, gen_vis, gen_call, NULL, NULL, "OPTIONS" },
+    { FE_CHOICE, 0, "Mode", "How a VS match is won.", gen_get, gen_set, 0, 3, 1, opts_fe_items_set_gameplay_3, NULL, NULL, NULL, NULL, NULL, "MATCH RULES" },
+    { FE_SLIDER, 0, "Stocks", "Lives each player starts with.", gen_get, gen_set, 1, 99, 1, NULL, NULL, gen_vis, NULL, NULL, NULL, "MATCH RULES" },
+    { FE_SLIDER, 0, "Time Limit", "0 plays without a clock.", gen_get, gen_set, 0, 99, 1, NULL, gen_fmt, NULL, NULL, NULL, NULL, "MATCH RULES" },
+    { FE_CHOICE, 0, "Items", "How often items appear.", gen_get, gen_set, -1, 4, 1, opts_fe_items_set_gameplay_6, NULL, NULL, NULL, NULL, NULL, "MATCH RULES" },
+    { FE_SLIDER, 0, "Damage Ratio", "How far hits send fighters.", gen_get, gen_set, 5, 20, 1, NULL, gen_fmt, NULL, NULL, NULL, NULL, "MATCH RULES" },
+    { FE_CHOICE, 0, "Handicap", "Auto evens out winners and losers.", gen_get, gen_set, 0, 2, 1, opts_fe_items_set_gameplay_8, NULL, NULL, NULL, NULL, NULL, "MATCH RULES" },
+    { FE_TOGGLE, 0, "Friendly Fire", "Team attacks hit teammates.", gen_get, gen_set, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "MATCH RULES" },
+    { FE_TOGGLE, 0, "Pause", "Allow pausing during the match.", gen_get, gen_set, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "MATCH RULES" },
+    { FE_ACTION, FE_DO_CALL, "Erase Data...", "Delete part of your save data. Nothing is erased until you confirm, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, gen_vis, gen_call, NULL, NULL, "SAVE DATA" },
 };
-static const int nopts_fe_items_set_gameplay[] = { 0, 0, 4, 0, 0, 6, 0, 3, 0, 0 };
+static const int nopts_fe_items_set_gameplay[] = { 0, 0, 0, 4, 0, 0, 6, 0, 3, 0, 0, 0 };
+static const FrontendItem tbl_fe_items_erase[] = {
+    { FE_ACTION, FE_DO_CALL, "Data set 1", "Erase this part of your save data. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, gen_call, NULL, NULL, "ERASE (ASKS FIRST)" },
+    { FE_ACTION, FE_DO_CALL, "Data set 2", "Erase this part of your save data. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, gen_call, NULL, NULL, "ERASE (ASKS FIRST)" },
+    { FE_ACTION, FE_DO_CALL, "Data set 3", "Erase this part of your save data. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, gen_call, NULL, NULL, "ERASE (ASKS FIRST)" },
+    { FE_ACTION, FE_DO_CALL, "Data set 4", "Erase this part of your save data. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, gen_call, NULL, NULL, "ERASE (ASKS FIRST)" },
+    { FE_ACTION, FE_DO_CALL, "Data set 5", "Erase this part of your save data. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, gen_call, NULL, NULL, "ERASE (ASKS FIRST)" },
+    { FE_ACTION, FE_DO_CALL, "Everything", "Erase all of your save data and start over; your language stays. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, gen_call, NULL, NULL, "ERASE (ASKS FIRST)" },
+};
+static const int nopts_fe_items_erase[] = { 0, 0, 0, 0, 0, 0 };
 static const char *const opts_fe_items_remap_0[] = { "Port 1", "Port 2", "Port 3", "Port 4" };
 static const char *const opts_fe_items_remap_2[] = { "A", "B", "X", "Y", "Z", "START", "L click", "R click", "D-pad Up", "D-pad Down", "D-pad Left", "D-pad Right", "Stick Right", "Stick Left", "Stick Up", "Stick Down", "C-stick Right", "C-stick Left", "C-stick Up", "C-stick Down", "Analog L", "Analog R" };
 static const char *const opts_fe_items_remap_4[] = { "Swap", "Also" };
@@ -93,7 +108,7 @@ static const FrontendItem tbl_fe_items_remap[] = {
     { FE_CHOICE, 0, "Digital Shield", "Light sends analog 80 without a hard-shield click. Full sends analog 140 and the click.", gen_get, gen_set, 0, 2, 1, opts_fe_items_remap_13, NULL, NULL, NULL, NULL, NULL, NULL },
     { FE_SLIDER, 0, "Main Dead Zone", "Inherit uses existing SDL deadzone or GameCube calibration. Percent of full travel.", gen_get, gen_set, -1, 50, 1, NULL, gen_fmt, NULL, NULL, NULL, NULL, NULL },
     { FE_SLIDER, 0, "C-stick Dead Zone", "Independent C-stick threshold; inherit uses the existing controller setting.", gen_get, gen_set, -1, 50, 1, NULL, gen_fmt, NULL, NULL, NULL, NULL, NULL },
-    { FE_TOGGLE, 0, "Rumble", "Allow rumble when this controller supports it.", gen_get, gen_set, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { FE_TOGGLE, 0, "Rumble (this profile)", "Allow rumble when this controller supports it. CONTROLS has a Rumble row per game port too.", gen_get, gen_set, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
     { FE_CHOICE, 0, "Assign to Port", "A copies this profile to a connected controller of the same kind on this port.", gen_get, gen_set, 0, 3, 1, opts_fe_items_remap_17, NULL, NULL, gen_call, NULL, NULL, NULL },
     { FE_ACTION, FE_DO_CALL, "Reset to Default", "Restore this profile. Anywhere in kit menus, hold original START+B for 2 seconds.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, gen_call, gen_en, "Connect a controller to this port first.", NULL },
     { FE_ACTION, FE_DO_CALL, "Done", "Return to controls.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, gen_call, NULL, NULL, NULL },
@@ -135,9 +150,10 @@ static const StubTable all_tables[] = {
     { "fe_items_set_video", tbl_fe_items_set_video, 6, nopts_fe_items_set_video },
     { "fe_items_set_audio", tbl_fe_items_set_audio, 3, nopts_fe_items_set_audio },
     { "fe_items_howto_online", tbl_fe_items_howto_online, 6, nopts_fe_items_howto_online },
-    { "fe_items_set_controls", tbl_fe_items_set_controls, 12, nopts_fe_items_set_controls },
+    { "fe_items_set_controls", tbl_fe_items_set_controls, 16, nopts_fe_items_set_controls },
     { "fe_items_set_online", tbl_fe_items_set_online, 6, nopts_fe_items_set_online },
-    { "fe_items_set_gameplay", tbl_fe_items_set_gameplay, 10, nopts_fe_items_set_gameplay },
+    { "fe_items_set_gameplay", tbl_fe_items_set_gameplay, 12, nopts_fe_items_set_gameplay },
+    { "fe_items_erase", tbl_fe_items_erase, 6, nopts_fe_items_erase },
     { "fe_items_remap", tbl_fe_items_remap, 20, nopts_fe_items_remap },
     { "fe_items_vs_setup", tbl_fe_items_vs_setup, 10, nopts_fe_items_vs_setup },
     { "fe_items_online", tbl_fe_items_online, 9, nopts_fe_items_online },

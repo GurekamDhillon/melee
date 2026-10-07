@@ -144,6 +144,8 @@ _Static_assert(FSS_EV_CHANGE == GS_SETEV_CHANGE && FSS_EV_ACCEPT == GS_SETEV_ACC
 _Static_assert(FSS_VK_NONE == AT_VAL_NONE && FSS_VK_TOGGLE == AT_VAL_TOGGLE && FSS_VK_CHOICE == AT_VAL_CHOICE && FSS_VK_SLIDER == AT_VAL_SLIDER &&
                FSS_VK_TEXT == AT_VAL_TEXT, "the walker's value kinds are the host's");
 _Static_assert(FSS_IF_A_STEPS == AT_ITEM_A_STEPS && FSS_IF_RO == AT_ITEM_RO && FSS_IF_DISABLED == AT_ITEM_DISABLED, "the walker's row flags are the host's");
+_Static_assert(FSS_IN_MOVE == AT_EV_MOVE && FSS_IN_ACCEPT == AT_EV_ACCEPT && FSS_IN_BACK == AT_EV_BACK && FSS_IN_ALT == AT_EV_ALT && FSS_IN_PAGE == AT_EV_PAGE &&
+               FSS_DIR_LEFT == AT_DIR_LEFT && FSS_DIR_RIGHT == AT_DIR_RIGHT && FSS_DIR_UP == AT_DIR_UP && FSS_DIR_DOWN == AT_DIR_DOWN, "the adapter's intents are the host's");
 
 static GsUiSlot *slot_of(int h) { return &gs_ui_slot[h & 0xFF]; }
 static void draw_once(void) { gs_ui_draw(); }

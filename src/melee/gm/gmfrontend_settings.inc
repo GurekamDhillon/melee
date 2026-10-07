@@ -351,28 +351,60 @@ static void fsc_howto(void) { fe_switch_screen(&fe_screen_howto_online); }
 /* The keyboard does not play: controllers play, the keyboard is hotkeys (and mods' keys). The first
  * boot opens this page once (gmfrontend_menus.inc, Onboard_Pending). */
 #include "gmfrontend_controls.inc"
+/* ---- RUMBLE: the retail screen's per-port setting (mnvibration.c). GetRumbleSettingOfPort reads the same bytes gmMainLib_SetRumbleEnabled writes (the game's saved
+ * preferences); the retail screen saves the card when it is left, so a change here saves at once, as every change on these pages applies at once. Shown only under
+ * Atlas (the retail screen stays reachable from the legacy list) and only for a port with a controller, as the retail screen shows panels. A name tag keeps its own
+ * rumble setting (gm_RumbleEnabledForPlayer): this row is the port's, for a player with no tag. The per-controller option of the remap editor is a different setting,
+ * labelled "Rumble (this profile)". */
+extern void HSD_PadRumbleRemoveAll(void);
+extern void HSD_PadRumbleOffN(u8 no);
+static int fsr_port_shown(int p) { return Ui_Ready() != 0 && HSD_PadCopyStatus[p].err == 0; }
+static void fsr_set_port(int p, int on)
+{
+    gmMainLib_SetRumbleEnabled(p, on != 0);
+    if (!on) {
+        HSD_PadRumbleRemoveAll(); /* as the retail screen turns a port off: nothing keeps buzzing */
+        HSD_PadRumbleOffN((u8) p);
+    }
+    lbCardGame_SaveChanges();
+}
+#define FSR_PORT(n)                                                                               \
+    static int fsr_vis##n(void) { return fsr_port_shown(n); }                                     \
+    static int fsr_get##n(void) { return GetRumbleSettingOfPort(n) != 0; }                        \
+    static void fsr_set##n(int v) { fsr_set_port(n, v); }
+FSR_PORT(0) FSR_PORT(1) FSR_PORT(2) FSR_PORT(3)
+#undef FSR_PORT
+
 static const FrontendItem fe_items_set_controls[] = {
     { FE_ACTION, FE_DO_CALL, "Remap Controller", "Choose a game input, then press the controller input you want.",
-      NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fcr_open },
+      NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fcr_open, NULL, NULL, "CONTROLLERS" },
     { FE_SLIDER, 0, "Port 1", "What port 1 reads right now: press buttons and move the sticks to test them.",
-      fsc_zero, NULL, 0, 0, 0, NULL, fsc_fmt_p1 },
-    { FE_SLIDER, 0, "Port 2", "What port 2 reads right now.", fsc_zero, NULL, 0, 0, 0, NULL, fsc_fmt_p2 },
-    { FE_SLIDER, 0, "Port 3", "What port 3 reads right now.", fsc_zero, NULL, 0, 0, 0, NULL, fsc_fmt_p3 },
-    { FE_SLIDER, 0, "Port 4", "What port 4 reads right now.", fsc_zero, NULL, 0, 0, 0, NULL, fsc_fmt_p4 },
+      fsc_zero, NULL, 0, 0, 0, NULL, fsc_fmt_p1, NULL, NULL, NULL, NULL, "CONTROLLERS" },
+    { FE_SLIDER, 0, "Port 2", "What port 2 reads right now.", fsc_zero, NULL, 0, 0, 0, NULL, fsc_fmt_p2, NULL, NULL, NULL, NULL, "CONTROLLERS" },
+    { FE_SLIDER, 0, "Port 3", "What port 3 reads right now.", fsc_zero, NULL, 0, 0, 0, NULL, fsc_fmt_p3, NULL, NULL, NULL, NULL, "CONTROLLERS" },
+    { FE_SLIDER, 0, "Port 4", "What port 4 reads right now.", fsc_zero, NULL, 0, 0, 0, NULL, fsc_fmt_p4, NULL, NULL, NULL, NULL, "CONTROLLERS" },
     { FE_ACTION, FE_DO_CALL, "GameCube Adapter", "A recalibrates every controller's sticks.", NULL, NULL,
-      0, 0, 0, NULL, fsc_fmt_adapter, NULL, fsc_recal },
+      0, 0, 0, NULL, fsc_fmt_adapter, NULL, fsc_recal, NULL, NULL, "CONTROLLERS" },
     { FE_SLIDER, 0, "Stick Dead Zone", "Xbox, PlayStation and other controllers: how far a stick moves before it counts.",
-      fsc_get_dz, fsc_set_dz, 0, 40, 2, NULL, fsc_fmt_dz, fsc_any_sdl },
+      fsc_get_dz, fsc_set_dz, 0, 40, 2, NULL, fsc_fmt_dz, fsc_any_sdl, NULL, NULL, NULL, "CONTROLLERS" },
+    { FE_TOGGLE, 0, "Rumble, Port 1", "Send rumble to port 1 during matches (a name tag keeps its own setting). The remap editor's Rumble is per controller profile.",
+      fsr_get0, fsr_set0, 0, 1, 1, NULL, NULL, fsr_vis0, NULL, NULL, NULL, "RUMBLE" },
+    { FE_TOGGLE, 0, "Rumble, Port 2", "Send rumble to port 2 during matches (a name tag keeps its own setting).",
+      fsr_get1, fsr_set1, 0, 1, 1, NULL, NULL, fsr_vis1, NULL, NULL, NULL, "RUMBLE" },
+    { FE_TOGGLE, 0, "Rumble, Port 3", "Send rumble to port 3 during matches (a name tag keeps its own setting).",
+      fsr_get2, fsr_set2, 0, 1, 1, NULL, NULL, fsr_vis2, NULL, NULL, NULL, "RUMBLE" },
+    { FE_TOGGLE, 0, "Rumble, Port 4", "Send rumble to port 4 during matches (a name tag keeps its own setting).",
+      fsr_get3, fsr_set3, 0, 1, 1, NULL, NULL, fsr_vis3, NULL, NULL, NULL, "RUMBLE" },
     { FE_ACTION, FE_DO_CALL, "How to Play Online", "Rooms, codes, random opponents and the lobby, in six steps.",
-      NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fsc_howto },
+      NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fsc_howto, NULL, NULL, "HELP AND HOTKEYS" },
     { FE_SLIDER, 0, "Controller Panel", "Hotkey: what each port reads; with an adapter, also recalibrates.",
-      fsc_zero, NULL, 0, 0, 0, NULL, fsc_k_panel },
+      fsc_zero, NULL, 0, 0, 0, NULL, fsc_k_panel, NULL, NULL, NULL, NULL, "HELP AND HOTKEYS" },
     { FE_SLIDER, 0, "Overlays Back", "Hotkey: puts every overlay back on screen.", fsc_zero, NULL, 0,
-      0, 0, NULL, fsc_k_reshow },
+      0, 0, NULL, fsc_k_reshow, NULL, NULL, NULL, NULL, "HELP AND HOTKEYS" },
     { FE_SLIDER, 0, "Console", "Hotkey: the command console.", fsc_zero, NULL, 0, 0, 0, NULL,
-      fsc_k_console },
+      fsc_k_console, NULL, NULL, NULL, NULL, "HELP AND HOTKEYS" },
     { FE_SLIDER, 0, "Mouse", "Menus take the mouse too (the wheel scrolls); matches never do.",
-      fsc_zero, NULL, 0, 0, 0, NULL, fsc_k_mouse },
+      fsc_zero, NULL, 0, 0, 0, NULL, fsc_k_mouse, NULL, NULL, NULL, NULL, "HELP AND HOTKEYS" },
 };
 
 /* ---- ONLINE --------------------------------------------------------------------------------- */
@@ -557,24 +589,68 @@ static void fsg_set_turbo(int v)
     OSReport("frontend: local Versus Turbo rule -> %s%c", v ? "on" : "off", 10);
 }
 
+/* The player's saved language: LANG_JP is 0 and LANG_US 1 (lblanguage.h). The row hands off to the game's own screen (the same native request the legacy list's
+ * LANGUAGE row makes) and the return reopens this page on this row. Under Atlas only: the legacy list keeps its LANGUAGE row. */
+static int fsg_atlas_only(void) { return Ui_Ready() != 0; }
+static void fsg_fmt_language(int v, char* out)
+{
+    (void) v;
+    sprintf(out, "%s", lbLang_IsSavedLanguageUS() ? "English" : "Japanese");
+}
+static void fsg_language(void)
+{
+    OSReport("frontend: SETTINGS > GAME > Language -> native screen (kind %d, selection %d) in GM_MENU\n", MENU_KIND_SETTINGS, SEL_SETTINGS_LANG);
+    fm.native_req = true;
+    fm.native_kind = MENU_KIND_SETTINGS;
+    fm.native_sel = SEL_SETTINGS_LANG;
+    fe.continue_to = GM_MENU;
+    fe.reported = GM_MENU;
+    fe.leaving = 1; /* the fade, then GM_MENU, which opens the game's Language screen as the legacy list's row would */
+}
+static const FrontendScreen fe_screen_erase;
+static void fsg_erase_open(void) { fe_switch_screen(&fe_screen_erase); }
+
 static const FrontendItem fe_items_set_gameplay[] = {
     { FE_TOGGLE, 0, "Turbo (Versus)", "A connected hit can be cancelled into most moves. Local Versus only.",
-      fsg_get_turbo, fsg_set_turbo, 0, 1, 1 },
+      fsg_get_turbo, fsg_set_turbo, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "OPTIONS" },
     { FE_TOGGLE, 0, "Unlock Everything", "Every fighter, stage and option, without touching the save.",
-      fsg_get_unlock, fsg_set_unlock, 0, 1, 1 },
-    { FE_CHOICE, 0, "Mode", "How a VS match is won.", fe_get_mode, fe_set_mode, 0, 3, 1, fe_opt_mode },
+      fsg_get_unlock, fsg_set_unlock, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "OPTIONS" },
+    { FE_ACTION, FE_DO_CALL, "Language", "English or Japanese. A opens the game's own screen; coming back returns here.",
+      NULL, NULL, 0, 0, 0, NULL, fsg_fmt_language, fsg_atlas_only, fsg_language, NULL, NULL, "OPTIONS" },
+    { FE_CHOICE, 0, "Mode", "How a VS match is won.", fe_get_mode, fe_set_mode, 0, 3, 1, fe_opt_mode, NULL, NULL, NULL, NULL, NULL, "MATCH RULES" },
     { FE_SLIDER, 0, "Stocks", "Lives each player starts with.", fe_get_stocks, fe_set_stocks, 1, 99, 1,
-      NULL, NULL, fe_is_stock },
+      NULL, NULL, fe_is_stock, NULL, NULL, NULL, "MATCH RULES" },
     { FE_SLIDER, 0, "Time Limit", "0 plays without a clock.", fe_get_time, fe_set_time, 0, 99, 1, NULL,
-      fe_fmt_time },
+      fe_fmt_time, NULL, NULL, NULL, NULL, "MATCH RULES" },
     { FE_CHOICE, 0, "Items", "How often items appear.", fe_get_items, fe_set_items, -1, 4, 1,
-      fe_opt_items },
+      fe_opt_items, NULL, NULL, NULL, NULL, NULL, "MATCH RULES" },
     { FE_SLIDER, 0, "Damage Ratio", "How far hits send fighters.", fe_get_ratio, fe_set_ratio, 5, 20, 1,
-      NULL, fe_fmt_ratio },
+      NULL, fe_fmt_ratio, NULL, NULL, NULL, NULL, "MATCH RULES" },
     { FE_CHOICE, 0, "Handicap", "Auto evens out winners and losers.", fe_get_handicap, fe_set_handicap,
-      0, 2, 1, fe_opt_handicap },
-    { FE_TOGGLE, 0, "Friendly Fire", "Team attacks hit teammates.", fe_get_ff, fe_set_ff, 0, 1, 1 },
-    { FE_TOGGLE, 0, "Pause", "Allow pausing during the match.", fe_get_pause, fe_set_pause, 0, 1, 1 },
+      0, 2, 1, fe_opt_handicap, NULL, NULL, NULL, NULL, NULL, "MATCH RULES" },
+    { FE_TOGGLE, 0, "Friendly Fire", "Team attacks hit teammates.", fe_get_ff, fe_set_ff, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "MATCH RULES" },
+    { FE_TOGGLE, 0, "Pause", "Allow pausing during the match.", fe_get_pause, fe_set_pause, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "MATCH RULES" },
+    { FE_ACTION, FE_DO_CALL, "Erase Data...", "Delete part of your save data. Nothing is erased until you confirm, and it cannot be undone.",
+      NULL, NULL, 0, 0, 0, NULL, NULL, fsg_atlas_only, fsg_erase_open, NULL, NULL, "SAVE DATA" },
+};
+
+/* ---- ERASE DATA: the six retail operations, each behind a Cancel-first dialog (the Atlas screen opens it: fss_erase_ask in gmfrontend_atlas_set.inc). The labels are
+ * pc/platform/gw_ui_erase.h's (tools/port/test_erase_plan.py pins them). Operations 0 to 4 are "Data set N" until the owner names them: the calls clear regions of
+ * the save without a name the decomp gives. */
+static void fss_erase_ask(int category);
+#define FSE_ASK(n) static void fse_ask##n(void) { fss_erase_ask(n); }
+FSE_ASK(0) FSE_ASK(1) FSE_ASK(2) FSE_ASK(3) FSE_ASK(4) FSE_ASK(5)
+#undef FSE_ASK
+static const FrontendItem fe_items_erase[] = {
+    { FE_ACTION, FE_DO_CALL, "Data set 1", "Erase this part of your save data. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fse_ask0, NULL, NULL, "ERASE (ASKS FIRST)" },
+    { FE_ACTION, FE_DO_CALL, "Data set 2", "Erase this part of your save data. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fse_ask1, NULL, NULL, "ERASE (ASKS FIRST)" },
+    { FE_ACTION, FE_DO_CALL, "Data set 3", "Erase this part of your save data. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fse_ask2, NULL, NULL, "ERASE (ASKS FIRST)" },
+    { FE_ACTION, FE_DO_CALL, "Data set 4", "Erase this part of your save data. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fse_ask3, NULL, NULL, "ERASE (ASKS FIRST)" },
+    { FE_ACTION, FE_DO_CALL, "Data set 5", "Erase this part of your save data. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fse_ask4, NULL, NULL, "ERASE (ASKS FIRST)" },
+    { FE_ACTION, FE_DO_CALL, "Everything", "Erase all of your save data and start over; your language stays. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fse_ask5, NULL, NULL, "ERASE (ASKS FIRST)" },
+};
+static const FrontendScreen fe_screen_erase = {
+    "SETTINGS", "ERASE DATA", fe_items_erase, sizeof fe_items_erase / sizeof fe_items_erase[0]
 };
 
 #define FSP_N(a) ((int) (sizeof a / sizeof a[0]))
@@ -599,7 +675,7 @@ static bool fe_is_controls_help(const FrontendScreen* s)
 
 static bool fe_is_settings(const FrontendScreen* s)
 {
-    return fe_is_controls_help(s) || s == &fe_screen_remap || (s >= &fe_screen_settings[0] && s < &fe_screen_settings[FSP_COUNT]);
+    return fe_is_controls_help(s) || s == &fe_screen_remap || s == &fe_screen_erase || (s >= &fe_screen_settings[0] && s < &fe_screen_settings[FSP_COUNT]);
 }
 
 /* The saved online defaults, into the ONLINE screen's state (once per boot is enough, but cheap). */

@@ -27,6 +27,10 @@
 #include <sysdolphin/baselib/jobj.h>
 #include <sysdolphin/baselib/memory.h>
 
+#if defined(TARGET_PC)
+#include <platform/gw_ui_erase.h>
+#endif
+
 HSD_Text* mnDataDel_804D6C6C;
 HSD_GObj* mnDataDel_804D6C68;
 
@@ -894,3 +898,62 @@ void mnDataDel_80250170(void)
     proc = HSD_GObj_SetupProc(GObj_Create(0U, 1U, 0x80U), fn_8024F840, 0U);
     proc->flags_3 = HSD_GObj_804D783C;
 }
+
+#if defined(TARGET_PC)
+/* ---- Atlas: Erase Data without the retail screen ------------------------------------------------------------------------------------------------------------
+ * Every retail path above also animates the retail screen's JObjs through mnDataDel_804D6C68->user_data, which is NULL when that screen is not up, so the Atlas
+ * Erase Data rows cannot call mnDataDel_8024E940 or mnDataDel_8024EA6C. They call mnDataDel_Erase(category): the same state-changing calls in the same order,
+ * from the plan table in gw_ui_erase.h (tools/port/test_erase_plan.py pins that table to the handlers above). Sounds are the caller's. */
+static s32 mnDataDel_erase_lang;
+
+static void mnDataDel_StageRelock(void)
+{
+    int i, found = 0;
+    for (i = 0; i < 0x1D; i++) {
+        if ((gm_80164430(gm_801641CC(i)) != 0) && ((gm_IsStageUnlocked((u16) i) & (0xFFFF & 0xFF)) != 0)) {
+            found = 1;
+            break;
+        }
+    }
+    if (found == 0) {
+        gm_801641E4(0U, 1U);
+    }
+}
+
+static void mnDataDel_RunCall(int id)
+{
+    switch (id) {
+    case AT_ER_GM_8016505C: gm_8016505C(); break;
+    case AT_ER_MAINLIB_8015F464: gmMainLib_8015F464(); break;
+    case AT_ER_GM_801729EC: gm_801729EC(); break;
+    case AT_ER_SAVE: lbCardGame_SaveChanges(); break;
+    case AT_ER_MAINLIB_8015DB80: gmMainLib_8015DB80(); break;
+    case AT_ER_GM_801647D0: gm_801647D0(); break;
+    case AT_ER_MAINLIB_8015F490: gmMainLib_8015F490(); break;
+    case AT_ER_STAGE_RELOCK: mnDataDel_StageRelock(); break;
+    case AT_ER_MAINLIB_8015EEC8: gmMainLib_8015EEC8(); break;
+    case AT_ER_MAINLIB_8015F150: gmMainLib_8015F150(); break;
+    case AT_ER_MAINLIB_8015F260: gmMainLib_8015F260(); break;
+    case AT_ER_TOY_80311960: Toy_80311960(); break;
+    case AT_ER_MAINLIB_8015F4BC: gmMainLib_8015F4BC(); break;
+    case AT_ER_GM_80174238: gm_80174238(); break;
+    case AT_ER_LANG_SAVE: mnDataDel_erase_lang = lbLang_GetSavedLanguage(); break;
+    case AT_ER_MAINLIB_8015FBA4: gmMainLib_8015FBA4(); break;
+    case AT_ER_GM_801A3EF4: gm_801A3EF4(); break;
+    case AT_ER_LANG_RESTORE:
+        if (mnDataDel_erase_lang != lbLang_GetSavedLanguage()) {
+            lbLang_SetSavedLanguage(mnDataDel_erase_lang); /* the player's language survives an erase (the retail sound for it is the caller's) */
+        }
+        break;
+    case AT_ER_GM_801603B0: gm_801603B0(); break;
+    case AT_ER_DEFLICKER_APPLY: gmMainLib_8015F588((u8) gmMainLib_8015F4E8()); break;
+    default: break;
+    }
+}
+
+/* category 0 to 5 (gw_ui_erase.h); a bad category does nothing. The caller has already asked the player. */
+void mnDataDel_Erase(int category)
+{
+    at_erase_run(category, 1, mnDataDel_RunCall);
+}
+#endif

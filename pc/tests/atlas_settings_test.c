@@ -213,9 +213,10 @@ static void render_screen(int h, float w, AtHits *hits)
 
 static void page_counts(void)
 {
-    CHECK(ntables() == 9);
-    CHECK(tbl("fe_items_set_video")->n == 6 && tbl("fe_items_set_audio")->n == 3 && tbl("fe_items_set_controls")->n == 12);
-    CHECK(tbl("fe_items_set_online")->n == 6 && tbl("fe_items_set_gameplay")->n == 10 && tbl("fe_items_remap")->n == 20 && tbl("fe_items_howto_online")->n == 6);
+    CHECK(ntables() == 10);
+    CHECK(tbl("fe_items_set_video")->n == 6 && tbl("fe_items_set_audio")->n == 3 && tbl("fe_items_set_controls")->n == 16);      /* 12 + the four Rumble, Port N rows */
+    CHECK(tbl("fe_items_set_online")->n == 6 && tbl("fe_items_set_gameplay")->n == 12 && tbl("fe_items_remap")->n == 20 && tbl("fe_items_howto_online")->n == 6);   /* gameplay 10 + Language + Erase Data... */
+    CHECK(tbl("fe_items_erase")->n == 6);                                                                                        /* the six retail operations */
     CHECK(tbl("fe_items_vs_setup")->n == 10 && tbl("fe_items_online")->n == 9);
 }
 
@@ -351,14 +352,15 @@ static void visible_rows_change(void)
     scr.title = "T"; scr.subtitle = "S"; scr.items = T->rows; scr.n_items = T->n; scr.art = 0;
     reset_set(); g_gvis = 1;
     h = show(&scr, &v);
-    CHECK(slot_of(h)->sc.n_items == 12 && strcmp(slot_of(h)->sc.items[6].id, "i6") == 0 && strcmp(slot_of(h)->sc.items[6].label, "Stick Dead Zone") == 0);
+    CHECK(slot_of(h)->sc.n_items == 16 && strcmp(slot_of(h)->sc.items[6].id, "i6") == 0 && strcmp(slot_of(h)->sc.items[6].label, "Stick Dead Zone") == 0);
+    CHECK(strcmp(slot_of(h)->sc.items[7].label, "Rumble, Port 1") == 0 && strcmp(slot_of(h)->sc.items[7].group, "RUMBLE") == 0);
     gw_Ui_SetFocus(h, "i6");
-    g_gvis = 0; resubmit(h, &scr, &v);
-    CHECK(slot_of(h)->sc.n_items == 11 && strcmp(focused_id(h), "i7") == 0);   /* the next visible row, never nothing */
+    g_gvis = 0; resubmit(h, &scr, &v);                                        /* the SDL row and the four Rumble rows (a port with no controller) all hide */
+    CHECK(slot_of(h)->sc.n_items == 11 && strcmp(focused_id(h), "i11") == 0);   /* the next visible row, never nothing */
     g_gvis = 1; resubmit(h, &scr, &v);
-    CHECK(slot_of(h)->sc.n_items == 12 && strcmp(focused_id(h), "i7") == 0);   /* and when it comes back the focus stays where it is */
-    gw_Ui_SetFocus(h, "i11"); g_gvis = 0; resubmit(h, &scr, &v);
-    CHECK(strcmp(focused_id(h), "i11") == 0);                                  /* a row after the hidden one keeps its id */
+    CHECK(slot_of(h)->sc.n_items == 16 && strcmp(focused_id(h), "i11") == 0);  /* and when they come back the focus stays where it is */
+    gw_Ui_SetFocus(h, "i15"); g_gvis = 0; resubmit(h, &scr, &v);
+    CHECK(strcmp(focused_id(h), "i15") == 0);                                  /* a row after the hidden ones keeps its id */
     gw_Ui_SetClose(h);
 }
 

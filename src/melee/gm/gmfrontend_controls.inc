@@ -90,7 +90,7 @@ static const FrontendItem fe_items_remap[] = {
     { FE_CHOICE, 0, "Digital Shield", "Light sends analog 80 without a hard-shield click. Full sends analog 140 and the click.", fcr_get_shield, fcr_set_shield, 0, 2, 1, fcr_shields },
     { FE_SLIDER, 0, "Main Dead Zone", "Inherit uses existing SDL deadzone or GameCube calibration. Percent of full travel.", fcr_get_main_dz, fcr_set_main_dz, -1, 50, 1, NULL, fcr_fmt_dz },
     { FE_SLIDER, 0, "C-stick Dead Zone", "Independent C-stick threshold; inherit uses the existing controller setting.", fcr_get_c_dz, fcr_set_c_dz, -1, 50, 1, NULL, fcr_fmt_dz },
-    { FE_TOGGLE, 0, "Rumble", "Allow rumble when this controller supports it.", fcr_get_rumble, fcr_set_rumble, 0, 1, 1 },
+    { FE_TOGGLE, 0, "Rumble (this profile)", "Allow rumble when this controller supports it. CONTROLS has a Rumble row per game port too.", fcr_get_rumble, fcr_set_rumble, 0, 1, 1 },
     { FE_CHOICE, 0, "Assign to Port", "A copies this profile to a connected controller of the same kind on this port.", fcr_get_assign, fcr_set_assign, 0, 3, 1, fcr_ports, NULL, NULL, fcr_assign_profile },
     { FE_ACTION, FE_DO_CALL, "Reset to Default", "Restore this profile. Anywhere in kit menus, hold original START+B for 2 seconds.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fcr_reset, fcr_ready, "Connect a controller to this port first." },
     { FE_ACTION, FE_DO_CALL, "Done", "Return to controls.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fcr_back },

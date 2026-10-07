@@ -1180,6 +1180,7 @@ static bool fm_back_to_online_item; ///< backing out of ONLINE lands on its VS h
 #include "gmfrontend_select.inc"
 #include "gmfrontend_atlas_select.inc"
 #include "gmfrontend_settings.inc"
+#include "gmfrontend_atlas_set.inc"
 
 /* Legacy panels, rows and buttons share the grid too. The source grid uses
  * their old display sizes, preserving UV placement at those sizes exactly. */
@@ -1761,6 +1762,10 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
 /* Show another screen in the same scene: the rows, title and subtitle follow. */
 static void fe_switch_screen(const FrontendScreen* s)
 {
+    if (fss_intercepts(s)) {
+        fss_switch(s); /* the Atlas settings are up: fss_frame moves the host to this screen on the same frame */
+        return;
+    }
     if (s->art != 0 || (fe.screen != NULL && fe.screen->art != 0)) {
         /* to or from a room screen: the model is rebuilt either way */
         const FrontendScreen* from = fe.screen;
@@ -2043,6 +2048,11 @@ void gm_Scene_Frontend_OnFrame(void)
         fe.hl_y += ((float) (fe.cursor - fe.scroll) - fe.hl_y) * 0.35F;
     }
 
+    /* the Atlas settings pages (tabs, rows, events: gmfrontend_atlas_set.inc). After the Controls_Menu heartbeat above, never before it. */
+    if (fss_frame()) {
+        return;
+    }
+
     if (fe.screen->art != 0) {
         fl_frame(); /* a room screen: its own input and model */
         return;
@@ -2155,6 +2165,7 @@ void gm_Scene_Frontend_OnExit(void* exit_data)
 {
     int slot;
     (void) exit_data;
+    fss_exit(); /* the host closes the settings screen with the scene (Ui_SceneExit) */
     if (fm.active) {
         fm_scene_exit();
         return;

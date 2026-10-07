@@ -1348,8 +1348,14 @@ std::string build_shader_source(const ShaderConfig& config, uint32_t normalAttac
         srcWarned[i][badSrc] = true;
         std::string stages;
         for (u32 t = 0; t < config.tevStageCount; ++t) {
-          stages += fmt::format(" s{}(coord={},map={})", t, underlying(config.tevStages[t].texCoordId),
-                                underlying(config.tevStages[t].texMapId));
+          const auto& st = config.tevStages[t];
+          stages += fmt::format(" s{}(coord={},map={},chan={},c={}/{}/{}/{},a={}/{}/{}/{},ind={} mtx={} wrap={}/{} add={})", t,
+                                underlying(st.texCoordId), underlying(st.texMapId), underlying(st.channelId),
+                                underlying(st.colorPass.a), underlying(st.colorPass.b), underlying(st.colorPass.c),
+                                underlying(st.colorPass.d), underlying(st.alphaPass.a), underlying(st.alphaPass.b),
+                                underlying(st.alphaPass.c), underlying(st.alphaPass.d), underlying(st.indTexStage),
+                                underlying(st.indTexMtxId), underlying(st.indTexWrapS), underlying(st.indTexWrapT),
+                                st.indTexAddPrev);
         }
         std::string tcg_set;
         for (u32 t = 0; t < MaxTexCoord; ++t) {
@@ -1358,8 +1364,11 @@ std::string build_shader_source(const ShaderConfig& config, uint32_t normalAttac
           }
         }
         Log.warn("tcg: texcoord {} is sampled but its texgen source is {} (unset or unsupported) - substituting "
-                 "(0,0). tev:{} ; texgens set:{} ; surfaceProgram {}",
-                 i, underlying(tcg.src), stages, tcg_set, config.surfaceProgram);
+                 "(0,0). tev:{} ; texgens set:{} ; indStages {} (ind0 coord={} map={}) ; surfaceProgram {} ; lineMode {} ; "
+                 "chans {}",
+                 i, underlying(tcg.src), stages, tcg_set, config.numIndStages, underlying(config.indStages[0].texCoordId),
+                 underlying(config.indStages[0].texMapId), config.surfaceProgram, config.lineMode,
+                 config.colorChannels[0].lightingEnabled);
       }
       vtxXfrAttrs += fmt::format("\n    var tc{} = vec4f(0.0, 0.0, 1.0, 1.0);", i);
     }

@@ -193,10 +193,11 @@ do
   check(m.register_entry({ id = 'envoy', parent = 'solo', label = 'ENVOY', action = 'script' }), 'an entry registers')
   raises(function() m.register_entry({ id = 'envoy', parent = 'solo', label = 'X', action = 'script' }) end, 'already registered', 'a duplicate id')
   raises(function() m.register_entry({ id = 'lab', parent = 'solo', label = 'LAB', action = 'script' }) end, 'starts with "envoy."', 'the id namespace')
-  raises(function() m.register_entry({ id = 'envoy.x', parent = 'nowhere', label = 'X', action = 'script' }) end, 'unknown parent', 'an unknown parent')
+  raises(function() m.register_entry({ id = 'envoy.x', parent = 'nowhere', label = 'X', action = 'script' }) end, 'no menu shows parent', 'an unknown parent')
   raises(function() m.register_entry({ id = 'envoy.y', parent = 'solo', label = '', action = 'script' }) end, 'needs a label', 'a label')
   raises(function() m.register_entry({ id = 'envoy.z', parent = 'solo', label = 'Z' }) end, 'needs opens or action', 'an action')
-  check(m.register_entry({ id = 'envoy.s', parent = 'settings.video', label = 'S', opens = 'envoy.q' }), 'a settings page is a parent')
+  raises(function() m.register_entry({ id = 'envoy.s', parent = 'settings.video', label = 'S', opens = 'envoy.q' }) end, 'no menu shows parent', 'a parent nothing renders yet is refused')
+  check(m.register_entry({ id = 'envoy.s', parent = 'settings', label = 'S', opens = 'envoy.q' }), 'the settings list is a parent')
   check(m.entry('envoy', { visible = false }) == true and #m.entries_under('solo') == 0, 'the owner hides its entry')
   check(m.entry('envoy', { visible = true, badge = 'NEW' }) == true and #m.entries_under('solo') == 1 and m.entries.envoy.badge == 'NEW', 'and shows it again with a badge')
   local other = Stub.new({ owner_mod = 'other', caller = 'other/a' }); other.entries = m.entries

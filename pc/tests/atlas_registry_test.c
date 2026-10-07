@@ -52,7 +52,10 @@ static void unknown_parent(void)
     CHECK(at_reg_add(&r, &e) == 0);
     CHECK(r.nlog == 1 && strstr(r.log[0], "nowhere") != NULL);
     CHECK(at_reg_add(&r, &p) == 0 && strstr(r.log[1], "later step") != NULL);
-    { AtEntry s = E("envoy", "envoy", "settings.video", "V", "", 0); CHECK(at_reg_add(&r, &s) == 1); }
+    { AtEntry s = E("envoy", "envoy", "settings.video", "V", "", 0); CHECK(at_reg_add(&r, &s) == 0 && strstr(r.log[2], "no menu shows parent") != NULL); }   /* a valid name nothing renders yet: refused, logged */
+    { AtEntry s = E("envoy", "envoy", "mods", "M", "", 0), o = E("envoy", "envoy", "online", "O", "", 0); CHECK(at_reg_add(&r, &s) == 0 && at_reg_add(&r, &o) == 0); }
+    { AtEntry s = E("envoy", "envoy", "settings", "S", "", 0); CHECK(at_reg_add(&r, &s) == 1); }
+    CHECK(at_reg_parent_rendered("solo") && at_reg_parent_rendered("main") && at_reg_parent_rendered("versus") && !at_reg_parent_rendered("online"));
 }
 static void namespace_rule(void)
 {
@@ -104,6 +107,14 @@ static void set_visibility(void)
     CHECK(at_reg_children(&r, "solo", 0, c, 8) == 1 && strcmp(c[0]->badge, "NEW") == 0);
     CHECK(at_reg_set(&r, "envoy", "envoy", -1, "") == 1 && at_reg_children(&r, "solo", 0, c, 8) == 1);   /* visible unchanged */
     CHECK(at_reg_set(&r, "envoy", "nothere", 1, NULL) == 0);
+}
+static void same_id_in_two_parents(void)             /* built-in rows share names across menus (ONLINE under main and under settings) */
+{
+    AtRegistry r; const AtEntry *c[8];
+    AtEntry a = E("", "online", "main", "ONLINE", "", 0), b = E("", "online", "settings", "ONLINE", "", 0);
+    at_reg_init(&r);
+    CHECK(at_reg_add(&r, &a) == 1 && at_reg_add(&r, &b) == 1 && at_reg_add(&r, &a) == 0);
+    CHECK(at_reg_children(&r, "main", 0, c, 8) == 1 && at_reg_children(&r, "settings", 0, c, 8) == 1);
 }
 static void duplicate_id(void)
 {
@@ -166,9 +177,18 @@ static void envoy_manifest(void)
     n = fread(buf, 1, sizeof buf - 1, f); fclose(f); buf[n] = 0;
     CHECK(at_menus_parse(buf, "envoy", e, 4, err, sizeof err) == ENVOY_MENUS_EXPECTED);
 }
+static void roguelite_manifest(void)
+{
+    FILE *f = fopen("pc/scripts/examples/roguelite/mod.json", "rb"); char buf[4096]; size_t n; AtEntry e[4]; char err[96];
+    CHECK(f != NULL);
+    if (f == NULL) return;
+    n = fread(buf, 1, sizeof buf - 1, f); fclose(f); buf[n] = 0;
+    CHECK(at_menus_parse(buf, "roguelite", e, 4, err, sizeof err) == 1 && strcmp(e[0].parent, "solo") == 0 && e[0].action == AT_ENTRY_SCRIPT && strstr(buf, "\"api_version\": 2") != NULL);
+    {   AtRegistry r; at_reg_init(&r); CHECK(at_reg_add(&r, &e[0]) == 1); }
+}
 int main(void)
 {
-    order(); order_ties_and_missing_after(); caps(); unknown_parent(); namespace_rule(); label_cap(); disabled_mod_adds_nothing(); online_hidden(); set_visibility(); duplicate_id();
-    menus_parse_ok(); menus_parse_rejects(); menus_into_registry(); envoy_manifest();
+    order(); order_ties_and_missing_after(); caps(); unknown_parent(); namespace_rule(); label_cap(); disabled_mod_adds_nothing(); online_hidden(); set_visibility(); duplicate_id(); same_id_in_two_parents();
+    menus_parse_ok(); menus_parse_rejects(); menus_into_registry(); envoy_manifest(); roguelite_manifest();
     ATLAS_DONE("atlas-registry");
 }

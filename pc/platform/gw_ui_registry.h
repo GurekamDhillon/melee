@@ -20,7 +20,8 @@ typedef struct {
 typedef struct { AtEntry e[AT_REG_MAX]; int n; char log[4][96]; int nlog; } AtRegistry;
 
 void at_reg_init(AtRegistry *r);
-int  at_reg_is_parent(const char *id);                              /* the built-in nodes, spec section 8.1 */
+int  at_reg_is_parent(const char *id);
+int  at_reg_parent_rendered(const char *id);                        /* the parents a menu draws today; a mod entry under another is refused */                              /* the built-in nodes, spec section 8.1 */
 /* 1 added; 0 refused, with one line in r->log (the first four are kept). mod "" = a built-in entry. */
 int  at_reg_add(AtRegistry *r, const AtEntry *e);
 /* gd.ui.entry: only the owning mod may change an entry. visible < 0 leaves it; badge NULL leaves it. 1 done, 0 refused. */

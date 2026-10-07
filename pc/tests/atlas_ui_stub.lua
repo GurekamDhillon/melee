@@ -390,13 +390,13 @@ function Stub.new(opts)
  -- ---- entries: gd.ui.entry, on_entry, and the engine's part of choosing one ----------------------------------------------
  -- An entry as mod.json "menus" declares it (the host reads the manifest; a test registers it here). It validates what
  -- at_menus_parse and at_reg_add validate (a label, the id namespace, a built-in parent, opens or action = "script").
- local PARENTS = { main = true, solo = true, versus = true, online = true, mods = true, settings = true, more = true }
+ local PARENTS = { main = true, solo = true, versus = true, settings = true }   -- the parents a menu draws today (online, mods, more, settings.<page> are refused)
  ui.entries, ui.hooks, ui.netplay = {}, {}, false
  function ui.register_entry(e)
   local function bad(msg) error('entry "' .. tostring(e.id) .. '": ' .. msg, 2) end
   if type(e.id) ~= 'string' or e.id == '' then error('an entry needs an id', 2) end
   if type(e.label) ~= 'string' or e.label == '' then bad('an entry needs a label') end
-  if not (PARENTS[e.parent] or tostring(e.parent):match('^settings%.%w')) then bad('unknown parent "' .. tostring(e.parent) .. '"') end
+  if not PARENTS[e.parent] then bad('no menu shows parent "' .. tostring(e.parent) .. '" yet') end
   local mod = ui.owner_mod
   if mod and not (e.id == mod or e.id:sub(1, #mod + 1) == mod .. '.') then bad('the id of a mod entry is "' .. mod .. '" or starts with "' .. mod .. '."') end
   if not (e.action == 'script' or e.opens) then bad('an entry needs opens or action "script"') end

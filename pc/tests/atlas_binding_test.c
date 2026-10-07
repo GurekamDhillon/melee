@@ -648,6 +648,19 @@ static void title_and_menu_together(void)
     gw_Ui_SceneExit(0);
     CHECK(gs_ui_stack.n == 0);
 }
+static void after_places_a_mod_entry_among_builtins(void)
+{
+    reset_ui(); reg_boot_with("{\"menus\":[{\"id\":\"envoy\",\"parent\":\"solo\",\"label\":\"ENVOY\",\"after\":\"training\",\"action\":\"script\"}]}", "envoy");
+    CHECK(gw_Ui_EntryBuiltin("solo", "regular-match", "REGULAR MATCH", 0) == 1);
+    CHECK(gw_Ui_EntryBuiltin("solo", "training", "TRAINING", 1) == 1);
+    CHECK(gw_Ui_EntryBuiltin("solo", "lab", "LAB", 2) == 1);
+    CHECK(gw_Ui_EntryCount("solo") == 4);
+    CHECK_STR(gw_Ui_EntryField("solo", 0, "id"), "regular-match"); CHECK_STR(gw_Ui_EntryField("solo", 1, "id"), "training");
+    CHECK_STR(gw_Ui_EntryField("solo", 2, "id"), "envoy");         /* right after training, not last */
+    CHECK_STR(gw_Ui_EntryField("solo", 3, "id"), "lab");
+    CHECK_STR(gw_Ui_EntryField("solo", 2, "tag"), "MOD"); CHECK_STR(gw_Ui_EntryField("solo", 1, "tag"), "");
+    CHECK(gw_Ui_EntryBuiltin("settings", "online", "ONLINE", 0) == 1 && gw_Ui_EntryBuiltin("main", "online", "ONLINE", 0) == 1);   /* the same name under two menus */
+}
 
 int main(void)
 {
@@ -919,7 +932,7 @@ int main(void)
     eight_slots_with_engine();
     entry_opens_pushes_mod_screen(); entry_script_runs_on_entry_as_the_mod(); entry_missing_screen_refused(); entry_from_other_script_cannot_hide();
     entry_hidden_in_netplay(); entry_screen_closed_on_scene_exit(); entry_mod_unloaded(); builtin_entries_register();
-    credits_screen(); held_menu_takes_no_intent(); menu_blocked_by_a_mod_screen();
+    after_places_a_mod_entry_among_builtins(); credits_screen(); held_menu_takes_no_intent(); menu_blocked_by_a_mod_screen();
     title_pushed_on_scene_begin(); title_takes_no_input(); title_waits_for_roles(); title_without_roles_stays_retail(); title_retail_when_off();
     title_popped_on_scene_exit(); title_and_menu_together();
     ATLAS_DONE("atlas binding");

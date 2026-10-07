@@ -18,18 +18,27 @@ int at_reg_is_parent(const char *id)
     return strncmp(id, "settings.", 9) == 0 && id[9] != '\0';
 }
 
+/* The parents a menu draws today: the main menu, Solo, Versus and the Settings list. The others (online, mods, more, settings.<page>) are
+ * valid names for later steps, but nothing renders their children yet, so an entry under one is refused at validation with a log line
+ * rather than accepted and never shown. */
+int at_reg_parent_rendered(const char *id)
+{
+    return strcmp(id, "main") == 0 || strcmp(id, "solo") == 0 || strcmp(id, "versus") == 0 || strcmp(id, "settings") == 0;
+}
+
 int at_reg_add(AtRegistry *r, const AtEntry *e)
 {
     int i, same = 0;
     size_t ml = strlen(e->mod);
     if (strcmp(e->parent, "pause") == 0 || strcmp(e->parent, "lab.pause") == 0) { rlog(r, "entry \"%s\": parent \"%s\" is not available until a later step", e->id, e->parent); return 0; }
     if (!at_reg_is_parent(e->parent)) { rlog(r, "entry \"%s\": unknown parent \"%s\"", e->id, e->parent); return 0; }
+    if (ml > 0 && !at_reg_parent_rendered(e->parent)) { rlog(r, "entry \"%s\": no menu shows parent \"%s\" yet (main, solo, versus and settings only)", e->id, e->parent); return 0; }
     if (e->id[0] == '\0') { rlog(r, "entry in parent \"%s\"%s: it has no id", e->parent, ""); return 0; }
     if (ml > 0 && !(strcmp(e->id, e->mod) == 0 || (strncmp(e->id, e->mod, ml) == 0 && e->id[ml] == '.' && e->id[ml + 1] != '\0'))) {
         rlog(r, "entry \"%s\": the id of a mod entry is \"%s\" or starts with \"%s.\"", e->id, e->mod); return 0;
     }
     for (i = 0; i < r->n; i++) {
-        if (strcmp(r->e[i].id, e->id) == 0) { rlog(r, "entry \"%s\": the id is already registered%s", e->id, ""); return 0; }
+        if (strcmp(r->e[i].id, e->id) == 0 && strcmp(r->e[i].parent, e->parent) == 0) { rlog(r, "entry \"%s\": the id is already registered%s", e->id, ""); return 0; }
         if (ml > 0 && strcmp(r->e[i].mod, e->mod) == 0 && strcmp(r->e[i].parent, e->parent) == 0) same++;
     }
     if (ml > 0 && same >= AT_REG_PER_MOD_PARENT) { rlog(r, "entry \"%s\": a mod may add 6 entries under one parent (\"%s\")", e->id, e->parent); return 0; }

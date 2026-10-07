@@ -1,0 +1,15 @@
+{
+  "id": "roguelite",
+  "name": "Roguelite prototype",
+  "version": "0.1.0",
+  "author": "GD's Melee",
+  "kind": "script",
+  "description": "The roguelite prototype: bounded rooms, ordinary CPU AI. Superseded by Envoy; kept as an example.",
+  "api_version": 2,
+  "gameplay": true,
+  "rollback_safe": false,
+  "entry": "main.lua",
+  "menus": [
+    { "id": "roguelite", "parent": "solo", "label": "ROGUELITE", "blurb": "The roguelite prototype: a run of bounded rooms.", "after": "training", "action": "script", "online": false }
+  ]
+}

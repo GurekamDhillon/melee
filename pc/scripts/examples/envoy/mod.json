@@ -5,7 +5,7 @@
   "author": "GD's Melee",
   "kind": "script",
   "description": "Retail Classic and Adventure with companion drive rewards, normalized opponents and offline New Game+; physical garden and progression.",
-  "api_version": 1,
+  "api_version": 2,
   "gameplay": true,
   "rollback_safe": false,
   "entry": "scripts/main.lua",

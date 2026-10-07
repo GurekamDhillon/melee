@@ -34,6 +34,9 @@ static struct {
     int idx;            ///< FA_AT_ENTRY: the entry; FA_AT_MORE: the More item (the native items use fm.cursor)
     const char* shown;  ///< the atlas_id last submitted (closed when the menu changes)
     bool handled;       ///< fa_frame ran this frame (so the host's queue was read)
+    int norder;         ///< the tiles of the menu as last submitted: fat.order[p] >= 0 is a fm.vis slot, < 0 is registry child -(k+1)
+    int order[24];
+    u32 registered;     ///< bit per MenuKind: its rows are in the entry registry (so a mod's `after` finds them)
 } fat;
 
 static bool fa_on(const FeMenu* m)
@@ -164,40 +167,117 @@ static void fa_more(int index)
     }
 }
 
+/* Only the menus a mod entry can sit under today (the registry's rendered parents, gw_ui_registry.c). */
+static bool fa_registry_parent(const FeMenu* m)
+{
+    return m->atlas_id != NULL && (strcmp(m->atlas_id, "main") == 0 || strcmp(m->atlas_id, "solo") == 0 || strcmp(m->atlas_id, "versus") == 0 ||
+                                   strcmp(m->atlas_id, "settings") == 0);
+}
+
+/* The menu's own rows go into the entry registry once, so a mod entry's "after" (Envoy: "training") finds its sibling and the
+ * order the player sees is the registry's, in Atlas and with MELEE_ATLAS=0 alike. */
+static void fa_register_builtins(const FeMenu* m)
+{
+    int i;
+    if (!fa_registry_parent(m) || m->kind >= 32 || (fat.registered & (1u << m->kind))) {
+        return;
+    }
+    fat.registered |= 1u << m->kind;
+    for (i = 0; i < m->n; i++) {
+        Ui_EntryBuiltin(m->atlas_id, fa_item_id(&m->items[i]), m->items[i].label, i);
+    }
+}
+
+/* the tile order: the registry's children (built-in rows and mod entries mixed as `after` places them), then any visible row it did not list */
+static void fa_build_order(const FeMenu* m)
+{
+    int n = Ui_EntryCount(m->atlas_id), k, j;
+    bool used[FM_MAX_VIS];
+    memset(used, 0, sizeof used);
+    fat.norder = 0;
+    for (k = 0; k < n && fat.norder < 24; k++) {
+        if (Ui_EntryField(m->atlas_id, k, "tag")[0] == '\0') {
+            const char* eid = Ui_EntryField(m->atlas_id, k, "id");
+            for (j = 0; j < fm.nvis; j++) {
+                if (!used[j] && strcmp(fa_item_id(&m->items[fm.vis[j]]), eid) == 0) {
+                    used[j] = true;
+                    fat.order[fat.norder++] = j;
+                    break;
+                }
+            }
+        } else {
+            fat.order[fat.norder++] = -(k + 1);
+        }
+    }
+    for (j = 0; j < fm.nvis && fat.norder < 24; j++) {
+        if (!used[j]) {
+            fat.order[fat.norder++] = j;
+        }
+    }
+}
+
+static int fa_pos_of_native(int slot)
+{
+    int p;
+    for (p = 0; p < fat.norder; p++) {
+        if (fat.order[p] == slot) {
+            return p;
+        }
+    }
+    return 0;
+}
+
 /* the whole screen, every frame: the host replaces its record only when something differs */
 static void fa_submit(const FeMenu* m)
 {
-    int i, ne = Ui_EntryCount(m->atlas_id), fb, fi, shown = fm.nvis;
+    int p, fb, fi;
     const FeMenuItem* f = fm.nvis > 0 ? &m->items[fm.vis[fm.cursor]] : NULL;
+    fa_register_builtins(m);
+    fa_build_order(m);
+    if (fat.where == FA_AT_ENTRY) {
+        /* the focused entry may have gone (its mod unloaded, hidden, or a netplay session began): clamp to a tile that exists */
+        if (fat.idx >= fat.norder) {
+            fat.idx = fat.norder - 1;
+        }
+        if (fat.idx < 0 || fat.order[fat.idx] >= 0) {
+            fat.where = FA_AT_NATIVE;
+            if (fat.idx >= 0) {
+                fm_go(fat.order[fat.idx]); /* the legacy cursor setter: it lands on a visible row */
+            }
+        }
+    }
     if (!Ui_Begin(m->atlas_id, FA_PRIMARY_TILES, fa_chapter_of(m), m->title)) {
         return;
     }
     Ui_Cols(m->kind == MENU_KIND_MAIN ? 1 : 0);
     fa_trail(m);
-    for (i = 0; i < fm.nvis; i++) {
-        const FeMenuItem* it = &m->items[fm.vis[i]];
-        Ui_Tile(fa_item_id(it), it->label, fa_item_tag(m, it), m->kind == MENU_KIND_MAIN ? fa_numeral(i) : "", 0);
-    }
-    for (i = 0; i < ne; i++) {
-        Ui_Tile(Ui_EntryField(m->atlas_id, i, "id"), Ui_EntryField(m->atlas_id, i, "label"), "MOD", "", 0);
+    for (p = 0; p < fat.norder; p++) {
+        if (fat.order[p] >= 0) {
+            const FeMenuItem* it = &m->items[fm.vis[fat.order[p]]];
+            Ui_Tile(fa_item_id(it), it->label, fa_item_tag(m, it), m->kind == MENU_KIND_MAIN ? fa_numeral(p) : "", 0);
+        } else {
+            int k = -fat.order[p] - 1;
+            Ui_Tile(Ui_EntryField(m->atlas_id, k, "id"), Ui_EntryField(m->atlas_id, k, "label"), "MOD", "", 0);
+        }
     }
     fa_more_submit(m);
     if (fat.where == FA_AT_NATIVE && f != NULL) {
-        Ui_Explain(fa_kicker(m, fm.cursor), f->label, f->desc);
+        Ui_Explain(fa_kicker(m, fa_pos_of_native(fm.cursor)), f->label, f->desc);
     } else if (fat.where == FA_AT_ENTRY) {
-        Ui_Explain("MOD", Ui_EntryField(m->atlas_id, fat.idx, "label"), Ui_EntryField(m->atlas_id, fat.idx, "blurb"));
+        int k = -fat.order[fat.idx] - 1;
+        Ui_Explain("MOD", Ui_EntryField(m->atlas_id, k, "label"), Ui_EntryField(m->atlas_id, k, "blurb"));
     }
     Ui_Key('A', "Open");
     Ui_Key('B', m->kind == MENU_KIND_MAIN ? "Title" : "Back");
     if (fat.where == FA_AT_ENTRY) {
         fb = 0;
-        fi = shown + (fat.idx < ne ? fat.idx : 0);
+        fi = fat.idx;
     } else if (fat.where == FA_AT_MORE) {
         fb = 1;
         fi = fat.idx;
     } else {
         fb = 0;
-        fi = fm.cursor; /* the legacy cursor is the truth */
+        fi = fa_pos_of_native(fm.cursor); /* the legacy cursor is the truth */
     }
     Ui_Commit(fb, fi);
 }
@@ -206,26 +286,27 @@ static void fa_submit(const FeMenu* m)
 static void fa_event(int type, int block, int index)
 {
     const FeMenu* m = fm.menu;
+    int o = (block == 0 && index >= 0 && index < fat.norder) ? fat.order[index] : 0;
     if (type == FA_EV_FOCUS) {
         if (block == 1) {
             fat.where = FA_AT_MORE;
             fat.idx = index;
-        } else if (index < fm.nvis) {
+        } else if (index >= 0 && index < fat.norder && o >= 0) {
             fat.where = FA_AT_NATIVE;
-            fm_go(index); /* the legacy cursor setter: sound, scroll, the kit's own events */
-        } else {
+            fm_go(o); /* the legacy cursor setter: sound, scroll, the kit's own events */
+        } else if (index >= 0 && index < fat.norder) {
             fat.where = FA_AT_ENTRY;
-            fat.idx = index - fm.nvis;
+            fat.idx = index;
         }
     } else if (type == FA_EV_ACCEPT) {
         if (block == 1) {
             fa_more(index);
-        } else if (index < fm.nvis) {
-            fm_go(index);
+        } else if (index >= 0 && index < fat.norder && o >= 0) {
+            fm_go(o);
             fm_confirm();
-        } else {
+        } else if (index >= 0 && index < fat.norder) {
             sfxForward();
-            Ui_EntryActivate(m->atlas_id, index - fm.nvis);
+            Ui_EntryActivate(m->atlas_id, -o - 1);
         }
     } else if (type == FA_EV_BACK) {
         fm_back();

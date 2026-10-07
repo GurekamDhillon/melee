@@ -86,12 +86,16 @@ extern void Ui_Close(const char* id);
 extern int Ui_EntryCount(const char* parent);
 extern const char* Ui_EntryField(const char* parent, int k, const char* field);
 extern int Ui_EntryActivate(const char* parent, int k);
+extern int Ui_EntryBuiltin(const char* parent, const char* id, const char* label, int native_arg);
 struct FeMenu;
 static bool fa_on(const struct FeMenu* m);
 static bool fa_frame(u32 pad);
 static void fa_sync(void);
 static void fa_open_reset(const struct FeMenu* m, int sel);
 static void fa_scene_exit(void);
+static void fa_register_builtins(const struct FeMenu* m);
+struct FeMenuItem;
+static const char* fa_item_id(const struct FeMenuItem* it);
 
 static const FeMenuItem fm_main[] = {
     { "SOLO", "Classic, Adventure, events, training and more.", "ico_solo", SEL_MAIN_1P, FA_SUB,
@@ -957,25 +961,47 @@ static char fm_dyn_desc[FM_MAX_VIS][164];
 
 static const FeMenu* fm_with_entries(const FeMenu* m, const char* parent)
 {
-    int n = Ui_EntryCount(parent), i, k;
-    if (n <= 0 || m->n >= FM_MAX_VIS) {
+    int n, i = 0, k, j, mods = 0;
+    bool used[FM_MAX_VIS];
+    fa_register_builtins(m);
+    n = Ui_EntryCount(parent);
+    for (k = 0; k < n; k++) {
+        if (Ui_EntryField(parent, k, "tag")[0] != '\0') {
+            mods++;
+        }
+    }
+    if (mods == 0 || m->n >= FM_MAX_VIS) {
         return m;
     }
-    for (i = 0; i < m->n; i++) {
-        fm_dyn_items[i] = m->items[i];
+    memset(used, 0, sizeof used);
+    /* the registry's order: the menu's own rows and the mods' entries, as each entry's `after` places them */
+    for (k = 0; k < n && i < FM_MAX_VIS; k++) {
+        if (Ui_EntryField(parent, k, "tag")[0] == '\0') {
+            const char* eid = Ui_EntryField(parent, k, "id");
+            for (j = 0; j < m->n; j++) {
+                if (!used[j] && strcmp(fa_item_id(&m->items[j]), eid) == 0) {
+                    used[j] = true;
+                    fm_dyn_items[i++] = m->items[j];
+                    break;
+                }
+            }
+        } else {
+            fp_copy(fm_dyn_label[i], Ui_EntryField(parent, k, "label"), (int) sizeof fm_dyn_label[i]);
+            fp_copy(fm_dyn_desc[i], Ui_EntryField(parent, k, "blurb"), (int) sizeof fm_dyn_desc[i]);
+            fm_dyn_items[i].label = fm_dyn_label[i];
+            fm_dyn_items[i].desc = fm_dyn_desc[i];
+            fm_dyn_items[i].icon = NULL;
+            fm_dyn_items[i].sel = (u8) (0x50 + k); /* not a vanilla selection */
+            fm_dyn_items[i].act = FA_ENTRY;
+            fm_dyn_items[i].arg = (u8) k;          /* the registry child index: Ui_EntryActivate(parent, k) */
+            fm_dyn_items[i].flags = 0;
+            i++;
+        }
     }
-    for (k = 0; k < n && i < FM_MAX_VIS; k++, i++) {
-        const char* label = Ui_EntryField(parent, k, "label");
-        const char* blurb = Ui_EntryField(parent, k, "blurb");
-        fp_copy(fm_dyn_label[i], label, (int) sizeof fm_dyn_label[i]);
-        fp_copy(fm_dyn_desc[i], blurb, (int) sizeof fm_dyn_desc[i]);
-        fm_dyn_items[i].label = fm_dyn_label[i];
-        fm_dyn_items[i].desc = fm_dyn_desc[i];
-        fm_dyn_items[i].icon = NULL;
-        fm_dyn_items[i].sel = (u8) (0x50 + k); /* not a vanilla selection */
-        fm_dyn_items[i].act = FA_ENTRY;
-        fm_dyn_items[i].arg = (u8) k;
-        fm_dyn_items[i].flags = 0;
+    for (j = 0; j < m->n && i < FM_MAX_VIS; j++) {
+        if (!used[j]) {
+            fm_dyn_items[i++] = m->items[j];
+        }
     }
     fm_dyn_menu = *m;
     fm_dyn_menu.items = fm_dyn_items;

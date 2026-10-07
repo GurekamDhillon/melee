@@ -7162,6 +7162,7 @@ static int gs_load_text(const char *id, const char *entry, char *src, size_t len
     if (s->api_version > GW_SCRIPT_API_VERSION) {
         gw_Console_Print(GS_RED, "[%s] needs scripting API %d; this build has %d - not loaded", id,
                          s->api_version, GW_SCRIPT_API_VERSION);
+        gw_log("script [%s] refused: it needs scripting API %d, this build has %d", id, s->api_version, GW_SCRIPT_API_VERSION);
         s->used = 0;
         free(src);
         return -1;

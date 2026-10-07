@@ -233,4 +233,73 @@ T.test('the swap screen belongs to its seat', function()
   assert(e.ui.screens['envoy.swap.p2'] and e.ui.screens['envoy.swap.p2'].port == 2)
 end)
 
+-- ---- Task 15: the online reward pick ------------------------------------------------------------------------------------------
+
+-- a lobby between games: the pick window is open for this seat (seat 1, game 1), the build already staged
+local function lobby(e, game)
+  local sent, env = {}, { on = true, seed = 77, open = true, left = 1500, picks = { -1, -1 }, history = {}, round = 1 }
+  local np = { phase = 'lobby', game = game or 1, me = 0, envoy = env }
+  e.g.netplay = function() return np end
+  e.g.netbuild_stage = function() return true end
+  e.g.netbuild = function() return { word = 'w' } end
+  e.g.netplay_act = function(what, v) sent[#sent + 1] = { what, v }; return true end
+  e.mods.net = { seed = 77, picks = {}, staged = game or 1 }
+  return sent, env, np
+end
+local function tick_lobby(e) e.mods.net_ticks = 19; e.mods:net_sync() end
+
+T.test('the online pick is four cards with the countdown, never masked and never paused', function()
+  local e = F.start(D, { netplay = true }); local sent, env = lobby(e)
+  e.s.pad = {}; tick_lobby(e)
+  local d = e.ui.screens['envoy.netpick']
+  assert(d and d.primary.kind == 'cards' and #d.primary.cards == 4, 'three offers and Keep my build')
+  assert(d.primary.cards[4].id == 'keep' and d.primary.cards[4].letter == 'K' and d.primary.cards[4].name == 'Keep my build')
+  assert(d.countdown == 25 and d.trail.title == 'ENVOY REWARD  GAME 1', 'the countdown is the lobby clock, the trail names the game: ' .. tostring(d.countdown) .. ' ' .. tostring(d.trail.title))
+  for i = 1, 3 do assert(d.primary.cards[i].name ~= '' and d.primary.cards[i].rule ~= '' and not d.primary.cards[i].rule:find('\n'), 'one rule per card') end
+  assert(e.ui.state().top == 'envoy.netpick')
+  assert(e.s.mask_calls == 0 and e.s.pause_calls == 0, 'never masked, never paused')
+end)
+
+T.test('A sends rpick with the card index, B sends 3', function()
+  local e = F.start(D, { netplay = true }); local sent = lobby(e)
+  tick_lobby(e)
+  e.ui.engine_focus('envoy.netpick', 'cards', 'offer:2'); e.ui.engine_press('envoy.netpick', 'accept')
+  assert(sent[#sent][1] == 'rpick' and sent[#sent][2] == 1, 'the second card is index 1')
+  e.ui.engine_focus('envoy.netpick', 'cards', 'keep'); e.ui.engine_press('envoy.netpick', 'accept')
+  assert(sent[#sent][2] == 3, 'Keep my build is 3')
+  e.ui.engine_press('envoy.netpick', 'back')
+  assert(sent[#sent][2] == 3 and #sent == 3, 'B keeps')
+end)
+
+T.test('the countdown is re-registered once a second and the screen closes when the pick is in', function()
+  local e = F.start(D, { netplay = true }); local sent, env = lobby(e)
+  tick_lobby(e); local n0 = e.ui.refreshed
+  tick_lobby(e); assert(e.ui.refreshed == n0, 'same second: no re-registration')
+  env.left = 1440; tick_lobby(e)
+  assert(e.ui.refreshed == n0 + 1 and e.ui.screens['envoy.netpick'].countdown == 24, 'one second later')
+  env.picks[1] = 1; tick_lobby(e)
+  assert(#e.ui.stack == 0 and not D.atlas_netpick.active(e.mods), 'the pick is in: the screen is gone')
+  env.picks[1] = -1; tick_lobby(e)
+  assert(e.ui.state().top == 'envoy.netpick', 'a new window opens it again')
+  env.open = false; tick_lobby(e)
+  assert(#e.ui.stack == 0, 'the window ended: the screen is gone')
+end)
+
+T.test('the auto-pick test hook still picks by itself and opens no screen', function()
+  local e = F.start(D, { netplay = true }); local sent = lobby(e)
+  e.mods.net_auto = 1
+  for _ = 1, 31 do tick_lobby(e) end
+  assert(sent[1] and sent[1][1] == 'rpick' and sent[1][2] == 1, 'auto picked')
+  assert(#e.ui.stack == 0, 'and no screen')
+end)
+
+T.test('Atlas off or legacy: the legacy box and its cursor input stay', function()
+  local e = F.start(D, { netplay = true }); local sent = lobby(e)
+  D.atlas_kit.set(false); tick_lobby(e)
+  assert(#e.ui.stack == 0 and e.mods.net.input ~= nil, 'the legacy input is polled')
+  D.atlas_kit.set(true); D.atlas_kit.set_legacy(true); e.mods.net.input = nil; tick_lobby(e)
+  assert(#e.ui.stack == 0 and e.mods.net.input ~= nil, 'envoy ui legacy: the legacy box')
+  D.atlas_kit.set_legacy(false)
+end)
+
 T.done()

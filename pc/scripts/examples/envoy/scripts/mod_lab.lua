@@ -716,6 +716,7 @@ return function(D)
   self.net_ticks=(self.net_ticks or 0)+1;if not self.net and self.net_ticks%20~=0 then return end -- idle: look every 20 ticks (gd.netplay builds a table), active: every tick
   local np=g.netplay();local env=np and np.envoy;local n=self.net
   if not (env and env.on and env.seed>0 and np.phase=='lobby') then
+   if D.atlas_netpick then D.atlas_netpick.close(self) end
    if n and n.input then n.input:close();n.input=nil end -- (a reconnect between games makes env.on blink off: the state is kept, the native history is the memory)
    return
   end
@@ -743,6 +744,7 @@ return function(D)
     if self.net_auto~=nil then
      n.wait=(n.wait or 0)+1
      if n.wait>=30 then n.wait=nil;g.netplay_act('rpick',self.net_auto) end
+    elseif D.atlas_netpick and D.atlas_netpick.sync(self,np,env) then   -- the Atlas pick screen (cards, non-modal) took this seat's input
     else
      n.input=n.input or D.menu_input.new(g,1);n.input:set_active(true)
      for _,a in ipairs(n.input:poll()) do
@@ -750,14 +752,21 @@ return function(D)
       elseif a=='accept' then g.netplay_act('rpick',n.cursor or 0) elseif a=='back' then g.netplay_act('rpick',3) end
      end
     end
-   elseif n.input then n.input:close();n.input=nil end
-  elseif n.input then n.input:close();n.input=nil end
+   else
+    if D.atlas_netpick then D.atlas_netpick.close(self) end   -- the pick is in: the screen goes
+    if n.input then n.input:close();n.input=nil end
+   end
+  else
+   if D.atlas_netpick then D.atlas_netpick.close(self) end    -- the pick window ended
+   if n.input then n.input:close();n.input=nil end
+  end
  end
  function L:net_draw()
   local g=self.g;local n=self.net
   if not n or not n.offers or not g.netplay or not g.text then return end
   local np=g.netplay();local env=np.envoy
   if not (env and env.on and env.open) or env.picks[n.seat]>=0 then return end
+  if D.atlas_netpick and D.atlas_netpick.active(self) then return end   -- the Atlas screen is up: the legacy box stays for `envoy ui legacy`
   g.fill(150,110,340,190,0x0A1018E8);g.box(150,110,340,190,0xE8EEF4FF)
   g.text(162,118,('ENVOY REWARD  -  game %d  -  %d s left'):format(np.game,math.ceil(env.left/60)),0xFFE070FF,1)
   for i,id in ipairs(n.offers) do

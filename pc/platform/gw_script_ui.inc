@@ -1873,10 +1873,17 @@ static int gs_ui_slot_arg(lua_State *L, int idx) {
     return s;
 }
 
-/* gd.ui.tab(id): the tab the screen shows now, 1-based; nil for a screen with none */
+/* gd.ui.tab(id): the tab the screen shows now, 1-based; nil for a screen with none. gd.ui.tab(id, n) shows tab n (the script moved it itself, say from a
+ * console command): it does not call on.tab, because the script is the one that asked. A re-registration keeps the tab the player is on, so this is how
+ * the script says otherwise. Returns the tab shown. */
 static int l_ui_tab(lua_State *L) {
     int s = gs_ui_slot_arg(L, 1);
-    if (gs_ui_slot[s].sc.n_tabs > 0) lua_pushinteger(L, gs_ui_slot[s].view.tab + 1); else lua_pushnil(L);
+    GsUiSlot *u = &gs_ui_slot[s];
+    if (u->sc.n_tabs > 0 && lua_isinteger(L, 2) && lua_tointeger(L, 2) >= 1 && lua_tointeger(L, 2) <= u->sc.n_tabs) {
+        u->view.tab = (int) lua_tointeger(L, 2) - 1;
+        u->explain_dirty = 1;
+    }
+    if (u->sc.n_tabs > 0) lua_pushinteger(L, u->view.tab + 1); else lua_pushnil(L);
     return 1;
 }
 

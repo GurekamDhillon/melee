@@ -11,7 +11,7 @@ extern "C" {
 #define AT_MAX_BLOCKS 6
 #define AT_MAX_CELLS 12               /* the Lua door's limit (documented in scripting.md): an inline block holds this many */
 #define AT_MAX_EXT_CELLS 256          /* a native grid block's capacity (stages: 256), in adapter-owned storage */
-#define AT_MAX_TABS 6
+#define AT_MAX_TABS 8                 /* the LAB pause menu has seven (PLAY DISPLAY DUMMY STATES TOOLS EXIT and a MODS tab when other mods add tools) */
 #define AT_MAX_CURSORS 4
 #define AT_MAX_ITEMS 64               /* a list: the MODS page has up to 41 rows, the remap inputs 22 (the Lua door keeps AT_MAX_ITEMS_LUA) */
 #define AT_MAX_ITEMS_LUA 32           /* the Lua door's documented limit for a list */

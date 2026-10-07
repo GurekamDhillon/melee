@@ -560,7 +560,7 @@ end
 -- rows are recorded as hit rects (menu.hits) so a mouse can drive it once the port has one.
 local RESET_SLOT = 4
 local menu = { open = false, tab = 1, sel = {}, port = 1, was_paused = false, prev = {}, rep = 0,
-  reset_saved = false, t = 0, tab_t = 99, sel_t = 99, hits = {}, slot = 1, target = 2, pct = 0 }
+  reset_saved = false, t = 0, tab_t = 99, sel_t = 99, hits = {}, slot = 1, target = 2, pct = 0, ui = {} } -- ui: the Atlas pause menu's hooks (below, behind `lab ui on`)
 
 local function in_lab_match()
   return gd.lab_mode ~= nil and gd.lab_mode() and gd.match().active and offline()
@@ -568,12 +568,14 @@ end
 
 local function menu_close()
   menu.open = false
+  if menu.ui.close then menu.ui.close() end
   if not menu.was_paused then gd.resume() end
   for port = 1, 6 do pcall(gd.input, port, 0, 10) end
 end
 
 local function menu_leave(where)
   menu.open = false
+  if menu.ui.close then menu.ui.close() end
   for port = 1, 6 do pcall(gd.input, port, 0, 10) end
   gd.lab_leave(where)
 end
@@ -701,7 +703,7 @@ local TABS = {
       desc = "One frame forward, then frozen again. The heart of frame study.",
       value = function() return "f " .. gd.match().frame end, run = function() gd.step(1) end },
     { label = "Step -1", icon = "lab_step_back", key = "LEFT",
-      desc = "One frame back through the history: the keyframe before it, then the logged input re-simulated. Undo, but for physics.",
+      desc = "One frame back through the history: the keyframe before it, then the logged input again.",
       value = function() local h = gd.history() return string.format("-%s / %d s", secs(h.back), cfg.history_s) end,
       run = function() back(1) end },
     { label = "Step +10", icon = "lab_forward", desc = "Ten frames at once, for when one at a time is a chore.",
@@ -712,7 +714,7 @@ local TABS = {
       run = function() next_port(1) end, adjust = function(d) next_port(d) end },
     -- debug movement (docs/scripting.md, gd.fly): the focused fighter flies through everything
     { label = "Fly (noclip)", icon = "lab_points", key = "F11",
-      desc = "The focused fighter flies: stick moves it, A slow, B fast. No gravity, stage, ledges, blast zones or hurtboxes.",
+      desc = "The focused fighter flies: stick moves it, A slow, B fast. No gravity, stage, blast zones or hurtboxes.",
       value = function() return gd.fly and gd.player(focus) and (gd.fly(focus) and "on" or "off") or "-" end,
       run = function()
         local ok, err = pcall(gd.fly, focus, "toggle")
@@ -777,8 +779,7 @@ states_items = function()
   lib_refresh(false)
   local items = {
     { label = "Save to library", icon = "lab_library",
-      desc = function() return "Everything, to a file that survives restarts, named " .. auto_name() ..
-        ". It loads only in this build, with this disc, these mods and this Geno data, in this match." end,
+      desc = function() return "To a file that survives restarts: " .. auto_name() .. ". It loads only in this build and match." end,
       value = function() return #lib.rows .. " SAVED" end,
       run = function() lib_save() end },
     { label = "Quick save", icon = "lab_save", key = "F5",
@@ -803,7 +804,7 @@ states_items = function()
     { label = "History", icon = "lab_history",
       desc = function()
         local h = gd.history()
-        return string.format("How far step-back and the timeline reach: one keyframe every %d frames plus the input log. Now %.0f MB for %s s kept.",
+        return string.format("How far step-back reaches: a keyframe every %d frames plus the input log. Now %.0f MB for %s s kept.",
           h.interval, h.mb, secs(h.back))
       end,
       value = function() return cfg.history_s .. " S" end,
@@ -818,8 +819,8 @@ states_items = function()
     { label = "Hot reload", icon = "lab_reload", key = "F8",
       desc = function()
         local st = gd.hot_reload_status and gd.hot_reload_status()
-        local last = (st and st.text ~= "") and ("  Last: " .. st.text) or ""
-        return "Re-read the fighters' geno.json, their overlays and this script, rewind the chosen seconds and replay your input on the new data. Left / right: how far." .. last
+        local last = (st and st.text ~= "") and ("  Last: " .. st.text:sub(1, 10)) or ""
+        return "Re-read the fighter data and this script, rewind, replay your input on it. Left / right: how far." .. last
       end,
       value = function() return "REPLAY " .. cfg.reload_s .. " S" end,
       run = function() menu_close() hot_reload() end,
@@ -891,6 +892,7 @@ local function menu_open(port)
   if gd.player(menu.target) == nil or menu.target == focus then menu.target = others[1] or focus end
   local tp = gd.player(menu.target)
   if tp then menu.pct = math.floor((tp.percent or 0) / 10 + 0.5) * 10 end
+  if menu.ui.open then menu.ui.open(port) end
 end
 
 local PAD_EDGES = { "A", "B", "X", "Y", "START", "UP", "DOWN", "LEFT", "RIGHT", "L", "R" }
@@ -930,6 +932,7 @@ end
 local function lab_menu_tick()
   if not in_lab_match() then
     menu.open = false
+    if menu.ui.close then menu.ui.close() end
     return false
   end
   if not menu.reset_saved and gd.match().frame >= 1 then
@@ -943,6 +946,7 @@ local function lab_menu_tick()
     if gd.key_pressed("ESCAPE") then menu_open(1) return true end
     return false
   end
+  if menu.ui.on and menu.ui.on() then return true end -- the Atlas screen reads the pad and the keys itself; the menu still owns the tick
   menu.t, menu.tab_t, menu.sel_t = menu.t + 1, menu.tab_t + 1, menu.sel_t + 1
   local e = pad_edges(menu.port)
   for port = 1, 4 do if port ~= menu.port then pad_edges(port) end end
@@ -2785,10 +2789,8 @@ tools_items = function()
   return {
     { label = "Frame data export", icon = "lab_export",
       desc = function()
-        return "Every attack, special, m-ex and Geno state of the focused fighter, one after another from a neutral"
-          .. " start, as fast as the game runs: startup, active frames, IASA, landing lag, autocancel and every"
-          .. " hitbox, to CSV and JSON in scripts-data/geno-lab_lab/framedata/<fighter>/<version>. Uses quick slot "
-          .. BATCH_SLOT .. "." .. (fd_last and ("  Last: " .. fd_last.dir .. ", " .. fd_last.n .. " states.") or "")
+        return "Every attack, special and Geno state of the focused fighter, from neutral, to CSV and JSON. Quick slot "
+          .. BATCH_SLOT .. "." .. (fd_last and ("  Last: " .. fd_last.n .. " states.") or "")
       end,
       value = function() return bx and "RUNNING" or (fd_last and fd_last.version or "") end,
       run = function()
@@ -2799,10 +2801,10 @@ tools_items = function()
     { label = "Diff the last two", icon = "lab_diff",
       desc = function()
         local t = fd_diff_text
-        if t == nil then return "Compare the focused fighter's last two exports: every changed state and field. The full list goes to framedata/<fighter>/diff_<a>_<b>.txt and the console." end
+        if t == nil then return "Compare the last two exports: every changed state and field. The full list goes to a diff file." end
         local s = t[1]
         for k = 2, math.min(#t, 4) do s = s .. "  " .. t[k] end
-        return s
+        return #s > 107 and (s:sub(1, 104) .. "...") or s
       end,
       value = function() return fd_diff_text and (#fd_diff_text - 1) .. " CHANGED" or "" end,
       run = function()
@@ -2815,10 +2817,10 @@ tools_items = function()
       desc = "Every action state of the focused fighter, with a filter. Pick one and play it: from neutral, looped, slowed.",
       run = go("moves") },
     { label = "Launch preview", icon = "lab_launch", key = "7",
-      desc = "The knockback, angle, hitstun and flight of the hitbox on screen (or the next one), for the victim's percent, weight and DI.",
+      desc = "Knockback, angle, hitstun and flight of the hitbox on screen, for the victim's percent, weight and DI.",
       run = go("launch") },
     { label = "A/B compare", icon = "lab_ab", key = "8",
-      desc = "Record your inputs once, re-simulate them on other fighter data from the same frame, see the first frame they part.",
+      desc = "Record your inputs once, replay them on other fighter data, see the first frame they part.",
       run = go("ab") },
     { label = "Rollbacks", icon = "lab_rollback",
       desc = function()
@@ -4267,20 +4269,20 @@ local extra = {
   { label = "Record slot", icon = "lab_record", key = "R",
     desc = function()
       local r = rec[dm.slot]
-      return "Your controller drives the dummy while it records (your fighter stands still). A starts, R in TRAINING too; again stops. "
+      return "Your pad drives the dummy while it records. A starts, again stops. "
         .. (r and string.format("Slot %d: %d frames%s.", dm.slot, #r.frames, r.state and ", from its saved state" or "") or "Empty.")
     end,
     value = function() return (recording and "REC " or "SLOT ") .. dm.slot end,
     run = function() menu_close() LD.dummy_record() end,
     adjust = function(d) if not recording then dm.slot = ((dm.slot - 1 + d) % REC_SLOTS) + 1 dm_save() end end },
   { label = "Record from a state", icon = "lab_save",
-    desc = "On: starting a recording saves quick slot 2, and each playback of it loads that state first (a loop from the same spot).",
+    desc = "On: a recording saves quick slot 2 and each playback loads it first: a loop from the same spot.",
     toggle = function() return dm.rec_state end, value = function() return onoff(dm.rec_state) end,
     run = function() dm.rec_state = not dm.rec_state dm_save() end, adjust = function() dm.rec_state = not dm.rec_state dm_save() end },
   row("Playback", "lab_play", "Play the recorded slots: in order, or at random by each slot's weight (lab dummy w_slot 1,1,0,2).", "play", PLAY_OPTS),
-  row("DI", "lab_launch", "Knockback DI on every hit: in, out, survival (toward the diagonal), a fixed stick angle, or random (weights: lab dummy w_di).", "di", DI_OPTS),
+  row("DI", "lab_launch", "Knockback DI on every hit: in, out, survival, a fixed angle, or random (weights: lab dummy w_di).", "di", DI_OPTS),
   { label = "Clean DI", icon = "lab_launch",
-    desc = "On: the stick goes to the DI in two steps (just past the stick line, then full once the SDI window has passed), so the DI never also counts as an SDI. Off: a full flick (DI plus one SDI, as a human's flick often is).",
+    desc = "On: DI in two stick steps, so it never also counts as an SDI. Off: a full flick (DI plus one SDI).",
     toggle = function() return dm.di_clean end, value = function() return onoff(dm.di_clean) end,
     run = function() dm.di_clean = not dm.di_clean dm_save() end, adjust = function() dm.di_clean = not dm.di_clean dm_save() end },
   num("DI angle", "lab_launch", "The stick angle for DI \"angle\", in degrees (0 = right, 90 = up).", "di_angle", 0, 345, 15, function(v) return v .. " DEG" end),
@@ -4289,7 +4291,7 @@ local extra = {
   row("SDI direction", "lab_mirror", "Which way the SDI flicks go.", "sdi_dir", SDI_DIRS),
   row("Tech", "lab_ko", "On landing in tumble: in place, roll away, roll toward, miss, or random (weights: lab dummy w_tech).", "tech", TECH_OPTS),
   row("Getup (missed tech)", "lab_ko", "From a missed tech: stand, attack, roll away / toward, or random (lab dummy w_getup).", "getup", GETUP_OPTS),
-  row("Ledge", "lab_ledge", "From the ledge: getup, roll, attack, jump, drop, ledgedash (approximate timing), or random (lab dummy w_ledge).", "ledge", LEDGE_OPTS),
+  row("Ledge", "lab_ledge", "From the ledge: getup, roll, attack, jump, drop, ledgedash (approximate) or random (lab dummy w_ledge).", "ledge", LEDGE_OPTS),
   row("After hitstun", "lab_dummy", "The first thing it does when hitstun ends.", "after_hit", AFTER),
   row("After shieldstun", "lab_dummy", "Out of shield, the frame shieldstun ends.", "after_shield", AFTER),
   row("After landing", "lab_dummy", "When a landing's lag ends.", "after_land", AFTER),
@@ -4682,12 +4684,12 @@ local RESULTS = "drills/results.txt"
 -- the built-in drills (the same format a drills/<id>.txt file uses)
 local BUILTIN = {
   { id = "lcancel", name = "L-cancel streak", rule = "tech:lcancel", score = "streak", attempts = 0, seconds = 60,
-    desc = "Land aerials and L-cancel them. The score is your longest streak; the hit rate is kept too. A plain landing (autocancel) does not count." },
+    desc = "Land aerials and L-cancel them. Score: your longest streak. An autocancel does not count." },
   { id = "techchase", name = "Tech chase", rule = "techchase", score = "rate", attempts = 20, seconds = 0,
     window = 40, ["dummy.on"] = "true", ["dummy.tech"] = "random", ["dummy.getup"] = "random", ["dummy.w_tech"] = "in place:1,away:1,toward:1,miss:1",
-    desc = "Knock the dummy down: it techs in place, away, toward or misses at random. Hit it within 40 frames of its tech or getup starting. The score is your rate; your reaction time is shown." },
+    desc = "Knock it down; it techs at random. Hit it within 40 frames of its tech. Score: your rate." },
   { id = "ledgedash", name = "Ledgedash consistency", rule = "tech:ledgedash", score = "rate", attempts = 20, seconds = 0,
-    desc = "Ledgedash 20 times. A hit is a landing with ledge intangibility left (GALINT above 0); the mean GALINT is shown." },
+    desc = "Ledgedash 20 times. A hit is a landing with GALINT left; the mean GALINT is shown." },
   { id = "wavedash", name = "Wavedash timing", rule = "tech:wavedash", score = "rate", attempts = 20, seconds = 0,
     desc = "Wavedash 20 times. A hit is a frame-perfect airdodge." },
 }
@@ -4899,7 +4901,7 @@ local function drill_items()
       run = function() menu_close() start(dd) end }
   end
   items[#items + 1] = { label = "Reload drill files", icon = "lab_reload",
-    desc = "Read scripts-data/geno-lab_lab/drills/index.txt again: one id per line, each drills/<id>.txt a drill (docs/geno.md 14.16).",
+    desc = "Read the drill files again (drills/index.txt: one id a line; docs/geno.md 14.16).",
     value = function() return #drills .. " DRILLS" end,
     run = function() load_drills() say(#drills .. " drills") end }
   return items
@@ -4938,6 +4940,181 @@ local function mode_keys()
     if (a.rep and repeat_key(a.k)) or (not a.rep and gd.key_pressed(a.k)) then ACTIONS[a.run]() end
   end
 end
+
+-- ---- the Atlas pause menu ------------------------------------------------------------------------------------------------
+-- docs/superpowers/plans/2026-10-06-atlas-step7-mods-and-lab.md. Off until `lab ui on`: the menu above is the fallback until the owner has looked at
+-- this one. No new top-level local: this scope holds its state and reaches the rest of the Lab through menu.ui. The rows are the SAME rows (TABS), so no
+-- row is rewritten and a row's behaviour is its own: a toggle is a toggle value, a row with adjust is a stepper (left and right change it, A runs it), a
+-- row with only a value is a text value, and the rest are plain rows.
+;(function()
+  local UI = type(gd.ui) == "table" and gd.ui or nil
+  local SCREEN = "geno-lab.pause"
+  local MAX_ROWS = 32 -- the Lua door's list limit (gw_ui_screen.h AT_MAX_ITEMS_LUA)
+  local on, opened = false, false
+  local byid, shown, state_page = {}, {}, 1
+
+  local function clip(s, n)
+    s = tostring(s or "")
+    if #s > n then return s:sub(1, n - 3) .. "..." end
+    return s
+  end
+  local function row_id(tab, i) return "t" .. tab .. "r" .. i end
+
+  -- the rows of one tab as a description, the legacy row for each id, and the legacy list that was shown
+  local function rows_for(tab)
+    local list = tab_items(tab)
+    local fixed, states = {}, {}
+    for _, it in ipairs(list) do
+      if it.state_row then states[#states + 1] = it else fixed[#fixed + 1] = it end
+    end
+    local chosen = list
+    local per = MAX_ROWS - #fixed - 1
+    if #list > MAX_ROWS and (#states == 0 or per < 4) then -- no library to page (or no room for a page): the first rows, as the record allows
+      chosen = {}
+      for k = 1, MAX_ROWS do chosen[k] = list[k] end
+      gd.log("Geno Lab: the " .. TABS[tab].name .. " tab has " .. #list .. " rows; the Atlas menu shows the first " .. MAX_ROWS)
+    elseif #list > MAX_ROWS then -- the library can be any length; the record holds 32 rows: page it
+      local pages = math.max(1, math.ceil(#states / per))
+      state_page = math.max(1, math.min(state_page, pages))
+      chosen = {}
+      for _, it in ipairs(fixed) do chosen[#chosen + 1] = it end
+      for k = (state_page - 1) * per + 1, math.min(#states, state_page * per) do chosen[#chosen + 1] = states[k] end
+      chosen[#chosen + 1] = {
+        label = "Library page", desc = "Left and right turn the page of the saved-state library.",
+        value = function() return state_page .. " / " .. pages end,
+        adjust = function(d) state_page = ((state_page - 1 + d) % pages) + 1 end,
+      }
+    end
+    local rows, map = {}, {}
+    for i, it in ipairs(chosen) do
+      local id = row_id(tab, i)
+      local row = { id = id, label = clip(it.label, 40) }
+      if it.key then row.sub = "Match key " .. it.key end
+      local val = it.value and it.value() or nil
+      if it.toggle then row.value = { kind = "toggle", on = it.toggle() and true or false }
+      elseif it.adjust then row.value = { kind = "stepper", text = clip(val or "", 20) }
+      elseif val ~= nil then row.value = { kind = "text", text = clip(val, 20) } end
+      rows[i], map[id] = row, it
+    end
+    return rows, map, chosen
+  end
+
+  local function explain(cell)
+    local it = byid[cell]
+    if not it then return nil end
+    local d = it.desc
+    if type(d) == "function" then d = d() end
+    local ex = { kicker = TABS[menu.tab].name, title = clip(it.label, 24), what = clip(d or "", 159), from = { text = "Geno LAB" }, well = false }
+    if it.preview == "mode" then
+      local tags, md = {}, mode()
+      for _, t in ipairs(md.t) do if #tags < 4 then tags[#tags + 1] = clip(t.k .. " " .. t.label, 19) end end
+      for _, a in ipairs(md.a) do if #tags < 4 then tags[#tags + 1] = clip(a.k .. " " .. a.label, 19) end end
+      ex.with = tags
+    end
+    return ex
+  end
+
+  local register
+  local function after() if menu.open and opened then register() end end -- the values and the explainer are data: rebuild them
+
+  local function accept(cell)
+    local it = byid[cell]
+    if it == nil then return nil end
+    if it.run then it.run() elseif it.adjust then it.adjust(1) end
+    after()
+    return nil
+  end
+  local function change(cell, v)
+    local it = byid[cell]
+    if it == nil then return nil end
+    if it.toggle then
+      if it.run then it.run() elseif it.adjust then it.adjust(1) end -- run and adjust both flip a toggle: only one is called
+    elseif it.adjust then
+      it.adjust(v)
+    end
+    after()
+    return nil
+  end
+  local function back() menu_close() return nil end
+  local function on_focus(cell)
+    local i = tonumber(tostring(cell):match("r(%d+)$"))
+    if i then menu.sel[menu.tab] = i end
+  end
+  local function on_tab(i)
+    set_tab(i)
+    register()
+    UI.set_focus(SCREEN, "list", row_id(menu.tab, math.min(menu.sel[menu.tab] or 1, #shown)))
+  end
+  local function on_delete(cell)
+    local it = byid[cell]
+    if it == nil or it.state_row == nil then return nil end
+    local row = it.state_row
+    UI.dialog({
+      title = "Delete state?", text = clip(row.name ~= "" and row.name or row.file, 60) .. " is removed from the library.",
+      actions = { { "A", "Delete" }, { "B", "Keep" } },
+      on = function(b) if b == "A" then lib_delete(row) after() end end,
+    })
+    return nil
+  end
+
+  register = function()
+    local rows, map = rows_for(menu.tab)
+    byid, shown = map, rows
+    local names = {}
+    for i, t in ipairs(TABS) do names[i] = { name = t.name } end
+    UI.screen({
+      id = SCREEN, chapter = 1, port = math.max(1, math.min(4, menu.port or 1)), backdrop = "world",
+      trail = { "LAB", "PAUSE", title = TABS[menu.tab].name },
+      tabs = names, tab = menu.tab,
+      primary = { kind = "list", items = rows },
+      explainer = { width = "wide", provide = explain },
+      keys = {
+        { "A", "Do it" }, { "B", "Resume" },
+        { "Y", "Delete", when = function(c) local it = byid[c]; return it ~= nil and it.state_row ~= nil end },
+        { "L", "Page" }, { "R", "Page" }, { "START", "Resume" },
+      },
+      counter = function(c) local i = c and tonumber(c:match("r(%d+)$")) or 1 return i .. " / " .. #shown end,
+      on = { accept = accept, back = back, start = back, change = change, tab = on_tab, focus = on_focus, alt = { Y = on_delete } },
+    })
+    UI.tab(SCREEN, menu.tab) -- a console command may have moved the tab: the engine keeps the player's tab across a re-registration
+  end
+
+  menu.ui.on = function() return opened end
+  menu.ui.refresh = function()
+    if opened then
+      register()
+      UI.set_focus(SCREEN, "list", row_id(menu.tab, math.min(menu.sel[menu.tab] or 1, #shown)))
+    end
+  end
+  menu.ui.open = function(port)
+    opened = false
+    if not on or UI == nil or gd.match().netplay then return end -- the LAB is offline only: never an Atlas screen in a session
+    local ok, why = UI.available()
+    if not ok then gd.log("Geno Lab: the Atlas menu is not available (" .. tostring(why) .. "); using the old menu") return end
+    state_page = 1
+    opened = true
+    local good, err = pcall(function()
+      register()
+      UI.open(SCREEN)
+      UI.set_focus(SCREEN, "list", row_id(menu.tab, math.min(menu.sel[menu.tab] or 1, #shown)))
+    end)
+    if not good then
+      opened = false
+      gd.log("Geno Lab: the Atlas menu failed (" .. tostring(err) .. "); using the old menu")
+    end
+  end
+  menu.ui.close = function()
+    if opened then
+      opened = false
+      pcall(UI.close, SCREEN)
+    end
+  end
+  menu.ui.set = function(word)
+    if UI == nil then gd.log("lab ui: gd.ui is not available in this build") return end
+    if word == "on" then on = true elseif word == "off" then on = false end
+    gd.log("lab ui " .. (on and "on" or "off"))
+  end
+end)()
 
 function on_tick()
   if lab_menu_tick() then return end -- the menu owns every key while it is open
@@ -5017,6 +5194,7 @@ function on_match_start()
   focus = 1
   tl_cache, scrub = {}, {}
   menu.open, menu.reset_saved, menu.prev = false, false, {}
+  if menu.ui.close then menu.ui.close() end
   LE.reset()
   LD.reset()
   cfg.on = cfg.always or gd.lab_request()
@@ -5100,7 +5278,10 @@ function on_draw()
     return
   end
   if not preload() then return end
-  if menu.open then lab_menu_draw() return end
+  if menu.open then
+    if not (menu.ui.on and menu.ui.on()) then lab_menu_draw() end
+    return
+  end
   LE.draw_batch()
   if not cfg.on or cfg.hidden then return end
   if not gd.match().active then return end
@@ -5158,7 +5339,7 @@ local function help_lines()
   local g = {}
   for _, k in ipairs(GLOBAL_KEYS) do g[#g + 1] = k[1] .. " " .. k[2] end
   out[#out + 1] = "  global: " .. table.concat(g, ", ")
-  out[#out + 1] = "  console: lab help | status | mode <name> | set <mode>.<toggle> on|off | hide | menu [tab]"
+  out[#out + 1] = "  console: lab help | status | mode <name> | set <mode>.<toggle> on|off | hide | menu [tab] | ui on|off"
   out[#out + 1] = "           port N | history [seconds] | back N | dump [N] | move <id> [frame] | events"
   out[#out + 1] = "           states | save | load <file> | rename <file> <name> | delete <file> | reload [seconds]"
   out[#out + 1] = "  stage E: moves [text] | play <id|name> | kb | di none|in|out|survival | ab [record|reload|same|mirror]"
@@ -5200,7 +5381,10 @@ gd.command("lab", function(arg)
     if rest == "close" then if menu.open then menu_close() end gd.log("menu closed") return end
     if not menu.open then menu_open(1) end
     for i, t in ipairs(TABS) do if t.name:lower() == rest:lower() then set_tab(i) end end
+    if menu.ui.refresh then menu.ui.refresh() end
     gd.log("menu open, tab " .. TABS[menu.tab].name)
+  elseif cmd == "ui" then
+    if menu.ui.set then menu.ui.set(rest) else gd.log("lab ui: gd.ui is not available in this build") end
   elseif cmd == "port" and n then
     focus = n
   elseif cmd == "history" and n then

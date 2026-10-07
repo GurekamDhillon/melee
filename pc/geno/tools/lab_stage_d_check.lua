@@ -79,7 +79,7 @@ gd = setmetatable({
     return { length = 10, events = {} }
   end,
   pad = function(port) return port == 2 and pad2 or pad end, motion_name = function(id) return names[id] or ("M" .. id) end,
-  history = function() return { busy = false, replaying = false, back = 0, fwd = 0, depth = 600 } end,
+  history = function() return { busy = false, replaying = false, back = 0, fwd = 0, depth = 600, interval = 5, mb = 12.0 } end,
   debug_draw = function() return 1 end, debug_stage = function() return 0 end,
   key = function() return false end, key_pressed = function() return false end, paused = function() return false end,
   command = noop, lab_mode = function() return true end, lab_env = function() return nil end,
@@ -587,6 +587,119 @@ do
   expect(type(st) == "table" and st.conditional and st.iasa == nil and st.ac == nil,
     "geno_conditional_static: conditional IASA/autocancel cannot masquerade as measured values")
   gd.timeline = old
+end
+-- ---- the Atlas pause menu (docs/superpowers/plans/2026-10-06-atlas-step7-mods-and-lab.md) --------------------------------------
+-- Runs the LAB against the real gd.ui contract (atlas_ui_stub.lua) owned by the script geno-lab, never the console, which bypasses ownership.
+do
+  local here = (arg and arg[0] or ""):gsub("\\", "/"):gsub("[^/]*$", "")
+  local Stub = dofile(here .. "../../tests/atlas_ui_stub.lua")
+  local ui = Stub.new{ caller = "geno-lab", owner_mod = "geno-lab", available = true }
+  local SCREEN = "geno-lab.pause"
+  local function upv(fn, name)
+    for i = 1, 250 do local n, v = debug.getupvalue(fn, i) if not n then return nil end if n == name then return v end end
+  end
+  gd.ui = ui
+  chunk()                                   -- a fresh LAB, loaded after gd.ui exists (the mapper reads it once, at load)
+  env.on_match_start()
+  local menu, TABS = upv(cmdfn, "menu"), upv(cmdfn, "TABS")
+  local resumed, left = 0, nil
+  gd.resume = function() resumed = resumed + 1 end
+  gd.lab_leave = function(where) left = where end
+  local function press(kind) return ui.engine_press(SCREEN, kind) end
+  local function desc() return ui.screens[SCREEN] end
+  local function rows() return desc().primary.items end
+  local function row(label) for _, r in ipairs(rows()) do if r.label == label then return r end end end
+  local function focus_on(label) local r = row(label); assert(r, "no row " .. label); ui.engine_focus(SCREEN, "list", r.id) end
+  local function closed() return ui.state().depth == 0 end
+
+  -- 1. off by default: the legacy menu opens and no Atlas screen exists
+  lab("menu")
+  expect(menu.open and closed() and desc() == nil, "lab ui is off by default: the legacy menu opens and registers no screen")
+  lab("menu close")
+  -- 2. on: the pause menu is the Atlas screen, owned by the script, over the world, with every tab
+  lab("ui on"); lab("menu")
+  expect(ui.state().top == SCREEN and menu.open, "lab ui on: the pause menu is the Atlas screen")
+  expect(ui._owner[SCREEN] == "geno-lab", "the screen is owned by the script geno-lab, not the console")
+  local names, want = {}, {}
+  for i, t in ipairs(desc().tabs) do names[i] = t.name end
+  for i, t in ipairs(TABS) do want[i] = t.name end
+  expect(table.concat(names, ",") == table.concat(want, ",") and want[1] == "PLAY" and want[#want] == "EXIT", "every tab is there: " .. table.concat(names, ","))
+  expect(desc().backdrop == "world" and desc().chapter == 1 and desc().trail.title == "PLAY" and desc().trail[1] == "LAB", "over the world, chapter I, LAB > PAUSE > PLAY")
+  expect(not pcall(ui.screen, { id = "lab.pause", primary = { kind = "list", items = { { id = "a", label = "A" } } } }), "a screen id without the mod's prefix is refused for the script")
+  -- 3. every row of every tab maps (count, unique ids, no row over the record's cap)
+  for i, t in ipairs(TABS) do
+    cmdfn("menu " .. t.name:lower())
+    local legacy = #(type(t.items) == "function" and t.items() or t.items)
+    local seen, ok = {}, true
+    for _, r in ipairs(rows()) do if seen[r.id] or #r.id > 23 then ok = false end seen[r.id] = true end
+    expect(ok and #rows() == math.min(legacy, 32) and #rows() >= 1, t.name .. ": " .. #rows() .. " rows for " .. legacy)
+    expect(ui.tab(SCREEN) == i, t.name .. ": the console command moved the engine's tab too")
+  end
+  -- 4. a toggle flips once (run and adjust both flip it: calling both would undo it)
+  cmdfn("menu display")
+  local tr
+  for _, r in ipairs(rows()) do if r.value and r.value.kind == "toggle" then tr = r break end end
+  expect(tr ~= nil, "the DISPLAY tab has toggle rows")
+  local before = tr.value.on
+  focus_on(tr.label); press("accept")
+  expect(row(tr.label).value.on ~= before, "a toggle flips on A")
+  press("accept")
+  expect(row(tr.label).value.on == before, "and flips back on the next A: once each, not twice")
+  ui.engine_row(SCREEN, "right")
+  expect(row(tr.label).value.on ~= before, "left and right flip a toggle once as well")
+  ui.engine_row(SCREEN, "left")
+  -- 5. a stepper: left and right change it, A runs it
+  cmdfn("menu play")
+  focus_on("Focus")
+  local function focus_now() return tonumber(lab("status"):match("focus=(%d+)")) end
+  local f0 = focus_now()
+  ui.engine_row(SCREEN, "right")
+  local f1 = focus_now()
+  press("accept")
+  local f2 = focus_now()
+  expect(f1 ~= f0 and f2 ~= f1, "a stepper: right changes it, A runs it (focus " .. f0 .. ", " .. f1 .. ", " .. f2 .. ")")
+  expect(row("Focus").value.kind == "stepper", "the Focus row is a stepper")
+  expect(row("Step +10").value == nil and row("Step +1").value.kind == "text", "a row with only a value is a text value, one with neither is plain")
+  -- 6. the focus stays on the row after every re-registration, and a tab change restores the tab's last row
+  focus_on("Step +10"); press("accept")
+  expect(ui.focus(SCREEN) == row("Step +10").id, "the focus stays on the same row after the screen is re-registered")
+  press("r"); expect(menu.tab == 2 and desc().trail.title == "DISPLAY", "R: the next tab, the trail follows")
+  press("l"); expect(menu.tab == 1 and ui.focus(SCREEN) == row("Step +10").id, "L: back, and the tab's last row has the focus again")
+  -- 7. closing: the game resumes once, every port's input is neutralised, the screen is gone
+  resumed = 0
+  focus_on("Resume")
+  local okc, errc = pcall(press, "accept")
+  expect(okc and closed() and not menu.open, "Resume closes the menu and the screen (" .. tostring(errc) .. ")")
+  expect(resumed == 1 and inputs[5] == 0 and inputs[6] == 0, "the game resumes once and all six ports' inputs are neutralised")
+  gd.paused = function() return true end
+  lab("menu"); resumed = 0
+  press("back")
+  expect(closed() and not menu.open and resumed == 0, "opened over a paused game: B closes the menu and leaves the game paused")
+  press("back")                                                    -- a stray second B on a closed screen is harmless
+  gd.paused = function() return false end
+  -- 8. leaving the match closes the screen too
+  lab("menu"); cmdfn("menu exit"); focus_on("Quit"); left = nil
+  press("accept")
+  expect(closed() and not menu.open and left == "menu", "EXIT > Quit leaves the match and closes the screen")
+  -- 9. the explainer: WHAT is the row's description, and a mode row carries its keys as tags
+  lab("menu"); cmdfn("menu display"); focus_on("Display mode")
+  local ex = desc().explainer.provide(row("Display mode").id)
+  expect(ex and ex.title == "Display mode" and #(ex.with or {}) >= 1 and ex.from.text == "Geno LAB" and ex.well == false, "the mode row explains itself, with no picture well, and lists the mode's keys")
+  lab("menu close")
+  -- 10. the descriptions fit the explainer (the spec's one short rule: at most 110 characters; the engine cuts at 159)
+  lab("menu")
+  local long = {}
+  for i, t in ipairs(TABS) do
+    cmdfn("menu " .. t.name:lower())
+    for _, r in ipairs(rows()) do
+      local okp, e = pcall(desc().explainer.provide, r.id)
+      if not okp then long[#long + 1] = t.name .. " / " .. r.label .. " (raised: " .. tostring(e) .. ")"
+      elseif e and #e.what > 110 then long[#long + 1] = t.name .. " / " .. r.label .. " (" .. #e.what .. ")" end
+    end
+  end
+  expect(#long == 0, "every row description is 110 characters or less; too long: " .. table.concat(long, "; "))
+  lab("menu close"); lab("ui off")
+-- (Tasks 8 and 9 add their checks above this closing end: one block, one preamble, no new file-scope local)
 end
 for k in pairs(unknown) do u[#u + 1] = k end
 print("gd functions stubbed as no-ops: " .. table.concat(u, " "))

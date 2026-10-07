@@ -1103,6 +1103,8 @@ static void step7_stepper_tabs_backdrop(void)
     LUA_IS("TB={}; gd.ui.screen{id='envoy.tabs', tabs={{name='ONE'},{name='TWO'},{name='THREE'}}, tab=2, primary={kind='list', items={{id='a',label='A'}}}, on={tab=function(i) TB[#TB+1]=i end}}; return gd.ui.open('envoy.tabs')", "true");
     LUA_IS("return gd.ui.tab('envoy.tabs')", "2");
     LUA_IS("gd.ui.feed('envoy.tabs','r'); gd.ui.feed('envoy.tabs','r'); gd.ui.feed('envoy.tabs','l'); return table.concat(TB,',')", "3,1,3");
+    LUA_IS("TB={}; return gd.ui.tab('envoy.tabs', 2) .. ':' .. gd.ui.tab('envoy.tabs', 9) .. ':' .. #TB", "2:2:0");      /* the script moves the tab itself: no on.tab; out of range changes nothing */
+    LUA_IS("gd.ui.tab('envoy.tabs', 3); TB={}; return gd.ui.tab('envoy.tabs')", "3");
     LUA_IS("gd.ui.screen{id='envoy.tabs', tabs={{name='ONE'},{name='TWO'},{name='THREE'}}, tab=1, primary={kind='list', items={{id='b',label='B'}}}, on={tab=function(i) TB[#TB+1]=i end}}; return gd.ui.tab('envoy.tabs')", "3");
     LUA_HAS("return gd.ui.screen{id='envoy.t0', tabs={}, primary={kind='list', items={{id='a',label='A'}}}}", "tabs");
     LUA_HAS("local t={} for i=1,9 do t[i]={name='T'..i} end return gd.ui.screen{id='envoy.t9', tabs=t, primary={kind='list', items={{id='a',label='A'}}}}", "tabs");

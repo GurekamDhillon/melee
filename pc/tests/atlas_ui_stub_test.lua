@@ -464,6 +464,9 @@ do
     primary = { kind = 'list', items = one }, on = { tab = function(i) TB[#TB + 1] = i end, page = function() TB[#TB + 1] = 'page' end } })
   s.open('geno-lab.t')
   check(s.tab('geno-lab.t') == 2, 'the screen starts on the tab it asked for')
+  TB = {}
+  check(s.tab('geno-lab.t', 3) == 3 and s.tab('geno-lab.t') == 3 and #TB == 0 and s.tab('geno-lab.t', 9) == 3, 'the script can move the tab itself: no on.tab, and a tab out of range changes nothing')
+  s.tab('geno-lab.t', 2)
   s.engine_press('geno-lab.t', 'r'); s.engine_press('geno-lab.t', 'r'); s.engine_press('geno-lab.t', 'l')
   check(table.concat(TB, ',') == '3,1,3', 'L and R move the tab and tell on.tab, wrapping; on.page is not called when there are tabs (got ' .. table.concat(TB, ',') .. ')')
   raises(function() s.screen({ id = 'geno-lab.t0', tabs = {}, primary = { kind = 'list', items = one } }) end, 'tabs', 'an empty tabs list is refused')

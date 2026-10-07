@@ -309,7 +309,12 @@ function Stub.new(opts)
   ui.dialogs[#ui.dialogs + 1] = t; return true
  end
  function ui.state() return { depth = #ui.stack, top = top(), roles_ok = ui.available_ok } end
- function ui.tab(id) own(id); return ui._tab[id] end   -- the active tab (1-based), nil for a screen with none
+ -- gd.ui.tab(id[, n]): the active tab (1-based), nil for a screen with none; with n the script moves it (no on.tab: the script asked)
+ function ui.tab(id, n)
+  own(id)
+  if ui.screens[id].tabs and math.type(n) == 'integer' and n >= 1 and n <= #ui.screens[id].tabs then ui._tab[id] = n end
+  return ui._tab[id]
+ end
 
  -- ---- the engine's part -------------------------------------------------------------------------------------
  -- the explainer table as the engine keeps it: fields cut to their buffers (AT_STR 63, AT_TEXT 159), a warning when cut

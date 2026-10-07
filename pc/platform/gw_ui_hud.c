@@ -1,9 +1,10 @@
 /* gw_ui_hud.c - the in-match HUD layer: zones in the title-safe box, the retail HUD's keep-out rectangles, stacking, the quiet-HUD caps,
  * expiry and the draw. Pure C: it draws only through AtSink and measures only through AtTextOps. See gw_ui_hud.h.
  *
- * KEEP-OUTS ARE ESTIMATES until measured in the game (plan step 3, Task 21 step 4): the retail HUD is drawn in the 4:3 band centred on
- * the canvas (ox = (canvas_w - 640) / 2). The damage plates and the stocks above them are one rectangle {ox + 40, 372, 560, 96}; the
- * match timer is {ox + 248, 16, 144, 52}. If the measurement differs, change these constants and atlas_hud_test.c together. */
+ * KEEP-OUTS, MEASURED IN THE GAME (Atlas proof, 2026-10-07, 4:3 960x720 and 16:9 1056x594, +-3 canvas units): the retail HUD is drawn in the
+ * 4:3 band centred on the canvas (ox = (canvas_w - 640) / 2). The damage plates and the stocks above them are one rectangle {ox + 40, 356, 560,
+ * 100} (stock icons start at y 361, plates end at y 446); the match timer is {ox + 246, 44, 168, 40} (text x 250-412, y 49-80, the centiseconds
+ * overhang it). If the HUD changes, change these constants and atlas_hud_test.c together. */
 #include "gw_ui_hud.h"
 #include "gw_ui_stack.h"
 #include "gw_ui_tokens.h"
@@ -12,15 +13,17 @@
 #include <string.h>
 
 #define KO_DAMAGE_X 40.0f
-#define KO_DAMAGE_Y 372.0f
+#define KO_DAMAGE_Y 356.0f
 #define KO_DAMAGE_W 560.0f
-#define KO_DAMAGE_H 96.0f
-#define KO_TIMER_X 248.0f
-#define KO_TIMER_Y 16.0f
-#define KO_TIMER_W 144.0f
-#define KO_TIMER_H 52.0f
+#define KO_DAMAGE_H 100.0f
+#define KO_TIMER_X 246.0f
+#define KO_TIMER_Y 44.0f
+#define KO_TIMER_W 168.0f
+#define KO_TIMER_H 40.0f
 #define HUD_GAP 8.0f
-#define HUD_MID_Y 240.0f
+#define HUD_MID_Y 240.0f                                 /* the top parts end above this */
+#define HUD_MID_Y_BOTTOM 232.0f                          /* the bottom parts start below this: the measured damage keep-out grew 16 px upward, and the LAB's
+                                                          * chip strip with its frame track above it needs 8 px of the middle band that nothing else uses */
 
 AtRect at_hud_safe(float canvas_w)
 {
@@ -135,7 +138,7 @@ void at_hud_layout(const AtHud *h, float canvas_w, const AtKeepOut *k, double no
                     moved = 1;
                 }
             } while (moved && ++guard < 16);
-            if (r.y < safe.y - 0.01f || r.y + r.h > safe.y + safe.h + 0.01f || (top ? r.y + r.h > HUD_MID_Y : r.y < HUD_MID_Y)) {
+            if (r.y < safe.y - 0.01f || r.y + r.h > safe.y + safe.h + 0.01f || (top ? r.y + r.h > HUD_MID_Y : r.y < HUD_MID_Y_BOTTOM)) {
                 out->dropped++;
                 continue;
             }

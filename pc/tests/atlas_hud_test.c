@@ -30,6 +30,10 @@ static void keepout_and_safe(void)
         AtHud h = envoy_fixture(); AtKeepOut ko; AtHudLayout l; AtRect safe = at_hud_safe(WIDTHS[w]);
         at_hud_retail_keepouts(WIDTHS[w], 0xFFFFFFFFu, &ko);                   /* every retail element visible */
         CHECK(ko.n == 2);
+        {   float ox = (WIDTHS[w] - 640.0f) * 0.5f;                            /* the measured retail HUD (Atlas proof, 640x480 canvas): plates + stocks, then the timer */
+            CHECK(ko.r[0].x == ox + 40.0f && ko.r[0].y == 356.0f && ko.r[0].w == 560.0f && ko.r[0].h == 100.0f);
+            CHECK(ko.r[1].x == ox + 246.0f && ko.r[1].y == 44.0f && ko.r[1].w == 168.0f && ko.r[1].h == 40.0f);
+        }
         at_hud_layout(&h, WIDTHS[w], &ko, 1000.0, &FAKE, &l);
         for (z = 0; z < AT_Z_COUNT; z++) for (i = 0; i < h.n[z]; i++) {
             AtRect r = l.rect[z][i];

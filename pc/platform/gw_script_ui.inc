@@ -1446,11 +1446,13 @@ static void gs_ui_hud_draw(void) {
     memset(&sink, 0, sizeof sink);                                            /* every AtSink op is set or NULL (AtSink.image arrived with the select) */
     sink.user = NULL; sink.poly = gs_ui_poly; sink.text = gs_ui_text; sink.model = gs_ui_model_draw; sink.image = gs_ui_image;
     if (gs_ui_keepout_show) {
+        int ko_first = gw_Kit_QuadCount();
         for (i = 0; i < ko.n; i++) {                                              /* 1 px outlines, for measuring them against the retail HUD */
             AtRect r = ko.r[i];
             at_poly_rect(&sink, r.x, r.y, r.w, 1.0f, AT_C_ROSE); at_poly_rect(&sink, r.x, r.y + r.h - 1.0f, r.w, 1.0f, AT_C_ROSE);
             at_poly_rect(&sink, r.x, r.y, 1.0f, r.h, AT_C_ROSE); at_poly_rect(&sink, r.x + r.w - 1.0f, r.y, 1.0f, r.h, AT_C_ROSE);
         }
+        gs_kit_record(ko_first, gw_Kit_QuadCount() - ko_first);                   /* the quads are only drawn if a draw entry covers them (Atlas proof D7) */
     }
     for (i = 0; i < GS_UI_HUDS; i++) {
         int first, quads;

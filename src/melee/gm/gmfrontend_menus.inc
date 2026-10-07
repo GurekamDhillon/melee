@@ -62,9 +62,33 @@ typedef struct FeMenu {
     const char* title;
     const FeMenuItem* items;
     int n;
+    const char* atlas_id; ///< the Atlas screen id (gmfrontend_atlas.inc); NULL = the legacy hub or list only
 } FeMenu;
 
 #define FM_N(a) ((int) (sizeof a / sizeof a[0]))
+
+/* The Atlas adapter (gmfrontend_atlas.inc, included after this file) and its host shims (pc/platform/gw_script_ui.inc). */
+extern int Ui_Ready(void);
+extern int Ui_Begin(const char* id, int primary, int chapter, const char* title);
+extern void Ui_Cols(int cols);
+extern void Ui_Trail(const char* parent);
+extern void Ui_Tile(const char* id, const char* label, const char* tag, const char* numeral, int flags);
+extern void Ui_More(const char* id, const char* label);
+extern void Ui_Explain(const char* kicker, const char* title, const char* what);
+extern void Ui_Key(int button, const char* label);
+extern int Ui_Commit(int focus_block, int focus_index);
+extern void Ui_Intent(int type, int a);
+extern int Ui_PollEvent(int* type, int* block, int* index);
+extern void Ui_Close(const char* id);
+extern int Ui_EntryCount(const char* parent);
+extern const char* Ui_EntryField(const char* parent, int k, const char* field);
+extern int Ui_EntryActivate(const char* parent, int k);
+struct FeMenu;
+static bool fa_on(const struct FeMenu* m);
+static bool fa_frame(u32 pad);
+static void fa_sync(void);
+static void fa_open_reset(const struct FeMenu* m, int sel);
+static void fa_scene_exit(void);
 
 static const FeMenuItem fm_main[] = {
     { "SUPERTIME ENVOY", "Explore, fight and evolve your build.", "ico_adventure", SEL_MAIN_TBD, FA_TBD },
@@ -202,27 +226,27 @@ static const FeMenuItem fm_records[] = {
 };
 
 static const FeMenu fm_menus[] = {
-    { MENU_KIND_MAIN, FM_HUB, SEL_MAIN_VS, 0xFF, 0, 0, "MAIN MENU", fm_main, FM_N(fm_main) },
+    { MENU_KIND_MAIN, FM_HUB, SEL_MAIN_VS, 0xFF, 0, 0, "MAIN MENU", fm_main, FM_N(fm_main), "main" },
     { MENU_KIND_1P, FM_HUB, SEL_1P_REG, MENU_KIND_MAIN, SEL_MAIN_1P, 1, "SOLO", fm_1p,
-      FM_N(fm_1p) },
+      FM_N(fm_1p), "solo" },
     { MENU_KIND_REG, FM_HUB, SEL_REG_CLASSIC, MENU_KIND_1P, SEL_1P_REG, 1, "REGULAR MATCH",
-      fm_reg, FM_N(fm_reg) },
+      fm_reg, FM_N(fm_reg), "solo.regular" },
     { MENU_KIND_STADIUM, FM_HUB, SEL_STADIUM_TARGET, MENU_KIND_1P, SEL_1P_STADIUM, 0,
-      "STADIUM", fm_stadium, FM_N(fm_stadium) },
+      "STADIUM", fm_stadium, FM_N(fm_stadium), "solo.stadium" },
     { MENU_KIND_MULTI_VS, FM_LIST, 0, MENU_KIND_STADIUM, SEL_STADIUM_MULTIMAN, 0,
-      "MULTI-MAN MELEE", fm_multi, FM_N(fm_multi) },
+      "MULTI-MAN MELEE", fm_multi, FM_N(fm_multi), "solo.multiman" },
     { MENU_KIND_VS, FM_HUB, SEL_VS_MELEE, MENU_KIND_MAIN, SEL_MAIN_VS, 0, "VERSUS", fm_vs,
-      FM_N(fm_vs) },
+      FM_N(fm_vs), "versus" },
     { MENU_KIND_SPECIAL, FM_LIST, 0, MENU_KIND_VS, SEL_VS_SPECIAL, 0, "SPECIAL MELEE",
-      fm_special, FM_N(fm_special) },
+      fm_special, FM_N(fm_special), "versus.special" },
     { MENU_KIND_TOY, FM_HUB, SEL_TOY_COLLECTION, MENU_KIND_MAIN, SEL_MAIN_TOY, 1,
-      "COLLECTION", fm_toy, FM_N(fm_toy) },
+      "COLLECTION", fm_toy, FM_N(fm_toy), "more.collection" },
     { MENU_KIND_SETTINGS, FM_LIST, 0, MENU_KIND_MAIN, SEL_MAIN_SETTINGS, 0, "SETTINGS",
-      fm_settings, FM_N(fm_settings) },
+      fm_settings, FM_N(fm_settings), "settings" },
     { MENU_KIND_DATA, FM_HUB, SEL_DATA_RECORDS, MENU_KIND_MAIN, SEL_MAIN_DATA, 0, "DATA",
-      fm_data, FM_N(fm_data) },
+      fm_data, FM_N(fm_data), "more.data" },
     { MENU_KIND_RECORDS, FM_LIST, 0, MENU_KIND_DATA, SEL_DATA_RECORDS, 0, "RECORDS",
-      fm_records, FM_N(fm_records) },
+      fm_records, FM_N(fm_records), "more.records" },
 };
 
 static const FeMenu* fm_find(int kind)
@@ -1006,6 +1030,7 @@ static void fm_open(const FeMenu* m, int sel)
     fm.ready_at = 8;
     fm.leave_at = 0;
     fm.pend_kind = 0;
+    fa_open_reset(m, sel);
     OSReport("frontend: menu %s (kind %d, %s), %d of %d items shown, cursor on \"%s\"%s%s\n",
              m->title, m->kind, m->style == FM_HUB ? "hub" : "list", fm.nvis, m->n,
              fm.nvis > 0 ? m->items[fm.vis[fm.cursor]].label : "-",
@@ -1417,7 +1442,7 @@ static void fm_scene_enter(void)
 
 static void fm_scene_frame(void)
 {
-    u32 in;
+    u32 in, pad_in;
     fm.frames++;
     if (fm.fading_out) {
         if (++fm.fade >= FM_FADE) {
@@ -1446,9 +1471,11 @@ static void fm_scene_frame(void)
                fm_first_boot()) {
         /* the first boot: SETTINGS > CONTROLS once (plug in, test, how to play online) */
     } else if (fm.leave_at == 0 && !fm.fading_out && fm.frames >= fm.ready_at && fm.nvis > 0) {
-        in = mn_80229624(4) | fms_menu_bits();
-        {
-            /* the mouse: pointing moves the cursor, a click selects, the wheel scrolls a list */
+        pad_in = mn_80229624(4);
+        in = pad_in | fms_menu_bits();
+        if (!fa_on(fm.menu)) {
+            /* the mouse: pointing moves the cursor, a click selects, the wheel scrolls a list
+               (under Atlas the host reads the mouse for its own screen instead) */
             int hov = fm_mouse_slot();
             if (hov >= 0 && (fms.moved || fms.click) && !(in & MenuInput_Confirm)) {
                 fm_go(hov);
@@ -1470,6 +1497,8 @@ static void fm_scene_frame(void)
             mn_8022F268();
             fe.reported = GM_MENU;
             fm_leave_scene(GM_MENU);
+        } else if (fa_frame(pad_in)) {
+            /* Atlas handled the frame: its events became fm_go / fm_confirm / fm_back (gmfrontend_atlas.inc) */
         } else if (in & MenuInput_Confirm) {
             fm_confirm();
         } else if (in & MenuInput_Back) {
@@ -1479,6 +1508,7 @@ static void fm_scene_frame(void)
         }
     }
     fm_mirror_flow();
+    fa_sync(); /* after a pending action: the Atlas screen of the menu that is open now */
     fp_evaluate(fp.frame);
     fm_clip_rows();
     fm_texts_update();
@@ -1486,6 +1516,7 @@ static void fm_scene_frame(void)
 
 static void fm_scene_exit(void)
 {
+    fa_scene_exit();
     fm_close();
     fm.active = false;
 }

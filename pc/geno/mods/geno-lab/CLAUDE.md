@@ -11,6 +11,9 @@ see `art/README.md`), and `mod.json`. The design and API are `docs/geno.md` sect
   stage_x()`, exporting through the table. Stage E exports `LE.*`, stage D `LD.*`.
 - **Modes** are the `MODES` table: toggles (`t`, remembered in `settings.txt`) and actions (`a`,
   run through `ACTIONS[name]`, with `STATES[name]` for their on/off icon). Key `0` is mode 10.
+- **The Atlas pause menu** is one mapper in its own function scope just before `on_tick` (`;(function() ... end)()`), reaching the rest of the Lab through `menu.ui`
+  (`open`, `close`, `on`, `refresh`, `set`, `hud_tick`, `hud_on`). It turns the same `TABS` rows into a `gd.ui.screen`, and builds the HUD descriptions. It is behind
+  `lab ui on` (off by default). **No new top-level local**: `tools/port/lab_locals.sh` (in the workspace) reports the main chunk's count, 179 now; it must not rise.
 - **The pause menu** is `TABS`; a tab's `items` is a table or a function returning one. Rows are
   `{label, icon, desc, value, run, adjust, toggle}`. Eight tabs fit; the strip narrows itself.
 - **Hooks**: `on_tick` (keys), `on_frame` (after each game frame; not during re-simulation),
@@ -29,7 +32,8 @@ see `art/README.md`), and `mod.json`. The design and API are `docs/geno.md` sect
 1. Syntax: any Lua 5.4 `luac -p` (or the harness below, which loads it).
 2. `lua pc/geno/tools/lab_stage_d_check.lua pc/geno/mods/geno-lab/scripts/lab.lua`: all checks
    pass. Add a check for every bug fixed from an in-game run; it should fail on the old code.
-3. It has not run in the game unless a Windows agent ran it: say so in the commit.
+3. `bash tools/port/lab_locals.sh pc/geno/mods/geno-lab/scripts/lab.lua` (workspace repo): the main-chunk locals number must not rise.
+4. It has not run in the game unless a Windows agent ran it: say so in the commit.
 
 ## Reading the game
 

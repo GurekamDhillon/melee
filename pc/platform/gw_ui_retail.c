@@ -4,7 +4,8 @@
 #include <string.h>
 
 static const char *const NAMES[AT_RE_COUNT] = { "hud.damage", "hud.stock", "hud.timer", "hud.nametag", "hud.magnify",
-                                                "hud.coin", "hud.prize", "hud.hazard", "pause.panel" };
+                                                "hud.coin", "hud.prize", "hud.hazard", "pause.panel",
+                                                "toy.panel", "toy.info", "toy.text" };
 const char *at_retail_name(int id) { return (id >= 0 && id < AT_RE_COUNT) ? NAMES[id] : NULL; }
 
 int at_retail_parse(const char *list, unsigned *mask, char *err, int cap)
@@ -30,7 +31,8 @@ int at_retail_parse(const char *list, unsigned *mask, char *err, int cap)
     *mask = m;
     return 1;
 }
-unsigned at_retail_script_allowed(void) { return ((1u << AT_RE_COUNT) - 1) & ~(1u << AT_RE_HUD_TIMER); }
+#define AT_RE_TOY_BITS ((1u << AT_RE_TOY_PANEL) | (1u << AT_RE_TOY_INFO) | (1u << AT_RE_TOY_TEXT))
+unsigned at_retail_script_allowed(void) { return ((1u << AT_RE_COUNT) - 1) & ~(1u << AT_RE_HUD_TIMER) & ~AT_RE_TOY_BITS; }   /* the clock and the trophy scenes' pieces are policy-only */
 void at_retail_set(AtRetail *r, int source, unsigned mask) { if (source >= 0 && source < AT_RS_COUNT) r->src[source] = mask & ((1u << AT_RE_COUNT) - 1); }
 unsigned at_retail_effective(const AtRetail *r, int online)
 {

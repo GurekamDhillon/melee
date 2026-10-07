@@ -319,7 +319,7 @@ void gw_Ui_SetRowVal(int h, int slot, int vmin, int vmax, int vstep, int value, 
     AtItem *it;
     if (u == NULL || (it = gs_set_row(u, slot)) == NULL) return;
     it->vmin = vmin; it->vmax = vmax; it->vstep = vstep;
-    it->vval = (vmax > vmin && it->vkind != AT_VAL_TOGGLE) ? (value < vmin ? vmin : value > vmax ? vmax : value) : value;
+    it->vval = (vmax > vmin && it->vkind == AT_VAL_SLIDER) ? (value < vmin ? vmin : value > vmax ? vmax : value) : value;   /* a slider is pulled into its range; a choice outside its options shows nothing, never a wrong option */
     it->on = value != 0;
     it->iflags = flags;
     if (flags & AT_ITEM_DISABLED) it->flags |= AT_CELL_DISABLED;

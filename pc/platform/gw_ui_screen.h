@@ -52,7 +52,7 @@ typedef struct { char id[AT_ID]; char label[AT_STR]; char sub[AT_STR]; unsigned 
                int vstep;                    /* a slider's step (0: the Lua rule, (max - min) / 20, at least 1) */
                int n_opts; char opt[AT_MAX_OPTS][24];   /* a choice the ENGINE owns (it wraps and shows opt[value - vmin]); n_opts 0: the owner's text and direction events */
                char group[24];               /* a heading drawn above this row when it differs from the previous row's (headings are not rows: never focused) */
-               char reason[40];              /* a disabled row says why under its label */
+               char reason[48];              /* a disabled row says why under its label ("Connect a controller to this port first." is 40) */
                unsigned iflags; } AtItem;    /* AT_ITEM_* */
 typedef struct { char btn; char label[AT_STR]; int fn_label, fn_when; } AtKey;
 typedef struct { int has; char label[24]; int model_a, model_b, model_out; char text[AT_STR]; } AtFooter;

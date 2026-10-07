@@ -91,6 +91,7 @@ return function(D)
  function C.digest(text) return ('%08x%08x'):format(fnv(text),fnv(text,fnv('co-op:'))) end
  -- ---- the run -----------------------------------------------------------------------------------------------------------------
  function C.new(g,mods,app)
+  if type(app)=='table' and app.mods==nil then app.mods=mods end -- the console's `envoy vs ...` reaches the rule host through the app (app.lua)
   local self=setmetatable({g=g,mods=mods,app=app,active=false,state='idle',hosts={},seats={},mode='coop',loop=0,stage=0,state_info={player_port=1},events={},stats={},log_lines={}},C)
   return self
  end

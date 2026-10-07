@@ -81,6 +81,21 @@ flow; its historical tests remain, but it is not the default.
 
 See MENUS.md, PLAYTEST.md and NATIVE-TEST-PLAN.md for controller/native acceptance.
 
+## Builds for CPUs in an ordinary VS match (`envoy vs`)
+
+Offline only, never in netplay, never under an Envoy run, and off until asked. In a normal offline VS match (stocks, timer, any stage):
+
+```
+envoy vs on                       the explicit switch (this match only; a new scene clears it)
+envoy vs max [seed] [depth [loop]]   a max build for EVERY present CPU port (1..6), sliced across frames; the CPUs are set to fight
+envoy vs <strength> [seed] ...    the same with a numeric strength (the whole bounded search, sliced)
+foe roll <max|strength|-> [seed] [port 1..6] [role]    one port, by hand (the LAB's command, now also here)
+```
+
+`max` is the highest bounded build of the depth and loop: every slot, the keystone allowance the rules permit, drives rolled at the deepest tier the
+depth band allows, best of 8 full builds by strength. With no depth set it means depth 12 / loop 3. Seeds above 2^31 are folded (logged). Without
+the switch, nothing here changes: a plain VS match refuses `foe`, the LAB works as before, and a run's host is untouched. Tests: `pc/tests/envoy_vs_*.lua`.
+
 ## The pieces (the readability split, 2026-10-05)
 
 A **drive** carries at most TWO rules: one below effective depth 5, two from depth 5 on (a standing rule and a trigger rule), and a white

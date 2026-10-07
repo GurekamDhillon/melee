@@ -4,19 +4,28 @@ return function(D)
  local function clone(v) return D.mod_codec.decode(D.mod_codec.encode(v)) end
  function F.new(g,lab)
   local self=setmetatable({g=g,lab=lab,roller=D.foe_roll.new(D.mod_pool),seed=104729,stage=0,builds={},pending={},labels={},drive=true,driver=D.foe_driver and D.foe_driver.new(g)},F)
-  g.command('foe',function(arg)return self:command(arg or '')end,'roll [strength or -] [seed] [CPU port] [normal|boss|finalboss] | clear | list | stand|fight [port] | drive on|off|report|switch on|off (force the old fight/script switch driver)')
+  g.command('foe',function(arg)return self:command(arg or '')end,'roll [strength|max|-] [seed] [CPU port 1..6] [normal|boss|finalboss] | clear | list | stand|fight [port] | drive on|off|report|switch on|off (force the old fight/script switch driver)')
   return self
  end
  function F:cpu(p)
-  p=tonumber(p or 2);assert(p and p%1==0 and p>=2 and p<=6,'CPU port 2..6 required')
-  local v=self.g.player(p);assert(v and v.cpu,'present CPU fighter required');return p
+  p=tonumber(p or 2);assert(p and p%1==0 and p>=1 and p<=6,'CPU port 1..6 required')
+  local v=self.g.player(p);assert(v and v.cpu,'present CPU fighter required')
+  -- P1 is the player's own build port: a CPU P1 may take a build only while it holds none of its own.
+  if p==1 then local l=self.lab;assert(not ((l.drives and (l.drives:has_build() or #l.drives.pending>0)) or next(l.debug_equipped[1] or {}) or #l.pending>0),'P1 holds its own build') end
+  return p
+ end
+ -- A seed from the console: any whole number 0 or more; one above the roller's range is folded into it (said in the log), never refused unexplained.
+ function F:fold_seed(text)
+  local n=tonumber(text or self.seed);assert(n and n%1==0 and n>=0,'seed must be a whole number, 0 or more')
+  if n>2147483646 then local f=n%2147483646;self.g.log(('foe: seed %s folded to %d (rolls take 0..2147483646)'):format(tostring(text),f));n=f end
+  return n
  end
  function F:command(arg)
   local ok,why=pcall(function()
    local allowed,reason=self.lab:allowed();assert(allowed,reason);assert(not self.lab:replaying(),'foe edit refused during rewind')
    local w={};for word in arg:gmatch('%S+') do w[#w+1]=word end
    if w[1]=='list' then
-    assert(#w==1,'usage: foe list');for p=2,6 do local r=self.builds[p];if r then local mods=self.roller:validate(r);local names={};for _,m in ipairs(self.lab.engine.list) do if mods[m.id] then names[#names+1]=m.label..' T'..D.mod_schema.level(mods[m.id])..' x'..D.mod_schema.copies(mods[m.id]) end end;self.g.log(('foe: P%d strength %.2f / target %.2f / %s'):format(p,r.strength,r.target,table.concat(names,', '))) end end;return
+    assert(#w==1,'usage: foe list');for p=1,6 do local r=self.builds[p];if r then local mods=self.roller:validate(r);local names={};for _,m in ipairs(self.lab.engine.list) do if mods[m.id] then names[#names+1]=m.label..' T'..D.mod_schema.level(mods[m.id])..' x'..D.mod_schema.copies(mods[m.id]) end end;self.g.log(('foe: P%d strength %.2f / target %.2f / %s'):format(p,r.strength,r.target,table.concat(names,', '))) end end;return
    elseif w[1]=='sliced' then self.sliced=(w[2]=='on');return
    elseif w[1]=='held' then self.held=(w[2]=='on');self.g.log('foe: held cap '..tostring(self.held));return
    elseif w[1]=='drive' then
@@ -38,10 +47,16 @@ return function(D)
     assert(#self.pending<12,'foe pending queue full')
     for _,e in ipairs(self.lab.pending) do assert(e.port==1,'wait for pending CPU modifier edits to commit') end
     assert(#w<=5,'usage: foe roll [strength or -] [seed] [port] [role]');local p=self:cpu(w[4])
-    local _,player=self.lab.engine:family_budget(1);local strength=(not w[2] or w[2]=='-') and player or tonumber(w[2]);local seed=tonumber(w[3] or self.seed)
+    local strength;local seed=self:fold_seed(w[3])
+    if w[2]=='max' then strength='max'
+    elseif not w[2] or w[2]=='-' then
+     -- No strength: the player's own. With no human player (P1 a CPU or absent) that is meaningless (about 1): the highest bounded build.
+     local one=self.g.player(1);if not one or one.cpu then strength='max' else local _,player=self.lab.engine:family_budget(1);strength=player end
+    else strength=tonumber(w[2]);assert(strength,'strength must be a number, max or -') end
     local m=self.g.match() or {};local stage=m.stage or m.stage_id or 0;assert(type(stage)=='number' and stage%1==0 and stage>=0,'numeric stage identity required')
     local held;if self.held and self.lab.drives then local b=self.lab.drives.bag;local n=0;for i=1,b:slots() do if b.equipped[i] then n=n+1 end end;held={drives=n,keystones=#(b.keystones or {})} end
-    if self.sliced then self:roll_begin(p,strength,seed,stage,w[5] or 'normal',held);self.lab.enabled=true;return end -- debug: the search runs a few attempts per frame (the host's way), not in one call
+    -- max is sliced across frames (its candidates are full builds); every number is the old single call (roll() bounds a high one to `sync_high` tries).
+    if self.sliced or strength=='max' then self:roll_begin(p,strength,seed,stage,w[5] or 'normal',held,self.sliced~=true);self.lab.enabled=true;return end -- debug: the search runs a few attempts per frame (the host's way), not in one call
     local r
     self.roller.log=self.g.log
     r=self.roller:roll(strength,seed,stage,p,D.mod_progression.context(self.lab.engine.context),w[5] or 'normal',held,self.roller.sync_attempts)
@@ -53,13 +68,32 @@ return function(D)
   if not ok then self.g.log('foe: refused '..tostring(why));return false,why end
   self.g.log('foe: '..arg..' accepted');return true
  end
+ -- `envoy vs <max|strength> [seed] [depth [loop]]` (mod_lab.lua vs_command checked the switch): a build for every present CPU, sliced, and every CPU to fight.
+ -- With no depth given and an empty context the top band is used (depth 12 / loop 3), so `max` means the full build the owner expects; a depth already set stays.
+ function F:vs(strength,seed,depth,loop)
+  local allowed,reason=self.lab:allowed();assert(allowed,reason);assert(not self.lab:replaying(),'foe edit refused during rewind')
+  local ports={};for p=1,6 do local v=self.g.player(p);if v and v.cpu then ports[#ports+1]=p end end
+  assert(#ports>0,'a present CPU fighter is required (no CPU in this match)')
+  if strength~='max' then strength=tonumber(strength);assert(strength and strength>=1,'strength must be max or a number from 1') end
+  local sd=self:fold_seed(seed)
+  -- Replace, not add: the earlier builds go first (a new depth must validate against the build set, and they are being rolled again anyway).
+  self.pending={};self.jobs={};self:retire()
+  if depth then assert(self.lab:depth_command(tostring(depth)..(loop and (' '..tostring(loop)) or '')),'depth refused')
+  elseif D.mod_progression.effective(self.lab.engine.context)==0 then assert(self.lab:depth_command('12 3'),'depth refused') end
+  assert(#ports<=6,'foe pending queue full')
+  local m=self.g.match() or {};local stage=m.stage or m.stage_id or 0;assert(type(stage)=='number' and stage%1==0 and stage>=0,'numeric stage identity required')
+  for _,p in ipairs(ports) do self:roll_begin(p,strength,sd,stage,'normal',nil,true) end
+  for _,p in ipairs(ports) do assert(self.g.cpu_mode and self.g.cpu_mode(p,'fight'),'native CPU mode refused') end
+  self.lab.enabled=true;if self.lab.options.activate then self.lab.options.activate() end
+  self.g.log(('envoy vs: rolling a %s build for CPU port%s %s at depth %d / loop %d (seed %d)'):format(tostring(strength),#ports>1 and 's' or '',table.concat(ports,', '),self.lab.engine.context.depth,self.lab.engine.context.loop,sd))
+ end
  -- Run adapter: the roll the console `foe roll` stages, minus the command parsing, in slices. A script call
  -- is limited to 2M instructions or 50 ms and a whole roll is more, so the run spends a few candidate builds
  -- per call. The CPU must already be present. The host's own frame warms the look shaders before publishing.
- function F:roll_begin(p,strength,seed,stage,role,held)
+ function F:roll_begin(p,strength,seed,stage,role,held,auto)
   assert(#self.pending<12,'foe pending queue full');self:cpu(p)
   self.jobs=self.jobs or {}
-  self.jobs[p]={job=self.roller:roll_job(strength,seed,stage,p,D.mod_progression.context(self.lab.engine.context),role or 'normal',held),seed=seed,stage=stage}
+  self.jobs[p]={job=self.roller:roll_job(strength,seed,stage,p,D.mod_progression.context(self.lab.engine.context),role or 'normal',held),seed=seed,stage=stage,auto=auto}
  end
  function F:roll_advance(p,attempts)
   local j=self.jobs and self.jobs[p];if not j then return false end
@@ -74,7 +108,7 @@ return function(D)
   for p in pairs(self.builds) do engine:clear(p);self.lab.display:clear(p);self.lab.debug_equipped[p]=nil;if engine.display.drive_build then engine.display.drive_build[p]=nil end end
   -- Provenance survives native chains; retire only statuses descended from these CPUs.
   for _,at in pairs(engine.statuses) do for name,v in pairs(at) do
-   for _,line in ipairs(v.origin or {}) do if line:match('^Envoy foe P[2-6]$') then at[name]=nil;break end end
+   for _,line in ipairs(v.origin or {}) do if line:match('^Envoy foe P[1-6]$') then at[name]=nil;break end end
   end end
   local queue={};for _,e in ipairs(engine.queue) do if not self.builds[e.port] and not self.builds[e.target] then queue[#queue+1]=e end end;engine.queue=queue
   self.builds={};self.labels={}
@@ -103,7 +137,10 @@ return function(D)
   end;self.pending={}
  end
  function F:frame()
-  if self.sliced and self.jobs then for p in pairs(self.jobs) do local ok,why=pcall(self.roll_advance,self,p,2);if not ok then self.jobs[p]=nil;self.g.log('foe: roll refused '..tostring(why)) end end end
+  if self.jobs then for p,j in pairs(self.jobs) do if self.sliced or j.auto then
+   if not (self.g.player(p) and self.g.player(p).cpu) then self.jobs[p]=nil;self.g.log('foe: roll for P'..p..' dropped, the opponent is gone')
+   else local ok,why=pcall(self.roll_advance,self,p,2);if not ok then self.jobs[p]=nil;self.g.log('foe: roll refused '..tostring(why)) end end
+  end end end
   if self.driver and self.drive and next(self.driver.foes) then local m=self.g.match();if m and m.active then self.driver:frame(m.frame) end end
   if self.defer and self.defer() then return end -- an announcement is up: the plate waits its turn (its timer does not run)
   for p,label in pairs(self.labels) do label.left=label.left-1;if label.left<=0 then self.labels[p]=nil end end end
@@ -121,7 +158,7 @@ return function(D)
  end
  function F:draw()
   if not self.g.kit or (self.defer and self.defer()) then return end;local a=self.g.safe_area();local y=a.y+42;local ports={}
-  for p=2,6 do if self.labels[p] then ports[#ports+1]=p end end;if #ports==0 then return end
+  for p=1,6 do if self.labels[p] then ports[#ports+1]=p end end;if #ports==0 then return end
   if self.lab:hosted() then return self:draw_cards(ports) end
   local shown=ports[math.floor(self.lab.engine.frame/45)%#ports+1];local l=self.labels[shown]
   -- Wrapping measures text through the kit: done once per label and width, not on every drawn frame.

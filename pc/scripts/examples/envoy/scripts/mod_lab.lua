@@ -98,7 +98,10 @@ return function(D)
   if self:hosted() then
    if not m or not m.active or m.netplay then return false,'offline active match required' end
   else
-   if not m or not m.active or m.netplay or not self.g.lab_mode or not self.g.lab_mode() then return false,'offline active LAB match required' end
+   -- The LAB needs its own mode. An ordinary offline VS match is allowed only after `envoy vs on` (self.vs_on): the explicit switch, per match.
+   -- Netplay never is (m.netplay is tested first), and the switch is cleared by every reset, scene and unload.
+   local lab=self.g.lab_mode and self.g.lab_mode()
+   if not m or not m.active or m.netplay or not (lab or self.vs_on) then return false,'offline active LAB match required (an offline VS match: `envoy vs on`)' end
    if self.options.blocked and self.options.blocked() then return false,'stop the Envoy run/director before using LAB modifiers' end
   end
   if not self.g.sim_supported or not self.g.sim_commit or not self.g.sim_clear then return false,'modifier checkpoint engine unavailable' end
@@ -106,6 +109,25 @@ return function(D)
   local caps=self.g.hit_rules and self.g.hit_rules(1) -- one table-building call, both flags read from it
   if not caps or caps.percent_only~=true then return false,'percent-only hit-rule engine unavailable; rebuild required' end
   if caps.progression~=true then return false,'progression hit-rule engine unavailable; rebuild required' end
+  return true
+ end
+ -- `envoy vs ...` (routed here by app.lua): builds for the CPUs of an ordinary offline VS match. `on`/`off` is the switch; `<max|strength> [seed]
+ -- [depth [loop]]` rolls and installs a build on every present CPU port (sliced across frames) and sets them to fight. Never in netplay, never under a run.
+ function L:vs_command(arg)
+  local ok,why=pcall(function()
+   local w={};for word in (arg or ''):gmatch('%S+') do w[#w+1]=word end
+   local m=self.g.match();assert(not (m and m.netplay),'offline only: no VS builds in netplay')
+   if w[1]=='on' then
+    assert(#w==1,'usage: envoy vs on');assert(m and m.active,'an active offline match required');assert(not self:hosted(),'an Envoy run owns its builds')
+    assert(not (self.options.blocked and self.options.blocked()),'stop the Envoy run/director before using VS builds')
+    self.vs_on=true;self.g.log('envoy vs: on for this match (offline VS builds: foe roll, envoy vs max)');return
+   elseif w[1]=='off' then assert(#w==1,'usage: envoy vs off');self.vs_on=nil;self.g.log('envoy vs: off');return
+   elseif w[1]=='status' then self.g.log('envoy vs: '..(self.vs_on and 'on' or 'off'));return end
+   assert(self.vs_on or (self.g.lab_mode and self.g.lab_mode()),'VS builds are off: run `envoy vs on` first (this match only)')
+   assert(self.foes,'opponent builds unavailable');assert(#w>=1 and #w<=4,'usage: envoy vs on|off|<max|strength> [seed] [depth [loop]]')
+   self.foes:vs(w[1],w[2],w[3],w[4])
+  end)
+  if not ok then self.g.log('envoy vs: refused '..tostring(why));return false,why end
   return true
  end
  function L:replaying() return self.g.sim_replaying and self.g.sim_replaying() end
@@ -125,7 +147,7 @@ return function(D)
   end
  end
  function L:reset(full)
-  self:release_native();self.op_sig=nil;self.blob_cache=nil
+  self:release_native();self.op_sig=nil;self.blob_cache=nil;self.vs_on=nil
   local keep=not full and self:hosted() and self.drives
   if self.echoes then self.echoes:reset() end
   if self.foes then self.foes:reset() end
@@ -359,7 +381,7 @@ return function(D)
     local mods,implicit=self.foes.roller:validate(e.record);probe:set_build(e.record.port,mods,implicit);foe_ports[e.record.port]=true
    elseif e.op=='clear' then
     for p in pairs(foe_ports) do probe:clear(p);debug[p]=nil end;foe_ports={}
-    for _,at in pairs(probe.statuses) do for name,v in pairs(at) do for _,line in ipairs(v.origin or {}) do if line:match('^Envoy foe P[2-6]$') then at[name]=nil;break end end end end
+    for _,at in pairs(probe.statuses) do for name,v in pairs(at) do for _,line in ipairs(v.origin or {}) do if line:match('^Envoy foe P[1-6]$') then at[name]=nil;break end end end end
    end
   end
   for _,e in ipairs(pending) do if not players or players[e.port] then probe:equip(e.port,e.id) end end
@@ -523,7 +545,7 @@ return function(D)
   local interrupts=self:technique_ops(ops,players,stock_queued)
   self.owned=new_owned;self.hit_owned=new_hit_owned
   for p=1,6 do if self.engine.statuses[p] and not next(self.engine.statuses[p]) then self.engine.statuses[p]=nil end end
-  self.enabled=(self.echoes and self.echoes:active()) or D.mod_progression.effective(self.engine.context)>0 or (self.foes and (#self.foes.pending>0 or next(self.foes.builds)~=nil)) or (self.drives and (#self.drives.pending>0 or self.drives.drops:count()>0 or #self.drives.bag.items>0 or self.drives:has_build())) or self:seats_enable() or #self.pending>0 or next(self.engine.equipped)~=nil or next(self.engine.statuses)~=nil
+  self.enabled=(self.echoes and self.echoes:active()) or D.mod_progression.effective(self.engine.context)>0 or (self.foes and (#self.foes.pending>0 or next(self.foes.builds)~=nil or next(self.foes.jobs or {})~=nil)) or (self.drives and (#self.drives.pending>0 or self.drives.drops:count()>0 or #self.drives.bag.items>0 or self.drives:has_build())) or self:seats_enable() or #self.pending>0 or next(self.engine.equipped)~=nil or next(self.engine.statuses)~=nil
   -- Visual pulse/cooldown metadata is pure state and belongs in the checkpoint.
   if self.enabled then self.display:update(self.engine,players) else self.display:clear() end
   -- The journal keeps the last frames' commits, one 2.4 KB slot per operation, under a 128 MiB budget: a commit that re-sends every fighter's overlay

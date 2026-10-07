@@ -1129,6 +1129,27 @@ static void step7_stepper_tabs_backdrop(void)
     gs_ui_release(1);
 }
 
+/* the read-only HUD parts, registered by a script (never the console): they draw, and a malformed one is refused and changes nothing */
+static void step7_hud_parts(void)
+{
+    hud_reset();
+    gs.match_active = 1;
+    CHECK(run_as_script(1,
+        "assert(gd.ui.hud{id='envoy.hud', zones={top_left={{kind='readout', title='P1 FOX', rows={{label='Motion', value='Wait f1', tone='ok'}}}},"
+        " bottom_center={{kind='track', title='P1 FOX', right='f 5 / 26', len=26, now=5, spans={{from=5, to=9, id=0}}, marks={{frame=20, kind='iasa'}}}},"
+        " bottom_left={{kind='chips', items={{text='FRAMES', tone='ok'}, {text='T Timeline', on=true}}, right='f 1'}}, top_right={{kind='note', text='Saved', tone='ok'}}}})") == 0);
+    CHECK(hud_count() == 1 && gs_ui_hud[0].z[AT_Z_TOP_LEFT][0].kind == AT_HP_READOUT && gs_ui_hud[0].z[AT_Z_BOTTOM_CENTER][0].kind == AT_HP_TRACK &&
+          gs_ui_hud[0].z[AT_Z_BOTTOM_LEFT][0].kind == AT_HP_CHIPS && gs_ui_hud[0].z[AT_Z_TOP_RIGHT][0].tone == AT_NOTE_OK);
+    g_quads = 0; gs_ui_hud_draw();
+    CHECK(g_quads > 30);                                                                              /* drawn with no screen open */
+    CHECK(run_as_script(1, "local rows = {} for i = 1, 17 do rows[i] = {label='r', value='v'} end assert(not pcall(gd.ui.hud, {id='envoy.hud', zones={top_left={{kind='readout', rows=rows}}}}))") == 0);
+    CHECK(run_as_script(1, "local s = {} for i = 1, 17 do s[i] = {from=1, to=2} end assert(not pcall(gd.ui.hud, {id='envoy.hud', zones={bottom_center={{kind='track', spans=s}}}}))") == 0);
+    CHECK(gs_ui_hud[0].z[AT_Z_TOP_LEFT][0].kind == AT_HP_READOUT && gs_ui_hud[0].z[AT_Z_TOP_LEFT][0].data.readout.n == 1);   /* a refused description changed nothing */
+    CHECK(run_as_script(1, "assert(not pcall(gd.ui.hud, {id='envoy.hud', zones={top_left={{kind='blob'}}}}))") == 0);
+    gs.match_active = 0;
+    hud_reset();
+}
+
 static void step7_token(void)
 {
     reset_ui(); fake_script(1, "envoy");
@@ -1453,6 +1474,6 @@ int main(void)
     title_pushed_on_scene_begin(); title_takes_no_input(); title_waits_for_roles(); title_without_roles_stays_retail(); title_retail_when_off();
     title_popped_on_scene_exit(); title_and_menu_together();
     value_api_as_a_mod(); engine_builder_obeys_the_lua_cap();
-    step7_stepper_tabs_backdrop(); step7_token(); step7_entries();
+    step7_stepper_tabs_backdrop(); step7_hud_parts(); step7_token(); step7_entries();
     ATLAS_DONE("atlas binding");
 }

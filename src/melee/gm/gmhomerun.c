@@ -68,6 +68,12 @@ void gm_801B98E8(GameModeState* scene)
     game_cache->stkind = 0x54;
     lbDvd_80018254();
     gm_804D68F9 = lbTime_8000AF74(gm_804D68F9, 1);
+#if defined(TARGET_PC)
+    {
+        extern void gmFrontend_AtlasSelect(GameModeState * state, int sss, const char* name);
+        gmFrontend_AtlasSelect(scene, 0, NULL); /* the Atlas select, when it can run; else the retail screen */
+    }
+#endif
 }
 
 void gm_801B999C(GameModeState* scene)

@@ -257,6 +257,12 @@ void gm_801B632C(GameModeState* arg0)
                 temp_r31->unk_586, 0, gm_804D68E8);
     lbDvd_SetupVsPreloadCache();
     gm_804D68E9 = lbTime_8000AF74(gm_804D68E9, 1);
+#if defined(TARGET_PC)
+    {
+        extern void gmFrontend_AtlasSelect(GameModeState * state, int sss, const char* name);
+        gmFrontend_AtlasSelect(arg0, 0, NULL); /* the Atlas select, when it can run; else the retail screen */
+    }
+#endif
 }
 
 void gm_801B63C4(GameModeState* arg0)
@@ -545,6 +551,12 @@ static void gm_801B6AD8_inline(GameModeState* scene, int x)
     temp_r31_2->entries[2].color = 0;
     temp_r31_2->stkind = 0x11D;
     lbDvd_80018254();
+#if defined(TARGET_PC)
+    {
+        extern void gmFrontend_AtlasSelect(GameModeState * state, int sss, const char* name);
+        gmFrontend_AtlasSelect(scene, 0, NULL); /* the Atlas select, when it can run; else the retail screen */
+    }
+#endif
 }
 
 void gm_801B69C0(StartMeleeData* arg0)

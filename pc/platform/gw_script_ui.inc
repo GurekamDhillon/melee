@@ -948,12 +948,17 @@ int gw_Ui_TopIsEngine(const char *id) {
     return id == NULL || strcmp(gs_ui_slot[top].sc.id, id) == 0;
 }
 
-/* a scene ends: every screen pushed during it goes (the menu's, a mod's opened from a menu entry) */
+/* a scene ends: every screen pushed during it goes (the menu's, a mod's opened from a menu entry), except a mod screen that says
+ * persist = true (Envoy's reward, swap and bag screens span the ladder's VS-to-VS scenes: the owner closes them, or its unload does) */
 void gw_Ui_SceneExit(int scene_kind) {
     int i, any = 0;
     for (i = 0; i < GS_UI_SLOTS; i++) {
         GsUiSlot *u = &gs_ui_slot[i];
         if (!u->used || u->scene != scene_kind || !gs_ui_find_on_stack(i)) continue;
+        if (u->owner != GS_UI_ENGINE && u->sc.persist) {            /* persist = true: the mod's run screen spans scenes; only its owner closes it */
+            u->scene = -1;                                            /* it now belongs to no scene: the next exit leaves it alone too */
+            continue;
+        }
         any = 1;
         if (u->owner == GS_UI_ENGINE) gs_ui_free_engine_slot(i);
         else gs_ui_close_screen(i);                                 /* a mod's screen: on.close runs, the screen stays registered */

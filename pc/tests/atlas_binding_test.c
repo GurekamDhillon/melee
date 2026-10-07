@@ -626,6 +626,27 @@ static void pause_takeover(void)
     reset_ui();
 }
 
+static void persist_screens_span_scenes(void)
+{
+    reset_ui();
+    fake_script(1, "envoy");
+    gs.scene_kind = 2;
+    CHECK(run_as_script(1, "assert(gd.ui.screen{id='envoy.keep', persist=true, primary={kind='list', items={{id='a', label='A'}}}}); assert(gd.ui.screen{id='envoy.drop', primary={kind='list', items={{id='a', label='A'}}}});"
+                           " assert(gd.ui.open('envoy.drop')); assert(gd.ui.open('envoy.keep'))") == 0);
+    gw_Ui_SceneExit(2);                                                       /* the scene they were opened in ends */
+    CHECK(gs_ui_stack.n == 1 && at_stack_top(&gs_ui_stack) == gs_ui_find("envoy.keep"));   /* the ordinary one closed, the persistent one stays */
+    gs.scene_kind = 2;                                                        /* the next scene is the same kind (VS to VS) */
+    gw_Ui_SceneExit(2);
+    CHECK(gs_ui_stack.n == 1);                                                /* and it still stays */
+    gs.cur = -1; gs_ui_tick(); gs_ui_tick();
+    CHECK(gs_ui_stack.n == 1);                                                /* the tick keeps running it */
+    CHECK(run_as_script(1, "assert(gd.ui.close('envoy.keep')); assert(gd.ui.state().depth == 0)") == 0);   /* its owner closes it */
+    CHECK(run_as_script(1, "assert(gd.ui.open('envoy.keep'))") == 0);
+    gs_ui_release(1);                                                         /* an unload takes it with it */
+    CHECK(gs_ui_stack.n == 0);
+    reset_ui();
+}
+
 /* ---- Atlas step 2, Task 6: entries at run time (driven as the engine and as the mod, not as the console) ---- */
 #include "gw_ui_menus_json.h"
 static void reg_boot_with(const char *json, const char *mod)
@@ -1217,7 +1238,7 @@ int main(void)
     engine_slot_survives_tick(); engine_slot_not_released_by_script_unload(); uncover_primes_engine_screen(); native_intents_are_primed(); polled_event_is_big_endian_for_the_game();
     intents_from_any_port(); engine_screen_covered_takes_no_intent(); scene_exit_closes_scene_screens(); console_cannot_touch_engine();
     mod_cannot_take_engine_id(); commit_without_change_does_not_rebuild(); engine_focus_is_the_games_cursor(); engine_close_and_queue();
-    eight_slots_with_engine(); forget_frees_a_slot(); retail_shims(); hud_basics(); retail_mask_ownership(); toasts_and_notes_leave_with_the_scene(); console_is_not_the_test(); atlas_console_command(); pause_takeover();
+    eight_slots_with_engine(); forget_frees_a_slot(); retail_shims(); hud_basics(); retail_mask_ownership(); toasts_and_notes_leave_with_the_scene(); console_is_not_the_test(); atlas_console_command(); pause_takeover(); persist_screens_span_scenes();
     entry_opens_pushes_mod_screen(); entry_script_runs_on_entry_as_the_mod(); entry_finds_the_script_with_on_entry(); entry_missing_screen_refused(); entry_from_other_script_cannot_hide();
     entry_hidden_in_netplay(); entry_screen_closed_on_scene_exit(); entry_mod_unloaded(); builtin_entries_register();
     after_places_a_mod_entry_among_builtins(); credits_screen(); held_menu_takes_no_intent(); menu_blocked_by_a_mod_screen();

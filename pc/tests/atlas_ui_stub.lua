@@ -596,6 +596,17 @@ function Stub.new(opts)
   return { hidden = hidden, paused = ui.paused == true, pauser = ui.pauser, takeover = ui.takeover == true }
  end
 
+ -- gw_Ui_SceneExit: a scene ends, every screen on the stack closes (its on.close runs) except one that says persist = true
+ function ui.scene_exit()
+  local ids = {}; for i, id in ipairs(ui.stack) do ids[i] = id end
+  for i = #ids, 1, -1 do
+   local d = ui.screens[ids[i]]
+   if d and not d.persist then
+    local keep = ui.caller; ui.caller = 'console'; ui.close(ids[i]); ui.caller = keep
+    local on = d.on or {}; if on.close then on.close('', '') end
+   end
+  end
+ end
  -- the binding's part at a scene change: the script's mask claim goes, every toast and note with it
  function ui.scene_changed()
   ui.mask, ui.mask_owner = {}, nil

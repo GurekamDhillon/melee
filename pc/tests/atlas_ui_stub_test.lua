@@ -306,6 +306,15 @@ do
   check(u.open('envoy.pause') == false, 'a pause screen does not open online')
   u.retail_pause(0, false)
 end
+-- scene exit and persist
+do
+  local u = Stub.new({ mod = 'envoy' })
+  u.screen({ id = 'envoy.keep', persist = true, primary = { kind = 'list', items = { { id = 'a', label = 'A' } } } })
+  local closed = 0
+  u.screen({ id = 'envoy.drop', primary = { kind = 'list', items = { { id = 'a', label = 'A' } } }, on = { close = function() closed = closed + 1 end } })
+  u.open('envoy.drop'); u.open('envoy.keep'); u.scene_exit()
+  check(u.state().top == 'envoy.keep' and u.state().depth == 1 and closed == 1, 'a scene exit closes an ordinary screen and leaves a persist screen')
+end
 local off = Stub.new({ available = false }); check(select(1, off.available()) == false, 'an unavailable stub says so')
 print(('atlas ui stub: %d checks, %d failed'):format(count, fails))
 os.exit(fails == 0 and 0 or 1)

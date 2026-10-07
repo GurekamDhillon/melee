@@ -1043,8 +1043,17 @@ int gw_Ui_TopIsEngine(const char *id) {
 
 /* a scene ends: every screen pushed during it goes (the menu's, a mod's opened from a menu entry), except a mod screen that says
  * persist = true (Envoy's reward, swap and bag screens span the ladder's VS-to-VS scenes: the owner closes them, or its unload does) */
-void gw_Ui_SceneExit(int scene_kind) {
+void gw_Ui_SceneExitTo(int scene_kind, int next_kind) {
     int i, any = 0;
+    if (next_kind >= 0 && at_policy_ends_run(next_kind)) {         /* the next scene is outside any run (menu, game over, credits ...): a persistent screen has nothing left to span (Atlas proof D12) */
+        for (i = 0; i < GS_UI_SLOTS; i++) {
+            GsUiSlot *u = &gs_ui_slot[i];
+            if (!u->used || u->owner == GS_UI_ENGINE || !u->sc.persist || !gs_ui_find_on_stack(i)) continue;
+            gw_log("ui: screen %s (persist) closed: scene %d begins and it is outside a run", u->sc.id, next_kind);
+            gs_ui_close_screen(i);
+            any = 1;
+        }
+    }
     for (i = 0; i < GS_UI_SLOTS; i++) {
         GsUiSlot *u = &gs_ui_slot[i];
         if (!u->used || u->scene != scene_kind || !gs_ui_find_on_stack(i)) continue;
@@ -1059,6 +1068,7 @@ void gw_Ui_SceneExit(int scene_kind) {
     gs_ui_menu_held_by = -2;                                       /* a hold lasts for the scene that took it */
     if (any) gs_ui_after_close();
 }
+void gw_Ui_SceneExit(int scene_kind) { gw_Ui_SceneExitTo(scene_kind, -1); }
 
 /* how many engine screens hold a slot (the front door uses at most two at once: the menu and the title) */
 static int gs_ui_engine_slots(void) {

@@ -18,5 +18,9 @@ int main(void)
     CHECK(at_policy_for(3, 1, "") == AT_POLICY_RETAIL);
     CHECK(at_policy_screen(GS_TITLE_K) != NULL && strcmp(at_policy_screen(GS_TITLE_K), "title") == 0);
     CHECK(at_policy_screen(5) == NULL);
+    /* Atlas proof D12: the scenes outside a run (GameSceneKind: TITLE 0, MENU 1, GAMEOVER 0x22, STAFFROLL 0x2B, the movies) end it; the run's own scenes do not */
+    CHECK(at_policy_ends_run(0) && at_policy_ends_run(1) && at_policy_ends_run(0x22) && at_policy_ends_run(0x2B) && at_policy_ends_run(0x1C) && at_policy_ends_run(0x1D));
+    CHECK(!at_policy_ends_run(2) && !at_policy_ends_run(3) && !at_policy_ends_run(5) && !at_policy_ends_run(8) && !at_policy_ends_run(9) && !at_policy_ends_run(0x20));   /* VS, sudden death, results, CSS, SSS, 1P intro */
+    CHECK(!at_policy_ends_run(-1));
     ATLAS_DONE("atlas-policy");
 }

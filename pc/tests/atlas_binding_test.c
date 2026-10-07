@@ -679,6 +679,18 @@ static void persist_screens_span_scenes(void)
     CHECK(run_as_script(1, "assert(gd.ui.open('envoy.keep'))") == 0);
     gs_ui_release(1);                                                         /* an unload takes it with it */
     CHECK(gs_ui_stack.n == 0);
+    /* Atlas proof D12: it spans the run's scenes (VS to results to VS) but not a scene outside the run: the game over closes it, even after it has already crossed one exit */
+    gs.scene_kind = 2;
+    CHECK(run_as_script(1, "assert(gd.ui.screen{id='envoy.keep', persist=true, primary={kind='list', items={{id='a', label='A'}}}}); assert(gd.ui.open('envoy.keep'))") == 0);
+    gw_Ui_SceneExitTo(2, 5);                                                  /* VS to the results: part of the run */
+    CHECK(gs_ui_stack.n == 1);
+    gw_Ui_SceneExitTo(5, 2);                                                  /* results to the next VS */
+    CHECK(gs_ui_stack.n == 1);
+    gw_Ui_SceneExitTo(2, 0x22);                                               /* VS to GS_GAMEOVER: the run is over */
+    CHECK(gs_ui_stack.n == 0);
+    CHECK(run_as_script(1, "assert(gd.ui.open('envoy.keep'))") == 0);                                          /* the screen stays registered: only closed */
+    gw_Ui_SceneExitTo(2, 1);                                                  /* and the main menu */
+    CHECK(gs_ui_stack.n == 0);
     reset_ui();
 }
 

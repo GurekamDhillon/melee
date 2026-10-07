@@ -44,6 +44,16 @@ int at_policy_for(int scene_kind, int atlas_on, const char *env_override)
     return AT_POLICY_RETAIL;
 }
 
+/* the scene kinds that end a run: values of GameSceneKind (src/melee/gm/forward.h:89..): TITLE 0, MENU 1, DEBUG_MENU 7, the toy rooms 0xB-0xD, REGEND_TOYFALL 0xF,
+ * REGEND_CONGRATS 0x10, MOVIE_OPENING 0x1C, MOVIE_END 0x1D, MOVIE_HOWTO 0x1E, MOVIE_OMAKE15 0x1F, GAMEOVER 0x22, COMING_SOON 0x23, MEMCARD 0x2A, STAFFROLL 0x2B */
+int at_policy_ends_run(int scene_kind)
+{
+    static const int ENDS[] = { 0, 1, 7, 0xB, 0xC, 0xD, 0xF, 0x10, 0x1C, 0x1D, 0x1E, 0x1F, 0x22, 0x23, 0x2A, 0x2B };
+    size_t i;
+    for (i = 0; i < sizeof ENDS / sizeof ENDS[0]; i++) if (ENDS[i] == scene_kind) return 1;
+    return 0;
+}
+
 const char *at_policy_screen(int scene_kind)
 {
     size_t i;

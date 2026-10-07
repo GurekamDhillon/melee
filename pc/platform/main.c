@@ -334,7 +334,16 @@ int main(int argc, char *argv[]) {
    * reaches the screen. Default on. */
   int vsync = 1;
   (void)gw_env_int("MELEE_VSYNC", &vsync);
+  /* MELEE_VSYNC=2: off, and force Immediate (tearing allowed). Mailbox, the default for off, stays
+   * paced to the display refresh on D3D12 windowed (DWM / frame-latency waits); only Immediate
+   * renders above it. Turbo is unchanged. */
+  const int present_immediate = vsync == 2 && !gw_turbo_enabled();
+  if (vsync == 2) vsync = 0;
   if (gw_turbo_enabled()) vsync = 0;
+  aurora_set_present_mode(present_immediate ? 1 : 0);
+  gw_log("gw: video: present mode request: %s",
+         vsync != 0 ? "vsync (FifoRelaxed/Fifo)" : present_immediate ? "Immediate (MELEE_VSYNC=2, tearing allowed)"
+                                                                      : "Mailbox, else Immediate");
   int msaa = 1;
   (void)gw_env_int("MELEE_MSAA", &msaa);
   if (msaa != 1 && msaa != 4) {

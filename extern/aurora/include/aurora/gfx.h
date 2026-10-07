@@ -113,6 +113,10 @@ void aurora_request_screenshot(const char* path);
 void aurora_frame_interp_stats(uint32_t* blended, uint32_t* rejected, uint32_t* missing);
 
 void aurora_enable_vsync(bool enabled);
+/// Port patch: 0 = automatic (Mailbox, else Immediate, when vsync is off); 1 = force Immediate
+/// (tearing allowed) when vsync is off. Call before aurora_initialize or any time before
+/// aurora_enable_vsync.
+void aurora_set_present_mode(int mode);
 
 #ifdef __cplusplus
 }

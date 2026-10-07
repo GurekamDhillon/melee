@@ -71,6 +71,7 @@ bool g_astcTexturesSupported = false;
 bool g_textureComponentSwizzleSupported = false;
 static std::atomic_bool g_initialized = false;
 static std::atomic_bool g_vsyncEnabled = true;
+static std::atomic_bool g_forceImmediate = false; // port patch: vsync off => Immediate, never Mailbox
 
 namespace {
 
@@ -248,6 +249,12 @@ wgpu::PresentMode select_present_mode(const wgpu::SurfaceCapabilities& capabilit
       return wgpu::PresentMode::FifoRelaxed;
     }
   } else {
+    // Port patch (aurora-gd-present-mode-v1): on D3D12 windowed, Dawn's Mailbox stays paced to the
+    // display refresh through the DWM / frame-latency waits; only Immediate (tearing allowed)
+    // renders above it. aurora_set_present_mode(1) skips Mailbox.
+    if (g_forceImmediate.load(std::memory_order_acquire) && supports(wgpu::PresentMode::Immediate)) {
+      return wgpu::PresentMode::Immediate;
+    }
     // Dawn only disables CAMetalLayer displaySyncEnabled for Immediate on Metal
     if (g_backendType != wgpu::BackendType::Metal && supports(wgpu::PresentMode::Mailbox)) {
       return wgpu::PresentMode::Mailbox;
@@ -1180,9 +1187,18 @@ void resize_swapchain(uint32_t width, uint32_t height, uint32_t nativeWidth, uin
 }
 } // namespace aurora::webgpu
 
+void aurora_set_present_mode(const int mode) {
+  aurora::webgpu::g_forceImmediate.store(mode == 1, std::memory_order_release);
+}
+
 void aurora_enable_vsync(const bool enabled) {
   aurora::webgpu::g_vsyncEnabled.store(enabled, std::memory_order_release);
-  aurora::webgpu::g_graphicsConfig.surfaceConfiguration.presentMode =
-      aurora::webgpu::select_present_mode(aurora::webgpu::g_surfaceCapabilities);
+  const auto mode = aurora::webgpu::select_present_mode(aurora::webgpu::g_surfaceCapabilities);
+  static std::atomic<int> s_lastMode{-1};
+  if (s_lastMode.exchange(static_cast<int>(mode)) != static_cast<int>(mode)) {
+    aurora::webgpu::Log.info("Present mode now {} (vsync {}, force-immediate {})", magic_enum::enum_name(mode), enabled,
+                             aurora::webgpu::g_forceImmediate.load());
+  }
+  aurora::webgpu::g_graphicsConfig.surfaceConfiguration.presentMode = mode;
   aurora::window::push_custom_event(aurora::window::CustomEvent::RefreshSurface);
 }

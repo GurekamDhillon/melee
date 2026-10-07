@@ -469,6 +469,7 @@ static int gw_video_loaded;
  * (gw_uncap_*, aurora_frame_replay). */
 static int gw_video_fps = 60;
 static int gw_video_vsync = 1;
+static int gw_video_immediate; /* MELEE_VSYNC=2: vsync off and Aurora forced to Immediate (not saved) */
 static int gw_video_show_fps;
 
 static const char *gw_video_cfg_path(void) {
@@ -540,7 +541,9 @@ static void gw_video_load(void) {
   }
   env = getenv("MELEE_VSYNC");
   if (env != NULL && env[0] != '\0') {
-    gw_video_vsync = atoi(env) != 0;
+    const int v = atoi(env);
+    gw_video_vsync = v != 0 && v != 2;
+    gw_video_immediate = v == 2;
   }
   env = getenv("MELEE_SHOW_FPS");
   if (env != NULL && env[0] != '\0') {
@@ -759,6 +762,7 @@ bool gw_frame_init(void) {
   gw_video_apply_scale();
   gw_video_apply_rate();
   if (gw_turbo || !gw_video_vsync) {
+    aurora_set_present_mode(!gw_turbo && gw_video_immediate);
     aurora_enable_vsync(false);
   }
   /* Realtime puts a cleared frame on screen before SDL opens input. Turbo starts offscreen so a

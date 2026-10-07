@@ -24,6 +24,6 @@ calls = set(re.findall(r'gd\.([a-zA-Z_0-9]+)\s*[(\{]', (demo / 'scripts/main.lua
 assert calls <= registered, calls - registered
 assert all(hook in adapter for hook in ('on_zone_enter','on_zone_exit','on_zone_none','on_zone_some'))
 rewind = (game / 'pc/tests/zones_rewind.lua').read_text()
-assert 'r.pass and r.diff==0' in rewind and 'gd.zone_add' in rewind
+assert 'r.pass and r.diff_compared==0' in rewind and 'gd.zone_add' in rewind
 assert '## Zones' in (root / 'docs/scripting.md').read_text(encoding='utf-8')
 print('zones source integration: PASS (registration, frame order, snapshot eligibility, stage lifecycle, demo API, rewind assertion)')

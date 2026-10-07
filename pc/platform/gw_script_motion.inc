@@ -2,11 +2,16 @@
  * gameplay permission gates, gs_rw_branch, or a game-state mutator. */
 #include "gw_motion.h"
 static void gs_item_keys(lua_State*,int,const char* const*);
+static const char* gs_motion_text(lua_State* L,int index)
+{
+    size_t n;const char* text=luaL_checklstring(L,index,&n);
+    if(strlen(text)!=n)luaL_error(L,"malformed motion name");return text;
+}
 static int gs_motion_enum(lua_State* L,int table,const char* key,const char* const* names,int count,int current)
 {
     int n;lua_getfield(L,table,key);
     if(lua_isnil(L,-1)){lua_pop(L,1);return current;}
-    const char* text=luaL_checkstring(L,-1);
+    const char* text=gs_motion_text(L,-1);
     for(n=0;n<count;++n)if(!strcmp(text,names[n])){lua_pop(L,1);return n;}
     return luaL_error(L,"invalid motion %s",key);
 }
@@ -38,7 +43,7 @@ static int gs_motion_joint(lua_State* L,int index)
 {
     static const char* names[]={"left_hand","right_hand","left_foot","right_foot","head"};
     int i;if(lua_type(L,index)==LUA_TNUMBER){lua_Integer n=luaL_checkinteger(L,index);if(n<0||n>254)luaL_error(L,"joint index 0..254");return (int)n;}
-    const char* name=luaL_checkstring(L,index);
+    const char* name=gs_motion_text(L,index);
     for(i=0;i<5;++i)if(!strcmp(name,names[i]))return -i-1;
     return luaL_error(L,"unknown joint alias; use an explicit joint index for tail or custom skeletons");
 }
@@ -73,11 +78,11 @@ static void gs_motion_options(lua_State* L,int table,GwMotionOptions* o)
             static const char* akeys[]={"joint","hitbox","item",NULL};int count=0;
             gs_item_keys(L,lua_gettop(L),akeys);
             lua_getfield(L,-1,"joint");if(!lua_isnil(L,-1)){o->anchor=GW_ANCHOR_JOINT;o->index=gs_motion_joint(L,-1);++count;}lua_pop(L,1);
-            lua_getfield(L,-1,"hitbox");if(!lua_isnil(L,-1)){o->anchor=GW_ANCHOR_HITBOX;o->index=(int)luaL_checkinteger(L,-1);if(o->index<0||o->index>4)luaL_error(L,"hitbox 0..4");++count;}lua_pop(L,1);
+            lua_getfield(L,-1,"hitbox");if(!lua_isnil(L,-1)){lua_Integer n=luaL_checkinteger(L,-1);if(n<0||n>4)luaL_error(L,"hitbox 0..4");o->anchor=GW_ANCHOR_HITBOX;o->index=(int)n;++count;}lua_pop(L,1);
             lua_getfield(L,-1,"item");if(!lua_isnil(L,-1)){lua_Integer id=luaL_checkinteger(L,-1);if(id<=0||id>INT_MAX)luaL_error(L,"invalid item serial");o->anchor=GW_ANCHOR_ITEM;o->item=(int)id;++count;}lua_pop(L,1);
             if(count!=1)luaL_error(L,"anchor table needs exactly one of joint, hitbox, item");
         }else{
-            const char* a=lua_type(L,-1)==LUA_TSTRING?lua_tostring(L,-1):NULL;
+            const char* a=lua_type(L,-1)==LUA_TSTRING?gs_motion_text(L,-1):NULL;
             if(a&&!strcmp(a,"held_item"))o->anchor=GW_ANCHOR_HELD;
             else if(a&&!strcmp(a,"sword_tip"))o->anchor=GW_ANCHOR_SWORD;
             else if(a&&!strcmp(a,"active_hitboxes"))o->anchor=GW_ANCHOR_HITS;
@@ -105,7 +110,8 @@ static int l_tracer_hitboxes(lua_State* L)
 {
     GwMotionOptions o;const char* error=NULL;gw_motion_defaults(&o,GW_MOTION_TRACER);
     lua_Integer p=luaL_checkinteger(L,1);if(p<1||p>6)return luaL_argerror(L,1,"port 1..6");o.port=(int)p;
-    if(!lua_isnoneornil(L,2))gs_motion_options(L,2,&o);o.anchor=GW_ANCHOR_HITS;
+    if(!lua_isnoneornil(L,2))gs_motion_options(L,2,&o);
+    if(o.port!=p)return luaL_error(L,"options port differs from argument");o.anchor=GW_ANCHOR_HITS;
     int h=gw_motion_add((unsigned)gs.cur+1,&o,&error);return gs_motion_result(L,h,error);
 }
 static int gs_motion_handle(lua_State* L,int kind,GwMotionOptions* o)

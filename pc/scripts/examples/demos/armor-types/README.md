@@ -11,4 +11,4 @@ These are collision hits attributed to P2, not P2 attack animations. No direct p
 
 Syntax/stub checks do not establish native armour reactions, events or rewind exactness. No build or game launch was performed.
 
-`scripts/rewind-proof.lua` is a separate unexecuted offline LAB tester. Load it alone, keep human controls neutral, and use standing CPUs. It grants all six types for 30 frames, observes expiry over a 120-frame forward run, then requires the existing native rewind comparison to return `pass` and `diff == 0`, with restored timer/type/value/budget readbacks. This source fixture is not a successful runtime proof.
+`scripts/rewind-proof.lua` is a separate unexecuted offline LAB tester. Load it alone, keep human controls neutral, and use standing CPUs. It grants all six types for 30 frames, observes expiry over a 120-frame forward run, then requires the existing native rewind comparison to return `pass` and `diff_compared == 0` (simulation bytes only), with restored timer/type/value/budget readbacks. This source fixture is not a successful runtime proof.

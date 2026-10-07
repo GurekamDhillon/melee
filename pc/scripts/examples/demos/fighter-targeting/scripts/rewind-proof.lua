@@ -54,7 +54,7 @@ function on_frame()
       finished=true
       assert(expired,'forward run did not observe timer expiry')
       -- The native field name is diff (number of differing bytes).
-      assert(r.pass and r.diff==0,'fighter capabilities rewind differs: '..tostring(r.diff)..' '..tostring(r.text))
+      assert(r.pass and r.diff_compared==0,'fighter capabilities rewind differs: '..tostring(r.diff)..' '..tostring(r.text))
       local c=assert(gd.fighter_caps(1),'restored capabilities unavailable')
       assert(c.air_jumps==8 and c.shield==true and c.air_dodge==true
         and c.run==true and c.grab==true and c.specials==true,'capabilities lost on restore')

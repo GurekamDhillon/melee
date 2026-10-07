@@ -76,6 +76,19 @@ static int lint_text_overlaps(void)
     return bad;
 }
 
+/* the pairs lint_text_overlaps counted, printed (a failing test calls this to say which texts collide) */
+static void lint_dump_overlaps(void)
+{
+    int i, j;
+    for (i = 0; i < REC.nt; i++) for (j = i + 1; j < REC.nt; j++) {
+        float a0, a1, b0, b1, c0, c1, d0, d1;
+        lint_text_box(&REC.t[i], &a0, &a1, &b0, &b1);
+        lint_text_box(&REC.t[j], &c0, &c1, &d0, &d1);
+        if (a0 < c1 - 1.0f && c0 < a1 - 1.0f && b0 < d1 - 1.0f && d0 < b1 - 1.0f)
+            printf("  overlap: \"%s\" [%g..%g x %g..%g] and \"%s\" [%g..%g x %g..%g]\n", REC.t[i].s, a0, a1, b0, b1, REC.t[j].s, c0, c1, d0, d1);
+    }
+}
+
 static float lint_top(void)
 {
     float top = 1e9f; int i;

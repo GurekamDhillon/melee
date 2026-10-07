@@ -57,6 +57,12 @@ int at_room_cursor_fix(const AtRoomView *v);
 /* Fill the screen record and the dynamic part of the view (keys, counter, explainer, the toast as a corner note) from a room view. 1 ok; 0 for an unknown kind. */
 int at_room_fill(const AtRoomView *rv, AtScreen *sc, AtView *vw, double now_ms);
 
+/* hit codes carried in AtHit.a (kind AT_HIT_ROOM); AtHit.b is the stage index or code slot */
+enum { AT_RH_STAGE = 1, AT_RH_ACTION, AT_RH_LEAVE, AT_RH_COPY, AT_RH_CODE_SLOT, AT_RH_CODE_UP, AT_RH_CODE_DOWN };
+/* Draws the primary of a room screen into L->primary and records hit rectangles (hits may be NULL: nothing is recorded).
+ * A NULL view draws nothing. Returns how many hit rectangles did not fit in AtHits. */
+int at_room_render(const AtRoomView *v, const AtLayout *L, const AtTextOps *o, const AtSink *s, AtHits *hits, double now_ms);
+
 #ifdef __cplusplus
 }
 #endif

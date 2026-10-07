@@ -1,4 +1,5 @@
 #include "gw_ui_render.h"
+#include "gw_ui_room.h"
 #include "gw_ui_stack.h"
 #include "gw_ui_tokens.h"
 
@@ -508,7 +509,8 @@ void at_render_ex(const AtScreen *sc, const AtView *v, float canvas_w, double no
             int list_tabs = sc->primary == AT_PRIMARY_LIST && sc->n_tabs > 0;      /* a list with tabs (the settings pages): the strip hangs on the pane's top edge */
             if (list_tabs) at_layout_split(&L, 1, AT_BAND_NONE, &lsp);
             at_plate(s, list_tabs ? lsp.grid : L.primary, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH);
-            if (sc->primary == AT_PRIMARY_GRID) draw_grid(sc, v, &L, o, s, &hc);
+            if (sc->primary == AT_PRIMARY_ROOM) hc.dropped += at_room_render(v->room, &L, o, s, hc.hits, now);   /* a NULL view draws nothing: the chrome only */
+            else if (sc->primary == AT_PRIMARY_GRID) draw_grid(sc, v, &L, o, s, &hc);
             else if (sc->primary == AT_PRIMARY_TILES) draw_tiles(sc, v, &L, o, s, &hc);
             else if (sc->primary == AT_PRIMARY_CARDS) draw_cards(sc, v, &L, o, s, &hc);
             else draw_list(sc, v, list_tabs ? lsp.grid : L.primary, o, s, &hc);
@@ -540,6 +542,11 @@ void at_render_ex(const AtScreen *sc, const AtView *v, float canvas_w, double no
     }
     at_tween_start(&open, v->opened_ms, 100.0, reduced);
     k = 1.0f - at_tween_value(&open, now);                               /* the screen fades in from the ground colour */
+    if (sc->primary == AT_PRIMARY_ROOM && v->room != NULL && v->room->fade_out > 0) {   /* and a room fades out on leaving: the game's own fade does not cover host quads */
+        float f = (float) v->room->fade_out / 1000.0f;
+        if (f > 1.0f) f = 1.0f;
+        if (f > k) k = f;
+    }
     if (k > 0.004f) at_poly_rect(s, 0.0f, 0.0f, L.canvas.w, 480.0f, (AT_C_GROUND & 0xFFFFFF00u) | (unsigned) (k * 255.0f + 0.5f));
     if (info != NULL) {
         info->entries = cn.entries; info->dropped = cn.dropped; info->hits_dropped = hc.dropped;

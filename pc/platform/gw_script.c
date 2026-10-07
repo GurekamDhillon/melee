@@ -231,7 +231,10 @@ extern int gw_script_pad_chord(int ch, int owner, unsigned buttons);
 extern unsigned gw_script_pad_raw_buttons(int ch);
 extern const char *gw_script_pad_lua_path(void); /* MELEE_PAD_SCRIPT when it names a .lua */
 
-#define GS_MAX_SCRIPTS 64
+/* One slot per loaded script file: a mod contributes one per scripts/*.lua. Envoy alone is about 60; with the demos and the LAB the old 64
+ * silently dropped geno-lab/lab (Atlas proof D5). A slot is ~1.2 KB of static state and the other per-script tables are as small, so 128
+ * costs well under 0.3 MB; the Lua heap (GS_MEM_CAP) and the per-call instruction budget are shared, not per slot. */
+#define GS_MAX_SCRIPTS 128
 #define GS_MAX_TASKS 16
 #define GS_CLIENTS 4
 #define GS_MAX_COMMANDS 64
@@ -7147,6 +7150,7 @@ static int gs_load_text(const char *id, const char *entry, char *src, size_t len
     if (i < 0) {
         free(src);
         gw_Console_Print(GS_RED, "too many scripts (max %d)", GS_MAX_SCRIPTS);
+        gw_log("script: REFUSED %s from %s: the script table is full (%d of %d slots in use)", id, entry, gs.n, GS_MAX_SCRIPTS);
         return -1;
     }
     s = &gs.s[i];
@@ -11066,6 +11070,33 @@ static int test_geno_lab_effective_timeline(void) {
     return rc;
 }
 
+/* Atlas proof D5: the table holds the 60-odd scripts of Envoy plus the demos and the LAB (it silently dropped geno-lab/lab at 64); and a script it cannot hold is
+ * refused with a result and a log line, never silently. Fill every free slot, then one more. */
+static int test_script_cap(void) {
+    static const char code[] = "x = 1";
+    char out[64], id[32];
+    int i, rc = 0, loaded = 0, free_slots, first_free;
+    if (t_exec("= 1", out, sizeof out) != 0) return 1;
+    for (i = 0, free_slots = 0; i < gs.n; ++i) if (!gs.s[i].used) free_slots++;
+    free_slots += GS_MAX_SCRIPTS - gs.n;
+    if (GS_MAX_SCRIPTS < 128) { gw_test_fail("the script table holds %d, fewer than the 64 + Envoy + demos + LAB that an install needs", GS_MAX_SCRIPTS); return 1; }
+    first_free = gs.n;
+    for (i = 0; i < free_slots + 1; ++i) {
+        char *src = (char *)malloc(sizeof code);
+        int r;
+        if (src == NULL) { rc = 1; break; }
+        memcpy(src, code, sizeof code);
+        snprintf(id, sizeof id, "cap_test_%d", i);
+        r = gs_load_text(id, "cap_test.lua", src, sizeof code - 1, NULL, "test");
+        if (i < free_slots) { if (r < 0) { gw_test_fail("script %d of %d was refused below the cap", i + 1, free_slots); rc = 1; break; } loaded++; }
+        else if (r >= 0) { gw_test_fail("a script past the cap was accepted"); rc = 1; }
+        else gw_log("script cap test: the refusal above is expected (%d loaded)", loaded);
+    }
+    for (i = 0; i < loaded; ++i) { snprintf(id, sizeof id, "cap_test_%d", i); if (gs_find(id) >= 0) gs_unload(gs_find(id)); }
+    while (gs.n > first_free && !gs.s[gs.n - 1].used) gs.n--;
+    return rc;
+}
+
 #include "gw_script_items_tests.inc"
 #include "gw_script_items_preload_tests.inc"
 #include "gw_script_items_interleave_tests.inc"
@@ -11076,6 +11107,7 @@ void gw_script_tests_register(void) {
     gw_test_register("script_item_interleave",test_script_item_interleave);
     gw_test_register("script_item_stage_articles",test_script_item_stage_articles);
     gw_test_register("script_deadline", test_script_deadline);
+    gw_test_register("script_cap", test_script_cap);
     gw_test_register("script_item_events",test_script_item_events);
     gw_test_register("script_shader_api", test_script_shader_api);
     gw_test_register("script_clank_event", test_script_clank_event);

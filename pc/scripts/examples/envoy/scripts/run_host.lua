@@ -685,11 +685,13 @@ return function(D)
   local a=g.safe_area();local frame=self.since or 0;local f=(self.g.frame and self.g.frame()) or 0
   local text=self.hold_banner
   local w=300;local x=a.x+(a.w-w)//2
-  g.fill(x,a.y+150,w,34,0x3A3320E8);g.fill(x,a.y+150,w,2,0xEBD175FF)   -- well below the match timer; the banner is the one instruction
-  k.text(x+w//2,a.y+174,text,'body','gold','center')
-  if self.paying then -- the way out: hold Z + D-pad Down
-   g.fill(x,a.y+184,w,18,0x3A3320E8);k.text(x+w//2,a.y+197,'Hold Z + D-pad Down to leave','caption','gold','center')
-   local pr=self.leave_w and self.leave_w:progress() or 0;if pr>0 then g.fill(x,a.y+201,math.floor(w*pr),2,0xEBD175FF) end
+  if not (D.atlas_hud and D.atlas_hud.on(self)) then   -- the banner text moves to the Atlas HUD (atlas_hud.lua); the floor arrow below stays world-space
+   g.fill(x,a.y+150,w,34,0x3A3320E8);g.fill(x,a.y+150,w,2,0xEBD175FF)   -- well below the match timer; the banner is the one instruction
+   k.text(x+w//2,a.y+174,text,'body','gold','center')
+   if self.paying then -- the way out: hold Z + D-pad Down
+    g.fill(x,a.y+184,w,18,0x3A3320E8);k.text(x+w//2,a.y+197,'Hold Z + D-pad Down to leave','caption','gold','center')
+    local pr=self.leave_w and self.leave_w:progress() or 0;if pr>0 then g.fill(x,a.y+201,math.floor(w*pr),2,0xEBD175FF) end
+   end
   end
   local me=g.player(self:port0());local best,bd
   for _,p in ipairs(list) do if me then local dd=math.abs(p.x-me.x)+math.abs(p.y-me.y);if not bd or dd<bd then best,bd=p,dd end end end

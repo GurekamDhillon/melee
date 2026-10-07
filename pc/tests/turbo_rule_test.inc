@@ -1,6 +1,7 @@
 /* Native fixture of the SAME state core used by script_game.c. No game, disc,
  * timing, sockets or Lua. Included by engine-data because its runner is read-only. */
 #include "../platform/gw_intrwin_core.h"
+#include "../platform/gw_replay_matchrules.h"
 
 static void turbo_rule_native_test(void)
 {
@@ -8,6 +9,24 @@ static void turbo_rule_native_test(void)
     IntrWinAttack hit = {IW_K_JAB, 44, 7, 3, 0};
     unsigned rules = GW_TURBO_V1;
     int jumps = 2, saved_jumps, expected_jumps, key, kind;
+
+    {
+        unsigned char event[1 + GW_RP_RULES_START] = {0};
+        unsigned word = 99;
+        assert(!gw_rp_rules_read(event, GW_RP_STANDARD_START, &word) && word == 0);
+        assert(!gw_rp_rules_read(event, GW_RP_RULES_START, &word) && word == 0);
+        gw_rp_rules_write(event, rules | (12u << GW_TURBO_FRAMES_SHIFT));
+        assert(gw_rp_rules_read(event, GW_RP_STANDARD_START + 4, &word) == -1);
+        assert(!gw_rp_rules_read(event, GW_RP_RULES_START, &word));
+        assert(word == (rules | (12u << GW_TURBO_FRAMES_SHIFT)));
+        gw_rp_rules_write(event, rules | GW_TURBO_HITLAG);
+        assert(gw_rp_rules_read(event, GW_RP_RULES_START, &word) == -1);
+        gw_rp_rules_write(event, 0);
+        assert(!gw_rp_rules_read(event, GW_RP_RULES_START, &word) && word == 0);
+        event[1 + GW_RP_STANDARD_START + 3] = '2';
+        assert(gw_rp_rules_read(event, GW_RP_RULES_START, &word) == -1);
+        puts("turbo replay: tagged rule roundtrip, legacy OFF, unsupported refusal PASS");
+    }
 
     assert(gw_turbo_valid(0) && gw_turbo_valid(rules));
     assert(gw_turbo_frames(rules) == 30);

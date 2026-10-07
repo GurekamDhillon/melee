@@ -1320,6 +1320,25 @@ void ftAnim_ApplyPartAnim(Fighter_GObj* gobj, s32 arg1, s32 arg2, f32 arg3)
     struct Fighter_x8B0_t* temp_r30;
     struct ftData_x1C* temp_r29;
 
+#if defined(TARGET_PC)
+    {
+        /* ftData x1C is the hand-pose table: Mario's part numbers and Mario's AnimJoint trees. A base "none" define
+         * copies the donor's ftData, and Mario's borrowed action scripts (and the item pick-up callbacks it inherits)
+         * ask for those poses. Armed on another skeleton, ftAnim_800707B0 then blends parts the define has no joint on
+         * and writes through a NULL joint (lbCopyJObjSRT; the Courier in Classic against Mario). The define has no hand
+         * poses of its own yet, so the request is ignored. */
+        extern int Geno_DefineIsNone(int kind);
+        if (Geno_DefineIsNone(fp->kind)) {
+            static unsigned char said[256];
+            if (fp->kind >= 0 && fp->kind < 256 && !said[fp->kind]) {
+                said[fp->kind] = 1;
+                OSReport("geno: kind %d: a part animation (hand pose, group %d) asked for by the donor's data is ignored; the define has none of its own\n",
+                         fp->kind, arg1);
+            }
+            return;
+        }
+    }
+#endif
     temp_r30 = &fp->x8B0[arg1];
     temp_r29 = fp->ft_data->x1C[arg1];
     temp_r30->x11 = arg2;

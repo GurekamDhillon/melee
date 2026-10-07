@@ -103,6 +103,18 @@ return function(D)
   if type(ui)=='table' and type(ui.toast)=='function' then pcall(ui.toast,{zone=K.corner(S),title='BAG',text=text,seconds=3}) end
  end
 
+ -- The legacy menu state machine shows screens by name (menu:show); menu.lua calls this hook when it does. A screen with an Atlas description
+ -- opens it instead of the legacy draw. Returns true when an Atlas screen took it.
+ local MENU_SCREEN={setup='atlas_setup',pause='atlas_pause',results='atlas_results'}
+ function K.menu_show(app,screen)
+  local name=MENU_SCREEN[screen]
+  local m=name and D[name]
+  if not m or app.visible==false or not K.enabled(app.g) then return false end
+  local ok,r=pcall(m.open,app)
+  if not ok then app.g.log('envoy atlas: '..name..' failed, the legacy screen stays: '..tostring(r));return false end
+  return r==true
+ end
+
  -- every screen id Envoy registers: forgotten when the run ends, so the engine's 16 slots are free again
  K.SCREENS={'bag','reward','keystone','swap','setup','pause','results','netpick'}
  function K.forget_all(g)

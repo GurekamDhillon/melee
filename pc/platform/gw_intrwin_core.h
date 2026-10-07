@@ -18,8 +18,8 @@ enum {
 };
 enum { IW_OPEN_HIT, IW_OPEN_SHIELD, IW_OPEN_ITEM };
 
-/* THE INDICATOR, tuned here: the game's own colour overlay (colanim id from settings.cfg
- * `turbo_colanim`, default in gw_runtime.c) started ONCE when the window opens, and cleared after
+/* THE INDICATOR, tuned here: the game's own colour overlay (fixed id in
+ * gw_runtime.c) started ONCE when the window opens, and cleared after
  * IW_IND_FRAMES free (non-hitlag) frames, or the frame the window closes or is consumed. Never
  * re-applied while the window is open. 0 frames = no indicator. */
 #define IW_IND_FRAMES 6

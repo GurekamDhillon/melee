@@ -2467,11 +2467,11 @@ int gw_MatchTurboRules(void) {
   if (gw_rules_in_vs && gw_Settings_Int("turbo_versus", 0) != 0) return (int) GW_TURBO_V1;
   return 0;
 }
-/* the indicator's colour animation id (fighter overlay); settings.cfg `turbo_colanim` retunes it
- * without a rebuild - its look has not been seen by the agent that wrote it */
+/* The colour overlay mutates snapshotted fighter state (ftCo_800BFFD0), so its
+ * id must not depend on a per-peer setting or an unrecorded replay preference.
+ * Use the existing default in every mode; its appearance still needs game QA. */
 int gw_MatchTurboColAnim(void) {
-  int id = gw_Settings_Int("turbo_colanim", 8);
-  return (id >= 0 && id < 0x7B) ? id : 8;
+  return 8;
 }
 /* Native Turbo counters: what the simulation DID, counted where a rollback cannot rewind them (the in-game
  * counters are simulation state, so they show the final timeline; these show every execution, resimulated frames

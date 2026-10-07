@@ -54,6 +54,9 @@ int gw_Ui_SelCanOpen(void) {
     return 0;
 }
 
+/* the game side brackets the select's open in a scene's init with 1 / 0: the screen then belongs to the scene that is about to begin, not to the one that is ending */
+void gw_Ui_SelNextScene(int on) { gs_ui_adopt_next = on != 0; }
+
 int gw_Ui_SelOpen(int kind, int match_type, const char *t0, const char *t1, const char *title) {
     int i, slot = -1;
     GsUiSlot *u;
@@ -71,7 +74,7 @@ int gw_Ui_SelOpen(int kind, int match_type, const char *t0, const char *t1, cons
     u->used = 1;
     u->owner = GS_UI_ENGINE;
     u->native_sel = 1;
-    u->scene = gs.scene_kind;
+    u->scene = gs_ui_adopt_next ? GS_UI_SCENE_NEXT : gs.scene_kind;   /* opened in a scene's init: the scene about to begin owns it (gw_Ui_SceneBegin) */
     sc = &u->sc;
     sc->fn_provide = sc->fn_accept = sc->fn_back = sc->fn_focus = sc->fn_change = sc->fn_open = sc->fn_close = sc->fn_counter = sc->fn_page = sc->fn_start = -1;
     sc->fn_alt[0] = sc->fn_alt[1] = sc->fn_alt[2] = -1;

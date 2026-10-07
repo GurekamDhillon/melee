@@ -663,11 +663,14 @@ static bool fss_frame(void)
     return true;
 }
 
-/* the scene ends: the host closes the screen with it (Ui_SceneExit); a capture in progress ends too */
+/* the scene ends: the host's screen closes here (Ui_SceneExit would only run when the next scene begins); a capture in progress ends too */
 static void fss_exit(void)
 {
     if (fss.h >= 0 && fss.kind == FSS_K_REMAP) {
         fssr_close(&fssr);
+    }
+    if (fss.h >= 0) {
+        Ui_SetClose(fss.h); /* NOW, not at the next Ui_SceneExit: the next scene's init may open a select (Match Setup > Continue), and one native screen exists at a time */
     }
     fss.h = -1;
     fss.shown_tab = -1;

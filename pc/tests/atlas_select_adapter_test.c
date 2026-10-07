@@ -130,7 +130,7 @@ static void reset_ui(void)
     for (i = 0; i < GS_UI_SLOTS; i++) { memset(&gs_ui_slot[i], 0, sizeof gs_ui_slot[i]); gs_ui_slot[i].dialog_fn = -1; }
     memset(&gs_ui_stack, 0, sizeof gs_ui_stack);
     gs_ui_qn = 0; g_pad = 0; gs.cur = 0; gs.scene_kind = 7;
-    gs_sel.h = -1; gs_sel.qn = 0;
+    gs_sel.h = -1; gs_sel.qn = 0; gs_ui_adopt_next = 0;
     g_mx = g_my = -1000.0f; g_mbuttons = 0; g_mwheel = 0.0f; g_art_calls = 0; g_images = 0;
     for (i = 1; i < 8; i++) gs.s[i].used = 0;
 }
@@ -410,6 +410,42 @@ static void can_open_before_routing(void)
     /* the answer is the open's answer: whenever CanOpen says yes an open succeeds */
     h = open_css(); CHECK(h >= 0); gw_Ui_SelClose(h);
 }
+/* Atlas fix D1: the frontend opens the select in the scene's INIT, before Script_SceneBegin runs gw_Ui_SceneExit(prev) for the scene that is ending. gs.scene_kind still
+ * names that scene (the previous scene can be of the SAME kind: the frontend after the frontend), so a screen stamped with it closed in the frame it opened. */
+static void a_select_opened_in_a_scene_init_survives_the_ending_scene(void)
+{
+    int h, n;
+    reset_ui();
+    gs.scene_kind = 46;                                                        /* the menus' scene is ending; the select's scene has the same kind */
+    gw_Ui_SelNextScene(1); h = open_css(); gw_Ui_SelNextScene(0);
+    CHECK(h >= 0 && gs_sel_get(h) != NULL);
+    gw_Ui_SceneExit(gs.scene_kind);                                            /* Script_SceneBegin: the ending scene's screens go */
+    CHECK(gs_sel_get(h) != NULL && gs_ui_stack.n == 1);                        /* ... not the screen the new scene opened */
+    gs.scene_kind = 46; gw_Ui_SceneBegin(46);                                  /* the scene that begins adopts it */
+    gw_Ui_SceneExit(46);                                                       /* and its own end closes it, as for every native screen */
+    CHECK(gs_sel_get(h) == NULL && gs_ui_stack.n == 0);
+    /* an open inside a running scene (the CSS to the SSS) is stamped with the scene, as before */
+    reset_ui();
+    h = open_css(); n = (int) (gs_sel_get(h) - gs_ui_slot);
+    CHECK(gs_ui_slot[n].scene == 7);
+    gw_Ui_SceneExit(7); CHECK(gs_sel_get(h) == NULL);
+    /* the bracket ends: a later open is not stamped for a scene that is not coming */
+    reset_ui();
+    gw_Ui_SelNextScene(1); gw_Ui_SelNextScene(0);
+    h = open_css(); n = (int) (gs_sel_get(h) - gs_ui_slot);
+    CHECK(gs_ui_slot[n].scene == 7);
+    gw_Ui_SelClose(h);
+}
+/* Atlas fix D3: the settings screen is native too (one at a time), and it is closed WHEN ITS SCENE EXITS so the next scene's select can open (fss_exit calls Ui_SetClose). */
+static void a_closed_settings_door_lets_the_select_open(void)
+{
+    int sh;
+    reset_ui();
+    sh = gw_Ui_SetOpen(0, 0, "MAIN MENU", "VERSUS", "RULES");
+    CHECK(sh >= 0 && gw_Ui_SelCanOpen() == 0 && open_css() < 0);               /* the legacy kit CSS would take over here */
+    gw_Ui_SetClose(sh);
+    CHECK(gw_Ui_SelCanOpen() == 1 && open_css() >= 0);
+}
 static void art_drop_reaches_the_kit(void)
 {
     int before = g_hsd_drops;
@@ -518,7 +554,7 @@ int main(void)
     lua_newtable(L); gs_push_ui(L); lua_setfield(L, -2, "ui"); lua_setglobal(L, "gd");
     filled_and_drawn(); closed_on_every_exit(); owner_native_vs_mod(); mouse_port(); poll_is_big_endian(); fields_land_where_the_render_reads_them();
     art_decode_goes_to_the_kit(); atlas_off_or_no_roles_keeps_the_legacy_drawing(); stack_full_refuses(); held_menu_and_hold_do_not_matter();
-    can_open_before_routing(); art_drop_reaches_the_kit(); known_match_types(); css_through_the_shims(); css_zelda_sheik_and_online_through_the_shims(); css_mouse_through_the_shims(); sss_through_the_shims();
+    can_open_before_routing(); a_select_opened_in_a_scene_init_survives_the_ending_scene(); a_closed_settings_door_lets_the_select_open(); art_drop_reaches_the_kit(); known_match_types(); css_through_the_shims(); css_zelda_sheik_and_online_through_the_shims(); css_mouse_through_the_shims(); sss_through_the_shims();
     lua_close(L);
     ATLAS_DONE("atlas select adapter");
 }

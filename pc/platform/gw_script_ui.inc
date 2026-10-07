@@ -1072,7 +1072,19 @@ static void gs_ui_overlay_try(void) {
     gw_Ui_Commit(-1, -1);
 }
 
+/* A native select opened in a scene's INIT (the frontend's on_enter, before gm_801A4D34 runs Script_SceneBegin) is stamped GS_UI_SCENE_NEXT: gs.scene_kind
+ * still names the scene that is ending, and gw_Ui_SceneExit(prev) would close the new screen in the same frame. The scene that begins adopts it here;
+ * gw_Ui_SceneExit has already run for the scene that ended. */
+#define GS_UI_SCENE_NEXT (-2)
+static int gs_ui_adopt_next = 0;    /* 1 while the game side is in a scene's init (Ui_SelNextScene) */
+
+static void gs_ui_adopt_next_scene(int scene_kind) {
+    int i;
+    for (i = 0; i < GS_UI_SLOTS; i++) if (gs_ui_slot[i].used && gs_ui_slot[i].scene == GS_UI_SCENE_NEXT) gs_ui_slot[i].scene = scene_kind;
+}
+
 void gw_Ui_SceneBegin(int scene_kind) {
+    gs_ui_adopt_next_scene(scene_kind);
     gs_ui_overlay_kind = (gw_Ui_ScenePolicy(scene_kind) == AT_POLICY_OVERLAY && at_policy_screen(scene_kind) != NULL) ? scene_kind : -1;
     gs_ui_overlay_try();
 }

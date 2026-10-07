@@ -1167,6 +1167,7 @@ static void fe_rules_from_menus(void);
 static void fe_rules_resume(void);
 static bool fe_is_settings(const FrontendScreen* s);
 static void fss_close(void); /* gmfrontend_atlas_set.inc */
+static bool fas_active(void); /* gmfrontend_atlas_select.inc */
 static bool fe_is_controls_help(const FrontendScreen* s);
 static int fm_back_kind = -1, fm_back_sel; ///< backing out of a frontend scene lands on this menu item
 static void fe_load_begin(void);
@@ -1355,8 +1356,8 @@ static void fe_draw_panels(HSD_GObj* gobj, int pass)
         else if (fm.active && fm.menu->style == FM_LIST) fp_scroll_cue(fm_scroll, fm.nvis);
         return;
     }
-    if (fe.screen == NULL) {
-        return;
+    if (fe.screen == NULL || fe.screen->art != 0 || fas_active()) {
+        return; /* a room / select screen has no rows (items is NULL: the legacy row loop would read it), and the Atlas select draws everything itself */
     }
     hsd_80391A04(1.0F, 1.0F, 1);
 
@@ -1718,7 +1719,14 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
         if (gobj != NULL) {
             GObj_SetupGXLink(gobj, fe_draw_fade, FE_GX_LINK, 20);
         }
-        fl_open(fe.screen->art);
+        {
+            /* this runs in the scene's init, BEFORE Script_SceneBegin: the select's host screen belongs to the scene that is about to begin (not to the one that ends, whose
+             * Ui_SceneExit would close it in this very frame) */
+            extern void Ui_SelNextScene(int on);
+            Ui_SelNextScene(1);
+            fl_open(fe.screen->art);
+            Ui_SelNextScene(0);
+        }
         return;
     }
     fe_rebuild_visible();

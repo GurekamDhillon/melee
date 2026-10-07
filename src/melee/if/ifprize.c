@@ -1,3 +1,6 @@
+#if defined(TARGET_PC)
+#include <platform/gw_ui_retail_ids.h>
+#endif
 #include "ifprize.h"
 
 #include <melee/cm/forward.h>
@@ -119,6 +122,19 @@ static inline void un_802FE3F8_noinline(int a, int b, s16* c, s16* d)
     un_802FE3F8_inner(a, b, c, d);
 }
 
+#if defined(TARGET_PC)
+/* the prize counter: the Atlas retail mask hides this element's render only (never its proc); empty by default */
+static void ifPrize_RenderGuarded(HSD_GObj* gobj, int pass)
+{
+    extern int Ui_RetailHidden(int id); /* pc/platform/gw_script_ui.inc */
+    if (Ui_RetailHidden(AT_RE_HUD_PRIZE)) return;
+    HSD_GObj_JObjCallback(gobj, pass);
+}
+#define IFPRIZE_RENDER ifPrize_RenderGuarded
+#else
+#define IFPRIZE_RENDER HSD_GObj_JObjCallback
+#endif
+
 void fn_802FE470(HSD_GObj* gobj)
 {
     HSD_JObj* jobj;
@@ -195,7 +211,7 @@ void un_802FE6A8(void)
     gobj_ui = GObj_Create(HSD_GOBJ_CLASS_UI, 15, 0);
     jobj_ui = HSD_JObjLoadJoint(un_804D6D9C->models[0]->joint);
     HSD_GObjObject_80390A70(gobj_ui, HSD_GObj_JObjKind, jobj_ui);
-    GObj_SetupGXLink(gobj_ui, HSD_GObj_JObjCallback, 11, 0);
+    GObj_SetupGXLink(gobj_ui, IFPRIZE_RENDER, 11, 0);
     HSD_GObj_SetupProc(gobj_ui, fn_802FE470, 17);
     gm_8016895C(jobj_ui, un_804D6D9C->models[0], 0);
     HSD_JObjReqAnimAll(jobj_ui, 0.0);

@@ -1,3 +1,6 @@
+#if defined(TARGET_PC)
+#include <platform/gw_ui_retail_ids.h>
+#endif
 #include "gmpause.h"
 
 #include "gm_unsplit.h"
@@ -41,6 +44,12 @@ void fn_801A0E34(HSD_GObj* arg0)
 
 void gm_801A0FEC(s32 slot, u8 flag)
 {
+#if defined(TARGET_PC)
+    {   /* the Atlas retail mask (empty by default): flag 0 is retail's own "no panel" path, which hides the background itself */
+        extern int Ui_RetailHidden(int id); /* pc/platform/gw_script_ui.inc */
+        if (Ui_RetailHidden(AT_RE_PAUSE_PANEL)) flag = 0;
+    }
+#endif
     lbl_80479B10.slot = slot;
     HSD_JObjReqAnimAll(lbl_80479B10.background, (f32) (slot + 1));
     // flag is set by match rules

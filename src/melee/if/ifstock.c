@@ -1,3 +1,6 @@
+#if defined(TARGET_PC)
+#include <platform/gw_ui_retail_ids.h>
+#endif
 #include "ifstock.h"
 
 #include <melee/gm/forward.h>
@@ -496,7 +499,8 @@ void fn_802F94E0(HSD_GObj* gobj, int renderpass)
 {
 #if defined(TARGET_PC)
     extern int Script_StatusHUDVisible(void);
-    if (!Script_StatusHUDVisible()) return;
+    extern int Ui_RetailHidden(int id); /* pc/platform/gw_script_ui.inc: the Atlas retail mask (empty by default) */
+    if (!Script_StatusHUDVisible() || Ui_RetailHidden(AT_RE_HUD_STOCK)) return;
 #endif
     struct IfStockUserData* p = GET_IFSTOCK(gobj);
     struct HudIndex* x = ifStatus_GetHUDInfo();
@@ -509,7 +513,8 @@ void fn_802F9548(HSD_GObj* gobj, int renderpass)
 {
 #if defined(TARGET_PC)
     extern int Script_StatusHUDVisible(void);
-    if (!Script_StatusHUDVisible()) return;
+    extern int Ui_RetailHidden(int id); /* pc/platform/gw_script_ui.inc: the Atlas retail mask (empty by default) */
+    if (!Script_StatusHUDVisible() || Ui_RetailHidden(AT_RE_HUD_STOCK)) return;
 #endif
     struct HudIndex* x = ifStatus_GetHUDInfo();
     if (!x->players[0].flags.hide_all_digits) {
@@ -521,7 +526,8 @@ void fn_802F9598(HSD_GObj* gobj, int renderpass)
 {
 #if defined(TARGET_PC)
     extern int Script_StatusHUDVisible(void);
-    if (!Script_StatusHUDVisible()) return;
+    extern int Ui_RetailHidden(int id); /* pc/platform/gw_script_ui.inc: the Atlas retail mask (empty by default) */
+    if (!Script_StatusHUDVisible() || Ui_RetailHidden(AT_RE_HUD_STOCK)) return;
 #endif
     struct HudIndex* x = ifStatus_GetHUDInfo();
     if (!x->players[0].flags.hide_all_digits) {
@@ -533,7 +539,8 @@ void fn_802F95E8(HSD_GObj* gobj, int renderpass)
 {
 #if defined(TARGET_PC)
     extern int Script_StatusHUDVisible(void);
-    if (!Script_StatusHUDVisible()) return;
+    extern int Ui_RetailHidden(int id); /* pc/platform/gw_script_ui.inc: the Atlas retail mask (empty by default) */
+    if (!Script_StatusHUDVisible() || Ui_RetailHidden(AT_RE_HUD_STOCK)) return;
 #endif
     struct HudIndex* x = ifStatus_GetHUDInfo();
     if (gm_8016B184() && gm_8016A1F8() &&
@@ -550,7 +557,8 @@ void fn_802F9680(HSD_GObj* gobj, int renderpass)
 {
 #if defined(TARGET_PC)
     extern int Script_StatusHUDVisible(void);
-    if (!Script_StatusHUDVisible()) return;
+    extern int Ui_RetailHidden(int id); /* pc/platform/gw_script_ui.inc: the Atlas retail mask (empty by default) */
+    if (!Script_StatusHUDVisible() || Ui_RetailHidden(AT_RE_HUD_STOCK)) return;
 #endif
     struct HudIndex* x = ifStatus_GetHUDInfo();
     if (!x->players[0].flags.hide_all_digits) {

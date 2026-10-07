@@ -17,6 +17,7 @@
 #include "gw_mods.h"
 #include "gw_ui_policy.h"
 #include "gw_ui_registry.h"
+#include "gw_ui_retail.h"
 #include "gw_ui_render.h"
 #include "gw_ui_stack.h"
 
@@ -1081,6 +1082,62 @@ static void gs_ui_reg_boot(void) {
     }
     gs_ui_reg_log();
 }
+
+/* ---- the retail takeover (spec 6.8): the element mask and the retail pause ---------------------------------------------------
+ * Game code calls these unprefixed (Ui_RetailHidden, Ui_RetailPause, Ui_TakeUnpause; melee/CLAUDE.md "The shim boundary"). The mask is
+ * EMPTY by default: with every source empty each guard's code path is retail's own. It reads 0 while netplay or rollback is on, so
+ * nothing retail is ever hidden online, and a guard never skips a proc, only a render callback or a panel's visibility. */
+static AtRetail gs_ui_retail;
+static AtPause gs_ui_pause = { 0, -1, 0, 0 };
+static int gs_ui_pause_changed;        /* a retail pause began or ended: the tick pushes or pops the pause screen */
+static int gs_ui_retail_env_done;
+
+static int gs_ui_online(void) { return gs_ui_netplay(); }
+
+/* MELEE_ATLAS_RETAIL="hud.damage,hud.stock" (or "all"): read once, into the environment source; a bad name is logged and ignored */
+static void gs_ui_retail_env(void) {
+    const char *e;
+    unsigned m = 0;
+    char err[96];
+    if (gs_ui_retail_env_done) return;
+    gs_ui_retail_env_done = 1;
+    e = getenv("MELEE_ATLAS_RETAIL");
+    if (e == NULL || e[0] == '\0') return;
+    if (!at_retail_parse(e, &m, err, sizeof err)) { gw_log("ui: MELEE_ATLAS_RETAIL ignored: %s", err); return; }
+    at_retail_set(&gs_ui_retail, AT_RS_ENV, m);
+    {
+        char names[160];
+        int id, n = 0;
+        names[0] = '\0';
+        for (id = 0; id < AT_RE_COUNT; id++)
+            if (m >> id & 1u) n += snprintf(names + n, sizeof names - (size_t) n, "%s%s", n > 0 ? "," : "", at_retail_name(id));
+        gw_log("ui: retail elements hidden by MELEE_ATLAS_RETAIL: %s", names);
+    }
+}
+
+/* the Atlas pause takeover is off unless MELEE_ATLAS_PAUSE=1 or the setting atlas_pause is on */
+static int gs_ui_pause_wanted(void) {
+    static int env = -1;
+    if (env < 0) {
+        const char *e = getenv("MELEE_ATLAS_PAUSE");
+        env = e != NULL && strcmp(e, "1") == 0;
+        if (env) gw_log("ui: the Atlas pause takeover is on (MELEE_ATLAS_PAUSE=1)");
+    }
+    return env || gw_Settings_Int("atlas_pause", 0) != 0;
+}
+
+int gw_Ui_RetailHidden(int id) {
+    gs_ui_retail_env();
+    return at_retail_hidden(&gs_ui_retail, id, gs_ui_online());
+}
+
+void gw_Ui_RetailPause(int pauser, int on) {
+    if (on) at_pause_on(&gs_ui_pause, pauser, gs_ui_pause_wanted(), gs_ui_online());
+    else at_pause_off(&gs_ui_pause);
+    gs_ui_pause_changed = 1;
+}
+
+int gw_Ui_TakeUnpause(void) { return gs_ui_online() ? -1 : at_pause_take_unpause(&gs_ui_pause); }
 
 /* a built-in entry (the adapter registers the native tree's rows that mods place themselves relative to) */
 int gw_Ui_EntryBuiltin(const char *parent, const char *id, const char *label, int native_arg) {

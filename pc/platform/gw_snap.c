@@ -1576,6 +1576,10 @@ static inline uint32_t xh_bswap(uint32_t v) {
     return (v >> 24) | ((v >> 8) & 0xFF00u) | ((v << 8) & 0xFF0000u) | (v << 24);
 }
 
+/* heapptr: also mask words that point into MEM1's heaps (>= 0x80003000). Which cell of a pool or heap an object got is
+ * not state - the audio engine allocates from the same heaps on its own clock, so two healthy builds hand out different
+ * addresses - and the rollback checksum never hashes a pointer for that reason. */
+static int xh_heapptr;
 static uint64_t xh_words(const uint8_t *p, size_t n, uint64_t h) {
     size_t i;
     for (i = 0; i + 4 <= n; i += 4) {
@@ -1583,6 +1587,8 @@ static uint64_t xh_words(const uint8_t *p, size_t n, uint64_t h) {
         memcpy(&v, p + i, 4);
         if (xh_bswap(v) >= xh_lo && xh_bswap(v) < xh_hi) {
             v = 0xA5A5A5A5u;
+        } else if (xh_heapptr && xh_bswap(v) >= 0x80003000u && xh_bswap(v) < 0x80000000u + gw_mem1_size) {
+            v = 0xA6A6A6A6u;
         }
         h = (h ^ v) * 0x100000001b3ull;
         h ^= h >> 29;
@@ -1629,6 +1635,9 @@ static void xh_mask_copy(uint8_t *dst, const uint8_t *src, size_t n) {
         memcpy(&v, dst + i, 4);
         if (xh_bswap(v) >= xh_lo && xh_bswap(v) < xh_hi) {
             v = 0xA5A5A5A5u;
+            memcpy(dst + i, &v, 4);
+        } else if (xh_heapptr && xh_bswap(v) >= 0x80003000u && xh_bswap(v) < 0x80000000u + gw_mem1_size) {
+            v = 0xA6A6A6A6u;
             memcpy(dst + i, &v, 4);
         }
     }
@@ -1760,9 +1769,11 @@ void gw_snap_xlog(int frame) {
 xh_cols:
     xh_nreg = 0;
     gw_RB_XRegions();
+    xh_heapptr = 1;
     for (i = 0; i < xh_nreg; ++i) {
         wide += xh_words((const uint8_t *) (uintptr_t) xh_reg[i].va, xh_reg[i].len, 0x9E3779B9ull + xh_reg[i].tag) * 0x9E3779B97F4A7C15ull;
     }
+    xh_heapptr = 0;
     fprintf(log, "%d,%08X,%016llX,%016llX,%016llX\n", frame, (unsigned) gw_RB_GameHash(), (unsigned long long) wide,
             (unsigned long long) mem, (unsigned long long) glob);
     fflush(log);
@@ -1810,6 +1821,7 @@ xh_cols:
             }
             snprintf(p, sizeof p, "%s/xh_%d.regs", dumpdir, frame);
             f = fopen(p, "wb");
+            xh_heapptr = 1;
             if (f != NULL) {
                 int k;
                 for (k = 0; k < xh_nreg; ++k) {
@@ -1826,6 +1838,7 @@ xh_cols:
                 }
                 fclose(f);
             }
+            xh_heapptr = 0;
             gw_log("xhash: dumped frame %d to %s", frame, dumpdir);
         }
     }

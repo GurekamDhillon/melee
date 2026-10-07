@@ -10,6 +10,15 @@ static Fighter* script_motion_fighter(int slot,int sub)
     g=Player_GetEntityAtIndex(slot,sub);
     return script_gobj_live(g)?GET_FIGHTER(g):NULL;
 }
+/* script_gobj_live() walks the FIGHTER link only; a held item's GObj lives on the ITEM link, so it
+ * rejected every held item and no held geometry was ever retained (held_retained_draws stayed 0). */
+static int script_motion_item_live(HSD_GObj* gobj)
+{
+    HSD_GObj* cur;
+    if(!gobj || !HSD_GObjPLinkHead)return 0;
+    for(cur=HSD_GObjPLinkHead[HSD_GOBJ_PLINK_ITEM];cur;cur=cur->next)if(cur==gobj)return 1;
+    return 0;
+}
 /* Called only for warm-up or a retain-only FIFO scope. Reuse the actual item
  * draw callback so visibility, custom parts and render offsets match live draws;
  * never advance item animation, physics, hitboxes or ownership here. */
@@ -17,7 +26,7 @@ int ScriptGame_MotionHeldDraw(int slot,int sub)
 {
     Fighter* fp=script_motion_fighter(slot,sub);
     HSD_GObj* item;
-    if(!fp || !(item=fp->item_gobj) || !script_gobj_live(item) || !item->render_cb)return 0;
+    if(!fp || !(item=fp->item_gobj) || !script_motion_item_live(item) || !item->render_cb)return 0;
     HSD_StateInvalidate(-1);
     { extern HSD_CObj* Camera_PCMainCObj(void);
       HSD_CObj* main=Camera_PCMainCObj();

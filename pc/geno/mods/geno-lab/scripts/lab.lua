@@ -4951,7 +4951,8 @@ end
   local SCREEN = "geno-lab.pause"
   local MAX_ROWS = 32 -- the Lua door's list limit (gw_ui_screen.h AT_MAX_ITEMS_LUA)
   local on, opened = false, false
-  local byid, shown, state_page = {}, {}, 1
+  local byid, shown = {}, {}
+  local page, cut_logged = {}, {} -- the page of each tab that has more rows than the record holds; the cuts already said
 
   local function clip(s, n)
     s = tostring(s or "")
@@ -4969,20 +4970,26 @@ end
     end
     local chosen = list
     local per = MAX_ROWS - #fixed - 1
-    if #list > MAX_ROWS and (#states == 0 or per < 4) then -- no library to page (or no room for a page): the first rows, as the record allows
-      chosen = {}
-      for k = 1, MAX_ROWS do chosen[k] = list[k] end
-      gd.log("Geno Lab: the " .. TABS[tab].name .. " tab has " .. #list .. " rows; the Atlas menu shows the first " .. MAX_ROWS)
-    elseif #list > MAX_ROWS then -- the library can be any length; the record holds 32 rows: page it
-      local pages = math.max(1, math.ceil(#states / per))
-      state_page = math.max(1, math.min(state_page, pages))
+    if #list > MAX_ROWS then -- the record holds 32 rows and a tab can hold any number: page it, so every row stays reachable
+      local pool, label, text = states, "Library page", "Left and right turn the page of the saved-state library."
+      if #states == 0 or per < 4 then -- no library: the rows themselves are paged, 31 and the page row
+        fixed, pool, per, label, text = {}, list, MAX_ROWS - 1, "Page", "Left and right turn the page of this tab's rows."
+      end
+      local pages = math.max(1, math.ceil(#pool / per))
+      local cur = math.max(1, math.min(page[tab] or 1, pages))
+      page[tab] = cur
+      local key = TABS[tab].name .. ":" .. #list
+      if not cut_logged[key] then
+        cut_logged[key] = true
+        gd.log("Geno Lab: the " .. TABS[tab].name .. " tab has " .. #list .. " rows; the Atlas menu pages them (" .. pages .. " pages)")
+      end
       chosen = {}
       for _, it in ipairs(fixed) do chosen[#chosen + 1] = it end
-      for k = (state_page - 1) * per + 1, math.min(#states, state_page * per) do chosen[#chosen + 1] = states[k] end
+      for k = (cur - 1) * per + 1, math.min(#pool, cur * per) do chosen[#chosen + 1] = pool[k] end
       chosen[#chosen + 1] = {
-        label = "Library page", desc = "Left and right turn the page of the saved-state library.",
-        value = function() return state_page .. " / " .. pages end,
-        adjust = function(d) state_page = ((state_page - 1 + d) % pages) + 1 end,
+        label = label, desc = text,
+        value = function() return (page[tab] or 1) .. " / " .. pages end,
+        adjust = function(d) page[tab] = (((page[tab] or 1) - 1 + d) % pages) + 1 end,
       }
     end
     local rows, map = {}, {}
@@ -5098,11 +5105,35 @@ end
     end
     return out
   end
+  -- The MODS tab is in TABS only while the Atlas menu is open (the legacy menu never sees it, and a tab list that changes under an open menu would move its
+  -- numbers): it goes in before the menu is shown, before EXIT, and out when the Atlas menu goes. Tab numbers and the rows each tab remembers follow by position.
+  local function shift_tabs(pos, delta)
+    local sel = {}
+    for k, v in pairs(menu.sel) do sel[(k >= pos) and (k + delta) or k] = v end
+    menu.sel = sel
+    if menu.tab >= pos then menu.tab = menu.tab + delta end
+    if menu.tab < 1 then menu.tab = 1 end
+  end
+  local function drop_mods_tab()
+    for i, t in ipairs(TABS) do
+      if t.name == "MODS" then
+        local was_on_it = menu.tab == i
+        table.remove(TABS, i)
+        shift_tabs(i + 1, -1)
+        if was_on_it then menu.tab = math.min(i, #TABS) end -- the next tab (EXIT)
+        return
+      end
+    end
+  end
   local function ensure_mods_tab()
     if UI == nil or UI.entries == nil then return end
     for _, t in ipairs(TABS) do if t.name == "MODS" then return end end
     local okl, list = pcall(UI.entries, "lab.pause")
-    if okl and #list > 0 then table.insert(TABS, #TABS, { name = "MODS", icon = "lab_modes", items = mod_items }) end
+    if okl and #list > 0 then
+      local pos = #TABS -- before EXIT
+      table.insert(TABS, pos, { name = "MODS", icon = "lab_modes", items = mod_items })
+      shift_tabs(pos, 1)
+    end
   end
 
   -- ---- the HUD (menu closed): info readouts, the timeline, the mode strip, a notice -------------------------------------------
@@ -5205,16 +5236,19 @@ end
     if not on or UI == nil or gd.match().netplay then return end -- the LAB is offline only: never an Atlas screen in a session
     local ok, why = UI.available()
     if not ok then gd.log("Geno Lab: the Atlas menu is not available (" .. tostring(why) .. "); using the old menu") return end
-    state_page = 1
+    page = {}
     ensure_mods_tab()
     opened = true
     local good, err = pcall(function()
       register()
-      UI.open(SCREEN)
+      -- refused: the game must never be left paused with no menu (a screen that is already the top one, left by an earlier instance of this script, is fine)
+      if not UI.open(SCREEN) and UI.state().top ~= SCREEN then error("the screen did not open") end
       UI.set_focus(SCREEN, "list", row_id(menu.tab, math.min(menu.sel[menu.tab] or 1, #shown)))
     end)
     if not good then
       opened = false
+      pcall(UI.close, SCREEN)
+      drop_mods_tab()
       gd.log("Geno Lab: the Atlas menu failed (" .. tostring(err) .. "); using the old menu")
     end
   end
@@ -5223,10 +5257,16 @@ end
       opened = false
       pcall(UI.close, SCREEN)
     end
+    drop_mods_tab()
   end
   menu.ui.set = function(word)
     if UI == nil then gd.log("lab ui: gd.ui is not available in this build") return end
-    if word == "on" then on = true elseif word == "off" then on = false end
+    if word == "on" then on = true
+    elseif word == "off" then
+      on = false
+      if opened then menu.ui.close() end -- an open Atlas menu hands over to the legacy one
+      if UI.hud_clear then pcall(UI.hud_clear, HUD) end hud_was_empty = false
+    end
     gd.log("lab ui " .. (on and "on" or "off"))
   end
 end)()

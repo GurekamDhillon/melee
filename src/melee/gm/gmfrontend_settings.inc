@@ -480,9 +480,20 @@ static void fsm_fmt_state(int v, char* out)
     if (Mods_RestartNeeded()) sprintf(out, "%s", "Restart to apply");
     else sprintf(out, "%d mod%s", fsm_n, fsm_n == 1 ? "" : "s");
 }
+/* a netplay or rollback session is on: the mounted set cannot change until a restart, and what is toggled now must not either */
+static int fsm_online(void)
+{
+    extern int RB_Enabled(void);
+    extern int Netplay_Enabled(void);
+    return RB_Enabled() || Netplay_Enabled();
+}
 static void fsm_toggle(int i, int v)
 {
     if (i < 0 || i >= fsm_n) return;
+    if (fsm_online()) {
+        fe_ol_notice("Mods cannot be changed while online.", true);
+        return;
+    }
     Mods_SetEnabled(i, v);
     Mods_Save();
     fe_ol_notice(Mods_RestartNeeded() ? "Saved. The change applies when the game restarts." : "Saved.",

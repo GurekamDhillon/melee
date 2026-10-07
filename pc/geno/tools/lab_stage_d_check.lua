@@ -756,7 +756,7 @@ do
   lab("menu"); lab("menu close")
   local mods_tabs = 0
   for _, t in ipairs(TABS) do if t.name == "MODS" then mods_tabs = mods_tabs + 1 end end
-  expect(mods_tabs == 1, "the MODS tab is added once however often the menu opens")
+  expect(mods_tabs == 0, "the MODS tab is in TABS only while the Atlas menu is open")
 
   -- 4. ownership: the screen belongs to geno-lab; another script cannot touch it; the console bypass is not what the tests ran as
   lab("menu")
@@ -789,6 +789,66 @@ do
   expect(ui.state().top == SCREEN and #rows() >= 1, "after a reload the screen opens again from the new instance")
   lab("menu close"); lab("ui off")
 
+
+  -- ---- review follow-ups ----
+  lab("ui on")
+  menu = upv(cmdfn, "menu"); TABS = upv(cmdfn, "TABS")
+  local function count_tabs(name) local n = 0 for _, t in ipairs(TABS) do if t.name == name then n = n + 1 end end return n end
+  ui.entries["tools.extra"] = nil
+  local all_logs, old_log = {}, gd.log
+  gd.log = function(...) all_logs[#all_logs + 1] = tostring((...)) return old_log(...) end
+  -- a. UI.open refusing (false) falls back to the legacy menu: the game is never left paused with no menu
+  local real_open = ui.open
+  ui.open = function() return false end
+  lab("menu")
+  expect(menu.open and closed(), "the Atlas screen refused to open: the legacy menu is up, no screen is left registered as open")
+  expect(not (menu.ui.on and menu.ui.on()), "and the Atlas path says it is not the one drawing")
+  lab("menu close"); ui.open = real_open
+  -- b. a tab of more than 32 rows stays fully reachable (paged), and the cut is logged once however often the screen is registered again
+  local big = {}
+  for i = 1, 70 do big[i] = { label = "Big " .. i, desc = "row " .. i } end
+  table.insert(TABS, #TABS, { name = "BIG", items = function() return big end })
+    lab("menu"); cmdfn("menu big")
+  local seen, pages = {}, 0
+  for _ = 1, 4 do
+    for _, r in ipairs(rows()) do seen[r.label] = true end
+    expect(#rows() <= 32, "a paged tab holds at most 32 rows (" .. #rows() .. ")")
+    pages = pages + 1
+    focus_on("Page"); ui.engine_row(SCREEN, "right")
+  end
+  local reach = 0
+  for i = 1, 70 do if seen["Big " .. i] then reach = reach + 1 end end
+  expect(reach == 70, "every one of 70 rows of a tab is reachable through its pages (" .. reach .. ")")
+  expect(row("Page") ~= nil and row("Page").value.text:find("/ 3", 1, true) ~= nil, "the page row reads n / 3")
+  local cuts = 0
+  for _, l in ipairs(all_logs) do if l:find("BIG tab has 70 rows", 1, true) then cuts = cuts + 1 end end
+  expect(cuts <= 1, "the cut is logged once, not on every re-registration (" .. cuts .. ")")
+  lab("menu close")
+  table.remove(TABS, #TABS - 1)
+  -- c. the MODS tab is only in TABS while the Atlas menu is open: the legacy menu never sees it, and tab numbers do not shift under an open menu
+  ui.entries["tools.extra"] = { id = "tools.extra", parent = "lab.pause", label = "Extra tool", blurb = "Does a thing.", mod = "tools", opens = "tools.screen", visible = true, badge = "" }
+  expect(count_tabs("MODS") == 0, "closed: no MODS tab in TABS")
+  lab("menu"); cmdfn("menu exit")
+  expect(count_tabs("MODS") == 1 and TABS[menu.tab].name == "EXIT", "open: one MODS tab, and the menu is still on EXIT")
+  local names_open = {}
+  for i, t in ipairs(TABS) do names_open[i] = t.name end
+  ui.refresh(SCREEN); lab("menu mods")
+  expect(#TABS == #names_open and TABS[menu.tab].name == "MODS", "opening it and moving to it changes no tab numbers")
+  lab("menu close")
+  expect(count_tabs("MODS") == 0 and TABS[menu.tab].name ~= "MODS", "closed again: no MODS tab, nothing lingering, the saved tab is a real one")
+  lab("ui off"); lab("menu")
+  expect(menu.open and count_tabs("MODS") == 0 and closed(), "lab ui off: the legacy menu has no MODS tab")
+  lab("menu close"); lab("ui on")
+  ui.entries["tools.extra"] = nil
+  lab("menu"); expect(count_tabs("MODS") == 0, "no entries: no MODS tab, not even an empty one"); lab("menu close")
+  -- d. lab ui off takes the HUD down (the clean mode has a chip strip and needs no fighter fields)
+  lab("mode clean"); run(2)
+  pcall(env.on_tick)
+  local was = ui.huds[ui.caller] ~= nil
+  lab("ui off")
+  expect(was and ui.huds[ui.caller] == nil, "lab ui off clears the HUD (it was up: " .. tostring(was) .. ")")
+  lab("ui on"); lab("mode training"); lab("ui off")
+  gd.log = old_log
   -- ---- Task 9: the HUD ----
   lab("ui on")
   -- the harness's fake fighters carry only what the older checks read; the info readout reads the rest (the real game has them all)

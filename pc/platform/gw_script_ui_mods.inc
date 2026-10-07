@@ -21,6 +21,7 @@ static struct {
     AtModsDetail dt;
     AtModsSrc src;
     AtModsHooks hooks;
+    int hit_base;               /* the window base of the record that was last DRAWN: the hit rectangles' row numbers are rows of that window */
 } gs_mods;
 static const AtModsSrc *gs_mods_test_src;   /* tests: a source over a fake folder instead of gw_Mods_* */
 
@@ -31,6 +32,9 @@ static int gs_mods_entry_ok(const char *id) {
     const AtEntry *e = gs_ui_entry_visible(id);
     return e != NULL && !e->builtin && gs_ui_mod_script(e->mod, NULL) >= 0;
 }
+
+/* called by the draw pass after it drew the MODS screen: the hit rectangles it just made belong to the window as it is now */
+static void gs_mods_drawn(void) { gs_mods.hit_base = gs_mods.st.base; }
 
 static void gs_mods_rebuild(GsUiSlot *u) {
     double now = gs_now_ms();
@@ -85,7 +89,11 @@ static void gs_mods_mouse(GsUiSlot *u) {
         }
     }
     n = at_mouse_events(&u->mouse, x, y, buttons, (int) wheel, &u->hits, ev, 16);
-    for (i = 0; i < n; i++) gs_mods_event(u, &ev[i]);
+    for (i = 0; i < n; i++) {
+        /* a row the pointer is over is a row of the window as it was drawn: a key or a pad press earlier in this frame may have moved the window since */
+        if (ev[i].type == AT_EV_FOCUS && gs_mods.mode == 0) ev[i].b += gs_mods.hit_base - gs_mods.st.base;
+        gs_mods_event(u, &ev[i]);
+    }
 }
 
 /* once per script tick, when the MODS screen is the top screen: the keyboard, then the mouse, then the rebuild (a note expires, the restart note appears) */

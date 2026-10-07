@@ -13,7 +13,7 @@ static int has_word(const char *list, const char *id)
 {
     char buf[100], *p, *save = NULL;
     snprintf(buf, sizeof buf, "%s", list);
-    for (p = strtok_s(buf, ",", &save); p != NULL; p = strtok_s(NULL, ",", &save)) if (strcmp(p, id) == 0) return 1;
+    for (p = strtok_s(buf, ",", &save); p != NULL; p = strtok_s(NULL, ",", &save)) if (_stricmp(p, id) == 0) return 1;
     return 0;
 }
 static void fm_recompute_restart(void) { int i; fm_restart = 0; for (i = 0; i < fm_n; i++) if (FM[i].enabled != FM[i].active) fm_restart = 1; }
@@ -422,6 +422,62 @@ static void detail(void)
     }
 }
 
+/* review follow-ups: ids match without regard to case (like gw_Mods_Find), whole-word names, a failed save rolls back, mixed cascades, no restart note when back */
+static void review_followups(void)
+{
+    AtModsSrc s = src();
+    int i;
+    char before[FM_MAX];
+    /* 1. a requirement spelled in another case is the same mod */
+    fixture(); at_mods_state_init(&ST); memset(&VW, 0, sizeof VW);
+    snprintf(FM[6].req, sizeof FM[6].req, "%s", "MISSING-BASE");
+    add("needs-sora", "Needs Sora", "fighter", "SORA", "", AT_MOD_MISSING_DEP, 1, 0);
+    build(&s); press(&s, ev(AT_EV_PAGE, 1, 0));
+    ST.sel[1] = 2; build(&s);
+    CHECK(strcmp(focused_label(), "Needs Sora") == 0);
+    press(&s, ev(AT_EV_ALT, 'X', 0));
+    CHECK(FM[7].enabled == 1 && strstr(VW.note.text, "not installed") == NULL);                 /* SORA found sora */
+    dopen(&s, 8);
+    CHECK(strstr(sub_of("Requires"), "Sora") != NULL);                                           /* named, not shown as the raw id */
+    /* 2. a reverse conflict is added by whole name, never skipped because its name is inside another */
+    fixture();
+    add("envoy-lite", "Envoy", "misc", "", "", AT_MOD_ACTIVE, 1, 1);
+    snprintf(FM[3].con, sizeof FM[3].con, "%s", "envoy-lite,envoy-drives-sa2");              /* mod 3 lists the lite one (Envoy) and sa2 */
+    snprintf(FM[8].con, sizeof FM[8].con, "%s", "envoy-drives");                               /* the lite one lists mod 3 too: reverse side */
+    dopen(&s, 8);
+    CHECK(strstr(sub_of("Conflicts"), "Envoy Drives") != NULL);
+    fixture();
+    add("envoy-lite", "Envoy", "misc", "", "", AT_MOD_ACTIVE, 1, 1);
+    snprintf(FM[3].con, sizeof FM[3].con, "%s", "envoy-drives-sa2");                           /* mod 3 ("Envoy Drives") lists SA2 ... */
+    snprintf(FM[4].con, sizeof FM[4].con, "%s", "envoy-drives");
+    snprintf(FM[8].con, sizeof FM[8].con, "%s", "envoy-drives");                               /* ... and "Envoy" lists mod 3: the name "Envoy" is inside "Envoy Drives" */
+    dopen(&s, 3);
+    CHECK(strstr(sub_of("Conflicts"), "Envoy Drives SA2") != NULL && strstr(sub_of("Conflicts"), ", Envoy") != NULL);   /* "Envoy" is added: whole words, not substrings */
+    /* 3. a failed save rolls the toggle back: the screen matches the disk */
+    fixture(); at_mods_state_init(&ST); memset(&VW, 0, sizeof VW); build(&s);
+    for (i = 0; i < fm_n; i++) before[i] = (char) FM[i].enabled;
+    fm_save_result = -1;
+    press(&s, ev(AT_EV_ACCEPT, 0, 0));                                                         /* ACE Base off would have turned ACE Wolf off too */
+    for (i = 0; i < fm_n; i++) CHECK((char) FM[i].enabled == before[i]);
+    CHECK(VW.note.kind == AT_NOTE_ERR && strstr(VW.note.text, "Could not save") != NULL && strstr(VW.note.text, "Nothing was changed") != NULL);
+    CHECK(SC.items[0].on == 1 && SC.items[1].on == 1);
+    fm_save_result = 0;
+    /* 4. a mixed cascade says both: a requirement on, a conflicting mod off */
+    fixture(); at_mods_state_init(&ST); memset(&VW, 0, sizeof VW);
+    add("mixer", "Mixer", "misc", "sora", "envoy", AT_MOD_OFF, 0, 0);
+    build(&s); ST.sel[0] = 8; build(&s);
+    press(&s, ev(AT_EV_ACCEPT, 0, 0));
+    CHECK(FM[8].enabled && FM[7].enabled && !FM[2].enabled);
+    CHECK(strstr(VW.note.text, "turned on: Sora") != NULL && strstr(VW.note.text, "turned off: Supertime Envoy") != NULL);
+    /* 5. back to what is mounted: no "applies at restart" in the note, and none standing */
+    many(5); at_mods_state_init(&ST); memset(&VW, 0, sizeof VW); build(&s);
+    ST.sel[0] = 1; build(&s);
+    press(&s, ev(AT_EV_ACCEPT, 0, 0));
+    CHECK(FM[1].enabled == 0 && strstr(VW.note.text, "Applies at restart") != NULL);
+    press(&s, ev(AT_EV_ACCEPT, 0, 0));
+    CHECK(FM[1].enabled == 1 && strstr(VW.note.text, "restart") == NULL);
+}
+
 int main(void)
 {
     rows();
@@ -433,5 +489,6 @@ int main(void)
     long_strings();
     parents();
     detail();
+    review_followups();
     ATLAS_DONE("atlas mods");
 }

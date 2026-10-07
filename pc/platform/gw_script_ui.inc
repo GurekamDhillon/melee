@@ -541,6 +541,7 @@ static void gs_ui_overlay_try(void);
 static void gs_sel_tick(GsUiSlot *u);
 static void gs_set_tick(GsUiSlot *u);
 static void gs_set_resolve(GsUiSlot *u);
+static void gs_mods_drawn(void);
 
 static void gs_ui_event(int slot, const AtEvent *e) {
     GsUiSlot *u = &gs_ui_slot[slot];
@@ -699,6 +700,7 @@ static void gs_ui_draw(void) {
     if (u->native_set) gs_set_resolve(u);                          /* the rows were submitted again: the focus is valid before it is drawn */
     gs_ui_reduced = gw_Settings_Int("reduced_motion", 0) != 0;
     at_render_ex(&u->sc, &u->view, gs_ui_stat.canvas_w, gs_now_ms(), gs_ui_reduced, &ops, &sink, &u->hits, &info);
+    if (u->native_mods) gs_mods_drawn();
     gw_Kit_SetTracking(0.0f);                                     /* belt and braces: no draw leaves tracking set */
     quads = gw_Kit_QuadCount() - first;
     gs_kit_record(first, quads);

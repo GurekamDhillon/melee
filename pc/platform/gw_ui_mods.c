@@ -65,6 +65,19 @@ static void put_key(AtScreen *sc, AtView *vw, char btn, const char *label)
     sc->n_keys++;
 }
 
+/* ids are matched without regard to case, as gw_Mods_Find does */
+static int ieq(const char *a, const char *b)
+{
+    for (; *a && *b; a++, b++) if (tolower((unsigned char) *a) != tolower((unsigned char) *b)) return 0;
+    return *a == *b;
+}
+static int ieqn(const char *a, const char *b, size_t n)
+{
+    size_t i;
+    for (i = 0; i < n; i++) if (tolower((unsigned char) a[i]) != tolower((unsigned char) b[i])) return 0;
+    return 1;
+}
+
 static int word_in(const char *list, const char *id)
 {
     size_t n = strlen(id);
@@ -72,7 +85,7 @@ static int word_in(const char *list, const char *id)
     while (p != NULL && *p) {
         const char *e = strchr(p, ',');
         size_t len = e ? (size_t) (e - p) : strlen(p);
-        if (len == n && strncmp(p, id, n) == 0) return 1;
+        if (len == n && ieqn(p, id, n)) return 1;
         p = e ? e + 1 : NULL;
     }
     return 0;
@@ -210,13 +223,13 @@ int at_mods_build(const AtModsSrc *s, AtModsState *st, AtScreen *sc, AtView *vw,
     return 1;
 }
 
-/* the mods that changed state between two snapshots, other than `except`, as "A, B and 2 more" */
-static void changed_names(const AtModsSrc *s, const unsigned char *before, int n, int except, char *out, int cap)
+/* the mods other than `except` that moved to `want` (1 on, 0 off) between a snapshot and now, as "A, B and 2 more" */
+static void changed_names(const AtModsSrc *s, const unsigned char *before, int n, int except, int want, char *out, int cap)
 {
     int i, k = 0, total = 0;
     out[0] = '\0';
     for (i = 0; i < n; i++) {
-        if (i == except || (before[i] != 0) == (s->enabled(s->user, i) != 0)) continue;
+        if (i == except || (before[i] != 0) == (s->enabled(s->user, i) != 0) || (s->enabled(s->user, i) != 0) != want) continue;
         total++;
         if (k < 2) {
             size_t l = strlen(out);
@@ -238,7 +251,7 @@ static void say(AtModsState *st, const char *text, int kind, double now_ms)
 static void toggle(const AtModsSrc *s, AtModsState *st, int m, int on, double now_ms)
 {
     unsigned char before[AT_MODS_MAX];
-    char others[AT_STR], text[AT_STR];
+    char on_list[AT_STR], off_list[AT_STR], text[AT_STR];
     int n = s->count(s->user), i, changed, saved;
     if (is_locked(s)) { say(st, "Mods cannot be changed while online.", AT_NOTE_WARN, now_ms); return; }
     if (n > AT_MODS_MAX) n = AT_MODS_MAX;
@@ -246,15 +259,27 @@ static void toggle(const AtModsSrc *s, AtModsState *st, int m, int on, double no
     changed = s->set_enabled(s->user, m, on);
     saved = changed > 0 ? s->save(s->user) : 0;
     if (changed <= 0) { say(st, "Nothing changed.", AT_NOTE_INFO, now_ms); return; }
-    if (saved != 0) { say(st, "Could not save mods/enabled.txt. The change is not kept.", AT_NOTE_ERR, now_ms); return; }
-    changed_names(s, before, n, m, others, (int) sizeof others);
-    if (others[0]) {
-        /* a cascade turns mods on (requirements) or off (dependents, conflicting mods): say which, from the first other mod that moved */
-        int turned_on = 0;
-        for (i = 0; i < n; i++) if (i != m && (before[i] != 0) != (s->enabled(s->user, i) != 0)) { turned_on = s->enabled(s->user, i) != 0; break; }
-        snprintf(text, sizeof text, "Also turned %s: %s.", turned_on ? "on" : "off", others);
-    } else {
+    if (saved != 0) {
+        /* the file was not written: put the memory back so the screen shows what the disk holds (a cascade can move others again, so go until it matches) */
+        int pass, again = 1;
+        for (pass = 0; pass < 4 && again; pass++) {
+            again = 0;
+            for (i = 0; i < n; i++) if ((before[i] != 0) != (s->enabled(s->user, i) != 0)) { s->set_enabled(s->user, i, before[i] != 0); again = 1; }
+        }
+        say(st, "Could not save mods/enabled.txt. Nothing was changed.", AT_NOTE_ERR, now_ms);
+        return;
+    }
+    changed_names(s, before, n, m, 1, on_list, (int) sizeof on_list);
+    changed_names(s, before, n, m, 0, off_list, (int) sizeof off_list);
+    if (on_list[0] || off_list[0]) {
+        /* a cascade turns mods on (requirements) and off (dependents, conflicting mods): say each, never one word for both */
+        snprintf(text, sizeof text, "%s%s%s%s%s%s", on_list[0] ? "Also turned on: " : "", on_list, on_list[0] ? "." : "", on_list[0] && off_list[0] ? " " : "",
+                 off_list[0] ? "Also turned off: " : "", off_list);
+        if (off_list[0]) { size_t l = strlen(text); if (l + 1 < sizeof text) { text[l] = '.'; text[l + 1] = '\0'; } }
+    } else if (s->restart_needed(s->user)) {
         snprintf(text, sizeof text, "%s %s. Applies at restart.", s->name(s->user, m), on ? "on" : "off");
+    } else {
+        snprintf(text, sizeof text, "%s %s.", s->name(s->user, m), on ? "on" : "off");        /* back to what is mounted: nothing waits for a restart */
     }
     say(st, text, AT_NOTE_OK, now_ms);
 }
@@ -276,7 +301,7 @@ static void resolve_missing(const AtModsSrc *s, AtModsState *st, int m, double n
         if (len >= sizeof id) len = sizeof id - 1;
         memcpy(id, p, len);
         id[len] = '\0';
-        for (j = 0; j < n && found < 0; j++) if (strcmp(s->id(s->user, j), id) == 0) found = j;
+        for (j = 0; j < n && found < 0; j++) if (ieq(s->id(s->user, j), id)) found = j;
         if (found < 0) { if (!gone[0]) snprintf(gone, sizeof gone, "%s", id); }
         else if (!s->enabled(s->user, found)) { toggle(s, st, found, 1, now_ms); turned++; }
         p = e ? e + 1 : NULL;
@@ -338,10 +363,25 @@ static void name_list(const AtModsSrc *s, const char *ids, char *out, int cap)
         if (len >= sizeof id) len = sizeof id - 1;
         memcpy(id, p, len);
         id[len] = '\0';
-        for (j = 0; j < n && found < 0; j++) if (strcmp(s->id(s->user, j), id) == 0) found = j;
+        for (j = 0; j < n && found < 0; j++) if (ieq(s->id(s->user, j), id)) found = j;
         snprintf(out + l, (size_t) cap - l, "%s%s", l ? ", " : "", found >= 0 ? s->name(s->user, found) : id);
         p = e ? e + 1 : NULL;
     }
+}
+
+/* 1 when `name` is one whole entry of the ", "-joined list (never a piece of a longer name) */
+static int list_has_name(const char *list, const char *name)
+{
+    size_t n = strlen(name);
+    const char *p = list;
+    while (*p) {
+        const char *e = strstr(p, ", ");
+        size_t len = e ? (size_t) (e - p) : strlen(p);
+        if (len == n && strncmp(p, name, n) == 0) return 1;
+        if (e == NULL) break;
+        p = e + 2;
+    }
+    return 0;
 }
 
 static void add_row(AtScreen *sc, const char *id, const char *label, const char *sub)
@@ -392,7 +432,7 @@ int at_mods_detail_build(const AtModsSrc *s, const AtModsDetail *d, AtScreen *sc
         size_t l = strlen(mine);
         if (j == m) continue;
         others = s->conflicts(s->user, j);
-        if (others != NULL && word_in(others, s->id(s->user, m)) && strstr(mine, s->name(s->user, j)) == NULL)
+        if (others != NULL && word_in(others, s->id(s->user, m)) && !list_has_name(mine, s->name(s->user, j)))
             snprintf(mine + l, sizeof mine - l, "%s%s", l ? ", " : "", s->name(s->user, j));
     }
     add_row(sc, "conflicts", "Conflicts", mine[0] ? mine : "Nothing");

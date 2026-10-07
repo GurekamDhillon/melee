@@ -4268,7 +4268,9 @@ void RB_XRegions(void)
             if (g == NULL || g->user_data == NULL) {
                 continue;
             }
-            Snap_XRegion(0x010000 + (i * 2 + j) * 0x100, (u32) g->user_data, (u32) sizeof(Fighter));
+            /* x2144..x2164 are AXDriver voice ids: the audio engine's handles, which differ between platforms and are not state */
+            Snap_XRegion(0x010000 + (i * 2 + j) * 0x100, (u32) g->user_data, 0x2144);
+            Snap_XRegion(0x010001 + (i * 2 + j) * 0x100, (u32) g->user_data + 0x2164, (u32) sizeof(Fighter) - 0x2164);
             Snap_XRegion(0x020000 + (i * 2 + j) * 0x100, (u32) g, 0x40);
             ftRb_XTree(0x030000 + (i * 2 + j) * 0x1000, g);
         }
@@ -4277,7 +4279,9 @@ void RB_XRegions(void)
         if (g->user_data == NULL) {
             continue;
         }
-        Snap_XRegion(0x040000 + n * 0x100, (u32) g->user_data, (u32) sizeof(Item));
+        /* xD64..xD7C hold sound handles (sfx_unk1/2, xD6C, ...): the audio engine's ids, not state */
+        Snap_XRegion(0x040000 + n * 0x100, (u32) g->user_data, 0xD64);
+        Snap_XRegion(0x040001 + n * 0x100, (u32) g->user_data + 0xD7C, (u32) sizeof(Item) - 0xD7C);
         Snap_XRegion(0x050000 + n * 0x100, (u32) g, 0x40);
         ftRb_XTree(0x060000 + n * 0x1000, g);
     }

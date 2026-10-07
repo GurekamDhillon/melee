@@ -45,6 +45,15 @@ static void textSetup(struct mnInfoBonus_804A09B0_t* o)
     HSD_SisLib_803A6368(o->x40, 0xA5);
 }
 
+#if defined(TARGET_PC)
+/* The Atlas Bonus Records screen (gmfrontend_atlas_data.inc) lists the bonuses the retail screen lists: the kind at position i of the retail table
+ * (static in mninfobonus.static.h), 0x100 at its end. A read; nothing here changes the retail screen. */
+int mnInfoBonus_PcKind(int i)
+{
+    return (i >= 0 && i < 0x100) ? mnInfoBonus_803EFCE8[i] : 0x100;
+}
+#endif
+
 int mnInfoBonus_802528F8(void)
 {
     int unused;

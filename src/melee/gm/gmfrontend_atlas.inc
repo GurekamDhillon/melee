@@ -18,10 +18,13 @@ _Static_assert(GS_TITLE == 0, "gw_ui_policy.c AT_SCENE_TITLE must be GS_TITLE");
 
 /* REPLACE has no user in step 2 (the title is an OVERLAY: retail's own exit logic, attract loop and debug path keep running).
  * This is the extension point: a scene kind that Atlas stands in for returns its own on_enter/on_frame pair here, step 8 first. */
+static GameScene* fad_results_standin(void); /* gmfrontend_atlas_data.inc */
+_Static_assert(GS_RESULTS == 5, "gw_ui_policy.c and MELEE_ATLAS_SCENES name the results scene by this number");
+
 GameScene* gmFrontend_AtlasStandIn(u8 kind)
 {
-    (void) kind;
-    return NULL;
+    /* only the results scene has a stand-in (Atlas step 8): reached through MELEE_ATLAS_SCENES=5:replace, never by default */
+    return kind == GS_RESULTS ? fad_results_standin() : NULL;
 }
 
 enum { FA_PRIMARY_TILES = 3 };                                           /* AT_PRIMARY_TILES (gw_ui_screen.h) */
@@ -359,6 +362,9 @@ static void fa_sync(void)
             fat.shown = NULL;
         }
         return;
+    }
+    if (fad_sync()) {
+        return; /* an Atlas data screen is up: it draws instead of the menu's own host screen, which comes back when the data screen closes */
     }
     if (fat.shown != NULL && strcmp(fat.shown, fm.menu->atlas_id) != 0) {
         Ui_Close(fat.shown);

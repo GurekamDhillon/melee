@@ -93,6 +93,11 @@ static bool fa_frame(u32 pad);
 static void fa_sync(void);
 static void fa_open_reset(const struct FeMenu* m, int sel);
 static void fa_scene_exit(void);
+static bool fad_open_for(u8 kind, u8 sel); /* gmfrontend_atlas_data.inc: a data screen takes an FA_NATIVE row */
+static bool fad_frame(u32 pad);
+static bool fad_sync(void);
+static void fad_scene_exit(void);
+static bool fad_events_wanted(void);
 static void fa_register_builtins(const struct FeMenu* m);
 struct FeMenuItem;
 static const char* fa_item_id(const struct FeMenuItem* it);
@@ -397,6 +402,12 @@ static void fm_position_for(u8 previous_mode, u8* kind, u8* sel)
     }
     if (previous_mode == GM_CHALLENGER_APPROACH) {
         previous_mode = gm_801737D8();
+    }
+    if (previous_mode == GM_EVENT && fad_events_wanted()) {
+        /* Atlas Event Match: the Solo menu on EVENT MATCH, and the list opens again on the event that was played (fad_sync) */
+        *kind = MENU_KIND_1P;
+        *sel = SEL_1P_EVENT;
+        return;
     }
     for (i = 0; i < FM_N(map); i++) {
         if (map[i][0] == previous_mode) {
@@ -1371,6 +1382,11 @@ static void fm_confirm(void)
     if (m->port_all || (it->flags & FMF_PORT)) {
         gm_801677E8((s8) fm_port_pressed());
     }
+#if defined(TARGET_PC)
+    if (it->act == FA_NATIVE && fad_open_for(m->kind, it->sel)) {
+        return; /* an Atlas data screen took the row: the menu stays, B returns to it (the Atlas Sound Test stops the audio itself) */
+    }
+#endif
     if (it->act == FA_NATIVE && m->kind == MENU_KIND_DATA && it->sel == SEL_DATA_SOUND) {
         /* the Sound Test think's own first two calls: stop the effects and the music */
         lbAudioAx_80023694();
@@ -1613,6 +1629,8 @@ static void fm_scene_frame(void)
             mn_8022F268();
             fe.reported = GM_MENU;
             fm_leave_scene(GM_MENU);
+        } else if (fad_frame(pad_in)) {
+            /* an Atlas data screen is up and took the frame (gmfrontend_atlas_data.inc) */
         } else if (fa_frame(pad_in)) {
             /* Atlas handled the frame: its events became fm_go / fm_confirm / fm_back (gmfrontend_atlas.inc) */
         } else if (in & MenuInput_Confirm) {
@@ -1632,6 +1650,7 @@ static void fm_scene_frame(void)
 
 static void fm_scene_exit(void)
 {
+    fad_scene_exit();
     fa_scene_exit();
     fm_close();
     fm.active = false;

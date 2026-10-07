@@ -20,6 +20,7 @@ workspace `_research/frontend-menus.md`; the art itself: workspace `menu/`.
 | `gmfrontend_mouse.inc` | the mouse in the menus |
 | `gmfrontend_atlas_online.inc` | the Atlas drawing of the room screens: copies legacy predicates into the host's room view by name, turns mouse and keyboard intents into the same MenuInput bits; reads netplay state, writes none (`tools/port/check_atlas_online.sh`) |
 | `gmfrontend_atlas.inc` | the Atlas adapter for the menu tree: `FeMenu.atlas_id`, `fa_frame` / `fa_sync`, the More strip, the scene policy's stand-in hook (see "Atlas" below) |
+| `gmfrontend_atlas_data.inc` | the Atlas data screens (Event Match, the Name Entry tag list, Sound Test, Special Messages, Bonus, Misc. and VS. Records) and the Results stand-in: opened from the `FA_NATIVE` row that opens the retail screen (`fad_open_for` in `fm_confirm`), the adapter owns the cursor and a 32-row window, retail text is decoded per string at run time and never stored (see "Data screens" below) |
 | `gmscmemcard.c` | the memory-card prompt, the boot blocker; the port's skip and auto-create are here |
 
 ## Rules
@@ -52,3 +53,8 @@ A mod's `mod.json` `menus` entries are tiles tagged MOD after a menu's own items
 blocks of `fm_scene_frame` are skipped under Atlas (the host reads the mouse and keyboard); `Ui_MenuBlocked()` stops the menu taking input while a
 mod's screen is on top. The title is a scene-policy OVERLAY drawn by the host (`gw_ui_policy.c`); REPLACE has no user yet (`gmFrontend_AtlasStandIn`).
 `tools/port/test_fe_atlas_positions.py` (workspace) checks every position the router can produce is an item of an Atlas menu.
+
+## Data screens (Atlas step 8)
+
+`gmfrontend_atlas_data.inc` draws the retail screens whose content is data the game already holds. Rules: (1) a screen opens from its `FA_NATIVE` row through `fad_open_for(kind, sel)` and no table row changes, so `MELEE_ATLAS=0`, a netplay session, or a screen left out of `MELEE_ATLAS_DATA` (`events,name,sound,messages,bonus,misc,vsrec`; `none`; `notext` never opens the disc's text archive) runs the retail screen as before; (2) the adapter owns the cursor: the host queues MOVE and PAGE events and never moves a data list's focus, up and down wrap over the whole list, the window slides with `Ui_DataFirst`, row ids are absolute; (3) a locked row is a disabled item and an accept on it does nothing (the host drops it, the adapter checks again); (4) read-only: the only save write is the selection an event start stores (`gm_801BEB74`, as `mnEvent_8024D864` does); Sound Test applies the saved volumes and sets none; Name Entry's list opens the retail screen for any edit; (5) words on the disc are decoded per string (`fad_sis_text`), drawn, never logged or stored, and a string with a glyph the Latin decoder does not know keeps the row's authored label; (6) Results is a `REPLACE` stand-in reached only by `MELEE_ATLAS_SCENES=5:replace`, never online, with its side-effect table in a comment above `far_enter`. `tools/port/test_fe_atlas_data.py`, `test_fe_atlas_results.py` and `check_no_disc_text.py` (workspace) pin these.
+

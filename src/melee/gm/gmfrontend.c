@@ -1186,6 +1186,7 @@ static bool fm_back_to_online_item; ///< backing out of ONLINE lands on its VS h
 #include "gmfrontend_atlas_select.inc"
 #include "gmfrontend_settings.inc"
 #include "gmfrontend_atlas_set.inc"
+#include "gmfrontend_atlas_data.inc"
 
 /* Legacy panels, rows and buttons share the grid too. The source grid uses
  * their old display sizes, preserving UV placement at those sizes exactly. */

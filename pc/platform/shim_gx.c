@@ -1070,7 +1070,7 @@ void gw_GXSetViewportJitter(f32 left, f32 top, f32 wd, f32 ht, f32 nearz, f32 fa
  * (lib/dolphin/gx/GXTransform.cpp), operation for operation, with contraction forbidden: single-precision SSE
  * arithmetic, one rounding per operation, everywhere. */
 #pragma STDC FP_CONTRACT OFF
-static void gw_xplat_GXProject(f32 x, f32 y, f32 z, const f32 mtx[3][4], const f32 *pm, const f32 *vp, f32 *sx,
+void gw_xplat_GXProject(f32 x, f32 y, f32 z, const f32 mtx[3][4], const f32 *pm, const f32 *vp, f32 *sx,
                                f32 *sy, f32 *sz) {
   f32 px, py, pz;
   f32 xc, yc, zc, wc;

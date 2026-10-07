@@ -672,7 +672,9 @@ static const char *refuse_check(gw_net *n, uint32_t ver, uint64_t exe, uint64_t 
     return why;
   }
   if (exe != n->cfg.exe_hash) {
-    snprintf(why, cap, "different melee-pc.exe build (host %08x, you %08x)",
+    /* exe_hash is the build id (gw_netplay.c np_build_id): the game's sources plus how its floating point rounds,
+       the same on every platform that builds the same bytes the same way; it was the executable file's hash */
+    snprintf(why, cap, "different game build (host %08x, you %08x): the sources or the floating-point results differ",
              (unsigned)n->cfg.exe_hash, (unsigned)exe);
     return why;
   }

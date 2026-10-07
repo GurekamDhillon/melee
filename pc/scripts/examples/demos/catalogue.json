@@ -972,6 +972,20 @@
   "setup": []
 },
 {
+  "id": "demo_geno_define_charger",
+  "tour": false,
+  "path": "demos/geno-define-charger",
+  "title": "Vanilla Charger: a Lua charge special",
+  "api": "geno v9 define with fighter Lua (typed state); gd.fighter_lua; gd.input; LAB snapshots",
+  "category": "demo",
+  "new": true,
+  "in_game": false,
+  "controls": "1 long charge (hold B 45 frames); 2 short charge (15 frames); S save; L load; P pause; N step; R resume",
+  "requires_assets": true,
+  "skip_reason": "Requires the separately enabled vanilla-charger fighter folder and the LAB; offline only",
+  "setup": []
+},
+{
   "id": "demo_cpu_controller",
   "tour": false,
   "path": "demos/cpu-controller",

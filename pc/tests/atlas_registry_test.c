@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 /* atlas-registry: the entry registry and the mod.json "menus" reader. No game. */
 #include "atlas_check.h"
 #include "../platform/gw_ui_registry.h"
@@ -111,8 +112,63 @@ static void duplicate_id(void)
     CHECK(at_reg_add(&r, &e) == 1);
     CHECK(at_reg_add(&r, &e) == 0);
 }
+#include "../platform/gw_ui_menus_json.h"
+static void menus_parse_ok(void)
+{
+    AtEntry e[4]; char err[96];
+    const char *j = "{ \"id\": \"envoy\", \"kind\": \"script\", \"menus\": [ { \"id\": \"envoy\", \"parent\": \"solo\", \"label\": \"ENVOY\","
+                    " \"blurb\": \"Explore, fight and evolve your build.\", \"after\": \"training\", \"action\": \"script\", \"online\": false } ],"
+                    " \"gameplay\": true }";
+    CHECK(at_menus_parse(j, "envoy", e, 4, err, sizeof err) == 1);
+    CHECK_STR(e[0].id, "envoy"); CHECK_STR(e[0].parent, "solo"); CHECK_STR(e[0].mod, "envoy"); CHECK_STR(e[0].after, "training");
+    CHECK_STR(e[0].blurb, "Explore, fight and evolve your build.");
+    CHECK(e[0].action == AT_ENTRY_SCRIPT); CHECK(e[0].online == 0); CHECK(e[0].visible == 1);
+    j = "{ \"menus\": [ { \"id\": \"m.a\", \"parent\": \"versus\", \"label\": \"A\", \"action\": \"script\", \"online\": true },"
+        " { \"id\": \"m.b\", \"parent\": \"versus\", \"label\": \"B\", \"action\": \"script\", \"online\": \"true\" } ] }";
+    CHECK(at_menus_parse(j, "m", e, 4, err, sizeof err) == 2 && e[0].online == 1 && e[1].online == 1);   /* a boolean or the string */
+    CHECK(at_menus_parse(j, "m", e, 1, err, sizeof err) == 1);                                            /* the cap */
+}
+static void menus_parse_rejects(void)
+{
+    AtEntry e[4]; char err[96];
+    CHECK(at_menus_parse("{ \"menus\": [ { \"id\": \"x\", \"parent\": \"solo\" } ] }", "m", e, 4, err, sizeof err) == 0);    /* no label: skipped */
+    CHECK(err[0] != '\0');
+    CHECK(at_menus_parse("{ \"menus\": [ { \"id\": \"m.a\", \"parent\": \"solo\", \"label\": \"A\", \"opens\": \"m.s\" } ] }", "m", e, 4, err, sizeof err) == 1);
+    CHECK(e[0].action == AT_ENTRY_OPENS);
+    CHECK(at_menus_parse("{ \"menus\": [ { \"id\": \"m.a\", \"parent\": \"solo\", \"label\": \"A\" } ] }", "m", e, 4, err, sizeof err) == 0);   /* neither opens nor action */
+    CHECK(at_menus_parse("{ \"menus\": [ { \"id\": ", "m", e, 4, err, sizeof err) == -1);
+    CHECK(at_menus_parse("{ \"name\": \"no menus\" }", "m", e, 4, err, sizeof err) == 0);
+    CHECK(at_menus_parse("{ \"menus\": [ {\"id\":\"m.a\",\"parent\":\"solo\",\"label\":\"A\",\"action\":\"script\",\"nested\":{\"x\":[1,2]}} ] }", "m", e, 4, err, sizeof err) == 1);
+    CHECK(at_menus_parse("[1,2]", "m", e, 4, err, sizeof err) == -1);
+    CHECK(at_menus_parse("{ \"menus\": [ 7, \"x\", { \"id\":\"m.a\",\"parent\":\"solo\",\"label\":\"A\",\"action\":\"script\" } ] }", "m", e, 4, err, sizeof err) == 1);   /* non-objects are skipped */
+    CHECK(at_menus_parse("{ \"menus\": [ { \"id\":\"m.a\",\"parent\":\"solo\",\"label\":\"A very long label that goes past the cap\",\"action\":\"script\" } ] }", "m", e, 4, err, sizeof err) == 1
+          && strlen(e[0].label) == AT_REG_LABEL_MAX);
+    CHECK(at_menus_parse("\xEF\xBB\xBF{ \"menus\": [] }", "m", e, 4, err, sizeof err) == 0);                  /* a BOM */
+}
+/* the registry takes what the reader gives, and refuses by its own rules */
+static void menus_into_registry(void)
+{
+    AtEntry e[8]; char err[96]; AtRegistry r; const AtEntry *c[8];
+    int n = at_menus_parse("{ \"menus\": [ { \"id\":\"m.a\",\"parent\":\"nowhere\",\"label\":\"A\",\"action\":\"script\" },"
+                           " { \"id\":\"m.b\",\"parent\":\"solo\",\"label\":\"B\",\"action\":\"script\" } ] }", "m", e, 8, err, sizeof err), i, added = 0;
+    at_reg_init(&r);
+    for (i = 0; i < n; i++) added += at_reg_add(&r, &e[i]);
+    CHECK(n == 2 && added == 1 && at_reg_children(&r, "solo", 0, c, 8) == 1);
+}
+#ifndef ENVOY_MENUS_EXPECTED
+#define ENVOY_MENUS_EXPECTED 0
+#endif
+static void envoy_manifest(void)
+{
+    FILE *f = fopen("pc/scripts/examples/envoy/mod.json", "rb"); char buf[4096]; size_t n; AtEntry e[4]; char err[96];
+    CHECK(f != NULL);
+    if (f == NULL) return;
+    n = fread(buf, 1, sizeof buf - 1, f); fclose(f); buf[n] = 0;
+    CHECK(at_menus_parse(buf, "envoy", e, 4, err, sizeof err) == ENVOY_MENUS_EXPECTED);
+}
 int main(void)
 {
     order(); order_ties_and_missing_after(); caps(); unknown_parent(); namespace_rule(); label_cap(); disabled_mod_adds_nothing(); online_hidden(); set_visibility(); duplicate_id();
+    menus_parse_ok(); menus_parse_rejects(); menus_into_registry(); envoy_manifest();
     ATLAS_DONE("atlas-registry");
 }

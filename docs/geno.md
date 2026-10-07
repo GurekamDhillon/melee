@@ -2702,6 +2702,8 @@ part numbers), `x24`, `x2C` (dynamics), `x48` (item hat table) and `x5C` (the me
 authored): `x20` (the guard tree table; the tree is the costume's), `x3C` camera box, `x40` pick-up offsets, `x50`, `x4C` sound-id struct. Common-state
 code is the engine and stays shared by design.
 
+**Donor requests a `none` define cannot honour (2026-10-07).** The define still runs the donor's action scripts and callbacks, which name the donor's body parts. Two requests used to fault on the Courier's skeleton and are now dropped, each logging once per kind: a hand-pose request (`ftAnim_ApplyPartAnim`; ftData x1C is Mario's table, so a define holds items with no grip pose) and an effect word on a part with no joint (`ftCo_8009F834`; the effect is skipped). Found by playing the Courier through Classic (`tools/geno/moves_check`); census fields x18, x24, x2C, x48, x5C are the same class and unproven.
+
 ### Frame-counting convention: the first `wait` of an authored script
 
 A subaction script's `wait N` is the engine's own synchronous timer, run by retail's ftAction loop

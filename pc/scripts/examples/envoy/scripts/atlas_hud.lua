@@ -66,7 +66,8 @@ return function(D)
    local pr=host.leave_w and host.leave_w.progress and host.leave_w:progress() or 0
    return {kind='banner',text='Hold Z + Down to leave',button='Z',progress=math.floor(pr*20)/20}   -- 5 percent steps: the description is not rebuilt per frame
   end
-  return {kind='banner',text='Collect the drives',button='A'}
+  -- the older hold (payout off) keeps its 30 s ceiling and says the seconds left ("Collect the drives  22 s"); the key changes once a second
+  return {kind='banner',text=(type(host.hold_banner)=='string' and host.hold_banner:find('^Collect the drives')) and host.hold_banner or 'Collect the drives',button='A'}
  end
 
  -- one line, four seconds: the pickup, or the out-of-bounds notice

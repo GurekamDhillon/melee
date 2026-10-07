@@ -158,14 +158,33 @@ return function(D)
  function T.totals(families,strength)
   return {strength=strength,damage_dealt=families.damage_dealt.value,launch_dealt=families.launch_dealt.value,speed=families.speed.value,damage_taken=families.damage_taken.value}
  end
- -- Build power is shown as a percentage over a build with nothing equipped, never the budget's own number.
- local function fmt(key,v) if key=='strength' then return ('%+d%%'):format(round((v-1)*100)) end;return ('x%.2f'):format(v) end
+ -- Build strength is an INDEX, not a damage figure: how many times stronger the whole build is than an empty one (x1.00), the same "x" the
+ -- other rows use. It was "+358%", which read as a damage bonus, and at New Game+ as "+8600%". Three significant figures: x1.19, x4.58, x87.1, x164.
+ -- Damage you take at its floor (x0.15: the engine takes nothing lower, and the budget clamps there) says so, so a defence pick that
+ -- changes nothing is explained, not mysterious.
+ T.damage_taken_floor=.15
+ function T.strength_text(v) if v<10 then return ('x%.2f'):format(v) elseif v<100 then return ('x%.1f'):format(v) end;return ('x%.0f'):format(v) end
+ local function fmt(key,v)
+  if key=='strength' then return T.strength_text(v) end
+  if key=='damage_taken' and v<=T.damage_taken_floor+.0005 then return 'x0.15 (limit)' end
+  return ('x%.2f'):format(v)
+ end
  -- Whether a change is good for the player: more strength/damage/launch/speed is good, more damage taken is bad.
  function T.better(key,a,b) if math.abs(a-b)<.005 then return nil end;if key=='damage_taken' then return b<a end;return b>a end
  function T.total_line(key,label,before,after)
   if after==nil then return label..' '..fmt(key,before[key]) end
   if math.abs(before[key]-after[key])<.005 then return label..' '..fmt(key,before[key])..' (no change)' end
   return label..' '..fmt(key,before[key])..' -> '..fmt(key,after[key])
+ end
+ -- A technique or crit rule (L-cancel, wavedash, perfect shield, tech, a crit chance) is worth what the player makes of it, and the strength index counts it
+ -- at a modest assumed rate. When a drive carries one the detail panel says so, so "Build strength: no change" is not read as "does nothing".
+ T.technique_note='Technique: worth more the more you use it. The strength number counts it lightly.'
+ function T.has_technique(loot,r)
+  for _,a in ipairs(r.affixes or {}) do
+   local rule=loot.rules[a.id]
+   for _,tag in ipairs(rule and rule.tags or {}) do if tag=='technique' or tag=='critical' then return true end end
+  end
+  return false
  end
  -- Opponent plate lines: each KEYSTONE the opponent holds (its name and its rule) and a count of its drive rules. The drive rules
  -- themselves are not listed (an opponent shows what defines it, not a page of text).

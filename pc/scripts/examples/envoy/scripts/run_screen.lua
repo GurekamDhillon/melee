@@ -181,9 +181,11 @@ return function(D)
   if ref.kind=='offer' then
    local r=ref.record;drive_lines(r);local plan=h:plan_take(r);lines[#lines+1]='';lines[#lines+1]=self:plan_line(plan)
    if plan.action~='choose' then self:compare(lines,plan_edit(plan,r)) end
+   if tx.has_technique(loot,r) then lines[#lines+1]=tx.technique_note end
   elseif ref.kind=='bag' and ref.record then
    local r=ref.record;drive_lines(r);local plan=h:plan_take(r,{where='bag',index=ref.index});lines[#lines+1]='';lines[#lines+1]=self:plan_line(plan)
    if plan.action=='choose' then lines[#lines]='No free slot: A asks which equipped drive to swap with.' else self:compare(lines,plan_edit(plan,r,{where='bag',index=ref.index})) end
+   if tx.has_technique(loot,r) then lines[#lines+1]=tx.technique_note end
   elseif ref.kind=='eq' and ref.record then
    drive_lines(ref.record);lines[#lines+1]='';lines[#lines+1]=('Slot %d.'):format(ref.index)
    local b=T().total_line('strength','Build strength',self:totals_before(),nil);lines[#lines+1]=b
@@ -201,7 +203,7 @@ return function(D)
    local rule=h:keystone_rule(ref.id);local fam=D.keystones.family(ref.id)
    if rule then for _,l in ipairs(tx.keystone_lines(rule,D.mod_progression.tier(h:bag().context))) do lines[#lines+1]=l end end
    lines[#lines+1]='';lines[#lines+1]=(D.keystones.family_names[fam] or 'Wild')..' keystone.'
-   lines[#lines+1]=ref.kind=='key' and 'You keep it for the whole run.' or 'Pick one. If you skip, it stays owed.'
+   lines[#lines+1]=ref.kind=='key' and 'You keep it for the whole run.' or 'Permanent: it stays for the whole run. Pick one; if you skip, it stays owed.'
   elseif cell.lines then return cell.lines end
   return lines
  end

@@ -26,7 +26,7 @@ return function(D)
   self.m={key=key,pips=pips,strength=t.strength,keys=keys,depth=b.context.depth,loop=h.loop or b.context.loop,bag=#b.items,label=nil,dev=dev,waiting=#h.decide}
   local k=self.g.kit
   -- The strength percentage and the depth line are developer figures now (a player reads them on the between-stage and bag screens).
-  local text=('%+d%%'):format(math.floor((t.strength-1)*100+.5))
+  local text=T().strength_text(t.strength)   -- the same index the screens show (x4.58), not a percentage
   self.m.text=dev and text or '';self.m.text_w=dev and (k and k.measure and k.measure(text,'caption') or #text*7) or 0
   self.m.keys_w=#keys>0 and (math.min(#keys,6)*20+(#keys>6 and 22 or 0)) or 0
   local dl=dev and (('Depth %d'):format(b.context.depth)..(self.m.loop>0 and ('  NG+%d'):format(self.m.loop) or '')) or ''

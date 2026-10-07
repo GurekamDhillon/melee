@@ -55,16 +55,26 @@ return function(D)
   g.command('uxgain',function(a)
    if not self.running then g.log('uxgain: no run');return false end
    local d=self.mods.drives;local ctx=self.mods.engine.context;self.gain_seed=(self.gain_seed or 1000)
-   local n=1;local want_merge=false
-   for w in (a or ''):gmatch('%S+') do if w=='merge' then want_merge=true else n=tonumber(w) or n end end
+   local n=1;local want_merge=false;local card=false;local full=false
+   for w in (a or ''):gmatch('%S+') do if w=='merge' then want_merge=true elseif w=='card' then card=true elseif w=='full' then full=true;card=true else n=tonumber(w) or n end end
+   if full then n=40 end   -- `full`: walk over drives that do not merge until the build is full (the last note is the bag-full warning)
    for _=1,n do
+    if full and self:build_full() then break end
     local r
-    for _=1,4000 do self.gain_seed=self.gain_seed+1;r=d.loot:roll(self.gain_seed,ctx);if not want_merge or self:plan_take(r).action=='merge' then break end end
-    local action=self:gain(r,'uxgain');g.log(('uxgain: %s -> %s'):format(self:name(r),tostring(action)))
+    for _=1,4000 do self.gain_seed=self.gain_seed+1;r=d.loot:roll(self.gain_seed,ctx);local act=self:plan_take(r).action;if (want_merge and act=='merge') or (full and act~='merge') or (not want_merge and not full) then break end end
+    -- `card`: as a walked-over drive (the pickup note, and the bag-full warning); otherwise the bare gain rule, and a full bag opens the screen at once
+    local action;if card then self:picked_up(r);action='picked up' else action=self:gain(r,'uxgain') end
+    g.log(('uxgain: %s -> %s'):format(self:name(r),tostring(action)))
     if action=='choose' and not self.screen.active then self.screen:open('bag') end
    end
    return true
-  end,'test hook: gain rolled drives through the pickup rule: uxgain [n] [merge]')
+  end,'test hook: gain rolled drives through the pickup rule: uxgain [n] [merge] [card] [full]')
+  -- Test hook for the "no reward" note: shows the card a clear that pays nothing queues for the next stage, now. uxnoreward [stage] (0-based, default 0).
+  g.command('uxnoreward',function(a)
+   if not self.running then return false end
+   local st=tonumber(a) or 0;local nxt=self:next_reward_line(st)
+   self.hud:show_card('No reward this stage',{nxt or 'Rewards come every third stage.'},0xD7D4CFFF);return true
+  end,'test hook: show the no-reward note: uxnoreward [stage]')
   g.command('uxpreview',function(a)
    if not self.running or self.screen.active then return false end
    local d=self.mods.drives;local ctx=self.mods.engine.context;self.offers={};self.stage_kind='battle'
@@ -369,6 +379,7 @@ return function(D)
   local ok,why=self:bag():choose_keystone(id)
   if not ok then self:log('keystone refused: '..tostring(why));return nil,plain(why) end
   self:emit('keystone',id);self:touch();local rule=self:keystone_rule(id);self:log('keystone chosen: '..(rule and rule.label or id));self.hud:flash('Keystone: '..(rule and rule.label or id))
+  self.hud:show_card('Keystone: '..(rule and rule.label or id),{'Permanent for this run.'},D.drive_text.base_colour[D.keystones.family(id)])
   self:offer_keystones();return true
  end
  -- The try-it command (`envoy grant <id>`): take a keystone now, outside the offer. Same legality rules as a pick.
@@ -439,7 +450,7 @@ return function(D)
   -- A new run is not a retry of the last one's stages: the attempt counts and the stages' given drops were never cleared, so every run after the first
   -- in a game session found its stages 'already played' and gave no floor drive at all (found by the co-op campaigns; a solo run had it too).
   self.attempts={};self.drops_given={};self.retry=false;self.drop_queue=nil
-  self.offers={};self.key_offers={};self.decide={};self.deferred={};self.new_keys={};self.kos=0;self.faded={};self.pending_ms={};self.milestone_line=nil;self.hud:clear();if self.synfx then self.synfx:reset() end;if self.screen.active then self.screen:close() end
+  self.offers={};self.key_offers={};self.decide={};self.deferred={};self.new_keys={};self.kos=0;self.faded={};self.pending_ms={};self.milestone_line=nil;self.next_card=nil;self.hud:clear();if self.synfx then self.synfx:reset() end;if self.screen.active then self.screen:close() end
   self.mods:run_end() -- a new run starts from an empty bag, whatever the last one left
   local dev=self.dev_pending;self.dev_pending=nil;self.floor=nil
   local ctx=D.mod_progression.context(0,0)
@@ -469,6 +480,7 @@ return function(D)
    local fam=D.keystones.family(kid)
    lines[#lines+1]={text='Your keystone: '..rule.label,colour=D.drive_text.base_colour[fam] or 'gold'}
    lines[#lines+1]=kl[1] or '';lines[#lines+1]=kl[2] or ''
+   lines[#lines+1]={text='Keystones are permanent for this run.',colour='muted'}
   else self:log('starting keystone refused: '..tostring(why)) end
   if dev and dev.build then self:dev_fill(ctx,dev.build_seed or seed);self:log('developer build rolled at depth '..ctx.depth..': '..self:equipped_count()..' drives, '..#self:keystone_ids()..' keystones') end
   if #lines>0 then self.hud:announce(lines) end
@@ -516,6 +528,7 @@ return function(D)
   self.attempts=self.attempts or {};local akey=self.loop..':'..self.stage;self.attempts[akey]=(self.attempts[akey] or 0)+1
   self.retry=self.attempts[akey]>1
   if self.retry then self:log(('stage %d retry (attempt %d): the build is kept as it was; a drop already given on this stage is not given twice'):format(self.stage,self.attempts[akey])) end
+  if self.next_card then self.next_card.armed=true end   -- the note queued at the last clear is shown now that the next stage is under way
   self.fell={};self.hurt={};self.dropped={};self.since=0;self.kos=0;self.faded={}
   self.travel_min,self.travel_max=nil,nil;self.foe_seen=false
   self.stage_kind=e.stage_kind or 'battle';self.foe_ports={};self.rolled={};self.drop_queue={};self.hold_gave_up=false;self.holding_end=false;self.out_frames=0;self.last_blast=nil;self.oob={}
@@ -623,6 +636,8 @@ return function(D)
   if ok then table.remove(q,1);self:log(('opponent P%d dropped %s (%s)'):format(item.port,self:name(item.record),item.why))
   elseif item.tries>=60 then table.remove(q,1);self:log(('drop failed for %s: %s'):format(self:name(item.record),tostring(why))) end
  end
+ -- No free slot and no bag place: the next drive that does not merge makes the player give one up (a replaced drive is lost).
+ function H:build_full() local b=self:bag();return self:free_slot()==nil and #b.items>=b:capacity() end
  -- Called by the drive host after the player walked over a drive: merge, bag, free slot, or ask which to give up.
  function H:picked_up(r,from)
   self.hud.m=nil;if from then self:log('received '..self:name(r)..' from P'..from:port0()..' (the drop belongs to this player)');from.hud:flash('Passed it on') end
@@ -632,10 +647,13 @@ return function(D)
   elseif action=='wait' then self.hud:show_card('Picked up: '..D.drive_text.short(d.loot,r),{'Being added to your build.'},D.drive_text.rarity_colour[r.rarity])
   elseif action=='choose' then
    -- Never a screen in the middle of a fight: the drive waits (shown on the strip) and is decided at the stage clear.
-   self.hud:show_card('Bag full: '..D.drive_text.short(d.loot,r),{('Held for the stage end (%d waiting).'):format(#self.decide)},D.drive_text.rarity_colour[r.rarity])
+   self.hud:show_card('Bag full: '..D.drive_text.short(d.loot,r),{('Give up a drive at the stage end (%d waiting).'):format(#self.decide)},D.drive_text.rarity_colour[r.rarity])
    self.hud:flash('Drive waiting')
   elseif action then
-   self.hud:show_card('Picked up: '..D.drive_text.short(d.loot,r),{action=='equip' and 'Equipped.' or 'In your bag (Z+START).'},D.drive_text.rarity_colour[r.rarity])
+   -- Rule: a drive that arrives with no free slot and a full bag REPLACES one (the replaced drive is gone). Said when the build FILLS, before it happens.
+   local line=action=='equip' and 'Equipped.' or 'In your bag (Z+START).'
+   if self:build_full() then line=(action=='equip' and 'Equipped. ' or '')..'Bag full: the next drive replaces one.' end
+   self.hud:show_card('Picked up: '..D.drive_text.short(d.loot,r),{line},D.drive_text.rarity_colour[r.rarity])
    self.hud:flash('+ drive')
   end
   self:log('picked up '..self:name(r)..(action and (' ('..action..')') or ''));self:update_hold()
@@ -890,6 +908,8 @@ return function(D)
  function H:frame()
   if not self.running then return end
   self.since=self.since+1;self.hud:frame();if not self:ready() then return end
+  -- a note queued at the last stage clear (no reward, and when the next one comes) is shown once the next stage is under way
+  if self.next_card and self.next_card.armed then local c=self.next_card;self.next_card=nil;self.hud:show_card(c.title,c.lines,c.colour) end
   self.hud:watch(self.mods.engine)
   if self.synfx then local ok,err=pcall(self.synfx.frame,self.synfx,self.mods.engine,self:port0());if not ok and not self.synfx_failed then self.synfx_failed=true;self:log('synergy fx frame failed: '..tostring(err)) end end
   local port0=self:port0()
@@ -974,6 +994,17 @@ return function(D)
   return ((self.travel_max or 0)-(self.travel_min or 0))<H.tuning.idle_travel
  end
 
+ -- "Drive rewards come every third stage (and at a bonus stage and the boss)": said at a clear that pays none, with the count to the next one.
+ -- `stage` is the stage just cleared (0-based, the economy's own numbering); a bonus stage or the boss may pay sooner, which is only a gain.
+ function H:next_reward_line(stage)
+  local every=econ().reward_every or 1
+  if every<=1 then return nil end
+  for k=1,every do
+   local _,reward=D.drive_economy.stage(econ(),'battle',stage+k)
+   if reward>0 then return k==1 and 'The next stage pays one.' or ('Next one: in %d stages.'):format(k) end
+  end
+  return nil
+ end
  function H:reward_due(stage,final)
   if final then return true end
   if self.seat and self.seat.reward_due then return self.seat.reward_due(self,stage,final) end
@@ -994,7 +1025,8 @@ return function(D)
   -- either way) is not earned: no drive and no keystone step (it stays owed for the next clear). Retail's own flow is untouched.
   if self:idle_clear(kind,final) then
    self:log(('stage clear (%s): no reward, the player stood still (%.0f units of travel, no opponent); the keystone step stays owed'):format(kind,(self.travel_max or 0)-(self.travel_min or 0)))
-   self.key_offers={};self:settle();return false
+   self.key_offers={};self:settle()
+   self.next_card={title='No reward',lines={'The stage ended while you stood still.'},colour=0xD7D4CFFF};return false
   end
   if self:reward_due(stage,final) then
    local many=final or kind=='bonus' or kind=='boss'
@@ -1004,7 +1036,10 @@ return function(D)
    self:connect_offers(seed_for(self.seed,stage,loop,3+self:salt()),ctx,function(i) return forced and forced[i] or D.drive_economy.reward_rarity(ctx,i) end)
    local names={};for _,o in ipairs(self.offers) do names[#names+1]=self:name(o) end
    self:log(('stage clear (%s%s): offers %s'):format(kind,final and ', final' or '',table.concat(names,' / ')))
-  else self:log(('stage clear (%s): no drive reward this stage'):format(kind)) end
+  else
+   self:log(('stage clear (%s): no drive reward this stage'):format(kind))
+   local nxt=self:next_reward_line(stage);self.next_card={title='No reward this stage',lines={nxt or 'Rewards come every third stage.'},colour=0xD7D4CFFF}
+  end
   self:offer_keystones()
   local newn=0;for _ in pairs(self.new_keys) do newn=newn+1 end
   self:log(('reward moment: %d offered, %d keystones offered, %d waiting, %d new'):format(#self.offers,#self.key_offers,#self.decide,newn))

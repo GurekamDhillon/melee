@@ -85,10 +85,20 @@ by `gd.input_chord`, and the START that closes it is hidden until released, so i
 
 ## Build strip (during fights)
 Top-left: one pip per slot (fill = drive colour, border = rarity; dark = empty) and the keystones you hold as small cells (an initial on the
-family colour, six then `+n`). That is all: the `+56%` strength and the `Depth n` / `NG+n` text are developer figures (`envoy devui on`), and a
+family colour, six then `+n`). That is all: the strength index (`x1.56`) and the `Depth n` / `NG+n` text are developer figures (`envoy devui on`), and a
 small gold `N waiting` shows only while drives wait for a decision. There is no flash text under the strip except the out-of-bounds notice
 ("Out of bounds: a stock is lost"); every other flash ("Build ready", a modifier's name) is developer-only. The synergy pill next to the
 strip (assembled emblems and a chain counter) stays.
+
+## Build strength and the notes that explain the rules (2026-10-07)
+**Build strength** is an index over an empty build (`x1.00`), three significant figures: `x1.19`, `x4.58`, `x87.1`, `x164`. It is how far the run has grown, not a damage
+bonus, and not how hard the next fight is (opponents are rolled from it: `_research/envoy-strength-decision-2026-10-07.md`). A drive with a technique or crit rule adds the line
+"Technique: worth more the more you use it. The strength number counts it lightly." A Damage-you-take row at the engine's floor reads `x0.15 (limit)`.
+Each lane-made rule is told where it bites: the run-start panel ends "Keystones are permanent for this run."; an offered keystone says "Permanent: it stays for the whole run.";
+taking one shows a card "Keystone: X / Permanent for this run."; the pickup that fills the build says "Bag full: the next drive replaces one."; a clear that pays no drive reward
+shows at the next stage start "No reward this stage / Next one: in 2 stages." (rewards come every third stage, at a bonus stage and the boss). The 30 s ceiling exists only in the older
+hold (`payout=false`); the stage-end payout has none, and the Atlas collect banner shows the seconds when the older hold counts them.
+Test hooks for these: `uxgain <n|full> [card]`, `uxnoreward [stage]`; `tools/port/envoy_look_tour.sh` (workspace) opens a run that shows them with the look items.
 
 ## Announcements and cards
 Centred panel, about 6 s, once: the starter drive and starting keystone (one panel). A new slot, keystone allowance, drive tier or New Game+ is

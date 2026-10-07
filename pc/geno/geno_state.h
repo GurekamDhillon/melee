@@ -96,6 +96,16 @@ typedef struct GenoState {
     f32 fall_limit;                  /* > 0: ftCommon_Fall clamps to this, not to terminal velocity */
 } GenoState;
 
+/* Slice 5: the typed state of a fighter's Lua callbacks (docs/geno.md section 23). A SEPARATE game global from GenoState
+ * (Geno_LuaBlock, geno_game.c), so GenoState's layout and every existing fighter's block are untouched. Plain 32-bit words
+ * (an int, the bits of a float, or 0/1 for a bool, as the profile's layout declares). Folded into the rollback hash only for a
+ * define that declares a layout (GenoDefine_StateDigest). */
+typedef struct GenoLuaBlock {
+    s32 slot[GENO_LUA_STATE_SLOTS];
+    u32 faults;     /* calls that faulted since the reset (simulation state: a fault sends the fighter to auto) */
+    s32 last_fault; /* GENO_LUA_FAULT_* of the last one */
+} GenoLuaBlock;
+
 #define GENO_SF_SCRIPT 1u /* a script used the escape since the reset */
 
 #endif

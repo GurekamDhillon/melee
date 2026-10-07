@@ -1,0 +1,7 @@
+# Neutral special, release: a dash strike. The hitboxes are authored here with damage 6; lua/charger.lua raises their damage with the
+# charge (ctx.hitbox_damage) and sets the dash speed (ctx.velocity) when the state is entered.
+wait 3
+hitbox slot=0 joint=0 damage=6 size=4.5 x=3 y=6 angle=361 kbg=90 fkb=0 bkb=40
+hitbox slot=1 joint=0 damage=6 size=3.5 x=0 y=6 angle=361 kbg=90 fkb=0 bkb=40
+wait 8
+clear_hitboxes

@@ -1,0 +1,55 @@
+{
+  "geno": 9,
+  "fighters": [
+    {
+      "define": {
+        "key": "vanilla-charger",
+        "name": "Vanilla Charger",
+        "base": "mario",
+        "common": "melee.common.v1",
+        "resources": "retail:mario"
+      },
+      "attributes": {
+        "walk_max_vel": 1.6
+      },
+      "lua": {
+        "script": "lua/charger.lua",
+        "state": {
+          "charge": "int",
+          "charged": "bool"
+        }
+      },
+      "states": [
+        {
+          "name": "Charge",
+          "behavior": "geno.ground",
+          "subaction": 295,
+          "like": "motion:343",
+          "phys": "auto",
+          "coll": "both",
+          "iasa": "none",
+          "move_tag": "special",
+          "lua": { "enter": "charge_enter", "frame": "charge_frame" }
+        },
+        {
+          "name": "Release",
+          "behavior": "geno.ground",
+          "subaction": 296,
+          "like": "motion:343",
+          "phys": "auto",
+          "coll": "both",
+          "move_tag": "special",
+          "lua": { "enter": "release_enter", "frame": "release_frame" }
+        }
+      ],
+      "specials": {
+        "n": "geno:Charge",
+        "air_n": "geno:Charge"
+      },
+      "subactions": [
+        { "index": 295, "file": "moves/charge.words", "move_tag": "special" },
+        { "index": 296, "file": "moves/release.words", "move_tag": "special" }
+      ]
+    }
+  ]
+}

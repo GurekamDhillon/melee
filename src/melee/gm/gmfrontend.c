@@ -97,41 +97,7 @@
 
 /* ---- the toolkit's data ------------------------------------------------------------------- */
 
-typedef enum FrontendItemKind {
-    FE_ACTION,
-    FE_CHOICE,
-    FE_SLIDER,
-    FE_TOGGLE,
-} FrontendItemKind;
-
-typedef enum FrontendAction {
-    FE_DO_CONTINUE, ///< go on to the mode the rule interrupted
-    FE_DO_BACK,     ///< return to the mode the player came from
-    FE_DO_CALL,     ///< run the item's `call` (the screen stays)
-} FrontendAction;
-
-typedef struct FrontendItem {
-    u8 kind;   ///< ::FrontendItemKind
-    u8 action; ///< ::FrontendAction, for FE_ACTION
-    const char* label;
-    const char* help;
-    int (*get)(void);
-    void (*set)(int);
-    int min, max, step;
-    const char* const* options;         ///< FE_CHOICE labels, index = value - min
-    void (*format)(int value, char* out); ///< FE_SLIDER text; default "%d"
-    int (*visible)(void);               ///< NULL = always shown
-    void (*call)(void);                 ///< FE_DO_CALL
-    int (*enabled)(void);               ///< NULL = enabled; a disabled row shows greyed, A bumps
-} FrontendItem;
-
-typedef struct FrontendScreen {
-    const char* title;
-    const char* subtitle;
-    const FrontendItem* items;
-    int n_items;
-    int art; ///< a room screen drawn from its layout (gmfrontend_online.inc: FL_*), 0 = rows
-} FrontendScreen;
+#include "gmfrontend_items.h" /* FrontendItem, FrontendScreen: shared with the native tests of the Atlas table walker (gmfrontend_atlas_table.h) */
 
 typedef struct FrontendRule {
     u8 from;

@@ -263,9 +263,74 @@ static void budget(void)
     CHECK(info.capped == 0);
 }
 
+static void title_fixture(void)
+{
+    memset(&SC, 0, sizeof SC); at_view_init(&V);
+    snprintf(SC.id, sizeof SC.id, "title");
+    SC.primary = AT_PRIMARY_DISPLAY; SC.preset = AT_PRESET_NONE;
+    snprintf(SC.hero, AT_STR, "GD'S MELEE"); snprintf(SC.prompt, AT_STR, "PRESS START");
+    snprintf(SC.foot_left, 24, "v0.1.7"); snprintf(SC.foot_right, AT_STR, "Original menu art");
+}
+static void title_fits(void)
+{
+    int w;
+    for (w = 0; w < 3; w++) {
+        AtSink s = rec_sink();
+        AtLayout L;
+        const RecText *h, *p;
+        title_fixture();
+        at_layout(WIDTHS[w], AT_PRESET_NONE, &L);
+        at_render(&SC, &V, WIDTHS[w], 1e6, 0, &FAKE, &s, &H);
+        h = find_text("GD'S MELEE"); p = find_text("PRESS START");
+        CHECK(h != NULL && p != NULL);
+        CHECK(h != NULL && at_role_size(h->role) >= 44);                 /* hero or display */
+        CHECK(texts_legible());
+        CHECK(text_inside(L.canvas));
+        CHECK(h != NULL && p != NULL && p->base > h->base);
+        /* the longest wordmark the title could carry still fits its box, stepping down then truncating */
+        snprintf(SC.hero, AT_STR, "%s", "A VERY LONG WORDMARK THAT CANNOT FIT ONE LINE AT ANY ROLE");
+        s = rec_sink(); at_render(&SC, &V, WIDTHS[w], 1e6, 0, &FAKE, &s, &H);
+        CHECK(texts_legible() && text_inside(L.canvas));
+    }
+}
+static void title_prompt_chamfers_and_pulse(void)
+{
+    AtSink s;
+    AtLayout L;
+    AtRect pr;
+    float a0, a1;
+    int i, k;
+    title_fixture();
+    at_layout(853.0f, AT_PRESET_NONE, &L);
+    s = rec_sink(); at_part_title(&s, &FAKE, &L, &SC, 0.0, 0, &pr);
+    CHECK(pr.w > 0.0f && corners_clear(pr, (float) AT_PX_CH_S));      /* the START glyph and the label stay out of the cut corners */
+    CHECK(count_color(AT_C_LIFT) == 2);                              /* the plate: lifted face (two quads) */
+    a0 = a1 = -1.0f;
+    for (k = 0; k < 2; k++) {
+        s = rec_sink(); at_part_title(&s, &FAKE, &L, &SC, k == 0 ? 0.0 : 600.0, 0, &pr);
+        for (i = 0; i < REC.np; i++) if ((REC.p[i].rgba & 0xFFFFFF00u) == (AT_C_EMBER & 0xFFFFFF00u) && poly_maxx(&REC.p[i]) - poly_minx(&REC.p[i]) > 100.0f && poly_maxy(&REC.p[i]) - poly_miny(&REC.p[i]) > 2.5f)
+            { if (k == 0) a0 = (float) (REC.p[i].rgba & 0xFFu); else a1 = (float) (REC.p[i].rgba & 0xFFu); }
+    }
+    CHECK(a0 > a1 && a1 >= 0.59f * 255.0f);                          /* the edge pulses between 60 and 100 percent */
+    s = rec_sink(); at_part_title(&s, &FAKE, &L, &SC, 600.0, 1, &pr);
+    for (i = 0; i < REC.np; i++) if ((REC.p[i].rgba & 0xFFFFFF00u) == (AT_C_EMBER & 0xFFFFFF00u) && poly_maxx(&REC.p[i]) - poly_minx(&REC.p[i]) > 100.0f && poly_maxy(&REC.p[i]) - poly_miny(&REC.p[i]) > 2.5f)
+        CHECK((REC.p[i].rgba & 0xFFu) == 0xFFu);                     /* reduced motion: no pulse */
+}
+static void title_has_no_hits(void)
+{
+    AtSink s = rec_sink();
+    AtFocusBlock fb[AT_MAX_BLOCKS];
+    title_fixture();
+    at_render(&SC, &V, 853.0f, 1e6, 0, &FAKE, &s, &H);
+    CHECK(H.n == 0);                                                     /* the mouse cannot act on the title */
+    CHECK(at_screen_focus_blocks(&SC, fb) == 0);
+    CHECK(at_screen_wants_pad(&SC) == 0);                                /* the title never reads the pad: retail does */
+}
+
 int main(void)
 {
     tiles_at_three_widths(); tile_chamfers_clear(); tile_three_cues(); long_strings_fit();
     more_row_fits_640(); more_strip_cues_and_corners(); focus_moves_between_tiles_and_more(); many_tiles_scroll_by_rows(); budget();
+    title_fits(); title_prompt_chamfers_and_pulse(); title_has_no_hits();
     ATLAS_DONE("atlas-tiles");
 }

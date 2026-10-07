@@ -417,4 +417,4 @@ int at_cell_accepts(const AtScreen *s, AtFocusPos p)
     return !(s->blocks[p.block].cells[p.index].flags & AT_CELL_DISABLED);
 }
 
-int at_screen_wants_pad(const AtScreen *s) { return !s->input_feed; }
+int at_screen_wants_pad(const AtScreen *s) { return !s->input_feed && s->primary != AT_PRIMARY_DISPLAY; }

@@ -39,6 +39,7 @@ typedef struct {
     int primary, preset, chapter;
     AtBlock blocks[AT_MAX_BLOCKS]; int n_blocks;
     AtItem items[AT_MAX_ITEMS]; int n_items;
+    char hero[AT_STR], prompt[AT_STR], foot_left[24], foot_right[AT_STR];   /* a display screen (the title): wordmark, prompt, footers */
     int tile_cols;                                   /* tiles: 1 (main menu: big rows) or 2 (hubs); 0 = by count: <= 3 items -> 1, else 2 */
     AtItem more[AT_MAX_MORE]; int n_more;            /* tiles: the small More row under the tiles */
     AtFooter footer;

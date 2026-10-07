@@ -292,13 +292,17 @@ void at_render_ex(const AtScreen *sc, const AtView *v, float canvas_w, double no
     hc.dropped = 0;
     at_layout(canvas_w, sc->preset, &L);
     at_poly_rect(s, 0.0f, 0.0f, L.canvas.w, 480.0f, AT_C_GROUND);
-    draw_header(sc, &L, o, s);
-    at_plate(s, L.primary, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH);
-    if (sc->primary == AT_PRIMARY_GRID) draw_grid(sc, v, &L, o, s, &hc);
-    else if (sc->primary == AT_PRIMARY_TILES) draw_tiles(sc, v, &L, o, s, &hc);
-    else draw_list(sc, v, &L, o, s, &hc);
-    if (sc->preset != AT_PRESET_NONE) at_part_explainer(s, o, L.explainer, &v->ex);
-    draw_keys(sc, v, &L, o, s, &hc);
+    if (sc->primary == AT_PRIMARY_DISPLAY) {                              /* a display screen: no header, no pane, no hits, no key strip */
+        at_part_title(s, o, &L, sc, now, reduced, NULL);
+    } else {
+        draw_header(sc, &L, o, s);
+        at_plate(s, L.primary, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH);
+        if (sc->primary == AT_PRIMARY_GRID) draw_grid(sc, v, &L, o, s, &hc);
+        else if (sc->primary == AT_PRIMARY_TILES) draw_tiles(sc, v, &L, o, s, &hc);
+        else draw_list(sc, v, &L, o, s, &hc);
+        if (sc->preset != AT_PRESET_NONE) at_part_explainer(s, o, L.explainer, &v->ex);
+        draw_keys(sc, v, &L, o, s, &hc);
+    }
     if (v->note.text[0] != '\0' && now < v->note.until_ms) {
         AtRect r;
         float w = o->width(o->user, AT_R_BODY14, v->note.text) + 54.0f, right = L.wide ? L.header.x + L.header.w : L.chapter.x - 12.0f;

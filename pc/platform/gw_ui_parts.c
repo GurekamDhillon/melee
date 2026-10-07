@@ -273,6 +273,39 @@ void at_part_more(const AtSink *s, const AtTextOps *o, AtRect r, const AtItem *i
     }
 }
 
+/* The title's face. The ground is the renderer's. The prompt is a focused-style plate (chamfer 5, lifted, ember edge) that pulses its
+ * edge between 60 and 100 percent alpha over 1,200 ms on the UI clock; reduced motion holds it at full. */
+void at_part_title(const AtSink *s, const AtTextOps *o, const AtLayout *L, const AtScreen *sc, double now_ms, int reduced, AtRect *prompt_out)
+{
+    float cx = L->canvas.w * 0.5f, max_w = L->content_w - 64.0f, tw, gw, lw, pw, pulse = 1.0f;
+    AtRect pr;
+    unsigned edge;
+    if (sc->hero[0] != '\0') at_text(s, o, AT_R_DISPLAY, sc->hero, cx, 208.0f, AT_C_IVORY, AT_ALIGN_CENTER, max_w);
+    tw = twidth(o, AT_R_CAP16, "PC PORT");
+    at_text(s, o, AT_R_CAP16, "PC PORT", cx, 240.0f, AT_C_MUTED, AT_ALIGN_CENTER, 0.0f);
+    at_poly_rect(s, cx - tw * 0.5f - 12.0f - 70.0f, 235.0f, 70.0f, 2.0f, AT_C_EMBER);
+    at_poly_rect(s, cx + tw * 0.5f + 12.0f, 235.0f, 70.0f, 2.0f, AT_C_EMBER);
+    if (sc->prompt[0] != '\0') {
+        float lab = max_w - 32.0f - 60.0f;
+        char fit[200];
+        int role = at_fit(o, AT_R_CAP16, sc->prompt, lab, fit, sizeof fit);
+        gw = twidth(o, AT_R_CAP12, "START") + 14.0f;
+        lw = twidth(o, role, fit);
+        pw = 16.0f + gw + 10.0f + lw + 16.0f;
+        pr.x = cx - pw * 0.5f; pr.y = 330.0f - 20.0f - 2.0f; pr.w = pw; pr.h = 40.0f;      /* the plate is lifted 2 px, as a focused row */
+        if (!reduced) pulse = 0.8f + 0.2f * (float) cos(now_ms * 6.28318530718 / 1200.0);
+        edge = (AT_C_EMBER & 0xFFFFFF00u) | (unsigned) (pulse * 255.0f + 0.5f);
+        at_plate(s, pr, AT_C_LIFT, edge, 3.0f, (float) AT_PX_CH_S);
+        at_part_hint(s, o, pr.x + 16.0f, pr.y + 20.0f + 5.0f, 'S', "");
+        s->text(s->user, pr.x + 16.0f + gw + 10.0f, pr.y + (pr.h - 3.0f) * 0.5f + (float) at_role_size(role) * 0.35f, fit, role, AT_C_IVORY, AT_ALIGN_LEFT, 0.0f);
+        if (prompt_out != NULL) *prompt_out = pr;
+    } else if (prompt_out != NULL) {
+        memset(prompt_out, 0, sizeof *prompt_out);
+    }
+    if (sc->foot_left[0] != '\0') fit_text(s, o, AT_R_NUM12, sc->foot_left, L->content_x + 32.0f, 456.0f, AT_C_MUTED, AT_ALIGN_LEFT, (L->content_w - 64.0f) * 0.3f);
+    if (sc->foot_right[0] != '\0') fit_text(s, o, AT_R_BODY12, sc->foot_right, L->content_x + L->content_w - 32.0f, 456.0f, AT_C_DIM, AT_ALIGN_RIGHT, (L->content_w - 64.0f) * 0.6f);
+}
+
 /* Tabs fit inside r.w: the names step down one role (CAP16 to CAP14), then are truncated in proportion; when even the
  * padding and counts do not fit, the counts are dropped, and a name with no room left is not drawn. */
 void at_part_tabs(const AtSink *s, const AtTextOps *o, AtRect r, const char *const *names, const int *counts, int n, int active, int focus_tab)

@@ -742,3 +742,14 @@ int gw_linux_install_signals(void) {
     pthread_once(&gw_signals_once, gw_linux_signals_init);
     return gw_signals_ok;
 }
+
+/* x87 PRECISION CONTROL. A Windows process starts every thread with the x87 control word at 0x027F
+ * (53-bit significands, round to nearest); a Linux process starts at 0x037F (64-bit). Game code is
+ * compiled for SSE2, but the 32-bit ABIs return float/double in ST0 and libm's i386 routines
+ * (fma, fmod...) compute on the x87 stack, so the control word decides the last bit of a value the
+ * simulation can see. Two builds of one commit must start from the same word or they drift (found by
+ * comparing per-frame state digests of a Windows and a Linux run, tools/xplat). Threads inherit it. */
+__attribute__((constructor(101))) static void gw_linux_fpu_init(void) {
+    unsigned short cw = 0x027F;
+    __asm__ volatile("fldcw %0" : : "m"(cw));
+}

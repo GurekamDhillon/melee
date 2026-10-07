@@ -131,4 +131,20 @@ static void calls_per_frame(void)
     CHECK(REC_ROWS.h == 7 && REC_ROWS.rows_calls == 1 && REC_ROWS.row_calls == v.n);                                       /* one SetRows and one SetRow per visible row */
     rows_calls = REC_ROWS.rows_calls; fss_table_submit(7, &S, &v); CHECK(REC_ROWS.rows_calls == rows_calls + 1);
 }
-int main(void) { visible_and_ids(); kinds_and_text(); legacy_change(); legacy_accept(); big_table(); options_beyond_the_record(); groups_and_reasons(); calls_per_frame(); ATLAS_DONE("atlas walker"); }
+static void hint_strings(void)                       /* the labels are true to what the legacy rule does: A steps a slider or flips a toggle */
+{
+    char o[96];
+    fss_hints_for(FSS_VK_TOGGLE, 0, 1, o, sizeof o); CHECK_STR(o, "A:Change,L:Page,B:Back");
+    fss_hints_for(FSS_VK_SLIDER, 0, 1, o, sizeof o); CHECK_STR(o, "A:Change,L:Page,B:Back");
+    fss_hints_for(FSS_VK_CHOICE, 0, 1, o, sizeof o); CHECK_STR(o, "A:Change,L:Page,B:Back");
+    fss_hints_for(FSS_VK_NONE, 0, 1, o, sizeof o);   CHECK_STR(o, "A:Select,L:Page,B:Back");       /* an action */
+    fss_hints_for(FSS_VK_TEXT, 0, 1, o, sizeof o);   CHECK_STR(o, "L:Page,B:Back");                 /* a readout: nothing to press A for */
+    fss_hints_for(FSS_VK_NONE, 1, 1, o, sizeof o);   CHECK_STR(o, "L:Page,B:Back");                 /* a disabled row offers no A */
+    fss_hints_for(FSS_VK_TOGGLE, 1, 1, o, sizeof o); CHECK_STR(o, "L:Page,B:Back");
+    fss_hints_for(FSS_VK_NONE, 0, 0, o, sizeof o);   CHECK_STR(o, "A:Select,B:Back");               /* no tabs: the how-to page, the erase screen */
+    fss_hints_for(FSS_VK_TEXT, 0, 0, o, sizeof o);   CHECK_STR(o, "B:Back");
+    fss_hints_for(FSS_VK_NONE, 0, 1, o, 8);          CHECK_STR(o, "A:Selec");                        /* a short buffer: cut and terminated, never overrun */
+    fss_hints_for(FSS_VK_NONE, 0, 1, o, 1);          CHECK_STR(o, "");
+    o[0] = 'x'; fss_hints_for(FSS_VK_NONE, 0, 1, o, 0); CHECK(o[0] == 'x');                           /* a zero buffer: nothing written */
+}
+int main(void) { visible_and_ids(); kinds_and_text(); legacy_change(); legacy_accept(); big_table(); options_beyond_the_record(); groups_and_reasons(); calls_per_frame(); hint_strings(); ATLAS_DONE("atlas walker"); }

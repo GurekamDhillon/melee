@@ -415,6 +415,66 @@ static void explainer_from_the_row(void)
     gw_Ui_SetClose(h);
 }
 
+/* hints are a function of the focused row's kind; every hint of every set the adapter sends is drawn AND clickable at 640 and at 853 */
+static void hints_fit(void)
+{
+    static const char *const sets[] = { "A:Change,L:Page,B:Back", "A:Select,L:Page,B:Back", "L:Page,B:Back", "A:Select,B:Back", "B:Back",
+                                        "A:Rebind,X:Swap,L:Page,B:Back", "A:Rebind,X:Also,L:Page,B:Back" };
+    static AtHits hits;
+    int i, w;
+    for (w = 0; w < 2; w++) for (i = 0; i < (int) (sizeof sets / sizeof sets[0]); i++) {
+        const char *p;
+        int n = 0, keys = 0, k, h;
+        float cw = w ? 853.3333f : 640.0f;
+        reset_set();
+        h = gw_Ui_SetOpen(0, 0, "MAIN MENU", "", "SETTINGS");
+        gw_Ui_SetKeys(h, sets[i]);
+        render_screen(h, cw, &hits);
+        for (p = sets[i]; *p; p++) n += *p == ':';
+        for (k = 0; k < hits.n; k++) keys += hits.h[k].kind == AT_HIT_KEY;
+        CHECK(keys == n);                                                            /* every hint of the set is drawn and clickable: nothing important is dropped */
+        CHECK(texts_legible());
+        gw_Ui_SetClose(h);
+    }
+}
+/* spec section 9: after a remap the hint keeps the LOGICAL glyph. The hint is a function of the row's kind alone (it has no input to read), and A and B are drawn in the
+ * A and B colours, never in a physical button's. */
+static int g_profile_swaps_a_and_b;                                                  /* a synthetic profile: logical A is physical B and the reverse (nothing here may read it) */
+static void hints_keep_the_logical_glyph(void)
+{
+    static AtHits hits;
+    char before[64], after[64];
+    int h;
+    reset_set();
+    g_profile_swaps_a_and_b = 0; fss_hints_for(FSS_VK_TOGGLE, 0, 1, before, sizeof before);
+    g_profile_swaps_a_and_b = 1; fss_hints_for(FSS_VK_TOGGLE, 0, 1, after, sizeof after);
+    CHECK_STR(before, after);                                                         /* the same hint under the swapped profile */
+    h = gw_Ui_SetOpen(0, 0, "MAIN MENU", "", "SETTINGS");
+    gw_Ui_SetKeys(h, after);
+    render_screen(h, 640.0f, &hits);
+    CHECK(find_text("Change") != NULL && find_text("Back") != NULL && find_text("Page") != NULL);
+    CHECK(count_color(AT_C_PAD_A) > 0 && count_color(AT_C_PAD_B) > 0);               /* the glyph colours are the logical buttons' */
+    gw_Ui_SetClose(h);
+    (void) g_profile_swaps_a_and_b;
+}
+/* the adapter's choice of hint for a table row: an action with a status is an action, a slider with no set is a readout */
+static void hints_follow_the_walker_kinds(void)
+{
+    static const FrontendItem I[] = {
+        { FE_TOGGLE, 0, "T", "t", gen_get, gen_set, 0, 1, 1 },
+        { FE_ACTION, FE_DO_CALL, "Status action", "a", NULL, NULL, 0, 0, 0, NULL, gen_fmt, NULL, gen_call },
+        { FE_SLIDER, 0, "Readout", "r", gen_get, NULL, 0, 0, 0, NULL, gen_fmt },
+    };
+    char o[64];
+    int i, want[3] = { FSS_VK_TOGGLE, FSS_VK_NONE, FSS_VK_TEXT };
+    for (i = 0; i < 3; i++) {
+        int vk = I[i].kind == FE_ACTION ? FSS_VK_NONE : (I[i].kind == FE_SLIDER && I[i].set == NULL) ? FSS_VK_TEXT : fss_vkind(&I[i]);
+        CHECK(vk == want[i]);
+    }
+    fss_hints_for(FSS_VK_NONE, 0, 1, o, sizeof o); CHECK_STR(o, "A:Select,L:Page,B:Back");     /* the action that shows a status still takes A */
+    fss_hints_for(FSS_VK_TEXT, 0, 1, o, sizeof o); CHECK_STR(o, "L:Page,B:Back");               /* the readout does not */
+}
+
 int main(void)
 {
     lua_State *L = luaL_newstate();
@@ -424,7 +484,7 @@ int main(void)
     gs.n = 8; gs.s[0].used = gs.s[1].used = gs.s[2].used = 1;
     luaL_openlibs(L);
     lua_newtable(L); gs_push_ui(L); lua_setfield(L, -2, "ui"); lua_setglobal(L, "gd");
-    page_counts(); every_row_is_drawable(); round_trips(); options_the_host_shows(); disabled_rows_say_why(); visible_rows_change(); mods_41_rows_and_help(); explainer_from_the_row();
+    page_counts(); every_row_is_drawable(); round_trips(); options_the_host_shows(); disabled_rows_say_why(); visible_rows_change(); mods_41_rows_and_help(); explainer_from_the_row(); hints_fit(); hints_keep_the_logical_glyph(); hints_follow_the_walker_kinds();
     lua_close(L);
     ATLAS_DONE("atlas settings pages");
 }

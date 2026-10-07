@@ -196,4 +196,41 @@ static unsigned fss_table_event(const FrontendScreen* s, const FssVis* v, int sl
     return 0;
 }
 
+/* The key hints of the focused row, as the string Ui_SetKeys takes ("A:Change,L:Page,B:Back"): a function of the row's kind only. The glyphs are the LOGICAL buttons
+ * (spec section 9): a remap that moves a logical button to another physical one does not change a hint, and no hint names a physical button. A changes a toggle, a choice
+ * or a slider (the legacy Confirm rule), selects an action, and is not offered on a readout or a disabled row. L pages the tabs; a screen with no tabs has no L. B is always Back.
+ * `vkind` is FSS_VK_*: pass FSS_VK_TEXT for a readout, FSS_VK_NONE for an action (even one that shows a status). */
+static void fss_hints_for(int vkind, int disabled, int tabs, char* out, int cap)
+{
+    const char* a = "";
+    const char* parts[3];
+    int np = 0, n = 0, i, k;
+    if (cap <= 0) {
+        return;
+    }
+    if (!disabled) {
+        if (vkind == FSS_VK_TOGGLE || vkind == FSS_VK_CHOICE || vkind == FSS_VK_SLIDER) {
+            a = "A:Change";
+        } else if (vkind == FSS_VK_NONE) {
+            a = "A:Select";
+        }
+    }
+    if (a[0] != 0) {
+        parts[np++] = a;
+    }
+    if (tabs) {
+        parts[np++] = "L:Page";
+    }
+    parts[np++] = "B:Back";
+    for (i = 0; i < np; i++) {
+        if (i > 0 && n < cap - 1) {
+            out[n++] = ',';
+        }
+        for (k = 0; parts[i][k] != 0 && n < cap - 1; k++) {
+            out[n++] = parts[i][k];
+        }
+    }
+    out[n] = 0;
+}
+
 #endif

@@ -66,7 +66,8 @@ static struct {
     const char* want_label; ///< a row to focus after the next submit (the return from the Language screen), by label
     bool refocus;          ///< set the focus by id after the next submit (a tab switch)
     int last_result;       ///< the remap result last told as a note
-} fss = { -1, 0, 0, -1, { -1, -1, -1, -1, -1, -1 }, { 0 }, -1, NULL, false, 0 };
+    int hint_sig;          ///< the key hint set last sent (a function of the focused row's kind); -1 none, so the set is sent when it changes, not every frame
+} fss = { -1, 0, 0, -1, { -1, -1, -1, -1, -1, -1 }, { 0 }, -1, NULL, false, 0, -1 };
 static FssRemap fssr;
 
 static int fss_page_of(const FrontendScreen* s)
@@ -167,6 +168,7 @@ static int fss_open(const FrontendScreen* s)
     fss.tab = tab;
     fss.shown_tab = -1;
     fss.erase_cat = -1;
+    fss.hint_sig = -1;
     for (i = 0; i < FSS_TABS; i++) {
         fss.tab_focus[i] = -1;
     }
@@ -461,6 +463,33 @@ static void fss_remap_view(void)
     Ui_SetExplain(fss.h, 0, 0, Controls_Capturing() ? fssr_message_for(1) : 0, tester, "");
 }
 
+/* The key hints follow the focused row's kind (fss_hints_for): the logical glyphs, and only what the row can do. The remap editor's INPUTS tab names its X mode. Sent when
+ * the set changes. An action that shows a status is an action; a slider with no set is a readout. */
+static void fss_hints(const FrontendScreen* s)
+{
+    char spec[64];
+    int slot = Ui_SetFocused(fss.h), vk = FSS_VK_NONE, disabled = 0, tabs = fss_ntabs() > 0 ? 1 : 0, sig;
+    if (fss.kind == FSS_K_REMAP && fss.tab == 0) {
+        sig = 1000 + (fcr_also ? 1 : 0);
+        if (sig != fss.hint_sig) {
+            Ui_SetKeys(fss.h, fcr_also ? "A:Rebind,X:Also,L:Page,B:Back" : "A:Rebind,X:Swap,L:Page,B:Back");
+            fss.hint_sig = sig;
+        }
+        return;
+    }
+    if (slot >= 0 && slot < fss.vis.n && fss.vis.idx[slot] < FSS_SYNTH) {
+        const FrontendItem* it = &s->items[fss.vis.idx[slot]];
+        vk = it->kind == FE_ACTION ? FSS_VK_NONE : (it->kind == FE_SLIDER && it->set == 0) ? FSS_VK_TEXT : fss_vkind(it);
+        disabled = (it->enabled != 0 && !it->enabled()) ? 1 : 0;
+    }
+    sig = vk * 4 + disabled * 2 + tabs;
+    if (sig != fss.hint_sig) {
+        fss_hints_for(vk, disabled, tabs, spec, sizeof spec);
+        Ui_SetKeys(fss.h, spec);
+        fss.hint_sig = sig;
+    }
+}
+
 /* One frame of the Atlas settings. True when it ran (the caller returns: nothing of the legacy rows is built or read). */
 static bool fss_frame(void)
 {
@@ -539,11 +568,10 @@ static bool fss_frame(void)
     if (fss.h >= 0 && fe.screen == s) {
         if (fss.kind == FSS_K_REMAP) {
             fss_remap_view();
-            Ui_SetKeys(fss.h, fss.tab == 0 ? (fcr_also ? "A:Rebind,X:Also,L:Page,B:Back" : "A:Rebind,X:Swap,L:Page,B:Back") : "A:Select,L:Page,B:Back");
         } else {
             Ui_SetExplain(fss.h, 0, 0, 0, 0, "");
-            Ui_SetKeys(fss.h, fss.kind == FSS_K_TABS ? "A:Select,L:Page,B:Back" : "A:Select,B:Back");
         }
+        fss_hints(s);
         fss_forward_note();
     }
     return true;

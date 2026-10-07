@@ -19,7 +19,7 @@
 #define FSS_TEXT 80         /* FE_STR: the longest value text a format callback may write */
 
 typedef struct { int n, idx[FSS_MAX]; } FssVis;                 /* the visible rows: slot -> table index */
-enum { FSS_EV_CHANGE = 1, FSS_EV_ACCEPT = 2, FSS_EV_BACK = 3, FSS_EV_TAB = 4, FSS_EV_FOCUS = 5 };
+enum { FSS_EV_CHANGE = 1, FSS_EV_ACCEPT = 2, FSS_EV_BACK = 3, FSS_EV_TAB = 4, FSS_EV_FOCUS = 5, FSS_EV_ALT = 6 };
 enum { FSS_FX_MOVE = 1, FSS_FX_BACK = 2, FSS_FX_FORWARD = 4, FSS_FX_REBUILD = 8, FSS_FX_CONTINUE = 16, FSS_FX_LEAVE = 32, FSS_FX_BUMP = 64 };
 /* the value kinds and row flags the host knows (AT_VAL_* and AT_ITEM_*, gw_ui_screen.h: gw_script_ui_set.inc asserts the numbers) */
 enum { FSS_VK_NONE = 0, FSS_VK_TOGGLE = 1, FSS_VK_CHOICE = 2, FSS_VK_SLIDER = 3, FSS_VK_TEXT = 4 };
@@ -88,49 +88,56 @@ static int fss_opts(const FrontendItem* it)
     return (it->options != 0 && n > 0 && n <= FSS_OPTS_MAX) ? n : 0;
 }
 
+/* One row of a table into the host's slot: values, text, flags, options. `table_index` names the row ("i7"). The remap editor submits some rows through this and
+ * builds its own for the rest. */
+static void fss_submit_row(int h, int slot, const FrontendItem* it, int table_index)
+{
+    int k;
+    char id[12], text[FSS_TEXT];
+    unsigned flags = 0;
+    int vk = fss_vkind(it), value = it->get != 0 ? it->get() : 0, nopts = fss_opts(it);
+    const char* reason = "";
+    fss_id(table_index, id);
+    text[0] = 0;
+    if (it->format != 0 && (vk == FSS_VK_SLIDER || vk == FSS_VK_TEXT || (vk == FSS_VK_CHOICE && it->options == 0))) {
+        it->format(value, text);
+    } else if (vk == FSS_VK_CHOICE && it->options != 0 && nopts == 0) {
+        int idx = value - it->min, n = it->max - it->min + 1; /* more options than the host holds: the text is ours */
+        const char* o = (idx >= 0 && idx < n) ? it->options[idx] : 0;
+        for (k = 0; o != 0 && o[k] != 0 && k < FSS_TEXT - 1; k++) {
+            text[k] = o[k];
+        }
+        text[k < FSS_TEXT ? k : FSS_TEXT - 1] = 0;
+    }
+    if (it->kind == FE_SLIDER && it->set != 0) {
+        flags |= FSS_IF_A_STEPS; /* A steps a slider (+1 step): the legacy Confirm branch */
+    }
+    if (it->kind == FE_SLIDER && it->set == 0) {
+        flags |= FSS_IF_RO; /* a readout */
+    }
+    if (it->enabled != 0 && !it->enabled()) {
+        flags |= FSS_IF_DISABLED;
+        if (it->off_reason != 0) {
+            reason = it->off_reason;
+        }
+    }
+    Ui_SetRow(h, slot, id, it->label != 0 ? it->label : "", it->help != 0 ? it->help : "", vk);
+    Ui_SetRowVal(h, slot, it->min, it->max, it->step, vk == FSS_VK_TOGGLE ? (value != 0) : value, flags);
+    Ui_SetRowText(h, slot, text, reason, it->group != 0 ? it->group : "");
+    if (vk == FSS_VK_CHOICE && nopts > 0) {
+        for (k = 0; k < nopts; k++) {
+            Ui_SetRowOpt(h, slot, k, it->options[k] != 0 ? it->options[k] : "");
+        }
+    }
+}
+
 /* the whole page, every frame: values, text, flags. The host replaces its record only when something differs. */
 static void fss_table_submit(int h, const FrontendScreen* s, const FssVis* v)
 {
-    int slot, k;
+    int slot;
     Ui_SetRows(h, v->n);
     for (slot = 0; slot < v->n; slot++) {
-        const FrontendItem* it = &s->items[v->idx[slot]];
-        char id[12], text[FSS_TEXT];
-        unsigned flags = 0;
-        int vk = fss_vkind(it), value = it->get != 0 ? it->get() : 0, nopts = fss_opts(it);
-        const char* reason = "";
-        fss_id(v->idx[slot], id);
-        text[0] = 0;
-        if (it->format != 0 && (vk == FSS_VK_SLIDER || vk == FSS_VK_TEXT || (vk == FSS_VK_CHOICE && it->options == 0))) {
-            it->format(value, text);
-        } else if (vk == FSS_VK_CHOICE && it->options != 0 && nopts == 0) {
-            int idx = value - it->min, n = it->max - it->min + 1; /* more options than the host holds: the text is ours */
-            const char* o = (idx >= 0 && idx < n) ? it->options[idx] : 0;
-            for (k = 0; o != 0 && o[k] != 0 && k < FSS_TEXT - 1; k++) {
-                text[k] = o[k];
-            }
-            text[k < FSS_TEXT ? k : FSS_TEXT - 1] = 0;
-        }
-        if (it->kind == FE_SLIDER && it->set != 0) {
-            flags |= FSS_IF_A_STEPS; /* A steps a slider (+1 step): the legacy Confirm branch */
-        }
-        if (it->kind == FE_SLIDER && it->set == 0) {
-            flags |= FSS_IF_RO; /* a readout */
-        }
-        if (it->enabled != 0 && !it->enabled()) {
-            flags |= FSS_IF_DISABLED;
-            if (it->off_reason != 0) {
-                reason = it->off_reason;
-            }
-        }
-        Ui_SetRow(h, slot, id, it->label != 0 ? it->label : "", it->help != 0 ? it->help : "", vk);
-        Ui_SetRowVal(h, slot, it->min, it->max, it->step, vk == FSS_VK_TOGGLE ? (value != 0) : value, flags);
-        Ui_SetRowText(h, slot, text, reason, it->group != 0 ? it->group : "");
-        if (vk == FSS_VK_CHOICE && nopts > 0) {
-            for (k = 0; k < nopts; k++) {
-                Ui_SetRowOpt(h, slot, k, it->options[k] != 0 ? it->options[k] : "");
-            }
-        }
+        fss_submit_row(h, slot, &s->items[v->idx[slot]], v->idx[slot]);
     }
 }
 

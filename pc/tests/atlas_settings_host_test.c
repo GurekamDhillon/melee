@@ -140,7 +140,7 @@ static void fake_script(int i, const char *mod) { snprintf(gs.s[i].id, sizeof gs
 
 /* the game side (gmfrontend_atlas_table.h) and the host (gw_script_ui_set.inc) write these numbers independently: they must agree */
 _Static_assert(FSS_EV_CHANGE == GS_SETEV_CHANGE && FSS_EV_ACCEPT == GS_SETEV_ACCEPT && FSS_EV_BACK == GS_SETEV_BACK && FSS_EV_TAB == GS_SETEV_TAB &&
-               FSS_EV_FOCUS == GS_SETEV_FOCUS, "the walker's event numbers are the host's");
+               FSS_EV_FOCUS == GS_SETEV_FOCUS && FSS_EV_ALT == GS_SETEV_ALT, "the walker's event numbers are the host's");
 _Static_assert(FSS_VK_NONE == AT_VAL_NONE && FSS_VK_TOGGLE == AT_VAL_TOGGLE && FSS_VK_CHOICE == AT_VAL_CHOICE && FSS_VK_SLIDER == AT_VAL_SLIDER &&
                FSS_VK_TEXT == AT_VAL_TEXT, "the walker's value kinds are the host's");
 _Static_assert(FSS_K_TABS == GS_SET_TABS && FSS_K_REMAP == GS_SET_REMAP && FSS_K_HOWTO == GS_SET_HOWTO && FSS_K_ERASE == GS_SET_ERASE, "the adapter's screen kinds are the host's");

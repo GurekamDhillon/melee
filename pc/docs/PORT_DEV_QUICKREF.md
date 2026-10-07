@@ -129,6 +129,8 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | `MELEE_TEST_SEED=<integer>` | fix the boot RNG seed for scripted parity checks; otherwise use OSGetTick |
 | `MELEE_ATLAS=0` | the legacy menus and the retail title exactly as before; absent or anything else = the Atlas menus (the front door: title, main menu, hubs) |
 | `MELEE_ATLAS_SCENES=<kind>:<retail\|overlay\|replace>,...` | development override of the Atlas scene policy table (`pc/platform/gw_ui_policy.c`); ignored under `MELEE_ATLAS=0` |
+| `MELEE_ATLAS_RETAIL=<ids>` | the Atlas retail takeover's environment source: hide retail HUD elements (`hud.damage hud.stock hud.timer hud.nametag hud.magnify hud.coin hud.prize hud.hazard pause.panel`, comma separated, or `all`). Empty by default; reads 0 while netplay or rollback is on; logs `ui: retail elements hidden by MELEE_ATLAS_RETAIL: ...` once. Console: `atlas retail <ids\|clear>` |
+| `MELEE_ATLAS_PAUSE=1` | the Atlas pause takeover: a retail pause (START in a VS-style match, offline) pushes the screen a script named with `gd.ui.pause_screen`. Off unless this or the setting `atlas_pause` is on; never in a netplay match |
 | `MELEE_WINDOW_X/Y` | window position; may be negative. Applied at creation, so no flash |
 | `MELEE_WINDOW_W/H` | window size (Aurora clamps to at least 640x480) |
 | `MELEE_AUDIO_LATENCY_MS` | output ring cushion, default 60 (section 19.2) |

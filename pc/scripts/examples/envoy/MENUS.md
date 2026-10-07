@@ -1,3 +1,32 @@
+# Envoy screens and HUD on Atlas (2026-10-06, step 3; supersedes the grid contract below for the screens it names, when `uxatlas on`)
+
+`uxatlas on` draws every Envoy screen and the match HUD through `gd.ui` (Atlas); `envoy ui legacy on` forces the legacy grid and HUD back whatever it says. Off by default until the
+owner has seen them. The legacy grid below stays the contract of the legacy screens (and of `envoy ui legacy on`). The logic is the run's own in both: an Atlas screen attaches to the
+RunScreen / app and its A, X, Y and B run the same handlers, so every outcome keeps its host log line. All of them are presentation only, work online where Envoy does, and never mask the pad.
+
+| screen | id (a seat adds `.pN`) | what it is | keys |
+|---|---|---|---|
+| bag (Z+START in a fight) | `envoy.bag` | the grid: EQUIPPED, BAG, KEYSTONES, an explainer with ONE rule (Z pages the rest), "IF YOU MERGE" footer | A, X, Y as the legacy table below, Z More, B or START Close |
+| reward (stage clear) | `envoy.reward`, `envoy.keystone` | a row of offer cards (drive: model well, name, ONE rule, a tag; keystone: arch stone with its letter), the countdown at the trail's right end, `STAGE CLEAR` | A the obvious thing, X To bag (room only), Z More, B Skip then Skip again (`Continue` when nothing is left) |
+| swap (BAG FULL / SWAP) | `envoy.swap` | the equipped (and bag) cells as targets, the incoming drive as the footer, synergy links as grid links, the outcome in the explainer before A | A Replace, B Back or Leave it (twice) |
+| run setup | `envoy.setup` | Begin, Mode, Fighter, Difficulty, Stocks; the same menu fields the legacy rows set; begins through the app's own start path (a refusal is a note) | A Begin or Change, left and right step a choice, B Leave |
+| pause | `envoy.pause` (`kind = "pause"`) | Resume, Bag (rules-on run), Controls (a dialog), Quit run (a dialog: A Quit, B Keep playing); named as the retail pause takeover's screen (`MELEE_ATLAS_PAUSE=1`) | A Select, B or START Resume |
+| results | `envoy.results` | the outcome, stages cleared, time, and the final build one row per drive or keystone with its one rule; NG+n counter | A Done (Retry save when pending), B Leave |
+| online reward pick | `envoy.netpick` | four cards (three offers and Keep my build), the lobby countdown; non-modal: never paused, never masked | A takes it (`rpick` index), B keeps (`rpick` 3) |
+
+A reward, swap, bag, setup, pause and results screen **persists across a scene change** (`persist = true`): the ladder goes from one VS scene to the next while a reward moment is held.
+Every Envoy screen is forgotten when a run ends (the engine has 16 screen slots; Envoy uses at most nine). Another seat's Envoy screen on top keeps this seat's bag from opening
+(a toast in its own corner: "Player 1 has a screen open").
+
+HUD zones (`atlas_hud.lua`; one HUD `envoy.hud`, both co-op seats merged): `top_left` the build strip (slot pips, keystone stones, "n waiting"), `top_right` the synergy toast (a small corner
+toast, never a banner) then the opponent cards (at most three, two in co-op), `top_center` one banner (`Collect the drives` with the A glyph, or `Hold Z + Down to leave` with its progress during the
+payout), `bottom_left` the pickup note (one line, four seconds; the out-of-bounds notice too). The starter announcement is a `RUN START` toast; **there is no HUD text for a crit**. The
+world-space link flashes and the floor arrow stay. The strength figure and the depth line are developer figures (`envoy devui on` draws the legacy HUD whole). Envoy never hides retail HUD.
+
+**Not ported (parked, logic kept, no screens):** title, profile, hub, fighter, companion, records, interlude.
+
+---
+
 # Envoy rule-host run screens: the grid (2026-10-05; supersedes the older contracts below for `envoy rules on`)
 
 Controller only. One component draws both screens: the grid from `demos/grid-inventory` (embedded into the bundle as

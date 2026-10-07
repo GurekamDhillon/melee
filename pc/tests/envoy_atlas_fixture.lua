@@ -5,7 +5,7 @@ local Stub = dofile(prefix .. 'pc/tests/atlas_ui_stub.lua')
 local T = dofile(prefix .. 'pc/tests/envoy_testlib.lua')
 local F = { Stub = Stub, T = T }
 
-local MODULES = { 'mod_progression', 'mod_schema', 'mod_codec', 'mod_engine', 'keystones', 'mod_pool', 'drive_loot', 'drive_merge', 'drive_economy', 'drive_bag', 'foe_roll' }
+local MODULES = { 'mod_progression', 'mod_schema', 'mod_codec', 'mod_engine', 'keystones', 'mod_pool', 'mod_graph', 'synergy_fx', 'drive_loot', 'drive_merge', 'drive_economy', 'drive_bag', 'foe_roll' }
 local LATE = { 'menu_input', 'drive_menu', 'drive_text', 'drive_drop', 'drive_lab', 'foe_lab', 'mod_lab', 'run_screen', 'atlas_kit', 'atlas_bag', 'atlas_reward', 'atlas_swap',
   'atlas_setup', 'atlas_pause', 'atlas_results', 'atlas_netpick', 'run_hud', 'atlas_hud', 'run_host' }
 

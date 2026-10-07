@@ -67,6 +67,20 @@ return function(D)
   return k
  end
 
+ -- enter_swap for an Atlas screen: remember where the engine's focus is (the legacy S:enter_swap reads the legacy view, which an Atlas screen does not drive)
+ -- as {block id, index}: a cards cell "offer:2" -> {'offer',2}, a grid cell "bag:1" -> {'bag',1}
+ function K.swap_entry(S,ui_id)
+  return function(inst,sw)
+   local ok,cid,bid=pcall(S.g.ui.focus,ui_id)
+   if ok and cid then
+    local block,idx=cid:match('^(%a+):(%d+)$')
+    if block=='key' then block='koffer' end
+    if block then inst.back_focus={block,tonumber(idx)} end
+   end
+   inst.layout='swap';inst.swap=sw
+  end
+ end
+
  -- the corner a seat's own toasts go to: seat 1 top left, seat 2 top right (the match HUD's co-op strips)
  function K.corner(S) return K.seat_port(S)==2 and 'top_right' or 'top_left' end
 

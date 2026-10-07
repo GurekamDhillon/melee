@@ -388,7 +388,7 @@ function Stub.new(opts)
   elseif kind == 'l' or kind == 'r' then
    if not on.page then return false end
    local r = on.page(kind == 'l' and -1 or 1, f and f.cell, f and f.block)
-   if ui.screens[id] then ui.refresh(id) end
+   if ui.screens[id] and top() == id then ui.refresh(id) end   -- the engine refreshes the top screen only (gs_ui_tick), never one a handler closed
    apply(r, ui._owner[id])
    return true, r
   end
@@ -397,7 +397,7 @@ function Stub.new(opts)
   end
   if not fn then return false end
   local r = fn(f and f.cell, f and f.block)
-  if ui.screens[id] then ui.refresh(id) end
+  if ui.screens[id] and top() == id then ui.refresh(id) end
   apply(r, ui._owner[id])
   return true, r
  end

@@ -124,6 +124,14 @@ return function(D)
   return true
  end
 
+ -- The last offer is resolved: what happened is the pickup note, and the moment ends (the legacy screen stayed up for a "Continue" press).
+ function R.complete(S)
+  local h=S.host;local text=S.notice
+  R.detach(S);if S.atlas_swap and D.atlas_swap then D.atlas_swap.detach(S) end
+  if text and h.hud and h.hud.show_card then pcall(h.hud.show_card,h.hud,'Reward',{text}) end
+  S:finish('done')
+ end
+
  function R.more(self,dir)
   local g=self.S.g
   local ok,cid=pcall(g.ui.focus,self.id)
@@ -165,13 +173,7 @@ return function(D)
    if not inst.active or inst.mode~='reward' then return end
    if inst.layout~='main' then R.detach(inst);if D.atlas_swap then D.atlas_swap.attach(inst) end;return end   -- the swap layout: atlas_swap's screen
    local h=inst.host
-   if #h.offers==0 and #h.key_offers==0 then   -- the last offer is resolved: the moment is over, and what happened is the pickup note
-    local text=inst.notice
-    R.detach(inst)
-    if text and h.hud and h.hud.show_card then pcall(h.hud.show_card,h.hud,'Reward',{text}) end
-    inst:finish('done')
-    return
-   end
+   if #h.offers==0 and #h.key_offers==0 then R.complete(inst);return end   -- the last offer is resolved: the moment is over
    if inst.blocks~=self.blocks_ref then
     local id_before=self.id;local b=offer_block(inst)
     if b and R.id_for(inst)~=id_before then pcall(g.ui.close,id_before) end   -- drive offers done: the keystone offer is its own screen
@@ -179,6 +181,7 @@ return function(D)
    end
   end
   S.notify=function(inst,text) orig_notify(inst,text);pcall(g.ui.note,{text=text,kind='info',seconds=4}) end
+  S.enter_swap=function(inst,sw) return K.swap_entry(inst,self.id)(inst,sw) end
   -- the countdown is re-registered once a second (the screen costs O(1) per frame)
   S.tick=function(inst)
    orig_tick(inst)
@@ -212,7 +215,7 @@ return function(D)
   local self=S.atlas_reward
   if not self then return end
   S.atlas_reward=nil
-  for _,k in ipairs({'draw','focused','sync','press','refresh','notify','tick'}) do S[k]=nil end
+  for _,k in ipairs({'draw','focused','sync','press','refresh','notify','tick','enter_swap'}) do S[k]=nil end
   if self.input then self.input.poll=self.input_poll end
   if S.g and S.g.ui then pcall(S.g.ui.close,K.id(BASE,S));pcall(S.g.ui.close,K.id(KEY_BASE,S)) end
  end

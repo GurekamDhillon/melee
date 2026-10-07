@@ -48,6 +48,8 @@ return function(D)
   return d
  end
 
+ A.cell_desc=cell_desc;A.split_title=split_title   -- shared with the swap screen (atlas_swap.lua)
+
  -- IF YOU MERGE: the focused drive, the drive it merges into and the result (only when the legacy plan says merge)
  function A.footer(S,c)
   local ref=c and c.ref
@@ -197,10 +199,16 @@ return function(D)
   end
   S.refresh=function(inst)
    orig_refresh(inst)
-   if inst.layout~='main' or inst.mode~='bag' then A.detach(inst);return end
+   if inst.layout~='main' or inst.mode~='bag' then
+    local swap=inst.layout=='swap'
+    A.detach(inst)
+    if swap and D.atlas_swap then D.atlas_swap.attach(inst) end   -- the swap layout is its own Atlas screen (step 3)
+    return
+   end
    if inst.blocks~=self.blocks_ref then A.register(self) end
   end
   S.notify=function(inst,text) orig_notify(inst,text);pcall(g.ui.note,{text=text,kind='info',seconds=4}) end
+  S.enter_swap=function(inst,sw) return K.swap_entry(inst,ID)(inst,sw) end
   -- the pad's Z: the legacy input does not read it, so its poll is wrapped for the life of the screen
   local inp=S.input
   if type(inp)=='table' and type(inp.poll)=='function' then
@@ -228,7 +236,7 @@ return function(D)
   local self=S.atlas
   if not self then return end
   S.atlas=nil
-  for _,k in ipairs({'draw','focused','sync','press','refresh','notify'}) do S[k]=nil end
+  for _,k in ipairs({'draw','focused','sync','press','refresh','notify','enter_swap'}) do S[k]=nil end
   if self.input then self.input.poll=self.input_poll end   -- nil again: the legacy method on the class is back
   if S.g and S.g.ui then pcall(S.g.ui.close,self.id or BASE_ID) end
  end

@@ -133,4 +133,104 @@ T.test('the switch: off, legacy and a missing gd.ui all leave the legacy screen'
   F.present(e.host, F.plain_drives(e.host, 3)); assert(e.host.screen.atlas_reward == nil)
 end)
 
+-- ---- Task 11: the swap screen -----------------------------------------------------------------------------------------------
+
+-- a build with every slot and every bag place full of drives that merge into nothing
+local function full_build(e, keep_free)
+  local host = e.host; local b = host:bag()
+  for i = 1, b:slots() do
+    if not b.equipped[i] then local r = F.roll(host, function(r) return host:plan_take(r).action ~= 'merge' end); assert(b:place(i, r)); host:touch() end
+  end
+  for _ = 1, b:capacity() - (keep_free or 0) do
+    local r = F.roll(host, function(r) return host:plan_take(r).action ~= 'merge' end); assert(b:give(r)); host:touch()
+  end
+end
+local function incoming(e) return F.roll(e.host, function(r) return e.host:plan_take(r).action == 'choose' end) end
+
+T.test('swap opens from a full bag, B returns to the reward cards with the focus where it was', function()
+  local e = F.start(D); F.stage(e.host); full_build(e)
+  local offers = { incoming(e), incoming(e), incoming(e) }
+  local S = reward(e, offers)
+  e.ui.engine_focus('envoy.reward', 'cards', 'offer:2')
+  e.ui.engine_press('envoy.reward', 'accept')
+  assert(S.layout == 'swap' and e.ui.state().top == 'envoy.swap' and S.atlas_swap and not S.atlas_reward, 'the swap screen is up')
+  local d = e.ui.screens['envoy.swap']
+  assert(d.primary.kind == 'grid' and d.primary.footer and d.primary.footer.label == 'INCOMING' and d.trail.title == 'BAG FULL')
+  assert(#d.primary.blocks == 2 and d.primary.blocks[1].id == 'eq' and d.primary.blocks[2].id == 'bag', 'the targets: six equipped and the bag')
+  local k = key_labels(e.ui, 'envoy.swap'); assert(k.A and k.B == 'Back', 'A names the swap, B says Back: ' .. tostring(k.A) .. '/' .. tostring(k.B))
+  e.ui.engine_press('envoy.swap', 'back')
+  assert(S.layout == 'main' and S.atlas_reward and not S.atlas_swap and e.ui.state().top == 'envoy.reward', 'back to the cards')
+  assert(select(1, e.ui.focus('envoy.reward')) == 'offer:2', 'the focus is where it was: ' .. tostring(select(1, e.ui.focus('envoy.reward'))))
+  assert(#e.host.offers == 3, 'nothing was taken')
+end)
+
+T.test('the explainer names the outcome before A: goes to the bag, or is gone for good', function()
+  local e = F.start(D); F.stage(e.host); full_build(e)
+  local S = reward(e, { incoming(e) })
+  e.ui.engine_press('envoy.reward', 'accept')
+  e.ui.engine_focus('envoy.swap', 'eq', 'eq:1')
+  local ex = e.ui.views['envoy.swap'].explainer
+  assert(ex.what:find('gone', 1, true), 'a full bag: the equipped drive is gone: ' .. tostring(ex.what))
+  S:close()
+  -- a bag with a free place: the replaced equipped drive goes to the bag
+  local e2 = F.start(D); F.stage(e2.host); full_build(e2)
+  local S2 = reward(e2, { incoming(e2) })
+  e2.ui.engine_press('envoy.reward', 'accept')
+  local b = e2.host:bag(); b.items[#b.items] = nil; e2.host:touch(); S2:invalidate(); S2:refresh()
+  e2.ui.engine_focus('envoy.swap', 'eq', 'eq:2')
+  assert(e2.ui.views['envoy.swap'].explainer.what:find('goes to your bag', 1, true), 'a bag with room: ' .. tostring(e2.ui.views['envoy.swap'].explainer.what))
+end)
+
+T.test('A on a target replaces it through the legacy logic and ends the swap; the moment goes on', function()
+  local e = F.start(D); F.stage(e.host); full_build(e)
+  local S = reward(e, { incoming(e) })
+  e.ui.engine_press('envoy.reward', 'accept')
+  e.ui.engine_focus('envoy.swap', 'eq', 'eq:3')
+  e.ui.engine_press('envoy.swap', 'accept')
+  assert(has_log(e, 'replaces'), 'the host logged the replacement')
+  assert(not S.active and #e.ui.stack == 0, 'the offer was the last one: the moment is over')
+end)
+
+T.test('a drive that cannot be kept (decide): B twice leaves it behind and logs it', function()
+  local e = F.start(D); F.stage(e.host); full_build(e)
+  local S = e.host.screen; S:open('bag')
+  e.host.decide = { incoming(e) }; S:refresh()
+  assert(S.layout == 'swap' and e.ui.state().top == 'envoy.swap' and e.ui.screens['envoy.swap'].trail.title == 'BAG FULL')
+  assert(key_labels(e.ui, 'envoy.swap').B == 'Leave it')
+  e.ui.engine_press('envoy.swap', 'back')
+  assert(#e.host.decide == 1 and e.ui.notes[#e.ui.notes].text:find('B again', 1, true), 'the first B only asks')
+  e.ui.engine_press('envoy.swap', 'back')
+  assert(#e.host.decide == 0 and has_log(e, 'left behind'), 'left behind and logged')
+  assert(S.layout == 'main')
+end)
+
+T.test('the bag hands a swap to the swap screen and takes it back', function()
+  local e = F.start(D); F.stage(e.host); full_build(e)
+  local S = e.host.screen; S:open('bag')
+  assert(S.atlas and e.ui.state().top == 'envoy.bag')
+  e.ui.engine_focus('envoy.bag', 'bag', 'bag:1')
+  e.ui.engine_press('envoy.bag', 'accept')
+  assert(S.layout == 'swap' and e.ui.state().top == 'envoy.swap', 'a bag drive wants a slot: the swap screen')
+  assert(e.ui.screens['envoy.swap'].trail.title == 'SWAP' and key_labels(e.ui, 'envoy.swap').B == 'Back')
+  e.ui.engine_press('envoy.swap', 'back')
+  assert(S.layout == 'main' and S.atlas and e.ui.state().top == 'envoy.bag', 'back to the bag')
+  assert(select(1, e.ui.focus('envoy.bag')) == 'bag:1', 'with the focus on the bag cell it left from')
+end)
+
+T.test('links: the synergy marks of held pieces are grid links drawn under the cells', function()
+  local e = F.start(D); F.stage(e.host); full_build(e)
+  e.host.synfx.grid_model = function() return { links = { { a = 'eq:1', b = 'bag:2', arch = { colour = 0x7A5CF0 } }, { a = 'eq:1', b = 'nope:9', arch = { colour = 1 } } } } end
+  local S = reward(e, { incoming(e) })
+  e.ui.engine_press('envoy.reward', 'accept')
+  local d = e.ui.screens['envoy.swap']
+  assert(#d.primary.links == 1 and d.primary.links[1].a == 'eq:1' and d.primary.links[1].b == 'bag:2' and d.primary.links[1].rgba == 0x7A5CF0FF, 'one link naming two real cells, in the archetype colour')
+end)
+
+T.test('the swap screen belongs to its seat', function()
+  local e = F.start(D, { seat = { port = 2, index = 2 } }); F.stage(e.host); full_build(e)
+  reward(e, { incoming(e) })
+  e.ui.engine_press('envoy.reward.p2', 'accept')
+  assert(e.ui.screens['envoy.swap.p2'] and e.ui.screens['envoy.swap.p2'].port == 2)
+end)
+
 T.done()

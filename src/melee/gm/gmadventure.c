@@ -1366,6 +1366,12 @@ void gm_801B42E8(GameModeState* scene)
     gm_801B06B0(css, 0xC, temp_r31->c_kind, temp_r31->stocks, temp_r31->color,
                 temp_r31->nametag, temp_r31->cpu_level,
                 gm_GetAdventureData()->x0.x0.slot);
+#if defined(TARGET_PC)
+    {
+        extern void gmFrontend_AtlasSelect(GameModeState * state, int sss, const char* name);
+        gmFrontend_AtlasSelect(scene, 0, NULL); /* the Atlas select, when it can run; else the retail screen */
+    }
+#endif
 }
 
 void gm_801B4350(GameModeState* scene)

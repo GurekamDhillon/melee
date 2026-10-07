@@ -717,6 +717,12 @@ void gm_801B5F50(GameModeState* arg0)
                 settings->nametag, settings->cpu_level,
                 gm_80473A18.x0.x0.slot);
     lbDvd_SetupVsPreloadCache();
+#if defined(TARGET_PC)
+    {
+        extern void gmFrontend_AtlasSelect(GameModeState * state, int sss, const char* name);
+        gmFrontend_AtlasSelect(arg0, 0, NULL); /* the Atlas select, when it can run; else the retail screen */
+    }
+#endif
 }
 
 void gm_801B5FB4(GameModeState* arg0)

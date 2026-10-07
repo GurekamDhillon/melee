@@ -1153,6 +1153,12 @@ void gmClassic_801B3DD8(GameModeState* scene)
                 temp_r31->nametag, temp_r31->cpu_level,
                 gm_GetAllStarData()->x0.x0.slot);
     lbDvd_SetupVsPreloadCache();
+#if defined(TARGET_PC)
+    {
+        extern void gmFrontend_AtlasSelect(GameModeState * state, int sss, const char* name);
+        gmFrontend_AtlasSelect(scene, 0, NULL); /* the Atlas select, when it can run; else the retail screen */
+    }
+#endif
 }
 
 void gmClassic_801B3E44(GameModeState* scene)

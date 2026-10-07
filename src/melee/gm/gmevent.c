@@ -254,6 +254,12 @@ void onEnterCss(GameModeState* arg0)
     if (temp_r31->x44 == 1) {
         gm_801BA938(temp_r31, 1, 4, true);
     }
+#if defined(TARGET_PC)
+    {
+        extern void gmFrontend_AtlasSelect(GameModeState * state, int sss, const char* name);
+        gmFrontend_AtlasSelect(arg0, 0, NULL); /* the Atlas select, when it can run; else the retail screen */
+    }
+#endif
 }
 
 void onExitCss(GameModeState* arg0)

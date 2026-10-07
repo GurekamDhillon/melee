@@ -632,6 +632,35 @@ static void pause_takeover(void)
     reset_ui();
 }
 
+/* Atlas proof D9: a screen re-registered with FEWER rows than it had (the LAB library's second page) kept the scroll of the longer list and drew nothing */
+static void shorter_list_keeps_a_valid_window(void)
+{
+    GsUiSlot *u;
+    int s;
+    reset_ui();
+    fake_script(1, "envoy");
+    CHECK(run_as_script(1, "local items = {} for i = 1, 32 do items[i] = {id = 'r' .. i, label = 'Row ' .. i} end"
+                           " assert(gd.ui.screen{id='envoy.lib', primary={kind='list', items=items}}); assert(gd.ui.open('envoy.lib'));"
+                           " assert(gd.ui.set_focus('envoy.lib', 'list', 'r32'))") == 0);
+    s = gs_ui_find("envoy.lib"); u = &gs_ui_slot[s];
+    CHECK(u->view.focus.index == 31 && u->view.scroll > 0);                  /* the long list is scrolled to its last row (set_focus moves the window with it) */
+    CHECK(run_as_script(1, "local items = {} for i = 1, 12 do items[i] = {id = 'r' .. i, label = 'Row ' .. i} end"
+                           " assert(gd.ui.screen{id='envoy.lib', primary={kind='list', items=items}})") == 0);
+    CHECK(u->sc.n_items == 12 && u->view.focus.index == 11);                  /* the focus clamps to the last row of the short list */
+    CHECK(u->view.scroll >= 0 && u->view.scroll < u->sc.n_items);             /* and the window is not past the end: it drew nothing at 26 of 12 */
+    {   float ph = gs_ui_list_pane_h(u);
+        int sc = u->view.scroll;
+        CHECK(u->view.focus.index >= sc && u->view.focus.index < sc + at_list_window(&u->sc, ph, sc));                       /* the focused last row is in the window */
+        CHECK(sc + at_list_window(&u->sc, ph, sc) >= u->sc.n_items);                                                         /* the window reaches the last row ... */
+        CHECK(sc == 0 || (sc - 1) + at_list_window(&u->sc, ph, sc - 1) < u->sc.n_items);                                     /* ... and no row above it could hide empty space: the page shows its rows, not just the focus */
+        CHECK(sc < 11);                                                                                                       /* more than the one focused row is visible */
+    }
+    /* with no focus at all the scroll is still pulled back into the list */
+    u->view.focus.index = -1; u->view.scroll = 40; gs_ui_fix_scroll(u);
+    CHECK(u->view.scroll < u->sc.n_items);
+    reset_ui();
+}
+
 static void persist_screens_span_scenes(void)
 {
     reset_ui();
@@ -1469,7 +1498,7 @@ int main(void)
     engine_slot_survives_tick(); engine_slot_not_released_by_script_unload(); uncover_primes_engine_screen(); native_intents_are_primed(); polled_event_is_big_endian_for_the_game();
     intents_from_any_port(); engine_screen_covered_takes_no_intent(); scene_exit_closes_scene_screens(); console_cannot_touch_engine();
     mod_cannot_take_engine_id(); commit_without_change_does_not_rebuild(); engine_focus_is_the_games_cursor(); engine_close_and_queue();
-    eight_slots_with_engine(); forget_frees_a_slot(); retail_shims(); hud_basics(); retail_mask_ownership(); toasts_and_notes_leave_with_the_scene(); console_is_not_the_test(); atlas_console_command(); pause_takeover(); persist_screens_span_scenes(); takeover_pause_screen_reads_the_pad_itself(); full_pool_is_said_once();
+    eight_slots_with_engine(); forget_frees_a_slot(); retail_shims(); hud_basics(); retail_mask_ownership(); toasts_and_notes_leave_with_the_scene(); console_is_not_the_test(); atlas_console_command(); pause_takeover(); persist_screens_span_scenes(); shorter_list_keeps_a_valid_window(); takeover_pause_screen_reads_the_pad_itself(); full_pool_is_said_once();
     entry_opens_pushes_mod_screen(); entry_script_runs_on_entry_as_the_mod(); entry_finds_the_script_with_on_entry(); entry_missing_screen_refused(); entry_from_other_script_cannot_hide();
     entry_hidden_in_netplay(); entry_screen_closed_on_scene_exit(); entry_mod_unloaded(); builtin_entries_register();
     after_places_a_mod_entry_among_builtins(); credits_screen(); held_menu_takes_no_intent(); menu_blocked_by_a_mod_screen();

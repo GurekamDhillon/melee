@@ -719,6 +719,11 @@ do
   expect(row("Library page").value.text == "2 / 3" and row("State 26") ~= nil and row("State 1") == nil, "right turns the page: the second page starts at state 26")
   ui.engine_row(SCREEN, "left"); ui.engine_row(SCREEN, "left")
   expect(row("Library page").value.text == "3 / 3", "and wraps round to the last page")
+  -- Atlas proof D9: the last page is shorter, so the page row moves up; the focus has to follow it, or the list draws empty with the focus off-screen
+  expect(#rows() < 32 and ui.focus(SCREEN) == row("Library page").id, "the last page is shorter and the focus is on the page row, not on a row that is gone")
+  ui.engine_row(SCREEN, "right"); ui.engine_row(SCREEN, "right")
+  expect(row("Library page").value.text == "2 / 3" and ui.focus(SCREEN) == row("Library page").id, "and back on a full page the focus is still on the page row")
+  ui.engine_row(SCREEN, "left"); ui.engine_row(SCREEN, "left")
   ui.engine_row(SCREEN, "right")
   -- 2. delete: Y asks in a dialog, B keeps, A deletes, and the focus lands on a neighbour (never on nothing)
   focus_on("State 3")

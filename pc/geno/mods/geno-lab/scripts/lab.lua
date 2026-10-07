@@ -5007,7 +5007,7 @@ end
       for _, it in ipairs(fixed) do chosen[#chosen + 1] = it end
       for k = (cur - 1) * per + 1, math.min(#pool, cur * per) do chosen[#chosen + 1] = pool[k] end
       chosen[#chosen + 1] = {
-        label = label, desc = text,
+        label = label, desc = text, page_row = true,
         value = function() return (page[tab] or 1) .. " / " .. pages end,
         adjust = function(d) page[tab] = (((page[tab] or 1) - 1 + d) % pages) + 1 end,
       }
@@ -5044,11 +5044,20 @@ end
   local register
   local function after() if menu.open and opened then register() end end -- the values and the explainer are data: rebuild them
 
+  -- Turning the page changes how many rows the tab has, so the page row moves (it is the last one) and the focus, still on the old row id, would be on a
+  -- row that is gone or on another state: the list drew empty (Atlas proof D9). The focus follows the page row.
+  local function refocus_page(it)
+    if it.page_row and menu.open and opened then
+      menu.sel[menu.tab] = #shown
+      UI.set_focus(SCREEN, "list", row_id(menu.tab, #shown))
+    end
+  end
   local function accept(cell)
     local it = byid[cell]
     if it == nil then return nil end
     if it.run then it.run() elseif it.adjust then it.adjust(1) end
     after()
+    refocus_page(it)
     return nil
   end
   local function change(cell, v)
@@ -5060,6 +5069,7 @@ end
       it.adjust(v)
     end
     after()
+    refocus_page(it)
     return nil
   end
   local function back() menu_close() return nil end

@@ -756,9 +756,32 @@ static void gs_ui_q_push(int type, int block, int index) {
     gs_ui_qn++;
 }
 
+/* the height of a list screen's pane (a tab strip shortens it; the pane's height does not depend on the canvas width) */
+static float gs_ui_list_pane_h(const GsUiSlot *u) {
+    AtLayout pl;
+    float ph;
+    at_layout(640.0f, u->sc.preset, &pl);
+    ph = pl.primary.h;
+    if (u->sc.n_tabs > 0) { AtSplit sp; at_layout_split(&pl, 1, AT_BAND_NONE, &sp); ph = sp.grid.h; }
+    return ph;
+}
+
+/* A list that was just replaced by a shorter one: pull the window back while the row above it still reaches the last row, so the list never ends in empty
+ * space (the LAB library's second page, Atlas proof D9) */
+static void gs_ui_trim_scroll(GsUiSlot *u) {
+    float ph;
+    int s;
+    if (u->sc.primary != AT_PRIMARY_LIST || u->sc.n_items < 1) return;
+    ph = gs_ui_list_pane_h(u);
+    s = u->view.scroll < 0 ? 0 : u->view.scroll;
+    while (s > 0 && (s - 1) + at_list_window(&u->sc, ph, s - 1) >= u->sc.n_items) s--;
+    u->view.scroll = s;
+}
+
 /* the scroll offset that keeps the focused cell in the pane (shared by script and engine screens) */
 static void gs_ui_fix_scroll(GsUiSlot *u) {
     AtLayout pl;
+    if (u->sc.primary == AT_PRIMARY_LIST && u->view.scroll >= (u->sc.n_items > 0 ? u->sc.n_items : 1)) u->view.scroll = u->sc.n_items > 0 ? u->sc.n_items - 1 : 0;   /* a shorter list than the one it replaced (Atlas proof D9) */
     if (u->view.focus.index < 0) return;
     at_layout(640.0f, u->sc.preset, &pl);                          /* the pane's height does not depend on the width */
     if (u->sc.primary == AT_PRIMARY_LIST) {                        /* the window counts group headings, and a tab strip shortens the pane */
@@ -1868,6 +1891,7 @@ static int l_ui_screen(lua_State *L) {
     if (u->sc.links_skipped > 0 && !u->links_warned) { u->links_warned = 1; gw_log("ui: %s: %d grid link(s) name a missing cell and are skipped", u->sc.id, u->sc.links_skipped); }
     if (replace) u->view.focus = at_screen_refocus(&u->sc, old_block[0] ? old_block : NULL, old_cell[0] ? old_cell : NULL, old);
     else { AtFocusBlock fb[AT_MAX_BLOCKS]; u->view.focus = at_focus_first(fb, at_screen_focus_blocks(&u->sc, fb)); }
+    if (replace) { gs_ui_fix_scroll(u); gs_ui_trim_scroll(u); }    /* the new rows may be fewer: the window moves with the focus, or the list drew empty (Atlas proof D9: the LAB library's second page) */
     u->explain_dirty = 1;
     if (replace && old_port != u->sc.port && at_stack_top(&gs_ui_stack) == slot) gs_ui_prime(slot);   /* the new port's buttons held now must be released first */
     lua_pushboolean(L, 1);
@@ -1982,7 +2006,7 @@ static int l_ui_set_focus(lua_State *L) {
     AtFocusPos p = at_screen_refocus(&u->sc, luaL_checkstring(L, 2), luaL_checkstring(L, 3), u->view.focus);
     const char *c = at_screen_cell_id(&u->sc, p);
     int ok = c != NULL && strcmp(c, lua_tostring(L, 3)) == 0;
-    if (ok) { u->view.focus = p; u->explain_dirty = 1; }
+    if (ok) { u->view.focus = p; u->explain_dirty = 1; gs_ui_fix_scroll(u); }   /* the window follows the focus the script moved */
     lua_pushboolean(L, ok);
     return 1;
 }

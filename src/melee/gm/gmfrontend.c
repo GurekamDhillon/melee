@@ -1163,6 +1163,8 @@ static void fe_match_setup_from_menus(void);
 static void fe_online_from_menus(void);
 static void fe_settings_from_menus(int page);
 static void fe_settings_resume_game(void);
+static void fe_rules_from_menus(void);
+static void fe_rules_resume(void);
 static bool fe_is_settings(const FrontendScreen* s);
 static bool fe_is_controls_help(const FrontendScreen* s);
 static int fm_back_kind = -1, fm_back_sel; ///< backing out of a frontend scene lands on this menu item
@@ -1267,6 +1269,10 @@ bool gmFrontend_NativeReturn(int kind, int sel)
     }
     if (Ui_Ready() != 0 && kind == MENU_KIND_SETTINGS && sel == SEL_SETTINGS_LANG) {
         fe_settings_resume_game(); /* Atlas: back to the tabs, on GAME at Language (the legacy list is the MELEE_ATLAS=0 destination) */
+        return true;
+    }
+    if (Ui_Ready() != 0 && kind == MENU_KIND_VS && sel == SEL_VS_RULES) {
+        fe_rules_resume(); /* Atlas: the game's own Rules screen (Item and Stage Switches) backs out to the Atlas Rules screen */
         return true;
     }
     OSReport("frontend: native screen backs out to (kind %d, sel %d) - back to the menus\n", kind,

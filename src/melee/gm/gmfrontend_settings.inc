@@ -653,6 +653,92 @@ static const FrontendScreen fe_screen_erase = {
     "SETTINGS", "ERASE DATA", fe_items_erase, sizeof fe_items_erase / sizeof fe_items_erase[0]
 };
 
+/* ---- RULES (VERSUS > RULES under Atlas): the retail Rules and More Rules screens as value rows -----------------------------------------------------------------
+ * Audit (mnmainrule.c, mnruleplus.c, mnitemsw.c, mnstagesw.c; the fields are pinned by tools/port/test_rules_fields.py):
+ *   Rules       writes GameRules.mode, time_limit, handicap, damage_ratio, stage_sel and stock_count (mnmainrule.c:197-203). Its second row is the TIME LIMIT in every mode
+ *               but Stock, where the same row is the STOCK COUNT; both read and write the fields below, with the encodings the game uses (damage ratio in tenths).
+ *   More Rules  writes GameRules.stock_time_limit, friendly_fire, pause, score_display and unk_xc, each 0..99, 0..1, 0..1, 0..1 and 0..2 (mnruleplus.c:145-149, the
+ *               bounds table mn_803ED2E8); Score Display shows only when the game says it is unlocked (gmMainLib_8015EE0C).
+ *   Item Switch  GamePrefs.item_mask, one bit per item (read gm_8016403C, written mn_8022E978); Random Stage Switch GamePrefs.stage_mask, one bit per stage (gm_801641E4).
+ *               The storage is named, but the ROW NAMES are the disc's own text and the decomp gives only the order of the bits: a table with invented names would
+ *               mislead, so those two lists stay the game's own screen. The Rules screen has one row that opens it (the same native request the legacy RULES row makes);
+ *               its back-out returns here (gmFrontend_NativeReturn).
+ * Only under Atlas: the legacy VERSUS > RULES row (FA_NATIVE) is the MELEE_ATLAS=0 route to the same retail screens. */
+static int frl_get_time(void) { return gmMainLib_GetGameRules()->time_limit; }
+static void frl_set_time(int v) { gmMainLib_GetGameRules()->time_limit = (u8) v; }
+static int frl_not_stock(void) { return gmMainLib_GetGameRules()->mode != 1; }
+static int frl_get_stock_time(void) { return gmMainLib_GetGameRules()->stock_time_limit; }
+static void frl_set_stock_time(int v) { gmMainLib_GetGameRules()->stock_time_limit = (u8) v; }
+static int frl_get_score(void) { return gmMainLib_GetGameRules()->score_display != 0; }
+static void frl_set_score(int v) { gmMainLib_GetGameRules()->score_display = (u8) (v != 0); }
+static int frl_score_shown(void) { return gmMainLib_8015EE0C() != 0; }
+static int frl_get_sd(void) { return gmMainLib_GetGameRules()->unk_xc; }
+static void frl_set_sd(int v) { gmMainLib_GetGameRules()->unk_xc = (u8) v; }
+static const FrontendScreen fe_screen_rules;
+static const FrontendScreen fe_screen_morerules;
+static void frl_more(void) { fe_switch_screen(&fe_screen_morerules); }
+/* the game's own Rules screen: its Item Switch and Random Stage Switch (the same native request the legacy VERSUS > RULES row makes) */
+static void frl_retail(void)
+{
+    OSReport("frontend: RULES > Item Switch and Random Stage Switch -> native screen (kind %d, selection %d) in GM_MENU\n", MENU_KIND_VS, SEL_VS_RULES);
+    fm.native_req = true;
+    fm.native_kind = MENU_KIND_VS;
+    fm.native_sel = SEL_VS_RULES;
+    fe.continue_to = GM_MENU;
+    fe.reported = GM_MENU;
+    fe.leaving = 1;
+}
+static int frl_atlas_only(void) { return Ui_Ready() != 0; }
+
+static const FrontendItem fe_items_rules[] = {
+    { FE_CHOICE, 0, "Mode", "How a match is won.", fe_get_mode, fe_set_mode, 0, 3, 1, fe_opt_mode, NULL, NULL, NULL, NULL, NULL, "MATCH" },
+    { FE_SLIDER, 0, "Time Limit", "Minutes per match; 0 plays without a clock.", frl_get_time, frl_set_time, 0, 99, 1, NULL, fe_fmt_time, frl_not_stock, NULL, NULL, NULL, "MATCH" },
+    { FE_SLIDER, 0, "Stocks", "Lives each player starts with.", fe_get_stocks, fe_set_stocks, 1, 99, 1, NULL, NULL, fe_is_stock, NULL, NULL, NULL, "MATCH" },
+    { FE_CHOICE, 0, "Handicap", "Auto evens out winners and losers.", fe_get_handicap, fe_set_handicap, 0, 2, 1, fe_opt_handicap, NULL, NULL, NULL, NULL, NULL, "MATCH" },
+    { FE_SLIDER, 0, "Damage Ratio", "How far hits send fighters.", fe_get_ratio, fe_set_ratio, 5, 20, 1, NULL, fe_fmt_ratio, NULL, NULL, NULL, NULL, "MATCH" },
+    { FE_CHOICE, 0, "Stage Selection", "How the stage is chosen.", fe_get_stage_sel, fe_set_stage_sel, 0, 4, 1, fe_opt_stage_sel, NULL, NULL, NULL, NULL, NULL, "MATCH" },
+    { FE_ACTION, FE_DO_CALL, "More Rules...", "Stock time limit, friendly fire, pause and more.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, frl_more, NULL, NULL, "MORE" },
+    { FE_ACTION, FE_DO_CALL, "Item and Stage Switches...", "Which items appear and which stages can come up at random: the game's own screen, since its lists are drawn from the game's text.",
+      NULL, NULL, 0, 0, 0, NULL, NULL, frl_atlas_only, frl_retail, NULL, NULL, "MORE" },
+};
+static const FrontendScreen fe_screen_rules = {
+    "VERSUS", "RULES", fe_items_rules, sizeof fe_items_rules / sizeof fe_items_rules[0]
+};
+
+static const FrontendItem fe_items_morerules[] = {
+    { FE_SLIDER, 0, "Stock Time Limit", "Minutes per Stock match; 0 plays without a clock.", frl_get_stock_time, frl_set_stock_time, 0, 99, 1, NULL, fe_fmt_time, NULL, NULL, NULL, NULL, "MORE RULES" },
+    { FE_TOGGLE, 0, "Friendly Fire", "Team attacks hit teammates.", fe_get_ff, fe_set_ff, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "MORE RULES" },
+    { FE_TOGGLE, 0, "Pause", "Allow pausing during the match.", fe_get_pause, fe_set_pause, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "MORE RULES" },
+    { FE_TOGGLE, 0, "Score Display", "Show the score during Time, Coin and Bonus matches. Unlocked by playing.", frl_get_score, frl_set_score, 0, 1, 1, NULL, NULL, frl_score_shown, NULL, NULL, NULL, "MORE RULES" },
+    { FE_SLIDER, 0, "Sudden Death Penalty", "The retail setting, 0 to 2; the game words its levels in its own text.", frl_get_sd, frl_set_sd, 0, 2, 1, NULL, NULL, NULL, NULL, NULL, NULL, "MORE RULES" },
+};
+static const FrontendScreen fe_screen_morerules = {
+    "VERSUS", "MORE RULES", fe_items_morerules, sizeof fe_items_morerules / sizeof fe_items_morerules[0]
+};
+
+/* VERSUS > RULES under Atlas: the rules screen as its own GS_FRONTEND scene; backing out goes to GM_MENU, which lands on VERSUS > RULES. fe_rules_set_screen is what the entry
+ * and the return from the game's own Rules screen (gmFrontend_NativeReturn) share. */
+static void fe_rules_set_screen(void)
+{
+    fe.screen = &fe_screen_rules;
+    fe.continue_to = GM_MENU;
+    fe.back_to = GM_MENU;
+    fe.reported = GM_MENU;
+    fe.next_menus = false;
+    fm_back_kind = MENU_KIND_VS;
+    fm_back_sel = SEL_VS_RULES;
+}
+static void fe_rules_from_menus(void)
+{
+    fe_rules_set_screen();
+    fm_leave_scene(GM_FRONTEND);
+}
+static void fe_rules_resume(void)
+{
+    OSReport("frontend: the game's Rules screen backs out to VERSUS > RULES\n");
+    fe_rules_set_screen();
+}
+
 #define FSP_N(a) ((int) (sizeof a / sizeof a[0]))
 static const FrontendScreen fe_screen_settings[FSP_COUNT] = {
     { "SETTINGS", "VIDEO", fe_items_set_video, FSP_N(fe_items_set_video) },
@@ -675,7 +761,7 @@ static bool fe_is_controls_help(const FrontendScreen* s)
 
 static bool fe_is_settings(const FrontendScreen* s)
 {
-    return fe_is_controls_help(s) || s == &fe_screen_remap || s == &fe_screen_erase || (s >= &fe_screen_settings[0] && s < &fe_screen_settings[FSP_COUNT]);
+    return fe_is_controls_help(s) || s == &fe_screen_remap || s == &fe_screen_erase || s == &fe_screen_rules || s == &fe_screen_morerules || (s >= &fe_screen_settings[0] && s < &fe_screen_settings[FSP_COUNT]);
 }
 
 /* The saved online defaults, into the ONLINE screen's state (once per boot is enough, but cheap). */

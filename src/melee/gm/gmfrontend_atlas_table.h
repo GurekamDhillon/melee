@@ -27,7 +27,7 @@ enum { FSS_IF_A_STEPS = 1, FSS_IF_RO = 2, FSS_IF_DISABLED = 8 };
 /* what the adapter feeds the host's intents with (AT_EV_* and AT_DIR_*: the host test asserts the numbers) */
 enum { FSS_IN_MOVE = 1, FSS_IN_ACCEPT = 3, FSS_IN_BACK = 4, FSS_IN_ALT = 5, FSS_IN_PAGE = 6 };
 enum { FSS_DIR_LEFT = 1, FSS_DIR_RIGHT = 2, FSS_DIR_UP = 3, FSS_DIR_DOWN = 4 };
-enum { FSS_K_TABS, FSS_K_REMAP, FSS_K_HOWTO, FSS_K_ERASE };   /* the host's screen kinds (gw_script_ui_set.inc GS_SET_*: the host test asserts the numbers) */
+enum { FSS_K_TABS, FSS_K_REMAP, FSS_K_HOWTO, FSS_K_ERASE, FSS_K_RULES, FSS_K_MORERULES, FSS_K_MATCH };   /* the host's screen kinds (gw_script_ui_set.inc GS_SET_*: the host test asserts the numbers) */
 
 /* the host's shims */
 extern void Ui_SetRows(int h, int n);

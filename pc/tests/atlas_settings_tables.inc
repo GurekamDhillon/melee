@@ -85,6 +85,28 @@ static const FrontendItem tbl_fe_items_erase[] = {
     { FE_ACTION, FE_DO_CALL, "Everything", "Erase all of your save data and start over; your language stays. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, gen_call, NULL, NULL, "ERASE (ASKS FIRST)" },
 };
 static const int nopts_fe_items_erase[] = { 0, 0, 0, 0, 0, 0 };
+static const char *const opts_fe_items_rules_0[] = { "Time", "Stock", "Coin", "Bonus" };
+static const char *const opts_fe_items_rules_3[] = { "Off", "Auto", "On" };
+static const char *const opts_fe_items_rules_5[] = { "On", "Random", "Ordered", "Turns", "Loser" };
+static const FrontendItem tbl_fe_items_rules[] = {
+    { FE_CHOICE, 0, "Mode", "How a match is won.", gen_get, gen_set, 0, 3, 1, opts_fe_items_rules_0, NULL, NULL, NULL, NULL, NULL, "MATCH" },
+    { FE_SLIDER, 0, "Time Limit", "Minutes per match; 0 plays without a clock.", gen_get, gen_set, 0, 99, 1, NULL, gen_fmt, gen_vis, NULL, NULL, NULL, "MATCH" },
+    { FE_SLIDER, 0, "Stocks", "Lives each player starts with.", gen_get, gen_set, 1, 99, 1, NULL, NULL, gen_vis, NULL, NULL, NULL, "MATCH" },
+    { FE_CHOICE, 0, "Handicap", "Auto evens out winners and losers.", gen_get, gen_set, 0, 2, 1, opts_fe_items_rules_3, NULL, NULL, NULL, NULL, NULL, "MATCH" },
+    { FE_SLIDER, 0, "Damage Ratio", "How far hits send fighters.", gen_get, gen_set, 5, 20, 1, NULL, gen_fmt, NULL, NULL, NULL, NULL, "MATCH" },
+    { FE_CHOICE, 0, "Stage Selection", "How the stage is chosen.", gen_get, gen_set, 0, 4, 1, opts_fe_items_rules_5, NULL, NULL, NULL, NULL, NULL, "MATCH" },
+    { FE_ACTION, FE_DO_CALL, "More Rules...", "Stock time limit, friendly fire, pause and more.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, gen_call, NULL, NULL, "MORE" },
+    { FE_ACTION, FE_DO_CALL, "Item and Stage Switches...", "Which items appear and which stages can come up at random: the game's own screen, since its lists are drawn from the game's text.", NULL, NULL, 0, 0, 0, NULL, NULL, gen_vis, gen_call, NULL, NULL, "MORE" },
+};
+static const int nopts_fe_items_rules[] = { 4, 0, 0, 3, 0, 5, 0, 0 };
+static const FrontendItem tbl_fe_items_morerules[] = {
+    { FE_SLIDER, 0, "Stock Time Limit", "Minutes per Stock match; 0 plays without a clock.", gen_get, gen_set, 0, 99, 1, NULL, gen_fmt, NULL, NULL, NULL, NULL, "MORE RULES" },
+    { FE_TOGGLE, 0, "Friendly Fire", "Team attacks hit teammates.", gen_get, gen_set, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "MORE RULES" },
+    { FE_TOGGLE, 0, "Pause", "Allow pausing during the match.", gen_get, gen_set, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "MORE RULES" },
+    { FE_TOGGLE, 0, "Score Display", "Show the score during Time, Coin and Bonus matches. Unlocked by playing.", gen_get, gen_set, 0, 1, 1, NULL, NULL, gen_vis, NULL, NULL, NULL, "MORE RULES" },
+    { FE_SLIDER, 0, "Sudden Death Penalty", "The retail setting, 0 to 2; the game words its levels in its own text.", gen_get, gen_set, 0, 2, 1, NULL, NULL, NULL, NULL, NULL, NULL, "MORE RULES" },
+};
+static const int nopts_fe_items_morerules[] = { 0, 0, 0, 0, 0 };
 static const char *const opts_fe_items_remap_0[] = { "Port 1", "Port 2", "Port 3", "Port 4" };
 static const char *const opts_fe_items_remap_2[] = { "A", "B", "X", "Y", "Z", "START", "L click", "R click", "D-pad Up", "D-pad Down", "D-pad Left", "D-pad Right", "Stick Right", "Stick Left", "Stick Up", "Stick Down", "C-stick Right", "C-stick Left", "C-stick Up", "C-stick Down", "Analog L", "Analog R" };
 static const char *const opts_fe_items_remap_4[] = { "Swap", "Also" };
@@ -154,6 +176,8 @@ static const StubTable all_tables[] = {
     { "fe_items_set_online", tbl_fe_items_set_online, 6, nopts_fe_items_set_online },
     { "fe_items_set_gameplay", tbl_fe_items_set_gameplay, 12, nopts_fe_items_set_gameplay },
     { "fe_items_erase", tbl_fe_items_erase, 6, nopts_fe_items_erase },
+    { "fe_items_rules", tbl_fe_items_rules, 8, nopts_fe_items_rules },
+    { "fe_items_morerules", tbl_fe_items_morerules, 5, nopts_fe_items_morerules },
     { "fe_items_remap", tbl_fe_items_remap, 20, nopts_fe_items_remap },
     { "fe_items_vs_setup", tbl_fe_items_vs_setup, 10, nopts_fe_items_vs_setup },
     { "fe_items_online", tbl_fe_items_online, 9, nopts_fe_items_online },

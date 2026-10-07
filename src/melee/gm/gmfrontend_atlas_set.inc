@@ -103,6 +103,15 @@ static int fss_kind_of(const FrontendScreen* s)
     if (s == &fe_screen_remap) {
         return FSS_K_REMAP;
     }
+    if (s == &fe_screen_rules) {
+        return FSS_K_RULES;
+    }
+    if (s == &fe_screen_morerules) {
+        return FSS_K_MORERULES;
+    }
+    if (s == &fe_screen_vs_setup) {
+        return FSS_K_MATCH;
+    }
     return -1;
 }
 
@@ -155,6 +164,12 @@ static int fss_open(const FrontendScreen* s)
         t0 = "SETTINGS"; t1 = "CONTROLS"; title = "HOW TO PLAY ONLINE";
     } else if (kind == FSS_K_ERASE) {
         t0 = "SETTINGS"; t1 = "GAME"; title = "ERASE DATA";
+    } else if (kind == FSS_K_RULES) {
+        t0 = "VERSUS"; title = "RULES";
+    } else if (kind == FSS_K_MORERULES) {
+        t0 = "VERSUS"; t1 = "RULES"; title = "MORE RULES";
+    } else if (kind == FSS_K_MATCH) {
+        t0 = "VERSUS"; t1 = "MELEE"; title = "MATCH SETUP";
     } else {
         t0 = "SETTINGS"; t1 = "CONTROLS"; title = "REMAP";
     }
@@ -218,7 +233,7 @@ static void fss_set_tab(int t)
     fss.refocus = true;
 }
 
-/* B: the tabs go back to the menus, the how-to page to CONTROLS, the erase screen to GAME, the remap editor through fcr_back */
+/* B: the tabs, the Rules screen and MATCH SETUP go back to the menus, the how-to page to CONTROLS, the erase screen to GAME, More Rules to Rules, the remap editor through fcr_back */
 static void fss_back(void)
 {
     sfxBack();
@@ -234,6 +249,13 @@ static void fss_back(void)
         break;
     case FSS_K_REMAP:
         fcr_back(); /* Controls_Cancel, Controls_Menu(-1), and back to CONTROLS through fe_switch_screen */
+        break;
+    case FSS_K_RULES:
+    case FSS_K_MATCH:
+        fe.leaving = 2; /* the menus: VERSUS on RULES (fe_rules_set_screen), or where MATCH SETUP came from */
+        break;
+    case FSS_K_MORERULES:
+        fss_switch(&fe_screen_rules);
         break;
     default:
         break;

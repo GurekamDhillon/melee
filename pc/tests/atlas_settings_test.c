@@ -213,11 +213,12 @@ static void render_screen(int h, float w, AtHits *hits)
 
 static void page_counts(void)
 {
-    CHECK(ntables() == 10);
+    CHECK(ntables() == 12);
     CHECK(tbl("fe_items_set_video")->n == 6 && tbl("fe_items_set_audio")->n == 3 && tbl("fe_items_set_controls")->n == 16);      /* 12 + the four Rumble, Port N rows */
     CHECK(tbl("fe_items_set_online")->n == 6 && tbl("fe_items_set_gameplay")->n == 12 && tbl("fe_items_remap")->n == 20 && tbl("fe_items_howto_online")->n == 6);   /* gameplay 10 + Language + Erase Data... */
     CHECK(tbl("fe_items_erase")->n == 6);                                                                                        /* the six retail operations */
     CHECK(tbl("fe_items_vs_setup")->n == 10 && tbl("fe_items_online")->n == 9);
+    CHECK(tbl("fe_items_rules")->n == 8 && tbl("fe_items_morerules")->n == 5);                                                   /* the retail Rules and More Rules screens */
 }
 
 /* per page, at 640 and 853, with every row enabled and then every enabled predicate failing: the style checks on every row kind the page contains */
@@ -475,6 +476,55 @@ static void hints_follow_the_walker_kinds(void)
     fss_hints_for(FSS_VK_TEXT, 0, 1, o, sizeof o); CHECK_STR(o, "L:Page,B:Back");               /* the readout does not */
 }
 
+/* Atlas step 4 Task 12 (on step 5's value rows): the Rules, More Rules and MATCH SETUP screens, from the real tables' shapes. The fields they read and write are pinned against
+ * the retail screens by tools/port/test_rules_fields.py; here, the shapes the host and the walker see. */
+static const FrontendItem *row_named(const StubTable *T, const char *label)
+{
+    int i;
+    for (i = 0; i < T->n; i++) if (strcmp(T->rows[i].label, label) == 0) return &T->rows[i];
+    return NULL;
+}
+static void rules_screens(void)
+{
+    const StubTable *R = tbl("fe_items_rules"), *M = tbl("fe_items_morerules"), *S = tbl("fe_items_vs_setup");
+    const FrontendItem *it;
+    CHECK(R != NULL && M != NULL && S != NULL && R->n == 8 && M->n == 5);
+    /* Rules: the six retail fields as rows, with the retail ranges */
+    it = row_named(R, "Mode"); CHECK(it && it->kind == FE_CHOICE && it->min == 0 && it->max == 3 && it->options != NULL);
+    it = row_named(R, "Time Limit"); CHECK(it && it->kind == FE_SLIDER && it->min == 0 && it->max == 99 && it->step == 1 && it->format != NULL && it->visible != NULL && it->set != NULL);
+    it = row_named(R, "Stocks"); CHECK(it && it->kind == FE_SLIDER && it->min == 1 && it->max == 99 && it->visible != NULL);               /* Stock mode's own row, in the time limit's place */
+    it = row_named(R, "Handicap"); CHECK(it && it->kind == FE_CHOICE && it->min == 0 && it->max == 2);
+    it = row_named(R, "Damage Ratio"); CHECK(it && it->kind == FE_SLIDER && it->min == 5 && it->max == 20 && it->format != NULL);          /* the game's tenths, formatted by the shared fe_fmt_ratio */
+    it = row_named(R, "Stage Selection"); CHECK(it && it->kind == FE_CHOICE && it->min == 0 && it->max == 4);
+    it = row_named(R, "More Rules..."); CHECK(it && it->kind == FE_ACTION && it->call != NULL);
+    it = row_named(R, "Item and Stage Switches..."); CHECK(it && it->kind == FE_ACTION && it->call != NULL && it->visible != NULL);       /* Atlas only: MELEE_ATLAS=0 has the game's own screen */
+    /* More Rules: the five retail fields */
+    it = row_named(M, "Stock Time Limit"); CHECK(it && it->kind == FE_SLIDER && it->min == 0 && it->max == 99);
+    it = row_named(M, "Friendly Fire"); CHECK(it && it->kind == FE_TOGGLE);
+    it = row_named(M, "Pause"); CHECK(it && it->kind == FE_TOGGLE);
+    it = row_named(M, "Score Display"); CHECK(it && it->kind == FE_TOGGLE && it->visible != NULL);                                         /* only when the game says it is unlocked */
+    it = row_named(M, "Sudden Death Penalty"); CHECK(it && it->kind == FE_SLIDER && it->min == 0 && it->max == 2);
+    /* MATCH SETUP is the same kind of table: its first row is the CONTINUE button, the rest value rows */
+    CHECK(S->rows[0].kind == FE_ACTION && S->rows[0].action == FE_DO_CONTINUE);
+    CHECK(row_named(S, "Damage Ratio") != NULL && row_named(S, "Stage Select") != NULL && row_named(S, "Time Limit") != NULL);
+    /* the host holds them: every row of the three through the walker, Time Limit and Stocks swapping with the mode */
+    {
+        FrontendScreen scr; FssVis v; int h, i;
+        scr.title = "VERSUS"; scr.subtitle = "RULES"; scr.items = R->rows; scr.n_items = R->n; scr.art = 0;
+        reset_set(); g_gvis = 1;
+        h = gw_Ui_SetOpen(4, 0, "VERSUS", "", "RULES");
+        CHECK(h >= 0);
+        fss_visible(&scr, &v); fss_table_submit(h, &scr, &v);
+        CHECK(slot_of(h)->sc.n_items == 8 && strcmp(slot_of(h)->sc.items[1].group, "MATCH") == 0 && strcmp(slot_of(h)->sc.items[6].group, "MORE") == 0);
+        g_gvis = 0; fss_visible(&scr, &v); fss_table_submit(h, &scr, &v);
+        CHECK(slot_of(h)->sc.n_items == 5);                                                           /* with every predicate false: Time Limit, Stocks and the Atlas-only row are gone */
+        for (i = 0; i < slot_of(h)->sc.n_items; i++) CHECK(strcmp(slot_of(h)->sc.items[i].label, "Time Limit") != 0 && strcmp(slot_of(h)->sc.items[i].label, "Stocks") != 0);
+        gw_Ui_SetClose(h);
+        /* the hints of a screen with no tabs */
+        { char o[64]; fss_hints_for(FSS_VK_SLIDER, 0, 0, o, sizeof o); CHECK_STR(o, "A:Change,B:Back"); fss_hints_for(FSS_VK_NONE, 0, 0, o, sizeof o); CHECK_STR(o, "A:Select,B:Back"); }
+    }
+}
+
 int main(void)
 {
     lua_State *L = luaL_newstate();
@@ -484,7 +534,7 @@ int main(void)
     gs.n = 8; gs.s[0].used = gs.s[1].used = gs.s[2].used = 1;
     luaL_openlibs(L);
     lua_newtable(L); gs_push_ui(L); lua_setfield(L, -2, "ui"); lua_setglobal(L, "gd");
-    page_counts(); every_row_is_drawable(); round_trips(); options_the_host_shows(); disabled_rows_say_why(); visible_rows_change(); mods_41_rows_and_help(); explainer_from_the_row(); hints_fit(); hints_keep_the_logical_glyph(); hints_follow_the_walker_kinds();
+    page_counts(); every_row_is_drawable(); round_trips(); options_the_host_shows(); disabled_rows_say_why(); visible_rows_change(); mods_41_rows_and_help(); explainer_from_the_row(); hints_fit(); hints_keep_the_logical_glyph(); hints_follow_the_walker_kinds(); rules_screens();
     lua_close(L);
     ATLAS_DONE("atlas settings pages");
 }

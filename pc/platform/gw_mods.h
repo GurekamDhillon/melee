@@ -63,6 +63,7 @@ const char *gw_Mods_Pack(int i);         /* e.g. "ace", "akaneia"; "" when unkno
 const char *gw_Mods_Autostart(int i);
 const char *gw_Mods_Description(int i);  /* "" when none */
 const char *gw_Mods_Requires(int i);     /* comma-separated ids, "" when none */
+const char *gw_Mods_Conflicts(int i);    /* comma-separated ids this mod lists as conflicts (its own list; a conflict also works from the other side), "" when none */
 int gw_Mods_Find(const char *id);        /* index of `id` (case-insensitive), or -1 */
 
 /* Atlas menu entries a mod.json "menus" array declares (docs/scripting.md). Active mods only: an inactive mod has none.

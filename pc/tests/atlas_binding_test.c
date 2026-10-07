@@ -1084,6 +1084,124 @@ static void engine_builder_obeys_the_lua_cap(void)
     reset_ui();
 }
 
+/* ---- Atlas step 7: every one of these runs AS A SCRIPT (gs.cur = 1, mod "envoy"), never as the developer console, which bypasses ownership ---- */
+static void step7_stepper_tabs_backdrop(void)
+{
+    reset_ui(); fake_script(1, "envoy");
+    gs.cur = 1;
+    /* a stepper: left and right report their direction to on.change, A goes to on.accept and never to on.change */
+    LUA_IS("SQ={}; gd.ui.screen{id='envoy.step', primary={kind='list', items={{id='st',label='Focus',value={kind='stepper',text='P1'}},{id='tg',label='T',value={kind='toggle',on=false}}}}, "
+           "on={change=function(id,v) SQ[#SQ+1]=id..'='..tostring(v) end, accept=function(c) SQ[#SQ+1]='accept '..c end}}; return gd.ui.open('envoy.step')", "true");
+    LUA_IS("gd.ui.feed('envoy.step','right'); gd.ui.feed('envoy.step','left'); gd.ui.feed('envoy.step','accept'); return table.concat(SQ,',')", "st=1,st=-1,accept st");
+    LUA_IS("return gd.ui.value('envoy.step','st')", "P1");
+    LUA_IS("return tostring(gd.ui.set_value('envoy.step','st','P2')) .. gd.ui.value('envoy.step','st')", "trueP2");
+    LUA_IS("while gd.ui.state().top do gd.ui.close() end return 'clear'", "clear");
+    /* the world backdrop validates */
+    LUA_IS("return gd.ui.screen{id='envoy.bd', backdrop='world', primary={kind='list', items={{id='a',label='A'}}}}", "true");
+    LUA_HAS("return gd.ui.screen{id='envoy.bd2', backdrop='sky', primary={kind='list', items={{id='a',label='A'}}}}", "backdrop is");
+    /* tabs: L and R move the tab and call on.tab, wrapping; gd.ui.tab reads it; the screen keeps the tab across a re-registration */
+    LUA_IS("TB={}; gd.ui.screen{id='envoy.tabs', tabs={{name='ONE'},{name='TWO'},{name='THREE'}}, tab=2, primary={kind='list', items={{id='a',label='A'}}}, on={tab=function(i) TB[#TB+1]=i end}}; return gd.ui.open('envoy.tabs')", "true");
+    LUA_IS("return gd.ui.tab('envoy.tabs')", "2");
+    LUA_IS("gd.ui.feed('envoy.tabs','r'); gd.ui.feed('envoy.tabs','r'); gd.ui.feed('envoy.tabs','l'); return table.concat(TB,',')", "3,1,3");
+    LUA_IS("TB={}; return gd.ui.tab('envoy.tabs', 2) .. ':' .. gd.ui.tab('envoy.tabs', 9) .. ':' .. #TB", "2:2:0");      /* the script moves the tab itself: no on.tab; out of range changes nothing */
+    LUA_IS("gd.ui.tab('envoy.tabs', 3); TB={}; return gd.ui.tab('envoy.tabs')", "3");
+    LUA_IS("gd.ui.screen{id='envoy.tabs', tabs={{name='ONE'},{name='TWO'},{name='THREE'}}, tab=1, primary={kind='list', items={{id='b',label='B'}}}, on={tab=function(i) TB[#TB+1]=i end}}; return gd.ui.tab('envoy.tabs')", "3");
+    LUA_HAS("return gd.ui.screen{id='envoy.t0', tabs={}, primary={kind='list', items={{id='a',label='A'}}}}", "tabs");
+    LUA_HAS("local t={} for i=1,9 do t[i]={name='T'..i} end return gd.ui.screen{id='envoy.t9', tabs=t, primary={kind='list', items={{id='a',label='A'}}}}", "tabs");
+    /* a screen without tabs: L and R still reach on.page, as before; gd.ui.tab is nil */
+    LUA_IS("TB={}; gd.ui.screen{id='envoy.nt', primary={kind='list', items={{id='a',label='A'}}}, on={tab=function(i) TB[#TB+1]='tab' end, page=function(d) TB[#TB+1]='page'..d end}}; gd.ui.open('envoy.nt'); gd.ui.feed('envoy.nt','r'); return table.concat(TB,',')", "page1");
+    LUA_IS("return tostring(gd.ui.tab('envoy.nt'))", "nil");
+    /* the engine-side tab click: a left click on a tab strip hit changes the tab and tells the script */
+    {
+        GsUiSlot *u; int i;
+        LUA_IS("while gd.ui.state().top do gd.ui.close() end TB={}; return tostring(gd.ui.open('envoy.tabs'))", "true");
+        gs_ui_tick(); gs_ui_draw();
+        u = &gs_ui_slot[gs_ui_find("envoy.tabs")];
+        g_mx = g_my = -1000.0f; g_mbuttons = 0; gs_ui_tick();
+        for (i = 0; i < u->hits.n; i++) if (u->hits.h[i].kind == AT_HIT_TAB && u->hits.h[i].a == 0) { g_mx = u->hits.h[i].r.x + 4.0f; g_my = u->hits.h[i].r.y + 4.0f; }
+        gs_ui_tick(); g_mbuttons = 1; gs_ui_tick(); g_mbuttons = 0; gs_ui_tick();
+        LUA_IS("return table.concat(TB,',')", "1");
+        LUA_IS("return gd.ui.tab('envoy.tabs')", "1");
+        g_mx = g_my = -1000.0f; gs_ui_tick();
+    }
+    /* an explainer with WITH tags and no well is accepted (the provider's table is converted by the same code) */
+    LUA_IS("return gd.ui.screen{id='envoy.ex', primary={kind='list', items={{id='a',label='A'}}}, explainer={provide=function() return {title='T', what='w', well=false, with={'B Boxes','L Labels'}} end}}", "true");
+    gs.cur = 0;
+    LUA_IS("while gd.ui.state().top do gd.ui.close() end return 'clear'", "clear");
+    gs_ui_release(1);
+}
+
+/* the read-only HUD parts, registered by a script (never the console): they draw, and a malformed one is refused and changes nothing */
+static void step7_hud_parts(void)
+{
+    hud_reset();
+    gs.match_active = 1;
+    CHECK(run_as_script(1,
+        "assert(gd.ui.hud{id='envoy.hud', zones={top_left={{kind='readout', title='P1 FOX', rows={{label='Motion', value='Wait f1', tone='ok'}}}},"
+        " bottom_center={{kind='track', title='P1 FOX', right='f 5 / 26', len=26, now=5, spans={{from=5, to=9, id=0}}, marks={{frame=20, kind='iasa'}}}},"
+        " bottom_left={{kind='chips', items={{text='FRAMES', tone='ok'}, {text='T Timeline', on=true}}, right='f 1'}}, top_right={{kind='note', text='Saved', tone='ok'}}}})") == 0);
+    CHECK(hud_count() == 1 && gs_ui_hud[0].z[AT_Z_TOP_LEFT][0].kind == AT_HP_READOUT && gs_ui_hud[0].z[AT_Z_BOTTOM_CENTER][0].kind == AT_HP_TRACK &&
+          gs_ui_hud[0].z[AT_Z_BOTTOM_LEFT][0].kind == AT_HP_CHIPS && gs_ui_hud[0].z[AT_Z_TOP_RIGHT][0].tone == AT_NOTE_OK);
+    g_quads = 0; gs_ui_hud_draw();
+    CHECK(g_quads > 30);                                                                              /* drawn with no screen open */
+    CHECK(run_as_script(1, "local rows = {} for i = 1, 17 do rows[i] = {label='r', value='v'} end assert(not pcall(gd.ui.hud, {id='envoy.hud', zones={top_left={{kind='readout', rows=rows}}}}))") == 0);
+    CHECK(run_as_script(1, "local s = {} for i = 1, 17 do s[i] = {from=1, to=2} end assert(not pcall(gd.ui.hud, {id='envoy.hud', zones={bottom_center={{kind='track', spans=s}}}}))") == 0);
+    CHECK(gs_ui_hud[0].z[AT_Z_TOP_LEFT][0].kind == AT_HP_READOUT && gs_ui_hud[0].z[AT_Z_TOP_LEFT][0].data.readout.n == 1);   /* a refused description changed nothing */
+    CHECK(run_as_script(1, "assert(not pcall(gd.ui.hud, {id='envoy.hud', zones={top_left={{kind='blob'}}}}))") == 0);
+    gs.match_active = 0;
+    hud_reset();
+}
+
+static void step7_token(void)
+{
+    reset_ui(); fake_script(1, "envoy");
+    gs.cur = 1;
+    LUA_IS("return gd.ui.token('ember')", "4286201343");                                    /* 0xFF7A3DFF */
+    LUA_IS("return tostring(gd.ui.token('no-such-colour'))", "nil");
+    LUA_IS("return tostring(gd.ui.token(5))", "nil");                                       /* a number is read as text: still a nil, not a crash */
+    LUA_IS("return gd.ui.token('scrim')", "84347576");
+    gs.cur = 0;
+}
+
+static void step7_entries(void)
+{
+    AtEntry e;
+    reset_ui(); fake_script(1, "envoy");
+    at_reg_init(&gs_ui_reg); gs_ui_reg_booted = 1;
+    memset(&e, 0, sizeof e);
+    snprintf(e.mod, sizeof e.mod, "%s", "tools"); snprintf(e.id, sizeof e.id, "%s", "tools.dummy"); snprintf(e.parent, sizeof e.parent, "%s", "lab.pause");
+    snprintf(e.label, sizeof e.label, "%s", "Dummy tool"); snprintf(e.blurb, sizeof e.blurb, "%s", "Does a thing."); snprintf(e.opens, sizeof e.opens, "%s", "tools.screen");
+    e.action = AT_ENTRY_OPENS; e.visible = 1;
+    CHECK(at_reg_add(&gs_ui_reg, &e) == 1);
+    fake_script_named(3, "geno-lab/main"); fake_script_named(4, "tools/main");
+    gs.cur = 4;                                                                             /* the tools mod registers the screen its entry opens */
+    LUA_IS("return gd.ui.screen{id='tools.screen', primary={kind='list', items={{id='a',label='A'}}}}", "true");
+    gs.cur = 1;                                                                             /* "envoy" does not own lab.pause */
+    LUA_HAS("return gd.ui.entries('lab.pause')", "not yours");
+    LUA_HAS("return gd.ui.activate('tools.dummy')", "not yours");
+    gs.cur = 0;                                                                             /* nor does the console */
+    LUA_HAS("return gd.ui.entries('lab.pause')", "not yours");
+    gs.cur = 4;                                                                             /* nor the mod that owns the entry */
+    LUA_HAS("return gd.ui.entries('lab.pause')", "not yours");
+    gs.cur = 3;                                                                             /* geno-lab owns it */
+    LUA_IS("local e = gd.ui.entries('lab.pause'); return #e .. ':' .. e[1].id .. ':' .. e[1].label .. ':' .. e[1].mod .. ':' .. e[1].blurb", "1:tools.dummy:Dummy tool:tools:Does a thing.");
+    LUA_HAS("return gd.ui.entries('solo')", "not yours");                                  /* only its own parents */
+    LUA_HAS("return gd.ui.activate('nothing.here') and 'x' or 'no'", "no");
+    LUA_IS("return tostring(gd.ui.activate('tools.dummy'))", "true");                      /* the registry opens the mod's own screen under the mod's ownership */
+    LUA_IS("return gd.ui.state().top", "tools.screen");
+    LUA_IS("return tostring(gd.ui.activate('x.gone'))", "false");
+    gs.cur = 0;
+    LUA_IS("while gd.ui.state().top do gd.ui.close() end return 'clear'", "clear");
+    /* a hidden entry is not listed and cannot be activated */
+    CHECK(at_reg_set(&gs_ui_reg, "tools", "tools.dummy", 0, NULL) == 1);
+    gs.cur = 3;
+    LUA_IS("return #gd.ui.entries('lab.pause')", "0");
+    LUA_IS("return tostring(gd.ui.activate('tools.dummy'))", "false");
+    gs.cur = 0;
+    gs_ui_release(3); gs_ui_release(4);
+    at_reg_init(&gs_ui_reg);
+}
+
 int main(void)
 {
     lua_State *L = luaL_newstate();
@@ -1358,5 +1476,6 @@ int main(void)
     title_pushed_on_scene_begin(); title_takes_no_input(); title_waits_for_roles(); title_without_roles_stays_retail(); title_retail_when_off();
     title_popped_on_scene_exit(); title_and_menu_together();
     value_api_as_a_mod(); engine_builder_obeys_the_lua_cap();
+    step7_stepper_tabs_backdrop(); step7_hud_parts(); step7_token(); step7_entries();
     ATLAS_DONE("atlas binding");
 }

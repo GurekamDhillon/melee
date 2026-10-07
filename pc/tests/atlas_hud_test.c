@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "atlas_check.h"
 #include "atlas_fake.h"
 #include "atlas_rec.h"
@@ -107,4 +108,90 @@ static void from_val(void)
       CHECK(!at_hud_from_val(&ARENA, r2, "envoy", 1000.0, &h, err, sizeof err) && strstr(err, "port 1 to 4") != NULL); }
     CHECK(at_hud_zone_by_name("top_right") == AT_Z_TOP_RIGHT && at_hud_zone_by_name("middle") == -1 && strcmp(at_hud_zone_name(AT_Z_BOTTOM_LEFT), "bottom_left") == 0);
 }
-int main(void) { keepout_and_safe(); hidden_element_frees_space(); caps(); expiry_and_render_style(); from_val(); ATLAS_DONE("atlas-hud"); }
+/* Atlas step 7: the LAB's HUD (two readouts, a timeline, a chip strip, a notice) next to the retail HUD, at 4:3 and wide */
+static AtHud lab_fixture(void)
+{
+    AtHud h; int i; AtHudPart *p;
+    memset(&h, 0, sizeof h);
+    snprintf(h.id, sizeof h.id, "%s", "geno-lab.hud");
+    for (i = 0; i < 2; i++) {                                                                    /* the info panel: one readout per fighter, P1 left, P2 right, ten rows each */
+        int z = i == 0 ? AT_Z_TOP_LEFT : AT_Z_TOP_RIGHT, r;
+        p = &h.z[z][0]; p->kind = AT_HP_READOUT; snprintf(p->data.readout.title, AT_STR, "P%d FOX", i + 1); p->data.readout.cols = 1; p->data.readout.n = 10;
+        for (r = 0; r < 10; r++) { snprintf(p->data.readout.row[r].label, 24, "Row %d", r); snprintf(p->data.readout.row[r].value, 40, "%d.5  air", r); }
+        h.n[z] = 1;
+    }
+    p = &h.z[AT_Z_BOTTOM_CENTER][0]; p->kind = AT_HP_TRACK; snprintf(p->data.track.title, AT_STR, "P1 FOX  AttackS3S"); p->data.track.len = 26; p->data.track.now = 5;
+    p->data.track.n_spans = 1; p->data.track.span[0].from = 5; p->data.track.span[0].to = 9; h.n[AT_Z_BOTTOM_CENTER] = 1;
+    p = &h.z[AT_Z_BOTTOM_LEFT][0]; p->kind = AT_HP_CHIPS; p->data.chips.n = 3;
+    snprintf(p->data.chips.c[0].text, 24, "FRAMES"); p->data.chips.c[0].on = -1; snprintf(p->data.chips.c[1].text, 24, "T Timeline"); p->data.chips.c[1].on = 1; snprintf(p->data.chips.c[2].text, 24, "H Hits");
+    h.n[AT_Z_BOTTOM_LEFT] = 1;
+    p = &h.z[AT_Z_TOP_CENTER][0]; p->kind = AT_HP_NOTE; snprintf(p->text, AT_STR, "Reloaded: ok"); p->tone = AT_NOTE_OK; p->until_ms = 5000.0; p->from_ms = 1000.0; h.n[AT_Z_TOP_CENTER] = 1;
+    return h;
+}
+static void lab_hud_keeps_off_the_retail_hud(void)
+{
+    int w, z, i, k;
+    for (w = 0; w < 3; w++) {
+        AtHud h = lab_fixture(); AtKeepOut ko; AtHudLayout l; AtRect safe = at_hud_safe(WIDTHS[w]);
+        char why[96];
+        CHECK(at_hud_cap_ok(&h, why, sizeof why));
+        at_hud_retail_keepouts(WIDTHS[w], 0xFFFFFFFFu, &ko);
+        at_hud_layout(&h, WIDTHS[w], &ko, 1500.0, &FAKE, &l);
+        CHECK(l.dropped == 0);                                                                   /* every part found room: none was dropped for the retail plates or timer */
+        for (z = 0; z < AT_Z_COUNT; z++) for (i = 0; i < h.n[z]; i++) {
+            AtRect r = l.rect[z][i];
+            CHECK(l.shown[z][i]);
+            CHECK(r.x >= safe.x - 0.01f && r.x + r.w <= safe.x + safe.w + 0.01f && r.y >= safe.y - 0.01f && r.y + r.h <= safe.y + safe.h + 0.01f);
+            for (k = 0; k < ko.n; k++) CHECK(!meets(r, ko.r[k]));
+        }
+        {   int a, b;                                                                            /* and none on another */
+            AtRect all[AT_Z_COUNT * AT_HUD_PER_ZONE]; int n = 0;
+            for (z = 0; z < AT_Z_COUNT; z++) for (i = 0; i < h.n[z]; i++) if (l.shown[z][i]) all[n++] = l.rect[z][i];
+            for (a = 0; a < n; a++) for (b = a + 1; b < n; b++) CHECK(!meets(all[a], all[b]));
+        }
+        {   AtSink s = rec_sink(); int entries = 0;                                              /* it draws, inside its budget */
+            at_hud_render(&h, &l, 1500.0, 0, &FAKE, &s, &entries);
+            CHECK(entries > 20 && entries < AT_HUD_QUAD_CAP && REC.nt > 20);
+        }
+    }
+}
+static void lab_parts_from_val(void)
+{
+    AtvArena *a = (AtvArena *) malloc(sizeof *a);
+    AtHud h; char err[160]; int root, zones, list, part, rows, row, k;
+    atv_init(a);
+    root = atv_table(a); atv_set(a, root, "id", atv_str(a, "geno-lab.hud")); zones = atv_table(a); list = atv_table(a); part = atv_table(a);
+    atv_set(a, part, "kind", atv_str(a, "readout")); atv_set(a, part, "title", atv_str(a, "P1 FOX")); rows = atv_table(a);
+    row = atv_table(a); atv_set(a, row, "label", atv_str(a, "Motion")); atv_set(a, row, "value", atv_str(a, "Wait f1")); atv_set(a, row, "tone", atv_str(a, "ok")); atv_push(a, rows, row);
+    atv_set(a, part, "rows", rows); atv_push(a, list, part); atv_set(a, zones, "top_left", list); atv_set(a, root, "zones", zones);
+    CHECK(at_hud_from_val(a, root, "geno-lab", 1000.0, &h, err, sizeof err) == 1);
+    CHECK(h.n[AT_Z_TOP_LEFT] == 1 && h.z[AT_Z_TOP_LEFT][0].kind == AT_HP_READOUT && h.z[AT_Z_TOP_LEFT][0].data.readout.n == 1 && h.z[AT_Z_TOP_LEFT][0].data.readout.row[0].tone == 1);
+    /* a readout with 17 rows is refused, and so is a track with 17 spans; nothing is registered */
+    atv_init(a);
+    root = atv_table(a); atv_set(a, root, "id", atv_str(a, "geno-lab.hud")); zones = atv_table(a); list = atv_table(a); part = atv_table(a);
+    atv_set(a, part, "kind", atv_str(a, "readout")); rows = atv_table(a);
+    for (k = 0; k < 17; k++) { row = atv_table(a); atv_set(a, row, "label", atv_str(a, "r")); atv_push(a, rows, row); }
+    atv_set(a, part, "rows", rows); atv_push(a, list, part); atv_set(a, zones, "top_left", list); atv_set(a, root, "zones", zones);
+    CHECK(at_hud_from_val(a, root, "geno-lab", 1000.0, &h, err, sizeof err) == 0 && strstr(err, "at most 16 rows") != NULL);
+    atv_init(a);
+    root = atv_table(a); atv_set(a, root, "id", atv_str(a, "geno-lab.hud")); zones = atv_table(a); list = atv_table(a); part = atv_table(a);
+    atv_set(a, part, "kind", atv_str(a, "track")); rows = atv_table(a);
+    for (k = 0; k < 17; k++) { row = atv_table(a); atv_set(a, row, "from", atv_num(a, 1)); atv_push(a, rows, row); }
+    atv_set(a, part, "spans", rows); atv_push(a, list, part); atv_set(a, zones, "bottom_center", list); atv_set(a, root, "zones", zones);
+    CHECK(at_hud_from_val(a, root, "geno-lab", 1000.0, &h, err, sizeof err) == 0 && strstr(err, "at most 16 spans") != NULL);
+    /* a chip strip and a note with a tone */
+    atv_init(a);
+    root = atv_table(a); atv_set(a, root, "id", atv_str(a, "geno-lab.hud")); zones = atv_table(a); list = atv_table(a); part = atv_table(a);
+    atv_set(a, part, "kind", atv_str(a, "chips")); rows = atv_table(a);
+    row = atv_table(a); atv_set(a, row, "text", atv_str(a, "FRAMES")); atv_set(a, row, "tone", atv_str(a, "ok")); atv_push(a, rows, row);
+    row = atv_table(a); atv_set(a, row, "text", atv_str(a, "T Timeline")); atv_set(a, row, "on", atv_bool(a, 1)); atv_push(a, rows, row);
+    atv_set(a, part, "items", rows); atv_push(a, list, part);
+    part = atv_table(a); atv_set(a, part, "kind", atv_str(a, "note")); atv_set(a, part, "text", atv_str(a, "Not saved")); atv_set(a, part, "tone", atv_str(a, "err")); atv_push(a, list, part);
+    atv_set(a, zones, "bottom_left", list); atv_set(a, root, "zones", zones);
+    CHECK(at_hud_from_val(a, root, "geno-lab", 1000.0, &h, err, sizeof err) == 1);
+    CHECK(h.z[AT_Z_BOTTOM_LEFT][0].kind == AT_HP_CHIPS && h.z[AT_Z_BOTTOM_LEFT][0].data.chips.n == 2 && h.z[AT_Z_BOTTOM_LEFT][0].data.chips.c[0].on == -1 && h.z[AT_Z_BOTTOM_LEFT][0].data.chips.c[1].on == 1);
+    CHECK(h.z[AT_Z_BOTTOM_LEFT][1].kind == AT_HP_NOTE && h.z[AT_Z_BOTTOM_LEFT][1].tone == AT_NOTE_ERR);
+    free(a);
+}
+
+int main(void) { lab_hud_keeps_off_the_retail_hud(); lab_parts_from_val(); keepout_and_safe(); hidden_element_frees_space(); caps(); expiry_and_render_style(); from_val(); ATLAS_DONE("atlas-hud"); }

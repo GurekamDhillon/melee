@@ -347,7 +347,7 @@ static void tabs_and_cursors(void)
     CHECK(v.tab == 0 && v.cursor[0].active == 0 && v.cursor[3].active == 0 && v.progress == 0 && v.ex.media_tex == -1);
     CHECK(v.cursor[0].card == -1 && v.cursor[0].block == 0 && v.cursor[0].index == -1);
     CHECK(at_explainer_from_val(A, -1, &e, err, sizeof err) == 1 && e.has == 0 && e.media_tex == -1 && e.stepper == 0);
-    CHECK(AT_MAX_CELLS == 12 && AT_MAX_EXT_CELLS == 256 && AT_MAX_TABS == 6 && AT_MAX_CURSORS == 4);
+    CHECK(AT_MAX_CELLS == 12 && AT_MAX_EXT_CELLS == 256 && AT_MAX_TABS == 8 && AT_MAX_CURSORS == 4);
 }
 
 static void pause_and_persist(void)
@@ -466,9 +466,69 @@ static void refocus_skips_headings(void)
     CHECK(q.block == 0 && q.index == 1);                                  /* fewer rows: the last one, never past the end */
 }
 
+/* Atlas step 7: a stepper value, the world backdrop, tabs from Lua, an explainer with no picture well */
+static int list_root(const char *id, int items_t)
+{
+    int root = atv_table(A), prim = atv_table(A);
+    S(root, "id", id); S(prim, "kind", "list"); atv_set(A, prim, "items", items_t); atv_set(A, root, "primary", prim);
+    return root;
+}
+static int one_item(const char *id, const char *label)
+{
+    int it = atv_table(A);
+    S(it, "id", id); S(it, "label", label);
+    return it;
+}
+static void step7(void)
+{
+    AtScreen sc; char err[160]; int root, items, it, val, tabs, t1, t2, on, refs[32], n, k, seen = 0;
+    /* a stepper value converts with its text */
+    items = atv_table(A); it = one_item("r1", "Row"); val = atv_table(A); S(val, "kind", "stepper"); S(val, "text", "Stand");
+    atv_set(A, it, "value", val); atv_push(A, items, it); root = list_root("t.one", items);
+    CHECK(at_screen_from_val(A, root, "t", &sc, err, sizeof err) == 1);
+    CHECK(sc.items[0].vkind == AT_VAL_STEPPER && strcmp(sc.items[0].text, "Stand") == 0 && sc.backdrop == AT_BD_GROUND);
+    /* the backdrop (a key is set once per tree: each case is a tree of its own) */
+    { int r2 = list_root("t.two", items); S(r2, "backdrop", "world"); CHECK(at_screen_from_val(A, r2, "t", &sc, err, sizeof err) == 1 && sc.backdrop == AT_BD_WORLD); }
+    { int r2 = list_root("t.two", items); S(r2, "backdrop", "sky"); CHECK(at_screen_from_val(A, r2, "t", &sc, err, sizeof err) == 0 && strstr(err, "backdrop") != NULL); }
+    { int r2 = list_root("t.two", items); S(r2, "backdrop", "ground"); CHECK(at_screen_from_val(A, r2, "t", &sc, err, sizeof err) == 1 && sc.backdrop == AT_BD_GROUND); }
+    /* tabs from Lua: names, a count, the tab asked for, on.tab as a reference that is released with the screen */
+    tabs = atv_table(A); t1 = atv_table(A); t2 = atv_table(A);
+    S(t1, "name", "PLAY"); S(t2, "name", "DISPLAY"); N(t2, "count", 4);
+    atv_push(A, tabs, t1); atv_push(A, tabs, t2); atv_set(A, root, "tabs", tabs); N(root, "tab", 2);
+    on = atv_table(A); atv_set(A, on, "tab", atv_fn(A, 41)); atv_set(A, root, "on", on);
+    CHECK(at_screen_from_val(A, root, "t", &sc, err, sizeof err) == 1);
+    CHECK(sc.n_tabs == 2 && strcmp(sc.tabs[1].name, "DISPLAY") == 0 && sc.tabs[1].count == 4 && sc.tabs[0].count == -1 && sc.tab0 == 1);
+    n = at_screen_fn_refs(&sc, refs, 32);
+    for (k = 0; k < n; k++) seen += refs[k] == 41;
+    CHECK(seen == 1);                                                         /* on.tab is released with the screen */
+    {   AtScreen z; int k2;                                                   /* an engine screen's record is zeroed: on.tab, kept as a reference PLUS ONE, names none */
+        memset(&z, 0, sizeof z);
+        z.fn_provide = z.fn_accept = z.fn_back = z.fn_focus = z.fn_change = z.fn_open = z.fn_close = z.fn_counter = z.fn_page = z.fn_start = -1;
+        z.fn_alt[0] = z.fn_alt[1] = z.fn_alt[2] = -1;
+        CHECK(at_screen_fn_refs(&z, refs, 32) == 0);
+        (void) k2;
+    }
+    { int r2 = list_root("t.two", items); atv_set(A, r2, "tabs", atv_table(A));   /* an empty tabs table is refused */
+      CHECK(at_screen_from_val(A, r2, "t", &sc, err, sizeof err) == 0 && strstr(err, "tabs") != NULL); }
+    {   int many = atv_table(A), i, r2 = list_root("t.two", items);
+        for (i = 0; i < AT_MAX_TABS + 1; i++) { int tt = atv_table(A); S(tt, "name", "T"); atv_push(A, many, tt); }
+        atv_set(A, r2, "tabs", many);
+        CHECK(at_screen_from_val(A, r2, "t", &sc, err, sizeof err) == 0 && strstr(err, "tabs") != NULL);
+    }
+    /* the explainer: well = false is a screen row with no picture; WITH strings are tags */
+    {   AtExplainer e; int ex = atv_table(A), with = atv_table(A);
+        atv_push(A, with, atv_str(A, "B Boxes")); atv_push(A, with, atv_str(A, "L Labels"));
+        atv_set(A, ex, "with", with); atv_set(A, ex, "well", atv_bool(A, 0)); S(ex, "title", "Mode");
+        CHECK(at_explainer_from_val(A, ex, &e, err, sizeof err) == 1 && e.no_well == 1 && e.n_with_text == 2 && strcmp(e.with_text[1], "L Labels") == 0);
+        ex = atv_table(A); S(ex, "title", "Mode"); atv_set(A, ex, "well", atv_bool(A, 1));
+        CHECK(at_explainer_from_val(A, ex, &e, err, sizeof err) == 1 && e.no_well == 0);
+    }
+}
+
 int main(void)
 {
     A = (AtvArena *) malloc(sizeof *A);
+    atv_init(A); step7();
     atv_init(A); parse_bag();
     atv_init(A); errors();
     atv_init(A); list_screen();

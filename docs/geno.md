@@ -574,6 +574,22 @@ the flask, the hitbox burst and hazard stripes.
 - Tabs and rows are recorded as hit rects (`menu.hits`, `menu_hit(x, y)`). A future
   `gd.mouse()` (`{x, y, pressed}`) is already polled when it exists.
 
+**The pause menu in Atlas (`lab ui on`; off is the default until the owner has looked).** The same `TABS` and the same rows, drawn by one mapper in `lab.lua` as a `gd.ui`
+screen (`geno-lab.pause`, chapter I, trail `LAB > PAUSE > <tab>`, over the frozen game: `backdrop = "world"`). What is the same: the tabs and rows, START and ESC to open, the
+freeze, the offline-only rule (no Atlas LAB screen exists online), `menu_close` resuming only when the menu paused the game. What changed: tabs move with L and R, Tab and Shift+Tab
+(**Q and E no longer change tabs here**: letters stay free for hotkeys); a toggle row is a toggle (A, left and right flip it once), a row with a value that left and right change
+(Focus, Damage, Fly speed, History, Hot reload, Display mode) is a **stepper** (left and right change it, A runs it), a value-only row is text; the key a row mirrors is its sub line
+("Match key F"); the description is the explainer's WHAT (at most 110 characters, so eighteen were shortened: what moved out is in 14.12, 14.13 and 14.16) and DISPLAY's mode row lists
+the mode's keys as WITH tags; **DELETE is Y**, and asks first in a dialog (A deletes, B keeps; the focus lands on a neighbour); the saved-state library is paged (25 a page, a
+`Library page` row) because the record holds 32 rows; entries other mods register under `lab.pause` become a MODS tab (A activates one through the registry; offline only). Row icons
+are not drawn (Atlas has no icon set yet; the `ico_lab_*` art stays for the dev overlays). `lab ui on|off` is per session and does not survive a script reload; if `gd.ui` is
+unavailable (fonts missing) the legacy menu opens. The menu is the script's own screen, so another script cannot touch it.
+**The LAB HUD in Atlas** (menu closed, same switch): the info panel is a **readout** per fighter (ten rows, P1 top left, P2 top right; the ECB row is not shown), the move timeline a
+**track** for the focused fighter at the bottom (the second fighter's timeline is not drawn: two do not fit above the retail plates), the mode strip a **chips** strip and `say()`
+notices **notes** with a tone; with the menu open, the Lab hidden or a netplay session the HUD is empty. Every other overlay (hitboxes, skeleton, ECB, labels, performance, the move
+browser, launch, A/B, the rollback strip, help, the event log, drill results) keeps its primitive drawing. **Verified**: the Lua checks in `pc/geno/tools/lab_stage_d_check.lua`
+(run against the `gd.ui` stand-in as the script `geno-lab`), `tools/port/lab_locals.sh` (main-chunk locals stay at 179), and the host tests; **not run in the game**.
+
 | tab | rows |
 |---|---|
 | PLAY | Resume; Step +1; Step -1; Step +10; Focus (left / right) |

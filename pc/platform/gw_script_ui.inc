@@ -38,6 +38,7 @@ typedef struct {
     int self_close;         /* an engine screen the host runs alone (Credits): B closes it here, no event reaches the game */
     int native_sel;         /* a select screen (gw_script_ui_sel.inc): its cells are in adapter storage, the mouse is read there */
     int native_set;         /* the settings screens (gw_script_ui_set.inc): rows filled by the table walker, keys and mouse read there, the pad fed as intents */
+    int native_mods;        /* the MODS screen (gw_script_ui_mods.inc), a settings-door screen whose rows come from the mods model; unlike the others it may be covered by a mod's screen */
     int native_room;        /* the online room screens (gw_script_ui_room.inc): a plain-data view the game fills by name; keys and mouse read there, the pad is the game's */
     AtScreen sc;
     AtView view;
@@ -393,7 +394,7 @@ static int gs_ui_open_screen(int slot) {
     int owner = u->owner;
     AtStackEntry *top;
     { int t = at_stack_top(&gs_ui_stack);                          /* no mod screen over a select: it owns the pad and the cursors of every port */
-      if (t >= 0 && (gs_ui_slot[t].native_sel || gs_ui_slot[t].native_set || gs_ui_slot[t].native_room)) { gw_log("ui: screen %s not opened: a select, settings or online room screen is on top", u->sc.id); return 0; } }
+      if (t >= 0 && (gs_ui_slot[t].native_sel || (gs_ui_slot[t].native_set && !gs_ui_slot[t].native_mods) || gs_ui_slot[t].native_room)) { gw_log("ui: screen %s not opened: a select, settings or online room screen is on top", u->sc.id); return 0; } }
     if (!at_stack_push(&gs_ui_stack, slot)) return 0;
     top = at_stack_top_entry(&gs_ui_stack);
     if (top != NULL && top->focus.block >= 0 && u->view.focus.block < 0) u->view.focus = top->focus;
@@ -481,7 +482,7 @@ static int gs_ui_value_event(int slot, const AtEvent *e) {
     double val = 0.0;
     if (u->sc.primary != AT_PRIMARY_LIST || idx < 0 || idx >= u->sc.n_items) return 0;
     it = &u->sc.items[idx];
-    if ((it->vkind != AT_VAL_TOGGLE && it->vkind != AT_VAL_CHOICE && it->vkind != AT_VAL_SLIDER) || (it->flags & AT_CELL_DISABLED)) return 0;
+    if ((it->vkind != AT_VAL_TOGGLE && it->vkind != AT_VAL_CHOICE && it->vkind != AT_VAL_SLIDER && it->vkind != AT_VAL_STEPPER) || (it->flags & AT_CELL_DISABLED)) return 0;
     left = e->type == AT_EV_MOVE && e->a == AT_DIR_LEFT;
     right = e->type == AT_EV_MOVE && e->a == AT_DIR_RIGHT;
     accept = e->type == AT_EV_ACCEPT;
@@ -496,6 +497,9 @@ static int gs_ui_value_event(int slot, const AtEvent *e) {
             it->vval = nv; val = nv;
             snprintf(it->text, sizeof it->text, "%s", it->opt[nv]);
         }
+    } else if (it->vkind == AT_VAL_STEPPER) {
+        if (accept) return 0;                                      /* A runs the row (on.accept); only left and right change it */
+        dir = left ? -1 : 1; val = dir;
     } else {
         if (accept && !(it->iflags & AT_ITEM_A_STEPS)) return 0;  /* a slider is stepped, not accepted (unless the row says A steps it) */
         step = it->vstep > 0 ? it->vstep : (it->vmax - it->vmin) / 20;   /* the script's step, else the Lua rule */
@@ -516,11 +520,28 @@ static int gs_ui_value_event(int slot, const AtEvent *e) {
 }
 
 static void gs_ui_engine_event(int slot, const AtEvent *e);
+/* a Lua screen's tab became t (0-based): the engine moves it and tells the script (on.tab(t + 1)), which re-registers the content; it never decides what is on a tab */
+static void gs_ui_set_tab(int slot, int t) {
+    GsUiSlot *u = &gs_ui_slot[slot];
+    int owner = u->owner;
+    if (t < 0 || t >= u->sc.n_tabs || t == u->view.tab) return;
+    u->view.tab = t;
+    u->explain_dirty = 1;
+    if (u->sc.fn_tab1 > 0 && gs_may_run(owner) && gs_ui_usable(owner)) {
+        lua_State *L = gs.L;
+        lua_rawgeti(L, LUA_REGISTRYINDEX, u->sc.fn_tab1 - 1);
+        if (lua_isfunction(L, -1)) {
+            lua_pushinteger(L, t + 1);
+            if (gs_pcall(owner, 1, 1, "ui") == 0) gs_ui_apply_result(owner);
+        } else lua_pop(L, 1);
+    }
+}
 static void gs_ui_fix_scroll(GsUiSlot *u);
 static void gs_ui_overlay_try(void);
 static void gs_sel_tick(GsUiSlot *u);
 static void gs_set_tick(GsUiSlot *u);
 static void gs_set_resolve(GsUiSlot *u);
+static void gs_mods_drawn(void);
 
 static void gs_ui_event(int slot, const AtEvent *e) {
     GsUiSlot *u = &gs_ui_slot[slot];
@@ -565,6 +586,8 @@ static void gs_ui_event(int slot, const AtEvent *e) {
     } else if (e->type == AT_EV_ALT) {
         alt = e->a == 'X' ? 0 : e->a == 'Y' ? 1 : 2;
         if (u->sc.fn_alt[alt] >= 0 && gs_ui_call(slot, u->sc.fn_alt[alt], cid, bid, 1)) gs_ui_apply_result(owner);
+    } else if (e->type == AT_EV_PAGE && u->sc.n_tabs > 0) {       /* a screen with tabs: L, R, Tab and Shift+Tab move between them (wrapping) and tell on.tab; on.page is for screens with none */
+        gs_ui_set_tab(slot, (u->view.tab + (e->a < 0 ? -1 : 1) + u->sc.n_tabs) % u->sc.n_tabs);
     } else if (e->type == AT_EV_PAGE) {                           /* L / R, Tab / Shift+Tab: on.page(dir, cell id, block id), dir -1 or +1 */
         if (u->sc.fn_page >= 0 && gs_may_run(u->owner) && gs_ui_usable(u->owner)) {
             lua_State *L = gs.L;
@@ -633,6 +656,14 @@ static void gs_ui_tick(void) {
         float x, y, wheel;
         int buttons;
         gw_Mouse_ScriptRead(&x, &y, &buttons, &wheel);
+        if (u->sc.n_tabs > 0 && (buttons & 1) && !(u->mouse.buttons & 1) && u->mouse.valid && x >= 0.0f && y >= 0.0f) {   /* a click on a tab */
+            int hit = at_hit_test(&u->hits, x, y);
+            if (hit >= 0 && u->hits.h[hit].kind == AT_HIT_TAB) {
+                gs_ui_set_tab(top, u->hits.h[hit].a);
+                u->mouse.buttons = buttons; u->mouse.x = x; u->mouse.y = y;                                           /* the click was the tab's, not the row under it */
+                x = -1000.0f; y = -1000.0f; buttons = 0;
+            }
+        }
         n = at_mouse_events(&u->mouse, x, y, buttons, (int) wheel, &u->hits, ev, 16);
         for (i = 0; i < n && at_stack_top(&gs_ui_stack) == top; i++) gs_ui_event(top, &ev[i]);
     }
@@ -669,6 +700,7 @@ static void gs_ui_draw(void) {
     if (u->native_set) gs_set_resolve(u);                          /* the rows were submitted again: the focus is valid before it is drawn */
     gs_ui_reduced = gw_Settings_Int("reduced_motion", 0) != 0;
     at_render_ex(&u->sc, &u->view, gs_ui_stat.canvas_w, gs_now_ms(), gs_ui_reduced, &ops, &sink, &u->hits, &info);
+    if (u->native_mods) gs_mods_drawn();
     gw_Kit_SetTracking(0.0f);                                     /* belt and braces: no draw leaves tracking set */
     quads = gw_Kit_QuadCount() - first;
     gs_kit_record(first, quads);
@@ -1599,15 +1631,9 @@ static int gs_ui_script_in_mod(int script, const char *mod) {
     return script >= 0 && script < gs.n && ml > 0 && strncmp(gs.s[script].id, mod, ml) == 0 && gs.s[script].id[ml] == '/';
 }
 
-int gw_Ui_EntryActivate(const char *parent, int k) {
-    const AtEntry *c[AT_REG_VISIBLE_PER_PARENT];
-    const AtEntry *e;
-    int n, owner;
-    gs_ui_reg_boot();
-    if (parent == NULL) return 0;
-    n = at_reg_children(&gs_ui_reg, parent, gs_ui_netplay(), c, AT_REG_VISIBLE_PER_PARENT);   /* the netplay rule is the list's own */
-    if (k < 0 || k >= n) { gw_log("ui: entry %s/%d refused: not available now", parent, k); return 0; }
-    e = c[k];
+/* the entry `e` of the registry is chosen: an "opens" entry pushes the mod's own registered screen, a "script" entry runs the mod's on_entry(id) as that mod */
+static int gs_ui_activate_entry(const AtEntry *e) {
+    int owner;
     if (e->builtin) return 0;                                       /* a native row: the adapter runs it itself */
     owner = gs_ui_mod_script(e->mod, e->action == AT_ENTRY_OPENS ? NULL : "on_entry");
     if (owner < 0) { gw_log("ui: entry %s refused: no running script of mod %s", e->id, e->mod); return 0; }
@@ -1624,6 +1650,37 @@ int gw_Ui_EntryActivate(const char *parent, int k) {
     if (gs_pcall(owner, 1, 1, "on_entry") != 0) return 0;
     gs_ui_apply_result(owner);                                      /* {push = "<mod>.<screen>"} opens one of the mod's own screens */
     return 1;
+}
+
+int gw_Ui_EntryActivate(const char *parent, int k) {
+    const AtEntry *c[AT_REG_VISIBLE_PER_PARENT];
+    int n;
+    gs_ui_reg_boot();
+    if (parent == NULL) return 0;
+    n = at_reg_children(&gs_ui_reg, parent, gs_ui_netplay(), c, AT_REG_VISIBLE_PER_PARENT);   /* the netplay rule is the list's own */
+    if (k < 0 || k >= n) { gw_log("ui: entry %s/%d refused: not available now", parent, k); return 0; }
+    return gs_ui_activate_entry(c[k]);
+}
+
+/* the entry with this id, when the registry lists it as visible right now (the visibility, cap and netplay rules are the list's own), else NULL */
+static const AtEntry *gs_ui_entry_visible(const char *id) {
+    const AtEntry *c[AT_REG_VISIBLE_PER_PARENT];
+    int i, j, n;
+    gs_ui_reg_boot();
+    if (id == NULL || id[0] == '\0') return NULL;
+    for (i = 0; i < gs_ui_reg.n; i++) {
+        if (strcmp(gs_ui_reg.e[i].id, id) != 0) continue;
+        n = at_reg_children(&gs_ui_reg, gs_ui_reg.e[i].parent, gs_ui_netplay(), c, AT_REG_VISIBLE_PER_PARENT);
+        for (j = 0; j < n; j++) if (c[j] == &gs_ui_reg.e[i]) return c[j];
+    }
+    return NULL;
+}
+
+/* gd.ui.activate and the MODS screen's settings door: one entry by id, through the same path a menu tile takes */
+static int gs_ui_activate_id(const char *id) {
+    const AtEntry *e = gs_ui_entry_visible(id);
+    if (e == NULL) { gw_log("ui: entry %s refused: not available now", id != NULL ? id : ""); return 0; }
+    return gs_ui_activate_entry(e);
 }
 
 /* a script unloaded: its mod's entries go too, unless another script of the mod is still running */
@@ -1657,6 +1714,62 @@ static int l_ui_entry(lua_State *L) {
     }
     ok = mod != NULL && at_reg_set(&gs_ui_reg, mod, id, visible, badge);
     lua_pushboolean(L, ok);
+    return 1;
+}
+
+/* ---- gd.ui.entries(parent), gd.ui.activate(entry), gd.ui.token(name), gd.ui.tab(id) (Atlas step 7) ---------------------------------------------------
+ * A mod's menu may list the entries other mods added under its own parent (the LAB's pause menu: lab.pause) and activate one. Activation is the registry's act, the same
+ * path a menu tile takes: it opens the owning mod's screen or runs its on_entry, under that mod's own permissions. Only the script of the mod that DRAWS a parent may do
+ * either (at_reg_owner), so no mod can trigger another mod's entries by id. What is listed already obeys the registry's visibility, cap and netplay rules. */
+static int gs_ui_owns_parent(const char *parent) {
+    char buf[64];
+    const char *om = gs_ui_owner_mod(buf, sizeof buf), *own = at_reg_owner(parent);
+    return om != NULL && own[0] != '\0' && strcmp(om, own) == 0;
+}
+
+static int l_ui_entries(lua_State *L) {
+    const AtEntry *c[AT_REG_VISIBLE_PER_PARENT];
+    const char *parent = luaL_checkstring(L, 1);
+    int n, i;
+    if (!gs_ui_owns_parent(parent)) return luaL_error(L, "gd.ui.entries: \"%s\" is not yours", parent);
+    gs_ui_reg_boot();
+    n = at_reg_children(&gs_ui_reg, parent, gs_ui_netplay(), c, AT_REG_VISIBLE_PER_PARENT);
+    lua_createtable(L, n, 0);
+    for (i = 0; i < n; i++) {
+        lua_createtable(L, 0, 5);
+        lua_pushstring(L, c[i]->id); lua_setfield(L, -2, "id");
+        lua_pushstring(L, c[i]->label); lua_setfield(L, -2, "label");
+        lua_pushstring(L, c[i]->blurb); lua_setfield(L, -2, "blurb");
+        lua_pushstring(L, c[i]->mod); lua_setfield(L, -2, "mod");
+        lua_pushstring(L, c[i]->badge); lua_setfield(L, -2, "badge");
+        lua_rawseti(L, -2, i + 1);
+    }
+    return 1;
+}
+
+static int l_ui_activate(lua_State *L) {
+    const char *id = luaL_checkstring(L, 1);
+    int i, found = 0;
+    gs_ui_reg_boot();
+    for (i = 0; i < gs_ui_reg.n && !found; i++) {
+        if (strcmp(gs_ui_reg.e[i].id, id) != 0) continue;
+        found = 1;
+        if (!gs_ui_owns_parent(gs_ui_reg.e[i].parent)) return luaL_error(L, "gd.ui.activate: \"%s\" is not yours", id);
+    }
+    lua_pushboolean(L, found && gs_ui_activate_id(id));
+    return 1;
+}
+
+static const struct { const char *name; unsigned rgba; } gs_ui_tokens[] = {
+#include "gw_ui_token_names.inc"
+};
+/* gd.ui.token(name): a colour token as 0xRRGGBBAA, nil for a name that is not one. The generator writes the table from the same source as gw_ui_tokens.h. */
+static int l_ui_token(lua_State *L) {
+    const char *n = luaL_tolstring(L, 1, NULL);
+    size_t i;
+    for (i = 0; i < sizeof gs_ui_tokens / sizeof gs_ui_tokens[0]; i++)
+        if (strcmp(gs_ui_tokens[i].name, n) == 0) { lua_pushinteger(L, (lua_Integer) gs_ui_tokens[i].rgba); return 1; }
+    lua_pushnil(L);
     return 1;
 }
 
@@ -1748,6 +1861,8 @@ static int l_ui_screen(lua_State *L) {
     gs_ui_put_screen(&u->sc);
     u->used = 1;
     u->owner = gs.cur;
+    if (!replace) u->view.tab = u->sc.tab0;                       /* a new screen starts on the tab it asked for; a re-registration keeps the tab the player is on */
+    else if (u->view.tab >= u->sc.n_tabs) u->view.tab = u->sc.n_tabs > 0 ? u->sc.n_tabs - 1 : 0;
     if (u->sc.links_skipped > 0 && !u->links_warned) { u->links_warned = 1; gw_log("ui: %s: %d grid link(s) name a missing cell and are skipped", u->sc.id, u->sc.links_skipped); }
     if (replace) u->view.focus = at_screen_refocus(&u->sc, old_block[0] ? old_block : NULL, old_cell[0] ? old_cell : NULL, old);
     else { AtFocusBlock fb[AT_MAX_BLOCKS]; u->view.focus = at_focus_first(fb, at_screen_focus_blocks(&u->sc, fb)); }
@@ -1763,6 +1878,20 @@ static int gs_ui_slot_arg(lua_State *L, int idx) {
     if (gs_ui_slot[s].owner == GS_UI_ENGINE) luaL_error(L, "gd.ui: screen \"%s\" belongs to the engine", lua_tostring(L, idx));
     if (!gs_ui_may_touch(s)) luaL_error(L, "gd.ui: screen \"%s\" belongs to another script", lua_tostring(L, idx));
     return s;
+}
+
+/* gd.ui.tab(id): the tab the screen shows now, 1-based; nil for a screen with none. gd.ui.tab(id, n) shows tab n (the script moved it itself, say from a
+ * console command): it does not call on.tab, because the script is the one that asked. A re-registration keeps the tab the player is on, so this is how
+ * the script says otherwise. Returns the tab shown. */
+static int l_ui_tab(lua_State *L) {
+    int s = gs_ui_slot_arg(L, 1);
+    GsUiSlot *u = &gs_ui_slot[s];
+    if (u->sc.n_tabs > 0 && lua_isinteger(L, 2) && lua_tointeger(L, 2) >= 1 && lua_tointeger(L, 2) <= u->sc.n_tabs) {
+        u->view.tab = (int) lua_tointeger(L, 2) - 1;
+        u->explain_dirty = 1;
+    }
+    if (u->sc.n_tabs > 0) lua_pushinteger(L, u->view.tab + 1); else lua_pushnil(L);
+    return 1;
 }
 
 static int l_ui_open(lua_State *L) {
@@ -1893,6 +2022,7 @@ static int l_ui_set_value(lua_State *L) {
             /* fall through: a choice without options shows the text it is given */
         case AT_VAL_TEXT:
         case AT_VAL_COUNTER:
+        case AT_VAL_STEPPER:
             if (lua_type(L, 3) == LUA_TSTRING) { snprintf(it->text, sizeof it->text, "%s", lua_tostring(L, 3)); ok = 1; }
             break;
         default: break;
@@ -1915,6 +2045,7 @@ static int l_ui_value(lua_State *L) {
         lua_pushstring(L, it->text);
         break;
     case AT_VAL_TEXT:
+    case AT_VAL_STEPPER:
     case AT_VAL_COUNTER: lua_pushstring(L, it->text); break;
     default: lua_pushnil(L); break;
     }
@@ -2006,7 +2137,7 @@ static int l_ui_state(lua_State *L) {
 static const luaL_Reg gs_ui_funcs[] = {
     {"available", l_ui_available}, {"screen", l_ui_screen}, {"open", l_ui_open}, {"close", l_ui_close},
     {"feed", l_ui_feed}, {"focus", l_ui_focus}, {"set_focus", l_ui_set_focus}, {"set_value", l_ui_set_value}, {"value", l_ui_value}, {"note", l_ui_note},
-    {"dialog", l_ui_dialog}, {"state", l_ui_state}, {"entry", l_ui_entry}, {"hold_menu", l_ui_hold_menu}, {"forget", l_ui_forget}, {"hud", l_ui_hud}, {"hud_clear", l_ui_hud_clear}, {"toast", l_ui_toast},
+    {"dialog", l_ui_dialog}, {"state", l_ui_state}, {"entry", l_ui_entry}, {"entries", l_ui_entries}, {"activate", l_ui_activate}, {"token", l_ui_token}, {"tab", l_ui_tab}, {"hold_menu", l_ui_hold_menu}, {"forget", l_ui_forget}, {"hud", l_ui_hud}, {"hud_clear", l_ui_hud_clear}, {"toast", l_ui_toast},
     {"retail_hide", l_ui_retail_hide}, {"retail", l_ui_retail}, {"pause_screen", l_ui_pause_screen}, {"unpause", l_ui_unpause}, {NULL, NULL}};
 
 static void gs_push_ui(lua_State *L) {
@@ -2016,5 +2147,6 @@ static void gs_push_ui(lua_State *L) {
 
 #include "gw_script_ui_sel.inc"
 #include "gw_script_ui_set.inc"
+#include "gw_script_ui_mods.inc"
 #include "gw_script_ui_room.inc"
 #include "gw_script_ui_data.inc"

@@ -144,7 +144,7 @@ _Static_assert(FSS_EV_CHANGE == GS_SETEV_CHANGE && FSS_EV_ACCEPT == GS_SETEV_ACC
 _Static_assert(FSS_VK_NONE == AT_VAL_NONE && FSS_VK_TOGGLE == AT_VAL_TOGGLE && FSS_VK_CHOICE == AT_VAL_CHOICE && FSS_VK_SLIDER == AT_VAL_SLIDER &&
                FSS_VK_TEXT == AT_VAL_TEXT, "the walker's value kinds are the host's");
 _Static_assert(FSS_K_TABS == GS_SET_TABS && FSS_K_REMAP == GS_SET_REMAP && FSS_K_HOWTO == GS_SET_HOWTO && FSS_K_ERASE == GS_SET_ERASE && FSS_K_RULES == GS_SET_RULES &&
-               FSS_K_MORERULES == GS_SET_MORERULES && FSS_K_MATCH == GS_SET_MATCH && FSS_K_ONLINE == GS_SET_ONLINE, "the adapter's screen kinds are the host's");
+               FSS_K_MORERULES == GS_SET_MORERULES && FSS_K_MATCH == GS_SET_MATCH && FSS_K_ONLINE == GS_SET_ONLINE && FSS_K_MODS == GS_SET_MODS, "the adapter's screen kinds are the host's");
 _Static_assert(FSS_IF_A_STEPS == AT_ITEM_A_STEPS && FSS_IF_RO == AT_ITEM_RO && FSS_IF_DISABLED == AT_ITEM_DISABLED, "the walker's row flags are the host's");
 _Static_assert(FSS_IN_MOVE == AT_EV_MOVE && FSS_IN_ACCEPT == AT_EV_ACCEPT && FSS_IN_BACK == AT_EV_BACK && FSS_IN_ALT == AT_EV_ALT && FSS_IN_PAGE == AT_EV_PAGE &&
                FSS_DIR_LEFT == AT_DIR_LEFT && FSS_DIR_RIGHT == AT_DIR_RIGHT && FSS_DIR_UP == AT_DIR_UP && FSS_DIR_DOWN == AT_DIR_DOWN, "the adapter's intents are the host's");
@@ -230,7 +230,7 @@ static void filled_and_drawn(void)
     h = gw_Ui_SetOpen(4, 0, "VERSUS", "", "RULES"); CHECK(h >= 0 && gw_Ui_TopIsEngine("settings.rules") == 1 && slot_of(h)->sc.chapter == 2); gw_Ui_SetClose(h);
     h = gw_Ui_SetOpen(5, 0, "VERSUS", "RULES", "MORE RULES"); CHECK(h >= 0 && gw_Ui_TopIsEngine("settings.morerules") == 1); gw_Ui_SetClose(h);
     h = gw_Ui_SetOpen(6, 0, "VERSUS", "MELEE", "MATCH SETUP"); CHECK(h >= 0 && gw_Ui_TopIsEngine("settings.match") == 1 && slot_of(h)->sc.chapter == 2); gw_Ui_SetClose(h);
-    CHECK(gw_Ui_SetOpen(8, 0, "", "", "") == -1 && gw_Ui_SetOpen(-1, 0, "", "", "") == -1);
+    CHECK(gw_Ui_SetOpen(9, 0, "", "", "") == -1 && gw_Ui_SetOpen(-1, 0, "", "", "") == -1);   /* 7 is ONLINE PLAY and 8 the MODS screen (atlas_mods_door_test.c) */
     h = gw_Ui_SetOpen(0, 4, "MAIN MENU", "", "SETTINGS"); CHECK(slot_of(h)->view.tab == 4); gw_Ui_SetClose(h);   /* opens on a given tab */
 }
 

@@ -637,8 +637,43 @@ static void link_is_flat(void)
     CHECK(REC.np == 0);                                                /* a zero-length link draws nothing */
 }
 
+/* Atlas step 7 */
+static void stepper_and_with_tags(void)
+{
+    AtRect r = { 32.0f, 100.0f, 300.0f, 34.0f };
+    AtItem c = item("Mode", AT_VAL_CHOICE), st = item("Mode", AT_VAL_STEPPER);
+    AtSink s; int np_choice, nt_choice, i;
+    snprintf(c.text, sizeof c.text, "Stand"); snprintf(st.text, sizeof st.text, "Stand");
+    s = rec_sink(); at_part_row(&s, &FAKE, r, &c, AT_ST_REST); np_choice = REC.np; nt_choice = REC.nt;
+    s = rec_sink(); at_part_row(&s, &FAKE, r, &st, AT_ST_REST);
+    CHECK(REC.np == np_choice && REC.nt == nt_choice && find_text("Stand") != NULL);       /* the arrows and the text, as a choice */
+    {   AtExplainer e; AtRect er = { 400.0f, 66.0f, 232.0f, 362.0f }, small = { 400.0f, 66.0f, 232.0f, 200.0f };
+        memset(&e, 0, sizeof e); e.media_model = e.media_ring = AT_NO_MODEL; e.media_tex = -1; e.has = 1; e.no_well = 1;
+        snprintf(e.kicker, sizeof e.kicker, "DUMMY"); snprintf(e.title, sizeof e.title, "BEHAVIOUR"); snprintf(e.what, sizeof e.what, "What the dummy does while you test.");
+        snprintf(e.from_text, sizeof e.from_text, "Geno LAB");
+        e.n_with_text = 3; snprintf(e.with_text[0], sizeof e.with_text[0], "B Boxes"); snprintf(e.with_text[1], sizeof e.with_text[1], "L Labels"); snprintf(e.with_text[2], sizeof e.with_text[2], "D Data");
+        s = rec_sink(); at_part_explainer(&s, &FAKE, er, &e);
+        CHECK(find_text("WITH") != NULL && find_text("B Boxes") != NULL && find_text("D Data") != NULL && find_text("FROM") != NULL);
+        CHECK(REC.nm == 0 && texts_legible() && texts_inside(er));
+        for (i = 0; i < REC.nt; i++) CHECK(at_role_size(REC.t[i].role) >= 12);
+        CHECK(find_text("DUMMY") != NULL && find_text("DUMMY")->base < er.y + 40.0f);        /* no well: the kicker starts at the top of the pane, not 106 px down */
+        e.no_well = 0; s = rec_sink(); at_part_explainer(&s, &FAKE, er, &e);
+        CHECK(find_text("DUMMY")->base > er.y + 106.0f);                                      /* with the well the text is below it, as before */
+        e.no_well = 1; s = rec_sink(); at_part_explainer(&s, &FAKE, small, &e);               /* tags that do not fit are left off, never overlapped */
+        CHECK(texts_inside(small));
+        {   int a, b, bad = 0;
+            for (a = 0; a < REC.nt; a++) for (b = a + 1; b < REC.nt; b++)
+                if (fabsf(REC.t[a].base - REC.t[b].base) < 8.0f && text_left(&REC.t[a]) < text_right(&REC.t[b]) - 1.0f && text_left(&REC.t[b]) < text_right(&REC.t[a]) - 1.0f) bad++;
+            CHECK(bad == 0);
+        }
+        e.n_with_text = 0; e.from_text[0] = '\0'; s = rec_sink(); at_part_explainer(&s, &FAKE, er, &e);
+        CHECK(find_text("WITH") == NULL);                                                      /* nothing to show: no label either */
+    }
+}
+
 int main(void)
 {
+    stepper_and_with_tags();
     plates(); rows(); values(); tabs_and_tags();
     cells(); hints_and_chrome(); explainer_note_dialog(); fix_round1(); fix_round2(); shared_helpers_on_step1_parts();
     offer_card_style(); hud_parts_never_focus(); link_is_flat();

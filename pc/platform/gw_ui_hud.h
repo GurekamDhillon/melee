@@ -4,6 +4,7 @@
  * HUD's keep-out rectangles, the quiet-HUD caps) and draws them every frame under the screen stack. Nothing here calls Lua. */
 #ifndef GW_UI_HUD_H
 #define GW_UI_HUD_H
+#include "gw_ui_hud_parts.h"
 #include "gw_ui_parts.h"
 #include "gw_ui_retail_ids.h"
 #include "gw_ui_val.h"
@@ -12,7 +13,8 @@ extern "C" {
 #endif
 
 enum { AT_Z_TOP_LEFT, AT_Z_TOP_CENTER, AT_Z_TOP_RIGHT, AT_Z_BOTTOM_LEFT, AT_Z_BOTTOM_CENTER, AT_Z_BOTTOM_RIGHT, AT_Z_COUNT };
-enum { AT_HP_PORT_CARD = 1, AT_HP_TIMER, AT_HP_NOTE, AT_HP_STRIP, AT_HP_BANNER, AT_HP_TOAST, AT_HP_CARD };
+enum { AT_HP_PORT_CARD = 1, AT_HP_TIMER, AT_HP_NOTE, AT_HP_STRIP, AT_HP_BANNER, AT_HP_TOAST, AT_HP_CARD,
+       AT_HP_READOUT, AT_HP_TRACK, AT_HP_CHIPS };   /* the last three are read-only data parts (gw_ui_hud_parts.h): label and value rows, a move's timeline, a mode and its toggles */
 #define AT_HUD_PER_ZONE 4
 #define AT_HUD_KEEPOUTS 12
 #define AT_HUD_QUAD_CAP 768
@@ -23,6 +25,8 @@ typedef struct {
     char text[AT_STR]; char rule[AT_TEXT]; char btn; float progress; unsigned rgba;
     char lines[3][AT_STR]; int n_lines;          /* AT_HP_CARD: the opponent card: a title (text) and up to 3 short lines */
     int seconds;                                  /* AT_HP_TIMER */
+    int tone;                                     /* AT_HP_NOTE: AT_NOTE_OK, WARN, ERR or INFO (the default) */
+    union { AtReadout readout; AtTrack track; AtChips chips; } data;   /* AT_HP_READOUT, AT_HP_TRACK, AT_HP_CHIPS */
     double from_ms, until_ms;                     /* AT_HP_TOAST / AT_HP_NOTE: shown on the UI clock; until_ms 0 = always */
 } AtHudPart;
 typedef struct { char id[AT_ID_HUD]; int owner; AtHudPart z[AT_Z_COUNT][AT_HUD_PER_ZONE]; int n[AT_Z_COUNT]; } AtHud;

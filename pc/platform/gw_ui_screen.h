@@ -11,7 +11,7 @@ extern "C" {
 #define AT_MAX_BLOCKS 6
 #define AT_MAX_CELLS 12               /* the Lua door's limit (documented in scripting.md): an inline block holds this many */
 #define AT_MAX_EXT_CELLS 256          /* a native grid block's capacity (stages: 256), in adapter-owned storage */
-#define AT_MAX_TABS 6
+#define AT_MAX_TABS 8                 /* the LAB pause menu has seven (PLAY DISPLAY DUMMY STATES TOOLS EXIT and a MODS tab when other mods add tools) */
 #define AT_MAX_CURSORS 4
 #define AT_MAX_ITEMS 64               /* a list: the MODS page has up to 41 rows, the remap inputs 22 (the Lua door keeps AT_MAX_ITEMS_LUA) */
 #define AT_MAX_ITEMS_LUA 32           /* the Lua door's documented limit for a list */
@@ -29,8 +29,10 @@ extern "C" {
 enum { AT_PRIMARY_LIST = 1, AT_PRIMARY_GRID = 2, AT_PRIMARY_TILES = 3, AT_PRIMARY_DISPLAY = 4, AT_PRIMARY_CARDS = 5, AT_PRIMARY_ROOM = 6 };   /* the plan says CARDS = 3; 3 is TILES. ROOM: native only (the online room, gw_ui_room.c); Lua cannot ask for it */
 enum { AT_CELL_LOCKED = 1, AT_CELL_EMPTY = 2, AT_CELL_MERGE = 4, AT_CELL_NEW = 8, AT_CELL_SELECTED = 16, AT_CELL_DISABLED = 32,
        AT_CELL_BANNED = 64, AT_CELL_PICKED = 128, AT_CELL_UNSET = 256, AT_CELL_P1 = 512 };   /* 64 and up: strike marks, drawing only (step 6 sets them) */
+enum { AT_BD_GROUND, AT_BD_WORLD };
 enum { AT_CARD_OPEN = 1, AT_CARD_CLOSED = 2, AT_CARD_READY = 4, AT_CARD_FOCUS = 8 };   /* AtPortCard.flags */
-enum { AT_VAL_NONE, AT_VAL_TOGGLE, AT_VAL_CHOICE, AT_VAL_SLIDER, AT_VAL_TEXT, AT_VAL_COUNTER };
+enum { AT_VAL_NONE, AT_VAL_TOGGLE, AT_VAL_CHOICE, AT_VAL_SLIDER, AT_VAL_TEXT, AT_VAL_COUNTER,
+       AT_VAL_STEPPER };   /* stepper: left and right change it (on.change reports the direction), A runs the row (on.accept); the script owns its text */
 /* AtItem.iflags: A steps a slider (+1 step) like the legacy rule; a readout (a value shown, never changed); a confirm-worthy action; a disabled row (its `reason` shows) */
 enum { AT_ITEM_A_STEPS = 1, AT_ITEM_RO = 2, AT_ITEM_DANGER = 4, AT_ITEM_DISABLED = 8 };
 
@@ -85,6 +87,9 @@ typedef struct {
     int has_countdown, countdown;                    /* seconds shown at the trail's right end (0:45, rose under 10 s). The script re-registers it once a second */
     int pause;                                       /* kind = "pause": a screen the retail pause takeover may push (a list primary; offline only) */
     int persist;                                     /* persist = true: the screen is not closed when the scene it was opened in ends (only its owner closes it) */
+    int backdrop;                                    /* AT_BD_*: the opaque ground (the default) or a translucent scrim over the frozen game (the LAB's pause menu) */
+    int fn_tab1;                                     /* on.tab as a Lua reference PLUS ONE: 0 = none (a record built by the engine is zeroed, and 0 is a valid reference) */
+    int tab0;                                        /* the tab a Lua screen asked for, 0-based */
     int fn_provide, fn_accept, fn_back, fn_alt[3], fn_focus, fn_change, fn_open, fn_close, fn_page, fn_start;
     int warnings;
 } AtScreen;

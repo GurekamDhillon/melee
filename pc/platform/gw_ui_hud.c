@@ -87,6 +87,13 @@ static void part_size(const AtHudPart *p, const AtTextOps *o, float safe_w, floa
         *w = tw < 120.0f ? 120.0f : (tw > 360.0f ? 360.0f : tw); *h = 24.0f;
         break; }
     case AT_HP_STRIP: *w = 232.0f; *h = 20.0f; break;
+    case AT_HP_READOUT: {                                              /* 200 px wide, one column: two fit side by side between the retail timer and the corners at 4:3 */
+        AtReadout one = p->data.readout;
+        one.cols = 1;
+        *w = 200.0f; *h = at_readout_height(&one);
+        break; }
+    case AT_HP_TRACK: *w = safe_w < 520.0f ? safe_w : 520.0f; *h = at_track_height(); break;
+    case AT_HP_CHIPS: *w = safe_w < 400.0f ? safe_w : 400.0f; *h = at_chips_height(); break;
     case AT_HP_BANNER: {                                               /* the glyph, one line, padding: fitted to its text, 160 to 300 */
         float tw = o->width(o->user, AT_R_CAP16, p->text) + 58.0f;
         *w = tw < 160.0f ? 160.0f : (tw > 300.0f ? 300.0f : tw); *h = 34.0f;
@@ -222,7 +229,10 @@ void at_hud_render(const AtHud *h, const AtHudLayout *l, double now_ms, int redu
             snprintf(t, sizeof t, "%d:%02d", p->seconds / 60, p->seconds % 60);
             at_text(&sink, o, AT_R_NUM16, t, r.x + r.w * 0.5f, r.y + 19.0f, AT_C_IVORY, AT_ALIGN_CENTER, 0.0f);
             break; }
-        case AT_HP_NOTE: at_part_note(&sink, o, r, p->text, AT_NOTE_INFO, remaining); break;
+        case AT_HP_NOTE: at_part_note(&sink, o, r, p->text, p->tone, remaining); break;
+        case AT_HP_READOUT: { AtReadout one = p->data.readout; one.cols = 1; at_part_readout(&sink, o, r, &one); break; }
+        case AT_HP_TRACK: at_part_track(&sink, o, r, &p->data.track); break;
+        case AT_HP_CHIPS: at_part_chips(&sink, o, r, &p->data.chips); break;
         case AT_HP_STRIP: at_part_strip(&sink, o, r, &p->strip); break;
         case AT_HP_BANNER: at_part_banner(&sink, o, r, p->btn, p->text, p->progress); break;
         case AT_HP_TOAST: at_part_toast(&sink, o, r, p->rgba != 0 ? p->rgba : AT_C_LINE2, p->text, p->rule, remaining); break;
@@ -323,7 +333,9 @@ int at_hud_from_val(const AtvArena *a, int root, const char *owner_mod, double n
                 for (k = 0; k < kn; k++) snprintf(p->lines[k], AT_STR, "%s", atv_strv(a, atv_at(a, lines, k + 1), ""));
                 p->n_lines = kn;
             } else if (strcmp(kind, "note") == 0) {
+                const char *tn = atv_strv(a, atv_get(a, pt, "tone"), "info");
                 p->kind = AT_HP_NOTE;
+                p->tone = strcmp(tn, "ok") == 0 ? AT_NOTE_OK : strcmp(tn, "warn") == 0 ? AT_NOTE_WARN : strcmp(tn, "err") == 0 ? AT_NOTE_ERR : AT_NOTE_INFO;
                 copy_str(a, pt, "text", p->text, AT_STR);
                 p->from_ms = now_ms;
                 p->until_ms = now_ms + 1000.0 * clamp_secs(atv_numv(a, atv_get(a, pt, "seconds"), 4.0));
@@ -336,8 +348,17 @@ int at_hud_from_val(const AtvArena *a, int root, const char *owner_mod, double n
                 double s = atv_numv(a, atv_get(a, pt, "seconds"), 0.0);
                 p->kind = AT_HP_TIMER;
                 p->seconds = (s != s || s < 0.0) ? 0 : (s > 5999.0 ? 5999 : (int) s);
+            } else if (strcmp(kind, "readout") == 0) {
+                p->kind = AT_HP_READOUT;
+                if (!at_readout_from_val(a, pt, &p->data.readout, err, errcap)) return 0;
+            } else if (strcmp(kind, "track") == 0) {
+                p->kind = AT_HP_TRACK;
+                if (!at_track_from_val(a, pt, &p->data.track, err, errcap)) return 0;
+            } else if (strcmp(kind, "chips") == 0) {
+                p->kind = AT_HP_CHIPS;
+                if (!at_chips_from_val(a, pt, &p->data.chips, err, errcap)) return 0;
             } else {
-                HFAIL("gd.ui.hud: part %d of %s has the unknown kind \"%s\" (strip, banner, card, note, port_card, timer)", i + 1, ZONE_NAMES[z], kind);
+                HFAIL("gd.ui.hud: part %d of %s has the unknown kind \"%s\" (strip, banner, card, note, port_card, timer, readout, track, chips)", i + 1, ZONE_NAMES[z], kind);
             }
         }
         out->n[z] = n;

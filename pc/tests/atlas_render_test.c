@@ -705,8 +705,33 @@ static void dialog_focused_button_cues(void)
     }
 }
 
+/* a full-canvas quad in that colour (any alpha): the ground, or its fade */
+static int covers_screen(unsigned rgba)
+{
+    int i;
+    for (i = 0; i < REC.np; i++) if ((REC.p[i].rgba & 0xFFFFFF00u) == (rgba & 0xFFFFFF00u) && poly_minx(&REC.p[i]) <= 0.0f && poly_maxx(&REC.p[i]) >= 640.0f && poly_maxy(&REC.p[i]) >= 480.0f) return 1;
+    return 0;
+}
+static void world_backdrop(void)
+{
+    static AtScreen sc; static AtView vw; static AtHits hits; AtSink s;
+    memset(&sc, 0, sizeof sc); memset(&vw, 0, sizeof vw);
+    sc.primary = AT_PRIMARY_LIST; sc.preset = AT_PRESET_NONE; sc.n_items = 1; snprintf(sc.items[0].id, AT_ID, "a"); snprintf(sc.items[0].label, AT_STR, "A");
+    sc.backdrop = AT_BD_WORLD; vw.opened_ms = 1000.0;
+    s = rec_sink(); at_render(&sc, &vw, 640.0f, 1000.0, 0, &FAKE, &s, &hits);
+    CHECK(REC.np == 0 || (REC.p[0].rgba & 0xFFu) < 0x10u || REC.p[0].rgba != AT_C_SCRIM);   /* just opened: no scrim yet (a zero-alpha quad or none) */
+    CHECK(!covers_screen(AT_C_GROUND));                                         /* and no ground, and no end fade of it, over the world */
+    s = rec_sink(); at_render(&sc, &vw, 640.0f, 1100.0, 0, &FAKE, &s, &hits);
+    CHECK(REC.p[0].rgba == AT_C_SCRIM && !covers_screen(AT_C_GROUND));          /* open: the full scrim, and never the ground */
+    s = rec_sink(); at_render(&sc, &vw, 640.0f, 1000.0, 1, &FAKE, &s, &hits);
+    CHECK(REC.p[0].rgba == AT_C_SCRIM);                                         /* Reduced Motion: a cut */
+    sc.backdrop = AT_BD_GROUND; s = rec_sink(); at_render(&sc, &vw, 640.0f, 1100.0, 0, &FAKE, &s, &hits);
+    CHECK(REC.p[0].rgba == AT_C_GROUND);                                        /* the default is unchanged */
+}
+
 int main(void)
 {
+    world_backdrop();
     budget_and_legibility(); focus_cues(); long_strings(); hits_at_widths(); list_screen(); overlays_and_fade();
     budget_enforced(); hits_stay_in_table(); tall_grid(); zero_cols(); dialog_suppresses_hits(); long_key_hints(); stone_note_per_row();
     tabs_and_band_render(); ext_cells_in_render(); cursors_per_port(); sink_without_image_op_in_render();

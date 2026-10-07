@@ -79,7 +79,7 @@ gd = setmetatable({
     return { length = 10, events = {} }
   end,
   pad = function(port) return port == 2 and pad2 or pad end, motion_name = function(id) return names[id] or ("M" .. id) end,
-  history = function() return { busy = false, replaying = false, back = 0, fwd = 0, depth = 600 } end,
+  history = function() return { busy = false, replaying = false, back = 0, fwd = 0, depth = 600, interval = 5, mb = 12.0 } end,
   debug_draw = function() return 1 end, debug_stage = function() return 0 end,
   key = function() return false end, key_pressed = function() return false end, paused = function() return false end,
   command = noop, lab_mode = function() return true end, lab_env = function() return nil end,
@@ -587,6 +587,352 @@ do
   expect(type(st) == "table" and st.conditional and st.iasa == nil and st.ac == nil,
     "geno_conditional_static: conditional IASA/autocancel cannot masquerade as measured values")
   gd.timeline = old
+end
+-- ---- the Atlas pause menu (docs/superpowers/plans/2026-10-06-atlas-step7-mods-and-lab.md) --------------------------------------
+-- Runs the LAB against the real gd.ui contract (atlas_ui_stub.lua) owned by the script geno-lab, never the console, which bypasses ownership.
+do
+  local here = (arg and arg[0] or ""):gsub("\\", "/"):gsub("[^/]*$", "")
+  local Stub = dofile(here .. "../../tests/atlas_ui_stub.lua")
+  local ui = Stub.new{ caller = "geno-lab", owner_mod = "geno-lab", available = true }
+  local SCREEN = "geno-lab.pause"
+  local function upv(fn, name)
+    for i = 1, 250 do local n, v = debug.getupvalue(fn, i) if not n then return nil end if n == name then return v end end
+  end
+  gd.ui = ui
+  chunk()                                   -- a fresh LAB, loaded after gd.ui exists (the mapper reads it once, at load)
+  env.on_match_start()
+  local menu, TABS = upv(cmdfn, "menu"), upv(cmdfn, "TABS")
+  local resumed, left = 0, nil
+  gd.resume = function() resumed = resumed + 1 end
+  gd.lab_leave = function(where) left = where end
+  local function press(kind) return ui.engine_press(SCREEN, kind) end
+  local function desc() return ui.screens[SCREEN] end
+  local function rows() return desc().primary.items end
+  local function row(label) for _, r in ipairs(rows()) do if r.label == label then return r end end end
+  local function focus_on(label) local r = row(label); assert(r, "no row " .. label); ui.engine_focus(SCREEN, "list", r.id) end
+  local function closed() return ui.state().depth == 0 end
+
+  -- 1. off by default: the legacy menu opens and no Atlas screen exists
+  lab("menu")
+  expect(menu.open and closed() and desc() == nil, "lab ui is off by default: the legacy menu opens and registers no screen")
+  lab("menu close")
+  -- 2. on: the pause menu is the Atlas screen, owned by the script, over the world, with every tab
+  lab("ui on"); lab("menu")
+  expect(ui.state().top == SCREEN and menu.open, "lab ui on: the pause menu is the Atlas screen")
+  expect(ui._owner[SCREEN] == "geno-lab", "the screen is owned by the script geno-lab, not the console")
+  local names, want = {}, {}
+  for i, t in ipairs(desc().tabs) do names[i] = t.name end
+  for i, t in ipairs(TABS) do want[i] = t.name end
+  expect(table.concat(names, ",") == table.concat(want, ",") and want[1] == "PLAY" and want[#want] == "EXIT", "every tab is there: " .. table.concat(names, ","))
+  expect(desc().backdrop == "world" and desc().chapter == 1 and desc().trail.title == "PLAY" and desc().trail[1] == "LAB", "over the world, chapter I, LAB > PAUSE > PLAY")
+  expect(not pcall(ui.screen, { id = "lab.pause", primary = { kind = "list", items = { { id = "a", label = "A" } } } }), "a screen id without the mod's prefix is refused for the script")
+  -- 3. every row of every tab maps (count, unique ids, no row over the record's cap)
+  for i, t in ipairs(TABS) do
+    cmdfn("menu " .. t.name:lower())
+    local legacy = #(type(t.items) == "function" and t.items() or t.items)
+    local seen, ok = {}, true
+    for _, r in ipairs(rows()) do if seen[r.id] or #r.id > 23 then ok = false end seen[r.id] = true end
+    expect(ok and #rows() == math.min(legacy, 32) and #rows() >= 1, t.name .. ": " .. #rows() .. " rows for " .. legacy)
+    expect(ui.tab(SCREEN) == i, t.name .. ": the console command moved the engine's tab too")
+  end
+  -- 4. a toggle flips once (run and adjust both flip it: calling both would undo it)
+  cmdfn("menu display")
+  local tr
+  for _, r in ipairs(rows()) do if r.value and r.value.kind == "toggle" then tr = r break end end
+  expect(tr ~= nil, "the DISPLAY tab has toggle rows")
+  local before = tr.value.on
+  focus_on(tr.label); press("accept")
+  expect(row(tr.label).value.on ~= before, "a toggle flips on A")
+  press("accept")
+  expect(row(tr.label).value.on == before, "and flips back on the next A: once each, not twice")
+  ui.engine_row(SCREEN, "right")
+  expect(row(tr.label).value.on ~= before, "left and right flip a toggle once as well")
+  ui.engine_row(SCREEN, "left")
+  -- 5. a stepper: left and right change it, A runs it
+  cmdfn("menu play")
+  focus_on("Focus")
+  local function focus_now() return tonumber(lab("status"):match("focus=(%d+)")) end
+  local f0 = focus_now()
+  ui.engine_row(SCREEN, "right")
+  local f1 = focus_now()
+  press("accept")
+  local f2 = focus_now()
+  expect(f1 ~= f0 and f2 ~= f1, "a stepper: right changes it, A runs it (focus " .. f0 .. ", " .. f1 .. ", " .. f2 .. ")")
+  expect(row("Focus").value.kind == "stepper", "the Focus row is a stepper")
+  expect(row("Step +10").value == nil and row("Step +1").value.kind == "text", "a row with only a value is a text value, one with neither is plain")
+  -- 6. the focus stays on the row after every re-registration, and a tab change restores the tab's last row
+  focus_on("Step +10"); press("accept")
+  expect(ui.focus(SCREEN) == row("Step +10").id, "the focus stays on the same row after the screen is re-registered")
+  press("r"); expect(menu.tab == 2 and desc().trail.title == "DISPLAY", "R: the next tab, the trail follows")
+  press("l"); expect(menu.tab == 1 and ui.focus(SCREEN) == row("Step +10").id, "L: back, and the tab's last row has the focus again")
+  -- 7. closing: the game resumes once, every port's input is neutralised, the screen is gone
+  resumed = 0
+  focus_on("Resume")
+  local okc, errc = pcall(press, "accept")
+  expect(okc and closed() and not menu.open, "Resume closes the menu and the screen (" .. tostring(errc) .. ")")
+  expect(resumed == 1 and inputs[5] == 0 and inputs[6] == 0, "the game resumes once and all six ports' inputs are neutralised")
+  gd.paused = function() return true end
+  lab("menu"); resumed = 0
+  press("back")
+  expect(closed() and not menu.open and resumed == 0, "opened over a paused game: B closes the menu and leaves the game paused")
+  press("back")                                                    -- a stray second B on a closed screen is harmless
+  gd.paused = function() return false end
+  -- 8. leaving the match closes the screen too
+  lab("menu"); cmdfn("menu exit"); focus_on("Quit"); left = nil
+  press("accept")
+  expect(closed() and not menu.open and left == "menu", "EXIT > Quit leaves the match and closes the screen")
+  -- 9. the explainer: WHAT is the row's description, and a mode row carries its keys as tags
+  lab("menu"); cmdfn("menu display"); focus_on("Display mode")
+  local ex = desc().explainer.provide(row("Display mode").id)
+  expect(ex and ex.title == "Display mode" and #(ex.with or {}) >= 1 and ex.from.text == "Geno LAB" and ex.well == false, "the mode row explains itself, with no picture well, and lists the mode's keys")
+  lab("menu close")
+  -- 10. the descriptions fit the explainer (the spec's one short rule: at most 110 characters; the engine cuts at 159)
+  lab("menu")
+  local long = {}
+  for i, t in ipairs(TABS) do
+    cmdfn("menu " .. t.name:lower())
+    for _, r in ipairs(rows()) do
+      local okp, e = pcall(desc().explainer.provide, r.id)
+      if not okp then long[#long + 1] = t.name .. " / " .. r.label .. " (raised: " .. tostring(e) .. ")"
+      elseif e and #e.what > 110 then long[#long + 1] = t.name .. " / " .. r.label .. " (" .. #e.what .. ")" end
+    end
+  end
+  expect(#long == 0, "every row description is 110 characters or less; too long: " .. table.concat(long, "; "))
+  lab("menu close"); lab("ui off")
+
+  -- ---- Task 8: the library, other mods' tools, lifetime, ownership, online ----
+  lab("ui on")
+  menu = upv(cmdfn, "menu")
+
+  -- 1. the saved-state library is paged: 60 states do not fit a 32-row record
+  local gen, lib_rows = 1, {}
+  for i = 1, 60 do lib_rows[i] = { name = "State " .. i, file = "s" .. i, saved = "today", what = "Fox v Falco", ok = true, frame = i } end
+  gd.state_gen = function() return gen end
+  gd.state_list = function() return lib_rows end
+  gd.state_delete = function(file)
+    for i, r in ipairs(lib_rows) do if r.file == file then table.remove(lib_rows, i) gen = gen + 1 return true end end
+    return false, "no such state"
+  end
+  lab("menu"); cmdfn("menu states")
+  expect(#rows() <= 32 and row("Library page") ~= nil and row("Library page").value.text == "1 / 3", "STATES with 60 saved states: at most 32 rows and a page row reading 1 / 3")
+  focus_on("Library page"); ui.engine_row(SCREEN, "right")
+  expect(row("Library page").value.text == "2 / 3" and row("State 26") ~= nil and row("State 1") == nil, "right turns the page: the second page starts at state 26")
+  ui.engine_row(SCREEN, "left"); ui.engine_row(SCREEN, "left")
+  expect(row("Library page").value.text == "3 / 3", "and wraps round to the last page")
+  ui.engine_row(SCREEN, "right")
+  -- 2. delete: Y asks in a dialog, B keeps, A deletes, and the focus lands on a neighbour (never on nothing)
+  focus_on("State 3")
+  ui.engine_press(SCREEN, "y")
+  expect(#ui.dialogs == 1 and ui.dialogs[1].actions[1][2] == "Delete", "Y on a saved state asks first, in a dialog")
+  ui.dialogs[1].on("B")
+  expect(#lib_rows == 60 and row("State 3") ~= nil, "B (Keep) deletes nothing")
+  ui.engine_press(SCREEN, "y")
+  ui.dialogs[#ui.dialogs].on("A")
+  expect(#lib_rows == 59 and row("State 3") == nil, "A (Delete) removes it from the library")
+  expect(ui.focus(SCREEN) ~= nil and (ui.focus(SCREEN) == row("State 4").id or ui.focus(SCREEN) == row("State 2").id), "the focus is on a neighbour after the delete")
+  expect(ui.state().top == SCREEN, "the screen is still open")
+  focus_on("Quick save"); local nd = #ui.dialogs; ui.engine_press(SCREEN, "y")
+  expect(#ui.dialogs == nd, "Y on a row with no delete asks nothing")
+  lab("menu close")
+
+  -- 2b. an empty library is just the fixed rows
+  lib_rows = {}; gen = gen + 1
+  lab("menu"); cmdfn("menu states")
+  expect(#rows() >= 4 and row("Library page") == nil, "no saved states: no page row")
+  lab("menu close")
+
+  -- 3. other mods' tools: entries under lab.pause appear as a tab, activating one is the registry's act
+  lab("menu"); local n_tabs0 = #desc().tabs; lab("menu close")
+  ui.entries["tools.extra"] = { id = "tools.extra", parent = "lab.pause", label = "Extra tool", blurb = "Does a thing.", mod = "tools", opens = "tools.screen", visible = true, badge = "" }
+  lab("menu")
+  local has_mods = false
+  for _, t in ipairs(desc().tabs) do if t.name == "MODS" then has_mods = true end end
+  expect(has_mods and #desc().tabs == n_tabs0 + 1, "an entry under lab.pause adds a MODS tab")
+  cmdfn("menu mods"); focus_on("Extra tool"); press("accept")
+  expect(ui.activated == "tools.extra", "A on the entry activates it through the registry")
+  local e = desc().explainer.provide(row("Extra tool").id)
+  expect(e and e.from.text == "tools" and e.what == "Does a thing.", "the explainer's FROM names the mod that added it")
+  lab("menu close")
+  lab("menu"); lab("menu close")
+  local mods_tabs = 0
+  for _, t in ipairs(TABS) do if t.name == "MODS" then mods_tabs = mods_tabs + 1 end end
+  expect(mods_tabs == 0, "the MODS tab is in TABS only while the Atlas menu is open")
+
+  -- 4. ownership: the screen belongs to geno-lab; another script cannot touch it; the console bypass is not what the tests ran as
+  lab("menu")
+  expect(ui._owner[SCREEN] == "geno-lab" and ui.caller == "geno-lab", "these checks ran as the script geno-lab (not as the developer console)")
+  lab("menu close")
+
+  -- 5. the Atlas menu falls back when gd.ui is not available (fonts missing): the legacy menu opens instead
+  ui.available_ok = false
+  lab("menu")
+  expect(menu.open and closed(), "gd.ui not available: the legacy menu opens and no screen is registered")
+  lab("menu close"); ui.available_ok = true
+
+  -- 6. offline only: online the menu does not open at all, and the Atlas path refuses even when called directly
+  local real = gd.match
+  gd.match = function() return { active = true, frame = now, netplay = true } end
+  lab("menu")
+  expect(not menu.open and closed(), "online: the LAB menu does not open")
+  menu.ui.open(1)
+  expect(closed(), "online: the Atlas path refuses to open")
+  gd.match = real
+
+  -- 7. a screen left open when the match ends is closed by on_match_start (a new match, a hot reload of the script)
+  lab("menu")
+  expect(ui.state().top == SCREEN, "open again")
+  env.on_match_start()
+  expect(closed() and not menu.open, "a new match closes a screen left open")
+  -- 8. the script reloaded while a screen is registered: the new instance opens its own screen cleanly
+  lab("menu"); chunk(); env.on_match_start()                        -- the reload re-registers the console command through gd.command
+  lab("ui on"); lab("menu")
+  expect(ui.state().top == SCREEN and #rows() >= 1, "after a reload the screen opens again from the new instance")
+  lab("menu close"); lab("ui off")
+
+
+  -- ---- review follow-ups ----
+  lab("ui on")
+  menu = upv(cmdfn, "menu"); TABS = upv(cmdfn, "TABS")
+  local function count_tabs(name) local n = 0 for _, t in ipairs(TABS) do if t.name == name then n = n + 1 end end return n end
+  ui.entries["tools.extra"] = nil
+  local all_logs, old_log = {}, gd.log
+  gd.log = function(...) all_logs[#all_logs + 1] = tostring((...)) return old_log(...) end
+  -- a. UI.open refusing (false) falls back to the legacy menu: the game is never left paused with no menu
+  local real_open = ui.open
+  ui.open = function() return false end
+  lab("menu")
+  expect(menu.open and closed(), "the Atlas screen refused to open: the legacy menu is up, no screen is left registered as open")
+  expect(not (menu.ui.on and menu.ui.on()), "and the Atlas path says it is not the one drawing")
+  lab("menu close"); ui.open = real_open
+  -- b. a tab of more than 32 rows stays fully reachable (paged), and the cut is logged once however often the screen is registered again
+  local big = {}
+  for i = 1, 70 do big[i] = { label = "Big " .. i, desc = "row " .. i } end
+  table.insert(TABS, #TABS, { name = "BIG", items = function() return big end })
+    lab("menu"); cmdfn("menu big")
+  local seen, pages = {}, 0
+  for _ = 1, 4 do
+    for _, r in ipairs(rows()) do seen[r.label] = true end
+    expect(#rows() <= 32, "a paged tab holds at most 32 rows (" .. #rows() .. ")")
+    pages = pages + 1
+    focus_on("Page"); ui.engine_row(SCREEN, "right")
+  end
+  local reach = 0
+  for i = 1, 70 do if seen["Big " .. i] then reach = reach + 1 end end
+  expect(reach == 70, "every one of 70 rows of a tab is reachable through its pages (" .. reach .. ")")
+  expect(row("Page") ~= nil and row("Page").value.text:find("/ 3", 1, true) ~= nil, "the page row reads n / 3")
+  local cuts = 0
+  for _, l in ipairs(all_logs) do if l:find("BIG tab has 70 rows", 1, true) then cuts = cuts + 1 end end
+  expect(cuts <= 1, "the cut is logged once, not on every re-registration (" .. cuts .. ")")
+  lab("menu close")
+  table.remove(TABS, #TABS - 1)
+  -- c. the MODS tab is only in TABS while the Atlas menu is open: the legacy menu never sees it, and tab numbers do not shift under an open menu
+  ui.entries["tools.extra"] = { id = "tools.extra", parent = "lab.pause", label = "Extra tool", blurb = "Does a thing.", mod = "tools", opens = "tools.screen", visible = true, badge = "" }
+  expect(count_tabs("MODS") == 0, "closed: no MODS tab in TABS")
+  lab("menu"); cmdfn("menu exit")
+  expect(count_tabs("MODS") == 1 and TABS[menu.tab].name == "EXIT", "open: one MODS tab, and the menu is still on EXIT")
+  local names_open = {}
+  for i, t in ipairs(TABS) do names_open[i] = t.name end
+  ui.refresh(SCREEN); lab("menu mods")
+  expect(#TABS == #names_open and TABS[menu.tab].name == "MODS", "opening it and moving to it changes no tab numbers")
+  lab("menu close")
+  expect(count_tabs("MODS") == 0 and TABS[menu.tab].name ~= "MODS", "closed again: no MODS tab, nothing lingering, the saved tab is a real one")
+  lab("ui off"); lab("menu")
+  expect(menu.open and count_tabs("MODS") == 0 and closed(), "lab ui off: the legacy menu has no MODS tab")
+  lab("menu close"); lab("ui on")
+  ui.entries["tools.extra"] = nil
+  lab("menu"); expect(count_tabs("MODS") == 0, "no entries: no MODS tab, not even an empty one"); lab("menu close")
+  -- d. lab ui off takes the HUD down (the clean mode has a chip strip and needs no fighter fields)
+  lab("mode clean"); run(2)
+  pcall(env.on_tick)
+  local was = ui.huds[ui.caller] ~= nil
+  lab("ui off")
+  expect(was and ui.huds[ui.caller] == nil, "lab ui off clears the HUD (it was up: " .. tostring(was) .. ")")
+  lab("ui on"); lab("mode training"); lab("ui off")
+  gd.log = old_log
+  -- ---- Task 9: the HUD ----
+  lab("ui on")
+  -- the harness's fake fighters carry only what the older checks read; the info readout reads the rest (the real game has them all)
+  for i = 1, 2 do
+    local q = P[i]
+    for k, v in pairs({ anim_frame_f = 0, anim_rate = 1, vx = 0, vy = 0, kb_vx = 0, kb_vy = 0, jumps_max = 2, jumps_left = 2, walljumps_used = 0, ground_vel = 0,
+                        hitlag = 0, hitstun = 0, kb_applied = 0, ledge_cooldown = 0, ecb_lock = 0, anim_name = "", intangible = 0, invincible = 0 }) do
+      if q[k] == nil then q[k] = v end
+    end
+    q.ecb = q.ecb or { bottom = { y = 0 } }
+  end
+  local old_timeline = gd.timeline                                            -- the harness's timeline has no motion_name; the real one does
+  gd.timeline = function(port, id) local tt = old_timeline(port, id); tt.motion_name = tt.motion_name or P[port].motion_name; return tt end
+  local function hud() return ui.huds[ui.caller] end                           -- what gd.ui.hud last got from this script
+  local function zone(name) return hud() and hud().zones and hud().zones[name] or {} end
+  local function part(zn, kind) for _, p in ipairs(zone(zn)) do if p.kind == kind then return p end end end
+  local function tap(k) gd.key_pressed = function(x) return x == k end pcall(env.on_tick) gd.key_pressed = function() return false end end
+  lab("mode inspect"); run(2)
+  if not lab("status"):find("info=ON", 1, true) then tap("I") end
+  pcall(env.on_tick)
+  expect(hud() ~= nil and hud().id == "geno-lab.hud", "in a LAB match the HUD is registered through gd.ui.hud")
+  local info = part("top_left", "readout")
+  expect(info ~= nil and #info.rows >= 9 and info.title:find("P1", 1, true) ~= nil, "INSPECT with I on: an info readout for the focused fighter")
+  local labels = {}
+  for _, r in ipairs(info.rows) do labels[r.label] = r.value end
+  expect(labels["Motion"] ~= nil and labels["Position"] ~= nil and labels["Hitlag"] ~= nil and labels["Shield"] ~= nil, "the readout has the info panel's fields as label and value rows")
+  for _, r in ipairs(info.rows) do expect(#r.label <= 23 and #r.value <= 39, "readout row fits its fields: " .. r.label) end
+  expect(#info.rows <= 10, "ten rows at most: the panel has to end above the middle of the screen")
+  local second = part("top_right", "readout")
+  expect(second ~= nil and second.title:find("P2", 1, true) ~= nil, "a second readout for the other fighter, in the other corner")
+  lab("mode frames"); run(2)
+  if not lab("status"):find("timeline=ON", 1, true) then tap("T") end
+  pcall(env.on_tick)
+  local tl = part("bottom_center", "track")
+  expect(tl ~= nil and tl.len >= 1 and tl.now >= 1 and tl.now <= tl.len, "FRAMES with T on: a timeline track for the focused fighter, the playhead inside the move")
+  expect(type(tl.spans) == "table" and type(tl.marks) == "table" and tl.right:find("f ", 1, true) ~= nil, "windows, marks and the 'f n / len' text")
+  for _, m in ipairs(tl.marks) do expect(m.kind == "iasa" or m.kind == "invinc" or m.kind == "gfx" or m.kind == "sfx" or m.kind == "vis", "a mark kind the part knows: " .. tostring(m.kind)) end
+  local chips = part("bottom_left", "chips")
+  expect(chips ~= nil and #chips.items >= 2, "the mode strip: the mode and its toggles")
+  expect(chips.items[1].text == "FRAMES", "the first chip names the mode (a word, not a colour)")
+  -- a notice is a corner note for its two seconds, then gone
+  gd.time = function() return now / 60 end
+  gd.hot_reload_status = function() return { text = "ok" } end
+  env.on_hot_reload(true); pcall(env.on_tick)                       -- on_hot_reload calls say("Reloaded: ok")
+  local note = part("top_center", "note")
+  expect(note ~= nil and note.text == "Reloaded: ok" and note.tone == "ok", "say() shows a corner note")
+  now = now + 600; pcall(env.on_tick)
+  expect(part("top_center", "note") == nil, "and it is gone after its time")
+  -- the menu open: the HUD is cleared (the pause screen is the only thing drawn)
+  lab("menu"); pcall(env.on_tick)
+  expect(#zone("top_left") == 0 and #zone("bottom_center") == 0 and #zone("bottom_left") == 0, "with the pause menu open the HUD is empty")
+  lab("menu close")
+  -- hidden or off: nothing
+  lab("hide"); pcall(env.on_tick)
+  expect(#zone("top_left") == 0 and #zone("bottom_left") == 0, "Lab UI hidden: no HUD parts")
+  lab("hide")
+  -- online or outside a LAB match: no HUD
+  local real_match = gd.match
+  gd.match = function() return { active = true, frame = now, netplay = true } end
+  pcall(env.on_tick)
+  expect(#zone("top_left") == 0 and #zone("bottom_left") == 0, "online: the Lab draws no HUD")
+  gd.match = real_match
+  -- the legacy drawing steps aside for these four things while the HUD is on, and comes back with `lab ui off`
+  lab("mode inspect")
+  lab("ui off"); pcall(env.on_tick)
+  expect(#zone("top_left") == 0 and #zone("bottom_left") == 0, "lab ui off clears the HUD")
+  lab("ui on")
+  -- a HUD that fails says so once and does not stop the tick
+  local real_hud = ui.hud
+  ui.hud = function() error("boom") end
+  logs = {}
+  pcall(env.on_tick); pcall(env.on_tick)
+  local said = 0
+  for _, l in ipairs(logs) do if l:find("the HUD failed", 1, true) then said = said + 1 end end
+  expect(said == 1, "a failing HUD is logged once and the tick goes on (said " .. said .. " times)")
+  ui.hud = real_hud
+  -- the budget: building the HUD every tick stays small
+  lab("mode inspect")
+  local t0 = os.clock()
+  for _ = 1, 200 do pcall(env.on_tick) end
+  expect((os.clock() - t0) / 200 < 0.002, string.format("a HUD rebuild is under 2 ms of Lua (%.3f ms)", (os.clock() - t0) / 200 * 1000))
+  gd.timeline = old_timeline
+  lab("ui off"); lab("mode training")
+-- (Task 9 adds its checks above this closing end: one block, one preamble, no new file-scope local)
 end
 for k in pairs(unknown) do u[#u + 1] = k end
 print("gd functions stubbed as no-ops: " .. table.concat(u, " "))

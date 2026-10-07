@@ -22,7 +22,7 @@
 
 extern int gw_Settings_Int(const char *key, int dflt); /* gw_settings.c:138; the Reduced Motion row writes "reduced_motion" */
 
-#define GS_UI_SLOTS 8
+#define GS_UI_SLOTS 16 /* Envoy alone holds up to nine (bag, bag.p2, reward, keystone, swap, setup, pause, results, the online pick) */
 #define GS_UI_ENGINE (-2) /* GsUiSlot.owner for a native screen (the menus, the title, Credits): drawn from a record the game fills, no Lua */
 
 typedef struct {
@@ -391,6 +391,20 @@ static void gs_ui_close_screen(int slot) {
 
 /* a script unloaded or switched off: its screens and their references go */
 static void gs_ui_reg_release_script(int script);
+/* a slot's screen leaves the stack, its Lua references go back to the registry and the slot is free again */
+static void gs_ui_free_slot(int i) {
+    GsUiSlot *u = &gs_ui_slot[i];
+    int was_top = at_stack_top(&gs_ui_stack) == i;
+    while (at_stack_remove(&gs_ui_stack, i)) {}                    /* open pushes again, so a duplicate entry may exist */
+    gs_ui_unref_screen(gs.L, &u->sc);
+    if (u->dialog_fn >= 0) luaL_unref(gs.L, LUA_REGISTRYINDEX, u->dialog_fn);
+    memset(u, 0, sizeof *u);
+    u->dialog_fn = u->sc.fn_provide = u->sc.fn_accept = u->sc.fn_back = u->sc.fn_focus = u->sc.fn_change = u->sc.fn_open =
+        u->sc.fn_close = u->sc.fn_counter = u->sc.fn_page = u->sc.fn_start = -1;
+    u->sc.fn_alt[0] = u->sc.fn_alt[1] = u->sc.fn_alt[2] = -1;
+    if (was_top && at_stack_top(&gs_ui_stack) >= 0 && gs_ui_slot[at_stack_top(&gs_ui_stack)].used) gs_ui_prime(at_stack_top(&gs_ui_stack));
+}
+
 static void gs_ui_release(int script) {
     int i;
     if (script < 0) return;                                        /* an engine screen is never released by a script's unload */
@@ -398,17 +412,8 @@ static void gs_ui_release(int script) {
     gs_ui_reg_release_script(script);                                        /* an engine screen is never released by a script's unload */
     for (i = 0; i < GS_UI_SLOTS; i++) {
         GsUiSlot *u = &gs_ui_slot[i];
-        int was_top;
         if (!u->used || u->owner != script) continue;
-        was_top = at_stack_top(&gs_ui_stack) == i;
-        at_stack_remove(&gs_ui_stack, i);
-        gs_ui_unref_screen(gs.L, &u->sc);
-        if (u->dialog_fn >= 0) luaL_unref(gs.L, LUA_REGISTRYINDEX, u->dialog_fn);
-        memset(u, 0, sizeof *u);
-        u->dialog_fn = u->sc.fn_provide = u->sc.fn_accept = u->sc.fn_back = u->sc.fn_focus = u->sc.fn_change = u->sc.fn_open =
-            u->sc.fn_close = u->sc.fn_counter = u->sc.fn_page = u->sc.fn_start = -1;
-        u->sc.fn_alt[0] = u->sc.fn_alt[1] = u->sc.fn_alt[2] = -1;
-        if (was_top && at_stack_top(&gs_ui_stack) >= 0 && gs_ui_slot[at_stack_top(&gs_ui_stack)].used) gs_ui_prime(at_stack_top(&gs_ui_stack));
+        gs_ui_free_slot(i);
     }
 }
 
@@ -1301,6 +1306,16 @@ static int gs_ui_slot_arg(lua_State *L, int idx) {
 
 static int l_ui_open(lua_State *L) { lua_pushboolean(L, gs_ui_open_screen(gs_ui_slot_arg(L, 1))); return 1; }
 
+/* gd.ui.forget(id): close it if it is on the stack (on.close runs first), release every Lua reference it holds, free its slot. */
+static int l_ui_forget(lua_State *L) {
+    int slot = gs_ui_slot_arg(L, 1);                               /* raises for an unknown id, an engine screen or another script's */
+    if (at_stack_top(&gs_ui_stack) == slot) gs_ui_close_screen(slot);
+    if (!gs_ui_slot[slot].used) { lua_pushboolean(L, 1); return 1; }   /* on.close forgot it itself */
+    gs_ui_free_slot(slot);
+    lua_pushboolean(L, 1);
+    return 1;
+}
+
 static int l_ui_close(lua_State *L) {
     int s = lua_isstring(L, 1) ? gs_ui_slot_arg(L, 1) : at_stack_top(&gs_ui_stack);
     if (s >= 0 && !gs_ui_may_touch(s)) s = -1;                      /* close() with no id closes the top screen only if it is the caller's */
@@ -1437,7 +1452,7 @@ static int l_ui_state(lua_State *L) {
 static const luaL_Reg gs_ui_funcs[] = {
     {"available", l_ui_available}, {"screen", l_ui_screen}, {"open", l_ui_open}, {"close", l_ui_close},
     {"feed", l_ui_feed}, {"focus", l_ui_focus}, {"set_focus", l_ui_set_focus}, {"note", l_ui_note},
-    {"dialog", l_ui_dialog}, {"state", l_ui_state}, {"entry", l_ui_entry}, {"hold_menu", l_ui_hold_menu}, {NULL, NULL}};
+    {"dialog", l_ui_dialog}, {"state", l_ui_state}, {"entry", l_ui_entry}, {"hold_menu", l_ui_hold_menu}, {"forget", l_ui_forget}, {NULL, NULL}};
 
 static void gs_push_ui(lua_State *L) {
     lua_newtable(L);

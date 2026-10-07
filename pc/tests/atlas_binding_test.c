@@ -384,6 +384,57 @@ static void eight_slots_with_engine(void)
     CHECK(at_screen_wants_pad(&gs_ui_slot[gs_ui_find("title")].sc) == 0);
 }
 
+/* ---- Atlas step 3, Task 1: sixteen slots and gd.ui.forget (run as a mod script, the real path) ---- */
+/* run Lua as script `slot` (gs.cur = slot, as a hook does); 0 when it ran without error, 1 when it raised. The tick runs with gs.cur = -1. */
+static int run_as_script(int slot, const char *code)
+{
+    int old = gs.cur, ok;
+    gs.cur = slot;
+    ok = t_lua(code);
+    gs.cur = old;
+    return ok ? 0 : 1;
+}
+static int run_as_console(const char *code) { return run_as_script(gs.console, code); }
+/* how many registry references the stored screens hold */
+static int lua_refs_held(void)
+{
+    int i, n = 0, refs[40];
+    for (i = 0; i < GS_UI_SLOTS; i++) if (gs_ui_slot[i].used) n += at_screen_fn_refs(&gs_ui_slot[i].sc, refs, 40);
+    return n;
+}
+static void forget_frees_a_slot(void)
+{
+    int i, ref, again;
+    char lua[320];
+    reset_ui();
+    fake_script(1, "envoy"); fake_script_named(2, "envoy/second");
+    CHECK(GS_UI_SLOTS == 16);
+    for (i = 0; i < 16; i++) {                                                  /* 16 screens fit */
+        snprintf(lua, sizeof lua, "assert(gd.ui.screen{id='envoy.s%d', trail={title='T'}, primary={kind='list', items={{id='a', label='A'}}}})", i);
+        CHECK(run_as_script(1, lua) == 0);
+    }
+    CHECK(run_as_script(1, "assert(not pcall(gd.ui.screen, {id='envoy.s16', trail={title='T'}, primary={kind='list', items={{id='a', label='A'}}}}))") == 0);
+    CHECK(run_as_script(1, "assert(gd.ui.open('envoy.s3')); assert(gd.ui.forget('envoy.s3')); assert(gd.ui.state().depth == 0)") == 0);
+    CHECK(gs_ui_find("envoy.s3") < 0);
+    CHECK(run_as_script(1, "assert(gd.ui.screen{id='envoy.s16', trail={title='T'}, primary={kind='list', items={{id='a', label='A'}}}})") == 0);
+    CHECK(run_as_script(2, "assert(not pcall(gd.ui.forget, 'envoy.s0'))") == 0);   /* another script: refused */
+    CHECK(gs_ui_find("envoy.s0") >= 0);
+    CHECK(run_as_script(1, "local ok, e = pcall(gd.ui.forget, 'envoy.nope'); assert(not ok and e:find('no screen'))") == 0);
+    CHECK(lua_refs_held() == 0);                                                /* handler-free screens hold no references */
+    /* a screen with handlers: forget returns every reference it holds to the registry (the next luaL_ref reuses the freed one) */
+    CHECK(run_as_script(1, "assert(gd.ui.forget('envoy.s5')); assert(gd.ui.screen{id='envoy.h', primary={kind='list', items={{id='a', label='A'}}}, on={accept=function() end}})") == 0);
+    CHECK(lua_refs_held() == 1);
+    { int refs[40]; at_screen_fn_refs(&gs_ui_slot[gs_ui_find("envoy.h")].sc, refs, 40); ref = refs[0]; }
+    CHECK(run_as_script(1, "assert(gd.ui.open('envoy.h')); assert(gd.ui.forget('envoy.h'))") == 0);
+    CHECK(lua_refs_held() == 0 && gs_ui_stack.n == 0);
+    lua_pushboolean(gs.L, 1); again = luaL_ref(gs.L, LUA_REGISTRYINDEX);
+    CHECK(again == ref);                                                        /* the freed slot of the registry came back: nothing leaked */
+    luaL_unref(gs.L, LUA_REGISTRYINDEX, again);
+    CHECK(run_as_console("assert(gd.ui.forget('envoy.s0'))") == 0);            /* the console may forget any script screen */
+    CHECK(run_as_script(1, "assert(gd.ui.forget('envoy.s1')); assert(gd.ui.forget('envoy.s2')); assert(gd.ui.screen{id='envoy.again', primary={kind='list', items={{id='a', label='A'}}}})") == 0);
+    reset_ui();
+}
+
 /* ---- Atlas step 2, Task 6: entries at run time (driven as the engine and as the mod, not as the console) ---- */
 #include "gw_ui_menus_json.h"
 static void reg_boot_with(const char *json, const char *mod)
@@ -975,7 +1026,7 @@ int main(void)
     engine_slot_survives_tick(); engine_slot_not_released_by_script_unload(); uncover_primes_engine_screen(); native_intents_are_primed(); polled_event_is_big_endian_for_the_game();
     intents_from_any_port(); engine_screen_covered_takes_no_intent(); scene_exit_closes_scene_screens(); console_cannot_touch_engine();
     mod_cannot_take_engine_id(); commit_without_change_does_not_rebuild(); engine_focus_is_the_games_cursor(); engine_close_and_queue();
-    eight_slots_with_engine();
+    eight_slots_with_engine(); forget_frees_a_slot();
     entry_opens_pushes_mod_screen(); entry_script_runs_on_entry_as_the_mod(); entry_finds_the_script_with_on_entry(); entry_missing_screen_refused(); entry_from_other_script_cannot_hide();
     entry_hidden_in_netplay(); entry_screen_closed_on_scene_exit(); entry_mod_unloaded(); builtin_entries_register();
     after_places_a_mod_entry_among_builtins(); credits_screen(); held_menu_takes_no_intent(); menu_blocked_by_a_mod_screen();

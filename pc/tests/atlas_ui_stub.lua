@@ -4,11 +4,12 @@
 -- label / counter refresh, accept / back / alt / page / start dispatch, value rows (on.change), {pop=}/{push=} results, a
 -- held-button model of the pad, and the ownership rule (a screen belongs to the script that registered it).
 --
--- What it does NOT model: layout, drawing, the quad budget, mouse and keyboard, the 8-slot table, the Lua registry, and the entry
+-- What it does NOT model: layout, drawing, the quad budget, mouse and keyboard, the Lua registry, and the entry
 -- registry's caps and ordering (6 per mod per parent, 12 visible, `after`): those are gw_ui_registry.c's, tested by atlas-registry.
 -- Everything in the conversion arena IS modelled (node, entry and string-pool ceilings and the depth limit), because a stand-in
 -- that accepts a description the engine refuses defeats its purpose.
 local Stub = {}
+Stub.slots = 16   -- GS_UI_SLOTS: one slot per registered screen id, freed only by forget (or the owner script unloading)
 
 local function read_limits()
  local here = (arg and arg[0] or ''):gsub('\\', '/'):gsub('[^/]*$', '')
@@ -180,6 +181,11 @@ function Stub.new(opts)
   end
   local port = d.port or 1
   if type(port) ~= 'number' or port < 1 or port > 4 then fail('port is 1 to 4') end
+  if not ui.screens[d.id] then
+   local n = 0
+   for _ in pairs(ui.screens) do n = n + 1 end
+   if n >= Stub.slots then fail(('too many screens (%d)'):format(Stub.slots)) end
+  end
   local old = ui.screens[d.id] and ui._f[d.id]
   ui.screens[d.id] = d
   ui._owner[d.id] = ui._owner[d.id] or ui.caller
@@ -219,6 +225,13 @@ function Stub.new(opts)
   for i = #ui.stack, 1, -1 do if ui.stack[i] == id then table.remove(ui.stack, i) end end
   if was_top and top() then prime() end
   return id ~= nil
+ end
+ -- gd.ui.forget(id): closed if on the stack, its slot freed (the id is unknown afterwards)
+ function ui.forget(id)
+  own(id)
+  ui.close(id)
+  ui.screens[id], ui._f[id], ui._owner[id], ui.views[id], ui._rows[id] = nil, nil, nil, nil, nil
+  return true
  end
  function ui.feed(id, intent)
   own(id)

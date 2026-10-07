@@ -229,6 +229,22 @@ do
   local con = Stub.new({}); con.held_by = 'a/main'
   check(con.hold_menu(false) == false, 'the console may release it (console-only check)')
 end
+-- Atlas step 3, Task 1: sixteen slots and forget
+do
+  local u = Stub.new({ caller = 'a/main', owner_mod = 'a' })
+  check(Stub.slots == 16, 'sixteen screen slots')
+  local function one(id) return { id = id, primary = { kind = 'list', items = { { id = 'x', label = 'X' } } } } end
+  for i = 1, 16 do u.screen(one('a.s' .. i)) end
+  raises(function() u.screen(one('a.s17')) end, 'too many screens (16)', 'the 17th screen raises')
+  check(u.screen(one('a.s3')), 'a re-registration of a held id still fits')
+  u.open('a.s5'); check(u.forget('a.s5') == true and u.state().depth == 0 and u.screens['a.s5'] == nil, 'forget closes and frees')
+  check(u.screen(one('a.s17')), 'the freed slot takes a new screen')
+  raises(function() u.forget('a.nope') end, 'no screen', 'forget of an unknown id raises')
+  local other = Stub.new({ caller = 'b/main' }); other.screens, other._owner = u.screens, u._owner
+  raises(function() other.forget('a.s1') end, 'belongs to another script', "another script's screen is refused")
+  local con = Stub.new({}); con.screens, con._owner, con._f, con.views, con._rows = u.screens, u._owner, u._f, u.views, u._rows
+  check(con.forget('a.s1') == true, 'the console may forget any screen (console-only check)')
+end
 local off = Stub.new({ available = false }); check(select(1, off.available()) == false, 'an unavailable stub says so')
 print(('atlas ui stub: %d checks, %d failed'):format(count, fails))
 os.exit(fails == 0 and 0 or 1)

@@ -409,3 +409,89 @@ int at_room_render(const AtRoomView *v, const AtLayout *L, const AtTextOps *o, c
     default: return 0;
     }
 }
+
+/* ---- input ---------------------------------------------------------------------------------------- */
+#define PUT(K, A) do { if (n < cap) { out[n].kind = (K); out[n].arg = (A); n++; } } while (0)
+
+int at_room_takes_keys(const AtRoomView *v) { return v != NULL && v->kind != AT_ROOM_CODE; }
+
+int at_room_key_intents(AtKeys *k, unsigned mask, double now_ms, AtRoomIntent *out, int cap)
+{
+    AtEvent ev[8];
+    int ne = at_key_events(k, mask, now_ms, ev, 8), i, n = 0;
+    for (i = 0; i < ne; i++) {
+        switch (ev[i].type) {
+        case AT_EV_MOVE: PUT(ev[i].a == AT_DIR_UP ? AT_RI_UP : ev[i].a == AT_DIR_DOWN ? AT_RI_DOWN : ev[i].a == AT_DIR_LEFT ? AT_RI_LEFT : AT_RI_RIGHT, 0); break;
+        case AT_EV_ACCEPT: PUT(AT_RI_ACCEPT, 0); break;
+        case AT_EV_BACK: PUT(AT_RI_BACK, 0); break;
+        case AT_EV_PAGE: PUT(ev[i].a < 0 ? AT_RI_PAGE_L : AT_RI_PAGE_R, 0); break;
+        default: break;
+        }
+    }
+    return n;
+}
+
+static int button_intent(int c)
+{
+    switch (c) {
+    case 'A': return AT_RI_ACCEPT;
+    case 'B': return AT_RI_BACK;
+    case 'X': return AT_RI_COPY;
+    case 'Y': return AT_RI_PASTE;
+    case 'S': return AT_RI_START;
+    case 'L': return AT_RI_PAGE_L;
+    case 'R': return AT_RI_PAGE_R;
+    default: return AT_RI_NONE;
+    }
+}
+
+int at_room_mouse_intents(const AtRoomView *v, AtMouse *m, float x, float y, int buttons, int wheel, const AtHits *hits, AtRoomIntent *out, int cap)
+{
+    int n = 0, hit, moved, left, right;
+    if (x < 0.0f || y < 0.0f) {                              /* off the picture (-1000): never an intent */
+        m->valid = 0;
+        m->buttons = buttons;
+        return 0;
+    }
+    moved = m->valid && (x != m->x || y != m->y);            /* a pointer at rest never acts */
+    left = (buttons & 1) && !(m->buttons & 1) && m->valid;
+    right = (buttons & 2) && !(m->buttons & 2) && m->valid;
+    hit = at_hit_test(hits, x, y);
+    if (hit >= 0 && moved && hits->h[hit].kind == AT_HIT_ROOM && hits->h[hit].a == AT_RH_STAGE && v->my_stage_turn &&
+        hits->h[hit].b >= 0 && hits->h[hit].b < v->n_stages && v->st[hits->h[hit].b].open)
+        PUT(AT_RI_STAGE_AT, hits->h[hit].b);                  /* hover moves the cursor onto an open stage, nothing more */
+    if (left && hit >= 0) {
+        const AtHit *h = &hits->h[hit];
+        if (h->kind == AT_HIT_KEY) {
+            int b = button_intent(h->a);
+            if (b != AT_RI_NONE) PUT(b, 0);
+        } else if (h->kind == AT_HIT_ROOM) {
+            switch (h->a) {
+            case AT_RH_STAGE:                                  /* as the legacy click: cursor there, then confirm; only on my stage turn (a click on a tile in the ready phase must not ready me) */
+                if (v->my_stage_turn && h->b >= 0 && h->b < v->n_stages) { PUT(AT_RI_STAGE_AT, h->b); PUT(AT_RI_ACCEPT, 0); }
+                break;
+            case AT_RH_ACTION: PUT(AT_RI_ACCEPT, 0); break;
+            case AT_RH_LEAVE: PUT(AT_RI_BACK, 0); break;
+            case AT_RH_COPY: PUT(AT_RI_COPY, 0); break;
+            case AT_RH_CODE_SLOT: PUT(AT_RI_CODE_SLOT, h->b); break;
+            case AT_RH_CODE_UP: PUT(AT_RI_UP, 0); break;
+            case AT_RH_CODE_DOWN: PUT(AT_RI_DOWN, 0); break;
+            default: break;
+            }
+        }
+    }
+    if (right) PUT(AT_RI_BACK, 0);
+    if (wheel != 0) {
+        if (v->kind == AT_ROOM_CODE) PUT(wheel > 0 ? AT_RI_UP : AT_RI_DOWN, 0);
+        else if (v->kind == AT_ROOM_LOBBY && v->my_stage_turn) PUT(wheel > 0 ? AT_RI_PAGE_L : AT_RI_PAGE_R, 0);
+    }
+    m->valid = 1; m->x = x; m->y = y; m->buttons = buttons;
+    return n;
+}
+#undef PUT
+
+const char *at_room_intent_name(int kind)
+{
+    static const char *const names[] = { "none", "up", "down", "left", "right", "accept", "back", "start", "copy", "paste", "page_l", "page_r", "stage_at", "code_slot" };
+    return kind >= 0 && kind < (int) (sizeof names / sizeof names[0]) ? names[kind] : "?";
+}

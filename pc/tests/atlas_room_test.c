@@ -216,11 +216,211 @@ static void render(void)
     }
 }
 
+/* A reference model of what the legacy lobby does with each intent (fl_frame_lobby), used only to compare streams.
+ * It returns the NETPLAY-VISIBLE actions: the things that call into the protocol. Cursor moves and arming B are local. */
+typedef struct { char act[24]; int arg; } NetAct;
+typedef struct { const AtRoomView *v; int cursor, armed; NetAct out[16]; int n; } Model;
+static void emit(Model *m, const char *a, int arg) { if (m->n < 16) { snprintf(m->out[m->n].act, 24, "%s", a); m->out[m->n].arg = arg; m->n++; } }
+static void consume(Model *m, AtRoomIntent in)
+{
+    const AtRoomView *v = m->v;
+    switch (in.kind) {
+    case AT_RI_STAGE_AT: m->cursor = in.arg; break;
+    case AT_RI_RIGHT: m->cursor = (m->cursor + 1) % v->n_stages; break;
+    case AT_RI_LEFT: m->cursor = (m->cursor + v->n_stages - 1) % v->n_stages; break;
+    case AT_RI_ACCEPT:
+        if (v->can_ready && !v->ready_mine) emit(m, "READY", 1);
+        else if (v->can_pick) emit(m, "PICK_CHAR", 0);
+        else if (v->my_stage_turn) emit(m, "STAGE_ACT", m->cursor);
+        break;
+    case AT_RI_START: if (v->can_ready) emit(m, "READY", !v->ready_mine); break;
+    case AT_RI_BACK:
+        if (v->countdown_s > 0 && v->ready_mine) emit(m, "READY", 0);
+        else if (m->armed) emit(m, "LEAVE", 0);
+        else m->armed = 1;
+        break;
+    default: break;
+    }
+}
+static int same(const Model *a, const Model *b)
+{
+    int i;
+    if (a->n != b->n) return 0;
+    for (i = 0; i < a->n; i++) if (strcmp(a->out[i].act, b->out[i].act) != 0 || a->out[i].arg != b->out[i].arg) return 0;
+    return 1;
+}
+
+static int mouse_step(const AtRoomView *v, AtMouse *m, float x, float y, int buttons, int wheel, AtRoomIntent *out, int cap)
+{
+    return at_room_mouse_intents(v, m, x, y, buttons, wheel, &RH, out, cap);
+}
+static float tx_of(int hit) { return RH.h[hit].r.x + 5.0f; }
+static float ty_of(int hit) { return RH.h[hit].r.y + 5.0f; }
+
+static void intents(void)
+{
+    static AtRoomView rv;
+    AtRoomIntent in[8];
+    AtMouse m; AtKeys k;
+    Model pad, mouse, kbd;
+    int i, n, tile3 = -1, action = -1;
+    memset(&m, 0, sizeof m); memset(&k, 0, sizeof k);
+
+    /* a lobby on my stage turn with six open stages; the pointer targets are the recorded hit rectangles */
+    fx_view(0, &rv); rv.kind = AT_ROOM_LOBBY; rv.phase = AT_PH_STRIKE; rv.me = 1; rv.host = 0; rv.turn = 1; rv.my_stage_turn = 1; rv.n_stages = 6; rv.cursor = 1;
+    rv.coin_on = 0; rv.countdown_s = 0;
+    { int g[AT_ROOM_STAGES], j; for (j = 0; j < 6; j++) { g[j] = 0; rv.st[j].open = 1; rv.st[j].state = AT_STAGE_FREE; } at_room_grid(g, 6, 3, 3, &rv.grid); }
+    draw_room(&rv, 640.0f);
+    for (i = 0; i < RH.n; i++) if (RH.h[i].a == AT_RH_STAGE && RH.h[i].b == 3) tile3 = i;
+    CHECK(tile3 >= 0);
+    {
+        float tx = tx_of(tile3), ty = ty_of(tile3);
+        /* the same job three ways: strike stage 3 */
+        memset(&pad, 0, sizeof pad); pad.v = &rv; pad.cursor = 1;
+        { AtRoomIntent a = { AT_RI_RIGHT, 0 }, b = { AT_RI_RIGHT, 0 }, c = { AT_RI_ACCEPT, 0 }; consume(&pad, a); consume(&pad, b); consume(&pad, c); }   /* pad: right, right, A */
+        memset(&mouse, 0, sizeof mouse); mouse.v = &rv; mouse.cursor = 1;
+        n = mouse_step(&rv, &m, 400.0f, 300.0f, 0, 0, in, 8);                      /* the pointer arrives somewhere: nothing */
+        for (i = 0; i < n; i++) consume(&mouse, in[i]);
+        n = mouse_step(&rv, &m, tx, ty, 0, 0, in, 8);                              /* hover over tile 3 */
+        CHECK(n == 1 && in[0].kind == AT_RI_STAGE_AT && in[0].arg == 3);           /* hover moves the cursor... */
+        for (i = 0; i < n; i++) consume(&mouse, in[i]);
+        CHECK(mouse.n == 0);                                                       /* ...and does nothing netplay-visible */
+        n = mouse_step(&rv, &m, tx, ty, 1, 0, in, 8);                              /* left click */
+        CHECK(n == 2 && in[0].kind == AT_RI_STAGE_AT && in[1].kind == AT_RI_ACCEPT);
+        for (i = 0; i < n; i++) consume(&mouse, in[i]);
+        memset(&kbd, 0, sizeof kbd); kbd.v = &rv; kbd.cursor = 1;
+        n = at_room_key_intents(&k, AT_KEY_RIGHT, 0.0, in, 8); for (i = 0; i < n; i++) consume(&kbd, in[i]);
+        n = at_room_key_intents(&k, 0, 10.0, in, 8);
+        n = at_room_key_intents(&k, AT_KEY_RIGHT, 20.0, in, 8); for (i = 0; i < n; i++) consume(&kbd, in[i]);
+        n = at_room_key_intents(&k, AT_KEY_RIGHT | AT_KEY_ENTER, 30.0, in, 8); for (i = 0; i < n; i++) consume(&kbd, in[i]);
+        CHECK(pad.n == 1 && strcmp(pad.out[0].act, "STAGE_ACT") == 0 && pad.out[0].arg == 3);
+        CHECK(same(&pad, &mouse));                                                 /* pad, mouse and keyboard: one netplay-visible action */
+        CHECK(kbd.n == 1 && strcmp(kbd.out[0].act, "STAGE_ACT") == 0);
+    }
+    /* hover alone: 100 pointer moves over every rectangle with no button, nothing netplay-visible; a resting pointer is silent */
+    {
+        Model hv; int steps;
+        memset(&hv, 0, sizeof hv); hv.v = &rv; hv.cursor = 1; memset(&m, 0, sizeof m);
+        for (steps = 0; steps < 100; steps++) {
+            const AtHit *h = &RH.h[steps % RH.n];
+            n = mouse_step(&rv, &m, h->r.x + 3.0f + (float) (steps % 3), h->r.y + 3.0f, 0, 0, in, 8);
+            for (i = 0; i < n; i++) consume(&hv, in[i]);
+        }
+        CHECK(hv.n == 0);
+        n = mouse_step(&rv, &m, 123.0f, 45.0f, 0, 0, in, 8); n = mouse_step(&rv, &m, 123.0f, 45.0f, 0, 0, in, 8); CHECK(n == 0);   /* resting: silent */
+        n = mouse_step(&rv, &m, -1000.0f, -1000.0f, 1, 0, in, 8); CHECK(n == 0);                                                   /* off the picture: silent */
+        n = mouse_step(&rv, &m, tx_of(tile3), ty_of(tile3), 0, 0, in, 8);                                                          /* back on, no click yet */
+        CHECK(n <= 1);
+    }
+    /* the ready phase: a click on the action plate readies (as A does), a click elsewhere does nothing, START and A agree */
+    rv.my_stage_turn = 0; rv.phase = AT_PH_READY; rv.can_ready = 1; rv.ready_mine = 0; draw_room(&rv, 640.0f);
+    for (i = 0; i < RH.n; i++) if (RH.h[i].a == AT_RH_ACTION) action = i;
+    CHECK(action >= 0);
+    memset(&m, 0, sizeof m);
+    mouse_step(&rv, &m, RH.h[action].r.x + 4.0f, RH.h[action].r.y + 4.0f, 0, 0, in, 8);
+    n = mouse_step(&rv, &m, RH.h[action].r.x + 4.0f, RH.h[action].r.y + 4.0f, 1, 0, in, 8);
+    CHECK(n == 1 && in[0].kind == AT_RI_ACCEPT);
+    mouse_step(&rv, &m, 3.0f, 3.0f, 0, 0, in, 8);
+    n = mouse_step(&rv, &m, 3.0f, 3.0f, 1, 0, in, 8); CHECK(n == 0);                                    /* a click on nothing */
+    n = mouse_step(&rv, &m, 3.0f, 3.0f, 2, 0, in, 8); CHECK(n == 1 && in[0].kind == AT_RI_BACK);       /* right click: back */
+    {   /* the deliberate narrowing: a click on a stage tile when it is not my stage turn is nothing (it must not ready me) */
+        int tile = -1;
+        for (i = 0; i < RH.n; i++) if (RH.h[i].a == AT_RH_STAGE) tile = i;
+        CHECK(tile >= 0);
+        mouse_step(&rv, &m, tx_of(tile), ty_of(tile), 0, 0, in, 8);
+        n = mouse_step(&rv, &m, tx_of(tile), ty_of(tile), 1, 0, in, 8); CHECK(n == 0);
+        n = mouse_step(&rv, &m, tx_of(tile), ty_of(tile), 0, 0, in, 8); CHECK(n == 0);
+    }
+
+    /* the Envoy reward pick open does not change one intent or one key (the lobby keeps today's input behaviour) */
+    {
+        AtRoomIntent a[8], b[8]; int na, nb; AtMouse m1, m2;
+        memset(&m1, 0, sizeof m1); memset(&m2, 0, sizeof m2);
+        rv.reward_open = 0; draw_room(&rv, 640.0f);
+        mouse_step(&rv, &m1, RH.h[action].r.x + 4.0f, RH.h[action].r.y + 4.0f, 0, 0, a, 8);
+        na = mouse_step(&rv, &m1, RH.h[action].r.x + 4.0f, RH.h[action].r.y + 4.0f, 1, 0, a, 8);
+        rv.reward_open = 1; rv.reward_left_s = 20; draw_room(&rv, 640.0f);
+        mouse_step(&rv, &m2, RH.h[action].r.x + 4.0f, RH.h[action].r.y + 4.0f, 0, 0, b, 8);
+        nb = mouse_step(&rv, &m2, RH.h[action].r.x + 4.0f, RH.h[action].r.y + 4.0f, 1, 0, b, 8);
+        CHECK(na == nb && (na == 0 || a[0].kind == b[0].kind));
+        {
+            AtKeys k1, k2; AtRoomIntent ka[8], kb[8]; int xa, xb;
+            memset(&k1, 0, sizeof k1); memset(&k2, 0, sizeof k2);
+            rv.reward_open = 0; xa = at_room_key_intents(&k1, AT_KEY_ENTER, 0.0, ka, 8);
+            rv.reward_open = 1; xb = at_room_key_intents(&k2, AT_KEY_ENTER, 0.0, kb, 8);
+            CHECK(xa == xb && xa == 1 && ka[0].kind == kb[0].kind);
+        }
+        rv.reward_open = 0;
+    }
+    /* B twice leaves, the same for the pad and for a click on the B key hint (the chrome records that hit rectangle: add one by hand) */
+    {
+        Model mb, pb;
+        AtRoomIntent back = { AT_RI_BACK, 0 };
+        AtHit key; int hb;
+        memset(&key, 0, sizeof key); key.r.x = 200.0f; key.r.y = 440.0f; key.r.w = 80.0f; key.r.h = 22.0f; key.kind = AT_HIT_KEY; key.a = 'B';
+        hb = RH.n; RH.h[RH.n++] = key;
+        memset(&mb, 0, sizeof mb); mb.v = &rv; memset(&pb, 0, sizeof pb); pb.v = &rv;
+        rv.countdown_s = 0;
+        consume(&pb, back); consume(&pb, back);
+        memset(&m, 0, sizeof m);
+        for (i = 0; i < 2; i++) {
+            mouse_step(&rv, &m, RH.h[hb].r.x + 4.0f, RH.h[hb].r.y + 4.0f, 0, 0, in, 8);
+            n = mouse_step(&rv, &m, RH.h[hb].r.x + 4.0f, RH.h[hb].r.y + 4.0f, 1, 0, in, 8);
+            CHECK(n == 1 && in[0].kind == AT_RI_BACK);
+            consume(&mb, in[0]);
+            mouse_step(&rv, &m, RH.h[hb].r.x + 4.0f, RH.h[hb].r.y + 4.0f, 0, 0, in, 8);   /* release */
+        }
+        CHECK(same(&pb, &mb) && pb.n == 1 && strcmp(pb.out[0].act, "LEAVE") == 0);
+        RH.n--;
+    }
+    /* the code screen: wheel steps the letter, a click on the active slot's strip steps it, a click on another slot moves there */
+    fx_view(0, &rv); rv.kind = AT_ROOM_CODE; rv.code_in.slot = 1; draw_room(&rv, 640.0f);
+    memset(&m, 0, sizeof m);
+    mouse_step(&rv, &m, 300.0f, 200.0f, 0, 0, in, 8);
+    n = mouse_step(&rv, &m, 300.0f, 200.0f, 0, 1, in, 8); CHECK(n == 1 && in[0].kind == AT_RI_UP);
+    n = mouse_step(&rv, &m, 300.0f, 200.0f, 0, -1, in, 8); CHECK(n == 1 && in[0].kind == AT_RI_DOWN);
+    {
+        int up = -1, down = -1, slot2 = -1;
+        for (i = 0; i < RH.n; i++) { if (RH.h[i].a == AT_RH_CODE_UP) up = i; if (RH.h[i].a == AT_RH_CODE_DOWN) down = i; if (RH.h[i].a == AT_RH_CODE_SLOT && RH.h[i].b == 2) slot2 = i; }
+        CHECK(up >= 0 && down >= 0 && slot2 >= 0);
+        mouse_step(&rv, &m, tx_of(up), ty_of(up), 0, 0, in, 8);
+        n = mouse_step(&rv, &m, tx_of(up), ty_of(up), 1, 0, in, 8); CHECK(n == 1 && in[0].kind == AT_RI_UP);
+        mouse_step(&rv, &m, tx_of(down), ty_of(down), 0, 0, in, 8);
+        n = mouse_step(&rv, &m, tx_of(down), ty_of(down), 1, 0, in, 8); CHECK(n == 1 && in[0].kind == AT_RI_DOWN);
+        mouse_step(&rv, &m, tx_of(slot2), ty_of(slot2), 0, 0, in, 8);
+        n = mouse_step(&rv, &m, tx_of(slot2), ty_of(slot2), 1, 0, in, 8); CHECK(n == 1 && in[0].kind == AT_RI_CODE_SLOT && in[0].arg == 2);
+    }
+    /* the code screen reads the keyboard itself (the netplay layer's own key poll): the room does not turn keys into intents there, or an arrow would act twice */
+    CHECK(!at_room_takes_keys(&rv));
+    rv.kind = AT_ROOM_WAIT; CHECK(at_room_takes_keys(&rv));
+    rv.kind = AT_ROOM_LOBBY; CHECK(at_room_takes_keys(&rv));
+    /* the lobby on my stage turn: the wheel turns the page (L before R) */
+    rv.kind = AT_ROOM_LOBBY; rv.my_stage_turn = 1; rv.phase = AT_PH_BAN; draw_room(&rv, 640.0f);
+    n = mouse_step(&rv, &m, 300.0f, 200.0f, 0, 1, in, 8); CHECK(n == 1 && in[0].kind == AT_RI_PAGE_L);
+    n = mouse_step(&rv, &m, 300.0f, 200.0f, 0, -1, in, 8); CHECK(n == 1 && in[0].kind == AT_RI_PAGE_R);
+    /* keyboard: arrows move, Enter accepts, Escape goes back, Tab and Shift+Tab page; typed letters are not here at all */
+    memset(&k, 0, sizeof k);
+    n = at_room_key_intents(&k, AT_KEY_UP, 0.0, in, 8); CHECK(n == 1 && in[0].kind == AT_RI_UP);
+    at_room_key_intents(&k, 0, 10.0, in, 8);
+    n = at_room_key_intents(&k, AT_KEY_ESC, 20.0, in, 8); CHECK(n == 1 && in[0].kind == AT_RI_BACK);
+    at_room_key_intents(&k, 0, 30.0, in, 8);
+    n = at_room_key_intents(&k, AT_KEY_TAB, 40.0, in, 8); CHECK(n == 1 && in[0].kind == AT_RI_PAGE_R);
+    at_room_key_intents(&k, 0, 50.0, in, 8);
+    n = at_room_key_intents(&k, AT_KEY_TAB | AT_KEY_SHIFT, 60.0, in, 8); CHECK(n == 1 && in[0].kind == AT_RI_PAGE_L);
+    /* every intent has a distinct name, and the names are the ones the adapter's table reads */
+    {
+        static const char *const want[] = { "none", "up", "down", "left", "right", "accept", "back", "start", "copy", "paste", "page_l", "page_r", "stage_at", "code_slot" };
+        for (i = 0; i <= AT_RI_CODE_SLOT; i++) CHECK(strcmp(at_room_intent_name(i), want[i]) == 0);
+        CHECK(strcmp(at_room_intent_name(99), "?") == 0 && strcmp(at_room_intent_name(-1), "?") == 0);
+    }
+}
+
 int main(void)
 {
     grid();
     cursor();
     fill();
     render();
+    intents();
     ATLAS_DONE("atlas room");
 }

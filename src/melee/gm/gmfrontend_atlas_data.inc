@@ -1161,7 +1161,9 @@ static void fad_scene_exit(void)
 {
     if (fad.id != FD_NONE) {
         const FadScreen* s = fad_find(fad.id);
-        if (s != NULL && s->close != NULL) {
+        if (fad.id == FD_SOUND) {
+            lbAudioAx_80023694(); /* the scene is ending (L+R+START, a mode): stop the effects as the retail path does; the next scene chooses its own music */
+        } else if (s != NULL && s->close != NULL) {
             s->close(); /* the host closes the screen with the scene (Ui_SceneExit) */
         }
         fad_sis_close();

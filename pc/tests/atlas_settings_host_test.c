@@ -143,6 +143,7 @@ _Static_assert(FSS_EV_CHANGE == GS_SETEV_CHANGE && FSS_EV_ACCEPT == GS_SETEV_ACC
                FSS_EV_FOCUS == GS_SETEV_FOCUS, "the walker's event numbers are the host's");
 _Static_assert(FSS_VK_NONE == AT_VAL_NONE && FSS_VK_TOGGLE == AT_VAL_TOGGLE && FSS_VK_CHOICE == AT_VAL_CHOICE && FSS_VK_SLIDER == AT_VAL_SLIDER &&
                FSS_VK_TEXT == AT_VAL_TEXT, "the walker's value kinds are the host's");
+_Static_assert(FSS_K_TABS == GS_SET_TABS && FSS_K_REMAP == GS_SET_REMAP && FSS_K_HOWTO == GS_SET_HOWTO && FSS_K_ERASE == GS_SET_ERASE, "the adapter's screen kinds are the host's");
 _Static_assert(FSS_IF_A_STEPS == AT_ITEM_A_STEPS && FSS_IF_RO == AT_ITEM_RO && FSS_IF_DISABLED == AT_ITEM_DISABLED, "the walker's row flags are the host's");
 _Static_assert(FSS_IN_MOVE == AT_EV_MOVE && FSS_IN_ACCEPT == AT_EV_ACCEPT && FSS_IN_BACK == AT_EV_BACK && FSS_IN_ALT == AT_EV_ALT && FSS_IN_PAGE == AT_EV_PAGE &&
                FSS_DIR_LEFT == AT_DIR_LEFT && FSS_DIR_RIGHT == AT_DIR_RIGHT && FSS_DIR_UP == AT_DIR_UP && FSS_DIR_DOWN == AT_DIR_DOWN, "the adapter's intents are the host's");
@@ -224,7 +225,8 @@ static void filled_and_drawn(void)
     CHECK(gs_ui_stack.n == 0 && gw_Ui_TopIsEngine("settings.tabs") == 0 && gs_set.h == -1);
     h = gw_Ui_SetOpen(1, 0, "SETTINGS", "CONTROLS", "REMAP"); CHECK(h >= 0 && gw_Ui_TopIsEngine("settings.remap") == 1 && slot_of(h)->sc.n_parents == 2); gw_Ui_SetClose(h);
     h = gw_Ui_SetOpen(2, 0, "SETTINGS", "", "HOW TO PLAY ONLINE"); CHECK(h >= 0 && gw_Ui_TopIsEngine("settings.howto") == 1); gw_Ui_SetClose(h);
-    CHECK(gw_Ui_SetOpen(3, 0, "", "", "") == -1 && gw_Ui_SetOpen(-1, 0, "", "", "") == -1);
+    h = gw_Ui_SetOpen(3, 0, "SETTINGS", "GAME", "ERASE DATA"); CHECK(h >= 0 && gw_Ui_TopIsEngine("settings.erase") == 1); gw_Ui_SetClose(h);
+    CHECK(gw_Ui_SetOpen(4, 0, "", "", "") == -1 && gw_Ui_SetOpen(-1, 0, "", "", "") == -1);
     h = gw_Ui_SetOpen(0, 4, "MAIN MENU", "", "SETTINGS"); CHECK(slot_of(h)->view.tab == 4); gw_Ui_SetClose(h);   /* opens on a given tab */
 }
 

@@ -23,7 +23,7 @@
 
 #define GS_SET_Q 32
 enum { GS_SETEV_CHANGE = 1, GS_SETEV_ACCEPT = 2, GS_SETEV_BACK = 3, GS_SETEV_TAB = 4, GS_SETEV_FOCUS = 5, GS_SETEV_ALT = 6 };   /* = FSS_EV_* (gmfrontend_atlas_table.h) */
-enum { GS_SET_TABS, GS_SET_REMAP, GS_SET_HOWTO };
+enum { GS_SET_TABS, GS_SET_REMAP, GS_SET_HOWTO, GS_SET_ERASE };
 
 static struct {
     int gen;                 /* the handle generation: bumped per open */
@@ -211,14 +211,14 @@ int gw_Ui_SetCanOpen(void) {
     return 0;
 }
 
-/* kind 0: the tabbed pages, 1: the remap editor, 2: the how-to page. t0 and t1: the trail's parents (SETTINGS > CONTROLS), title: the screen's name.
+/* kind 0: the tabbed pages, 1: the remap editor, 2: the how-to page, 3: the erase screen. t0 and t1: the trail's parents (SETTINGS > CONTROLS), title: the screen's name.
  * Returns a handle, or -1 (roles missing, MELEE_ATLAS=0, another native screen open, no free slot: the caller keeps the legacy drawing). */
 int gw_Ui_SetOpen(int kind, int active_tab, const char *t0, const char *t1, const char *title) {
     int i, slot = -1;
     GsUiSlot *u;
     AtScreen *sc;
-    static const char *const ids[3] = { "settings.tabs", "settings.remap", "settings.howto" };
-    if (!gw_Ui_Ready() || kind < GS_SET_TABS || kind > GS_SET_HOWTO) return -1;
+    static const char *const ids[4] = { "settings.tabs", "settings.remap", "settings.howto", "settings.erase" };
+    if (!gw_Ui_Ready() || kind < GS_SET_TABS || kind > GS_SET_ERASE) return -1;
     if (gs_set_is_open() || gw_Ui_SelCanOpen() == 0) return -1;     /* one native screen at a time: the stack has one top */
     for (i = 0; i < GS_UI_SLOTS; i++) if (!gs_ui_slot[i].used) { slot = i; break; }
     if (slot < 0) { gw_log("ui: no free screen slot for the settings screen"); return -1; }

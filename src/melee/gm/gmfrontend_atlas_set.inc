@@ -37,7 +37,6 @@ extern void Ui_Freeze(int h, int on);
 extern void Ui_SetIntent(int h, int type, int a);
 extern int Ui_SetPoll(int h, int* slot, int* arg);
 
-enum { FSS_K_TABS, FSS_K_REMAP, FSS_K_HOWTO, FSS_K_ERASE };   /* the host's screen kinds (gw_script_ui_set.inc GS_SET_*) */
 #define FSS_TABS 6
 #define FSS_HAS_REMAP 0 /* the remap editor's Atlas layer: Task 8 */
 

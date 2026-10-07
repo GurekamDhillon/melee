@@ -2060,6 +2060,12 @@ extern double gw___frsqrte(double), gw___fres(double);
 extern void gw_xplat_GXProject(float x, float y, float z, const float mtx[3][4], const float *pm, const float *vp,
                                float *sx, float *sy, float *sz);
 
+#ifdef GW_BUILD_SOURCE_HASH
+/* tools/port/check_build_id.py looks for this string in the linked executable: a build that was not compiled with the
+ * current gw_build_id.h is stopped at the end of build.sh / build_linux.sh. Referenced below so the linker keeps it. */
+const char gw_build_id_marker[] = "GWBUILDID:" GW_BUILD_SOURCE_HEX;
+#endif
+
 static uint64_t np_fp_mix(uint64_t h, uint32_t v) {
     h ^= v;
     h *= 0x100000001b3ull;
@@ -2151,8 +2157,8 @@ static uint64_t np_build_id(void) {
             h = np_fp_mix(h, (uint32_t)((numerics >> i) & 0xFF));
         }
         id = h == 0 ? 1 : h;
-        gw_log("netplay: build id %016llx = sources %016llx (%s, %d files) + numerics %016llx", (unsigned long long)id,
-               (unsigned long long)src, GW_BUILD_SOURCE_DESC, GW_BUILD_SOURCE_FILES, (unsigned long long)numerics);
+        gw_log("netplay: build id %016llx = sources %016llx (%s, %d files, %s) + numerics %016llx", (unsigned long long)id,
+               (unsigned long long)src, GW_BUILD_SOURCE_DESC, GW_BUILD_SOURCE_FILES, gw_build_id_marker, (unsigned long long)numerics);
 #else
         id = np_exe_hash();
         gw_log("netplay: build id %016llx = the executable file (no gw_build_id.h: built outside build.sh); numerics %016llx",

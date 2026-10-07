@@ -108,6 +108,7 @@ int gw_Kit_DrawText(float x, float y, const char *s, int role, uint32_t rgba, in
 int gw_Kit_DrawPoly4(const float x[4], const float y[4], uint32_t rgba) { (void) x; (void) y; (void) rgba; g_quads++; return 1; }
 int gw_Kit_DrawImage(int tex, float x, float y, float w, float h, uint32_t rgba, int flip, float shear) { (void) tex; (void) x; (void) y; (void) w; (void) h; (void) rgba; (void) flip; (void) shear; g_quads++; return 1; }
 void gw_Kit_SetTracking(float px) { g_track = px; }
+static int g_hsd_frame; void gw_Kit_TexHsdFrame(int frame) { g_hsd_frame = frame; }
 int gw_Kit_QuadCount(void) { return g_quads; }
 int gw_Kit_QuadRoom(void) { return 16000; }
 

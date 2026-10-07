@@ -874,8 +874,10 @@ uint32_t gw_Kit_SectionRGBA(int section, int which) {
 /* ============================================================================================
  * textures: .gxtex (pc/tools/png2gx.py) decoded from GX's tiled formats into RGBA8
  * ============================================================================================ */
-#define KT_MAX 384 /* file textures (the first 320) and script model atlases (gw_Kit_TexAddGX, at most 64) */
+#define KT_MAX 576 /* file textures (the first 320), script model atlases (gw_Kit_TexAddGX, at most 64: indices below KT_HSD_BASE) and disc art */
 #define KT_FILE_MAX 320
+#define KT_HSD_BASE 384 /* disc art (gw_Kit_TexAddHsd) lives in kt[KT_HSD_BASE .. KT_HSD_BASE + KT_HSD_MAX): a fixed block, so an evicted slot keeps its index */
+#define KT_HSD_MAX 192
 
 typedef struct {
     char path[MAX_PATH]; /* the file it came from (the cache key) */
@@ -884,10 +886,20 @@ typedef struct {
     float w1x, h1x;
     char tint[24];
     uint8_t *rgba;
+    int used; /* disc art: the host frame it was last requested or drawn in (the eviction clock) */
 } KitTex;
 
 static KitTex *kt[KT_MAX];
 static int nkt;
+static int hsd_gen[KT_HSD_MAX]; /* how many times each disc-art slot has been (re)assigned: the overlay re-uploads a slot whose number moved */
+static int hsd_clock;           /* the host frame (gw_Kit_TexHsdFrame) */
+static int hsd_n;               /* occupied slots */
+
+/* a usable texture index: a dense file/model entry, or an occupied disc-art slot */
+static int kt_ok(int tex) {
+    if (tex >= 0 && tex < nkt) return kt[tex] != NULL;
+    return tex >= KT_HSD_BASE && tex < KT_HSD_BASE + KT_HSD_MAX && kt[tex] != NULL;
+}
 
 static uint32_t kt_be32(const uint8_t *p) {
     return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) | ((uint32_t)p[2] << 8) | p[3];
@@ -1108,7 +1120,7 @@ int gw_Kit_Tex(const char *name, const char *mod_ui) {
 
 int gw_Kit_TexInfo(int tex, int *w, int *h, float *w1x, float *h1x, int *mask, const char **tint) {
     const KitTex *t;
-    if (tex < 0 || tex >= nkt || kt[tex]->rgba == NULL) return 0;
+    if (!kt_ok(tex) || kt[tex]->rgba == NULL) return 0;
     t = kt[tex];
     if (w) *w = t->w;
     if (h) *h = t->h;
@@ -1119,7 +1131,7 @@ int gw_Kit_TexInfo(int tex, int *w, int *h, float *w1x, float *h1x, int *mask, c
     return 1;
 }
 
-const uint8_t *gw_Kit_TexPixels(int tex) { return (tex >= 0 && tex < nkt) ? kt[tex]->rgba : NULL; }
+const uint8_t *gw_Kit_TexPixels(int tex) { return kt_ok(tex) ? kt[tex]->rgba : NULL; }
 int gw_Kit_TexCount(void) { return nkt; }
 
 /* A script model's atlas as a kit texture: decoded once per `key` (the model file's path and stamp),
@@ -1136,7 +1148,7 @@ int gw_Kit_TexAddGX(const char *key, const uint8_t *img, size_t img_size, int w,
             if (strcmp(kt[i]->path, key) == 0) return kt[i]->rgba != NULL ? i : -1;
         }
     }
-    if (nkt >= KT_MAX || n >= 64) return -1;
+    if (nkt >= KT_HSD_BASE || n >= 64) return -1;
     t = (KitTex *)calloc(1, sizeof *t);
     if (t == NULL) return -1;
     kit_copy(t->path, key, sizeof t->path);
@@ -1160,6 +1172,78 @@ int gw_Kit_TexAddGX(const char *key, const uint8_t *img, size_t img_size, int w,
     kt[nkt] = t;
     if (t->rgba == NULL) return nkt++, -1;
     return nkt++;
+}
+
+/* ---- disc art: a GX texture read from game memory, decoded NOW into an RGBA8 copy the kit owns ------------------------------
+ * The caller's pointers are never kept (the archive they point into is closed when the scene ends), and nothing is written anywhere: the
+ * pixels live in this process's memory and nowhere else. The pool is KT_HSD_MAX slots in a fixed block of kt[]. The overlay uploads a texture
+ * once per (index, generation) and cannot free it, so the pool stays warm across scenes (a revisit re-decodes nothing and uploads nothing) and
+ * a slot is reassigned only when the pool is full: the least recently used slot that was neither requested nor drawn in the last two frames
+ * (the draw list is two-banked: the frame in flight still names last frame's slots). Reassigning bumps the slot's generation. A full pool of
+ * busy slots answers -1 and the caller draws its placeholder: a missing picture is acceptable, a wrong one is not.
+ * Memory: an icon is 64x56x4 = 14 KB, a portrait 136x188x4 = 102 KB; 192 slots are at most 19.6 MB (192 portraits), about 0.85 MB for one
+ * character select (30 icons and 4 portraits). */
+static unsigned hsd_logged_formats;
+
+int gw_Kit_TexAddHsd(const char *key, int gx_fmt, const uint8_t *img, size_t img_size, int w, int h,
+                     int tlut_fmt, const uint8_t *tlut, int tlut_n) {
+    int i, slot = -1, lru = -1, lru_used = 0;
+    uint8_t *px;
+    KitTex *t;
+    if (key == NULL || key[0] == '\0' || img == NULL || w < 1 || h < 1 || w > 1024 || h > 1024) return -1;
+    for (i = 0; i < KT_HSD_MAX; i++) {                                  /* the same key is the same slot */
+        KitTex *e = kt[KT_HSD_BASE + i];
+        if (e != NULL && strcmp(e->path, key) == 0) { e->used = hsd_clock; return e->rgba != NULL ? KT_HSD_BASE + i : -1; }
+    }
+    if (gx_fmt < 0 || gx_fmt > 10 || gx_fmt == 7) {
+        if (gx_fmt >= 0 && gx_fmt < 32 && !(hsd_logged_formats & (1u << gx_fmt))) {
+            hsd_logged_formats |= 1u << gx_fmt;
+            gw_log("ui: disc art format %d not decoded", gx_fmt);       /* the in-game checklist reads these lines (CMPR is 14) */
+        }
+        return -1;
+    }
+    if ((gx_fmt >= 8) && (tlut == NULL || tlut_n < 1)) return -1;       /* a palette image needs its palette */
+    px = kt_decode(img, img_size, gx_fmt, w, h, tlut, tlut_fmt, tlut_n);
+    if (px == NULL) return -1;
+    for (i = 0; i < KT_HSD_MAX && slot < 0; i++) if (kt[KT_HSD_BASE + i] == NULL) slot = i;
+    if (slot < 0) {
+        for (i = 0; i < KT_HSD_MAX; i++) {
+            const KitTex *e = kt[KT_HSD_BASE + i];
+            if (hsd_clock - e->used >= 2 && (lru < 0 || e->used < lru_used)) { lru = i; lru_used = e->used; }
+        }
+        if (lru < 0) { free(px); return -1; }
+        slot = lru;
+        free(kt[KT_HSD_BASE + slot]->rgba);
+        free(kt[KT_HSD_BASE + slot]);
+        kt[KT_HSD_BASE + slot] = NULL;
+        hsd_n--;
+    }
+    t = (KitTex *)calloc(1, sizeof *t);
+    if (t == NULL) { free(px); return -1; }
+    kit_copy(t->path, key, sizeof t->path);
+    kit_copy(t->name, "disc art", sizeof t->name);
+    t->w = w; t->h = h; t->fmt = -7; t->mask = 0;
+    t->w1x = (float)w * 0.5f; t->h1x = (float)h * 0.5f;
+    t->rgba = px;
+    t->used = hsd_clock;
+    kt[KT_HSD_BASE + slot] = t;
+    hsd_gen[slot]++;
+    hsd_n++;
+    return KT_HSD_BASE + slot;
+}
+
+void gw_Kit_TexHsdFrame(int frame) { hsd_clock = frame; }
+int gw_Kit_TexHsdCount(void) { return hsd_n; }
+int gw_Kit_TexGeneration(int tex) { return (tex >= KT_HSD_BASE && tex < KT_HSD_BASE + KT_HSD_MAX) ? hsd_gen[tex - KT_HSD_BASE] : 0; }
+
+/* Frees the whole disc-art pool (a disc or mod change; the tests). Slots keep their generation, so a later slot is re-uploaded. */
+void gw_Kit_TexDropHsd(void) {
+    int i;
+    for (i = 0; i < KT_HSD_MAX; i++) {
+        KitTex *e = kt[KT_HSD_BASE + i];
+        if (e != NULL) { free(e->rgba); free(e); kt[KT_HSD_BASE + i] = NULL; hsd_gen[i]++; }
+    }
+    hsd_n = 0;
 }
 
 /* ============================================================================================
@@ -1327,7 +1411,8 @@ int gw_Kit_DrawParagraph(float x, float y, float max_w, const char *s, int role,
 
 int gw_Kit_DrawImage(int tex, float x, float y, float w, float h, uint32_t rgba, int flip, float shear) {
     float u0 = 0, v0 = 0, u1 = 1, v1 = 1;
-    if (tex < 0 || tex >= nkt || kt[tex]->rgba == NULL) return 0;
+    if (!kt_ok(tex) || kt[tex]->rgba == NULL) return 0;
+    if (tex >= KT_HSD_BASE) kt[tex]->used = hsd_clock;                  /* drawn: not evictable for two frames */
     if (flip & GW_KIT_FLIP_X) { u0 = 1; u1 = 0; }
     if (flip & GW_KIT_FLIP_Y) { v0 = 1; v1 = 0; }
     return kq_add(x, y, x + w, y + h, u0, v0, u1, v1, rgba, tex, shear, y + h * 0.5f);
@@ -1525,6 +1610,61 @@ static int test_kit_decode_formats(void) {
         gw_test_fail("a short I4 image was decoded");
         return 1;
     }
+    return 0;
+}
+
+static int test_kit_discart(void) {
+    uint8_t ci8[64], tl[8];
+    static uint8_t big[136 * 192 * 2];
+    int a, b, i, c, g0 = 0, g1 = 0;
+    char key[32];
+    /* a CI8 tile: 8x4 texels, palette entries 0 and 1 (RGB5A3: opaque red, opaque blue) */
+    for (i = 0; i < 32; i++) ci8[i] = (uint8_t)(i & 1);
+    tl[0] = 0xFC; tl[1] = 0x00; tl[2] = 0x80; tl[3] = 0x1F;                /* 1 11111 00000 00000 ; 1 00000 00000 11111 */
+    gw_Kit_TexDropHsd();
+    a = gw_Kit_TexAddHsd("t:ci8", 9, ci8, 32, 8, 4, 2, tl, 2);
+    if (a < 0) { gw_test_fail("CI8 with an RGB5A3 palette did not decode"); return 1; }
+    { const uint8_t *px = gw_Kit_TexPixels(a);
+      if (px == NULL || px[0] != 255 || px[1] != 0 || px[2] != 0 || px[3] != 255) { gw_test_fail("texel 0 should be opaque red"); return 1; }
+      if (px[4 + 2] != 255) { gw_test_fail("texel 1 should be blue"); return 1; } }
+    /* the same key is the same slot; the caller's buffer may be overwritten without changing the texture (the pixels were COPIED) */
+    memset(ci8, 0xFF, sizeof ci8); memset(tl, 0, sizeof tl);
+    b = gw_Kit_TexAddHsd("t:ci8", 9, ci8, 32, 8, 4, 2, tl, 2);
+    if (b != a || gw_Kit_TexPixels(a)[0] != 255) { gw_test_fail("decode_copies_pixels: the kit kept the caller's buffer"); return 1; }
+    /* short image, unknown format, bad size: -1, never a crash */
+    if (gw_Kit_TexAddHsd("t:short", 9, ci8, 4, 8, 4, 2, tl, 2) != -1) { gw_test_fail("a short image was accepted"); return 1; }
+    if (gw_Kit_TexAddHsd("t:fmt", 99, ci8, 32, 8, 4, 2, tl, 2) != -1) { gw_test_fail("an unknown format was accepted"); return 1; }
+    if (gw_Kit_TexAddHsd("t:cmpr", 14, ci8, 32, 8, 8, 2, tl, 2) != -1) { gw_test_fail("CMPR was accepted before it is decoded"); return 1; }
+    if (gw_Kit_TexAddHsd("t:null", 9, NULL, 32, 8, 4, 2, tl, 2) != -1) { gw_test_fail("a NULL image was accepted"); return 1; }
+    if (gw_Kit_TexAddHsd("t:ci8-no-lut", 9, ci8, 32, 8, 4, 2, NULL, 0) != -1) { gw_test_fail("a palette image without a palette was accepted"); return 1; }
+    if (gw_Kit_TexAddHsd("", 5, big, sizeof big, 8, 8, 0, NULL, 0) != -1 || gw_Kit_TexAddHsd(NULL, 5, big, sizeof big, 8, 8, 0, NULL, 0) != -1) { gw_test_fail("an empty key was accepted"); return 1; }
+    if (gw_Kit_TexAddHsd("t:huge", 5, big, sizeof big, 4000, 4000, 0, NULL, 0) != -1) { gw_test_fail("an oversized image was accepted"); return 1; }
+    if (gw_Kit_TexPixels(KT_HSD_BASE + KT_HSD_MAX) != NULL || gw_Kit_TexPixels(KT_HSD_BASE + 100) != NULL) { gw_test_fail("an empty slot has pixels"); return 1; }
+    /* RGB5A3 portrait-sized images (136x188; GX tiles are 4x4 so the rows round up to 192): four decodes a frame, 400 of them. The pool
+     * holds 192; nothing is evicted that was drawn or requested in the last two frames; a refused request is -1 */
+    gw_Kit_TexDropHsd();
+    for (i = 0; i < KT_HSD_MAX; i++) g0 += hsd_gen[i];
+    for (c = 0; c < 400; c++) {
+        gw_Kit_TexHsdFrame(c / 4);
+        snprintf(key, sizeof key, "t:p%d", c);
+        i = gw_Kit_TexAddHsd(key, 5, big, 136 * 192 * 2, 136, 188, 0, NULL, 0);
+        if (i < 0 && c < 100) { gw_test_fail("slot_pool_evicts: the pool refused too early"); return 1; }
+        if (gw_Kit_TexHsdCount() > KT_HSD_MAX) { gw_test_fail("the pool grew past its cap"); return 1; }
+    }
+    for (i = 0; i < KT_HSD_MAX; i++) g1 += hsd_gen[i];
+    if (g1 - g0 <= KT_HSD_MAX) { gw_test_fail("slot_pool_evicts: a full pool never reassigned a slot"); return 1; }
+    /* a slot drawn this frame is not taken: fill the pool within one frame, then one more is refused */
+    gw_Kit_TexDropHsd();
+    gw_Kit_TexHsdFrame(1000);
+    for (c = 0; c < KT_HSD_MAX; c++) { snprintf(key, sizeof key, "t:q%d", c); if (gw_Kit_TexAddHsd(key, 5, big, 136 * 192 * 2, 8, 8, 0, NULL, 0) < 0) { gw_test_fail("the pool refused before it was full"); return 1; } }
+    if (gw_Kit_TexAddHsd("t:one-more", 5, big, 136 * 192 * 2, 8, 8, 0, NULL, 0) != -1) { gw_test_fail("a slot used this frame was reassigned"); return 1; }
+    gw_Kit_TexHsdFrame(1002);
+    i = gw_Kit_TexAddHsd("t:one-more", 5, big, 136 * 192 * 2, 8, 8, 0, NULL, 0);
+    if (i < 0) { gw_test_fail("a slot unused for two frames was not reassigned"); return 1; }
+    gw_Kit_TexDropHsd();
+    if (gw_Kit_TexHsdCount() != 0 || gw_Kit_TexPixels(i) != NULL) { gw_test_fail("TexDropHsd left slots behind"); return 1; }
+    /* the model slots and file textures are untouched by the pool */
+    if (gw_Kit_TexCount() >= KT_HSD_BASE) { gw_test_fail("the dense texture count reached the disc-art block"); return 1; }
     return 0;
 }
 
@@ -1772,6 +1912,7 @@ static int test_kit_atlas_roles(void) {
 
 void gw_kit_tests_register(void) {
     gw_test_register("kit_decode_formats", test_kit_decode_formats);
+    gw_test_register("kit_discart", test_kit_discart);
     gw_test_register("kit_json_and_colours", test_kit_json_and_colours);
     gw_test_register("kit_text_layout", test_kit_text_layout);
     gw_test_register("kit_panel_and_row", test_kit_panel_and_row);

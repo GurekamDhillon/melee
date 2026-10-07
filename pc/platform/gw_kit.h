@@ -97,6 +97,19 @@ int gw_Kit_TexCount(void);
 int gw_Kit_TexAddGX(const char *key, const uint8_t *img, size_t img_size, int w, int h,
                     const uint8_t *glow, size_t glow_size, int gw, int gh, int keep_alpha);
 
+/* A GX texture read from game memory (a retail icon or portrait), decoded NOW into an RGBA8 copy owned by the kit: the caller's pointers are not
+ * kept and nothing is written to disk. `key` names it; the same key returns the same slot. gx_fmt is GX's number (0 I4, 1 I8, 2 IA4, 3 IA8, 4 RGB565,
+ * 5 RGB5A3, 6 RGBA8, 8 C4, 9 C8, 10 C14X2; CMPR 14 is not decoded and is logged once as "ui: disc art format 14 not decoded"); tlut_fmt 0 IA8,
+ * 1 RGB565, 2 RGB5A3, tlut_n entries of 2 bytes. Returns the texture index (usable with gw_Kit_DrawImage), or -1 when the format is not
+ * decodable, the image is short, there is no palette for a palette format, or every one of the 192 slots was used in the last two frames. */
+int gw_Kit_TexAddHsd(const char *key, int gx_fmt, const uint8_t *img, size_t img_size, int w, int h,
+                     int tlut_fmt, const uint8_t *tlut, int tlut_n);
+void gw_Kit_TexHsdFrame(int frame);   /* the host calls it once per frame: the eviction clock */
+void gw_Kit_TexDropHsd(void);         /* frees the whole disc-art pool (a disc or mod change); a scene exit does not call it: the pool stays warm */
+int gw_Kit_TexHsdCount(void);
+int gw_Kit_TexGeneration(int tex);    /* disc-art slots: how often the slot was reassigned (the overlay re-uploads when it moves); 0 otherwise */
+#define GW_KIT_TEX_MAX 576            /* every texture index is below this (the overlay sizes its upload table by it) */
+
 /* ---- the frame's draw list ------------------------------------------------------------------ */
 void gw_Kit_BeginFrame(void); /* empties the quad list (gw_Script_Tick, before on_tick) */
 int gw_Kit_QuadCount(void);

@@ -605,6 +605,7 @@ static void gs_ui_draw(void) {
         if (!u->warned) { u->warned = 1; gw_log("ui: %s not drawn: only %d quads left this frame", u->sc.id, gw_Kit_QuadRoom()); }
         return;
     }
+    gw_Kit_TexHsdFrame((int) gs_ui_frame);                             /* the disc-art pool's eviction clock */
     old = gs.cur;
     if (u->owner != GS_UI_ENGINE) gs.cur = u->owner;                   /* an engine screen draws as whoever is running */
     QueryPerformanceCounter(&t0);

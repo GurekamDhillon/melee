@@ -13,12 +13,13 @@
 #ifndef GENO_H
 #define GENO_H
 
-#define GENO_VERSION 9    /* newest geno.json "geno" field this build reads (v2-v5 keys are additive;
+#define GENO_VERSION 10   /* newest geno.json "geno" field this build reads (v2-v5 keys are additive;
                              4 = v5: articles, on_hit, counter windows - docs/geno.md section 19;
                              7 = slice 2: a define may use the full attribute table, special_attributes,
                              fx_bindings;
                              8 = slice 3: a define may declare articles and a named-sound table;
-                             9 = slice 4: a define may be base "none" (own model, clip bank and tables)) */
+                             9 = slice 4: a define may be base "none" (own model, clip bank and tables);
+                             10 = slice 5: a define may carry fighter Lua ("lua" block, per-state "lua" keys)) */
 #define GENO_ID_VERSION 1 /* salt of the stable ids: NOT bumped by v2 (same entry -> same id) */
 #define GENO_LEVEL 3      /* feature level: 0 v0, 1 v1 (section 15), 2 v2 (section 16), 3 v3 (section 17) */
 
@@ -513,6 +514,9 @@ enum {
     GENO_LUA_IO_VEL_X = 9,
     GENO_LUA_IO_VEL_Y = 10,
     GENO_LUA_IO_PERCENT = 11,
+    GENO_LUA_IO_HIT_DAMAGE = 12, /* in, float bits: the last hit taken (before a counter negated it); GenoState.hit_damage */
+    GENO_LUA_IO_HIT_FROM = 13,   /* in: 0 unknown, 1 the last hit's attacker is in front of the fighter now, 2 behind */
+    GENO_LUA_IO_COUNTERED = 14,  /* in: hits countered since the fighter was reset; GenoState.counters */
     GENO_LUA_IO_STATE = 16,  /* in and out: GENO_LUA_STATE_SLOTS words, the typed state */
     GENO_LUA_IO_NCMDS = 32,  /* out: commands queued */
     GENO_LUA_IO_FAULT = 33,  /* out: GENO_LUA_FAULT_* */
@@ -522,7 +526,8 @@ enum { /* a command's op */
     GENO_LUA_CMD_GO = 1,         /* a: a target word (GENO_TARGET(GENO_TGT_GENO, n) | GENO_TGT_AUTO | GENO_TGT_HELPLESS) */
     GENO_LUA_CMD_VELOCITY = 2,   /* a: forward (float bits, facing-relative), b: up */
     GENO_LUA_CMD_HITBOX_DAMAGE = 3, /* a: hitbox mask (bit n = slot n), b: damage (float bits) */
-    GENO_LUA_CMD_LOOP = 4        /* restart the animation, the state's variables kept */
+    GENO_LUA_CMD_LOOP = 4,       /* restart the animation, the state's variables kept */
+    GENO_LUA_CMD_TURN = 5        /* flip the facing (as the script value FACING = 0); the model follows */
 };
 enum { /* GENO_LUA_IO_FAULT */
     GENO_LUA_FAULT_NONE = 0,

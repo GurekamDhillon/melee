@@ -1,6 +1,6 @@
 # Vanilla Charger demo
 
-One capability: a Geno `define` whose neutral special is a Lua callback with typed per-fighter state (slice 5, `"geno": 9`; reference `docs/geno.md` section 23).
+One capability: a Geno `define` whose neutral special is a Lua callback with typed per-fighter state (slice 5, `"geno": 10`; reference `docs/geno.md` section 23).
 Enable the fighter folder `pc/geno/mods/vanilla-charger/` and `geno-lab`, then start the LAB with `p1=geno:vanilla-charger/hu;p2=mario/cpu0`
 (`gd.cpu_mode(2,"stand")`). Hold B on a controller, or press key 1 (hold B 45 frames) or 2 (15 frames); S/L save and load, P/N/R pause, step, resume.
 The HUD reads the Lua state with `gd.fighter_lua(1)`; the fighter's Lua is not a `gd` script and cannot call `gd`.

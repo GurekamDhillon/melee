@@ -6,7 +6,7 @@
  *   states[n]: { ..., "lua": { "enter": "fn", "frame": "fn" } }              functions of that module, run on entry / each frame
  *
  * Strict, like the rest of a define: a bad block, a missing function, a module the domain refuses (geno_lua_core.h), or the key on an
- * attach entry or a file older than "geno": 9 refuses the entry with the reason in the log. The module text and the layout are folded
+ * attach entry or a file older than "geno": 10 refuses the entry with the reason in the log. The module text and the layout are folded
  * into the entry's id, so two installs with different scripts never share one. Nothing here changes an entry without a lua block. */
 
 static const gn_profile *gn_at(int p);
@@ -58,7 +58,7 @@ static int gn_lua_parse(gn_profile *p, const jdoc *d, int e, const char *mod, co
             if (jd_get(d, c, "lua") >= 0) any = 1;
     if (lb < 0 && !any) return 1;
     if (!p->defined) { gw_log("geno: %s: fighter Lua is for a define; an attach entry cannot carry a \"lua\" block - refused", where); return 0; }
-    if (version < 9) { gw_log("geno: %s: \"lua\" needs \"geno\": 9 - refused", where); return 0; }
+    if (version < 10) { gw_log("geno: %s: \"lua\" needs \"geno\": 10 - refused", where); return 0; }
     if (lb < 0 || d->n[lb].type != JN_OBJ) { gw_log("geno: %s: a state names Lua functions but the entry has no \"lua\" block - refused", where); return 0; }
     {
         int sc = jd_get(d, lb, "script"), so = jd_get(d, lb, "source"), sl = jd_get(d, lb, "state");

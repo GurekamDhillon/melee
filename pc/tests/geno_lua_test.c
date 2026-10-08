@@ -182,6 +182,29 @@ int main(void)
     CHECK(rc == 0 && (int32_t) rd(GENO_LUA_IO_STATE + 0) == 9, "the domain works after a fault");
     CHECK((int) g->used <= a + 64, "heap after a fault %d vs %d", (int) g->used, a);
     glua_free(g);
+    /* ---- increment 2: the hit the fighter just took is readable; ctx.turn queues a command ---- */
+    g = mk("return { f = function(ctx) local s = ctx.state local d = ctx.self.hit_damage "
+           "s.ratio = math.min(30, math.max(9, 1.5 * d)) s.charge = ctx.self.countered * 10 + ctx.self.hit_from "
+           "if ctx.self.hit_from < 0 then ctx.turn() end end }\n");
+    io_reset();
+    gw_w32(&io[GENO_LUA_IO_HIT_DAMAGE], glua_f_bits(12.0f));
+    gw_w32(&io[GENO_LUA_IO_COUNTERED], 3);
+    gw_w32(&io[GENO_LUA_IO_HIT_FROM], 1);
+    rc = glua_call(g, glua_find(g, "f"), io);
+    CHECK(rc == 0 && glua_bits_f(rd(GENO_LUA_IO_STATE + 1)) == 18.0f && (int32_t) rd(GENO_LUA_IO_STATE + 0) == 31 && rd(GENO_LUA_IO_NCMDS) == 0,
+          "hit_damage 12 -> 18, countered 3, hit_from 1 (in front), no turn (rc %d, %s)", rc, g->err);
+    io_reset();
+    gw_w32(&io[GENO_LUA_IO_HIT_DAMAGE], glua_f_bits(2.0f));
+    gw_w32(&io[GENO_LUA_IO_HIT_FROM], 2);
+    rc = glua_call(g, glua_find(g, "f"), io);
+    CHECK(rc == 0 && glua_bits_f(rd(GENO_LUA_IO_STATE + 1)) == 9.0f && (int32_t) rd(GENO_LUA_IO_STATE + 0) == -1 && rd(GENO_LUA_IO_NCMDS) == 1 &&
+              rd(GENO_LUA_IO_CMDS + 0) == GENO_LUA_CMD_TURN,
+          "hit_damage 2 -> floor 9, hit_from 2 reads as -1 (behind) and queues a turn (rc %d)", rc);
+    io_reset();
+    gw_w32(&io[GENO_LUA_IO_HIT_DAMAGE], glua_f_bits(80.0f));
+    rc = glua_call(g, glua_find(g, "f"), io);
+    CHECK(rc == 0 && glua_bits_f(rd(GENO_LUA_IO_STATE + 1)) == 30.0f && (int32_t) rd(GENO_LUA_IO_STATE + 0) == 0, "hit_damage 80 -> cap 30, hit_from 0 (unknown)");
+    glua_free(g);
     /* ---- the allowlist's functions work ---- */
     g = mk("return { f = function(ctx) local t = freeze{4,5,6} local s = 0 for _, v in ipairs(t) do s = s + v end "
            "ctx.state.charge = s + #t + math.floor(2.7) + math.abs(-1) + select('#', 1, 2) + math.max(1, 9) end }\n");

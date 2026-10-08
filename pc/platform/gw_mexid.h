@@ -23,8 +23,9 @@
  *            NOT included (cosmetic): costume files, effect banks, sound banks, CSS art.
  *   stage    its Gr file(s): the .dat, and for a prefix name ("/GrPs") every <prefix>.dat and
  *            <prefix>1..9.dat present. NOT included: music, SSS art, .usd language variants.
- *   global   PlCo.dat's 21 global tables (all but the two per-kind tables, see gw_mexid.c) at
- *            their vanilla sizes; ItCo.dat whole; MELEE_MEX + <exe>/mods/mex.txt.
+ *   global   PlCo.dat WHOLE FILE (a different disc or mod pack changes how vanilla fighters animate
+ *            even where its tables look equal, see gw_mexid.c) and its 21 global tables (all but the two
+ *            per-kind tables) at their vanilla sizes; ItCo.dat whole; MELEE_MEX + <exe>/mods/mex.txt.
  *
  * All ints and const char* so gwtool-compiled game code (alpha's online CSS/SSS) can call these
  * without the gw_ prefix, e.g. `extern int MexId_OnlineFighter(int ck);`.

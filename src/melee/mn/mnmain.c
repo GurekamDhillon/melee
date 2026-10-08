@@ -3055,11 +3055,20 @@ void mnMain_Scene_OnEnter(void* user_data)
     }
     lbAudioAx_80023F28(gmMainLib_8015ECB0());
 #if defined(TARGET_PC)
+    /* Mark the card dirty BEFORE the frontend's native screen starts. Retail runs this call on scene
+     * entry, long before the player can pick a screen, so mnSnap_80257F24's lb_8001CDB4 drains the
+     * autosave first. Opening the screen from here ran its init with nothing dirty, the autosave
+     * then started in the same frame as the Snapshots screen's own card scan (lb_8001BFD8), the
+     * scan's resetState clobbered the shared task state, and two CARDMountAsync completions
+     * against one count left tasks_remaining at -1: a wait_idle spin that never ends (Data >
+     * Snapshots froze the game). */
+    lbCardGame_SaveChanges();
     if (pc_native && gmFrontend_TakeNativeRequest(&pc_native_kind, &pc_native_sel)) {
         mn_PcOpenNative(pc_native_kind, pc_native_sel);
     }
-#endif
+#else
     lbCardGame_SaveChanges();
+#endif
 }
 
 char null_terminator[1] = "\0";

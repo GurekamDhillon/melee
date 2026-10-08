@@ -76,6 +76,41 @@ static int test_mem1_at_guest_base(void) {
   return 0;
 }
 
+/* A second rollback session in one process must start with an EMPTY snapshot ring (0.2.2-rc1: slots kept the last session's
+ * frames, the new match counted up from -123 and evicted its own newest snapshot every frame, so every rollback deeper than one
+ * frame found "its snapshot is gone" and the third online match desynced). */
+static int test_snap_second_session_ring(void) {
+  extern int gw_Snap_OpenSession(int k);
+  extern int gw_Snap_HasFrame(int frame);
+  extern void gw_snap_save(int frame);
+  int f, depth_ok = 1;
+  if (gw_Snap_OpenSession(8) < 8) {
+    gw_test_fail("gw_Snap_OpenSession(8) gave too few slots (no melee-pc.map beside the exe?)");
+    return 1;
+  }
+  for (f = 9000; f < 9010; ++f) {
+    gw_snap_save(f); /* the first match ends at frame 9009 */
+  }
+  gw_Snap_OpenSession(8); /* the second match */
+  for (f = -123; f < -115; ++f) {
+    gw_snap_save(f);
+  }
+  for (f = -123; f < -115; ++f) {
+    if (!gw_Snap_HasFrame(f)) {
+      depth_ok = 0;
+    }
+  }
+  if (!depth_ok) {
+    gw_test_fail("after a second session opened, saved frames -123..-116 are not all present in the ring (stale slots evict the new match)");
+    return 1;
+  }
+  if (gw_Snap_HasFrame(9005)) {
+    gw_test_fail("a slot of the previous session (frame 9005) survived the second session's open");
+    return 1;
+  }
+  return 0;
+}
+
 static int test_mem1_aram_distinct(void) {
   if (gw_mem1 == NULL || gw_aram == NULL) {
     gw_test_fail("gw_mem1=%p gw_aram=%p", (void *)gw_mem1, (void *)gw_aram);
@@ -488,6 +523,7 @@ void gw_tests_register_all(void) {
   gw_test_register("mex_csp_frame_map", test_mex_csp_frame_map);
   gw_test_register("mex_kirby_costume_rows", test_mex_kirby_costume_rows);
   gw_test_register("unlock_all", test_unlock_all);
+  gw_test_register("snap_second_session_ring", test_snap_second_session_ring);
   /* Geno last: its savestate test opens gw_snap's snapshot slots for the rest of the process. */
   {
     extern void gw_GenoTestRegisterAll(void); /* pc/geno/geno_tests.c (game side) */

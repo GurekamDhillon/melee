@@ -255,7 +255,7 @@ enum {
 #define GENO_MAX_SPECIAL 64      /* v1: special_attributes entries per profile */
 #define GENO_MAX_ONLAND 16       /* v1: on_land map entries per profile */
 #define GENO_MAX_MOTION_ANIM 8   /* v5.4: "motion_anims" entries per profile */
-#define GENO_MAX_OVERLAYS 64     /* v1: subaction script overlays per profile */
+#define GENO_MAX_OVERLAYS 192    /* v1: subaction script overlays per profile (slice 8: was 64; Sora needs about 100) */
 #define GENO_POOL_WORDS 16384    /* v1: all overlay words of every profile (64 KB) */
 
 /* ---- v2: Geno action states (docs/geno.md section 16) ------------------------------------------

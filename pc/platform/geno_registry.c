@@ -380,6 +380,8 @@ struct gn_fm {
     char cos_file[16][64], cos_joint[16][48], cos_matanim[16][48];
     char cos_name[16][24];          /* slice 6: a costume's declared name ("" = none) */
     signed char cos_team[16];       /* slice 6: a declared team colour set: -1 none, 0 red, 1 blue, 2 green */
+    int nown;                       /* slice 8: rows the package declares past Mario's 303 (fighter.rows), each a clip name of the bank */
+    char own_clip[GPL_MAX_OWN_ROWS][32];
     GenoPlan *plan; int plan_tried;
 };
 
@@ -482,7 +484,7 @@ typedef struct {
 
 #define GN_NONE 0xFFFFFFFFu
 
-#define GN_MAX_SLOTS 256 /* overlay slots over every profile */
+#define GN_MAX_SLOTS 512 /* overlay slots over every profile */
 
 typedef struct {
     gn_profile* p;
@@ -2398,6 +2400,7 @@ void geno_registry_tests_register(void) {
     gw_test_register("geno_lua_registry", test_geno_lua_registry);
     gw_test_register("geno_lua_call", test_geno_lua_call);
     gw_test_register("geno_define_presentation", test_geno_define_presentation);
+    gw_test_register("geno_define_own_rows", test_geno_define_own_rows);
     gw_test_register("geno_gxtex_art", test_geno_gxtex_art);
     gw_test_register("geno_define_presentation_ck", test_geno_define_presentation_ck);
     gw_test_register("geno_items_registry",gn_items_registry_test);

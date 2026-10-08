@@ -54,6 +54,22 @@ static int gn_define_fighter(gn_profile* p, const jdoc* d, int e, const char* wh
             }
         }
     }
+    /* slice 8: "rows": names of bank clips, the package's own animation rows 303, 304, ... (a state's or an overlay's `subaction` may name them).
+     * Mario's 303 rows are a donor's: a port with its own specials needs rows of its own. */
+    {
+        int rv = jd_get(d, f, "rows");
+        if (rv >= 0) {
+            if (d->n[rv].type != JN_ARR || d->n[rv].count > GPL_MAX_OWN_ROWS) {
+                gw_log("geno: %s: fighter.rows must be a list of at most %d clip names", where, GPL_MAX_OWN_ROWS); free(fm); return 0;
+            }
+            for (c = d->n[rv].first; c >= 0; c = d->n[c].next) {
+                if (d->n[c].type != JN_STR || !d->n[c].str[0] || strlen(d->n[c].str) >= sizeof fm->own_clip[0]) {
+                    gw_log("geno: %s: fighter.rows[%d] must be a clip name of 1..31 characters", where, fm->nown); free(fm); return 0;
+                }
+                snprintf(fm->own_clip[fm->nown++], sizeof fm->own_clip[0], "%s", d->n[c].str);
+            }
+        }
+    }
     p->fm = fm;
     return 1;
 }
@@ -165,7 +181,7 @@ static int gn_define_parse(gn_profile* p, const jdoc* d, int e, int version, con
         for (c = d->n[v].first; c >= 0; c = d->n[c].next) {
             int index = jd_get(d, c, "index");
             if (index < 0 || d->n[index].type != JN_NUM || d->n[index].num < 0 ||
-                d->n[index].num >= 303 || d->n[index].num != (int)d->n[index].num) goto refused;
+                d->n[index].num >= 303 + (p->fm ? p->fm->nown : 0) || d->n[index].num != (int)d->n[index].num) goto refused;
         }
     }
     v = jd_get(d, e, "common_states");
@@ -182,7 +198,7 @@ static int gn_define_parse(gn_profile* p, const jdoc* d, int e, int version, con
                 for (j = 0; j < 9 && strcmp(d->n[x].key, fields[j]); ++j) {}
                 if (j == 9) goto refused;
                 if (j < 5) {
-                    if (d->n[x].type != JN_NUM || d->n[x].num < 0 || d->n[x].num > (j < 2 ? 350 : j == 2 ? 302 : j == 4 ? 255 : 2147483647) ||
+                    if (d->n[x].type != JN_NUM || d->n[x].num < 0 || d->n[x].num > (j < 2 ? 350 : j == 2 ? 302 + (p->fm ? p->fm->nown : 0) : j == 4 ? 255 : 2147483647) ||
                         d->n[x].num != (int)d->n[x].num) goto refused;
                     k = (int)d->n[x].num;
                 } else {
@@ -205,7 +221,7 @@ static int gn_define_parse(gn_profile* p, const jdoc* d, int e, int version, con
         for (c = d->n[v].first; c >= 0; c = d->n[c].next) {
             int sub = jd_get(d, c, "subaction");
             if (sub >= 0 && d->n[sub].type == JN_NUM &&
-                (d->n[sub].num < 0 || d->n[sub].num >= 303 || d->n[sub].num != (int)d->n[sub].num)) goto refused;
+                (d->n[sub].num < 0 || d->n[sub].num >= 303 + (p->fm ? p->fm->nown : 0) || d->n[sub].num != (int)d->n[sub].num)) goto refused;
         }
     }
     p->defined = 1;
@@ -519,6 +535,23 @@ static int gn_plan_parse(GenoPlan* pl, const jdoc* d, const char* who)
         }
         if (m + 1 > pl->nmotions) pl->nmotions = m + 1;
     }
+    {   /* slice 8: row_blend: an array indexed by row, [a, b] (the two blend bytes of ftData x10) or null */
+        int rb = jd_get(d, root, "row_blend"), e, ri = 0;
+        if (rb >= 0 && d->n[rb].type == JN_ARR)
+            for (e = d->n[rb].first; e >= 0 && ri < GPL_MAX_ROWS; e = d->n[e].next, ++ri)
+                if (d->n[e].type == JN_ARR && d->n[e].count == 2) {
+                    int q = d->n[e].first;
+                    pl->row_blend[ri][0] = (unsigned char)d->n[q].num; pl->row_blend[ri][1] = (unsigned char)d->n[d->n[q].next].num; pl->has_blend[ri] = 1;
+                }
+    }
+    {   /* slice 8: row_flags: an array indexed by row, a number (the flag bits above the low 6, which stay the loader's) or null */
+        int rd = jd_get(d, root, "row_flags"), e, ri = 0;
+        if (rd >= 0 && d->n[rd].type == JN_ARR)
+            for (e = d->n[rd].first; e >= 0 && ri < GPL_MAX_ROWS; e = d->n[e].next, ++ri)
+                if (d->n[e].type == JN_NUM && d->n[e].num >= 0 && d->n[e].num <= 4294967295.0) {
+                    pl->row_flags[ri] = (unsigned)d->n[e].num & ~0x3fu; pl->has_flags[ri] = 1;
+                }
+    }
     {
         static const struct { const char* key; int n; int off; } lists[] = {
             {"x8_part_bytes", 5, 0}, {"x34_centre", 1, 1}, {"x38_coin", 2, 2}, {"x44_ecb", 6, 3}, {"x54_gfx", 5, 4}, {"x58_ik", 10, 5}, {"x30_hurtbox_bones", 10, 6}};
@@ -558,7 +591,7 @@ static const GenoPlan* gn_define_plan(int kind)
     struct gn_fm* fm = gn_fm_for_kind(kind);
     if (!fm) return NULL;
     if (!fm->plan_tried) {
-        uint32_t len = 0; char* raw; jdoc* d; GenoPlan* pl;
+        uint32_t len = 0; char* raw; jdoc* d; GenoPlan* pl; int i2;
         fm->plan_tried = 1;
         raw = (char*)gw_DVDReadFileAlloc(fm->plan_file, &len);
         if (!raw) { gw_log("geno: plan file %s not found in the mod's files/", fm->plan_file); return NULL; }
@@ -571,6 +604,15 @@ static const GenoPlan* gn_define_plan(int kind)
                 ok = jd_parse(d, text) >= 0 ? gn_plan_parse(pl, d, fm->plan_file) : (gw_log("geno: plan %s: %s", fm->plan_file, d->err ? d->err : "bad JSON"), 0);
             }
             free(text);
+            if (ok) {   /* slice 8: fighter.rows names a bank clip each */
+                int k;
+                for (k = 0; k < fm->nown && ok; ++k) {
+                    for (i2 = 0; i2 < pl->nclips && strcmp(pl->clip_name[i2], fm->own_clip[k]); ++i2) {}
+                    if (i2 == pl->nclips) { gw_log("geno: plan %s: fighter.rows[%d] names clip %s, not in the bank", fm->plan_file, k, fm->own_clip[k]); ok = 0; }
+                    else pl->own_clip[k] = (short)i2;
+                }
+                pl->nown = fm->nown;
+            }
             if (ok) { fm->plan = pl; gw_log("geno: plan %s: %d joints, %d parts, %d clips, %d motion rows", fm->plan_file, pl->joints, pl->nparts, pl->nclips, pl->nmotions); }
             else free(pl);
         }
@@ -597,6 +639,11 @@ int gw_Geno_DefinePlanInt(int kind, int what, int i)
     case 13: return i >= 0 && i < GPL_MAX_MOTIONS ? (int)pl->motion_clip[i] : -1;
     case 14: return i >= 0 && i < GPL_MAX_ROWS ? (int)pl->row_clip[i] : -1;
     case 5: return pl->nhurt;
+    case 6: return pl->nown;
+    case 15: return i >= 0 && i < pl->nown ? (int)pl->own_clip[i] : -1;
+    case 16: return i >= 0 && i < GPL_MAX_ROWS && pl->has_flags[i] ? (int)pl->row_flags[i] : 0;
+    case 17: return i >= 0 && i < GPL_MAX_ROWS ? (int)pl->has_flags[i] : 0;
+    case 18: return i >= 0 && i < GPL_MAX_ROWS && pl->has_blend[i] ? ((int)pl->row_blend[i][0] | ((int)pl->row_blend[i][1] << 8)) : -1;
     case 20: return i >= 0 && i < 5 ? pl->ft_x8[i] : -1;
     case 21: return i == 0 ? pl->ft_x34[0] : -1;
     case 22: return i >= 0 && i < 2 ? pl->ft_x38[i] : -1;

@@ -310,8 +310,27 @@ void gmVsMelee_ExitVs(GameModeState* state, u8 id0, u8 id1)
          * `li r27, 0`, so a one-winner VS match skips the results screen and
          * goes straight to game-mode state 0. Opt-in: MELEE_MEX=skip_result_screen. */
         extern int Mex_Enabled(const char *);
-        if (Mex_Enabled("skip_result_screen")) {
+        extern int Netplay_Enabled(void);
+        /* Online results must run the room recovery and score handler. */
+        if (!Netplay_Enabled() && Mex_Enabled("skip_result_screen")) {
             id0 = 0;
+        }
+    }
+#endif
+
+#if defined(TARGET_PC)
+    {
+        /* ONLINE: a tie does not go to sudden death. Retail plays it as a separate scene
+         * (GS_SUDDEN_DEATH), which is not a VS scene: the rollback session closes at the scene
+         * change and each peer used to play it offline and alone, so the two peers disagreed on the
+         * winner. Both peers apply the same rule to a tied match result: the game is a draw and goes to the
+         * results screen as a no-contest, nobody scores, and the lobby replays the game
+         * (gw_Netplay_GameResult). Offline play is untouched. */
+        extern int Netplay_Enabled(void);
+        extern void Netplay_NoteTie(void);
+        if (Netplay_Enabled() && gm_MatchHasMultipleWinners(&exit->match_end)) {
+            exit->match_end.outcome = OUTCOME_NO_CONTEST;
+            Netplay_NoteTie();
         }
     }
 #endif

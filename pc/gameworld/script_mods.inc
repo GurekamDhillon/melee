@@ -50,13 +50,11 @@ void ScriptMods_Clear(void)
     memset(&script_mods_x, 0, sizeof script_mods_x);
 }
 int ScriptMods_ProgWord(int port, int index, int value) { return sm_prog_word(&script_mods, port, index, value); }
-/* Seal a loaded program. The match's frame counter and state start from zero. */
+/* Seal a loaded program. (The state is zero already: ScriptMods_Clear ran at the scene start, and sealing one seat must not wipe the other's.) */
 int ScriptMods_ProgSeal(int port)
 {
     int ok = sm_prog_seal(&script_mods, port);
     if (ok) {
-        sm_clear_state(&script_mods);
-        memset(&script_mods_x, 0, sizeof script_mods_x);
         OSReport("envoy mods: port=%d program sealed rules=%d variants=%d digest=%08x\n", port + 1, script_mods.prog[port].w[1],
                  script_mods.prog[port].w[2], script_mods.prog[port].digest);
     }

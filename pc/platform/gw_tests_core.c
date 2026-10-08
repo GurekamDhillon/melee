@@ -45,6 +45,7 @@ int gw_skins_installed_tables_check(void) {
   extern void gw_ftData_MexInitKinds(void);
   if (gw_Skins_Count() == 0) { gw_log("skins: no skin mod mounted - installed-table test has nothing to check"); return 0; }
   gw_ftData_MexInitKinds(); /* idempotent; builds the tables in this test's isolation when nothing has yet */
+  { extern void gw_GenoDefine_InitKinds(void); gw_GenoDefine_InitKinds(); } /* the Geno defines' rows too */
   for (fk = 0; fk < 127; ++fk) {
     int added = gw_Skins_Added(fk), base = gw_Skins_Base(fk), total = gw_Skins_Total(fk), c, ck, n;
     uint32_t strings;

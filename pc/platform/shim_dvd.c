@@ -248,6 +248,36 @@ static void gw_mods_scan(int mod_index, const char *mod, const char *host_dir, c
   FindClose(h);
 }
 
+/* The size a mod file contributes to the mods fingerprint (gw_Mods_NoteFile). A text file checked out or
+ * packaged with CRLF line ends is the same mod as its LF copy, so its CR of every CR LF pair is not counted:
+ * the 0.2.2-test1 Windows package (CRLF) and Linux package (LF) of one commit otherwise showed different
+ * mod hashes (envoy#2d54 against envoy#ad28). Binary files count their exact size. The game itself still
+ * reads the file as it is (m->size). */
+static uint32_t gw_mod_fingerprint_size(const gw_mod_file *m) {
+    static const char *const text[] = { ".lua", ".json", ".md", ".txt", ".wgsl", ".csv", ".cfg", ".toml", ".xml", ".glsl", ".yml", ".yaml", ".ini" };
+    size_t n = strlen(m->host), i;
+    FILE *f;
+    unsigned char buf[4096];
+    size_t got;
+    uint32_t crlf = 0;
+    int prev_cr = 0, is_text = 0;
+    for (i = 0; i < sizeof text / sizeof text[0]; ++i) {
+        size_t l = strlen(text[i]);
+        if (n >= l && _stricmp(m->host + n - l, text[i]) == 0) is_text = 1;
+    }
+    if (!is_text) return m->size;
+    f = fopen(m->host, "rb");
+    if (f == NULL) return m->size;
+    while ((got = fread(buf, 1, sizeof buf, f)) > 0) {
+        for (i = 0; i < got; ++i) {
+            if (buf[i] == '\n' && prev_cr) ++crlf;
+            prev_cr = buf[i] == '\r';
+        }
+    }
+    fclose(f);
+    return m->size - crlf;
+}
+
 /* Mount the enabled mods (gw_mods.c decides which, and in what order) over the disc. */
 static void gw_mods_load(void) {
   int n, k, i, next;
@@ -275,7 +305,7 @@ static void gw_mods_load(void) {
     gw_mod_file *m = &gw_mod_files[i];
     int e = gw_iso_lookup(m->disc);
     /* the netplay fingerprint covers exactly the files the game will read, and who won each */
-    gw_Mods_NoteFile(m->mod_index, m->disc, m->size);
+    gw_Mods_NoteFile(m->mod_index, m->disc, gw_mod_fingerprint_size(m));
     if (e >= 0 && gw_fst_kind((uint32_t)e) == 0) {
       m->entrynum = e;
       gw_log("gw: mods:   /%s <- %s (overrides the disc file, %u bytes)", m->disc, m->mod, m->size);

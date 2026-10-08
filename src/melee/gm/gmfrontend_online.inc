@@ -1255,6 +1255,11 @@ static void fl_instruction(char* out)
     }
     switch (p) {
     case LBP_CHAR_BLIND:
+        if (Netplay_LobbyInfo(15)) { /* the last game was a tie: online there is no sudden death, the game is simply replayed */
+            sprintf(out, "%s", Netplay_LobbyPlayer(me, 2) ? "That game was a tie. Waiting for your opponent."
+                                                          : "That game was a tie: nobody scores. Press A to pick.");
+            break;
+        }
         sprintf(out, "%s", Netplay_LobbyPlayer(me, 2) ? "Locked in. Waiting for your opponent."
                                                       : "Press A to pick. It stays hidden till both lock.");
         break;

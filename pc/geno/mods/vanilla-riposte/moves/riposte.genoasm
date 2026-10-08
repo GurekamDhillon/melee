@@ -1,0 +1,7 @@
+# The answer to a countered hit. The hitboxes are authored here with damage 14; lua/riposte.lua replaces their damage every frame with
+# 1.5 x the countered hit (9..30) plus one per hit of the current streak (ctx.hitbox_damage), so these numbers are only the shape.
+wait 2
+hitbox slot=0 joint=0 damage=14 size=6.0 x=3 y=6 angle=45 kbg=100 fkb=0 bkb=55
+hitbox slot=1 joint=0 damage=14 size=4.0 x=-3 y=6 angle=45 kbg=100 fkb=0 bkb=55
+wait 6
+clear_hitboxes

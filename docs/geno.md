@@ -327,6 +327,8 @@ Geno version - data-driven, drawn natively, no fighter code:
 | v4 (built, section 18) | animation-rate and glide refinements |
 | future, unversioned | HUD elements (section 11b): data-driven meters/icons bound to Geno variables |
 | v6, integration pending | `define`: offline Mario-reference native registration, independent effective rows and descriptors, unused resident aliases, selection defaults (section 22) |
+| v7 to v9 (built, sections 22.1 to 22.5) | a define widens: the whole attribute table, special attributes, fx bindings (7); articles and named sounds (8); base `none`, own model, bank and tables (9) |
+| v10 (built, section 23) | a define may carry fighter Lua: a `lua` block and per-state `lua` keys. `GENO_VERSION` is 10; a `lua` block in a file of 9 or less is refused. Every older file reads as before |
 | later | an IR emitter/loader for `melee.geno`; per-profile merge rules instead of "later mod wins" |
 
 Constraints that stay: Melee's global rules (section 1), m-ex untouched (section 3), rollback-safe
@@ -2759,18 +2761,18 @@ special projectile`. Hit rules, `on_hit` info and echoes read it. An undeclared 
 reports `special` when it was entered through a special input (any fighter, Geno or m-ex), keeps the
 vanilla special-range answer for a `define` (Mario) or `attach` fighter, and is otherwise `unknown`.
 
-## 23. Fighter Lua (slice 5, first increment built 2026-10-07)
+## 23. Fighter Lua (slice 5: the first increment built 2026-10-07, the second move and the tooling 2026-10-08)
 
-A define can write a state's behaviour as Lua. This increment is deliberately small: two phases (`enter`, `frame`), a typed per-fighter state, four commands. Physics,
+A define can write a state's behaviour as Lua. The shape is deliberately small: two phases (`enter`, `frame`), a typed per-fighter state, five commands (four in the first increment; `turn` came with the second move). Physics,
 collision, landing and ledge rules stay the state's native callbacks. Brief and decisions: workspace `docs/superpowers/plans/2026-10-07-geno-slice5-fighter-lua.md`.
-Fixture: `pc/geno/mods/vanilla-charger/` (neutral special, ground and air: hold B to charge up to 60 frames, release to strike; the dash speed and the hit's damage grow
-with the charge). Demo and headless proof: `pc/scripts/examples/demos/geno-define-charger/`. Lesson stub: workspace `docs/learn/geno-fighters/13-fighter-lua.md`.
+Fixtures: `pc/geno/mods/vanilla-charger/` (neutral special, ground and air: hold B to charge up to 60 frames, release to strike; the dash speed and the hit's damage grow
+with the charge) and `pc/geno/mods/vanilla-riposte/` (down special: a counter answered in Lua with a follow-up, section 23.7). Demos and headless proofs: `pc/scripts/examples/demos/geno-define-charger/`, `geno-define-riposte/`. Lesson: workspace `docs/learn/geno-fighters/13-fighter-lua.md`.
 
 **This is not `gd` scripting.** A fighter's Lua runs inside the fighter's own state machine, in a separate `lua_State` with no `gd`, so the manifest flags `gameplay` and
 `rollback_safe` (`docs/scripting.md`) do not apply to it. It is offline only because define fighters are (section 22). Whether this API shape and its limits are final is the
-owner's call (listed as open in the brief).
+owner's call (listed as open in the brief; as of 2026-10-08 the API names, commands and limits are accepted as built and widened when a real move needs it, the format number is 10, the fault policy stays abort-to-Wait/Fall until slice 7).
 
-### 23.1 The format (additive; the file says `"geno": 9`, no number was taken for it)
+### 23.1 The format (`"geno": 10`, `GENO_VERSION` 10; the owner took the number)
 
 ```json
 "lua": { "script": "lua/charger.lua", "state": { "charge": "int", "charged": "bool" } },
@@ -2784,11 +2786,11 @@ owner's call (listed as open in the brief).
 | `lua.state` | the typed state: slot name (1 to 23 letters, digits, underscores) to `int`, `float` or `bool`; at most 16 slots of 32 bits (`GENO_LUA_STATE_SLOTS`) |
 | `states[].lua.enter` / `.frame` | module functions run once when the state is entered / once per logic frame. A state with a `frame` function gets the anim callback `lua` (unless it names its own `anim`), which also takes the state's `next` when the animation ends and no command changed the action |
 
-Strict like the rest of a define: a `lua` key on an attach entry, in a file older than `"geno": 9`, a state that names a function the module lacks, a module the sandbox refuses
+Strict like the rest of a define: a `lua` key on an attach entry, in a file older than `"geno": 10`, a state that names a function the module lacks, a module the sandbox refuses
 (23.3), more than 16 slots, a bad slot name or type, refuse the entry with the reason in the log (`geno: <mod>/geno.json: the Lua module was refused: ...`). The module text and the
 slot layout are folded into the entry's content id; an entry without a `lua` block hashes exactly as before (the Hero, Striker and Caster ids were compared old exe against new:
-unchanged). **An older engine ignores the key** and loads the Charger as a plain Mario define (measured: it logged id `08ed...` and ran without the special); that is why a format
-number for the Lua keys is an open decision.
+unchanged). **An older engine ignores the key** and loads the Charger as a plain Mario define (measured: it logged id `08ed...` and ran without the special); that is why the Lua keys
+took format 10 (a build that reads 10 reads every older file unchanged; a file of 9 or less with a `lua` block is refused).
 
 ### 23.2 The API
 
@@ -2808,12 +2810,13 @@ A module is a chunk that returns a table of functions and nothing else. `ctx` is
 | field | |
 |---|---|
 | `ctx.input` | `attack`, `special`, `jump`, `shield`, `grab` with `_held` and `_pressed` booleans; `stick_x`, `stick_y`, `stick_fwd` (the same buttons the script VM's HELD / PRESSED read) |
-| `ctx.self` | `air`, `anim_ended` (booleans), `facing` (+1 / -1), `percent`, `x`, `y`, `vel_x`, `vel_y`, `action_frame`, `motion` |
+| `ctx.self` | `air`, `anim_ended` (booleans), `facing` (+1 / -1), `percent`, `x`, `y`, `vel_x`, `vel_y`, `action_frame`, `motion`; and what the last hit taken left (added with the Riposte): `hit_damage` (`GenoState.hit_damage`, before a counter window negated it), `hit_from` (+1 the attacker is in front of the fighter now, -1 behind, 0 no fighter attacker or not on the field: from the two positions and the facing at the time of the call), `countered` (`GenoState.counters`, hits countered since the fighter was reset). `action_frame` is the state's own clock, `GenoState.action_time`: it does NOT advance during hitlag, as the words scripts and counter windows do not |
 | `ctx.state` | the declared slots, read and written by name; an undeclared name, a float into an `int` slot, an integer beyond 32 bits, a non-finite float, a number into a `bool` slot is a fault |
 | `ctx.go(name)` | go to the Geno state of that name, or `"auto"` (Wait on the ground, Fall in the air) or `"helpless"` |
 | `ctx.velocity(forward, up)` | facing-relative forward speed; on the ground the ground speed (`up` ignored), in the air both |
 | `ctx.hitbox_damage(mask, damage)` | as the script word HBDMG: bit n of `mask` is hitbox slot n |
 | `ctx.loop()` | restart the animation, the state's variables kept |
+| `ctx.turn()` | flip the facing (the script value FACING = 0: `facing_dir` flips and the root joint's rotation follows); a `velocity` queued after it in the same call is relative to the new facing |
 
 Commands are queued (at most 8 per call, `GENO_LUA_MAX_CMDS`) and applied in call order when the call returns, by the game half, before the next phase. The allowlist environment is
 `type`, `select`, `ipairs`, `assert`, `error`, `freeze` and `math.{abs, min, max, floor, ceil, sqrt, tointeger, huge, pi}`; nothing else exists.
@@ -2845,7 +2848,7 @@ define whose profile declares a layout**; a define without a `lua` block keeps i
 | check | result |
 |---|---|
 | native sandbox test `geno-lua` | all pass: 11 module refusals (global write, captured counter, nested capture, mutable table upvalue, module table upvalue, constant in the module table, no table, load-time global write, syntax error, load-time loop, bad freeze key), 19 run-time faults, allowlist arithmetic, stateless fresh ctx, heap steady |
-| `run.sh --test` | 326 of 326 (321 before; new: `geno_lua_registry`, `geno_lua_call`, `geno_lua_charge`, `geno_lua_fault`, `geno_lua_digest`) |
+| `run.sh --test` | 326 of 326 (321 before; new: `geno_lua_registry`, `geno_lua_call`, `geno_lua_charge`, `geno_lua_fault`, `geno_lua_digest`); 331 of 331 on 2026-10-08 with `geno_lua_counter` and the merged integration tests |
 | LAB proof (`scripts/proof.lua`, `mode=lab;p1=geno:vanilla-charger/hu;p2=mario/cpu0`) | charge 13 after 15 held frames; released at 25 with the charge kept; Release hitbox damage `9.750` = 6 + 0.15 x 25; `gd.savestate` at charge 10, `gd.loadstate` at 24 gave 11; `gd.rewind_test(120)` across charge, cap and release: `pass=true`, `diff_compared=0` ("0 simulation bytes differ"); `PROOF RESULT: PASS` |
 | bench SyncTest (`cycle.lua`: B held 40 frames every 100, ~24 charge/release cycles; `MELEE_SYNCTEST_BENCH=1 MELEE_SYNCTEST_CURATED=1 MELEE_SYNCTEST=12`) | 27,600 curated checks, no Lua fault logged; 616 mismatching, **all in one word: the cmd-script frame counter of P2 (the idle Mario CPU), curated word 23, from frame 544**. The Charger's own record never mismatched. The same word mismatches for a retail Mario P1 driven by the same input (649 of 10,800), and an idle-Charger control had 0 of 8,400: this is the documented unexplained SyncTest class (`PORT_DEV_QUICKREF`, "sustained combat"), not shown to come from Lua, and not a certification |
 | ids | Hero `47e0fa82...`, Striker `54334a53...`, Caster `ac4e4338...` identical in the old and the new exe |
@@ -2855,5 +2858,32 @@ refused for defines (section 22); certifying a Lua fighter under real rollback i
 
 ### 23.6 Not built (the road, in order)
 
-`phys`/`coll`/`iasa` phases in Lua; `ctx.query` (opponents, stable order); `grab`, `throw_release`, `attribute`, article/FX/sound commands; per-article state; a LAB faults and budget
-display (S5-7 of the road); `check` that understands Lua beyond function names and `ctx.state.<name>` spellings; a real match fault; Lua source and compiler version in an online handshake.
+`phys`/`coll`/`iasa` phases in Lua; `ctx.query` (opponents, stable order; `hit_from` is the one reading of an opponent so far); a counter window that Lua opens or moves (the window stays the state's `counter` key); `grab`, `throw_release`, `attribute`, article/FX/sound commands; per-article state; a LAB faults and budget
+display (S5-7 of the road); a real match fault; Lua source and compiler version in an online handshake.
+
+### 23.7 The second move: Vanilla Riposte, a counter with a follow-up (built and run 2026-10-08)
+
+`pc/geno/mods/vanilla-riposte/` (`"geno": 10`, Mario donor, slots `power` float, `streak` int, `follow` bool; three states bound to the down special, ground and air). It is a different kind of move
+from the Charger: it reacts to a hit instead of to the pad, reads what the engine recorded about that hit, and runs in phases.
+
+| state | words (`moves/*.genoasm`) | Lua |
+|---|---|---|
+| `Parry` | the animation only | the stance. The `counter` window is native (`{"from":4,"to":24,"target":"geno:Riposte"}`: the hit's damage and knockback are dropped, `GenoState.hit_damage/hit_counter/counters` are set, the fighter goes to `Riposte`). `frame`: letting go of B from action frame 8 to 24 cancels to `auto` and breaks the streak; passing frame 24 with no counter is a whiff and breaks it; frame 30 ends the stance; `anim_ended` loops the clip |
+| `Riposte` | two hitboxes of damage 14 (only the shape) | `enter`: `streak = min(streak + 1, 4)`, `follow = false`, `power = clamp(1.5 x hit_damage, 9, 30) + (streak - 1)`, `turn()` if `hit_from < 0`, `velocity(0.9, 0)`. `frame`: `hitbox_damage(3, power)`; A pressed in action frames 6 to 16 (once) goes to `Follow` |
+| `Follow` | two hitboxes (shape) | `enter`: `velocity(1.6, 0)`. `frame`: `hitbox_damage(3, 0.6 x power)` |
+
+What the move needed that the Charger did not (all additive, the first increment's numbers unchanged): the three `ctx.self` reads above (io words 12 to 14 of `GenoLuaIo`: `GENO_LUA_IO_HIT_DAMAGE`,
+`GENO_LUA_IO_HIT_FROM`, `GENO_LUA_IO_COUNTERED`, all values already in `GenoState` and in the hash, so nothing new is state) and the command `ctx.turn()` (`GENO_LUA_CMD_TURN`). `hit_from` is derived
+from positions at call time, so it is not state either. The `streak` and `power` slots are in the typed block, hence in snapshots and in the digest of a define that declares them.
+
+Verified (exe build id `3d693663503b247c`, vanilla disc, headless; nothing seen on screen):
+
+| check | result |
+|---|---|
+| native `geno-lua` | all pass, with the new reads (`hit_damage` 12 to power 18, 2 to the floor 9, 80 to the cap 30; `hit_from` 1 / 2 / 0) and the queued `turn` |
+| suite `geno_lua_counter` (game half, capture mode) | the answer enters with `countered` 1 and `hit_from` 0, power 18 / 9 / 30, the strike frame sets hitboxes 0 and 1 and not 2, `turn` flips the facing and a later `velocity` follows it |
+| LAB proof (`scripts/proof.lua`, `mode=lab;p1=geno:vanilla-riposte/hu;p2=mario/cpu0;stage=fd`, P2 a script-mode CPU) | counter 1: P1 percent 0.0 to 0.0 (negated), streak 1, power 9.000, P2 0.0 to 9.0. Counter 2: streak 2, power 10.000, hitbox damage 10.0, A in the answer gives state 0x402 (Follow) with follow true, hitbox damage 6.0. Whiff: streak 0, stance ended at action frame 29. Counter after the whiff: streak 1. Early cancel (B held 12 frames): stance ended at frame 12, streak 0. Jab from behind: facing 1 to -1 at the answer. `gd.rewind_test(120)` across a counter: `pass=true`, `diff_compared=0`. Lua faults 0. `PROOF RESULT: PASS` |
+| bench SyncTest (`scripts/cycle.lua`, both fighters on `gd.input`, 1500 frames, 11 cycles of stance, counter, follow-up and whiff; `MELEE_SYNCTEST_BENCH=1 MELEE_SYNCTEST_CURATED=1 MELEE_SYNCTEST=12`) | 16,800 curated checks, 0 mismatching, no Lua fault. An earlier driver that teleported P2 and drove it with the CPU-script API mismatched from frame 280 (a script write the bench does not replay); that is the driver, not the move, and `cycle.lua` says why it uses only `gd.input` |
+| the Charger | its proof passes unchanged on the same build (charge 13 after 15 frames, release at 25, damage 9.750, savestate, `rewind_test` `diff_compared=0`) |
+
+Owed to a person: the feel of the stance, the answer and the follow-up (windows, damage, the 0.9 and 1.6 steps), a controller play-through, a real-rollback run (slice 7).

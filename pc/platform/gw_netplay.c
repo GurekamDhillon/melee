@@ -107,7 +107,7 @@ static struct {
     char code[96];        /* this side's code: "public:port/lan:port" (see np_parse_code) */
     gw_net_addr mypub;    /* this socket's public address, from STUN */
     int have_mypub;
-    char scene[400];      /* the agreed match */
+    char scene[512];      /* the agreed match (base scene + the host's extras) */
     char info[64];        /* guest: its choices, sent in the HELLO */
     uint32_t seed;
     gw_net_config cfg;    /* kept: a guest joins only once the server has introduced the host */
@@ -124,6 +124,9 @@ static struct {
     unsigned envoy;       /* the Envoy mode word agreed for this match (gw_matchbuild.h); 0 = off */
     unsigned envoy_pref;  /* the host's choice for private rooms it opens (menu / MELEE_NETPLAY_ENVOY); never used for random matches */
     int envoy_env;        /* guest, scripted: MELEE_NETPLAY_ENVOY is set, so the guest insists on that word */
+    char cpus_pref[40];   /* the host's CPU opponents for rooms it opens: "<ckind>:<color>:<level>[,...]" for ports 3 and 4 (gd.netplay_act("cpus")); "" none */
+    int teams_pref;       /* with CPUs: the two humans on team 0, the CPUs on team 1 */
+    int items_pref;       /* the host's item frequency index for the online match (gd.netplay_act("items")); -1 = items off (the default) */
     int t_open_session;   /* random matchmaking: the session on the queue socket has started */
     int started, dead, accepted;
     long ticks;
@@ -136,7 +139,7 @@ static struct {
     HANDLE upnp_proc;
     char upnp_out[MAX_PATH];
     int upnp_state;       /* 0 not tried, 1 working, 2 opened, 3 unavailable */
-} np = { .phase = NP_IDLE, .desync_frame = GW_NET_NO_FRAME };
+} np = { .phase = NP_IDLE, .desync_frame = GW_NET_NO_FRAME, .items_pref = -1 };
 
 int gw_Netplay_Enabled(void) { return np.enabled; }
 /* what the simulation reads in an online match (gw_MatchTurboRules, gw_runtime.c) */
@@ -206,6 +209,76 @@ static void np_decode(const uint8_t *b, GwRbInput *in) {
  * A scene string (gmscenelaunch.h / _research/scene-launch.md). The rules are part of it, and the
  * scene launcher writes them into the saved rules, so both peers play the same match whatever
  * their memory cards say. */
+/* Extra CPU slots for ports 3 and 4 (p3, p4) from MELEE_NETPLAY_CPUS="<ckind>:<color>:<level>[,<ckind>:<color>:<level>]";
+   MELEE_NETPLAY_TEAMS=1 puts the two humans on team 0 and the CPUs on team 1 (co-op against CPUs). Fighters go by content identity
+   like the human slots. Nothing is appended without the variable, so an ordinary match is unchanged. */
+static void np_append_cpus(char *out, size_t cap) { /* appends to out */
+    const char *v = np.cpus_pref[0] != '\0' ? np.cpus_pref : getenv("MELEE_NETPLAY_CPUS");
+    int port = 3, teams = np.teams_pref;
+    if (v == NULL || v[0] == '\0') return;
+    {
+        const char *t = getenv("MELEE_NETPLAY_TEAMS");
+        if (t != NULL && t[0] != '\0' && t[0] != '0') teams = 1;
+    }
+    while (*v != '\0' && port <= 4) {
+        char *end = NULL;
+        long ck = strtol(v, &end, 10), color = 0, level = 9;
+        size_t l = strlen(out);
+        if (end == v) break;
+        v = end;
+        if (*v == ':') { color = strtol(v + 1, &end, 10); v = end; }
+        if (*v == ':') { level = strtol(v + 1, &end, 10); v = end; }
+        if (color < 0 || color > 5) color = 0;
+        if (level < 1 || level > 9) level = 9;
+        snprintf(out + l, cap - l, ";p%d=%s/c%ld/cpu%ld%s", port, gw_MexId_TokenForCk((int) ck), color, level,
+                 teams ? "/team1" : "");
+        port++;
+        if (*v == ',') v++;
+    }
+    if (teams) {
+        size_t l = strlen(out);
+        snprintf(out + l, cap - l, ";teams=1");
+    }
+}
+
+/* gd.netplay_act("cpus", "<ckind>:<color>:<level>[,...]", teams) | ("items", n|-1): the host's choices for the next match. 1 when accepted. */
+int gw_Netplay_SetCpus(const char *spec, int teams) {
+    size_t i;
+    if (spec == NULL) spec = "";
+    if (strlen(spec) >= sizeof np.cpus_pref) return 0;
+    for (i = 0; spec[i] != '\0'; ++i) {
+        if (!((spec[i] >= '0' && spec[i] <= '9') || spec[i] == ':' || spec[i] == ',')) return 0;
+    }
+    snprintf(np.cpus_pref, sizeof np.cpus_pref, "%s", spec);
+    np.teams_pref = teams != 0;
+    return 1;
+}
+int gw_Netplay_SetItems(int n) {
+    np.items_pref = n >= 0 && n <= 8 ? n : -1;
+    return 1;
+}
+
+/* The host's EXTRAS to the base scene (Envoy online stage 6): CPU opponents on ports 3 and 4, their teams, and the online item
+ * frequency. They ride in the scene string like every other rule, so the guest plays exactly the match it is given. They are kept
+ * apart from np_build_scene because the lobby's `G` message is capped at GW_NET_LOBBY_MAX (200) bytes and the base scene already
+ * fills most of it: the lobby sends them as an `X` message just before `G` and the guest appends them (np_lobby_extras); the
+ * direct-connect path puts base + extras in the 900-byte handshake blob. Empty (and so no change to an ordinary match) unless the
+ * host chose something: gd.netplay_act("cpus"/"items") or MELEE_NETPLAY_CPUS / _TEAMS / _ITEMS. */
+static int np_random_matched(void); /* defined with the random-matchmaking state below */
+static char lb_xtras[200]; /* guest: the host's X message, waiting for its G */
+static void np_scene_extras(char *out, size_t cap) {
+    int n = np.items_pref;
+    const char *e = getenv("MELEE_NETPLAY_ITEMS");
+    if (cap == 0) return;
+    out[0] = '\0';
+    np_append_cpus(out, cap);
+    if (n < 0 && e != NULL && e[0] != '\0' && strcmp(e, "off") != 0) n = atoi(e);
+    if (n >= 0 && n <= 8) {
+        size_t l = strlen(out);
+        snprintf(out + l, cap - l, ";items=%d", n);
+    }
+}
+
 static void np_build_scene(char *out, size_t cap, int host_ck, int host_c, int guest_ck, int guest_c) {
     /* delta: fighters and the stage by CONTENT IDENTITY ("id:<hex>"), so each side loads its own
        local ids for them - they differ between installs with different mods (gw_mexid.c) */
@@ -379,6 +452,11 @@ static void np_cb_guest_hello(void *user, const uint8_t *info, int info_len, uin
     }
     if (gc < 0 || gc > 15) gc = 0;
     np_build_scene(np.scene, sizeof np.scene, np.ck, np.color, gck, gc);
+    if (!np_random_matched()) { /* a public random match is always the plain scene */
+        char x[200];
+        np_scene_extras(x, sizeof x);
+        snprintf(np.scene + strlen(np.scene), sizeof np.scene - strlen(np.scene), "%s", x);
+    }
     snprintf((char *) blob, (size_t) cap, "%s", np.scene);
     *blob_len = (uint16_t) (strlen(np.scene) + 1);
     gw_log("netplay: the guest picked \"%s\" - match \"%s\"", s, np.scene);
@@ -976,6 +1054,7 @@ static struct {
     int waiting;              /* players waiting with this global data, as the server last said */
     uint32_t since, next_send;
 } rnd;
+static int np_random_matched(void) { return rnd.state == NP_RAND_MATCHED; }
 
 static void np_rdv_handle(const char *msg) {
     char w0[16] = { 0 }, w1[64] = { 0 }, w2[64] = { 0 };
@@ -1821,8 +1900,18 @@ static void lb_go(void) {
     np.stage_ext = lb.stage_ext[lb.chosen >= 0 ? lb.chosen : 0];
     np_build_scene(np.scene, sizeof np.scene, lb.ck[0], lb.color[0], lb.ck[1], lb.color[1]);
     lb.phase = LB_GO;
-    snprintf(m, sizeof m, "G %u %s", np.seed, np.scene);
-    lb_send(m);
+    {   /* the host's extras (CPUs, teams, items) go first, in their own message: the base scene alone nearly fills a lobby message */
+        char x[GW_NET_LOBBY_MAX];
+        np_scene_extras(x, sizeof x - 4);
+        if (x[0] != '\0') {
+            char xm[GW_NET_LOBBY_MAX];
+            snprintf(xm, sizeof xm, "X %s", x);
+            lb_send(xm);
+        }
+        snprintf(m, sizeof m, "G %u %s", np.seed, np.scene);
+        lb_send(m);
+        snprintf(np.scene + strlen(np.scene), sizeof np.scene - strlen(np.scene), "%s", x);
+    }
     lb.seq++;
 }
 
@@ -1912,6 +2001,8 @@ static void np_cb_lobby(void *user, const uint8_t *data, int len) {
             gw_log("netplay: envoy - the other side REFUSED the match: %s", m + 2);
             np_status("Refused: %s", m + 2);
         }
+    } else if (!np.host && m[0] == 'X') { /* the host's scene extras, ahead of its G (np_scene_extras) */
+        snprintf(lb_xtras, sizeof lb_xtras, "%s", m + 2);
     } else if (!np.host && m[0] == 'G') {
         unsigned seed = 0;
         int off = 0;
@@ -1927,7 +2018,8 @@ static void np_cb_lobby(void *user, const uint8_t *data, int len) {
                 }
             }
             np.seed = seed;
-            snprintf(np.scene, sizeof np.scene, "%s", m + 2 + off);
+            snprintf(np.scene, sizeof np.scene, "%s%s", m + 2 + off, lb_xtras);
+            lb_xtras[0] = '\0';
             lb.phase = LB_GO;
             lb.seq++;
         }

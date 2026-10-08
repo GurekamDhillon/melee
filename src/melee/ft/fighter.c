@@ -4047,6 +4047,44 @@ u32 RB_FighterHash(u32 h, Fighter* fp, int slot)
         h = ftRb_Mix(h, (u32) fp->x67F);
         h = ftRb_Mix(h, (u32) fp->x680);
         h = ftRb_Mix(h, (u32) Player_GetStocks(fp->player_id));
+        if (ftCo_IsCpuControlled(fp)) {
+            /* A CPU's AI state (online CPUs, Envoy stage 6): the virtual pad it wrote, its kind and level, the AI's working words,
+             * the command script's duration and read offset, and the flag bytes. All of it lives in the fighter struct, which the
+             * snapshot restores; hashed so an AI divergence is a desync at once rather than after it has moved a position. The
+             * script pointer goes in as an offset into the CPU's own buffer (a pointer is not hashed). Only CPU fighters mix
+             * this in, so a match of humans hashes exactly as before. */
+            struct CpuFighter* c = &fp->cpu;
+            u32 off = 0;
+            if ((u8*) c->csP >= (u8*) c->buffer && (u8*) c->csP <= (u8*) c->buffer + sizeof c->buffer) {
+                off = (u32) ((u8*) c->csP - (u8*) c->buffer);
+            }
+            h = ftRb_Mix(h, 0x43505541u); /* "CPUA" */
+            h = ftRb_Mix(h, (u32) c->buttons);
+            h = ftRb_Mix(h, ((u32) (u8) c->lstick.x << 24) | ((u32) (u8) c->lstick.y << 16) | ((u32) (u8) c->cstick.x << 8) | (u32) (u8) c->cstick.y);
+            h = ftRb_Mix(h, ((u32) c->ltrigger << 8) | (u32) c->rtrigger);
+            h = ftRb_Mix(h, (u32) c->kind);
+            h = ftRb_Mix(h, (u32) c->level);
+            h = ftRb_Mix(h, (u32) c->x14);
+            h = ftRb_Mix(h, (u32) c->x18);
+            h = ftRb_Mix(h, (u32) c->x1C);
+            h = ftRb_Mix(h, (u32) c->x20);
+            h = ftRb_Mix(h, (u32) c->x24);
+            h = ftRb_Mix(h, (u32) c->x28);
+            h = ftRb_Mix(h, (u32) c->x2C);
+            h = ftRb_Mix(h, (u32) c->x30);
+            h = ftRb_Mix(h, (u32) c->x34);
+            h = ftRb_Mix(h, ftRb_Bits(c->x38));
+            h = ftRb_Mix(h, ftRb_Bits(c->x3C));
+            h = ftRb_Mix(h, ftRb_Bits(c->x40));
+            h = ftRb_Mix(h, (u32) c->x7C);
+            h = ftRb_Mix(h, (u32) c->x80);
+            h = ftRb_Mix(h, (u32) c->x84);
+            h = ftRb_Mix(h, (u32) c->xC8);
+            h = ftRb_Mix(h, (u32) c->xEC);
+            h = ftRb_Mix(h, (u32) c->command_duration);
+            h = ftRb_Mix(h, off);
+            h = ftRb_Mix(h, ((u32) ((u8*) c)[0xF8] << 24) | ((u32) ((u8*) c)[0xF9] << 16) | ((u32) ((u8*) c)[0xFA] << 8) | (u32) ((u8*) c)[0xFB]);
+        }
     }
     return h;
 }
@@ -4197,6 +4235,7 @@ void RB_Perturb(int code)
             case 9: fp->x2219_b5 = !fp->x2219_b5; break;             /* b5 */
             case 10: fp->cur_pos.x += 0.01f; break;                  /* pos (a legacy field) */
             case 12: Player_SetStocks(fp->player_id, Player_GetStocks(fp->player_id) + 1); break; /* stocks */
+            case 13: if (ftCo_IsCpuControlled(fp)) { fp->cpu.command_duration += 1; } else { continue; } break; /* cpu: the first CPU's command duration */
             default: break;
             }
             return;

@@ -946,7 +946,7 @@ int gw_PcTraceMotionEnabled(void) {
   return (v != NULL && v[0] != '0') ? 1 : 0;
 }
 
-/* MELEE_UNLOCK_ALL=1 (the launcher's "Unlock everything", on by default there): every character,
+/* MELEE_UNLOCK_ALL=1 (SETTINGS > Gameplay > Unlock Everything; ON by default since 2026-10-08): every character,
  * stage and unlockable rule/feature reports unlocked (src/melee/gm/gmmain_lib.c), WITHOUT touching
  * the memory card - the real save data is never written. Forced on for any netplay or rollback
  * session, so both peers get the same roster whatever their cards hold. */
@@ -965,7 +965,7 @@ int gw_PcUnlockAll(void) {
     extern int gw_Settings_Int(const char *key, int dflt);
     const char *v = getenv("MELEE_UNLOCK_ALL");
     /* the environment wins; else SETTINGS > Gameplay > Unlock Everything (settings.cfg) */
-    env = v != NULL && v[0] != '\0' ? (v[0] != '0') : gw_Settings_Int("unlock_all", 0) != 0;
+    env = v != NULL && v[0] != '\0' ? (v[0] != '0') : gw_Settings_Int("unlock_all", 1) != 0; /* default ON (owner, 2026-10-08): everything unlocked unless a player turns it off */
     if (env) {
       gw_log("gw: unlock-all: every character, stage and feature reports unlocked (MELEE_UNLOCK_ALL)");
     }

@@ -2666,7 +2666,15 @@ int gw_SceneLaunch_PlayerColor(int n) {
   gw_sl_load();
   if (n < 0 || n >= GW_SL_SLOTS) return -1;
   color = gw_sl_cfg.p[n].color;
-  if (color >= 255) color = gw_sl_cfg.p[n].ckind >= 0 ? gw_Skins_FromWireCK(gw_sl_cfg.p[n].ckind, color) : 0;
+  if (color >= 255) {
+    static int said[GW_SL_SLOTS];
+    int wire = color;
+    color = gw_sl_cfg.p[n].ckind >= 0 ? gw_Skins_FromWireCK(gw_sl_cfg.p[n].ckind, wire) : 0;
+    if (said[n] != wire) {
+      said[n] = wire;
+      gw_log("skins: p%d wire costume %08x -> costume %d here%s", n + 1, (unsigned) wire, color, color == 0 ? " (the default: this install lacks that skin)" : "");
+    }
+  }
   return color;
 }
 int gw_SceneLaunch_PlayerCpuKind(int n) {

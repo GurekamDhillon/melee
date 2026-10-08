@@ -61,7 +61,7 @@ static int test_skins_installed_tables(void) {
       const char *want = gw_Skins_String(fk, c, 0);
       rows++;
       if (want) {
-        if (!file || strcmp((const char *) (uintptr_t) file, want) != 0) { gw_test_fail("fighter %d costume %d: table file differs from the registry's %s", fk, c, want); rc = 1; }
+        if (!file || strcmp((const char *) (uintptr_t) file, want) != 0) { gw_test_fail("fighter %d costume %d: table file \"%s\" differs from the registry's %s", fk, c, file ? (const char *) (uintptr_t) file : "(null)", want); rc = 1; }
       } else if (file != gw_r32((void *) (uintptr_t) strings)) {
         gw_test_fail("fighter %d costume %d: a partner row without files must repeat costume 0", fk, c); rc = 1;
       }

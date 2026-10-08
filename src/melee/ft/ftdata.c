@@ -2150,6 +2150,14 @@ void ftData_80085820(FighterKind kind, int costume_id)
         costume_id = 0;
     }
     temp_r5 = &CostumeListsForeachCharacter[kind].costume_list[costume_id];
+    {
+        extern int Skins_Base(int fk);
+        extern int Skins_Added(int fk);
+        if (Skins_Added(kind) > 0 && costume_id >= Skins_Base(kind) && temp_r5->joint == NULL) {
+            OSReport("skins: kind %d loads skin costume %d: %s\n", kind, costume_id,
+                     ftData_803C2360[kind][costume_id].dat_filename);
+        }
+    }
 #else
     UnkCostumeStruct* temp_r5 =
         &CostumeListsForeachCharacter[kind].costume_list[costume_id];

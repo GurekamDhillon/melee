@@ -3988,6 +3988,7 @@ static int gw_strncasecmp_ascii(const char *a, const char *b, size_t n) {
 
 static int test_mex_ftdata_rows(void) {
     extern void gw_ftData_MexInitKinds(void);
+    extern int gw_Skins_Base(int fk), gw_Skins_Added(int fk);
     extern uint8_t gw_ftData_803C1F40[];   /* StringPair[Ft_Kind_Max]        {file, symbol} */
     extern uint8_t gw_ftData_803C2360[];   /* Fighter_CostumeStrings*[Ft_Kind_Max]          */
     extern uint8_t gw_CostumeListsForeachCharacter[]; /* {UnkCostumeStruct*; u8 n} [Ft_Kind_Max] */
@@ -4050,6 +4051,7 @@ static int test_mex_ftdata_rows(void) {
                 rc = 1;
                 continue;
             }
+            if (c >= (uint32_t) gw_Skins_Base(fk) && gw_Skins_Added(fk) > 0) continue; /* a skin costume's file lives in its own folder */
             if (gw_strncasecmp_ascii(fn, stem, 4) != 0) {
                 gw_test_fail("kind %d (%s) costume %u is %s - another fighter's file", fk, plname,
                              c, fn);

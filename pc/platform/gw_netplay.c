@@ -2745,6 +2745,7 @@ int gw_Netplay_MenuBegin(int host, int ck, int color, int stocks, int minutes, i
        (below) moves the host's UDP port off 51500 so two tests can run side by side. */
     stocks = np_env_int("MELEE_NETPLAY_STOCKS", stocks);
     minutes = np_env_int("MELEE_NETPLAY_MINUTES", minutes);
+    color = np_env_int("MELEE_NETPLAY_COLOR", color); /* TEST-ONLY, like the two above: a loopback pair picks its costumes */
     np.host = host != 0;
     np.ck = ck;
     np.color = gw_Skins_ToWireCK(ck, color);

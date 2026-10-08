@@ -2328,7 +2328,7 @@ static u32 geno_dgf(u32 h, f32 f)
 
 /* A digest of everything in this fighter's GenoState that can decide what happens next: the variable
  * banks, the registered change-action checks, the move variables, the per-action timers and rehit/link
- * state, the hit record. NOT the diagnostics (hook_calls, resets, changes, state_entries, art_spawned,
+ * state, the hit record. NOT the diagnostics (hook_calls, resets, changes, state_entries, art_spawned [counters now counts: Lua reads it],
  * counters, motion_land) and not the transient collision-callback edge words, which are zero at the
  * start of a logic frame. 0 for every fighter that is not a define, so no other fighter's hash changes
  * (RB_GameHash mixes the word only when it is nonzero). */
@@ -2386,6 +2386,7 @@ u32 GenoDefine_StateDigest(Fighter* fp)
     h = geno_dgf(h, s->hit_damage);
     h = geno_dg(h, (u32) s->hit_port);
     h = geno_dg(h, (u32) s->hit_counter);
+    h = geno_dg(h, (u32) s->counters); /* slice 7 audit: fighter Lua reads it (ctx.self.countered, slice 5b), so it decides what happens next */
     h = geno_dg(h, (u32) s->ledge);
     h = geno_dg(h, (u32) s->motion_started);
     h = geno_dgf(h, s->motion_vy);

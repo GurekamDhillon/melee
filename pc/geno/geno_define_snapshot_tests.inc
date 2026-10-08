@@ -115,7 +115,7 @@ static int test_geno_define_state_hash(void)
     s->la_i[3] = 0;
     /* diagnostics do not */
     d1 = GenoDefine_StateDigest(&t_fp);
-    s->hook_calls += 3; s->resets += 2; s->changes += 4; s->state_entries += 5; s->art_spawned += 6; s->counters += 7; s->motion_land += 8;
+    s->hook_calls += 3; s->resets += 2; s->changes += 4; s->state_entries += 5; s->art_spawned += 6; s->motion_land += 8;
     if (GenoDefine_StateDigest(&t_fp) != d1) { TestFail("digest moved with a diagnostics-only change"); rc = 1; }
     /* a snapshot restores it */
     if (snap_open(1) != 0) { TestFail("snapshot could not open for the hash test"); rc = 1; }

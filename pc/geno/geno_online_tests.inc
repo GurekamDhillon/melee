@@ -40,7 +40,7 @@ static const GenoCoverField gc_state_fields[] = {
     GC_S(state_entries, 0, "diagnostic: Geno states entered since the reset"),
     GC_S(enter_from, 1, ""), GC_S(hidden, 1, ""), GC_S(hit_count, 1, ""), GC_S(hit_damage, 1, ""), GC_S(hit_port, 1, ""),
     GC_S(hit_counter, 1, ""),
-    GC_S(counters, 0, "diagnostic: hits countered since the reset"),
+    GC_S(counters, 1, "found by this audit after slice 5b: fighter Lua reads it (ctx.self.countered)"),
     GC_S(art_spawned, 0, "diagnostic: articles spawned since the reset (the live articles themselves are hashed)"),
     GC_S(ledge, 1, ""), GC_S(motion_started, 1, ""), GC_S(motion_vy, 1, ""),
     GC_S(motion_land, 0, "diagnostic: frames the root motion has been grounded"),

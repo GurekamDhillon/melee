@@ -687,6 +687,33 @@ static std::filesystem::path learned_directory() {
   return {}; // explicit opt-in outside Windows
 }
 
+constexpr size_t LearnedSnapshotsKept = 8;
+
+// Newest first by write time. The file names carry a steady_clock stamp, which restarts at boot
+// and changes digit count, so neither a name sort nor a numeric one orders snapshots by age.
+static std::vector<std::filesystem::path> learned_snapshots(const std::filesystem::path& dir) {
+  std::error_code ec;
+  std::vector<std::pair<std::filesystem::file_time_type, std::filesystem::path>> found;
+  for (std::filesystem::directory_iterator it(dir, ec), end; !ec && it != end; it.increment(ec)) {
+    if (it->path().extension() != ".db") continue;
+    std::error_code tec;
+    const auto when = std::filesystem::last_write_time(it->path(), tec);
+    if (!tec) found.emplace_back(when, it->path());
+  }
+  std::ranges::sort(found, std::greater<>{});
+  std::vector<std::filesystem::path> out;
+  for (auto& [when, path] : found) out.push_back(std::move(path));
+  return out;
+}
+
+// Only the newest LearnedSnapshotsKept are ever imported; older ones are dead weight
+// (unbounded, they reached tens of GB on a test machine).
+static void prune_learned_cache(const std::filesystem::path& dir) {
+  const auto snapshots = learned_snapshots(dir);
+  std::error_code ec;
+  for (size_t i = LearnedSnapshotsKept; i < snapshots.size(); ++i) std::filesystem::remove(snapshots[i], ec);
+}
+
 static void publish_learned_cache() {
   const auto dir = learned_directory();
   if (dir.empty() || !g_pipelineCacheDb || g_pipelineCacheBroken) return;
@@ -715,6 +742,7 @@ static void publish_learned_cache() {
   if (copied && finished) {
     std::filesystem::rename(temporary, final, ec);
     if (!ec) Log.info("pipeline coverage: published {}", io::fs_path_to_string(final));
+    prune_learned_cache(dir);
   } else std::filesystem::remove(temporary, ec);
 }
 
@@ -1019,14 +1047,10 @@ INSERT INTO aurora_schema VALUES ({});)",
               "type INTEGER NOT NULL, hash INTEGER NOT NULL, origin TEXT NOT NULL, PRIMARY KEY(type,hash,origin))");
   seed_pipeline_cache();
   const auto learned = learned_directory();
-  std::error_code ec;
-  std::vector<std::filesystem::path> snapshots;
   if (!learned.empty()) {
-    for (std::filesystem::directory_iterator it(learned, ec), end; !ec && it != end; it.increment(ec))
-      if (it->path().extension() == ".db") snapshots.push_back(it->path());
-    std::ranges::sort(snapshots, std::greater<>{});
+    auto snapshots = learned_snapshots(learned);
     // Each snapshot includes its imported ancestors; bounded reads retain recent concurrent lanes.
-    if (snapshots.size() > 8) snapshots.resize(8);
+    if (snapshots.size() > LearnedSnapshotsKept) snapshots.resize(LearnedSnapshotsKept);
     for (const auto& path : snapshots) seed_pipeline_cache(io::fs_path_to_string(path));
   }
   if (g_pipelineCacheBroken) {

@@ -625,6 +625,14 @@ static void gmRst_DrawName(HSD_TObj* tobj, int ck, int style)
     hp = (h + 7) & ~7;
     ext = Mex_PortCKindToExt(ck);
     name = ext >= 0 ? Mex_FighterName(ext) : NULL;
+    if (name == NULL) {
+        /* a Geno define is no m-ex slot (ext < 0): its name is the one its package declares (slice 6); before this the strip was blank */
+        static char geno_name[48];
+        extern int Geno_DefineName(int ck, char* out, int cap);
+        if (Geno_DefineName(ck, geno_name, sizeof geno_name)) {
+            name = geno_name;
+        }
+    }
     for (i = 0; name != NULL && name[i] != '\0' && i < (int) sizeof(upper) - 1; i++) {
         char c = name[i];
         upper[i] = (c >= 'a' && c <= 'z') ? (char) (c - 'a' + 'A') : c;

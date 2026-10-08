@@ -1286,6 +1286,18 @@ void fn_80161C90(MatchEnd* arg0, int arg1, struct GmStats* s)
     }
 }
 
+#if defined(TARGET_PC)
+/* Geno slice 6, records: a define has no row of its own in the save. Its CharacterKind is in the m-ex range, and gm_CKindToSelKind sends every
+ * m-ex kind to one retail selkind (Captain Falcon's row, ckind_to_selkind_map[ChKind_Popo]), so a define's KOs and play time would be written
+ * into a retail fighter's record. A define's matches are therefore not recorded in the retail save (its own records, under a stable key, are a later
+ * piece of slice 6). Retail and m-ex kinds are unchanged. */
+static bool gm_IsGenoDefineCK(int ck)
+{
+    extern int Geno_DefineBaseCK(int ck);
+    return ck >= 0 && Geno_DefineBaseCK(ck) >= 0;
+}
+#endif
+
 void fn_80162068(MatchEnd* match_end)
 {
     ssize_t i;
@@ -1300,12 +1312,22 @@ void fn_80162068(MatchEnd* match_end)
         if (pdata_i->pkind == 3) {
             continue;
         }
+#if defined(TARGET_PC)
+        if (gm_IsGenoDefineCK(pdata_i->ckind)) {
+            continue;
+        }
+#endif
         fd = GetPersistentFighterData(gm_CKindToSelKind(pdata_i->ckind));
         for (j = 0; j < PAD_MAX_CONTROLLERS; j++) {
             pdata_j = &match_end->player_standings[j];
             if (i == j || pdata_j->pkind == Gm_PKind_NA) {
                 continue;
             }
+#if defined(TARGET_PC)
+            if (gm_IsGenoDefineCK(pdata_j->ckind)) {
+                continue;
+            }
+#endif
             if (pdata_i->kills[j] +
                     fd->fighter_kos[gm_CKindToSelKind(pdata_j->ckind)] >
                 U16_MAX)
@@ -1354,6 +1376,9 @@ void fn_80162170(MatchEnd* arg0)
                     }
                 }
             }
+#if defined(TARGET_PC)
+            if (!gm_IsGenoDefineCK(p->ckind))
+#endif
             {
                 u32 sum =
                     nt->play_time_by_fighter[gm_CKindToSelKind(p->ckind)] +
@@ -4164,6 +4189,19 @@ f32 gm_80168B34(CharacterKind ckind, int arg1, int arg2)
     return base + arg2 * 30;
 }
 
+#if defined(TARGET_PC)
+/* Geno slice 6: the stock-icon frame a define whose package declares a stock icon asks for instead of an atlas frame: 20000 + ck * 32 + costume
+ * (if/ifstock.c turns it into the package's image), or -1 for any fighter that declares none. */
+f32 gm_GenoStockFrame(int ck, int costume)
+{
+    extern int Geno_DefineHasArt(int ck, int what, int costume);
+    if (ck < 34 || ck > 127 || costume < 0 || costume > 31 || !Geno_DefineHasArt(ck, 2, costume)) {
+        return -1.0F;
+    }
+    return 20000.0F + (f32) (ck * 32 + costume);
+}
+#endif
+
 float gm_80168BF8(int arg0)
 {
     CharacterKind ckind = Player_GetPlayerCharacter(arg0);
@@ -4172,7 +4210,12 @@ float gm_80168BF8(int arg0)
     {
         /* m-ex: every in-match stock icon reaches the formula through here (the hook at
          * 0x80168B34 takes the current FighterKind, arg1). */
-        f32 mex = gm_MexStockFrame(Player_80036394(arg0), costume);
+        f32 geno = gm_GenoStockFrame(ckind, costume);
+        f32 mex;
+        if (geno >= 0.0F) {
+            return geno;
+        }
+        mex = gm_MexStockFrame(Player_80036394(arg0), costume);
         if (mex >= 0.0F) {
             return mex;
         }
@@ -4191,6 +4234,14 @@ void gm_80168C5C(u32 arg0)
     if (mex >= 0) {
         lbAudioAx_800243F4(mex);
         return;
+    }
+    {
+        /* Geno slice 6: a define has no announcer call of its own yet (a package audio source is an open decision), and the donor's call would
+         * name another fighter ("Mario!" for the Courier), so a define is silent here. Retail and m-ex kinds are unchanged. */
+        extern int Geno_DefineBaseCK(int ck);
+        if (Geno_DefineBaseCK((int) arg0) >= 0) {
+            return;
+        }
     }
     arg0 = gm_MexVanillaKind(arg0, 1);
 #endif
@@ -4407,6 +4458,14 @@ u8 gm_GetNumCostumesForCKind(u8 ckind)
 {
 #if defined(TARGET_PC)
     extern int Geno_DefineBaseCK(int ck);
+    /* a base "none" define declares its own costumes (Geno slice 6): not Mario's five */
+    extern int Geno_DefineCostumeCountCK(int ck);
+    {
+        int own = Geno_DefineCostumeCountCK(ckind);
+        if (own > 0) {
+            return (u8) own;
+        }
+    }
     int native_base = Geno_DefineBaseCK(ckind);
     if (native_base >= 0) ckind = native_base;
 #endif
@@ -4454,6 +4513,14 @@ u8 gm_80169264(u8 ckind)
 {
 #if defined(TARGET_PC)
     extern int Geno_DefineBaseCK(int ck);
+    /* a base "none" define's declared team colour (Geno slice 6; team 0) */
+    extern int Geno_DefineTeamCostume(int ck, int team);
+    {
+        int own = Geno_DefineTeamCostume(ckind, 0);
+        if (own >= 0) {
+            return (u8) own;
+        }
+    }
     int native_base = Geno_DefineBaseCK(ckind);
     if (native_base >= 0) ckind = native_base;
     if (GM_IS_MEX_CK(ckind)) { /* m-ex: costume_info[ext].red_idx */
@@ -4471,6 +4538,14 @@ u8 gm_80169290(u8 ckind)
 {
 #if defined(TARGET_PC)
     extern int Geno_DefineBaseCK(int ck);
+    /* a base "none" define's declared team colour (Geno slice 6; team 2) */
+    extern int Geno_DefineTeamCostume(int ck, int team);
+    {
+        int own = Geno_DefineTeamCostume(ckind, 2);
+        if (own >= 0) {
+            return (u8) own;
+        }
+    }
     int native_base = Geno_DefineBaseCK(ckind);
     if (native_base >= 0) ckind = native_base;
     if (GM_IS_MEX_CK(ckind)) { /* m-ex: costume_info[ext].green_idx */
@@ -4488,6 +4563,14 @@ u8 gm_801692BC(u8 ckind)
 {
 #if defined(TARGET_PC)
     extern int Geno_DefineBaseCK(int ck);
+    /* a base "none" define's declared team colour (Geno slice 6; team 1) */
+    extern int Geno_DefineTeamCostume(int ck, int team);
+    {
+        int own = Geno_DefineTeamCostume(ckind, 1);
+        if (own >= 0) {
+            return (u8) own;
+        }
+    }
     int native_base = Geno_DefineBaseCK(ckind);
     if (native_base >= 0) ckind = native_base;
     if (GM_IS_MEX_CK(ckind)) { /* m-ex: costume_info[ext].blue_idx */

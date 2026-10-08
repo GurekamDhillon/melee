@@ -295,3 +295,209 @@ static int test_geno_define_resolver(void)
     gn_registry_clear(&r);
     return rc;
 }
+
+/* Geno slice 6: a define's costumes as declared colour sets, and its own menu and HUD art (registry half). A base "none" define fixture
+ * is built in text; the fixture is parsed, never installed. */
+#define GN_T_NONE(ver, fighter_extra, entry_extra) "{\"geno\":" #ver ",\"fighters\":[{\"define\":{\"key\":\"t9\",\"name\":\"T9\",\"base\":\"none\"," \
+    "\"common\":\"melee.common.v1\",\"resources\":\"mod:files\"},\"fighter\":{\"plan\":\"plan.json\",\"animation\":\"bank.dat\",\"costumes\":[" fighter_extra "]}" entry_extra "}]}"
+#define GN_T_COS(file, extra) "{\"file\":\"" file "\",\"joint\":\"j\"" extra "}"
+
+static int test_geno_define_presentation(void)
+{
+    static gn_registry r;
+    const gn_profile* p;
+    char buf[64];
+    int rc = 0;
+    gn_registry_clear(&r);
+    /* declared team colours and names */
+    if (gn_parse_text(&r, GN_T_NONE(9, GN_T_COS("a.dat", ",\"name\":\"Plain\"") "," GN_T_COS("b.dat", ",\"name\":\"Ember\",\"team\":\"red\"") ","
+                                       GN_T_COS("c.dat", ",\"team\":\"blue\"") "," GN_T_COS("d.dat", ",\"team\":\"green\""), ""), "none") != 1 || r.n != 1 || !r.p[0].fm) {
+        gw_test_fail("a none define with declared costume colours was refused"); gn_registry_clear(&r); return 1;
+    }
+    p = &r.p[0];
+    if (p->fm->ncostume != 4 || gn_fm_team_costume(p->fm, 0) != 1 || gn_fm_team_costume(p->fm, 1) != 2 || gn_fm_team_costume(p->fm, 2) != 3 ||
+        strcmp(p->fm->cos_name[0], "Plain") || strcmp(p->fm->cos_name[1], "Ember") || p->fm->cos_name[2][0] || p->fm->cos_team[0] != -1) {
+        gw_test_fail("declared costume colours: red %d blue %d green %d, names '%s' '%s'", gn_fm_team_costume(p->fm, 0), gn_fm_team_costume(p->fm, 1),
+                     gn_fm_team_costume(p->fm, 2), p->fm->cos_name[0], p->fm->cos_name[1]);
+        rc = 1;
+    }
+    if (gn_fm_team_costume(p->fm, 3) != -1 || gn_fm_team_costume(NULL, 0) != -1) { gw_test_fail("a team past green, or no fighter block, answered a costume"); rc = 1; }
+    gn_registry_clear(&r);
+    /* undeclared: red first, blue second, green third, wrapping to the first when there are fewer */
+    if (gn_parse_text(&r, GN_T_NONE(9, GN_T_COS("a.dat", "") "," GN_T_COS("b.dat", ""), ""), "two") != 1 || !r.p[0].fm ||
+        gn_fm_team_costume(r.p[0].fm, 0) != 0 || gn_fm_team_costume(r.p[0].fm, 1) != 1 || gn_fm_team_costume(r.p[0].fm, 2) != 0) {
+        gw_test_fail("undeclared team colours of a two-costume define"); rc = 1;
+    }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_NONE(9, GN_T_COS("a.dat", ""), ""), "one") != 1 || !r.p[0].fm ||
+        gn_fm_team_costume(r.p[0].fm, 1) != 0 || gn_fm_team_costume(r.p[0].fm, 2) != 0) { gw_test_fail("undeclared team colours of a one-costume define"); rc = 1; }
+    gn_registry_clear(&r);
+    /* refusals */
+    if (gn_parse_text(&r, GN_T_NONE(9, GN_T_COS("a.dat", ",\"team\":\"purple\""), ""), "team") != 0) { gw_test_fail("team purple accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_NONE(9, GN_T_COS("a.dat", ",\"name\":\"A\\tB\""), ""), "ctl") != 0) { gw_test_fail("a control character in a costume name accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_NONE(9, GN_T_COS("a.dat", ",\"name\":\"0123456789012345678901234\""), ""), "long") != 0) { gw_test_fail("a 25-character costume name accepted"); rc = 1; }
+    gn_registry_clear(&r);
+
+    /* the art: one icon, per-costume portraits and stock icons (a costume past the list uses the first) */
+    if (gn_parse_text(&r, GN_T_NONE(9, GN_T_COS("a.dat", "") "," GN_T_COS("b.dat", ""),
+            ",\"presentation\":{\"icon\":\"t9_icon.gxtex\",\"portrait\":[\"t9_p0.gxtex\",\"t9_p1.gxtex\"],\"stock\":\"t9_stock.gxtex\"}"), "art") != 1 || !r.p[0].pres) {
+        gw_test_fail("a define with its package art was refused"); gn_registry_clear(&r); return 1;
+    }
+    p = &r.p[0];
+    if (strcmp(gn_pres_file(p, GN_PRES_ICON, 0), "t9_icon.gxtex") || strcmp(gn_pres_file(p, GN_PRES_ICON, 3), "t9_icon.gxtex") ||
+        strcmp(gn_pres_file(p, GN_PRES_PORTRAIT, 0), "t9_p0.gxtex") || strcmp(gn_pres_file(p, GN_PRES_PORTRAIT, 1), "t9_p1.gxtex") ||
+        strcmp(gn_pres_file(p, GN_PRES_PORTRAIT, 7), "t9_p0.gxtex") || strcmp(gn_pres_file(p, GN_PRES_STOCK, 1), "t9_stock.gxtex") ||
+        gn_pres_file(p, 3, 0) != NULL || gn_pres_file(&r.p[0], -1, 0) != NULL) {
+        gw_test_fail("presentation files do not resolve: icon '%s' portrait1 '%s' stock1 '%s'", gn_pres_file(p, 0, 0), gn_pres_file(p, 1, 1), gn_pres_file(p, 2, 1)); rc = 1;
+    }
+    gn_registry_clear(&r);
+    /* nothing declared: nothing resolves, and the entry is the same entry as before (its id is the hash of the entry) */
+    if (gn_parse_text(&r, GN_T_NONE(9, GN_T_COS("a.dat", ""), ""), "none-art") != 1 || r.p[0].pres != NULL || gn_pres_file(&r.p[0], 0, 0) != NULL) {
+        gw_test_fail("a define without presentation answered art"); rc = 1;
+    }
+    gn_registry_clear(&r);
+    /* a donor-based define may declare art too (its icon, its portrait), at format 9 */
+    if (gn_parse_text(&r, GN_T_HEAD(9, ",\"presentation\":{\"icon\":\"t7_icon.gxtex\"}"), "mario-art") != 1 || !r.p[0].pres || strcmp(gn_pres_file(&r.p[0], 0, 0), "t7_icon.gxtex")) {
+        gw_test_fail("a donor-based define with an icon was refused"); rc = 1;
+    }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(9, ",\"attributes\":{\"walk_max_vel\":1.8}"), "id9") != 1 || r.p[0].id != 0xa2759ebe1530b465ull || r.p[0].pres != NULL) {
+        gw_test_fail("a define without presentation changed id: %016llx", (unsigned long long)(r.n ? r.p[0].id : 0)); rc = 1;
+    }
+    gn_registry_clear(&r);
+    /* refusals: format 8, an unknown key, a name that is not a plain .gxtex, an icon list, too many entries, a non-object */
+    if (gn_parse_text(&r, GN_T_HEAD(8, ",\"presentation\":{\"icon\":\"a.gxtex\"}"), "v8") != 0) { gw_test_fail("presentation accepted at geno 8"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(9, ",\"presentation\":{\"banner\":\"a.gxtex\"}"), "key") != 0) { gw_test_fail("an unknown presentation key accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(9, ",\"presentation\":{\"icon\":\"a.png\"}"), "ext") != 0) { gw_test_fail("a .png accepted as art"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(9, ",\"presentation\":{\"icon\":\"sub/a.gxtex\"}"), "slash") != 0) { gw_test_fail("a path accepted as art"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(9, ",\"presentation\":{\"icon\":\"..a.gxtex\"}"), "dots") != 0) { gw_test_fail("a .. name accepted as art"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(9, ",\"presentation\":{\"icon\":[\"a.gxtex\"]}"), "iconlist") != 0) { gw_test_fail("an icon list accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(9, ",\"presentation\":\"a.gxtex\""), "notobj") != 0) { gw_test_fail("a non-object presentation accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    {
+        static char text[1600];
+        int i, n = snprintf(text, sizeof text, "{\"geno\":9,\"fighters\":[{\"define\":{\"key\":\"t9\",\"name\":\"T9\",\"base\":\"mario\",\"common\":\"melee.common.v1\",\"resources\":\"retail:mario\"},\"presentation\":{\"stock\":[");
+        for (i = 0; i < 17; ++i) n += snprintf(text + n, sizeof text - n, "%s\"s%d.gxtex\"", i ? "," : "", i);
+        snprintf(text + n, sizeof text - n, "]}}]}");
+        if (gn_parse_text(&r, text, "17") != 0) { gw_test_fail("17 stock icons accepted"); rc = 1; }
+        gn_registry_clear(&r);
+    }
+    (void)buf;
+    return rc;
+}
+
+/* The .gxtex container the art travels in: the kit decodes a mod's file into the same pool the disc's art uses, and refuses anything else. */
+static int test_geno_gxtex_art(void)
+{
+    extern int gw_Kit_TexAddGxtex(const char* key, const uint8_t* blob, size_t len);
+    extern int gw_Kit_TexHsdFind(const char* key);
+    extern void gw_Kit_TexDropHsd(void);
+    extern const uint8_t* gw_Kit_TexPixels(int tex);
+    extern int gw_Kit_TexInfo(int tex, int* w, int* h, float* w1x, float* h1x, int* mask, const char** tint);
+    uint8_t blob[64 + 32];
+    int tex, w = 0, h = 0, rc = 0;
+    const uint8_t* px;
+    memset(blob, 0, sizeof blob);
+    /* "GXTX", version 1, RGB5A3 (5), 4x4, no TLUT, image 32 bytes at 64 */
+    blob[0] = 'G'; blob[1] = 'X'; blob[2] = 'T'; blob[3] = 'X'; blob[7] = 1; blob[11] = 5; blob[15] = 4; blob[19] = 4;
+    blob[20] = blob[21] = blob[22] = blob[23] = 0xFF; blob[31] = 32; blob[39] = 64;
+    blob[64] = 0xFC; blob[65] = 0x00; /* texel 0: opaque RGB555 1,31,0,0 -> red */
+    tex = gw_Kit_TexAddGxtex("gn:test:gxtex", blob, sizeof blob);
+    if (tex < 0 || gw_Kit_TexHsdFind("gn:test:gxtex") != tex || gw_Kit_TexAddGxtex("gn:test:gxtex", blob, sizeof blob) != tex) {
+        gw_test_fail("a 4x4 RGB5A3 .gxtex was not decoded into the pool (or the key was not the same slot)"); return 1;
+    }
+    px = gw_Kit_TexPixels(tex);
+    if (!gw_Kit_TexInfo(tex, &w, &h, NULL, NULL, NULL, NULL) || w != 4 || h != 4 || !px || px[0] != 255 || px[1] != 0 || px[2] != 0 || px[3] != 255) {
+        gw_test_fail("the decoded texel is not opaque red: %dx%d", w, h); rc = 1;
+    }
+    if (gw_Kit_TexAddGxtex("gn:test:short", blob, 70) != -1) { gw_test_fail("a .gxtex shorter than its image was accepted"); rc = 1; }
+    blob[0] = 'X';
+    if (gw_Kit_TexAddGxtex("gn:test:magic", blob, sizeof blob) != -1) { gw_test_fail("a file without the GXTX magic was accepted"); rc = 1; }
+    blob[0] = 'G'; blob[7] = 2;
+    if (gw_Kit_TexAddGxtex("gn:test:ver", blob, sizeof blob) != -1) { gw_test_fail("a .gxtex version 2 was accepted"); rc = 1; }
+    blob[7] = 1; blob[11] = 12;
+    if (gw_Kit_TexAddGxtex("gn:test:fmt", blob, sizeof blob) != -1) { gw_test_fail("an unknown GX format was accepted"); rc = 1; }
+    if (gw_Kit_TexAddGxtex(NULL, blob, sizeof blob) != -1 || gw_Kit_TexAddGxtex("gn:test:null", NULL, 0) != -1) { gw_test_fail("NULL arguments were accepted"); rc = 1; }
+    /* the same bytes through the game-side handle API (the HUD stock icon and the results screen copy from it) */
+    {
+        extern int gw_GxTex_OpenBlob(const unsigned char* bytes, uint32_t len, const char* label);
+        extern int gw_GxTex_Width(int h); extern int gw_GxTex_Height(int h); extern int gw_GxTex_Format(int h);
+        extern int gw_GxTex_ImageSize(int h); extern int gw_GxTex_TlutFormat(int h);
+        extern void gw_GxTex_CopyImage(int h, void* dst); extern void gw_GxTex_Close(int h);
+        uint8_t copy[32];
+        int g;
+        blob[11] = 5; blob[7] = 1;
+        g = gw_GxTex_OpenBlob(blob, sizeof blob, "gn:test");
+        if (g < 0 || gw_GxTex_Width(g) != 4 || gw_GxTex_Height(g) != 4 || gw_GxTex_Format(g) != 5 || gw_GxTex_ImageSize(g) != 32 || gw_GxTex_TlutFormat(g) != -1) {
+            gw_test_fail("gw_GxTex_OpenBlob: handle %d", g); rc = 1;
+        } else {
+            memset(copy, 0, sizeof copy);
+            gw_GxTex_CopyImage(g, copy);
+            if (copy[0] != 0xFC || copy[1] != 0x00) { gw_test_fail("gw_GxTex_CopyImage did not copy the payload bytes"); rc = 1; }
+            gw_GxTex_Close(g);
+            if (gw_GxTex_Width(g) != 0) { gw_test_fail("a closed handle still answers"); rc = 1; }
+        }
+        if (gw_GxTex_OpenBlob(blob, 20, "gn:short") != -1 || gw_GxTex_OpenBlob(NULL, 0, "gn:null") != -1) { gw_test_fail("a short blob was opened"); rc = 1; }
+        blob[0] = 'X';
+        if (gw_GxTex_OpenBlob(blob, sizeof blob, "gn:magic") != -1) { gw_test_fail("a blob without the magic was opened"); rc = 1; }
+    }
+    gw_Kit_TexDropHsd();
+    return rc;
+}
+
+/* The same, through the live registry by CK (the way the menus and the match setup ask): install a base "none" define for the test, resolve its CK,
+ * read its costume count, team colours, names and art flags; then restore the caller's registry. A missing art file answers -1 and does not crash. */
+static int test_geno_define_presentation_ck(void)
+{
+    extern int gw_Geno_DefineArtTex(int ck, int what, int costume);
+    extern int gw_Geno_DefineArtOpen(int ck, int what, int costume);
+    gn_registry entry = gn_boot, entry_saved = gn_saved;
+    int entry_loaded = gn_boot_loaded, entry_saved_loaded = gn_saved_loaded;
+    int entry_swapped = gn_swapped;
+    int rc = 0, ck;
+    char name[32];
+    memset(&gn_boot, 0, sizeof gn_boot);
+    memset(&gn_saved, 0, sizeof gn_saved);
+    gn_boot_loaded = 1; gn_saved_loaded = 0; gn_swapped = 0;
+    if (gw_Geno_TestInstall(GN_T_NONE(9, GN_T_COS("a.dat", ",\"name\":\"Plain\"") "," GN_T_COS("b.dat", ",\"name\":\"Ember\",\"team\":\"red\"") ","
+                                         GN_T_COS("c.dat", ",\"team\":\"blue\"") "," GN_T_COS("d.dat", ",\"team\":\"green\""),
+                            ",\"presentation\":{\"icon\":\"gn_absent_icon.gxtex\",\"stock\":[\"gn_absent_s0.gxtex\"]}")) != 1) {
+        gw_test_fail("install of a none define with art"); rc = 1;
+    } else if ((ck = gw_Geno_DefineResolve("t9")) < 34) {
+        gw_test_fail("the none define has no resident CK (%d)", ck); rc = 1;
+    } else {
+        if (gw_Geno_DefineCostumeCountCK(ck) != 4 || gw_Geno_DefineTeamCostume(ck, 0) != 1 || gw_Geno_DefineTeamCostume(ck, 1) != 2 ||
+            gw_Geno_DefineTeamCostume(ck, 2) != 3) {
+            gw_test_fail("by CK: costumes %d, team colours %d %d %d", gw_Geno_DefineCostumeCountCK(ck), gw_Geno_DefineTeamCostume(ck, 0),
+                         gw_Geno_DefineTeamCostume(ck, 1), gw_Geno_DefineTeamCostume(ck, 2)); rc = 1;
+        }
+        if (!gw_Geno_DefineCostumeName(ck, 1, name, sizeof name) || strcmp(name, "Ember") || gw_Geno_DefineCostumeName(ck, 2, name, sizeof name) ||
+            gw_Geno_DefineCostumeName(ck, 4, name, sizeof name)) {
+            gw_test_fail("by CK: costume names"); rc = 1;
+        }
+        if (!gw_Geno_DefineHasArt(ck, 0, 0) || gw_Geno_DefineHasArt(ck, 1, 0) || !gw_Geno_DefineHasArt(ck, 2, 3)) { gw_test_fail("by CK: art flags"); rc = 1; }
+        if (gw_Geno_DefineArtTex(ck, 0, 0) != -1 || gw_Geno_DefineArtOpen(ck, 2, 0) != -1 || gw_Geno_DefineArtTex(ck, 1, 0) != -1) {
+            gw_test_fail("a missing or undeclared art file did not answer -1"); rc = 1;
+        }
+        /* a retail CK, CK 0 and a CK no define holds are not none defines: the callers keep their own tables */
+        if (gw_Geno_DefineCostumeCountCK(8) != 0 || gw_Geno_DefineCostumeCountCK(0) != 0 || gw_Geno_DefineCostumeCountCK(255) != 0 ||
+            gw_Geno_DefineTeamCostume(8, 0) != -1 || gw_Geno_DefineHasArt(8, 0, 0)) {
+            gw_test_fail("a retail CK answered a define's costumes or art"); rc = 1;
+        }
+    }
+    gw_Geno_TestRestore();
+    gn_registry_clear(&gn_boot);
+    gn_registry_clear(&gn_saved);
+    gn_boot = entry; gn_saved = entry_saved;
+    gn_boot_loaded = entry_loaded; gn_saved_loaded = entry_saved_loaded;
+    gn_swapped = entry_swapped; ++gn_pool_gen;
+    return rc;
+}

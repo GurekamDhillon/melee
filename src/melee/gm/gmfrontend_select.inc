@@ -31,6 +31,9 @@ extern int mnCharSel_PcArtPortrait(int ck, int costume, HSD_ImageDesc** img, HSD
 extern int Geno_DefineCount(void);
 extern int Geno_DefineCKAt(int index);
 extern int Geno_DefineBaseCK(int ck);
+extern int Geno_DefineCostumeCountCK(int ck);
+extern int Geno_DefineCostumeName(int ck, int costume, char* out, int cap);
+extern int Geno_DefineHasArt(int ck, int what, int costume);
 extern int Geno_DefineName(int ck, char* out, int cap);
 extern int mnStageSel_PcArtOpen(HSD_Archive* archive);
 extern int mnStageSel_PcArtIcon(int i, int* ext, int* type, HSD_ImageDesc** img, HSD_Tlut** tlut);
@@ -331,7 +334,12 @@ static bool fs_slot_ok(int slot)
 
 static int fs_costumes(int ck)
 {
-    int base = Geno_DefineBaseCK(ck);
+    int own = ck >= 0 ? Geno_DefineCostumeCountCK(ck) : 0;
+    int base;
+    if (own > 0) {
+        return own; /* a base "none" define's declared costumes (Geno slice 6), not its donor's */
+    }
+    base = Geno_DefineBaseCK(ck);
     if (base >= 0) ck = base;
     int n = ck >= 0 ? gm_GetNumCostumesForCKind((u8) ck) : 1;
     return n > 0 ? n : 1;
@@ -392,7 +400,7 @@ static void fs_css_roster(void)
             if (ck < 0) continue;
             for (source = 0; source < fcs.n && fcs.ck[source] != base; ++source) {}
             fcs.ck[fcs.n] = ck;
-            if (source < fcs.n) fcs.icon[fcs.n] = fcs.icon[source];
+            if (source < fcs.n && Geno_DefineCostumeCountCK(ck) == 0) fcs.icon[fcs.n] = fcs.icon[source]; /* a base "none" define has no donor art */
             else { fcs.icon[fcs.n].img = NULL; fcs.icon[fcs.n].tl = NULL; }
             fcs.ok[fcs.n++] = true;
         }

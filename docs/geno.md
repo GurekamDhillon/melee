@@ -2964,7 +2964,7 @@ Default (soft): a fault drops the call's writes and commands, bumps `GenoLuaBloc
 
 ### 24.4 Proof (build id `8c100b8c47a12269`, vanilla disc; loopback, `MELEE_NETPLAY_BIND=127.0.0.1`, local server, windows off screen)
 
-See `docs/superpowers/plans/2026-10-08-geno-slice7-online.md` section 7 in the workspace for the tables and logs. Tools: `tools/netplay/geno_pair.py`, `geno_matrix.py`, `geno_lobby.py`, `geno_np.lua`, `geno_cov.lua`.
+Scripted matrix: 15 scenarios of 110 s (Striker, Courier, Charger, Riposte, Caster in mirrors and against retail Fox/Marth, mismatched alias numbers, a LAN-speed run) under lag/jitter/loss, plus two 10-minute soaks (24088 and 19876 frames): every row 0 desyncs and 0 differing confirmed-frame checksums. Through the real lobby: Striker mirror, 3 games; Courier v Riposte under lag/jitter/loss, 3 games, 1029 rollbacks: 0 desyncs. Refusals: a missing define and a changed Lua constant are both refused in the lobby with the define's name. One Windows (host) v Linux (guest) match with two defines: same build id, 0 DESYNC lines, match played to its end; the per-frame hash log differs in isolated frames on that pair for retail fighters too (see the workspace brief). Tables and logs: `docs/superpowers/plans/2026-10-08-geno-slice7-online.md` section 7 in the workspace. Tools: `tools/netplay/geno_pair.py`, `geno_matrix.py`, `geno_lobby.py`, `geno_np.lua`, `geno_cov.lua`.
 
 ### 24.5 Not done
 

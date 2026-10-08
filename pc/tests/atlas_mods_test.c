@@ -490,5 +490,19 @@ int main(void)
     parents();
     detail();
     review_followups();
+    {   /* Z opens the Nucleus browser, from either tab and with an empty folder; the hint is on the screen */
+        AtModsSrc s = src();
+        AtModsAction a;
+        int i, hint = 0;
+        fixture(); at_mods_state_init(&ST); memset(&VW, 0, sizeof VW); build(&s);
+        for (i = 0; i < SC.n_keys; i++) if (SC.keys[i].btn == 'Z' && strcmp(SC.keys[i].label, "Nucleus") == 0) hint = 1;
+        CHECK(hint);
+        a = press(&s, ev(AT_EV_ALT, 'Z', 0)); CHECK(a.kind == AT_MA_NUCLEUS);
+        press(&s, ev(AT_EV_PAGE, 1, 0)); a = press(&s, ev(AT_EV_ALT, 'Z', 0)); CHECK(a.kind == AT_MA_NUCLEUS);
+        fm_n = 0; at_mods_state_init(&ST); build(&s);
+        hint = 0; for (i = 0; i < SC.n_keys; i++) if (SC.keys[i].btn == 'Z') hint = 1;
+        CHECK(hint);
+        a = press(&s, ev(AT_EV_ALT, 'Z', 0)); CHECK(a.kind == AT_MA_NUCLEUS);
+    }
     ATLAS_DONE("atlas mods");
 }

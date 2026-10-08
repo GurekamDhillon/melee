@@ -249,7 +249,7 @@ int main(void) {
         CHECK(nc_cat_filter(&cat, &q, a, 64) == 5);                                 /* author search */
         nc_query_init(&q); q.fighter = 1;
         CHECK(nc_cat_filter(&cat, &q, a, 64) == 1);
-        nc_query_init(&q); q.type = NC_T_STAGE_SKIN;
+        nc_query_init(&q); q.type_mask = 1u << NC_T_STAGE_SKIN;
         CHECK(nc_cat_filter(&cat, &q, a, 64) == 0);                                 /* 102 was removed */
         nc_query_init(&q); q.installable_only = 1;
         CHECK(nc_cat_filter(&cat, &q, a, 64) == 5);                                 /* all but the Sheik post */

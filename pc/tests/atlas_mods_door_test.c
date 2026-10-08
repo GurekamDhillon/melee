@@ -167,6 +167,7 @@ const char *gw_Mods_MenuField(int i, int k, const char *f)
     return "";
 }
 
+#include "atlas_nucleus_stubs.h"
 #include "gw_script_ui.inc"
 
 static const char *lua(const char *code)

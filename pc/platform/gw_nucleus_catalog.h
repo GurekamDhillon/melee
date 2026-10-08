@@ -126,8 +126,8 @@ static void nc_media_full(const char *stored, char *out, size_t cap) {
     else snprintf(out, cap, "%s%s", NC_MEDIA_BASE, stored);
 }
 static void nc_download_url(int mod, int file, char *out, size_t cap) {
-    if (file > 0) snprintf(out, cap, "%s/mods/%d/download?file=%d", NC_API_BASE, mod, file);
-    else snprintf(out, cap, "%s/mods/%d/download", NC_API_BASE, mod);
+    if (file > 0) snprintf(out, cap, "%s/mods/%d/download?file=%d", nc_api_base, mod, file);
+    else snprintf(out, cap, "%s/mods/%d/download", nc_api_base, mod);
 }
 
 /* ---- parsing one mod ----------------------------------------------------------------------------------- */
@@ -377,13 +377,13 @@ static const char *const nc_sort_label[NC_SORT_N] = { "Recently updated", "Newes
 
 typedef struct {
     char text[48];          /* words, all of which must appear in the title, author, tags or a file name */
-    int type;               /* -1 any, else NC_T_* */
+    unsigned type_mask;     /* 0 any, else bit (1 << NC_T_*) per accepted type */
     int fighter;            /* -1 any, else nc_fighters index (costume mods with a file for it) */
     int sort;               /* NC_SORT_* */
     int installable_only;   /* only mods the browser can install */
 } nc_query;
 
-static void nc_query_init(nc_query *q) { memset(q, 0, sizeof *q); q->type = -1; q->fighter = -1; }
+static void nc_query_init(nc_query *q) { memset(q, 0, sizeof *q); q->fighter = -1; }
 
 static const nc_catalog *nc_sort_cat;
 static int nc_sort_mode;
@@ -401,18 +401,19 @@ static int nc_cmp_idx(const void *a, const void *b) {
     return x->id - y->id;                  /* a total order: the list never reshuffles between two builds */
 }
 
-static int nc_installable_mod(const nc_catalog *c, const nc_mod *m) {
+static int nc_installable_files(const nc_mod *m, const nc_file *files) {
     int i;
     if (m->type != NC_T_COSTUME) return 0;
     for (i = 0; i < m->nf; ++i) {
-        const nc_file *f = &c->f[m->f0 + i];
+        const nc_file *f = &files[i];
         if (f->costume && f->fighter >= 0 && nc_fighters[f->fighter].installable) return 1;
     }
     return 0;
 }
+static int nc_installable_mod(const nc_catalog *c, const nc_mod *m) { return nc_installable_files(m, c->f + m->f0); }
 
 /* Why a mod cannot be installed here, or "" when it can. */
-static const char *nc_why_not(const nc_catalog *c, const nc_mod *m) {
+static const char *nc_why_not_files(const nc_mod *m, const nc_file *files) {
     int i, any_costume = 0, any_known = 0;
     if (m->type == NC_T_STAGE_SKIN) return "Stage skins cannot be installed yet.";
     if (m->type == NC_T_EFFECTS) return "Effect mods cannot be installed yet.";
@@ -421,7 +422,7 @@ static const char *nc_why_not(const nc_catalog *c, const nc_mod *m) {
     if (m->type == NC_T_PATCH) return "Patches are for the whole disc and cannot be installed.";
     if (m->type != NC_T_COSTUME) return "This kind of mod cannot be installed yet.";
     for (i = 0; i < m->nf; ++i) {
-        const nc_file *f = &c->f[m->f0 + i];
+        const nc_file *f = &files[i];
         if (!f->costume) continue;
         ++any_costume;
         if (f->fighter >= 0) { ++any_known; if (nc_fighters[f->fighter].installable) return ""; }
@@ -430,6 +431,7 @@ static const char *nc_why_not(const nc_catalog *c, const nc_mod *m) {
     if (!any_known) return "Not a retail fighter's costume.";
     return "Sheik and Nana costumes come with Zelda and Popo (not yet).";
 }
+static const char *nc_why_not(const nc_catalog *c, const nc_mod *m) { return nc_why_not_files(m, c->f + m->f0); }
 
 /* Fills out[] (at most cap) with catalog indices in the query's order; returns the count. */
 static int nc_cat_filter(const nc_catalog *c, const nc_query *q, int *out, int cap) {
@@ -447,7 +449,7 @@ static int nc_cat_filter(const nc_catalog *c, const nc_query *q, int *out, int c
     for (i = 0; i < c->n && n < cap; ++i) {
         const nc_mod *m = &c->m[i];
         int w, ok = 1;
-        if (q->type >= 0 && m->type != q->type) continue;
+        if (q->type_mask && !(q->type_mask & (1u << m->type))) continue;
         if (q->fighter >= 0 && !(m->fmask & (1u << q->fighter))) continue;
         if (q->installable_only && !nc_installable_mod(c, m)) continue;
         for (w = 0; w < nw && ok; ++w) {
@@ -473,6 +475,8 @@ typedef struct {
     int (*stop)(void *user);                                                  /* nonzero: leave at the next page */
     void (*progress)(void *user, const char *what, int done, int total);
     void (*checkpoint)(void *user);                                           /* save the catalog and the state: a long first sync resumes */
+    void (*lock)(void *user);                                                 /* optional: held around every change to the catalog */
+    void (*unlock)(void *user);
 } nc_sync_io;
 
 typedef struct {
@@ -545,7 +549,7 @@ static int nc_get(const nc_sync_io *io, const char *url, nc_resp *r, char *msg, 
 }
 
 /* one page of /mods: applies every mod; returns the number applied, -1 on bad JSON; *next set to the next cursor ("" at the end) */
-static int nc_apply_page(nc_catalog *c, const char *body, char *next, size_t ncap, int *total) {
+static int nc_apply_page_(nc_catalog *c, const char *body, char *next, size_t ncap, int *total) {
     nj_doc d;
     int root = nj_parse(&d, body), data, e, n = 0, nx;
     next[0] = '\0';
@@ -563,7 +567,7 @@ static int nc_apply_page(nc_catalog *c, const char *body, char *next, size_t nca
     return n;
 }
 
-static int nc_apply_removed(nc_catalog *c, const char *body, char *next, size_t ncap) {
+static int nc_apply_removed_(nc_catalog *c, const char *body, char *next, size_t ncap) {
     nj_doc d;
     int root = nj_parse(&d, body), data, e, n = 0, nx;
     next[0] = '\0';
@@ -577,6 +581,21 @@ static int nc_apply_removed(nc_catalog *c, const char *body, char *next, size_t 
     nx = nj_get(&d, root, "next_cursor");
     if (nx >= 0 && d.n[nx].type == NJ_STR) nc_copy(next, ncap, d.pool + d.n[nx].str);
     nj_free(&d);
+    return n;
+}
+
+static int nc_apply_page(const nc_sync_io *io, nc_catalog *c, const char *body, char *next, size_t ncap, int *total) {
+    int n;
+    if (io->lock) io->lock(io->user);
+    n = nc_apply_page_(c, body, next, ncap, total);
+    if (io->unlock) io->unlock(io->user);
+    return n;
+}
+static int nc_apply_removed(const nc_sync_io *io, nc_catalog *c, const char *body, char *next, size_t ncap) {
+    int n;
+    if (io->lock) io->lock(io->user);
+    n = nc_apply_removed_(c, body, next, ncap);
+    if (io->unlock) io->unlock(io->user);
     return n;
 }
 
@@ -595,10 +614,10 @@ static int nc_sync_run(nc_sync *s, nc_catalog *c, const nc_sync_io *io, int forc
     if (!s->full) {
         if (s->t0 == 0) { s->t0 = now; s->cursor[0] = '\0'; s->pages = 0; }
         for (;;) {
-            if (s->cursor[0]) { nc_urlenc(s->cursor, enc, sizeof enc); snprintf(url, sizeof url, "%s/mods?limit=%d&cursor=%s", NC_API_BASE, NC_PAGE_LIMIT, enc); }
-            else snprintf(url, sizeof url, "%s/mods?limit=%d", NC_API_BASE, NC_PAGE_LIMIT);
+            if (s->cursor[0]) { nc_urlenc(s->cursor, enc, sizeof enc); snprintf(url, sizeof url, "%s/mods?limit=%d&cursor=%s", nc_api_base, NC_PAGE_LIMIT, enc); }
+            else snprintf(url, sizeof url, "%s/mods?limit=%d", nc_api_base, NC_PAGE_LIMIT);
             if (nc_get(io, url, &r, s->msg, sizeof s->msg) < 0) { s->next_ok = io->now(io->user) + NC_POLL_SECONDS; if (io->checkpoint) io->checkpoint(io->user); return -1; }
-            n = nc_apply_page(c, r.body, next, sizeof next, &total);
+            n = nc_apply_page(io, c, r.body, next, sizeof next, &total);
             free(r.body);
             if (n < 0) { snprintf(s->msg, sizeof s->msg, "SSBM Nucleus sent something unreadable."); s->next_ok = io->now(io->user) + NC_POLL_SECONDS; return -1; }
             ++s->pages;
@@ -622,9 +641,9 @@ static int nc_sync_run(nc_sync *s, nc_catalog *c, const nc_sync_io *io, int forc
         char cur[400];
         cur[0] = '\0';
         if (next[0]) { char e2[400]; nc_urlenc(next, e2, sizeof e2); snprintf(cur, sizeof cur, "&cursor=%s", e2); }
-        snprintf(url, sizeof url, "%s/mods?limit=%d&updated_since=%s%s", NC_API_BASE, NC_PAGE_LIMIT, enc, cur);
+        snprintf(url, sizeof url, "%s/mods?limit=%d&updated_since=%s%s", nc_api_base, NC_PAGE_LIMIT, enc, cur);
         if (nc_get(io, url, &r, s->msg, sizeof s->msg) < 0) { s->next_ok = io->now(io->user) + NC_POLL_SECONDS; return -1; }
-        n = nc_apply_page(c, r.body, next, sizeof next, NULL);
+        n = nc_apply_page(io, c, r.body, next, sizeof next, NULL);
         free(r.body);
         if (n < 0) { snprintf(s->msg, sizeof s->msg, "SSBM Nucleus sent something unreadable."); s->next_ok = io->now(io->user) + NC_POLL_SECONDS; return -1; }
         if (io->progress) io->progress(io->user, "Checking for changes", c->n, 0);
@@ -636,10 +655,10 @@ static int nc_sync_run(nc_sync *s, nc_catalog *c, const nc_sync_io *io, int forc
         char cur[400];
         cur[0] = '\0';
         if (next[0]) { char e2[400]; nc_urlenc(next, e2, sizeof e2); snprintf(cur, sizeof cur, "&cursor=%s", e2); }
-        snprintf(url, sizeof url, "%s/mods/removed?limit=1000&since=%s%s", NC_API_BASE, enc, cur);
+        snprintf(url, sizeof url, "%s/mods/removed?limit=1000&since=%s%s", nc_api_base, enc, cur);
         io->sleep_ms(io->user, 700);
         if (nc_get(io, url, &r, s->msg, sizeof s->msg) < 0) { s->next_ok = io->now(io->user) + NC_POLL_SECONDS; return -1; }
-        n = nc_apply_removed(c, r.body, next, sizeof next);
+        n = nc_apply_removed(io, c, r.body, next, sizeof next);
         free(r.body);
         if (n < 0) { snprintf(s->msg, sizeof s->msg, "SSBM Nucleus sent something unreadable."); s->next_ok = io->now(io->user) + NC_POLL_SECONDS; return -1; }
         if (!next[0]) break;

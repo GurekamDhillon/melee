@@ -50,7 +50,7 @@ typedef struct {
     char note[AT_STR]; int note_kind; double note_until;
 } AtModsState;
 
-enum { AT_MA_NONE, AT_MA_BACK, AT_MA_DETAIL, AT_MA_SETTINGS };
+enum { AT_MA_NONE, AT_MA_BACK, AT_MA_DETAIL, AT_MA_SETTINGS, AT_MA_NUCLEUS };   /* NUCLEUS: Z opens the SSBM Nucleus browser (gw_ui_nucleus.inc) */
 typedef struct { int kind, arg; char id[AT_ID * 2]; } AtModsAction;
 
 void at_mods_state_init(AtModsState *st);

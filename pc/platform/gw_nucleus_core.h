@@ -25,6 +25,7 @@
 #endif
 
 #define NC_API_BASE "https://ssbmnucleus.net/api/public/v1"
+static char nc_api_base[200] = NC_API_BASE;      /* MELEE_NUCLEUS_API replaces it (a loopback fixture server only; see gw_nucleus_http.inc) */
 #define NC_MEDIA_BASE "https://media.ssbmnucleus.net/"
 #define NC_SITE "ssbmnucleus.net"
 #define NC_CREDIT "Mods from SSBM Nucleus - ssbmnucleus.net"

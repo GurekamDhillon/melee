@@ -2648,7 +2648,7 @@ files need distinct names.
 textured (teal tunic, cream helmet, visor, crest, boots) in the rest A-pose at 1.0 scale through the palette path. (The white-material test drew identically through the plain and the palette path, so the material, not the path, was the fault.) Not run: any
 clip on the skeleton, any fighter use of the files (the model is an article, not a costume), hurtboxes, performance.
 
-**What is left (the engine side, none of it started).** Read from source, not run:
+**What was left when this section was written (2026-10-05; all six items are built since, see 22.4-22.5 and the 2026-10-08 guard correction; kept as the record of what the engine needed).** Read from source, not run:
 1. **Registry.** `gn_define_parse` (`pc/platform/geno_define_registry.inc`) accepts only `base: "mario"`, `common`, `resources: "retail:mario"`; `gw_Geno_DefineBaseKind` returns 0 for any define (line ~151) and `gw_Geno_DefineBaseCK` maps it to CK 8. `base: "none"` needs the parse, a per-define resource record (model files, bank file, `plan.json`) and the base lookup to answer "no donor".
 2. **Loader.** `GenoDefine_Load` (`pc/geno/geno_define_data.inc`) copies Mario's `ftData`, `ftCo_DatAttrs`, `ftMario_DatAttrs`, the 303 `xC` rows and the specific state table. A none define builds `ftData` natively: attributes from the define alone (an authored default table is needed: zeroed gravity breaks the fighter), `xC` rows from `manifest.json` `motion_rows` (name `x0` = the clip symbol, flags low 6 bits = the define's kind, as `ftData_8008572C` does for m-ex), `x14` demo rows, and the `xC`/`x14` counts (`ftData_Table_Unk0[kind].count`), which are now copied from the base.
 3. **Files.** `ftData_803C2360[kind]` (costume file names), `ftData_803C23E4[kind]` (animation file) and `ftData_803C1F40[kind]` (data file) are what `ftData_800855C8` loads; point them at `GnCourier_<costume>.dat` / `GnCourierAJ.dat` (mod `files/` resolve by name, as the article model already does).
@@ -2831,6 +2831,20 @@ A state (`states[].move_tag`), a subaction overlay (`subactions[].move_tag`) or 
 special projectile`. Hit rules, `on_hit` info and echoes read it. An undeclared fighter-specific state
 reports `special` when it was entered through a special input (any fighter, Geno or m-ex), keeps the
 vanilla special-range answer for a `define` (Mario) or `attach` fighter, and is otherwise `unknown`.
+
+### 22.9 The artist pipeline: Blender to a `base: "none"` fighter (2026-10-08)
+
+The converter is no longer Courier-only. The workspace repo's `tools/geno/artist` takes a character's glb (and one short `fighter.json`) and builds the
+define folder this section's loader reads; the rules, who enforces each (engine, converter, or the Courier's own choice) and the clip checklist are in the workspace's
+`docs/geno-artist-spec.md` and `docs/geno-artist-checklist.md`. What the engine side of that spec rests on, all read from this tree:
+
+- `gn_plan_parse` (`pc/platform/geno_define_registry.inc`) needs: `joint_count` 1..256 (`GPL_MAX_JOINTS`), `parts.joint_to_part`/`part_to_joint` (at most 56), `bank.clips` (at most 256, names under 32 and symbols under 72 characters),
+  `motion_rows` (a clip in the bank for each named row), every `ftdata` list entry resolved to a joint, and 1..15 `hurtboxes`. It never reads `roles`, `role_joint` or `ecb`: the extra sockets and the ECB in a plan are documentation until the engine uses them.
+- A move ends when its animation ends, so a clip shorter than its move script cuts the move off (measured with a prototype fighter whose placeholder clips were 13 frames: the smashes, the neutral air, the pummel and the counter ended in `Wait` before their hitboxes were live). The importer holds a placeholder on its last pose to the script's length.
+- `plan.json` joint count is the exported bones plus the synthesized `TopN`, `XRotN`, `YRotN`; the part limit on PC is 255, so at most 252 exported bones.
+
+Verified (this build, vanilla disc, headless LAB, nothing seen on screen): a second original character with other proportions and other bone names (the workspace's `ports/geno-artist-samples/pip`) built with no converter edit
+plays idle, walk, run, jump, double jump, jab (hitbox on a declared bone, 2% to Mario), shield, grab and forward throw (6%), 15 hurtboxes, no crash (workspace `tools/geno/artist/proof.lua`), and `tools/geno/moves_check` reports 39 of its 40 scenarios as works (the dair's landing lag reads 21 against the declared 23). Before placeholder clips were held to their script length the same run reported 31 works and 9 wrong, all of them moves cut off by a too-short borrowed clip. The Courier built through the same importer: 38 works, 2 works*, 0 wrong. `run.sh --test`: 350 of 350.
 
 ## 23. Fighter Lua (slice 5: the first increment built 2026-10-07, the second move and the tooling 2026-10-08)
 

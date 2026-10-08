@@ -2735,11 +2735,64 @@ What reads it: the Atlas select (`gmfrontend_atlas_select.inc`, shim `Ui_ArtGeno
 and none for a `none` define; the retail CSS never lists a define. Logged: `geno: <name>: select icon|portrait|stock icon from its package: <file> as kit texture N`,
 `geno: stock icon of ck N costume C: WxH format F from its package`, `frontend: character select - ck N icon|portrait from its package (kit texture T)`.
 
-Also built here, each a small retail-path guard (all `TARGET_PC`, a define only): the **results name plate** is drawn from the define's name (`gmRst_DrawName`: it was blank, a define being no m-ex slot);
+Slice 6's second half (own audio, CPU AI, the Kirby copy, a define's own records, the results art) is section 22.7. Also built here, each a small retail-path guard (all `TARGET_PC`, a define only): the **results name plate** is drawn from the define's name (`gmRst_DrawName`: it was blank, a define being no m-ex slot);
 **records**: a define's matches write no retail row (`gm_CKindToSelKind` sends every m-ex or define CK to one retail selkind, Captain Falcon's, so a define's KOs and play time would have
 been written into a retail fighter's record; `fn_80162068`, `fn_80162170`); **announcer**: a define is silent (`gm_80168C5C`; the donor's call named Mario). Not built (elevated, see the brief):
 own announcer and voice audio, CPU AI hints, Kirby copy policy, a define's own records, the package emblem and the results stock icon. Tests: `geno_define_presentation`,
 `geno_gxtex_art`, `geno_define_presentation_ck`.
+
+### 22.7 Slice 6, second half: own audio, CPU AI, the Kirby copy, a define's own records, the results art (built 2026-10-08)
+
+Format: `ai` and `kirby_copy` change what a fighter **does**, so a file that carries them says `"geno": 10` (a v9 file is refused with the reason in the log). `audio` and
+`presentation.emblem` are presentation like the art keys of 22.6 and stay at `"geno": 9`. Every key is strict (an unknown key inside it refuses the entry) and part of the
+entry's content id (the id hashes the entry as written, so two installs never agree on an id while behaving differently). Nothing here is new simulation state: the CPU's
+stand-in and the Kirby policy are fixed per profile (the identity covers them), the hat kind Kirby ends up wearing is already in the fighter struct the snapshot and the
+rollback hash cover, and audio and records happen outside the simulation (a define is offline only; a clip is not played while a rollback session is armed).
+
+```json
+"ai": {"like": "falco"},
+"kirby_copy": "none",
+"audio": {"announcer": "GnCourier_call.gnsnd", "voice": [{"sfx": 180058, "file": "GnCourier_jump.gnsnd", "volume": 110}]},
+"presentation": {"emblem": "GnCourier_emblem.gxtex"}
+```
+
+| key | meaning |
+|---|---|
+| `ai.like` | a retail fighter (the names and aliases `attach` takes: `mario`, `fox`, `captain`/`falcon`, `donkey`/`dk`, `kirby`, `koopa`/`bowser`, `link`, `seak`/`sheik`, `ness`, `peach`, `popo`, `pikachu`, `samus`, `yoshi`, `purin`, `mewtwo`, `luigi`, `mars`/`marth`, `zelda`, `clink`, `drmario`, `falco`, `pichu`, `gamewatch`, `ganon`, `emblem`/`roy`; not Nana). The CPU reads the define as that fighter: every `fp->kind` switch in `ftcpuattack.c` and `ftCo_0A01.c` (recovery, the special-move roll, the ranged-attack choice, Kirby/Yoshi/Donkey/Samus special cases) goes through `FTAI_KIND` (`src/melee/ft/ftaikind.h` -> `Geno_DefineAiLike`), and the per-kind AI table copy in `fighter.c` takes that fighter's row instead of the donor's (Mario's). Without the key nothing changes: every switch takes its default arm. Logged once: `geno: CPU AI: <name> (kind N) is read as retail kind M (ai.like)` |
+| `kirby_copy` | what Kirby gets from inhaling the define. `"none"` (the default, now explicit and guarded): Kirby swallows and ends with his own hat, no ability and no table lookup by the define's kind (`ftCo_800BD9E0`; before, the define's kind was written into `hat.kind` and every per-kind hat table was indexed by it). `"retail:<fighter>"` (any retail fighter but Kirby and Nana): Kirby wears that fighter's hat and uses its special (`retail:mario` makes his B a fireball). An ability of the define's own (a hat model, a move) is not built. Logged: `geno: Kirby inhales define kind N: copy policy none -1` / `retail 0` |
+| `audio.announcer` | the pick call: played by `gm_80168C5C` (the native select and the results) and by the Atlas select when a port picks the define. A define without it is **silent** there (never the donor's "Mario!") |
+| `audio.voice[]` | `{"sfx": id, "file": clip, "volume": 0..127}`: the clip replaces one retail sound id the fighter would play (`ft_PlaySFX`, `ft_800881D8` ... `ft_80088640`, with the id before `ft_80087D0C` maps it). At most 32 rows, each id once. The Lab-free way to find an id: with an `audio` block, the log names each retail sound the define plays that has no row (`geno: <name>: plays retail sound 180058 (no audio.voice row for it)`, 64 distinct ids at most); 180058 is Mario's ground jump voice. A declared clip that is missing or malformed is silent and logged once (never the donor's sound) |
+| `presentation.emblem` | one `.gxtex`, no palette: the faint shape behind the rank numeral on the results card |
+
+**The clip container, `.gnsnd` v1** (`python -m tools.geno.audio in.wav out.gnsnd`; `--tone out.gnsnd --hz 660 --ms 400` writes an original test tone): a 32-byte header of big-endian
+u32 (`GNSD`, version 1, rate 32000, channels 1 or 2, frames 1..320000, data offset 32, data bytes, 0), then s16 big-endian samples. The converter reads a PCM WAV (8, 16, 24 or 32
+bit, mono or stereo), resamples to 32 kHz by linear interpolation and refuses more than 10 s, more than two channels and any non-PCM file. The engine decodes a clip on first use
+into host memory and `shim_ax.c` sums it into the main mix after the voices and the aux buses (`gw_Audio_PlayClip`, eight at once, the oldest replaced); it never goes through the
+game's synth, so it needs no ARAM, no sound bank and no named rollback event (a define is offline only; `gw_rb_active()` keeps a clip silent under a session). The audio is the
+author's own: nothing in the repository converts or ships a disc sound. `tools/geno/check` parses each file named by an `audio` block (a file not built yet is a warning, a bad one an error).
+
+**A define's own records.** A define's matches never write a retail fighter's row (22.6). Its numbers go into `geno_records.json` **beside the save**: `<card folder>/../geno_records.json`
+(the card folder is `card/` next to the exe; `MELEE_GENO_RECORDS=<file>` overrides; with the card off and no override nothing is written). `{"format": 1, "records": {"<define key>": {"name",
+"matches", "wins", "losses", "kos", "falls", "sds", "play_seconds", "damage_dealt", "damage_taken", "attacks_hit", "attacks_total", "peak_damage"}}}`, keyed by the define's stable key (not
+its resident CK, which depends on what else is installed); sums saturate at 2^32-1, `peak_damage` is a maximum; keys of defines not installed now stay in the file; a file that is not a
+records file is moved aside as `.bad`. It is written once per define player when the results screen is left (`gm_801623A4`, from `gm_GenoRecordMatch`, which takes the numbers
+`fn_80161C90` would add to a retail row). The retail save block is never read or written by it. The match end logs `geno: retail fighter rows digest A -> B after recording the match (N define player(s); ...)`: the digest is
+an FNV over every per-fighter row of the save; A equals B for a match of defines alone (measured: `84d9a62a -> 84d9a62a`, two Couriers) and differs for a retail match (`c3b96faa -> 5a1d5f99`).
+A define that fights a retail fighter still changes the retail fighter's own row (its KOs and falls are real).
+
+**The results screen** (read by dumping the DObj chains, 2026-10-08): per player `jobjs[7]` is the small stock icon beside "P1" (its second DObj, a 24x24 palette image the stock frame animates) and
+`jobjs[0]` is the card: its first DObj the faint series emblem (80x64 intensity, animated), its second the **picture of the fighter** (a static 52x74 RGB5A3). `presentation.stock` and
+`presentation.portrait` (by the player's costume) are pointed at those TObjs (`gmRst_GenoApplyArt`, the HUD's table trick); a define without portrait art hides the card picture. The big
+Smash-logo shape at the top left is a 3D model without a texture (the neutral emblem model 11 `fn_80176BF0` falls back to): it stays for every define, a package cannot replace it
+without geometry. Logged: `geno: results stock icon|card picture|emblem of ck N: WxH format F from its package`.
+
+**The Atlas select card face.** `Ui_SelCard` carries the fighter's select icon (`fas_card_face`: the define's own icon, or the roster's icon for a retail fighter; none for a base `none`
+define without art) and `at_part_sel_card` draws it at the card's left, 64x56 aspect, with the text after it; a card narrower than 150 px plus the face, an open slot, or no art draws none.
+
+Tests: native `geno_define_s6_keys`, `geno_define_policy_ck`, `geno_gnsnd_audio`, `geno_define_records` (`run.sh --test`), the card face in `atlas-parts` and `atlas-select-adapter` (`build.sh --native-test`);
+Python `tools/geno/test_audio.py`, `test_define.py`. In the exe (2026-10-08, vanilla disc, window off screen): a team match (red 1, blue 2, green 3), Kirby inhaling a Courier under `none` and `retail:mario`
+(the fireball item), a played match (the record file, the digest line), the announcer on an Atlas pick and a jump voice line (a 660 Hz and a 990 Hz tone in the `MELEE_AUDIO_DUMP` WAV), a CPU Courier under
+`ai.like` mario and falco.
 
 ### Frame-counting convention: the first `wait` of an authored script
 

@@ -570,7 +570,12 @@ int gw_Geno_DefineAiLike(int kind)
     if (kind < 0x21) return -1; /* the retail cast: no registry walk on the AI's hot path */
     if (!r->kinds_built) gn_build_kinds(r);
     p = gdf_profile_for_kind(&r->definitions, kind);
-    return p >= 0 && r->p[p].ai_set ? r->p[p].ai_like : -1;
+    if (p >= 0 && r->p[p].ai_set) {
+        static unsigned char said[128];
+        if (!said[kind & 127]) { said[kind & 127] = 1; gw_log("geno: CPU AI: %s (kind %d) is read as retail kind %d (ai.like): its per-kind switches and AI tables answer for that fighter", r->p[p].name, kind, r->p[p].ai_like); }
+        return r->p[p].ai_like;
+    }
+    return -1;
 }
 /* What Kirby gets from inhaling FighterKind `kind`: -2 = it is not a define (the caller keeps retail behaviour), -1 = nothing (the default and "none"),
  * otherwise the retail FighterKind whose hat and ability Kirby wears. */
@@ -645,7 +650,13 @@ int gw_Geno_DefineAudioPlay(int ck, int which, int sfx)
         c = gn_clip_load(p, &p->aud->announcer_clip, p->aud->announcer);
     } else {
         for (i = 0; i < p->aud->nvoice && p->aud->voice_sfx[i] != sfx; ++i) {}
-        if (i == p->aud->nvoice) return 0;
+        if (i == p->aud->nvoice) {
+            /* a define with an audio block is being authored: name each retail sound id it plays that has no row, once, so the author can map it */
+            static int seen[64], nseen; int k;
+            for (k = 0; k < nseen && seen[k] != sfx; ++k) {}
+            if (k == nseen && nseen < 64) { seen[nseen++] = sfx; gw_log("geno: %s: plays retail sound %d (no audio.voice row for it)", p->name, sfx); }
+            return 0;
+        }
         vol = p->aud->voice_vol[i];
         c = gn_clip_load(p, &p->aud->voice_clip[i], p->aud->voice_file[i]);
     }

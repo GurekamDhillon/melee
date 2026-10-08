@@ -89,6 +89,7 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | `MELEE_SLIPPI_RUN_SALT=<32 hex digits>` | Direct run's shared salt for reciprocal account tags; supplied by the workspace runner |
 | `MELEE_SLIPPI_MATCH_ID=<id>` | shared loopback run ID, including when using a UDP impairment relay |
 | `MELEE_CARD=0` | disable the memory card (on by default; GCI folder at `_build/card`) |
+| `MELEE_GENO_RECORDS=<file>` | where a Geno define's own records file is written (default: `geno_records.json` beside the card folder, none with the card off); `docs/geno.md` 22.7 |
 | `MELEE_SKIP_INTRO=1` | skip the opening movie and boot straight to the title |
 | `MELEE_TARGET_TEST=<char>` | boot straight into Target Test with that character (name or ckind; dev/testing) |
 | `MELEE_PAD_SCRIPT=<file>` | text scripts consume PADReads; `.lua` files run gameplay scripts whose `gd.input` holds count completed logic frames, including paused single steps |

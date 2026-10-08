@@ -341,10 +341,12 @@ unsigned ScriptMods_HashWord(void)
     }
     return h | 1u;
 }
-/* Test hook (the native suite): poison one status so the hash must change. */
+/* Test hook: poison the state so the hash must change. status 1..7: that status slot's next tick (only visible while it is on); status 0: the frame counter, which
+ * is always in the word (MELEE_MODS_POISON=1 on one peer: the rollback hash must report a desync at the first compared frame). */
 void ScriptMods_Poison(int port, int status)
 {
-    if (port >= 0 && port < SM_PORTS && status >= 1 && status <= SM_NSTATUS) script_mods.st[port][status].next_tick ^= 1;
+    if (status == 0) script_mods.frame ^= 1;
+    else if (port >= 0 && port < SM_PORTS && status <= SM_NSTATUS) script_mods.st[port][status].next_tick ^= 1;
 }
 
 /* Fixture for the native suite (the evaluator proper is parity-tested against the Lua engine by pc/tests/script_mods_core_test.c; this proves the game half:

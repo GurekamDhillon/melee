@@ -2388,6 +2388,10 @@ static int np_start_session(const gw_net_addr *peer_in, uint32_t bind_ip) {
         QueryPerformanceCounter(&c);
         np.seed = (uint32_t) (c.QuadPart * 2654435761u) ^ GetCurrentProcessId();
         if (np.seed == 0) np.seed = 1;
+        {   /* TEST-ONLY (Envoy stage 4 soak): a fixed seed, so a run can name the set it plays (the Envoy run seed is derived from it) */
+            const char *fixed = getenv("MELEE_NETPLAY_SEED");
+            if (fixed != NULL && atoi(fixed) > 0) np.seed = (uint32_t) atoi(fixed);
+        }
         cfg.seed = np.seed;
         cfg.input_delay = (uint8_t) np.delay;
         cfg.host_slots = (uint8_t) (1u << (2 * 0));

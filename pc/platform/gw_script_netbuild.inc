@@ -359,6 +359,10 @@ void gw_Script_NetBuildApply(void) {
         }
         gw_ScriptGame_BuildSet(i, (int) gs_nb[i].rec.dig_hi, (int) gs_nb[i].rec.dig_lo, (int) gs_nb[i].ops_word, ok, gs_nb[i].rec.nmods);
         gw_log("netbuild: applied slot=%d ops=%d/%d record=%s ops=%08x", i + 1, ok, gs_nb[i].nops, gs_nb[i].rec.digest, gs_nb[i].ops_word);
+        if (i == 0 && gs_nb_prog[0].have) { /* test hook: the triggered evaluator's frame counter is poisoned on this peer only (MELEE_MODS_POISON=1) */
+            const char *q = getenv("MELEE_MODS_POISON");
+            if (q != NULL && q[0] == '1') { extern void gw_ScriptMods_Poison(int, int); gw_ScriptMods_Poison(0, 0); gw_log("netbuild: POISONED the evaluator's frame counter on this peer (test)"); }
+        }
         if (i == 0) { /* test hook: one peer's table is poisoned (MELEE_ENVOY_POISON=1), so its hash word must disagree */
             const char *p = getenv("MELEE_ENVOY_POISON");
             if (p != NULL && p[0] == '1') {

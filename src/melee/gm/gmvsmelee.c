@@ -294,6 +294,16 @@ void gmVsMelee_ExitVs(GameModeState* state, u8 id0, u8 id1)
     MatchExitInfo* exit = gm_GetGameModeStateExitData(state);
     ssize_t i;
 #if defined(TARGET_PC)
+    {
+        /* an online STAGE RUN (gw_netplay.c, gw_netdir.h): before this scene is let go, the two peers exchange the stage-end tuple (epoch, exit frame, a final
+         * hash, winner, stocks) and the run director moves on - or the run ends if they differ. Returns at once outside a run. */
+        extern void Netplay_StageEnd(int winner, int s0, int s1);
+        int w = -1;
+        if (!gm_WasMatchCanceled(exit->match_end.outcome) && exit->match_end.n_winners == 1 && exit->match_end.winners[0] <= 1) {
+            w = exit->match_end.winners[0];
+        }
+        Netplay_StageEnd(w, exit->match_end.player_standings[0].stocks, exit->match_end.player_standings[1].stocks);
+    }
     if (exit->match_end.player_standings[4].pkind != Gm_PKind_NA ||
         exit->match_end.player_standings[5].pkind != Gm_PKind_NA) {
         OSReport("gw: scene: six-slot VS finished; returning to menus (CSS/results round-trip unsupported)\n");

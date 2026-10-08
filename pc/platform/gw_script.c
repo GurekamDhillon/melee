@@ -1506,6 +1506,10 @@ extern int gw_Netplay_EnvoyPref(void);
 extern unsigned gw_Netplay_RunInfo(int what);
 extern const char *gw_Netplay_RunRecord(void);
 extern const char *gw_Netplay_RunFail(void);
+extern const char *gw_Netplay_RunLast(void);
+extern const char *gw_Netplay_RunBlock(void);
+extern const char *gw_Netplay_RunPlan(void);
+extern void gw_Netplay_RunText(int which, char *out, int cap);
 extern void gw_Netplay_SetRun(int on);
 extern int gw_Netplay_RunPref(void);
 #include "gw_netrun.h"
@@ -1667,9 +1671,13 @@ static int l_netplay(lua_State *L) {
         }
         lua_setfield(L, -2, "envoy");
     }
-    { /* run: the online stage run (stage 7 spike, gw_netrun.h): {on, seed, stage (zero-based), record, digest, refused, fail}; read-only */
+    { /* run: the online stage run (stage 7, gw_netrun.h / gw_netdir.h); read-only. on, seed, stage (zero-based), record, digest, refused, fail; the director: kind ("stages"|"classic"), len, pool (shared
+         stocks), pool_start, cont (continue tokens left), cont_used, over ("" | "stocks" | "cleared" | "aborted"), asking (the continue is on offer), ends (stage-end barriers closed), each (stocks per
+         player per stage), mask (agreed unlock mask, 8 hex, "" until known), plan (the Classic plan on one line), last (the last stage end in words), block (why READY is refused), title/line (the interstitial's words) */
         const char *rec = gw_Netplay_RunRecord(), *dg = strrchr(rec, '|');
-        lua_createtable(L, 0, 7);
+        unsigned over = gw_Netplay_RunInfo(9);
+        char tb[64], lb_[200], mh[16];
+        lua_createtable(L, 0, 24);
         gs_setbool(L, "on", gw_Netplay_RunInfo(0));
         gs_setint(L, "seed", (lua_Integer) gw_Netplay_RunInfo(1));
         gs_setint(L, "stage", (int) gw_Netplay_RunInfo(2));
@@ -1677,6 +1685,25 @@ static int l_netplay(lua_State *L) {
         gs_setstr(L, "digest", dg != NULL ? dg + 1 : "");
         gs_setint(L, "refused", (int) gw_Netplay_RunInfo(3));
         gs_setstr(L, "fail", gw_Netplay_RunFail());
+        gs_setstr(L, "kind", gw_Netplay_RunInfo(4) == 1 ? "classic" : "stages");
+        gs_setint(L, "len", (int) gw_Netplay_RunInfo(5));
+        gs_setint(L, "pool", (int) gw_Netplay_RunInfo(6));
+        gs_setint(L, "pool_start", (int) gw_Netplay_RunInfo(7));
+        gs_setint(L, "cont", (int) gw_Netplay_RunInfo(8));
+        gs_setint(L, "cont_used", (int) gw_Netplay_RunInfo(15));
+        gs_setstr(L, "over", over == 1 ? "stocks" : over == 2 ? "cleared" : over == 3 ? "aborted" : "");
+        gs_setbool(L, "asking", gw_Netplay_RunInfo(10));
+        gs_setint(L, "ends", (int) gw_Netplay_RunInfo(11));
+        gs_setint(L, "each", (int) gw_Netplay_RunInfo(14));
+        if (gw_Netplay_RunInfo(13)) snprintf(mh, sizeof mh, "%08x", gw_Netplay_RunInfo(12)); else mh[0] = ' ';
+        gs_setstr(L, "mask", mh);
+        gs_setstr(L, "plan", gw_Netplay_RunPlan());
+        gs_setstr(L, "last", gw_Netplay_RunLast());
+        gs_setstr(L, "block", gw_Netplay_RunBlock());
+        gw_Netplay_RunText(0, tb, sizeof tb);
+        gs_setstr(L, "title", tb);
+        gw_Netplay_RunText(1, lb_, sizeof lb_);
+        gs_setstr(L, "line", lb_);
         lua_setfield(L, -2, "run");
     }
     return 1;
@@ -1701,8 +1728,14 @@ static int l_netplay_act(lua_State *L) {
         if (!lua_isnone(L, 2)) gw_Netplay_SetEnvoy(lua_toboolean(L, 2));
         ok = gw_Netplay_EnvoyPref();
     } else if (_stricmp(what, "run") == 0) { /* the host's choice for rooms it opens: an online stage run (spike) */
-        if (!lua_isnone(L, 2)) gw_Netplay_SetRun(lua_toboolean(L, 2));
-        ok = gw_Netplay_RunPref();
+        if (!lua_isnone(L, 2)) { /* true / 1: plain seeded stages; "classic" / 2: the Classic plan; false / 0 / "off": no run */
+            if (lua_type(L, 2) == LUA_TSTRING) {
+                const char *v = lua_tostring(L, 2);
+                gw_Netplay_SetRun(_stricmp(v, "classic") == 0 ? 2 : _stricmp(v, "off") == 0 || v[0] == '0' ? 0 : 1);
+            } else if (lua_type(L, 2) == LUA_TNUMBER) gw_Netplay_SetRun((int) lua_tointeger(L, 2));
+            else gw_Netplay_SetRun(lua_toboolean(L, 2) ? 1 : 0);
+        }
+        ok = gw_Netplay_RunPref() != 0;
     } else if (_stricmp(what, "rpick") == 0) { /* an Envoy set's reward: 0..2 an offer, 3 keeps the build (host-validated) */
         ok = gw_Netplay_EnvoyPick((int) luaL_checkinteger(L, 2));
     } else {

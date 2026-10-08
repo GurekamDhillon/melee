@@ -2911,6 +2911,25 @@ int gw_Snap_OpenSession(int k) {
     if (!sn.enabled) {
         gw_snap_open(k);
     }
+    /* The ring outlives the match (the machinery is opened once per process), so a second session
+       found the previous one's slots still tagged with its LAST frames (thousands). sn_slot_for
+       evicts the LOWEST frame, and the new match counts up from -123: every save then evicted the
+       slot the match had just written, the ring held one live snapshot, and any rollback deeper
+       than one frame found "its snapshot is gone" (0.2.2-rc1: the third online match in a process
+       desynced at frame 3, the fourth at -32). Start every session with empty slots. The slots'
+       page data stays a valid delta base (their dirty sets are untouched). */
+    {
+        int i, stale = 0;
+        for (i = 0; i < sn.nslots; ++i) {
+            if (sn.slot[i].frame != -0x7FFFFFFF - 1) {
+                ++stale;
+                sn.slot[i].frame = -0x7FFFFFFF - 1;
+            }
+        }
+        if (stale != 0) {
+            gw_log("snap: session open - %d stale slot(s) from an earlier session cleared (%d slots)", stale, sn.nslots);
+        }
+    }
     sn.session = sn.enabled;
     return sn.enabled ? sn.nslots : 0;
 }

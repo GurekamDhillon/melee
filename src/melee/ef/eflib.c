@@ -1426,7 +1426,16 @@ void efLib_SetParamAlpha(HSD_GObj* gobj, u8 alpha)
     s32 idx;
 
     // WHY
+#if defined(TARGET_PC)
+    /* Retail lays efLib_ParamTable right after efLib_AnimQueue, so the decomp spells the table as
+     * AnimQueue + 0x10. The port's globals are placed one per aligned slot (gw_ symbols), so that
+     * address is the NEXT global instead: efLib_AnimCount, then efAsync_AllocData. Four live shields
+     * wrote (gfx_id 0x417, alpha 0xFF) over that pool's free-list head, and the next HSD_ObjAlloc
+     * read 0x041700FF (0.2.2-rc1 SIGSEGV in gw_HSD_ObjAlloc on Linux). Index the table itself. */
+    EF_ParamEntry* base = efLib_ParamTable;
+#else
     EF_ParamEntry* base = efLib_AnimQueue + 0x10;
+#endif
 
     for (idx = 0; idx < 8; idx++) {
         if (base[idx].gobj == gobj) {
@@ -1442,8 +1451,13 @@ void efLib_SetParamAlpha(HSD_GObj* gobj, u8 alpha)
 
 found:
     // WHY
+#if defined(TARGET_PC)
+    efLib_ParamTable[idx].gobj = gobj;
+    efLib_ParamTable[idx].alpha = alpha;
+#else
     efLib_AnimQueue[idx + 0x10].gobj = gobj;
     efLib_AnimQueue[idx + 0x10].alpha = alpha;
+#endif
 }
 
 void efLib_SetParamGfxId(HSD_GObj* gobj, s32 gfx_id)
@@ -1451,7 +1465,16 @@ void efLib_SetParamGfxId(HSD_GObj* gobj, s32 gfx_id)
     s32 idx;
 
     // WHY
+#if defined(TARGET_PC)
+    /* Retail lays efLib_ParamTable right after efLib_AnimQueue, so the decomp spells the table as
+     * AnimQueue + 0x10. The port's globals are placed one per aligned slot (gw_ symbols), so that
+     * address is the NEXT global instead: efLib_AnimCount, then efAsync_AllocData. Four live shields
+     * wrote (gfx_id 0x417, alpha 0xFF) over that pool's free-list head, and the next HSD_ObjAlloc
+     * read 0x041700FF (0.2.2-rc1 SIGSEGV in gw_HSD_ObjAlloc on Linux). Index the table itself. */
+    EF_ParamEntry* base = efLib_ParamTable;
+#else
     EF_ParamEntry* base = efLib_AnimQueue + 0x10;
+#endif
 
     for (idx = 0; idx < 8; idx++) {
         if (base[idx].gobj == gobj) {
@@ -1467,8 +1490,13 @@ void efLib_SetParamGfxId(HSD_GObj* gobj, s32 gfx_id)
 
 found:
     // WHY
+#if defined(TARGET_PC)
+    efLib_ParamTable[idx].gobj = gobj;
+    efLib_ParamTable[idx].gfx_id = gfx_id;
+#else
     efLib_AnimQueue[idx + 0x10].gobj = gobj;
     efLib_AnimQueue[idx + 0x10].gfx_id = gfx_id;
+#endif
 }
 
 void efLib_Cb_ApplyStoredAlpha(EF_Effect* effect)

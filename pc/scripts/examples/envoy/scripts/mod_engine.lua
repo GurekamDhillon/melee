@@ -402,7 +402,12 @@ return function(D)
  -- armor and air_jumps and restrict (armour and capability tables). Echoes and every triggered record need the native evaluator (stage 4).
  local online_ops={value=true,convert=true,['versus-status']=true,crit=true,armor=true,air_jumps=true,restrict=true}
  function E.online_safe(rule)
-  if rule.trigger~='equip' then return false,'triggered ('..tostring(rule.trigger)..'): needs the native evaluator' end
+  if rule.trigger~='equip' then
+   -- Stage 4: a triggered record is online-safe when the native evaluator has a form for its trigger, conditions and effects (E.native_support, below).
+   local ok,why=E.native_support(rule)
+   if not ok then return false,'triggered ('..tostring(rule.trigger)..'): '..tostring(why) end
+   return true
+  end
   for _,e in ipairs(rule.effects) do if not online_ops[e.op] then return false,'effect '..e.op..' has no native carrier yet' end end
   return true
  end
@@ -614,6 +619,184 @@ return function(D)
   local ok,err=pcall(function()for p,mods in pairs(self.equipped)do self:set_build(p,mods,self.implicits[p])end end)
   if not ok then self.context=old;error(err)end
   return c
+ end
+ -- ---- online play, stage 4: the TRIGGERED rules as a native program (Envoy netplay plan, stage 4) -----------------------------------------------
+ -- The records are data, so everything that is a pure function of (build, tier) is resolved here ONCE, before the match: E:trigger_program flattens the
+ -- equipped triggered records into numbers (every $tier resolved with S.resolve, durations scaled by the build's status_duration and clamped exactly as
+ -- E:apply does, amounts clamped, technique effects clamped as mod_lab:technique_ops does) and the native evaluator (pc/gameworld/script_mods_core.h)
+ -- runs them on the simulation's own events. The derived native tables that depend on WHICH statuses a fighter holds (fighter values, hit rules and their
+ -- status bits, the crit configuration) are enumerated per status mask as VARIANTS, computed by the same E:values/native_rules/crit_config the offline
+ -- host commits; the evaluator only picks a variant when the mask changes. The numbers below mirror script_mods_core.h (checked by the parity test).
+ local NATIVE_EVENTS={'hit_dealt','hit_taken','ko_dealt','stock_lost','shield_hit','perfect_shield','clank','jump','air_jump','landing','ledge_grab','grab','throw','taunt','interval','status_applied','status_removed','stacks_changed','crit','armor','lcancel','lcancel_hit','lcancel_miss','wavedash','waveland','ledge_dash','air_dodge','tech','tech_miss','dash_dance','short_hop','full_hop','fast_fall','shield_drop','jump_cancel_grab','jump_cancel_usmash','sdi','auto_cancel','combo','combo_end'}
+ local NATIVE_TAGS={'jab','tilt','smash','aerial','special','grab','throw','projectile','dash_attack','grounded','airborne','normal','fire','electric','ice','darkness','burning','shocked','chilled','cursed','hasted','guarded','momentum','damage','healing','unique','keystone','technique','critical'}
+ local NATIVE_EXITS={'jab','tilt','smash','aerial','special','grab','jump','dash','crouch','turn','walk','escape','shield','air_dodge','air_jump'}
+ local NATIVE_ARMOR={knockback=1,damage_threshold=2,knockback_threshold=3,super=4,hit_count=5,damage_pool=6}
+ local NATIVE_OPS={status=1,stacks=2,chain_status=3,remove_status=4,clank_damage=5,heal=6,damage=7,armor=8,intangible=9,interrupt=10,crit_next=11,emit=12}
+ local NATIVE_COND={tag=1,status=2,self_status=3,target_status=4,self_damage_above=5,self_damage_below=6,target_damage_above=7,grounded=8,airborne=9,last_stock=10,stage_kind=11,combo_at_least=12,combo_damage_above=13,hit=14,aerial=15,direction=16,strength_above=17,armor_result=18,air_frames_above=19,aerial_hit=20,recently=21}
+ local NATIVE_AERIAL={nair=0,fair=1,bair=2,uair=3,dair=4}
+ local NATIVE_DIRECTION={in_place=0,toward=1,away=2,wall=3,ceiling=4}
+ local EV,TAGBIT,STATUS_ID,EXITBIT={},{},{},{}
+ for i,n in ipairs(NATIVE_EVENTS) do EV[n]=i end
+ for i,n in ipairs(NATIVE_TAGS) do TAGBIT[n]=1<<(i-1) end
+ for i,n in ipairs(ordered) do STATUS_ID[n]=i end
+ for i,n in ipairs(NATIVE_EXITS) do EXITBIT[n]=1<<(i-1) end
+ E.native={status_bits=D.mod_status.bits,events=EV,event_names=NATIVE_EVENTS,tags=TAGBIT,status_ids=STATUS_ID,max_rules=24,max_variants=16,magic=0x534D5031,header=136,rule_words=268,masks=128}
+ local armor_limit={super=30,damage_threshold=300,knockback_threshold=300,hit_count=600,damage_pool=600}
+ local function fbits(x) return (string.unpack('<i4',string.pack('<f',x))) end
+ local function clamp(lo,hi,x) return math.max(lo,math.min(hi,x)) end
+ -- Why a triggered record cannot run natively, or nil. A pure function of the record.
+ local function flatten(m,tier,conditions)
+  local out={}
+  for _,c in ipairs(conditions or {}) do
+   local keys={};for k in pairs(c) do keys[#keys+1]=k end;table.sort(keys)
+   for _,k in ipairs(keys) do
+    local v=c[k];if type(v)=='string' and v:sub(1,1)=='$' then v=S.resolve(v,m,tier) end
+    local kind=assert(NATIVE_COND[k],'condition '..k..' has no native form');local a,b=0,0
+    if k=='tag' then a=assert(TAGBIT[v],'unknown tag')
+    elseif k=='status' or k=='self_status' or k=='target_status' then a=v=='any' and 0 or assert(STATUS_ID[v],'unknown status')
+    elseif k=='self_damage_above' or k=='self_damage_below' or k=='target_damage_above' or k=='combo_damage_above' or k=='strength_above' then b=fbits(v)
+    elseif k=='grounded' or k=='airborne' or k=='last_stock' or k=='hit' or k=='aerial_hit' then a=v and 1 or 0
+    elseif k=='combo_at_least' or k=='air_frames_above' then a=math.floor(v)
+    elseif k=='aerial' then a=assert(NATIVE_AERIAL[v],'unknown aerial')
+    elseif k=='direction' then a=assert(NATIVE_DIRECTION[v],'unknown direction')
+    elseif k=='armor_result' then a=v=='absorbed' and 1 or 2
+    elseif k=='recently' then a=assert(EV[v.event],'recently: no native source for '..tostring(v.event));b=math.floor(S.resolve(v.frames,m,tier))
+    end
+    out[#out+1]={kind,a,b}
+   end
+  end
+  assert(#out<=8,'more than 8 conditions')
+  return out
+ end
+ function E.native_support(rule)
+  if rule.trigger=='equip' then return true end
+  local ok,why=pcall(function()
+   assert(EV[rule.trigger],'no native source for the trigger '..tostring(rule.trigger))
+   for _,a in ipairs(rule.also or {}) do assert(EV[a.trigger],'no native source for the trigger '..tostring(a.trigger)) end
+   assert(1+#(rule.also or {})<=4,'too many alternative triggers')
+   flatten(rule,1,rule.conditions);for _,a in ipairs(rule.also or {}) do flatten(rule,1,a.conditions) end
+   assert(#rule.effects<=8,'more than 8 effects')
+   for _,e in ipairs(rule.effects) do
+    assert(NATIVE_OPS[e.op],'effect '..e.op..' has no native form')
+    if e.op=='emit' then assert(EV[e.event] and TAGBIT[e.tag],'emit has no native form') end
+   end
+  end)
+  if ok then return true end
+  return false,(tostring(why):gsub('^.-:%d+: ',''))
+ end
+ local function compile_effect(self,m,instance,effect,sd)
+  local w={};for i=1,20 do w[i]=0 end
+  local function set(i,v) w[i+1]=v end
+  local function value(v) return S.resolve(v,m,instance) end
+  set(0,NATIVE_OPS[effect.op]);set(1,effect.subject=='target' and 1 or 0);set(2,effect.when and EV[effect.when] or 0)
+  local op=effect.op
+  if op=='status' or op=='stacks' or op=='chain_status' then
+   set(3,STATUS_ID[effect.status]);set(4,clamp(1,3600,math.floor(value(effect.duration)*sd)));set(5,effect.max)
+   set(6,effect.refresh=='refresh' and 0 or effect.refresh=='extend' and 1 or 2)
+   set(11,fbits(clamp(0,100,value(effect.amount or 1)*(D.mod_tuning and D.mod_tuning.amount_scale(m,effect) or 1))))
+  elseif op=='remove_status' then set(3,STATUS_ID[effect.status]);set(7,effect.count or 0)
+  elseif op=='heal' or op=='damage' then local a=clamp(0,100,value(effect.amount));set(11,fbits(op=='heal' and -a or a))
+  elseif op=='armor' then
+   local ty=effect.type;set(9,NATIVE_ARMOR[ty]);set(8,clamp(1,armor_limit[ty] or 30,math.floor(effect.frames and value(effect.frames) or 1)))
+   local v=ty=='super' and 1 or clamp(1,ty=='hit_count' and 3 or 40,effect.value~=nil and value(effect.value) or 1);if ty=='hit_count' then v=math.floor(v) end
+   set(10,fbits(v));set(12,effect.direction=='front' and 1 or effect.direction=='back' and -1 or 0)
+  elseif op=='intangible' then set(8,clamp(1,24,math.floor(value(effect.frames))))
+  elseif op=='interrupt' then
+   set(8,clamp(1,20,math.floor(value(effect.frames))))
+   local mask=0x7FFF;if effect.exits then mask=0;for _,x in ipairs(effect.exits) do mask=mask|EXITBIT[x] end end
+   set(13,mask);set(14,(effect.guard and 1 or 0)|(effect.restore_jumps and 2 or 0))
+  elseif op=='crit_next' then set(7,clamp(1,3,math.floor(value(effect.count))))
+  elseif op=='emit' then set(15,EV[effect.event]);set(16,TAGBIT[effect.tag])
+  end
+  return w
+ end
+ -- The status-mask variants of one port's derived native tables (see the header). Pure; uses a private probe engine, never self's statuses.
+ local function variants_of(self,port)
+  local probe=E.new(self.seed,self.list,{context=self.context});probe:set_build(port,self.equipped[port] or {},self.implicits[port])
+  local list,index,map={},{},{}
+  for mask=0,127 do
+   local base=mask&~2
+   if base~=mask then map[mask]=map[base]
+   else
+    local st={};for i,name in ipairs(ordered) do if mask&(1<<(i-1))~=0 then st[name]={expires=3600,stacks=1,max=1,amount=0,next_tick=60,origin={}} end end
+    probe.statuses={[port]=next(st) and st or nil}
+    local ops={}
+    local values=probe:values(port);values.status_duration=nil;values.damage_dealt=nil;values.damage_taken=nil;values.knockback_taken=nil
+    if next(values) then ops[#ops+1]={op='fighter_mod',port=port,values=values} end
+    local rules,bits=probe:native_rules(port)
+    local curse=0
+    local copy={};for i,r in ipairs(rules) do copy[i]=r end
+    if mask&(1<<(STATUS_ID.curse-1))~=0 then
+     for i,r in ipairs(copy) do if r.id==1002 then curse=i end end
+     if curse==0 then copy[#copy+1]={id=1002,match={move='any',incoming=true},change={launch=1}};curse=#copy end
+    end
+    -- The status bits are not part of a variant: they are a function of the mask alone (E.native.status_bits), written by the host at every apply.
+    if #copy>0 then ops[#ops+1]={op='hit_rules',port=port,rules=copy,status_bits=0} end
+    local cfg=probe:crit_config(port)
+    if cfg then
+     ops[#ops+1]={op='crit',entity=port,begin=true,min_percent=cfg.min_percent}
+     local function add(tag,s) local o={op='crit',entity=port,slot=tag,chance=s.chance,multiplier=s.multiplier,launch=s.launch};if s.multiplier_max then o.multiplier_max=s.multiplier_max end;ops[#ops+1]=o end
+     add('default',cfg.slots.default)
+     for _,tag in ipairs({'jab','dash_attack','tilt','smash','aerial','grab','throw','special','projectile'}) do if cfg.slots[tag] then add(tag,cfg.slots[tag]) end end
+    end
+    local key=C.encode({ops,curse})
+    local at=index[key]
+    if not at then
+     assert(#list<E.native.max_variants,'more than '..E.native.max_variants..' derived variants')
+     list[#list+1]={ops=ops,curse_rule=curse};at=#list-1;index[key]=at
+    end
+    map[mask]=at
+   end
+  end
+  return list,map
+ end
+ -- The program of one port's triggered build, or nil when it holds no triggered record. `slot` is the 1-based seat (default: the port).
+ -- Returns {words=,variants=,mask_variant=,rules=n}. Deterministic: same build -> same words, whatever the process.
+ function E:trigger_program(port,slot)
+  slot=slot or port
+  local eq=self.equipped[port] or {}
+  local sd=self:values(port).status_duration or 1
+  local rules={}
+  for _,m in ipairs(self.list) do local tier=eq[m.id]
+   if tier and m.trigger~='equip' then
+    local ok,why=E.native_support(m);assert(ok,'record '..m.id..' has no native form: '..tostring(why))
+    for _,instance in ipairs(S.instances(tier)) do
+     local triggers={{EV[m.trigger],flatten(m,instance,m.conditions)}}
+     for _,a in ipairs(m.also or {}) do triggers[#triggers+1]={EV[a.trigger],flatten(m,instance,a.conditions)} end
+     local effects={};for _,e in ipairs(m.effects) do effects[#effects+1]=compile_effect(self,m,instance,e,sd) end
+     rules[#rules+1]={id=m.id,interval=m.trigger=='interval' and math.floor(S.resolve(m.interval,m,instance)) or 0,triggers=triggers,effects=effects}
+    end
+   end
+  end
+  assert(#rules<=E.native.max_rules,'more than '..E.native.max_rules..' triggered rule instances in one build')
+  return rules
+ end
+ -- Whether any equipped record of this port is triggered.
+ function E:has_triggered(port) for _,m in ipairs(self.list) do if (self.equipped[port] or {})[m.id] and m.trigger~='equip' then return true end end;return false end
+ -- The staged form for one port (slot = 1-based seat): flat words for the evaluator, the variants and the mask map for the host. Call once either seat has
+ -- a triggered record: a seat without one still needs its variants, because the other seat's statuses land on it.
+ function E:native_program(port,slot)
+  slot=slot or port
+  local rules=self:trigger_program(port,slot)
+  local N=E.native;local words={}
+  local function put(i,v) words[i+1]=v end
+  for i=1,N.header+N.max_rules*N.rule_words do words[i]=0 end
+  put(0,N.magic);put(1,#rules)
+  local variants,map=variants_of(self,port)
+  put(2,#variants)
+  for mask=0,N.masks-1 do put(8+mask,map[mask]) end
+  for r,rule in ipairs(rules) do
+   local base=N.header+(r-1)*N.rule_words
+   put(base,rule.interval);put(base+1,#rule.triggers);put(base+2,#rule.effects)
+   for t,tr in ipairs(rule.triggers) do
+    local tb=base+4+(t-1)*26;put(tb,tr[1]);put(tb+1,#tr[2])
+    for c,cond in ipairs(tr[2]) do local cb=tb+2+(c-1)*3;put(cb,cond[1]);put(cb+1,cond[2]);put(cb+2,cond[3]) end
+   end
+   for e,ew in ipairs(rule.effects) do local eb=base+4+4*26+(e-1)*20;for k=1,20 do put(eb+k-1,ew[k]) end end
+  end
+  for i=1,#variants do for _,o in ipairs(variants[i].ops) do D.mod_registry.operation(o) end end
+  for _,v in ipairs(variants) do for _,o in ipairs(v.ops) do if o.port then o.port=slot end;if o.entity then o.entity=slot end end end
+  return {words=words,variants=variants,mask_variant=map,rules=#rules}
  end
  return E
 end

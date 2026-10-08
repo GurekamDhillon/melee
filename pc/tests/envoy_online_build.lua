@@ -22,13 +22,15 @@ T.test('the pool census: 34 passive records, 30 online-safe, the 4 echo records 
  assert(equip==34,'passive (equip) records: '..equip)
  assert(#safe==30 and #unsafe==4,('safe %d unsafe %d'):format(#safe,#unsafe))
  for _,u in ipairs(unsafe) do assert(u:find('echo'),'an unsafe record that is not an echo record: '..u) end
- local triggered=0;for _,m in ipairs(D.mod_pool) do if m.trigger~='equip' then local s=D.mod_engine.online_safe(m);assert(not s);triggered=triggered+1 end end
+ -- stage 4: a triggered record is online-safe when the native evaluator has a form for it (E.native_support); the whole current pool has one
+ local triggered=0;for _,m in ipairs(D.mod_pool) do if m.trigger~='equip' then local s,why=D.mod_engine.online_safe(m);assert(s,m.id..': '..tostring(why));triggered=triggered+1 end end
  assert(triggered==#D.mod_pool-34)
  print(('pool %d records: %d passive (%d online-safe, %d echo), %d triggered'):format(#D.mod_pool,equip,#safe,#unsafe,triggered))
 end)
-T.test('passive_ops refuses a triggered or echo record and a unknown id',function()
+T.test('passive_ops refuses an echo record; a triggered record adds nothing to the passive ops (they are the status-free variant of its program)',function()
  local e=D.mod_engine.new(1,D.mod_pool);e:set_build(1,{kindling=1},{})
- local ok,err=pcall(e.passive_ops,e,1);assert(not ok and tostring(err):find('not online%-safe'),tostring(err))
+ assert(#e:passive_ops(1,1)==0,'kindling is a status source: no passive op')
+ local ok,err
  e:set_build(1,{trailing=1},{});ok,err=pcall(e.passive_ops,e,1);assert(not ok and tostring(err):find('echo'),tostring(err))
 end)
 T.test('every online-safe record compiles to ops the registry accepts, and they equal what the offline rule host commits',function()

@@ -34,27 +34,8 @@
 #include <windows.h>
 #else
 #include "gw_compat_linux.h"
-/* MEM_WRITE_WATCH is never honored by the Linux VirtualAlloc() shim (gw_mem1_watched is always
- * false there), so sn.dirty_mode is always false and these are never actually called - stubs
- * only so the file compiles. See gw_compat_linux.c's VirtualAlloc(). */
-typedef void *PVOID;
-typedef unsigned int UINT;
-#define WRITE_WATCH_FLAG_RESET 1
-static inline UINT GetWriteWatch(DWORD flags, PVOID base, size_t size, PVOID *addrs,
-                                 ULONG_PTR *count, DWORD *granularity) {
-  (void)flags;
-  (void)base;
-  (void)size;
-  (void)addrs;
-  (void)granularity;
-  *count = 0;
-  return 1; /* nonzero: failure, matching "cannot tell: everything is suspect" */
-}
-static inline UINT ResetWriteWatch(PVOID base, size_t size) {
-  (void)base;
-  (void)size;
-  return 0;
-}
+/* GetWriteWatch/ResetWriteWatch: gw_writewatch_linux.c (userfaultfd write-protect, else soft-dirty; when neither
+ * works VirtualAlloc(MEM_WRITE_WATCH) fails, gw_mem1_watched is 0 and the snapshots run in full-copy mode). */
 #endif
 
 #define GW_SNAP_MAX_RANGES 4096
@@ -2189,6 +2170,10 @@ int gw_snap_open(int k) {
     gw_log("snap: SyncTest k=%d (%d slots of %u bytes), %s mode%s%s", sn.k, sn.nslots,
            gw_mem1_size + sn.globals_len, sn.dirty_mode ? "dirty-page" : "full-copy",
            sn.verify ? ", verify" : "", sn.hash_on ? ", hash" : "");
+#ifndef _WIN32
+    gw_log("snap: write-watch backend: %s%s", gw_linux_writewatch_name(),
+           sn.dirty_mode ? "" : " (full-copy: every save reads all of MEM1; MELEE_WRITEWATCH=auto|uffd|softdirty|off)");
+#endif
     return 0;
 }
 

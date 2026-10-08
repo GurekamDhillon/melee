@@ -278,11 +278,6 @@ void *VirtualAlloc(void *addr, size_t size, DWORD alloc_type, DWORD protect) {
     int flags = MAP_PRIVATE | MAP_ANONYMOUS;
     void *p;
     (void)protect; /* only PAGE_READWRITE is ever requested */
-    if (alloc_type & MEM_WRITE_WATCH) {
-        /* Not implemented on Linux (no equivalent dirty-page-tracking mmap flag); the caller
-         * (gw_mem_init) treats this as an optional optimisation and retries without it. */
-        return NULL;
-    }
     if (addr != NULL) {
 #ifdef MAP_FIXED_NOREPLACE
         flags |= MAP_FIXED_NOREPLACE;
@@ -295,6 +290,12 @@ void *VirtualAlloc(void *addr, size_t size, DWORD alloc_type, DWORD protect) {
     if (addr && p != addr) {
         munmap(p, size);
         errno = EEXIST;
+        return NULL;
+    }
+    if ((alloc_type & MEM_WRITE_WATCH) && !gw_linux_writewatch_start(p, size)) {
+        /* no dirty-page backend on this kernel: the caller (gw_mem_init) retries without MEM_WRITE_WATCH
+         * and the snapshot code falls back to full-copy mode */
+        munmap(p, size);
         return NULL;
     }
     return p;

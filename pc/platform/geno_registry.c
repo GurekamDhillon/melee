@@ -1291,6 +1291,8 @@ static void gn_registry_clear(gn_registry* r)
 }
 #include "geno_define_registry.inc"
 #include "geno_lua_registry.inc"
+#include "geno_define_online.h"
+#include "geno_define_online.inc"
 
 static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod, const char *where, int version) {
     static const char *const ev_names[GENO_EV_COUNT] = { "on_init", "on_frame", "on_action",

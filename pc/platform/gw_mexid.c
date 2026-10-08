@@ -13,6 +13,7 @@
 #include "gw_mex_grfunction.h"
 #include "gw_test.h"
 #include "gw_uigen.h"
+#include "geno_define_online.h"
 
 #define WIN32_LEAN_AND_MEAN
 #ifdef _WIN32
@@ -33,10 +34,12 @@ extern const char *gw_Mex_FtAnimFile(int k);
 extern const char *gw_Mex_KirbyCapFile(int k);
 extern int gw_Mex_ExtForInternal(int k);
 extern const char *gw_Mex_FighterName(int ext);
+extern int gw_Geno_DefineCount(void); /* slice 7: native defines are fighters of the table (gw_Geno_DefineOnlineInfo) */
 
 #define MX_CK_MEX0 0x22 /* ChKind_Mex0: m-ex slot s is CharacterKind 0x22 + s */
 #define MX_MEX_SLOTS GW_MEX_SLOT_COUNT
 #define MX_MAX 512
+#define MX_MAXDEF 128 /* slice 7: GF1 admits at most 94 defines */
 #define MX_WIRE_HASH_BYTES 6 /* 48 bits on the wire: accidental collisions are not a concern */
 #define MX_WIRE_ENTRY (1 + MX_WIRE_HASH_BYTES + 2)
 #define MX_WIRE_HDR 5 /* 'M' 'X' 'E' index total */
@@ -50,6 +53,8 @@ typedef struct mx_entry {
     uint64_t hash;
     char name[40];
     char hex[17];
+    int define;       /* slice 7: a native Geno define (its local id is a resident alias) */
+    char key[40];     /* a define's key, for the reason text and the MXD message */
 } mx_entry;
 
 typedef struct mx_table {
@@ -68,7 +73,12 @@ typedef struct mx_peer {
         int local;
         uint64_t hash48;
     } e[MX_MAX];
-    int send_next; /* our next chunk to send */
+    int send_next; /* our next chunk to send (MXE chunks first, then one MXD message per define) */
+    int nd;        /* slice 7: the peer's defines (key + short id), from MXD messages */
+    struct {
+        uint64_t hash48;
+        char key[40];
+    } d[MX_MAXDEF];
 } mx_peer;
 
 static mx_table mx_local;
@@ -252,6 +262,39 @@ static uint64_t mx_stage_identity(const char *file) {
     return any ? h : 0;
 }
 
+/* Slice 7: the online identity of a native Geno define. The entry's content id (the whole geno.json entry, its overlay words and
+ * its Lua module: geno_registry.c) says what the fighter DOES; the files the registry names say what it is built on (Mario's
+ * model and clips for a donor define, the package's own bank, plan and costume models for a "none" define). The resident alias
+ * is NOT part of it: it is this install's local id, mapped through the peer's list like an m-ex slot. A define whose resource
+ * file is missing has no identity and so cannot be played online (it would not load offline either). */
+static void mx_add_defines(mx_table *t) {
+    int d, n = gw_Geno_DefineCount();
+    for (d = 0; d < n; ++d) {
+        GenoDefineOnline o;
+        uint64_t h;
+        int f, ok = 1;
+        mx_entry *e;
+        if (!gw_Geno_DefineOnlineInfo(d, &o)) continue;
+        h = mx_mix(mx_hash_str(0, "geno-define"), o.id);
+        h = mx_mix(h, (uint64_t) o.none);
+        for (f = 0; f < o.nfiles && ok; ++f) {
+            uint64_t fh = mx_file(o.files[f]);
+            if (fh == 0) {
+                gw_log("mexid: define %s has no online identity: resource file %s is missing", o.key, o.files[f]);
+                ok = 0;
+            } else {
+                h = mx_mix(h, fh);
+            }
+        }
+        if (!ok) continue;
+        e = mx_add(t, GW_MEXID_FIGHTER, o.ck, h, o.name);
+        if (e != NULL) {
+            e->define = 1;
+            snprintf(e->key, sizeof e->key, "%s", o.key);
+        }
+    }
+}
+
 static void mx_build(mx_table *t) {
     DWORD t0 = GetTickCount();
     int i, s, n;
@@ -281,6 +324,7 @@ static void mx_build(mx_table *t) {
         name = gw_Mex_FighterName(gw_Mex_ExtForInternal(k));
         if (h != 0) mx_add(t, GW_MEXID_FIGHTER, MX_CK_MEX0 + s, h, name != NULL ? name : pl);
     }
+    mx_add_defines(t);
     for (i = 0; i < (int) (sizeof mx_vanilla_stages / sizeof mx_vanilla_stages[0]); ++i) {
         uint64_t h = mx_stage_identity(mx_vanilla_stages[i].file);
         if (h != 0) mx_add(t, GW_MEXID_STAGE, mx_vanilla_stages[i].ext, h, mx_vanilla_stages[i].name);
@@ -569,14 +613,67 @@ static int mx_wire_chunk(const mx_table *t, int idx, uint8_t *out, int cap) {
     return len;
 }
 
+/* Slice 7: one message per define, after the identity chunks: 'M' 'X' 'D' index count hash48(6) key. It lets each side say WHICH
+ * define the other lacks or holds a different copy of (the reason text); nothing is decided from it. A build that does not know
+ * it ignores the message (its WireFeed and the lobby both pass over an unknown first letter). */
+#define MX_WIRE_DHDR 5
+static int mx_wire_define(const mx_table *t, int idx, uint8_t *out, int cap) {
+    int i, seen = 0, count = 0, b;
+    uint8_t *p = out;
+    size_t kl;
+    for (i = 0; i < t->n; ++i) count += t->e[i].define != 0;
+    if (idx < 0 || idx >= count || cap < MX_WIRE_CAP) return 0;
+    for (i = 0; i < t->n; ++i) {
+        uint64_t h;
+        if (!t->e[i].define) continue;
+        if (seen++ != idx) continue;
+        h = t->e[i].hash & MX_WIRE_MASK;
+        *p++ = 'M';
+        *p++ = 'X';
+        *p++ = 'D';
+        *p++ = (uint8_t) idx;
+        *p++ = (uint8_t) count;
+        for (b = MX_WIRE_HASH_BYTES - 1; b >= 0; --b) *p++ = (uint8_t) (h >> (8 * b));
+        kl = strlen(t->e[i].key);
+        memcpy(p, t->e[i].key, kl);
+        p += kl;
+        return (int) (p - out);
+    }
+    return 0;
+}
+
 int gw_MexId_WireNext(uint8_t *out, int cap) {
-    return mx_wire_chunk(mx_tab(), mx_remote.send_next, out, cap);
+    const mx_table *t = mx_tab();
+    int total = mx_chunks_for(t->n);
+    if (mx_remote.send_next < total) return mx_wire_chunk(t, mx_remote.send_next, out, cap);
+    return mx_wire_define(t, mx_remote.send_next - total, out, cap);
 }
 
 void gw_MexId_WireSent(void) { mx_remote.send_next++; }
 
+static int mx_wire_feed_define(mx_peer *r, const uint8_t *msg, int len) {
+    int idx = msg[3], b, k, kl;
+    uint64_t h = 0;
+    if (len < MX_WIRE_DHDR + MX_WIRE_HASH_BYTES || idx >= MX_MAXDEF || idx >= msg[4]) {
+        gw_log("mexid: malformed define message - ignored");
+        return 1;
+    }
+    for (b = 0; b < MX_WIRE_HASH_BYTES; ++b) h = (h << 8) | msg[MX_WIRE_DHDR + b];
+    kl = len - MX_WIRE_DHDR - MX_WIRE_HASH_BYTES;
+    if (kl > (int) sizeof r->d[0].key - 1) kl = (int) sizeof r->d[0].key - 1;
+    r->d[idx].hash48 = h;
+    for (k = 0; k < kl; ++k) {
+        uint8_t c = msg[MX_WIRE_DHDR + MX_WIRE_HASH_BYTES + k];
+        r->d[idx].key[k] = (c >= 32 && c < 127) ? (char) c : '?';
+    }
+    r->d[idx].key[kl] = '\0';
+    if (idx + 1 > r->nd) r->nd = idx + 1;
+    return 1;
+}
+
 static int mx_wire_feed(mx_peer *r, const uint8_t *msg, int len) {
     int idx, total, i, count, first;
+    if (msg != NULL && len >= MX_WIRE_DHDR && msg[0] == 'M' && msg[1] == 'X' && msg[2] == 'D') return mx_wire_feed_define(r, msg, len);
     if (msg == NULL || len < MX_WIRE_HDR || msg[0] != 'M' || msg[1] != 'X' || msg[2] != 'E') return 0;
     idx = msg[3];
     total = msg[4];
@@ -664,6 +761,57 @@ int gw_MexId_PeerExtForLocal(int ext) {
 }
 int gw_MexId_LocalExtForPeer(int peer_ext) {
     return gw_MexId_PeerReady() ? mx_local_for_peer(mx_tab(), &mx_remote, GW_MEXID_STAGE, peer_ext) : -1;
+}
+
+/* Slice 7: why a fighter this install has cannot be played against this peer. 1 = playable, or the peer's list is not complete yet
+ * (nothing is refused on a guess); 0 = refused, and `why` says in the player's words which fighter and what differs. */
+int gw_MexId_FighterWhy(int ck, char *why, int cap) {
+    mx_table *t = mx_tab();
+    int i = gw_MexId_FindFighter(ck), j;
+    char nm[48];
+    if (why != NULL && cap > 0) why[0] = '\0';
+    if (i < 0) {
+        char dn[48];
+        extern int gw_Geno_DefineName(int ck, char *out, int cap);
+        if (gw_Geno_DefineName(ck, dn, (int) sizeof dn)) { /* a define whose package lacks a resource file: no identity, so no online play */
+            if (why != NULL && cap > 0) snprintf(why, (size_t) cap, "%.46s: its package is incomplete (see the log)", dn);
+            return 0;
+        }
+        return 1; /* any other fighter without an identity: not decided here (the lobby has always let those through) */
+    }
+    if (!gw_MexId_PeerReady() || mx_peer_local(t, &mx_remote, i) >= 0) return 1;
+    snprintf(nm, sizeof nm, "%s", t->e[i].name);
+    /* the text is short on purpose: the lobby's notice line holds 80 characters. The two ids go to the log, once per fighter. */
+    {
+        static int said[MX_MAX];
+        int differs = -1;
+        if (t->e[i].define) {
+            for (j = 0; j < mx_remote.nd; ++j) {
+                if (strcmp(mx_remote.d[j].key, t->e[i].key) == 0) differs = j;
+            }
+        }
+        if (i < MX_MAX && !said[i]) {
+            said[i] = 1;
+            if (differs >= 0) {
+                gw_log("mexid: define %s (%s) is not in common: the peer's copy is %012llx, ours %012llx", t->e[i].key, nm,
+                       (unsigned long long) mx_remote.d[differs].hash48, (unsigned long long) (t->e[i].hash & MX_WIRE_MASK));
+            } else {
+                gw_log("mexid: %s %s (%012llx) is not in common: the peer does not have it", t->e[i].define ? "define" : "fighter", nm,
+                       (unsigned long long) (t->e[i].hash & MX_WIRE_MASK));
+            }
+        }
+        if (why != NULL && cap > 0) {
+            if (differs >= 0) snprintf(why, (size_t) cap, "%.46s: your opponent has another version", nm);
+            else snprintf(why, (size_t) cap, "%.46s: your opponent doesn't have it", nm);
+        }
+    }
+    return 0;
+}
+
+/* A define's local key for a CharacterKind ("" when it is not a define). */
+const char *gw_MexId_DefineKey(int ck) {
+    int i = gw_MexId_FindFighter(ck);
+    return i >= 0 && mx_local.e[i].define ? mx_local.e[i].key : "";
 }
 
 static int mx_common(int kind) {
@@ -807,7 +955,165 @@ static int test_mexid_disc_table(void) {
     return 0;
 }
 
+/* ---- Geno slice 7: a native define is a fighter of the table ---------------------------------------- */
+
+extern int gw_Geno_TestInstall(const char *text);
+extern void gw_Geno_TestRestore(void);
+
+/* one donor define as geno.json text; `walk` is the one attribute that makes two otherwise equal entries different */
+static void mx_test_define(char *out, size_t cap, const char *key, const char *walk) {
+    snprintf(out, cap,
+             "{\"key\":\"%s\",\"name\":\"Test %s\",\"base\":\"mario\",\"common\":\"melee.common.v1\",\"resources\":\"retail:mario\"}"
+             ",\"attributes\":{\"walk_max_vel\":%s}", key, key, walk);
+}
+
+static void mx_test_install(const char *const *keys, const char *const *walks, int n) {
+    char text[2048], one[400];
+    int i;
+    snprintf(text, sizeof text, "{\"geno\":7,\"fighters\":[");
+    for (i = 0; i < n; ++i) {
+        mx_test_define(one, sizeof one, keys[i], walks[i]);
+        snprintf(text + strlen(text), sizeof text - strlen(text), "%s{\"define\":%s}", i ? "," : "", one);
+    }
+    strcat(text, "]}");
+    (void) gw_Geno_TestInstall(text);
+    mx_local.built = 0;
+}
+
+static int mx_test_find_define(const mx_table *t, const char *key) {
+    int i;
+    for (i = 0; i < t->n; ++i) {
+        if (t->e[i].define && strcmp(t->e[i].key, key) == 0) return i;
+    }
+    return -1;
+}
+
+/* Identity of a define: stable, independent of its alias, sensitive to its content; it travels the wire with its key; a define the peer lacks
+ * or holds another version of is not in common and the reason says which. Needs the disc (Mario's files are part of the identity). */
+static int test_mexid_define_online(void) {
+    static mx_table a, b, saved;
+    static mx_peer saved_peer;
+    const char *k1[] = { "alpha", "beta" }, *w1[] = { "1.8", "1.8" };
+    const char *k2[] = { "beta", "alpha", "gamma", "aa1", "aa2" }, /* aliases follow the keys' order: two keys before "alpha" move it */
+               *w2[] = { "1.9", "1.8", "1.8", "1.7", "1.6" };
+    uint8_t buf[MX_WIRE_CAP];
+    char why[200];
+    int rv = 0, idx, len, ia, ib, ck_alpha_a, ck_alpha_b;
+    if (gw_iso_path() == NULL) {
+        gw_log("mexid: no disc - skipping the define identity test");
+        return 0;
+    }
+    saved = mx_local;
+    saved_peer = mx_remote;
+    /* peer b: beta (another walk speed), alpha, gamma; ours a: alpha, beta */
+    mx_test_install(k2, w2, 5);
+    b = *mx_tab();
+    mx_test_install(k1, w1, 2);
+    a = *mx_tab();
+    ia = mx_test_find_define(&a, "alpha");
+    ib = mx_test_find_define(&b, "alpha");
+    if (ia < 0 || ib < 0 || mx_test_find_define(&a, "beta") < 0 || mx_test_find_define(&b, "gamma") < 0) {
+        gw_test_fail("a define has no entry in the identity table (alpha %d/%d)", ia, ib);
+        rv = 1;
+        goto done;
+    }
+    ck_alpha_a = a.e[ia].local;
+    ck_alpha_b = b.e[ib].local;
+    if (ck_alpha_a == ck_alpha_b) {
+        gw_test_fail("the two installs gave 'alpha' the same alias (%d): the test cannot show alias independence", ck_alpha_a);
+        rv = 1;
+        goto done;
+    }
+    if (a.e[ia].hash != b.e[ib].hash) {
+        gw_test_fail("the same define has two identities under two aliases: %s vs %s", a.e[ia].hex, b.e[ib].hex);
+        rv = 1;
+        goto done;
+    }
+    if (a.e[mx_test_find_define(&a, "beta")].hash == b.e[mx_test_find_define(&b, "beta")].hash) {
+        gw_test_fail("a changed attribute did not change the identity");
+        rv = 1;
+        goto done;
+    }
+    if (a.e[ia].hash == a.e[mx_test_find_define(&a, "beta")].hash) {
+        gw_test_fail("two different defines share an identity");
+        rv = 1;
+        goto done;
+    }
+    /* the peer's list reaches us through the real wire encoding, identity chunks and define messages */
+    memset(&mx_remote, 0, sizeof mx_remote);
+    for (idx = 0; (len = mx_wire_chunk(&b, idx, buf, sizeof buf)) > 0; ++idx) {
+        if (!mx_wire_feed(&mx_remote, buf, len)) {
+            gw_test_fail("identity chunk %d not recognised", idx);
+            rv = 1;
+            goto done;
+        }
+    }
+    for (idx = 0; (len = mx_wire_define(&b, idx, buf, sizeof buf)) > 0; ++idx) {
+        if (len > MX_WIRE_CAP || !mx_wire_feed(&mx_remote, buf, len)) {
+            gw_test_fail("define message %d bad (%d bytes)", idx, len);
+            rv = 1;
+            goto done;
+        }
+    }
+    mx_local = a;
+    if (idx != 5 || mx_remote.nd != 5) {
+        gw_test_fail("the peer's define messages: sent %d, received %d (expected 5)", idx, mx_remote.nd);
+        rv = 1;
+        goto done;
+    }
+    if (gw_MexId_OnlineFighter(ck_alpha_a) != 1 || gw_MexId_PeerCkForLocal(ck_alpha_a) != ck_alpha_b ||
+        gw_MexId_LocalCkForPeer(ck_alpha_b) != ck_alpha_a) {
+        gw_test_fail("alpha is not mapped %d <-> %d through the lists", ck_alpha_a, ck_alpha_b);
+        rv = 1;
+        goto done;
+    }
+    if (gw_MexId_FighterWhy(ck_alpha_a, why, sizeof why) != 1) {
+        gw_test_fail("a define in common is refused: %s", why);
+        rv = 1;
+        goto done;
+    }
+    ib = mx_test_find_define(&a, "beta");
+    if (gw_MexId_OnlineFighter(a.e[ib].local) != 0 || gw_MexId_FighterWhy(a.e[ib].local, why, sizeof why) != 0 ||
+        strstr(why, "another version") == NULL || strstr(why, "Test beta") == NULL || strlen(why) > 79) {
+        gw_test_fail("a define the peer holds in another version: \"%s\"", why);
+        rv = 1;
+        goto done;
+    }
+    /* we hold a define the peer lacks: swap roles (the peer's list is a's, ours is b's with gamma) */
+    memset(&mx_remote, 0, sizeof mx_remote);
+    for (idx = 0; (len = mx_wire_chunk(&a, idx, buf, sizeof buf)) > 0; ++idx) mx_wire_feed(&mx_remote, buf, len);
+    for (idx = 0; (len = mx_wire_define(&a, idx, buf, sizeof buf)) > 0; ++idx) mx_wire_feed(&mx_remote, buf, len);
+    mx_local = b;
+    ib = mx_test_find_define(&b, "gamma");
+    if (gw_MexId_FighterWhy(b.e[ib].local, why, sizeof why) != 0 || strstr(why, "doesn't have it") == NULL ||
+        strstr(why, "Test gamma") == NULL) {
+        gw_test_fail("a define the peer lacks: \"%s\"", why);
+        rv = 1;
+        goto done;
+    }
+    /* scene tokens name it by identity and resolve back */
+    if (strncmp(gw_MexId_TokenForCk(b.e[ib].local), "id:", 3) != 0 || gw_MexId_CkForHex(b.e[ib].hex) != b.e[ib].local ||
+        strcmp(gw_MexId_DefineKey(b.e[ib].local), "gamma") != 0 || gw_MexId_DefineKey(2)[0] != 0) {
+        gw_test_fail("scene token / key of a define wrong");
+        rv = 1;
+        goto done;
+    }
+    /* before the peer's list is complete nothing is refused on a guess */
+    memset(&mx_remote, 0, sizeof mx_remote);
+    if (gw_MexId_FighterWhy(b.e[ib].local, why, sizeof why) != 1) {
+        gw_test_fail("a define is refused before the peer's list arrived");
+        rv = 1;
+    }
+done:
+    gw_Geno_TestRestore();
+    mx_local = saved;
+    mx_local.built = 0; /* rebuilt from the real registry on the next use */
+    mx_remote = saved_peer;
+    return rv;
+}
+
 void gw_mexid_tests_register(void) {
+    gw_test_register("mexid_define_online", test_mexid_define_online);
     gw_test_register("mexid_wire_intersection", test_mexid_wire_intersection);
     gw_test_register("mexid_global_diff", test_mexid_global_diff);
     gw_test_register("mexid_disc_table", test_mexid_disc_table);

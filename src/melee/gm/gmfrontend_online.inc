@@ -588,6 +588,14 @@ static int fl_char_tex(int ck)
     if (ck == CKind_Seak && !fe_np_char_icon[ck].ok) {
         ck = CKind_Zelda; /* no Sheik icon on a retail roster: she shares Zelda's */
     }
+    {
+        /* Geno slice 7: a native define in the online lobby wears its donor's icon, as on the offline select */
+        extern int Geno_DefineBaseCK(int ck);
+        int b = ck >= 0 ? Geno_DefineBaseCK(ck) : -1;
+        if (b >= 0) {
+            ck = b;
+        }
+    }
     if (ck < 0 || ck >= FE_NP_MAX_CK || !fe_np_char_icon[ck].ok) {
         return -1;
     }

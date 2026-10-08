@@ -392,8 +392,9 @@ static void fs_css_roster(void)
         fcs.ok[fcs.n] = !fcs.online || Netplay_FighterAvailable(ck);
         fcs.n++;
     }
-    /* Native definitions borrow retail art and remain offline-only in GF1. */
-    if (!fcs.online) {
+    /* Native definitions borrow retail art. Online (Geno slice 7) a define is offered like an m-ex fighter: playable when the opponent holds the
+     * same package (Netplay_FighterAvailable by content identity), greyed otherwise. */
+    {
         int d, count = Geno_DefineCount();
         for (d = 0; d < count && fcs.n < FS_MAX_FIGHTERS; ++d) {
             int ck = Geno_DefineCKAt(d), base = Geno_DefineBaseCK(ck), source;
@@ -402,7 +403,7 @@ static void fs_css_roster(void)
             fcs.ck[fcs.n] = ck;
             if (source < fcs.n && Geno_DefineCostumeCountCK(ck) == 0) fcs.icon[fcs.n] = fcs.icon[source]; /* a base "none" define has no donor art */
             else { fcs.icon[fcs.n].img = NULL; fcs.icon[fcs.n].tl = NULL; }
-            fcs.ok[fcs.n++] = true;
+            fcs.ok[fcs.n++] = !fcs.online || Netplay_FighterAvailable(ck);
         }
     }
     fcs.cols = 11;

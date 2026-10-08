@@ -330,10 +330,13 @@ static void GenoDefine_OwnTables(int kind, ftData* out)
 void GenoDefine_Load(int kind, int base)
 {
     extern int Netplay_Enabled(void);
+    extern int Netplay_FighterAvailable(int ck);
     ftData* source = gFtDataList[base];
     ftData* out;
     int i, n = ftData_Table_Unk0[base].count, demo = ftData_UnkIntPairs[base].count;
-    HSD_ASSERTREPORT(__LINE__, !Netplay_Enabled(), "Geno define is offline only: online admission/identity contract unavailable\n");
+    /* slice 7: a define plays online when both peers hold the same package (gw_mexid.c: its identity is in the intersection). Netplay_FighterAvailable
+     * answers 1 for such a fighter and -1 before the peer's list is here; only a definite 0 is a bug in the caller (the scene should never have named it). */
+    HSD_ASSERTREPORT(__LINE__, !Netplay_Enabled() || Netplay_FighterAvailable(kind + 1) != 0, "Geno define is not in common with the opponent (the scene named a fighter the peer lacks)\n");
     if (gFtDataList[kind] != NULL) return;
     out = gd_data_copy(source, sizeof(*out));
     out->x0 = gd_data_copy(source->x0, sizeof(ftCo_DatAttrs));

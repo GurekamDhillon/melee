@@ -1819,6 +1819,7 @@ static int gw_sl_mex_name(const char *v) {
 static int gw_sl_parse_char(const char *v, int *ck_out, int *random_out) {
   extern int gw_Geno_DefineResolve(const char *token);
   extern int gw_Geno_DefineBaseCK(int ck);
+  extern int gw_MexId_FindFighter(int ck);
   extern int gw_Mex_ExtToPortCKind(int ext);
   const char *rest;
   int n;
@@ -1834,8 +1835,9 @@ static int gw_sl_parse_char(const char *v, int *ck_out, int *random_out) {
   }
   if ((rest = gw_sl_after(v, "ck:")) != NULL && gw_sl_all_digits(rest)) {
     n = atoi(rest);
-    if (gw_Netplay_Enabled() && gw_Geno_DefineBaseCK(n) >= 0) {
-      gw_log("scene: Geno definition refused online: admission/identity contract unavailable");
+    if (gw_Netplay_Enabled() && gw_Geno_DefineBaseCK(n) >= 0 && gw_MexId_FindFighter(n) < 0) {
+      /* slice 7: a define plays online only through its content identity (gw_mexid.c); one without it cannot be named to the peer */
+      gw_log("scene: Geno definition refused online: ck:%d has no online identity (a resource file of its package is missing)", n);
       return -1;
     }
     if (n == GW_SL_CK_NONE) {
@@ -1885,8 +1887,8 @@ static int gw_sl_parse_char(const char *v, int *ck_out, int *random_out) {
   rest = gw_sl_after(v, "geno:");
   n = gw_Geno_DefineResolve(rest ? rest : v);
   if (n >= 0) {
-    if (gw_Netplay_Enabled()) {
-      gw_log("scene: Geno definition refused online: admission/identity contract unavailable");
+    if (gw_Netplay_Enabled() && gw_MexId_FindFighter(n) < 0) {
+      gw_log("scene: Geno definition refused online: %s has no online identity (a resource file of its package is missing)", v);
       return -1;
     }
     *ck_out = n;

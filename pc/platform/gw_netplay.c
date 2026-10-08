@@ -256,6 +256,7 @@ static int np_scene_envoy(const char *scene, unsigned *w) {
 
 static void np_cb_lobby_any(void *user, const uint8_t *data, int len); /* delta */
 static void np_mx_pump(void); /* delta */
+void gw_Netplay_FighterName(int ck, char *out, int cap);
 
 /* delta: a CharacterKind in the PEER's install -> ours, through the identity lists (gw_mexid.c).
  * Before they arrive only the retail kinds are trusted to mean the same thing. */
@@ -2530,6 +2531,18 @@ static int np_poll(void) {
                         return np.phase;
                     }
                 }
+                if (!np.use_lobby && gw_MexId_DefineKey(np.ck)[0] != 0 && strstr(np.scene, gw_MexId_TokenForCk(np.ck)) == NULL) {
+                    /* slice 7 (the scripted path, which has no lobby to pick in): this side asked for a Geno define in its HELLO and the host's
+                       match does not name it - the host did not have this exact package and substituted another fighter. Say so, never play it. */
+                    char nm[64];
+                    gw_Netplay_FighterName(np.ck, nm, (int) sizeof nm);
+                    np_status("The host cannot play your fighter %s: it does not have this exact package", nm);
+                    gw_log("netplay: refused - the host's match \"%s\" does not name our define %s (%s)", np.scene, gw_MexId_DefineKey(np.ck),
+                           gw_MexId_TokenForCk(np.ck));
+                    np.phase = NP_FAILED;
+                    np_close();
+                    return np.phase;
+                }
                 np.seed = hc.seed;
                 np.delay = hc.input_delay;
                 gw_RB_SetDelay(np.delay);
@@ -2814,9 +2827,12 @@ void gw_Netplay_FighterName(int ck, char *out, int cap) {
     };
     extern const char *gw_Mex_FighterName(int ext);
     extern int gw_Mex_PortCKindToExt(int ckind);
+    extern int gw_Geno_DefineName(int ck, char *out, int cap);
     const char *m = ck >= 0 ? gw_Mex_FighterName(gw_Mex_PortCKindToExt(ck)) : NULL;
-    char buf[32];
-    if (m != NULL && m[0] != '\0') {
+    char buf[48];
+    if (ck >= 0 && gw_Geno_DefineName(ck, buf, (int) sizeof buf)) { /* slice 7: a native define plays online */
+        np_copy(out, cap, buf);
+    } else if (m != NULL && m[0] != '\0') {
         np_copy(out, cap, m);
     } else if (ck >= 0 && ck < (int) (sizeof retail / sizeof retail[0])) {
         np_copy(out, cap, retail[ck]);
@@ -2937,7 +2953,19 @@ int gw_Netplay_LobbyPlayer(int who, int what) {
     default: return 0;
     }
 }
+/* Slice 7: why a fighter of this install cannot be played against the peer (gw_mexid.c), for the select and for scripts. */
+int gw_Netplay_FighterWhy(int ck, char *why, int cap) { return gw_MexId_FighterWhy(ck, why, cap); }
+static char np_refusal[200]; /* the reason the last lobby pick was refused here ("" none) */
+const char *gw_Netplay_Refusal(void) { return np_refusal; }
+
 void gw_Netplay_LobbyChar(int ck, int color) {
+    /* slice 7: a pick the opponent cannot play is refused here, with the reason - never replaced by another fighter later */
+    if (gw_MexId_FighterWhy(ck, np_refusal, (int) sizeof np_refusal) == 0) {
+        gw_log("netplay: lobby - pick of fighter %d refused: %s", ck, np_refusal);
+        np_status("%s", np_refusal);
+        return;
+    }
+    np_refusal[0] = 0;
     np.ck = ck; /* remembered for the next room too */
     np.color = color;
     lb_action("CHAR", ck, color);

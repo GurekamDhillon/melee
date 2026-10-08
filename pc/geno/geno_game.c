@@ -2355,6 +2355,7 @@ u32 GenoDefine_StateDigest(Fighter* fp)
     h = geno_dg(h, s->extra_jumps);
     h = geno_dg(h, (u32) s->action_time);
     h = geno_dg(h, s->nchecks);
+    h = geno_dg(h, (u32) s->last_check); /* slice 7 audit: the check a later CHGAND extends survives frames within an action */
     for (i = 0; i < (int) s->nchecks && i < GENO_MAX_CHECKS; i++) {
         h = geno_dg(h, s->checks[i].target);
         h = geno_dg(h, s->checks[i].once);

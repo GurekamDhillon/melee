@@ -290,7 +290,7 @@ static unsigned pb_fuzz_one(PbBot *b, PADStatus *st, int dir, float dist, int ai
     b->fz_cx = b->fz_cy = b->fz_tl = b->fz_tr = 0;
     b->fz_left = 3 + (int)((r >> 16) % 3);
     b->fz_actions++;
-    if (pick < 22 && dist > 12.0f) {            /* walk or dash at the opponent */
+    if (pick < 65 && dist > 20.0f) {            /* walk or dash at the opponent (out of range most of the time: the hits must land) */
       b->fz_sx = fwd * strong;
       b->fz_sy = 0;
       b->fz_left = 6 + (int)((r >> 16) % 24);
@@ -299,6 +299,9 @@ static unsigned pb_fuzz_one(PbBot *b, PADStatus *st, int dir, float dist, int ai
     } else if (pick < 70) {                      /* B: specials; holds 2..75 frames walk a charge through its range */
       b->fz_btn = PB_BTN_B;
       b->fz_left = 2 + (int)((r >> 16) % 74);
+      if (((r >> 20) & 3) < 2) {                 /* half of the B presses are the NEUTRAL special (the stick centred) */
+        b->fz_sx = b->fz_sy = 0;
+      }
     } else if (pick < 78) {                      /* jump */
       b->fz_btn = PB_BTN_X;
     } else if (pick < 86) {                      /* C-stick: smashes and aerials */
@@ -316,7 +319,7 @@ static unsigned pb_fuzz_one(PbBot *b, PADStatus *st, int dir, float dist, int ai
       b->fz_sx = b->fz_sy = 0;
       b->fz_left = 2 + (int)((r >> 16) % 8);
     }
-    if (air && (pick < 22)) {
+    if (air && (pick < 65 && dist > 20.0f)) {
       b->fz_sy = 0;
     }
   }

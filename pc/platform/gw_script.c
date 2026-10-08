@@ -1480,6 +1480,8 @@ extern int gw_Frontend_Cursor(void);
 extern const char *gw_Frontend_CursorLabel(void);
 extern int gw_Netplay_Phase(void);
 extern const char *gw_Netplay_Status(void);
+extern int gw_MexId_CommonFighterCount(void); /* slice 7: -1 until the peer's identity list is here */
+extern int gw_MexId_PeerDefinesComplete(void);
 extern const char *gw_Netplay_Refusal(void); /* Geno slice 7: why the last lobby pick was refused here ("" none) */
 extern const char *gw_Netplay_Code(void);
 extern int gw_Netplay_IsHost(void);
@@ -1531,6 +1533,8 @@ static int l_netplay(lua_State *L) {
     gs_setstr(L, "phase", ph >= 0 && ph < 6 ? gs_np_phase[ph] : "?");
     gs_setstr(L, "status", gw_Netplay_Status());
     gs_setstr(L, "refusal", gw_Netplay_Refusal());
+    gs_setint(L, "common_fighters", gw_MexId_CommonFighterCount());
+    gs_setbool(L, "peer_defines", gw_MexId_PeerDefinesComplete());
     gs_setstr(L, "code", gw_Netplay_Code());
     gs_setbool(L, "host", gw_Netplay_IsHost());
     gs_setbool(L, "rematch", gw_Netplay_RematchPending());

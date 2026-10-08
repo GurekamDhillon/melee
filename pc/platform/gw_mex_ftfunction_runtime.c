@@ -1934,6 +1934,7 @@ static int gw_costume_native_count(int fkx) {
     }
     return 0;
 }
+int gw_Costume_NativeCount(int fk) { return gw_costume_native_count(fk); } /* the skin registry's base counts */
 uint32_t gw_CostumeRegionSize(void) {
     extern uint8_t gw_CostumeListsForeachCharacter[];
     extern void gw_Skins_Build(int (*base_fn)(int));

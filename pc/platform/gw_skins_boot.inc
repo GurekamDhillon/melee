@@ -270,56 +270,61 @@ void gw_Skins_Build(int (*base_fn)(int)) {
                sk_mods_read, sk_mods_bad, costumes, fighters, sk_reg.refused, sk_ms);
 }
 
+/* Every query builds the registry first if nothing has: the first customer can be a table install that runs before the arena is carved
+ * (the headless tests do), and an answer from an empty registry would silently install no skins. */
+extern int gw_Costume_NativeCount(int fk);
+static void sk_ensure(void) { if (!sk_built) gw_Skins_Build(gw_Costume_NativeCount); }
+
 /* ---- queries by FighterKind (the ftData side) --------------------------------------------------- */
 
 /* Tests that install a throw-away Geno define on a kind a mounted skin also targets ask the registry to answer as if empty. */
 static int sk_suspended;
 void gw_Skins_Suspend(int on) { sk_suspended = on; }
-int gw_Skins_Added(int fk) { return sk_suspended ? 0 : sk_added(fk); }
-int gw_Skins_Base(int fk) { return sk_base(fk); }
-int gw_Skins_Total(int fk) { return sk_suspended ? sk_base(fk) : sk_total(fk); }
-int gw_Skins_Count(void) { int fk, t = 0; for (fk = 0; fk < SK_FK_MAX; ++fk) t += sk_reg.added[fk]; return t; }
+int gw_Skins_Added(int fk) { sk_ensure(); return sk_suspended ? 0 : sk_added(fk); }
+int gw_Skins_Base(int fk) { sk_ensure(); return sk_base(fk); }
+int gw_Skins_Total(int fk) { sk_ensure(); return sk_suspended ? sk_base(fk) : sk_total(fk); }
+int gw_Skins_Count(void) { sk_ensure(); int fk, t = 0; for (fk = 0; fk < SK_FK_MAX; ++fk) t += sk_reg.added[fk]; return t; }
 
 /* Costume c of fighter fk: which 0 = file, 1 = joint symbol, 2 = matanim symbol (NULL = none). A generated partner row that
  * has no files of its own answers NULL for file: the installer then copies the partner's costume 0. */
-const char *gw_Skins_String(int fk, int c, int which) {
+const char *gw_Skins_String(int fk, int c, int which) { sk_ensure();
     const sk_costume *r = sk_suspended ? NULL : sk_row(fk, c);
     const char *s;
     if (!r) return NULL;
     s = which == 0 ? r->file : which == 1 ? r->joint : r->matanim;
     return s[0] ? s : NULL;
 }
-int gw_Skins_IsRow(int fk, int c) { return sk_row(fk, c) != NULL; }
+int gw_Skins_IsRow(int fk, int c) { sk_ensure(); return sk_row(fk, c) != NULL; }
 
 /* The part-visibility row a skin costume copies (an original costume's index), or -1: not a skin. */
-int gw_Skins_Like(int fk, int c) { return sk_like(fk, c); }
-int gw_Skins_KirbyRow(int fk, int c) { return sk_kirby_row(fk, c); }
+int gw_Skins_Like(int fk, int c) { sk_ensure(); return sk_like(fk, c); }
+int gw_Skins_KirbyRow(int fk, int c) { sk_ensure(); return sk_kirby_row(fk, c); }
 
 /* ---- queries by CharacterKind (the menus, the netplay layer) -------------------------------------- */
 
 static int sk_fk(int ck) { return ck >= 0 ? gw_SceneLaunch_CKindToFKind(ck) : -1; }
 
 /* The fighter's costume count with its skins, or 0 when it has none (the caller keeps its own answer). */
-int gw_Skins_CostumeCountCK(int ck) {
+int gw_Skins_CostumeCountCK(int ck) { sk_ensure();
     int fk = sk_fk(ck);
     return (fk >= 0 && !sk_suspended && sk_added(fk) > 0) ? sk_total(fk) : 0;
 }
-int gw_Skins_TeamCostumeCK(int ck, int team) {
+int gw_Skins_TeamCostumeCK(int ck, int team) { sk_ensure();
     int fk = sk_fk(ck);
     return (fk >= 0 && !sk_suspended) ? sk_team(fk, team) : -1;
 }
-int gw_Skins_NameCK(int ck, int costume, char *out, int cap) {
+int gw_Skins_NameCK(int ck, int costume, char *out, int cap) { sk_ensure();
     int fk = sk_fk(ck);
     const sk_costume *r = (fk >= 0 && !sk_suspended) ? sk_row(fk, costume) : NULL;
     if (!r || !out || cap <= 0) return 0;
     snprintf(out, (size_t) cap, "%s", r->name);
     return 1;
 }
-int gw_Skins_ToWireCK(int ck, int color) {
+int gw_Skins_ToWireCK(int ck, int color) { sk_ensure();
     int fk = sk_fk(ck);
     return fk >= 0 ? sk_to_wire(fk, color) : color;
 }
-int gw_Skins_FromWireCK(int ck, int wire) {
+int gw_Skins_FromWireCK(int ck, int wire) { sk_ensure();
     int fk = sk_fk(ck);
     if (fk < 0) return (wire >= 0 && wire < SK_CAP) ? wire : 0;
     return sk_from_wire(fk, wire);

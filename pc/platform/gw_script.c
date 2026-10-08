@@ -1508,6 +1508,55 @@ extern const char *gw_Netplay_RunRecord(void);
 extern const char *gw_Netplay_RunFail(void);
 extern void gw_Netplay_SetRun(int on);
 extern int gw_Netplay_RunPref(void);
+#include "gw_netrun.h"
+extern int gw_Netplay_EnvoyPrefMode(void);
+extern int gw_Netplay_EnvoyRoomMode(void);
+extern int gw_Netplay_EnvoyRunGet(int which, char *text, int cap, int *state, int *me);
+extern unsigned gw_Netplay_EnvoyRunInfo(int what);
+extern const char *gw_Netplay_EnvoyRunNote(void);
+extern int gw_Netplay_EnvoyRunAct(const char *what, int a, const char *s);
+extern void gw_Netplay_SetEnvoy(int on);
+/* The Envoy run record (gw_netrun.h) as a table: nil when `which` (0 live or saved, 1 saved, 2 displaced) holds none. Read-only; works offline. */
+static void gs_push_run(lua_State *L, int which) {
+    char text[520], why[64], hex[16];
+    int st = 0, me = 0, g;
+    GwNrRecord r;
+    if (!gw_Netplay_EnvoyRunGet(which, text, sizeof text, &st, &me) || !gw_nr_parse(text, &r, why, sizeof why)) { lua_pushnil(L); return; }
+    lua_createtable(L, 0, 20);
+    gs_setstr(L, "text", text);
+    gs_setstr(L, "digest", r.digest);
+    gs_setstr(L, "state", gw_nr_state_name(st));
+    gs_setint(L, "me", me);
+    gs_setstr(L, "mode", r.mode == GW_ENVOY_MODE_COOP ? "coop" : "versus");
+    snprintf(hex, sizeof hex, "%08x", (unsigned) r.mode); gs_setstr(L, "mode_word", hex);
+    gs_setint(L, "seed", (lua_Integer) r.seed);
+    gs_setint(L, "loop", r.loop);
+    gs_setint(L, "game", r.game);
+    gs_setint(L, "round", r.round);
+    gs_setint(L, "winner", r.winner);
+    gs_setint(L, "started", r.started);
+    snprintf(hex, sizeof hex, "%08x", (unsigned) r.bw); gs_setstr(L, "bw", hex);
+    gs_setstr(L, "x", r.x);
+    lua_createtable(L, 2, 0);
+    lua_pushinteger(L, r.score[0]); lua_rawseti(L, -2, 1);
+    lua_pushinteger(L, r.score[1]); lua_rawseti(L, -2, 2);
+    lua_setfield(L, -2, "score");
+    lua_createtable(L, 0, 8); /* picks[g] = {host pick, guest pick}: the builds are recomputed from it (mod_progression.set_build) */
+    for (g = 2; g <= r.round; ++g) {
+        if (r.pick[g][0] < 0 || r.pick[g][1] < 0) continue;
+        lua_createtable(L, 2, 0);
+        lua_pushinteger(L, r.pick[g][0]); lua_rawseti(L, -2, 1);
+        lua_pushinteger(L, r.pick[g][1]); lua_rawseti(L, -2, 2);
+        lua_rawseti(L, -2, g);
+    }
+    lua_setfield(L, -2, "picks");
+    lua_createtable(L, 0, 8); /* stages[g] = the identity word of the stage of game g, 6 hex */
+    for (g = 1; g <= r.started; ++g) {
+        snprintf(hex, sizeof hex, "%06x", (unsigned) r.gstage[g]);
+        lua_pushstring(L, hex); lua_rawseti(L, -2, g);
+    }
+    lua_setfield(L, -2, "stages");
+}
 
 /* gd.menu() -> {frontend = {title, screen, cursor, item} (the port's own menus: gmfrontend.c),
  * native = {menu, hovered} (Melee's menu tree)}. Which one is live follows gd.scene(). */
@@ -1598,6 +1647,24 @@ static int l_netplay(lua_State *L) {
         snprintf(hex, sizeof hex, "%08x", gw_Netplay_EnvoyInfo(10)); gs_setstr(L, "word", hex);
         snprintf(hex, sizeof hex, "%08x", gw_Netplay_EnvoyInfo(7)); gs_setstr(L, "peer_word", hex);
         gs_setbool(L, "peer_reported", gw_Netplay_EnvoyInfo(8));
+        gs_setstr(L, "mode", gw_Netplay_EnvoyRoomMode() == 2 ? "coop" : gw_Netplay_EnvoyRoomMode() == 1 ? "versus" : "off");
+        { /* run: the saved-run check, the live/saved record, what happened to it (stage 5) */
+            static const char *const names[] = { "none", "checking", "resumed", "fresh", "conflict", "abandoned", "interrupted" };
+            unsigned stt = gw_Netplay_EnvoyRunInfo(0);
+            lua_createtable(L, 0, 12);
+            gs_setstr(L, "status", names[stt < 7 ? stt : 0]);
+            gs_setbool(L, "pending", gw_Netplay_EnvoyRunInfo(5));
+            gs_setbool(L, "conflict", gw_Netplay_EnvoyRunInfo(6));
+            gs_setbool(L, "live", gw_Netplay_EnvoyRunInfo(7));
+            gs_setint(L, "resumed", (lua_Integer) gw_Netplay_EnvoyRunInfo(1));
+            gs_setint(L, "abandoned", (lua_Integer) gw_Netplay_EnvoyRunInfo(2));
+            gs_setint(L, "interrupted", (lua_Integer) gw_Netplay_EnvoyRunInfo(3));
+            gs_setint(L, "note_seq", (lua_Integer) gw_Netplay_EnvoyRunInfo(4));
+            gs_setstr(L, "note", gw_Netplay_EnvoyRunNote());
+            gs_push_run(L, 0);
+            lua_setfield(L, -2, "record");
+            lua_setfield(L, -2, "run");
+        }
         lua_setfield(L, -2, "envoy");
     }
     { /* run: the online stage run (stage 7 spike, gw_netrun.h): {on, seed, stage (zero-based), record, digest, refused, fail}; read-only */
@@ -1639,9 +1706,28 @@ static int l_netplay_act(lua_State *L) {
     } else if (_stricmp(what, "rpick") == 0) { /* an Envoy set's reward: 0..2 an offer, 3 keeps the build (host-validated) */
         ok = gw_Netplay_EnvoyPick((int) luaL_checkinteger(L, 2));
     } else {
-        return luaL_error(L, "gd.netplay_act: unknown action \"%s\" (char, stage, ready, code, rpick, envoy)", what);
+        if (_stricmp(what, "envoymode") == 0) { /* the host's Envoy mode for rooms it opens: "off" | "versus" | "coop" (or 0/1/2) */
+            if (lua_isstring(L, 2) && !lua_isnumber(L, 2)) {
+                const char *m = lua_tostring(L, 2);
+                gw_Netplay_SetEnvoy(_stricmp(m, "coop") == 0 ? 2 : _stricmp(m, "versus") == 0 || _stricmp(m, "on") == 0 ? 1 : 0);
+            } else if (!lua_isnone(L, 2)) gw_Netplay_SetEnvoy((int) lua_tointeger(L, 2));
+            lua_pushinteger(L, gw_Netplay_EnvoyPrefMode());
+            return 1;
+        }
+        if (_stricmp(what, "rabandon") == 0) { lua_pushboolean(L, gw_Netplay_EnvoyRunAct("abandon", 0, NULL)); return 1; }   /* abandon the live run (host decides; both clients end it) */
+        if (_stricmp(what, "rresume") == 0) { lua_pushboolean(L, gw_Netplay_EnvoyRunAct("resume", (int) luaL_optinteger(L, 2, 0), NULL)); return 1; } /* after two different saved runs: 1 the host's, 2 the guest's */
+        if (_stricmp(what, "rnote") == 0) { lua_pushboolean(L, gw_Netplay_EnvoyRunAct("note", 0, luaL_optstring(L, 2, ""))); return 1; }   /* a script's 16-hex digest joins the record (the co-op director's) */
+        if (_stricmp(what, "rstate") == 0) { lua_pushboolean(L, gw_Netplay_EnvoyRunAct("state", 0, luaL_checkstring(L, 2))); return 1; }  /* "continued": the saved run went to the offline Envoy */
+        return luaL_error(L, "gd.netplay_act: unknown action \"%s\" (char, stage, ready, code, rpick, envoy, envoymode, rabandon, rresume, rnote, rstate)", what);
     }
     lua_pushboolean(L, ok);
+    return 1;
+}
+
+/* gd.netplay_run([which]) - the Envoy run record, "live" (default: the set in the lobby, else the saved one), "saved", or "previous"; nil when there is none. Offline too. */
+static int l_netplay_run(lua_State *L) {
+    const char *w = luaL_optstring(L, 1, "live");
+    gs_push_run(L, _stricmp(w, "saved") == 0 ? 1 : _stricmp(w, "previous") == 0 ? 2 : 0);
     return 1;
 }
 
@@ -6585,7 +6671,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"mod_read", l_mod_read}, {"mod_list", l_mod_list}, {"mod_stamp", l_mod_stamp},
     {"campaign_storage", l_campaign_storage}, /* campaign-save */
     {"rgb", l_rgb}, {"label", l_label}, {"screenshot", l_screenshot}, {"quit", l_quit},
-    {"menu", l_menu}, {"netplay", l_netplay}, {"netplay_act", l_netplay_act},
+    {"menu", l_menu}, {"netplay", l_netplay}, {"netplay_act", l_netplay_act}, {"netplay_run", l_netplay_run},
     /* the Geno Lab (docs/geno.md) */
     {"debug_draw", l_debug_draw}, {"debug_stage", l_debug_stage}, {"hitboxes", l_hitboxes},
     {"hurtboxes", l_hurtboxes}, {"joints", l_joints}, {"dobjs", l_dobjs},

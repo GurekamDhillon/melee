@@ -9,6 +9,7 @@ What the port builds against, where each piece comes from, and its licence.
 | [encounter/aurora](https://github.com/encounter/aurora) (GC/Wii SDK reimplementation) | `extern/aurora` — base commit `749d6ee7a22bdfab78c8ece9047bca5d79aa72ca`, seven port patches (see [`extern/aurora/PORT_PATCHES.md`](extern/aurora/PORT_PATCHES.md)) | MIT |
 | Nintendo Dolphin SDK / MSL / MetroTRK | `extern/dolphin`, `src/MSL`, `src/Runtime`, `src/MetroTRK` (part of the upstream decompilation) | proprietary SDK sources, upstream |
 | [ENet](https://github.com/lsalzman/enet) | `extern/enet`, v1.3.18 at `2662c0de09e36f2a2030ccc2c528a3e4c9e8138a`; unmodified source, headers and `LICENSE` | MIT |
+| [stb_image](https://github.com/nothings/stb) | `pc/third_party/stb/stb_image.h`, v2.30; unmodified single header. Used by the Nucleus browser for PNG decoding (costume art) and for its zlib inflate (reading zip-only posts); no other code is vendored for either | public domain (or MIT, at the user's choice) |
 
 `extern/aurora` is a plain vendored copy, not a git submodule, so a clone contains
 the patched Aurora directly.

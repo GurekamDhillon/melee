@@ -4104,7 +4104,12 @@ u32 RB_ItemHash(u32* count_out)
         if (ip == NULL) {
             continue;
         }
-        ih = ftRb_Mix(0x4954454Du, (u32) ip->kind);
+        {
+            /* Geno slice 7: a Geno article's numeric kind depends on how this install numbers its profiles; hash it by content instead */
+            extern u32 Geno_ArtStableKind(int kind);
+            u32 stable = Geno_ArtStableKind((int) ip->kind);
+            ih = ftRb_Mix(0x4954454Du, stable != 0 ? stable : (u32) ip->kind);
+        }
         ih = ftRb_Mix(ih, (u32) ip->msid);
         ih = ftRb_Mix(ih, ftRb_Bits(ip->pos.x));
         ih = ftRb_Mix(ih, ftRb_Bits(ip->pos.y));

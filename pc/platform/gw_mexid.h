@@ -80,6 +80,7 @@ int gw_MexId_WireNext(uint8_t *out, int cap); /* next chunk to send (bytes), 0 =
 void gw_MexId_WireSent(void);              /* the chunk WireNext produced was accepted */
 int gw_MexId_WireFeed(const uint8_t *msg, int len); /* 1 = it was ours (consumed), 0 = not ours */
 int gw_MexId_PeerReady(void);              /* 1 = the peer's whole list has arrived */
+int gw_MexId_PeerDefinesComplete(void);    /* slice 7: 1 = every Geno define the peer announced has arrived (their keys name a refusal) */
 int gw_MexId_PeerCount(void);              /* entries the peer sent */
 
 /* Online availability: 1 = both have it (same identity), 0 = not common, -1 = peer list not here
@@ -91,6 +92,10 @@ int gw_MexId_PeerCkForLocal(int ck);
 int gw_MexId_LocalCkForPeer(int peer_ck);
 int gw_MexId_PeerExtForLocal(int ext);
 int gw_MexId_LocalExtForPeer(int peer_ext);
+/* Slice 7. Why a fighter of this install cannot be played against the peer: 1 playable (or the peer list is not here yet), 0 refused
+ * with `why` set in the player's words (not installed there / a different version of a Geno define). */
+int gw_MexId_FighterWhy(int ck, char *why, int cap);
+const char *gw_MexId_DefineKey(int ck);   /* the key of a native Geno define's CharacterKind, "" for any other */
 int gw_MexId_CommonFighterCount(void);     /* -1 until the peer list is here */
 int gw_MexId_CommonStageCount(void);
 

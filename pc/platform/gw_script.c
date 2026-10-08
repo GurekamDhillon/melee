@@ -1480,6 +1480,9 @@ extern int gw_Frontend_Cursor(void);
 extern const char *gw_Frontend_CursorLabel(void);
 extern int gw_Netplay_Phase(void);
 extern const char *gw_Netplay_Status(void);
+extern int gw_MexId_CommonFighterCount(void); /* slice 7: -1 until the peer's identity list is here */
+extern int gw_MexId_PeerDefinesComplete(void);
+extern const char *gw_Netplay_Refusal(void); /* Geno slice 7: why the last lobby pick was refused here ("" none) */
 extern const char *gw_Netplay_Code(void);
 extern int gw_Netplay_IsHost(void);
 extern int gw_Netplay_LobbyPhase(void);
@@ -1529,6 +1532,9 @@ static int l_netplay(lua_State *L) {
     lua_createtable(L, 0, 16);
     gs_setstr(L, "phase", ph >= 0 && ph < 6 ? gs_np_phase[ph] : "?");
     gs_setstr(L, "status", gw_Netplay_Status());
+    gs_setstr(L, "refusal", gw_Netplay_Refusal());
+    gs_setint(L, "common_fighters", gw_MexId_CommonFighterCount());
+    gs_setbool(L, "peer_defines", gw_MexId_PeerDefinesComplete());
     gs_setstr(L, "code", gw_Netplay_Code());
     gs_setbool(L, "host", gw_Netplay_IsHost());
     gs_setbool(L, "rematch", gw_Netplay_RematchPending());
@@ -1607,6 +1613,7 @@ static int l_netplay_act(lua_State *L) {
     if (_stricmp(what, "char") == 0) {
         gw_Netplay_LobbyChar((int) luaL_optinteger(L, 2, gw_Netplay_LocalCk()),
                              (int) luaL_optinteger(L, 3, gw_Netplay_LocalColor()));
+        ok = gw_Netplay_Refusal()[0] == 0; /* slice 7: false when the pick was refused (gd.netplay().refusal says why) */
     } else if (_stricmp(what, "stage") == 0) {
         gw_Netplay_LobbyStageAct((int) luaL_checkinteger(L, 2) - 1);
     } else if (_stricmp(what, "ready") == 0) {

@@ -421,6 +421,22 @@ static int geno_art_live(HSD_GObj* owner, int article)
     return n;
 }
 
+/* Slice 7: the rollback hash names an item by its kind (RB_ItemHash), and an article's kind is PROFILE ARITHMETIC: two peers whose installs
+ * number their profiles differently (a stray extra define or attach mod) would hash the same article differently and report a desync that
+ * is not one. This word replaces the numeric kind in that hash for an article: the profile's content id and the article index. 0 for any
+ * other kind, which keeps its own number. */
+extern unsigned Geno_ProfileIdWord(int p);
+u32 Geno_ArtStableKind(int kind)
+{
+    int p, a;
+    u32 id;
+    if (!geno_art_of_kind(kind, &p, &a)) {
+        return 0;
+    }
+    id = Geno_ProfileIdWord(p);
+    return (geno_dg(geno_dg(0x41525447u, id), (u32) a)) | 1u; /* "ARTG" */
+}
+
 /* Slice 3: a digest of the live Geno articles this fighter owns, for the rollback hash word (GenoDefine_StateDigest).
  * Each item contributes one word (its profile, article, age, despawn flag, travel velocity, position, engine velocity, hitbox
  * slots); the words are SUMMED, so the order of the item list does not matter. 0 when it owns none. */

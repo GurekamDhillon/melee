@@ -199,6 +199,11 @@ typedef struct {
   unsigned rng;
   int plan, step, phase, t, hold; /* phase 0 approach, 1 press, 2 wait */
   long reads, plans, steps, wins, cancels, aborts, last_wf, pause;
+  /* MELEE_PAD_BOT_MODE=fuzz (Geno slice 7): the action now being held, and what it presses */
+  int fz_left;
+  unsigned fz_btn;
+  int fz_sx, fz_sy, fz_cx, fz_cy, fz_tl, fz_tr;
+  long fz_actions;
 } PbBot;
 static PbBot pb_bots[4];
 static int pb_nbots = -1;
@@ -260,6 +265,80 @@ static void pb_press(PbBot *b, PADStatus *st, const PbStep *sp, int dir, int fdi
     }
   }
 }
+/* MELEE_PAD_BOT_MODE=fuzz: a state-blind input generator for the Geno online proofs. The plans above chain moves off the interrupt
+ * window and need a retail move's timing; a define's own moves, charges and counters want what a person would throw at them:
+ * every button, every stick direction, short taps and long holds (B held 2..75 frames walks a charge special through its whole
+ * range), grabs, shields, jumps, C-stick smashes, and walking at the opponent so the hits land. Seeded, so a run repeats exactly;
+ * it keeps to the stage through the same recovery branch the plans use. TEST-ONLY, like the bot. */
+static int pb_fuzz_mode = -1;
+static int pb_fuzz(void) {
+  if (pb_fuzz_mode < 0) {
+    const char *m = getenv("MELEE_PAD_BOT_MODE");
+    pb_fuzz_mode = (m != NULL && strcmp(m, "fuzz") == 0) ? 1 : 0;
+  }
+  return pb_fuzz_mode;
+}
+static unsigned pb_fuzz_one(PbBot *b, PADStatus *st, int dir, float dist, int air) {
+  static const int dirs[9][2] = { {0, 0}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {1, -1}, {-1, 1}, {-1, -1} };
+  if (b->fz_left <= 0) {
+    unsigned r = pb_rand(b);
+    int pick = (int)(r % 100), d = (int)((r >> 8) % 9), strong = ((r >> 12) & 1) ? 100 : 55;
+    int fwd = dir;
+    b->fz_btn = 0;
+    b->fz_sx = dirs[d][0] * fwd * strong;
+    b->fz_sy = dirs[d][1] * strong;
+    b->fz_cx = b->fz_cy = b->fz_tl = b->fz_tr = 0;
+    b->fz_left = 3 + (int)((r >> 16) % 3);
+    b->fz_actions++;
+    if (pick < 65 && dist > 20.0f) {            /* walk or dash at the opponent (out of range most of the time: the hits must land) */
+      b->fz_sx = fwd * strong;
+      b->fz_sy = 0;
+      b->fz_left = 6 + (int)((r >> 16) % 24);
+    } else if (pick < 46) {                      /* A: jab, tilts, aerials */
+      b->fz_btn = PB_BTN_A;
+    } else if (pick < 70) {                      /* B: specials; holds 2..75 frames walk a charge through its range */
+      b->fz_btn = PB_BTN_B;
+      b->fz_left = 2 + (int)((r >> 16) % 74);
+      if (((r >> 20) & 3) < 2) {                 /* half of the B presses are the NEUTRAL special (the stick centred) */
+        b->fz_sx = b->fz_sy = 0;
+      }
+    } else if (pick < 78) {                      /* jump */
+      b->fz_btn = PB_BTN_X;
+    } else if (pick < 86) {                      /* C-stick: smashes and aerials */
+      b->fz_cx = dirs[d][0] * fwd * 100;
+      b->fz_cy = dirs[d][1] * 100;
+      b->fz_sx = b->fz_sy = 0;
+    } else if (pick < 92) {                      /* grab */
+      b->fz_btn = 0x0010u | 0x0020u;
+      b->fz_tr = 255;
+    } else if (pick < 97) {                      /* shield */
+      b->fz_btn = 0x0020u;
+      b->fz_tr = 255;
+      b->fz_left = 6 + (int)((r >> 16) % 20);
+    } else {                                     /* rest */
+      b->fz_sx = b->fz_sy = 0;
+      b->fz_left = 2 + (int)((r >> 16) % 8);
+    }
+    if (air && (pick < 65 && dist > 20.0f)) {
+      b->fz_sy = 0;
+    }
+  }
+  b->fz_left--;
+  st[b->chan].stickX = (s8)(b->fz_sx > 100 ? 100 : b->fz_sx < -100 ? -100 : b->fz_sx);
+  st[b->chan].stickY = (s8)(b->fz_sy > 100 ? 100 : b->fz_sy < -100 ? -100 : b->fz_sy);
+  st[b->chan].substickX = (s8)b->fz_cx;
+  st[b->chan].substickY = (s8)b->fz_cy;
+  st[b->chan].triggerLeft = 0;
+  st[b->chan].triggerRight = (u8)b->fz_tr;
+  gw_w16(&st[b->chan].button, (uint16_t)b->fz_btn);
+  st[b->chan].err = 0;
+  if (b->fz_left <= 0) { /* a release frame between presses so the next one is an edge */
+    b->fz_left = 0;
+    b->fz_btn = 0;
+    b->pause = 1 + (long)(pb_rand(b) % 3);
+  }
+  return 1u << b->chan;
+}
 static unsigned pb_one(PbBot *b, PADStatus *st) {
   int me = b->slot, opp = b->slot == 0 ? 1 : 0, ent = me + 1;
   float x, y, ox, face, hitlag, dist;
@@ -316,6 +395,12 @@ static unsigned pb_one(PbBot *b, PADStatus *st) {
     b->pause--;
     pb_out(st, b->chan, 0, 0, 0);
     return ret;
+  }
+  if (pb_fuzz()) {
+    if ((b->reads % 1800) == 0) {
+      gw_log("pad bot slot %d (fuzz): %ld actions", me, b->fz_actions);
+    }
+    return pb_fuzz_one(b, st, dir, dist, air);
   }
   if (b->phase == 0) {
     if (dist > 15.0f || (fdir != dir && !air)) {

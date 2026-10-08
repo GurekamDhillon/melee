@@ -235,6 +235,7 @@ void Netplay_LobbyStageAct(int i);
 void Netplay_LobbyReady(int on);
 int Netplay_LobbyActive(void);
 int Netplay_FighterAvailable(int ck);
+int Netplay_FighterWhy(int ck, char* why, int cap);
 int Netplay_LobbyStageExt(int i);
 int Netplay_LobbyStageGroup(int i);
 int Netplay_LobbyStageOpen(int i);
@@ -710,7 +711,13 @@ void Frontend_OnlinePicked(int which, int a, int b)
     SceneLaunch_SetText(NULL);
     if (Netplay_LobbyActive()) {
         if (which == 1 && a >= 0 && !Netplay_FighterAvailable(a)) {
-            fl_lobby_notice("Your opponent doesn't have that fighter - pick another.");
+            char why[200];
+            /* Geno slice 7: say which fighter and what differs (a define the opponent lacks, or holds in another version) */
+            if (Netplay_FighterWhy(a, why, sizeof why) == 0 && why[0] != 0) {
+                fl_lobby_notice(why);
+            } else {
+                fl_lobby_notice("Your opponent doesn't have that fighter - pick another.");
+            }
         } else if (which == 1 && a >= 0) {
             Netplay_LobbyChar(a, b);
         }

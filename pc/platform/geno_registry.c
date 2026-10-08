@@ -1319,6 +1319,8 @@ int gw_Skins_ArtOpenCK(int ck, int what, int costume);
 #include "geno_define_registry.inc"
 #include "geno_define_records.inc"
 #include "geno_lua_registry.inc"
+#include "geno_define_online.h"
+#include "geno_define_online.inc"
 
 static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod, const char *where, int version) {
     static const char *const ev_names[GENO_EV_COUNT] = { "on_init", "on_frame", "on_action",
@@ -2428,6 +2430,7 @@ void geno_registry_tests_register(void) {
     gw_test_register("geno_define_resolver", test_geno_define_resolver);
     gw_test_register("geno_lua_registry", test_geno_lua_registry);
     gw_test_register("geno_lua_call", test_geno_lua_call);
+    gw_test_register("geno_lua_fault_policy", test_geno_lua_fault_policy);
     gw_test_register("geno_define_presentation", test_geno_define_presentation);
     gw_test_register("geno_define_skins255", test_geno_define_skins255);
     gw_test_register("geno_define_own_rows", test_geno_define_own_rows);

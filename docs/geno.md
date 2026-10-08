@@ -2581,7 +2581,7 @@ Native profile storage grows beyond 32 with a 65,535 id bound and a 256 MiB meta
 
 Native identities and interpreter-attempt counters are game globals; host registry/aliases are process-immutable. A guard at the PPC interpreter entry recognizes a native fighter owner passed as GObj or Fighter pointer, increments its counter and logs/refuses the attempt. Normal native fallback dispatch does not increment it. Load/spawn logs show the count. These are diagnostics, not a claim that a complete stock match has been executed.
 
-Definitions are offline only, absent from online CSS, and refused by named/CK scene selection and the loader guard. Changing definitions requires restart; adding the first definition through hot reload is also refused. Online remains blocked pending resource identity/preset certification, negotiated admission and mapping, replay metadata, compatibility/hash checks and real deterministic resimulation validation. The source SHA-256 export manifest is packaging metadata, not an online certificate. Existing attachments retain their previous format and id behavior.
+Definitions were offline only until slice 7 (section 24: a define with an online identity is now a fighter in the netplay identity table and plays online against a peer with the same package). Changing definitions requires restart; adding the first definition through hot reload is also refused. Still not online (section 24.5): replay metadata for netplay matches. The source SHA-256 export manifest is packaging metadata, not an online certificate. Existing attachments retain their previous format and id behavior.
 
 Author commands are in workspace `tools/geno/README.md`; packet 11 in `docs/learn/geno-fighters/` is an untested teaching stub. The catalogue companion requires the separate Hero folder and is excluded from automatic tours until accepted. Registered tests `geno_define_registry`, `geno_define_repeated_install` and `geno_define_snapshot` require the integrator rebuild. Full action coverage, mixed stock match, save/restore/repeated-input hashes, frontend/audio/results and second-match memory lifetime remain runtime acceptance gates.
 
@@ -2924,13 +2924,13 @@ define whose profile declares a layout**; a define without a `lua` block keeps i
 | bench SyncTest (`cycle.lua`: B held 40 frames every 100, ~24 charge/release cycles; `MELEE_SYNCTEST_BENCH=1 MELEE_SYNCTEST_CURATED=1 MELEE_SYNCTEST=12`) | 27,600 curated checks, no Lua fault logged; 616 mismatching, **all in one word: the cmd-script frame counter of P2 (the idle Mario CPU), curated word 23, from frame 544**. The Charger's own record never mismatched. The same word mismatches for a retail Mario P1 driven by the same input (649 of 10,800), and an idle-Charger control had 0 of 8,400: this is the documented unexplained SyncTest class (`PORT_DEV_QUICKREF`, "sustained combat"), not shown to come from Lua, and not a certification |
 | ids | Hero `47e0fa82...`, Striker `54334a53...`, Caster `ac4e4338...` identical in the old and the new exe |
 
-`gd.rewind_test` restores a snapshot and compares bytes; it does not itself resimulate (its text says "0 frames re-simulated"), so resimulation is what the SyncTest line is for. Online remains
-refused for defines (section 22); certifying a Lua fighter under real rollback is slice 7.
+`gd.rewind_test` restores a snapshot and compares bytes; it does not itself resimulate (its text says "0 frames re-simulated"), so resimulation is what the SyncTest line is for. Online: slice 7 (section 24) lifted the
+refusal and certified Lua fighters under real rollback.
 
 ### 23.6 Not built (the road, in order)
 
 `phys`/`coll`/`iasa` phases in Lua; `ctx.query` (opponents, stable order; `hit_from` is the one reading of an opponent so far); a counter window that Lua opens or moves (the window stays the state's `counter` key); `grab`, `throw_release`, `attribute`, article/FX/sound commands; per-article state; a LAB faults and budget
-display (S5-7 of the road); a real match fault; Lua source and compiler version in an online handshake.
+display (S5-7 of the road); a real match fault (online: section 24.3, a flag, default soft); Lua source and compiler version in an online handshake (done: the content id folds the module, section 24.1).
 
 ### 23.7 The second move: Vanilla Riposte, a counter with a follow-up (built and run 2026-10-08)
 
@@ -2958,3 +2958,32 @@ Verified (exe build id `3d693663503b247c`, vanilla disc, headless; nothing seen 
 | the Charger | its proof passes unchanged on the same build (charge 13 after 15 frames, release at 25, damage 9.750, savestate, `rewind_test` `diff_compared=0`) |
 
 Owed to a person: the feel of the stance, the answer and the follow-up (windows, damage, the 0.9 and 1.6 steps), a controller play-through, a real-rollback run (slice 7).
+
+## 24. Online (slice 7: built and run 2026-10-08)
+
+A define is a fighter in the netplay identity table, so it plays online against a peer that has the same package. Nothing in the handshake changed
+(no protocol number was bumped); the new traffic is one additive lobby message that older builds ignore.
+
+### 24.1 What changed
+
+- **One condition replaces the four offline-only refusals** (`GenoDefine_Load`'s netplay assert, the `ck:N` / `geno:` refusal in `gw_sl_parse_char`, the online select leaving defines out, the lobby): a define may be used online when it has an online identity in the mexid table (`pc/platform/gw_mexid.c`, `geno_define_online.{h,inc}`). Offline nothing changed.
+- **The identity** of a define is mix("define", the entry's content id, the bytes of the resources the simulation reads). The content id (`geno_registry.c`, `p->id`) hashes the WHOLE entry node, so the overlay words, the attribute table, the Lua module (source and compiler version), and every slice-6 key (`presentation`, `ai.like`, `kirby_copy`, `audio` names) are in it. The resource bytes are `PlMr.dat` + `PlMrAJ.dat` for `base: "mario"`, and the animation bank, the plan and every costume model for `base: "none"`. Art, sound and FX FILES (`.gxtex`, `.gnsnd`, FX packages) are cosmetic and not hashed; their names are, because they are entry keys. A define whose resource file is missing has no online identity and is not offered.
+- **The alias number is not part of the identity.** A peer with an extra define numbers its aliases differently; the lobby maps peer to local CharacterKind by identity (`gw_MexId_LocalCkForPeer`) and the scene string names the fighter `id:<16 hex>`. Proved with mismatched installs (24.4).
+- **Refusals with a reason.** `MXD` is a new lobby message (define key and short id); with it the pick of a define the opponent lacks is refused on the spot with `<name>: your opponent doesn't have it`, and one the opponent has in another version with `<name>: your opponent has another version`. Nothing is substituted. On the scripted (boot-time) path, which has no lobby traffic, the guest refuses the host's scene with `content you don't have: fighter <id>`. `gd.netplay()` gained `refusal`, `common_fighters` and `peer_defines` so a script can read the state.
+- Article item kinds are hashed by content id in `RB_ItemHash` (two installs with different mod sets number their article profiles differently).
+
+### 24.2 The state audit (S7-D6): a test, not a review
+
+`GenoDefine_StateDigest` (folded into `RB_GameHash` for a defined kind) now covers every word of `GenoState` and `GenoLuaBlock` that decides the future. Test `geno_digest_coverage` (`pc/geno/geno_online_tests.inc`) perturbs each 32-bit word in turn: a field marked covered must move the digest, a field marked excluded must not (so an exclusion cannot rot into a hole), and a word that belongs to no field fails. A field a later slice adds fails the test until someone decides, on purpose, which list it is in. The audit found two unhashed fields: `last_check` (a CHGAND after a wait extends the check registered frames earlier) and `counters` (fighter Lua reads it since slice 5b). Exclusions, each with its reason in the table: diagnostics (`resets`, `hook_calls`, `changes`, `state_entries`, `art_spawned`, `motion_land`), values keyed to one frame (`stun_bonus_frame`, `react_flags`, `react_frame`), values live only inside one callback (`in_coll`, `edge_pending`, `edge_target`), `flags`, and the two fixed-at-spawn names (`profile`, `kind`). The Lua VM keeps no state between calls (the slots in `GenoLuaBlock.slot` are the state), so the block is all of it. The block lives in game memory, which `gw_snap.c` snapshots whole (`pc_geno_*` objects), so the audit is about the HASH; the snapshot cannot miss a field.
+
+### 24.3 Lua faults online
+
+Default (soft): a fault drops the call's writes and commands, bumps `GenoLuaBlock.faults` (hashed) and sends the fighter to auto. Budgets count VM instructions and allocated bytes, never time, so the fault happens on the same tick on both peers when the package is the same; it cannot desync by itself. Optional (hard, a flag): `MELEE_GENO_FAULT_ONLINE=hard` ends the match like a disconnect (`Disconnected: a fighter's script faulted`), but only when the faulting frame is CONFIRMED: a fault noted inside a mispredicted stretch is forgotten by the rollback that undoes it (`gw_Geno_FaultNote/RolledBack/Confirmed`, test `geno_lua_fault_policy`). Known hazard, not fixed: the heap budget counts bytes Lua asks for, and a Lua value is 16 bytes on i686 Windows and 12 on i686 Linux, so a call that grows the heap to within a quarter of the 64 KB budget could fault on one OS only. `tools.geno.check` should warn above 32 KB peak growth (not built).
+
+### 24.4 Proof (build id `8c100b8c47a12269`, vanilla disc; loopback, `MELEE_NETPLAY_BIND=127.0.0.1`, local server, windows off screen)
+
+Scripted matrix: 15 scenarios of 110 s (Striker, Courier, Charger, Riposte, Caster in mirrors and against retail Fox/Marth, mismatched alias numbers, a LAN-speed run) under lag/jitter/loss, plus two 10-minute soaks (24088 and 19876 frames): every row 0 desyncs and 0 differing confirmed-frame checksums. Through the real lobby: Striker mirror, 3 games; Courier v Riposte under lag/jitter/loss, 3 games, 1029 rollbacks: 0 desyncs. Refusals: a missing define and a changed Lua constant are both refused in the lobby with the define's name. One Windows (host) v Linux (guest) match with two defines: same build id, 0 DESYNC lines, match played to its end; the per-frame hash log differs in isolated frames on that pair for retail fighters too (see the workspace brief). Tables and logs: `docs/superpowers/plans/2026-10-08-geno-slice7-online.md` section 7 in the workspace. Tools: `tools/netplay/geno_pair.py`, `geno_matrix.py`, `geno_lobby.py`, `geno_np.lua`, `geno_cov.lua`.
+
+### 24.5 Not done
+
+Replay headers for netplay matches (a `.slp` cannot hold a define), voice/announcer, the Kirby copy online, an ABI-neutral heap budget.

@@ -9,8 +9,23 @@
 #include <melee/pl/plstale.h>
 #include <sysdolphin/baselib/random.h>
 
+#if defined(TARGET_PC)
+/* Geno slice 6 (geno 10): a define whose package maps this retail sound id to its own clip (audio.voice) plays the clip and nothing else. Every voice
+ * line the game plays for a fighter goes through one of the functions below (or ft_PlaySFX in ft_0877.c), with the id before ft_80087D0C maps it. */
+extern int Geno_DefineVoicePlayKind(int kind, int sfx);
+#define FT_GENO_VOICE(fp, id) \
+    do { \
+        if ((fp)->kind >= Ft_Kind_Mex0 && Geno_DefineVoicePlayKind((int) (fp)->kind, (int) (id))) { \
+            return; \
+        } \
+    } while (0)
+#else
+#define FT_GENO_VOICE(fp, id) ((void) 0)
+#endif
+
 void ft_800881D8(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
 {
+    FT_GENO_VOICE(fp, sfx_id);
     if (!fp->x2225_b6) {
         if (sfx_id != 0x83D60) {
             if (sfx_id != 0x83D61) {
@@ -48,6 +63,7 @@ void ft_800881D8(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
 
 void ft_80088328(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
 {
+    FT_GENO_VOICE(fp, sfx_id);
     s32 temp_r30;
 
     if (!(fp->x2225_b6)) {
@@ -89,6 +105,7 @@ void ft_80088328(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
 
 void ft_80088478(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
 {
+    FT_GENO_VOICE(fp, sfx_id);
     if (sfx_id != 0x83D60) {
         if (sfx_id != 0x83D61) {
             sfx_id = ft_80087D0C(fp, sfx_id);
@@ -103,6 +120,7 @@ void ft_80088478(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
 
 void ft_80088510(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
 {
+    FT_GENO_VOICE(fp, sfx_id);
     if (sfx_id != 0x83D60) {
         if (sfx_id != 0x83D61) {
             sfx_id = ft_80087D0C(fp, sfx_id);
@@ -117,6 +135,7 @@ void ft_80088510(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
 
 void ft_800885A8(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
 {
+    FT_GENO_VOICE(fp, sfx_id);
     if (sfx_id != 0x83D60) {
         if (sfx_id != 0x83D61) {
             sfx_id = ft_80087D0C(fp, sfx_id);
@@ -131,6 +150,7 @@ void ft_800885A8(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
 
 void ft_80088640(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
 {
+    FT_GENO_VOICE(fp, sfx_id);
     if (sfx_id != 0x83D60) {
         if (sfx_id != 0x83D61) {
             sfx_id = ft_80087D0C(fp, sfx_id);

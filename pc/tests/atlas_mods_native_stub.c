@@ -8,3 +8,6 @@ void at_mods_native_src(AtModsSrc *out, const AtModsHooks *hooks)
     (void) hooks;
     memset(out, 0, sizeof *out);
 }
+
+/* the select adapter's Ui_ArtGeno asks the Geno registry for a define's own art; no registry here: no art (slice 6) */
+int gw_Geno_DefineArtTex(int ck, int what, int costume) { (void) ck; (void) what; (void) costume; return -1; }

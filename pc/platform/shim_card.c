@@ -48,6 +48,7 @@
 #define GW_CARD_MAKER "01"
 
 static int gw_card_ready;
+static char gw_card_base_dir[1024]; /* the folder CARDInit was given ("" until then): Geno's own records file lives beside it (geno_define_records.inc) */
 
 /* Card traffic is low-frequency and the card paths are new, so log every call and its result
  * until they are trusted. Off unless MELEE_CARD_DIAG=1. */
@@ -197,6 +198,7 @@ void gw_CARDInit(void) {
     base = path;
   }
 
+  snprintf(gw_card_base_dir, sizeof gw_card_base_dir, "%s", base);
   CARDSetLoadType((raw != NULL && raw[0] == '1') ? CARD_RAWIMAGE : CARD_GCIFOLDER);
   CARDSetBasePath(base, 0);
   CARDSetBasePath(base, 1);
@@ -206,6 +208,9 @@ void gw_CARDInit(void) {
   gw_log("gw: card: initialised (%s) at %s",
          (raw != NULL && raw[0] == '1') ? "raw image" : "GCI folder", base);
 }
+
+/* The card folder (or raw image path) in use, NULL while the card is off or not yet initialised. */
+const char *gw_CardBasePath(void) { return gw_card_ready && gw_card_base_dir[0] ? gw_card_base_dir : NULL; }
 
 /* 0 = no card present. */
 int gw_CARDProbe(int chan) {

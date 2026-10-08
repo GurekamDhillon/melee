@@ -151,9 +151,12 @@ int ScriptGame_ArmorReact(Fighter* fp)
             events[i].type=i+1; events[i].damage=damage; events[i].knockback=fp->dmg.kb_applied;
         }
     }
-    for (i=0;i<6;++i) if (events[i].type)
+    for (i=0;i<6;++i) if (events[i].type) {
+        extern void ScriptMods_Armor(int, int, int); /* online Envoy stage 4: the native triggered rules */
+        ScriptMods_Armor(entity,events[i].absorbed,events[i].broke);
         Script_ArmorEvent(entity,events[i].type,events[i].absorbed,events[i].broke,
                           script_caps_armor_bits(events[i].damage),script_caps_armor_bits(events[i].knockback));
+    }
     return r->absorbed != 0;
 }
 int ScriptGame_ArmorAbsorbed(Fighter* fp)

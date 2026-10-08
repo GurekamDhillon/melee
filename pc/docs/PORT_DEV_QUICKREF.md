@@ -89,11 +89,13 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | `MELEE_SLIPPI_RUN_SALT=<32 hex digits>` | Direct run's shared salt for reciprocal account tags; supplied by the workspace runner |
 | `MELEE_SLIPPI_MATCH_ID=<id>` | shared loopback run ID, including when using a UDP impairment relay |
 | `MELEE_CARD=0` | disable the memory card (on by default; GCI folder at `_build/card`) |
+| `MELEE_GENO_RECORDS=<file>` | where a Geno define's own records file is written (default: `geno_records.json` beside the card folder, none with the card off); `docs/geno.md` 22.7 |
 | `MELEE_SKIP_INTRO=1` | skip the opening movie and boot straight to the title |
 | `MELEE_TARGET_TEST=<char>` | boot straight into Target Test with that character (name or ckind; dev/testing) |
 | `MELEE_PAD_SCRIPT=<file>` | text scripts consume PADReads; `.lua` files run gameplay scripts whose `gd.input` holds count completed logic frames, including paused single steps |
 | `MELEE_PAD_IGNORE_ADAPTER=1` | ignore a physical adapter (use with scripted input) |
 | `MELEE_NETPLAY_TURBO=on` / `off` / `<hex>` | scripted netplay: the host's Turbo match rule (gw_matchrules.h); on a guest it is what the guest insists on, and a host with another word refuses it at the handshake ("different match rules"). Scene token `turbo=` for offline runs; settings `turbo_online` (hosting), `turbo_versus` (local Versus), `turbo_colanim` (the indicator's colour-animation id) |
+| `MELEE_NETPLAY_STOCKS`, `MELEE_NETPLAY_MINUTES`, `MELEE_NETPLAY_PORT` | TEST-ONLY room overrides for loopback tests: stock count, time limit in minutes, and host UDP port (default 51500). Stock/minute variables also apply to scripted direct matches. |
 | `MELEE_NETPLAY_ENVOY=on` / `off` | scripted netplay (direct-connect path): the host's online Envoy choice (a set with a passive build each, `envoy/ONLINE.md`); on a guest it is what the guest insists on, and a host with another mode word refuses it at the handshake (netplay protocol 5). Never used for Random Opponent |
 | `MELEE_ENVOY_POISON=1` | TEST-ONLY: after an online Envoy build is applied, flip one bit of slot 1's record word on this peer only, so the rollback hash must report a DESYNC at the first compared frame |
 | `MELEE_CPU_IDLE=1` | every CPU-controlled fighter stands still for the whole process (neutral input at the AI's write point; it still takes hits, falls, respawns). Same as scene `cpus=idle`; per slot `p2=fox/idle`. A script's `gd.cpu_mode(port,"fight")` overrides one slot, `"default"` returns it. Ignored in netplay. `run.sh --idle-cpus` sets it; agent test runs should. Log: `cpu: P2 idle (global)` at match start; `gd.cpu_modes()` |

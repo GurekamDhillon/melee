@@ -49,6 +49,12 @@ static void script_skill_emit(int kind, int entity, int i1, int i2, int i3, floa
     r->frame = script_skill_frame; r->kind = kind; r->entity = entity;
     r->i1 = i1; r->i2 = i2; r->i3 = i3; r->f1 = f1; r->f2 = f2;
     script_skill_head++; if (script_skill_n < SK_RING) script_skill_n++;
+    {   /* online Envoy stage 4: the native triggered rules take the row here, in the simulation (the host queue below is skipped while resimulating) */
+        extern void ScriptMods_Skill(int, int, int, int, int, float, float, int, int);
+        extern void ScriptMods_ShockEnd(int, int);
+        if (kind == SK_SHOCK_END) ScriptMods_ShockEnd(entity, i1);
+        else if (entity >= 1 && entity <= 12) ScriptMods_Skill(kind, entity, i1, i2, i3, f1, f2, script_skill_rec[entity-1].air_frames, script_skill_rec[entity-1].aerial_hit);
+    }
     Script_SkillEvent(kind, entity, i1, i2, i3, script_skill_bits(f1), script_skill_bits(f2));
 }
 static ScriptSkillRec* script_skill_of(Fighter* fp, int* entity)

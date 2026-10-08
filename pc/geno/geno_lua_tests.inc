@@ -21,7 +21,7 @@ extern int GenoGame_LuaInfo(int port, int what);
     "return M"
 
 #define TL_HEAD(KEY) \
-    "{\"geno\":9,\"fighters\":[{\"define\":{\"key\":\"" KEY "\",\"name\":\"Lua T\",\"base\":\"mario\",\"common\":\"melee.common.v1\"," \
+    "{\"geno\":10,\"fighters\":[{\"define\":{\"key\":\"" KEY "\",\"name\":\"Lua T\",\"base\":\"mario\",\"common\":\"melee.common.v1\"," \
     "\"resources\":\"retail:mario\"}"
 #define TL_BLOCK ",\"lua\":{\"source\":\"" TL_MODULE "\",\"state\":{\"charge\":\"int\",\"armed\":\"bool\"}}"
 #define TL_STATES \
@@ -240,6 +240,108 @@ static int test_geno_lua_digest(void)
         TestFail("fighter Lua: a non-define fighter's digest must stay 0");
         rc = 1;
     }
+    Geno_TestRestore();
+    return rc;
+}
+
+/* slice 5 increment 2: a counter answered in Lua. The entry of the answer state reads what the hit left in the fighter (hit_damage,
+ * countered) and scales the strike by it; a second state turns the fighter. Both read GenoState values that are already in the hash. */
+#define TC_MODULE \
+    "local M = {} " \
+    "function M.answer(ctx) local s = ctx.state " \
+    "s.power = math.min(30, math.max(9, 1.5 * ctx.self.hit_damage)) s.seen = ctx.self.countered s.from = ctx.self.hit_from end " \
+    "function M.strike(ctx) ctx.hitbox_damage(3, ctx.state.power) end " \
+    "function M.spin(ctx) ctx.turn() ctx.velocity(2, 0) end " \
+    "return M"
+#define TC_BLOCK ",\"lua\":{\"source\":\"" TC_MODULE "\",\"state\":{\"power\":\"float\",\"seen\":\"int\",\"from\":\"int\"}}"
+#define TC_STATES \
+    ",\"states\":[{\"name\":\"Parry\",\"behavior\":\"geno.ground\",\"counter\":{\"from\":2,\"to\":9,\"target\":\"geno:Answer\"}}," \
+    "{\"name\":\"Answer\",\"behavior\":\"geno.ground\",\"lua\":{\"enter\":\"answer\",\"frame\":\"strike\"}}," \
+    "{\"name\":\"Spin\",\"behavior\":\"geno.ground\",\"lua\":{\"enter\":\"spin\"}}]" \
+    ",\"specials\":{\"lw\":\"geno:Parry\",\"s\":\"geno:Spin\"}"
+
+static int test_geno_lua_counter(void)
+{
+    TestGenoState* st;
+    GenoLuaBlock* lb;
+    int rc = 0;
+    f32 want;
+    if (!tl_setup(TL_HEAD("lua-counter") TC_BLOCK TC_STATES "}]}", &st)) {
+        Geno_TestRestore();
+        return 1;
+    }
+    GenoGame_TestCapture(1, 0);
+    lb = GenoGame_LuaBlockOf(&t_fp);
+    /* a hit of 12 landed in the window: the answer's enter sees hit_damage 12 and countered 1 (Geno_OnHit counts it) */
+    st->hit_damage = 12.0f;
+    st->hit_port = -1; /* no fighter attacker: hit_from is 0 */
+    if (!Geno_SpecialEnter(&t_gobj, GENO_SP_LW)) {
+        TestFail("fighter Lua counter: the down special did not enter Parry");
+        rc = 1;
+    }
+    t_fp.motion_id = GENO_MOTION_BASE + 0;
+    st->action_time = 4;
+    t_fp.dmg.x1838_percentTemp = 12.0f;
+    Geno_OnHit(&t_gobj);
+    want = 18.0f; /* 1.5 x 12, inside 9..30 */
+    if (lb->slot[1] != 1 || lb->slot[2] != 0 || GenoGame_TestLastTarget() != GENO_TARGET(GENO_TGT_GENO, 1)) {
+        TestFail("fighter Lua counter: the answer must be entered with countered 1 and hit_from 0");
+        rc = 1;
+    }
+    {
+        union { f32 f; s32 i; } u;
+        u.i = lb->slot[0];
+        if (u.f < want - 0.0001f || u.f > want + 0.0001f) {
+            TestFail("fighter Lua counter: power must be 1.5 x the countered hit (18)");
+            rc = 1;
+        }
+    }
+    /* clamps: a 2% hit answers with 9, a 40% hit with 30 */
+    st->hit_damage = 2.0f;
+    Geno_MotionRow(&t_fp, GENO_MOTION_BASE + 1);
+    t_fp.motion_id = GENO_MOTION_BASE + 0;
+    st->action_time = 4;
+    t_fp.dmg.x1838_percentTemp = 2.0f;
+    Geno_OnHit(&t_gobj);
+    {
+        union { f32 f; s32 i; } u;
+        u.i = lb->slot[0];
+        if (u.f != 9.0f) {
+            TestFail("fighter Lua counter: a 2 percent hit must answer with the floor 9");
+            rc = 1;
+        }
+    }
+    st->action_time = 4;
+    t_fp.motion_id = GENO_MOTION_BASE + 0;
+    t_fp.dmg.x1838_percentTemp = 40.0f;
+    Geno_OnHit(&t_gobj);
+    {
+        union { f32 f; s32 i; } u;
+        u.i = lb->slot[0];
+        if (u.f != 30.0f) {
+            TestFail("fighter Lua counter: a 40 percent hit must answer with the cap 30");
+            rc = 1;
+        }
+    }
+    /* the strike frame sets the hitboxes to the stored power */
+    t_fp.motion_id = GENO_MOTION_BASE + 1;
+    Geno_MotionRow(&t_fp, GENO_MOTION_BASE + 1)->anim_cb(&t_gobj);
+    if (t_fp.x914[0].damage != 30.0f || t_fp.x914[1].damage != 30.0f || t_fp.x914[2].damage != 0.0f) {
+        TestFail("fighter Lua counter: the strike frame must set hitboxes 0 and 1 to power 30");
+        rc = 1;
+    }
+    /* turn: facing flips, and a velocity after it is relative to the new facing */
+    t_fp.facing_dir = 1.0f;
+    t_fp.ground_or_air = GA_Ground;
+    if (!Geno_SpecialEnter(&t_gobj, GENO_SP_S) || t_fp.facing_dir != -1.0f) {
+        TestFail("fighter Lua counter: ctx.turn must flip the facing");
+        rc = 1;
+    }
+    if (t_fp.gr_vel != -2.0f) {
+        TestFail("fighter Lua counter: a velocity queued after turn is relative to the new facing");
+        rc = 1;
+    }
+    GenoGame_TestCapture(0, 0);
     Geno_TestRestore();
     return rc;
 }

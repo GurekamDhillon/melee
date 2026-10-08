@@ -50,6 +50,7 @@ int ScriptGame_BuildSet(int port, int rec_hi, int rec_lo, int ops_word, int nops
 void ScriptGame_BuildClear(void)
 {
     memset(script_build, 0, sizeof script_build);
+    ScriptMods_Clear(); /* stage 4: the triggered programs and their state go with the build */
 }
 
 /* field: 0 active, 1 record digest high, 2 low, 3 ops word, 4 ops, 5 modifiers, 6 live word (what the hash sees for this port) */
@@ -109,6 +110,7 @@ unsigned ScriptGame_BuildHashWord(void)
         any = 1;
         h = script_build_mix(h ^ (unsigned) (p + 1) * 0x9E3779B1u, script_build_live(p));
     }
+    if (any) h = script_build_mix(h, ScriptMods_HashWord()); /* stage 4: statuses, recents, programs (0 without a triggered program) */
     return any ? (h | 1u) ^ 0x45564F59u : 0;
 }
 

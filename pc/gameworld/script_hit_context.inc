@@ -90,6 +90,11 @@ void ScriptGame_ReportHitContext(Fighter* attacker,Fighter* victim,int element,i
         owner=GET_FIGHTER(owner->x1064_thrownHitbox.owner);
     a.f=owner ? owner->dmg.x1830_percent : 0;
     v.f=victim->dmg.x1830_percent;
+    {   /* online Envoy stage 4: the native triggered rules see the hit here, inside the simulation (also while resimulating) */
+        extern void ScriptMods_Hit(int,int,int,int,int,int,float,float);
+        ScriptMods_Hit(owner ? owner->player_id : -1,victim->player_id,element,item ? 9 : owner ? script_hit_family_move(owner) : 0,
+            owner ? owner->ground_or_air==GA_Ground : -1,victim->ground_or_air==GA_Ground,a.f,v.f);
+    }
     Script_HitContext(owner ? owner->player_id : -1,victim->player_id,element,
         /* An item or article declares itself: its hits are projectile hits, whatever its owner was doing
            (the hit rules already record item hits as move 9). */

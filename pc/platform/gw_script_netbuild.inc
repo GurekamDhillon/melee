@@ -38,6 +38,25 @@ typedef struct {
 static GsNbSlot gs_nb[GW_NB_SLOTS];
 static int gs_nb_applied;
 
+/* ---- stage 4: the TRIGGERED program staged beside the passive ops --------------------------------------------------------------------------------------
+ * The script layer (mod_engine.lua E:native_program) compiles the equipped triggered records into flat words for the native evaluator
+ * (pc/gameworld/script_mods_core.h) and the derived tables of every status mask into VARIANTS (fighter values, hit rules without their status bits,
+ * crit configuration). Words are loaded into the game's snapshotted BSS at the arm; the variants stay here (constant for the match) and are applied by
+ * gw_Script_NetModsVariant when the evaluator's status mask changes. The program digest is folded into the slot's ops word, so the agreement word, the
+ * build table and the rollback hash all cover it. */
+#define GW_MODS_WORDS 6568
+#define GW_NB_VARIANTS 24
+#define GW_NB_VOPS 12
+extern int gw_ScriptMods_ProgWord(int port, int index, int value);
+extern int gw_ScriptMods_ProgSeal(int port);
+extern int gw_ScriptMods_Read(int port, int what, int idx);
+extern int gw_ScriptGame_CritSet(int entity, int owner, int slot, int chance, int mult, int mult_max, int launch, int min_percent, int force, int flags);
+extern int gw_ScriptGame_CritRead(int entity, int field);
+typedef struct { int nops, curse_rule; GsSimOp ops[GW_NB_VOPS]; } GsNbVariant;
+typedef struct { int have, nvariants; unsigned digest; int words[GW_MODS_WORDS]; GsNbVariant var[GW_NB_VARIANTS]; } GsNbProg;
+static GsNbProg gs_nb_prog[GW_NB_SLOTS];
+static GsNbProg gs_nb_prog_draft;
+
 static unsigned gs_nb_mix(unsigned h, unsigned v) {
     h ^= v;
     h *= 0x01000193u;
@@ -57,6 +76,18 @@ static unsigned gs_nb_op_word(const GsSimOp *o) {
         h = gs_nb_mix(h, (unsigned) o->hit_rules.status);
         for (i = 0; i < o->hit_rules.count; ++i) for (j = 0; j < GS_HR_FIELDS; ++j) if (j != 12) h = gs_nb_mix(h, (unsigned) o->hit_rules.rules[i][j]);
     } else if (o->kind >= GS_SIM_CAPS) { for (i = 0; i < 9; ++i) h = gs_nb_mix(h, (unsigned) o->eff[i]); }
+    return h;
+}
+static unsigned gs_nb_prog_digest(const GsNbProg *g) {
+    unsigned h = 0x6D6F6473u;
+    int i, j;
+    for (i = 0; i < GW_MODS_WORDS; ++i) h = gs_nb_mix(h, (unsigned) g->words[i]);
+    h = gs_nb_mix(h, (unsigned) g->nvariants);
+    for (i = 0; i < g->nvariants; ++i) {
+        h = gs_nb_mix(h, (unsigned) g->var[i].nops);
+        h = gs_nb_mix(h, (unsigned) g->var[i].curse_rule);
+        for (j = 0; j < g->var[i].nops; ++j) h = gs_nb_mix(h, gs_nb_op_word(&g->var[i].ops[j]));
+    }
     return h;
 }
 static unsigned gs_nb_ops_word(const GsNbSlot *s) {
@@ -124,6 +155,45 @@ static void gs_nb_parse_op(lua_State *L, int slot, GsSimOp *o) {
     }
 }
 
+
+/* The optional 4th argument of gd.netbuild_stage: {words = {6568 ints}, variants = { {ops = {...}, curse_rule = n}, ... }}. Parsed into a draft. */
+static void gs_nb_parse_program(lua_State *L, int arg, int slot, GsNbProg *out) {
+    size_t n, i, j;
+    int idx = lua_absindex(L, arg);
+    memset(out, 0, sizeof *out);
+    luaL_checktype(L, idx, LUA_TTABLE);
+    lua_getfield(L, idx, "words"); luaL_checktype(L, -1, LUA_TTABLE);
+    n = lua_rawlen(L, -1);
+    if (n != GW_MODS_WORDS) luaL_error(L, "netbuild_stage: program needs %d words, got %d", GW_MODS_WORDS, (int) n);
+    for (i = 0; i < n; ++i) { lua_rawgeti(L, -1, (lua_Integer) i + 1); out->words[i] = (int) luaL_checkinteger(L, -1); lua_pop(L, 1); }
+    lua_pop(L, 1);
+    if (out->words[0] != 0x534D5031 || out->words[1] < 0 || out->words[1] > 24) luaL_error(L, "netbuild_stage: bad program header");
+    lua_getfield(L, idx, "variants"); luaL_checktype(L, -1, LUA_TTABLE);
+    n = lua_rawlen(L, -1);
+    if (n < 1 || n > GW_NB_VARIANTS) luaL_error(L, "netbuild_stage: 1..%d program variants", GW_NB_VARIANTS);
+    out->nvariants = (int) n;
+    for (i = 0; i < n; ++i) {
+        size_t m;
+        GsNbVariant *v = &out->var[i];
+        lua_rawgeti(L, -1, (lua_Integer) i + 1); luaL_checktype(L, -1, LUA_TTABLE);
+        lua_getfield(L, -1, "curse_rule"); v->curse_rule = (int) luaL_optinteger(L, -1, 0); lua_pop(L, 1);
+        lua_getfield(L, -1, "ops"); luaL_checktype(L, -1, LUA_TTABLE);
+        m = lua_rawlen(L, -1);
+        if (m > GW_NB_VOPS) luaL_error(L, "netbuild_stage: at most %d ops in a variant", GW_NB_VOPS);
+        for (j = 0; j < m; ++j) {
+            lua_rawgeti(L, -1, (lua_Integer) j + 1); luaL_checktype(L, -1, LUA_TTABLE);
+            gs_nb_parse_op(L, slot, &v->ops[j]);
+            lua_pop(L, 1);
+        }
+        v->nops = (int) m;
+        lua_pop(L, 2);
+    }
+    lua_pop(L, 1);
+    for (i = 0; i < GW_MODS_WORDS; ++i) {} /* (the words beyond the header are bounds-checked by the native seal at the arm) */
+    out->digest = gs_nb_prog_digest(out);
+    out->have = 1;
+}
+
 /* Store one slot's build: the record (already parsed) and the ops (already validated). The digest of the ops is computed here, once. */
 static void gs_nb_install(int slot, const char *record, const GwMbRecord *rec, const GsSimOp *ops, int n) {
     GsNbSlot *s = &gs_nb[slot];
@@ -161,10 +231,14 @@ static int l_netbuild_stage(lua_State *L) {
             gs_nb_parse_op(L, slot, &draft[i]);
             lua_pop(L, 1);
         }
+        if (lua_gettop(L) >= 4 && !lua_isnil(L, 4)) gs_nb_parse_program(L, 4, slot, &gs_nb_prog_draft); else memset(&gs_nb_prog_draft, 0, sizeof gs_nb_prog_draft);
         gs_nb_install(slot, record, &rec, draft, (int) n);
         s = &gs_nb[slot];
+        memcpy(&gs_nb_prog[slot], &gs_nb_prog_draft, sizeof gs_nb_prog[slot]);
+        if (gs_nb_prog[slot].have) s->ops_word = gs_nb_mix(s->ops_word ^ 0x9E3779B1u, gs_nb_prog[slot].digest);
     }
-    gw_log("netbuild: staged slot=%d modifiers=%d keystones=%d ops=%d record=%s ops=%08x word=%08x", slot + 1, rec.nmods, rec.nkeystones, s->nops, rec.digest, s->ops_word, gw_Script_NetBuildWord());
+    gw_log("netbuild: staged slot=%d modifiers=%d keystones=%d ops=%d record=%s ops=%08x word=%08x program=%s rules=%d variants=%d", slot + 1, rec.nmods, rec.nkeystones, s->nops, rec.digest, s->ops_word, gw_Script_NetBuildWord(),
+           gs_nb_prog[slot].have ? "yes" : "no", gs_nb_prog[slot].have ? gs_nb_prog[slot].words[1] : 0, gs_nb_prog[slot].have ? gs_nb_prog[slot].nvariants : 0);
     lua_pushstring(L, rec.digest);
     return 1;
 }
@@ -173,8 +247,8 @@ static int l_netbuild_clear(lua_State *L) {
     if (!lua_isnoneornil(L, 1)) {
         lua_Integer slot = luaL_checkinteger(L, 1);
         if (slot < 1 || slot > GW_NB_SLOTS) return luaL_error(L, "netbuild_clear: slot is 1 or 2");
-        memset(&gs_nb[slot - 1], 0, sizeof gs_nb[0]);
-    } else for (i = 0; i < GW_NB_SLOTS; ++i) memset(&gs_nb[i], 0, sizeof gs_nb[0]);
+        memset(&gs_nb[slot - 1], 0, sizeof gs_nb[0]); memset(&gs_nb_prog[slot - 1], 0, sizeof gs_nb_prog[0]);
+    } else for (i = 0; i < GW_NB_SLOTS; ++i) { memset(&gs_nb[i], 0, sizeof gs_nb[0]); memset(&gs_nb_prog[i], 0, sizeof gs_nb_prog[0]); }
     lua_pushboolean(L, 1);
     return 1;
 }
@@ -199,6 +273,58 @@ static int gs_nb_apply_slot(int slot) {
     }
     return ok;
 }
+
+/* Stage 4: the evaluator's status mask changed (or the Marked amount did): apply the derived tables of `variant`, called from inside the simulation by
+ * ScriptMods_StageFrame. The same setters the arm used, under the build owner. status_bits is a function of the mask (the evaluator computes it);
+ * curse_bits is the Marked amount (float bits), added to the incoming launch rule the program marked. Deterministic: constant staged data, snapshotted targets. */
+static float gs_nb_f(int bits) { union { int i; float f; } u; u.i = bits; return u.f; }
+void gw_Script_NetModsVariant(int port, int variant, int status_bits, int curse_bits) {
+    GsNbProg *pr;
+    GsNbVariant *v;
+    int j, k, have_mod = 0, have_rules = 0, have_crit = 0, entity = port + 1, owner = GW_NB_OWNER, present = 0;
+    if (port < 0 || port >= GW_NB_SLOTS || !gs_nb_prog[port].have) return;
+    pr = &gs_nb_prog[port];
+    if (variant < 0 || variant >= pr->nvariants) { gw_log("netbuild: variant %d of port %d out of range", variant, port + 1); return; }
+    v = &pr->var[variant];
+    for (j = 0; j < v->nops; ++j) {
+        GsSimOp *o = &v->ops[j];
+        if (o->kind == 1) {
+            have_mod = 1;
+            if (gw_ScriptGame_FighterMod(o->slot, owner, 1, o->bits[0], o->bits[1], o->bits[2], o->bits[3], o->bits[4], o->bits[5], o->bits[6], o->bits[7]))
+                gw_ScriptGame_FighterModExtra(o->slot, owner, o->bits[8], o->bits[9], o->bits[10]);
+        } else if (o->kind == 3) {
+            GsHitRules r = o->hit_rules;
+            have_rules = 1;
+            r.status = status_bits;
+            if (v->curse_rule >= 1 && v->curse_rule <= r.count && r.rules[v->curse_rule - 1][0] == 1002 && curse_bits)
+                r.rules[v->curse_rule - 1][15] = (int) gs_fbits(gs_nb_f(r.rules[v->curse_rule - 1][15]) + gs_nb_f(curse_bits));
+            gs_hr_apply_targets(port, -1, owner, &r);
+        }
+    }
+    if (!have_mod && gw_ScriptGame_FighterModOwner(port) == owner) gw_ScriptGame_FighterMod(port, owner, 0, gs_fbits(1.0f), gs_fbits(1.0f), gs_fbits(1.0f), gs_fbits(1.0f), gs_fbits(1.0f), gs_fbits(1.0f), gs_fbits(1.0f), gs_fbits(1.0f));
+    if (!have_rules) { GsHitRules r; memset(&r, 0, sizeof r); r.status = status_bits; gs_hr_apply_targets(port, -1, owner, &r); }
+    /* crit: keep a configuration the build already owns (a `begin` would also clear the forced-crit count); rewrite slots, zero the ones the variant lacks */
+    {
+        int has_now = gw_ScriptGame_CritRead(entity, 0) == owner ? gw_ScriptGame_CritRead(entity, 1) : 0, want = 0;
+        int owned = gw_ScriptGame_CritRead(entity, 0) == owner;
+        for (j = 0; j < v->nops; ++j) {
+            GsSimOp *o = &v->ops[j];
+            if (o->kind != GS_SIM_CRIT) continue;
+            have_crit = 1;
+            if (o->eff[7] & 1) {  /* begin: only when nothing is owned yet or the floor differs */
+                if (!owned || gw_ScriptGame_CritRead(entity, 2) != o->eff[5]) { gw_ScriptGame_CritSet(entity, owner, o->eff[0], o->eff[1], o->eff[2], o->eff[3], o->eff[4], o->eff[5], 0, o->eff[7]); owned = 1; }
+                continue;
+            }
+            gw_ScriptGame_CritSet(entity, owner, o->eff[0], o->eff[1], o->eff[2], o->eff[3], o->eff[4], o->eff[5], o->eff[6], o->eff[7]);
+            want |= 1 << o->eff[0];
+        }
+        if (!have_crit) { if (owned) gw_ScriptGame_CritSet(entity, owner, 0, 0, 0, 0, 0, 0, 0, 2); }
+        else for (k = 0; k < 10; ++k) if ((has_now & (1 << k)) && !(want & (1 << k)))
+            gw_ScriptGame_CritSet(entity, owner, k, gs_fbits(0.0f), gs_fbits(1.0f), gs_fbits(1.0f), gs_fbits(1.0f), 0, 0, 4);
+    }
+    (void) present;
+}
+
 /* Everything the build owns goes: called at every scene start, so a match without a build is exactly as it always was. */
 void gw_Script_NetBuildSceneBegin(void) {
     if (gs_nb_applied) {
@@ -225,8 +351,18 @@ void gw_Script_NetBuildApply(void) {
         int ok;
         if (!gs_nb[i].have) continue;
         ok = gs_nb_apply_slot(i);
+        if (gs_nb_prog[i].have) {   /* stage 4: the triggered program goes into the game's snapshotted state */
+            int k, sealed;
+            for (k = 0; k < GW_MODS_WORDS; ++k) gw_ScriptMods_ProgWord(i, k, gs_nb_prog[i].words[k]);
+            sealed = gw_ScriptMods_ProgSeal(i);
+            gw_log("netbuild: slot %d triggered program %s (rules %d, variants %d, digest %08x)", i + 1, sealed ? "sealed" : "REFUSED", gs_nb_prog[i].words[1], gs_nb_prog[i].nvariants, gs_nb_prog[i].digest);
+        }
         gw_ScriptGame_BuildSet(i, (int) gs_nb[i].rec.dig_hi, (int) gs_nb[i].rec.dig_lo, (int) gs_nb[i].ops_word, ok, gs_nb[i].rec.nmods);
         gw_log("netbuild: applied slot=%d ops=%d/%d record=%s ops=%08x", i + 1, ok, gs_nb[i].nops, gs_nb[i].rec.digest, gs_nb[i].ops_word);
+        if (i == 0 && gs_nb_prog[0].have) { /* test hook: the triggered evaluator's frame counter is poisoned on this peer only (MELEE_MODS_POISON=1) */
+            const char *q = getenv("MELEE_MODS_POISON");
+            if (q != NULL && q[0] == '1') { extern void gw_ScriptMods_Poison(int, int); gw_ScriptMods_Poison(0, 0); gw_log("netbuild: POISONED the evaluator's frame counter on this peer (test)"); }
+        }
         if (i == 0) { /* test hook: one peer's table is poisoned (MELEE_ENVOY_POISON=1), so its hash word must disagree */
             const char *p = getenv("MELEE_ENVOY_POISON");
             if (p != NULL && p[0] == '1') {
@@ -237,6 +373,52 @@ void gw_Script_NetBuildApply(void) {
     }
     gs_nb_applied = 1;
     gw_log("netbuild: word=%08x hash-word=%08x", gw_Script_NetBuildWord(), gw_ScriptGame_BuildHashWord());
+}
+
+/* The engine's Script_GameEvent sites reach the evaluator before the host's own gating (called from gw_Script_GameEvent, resimulated frames included). */
+extern void gw_ScriptMods_GameEvent(int what, int a, int b, int c, int d);
+
+/* gd.netmods(): READ-ONLY, allowed online. {active, ticks, events, variants_applied, fx_applied, ports = { {loaded, rules, digest, frame, dropped, queue, mask, variant,
+ * statuses = {burn = {stacks, max, left, amount, cause}, ...}} , ... }}. `left` is frames until expiry. For presentation and tests; gameplay never reads it. */
+static int l_netmods(lua_State *L) {
+    static const char *names[8] = {"", "burn", "shock", "chill", "curse", "haste", "guarded", "momentum"};
+    int p, i, active = 0;
+    char hex[20];
+    for (p = 0; p < GW_NB_SLOTS; ++p) active += gw_ScriptMods_Read(p, 0, 0);
+    lua_createtable(L, 0, 8);
+    gs_setbool(L, "active", active != 0);
+    gs_setint(L, "ticks", gw_ScriptMods_Read(0, 7, 0));
+    gs_setint(L, "events", gw_ScriptMods_Read(0, 8, 0));
+    gs_setint(L, "variants_applied", gw_ScriptMods_Read(0, 9, 0));
+    gs_setint(L, "fx_applied", gw_ScriptMods_Read(0, 10, 0));
+    lua_createtable(L, GW_NB_SLOTS, 0);
+    for (p = 0; p < GW_NB_SLOTS; ++p) {
+        int frame = gw_ScriptMods_Read(p, 2, 0);
+        lua_createtable(L, 0, 10);
+        gs_setbool(L, "loaded", gw_ScriptMods_Read(p, 0, 0));
+        gs_setint(L, "rules", gw_ScriptMods_Read(p, 6, 0));
+        snprintf(hex, sizeof hex, "%08x", (unsigned) gw_ScriptMods_Read(p, 1, 0)); lua_pushstring(L, hex); lua_setfield(L, -2, "digest");
+        gs_setint(L, "frame", frame);
+        gs_setint(L, "dropped", gw_ScriptMods_Read(p, 3, 0));
+        gs_setint(L, "queue", gw_ScriptMods_Read(p, 11, 0));
+        gs_setint(L, "mask", gw_ScriptMods_Read(p, 5, 0));
+        gs_setint(L, "variant", gw_ScriptMods_Read(p, 4, 0));
+        lua_createtable(L, 0, 7);
+        for (i = 1; i <= 7; ++i) {
+            if (!gw_ScriptMods_Read(p, 20, i)) continue;
+            lua_createtable(L, 0, 5);
+            gs_setint(L, "stacks", gw_ScriptMods_Read(p, 21, i));
+            gs_setint(L, "max", gw_ScriptMods_Read(p, 22, i));
+            gs_setint(L, "left", gw_ScriptMods_Read(p, 23, i) - frame);
+            { union { int i; float f; } u; u.i = gw_ScriptMods_Read(p, 25, i); gs_setnum(L, "amount", u.f); }
+            gs_setint(L, "cause", gw_ScriptMods_Read(p, 26, i));
+            lua_setfield(L, -2, names[i]);
+        }
+        lua_setfield(L, -2, "statuses");
+        lua_rawseti(L, -2, p + 1);
+    }
+    lua_setfield(L, -2, "ports");
+    return 1;
 }
 
 static int l_netbuild(lua_State *L) {

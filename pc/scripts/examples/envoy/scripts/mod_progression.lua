@@ -136,15 +136,25 @@ return function()
   end
   return eq,{}
  end
- -- Everything a client stages for the next game: both seats' records and passive ops. Returns {[seat]={record=,digest=,ops=,build=}}.
+ -- Everything a client stages for the next game: both seats' records and passive ops. Returns {[seat]={record=,digest=,ops=,build=,program=}}.
+ -- Stage 4: when either seat holds a triggered record BOTH seats carry a native program (a seat without triggered records still needs its
+ -- derived-table variants: the other seat's statuses land on it). Built in two steps so a caller can spread the work over ticks (the script
+ -- instruction budget): set_stage_seat for one seat at a time, then set_stage_programs.
+ function P.set_stage_seat(D,seed,game,seat,picks)
+  local eq,imp=P.set_build(D,seed,game,seat,picks)
+  local record,digest=D.mod_codec.build_record({seed=seed,game=game,loop=0,port=seat},eq,imp)
+  local engine=D.mod_engine.new(seed,D.mod_pool);engine:set_build(seat,eq,imp)
+  return {record=record,digest=digest,ops=engine:passive_ops(seat,seat),build=eq,engine=engine,triggered=engine:has_triggered(seat)}
+ end
+ function P.set_stage_program(seat_result,seat)
+  seat_result.program=seat_result.engine:native_program(seat,seat)
+  return seat_result.program
+ end
  function P.set_stage(D,seed,game,picks)
   local out={}
-  for seat=1,2 do
-   local eq,imp=P.set_build(D,seed,game,seat,picks)
-   local record,digest=D.mod_codec.build_record({seed=seed,game=game,loop=0,port=seat},eq,imp)
-   local engine=D.mod_engine.new(seed,D.mod_pool);engine:set_build(seat,eq,imp)
-   out[seat]={record=record,digest=digest,ops=engine:passive_ops(seat,seat),build=eq}
-  end
+  for seat=1,2 do out[seat]=P.set_stage_seat(D,seed,game,seat,picks) end
+  if out[1].triggered or out[2].triggered then for seat=1,2 do P.set_stage_program(out[seat],seat) end end
+  for seat=1,2 do out[seat].engine=nil end
   return out
  end
  return P

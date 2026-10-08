@@ -1,0 +1,72 @@
+{
+  "geno": 10,
+  "fighters": [
+    {
+      "define": {
+        "key": "vanilla-riposte",
+        "name": "Vanilla Riposte",
+        "base": "mario",
+        "common": "melee.common.v1",
+        "resources": "retail:mario"
+      },
+      "attributes": {
+        "walk_max_vel": 1.5
+      },
+      "lua": {
+        "script": "lua/riposte.lua",
+        "state": {
+          "power": "float",
+          "streak": "int",
+          "follow": "bool"
+        }
+      },
+      "states": [
+        {
+          "name": "Parry",
+          "behavior": "geno.ground",
+          "subaction": 295,
+          "like": "motion:349",
+          "phys": "auto",
+          "coll": "both",
+          "iasa": "none",
+          "counter": {
+            "from": 4,
+            "to": 24,
+            "target": "geno:Riposte"
+          },
+          "move_tag": "special",
+          "lua": { "enter": "parry_enter", "frame": "parry_frame" }
+        },
+        {
+          "name": "Riposte",
+          "behavior": "geno.ground",
+          "subaction": 296,
+          "like": "motion:345",
+          "phys": "auto",
+          "coll": "both",
+          "move_tag": "special",
+          "lua": { "enter": "riposte_enter", "frame": "riposte_frame" }
+        },
+        {
+          "name": "Follow",
+          "behavior": "geno.ground",
+          "subaction": 297,
+          "like": "motion:343",
+          "phys": "auto",
+          "coll": "both",
+          "move_tag": "special",
+          "lua": { "enter": "follow_enter", "frame": "follow_frame" }
+        }
+      ],
+      "specials": {
+        "lw": "geno:Parry",
+        "air_lw": "geno:Parry"
+      },
+      "subactions": [
+        { "index": 295, "file": "moves/parry.words", "move_tag": "special" },
+        { "index": 296, "file": "moves/riposte.words", "move_tag": "special" },
+        { "index": 297, "file": "moves/follow.words", "move_tag": "special" }
+      ]
+    }
+  ]
+}

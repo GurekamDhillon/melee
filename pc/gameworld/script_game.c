@@ -1185,6 +1185,7 @@ void ScriptGame_StageFrame(void)
     script_bench_frame();
     ScriptGame_CapsEffectsFrame();
     ScriptGame_SkillFrame();
+    { extern void ScriptMods_StageFrame(void); ScriptMods_StageFrame(); } /* online Envoy: the triggered rules, after this frame's skill rows are queued */
     ScriptGame_EchoFrame();
     script_caps_status_frame();
     ScriptGame_AreaDrain();
@@ -1716,6 +1717,7 @@ static Fighter* script_fighter(int slot)
 #include "script_fighter_caps_effects.inc"
 #include "script_skill.inc"
 #include "script_fighter_interrupt.inc"
+#include "script_mods.inc" /* online Envoy stage 4: the native triggered-rule evaluator (its hash word is in script_build.inc's) */
 #include "script_build.inc"
 #include "script_zones.inc"
 #include "script_six_slots.inc"

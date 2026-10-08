@@ -501,3 +501,235 @@ static int test_geno_define_presentation_ck(void)
     gn_swapped = entry_swapped; ++gn_pool_gen;
     return rc;
 }
+
+/* ---- slice 6 (geno 10): ai, kirby_copy, audio, the emblem, a define's own records ---------------------------------------------------- */
+static int test_geno_define_s6_keys(void)
+{
+    static gn_registry r;
+    int rc = 0;
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(10, ",\"ai\":{\"like\":\"fox\"},\"kirby_copy\":\"retail:mario\""), "ok") != 1 || r.p[0].ai_like != 1 || !r.p[0].ai_set || r.p[0].kb_copy != 0) {
+        gw_test_fail("ai.like fox / kirby_copy retail:mario: like %d copy %d", r.n ? r.p[0].ai_like : -9, r.n ? r.p[0].kb_copy : -9); rc = 1;
+    }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(10, ",\"ai\":{\"like\":\"Bowser\"},\"kirby_copy\":\"none\""), "alias") != 1 || r.p[0].ai_like != 5 || r.p[0].kb_copy != -1) {
+        gw_test_fail("ai.like bowser (an alias) / kirby_copy none"); rc = 1;
+    }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(10, ""), "plain") != 1 || r.p[0].ai_set || r.p[0].ai_like != -1 || r.p[0].kb_copy != -1 || r.p[0].aud != NULL) {
+        gw_test_fail("a define without the keys has a policy"); rc = 1;
+    }
+    gn_registry_clear(&r);
+    /* ai and kirby_copy need geno 10; audio and the emblem are presentation and take 9 (a file of 8 refuses them) */
+    if (gn_parse_text(&r, GN_T_HEAD(9, ",\"ai\":{\"like\":\"fox\"}"), "ai9") != 0 || gn_parse_text(&r, GN_T_HEAD(9, ",\"kirby_copy\":\"none\""), "kb9") != 0 ||
+        gn_parse_text(&r, GN_T_HEAD(8, ",\"audio\":{\"announcer\":\"a.gnsnd\"}"), "au8") != 0 || gn_parse_text(&r, GN_T_HEAD(8, ",\"presentation\":{\"emblem\":\"e.gxtex\"}"), "em8") != 0) {
+        gw_test_fail("a v9 file with ai or kirby_copy, or a v8 file with audio or emblem, was accepted"); rc = 1;
+    }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(9, ",\"audio\":{\"announcer\":\"a.gnsnd\"},\"presentation\":{\"emblem\":\"e.gxtex\"}"), "au9") != 1 || !r.p[0].aud || !r.p[0].pres) {
+        gw_test_fail("audio and emblem were refused at geno 9"); rc = 1;
+    }
+    gn_registry_clear(&r);
+    /* refusals */
+    {
+        static const char* const bad[] = {
+            ",\"ai\":{\"like\":\"nobody\"}", ",\"ai\":{\"like\":\"nana\"}", ",\"ai\":{\"like\":3}", ",\"ai\":{}", ",\"ai\":{\"like\":\"fox\",\"x\":1}", ",\"ai\":\"fox\"",
+            ",\"kirby_copy\":\"retail:kirby\"", ",\"kirby_copy\":\"retail:nana\"", ",\"kirby_copy\":\"retail:\"", ",\"kirby_copy\":\"mario\"", ",\"kirby_copy\":true",
+            ",\"audio\":{\"hi\":1}", ",\"audio\":{\"announcer\":\"a.wav\"}", ",\"audio\":{\"announcer\":\"d/a.gnsnd\"}", ",\"audio\":{\"announcer\":\"..a.gnsnd\"}", ",\"audio\":\"a.gnsnd\"",
+            ",\"audio\":{\"voice\":[]}", ",\"audio\":{\"voice\":[{\"sfx\":0,\"file\":\"a.gnsnd\"}]}", ",\"audio\":{\"voice\":[{\"sfx\":5,\"file\":\"a.gnsnd\",\"volume\":128}]}",
+            ",\"audio\":{\"voice\":[{\"sfx\":5,\"file\":\"a.gnsnd\"},{\"sfx\":5,\"file\":\"b.gnsnd\"}]}", ",\"audio\":{\"voice\":[{\"sfx\":5}]}",
+            ",\"audio\":{\"voice\":[{\"sfx\":5,\"file\":\"a.gnsnd\",\"pitch\":1}]}", ",\"presentation\":{\"emblem\":[\"e.gxtex\"]}", ",\"presentation\":{\"emblem\":\"e.png\"}"};
+        size_t i;
+        for (i = 0; i < sizeof bad / sizeof bad[0]; ++i) {
+            static char text[512];
+            snprintf(text, sizeof text, "{\"geno\":10,\"fighters\":[{\"define\":{\"key\":\"t7\",\"name\":\"T7\",\"base\":\"mario\",\"common\":\"melee.common.v1\",\"resources\":\"retail:mario\"}%s}]}", bad[i]);
+            if (gn_parse_text(&r, text, "bad") != 0) { gw_test_fail("accepted: %s", bad[i]); rc = 1; }
+            gn_registry_clear(&r);
+        }
+    }
+    /* audio and the emblem parse */
+    if (gn_parse_text(&r, GN_T_HEAD(10, ",\"audio\":{\"announcer\":\"t7_call.gnsnd\",\"voice\":[{\"sfx\":5,\"file\":\"t7_a.gnsnd\",\"volume\":90},{\"sfx\":6,\"file\":\"t7_b.gnsnd\"}]},"
+                                       "\"presentation\":{\"emblem\":\"t7_emblem.gxtex\"}"), "audio") != 1 || !r.p[0].aud || strcmp(r.p[0].aud->announcer, "t7_call.gnsnd") ||
+        r.p[0].aud->nvoice != 2 || r.p[0].aud->voice_sfx[1] != 6 || r.p[0].aud->voice_vol[0] != 90 || r.p[0].aud->voice_vol[1] != 127 ||
+        !r.p[0].pres || strcmp(gn_pres_file(&r.p[0], GN_PRES_EMBLEM, 5), "t7_emblem.gxtex")) {
+        gw_test_fail("audio and emblem did not parse"); rc = 1;
+    }
+    gn_registry_clear(&r);
+    /* the entry id covers the keys: a policy is part of the fighter's identity */
+    {
+        static gn_registry r2;
+        gn_registry_clear(&r2);
+        if (gn_parse_text(&r, GN_T_HEAD(10, ",\"kirby_copy\":\"none\""), "ida") != 1 || gn_parse_text(&r2, GN_T_HEAD(10, ",\"kirby_copy\":\"retail:fox\""), "idb") != 1) {
+            gw_test_fail("id fixtures refused"); rc = 1;
+        } else if (r.p[0].id == r2.p[0].id) { gw_test_fail("two kirby_copy policies share an id"); rc = 1; }
+        gn_registry_clear(&r2);
+    }
+    gn_registry_clear(&r);
+    return rc;
+}
+
+static int test_geno_define_policy_ck(void)
+{
+    gn_registry entry = gn_boot, entry_saved = gn_saved;
+    int entry_loaded = gn_boot_loaded, entry_saved_loaded = gn_saved_loaded;
+    int entry_swapped = gn_swapped;
+    int rc = 0, ck;
+    memset(&gn_boot, 0, sizeof gn_boot);
+    memset(&gn_saved, 0, sizeof gn_saved);
+    gn_boot_loaded = 1; gn_saved_loaded = 0; gn_swapped = 0;
+    if (gw_Geno_TestInstall("{\"geno\":10,\"fighters\":[{\"define\":{\"key\":\"t7\",\"name\":\"T7\",\"base\":\"mario\",\"common\":\"melee.common.v1\",\"resources\":\"retail:mario\"},"
+                            "\"ai\":{\"like\":\"falco\"},\"kirby_copy\":\"retail:luigi\"}]}") != 1) {
+        gw_test_fail("install of a define with ai and kirby_copy"); rc = 1;
+    } else if ((ck = gw_Geno_DefineResolve("t7")) < 34) {
+        gw_test_fail("no resident CK (%d)", ck); rc = 1;
+    } else {
+        if (gw_Geno_DefineAiLike(ck - 1) != 22 || gw_Geno_DefineKirbyCopy(ck - 1) != 17) {
+            gw_test_fail("by kind: ai.like %d (want 22 Falco), kirby copy %d (want 17 Luigi)", gw_Geno_DefineAiLike(ck - 1), gw_Geno_DefineKirbyCopy(ck - 1)); rc = 1;
+        }
+        /* retail kinds are not defines: AI -1, Kirby -2 (the caller keeps retail behaviour); a kind no define holds likewise */
+        if (gw_Geno_DefineAiLike(0) != -1 || gw_Geno_DefineAiLike(8) != -1 || gw_Geno_DefineKirbyCopy(0) != -2 || gw_Geno_DefineKirbyCopy(4) != -2 ||
+            gw_Geno_DefineKirbyCopy(120) != -2 || gw_Geno_DefineAiLike(-1) != -1) {
+            gw_test_fail("a retail kind answered a define policy"); rc = 1;
+        }
+    }
+    gw_Geno_TestRestore();
+    gn_registry_clear(&gn_boot);
+    gn_registry_clear(&gn_saved);
+    gn_boot = entry; gn_saved = entry_saved;
+    gn_boot_loaded = entry_loaded; gn_saved_loaded = entry_saved_loaded;
+    gn_swapped = entry_swapped; ++gn_pool_gen;
+    return rc;
+}
+
+/* the .gnsnd container and the clip route: decode, the refusals, a declared-but-missing file stays silent, a loaded clip reaches the mixer */
+static int test_geno_gnsnd_audio(void)
+{
+    extern int gw_Audio_PlayClip(const int16_t* pcm, int frames, int channels, int volume);
+    extern uint32_t gw_Audio_ClipStat(int which);
+    unsigned char b[32 + 8];
+    int16_t* pcm; int frames = 0, channels = 0, rc = 0; const char* why = "";
+    memset(b, 0, sizeof b);
+    memcpy(b, "GNSD", 4);
+    b[7] = 1; b[10] = 0x7D; b[11] = 0x00; /* 32000 */ b[15] = 1; b[19] = 4; b[23] = 32; b[27] = 8;
+    b[32] = 0x12; b[33] = 0x34; b[34] = 0xFF; b[35] = 0xFE; b[36] = 0x80; b[37] = 0x00; b[38] = 0x7F; b[39] = 0xFF;
+    pcm = gn_gnsnd_decode(b, sizeof b, &frames, &channels, &why);
+    if (!pcm || frames != 4 || channels != 1 || pcm[0] != 0x1234 || pcm[1] != -2 || pcm[2] != -32768 || pcm[3] != 32767) { gw_test_fail("gnsnd decode: %s", why); rc = 1; }
+    free(pcm);
+    {
+        unsigned char c[sizeof b];
+        memcpy(c, b, sizeof b); c[0] = 'X';
+        if (gn_gnsnd_decode(c, sizeof c, &frames, &channels, &why)) { gw_test_fail("bad magic decoded"); rc = 1; }
+        memcpy(c, b, sizeof b); c[7] = 2;
+        if (gn_gnsnd_decode(c, sizeof c, &frames, &channels, &why)) { gw_test_fail("version 2 decoded"); rc = 1; }
+        memcpy(c, b, sizeof b); c[11] = 1;
+        if (gn_gnsnd_decode(c, sizeof c, &frames, &channels, &why)) { gw_test_fail("a 32001 Hz file decoded"); rc = 1; }
+        memcpy(c, b, sizeof b); c[15] = 3;
+        if (gn_gnsnd_decode(c, sizeof c, &frames, &channels, &why)) { gw_test_fail("3 channels decoded"); rc = 1; }
+        memcpy(c, b, sizeof b); c[19] = 5;
+        if (gn_gnsnd_decode(c, sizeof c, &frames, &channels, &why)) { gw_test_fail("frames/length mismatch decoded"); rc = 1; }
+        if (gn_gnsnd_decode(b, sizeof b - 1, &frames, &channels, &why) || gn_gnsnd_decode(b, 10, &frames, &channels, &why)) { gw_test_fail("a short file decoded"); rc = 1; }
+    }
+    /* a define with audio, through the live registry by CK */
+    {
+        gn_registry entry = gn_boot, entry_saved = gn_saved;
+        int entry_loaded = gn_boot_loaded, entry_saved_loaded = gn_saved_loaded;
+        int entry_swapped = gn_swapped, ck;
+        memset(&gn_boot, 0, sizeof gn_boot);
+        memset(&gn_saved, 0, sizeof gn_saved);
+        gn_boot_loaded = 1; gn_saved_loaded = 0; gn_swapped = 0;
+        if (gw_Geno_TestInstall("{\"geno\":10,\"fighters\":[{\"define\":{\"key\":\"t7\",\"name\":\"T7\",\"base\":\"mario\",\"common\":\"melee.common.v1\",\"resources\":\"retail:mario\"},"
+                                "\"audio\":{\"announcer\":\"gn_absent_call.gnsnd\",\"voice\":[{\"sfx\":77,\"file\":\"gn_absent_v.gnsnd\",\"volume\":80}]}}]}") != 1 ||
+            (ck = gw_Geno_DefineResolve("t7")) < 34) {
+            gw_test_fail("install of a define with audio"); rc = 1;
+        } else {
+            gn_profile* p = (gn_profile*)gn_define_profile_ck(ck);
+            uint32_t before = gw_Audio_ClipStat(0);
+            if (!gw_Geno_DefineAudioHas(ck, 0, 0) || !gw_Geno_DefineAudioHas(ck, 1, 77) || gw_Geno_DefineAudioHas(ck, 1, 78) || gw_Geno_DefineAudioHas(8, 0, 0)) {
+                gw_test_fail("audio flags by CK"); rc = 1;
+            }
+            /* declared, file missing: it answers "handled" (so the caller does not fall back to the donor's voice) and plays nothing */
+            if (gw_Geno_DefineAudioPlay(ck, 0, 0) != 1 || gw_Geno_DefineAudioPlay(ck, 1, 77) != 1 || gw_Audio_ClipStat(0) != before) {
+                gw_test_fail("a missing clip played, or fell back"); rc = 1;
+            }
+            /* not declared: not handled, the caller does what it did before */
+            if (gw_Geno_DefineAudioPlay(ck, 1, 78) != 0 || gw_Geno_DefineAudioPlay(8, 0, 0) != 0 || gw_Geno_DefineVoicePlayKind(0, 77) != 0) { gw_test_fail("an undeclared clip was handled"); rc = 1; }
+            /* a loaded clip reaches the mixer: put a decoded one in the announcer slot as the loader would */
+            p->aud->announcer_clip.pcm = gn_gnsnd_decode(b, sizeof b, &p->aud->announcer_clip.frames, &p->aud->announcer_clip.channels, &why);
+            if (!p->aud->announcer_clip.pcm || gw_Geno_DefineAudioPlay(ck, 0, 0) != 1 || gw_Audio_ClipStat(0) != before + 1) {
+                gw_test_fail("a loaded announcer clip did not start (%u -> %u)", (unsigned)before, (unsigned)gw_Audio_ClipStat(0)); rc = 1;
+            }
+        }
+        gw_Geno_TestRestore();
+        gn_registry_clear(&gn_boot);
+        gn_registry_clear(&gn_saved);
+        gn_boot = entry; gn_saved = entry_saved;
+        gn_boot_loaded = entry_loaded; gn_saved_loaded = entry_saved_loaded;
+        gn_swapped = entry_swapped; ++gn_pool_gen;
+    }
+    return rc;
+}
+
+/* a define's own records: the file, the saturating sums and the peak, a reload, a malformed file moved aside, and the registry route by CK */
+static int test_geno_define_records(void)
+{
+    char path[1100], bad[1110]; struct gn_rec* r; FILE* f; int rc = 0, ck;
+    const char* tmp = getenv("TEMP");
+    snprintf(path, sizeof path, "%s/geno_rec_test_%d.json", tmp && tmp[0] ? tmp : ".", (int)(((uintptr_t)&rc >> 4) & 0xFFFF));
+    snprintf(bad, sizeof bad, "%s.bad", path);
+    remove(path); remove(bad);
+    gn_rec_clear();
+    r = gn_rec_find("alpha", 1); snprintf(r->name, sizeof r->name, "Alpha");
+    gn_rec_add(r, 0, 2); gn_rec_add(r, 0, 3); gn_rec_add(r, 3, 7); gn_rec_add(r, 11, 120); gn_rec_add(r, 11, 80); gn_rec_add(r, 8, 0xFFFFFFF0u); gn_rec_add(r, 8, 0x100u);
+    r = gn_rec_find("beta", 1); gn_rec_add(r, 1, 4);
+    if (r->v[1] != 4 || gn_rec_find("alpha", 0)->v[0] != 5 || gn_rec_find("alpha", 0)->v[11] != 120 || gn_rec_find("alpha", 0)->v[8] != 0xFFFFFFFFu) {
+        gw_test_fail("record sums: matches %u peak %u saturated %u", (unsigned)gn_rec_find("alpha", 0)->v[0], (unsigned)gn_rec_find("alpha", 0)->v[11], (unsigned)gn_rec_find("alpha", 0)->v[8]); rc = 1;
+    }
+    gn_rec_add(r, 99, 1); gn_rec_add(r, -1, 1);
+    if (!gn_rec_save_file(path)) { gw_test_fail("records file not written to %s", path); return 1; }
+    gn_rec_clear();
+    if (!gn_rec_load_file(path) || gn_nrec != 2 || !gn_rec_find("alpha", 0) || gn_rec_find("alpha", 0)->v[3] != 7 || gn_rec_find("alpha", 0)->v[8] != 0xFFFFFFFFu ||
+        strcmp(gn_rec_find("alpha", 0)->name, "Alpha") || gn_rec_find("beta", 0)->v[1] != 4) {
+        gw_test_fail("records did not reload from %s", path); rc = 1;
+    }
+    /* a malformed file is moved aside, not read and not lost */
+    f = fopen(path, "wb"); fputs("not json at all", f); fclose(f);
+    gn_rec_clear();
+    if (gn_rec_load_file(path) != 0 || gn_nrec != 0 || !(f = fopen(bad, "rb"))) { gw_test_fail("a malformed records file was not set aside"); rc = 1; }
+    else fclose(f);
+    remove(path); remove(bad);
+    /* the registry route by CK: the file is MELEE_GENO_RECORDS, the key is the define's own, a retail CK has none */
+    {
+        gn_registry entry = gn_boot, entry_saved = gn_saved;
+        int entry_loaded = gn_boot_loaded, entry_saved_loaded = gn_saved_loaded;
+        int entry_swapped = gn_swapped;
+        char env[1200];
+        memset(&gn_boot, 0, sizeof gn_boot);
+        memset(&gn_saved, 0, sizeof gn_saved);
+        gn_boot_loaded = 1; gn_saved_loaded = 0; gn_swapped = 0;
+        snprintf(env, sizeof env, "MELEE_GENO_RECORDS=%s", path);
+        _putenv(env);
+        gn_rec_clear();
+        if (gw_Geno_TestInstall(GN_T_HEAD(10, "")) != 1 || (ck = gw_Geno_DefineResolve("t7")) < 34) { gw_test_fail("install for records"); rc = 1; }
+        else {
+            if (!gw_Geno_RecordAdd(ck, 0, 1) || !gw_Geno_RecordAdd(ck, 1, 1) || !gw_Geno_RecordAdd(ck, 3, 4) || !gw_Geno_RecordCommit(ck) ||
+                gw_Geno_RecordGet(ck, 3) != 4 || gw_Geno_RecordAdd(8, 0, 1) != 0 || gw_Geno_RecordCommit(8) != 0 || gw_Geno_RecordGet(8, 0) != -1) {
+                gw_test_fail("records by CK"); rc = 1;
+            }
+            gn_rec_clear();
+            if (gw_Geno_RecordGet(ck, 3) != 4 || gw_Geno_RecordGet(ck, 0) != 1) { gw_test_fail("a committed record was not read back from the file"); rc = 1; }
+            f = fopen(path, "rb");
+            if (!f) { gw_test_fail("no records file at %s", path); rc = 1; }
+            else { char buf[600]; size_t n = fread(buf, 1, sizeof buf - 1, f); fclose(f); buf[n] = 0; if (!strstr(buf, "\"t7\"") || !strstr(buf, "\"kos\": 4")) { gw_test_fail("records file text: %s", buf); rc = 1; } }
+        }
+        _putenv("MELEE_GENO_RECORDS=");
+        gw_Geno_TestRestore();
+        gn_registry_clear(&gn_boot);
+        gn_registry_clear(&gn_saved);
+        gn_boot = entry; gn_saved = entry_saved;
+        gn_boot_loaded = entry_loaded; gn_saved_loaded = entry_saved_loaded;
+        gn_swapped = entry_swapped; ++gn_pool_gen;
+        gn_rec_clear();
+    }
+    remove(path); remove(bad);
+    return rc;
+}

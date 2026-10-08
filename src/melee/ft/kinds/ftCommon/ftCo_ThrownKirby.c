@@ -45,6 +45,19 @@ FighterKind ftCo_800BD9E0(Fighter_GObj* gobj, Fighter_GObj* victim_gobj)
     ftKb_Fighter* fp = GET_FIGHTER(gobj);
     Fighter* victim_fp = GET_FIGHTER(victim_gobj);
     FighterKind victim_kind = victim_fp->kind;
+#if defined(TARGET_PC)
+    {
+        /* Geno slice 6 (geno 10): what Kirby gets from a define is the define's own policy, never "its kind as a hat". A define has no hat model, no
+         * copy ability and no row in the per-kind hat tables, so its kind used to be written into hat.kind unchanged. "none" (the default) leaves Kirby
+         * with Kirby's own hat (as inhaling Sandbag does for a boy: no ability); "retail:<fighter>" gives that retail fighter's hat and ability. */
+        extern int Geno_DefineKirbyCopy(int kind);
+        int copy = Geno_DefineKirbyCopy((int) victim_kind);
+        if (copy != -2) {
+            OSReport("geno: Kirby inhales define kind %d: copy policy %s %d\n", (int) victim_kind, copy < 0 ? "none" : "retail", copy);
+            return copy < 0 ? Ft_Kind_Kirby : (FighterKind) copy;
+        }
+    }
+#endif
     if (FTKB_IS_KIRBY(victim_kind)) {
         ftCo_800BDA50(victim_gobj);
         return victim_fp->u.kb.hat.kind;

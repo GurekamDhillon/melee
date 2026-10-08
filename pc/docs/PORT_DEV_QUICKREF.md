@@ -143,6 +143,9 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | `MELEE_AUDIO_NOFX=1` | bypass the aux effect processors |
 | `MELEE_BACKEND=d3d12\|auto\|vulkan` | override the default D3D11 backend |
 | `MELEE_AURORA_VERBOSE=1` | log Aurora INFO (present mode, adapter) |
+| `MELEE_GPU=integrated\|discrete\|<text>` | Linux: which GPU. Default is Dawn's HighPerformance pick (a discrete GPU on a hybrid laptop). `integrated` = the low-power one; any other text picks the adapter whose name or vendor contains it (`nvidia`, `intel`, `rtx`). Only 32-bit Vulkan drivers can appear. The choice is logged at startup as `gw: gpu: ...` |
+| `MELEE_GPU_LIST=1` | Linux: also probe the other power preference so the `gw: gpu:` line names both adapters |
+| `MELEE_WRITEWATCH=auto\|uffd\|softdirty\|off` | Linux: how MEM1 writes are tracked for rollback snapshots (`gw_writewatch_linux.c`). `auto` = userfaultfd write-protect, kernel 6.7+; `off` = full-copy snapshots (every save reads all 40 MB); `softdirty` = opt-in test backend (slower overall). The log says which: `snap: write-watch backend: ...` |
 | `MELEE_LOG=gobj` | log each GObj render callback address, class, owner and link before invocation (very verbose; Classic IntroEasy diagnosis) |
 
 `MELEE_WINDOW_HIDE=1` remains unsuitable for realtime play: a hidden window makes the D3D11

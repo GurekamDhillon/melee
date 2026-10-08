@@ -249,7 +249,7 @@ static int ne_install_impl(int id, char *msg, size_t mcap, uint8_t **zipout) {
     char first_err[160];
     uint8_t *zipbuf = NULL;                 /* the mod's own zip, fetched once for all its zip-only files and fighter groups; handed to the caller to free */
     size_t ziplen = 0;
-    int zip_tried = 0, zip_status = 0;
+    int zip_tried = 0, zip_status = 0, use_zip;
     first_err[0] = '\0';
     if (!ne_copy_mod(id, &m, files)) { snprintf(msg, mcap, "That mod is not in the catalog."); return -1; }
     if (nc_why_not_files(&m, files)[0]) { snprintf(msg, mcap, "%s", nc_why_not_files(&m, files)); return -1; }
@@ -292,7 +292,16 @@ static int ne_install_impl(int id, char *msg, size_t mcap, uint8_t **zipout) {
             if (!files[i].costume || files[i].fighter != fighters[g]) continue;
             if (nc_variant_skip(files, m.nf, i)) { ne_log("install %d: file %d (%s): the Animelee variant is skipped, the vanilla one is installed", m.id, files[i].id, files[i].filename); continue; }
             ne_set_job(1, "Downloading a costume", done, total);
-            if (files[i].zip) {
+            use_zip = files[i].zip;
+            if (!use_zip) {
+                nc_download_url(m.id, files[i].id, url, sizeof url);
+                if (nch_get(url, 24u * 1024 * 1024, &r) < 0 || r.status != 200 || !r.data) {
+                    ne_log("install %d: file %d: %s (HTTP %d)", m.id, files[i].id, r.err[0] ? r.err : "download failed", r.status);
+                    free(r.data); memset(&r, 0, sizeof r);
+                    use_zip = 1;   /* no per-file download (a stale catalog, or the post lists it wrong): the file may still be in the post's zip */
+                }
+            }
+            if (use_zip) {
                 /* no per-file download: the file is an entry of the mod's zip (GET /mods/{id}/download), fetched once */
                 memset(&r, 0, sizeof r);
                 if (!zip_tried) {
@@ -314,13 +323,6 @@ static int ne_install_impl(int id, char *msg, size_t mcap, uint8_t **zipout) {
                     ne_log("install %d: file %d (%s): %s", m.id, files[i].id, files[i].filename, err);
                     done += 3; continue;
                 }
-            } else {
-            nc_download_url(m.id, files[i].id, url, sizeof url);
-            if (nch_get(url, 24u * 1024 * 1024, &r) < 0 || r.status != 200 || !r.data) {
-                if (!first_err[0]) snprintf(first_err, sizeof first_err, "%s", nc_http_reason(r.status));
-                ne_log("install %d: file %d: %s (HTTP %d)", m.id, files[i].id, r.err[0] ? r.err : "download failed", r.status);
-                free(r.data); done += 3; continue;
-            }
             }
             ++done;
             if (nc_dat_costume(r.data, r.len, &info, err, sizeof err) < 0) {

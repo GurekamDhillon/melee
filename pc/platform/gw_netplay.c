@@ -261,9 +261,15 @@ int gw_Netplay_SetItems(int n) {
 /* The host's EXTRAS to the base scene (Envoy online stage 6): CPU opponents on ports 3 and 4, their teams, and the online item
  * frequency. They ride in the scene string like every other rule, so the guest plays exactly the match it is given. They are kept
  * apart from np_build_scene because the lobby's `G` message is capped at GW_NET_LOBBY_MAX (200) bytes and the base scene already
- * fills most of it: the lobby sends them as an `X` message just before `G` and the guest appends them (np_lobby_extras); the
+ * fills most of it: the lobby sends them as a `C` message just before `G` and the guest appends them (np_lobby_extras); the
  * direct-connect path puts base + extras in the 900-byte handshake blob. Empty (and so no change to an ordinary match) unless the
  * host chose something: gd.netplay_act("cpus"/"items") or MELEE_NETPLAY_CPUS / _TEAMS / _ITEMS. */
+/* The UDP port a room opened from the menus listens on: 51500, or MELEE_NETPLAY_PORT (test only: several lanes' clients on one machine). */
+static uint16_t np_menu_port(void) {
+    const char *e = getenv("MELEE_NETPLAY_PORT");
+    int v = e != NULL ? atoi(e) : 0;
+    return v > 1023 && v < 65536 ? (uint16_t) v : (uint16_t) NP_DEFAULT_PORT;
+}
 static int np_random_matched(void); /* defined with the random-matchmaking state below */
 static char lb_xtras[200]; /* guest: the host's X message, waiting for its G */
 static void np_scene_extras(char *out, size_t cap) {
@@ -1905,7 +1911,7 @@ static void lb_go(void) {
         np_scene_extras(x, sizeof x - 4);
         if (x[0] != '\0') {
             char xm[GW_NET_LOBBY_MAX];
-            snprintf(xm, sizeof xm, "X %s", x);
+            snprintf(xm, sizeof xm, "C %s", x);
             lb_send(xm);
         }
         snprintf(m, sizeof m, "G %u %s", np.seed, np.scene);
@@ -2001,7 +2007,7 @@ static void np_cb_lobby(void *user, const uint8_t *data, int len) {
             gw_log("netplay: envoy - the other side REFUSED the match: %s", m + 2);
             np_status("Refused: %s", m + 2);
         }
-    } else if (!np.host && m[0] == 'X') { /* the host's scene extras, ahead of its G (np_scene_extras) */
+    } else if (!np.host && m[0] == 'C') { /* the host's scene extras, ahead of its G (np_scene_extras) */
         snprintf(lb_xtras, sizeof lb_xtras, "%s", m + 2);
     } else if (!np.host && m[0] == 'G') {
         unsigned seed = 0;
@@ -2729,7 +2735,7 @@ static void np_rand_poll(void) {
  * 0 = queued; -1 = np.status says why. Poll with gw_Netplay_MenuPoll as for a room; while queued
  * the phase is NP_WORKING and gw_Netplay_RandomStatus says how it is going. */
 int gw_Netplay_RandomBegin(int ck, int color, int stocks, int minutes, int delay) {
-    uint16_t port = NP_DEFAULT_PORT;
+    uint16_t port = np_menu_port();
     if (gw_turbo_enabled()) {
         np_status("Online play requires realtime mode; restart without turbo");
         gw_log("netplay: random queue refused while turbo is active");
@@ -2820,7 +2826,7 @@ int gw_Netplay_MenuBegin(int host, int ck, int color, int stocks, int minutes, i
     np.stocks = stocks;
     np.minutes = minutes;
     np.delay = delay;
-    np.port = NP_DEFAULT_PORT;
+    np.port = np_menu_port();
     np.use_lobby = 1;
     np.rejoining = 0;
     np.peer_left = 0;

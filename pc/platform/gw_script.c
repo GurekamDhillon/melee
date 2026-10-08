@@ -1616,10 +1616,16 @@ static int l_netplay_act(lua_State *L) {
     } else if (_stricmp(what, "envoy") == 0) { /* the host's Online > Envoy choice for rooms it opens (menu routing, like the menu row) */
         if (!lua_isnone(L, 2)) gw_Netplay_SetEnvoy(lua_toboolean(L, 2));
         ok = gw_Netplay_EnvoyPref();
+    } else if (_stricmp(what, "cpus") == 0) { /* the host's CPU opponents for ports 3 and 4: "ckind:color:level[,...]" ("" none), teams = humans vs CPUs */
+        extern int gw_Netplay_SetCpus(const char *spec, int teams);
+        ok = gw_Netplay_SetCpus(lua_isnone(L, 2) ? "" : luaL_checkstring(L, 2), lua_toboolean(L, 3));
+    } else if (_stricmp(what, "items") == 0) { /* the host's online item frequency 0..8, or -1/nil for none (the default) */
+        extern int gw_Netplay_SetItems(int n);
+        ok = gw_Netplay_SetItems((int) luaL_optinteger(L, 2, -1));
     } else if (_stricmp(what, "rpick") == 0) { /* an Envoy set's reward: 0..2 an offer, 3 keeps the build (host-validated) */
         ok = gw_Netplay_EnvoyPick((int) luaL_checkinteger(L, 2));
     } else {
-        return luaL_error(L, "gd.netplay_act: unknown action \"%s\" (char, stage, ready, code, rpick, envoy)", what);
+        return luaL_error(L, "gd.netplay_act: unknown action \"%s\" (char, stage, ready, code, rpick, envoy, cpus, items)", what);
     }
     lua_pushboolean(L, ok);
     return 1;

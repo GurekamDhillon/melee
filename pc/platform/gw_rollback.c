@@ -184,7 +184,7 @@ static int rb_nearly;
  * kbvel, groundvel, cmdframe, b5, stocks, item (an item's x), pos (a legacy field: both modes must see it). */
 extern void gw_RB_Perturb(int code); /* fighter.c */
 static const char *const rb_perturb_names[] = {"", "hitlag", "jumps", "shield", "x680", "x67f", "kbvel", "groundvel",
-                                               "cmdframe", "b5", "pos", "item", "stocks"};
+                                               "cmdframe", "b5", "pos", "item", "stocks", "cpu"};
 /* fighter.c's RB_FighterHash reads this: the legacy (pre-widening) hash mode, set by MELEE_RB_HASH_LEGACY=1 on BOTH peers */
 int gw_RbHashLegacyEnv(void) {
     const char *e = getenv("MELEE_RB_HASH_LEGACY");

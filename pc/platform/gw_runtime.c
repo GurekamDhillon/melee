@@ -3109,6 +3109,17 @@ static int test_scene_parse_costumes255(void) {
   gw_SceneLaunch_LoadForTest("mode=vs;p1=mario/c255");
   c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
   if (!c->errors) return 1;
+  /* a netplay WIRE costume (0x40000000 | skin identity): accepted, and a skin this install lacks resolves to the default (0) */
+  gw_SceneLaunch_LoadForTest("mode=vs;p1=mario/c1073741825;p2=fox/c3");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->errors || c->p[0].color != 0x40000001 || gw_SceneLaunch_PlayerColor(0) != 0 || gw_SceneLaunch_PlayerColor(1) != 3) {
+    gw_test_fail("wire costume in a scene: errors %d color %d resolved %d/%d", c->errors, c->p[0].color,
+                 gw_SceneLaunch_PlayerColor(0), gw_SceneLaunch_PlayerColor(1));
+    return 1;
+  }
+  gw_SceneLaunch_LoadForTest("mode=vs;p1=mario/c300");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (!c->errors) return 1;
   gw_SceneLaunch_LoadForTest(NULL);
   return 0;
 }

@@ -2411,12 +2411,14 @@ static int test_geno_registry_reload_layout(void) {
     return 0;
 }
 
+#include "gw_skins_tests.inc"
 #include "geno_define_tests.inc"
 #include "geno_lua_tests.inc"
 #include "geno_items_registry.inc"
 #include "geno_items_registry_tests.inc"
 #include "geno_items_runtime_tests.inc"
 void geno_registry_tests_register(void) {
+    gw_skins_tests_register();
     gw_test_register("geno_define_registry", test_geno_define_registry);
     gw_test_register("geno_define_repeated_install", test_geno_define_repeated_install);
     gw_test_register("geno_define_attrs_v7", test_geno_define_attrs_v7);

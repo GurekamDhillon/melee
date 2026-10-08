@@ -302,6 +302,37 @@ static int test_geno_define_resolver(void)
     "\"common\":\"melee.common.v1\",\"resources\":\"mod:files\"},\"fighter\":{\"plan\":\"plan.json\",\"animation\":\"bank.dat\",\"costumes\":[" fighter_extra "]}" entry_extra "}]}"
 #define GN_T_COS(file, extra) "{\"file\":\"" file "\",\"joint\":\"j\"" extra "}"
 
+/* Slice 8: fighter.rows. A base "none" define declares animation rows past Mario's 303 (one clip name each); a state, an overlay
+ * or a common_states row may then name 303 + i. Without the key the bound stays 302, and a donor define never gets it. */
+#define GN_T_NONE_R(rows, entry_extra) "{\"geno\":9,\"fighters\":[{\"define\":{\"key\":\"t9\",\"name\":\"T9\",\"base\":\"none\"," \
+    "\"common\":\"melee.common.v1\",\"resources\":\"mod:files\"},\"fighter\":{\"plan\":\"plan.json\",\"animation\":\"bank.dat\",\"costumes\":[" GN_T_COS("a.dat", "") "]" rows "}" entry_extra "}]}"
+static int test_geno_define_own_rows(void)
+{
+    static gn_registry r;
+    int rc = 0;
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_NONE_R(",\"rows\":[\"SpecialN1Start\",\"SpecialN1\"]",
+                      ",\"states\":[{\"name\":\"A\",\"behavior\":\"geno.ground\",\"subaction\":304}],\"subactions\":[{\"index\":303,\"words\":[\"0x04000002\"]}]"), "rows") != 1 ||
+        r.n != 1 || !r.p[0].fm || r.p[0].fm->nown != 2 || strcmp(r.p[0].fm->own_clip[1], "SpecialN1")) {
+        gw_test_fail("a none define with two own rows and a state and an overlay on them was refused or misread"); rc = 1;
+    }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_NONE_R(",\"rows\":[\"X\",\"Y\"]", ",\"states\":[{\"name\":\"A\",\"behavior\":\"geno.ground\",\"subaction\":305}]"), "past") != 0 || r.n != 0) {
+        gw_test_fail("a state on row 305 was accepted with two own rows"); rc = 1;
+    }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_NONE_R("", ",\"subactions\":[{\"index\":303,\"words\":[\"0x04000002\"]}]"), "norows") != 0 || r.n != 0) {
+        gw_test_fail("an overlay on row 303 was accepted without own rows"); rc = 1;
+    }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_NONE_R(",\"rows\":[5]", ""), "badrow") != 0 || r.n != 0) { gw_test_fail("a non-string row was accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    /* a donor (mario) define does not get the key */
+    if (gn_parse_text(&r, GN_T_HEAD(9, ",\"subactions\":[{\"index\":303,\"words\":[\"0x04000002\"]}]"), "donor") != 0 || r.n != 0) { gw_test_fail("a donor define reached row 303"); rc = 1; }
+    gn_registry_clear(&r);
+    return rc;
+}
+
 static int test_geno_define_presentation(void)
 {
     static gn_registry r;

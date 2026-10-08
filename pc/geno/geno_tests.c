@@ -2983,7 +2983,7 @@ static const char t_v51_json[] =
     "\"hitboxes\":[{\"damage\":2.4,\"start\":1,\"end\":3},{\"damage\":2.4,\"slot\":0,\"start\":4,\"end\":6}]},"
     "{\"name\":\"Cloud\",\"lifetime\":30,\"bone\":2,\"effect\":1147,"
     "\"children\":[{\"article\":\"Bolt\",\"frame\":3,\"every\":3,\"count\":4,\"spawn\":1}]},"
-    "{\"name\":\"Bolt\",\"velocity\":[0,-3.8]}"
+    "{\"name\":\"Bolt\",\"velocity\":[0,-3.8],\"show_model\":true}"
     "]}]}";
 
 static int test_geno_v51(void)
@@ -3002,6 +3002,12 @@ static int test_geno_v51(void)
         Geno_ArticleParam(0, 1, GENO_AP_BONE) != 2 || Geno_ArticleParam(0, 1, GENO_AP_EFFECT) != 1147)
     {
         TestFail("v5.1 article keys: slots (both entries in slot 0), spawns, angle, bone, effect");
+        rc = 1;
+    }
+    if (Geno_ArticleParam(0, 2, GENO_AP_SHOW_MODEL) != 1 || Geno_ArticleParam(0, 0, GENO_AP_SHOW_MODEL) != 0 ||
+        Geno_ArticleParam(0, 1, GENO_AP_SHOW_MODEL) != 0)
+    {
+        TestFail("v5.7 show_model: on for Bolt only, default off");
         rc = 1;
     }
     if (Geno_ArticleParam(0, 1, GENO_AP_CHILD) != 2 || Geno_ArticleParam(0, 1, GENO_AP_CHILD + 1) != 3 ||
@@ -3460,6 +3466,7 @@ static int test_geno_fly(void)
 
 #include "geno_define_snapshot_tests.inc"
 #include "geno_lua_tests.inc"
+#include "geno_guard_tests.inc"
 
 /* Slice 4d: the independence census. A base "none" define's ftData must hold no pointer of the donor's that it does not
  * list as shared (docs/geno.md 22.4). The census function is pure: it names the pointer fields two ftData share. */
@@ -3485,6 +3492,7 @@ static int test_geno_none_independence(void)
 }
 void GenoTestRegisterAll(void)
 {
+    TestRegister("geno_none_guard_contact", test_geno_none_guard_contact);
     TestRegister("geno_lua_charge", test_geno_lua_charge);
     TestRegister("geno_lua_fault", test_geno_lua_fault);
     TestRegister("geno_lua_digest", test_geno_lua_digest);

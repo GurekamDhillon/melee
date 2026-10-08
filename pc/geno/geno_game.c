@@ -563,7 +563,7 @@ static void geno_run_event(Fighter_GObj* gobj, GenoState* st, int ev)
  * change during a match: a refill after a rollback writes the same words again. */
 u32 Geno_ScriptPool[GENO_POOL_WORDS];
 s32 Geno_ScriptPoolGen;
-CmdUnion* Geno_OverlayOrig[256]; /* per overlay slot: the script the overlay replaced (ORIG) */
+CmdUnion* Geno_OverlayOrig[512]; /* per overlay slot: the script the overlay replaced (ORIG) */
 
 static void geno_pool_sync(void)
 {
@@ -609,7 +609,7 @@ static void geno_install_overlays(Fighter* fp, int p)
             OSReport("geno: native definition refused out-of-range overlay %d (rows %d)\n", anim, fp->x58C);
             continue;
         }
-        if (anim < 0 || slot < 0 || slot >= 256 || off < 0 || off >= GENO_POOL_WORDS) {
+        if (anim < 0 || slot < 0 || slot >= 512 || off < 0 || off >= GENO_POOL_WORDS) {
             continue;
         }
         mine = (CmdUnion*) &Geno_ScriptPool[off];
@@ -637,7 +637,7 @@ static int geno_slot_of(u32* w)
     }
     off = (int) (w - &Geno_ScriptPool[0]);
     n = Geno_SlotCount();
-    for (s = 0; s < n && s < 256; s++) {
+    for (s = 0; s < n && s < 512; s++) {
         int o = Geno_SlotOffset(s);
         if (off >= o && off < o + Geno_SlotLen(s)) {
             return s;
@@ -653,7 +653,7 @@ int GenoGame_ScriptRange(u32 address, u32 bytes)
     if (bytes == 0 || address + bytes < address || (address & 3)) {
         return 0;
     }
-    for (s = 0; s < n && s < 256; s++) {
+    for (s = 0; s < n && s < 512; s++) {
         int off = Geno_SlotOffset(s), len = Geno_SlotLen(s);
         u32 start;
         if (off < 0 || len < 1 || off > GENO_POOL_WORDS - len) {
@@ -969,6 +969,16 @@ static const struct {
     GENO_ATTR(respawn_platform_scale, 0),
     GENO_ATTR(warp_star_hitbox_scale, 0),
     GENO_ATTR(camera_zoom_target_bone, 1),
+    /* slice 8: the nine fields of ftCo_DatAttrs that had no name (appended; a port reads them from its installed block) */
+    GENO_ATTR(unused_0, 1),
+    GENO_ATTR(xDC, 0),
+    GENO_ATTR(x12C, 0),
+    GENO_ATTR(x13C, 0),
+    GENO_ATTR(x144, 0),
+    GENO_ATTR(x150_damageice_unk, 0),
+    GENO_ATTR(x154_damageice_unk, 0),
+    GENO_ATTR(x168, 0),
+    GENO_ATTR(x17C, 0),
 };
 #define GENO_NATTRS ((int) (sizeof(geno_attrs) / sizeof(geno_attrs[0])))
 

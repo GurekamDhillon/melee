@@ -256,7 +256,7 @@ enum {
 #define GENO_MAX_SPECIAL 64      /* v1: special_attributes entries per profile */
 #define GENO_MAX_ONLAND 16       /* v1: on_land map entries per profile */
 #define GENO_MAX_MOTION_ANIM 8   /* v5.4: "motion_anims" entries per profile */
-#define GENO_MAX_OVERLAYS 64     /* v1: subaction script overlays per profile */
+#define GENO_MAX_OVERLAYS 192    /* v1: subaction script overlays per profile (slice 8: was 64; Sora needs about 100) */
 #define GENO_POOL_WORDS 16384    /* v1: all overlay words of every profile (64 KB) */
 
 /* ---- v2: Geno action states (docs/geno.md section 16) ------------------------------------------
@@ -426,7 +426,9 @@ enum {
     GENO_AP_SPAWN_VOL = 65,  /* int: its volume 0..127 */
     GENO_AP_END_SFX = 66,    /* int: sound id when the article goes (hit, timeout, stage, absorbed) */
     GENO_AP_END_VOL = 67,    /* int: its volume */
-    GENO_AP_COUNT = 68
+    GENO_AP_SHOW_MODEL = 68, /* v5.7 int: "show_model" - with an "fx" package, keep the article's model drawn too
+                                (default 0: the package is the article's look and the model, a placeholder, is hidden) */
+    GENO_AP_COUNT = 69
 };
 #define GENO_ART_DESPAWN_HIT 1u    /* its hitbox hit a fighter / item */
 #define GENO_ART_DESPAWN_SHIELD 2u /* it hit a shield */

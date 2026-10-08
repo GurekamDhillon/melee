@@ -380,6 +380,8 @@ struct gn_fm {
     char cos_file[16][64], cos_joint[16][48], cos_matanim[16][48];
     char cos_name[16][24];          /* slice 6: a costume's declared name ("" = none) */
     signed char cos_team[16];       /* slice 6: a declared team colour set: -1 none, 0 red, 1 blue, 2 green */
+    int nown;                       /* slice 8: rows the package declares past Mario's 303 (fighter.rows), each a clip name of the bank */
+    char own_clip[GPL_MAX_OWN_ROWS][32];
     GenoPlan *plan; int plan_tried;
 };
 
@@ -502,7 +504,7 @@ typedef struct {
 
 #define GN_NONE 0xFFFFFFFFu
 
-#define GN_MAX_SLOTS 256 /* overlay slots over every profile */
+#define GN_MAX_SLOTS 512 /* overlay slots over every profile */
 
 typedef struct {
     gn_profile* p;
@@ -1178,6 +1180,7 @@ static void gn_add_v5(gn_profile *p, const jdoc *d, int e, const char *where) {
             int pk = gw_Fx_Find(d->n[m].str);
             p->art_param[a][GENO_AP_FX] = pk >= 0 ? (uint32_t) (pk + 1) : 0;
         }
+        p->art_param[a][GENO_AP_SHOW_MODEL] = gn_num(d, c, "show_model", &v) && v != 0 ? 1u : 0u; /* v5.7 */
         if ((m = jd_get(d, c, "effects")) >= 0 && d->n[m].type == JN_ARR) { /* v5.2 */
             int e2, n2 = 0;
             for (e2 = d->n[m].first; e2 >= 0 && n2 < 8; e2 = d->n[e2].next) {
@@ -1898,6 +1901,9 @@ void gw_Geno_Event(int what, int a, int b, int c, int d) {
         "geno: kind %d player %d lockon: target %d, aim %d deg",                             /* 40 */
         "geno:   particles behind the ball x100 %d (along the facing), above x100 %d, forward speed x1000 %d (%d)", /* 41 */
         "geno: kind %d player %d aim_stick: stick used %d, heading %d deg",                  /* 42 */
+        "geno: kind %d player %d dash.search: %d (0 none, 1 + port locked), stick heading %d deg (-1 none)", /* 43 */
+        "geno: kind %d player %d dash.aim: flags %d (1 target, 2 stick, +4 x kind), heading %d deg", /* 44 */
+        "geno: article %d model: %d (1 drawn, 2 hidden because its fx package is its look - \"show_model\": true keeps both, 3 drawn with its fx package)%.0d", /* 45 */
     };
     if (what < 0 || what >= (int) (sizeof fmt / sizeof fmt[0])) return;
     if (++count[what] > 40) {
@@ -2415,6 +2421,7 @@ void geno_registry_tests_register(void) {
     gw_test_register("geno_lua_registry", test_geno_lua_registry);
     gw_test_register("geno_lua_call", test_geno_lua_call);
     gw_test_register("geno_define_presentation", test_geno_define_presentation);
+    gw_test_register("geno_define_own_rows", test_geno_define_own_rows);
     gw_test_register("geno_gxtex_art", test_geno_gxtex_art);
     gw_test_register("geno_define_presentation_ck", test_geno_define_presentation_ck);
     gw_test_register("geno_define_s6_keys", test_geno_define_s6_keys);

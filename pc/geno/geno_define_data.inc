@@ -194,7 +194,7 @@ static void GenoDefine_JointFields(int kind, ftData* out, struct ftData_x8* x8)
 static void GenoDefine_BuildOwn(int kind, ftData* out, int n)
 {
     extern MotionState ftMr_Init_MotionStateTable[];
-    int nmotions = Geno_DefinePlanInt(kind, 4, 0), njoints = Geno_DefinePlanInt(kind, 1, 0);
+    int nmotions = Geno_DefinePlanInt(kind, 4, 0), njoints = Geno_DefinePlanInt(kind, 1, 0), nown = Geno_DefinePlanInt(kind, 6, 0);
     struct ftData_x8* x8;
     short pick[512];
     u8 rank[512];
@@ -237,7 +237,7 @@ static void GenoDefine_BuildOwn(int kind, ftData* out, int n)
                     HSD_ASSERTREPORT(__LINE__, extras < GENO_OWN_EXTRA_ROWS, "Geno base none: too many own animation rows\n");
                     ex_a[extras] = (short)a; ex_c[extras] = (short)c; ++extras;
                 }
-                GenoDefine_RowRemap[slot][m] = (short)(n + i);
+                GenoDefine_RowRemap[slot][m] = (short)(n + nown + i);
                 ++conflicts;
             }
         }
@@ -253,21 +253,38 @@ static void GenoDefine_BuildOwn(int kind, ftData* out, int n)
             }
             OSReport("geno: base none kind %d: %d rows no state names take their ftCo_SM_ clip or Wait\n", kind, filled);
         }
-        rows2 = (Fighter_WaitAnimData*) HSD_MemAlloc((n + extras) * sizeof *rows2);
-        blend2 = (u8 (*)[2]) HSD_MemAlloc((n + extras) * 2);
+        rows2 = (Fighter_WaitAnimData*) HSD_MemAlloc((n + nown + extras) * sizeof *rows2);
+        blend2 = (u8 (*)[2]) HSD_MemAlloc((n + nown + extras) * 2);
         HSD_ASSERTREPORT(__LINE__, rows2 != NULL && blend2 != NULL, "Geno definition descriptor allocation exhausted\n");
         memcpy(rows2, out->xC, n * sizeof *rows2);
         memcpy(blend2, out->x10, n * 2);
+        {   /* slice 8: the package's declared rows (geno.json fighter.rows), 303.. : a copy of the Wait row (its script words are
+             * benign, its flags are a plain ground row) given the declared clip. A state or an overlay names them by number. */
+            int wr = ftData_MotionStateList[ftCo_MS_Wait].anim_id, wc2 = Geno_DefinePlanInt(kind, 13, ftCo_MS_Wait);
+            HSD_ASSERTREPORT(__LINE__, wr >= 0 && wr < n, "Geno base none: no Wait row to copy for the declared rows\n");
+            for (i = 0; i < nown; ++i) {
+                int cc = Geno_DefinePlanInt(kind, 15, i);
+                if (cc < 0) cc = wc2;
+                rows2[n + i] = rows2[wr];
+                blend2[n + i][0] = blend2[wr][0]; blend2[n + i][1] = blend2[wr][1];
+                rows2[n + i].x0 = (char*)Geno_DefinePlanText(kind, 1, cc);
+                rows2[n + i].x4 = (s32)Geno_DefinePlanInt(kind, 10, cc);
+                rows2[n + i].x8 = (s32)Geno_DefinePlanInt(kind, 11, cc);
+                { int bl = Geno_DefinePlanInt(kind, 18, n + i); if (bl >= 0) { blend2[n + i][0] = (u8)(bl & 255); blend2[n + i][1] = (u8)(bl >> 8); } }
+                if (Geno_DefinePlanInt(kind, 17, n + i)) rows2[n + i].x10_animCurrFlags = (rows2[n + i].x10_animCurrFlags & 0x3f) | (u32)Geno_DefinePlanInt(kind, 16, n + i);
+                ++mapped;
+            }
+        }
         for (i = 0; i < extras; ++i) {
-            rows2[n + i] = rows2[ex_a[i]];
-            blend2[n + i][0] = blend2[ex_a[i]][0]; blend2[n + i][1] = blend2[ex_a[i]][1];
-            rows2[n + i].x0 = (char*)Geno_DefinePlanText(kind, 1, ex_c[i]);
-            rows2[n + i].x4 = (s32)Geno_DefinePlanInt(kind, 10, ex_c[i]);
-            rows2[n + i].x8 = (s32)Geno_DefinePlanInt(kind, 11, ex_c[i]);
+            rows2[n + nown + i] = rows2[ex_a[i]];
+            blend2[n + nown + i][0] = blend2[ex_a[i]][0]; blend2[n + nown + i][1] = blend2[ex_a[i]][1];
+            rows2[n + nown + i].x0 = (char*)Geno_DefinePlanText(kind, 1, ex_c[i]);
+            rows2[n + nown + i].x4 = (s32)Geno_DefinePlanInt(kind, 10, ex_c[i]);
+            rows2[n + nown + i].x8 = (s32)Geno_DefinePlanInt(kind, 11, ex_c[i]);
             ++mapped;
         }
         out->xC = rows2; out->x10 = blend2;
-        ftData_Table_Unk0[kind].count = n + extras;
+        ftData_Table_Unk0[kind].count = n + nown + extras;
     }
     for (i = 0; i < n; ++i) {
         Fighter_WaitAnimData* row = &out->xC[i];
@@ -275,6 +292,9 @@ static void GenoDefine_BuildOwn(int kind, ftData* out, int n)
         row->x0 = (char*)Geno_DefinePlanText(kind, 1, pick[i]);
         row->x4 = (s32)Geno_DefinePlanInt(kind, 10, pick[i]);
         row->x8 = (s32)Geno_DefinePlanInt(kind, 11, pick[i]);
+        if (Geno_DefinePlanInt(kind, 17, i) && (row->x10_animCurrFlags & 0x3f) != 0x21)   /* slice 8: the package's flags for this row (a thrown-victim row keeps the donor's) */
+            row->x10_animCurrFlags = (row->x10_animCurrFlags & 0x3f) | (u32)Geno_DefinePlanInt(kind, 16, i);
+        { int bl = Geno_DefinePlanInt(kind, 18, i); if (bl >= 0) { out->x10[i][0] = (u8)(bl & 255); out->x10[i][1] = (u8)(bl >> 8); } }   /* slice 8 */
         ++mapped;
     }
     OSReport("geno: base none kind %d: %d of %d animation rows take the package's clips (%d states given a row of their own, %d rows in all); own parts table of %d joints\n",

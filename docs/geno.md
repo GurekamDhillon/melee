@@ -2105,6 +2105,14 @@ region RESERVED` / `not reserved`; a mod enabled later by a hot reload gets no m
 model loaded into a match's heap is freed with it). Read-only after the load. No model = an
 invisible article (hitboxes only).
 
+**A model with an `"fx"` package is hidden (v5.7 note).** When an article names an effect package, the package is its look and
+the model is treated as a placeholder: the spawn hides every display object of the model's joint tree
+(`geno_art_hide_model`; the joints keep following the article, so the effects still do) and logs
+`geno: article N model: 2 (...)` (event 45). This is by design, not a draw bug: a model that **looks** never-drawn next to a retail model is
+almost always one whose article also has an `"fx"`; any model draws as an article without one (a procedural
+`fighterbuild` model and a retail `PlFx*.dat` alike; checked in the LAB, `_research/luigi-ultimate-grab-2026-10-07.md` section 7).
+`"show_model": true` (v5.7, `GENO_AP_SHOW_MODEL`, default false) keeps both drawn: the model under the package (event 45, value 3).
+
 ### 19.2 geno.json
 
 ```json
@@ -2688,6 +2696,14 @@ NULL part (`ftAnim_80070010` / `80070108` -> `lb_8000C868`, read of NULL+0x38, t
 own costume model's joint tree below the root (`GenoDefine_RestPoseTree`), and after the blend the `ThrowN` joint's translation is cleared the way
 `ftCo_800921DC` clears it, so the bubble is centred on its parent. Checked in the LAB: shield on, hold, drop, rolls, spot dodge, a real hit in
 shield (`GuardSetOff`), shield held to break (`ShieldBreakFly`..`Furafura`).
+
+**2026-10-08 guard correction (supersedes the rest-pose/cleared-translation rule above).** The costume's rest pose is not its shield pose.
+The slice-8 Sora defense comparison showed `GuardReflect -> Guard` with no pushback against a smash: the rest pose plus a cleared `ThrowN`
+placed the bubble above the hit. `ftCo_80091E78` now samples a base-none define's effective Guard animation row at frame zero over its own
+skeleton and uses temporary joint descriptors for the existing guard-on and tilt blends. The authored shield anchor is retained. A shield
+contact then uses the unchanged retail `ftCo_80092E50` / `ftCo_80092F2C` set-off and velocity calculation; retail and donor definitions still
+use their original x20 trees. No new format or stored gameplay state. Headless `geno_none_guard_contact` checks actual collision, own-row
+selection, guard-on blending and tilt. Full Sora windowed defense parity remains a coordinator re-check.
 
 **`ThrowN` is one joint with two jobs.** `ftData->x8->x11` is where a held victim attaches (`ftCo_CatchPull`: the victim's `XRotN` is moved onto it)
 and the joint the shield bubble hangs from. The converter now maps the art's `grab_anchor` to it (it was `shield_origin`, which put the victim

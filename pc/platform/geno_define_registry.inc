@@ -115,7 +115,7 @@ static int gn_define_parse(gn_profile* p, const jdoc* d, int e, int version, con
     if (def < 0) return 0;
     /* v7 (slice 2) widens a define: the whole common attribute table, special_attributes, fx_bindings.
      * v8 (slice 3) adds articles and the named-sound table. A v6 or v7 file keeps exactly its meaning. */
-    if (version < 6 || version > 9 || jd_get(d, e, "attach") >= 0 || d->n[def].type != JN_OBJ ||
+    if (version < 6 || version > 10 || jd_get(d, e, "attach") >= 0 || d->n[def].type != JN_OBJ ||
         (version < 8 && (jd_get(d, e, "articles") >= 0 || jd_get(d, e, "sounds") >= 0)) ||
         (version < 7 && (jd_get(d, e, "fx_bindings") >= 0 || jd_get(d, e, "special_attributes") >= 0))) {
         if (version < 8 && (jd_get(d, e, "articles") >= 0 || jd_get(d, e, "sounds") >= 0))

@@ -3490,6 +3490,7 @@ void GenoTestRegisterAll(void)
     TestRegister("geno_lua_fault", test_geno_lua_fault);
     TestRegister("geno_lua_digest", test_geno_lua_digest);
     TestRegister("geno_digest_coverage", test_geno_digest_coverage);
+    TestRegister("geno_lua_counter", test_geno_lua_counter);
     TestRegister("geno_define_snapshot", test_geno_define_snapshot);
     TestRegister("geno_none_independence", test_geno_none_independence);
     TestRegister("geno_define_hit_tag", test_geno_define_hit_tag);

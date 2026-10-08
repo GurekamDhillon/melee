@@ -328,6 +328,11 @@ static int glua_loop(lua_State* L)
     return glua_cmd(L, GENO_LUA_CMD_LOOP, 0, 0);
 }
 
+static int glua_turn(lua_State* L)
+{
+    return glua_cmd(L, GENO_LUA_CMD_TURN, 0, 0);
+}
+
 /* ---- closure scan -------------------------------------------------------------------------------------- */
 
 static int glua_scan_proto(gn_lua* g, const Proto* p, const char* fn)
@@ -609,7 +614,7 @@ static void glua_push_ctx(gn_lua* g)
     glua_setnum(L, "stick_y", sy);
     glua_setnum(L, "stick_fwd", (fl & 2) ? -sx : sx);
     lua_setfield(L, -2, "input");
-    lua_createtable(L, 0, 12);
+    lua_createtable(L, 0, 16);
     glua_setbool(L, "air", (fl & 1) != 0);
     glua_setbool(L, "anim_ended", (fl & 4) != 0);
     glua_setnum(L, "facing", (fl & 2) ? -1.0 : 1.0);
@@ -620,6 +625,9 @@ static void glua_push_ctx(gn_lua* g)
     glua_setnum(L, "vel_y", glua_bits_f(gw_r32(&io[GENO_LUA_IO_VEL_Y])));
     glua_setint(L, "action_frame", (int32_t) gw_r32(&io[GENO_LUA_IO_ACTION_FRAME]));
     glua_setint(L, "motion", (int32_t) gw_r32(&io[GENO_LUA_IO_MOTION]));
+    glua_setnum(L, "hit_damage", glua_bits_f(gw_r32(&io[GENO_LUA_IO_HIT_DAMAGE])));
+    glua_setint(L, "hit_from", gw_r32(&io[GENO_LUA_IO_HIT_FROM]) == 1 ? 1 : gw_r32(&io[GENO_LUA_IO_HIT_FROM]) == 2 ? -1 : 0);
+    glua_setint(L, "countered", (int32_t) gw_r32(&io[GENO_LUA_IO_COUNTERED]));
     lua_setfield(L, -2, "self");
     lua_newtable(L); /* ctx.state: an empty proxy; every access goes to the metatable */
     lua_getfield(L, LUA_REGISTRYINDEX, "geno.lua.state");
@@ -633,6 +641,8 @@ static void glua_push_ctx(gn_lua* g)
     lua_setfield(L, -2, "hitbox_damage");
     lua_pushcfunction(L, glua_loop);
     lua_setfield(L, -2, "loop");
+    lua_pushcfunction(L, glua_turn);
+    lua_setfield(L, -2, "turn");
 }
 
 /* Runs function `fn` (an index from glua_find) over `io`. 0 = ok; GENO_LUA_FAULT_* otherwise (the io's state words and

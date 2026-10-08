@@ -2697,6 +2697,14 @@ own costume model's joint tree below the root (`GenoDefine_RestPoseTree`), and a
 `ftCo_800921DC` clears it, so the bubble is centred on its parent. Checked in the LAB: shield on, hold, drop, rolls, spot dodge, a real hit in
 shield (`GuardSetOff`), shield held to break (`ShieldBreakFly`..`Furafura`).
 
+**2026-10-08 guard correction (supersedes the rest-pose/cleared-translation rule above).** The costume's rest pose is not its shield pose.
+The slice-8 Sora defense comparison showed `GuardReflect -> Guard` with no pushback against a smash: the rest pose plus a cleared `ThrowN`
+placed the bubble above the hit. `ftCo_80091E78` now samples a base-none define's effective Guard animation row at frame zero over its own
+skeleton and uses temporary joint descriptors for the existing guard-on and tilt blends. The authored shield anchor is retained. A shield
+contact then uses the unchanged retail `ftCo_80092E50` / `ftCo_80092F2C` set-off and velocity calculation; retail and donor definitions still
+use their original x20 trees. No new format or stored gameplay state. Headless `geno_none_guard_contact` checks actual collision, own-row
+selection, guard-on blending and tilt. Full Sora windowed defense parity remains a coordinator re-check.
+
 **`ThrowN` is one joint with two jobs.** `ftData->x8->x11` is where a held victim attaches (`ftCo_CatchPull`: the victim's `XRotN` is moved onto it)
 and the joint the shield bubble hangs from. The converter now maps the art's `grab_anchor` to it (it was `shield_origin`, which put the victim
 inside the Courier). A split of the two (a separate shield origin) is not built.

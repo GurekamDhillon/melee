@@ -44,7 +44,12 @@
 #include <sysdolphin/baselib/jobj.h>
 
 /* 091BC4 */ static void ftCo_80091BC4(Fighter* fp);
+#if defined(TARGET_PC)
+/* Exposed to the asset-free guard collision regression. */
+void ftCo_80091E78(Fighter_GObj* gobj, float);
+#else
 /* 091E78 */ static void ftCo_80091E78(Fighter_GObj* gobj, float);
+#endif
 /* 092158 */ static void ftCo_80092158(Fighter_GObj* gobj, int arg1,
                                        HSD_JObj* arg2);
 /* 0921DC */ static void ftCo_800921DC(Fighter_GObj* gobj);
@@ -225,30 +230,90 @@ static inline void inlineD0(Fighter_GObj* gobj)
 }
 
 #if defined(TARGET_PC)
-/* The guard's rest-pose joint tree: a retail fighter's is ftData->x20->x0[2] (its own data file's pose tree); a Geno base
- * "none" define has none (the field is the donor's tree, of the donor's joint count: walked over another skeleton it
- * reads NULL parts), so it takes its own model's joint tree (the costume's: the rest pose). */
+/* Retail x20 is a GUARD pose, not a model rest pose. Base-none has no
+ * descriptor tree for that pose: sample its own Guard animation at frame zero
+ * over its own rest skeleton. The temporary descriptors keep retail's guard-on
+ * and directional blends without caching any gameplay state. */
 extern HSD_Joint* GenoDefine_RestPoseTree(Fighter* fp);
-static HSD_Joint* ftCo_GuardPoseTree(Fighter* fp)
+static HSD_Joint* ftCo_CopyGuardPose(Fighter* fp, HSD_Joint* src,
+                                    HSD_Joint* pose, int* index)
+{
+    HSD_Joint* head = NULL;
+    HSD_Joint* prev = NULL;
+    while (src != NULL) {
+        HSD_Joint* dst;
+        HSD_JObj* jobj;
+        HSD_ASSERTREPORT(__LINE__, *index < MAX_FT_PARTS &&
+                         *index < ftPartsTable[fp->kind]->parts_num,
+                         "Geno guard pose exceeds the parts limit\n");
+        dst = &pose[*index];
+        jobj = fp->parts[(*index)++].x4_jobj2;
+        *dst = *src;
+        if (jobj != NULL) {
+            dst->rotation.x = jobj->rotate.x;
+            dst->rotation.y = jobj->rotate.y;
+            dst->rotation.z = jobj->rotate.z;
+            dst->scale = jobj->scale;
+            dst->position = jobj->translate;
+        }
+        dst->child = ftCo_CopyGuardPose(fp, src->child, pose, index);
+        dst->next = NULL;
+        if (prev != NULL) prev->next = dst;
+        else head = dst;
+        prev = dst;
+        src = src->next;
+    }
+    return head;
+}
+static HSD_Joint* ftCo_GuardPoseTree(Fighter* fp, HSD_Joint* pose, int* row)
 {
     HSD_Joint* own = GenoDefine_RestPoseTree(fp);
-    return own != NULL ? own : fp->ft_data->x20->x0[2];
+    FigaTree* tree;
+    int index = FtPart_TransN;
+    extern int Geno_MotionAnimRow(Fighter* fp, int motion);
+    if (own == NULL) return fp->ft_data->x20->x0[2];
+    *row = Geno_MotionAnimRow(fp, ftCo_MS_Guard);
+    if (*row < 0) *row = fp->x1C_actionStateList[ftCo_MS_Guard].anim_id;
+    tree = ftData_80085E50(fp, *row);
+    if (tree == NULL) return own;
+    ftAnim_8006F4C8(fp, true, tree);
+    ftAnim_80070710(fp->x8AC_animSkeleton, 0);
+    ftAnim_8006FB88(fp, FtPart_TransN, own);
+    HSD_JObjAnimAll(fp->x8AC_animSkeleton);
+    {
+        static u8 said[Ft_Kind_Max];
+        if (!said[fp->kind]) {
+            said[fp->kind] = 1;
+            OSReport("geno: kind %d: shield guard pose samples own Guard row %d\n", fp->kind, *row);
+        }
+    }
+    return ftCo_CopyGuardPose(fp, own, pose, &index);
 }
-#define GUARD_POSE_TREE(fp) ftCo_GuardPoseTree(fp)
+#define GUARD_POSE_TREE(fp) guard_pose
+#define GUARD_ANIM_ROW guard_row
 #else
 #define GUARD_POSE_TREE(fp) ((fp)->ft_data->x20->x0[2])
+#define GUARD_ANIM_ROW 38
 #endif
 
 void ftCo_80091E78(Fighter_GObj* gobj, float arg1)
 {
     Fighter* fp = gobj->user_data;
     Vec3 scl;
+#if defined(TARGET_PC)
+    HSD_Joint own_pose[MAX_FT_PARTS];
+    HSD_Joint* guard_pose;
+    int guard_row = 38;
+#endif
     PAD_STACK(4);
     if (fp->reflecting || fp->x221B_b0) {
+#if defined(TARGET_PC)
+        guard_pose = ftCo_GuardPoseTree(fp, own_pose, &guard_row);
+#endif
         ftCo_80091BC4(fp);
         if (fp->mv.co.guard.x4) {
             HSD_JObj* jobj = fp->x8AC_animSkeleton;
-            ftAnim_8006F4C8(fp, true, ftData_80085E50(fp, 38));
+            ftAnim_8006F4C8(fp, true, ftData_80085E50(fp, GUARD_ANIM_ROW));
             ftAnim_80070710(jobj, fp->mv.co.guard.x8);
             ftAnim_8006FB88(fp, FtPart_TransN, fp->x108_costume_joint->child);
             HSD_JObjAnimAll(jobj);
@@ -270,16 +335,6 @@ void ftCo_80091E78(Fighter_GObj* gobj, float arg1)
         {
             scl.x = scl.y = scl.z = inlineB0(fp);
             HSD_JObjSetScale(fp->parts[fp->ft_data->x8->x11].joint, &scl);
-#if defined(TARGET_PC)
-            if (GenoDefine_RestPoseTree(fp) != NULL) {
-                /* ThrowN is the shield bubble's joint and the held victim's joint (one part in retail). Retail's guard pose
-                 * tree has its translation at 0 (ftCo_800921DC clears it too), which centres the bubble on its parent; an
-                 * authored fighter's rest tree carries the hold anchor in front of the body, so clear it after the blend. */
-                Vec3 zero;
-                zero.x = zero.y = zero.z = 0.0f;
-                HSD_JObjSetTranslate(fp->parts[fp->ft_data->x8->x11].joint, &zero);
-            }
-#endif
         }
         inlineD0(gobj);
     }

@@ -3466,6 +3466,7 @@ static int test_geno_fly(void)
 
 #include "geno_define_snapshot_tests.inc"
 #include "geno_lua_tests.inc"
+#include "geno_guard_tests.inc"
 
 /* Slice 4d: the independence census. A base "none" define's ftData must hold no pointer of the donor's that it does not
  * list as shared (docs/geno.md 22.4). The census function is pure: it names the pointer fields two ftData share. */
@@ -3491,6 +3492,7 @@ static int test_geno_none_independence(void)
 }
 void GenoTestRegisterAll(void)
 {
+    TestRegister("geno_none_guard_contact", test_geno_none_guard_contact);
     TestRegister("geno_lua_charge", test_geno_lua_charge);
     TestRegister("geno_lua_fault", test_geno_lua_fault);
     TestRegister("geno_lua_digest", test_geno_lua_digest);

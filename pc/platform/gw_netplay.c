@@ -37,6 +37,7 @@
 #include "gw_script.h" /* charlie: gameplay scripts join the must-match set */
 #include "gw_matchrules.h" /* the match rule word (Turbo) agreed in the handshake */
 #include "gw_matchbuild.h" /* the Envoy mode word and the build record (online Envoy) */
+#include "gw_netrun.h" /* the run record of an online stage run (stage 7 spike) */
 #include "shim_vi.h"
 #include <stdio.h>
 #include <stdint.h>
@@ -124,6 +125,7 @@ static struct {
     unsigned envoy;       /* the Envoy mode word agreed for this match (gw_matchbuild.h); 0 = off */
     unsigned envoy_pref;  /* the host's choice for private rooms it opens (menu / MELEE_NETPLAY_ENVOY); never used for random matches */
     int envoy_env;        /* guest, scripted: MELEE_NETPLAY_ENVOY is set, so the guest insists on that word */
+    int run_pref;         /* the host's choice for rooms it opens: an online STAGE RUN (gw_netrun.h); gd.netplay_act("run", true) or MELEE_NETPLAY_RUN=1. Spike: not in the menu */
     int t_open_session;   /* random matchmaking: the session on the queue socket has started */
     int started, dead, accepted;
     long ticks;
@@ -1299,6 +1301,12 @@ static struct {
     char env_block[120]; /* the reason Envoy cannot start the match right now (empty = none): it stops READY, the lobby shows it, the host may switch Envoy off */
     int env_peer_mod;    /* the other side's report: -1 unknown (an older build), 0 no Envoy mod loaded there, 1 loaded */
     int env_note;        /* bumped whenever a refusal/block is raised: the menu shows the reason as a toast once per bump */
+    /* ONLINE STAGE RUN (stage 7 spike, gw_netrun.h): no pick/ban; the host's run seed plans every stage, the characters carry over, and each match
+       names the run record it is played under (`run=` in the scene) which the guest recomputes and refuses on a difference. */
+    int run_on;          /* this set is a stage run (host: its preference at set start; guest: the host's R message) */
+    uint32_t run_seed;   /* 1..2147483646, the host's choice */
+    int run_refused;     /* stages refused for differing records (this process) */
+    char run_fail[120];
 } lb;
 #define LB_ENV_TICKS 1800 /* 30 s at 60 lobby ticks a second: the reward pick */
 #define LB_ENV_KEEP 3     /* the pick that keeps the build; a timeout takes offer 0 (the first) */
@@ -1399,11 +1407,79 @@ static void lb_new_set(int host_ck, int guest_ck) {
     lb.env_round = 0;
     memset(lb.env_hist, 0xFF, sizeof lb.env_hist); /* -1: no game's picks yet */
     lb.env_tx = 1;
+    lb.run_on = np.host && (np.run_pref || (getenv("MELEE_NETPLAY_RUN") != NULL && getenv("MELEE_NETPLAY_RUN")[0] != '0'));
+    lb.run_seed = (np.seed & 0x7FFFFFFFu) % 2147483646u + 1u; /* the host's choice; a guest's value is replaced by the host's R message */
     lb.ck[0] = host_ck;
     lb.ck[1] = guest_ck;
     lb.color[0] = lb.color[1] = 0;
     if (lb.nstages <= 0) lb_default_stages();
     lb.seq++;
+}
+
+/* ---- ONLINE STAGE RUN (stage 7 spike; gw_netrun.h) ------------------------------------------------------------------------------------
+ * The plan: stage i of the run is list entry gw_nr_stage_index(run seed, i, list length). Both peers hold the same list (the host's, sent in "L"
+ * chunks) and the same seed (the host's "R" message), so both compute the same stage; the match's scene names the record (`run=<digest>`) and the
+ * guest recomputes it from its own state before it loads anything. */
+static int lb_run_stage_ix(void) { return lb.game > 0 ? lb.game - 1 : 0; }
+static int lb_run_list_index(void) { return lb.nstages > 0 ? gw_nr_stage_index(lb.run_seed, lb_run_stage_ix(), lb.nstages) : -1; }
+/* The record of the stage about to be played, from state both peers hold (seed, game number, scores, the stage list). */
+static int lb_run_record(char *out, size_t cap, unsigned poison) {
+    int ix = lb_run_list_index();
+    long ext = ix >= 0 ? lb.stage_ext[ix] : 0;
+    return gw_nr_format(out, cap, (long) (lb.run_seed ^ poison), lb_run_stage_ix(), 0, lb.score[0], lb.score[1], 0, ext);
+}
+static void lb_run_choose(void) {
+    int ix = lb_run_list_index();
+    if (ix >= 0) lb.chosen = ix;
+}
+static void lb_run_refuse(const char *why) {
+    char m[GW_NET_LOBBY_MAX];
+    lb.run_refused++;
+    snprintf(lb.run_fail, sizeof lb.run_fail, "%s", why);
+    gw_log("netrun: REFUSED the stage: %s", why);
+    np_status("Refused: %s", why);
+    snprintf(m, sizeof m, "X %s", why);
+    if (np.net != NULL) gw_net_lobby_send(np.net, m, (int) strlen(m));
+}
+/* Host: append the record to the scene string it is about to send. */
+static void lb_run_scene_token(void) {
+    char rec[GW_NR_RECORD_MAX];
+    size_t l = strlen(np.scene);
+    if (lb_run_record(rec, sizeof rec, 0) == 0) return;
+    snprintf(np.scene + l, sizeof np.scene - l, ";run=%s", gw_nr_digest_of(rec));
+    gw_log("netrun: stage %d of the run - %s (host)", lb_run_stage_ix() + 1, rec);
+}
+/* Guest: the host's scene against this side's own record. 1 = agreed. */
+static int lb_run_check_scene(const char *scene, char *why, size_t cap) {
+    char rec[GW_NR_RECORD_MAX];
+    const char *t = strstr(scene, ";run=");
+    const char *poison = getenv("MELEE_NETRUN_POISON"); /* TEST-ONLY: this side computes its record from another seed, so the stage must be refused */
+    if (t == NULL && !lb.run_on) return 1;
+    if (t == NULL) { snprintf(why, cap, "the host's match carries no run record"); return 0; }
+    if (!lb.run_on) { snprintf(why, cap, "the host plays a stage run this client does not know"); return 0; }
+    if (lb_run_record(rec, sizeof rec, poison != NULL && poison[0] == '1' ? 1u : 0u) == 0) { snprintf(why, cap, "no run record"); return 0; }
+    if (strncmp(t + 5, gw_nr_digest_of(rec), 16) != 0) {
+        snprintf(why, cap, "run records differ (host %.16s, guest %s)", t + 5, gw_nr_digest_of(rec));
+        return 0;
+    }
+    gw_log("netrun: stage %d of the run - %s (guest agrees)", lb_run_stage_ix() + 1, rec);
+    return 1;
+}
+/* host -> guest: "R <on> <seed>" on entering the lobby (every connection of the set) */
+static void lb_run_send(void) {
+    char m[40];
+    snprintf(m, sizeof m, "R %d %u", lb.run_on, lb.run_seed);
+    if (np.net != NULL) gw_net_lobby_send(np.net, m, (int) strlen(m));
+}
+static int lb_run_decode(const char *m) {
+    int on = 0;
+    unsigned seed = 0;
+    if (sscanf(m + 2, "%d %u", &on, &seed) < 2 || seed == 0 || seed > 2147483646u) return 0;
+    lb.run_on = on != 0;
+    lb.run_seed = seed;
+    lb.seq++;
+    gw_log("netrun: the host's room is %s (run seed %u)", lb.run_on ? "a stage run" : "an ordinary set", seed);
+    return 1;
 }
 
 /* The next game of the set: game 1 (or after a game nobody won) starts with blind characters;
@@ -1426,6 +1502,10 @@ static void lb_reset_game(void) {
         lb.phase = LB_BAN;                      /* winner bans 2, loser picks */
         lb.turn = lb.winner;
         lb.left = 2;
+    }
+    if (lb.run_on) { /* a stage run has no pick/ban: the plan chooses the stage and the characters carry over from game 1 */
+        if (lb.game >= 2) { lb.phase = LB_READY; lb.locked[0] = lb.locked[1] = 1; }
+        lb_run_choose();
     }
     /* an Envoy set pays out between games: before game 2 and every later one each player picks a reward, then the usual pick/ban follows */
     if (lb.env_on && lb.game >= 2 && lb.env_round != lb.game) {
@@ -1493,7 +1573,10 @@ static int lb_apply_(int who, const char *act, int a, int b) {
             lb.color[who] = b;
             lb.locked[who] = 1;
             if (lb.locked[0] && lb.locked[1]) {
-                if (lb.mode == 1) {
+                if (lb.run_on) {
+                    lb.phase = LB_READY; /* a stage run: the plan chooses the stage */
+                    lb_run_choose();
+                } else if (lb.mode == 1) {
                     lb.phase = LB_BAN; /* all stages: the coin winner bans 2, the other picks */
                     lb.turn = lb.first;
                     lb.left = 2;
@@ -1818,8 +1901,15 @@ static void lb_go(void) {
             return;
         }
     }
+    if (lb.run_on) { /* TEST-ONLY shortcuts so a loopback run does not play full matches: MELEE_NETPLAY_RUN_STOCKS / _MINUTES */
+        const char *s = getenv("MELEE_NETPLAY_RUN_STOCKS"), *mi = getenv("MELEE_NETPLAY_RUN_MINUTES");
+        lb_run_choose();
+        if (s != NULL && atoi(s) > 0) np.stocks = atoi(s);
+        if (mi != NULL && atoi(mi) > 0) np.minutes = atoi(mi);
+    }
     np.stage_ext = lb.stage_ext[lb.chosen >= 0 ? lb.chosen : 0];
     np_build_scene(np.scene, sizeof np.scene, lb.ck[0], lb.color[0], lb.ck[1], lb.color[1]);
+    if (lb.run_on) lb_run_scene_token();
     lb.phase = LB_GO;
     snprintf(m, sizeof m, "G %u %s", np.seed, np.scene);
     lb_send(m);
@@ -1903,6 +1993,13 @@ static void np_cb_lobby(void *user, const uint8_t *data, int len) {
             gw_log("netplay: envoy - the host switched Envoy mode off");
             np_status("The host switched Envoy mode off");
         }
+    } else if (!np.host && m[0] == 'R' && m[1] == ' ') {
+        lb_run_decode(m);
+    } else if (m[0] == 'X' && m[1] == ' ' && !np.envoy && lb.run_on) {
+        lb.run_refused++;
+        snprintf(lb.run_fail, sizeof lb.run_fail, "%s", m + 2);
+        gw_log("netrun: the other side REFUSED the stage: %s", m + 2);
+        np_status("Refused: %s", m + 2);
     } else if (m[0] == 'X' && m[1] == ' ') {
         if (np.envoy) {
             lb.env_refused++;
@@ -1926,6 +2023,14 @@ static void np_cb_lobby(void *user, const uint8_t *data, int len) {
                     return;
                 }
             }
+            if (lb.run_on || strstr(m + 2 + off, ";run=") != NULL) { /* a stage run: this side recomputes the record before it loads anything */
+                char why[120];
+                if (!lb_run_check_scene(m + 2 + off, why, sizeof why)) {
+                    lb_run_refuse(why);
+                    np_peer_gone_pending = 1; /* the guest leaves; the host sees the disconnect and the run ends */
+                    return;
+                }
+            }
             np.seed = seed;
             snprintf(np.scene, sizeof np.scene, "%s", m + 2 + off);
             lb.phase = LB_GO;
@@ -1946,6 +2051,7 @@ static void np_peer_gone(void) {
     lb.game = 0; /* the next opponent starts a new set */
     lb.env_on = 0; /* an Envoy set ends with the connection: the survivor is back at the menu, nothing is carried over */
     lb.env_open = 0;
+    lb.run_on = 0; /* so does a stage run (the record of the last agreed stage is in the log) */
 }
 
 /* Every frame while in the lobby - also while a player is away on the CSS (gmscene.c calls
@@ -2073,6 +2179,7 @@ static void np_lobby_enter(void) {
         lb_reset_game();
     }
     if (np.host) {
+        lb_run_send();
         lb_list_pump();
         lb_broadcast();
     }
@@ -2892,6 +2999,26 @@ int gw_Netplay_EnvoyPick(int idx) {
     lb_action("RPICK", idx, 0);
     return 1;
 }
+/* Stage run, for scripts (read-only) and the driver. what: 0 on, 1 seed, 2 zero-based stage index, 3 refusals so far. */
+void gw_Netplay_SetRun(int on) { np.run_pref = on != 0; }
+int gw_Netplay_RunPref(void) { return np.run_pref; }
+unsigned gw_Netplay_RunInfo(int what) {
+    switch (what) {
+    case 0: return (unsigned) lb.run_on;
+    case 1: return lb.run_seed;
+    case 2: return (unsigned) lb_run_stage_ix();
+    case 3: return (unsigned) lb.run_refused;
+    default: return 0;
+    }
+}
+/* The record of the stage about to be played (or being played): "" when this is not a stage run. */
+const char *gw_Netplay_RunRecord(void) {
+    static char rec[GW_NR_RECORD_MAX];
+    rec[0] = '\0';
+    if (lb.run_on) lb_run_record(rec, sizeof rec, 0);
+    return rec;
+}
+const char *gw_Netplay_RunFail(void) { return lb.run_fail; }
 int gw_Netplay_LobbyStage(int i) { return i >= 0 && i < lb.nstages ? lb.stage[i] : 0; }
 int gw_Netplay_LobbyStageExt(int i) { return i >= 0 && i < lb.nstages ? lb.stage_ext[i] : 0; }
 /* A stage's group in the list: 0 starter, 1 counterpick (the list has starters first). */
@@ -3276,6 +3403,10 @@ uint32_t gw_Netplay_Handshake(uint8_t *d, int len, int keep_off, int keep_len) {
         np_connected_title(title, sizeof title);
         gw_log("netplay: %s", title);
     }
+    if (lb.run_on) { /* the proof line: both logs carry the same record and digest when the stage starts */
+        char rec[GW_NR_RECORD_MAX];
+        if (lb_run_record(rec, sizeof rec, 0) != 0) gw_log("netrun: ARRIVED in stage %d of the run - %s (%s, seed 0x%08X)", lb_run_stage_ix() + 1, rec, np.host ? "host" : "guest", np.seed);
+    }
     return np.seed;
 }
 
@@ -3629,7 +3760,88 @@ static int test_lobby_groups(void) {
     return 0;
 }
 
+/* The run record: format, strict parse, digest, and the plan (never the same stage twice in a row, a pure function of the seed). */
+static int test_run_record(void) {
+    char rec[GW_NR_RECORD_MAX], bad[GW_NR_RECORD_MAX], why[80];
+    GwNrRecord r;
+    int s, prev = -1, n, seen[6] = { 0 };
+    if (gw_nr_format(rec, sizeof rec, 1234567, 1, 0, 1, 0, 0, 32) == 0) { gw_test_fail("netrun: format"); return 1; }
+    if (!gw_nr_parse(rec, &r, why, sizeof why) || r.seed != 1234567 || r.stage != 1 || r.score0 != 1 || r.ext != 32) {
+        gw_test_fail("netrun: parse %s (%s)", rec, why);
+        return 1;
+    }
+    memcpy(bad, rec, sizeof bad);
+    bad[4] = '9'; /* the seed's first digit */
+    if (gw_nr_parse(bad, &r, why, sizeof why)) { gw_test_fail("netrun: a tampered record parsed"); return 1; }
+    if (gw_nr_parse("RN1|1|0|0|0|0|0|31|0123456789abcdef", &r, why, sizeof why)) { gw_test_fail("netrun: a wrong digest parsed"); return 1; }
+    if (gw_nr_parse("RN2|1|0|0|0|0|0|31|0123456789abcdef", &r, why, sizeof why)) { gw_test_fail("netrun: another version parsed"); return 1; }
+    for (n = 2; n <= 6; ++n) {
+        for (s = 0; s < 40; ++s) {
+            int ix = gw_nr_stage_index(99u + (unsigned) n, s, n);
+            if (ix < 0 || ix >= n || (s > 0 && ix == prev)) { gw_test_fail("netrun: plan n=%d stage %d -> %d after %d", n, s, ix, prev); return 1; }
+            if (ix != gw_nr_stage_index(99u + (unsigned) n, s, n)) { gw_test_fail("netrun: plan is not a pure function"); return 1; }
+            prev = ix;
+            if (n == 6) seen[ix] = 1;
+        }
+    }
+    for (s = 0; s < 6; ++s) if (!seen[s]) { gw_test_fail("netrun: stage %d is never planned in 40 stages", s); return 1; }
+    if (gw_nr_stage_index(1u, 5, 1) != 0) { gw_test_fail("netrun: a one-stage list"); return 1; }
+    return 0;
+}
+
+/* A stage run in the lobby: no pick/ban, the plan chooses the stage, characters carry over, the guest recomputes the record. */
+static int test_lobby_run(void) {
+    char rec0[GW_NR_RECORD_MAX], rec1[GW_NR_RECORD_MAX], why[120];
+    int first;
+    lbt_start(0);
+    lb.run_on = 1;
+    lb.run_seed = 4242;
+    lb_reset_game();
+    if (lb.phase != LB_CHAR_BLIND) return lbt_fail("game 1 of a run starts with blind characters");
+    if (!lb_apply_(0, "CHAR", 34, 1) || !lb_apply_(1, "CHAR", 36, 2)) return lbt_fail("characters");
+    if (lb.phase != LB_READY || lb.chosen < 0) return lbt_fail("a run goes from the characters straight to Ready with the plan's stage");
+    first = lb.chosen;
+    if (lb.chosen != gw_nr_stage_index(4242u, 0, lb.nstages)) return lbt_fail("the chosen stage is the plan's");
+    if (lb_apply_(0, "STRIKE", 0, 0) || lb_apply_(1, "BAN", 0, 0)) return lbt_fail("no strike or ban in a run");
+    if (!lb_apply_(0, "READY", 1, 0) || !lb_apply_(1, "READY", 1, 0) || lb.countdown != LB_COUNTDOWN) return lbt_fail("both ready: countdown");
+    /* the host's scene carries the record; the guest (same state) agrees */
+    snprintf(np.scene, sizeof np.scene, "mode=vs;stage=ext:%d", lb.stage_ext[lb.chosen]);
+    lb_run_scene_token();
+    if (strstr(np.scene, ";run=") == NULL) return lbt_fail("the scene names the run record");
+    if (!lb_run_check_scene(np.scene, why, sizeof why)) return lbt_fail(why);
+    lb_run_record(rec0, sizeof rec0, 0);
+    /* a guest that disagrees on the seed, the score or the game number is refused */
+    lb.run_seed ^= 1;
+    if (lb_run_check_scene(np.scene, why, sizeof why)) return lbt_fail("a different seed was accepted");
+    lb.run_seed ^= 1;
+    lb.score[0]++;
+    if (lb_run_check_scene(np.scene, why, sizeof why)) return lbt_fail("a different score was accepted");
+    lb.score[0]--;
+    lb.run_on = 0;
+    if (lb_run_check_scene(np.scene, why, sizeof why)) return lbt_fail("a guest that does not know the run accepted its stage");
+    lb.run_on = 1;
+    /* game 2: P1 won game 1; straight to Ready, characters kept, a different stage, a different record */
+    lb.winner = 0;
+    lb.score[0] = 1;
+    lb.game = 2;
+    lb_reset_game();
+    if (lb.phase != LB_READY || !lb.locked[0] || !lb.locked[1] || lb.ck[0] != 34 || lb.ck[1] != 36) return lbt_fail("game 2 of a run: Ready at once, characters carried");
+    if (lb.chosen == first || lb.chosen != gw_nr_stage_index(4242u, 1, lb.nstages)) return lbt_fail("game 2 plays the plan's next stage");
+    lb_run_record(rec1, sizeof rec1, 0);
+    if (strcmp(gw_nr_digest_of(rec0), gw_nr_digest_of(rec1)) == 0) return lbt_fail("two stages share a record");
+    if (!lb_apply_(0, "READY", 1, 0)) return lbt_fail("ready in game 2");
+    /* an ordinary set is untouched */
+    lbt_start(0);
+    if (lb.run_on || lb.phase != LB_CHAR_BLIND) return lbt_fail("a plain set is not a run");
+    lb_apply_(0, "CHAR", 34, 1);
+    lb_apply_(1, "CHAR", 36, 2);
+    if (lb.phase != LB_STRIKE) return lbt_fail("a plain set still strikes");
+    return 0;
+}
+
 void gw_netplay_tests_register(void) {
+    gw_test_register("netplay_run_record", test_run_record);
+    gw_test_register("netplay_lobby_run", test_lobby_run);
     gw_test_register("netplay_lobby_groups", test_lobby_groups);
     gw_test_register("netplay_lobby_all_stages", test_lobby_all_stages);
     gw_test_register("netplay_lobby_game1", test_lobby_game1);

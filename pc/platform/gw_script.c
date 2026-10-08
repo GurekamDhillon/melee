@@ -1503,6 +1503,11 @@ extern int gw_Netplay_EnvoyPick(int idx);
 extern int gw_Netplay_EnvoyHist(int game, int who);
 extern void gw_Netplay_SetEnvoy(int on);
 extern int gw_Netplay_EnvoyPref(void);
+extern unsigned gw_Netplay_RunInfo(int what);
+extern const char *gw_Netplay_RunRecord(void);
+extern const char *gw_Netplay_RunFail(void);
+extern void gw_Netplay_SetRun(int on);
+extern int gw_Netplay_RunPref(void);
 
 /* gd.menu() -> {frontend = {title, screen, cursor, item} (the port's own menus: gmfrontend.c),
  * native = {menu, hovered} (Melee's menu tree)}. Which one is live follows gd.scene(). */
@@ -1595,6 +1600,18 @@ static int l_netplay(lua_State *L) {
         gs_setbool(L, "peer_reported", gw_Netplay_EnvoyInfo(8));
         lua_setfield(L, -2, "envoy");
     }
+    { /* run: the online stage run (stage 7 spike, gw_netrun.h): {on, seed, stage (zero-based), record, digest, refused, fail}; read-only */
+        const char *rec = gw_Netplay_RunRecord(), *dg = strrchr(rec, '|');
+        lua_createtable(L, 0, 7);
+        gs_setbool(L, "on", gw_Netplay_RunInfo(0));
+        gs_setint(L, "seed", (lua_Integer) gw_Netplay_RunInfo(1));
+        gs_setint(L, "stage", (int) gw_Netplay_RunInfo(2));
+        gs_setstr(L, "record", rec);
+        gs_setstr(L, "digest", dg != NULL ? dg + 1 : "");
+        gs_setint(L, "refused", (int) gw_Netplay_RunInfo(3));
+        gs_setstr(L, "fail", gw_Netplay_RunFail());
+        lua_setfield(L, -2, "run");
+    }
     return 1;
 }
 
@@ -1616,6 +1633,9 @@ static int l_netplay_act(lua_State *L) {
     } else if (_stricmp(what, "envoy") == 0) { /* the host's Online > Envoy choice for rooms it opens (menu routing, like the menu row) */
         if (!lua_isnone(L, 2)) gw_Netplay_SetEnvoy(lua_toboolean(L, 2));
         ok = gw_Netplay_EnvoyPref();
+    } else if (_stricmp(what, "run") == 0) { /* the host's choice for rooms it opens: an online stage run (spike) */
+        if (!lua_isnone(L, 2)) gw_Netplay_SetRun(lua_toboolean(L, 2));
+        ok = gw_Netplay_RunPref();
     } else if (_stricmp(what, "rpick") == 0) { /* an Envoy set's reward: 0..2 an offer, 3 keeps the build (host-validated) */
         ok = gw_Netplay_EnvoyPick((int) luaL_checkinteger(L, 2));
     } else {

@@ -2127,6 +2127,7 @@ static int gw_sl_apply(GwSceneConfig *c, const char *key, const char *val) {
     else return -1;
     return 0;
   }
+  if (tt_ieq(key, "run")) return 0; /* an online stage run's record digest (gw_netrun.h): the netplay layer checks it; the launcher ignores it */
   if (tt_ieq(key, "turbo")) {
     /* the Turbo match rule (gw_matchrules.h): off, on (the first rule set), or a rule word in hex.
      * The host's scene carries it, so both peers of an online match agree on it. */

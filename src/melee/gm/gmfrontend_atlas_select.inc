@@ -32,6 +32,7 @@ extern int Ui_SelCols(int h);
 extern void Ui_SelProgress(int h, int permille);
 extern int Settings_Int(const char* key, int dflt);
 extern void Ui_ArtDrop(void);
+extern int Geno_DefineAudioPlay(int ck, int which, int sfx); /* a define's own clip (announcer: which 0); 1 when one was started or declared */
 extern int Ui_ArtGeno(int ck, int what, int costume); /* a Geno define's own package art as a kit texture, or -1 (what: 0 icon, 1 portrait) */
 extern int Ui_ArtDecode(const char* key, int gx_fmt, const void* img, int size, int w, int h, int tlut_fmt, const void* tlut, int tlut_n);
 
@@ -414,6 +415,34 @@ static const char* fas_css_hint(char* buf)
     return Ui_CssGet(FA_CG_CPU_CARDS, 0) ? "A: pick. X/Y: costume. L/R: tabs. Down: CPUs." : "A: pick. X/Y: costume. L/R: tabs.";
 }
 
+/* The face on a port's card: the fighter's select icon, the same texture its cell shows (a define's own icon when its package has one; a base "none" define
+ * without art has none: letters in the cell, no face on the card). -1 for an empty port, Random, or a fighter the roster has no art for. */
+static int fas_card_face(int ck)
+{
+    char id[12];
+    int slot, ns;
+    if (ck < 0) {
+        return -1;
+    }
+    if (ck >= FA_RETAIL_FIGHTERS) {
+        int tex = Ui_ArtGeno(ck, 0, 0);
+        if (tex >= 0) {
+            return tex;
+        }
+    }
+    if (fas_ck_is_none(ck)) {
+        return -1;
+    }
+    ns = Ui_CssGet(FA_CG_N_SLOTS, 0);
+    for (slot = 0; slot < ns && slot < fcs.n; slot++) {
+        if (Ui_CssGet(FA_CG_SLOT_CK, slot) == ck) {
+            sprintf(id, "f%d", ck);
+            return fas_art(id, fcs.icon[slot]);
+        }
+    }
+    return -1;
+}
+
 static void fas_submit_css(void)
 {
     char name[40], abbr[4], buf[FE_HELP_STR], sub[40], id[12], step[24];
@@ -476,7 +505,7 @@ static void fas_submit_css(void)
         if (kind == FS_HMN && pck != FS_CK_NONE) {
             flags |= FA_CARD_READY;
         }
-        Ui_SelCard(fas.h, p, kind, name, sub, abbr, -1, Ui_CssGet(FA_CG_CPU_LV, p), Ui_CssGet(FA_CG_TEAMS, 0) ? Ui_CssGet(FA_CG_TEAM, p) + 1 : 0, flags);
+        Ui_SelCard(fas.h, p, kind, name, sub, abbr, fas_card_face(pck), Ui_CssGet(FA_CG_CPU_LV, p), Ui_CssGet(FA_CG_TEAMS, 0) ? Ui_CssGet(FA_CG_TEAM, p) + 1 : 0, flags);
         Ui_SelCursor(fas.h, p, kind == FS_HMN && !(online && p != 0) ? 1 : 0, Ui_CssGet(FA_CG_CUR, p), Ui_CssGet(FA_CG_CARD, p));
     }
     for (p = 0; p < 4; p++) {
@@ -549,7 +578,7 @@ static void fas_finish_css(int go)
 static void fas_css_frame(void)
 {
     unsigned ev = 0, trig[4], rep[4], mouse = 0;
-    int p, k, a, b, mp, before_cur, before_card;
+    int p, k, a, b, mp, before_cur, before_card, ck_before[4];
     char buf[80];
     bool online = Ui_CssGet(FA_CG_ONLINE, 0) != 0;
     if (fe.frames >= 4) {
@@ -589,8 +618,17 @@ static void fas_css_frame(void)
             }
         }
         Ui_CssCols(Ui_SelCols(fas.h));
+        for (p = 0; p < 4; p++) {
+            ck_before[p] = Ui_CssGet(FA_CG_CK, p);
+        }
         for (p = 0; p < 4 && !(ev & (FA_CE_FINISH_GO | FA_CE_FINISH_BACK)); p++) {
             ev |= Ui_CssStep(p, trig[p], rep[p], fe.frames);
+        }
+        for (p = 0; p < 4; p++) { /* a port that has just picked a Geno define: its own announcer call, when its package ships one (never the donor's) */
+            int now = Ui_CssGet(FA_CG_CK, p);
+            if (now != ck_before[p] && now >= FA_RETAIL_FIGHTERS) {
+                Geno_DefineAudioPlay(now, 0, 0);
+            }
         }
         fas_sfx(ev);
         if (ev & FA_CE_TOAST) {

@@ -466,6 +466,18 @@ static void port_cards(void)
       CHECK(sty_focus_cues(a, b) == 3);
       pc[2].flags = AT_CARD_OPEN; s2 = rec_sink(); at_part_sel_card(&s2, &O, r, &pc[2], 1); CHECK(find_text("Press A to join") != NULL && sty_text_inside(r, 0) == -1);
       s2 = rec_sink(); at_part_sel_card(&s2, &O, r, &pc[2], 0); CHECK(find_text("Press A to join") == NULL); }
+    /* slice 6: the fighter's face on the card (its select icon) - inside the card, keeping the icon's 64x56 aspect, the text still inside and after it;
+     * no art (-1), an open slot, or a card too narrow for it draws no image and the text keeps its place */
+    { AtSink s2; AtSelCard fc = pc[0]; AtRect wide = { 32, 372, 200, 56 }; 
+      fc.kind = 1; fc.ck_tex = -1; s2 = rec_sink(); at_part_sel_card(&s2, &O, wide, &fc, 0); CHECK(REC.ni == 0);
+      fc.ck_tex = 9; s2 = rec_sink(); at_part_sel_card(&s2, &O, wide, &fc, 0);
+      CHECK(REC.ni == 1 && REC.im[0].tex == 9);
+      CHECK(REC.im[0].x >= wide.x && REC.im[0].y >= wide.y && REC.im[0].x + REC.im[0].w <= wide.x + wide.w + 0.01f && REC.im[0].y + REC.im[0].h <= wide.y + wide.h + 0.01f);
+      CHECK_NEAR(REC.im[0].w / REC.im[0].h, 64.0f / 56.0f);
+      CHECK(sty_text_inside(wide, 0) == -1 && texts_legible());
+      fc.kind = 0; s2 = rec_sink(); at_part_sel_card(&s2, &O, wide, &fc, 0); CHECK(REC.ni == 0);        /* an open slot has no face */
+      fc.kind = 1; { AtRect tight = { 32, 372, 120, 56 }; s2 = rec_sink(); at_part_sel_card(&s2, &O, tight, &fc, 0); CHECK(REC.ni == 0); }   /* too narrow: text first */
+    }
     /* a narrow card never lets text outside it */
     { AtRect nr = { 32, 372, 90, 56 }; pc[0].kind = 1; snprintf(pc[0].name, sizeof pc[0].name, "%s", "CAPTAIN FALCON THE FIRST"); { AtSink s2 = rec_sink(); at_part_sel_card(&s2, &O, nr, &pc[0], 1); CHECK(sty_text_inside(nr, 0) == -1 && texts_legible()); } }
 }

@@ -466,6 +466,17 @@ void ft_80088110(Fighter* fp)
 
 void ft_PlaySFX(Fighter* fp, enum_t sfx_id, u8 sfx_vol, u8 sfx_pan)
 {
+#if defined(TARGET_PC)
+    {
+        /* Geno slice 6 (geno 10): a define whose package maps this retail sound id to its own clip (audio.voice) plays the clip and nothing else. The
+         * fighter keeps no engine handle (-1), so a later stop of "its" sound stops nothing. */
+        extern int Geno_DefineVoicePlayKind(int kind, int sfx);
+        if (fp->kind >= Ft_Kind_Mex0 && Geno_DefineVoicePlayKind((int) fp->kind, (int) sfx_id)) {
+            fp->x2160 = -1;
+            return;
+        }
+    }
+#endif
     sfx_id = ft_80087D0C(fp, sfx_id);
     fp->x2160 = lbAudioAx_800237A8(sfx_id, sfx_vol, sfx_pan);
 

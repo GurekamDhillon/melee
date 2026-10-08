@@ -388,9 +388,25 @@ struct gn_fm {
 #define GN_PRES_ICON 0
 #define GN_PRES_PORTRAIT 1
 #define GN_PRES_STOCK 2
+#define GN_PRES_EMBLEM 3            /* the results emblem (geno 10): one file, a format without a palette */
+#define GN_PRES_KINDS 4
 struct gn_pres {
-    int n[3];                       /* entries per kind: icon 0..1, portrait and stock 0..16 (one per costume; a costume past the list uses entry 0) */
-    char file[3][16][64];
+    int n[GN_PRES_KINDS];           /* entries per kind: icon and emblem 0..1, portrait and stock 0..16 (one per costume; a costume past the list uses entry 0) */
+    char file[GN_PRES_KINDS][16][64];
+};
+
+/* slice 6 (geno 10): a define's own sound clips, converted offline to .gnsnd (tools/geno/audio.py) and read from the mod's files/ folder.
+ * "announcer" is the pick call; each voice row replaces one retail sound id the fighter would play (its voice lines) with a clip. A clip is decoded
+ * on first use into host memory; nothing here is simulation state and nothing is played while a rollback session runs (a define is offline only). */
+#define GN_MAX_VOICE 32
+struct gn_clip { int16_t *pcm; int frames, channels, tried; };
+struct gn_aud {
+    char announcer[64];
+    int nvoice;
+    int voice_sfx[GN_MAX_VOICE];
+    int voice_vol[GN_MAX_VOICE];
+    char voice_file[GN_MAX_VOICE][64];
+    struct gn_clip announcer_clip, voice_clip[GN_MAX_VOICE];
 };
 
 typedef struct {
@@ -478,6 +494,10 @@ typedef struct {
     int st_lua[GENO_MAX_STATES][GENO_LUA_PHASES]; /* slice 5: the module function a state runs per phase (glua_find index), -1 none */
     uint64_t lua_hash;                        /* slice 5: the module text and layout, folded into the id */
     struct gn_pres *pres;                     /* slice 6: a define's own menu and HUD art, NULL = none declared */
+    struct gn_aud *aud;                       /* slice 6 (geno 10): a define's own announcer call and voice clips, NULL = none (silence stays) */
+    int ai_like;                              /* slice 6 (geno 10): "ai": {"like": fighter} - the retail FighterKind the CPU treats this define as, -1 none (0 is Mario: use ai_set) */
+    int ai_set;
+    int kb_copy;                              /* slice 6 (geno 10): "kirby_copy": "none" (-1, the default) or "retail:<fighter>" (that FighterKind) */
 } gn_profile;
 
 #define GN_NONE 0xFFFFFFFFu
@@ -1290,6 +1310,7 @@ static void gn_registry_clear(gn_registry* r)
     free(r->p); gdf_free(&r->definitions); memset(r, 0, sizeof *r);
 }
 #include "geno_define_registry.inc"
+#include "geno_define_records.inc"
 #include "geno_lua_registry.inc"
 #include "geno_define_online.h"
 #include "geno_define_online.inc"
@@ -2398,6 +2419,10 @@ void geno_registry_tests_register(void) {
     gw_test_register("geno_define_presentation", test_geno_define_presentation);
     gw_test_register("geno_gxtex_art", test_geno_gxtex_art);
     gw_test_register("geno_define_presentation_ck", test_geno_define_presentation_ck);
+    gw_test_register("geno_define_s6_keys", test_geno_define_s6_keys);
+    gw_test_register("geno_define_policy_ck", test_geno_define_policy_ck);
+    gw_test_register("geno_gnsnd_audio", test_geno_gnsnd_audio);
+    gw_test_register("geno_define_records", test_geno_define_records);
     gw_test_register("geno_items_registry",gn_items_registry_test);
     gw_test_register("geno_items_physics",gn_items_physics_test);
     gw_test_register("geno_items_snapshot",gn_items_snapshot_test);

@@ -877,6 +877,15 @@ void at_part_sel_card(const AtSink *s, const AtTextOps *o, AtRect r, const AtSel
     num[0] = (char) ('1' + (c->port & 3)); num[1] = '\0';
     at_text(s, o, AT_R_CAP14, num, cx, mid_base(cy - 11.0f, 22.0f, AT_R_CAP14), AT_C_INK, AT_ALIGN_CENTER, 0.0f);
     lx = r.x + 38.0f;
+    if (c->kind != 0 && c->ck_tex >= 0 && s->image != NULL) {              /* the fighter's face: its select icon at the card's left, the text after it */
+        float fh = r.h - 3.0f - e - 12.0f, fw;
+        if (fh > 40.0f) fh = 40.0f;
+        fw = fh * 64.0f / 56.0f;
+        if (fh >= 16.0f && r.w >= 150.0f + fw) {
+            at_sink_image(s, c->ck_tex, lx, y + 3.0f + (r.h - 3.0f - e - fh) * 0.5f, fw, fh, 0xFFFFFFFFu);
+            lx += fw + 6.0f;
+        }
+    }
     right = r.x + r.w - 10.0f;                                             /* clear of the bottom-right cut */
     avail = right - lx;
     if (c->kind == 0) {

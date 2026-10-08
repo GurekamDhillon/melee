@@ -281,7 +281,9 @@ static struct Fighter_804D64FC_t* ftCommonData_ExtendCpuTables(struct Fighter_80
         for (i = 0; i < Ft_Kind_Max; i++) {
             int k = i;
             if (i >= Ft_Kind_Mex0) {
-                k = gm_MexVanillaKind(i, 0);
+                extern int Geno_DefineAiLike(int kind);
+                int like = Geno_DefineAiLike(i);
+                k = like >= 0 ? like : gm_MexVanillaKind(i, 0); /* a define's "ai.like" row, else its base's (Mario's) */
             }
             tables[j][i] = k >= 0 ? loaded[k] : NULL;
         }

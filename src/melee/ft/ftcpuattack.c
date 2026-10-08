@@ -1,4 +1,5 @@
 #include "ftcpuattack.h"
+#include <melee/ft/ftaikind.h>
 
 #if defined(TARGET_PC)
 #include "script_fighter_caps.h"
@@ -835,17 +836,17 @@ bool ftCo_800B630C(Fighter* fp)
     if (ftCo_800A5A90(fp)) {
         return true;
     }
-    if (fp->kind == Ft_Kind_Donkey) {
+    if (FTAI_KIND(fp) == Ft_Kind_Donkey) {
         // Any of DK's common moves, or cargo carry / throw
         if (fp->motion_id <= ftDk_MS_ThrowAirFLw) {
             return false;
         }
-    } else if (FTKB_IS_KIRBY(fp->kind)) {
+    } else if (FTKB_IS_KIRBY(FTAI_KIND(fp))) {
         // Any of Kirby's common moves, or air jump / dash attack?
         if (fp->motion_id <= ftKb_MS_AttackDashAir) {
             return false;
         }
-    } else if (fp->kind == Ft_Kind_Peach) {
+    } else if (FTAI_KIND(fp) == Ft_Kind_Peach) {
         // Any of Peach's common moves, or float fall
         if (fp->motion_id <= ftPe_MS_FloatFallB) {
             return false;
@@ -924,7 +925,7 @@ void ftCo_800B658C(Fighter* fp)
         }
     }
 
-    if (fp->kind == Ft_Kind_Ness) {
+    if (FTAI_KIND(fp) == Ft_Kind_Ness) {
         if (fp->motion_id >= ftNs_MS_SpecialNStart &&
             fp->motion_id <= ftNs_MS_SpecialNEnd)
         {
@@ -937,22 +938,22 @@ void ftCo_800B658C(Fighter* fp)
             ftCo_800B92D4(fp);
             return;
         }
-    } else if (fp->kind == Ft_Kind_Yoshi) {
+    } else if (FTAI_KIND(fp) == Ft_Kind_Yoshi) {
         if (fp->motion_id >= ftYs_MS_SpecialAirSStart_0 &&
             fp->motion_id <= ftYs_MS_SpecialAirSEnd)
         {
             ftCo_800B9340(fp);
             return;
         }
-    } else if (fp->kind == Ft_Kind_Samus) {
+    } else if (FTAI_KIND(fp) == Ft_Kind_Samus) {
         if (fp->motion_id == ftSs_MS_SpecialNHold) {
             ftCo_CpuTapRAndWaitFiveFrames(fp);
         }
-    } else if (fp->kind == Ft_Kind_Donkey) {
+    } else if (FTAI_KIND(fp) == Ft_Kind_Donkey) {
         if (fp->motion_id == ftDk_MS_SpecialNLoop) {
             ftCo_CpuTapRAndWaitFiveFrames(fp);
         }
-    } else if (fp->kind == Ft_Kind_Zelda) {
+    } else if (FTAI_KIND(fp) == Ft_Kind_Zelda) {
         if (fp->motion_id >= ftZd_MS_SpecialSLoop &&
             fp->motion_id <= ftZd_MS_SpecialAirSEnd)
         {
@@ -1040,7 +1041,7 @@ void ftCo_800B683C(Fighter* fp)
         return;
     }
     var_r30 = false;
-    if (fp->kind == Ft_Kind_Donkey && fp->motion_id >= 0x15F &&
+    if (FTAI_KIND(fp) == Ft_Kind_Donkey && fp->motion_id >= 0x15F &&
         fp->motion_id <= 0x164)
     {
         temp_r3_2 = mpIsland_8005AC14(&fp->cur_pos, -10.0f);
@@ -1067,11 +1068,11 @@ void ftCo_800B683C(Fighter* fp)
             ftCo_CpuPressAWithLstickX(fp, 0x81);
         }
         return;
-    } else if ((fp->kind == Ft_Kind_Koopa || fp->kind == Ft_Kind_GKoops) &&
+    } else if ((FTAI_KIND(fp) == Ft_Kind_Koopa || FTAI_KIND(fp) == Ft_Kind_GKoops) &&
                fp->motion_id == 0x15E)
     {
         var_r30 = true;
-    } else if (FTKB_IS_KIRBY(fp->kind) && fp->motion_id >= 0x164 &&
+    } else if (FTKB_IS_KIRBY(FTAI_KIND(fp)) && fp->motion_id >= 0x164 &&
                fp->motion_id <= 0x17E)
     {
         if (fp->victim_gobj != NULL) {
@@ -1096,28 +1097,28 @@ void ftCo_800B683C(Fighter* fp)
             ftCo_800B463C(fp, CpuCmd_Done);
         }
         return;
-    } else if (fp->kind == Ft_Kind_Popo) {
+    } else if (FTAI_KIND(fp) == Ft_Kind_Popo) {
         if (temp_r31->x94 == 0 && temp_r31->level > 4 &&
             HSD_Randf() < 0.05f * temp_r31->level)
         {
             ftCo_800B4880(fp, 0x3B);
             return;
         }
-    } else if (fp->kind == Ft_Kind_Mario) {
+    } else if (FTAI_KIND(fp) == Ft_Kind_Mario) {
         if (temp_r31->x94 == 0 && temp_r31->level < 5 &&
             HSD_Randf() < 0.05f * temp_r31->level)
         {
             ftCo_800B4880(fp, 0x35);
             return;
         }
-    } else if (fp->kind == Ft_Kind_Fox) {
+    } else if (FTAI_KIND(fp) == Ft_Kind_Fox) {
         if (temp_r31->x94 == 0 && temp_r31->level > 4 &&
             HSD_Randf() < 0.05f * temp_r31->level)
         {
             ftCo_800B4880(fp, 0x3D);
             return;
         }
-    } else if (fp->kind == Ft_Kind_Captain) {
+    } else if (FTAI_KIND(fp) == Ft_Kind_Captain) {
         if (temp_r31->x94 == 0 && temp_r31->level > 4 &&
             HSD_Randf() < 0.05f * temp_r31->level)
         {
@@ -1442,7 +1443,7 @@ void ftCo_800B77E8(Fighter* fp)
             tmp->xEC++;
         }
     }
-    switch (FTKB_CANON_KIND(fp->kind)) {
+    switch (FTKB_CANON_KIND(FTAI_KIND(fp))) {
     case Ft_Kind_Mario:
         target = fp->cpu.x44;
         can_attack = ftCo_CpuCanUseRangedAttack(fp, target, &c1, 22.0f);
@@ -1727,7 +1728,7 @@ bool ftCo_800B89CC(Fighter* fp)
     if (!temp_r31->xF9_b4) {
         return false;
     }
-    if (!temp_r31->xFA_b5 && fp->kind == Ft_Kind_Koopa) {
+    if (!temp_r31->xFA_b5 && FTAI_KIND(fp) == Ft_Kind_Koopa) {
         return false;
     }
     if (temp_r31->level < 4) {
@@ -1796,7 +1797,7 @@ bool ftCo_800B8A9C(Fighter* fp)
                     tmp->xEC++;
                 }
             }
-            if (FTKB_IS_KIRBY(fp->kind)) {
+            if (FTKB_IS_KIRBY(FTAI_KIND(fp))) {
                 struct CpuFighter* tmp = &fp->cpu;
                 if (*xec < 8U) {
                     tmp->xCC_array[tmp->xEC] = 0x11;
@@ -1809,7 +1810,7 @@ bool ftCo_800B8A9C(Fighter* fp)
     if (fp->ground_or_air == GA_Air) {
         if (ftCo_800B89CC(fp)) {
             result =
-                ftCo_800B4AB0(fp, target, (Fighter_804D64FC->x8)[fp->kind]);
+                ftCo_800B4AB0(fp, target, (Fighter_804D64FC->x8)[FTAI_KIND(fp)]);
             if (result != 0) {
                 cpu->xA4 = result;
                 return true;
@@ -1831,7 +1832,7 @@ bool ftCo_800B8A9C(Fighter* fp)
                 tmp->xC8++;
             }
         }
-        result = ftCo_800B4AB0(fp, target, (Fighter_804D64FC->x4)[fp->kind]);
+        result = ftCo_800B4AB0(fp, target, (Fighter_804D64FC->x4)[FTAI_KIND(fp)]);
         if (result != 0) {
             cpu->xA4 = result;
             return true;
@@ -1869,7 +1870,7 @@ bool ftCo_800B8A9C(Fighter* fp)
                 break;
             }
         }
-        result = ftCo_800B52AC(fp, target, (Fighter_804D64FC->x18)[fp->kind],
+        result = ftCo_800B52AC(fp, target, (Fighter_804D64FC->x18)[FTAI_KIND(fp)],
                                weapon_reach);
         if (result != 0) {
             cpu->xA4 = result;
@@ -1877,7 +1878,7 @@ bool ftCo_800B8A9C(Fighter* fp)
         }
     }
     if (cpu->level > 5 && ftCo_800B9F6C(target)) {
-        result = ftCo_800B4AB0(fp, target, (Fighter_804D64FC->x10)[fp->kind]);
+        result = ftCo_800B4AB0(fp, target, (Fighter_804D64FC->x10)[FTAI_KIND(fp)]);
         if (result != 0) {
             cpu->xA4 = result;
             return true;
@@ -1902,21 +1903,21 @@ bool ftCo_800B8A9C(Fighter* fp)
         }
     }
     if (var_r0 != 0) {
-        result = ftCo_800B4AB0(fp, target, (Fighter_804D64FC->x1C)[fp->kind]);
+        result = ftCo_800B4AB0(fp, target, (Fighter_804D64FC->x1C)[FTAI_KIND(fp)]);
         if (result != 0) {
             cpu->xA4 = result;
             cpu->xF8_b7 = 1;
             return true;
         }
     }
-    result = ftCo_800B4AB0(fp, target, (Fighter_804D64FC->x4)[fp->kind]);
+    result = ftCo_800B4AB0(fp, target, (Fighter_804D64FC->x4)[FTAI_KIND(fp)]);
     if (result != 0) {
         cpu->xA4 = result;
         return true;
     }
     if (cpu->x50 != 0) {
         result = ftCo_800B5AB0(fp, (void*) cpu->x50,
-                               (Fighter_804D64FC->x14)[fp->kind]);
+                               (Fighter_804D64FC->x14)[FTAI_KIND(fp)]);
         if (result != 0) {
             cpu->xA4 = result;
             return true;
@@ -1937,7 +1938,7 @@ void ftCo_800B9020(Fighter* fp)
         return;
     }
 
-    if (fp->kind == Ft_Kind_Ness) {
+    if (FTAI_KIND(fp) == Ft_Kind_Ness) {
         if (fp->motion_id >= ftNs_MS_SpecialNStart &&
             fp->motion_id <= ftNs_MS_SpecialNEnd)
         {
@@ -1952,7 +1953,7 @@ void ftCo_800B9020(Fighter* fp)
             temp_r31->x90++;
             return;
         }
-    } else if (fp->kind == Ft_Kind_Yoshi) {
+    } else if (FTAI_KIND(fp) == Ft_Kind_Yoshi) {
         if (fp->motion_id >= ftYs_MS_SpecialAirSStart_0 &&
             fp->motion_id <= ftYs_MS_SpecialAirSEnd)
         {
@@ -1960,7 +1961,7 @@ void ftCo_800B9020(Fighter* fp)
             temp_r31->x90++;
             return;
         }
-    } else if (fp->kind == Ft_Kind_Zelda) {
+    } else if (FTAI_KIND(fp) == Ft_Kind_Zelda) {
         if (fp->motion_id >= ftZd_MS_SpecialSLoop &&
             fp->motion_id <= ftZd_MS_SpecialAirSEnd)
         {
@@ -2305,7 +2306,7 @@ bool ftCo_800B9CBC(Fighter* fp)
     if (temp_f30 < 30.0) {
         return false;
     }
-    switch (fp->kind) {
+    switch (FTAI_KIND(fp)) {
     case Ft_Kind_Ness:
         var_r3 = ftCo_800B9790(fp, temp_f31, temp_f30);
         break;
@@ -2334,7 +2335,7 @@ bool ftCo_800B9CBC(Fighter* fp)
         return false;
     }
     if (temp_f31 < 0.08726646192371845 && temp_f31 > -0.08726646192371845) {
-        temp_r31->xA4 = ftCo_800B6208(Fighter_804D64FC->xC[fp->kind]);
+        temp_r31->xA4 = ftCo_800B6208(Fighter_804D64FC->xC[FTAI_KIND(fp)]);
         if (temp_r31->xA4 != 0) {
             return true;
         }
@@ -2426,21 +2427,21 @@ bool ftCo_800BA2E8(Fighter* fp, Fighter* arg1)
     PAD_STACK(0x10);
 
     if (fp->cur_pos.x - arg1->cur_pos.x > 0.0) {
-        if (ftCo_800A2A70(fp, false) > Fighter_804D64FC->x20[fp->kind]) {
+        if (ftCo_800A2A70(fp, false) > Fighter_804D64FC->x20[FTAI_KIND(fp)]) {
             ftCo_800BA160(fp);
             return true;
         }
-        if (ftCo_800A2A70(fp, true) > Fighter_804D64FC->x20[fp->kind]) {
+        if (ftCo_800A2A70(fp, true) > Fighter_804D64FC->x20[FTAI_KIND(fp)]) {
             ftCo_800BA224(fp);
             return true;
         }
         return false;
     } else {
-        if (ftCo_800A2A70(fp, true) > Fighter_804D64FC->x20[fp->kind]) {
+        if (ftCo_800A2A70(fp, true) > Fighter_804D64FC->x20[FTAI_KIND(fp)]) {
             ftCo_800BA224(fp);
             return true;
         }
-        if (ftCo_800A2A70(fp, false) > Fighter_804D64FC->x20[fp->kind]) {
+        if (ftCo_800A2A70(fp, false) > Fighter_804D64FC->x20[FTAI_KIND(fp)]) {
             ftCo_800BA160(fp);
             return true;
         }
@@ -2453,13 +2454,13 @@ void ftCo_800BA674(Fighter* fp, Fighter* arg1)
     PAD_STACK(0x10);
 
     if (fp->cur_pos.x - arg1->cur_pos.x > 0.0) {
-        if (ftCo_800A2A70(fp, false) > 2.0 * Fighter_804D64FC->x20[fp->kind]) {
+        if (ftCo_800A2A70(fp, false) > 2.0 * Fighter_804D64FC->x20[FTAI_KIND(fp)]) {
             ftCo_800BA160(fp);
         } else {
             ftCo_800BA224(fp);
         }
     } else {
-        if (ftCo_800A2A70(fp, true) > 2.0 * Fighter_804D64FC->x20[fp->kind]) {
+        if (ftCo_800A2A70(fp, true) > 2.0 * Fighter_804D64FC->x20[FTAI_KIND(fp)]) {
             ftCo_800BA224(fp);
         } else {
             ftCo_800BA160(fp);
@@ -2586,7 +2587,7 @@ void ftCo_800BA9A0(Fighter* fp)
         return;
     }
     if (fp->ground_or_air == GA_Air) {
-        if (fp->kind == Ft_Kind_Fox || fp->kind == Ft_Kind_Falco) {
+        if (FTAI_KIND(fp) == Ft_Kind_Fox || FTAI_KIND(fp) == Ft_Kind_Falco) {
             if (temp_r4 == 2) {
                 ftCo_CpuFireBlaster(fp);
             } else {
@@ -2606,7 +2607,7 @@ void ftCo_800BA9A0(Fighter* fp)
         } else if (temp_r30_3->kind == It_Kind_DKinoko) {
             inline1(fp, temp_r30_3);
         } else {
-            if (fp->kind == Ft_Kind_Fox || fp->kind == Ft_Kind_Falco) {
+            if (FTAI_KIND(fp) == Ft_Kind_Fox || FTAI_KIND(fp) == Ft_Kind_Falco) {
                 if (HSD_Randf() > 0.5) {
                     ftCo_CpuFireBlaster(fp);
                 } else {
@@ -2724,7 +2725,7 @@ int ftCo_800BB220(Fighter* fp, Item* ip, Vec3* arg2, f32 arg3)
     dst.y = fp->pos_delta.y * count + arg2->y;
     dst.z = fp->pos_delta.z * count + arg2->z;
 
-    if (fp->kind == Ft_Kind_Ness && temp_r31->level > 3) {
+    if (FTAI_KIND(fp) == Ft_Kind_Ness && temp_r31->level > 3) {
         if (count < 21) {
             Vec3 spB8;
             Vec3 spAC;
@@ -2909,7 +2910,7 @@ int ftCo_800BB9B4(Fighter* fp)
     if (ftCo_800A1C44(fp)) {
         return temp_r31->xF8_b12;
     }
-    if (fp->kind == Ft_Kind_GKoops) {
+    if (FTAI_KIND(fp) == Ft_Kind_GKoops) {
         return temp_r31->xF8_b12;
     }
 

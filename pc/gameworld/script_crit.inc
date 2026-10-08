@@ -157,6 +157,7 @@ static void script_crit_flush(void)
         ScriptCritPending* p = &script_crit_pending[i];
         Fighter* v = ScriptGame_CapsFighter(p->victim_e);
         float hitlag = v ? v->dmg.x195c_hitlag_frames : 0.0f;
+        { extern void ScriptMods_Crit(int, int, float); ScriptMods_Crit(p->attacker_e, p->victim_e, p->strength); } /* online Envoy stage 4 */
         Script_CritEvent(p->attacker_e, p->victim_e, p->tag | (p->forced ? 0x100 : 0) | (p->projectile ? 0x200 : 0), script_skill_bits(p->launch),
                          script_skill_bits(p->base), script_skill_bits(p->final_dmg), script_skill_bits(p->strength),
                          script_skill_bits(p->x), script_skill_bits(p->y), script_skill_bits(p->z), script_skill_bits(hitlag), script_skill_bits(p->mult));

@@ -471,7 +471,9 @@ int gw_MexId_SceneCheck(const char *scene, char *why, int cap) {
  * at their retail sizes, pointer words as a marker (their value moves with the file layout). An
  * offline walk found every retail table and everything under it identical in vanilla, ACE 2.0 and
  * Akaneia 1.0.1 (m-ex only APPENDS, and edits rows >= 27 of the two per-kind tables); this hash
- * does not descend into the nested tables, so a mod that edits those is not caught. */
+ * does not descend into the nested tables, so a mod that edits those is not caught. THAT WALK WAS NOT
+ * ENOUGH: ACE's PlCo.dat still changes vanilla fighters' animation poses (see mx_global_build), so the
+ * global component also hashes the whole file. */
 static const uint16_t mx_plco_sizes[23] = { 2072, 312, 120, 36, 0, 0, 984, 48, 8, 24, 8, 8,
                                             156, 60, 36, 8, 88, 20, 20, 20, 88, 68, 48 };
 
@@ -547,7 +549,7 @@ static uint64_t mx_mexflags(void) {
 static const struct {
     const char *key, *what;
 } mx_global_names[3] = {
-    { "plco", "PlCo.dat (common fighter data)" },
+    { "plco", "PlCo.dat (common fighter data: a different disc or mod pack)" },
     { "itco", "ItCo.dat (common items)" },
     { "mexflags", "m-ex feature flags (MELEE_MEX / mods\\mex.txt)" },
 };
@@ -562,7 +564,13 @@ static unsigned mx_fold16(uint64_t h) {
 static void mx_global_build(void) {
     if (mx_global_done) return;
     mx_global_done = 1;
-    mx_global[0] = mx_plco();
+    /* The whole PlCo.dat file, not only its 21 global tables (mx_plco): vanilla fighters played with the
+     * SSBM ACE Build v2.0.0 PlCo.dat (vanilla disc + that one file as a loose mod) stop matching a
+     * vanilla PlCo.dat at an animation's first frame (frames 3560 and 5218 of a scripted Falco v Sheik
+     * match; the netplay checksum fails at 5244) although every table the shallow walk reaches is equal.
+     * The same PlCo.dat re-padded to another size changes nothing (identical over 6000 frames), so it is
+     * the content, not the heap layout. Until the field is named, equal PlCo.dat bytes are required. */
+    mx_global[0] = mx_mix(mx_plco(), mx_file("PlCo.dat"));
     mx_global[1] = mx_mix(mx_hash_str(0, "itco"), mx_file("ItCo.dat"));
     mx_global[2] = mx_mexflags();
     snprintf(mx_global_desc, sizeof mx_global_desc, "%s#%04x,%s#%04x,%s#%04x", mx_global_names[0].key,

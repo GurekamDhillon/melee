@@ -34,6 +34,7 @@
 #include "gw_net.h"
 #include "gw_rollback.h"
 #include "gw_mexid.h" /* delta: content identities - mods online (gw_mexid.h) */
+#include "gw_overlay.h" /* the draw rule is also visible without a persistent room */
 #include "gw_script.h" /* charlie: gameplay scripts join the must-match set */
 #include "gw_matchrules.h" /* the match rule word (Turbo) agreed in the handshake */
 #include "gw_matchbuild.h" /* the Envoy mode word and the build record (online Envoy) */
@@ -1388,8 +1389,15 @@ static void lb_build_list(void) {
            lb.nstages, lb.list_final ? "" : " (the opponent's stages are not in yet)");
 }
 
+/* An online TIE (no sudden death online): set by gw_Netplay_NoteTie while the match is still in the
+ * session, consumed by gw_Netplay_GameResult on the results screen into np_last_tie (the lobby shows
+ * "the game was a tie" while it is set). Both are local, but both peers set them from the identical
+ * match result. */
+static int np_tie_pending, np_last_tie;
+
 /* A new opponent: game 1, no winner, 0-0. */
 static void lb_new_set(int host_ck, int guest_ck) {
+    np_tie_pending = np_last_tie = 0;
     lb.game = 1;
     lb.winner = -1;
     lb.score[0] = lb.score[1] = 0;
@@ -2435,6 +2443,7 @@ static int np_start_session(const gw_net_addr *peer_in, uint32_t bind_ip) {
 /* Arm everything for the agreed match: the scene, live mode, the rollback session. */
 static void np_arm(void) {
     np.enabled = 1;
+    np_tie_pending = 0; /* a tie belongs to the match that ends in it */
     gw_Replay_ArmLive(1);
     gw_log("netplay: match agreed - \"%s\" (seed 0x%08X, input delay %d)", np.scene, np.seed,
            np.delay);
@@ -2742,7 +2751,13 @@ int gw_Netplay_RandomSeconds(void) {
  *               NP_CONNECTED = the match is agreed: gw_Netplay_MenuLaunch, then VS mode
  *   after       results -> the lobby again: gw_Netplay_RematchPending -> gw_Netplay_Rejoin
  *   leaving     gw_Netplay_Leave at any step (the host's room closes; a guest just goes) */
+static int np_env_int(const char *name, int dflt);
 int gw_Netplay_MenuBegin(int host, int ck, int color, int stocks, int minutes, int delay) {
+    /* TEST-ONLY: MELEE_NETPLAY_STOCKS / MELEE_NETPLAY_MINUTES set a room's rules without the menu rows (the
+       scripted path reads the same variables), so a loopback test can play a short timed match; MELEE_NETPLAY_PORT
+       (below) moves the host's UDP port off 51500 so two tests can run side by side. */
+    stocks = np_env_int("MELEE_NETPLAY_STOCKS", stocks);
+    minutes = np_env_int("MELEE_NETPLAY_MINUTES", minutes);
     np.host = host != 0;
     np.ck = ck;
     np.color = color;
@@ -2750,7 +2765,7 @@ int gw_Netplay_MenuBegin(int host, int ck, int color, int stocks, int minutes, i
     np.stocks = stocks;
     np.minutes = minutes;
     np.delay = delay;
-    np.port = NP_DEFAULT_PORT;
+    np.port = (uint16_t) np_env_int("MELEE_NETPLAY_PORT", NP_DEFAULT_PORT); /* TEST-ONLY: two lanes' hosts on one machine need two ports */
     np.use_lobby = 1;
     np.rejoining = 0;
     np.peer_left = 0;
@@ -2886,6 +2901,7 @@ int gw_Netplay_LobbyInfo(int what) {
     case 12: return np.host || lb.list_ok; /* the stage list is here (a guest waits for it) */
     case 13: return lb.env_on && lb.env_open; /* an Envoy reward pick is open */
     case 14: return lb.env_left;              /* ...and the lobby ticks left to make it */
+    case 15: return np_last_tie;              /* the game just played was a tie (replayed, nobody scored) */
     default: return 0;
     }
 }
@@ -2991,12 +3007,29 @@ int gw_Netplay_RematchPending(void) { return np.rematch; }
 /* The game's winner (0 host/P1, 1 guest/P2, -1 none), from the results screen: the next game's
  * rules (winner bans, loser picks) and the set score. */
 void gw_Netplay_GameResult(int winner) {
+    int tie = np_tie_pending;
+    np_tie_pending = 0;
     if (lb.game <= 0) return;
+    np_last_tie = tie;
     lb.winner = winner;
     if (winner == 0 || winner == 1) lb.score[winner]++;
     lb.game++;
     lb.seq++;
-    gw_log("netplay: game over - winner P%d, set %d-%d, next game %d", winner + 1, lb.score[0], lb.score[1], lb.game);
+    if (tie) {
+        gw_log("netplay: game over - TIE (no sudden death online: nobody scores, the game is replayed), set %d-%d, next game %d",
+               lb.score[0], lb.score[1], lb.game);
+    } else if (winner == 0 || winner == 1) {
+        gw_log("netplay: game over - winner P%d, set %d-%d, next game %d", winner + 1, lb.score[0], lb.score[1], lb.game);
+    } else {
+        gw_log("netplay: game over - no winner, set %d-%d, next game %d", lb.score[0], lb.score[1], lb.game);
+    }
+}
+
+/* The match that just ended in the session was a tie (gmVsMelee_ExitVs, both peers, from the identical
+ * match result). Retail would play sudden death in a non-VS scene, which the session cannot follow. */
+void gw_Netplay_NoteTie(void) {
+    np_tie_pending = 1;
+    gw_log("netplay: the match ended in a tie - online ties are a draw (no sudden death): nobody scores, the game is replayed");
 }
 
 /* Once connected: make the agreed match the configured scene (VS mode seeds from it). */
@@ -3332,6 +3365,9 @@ void gw_Netplay_MatchOver(void) {
     gw_Replay_ArmLive(0);
     gw_SceneLaunch_SetText(NULL);
     np_set_title("Melee");
+    if (np_tie_pending) {
+        gw_Overlay_Toast("Tie: nobody scores. Replay the game.");
+    }
 }
 
 /* Once per render tick during the match (gw_RB_Iterations). */

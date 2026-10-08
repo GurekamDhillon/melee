@@ -1,8 +1,9 @@
--- np_guest.lua - INPUT SCRIPT for two-window netplay tests, GUEST side: main menu > VERSUS >
--- ONLINE > Join a Room, fills in the room code, joins, then plays the lobby like lobby_autoplay.
--- The code comes from whoever drives the test (np_drive.py sends gd.netplay_act("code", ...) over
--- the console socket); failing that, Y pastes it from the clipboard, which a host on the same
--- machine has just copied. The Lua form of _build/pad_np_menu_guest.txt + pad_np_ready_guest.txt.
+-- np_guest.lua - INPUT SCRIPT for two-window netplay tests, GUEST side: Atlas main menu > ONLINE >
+-- Join a Room, joins THE HOST'S ROOM BY CODE (never random matchmaking), then plays the lobby like
+-- lobby_autoplay. The code comes from MELEE_LAB_ROOM (gd.lab_env("ROOM"), set by the driver once
+-- the host has logged "ROOMCODE <code>") and goes in with gd.netplay_act("code", code); failing
+-- that, from whoever drives the test (np_drive.py sends the same call over the console socket) or
+-- Y (pastes the clipboard, which a host on the same machine has just copied).
 --
 --   MELEE_SCENE=mode=menu MELEE_SCRIPT=builtin:np_guest
 --
@@ -33,20 +34,23 @@ end
 gd.run(function()
   gd.wait_until(function() return gd.scene().name == "GS_FRONTEND" end, 3600)
   gd.wait(30)
-  step("main menu -> VERSUS")
-  pick(function() return gd.menu().native_hovered == 1 end)
-  gd.wait_until(function() return gd.menu().native_menu == 2 end, 600)
-  gd.wait(20)
-  step("VERSUS -> ONLINE")
-  -- the VERSUS menu reports the port's ONLINE row as hovered = 64 (0x40), between Melee and
-  -- Tournament Melee
-  pick(function() return gd.menu().native_hovered == 64 end)
+  step("main menu -> ONLINE")
+  -- the Atlas main menu reports its ONLINE row as hovered = 68 (0x44)
+  pick(function() return gd.menu().native_hovered == 68 end)
   if not gd.wait_until(function() return gd.menu().screen == "ONLINE PLAY" end, 600) then
     step("never reached ONLINE PLAY") return
   end
   step("ONLINE PLAY -> Join a Room")
-  pick(function() return gd.menu().item == "Join a Room" end)
+  gd.wait(60)
+  -- Host a Room is the first row; the readback does not follow the Atlas cursor, so go Down once
+  gd.press(1, "Down", 4) gd.wait(40)
+  gd.press(1, "A", 4) gd.wait(10)
   gd.wait_until(function() return gd.menu().screen == "JOIN ROOM" end, 600)
+  local env = gd.lab_env("ROOM")
+  if env and #env == 4 then
+    step("room code from MELEE_LAB_ROOM: " .. env)
+    gd.netplay_act("code", env)
+  end
   step("waiting for the room code")
   local t = 0
   while not code_ready() and t < 36000 do

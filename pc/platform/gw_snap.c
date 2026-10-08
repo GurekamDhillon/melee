@@ -126,7 +126,7 @@ static struct {
     uint32_t hash_node_pg[64]; /* pages forced dirty last call (async nodes zeroed in the hash) */
     int n_hash_node_pg;
     uint64_t hash_ready;
-    double ms_poll, ms_hash;
+    double ms_poll, ms_hash, ms_copy, ms_gather;
     long n_poll, n_dirty_pages, n_copy_pages, n_hash_pages, n_hash_calls;
     long n_verify_fail;
 } sn = { 0 };
@@ -863,11 +863,14 @@ static void sn_save_to(GwSnapSlot *s, int frame) {
     sn_boundary_asserts("save");
     s->frame = frame;
     if (sn.dirty_mode) {
+        double tc;
         sn_poll();
+        tc = sn_ms();
         sn.n_copy_pages += (long) sn_copy_pages(s->dirty, s->pg,
                                                 sn_last_saved != (const void *) s && sn_last_saved != NULL
                                                     ? ((const GwSnapSlot *) sn_last_saved)->pg : NULL,
                                                 0);
+        sn.ms_copy += sn_ms() - tc;
         memset(s->dirty, 0, SN_BM_WORDS(sn.npages) * 8);
         if (sn.verify) {
             sn_verify_equal(s, "save");
@@ -881,13 +884,23 @@ static void sn_save_to(GwSnapSlot *s, int frame) {
     sn_last_saved = s;
     gw_prof_counter(GW_PROF_SNAPSHOT_BYTES,
         (sn.dirty_mode ? (sn.n_copy_pages - prof_copy_start) * (double) SN_PAGE : gw_mem1_size) + sn.globals_len);
-    sn_gather(s->globals);
+    {
+        double tg = sn_ms();
+        sn_gather(s->globals);
+        sn.ms_gather += sn_ms() - tg;
+    }
     gw_Replay_GetCursor(s->replay_cursor);
     sn.ms_save += sn_ms() - t0;
     sn.n_save++;
     if (sn.n_save % 600 == 1) {
         gw_log("snap: page pool %u pages live (%u MB), peak %u (%u MB), %u MB reserved, %d slots", sn_pool_live,
                sn_pool_live / 256u, sn_pool_peak, sn_pool_peak / 256u, sn_pool_nchunks, sn.nslots);
+        gw_log("snap: save cost per op %.2f ms = write-watch poll %.2f (%.0f dirty pages) + page copy %.2f (%.0f pages) + globals %.2f + other %.2f; %s",
+               sn.ms_save / sn.n_save, sn.n_poll ? sn.ms_poll / sn.n_poll : 0.0,
+               sn.n_poll ? (double) sn.n_dirty_pages / sn.n_poll : 0.0, sn.ms_copy / sn.n_save,
+               (double) sn.n_copy_pages / sn.n_save, sn.ms_gather / sn.n_save,
+               (sn.ms_save - sn.ms_poll - sn.ms_copy - sn.ms_gather) / sn.n_save,
+               sn.dirty_mode ? "dirty-page mode" : "full-copy mode");
     }
     if (sn.hash_on) {
         s->hash = gw_snap_hash();

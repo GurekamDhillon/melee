@@ -28,6 +28,7 @@
  *   MELEE_NETPLAY=host[:port] | join:<ip>[:port]     connect at boot
  *   MELEE_NETPLAY_CHAR / _COLOR / _STAGE / _STOCKS / _MINUTES / _DELAY
  *   MELEE_NETPLAY_BIND=<ip>                           local address (default 127.0.0.1 for a local peer)
+ *   MELEE_NETPLAY_PORT=<n>                            the UDP port a menu-hosted room opens (default 51500; tests that share a machine pick their own)
  *   MELEE_NET_SIM / MELEE_NET_SIM_FILE                simulated network conditions (see below)
  */
 #include "gw.h"
@@ -37,6 +38,7 @@
 #include "gw_script.h" /* charlie: gameplay scripts join the must-match set */
 #include "gw_matchrules.h" /* the match rule word (Turbo) agreed in the handshake */
 #include "gw_matchbuild.h" /* the Envoy mode word and the build record (online Envoy) */
+#include "gw_netdir.h"
 #include "gw_netrun.h"   /* the run record: the Envoy set (stage 5) and the stage run (stage 7) */
 #include "shim_vi.h"
 #include <stdio.h>
@@ -1330,6 +1332,8 @@ static struct {
 enum { RN_ST_NONE, RN_ST_CHECKING, RN_ST_RESUMED, RN_ST_FRESH, RN_ST_CONFLICT, RN_ST_ABANDONED, RN_ST_INTERRUPTED };
 static struct {
     int begun;                      /* a record exists for this set in memory (a game started, a record was applied, or a co-op room was opened) */
+    long flags, ext;             /* unified stage-7 director fields survive adoption unchanged */
+    int stocks, continues, lost;   /* shared run resources, carried through RN2 for the stage-7 director */
     int started, loop;              /* games started in this set; New Game+ loop */
     uint32_t stage[LB_ENV_HIST + 1]; /* identity word of the stage of every game started */
     uint32_t bw;                    /* the build word both sides verified at the start of the latest game */
@@ -1488,7 +1492,7 @@ static void lb_run_new(void) {
     int kind = np.run_pref == 2 ? GW_ND_KIND_CLASSIC : GW_ND_KIND_STAGES, len = kind == GW_ND_KIND_CLASSIC ? GW_ND_CLASSIC_STAGES : 0;
     if (!np.host && lb.rd_synced) return; /* the host's "R" overtook this (it can arrive before the lobby opens): keep what it said */
     lb.fz_have_peer = lb.ends = 0;
-    lb.rd_block[0] = lb.rd_last[0] = ' ';
+    lb.rd_block[0] = lb.rd_last[0] = '\0';
     if (!np.host || !lb.run_on) { /* a guest takes the host's; nothing in a plain room */
         gw_nd_init(&lb.rd, GW_ND_KIND_STAGES, 0, 1, 0);
         lb.rd_each = np.stocks;
@@ -1538,8 +1542,7 @@ static int lb_run_plan(GwNdPlan *p, unsigned poison) {
     uint32_t mask;
     if (lb.rd.kind != GW_ND_KIND_CLASSIC || !lb_run_mask(&mask)) return 0;
     if (poison == 2) mask ^= 1u << 8;
-    gw_nd_classic_plan(lb.run_seed, 0, mask, lb.ck[0], lb.ck[1], p);
-    return 1;
+    return gw_nd_classic_plan(lb.run_seed, 0, mask, lb.ck[0], lb.ck[1], p) > 0;
 }
 /* The record of the stage about to be played (or being played), under director state `d`, from state both peers hold: the seed, the stage, the scores, the
  * director's flags (shared stocks, continue), the stage identity and (Classic) the plan's digest. */
@@ -1554,8 +1557,14 @@ static int lb_run_record_for(const GwNdRun *d, char *out, size_t cap, unsigned p
     r.score[1] = lb.score[1];
     r.flags = gw_nd_flags(d);
     r.mode = GW_ENVOY_MODE_RUN;
+    r.stocks = d->pool;
+    r.continues = gw_nd_cont_left(d);
+    r.lost = d->pool == 0;
     r.ext = ix >= 0 ? (long) gw_nr_stage_word(gw_MexId_TokenForExt(lb.stage_ext[ix])) : 0;
-    if (lb_run_plan(&pl, poison)) snprintf(r.x, sizeof r.x, "%s", pl.digest);
+    if (d->kind == GW_ND_KIND_CLASSIC) {
+        if (!lb_run_plan(&pl, poison)) return 0;
+        snprintf(r.x, sizeof r.x, "%s", pl.digest);
+    }
     return gw_nr_encode(&r, out, cap);
 }
 static int lb_run_record(char *out, size_t cap, unsigned poison) { return lb_run_record_for(&lb.rd, out, cap, poison); }
@@ -1578,6 +1587,10 @@ static const char *lb_run_block(void) {
     if (np.host && !lb.list_final) {
         snprintf(lb.rd_block, sizeof lb.rd_block, "%s", "waiting for the other player's stages");
         return lb.rd_block;
+    }
+    if (lb.rd.kind == GW_ND_KIND_CLASSIC) {
+        GwNdPlan pl;
+        if (!lb_run_plan(&pl, 0)) { snprintf(lb.rd_block, sizeof lb.rd_block, "no Classic matchup in the agreed unlock mask"); return lb.rd_block; }
     }
     lb.rd_block[0] = '\0';
     return lb.rd_block;
@@ -1636,6 +1649,11 @@ static int lb_run_decode(const char *m) {
     unsigned seed = 0;
     k = sscanf(m + 2, "%d %u %d %d %d %d %d %d %d %d %d", &on, &seed, &kind, &len, &pool, &ps, &cs, &cu, &over, &stage, &each);
     if (k < 2 || seed == 0 || seed > 2147483646u) return 0;
+    if (lb.rd_synced && (on == 0 || seed != lb.run_seed || cs != lb.rd.cont_start)) {
+        lb_run_abort("the host changed the agreed run seed or continue allotment");
+        lb_run_refuse("the host changed the agreed run seed or continue allotment");
+        return 0;
+    }
     lb.run_on = on != 0;
     lb.run_seed = seed;
     if (k >= 11 && on != 0) {
@@ -1784,7 +1802,7 @@ static int lb_apply_(int who, const char *act, int a, int b) {
     }
     if (strcmp(act, "READY") == 0) {
         if (lb.phase != LB_READY || lb.ready[who] == (a != 0)) return 0;
-        if (a != 0 && lb.run_on && lb_run_block()[0] != ' ') return 0; /* a stage run that is over, or still waiting for the other side's unlocks / stages */
+        if (a != 0 && lb.run_on && lb_run_block()[0] != '\0') return 0; /* a stage run that is over, or still waiting for the other side's unlocks / stages */
         if (a != 0 && rn_check_pending()) return 0; /* the saved-run check is still running: nobody readies into a fresh run for a moment */
         if (a != 0 && np.envoy) { /* Envoy cannot start: nobody gets to ready up into a countdown that ends in a refusal (after a refusal the builds are compared too) */
             char why[120];
@@ -2022,6 +2040,8 @@ static void rn_note(const char *fmt, ...) {
 }
 static void rn_forget(void) {
     int g;
+    rn.flags = rn.ext = 0;
+    rn.stocks = np.envoy == GW_ENVOY_MODE_COOP ? 2 * (np.stocks > 0 && np.stocks <= 99 ? np.stocks : 4) : 0; rn.continues = 1; rn.lost = 0;
     rn.begun = 0; rn.started = 0; rn.loop = 0; rn.bw = 0; rn.x[0] = '\0'; rn.last[0] = '\0'; rn.last_state = 0;
     for (g = 0; g <= LB_ENV_HIST; ++g) rn.stage[g] = GW_NR_NOSTAGE;
 }
@@ -2033,6 +2053,8 @@ static int rn_build(GwNrRecord *r) {
     r->mode = np.envoy;
     r->seed = lb.env_seed;
     r->loop = rn.loop;
+    r->flags = rn.flags; r->ext = rn.ext;
+    r->stocks = rn.stocks; r->continues = rn.continues; r->lost = rn.lost;
     r->game = lb.game;
     r->round = lb.env_round;
     r->score[0] = lb.score[0];
@@ -2118,6 +2140,8 @@ static void rn_apply(const GwNrRecord *rec) {
     for (g = 1; g <= rec->started && g <= GW_NR_MAXGAMES; ++g) rn.stage[g] = rec->gstage[g];
     rn.started = rec->started;
     rn.loop = rec->loop;
+    rn.flags = rec->flags; rn.ext = rec->ext;
+    rn.stocks = rec->stocks; rn.continues = rec->continues; rn.lost = rec->lost;
     rn.bw = rec->bw;
     snprintf(rn.x, sizeof rn.x, "%s", rec->x);
     rn.begun = 1;
@@ -2144,7 +2168,7 @@ static void rn_fresh(const char *why, int conflict) {
     rn.conflict = conflict;
     if (why[0] != '\0') rn_note("a new run starts: %s", why);
     else gw_log("netplay: envoy run - a new run starts");
-    if (np.host) { snprintf(m, sizeof m, "Y 0 %d", conflict); lb_send(m); }
+    if (np.host) { snprintf(m, sizeof m, "Y 0 %d", conflict); lb_send(m); lb.env_tx = 1; } /* (and the Envoy state again, so a co-op guest can begin its record at once) */
     if (np.host && np.envoy == GW_ENVOY_MODE_COOP && lb.game >= 1) { rn.begun = 1; rn_touch(); } /* (the guest begins when the host's E brings the seed) */
 }
 static void rn_resume(const GwNrRecord *rec, const char *how) {
@@ -2207,6 +2231,7 @@ static int rn_abandon_host(void) {
     rn_touch();
     rn_write(GW_NR_ABANDONED);
     rn.abandoned++;
+    rn_send_record(&r); /* both seats mark this exact record, even if a script note diverged */
     snprintf(m, sizeof m, "Z %s", r.digest);
     lb_send(m);
     rn_note("abandoned: digest %s (game %d, score %d-%d)", r.digest, r.game, r.score[0], r.score[1]);
@@ -2227,6 +2252,7 @@ static void rn_on_abandon(const char *dig) {
     char text[GW_NR_TEXT_MAX + 4];
     int own = 0;
     if (np.host) return;
+    if (rn.rx_ok && strcmp(rn.rx_rec.digest, dig) == 0) rn_apply(&rn.rx_rec);
     if (rn.begun && rn_build(&r) && gw_nr_encode(&r, text, sizeof text)) {
         own = strcmp(r.digest, dig) == 0;
         rn_write(GW_NR_ABANDONED);
@@ -2337,16 +2363,21 @@ extern unsigned gw_Script_NetBuildWord(void);
 static int np_peer_gone_pending; /* the guest found the builds differ at the match: it leaves, the host sees a disconnect */
 /* host -> guest: "E <on> <seed> <open> <host pick> <guest pick> <ticks left> <round>" - everything the reward phase needs, small enough to resend often */
 static void lb_env_send(void) {
-    char m[96];
-    snprintf(m, sizeof m, "E %d %u %d %d %d %d %d %d", lb.env_on, lb.env_seed, lb.env_open, lb.env_pick[0], lb.env_pick[1], lb.env_left, lb.env_round, lb.env_block[0] != '\0');
+    char m[128];
+    snprintf(m, sizeof m, "E %d %u %d %d %d %d %d %d %d %d %d", lb.env_on, lb.env_seed, lb.env_open, lb.env_pick[0], lb.env_pick[1], lb.env_left, lb.env_round, lb.env_block[0] != '\0', rn.stocks, rn.continues, rn.lost);
     lb_send(m);
     lb.env_tx = 0;
 }
 static int lb_env_decode(const char *m) {
     int on = 0, open = 0, p0 = -1, p1 = -1, left = 0, round = 0, blocked = -1, k;
+    int stocks = 0, continues = 1, lost = 0;
     unsigned seed = 0;
-    k = sscanf(m + 2, "%d %u %d %d %d %d %d %d", &on, &seed, &open, &p0, &p1, &left, &round, &blocked); /* the 8th field (is Envoy blocked) is optional */
+    k = sscanf(m + 2, "%d %u %d %d %d %d %d %d %d %d %d", &on, &seed, &open, &p0, &p1, &left, &round, &blocked, &stocks, &continues, &lost); /* V1 accepts the older 7/8 fields; V2 also carries authoritative shared resources */
     if (k < 7 || seed == 0 || seed > 2147483646u || p0 < -1 || p0 > LB_ENV_KEEP || p1 < -1 || p1 > LB_ENV_KEEP) return 0;
+    if (np.envoy == GW_ENVOY_MODE_COOP) {
+        if (k != 11 || stocks < 0 || stocks > 198 || continues < 0 || continues > 1 || lost < 0 || lost > 1 || (lost && stocks)) return 0;
+        rn.stocks = stocks; rn.continues = continues; rn.lost = lost; /* authoritative pair resources, independent of this guest's menu preferences */
+    }
     lb.env_on = on != 0;
     lb.env_seed = seed;
     lb.env_open = open != 0;
@@ -2726,6 +2757,16 @@ static void np_lobby_enter(void) {
         nm[1] = ' ';
         lb_send(nm); /* this player's name, for the opponent's cards */
     }
+    if (np.envoy != 0 && rn.begun && lb.game > 0 && rn.started > 0 && lb.game == rn.started) {
+        /* a game of the set started here and never ended (no result was recorded): the connection was lost IN the match. That game is replayed on resume (rollback cannot recover a
+           missing peer); the run is kept as interrupted and this lobby looks for the saved run like any new one. */
+        gw_log("netplay: envoy run - game %d started and never finished: the match was interrupted", lb.game);
+        rn_interrupt();
+        lb.game = 0;
+        lb.env_on = 0;
+        lb.env_open = 0;
+        lb.have_state = 0;
+    }
     lb.seed = np.seed;
     lb.env_sent = 0;     /* a new connection: report the build word again, expect the other side's again */
     lb.env_peer_ok = 0;
@@ -3048,7 +3089,7 @@ static int np_start_session(const gw_net_addr *peer_in, uint32_t bind_ip) {
     np.runmode = 0;
     if (np.host && rnd.state != NP_RAND_MATCHED) {
         const char *re = getenv("MELEE_NETPLAY_RUN");
-        if (re != NULL && re[0] != ' ') np.run_pref = (strcmp(re, "classic") == 0 || re[0] == '2') ? 2 : (re[0] == '0' || strcmp(re, "off") == 0) ? 0 : 1;
+        if (re != NULL && re[0] != '\0') np.run_pref = (strcmp(re, "classic") == 0 || re[0] == '2') ? 2 : (re[0] == '0' || strcmp(re, "off") == 0) ? 0 : 1;
         np.runmode = np.run_pref != 0;
         if (np.runmode) np.envoy = 0;
     }
@@ -3421,6 +3462,7 @@ int gw_Netplay_MenuBegin(int host, int ck, int color, int stocks, int minutes, i
     np.minutes = minutes;
     np.delay = delay;
     np.port = NP_DEFAULT_PORT;
+    if (getenv("MELEE_NETPLAY_PORT") != NULL && atoi(getenv("MELEE_NETPLAY_PORT")) > 1024 && atoi(getenv("MELEE_NETPLAY_PORT")) < 65536) np.port = (uint16_t) atoi(getenv("MELEE_NETPLAY_PORT")); /* TEST: two lanes on one machine must not fight over 51500 */
     np.use_lobby = 1;
     np.rejoining = 0;
     np.peer_left = 0;
@@ -4644,6 +4686,19 @@ static int test_run_director(void) {
     np.host = 0;
     if (!lb_run_decode(dt_msg[0]) || !lb.run_on || lb.rd.kind != GW_ND_KIND_CLASSIC || lb.rd.stage != 2 || lb.rd.pool != 5 || lb.rd_each != 3 || !lb.rd_synced) { rc = lbt_fail("the guest takes the host's director once"); goto out; }
     if (!lb_run_decode(dt_msg[0]) || lb.rd.over != GW_ND_LIVE) { rc = lbt_fail("the same R again agrees"); goto out; }
+    {
+        GwNdRun agreed = lb.rd;
+        unsigned agreed_seed = lb.run_seed;
+        char drift[120];
+        snprintf(drift, sizeof drift, "R 1 %u 1 8 5 9 1 0 0 2 3", agreed_seed ^ 1u);
+        lb_run_decode(drift);
+        if (lb.rd.over != GW_ND_ABORTED || lb.run_seed != agreed_seed) { rc = lbt_fail("a changed run seed was accepted"); goto out; }
+        lb.rd = agreed;
+        snprintf(drift, sizeof drift, "R 1 %u 1 8 5 9 0 0 0 2 3", agreed_seed);
+        lb_run_decode(drift);
+        if (lb.rd.over != GW_ND_ABORTED) { rc = lbt_fail("a changed initial continue allotment was accepted"); goto out; }
+        lb.rd = agreed;
+    }
     lb.rd.pool = 4; /* the guest's own count drifted */
     lb_run_decode(dt_msg[0]);
     if (lb.rd.over != GW_ND_ABORTED) { rc = lbt_fail("an R that contradicts the guest's own state ends the run"); goto out; }
@@ -4651,6 +4706,437 @@ out:
     lb_run_test_peer = 0;
     np.host = h0;
     rn_tap = NULL;
+    return rc;
+}
+
+
+/* ---- the run record (stage 5): the record, the boundaries, the saved-run check, resume, adoption, conflict, abandon, the co-op word ---- */
+static char rnt_msg[24][GW_NET_LOBBY_MAX];
+static int rnt_n;
+static void rnt_tap(const char *m) { if (rnt_n < 24) snprintf(rnt_msg[rnt_n++], GW_NET_LOBBY_MAX, "%s", m); }
+static int rnt_has(const char *prefix) {
+    int i;
+    for (i = 0; i < rnt_n; ++i) if (strncmp(rnt_msg[i], prefix, strlen(prefix)) == 0) return 1;
+    return 0;
+}
+static void rnt_feed(const char *m) { np_cb_lobby(NULL, (const uint8_t *) m, (int) strlen(m)); }
+static void rnt_feed_sent(void) { /* hand every message this side sent to the other side's handler (the caller has switched roles) */
+    char copy[24][GW_NET_LOBBY_MAX];
+    int i, n = rnt_n;
+    memcpy(copy, rnt_msg, sizeof copy);
+    rnt_n = 0;
+    for (i = 0; i < n; ++i) rnt_feed(copy[i]);
+}
+/* A side of the pair: `host`, the room's mode word, and (keepkv) whether the stores survive. */
+static void rnt_side(int host, unsigned mode, int keepkv, uint32_t seed) {
+    memset(&rn, 0, sizeof rn);
+    memset(&lb, 0, sizeof lb);
+    rn_kv_mem = 1;
+    if (!keepkv) { memset(rn_kv_text, 0, sizeof rn_kv_text); memset(rn_kv_state, 0, sizeof rn_kv_state); memset(rn_kv_me, 0, sizeof rn_kv_me); }
+    np.host = host;
+    np.phase = NP_LOBBY;
+    np.envoy = mode;
+    np.seed = seed;
+    lb.seed = seed;
+    lb_default_stages();
+    lb_new_set(2, 9);
+    lb_reset_game();
+    rnt_n = 0;
+    rn_tap = rnt_tap;
+}
+static void rnt_end(unsigned envoy, int host, int phase) {
+    rn_tap = NULL;
+    rn_kv_mem = 0;
+    np.envoy = envoy;
+    np.host = host;
+    np.phase = phase;
+}
+/* Play the host's side of a set up to a point: 1 = game 1 started, 2 = game 1 over, 3 = the game-2 reward resolved, 4 = game 2 started, 5 = game 2 over (the guest won). */
+static void rnt_play(int upto) {
+    lb.chosen = 0;
+    rn_game_start();
+    if (upto < 2) return;
+    gw_Netplay_GameResult(0);
+    lb_reset_game();
+    if (upto < 3) return;
+    lb_apply_(0, "RPICK", 1, 0);
+    lb_apply_(1, "RPICK", LB_ENV_KEEP, 0);
+    if (upto < 4) return;
+    lb.chosen = lb.nstages > 1 ? 1 : 0;
+    rn_game_start();
+    if (upto < 5) return;
+    gw_Netplay_GameResult(1);
+}
+static int rnt_fail(const char *what) {
+    gw_test_fail("run record: %s (host %d, envoy %08x, game %d, round %d, score %d-%d, status %d, note '%s')", what, np.host, np.envoy, lb.game, lb.env_round, lb.score[0], lb.score[1], rn.status, rn.note);
+    return 1;
+}
+static const char *rnt_saved(int slot, int *state, int *me) { static char t[GW_NR_TEXT_MAX + 1]; rn_kv_get(slot, t, sizeof t, state, me); return t; }
+
+static int test_run_record(void) {
+    GwNrRecord a, b, c;
+    char text[GW_NR_TEXT_MAX + 8], why[96], text2[GW_NR_TEXT_MAX + 8];
+    const char *want_text = "RN2|123456789|2|0|1|1|0|0|45560001|3|1|1302|abcdef123456|deadbeef|-|0|1|0|235fd23981123889"; /* the same literal is checked against mod_codec.digest64 in pc/tests/envoy_online_run.lua */
+    int g, n;
+    gw_nr_clear(&a);
+    a.mode = GW_ENVOY_MODE_V1; a.seed = 123456789u; a.loop = 0; a.game = 3; a.round = 3; a.score[0] = 1; a.score[1] = 1; a.winner = 1;
+    a.pick[2][0] = 1; a.pick[2][1] = 3; a.pick[3][0] = 0; a.pick[3][1] = 2;
+    a.started = 2; a.gstage[1] = 0x00abcdef; a.gstage[2] = 0x00123456; a.bw = 0xdeadbeefu;
+    n = gw_nr_encode(&a, text, sizeof text);
+    if (n <= 0 || n != (int) strlen(text)) return rnt_fail("a record encodes");
+    if (strcmp(text, want_text) != 0) { gw_test_fail("run record: unexpected text %s", text); return 1; }
+    if (!gw_nr_parse(text, &b, why, sizeof why)) { gw_test_fail("run record: its own text is refused: %s", why); return 1; }
+    gw_nr_encode(&b, text2, sizeof text2);
+    if (strcmp(text, text2) != 0 || strcmp(a.digest, b.digest) != 0 || b.pick[2][1] != 3 || b.pick[3][0] != 0 || b.gstage[2] != 0x123456u || b.bw != 0xdeadbeefu || b.winner != 1 || b.round != 3) return rnt_fail("a record round-trips");
+    { /* the digest is the Lua digest64 of the body with the salt "run:" (mod_codec.digest64(body, 'netrun:')) */
+        uint32_t hi, lo;
+        char want[17], body[GW_NR_TEXT_MAX];
+        snprintf(body, sizeof body, "%.*s", (int) strlen(text) - 17, text);
+        gw_mb_digest64(body, strlen(body), "netrun:", &hi, &lo);
+        snprintf(want, sizeof want, "%08x%08x", (unsigned) hi, (unsigned) lo);
+        if (strcmp(want, a.digest) != 0) return rnt_fail("the digest is the codec's netrun: digest");
+        gw_log("netplay: run record test vector: %s", text);
+    }
+    { /* refusals */
+        char bad[GW_NR_TEXT_MAX + 8];
+        snprintf(bad, sizeof bad, "%s", text); bad[20] ^= 1;
+        if (gw_nr_parse(bad, &c, why, sizeof why) || strstr(why, "digest") == NULL) return rnt_fail("a flipped byte is refused by the digest");
+        if (gw_nr_parse("ER2|x", &c, why, sizeof why) || gw_nr_parse("", &c, why, sizeof why) || gw_nr_parse(NULL, &c, why, sizeof why)) return rnt_fail("nonsense is refused");
+        snprintf(bad, sizeof bad, "%s", text); memcpy(bad + strlen(bad) - 16, "0123456789abcdef", 16);
+        if (gw_nr_parse(bad, &c, why, sizeof why)) return rnt_fail("a wrong digest is refused");
+        b = a; b.round = 4;
+        if (gw_nr_encode(&b, text2, sizeof text2)) return rnt_fail("round past game is not encodable");
+        b = a; b.seed = 0;
+        if (gw_nr_encode(&b, text2, sizeof text2)) return rnt_fail("seed 0 is not encodable");
+    }
+    { /* the longest record fits a settings value */
+        GwNrRecord big;
+        gw_nr_clear(&big);
+        big.mode = GW_ENVOY_MODE_V1; big.seed = 2147483646u; big.loop = 99999; big.game = GW_NR_MAXGAMES; big.round = GW_NR_MAXGAMES; big.started = GW_NR_MAXGAMES; big.winner = 1;
+        big.score[0] = 99; big.score[1] = 99; big.bw = 0xffffffffu;
+        for (g = 1; g <= GW_NR_MAXGAMES; ++g) { big.gstage[g] = 0xabcdefu; big.pick[g][0] = 3; big.pick[g][1] = 2; }
+        snprintf(big.x, sizeof big.x, "0123456789abcdef");
+        n = gw_nr_encode(&big, text, sizeof text);
+        if (n <= 0 || n > 511 || !gw_nr_parse(text, &c, why, sizeof why) || c.pick[GW_NR_MAXGAMES][0] != 3 || strcmp(c.x, "0123456789abcdef") != 0) return rnt_fail("a 31-game record fits a settings value and parses");
+    }
+    { /* compare */
+        GwNrRecord later;
+        later = a; later.game = 4; later.round = 3; later.started = 3; later.gstage[3] = 0x00777777; later.score[0] = 2; later.winner = 0;
+        gw_nr_encode(&later, text2, sizeof text2);
+        if (gw_nr_compare(&a, &a) != 0) return rnt_fail("equal records compare equal");
+        if (gw_nr_compare(&later, &a) != 1 || gw_nr_compare(&a, &later) != -1) return rnt_fail("the record with more boundaries is ahead");
+        b = a; b.seed = 99; gw_nr_encode(&b, text2, sizeof text2);
+        if (gw_nr_compare(&a, &b) != 2) return rnt_fail("another seed is another run");
+        b = a; b.pick[2][0] = 0; gw_nr_encode(&b, text2, sizeof text2);
+        if (gw_nr_compare(&a, &b) != 2) return rnt_fail("a different pick contradicts");
+        b = a; b.bw = 1; gw_nr_encode(&b, text2, sizeof text2);
+        if (gw_nr_compare(&a, &b) != 2) return rnt_fail("the same boundary with another build word contradicts");
+        b = a; b.mode = GW_ENVOY_MODE_COOP; gw_nr_encode(&b, text2, sizeof text2);
+        if (gw_nr_compare(&a, &b) != 2) return rnt_fail("another mode is another run");
+    }
+    return 0;
+}
+
+static int test_run_events(void) {
+    int st, me, rc = 0, e0 = np.envoy, h0 = np.host, p0 = np.phase;
+    GwNrRecord r;
+    char why[80];
+    rnt_side(1, GW_ENVOY_MODE_V1, 0, 0x1234567u);
+    if (rn.begun || rnt_saved(0, &st, &me)[0] != '\0') rc = rnt_fail("nothing is recorded before a game starts");
+    if (!rc) { rnt_side(1, GW_ENVOY_MODE_V1, 0, 0x1234567u); rnt_play(1); if (!gw_nr_parse(rnt_saved(0, &st, &me), &r, why, sizeof why) || r.game != 1 || r.started != 1 || st != GW_NR_ACTIVE || me != 0 || r.round != 0) rc = rnt_fail("game 1 starting writes the record (active, host seat)"); }
+    if (!rc) { rnt_side(1, GW_ENVOY_MODE_V1, 0, 0x1234567u); rnt_play(2); gw_nr_parse(rnt_saved(0, &st, &me), &r, why, sizeof why); if (r.game != 2 || r.score[0] != 1 || r.winner != 0 || r.started != 1 || r.round != 0) rc = rnt_fail("a result moves the record on"); }
+    if (!rc) { rnt_side(1, GW_ENVOY_MODE_V1, 0, 0x1234567u); rnt_play(3); gw_nr_parse(rnt_saved(0, &st, &me), &r, why, sizeof why); if (r.round != 2 || r.pick[2][0] != 1 || r.pick[2][1] != LB_ENV_KEEP) rc = rnt_fail("a resolved reward joins the record"); }
+    if (!rc) {
+        rnt_side(1, GW_ENVOY_MODE_V1, 0, 0x1234567u);
+        rnt_play(4);
+        gw_nr_parse(rnt_saved(0, &st, &me), &r, why, sizeof why);
+        if (r.started != 2 || r.gstage[1] == GW_NR_NOSTAGE) rc = rnt_fail("the stage of every game started is recorded");
+        else if (lb.nstages > 1 && strcmp(gw_MexId_TokenForExt(lb.stage_ext[0]), gw_MexId_TokenForExt(lb.stage_ext[1])) != 0 && r.gstage[2] == r.gstage[1]) rc = rnt_fail("two different stages are two different words");
+    }
+    if (!rc) { /* a stable digest: writing the same state again changes nothing */
+        char d[17];
+        snprintf(d, sizeof d, "%s", rn.last);
+        rn_touch();
+        if (strcmp(d, rn.last) != 0) rc = rnt_fail("touching without change keeps the digest");
+    }
+    if (!rc) { /* the peer leaves */
+        rn_interrupt();
+        gw_nr_parse(rnt_saved(0, &st, &me), &r, why, sizeof why);
+        if (st != GW_NR_INTERRUPTED || r.started != 2 || rn.begun || rn.status != RN_ST_INTERRUPTED || rn.note[0] == '\0') rc = rnt_fail("a lost peer keeps the run as interrupted");
+    }
+    if (!rc) { /* a script's digest joins the record */
+        rnt_side(1, GW_ENVOY_MODE_V1, 0, 0x1234567u);
+        rnt_play(1);
+        if (!gw_Netplay_EnvoyRunAct("note", 0, "00112233445566ff") || gw_Netplay_EnvoyRunAct("note", 0, "xyz") || gw_Netplay_EnvoyRunAct("note", 0, "00112233445566fG")) rc = rnt_fail("a script's digest is validated");
+        else { gw_nr_parse(rnt_saved(0, &st, &me), &r, why, sizeof why); if (strcmp(r.x, "00112233445566ff") != 0) rc = rnt_fail("the script's digest is in the record"); }
+    }
+    if (!rc) {
+        rnt_side(1, GW_ENVOY_MODE_V1, 0, 0x1234567u); rnt_play(1);
+        np_lobby_enter();
+        rnt_saved(0, &st, &me);
+        if (st != GW_NR_INTERRUPTED || !rn.pending || rn.begun) rc = rnt_fail("unfinished match re-entry interrupts and checks the saved run");
+        else if (!gw_Netplay_EnvoyRunAct("state", 0, "continued")) rc = rnt_fail("offline handoff accepts the saved run");
+        else { rnt_saved(0, &st, &me); if (st != GW_NR_CONTINUED) rc = rnt_fail("offline handoff prevents online resume"); }
+    }
+    rnt_end(e0, h0, p0);
+    return rc;
+}
+
+/* One side of the exchange, then the other: `host` messages in `out` after feeding `in`. */
+typedef struct { char m[24][GW_NET_LOBBY_MAX]; int n; } RntBag;
+static void rnt_take(RntBag *b) { b->n = rnt_n; memcpy(b->m, rnt_msg, sizeof b->m); rnt_n = 0; }
+static void rnt_give(const RntBag *b) { int i; for (i = 0; i < b->n; ++i) rnt_feed(b->m[i]); }
+static void rnt_open(int host, uint32_t seed, const char *record, int state) { /* a side opens its lobby holding `record` in its store */
+    rnt_side(host, GW_ENVOY_MODE_V1, 0, seed);
+    if (record != NULL) rn_kv_set(0, record, state, host ? 0 : 1);
+    rn_lobby_enter();
+}
+
+/* The saved-run check between two sides, simulated in one process by switching roles and handing over what each side sent. */
+static int test_run_resume(void) {
+    char t2[GW_NR_TEXT_MAX + 1], t3[GW_NR_TEXT_MAX + 1], d3[17], d2[17], other[GW_NR_TEXT_MAX + 1], hostlast[17];
+    int rc = 0, st, me, e0 = np.envoy, h0 = np.host, p0 = np.phase;
+    RntBag guest_says, host_says, guest_sends_record;
+    GwNrRecord r, o;
+    char why[80], q[GW_NET_LOBBY_MAX];
+    /* the host's run: ... game 2 started (t2), game 2 over and the guest won (t3) */
+    rnt_side(1, GW_ENVOY_MODE_V1, 0, 0x1234567u);
+    rnt_play(4);
+    snprintf(t2, sizeof t2, "%s", rnt_saved(0, &st, &me));
+    snprintf(d2, sizeof d2, "%s", rn.last);
+    gw_Netplay_GameResult(1);
+    snprintf(t3, sizeof t3, "%s", rnt_saved(0, &st, &me));
+    snprintf(d3, sizeof d3, "%s", rn.last);
+    rn_interrupt();
+    if (strcmp(d2, d3) == 0) { rnt_end(e0, h0, p0); return rnt_fail("two boundaries, two digests"); }
+    rnt_side(1, GW_ENVOY_MODE_V1, 0, 0x7654321u); /* another run, for the conflict */
+    rnt_play(3);
+    snprintf(other, sizeof other, "%s", rnt_saved(0, &st, &me));
+    gw_nr_parse(other, &o, why, sizeof why);
+
+    /* 1. both sides hold t3: the guest reports it, the host resumes it, the guest applies it */
+    rnt_open(0, 0x9999u, t3, GW_NR_INTERRUPTED);
+    rnt_take(&guest_says);
+    if (!rn.pending || guest_says.n != 1 || strncmp(guest_says.m[0], "U ", 2) != 0 || strstr(guest_says.m[0], d3) == NULL) rc = rnt_fail("the guest reports its saved run on entering the lobby");
+    if (!rc) {
+        rnt_open(1, 0x1234567u, t3, GW_NR_INTERRUPTED);
+        lb.phase = LB_READY;
+        if (!rn.pending || lb_apply_(0, "READY", 1, 0) || lb.ready[0]) rc = rnt_fail("READY waits for the saved-run check");
+    }
+    if (!rc) {
+        rnt_n = 0;
+        rnt_give(&guest_says);
+        if (rn.pending || rn.status != RN_ST_RESUMED || lb.game != 3 || lb.score[0] != 1 || lb.score[1] != 1 || lb.winner != 1 || lb.env_hist[2][0] != 1 || lb.env_hist[2][1] != LB_ENV_KEEP) rc = rnt_fail("the host resumes the equal record into the lobby");
+        else if (!lb.env_open || strcmp(rn.last, d3) != 0 || !rnt_has("T ") || !rnt_has("Y 1 ")) rc = rnt_fail("it reopens game 3's reward and sends the record and the decision");
+        else if (!gw_nr_parse(rnt_saved(0, &st, &me), &r, why, sizeof why) || st != GW_NR_ACTIVE || strcmp(r.digest, d3) != 0) rc = rnt_fail("the resumed record is active again, same digest");
+        snprintf(hostlast, sizeof hostlast, "%s", rn.last);
+        rnt_take(&host_says);
+    }
+    if (!rc) {
+        rnt_open(0, 0x9999u, t3, GW_NR_INTERRUPTED);
+        rnt_n = 0;
+        rnt_give(&host_says);
+        if (rn.pending || rn.status != RN_ST_RESUMED || lb.game != 3 || lb.env_hist[2][1] != LB_ENV_KEEP || lb.score[1] != 1 || strcmp(rn.last, hostlast) != 0 || strcmp(rn.last, d3) != 0)
+            rc = rnt_fail("the guest applies the same record: same game, score, picks and the same digest as the host");
+        else if (strstr(rn.note, "same record") == NULL) rc = rnt_fail("the guest says its own saved record was the same");
+    }
+    /* 2. the guest only has the earlier boundary (t2): it adopts the host's later record */
+    if (!rc) {
+        rnt_open(0, 0x9999u, t2, GW_NR_ACTIVE);
+        rnt_take(&guest_says);
+        rnt_feed("Q x"); /* a query for a record it does not hold sends nothing */
+        if (rnt_n != 0) rc = rnt_fail("a query for a record this side does not hold is ignored");
+        snprintf(q, sizeof q, "Q %s", d2);
+        rnt_feed(q);
+        rnt_take(&guest_sends_record);
+        if (!rc && (guest_sends_record.n < 1 || strncmp(guest_sends_record.m[0], "T ", 2) != 0)) rc = rnt_fail("the guest answers a query with its record");
+    }
+    if (!rc) {
+        rnt_open(1, 0x1234567u, t3, GW_NR_INTERRUPTED);
+        rnt_n = 0;
+        rnt_give(&guest_says);
+        if (!rnt_has("Q ") || !rn.pending) rc = rnt_fail("the host asks for the guest's record when the digests differ");
+        else {
+            rnt_n = 0;
+            rnt_give(&guest_sends_record);
+            if (rn.pending || rn.status != RN_ST_RESUMED || lb.game != 3 || !rnt_has("Y 1 ")) rc = rnt_fail("the later record wins and the host resumes it");
+            else rnt_take(&host_says);
+        }
+    }
+    if (!rc) {
+        rnt_open(0, 0x9999u, t2, GW_NR_ACTIVE);
+        rnt_n = 0;
+        rnt_give(&host_says);
+        if (rn.status != RN_ST_RESUMED || lb.game != 3 || strcmp(rn.last, d3) != 0 || strstr(rn.note, "adopted") == NULL) rc = rnt_fail("the lagging guest adopts the host's record (the later digest)");
+    }
+    /* 3. two different runs: a new run, both kept, and the host may choose one */
+    if (!rc) {
+        rnt_open(0, 0x9999u, other, GW_NR_INTERRUPTED);
+        rnt_take(&guest_says);
+        snprintf(q, sizeof q, "Q %s", o.digest);
+        rnt_feed(q);
+        rnt_take(&guest_sends_record);
+        rnt_open(1, 0x2222222u, t3, GW_NR_INTERRUPTED);
+        rnt_n = 0;
+        rnt_give(&guest_says);
+        rnt_give(&guest_sends_record);
+        if (rn.pending || rn.status != RN_ST_CONFLICT || !rn.conflict || lb.game != 1 || !rnt_has("Y 0 1") || rn.begun) rc = rnt_fail("two different runs: a new run, the host is told why");
+        else if (!rn_resume_choice(1) || lb.game != 3 || rn.status != RN_ST_RESUMED || strcmp(rn.last, d3) != 0) rc = rnt_fail("the host can still choose its own saved run");
+    }
+    if (!rc) {
+        rnt_open(1, 0x2222222u, t3, GW_NR_INTERRUPTED);
+        rnt_n = 0;
+        rnt_give(&guest_says);
+        rnt_give(&guest_sends_record);
+        if (!rn_resume_choice(2) || lb.game != o.game || lb.env_seed != o.seed) rc = rnt_fail("or the guest's");
+    }
+    if (!rc) {
+        char prev[GW_NR_TEXT_MAX + 1];
+        int ps, pm;
+        rnt_open(1, 0x2222222u, t3, GW_NR_INTERRUPTED);
+        rnt_n = 0;
+        rnt_give(&guest_says);
+        rnt_give(&guest_sends_record);
+        rnt_play(1); /* the new run begins: the older resumable one is kept as the previous */
+        snprintf(prev, sizeof prev, "%s", rnt_saved(1, &ps, &pm));
+        if (strncmp(prev, "RN2|", 4) != 0 || ps != GW_NR_INTERRUPTED) rc = rnt_fail("a new run displaces the older one into the previous slot");
+    }
+    /* 4. a record saved as the other seat, an abandoned one, a silent older guest, another room mode: a new run */
+    if (!rc) {
+        rnt_open(1, 0x1234567u, t3, GW_NR_INTERRUPTED);
+        rn_kv_set(0, t3, GW_NR_INTERRUPTED, 1); /* saved as the guest */
+        rn_lobby_enter();
+        rnt_feed("U - 0 0 00000000 0 1");
+        if (rn.status != RN_ST_FRESH || lb.game != 1) rc = rnt_fail("a record saved as the other seat is not resumed");
+    }
+    if (!rc) {
+        rnt_open(1, 0x1234567u, t3, GW_NR_ABANDONED);
+        rnt_feed("U - 0 0 00000000 0 1");
+        if (rn.status != RN_ST_FRESH) rc = rnt_fail("an abandoned run is not resumed");
+    }
+    if (!rc) {
+        int i;
+        rnt_open(1, 0x1234567u, t3, GW_NR_INTERRUPTED);
+        for (i = 0; i < 181 && rn.pending; ++i) rn_host_tick();
+        if (rn.pending || rn.status != RN_ST_FRESH) rc = rnt_fail("an older guest that reports nothing does not hold the lobby for ever");
+    }
+    if (!rc) { /* the same record in another room mode is not resumed */
+        char adv[GW_NET_LOBBY_MAX];
+        rnt_side(1, GW_ENVOY_MODE_COOP, 0, 0x1234567u);
+        rn_kv_set(0, t3, GW_NR_INTERRUPTED, 0);
+        rn_lobby_enter();
+        snprintf(adv, sizeof adv, "U %s 3 1 %08x 2 1", d3, (unsigned) GW_ENVOY_MODE_V1);
+        rnt_feed(adv);
+        if (rn.status != RN_ST_FRESH) rc = rnt_fail("a Versus record is not resumed in a co-op room");
+    }
+    rnt_end(e0, h0, p0);
+    return rc;
+}
+
+static int test_run_abandon(void) {
+    char t[GW_NR_TEXT_MAX + 1], dig[17], zmsg[GW_NET_LOBBY_MAX];
+    unsigned seed0;
+    int rc = 0, st, me, i, e0 = np.envoy, h0 = np.host, p0 = np.phase;
+    GwNrRecord rec;
+    char w[80];
+    rnt_side(1, GW_ENVOY_MODE_V1, 0, 0x1234567u);
+    rnt_play(4);
+    seed0 = lb.env_seed;
+    snprintf(dig, sizeof dig, "%s", rn.last);
+    snprintf(t, sizeof t, "%s", rnt_saved(0, &st, &me));
+    rnt_n = 0;
+    if (!lb_apply_(0, "RABANDON", 0, 0) || rn.begun || lb.game != 1 || lb.env_seed == seed0 || lb.score[0] != 0 || lb.env_round != 0 || lb.env_hist[2][0] != -1) rc = rnt_fail("the host's abandon clears the run and starts another seed");
+    zmsg[0] = '\0';
+    for (i = 0; i < rnt_n; ++i) if (rnt_msg[i][0] == 'Z') snprintf(zmsg, sizeof zmsg, "%s", rnt_msg[i]);
+    if (!rc && strstr(zmsg, dig) == NULL) rc = rnt_fail("the guest is told which record was abandoned");
+    if (!rc) { rnt_saved(0, &st, &me); if (st != GW_NR_ABANDONED) rc = rnt_fail("the host's record is marked abandoned"); }
+    if (!rc) { /* the guest, holding the same run */
+        rnt_side(0, GW_ENVOY_MODE_V1, 0, 0x9999u);
+        gw_nr_parse(t, &rec, w, sizeof w);
+        rn_apply(&rec);
+        if (strcmp(rn.last, dig) != 0) rc = rnt_fail("the guest holds the same record as the host had");
+        else {
+            rnt_feed(zmsg);
+            if (rn.begun || rn.status != RN_ST_ABANDONED || lb.env_round != 0 || strstr(rn.note, "the same") == NULL) rc = rnt_fail("the guest abandons the same record");
+            else { rnt_saved(0, &st, &me); if (st != GW_NR_ABANDONED) rc = rnt_fail("the guest's record is marked abandoned"); }
+        }
+    }
+    if (!rc) { /* one peer's script digest diverged: the host's record text precedes abandon */
+        RntBag host_record;
+        rnt_side(0, GW_ENVOY_MODE_V1, 0, 0x9999u); rn_apply(&rec);
+        snprintf(rn.x, sizeof rn.x, "0011223344556677"); rn_touch();
+        rnt_n = 0; rn_send_record(&rec); rnt_take(&host_record); rnt_give(&host_record);
+        rnt_feed(zmsg);
+        if (strcmp(gw_nr_digest_of(rnt_saved(0, &st, &me)), dig) || st != GW_NR_ABANDONED)
+            rc = rnt_fail("abandon adopts the host record when the guest differs");
+    }
+    if (!rc) { /* nothing to abandon */
+        rnt_side(1, GW_ENVOY_MODE_V1, 0, 0x1234567u);
+        if (lb_apply_(0, "RABANDON", 0, 0)) rc = rnt_fail("no run, nothing to abandon");
+    }
+    rnt_end(e0, h0, p0);
+    return rc;
+}
+
+static int test_run_coop(void) {
+    int rc = 0, st, me, e0 = np.envoy, h0 = np.host, p0 = np.phase;
+    char why[200];
+    rnt_side(1, GW_ENVOY_MODE_COOP, 0, 0x1234567u);
+    if (!lb_env_why(why, sizeof why, 0) || strstr(why, "co-op") == NULL) rc = rnt_fail("a co-op room says it cannot be played yet");
+    else {
+        lb.phase = LB_READY;
+        if (lb_apply_(0, "READY", 1, 0) || lb.ready[0] || strstr(lb.env_block, "co-op") == NULL) rc = rnt_fail("READY is refused in a co-op room, with the reason");
+    }
+    if (!rc) {
+        rn_lobby_enter();
+        rnt_feed("U - 0 0 00000000 0 1");
+        if (rn.pending || rn.status != RN_ST_FRESH || !rn.begun) rc = rnt_fail("a co-op room begins its record without a first game");
+        else if (strstr(rnt_saved(0, &st, &me), "|45560002|") == NULL) rc = rnt_fail("the record carries the co-op mode word");
+    }
+    if (!rc) {
+        char dig[17];
+        snprintf(dig, sizeof dig, "%s", rn.last);
+        gw_Netplay_EnvoyRunAct("note", 0, "0123456789abcdef");
+        if (strcmp(dig, rn.last) == 0) rc = rnt_fail("the co-op director's digest changes the record's digest");
+        else if (!lb_apply_(0, "RABANDON", 0, 0) || rn.begun == 0 || strstr(rnt_saved(0, &st, &me), "|45560002|") == NULL) rc = rnt_fail("a co-op run can be abandoned and a new one begins");
+    }
+    if (!rc) { /* shared resources survive interruption, record transfer and adoption into the other seat */
+        GwNrRecord rec; char saved[GW_NR_TEXT_MAX + 1], w[80], dig[17];
+        rn.stocks = 5; rn.continues = 0; rn.loop = 2; rn_touch();
+        snprintf(saved, sizeof saved, "%s", rnt_saved(0, &st, &me));
+        snprintf(dig, sizeof dig, "%s", rn.last);
+        rn_interrupt();
+        if (!gw_nr_parse(saved, &rec, w, sizeof w)) rc = rnt_fail("co-op resources parse");
+        else {
+            rnt_side(0, GW_ENVOY_MODE_COOP, 0, 0x9999u); rn_apply(&rec);
+            if (rn.stocks != 5 || rn.continues != 0 || rn.loop != 2 || strcmp(rn.last, dig)) rc = rnt_fail("co-op resume restores shared resources on the guest");
+            else {
+                rnt_side(1, GW_ENVOY_MODE_COOP, 0, 0x9999u); rn_apply(&rec);
+                if (!rn_abandon_host() || rn.continues != 1 || rn.loop != 0 || rn.lost) rc = rnt_fail("abandon resets resources for the new pair run");
+            }
+        }
+    }
+    if (!rc) { /* the one format also carries stage-7 director fields: adoption must preserve its exact digest */
+        GwNrRecord rec; char text[GW_NR_TEXT_MAX + 1], dig[17];
+        if (!rn_build(&rec)) rc = rnt_fail("stage-run extension builds");
+        else {
+            rec.ext = 31; rec.flags = 7;
+            gw_nr_encode(&rec, text, sizeof text); snprintf(dig, sizeof dig, "%s", rec.digest);
+            rn_apply(&rec);
+            if (strcmp(rn.last, dig)) rc = rnt_fail("resume keeps stage-7 flags and chosen external stage");
+        }
+    }
+    if (!rc) { /* the shared pool is the host's room choice, never the guest's local menu preference */
+        RntBag host_state; char dig[17]; int old_stocks = np.stocks;
+        np.stocks = 3; rnt_side(1, GW_ENVOY_MODE_COOP, 0, 0x1234567u);
+        rn_fresh("", 0); lb_env_send(); snprintf(dig, sizeof dig, "%s", rn.last); rnt_take(&host_state);
+        np.stocks = 9; rnt_side(0, GW_ENVOY_MODE_COOP, 0, 0x1234567u);
+        rnt_give(&host_state);
+        if (rn.stocks != 6 || strcmp(rn.last, dig)) rc = rnt_fail("fresh co-op guest adopts the host's shared stock pool");
+        np.stocks = old_stocks;
+    }
+    if (!rc && (!gw_envoy_mode_valid(GW_ENVOY_MODE_COOP) || GW_ENVOY_MODE_COOP == GW_ENVOY_MODE_V1)) rc = rnt_fail("two distinct valid mode words");
+    rnt_end(e0, h0, p0);
     return rc;
 }
 

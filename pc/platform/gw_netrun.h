@@ -2,7 +2,7 @@
  * _research/envoy-netplay-scoping-2026-10-05.md) and for the Envoy set, resume and abandon (stage 5). Plain static functions over integers only
  * (no floats, no locale, fixed-width values where it matters), so the text is byte-identical on Windows and Linux; compiles anywhere, tested headless.
  *
- *   RN2|<seed>|<stage>|<loop>|<score0>|<score1>|<flags>|<ext>|<mode 8 hex>|<round>|<winner 0|1|n>|<picks>|<stages>|<bw 8 hex>|<x 16 hex|->|<digest 16 hex>
+ *   RN2|<seed>|<stage>|<loop>|<score0>|<score1>|<flags>|<ext>|<mode 8 hex>|<round>|<winner 0|1|n>|<picks>|<stages>|<bw 8 hex>|<x 16 hex|->|<stocks>|<continues>|<lost>|<digest 16 hex>
  *
  * The first seven fields are the stage-7 spike's RN1 record, unchanged and in the same order (RN2 only appends):
  *   seed    the run seed (1..2147483646), the HOST's choice; every roll of the run is a pure function of it
@@ -18,6 +18,8 @@
  *           both players' BAGS and KEYSTONES (mod_progression.set_build)
  *   stages  6 hex per game started: the low 24 bits of the FNV-1a of that stage's content identity ("ffffff" unknown); '-' when none started
  *   bw      the build word both peers verified at the start of the latest game (0 before the first)
+ *   stocks  shared stock pool (0..198); Versus sets use 0
+ *   continues one run-level token, 0 or 1; lost is 0 or 1 and a lost stage has zero stocks
  *   x       an optional digest a script supplies (the co-op director's record digest); '-' none
  *   digest  two salted FNV-1a words (gw_mb_digest64, salt "netrun:") over everything before the last '|'
  * The record's STATE (active, interrupted, abandoned, continued) and the local seat are not in it: they belong to one side.
@@ -32,7 +34,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define GW_NR_RECORD_MAX 112   /* a record with no extension content (what gw_nr_format writes) always fits */
+#define GW_NR_RECORD_MAX 144   /* a record with no extension content (what gw_nr_format writes) always fits */
 #define GW_NR_TEXT_MAX 480     /* the longest record (31 games); a settings value holds 511 */
 #define GW_NR_MAXGAMES 31      /* games the extension names (the lobby remembers 32 slots, index 0 unused) */
 #define GW_NR_CHUNK 120        /* record bytes per lobby chunk message */
@@ -58,12 +60,14 @@ typedef struct {
     uint32_t gstage[GW_NR_MAXGAMES + 1];       /* index = game (1..started); GW_NR_NOSTAGE unknown */
     int started;                               /* games started */
     uint32_t bw;
+    int stocks, continues, lost;                /* shared pair stock pool; 0/1 token; lost stage ends both seats */
     char x[17];                                /* "" none */
 } GwNrRecord;
 
 static inline void gw_nr_clear(GwNrRecord *r) {
     int g;
     memset(r, 0, sizeof *r);
+    r->continues = 1;
     r->winner = -1;
     r->game = 1;
     for (g = 0; g <= GW_NR_MAXGAMES; ++g) { r->pick[g][0] = r->pick[g][1] = -1; r->gstage[g] = GW_NR_NOSTAGE; }
@@ -111,6 +115,7 @@ static inline int gw_nr_encode(GwNrRecord *r, char *out, size_t cap) {
     if (r->game < 1 || r->round < 0 || r->round > r->game || r->started < 0 || r->started > r->game) return 0;
     if (r->round > GW_NR_MAXGAMES || r->started > GW_NR_MAXGAMES) return 0;
     if (r->seed <= 0 || r->seed > 2147483646L || r->loop < 0 || r->loop > 99999 || r->winner < -1 || r->winner > 1 || r->score[0] < 0 || r->score[1] < 0 || r->score[0] > 99 || r->score[1] > 99) return 0;
+    if (r->stocks < 0 || r->stocks > 198 || r->continues < 0 || r->continues > 1 || r->lost < 0 || r->lost > 1 || (r->lost && r->stocks != 0)) return 0;
     if (r->flags < 0 || r->ext < 0 || r->game > 99999) return 0;
     if (r->round >= 2) {
         for (g = 2; g <= r->round; ++g) {
@@ -129,8 +134,8 @@ static inline int gw_nr_encode(GwNrRecord *r, char *out, size_t cap) {
     r->stage = r->game - 1;
     r->score0 = r->score[0];
     r->score1 = r->score[1];
-    n = snprintf(out, cap, "RN2|%ld|%ld|%ld|%d|%d|%ld|%ld|%08x|%d|%c|%s|%s|%08x|%s", r->seed, r->stage, r->loop, r->score[0], r->score[1], r->flags, r->ext, (unsigned) r->mode, r->round,
-                 r->winner < 0 ? 'n' : (char) ('0' + r->winner), picks, stages, (unsigned) r->bw, x);
+    n = snprintf(out, cap, "RN2|%ld|%ld|%ld|%d|%d|%ld|%ld|%08x|%d|%c|%s|%s|%08x|%s|%d|%d|%d", r->seed, r->stage, r->loop, r->score[0], r->score[1], r->flags, r->ext, (unsigned) r->mode, r->round,
+                 r->winner < 0 ? 'n' : (char) ('0' + r->winner), picks, stages, (unsigned) r->bw, x, r->stocks, r->continues, r->lost);
     if (n <= 0 || (size_t) n + 18 > cap || n + 17 > GW_NR_TEXT_MAX) return 0;
     gw_nr_digest_text(out, (size_t) n, r->digest);
     snprintf(out + n, cap - (size_t) n, "|%s", r->digest);
@@ -162,11 +167,12 @@ static inline int gw_nr_hexn(const char *s, size_t n, uint32_t *v) {
 
 static inline int gw_nr_num(const char *s, size_t n, long *v) {
     size_t i;
-    long x = 0;
+    uint32_t x = 0;
     if (n == 0 || n > 10 || (n > 1 && s[0] == '0')) return 0;
     for (i = 0; i < n; ++i) {
         if (s[i] < '0' || s[i] > '9') return 0;
-        x = x * 10 + (s[i] - '0');
+        if (x > (2147483647u - (unsigned) (s[i] - '0')) / 10u) return 0;
+        x = x * 10u + (unsigned) (s[i] - '0');
     }
     if (x > 2147483647L) return 0;
     *v = x;
@@ -175,8 +181,8 @@ static inline int gw_nr_num(const char *s, size_t n, long *v) {
 
 /* Strict parse: form, canonical integers, digest. Returns 1 and fills out, or 0 with a reason in why. */
 static inline int gw_nr_parse(const char *text, GwNrRecord *out, char *why, size_t cap) {
-    const char *f[16];
-    size_t fl[16], len, i;
+    const char *f[19];
+    size_t fl[19], len, i;
     int nf = 0, k, g, w;
     long v[8];
     uint32_t hv;
@@ -189,18 +195,18 @@ static inline int gw_nr_parse(const char *text, GwNrRecord *out, char *why, size
     f[0] = text;
     for (i = 0; i <= len; ++i) {
         if (i == len || text[i] == '|') {
-            if (nf >= 16) NR_FAIL("record has too many fields");
+            if (nf >= 19) NR_FAIL("record has too many fields");
             fl[nf] = (size_t) (text + i - f[nf]);
             ++nf;
-            if (i < len && nf < 16) f[nf] = text + i + 1;
+            if (i < len && nf < 19) f[nf] = text + i + 1;
         }
     }
-    if (nf != 16) NR_FAIL("record does not have 16 fields");
+    if (nf != 19) NR_FAIL("record does not have 19 fields");
     if (fl[0] != 3 || memcmp(f[0], "RN2", 3) != 0) NR_FAIL("record version is not supported (this build reads RN2)");
-    if (fl[15] != 16) NR_FAIL("bad digest");
-    for (k = 0; k < 16; ++k) if (!gw_mb_ishex(f[15][k])) NR_FAIL("bad digest");
-    gw_nr_digest_text(text, (size_t) (f[15] - 1 - text), want);
-    if (memcmp(want, f[15], 16) != 0) NR_FAIL("record digest does not match its contents");
+    if (fl[18] != 16) NR_FAIL("bad digest");
+    for (k = 0; k < 16; ++k) if (!gw_mb_ishex(f[18][k])) NR_FAIL("bad digest");
+    gw_nr_digest_text(text, (size_t) (f[18] - 1 - text), want);
+    if (memcmp(want, f[18], 16) != 0) NR_FAIL("record digest does not match its contents");
     for (k = 1; k <= 7; ++k) if (!gw_nr_num(f[k], fl[k], &v[k - 1])) NR_FAIL("bad number in the record");
     gw_nr_clear(out);
     out->seed = v[0]; out->stage = v[1]; out->loop = v[2]; out->score0 = v[3]; out->score1 = v[4]; out->flags = v[5]; out->ext = v[6];
@@ -208,7 +214,7 @@ static inline int gw_nr_parse(const char *text, GwNrRecord *out, char *why, size
     out->game = (int) out->stage + 1;
     out->score[0] = (int) out->score0;
     out->score[1] = (int) out->score1;
-    memcpy(out->digest, f[15], 16); out->digest[16] = '\0';
+    memcpy(out->digest, f[18], 16); out->digest[16] = '\0';
     if (fl[8] != 8 || !gw_nr_hexn(f[8], 8, &hv)) NR_FAIL("bad mode word");
     out->mode = hv;
     if (!gw_nr_num(f[9], fl[9], &v[7]) || v[7] > out->game || v[7] > GW_NR_MAXGAMES) NR_FAIL("bad round");
@@ -244,6 +250,12 @@ static inline int gw_nr_parse(const char *text, GwNrRecord *out, char *why, size
         for (i = 0; i < 16; ++i) if (!gw_mb_ishex(f[14][i])) NR_FAIL("bad x digest");
         memcpy(out->x, f[14], 16); out->x[16] = '\0';
     }
+    if (!gw_nr_num(f[15], fl[15], &v[7]) || v[7] > 198) NR_FAIL("bad shared stocks");
+    out->stocks = (int) v[7];
+    if (!gw_nr_num(f[16], fl[16], &v[7]) || v[7] > 1) NR_FAIL("bad continue token");
+    out->continues = (int) v[7];
+    if (!gw_nr_num(f[17], fl[17], &v[7]) || v[7] > 1 || (v[7] && out->stocks != 0)) NR_FAIL("bad lost stage");
+    out->lost = (int) v[7];
     return 1;
 #undef NR_FAIL
 }
@@ -273,6 +285,9 @@ static inline int gw_nr_compare(const GwNrRecord *a, const GwNrRecord *b) {
     for (g = 1; g <= n; ++g) if (a->gstage[g] != b->gstage[g]) return 2;
     c = gw_nr_progress_cmp(a, b);
     if (c == 0) return 2; /* the same boundary with different content (build word, x, score) */
+    { const GwNrRecord *lo = c > 0 ? b : a, *hi = c > 0 ? a : b;
+      if (hi->continues > lo->continues || lo->lost) return 2; /* a loss requires an explicit agreed continue, never automatic prefix adoption */
+    }
     if (a->game == b->game && (a->score[0] != b->score[0] || a->score[1] != b->score[1] || a->winner != b->winner)) return 2;
     if (a->game != b->game) { /* scores only grow */
         const GwNrRecord *lo = c > 0 ? b : a, *hi = c > 0 ? a : b;
@@ -280,6 +295,14 @@ static inline int gw_nr_compare(const GwNrRecord *a, const GwNrRecord *b) {
         if (hi->score[0] + hi->score[1] - lo->score[0] - lo->score[1] > hi->game - lo->game) return 2;
     }
     return c;
+}
+
+/* Stage-7 director helpers: a loss ends the pair; spending the single token needs both seats' agreement (bit mask 3).
+ * A disconnect is NOT a stage loss: resume replays the last started stage without spending stocks or the token. */
+static inline void gw_nr_lose_stage(GwNrRecord *r) { r->stocks = 0; r->lost = 1; }
+static inline int gw_nr_continue(GwNrRecord *r, unsigned agreed, int stocks) {
+    if (agreed != 3 || !r->lost || r->continues != 1 || stocks < 1 || stocks > 198) return 0;
+    r->stocks = stocks; r->continues = 0; r->lost = 0; return 1;
 }
 
 #endif

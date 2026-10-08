@@ -97,6 +97,8 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | `MELEE_NETPLAY_ENVOY=on` / `off` | scripted netplay (direct-connect path): the host's online Envoy choice (a set with a passive build each, `envoy/ONLINE.md`); on a guest it is what the guest insists on, and a host with another mode word refuses it at the handshake (netplay protocol 5). Never used for Random Opponent |
 | `MELEE_ENVOY_POISON=1` | TEST-ONLY: after an online Envoy build is applied, flip one bit of slot 1's record word on this peer only, so the rollback hash must report a DESYNC at the first compared frame |
 | `MELEE_NETPLAY_RUN=1` | the host's room is an online STAGE RUN (spike, `gw_netrun.h`; also `gd.netplay_act("run", true)`): no pick/ban, the plan chooses each stage from the run seed, the scene carries `run=<digest>` and the guest refuses a differing record. No menu row |
+| `MELEE_NETPLAY_RUN=classic` / `MELEE_NETPLAY_RUN_LEN=<n>` / `MELEE_NETPLAY_RUN_POOL=<n>` / `MELEE_NETPLAY_RUN_CONT=0|1` | Classic director; test-only length/pool/token overrides, one token maximum |
+| `MELEE_NETRUN_UNLOCK=<hex>` / `MELEE_NETRUN_POISON=mask|barrier` | TEST-ONLY unlock intersection and plan/barrier negative controls |
 | `MELEE_NETPLAY_RUN_STOCKS=<n>` / `MELEE_NETPLAY_RUN_MINUTES=<n>` | TEST-ONLY, host of a stage run: override the stocks and minutes of every stage so a loopback proof plays short matches |
 | `MELEE_NETRUN_POISON=1` | TEST-ONLY, guest of a stage run: compute the run record from another seed, so the stage must be REFUSED before it loads |
 | `MELEE_CPU_IDLE=1` | every CPU-controlled fighter stands still for the whole process (neutral input at the AI's write point; it still takes hits, falls, respawns). Same as scene `cpus=idle`; per slot `p2=fox/idle`. A script's `gd.cpu_mode(port,"fight")` overrides one slot, `"default"` returns it. Ignored in netplay. `run.sh --idle-cpus` sets it; agent test runs should. Log: `cpu: P2 idle (global)` at match start; `gd.cpu_modes()` |
@@ -406,3 +408,10 @@ iteration, exchanged and compared by `gw_net.c`). Widened 2026-10-05; the design
   (`MELEE_RB_HASH_LEGACY=1`) reproduces the old value.
 - Cost: `rb: tick ... hash X/call` in the log; about 2 microseconds a frame for two fighters.
 - Negative control: `MELEE_RB_PERTURB=<field>` on one peer (see the env table). Run the soak pair as `_build/audit-20261003/checksum/run_soak.sh`.
+
+### Envoy private-room proof ports
+
+`MELEE_NETPLAY_PORT=<1025..65535>` selects the UDP port of a menu-hosted room (default 51500).
+For two-client local proof use a unique port and `MELEE_NETPLAY_BIND=127.0.0.1`, with a separate
+matchmaking server bound to 127.0.0.1 on its own port. Stage-5 proof commands are in the workspace
+report; `MELEE_NET_SIM` / `MELEE_NET_SIM_FILE` can supply lag, jitter and loss.

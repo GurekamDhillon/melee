@@ -1131,7 +1131,7 @@ static void gs_end_hold_release_owner(int owner) { /* owner 0: every hold (scene
     for (i = 0; i < GS_END_HOLDS; ++i) {
         if (gs_end_hold_reason[i][0] && (owner == 0 || gs_end_hold_owner[i] == owner)) {
             gw_log("script: match end hold '%s' released (%s)", gs_end_hold_reason[i], owner ? "script unloaded" : "scene change");
-            gs_end_hold_reason[i][0] = ' ';
+            gs_end_hold_reason[i][0] = '\0';
             gs_end_hold_owner[i] = 0;
         }
     }
@@ -1156,7 +1156,7 @@ static int l_match_end_hold(lua_State *L) {
         return 1;
     }
     reason = luaL_checkstring(L, 1);
-    if (reason[0] == ' ' || strlen(reason) >= sizeof gs_end_hold_reason[0]) {
+    if (reason[0] == '\0' || strlen(reason) >= sizeof gs_end_hold_reason[0]) {
         return luaL_error(L, "gd.match_end_hold: reason must be 1-23 characters");
     }
     if (lua_isnoneornil(L, 2)) { /* read one back */
@@ -1175,7 +1175,7 @@ static int l_match_end_hold(lua_State *L) {
             gmVs_SetEndHold(1);
         }
     } else if (i >= 0) {
-        gs_end_hold_reason[i][0] = ' ';
+        gs_end_hold_reason[i][0] = '\0';
         gs_end_hold_owner[i] = 0;
         gw_log("script [%s]: match end hold '%s' released", gs_script_id(gs.cur), reason);
         if (!gs_end_hold_any()) gmVs_SetEndHold(0);
@@ -1535,6 +1535,10 @@ static void gs_push_run(lua_State *L, int which) {
     snprintf(hex, sizeof hex, "%08x", (unsigned) r.mode); gs_setstr(L, "mode_word", hex);
     gs_setint(L, "seed", (lua_Integer) r.seed);
     gs_setint(L, "loop", r.loop);
+    gs_setint(L, "depth", r.stage);
+    gs_setint(L, "stocks", r.stocks);
+    gs_setint(L, "continues", r.continues);
+    gs_setbool(L, "lost", r.lost);
     gs_setint(L, "game", r.game);
     gs_setint(L, "round", r.round);
     gs_setint(L, "winner", r.winner);
@@ -1695,7 +1699,7 @@ static int l_netplay(lua_State *L) {
         gs_setbool(L, "asking", gw_Netplay_RunInfo(10));
         gs_setint(L, "ends", (int) gw_Netplay_RunInfo(11));
         gs_setint(L, "each", (int) gw_Netplay_RunInfo(14));
-        if (gw_Netplay_RunInfo(13)) snprintf(mh, sizeof mh, "%08x", gw_Netplay_RunInfo(12)); else mh[0] = ' ';
+        if (gw_Netplay_RunInfo(13)) snprintf(mh, sizeof mh, "%08x", gw_Netplay_RunInfo(12)); else mh[0] = '\0';
         gs_setstr(L, "mask", mh);
         gs_setstr(L, "plan", gw_Netplay_RunPlan());
         gs_setstr(L, "last", gw_Netplay_RunLast());

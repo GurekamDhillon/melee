@@ -154,6 +154,24 @@ Seeds: `seed_for(seed,stage,loop,k)` only, k = salt per seat. No wall clock in a
 the record and a 64-bit digest (two FNV-1a words over the canonical text and the builds through the sorted codec). `coop.lua` `C.cheats` lists
 each place one machine sees both players' choices at once and how online differs.
 
+## Online co-op, what stage 5 delivered (2026-10-08) and what is still stage 6
+Delivered (native, `pc/platform/gw_netplay.c`, `gw_netrun.h`; details and API in `ONLINE.md`, "Stage 5"):
+* **A lobby mode flag.** The host chooses the room's mode, Versus set or co-op run (`gd.netplay_act("envoymode", "coop")`, `MELEE_NETPLAY_ENVOY=coop`). The co-op mode
+  word rides in the handshake's existing Envoy field (protocol 5, no new bytes); both clients report it (`gd.netplay().envoy.mode`). A Versus-only (stage 3) client
+  refuses a co-op room at the first packet.
+* **A run record both peers keep and compare.** `RN2` carries the seed, the depth (stage), the loop, the score, the mode, the stage order and the build word, and an
+  optional `x`: the co-op director's `C.digest` of `C:record()` (seed, every player decision in order, both builds through the sorted codec) goes there with
+  `gd.netplay_act("rnote", digest)`, and is then digest-checked by the same machinery that checks a Versus set. The call exists and is tested; nothing in `coop.lua` calls it yet (stage 6 calls it at each stage boundary). A co-op room begins
+  its record at once (no first game is needed), resumes it peer to peer (equal digests, or the later one wins), abandons it on both sides, and keeps it when a peer is lost.
+* **The lobby refuses to start the match** ("Envoy co-op cannot be played online yet"): the room, the record and the digest check work; the match does not.
+
+Still stage 6 (unchanged from the list below): CPU opponents in an online match, two human slots plus CPUs in the scene builder, seat-to-local-pad mapping, team stage
+results synchronised, drops decided at the stage boundary (items are off online), the floor-drive item's port mask set from the lobby's seats.
+
+The checklist `C.cheats` becomes, online: (1) each peer sees only its own offer and the pick is a message the host validates (the stage-3 reward phase already does
+this for a Versus set); (2) the countdown is lobby ticks (done for Versus); (3) both builds come from the record (`set_build` is the model); (4) a floor drive's touch is a
+game event both peers see on one frame (stage 6); (5) the run seed is the host's (the lobby host chooses it); (6) one process per peer.
+
 ## Engine capabilities online (and offline) co-op needs
 1. `gd.match_end_hold` applies only while the human in SLOT 0 has a stock. With CPU-assisted players, or P1 out, the engine ends the match
    under the run. Needed: hold while ANY fighter of a named team (or any reason holder) is alive, independent of slot 0 being human.
@@ -180,3 +198,12 @@ each place one machine sees both players' choices at once and how online differs
 `scripts/coop.lua` (director, plan, rules, record, stage rows), `scripts/coop_synth.lua` (synthetic players: `synth start [first|seeded|best] [cpuonly]`, `synth wait <ticks>`,
 `synth damage <n>`, `synth gear <seat> <id>...`, `synth chains`, `synth trace <frame>`, `synth refusals`), seat support in `drive_lab`, `mod_lab` (`add_seat`, `techprobe size|ops|prof|cost`),
 `run_host`, `run_hud`, `run_screen`, `menu_input`, `items/drive_coop/item.json`; tests `melee/pc/tests/envoy_coop.lua` and `envoy_coop_campaign.lua`.
+
+The unified RN2 record now digest-carries the shared pair stock pool (`stocks`), the single remaining
+run-level continue token (`continues`) and a lost-stage flag (`lost`), as well as seed, depth, loop and
+both seats' deterministic build history. A lost stage ends both players; the token is spent only by
+both seats agreeing. Native record helpers enforce these transitions; stage 7 must wire them into its
+director. A disconnect preserves the stage-start record for replay and does not spend the token.
+The stage-5 unit tests cover resource round trips, digest differences, strict bounds, single-token
+agreement, interruption/resume and abandon. Its two-client proof is owed. Arbitrary co-op drop bags
+are not recoverable from the optional `x` digest, and co-op continue-offline remains gated on the director.

@@ -303,6 +303,19 @@ void gmVsMelee_ExitVs(GameModeState* state, u8 id0, u8 id1)
             w = exit->match_end.winners[0];
         }
         Netplay_StageEnd(w, exit->match_end.player_standings[0].stocks, exit->match_end.player_standings[1].stocks);
+        {
+            extern int Netplay_RunActive(void);
+            extern void Netplay_GameResult(int winner);
+            extern void Frontend_BackToOnline(void);
+            if (Netplay_RunActive()) {
+                /* The director interstitial replaces results and sudden death;
+                 * retail record/unlock writes stay out of the online run. */
+                Netplay_GameResult(w);
+                Frontend_BackToOnline();
+                gm_ChangeGameModeAfterCurrentScene(GM_FRONTEND);
+                return;
+            }
+        }
     }
     if (exit->match_end.player_standings[4].pkind != Gm_PKind_NA ||
         exit->match_end.player_standings[5].pkind != Gm_PKind_NA) {

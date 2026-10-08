@@ -172,7 +172,9 @@ return function()
     out.drives[#out.drives+1]={seed=D.mod_codec.seed_for(run.seed,game,0,seat*7+5+#out.drives),depth=depth,colour='white',rarity='common',affixes={{id=id,tier=tier}},merged=(tier>base) and (tier-base) or nil}
    end
   end
-  out.depth=5*math.max(0,#out.drives-4)
+  out.depth=math.max(run.depth or math.max(0,(run.game or 1)-1),5*math.max(0,#out.drives-4))
+  out.loop=run.loop or 0
+  out.stocks=run.stocks;out.continues=run.continues;out.lost=run.lost
   return out
  end
  return P

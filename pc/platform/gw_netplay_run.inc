@@ -35,9 +35,9 @@ static void lb_run_on_mask(const char *m) {
  * Before a peer lets a stage's scene go (gmVsMelee_ExitVs -> gw_Netplay_StageEnd) the two exchange (epoch, exit frame, a final hash from before the exit,
  * winner, stocks, shared stocks) on the lobby channel, which is still open: the session closes only when the next scene starts (gw_Netplay_MatchOver).
  * Equal tuples: both directors move on identically (pool pays, next stage / continue / over). Unequal, or the other side does not answer: the run ends for
- * both. The hash is the curated gameplay checksum (gw_rb_checksum_e) of a frame HASH_BACK before the exit, once it is final. */
-#define LB_RUN_HASH_BACK 12
-#define LB_RUN_BARRIER_MS 10000u
+ * both. The hash is the curated gameplay checksum (gw_rb_checksum_e) of the last simulated frame before the exit, once its inputs are confirmed. */
+#define LB_RUN_HASH_BACK 1
+#define LB_RUN_BARRIER_MS 5000u
 static void lb_run_on_end(const char *m) {
     GwNdEnd e;
     if (!gw_nd_end_parse(m, &e)) {
@@ -76,6 +76,7 @@ static int lb_run_close_stage(const GwNdEnd *mine, const GwNdEnd *theirs) {
         return 0;
     }
     deaths = gw_nd_deaths(lb.rd_each, mine->s0, mine->s1);
+    if (mine->winner < 0) deaths = lb.rd.pool; /* cancellation or no clear loses this stage for the pair */
     gw_nd_after_stage(&lb.rd, deaths);
     lb.ends++;
     snprintf(lb.rd_last, sizeof lb.rd_last, "stage %d ended: epoch %d, exit frame %d, hash %08x, winner %d, stocks %d-%d, shared stocks %d -> %d (-%d)%s", stage + 1, mine->epoch, mine->frame,
@@ -105,14 +106,13 @@ void gw_Netplay_StageEnd(int winner, int s0, int s1) {
     e.stage = lb.rd.stage;
     e.pool = lb.rd.pool;
     t0 = GetTickCount();
-    while ((e.hash = gw_rb_checksum_e(epoch, hf)) == 0 && GetTickCount() - t0 < 3000u && !np.dead) lb_run_pump(frame); /* the remaining inputs arrive and make it final */
-    if (e.hash == 0) gw_log("netrun: the final hash of frame %d is not available here - comparing the rest of the tuple", hf);
+    while ((gw_rb_confirmed_frame() < hf || (e.hash = gw_rb_checksum_e(epoch, hf)) == 0) && GetTickCount() - t0 < LB_RUN_BARRIER_MS && !np.dead) lb_run_pump(frame); /* the remaining inputs arrive and make it final */
+    if (gw_rb_confirmed_frame() < hf || e.hash == 0) { lb_run_abort("final stage hash unavailable"); return; }
     if (lb_run_poison() == 3) e.hash ^= 0x5A5A5A5Au; /* TEST-ONLY: this side reports another hash, so the barrier must refuse */
     lb.fz_mine = e;
     gw_nd_end_format(&e, m, sizeof m);
     lb_send(m);
     gw_log("netrun: stage %d is ending - %s", e.stage + 1, m + 2);
-    t0 = GetTickCount();
     while (!lb.fz_have_peer && GetTickCount() - t0 < LB_RUN_BARRIER_MS && !np.dead) lb_run_pump(frame);
     if (!lb.fz_have_peer) {
         lb_run_abort("the other side never closed the stage (no stage-end message)");

@@ -47,7 +47,7 @@ static inline void gw_nd_init(GwNdRun *r, int kind, int len, int pool, int cont)
     r->kind = kind;
     r->len = len < 0 ? 0 : len > 63 ? 63 : len;
     r->pool = r->pool_start = pool < 1 ? 1 : pool > GW_ND_POOL_MAX ? GW_ND_POOL_MAX : pool;
-    r->cont_start = cont < 0 ? 0 : cont > 3 ? 3 : cont;
+    r->cont_start = cont < 0 ? 0 : cont > 1 ? 1 : cont;
 }
 static inline int gw_nd_cont_left(const GwNdRun *r) { return r->cont_start > r->cont_used ? r->cont_start - r->cont_used : 0; }
 /* The continue is on offer: the pool ran out, the run is live and a token is left. */
@@ -103,13 +103,14 @@ static inline int gw_nd_end_format(const GwNdEnd *e, char *out, size_t cap) {
 }
 static inline int gw_nd_end_parse(const char *m, GwNdEnd *e) {
     unsigned h = 0;
+    int used = 0;
     if (m == NULL || m[0] != 'F' || m[1] != ' ') return 0;
-    if (sscanf(m + 2, "%d %d %x %d %d %d %d %d", &e->epoch, &e->frame, &h, &e->winner, &e->s0, &e->s1, &e->stage, &e->pool) != 8) return 0;
+    if (sscanf(m + 2, "%d %d %x %d %d %d %d %d%n", &e->epoch, &e->frame, &h, &e->winner, &e->s0, &e->s1, &e->stage, &e->pool, &used) != 8) return 0;
     e->hash = h;
-    return e->winner >= -1 && e->winner <= 1 && e->s0 >= -1 && e->s1 >= -1;
+    return m[2 + used] == '\0' && e->epoch >= 0 && e->frame >= -123 && e->winner >= -1 && e->winner <= 1 &&
+           e->s0 >= -1 && e->s0 <= 99 && e->s1 >= -1 && e->s1 <= 99 && e->stage >= 0 && e->stage <= 63 && e->pool >= 0 && e->pool <= GW_ND_POOL_MAX;
 }
-/* NULL when the two sides saw the same end; else the first field that differs (for the log and the refusal). A zero hash means "not final here": it
- * is not compared (the other fields still are). */
+/* NULL when the two sides saw the same end; else the first field that differs (for the log and the refusal). A missing final hash refuses the boundary. */
 static inline const char *gw_nd_end_diff(const GwNdEnd *a, const GwNdEnd *b) {
     if (a->epoch != b->epoch) return "epoch";
     if (a->stage != b->stage) return "stage";
@@ -117,7 +118,8 @@ static inline const char *gw_nd_end_diff(const GwNdEnd *a, const GwNdEnd *b) {
     if (a->winner != b->winner) return "winner";
     if (a->s0 != b->s0 || a->s1 != b->s1) return "stocks";
     if (a->pool != b->pool) return "shared stocks";
-    if (a->hash != 0 && b->hash != 0 && a->hash != b->hash) return "final hash";
+    if (a->hash == 0 || b->hash == 0) return "final hash unavailable";
+    if (a->hash != b->hash) return "final hash";
     return NULL;
 }
 
@@ -199,25 +201,25 @@ static inline void gw_nd_perm(uint32_t seed, uint32_t salt, int n, int *p) {
 static inline int gw_nd_mask_has(uint32_t mask, int ck) { return ck >= 0 && ck < 32 && ((mask >> ck) & 1u) != 0; }
 
 /* Pick the matchup of one row from `pool` (n entries). Rules, strongest first: every enemy in the mask; none of the two humans' fighters; none already
- * used by an earlier row. If nothing fits, the rules are relaxed in the reverse order (used, then humans, then the mask) so a row is always filled. */
+ * used by an earlier row. If nothing fits, the rules are relaxed in the reverse order (used, then humans, then humans); the mask is never relaxed. No eligible matchup refuses the plan. */
 static inline const GwNdMatchup *gw_nd_pick(const GwNdMatchup *pool, int n, const int *perm, uint32_t mask, int h0, int h1, uint32_t used, int *relaxed) {
     int level, i, k;
-    for (level = 0; level < 4; ++level) {
+    for (level = 0; level < 3; ++level) {
         for (i = 0; i < n; ++i) {
             const GwNdMatchup *m = &pool[perm[i]];
             int ok = 1;
             for (k = 0; k < 3 && ok; ++k) {
                 int c = m->ck[k];
                 if (c == GW_ND_ENEMY_NONE) continue;
-                if (level < 3 && !gw_nd_mask_has(mask, c)) ok = 0;
+                if (!gw_nd_mask_has(mask, c)) ok = 0;
                 if (level < 2 && (c == h0 || c == h1)) ok = 0;
                 if (level < 1 && gw_nd_mask_has(used, c)) ok = 0;
             }
             if (ok) { *relaxed = level; return m; }
         }
     }
-    *relaxed = 4;
-    return &pool[perm[0]];
+    *relaxed = 3;
+    return NULL;
 }
 
 /* The whole plan (a pure function of the seed, the loop, the agreed mask and the two humans' fighters). Returns the number of stages. */
@@ -246,6 +248,7 @@ static inline int gw_nd_classic_plan(uint32_t seed, int loop, uint32_t mask, int
             if (f & GW_ND_ROW_BOSS) continue;
             if (pass < 3 ? !(f & pass_of[pass]) : !(f == 0 || f == 4)) continue;
             m = gw_nd_pick(pool, n, perm, mask, h0, h1, used, &relaxed);
+            if (m == NULL) { memset(out, 0, sizeof *out); return 0; }
             g->table_stage = m->stage_kind;
             for (k = 0; k < 3; ++k) {
                 g->ck[k] = m->ck[k];

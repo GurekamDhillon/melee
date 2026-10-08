@@ -19,7 +19,7 @@ static void flags_and_state(void) {
     assert((f & 0x7F) == 0 && ((f >> 7) & 3) == GW_ND_LOST && ((f >> 9) & 1) == 1);
     assert(f > 0 && f < 2147483647L);
     gw_nd_init(&r, 0, 999, 500, 9);
-    assert(r.len == 63 && r.pool == GW_ND_POOL_MAX && r.cont_start == 3);
+    assert(r.len == 63 && r.pool == GW_ND_POOL_MAX && r.cont_start == 1);
 }
 
 static void shared_stocks(void) {
@@ -49,6 +49,8 @@ static void end_tuple(void) {
     assert(gw_nd_end_format(&a, m, sizeof m) > 0 && m[0] == 'F');
     assert(gw_nd_end_parse(m, &b) && gw_nd_end_diff(&a, &b) == NULL);
     assert(!gw_nd_end_parse("F 1 2 zz 0 0 0 0 0", &c) && !gw_nd_end_parse("G 1 2 00000000 0 0 0 0 0", &c) && !gw_nd_end_parse("F 1 2 00000000 7 0 0 0 0", &c));
+    assert(!gw_nd_end_parse("F 7 1423 deadbeef 1 0 1 2 5 junk", &c));
+    assert(!gw_nd_end_parse("F 7 1423 deadbeef 1 0 1 2 100", &c));
     c = a; c.epoch++;  assert(strcmp(gw_nd_end_diff(&a, &c), "epoch") == 0);
     c = a; c.stage++;  assert(strcmp(gw_nd_end_diff(&a, &c), "stage") == 0);
     c = a; c.frame++;  assert(strcmp(gw_nd_end_diff(&a, &c), "exit frame") == 0);
@@ -56,7 +58,7 @@ static void end_tuple(void) {
     c = a; c.s1++;     assert(strcmp(gw_nd_end_diff(&a, &c), "stocks") == 0);
     c = a; c.pool++;   assert(strcmp(gw_nd_end_diff(&a, &c), "shared stocks") == 0);
     c = a; c.hash ^= 1; assert(strcmp(gw_nd_end_diff(&a, &c), "final hash") == 0);
-    c = a; c.hash = 0; assert(gw_nd_end_diff(&a, &c) == NULL); /* "not final here" is not a mismatch */
+    c = a; c.hash = 0; assert(strcmp(gw_nd_end_diff(&a, &c), "final hash unavailable") == 0);
 }
 
 static int plan_ok(const GwNdPlan *p, uint32_t mask, int h0, int h1, int strict) {
@@ -109,14 +111,14 @@ static void classic_plan(void) {
                 if (a.st[i].flags & GW_ND_ROW_BOSS) continue;
                 for (k = 0; k < 3; ++k) if (a.st[i].ck[k] != GW_ND_ENEMY_NONE && !gw_nd_mask_has(narrow, a.st[i].ck[k])) in = 0;
                 if (in) narrow_ok++;
-                else assert(a.st[i].relaxed >= 3); /* outside the mask only when everything else was relaxed first */
+                else assert(0 && "opponent outside agreed unlock mask");
             }
         }
         assert(narrow_ok > 200 * 6);
     }
     /* an empty mask still fills every row (deterministically, flagged relaxed) */
     gw_nd_classic_plan(5u, 0, 0, 0, 1, &a); gw_nd_classic_plan(5u, 0, 0, 0, 1, &b);
-    assert(memcmp(&a, &b, sizeof a) == 0 && a.st[0].relaxed >= 3 && a.st[0].n_enemy == 1);
+    assert(memcmp(&a, &b, sizeof a) == 0 && a.n == 0);
 }
 
 static void record_carries_state(void) {

@@ -2770,7 +2770,7 @@ with the charge). Demo and headless proof: `pc/scripts/examples/demos/geno-defin
 `rollback_safe` (`docs/scripting.md`) do not apply to it. It is offline only because define fighters are (section 22). Whether this API shape and its limits are final is the
 owner's call (listed as open in the brief).
 
-### 23.1 The format (additive; the file says `"geno": 9`, no number was taken for it)
+### 23.1 The format (`"geno": 10`, `GENO_VERSION` 10; the owner took the number)
 
 ```json
 "lua": { "script": "lua/charger.lua", "state": { "charge": "int", "charged": "bool" } },
@@ -2784,11 +2784,11 @@ owner's call (listed as open in the brief).
 | `lua.state` | the typed state: slot name (1 to 23 letters, digits, underscores) to `int`, `float` or `bool`; at most 16 slots of 32 bits (`GENO_LUA_STATE_SLOTS`) |
 | `states[].lua.enter` / `.frame` | module functions run once when the state is entered / once per logic frame. A state with a `frame` function gets the anim callback `lua` (unless it names its own `anim`), which also takes the state's `next` when the animation ends and no command changed the action |
 
-Strict like the rest of a define: a `lua` key on an attach entry, in a file older than `"geno": 9`, a state that names a function the module lacks, a module the sandbox refuses
+Strict like the rest of a define: a `lua` key on an attach entry, in a file older than `"geno": 10`, a state that names a function the module lacks, a module the sandbox refuses
 (23.3), more than 16 slots, a bad slot name or type, refuse the entry with the reason in the log (`geno: <mod>/geno.json: the Lua module was refused: ...`). The module text and the
 slot layout are folded into the entry's content id; an entry without a `lua` block hashes exactly as before (the Hero, Striker and Caster ids were compared old exe against new:
-unchanged). **An older engine ignores the key** and loads the Charger as a plain Mario define (measured: it logged id `08ed...` and ran without the special); that is why a format
-number for the Lua keys is an open decision.
+unchanged). **An older engine ignores the key** and loads the Charger as a plain Mario define (measured: it logged id `08ed...` and ran without the special); that is why the Lua keys
+took format 10 (a build that reads 10 reads every older file unchanged; a file of 9 or less with a `lua` block is refused).
 
 ### 23.2 The API
 

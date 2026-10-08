@@ -21,7 +21,7 @@ extern int GenoGame_LuaInfo(int port, int what);
     "return M"
 
 #define TL_HEAD(KEY) \
-    "{\"geno\":9,\"fighters\":[{\"define\":{\"key\":\"" KEY "\",\"name\":\"Lua T\",\"base\":\"mario\",\"common\":\"melee.common.v1\"," \
+    "{\"geno\":10,\"fighters\":[{\"define\":{\"key\":\"" KEY "\",\"name\":\"Lua T\",\"base\":\"mario\",\"common\":\"melee.common.v1\"," \
     "\"resources\":\"retail:mario\"}"
 #define TL_BLOCK ",\"lua\":{\"source\":\"" TL_MODULE "\",\"state\":{\"charge\":\"int\",\"armed\":\"bool\"}}"
 #define TL_STATES \

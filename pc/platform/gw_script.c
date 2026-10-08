@@ -6621,7 +6621,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"fighter_status", l_fighter_status},
     {"sim_commit", l_sim_commit},
     {"sim_clear", l_sim_clear},
-    {"netbuild_stage", l_netbuild_stage}, {"netbuild_clear", l_netbuild_clear}, {"netbuild", l_netbuild},
+    {"netbuild_stage", l_netbuild_stage}, {"netbuild_clear", l_netbuild_clear}, {"netbuild", l_netbuild}, {"netmods", l_netmods},
     {"sim_read", l_sim_read},
     {"sim_replaying", l_sim_replaying},
     {"dobj_tints", l_dobj_tints},
@@ -8443,6 +8443,7 @@ void gw_Script_FramePre(void) {
    engine is in the middle of it. Reading the attacker's hitbox here is read-only. */
 void gw_Script_GameEvent(int what, int a, int b, int c, int d) {
     GsEvent *e;
+    gw_ScriptMods_GameEvent(what, a, b, c, d); /* online Envoy stage 4: the native triggered rules, un-gated (a resimulated frame sees the event too) */
     if (gs.L == NULL || !gs.want_events || gw_Snap_Resimulating()) {
         return;
     }
@@ -11114,6 +11115,7 @@ void gw_script_tests_register(void) {
     gw_test_register("script_shader_api", test_script_shader_api);
     gw_test_register("script_clank_event", test_script_clank_event);
     gw_test_register("netbuild", test_netbuild);
+    gw_test_register("netmods", test_netmods);
     gw_test_register("script_presentation_timer", test_script_presentation_timer);
 #ifdef _WIN32
     gw_test_register("script_mission_paths", test_script_mission_paths);

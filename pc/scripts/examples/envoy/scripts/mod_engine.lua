@@ -640,7 +640,7 @@ return function(D)
  for i,n in ipairs(NATIVE_TAGS) do TAGBIT[n]=1<<(i-1) end
  for i,n in ipairs(ordered) do STATUS_ID[n]=i end
  for i,n in ipairs(NATIVE_EXITS) do EXITBIT[n]=1<<(i-1) end
- E.native={status_bits=D.mod_status.bits,events=EV,event_names=NATIVE_EVENTS,tags=TAGBIT,status_ids=STATUS_ID,max_rules=24,max_variants=16,magic=0x534D5031,header=136,rule_words=268,masks=128}
+ E.native={status_bits=D.mod_status.bits,events=EV,event_names=NATIVE_EVENTS,tags=TAGBIT,status_ids=STATUS_ID,max_rules=24,max_variants=24,magic=0x534D5031,header=136,rule_words=268,masks=128}
  local armor_limit={super=30,damage_threshold=300,knockback_threshold=300,hit_count=600,damage_pool=600}
  local function fbits(x) return (string.unpack('<i4',string.pack('<f',x))) end
  local function clamp(lo,hi,x) return math.max(lo,math.min(hi,x)) end
@@ -713,20 +713,24 @@ return function(D)
  -- The status-mask variants of one port's derived native tables (see the header). Pure; uses a private probe engine, never self's statuses.
  local function variants_of(self,port)
   local probe=E.new(self.seed,self.list,{context=self.context});probe:set_build(port,self.equipped[port] or {},self.implicits[port])
-  local list,index,map={},{},{}
+  -- Only statuses that change a derived table matter: those with fighter values, and those a crit effect waits for. (Status BITS are not in a variant.)
+  local relevant=0
+  for i,name in ipairs(ordered) do local d=D.mod_status.by_name[name];if d and d.values~=nil then relevant=relevant|(1<<(i-1)) end end
+  for _,m in ipairs(self.list) do if (self.equipped[port] or {})[m.id] then for _,e in ipairs(m.effects) do if e.op=='crit' and e.status then relevant=relevant|(1<<(STATUS_ID[e.status]-1)) end end end end
+  local list,index,map,of={},{},{},{}
   for mask=0,127 do
-   local base=mask&~2
-   if base~=mask then map[mask]=map[base]
+   local base=mask&relevant
+   if of[base]~=nil then map[mask]=of[base]
    else
-    local st={};for i,name in ipairs(ordered) do if mask&(1<<(i-1))~=0 then st[name]={expires=3600,stacks=1,max=1,amount=0,next_tick=60,origin={}} end end
+    local st={};for i,name in ipairs(ordered) do if base&(1<<(i-1))~=0 then st[name]={expires=3600,stacks=1,max=1,amount=0,next_tick=60,origin={}} end end
     probe.statuses={[port]=next(st) and st or nil}
     local ops={}
     local values=probe:values(port);values.status_duration=nil;values.damage_dealt=nil;values.damage_taken=nil;values.knockback_taken=nil
     if next(values) then ops[#ops+1]={op='fighter_mod',port=port,values=values} end
-    local rules,bits=probe:native_rules(port)
+    local rules=probe:native_rules(port)
     local curse=0
     local copy={};for i,r in ipairs(rules) do copy[i]=r end
-    if mask&(1<<(STATUS_ID.curse-1))~=0 then
+    if base&(1<<(STATUS_ID.curse-1))~=0 then
      for i,r in ipairs(copy) do if r.id==1002 then curse=i end end
      if curse==0 then copy[#copy+1]={id=1002,match={move='any',incoming=true},change={launch=1}};curse=#copy end
     end
@@ -745,7 +749,7 @@ return function(D)
      assert(#list<E.native.max_variants,'more than '..E.native.max_variants..' derived variants')
      list[#list+1]={ops=ops,curse_rule=curse};at=#list-1;index[key]=at
     end
-    map[mask]=at
+    of[base]=at;map[mask]=at
    end
   end
   return list,map

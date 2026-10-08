@@ -168,6 +168,11 @@ static int test_netbuild(void) {
         int g = gw_ScriptGame_BuildTest();
         if (g != 0) { gw_test_fail("netbuild: game-side table fixture failed (0x%x)", g); goto done; }
     }
+    {   /* stage 4: the triggered-rule evaluator's game half (program load, hooks, tick, hash word, snapshot exactness) */
+        extern int gw_ScriptMods_Test(void);
+        int g = gw_ScriptMods_Test();
+        if (g != 0) { gw_test_fail("netbuild: triggered-rule evaluator fixture failed (0x%x)", g); goto done; }
+    }
     rc = 0;
     goto restore;
 done:
@@ -176,5 +181,48 @@ restore:
     gw_Script_NetBuildSceneBegin();
     memcpy(gs_nb, saved, sizeof saved);
     gs_nb_applied = saved_applied;
+    return rc;
+}
+
+/* Stage 4: staging a triggered program and applying a derived-table variant (what the evaluator asks for when a fighter's status mask changes). */
+static int test_netmods(void) {
+    static GsNbProg saved[GW_NB_SLOTS];
+    GsNbProg *g = &gs_nb_prog[0];
+    float base = 1.0f, curse = 0.05f;
+    int rc = 1, i;
+    memcpy(saved, gs_nb_prog, sizeof saved);
+    gw_Script_NetBuildSceneBegin();
+    memset(gs_nb_prog, 0, sizeof gs_nb_prog);
+    g->have = 1; g->nvariants = 2;
+    g->words[0] = 0x534D5031; g->words[1] = 0; g->words[2] = 2;
+    /* variant 0: a fighter value, an incoming launch rule (id 1002) the Marked amount lands on; variant 1: nothing */
+    nb_mod_op(&g->var[0].ops[0], 0, 7, 0.75f);          /* knockback_taken field 7 */
+    nb_rule_op(&g->var[0].ops[1], 0, 1.0f);
+    g->var[0].ops[1].hit_rules.rules[0][0] = 1002; g->var[0].ops[1].hit_rules.rules[0][13] = 1; g->var[0].ops[1].hit_rules.rules[0][15] = gs_fbits(base);
+    g->var[0].nops = 2; g->var[0].curse_rule = 1;
+    g->var[1].nops = 0;
+    gw_Script_NetModsVariant(0, 0, 4 | 32, gs_fbits(curse));
+    if (gw_ScriptGame_FighterModOwner(0) != GW_NB_OWNER || gw_ScriptGame_FighterModRead(0, 7) != gs_fbits(0.75f)) { gw_test_fail("netmods: variant 0 values not applied"); goto done; }
+    if (gw_ScriptGame_HitRulesCount(0) != 1 || gw_ScriptGame_HitRuleRead(0, 0, 0) != 1002 || gw_ScriptGame_HitRuleRead(0, 0, 15) != gs_fbits(base + curse) || gw_ScriptGame_FighterStatus(0) != 36) {
+        gw_test_fail("netmods: variant 0 rules/status wrong (count %d launch %08x status %d)", gw_ScriptGame_HitRulesCount(0), (unsigned) gw_ScriptGame_HitRuleRead(0, 0, 15), gw_ScriptGame_FighterStatus(0));
+        goto done;
+    }
+    gw_Script_NetModsVariant(0, 0, 4 | 32, 0);          /* the Marked status ended: the launch is the variant's own again */
+    if (gw_ScriptGame_HitRuleRead(0, 0, 15) != gs_fbits(base)) { gw_test_fail("netmods: the curse amount was not removed again"); goto done; }
+    gw_Script_NetModsVariant(0, 1, 8, 0);               /* variant 1: no values, no rules - only the status bits remain */
+    if (gw_ScriptGame_FighterModOwner(0) != 0 || gw_ScriptGame_HitRulesCount(0) != 0 || gw_ScriptGame_FighterStatus(0) != 8) {
+        gw_test_fail("netmods: variant 1 left something behind (owner %d rules %d status %d)", gw_ScriptGame_FighterModOwner(0), gw_ScriptGame_HitRulesCount(0), gw_ScriptGame_FighterStatus(0));
+        goto done;
+    }
+    gw_Script_NetModsVariant(0, 5, 0, 0);               /* out of range: ignored */
+    gw_Script_NetModsVariant(1, 0, 0, 0);               /* a slot with nothing staged: ignored */
+    /* the digest follows the program and the variants */
+    { unsigned d0 = gs_nb_prog_digest(g); g->var[0].curse_rule = 2; if (gs_nb_prog_digest(g) == d0) { gw_test_fail("netmods: the program digest ignores a variant field"); goto done; }
+      g->var[0].curse_rule = 1; g->words[17] ^= 1; if (gs_nb_prog_digest(g) == d0) { gw_test_fail("netmods: the program digest ignores a word"); goto done; } g->words[17] ^= 1; }
+    (void) i;
+    rc = 0;
+done:
+    gw_Script_NetBuildSceneBegin();
+    memcpy(gs_nb_prog, saved, sizeof saved);
     return rc;
 }

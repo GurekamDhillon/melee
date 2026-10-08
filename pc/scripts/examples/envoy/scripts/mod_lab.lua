@@ -748,17 +748,23 @@ return function(D)
   local picks={};for g,p in pairs(env.history) do picks[g]={[1]=p[1],[2]=p[2]} end;n.picks=picks
   if n.staged and game<n.staged then n.staged=nil end -- a new set with the same seed (or a restart): stage again
   if n.staged~=game and (game==1 or n.picks[game]) then
-   local ok,st=pcall(D.mod_progression.set_stage,D,env.seed+(self.net_tamper and 1 or 0),game,n.picks) -- tamper: a TEST hook that makes this client stage a different build
-   if ok then
-    for seat=1,2 do
-     local sok,why=pcall(g.netbuild_stage,seat,st[seat].record,st[seat].ops)
-     if not sok then ok=false;st=why;break end
+   -- Stage 4: the work is spread over ticks (one seat's build, one seat's native program per tick: each is a large share of the script instruction
+   -- budget), then both seats are staged together.
+   local P=D.mod_progression;local seed=env.seed+(self.net_tamper and 1 or 0) -- tamper: a TEST hook that makes this client stage a different build
+   local w=n.work
+   if not w or w.game~=game or w.seed~=seed then w={game=game,seed=seed,step=1,st={}};n.work=w end
+   local ok,err=pcall(function()
+    if w.step==1 or w.step==2 then w.st[w.step]=P.set_stage_seat(D,seed,game,w.step,n.picks);w.step=w.step+1
+    elseif w.step==3 or w.step==4 then
+     if w.st[1].triggered or w.st[2].triggered then P.set_stage_program(w.st[w.step-2],w.step-2) end
+     w.step=w.step+1
+    else
+     for seat=1,2 do local r=w.st[seat];g.netbuild_stage(seat,r.record,r.ops,r.program) end
+     n.staged=game;n.builds={w.st[1].build,w.st[2].build};n.work=nil
+     self:net_log(('game %d staged: host %s | guest %s | word %s%s'):format(game,w.st[1].digest,w.st[2].digest,g.netbuild().word,w.st[1].program and (' | triggered program: '..w.st[1].program.rules..'+'..w.st[2].program.rules..' rules') or ''))
     end
-   end
-   if ok then
-    n.staged=game;n.builds={st[1].build,st[2].build}
-    self:net_log(('game %d staged: host %s | guest %s | word %s'):format(game,st[1].digest,st[2].digest,g.netbuild().word))
-   elseif n.fail~=tostring(st) then n.fail=tostring(st);self:net_log('staging failed: '..n.fail) end
+   end)
+   if not ok then n.work=nil;if n.fail~=tostring(err) then n.fail=tostring(err);self:net_log('staging failed: '..n.fail) end end
   end
   if env.open then
    local offers,seat=self:net_offers(env,np);n.offers=offers;n.seat=seat
@@ -807,7 +813,7 @@ return function(D)
   elseif word=='stage' then -- TEST hook (offline or lobby): stage both seats of a set at <seed> [game] with the default picks, as the lobby would
    local seed,game=rest:match('^(%d+)%s*(%d*)$');seed=tonumber(seed);game=tonumber(game) or 1;if not seed then return 'envoynet stage <seed> [game]' end
    local st=D.mod_progression.set_stage(D,seed,game,{})
-   for seat=1,2 do g.netbuild_stage(seat,st[seat].record,st[seat].ops) end
+   for seat=1,2 do g.netbuild_stage(seat,st[seat].record,st[seat].ops,st[seat].program) end
    return ('staged game %d of seed %d: %s | %s word %s'):format(game,seed,st[1].digest,st[2].digest,g.netbuild().word)
   elseif word=='tamper' then self.net_tamper=true;if self.net then self.net.staged=nil end;return 'tampered: this client stages a different build (test hook)'
   end

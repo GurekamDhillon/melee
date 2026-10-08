@@ -521,8 +521,12 @@ typedef struct {
     char msg[120];
 } nc_sync;
 
+/* The cache format. Bump it when a cached record gains a field the API already had (2: a file's "zip" flag): an older state starts a fresh
+ * full pass, which replaces every cached mod by id (a delta poll would never refetch an unchanged mod). */
+#define NC_CACHE_SCHEMA 2
+
 static void nc_sync_to_json(const nc_sync *s, nj_buf *b) {
-    nj_printf(b, "{\"t0\":%lld,\"since\":%lld,\"last_poll\":%lld,\"next_ok\":%lld,\"full\":%d,\"cursor\":", (long long) s->t0, (long long) s->since,
+    nj_printf(b, "{\"schema\":%d,\"t0\":%lld,\"since\":%lld,\"last_poll\":%lld,\"next_ok\":%lld,\"full\":%d,\"cursor\":", NC_CACHE_SCHEMA, (long long) s->t0, (long long) s->since,
               (long long) s->last_poll, (long long) s->next_ok, s->full);
     nj_qstr(b, s->cursor);
     nj_puts(b, "}\n");
@@ -538,6 +542,7 @@ static int nc_sync_from_json(nc_sync *s, const char *text) {
         s->next_ok = (int64_t) nj_gnum(&d, root, "next_ok", 0);
         s->full = (int) nj_gnum(&d, root, "full", 0);
         nc_copy(s->cursor, sizeof s->cursor, nj_gstr(&d, root, "cursor", ""));
+        if ((int) nj_gnum(&d, root, "schema", 1) < NC_CACHE_SCHEMA) memset(s, 0, sizeof *s);   /* an older cache: sync it all again */
     }
     nj_free(&d);
     return root >= 0 ? 0 : -1;

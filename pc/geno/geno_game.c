@@ -969,6 +969,16 @@ static const struct {
     GENO_ATTR(respawn_platform_scale, 0),
     GENO_ATTR(warp_star_hitbox_scale, 0),
     GENO_ATTR(camera_zoom_target_bone, 1),
+    /* slice 8: the nine fields of ftCo_DatAttrs that had no name (appended; a port reads them from its installed block) */
+    GENO_ATTR(unused_0, 1),
+    GENO_ATTR(xDC, 0),
+    GENO_ATTR(x12C, 0),
+    GENO_ATTR(x13C, 0),
+    GENO_ATTR(x144, 0),
+    GENO_ATTR(x150_damageice_unk, 0),
+    GENO_ATTR(x154_damageice_unk, 0),
+    GENO_ATTR(x168, 0),
+    GENO_ATTR(x17C, 0),
 };
 #define GENO_NATTRS ((int) (sizeof(geno_attrs) / sizeof(geno_attrs[0])))
 

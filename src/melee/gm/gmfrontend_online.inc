@@ -1245,6 +1245,10 @@ static void fl_instruction(char* out)
         left = Netplay_LobbyInfo(5);
     bool mine = turn == me;
     const char* pl = left == 1 ? "" : "s";
+    if (p == LBP_READY && Netplay_EnvoyBlock()[0] != '\0') { /* Envoy cannot start: the reason is on the status line */
+        sprintf(out, "%s", Netplay_IsHost() ? "Envoy is blocked. Press Y to switch Envoy off." : "Envoy is blocked. Waiting for the host.");
+        return;
+    }
     if (Netplay_LobbyInfo(13)) { /* an Envoy reward pick is open: the pick itself is drawn by the Envoy script; the lobby waits */
         sprintf(out, "Envoy: pick your reward. %d s left.", (Netplay_LobbyInfo(14) + 59) / 60);
         return;
@@ -1312,6 +1316,11 @@ static void fl_status_line(char* out)
     char code[8];
     if (t != NULL) {
         sprintf(out, "%s", t);
+        return;
+    }
+    if (fl.art == FL_LOBBY && !fl_reconnecting() && Netplay_EnvoyBlock()[0] != '\0') {
+        fp_copy(out, "Envoy: ", FE_STR);
+        fp_copy(out + 7, Netplay_EnvoyBlock(), FE_STR - 7);
         return;
     }
     Netplay_RoomCode(code, sizeof code);
@@ -2291,8 +2300,21 @@ static void fl_frame_wait(u32 in)
 static void fl_lobby_events(void)
 {
     int p = Netplay_LobbyPhase(), i, n = Netplay_LobbyInfo(9), cd = Netplay_LobbyInfo(8);
+    static int env_note_seen;
+    if (fl.frames < 2) {
+        env_note_seen = Netplay_EnvoyNote();
+    }
     if (fl_reconnecting()) {
         return;
+    }
+    if (Netplay_EnvoyNote() != env_note_seen) { /* an Envoy refusal was raised: say why, on the screen */
+        env_note_seen = Netplay_EnvoyNote();
+        if (Netplay_EnvoyBlock()[0] != '\0') {
+            char why[FE_STR];
+            fp_copy(why, "Envoy: ", FE_STR);
+            fp_copy(why + 7, Netplay_EnvoyBlock(), FE_STR - 7);
+            fl_toast(why, true, 360);
+        }
     }
     if (p == LBP_CHAR_BLIND) {
         fl_coin_done = false;
@@ -2391,6 +2413,13 @@ static void fl_frame_lobby(u32 in)
     }
     fl_lobby_events();
     p = fl_phase();
+    if ((in & MenuInput_YButton) && Netplay_IsHost() && Netplay_EnvoyBlock()[0] != '\0') {
+        sfxForward();
+        if (Netplay_EnvoyOff()) {
+            fl_toast("Envoy mode is off. Ready up for an ordinary match.", false, 240);
+        }
+        return;
+    }
     if (in & MenuInput_Back) {
         if (p == LBP_READY && Netplay_LobbyInfo(8) > 0 && Netplay_LobbyPlayer(me, 3)) {
             sfxBack();

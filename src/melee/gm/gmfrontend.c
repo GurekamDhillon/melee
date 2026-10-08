@@ -248,6 +248,10 @@ int Netplay_Turbo(void);
 void Netplay_SetEnvoy(int on);
 int Netplay_EnvoyPref(void);
 int Netplay_Envoy(void);
+int Netplay_EnvoyAvailable(void);
+const char* Netplay_EnvoyBlock(void);
+int Netplay_EnvoyNote(void);
+int Netplay_EnvoyOff(void);
 int Netplay_RandomBegin(int ck, int color, int stocks, int minutes, int delay);
 void Netplay_RandomCancel(void);
 int Netplay_RandomStatus(void);
@@ -516,6 +520,10 @@ static const char* const fe_np_envoy_modes[] = { "Off", "On" };
 static int fe_np_get_envoy(void) { return Netplay_EnvoyPref(); }
 static void fe_np_set_envoy(int v)
 {
+    if (v && !Netplay_EnvoyAvailable()) { /* no Envoy mod loaded here: a room that could never start its match */
+        OSReport("frontend: online Envoy rules stay off - the Envoy mod is not loaded%c", 10);
+        v = 0;
+    }
     Netplay_SetEnvoy(v);
     Settings_SetInt("envoy_online", v);
     OSReport("frontend: online Envoy rules -> %s%c", v ? "on" : "off", 10);
@@ -558,7 +566,7 @@ static const FrontendItem fe_items_online[] = {
       fe_np_get_stage_mode, fe_np_set_stage_mode, 0, 1, 1, fe_np_stage_modes },
     { FE_CHOICE, 0, "Turbo", "Rooms you host: a connected hit can be cancelled into most moves.",
       fe_np_get_turbo, fe_np_set_turbo, 0, 1, 1, fe_np_turbo_modes },
-    { FE_CHOICE, 0, "Envoy", "Rooms you host: a best-of set where each player fights with an Envoy build and picks a reward between games.",
+    { FE_CHOICE, 0, "Envoy", "Rooms you host: a best-of set, an Envoy build each. Needs the Envoy mod.",
       fe_np_get_envoy, fe_np_set_envoy, 0, 1, 1, fe_np_envoy_modes },
     { FE_SLIDER, 0, "Stocks", "Stocks per game, in rooms you host.", fe_np_get_stocks,
       fe_np_set_stocks, 1, 9, 1 },

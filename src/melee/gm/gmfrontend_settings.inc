@@ -451,6 +451,7 @@ static const char* const fso_turbo_modes[] = { "Off", "On" };
 static int fso_get_envoy(void) { return Netplay_EnvoyPref(); }
 static void fso_set_envoy(int v)
 {
+    if (v && !Netplay_EnvoyAvailable()) v = 0; /* no Envoy mod loaded here: Envoy rooms could never start */
     Netplay_SetEnvoy(v);
     Settings_SetInt("envoy_online", v);
 }
@@ -466,7 +467,7 @@ static const FrontendItem fe_items_set_online[] = {
       fso_get_stages, fso_set_stages, 0, 1, 1, fso_stage_modes },
     { FE_CHOICE, 0, "Turbo", "Rooms you host: a connected hit can be cancelled. Never in Random.",
       fso_get_turbo, fso_set_turbo, 0, 1, 1, fso_turbo_modes },
-    { FE_CHOICE, 0, "Envoy", "Rooms you host: an Envoy set with a build each. Never in Random.",
+    { FE_CHOICE, 0, "Envoy", "Rooms you host: an Envoy set. Needs the Envoy mod. Never in Random.",
       fso_get_envoy, fso_set_envoy, 0, 1, 1, fso_turbo_modes },
 };
 

@@ -131,6 +131,10 @@ static void fa_room_common(void)
     Ui_RoomSetInt("me", Netplay_LobbyMe());
     Ui_RoomSetInt("ping", fl_reconnecting() ? -1 : Netplay_Ping());
     Netplay_MenuStatus(b, FE_STR);
+    if (Netplay_EnvoyBlock()[0] != '\0' && fe_np_phase == FE_NP_LOBBY) { /* Envoy cannot start: the reason stays on the status line */
+        fp_copy(b, "Envoy: ", FE_STR);
+        fp_copy(b + 7, Netplay_EnvoyBlock(), FE_STR - 7);
+    }
     Ui_RoomSetStr("status", b);
     Ui_RoomSetInt("turbo", pref ? Netplay_TurboPref() != 0 : Netplay_Turbo() != 0);
     Ui_RoomSetInt("envoy", pref ? Netplay_EnvoyPref() != 0 : Netplay_Envoy() != 0);

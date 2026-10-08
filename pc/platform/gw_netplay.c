@@ -249,7 +249,7 @@ static int np_scene_envoy(const char *scene, unsigned *w) {
     unsigned long v;
     if (t == NULL) return 0;
     v = strtoul(t + 7, &end, 16);
-    if (end == t + 7 || (*end != ';' && *end != ' ')) return 0;
+    if (end == t + 7 || (*end != ';' && *end != '\0')) return 0;
     *w = (unsigned) v;
     return 1;
 }
@@ -1296,6 +1296,9 @@ static struct {
     int env_tx;          /* host: the Envoy state must be (re)sent to the guest */
     int env_refused;     /* matches refused for differing builds (this process) */
     char env_fail[120];  /* why, in words, for the lobby and the log */
+    char env_block[120]; /* the reason Envoy cannot start the match right now (empty = none): it stops READY, the lobby shows it, the host may switch Envoy off */
+    int env_peer_mod;    /* the other side's report: -1 unknown (an older build), 0 no Envoy mod loaded there, 1 loaded */
+    int env_note;        /* bumped whenever a refusal/block is raised: the menu shows the reason as a toast once per bump */
 } lb;
 #define LB_ENV_TICKS 1800 /* 30 s at 60 lobby ticks a second: the reward pick */
 #define LB_ENV_KEEP 3     /* the pick that keeps the build; a timeout takes offer 0 (the first) */
@@ -1470,6 +1473,9 @@ static void lb_after_stage(void) {
     }
 }
 
+static int lb_env_why(char *why, int cap, int full);
+static void lb_env_refuse(const char *why);
+
 /* Apply one player's action (host). Returns 1 if the state changed. */
 static int lb_apply_(int who, const char *act, int a, int b) {
     if (who < 0 || who > 1) return 0;
@@ -1513,6 +1519,14 @@ static int lb_apply_(int who, const char *act, int a, int b) {
     }
     if (strcmp(act, "READY") == 0) {
         if (lb.phase != LB_READY || lb.ready[who] == (a != 0)) return 0;
+        if (a != 0 && np.envoy) { /* Envoy cannot start: nobody gets to ready up into a countdown that ends in a refusal (after a refusal the builds are compared too) */
+            char why[120];
+            if (lb_env_why(why, (int) sizeof why, lb.env_block[0] != '\0')) {
+                if (strcmp(why, lb.env_block) != 0) lb_env_refuse(why); /* say it once: log, status, the other side, a toast (a script re-asking every half second adds nothing) */
+                return 0;
+            }
+            if (lb.env_block[0] != '\0') { lb.env_block[0] = '\0'; lb.env_tx = 1; }
+        }
         lb.ready[who] = a != 0;
         lb.countdown = lb.ready[0] && lb.ready[1] ? LB_COUNTDOWN : 0;
         return 1;
@@ -1699,14 +1713,14 @@ static int np_peer_gone_pending; /* the guest found the builds differ at the mat
 /* host -> guest: "E <on> <seed> <open> <host pick> <guest pick> <ticks left> <round>" - everything the reward phase needs, small enough to resend often */
 static void lb_env_send(void) {
     char m[96];
-    snprintf(m, sizeof m, "E %d %u %d %d %d %d %d", lb.env_on, lb.env_seed, lb.env_open, lb.env_pick[0], lb.env_pick[1], lb.env_left, lb.env_round);
+    snprintf(m, sizeof m, "E %d %u %d %d %d %d %d %d", lb.env_on, lb.env_seed, lb.env_open, lb.env_pick[0], lb.env_pick[1], lb.env_left, lb.env_round, lb.env_block[0] != '\0');
     lb_send(m);
     lb.env_tx = 0;
 }
 static int lb_env_decode(const char *m) {
-    int on = 0, open = 0, p0 = -1, p1 = -1, left = 0, round = 0, k;
+    int on = 0, open = 0, p0 = -1, p1 = -1, left = 0, round = 0, blocked = -1, k;
     unsigned seed = 0;
-    k = sscanf(m + 2, "%d %u %d %d %d %d %d", &on, &seed, &open, &p0, &p1, &left, &round);
+    k = sscanf(m + 2, "%d %u %d %d %d %d %d %d", &on, &seed, &open, &p0, &p1, &left, &round, &blocked); /* the 8th field (is Envoy blocked) is optional */
     if (k < 7 || seed == 0 || seed > 2147483646u || p0 < -1 || p0 > LB_ENV_KEEP || p1 < -1 || p1 > LB_ENV_KEEP) return 0;
     lb.env_on = on != 0;
     lb.env_seed = seed;
@@ -1715,16 +1729,61 @@ static int lb_env_decode(const char *m) {
     lb.env_pick[1] = p1;
     lb.env_left = left < 0 ? 0 : left > LB_ENV_TICKS ? LB_ENV_TICKS : left;
     lb.env_round = round;
+    if (blocked == 0 && lb.env_block[0] != '\0') lb.env_block[0] = '\0'; /* the host says nothing is in the way any more */
     if (!lb.env_open && round >= 2 && round < LB_ENV_HIST && p0 >= 0 && p1 >= 0) { lb.env_hist[round][0] = p0; lb.env_hist[round][1] = p1; } /* the guest's copy of what the host resolved */
     lb.seq++;
     return 1;
 }
-/* Each side reports the word of the builds it has staged ("W <hex>"), on entering the lobby and whenever it changes (after a reward was applied). */
+/* Whether this side can play an Envoy set at all: the Envoy mod is loaded and running. A test may force 0/1. */
+static int np_envoy_cap_force = -1;
+static int np_envoy_modloaded(void) {
+    int i;
+    if (np_envoy_cap_force >= 0) return np_envoy_cap_force;
+    i = gw_Mods_Find("envoy");
+    return i >= 0 && gw_Mods_IsActive(i);
+}
+int gw_Netplay_EnvoyAvailable(void) { return np_envoy_modloaded(); }
+/* Why an Envoy match cannot start now, in words (the host's view); 0 = nothing in the way. `full` also compares the staged build words (what lb_go checks). */
+static int lb_env_why(char *why, int cap, int full) {
+    unsigned mine = gw_Script_NetBuildWord();
+    if (!np.envoy) return 0;
+    if (!np_envoy_modloaded()) snprintf(why, (size_t) cap, "the host has no Envoy mod loaded");
+    else if (lb.env_peer_ok && lb.env_peer_mod == 0) snprintf(why, (size_t) cap, "the guest has no Envoy mod loaded");
+    else if (!full) return 0;
+    else if (mine == 0) snprintf(why, (size_t) cap, "no Envoy build is staged on the host (is the Envoy mod loaded?)");
+    else if (!lb.env_peer_ok) snprintf(why, (size_t) cap, "the guest has not reported an Envoy build (is the Envoy mod loaded?)");
+    else if (lb.env_peer_word != mine) snprintf(why, (size_t) cap, "Envoy builds differ (host %08x, guest %08x)", mine, lb.env_peer_word);
+    else return 0;
+    return 1;
+}
+/* The reason the lobby shows on screen while Envoy is blocked (empty = none). */
+const char *gw_Netplay_EnvoyBlock(void) { return lb.env_block; }
+int gw_Netplay_EnvoyNote(void) { return lb.env_note; }
+/* The host's way out of a blocked Envoy room: switch Envoy mode off for this room (the saved setting is left alone), tell the guest ("V 0"), clear both READY flags.
+   Returns 1 if it changed anything. Host only, and only in the lobby. */
+int gw_Netplay_EnvoyOff(void) {
+    if (!np.host || np.phase != NP_LOBBY || !np.envoy) return 0;
+    np.envoy = 0;
+    lb.env_on = 0;
+    lb.env_open = 0;
+    lb.env_block[0] = '\0';
+    lb.ready[0] = lb.ready[1] = 0;
+    lb.countdown = 0;
+    lb_send("V 0");
+    lb.seq++;
+    lb_broadcast();
+    gw_log("netplay: envoy - switched off for this room by the host");
+    np_status("Envoy mode is off");
+    return 1;
+}
+
+/* Each side reports the word of the builds it has staged ("W <hex> m<0|1>"), on entering the lobby and whenever it changes (after a reward was applied).
+   The trailing m-token (is the Envoy mod loaded) is optional on the wire: an older peer stops reading at the hex word. */
 static void lb_env_report_word(void) {
     char m[32];
     unsigned w = gw_Script_NetBuildWord();
     if (!np.envoy || (lb.env_sent && lb.env_sent_word == w)) return;
-    snprintf(m, sizeof m, "W %08x", w);
+    snprintf(m, sizeof m, "W %08x m%d", w, np_envoy_modloaded() ? 1 : 0);
     lb_send(m);
     lb.env_sent = 1;
     lb.env_sent_word = w;
@@ -1735,6 +1794,9 @@ static void lb_env_refuse(const char *why) {
     char m[GW_NET_LOBBY_MAX];
     lb.env_refused++;
     snprintf(lb.env_fail, sizeof lb.env_fail, "%s", why);
+    snprintf(lb.env_block, sizeof lb.env_block, "%s", why);
+    lb.env_note++;
+    lb.env_tx = 1;
     gw_log("netplay: envoy - REFUSED the match: %s", why);
     np_status("Refused: %s", why);
     snprintf(m, sizeof m, "X %s", why);
@@ -1745,13 +1807,8 @@ static void lb_env_refuse(const char *why) {
 static void lb_go(void) {
     char m[GW_NET_LOBBY_MAX];
     if (np.envoy) { /* the builds must be the same on both sides, as each reports them, before anyone loads the match */
-        unsigned mine = gw_Script_NetBuildWord();
         char why[120];
-        why[0] = ' ';
-        if (mine == 0) snprintf(why, sizeof why, "no Envoy build is staged on the host (is the Envoy mod loaded?)");
-        else if (!lb.env_peer_ok) snprintf(why, sizeof why, "the guest has not reported an Envoy build (is the Envoy mod loaded?)");
-        else if (lb.env_peer_word != mine) snprintf(why, sizeof why, "Envoy builds differ (host %08x, guest %08x)", mine, lb.env_peer_word);
-        if (why[0] != ' ') {
+        if (lb_env_why(why, (int) sizeof why, 1)) {
             lb_env_refuse(why);
             lb.ready[0] = lb.ready[1] = 0; /* nobody is ready any more; the countdown is over */
             lb.countdown = 0;
@@ -1829,13 +1886,29 @@ static void np_cb_lobby(void *user, const uint8_t *data, int len) {
         if (!np.host) lb_env_decode(m);
     } else if (m[0] == 'W' && m[1] == ' ') {
         unsigned w = (unsigned) strtoul(m + 2, NULL, 16);
+        const char *mt = strstr(m + 2, " m");
         lb.env_peer_word = w;
         lb.env_peer_ok = 1;
-        gw_log("netplay: envoy - the other side's build word is %08x", w);
+        lb.env_peer_mod = mt != NULL ? (mt[2] == '1') : -1; /* an older peer sends no m-token: unknown */
+        gw_log("netplay: envoy - the other side's build word is %08x (Envoy mod %s)", w, lb.env_peer_mod < 0 ? "unknown" : lb.env_peer_mod ? "loaded" : "NOT loaded");
+    } else if (!np.host && m[0] == 'V' && m[1] == ' ') {
+        if (np.envoy) { /* the host switched Envoy mode off for this room: an ordinary match from here on */
+            np.envoy = 0;
+            lb.env_on = 0;
+            lb.env_open = 0;
+            lb.env_block[0] = '\0';
+            lb.ready[0] = lb.ready[1] = 0;
+            lb.countdown = 0;
+            lb.seq++;
+            gw_log("netplay: envoy - the host switched Envoy mode off");
+            np_status("The host switched Envoy mode off");
+        }
     } else if (m[0] == 'X' && m[1] == ' ') {
         if (np.envoy) {
             lb.env_refused++;
             snprintf(lb.env_fail, sizeof lb.env_fail, "%s", m + 2);
+            snprintf(lb.env_block, sizeof lb.env_block, "%s", m + 2);
+            lb.env_note++;
             gw_log("netplay: envoy - the other side REFUSED the match: %s", m + 2);
             np_status("Refused: %s", m + 2);
         }
@@ -1982,6 +2055,8 @@ static void np_lobby_enter(void) {
     lb.seed = np.seed;
     lb.env_sent = 0;     /* a new connection: report the build word again, expect the other side's again */
     lb.env_peer_ok = 0;
+    lb.env_peer_mod = -1;
+    lb.env_block[0] = '\0';
     lb.env_tx = 1;
     if (np.host) {
         if (lb.game <= 0) lb.mode = np.stage_mode; /* a new set takes the room's stage list */
@@ -2288,6 +2363,10 @@ static int np_start_session(const gw_net_addr *peer_in, uint32_t bind_ip) {
     }
     /* Online Envoy: the same shape. Only the host of a private room; a scripted guest with MELEE_NETPLAY_ENVOY insists on its word. */
     np.envoy = (np.host && rnd.state != NP_RAND_MATCHED) ? np.envoy_pref : 0;
+    if (np.envoy != 0 && !np.envoy_env && getenv("MELEE_NETPLAY_ENVOY_FORCE") == NULL && !np_envoy_modloaded()) { /* (MELEE_NETPLAY_ENVOY_FORCE: TEST-ONLY, keeps the room Envoy so the lobby's refusal can be exercised) */ /* the saved setting says Envoy, but the mod is gone or disabled: an ordinary room, never a room that cannot start */
+        gw_log("netplay: Envoy mode is on in the settings but the Envoy mod is not loaded - hosting an ordinary room");
+        np.envoy = 0;
+    }
     if (np.host) {
         cfg.envoy = np.envoy;
         if (np.envoy != 0) gw_log("netplay: hosting with Envoy rules 0x%08x", np.envoy);
@@ -3101,7 +3180,7 @@ const char *gw_Netplay_Scene(void) {
         const char *e = getenv("MELEE_NETPLAY_ENVOY");
         np.envoy_pref = 0;
         np.envoy_env = 0;
-        if (e != NULL && e[0] != ' ') {
+        if (e != NULL && e[0] != '\0') {
             np.envoy_pref = strcmp(e, "off") == 0 || e[0] == '0' ? 0u : GW_ENVOY_MODE_V1;
             np.envoy_env = 1;
         }
@@ -3369,6 +3448,41 @@ static int test_lobby_wire(void) {
    players pick (0..2 an offer, 3 keep), nothing else is allowed while it is open, a double or out-of-range pick is refused, the pick resolves when both
    have picked or the countdown's default fills in, it never reopens for the same game, a set without Envoy is untouched, and the host's state message
    round-trips and refuses nonsense. */
+/* Envoy blocked: READY is refused with a reason (no countdown to loop on), the reason clears when the cause does, and the host can switch Envoy off. */
+static int test_lobby_envoy_block(void) {
+    unsigned saved = np.envoy;
+    int host = np.host, ph = np.phase, rc = 0;
+    np.host = 1;
+    np.envoy = GW_ENVOY_MODE_V1;
+    lbt_start(5);
+    lb.phase = LB_READY;
+    lb.env_peer_mod = -1;
+    np_envoy_cap_force = 0;
+    if (lb_apply_(0, "READY", 1, 0) || lb.ready[0] || lb.env_block[0] == '\0' || strstr(lb.env_block, "host has no Envoy mod") == NULL) rc = lbt_fail("no Envoy mod on the host: READY is refused with the reason");
+    else if (lb_apply_(1, "READY", 1, 0) || lb.ready[1] || lb.countdown != 0) rc = lbt_fail("the guest's READY is refused too and no countdown starts");
+    if (!rc) {
+        np_envoy_cap_force = 1;
+        lb.env_peer_ok = 1;
+        lb.env_peer_mod = 0;
+        if (lb_apply_(0, "READY", 1, 0) || strstr(lb.env_block, "guest has no Envoy mod") == NULL) rc = lbt_fail("no Envoy mod on the guest: READY is refused with the reason");
+    }
+    if (!rc) {
+        lb.env_peer_mod = -1; /* an older peer: unknown, not blocked by the mod check; the builds are compared after a refusal */
+        lb.env_peer_word = 0x1234u;
+        if (lb_apply_(0, "READY", 1, 0)) rc = lbt_fail("after a refusal the builds are compared too (nothing staged here)");
+    }
+    if (!rc) {
+        np.phase = NP_LOBBY;
+        if (!gw_Netplay_EnvoyOff() || np.envoy != 0 || lb.env_on || lb.env_block[0] != '\0') rc = lbt_fail("the host switches Envoy off: the block is gone");
+        else if (!lb_apply_(0, "READY", 1, 0) || !lb.ready[0]) rc = lbt_fail("without Envoy the same READY works");
+    }
+    np_envoy_cap_force = -1;
+    np.envoy = saved;
+    np.host = host;
+    np.phase = ph;
+    return rc;
+}
+
 static int test_lobby_envoy(void) {
     unsigned saved = np.envoy, seed = np.seed;
     int rc = 0;
@@ -3522,4 +3636,5 @@ void gw_netplay_tests_register(void) {
     gw_test_register("netplay_lobby_game2", test_lobby_game2);
     gw_test_register("netplay_lobby_wire", test_lobby_wire);
     gw_test_register("netplay_lobby_envoy", test_lobby_envoy);
+    gw_test_register("netplay_lobby_envoy_block", test_lobby_envoy_block);
 }

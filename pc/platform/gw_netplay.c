@@ -4409,8 +4409,10 @@ static int test_run_resume(void) {
     }
     /* A mid-game loss resumes t2 itself, replaying game 2 rather than awarding
        a result or reopening the already resolved game-2 reward. */
-    if (!rc) {
-        rnt_open(0, 0x9999u, t2, GW_NR_ACTIVE); /* killed guest's persisted start */
+    for (int guest_state = GW_NR_ACTIVE; !rc && guest_state <= GW_NR_INTERRUPTED; ++guest_state) {
+        /* Both a killed guest's active start and a surviving guest's interrupted
+           start must resume after the server introduces the pair again. */
+        rnt_open(0, 0x9999u, t2, guest_state);
         rnt_take(&guest_says);
         rnt_open(1, 0x1234567u, t2, GW_NR_INTERRUPTED);
         rnt_n = 0;
@@ -4419,7 +4421,7 @@ static int test_run_resume(void) {
             lb.score[0] != 1 || lb.score[1] != 0 || strcmp(rn.last, d2))
             rc = rnt_fail("mid-game loss resumes the start record without a result or reward");
         rnt_take(&host_says);
-        rnt_open(0, 0x9999u, t2, GW_NR_ACTIVE);
+        rnt_open(0, 0x9999u, t2, guest_state);
         rnt_give(&host_says);
         if (rn.pending || rn.status != RN_ST_RESUMED || lb.game != 2 || lb.env_open || strcmp(rn.last, d2))
             rc = rnt_fail("fresh guest resumes the interrupted game's identical start record");

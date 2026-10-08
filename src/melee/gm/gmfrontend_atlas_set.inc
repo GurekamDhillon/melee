@@ -468,6 +468,15 @@ static void fss_feed_pad(void)
     if (in & MenuInput_YButton) {
         Ui_SetIntent(fss.h, FSS_IN_ALT, 'Y');
     }
+    {   /* Z (MODS > NUCLEUS): not in the menu input bits, so read the pads' trigger edge directly, every port merged */
+        int p;
+        for (p = 0; p < 4; p++) {
+            if (HSD_PadCopyStatus[p].trigger & PAD_TRIGGER_Z) {
+                Ui_SetIntent(fss.h, FSS_IN_ALT, 'Z');
+                break;
+            }
+        }
+    }
 }
 
 /* ONLINE PLAY under Atlas: the explainer is a few lines wide, so three rows say their help shorter than the legacy rows do (the legacy strings in fe_items_online

@@ -75,6 +75,9 @@ typedef struct mx_peer {
     } e[MX_MAX];
     int send_next; /* our next chunk to send (MXE chunks first, then one MXD message per define) */
     int nd;        /* slice 7: the peer's defines (key + short id), from MXD messages */
+    int nd_total;  /* how many it says it has (from the messages), 0 = none heard */
+    int nd_got;    /* how many distinct ones arrived */
+    unsigned char nd_seen[MX_MAXDEF];
     struct {
         uint64_t hash48;
         char key[40];
@@ -412,7 +415,30 @@ static int mx_local_for_hex(int kind, const char *hex) {
 int gw_MexId_CkForHex(const char *hex16) { return mx_local_for_hex(GW_MEXID_FIGHTER, hex16); }
 int gw_MexId_ExtForHex(const char *hex16) { return mx_local_for_hex(GW_MEXID_STAGE, hex16); }
 
+/* Slice 7: the peer announced a define whose short id is the one in `hex16` (the peer's scene names it): say its key, and whether this
+ * install lacks it or holds another version of the same key. 0 when the peer did not announce it (an older build, or the list is not here). */
+static int mx_peer_define_note(const char *hex16, char *out, int cap) {
+    const mx_table *t = &mx_local;
+    char *end;
+    uint64_t h = _strtoui64(hex16, &end, 16) & MX_WIRE_MASK;
+    int j, i;
+    if (end == hex16) return 0;
+    for (j = 0; j < mx_remote.nd; ++j) {
+        if (mx_remote.d[j].hash48 != h) continue;
+        for (i = 0; i < t->n; ++i) {
+            if (t->e[i].define && strcmp(t->e[i].key, mx_remote.d[j].key) == 0) {
+                snprintf(out, (size_t) cap, "Geno fighter %.40s (you have another version of it)", mx_remote.d[j].key);
+                return 1;
+            }
+        }
+        snprintf(out, (size_t) cap, "Geno fighter %.40s (not installed here)", mx_remote.d[j].key);
+        return 1;
+    }
+    return 0;
+}
+
 int gw_MexId_SceneCheck(const char *scene, char *why, int cap) {
+    (void) mx_tab();
     const char *p = scene;
     int missing = 0;
     if (why != NULL && cap > 0) why[0] = '\0';
@@ -424,8 +450,13 @@ int gw_MexId_SceneCheck(const char *scene, char *why, int cap) {
             ++missing;
             if (why != NULL && cap > 0) {
                 size_t l = strlen(why);
-                snprintf(why + l, (size_t) cap - l, "%s%s %.16s", l ? ", " : "",
-                         is_stage ? "stage" : "fighter", p + 3);
+                char named[120];
+                if (!is_stage && mx_peer_define_note(p + 3, named, sizeof named)) {
+                    snprintf(why + l, (size_t) cap - l, "%s%s", l ? ", " : "", named);
+                } else {
+                    snprintf(why + l, (size_t) cap - l, "%s%s %.16s", l ? ", " : "",
+                             is_stage ? "stage" : "fighter", p + 3);
+                }
             }
         }
         p += 3;
@@ -662,6 +693,11 @@ static int mx_wire_feed_define(mx_peer *r, const uint8_t *msg, int len) {
     kl = len - MX_WIRE_DHDR - MX_WIRE_HASH_BYTES;
     if (kl > (int) sizeof r->d[0].key - 1) kl = (int) sizeof r->d[0].key - 1;
     r->d[idx].hash48 = h;
+    r->nd_total = msg[4];
+    if (!r->nd_seen[idx]) {
+        r->nd_seen[idx] = 1;
+        r->nd_got++;
+    }
     for (k = 0; k < kl; ++k) {
         uint8_t c = msg[MX_WIRE_DHDR + MX_WIRE_HASH_BYTES + k];
         r->d[idx].key[k] = (c >= 32 && c < 127) ? (char) c : '?';
@@ -710,6 +746,11 @@ int gw_MexId_WireFeed(const uint8_t *msg, int len) {
                gw_MexId_CommonStageCount());
     }
     return r;
+}
+
+/* 1 when every define the peer announced has arrived (it announces its count with each one); 0 while some are missing or none came. */
+int gw_MexId_PeerDefinesComplete(void) {
+    return mx_remote.nd_total != 0 && mx_remote.nd_got >= mx_remote.nd_total;
 }
 
 int gw_MexId_PeerReady(void) {
@@ -1078,6 +1119,19 @@ static int test_mexid_define_online(void) {
         gw_test_fail("a define the peer holds in another version: \"%s\"", why);
         rv = 1;
         goto done;
+    }
+    /* the host's scene names a define by identity: the refusal says WHICH one and what differs (the peer announced its keys) */
+    {
+        char scene[160];
+        snprintf(scene, sizeof scene, "mode=vs;p1=id:%s/c0/hu;p2=id:%s/c0/hu", b.e[mx_test_find_define(&b, "gamma")].hex,
+                 b.e[mx_test_find_define(&b, "beta")].hex);
+        if (!gw_MexId_PeerDefinesComplete() || gw_MexId_SceneCheck(scene, why, sizeof why) != 2 ||
+            strstr(why, "Geno fighter gamma (not installed here)") == NULL ||
+            strstr(why, "Geno fighter beta (you have another version of it)") == NULL) {
+            gw_test_fail("the scene check does not name the defines: \"%s\"", why);
+            rv = 1;
+            goto done;
+        }
     }
     /* we hold a define the peer lacks: swap roles (the peer's list is a's, ours is b's with gamma) */
     memset(&mx_remote, 0, sizeof mx_remote);

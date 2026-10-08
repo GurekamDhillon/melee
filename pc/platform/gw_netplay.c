@@ -2523,9 +2523,18 @@ static int np_poll(void) {
                 {
                     /* delta: the host names m-ex content by identity; if this install lacks one
                        of them, say which instead of failing to load the match (gw_mexid.c) */
-                    char why[160];
+                    char why[220];
                     if (gw_MexId_SceneCheck(np.scene, why, sizeof why) > 0) {
+                        /* slice 7: the host's list of Geno defines (their keys) follows its identity list on the lobby channel; give it a moment so
+                           the refusal can name the fighter instead of a hash */
+                        static uint32_t wait_until;
+                        if (np.use_lobby && !gw_MexId_PeerDefinesComplete()) { /* (the scripted path has no lobby channel traffic before the match) */
+                            if (wait_until == 0) wait_until = GetTickCount() + 3000u;
+                            if ((int32_t) (GetTickCount() - wait_until) < 0) return np.phase;
+                        }
+                        wait_until = 0;
                         np_status("The host's match uses content you don't have: %s", why);
+                        gw_log("netplay: refused the host's match \"%s\" - content you don't have: %s", np.scene, why);
                         np.phase = NP_FAILED;
                         np_close();
                         return np.phase;

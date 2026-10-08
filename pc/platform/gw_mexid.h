@@ -79,6 +79,7 @@ int gw_MexId_WireNext(uint8_t *out, int cap); /* next chunk to send (bytes), 0 =
 void gw_MexId_WireSent(void);              /* the chunk WireNext produced was accepted */
 int gw_MexId_WireFeed(const uint8_t *msg, int len); /* 1 = it was ours (consumed), 0 = not ours */
 int gw_MexId_PeerReady(void);              /* 1 = the peer's whole list has arrived */
+int gw_MexId_PeerDefinesComplete(void);    /* slice 7: 1 = every Geno define the peer announced has arrived (their keys name a refusal) */
 int gw_MexId_PeerCount(void);              /* entries the peer sent */
 
 /* Online availability: 1 = both have it (same identity), 0 = not common, -1 = peer list not here

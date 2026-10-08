@@ -104,6 +104,8 @@ extern int Geno_Special(int p, int which);
  * the inactive Zelda/Sheik form). Deliberately NOT static: an uninitialised global is a common
  * symbol, which gw_snap.c's map walk takes as game state by its _gw_ name. */
 GenoState Geno_StateBlock[GENO_PLAYERS][2];
+/* Slice 5: the typed state of fighter Lua (geno_game_lua.inc). A separate common symbol, so GenoState's layout is untouched. */
+GenoLuaBlock Geno_LuaBlock[GENO_PLAYERS][2];
 
 static GenoState* geno_state(Fighter* fp)
 {
@@ -125,6 +127,9 @@ static int geno_state_valid(GenoState* st, int s);
 static int geno_enter_state(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int s, u32 target);
 static int geno_v2_preanim(Fighter_GObj* gobj, Fighter* fp, GenoState* st);
 static int geno_cur_state(Fighter* fp, GenoState* st);
+/* slice 5: fighter Lua (geno_game_lua.inc) */
+static GenoLuaBlock* geno_lua_block(Fighter* fp);
+static u32 geno_lua_digest(Fighter* fp, GenoState* st);
 /* v5: articles (geno_game_articles.inc) */
 extern int Geno_ArticleCount(int p);
 static void geno_art_prepare(int p);
@@ -800,6 +805,7 @@ void Geno_FighterReset(Fighter* fp)
     st->ledge = -1;
     st->enter_from = -1;
     st->hit_port = -1;
+    geno_zero(geno_lua_block(fp), sizeof(GenoLuaBlock));
     if (st->profile >= 0) {
         Geno_Event(0, fp->kind, fp->player_id, st->profile, 0);
         geno_install_overlays(fp, st->profile);
@@ -2394,6 +2400,13 @@ u32 GenoDefine_StateDigest(Fighter* fp)
         u32 ad = geno_art_digest(fp);
         if (ad != 0) {
             h = geno_dg(h, ad);
+        }
+    }
+    {
+        /* slice 5: the typed state of fighter Lua, folded only for a profile that declares a layout */
+        u32 ld = geno_lua_digest(fp, s);
+        if (ld != 0) {
+            h = geno_dg(h, ld);
         }
     }
     return h != 0 ? h : 1u;

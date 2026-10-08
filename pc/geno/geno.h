@@ -484,6 +484,55 @@ enum {
     (((unsigned) (article) & 0xFFu) | (((unsigned) (variant) & 0xFFu) << 8) | \
      (((unsigned) (angle) & 0xFFFFu) << 16))
 
+/* ---- slice 5: fighter Lua (docs/geno.md section 23) ----------------------------------------------
+ * A define's "lua" block names a module and a typed state layout; a Geno state's "lua" key names an
+ * "enter" and a "frame" function of that module. The native half owns the Lua domain (one lua_State per
+ * profile); the game half owns every byte of simulation state (Geno_LuaBlock) and passes each call a
+ * GenoLuaIo, a block of GENO_LUA_IO_WORDS 32-bit words (floats as raw bits) in the layout below. */
+#define GENO_LUA_STATE_SLOTS 16   /* typed per-fighter state: 16 slots of 32 bits (int / float / bool) */
+#define GENO_LUA_PHASE_ENTER 0
+#define GENO_LUA_PHASE_FRAME 1
+#define GENO_LUA_PHASES 2
+#define GENO_LUA_MAX_CMDS 8       /* commands one call may queue */
+#define GENO_LUA_INSN_BUDGET 10000 /* VM instructions per call (counted in steps of GENO_LUA_INSN_STEP) */
+#define GENO_LUA_INSN_STEP 50
+#define GENO_LUA_HEAP_BUDGET 65536 /* bytes of heap one call may grow by */
+#define GENO_LUA_IO_WORDS 64
+enum {
+    GENO_LUA_IO_FLAGS = 0,   /* in: bit 0 airborne, bit 1 facing left, bit 2 animation ended */
+    GENO_LUA_IO_ACTION_FRAME = 1,
+    GENO_LUA_IO_MOTION = 2,
+    GENO_LUA_IO_HELD = 3,    /* in: GENO_BTN_* masks */
+    GENO_LUA_IO_PRESSED = 4,
+    GENO_LUA_IO_STICK_X = 5, /* in, float bits */
+    GENO_LUA_IO_STICK_Y = 6,
+    GENO_LUA_IO_POS_X = 7,
+    GENO_LUA_IO_POS_Y = 8,
+    GENO_LUA_IO_VEL_X = 9,
+    GENO_LUA_IO_VEL_Y = 10,
+    GENO_LUA_IO_PERCENT = 11,
+    GENO_LUA_IO_STATE = 16,  /* in and out: GENO_LUA_STATE_SLOTS words, the typed state */
+    GENO_LUA_IO_NCMDS = 32,  /* out: commands queued */
+    GENO_LUA_IO_FAULT = 33,  /* out: GENO_LUA_FAULT_* */
+    GENO_LUA_IO_CMDS = 40    /* out: GENO_LUA_MAX_CMDS x 3 words (op, a, b) */
+};
+enum { /* a command's op */
+    GENO_LUA_CMD_GO = 1,         /* a: a target word (GENO_TARGET(GENO_TGT_GENO, n) | GENO_TGT_AUTO | GENO_TGT_HELPLESS) */
+    GENO_LUA_CMD_VELOCITY = 2,   /* a: forward (float bits, facing-relative), b: up */
+    GENO_LUA_CMD_HITBOX_DAMAGE = 3, /* a: hitbox mask (bit n = slot n), b: damage (float bits) */
+    GENO_LUA_CMD_LOOP = 4        /* restart the animation, the state's variables kept */
+};
+enum { /* GENO_LUA_IO_FAULT */
+    GENO_LUA_FAULT_NONE = 0,
+    GENO_LUA_FAULT_ERROR = 1,    /* a Lua runtime error */
+    GENO_LUA_FAULT_INSNS = 2,    /* instruction budget */
+    GENO_LUA_FAULT_HEAP = 3,     /* heap budget */
+    GENO_LUA_FAULT_COMMAND = 4,  /* a bad command argument or unknown state name */
+    GENO_LUA_FAULT_STATE = 5,    /* an undeclared state slot, or a value that does not fit its type */
+    GENO_LUA_FAULT_CMDS = 6      /* more than GENO_LUA_MAX_CMDS commands */
+};
+#define GENO_LUA_NONE (-1)       /* Geno_LuaCall: the state has no function for the phase (not a fault) */
+
 enum {
     GENO_SP_N = 0, GENO_SP_S = 1, GENO_SP_HI = 2, GENO_SP_LW = 3,
     GENO_SP_AIR_N = 4, GENO_SP_AIR_S = 5, GENO_SP_AIR_HI = 6, GENO_SP_AIR_LW = 7,

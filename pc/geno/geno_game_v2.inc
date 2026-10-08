@@ -261,6 +261,7 @@ static MotionState* geno_vanilla_row(Fighter* fp, int msid)
     return fp->x1C_actionStateList != NULL ? &fp->x1C_actionStateList[msid] : NULL;
 }
 
+static void geno_lua_enter(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int s); /* slice 5 (geno_game_lua.inc) */
 typedef void (*GenoCbFn)(Fighter_GObj* gobj);
 typedef void (*GenoEnterFn)(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int s);
 
@@ -454,6 +455,7 @@ static int geno_enter_state(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int 
     if (b->enter != NULL) {
         b->enter(gobj, fp, st, s);
     }
+    geno_lua_enter(gobj, fp, st, s); /* slice 5: the state's Lua "enter", if it names one */
     return 1;
 }
 
@@ -876,6 +878,9 @@ static int geno_jump_held(Fighter* fp)
 /* ---- Mach Tornado and Drill Rush ------------------------------------------------------------------ */
 #include "geno_game_specials.inc"
 
+/* ---- slice 5: fighter Lua ------------------------------------------------------------------------- */
+#include "geno_game_lua.inc"
+
 /* ---- tables ---------------------------------------------------------------------------------------- */
 
 enum {
@@ -894,6 +899,7 @@ enum {
     GENO_CBID_INTERRUPT = 13,   /* v3 */
     GENO_CBID_AIR_DRIFT = 14,   /* v5.2 */
     GENO_CBID_BRAKE = 15,       /* v5.4 */
+    GENO_CBID_LUA = 60,         /* slice 5: the state's Lua "frame" function */
     GENO_CBID_CAPE = 50,        /* v3 */
     GENO_CBID_CAPE_AFTER = 51,  /* v3 */
     GENO_CBID_GLIDE_AFTER = 25, /* v3 */
@@ -911,6 +917,7 @@ enum {
 static const GenoCbDef geno_cbs[] = {
     { GENO_CBID_NEXT, GENO_CB_ANIM, "next", geno_cb_anim_next },
     { GENO_CBID_LOOP, GENO_CB_ANIM, "loop", geno_cb_anim_loop },
+    { GENO_CBID_LUA, GENO_CB_ANIM, "lua", geno_cb_anim_lua },
     { GENO_CBID_HOLD, GENO_CB_ANIM, "hold", geno_cb_nothing },
     { GENO_CBID_GLIDE_START, GENO_CB_ANIM, "glide.start", geno_glide_start_anim },
     { GENO_CBID_GLIDE, GENO_CB_ANIM, "glide", geno_glide_anim },

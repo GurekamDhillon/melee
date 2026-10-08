@@ -2097,6 +2097,7 @@ static int l_cpu_modes(lua_State *L) {
 
 #include "gw_script_cpu.inc"
 #include "gw_script_cpu_ctl.inc"
+#include "gw_script_fighter_lua.inc"
 
 static int l_impulse(lua_State *L) {
     int slot = gs_slot_arg(L, 1);
@@ -6551,7 +6552,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"hit", l_hit}, {"impulse", l_impulse}, {"cpu_mode", l_cpu_mode}, {"cpu_modes", l_cpu_modes},
     {"cpu_pad", l_cpu_pad}, {"cpu_script", l_cpu_script}, {"cpu_dest", l_cpu_dest}, {"cpu_target", l_cpu_target},
     {"cpu_script_done", l_cpu_script_done}, {"cpu_script_status", l_cpu_script_status},
-    {"cpu_assist", l_cpu_assist}, {"cpu_commands", l_cpu_commands}, {"cpu_goto", l_cpu_goto}, {"cpu_goto_status", l_cpu_goto_status}, {"cpu_cancel", l_cpu_cancel}, {"cpu_macro", l_cpu_macro}, {"cpu_attrs", l_cpu_attrs}, {"cpu_technical", l_cpu_technical}, {"set_stocks", l_set_stocks},
+    {"cpu_assist", l_cpu_assist}, {"cpu_commands", l_cpu_commands}, {"cpu_goto", l_cpu_goto}, {"cpu_goto_status", l_cpu_goto_status}, {"cpu_cancel", l_cpu_cancel}, {"cpu_macro", l_cpu_macro}, {"cpu_attrs", l_cpu_attrs}, {"fighter_lua", l_fighter_lua}, {"cpu_technical", l_cpu_technical}, {"set_stocks", l_set_stocks},
     {"play_sound", l_play_sound}, {"hold_hitbox", l_hold_hitbox},
     {"fly", l_fly}, {"teleport", l_teleport}, {"fly_speed", l_fly_speed}, {"fly_solid", l_fly_solid},
     {"fly_target", l_fly_target}, {"fly_attack", l_fly_attack}, {"fly_clear", l_fly_clear}, {"fly_state", l_fly_state},

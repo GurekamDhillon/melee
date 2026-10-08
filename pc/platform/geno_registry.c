@@ -31,6 +31,7 @@
 #include "gw_test.h"
 #include "../geno/geno.h"
 #include "../geno/geno_plan.h"
+#include "geno_lua_core.h"
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -461,6 +462,9 @@ typedef struct {
     uint32_t art_joint[GENO_MAX_ARTICLES];    /* loaded HSD_Joint (guest address), 0 = not yet */
     int art_tried[GENO_MAX_ARTICLES];         /* the load was attempted (a failure is not retried) */
     struct gn_fm *fm;                         /* slice 4: a base "none" define's own model, bank and plan; NULL otherwise */
+    gn_lua *lua;                              /* slice 5: the fighter-Lua domain of a define with a "lua" block; NULL otherwise */
+    int st_lua[GENO_MAX_STATES][GENO_LUA_PHASES]; /* slice 5: the module function a state runs per phase (glua_find index), -1 none */
+    uint64_t lua_hash;                        /* slice 5: the module text and layout, folded into the id */
 } gn_profile;
 
 #define GN_NONE 0xFFFFFFFFu
@@ -1266,11 +1270,14 @@ static int gn_profile_reserve(gn_registry* r)
     if (!next) return 0;
     r->p = next; r->capacity = cap; return 1;
 }
+static void gn_lua_free_all(gn_registry *r);
 static void gn_registry_clear(gn_registry* r)
 {
+    gn_lua_free_all(r);
     free(r->p); gdf_free(&r->definitions); memset(r, 0, sizeof *r);
 }
 #include "geno_define_registry.inc"
+#include "geno_lua_registry.inc"
 
 static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod, const char *where, int version) {
     static const char *const ev_names[GENO_EV_COUNT] = { "on_init", "on_frame", "on_action",
@@ -1358,10 +1365,14 @@ static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod
     gn_add_v2(p, d, e, where);
     gn_add_v5(p, d, e, where);
     gn_add_v1(r, p, d, e, mod, where);
+    if (!gn_lua_parse(p, d, e, mod, where, version)) { /* slice 5: a bad "lua" block refuses the entry */
+        r->npool = pool_before; r->nslot = slots_before;
+        return;
+    }
     if (p->defined) {
         int overlays = jd_get(d, e, "subactions");
         if (overlays >= 0 && (d->n[overlays].type != JN_ARR || d->n[overlays].count != p->nov)) {
-            r->npool = pool_before; r->nslot = slots_before;
+            glua_free(p->lua); p->lua = NULL; r->npool = pool_before; r->nslot = slots_before;
             gw_log("geno: %s: native definition refused: invalid overlay or script budget exhausted", where);
             return;
         }
@@ -1379,6 +1390,7 @@ static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod
             for (w = 0; w < r->slot_len[s]; ++w) p->id = gn_mix(p->id, r->pool[r->slot_off[s] + w]);
         }
     }
+    if (p->lua != NULL) p->id = gn_mix(p->id, p->lua_hash); /* slice 5: the module is content (an entry without Lua hashes as before) */
     if (p->id == 0) p->id = 1;
     snprintf(p->hex, sizeof p->hex, "%016llx", (unsigned long long) p->id);
     r->n++;
@@ -2354,6 +2366,7 @@ static int test_geno_registry_reload_layout(void) {
 }
 
 #include "geno_define_tests.inc"
+#include "geno_lua_tests.inc"
 #include "geno_items_registry.inc"
 #include "geno_items_registry_tests.inc"
 #include "geno_items_runtime_tests.inc"
@@ -2365,6 +2378,8 @@ void geno_registry_tests_register(void) {
     gw_test_register("geno_define_overlay_budget", test_geno_define_overlay_budget);
     gw_test_register("geno_define_v8_parse", test_geno_define_v8_parse);
     gw_test_register("geno_define_resolver", test_geno_define_resolver);
+    gw_test_register("geno_lua_registry", test_geno_lua_registry);
+    gw_test_register("geno_lua_call", test_geno_lua_call);
     gw_test_register("geno_items_registry",gn_items_registry_test);
     gw_test_register("geno_items_physics",gn_items_physics_test);
     gw_test_register("geno_items_snapshot",gn_items_snapshot_test);

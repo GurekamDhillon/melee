@@ -2723,3 +2723,102 @@ A state (`states[].move_tag`), a subaction overlay (`subactions[].move_tag`) or 
 special projectile`. Hit rules, `on_hit` info and echoes read it. An undeclared fighter-specific state
 reports `special` when it was entered through a special input (any fighter, Geno or m-ex), keeps the
 vanilla special-range answer for a `define` (Mario) or `attach` fighter, and is otherwise `unknown`.
+
+## 23. Fighter Lua (slice 5, first increment built 2026-10-07)
+
+A define can write a state's behaviour as Lua. This increment is deliberately small: two phases (`enter`, `frame`), a typed per-fighter state, four commands. Physics,
+collision, landing and ledge rules stay the state's native callbacks. Brief and decisions: workspace `docs/superpowers/plans/2026-10-07-geno-slice5-fighter-lua.md`.
+Fixture: `pc/geno/mods/vanilla-charger/` (neutral special, ground and air: hold B to charge up to 60 frames, release to strike; the dash speed and the hit's damage grow
+with the charge). Demo and headless proof: `pc/scripts/examples/demos/geno-define-charger/`. Lesson stub: workspace `docs/learn/geno-fighters/13-fighter-lua.md`.
+
+**This is not `gd` scripting.** A fighter's Lua runs inside the fighter's own state machine, in a separate `lua_State` with no `gd`, so the manifest flags `gameplay` and
+`rollback_safe` (`docs/scripting.md`) do not apply to it. It is offline only because define fighters are (section 22). Whether this API shape and its limits are final is the
+owner's call (listed as open in the brief).
+
+### 23.1 The format (additive; the file says `"geno": 9`, no number was taken for it)
+
+```json
+"lua": { "script": "lua/charger.lua", "state": { "charge": "int", "charged": "bool" } },
+"states": [ { "name": "Charge", "behavior": "geno.ground", "subaction": 295, "like": "motion:343",
+              "lua": { "enter": "charge_enter", "frame": "charge_frame" } } ]
+```
+
+| key | meaning |
+|---|---|
+| `lua.script` | the module, a file of the mod (relative, no `..`, at most 64 KB); `lua.source` is the same text inline (tests). Exactly one of the two |
+| `lua.state` | the typed state: slot name (1 to 23 letters, digits, underscores) to `int`, `float` or `bool`; at most 16 slots of 32 bits (`GENO_LUA_STATE_SLOTS`) |
+| `states[].lua.enter` / `.frame` | module functions run once when the state is entered / once per logic frame. A state with a `frame` function gets the anim callback `lua` (unless it names its own `anim`), which also takes the state's `next` when the animation ends and no command changed the action |
+
+Strict like the rest of a define: a `lua` key on an attach entry, in a file older than `"geno": 9`, a state that names a function the module lacks, a module the sandbox refuses
+(23.3), more than 16 slots, a bad slot name or type, refuse the entry with the reason in the log (`geno: <mod>/geno.json: the Lua module was refused: ...`). The module text and the
+slot layout are folded into the entry's content id; an entry without a `lua` block hashes exactly as before (the Hero, Striker and Caster ids were compared old exe against new:
+unchanged). **An older engine ignores the key** and loads the Charger as a plain Mario define (measured: it logged id `08ed...` and ran without the special); that is why a format
+number for the Lua keys is an open decision.
+
+### 23.2 The API
+
+```lua
+local MAX = 60
+local M = {}
+function M.charge_enter(ctx) ctx.state.charge = 0 end
+function M.charge_frame(ctx)
+  local s = ctx.state
+  if ctx.input.special_held and s.charge < MAX then s.charge = s.charge + 1 else ctx.go("Release") end
+end
+return M
+```
+
+A module is a chunk that returns a table of functions and nothing else. `ctx` is a fresh table every call.
+
+| field | |
+|---|---|
+| `ctx.input` | `attack`, `special`, `jump`, `shield`, `grab` with `_held` and `_pressed` booleans; `stick_x`, `stick_y`, `stick_fwd` (the same buttons the script VM's HELD / PRESSED read) |
+| `ctx.self` | `air`, `anim_ended` (booleans), `facing` (+1 / -1), `percent`, `x`, `y`, `vel_x`, `vel_y`, `action_frame`, `motion` |
+| `ctx.state` | the declared slots, read and written by name; an undeclared name, a float into an `int` slot, an integer beyond 32 bits, a non-finite float, a number into a `bool` slot is a fault |
+| `ctx.go(name)` | go to the Geno state of that name, or `"auto"` (Wait on the ground, Fall in the air) or `"helpless"` |
+| `ctx.velocity(forward, up)` | facing-relative forward speed; on the ground the ground speed (`up` ignored), in the air both |
+| `ctx.hitbox_damage(mask, damage)` | as the script word HBDMG: bit n of `mask` is hitbox slot n |
+| `ctx.loop()` | restart the animation, the state's variables kept |
+
+Commands are queued (at most 8 per call, `GENO_LUA_MAX_CMDS`) and applied in call order when the call returns, by the game half, before the next phase. The allowlist environment is
+`type`, `select`, `ipairs`, `assert`, `error`, `freeze` and `math.{abs, min, max, floor, ceil, sqrt, tointeger, huge, pi}`; nothing else exists.
+
+### 23.3 What is enforced, and where (`pc/platform/geno_lua_core.h`, tested by `build.sh --native-test geno-lua`)
+
+- **No hidden state.** Module functions are scanned when the module loads: bytecode containing `OP_SETUPVAL` (assigns a captured variable) or `OP_SETTABUP` (assigns a global or a
+  field of a captured table) is refused, in the function or any function nested in it; every captured value must be nil, boolean, number, string, a function that passes the same test,
+  or a table made by `freeze{...}` (a deep read-only proxy; constants go there). The module table itself cannot be captured, so helpers are `local function`s. The environment is a
+  frozen proxy, so a stray global write is an error at load or call time too.
+- **No host dependence.** No `pairs`/`next` (iteration order follows a per-state string seed in 5.4), no `pcall` (a budget fault must not be catchable), no `string`, `table`,
+  `os`, `io`, `debug`, `coroutine`, `load`, metatables, randomness or clock. Values are IEEE doubles narrowed to `s32`/`f32` at the state boundary. The collector is stopped during a call and a full
+  collection runs after it, so the heap at the start of every call is the same; the test checks 50 calls leave it unchanged.
+- **Budgets, deterministic.** 10,000 VM instructions per call (counted in steps of 50 by a count hook) and 64 KB of heap growth per call. The fault count of an endless loop was identical in three runs.
+- **A fault** (error, either budget, bad command, bad state access, more than 8 commands) drops the call's state writes and commands, adds one to `Geno_LuaBlock.faults`
+  (simulation state, in the hash), and sends the fighter to `auto` so it cannot sit in a state whose Lua no longer runs. The first eight faults of a profile are logged. The design
+  asks for a hard match fault instead of this; that is an open decision (one line in `geno_lua_run`).
+
+### 23.4 State, rollback and the hash
+
+The typed state is `Geno_LuaBlock[6][2]` (`GenoLuaBlock` in `geno_state.h`: 16 words, the fault count, the last fault), a game global declared like `Geno_StateBlock`, so a savestate,
+the LAB rewind and SyncTest cover it with no extra code. `GenoState` itself is untouched. Each call is transactional: the slots are copied into the call's io block, Lua works on the
+copy, and only a call that returned 0 is copied back. `Geno_FighterReset` zeroes the block. `GenoDefine_StateDigest` folds the block (slots, fault count, last fault) **only for a
+define whose profile declares a layout**; a define without a `lua` block keeps its digest, and a non-define's stays 0, so no existing fighter's hash changes. Both
+`enter` (from `geno_enter_state`, after the behaviour's own entry; a chain of enters through `go` stops at depth 4 as a fault) and `frame` read only the fighter, the pad and the block.
+
+### 23.5 Verified (this build, vanilla disc, headless; nothing seen on screen)
+
+| check | result |
+|---|---|
+| native sandbox test `geno-lua` | all pass: 11 module refusals (global write, captured counter, nested capture, mutable table upvalue, module table upvalue, constant in the module table, no table, load-time global write, syntax error, load-time loop, bad freeze key), 19 run-time faults, allowlist arithmetic, stateless fresh ctx, heap steady |
+| `run.sh --test` | 326 of 326 (321 before; new: `geno_lua_registry`, `geno_lua_call`, `geno_lua_charge`, `geno_lua_fault`, `geno_lua_digest`) |
+| LAB proof (`scripts/proof.lua`, `mode=lab;p1=geno:vanilla-charger/hu;p2=mario/cpu0`) | charge 13 after 15 held frames; released at 25 with the charge kept; Release hitbox damage `9.750` = 6 + 0.15 x 25; `gd.savestate` at charge 10, `gd.loadstate` at 24 gave 11; `gd.rewind_test(120)` across charge, cap and release: `pass=true`, `diff_compared=0` ("0 simulation bytes differ"); `PROOF RESULT: PASS` |
+| bench SyncTest (`cycle.lua`: B held 40 frames every 100, ~24 charge/release cycles; `MELEE_SYNCTEST_BENCH=1 MELEE_SYNCTEST_CURATED=1 MELEE_SYNCTEST=12`) | 27,600 curated checks, no Lua fault logged; 616 mismatching, **all in one word: the cmd-script frame counter of P2 (the idle Mario CPU), curated word 23, from frame 544**. The Charger's own record never mismatched. The same word mismatches for a retail Mario P1 driven by the same input (649 of 10,800), and an idle-Charger control had 0 of 8,400: this is the documented unexplained SyncTest class (`PORT_DEV_QUICKREF`, "sustained combat"), not shown to come from Lua, and not a certification |
+| ids | Hero `47e0fa82...`, Striker `54334a53...`, Caster `ac4e4338...` identical in the old and the new exe |
+
+`gd.rewind_test` restores a snapshot and compares bytes; it does not itself resimulate (its text says "0 frames re-simulated"), so resimulation is what the SyncTest line is for. Online remains
+refused for defines (section 22); certifying a Lua fighter under real rollback is slice 7.
+
+### 23.6 Not built (the road, in order)
+
+`phys`/`coll`/`iasa` phases in Lua; `ctx.query` (opponents, stable order); `grab`, `throw_release`, `attribute`, article/FX/sound commands; per-article state; a LAB faults and budget
+display (S5-7 of the road); `check` that understands Lua beyond function names and `ctx.state.<name>` spellings; a real match fault; Lua source and compiler version in an online handshake.

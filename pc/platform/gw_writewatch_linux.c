@@ -5,13 +5,18 @@
  * here, so every snapshot SAVE compared and copied all of MEM1 (40 MB read twice, "full-copy mode"):
  * ~8 ms per tick on a laptop against 0.8 ms on Windows, enough to drop an online match below 60 fps.
  *
- * BACKENDS, tried in this order (MELEE_WRITEWATCH=auto|uffd|softdirty|off; default auto):
+ * BACKENDS (MELEE_WRITEWATCH=auto|uffd|softdirty|off; the default, auto, means uffd only):
  *   uffd       userfaultfd write-protect in ASYNC mode + the PAGEMAP_SCAN ioctl (Linux 6.7+). The range
  *              is write-protected; the first write to a page is resolved by the kernel (no signal, no
  *              handler) and marks it "written"; one ioctl returns the written pages and re-protects
- *              them atomically. Only MEM1 is touched, so the cost is the MEM1 page faults.
+ *              them atomically. Only MEM1 is touched, so the cost is one minor fault per MEM1 page
+ *              written per poll (~170 per tick in a match).
  *   softdirty  /proc/self/pagemap bit 55 + writing 4 to /proc/self/clear_refs (CONFIG_MEM_SOFT_DIRTY,
- *              Linux 3.11+). clear_refs resets the whole process, not just MEM1, so it is slower.
+ *              Linux 3.11+). Correct, but clear_refs write-protects the WHOLE PROCESS, so every heap page
+ *              the game, the snapshot buffers and the graphics driver write between two polls takes a
+ *              fault too. Measured in WSL2 (kernel 6.6) it moved the cost from the save into the
+ *              simulation (save 14.5 -> 5.3 ms, simulation 72 -> 81 ms): no net gain. Opt-in only, for
+ *              testing the dirty-page paths on kernels without PAGEMAP_SCAN.
  * Each backend proves itself at start with a self-test (a user write, a kernel write via read(2), a
  * second write after a reset, and "nothing reported when nothing was written"). If none passes the
  * caller gets NULL from VirtualAlloc(MEM_WRITE_WATCH) and gw_snap.c runs in full-copy mode, as before.
@@ -350,7 +355,7 @@ static void ww_close(void) {
 /* Called by VirtualAlloc on a fresh, untouched MEM_WRITE_WATCH mapping. Returns 1 if a backend works. */
 int gw_linux_writewatch_start(void *base, size_t size) {
     const char *env = getenv("MELEE_WRITEWATCH");
-    int want_uffd = 1, want_sd = 1;
+    int want_uffd = 1, want_sd = 0; /* soft-dirty is opt-in, see the header comment */
     if (env != NULL && env[0] != '\0') {
         if (strcmp(env, "off") == 0 || strcmp(env, "0") == 0) {
             want_uffd = want_sd = 0;
@@ -358,6 +363,7 @@ int gw_linux_writewatch_start(void *base, size_t size) {
             want_sd = 0;
         } else if (strcmp(env, "softdirty") == 0) {
             want_uffd = 0;
+            want_sd = 1;
         }
     }
     memset(&ww, 0, sizeof ww);

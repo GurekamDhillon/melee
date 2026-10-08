@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <atomic>
 #include <array>
+#include <cctype>
 #include <cmath>
 #include <cstdint>
 #include <span>
@@ -14,6 +15,7 @@
 #include <aurora/aurora.h>
 #include <aurora/webgpu.hpp>
 #include <aurora/gfx.h>
+#include <fmt/format.h>
 #include <magic_enum.hpp>
 #include <webgpu/webgpu_cpp.h>
 
@@ -62,6 +64,11 @@ static wgpu::Buffer g_ResampleUniformBuffer;
 static TextureWithSampler g_resampledFrameBuffer;
 
 static wgpu::Adapter g_adapter;
+static std::string g_gpuSpec;     // aurora_set_gpu_preference
+static bool g_gpuList = false;    // MELEE_GPU_LIST: also probe the other power preference, for the log
+static std::string g_gpuSummary;
+static std::string g_gpuAlternatives;
+static std::string g_presentSummary;
 wgpu::Instance g_instance;
 wgpu::AdapterInfo g_adapterInfo;
 static wgpu::SurfaceCapabilities g_surfaceCapabilities;
@@ -821,49 +828,123 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
     return false;
   }
   {
-    const wgpu::RequestAdapterOptions options{
-        .featureLevel = wgpu::FeatureLevel::Compatibility,
-        .powerPreference = wgpu::PowerPreference::HighPerformance,
-        .backendType = backend,
-        .compatibleSurface = g_surface,
+    // Port patch (aurora-gd-gpu-choice-v1): which adapter. Dawn's RequestAdapter returns one adapter per
+    // power preference (HighPerformance = a discrete GPU first, LowPower = an integrated one first). The
+    // port exposes that as aurora_set_gpu_preference() (MELEE_GPU): "" / auto / discrete = high performance,
+    // integrated = low power, anything else = the adapter whose name or vendor contains the text.
+    struct Candidate {
+      wgpu::PowerPreference preference;
+      wgpu::Adapter adapter;
+      wgpu::AdapterInfo info;
     };
-    Log.info("Requesting adapter\n  Feature level: {}\n  Power preference: {}\n  Backend: {}\n  Compatible surface: {}",
-             magic_enum::enum_name(options.featureLevel), magic_enum::enum_name(options.powerPreference),
-             magic_enum::enum_name(options.backendType), static_cast<bool>(options.compatibleSurface));
-    bool requestAdapterCallbackCompleted = false;
-    wgpu::RequestAdapterStatus requestAdapterStatus = wgpu::RequestAdapterStatus::CallbackCancelled;
-    std::string requestAdapterMessage;
-    const auto future = g_instance.RequestAdapter(
-        &options, wgpu::CallbackMode::WaitAnyOnly,
-        [&](wgpu::RequestAdapterStatus status, wgpu::Adapter adapter, wgpu::StringView message) {
-          requestAdapterCallbackCompleted = true;
-          requestAdapterStatus = status;
-          requestAdapterMessage = std::string{std::string_view{message}};
-          if (status == wgpu::RequestAdapterStatus::Success) {
-            g_adapter = std::move(adapter);
-          } else {
-            Log.warn("Adapter request failed: {}: {}", magic_enum::enum_name(status), message);
-          }
-        });
-    const auto status = g_instance.WaitAny(future, 5000000000);
-    if (status != wgpu::WaitStatus::Success) {
-      if (requestAdapterCallbackCompleted) {
-        Log.error("Failed to create adapter: wait status {}, request status {}, message: {}",
-                  magic_enum::enum_name(status), magic_enum::enum_name(requestAdapterStatus), requestAdapterMessage);
-      } else {
-        Log.error("Failed to create adapter: wait status {}, request callback did not complete",
-                  magic_enum::enum_name(status));
+    std::vector<Candidate> candidates;
+    const std::string spec = g_gpuSpec;
+    const bool wantLow = spec == "integrated" || spec == "low" || spec == "lowpower" || spec == "igpu";
+    const bool wantHigh = spec.empty() || spec == "auto" || spec == "discrete" || spec == "high" ||
+                          spec == "highperformance" || spec == "dgpu";
+    std::vector<wgpu::PowerPreference> order;
+    if (wantLow) {
+      order = {wgpu::PowerPreference::LowPower};
+    } else if (wantHigh) {
+      order = {wgpu::PowerPreference::HighPerformance};
+    } else {
+      order = {wgpu::PowerPreference::HighPerformance, wgpu::PowerPreference::LowPower};
+    }
+    if (g_gpuList && order.size() == 1) {
+      order.push_back(order[0] == wgpu::PowerPreference::HighPerformance ? wgpu::PowerPreference::LowPower
+                                                                          : wgpu::PowerPreference::HighPerformance);
+    }
+    for (const auto preference : order) {
+      const wgpu::RequestAdapterOptions options{
+          .featureLevel = wgpu::FeatureLevel::Compatibility,
+          .powerPreference = preference,
+          .backendType = backend,
+          .compatibleSurface = g_surface,
+      };
+      Log.info("Requesting adapter\n  Feature level: {}\n  Power preference: {}\n  Backend: {}\n  Compatible surface: {}",
+               magic_enum::enum_name(options.featureLevel), magic_enum::enum_name(options.powerPreference),
+               magic_enum::enum_name(options.backendType), static_cast<bool>(options.compatibleSurface));
+      bool requestAdapterCallbackCompleted = false;
+      wgpu::RequestAdapterStatus requestAdapterStatus = wgpu::RequestAdapterStatus::CallbackCancelled;
+      std::string requestAdapterMessage;
+      wgpu::Adapter adapter;
+      const auto future = g_instance.RequestAdapter(
+          &options, wgpu::CallbackMode::WaitAnyOnly,
+          [&](wgpu::RequestAdapterStatus status, wgpu::Adapter result, wgpu::StringView message) {
+            requestAdapterCallbackCompleted = true;
+            requestAdapterStatus = status;
+            requestAdapterMessage = std::string{std::string_view{message}};
+            if (status == wgpu::RequestAdapterStatus::Success) {
+              adapter = std::move(result);
+            } else {
+              Log.warn("Adapter request failed: {}: {}", magic_enum::enum_name(status), message);
+            }
+          });
+      const auto status = g_instance.WaitAny(future, 5000000000);
+      if (status != wgpu::WaitStatus::Success) {
+        if (requestAdapterCallbackCompleted) {
+          Log.error("Failed to create adapter: wait status {}, request status {}, message: {}",
+                    magic_enum::enum_name(status), magic_enum::enum_name(requestAdapterStatus), requestAdapterMessage);
+        } else {
+          Log.error("Failed to create adapter: wait status {}, request callback did not complete",
+                    magic_enum::enum_name(status));
+        }
+        continue;
       }
+      if (!adapter) {
+        if (requestAdapterCallbackCompleted) {
+          Log.error("Failed to create adapter: request status {}, message: {}",
+                    magic_enum::enum_name(requestAdapterStatus), requestAdapterMessage);
+        } else {
+          Log.error("Failed to create adapter: request callback did not complete");
+        }
+        continue;
+      }
+      Candidate candidate{preference, std::move(adapter), {}};
+      candidate.adapter.GetInfo(&candidate.info);
+      candidates.push_back(std::move(candidate));
+    }
+    if (candidates.empty()) {
       return false;
     }
-    if (!g_adapter) {
-      if (requestAdapterCallbackCompleted) {
-        Log.error("Failed to create adapter: request status {}, message: {}",
-                  magic_enum::enum_name(requestAdapterStatus), requestAdapterMessage);
-      } else {
-        Log.error("Failed to create adapter: request callback did not complete");
+    const auto text = [](const wgpu::StringView& v) {
+      return v.IsUndefined() ? std::string("?") : std::string{std::string_view{v}};
+    };
+    const auto describe = [&text](const Candidate& c) {
+      return fmt::format("{} [{}, vendor 0x{:04x} device 0x{:04x}, {}, {}, driver {}]", text(c.info.device),
+                         text(c.info.vendor), static_cast<unsigned>(c.info.vendorID),
+                         static_cast<unsigned>(c.info.deviceID), magic_enum::enum_name(c.info.adapterType),
+                         magic_enum::enum_name(c.info.backendType), text(c.info.description));
+    };
+    size_t chosen = 0;
+    std::string how = wantLow ? "power preference LowPower (MELEE_GPU=" + spec + ")"
+                      : wantHigh ? (spec.empty() ? std::string("power preference HighPerformance (default)")
+                                                 : "power preference HighPerformance (MELEE_GPU=" + spec + ")")
+                                 : std::string();
+    if (!wantLow && !wantHigh) {
+      bool found = false;
+      for (size_t i = 0; i < candidates.size() && !found; ++i) {
+        std::string hay = text(candidates[i].info.device) + " " + text(candidates[i].info.vendor) + " " +
+                          text(candidates[i].info.description);
+        for (auto& ch : hay) {
+          ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
+        }
+        if (hay.find(spec) != std::string::npos) {
+          chosen = i;
+          found = true;
+        }
       }
-      return false;
+      how = found ? "name match for MELEE_GPU=" + spec
+                  : "NO adapter matched MELEE_GPU=" + spec + "; kept the HighPerformance one";
+    }
+    g_adapter = candidates[chosen].adapter;
+    g_gpuSummary = fmt::format("{} - chosen by {}", describe(candidates[chosen]), how);
+    g_gpuAlternatives.clear();
+    for (size_t i = 0; i < candidates.size(); ++i) {
+      if (i != chosen) {
+        g_gpuAlternatives += (g_gpuAlternatives.empty() ? "" : "; ") + describe(candidates[i]) + " (" +
+                             std::string{magic_enum::enum_name(candidates[i].preference)} + " pick, not used)";
+      }
     }
   }
   g_adapter.GetInfo(&g_adapterInfo);
@@ -1062,6 +1143,8 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
   auto presentMode = select_present_mode(g_surfaceCapabilities);
   Log.info("Using surface format {}, present mode {}", magic_enum::enum_name(surfaceFormat),
            magic_enum::enum_name(presentMode));
+  g_presentSummary = fmt::format("surface format {}, present mode {}", magic_enum::enum_name(surfaceFormat),
+                                 magic_enum::enum_name(presentMode));
   const auto size = window::get_window_size();
   g_graphicsConfig = GraphicsConfig{
       .surfaceConfiguration =
@@ -1186,6 +1269,30 @@ void resize_swapchain(uint32_t width, uint32_t height, uint32_t nativeWidth, uin
   resize_swapchain_internal(width, height, nativeWidth, nativeHeight, force);
 }
 } // namespace aurora::webgpu
+
+void aurora_set_gpu_preference(const char* spec, const int list) {
+  std::string v = spec != nullptr ? spec : "";
+  for (auto& ch : v) {
+    ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
+  }
+  while (!v.empty() && v.back() == ' ') {
+    v.pop_back();
+  }
+  aurora::webgpu::g_gpuSpec = v;
+  aurora::webgpu::g_gpuList = list != 0;
+}
+
+const char* aurora_get_gpu_summary(void) {
+  static std::string text;
+  text = aurora::webgpu::g_gpuSummary;
+  if (!aurora::webgpu::g_gpuAlternatives.empty()) {
+    text += " | also available: " + aurora::webgpu::g_gpuAlternatives;
+  }
+  if (!aurora::webgpu::g_presentSummary.empty()) {
+    text += " | " + aurora::webgpu::g_presentSummary;
+  }
+  return text.c_str();
+}
 
 void aurora_set_present_mode(const int mode) {
   aurora::webgpu::g_forceImmediate.store(mode == 1, std::memory_order_release);

@@ -179,6 +179,31 @@ const char *gw_Geno_LuaSlotName(int p, int i)
     return x != NULL && x->lua != NULL && i >= 0 && i < x->lua->nslot ? x->lua->slot_name[i] : "";
 }
 
+/* ---- Lua fault policy ONLINE (slice 7) -------------------------------------------------------------------------------------
+ * Default ("soft"): a fault sends the fighter to auto and is counted in the hashed GenoLuaBlock; it happens on the same tick on both
+ * peers (budgets count instructions and allocated bytes, never time), so it cannot desync by itself. MELEE_GENO_FAULT_ONLINE=hard:
+ * a fault ends the match like a disconnect, but only once the fault's frame is CONFIRMED (a fault inside a mispredicted stretch is
+ * rolled back with the state and must not end anything): FaultNote remembers the earliest faulting frame, a rollback forgets it
+ * (the resimulation notes it again if it faults again), gw_Netplay_Tick asks FaultConfirmed(confirmed frame). */
+#define GN_NO_FAULT 0x7fffffff
+extern int gw_Netplay_Enabled(void);
+extern int gw_rb_active(void);
+extern int gw_rb_current_frame(void);
+static int gn_fault_frame = GN_NO_FAULT;
+static int gn_fault_hard_v = -1; /* -1: read the environment */
+static int gn_fault_hard(void)
+{
+    if (gn_fault_hard_v < 0) {
+        const char *e = getenv("MELEE_GENO_FAULT_ONLINE");
+        gn_fault_hard_v = e != NULL && strcmp(e, "hard") == 0;
+    }
+    return gn_fault_hard_v;
+}
+void gw_Geno_FaultSetHard(int on) { gn_fault_hard_v = on ? 1 : 0; gn_fault_frame = GN_NO_FAULT; }
+void gw_Geno_FaultNote(int frame) { if (frame < gn_fault_frame) gn_fault_frame = frame; }
+void gw_Geno_FaultRolledBack(void) { gn_fault_frame = GN_NO_FAULT; }
+int gw_Geno_FaultConfirmed(int confirmed_frame) { return gn_fault_frame != GN_NO_FAULT && confirmed_frame >= gn_fault_frame; }
+
 /* Runs state s's function for the phase over the game's io block. GENO_LUA_NONE when there is none; 0 ok; a GENO_LUA_FAULT_* otherwise. */
 int gw_Geno_LuaCall(int p, int s, int phase, void *io)
 {
@@ -188,6 +213,7 @@ int gw_Geno_LuaCall(int p, int s, int phase, void *io)
     if (!gw_Geno_LuaFn(p, s, phase) || io == NULL) return GENO_LUA_NONE;
     g = x->lua;
     rc = glua_call(g, x->st_lua[s][phase], (uint32_t *) io);
+    if (rc != 0 && gn_fault_hard() && gw_Netplay_Enabled() && gw_rb_active()) gw_Geno_FaultNote(gw_rb_current_frame());
     if (rc != 0 && g->faults <= 8) {
         gw_log("geno: lua fault %d in profile %d state %s (%s): %s%s", rc, p, x->st_name[s], phase == GENO_LUA_PHASE_ENTER ? "enter" : "frame",
                g->err, g->faults == 8 ? " (further faults of this profile are not logged)" : "");

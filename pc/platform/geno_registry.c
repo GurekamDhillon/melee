@@ -2416,6 +2416,7 @@ void geno_registry_tests_register(void) {
     gw_test_register("geno_define_resolver", test_geno_define_resolver);
     gw_test_register("geno_lua_registry", test_geno_lua_registry);
     gw_test_register("geno_lua_call", test_geno_lua_call);
+    gw_test_register("geno_lua_fault_policy", test_geno_lua_fault_policy);
     gw_test_register("geno_define_presentation", test_geno_define_presentation);
     gw_test_register("geno_gxtex_art", test_geno_gxtex_art);
     gw_test_register("geno_define_presentation_ck", test_geno_define_presentation_ck);

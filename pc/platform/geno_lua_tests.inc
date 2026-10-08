@@ -188,3 +188,19 @@ static int test_geno_lua_call(void)
     }
     return rc;
 }
+
+/* Slice 7: the online fault policy ("hard") ends a match only on a CONFIRMED frame, and a rollback forgets a fault noted in the undone stretch. */
+static int test_geno_lua_fault_policy(void)
+{
+    int rc = 0;
+    gw_Geno_FaultSetHard(1);
+    if (gw_Geno_FaultConfirmed(1000)) { gw_test_fail("fault policy: nothing noted, nothing confirmed"); rc = 1; }
+    gw_Geno_FaultNote(500);
+    gw_Geno_FaultNote(520); /* the earliest frame counts */
+    if (gw_Geno_FaultConfirmed(499)) { gw_test_fail("fault policy: a fault ahead of the confirmed frame must not end the match"); rc = 1; }
+    if (!gw_Geno_FaultConfirmed(500)) { gw_test_fail("fault policy: a fault on a confirmed frame ends the match"); rc = 1; }
+    gw_Geno_FaultRolledBack(); /* the rollback loaded a snapshot before the fault */
+    if (gw_Geno_FaultConfirmed(9999)) { gw_test_fail("fault policy: a rollback forgets a fault from the undone stretch"); rc = 1; }
+    gw_Geno_FaultSetHard(0);
+    return rc;
+}

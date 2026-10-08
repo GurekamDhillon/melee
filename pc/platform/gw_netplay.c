@@ -2270,7 +2270,7 @@ static int np_begin(int bind_local) {
     np_close();
     rnd.state = NP_RAND_OFF; /* a room-code session: not random matchmaking */
     memset(&peer, 0, sizeof peer);
-    np.started = np.dead = np.accepted = 0;
+    np.started = np.dead = np.accepted = 0; { extern void gw_Geno_FaultRolledBack(void); gw_Geno_FaultRolledBack(); }
     lb.have_state = 0;
     np.enabled = 0;
     np.desync_frame = GW_NET_NO_FRAME;
@@ -2684,7 +2684,7 @@ int gw_Netplay_RandomBegin(int ck, int color, int stocks, int minutes, int delay
     np.delay = delay;
     np.use_lobby = 1;
     np.rejoining = np.peer_left = np.rematch = 0;
-    np.started = np.dead = np.accepted = 0;
+    np.started = np.dead = np.accepted = 0; { extern void gw_Geno_FaultRolledBack(void); gw_Geno_FaultRolledBack(); }
     np.enabled = 0;
     np.desync_frame = GW_NET_NO_FRAME;
     np.code[0] = np.peer_code[0] = '\0';
@@ -3377,6 +3377,14 @@ void gw_Netplay_Tick(void) {
         return;
     }
     gw_net_poll(np.net, gw_rb_current_frame());
+    {
+        extern int gw_Geno_FaultConfirmed(int confirmed_frame); /* slice 7, MELEE_GENO_FAULT_ONLINE=hard only */
+        if (!np.dead && np.started && gw_Geno_FaultConfirmed(gw_rb_confirmed_frame())) {
+            gw_log("netplay: a fighter's Lua faulted on a confirmed frame; MELEE_GENO_FAULT_ONLINE=hard ends the match");
+            np.dead = 1;
+            np_status("Disconnected: a fighter's script faulted (hard fault policy)");
+        }
+    }
     if (rdv.on && (np.ticks % 60) == 0) {
         np_rdv_service(); /* keepalives: the room and the router mapping stay open */
     }

@@ -1351,6 +1351,10 @@ void gw_RB_IterStart(void) {
     if (rb.plan.i == 0 && rb.plan.rollback) {
         double t0 = rb_ms();
         gw_snap_load(rb.plan.first);
+        {
+            extern void gw_Geno_FaultRolledBack(void); /* slice 7: a Lua fault noted in the undone stretch is undone with it */
+            gw_Geno_FaultRolledBack();
+        }
         rb.ms_load += rb_ms() - t0;
         rb.c_load += rb_ms() - t0;
         rb.cur_extra_ms += rb_ms() - t0;

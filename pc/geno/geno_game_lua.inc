@@ -99,6 +99,24 @@ static int geno_lua_has(GenoState* st, int s, int phase)
     return st->profile >= 0 && s >= 0 && Geno_LuaFn(st->profile, s, phase);
 }
 
+/* GENO_LUA_IO_HIT_FROM: where the last hit's attacker (the source port the hit recorded) is, relative to the fighter's facing,
+ * from the two fighters' positions now. 0 when the hit had no fighter attacker or it is not on the field. */
+static u32 geno_lua_hit_from(Fighter* fp, GenoState* st)
+{
+    HSD_GObj* cur;
+    if (st->hit_port < 0 || HSD_GObjPLinkHead == NULL) {
+        return 0;
+    }
+    for (cur = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; cur != NULL; cur = cur->next) {
+        Fighter* ap = GET_FIGHTER(cur);
+        if (ap != fp && ap->player_id == st->hit_port && !ap->is_sub_fighter) {
+            f32 dx = (ap->cur_pos.x - fp->cur_pos.x) * (fp->facing_dir < 0.0f ? -1.0f : 1.0f);
+            return dx >= 0.0f ? 1u : 2u;
+        }
+    }
+    return 0;
+}
+
 static void geno_lua_fill(Fighter* fp, GenoState* st, GenoLuaBlock* lb, int anim_ended)
 {
     GenoLuaIo* io = &geno_lua_io;
@@ -118,6 +136,9 @@ static void geno_lua_fill(Fighter* fp, GenoState* st, GenoLuaBlock* lb, int anim
     io->w[GENO_LUA_IO_VEL_X] = geno_lua_fbits(fp->self_vel.x);
     io->w[GENO_LUA_IO_VEL_Y] = geno_lua_fbits(fp->self_vel.y);
     io->w[GENO_LUA_IO_PERCENT] = geno_lua_fbits(fp->dmg.x1830_percent);
+    io->w[GENO_LUA_IO_HIT_DAMAGE] = geno_lua_fbits(st->hit_damage);
+    io->w[GENO_LUA_IO_HIT_FROM] = geno_lua_hit_from(fp, st);
+    io->w[GENO_LUA_IO_COUNTERED] = (u32) st->counters;
     for (i = 0; i < GENO_LUA_STATE_SLOTS; i++) {
         io->w[GENO_LUA_IO_STATE + i] = (u32) lb->slot[i];
     }
@@ -207,6 +228,13 @@ static int geno_lua_run(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int s, i
             } else {
                 geno_test_changes++;
             }
+            break;
+        case GENO_LUA_CMD_TURN:
+            fp->facing_dir = -fp->facing_dir;
+            if (fp->parts != NULL) {
+                ftPartSetRotY(fp, 0, 1.5707964f * fp->facing_dir); /* as GENO_VAL_FACING does */
+            }
+            lr = fp->facing_dir < 0.0f ? -1.0f : 1.0f; /* a later velocity command in this call is relative to the new facing */
             break;
         default:
             break;

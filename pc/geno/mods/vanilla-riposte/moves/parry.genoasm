@@ -1,0 +1,3 @@
+# Down special, the stance: the animation only. The counter window is declared in geno.json (frames 4-24, target Riposte); the hold,
+# the whiff and the streak are the Lua module's (lua/riposte.lua).
+wait 1

@@ -512,6 +512,9 @@ enum {
     GENO_LUA_IO_VEL_X = 9,
     GENO_LUA_IO_VEL_Y = 10,
     GENO_LUA_IO_PERCENT = 11,
+    GENO_LUA_IO_HIT_DAMAGE = 12, /* in, float bits: the last hit taken (before a counter negated it); GenoState.hit_damage */
+    GENO_LUA_IO_HIT_FROM = 13,   /* in: 0 unknown, 1 the last hit's attacker is in front of the fighter now, 2 behind */
+    GENO_LUA_IO_COUNTERED = 14,  /* in: hits countered since the fighter was reset; GenoState.counters */
     GENO_LUA_IO_STATE = 16,  /* in and out: GENO_LUA_STATE_SLOTS words, the typed state */
     GENO_LUA_IO_NCMDS = 32,  /* out: commands queued */
     GENO_LUA_IO_FAULT = 33,  /* out: GENO_LUA_FAULT_* */
@@ -521,7 +524,8 @@ enum { /* a command's op */
     GENO_LUA_CMD_GO = 1,         /* a: a target word (GENO_TARGET(GENO_TGT_GENO, n) | GENO_TGT_AUTO | GENO_TGT_HELPLESS) */
     GENO_LUA_CMD_VELOCITY = 2,   /* a: forward (float bits, facing-relative), b: up */
     GENO_LUA_CMD_HITBOX_DAMAGE = 3, /* a: hitbox mask (bit n = slot n), b: damage (float bits) */
-    GENO_LUA_CMD_LOOP = 4        /* restart the animation, the state's variables kept */
+    GENO_LUA_CMD_LOOP = 4,       /* restart the animation, the state's variables kept */
+    GENO_LUA_CMD_TURN = 5        /* flip the facing (as the script value FACING = 0); the model follows */
 };
 enum { /* GENO_LUA_IO_FAULT */
     GENO_LUA_FAULT_NONE = 0,

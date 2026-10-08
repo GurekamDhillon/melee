@@ -987,7 +987,12 @@ static Item_GObj* geno_art_spawn(HSD_GObj* owner, int p, int a, int variant, f32
         }
         /* the package is the article's look: the model's display objects (a placeholder, e.g. trail_magic_models.py's
          * sphere) are hidden; the joints keep being set up, so the effects still follow the article */
-        geno_art_hide_model(GET_JOBJ(ig));
+        if (Geno_ArticleParam(p, a, GENO_AP_SHOW_MODEL) == 0) {
+            geno_art_hide_model(GET_JOBJ(ig));
+            Geno_Event(45, a, 2, 0, 0);
+        } else {
+            Geno_Event(45, a, 3, 0, 0); /* v5.7 "show_model": the model and the package are both drawn */
+        }
     }
     geno_state(fp)->art_spawned++;
     Geno_Event(28, fp->kind, fp->player_id, a, kind);

@@ -2103,6 +2103,14 @@ region RESERVED` / `not reserved`; a mod enabled later by a hot reload gets no m
 model loaded into a match's heap is freed with it). Read-only after the load. No model = an
 invisible article (hitboxes only).
 
+**A model with an `"fx"` package is hidden (v5.7 note).** When an article names an effect package, the package is its look and
+the model is treated as a placeholder: the spawn hides every display object of the model's joint tree
+(`geno_art_hide_model`; the joints keep following the article, so the effects still do) and logs
+`geno: article N model: 2 (...)` (event 45). This is by design, not a draw bug: a model that **looks** never-drawn next to a retail model is
+almost always one whose article also has an `"fx"`; any model draws as an article without one (a procedural
+`fighterbuild` model and a retail `PlFx*.dat` alike; checked in the LAB, `_research/luigi-ultimate-grab-2026-10-07.md` section 7).
+`"show_model": true` (v5.7, `GENO_AP_SHOW_MODEL`, default false) keeps both drawn: the model under the package (event 45, value 3).
+
 ### 19.2 geno.json
 
 ```json

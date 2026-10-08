@@ -1158,6 +1158,7 @@ static void gn_add_v5(gn_profile *p, const jdoc *d, int e, const char *where) {
             int pk = gw_Fx_Find(d->n[m].str);
             p->art_param[a][GENO_AP_FX] = pk >= 0 ? (uint32_t) (pk + 1) : 0;
         }
+        p->art_param[a][GENO_AP_SHOW_MODEL] = gn_num(d, c, "show_model", &v) && v != 0 ? 1u : 0u; /* v5.7 */
         if ((m = jd_get(d, c, "effects")) >= 0 && d->n[m].type == JN_ARR) { /* v5.2 */
             int e2, n2 = 0;
             for (e2 = d->n[m].first; e2 >= 0 && n2 < 8; e2 = d->n[e2].next) {
@@ -1877,6 +1878,9 @@ void gw_Geno_Event(int what, int a, int b, int c, int d) {
         "geno: kind %d player %d lockon: target %d, aim %d deg",                             /* 40 */
         "geno:   particles behind the ball x100 %d (along the facing), above x100 %d, forward speed x1000 %d (%d)", /* 41 */
         "geno: kind %d player %d aim_stick: stick used %d, heading %d deg",                  /* 42 */
+        "geno: kind %d player %d dash.search: %d (0 none, 1 + port locked), stick heading %d deg (-1 none)", /* 43 */
+        "geno: kind %d player %d dash.aim: flags %d (1 target, 2 stick, +4 x kind), heading %d deg", /* 44 */
+        "geno: article %d model: %d (1 drawn, 2 hidden because its fx package is its look - \"show_model\": true keeps both, 3 drawn with its fx package)%.0d", /* 45 */
     };
     if (what < 0 || what >= (int) (sizeof fmt / sizeof fmt[0])) return;
     if (++count[what] > 40) {

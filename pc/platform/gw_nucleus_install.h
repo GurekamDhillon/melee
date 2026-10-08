@@ -121,6 +121,88 @@ static int nc_png_to_gxtex(const uint8_t *png, size_t n, uint8_t **out, size_t *
     return rc;
 }
 
+/* ---- zip (read only) -------------------------------------------------------------------------------------------
+ * Some posts are only a zip ("Luffy Falco/Animelee/PlFcBu.dat" inside). Reads the central directory and pulls one entry out: stored or
+ * deflated (inflate is stb_image's own zlib decoder, already vendored for the PNGs). No zip64, no encryption, no multi-disk. */
+
+static uint32_t nz_u16(const uint8_t *p) { return (uint32_t) p[0] | ((uint32_t) p[1] << 8); }
+static uint32_t nz_u32(const uint8_t *p) { return nz_u16(p) | (nz_u16(p + 2) << 16); }
+
+static int nz_ieq(const char *a, size_t an, const char *b, size_t bn) {
+    size_t i;
+    if (an != bn) return 0;
+    for (i = 0; i < an; ++i) if (tolower((unsigned char) a[i]) != tolower((unsigned char) b[i])) return 0;
+    return 1;
+}
+static const char *nz_base(const char *p, size_t n, size_t *bn) {
+    size_t i = n;
+    while (i > 0 && p[i - 1] != '/' && p[i - 1] != '\\') --i;
+    *bn = n - i;
+    return p + i;
+}
+
+/* Extracts the entry named `want` (the API's filename; the full path first, then a unique match on the file name alone) into a malloc'd buffer. */
+static int nc_zip_extract(const uint8_t *z, size_t zn, const char *want, uint8_t **out, size_t *outlen, size_t max_out, char *err, size_t ecap) {
+    size_t eocd, i, cd, wl = strlen(want), wbn, found_hdr = 0;
+    uint32_t count, k;
+    int hits = 0;
+    const char *wb = nz_base(want, wl, &wbn);
+    *out = NULL; *outlen = 0;
+    if (zn < 22 || zn > 0x7FFFFFFFu) { snprintf(err, ecap, "not a zip file"); return -1; }
+    for (i = zn - 22, eocd = (size_t) -1; ; --i) {
+        if (nz_u32(z + i) == 0x06054B50u) { eocd = i; break; }
+        if (i == 0 || zn - i > 22 + 65535) break;
+    }
+    if (eocd == (size_t) -1) { snprintf(err, ecap, "not a zip file"); return -1; }
+    count = nz_u16(z + eocd + 10);
+    cd = nz_u32(z + eocd + 16);
+    if (count == 0xFFFF || cd >= zn) { snprintf(err, ecap, "unsupported zip (zip64 or damaged)"); return -1; }
+    for (k = 0, i = cd; k < count; ++k) {
+        size_t nl, xl, cl;
+        if (i + 46 > zn || nz_u32(z + i) != 0x02014B50u) { snprintf(err, ecap, "damaged zip directory"); return -1; }
+        nl = nz_u16(z + i + 28); xl = nz_u16(z + i + 30); cl = nz_u16(z + i + 32);
+        if (i + 46 + nl > zn) { snprintf(err, ecap, "damaged zip directory"); return -1; }
+        {
+            const char *nm = (const char *) z + i + 46;
+            size_t bn;
+            const char *bs = nz_base(nm, nl, &bn);
+            if (nz_ieq(nm, nl, want, wl)) { found_hdr = i; hits = 1; break; }
+            if (bn && nz_ieq(bs, bn, wb, wbn)) { if (!hits) found_hdr = i; ++hits; }
+        }
+        i += 46 + nl + xl + cl;
+    }
+    if (!hits) { snprintf(err, ecap, "%s is not in the zip", want); return -1; }
+    if (hits > 1) { snprintf(err, ecap, "%s matches several files in the zip", want); return -1; }
+    {
+        size_t h = found_hdr, nl = nz_u16(z + h + 28), xl;
+        uint32_t method = nz_u16(z + h + 10), csz = nz_u32(z + h + 20), usz = nz_u32(z + h + 24), lho = nz_u32(z + h + 42), flags = nz_u16(z + h + 8);
+        size_t data;
+        (void) nl;
+        if (flags & 1u) { snprintf(err, ecap, "the zip is encrypted"); return -1; }
+        if (usz == 0xFFFFFFFFu || csz == 0xFFFFFFFFu) { snprintf(err, ecap, "unsupported zip (zip64)"); return -1; }
+        if (usz > max_out) { snprintf(err, ecap, "file too large (%u bytes)", (unsigned) usz); return -1; }
+        if ((size_t) lho + 30 > zn || nz_u32(z + lho) != 0x04034B50u) { snprintf(err, ecap, "damaged zip entry"); return -1; }
+        nl = nz_u16(z + lho + 26); xl = nz_u16(z + lho + 28);
+        data = (size_t) lho + 30 + nl + xl;
+        if (data > zn || csz > zn - data) { snprintf(err, ecap, "damaged zip entry"); return -1; }
+        if (method == 0) {
+            uint8_t *b = (uint8_t *) malloc(usz ? usz : 1);
+            if (!b || csz != usz) { free(b); snprintf(err, ecap, "damaged zip entry"); return -1; }
+            memcpy(b, z + data, usz);
+            *out = b; *outlen = usz;
+            return 0;
+        } else if (method == 8) {
+            int ol = 0;
+            char *b = stbi_zlib_decode_noheader_malloc((const char *) z + data, (int) csz, &ol);
+            if (!b || (uint32_t) ol != usz) { if (b) stbi_image_free(b); snprintf(err, ecap, "could not unpack the file"); return -1; }
+            *out = (uint8_t *) b; *outlen = (size_t) ol;
+            return 0;
+        }
+        snprintf(err, ecap, "unsupported zip compression (%u)", (unsigned) method);
+        return -1;
+    }
+}
+
 /* ---- files and folders ---------------------------------------------------------------------------------------- */
 
 static void nc_fix_slashes(char *p) {

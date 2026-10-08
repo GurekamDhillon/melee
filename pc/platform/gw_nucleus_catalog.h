@@ -14,6 +14,7 @@ typedef struct {
     int colour_idx;                     /* the original costume this colour is, or -1 */
     int costume;                        /* 1: a costume .dat / .usd we can try to install */
     int mismatch;                       /* the API's character and the filename's slot code name different fighters */
+    int zip;                            /* 1: the post is a zip (the API lists no per-file download_url / file_url): the file is an entry of the mod's own download */
 } nc_file;
 
 typedef struct {
@@ -201,6 +202,10 @@ static int nc_cat_apply(nc_catalog *c, const nj_doc *d, int node) {
             snprintf(tmp, sizeof tmp, "%s", nc_media_strip(nj_gstr(d, e, "stock_url", "")));
             if (strlen(tmp) < sizeof f.stock) nc_copy(f.stock, sizeof f.stock, tmp);
             nc_classify_file(&f, nj_gstr(d, e, "file_type", ""));
+            {   /* explicit nulls (not absent keys) mean the file is only reachable inside the mod's zip */
+                int du = nj_get(d, e, "download_url"), fu = nj_get(d, e, "file_url");
+                f.zip = (du >= 0 && d->n[du].type != NJ_STR && fu >= 0 && d->n[fu].type != NJ_STR) || (int) nj_gnum(d, e, "zip", 0) == 1;
+            }
             if (f.id <= 0) continue;
             if (c->nf == c->fcap) {
                 int nc = c->fcap ? c->fcap * 2 : 1024;
@@ -296,6 +301,7 @@ static void nc_write_mod(nj_buf *b, const nc_catalog *c, const nc_mod *m) {
         nj_puts(b, ",\"color\":"); nj_qstr(b, f->color);
         nc_media_full(f->csp, full, sizeof full); nj_puts(b, ",\"csp_url\":"); nj_qstr(b, full);
         nc_media_full(f->stock, full, sizeof full); nj_puts(b, ",\"stock_url\":"); nj_qstr(b, full);
+        if (f->zip) nj_puts(b, ",\"zip\":1");
         nj_puts(b, "}");
     }
     nj_puts(b, "]}\n");
@@ -399,6 +405,31 @@ static int nc_cmp_idx(const void *a, const void *b) {
     }
     if (r) return r;
     return x->id - y->id;                  /* a total order: the list never reshuffles between two builds */
+}
+
+/* "Luffy Falco/Animelee/PlFcBu.dat": a post that ships an Animelee set beside a vanilla one installs the vanilla (non-Animelee) files only.
+ * A file is skipped when its path names Animelee and another costume file of the same fighter does not. */
+static int nc_is_animelee(const nc_file *f) {
+    const char *p = f->filename;
+    size_t n = strlen("animelee");
+    for (; *p; ++p) if (!strncmp(p, "Animelee", n) || !strncmp(p, "animelee", n) || !strncmp(p, "ANIMELEE", n)) return 1;
+    return 0;
+}
+static int nc_variant_skip(const nc_file *files, int nf, int i) {
+    int k;
+    if (!files[i].costume || !nc_is_animelee(&files[i])) return 0;
+    for (k = 0; k < nf; ++k) if (k != i && files[k].costume && files[k].fighter == files[i].fighter && !nc_is_animelee(&files[k])) return 1;
+    return 0;
+}
+
+/* a download that did not work, in words a player can use */
+static const char *nc_http_reason(int status) {
+    if (status == 404 || status == 410) return "Nucleus offers no download for this file (the author may have removed it).";
+    if (status == 401 || status == 403) return "Nucleus does not allow this download.";
+    if (status == 429) return "Nucleus asked us to slow down. Try again in a minute.";
+    if (status >= 500) return "Nucleus is not answering right now. Try again later.";
+    if (status == 0) return "Could not reach Nucleus.";
+    return "The download did not work.";
 }
 
 static int nc_installable_files(const nc_mod *m, const nc_file *files) {

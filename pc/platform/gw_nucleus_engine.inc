@@ -234,17 +234,29 @@ static int ne_copy_mod(int id, nc_mod *m, nc_file *files) {
 
 static void ne_now_iso(char *out, size_t cap) { nc_iso(ne_now(), out, cap); }
 
+static int ne_install_impl(int id, char *msg, size_t mcap, uint8_t **zipout);
 static int ne_install(int id, char *msg, size_t mcap) {
+    uint8_t *z = NULL;
+    int rc = ne_install_impl(id, msg, mcap, &z);
+    free(z);
+    return rc;
+}
+
+static int ne_install_impl(int id, char *msg, size_t mcap, uint8_t **zipout) {
     nc_mod m;
     nc_file files[NC_MAX_FILES_PER_MOD];
     int fighters[NC_NFIGHTERS], nfg = 0, g, i, installed = 0, total = 0, done = 0;
     char first_err[160];
+    uint8_t *zipbuf = NULL;                 /* the mod's own zip, fetched once for all its zip-only files and fighter groups; handed to the caller to free */
+    size_t ziplen = 0;
+    int zip_tried = 0, zip_status = 0;
     first_err[0] = '\0';
     if (!ne_copy_mod(id, &m, files)) { snprintf(msg, mcap, "That mod is not in the catalog."); return -1; }
     if (nc_why_not_files(&m, files)[0]) { snprintf(msg, mcap, "%s", nc_why_not_files(&m, files)); return -1; }
     for (i = 0; i < m.nf; ++i) {
         int k, seen = 0;
         if (!files[i].costume || files[i].fighter < 0 || !nc_fighters[files[i].fighter].installable) continue;
+        if (nc_variant_skip(files, m.nf, i)) continue;
         for (k = 0; k < nfg; ++k) if (fighters[k] == files[i].fighter) seen = 1;
         if (!seen) fighters[nfg++] = files[i].fighter;
         total += 3;
@@ -255,7 +267,7 @@ static int ne_install(int id, char *msg, size_t mcap) {
         int in_group = 0, n = 0;
         nj_buf b;
         if (!sm) { snprintf(msg, mcap, "Out of memory."); return -1; }
-        for (i = 0; i < m.nf; ++i) if (files[i].costume && files[i].fighter == fighters[g]) ++in_group;
+        for (i = 0; i < m.nf; ++i) if (files[i].costume && files[i].fighter == fighters[g] && !nc_variant_skip(files, m.nf, i)) ++in_group;
         nc_mod_id(m.id, fighters[g], sm->mod_id, sizeof sm->mod_id);
         sm->nucleus_id = m.id;
         snprintf(sm->title, sizeof sm->title, "%s", m.title);
@@ -278,12 +290,37 @@ static int ne_install(int id, char *msg, size_t mcap) {
             uint8_t *png, *gx;
             size_t pl, gl;
             if (!files[i].costume || files[i].fighter != fighters[g]) continue;
+            if (nc_variant_skip(files, m.nf, i)) { ne_log("install %d: file %d (%s): the Animelee variant is skipped, the vanilla one is installed", m.id, files[i].id, files[i].filename); continue; }
             ne_set_job(1, "Downloading a costume", done, total);
+            if (files[i].zip) {
+                /* no per-file download: the file is an entry of the mod's zip (GET /mods/{id}/download), fetched once */
+                memset(&r, 0, sizeof r);
+                if (!zip_tried) {
+                    nch_result zr;
+                    zip_tried = 1;
+                    nc_download_url(m.id, 0, url, sizeof url);
+                    if (nch_get(url, 64u * 1024 * 1024, &zr) < 0 || zr.status != 200 || !zr.data) {
+                        zip_status = zr.status ? zr.status : -1;
+                        ne_log("install %d: zip download: %s (HTTP %d)", m.id, zr.err[0] ? zr.err : "failed", zr.status);
+                        free(zr.data);
+                    } else { zipbuf = zr.data; ziplen = zr.len; *zipout = zipbuf; }
+                }
+                if (!zipbuf) {
+                    if (!first_err[0]) snprintf(first_err, sizeof first_err, "%s", nc_http_reason(zip_status < 0 ? 0 : zip_status));
+                    done += 3; continue;
+                }
+                if (nc_zip_extract(zipbuf, ziplen, files[i].filename, &r.data, &r.len, 24u * 1024 * 1024, err, sizeof err) < 0) {
+                    if (!first_err[0]) snprintf(first_err, sizeof first_err, "Could not unpack the post's zip: %s.", err);
+                    ne_log("install %d: file %d (%s): %s", m.id, files[i].id, files[i].filename, err);
+                    done += 3; continue;
+                }
+            } else {
             nc_download_url(m.id, files[i].id, url, sizeof url);
             if (nch_get(url, 24u * 1024 * 1024, &r) < 0 || r.status != 200 || !r.data) {
-                if (!first_err[0]) snprintf(first_err, sizeof first_err, "Download failed (%s%d).", r.status ? "HTTP " : "", r.status);
-                ne_log("install %d: file %d: %s", m.id, files[i].id, r.err[0] ? r.err : "download failed");
+                if (!first_err[0]) snprintf(first_err, sizeof first_err, "%s", nc_http_reason(r.status));
+                ne_log("install %d: file %d: %s (HTTP %d)", m.id, files[i].id, r.err[0] ? r.err : "download failed", r.status);
                 free(r.data); done += 3; continue;
+            }
             }
             ++done;
             if (nc_dat_costume(r.data, r.len, &info, err, sizeof err) < 0) {

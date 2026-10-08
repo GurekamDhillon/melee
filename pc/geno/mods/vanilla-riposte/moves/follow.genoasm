@@ -1,0 +1,7 @@
+# The follow-up, reached from the Riposte by pressing A in its window (a second phase of one move). Its damage is 0.6 x the riposte's
+# (lua/riposte.lua); these hitboxes are only the shape.
+wait 3
+hitbox slot=0 joint=0 damage=8 size=5.0 x=3 y=6 angle=361 kbg=90 fkb=0 bkb=40
+hitbox slot=1 joint=0 damage=8 size=3.5 x=0 y=6 angle=361 kbg=90 fkb=0 bkb=40
+wait 5
+clear_hitboxes

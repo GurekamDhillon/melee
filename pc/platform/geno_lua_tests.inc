@@ -47,7 +47,7 @@ static int test_geno_lua_registry(void)
     uint64_t id1, id2;
     int rc = 0;
     gn_registry_clear(&r);
-    gnl_json(text, sizeof text, 9, "lua-t", GNL_BLOCK, GNL_STATES, ",\"specials\":{\"n\":\"geno:Charge\"}");
+    gnl_json(text, sizeof text, 10, "lua-t", GNL_BLOCK, GNL_STATES, ",\"specials\":{\"n\":\"geno:Charge\"}");
     if (gn_parse_text(&r, text, "lua-test") != 1 || r.n != 1) {
         gw_test_fail("fighter Lua: a good v9 define was not taken");
         gn_registry_clear(&r);
@@ -75,7 +75,7 @@ static int test_geno_lua_registry(void)
         static char changed[2048];
         const char *at = strstr(GNL_BLOCK, "< 60");
         snprintf(changed, sizeof changed, "%.*s< 61%s", (int) (at - GNL_BLOCK), GNL_BLOCK, at + 4);
-        gnl_json(other, sizeof other, 9, "lua-t", changed, GNL_STATES, ",\"specials\":{\"n\":\"geno:Charge\"}");
+        gnl_json(other, sizeof other, 10, "lua-t", changed, GNL_STATES, ",\"specials\":{\"n\":\"geno:Charge\"}");
     }
     if (gn_parse_text(&r, other, "lua-test") != 1) {
         gw_test_fail("fighter Lua: the changed module was not taken");
@@ -88,7 +88,7 @@ static int test_geno_lua_registry(void)
         }
     }
     gn_registry_clear(&r);
-    gnl_json(text, sizeof text, 9, "lua-t", NULL, NULL, NULL);
+    gnl_json(text, sizeof text, 10, "lua-t", NULL, NULL, NULL);
     if (gn_parse_text(&r, text, "lua-test") != 1 || r.p[0].lua != NULL) {
         gw_test_fail("fighter Lua: a define with no lua block must have no domain");
         rc = 1;
@@ -97,19 +97,21 @@ static int test_geno_lua_registry(void)
     /* refusals (strict, like the rest of a define) */
     gnl_json(text, sizeof text, 8, "lua-t", GNL_BLOCK, GNL_STATES, NULL);
     rc |= gnl_refuses("lua in a geno 8 file", text);
-    snprintf(text, sizeof text, "{\"geno\":9,\"fighters\":[{\"attach\":\"kirby\",\"lua\":{\"source\":\"return {}\"}}]}");
+    gnl_json(text, sizeof text, 9, "lua-t", GNL_BLOCK, GNL_STATES, NULL);
+    rc |= gnl_refuses("lua in a geno 9 file (the format number is 10)", text);
+    snprintf(text, sizeof text, "{\"geno\":10,\"fighters\":[{\"attach\":\"kirby\",\"lua\":{\"source\":\"return {}\"}}]}");
     rc |= gnl_refuses("lua on an attach entry", text);
-    gnl_json(text, sizeof text, 9, "lua-t", NULL, GNL_STATES, NULL);
+    gnl_json(text, sizeof text, 10, "lua-t", NULL, GNL_STATES, NULL);
     rc |= gnl_refuses("state lua functions with no lua block", text);
-    gnl_json(text, sizeof text, 9, "lua-t", "{\"source\":\"return {f=function(ctx) end}\",\"script\":\"lua/x.lua\"}", NULL, NULL);
+    gnl_json(text, sizeof text, 10, "lua-t", "{\"source\":\"return {f=function(ctx) end}\",\"script\":\"lua/x.lua\"}", NULL, NULL);
     rc |= gnl_refuses("both script and source", text);
-    gnl_json(text, sizeof text, 9, "lua-t", "{}", NULL, NULL);
+    gnl_json(text, sizeof text, 10, "lua-t", "{}", NULL, NULL);
     rc |= gnl_refuses("neither script nor source", text);
-    gnl_json(text, sizeof text, 9, "lua-t", "{\"script\":\"../x.lua\"}", NULL, NULL);
+    gnl_json(text, sizeof text, 10, "lua-t", "{\"script\":\"../x.lua\"}", NULL, NULL);
     rc |= gnl_refuses("a script path that leaves the mod", text);
-    gnl_json(text, sizeof text, 9, "lua-t", "{\"source\":\"return {f=function(ctx) end}\",\"state\":{\"a\":\"string\"}}", NULL, NULL);
+    gnl_json(text, sizeof text, 10, "lua-t", "{\"source\":\"return {f=function(ctx) end}\",\"state\":{\"a\":\"string\"}}", NULL, NULL);
     rc |= gnl_refuses("a state slot of an unknown type", text);
-    gnl_json(text, sizeof text, 9, "lua-t", "{\"source\":\"return {f=function(ctx) end}\",\"state\":{\"a\":\"int\",\"a\":\"int\"}}", NULL, NULL);
+    gnl_json(text, sizeof text, 10, "lua-t", "{\"source\":\"return {f=function(ctx) end}\",\"state\":{\"a\":\"int\",\"a\":\"int\"}}", NULL, NULL);
     rc |= gnl_refuses("a slot declared twice", text);
     {
         char many[1024] = "{\"source\":\"return {f=function(ctx) end}\",\"state\":{";
@@ -120,15 +122,15 @@ static int test_geno_lua_registry(void)
             strcat(many, one);
         }
         strcat(many, "}}");
-        gnl_json(text, sizeof text, 9, "lua-t", many, NULL, NULL);
+        gnl_json(text, sizeof text, 10, "lua-t", many, NULL, NULL);
         rc |= gnl_refuses("more than 16 slots", text);
     }
-    gnl_json(text, sizeof text, 9, "lua-t", "{\"source\":\"local n = 0 return {f=function(ctx) n = n + 1 end}\"}", NULL, NULL);
+    gnl_json(text, sizeof text, 10, "lua-t", "{\"source\":\"local n = 0 return {f=function(ctx) n = n + 1 end}\"}", NULL, NULL);
     rc |= gnl_refuses("a module that keeps state in a captured variable", text);
-    gnl_json(text, sizeof text, 9, "lua-t", "{\"source\":\"return {f=function(ctx) end}\"}",
+    gnl_json(text, sizeof text, 10, "lua-t", "{\"source\":\"return {f=function(ctx) end}\"}",
              "[{\"name\":\"A\",\"behavior\":\"geno.ground\",\"lua\":{\"frame\":\"nope\"}}]", NULL);
     rc |= gnl_refuses("a state naming a function the module lacks", text);
-    gnl_json(text, sizeof text, 9, "lua-t", "{\"source\":\"return {f=function(ctx) ctx.go('A') end}\"}", NULL, NULL);
+    gnl_json(text, sizeof text, 10, "lua-t", "{\"source\":\"return {f=function(ctx) ctx.go('A') end}\"}", NULL, NULL);
     /* (an unknown ctx.go target is a run-time fault, not a load error: the module text is not executed at load) */
     gn_registry_clear(&r);
     if (gn_parse_text(&r, text, "lua-test") != 1) {
@@ -145,7 +147,7 @@ static int test_geno_lua_call(void)
     char text[4096];
     uint32_t io[GENO_LUA_IO_WORDS];
     int rc = 0, c;
-    gnl_json(text, sizeof text, 9, "lua-t", GNL_BLOCK, GNL_STATES, ",\"specials\":{\"n\":\"geno:Charge\"}");
+    gnl_json(text, sizeof text, 10, "lua-t", GNL_BLOCK, GNL_STATES, ",\"specials\":{\"n\":\"geno:Charge\"}");
     if (gw_Geno_TestInstall(text) != 1) {
         gw_test_fail("fighter Lua: could not install the test define");
         gw_Geno_TestRestore();

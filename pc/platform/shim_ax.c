@@ -1106,6 +1106,55 @@ static void gw_ax_mix_voice(gw_ax_vstate *s) {
     }
 }
 
+/* ---- native clips (Geno slice 6): a define's own announcer call and voice lines -----------------------------------------------------
+ * A clip is 32 kHz signed 16-bit PCM decoded from a package's .gnsnd (pc/platform/geno_define_registry.inc). It does not go through the game's synth: it is
+ * summed into the main mix after the voices and the aux buses, one 5 ms sub-frame at a time, so it advances exactly as the mixer does and is silent in turbo
+ * (no sub-frame writes output there). Up to GW_AX_CLIPS play at once; a new one past that replaces the oldest. Game thread only, like every AX entry.
+ * Nothing here is simulation state, and a define is offline only (no rollback session governs a match with one). */
+#define GW_AX_CLIPS 8
+static struct {
+    const int16_t *pcm; /* host-owned, never freed while the process runs (the registry caches it) */
+    uint32_t frames, pos;
+    int channels, gain;  /* gain 0..127 */
+    uint32_t age;
+} gw_ax_clip[GW_AX_CLIPS];
+static uint32_t gw_ax_clip_age, gw_ax_clips_started, gw_ax_clip_frames_mixed;
+
+int gw_Audio_PlayClip(const int16_t *pcm, int frames, int channels, int volume) {
+    int i, slot = 0;
+    if (pcm == NULL || frames < 1 || channels < 1 || channels > 2) return 0;
+    for (i = 0; i < GW_AX_CLIPS; i++) {
+        if (gw_ax_clip[i].pcm == NULL) { slot = i; break; }
+        if (gw_ax_clip[i].age < gw_ax_clip[slot].age) slot = i;
+    }
+    gw_ax_clip[slot].pcm = pcm;
+    gw_ax_clip[slot].frames = (uint32_t) frames;
+    gw_ax_clip[slot].pos = 0;
+    gw_ax_clip[slot].channels = channels;
+    gw_ax_clip[slot].gain = volume < 0 ? 0 : volume > 127 ? 127 : volume;
+    gw_ax_clip[slot].age = ++gw_ax_clip_age;
+    ++gw_ax_clips_started;
+    return 1;
+}
+/* counters for the tests and the log: clips started, 32 kHz frames mixed so far */
+uint32_t gw_Audio_ClipStat(int which) { return which == 0 ? gw_ax_clips_started : gw_ax_clip_frames_mixed; }
+
+/* 160 samples of every playing clip into the main L/R accumulators (the audio rate is the clip rate: no resampling) */
+static void gw_ax_mix_clips(void) {
+    int c, i;
+    for (c = 0; c < GW_AX_CLIPS; c++) {
+        if (gw_ax_clip[c].pcm == NULL) continue;
+        for (i = 0; i < GW_AX_FRAME_SAMPLES && gw_ax_clip[c].pos < gw_ax_clip[c].frames; i++, gw_ax_clip[c].pos++) {
+            const int16_t *f = gw_ax_clip[c].pcm + (size_t) gw_ax_clip[c].pos * (size_t) gw_ax_clip[c].channels;
+            int32_t l = f[0], r = gw_ax_clip[c].channels == 2 ? f[1] : f[0];
+            gw_ax_acc[0][i] += l * gw_ax_clip[c].gain / 127;
+            gw_ax_acc[1][i] += r * gw_ax_clip[c].gain / 127;
+            ++gw_ax_clip_frames_mixed;
+        }
+        if (gw_ax_clip[c].pos >= gw_ax_clip[c].frames) gw_ax_clip[c].pcm = NULL;
+    }
+}
+
 static void gw_ax_run_frame(void) {
     int i;
     int active = 0;
@@ -1160,6 +1209,8 @@ static void gw_ax_run_frame(void) {
             gw_ax_acc[1][i] += gw_ax_aux_b.bus[GW_AX_FRAME_SAMPLES + i];
         }
     }
+
+    gw_ax_mix_clips();
 
     /* Track the loudest mixed sample for the heartbeat (proof of non-silent output). */
     for (i = 0; i < GW_AX_FRAME_SAMPLES; i++) {

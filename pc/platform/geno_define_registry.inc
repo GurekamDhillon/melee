@@ -69,27 +69,28 @@ static int gn_pres_name_ok(const char* s)
     for (; *s; ++s) if ((unsigned char)*s < 33 || (unsigned char)*s > 126) return 0;
     return 1;
 }
-static int gn_define_presentation(gn_profile* p, const jdoc* d, int e, const char* where)
+static int gn_define_presentation(gn_profile* p, const jdoc* d, int e, int version, const char* where)
 {
-    static const char* keys[3] = {"icon", "portrait", "stock"};
+    static const char* keys[GN_PRES_KINDS] = {"icon", "portrait", "stock", "emblem"};
     int pv = jd_get(d, e, "presentation"), c, k;
     struct gn_pres* pr;
     if (pv < 0) return 1;
     if (d->n[pv].type != JN_OBJ) { gw_log("geno: %s: presentation must be an object", where); return 0; }
     for (c = d->n[pv].first; c >= 0; c = d->n[c].next) {
-        for (k = 0; k < 3 && strcmp(d->n[c].key, keys[k]); ++k) {}
-        if (k == 3) { gw_log("geno: %s: presentation key \"%s\" is not known (icon, portrait, stock)", where, d->n[c].key); return 0; }
+        for (k = 0; k < GN_PRES_KINDS && strcmp(d->n[c].key, keys[k]); ++k) {}
+        if (k == GN_PRES_KINDS) { gw_log("geno: %s: presentation key \"%s\" is not known (icon, portrait, stock, emblem)", where, d->n[c].key); return 0; }
+        if (k == GN_PRES_EMBLEM && version < 10) { gw_log("geno: %s: presentation.emblem needs \"geno\": 10", where); return 0; }
     }
     pr = (struct gn_pres*)calloc(1, sizeof *pr);
     if (!pr) return 0;
-    for (k = 0; k < 3; ++k) {
+    for (k = 0; k < GN_PRES_KINDS; ++k) {
         int v = jd_get(d, pv, keys[k]), q, n = 0;
         if (v < 0) continue;
         if (d->n[v].type == JN_STR) {
             if (!gn_pres_name_ok(d->n[v].str)) goto bad;
             snprintf(pr->file[k][0], sizeof pr->file[k][0], "%s", d->n[v].str);
             n = 1;
-        } else if (d->n[v].type == JN_ARR && k != GN_PRES_ICON && d->n[v].count >= 1 && d->n[v].count <= 16) {
+        } else if (d->n[v].type == JN_ARR && k != GN_PRES_ICON && k != GN_PRES_EMBLEM && d->n[v].count >= 1 && d->n[v].count <= 16) {
             for (q = d->n[v].first; q >= 0; q = d->n[q].next) {
                 if (d->n[q].type != JN_STR || !gn_pres_name_ok(d->n[q].str)) goto bad;
                 snprintf(pr->file[k][n++], sizeof pr->file[k][0], "%s", d->n[q].str);
@@ -100,9 +101,106 @@ static int gn_define_presentation(gn_profile* p, const jdoc* d, int e, const cha
     p->pres = pr;
     return 1;
 bad:
-    gw_log("geno: %s: presentation.%s must be one plain *.gxtex file name (portrait and stock: or 1..16 of them; icon: one)", where, keys[k]);
+    gw_log("geno: %s: presentation.%s must be one plain *.gxtex file name (portrait and stock: or 1..16 of them; icon and emblem: one)", where, keys[k]);
     free(pr);
     return 0;
+}
+
+/* ---- slice 6 (geno 10): AI, Kirby copy and own audio keys -------------------------------------------------------------------------------
+ *   "ai": {"like": "<retail fighter>"}           the CPU plays this define as that fighter (every kind switch and the per-kind AI tables answer for it)
+ *   "kirby_copy": "none" | "retail:<fighter>"      what Kirby gets from inhaling the define: nothing (the default, made explicit and guarded), or that
+ *                                                  retail fighter's hat and copy ability
+ *   "audio": {"announcer": "a.gnsnd", "voice": [{"sfx": 1234, "file": "b.gnsnd", "volume": 100}]}   own sound clips (tools/geno/audio.py)
+ * All three change behaviour or sound a v9 engine would have ignored, so they need "geno": 10; an unknown key inside any of them refuses the entry. */
+static int gn_retail_kind(const char* name)
+{
+    int i;
+    for (i = 0; i < 27; ++i) {
+        if (i == 11) continue; /* Nana: Popo's partner, not a fighter one picks or copies */
+        if (!_stricmp(name, gn_vanilla[i].name) || (gn_vanilla[i].alias && !_stricmp(name, gn_vanilla[i].alias))) return i;
+    }
+    return -1;
+}
+static int gn_file_name_ok(const char* s, const char* ext)
+{
+    size_t n = strlen(s), m = strlen(ext);
+    if (n < m + 1 || n >= 64 || _stricmp(s + n - m, ext) || strpbrk(s, "/\\:") || strstr(s, "..")) return 0;
+    for (; *s; ++s) if ((unsigned char)*s < 33 || (unsigned char)*s > 126) return 0;
+    return 1;
+}
+static int gn_define_s6_keys(gn_profile* p, const jdoc* d, int e, int version, const char* where)
+{
+    int v, c, k;
+    p->ai_like = -1; p->ai_set = 0; p->kb_copy = -1;
+    if (version < 10 && (jd_get(d, e, "ai") >= 0 || jd_get(d, e, "kirby_copy") >= 0 || jd_get(d, e, "audio") >= 0)) {
+        gw_log("geno: %s: ai, kirby_copy and audio need \"geno\": 10", where); return 0;
+    }
+    v = jd_get(d, e, "ai");
+    if (v >= 0) {
+        int lk;
+        if (d->n[v].type != JN_OBJ) { gw_log("geno: %s: ai must be an object {\"like\": <retail fighter>}", where); return 0; }
+        for (c = d->n[v].first; c >= 0; c = d->n[c].next)
+            if (strcmp(d->n[c].key, "like")) { gw_log("geno: %s: ai key \"%s\" is not known (like)", where, d->n[c].key); return 0; }
+        lk = jd_get(d, v, "like");
+        if (lk < 0 || d->n[lk].type != JN_STR || (p->ai_like = gn_retail_kind(d->n[lk].str)) < 0) {
+            gw_log("geno: %s: ai.like must name a retail fighter (mario, fox, captain, donkey, kirby, koopa, link, seak, ness, peach, popo, pikachu, samus, yoshi, purin, mewtwo, luigi, mars, zelda, clink, drmario, falco, pichu, gamewatch, ganon, emblem)", where);
+            p->ai_like = -1; return 0;
+        }
+        p->ai_set = 1;
+    }
+    v = jd_get(d, e, "kirby_copy");
+    if (v >= 0) {
+        const char* t = d->n[v].type == JN_STR ? d->n[v].str : "";
+        if (!strcmp(t, "none")) p->kb_copy = -1;
+        else if (!strncmp(t, "retail:", 7) && (p->kb_copy = gn_retail_kind(t + 7)) >= 0 && p->kb_copy != 4) {}
+        else {
+            gw_log("geno: %s: kirby_copy must be \"none\" or \"retail:<fighter>\" (a retail fighter other than Kirby, e.g. \"retail:mario\")", where);
+            p->kb_copy = -1; return 0;
+        }
+    }
+    v = jd_get(d, e, "audio");
+    if (v >= 0) {
+        struct gn_aud* a;
+        int vo;
+        if (d->n[v].type != JN_OBJ) { gw_log("geno: %s: audio must be an object", where); return 0; }
+        for (c = d->n[v].first; c >= 0; c = d->n[c].next)
+            if (strcmp(d->n[c].key, "announcer") && strcmp(d->n[c].key, "voice")) { gw_log("geno: %s: audio key \"%s\" is not known (announcer, voice)", where, d->n[c].key); return 0; }
+        a = (struct gn_aud*)calloc(1, sizeof *a);
+        if (!a) return 0;
+        c = jd_get(d, v, "announcer");
+        if (c >= 0) {
+            if (d->n[c].type != JN_STR || !gn_file_name_ok(d->n[c].str, ".gnsnd")) { gw_log("geno: %s: audio.announcer must be one plain *.gnsnd file name", where); free(a); return 0; }
+            snprintf(a->announcer, sizeof a->announcer, "%s", d->n[c].str);
+        }
+        vo = jd_get(d, v, "voice");
+        if (vo >= 0) {
+            if (d->n[vo].type != JN_ARR || d->n[vo].count < 1 || d->n[vo].count > GN_MAX_VOICE) { gw_log("geno: %s: audio.voice must list 1..%d rows", where, GN_MAX_VOICE); free(a); return 0; }
+            for (c = d->n[vo].first; c >= 0; c = d->n[c].next) {
+                int sx, fl, vl, x, n = a->nvoice;
+                if (d->n[c].type != JN_OBJ) goto bad_voice;
+                for (x = d->n[c].first; x >= 0; x = d->n[x].next)
+                    if (strcmp(d->n[x].key, "sfx") && strcmp(d->n[x].key, "file") && strcmp(d->n[x].key, "volume")) goto bad_voice;
+                sx = jd_get(d, c, "sfx"); fl = jd_get(d, c, "file"); vl = jd_get(d, c, "volume");
+                if (sx < 0 || d->n[sx].type != JN_NUM || d->n[sx].num < 1 || d->n[sx].num > 999999 || d->n[sx].num != (int)d->n[sx].num) goto bad_voice;
+                if (fl < 0 || d->n[fl].type != JN_STR || !gn_file_name_ok(d->n[fl].str, ".gnsnd")) goto bad_voice;
+                a->voice_vol[n] = 127;
+                if (vl >= 0) {
+                    if (d->n[vl].type != JN_NUM || d->n[vl].num < 0 || d->n[vl].num > 127 || d->n[vl].num != (int)d->n[vl].num) goto bad_voice;
+                    a->voice_vol[n] = (int)d->n[vl].num;
+                }
+                a->voice_sfx[n] = (int)d->n[sx].num;
+                for (k = 0; k < n; ++k) if (a->voice_sfx[k] == a->voice_sfx[n]) { gw_log("geno: %s: audio.voice names sound %d twice", where, a->voice_sfx[n]); free(a); return 0; }
+                snprintf(a->voice_file[n], sizeof a->voice_file[n], "%s", d->n[fl].str);
+                a->nvoice = n + 1;
+            }
+        }
+        p->aud = a;
+        return 1;
+    bad_voice:
+        gw_log("geno: %s: audio.voice rows are {\"sfx\": 1..999999, \"file\": \"x.gnsnd\", \"volume\": 0..127 (optional)}, each sound once", where);
+        free(a); return 0;
+    }
+    return 1;
 }
 
 /* Included after the registry types/parser helpers. Native boot metadata only.
@@ -158,7 +256,8 @@ static int gn_define_parse(gn_profile* p, const jdoc* d, int e, int version, con
     }
     if (!gn_sounds_check(d, e, where)) goto refused;
     if (version < 9 && jd_get(d, e, "presentation") >= 0) { gw_log("geno: %s: presentation needs \"geno\": 9", where); goto refused; }
-    if (!gn_define_presentation(p, d, e, where)) goto refused;
+    if (!gn_define_presentation(p, d, e, version, where)) goto refused;
+    if (!gn_define_s6_keys(p, d, e, version, where)) goto refused;
     v = jd_get(d, e, "subactions");
     if (v >= 0) {
         if (d->n[v].type != JN_ARR) goto refused;
@@ -377,8 +476,8 @@ static int gn_fm_team_costume(const struct gn_fm* fm, int team)
 }
 static const char* gn_pres_file(const gn_profile* p, int what, int costume)
 {
-    if (!p || !p->pres || what < 0 || what > 2 || p->pres->n[what] < 1) return NULL;
-    if (what == GN_PRES_ICON || costume < 0 || costume >= p->pres->n[what]) costume = 0;
+    if (!p || !p->pres || what < 0 || what >= GN_PRES_KINDS || p->pres->n[what] < 1) return NULL;
+    if (what == GN_PRES_ICON || what == GN_PRES_EMBLEM || costume < 0 || costume >= p->pres->n[what]) costume = 0;
     return p->pres->file[what][costume];
 }
 static const gn_profile* gn_define_profile_ck(int ck)
@@ -408,7 +507,7 @@ int gw_Geno_DefineCostumeName(int ck, int costume, char* out, int cap)
     snprintf(out, (size_t)cap, "%s", p->fm->cos_name[costume]);
     return out[0] != 0;
 }
-/* 1 when the package declares art of this kind (0 icon, 1 portrait, 2 stock) */
+/* 1 when the package declares art of this kind (0 icon, 1 portrait, 2 stock, 3 emblem) */
 int gw_Geno_DefineHasArt(int ck, int what, int costume) { return gn_pres_file(gn_define_profile_ck(ck), what, costume) != NULL; }
 /* the file's bytes, from the mod's files/ by name: malloc'd, the caller frees; NULL when the define declares none or the file is missing
  * (logged once per file). Host only: the game side gets a gxtex handle or a kit texture, never this pointer. */
@@ -441,7 +540,7 @@ int gw_Geno_DefineArtTex(int ck, int what, int costume)
     if (!raw) return -1;
     tex = gw_Kit_TexAddGxtex(key, (const uint8_t*)raw, len);
     if (tex < 0) gw_log("geno: %s: presentation file %s is not a usable .gxtex", p->name, file);
-    else gw_log("geno: %s: %s from its package: %s as kit texture %d", p->name, what == 0 ? "select icon" : what == 1 ? "portrait" : "stock icon", file, tex);
+    else gw_log("geno: %s: %s from its package: %s as kit texture %d", p->name, what == 0 ? "select icon" : what == 1 ? "portrait" : what == 2 ? "stock icon" : "results emblem", file, tex);
     free(raw);
     return tex;
 }
@@ -460,6 +559,102 @@ int gw_Geno_DefineArtOpen(int ck, int what, int costume)
     free(raw);
     return h;
 }
+
+/* ---- slice 6 (geno 10): AI, Kirby copy, own sound clips ----------------------------------------------------------------------------------- */
+/* The retail FighterKind a CPU treats the define (FighterKind `kind`, = CK - 1) as, or -1: not a define, or it declared no "ai.like". */
+int gw_Geno_DefineAiLike(int kind)
+{
+    gn_registry* r = gn_reg(); int p;
+    if (kind < 0x21) return -1; /* the retail cast: no registry walk on the AI's hot path */
+    if (!r->kinds_built) gn_build_kinds(r);
+    p = gdf_profile_for_kind(&r->definitions, kind);
+    return p >= 0 && r->p[p].ai_set ? r->p[p].ai_like : -1;
+}
+/* What Kirby gets from inhaling FighterKind `kind`: -2 = it is not a define (the caller keeps retail behaviour), -1 = nothing (the default and "none"),
+ * otherwise the retail FighterKind whose hat and ability Kirby wears. */
+int gw_Geno_DefineKirbyCopy(int kind)
+{
+    gn_registry* r = gn_reg(); int p;
+    if (kind < 0x21) return -2;
+    if (!r->kinds_built) gn_build_kinds(r);
+    p = gdf_profile_for_kind(&r->definitions, kind);
+    return p < 0 ? -2 : r->p[p].kb_copy;
+}
+
+/* A .gnsnd (tools/geno/audio.py): 32-byte big-endian header, then s16 big-endian samples. Decoded to native s16, or NULL (and *why) when it is not a
+ * valid v1 file. Pure: the tests feed it blobs. */
+static int16_t* gn_gnsnd_decode(const unsigned char* b, uint32_t len, int* frames, int* channels, const char** why)
+{
+    uint32_t w[8], i, n;
+    int16_t* pcm;
+#define GN_BE32(o) ((uint32_t)b[o] << 24 | (uint32_t)b[(o)+1] << 16 | (uint32_t)b[(o)+2] << 8 | b[(o)+3])
+    if (len < 32 || memcmp(b, "GNSD", 4)) { *why = "not a .gnsnd (magic)"; return NULL; }
+    for (i = 1; i < 8; ++i) w[i] = GN_BE32(i * 4);
+    if (w[1] != 1) { *why = "unknown .gnsnd version"; return NULL; }
+    if (w[2] != 32000) { *why = "sample rate is not 32000"; return NULL; }
+    if (w[3] < 1 || w[3] > 2) { *why = "channels must be 1 or 2"; return NULL; }
+    if (w[4] < 1 || w[4] > 320000) { *why = "frames must be 1..320000"; return NULL; }
+    if (w[5] != 32 || w[7] != 0 || w[6] != w[4] * w[3] * 2 || len != 32 + w[6]) { *why = "header and length disagree"; return NULL; }
+    n = w[4] * w[3];
+    pcm = (int16_t*)malloc((size_t)n * 2);
+    if (!pcm) { *why = "out of memory"; return NULL; }
+    for (i = 0; i < n; ++i) pcm[i] = (int16_t)((uint16_t)b[32 + i * 2] << 8 | b[33 + i * 2]);
+    *frames = (int)w[4]; *channels = (int)w[3];
+#undef GN_BE32
+    return pcm;
+}
+static const struct gn_clip* gn_clip_load(const gn_profile* p, struct gn_clip* c, const char* file)
+{
+    extern void* gw_DVDReadFileAlloc(const char* path, uint32_t* out_size);
+    uint32_t len = 0; void* raw; const char* why = "";
+    if (c->pcm) return c;
+    if (c->tried) return NULL;
+    c->tried = 1;
+    raw = gw_DVDReadFileAlloc(file, &len);
+    if (!raw) { gw_log("geno: %s: audio file %s is not in the mod's files/", p->name, file); return NULL; }
+    c->pcm = gn_gnsnd_decode((const unsigned char*)raw, len, &c->frames, &c->channels, &why);
+    free(raw);
+    if (!c->pcm) { gw_log("geno: %s: audio file %s is not usable: %s", p->name, file, why); return NULL; }
+    gw_log("geno: %s: audio %s: %d frames, %d channel(s)", p->name, file, c->frames, c->channels);
+    return c;
+}
+/* 1 when the define has a clip for this: which 0 = its announcer call (sfx ignored), 1 = a voice row for retail sound id `sfx` */
+int gw_Geno_DefineAudioHas(int ck, int which, int sfx)
+{
+    const gn_profile* p = gn_define_profile_ck(ck);
+    int i;
+    if (!p || !p->aud) return 0;
+    if (which == 0) return p->aud->announcer[0] != 0;
+    for (i = 0; i < p->aud->nvoice; ++i) if (p->aud->voice_sfx[i] == sfx) return 1;
+    return 0;
+}
+/* Start the define's clip (see gw_Geno_DefineAudioHas); 1 when one was started, 0 when there is none (the caller then does what it did before).
+ * Never while a rollback session is armed: a define is offline only, and a clip is not rolled back. */
+int gw_Geno_DefineAudioPlay(int ck, int which, int sfx)
+{
+    extern int gw_Audio_PlayClip(const int16_t* pcm, int frames, int channels, int volume);
+    extern int gw_rb_active(void);
+    const gn_profile* p = gn_define_profile_ck(ck);
+    const struct gn_clip* c = NULL;
+    int i, vol = 127;
+    if (!p || !p->aud) return 0;
+    if (which == 0) {
+        if (!p->aud->announcer[0]) return 0;
+        c = gn_clip_load(p, &p->aud->announcer_clip, p->aud->announcer);
+    } else {
+        for (i = 0; i < p->aud->nvoice && p->aud->voice_sfx[i] != sfx; ++i) {}
+        if (i == p->aud->nvoice) return 0;
+        vol = p->aud->voice_vol[i];
+        c = gn_clip_load(p, &p->aud->voice_clip[i], p->aud->voice_file[i]);
+    }
+    if (!c) return 1; /* declared but unusable: stay silent rather than fall back to the donor's voice */
+    if (gw_rb_active()) return 1;
+    gw_Audio_PlayClip(c->pcm, c->frames, c->channels, vol);
+    gw_log("geno: %s: plays its own %s (%s)", p->name, which == 0 ? "announcer call" : "voice line", which == 0 ? p->aud->announcer : p->aud->voice_file[i]);
+    return 1;
+}
+/* the same by FighterKind (the fighter code knows kind, not CK) */
+int gw_Geno_DefineVoicePlayKind(int kind, int sfx) { return kind < 0x21 ? 0 : gw_Geno_DefineAudioPlay(kind + 1, 1, sfx); }
 
 static int gn_plan_num(const jdoc* d, int o, const char* key, int lo, int hi)
 {

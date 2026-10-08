@@ -670,6 +670,82 @@ static void gmRst_DrawName(HSD_TObj* tobj, int ck, int style)
     tobj->imagedesc = desc;
 }
 
+/* ---- Geno slice 6: a define's own picture on the results card, and its own emblem -----------------------------------------------------
+ * The card's face is the stock icon (the second DObj of the card's taunt JObj: where m-ex attaches IfAll's stock animation), the emblem is the
+ * first JObj's own DObj. A define has no frame in either atlas, so the face was hidden and the emblem was the generic Smash logo. When its package
+ * declares art (presentation.stock, presentation.emblem: .gxtex, no palette) the TObj's image table is pointed at one image built from those bytes in
+ * the scene heap, as the HUD does (ifstock.c): every entry of the table is the define's image, so whichever frame the animation selects lands on it.
+ * Nothing here is simulation state. what: 2 stock, 3 emblem. Returns true when the art was applied. */
+extern int Geno_DefineHasArt(int ck, int what, int costume);
+extern int Geno_DefineArtOpen(int ck, int what, int costume);
+extern int GxTex_Width(int h);
+extern int GxTex_Height(int h);
+extern int GxTex_Format(int h);
+extern int GxTex_ImageSize(int h);
+extern void GxTex_CopyImage(int h, void* dst);
+extern void GxTex_Close(int h);
+
+static bool gmRst_GenoHasArt(int ck, int what, int costume)
+{
+    return ck >= 34 && ck <= 127 && Geno_DefineHasArt(ck, what, costume);
+}
+
+static bool gmRst_GenoApplyArt(HSD_TObj* tobj, int ck, int what, int costume)
+{
+    HSD_ImageDesc* desc;
+    HSD_ImageDesc** tbl;
+    u8* pix;
+    int h, w, ht, size, i;
+    if (tobj == NULL || (h = Geno_DefineArtOpen(ck, what, costume)) < 0) {
+        return false;
+    }
+    w = GxTex_Width(h);
+    ht = GxTex_Height(h);
+    size = GxTex_ImageSize(h);
+    if (GxTex_Format(h) >= 8 || w < 1 || ht < 1 || size < 1) {
+        OSReport("geno: results art of ck %d (kind %d): format %d is not usable (no palette)\n", ck, what, GxTex_Format(h));
+        GxTex_Close(h);
+        return false;
+    }
+    pix = HSD_MemAlloc(size + 32);
+    desc = HSD_MemAlloc(sizeof(HSD_ImageDesc));
+    tbl = HSD_MemAlloc(128 * sizeof(HSD_ImageDesc*));
+    if (pix == NULL || desc == NULL || tbl == NULL) {
+        GxTex_Close(h);
+        return false;
+    }
+    pix = (u8*) (((uintptr_t) pix + 31) & ~(uintptr_t) 31);
+    GxTex_CopyImage(h, pix);
+    desc->image_ptr = pix;
+    desc->width = (u16) w;
+    desc->height = (u16) ht;
+    desc->format = (GXTexFmt) GxTex_Format(h);
+    desc->mipmap = 0;
+    desc->minLOD = 0.0F;
+    desc->maxLOD = 0.0F;
+    for (i = 0; i < 128; i++) {
+        tbl[i] = desc;
+    }
+    tobj->imagetbl = tbl;
+    tobj->imagedesc = desc;
+    GxTex_Close(h);
+    OSReport("geno: results %s of ck %d: %dx%d format %d from its package\n", what == 2 ? "card picture" : "emblem", ck, w, ht, (int) desc->format);
+    return true;
+}
+
+/* the TObj of DObj number `index` of `jobj`'s own DObj chain, or NULL */
+static HSD_TObj* gmRst_GenoTObjAt(HSD_JObj* jobj, int index)
+{
+    HSD_DObj* dobj;
+    if (jobj == NULL || (dobj = jobj->u.dobj) == NULL) {
+        return NULL;
+    }
+    for (; index > 0 && dobj != NULL; index--) {
+        dobj = dobj->next;
+    }
+    return dobj != NULL && dobj->mobj != NULL ? dobj->mobj->tobj : NULL;
+}
+
 /* m-ex "Replace Results Stock and Emblem Matanim", per player: `jobj`'s DObj `dobj_index` takes
  * IfAll's `symbol` matanim (the first MatAnim of the MatAnimJoint the symbol names, or of the
  * Stc_icns struct's). False when the disc's IfAll has no such symbol (a retail disc). */
@@ -718,6 +794,13 @@ void fn_80177748(void)
             ckind = temp_r3->player_standings[i].ckind;
             HSD_JObjClearFlagsAll(data->player_data[i].jobjs[0], JOBJ_HIDDEN);
 #if defined(TARGET_PC)
+            if (gmRst_GenoHasArt(ckind, 3, 0)) {
+                /* Geno: the package's own emblem (presentation.emblem); the retail animation runs on frame 0 and its image is the package's */
+                inline0(data->player_data[i].jobjs[0], 0.0f);
+                if (!gmRst_GenoApplyArt(gmRst_GenoTObjAt(data->player_data[i].jobjs[0], 0), ckind, 3, 0)) {
+                    HSD_JObjSetFlagsAll(data->player_data[i].jobjs[0], JOBJ_HIDDEN);
+                }
+            } else
             if (gmRst_IsMex(ckind)) {
                 /* m-ex: IfAll's emblem atlas at insignia[external id]; no emblem at all rather
                  * than another fighter's when the disc has no atlas or no entry. */
@@ -1416,7 +1499,11 @@ static inline void fn_80178BB4_init_players(ResultsData* data,
                     /* m-ex: the stock icon from IfAll's Stc_icns (the second DObj, as m-ex
                      * attaches it); none rather than another fighter's without one. */
                     bool no_stock = false;
-                    if (gmRst_IsMex(ckind)) {
+                    bool geno_stock = gmRst_GenoHasArt(ckind, 2, match_end->player_standings[(*i)].x3_b0);
+                    if (geno_stock) {
+                        /* Geno: the package's own stock icon is the card's face; the retail animation runs on frame 0 (see gmRst_GenoApplyArt) */
+                        taunt_frame = 0.0F;
+                    } else if (gmRst_IsMex(ckind)) {
                         f32 mex = gm_MexStockFrame(
                             match_end->player_standings[(*i)].ftkind,
                             match_end->player_standings[(*i)].x3_b0);
@@ -1438,6 +1525,12 @@ static inline void fn_80178BB4_init_players(ResultsData* data,
                     HSD_AObjSetCurrentFrame(
                         data->player_data[(*i)].jobjs[7]->aobj, 0.0f);
 #if defined(TARGET_PC)
+                    if (geno_stock &&
+                        !gmRst_GenoApplyArt(gmRst_GenoTObjAt(taunt_jobj, 1), ckind, 2,
+                                            match_end->player_standings[(*i)].x3_b0))
+                    {
+                        no_stock = true; /* the file went missing between the check and the read: hide, never another fighter's face */
+                    }
                     if (no_stock) {
                         HSD_JObjSetFlagsAll(taunt_jobj, JOBJ_HIDDEN);
                     }

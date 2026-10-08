@@ -1296,6 +1296,40 @@ static bool gm_IsGenoDefineCK(int ck)
     extern int Geno_DefineBaseCK(int ck);
     return ck >= 0 && Geno_DefineBaseCK(ck) >= 0;
 }
+
+/* A define's own record (geno 10): the numbers fn_80161C90 would add to a retail fighter's stats, added to the define's row of its own file instead
+ * (pc/platform/geno_define_records.inc; beside the save, keyed by the define's stable key). The retail save block is not touched. The fields are the
+ * file's: 0 matches, 1 wins, 2 losses, 3 KOs, 4 falls, 5 SDs, 6 play seconds, 7 damage dealt, 8 damage taken, 9 attacks hit, 10 attacks thrown, 11 peak damage. */
+static void gm_GenoRecordMatch(MatchEnd* match_end, int i)
+{
+    extern int Geno_RecordAdd(int ck, int field, int value);
+    extern int Geno_RecordCommit(int ck);
+    MatchPlayerData* p = &match_end->player_standings[i];
+    int ck = p->ckind, j, kos = 0, falls = 0;
+    for (j = 0; j < PAD_MAX_CONTROLLERS; j++) {
+        if (j != i && match_end->player_standings[j].pkind != Gm_PKind_NA) {
+            kos += p->kills[j];
+            falls += match_end->player_standings[j].kills[i];
+        }
+    }
+    Geno_RecordAdd(ck, 0, 1);
+    if (i == fn_80165548(match_end, fn_80165418(match_end), fn_801654A0(match_end))) {
+        Geno_RecordAdd(ck, 1, 1);
+    }
+    if (i == fn_80161154(match_end)) {
+        Geno_RecordAdd(ck, 2, 1);
+    }
+    Geno_RecordAdd(ck, 3, kos);
+    Geno_RecordAdd(ck, 4, falls);
+    Geno_RecordAdd(ck, 5, p->self_destructs);
+    Geno_RecordAdd(ck, 6, match_end->frame_count / 60);
+    Geno_RecordAdd(ck, 7, p->x40);
+    Geno_RecordAdd(ck, 8, p->x44);
+    Geno_RecordAdd(ck, 9, p->x38);
+    Geno_RecordAdd(ck, 10, p->x3C);
+    Geno_RecordAdd(ck, 11, p->x4C);
+    Geno_RecordCommit(ck);
+}
 #endif
 
 void fn_80162068(MatchEnd* match_end)
@@ -1314,6 +1348,7 @@ void fn_80162068(MatchEnd* match_end)
         }
 #if defined(TARGET_PC)
         if (gm_IsGenoDefineCK(pdata_i->ckind)) {
+            gm_GenoRecordMatch(match_end, (int) i);
             continue;
         }
 #endif
@@ -4236,10 +4271,12 @@ void gm_80168C5C(u32 arg0)
         return;
     }
     {
-        /* Geno slice 6: a define has no announcer call of its own yet (a package audio source is an open decision), and the donor's call would
-         * name another fighter ("Mario!" for the Courier), so a define is silent here. Retail and m-ex kinds are unchanged. */
+        /* Geno slice 6: the donor's call would name another fighter ("Mario!" for the Courier), so a define never plays it: it plays its own announcer
+         * clip when its package ships one (audio.announcer, converted offline to a .gnsnd), and is silent otherwise. Retail and m-ex kinds are unchanged. */
         extern int Geno_DefineBaseCK(int ck);
+        extern int Geno_DefineAudioPlay(int ck, int which, int sfx);
         if (Geno_DefineBaseCK((int) arg0) >= 0) {
+            Geno_DefineAudioPlay((int) arg0, 0, 0);
             return;
         }
     }

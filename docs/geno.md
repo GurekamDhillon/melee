@@ -2751,6 +2751,8 @@ What reads it: the Atlas select (`gmfrontend_atlas_select.inc`, shim `Ui_ArtGeno
 and none for a `none` define; the retail CSS never lists a define. Logged: `geno: <name>: select icon|portrait|stock icon from its package: <file> as kit texture N`,
 `geno: stock icon of ck N costume C: WxH format F from its package`, `frontend: character select - ck N icon|portrait from its package (kit texture T)`.
 
+**Skins** (2026-10-08): a mod of kind `skin` can add costumes to a base `none` define after its declared ones (`target: {"geno": "<define key>"}`; a donor-based define wears Mario's list, so its skins are Mario's). The select shows the skin's name, art falls back to the define's own. Format and rules: workspace `docs/mods-packaging.md` 4b.
+
 Slice 6's second half (own audio, CPU AI, the Kirby copy, a define's own records, the results art) is section 22.7. Also built here, each a small retail-path guard (all `TARGET_PC`, a define only): the **results name plate** is drawn from the define's name (`gmRst_DrawName`: it was blank, a define being no m-ex slot);
 **records**: a define's matches write no retail row (`gm_CKindToSelKind` sends every m-ex or define CK to one retail selkind, Captain Falcon's, so a define's KOs and play time would have
 been written into a retail fighter's record; `fn_80162068`, `fn_80162170`); **announcer**: a define is silent (`gm_80168C5C`; the donor's call named Mario). Not built (elevated, see the brief):

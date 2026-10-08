@@ -2494,13 +2494,18 @@ ftKirby_CostumeArchive* ftKb_Init_803C9FC8[Ft_Kind_Max] = {
  * once instead of one call site at a time.
  *
  * Note the contrast with a fighter's own costume archives (CostumeListsForeachCharacter,
- * ftData_803C2360): those the port REBUILDS with sixteen rows, so they keep the real costume id
+ * ftData_803C2360): those the port REBUILDS from the real costume count, so they keep the real costume id
  * and two costumes never share an archive. These tables are not rebuilt, so they cannot. */
 #define FTKB_COPY_COSTUMES 6
 int ftKb_CopyCostumeRow(int costume)
 {
     extern int Mex_CostumeVisIdx(int, int);
-    int row = Mex_CostumeVisIdx((int) Ft_Kind_Kirby, costume);
+    extern int Skins_KirbyRow(int fk, int costume);
+    int row = Skins_KirbyRow((int) Ft_Kind_Kirby, costume); /* a Kirby skin's declared hat row */
+    if (row >= 0 && row < FTKB_COPY_COSTUMES) {
+        return row;
+    }
+    row = Mex_CostumeVisIdx((int) Ft_Kind_Kirby, costume);
     return (row >= 0 && row < FTKB_COPY_COSTUMES) ? row : 0;
 }
 #define FTKB_COPY_ROW(fp) ftKb_CopyCostumeRow((int) (fp)->x619_costume_id)

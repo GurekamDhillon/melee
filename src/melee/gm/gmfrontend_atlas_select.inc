@@ -402,7 +402,7 @@ static const char* fas_css_hint(char* buf)
     }
     if (card >= 0) {
         if (card == lead) {
-            return "Your card: X/Y costume, A back to the fighters.";
+            return "Your card: X/Y costume, L/R skip 10, A back.";
         }
         if (Ui_CssGet(FA_CG_KIND, card) == FS_OFF) {
             return "A: add a CPU here.";
@@ -530,7 +530,7 @@ static void fas_submit_css(void)
                 a.img = NULL;
                 a.tl = NULL;
                 sprintf(id, "p%d:%d", ck, cos);
-                fas.art_tex = ck >= FA_RETAIL_FIGHTERS ? Ui_ArtGeno(ck, 1, cos) : -1; /* the package's own portrait first */
+                fas.art_tex = Ui_ArtGeno(ck, 1, cos); /* a package's or a skin's own portrait first (-1 for the disc's) */
                 if (fas.art_tex >= 0) {
                     fas_geno_art_said(ck, 1, fas.art_tex);
                 }
@@ -545,8 +545,8 @@ static void fas_submit_css(void)
         }
         if (tck >= 0) {
             char cname[24];
-            if (Geno_DefineCostumeName(tck, Ui_CssGet(FA_CG_COSTUME, target), cname, 24)) { /* step[24]: "9 / 16 " and a 16-character name fit */
-                cname[16] = '\0';
+            if (Geno_DefineCostumeName(tck, Ui_CssGet(FA_CG_COSTUME, target), cname, 24)) { /* step[24]: "255 / 255 " and a shortened name fit */
+                cname[13] = '\0';
                 sprintf(step, "%d / %d %s", Ui_CssGet(FA_CG_COSTUME, target) + 1, fs_costumes(tck), cname);
             } else {
                 sprintf(step, "%d / %d", Ui_CssGet(FA_CG_COSTUME, target) + 1, fs_costumes(tck));

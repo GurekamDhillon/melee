@@ -1,4 +1,11 @@
 #include "gm_1601.h"
+#if defined(TARGET_PC)
+#include <melee/ft/ftdata.h>
+#include <melee/ft/types.h>
+#include <sysdolphin/baselib/mobj.h>
+#include <sysdolphin/baselib/tobj.h>
+#include <sysdolphin/baselib/aobj.h>
+#endif
 
 #include <Runtime/platform.h>
 
@@ -4211,7 +4218,17 @@ f32 gm_MexStockFrame(int fk, int costume)
     if (mint >= n - 6 && mint < n) {
         return specials[mint - (n - 6)];
     }
-    return stc->reserved + stc->stride * costume + mint;
+    {
+        f32 frame = stc->reserved + stc->stride * costume + mint;
+        HSD_MatAnim* ma = stc->matanim != NULL ? stc->matanim->matanim : NULL;
+        /* Extra skins need not ship extra stock art. Never animate beyond the
+         * authored atlas: use this fighter's default icon, as CSPs already do. */
+        if (ma != NULL && ma->texanim != NULL && ma->texanim->aobjdesc != NULL &&
+            frame > ma->texanim->aobjdesc->end_frame) {
+            frame = stc->reserved + mint;
+        }
+        return frame;
+    }
 }
 #endif
 
@@ -4224,6 +4241,9 @@ f32 gm_80168B34(CharacterKind ckind, int arg1, int arg2)
     int base = gm_MexVanillaKind(ckind, 1);
     ckind = (CharacterKind) base;
     arg1 = gm_MexVanillaKind(arg1, 0);
+    /* Retail stock art has only its authored colour rows. */
+    if (ckind >= 0 && ckind < ARRAY_SIZE(lbl_803D51A0) &&
+        (arg2 < 0 || arg2 >= lbl_803D51A0[ckind].ncolors)) arg2 = 0;
 #else
     int base;
 #endif
@@ -4256,15 +4276,15 @@ f32 gm_80168B34(CharacterKind ckind, int arg1, int arg2)
 }
 
 #if defined(TARGET_PC)
-/* Geno slice 6: the stock-icon frame a define whose package declares a stock icon asks for instead of an atlas frame: 20000 + ck * 32 + costume
+/* Geno slice 6: the stock-icon frame a define whose package declares a stock icon asks for instead of an atlas frame: 1000000 + ck * 256 + costume
  * (if/ifstock.c turns it into the package's image), or -1 for any fighter that declares none. */
 f32 gm_GenoStockFrame(int ck, int costume)
 {
     extern int Geno_DefineHasArt(int ck, int what, int costume);
-    if (ck < 34 || ck > 127 || costume < 0 || costume > 31 || !Geno_DefineHasArt(ck, 2, costume)) {
+    if (ck < 0 || ck > 127 || costume < 0 || costume > 254 || !Geno_DefineHasArt(ck, 2, costume)) {
         return -1.0F;
     }
-    return 20000.0F + (f32) (ck * 32 + costume);
+    return 1000000.0F + (f32) (ck * 256 + costume);
 }
 #endif
 
@@ -4525,6 +4545,19 @@ void fn_80169000(MatchEnd* arg0, u8* arg1)
 u8 gm_GetNumCostumesForCKind(u8 ckind)
 {
 #if defined(TARGET_PC)
+    extern int Skins255_TestCount(void);
+    extern int Skins_CostumeCountCK(int ck);
+    {
+        /* skins: the fighter's own costumes plus the skin mods' (0 = it has none: fall through to the tables below) */
+        int sk = Skins_CostumeCountCK((int) ckind);
+        if (sk > 0) {
+            return (u8) sk;
+        }
+    }
+    if (ckind == CKind_Mario && Skins255_TestCount() > 0) {
+        ftData_MexInitKinds();
+        return CostumeListsForeachCharacter[Ft_Kind_Mario].numCostumes;
+    }
     extern int Geno_DefineBaseCK(int ck);
     /* a base "none" define declares its own costumes (Geno slice 6): not Mario's five */
     extern int Geno_DefineCostumeCountCK(int ck);
@@ -4581,6 +4614,13 @@ u8 gm_80169264(u8 ckind)
 {
 #if defined(TARGET_PC)
     extern int Geno_DefineBaseCK(int ck);
+    extern int Skins_TeamCostumeCK(int ck, int team);
+    {
+        int skin = Skins_TeamCostumeCK((int) ckind, 0); /* a skin that declared this team colour */
+        if (skin >= 0) {
+            return (u8) skin;
+        }
+    }
     /* a base "none" define's declared team colour (Geno slice 6; team 0) */
     extern int Geno_DefineTeamCostume(int ck, int team);
     {
@@ -4606,6 +4646,13 @@ u8 gm_80169290(u8 ckind)
 {
 #if defined(TARGET_PC)
     extern int Geno_DefineBaseCK(int ck);
+    extern int Skins_TeamCostumeCK(int ck, int team);
+    {
+        int skin = Skins_TeamCostumeCK((int) ckind, 2); /* a skin that declared this team colour */
+        if (skin >= 0) {
+            return (u8) skin;
+        }
+    }
     /* a base "none" define's declared team colour (Geno slice 6; team 2) */
     extern int Geno_DefineTeamCostume(int ck, int team);
     {
@@ -4631,6 +4678,13 @@ u8 gm_801692BC(u8 ckind)
 {
 #if defined(TARGET_PC)
     extern int Geno_DefineBaseCK(int ck);
+    extern int Skins_TeamCostumeCK(int ck, int team);
+    {
+        int skin = Skins_TeamCostumeCK((int) ckind, 1); /* a skin that declared this team colour */
+        if (skin >= 0) {
+            return (u8) skin;
+        }
+    }
     /* a base "none" define's declared team colour (Geno slice 6; team 1) */
     extern int Geno_DefineTeamCostume(int ck, int team);
     {

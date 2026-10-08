@@ -2363,7 +2363,7 @@ s32 mnCharSel_8025FDEC(u8 door)
         {
             int door_idx = door;
             if (mnCharSel_8025DAA0(door_idx)) {
-                s8 costume;
+                int costume;
                 CSSDoor* selected_door = &mnCharSel_803F0DFC.doors[door_idx];
                 for (costume = 0;; costume++) {
                     selected_door->costume = costume;
@@ -6549,7 +6549,8 @@ int mnCharSel_PcArtPortrait(int ck, int costume, HSD_ImageDesc** img, HSD_Tlut**
         int want = ck == CKind_Seak ? CKind_Zelda : ck;
         for (i = 0; i < SELKIND_COUNT; i++) {
             if (icons[i].char_kind == want) {
-                frame = icons[i].ft_hudindex + costume * 0x1E;
+                /* The retail CSP atlas has six rows; extra skins use its default. */
+                frame = icons[i].ft_hudindex + (costume < 6 ? costume : 0) * 0x1E;
                 break;
             }
         }

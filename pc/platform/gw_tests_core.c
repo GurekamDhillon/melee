@@ -13,6 +13,78 @@ int gw_Mex_FtCostumeCount(int internal);
 int gw_Mex_InternalForPortKind(int fk);
 int gw_Mex_CostumeVisIdx(int fk, int costume);
 
+static int test_skins255_coordinator_fixture(void) {
+  extern int gw_Skins255_TestCount(void);
+  extern uint8_t gw_gm_GetNumCostumesForCKind(uint8_t);
+  extern uint8_t gw_ftData_803C2360[], gw_CostumeListsForeachCharacter[];
+  int expected = gw_Skins255_TestCount(); uint32_t strings, first, last;
+  if (!expected) return 0;
+  if (gw_gm_GetNumCostumesForCKind(8) != expected) {
+    gw_test_fail("Mario coordinator fixture count differs from %d", expected); return 1;
+  }
+  strings = gw_r32(gw_ftData_803C2360);
+  first = gw_r32((void*)(uintptr_t)strings);
+  last = gw_r32((void*)(uintptr_t)(strings + (expected - 1) * 12));
+  if (!first || last != first || gw_r8(gw_CostumeListsForeachCharacter + 4) != expected) {
+    gw_test_fail("coordinator fixture did not preserve default strings at its highest index"); return 1;
+  }
+  gw_log("skins255: coordinator fixture %d installed in persistent guest memory", expected);
+  return 0;
+}
+
+/* Every installed skin: the fighter's table holds base + skins, the file strings are the registry's, the menus' count agrees,
+ * and the wire costume round-trips. Passes trivially (and says so) when no skin mod is mounted. */
+int gw_skins_installed_tables_check(void) {
+  extern int gw_Skins_Added(int), gw_Skins_Base(int), gw_Skins_Total(int), gw_Skins_Count(void);
+  extern const char *gw_Skins_String(int fk, int c, int which);
+  extern int gw_Skins_ToWireCK(int ck, int color), gw_Skins_FromWireCK(int ck, int wire);
+  extern int gw_SceneLaunch_FKindToCKind(int fk);
+  extern uint8_t gw_gm_GetNumCostumesForCKind(uint8_t);
+  extern uint8_t gw_ftData_803C2360[], gw_CostumeListsForeachCharacter[];
+  int fk, fighters = 0, rows = 0, rc = 0;
+  extern void gw_ftData_MexInitKinds(void);
+  if (gw_Skins_Count() == 0) { gw_log("skins: no skin mod mounted - installed-table test has nothing to check"); return 0; }
+  gw_ftData_MexInitKinds(); /* idempotent; builds the tables in this test's isolation when nothing has yet */
+  { extern void gw_GenoDefine_InitKinds(void); gw_GenoDefine_InitKinds(); } /* the Geno defines' rows too */
+  for (fk = 0; fk < 127; ++fk) {
+    int added = gw_Skins_Added(fk), base = gw_Skins_Base(fk), total = gw_Skins_Total(fk), c, ck, n;
+    uint32_t strings;
+    if (added == 0) continue;
+    fighters++;
+    n = gw_r8(gw_CostumeListsForeachCharacter + fk * 8u + 4u);
+    if (n != total) { gw_test_fail("fighter %d: numCostumes %d, registry total %d", fk, n, total); rc = 1; continue; }
+    strings = gw_r32(gw_ftData_803C2360 + fk * 4u);
+    ck = gw_SceneLaunch_FKindToCKind(fk);
+    if (ck >= 0 && fk != 7 && fk != 11 && gw_gm_GetNumCostumesForCKind((uint8_t) ck) != total) {
+      gw_test_fail("fighter %d (ck %d): the menus count %d, registry total %d", fk, ck, gw_gm_GetNumCostumesForCKind((uint8_t) ck), total);
+      rc = 1;
+    }
+    for (c = base; c < total; ++c) {
+      uint32_t file = gw_r32((void *) (uintptr_t) (strings + (uint32_t) c * 12u));
+      const char *want = gw_Skins_String(fk, c, 0);
+      rows++;
+      if (want) {
+        if (!file || strcmp((const char *) (uintptr_t) file, want) != 0) { gw_test_fail("fighter %d costume %d: table file \"%s\" differs from the registry's %s", fk, c, file ? (const char *) (uintptr_t) file : "(null)", want); rc = 1; }
+      } else if (file != gw_r32((void *) (uintptr_t) strings)) {
+        gw_test_fail("fighter %d costume %d: a partner row without files must repeat costume 0", fk, c); rc = 1;
+      }
+      if (ck >= 0 && fk != 7 && fk != 11 && gw_Skins_FromWireCK(ck, gw_Skins_ToWireCK(ck, c)) != c) {
+        gw_test_fail("fighter %d costume %d: wire round trip", fk, c); rc = 1;
+      }
+    }
+  }
+  gw_log("skins: installed tables verified: %d fighters, %d skin rows", fighters, rows);
+  return rc;
+}
+
+/* Each test runs isolated (gw_test_isolate_*: guest memory is put back afterwards), so tables an earlier test built in the persistent pool
+ * are gone by now: on an m-ex disc the check runs inside test_mex_ftdata_rows, which builds them; here only without MxDt. */
+static int test_skins_installed_tables(void) {
+  extern int gw_Mex_CssIconCount(void);
+  if (gw_Mex_CssIconCount() != 0) { gw_log("skins: installed tables are checked inside mex_ftdata_rows on an m-ex disc"); return 0; }
+  return gw_skins_installed_tables_check();
+}
+
 static int test_u32_roundtrip(void) {
   unsigned char buf[8];
   gw_w32(buf, 0x12345678u);
@@ -485,6 +557,12 @@ void gw_tests_register_all(void) {
   gw_test_register("endian_wf32_is_big_endian", test_wf32_is_big_endian);
   gw_test_register("mem1_at_guest_base", test_mem1_at_guest_base);
   gw_test_register("mem1_aram_distinct", test_mem1_aram_distinct);
+  { extern int gw_ftData_PcTestCostumes(void);
+    gw_test_register("skins255_costume_descriptors", gw_ftData_PcTestCostumes);
+    { extern int gw_gm_PcTestLegacyCostumes(void);
+      gw_test_register("skins255_legacy_event_queue", gw_gm_PcTestLegacyCostumes); } }
+  gw_test_register("skins255_coordinator_fixture", test_skins255_coordinator_fixture);
+  gw_test_register("skins_installed_tables", test_skins_installed_tables);
   gw_test_register("mex_csp_frame_map", test_mex_csp_frame_map);
   gw_test_register("mex_kirby_costume_rows", test_mex_kirby_costume_rows);
   gw_test_register("unlock_all", test_unlock_all);

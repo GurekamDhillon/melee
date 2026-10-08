@@ -1555,7 +1555,8 @@ u8 ftData_UnkBytePerCharacter[Ft_Kind_Max] = {
  *     whose default onLoad it shares) - Kirby's copy tables, demo-motion count, effect file.
  * A disc without MxDt.dat leaves every slot empty. */
 #include "geno/geno_define_data.inc"
-static Fighter_CostumeStrings ftData_MexCostumeStrings[Ft_Kind_Max - Ft_Kind_Mex0][16];
+extern void* PcCostumeAlloc(int bytes);
+#include "ftdata_costumes.inc"
 
 /* Whether a motion-table row (Fighter_WaitAnimData, main or demo table) of an m-ex fighter's file
  * is a real row: its name is NULL (a hole) or a string inside the archive, and its subaction
@@ -1591,7 +1592,52 @@ static u32 ftData_MexAnimFlags(u32 flags, int kind)
     }
     return (flags & ~0x3Fu) | (u32) FT_ANIM_KIND_SELF;
 }
-static UnkCostumeStruct ftData_MexCostumeLists[Ft_Kind_Max - Ft_Kind_Mex0][16];
+
+
+/* Windowed fixture repeats costume 0; opt-in only, no new assets. */
+static Fighter_CostumeStrings ftData_PcFixtureString;
+static const char* ftData_PcFixtureAt(int internal, int c, int which)
+{
+    if (which == 0) return ftData_PcFixtureString.dat_filename;
+    if (which == 1) return ftData_PcFixtureString.joint_name;
+    return ftData_PcFixtureString.matanim_joint_name;
+}
+
+/* Skin costumes (pc/platform/gw_skins_boot.inc): a fighter's own rows first (`native_at`), then the registry's rows for it. A partner
+ * row with no files of its own (Nana, Sheik) repeats this kind's costume 0. */
+extern int Skins_Added(int fk);
+extern const char* Skins_String(int fk, int c, int which);
+static struct {
+    int fk, native;
+    const char* (*native_at)(int, int, int);
+} ftData_PcRows;
+static const char* ftData_PcRowString(int internal, int c, int which)
+{
+    if (c < ftData_PcRows.native) {
+        return ftData_PcRows.native_at(internal, c, which);
+    }
+    return Skins_String(ftData_PcRows.fk, c, which);
+}
+static void ftData_PcInstallRows(int fk, int native, int have, const char* (*native_at)(int, int, int), int internal)
+{
+    int added = Skins_Added(fk), c;
+    ftData_PcRows.fk = fk;
+    ftData_PcRows.native = native;
+    ftData_PcRows.native_at = native_at;
+    ftData_PcInstallCostumes(fk, native + added, have, ftData_PcRowString, internal, PcCostumeAlloc);
+    /* a partner row that named no files repeats the kind's own costume 0 */
+    for (c = native; c < native + added; ++c) {
+        Fighter_CostumeStrings* row = &ftData_803C2360[fk][c];
+        if (row->dat_filename == NULL) {
+            row->dat_filename = ftData_803C2360[fk][0].dat_filename;
+            row->joint_name = ftData_803C2360[fk][0].joint_name;
+            row->matanim_joint_name = ftData_803C2360[fk][0].matanim_joint_name;
+        }
+    }
+    if (added > 0) {
+        OSReport("skins: kind %d: %d costumes (%d own, %d from skins)\n", fk, native + added, native, added);
+    }
+}
 
 void ftData_MexInitKinds(void)
 {
@@ -1754,18 +1800,11 @@ void ftData_MexInitKinds(void)
         ftData_Table_Unk0[fk].count = Mex_FtAnimCount(k);
         ftData_803C2468[fk] = (Fighter_DemoStrings*) Mex_FtDemoStrings(k);
         ncost = Mex_FtCostumeCount(k);
-        if (ncost > 16) {
-            ncost = 16;
+        if (ncost > 0) {
+            ftData_PcInstallRows(fk, ncost, 0, Mex_FtCostumeString, k);
+            OSReport("gw: kind %d: %d costume descriptors allocated\n", fk, ncost);
         }
-        for (c = 0; c < ncost; c++) {
-            ftData_MexCostumeStrings[slot][c].dat_filename = (char*) Mex_FtCostumeString(k, c, 0);
-            ftData_MexCostumeStrings[slot][c].joint_name = (char*) Mex_FtCostumeString(k, c, 1);
-            ftData_MexCostumeStrings[slot][c].matanim_joint_name =
-                (char*) Mex_FtCostumeString(k, c, 2);
-        }
-        ftData_803C2360[fk] = ftData_MexCostumeStrings[slot];
-        CostumeListsForeachCharacter[fk].costume_list = ftData_MexCostumeLists[slot];
-        CostumeListsForeachCharacter[fk].numCostumes = ncost;
+
 
         ftData_Table_Unk1[fk] = ftData_Table_Unk1[base];
         ftData_UnkMotionStates5[fk] = ftData_UnkMotionStates5[base];
@@ -1802,28 +1841,29 @@ void ftData_MexInitKinds(void)
     /* Retail fighters the disc gives MORE costumes than retail (ACE's Mario has 7): append the
      * extra costumes' files after the retail ones, which stay exactly as they were. */
     for (slot = 0; slot < Ft_Kind_MasterH; slot++) {
-        static Fighter_CostumeStrings strs[Ft_Kind_MasterH][16];
-        static UnkCostumeStruct lists[Ft_Kind_MasterH][16];
         int ncost = Mex_FtCostumeCount(slot);
         int have = CostumeListsForeachCharacter[slot].numCostumes, c;
-        if (ncost <= have || ftData_803C2360[slot] == NULL) {
+        if (ftData_803C2360[slot] == NULL) {
             continue;
         }
-        if (ncost > 16) {
-            ncost = 16;
+        if (ncost < have) {
+            ncost = have; /* the disc's m-ex row gave it fewer: the retail list stands */
         }
-        for (c = 0; c < ncost; c++) {
-            if (c < have) {
-                strs[slot][c] = ftData_803C2360[slot][c];
-            } else {
-                strs[slot][c].dat_filename = (char*) Mex_FtCostumeString(slot, c, 0);
-                strs[slot][c].joint_name = (char*) Mex_FtCostumeString(slot, c, 1);
-                strs[slot][c].matanim_joint_name = (char*) Mex_FtCostumeString(slot, c, 2);
-            }
+        if (ncost <= have && Skins_Added(slot) == 0) {
+            continue;
         }
-        ftData_803C2360[slot] = strs[slot];
-        CostumeListsForeachCharacter[slot].costume_list = lists[slot];
-        CostumeListsForeachCharacter[slot].numCostumes = ncost;
+        ftData_PcInstallRows(slot, ncost, have, Mex_FtCostumeString, slot);
+        OSReport("gw: retail kind %d: %d costumes (%d preserved)\n", slot, ncost + Skins_Added(slot), have);
+    }
+    {
+        extern int Skins255_TestCount(void);
+        int count = Skins255_TestCount();
+        int have = CostumeListsForeachCharacter[Ft_Kind_Mario].numCostumes;
+        if (count > have) {
+            ftData_PcFixtureString = ftData_803C2360[Ft_Kind_Mario][0];
+            ftData_PcInstallCostumes(Ft_Kind_Mario, count, have, ftData_PcFixtureAt, 0, PcCostumeAlloc);
+            OSReport("skins255: coordinator fixture Mario has %d costumes (extra rows repeat default assets)\n", count);
+        }
     }
     if (n != 0) {
         OSReport("gw: %d m-ex fighter kinds from MxDt.dat (kinds %d..%d)\n", n,
@@ -2101,11 +2141,8 @@ void ftData_80085820(FighterKind kind, int costume_id)
 {
 #if defined(TARGET_PC)
     UnkCostumeStruct* temp_r5;
-    /* The port's per-costume runtime arrays have sixteen rows and the rows past this fighter's
-     * count are zeroed, so a costume it does not have loads a NULL filename and dies inside the
-     * DVD layer with nothing in the log that names the costume. Say what happened and use
-     * costume 0, which every fighter has. MELEE_SCENE refuses an id above 15 at parse time; this
-     * is the per-fighter half of the same check, and it is the only place that can make it. */
+    /* Costume ids are 0..254; 255 is the preload-all sentinel. Validate against
+     * this fighter's real count before touching its exactly-sized descriptors. */
     if (costume_id < 0 ||
         costume_id >= (int) CostumeListsForeachCharacter[kind].numCostumes) {
         OSReport("gw: kind %d has no costume %d (%d costumes) - using 0\n", kind, costume_id,
@@ -2113,6 +2150,14 @@ void ftData_80085820(FighterKind kind, int costume_id)
         costume_id = 0;
     }
     temp_r5 = &CostumeListsForeachCharacter[kind].costume_list[costume_id];
+    {
+        extern int Skins_Base(int fk);
+        extern int Skins_Added(int fk);
+        if (Skins_Added(kind) > 0 && costume_id >= Skins_Base(kind) && temp_r5->joint == NULL) {
+            OSReport("skins: kind %d loads skin costume %d: %s\n", kind, costume_id,
+                     ftData_803C2360[kind][costume_id].dat_filename);
+        }
+    }
 #else
     UnkCostumeStruct* temp_r5 =
         &CostumeListsForeachCharacter[kind].costume_list[costume_id];

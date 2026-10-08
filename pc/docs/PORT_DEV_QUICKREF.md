@@ -95,6 +95,7 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | `MELEE_PAD_SCRIPT=<file>` | text scripts consume PADReads; `.lua` files run gameplay scripts whose `gd.input` holds count completed logic frames, including paused single steps |
 | `MELEE_PAD_IGNORE_ADAPTER=1` | ignore a physical adapter (use with scripted input) |
 | `MELEE_NETPLAY_TURBO=on` / `off` / `<hex>` | scripted netplay: the host's Turbo match rule (gw_matchrules.h); on a guest it is what the guest insists on, and a host with another word refuses it at the handshake ("different match rules"). Scene token `turbo=` for offline runs; settings `turbo_online` (hosting), `turbo_versus` (local Versus), `turbo_colanim` (the indicator's colour-animation id) |
+| `MELEE_NETPLAY_COLOR` | TEST-ONLY: the costume index (this install's numbering, a skin's index included) a room's host or guest picks when it opens or joins from the menu; the netplay layer turns it into a wire costume (`pc/platform/gw_skins_core.h`). |
 | `MELEE_NETPLAY_STOCKS`, `MELEE_NETPLAY_MINUTES`, `MELEE_NETPLAY_PORT` | TEST-ONLY room overrides for loopback tests: stock count, time limit in minutes, and host UDP port (default 51500). Stock/minute variables also apply to scripted direct matches. |
 | `MELEE_NETPLAY_ENVOY=on` / `off` | scripted netplay (direct-connect path): the host's online Envoy choice (a set with a passive build each, `envoy/ONLINE.md`); on a guest it is what the guest insists on, and a host with another mode word refuses it at the handshake (netplay protocol 5). Never used for Random Opponent |
 | `MELEE_ENVOY_POISON=1` | TEST-ONLY: after an online Envoy build is applied, flip one bit of slot 1's record word on this peer only, so the rollback hash must report a DESYNC at the first compared frame |
@@ -406,3 +407,11 @@ iteration, exchanged and compared by `gw_net.c`). Widened 2026-10-05; the design
   (`MELEE_RB_HASH_LEGACY=1`) reproduces the old value.
 - Cost: `rb: tick ... hash X/call` in the log; about 2 microseconds a frame for two fighters.
 - Negative control: `MELEE_RB_PERTURB=<field>` on one peer (see the env table). Run the soak pair as `_build/audit-20261003/checksum/run_soak.sh`.
+
+### Costume-count coordinator fixture
+
+`MELEE_SKINS255_TEST_COUNT=64` (17..255) gives Mario that many selectable
+costume descriptors. Retail rows stay intact; additional rows reuse Mario's
+costume-0 model strings and visibility row. This is an offline visual-test
+fixture, disabled by default; do not use it for online play. No assets are generated.
+`MELEE_SKINS255_TEST_COUNT=255` exercises ids 0..254 (255 remains preload-all).

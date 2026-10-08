@@ -206,6 +206,11 @@ static void np_decode(const uint8_t *b, GwRbInput *in) {
     in->pad_err = (int8_t) b[10];
 }
 
+/* skins: costumes travel as WIRE values (gw_skins_core.h): a base costume's index, or 0x40000000 | a skin's identity; each side maps
+ * what it receives to its own index, or to the default when it lacks the skin. Costumes never enter the simulation or its hash. */
+int gw_Skins_ToWireCK(int ck, int color);
+int gw_Skins_FromWireCK(int ck, int wire);
+
 /* ---- the match both sides play ---------------------------------------------------------------
  * A scene string (gmscenelaunch.h / _research/scene-launch.md). The rules are part of it, and the
  * scene launcher writes them into the saved rules, so both peers play the same match whatever
@@ -457,7 +462,7 @@ static void np_cb_guest_hello(void *user, const uint8_t *info, int info_len, uin
     } else if (sscanf(s, "ck:%d/c%d", &gck, &gc) < 1 || gck < 0 || gck > 0x7F || gck == 0x21) {
         gck = 9;
     }
-    if (gc < 0 || gc > 15) gc = 0;
+    if (gc < 0 || (gc > 254 && !(gc & 0x40000000))) gc = 0; /* a base costume 0..254, or a skin's wire costume */
     np_build_scene(np.scene, sizeof np.scene, np.ck, np.color, gck, gc);
     if (!np_random_matched()) { /* a public random match is always the plain scene */
         char x[200];
@@ -2757,7 +2762,7 @@ int gw_Netplay_RandomBegin(int ck, int color, int stocks, int minutes, int delay
     np_close();
     memset(&rnd, 0, sizeof rnd);
     np.ck = ck;
-    np.color = color;
+    np.color = gw_Skins_ToWireCK(ck, color); /* skins: a wire costume (gw_skins_core.h) */
     np.stage_ext = 31;
     np.stocks = stocks;
     np.minutes = minutes;
@@ -2838,9 +2843,10 @@ int gw_Netplay_MenuBegin(int host, int ck, int color, int stocks, int minutes, i
        (below) moves the host's UDP port off 51500 so two tests can run side by side. */
     stocks = np_env_int("MELEE_NETPLAY_STOCKS", stocks);
     minutes = np_env_int("MELEE_NETPLAY_MINUTES", minutes);
+    color = np_env_int("MELEE_NETPLAY_COLOR", color); /* TEST-ONLY, like the two above: a loopback pair picks its costumes */
     np.host = host != 0;
     np.ck = ck;
-    np.color = color;
+    np.color = gw_Skins_ToWireCK(ck, color);
     np.stage_ext = 31;
     np.stocks = stocks;
     np.minutes = minutes;
@@ -2901,7 +2907,7 @@ int gw_Netplay_Phase(void) { return np.phase; }
 const char *gw_Netplay_Status(void) { return np.status; }
 const char *gw_Netplay_Code(void) { return np.host ? rdv.code : np.peer_code; }
 int gw_Netplay_LocalCk(void) { return np.ck; }
-int gw_Netplay_LocalColor(void) { return np.color; }
+int gw_Netplay_LocalColor(void) { return gw_Skins_FromWireCK(np.ck, np.color); }
 /* Fill the join code from text (scripts, test drivers); 1 when it was a valid room code. */
 int gw_Netplay_SetCode(const char *code) {
     np_code_init();
@@ -3049,7 +3055,7 @@ int gw_Netplay_LobbyPlayer(int who, int what) {
     if (who < 0 || who > 1) return 0;
     switch (what) {
     case 0: return lb.ck[who];
-    case 1: return lb.color[who];
+    case 1: return gw_Skins_FromWireCK(lb.ck[who], lb.color[who]); /* the wire costume, as this install numbers it */
     case 2: return lb.locked[who];
     case 3: return lb.ready[who];
     default: return 0;
@@ -3057,8 +3063,8 @@ int gw_Netplay_LobbyPlayer(int who, int what) {
 }
 void gw_Netplay_LobbyChar(int ck, int color) {
     np.ck = ck; /* remembered for the next room too */
-    np.color = color;
-    lb_action("CHAR", ck, color);
+    np.color = gw_Skins_ToWireCK(ck, color);
+    lb_action("CHAR", ck, np.color);
 }
 void gw_Netplay_LobbyStageAct(int i) {
     lb_action(lb.phase == LB_BAN ? "BAN" : lb.phase == LB_PICK ? "PICK" : "STRIKE", i, 0);
@@ -3291,7 +3297,7 @@ const char *gw_Netplay_Scene(void) {
         return NULL;
     }
     np.ck = np_env_int("MELEE_NETPLAY_CHAR", np.host ? 2 : 9); /* Fox / Marth */
-    np.color = np_env_int("MELEE_NETPLAY_COLOR", 0);
+    np.color = gw_Skins_ToWireCK(np.ck, np_env_int("MELEE_NETPLAY_COLOR", 0));
     np.stage_ext = np_env_int("MELEE_NETPLAY_STAGE", 31);     /* Battlefield */
     np.stocks = np_env_int("MELEE_NETPLAY_STOCKS", 4);
     np.minutes = np_env_int("MELEE_NETPLAY_MINUTES", 8);
@@ -3692,6 +3698,26 @@ static int test_lobby_envoy(void) {
 
 /* All stages: game 1 is ban-and-pick from the coin winner; the list travels as identities in
    chunks and comes back as the same external ids; the state names the list it goes with. */
+static int test_netplay_costumes255(void) {
+    char saved_scene[sizeof np.scene], blob[sizeof np.scene];
+    uint16_t len;
+    int c, rc = 0;
+    memcpy(saved_scene, np.scene, sizeof saved_scene);
+    for (c = 0; c <= 255; ++c) {
+        char hello[32], expected[32];
+        snprintf(hello, sizeof hello, "ck:8/c%d", c);
+        snprintf(expected, sizeof expected, "/c%d/hu", c == 255 ? 0 : c);
+        np_cb_guest_hello(NULL, (const uint8_t *) hello, (int) strlen(hello),
+                          (uint8_t *) blob, &len, sizeof blob);
+        if (strstr(strstr(blob, ";p2="), expected) == NULL) {
+            rc = lbt_fail("guest handshake preserves every valid costume byte");
+            break;
+        }
+    }
+    memcpy(np.scene, saved_scene, sizeof saved_scene);
+    return rc;
+}
+
 static int test_lobby_all_stages(void) {
     char m[GW_NET_LOBBY_MAX];
     int host_ext[LB_MAX_STAGES], n = 20, i, first, len;
@@ -3768,6 +3794,7 @@ static int test_lobby_groups(void) {
 }
 
 void gw_netplay_tests_register(void) {
+    gw_test_register("netplay_costumes255", test_netplay_costumes255);
     gw_test_register("netplay_lobby_groups", test_lobby_groups);
     gw_test_register("netplay_lobby_all_stages", test_lobby_all_stages);
     gw_test_register("netplay_lobby_game1", test_lobby_game1);

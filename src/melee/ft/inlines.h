@@ -52,7 +52,7 @@
  * or no row, so a vanilla disc is unchanged.
  *
  * USE THIS FOR THE FIGHTER'S OWN DISC DATA ONLY. The port's own runtime arrays
- * (CostumeListsForeachCharacter[k].costume_list, ftData_803C2360[k]) are rebuilt with 16 rows by
+ * (CostumeListsForeachCharacter[k].costume_list, ftData_803C2360[k]) are allocated from the real count by
  * ftData_MexInitKinds and must keep being indexed by the real costume id, or two costumes would
  * share one archive slot. */
 int Mex_CostumeVisIdx(int fk, int costume);

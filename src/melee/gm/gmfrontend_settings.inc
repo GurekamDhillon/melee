@@ -23,6 +23,8 @@ extern int Video_FrameRate(void);
 extern void Video_SetFrameRate(int fps);
 extern int Video_Vsync(void);
 extern void Video_SetVsync(int on);
+extern int Video_Fullscreen(void);
+extern void Video_SetFullscreen(int on);
 extern int Video_ShowFps(void);
 extern void Video_SetShowFps(int on);
 extern int Audio_Volume(void);
@@ -181,6 +183,8 @@ static void fsv_set_rate(int v) { Video_SetFrameRate(fsv_rates[v]); }
 extern int Widescreen_Enabled(void);
 static int fsv_get_widescreen(void) { return Widescreen_Enabled(); }
 static void fsv_set_widescreen(int v) { Settings_SetInt("widescreen", v); }
+static int fsv_get_fullscreen(void) { return Video_Fullscreen(); }
+static void fsv_set_fullscreen(int v) { Video_SetFullscreen(v); }
 static int fsv_get_vsync(void) { return Video_Vsync(); }
 static void fsv_set_vsync(int v) { Video_SetVsync(v); }
 static int fsv_get_fps(void) { return Video_ShowFps(); }
@@ -193,6 +197,8 @@ static void fsv_set_reduced(int v) { Settings_SetInt("reduced_motion", v); }
 static const FrontendItem fe_items_set_video[] = {
     { FE_TOGGLE, 0, "Widescreen", "Follow the window from 4:3 to 32:9. Native screens keep bars. MELEE_WIDESCREEN overrides this.",
       fsv_get_widescreen, fsv_set_widescreen, 0, 1, 1 },
+    { FE_TOGGLE, 0, "Fullscreen", "Borderless fullscreen on the desktop. F11 or Alt+Enter toggles it in the game. MELEE_FULLSCREEN overrides this.",
+      fsv_get_fullscreen, fsv_set_fullscreen, 0, 1, 1 },
     { FE_CHOICE, 0, "Render Scale", "The picture's internal size. Auto follows the window.",
       fsv_get_scale, fsv_set_scale, 0, 5, 1, fsv_scale_names },
     { FE_CHOICE, 0, "Frame Rate",

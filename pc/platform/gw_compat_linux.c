@@ -615,6 +615,8 @@ static int gw_vk_to_scancode(int vk) {
         return SDL_SCANCODE_F9;
     case VK_F10:
         return SDL_SCANCODE_F10;
+    case VK_F11:
+        return SDL_SCANCODE_F11;
     case VK_OEM_1:
         return SDL_SCANCODE_SEMICOLON;
     case VK_OEM_3:

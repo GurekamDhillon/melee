@@ -406,8 +406,22 @@ int main(int argc, char *argv[]) {
   aurora_profiler_enable(gw_prof_active() != 0);
   /* Aurora replays every persisted pipeline at boot and aborts on one it cannot build: drop such rows first. */
   (void)gw_pcache_guard_run(config.cachePath);
+#ifndef _WIN32
+  /* Which GPU. Aurora asks Dawn for the HighPerformance adapter (a discrete GPU on a hybrid laptop) by
+   * default; MELEE_GPU=integrated|discrete|<text in the adapter's name or vendor, e.g. nvidia, intel, rtx>
+   * overrides it, and MELEE_GPU_LIST=1 also probes the other power preference so the log names both.
+   * Only the 32-bit Vulkan drivers installed for 32-bit processes can appear (an Intel GPU needs
+   * lib32-vulkan-intel / mesa-vulkan-drivers:i386). The Windows build links the prebuilt Aurora, which
+   * predates these two calls: enable them there at the next Aurora rebuild. */
+  {
+    const char *gpu = getenv("MELEE_GPU");
+    int gpu_list = 0;
+    (void)gw_env_int("MELEE_GPU_LIST", &gpu_list);
+    aurora_set_gpu_preference(gpu != NULL ? gpu : "", gpu_list);
+  }
+#endif
   AuroraInfo info = aurora_initialize(argc, argv, &config);
-  gw_log("prof: GPU timestamps %s (D3D11 has no Dawn timestamp feature; opt into D3D12 for supported adapters)",
+  gw_log("prof: GPU timestamps %s (D3D11 and most Vulkan setups have no Dawn timestamp feature; Windows: opt into D3D12 for supported adapters)",
          aurora_profiler_gpu_available() ? "available" : "unavailable");
 
 #ifdef _WIN32
@@ -415,8 +429,13 @@ int main(int argc, char *argv[]) {
     gw_panic("could not install nonmodal window drag");
   }
 #endif
-  gw_log("melee-pc: aurora backend %d, window %ux%u", (int)info.backend, info.windowSize.width,
-         info.windowSize.height);
+  /* The window the compositor granted can differ from the 1280x960 asked for: a tiling Wayland compositor
+   * (Hyprland, Sway) sizes it to its tile, e.g. 640x577. Not a bug; the view letterboxes to 4:3 inside it. */
+  gw_log("melee-pc: aurora backend %d, window %ux%u (requested %dx%d)", (int)info.backend, info.windowSize.width,
+         info.windowSize.height, win_w, win_h);
+#ifndef _WIN32
+  gw_log("gw: gpu: %s", aurora_get_gpu_summary());
+#endif
 #ifndef _WIN32
   gw_window_drag_install(info.window);
   gw_set_window(info.window);

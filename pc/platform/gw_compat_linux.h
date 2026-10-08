@@ -162,9 +162,18 @@ void gw_linux_set_exec_resolver(gw_linux_exec_resolver resolver);
 /* ---- memory ---- */
 #define MEM_RESERVE 0x00002000u
 #define MEM_COMMIT 0x00001000u
-#define MEM_WRITE_WATCH 0x00200000u /* never honored here - see gw_mem_init's fallback */
+#define MEM_WRITE_WATCH 0x00200000u /* honored when a backend works (gw_writewatch_linux.c), else VirtualAlloc returns NULL */
 #define PAGE_READWRITE 0x04u
 void *VirtualAlloc(void *addr, size_t size, DWORD alloc_type, DWORD protect);
+
+/* ---- write watch (gw_writewatch_linux.c): which pages of a MEM_WRITE_WATCH range were written ---- */
+typedef void *PVOID;
+typedef unsigned int UINT;
+#define WRITE_WATCH_FLAG_RESET 1u
+UINT GetWriteWatch(DWORD flags, PVOID base, size_t size, PVOID *addrs, ULONG_PTR *count, DWORD *granularity);
+UINT ResetWriteWatch(PVOID base, size_t size);
+int gw_linux_writewatch_start(void *base, size_t size);
+const char *gw_linux_writewatch_name(void);
 
 /* ---- module path ---- */
 DWORD GetModuleFileNameA(HANDLE unused_module, char *out, DWORD cap);

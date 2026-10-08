@@ -117,6 +117,14 @@ void aurora_enable_vsync(bool enabled);
 /// (tearing allowed) when vsync is off. Call before aurora_initialize or any time before
 /// aurora_enable_vsync.
 void aurora_set_present_mode(int mode);
+/// Port patch (aurora-gd-gpu-choice-v1): which GPU. "" / "auto" / "discrete" = the high-performance adapter
+/// (the default), "integrated" = the low-power one, anything else = the adapter whose name or vendor
+/// contains the text (case-insensitive, e.g. "nvidia", "intel", "rtx"). list != 0 also probes the other
+/// power preference so the log shows both. Call before aurora_initialize.
+void aurora_set_gpu_preference(const char* spec, int list);
+/// One line: the adapter in use (name, vendor, ids, type, backend, driver), how it was chosen, the
+/// adapter(s) not used, and the surface format and present mode. Valid after aurora_initialize.
+const char* aurora_get_gpu_summary(void);
 
 #ifdef __cplusplus
 }

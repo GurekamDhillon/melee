@@ -1589,6 +1589,13 @@ static int l_netplay(lua_State *L) {
     gs_setstr(L, "lobby", lp >= 0 && lp < 9 ? gs_lb_phase[lp] : "?");
     gs_setint(L, "me", gw_Netplay_LobbyMe());
     gs_setint(L, "game", gw_Netplay_LobbyInfo(0));
+    /* The live lobby score, independent of the saved/abandoned run record. */
+    lua_createtable(L, 2, 0);
+    for (i = 0; i < 2; ++i) {
+        lua_pushinteger(L, gw_Netplay_LobbyInfo(2 + i));
+        lua_rawseti(L, -2, i + 1);
+    }
+    lua_setfield(L, -2, "score");
     gs_setint(L, "turn", gw_Netplay_LobbyInfo(4));
     gs_setint(L, "left", gw_Netplay_LobbyInfo(5));
     gs_setint(L, "countdown", gw_Netplay_LobbyInfo(8));
@@ -10357,6 +10364,7 @@ static int test_script_lab_api(void) {
         const char *expr, *want;
     } checks[] = {
         {"= gd.lab_api", "1"},
+        {"= type(gd.netplay().score) == 'table' and type(gd.netplay().score[1]) == 'number' and type(gd.netplay().score[2]) == 'number'", "true"},
         {"= gd.draw.MODEL, gd.draw.HIT, gd.draw.HURT, gd.draw.THROWN", "1\n2\n2\n64"},
         {"= gd.stage_draw.COLL, gd.stage_draw.ECB, gd.stage_draw.ZONES", "1\n1\n16"},
         {"= gd.motion_name(14)", "Wait"},

@@ -4556,6 +4556,42 @@ static int test_run_abandon(void) {
         if (strcmp(gw_nr_digest_of(rnt_saved(0, &st, &me)), dig) || st != GW_NR_ABANDONED)
             rc = rnt_fail("abandon adopts the host record when the guest differs");
     }
+    if (!rc) { /* resumed game 2 -> abandon -> fresh lobby, while the archive remains game 2 */
+        RntBag abandoned, advert, decision;
+        char archived[GW_NR_TEXT_MAX + 1];
+        unsigned newseed;
+        rnt_side(1, GW_ENVOY_MODE_V1, 0, 0x1234567u);
+        rn_resume(&rec, "test: replay the interrupted game");
+        rnt_n = 0;
+        if (!lb_apply_(1, "RABANDON", 0, 0)) rc = rnt_fail("a guest can abandon a resumed run");
+        lb_env_send(); /* normally sent on the following lobby tick */
+        rnt_take(&abandoned);
+        newseed = lb.env_seed;
+        if (!rc && (gw_Netplay_LobbyInfo(0) != 1 || gw_Netplay_LobbyInfo(2) || gw_Netplay_LobbyInfo(3) ||
+                    lb.winner != -1 || lb.env_round || lb.env_pick[0] != -1 || lb.env_pick[1] != -1 || rn.begun))
+            rc = rnt_fail("after resume then abandon the live host is game 1, 0-0, no picks");
+        if (!rc && (!gw_Netplay_EnvoyRunGet(0, archived, sizeof archived, &st, &me) ||
+                    st != GW_NR_ABANDONED || !gw_nr_parse(archived, &rec, w, sizeof w) || rec.game != 2 || strcmp(rec.digest, dig)))
+            rc = rnt_fail("before the new run begins RunGet still exposes the abandoned game-2 archive");
+        if (!rc) {
+            rnt_side(0, GW_ENVOY_MODE_V1, 0, 0x9999u);
+            rn_apply(&rec);
+            rnt_give(&abandoned);
+            if (lb.game != 1 || lb.score[0] || lb.score[1] || lb.winner != -1 || lb.env_seed != newseed ||
+                lb.env_round || lb.env_open || lb.env_pick[0] != -1 || lb.env_pick[1] != -1 ||
+                lb.env_hist[2][0] != -1 || lb.env_hist[2][1] != -1 || rn.begun)
+                rc = rnt_fail("the host's abandon messages reset the resumed guest's live lobby too");
+        }
+        if (!rc) { /* a NEW transport/lobby exchange must not offer the abandoned record */
+            rnt_open(0, 0x9999u, archived, GW_NR_ABANDONED); rnt_take(&advert);
+            rnt_open(1, 0x1234567u, archived, GW_NR_ABANDONED); rnt_give(&advert); rnt_take(&decision);
+            if (rn.pending || rn.status != RN_ST_FRESH || rn.resumed || rn.begun || lb.game != 1)
+                rc = rnt_fail("the returning pair's abandoned records start a fresh host run");
+            rnt_open(0, 0x9999u, archived, GW_NR_ABANDONED); rnt_give(&decision);
+            if (rn.pending || rn.status != RN_ST_FRESH || rn.resumed || rn.begun || lb.game != 1)
+                rc = rnt_fail("the returning guest does not resume its abandoned archive");
+        }
+    }
     if (!rc) { /* nothing to abandon */
         rnt_side(1, GW_ENVOY_MODE_V1, 0, 0x1234567u);
         if (lb_apply_(0, "RABANDON", 0, 0)) rc = rnt_fail("no run, nothing to abandon");

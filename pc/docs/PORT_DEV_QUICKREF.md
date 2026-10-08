@@ -403,3 +403,10 @@ iteration, exchanged and compared by `gw_net.c`). Widened 2026-10-05; the design
   (`MELEE_RB_HASH_LEGACY=1`) reproduces the old value.
 - Cost: `rb: tick ... hash X/call` in the log; about 2 microseconds a frame for two fighters.
 - Negative control: `MELEE_RB_PERTURB=<field>` on one peer (see the env table). Run the soak pair as `_build/audit-20261003/checksum/run_soak.sh`.
+
+### Envoy private-room proof ports
+
+`MELEE_NETPLAY_PORT=<1025..65535>` selects the UDP port of a menu-hosted room (default 51500).
+For two-client local proof use a unique port and `MELEE_NETPLAY_BIND=127.0.0.1`, with a separate
+matchmaking server bound to 127.0.0.1 on its own port. Stage-5 proof commands are in the workspace
+report; `MELEE_NET_SIM` / `MELEE_NET_SIM_FILE` can supply lag, jitter and loss.

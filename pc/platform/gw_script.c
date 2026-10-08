@@ -1526,6 +1526,10 @@ static void gs_push_run(lua_State *L, int which) {
     snprintf(hex, sizeof hex, "%08x", (unsigned) r.mode); gs_setstr(L, "mode_word", hex);
     gs_setint(L, "seed", (lua_Integer) r.seed);
     gs_setint(L, "loop", r.loop);
+    gs_setint(L, "depth", r.stage);
+    gs_setint(L, "stocks", r.stocks);
+    gs_setint(L, "continues", r.continues);
+    gs_setbool(L, "lost", r.lost);
     gs_setint(L, "game", r.game);
     gs_setint(L, "round", r.round);
     gs_setint(L, "winner", r.winner);

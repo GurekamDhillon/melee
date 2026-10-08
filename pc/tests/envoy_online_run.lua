@@ -9,8 +9,8 @@ local C=D.mod_codec
 local function read(name) local f=assert(io.open(T.root..name..'.lua','rb'));local s=f:read('a');f:close();return s end
 
 T.test('the native run record digest is mod_codec.digest64(body, "netrun:") (the vector the native test checks)',function()
- local body='RN2|123456789|2|0|1|1|0|0|45560001|3|1|1302|abcdef123456|deadbeef|-'
- assert(C.digest64(body,'netrun:')=='70aaf28a62121b5a',C.digest64(body,'netrun:'))
+ local body='RN2|123456789|2|0|1|1|0|0|45560001|3|1|1302|abcdef123456|deadbeef|-|0|1|0'
+ assert(C.digest64(body,'netrun:')=='235fd23981123889',C.digest64(body,'netrun:'))
  assert(C.digest64(body,'build:')~=C.digest64(body,'netrun:'),'the salts must separate a build record from a run record')
 end)
 
@@ -42,7 +42,7 @@ T.test('set_carry rebuilds the online build: the same records at the same tiers,
     end
    end
    local c=0;for _ in pairs(seen) do c=c+1 end;assert(c==n and #carry.drives==n,'the carry has other records than the build')
-   assert(carry.depth==5*math.max(0,n-4) and #carry.keystones>=1)
+   assert(carry.depth==math.max(r.game-1,5*math.max(0,n-4)) and #carry.keystones>=1)
   end
  end
 end)
@@ -72,6 +72,14 @@ T.test('the rule host carries a build in, and the console command and the bundle
  local app=read('retail_app');assert(app:find("arg=='continue'",1,true) and app:find("netplay_act('rstate','continued')",1,true) and app:find('set_carry',1,true))
  local lab=read('mod_lab');assert(lab:find("word=='run'",1,true))
  local main=read('main');assert(main:find('function P.set_carry',1,true) and main:find('function H:carry_in',1,true),'main.lua is stale: run tools/port/envoy_bundle.py')
+end)
+
+T.test('offline carry preserves depth and loop from the saved boundary',function()
+ local r=run(99,3,0);r.game=12;r.loop=2;r.stocks=6;r.continues=0;r.lost=false
+ local carry=D.mod_progression.set_carry(D,r)
+ assert(carry.depth>=11,'saved depth was lost')
+ assert(carry.loop==2,'saved loop was lost')
+ assert(carry.stocks==6 and carry.continues==0 and carry.lost==false,'run resources were lost')
 end)
 
 T.done()

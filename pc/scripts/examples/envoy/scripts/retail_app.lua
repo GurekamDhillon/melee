@@ -163,7 +163,7 @@ return function(D)
     local id,why;if token then id,why=D.fighters.resolve(self.g,token);if not id then self.notice=why;return false,why end end
     local ok,carry=pcall(D.mod_progression.set_carry,D,run)
     if not ok then self.g.log('envoy: continue failed: '..tostring(carry));return false,tostring(carry) end
-    self.retail.rules=true;self.dev_spec={depth=carry.depth,loop=0,carry=carry};self.menu.run_type=mode;if id then self.menu.fighter=id end
+    self.retail.rules=true;self.dev_spec={depth=carry.depth,loop=carry.loop,carry=carry};self.menu.run_type=mode;if id then self.menu.fighter=id end
     self.g.log(('envoy: continuing online set %s offline: seed=%d game=%d seat=%d, %d drives, %d keystones, depth floor %d'):format(run.digest,run.seed,carry.game,carry.seat,#carry.drives,#carry.keystones,carry.depth))
     local sok,err=self:start_retail(mode,id,nil,nil,run.seed)
     if sok==false then self.dev_spec=nil;return false,err end

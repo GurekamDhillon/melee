@@ -149,6 +149,27 @@ return function(D)
     return true
    end
    if arg=='coop' or arg:match('^coop%s') then return self:coop_command(arg) end
+   -- `envoy continue [classic|adventure] [fighter]` (stage 5 of the online plan): the build of the saved online set (gd.netplay_run('saved'): a Versus set whose
+   -- connection ended, state interrupted or active) becomes an offline run seeded with the set's own seed, at the depth that opens enough slots. The saved record is then marked continued
+   -- (no more online resume). Offline only.
+   if arg=='continue' or arg:match('^continue%s') then
+    local w={};for x in arg:gmatch('%S+') do w[#w+1]=x end
+    local run=self.g.netplay_run and self.g.netplay_run('saved')
+    if not run then return false,'no saved online run' end
+    if run.mode~='versus' then return false,'a co-op record carries no builds; only a Versus set can be continued offline' end
+    if run.state~='interrupted' and run.state~='active' then return false,'the saved online run is '..tostring(run.state)..', not resumable' end
+    if self.retail.active or self.retail.pending or self.retail_request then return false,'finish the retail run first' end
+    local mode=(w[2]=='classic' or w[2]=='adventure') and w[2] or 'classic';local token=w[3] or ((w[2] and w[2]~='classic' and w[2]~='adventure') and w[2] or nil)
+    local id,why;if token then id,why=D.fighters.resolve(self.g,token);if not id then self.notice=why;return false,why end end
+    local ok,carry=pcall(D.mod_progression.set_carry,D,run)
+    if not ok then self.g.log('envoy: continue failed: '..tostring(carry));return false,tostring(carry) end
+    self.retail.rules=true;self.dev_spec={depth=carry.depth,loop=0,carry=carry};self.menu.run_type=mode;if id then self.menu.fighter=id end
+    self.g.log(('envoy: continuing online set %s offline: seed=%d game=%d seat=%d, %d drives, %d keystones, depth floor %d'):format(run.digest,run.seed,carry.game,carry.seat,#carry.drives,#carry.keystones,carry.depth))
+    local sok,err=self:start_retail(mode,id,nil,nil,run.seed)
+    if sok==false then self.dev_spec=nil;return false,err end
+    if self.g.netplay_act then self.g.netplay_act('rstate','continued') end
+    return sok,err
+   end
    -- `envoy start <classic|adventure> <fighter> [depth=<n>] [loop=<n>] [build=<seed|current|proposed>]`: a developer start at a chosen depth with a
    -- consistent build (rule host forced on). depth/loop set a floor on the run's progression context (slots, keystone allowance, tier, opponents);
    -- build=<seed> rolls the drives for every slot and the keystones up to the allowance at that depth (build=current|proposed also sets the tuning preset).

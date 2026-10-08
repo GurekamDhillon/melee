@@ -21,7 +21,9 @@
  * another native table format is refused at the first packet. The per-game build agreement is separate (the scene's envoy= token). */
 #define GW_ENVOY_MODE_OFF 0u
 #define GW_ENVOY_MODE_V1  0x45560001u /* "EV" + version 1: adversarial set, passive builds */
-static inline int gw_envoy_mode_valid(uint32_t w) { return w == GW_ENVOY_MODE_OFF || w == GW_ENVOY_MODE_V1; }
+#define GW_ENVOY_MODE_COOP 0x45560002u /* "EV" + 2: a co-op run (stage 5: the room, its run record, resume and abandon; the match itself is stage 6).
+                                          Same protocol-5 field, no new bytes: a peer that knows only V1 refuses it at the first packet. */
+static inline int gw_envoy_mode_valid(uint32_t w) { return w == GW_ENVOY_MODE_OFF || w == GW_ENVOY_MODE_V1 || w == GW_ENVOY_MODE_COOP; }
 
 #define GW_MB_RECORD_MAX 400
 #define GW_MB_MODS_MAX 24

@@ -50,7 +50,7 @@ static int test_netbuild(void) {
     unsigned w1, w2, w3, h0, h1;
 
     /* ---- the mode word and the record codec ---- */
-    if (!gw_envoy_mode_valid(0) || !gw_envoy_mode_valid(GW_ENVOY_MODE_V1) || gw_envoy_mode_valid(1) || gw_envoy_mode_valid(GW_ENVOY_MODE_V1 + 1)) { gw_test_fail("netbuild: mode word validity wrong"); return 1; }
+    if (!gw_envoy_mode_valid(0) || !gw_envoy_mode_valid(GW_ENVOY_MODE_V1) || gw_envoy_mode_valid(1) || !gw_envoy_mode_valid(GW_ENVOY_MODE_COOP) || gw_envoy_mode_valid(GW_ENVOY_MODE_V1 + 3)) { gw_test_fail("netbuild: mode word validity wrong"); return 1; }
     if (!gw_mb_record_parse(nb_rec1, &r, why, sizeof why)) { gw_test_fail("netbuild: the Lua-written record is refused: %s", why); return 1; }
     if (r.seed != 31337 || r.game != 1 || r.loop != 0 || r.port != 1 || r.nmods != 2 || r.nkeystones != 1 || strcmp(r.digest, "a0a765cf140457a9") != 0 ||
         strcmp(r.pool, "ea4291532a5df145") != 0) { gw_test_fail("netbuild: record fields misread (seed %ld port %ld mods %d ks %d)", r.seed, r.port, r.nmods, r.nkeystones); return 1; }

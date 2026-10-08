@@ -15,7 +15,10 @@ assert gpu == dict(count=100, mean=50.5, p50=50, p95=95, p99=99, max=100)
 assert report["diagnostics"]["event_overwrites"] == 0
 assert report["detail_names"]["99"] == 'gpu pass test'
 assert report["detail_names"]["100"] == 'test "gpu"\npass'
-assert any(d["zone"] == "gpu" and d["detail"] == 99 for d in report["details"])
+# The fixture fills the identity table before restoring GPU samples. The
+# reserved mixed bucket retains all samples even when detail 99 cannot fit.
+gpu_detail = next(d for d in report["details"] if d["zone"] == "gpu" and d["detail"] == 0xFFFFFFFF)
+assert gpu_detail == dict(zone="gpu", detail=0xFFFFFFFF, **gpu)
 trace = json.loads(Path("profiler-test-trace.json").read_text())
 assert trace["event_capacity"] == 131072
 assert len(trace["traceEvents"]) == 9

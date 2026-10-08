@@ -18,6 +18,7 @@ static struct {
     char hot_text[800];
 } gs;
 static GsScript script;
+static int gs_callback_refused;
 static GsLogEntry gs_log[GS_LOG_N];
 static jmp_buf error_jump;
 static int online, rollback, reload_result, script_result, lab_active, registry_reloads;
@@ -43,8 +44,10 @@ static int gw_rw_begin(int now, GsSaveSlot *slot, int size) { (void)now; (void)s
 #include "script_policy_functions.inc"
 
 static int write_allowed(void) {
-    if (setjmp(error_jump)) return 0;
+    gs_callback_refused = 0;
+    if (setjmp(error_jump)) { assert(gs_callback_refused); return 0; }
     gs_require_gameplay(NULL, "set_percent");
+    assert(!gs_callback_refused);
     return 1;
 }
 static void reset_reload(int result) {

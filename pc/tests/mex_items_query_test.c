@@ -43,6 +43,8 @@ int main(void) {
     assert(!gw_Mex_ItemReady(2147483647));
     assert(!gw_Mex_ItemRangeAvailable(4608,64)); /* present zero rows reserved */
     gw_mexdt_size=0x2000u;
+    assert(!gw_Mex_ItemRangeAvailable(4608,64)); /* table base at exclusive end is malformed */
+    gw_mexdt_size=0x2001u; /* both table bases valid; candidate rows beyond archive tail */
     assert(gw_Mex_ItemRangeAvailable(4608,64));
     custom=0xFFFFFFF0u;
     assert(!gw_Mex_ItemReady(238));

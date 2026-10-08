@@ -3803,7 +3803,7 @@ void gw_Netplay_MatchOver(void) {
     uint16_t port = rdv.on ? gw_net_udp_local_port(&rdv.inner) : 0;
     if (!np.enabled) return;
     gw_log("netplay: match over - closing the session%s", rdv.on ? ", keeping the room" : "");
-    np.rematch = rdv.on; /* PERSISTENT ROOMS: back to ONLINE PLAY, same room, reconnect */
+    np.rematch = np.peer_left ? np.rematch : rdv.on; /* terminal loss already closed its socket; retain the room handoff */
     np_keep_room = rdv.on;
     np_close();
     np_keep_room = 0;
@@ -3818,10 +3818,26 @@ void gw_Netplay_MatchOver(void) {
 /* Once per render tick during the match (gw_RB_Iterations). */
 void gw_Netplay_Tick(void) {
     int w;
+    /* A terminal loss must escape rollback's prediction stall. The transport's
+       event only sets dead; lobby ticks do not run while a match is stalled. */
+    if (np.dead) {
+        if (!np.peer_left) {
+            gw_log("netplay: terminal match disconnect - returning to online play");
+            np.rematch = rdv.on;
+            np_peer_gone();
+        }
+        return;
+    }
     if (np.net == NULL) {
         return;
     }
     gw_net_poll(np.net, gw_rb_current_frame());
+    if (np.dead) {
+        gw_log("netplay: terminal match disconnect - returning to online play");
+        np.rematch = rdv.on;
+        np_peer_gone();
+        return;
+    }
     if (rdv.on && (np.ticks % 60) == 0) {
         np_rdv_service(); /* keepalives: the room and the router mapping stay open */
     }
@@ -4276,6 +4292,7 @@ static int test_run_record(void) {
 
 static int test_run_events(void) {
     int st, me, rc = 0, e0 = np.envoy, h0 = np.host, p0 = np.phase;
+    int enabled0 = np.enabled, rematch0 = np.rematch, dead0 = np.dead, left0 = np.peer_left;
     GwNrRecord r;
     char why[80];
     rnt_side(1, GW_ENVOY_MODE_V1, 0, 0x1234567u);
@@ -4297,9 +4314,21 @@ static int test_run_events(void) {
         if (strcmp(d, rn.last) != 0) rc = rnt_fail("touching without change keeps the digest");
     }
     if (!rc) { /* the peer leaves */
-        rn_interrupt();
+        np.peer_left = 0;
+        np.dead = 1; /* terminal transport loss while rollback is stalled */
+        gw_Netplay_Tick();
         gw_nr_parse(rnt_saved(0, &st, &me), &r, why, sizeof why);
         if (st != GW_NR_INTERRUPTED || r.started != 2 || rn.begun || rn.status != RN_ST_INTERRUPTED || rn.note[0] == '\0') rc = rnt_fail("a lost peer keeps the run as interrupted");
+        else if (!np.peer_left || np.phase != NP_FAILED || lb.game != 0 || lb.env_on)
+            rc = rnt_fail("terminal mid-match loss releases the scene and resets the lobby");
+        /* SceneBegin closes a match after the terminal handler closed its
+           room socket: that must not erase the frontend's reconnect handoff. */
+        np.rematch = 1;
+        np.enabled = 1;
+        gw_Netplay_MatchOver();
+        if (!np.rematch || np.enabled || np.phase != NP_IDLE)
+            rc = rnt_fail("interrupted match scene exit retains the same-room reconnect handoff");
+        np.dead = np.peer_left = 0;
     }
     if (!rc) { /* a script's digest joins the record */
         rnt_side(1, GW_ENVOY_MODE_V1, 0, 0x1234567u);
@@ -4316,6 +4345,7 @@ static int test_run_events(void) {
         else { rnt_saved(0, &st, &me); if (st != GW_NR_CONTINUED) rc = rnt_fail("offline handoff prevents online resume"); }
     }
     rnt_end(e0, h0, p0);
+    np.enabled = enabled0; np.rematch = rematch0; np.dead = dead0; np.peer_left = left0;
     return rc;
 }
 
@@ -4376,6 +4406,23 @@ static int test_run_resume(void) {
         if (rn.pending || rn.status != RN_ST_RESUMED || lb.game != 3 || lb.env_hist[2][1] != LB_ENV_KEEP || lb.score[1] != 1 || strcmp(rn.last, hostlast) != 0 || strcmp(rn.last, d3) != 0)
             rc = rnt_fail("the guest applies the same record: same game, score, picks and the same digest as the host");
         else if (strstr(rn.note, "same record") == NULL) rc = rnt_fail("the guest says its own saved record was the same");
+    }
+    /* A mid-game loss resumes t2 itself, replaying game 2 rather than awarding
+       a result or reopening the already resolved game-2 reward. */
+    if (!rc) {
+        rnt_open(0, 0x9999u, t2, GW_NR_ACTIVE); /* killed guest's persisted start */
+        rnt_take(&guest_says);
+        rnt_open(1, 0x1234567u, t2, GW_NR_INTERRUPTED);
+        rnt_n = 0;
+        rnt_give(&guest_says);
+        if (rn.pending || rn.status != RN_ST_RESUMED || lb.game != 2 || lb.env_open ||
+            lb.score[0] != 1 || lb.score[1] != 0 || strcmp(rn.last, d2))
+            rc = rnt_fail("mid-game loss resumes the start record without a result or reward");
+        rnt_take(&host_says);
+        rnt_open(0, 0x9999u, t2, GW_NR_ACTIVE);
+        rnt_give(&host_says);
+        if (rn.pending || rn.status != RN_ST_RESUMED || lb.game != 2 || lb.env_open || strcmp(rn.last, d2))
+            rc = rnt_fail("fresh guest resumes the interrupted game's identical start record");
     }
     /* 2. the guest only has the earlier boundary (t2): it adopts the host's later record */
     if (!rc) {

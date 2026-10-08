@@ -15,18 +15,19 @@ MotionState* GenoDefine_CommonRows[Ft_Kind_Max];
 MotionState* GenoDefine_SpecificRows[Ft_Kind_Max];
 u32 GenoDefine_ContentIdentity[Ft_Kind_Max][2];
 u32 GenoDefine_InterpreterAttempts[Ft_Kind_Max];
-static UnkCostumeStruct GenoDefine_Costumes[Ft_Kind_Max - Ft_Kind_Mex0][16];
+extern void* PcCostumeAlloc(int bytes);
+static UnkCostumeStruct* GenoDefine_Costumes[Ft_Kind_Max - Ft_Kind_Mex0];
 static Fighter_WaitAnimData* GenoDefine_MarioBaseline;
 /* slice 4: a base "none" define's own costume names, parts table and part-visibility stand-ins (all static, kind-indexed). */
-static Fighter_CostumeStrings GenoDefine_CostumeStrings[Ft_Kind_Max - Ft_Kind_Mex0][16];
+static Fighter_CostumeStrings* GenoDefine_CostumeStrings[Ft_Kind_Max - Ft_Kind_Mex0];
 static FighterPartsTable GenoDefine_Parts[Ft_Kind_Max - Ft_Kind_Mex0];
 static u8 GenoDefine_PartsJ2P[Ft_Kind_Max - Ft_Kind_Mex0][128];
 static u8 GenoDefine_PartsP2J[Ft_Kind_Max - Ft_Kind_Mex0][56];
 #define GENO_OWN_EXTRA_ROWS 96
 static short GenoDefine_RowRemap[Ft_Kind_Max - Ft_Kind_Mex0][512];   /* motion -> its own animation row (>= n), -1: keeps the donor's number */
-static void* GenoDefine_VisTable[16][4];     /* no visibility groups: every row NULL, model_num 0 */
+static void* GenoDefine_VisTable[255][4];     /* no visibility groups: every row NULL, model_num 0 */
 static u16 GenoDefine_TobjZero;
-static u16* GenoDefine_TobjTable[16];        /* no texture animations: n_costume_tobjs 0 */
+static u16* GenoDefine_TobjTable[255];        /* no texture animations: n_costume_tobjs 0 */
 extern int Geno_DefineIsNone(int kind);
 extern int Geno_DefineCostumeCount(int kind);
 extern const char* Geno_DefineString(int kind, int which, int costume);
@@ -114,7 +115,10 @@ void GenoDefine_InitKinds(void)
             int c, nc = Geno_DefineCostumeCount(fk), slot = fk - Ft_Kind_Mex0;
             ftData_803C1F40[fk].a = NULL; ftData_803C1F40[fk].b = NULL;
             ftData_803C23E4[fk] = (char*)Geno_DefineString(fk, 0, 0);
-            for (c = 0; c < nc && c < 16; ++c) {
+            if (!GenoDefine_CostumeStrings[slot])
+                GenoDefine_CostumeStrings[slot] = PcCostumeAlloc(nc * sizeof *GenoDefine_CostumeStrings[slot]);
+            HSD_ASSERTREPORT(__LINE__, GenoDefine_CostumeStrings[slot] != NULL, "costume strings exhausted\n");
+            for (c = 0; c < nc; ++c) {
                 GenoDefine_CostumeStrings[slot][c].dat_filename = (char*)Geno_DefineString(fk, 2, c);
                 GenoDefine_CostumeStrings[slot][c].joint_name = (char*)Geno_DefineString(fk, 3, c);
                 GenoDefine_CostumeStrings[slot][c].matanim_joint_name = (char*)Geno_DefineString(fk, 4, c);
@@ -126,7 +130,16 @@ void GenoDefine_InitKinds(void)
         ftData_Table_Unk1[fk] = NULL;
         ftData_Table_Unk0[fk].count = ftData_Table_Unk0[base].count;
         ftData_UnkIntPairs[fk].count = ftData_UnkIntPairs[base].count;
-        CostumeListsForeachCharacter[fk].costume_list = GenoDefine_Costumes[fk-Ft_Kind_Mex0];
+        {
+            int slot = fk - Ft_Kind_Mex0;
+            int nc = Geno_DefineIsNone(fk) ? Geno_DefineCostumeCount(fk)
+                                         : CostumeListsForeachCharacter[base].numCostumes;
+            if (!GenoDefine_Costumes[slot]) {
+                GenoDefine_Costumes[slot] = PcCostumeAlloc(nc * sizeof *GenoDefine_Costumes[slot]);
+                HSD_ASSERTREPORT(__LINE__, GenoDefine_Costumes[slot] != NULL, "costume runtime exhausted\n");
+            }
+            CostumeListsForeachCharacter[fk].costume_list = GenoDefine_Costumes[slot];
+        }
         CostumeListsForeachCharacter[fk].numCostumes = Geno_DefineIsNone(fk) ? Geno_DefineCostumeCount(fk)
                                                       : CostumeListsForeachCharacter[base].numCostumes;
         Player_MexSetMapping(ck, fk);
@@ -205,7 +218,7 @@ static void GenoDefine_BuildOwn(int kind, ftData* out, int n)
     x8->x0.model_num = 0;
     x8->x0.vis_table = GenoDefine_VisTable;
     x8->x8.x8 = 0;
-    for (i = 0; i < 16; ++i) GenoDefine_TobjTable[i] = &GenoDefine_TobjZero;
+    for (i = 0; i < 255; ++i) GenoDefine_TobjTable[i] = &GenoDefine_TobjZero;
     x8->x8.xC = GenoDefine_TobjTable;
     out->x8 = x8;
     GenoDefine_JointFields(kind, out, x8);

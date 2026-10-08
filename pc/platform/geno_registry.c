@@ -377,9 +377,9 @@ static int gn_kind_for_file(const char *pl) {
 struct gn_fm {
     char plan_file[64], anim_file[64];
     int ncostume;
-    char cos_file[16][64], cos_joint[16][48], cos_matanim[16][48];
-    char cos_name[16][24];          /* slice 6: a costume's declared name ("" = none) */
-    signed char cos_team[16];       /* slice 6: a declared team colour set: -1 none, 0 red, 1 blue, 2 green */
+    char (*cos_file)[64], (*cos_joint)[48], (*cos_matanim)[48];
+    char (*cos_name)[24];          /* slice 6: a costume's declared name ("" = none) */
+    signed char* cos_team;       /* slice 6: a declared team colour set: -1 none, 0 red, 1 blue, 2 green */
     int nown;                       /* slice 8: rows the package declares past Mario's 303 (fighter.rows), each a clip name of the bank */
     char own_clip[GPL_MAX_OWN_ROWS][32];
     GenoPlan *plan; int plan_tried;
@@ -393,8 +393,8 @@ struct gn_fm {
 #define GN_PRES_EMBLEM 3            /* the results emblem (geno 10): one file, a format without a palette */
 #define GN_PRES_KINDS 4
 struct gn_pres {
-    int n[GN_PRES_KINDS];           /* entries per kind: icon and emblem 0..1, portrait and stock 0..16 (one per costume; a costume past the list uses entry 0) */
-    char file[GN_PRES_KINDS][16][64];
+    int n[GN_PRES_KINDS];           /* entries per kind: icon and emblem 0..1, portrait and stock 0..255 (one per costume; a costume past the list uses entry 0) */
+    char (*file[GN_PRES_KINDS])[64];
 };
 
 /* slice 6 (geno 10): a define's own sound clips, converted offline to .gnsnd (tools/geno/audio.py) and read from the mod's files/ folder.
@@ -2421,6 +2421,7 @@ void geno_registry_tests_register(void) {
     gw_test_register("geno_lua_registry", test_geno_lua_registry);
     gw_test_register("geno_lua_call", test_geno_lua_call);
     gw_test_register("geno_define_presentation", test_geno_define_presentation);
+    gw_test_register("geno_define_skins255", test_geno_define_skins255);
     gw_test_register("geno_define_own_rows", test_geno_define_own_rows);
     gw_test_register("geno_gxtex_art", test_geno_gxtex_art);
     gw_test_register("geno_define_presentation_ck", test_geno_define_presentation_ck);

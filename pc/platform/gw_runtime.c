@@ -1969,16 +1969,11 @@ static int gw_sl_parse_player(const char *v, GwSlPlayer *p) {
     next = strchr(tok, '/');
     if (next != NULL) *next++ = '\0';
     if ((rest = gw_sl_after(tok, "c")) != NULL && gw_sl_all_digits(rest)) {
-      /* A costume id has a hard ceiling that does not depend on the disc: every per-costume
-       * runtime array the port rebuilds for an m-ex disc has sixteen rows, and
-       * ftData_MexInitKinds clamps a fighter's count to that. Refuse anything above it HERE -
-       * a bad costume used to travel all the way into the animation path and fault there
-       * (ftAnim_80070200), which is a miserable way to learn you typed c9 for a six-costume
-       * fighter. The per-fighter count is not known at parse time (it comes from MxDt.dat,
-       * which is not mounted yet); ftData_80085820 reports that one. */
+      /* 255 is the preload-all sentinel; playable ids are 0..254. The
+       * per-fighter count is validated after MxDt has been mounted. */
       int c = atoi(rest);
-      if (c < 0 || c >= 16) {
-        gw_log("gw: scene: rejected \"%s\" -- a costume id must be 0..15", tok);
+      if (c < 0 || c >= 255) {
+        gw_log("gw: scene: rejected \"%s\" -- a costume id must be 0..254", tok);
         return -1;
       }
       p->color = c;
@@ -3087,6 +3082,27 @@ static int test_scene_parse_vs_four(void) {
   return 0;
 }
 
+/* Explicit coordinator fixture: repeat Mario's existing assets, never create disc data. */
+int gw_Skins255_TestCount(void) {
+  const char *v = getenv("MELEE_SKINS255_TEST_COUNT"); char *end; long n;
+  extern int gw_Netplay_Enabled(void);
+  if (!v || !*v || gw_Netplay_Enabled()) return 0;
+  n = strtol(v, &end, 10);
+  return !*end && n >= 17 && n <= 255 ? (int)n : 0;
+}
+
+static int test_scene_parse_costumes255(void) {
+  const GwSceneConfig *c;
+  gw_SceneLaunch_LoadForTest("mode=vs;p1=mario/c64;p2=fox/c254");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->errors || c->p[0].color != 64 || c->p[1].color != 254) return 1;
+  gw_SceneLaunch_LoadForTest("mode=vs;p1=mario/c255");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (!c->errors) return 1;
+  gw_SceneLaunch_LoadForTest(NULL);
+  return 0;
+}
+
 static int test_scene_parse_stage(void) {
   const GwSceneConfig *c;
   gw_SceneLaunch_LoadForTest("mode=training;p1=fox;stage=ext:293");
@@ -3683,6 +3699,7 @@ void gw_scene_tests_register(void) {
   gw_test_register("scene_parse_vs_four", test_scene_parse_vs_four);
   gw_test_register("scene_cpu_idle_tokens", test_scene_cpu_idle_tokens);
   gw_test_register("match_turbo_rule", test_match_turbo_rule);
+  gw_test_register("scene_parse_costumes255", test_scene_parse_costumes255);
   gw_test_register("scene_parse_stage", test_scene_parse_stage);
   gw_test_register("scene_memcard_default", test_scene_memcard_default);
   gw_test_register("scene_parse_file_form", test_scene_parse_file_form);

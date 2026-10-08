@@ -13,6 +13,25 @@ int gw_Mex_FtCostumeCount(int internal);
 int gw_Mex_InternalForPortKind(int fk);
 int gw_Mex_CostumeVisIdx(int fk, int costume);
 
+static int test_skins255_coordinator_fixture(void) {
+  extern int gw_Skins255_TestCount(void);
+  extern uint8_t gw_gm_GetNumCostumesForCKind(uint8_t);
+  extern uint8_t gw_ftData_803C2360[], gw_CostumeListsForeachCharacter[];
+  int expected = gw_Skins255_TestCount(); uint32_t strings, first, last;
+  if (!expected) return 0;
+  if (gw_gm_GetNumCostumesForCKind(8) != expected) {
+    gw_test_fail("Mario coordinator fixture count differs from %d", expected); return 1;
+  }
+  strings = gw_r32(gw_ftData_803C2360);
+  first = gw_r32((void*)(uintptr_t)strings);
+  last = gw_r32((void*)(uintptr_t)(strings + (expected - 1) * 12));
+  if (!first || last != first || gw_r8(gw_CostumeListsForeachCharacter + 4) != expected) {
+    gw_test_fail("coordinator fixture did not preserve default strings at its highest index"); return 1;
+  }
+  gw_log("skins255: coordinator fixture %d installed in persistent guest memory", expected);
+  return 0;
+}
+
 static int test_u32_roundtrip(void) {
   unsigned char buf[8];
   gw_w32(buf, 0x12345678u);
@@ -485,6 +504,11 @@ void gw_tests_register_all(void) {
   gw_test_register("endian_wf32_is_big_endian", test_wf32_is_big_endian);
   gw_test_register("mem1_at_guest_base", test_mem1_at_guest_base);
   gw_test_register("mem1_aram_distinct", test_mem1_aram_distinct);
+  { extern int gw_ftData_PcTestCostumes(void);
+    gw_test_register("skins255_costume_descriptors", gw_ftData_PcTestCostumes);
+    { extern int gw_gm_PcTestLegacyCostumes(void);
+      gw_test_register("skins255_legacy_event_queue", gw_gm_PcTestLegacyCostumes); } }
+  gw_test_register("skins255_coordinator_fixture", test_skins255_coordinator_fixture);
   gw_test_register("mex_csp_frame_map", test_mex_csp_frame_map);
   gw_test_register("mex_kirby_costume_rows", test_mex_kirby_costume_rows);
   gw_test_register("unlock_all", test_unlock_all);

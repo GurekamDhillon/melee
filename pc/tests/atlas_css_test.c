@@ -3,7 +3,8 @@
 
 /* The fakes: every fighter has 4 costumes; Zelda is ck 19 and Sheik 20, shared only when the roster has no 20. */
 static int g_sheik = 1;
-static int f_costumes(void *u, int ck) { (void) u; (void) ck; return 4; }
+static int g_costumes = 4;
+static int f_costumes(void *u, int ck) { (void) u; (void) ck; return g_costumes; }
 static int f_random(void *u, const AtCss *c) { (void) u; return c->n_slots > 0 ? c->ck[0] : 0; }
 static int f_swap(void *u, int ck) { (void) u; return ck == 19 ? 20 : ck == 20 ? 19 : -1; }
 static int f_sheik_ok(void *u) { (void) u; return g_sheik; }
@@ -337,8 +338,25 @@ static void finish_leaves_mode_fields_one_player(void)
     CHECK(c.p[0].ck == 9 && c.p[0].costume == 2);
 }
 
+static void skins255_stepper(void)
+{
+    AtCss c; int i;
+    g_costumes = 255;
+    fresh(&c, 0x0, 0, 0, 29);
+    c.p[0].ck = 0;
+    for (i = 0; i < 255; ++i) {
+        CHECK(at_css_free_costume(&c, 0, 0, i, 1) == i);
+        c.p[0].costume = i;
+    }
+    CHECK(at_css_free_costume(&c, 0, 0, 255, 1) == 0);
+    CHECK(at_css_free_costume(&c, 0, 0, -1, -1) == 254);
+    c.p[1].kind = AT_CSS_CPU; c.p[1].ck = 0; c.p[1].costume = 128;
+    CHECK(at_css_free_costume(&c, 0, 0, 128, 1) == 129);
+    g_costumes = 4;
+}
 int main(void)
 {
+    skins255_stepper();
     ports_join(); legacy_rules_pick_undo_back(); legacy_rules_cards(); legacy_rules_costume(); legacy_rules_start();
     profile_rules(); legacy_rules_zelda(); tabs_visible(); ports_leave(); lobby_rules(); mouse_rules(); finish_state(); finish_leaves_mode_fields_group1(); finish_leaves_mode_fields_one_player();
     ATLAS_DONE("atlas css");

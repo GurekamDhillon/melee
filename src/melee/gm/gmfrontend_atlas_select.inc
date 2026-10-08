@@ -545,8 +545,8 @@ static void fas_submit_css(void)
         }
         if (tck >= 0) {
             char cname[24];
-            if (Geno_DefineCostumeName(tck, Ui_CssGet(FA_CG_COSTUME, target), cname, 24)) { /* step[24]: "9 / 16 " and a 16-character name fit */
-                cname[16] = '\0';
+            if (Geno_DefineCostumeName(tck, Ui_CssGet(FA_CG_COSTUME, target), cname, 24)) { /* step[24]: "255 / 255 " and a shortened name fit */
+                cname[13] = '\0';
                 sprintf(step, "%d / %d %s", Ui_CssGet(FA_CG_COSTUME, target) + 1, fs_costumes(tck), cname);
             } else {
                 sprintf(step, "%d / %d", Ui_CssGet(FA_CG_COSTUME, target) + 1, fs_costumes(tck));

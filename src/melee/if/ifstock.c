@@ -52,12 +52,12 @@ static char ifStock_SceneModels[] = "Stc_scemdls";
 #if defined(TARGET_PC)
 /* ---- Geno slice 6: a define's own stock icon ----------------------------------------------------------------------------------
  * Every stock-icon site below picks the icon by a TObj animation frame of the shared IfAll atlas (gm_80168BF8, ifStock_MexFrame). A define whose
- * package declares a stock icon gets a frame number no atlas has instead (gm_GenoStockFrame: IFSTOCK_GENO_FRAME + ck * 32 + costume), and this
+ * package declares a stock icon gets a frame number no atlas has instead (gm_GenoStockFrame: IFSTOCK_GENO_FRAME + ck * 256 + costume), and this
  * wrapper, which replaces HSD_TObjReqAnimAll in this file only, points that one TObj at the package's image: a table in which every entry is the
  * define's image, so the animation's own image key (frame 0) lands on it whatever index it holds. The images are built once per scene (the cache is
  * dropped in ifStock_802FAEC4) in the scene heap from the package's .gxtex (GX-tiled bytes copied as bytes; no TLUT: use rgb5a3 or rgba8). Nothing here
  * is simulation state. A file that is missing or not usable falls back to the donor's atlas frame. */
-#define IFSTOCK_GENO_FRAME 20000.0F
+#define IFSTOCK_GENO_FRAME 1000000.0F
 #define IFSTOCK_GENO_CACHE 12
 #define IFSTOCK_GENO_TBL 128
 extern int Geno_DefineArtOpen(int ck, int what, int costume);
@@ -139,7 +139,7 @@ static struct IfStockGenoArt* ifStock_GenoFind(int ck, int costume)
 static void ifStock_ReqAnim(HSD_TObj* tobj, f32 frame)
 {
     if (frame >= IFSTOCK_GENO_FRAME && tobj != NULL) {
-        int v = (int) (frame - IFSTOCK_GENO_FRAME), ck = v / 32, costume = v % 32;
+        int v = (int) (frame - IFSTOCK_GENO_FRAME), ck = v / 256, costume = v % 256;
         struct IfStockGenoArt* a = ifStock_GenoFind(ck, costume);
         if (a != NULL && a->desc != NULL) {
             tobj->imagetbl = a->tbl;

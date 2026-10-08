@@ -42,4 +42,19 @@ static void string_vector(void) {
   memset(buf,0xff,4);
   assert(!gw_slippi_wire_decode_string(buf,4,value,sizeof value,&used));
 }
-int main(void) { pad_vector(); ack_vector(); string_vector(); puts("slippi wire vectors passed"); return 0; }
+static void costumes255_vector(void) {
+  GwSlippiWireSelections s = {0}, decoded = {0};
+  GwSlippiWirePrep p = {0}, prep = {0};
+  uint8_t buf[32]; size_t n; int c;
+  for (c = 0; c < 255; ++c) {
+    s.character_color = (uint8_t)c;
+    n = gw_slippi_wire_encode_selections(buf, sizeof buf, &s);
+    assert(n && gw_slippi_wire_decode_selections(buf, n, &decoded));
+    assert(decoded.character_color == c);
+    p.character_color = (uint8_t)c;
+    n = gw_slippi_wire_encode_prep(buf, sizeof buf, &p);
+    assert(n && gw_slippi_wire_decode_prep(buf, n, &prep));
+    assert(prep.character_color == c);
+  }
+}
+int main(void) { costumes255_vector(); pad_vector(); ack_vector(); string_vector(); puts("slippi wire vectors passed"); return 0; }

@@ -378,7 +378,7 @@ static void np_cb_guest_hello(void *user, const uint8_t *info, int info_len, uin
     } else if (sscanf(s, "ck:%d/c%d", &gck, &gc) < 1 || gck < 0 || gck > 0x7F || gck == 0x21) {
         gck = 9;
     }
-    if (gc < 0 || gc > 15) gc = 0;
+    if (gc < 0 || gc > 254) gc = 0;
     np_build_scene(np.scene, sizeof np.scene, np.ck, np.color, gck, gc);
     snprintf((char *) blob, (size_t) cap, "%s", np.scene);
     *blob_len = (uint16_t) (strlen(np.scene) + 1);
@@ -3594,6 +3594,26 @@ static int test_lobby_envoy(void) {
 
 /* All stages: game 1 is ban-and-pick from the coin winner; the list travels as identities in
    chunks and comes back as the same external ids; the state names the list it goes with. */
+static int test_netplay_costumes255(void) {
+    char saved_scene[sizeof np.scene], blob[sizeof np.scene];
+    uint16_t len;
+    int c, rc = 0;
+    memcpy(saved_scene, np.scene, sizeof saved_scene);
+    for (c = 0; c <= 255; ++c) {
+        char hello[32], expected[32];
+        snprintf(hello, sizeof hello, "ck:8/c%d", c);
+        snprintf(expected, sizeof expected, "/c%d/hu", c == 255 ? 0 : c);
+        np_cb_guest_hello(NULL, (const uint8_t *) hello, (int) strlen(hello),
+                          (uint8_t *) blob, &len, sizeof blob);
+        if (strstr(strstr(blob, ";p2="), expected) == NULL) {
+            rc = lbt_fail("guest handshake preserves every valid costume byte");
+            break;
+        }
+    }
+    memcpy(np.scene, saved_scene, sizeof saved_scene);
+    return rc;
+}
+
 static int test_lobby_all_stages(void) {
     char m[GW_NET_LOBBY_MAX];
     int host_ext[LB_MAX_STAGES], n = 20, i, first, len;
@@ -3670,6 +3690,7 @@ static int test_lobby_groups(void) {
 }
 
 void gw_netplay_tests_register(void) {
+    gw_test_register("netplay_costumes255", test_netplay_costumes255);
     gw_test_register("netplay_lobby_groups", test_lobby_groups);
     gw_test_register("netplay_lobby_all_stages", test_lobby_all_stages);
     gw_test_register("netplay_lobby_game1", test_lobby_game1);

@@ -21,8 +21,22 @@ static int gn_define_fighter(gn_profile* p, const jdoc* d, int e, const char* wh
         gw_log("geno: %s: fighter.plan and fighter.animation must be plain file names", where); free(fm); return 0;
     }
     cs = jd_get(d, f, "costumes");
-    if (cs < 0 || d->n[cs].type != JN_ARR || d->n[cs].count < 1 || d->n[cs].count > 16) {
-        gw_log("geno: %s: fighter.costumes must list 1..16 costumes", where); free(fm); return 0;
+    if (cs < 0 || d->n[cs].type != JN_ARR || d->n[cs].count < 1 || d->n[cs].count > 255) {
+        gw_log("geno: %s: fighter.costumes must list 1..255 costumes", where); free(fm); return 0;
+    }
+    /* One allocation, sized from this fighter's count; free(fm) owns its tail too. */
+    {
+        int n = d->n[cs].count;
+        struct gn_fm* grown = (struct gn_fm*)realloc(fm, sizeof *fm + n * (64 + 48 + 48 + 24 + 1));
+        char* tail;
+        if (!grown) { free(fm); return 0; }
+        fm = grown; tail = (char*)(fm + 1);
+        fm->cos_file = (char (*)[64])tail; tail += n * 64;
+        fm->cos_joint = (char (*)[48])tail; tail += n * 48;
+        fm->cos_matanim = (char (*)[48])tail; tail += n * 48;
+        fm->cos_name = (char (*)[24])tail; tail += n * 24;
+        fm->cos_team = (signed char*)tail;
+        memset(fm + 1, 0, n * (64 + 48 + 48 + 24 + 1));
     }
     for (c = d->n[cs].first; c >= 0; c = d->n[c].next) {
         int i = fm->ncostume++;
@@ -74,8 +88,8 @@ static int gn_define_fighter(gn_profile* p, const jdoc* d, int e, const char* wh
     return 1;
 }
 
-/* slice 6: the optional entry-level "presentation": {"icon": "a.gxtex", "portrait": "b.gxtex" | [..16], "stock": "c.gxtex" | [..16]}.
- * Strict like the rest of a define: an unknown key, a name that is not a plain *.gxtex file name, or more than 16 entries refuses the
+/* slice 6: the optional entry-level "presentation": {"icon": "a.gxtex", "portrait": "b.gxtex" | [..255], "stock": "c.gxtex" | [..255]}.
+ * Strict like the rest of a define: an unknown key, a name that is not a plain *.gxtex file name, or more than 255 entries refuses the
  * entry with the reason in the log. Whether the file exists is checked when it is first used (and offline by tools.geno.check):
  * a missing file falls back to the donor's (or no) art and logs once. Nothing here is simulation state. */
 static int gn_pres_name_ok(const char* s)
@@ -96,16 +110,32 @@ static int gn_define_presentation(gn_profile* p, const jdoc* d, int e, int versi
         for (k = 0; k < GN_PRES_KINDS && strcmp(d->n[c].key, keys[k]); ++k) {}
         if (k == GN_PRES_KINDS) { gw_log("geno: %s: presentation key \"%s\" is not known (icon, portrait, stock, emblem)", where, d->n[c].key); return 0; }
     }
-    pr = (struct gn_pres*)calloc(1, sizeof *pr);
+    /* Reserve only the supplied art entries in a single owned tail allocation. */
+    {
+        int total = 0;
+        for (k = 0; k < GN_PRES_KINDS; ++k) {
+            int v = jd_get(d, pv, keys[k]);
+            if (v < 0) continue;
+            if (d->n[v].type == JN_STR) total++;
+            else if (d->n[v].type == JN_ARR && d->n[v].count >= 1 && d->n[v].count <= 255) total += d->n[v].count;
+            else { gw_log("geno: %s: presentation list must have 1..255 entries", where); return 0; }
+        }
+        pr = (struct gn_pres*)calloc(1, sizeof *pr + total * 64);
+    }
     if (!pr) return 0;
     for (k = 0; k < GN_PRES_KINDS; ++k) {
         int v = jd_get(d, pv, keys[k]), q, n = 0;
         if (v < 0) continue;
+        {
+            int j, offset = 0;
+            for (j = 0; j < k; ++j) offset += pr->n[j];
+            pr->file[k] = (char (*)[64])(pr + 1) + offset;
+        }
         if (d->n[v].type == JN_STR) {
             if (!gn_pres_name_ok(d->n[v].str)) goto bad;
             snprintf(pr->file[k][0], sizeof pr->file[k][0], "%s", d->n[v].str);
             n = 1;
-        } else if (d->n[v].type == JN_ARR && k != GN_PRES_ICON && k != GN_PRES_EMBLEM && d->n[v].count >= 1 && d->n[v].count <= 16) {
+        } else if (d->n[v].type == JN_ARR && k != GN_PRES_ICON && k != GN_PRES_EMBLEM && d->n[v].count >= 1 && d->n[v].count <= 255) {
             for (q = d->n[v].first; q >= 0; q = d->n[q].next) {
                 if (d->n[q].type != JN_STR || !gn_pres_name_ok(d->n[q].str)) goto bad;
                 snprintf(pr->file[k][n++], sizeof pr->file[k][0], "%s", d->n[q].str);
@@ -116,7 +146,7 @@ static int gn_define_presentation(gn_profile* p, const jdoc* d, int e, int versi
     p->pres = pr;
     return 1;
 bad:
-    gw_log("geno: %s: presentation.%s must be one plain *.gxtex file name (portrait and stock: or 1..16 of them; icon and emblem: one)", where, keys[k]);
+    gw_log("geno: %s: presentation.%s must be one plain *.gxtex file name (portrait and stock: or 1..255 of them; icon and emblem: one)", where, keys[k]);
     free(pr);
     return 0;
 }

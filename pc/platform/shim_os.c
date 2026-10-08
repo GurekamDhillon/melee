@@ -80,13 +80,17 @@ static uint32_t gw_geno_region_size(void) {
   return decided ? GW_GENO_PERSIST_SIZE : 0u;
 }
 
+static uint32_t gw_costume_region_size(void) {
+  extern uint32_t gw_CostumeRegionSize(void);
+  return gw_CostumeRegionSize();
+}
 static uintptr_t gw_arena_lo;
 static uintptr_t gw_arena_hi;
 
 static void gw_arena_ensure(void) {
   if (gw_arena_lo == 0) {
     gw_arena_lo = (uintptr_t)gw_mem1 + GW_ARENA_LO_OFFSET;
-    gw_arena_hi = (uintptr_t)gw_mem1 + gw_mem1_size - GW_MEX_PERSIST_SIZE - gw_geno_region_size();
+    gw_arena_hi = (uintptr_t)gw_mem1 + gw_mem1_size - GW_MEX_PERSIST_SIZE - gw_geno_region_size() - gw_costume_region_size();
   }
 }
 
@@ -105,6 +109,12 @@ void gw_mex_persist_region(uint32_t *base, uint32_t *size) {
 void gw_geno_persist_region(uint32_t *base, uint32_t *size) {
   *base = (uint32_t)((uintptr_t)gw_mem1 + gw_mem1_size - GW_MEX_PERSIST_SIZE - gw_geno_region_size());
   *size = gw_geno_region_size(); /* 0 when no mod defines articles: nothing reserved */
+}
+
+/* Boot costume tables and their interpreter mirror, below Geno's reservation. */
+void gw_costume_persist_region(uint32_t *base, uint32_t *size) {
+  *size = gw_costume_region_size();
+  *base = (uint32_t)((uintptr_t)gw_mem1 + gw_mem1_size - GW_MEX_PERSIST_SIZE - gw_geno_region_size() - *size);
 }
 
 /* ---- guest scratch for pointer arguments handed to GUEST callbacks -------------------------

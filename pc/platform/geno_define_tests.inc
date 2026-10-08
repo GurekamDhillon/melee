@@ -306,6 +306,31 @@ static int test_geno_define_resolver(void)
  * or a common_states row may then name 303 + i. Without the key the bound stays 302, and a donor define never gets it. */
 #define GN_T_NONE_R(rows, entry_extra) "{\"geno\":9,\"fighters\":[{\"define\":{\"key\":\"t9\",\"name\":\"T9\",\"base\":\"none\"," \
     "\"common\":\"melee.common.v1\",\"resources\":\"mod:files\"},\"fighter\":{\"plan\":\"plan.json\",\"animation\":\"bank.dat\",\"costumes\":[" GN_T_COS("a.dat", "") "]" rows "}" entry_extra "}]}"
+static int test_geno_define_skins255(void)
+{
+    static gn_registry r;
+    static char costumes[40000], text[45000];
+    int c, n = 0, rc = 0;
+    gn_registry_clear(&r);
+    for (c = 0; c < 255; ++c)
+        n += snprintf(costumes + n, sizeof costumes - n,
+            "%s{\"file\":\"skin%d.dat\",\"joint\":\"joint%d\",\"matanim\":\"mat%d\"}", c ? "," : "", c, c, c);
+    snprintf(text, sizeof text, GN_T_NONE(9, "%s", ""), costumes);
+    if (gn_parse_text(&r, text, "skins255") != 1 || !r.p[0].fm || r.p[0].fm->ncostume != 255) {
+        gw_test_fail("255 costume definition did not parse"); rc = 1;
+    } else for (c = 0; c < 255; ++c) {
+        char expected[32];
+        snprintf(expected, sizeof expected, "skin%d.dat", c);
+        if (strcmp(r.p[0].fm->cos_file[c], expected)) rc = 1;
+        snprintf(expected, sizeof expected, "joint%d", c);
+        if (strcmp(r.p[0].fm->cos_joint[c], expected)) rc = 1;
+        snprintf(expected, sizeof expected, "mat%d", c);
+        if (strcmp(r.p[0].fm->cos_matanim[c], expected)) rc = 1;
+    }
+    gn_registry_clear(&r);
+    return rc;
+}
+
 static int test_geno_define_own_rows(void)
 {
     static gn_registry r;
@@ -414,11 +439,11 @@ static int test_geno_define_presentation(void)
     if (gn_parse_text(&r, GN_T_HEAD(9, ",\"presentation\":\"a.gxtex\""), "notobj") != 0) { gw_test_fail("a non-object presentation accepted"); rc = 1; }
     gn_registry_clear(&r);
     {
-        static char text[1600];
+        static char text[5000];
         int i, n = snprintf(text, sizeof text, "{\"geno\":9,\"fighters\":[{\"define\":{\"key\":\"t9\",\"name\":\"T9\",\"base\":\"mario\",\"common\":\"melee.common.v1\",\"resources\":\"retail:mario\"},\"presentation\":{\"stock\":[");
-        for (i = 0; i < 17; ++i) n += snprintf(text + n, sizeof text - n, "%s\"s%d.gxtex\"", i ? "," : "", i);
+        for (i = 0; i < 256; ++i) n += snprintf(text + n, sizeof text - n, "%s\"s%d.gxtex\"", i ? "," : "", i);
         snprintf(text + n, sizeof text - n, "]}}]}");
-        if (gn_parse_text(&r, text, "17") != 0) { gw_test_fail("17 stock icons accepted"); rc = 1; }
+        if (gn_parse_text(&r, text, "256") != 0) { gw_test_fail("256 stock icons accepted"); rc = 1; }
         gn_registry_clear(&r);
     }
     (void)buf;

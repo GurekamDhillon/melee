@@ -405,3 +405,11 @@ iteration, exchanged and compared by `gw_net.c`). Widened 2026-10-05; the design
   (`MELEE_RB_HASH_LEGACY=1`) reproduces the old value.
 - Cost: `rb: tick ... hash X/call` in the log; about 2 microseconds a frame for two fighters.
 - Negative control: `MELEE_RB_PERTURB=<field>` on one peer (see the env table). Run the soak pair as `_build/audit-20261003/checksum/run_soak.sh`.
+
+### Costume-count coordinator fixture
+
+`MELEE_SKINS255_TEST_COUNT=64` (17..255) gives Mario that many selectable
+costume descriptors. Retail rows stay intact; additional rows reuse Mario's
+costume-0 model strings and visibility row. This is an offline visual-test
+fixture, disabled by default; do not use it for online play. No assets are generated.
+`MELEE_SKINS255_TEST_COUNT=255` exercises ids 0..254 (255 remains preload-all).

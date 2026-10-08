@@ -142,9 +142,19 @@ void fn_801695BC(u8 arg0, u8 arg1, u8 arg2, const u8* arg3, s8* arg4)
     s32 ncolors_s32;
     s32 color_i;
     u8 ncolors;
+#if defined(TARGET_PC)
+    s8 colors[254];
+#else
     s8 colors[6];
+#endif
 
     ncolors = gm_GetNumCostumesForCKind(arg0);
+#if defined(TARGET_PC)
+    /* Legacy Classic queues use signed bytes with -1/-2 sentinels and signed
+     * storage. ID 254 equals the -2 terminator: exclude it from this legacy
+     * enemy queue only; VS/select keep all 255. */
+    if (ncolors > 254) ncolors = 254;
+#endif
 #if defined(TARGET_PC)
     /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/ClassicScenePrep14.asm, @ 0x8017CFC0. Replaces the external-ID null literal 0x21 with ChKind_None. */
     if ((s8) arg0 != ChKind_None) {
@@ -155,8 +165,8 @@ void fn_801695BC(u8 arg0, u8 arg1, u8 arg2, const u8* arg3, s8* arg4)
         for (i = 0; i < ncolors; i++) {
             colors[i] = (s8) i;
         }
-        if ((s8) arg1 == (s8) arg0) {
-            colors[(s8) arg2] = -1;
+        if ((s8) arg1 == (s8) arg0 && arg2 < ncolors) {
+            colors[arg2] = -1;
         }
         for (i = 0; i < ncolors_s32; i++) {
             s8* other = fn_801695BC_rand_color(ncolors_s32, colors);
@@ -204,8 +214,12 @@ void fn_801697FC(s8 character, s8 costume, s8 new_character, s8 new_costume,
 #endif
         return;
     }
+#if defined(TARGET_PC)
+    if ((u8) costume == 254) costume = 0;
+    if (ncolors > 254) ncolors = 254;
+#endif
     if (new_character == character && costume == new_costume) {
-        costume = (costume + 1) % ncolors;
+        costume = ((u8) costume + 1) % ncolors;
     }
     for (i = 0; buf[i] != -2; i++) {
         buf[i] = costume;
@@ -410,6 +424,10 @@ void fn_80169C54(s8 arg0, s8 arg1)
             if (st->xB == 0) {
                 count = gm_GetNumCostumesForCKind(4U);
 #endif
+#if defined(TARGET_PC)
+                /* Copy hats have six authored rows, regardless of Kirby's count. */
+                if (count > 6) count = 6;
+#endif
                 for (costume_idx = 0; costume_idx < count; costume_idx++) {
                     costumes[costume_idx] = costume_idx;
                     ncostumes++;
@@ -485,7 +503,7 @@ static inline void fn_80169F50_inline(s8 costume, struct lbl_8046B488_t* gp,
     s32 costume_id;
     if (character == 4 && gp->xE != 0) {
         i = 0;
-        costume_id = costume;
+        costume_id = (u8) costume;
         for (; gp->x20[i] != -2; i++) {
             if (gp->x20[i] == -1) {
                 continue;
@@ -529,7 +547,7 @@ void fn_80169F50(s8 arg0, s8 arg1)
             if (gp->x124[i] == -1) {
                 continue;
             }
-            Player_80031DA8(gp->x124[i], v);
+            Player_80031DA8(gp->x124[i], (u8) v);
         }
     }
 
@@ -824,7 +842,7 @@ void fn_8016A4C8(void)
                 Player_SetPlayerCharacter(spawn_slot, gp->xA2[gm_80169384()]);
                 Player_SetStocks(spawn_slot, 1);
                 {
-                    int costume_id = gp->x20[gm_80169384()];
+                    int costume_id = (u8) gp->x20[gm_80169384()];
                     Player_SetCostumeId(spawn_slot, costume_id);
                     Player_SetControllerIndex(
                         spawn_slot,
@@ -946,6 +964,10 @@ struct lbl_8046B668_t* gm_8016A98C(void)
 
 int gm_8016A998(s8 arg0, s8 arg1)
 {
+#if defined(TARGET_PC)
+    /* This legacy Event queue uses -2 as terminator, not costume 254. */
+    if ((u8) arg1 == 254) arg1 = 0;
+#endif
     int i;
     struct lbl_8046B668_t* ptr = gm_8016A98C();
     for (i = 0; i < 27; i++) {
@@ -961,6 +983,9 @@ int gm_8016A998(s8 arg0, s8 arg1)
 
 int gm_8016A9E8(u8 arg0, s8 arg1)
 {
+#if defined(TARGET_PC)
+    if ((u8) arg1 == 254) arg1 = 0;
+#endif
     int i;
     int found;
     struct lbl_8046B668_t* ptr = gm_8016A98C();
@@ -986,6 +1011,9 @@ int gm_8016A9E8(u8 arg0, s8 arg1)
 
 bool gm_8016AC44(s8 ckind, s8 costume_id)
 {
+#if defined(TARGET_PC)
+    if ((u8) costume_id == 254) costume_id = 0;
+#endif
     s32 idx;
     s32 i;
 
@@ -1009,3 +1037,20 @@ bool gm_8016AC44(s8 ckind, s8 costume_id)
     }
     return false;
 }
+
+#if defined(TARGET_PC)
+int gm_PcTestLegacyCostumes(void)
+{
+    struct lbl_8046B668_t saved = lbl_8046B668;
+    int failed;
+    memzero(&lbl_8046B668, sizeof lbl_8046B668);
+    lbl_8046B668.arr2[0] = -2;
+    failed = gm_8016A998(CKind_Mario, (s8)254) != 0 ||
+             lbl_8046B668.arr2[0] != 0 || lbl_8046B668.arr2[1] != -2;
+    failed |= gm_8016A9E8(CKind_Mario, (s8)253) != 2 ||
+              (u8)lbl_8046B668.arr2[0] != 253 ||
+              lbl_8046B668.arr2[1] != 0 || lbl_8046B668.arr2[2] != -2;
+    lbl_8046B668 = saved;
+    return failed;
+}
+#endif

@@ -146,7 +146,7 @@ static void gwr_boot_load(void);
  * (GW_FTFUNC_KIND_MAX): 46 * 4 + 46 * 512 = 0x5CB8 at most. */
 #define GW_MEX_MEXDATA_SIZE 0x6000u
 #define GW_MEX_STACK_SIZE 0x10000u
-#define GW_MEX_GETDATA_SIZE 0x10000u /* MEX_GetData(8): the costume table mirrored into MEM1 */
+
 
 /* MoveLogic (slot 3) is a MotionState[] table the engine indexes by `motion_id - fp->x18`. Its
  * layout (mirroring src/melee/ft/types.h MotionState, 0x20 bytes) is:
@@ -194,6 +194,7 @@ static int gw_mex_any_installed;      /* ANY m-ex guest code is installed (exec 
 
 static int gw_mex_any_installed;      /* any m-ex guest code is installed (exec trap guard) */
 static uint32_t gw_mex_stack_top;     /* guest stack top (r1), shared */
+static uint32_t gw_mex_getdata_capacity;
 static uint32_t gw_mex_getdata_buf;   /* guest buffer backing the MEX_GetData(8) shim */
 
 #define gw_mex_ff (gw_mex_k->ff)
@@ -1381,6 +1382,9 @@ int gw_Mex_CostumeInfo(int ck, int field) {
  * .visibility_lookup_idx (m-ex lets costumes share one; Sonic's all use 0). The costume id itself
  * when there is no mexData or no row for it. */
 int gw_Mex_CostumeVisIdx(int fk, int costume) {
+    extern int gw_Skins255_TestCount(void);
+    if (fk == 0 && costume >= 5 && gw_Skins255_TestCount()) return 0;
+
     int k = gw_Mex_InternalForPortKind(fk);
     uint32_t tbl;
     int32_t v;
@@ -1393,7 +1397,7 @@ int gw_Mex_CostumeVisIdx(int fk, int costume) {
         return costume;
     }
     v = (int32_t) gw_r32((const void *) (uintptr_t) (tbl + (uint32_t) costume * 16u + 12u));
-    return (v >= 0 && v < 16) ? v : costume;
+    return (v >= 0 && v < 255) ? v : 0;
 }
 
 /* The retail fighter this one was cloned from: the retail kind whose default onLoad it shares
@@ -1896,21 +1900,88 @@ static uint32_t gw_mex_mexdt_field(uint32_t root, uint32_t arch, uint32_t field)
  * matanim, archive) are heap - MEM1 - already. A copy is current for the call that asked, which is
  * when a blob reads it (OnLoad, right after the costume loaded). Kinds past the buffer, or with no
  * list, get a NULL row. */
+/* Costume descriptors outlive HSD_CreateMainHeap. Reserve exactly the summed
+ * boot counts in MEM1, separately from the fixed m-ex interpreter reservation. */
+static uint32_t gw_costume_data_bytes, gw_costume_mirror_bytes, gw_costume_region_bytes;
+static uint32_t gw_costume_align(uint32_t n) { return (n + 31u) & ~31u; }
+uint32_t gw_CostumeRegionSize(void) {
+    extern uint8_t gw_CostumeListsForeachCharacter[];
+    extern int gw_Geno_DefineCount(void), gw_Geno_DefineCKAt(int);
+    extern int gw_Geno_DefineCostumeCount(int), gw_Skins255_TestCount(void);
+    uint32_t counts[GW_PORT_FT_MEX0 + GW_MEX_SLOTS];
+    uint32_t fk, n, fixture;
+    int i;
+    if (gw_costume_region_bytes) return gw_costume_region_bytes;
+    for (fk = 0; fk < GW_PORT_FT_MEX0; ++fk) {
+        uint32_t have = gw_r8(gw_CostumeListsForeachCharacter + fk * 8u + 4u);
+        n = (uint32_t)gw_Mex_FtCostumeCount((int)fk);
+        counts[fk] = n > have && fk < 27u ? n : have;
+        if (counts[fk] > have) gw_costume_data_bytes += gw_costume_align(n * 12u) + gw_costume_align(n * 24u);
+    }
+    for (fk = GW_PORT_FT_MEX0; fk < GW_PORT_FT_MEX0 + GW_MEX_SLOTS; ++fk) {
+        int k = gw_Mex_SlotInternal((int)fk - GW_PORT_FT_MEX0);
+        n = k >= 0 ? (uint32_t)gw_Mex_FtCostumeCount(k) : 0u;
+        counts[fk] = n;
+        if (n) gw_costume_data_bytes += gw_costume_align(n * 12u) + gw_costume_align(n * 24u);
+    }
+    fixture = (uint32_t)gw_Skins255_TestCount();
+    if (fixture > counts[0]) {
+        counts[0] = fixture;
+        gw_costume_data_bytes += gw_costume_align(fixture * 12u) + gw_costume_align(fixture * 24u);
+    }
+    for (i = 0; i < gw_Geno_DefineCount(); ++i) {
+        int kind = gw_Geno_DefineCKAt(i) - 1;
+        n = (uint32_t)gw_Geno_DefineCostumeCount(kind);
+        if (kind < (int)GW_PORT_FT_MEX0 || kind >= (int)(GW_PORT_FT_MEX0 + GW_MEX_SLOTS)) continue;
+        if (n) gw_costume_data_bytes += gw_costume_align(n * 12u);
+        else n = counts[0]; /* the native Mario donor */
+        counts[kind] = n;
+        gw_costume_data_bytes += gw_costume_align(n * 24u);
+    }
+    gw_costume_mirror_bytes = (GW_PORT_FT_MEX0 + GW_MEX_SLOTS) * 8u;
+    for (fk = 0; fk < GW_PORT_FT_MEX0 + GW_MEX_SLOTS; ++fk) gw_costume_mirror_bytes += counts[fk] * 24u;
+    gw_costume_region_bytes = 32u + gw_costume_data_bytes + gw_costume_align(gw_costume_mirror_bytes);
+    gw_log("skins255: persistent pool %u descriptor bytes, %u mirror bytes", gw_costume_data_bytes, gw_costume_mirror_bytes);
+    return gw_costume_region_bytes;
+}
+void* gw_PcCostumeAlloc(int bytes) {
+    extern void gw_costume_persist_region(uint32_t*, uint32_t*);
+    uint32_t base, size, used, n = gw_costume_align((uint32_t)bytes);
+    gw_costume_persist_region(&base, &size);
+    used = gw_r32((void*)(uintptr_t)base); /* allocation cursor follows snapshots */
+    if (bytes <= 0 || used + n > gw_costume_data_bytes) gw_panic("skins255: descriptor pool exhausted (%u + %u of %u)", used, n, gw_costume_data_bytes);
+    gw_w32((void*)(uintptr_t)base, used + n);
+    memset((void*)(uintptr_t)(base + 32u + used), 0, n);
+    return (void*)(uintptr_t)(base + 32u + used);
+}
+
 static uint32_t gw_mex_costume_mirror(void) {
     extern uint8_t gw_CostumeListsForeachCharacter[];
     const uint32_t kinds = GW_PORT_FT_MEX0 + GW_MEX_SLOTS;
     uint32_t k, at = kinds * 8u;
-    uint8_t *buf = (uint8_t *) (uintptr_t) gw_mex_getdata_buf;
-    if (gw_mex_getdata_buf == 0u) {
-        return 0u;
+    uint32_t needed = at;
+    uint8_t *buf;
+    for (k = 0; k < kinds; ++k) {
+        const uint8_t *row = gw_CostumeListsForeachCharacter + k * 8u;
+        if (gw_r32(row)) needed += gw_r8(row + 4u) * 0x18u;
     }
+    if (needed > gw_mex_getdata_capacity) {
+        extern void gw_costume_persist_region(uint32_t*, uint32_t*);
+        uint32_t base, size;
+        gw_costume_persist_region(&base, &size);
+        if (needed > gw_costume_mirror_bytes) gw_panic("skins255: costume mirror exceeds boot counts");
+        gw_mex_getdata_buf = base + 32u + gw_costume_data_bytes;
+        gw_mex_getdata_capacity = gw_costume_mirror_bytes;
+        gw_log("mex: costume mirror allocated %u bytes", needed);
+    }
+    buf = (uint8_t *)(uintptr_t)gw_mex_getdata_buf;
     for (k = 0; k < kinds; ++k) {
         const uint8_t *row = gw_CostumeListsForeachCharacter + k * 8u;
         uint32_t list = gw_r32(row);
         uint32_t n = gw_r8(row + 4u);
         uint32_t bytes = n * 0x18u;
         uint32_t dst = 0u;
-        if (list != 0u && n != 0u && at + bytes <= GW_MEX_GETDATA_SIZE) {
+        if (list != 0u && n != 0u && at + bytes <= gw_mex_getdata_capacity) {
             dst = gw_mex_getdata_buf + at;
             memcpy(buf + at, (const void *) (uintptr_t) list, bytes); /* big-endian both sides */
             at += bytes;
@@ -3409,14 +3480,11 @@ static void gw_mex_report_unwired_slots(int kind) {
  * grFunction blobs are ordinary MEXFunctions and run on the same interpreter. Whichever of the
  * two loads first pays for it; a stage-only run never touches the fighter path at all. */
 void gw_Mex_RuntimeInit(void) {
-    uint32_t getdata_base;
     if (gw_mex_mexdata_base != 0u) {
         return;
     }
     gw_mex_mexdata_base = (uint32_t) (uintptr_t) gw_mex_persist_alloc(GW_MEX_MEXDATA_SIZE);
     gw_mex_stack_base = (uint32_t) (uintptr_t) gw_mex_persist_alloc(GW_MEX_STACK_SIZE);
-    getdata_base = (uint32_t) (uintptr_t) gw_mex_persist_alloc(GW_MEX_GETDATA_SIZE);
-    gw_mex_getdata_buf = getdata_base;
     gw_mex_stack_top = gw_mex_stack_base + GW_MEX_STACK_SIZE - 0x100u;
     gw_mex_r2 = gw_mex_mexdata_base;
     gw_ppc_set_bridge(gw_mex_interp_resolve, NULL, 0u, 0u); /* code lives in added ranges */
@@ -3465,6 +3533,7 @@ void gw_Mex_InvalidateAfterMem1Restore(void) {
     gw_mex_stack_base = 0u;
     gw_mex_stack_top = 0u;
     gw_mex_getdata_buf = 0u;
+    gw_mex_getdata_capacity = 0u;
     gw_mex_r2 = 0u;
     gw_mex_persist_used = 0u; /* the region's CONTENTS were restored too; rewind, do not leak */
     gw_Mex_GrInvalidate();

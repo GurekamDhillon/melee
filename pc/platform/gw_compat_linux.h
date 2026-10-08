@@ -284,6 +284,7 @@ SHORT GetAsyncKeyState(int vk);
 #define VK_F1 0x70
 #define VK_F9 0x78
 #define VK_F10 0x79
+#define VK_F11 0x7A
 #define VK_NUMPAD0 0x60 /* ..VK_NUMPAD0+9: contiguous, matches gw_script.c's arithmetic use */
 #define VK_OEM_1 0xBA      /* ;: */
 #define VK_OEM_3 0xC0      /* `~ */

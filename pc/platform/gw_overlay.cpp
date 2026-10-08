@@ -476,8 +476,11 @@ void build_panel() {
  * nothing - the game draws. */
 extern "C" void gw_Console_Draw(void); /* gw_console.cpp: the console and script drawing */
 
+extern "C" void gw_Video_PollFullscreenKeys(void); /* shim_vi.c: F11 / Alt+Enter */
+
 extern "C" void gw_Overlay_DrawPanel(void) {
   gw_Console_Draw(); /* independent of MELEE_OVERLAY */
+  gw_Video_PollFullscreenKeys();
   apply_title();
   if (!overlay_enabled()) {
     return;

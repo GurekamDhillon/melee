@@ -214,7 +214,7 @@ static void render_screen(int h, float w, AtHits *hits)
 static void page_counts(void)
 {
     CHECK(ntables() == 12);
-    CHECK(tbl("fe_items_set_video")->n == 6 && tbl("fe_items_set_audio")->n == 3 && tbl("fe_items_set_controls")->n == 16);      /* 12 + the four Rumble, Port N rows */
+    CHECK(tbl("fe_items_set_video")->n == 7 && tbl("fe_items_set_audio")->n == 3 && tbl("fe_items_set_controls")->n == 16);      /* 12 + the four Rumble, Port N rows */
     CHECK(tbl("fe_items_set_online")->n == 6 && tbl("fe_items_set_gameplay")->n == 12 && tbl("fe_items_remap")->n == 20 && tbl("fe_items_howto_online")->n == 6);   /* gameplay 10 + Language + Erase Data... */
     CHECK(tbl("fe_items_erase")->n == 6);                                                                                        /* the six retail operations */
     CHECK(tbl("fe_items_vs_setup")->n == 10 && tbl("fe_items_online")->n == 9);
@@ -308,9 +308,9 @@ static void options_the_host_shows(void)
     scr.title = "T"; scr.subtitle = "S"; scr.items = T->rows; scr.n_items = T->n; scr.art = 0;
     reset_set(); g_gv = 1;
     h = show(&scr, &v);
-    it = &slot_of(h)->sc.items[1];                                          /* Render Scale: six options */
+    it = &slot_of(h)->sc.items[2];                                          /* Render Scale: six options */
     CHECK(it->vkind == AT_VAL_CHOICE && it->n_opts == 6 && strcmp(it->text, "1x") == 0 && strcmp(it->opt[5], "4x") == 0);
-    g_gv = 0; resubmit(h, &scr, &v); CHECK(strcmp(slot_of(h)->sc.items[1].text, "Auto (window)") == 0);   /* the text follows the value, every frame */
+    g_gv = 0; resubmit(h, &scr, &v); CHECK(strcmp(slot_of(h)->sc.items[2].text, "Auto (window)") == 0);   /* the text follows the value, every frame */
     gw_Ui_SetClose(h);
     /* the remap page's Game Input has 22 options: more than the record holds, so the walker shows the text */
     T = tbl("fe_items_remap");

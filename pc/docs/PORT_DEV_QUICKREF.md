@@ -124,6 +124,8 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | `MELEE_TURBO_RENDER=N` | present every Nth game frame in turbo (default 8, 0 never; 0-10000); hidden/minimised windows never present |
 | `MELEE_TURBO_DRAWS=1` | retain display lists and skinning on unpresented turbo match frames; normally suppressed while render callbacks still run |
 | `MELEE_FPS=u` / `MELEE_FPS=120` | uncapped / capped interpolated presentation; realtime logic remains 60 Hz |
+| `MELEE_FULLSCREEN=1` | start in borderless desktop fullscreen (wins over video.cfg `fullscreen`; never in turbo). F11 / Alt+Enter toggle in game and save it |
+| `MELEE_FULLSCREEN_TOGGLE_AT=N` | toggle fullscreen once at present N (unattended capture of the toggle) |
 | `MELEE_MODS_DIR=<path>` | parent of mod folders; use a Windows path (`pwd -W` in Git Bash), not `/c/...` |
 | `MELEE_TURBO_HASHLOG=<path>` | optional per-match-frame full snapshot hash CSV for realtime/turbo parity checks |
 | `MELEE_XHASH_LOG=<csv>` | cross-platform state digest, one row per live match frame: `frame,rb,wide,mem,glob` (RB_GameHash; every fighter's and item's struct/GObj/joint tree with heap addresses and sound ids masked; masked MEM1; masked game globals). Words that point into the image are masked so a Windows and a Linux run compare (`tools/xplat/`, `docs/xplat-netplay.md` in the workspace). Needs no write-watch, so it runs on Linux |
@@ -306,7 +308,7 @@ Restore vanilla before handing the machine back (same write, with the original 6
   pending. See workspace `_build/tmp/codex-controls-remap-report.md`.
 
 ### The keyboard does not play
-The keyboard is hotkeys only (F9/F10, the console's backquote, `gd.key` for scripts); it never
+The keyboard is hotkeys only (F9/F10, F11 and Alt+Enter for fullscreen, the console's backquote, `gd.key` for scripts); it never
 drives a pad. For unattended runs use `MELEE_PAD_SCRIPT` (or `gd.input` / the console `input`
 command). `MELEE_INPUT=none` (old value: `keyboard`) opens no devices and leaves port 1 as a
 controller at rest.

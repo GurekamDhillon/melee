@@ -358,6 +358,7 @@ int main(int argc, char *argv[]) {
   (void)gw_env_int("MELEE_WINDOW_W", &win_w);
   (void)gw_env_int("MELEE_WINDOW_H", &win_h);
 
+  extern int gw_Video_Fullscreen(void);
   const AuroraConfig config = {
       .appName = "Melee PC",
       .cachePath = gw_cache_path(),
@@ -379,6 +380,8 @@ int main(int argc, char *argv[]) {
       .windowPosY = (have_y && win_y >= 0) ? win_y : -1,
       .windowWidth = (uint32_t)win_w,
       .windowHeight = (uint32_t)win_h,
+      /* video.cfg "fullscreen" / MELEE_FULLSCREEN: SDL3 borderless desktop fullscreen. */
+      .startFullscreen = !gw_turbo_enabled() && gw_Video_Fullscreen() != 0,
       .logCallback = &gw_aurora_log,
       .logLevel = LOG_INFO,
       /* The port manages MEM1 and ARAM itself, because game code tells main memory from ARAM by

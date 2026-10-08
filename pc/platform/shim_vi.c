@@ -471,6 +471,7 @@ static int gw_video_fps = 60;
 static int gw_video_vsync = 1;
 static int gw_video_immediate; /* MELEE_VSYNC=2: vsync off and Aurora forced to Immediate (not saved) */
 static int gw_video_show_fps;
+static int gw_video_fullscreen; /* borderless desktop fullscreen (SDL3's default for SDL_SetWindowFullscreen) */
 
 static const char *gw_video_cfg_path(void) {
   static char buf[MAX_PATH];
@@ -524,6 +525,8 @@ static void gw_video_load(void) {
         gw_video_vsync = iv != 0;
       } else if (sscanf(line, " show_fps = %d", &iv) == 1) {
         gw_video_show_fps = iv < 0 ? 0 : iv > 2 ? 2 : iv;
+      } else if (sscanf(line, " fullscreen = %d", &iv) == 1) {
+        gw_video_fullscreen = iv != 0;
       }
     }
     fclose(f);
@@ -545,6 +548,10 @@ static void gw_video_load(void) {
     gw_video_vsync = v != 0 && v != 2;
     gw_video_immediate = v == 2;
   }
+  env = getenv("MELEE_FULLSCREEN");
+  if (env != NULL && env[0] != '\0') {
+    gw_video_fullscreen = atoi(env) != 0;
+  }
   env = getenv("MELEE_SHOW_FPS");
   if (env != NULL && env[0] != '\0') {
     int mode = atoi(env);
@@ -565,6 +572,8 @@ static void gw_video_save(void) {
   fprintf(f, "fps = %d\n", gw_video_fps);
   fprintf(f, "vsync = %d\n", gw_video_vsync);
   fprintf(f, "show_fps = %d\n", gw_video_show_fps);
+  fprintf(f, "# fullscreen: 1 = borderless desktop fullscreen (F11 / Alt+Enter toggle it)\n");
+  fprintf(f, "fullscreen = %d\n", gw_video_fullscreen);
   fclose(f);
 }
 
@@ -666,6 +675,70 @@ void gw_Video_SetShowFps(int on) {
   gw_video_save();
 }
 
+/* Fullscreen. The setting (video.cfg "fullscreen", MELEE_FULLSCREEN over it) is applied by main()
+ * through AuroraConfig.startFullscreen, so the window is created fullscreen and never flashes
+ * windowed. A turbo (offscreen/scripted) run never starts fullscreen. This is SDL3's borderless
+ * desktop fullscreen: Aurora's set_fullscreen calls SDL_SetWindowFullscreen without choosing a
+ * display mode, so the desktop mode stays and no mode change happens. */
+int gw_Video_Fullscreen(void) {
+  gw_video_load();
+  return gw_video_fullscreen;
+}
+
+void gw_Video_SetFullscreen(int on) {
+  gw_video_load();
+  gw_video_fullscreen = on != 0;
+  if (VIGetWindowFullscreen() != (gw_video_fullscreen != 0)) {
+    VISetWindowFullscreen(gw_video_fullscreen != 0);
+  }
+  gw_log("gw: video: fullscreen %s (borderless desktop)", gw_video_fullscreen ? "on" : "off");
+  gw_video_save();
+}
+
+/* F11 and Alt+Enter, once per press, only while this game's window has the keyboard (a global
+ * GetAsyncKeyState would also fire for a key pressed in another program). Called every present
+ * from the overlay slot (gw_Overlay_DrawPanel), so it works with the F9 overlay off. */
+static int gw_this_window_focused_vi(void) {
+#ifdef _WIN32
+  HWND fg = GetForegroundWindow();
+  DWORD pid = 0;
+  if (fg != NULL) GetWindowThreadProcessId(fg, &pid);
+  return pid == GetCurrentProcessId();
+#else
+  return gw_window_focused() ? 1 : 0;
+#endif
+}
+
+void gw_Video_PollFullscreenKeys(void) {
+  static int f11_was_down, alt_enter_was_down;
+  int f11, alt_enter;
+  /* MELEE_FULLSCREEN_TOGGLE_AT=N: toggle once at present N, for an unattended capture that cannot
+   * press a key (the same reason as MELEE_OVERLAY_PANEL). */
+  {
+    static int at = -2, count;
+    if (at == -2) {
+      const char *e = getenv("MELEE_FULLSCREEN_TOGGLE_AT");
+      at = (e != NULL && e[0] != ' ') ? atoi(e) : -1;
+    }
+    if (at > 0 && ++count == at) {
+      gw_log("gw: video: MELEE_FULLSCREEN_TOGGLE_AT reached");
+      gw_Video_SetFullscreen(!VIGetWindowFullscreen());
+    }
+  }
+  if (gw_turbo || !gw_this_window_focused_vi()) {
+    f11_was_down = alt_enter_was_down = 1; /* a key held across a focus change is not a press */
+    return;
+  }
+  f11 = (GetAsyncKeyState(VK_F11) & 0x8000) != 0;
+  alt_enter = (GetAsyncKeyState(VK_MENU) & 0x8000) != 0 && (GetAsyncKeyState(VK_RETURN) & 0x8000) != 0;
+  if ((f11 && !f11_was_down) || (alt_enter && !alt_enter_was_down)) {
+    gw_log("gw: video: %s pressed", f11 && !f11_was_down ? "F11" : "Alt+Enter");
+    gw_Video_SetFullscreen(!VIGetWindowFullscreen());
+  }
+  f11_was_down = f11;
+  alt_enter_was_down = alt_enter;
+}
+
 /* ---- screenshots ----------------------------------------------------------------------------
  * gw_Screenshot(path) writes the next presented frame to a PNG: the final image at the render
  * scale, without the host ImGui overlay (the game's own DevText overlay is part of the frame).
@@ -761,6 +834,7 @@ bool gw_frame_init(void) {
   gw_video_load();
   gw_video_apply_scale();
   gw_video_apply_rate();
+  gw_log("gw: video: fullscreen setting %d, window is %s", gw_video_fullscreen, VIGetWindowFullscreen() ? "fullscreen" : "windowed");
   if (gw_turbo || !gw_video_vsync) {
     aurora_set_present_mode(!gw_turbo && gw_video_immediate);
     aurora_enable_vsync(false);

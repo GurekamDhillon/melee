@@ -272,15 +272,18 @@ void gw_Skins_Build(int (*base_fn)(int)) {
 
 /* ---- queries by FighterKind (the ftData side) --------------------------------------------------- */
 
-int gw_Skins_Added(int fk) { return sk_added(fk); }
+/* Tests that install a throw-away Geno define on a kind a mounted skin also targets ask the registry to answer as if empty. */
+static int sk_suspended;
+void gw_Skins_Suspend(int on) { sk_suspended = on; }
+int gw_Skins_Added(int fk) { return sk_suspended ? 0 : sk_added(fk); }
 int gw_Skins_Base(int fk) { return sk_base(fk); }
-int gw_Skins_Total(int fk) { return sk_total(fk); }
+int gw_Skins_Total(int fk) { return sk_suspended ? sk_base(fk) : sk_total(fk); }
 int gw_Skins_Count(void) { int fk, t = 0; for (fk = 0; fk < SK_FK_MAX; ++fk) t += sk_reg.added[fk]; return t; }
 
 /* Costume c of fighter fk: which 0 = file, 1 = joint symbol, 2 = matanim symbol (NULL = none). A generated partner row that
  * has no files of its own answers NULL for file: the installer then copies the partner's costume 0. */
 const char *gw_Skins_String(int fk, int c, int which) {
-    const sk_costume *r = sk_row(fk, c);
+    const sk_costume *r = sk_suspended ? NULL : sk_row(fk, c);
     const char *s;
     if (!r) return NULL;
     s = which == 0 ? r->file : which == 1 ? r->joint : r->matanim;
@@ -299,15 +302,15 @@ static int sk_fk(int ck) { return ck >= 0 ? gw_SceneLaunch_CKindToFKind(ck) : -1
 /* The fighter's costume count with its skins, or 0 when it has none (the caller keeps its own answer). */
 int gw_Skins_CostumeCountCK(int ck) {
     int fk = sk_fk(ck);
-    return (fk >= 0 && sk_added(fk) > 0) ? sk_total(fk) : 0;
+    return (fk >= 0 && !sk_suspended && sk_added(fk) > 0) ? sk_total(fk) : 0;
 }
 int gw_Skins_TeamCostumeCK(int ck, int team) {
     int fk = sk_fk(ck);
-    return fk >= 0 ? sk_team(fk, team) : -1;
+    return (fk >= 0 && !sk_suspended) ? sk_team(fk, team) : -1;
 }
 int gw_Skins_NameCK(int ck, int costume, char *out, int cap) {
     int fk = sk_fk(ck);
-    const sk_costume *r = fk >= 0 ? sk_row(fk, costume) : NULL;
+    const sk_costume *r = (fk >= 0 && !sk_suspended) ? sk_row(fk, costume) : NULL;
     if (!r || !out || cap <= 0) return 0;
     snprintf(out, (size_t) cap, "%s", r->name);
     return 1;
@@ -326,7 +329,7 @@ int gw_Skins_FromWireCK(int ck, int wire) {
 
 static const char *sk_art_file(int ck, int what, int costume) {
     int fk = sk_fk(ck);
-    const sk_costume *r = fk >= 0 ? sk_row(fk, costume) : NULL;
+    const sk_costume *r = (fk >= 0 && !sk_suspended) ? sk_row(fk, costume) : NULL;
     if (!r || r->partner_row) return NULL;
     if (what == 1) return r->csp[0] ? r->csp : NULL;
     if (what == 2) return r->stock[0] ? r->stock : NULL;

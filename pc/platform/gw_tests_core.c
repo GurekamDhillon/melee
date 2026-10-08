@@ -34,7 +34,7 @@ static int test_skins255_coordinator_fixture(void) {
 
 /* Every installed skin: the fighter's table holds base + skins, the file strings are the registry's, the menus' count agrees,
  * and the wire costume round-trips. Passes trivially (and says so) when no skin mod is mounted. */
-static int test_skins_installed_tables(void) {
+int gw_skins_installed_tables_check(void) {
   extern int gw_Skins_Added(int), gw_Skins_Base(int), gw_Skins_Total(int), gw_Skins_Count(void);
   extern const char *gw_Skins_String(int fk, int c, int which);
   extern int gw_Skins_ToWireCK(int ck, int color), gw_Skins_FromWireCK(int ck, int wire);
@@ -42,7 +42,9 @@ static int test_skins_installed_tables(void) {
   extern uint8_t gw_gm_GetNumCostumesForCKind(uint8_t);
   extern uint8_t gw_ftData_803C2360[], gw_CostumeListsForeachCharacter[];
   int fk, fighters = 0, rows = 0, rc = 0;
+  extern void gw_ftData_MexInitKinds(void);
   if (gw_Skins_Count() == 0) { gw_log("skins: no skin mod mounted - installed-table test has nothing to check"); return 0; }
+  gw_ftData_MexInitKinds(); /* idempotent; builds the tables in this test's isolation when nothing has yet */
   for (fk = 0; fk < 127; ++fk) {
     int added = gw_Skins_Added(fk), base = gw_Skins_Base(fk), total = gw_Skins_Total(fk), c, ck, n;
     uint32_t strings;
@@ -72,6 +74,14 @@ static int test_skins_installed_tables(void) {
   }
   gw_log("skins: installed tables verified: %d fighters, %d skin rows", fighters, rows);
   return rc;
+}
+
+/* Each test runs isolated (gw_test_isolate_*: guest memory is put back afterwards), so tables an earlier test built in the persistent pool
+ * are gone by now: on an m-ex disc the check runs inside test_mex_ftdata_rows, which builds them; here only without MxDt. */
+static int test_skins_installed_tables(void) {
+  extern int gw_Mex_CssIconCount(void);
+  if (gw_Mex_CssIconCount() != 0) { gw_log("skins: installed tables are checked inside mex_ftdata_rows on an m-ex disc"); return 0; }
+  return gw_skins_installed_tables_check();
 }
 
 static int test_u32_roundtrip(void) {

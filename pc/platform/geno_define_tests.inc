@@ -511,7 +511,18 @@ static int test_geno_gxtex_art(void)
 
 /* The same, through the live registry by CK (the way the menus and the match setup ask): install a base "none" define for the test, resolve its CK,
  * read its costume count, team colours, names and art flags; then restore the caller's registry. A missing art file answers -1 and does not crash. */
+static int test_geno_define_presentation_ck_body(void);
 static int test_geno_define_presentation_ck(void)
+{
+    /* it installs a throw-away define on kind 126, which a mounted Geno skin pack may also target: the skin registry answers empty meanwhile */
+    extern void gw_Skins_Suspend(int on);
+    int rc;
+    gw_Skins_Suspend(1);
+    rc = test_geno_define_presentation_ck_body();
+    gw_Skins_Suspend(0);
+    return rc;
+}
+static int test_geno_define_presentation_ck_body(void)
 {
     extern int gw_Geno_DefineArtTex(int ck, int what, int costume);
     extern int gw_Geno_DefineArtOpen(int ck, int what, int costume);

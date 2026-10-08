@@ -4059,6 +4059,10 @@ static int test_mex_ftdata_rows(void) {
             }
         }
     }
+    {
+        extern int gw_skins_installed_tables_check(void); /* the tables are live only inside this test (each test is isolated) */
+        if (gw_skins_installed_tables_check() != 0) rc = 1;
+    }
     gw_mexdt = saved; gw_mexdt_base = saved_base; gw_mexdt_size = saved_size;
     return rc;
 }

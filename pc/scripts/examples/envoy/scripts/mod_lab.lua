@@ -816,6 +816,10 @@ return function(D)
    for seat=1,2 do g.netbuild_stage(seat,st[seat].record,st[seat].ops,st[seat].program) end
    return ('staged game %d of seed %d: %s | %s word %s'):format(game,seed,st[1].digest,st[2].digest,g.netbuild().word)
   elseif word=='tamper' then self.net_tamper=true;if self.net then self.net.staged=nil end;return 'tampered: this client stages a different build (test hook)'
+  elseif word=='run' then -- stage 5: the run record (live or saved) and what the lobby did with it
+   local np=g.netplay and g.netplay();local r=np and np.envoy and np.envoy.run;local rec=r and r.record or (g.netplay_run and g.netplay_run('saved'))
+   if not rec then return ('envoynet run: no record (status %s)'):format(tostring(r and r.status)) end
+   return ('envoynet run: status=%s mode=%s digest=%s state=%s me=%s seed=%s game=%s round=%s score=%s-%s resumed=%s abandoned=%s interrupted=%s'):format(tostring(r and r.status),rec.mode,rec.digest,rec.state,tostring(rec.me),tostring(rec.seed),tostring(rec.game),tostring(rec.round),tostring(rec.score[1]),tostring(rec.score[2]),tostring(r and r.resumed),tostring(r and r.abandoned),tostring(r and r.interrupted))
   end
   return 'envoynet status | auto <0..3|x> | pick <0..3> | tamper'
  end

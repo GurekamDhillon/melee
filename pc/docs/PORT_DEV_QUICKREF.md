@@ -415,3 +415,10 @@ costume descriptors. Retail rows stay intact; additional rows reuse Mario's
 costume-0 model strings and visibility row. This is an offline visual-test
 fixture, disabled by default; do not use it for online play. No assets are generated.
 `MELEE_SKINS255_TEST_COUNT=255` exercises ids 0..254 (255 remains preload-all).
+
+### Envoy private-room proof ports
+
+`MELEE_NETPLAY_PORT=<1025..65535>` selects the UDP port of a menu-hosted room (default 51500).
+For two-client local proof use a unique port and `MELEE_NETPLAY_BIND=127.0.0.1`, with a separate
+matchmaking server bound to 127.0.0.1 on its own port. Stage-5 proof commands are in the workspace
+report; `MELEE_NET_SIM` / `MELEE_NET_SIM_FILE` can supply lag, jitter and loss.

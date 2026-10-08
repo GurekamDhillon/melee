@@ -157,5 +157,35 @@ return function()
   for seat=1,2 do out[seat].engine=nil end
   return out
  end
+ -- Online Envoy, stage 5 ("Continue offline"): what one seat of a saved online set held, as offline bag material. `run` is the saved run record
+ -- (gd.netplay_run: seed, round, picks[g]={host pick,guest pick}, me). The build is REGENERATED from the seed and the resolved picks (set_build), never
+ -- copied, so it is the build the set had at its last resolved reward. Each held record becomes a common white drive with that one modifier at its tier
+ -- (one merge per tier above the first: a merged drive may sit above its depth tier); keystones go in the keystone list. Pure.
+ -- Returns {drives=,keystones=,depth=,seat=,game=}; depth is a floor that opens enough slots for the drives.
+ function P.set_carry(D,run,seat)
+  assert(type(run)=='table' and run.seed and run.seed>0,'no run record')
+  seat=seat or ((run.me or 0)+1)
+  local game=math.max(1,run.round or 1)
+  local eq=P.set_build(D,run.seed,game,seat,run.picks)
+  local meta={};for _,m in ipairs(D.mod_pool) do meta[m.id]=m end
+  local ids={};for id in pairs(eq) do ids[#ids+1]=id end;table.sort(ids)
+  local out={drives={},keystones={},seat=seat,game=game,raised={}}
+  for _,id in ipairs(ids) do
+   local t=eq[id];if type(t)~='number' then t=1 end
+   local m=meta[id]
+   if m and m.kind=='keystone' then out.keystones[#out.keystones+1]=id
+   else
+    -- A drive is rolled at a depth: the record must be available there (min_depth) and its tier is at least the depth's own (min(tiers,3,1+depth//5)), more by merging.
+    -- A record whose floor is deeper than its online tier (pyre, cinder, shatter, keen, brutal, ruthless, finishing) therefore carries at that floor's tier: listed in `raised`.
+    local depth=m and m.min_depth or 0;local base=math.min(m and #m.tiers or 3,3,1+math.floor(depth/5));local tier=math.max(t,base)
+    if tier>t then out.raised[#out.raised+1]=id end
+    out.drives[#out.drives+1]={seed=D.mod_codec.seed_for(run.seed,game,0,seat*7+5+#out.drives),depth=depth,colour='white',rarity='common',affixes={{id=id,tier=tier}},merged=(tier>base) and (tier-base) or nil}
+   end
+  end
+  out.depth=math.max(run.depth or math.max(0,(run.game or 1)-1),5*math.max(0,#out.drives-4))
+  out.loop=run.loop or 0
+  out.stocks=run.stocks;out.continues=run.continues;out.lost=run.lost
+  return out
+ end
  return P
 end

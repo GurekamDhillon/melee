@@ -2,6 +2,7 @@
 #include "gmscene.h"
 
 #include "gm_1A36.h"
+#include "gm_1A3F.h"
 #include "gm_unsplit.h"
 #include "gmmain_lib.h"
 #include "gmscdata.h"
@@ -858,6 +859,21 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                 pad_queue_count = RB_Iterations(pad_queue_count);
             } else {
                 pad_queue_count = SyncTest_Iterations(pad_queue_count);
+            }
+        }
+        if (info != NULL && info->scene_kind == 2) {
+            /* A dead peer cannot confirm another rollback frame. Leave from
+             * the render tick, which still runs when there are zero logic
+             * iterations, and bypass Results so no cancelled-game result
+             * advances the interrupted run's start record. */
+            extern int Netplay_PeerLeft(void);
+            extern int Netplay_Enabled(void);
+            extern void Frontend_BackToOnline(void);
+            if (Netplay_Enabled() && Netplay_PeerLeft()) {
+                Frontend_BackToOnline();
+                gm_ChangeGameModeAfterCurrentScene(GM_FRONTEND);
+                gm_801A4B60();
+                break;
             }
         }
         {

@@ -463,9 +463,11 @@ return function(D)
   self.seen_slots,self.seen_keys,self.seen_tier,self.seen_loop=D.mod_progression.slots(ctx),D.mod_progression.keystones(ctx),D.mod_progression.tier(ctx),D.mod_progression.run_loop(self.retail.mode,ctx)
   -- A starter drive and a starting keystone (one random one, from the run seed), so the first opponents already roll
   -- against a build: the drive goes straight into slot 1. One panel announces both.
-  local record=self.mods.drives.loot:roll(seed_for(seed,0,0,5+self:salt()),ctx)
-  self.starter=record
   local lines={}
+  local record
+  if dev and dev.carry then lines=self:carry_in(dev.carry) else
+  record=self.mods.drives.loot:roll(seed_for(seed,0,0,5+self:salt()),ctx)
+  self.starter=record
   local idx=self:acquire(record,'starter')
   if idx then local ok,msg=self:equip(idx,1);self.starter_text=ok and msg or nil;self.new_keys={}
    lines[#lines+1]={text='Your starter drive',colour='gold'}
@@ -482,9 +484,35 @@ return function(D)
    lines[#lines+1]=kl[1] or '';lines[#lines+1]=kl[2] or ''
    lines[#lines+1]={text='Keystones are permanent for this run.',colour='muted'}
   else self:log('starting keystone refused: '..tostring(why)) end
+  end
   if dev and dev.build then self:dev_fill(ctx,dev.build_seed or seed);self:log('developer build rolled at depth '..ctx.depth..': '..self:equipped_count()..' drives, '..#self:keystone_ids()..' keystones') end
   if #lines>0 then self.hud:announce(lines) end
   self:log('run begin seed='..seed)
+ end
+ -- Online Envoy, stage 5: a run that CARRIES the build of an online set that ended with the connection ("envoy continue"): the held records come in as drives
+ -- (mod_progression.set_carry) and are equipped in order, the keystones are chosen. No starter and no starting keystone: the build is the set's. Returns the panel lines.
+ function H:carry_in(carry)
+  local lines={{text='Continued from an online set',colour='gold'}};local b=self:bag();local placed,left=0,0
+  self.starter=nil;self.new_keys={}
+  for _,r in ipairs(carry.drives) do
+   local ok,why=pcall(function() self.mods.drives.loot:validate(r) end)
+   if not ok then left=left+1;self:log('carried drive refused ('..tostring(r.affixes and r.affixes[1] and r.affixes[1].id)..'): '..tostring(why))
+   else
+    local idx=self:acquire(r,'carried')
+    if idx then local slot=self:free_slot();if slot then local eok=self:equip(idx,slot);if eok then placed=placed+1 end end end
+    self.new_keys={}
+   end
+  end
+  local kept={}
+  for _,kid in ipairs(carry.keystones) do
+   local ok,why=b:choose_keystone(kid)
+   if ok then kept[#kept+1]=self:keystone_rule(kid) and self:keystone_rule(kid).label or kid else self:log('carried keystone '..tostring(kid)..' refused: '..tostring(why)) end
+  end
+  self:touch();self.starting_keystone=carry.keystones[1]
+  lines[#lines+1]=('%d drives carried%s'):format(placed,left>0 and (', '..left..' could not be') or '')
+  if #kept>0 then lines[#lines+1]='Keystone: '..table.concat(kept,', ') end
+  self:log(('carried in an online build: %d drives equipped, %d refused, keystones %s'):format(placed,left,table.concat(carry.keystones,',')))
+  return lines
  end
  -- A drive that arrives in the bag by the run itself (the starter): returns the bag index or nil + the reason.
  function H:acquire(r,how)

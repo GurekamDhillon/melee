@@ -17,6 +17,7 @@ void gw_SlippiMode_SceneBegin(int scene_kind) { assert(scene_kind == 2); ++scene
 void gw_MatchRules_SceneBegin(int scene_kind) { (void) scene_kind; }
 void gw_Script_NetBuildSceneBegin(void) {}
 void gw_Script_NetBuildApply(void) {}
+void gw_Geno_FaultRolledBack(void) {}
 static void tick(int online_frame) { assert(online_frame == 1); ++ticks; }
 void gw_log(const char *fmt, ...) { (void) fmt; }
 /* Profiling is observational; perturbations must stay disabled in this seam. */

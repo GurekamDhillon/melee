@@ -92,6 +92,27 @@ block_7:
     }
     part = ftParts_GetBoneIndex(fp, part);
 block_9:
+#if defined(TARGET_PC)
+    {
+        /* A base "none" define runs the donor's action scripts, whose effect words name the donor's body parts. The
+         * define's parts table has no joint for some of them (part_to_joint gives FTPART_INVALID): fp->parts[0xFF] is
+         * past the array, and the queued effect carried that garbage as its joint (efAsync_QueueProcessDeferred ->
+         * lb_8000B1CC, ACCESS_VIOLATION on landing out of an item throw). No joint, no effect. Retail data and every other
+         * define keep the old path (a bad part there is a data error). */
+        extern int Geno_DefineIsNone(int kind);
+        if (Geno_DefineIsNone(fp->kind) &&
+            ((u32) part >= (u32) ftPartsTable[fp->kind]->parts_num || fp->parts[part].joint == NULL))
+        {
+            static unsigned char said[256];
+            if (fp->kind >= 0 && fp->kind < 256 && !said[fp->kind]) {
+                said[fp->kind] = 1;
+                OSReport("geno: kind %d: an effect (%d) at a body part the define has no joint for (part %d) is skipped; "
+                         "the donor's script named it\n", fp->kind, gfx_id, (int) part);
+            }
+            return;
+        }
+    }
+#endif
     if (gfx_id < 0x250) {
         goto block_11;
     }

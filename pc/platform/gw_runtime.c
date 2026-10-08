@@ -1971,12 +1971,14 @@ static int gw_sl_parse_player(const char *v, GwSlPlayer *p) {
     if ((rest = gw_sl_after(tok, "c")) != NULL && gw_sl_all_digits(rest)) {
       /* 255 is the preload-all sentinel; playable ids are 0..254. The
        * per-fighter count is validated after MxDt has been mounted. */
-      int c = atoi(rest);
-      if (c < 0 || c >= 255) {
+      /* or a netplay WIRE costume (gw_skins_core.h): 0x40000000 | a skin's identity, resolved to this install's
+       * index when the match is set up (gw_SceneLaunch_PlayerColor): the peer's skin, or the default */
+      long cl = strtol(rest, NULL, 10);
+      if (cl < 0 || cl > 0x7FFFFFFFL || (cl >= 255 && !(cl & 0x40000000L))) {
         gw_log("gw: scene: rejected \"%s\" -- a costume id must be 0..254", tok);
         return -1;
       }
-      p->color = c;
+      p->color = (int) cl;
     } else if ((rest = gw_sl_after(tok, "cpu")) != NULL && gw_sl_all_digits(rest)) {
       p->slot_type = GW_SL_PK_CPU;
       p->cpu_level = atoi(rest);
@@ -2659,8 +2661,13 @@ int gw_SceneLaunch_PlayerSlotType(int n) {
   return (n >= 0 && n < GW_SL_SLOTS) ? gw_sl_cfg.p[n].slot_type : -1;
 }
 int gw_SceneLaunch_PlayerColor(int n) {
+  extern int gw_Skins_FromWireCK(int ck, int wire);
+  int color;
   gw_sl_load();
-  return (n >= 0 && n < GW_SL_SLOTS) ? gw_sl_cfg.p[n].color : -1;
+  if (n < 0 || n >= GW_SL_SLOTS) return -1;
+  color = gw_sl_cfg.p[n].color;
+  if (color >= 255) color = gw_sl_cfg.p[n].ckind >= 0 ? gw_Skins_FromWireCK(gw_sl_cfg.p[n].ckind, color) : 0;
+  return color;
 }
 int gw_SceneLaunch_PlayerCpuKind(int n) {
   gw_sl_load();
@@ -3086,7 +3093,10 @@ static int test_scene_parse_vs_four(void) {
 int gw_Skins255_TestCount(void) {
   const char *v = getenv("MELEE_SKINS255_TEST_COUNT"); char *end; long n;
   extern int gw_Netplay_Enabled(void);
+  int i;
   if (!v || !*v || gw_Netplay_Enabled()) return 0;
+  for (i = 0; i < gw_Mods_ActiveCount(); ++i) /* the fixture and real skin mods do not mix */
+    if (strcmp(gw_Mods_Kind(gw_Mods_ActiveAt(i)), "skin") == 0) return 0;
   n = strtol(v, &end, 10);
   return !*end && n >= 17 && n <= 255 ? (int)n : 0;
 }

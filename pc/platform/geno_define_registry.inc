@@ -496,7 +496,11 @@ static struct gn_fm* gn_fm_for_kind(int kind)
     return p >= 0 ? r->p[p].fm : NULL;
 }
 int gw_Geno_DefineIsNone(int kind) { return gn_fm_for_kind(kind) != NULL; }
-int gw_Geno_DefineCostumeCount(int kind) { struct gn_fm* fm = gn_fm_for_kind(kind); return fm ? fm->ncostume : 0; }
+int gw_Skins_Added(int fk); /* gw_skins_boot.inc */
+const char* gw_Skins_String(int fk, int c, int which);
+/* A base "none" define's costumes: the ones it declares plus the skins installed for it. Native: the declared ones alone. */
+int gw_Geno_DefineCostumeCountNative(int kind) { struct gn_fm* fm = gn_fm_for_kind(kind); return fm ? fm->ncostume : 0; }
+int gw_Geno_DefineCostumeCount(int kind) { struct gn_fm* fm = gn_fm_for_kind(kind); return fm ? fm->ncostume + gw_Skins_Added(kind) : 0; }
 /* which: 0 animation bank file, 1 plan file, 2 costume model file, 3 its joint symbol, 4 its matanim symbol (NULL = none) */
 const char* gw_Geno_DefineString(int kind, int which, int costume)
 {
@@ -504,6 +508,7 @@ const char* gw_Geno_DefineString(int kind, int which, int costume)
     if (!fm) return NULL;
     if (which == 0) return fm->anim_file;
     if (which == 1) return fm->plan_file;
+    if (costume >= fm->ncostume && which >= 2 && which <= 4) return gw_Skins_String(kind, costume, which - 2); /* a skin's row */
     if (costume < 0 || costume >= fm->ncostume) return NULL;
     if (which == 2) return fm->cos_file[costume];
     if (which == 3) return fm->cos_joint[costume];
@@ -539,7 +544,7 @@ static const gn_profile* gn_define_profile_ck(int ck)
 int gw_Geno_DefineCostumeCountCK(int ck)
 {
     const gn_profile* p = gn_define_profile_ck(ck);
-    return p && p->fm ? p->fm->ncostume : 0;
+    return p && p->fm ? p->fm->ncostume + gw_Skins_Added(ck - 1) : 0;
 }
 /* the costume a team battle colour (0 red, 1 blue, 2 green) uses, or -1 when the define is not a base "none" one */
 int gw_Geno_DefineTeamCostume(int ck, int team)
@@ -548,15 +553,18 @@ int gw_Geno_DefineTeamCostume(int ck, int team)
     return p ? gn_fm_team_costume(p->fm, team) : -1;
 }
 /* the declared name of a costume ("" when it has none; 0 when the define is not a base "none" one or the costume is out of range) */
+int gw_Skins_NameCK(int ck, int costume, char* out, int cap);
 int gw_Geno_DefineCostumeName(int ck, int costume, char* out, int cap)
 {
-    const gn_profile* p = gn_define_profile_ck(ck);
+    const gn_profile* p;
+    if (gw_Skins_NameCK(ck, costume, out, cap)) return 1; /* a skin costume's own name, for any fighter */
+    p = gn_define_profile_ck(ck);
     if (!p || !p->fm || costume < 0 || costume >= p->fm->ncostume || !out || cap <= 0) return 0;
     snprintf(out, (size_t)cap, "%s", p->fm->cos_name[costume]);
     return out[0] != 0;
 }
 /* 1 when the package declares art of this kind (0 icon, 1 portrait, 2 stock, 3 emblem) */
-int gw_Geno_DefineHasArt(int ck, int what, int costume) { return gn_pres_file(gn_define_profile_ck(ck), what, costume) != NULL; }
+int gw_Geno_DefineHasArt(int ck, int what, int costume) { return gw_Skins_HasArtCK(ck, what, costume) || gn_pres_file(gn_define_profile_ck(ck), what, costume) != NULL; }
 /* the file's bytes, from the mod's files/ by name: malloc'd, the caller frees; NULL when the define declares none or the file is missing
  * (logged once per file). Host only: the game side gets a gxtex handle or a kit texture, never this pointer. */
 static void* gn_pres_read(const gn_profile* p, const char* name, uint32_t* len)
@@ -576,10 +584,14 @@ int gw_Geno_DefineArtTex(int ck, int what, int costume)
 {
     extern int gw_Kit_TexAddGxtex(const char* key, const uint8_t* blob, size_t len);
     extern int gw_Kit_TexHsdFind(const char* key);
-    const gn_profile* p = gn_define_profile_ck(ck);
-    const char* file = gn_pres_file(p, what, costume);
+    const gn_profile* p;
+    const char* file;
     char key[96];
     uint32_t len = 0; void* raw; int tex;
+    tex = gw_Skins_ArtTexCK(ck, what, costume); /* a skin costume's own art first */
+    if (tex >= 0) return tex;
+    p = gn_define_profile_ck(ck);
+    file = gn_pres_file(p, what, costume);
     if (!file) return -1;
     snprintf(key, sizeof key, "gn:%s:%d:%s", p->define_key, what, file);
     tex = gw_Kit_TexHsdFind(key);
@@ -597,9 +609,13 @@ int gw_Geno_DefineArtTex(int ck, int what, int costume)
 int gw_Geno_DefineArtOpen(int ck, int what, int costume)
 {
     extern int gw_GxTex_OpenBlob(const unsigned char* blob, uint32_t len, const char* label);
-    const gn_profile* p = gn_define_profile_ck(ck);
-    const char* file = gn_pres_file(p, what, costume);
+    const gn_profile* p;
+    const char* file;
     uint32_t len = 0; void* raw; int h;
+    h = gw_Skins_ArtOpenCK(ck, what, costume); /* a skin costume's own art first */
+    if (h >= 0) return h;
+    p = gn_define_profile_ck(ck);
+    file = gn_pres_file(p, what, costume);
     if (!file) return -1;
     raw = gn_pres_read(p, file, &len);
     if (!raw) return -1;

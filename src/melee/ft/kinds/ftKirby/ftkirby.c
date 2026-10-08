@@ -2500,7 +2500,12 @@ ftKirby_CostumeArchive* ftKb_Init_803C9FC8[Ft_Kind_Max] = {
 int ftKb_CopyCostumeRow(int costume)
 {
     extern int Mex_CostumeVisIdx(int, int);
-    int row = Mex_CostumeVisIdx((int) Ft_Kind_Kirby, costume);
+    extern int Skins_KirbyRow(int fk, int costume);
+    int row = Skins_KirbyRow((int) Ft_Kind_Kirby, costume); /* a Kirby skin's declared hat row */
+    if (row >= 0 && row < FTKB_COPY_COSTUMES) {
+        return row;
+    }
+    row = Mex_CostumeVisIdx((int) Ft_Kind_Kirby, costume);
     return (row >= 0 && row < FTKB_COPY_COSTUMES) ? row : 0;
 }
 #define FTKB_COPY_ROW(fp) ftKb_CopyCostumeRow((int) (fp)->x619_costume_id)

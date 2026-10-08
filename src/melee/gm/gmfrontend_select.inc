@@ -772,7 +772,13 @@ static void fs_css_port(int p)
         }
         return;
     }
-    if (in.trig & PAD_TRIGGER_L) {
+    if ((in.trig & (PAD_TRIGGER_L | PAD_TRIGGER_R)) && s->card == p && s->ck >= 0 && fs_costumes(s->ck) > 12) {
+        /* skins: on your own card with a long costume list, L/R skip ten (X/Y step one); the fighters' pages are on the grid */
+        int dir = (in.trig & PAD_TRIGGER_R) ? 1 : -1;
+        s->costume = fs_free_costume(p, s->ck, s->costume + dir * 10, dir);
+        sfxMove();
+        in.trig &= ~(u64) (PAD_TRIGGER_L | PAD_TRIGGER_R);
+    } else if (in.trig & PAD_TRIGGER_L) {
         fcs.page = (fcs.page + fcs.pages - 1) % fcs.pages;
         sfxMove();
     } else if (in.trig & PAD_TRIGGER_R) {
@@ -987,7 +993,7 @@ static const char* fs_css_hint(char* buf)
     }
     if (s->card >= 0) {
         FsPort* c = &fcs.p[s->card];
-        if (s->card == 0) return "Your card: X/Y costume, A back to the fighters.";
+        if (s->card == 0) return "Your card: X/Y costume, L/R skip 10, A back.";
         if (c->kind == FS_OFF) return "A: add a CPU here.";
         if (c->kind == FS_CPU) return "CPU: A pick its fighter, X/Y level, Z remove.";
         return "Another player's card.";

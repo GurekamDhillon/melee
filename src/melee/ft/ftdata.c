@@ -1603,6 +1603,42 @@ static const char* ftData_PcFixtureAt(int internal, int c, int which)
     return ftData_PcFixtureString.matanim_joint_name;
 }
 
+/* Skin costumes (pc/platform/gw_skins_boot.inc): a fighter's own rows first (`native_at`), then the registry's rows for it. A partner
+ * row with no files of its own (Nana, Sheik) repeats this kind's costume 0. */
+extern int Skins_Added(int fk);
+extern const char* Skins_String(int fk, int c, int which);
+static struct {
+    int fk, native;
+    const char* (*native_at)(int, int, int);
+} ftData_PcRows;
+static const char* ftData_PcRowString(int internal, int c, int which)
+{
+    if (c < ftData_PcRows.native) {
+        return ftData_PcRows.native_at(internal, c, which);
+    }
+    return Skins_String(ftData_PcRows.fk, c, which);
+}
+static void ftData_PcInstallRows(int fk, int native, int have, const char* (*native_at)(int, int, int), int internal)
+{
+    int added = Skins_Added(fk), c;
+    ftData_PcRows.fk = fk;
+    ftData_PcRows.native = native;
+    ftData_PcRows.native_at = native_at;
+    ftData_PcInstallCostumes(fk, native + added, have, ftData_PcRowString, internal, PcCostumeAlloc);
+    /* a partner row that named no files repeats the kind's own costume 0 */
+    for (c = native; c < native + added; ++c) {
+        Fighter_CostumeStrings* row = &ftData_803C2360[fk][c];
+        if (row->dat_filename == NULL) {
+            row->dat_filename = ftData_803C2360[fk][0].dat_filename;
+            row->joint_name = ftData_803C2360[fk][0].joint_name;
+            row->matanim_joint_name = ftData_803C2360[fk][0].matanim_joint_name;
+        }
+    }
+    if (added > 0) {
+        OSReport("skins: kind %d: %d costumes (%d own, %d from skins)\n", fk, native + added, native, added);
+    }
+}
+
 void ftData_MexInitKinds(void)
 {
     extern int Mex_SlotInternal(int slot);
@@ -1765,7 +1801,7 @@ void ftData_MexInitKinds(void)
         ftData_803C2468[fk] = (Fighter_DemoStrings*) Mex_FtDemoStrings(k);
         ncost = Mex_FtCostumeCount(k);
         if (ncost > 0) {
-            ftData_PcInstallCostumes(fk, ncost, 0, Mex_FtCostumeString, k, PcCostumeAlloc);
+            ftData_PcInstallRows(fk, ncost, 0, Mex_FtCostumeString, k);
             OSReport("gw: kind %d: %d costume descriptors allocated\n", fk, ncost);
         }
 
@@ -1807,11 +1843,17 @@ void ftData_MexInitKinds(void)
     for (slot = 0; slot < Ft_Kind_MasterH; slot++) {
         int ncost = Mex_FtCostumeCount(slot);
         int have = CostumeListsForeachCharacter[slot].numCostumes, c;
-        if (ncost <= have || ftData_803C2360[slot] == NULL) {
+        if (ftData_803C2360[slot] == NULL) {
             continue;
         }
-        ftData_PcInstallCostumes(slot, ncost, have, Mex_FtCostumeString, slot, PcCostumeAlloc);
-        OSReport("gw: retail kind %d: %d costumes (%d preserved)\n", slot, ncost, have);
+        if (ncost < have) {
+            ncost = have; /* the disc's m-ex row gave it fewer: the retail list stands */
+        }
+        if (ncost <= have && Skins_Added(slot) == 0) {
+            continue;
+        }
+        ftData_PcInstallRows(slot, ncost, have, Mex_FtCostumeString, slot);
+        OSReport("gw: retail kind %d: %d costumes (%d preserved)\n", slot, ncost + Skins_Added(slot), have);
     }
     {
         extern int Skins255_TestCount(void);

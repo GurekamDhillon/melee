@@ -1383,6 +1383,11 @@ int gw_Mex_CostumeInfo(int ck, int field) {
  * when there is no mexData or no row for it. */
 int gw_Mex_CostumeVisIdx(int fk, int costume) {
     extern int gw_Skins255_TestCount(void);
+    extern int gw_Skins_Like(int fk, int costume);
+    {
+        int like = gw_Skins_Like(fk, costume); /* a skin costume copies an original costume's part visibility */
+        if (like >= 0) costume = like;
+    }
     if (fk == 0 && costume >= 5 && gw_Skins255_TestCount()) return 0;
 
     int k = gw_Mex_InternalForPortKind(fk);
@@ -1904,39 +1909,59 @@ static uint32_t gw_mex_mexdt_field(uint32_t root, uint32_t arch, uint32_t field)
  * boot counts in MEM1, separately from the fixed m-ex interpreter reservation. */
 static uint32_t gw_costume_data_bytes, gw_costume_mirror_bytes, gw_costume_region_bytes;
 static uint32_t gw_costume_align(uint32_t n) { return (n + 31u) & ~31u; }
+/* A fighter's own costume count before any skin: the retail table (or the disc's m-ex row when it gives a retail fighter more), the m-ex row,
+ * a Geno define's declared list (a donor-based define shares Mario's), and the dev fixture. 0 = no costume list. */
+extern int gw_Geno_DefineCostumeCountNative(int kind); /* a define's declared costumes, without skins */
+static int gw_costume_native_count(int fkx) {
+    extern uint8_t gw_CostumeListsForeachCharacter[];
+    extern int gw_Geno_DefineBaseKind(int), gw_Geno_DefineCostumeCount(int), gw_Skins255_TestCount(void);
+    uint32_t fk = (uint32_t)fkx, have, n;
+    if (fk < GW_PORT_FT_MEX0) {
+        have = gw_r8(gw_CostumeListsForeachCharacter + fk * 8u + 4u);
+        n = (uint32_t)gw_Mex_FtCostumeCount((int)fk);
+        n = n > have && fk < 27u ? n : have;
+        if (fk == 0u && (uint32_t)gw_Skins255_TestCount() > n) n = (uint32_t)gw_Skins255_TestCount();
+        return (int)n;
+    }
+    if (fk < GW_PORT_FT_MEX0 + GW_MEX_SLOTS) {
+        int k;
+        if (gw_Geno_DefineBaseKind((int)fk) >= 0) {
+            n = (uint32_t)gw_Geno_DefineCostumeCountNative((int)fk);
+            return n ? (int)n : gw_costume_native_count(0); /* the native Mario donor */
+        }
+        k = gw_Mex_SlotInternal((int)fk - GW_PORT_FT_MEX0);
+        return k >= 0 ? gw_Mex_FtCostumeCount(k) : 0;
+    }
+    return 0;
+}
 uint32_t gw_CostumeRegionSize(void) {
     extern uint8_t gw_CostumeListsForeachCharacter[];
-    extern int gw_Geno_DefineCount(void), gw_Geno_DefineCKAt(int);
-    extern int gw_Geno_DefineCostumeCount(int), gw_Skins255_TestCount(void);
+    extern void gw_Skins_Build(int (*base_fn)(int));
+    extern int gw_Skins_Added(int fk), gw_Geno_DefineBaseKind(int);
     uint32_t counts[GW_PORT_FT_MEX0 + GW_MEX_SLOTS];
-    uint32_t fk, n, fixture;
-    int i;
+    uint32_t fk, n, native, added, have;
     if (gw_costume_region_bytes) return gw_costume_region_bytes;
-    for (fk = 0; fk < GW_PORT_FT_MEX0; ++fk) {
-        uint32_t have = gw_r8(gw_CostumeListsForeachCharacter + fk * 8u + 4u);
-        n = (uint32_t)gw_Mex_FtCostumeCount((int)fk);
-        counts[fk] = n > have && fk < 27u ? n : have;
-        if (counts[fk] > have) gw_costume_data_bytes += gw_costume_align(n * 12u) + gw_costume_align(n * 24u);
-    }
-    for (fk = GW_PORT_FT_MEX0; fk < GW_PORT_FT_MEX0 + GW_MEX_SLOTS; ++fk) {
-        int k = gw_Mex_SlotInternal((int)fk - GW_PORT_FT_MEX0);
-        n = k >= 0 ? (uint32_t)gw_Mex_FtCostumeCount(k) : 0u;
+    gw_Skins_Build(gw_costume_native_count);
+    for (fk = 0; fk < GW_PORT_FT_MEX0 + GW_MEX_SLOTS; ++fk) {
+        native = (uint32_t)gw_costume_native_count((int)fk);
+        added = (uint32_t)gw_Skins_Added((int)fk);
+        n = native + added;
         counts[fk] = n;
-        if (n) gw_costume_data_bytes += gw_costume_align(n * 12u) + gw_costume_align(n * 24u);
-    }
-    fixture = (uint32_t)gw_Skins255_TestCount();
-    if (fixture > counts[0]) {
-        counts[0] = fixture;
-        gw_costume_data_bytes += gw_costume_align(fixture * 12u) + gw_costume_align(fixture * 24u);
-    }
-    for (i = 0; i < gw_Geno_DefineCount(); ++i) {
-        int kind = gw_Geno_DefineCKAt(i) - 1;
-        n = (uint32_t)gw_Geno_DefineCostumeCount(kind);
-        if (kind < (int)GW_PORT_FT_MEX0 || kind >= (int)(GW_PORT_FT_MEX0 + GW_MEX_SLOTS)) continue;
-        if (n) gw_costume_data_bytes += gw_costume_align(n * 12u);
-        else n = counts[0]; /* the native Mario donor */
-        counts[kind] = n;
-        gw_costume_data_bytes += gw_costume_align(n * 24u);
+        if (fk < GW_PORT_FT_MEX0) {
+            have = gw_r8(gw_CostumeListsForeachCharacter + fk * 8u + 4u);
+            if (n > have) gw_costume_data_bytes += gw_costume_align(n * 12u) + gw_costume_align(n * 24u);
+        } else if (gw_Geno_DefineBaseKind((int)fk) >= 0) {
+            /* a base "none" define allocates its strings and runtime rows itself; a donor-based one only the runtime rows,
+             * and its own strings when skins add to it */
+            uint32_t own = (uint32_t)gw_Geno_DefineCostumeCountNative((int)fk);
+            if (own) gw_costume_data_bytes += gw_costume_align(n * 12u) + gw_costume_align(n * 24u);
+            else { /* donor-based: Mario's list, skins included (a skin targeting it is installed as Mario's) */
+                counts[fk] = counts[0];
+                gw_costume_data_bytes += gw_costume_align(counts[fk] * 24u);
+            }
+        } else if (n) {
+            gw_costume_data_bytes += gw_costume_align(n * 12u) + gw_costume_align(n * 24u);
+        }
     }
     gw_costume_mirror_bytes = (GW_PORT_FT_MEX0 + GW_MEX_SLOTS) * 8u;
     for (fk = 0; fk < GW_PORT_FT_MEX0 + GW_MEX_SLOTS; ++fk) gw_costume_mirror_bytes += counts[fk] * 24u;

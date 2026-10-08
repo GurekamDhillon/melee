@@ -1312,6 +1312,10 @@ static void gn_registry_clear(gn_registry* r)
     gn_lua_free_all(r);
     free(r->p); gdf_free(&r->definitions); memset(r, 0, sizeof *r);
 }
+/* skins (gw_skins_boot.inc, included below): a skin costume's own art comes before a define's or the default */
+int gw_Skins_HasArtCK(int ck, int what, int costume);
+int gw_Skins_ArtTexCK(int ck, int what, int costume);
+int gw_Skins_ArtOpenCK(int ck, int what, int costume);
 #include "geno_define_registry.inc"
 #include "geno_define_records.inc"
 #include "geno_lua_registry.inc"
@@ -1532,6 +1536,8 @@ static gn_registry *gn_reg(void) {
     }
     return &gn_boot;
 }
+
+#include "gw_skins_boot.inc"
 
 /* shim_os.c asks once, before it carves the arena: does any mounted mod's geno.json define
  * "articles"? Only then are GW_GENO_PERSIST_SIZE bytes withheld for article models (GD, 2026-09-26:

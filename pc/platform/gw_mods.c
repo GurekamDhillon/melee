@@ -377,7 +377,7 @@ static void mod_load_meta(gw_mod *m, const char *moddir) {
     if (m->name[0] == '\0') copy_str(m->name, sizeof m->name, m->id);
     if (m->kind[0] == '\0' || (strcmp(m->kind, "base") != 0 && strcmp(m->kind, "fighter") != 0 &&
                                strcmp(m->kind, "stage") != 0 && strcmp(m->kind, "misc") != 0 &&
-                               strcmp(m->kind, "script") != 0)) {
+                               strcmp(m->kind, "script") != 0 && strcmp(m->kind, "skin") != 0)) {
         if (m->kind[0] != '\0') gw_log("gw: mods: %s: unknown kind \"%s\" - treated as misc", m->id, m->kind);
         copy_str(m->kind, sizeof m->kind, "misc");
     }

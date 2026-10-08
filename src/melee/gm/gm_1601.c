@@ -4281,7 +4281,7 @@ f32 gm_80168B34(CharacterKind ckind, int arg1, int arg2)
 f32 gm_GenoStockFrame(int ck, int costume)
 {
     extern int Geno_DefineHasArt(int ck, int what, int costume);
-    if (ck < 34 || ck > 127 || costume < 0 || costume > 254 || !Geno_DefineHasArt(ck, 2, costume)) {
+    if (ck < 0 || ck > 127 || costume < 0 || costume > 254 || !Geno_DefineHasArt(ck, 2, costume)) {
         return -1.0F;
     }
     return 1000000.0F + (f32) (ck * 256 + costume);
@@ -4546,6 +4546,14 @@ u8 gm_GetNumCostumesForCKind(u8 ckind)
 {
 #if defined(TARGET_PC)
     extern int Skins255_TestCount(void);
+    extern int Skins_CostumeCountCK(int ck);
+    {
+        /* skins: the fighter's own costumes plus the skin mods' (0 = it has none: fall through to the tables below) */
+        int sk = Skins_CostumeCountCK((int) ckind);
+        if (sk > 0) {
+            return (u8) sk;
+        }
+    }
     if (ckind == CKind_Mario && Skins255_TestCount() > 0) {
         ftData_MexInitKinds();
         return CostumeListsForeachCharacter[Ft_Kind_Mario].numCostumes;
@@ -4606,6 +4614,13 @@ u8 gm_80169264(u8 ckind)
 {
 #if defined(TARGET_PC)
     extern int Geno_DefineBaseCK(int ck);
+    extern int Skins_TeamCostumeCK(int ck, int team);
+    {
+        int skin = Skins_TeamCostumeCK((int) ckind, 0); /* a skin that declared this team colour */
+        if (skin >= 0) {
+            return (u8) skin;
+        }
+    }
     /* a base "none" define's declared team colour (Geno slice 6; team 0) */
     extern int Geno_DefineTeamCostume(int ck, int team);
     {
@@ -4631,6 +4646,13 @@ u8 gm_80169290(u8 ckind)
 {
 #if defined(TARGET_PC)
     extern int Geno_DefineBaseCK(int ck);
+    extern int Skins_TeamCostumeCK(int ck, int team);
+    {
+        int skin = Skins_TeamCostumeCK((int) ckind, 2); /* a skin that declared this team colour */
+        if (skin >= 0) {
+            return (u8) skin;
+        }
+    }
     /* a base "none" define's declared team colour (Geno slice 6; team 2) */
     extern int Geno_DefineTeamCostume(int ck, int team);
     {
@@ -4656,6 +4678,13 @@ u8 gm_801692BC(u8 ckind)
 {
 #if defined(TARGET_PC)
     extern int Geno_DefineBaseCK(int ck);
+    extern int Skins_TeamCostumeCK(int ck, int team);
+    {
+        int skin = Skins_TeamCostumeCK((int) ckind, 1); /* a skin that declared this team colour */
+        if (skin >= 0) {
+            return (u8) skin;
+        }
+    }
     /* a base "none" define's declared team colour (Geno slice 6; team 1) */
     extern int Geno_DefineTeamCostume(int ck, int team);
     {

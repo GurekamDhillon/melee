@@ -402,7 +402,7 @@ static const char* fas_css_hint(char* buf)
     }
     if (card >= 0) {
         if (card == lead) {
-            return "Your card: X/Y costume, A back to the fighters.";
+            return "Your card: X/Y costume, L/R skip 10, A back.";
         }
         if (Ui_CssGet(FA_CG_KIND, card) == FS_OFF) {
             return "A: add a CPU here.";
@@ -530,7 +530,7 @@ static void fas_submit_css(void)
                 a.img = NULL;
                 a.tl = NULL;
                 sprintf(id, "p%d:%d", ck, cos);
-                fas.art_tex = ck >= FA_RETAIL_FIGHTERS ? Ui_ArtGeno(ck, 1, cos) : -1; /* the package's own portrait first */
+                fas.art_tex = Ui_ArtGeno(ck, 1, cos); /* a package's or a skin's own portrait first (-1 for the disc's) */
                 if (fas.art_tex >= 0) {
                     fas_geno_art_said(ck, 1, fas.art_tex);
                 }

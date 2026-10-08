@@ -19,6 +19,10 @@ void gw_Script_NetBuildSceneBegin(void) {}
 void gw_Script_NetBuildApply(void) {}
 static void tick(int online_frame) { assert(online_frame == 1); ++ticks; }
 void gw_log(const char *fmt, ...) { (void) fmt; }
+/* Profiling is observational; perturbations must stay disabled in this seam. */
+void gw_prof_cpu_completed(unsigned id, unsigned detail, double ms) { (void) id; (void) detail; (void) ms; }
+void gw_prof_counter(unsigned id, double value) { (void) id; (void) value; }
+void gw_RB_Perturb(int code) { (void) code; assert(!"unexpected rollback perturbation"); }
 int gw_Replay_Active(void) { return fixture_active; }
 int gw_Replay_Frame(void) { return replay_frame; }
 int gw_Replay_LastFrame(void) { return -120; }

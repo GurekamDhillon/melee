@@ -8,6 +8,8 @@
 #include "../platform/gw_replay.c"
 
 void gw_log(const char *fmt, ...) { (void) fmt; }
+/* Replay parity diagnostics are outside this parser fixture. */
+void gw_hang_final(const char *reason, unsigned code) { (void) reason; (void) code; }
 static int external_slippi_port = -1;
 static int rollback_active;
 static int used_pad_on;

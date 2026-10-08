@@ -26,6 +26,8 @@ static char g_last[512];
 static char g_art_key[64];
 
 void gw_log(const char *fmt, ...) { (void) fmt; }
+/* No fighter registry in this mods-door fixture (Geno slice 6). */
+int gw_Geno_DefineArtTex(int ck, int what, int costume) { (void) ck; (void) what; (void) costume; return -1; }
 static int gs_may_run(int i) { (void) i; return g_may_run; }
 static int g_online, g_set_calls, g_save_calls, g_save_result;
 int gw_RB_Enabled(void) { return g_online; }

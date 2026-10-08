@@ -66,6 +66,8 @@ static CollJoint* mpGetGroundCollJoint(void) { return joints; }
 static CollLine* mpGetGroundCollLine(void) { return lines; }
 static void mpJointListAdd(int id) { (void) id; }
 static void mpLib_80057BC0(int id) { (void) id; }
+/* Tracking diagnostics do not require the game OS shim. */
+static void OSReport(const char *fmt, ...) { (void) fmt; }
 #include "../gameworld/script_arena.inc"
 
 static int near(float a, float b) { return fabsf(a - b) < 1e-3f; }

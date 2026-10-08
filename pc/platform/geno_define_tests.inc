@@ -520,10 +520,14 @@ static int test_geno_define_s6_keys(void)
         gw_test_fail("a define without the keys has a policy"); rc = 1;
     }
     gn_registry_clear(&r);
-    /* the keys need geno 10; a v9 file refuses them */
+    /* ai and kirby_copy need geno 10; audio and the emblem are presentation and take 9 (a file of 8 refuses them) */
     if (gn_parse_text(&r, GN_T_HEAD(9, ",\"ai\":{\"like\":\"fox\"}"), "ai9") != 0 || gn_parse_text(&r, GN_T_HEAD(9, ",\"kirby_copy\":\"none\""), "kb9") != 0 ||
-        gn_parse_text(&r, GN_T_HEAD(9, ",\"audio\":{\"announcer\":\"a.gnsnd\"}"), "au9") != 0 || gn_parse_text(&r, GN_T_HEAD(9, ",\"presentation\":{\"emblem\":\"e.gxtex\"}"), "em9") != 0) {
-        gw_test_fail("a v9 file with ai, kirby_copy, audio or emblem was accepted"); rc = 1;
+        gn_parse_text(&r, GN_T_HEAD(8, ",\"audio\":{\"announcer\":\"a.gnsnd\"}"), "au8") != 0 || gn_parse_text(&r, GN_T_HEAD(8, ",\"presentation\":{\"emblem\":\"e.gxtex\"}"), "em8") != 0) {
+        gw_test_fail("a v9 file with ai or kirby_copy, or a v8 file with audio or emblem, was accepted"); rc = 1;
+    }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(9, ",\"audio\":{\"announcer\":\"a.gnsnd\"},\"presentation\":{\"emblem\":\"e.gxtex\"}"), "au9") != 1 || !r.p[0].aud || !r.p[0].pres) {
+        gw_test_fail("audio and emblem were refused at geno 9"); rc = 1;
     }
     gn_registry_clear(&r);
     /* refusals */

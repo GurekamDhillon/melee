@@ -1431,10 +1431,41 @@ void fn_80162170(MatchEnd* arg0)
     }
 }
 
+#if defined(TARGET_PC)
+/* Evidence for the records rule (a define's match leaves every retail fighter row as it was): a digest of all the save's per-fighter rows
+ * (FighterData, SELKIND_COUNT of them), logged before and after the match is recorded. A retail match changes it; a match of defines alone must not. */
+static u32 gm_GenoSaveRowsDigest(void)
+{
+    u32 h = 2166136261u;
+    int sk;
+    size_t n;
+    for (sk = 0; sk < SELKIND_COUNT; sk++) {
+        const u8* p = (const u8*) GetPersistentFighterData((SelectableCharacterKind) sk);
+        for (n = 0; n < sizeof(struct FighterData); n++) {
+            h = (h ^ p[n]) * 16777619u;
+        }
+    }
+    return h;
+}
+#endif
+
 s32 gm_801623A4(MatchEnd* arg0)
 {
+#if defined(TARGET_PC)
+    u32 before = gm_GenoSaveRowsDigest();
+    int i, defines = 0;
+    for (i = 0; i < PAD_MAX_CONTROLLERS; i++) {
+        if (arg0->player_standings[i].pkind != 3 && gm_IsGenoDefineCK(arg0->player_standings[i].ckind)) {
+            defines++;
+        }
+    }
+#endif
     fn_80162068(arg0);
     fn_80162170(arg0);
+#if defined(TARGET_PC)
+    OSReport("geno: retail fighter rows digest %08x -> %08x after recording the match (%d define player(s); a match of defines alone must leave it unchanged)\n",
+             (unsigned) before, (unsigned) gm_GenoSaveRowsDigest(), defines);
+#endif
 }
 
 int gm_801623D8(void)

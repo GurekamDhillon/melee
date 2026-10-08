@@ -79,7 +79,6 @@ static int gn_define_presentation(gn_profile* p, const jdoc* d, int e, int versi
     for (c = d->n[pv].first; c >= 0; c = d->n[c].next) {
         for (k = 0; k < GN_PRES_KINDS && strcmp(d->n[c].key, keys[k]); ++k) {}
         if (k == GN_PRES_KINDS) { gw_log("geno: %s: presentation key \"%s\" is not known (icon, portrait, stock, emblem)", where, d->n[c].key); return 0; }
-        if (k == GN_PRES_EMBLEM && version < 10) { gw_log("geno: %s: presentation.emblem needs \"geno\": 10", where); return 0; }
     }
     pr = (struct gn_pres*)calloc(1, sizeof *pr);
     if (!pr) return 0;
@@ -111,7 +110,9 @@ bad:
  *   "kirby_copy": "none" | "retail:<fighter>"      what Kirby gets from inhaling the define: nothing (the default, made explicit and guarded), or that
  *                                                  retail fighter's hat and copy ability
  *   "audio": {"announcer": "a.gnsnd", "voice": [{"sfx": 1234, "file": "b.gnsnd", "volume": 100}]}   own sound clips (tools/geno/audio.py)
- * All three change behaviour or sound a v9 engine would have ignored, so they need "geno": 10; an unknown key inside any of them refuses the entry. */
+ * ai and kirby_copy change what a fighter DOES (the CPU's moves, what Kirby becomes), so they need "geno": 10, the first format that carries them; audio is
+ * presentation like the art keys and stays at "geno": 9 (the owner's rule: only keys that change the simulation, and a lua block, take 10). An unknown key
+ * inside any of them refuses the entry. */
 static int gn_retail_kind(const char* name)
 {
     int i;
@@ -132,9 +133,10 @@ static int gn_define_s6_keys(gn_profile* p, const jdoc* d, int e, int version, c
 {
     int v, c, k;
     p->ai_like = -1; p->ai_set = 0; p->kb_copy = -1;
-    if (version < 10 && (jd_get(d, e, "ai") >= 0 || jd_get(d, e, "kirby_copy") >= 0 || jd_get(d, e, "audio") >= 0)) {
-        gw_log("geno: %s: ai, kirby_copy and audio need \"geno\": 10", where); return 0;
+    if (version < 10 && (jd_get(d, e, "ai") >= 0 || jd_get(d, e, "kirby_copy") >= 0)) {
+        gw_log("geno: %s: ai and kirby_copy need \"geno\": 10", where); return 0;
     }
+    if (version < 9 && jd_get(d, e, "audio") >= 0) { gw_log("geno: %s: audio needs \"geno\": 9", where); return 0; }
     v = jd_get(d, e, "ai");
     if (v >= 0) {
         int lk;

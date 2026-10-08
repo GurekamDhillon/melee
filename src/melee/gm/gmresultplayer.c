@@ -670,12 +670,14 @@ static void gmRst_DrawName(HSD_TObj* tobj, int ck, int style)
     tobj->imagedesc = desc;
 }
 
-/* ---- Geno slice 6: a define's own picture on the results card, and its own emblem -----------------------------------------------------
- * The card's face is the stock icon (the second DObj of the card's taunt JObj: where m-ex attaches IfAll's stock animation), the emblem is the
- * first JObj's own DObj. A define has no frame in either atlas, so the face was hidden and the emblem was the generic Smash logo. When its package
- * declares art (presentation.stock, presentation.emblem: .gxtex, no palette) the TObj's image table is pointed at one image built from those bytes in
- * the scene heap, as the HUD does (ifstock.c): every entry of the table is the define's image, so whichever frame the animation selects lands on it.
- * Nothing here is simulation state. what: 2 stock, 3 emblem. Returns true when the art was applied. */
+/* ---- Geno slice 6: a define's own art on the results screen ---------------------------------------------------------------------------
+ * Per player the screen shows (read from the DObj chains, 2026-10-08): the small stock icon beside "P1" (jobjs[7], its second DObj: a 24x24 palette image
+ * the stock frame animates) and the card (jobjs[0]), whose first DObj is the faint series emblem behind the rank numeral (80x64 intensity, animated) and
+ * whose second DObj is the picture of the fighter (a static 52x74 RGB5A3). A define has no frame in the atlases, so the stock icon and the picture were
+ * hidden or blank. When its package declares art (presentation.stock, .portrait, .emblem: .gxtex, no palette) the TObj's image table is pointed at one
+ * image built from those bytes in the scene heap, as the HUD does (ifstock.c): every entry of the table is the define's image, so whichever frame the
+ * animation selects lands on it. The big Smash-logo shape at the top left is a 3D model with no texture (the neutral emblem model 11); it stays.
+ * Nothing here is simulation state. what: 1 portrait, 2 stock, 3 emblem. Returns true when the art was applied. */
 extern int Geno_DefineHasArt(int ck, int what, int costume);
 extern int Geno_DefineArtOpen(int ck, int what, int costume);
 extern int GxTex_Width(int h);
@@ -729,7 +731,8 @@ static bool gmRst_GenoApplyArt(HSD_TObj* tobj, int ck, int what, int costume)
     tobj->imagetbl = tbl;
     tobj->imagedesc = desc;
     GxTex_Close(h);
-    OSReport("geno: results %s of ck %d: %dx%d format %d from its package\n", what == 2 ? "card picture" : "emblem", ck, w, ht, (int) desc->format);
+    OSReport("geno: results %s of ck %d: %dx%d format %d from its package\n", what == 1 ? "card picture" : what == 2 ? "stock icon" : "emblem", ck, w, ht,
+             (int) desc->format);
     return true;
 }
 
@@ -794,11 +797,14 @@ void fn_80177748(void)
             ckind = temp_r3->player_standings[i].ckind;
             HSD_JObjClearFlagsAll(data->player_data[i].jobjs[0], JOBJ_HIDDEN);
 #if defined(TARGET_PC)
-            if (gmRst_GenoHasArt(ckind, 3, 0)) {
-                /* Geno: the package's own emblem (presentation.emblem); the retail animation runs on frame 0 and its image is the package's */
+            if (gmRst_GenoHasArt(ckind, 1, temp_r3->player_standings[i].x3_b0)) {
+                /* Geno: the package's own portrait is the card's picture (second DObj) and, when it declares one, its emblem the faint shape behind the
+                 * rank numeral (first DObj); the retail animation runs on frame 0 and the images are the package's */
                 inline0(data->player_data[i].jobjs[0], 0.0f);
-                if (!gmRst_GenoApplyArt(gmRst_GenoTObjAt(data->player_data[i].jobjs[0], 0), ckind, 3, 0)) {
+                if (!gmRst_GenoApplyArt(gmRst_GenoTObjAt(data->player_data[i].jobjs[0], 1), ckind, 1, temp_r3->player_standings[i].x3_b0)) {
                     HSD_JObjSetFlagsAll(data->player_data[i].jobjs[0], JOBJ_HIDDEN);
+                } else if (gmRst_GenoHasArt(ckind, 3, 0)) {
+                    gmRst_GenoApplyArt(gmRst_GenoTObjAt(data->player_data[i].jobjs[0], 0), ckind, 3, 0);
                 }
             } else
             if (gmRst_IsMex(ckind)) {
@@ -1501,7 +1507,7 @@ static inline void fn_80178BB4_init_players(ResultsData* data,
                     bool no_stock = false;
                     bool geno_stock = gmRst_GenoHasArt(ckind, 2, match_end->player_standings[(*i)].x3_b0);
                     if (geno_stock) {
-                        /* Geno: the package's own stock icon is the card's face; the retail animation runs on frame 0 (see gmRst_GenoApplyArt) */
+                        /* Geno: the package's own stock icon is the small icon beside "P1"; the retail animation runs on frame 0 (see gmRst_GenoApplyArt) */
                         taunt_frame = 0.0F;
                     } else if (gmRst_IsMex(ckind)) {
                         f32 mex = gm_MexStockFrame(

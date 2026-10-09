@@ -234,32 +234,7 @@ int input_cb(ImGuiInputTextCallbackData *d) {
   return 0;
 }
 
-/* The kit's textures as ImGui textures, uploaded the first time a quad uses one (they never
- * change once decoded; a handful of atlas pages and icons). */
-ImTextureID g_kit_tex[GW_KIT_TEX_MAX];
-bool g_kit_tex_up[GW_KIT_TEX_MAX];
-int g_kit_tex_gen[GW_KIT_TEX_MAX];
-
-ImTextureID kit_texture(int tex) {
-  if (tex < 0 || tex >= GW_KIT_TEX_MAX) {
-    return ImTextureID{};
-  }
-  const int gen = gw_Kit_TexGeneration(tex); /* a disc-art slot that was reassigned is uploaded again (the old upload cannot be freed) */
-  if (g_kit_tex_up[tex] && g_kit_tex_gen[tex] != gen) {
-    g_kit_tex_up[tex] = false;
-    g_kit_tex[tex] = ImTextureID{};
-  }
-  if (!g_kit_tex_up[tex]) {
-    g_kit_tex_gen[tex] = gen;
-    int w = 0, h = 0;
-    const uint8_t *px = gw_Kit_TexPixels(tex);
-    g_kit_tex_up[tex] = true;
-    if (px != nullptr && gw_Kit_TexInfo(tex, &w, &h, nullptr, nullptr, nullptr, nullptr)) {
-      g_kit_tex[tex] = aurora_imgui_add_texture((uint32_t)w, (uint32_t)h, px);
-    }
-  }
-  return g_kit_tex[tex];
-}
+#include "gw_kit_texture.inc"
 
 /* Kit quads kq0 .. kq0+kqn-1: textured ones modulate the texture by the tint (masks are white,
  * so their RGB is the tint's), flat ones fill with it. */

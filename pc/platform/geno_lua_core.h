@@ -333,6 +333,14 @@ static int glua_turn(lua_State* L)
     return glua_cmd(L, GENO_LUA_CMD_TURN, 0, 0);
 }
 
+/* geno 11: ctx.ki(delta) adds to the combo meter (meter units, two decimals; negative spends), clamped by the game half. */
+static int glua_ki(lua_State* L)
+{
+    float d = glua_checkfinite(L, 1, 1000.0, "ctx.ki takes a finite number (meter units)");
+    int32_t h = (int32_t) (d * 100.0f + (d < 0.0f ? -0.5f : 0.5f));
+    return glua_cmd(L, GENO_LUA_CMD_KI, (uint32_t) h, 0);
+}
+
 /* ---- closure scan -------------------------------------------------------------------------------------- */
 
 static int glua_scan_proto(gn_lua* g, const Proto* p, const char* fn)
@@ -628,6 +636,8 @@ static void glua_push_ctx(gn_lua* g)
     glua_setnum(L, "hit_damage", glua_bits_f(gw_r32(&io[GENO_LUA_IO_HIT_DAMAGE])));
     glua_setint(L, "hit_from", gw_r32(&io[GENO_LUA_IO_HIT_FROM]) == 1 ? 1 : gw_r32(&io[GENO_LUA_IO_HIT_FROM]) == 2 ? -1 : 0);
     glua_setint(L, "countered", (int32_t) gw_r32(&io[GENO_LUA_IO_COUNTERED]));
+    glua_setnum(L, "ki", (double) (int32_t) gw_r32(&io[GENO_LUA_IO_KI]) / 100.0); /* geno 11: the combo meter */
+    glua_setint(L, "combo_links", (int32_t) gw_r32(&io[GENO_LUA_IO_LINKS]));
     lua_setfield(L, -2, "self");
     lua_newtable(L); /* ctx.state: an empty proxy; every access goes to the metatable */
     lua_getfield(L, LUA_REGISTRYINDEX, "geno.lua.state");
@@ -643,6 +653,8 @@ static void glua_push_ctx(gn_lua* g)
     lua_setfield(L, -2, "loop");
     lua_pushcfunction(L, glua_turn);
     lua_setfield(L, -2, "turn");
+    lua_pushcfunction(L, glua_ki);
+    lua_setfield(L, -2, "ki");
 }
 
 /* Runs function `fn` (an index from glua_find) over `io`. 0 = ok; GENO_LUA_FAULT_* otherwise (the io's state words and

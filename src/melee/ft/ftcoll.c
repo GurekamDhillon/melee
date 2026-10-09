@@ -493,6 +493,7 @@ void ftColl_80076CBC(Fighter* fp0, HitCapsule* hit0, Fighter* fp1)
         if (fp1->x221C_b2) Script_GameEvent(16,fp1->player_id,fp1->motion_id,8,fp1->is_sub_fighter);
         if (fp1->x221C_b2) ScriptGame_SkillPerfectShield(fp1,fp0,0,hit0->damage);
         ScriptGame_IntrWinHit(fp0,1 /* shield hit */); /* turbo rule window */
+        { extern void Geno_ComboContact(Fighter*, int); Geno_ComboContact(fp0, 1 /* shield */); } /* geno 11 combo "block" */
     }
 #endif
 
@@ -795,6 +796,7 @@ bool ftColl_80076ED8(Fighter* fp0, HitCapsule* hit0, Fighter* fp1,
                     if(!ScriptGame_EchoReportContext(fp0,fp1,hit0)) ScriptGame_ReportHitContext(fp0,fp1,hit0->element,0);
                     if(inner_ret) ScriptGame_EchoConnected(hit0,fp1);
                     if(inner_ret) ScriptGame_IntrWinHit(fp0,0 /* fighter hit */); /* turbo rule window */
+                    if(inner_ret) { extern void Geno_ComboContact(Fighter*, int); Geno_ComboContact(fp0, 0 /* hit */); } /* geno 11 combo "hit" */
                     if(inner_ret) ScriptGame_SkillHit(fp0,fp1,dmg); /* combo and hit-confirm telemetry */
                     ScriptGame_HitRuleContext(hit0,fp1);
                 }
@@ -1475,7 +1477,10 @@ bool ftColl_80077C60(Item* item, HitCapsule* hit, Fighter* fp,
                         ScriptGame_ReportHitContext(owner<0 ? NULL : GET_FIGHTER(item->owner),fp,hit->element,1);
                         ScriptGame_HitRuleContext(hit,fp);
                         if (inner_ret && owner >= 0 && GET_FIGHTER(item->owner) != fp)
+{
                             ScriptGame_IntrWinHit(GET_FIGHTER(item->owner),2 /* projectile hit */); /* turbo rule window */
+                            { extern void Geno_ComboContact(Fighter*, int); Geno_ComboContact(GET_FIGHTER(item->owner), 2 /* article hit */); }
+                        }
                         if (inner_ret) ScriptGame_SkillHit(owner >= 0 ? GET_FIGHTER(item->owner) : NULL,fp,scaled_dmg);
                     }
                 }

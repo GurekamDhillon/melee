@@ -130,6 +130,14 @@ static int geno_cur_state(Fighter* fp, GenoState* st);
 /* slice 5: fighter Lua (geno_game_lua.inc) */
 static GenoLuaBlock* geno_lua_block(Fighter* fp);
 static u32 geno_lua_digest(Fighter* fp, GenoState* st);
+/* geno 11: the combo graph (geno_game_combo.inc, included at the end of this file) */
+extern int Geno_ComboParam(int p, int what);
+static void geno_combo_reset(Fighter* fp, GenoState* st);
+static void geno_combo_action(Fighter* fp, GenoState* st);
+static void geno_combo_taken_hit(Fighter* fp, GenoState* st);
+static u32 geno_combo_digest(Fighter* fp, GenoState* st);
+static void geno_combo_ki_add(Fighter* fp, GenoState* st, s32 d);
+static GenoComboBlock* geno_combo_block(Fighter* fp);
 /* v5: articles (geno_game_articles.inc) */
 extern int Geno_ArticleCount(int p);
 static void geno_art_prepare(int p);
@@ -806,6 +814,7 @@ void Geno_FighterReset(Fighter* fp)
     st->enter_from = -1;
     st->hit_port = -1;
     geno_zero(geno_lua_block(fp), sizeof(GenoLuaBlock));
+    geno_combo_reset(fp, st);
     if (st->profile >= 0) {
         Geno_Event(0, fp->kind, fp->player_id, st->profile, 0);
         geno_install_overlays(fp, st->profile);
@@ -866,6 +875,7 @@ void Geno_OnActionChange(Fighter_GObj* gobj)
     st->atk_connected_prev = st->atk_connected;
     st->atk_connected = 0;
     st->fall_limit = 0.0f;
+    geno_combo_action(GET_FIGHTER(gobj), st);
     if ((s32) GET_FIGHTER(gobj)->motion_id < GENO_MOTION_BASE) {
         st->hidden = 0; /* v3: HIDDEN lives only across Geno states (damage etc. show the fighter) */
     }
@@ -2421,6 +2431,13 @@ u32 GenoDefine_StateDigest(Fighter* fp)
             h = geno_dg(h, ld);
         }
     }
+    {
+        /* geno 11: the combo graph's block, folded only for a profile that declares a combo block */
+        u32 cd = geno_combo_digest(fp, s);
+        if (cd != 0) {
+            h = geno_dg(h, cd);
+        }
+    }
     return h != 0 ? h : 1u;
 }
 
@@ -2485,3 +2502,6 @@ int GenoGame_StateFieldBase(int off)
 }
 
 #include "geno_game_items.inc"
+
+/* ---- geno 11: the combo graph ------------------------------------------------------------------ */
+#include "geno_game_combo.inc"

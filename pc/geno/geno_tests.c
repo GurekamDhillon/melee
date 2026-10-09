@@ -3466,6 +3466,7 @@ static int test_geno_fly(void)
 
 #include "geno_define_snapshot_tests.inc"
 #include "geno_lua_tests.inc"
+#include "geno_combo_tests.inc"
 #include "geno_guard_tests.inc"
 #include "geno_online_tests.inc"
 
@@ -3495,6 +3496,9 @@ void GenoTestRegisterAll(void)
 {
     TestRegister("geno_none_guard_contact", test_geno_none_guard_contact);
     TestRegister("geno_lua_charge", test_geno_lua_charge);
+    TestRegister("geno_combo_parse", test_geno_combo_parse);
+    TestRegister("geno_combo_routes", test_geno_combo_routes);
+    TestRegister("geno_combo_digest", test_geno_combo_digest);
     TestRegister("geno_lua_fault", test_geno_lua_fault);
     TestRegister("geno_lua_digest", test_geno_lua_digest);
     TestRegister("geno_digest_coverage", test_geno_digest_coverage);

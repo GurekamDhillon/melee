@@ -1078,6 +1078,7 @@ int Geno_OnHit(Fighter_GObj* gobj)
         return 0;
     }
     st->hit_count++;
+    geno_combo_taken_hit(fp, st); /* geno 11: the combo meter's "on_taken" */
     st->hit_damage = fp->dmg.x1838_percentTemp;
     st->hit_port = fp->dmg.x18c4_source_ply >= 0 && fp->dmg.x18c4_source_ply < 6
                        ? fp->dmg.x18c4_source_ply

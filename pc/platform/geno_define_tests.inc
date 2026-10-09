@@ -835,8 +835,8 @@ static int test_geno_define_template(void)
         r.nslot != 1 || !r.slot_rel[0]) { gw_test_fail("a define overlay with a relative Goto was refused or not marked"); rc = 1; }
     gn_registry_clear(&r);
     /* the operand must be a command boundary inside the overlay: word 2 here is the operand itself */
-    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"captain\",", ",\"subactions\":[{\"index\":7,\"words\":[\"0x04000004\",\"0x1C000000\",\"2\"]}]"), "gotobad") != 1 || r.p[0].nov != 0) {
-        gw_test_fail("a Goto into the middle of a command was kept"); rc = 1;
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"captain\",", ",\"subactions\":[{\"index\":7,\"words\":[\"0x04000004\",\"0x1C000000\",\"2\"]}]"), "gotobad") != 0 || r.n != 0) {
+        gw_test_fail("a Goto into the middle of a command was accepted"); rc = 1;
     }
     gn_registry_clear(&r);
     return rc;

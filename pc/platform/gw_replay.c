@@ -842,6 +842,19 @@ static int rp_frame_seed(uint32_t *out) {
     return 1;
 }
 
+/* RB_IterStart hashes before Replay_Tick/ResyncSeed in gm_801A4D34. In live
+ * online play the old RNG value is discarded before GObj simulation: it includes
+ * render-only draws and must not masquerade as next-frame simulation state.
+ * Preview the SAME seed rule without advancing the cursor or touching game memory.
+ * Offline/free-running replay retains its actual RNG word. */
+uint32_t gw_Replay_ChecksumSeed(uint32_t arrived, int frame) {
+    if ((rp.live || gw_rb_slippi_local_port() >= 0) && frame != GW_RP_UNARMED) {
+        uint32_t s = rp.seed + (((uint32_t) frame - (uint32_t) GW_RP_FIRST_FRAME) << 16);
+        return s != 0 ? s : 1;
+    }
+    return arrived;
+}
+
 /* The seed to force at the start of this frame, or 0 to leave it.
  *
  * Frame -123 always gets the Game Start seed: it is recorded AFTER match setup's own draws (on
@@ -859,8 +872,7 @@ uint32_t gw_Replay_ResyncSeed(void) {
         if (rp.frame == GW_RP_UNARMED) {
             return 0;
         }
-        s = rp.seed + ((uint32_t) (rp.frame - GW_RP_FIRST_FRAME) << 16);
-        return s != 0 ? s : 1;
+        return gw_Replay_ChecksumSeed(0, rp.frame);
     }
     if (rp.active && rp.frame == GW_RP_FIRST_FRAME) {
         /* A replay without Frame Start events (Slippi < 2.2) records its seed in each PRE-frame

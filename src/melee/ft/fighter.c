@@ -3974,6 +3974,29 @@ static u32 ftRb_Mix(u32 h, u32 v)
     return h;
 }
 
+/* Trace the exact mixed words, never a second hand-maintained field list. The
+ * native side retains them at capture time; string pointers are labels only and
+ * are never mixed. Word offsets in the report are offsets in this region's hash
+ * input stream (not byte offsets in Fighter). */
+static int ftRb_trace;
+static u32 ftRb_TraceMix(u32 h, u32 v, const char* symbol)
+{
+    if (ftRb_trace) {
+        extern void RbHashWord(u32 value, const char* symbol);
+        RbHashWord(v, symbol);
+    }
+    return ftRb_Mix(h, v);
+}
+#define ftRb_Mix(h, v) ftRb_TraceMix(h, v, #v)
+
+static void ftRb_Region(int region, int slot)
+{
+    if (ftRb_trace) {
+        extern void RbHashRegion(int region, int slot);
+        RbHashRegion(region, slot);
+    }
+}
+
 static u32 ftRb_Bits(f32 f)
 {
     union {
@@ -4019,6 +4042,7 @@ static int ftRb_HashLegacy(void)
  * hashed by bit pattern. */
 u32 RB_FighterHash(u32 h, Fighter* fp, int slot)
 {
+    ftRb_Region(1, slot);
     h = ftRb_Mix(h, (u32) slot + 0x100u);
     h = ftRb_Mix(h, (u32) fp->motion_id);
     h = ftRb_Mix(h, ftRb_Bits(fp->cur_pos.x));
@@ -4032,7 +4056,7 @@ u32 RB_FighterHash(u32 h, Fighter* fp, int slot)
     {
         u32 gw = ftRb_GenoDefineWord(fp);
         if (gw != 0) {
-            h = ftRb_Mix(h, gw);
+            h = ftRb_TraceMix(h, gw, "GenoDefine_StateDigest (tagged)");
         }
     }
     if (!ftRb_HashLegacy()) {
@@ -4084,7 +4108,7 @@ u32 RB_FighterHash(u32 h, Fighter* fp, int slot)
             h = ftRb_Mix(h, (u32) c->xC8);
             h = ftRb_Mix(h, (u32) c->xEC);
             h = ftRb_Mix(h, (u32) c->command_duration);
-            h = ftRb_Mix(h, off);
+            h = ftRb_TraceMix(h, off, "cpu.csP - cpu.buffer");
             h = ftRb_Mix(h, ((u32) ((u8*) c)[0xF8] << 24) | ((u32) ((u8*) c)[0xF9] << 16) | ((u32) ((u8*) c)[0xFA] << 8) | (u32) ((u8*) c)[0xFB]);
         }
     }
@@ -4108,6 +4132,7 @@ u32 RB_ItemHash(u32* count_out)
             /* Geno slice 7: a Geno article's numeric kind depends on how this install numbers its profiles; hash it by content instead */
             extern u32 Geno_ArtStableKind(int kind);
             u32 stable = Geno_ArtStableKind((int) ip->kind);
+            ftRb_Region(2, (int) n);
             ih = ftRb_Mix(0x4954454Du, stable != 0 ? stable : (u32) ip->kind);
         }
         ih = ftRb_Mix(ih, (u32) ip->msid);
@@ -4178,17 +4203,17 @@ void Snap_CuratedItems(void)
     }
 }
 
-u32 RB_GameHash(void)
+static u32 ftRb_GameHash(u32 seed)
 {
-    extern u32* HSD_RandSeedPtr;
     u32 h = 0x811C9DC5u;
     int i, j;
-    h = ftRb_Mix(h, *HSD_RandSeedPtr);
+    ftRb_Region(0, 0);
+    h = ftRb_TraceMix(h, seed, "HSD_RandSeedPtr (effective online seed)");
     {   /* Online Envoy: ONE word for the applied builds (pc/gameworld/script_build.inc); 0 when none is, so no other match hashes differently */
         extern unsigned ScriptGame_BuildHashWord(void);
         u32 bw = ScriptGame_BuildHashWord();
         if (bw != 0) {
-            h = ftRb_Mix(h, bw);
+            h = ftRb_TraceMix(h, bw, "ScriptGame_BuildHashWord");
         }
     }
     for (i = 0; i < 6; i++) {
@@ -4202,13 +4227,38 @@ u32 RB_GameHash(void)
     }
     if (!ftRb_HashLegacy()) {
         u32 n, w = RB_ItemHash(&n);
+        ftRb_Region(0, 1);
         if (n != 0) {
-            h = ftRb_Mix(h, n);
-            h = ftRb_Mix(h, w);
+            h = ftRb_TraceMix(h, n, "RB_ItemHash.count");
+            h = ftRb_TraceMix(h, w, "RB_ItemHash.sum");
         }
     }
     return h;
 }
+
+u32 RB_GameHash(void)
+{
+    extern u32* HSD_RandSeedPtr;
+    return ftRb_GameHash(*HSD_RandSeedPtr);
+}
+
+/* The rollback boundary precedes the online per-frame RNG reset. Hash the seed
+ * simulation will consume, not discarded render-side draws. All other words and
+ * the offline RB_GameHash diagnostic retain their exact bit-pattern semantics. */
+u32 RB_GameHashForFrame(int frame)
+{
+    extern u32* HSD_RandSeedPtr;
+    extern u32 Replay_ChecksumSeed(u32 arrived, int frame);
+    extern void RbHashSeed(u32 arrived, u32 effective);
+    u32 h, arrived = *HSD_RandSeedPtr;
+    u32 effective = Replay_ChecksumSeed(arrived, frame);
+    RbHashSeed(arrived, effective); /* evidence only; arrived is not mixed online */
+    ftRb_trace = 1;
+    h = ftRb_GameHash(effective);
+    ftRb_trace = 0;
+    return h;
+}
+#undef ftRb_Mix
 
 /* NEGATIVE CONTROL (gw_rollback.c rb_perturb, MELEE_RB_PERTURB=<field>, code = the field's number there): perturb ONE hashed value of the first fighter found
  * (port order), or the first item. Test only; never reached without the env switch. */

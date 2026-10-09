@@ -150,6 +150,23 @@ int main(void) {
     assert(!gw_Replay_SlippiFixtureInfo(&info));
     assert(strcmp(gw_Replay_SlippiFixtureReason(), "truncated replay") == 0);
 
+    /* The checksum is taken BEFORE Replay_Tick and the online seed reset. Two
+       render histories must hash the same effective seed, including entry frames. */
+    clear_replay(); rp.live = 1; rp.seed = 0x12345678; rp.frame = -81;
+    assert(gw_Replay_ChecksumSeed(0xAAAAAAAA, -80) == 0x125F5678);
+    assert(gw_Replay_ChecksumSeed(0x55555555, -80) == 0x125F5678);
+    assert(rp.frame == -81); /* preview must not advance the replay cursor */
+    rp.frame = -80;
+    assert(gw_Replay_ResyncSeed() == gw_Replay_ChecksumSeed(0, -80));
+    assert(gw_Replay_ChecksumSeed(0, -123) == 0x12345678);
+    assert(gw_Replay_ChecksumSeed(0, 0) == 0x12AF5678);
+    rp.seed = 0xFFFF0000;
+    assert(gw_Replay_ChecksumSeed(123, -122) == 1); /* zero is the no-reset sentinel */
+    rp.live = 0; external_slippi_port = 0;
+    assert(gw_Replay_ChecksumSeed(123, -122) == 1);
+    external_slippi_port = -1;
+    assert(gw_Replay_ChecksumSeed(0xAAAAAAAA, -80) == 0xAAAAAAAA);
+    assert(gw_Replay_ChecksumSeed(0x55555555, -80) == 0x55555555);
     clear_replay();
     return 0;
 }

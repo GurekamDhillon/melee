@@ -138,6 +138,8 @@ int gw_rb_frame_advantage(void);
  * Exchange them and compare for desync detection. (The whole-state hash SyncTest uses is
  * gw_rb_checksum_full: valid within one process only.) */
 uint32_t gw_rb_checksum(int frame);
+/* Retained words from the reported frame, never current-state substitutes. */
+void gw_rb_hash_desync(int frame, uint32_t local, uint32_t remote);
 uint32_t gw_rb_checksum_full(int frame);
 
 /* EPOCHS. Frames are numbered per scene (a VS match: -123.. again each time) and every scene

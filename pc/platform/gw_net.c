@@ -998,7 +998,9 @@ void gw_net_poll(gw_net *n, int32_t local_frame) {
     if (silent >= n->cfg.notify_timeout_ms && !n->interrupted) { n->interrupted = 1; fire(n, GW_NET_EV_INTERRUPTED, NULL); }
   }
 
-  if ((n->state == GW_NET_ACCEPTED || n->state == GW_NET_STARTING) && n->session != 0 &&
+  /* RUNNING too while a message of ours is unacknowledged: the stage run's end-of-stage barrier (gw_Netplay_StageEnd) sends its tuple on the lobby channel
+   * after the match has started, and the pre-start states alone never resent it (the barrier timed out: "no stage-end message") */
+  if ((n->state == GW_NET_ACCEPTED || n->state == GW_NET_STARTING || (n->state == GW_NET_RUNNING && n->nlq != 0)) && n->session != 0 &&
       (n->cfg.cb.lobby_msg != NULL || n->nlq != 0) && reached(t, n->next_lobby)) {
     send_lobby(n);                               /* resends + ack, doubling as a heartbeat */
     n->next_lobby = t + (n->nlq != 0 ? 100u : 500u);

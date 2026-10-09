@@ -16,6 +16,8 @@ static int used_pad_on;
 static GwRbInput used_pad;
 int gw_rb_slippi_local_port(void) { return external_slippi_port; }
 /* Unused game callbacks retained by the Windows linker for this source-inclusion test. */
+void gw_HSD_RandRenderBegin(void) {}
+void gw_HSD_RandRenderEnd(void) {}
 uint32_t gw_Netplay_Handshake(uint8_t *p, int n, int off, int len) {
     (void) p; (void) n; (void) off; (void) len; return 0;
 }

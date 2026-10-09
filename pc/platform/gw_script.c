@@ -1451,6 +1451,39 @@ static int l_log(lua_State *L) {
     return 0;
 }
 
+/* Native regression diagnostic. Uses the raw offline seed (RB_GameHash), never
+ * RB_GameHashForFrame's effective online/resynchronized seed. Presentation mode
+ * is native test state so a savestate can replay under a different schedule. */
+static int gs_render_test_pads;
+static uint32_t gs_render_test_pad_hash;
+static int l_render_test(lua_State *L) {
+    extern uint32_t gw_RB_GameHash(void);
+    extern int gw_Replay_Active(void);
+    extern uint32_t gw_Det_RenderSerial(void);
+    extern unsigned char gw_HSD_RandSeedPtr[];
+    extern void gw_RenderTest_SetPresents(int count);
+    const char *enabled = getenv("MELEE_RENDER_DET_TEST");
+    char hash[16];
+    if (!enabled || strcmp(enabled, "1") != 0)
+        return luaL_error(L, "render_test requires MELEE_RENDER_DET_TEST=1");
+    gs_require_offline(L, "render_test");
+    if (gw_Replay_Active())
+        return luaL_error(L, "render_test forbids playback and replay seed resync");
+    if (!lua_isnoneornil(L, 1)) {
+        lua_Integer count = luaL_checkinteger(L, 1);
+        if (count < -1 || count > 1)
+            return luaL_error(L, "render_test presents must be -1, 0 or 1");
+        gw_RenderTest_SetPresents((int) count);
+        gs_render_test_pads = count >= 0;
+    }
+    snprintf(hash, sizeof hash, "%08X", (unsigned) gw_RB_GameHash());
+    lua_pushstring(L, hash);
+    lua_pushinteger(L, (lua_Integer) gw_r32(gw_rptr(gw_HSD_RandSeedPtr)));
+    lua_pushinteger(L, (lua_Integer) gs_render_test_pad_hash);
+    lua_pushinteger(L, (lua_Integer) gw_Det_RenderSerial());
+    return 4;
+}
+
 static int l_frame(lua_State *L) {
     lua_pushinteger(L, gs.frame);
     return 1;
@@ -6699,6 +6732,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"fighter_shader", l_fighter_shader},
     {"fighter_shader_set", l_fighter_shader_set},
     {"stage_shader", l_stage_shader},
+    {"render_test", l_render_test},
     {"log", l_log}, {"frame", l_frame}, {"time", l_time}, {"perf", l_perf}, {"prof", l_prof}, {"scene", l_scene}, {"match", l_match},
     {"fighter_recycle", l_fighter_recycle}, {"players", l_players}, {"player", l_player}, {"items", l_items}, {"fx", l_fx},
     {"camera_get", l_camera_get}, {"camera_detach", l_camera_detach},
@@ -8028,6 +8062,22 @@ static int gs_rw_request(int target, const char **why) {
 int gw_LabPad_Replay(void *out, int size) {
     int tag;
     GsLogEntry *e;
+    if (gs_render_test_pads && size == (int) (4 * sizeof(PADStatus))) {
+        /* Test-only per-logic input, before controller.c clamps/scales and derives
+         * button edges. PADRead runs per native tick and cannot feed both forced
+         * catch-up iterations. Use the PC PADStatus layout (with extButton), not
+         * the smaller console layout. Keep this out of normal input. */
+        PADStatus *pad = (PADStatus *) out;
+        const unsigned char *bytes = (const unsigned char *) out;
+        int i;
+        memset(pad, 0, (size_t) size);
+        for (i = 0; i < 4; ++i) pad[i].err = PAD_ERR_NO_CONTROLLER;
+        gw_Script_PadApply(pad);
+        gs_render_test_pad_hash = 2166136261u;
+        for (i = 0; i < size; ++i)
+            gs_render_test_pad_hash = (gs_render_test_pad_hash ^ bytes[i]) * 16777619u;
+        return 1;
+    }
     if (gs.L == NULL || !gs.rw_began || !gs.match_active) {
         return 0;
     }

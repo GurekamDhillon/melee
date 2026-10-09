@@ -88,6 +88,8 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | `MELEE_SLIPPI_EVIDENCE=<path>` | required diagnostic JSON output; pair with `MELEE_STATE_TRACE`, `MELEE_RB_HASHLOG`, `MELEE_SLP_RECORD` |
 | `MELEE_SLIPPI_RUN_SALT=<32 hex digits>` | Direct run's shared salt for reciprocal account tags; supplied by the workspace runner |
 | `MELEE_SLIPPI_MATCH_ID=<id>` | shared loopback run ID, including when using a UDP impairment relay |
+| `MELEE_RAND_TRACE=<path>` (or `1`) | Offline/replay RNG CSV: scene logic frame, native caller, seed after, stream (0 redirected sim, 1 default sim, 2 render). `1` writes `melee-rand.csv` in the run directory. No RNG reset is performed. |
+| `MELEE_RENDER_DET_TEST=1` | Enables offline gameplay-only `gd.render_test([presents]) -> hash_hex, raw_seed, applied_pad_hash, render_serial`. -1 restores normal presentation, 0 skips presents/geometry and batches two logic iterations per tick, 1 uses one logic iteration and presents it. Canonical game callbacks still run once per logic iteration. `pc/tests/render_determinism.lua` compares the same saved match under 1/0/1 schedules; it rejects replay playback and never uses the online effective seed. Test pads enter before retail input processing on each logic frame; renderer settings stay in the run cache directory. The serial independently verifies a canonical draw completed between logic samples. |
 | `MELEE_CARD=0` | disable the memory card (on by default; GCI folder at `_build/card`) |
 | `MELEE_GENO_RECORDS=<file>` | where a Geno define's own records file is written (default: `geno_records.json` beside the card folder, none with the card off); `docs/geno.md` 22.7 |
 | `MELEE_SKIP_INTRO=1` | skip the opening movie and boot straight to the title |

@@ -539,7 +539,43 @@ static int test_unlock_all(void) {
   return rc;
 }
 
+/* A draw callback must not advance the simulation RNG, even inside another
+ * camera's render scope. The values below are the retail LCG from seed 1. */
+static int test_render_rng_isolation(void) {
+  extern unsigned char gw_HSD_RandSeedPtr[];
+  extern int gw_HSD_Rand(void), gw_HSD_Randi(int);
+  extern float gw_HSD_Randf(void);
+  extern void gw_Det_SetInRender(int);
+  void *seed = gw_rptr(gw_HSD_RandSeedPtr);
+  uint32_t saved = gw_r32(seed), after;
+  int value;
+  gw_w32(seed, 1);
+  value = gw_HSD_Rand();
+  if (value != 41 || gw_r32(seed) != 2745024u) {
+    gw_w32(seed, saved);
+    gw_test_fail("simulation RNG no longer follows the retail LCG");
+    return 1;
+  }
+  gw_Det_SetInRender(1);
+  gw_HSD_Rand();
+  gw_Det_SetInRender(1);
+  gw_HSD_Randf();
+  gw_Det_SetInRender(0);
+  gw_HSD_Randi(100);
+  after = gw_r32(seed);
+  gw_Det_SetInRender(0);
+  value = gw_HSD_Rand();
+  if (after != 2745024u || value != 51235 || gw_r32(seed) != 3357800067u) {
+    gw_w32(seed, saved);
+    gw_test_fail("render RNG advanced the simulation seed (after render %08X)", after);
+    return 1;
+  }
+  gw_w32(seed, saved);
+  return 0;
+}
+
 void gw_tests_register_all(void) {
+  gw_test_register("render_rng_isolation", test_render_rng_isolation);
   gw_hang_tests_register();
   extern void gw_MexTestRegisterAll(void);
   extern void gw_ppc_tests_register(void);

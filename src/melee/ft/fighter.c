@@ -1199,6 +1199,9 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
     u8(*unk_byte_ptr)[2];
     bool animflags_bool;
     union Struct2070 x2070;
+#if defined(TARGET_PC)
+    int lab_pose_row = -1; /* LAB preview: the row whose script/flags stay in use, -1 = none */
+#endif
 
 #if defined(TARGET_PC)
     /* The only choke point every action state passes through, so it is the one honest answer
@@ -1530,10 +1533,13 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
             }
         }
         {
-            /* LAB animation preview (gd.anim_preview): offline tool, -1 when unused */
+            /* LAB animation preview (gd.anim_preview): offline tool, -1 when unused. Pose only: the
+             * row gives its figatree; Wait's own row keeps the script words, flags and blend, so no
+             * row's commands (items, parasol, throws, effects) run (see lab_pose_row below). */
             extern int ScriptGame_LabPreviewRow(Fighter * fp, int motion);
             int lab_row = ScriptGame_LabPreviewRow(fp, (int) msid);
             if (lab_row >= 0) {
+                lab_pose_row = fp->anim_id;
                 fp->anim_id = lab_row;
             }
         }
@@ -1571,6 +1577,13 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
                 unk_struct_x18 = &fp->x24[fp->anim_id];
                 unk_byte_ptr = &fp->x28[fp->anim_id];
             }
+#if defined(TARGET_PC)
+            if (lab_pose_row >= 0 && arg3 == NULL) {
+                /* LAB preview: the host state's own row for everything but the animation */
+                unk_struct_x18 = &fp->x24[lab_pose_row];
+                unk_byte_ptr = &fp->x28[lab_pose_row];
+            }
+#endif
             fp->x594_s32 = unk_struct_x18->x10_animCurrFlags;
             ftCo_8009E7B4(fp, unk_byte_ptr);
             if ((flags & Ft_MF_SkipAnim) == 0) {
@@ -3151,6 +3164,17 @@ void Fighter_procMap(Fighter_GObj* gobj)
     PC_PROF_BEGIN(GW_PROF_FIGHTER_COLLISION, ((GET_FIGHTER(gobj)->player_id + 1) << 16) | GET_FIGHTER(gobj)->kind);
     Fighter* fp = GET_FIGHTER(gobj);
 
+#if defined(TARGET_PC)
+    {
+        /* LAB animation preview: the posed fighter has no map collision (a clip that moves the body
+         * far from its origin would drag the ECB into the floor and launch it); Wait moves it nowhere. */
+        extern int ScriptGame_LabPreviewRow(Fighter * fp, int motion);
+        if (fp->motion_id == ftCo_MS_Wait && ScriptGame_LabPreviewRow(fp, ftCo_MS_Wait) >= 0) {
+            PC_PROF_END();
+            return;
+        }
+    }
+#endif
     if (!fp->x221F_b3) {
         if (fp->ecb_lock) {
             fp->ecb_lock--;

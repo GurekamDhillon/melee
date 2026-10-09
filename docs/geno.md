@@ -3040,3 +3040,16 @@ camera. Console: `lab clips find|play|show|frame|speed|category|stop`. `MELEE_LA
 `MELEE_LAB_CLIP=<row|name>` open on it. Entering CLIPS parks the other fighters (stand, 45 units away).
 Limits raised for it: GPL_MAX_CLIPS 576, GPL_MAX_OWN_ROWS 448, the registry JSON pool 16384 nodes /
 256 KB. Modes past the tenth have no digit key (TAB / `lab mode`).
+
+**Pose-only preview (fix 2026-10-08).** A previewed row gives only its figatree: Wait's own row keeps
+the script words, animation flags and blend (Fighter_ChangeMotionState, `lab_pose_row`), so no row's
+commands run (a parasol row's script asserted `ftGetParasolStatus` without a parasol), and the posed
+fighter skips map collision (Fighter_procMap) so a clip that moves the body cannot launch it. CLIPS
+holds the focused port's pad neutral while posing and leaves out the rows a Geno define's own states
+drive (Lua, articles). Checked natively: every row of Goku (680), Peach (318) and Mario (303).
+
+**MOVES category.** With `missions/moves-<fighter name>.txt` in the LAB mod (tab separated: `M` move,
+`C frame span clip start end speed`, `H frame dur` source hitbox, `X frame dur` cancel window; written for
+Goku by `ports/goku-xv2/tools/movemap.py`), CLIPS lists source moves and plays their chained clips in
+order at the source speed; a bar marks the source hitbox (red) and cancel (blue) windows. Reference only:
+unverified static timing. `lab clips play <move id> [frame]`.

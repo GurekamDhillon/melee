@@ -4974,9 +4974,12 @@ stage_d5()
 -- Wait (grounded, in place; Wait runs no move script, so no hitboxes or root motion), the row's clip
 -- plays from any frame, and the LAB's own SPACE / LEFT / RIGHT pause and step it. A Geno base "none"
 -- define lists its unbound fighter.rows (row 303 on) as LIBRARY: Goku's whole XV2 set is one.
+-- MOVES (when the LAB mod has missions/moves-<fighter>.txt, e.g. ports/goku-xv2/tools/movemap.py): a source
+-- move's chained clips play in order with its static timing; the bar marks the source's hitbox and cancel
+-- windows (reference only; unverified timing). Same pose-only playback.
 -- Its own function scope: the main chunk is at its local limit.
 ;(function()
-local CATS = { "ALL", "LIBRARY", "ATTACKS", "SPECIALS", "MOVEMENT", "DAMAGE", "OTHER" }
+local CATS = { "ALL", "MOVES", "LIBRARY", "ATTACKS", "SPECIALS", "MOVEMENT", "DAMAGE", "OTHER" }
 local CSPEEDS = { 2, 1, 0.5, 0.25, 0.1 }
 local cl = { key = nil, all = {}, cat = 1, sel = 1, first = 1, speed = 1, row = nil, len = nil, acc = 0,
   face = 0, text = "", cam = false, pend = nil, slow = false }
@@ -5000,16 +5003,48 @@ function LE.clip_list()
   if p == nil or not gd.anim_rows then return {} end
   local key = focus .. ":" .. tostring(p.char_name) .. ":" .. tostring(p.kind)
   if cl.key ~= key then
-    cl.key, cl.all, cl.sel, cl.first, cl.row, cl.cur = key, {}, 1, 1, nil, nil
+    cl.key, cl.all, cl.sel, cl.first, cl.row, cl.cur, cl.mv = key, {}, 1, 1, nil, nil, nil
+    local byname, staterow = {}, {}
+    -- a Geno define's own states drive their rows with Lua and articles: not pose-only, so not listed
+    for _, mo in ipairs(gd.motion_list and gd.motion_list(focus) or {}) do
+      if mo.group == "geno" and mo.anim_id and mo.anim_id >= 0 then staterow[mo.anim_id] = mo.name end
+    end
     for _, r in ipairs(gd.anim_rows(focus) or {}) do
-      if r.symbol ~= "" then
+      if r.symbol ~= "" and not staterow[r.row] then
         local e = { row = r.row, name = r.name ~= "" and r.name or r.symbol, symbol = r.symbol, lib = r.row >= OWN_FIRST }
         e.cat = category(e)
         cl.all[#cl.all + 1] = e
+        byname[e.name] = r.row
       end
     end
+    -- the source moves table (tab separated: M move / C clip event / H hit window / X cancel window)
+    cl.moves = {}
+    local fname = "missions/moves-" .. tostring(p.char_name):lower():gsub("%W", "") .. ".txt"
+    local text = gd.mod_read and gd.mod_read(fname) or nil
+    local m
+    for line in (type(text) == "string" and text or ""):gmatch("[^\n]+") do
+      local f = {}
+      for v in (line .. "\t"):gmatch("([^\t]*)\t") do f[#f + 1] = v end
+      if f[1] == "M" then
+        m = { move = true, name = f[2] .. "  " .. (f[4] or ""), id = f[2], kind = f[3] or "", clip = f[4], inputs = f[5] or "",
+          len = tonumber(f[6]) or 1, anims = {}, hits = {}, cx = {}, cat = "MOVES" }
+        cl.moves[#cl.moves + 1] = m
+      elseif m and f[1] == "C" and byname[f[4]] then
+        m.anims[#m.anims + 1] = { frame = tonumber(f[2]), play = tonumber(f[3]), row = byname[f[4]], lib = f[4],
+          start = tonumber(f[5]), last = tonumber(f[6]), speed = tonumber(f[7]) or 1 }
+      elseif m and f[1] == "H" then m.hits[#m.hits + 1] = { tonumber(f[2]), tonumber(f[3]) }
+      elseif m and f[1] == "X" then m.cx[#m.cx + 1] = { tonumber(f[2]), tonumber(f[3]) } end
+    end
+    for i = #cl.moves, 1, -1 do if #cl.moves[i].anims == 0 then table.remove(cl.moves, i) end end
   end
   local c, out = CATS[cl.cat], {}
+  if c == "MOVES" then
+    for _, e in ipairs(cl.moves or {}) do
+      if cl.text == "" or e.name:lower():find(cl.text, 1, true) or e.inputs:lower():find(cl.text, 1, true) then out[#out + 1] = e end
+    end
+    if cl.sel > #out then cl.sel = math.max(1, #out) end
+    return out
+  end
   for _, e in ipairs(cl.all) do
     local ok = c == "ALL" or (c == "LIBRARY" and e.lib) or e.cat == c
     if ok and cl.text ~= "" then
@@ -5026,10 +5061,36 @@ local function cl_show(e, frame, run)
   local ok, why = gd.anim_preview(focus, e.row, frame or 1, 1, cl.face)
   if not ok then say("Clip: " .. tostring(why), DANGER) return end
   if cl.cur ~= e or cl.face_changed then cl.len = nil cl.face_changed = nil end
-  cl.row, cl.cur, cl.acc, cl.slow = e.row, e, 0, false
+  cl.row, cl.cur, cl.acc, cl.slow, cl.mv = e.row, e, 0, false, nil
   cl.pend = run and (cl.speed >= 1 and "resume" or "slow") or nil
 end
 LE.clip_show = cl_show
+
+-- ---- source-move playback: event k's clip frame for move frame t, and back
+local function mv_event(m, t)
+  local k = 1
+  for i, a in ipairs(m.anims) do if a.frame <= t then k = i end end
+  return k
+end
+local function mv_apply(m, t, run)
+  if not offline() then return end
+  t = math.max(0, math.min(m.len - 1, t))
+  local k = mv_event(m, t)
+  local a = m.anims[k]
+  local f = math.max(a.start, math.min(a.last, a.start + math.floor((t - a.frame) * a.speed)))
+  local ok, why = gd.anim_preview(focus, a.row, f + 1, a.speed, cl.face)
+  if not ok then say("Move: " .. tostring(why), DANGER) return end
+  cl.mv, cl.ev, cl.row, cl.cur, cl.len, cl.acc, cl.slow = m, k, a.row, m, nil, 0, false
+  cl.pend = run and (cl.speed >= 1 and "resume" or "slow") or nil
+end
+local function mv_time()
+  local m, p = cl.mv, gd.player(focus)
+  if m == nil or p == nil then return 0 end
+  local a = m.anims[cl.ev]
+  if p.anim_id ~= a.row then return a.frame end
+  return a.frame + ((p.anim_frame_f or 0) - a.start) / (a.speed ~= 0 and a.speed or 1)
+end
+LE.clip_move_apply, LE.clip_move_time = mv_apply, mv_time
 
 local function cl_len()
   -- only once the clip is the one playing: right after a switch the fighter still shows the old row
@@ -5072,6 +5133,10 @@ function LE.clips_tick()
   elseif cl.cam then
     gd.camera_attach(10) cl.cam = false
   end
+  if cl.row and not menu.open then
+    -- a pad held or knocked while posing would take the fighter out of Wait: hold its port neutral
+    pcall(gd.input, focus, 0, 2)
+  end
   if cl.pend == "resume" then cl.pend = nil gd.resume() end
   if cl.pend == "slow" then cl.pend = nil cl.slow = true end
   if cl.slow and cl.row and not menu.open then
@@ -5086,6 +5151,19 @@ function LE.clips_frame()
   if not in_mode("clips") or cl.row == nil then return end
   local p = gd.player(focus)
   if p == nil then return end
+  if cl.mv then
+    local m, running = cl.mv, (not gd.paused()) or cl.slow
+    local a, t = m.anims[cl.ev], mv_time()
+    local nxt = m.anims[cl.ev + 1]
+    if p.anim_id ~= a.row then return end
+    -- one frame early: on its last frame Wait's own anim-end handler would put the idle clip back
+    if nxt and (t >= nxt.frame - 1 or (p.anim_frame_f or 0) >= a.last - 1) then
+      mv_apply(m, nxt.frame, running)
+    elseif t >= m.len - 2 or (nxt == nil and (p.anim_frame_f or 0) >= a.last - 1) then
+      if T("loop") then if running then mv_apply(m, 0, true) end else gd.pause() cl.slow = false end
+    end
+    return
+  end
   local len = cl_len()
   if len and p.anim_id == cl.row and p.anim_frame_f and p.anim_frame_f >= len - 1 then
     if T("loop") then
@@ -5099,6 +5177,7 @@ end
 local function jump(d)
   local p = gd.player(focus)
   if cl.cur == nil or p == nil then return end
+  if cl.mv then mv_apply(cl.mv, math.floor(mv_time() + 0.5) + d, false) return end
   local len = cl_len() or 600
   local f = math.max(1, math.min(len, math.floor((p.anim_frame_f or 0) + 1.5) + d))
   cl_show(cl.cur, f, false)
@@ -5108,7 +5187,8 @@ ACTIONS.cl_up = function() cl.sel = math.max(1, cl.sel - 1) end
 ACTIONS.cl_down = function() cl.sel = math.min(#LE.clip_list(), cl.sel + 1) end
 ACTIONS.cl_play = function()
   local e = LE.clip_list()[cl.sel]
-  if e then cl_show(e, 1, true) say(e.name) end
+  if e and e.move then mv_apply(e, 0, true) say(e.name)
+  elseif e then cl_show(e, 1, true) say(e.name) end
 end
 ACTIONS.cl_filter = function()
   cl.cat = cl.cat % #CATS + 1
@@ -5145,14 +5225,19 @@ function LE.clips_console(rest)
     gd.log(string.format("clips: %d of %d (%s, \"%s\")", #list, #cl.all, CATS[cl.cat], cl.text))
     for i, e in ipairs(list) do
       if i > 80 then gd.log(string.format("  ... %d more (lab clips find <text>)", #list - 80)) break end
-      gd.log(string.format("  %4d %-9s %s", e.row, e.cat, e.name))
+      if e.move then gd.log(string.format("  %s  [%s] %df %s", e.name, e.inputs, e.len, e.kind))
+      else gd.log(string.format("  %4d %-9s %s", e.row, e.cat, e.name)) end
     end
   elseif sub == "play" or sub == "show" then
     local want, fr = arg:match("^(%S+)%s*(%d*)$")
     LE.clip_list()
     local hit
     for _, e in ipairs(cl.all) do if tostring(e.row) == want or e.name == want or e.symbol == want then hit = e end end
-    if hit then
+    for _, e in ipairs(cl.moves or {}) do if e.id == want then hit = e end end
+    if hit and hit.move then
+      mv_apply(hit, (tonumber(fr) or 1) - 1, sub == "play")
+      gd.log("move " .. hit.name)
+    elseif hit then
       for i, e in ipairs(LE.clip_list()) do if e == hit then cl.sel = i end end
       cl_show(hit, tonumber(fr) or 1, sub == "play")
       gd.log("clip " .. hit.row .. " " .. hit.name)
@@ -5196,7 +5281,7 @@ function LE.draw_clips()
     local on = i == cl.sel
     if on then quad(x + 6, yy, w - 12, 14, GOLD, SHEAR) end
     quad(x + 8, yy + 2, 3, 10, e.lib and GOLD or MUTED)
-    txt(x + 16, yy + 11, tostring(e.row), "caption", on and INK or DISABLED)
+    txt(x + 16, yy + 11, e.move and e.kind:sub(1, 5) or tostring(e.row), "caption", on and INK or DISABLED)
     txt(x + 48, yy + 11, e.name, "caption", on and INK or BONE, "left", w - 120)
     txt(x + w - 12, yy + 11, e.cat, "caption", on and INK or DISABLED, "right", 66)
     if cl.cur == e then icon("lab_play", x + w - 82, yy + 1, 12, on and INK or OK) end
@@ -5204,6 +5289,28 @@ function LE.draw_clips()
   if cl.text ~= "" then txt(x + 12, y + h - 5, "find: " .. cl.text, "caption", BONE) end
   local e = cl.cur
   local tx, tw = 316, 316
+  if cl.mv then
+    local m = cl.mv
+    local t = mv_time()
+    local a = m.anims[cl.ev] or m.anims[1]
+    local run = cl.slow or not gd.paused()
+    panel(tx, 8, tw, 110, "SOURCE MOVE")
+    stxt(tx + 12, 42, m.name, "label", BONE, "left", tw - 24)
+    txt(tx + 12, 58, string.format("frame %d / %d   x%g   %s   input %s", math.floor(t + 1.5), m.len, cl.speed,
+      run and "PLAYING" or "PAUSED", m.inputs ~= "" and m.inputs or "-"), "caption", run and OK or GOLD, "left", tw - 24)
+    txt(tx + 12, 72, string.format("clip %d/%d %s  f%d (%d..%d x%g)", cl.ev, #m.anims, a.lib,
+      math.floor((p.anim_frame_f or 0) + 1.5), a.start, a.last, a.speed), "caption", MUTED, "left", tw - 24)
+    local bx, bw, by = tx + 12, tw - 24, 80
+    local sx = function(fr) return bx + bw * math.max(0, math.min(1, fr / math.max(1, m.len))) end
+    quad(bx, by, bw, 12, alpha(BONE, 0x30))
+    for _, an in ipairs(m.anims) do quad(sx(an.frame), by, 1, 12, alpha(BONE, 0xA0)) end
+    for _, h in ipairs(m.hits) do quad(sx(h[1]), by, math.max(2, sx(h[1] + h[2]) - sx(h[1])), 5, DANGER) end
+    for _, h in ipairs(m.cx) do quad(sx(h[1]), by + 7, math.max(2, sx(h[1] + h[2]) - sx(h[1])), 5, ACCENT) end
+    quad(sx(t), by - 2, 2, 16, GOLD)
+    txt(tx + 12, 106, "red: source hitboxes  blue: cancel windows  (unverified timing)", "caption", DISABLED, "left", tw - 24)
+    if T("skel") then draw_skeleton(p, PORT[p.port]) end
+    return
+  end
   panel(tx, 8, tw, 70, "PLAYING")
   if e then
     stxt(tx + 12, 42, e.name, "label", BONE, "left", tw - 24)

@@ -963,6 +963,26 @@ do
     local lib = 0
     for _, l in ipairs(logs) do if l:match("^%s+30[345] ") then lib = lib + 1 end end
     expect(lib == 3, "the LIBRARY category is the rows from 303 (" .. lib .. ")")
+    -- MOVES: a source move's chained clips, from the LAB mod's missions/moves-<fighter>.txt
+    local real_mr = gd.mod_read
+    gd.mod_read = function(path)
+      if path ~= "missions/moves-tester.txt" and path ~= "missions/moves-" .. tostring(gd.player(1).char_name):lower():gsub("%W", "") .. ".txt" then return nil end
+      return "# test\nM\tchara/GOK/GOK_PLAYER.bac:300\tgoku\tGOK_ATC_002\tLight\t60\nC\t0\t30\txGOK_ATC_002\t0\t29\t1\nC\t30\t30\txGOK_SPA_KMH\t10\t69\t2\nH\t12\t4\nX\t14\t20\n"
+    end
+    real_rows = gd.anim_rows
+    gd.anim_rows = function() return { { row = 303, name = "xGOK_ATC_002", symbol = "xGOK_ATC_002" },
+      { row = 304, name = "xGOK_SPA_KMH", symbol = "xGOK_SPA_KMH" } } end
+    gd.anim_preview = function(port, row, frame, rate, face) calls[#calls + 1] = { row = row, frame = frame, rate = rate } return true end
+    lab("mode training"); lab("mode clips")
+    gd.player(1).kind = (gd.player(1).kind or 0) + 1000 -- a new fighter key: the table is read again
+    lab("clips category moves")
+    lab("clips play chara/GOK/GOK_PLAYER.bac:300 13")
+    expect(calls[#calls] and calls[#calls].row == 303 and calls[#calls].frame == 13, "a source move plays its first clip at move frame 13")
+    lab("clips play chara/GOK/GOK_PLAYER.bac:300 41")
+    expect(calls[#calls] and calls[#calls].row == 304 and calls[#calls].frame == 31 and calls[#calls].rate == 2,
+      "move frame 41 is the second clip's frame 10 + 10 x2, at its own speed (" .. tostring(calls[#calls] and calls[#calls].frame) .. ")")
+    gd.mod_read = real_mr
+    lab("clips category all")
     -- the engine refuses unknown key names ("11" from an 11th mode in the digit loop broke on_tick)
     local real_kp = env.gd.key_pressed
     env.gd.key_pressed = function(k)

@@ -42,7 +42,51 @@ static int gs_surface_shader(lua_State *L, unsigned slot, int path_index, int op
         free(text);
         if (!program) { error = diagnostic; goto failed; }
 #else
-        error = "surface shader loading requires Windows"; goto failed;
+        /* POSIX twin of the contained item reader (b8f7039dd): resolve the
+         * calling mod and shader before reading. This rejects symlink escapes,
+         * but does not provide Win32's final-handle protection against renames. */
+        char root[MAX_PATH], path[MAX_PATH], base[PATH_MAX], final[PATH_MAX];
+        struct stat info;
+        FILE *file;
+        size_t bytes, got;
+        char *text;
+        int extra, read_failed;
+        if (!gw_surface_path_valid(relative, length)) {
+            error = "surface path must be shaders/*.wgsl with no traversal";
+            goto failed;
+        }
+        if (!gs_mission_script_root(root) || snprintf(path, sizeof path, "%s/%s", root, relative) >= sizeof path) {
+            error = "surface shader requires a calling mod folder"; goto failed;
+        }
+        if (!realpath(root, base) || !realpath(path, final) ||
+            !gs_mission_inside(base, final) || stat(final, &info) || !S_ISREG(info.st_mode)) {
+            error = "surface shader missing, unreadable or outside the mod folder"; goto failed;
+        }
+        if (info.st_size < 1 || info.st_size > 65536) {
+            error = "surface shader must be 1..65536 bytes"; goto failed;
+        }
+        file = fopen(final, "rb");
+        if (!file) { error = "surface shader read failed"; goto failed; }
+        /* Size the allocation from the opened file, not the earlier path stat. */
+        if (fstat(fileno(file), &info) || !S_ISREG(info.st_mode) || info.st_size < 1 || info.st_size > 65536) {
+            fclose(file); error = "surface shader must be 1..65536 bytes"; goto failed;
+        }
+        bytes = (size_t)info.st_size;
+        text = (char *)malloc(bytes + 1);
+        if (!text) { fclose(file); error = "surface shader allocation failed"; goto failed; }
+        got = fread(text, 1, bytes, file);
+        extra = fgetc(file);
+        read_failed = ferror(file);
+        fclose(file);
+        if (got != bytes || extra != EOF || read_failed) {
+            free(text); error = "surface shader read failed"; goto failed;
+        }
+        text[got] = 0;
+        if (strlen(text) != got) { free(text); error = "surface shader contains NUL"; goto failed; }
+        program = gw_surface_register(text, relative, diagnostic, sizeof diagnostic);
+        free(text);
+        if (!program) { error = diagnostic; goto failed; }
+        gw_log("surface shader %s: loaded %u bytes (POSIX)", relative, (unsigned)got);
 #endif
     }
     if (!lua_isnoneornil(L, options_index)) {

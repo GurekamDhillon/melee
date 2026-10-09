@@ -3178,6 +3178,29 @@ taken, meter, expectation) to `results/<name>.md` and exits 1 on a failed expect
 on screen; the default runs turbo on screen too. These run as a game script, not inside `run.sh --test` (they need the fighter's
 package, which is local), so they are not in the headless 363.
 
+### 25.5c Targets added after the first build
+
+- `to: "jump_short"` (`GENO_CA_JUMP_SHORT`): as `jump`, but the ground jump is always a short hop (the launcher's jump-cancel, so the air
+  string meets the victim). The route skips the jump squat, so the short-hop flag the squat would set (`mv.co.kneebend.is_short_hop`, read by
+  `ftCo_800CB110` as `mv.co.jump.x0`) is written here: 1 for `jump_short`, **0 for `jump`** (it used to inherit whatever the last action left in
+  that union word). In the air both are an air jump. Test: `geno_combo_parse` (both targets parse).
+- **Shield rule for routes.** A route is `on: hit` unless it says otherwise; a string link, an ender or a special cancel must not be `block` /
+  `contact`. On a shield the graph does nothing: only Melee's own follow-ups (the native jab chain) apply. The Goku suite asserts it (below).
+
+### 25.7 The meter HUD (`fighters[].meter`)
+
+```json
+"meter": { "name": "KI", "color": "#F2C14E", "position": [60, 438], "size": [110, 7], "max": 100 }
+```
+
+A bar for the combo ki value, drawn in matches (offline or online) in screen space (the 640x480 virtual screen of the script draw list,
+`gw_Script_DrawCount/At`): a dark back bar, the fill, a frame (white when full) and `NAME value` above it. Defaults: name `KI`, colour
+`#F2C14E`, position `[60 + 150 x slot, 438]`, size `[110, 7]`, max `combo.ki.max`. It needs a define with a combo block that declares `ki`;
+otherwise the entry is refused. It only **reads** the combo block (`GenoGame_ComboInfo`, the value the digest folds) and exists only
+while a match runs, so it cannot change the simulation, a savestate or a rollback. Code: `pc/platform/geno_combo_registry.inc`
+(`gn_meter_parse`, `gw_Geno_MeterInfo/MeterParam`), `pc/platform/gw_script_meter.inc`. Test: `geno_combo_parse` (a meter without a combo
+block and a bad colour refuse; name, colour, position, size, max read back).
+
 ### 25.6 Verified
 
 Headless suite: `geno_combo_parse` (refusals: geno 10, a missing state, an unknown input, a bad Lua gate, an attach entry;

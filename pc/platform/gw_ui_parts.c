@@ -172,8 +172,98 @@ static float part_slider(const AtSink *s, float right, float cy, int vmin, int v
     return 70.0f;
 }
 
+/* A RICH row: the Nucleus browser's mod row and text blocks. A picture box at the left (a placeholder while it loads), then the title wrapped to two
+ * lines (a smaller role before it is cut), the small line under it, and up to two tags stacked at the right edge. Text never takes the tags' room:
+ * the lines are fitted to what is left of the row. Same plate, focus tick and selected bar as a plain row. */
+static float tag_width(const AtTextOps *o, const char *text, float cap)
+{
+    float w = twidth(o, AT_R_CAP12, text) + 16.0f;
+    return w > cap ? cap : w;
+}
+
+/* The line(s) under a title: " - " separated facts in order of importance. All of it, wrapped to the lines the row has; if that is too long the LAST facts are
+ * dropped (the numbers go before the author does), and only a single fact that still does not fit is cut with an ellipsis. Returns the line count. */
+static int meta_fit(const AtTextOps *o, const char *meta, float avail, int max_lines, char out[][96])
+{
+    char buf[AT_TEXT];
+    snprintf(buf, sizeof buf, "%s", meta);
+    for (;;) {
+        int clamped = 0, n = at_wrap(o, AT_R_BODY12, buf, avail, max_lines, out, &clamped);
+        char *cut = NULL, *p = buf;
+        if (!clamped) return n;
+        while ((p = strstr(p, " - ")) != NULL) { cut = p; p += 3; }
+        if (cut == NULL) return n;
+        *cut = '\0';
+    }
+}
+
+static void part_row_rich(const AtSink *s, const AtTextOps *o, AtRect r, const AtItem *it, int state)
+{
+    unsigned face = AT_C_PLATE2, edge = AT_C_EDGE2, txt = AT_C_TEXT2, sub = AT_C_MUTED;
+    float e = 3.0f, y = r.y, lx, right, ch, chipw = 0.0f, avail, block, top;
+    int disabled = state == AT_ST_DISABLED || (it->flags & AT_CELL_DISABLED);
+    int focus = state == AT_ST_FOCUS && !disabled, dfocus = state == AT_ST_FOCUS && disabled;
+    char lines[3][96];
+    int nl = 0, clamped = 0, role = AT_R_ROW16, k, lh = 17, has_meta = it->meta[0] != '\0', mn = 0;
+    char mlines[2][96];
+    const char *title = it->title[0] != '\0' ? it->title : it->label;
+    AtRect pr;
+    if (dfocus) { face = AT_C_PLATE; edge = AT_C_EMBER; txt = AT_C_DIM; sub = AT_C_DIM; y -= 2.0f; }
+    else if (disabled) { face = AT_C_PLATE; txt = AT_C_DIM; sub = AT_C_DIM; }
+    else if (focus) { face = AT_C_LIFT; edge = AT_C_EMBER; txt = AT_C_IVORY; sub = AT_C_TEXT2; y -= 2.0f; }
+    else if (state == AT_ST_PRESS) { face = AT_C_PLATE; edge = AT_C_EMBER_D; txt = AT_C_IVORY; e = 1.0f; y += 1.0f; }
+    pr.x = r.x; pr.y = y; pr.w = r.w; pr.h = r.h;
+    at_plate(s, pr, face, edge, e, (float) AT_PX_CH_S);
+    if (focus || dfocus) at_poly_rect(s, r.x, y + (float) AT_PX_CH_S, 4.0f, r.h - e - (float) AT_PX_CH_S, AT_C_EMBER);
+    if (state == AT_ST_PRESS) at_poly_rect(s, r.x, y + (float) AT_PX_CH_S, 4.0f, r.h - e - (float) AT_PX_CH_S, AT_C_EMBER_D);
+    if (it->flags & AT_CELL_SELECTED) at_poly_rect(s, r.x + r.w - 4.0f, y, 4.0f, r.h - e, AT_C_JADE);
+    right = r.x + r.w - 12.0f - ((it->flags & AT_CELL_SELECTED) ? 6.0f : 0.0f);
+    lx = r.x + 12.0f;
+    ch = r.h - e;
+    if (it->thumb_on) {
+        float bh = ch - 8.0f, bw = it->thumb_w > 0 ? (float) it->thumb_w : (float) floor((double) (bh * 4.0f / 3.0f));
+        at_poly_rect(s, lx, y + 4.0f, bw, bh, AT_C_GROUND2);
+        if (it->thumb_tex >= 0 && s->image != NULL) at_sink_image(s, it->thumb_tex, lx, y + 4.0f, bw, bh, disabled ? 0x9A9A9AFFu : 0xFFFFFFFFu);
+        else if (it->thumb_abbr[0] != '\0') at_text(s, o, AT_R_CAP14, it->thumb_abbr, lx + bw * 0.5f, mid_base(y + 4.0f, bh, AT_R_CAP14), AT_C_DIM, AT_ALIGN_CENTER, bw - 4.0f);
+        if (it->thumb2_on && it->thumb2_tex >= 0 && s->image != NULL) at_sink_image(s, it->thumb2_tex, lx + bw - 24.0f, y + 4.0f + bh - 24.0f, 22.0f, 22.0f, disabled ? 0x9A9A9AFFu : 0xFFFFFFFFu);
+        lx += bw + 12.0f;
+    }
+    if (it->chip[0] != '\0' || it->chip2[0] != '\0') {
+        float cap = (right - lx) * 0.4f, w1 = it->chip[0] != '\0' ? tag_width(o, it->chip, cap) : 0.0f, w2 = it->chip2[0] != '\0' ? tag_width(o, it->chip2, cap) : 0.0f;
+        float ty = y + (ch - ((w1 > 0.0f && w2 > 0.0f) ? 46.0f : 20.0f)) * 0.5f;
+        if (w1 > 0.0f) { at_part_tag(s, o, right - w1, ty, it->chip, it->chip_tone, w1); ty += 26.0f; }
+        if (w2 > 0.0f) at_part_tag(s, o, right - w2, ty, it->chip2, it->chip2_tone, w2);
+        chipw = w1 > w2 ? w1 : w2;
+    }
+    avail = right - lx - (chipw > 0.0f ? chipw + 12.0f : 0.0f);
+    if (avail < 8.0f) return;
+    if (it->body[0] != '\0') {                                          /* a block of text: as many lines as the row holds */
+        int maxl = (int) ((ch - 8.0f) / 16.0f);
+        char bl[6][96];
+        if (maxl > 6) maxl = 6;
+        if (maxl < 1) maxl = 1;
+        nl = at_wrap(o, AT_R_BODY14, it->body, avail, maxl, bl, &clamped);
+        top = y + (ch - (float) nl * 16.0f) * 0.5f;
+        for (k = 0; k < nl; k++) at_text(s, o, AT_R_BODY14, bl[k], lx, top + 12.0f + 16.0f * (float) k, txt, AT_ALIGN_LEFT, 0.0f);
+        return;
+    }
+    /* the title: two lines at the row role, else two at the next smaller one, else the second line ends in an ellipsis */
+    nl = at_wrap(o, role, title, avail, 2, lines, &clamped);
+    if (clamped) {
+        char alt[2][96];
+        int c2 = 0, n2 = at_wrap(o, AT_R_BODY14, title, avail, 2, alt, &c2);
+        if (!c2) { role = AT_R_BODY14; lh = 16; nl = n2; memcpy(lines, alt, sizeof alt); }
+    }
+    if (has_meta) mn = meta_fit(o, it->meta, avail, nl == 1 ? 2 : 1, mlines);
+    block = (float) nl * (float) lh + (float) mn * 14.0f + (mn > 0 ? 1.0f : 0.0f);
+    top = y + (ch - block) * 0.5f;
+    for (k = 0; k < nl; k++) at_text(s, o, role, lines[k], lx, top + (role == AT_R_ROW16 ? 13.0f : 12.0f) + (float) lh * (float) k, txt, AT_ALIGN_LEFT, 0.0f);
+    for (k = 0; k < mn; k++) at_text(s, o, AT_R_BODY12, mlines[k], lx, top + (float) nl * (float) lh + 12.0f + 14.0f * (float) k, sub, AT_ALIGN_LEFT, 0.0f);
+}
+
 void at_part_row(const AtSink *s, const AtTextOps *o, AtRect r, const AtItem *it, int state)
 {
+    if (it->row_h > 34 || it->thumb_on || it->body[0] != '\0') { part_row_rich(s, o, r, it, state); return; }
     unsigned face = AT_C_PLATE2, edge = AT_C_EDGE2, txt = AT_C_TEXT2, val = AT_C_MUTED;
     float e = 3.0f, y = r.y, right, cy, vw = 0.0f, lx, avail, vmax_w;
     int disabled = state == AT_ST_DISABLED || (it->flags & AT_CELL_DISABLED);
@@ -334,7 +424,7 @@ static void tab_short(const char *name, char *out, size_t cap)
                                         { "INSTALLED", "INST" }, { "CONFLICTS", "CONF" }, { "RETAIL", "RETL" }, { "ADDED", "ADDED" } };
     size_t i, chars = 0, cut = 0;
     for (i = 0; i < sizeof T / sizeof T[0]; i++) if (strcmp(name, T[i][0]) == 0) { snprintf(out, cap, "%s", T[i][1]); return; }
-    for (i = 0; name[i] != ' '; i++) if (((unsigned char) name[i] & 0xC0) != 0x80) { if (chars == 4) cut = i; chars++; }
+    for (i = 0; name[i] != '\0'; i++) if (((unsigned char) name[i] & 0xC0) != 0x80) { if (chars == 4) cut = i; chars++; }
     if (chars <= 5) cut = i;                                         /* five characters or fewer: the name itself */
     snprintf(out, cap, "%.*s", (int) (cut < cap - 1 ? cut : cap - 1), name);
 }

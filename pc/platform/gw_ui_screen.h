@@ -55,7 +55,17 @@ typedef struct { char id[AT_ID]; char label[AT_STR]; char sub[AT_STR]; unsigned 
                int n_opts; char opt[AT_MAX_OPTS][24];   /* a choice the ENGINE owns (it wraps and shows opt[value - vmin]); n_opts 0: the owner's text and direction events */
                char group[24];               /* a heading drawn above this row when it differs from the previous row's (headings are not rows: never focused) */
                char reason[48];              /* a disabled row says why under its label ("Connect a controller to this port first." is 40) */
-               unsigned iflags; } AtItem;    /* AT_ITEM_* */
+               unsigned iflags;              /* AT_ITEM_* */
+               /* a RICH row (the Nucleus browser): taller than 34 px, with a picture, a wrapped title, a line under it, chips and a block of wrapped text. Every field
+                * is zero in a plain row (a Lua screen never sets them), and a row with row_h 0, no thumb and no body is drawn exactly as before. */
+               int row_h;                    /* the row's height in px (0: the usual 34); the list window, the scroll and the hit rectangles follow it */
+               int thumb_on, thumb_tex, thumb_w;   /* a picture box at the row's left: thumb_tex a kit texture slot or -1 (loading: a plain box with thumb_abbr); thumb_w 0: 4:3 of the box height */
+               char thumb_abbr[3];
+               int thumb2_on, thumb2_tex;    /* a second, small picture (a stock icon) over the box's lower right corner, 22 px, drawn only once it is loaded (thumb2_tex >= 0) */
+               char title[96];               /* a rich row's title, wrapped to two lines (label is used when this is empty) */
+               char meta[AT_TEXT];           /* the line under the title, in the small text */
+               char chip[24], chip2[24]; int chip_tone, chip2_tone;   /* tags at the row's right edge, one above the other (AT_TAG_*) */
+               char body[336]; } AtItem;     /* a block of text wrapped in the row (a mod's description); the row's height must leave room */
 typedef struct { char btn; char label[AT_STR]; int fn_label, fn_when; } AtKey;
 typedef struct { int has; char label[24]; int model_a, model_b, model_out; char text[AT_STR]; } AtFooter;
 typedef struct { int has; int media_model, media_ring; char kicker[AT_STR], title[AT_STR], what[AT_TEXT]; int n_with, with_model[AT_MAX_WITH]; char from_text[AT_STR]; int warn;
@@ -92,6 +102,7 @@ typedef struct {
     int tab0;                                        /* the tab a Lua screen asked for, 0-based */
     int fn_provide, fn_accept, fn_back, fn_alt[3], fn_focus, fn_change, fn_open, fn_close, fn_page, fn_start;
     int warnings;
+    char credit[AT_STR];                             /* a list: a line of credit drawn under the pane in its own 22 px strip (the Nucleus browser's "Mods from SSBM Nucleus") */
 } AtScreen;
 
 struct AtRoomView;

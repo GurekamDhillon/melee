@@ -110,6 +110,15 @@ static void gs_mods_mouse(GsUiSlot *u) {
     AtEvent ev[16];
     gw_Mouse_ScriptRead(&x, &y, &buttons, &wheel);
     left = (buttons & 1) && !(u->mouse.buttons & 1) && u->mouse.valid && x >= 0.0f && y >= 0.0f;
+    if (gs_mods.mode == 2 && gs_mods.nc.confirm) {                    /* the clear-the-queue dialog: only its buttons are hit, and a right click is Keep */
+        int right = (buttons & 2) && !(u->mouse.buttons & 2) && u->mouse.valid && x >= 0.0f && y >= 0.0f, hit2 = left ? at_hit_test(&u->hits, x, y) : -1;
+        AtEvent de;
+        memset(&de, 0, sizeof de);
+        if (hit2 >= 0 && u->hits.h[hit2].kind == AT_HIT_DIALOG) { gs_mods.nc.confirm_focus = u->hits.h[hit2].a == 'A' ? 0 : 1; de.type = AT_EV_ACCEPT; gs_mods_event(u, &de); }
+        else if (right) { de.type = AT_EV_BACK; gs_mods_event(u, &de); }
+        u->mouse.buttons = buttons; u->mouse.x = x; u->mouse.y = y; u->mouse.valid = x >= 0.0f && y >= 0.0f;
+        return;
+    }
     if (left && (gs_mods.mode == 0 || gs_mods.mode == 2)) {
         hit = at_hit_test(&u->hits, x, y);
         if (hit >= 0 && u->hits.h[hit].kind == AT_HIT_TAB) {
@@ -129,28 +138,51 @@ static void gs_mods_mouse(GsUiSlot *u) {
 }
 
 /* once per script tick, when the MODS screen is the top screen: the keyboard, then the mouse, then the rebuild (a note expires, the restart note appears) */
-/* typed characters for the Nucleus search (edge-detected from the host's key table; the arrows, Enter and Esc already reach the model as events) */
+/* The Nucleus keyboard. Typed characters for the search (edge-detected from the host's key table; the arrows and Esc already reach the model as events), and
+ * outside a search: Space is A (queue the mod), Enter is START (begin the downloads), X / Y / Z are the pad's X / Y / Z. The table of previous states is updated
+ * every tick, search or not, so a key held down while the search ends is not a press for the list. */
+static unsigned char gs_nc_prev[256];
+static int gs_nucleus_edge(int vk) { return gs.key_now[vk] != 0 && !gs_nc_prev[vk]; }
+
 static void gs_nucleus_typing(void) {
-    static unsigned char prev[256];
     int vk;
     for (vk = 8; vk < 256; vk++) {
-        int now = gs.key_now[vk] != 0, ch = 0;
-        if (now && !prev[vk]) {
+        int ch = 0;
+        if (gs_nucleus_edge(vk)) {
             if ((vk >= 'A' && vk <= 'Z') || (vk >= '0' && vk <= '9') || vk == ' ') ch = vk;
             else if (vk == VK_BACK) ch = 8;
             if (ch && gs_mods.nc.edit) at_nc_type(&gs_mods.nc, ch);
         }
-        prev[vk] = (unsigned char) now;
     }
+}
+
+static void gs_nucleus_keys(GsUiSlot *u) {
+    AtEvent e;
+    memset(&e, 0, sizeof e);
+    if (gs_nucleus_edge(VK_SPACE)) { e.type = AT_EV_ACCEPT; gs_mods_event(u, &e); }
+    else if (gs_nucleus_edge(VK_RETURN)) { e.type = AT_EV_START; gs_mods_event(u, &e); }
+    else if (gs_nucleus_edge('X')) { e.type = AT_EV_ALT; e.a = 'X'; gs_mods_event(u, &e); }
+    else if (gs_nucleus_edge('Y')) { e.type = AT_EV_ALT; e.a = 'Y'; gs_mods_event(u, &e); }
+    else if (gs_nucleus_edge('Z')) { e.type = AT_EV_ALT; e.a = 'Z'; gs_mods_event(u, &e); }
+}
+
+static void gs_nucleus_keys_end(void) {
+    int vk;
+    for (vk = 0; vk < 256; vk++) gs_nc_prev[vk] = gs.key_now[vk] != 0;
 }
 
 static void gs_mods_tick(GsUiSlot *u) {
     AtEvent ev[16];
-    int n, i;
+    int n, i, nucleus = gs_mods.mode >= 2, editing = nucleus && gs_mods.mode == 2 && gs_mods.nc.edit;
+    unsigned km = gs_ui_key_mask();
     ne_pump();
-    if (gs_mods.mode == 2 && gs_mods.nc.edit) gs_nucleus_typing();
-    n = at_key_events(&u->keys, gs_ui_key_mask(), gs_now_ms(), ev, 16);
+    if (editing) gs_nucleus_typing();
+    if (nucleus && !editing) km &= ~(unsigned) AT_KEY_ENTER;           /* Enter starts the downloads here; it is A only while a search is typed */
+    n = at_key_events(&u->keys, km, gs_now_ms(), ev, 16);
     for (i = 0; i < n; i++) gs_mods_event(u, &ev[i]);
+    if (nucleus && !editing && !gs_mods.nc.confirm) gs_nucleus_keys(u);
+    else if (nucleus && gs_mods.nc.confirm && gs_nucleus_edge(VK_RETURN)) { AtEvent a; memset(&a, 0, sizeof a); a.type = AT_EV_ACCEPT; gs_mods_event(u, &a); }
+    gs_nucleus_keys_end();
     gs_mods_mouse(u);
     gs_mods_rebuild(u);
 }

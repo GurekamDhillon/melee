@@ -1453,6 +1453,11 @@ static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod
         r->npool = pool_before; r->nslot = slots_before;
         return;
     }
+    if (!gn_meter_parse(p, d, e, where)) { /* geno 11: a bad "meter" refuses the entry */
+        glua_free(p->lua); p->lua = NULL; free(p->combo); p->combo = NULL;
+        r->npool = pool_before; r->nslot = slots_before;
+        return;
+    }
     if (p->defined) {
         int overlays = jd_get(d, e, "subactions");
         if (overlays >= 0 && (d->n[overlays].type != JN_ARR || d->n[overlays].count != p->nov)) {

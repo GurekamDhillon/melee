@@ -9170,10 +9170,16 @@ void gw_Script_FramePost(void) {
     }
 }
 
-int gw_Script_DrawCount(void) { return gs.ndraw[!gs.build]+(gs_stage_indicator_draw()!=NULL); }
+#include "gw_script_meter.inc"
+int gw_Script_DrawCount(void) { return gs.ndraw[!gs.build]+(gs_stage_indicator_draw()!=NULL)+gs_meter_build(); }
 const GwScriptDraw *gw_Script_DrawAt(int i) {
-    if(i==gs.ndraw[!gs.build])return gs_stage_indicator_draw();
-    return (i >= 0 && i < gs.ndraw[!gs.build]) ? &gs.draw[!gs.build][i] : NULL;
+    int nd=gs.ndraw[!gs.build];
+    const GwScriptDraw *ind;
+    if(i>=0&&i<nd)return &gs.draw[!gs.build][i];
+    i-=nd;if(i<0)return NULL;
+    ind=gs_stage_indicator_draw();
+    if(ind){if(i==0)return ind;i--;}
+    return i<gs_meter_n?&gs_meter_draw[i]:NULL;
 }
 
 uint64_t gw_Script_GameplayHash(void) {

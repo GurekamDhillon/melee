@@ -21,6 +21,11 @@ typedef struct gn_combo {
     int32_t w[GENO_COMBO_MAX_ROUTES][GENO_CR_COUNT];
     char name[GENO_COMBO_MAX_ROUTES][GENO_COMBO_MAX_NAME];
     int32_t param[GENO_CP_COUNT];
+    int has_meter;      /* the fighter's "meter" (a HUD bar for the ki value): drawn by gw_script_meter.inc */
+    char mname[12];
+    uint32_t mrgba;
+    float mx, my, mw, mh;
+    int32_t mmax;       /* hundredths shown as full; 0 = combo.ki.max */
 } gn_combo;
 
 static void gn_combo_free_all(gn_registry *r)
@@ -120,6 +125,68 @@ static int gn_combo_enum(const jdoc *d, int obj, const char *key, int def, const
         return 0;
     }
     *out = i;
+    return 1;
+}
+
+/* "meter": {"name": "KI", "color": "#F2C14E", "position": [x, y], "size": [w, h], "max": 100}, a HUD bar for the combo ki value. Screen
+ * space, the 640x480 virtual screen; defaults: under the fighter's port slot. Reads the same hashed value the combo graph keeps; draws
+ * nothing into the simulation. Needs a combo block with a "ki" object (the value it shows). 1 = fine, 0 = refuse the entry. */
+static int gn_meter_color(const char *s, uint32_t *out)
+{
+    unsigned v = 0;
+    int i;
+    if (s == NULL || s[0] != '#' || strlen(s) != 7) return 0;
+    for (i = 1; i < 7; ++i) {
+        char c = s[i];
+        int h = (c >= '0' && c <= '9') ? c - '0' : (c >= 'a' && c <= 'f') ? c - 'a' + 10 : (c >= 'A' && c <= 'F') ? c - 'A' + 10 : -1;
+        if (h < 0) return 0;
+        v = v * 16 + (unsigned) h;
+    }
+    *out = (v << 8) | 0xFFu;
+    return 1;
+}
+
+static int gn_meter_pair(const jdoc *d, int obj, const char *key, float lo, float hi, float *a, float *b, const char *where)
+{
+    int v = jd_get(d, obj, key), x, y;
+    if (v < 0) return 1;
+    x = d->n[v].type == JN_ARR && d->n[v].count == 2 ? d->n[v].first : -1;
+    y = x >= 0 ? d->n[x].next : -1;
+    if (x < 0 || d->n[x].type != JN_NUM || d->n[y].type != JN_NUM || d->n[x].num < lo || d->n[x].num > hi || d->n[y].num < lo || d->n[y].num > hi) {
+        gw_log("geno: %s: meter.%s must be [a, b] numbers in %g..%g - refused", where, key, (double) lo, (double) hi);
+        return 0;
+    }
+    *a = (float) d->n[x].num;
+    *b = (float) d->n[y].num;
+    return 1;
+}
+
+static int gn_meter_parse(gn_profile *p, const jdoc *d, int e, const char *where)
+{
+    int m = jd_get(d, e, "meter"), v;
+    gn_combo *g = p->combo;
+    if (m < 0) return 1;
+    if (g == NULL || !p->defined) { gw_log("geno: %s: \"meter\" shows the combo ki value: it needs a define with a combo block - refused", where); return 0; }
+    if (d->n[m].type != JN_OBJ) { gw_log("geno: %s: \"meter\" must be an object - refused", where); return 0; }
+    if (g->param[GENO_CP_KI_MAX] <= 0) { gw_log("geno: %s: \"meter\" needs combo.ki (max above 0) - refused", where); return 0; }
+    g->has_meter = 1;
+    snprintf(g->mname, sizeof g->mname, "KI");
+    g->mrgba = 0xF2C14EFFu;
+    g->mw = 110.0f; g->mh = 7.0f; g->mx = -1.0f; g->my = 438.0f;
+    v = jd_get(d, m, "name");
+    if (v >= 0) {
+        if (d->n[v].type != JN_STR || strlen(d->n[v].str) > 11) { gw_log("geno: %s: meter.name must be a string of at most 11 characters - refused", where); return 0; }
+        snprintf(g->mname, sizeof g->mname, "%s", d->n[v].str);
+    }
+    v = jd_get(d, m, "color");
+    if (v >= 0 && (d->n[v].type != JN_STR || !gn_meter_color(d->n[v].str, &g->mrgba))) { gw_log("geno: %s: meter.color must be \"#RRGGBB\" - refused", where); return 0; }
+    if (!gn_meter_pair(d, m, "position", 0, 640, &g->mx, &g->my, where) || !gn_meter_pair(d, m, "size", 4, 400, &g->mw, &g->mh, where)) return 0;
+    v = jd_get(d, m, "max");
+    if (v >= 0) {
+        if (d->n[v].type != JN_NUM || d->n[v].num <= 0 || d->n[v].num > 1000) { gw_log("geno: %s: meter.max must be a number in 0..1000 - refused", where); return 0; }
+        g->mmax = (int) (d->n[v].num * 100.0 + 0.5);
+    }
+    gw_log("geno: %s: meter \"%s\" (ki, max %d)", where, g->mname, (g->mmax ? g->mmax : g->param[GENO_CP_KI_MAX]) / 100);
     return 1;
 }
 
@@ -260,6 +327,36 @@ int gw_Geno_ComboParam(int p, int what)
     const gn_profile *x = gn_at(p);
     if (x == NULL || x->combo == NULL || what < 0 || what >= GENO_CP_COUNT) return 0;
     return x->combo->param[what];
+}
+
+/* The HUD meter of profile p: 1 when it has one. name/rgba/x/y/w/h filled; ki_max in hundredths (the "max" override, else combo.ki.max). */
+int gw_Geno_MeterInfo(int p, char *name, int cap, unsigned *rgba, float *x, float *y, float *w, float *h, int *max)
+{
+    const gn_profile *q = gn_at(p);
+    if (q == NULL || q->combo == NULL || !q->combo->has_meter) return 0;
+    if (name != NULL && cap > 0) snprintf(name, (size_t) cap, "%s", q->combo->mname);
+    *rgba = q->combo->mrgba; *x = q->combo->mx; *y = q->combo->my; *w = q->combo->mw; *h = q->combo->mh;
+    *max = q->combo->mmax ? q->combo->mmax : q->combo->param[GENO_CP_KI_MAX];
+    return 1;
+}
+
+/* The same, as scalars for the game half and its tests: 0 has a meter, 1 rgba, 2..5 x y w h in hundredths, 6 max (hundredths), 7 + i the name's
+ * character i (0 at the end). */
+int gw_Geno_MeterParam(int p, int what)
+{
+    const gn_profile *q = gn_at(p);
+    if (q == NULL || q->combo == NULL || !q->combo->has_meter) return 0;
+    switch (what) {
+    case 0: return 1;
+    case 1: return (int) q->combo->mrgba;
+    case 2: return (int) (q->combo->mx * 100.0f + 0.5f);
+    case 3: return (int) (q->combo->my * 100.0f + 0.5f);
+    case 4: return (int) (q->combo->mw * 100.0f + 0.5f);
+    case 5: return (int) (q->combo->mh * 100.0f + 0.5f);
+    case 6: return q->combo->mmax ? q->combo->mmax : q->combo->param[GENO_CP_KI_MAX];
+    }
+    if (what >= 7 && what < 7 + (int) sizeof q->combo->mname) return (unsigned char) q->combo->mname[what - 7];
+    return 0;
 }
 
 int gw_Geno_ComboWord(int p, int route, int word)

@@ -7,6 +7,7 @@ extern void Geno_ComboInput(Fighter_GObj* gobj);
 extern int Geno_ComboTick(Fighter_GObj* gobj);
 extern void Geno_ComboContact(Fighter* fp, int kind);
 extern int Geno_ComboParam(int p, int what);
+extern int Geno_MeterParam(int p, int what);
 extern int Geno_ComboWord(int p, int route, int word);
 
 #define TC_HEAD(VER, KEY) \
@@ -122,6 +123,32 @@ static int test_geno_combo_parse(void)
     {
         TestFail("combo: \"jump_short\" must parse to GENO_CA_JUMP_SHORT and \"jump\" to GENO_CA_JUMP");
         rc = 1;
+    }
+    /* "meter": a HUD bar for the ki value; needs a combo block with ki; refused when malformed */
+    if (Geno_TestInstall(TC_HEAD("11", "meter-bad1") TC_STATES ",\"meter\":{\"name\":\"KI\"}}]}") != 0) {
+        TestFail("combo: a meter without a combo block must refuse the entry");
+        rc = 1;
+    }
+    if (Geno_TestInstall(TC_HEAD("11", "meter-bad2") TC_STATES ",\"combo\":{\"ki\":{\"max\":100},\"routes\":[]},\"meter\":{\"color\":\"red\"}}]}") != 0) {
+        TestFail("combo: a meter colour that is not #RRGGBB must refuse the entry");
+        rc = 1;
+    }
+    if (!tc_setup(TC_HEAD("11", "meter-ok") TC_STATES ",\"combo\":{\"ki\":{\"max\":80},\"routes\":[]},"
+                  "\"meter\":{\"name\":\"CHI\",\"color\":\"#10A0FF\",\"position\":[100,420],\"size\":[90,6]}}]}")) {
+        TestFail("combo: a define with a meter was not installed");
+        Geno_TestRestore();
+        t_setup();
+        return 1;
+    }
+    {
+        int pr = tc_st->profile;
+        if (!Geno_MeterParam(pr, 0) || Geno_MeterParam(pr, 7) != 'C' || Geno_MeterParam(pr, 8) != 'H' || Geno_MeterParam(pr, 9) != 'I' ||
+            Geno_MeterParam(pr, 10) != 0 || (unsigned) Geno_MeterParam(pr, 1) != 0x10A0FFFFu || Geno_MeterParam(pr, 2) != 10000 ||
+            Geno_MeterParam(pr, 3) != 42000 || Geno_MeterParam(pr, 4) != 9000 || Geno_MeterParam(pr, 5) != 600 || Geno_MeterParam(pr, 6) != 8000)
+        {
+            TestFail("combo: the meter's name CHI, colour #10A0FF, position 100,420, size 90x6 and max (combo.ki.max 80 = 8000 hundredths)");
+            rc = 1;
+        }
     }
     Geno_TestRestore();
     t_setup();

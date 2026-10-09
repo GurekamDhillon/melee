@@ -71,8 +71,8 @@ typedef struct {
     int count;
 } jnode;
 
-#define JDOC_NODES 16384 /* Sora's merged profile reached 1920 of the old 2048; a 450-clip LAB library plan needs ~12000 */
-#define JDOC_ARENA 262144
+#define JDOC_NODES 32768 /* Sora's merged profile reached 1920 of the old 2048; a 450-clip LAB library plan needs ~12000 */
+#define JDOC_ARENA 524288
 
 typedef struct {
     jnode n[JDOC_NODES];

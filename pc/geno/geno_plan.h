@@ -6,7 +6,7 @@
 #define GPL_MAX_JOINTS 256   /* slice 8: was 128; Sora has 175 */
 #define GPL_MAX_OWN_ROWS 448 /* slice 8: rows a package declares past Mario's 303 (geno.json fighter.rows) */
 #define GPL_MAX_PARTS 56
-#define GPL_MAX_CLIPS 576 /* 2026-10-08: was 256; a source library browsed in the LAB (CLIPS) */
+#define GPL_MAX_CLIPS 1024 /* 2026-10-08: was 256; a source library browsed in the LAB (CLIPS) */
 #define GPL_MAX_MOTIONS 351
 #define GPL_MAX_ROWS 512
 #define GPL_NONE 255

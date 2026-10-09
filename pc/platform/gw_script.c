@@ -1131,7 +1131,7 @@ static void gs_end_hold_release_owner(int owner) { /* owner 0: every hold (scene
     for (i = 0; i < GS_END_HOLDS; ++i) {
         if (gs_end_hold_reason[i][0] && (owner == 0 || gs_end_hold_owner[i] == owner)) {
             gw_log("script: match end hold '%s' released (%s)", gs_end_hold_reason[i], owner ? "script unloaded" : "scene change");
-            gs_end_hold_reason[i][0] = ' ';
+            gs_end_hold_reason[i][0] = '\0';
             gs_end_hold_owner[i] = 0;
         }
     }
@@ -1156,7 +1156,7 @@ static int l_match_end_hold(lua_State *L) {
         return 1;
     }
     reason = luaL_checkstring(L, 1);
-    if (reason[0] == ' ' || strlen(reason) >= sizeof gs_end_hold_reason[0]) {
+    if (reason[0] == '\0' || strlen(reason) >= sizeof gs_end_hold_reason[0]) {
         return luaL_error(L, "gd.match_end_hold: reason must be 1-23 characters");
     }
     if (lua_isnoneornil(L, 2)) { /* read one back */
@@ -1175,7 +1175,7 @@ static int l_match_end_hold(lua_State *L) {
             gmVs_SetEndHold(1);
         }
     } else if (i >= 0) {
-        gs_end_hold_reason[i][0] = ' ';
+        gs_end_hold_reason[i][0] = '\0';
         gs_end_hold_owner[i] = 0;
         gw_log("script [%s]: match end hold '%s' released", gs_script_id(gs.cur), reason);
         if (!gs_end_hold_any()) gmVs_SetEndHold(0);
@@ -1506,6 +1506,15 @@ extern int gw_Netplay_EnvoyPick(int idx);
 extern int gw_Netplay_EnvoyHist(int game, int who);
 extern void gw_Netplay_SetEnvoy(int on);
 extern int gw_Netplay_EnvoyPref(void);
+extern unsigned gw_Netplay_RunInfo(int what);
+extern const char *gw_Netplay_RunRecord(void);
+extern const char *gw_Netplay_RunFail(void);
+extern const char *gw_Netplay_RunLast(void);
+extern const char *gw_Netplay_RunBlock(void);
+extern const char *gw_Netplay_RunPlan(void);
+extern void gw_Netplay_RunText(int which, char *out, int cap);
+extern void gw_Netplay_SetRun(int on);
+extern int gw_Netplay_RunPref(void);
 #include "gw_netrun.h"
 extern int gw_Netplay_EnvoyPrefMode(void);
 extern int gw_Netplay_EnvoyRoomMode(void);
@@ -1679,6 +1688,41 @@ static int l_netplay(lua_State *L) {
         }
         lua_setfield(L, -2, "envoy");
     }
+    { /* run: the online stage run (stage 7, gw_netrun.h / gw_netdir.h); read-only. on, seed, stage (zero-based), record, digest, refused, fail; the director: kind ("stages"|"classic"), len, pool (shared
+         stocks), pool_start, cont (continue tokens left), cont_used, over ("" | "stocks" | "cleared" | "aborted"), asking (the continue is on offer), ends (stage-end barriers closed), each (stocks per
+         player per stage), mask (agreed unlock mask, 8 hex, "" until known), plan (the Classic plan on one line), last (the last stage end in words), block (why READY is refused), title/line (the interstitial's words) */
+        const char *rec = gw_Netplay_RunRecord(), *dg = strrchr(rec, '|');
+        unsigned over = gw_Netplay_RunInfo(9);
+        char tb[64], lb_[200], mh[16];
+        lua_createtable(L, 0, 24);
+        gs_setbool(L, "on", gw_Netplay_RunInfo(0));
+        gs_setint(L, "seed", (lua_Integer) gw_Netplay_RunInfo(1));
+        gs_setint(L, "stage", (int) gw_Netplay_RunInfo(2));
+        gs_setstr(L, "record", rec);
+        gs_setstr(L, "digest", dg != NULL ? dg + 1 : "");
+        gs_setint(L, "refused", (int) gw_Netplay_RunInfo(3));
+        gs_setstr(L, "fail", gw_Netplay_RunFail());
+        gs_setstr(L, "kind", gw_Netplay_RunInfo(4) == 1 ? "classic" : "stages");
+        gs_setint(L, "len", (int) gw_Netplay_RunInfo(5));
+        gs_setint(L, "pool", (int) gw_Netplay_RunInfo(6));
+        gs_setint(L, "pool_start", (int) gw_Netplay_RunInfo(7));
+        gs_setint(L, "cont", (int) gw_Netplay_RunInfo(8));
+        gs_setint(L, "cont_used", (int) gw_Netplay_RunInfo(15));
+        gs_setstr(L, "over", over == 1 ? "stocks" : over == 2 ? "cleared" : over == 3 ? "aborted" : "");
+        gs_setbool(L, "asking", gw_Netplay_RunInfo(10));
+        gs_setint(L, "ends", (int) gw_Netplay_RunInfo(11));
+        gs_setint(L, "each", (int) gw_Netplay_RunInfo(14));
+        if (gw_Netplay_RunInfo(13)) snprintf(mh, sizeof mh, "%08x", gw_Netplay_RunInfo(12)); else mh[0] = '\0';
+        gs_setstr(L, "mask", mh);
+        gs_setstr(L, "plan", gw_Netplay_RunPlan());
+        gs_setstr(L, "last", gw_Netplay_RunLast());
+        gs_setstr(L, "block", gw_Netplay_RunBlock());
+        gw_Netplay_RunText(0, tb, sizeof tb);
+        gs_setstr(L, "title", tb);
+        gw_Netplay_RunText(1, lb_, sizeof lb_);
+        gs_setstr(L, "line", lb_);
+        lua_setfield(L, -2, "run");
+    }
     return 1;
 }
 
@@ -1707,6 +1751,15 @@ static int l_netplay_act(lua_State *L) {
     } else if (_stricmp(what, "items") == 0) { /* the host's online item frequency 0..8, or -1/nil for none (the default) */
         extern int gw_Netplay_SetItems(int n);
         ok = gw_Netplay_SetItems((int) luaL_optinteger(L, 2, -1));
+    } else if (_stricmp(what, "run") == 0) { /* the host's choice for rooms it opens: an online stage run (spike) */
+        if (!lua_isnone(L, 2)) { /* true / 1: plain seeded stages; "classic" / 2: the Classic plan; false / 0 / "off": no run */
+            if (lua_type(L, 2) == LUA_TSTRING) {
+                const char *v = lua_tostring(L, 2);
+                gw_Netplay_SetRun(_stricmp(v, "classic") == 0 ? 2 : _stricmp(v, "off") == 0 || v[0] == '0' ? 0 : 1);
+            } else if (lua_type(L, 2) == LUA_TNUMBER) gw_Netplay_SetRun((int) lua_tointeger(L, 2));
+            else gw_Netplay_SetRun(lua_toboolean(L, 2) ? 1 : 0);
+        }
+        ok = gw_Netplay_RunPref() != 0;
     } else if (_stricmp(what, "rpick") == 0) { /* an Envoy set's reward: 0..2 an offer, 3 keeps the build (host-validated) */
         ok = gw_Netplay_EnvoyPick((int) luaL_checkinteger(L, 2));
     } else {

@@ -1261,6 +1261,12 @@ static void fl_instruction(char* out)
         sprintf(out, "Envoy: pick your reward. %d s left.", (Netplay_LobbyInfo(14) + 59) / 60);
         return;
     }
+    if (Netplay_RunActive()) { /* an online stage run: the interstitial's words (the next stage, the shared stocks, the continue, the end) */
+        Netplay_RunText(1, out, FE_STR);
+        if (out[0] != ' ') {
+            return;
+        }
+    }
     switch (p) {
     case LBP_CHAR_BLIND:
         if (Netplay_LobbyInfo(15)) { /* the last game was a tie: online there is no sudden death, the game is simply replayed */
@@ -1310,6 +1316,13 @@ static void fl_instruction(char* out)
 
 static const char* fl_phase_title(void)
 {
+    static char run_title[FE_STR];
+    if (Netplay_RunActive() && (fl_phase() == LBP_READY || fl_phase() == LBP_GO)) { /* the run's interstitial title: RUN - STAGE 3 OF 8, OUT OF STOCKS, RUN OVER */
+        Netplay_RunText(0, run_title, sizeof run_title);
+        if (run_title[0] != ' ') {
+            return run_title;
+        }
+    }
     switch (fl_phase()) {
     case LBP_CHAR_BLIND:
     case LBP_CHAR_WINNER:
@@ -2549,6 +2562,17 @@ static void fl_frame(void)
 {
     u32 in = 0, room_bits = 0;
     fl.frames++;
+    {
+        /* the fighters this save has unlocked, for an online stage run's agreed unlock mask (the intersection of both players') */
+        unsigned um = 0;
+        int ck;
+        for (ck = 0; ck < 26; ck++) {
+            if (gm_IsCKindUnlocked((u8) ck)) {
+                um |= 1u << ck;
+            }
+        }
+        Netplay_SetUnlocks(um);
+    }
     if (fas_active() && (fl.art == FL_CSS || fl.art == FL_SSS)) {
         fas_frame(); /* the Atlas select: its own pads, mouse, models and drawing; nothing of the legacy panels is built */
         return;

@@ -124,3 +124,28 @@ them, and refusals disabled the script). Native: `pc/platform/gw_matchbuild.h`, 
 `E`/`W`/`X` messages, `envoy=` token), `gw_net.c/.h` (protocol 5), `pc/gameworld/script_build.inc`, `script_mods.inc`, `script_mods_core.h` (stage 4), `src/melee/ft/fighter.c` (the hash word),
 `src/melee/gm/gmfrontend*.c/.inc` (the toggle and the lobby's one instruction line).
 Tests: `pc/tests/envoy_online.lua`, `envoy_online_build.lua`, `net_proc_helper.lua`; native `netbuild`, `net_*envoy*`, `netplay_lobby_envoy`.
+
+## Online Classic director (stage 7a/7b, 2026-10-08)
+
+Host a private room with `MELEE_NETPLAY_RUN=classic` (or `gd.netplay_act("run", "classic")`). The handshake uses the additive run mode word
+`0x45560003` in protocol 5; no transport packet or protocol version changes. Envoy builds and CPU opponents are not part of this slice.
+Both humans play ordinary GS_VS placeholders. The Classic plan retains the retail battle rows, difficulty, matchup stages and opponent kinds as data;
+bonus rows and Adventure special stages are skipped. Played arenas come from the seeded agreed lobby stage list.
+
+Each save advertises unlocked fighters, mapped through content identities and intersected with installed common fighters. Selection is seeded, avoids
+repeat opponents and the humans where possible, and never relaxes the unlock mask. An intersection that cannot fill a battle row refuses READY.
+The boss row remains data for stage 6. A reordered mod fighter installation can refuse the plan digest; vanilla IDs are the supported proof target.
+
+The pair has a shared pool (default 12), charged for both humans' lost stocks at each stage boundary. A cancellation or no clear loses the stage for
+both. An exhausted pool holds the failed stage and offers one agreed continue: both READY votes spend it and refill the original pool; another loss
+ends the run for both. RN2 carries the pool, remaining token, loss flag, packed director state, chosen stage identity and Classic-plan digest.
+
+Before scene teardown both peers compare epoch, exit frame, a final checksum of the last simulated frame, winner, remaining stocks, stage and pool.
+Missing checksum, tuple mismatch or timeout aborts without advancing the director. The lobby shows the next stage, opponents, pool, continue or
+terminal outcome, replacing retail results/sudden death and retail save side effects. The blocking exit barrier cannot apply a pending rollback
+correction: it safely aborts; a future frame-loop exit gate and real-client lag/loss proof are still needed.
+
+`gd.netplay().run` adds `kind`, `len`, `pool`, `pool_start`, `cont`, `cont_used`, `over`, `asking`, `ends`, `each`, `mask`, `plan`, `last`, `block`,
+`title` and `line`. `over` is empty while live, then `stocks`, `cleared` or `aborted`. `record` remains the digest-checked RN2 string.
+Test overrides: `MELEE_NETPLAY_RUN_LEN`, `_POOL`, `_CONT` (0 or 1), `_STOCKS`; `MELEE_NETRUN_UNLOCK` (hex mask), `MELEE_NETRUN_POISON=1|mask|barrier`.
+Native: `build.sh --native-test netdir`, `--native-test envoy-netrun`; integrated headless: `run.sh --test`.

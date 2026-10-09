@@ -1338,6 +1338,7 @@ static void gs_push_xy(lua_State *L, const char *k, float x, float y) {
     lua_setfield(L, -2, k);
 }
 
+extern float gw_ScriptGame_LabAnimEnd(int slot);
 static void gs_push_lab_fields(lua_State *L, int slot) {
     char anim[128], buf[32];
     const char *sym = gw_ScriptGame_LabAnimSymbol(slot);
@@ -1352,6 +1353,7 @@ static void gs_push_lab_fields(lua_State *L, int slot) {
     gs_setstr(L, "anim_symbol", sym != NULL ? sym : "");
     gs_setnum(L, "anim_frame_f", gw_ScriptGame_FighterF(slot, SF_ANIM_FRAME));
     gs_setnum(L, "anim_rate", gw_ScriptGame_LabF(slot, LAB_F_ANIM_RATE));
+    gs_setnum(L, "anim_end", gw_ScriptGame_LabAnimEnd(slot)); /* the playing clip's last frame (LAB CLIPS) */
     gs_setnum(L, "hitstun", gw_ScriptGame_LabF(slot, LAB_F_HITSTUN));
     gs_setbool(L, "in_hitlag", gw_ScriptGame_LabI(slot, LAB_I_IN_HITLAG) == 1);
     gs_setbool(L, "in_hitstun", gw_ScriptGame_LabI(slot, LAB_I_IN_HITSTUN) == 1);
@@ -3785,6 +3787,8 @@ extern int gw_ScriptGame_LabCommonCount(int slot);
 extern const void *gw_ScriptGame_LabScript(int slot, int anim);
 extern const char *gw_ScriptGame_LabAnimSymbolFor(int slot, int anim);
 extern float gw_ScriptGame_LabAnimEnd(int slot);
+extern int gw_ScriptGame_LabRowCount(int slot);
+extern int gw_ScriptGame_LabSetPreviewRow(int slot, int row, int facing);
 extern int gw_ScriptGame_LabSetMotion(int slot, int msid, int rate_bits, int lift_bits);
 
 /* Command lengths in words for opcodes 10-58 (ftaction.c ftAction_803C0870) and the names the
@@ -4227,6 +4231,53 @@ static int l_set_motion(lua_State *L) {
     }
     gs.paused = 1;
     gs.step = frame - 1; /* entering is frame 1 */
+    lua_pushboolean(L, 1);
+    return 1;
+}
+
+/* gd.anim_rows(port): every animation row of that fighter, {row, name, symbol}. Offline LAB tool
+   for the CLIPS page; Geno base "none" defines list their unbound fighter.rows here too. */
+static int l_anim_rows(lua_State *L) {
+    int slot = gs_present_arg(L, 1), n, i;
+    char anim[128];
+    if (slot < 0) { lua_pushnil(L); return 1; }
+    n = gw_ScriptGame_LabRowCount(slot);
+    lua_createtable(L, n > 0 ? n : 0, 0);
+    for (i = 0; i < n; ++i) {
+        const char *sym = gw_ScriptGame_LabAnimSymbolFor(slot, i);
+        lua_createtable(L, 0, 3);
+        gs_setint(L, "row", i);
+        gs_anim_name(sym, anim, sizeof anim);
+        gs_setstr(L, "name", anim);
+        gs_setstr(L, "symbol", sym != NULL ? sym : "");
+        lua_rawseti(L, -2, i + 1);
+    }
+    return 1;
+}
+
+/* gd.anim_preview(port, row [, frame [, rate [, facing]]]) / gd.anim_preview(port, nil): offline. The fighter
+   goes to Wait playing animation `row` (any row of its table) from `frame`, then pauses, as
+   gd.set_motion does; Wait keeps it grounded in place, and the row's own script words are not
+   run as a move. nil restores its own Wait. Returns true or false, reason. */
+static int l_anim_preview(lua_State *L) {
+    int slot = gs_present_arg(L, 1);
+    int row = lua_isnoneornil(L, 2) ? -1 : (int) luaL_checkinteger(L, 2);
+    int frame = (int) luaL_optinteger(L, 3, 1);
+    float rate = (float) luaL_optnumber(L, 4, 1.0);
+    int facing = (int) luaL_optinteger(L, 5, 0);
+    enum { WAIT = 14 }; /* ftCo_MS_Wait */
+    gs_require_offline(L, "anim_preview");
+    if (slot < 0) { lua_pushboolean(L, 0); lua_pushstring(L, "no fighter on that port"); return 2; }
+    if (row >= gw_ScriptGame_LabRowCount(slot)) { lua_pushboolean(L, 0); lua_pushstring(L, "no such animation row"); return 2; }
+    gw_ScriptGame_LabSetPreviewRow(slot, row, facing);
+    if (frame < 1) frame = 1;
+    if (frame > 600) frame = 600;
+    gs.step = 0;
+    gs.set_motion[slot] = WAIT + 1;
+    gs.set_rate[slot] = rate;
+    gs.set_lift[slot] = 0.0f;
+    gs.paused = 1;
+    gs.step = frame - 1;
     lua_pushboolean(L, 1);
     return 1;
 }
@@ -6746,7 +6797,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"hot_reload_status", l_hot_reload_status}, {"state_save", l_state_save},
     {"state_list", l_state_list}, {"state_load", l_state_load}, {"state_delete", l_state_delete},
     {"state_rename", l_state_rename}, {"state_gen", l_state_gen}, {"lab_peek", l_lab_peek},
-    {"timeline", l_timeline}, {"set_motion", l_set_motion}, {"mirror_pad", l_mirror_pad},
+    {"timeline", l_timeline}, {"set_motion", l_set_motion}, {"anim_preview", l_anim_preview}, {"anim_rows", l_anim_rows}, {"mirror_pad", l_mirror_pad},
     {"lab_request", l_lab_request}, {"lab_mode", l_lab_mode}, {"lab_leave", l_lab_leave},
     {"tbd_request", l_tbd_request}, {"input_mask", l_input_mask}, {"input_chord", l_input_chord},
     {"training_select", l_training_select},
@@ -7632,6 +7683,7 @@ void gw_Script_SceneBegin(int scene_kind) {
     prev = gs.scene_kind;
     gw_Ui_SceneExitTo(prev, scene_kind); /* every Atlas screen pushed during the scene that ends goes with it (menus, mod entries); a persistent one also when the next scene is outside a run */
     gw_surface_release(0);
+    { int ps; for (ps = 0; ps < 6; ++ps) gw_ScriptGame_LabSetPreviewRow(ps, -1, 0); } /* LAB clip preview ends with its scene */
     gw_motion_release(0);
     gs_earned_release(0);
     gs_echo_visual_release(0);

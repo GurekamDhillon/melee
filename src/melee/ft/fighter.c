@@ -1529,6 +1529,14 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
                 fp->anim_id = geno_row;
             }
         }
+        {
+            /* LAB animation preview (gd.anim_preview): offline tool, -1 when unused */
+            extern int ScriptGame_LabPreviewRow(Fighter * fp, int motion);
+            int lab_row = ScriptGame_LabPreviewRow(fp, (int) msid);
+            if (lab_row >= 0) {
+                fp->anim_id = lab_row;
+            }
+        }
 #endif
         fp->frame_speed_mul = anim_speed;
         fp->x8A0_unk = anim_speed;

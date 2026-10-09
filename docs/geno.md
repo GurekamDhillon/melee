@@ -3023,3 +3023,20 @@ A script's own `gd.fighter_shader` on that port takes precedence; releasing it r
 
 Requires the Aurora GD surface patch (as `gd.fighter_shader`). The ramp is procedural; a source
 toon-ramp texture (XV2 DYT) is not sampled because surface functions have no texture binding.
+
+## LAB CLIPS: the animation library (2026-10-08)
+
+A LAB mode (TAB to it, or `lab mode clips`) listing every row of the focused fighter's animation
+table: retail rows for retail fighters; for a Geno base "none" define also its unbound `fighter.rows`
+(303 on), shown as LIBRARY. Goku XV2 declares his whole XV2 clip set there (385 rows). A clip plays
+held in place: `gd.anim_preview(port, row [, frame [, rate [, facing]]])` puts the fighter in Wait
+with that row (ScriptGame_LabPreviewRow, asked by Fighter_ChangeMotionState for Wait only), steps to
+`frame` and pauses like `gd.set_motion`; `gd.anim_preview(port, nil)` ends it; scene changes clear
+it. `gd.anim_rows(port)` lists `{row, name, symbol}`; the player table gained `anim_end`.
+
+Keys: UP/DOWN pick, ENTER play from 1, SPACE pause, LEFT/RIGHT a frame (CTRL 10), PAGEUP/PAGEDOWN
+10 frames, Z/X speed (x2 .. x0.1), V category, O facing, L loop, M model, S skeleton, B boxes, C close-up
+camera. Console: `lab clips find|play|show|frame|speed|category|stop`. `MELEE_LAB_MODE=clips` and
+`MELEE_LAB_CLIP=<row|name>` open on it. Entering CLIPS parks the other fighters (stand, 45 units away).
+Limits raised for it: GPL_MAX_CLIPS 576, GPL_MAX_OWN_ROWS 448, the registry JSON pool 16384 nodes /
+256 KB. Modes past the tenth have no digit key (TAB / `lab mode`).

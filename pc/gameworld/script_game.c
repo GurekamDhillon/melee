@@ -15,6 +15,7 @@
 
 #include <melee/ft/fighter.h>
 #include <melee/ft/ftcmdscript.h>
+#include <melee/ft/ftdata.h>
 #include <melee/ft/inlines.h>
 #include <melee/ft/types.h>
 #include <melee/ft/kinds/ftCommon/forward.h>
@@ -2498,6 +2499,60 @@ const char* ScriptGame_LabAnimSymbolFor(int slot, int anim)
         return NULL;
     }
     return fp->x24[anim].x0;
+}
+
+/* LAB animation preview (gd.anim_preview): a row this port's fighter plays instead of its state's own
+ * whenever it enters Wait (Fighter_ChangeMotionState asks ScriptGame_LabPreviewRow). Offline LAB tool
+ * state: -1 = off. Any Geno or retail row works; Geno base "none" defines add unbound rows
+ * (fighter.rows) so a whole source library can be browsed without states. */
+static int lab_preview_row[6] = { -1, -1, -1, -1, -1, -1 };
+static int lab_preview_face[6]; /* -1 / 1 forces the facing on entry, 0 keeps it */
+static int lab_row_count(Fighter* fp)
+{
+    /* A Geno base "none" define's declared rows (fighter.rows) sit at 303.. after the table it builds
+     * (geno_define_data.inc GenoDefine_BuildOwn); count them even where the kind's count stays 303. */
+    extern int Geno_DefineIsNone(int kind);
+    extern int Geno_DefinePlanInt(int kind, int what, int i);
+    int n;
+    if (fp == NULL || fp->x24 == NULL) {
+        return 0;
+    }
+    n = (int) ftData_Table_Unk0[fp->kind].count;
+    if (Geno_DefineIsNone(fp->kind)) {
+        int own = 303 + Geno_DefinePlanInt(fp->kind, 6, 0);
+        if (own > n) {
+            n = own;
+        }
+    }
+    return n;
+}
+int ScriptGame_LabRowCount(int slot)
+{
+    return lab_row_count(script_fighter(slot));
+}
+int ScriptGame_LabSetPreviewRow(int slot, int row, int facing)
+{
+    if (slot < 0 || slot >= 6) {
+        return -1;
+    }
+    lab_preview_row[slot] = row;
+    lab_preview_face[slot] = facing < 0 ? -1 : facing > 0 ? 1 : 0;
+    return 0;
+}
+int ScriptGame_LabPreviewRow(Fighter* fp, int motion)
+{
+    int slot = fp->player_id, row;
+    if (motion != ftCo_MS_Wait || slot < 0 || slot >= 6 || fp->is_sub_fighter) {
+        return -1;
+    }
+    row = lab_preview_row[slot];
+    if (row < 0 || row >= lab_row_count(fp)) {
+        return -1;
+    }
+    if (lab_preview_face[slot] != 0) {
+        fp->facing_dir = (float) lab_preview_face[slot]; /* read below for the root yaw */
+    }
+    return row;
 }
 
 /* The playing animation's last frame. */

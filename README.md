@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Release v0.1.7" src="pc/docs/readme/brand/version.svg" height="28"></a>
-  <img alt="Platform: Windows x64" src="pc/docs/readme/brand/windows.svg" height="28">
+  <a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Release v0.2.2" src="pc/docs/readme/brand/version.svg" height="28"></a>
+  <img alt="Platform: Windows x64 and Linux x86_64" src="pc/docs/readme/brand/windows.svg" height="28">
   <img alt="Netplay: rollback" src="pc/docs/readme/brand/rollback.svg" height="28">
   <img alt="Mods: m-ex compatible" src="pc/docs/readme/brand/mex.svg" height="28">
   <img alt="Replays: Slippi" src="pc/docs/readme/brand/slippi.svg" height="28">
@@ -29,11 +29,13 @@ It plays online with **rollback netcode** from a competitive lobby, renders nati
 **[m-ex](https://github.com/akaneia/m-ex) modded content** (mod discs and loose mods: fighters,
 stages, items and music), and can be scripted in **Lua**.
 
-> **Status: public test build (0.1.7).** Download it, and read the project overview, the full
-> feature list and the screenshots, in the workspace repo:
+> **Status: public test build (0.2.2), for Windows x64 and Linux x86_64.** Download it
+> (`GDMelee-<version>-win64.zip` or `GDMelee-<version>-linux-x86_64.tar.xz`), and read the project
+> overview, the full feature list and the screenshots, in the workspace repo:
 > **[GurekamDhillon/gd-melee-workspace](https://github.com/GurekamDhillon/gd-melee-workspace)**
 > ([latest release](https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest)). You
-> supply your own legally dumped disc image.
+> supply your own legally dumped disc image; nothing disc-derived is distributed. Windows and Linux
+> 0.2.2 play each other online, but not 0.2.1 or earlier.
 
 <table>
   <tr>
@@ -51,7 +53,9 @@ stages, items and music), and can be scripted in **Lua**.
 - **Rollback netplay** with a room code or Random Opponent, and a competitive lobby: blind picks,
   starters and counterpicks, 1-2-1 strikes (the cursor skips struck stages), bans, ready-up and
   rematches.
-- **HD rendering** at any render scale over D3D12, vsync off, an experimental uncapped frame rate,
+- **Windows and Linux**, with cross-play. Sets resume after a disconnect, and the disc check refuses
+  a player on a different disc image instead of desyncing.
+- **HD rendering** at any render scale over D3D12 (Vulkan on Linux), vsync off, an experimental uncapped frame rate,
   and about 13 ms from controller to screen.
 - **m-ex content**: mod discs (ACE, Akaneia) and loose mods, **94 fighter slots**, m-ex fighters'
   names, emblems and stock icons on the results screen, and m-ex CPUs that play from their clone
@@ -63,6 +67,12 @@ stages, items and music), and can be scripted in **Lua**.
   [`docs/scripting.md`](https://github.com/GurekamDhillon/gd-melee-workspace/blob/master/docs/scripting.md).
 - **Slippi replay playback**, UCF and tournament rule sets, and a deterministic engine checked frame
   by frame with SyncTest.
+- **An in-game mod browser** for SSBM Nucleus mods (search, thumbnails, an install queue that
+  survives a restart; zip mods are downloaded and installed for you). Mods from SSBM Nucleus -
+  https://ssbmnucleus.net, with the permission of sc00p.
+- **Envoy**, a roguelite on top of Classic and Adventure (drives, keystones, tougher opponents; solo,
+  offline co-op or an online set), **255 costumes per fighter**, **everything unlocked by default**
+  (Settings > Gameplay turns it off) and **fullscreen** (F11 or Alt+Enter).
 - **Controllers play, the keyboard is hotkeys only**, with a "Connect a controller" notice when a
   window has none, and **the mouse in every menu** (`gd.mouse` for scripts).
 - **Bit-exact with the console:** matrix maths rounds like the Gekko's paired singles, and real

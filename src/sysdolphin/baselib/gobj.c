@@ -12,6 +12,7 @@
 
 #if defined(TARGET_PC)
 #include <dolphin/os.h>
+#include "random.h"
 extern int GObjLogEnabled(void);
 extern int ScriptStageHostHidden;
 
@@ -220,6 +221,9 @@ void HSD_GObj_80390ED0(HSD_GObj* gobj, u32 mask)
 {
     PC_PROF_BEGIN(GW_PROF_DRAW, 0);
     s32 i = 0;
+#if defined(TARGET_PC)
+    HSD_RandRenderBegin();
+#endif
     while (mask) {
         if (mask & 1) {
             u64 prios = gobj->gxlink_prios;
@@ -246,6 +250,9 @@ void HSD_GObj_80390ED0(HSD_GObj* gobj, u32 mask)
         mask >>= 1;
     }
 
+#if defined(TARGET_PC)
+    HSD_RandRenderEnd();
+#endif
     PC_PROF_END();
 }
 
@@ -255,6 +262,9 @@ void HSD_GObj_80390FC0(void)
     PC_PROF_BEGIN(GW_PROF_DRAW, 0);
     HSD_GObj* saved;
     HSD_GObj* cur = HSD_GObjGXLinkHead[HSD_GObjLibInitData.gx_link_max + 1];
+#if defined(TARGET_PC)
+    HSD_RandRenderBegin();
+#endif
     while (cur != NULL) {
 #if defined(TARGET_PC)
         /* The Classic step-7 splash installs max-link render objects. Use the
@@ -287,6 +297,9 @@ void HSD_GObj_80390FC0(void)
         cur = cur->next_gx;
     }
 
+#if defined(TARGET_PC)
+    HSD_RandRenderEnd();
+#endif
     PC_PROF_END();
 }
 

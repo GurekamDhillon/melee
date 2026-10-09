@@ -358,9 +358,14 @@ int main(int argc, char *argv[]) {
   (void)gw_env_int("MELEE_WINDOW_W", &win_w);
   (void)gw_env_int("MELEE_WINDOW_H", &win_h);
 
+  int render_det_test = 0;
+  (void)gw_env_int("MELEE_RENDER_DET_TEST", &render_det_test);
   extern int gw_Video_Fullscreen(void);
   const AuroraConfig config = {
       .appName = "Melee PC",
+      /* Isolated native regression runs cannot create the shared SDL preference
+       * directory. Aurora assumes userPath is non-NULL when it starts ImGui. */
+      .userPath = render_det_test == 1 ? gw_cache_path() : NULL,
       .cachePath = gw_cache_path(),
       /* The exe's own folder: aurora loads its pipeline seed, initial_pipeline_cache.db, from
        * here and warms every pipeline in it in the background. The seed is built from a full
@@ -389,6 +394,9 @@ int main(int argc, char *argv[]) {
       .mem1Size = 0,
       .mem2Size = 0,
   };
+  if (render_det_test == 1) {
+    gw_log("det: isolated renderer settings in %s", config.userPath);
+  }
   /* Boot black screen: Aurora opens SDL's joystick subsystem on the first aurora_update, before the first
    * present, and SDL's DirectInput enumeration asks every HID device for its product string. A slow
    * device kept the main thread in HidD_GetProductString for 4.2 s in 2 of 7 boots (cdb stack: dinput8

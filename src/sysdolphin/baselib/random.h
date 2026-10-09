@@ -8,6 +8,10 @@ f32 HSD_Randf(void);
 s32 HSD_Randi(s32 max_val);
 void _HSD_RandForgetMemory(void* low, void* high);
 extern u32* HSD_RandSeedPtr;
+#if defined(TARGET_PC)
+void HSD_RandRenderBegin(void);
+void HSD_RandRenderEnd(void);
+#endif
 
 /// #HSD_Randi that accepts an empty range.
 static inline int randi(int max_val)

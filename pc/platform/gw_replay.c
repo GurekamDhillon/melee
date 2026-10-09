@@ -1319,18 +1319,40 @@ int gw_Replay_PortHuman(int p) {
 }
 
 /* <trace>.rand.csv: every RNG draw while a replay is armed - frame, caller (native return address),
- * seed after, and whether it drew the global seed or a redirected one (HSD_RandSeedPtr). */
+ * seed after, and stream: 1 = default simulation, 0 = redirected simulation, 2 = render. */
 /* Set by gmscene.c around the render section of the scene loop. */
 static int gw_det_in_render;
-void gw_Det_SetInRender(int on) { gw_det_in_render = on; }
+static int gw_det_logic_frame;
+/* Diagnostic completion count, deliberately not part of the gameplay hash. */
+static uint32_t gw_det_render_serial;
+uint32_t gw_Det_RenderSerial(void) { return gw_det_render_serial; }
+void gw_Det_LogicFrame(int frame) {
+    static int logged;
+    gw_det_logic_frame = frame;
+    if (!logged) {
+        gw_log("det: isolated render RNG; canonical callbacks on every logic frame");
+        logged = 1;
+    }
+}
+void gw_Det_SetInRender(int on) {
+    extern void gw_HSD_RandRenderBegin(void), gw_HSD_RandRenderEnd(void);
+    if (on) {
+        ++gw_det_in_render;
+        gw_HSD_RandRenderBegin();
+    } else if (gw_det_in_render) {
+        gw_HSD_RandRenderEnd();
+        if (--gw_det_in_render == 0) ++gw_det_render_serial;
+    }
+}
 
 void gw_Replay_RandTrace(uint32_t caller, uint32_t seed_after, int32_t global) {
-    static int tried;
+    static int tried, offline, configured;
+    static const char *direct, *tp;
     extern int gw_Snap_Resimulating(void);
     if (!gw_rb_active() && gw_Snap_Resimulating()) {
         return;
     }
-    if (gw_det_in_render && global) {
+    if (gw_det_in_render && global == 1) {
         /* render code drawing from the GLOBAL seed: simulation state consumed by rendering, so a
            frame that renders and one that does not (catch-up, rollback resimulation) diverge.
            Logged once per caller; resolve the address against melee-pc.map. */
@@ -1344,20 +1366,27 @@ void gw_Replay_RandTrace(uint32_t caller, uint32_t seed_after, int32_t global) {
             gw_log("det: RNG draw during render from 0x%08X (frame %d)", caller, rp.frame);
         }
     }
-    if (!rp.active || rp.frame == GW_RP_UNARMED) {
-        return;
-    }
     if (!tried) {
-        const char *tp = getenv("MELEE_STATE_TRACE");
+        if (!configured) {
+            direct = getenv("MELEE_RAND_TRACE");
+            tp = getenv("MELEE_STATE_TRACE");
+            offline = direct != NULL && direct[0] != '\0';
+            configured = 1;
+        }
+        if (!offline && (!rp.active || rp.frame == GW_RP_UNARMED)) return;
         tried = 1;
-        if (tp != NULL && tp[0] != '\0') {
+        if (offline) {
+            gw_randf = fopen(strcmp(direct, "1") == 0 ? "melee-rand.csv" : direct, "w");
+            gw_log("det: offline RNG trace %s", gw_randf ? "opened" : "failed to open");
+        } else if (tp != NULL && tp[0] != '\0') {
             char p[600];
             snprintf(p, sizeof p, "%s.rand.csv", tp);
             gw_randf = fopen(p, "w");
         }
     }
-    if (gw_randf != NULL) {
-        gw_tb_printf(3, gw_randf, "%d,%08X,%08X,%d\n", rp.frame, caller, seed_after, (int) global);
+    if (gw_randf != NULL && (offline || (rp.active && rp.frame != GW_RP_UNARMED))) {
+        gw_tb_printf(3, gw_randf, "%d,%08X,%08X,%d\n",
+                     rp.active ? rp.frame : gw_det_logic_frame, caller, seed_after, (int) global);
     }
 }
 

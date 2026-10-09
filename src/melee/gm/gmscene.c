@@ -879,7 +879,9 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
         {
             /* scripting: pause / frame advance (never during a rollback session) */
             extern int Script_Iterations(int count);
+            extern int RenderTest_Iterations(int count);
             pad_queue_count = gm_onep_interstage ? 0 : Script_Iterations(pad_queue_count);
+            pad_queue_count = RenderTest_Iterations(pad_queue_count);
         }
 #endif
 
@@ -906,7 +908,9 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                 /* scripting, at the logic-frame boundary: pending savestate/loadstate and
                    on_frame_pre (not on a resimulated frame) */
                 extern void Script_FramePre(void);
+                extern void Det_LogicFrame(int frame);
                 Script_FramePre();
+                Det_LogicFrame(temp_r25->unk_0);
             }
 #endif
             HSD_PerfSetStartTime();
@@ -1049,39 +1053,48 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
             }
 #if defined(TARGET_PC)
             {
-                /* SyncTest: a resimulated frame must ALSO render, minus the present. The render
-                 * pass is part of a frame - it moves object pools, fills matrix caches, clears
-                 * dirty flags - and the first pass did it, so a resimulation that skips it lands
-                 * in a different state (the whole "render-owned" chase in gw_snap.c). Same calls
-                 * as the real render below, without HSD_VICopyXFBAsync. Its draw commands are
-                 * discarded with the frame by aurora, so the picture is unaffected. */
+                /* Finish EVERY intermediate logic frame with the retail callback walk.
+                 * HSD_JObjDisp creates one-shot SPtcl generators, particleSort rewires
+                 * the list that hsd_8039CEAC will simulate, and ftDrawCommon_80080E18
+                 * updates screen-KO positions. Catch-up used to skip these writes.
+                 * Preserve their order exactly as on a presented frame, but omit
+                 * GPU geometry/presentation. Extra native presents replay Aurora's
+                 * recorded commands; they must never repeat these callbacks. */
                 extern int Snap_Resimulating(void);
                 extern int Snap_CuratedNoRender(void);
                 extern void SyncTest_PreRender(void);
-                if (Snap_Resimulating() && !Snap_CuratedNoRender()) {
+                int resim = Snap_Resimulating();
+                if ((resim && !Snap_CuratedNoRender()) ||
+                    (!resim && i + 1 < pad_queue_count &&
+                     temp_r25->unk_C == 0)) {
                     extern void Snap_Time(int what, int begin);
-                    Snap_Time(2, 0); /* a resimulated iteration's logic, end of IterStart -> here */
+                    if (resim) Snap_Time(2, 0); /* a resimulated iteration's logic, end of IterStart -> here */
                     SyncTest_PreRender(); /* open the between-frames window here too */
                     extern void Gx_SuppressDraws(int on);
                     extern int Snap_SuppressDraws(void);
-                    Snap_Time(0, 1);
-                    Snap_Time(3, 1);
+                    extern void Det_SetInRender(int on);
+                    if (resim) Snap_Time(0, 1);
+                    if (resim) Snap_Time(3, 1);
                     lb_800195D0();
                     GXInvalidateVtxCache();
                     GXInvalidateTexAll();
-                    Snap_Time(3, 0);
-                    Snap_Time(4, 1);
+                    if (resim) Snap_Time(3, 0);
+                    if (resim) Snap_Time(4, 1);
+                    Det_SetInRender(1);
                     HSD_StartRender(HSD_RP_SCREEN);
-                    Snap_Time(4, 0);
-                    Snap_Time(5, 1);
-                    Gx_SuppressDraws(Snap_SuppressDraws());
+                    if (resim) Snap_Time(4, 0);
+                    /* Timing slot 5 also enables resim-only callback skips.
+                     * Ordinary catch-up must retain Fountain reflections. */
+                    if (resim) Snap_Time(5, 1);
+                    Gx_SuppressDraws(resim ? Snap_SuppressDraws() : 1);
                     HSD_GObj_80390FC0();
                     Gx_SuppressDraws(0);
-                    Snap_Time(5, 0);
-                    Snap_Time(6, 1);
+                    if (resim) Snap_Time(5, 0);
+                    if (resim) Snap_Time(6, 1);
                     HSD_Init_803755A8();
-                    Snap_Time(6, 0);
-                    Snap_Time(0, 0);
+                    Det_SetInRender(0);
+                    if (resim) Snap_Time(6, 0);
+                    if (resim) Snap_Time(0, 0);
                 }
             }
 #endif
@@ -1111,8 +1124,8 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
         GXInvalidateTexAll();
 #if defined(TARGET_PC)
         {
-            /* render-section marker for the determinism audit: an RNG draw made while it is set is
-               render code consuming simulation state (gw_replay.c, gw_Replay_RandTrace) */
+            /* Canonical draw callbacks use their private RNG stream. The native
+             * marker also diagnoses any simulation-stream draw that leaks in. */
             extern void Det_SetInRender(int on);
             Det_SetInRender(1);
 #endif
@@ -1144,12 +1157,14 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
             Script_PostRender();
         }
 #endif
-        HSD_PerfSetDrawTime();
-        HSD_VICopyXFBAsync(HSD_RP_SCREEN);
 #if defined(TARGET_PC)
+            /* Present pumps asynchronous SDK callbacks. Those are outside the
+             * draw RNG scope, just as they are during an idle wait. */
             Det_SetInRender(0);
         }
 #endif
+        HSD_PerfSetDrawTime();
+        HSD_VICopyXFBAsync(HSD_RP_SCREEN);
         if (temp_r25->unk_4 != -2U) {
             temp_r25->unk_4++;
         }

@@ -233,7 +233,24 @@ int gw_turbo_enabled(void) { return gw_turbo; }
  * is minimized or hidden. Decided once per frame - by the game's render pass when it asks
  * (gw_Turbo_FrameHidden, gmscene.c), else at present time - so both see the same answer. */
 static int gw_turbo_hidden_decided, gw_turbo_hidden;
+/* Test-only override set by gd.render_test behind MELEE_RENDER_DET_TEST=1.
+ * It changes submission/geometry only. Retail callbacks still finalize each
+ * logic frame, including particle sorting and screen-KO position updates. */
+static int gw_render_test_presents = -1;
+int gw_RenderTest_Iterations(int count) {
+  /* Exercise the same catch-up boundary as a slow realtime render. Script pads
+   * are applied at each logic boundary. Preserve pause/stall (zero iterations). */
+  if (count > 0 && gw_render_test_presents >= 0)
+    return gw_render_test_presents == 0 ? 2 : 1;
+  return count;
+}
+void gw_RenderTest_SetPresents(int count) {
+  gw_render_test_presents = count;
+  gw_turbo_hidden_decided = 0;
+  gw_log("det: render test presentations=%d (canonical callbacks retained)", count);
+}
 static int gw_turbo_frame_hidden(void) {
+  if (gw_render_test_presents >= 0) return gw_render_test_presents == 0;
   if (!gw_turbo_hidden_decided) {
     gw_turbo_hidden = gw_turbo && !(gw_turbo_render != 0 && (gw_retrace_count % gw_turbo_render) == 0 &&
                                     gw_video_window != NULL &&
@@ -249,6 +266,7 @@ static int gw_turbo_frame_hidden(void) {
  * matrix products are skipped (Gx_SuppressDraws; pobj.c checks it). MELEE_TURBO_DRAWS=1 keeps them. */
 int gw_Turbo_FrameHidden(void) {
   static int keep = -1;
+  if (gw_render_test_presents >= 0) return gw_render_test_presents == 0;
   if (keep < 0) {
     const char *e = getenv("MELEE_TURBO_DRAWS");
     keep = e != NULL && e[0] == '1';
@@ -621,7 +639,9 @@ void gw_aurora_end_frame_offscreen_none(void) { aurora_end_frame(); }
 #pragma comment(linker, "/alternatename:_aurora_begin_frame_offscreen=_gw_aurora_begin_frame_offscreen_none")
 #pragma comment(linker, "/alternatename:_aurora_end_frame_offscreen=_gw_aurora_end_frame_offscreen_none")
 
-static int gw_uncap_on(void) { return !gw_turbo && gw_video_fps != 60; }
+static int gw_uncap_on(void) {
+  return !gw_turbo && gw_render_test_presents != 0 && gw_video_fps != 60;
+}
 
 static void gw_video_apply_rate(void) {
   const int on = gw_uncap_on();
@@ -2059,7 +2079,9 @@ void gw_frame_tick(void) {
   }
 
   if (!gw_frame_begun) {
-    gw_frame_begun = gw_turbo ? gw_view_begin_frame(1) : gw_view_begin_frame(0);
+    /* A skipped test present needs the same offscreen acquisition as turbo;
+     * otherwise every realtime tick recreates the unused swapchain surface. */
+    gw_frame_begun = gw_view_begin_frame(gw_turbo || gw_render_test_presents == 0);
   }
   if (gw_inprof_on() && presented) {
     gw_ip_push(&gw_ip_begin, gw_prof_ms(gw_ip_last_events, gw_prof_now()));

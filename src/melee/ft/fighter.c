@@ -1201,6 +1201,24 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
     union Struct2070 x2070;
 #if defined(TARGET_PC)
     int lab_pose_row = -1; /* LAB preview: the row whose script/flags stay in use, -1 = none */
+    if (arg3 != NULL) {
+        /* A thrown victim plays the thrower's row (ftData_80085CD8(fp, thrower, ...)), timed to that thrower's
+         * release. Across a Geno base "none" define that breaks: its rows are figatrees for its own skeleton
+         * (on another fighter's joints they hang ftAnim_8006E7B8), and a victim's own row is timed to its own
+         * throws (Mario's 12-frame TMarioThrowF ends before a slower release, which also hangs). So a retail
+         * victim of a base "none" thrower keeps the pose it has (the CaptureWait loop) until released, and a
+         * base "none" victim of a retail thrower plays its own row (authored long enough to hold). */
+        extern int Geno_DefineIsNone(int kind);
+        Fighter* thrower = GET_FIGHTER(arg3);
+        if (thrower != NULL && thrower->kind != fp->kind) {
+            if (Geno_DefineIsNone(thrower->kind) && !Geno_DefineIsNone(fp->kind)) {
+                arg3 = NULL;
+                flags |= Ft_MF_SkipAnim;
+            } else if (Geno_DefineIsNone(fp->kind)) {
+                arg3 = NULL;
+            }
+        }
+    }
 #endif
 
 #if defined(TARGET_PC)

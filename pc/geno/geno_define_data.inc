@@ -296,6 +296,19 @@ static void GenoDefine_BuildOwn(int kind, ftData* out, int n)
             rows2[n + nown + i].x8 = (s32)Geno_DefinePlanInt(kind, 11, ex_c[i]);
             ++mapped;
         }
+        {   /* A row the package gives no flags keeps the donor's, and the donor's part-animation bits (x594_b3,
+             * x594_b4: hand poses, dynamics) make ftCo_8009E4A8 run a donor figatree on one part of this skeleton:
+             * ftAnim_8006E7B8 then walks a parts table that does not match and never ends (Goku's ThrowF froze
+             * the game on its frame 13). The define's own skeleton has no such part clips: clear the two bits. */
+            int r, cleared = 0;
+            for (r = 0; r < n + nown + extras; ++r) {
+                if (!Geno_DefinePlanInt(kind, 17, r) && (rows2[r].x10_animCurrFlags & 0x18000000)) {
+                    rows2[r].x10_animCurrFlags &= ~0x18000000;
+                    ++cleared;
+                }
+            }
+            if (cleared) OSReport("geno: base none kind %d: %d donor rows lose their part-animation flags\n", kind, cleared);
+        }
         out->xC = rows2; out->x10 = blend2;
         ftData_Table_Unk0[kind].count = n + nown + extras;
     }

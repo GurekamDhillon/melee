@@ -209,9 +209,24 @@ void fn_800DD568(Fighter_GObj* gobj)
 void fn_800DD5EC(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
+#if defined(TARGET_PC)
+    {
+        /* Fast-forward to the throw's release (its script sets cmd_var 0). A script that never sets it (a Geno
+         * define's throw without the release flag) looped here forever: stop after the longest throw. */
+        int guard = 0;
+        while (fp->cmd_vars[0] == 0 && guard++ < 600) {
+            ftAnim_8006EBA4(gobj);
+        }
+        if (guard >= 600) {
+            OSReport("throw: P%d kind %d motion %d never set cmd_var 0 (the release); landing without it\n",
+                     (int) fp->player_id + 1, (int) fp->kind, (int) fp->motion_id);
+        }
+    }
+#else
     while (fp->cmd_vars[0] == 0) {
         ftAnim_8006EBA4(gobj);
     }
+#endif
     if (fp->anim_cb != NULL) {
         fp->anim_cb(gobj);
     }

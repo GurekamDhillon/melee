@@ -251,6 +251,13 @@ static int gn_define_s6_keys(gn_profile* p, const jdoc* d, int e, int version, c
     return 1;
 }
 
+/* define.template: the retail fighter a base "none" define's native code and tables come from. Fighter kind and CharacterKind of
+ * retail Captain Falcon, the animation-row count of his ftData (ftData_Table_Unk0) and his highest motion number (341 common + 23). */
+#define GN_TMPL_CAPTAIN_KIND 2
+#define GN_TMPL_CAPTAIN_CK 0
+#define GN_TMPL_ROWS(p) ((p)->tmpl ? 318 : 303)
+#define GN_TMPL_MAXMOTION(p) ((p)->tmpl ? 363 : 350)
+
 /* Included after the registry types/parser helpers. Native boot metadata only.
  * Definitions are process-immutable in GF1: changing one requires restarting.
  */
@@ -270,12 +277,25 @@ static int gn_define_parse(gn_profile* p, const jdoc* d, int e, int version, con
     }
     for (c = d->n[def].first; c >= 0; c = d->n[c].next) {
         for (i = 0; i < 5 && strcmp(d->n[c].key, keys[i]); ++i) {}
+        if (i == 5 && !strcmp(d->n[c].key, "template")) continue;   /* optional, below */
         if (i == 5 || d->n[c].type != JN_STR) goto refused;
     }
     for (i = 0; i < 5; ++i) { v = jd_get(d, def, keys[i]); if (v < 0 || d->n[v].type != JN_STR) goto refused; }
     v = jd_get(d, def, "base");
     if (!strcmp(d->n[v].str, "none")) { if (version < 9) { gw_log("geno: %s: base \"none\" needs \"geno\": 9", where); goto refused; } p->none = 1; }
     else if (strcmp(d->n[v].str, "mario")) goto refused;
+    /* define.template (inside geno 10, additive): which retail fighter's native code and tables a base "none" define runs on top of.
+     * "mario" (the default) is the donor of every earlier define; "captain" makes the retail Captain Falcon rows, specific
+     * state table, special entries and callbacks the template (a complete retail fighter carried as a package). */
+    p->tmpl = 0;
+    v = jd_get(d, def, "template");
+    if (v >= 0) {
+        if (!p->none || version < 10 || d->n[v].type != JN_STR ||
+            (strcmp(d->n[v].str, "mario") && strcmp(d->n[v].str, "captain"))) {
+            gw_log("geno: %s: define.template must be \"mario\" or \"captain\", on a base \"none\" define of \"geno\": 10", where); goto refused;
+        }
+        p->tmpl = !strcmp(d->n[v].str, "captain");
+    }
     v = jd_get(d, def, "common"); if (strcmp(d->n[v].str, "melee.common.v1")) goto refused;
     v = jd_get(d, def, "resources"); if (strcmp(d->n[v].str, p->none ? "mod:files" : "retail:mario")) goto refused;
     if (p->none && !gn_define_fighter(p, d, e, where)) goto refused;
@@ -312,7 +332,7 @@ static int gn_define_parse(gn_profile* p, const jdoc* d, int e, int version, con
         for (c = d->n[v].first; c >= 0; c = d->n[c].next) {
             int index = jd_get(d, c, "index");
             if (index < 0 || d->n[index].type != JN_NUM || d->n[index].num < 0 ||
-                d->n[index].num >= 303 + (p->fm ? p->fm->nown : 0) || d->n[index].num != (int)d->n[index].num) goto refused;
+                d->n[index].num >= GN_TMPL_ROWS(p) + (p->fm ? p->fm->nown : 0) || d->n[index].num != (int)d->n[index].num) goto refused;
         }
     }
     v = jd_get(d, e, "common_states");
@@ -329,7 +349,7 @@ static int gn_define_parse(gn_profile* p, const jdoc* d, int e, int version, con
                 for (j = 0; j < 9 && strcmp(d->n[x].key, fields[j]); ++j) {}
                 if (j == 9) goto refused;
                 if (j < 5) {
-                    if (d->n[x].type != JN_NUM || d->n[x].num < 0 || d->n[x].num > (j < 2 ? 350 : j == 2 ? 302 + (p->fm ? p->fm->nown : 0) : j == 4 ? 255 : 2147483647) ||
+                    if (d->n[x].type != JN_NUM || d->n[x].num < 0 || d->n[x].num > (j < 2 ? GN_TMPL_MAXMOTION(p) : j == 2 ? GN_TMPL_ROWS(p) - 1 + (p->fm ? p->fm->nown : 0) : j == 4 ? 255 : 2147483647) ||
                         d->n[x].num != (int)d->n[x].num) goto refused;
                     k = (int)d->n[x].num;
                 } else {
@@ -352,7 +372,7 @@ static int gn_define_parse(gn_profile* p, const jdoc* d, int e, int version, con
         for (c = d->n[v].first; c >= 0; c = d->n[c].next) {
             int sub = jd_get(d, c, "subaction");
             if (sub >= 0 && d->n[sub].type == JN_NUM &&
-                (d->n[sub].num < 0 || d->n[sub].num >= 303 + (p->fm ? p->fm->nown : 0) || d->n[sub].num != (int)d->n[sub].num)) goto refused;
+                (d->n[sub].num < 0 || d->n[sub].num >= GN_TMPL_ROWS(p) + (p->fm ? p->fm->nown : 0) || d->n[sub].num != (int)d->n[sub].num)) goto refused;
         }
     }
     p->defined = 1;
@@ -420,9 +440,9 @@ int gw_Geno_DefineBaseKind(int kind)
     int p;
     if (!r->kinds_built) gn_build_kinds(r);
     p = gdf_profile_for_kind(&r->definitions, kind);
-    return p >= 0 ? 0 : -1; /* native Mario only in slice 1 */
+    return p >= 0 ? (gn_reg()->p[p].tmpl ? GN_TMPL_CAPTAIN_KIND : 0) : -1; /* native Mario (default) or, template "captain", retail Captain Falcon */
 }
-int gw_Geno_DefineBaseCK(int ck) { return gw_Geno_DefineBaseKind(ck-1) >= 0 ? 8 : -1; }
+int gw_Geno_DefineBaseCK(int ck) { int b = gw_Geno_DefineBaseKind(ck-1); return b < 0 ? -1 : b ? GN_TMPL_CAPTAIN_CK : 8; }
 int gw_Geno_DefineName(int ck, char* out, int cap)
 {
     gn_registry* r = gn_reg(); int p;

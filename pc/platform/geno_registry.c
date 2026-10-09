@@ -421,6 +421,7 @@ typedef struct {
     int defined;
     char define_key[40];
     int none;                                 /* slice 4: base "none" - no donor model, clips or tables */
+    int tmpl;                                 /* define.template: 0 Mario (every define before), 1 retail Captain Falcon (native code and tables underneath) */
     int ncommon;
     int common_row[64][9]; /* motion, like, subaction, flags, move_id, anim/iasa/phys/coll */
     uint64_t iasa_warned;

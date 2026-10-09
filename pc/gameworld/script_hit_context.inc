@@ -69,7 +69,7 @@ static int script_hit_family_move(Fighter* fp)
   /* Undeclared: a state a special input started is that special; a state in the base fighter's own
    * special range (define = native Mario, attach = the vanilla kind) keeps the vanilla answer. */
   if(fp->motion_id>=0x400)return e>=0 && script_special_open[e] ? 8 : 0;
-  base=Geno_DefineBaseKind(fp->kind)>=0 ? 0 : fp->kind;
+  base=Geno_DefineBaseKind(fp->kind); if(base<0)base=fp->kind;   /* a define's template (Mario, or retail Captain Falcon) */
   if(base>=0 && base<33 && range[base][0] && fp->motion_id>=range[base][0] && fp->motion_id<=range[base][1])return 8;
   return e>=0 && script_special_open[e] && fp->motion_id>=341 ? 8 : 0;
  }

@@ -9,6 +9,8 @@
 #include <sysdolphin/baselib/memory.h>
 #include <melee/ft/kinds/ftMario/forward.h>
 #include <melee/ft/kinds/ftMario/types.h>
+#include <melee/ft/kinds/ftCaptain/forward.h>
+#include <melee/ft/kinds/ftCaptain/types.h>
 #include <melee/ft/kinds/ftCommon/forward.h>
 
 MotionState* GenoDefine_CommonRows[Ft_Kind_Max];
@@ -17,7 +19,15 @@ u32 GenoDefine_ContentIdentity[Ft_Kind_Max][2];
 u32 GenoDefine_InterpreterAttempts[Ft_Kind_Max];
 extern void* PcCostumeAlloc(int bytes);
 static UnkCostumeStruct* GenoDefine_Costumes[Ft_Kind_Max - Ft_Kind_Mex0];
-static Fighter_WaitAnimData* GenoDefine_MarioBaseline;
+/* The pristine animation-row table of each template fighter (index 0 Mario, 1 retail Captain Falcon), captured before an attach can touch it. */
+static Fighter_WaitAnimData* GenoDefine_RowBaseline[2];
+#define GenoDefine_MarioBaseline GenoDefine_RowBaseline[0]
+static int GenoDefine_TmplIndex(int base) { return base == Ft_Kind_Captain ? 1 : 0; }
+/* The template's own specific (non-common) motion state table and its length. */
+extern MotionState ftMr_Init_MotionStateTable[];
+extern MotionState ftCa_Init_MotionStateTable[];
+static MotionState* GenoDefine_NativeSpecific(int base) { return base == Ft_Kind_Captain ? ftCa_Init_MotionStateTable : ftMr_Init_MotionStateTable; }
+static int GenoDefine_SelfCount(int base) { return base == Ft_Kind_Captain ? (int)ftCa_MS_SelfCount : (int)ftMr_MS_SelfCount; }
 /* slice 4: a base "none" define's own costume names, parts table and part-visibility stand-ins (all static, kind-indexed). */
 static Fighter_CostumeStrings* GenoDefine_CostumeStrings[Ft_Kind_Max - Ft_Kind_Mex0];
 static FighterPartsTable GenoDefine_Parts[Ft_Kind_Max - Ft_Kind_Mex0];
@@ -63,18 +73,20 @@ static void* gd_data_copy(const void* source, int bytes)
 
 void GenoDefine_ResetDescriptors(void)
 {
-    GenoDefine_MarioBaseline = NULL;
+    GenoDefine_RowBaseline[0] = GenoDefine_RowBaseline[1] = NULL;
     memset(GenoDefine_CommonRows, 0, sizeof GenoDefine_CommonRows);
     memset(GenoDefine_SpecificRows, 0, sizeof GenoDefine_SpecificRows);
 }
 
 /* Capture before the first Mario attachment can change script pointers.
  * Animation-bank pointers are resolved later independently for each clone. */
-void GenoDefine_CaptureMario(void)
+void GenoDefine_CaptureMario(void) { GenoDefine_CaptureBase(Ft_Kind_Mario); }
+void GenoDefine_CaptureBase(int kind)
 {
-    if (Geno_DefineCount() && !GenoDefine_MarioBaseline && gFtDataList[0])
-        GenoDefine_MarioBaseline = gd_data_copy(gFtDataList[0]->xC,
-            ftData_Table_Unk0[0].count*sizeof(*GenoDefine_MarioBaseline));
+    int t = GenoDefine_TmplIndex(kind);
+    if (Geno_DefineCount() && !GenoDefine_RowBaseline[t] && gFtDataList[kind])
+        GenoDefine_RowBaseline[t] = gd_data_copy(gFtDataList[kind]->xC,
+            ftData_Table_Unk0[kind].count*sizeof(*GenoDefine_RowBaseline[t]));
 }
 
 void GenoDefine_InitKinds(void)
@@ -206,7 +218,8 @@ static void GenoDefine_JointFields(int kind, ftData* out, struct ftData_x8* x8)
 
 static void GenoDefine_BuildOwn(int kind, ftData* out, int n)
 {
-    extern MotionState ftMr_Init_MotionStateTable[];
+    int tbase = Geno_DefineBaseKind(kind), tself = GenoDefine_SelfCount(tbase);
+    MotionState* tspec = GenoDefine_NativeSpecific(tbase);
     int nmotions = Geno_DefinePlanInt(kind, 4, 0), njoints = Geno_DefinePlanInt(kind, 1, 0), nown = Geno_DefinePlanInt(kind, 6, 0);
     struct ftData_x8* x8;
     short pick[512];
@@ -236,8 +249,8 @@ static void GenoDefine_BuildOwn(int kind, ftData* out, int n)
             int wc = Geno_DefinePlanInt(kind, 13, ftCo_MS_Wait);
             if (ws->anim_id >= 0 && ws->anim_id < n && wc >= 0) { pick[ws->anim_id] = (short) wc; rank[ws->anim_id] = 1; }
         }
-        for (m = 0; m < nmotions && m < ftCo_MS_Count + ftMr_MS_SelfCount; ++m) {
-            MotionState* st = m < ftCo_MS_Count ? &ftData_MotionStateList[m] : &ftMr_Init_MotionStateTable[m - ftCo_MS_Count];
+        for (m = 0; m < nmotions && m < ftCo_MS_Count + tself; ++m) {
+            MotionState* st = m < ftCo_MS_Count ? &ftData_MotionStateList[m] : &tspec[m - ftCo_MS_Count];
             int a = st->anim_id, c = Geno_DefinePlanInt(kind, 13, m);
             if (a < 0 || a >= n || c < 0) continue;
             /* the row's rank: the first state to name a row keeps it */
@@ -401,10 +414,10 @@ void GenoDefine_Load(int kind, int base)
         GenoDefine_Census(kind, out, source);
     }
     GenoDefine_CommonRows[kind] = gd_data_copy(ftData_MotionStateList, sizeof(MotionState)*ftCo_MS_Count);
-    GenoDefine_SpecificRows[kind] = gd_data_copy(ftData_CharacterStateTables[base], sizeof(MotionState)*ftMr_MS_SelfCount);
+    GenoDefine_SpecificRows[kind] = gd_data_copy(ftData_CharacterStateTables[base], sizeof(MotionState)*GenoDefine_SelfCount(base));
     if (Geno_DefineIsNone(kind)) {
         int m, slot = kind - Ft_Kind_Mex0;
-        for (m = 0; m < ftCo_MS_Count + ftMr_MS_SelfCount && m < 512; ++m) {
+        for (m = 0; m < ftCo_MS_Count + GenoDefine_SelfCount(base) && m < 512; ++m) {
             MotionState* ms = m < ftCo_MS_Count ? &GenoDefine_CommonRows[kind][m] : &GenoDefine_SpecificRows[kind][m - ftCo_MS_Count];
             if (GenoDefine_RowRemap[slot][m] >= 0) ms->anim_id = GenoDefine_RowRemap[slot][m];
         }

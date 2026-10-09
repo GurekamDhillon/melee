@@ -6,8 +6,8 @@
 #define GPL_MAX_JOINTS 256   /* slice 8: was 128; Sora has 175 */
 #define GPL_MAX_OWN_ROWS 128 /* slice 8: rows a package declares past Mario's 303 (geno.json fighter.rows) */
 #define GPL_MAX_PARTS 56
-#define GPL_MAX_CLIPS 256
-#define GPL_MAX_MOTIONS 351
+#define GPL_MAX_CLIPS 384   /* was 256; a complete retail fighter bank (template captain) */
+#define GPL_MAX_MOTIONS 368 /* was 351; Captain has 364 */
 #define GPL_MAX_ROWS 512
 #define GPL_NONE 255
 typedef struct GenoPlan {

@@ -1,4 +1,5 @@
 /* Core runtime for the game world: startup fixups, memory regions, logging. */
+#include <ctype.h>
 #include "gw.h"
 #include "gw_hang.h"
 #include "gw_profiler.h"
@@ -2178,6 +2179,14 @@ static int gw_sl_apply(GwSceneConfig *c, const char *key, const char *val) {
     c->rule_minutes = atoi(val);
     return 0;
   }
+  if (tt_ieq(key, "envoy")) {
+    /* the Envoy build word (gw_netplay.c np_scene_envoy): the guest compares it against its own staged builds when the
+     * match starts; the scene grammar only has to accept a well-formed hex word (8 digits at most) */
+    size_t n = strlen(val), k;
+    if (n == 0 || n > 8) return -1;
+    for (k = 0; k < n; ++k) if (!isxdigit((unsigned char) val[k])) return -1;
+    return 0;
+  }
   if (tt_ieq(key, "pause")) {
     c->rule_pause = (val[0] == '1');
     return 0;
@@ -2892,6 +2901,11 @@ static int test_scene_launch_keywords(void) {
   if (!c.errors) { gw_test_fail("mission traversal accepted"); return 1; }
   gw_sl_parse(&c, "maze=7,0", "launch test");
   if (!c.errors) { gw_test_fail("empty maze accepted"); return 1; }
+  /* an online Envoy scene carries the build word as envoy=<hex8>; it must parse clean (it is compared in gw_netplay.c) */
+  gw_sl_parse(&c, "mode=vs;at=match;stage=fd;turbo=5fb;envoy=31f8639b", "envoy test");
+  if (c.errors) { gw_test_fail("scene refused the envoy= build word"); return 1; }
+  gw_sl_parse(&c, "mode=vs;envoy=zz", "envoy test");
+  if (!c.errors) { gw_test_fail("malformed envoy= word accepted"); return 1; }
   return 0;
 }
 

@@ -1,5 +1,11 @@
 /* Unified item surface. Definitions/assets are immutable host resources;
  * handles, motion, lifetime and terminal guards belong to snapshotted game memory. */
+#ifndef _WIN32
+#include <dirent.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#endif
 #include "../geno/geno_items.h"
 #include "../geno/geno_item_errors.h"
 #define GS_EV_ITEM_COLLECT 12
@@ -71,7 +77,21 @@ static int gs_item_define_root(const char* root,const char* rel,char* error,int 
  if(memchr(bytes,0,n)) { free(bytes); snprintf(error,cap,"item JSON contains NUL"); return -1; }
  def=gw_Geno_ItemDefineText((char*)bytes,root,rel,error,cap); free(bytes); return def;
 #else
- (void)root;(void)rel;snprintf(error,cap,"contained item files require Windows");return -1;
+ /* POSIX: the canonical root and the canonical file are compared before reading (no handle-level race resistance; Windows is
+  * the author workflow). Without this a Linux Envoy run had no items at all ("unknown item name" on every drive drop). */
+ char base[PATH_MAX],file[PATH_MAX],joined[MAX_PATH],*bytes; struct stat info; FILE* f; size_t n,got; int def;
+ if(!gs_item_path_valid(rel,strlen(rel))||snprintf(joined,sizeof joined,"%s/%s",root,rel)>=sizeof joined) { snprintf(error,cap,"invalid items/<name>/item.json path"); return -1; }
+ {char rootn[MAX_PATH],*q;snprintf(rootn,sizeof rootn,"%s",root);for(q=rootn;*q;++q)if(*q==92)*q=47;for(q=joined;*q;++q)if(*q==92)*q=47;
+  if(!realpath(rootn,base)||!realpath(joined,file)) { snprintf(error,cap,"item file missing, unreadable or outside the mod folder"); return -1; }}
+ n=strlen(base);
+ if(strncmp(base,file,n)||file[n]!='/'||stat(file,&info)||!S_ISREG(info.st_mode)||info.st_size>65536) { snprintf(error,cap,"item file missing, unreadable or outside the mod folder"); return -1; }
+ f=fopen(file,"rb");if(!f) { snprintf(error,cap,"item file missing, unreadable or outside the mod folder"); return -1; }
+ bytes=(char*)malloc((size_t)info.st_size+1);if(!bytes) {fclose(f);snprintf(error,cap,"out of memory");return -1;}
+ got=fread(bytes,1,(size_t)info.st_size,f);fclose(f);
+ if(got!=(size_t)info.st_size) {free(bytes);snprintf(error,cap,"item file missing, unreadable or outside the mod folder");return -1;}
+ bytes[got]=0;
+ if(memchr(bytes,0,got)) { free(bytes); snprintf(error,cap,"item JSON contains NUL"); return -1; }
+ def=gw_Geno_ItemDefineText(bytes,base,rel,error,cap); free(bytes); return def;
 #endif
 }
 static int l_item_define(lua_State* L) {
@@ -98,6 +118,30 @@ static void gs_item_scan_mods(void) {
    if(count==GENO_ITEM_MAX_DEFS) {overflow=1;continue;}
    snprintf(names[count++],49,"%s",fd.cFileName);
   } while(FindNextFileA(h,&fd)); FindClose(h);
+  if(overflow) {gw_log("geno item: more than 64 directories in %s; mod item scan refused",root);continue;}
+  qsort(names,count,sizeof names[0],gs_item_dir_compare);
+  for(k=0;k<count;++k) {
+   char rel[MAX_PATH],error[256];snprintf(rel,sizeof rel,"items/%s/item.json",names[k]);
+   if(gs_item_define_root(root,rel,error,sizeof error)<0) gw_log("geno item: %s/%s refused: %s",gw_Mods_Id(i),rel,error);
+  }
+ }
+#else
+ /* POSIX twin of the scan above (same order, same refusals). */
+ int i;
+ for(i=0;i<gw_Mods_Count();++i) {
+  char root[MAX_PATH],dirpath[MAX_PATH],names[GENO_ITEM_MAX_DEFS][49];int count=0,k,overflow=0;
+  struct dirent* de; DIR* d;
+  if(!gw_Mods_IsActive(i)) continue;
+  if(snprintf(root,sizeof root,"%s/%s",gw_Mods_Dir(),gw_Mods_Id(i))>=sizeof root||snprintf(dirpath,sizeof dirpath,"%s/items",root)>=sizeof dirpath) continue;
+  d=opendir(dirpath);if(!d) continue;
+  while((de=readdir(d))!=NULL) {
+   char sub[MAX_PATH];struct stat info;
+   if(de->d_name[0]=='.') continue;
+   if(snprintf(sub,sizeof sub,"%s/%s",dirpath,de->d_name)>=sizeof sub||stat(sub,&info)||!S_ISDIR(info.st_mode)) continue;
+   if(strlen(de->d_name)>48) {gw_log("geno item: directory name too long: %s",de->d_name);continue;}
+   if(count==GENO_ITEM_MAX_DEFS) {overflow=1;continue;}
+   snprintf(names[count++],49,"%s",de->d_name);
+  } closedir(d);
   if(overflow) {gw_log("geno item: more than 64 directories in %s; mod item scan refused",root);continue;}
   qsort(names,count,sizeof names[0],gs_item_dir_compare);
   for(k=0;k<count;++k) {

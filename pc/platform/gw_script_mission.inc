@@ -262,7 +262,43 @@ static int l_mod_list(lua_State *L)
 /* The approved containment protocol relies on Win32 final handle paths.
  * Preserve existing Linux scripts/model loading; new mission IO fails closed. */
 #include <sys/stat.h>
-static int gs_mission_script_root(char out[MAX_PATH]) { (void)out; return 0; }
+/* The calling script's mod folder, as on Windows: a mounted (active) mod whose folder holds the script's entry file wins; the
+ * ancestor holding a mod.json is the fallback for standalone manifests and headless fixtures. Paths are canonicalised
+ * (realpath), so a symlink cannot make a script claim another mod's folder. Returned with '/' separators (the callers join
+ * with a backslash and fopen/opendir normalise it). Needed by item_define and shader_load: without it a Linux Envoy run
+ * had no items and no shaders ("unknown item name", "shader path needs a calling mod"). */
+static int gs_mission_inside(const char *root, const char *path)
+{
+    size_t n = strlen(root);
+    return !strncmp(root, path, n) && path[n] == '/';
+}
+static int gs_mission_script_root(char out[MAX_PATH])
+{
+    GsScript *s = gs_cur_script();
+    char entry[MAX_PATH], norm[MAX_PATH], root[MAX_PATH], real[PATH_MAX], manifest[MAX_PATH], *p, *slash;
+    int i;
+    struct stat info;
+    if (!s || gs.cur == gs.console) return 0;
+    snprintf(norm, sizeof norm, "%s", s->entry);
+    for (p = norm; *p; ++p) if (*p == '\\') *p = '/';
+    if (!realpath(norm, real) || strlen(real) >= sizeof entry) return 0;
+    snprintf(entry, sizeof entry, "%s", real);
+    for (i = 0; i < gw_Mods_Count(); ++i) {
+        if (!gw_Mods_IsActive(i)) continue;
+        if (snprintf(norm, sizeof norm, "%s/%s", gw_Mods_Dir(), gw_Mods_Id(i)) >= sizeof norm) continue;
+        for (p = norm; *p; ++p) if (*p == '\\') *p = '/';
+        if (!realpath(norm, real) || strlen(real) >= MAX_PATH) continue;
+        if (gs_mission_inside(real, entry)) { snprintf(out, MAX_PATH, "%s", real); return 1; }
+    }
+    snprintf(root, sizeof root, "%s", entry);
+    while ((slash = strrchr(root, '/')) != NULL) {
+        *slash = 0;
+        if (!root[0]) return 0;
+        if (snprintf(manifest, sizeof manifest, "%s/mod.json", root) >= sizeof manifest) return 0;
+        if (!stat(manifest, &info) && S_ISREG(info.st_mode)) { snprintf(out, MAX_PATH, "%s", root); return 1; }
+    }
+    return 0;
+}
 static int gs_mission_error(lua_State *L, const char *error)
 {
     lua_pushnil(L); lua_pushstring(L, error); return 2;

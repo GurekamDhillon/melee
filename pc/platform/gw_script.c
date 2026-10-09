@@ -11265,6 +11265,7 @@ static int test_script_cap(void) {
 }
 
 #include "gw_script_items_tests.inc"
+#include "gw_script_rc3_tests.inc"
 #include "gw_script_items_preload_tests.inc"
 #include "gw_script_items_interleave_tests.inc"
 #include "gw_script_sound_tests.inc"
@@ -11276,6 +11277,8 @@ void gw_script_tests_register(void) {
     gw_test_register("script_deadline", test_script_deadline);
     gw_test_register("script_cap", test_script_cap);
     gw_test_register("script_item_events",test_script_item_events);
+    gw_test_register("script_item_define_contained",test_script_item_define_contained);
+    gw_test_register("script_shader_calling_mod",test_script_shader_calling_mod);
     gw_test_register("script_shader_api", test_script_shader_api);
     gw_test_register("script_clank_event", test_script_clank_event);
     gw_test_register("netbuild", test_netbuild);

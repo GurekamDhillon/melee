@@ -27,6 +27,7 @@ const GwRbInput *gw_RB_InputAny(int port, int frame) {
     (void) port; (void) frame; return used_pad_on ? &used_pad : NULL;
 }
 int gw_Snap_Resimulating(void) { return 0; }
+int gw_MatchTurboRules(void) { return 0; } /* gw_replay.c records the match rule (codex/turbo); the fixture has no runtime */
 
 static void be32(uint8_t *p, uint32_t n) {
     p[0] = (uint8_t) (n >> 24); p[1] = (uint8_t) (n >> 16);

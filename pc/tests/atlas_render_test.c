@@ -762,6 +762,8 @@ static void tab_labels_fit(void)
             CHECK(HITS.h[k].r.x + HITS.h[k].r.w <= WIDTHS[w] + 0.01f);
         }
     }
+}
+
 /* a framed screen (step 10): plates in the ground colour around the window, chrome on the plates, nothing inside the window, no hit rectangles */
 static int has_rect(unsigned rgba, AtRect r)
 {

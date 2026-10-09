@@ -1344,6 +1344,12 @@ void gw_Replay_RandTrace(uint32_t caller, uint32_t seed_after, int32_t global) {
             gw_log("det: RNG draw during render from 0x%08X (frame %d)", caller, rp.frame);
         }
     }
+    {   /* MELEE_RAND_TRACE=<file>: every draw outside a replay too (LAB, VS): draw number, caller, seed after. Two runs diffed by this show which consumer drew differently. */
+        extern int gw_Script_FrameNo(void);
+        static FILE *lab_randf; static int lab_tried; static unsigned lab_n;
+        if (!lab_tried) { const char *tp = getenv("MELEE_RAND_TRACE"); lab_tried = 1; if (tp && tp[0]) lab_randf = fopen(tp, "w"); }
+        if (lab_randf) { fprintf(lab_randf, "%u,%d,%08X,%08X,%d\n", lab_n++, gw_Script_FrameNo(), caller, seed_after, (int) global); fflush(lab_randf); }
+    }
     if (!rp.active || rp.frame == GW_RP_UNARMED) {
         return;
     }

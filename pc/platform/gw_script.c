@@ -1451,6 +1451,7 @@ static int l_log(lua_State *L) {
     return 0;
 }
 
+int gw_Script_FrameNo(void) { return gs.frame; }
 static int l_frame(lua_State *L) {
     lua_pushinteger(L, gs.frame);
     return 1;

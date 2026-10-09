@@ -451,7 +451,13 @@ static void fss_feed_pad(void)
         Ui_SetIntent(fss.h, FSS_IN_MOVE, FSS_DIR_RIGHT);
     }
     if (in & MenuInput_Confirm) {
-        Ui_SetIntent(fss.h, FSS_IN_ACCEPT, 0);
+        /* MODS > NUCLEUS: Start begins the downloads and is not also an A press (the queue toggles on A) */
+        if (!(fss.kind == FSS_K_MODS && (in & MenuInput_StartButton))) {
+            Ui_SetIntent(fss.h, FSS_IN_ACCEPT, 0);
+        }
+    }
+    if (fss.kind == FSS_K_MODS && (in & MenuInput_StartButton)) {
+        Ui_SetIntent(fss.h, FSS_IN_START, 0);
     }
     if (in & MenuInput_Back) {
         Ui_SetIntent(fss.h, FSS_IN_BACK, 0);
@@ -467,6 +473,15 @@ static void fss_feed_pad(void)
     }
     if (in & MenuInput_YButton) {
         Ui_SetIntent(fss.h, FSS_IN_ALT, 'Y');
+    }
+    {   /* Z (MODS > NUCLEUS): not in the menu input bits, so read the pads' trigger edge directly, every port merged */
+        int p;
+        for (p = 0; p < 4; p++) {
+            if (HSD_PadCopyStatus[p].trigger & PAD_TRIGGER_Z) {
+                Ui_SetIntent(fss.h, FSS_IN_ALT, 'Z');
+                break;
+            }
+        }
     }
 }
 

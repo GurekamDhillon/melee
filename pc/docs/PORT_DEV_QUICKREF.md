@@ -131,6 +131,9 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | `MELEE_FULLSCREEN=1` | start in borderless desktop fullscreen (wins over video.cfg `fullscreen`; never in turbo). F11 / Alt+Enter toggle in game and save it |
 | `MELEE_FULLSCREEN_TOGGLE_AT=N` | toggle fullscreen once at present N (unattended capture of the toggle) |
 | `MELEE_MODS_DIR=<path>` | parent of mod folders; use a Windows path (`pwd -W` in Git Bash), not `/c/...` |
+| `MELEE_NUCLEUS_DIR=<path>` | the Nucleus browser's cache folder (default `<mods dir>/.nucleus`): catalog, `queue.json` (the download queue), `ui.json` (remembered filters), `thumbs/` (pictures), `dl/` (downloads) |
+| `MELEE_NUCLEUS_CACHE_MB=<n>` | size cap of the Nucleus picture cache `thumbs/` in MB (default 200; least recently used files go first) |
+| `MELEE_NUCLEUS_API=<url>` | a loopback API base for `tools/nucleus/fixture_server.py` (`http://127.0.0.1:<port>/api/public/v1`); nothing but loopback is accepted |
 | `MELEE_TURBO_HASHLOG=<path>` | optional per-match-frame full snapshot hash CSV for realtime/turbo parity checks |
 | `MELEE_XHASH_LOG=<csv>` | cross-platform state digest, one row per live match frame: `frame,rb,wide,mem,glob` (RB_GameHash; every fighter's and item's struct/GObj/joint tree with heap addresses and sound ids masked; masked MEM1; masked game globals). Words that point into the image are masked so a Windows and a Linux run compare (`tools/xplat/`, `docs/xplat-netplay.md` in the workspace). Needs no write-watch, so it runs on Linux |
 | `MELEE_XHASH_DUMP_FRAMES=a,b` / `_DUMP_DIR` | also write the masked MEM1 / globals / regions of those frames for `tools/xplat/xhash_diff.py` |

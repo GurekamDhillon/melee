@@ -167,6 +167,7 @@ int at_mods_build(const AtModsSrc *s, AtModsState *st, AtScreen *sc, AtView *vw,
         vw->focus.block = 0; vw->focus.index = 0; vw->scroll = 0;
         snprintf(vw->counter, sizeof vw->counter, "%s", "0 / 0");
         put_key(sc, vw, 'B', "Back");
+        put_key(sc, vw, 'Z', "Nucleus");
     } else {
         last = st->base + AT_MODS_WINDOW;
         if (last > st->n[t]) last = st->n[t];
@@ -200,6 +201,7 @@ int at_mods_build(const AtModsSrc *s, AtModsState *st, AtScreen *sc, AtView *vw,
         put_key(sc, vw, 'B', "Back");
         put_key(sc, vw, 'Y', "Details");
         if (!locked && (t == 1 || s->status(s->user, st->list[t][cur]) == AT_MOD_CONFLICT || s->status(s->user, st->list[t][cur]) == AT_MOD_MISSING_DEP)) put_key(sc, vw, 'X', "Resolve");
+        put_key(sc, vw, 'Z', "Nucleus");
     }
     /* the corner note: the last result while it lasts, else the standing note (locked online, or the restart note) */
     if (now_ms < st->note_until && st->note[0]) {
@@ -320,6 +322,7 @@ void at_mods_event(const AtModsSrc *s, AtModsState *st, const AtEvent *e, double
     act->kind = AT_MA_NONE;
     if (e->type == AT_EV_PAGE) { st->tab = 1 - t; return; }                /* two tabs: L, R, Tab and Shift+Tab all switch */
     if (e->type == AT_EV_BACK) { act->kind = AT_MA_BACK; return; }
+    if (e->type == AT_EV_ALT && e->a == 'Z') { act->kind = AT_MA_NUCLEUS; return; }       /* the SSBM Nucleus browser, on any tab and with no mods installed */
     if (n == 0) return;
     m = st->list[t][st->sel[t]];
     if (e->type == AT_EV_MOVE) {

@@ -393,7 +393,19 @@ static void draw_tiles(const AtScreen *sc, const AtView *v, const AtLayout *L, c
     }
 }
 
+/* the credit line: small, quiet, never wider than the pane (at_fit steps down a role, then cuts with an ellipsis: a last resort) */
+static void fit_text_credit(const AtSink *s, const AtTextOps *o, const char *text, float x, float base, float max_w)
+{
+    char fit[AT_STR * 2];
+    int role = at_fit(o, AT_R_CAP12, text, max_w, fit, (int) sizeof fit);
+    at_text(s, o, role, fit, x, base, AT_C_MUTED, AT_ALIGN_LEFT, 0.0f);
+}
+
 /* A heading precedes row i when it names a group the row before it does not (the first row too). Headings are not rows: no focus, no hit rectangle. */
+/* a row's height and the step to the next: 34 and 39 for a plain row, row_h and row_h + 5 for a rich one */
+static float item_height(const AtItem *it) { return it->row_h > 34 ? (float) it->row_h : 34.0f; }
+float at_item_pitch(const AtItem *it) { return item_height(it) + 5.0f; }
+
 static int heading_before(const AtScreen *sc, int i)
 {
     return sc->items[i].group[0] != '\0' && (i == 0 || strcmp(sc->items[i].group, sc->items[i - 1].group) != 0);
@@ -407,7 +419,7 @@ int at_list_window(const AtScreen *sc, float pane_h, int first)
     int i, n = 0;
     if (first < 0) first = 0;
     for (i = first; i < sc->n_items; i++) {
-        float cost = 39.0f + (heading_before(sc, i) ? 22.0f : 0.0f);
+        float cost = at_item_pitch(&sc->items[i]) + (heading_before(sc, i) ? 22.0f : 0.0f);
         if (used + cost > avail + 0.001f) break;
         used += cost;
         n++;
@@ -439,10 +451,10 @@ static void draw_list(const AtScreen *sc, const AtView *v, AtRect pane, const At
             if (iw * 0.5f > tw + 16.0f) at_poly_rect(s, x0 + tw + 14.0f, y + 9.0f, iw - tw - 14.0f, 1.0f, AT_C_LINE);
             y += 22.0f;
         }
-        r.x = x0; r.y = y; r.w = iw; r.h = 34.0f;
+        r.x = x0; r.y = y; r.w = iw; r.h = item_height(&sc->items[i]);
         at_part_row(s, o, r, &sc->items[i], (v->focus.index == i) ? AT_ST_FOCUS : AT_ST_REST);
         hit_add(hc, r, AT_HIT_CELL, 0, i);
-        y += 39.0f;
+        y += at_item_pitch(&sc->items[i]);
     }
 }
 
@@ -514,12 +526,17 @@ void at_render_ex(const AtScreen *sc, const AtView *v, float canvas_w, double no
             AtSplit lsp;
             int list_tabs = sc->primary == AT_PRIMARY_LIST && sc->n_tabs > 0;      /* a list with tabs (the settings pages): the strip hangs on the pane's top edge */
             if (list_tabs) at_layout_split(&L, 1, AT_BAND_NONE, &lsp);
-            at_plate(s, list_tabs ? lsp.grid : L.primary, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH);
+            AtRect lpane = list_tabs ? lsp.grid : L.primary;
+            if (sc->primary == AT_PRIMARY_LIST && sc->credit[0] != '\0') {      /* the credit strip under a list pane: the pane gives up 22 px (at_list_pane_h is the model's copy of this) */
+                lpane.h -= AT_CREDIT_H;
+                fit_text_credit(s, o, sc->credit, lpane.x + 4.0f, lpane.y + lpane.h + 16.0f, lpane.w - 8.0f);
+            }
+            at_plate(s, lpane, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH);
             if (sc->primary == AT_PRIMARY_ROOM) hc.dropped += at_room_render(v->room, &L, o, s, hc.hits, now);   /* a NULL view draws nothing: the chrome only */
             else if (sc->primary == AT_PRIMARY_GRID) draw_grid(sc, v, &L, o, s, &hc);
             else if (sc->primary == AT_PRIMARY_TILES) draw_tiles(sc, v, &L, o, s, &hc);
             else if (sc->primary == AT_PRIMARY_CARDS) draw_cards(sc, v, &L, o, s, &hc);
-            else draw_list(sc, v, list_tabs ? lsp.grid : L.primary, o, s, &hc);
+            else draw_list(sc, v, lpane, o, s, &hc);
             if (list_tabs) draw_tabs(sc, v, lsp.tabs, o, s, &hc);
         }
         if (sc->preset != AT_PRESET_NONE) at_part_explainer(s, o, L.explainer, &v->ex);

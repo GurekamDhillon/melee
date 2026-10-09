@@ -32,6 +32,8 @@ void at_render_ex(const AtScreen *sc, const AtView *v, float canvas_w, double no
 int at_list_visible(const AtLayout *L);
 /* A list pane with group headings (22 px each) and 39 px rows: how many rows fit from `first` in a pane of height pane_h, and the first row that keeps `focus`
  * in view. With no groups the window is exactly at_list_visible's. A list with tabs has the shorter pane (at_layout_split). */
+#define AT_CREDIT_H 22.0f                                  /* the strip a list's credit line takes from the bottom of its pane */
+float at_item_pitch(const AtItem *it);                      /* a list row's step: its height plus the 5 px gap (39 for a plain row) */
 int at_list_window(const AtScreen *sc, float pane_h, int first);
 int at_list_scroll_to(const AtScreen *sc, float pane_h, int focus, int scroll);
 /* the rectangle of every offer card of a cards screen (the count is returned), for the renderer, hit testing and tests */

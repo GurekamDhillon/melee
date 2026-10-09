@@ -101,6 +101,8 @@
 #include <sysdolphin/baselib/gobjproc.h>
 #include <sysdolphin/baselib/gobjuserdata.h>
 #include <sysdolphin/baselib/jobj.h>
+#include <sysdolphin/baselib/dobj.h>
+#include <sysdolphin/baselib/mobj.h>
 #include <sysdolphin/baselib/lobj.h>
 #include <sysdolphin/baselib/mtx.h>
 #include <sysdolphin/baselib/random.h>
@@ -713,6 +715,26 @@ void Fighter_UnkProcessDeath_80068354(Fighter_GObj* gobj)
     ft_8007C630(gobj);
 }
 
+#if defined(TARGET_PC)
+static int gw_toon_unlit_tree(HSD_JObj* j)
+{
+    int n = 0;
+    for (; j != NULL; j = j->next) {
+        if (!(j->flags & (JOBJ_PTCL | JOBJ_SPLINE))) {
+            HSD_DObj* d;
+            for (d = j->u.dobj; d != NULL; d = d->next) {
+                if (d->mobj != NULL) {
+                    d->mobj->rendermode = (d->mobj->rendermode & ~CHANNEL_FIELD) | RENDER_CONSTANT;
+                    n++;
+                }
+            }
+        }
+        n += gw_toon_unlit_tree(j->child);
+    }
+    return n;
+}
+#endif
+
 void Fighter_UnkUpdateCostumeJoint_800686E4(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
@@ -725,6 +747,17 @@ void Fighter_UnkUpdateCostumeJoint_800686E4(Fighter_GObj* gobj)
     jobj = HSD_JObjLoadJoint(fp->x108_costume_joint);
     ftPartsPObjClearDefaultClass();
     ftParts_80073758(jobj);
+#if defined(TARGET_PC)
+    {
+        /* Geno "toon" (unlit base): the built-in toon surface lights the model itself, with a
+         * stepped ramp, so the GX channel must carry the unlit texture colour. Visual only. */
+        extern int Geno_ToonUnlit(int kind);
+        if (Geno_ToonUnlit(fp->kind)) {
+            int n = gw_toon_unlit_tree(jobj);
+            OSReport("geno toon: kind %d unlit base on %d materials\n", (int) fp->kind, n);
+        }
+    }
+#endif
 
     HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
 }

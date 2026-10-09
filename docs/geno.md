@@ -3001,3 +3001,25 @@ Scripted matrix: 15 scenarios of 110 s (Striker, Courier, Charger, Riposte, Cast
 ### 24.5 Not done
 
 Replay headers for netplay matches (a `.slp` cannot hold a define), voice/announcer, the Kirby copy online, an ABI-neutral heap budget.
+
+## Toon (cel) shading for base "none" defines (2026-10-08)
+
+`fighters[].toon` is an optional, visual-only block (`true` or an object). It is not folded into
+simulation state; a define that omits it is unchanged. When present, the engine selects a built-in
+WGSL surface (`builtin/geno-toon`, `pc/platform/gw_surface.cpp`) for the fighter's port on its
+first draw (`GenoToonEnsure`, from `ftDrawCommon_80080E18`) and re-asserts it after scene changes.
+A script's own `gd.fighter_shader` on that port takes precedence; releasing it restores the toon.
+
+| key | default | meaning |
+|---|---|---|
+| `bands` | 3 | light bands (2..8) of a half-Lambert ramp from a fixed eye-space key light |
+| `shadow` | 0.58 | dark band level (0..1) |
+| `shadow_tint` | [0.62,0.66,0.86] | dark band tint |
+| `light` | [0.45,0.65,0.6] | key light direction, eye space |
+| `rim` | 0.18 | rim light on the lit side |
+| `outline` / `outline_dark` | 0.28 / 0.75 | view-angle silhouette edge width and darkness (no geometry expansion) |
+| `softness` | 0.04 | band edge softness |
+| `unlit` | true | the model's MObjs are drawn with a constant channel (Fighter_UnkUpdateCostumeJoint_800686E4), so the ramp is the only lighting |
+
+Requires the Aurora GD surface patch (as `gd.fighter_shader`). The ramp is procedural; a source
+toon-ramp texture (XV2 DYT) is not sampled because surface functions have no texture binding.

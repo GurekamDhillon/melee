@@ -499,6 +499,8 @@ typedef struct {
     struct gn_aud *aud;                       /* slice 6 (geno 10): a define's own announcer call and voice clips, NULL = none (silence stays) */
     int ai_like;                              /* slice 6 (geno 10): "ai": {"like": fighter} - the retail FighterKind the CPU treats this define as, -1 none (0 is Mario: use ai_set) */
     int ai_set;
+    int toon_on;                              /* "toon": cel shading for a base "none" model (visual only: no id, digest or simulation effect) */
+    float toon[16];                           /* the built-in toon surface's 16 parameters, native floats (gw_surface ABI) */
     int kb_copy;                              /* slice 6 (geno 10): "kirby_copy": "none" (-1, the default) or "retail:<fighter>" (that FighterKind) */
 } gn_profile;
 
@@ -1377,6 +1379,36 @@ static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod
         extern int gw_Fx_BindLoad(const char *mod_id, const char *rel);
         p->fx_set = gw_Fx_BindLoad(mod, d->n[x].str);
     }
+    x = jd_get(d, e, "toon"); /* visual only: never folded into the define id, digest or snapshot */
+    if (x >= 0 && (d->n[x].type == JN_OBJ || (d->n[x].type == JN_BOOL && d->n[x].num != 0))) {
+        static const struct { const char *key; int slot; float def, lo, hi; } tk[] = {
+            {"bands", 0, 3.0f, 2.0f, 8.0f},        {"shadow", 1, 0.58f, 0.0f, 1.0f},
+            {"rim", 2, 0.18f, 0.0f, 1.0f},         {"outline", 3, 0.28f, 0.0f, 1.0f},
+            {"outline_dark", 7, 0.75f, 0.0f, 1.0f}, {"softness", 11, 0.04f, 0.0f, 0.5f},
+            {"unlit", 15, 1.0f, 0.0f, 1.0f},
+        };
+        int t, a, k;
+        p->toon_on = 1;
+        p->toon[4] = 0.45f; p->toon[5] = 0.65f; p->toon[6] = 0.6f;    /* key light, eye space */
+        p->toon[8] = 0.62f; p->toon[9] = 0.66f; p->toon[10] = 0.86f;  /* shadow tint (cool) */
+        for (t = 0; t < (int) (sizeof tk / sizeof tk[0]); ++t) {
+            int v = d->n[x].type == JN_OBJ ? jd_get(d, x, tk[t].key) : -1;
+            float f = v >= 0 && d->n[v].type == JN_NUM ? (float) d->n[v].num
+                    : v >= 0 && d->n[v].type == JN_BOOL ? (d->n[v].num != 0 ? 1.0f : 0.0f) : tk[t].def;
+            if (!(f >= tk[t].lo && f <= tk[t].hi)) {
+                gw_log("geno: %s: toon.%s out of range [%g, %g] - default used", where, tk[t].key, tk[t].lo, tk[t].hi);
+                f = tk[t].def;
+            }
+            p->toon[tk[t].slot] = f;
+        }
+        for (a = 0; a < 2 && d->n[x].type == JN_OBJ; ++a) {
+            int v = jd_get(d, x, a ? "shadow_tint" : "light"), c3;
+            if (v < 0 || d->n[v].type != JN_ARR || d->n[v].count != 3) continue;
+            for (c3 = d->n[v].first, k = 0; c3 >= 0 && k < 3; c3 = d->n[c3].next, ++k)
+                if (d->n[c3].type == JN_NUM && d->n[c3].num >= (a ? 0.0 : -1.0) && d->n[c3].num <= 1.0)
+                    p->toon[(a ? 8 : 4) + k] = (float) d->n[c3].num;
+        }
+    }
     x = jd_get(d, e, "jumps");
     if (x >= 0 && d->n[x].type == JN_OBJ) {
         int m = jd_get(d, x, "max"), v = jd_get(d, x, "air_vy");
@@ -1578,6 +1610,17 @@ int gw_Geno_ProfileForKind(int kind) {
     if (r->n == 0 || kind < 0 || kind >= GN_KINDS) return -1;
     if (!r->kinds_built) gn_build_kinds(r);
     return r->kind_profile[kind];
+}
+/* "toon": 1 and the surface parameters when the define on this kind asks for cel shading. */
+int gw_Geno_ToonParams(int kind, float out16[16]) {
+    const gn_profile *x = gn_at(gw_Geno_ProfileForKind(kind));
+    if (x == NULL || !x->toon_on) return 0;
+    if (out16) memcpy(out16, x->toon, sizeof x->toon);
+    return 1;
+}
+int gw_Geno_ToonUnlit(int kind) {
+    float t[16];
+    return gw_Geno_ToonParams(kind, t) && t[15] > 0.5f;
 }
 int gw_Geno_MaxJumps(int p) { return gn_at(p) ? gn_at(p)->max_jumps : -1; }
 int gw_Geno_JumpVyCount(int p) { return gn_at(p) ? gn_at(p)->njvy : 0; }

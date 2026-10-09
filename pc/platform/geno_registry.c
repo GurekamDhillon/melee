@@ -521,6 +521,7 @@ typedef struct {
     int nslot;
     int slot_off[GN_MAX_SLOTS];
     int slot_len[GN_MAX_SLOTS];
+    unsigned char slot_rel[GN_MAX_SLOTS]; /* a define's overlay: Subroutine/Goto operands are word indices into the overlay (the game half makes them pointers) */
 } gn_registry;
 
 static int gn_pool_gen = 1; /* bumped whenever a registry is (re)installed: the game half refills */
@@ -814,6 +815,29 @@ static void gn_add_v1(gn_registry *r, gn_profile *p, const jdoc *d, int e, const
             }
             r->pool[r->npool++] = 0;
             n++;
+            if (p->defined) {
+                /* A define's overlay has no absolute pointers (the checker and the exporter refuse them): the operand of a Subroutine (5) or
+                 * Goto (7) command is the word index, inside this overlay, of its target. Every target must be a command boundary. */
+                unsigned char *isb = (unsigned char *) calloc((size_t) n + 1, 1);
+                int q, bad = 0;
+                if (isb) {
+                    for (q = 0; q < n;) { isb[q] = 1; q += geno_cmd_words(r->pool[start + q]); }
+                    for (q = 0; q < n;) {
+                        unsigned op = r->pool[start + q] >> 26;
+                        if ((op == 5 || op == 7) && (q + 1 >= n || r->pool[start + q + 1] >= (uint32_t) n || !isb[r->pool[start + q + 1]])) bad = 1;
+                        q += geno_cmd_words(r->pool[start + q]);
+                    }
+                    free(isb);
+                }
+                if (bad) {
+                    gw_log("geno: %s: subaction %d: a Subroutine or Goto operand is not a command inside the overlay - ignored", where, (int) d->n[ix].num);
+                    r->npool = start;
+                    continue;
+                }
+                r->slot_rel[r->nslot] = 1;
+            } else {
+                r->slot_rel[r->nslot] = 0;
+            }
             p->ov_anim[p->nov] = (int) d->n[ix].num;
             p->ov_tag[p->nov] = gn_move_tag(d, c);
             p->ov_slot[p->nov] = r->nslot;
@@ -1657,6 +1681,7 @@ int gw_Geno_OverlaySlot(int p, int i) {
 }
 int gw_Geno_SlotCount(void) { return gn_reg()->nslot; }
 int gw_Geno_SlotOffset(int s) { return s >= 0 && s < gn_reg()->nslot ? gn_reg()->slot_off[s] : -1; }
+int gw_Geno_SlotRelative(int s) { return s >= 0 && s < gn_reg()->nslot ? gn_reg()->slot_rel[s] : 0; }
 int gw_Geno_SlotLen(int s) { return s >= 0 && s < gn_reg()->nslot ? gn_reg()->slot_len[s] : 0; }
 int gw_Geno_PoolWords(void) { return gn_reg()->npool; }
 int gw_Geno_PoolWord(int i) { return i >= 0 && i < gn_reg()->npool ? (int) gn_reg()->pool[i] : 0; }

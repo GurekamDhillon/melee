@@ -21,7 +21,6 @@ extern void* PcCostumeAlloc(int bytes);
 static UnkCostumeStruct* GenoDefine_Costumes[Ft_Kind_Max - Ft_Kind_Mex0];
 /* The pristine animation-row table of each template fighter (index 0 Mario, 1 retail Captain Falcon), captured before an attach can touch it. */
 static Fighter_WaitAnimData* GenoDefine_RowBaseline[2];
-#define GenoDefine_MarioBaseline GenoDefine_RowBaseline[0]
 static int GenoDefine_TmplIndex(int base) { return base == Ft_Kind_Captain ? 1 : 0; }
 /* The template's own specific (non-common) motion state table and its length. */
 extern MotionState ftMr_Init_MotionStateTable[];
@@ -386,9 +385,9 @@ void GenoDefine_Load(int kind, int base)
     if (gFtDataList[kind] != NULL) return;
     out = gd_data_copy(source, sizeof(*out));
     out->x0 = gd_data_copy(source->x0, sizeof(ftCo_DatAttrs));
-    out->ext_attr = gd_data_copy(source->ext_attr, sizeof(ftMario_DatAttrs));
-    HSD_ASSERTREPORT(__LINE__, GenoDefine_MarioBaseline != NULL, "Geno native Mario preset baseline unavailable\n");
-    out->xC = gd_data_copy(GenoDefine_MarioBaseline, n*sizeof(*out->xC));
+    out->ext_attr = gd_data_copy(source->ext_attr, base == Ft_Kind_Captain ? sizeof(ftCaptain_DatAttrs) : sizeof(ftMario_DatAttrs));
+    HSD_ASSERTREPORT(__LINE__, GenoDefine_RowBaseline[GenoDefine_TmplIndex(base)] != NULL, "Geno native template preset baseline unavailable\n");
+    out->xC = gd_data_copy(GenoDefine_RowBaseline[GenoDefine_TmplIndex(base)], n*sizeof(*out->xC));
     out->x14 = gd_data_copy(source->x14, demo*sizeof(*out->x14));
     for (i = 0; i < n+demo; ++i) {
         Fighter_WaitAnimData* row = i < n ? &out->xC[i] : &out->x14[i-n];

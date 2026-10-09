@@ -72,6 +72,7 @@ extern int Geno_OverlaySlot(int p, int i);
 extern int Geno_SlotCount(void);
 extern int Geno_SlotOffset(int s);
 extern int Geno_SlotLen(int s);
+extern int Geno_SlotRelative(int s);
 extern int Geno_PoolWords(void);
 extern int Geno_PoolWord(int i);
 extern int Geno_PoolGen(void);
@@ -578,6 +579,24 @@ static void geno_pool_sync(void)
     }
     for (i = 0; i < n; i++) {
         Geno_ScriptPool[i] = (u32) Geno_PoolWord(i);
+    }
+    {   /* A define's overlay carries Subroutine/Goto operands as word indices inside the overlay (the registry validated them);
+         * they become the pool's addresses here, where the pool has one. */
+        int s, slots = Geno_SlotCount();
+        for (s = 0; s < slots && s < 512; s++) {
+            int off, len, q;
+            if (!Geno_SlotRelative(s)) continue;
+            off = Geno_SlotOffset(s); len = Geno_SlotLen(s);
+            if (off < 0 || off + len > n) continue;
+            for (q = 0; q < len;) {
+                u32 w = Geno_ScriptPool[off + q];
+                u32 op = w >> 26;
+                if ((op == 5 || op == 7) && q + 1 < len) {
+                    Geno_ScriptPool[off + q + 1] = (u32) &Geno_ScriptPool[off + (int) Geno_ScriptPool[off + q + 1]];
+                }
+                q += geno_cmd_words(w);
+            }
+        }
     }
     Geno_ScriptPoolGen = gen;
 }

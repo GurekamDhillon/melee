@@ -7,6 +7,9 @@ enum {
     AT_RE_HUD_TIMER = 2,    /* match timer and countdown: iftime.c GXLink sites */
     AT_RE_HUD_NAMETAG = 3, AT_RE_HUD_MAGNIFY = 4, AT_RE_HUD_COIN = 5, AT_RE_HUD_PRIZE = 6, AT_RE_HUD_HAZARD = 7,
     AT_RE_PAUSE_PANEL = 8,  /* the GmPause panel (gm_801A0FEC) */
-    AT_RE_COUNT = 9
+    AT_RE_TOY_PANEL = 9,    /* the Trophy Gallery's panel ToyFigurePanel_Top_joint: toy.c Toy_80307470, GX link 0x3C (policy only: a mod may never hide it) */
+    AT_RE_TOY_INFO = 10,    /* the Gallery's info frame images (TyMnInfo sobjs): toy.c _Toy_803078E4, GX link 0x38 (policy only) */
+    AT_RE_TOY_TEXT = 11,    /* the Gallery's name, description and series text objects (display->x144..x150): toy.c _Toy_803084A0 (policy only) */
+    AT_RE_COUNT = 12
 };
 #endif

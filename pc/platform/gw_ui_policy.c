@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "gw_ui_retail_ids.h"
+
 #define AT_SCENE_TITLE 0   /* GS_TITLE: the first value of GameSceneKind (src/melee/gm/forward.h); gmfrontend_atlas.inc asserts it */
 
 static const AtPolicyRow ROWS[] = { { AT_SCENE_TITLE, AT_POLICY_OVERLAY, "title" } };
@@ -59,4 +61,27 @@ const char *at_policy_screen(int scene_kind)
     size_t i;
     for (i = 0; i < sizeof ROWS / sizeof ROWS[0]; i++) if (ROWS[i].scene_kind == scene_kind) return ROWS[i].screen;
     return NULL;
+}
+
+/* the bespoke scenes: what each hides under an OVERLAY, which of those bits are decoded text, and the chrome screen's id */
+static const struct { int kind; unsigned mask; unsigned text_bits; const char *screen; } BESPOKE[] = {
+    { 11, (1u << AT_RE_TOY_PANEL) | (1u << AT_RE_TOY_INFO) | (1u << AT_RE_TOY_TEXT), 1u << AT_RE_TOY_TEXT, "toy.gallery" },   /* GS_TOY_GALLERY */
+    { 12, 0, 0, "toy.lottery" },                                                                                              /* GS_TOY_LOTTERY */
+    { 13, 0, 0, "toy.collection" },                                                                                           /* GS_TOY_COLLECTION */
+};
+
+unsigned at_policy_mask(int scene_kind, int atlas_on, const char *env_override, int text_ok)
+{
+    size_t i;
+    if (at_policy_for(scene_kind, atlas_on, env_override) != AT_POLICY_OVERLAY) return 0;
+    for (i = 0; i < sizeof BESPOKE / sizeof BESPOKE[0]; i++)
+        if (BESPOKE[i].kind == scene_kind) return text_ok ? BESPOKE[i].mask : (BESPOKE[i].mask & ~BESPOKE[i].text_bits);
+    return 0;
+}
+
+const char *at_policy_screen_for(int scene_kind)
+{
+    size_t i;
+    for (i = 0; i < sizeof BESPOKE / sizeof BESPOKE[0]; i++) if (BESPOKE[i].kind == scene_kind) return BESPOKE[i].screen;
+    return at_policy_screen(scene_kind);
 }

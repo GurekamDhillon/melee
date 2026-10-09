@@ -4,6 +4,7 @@
 #include "atlas_fake.h"
 #include "atlas_rec.h"
 #include "atlas_style.h"
+#include "../platform/gw_ui_frame.h"
 #include "../platform/gw_ui_render.h"
 #include "../platform/gw_ui_tokens.h"
 
@@ -761,11 +762,99 @@ static void tab_labels_fit(void)
             CHECK(HITS.h[k].r.x + HITS.h[k].r.w <= WIDTHS[w] + 0.01f);
         }
     }
+/* a framed screen (step 10): plates in the ground colour around the window, chrome on the plates, nothing inside the window, no hit rectangles */
+static int has_rect(unsigned rgba, AtRect r)
+{
+    int i;
+    for (i = 0; i < REC.np; i++)
+        if (REC.p[i].rgba == rgba && fabsf(poly_minx(&REC.p[i]) - r.x) < 0.01f && fabsf(poly_miny(&REC.p[i]) - r.y) < 0.01f &&
+            fabsf(poly_maxx(&REC.p[i]) - (r.x + r.w)) < 0.01f && fabsf(poly_maxy(&REC.p[i]) - (r.y + r.h)) < 0.01f) return 1;
+    return 0;
+}
+static int quad_in_hole(AtRect hole)
+{
+    int i;
+    for (i = 0; i < REC.np; i++) {
+        AtRect q = { poly_minx(&REC.p[i]), poly_miny(&REC.p[i]), poly_maxx(&REC.p[i]) - poly_minx(&REC.p[i]), poly_maxy(&REC.p[i]) - poly_miny(&REC.p[i]) };
+        if (q.x < hole.x + hole.w - 0.5f && hole.x < q.x + q.w - 0.5f && q.y < hole.y + hole.h - 0.5f && hole.y < q.y + q.h - 0.5f) return 1;
+    }
+    return 0;
+}
+static int text_in_hole(AtRect hole)
+{
+    int i;
+    for (i = 0; i < REC.nt; i++) {
+        float l = text_left(&REC.t[i]), r = text_right(&REC.t[i]), t = REC.t[i].base - (float) at_role_size(REC.t[i].role), b = REC.t[i].base;
+        if (l < hole.x + hole.w && hole.x < r && t < hole.y + hole.h && hole.y < b) return 1;
+    }
+    return 0;
+}
+static void frame_fixture(AtScreen *sc, AtView *vw, float x, float y, float w, float h)
+{
+    memset(sc, 0, sizeof *sc); memset(vw, 0, sizeof *vw);
+    sc->primary = AT_PRIMARY_FRAME; sc->preset = AT_PRESET_NARROW; sc->has_frame = 1; sc->frame_x = x; sc->frame_y = y; sc->frame_w = w; sc->frame_h = h;
+    sc->input_feed = 1;
+    snprintf(sc->id, sizeof sc->id, "toy.test"); snprintf(sc->title, sizeof sc->title, "GALLERY");
+    snprintf(sc->parent[0], AT_STR, "MAIN MENU"); snprintf(sc->parent[1], AT_STR, "COLLECTION"); sc->n_parents = 2;
+    sc->n_keys = 1; sc->keys[0].btn = 'B'; snprintf(sc->keys[0].label, AT_STR, "Back");
+    vw->key_shown[0] = 1; snprintf(vw->key_label[0], AT_STR, "Back");
+    snprintf(vw->counter, AT_STR, "7 / 293");
+    vw->ex.has = 1; snprintf(vw->ex.kicker, AT_STR, "TROPHY"); snprintf(vw->ex.title, AT_STR, "Invented Trophy"); snprintf(vw->ex.what, AT_TEXT, "A short invented rule line.");
+    snprintf(vw->ex.from_text, AT_STR, "Invented series");
+    vw->opened_ms = 1000.0;
+}
+static void framed_screen(void)
+{
+    static AtScreen sc; static AtView vw; static AtHits hits; AtSink s; AtLayout L; AtRect hole; AtFrameRect fr = { 40, 70, 330, 350 };
+    static const float widths[3] = { 640.0f, 853.0f, 1140.0f };
+    int i, np_first;
+    for (i = 0; i < 3; i++) {
+        frame_fixture(&sc, &vw, fr.x, fr.y, fr.w, fr.h);
+        at_layout(widths[i], AT_PRESET_NARROW, &L); hole = at_frame_hole(&L, fr);
+        hits.n = 7;
+        s = rec_sink(); at_render(&sc, &vw, widths[i], 1000.0, 0, &FAKE, &s, &hits);
+        CHECK(hits.n == 0);                                                   /* no hit rectangles: a hint is information, never a button */
+        { AtRect pl[4]; int k, np = at_frame_plates(&L, fr, pl); CHECK(np == 4); for (k = 0; k < np; k++) CHECK(has_rect(AT_C_GROUND, pl[k])); }   /* the four plates, in the ground colour, exactly */
+        CHECK(!has_rect(AT_C_GROUND, (AtRect) { 0, 0, widths[i], 480 }));                                          /* never a full-canvas ground over the window */
+        CHECK(!quad_in_hole(hole));                                           /* not one quad inside the window */
+        CHECK(!text_in_hole(hole));                                           /* not one text either */
+        CHECK(find_text("Invented Trophy") != NULL && find_text("Back") != NULL && find_text("7 / 293") != NULL);   /* the chrome, the key hint and the counter */
+        CHECK(find_text("TROPHY") != NULL && find_text("COLLECTION") != NULL);
+        CHECK(texts_legible());
+        np_first = REC.np;
+        s = rec_sink(); at_render(&sc, &vw, widths[i], 1000.0, 1, &FAKE, &s, &hits);   /* Reduced Motion and a later frame draw the same (no open fade) */
+        CHECK(REC.np == np_first);
+        s = rec_sink(); at_render(&sc, &vw, widths[i], 5000.0, 0, &FAKE, &s, &hits);
+        CHECK(REC.np == np_first);
+    }
+    /* MELEE_ATLAS_FRAME_OUTLINE: the edge is ember (four lines), still outside the window */
+    { int e0, e1;
+      frame_fixture(&sc, &vw, fr.x, fr.y, fr.w, fr.h); at_layout(640.0f, AT_PRESET_NARROW, &L); hole = at_frame_hole(&L, fr);
+      s = rec_sink(); at_render(&sc, &vw, 640.0f, 1000.0, 0, &FAKE, &s, &hits); e0 = count_color(AT_C_EMBER);
+      sc.frame_outline = 1;
+      s = rec_sink(); at_render(&sc, &vw, 640.0f, 1000.0, 0, &FAKE, &s, &hits); e1 = count_color(AT_C_EMBER);
+      CHECK(e1 == e0 + 4 && !quad_in_hole(hole)); }
+    /* a window over the key strip: the strip is dropped, the counter rides in the explainer's kicker */
+    { AtFrameRect big = { 120, 60, 400, 380 };
+      frame_fixture(&sc, &vw, big.x, big.y, big.w, big.h);
+      at_layout(640.0f, AT_PRESET_NARROW, &L); hole = at_frame_hole(&L, big);
+      s = rec_sink(); at_render(&sc, &vw, 640.0f, 1000.0, 0, &FAKE, &s, &hits);
+      CHECK(find_text("Back") == NULL && find_text("7 / 293") != NULL);       /* the keys are gone; the counter is the kicker of the card over the window's corner */
+      CHECK(find_text("TROPHY") == NULL); }
+    /* no window at all (a zero rectangle: unmeasured): the whole canvas is one plate and the chrome still draws */
+    frame_fixture(&sc, &vw, 0, 0, 0, 0); sc.has_frame = 0;
+    s = rec_sink(); at_render(&sc, &vw, 640.0f, 1000.0, 0, &FAKE, &s, &hits);
+    CHECK(hits.n == 0 && has_rect(AT_C_GROUND, (AtRect) { 0, 0, 640, 480 }) && find_text("Invented Trophy") != NULL);
+    /* the other screens are unchanged by the new primary: a list draws its ground and its hits */
+    memset(&sc, 0, sizeof sc); memset(&vw, 0, sizeof vw);
+    sc.primary = AT_PRIMARY_LIST; sc.preset = AT_PRESET_NONE; sc.n_items = 1; snprintf(sc.items[0].id, AT_ID, "a"); snprintf(sc.items[0].label, AT_STR, "A");
+    s = rec_sink(); at_render(&sc, &vw, 640.0f, 1000.0, 0, &FAKE, &s, &hits);
+    CHECK(hits.n >= 1 && count_color(AT_C_GROUND) >= 1);
 }
 
 int main(void)
 {
-    world_backdrop();
+    world_backdrop(); framed_screen();
     budget_and_legibility(); focus_cues(); long_strings(); hits_at_widths(); list_screen(); overlays_and_fade();
     budget_enforced(); hits_stay_in_table(); tall_grid(); zero_cols(); dialog_suppresses_hits(); long_key_hints(); stone_note_per_row();
     tabs_and_band_render(); ext_cells_in_render(); cursors_per_port(); sink_without_image_op_in_render();

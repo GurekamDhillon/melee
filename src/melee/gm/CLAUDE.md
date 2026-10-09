@@ -21,6 +21,7 @@ workspace `_research/frontend-menus.md`; the art itself: workspace `menu/`.
 | `gmfrontend_atlas_online.inc` | the Atlas drawing of the room screens: copies legacy predicates into the host's room view by name, turns mouse and keyboard intents into the same MenuInput bits; reads netplay state, writes none (`tools/port/check_atlas_online.sh`) |
 | `gmfrontend_atlas.inc` | the Atlas adapter for the menu tree: `FeMenu.atlas_id`, `fa_frame` / `fa_sync`, the More strip, the scene policy's stand-in hook (see "Atlas" below) |
 | `gmfrontend_atlas_data.inc` | the Atlas data screens (Event Match, the Name Entry tag list, Sound Test, Special Messages, Bonus, Misc. and VS. Records) and the Results stand-in: opened from the `FA_NATIVE` row that opens the retail screen (`fad_open_for` in `fm_confirm`), the adapter owns the cursor and a 32-row window, retail text is decoded per string at run time and never stored (see "Data screens" below) |
+| `gmfrontend_atlas_toy.inc` | Atlas step 10: the framed trophy scenes. `Fad_OverlayWrap` wraps an OVERLAY scene's `on_frame` (retail first, then the chrome from readbacks), `Fad_ToyWindowKnown` gates the mask, the three `FAT_*_WIN` windows are unmeasured (zero: no chrome, nothing hidden), `MELEE_ATLAS_TOYPROBE=1` logs numbers. Reads netplay state only through `Ui_NetplayActive`; `tools/port/test_overlay_hook.py` pins the rules |
 | `gmscmemcard.c` | the memory-card prompt, the boot blocker; the port's skip and auto-create are here |
 
 ## Rules

@@ -802,7 +802,7 @@ static void gs_ui_engine_event(int slot, const AtEvent *e) {
     AtFocusBlock fb[AT_MAX_BLOCKS];
     AtFocusPos before = u->view.focus;
     int nb;
-    if (u->sc.primary == AT_PRIMARY_DISPLAY) return;                  /* the title takes no input, from anything: retail reads the pad */
+    if (u->sc.primary == AT_PRIMARY_DISPLAY || u->sc.primary == AT_PRIMARY_FRAME) return;   /* the title and a framed scene take no input, from anything: retail reads the pad */
     nb = at_screen_focus_blocks(&u->sc, fb);
     if (e->type == AT_EV_MOVE) u->view.focus = at_focus_move(fb, nb, u->view.focus, e->a, 1);
     else if (e->type == AT_EV_SCROLL) u->view.focus = at_focus_move(fb, nb, u->view.focus, e->a < 0 ? AT_DIR_UP : AT_DIR_DOWN, 0);
@@ -963,6 +963,7 @@ int gw_Ui_Commit(int focus_block, int focus_index) {
         u->owner = GS_UI_ENGINE;
         gs_ui_put_screen(&u->sc);
         gs_ui_engine_view(u);
+        if (u->sc.primary == AT_PRIMARY_FRAME) gs_ui_qn = 0;       /* a framed scene begins with an empty event ring: nothing from the menu that launched it */
     } else {
         u = &gs_ui_slot[slot];
         if (u->owner != GS_UI_ENGINE) { gw_log("ui: the engine screen id %s is a script's screen; not replaced", gs_ui_scratch.id); return 0; }
@@ -975,9 +976,11 @@ int gw_Ui_Commit(int focus_block, int focus_index) {
             gs_ui_put_screen(&u->sc);
             u->view.focus = at_screen_refocus(&u->sc, b[0] ? b : NULL, c[0] ? c : NULL, old);
             u->rebuilds++;
+            if (u->sc.primary == AT_PRIMARY_FRAME) gs_ui_engine_view(u);   /* a framed scene's hints change with its state, not with its explainer */
         }
         if (!u->self_close && (memcmp(&u->view.ex, &gs_ui_scratch_ex, sizeof u->view.ex) != 0 || u->explain_dirty)) gs_ui_engine_view(u);
     }
+    if (u->sc.primary == AT_PRIMARY_FRAME) snprintf(u->view.counter, AT_STR, "%s", u->sc.counter);   /* the counter rides the record (a framed scene's only readout) */
     if (focus_block >= 0) {                                        /* the game's cursor is the truth */
         AtFocusPos p;
         p.block = focus_block; p.index = focus_index;
@@ -1540,7 +1543,11 @@ static int l_ui_retail_hide(lua_State *L) {
             lua_pop(L, 1);
             return luaL_error(L, "gd.ui.retail_hide: %s", err[0] != '\0' ? err : "name the elements, not \"all\"");
         }
-        if ((add & ~at_retail_script_allowed()) != 0u) { lua_pop(L, 1); return luaL_error(L, "gd.ui.retail_hide: hud.timer may not be hidden by a mod"); }
+        if ((add & ~at_retail_script_allowed()) != 0u) {
+            lua_pop(L, 1);
+            if (add & (1u << AT_RE_HUD_TIMER)) return luaL_error(L, "gd.ui.retail_hide: hud.timer may not be hidden by a mod");
+            return luaL_error(L, "gd.ui.retail_hide: the trophy scenes' elements (toy.*) are the scene policy's, not a mod's");
+        }
         m |= add;
         lua_pop(L, 1);
     }
@@ -1577,7 +1584,7 @@ static int gs_ui_console(const char *arg, char *out, int cap) {
         const char *list = arg + 6;
         while (*list == ' ') list++;
         if (strcmp(list, "clear") == 0) m = 0u;
-        else if (list[0] == '\0') { snprintf(out, (size_t) cap, "usage: atlas retail <ids|all|clear> (hud.damage hud.stock hud.timer hud.nametag hud.magnify hud.coin hud.prize hud.hazard pause.panel)"); return -1; }
+        else if (list[0] == '\0') { snprintf(out, (size_t) cap, "usage: atlas retail <ids|all|clear> (hud.damage hud.stock hud.timer hud.nametag hud.magnify hud.coin hud.prize hud.hazard pause.panel toy.panel toy.info toy.text)"); return -1; }
         else if (!at_retail_parse(list, &m, err, sizeof err)) { snprintf(out, (size_t) cap, "%s", err); return -1; }
         at_retail_set(&gs_ui_retail, AT_RS_CONSOLE, m);
         gw_log("ui: console retail mask: %u (effective %u%s)", m, at_retail_effective(&gs_ui_retail, gs_ui_online()), gs_ui_online() ? "; online, nothing is hidden" : "");
@@ -2199,3 +2206,4 @@ static void gs_push_ui(lua_State *L) {
 #include "gw_script_ui_mods.inc"
 #include "gw_script_ui_room.inc"
 #include "gw_script_ui_data.inc"
+#include "gw_script_ui_toy.inc"

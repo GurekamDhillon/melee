@@ -20,6 +20,15 @@ const char *at_policy_screen(int scene_kind);
  * cutscenes) is part of a run. An unknown kind (negative) is no run's end. */
 int at_policy_ends_run(int scene_kind);
 
+/* Step 10, the bespoke retail scenes (Trophy Gallery 11, Lottery 12, Collection 13: GameSceneKind, src/melee/gm/forward.h).
+ * The retail 2D pieces (retail element ids, gw_ui_retail_ids.h) a scene hides while Atlas frames it: the scene's mask, and nothing
+ * unless that scene's policy is OVERLAY (MELEE_ATLAS_SCENES) and Atlas is on. text_ok 0: the decoded retail text is not available, so the
+ * retail text objects stay (a partial mask). Opaque plates cover the retail 2D that sits outside the window, so the masks only name
+ * what sits inside it. The Lottery's machine and the Collection's room have no 2D piece (their masks are empty: chrome only). */
+unsigned at_policy_mask(int scene_kind, int atlas_on, const char *env_override, int text_ok);
+/* the chrome screen id of a scene that has one (a bespoke scene whatever its row, or the default table's), else NULL */
+const char *at_policy_screen_for(int scene_kind);
+
 #ifdef __cplusplus
 }
 #endif

@@ -1674,3 +1674,23 @@ void tyFigupon_Scene_OnFrame(void)
         gm_801A4B60();
     }
 }
+
+#if defined(TARGET_PC)
+/* Atlas step 10: readbacks for the framed Lottery (src/melee/gm/gmfrontend_atlas_toy.inc). Numbers only, read-only, called from the scene's own on_frame
+ * wrapper while the scene is live. what: 0 the coin balance the machine shows (gm_801623D8() / 10), 1 the bet retail has chosen (1 to 20), 2 nonzero
+ * while a draw is running (retail ignores the pad then), -1 when the scene's state is not there. The machine and the coin digits are 3D models of the
+ * scene; the two text objects are the popup's (the new trophy's name and the NEW! line), so Atlas hides none of them. */
+int tyFigupon_PcReadback(int what)
+{
+    struct un_804D6EF4_t* ef4 = _tyFigupon_804D6EF4;
+    switch (what) {
+    case 0:
+        return (int) (gm_801623D8() / 10u);
+    case 1:
+        return ef4 != NULL ? (int) ef4->x5E : -1;
+    case 2:
+        return ef4 != NULL ? (int) ef4->x5C : -1;
+    }
+    return -1;
+}
+#endif

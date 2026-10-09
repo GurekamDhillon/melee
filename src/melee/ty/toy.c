@@ -56,6 +56,33 @@
 #include <sysdolphin/baselib/tobj.h>
 #include <sysdolphin/baselib/wobj.h>
 
+#if defined(TARGET_PC)
+#include <platform/gw_ui_retail_ids.h>
+/* Atlas step 10 (the framed Trophy Gallery): the retail mask (pc/platform/gw_ui_retail.h) hides two of the Gallery's 2D pieces and its text while
+ * Atlas frames the scene. Presentation only: a guard swaps nothing but what is DRAWN (a render callback that returns early, a text object's `hidden`
+ * flag). No proc is skipped, no retail state is written, no branch changes; with the mask empty (the default, and always online) each call below is
+ * exactly the retail one. The panel at link 0x33 (the backdrop the Start button cycles) and the viewer, stand, lights and TyMnBg are never guarded: that
+ * is the retail 3D and what it stands against. */
+extern int Ui_RetailHidden(int id); /* pc/platform/gw_script_ui.inc */
+extern int tyList_PcActive(void);   /* tylist.c: the full-screen list is up; the guards stand down, Atlas draws nothing over it */
+extern void tyList_PcSetActive(int on);
+static void Toy_RenderPanelGuarded(HSD_GObj* gobj, int pass)
+{
+    if (!tyList_PcActive() && Ui_RetailHidden(AT_RE_TOY_PANEL)) return;
+    HSD_GObj_JObjCallback(gobj, pass);
+}
+static void Toy_RenderInfoGuarded(HSD_GObj* gobj, int pass)
+{
+    if (!tyList_PcActive() && Ui_RetailHidden(AT_RE_TOY_INFO)) return;
+    HSD_SObjLib_803A49E0(gobj, pass);
+}
+#define TOY_PANEL_RENDER Toy_RenderPanelGuarded
+#define TOY_INFO_RENDER Toy_RenderInfoGuarded
+#else
+#define TOY_PANEL_RENDER HSD_GObj_JObjCallback
+#define TOY_INFO_RENDER HSD_SObjLib_803A49E0
+#endif
+
 typedef struct ToyUnkJObjData {
     /* 0x00 */ u8 pad_00[0x10];
     /* 0x10 */ HSD_JObj* jobj;
@@ -2420,7 +2447,7 @@ void Toy_80307470(s32 arg0)
         HSD_JObjReqAnimAll(loaded_jobj, 0.0f);
         HSD_GObjObject_80390A70(tg->x0, (kind = HSD_GObj_JObjKind),
                                 loaded_jobj);
-        GObj_SetupGXLink(tg->x0, HSD_GObj_JObjCallback, 0x3C, 0);
+        GObj_SetupGXLink(tg->x0, TOY_PANEL_RENDER, 0x3C, 0);
 
         lb_8001204C(loaded_jobj, (HSD_JObj**) &tg->x10, _Toy_803FE3F8, 9);
 
@@ -2583,7 +2610,7 @@ void _Toy_803078E4(void)
             _Toy_803FE108[6], NULL);
 
         data->x0C = GObj_Create(5, 6, 0);
-        GObj_SetupGXLink(data->x0C, HSD_SObjLib_803A49E0, 0x38, 0);
+        GObj_SetupGXLink(data->x0C, TOY_INFO_RENDER, 0x38, 0);
 
         for (i = 0; i < 7; i++) {
             sobj = HSD_SObjLib_803A477C(data->x0C, syms[i], 0, 0, 0x80, 0);
@@ -2998,6 +3025,16 @@ void _Toy_803084A0(s32 arg0)
     }
     HSD_SisLib_803A6368(display->x14C, Toy_803063D4(id, 0x128, 0x37A));
     HSD_SisLib_803A6368(display->x150, Toy_803063D4(id, 0x24E, 0x380));
+#if defined(TARGET_PC)
+    /* the four text objects are made once (above) and only re-pointed afterwards, and nothing but sislib.c's creation writes `hidden`:
+     * Atlas frames the scene and draws the name, description and series itself, so the retail objects are not drawn. Only ever set to 1. */
+    if (Ui_RetailHidden(AT_RE_TOY_TEXT)) {
+        display->x144->hidden = 1;
+        display->x148->hidden = 1;
+        display->x14C->hidden = 1;
+        display->x150->hidden = 1;
+    }
+#endif
 }
 
 #ifdef MUST_MATCH
@@ -6431,6 +6468,9 @@ void Toy_Scene_OnEnter(void* arg0)
     _Toy_sbss_804D6EA2 = 0;
     _Toy_sbss_804D6E50 = 0;
     _Toy_sbss_804D6EA1 = 0;
+#if defined(TARGET_PC)
+    tyList_PcSetActive(0); /* a Gallery entry starts in the viewer */
+#endif
 
     if (DbLevel >= DbLKind_DebugRom) {
         /* Check Z button */
@@ -6840,3 +6880,31 @@ void Toy_803127D4(void)
     Toy_sbss_804D6EC8 = NULL;
     memzero(&Toy_804A2AA8, sizeof(Toy_804A2AA8));
 }
+
+#if defined(TARGET_PC)
+/* Atlas step 10: readbacks for the framed scenes (src/melee/gm/gmfrontend_atlas_toy.inc). Numbers only, read-only, called from the scene's own
+ * on_frame wrapper while the scene is live. what: 0 the trophy count (Toy_GetTrophyTotal), 1 the selected list index, 2 the selected trophy's id,
+ * 3 the viewer's state (0 shelf, 1 and 3 moving, 2 examining), 4 retail's exit request (set by B or START; the scene frees its state next), 5 the
+ * full-screen trophy list is up (tylist.c; the viewer's state means nothing then). -1 when
+ * the state is not there. */
+int Toy_PcReadback(int what)
+{
+    TyDisplayData* display = Toy_sbss_804D6EE0;
+    Toy6E68* mode = _Toy_sbss_804D6E68;
+    switch (what) {
+    case 0:
+        return Toy_GetTrophyTotal();
+    case 1:
+        return display != NULL ? (int) display->selectedIdx : -1;
+    case 2:
+        return (display != NULL && display->selected_entry != NULL) ? (int) display->selected_entry->trophy_id : -1;
+    case 3:
+        return mode != NULL ? (int) mode->x61 : -1;
+    case 4:
+        return (int) ((TyModeState*) Toy_804A284C)->x4;
+    case 5:
+        return tyList_PcActive();
+    }
+    return -1;
+}
+#endif

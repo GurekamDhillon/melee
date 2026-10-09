@@ -163,6 +163,9 @@ void gm_801A4014(GameMode* mode)
     struct GameSceneInfo* info;
     u8 kind;
     uintptr_t zero;
+#if defined(TARGET_PC)
+    void (*frame_fn)(void);
+#endif
     PAD_STACK(4);
 
     sm = &state_machine;
@@ -201,15 +204,36 @@ void gm_801A4014(GameMode* mode)
             }
         }
     }
+    {
+        /* Atlas step 10 (the framed trophy scenes): the policy's retail mask is set HERE, for every scene, before on_enter. Script_SceneBegin, which
+         * the host's scene hook hangs on, runs in gm_801A4D34 AFTER on_enter, so a guard at a creation site would read an empty mask. The next
+         * scene's call replaces this one: nothing is left over. With the default policy (retail) the mask is empty and nothing changes. */
+        extern void Ui_ScenePolicyMask(int scene_kind, int window_known);
+        extern int Fad_ToyWindowKnown(u8 kind);
+        Ui_ScenePolicyMask(kind, Fad_ToyWindowKnown(kind));
+    }
 #endif
     gm_801A4BD4();
     gm_801A4B88(info);
     if (scene->on_enter != NULL) {
         scene->on_enter(info->enter_data);
     }
-    gm_801A4D34(scene->on_frame, info);
 #if defined(TARGET_PC)
+    frame_fn = scene->on_frame;
+    {
+        /* An OVERLAY scene with chrome (the trophy scenes) gets a per-frame wrapper: retail's own on_frame first, every frame, then the Atlas
+         * chrome from readbacks (gmfrontend_atlas_toy.inc). Fad_OverlayWrap returns on_frame itself for a scene that has none (the title). */
+        extern int Ui_ScenePolicy(int);
+        extern int Ui_ToyProbe(void);
+        extern void (*Fad_OverlayWrap(u8 kind, void (*inner)(void)))(void);
+        if (Ui_ScenePolicy(kind) == 1 /* AT_POLICY_OVERLAY */ || Ui_ToyProbe()) {
+            frame_fn = Fad_OverlayWrap(kind, scene->on_frame);
+        }
+    }
+    gm_801A4D34(frame_fn, info);
     SceneReport_State(1, mode->kind, state->id, info->scene_kind);
+#else
+    gm_801A4D34(scene->on_frame, info);
 #endif
     if (!gmMainLib_8046B0F0.resetting && scene->on_exit != NULL) {
         scene->on_exit(info->exit_data);

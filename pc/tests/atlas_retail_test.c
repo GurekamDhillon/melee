@@ -35,6 +35,23 @@ static void sources_and_online(void)
     at_retail_set(&r, 99, 1u);                                               /* an unknown source changes nothing */
     CHECK(at_retail_effective(&r, 0) == (1u << AT_RE_COUNT) - 1);
 }
+static void bespoke_ids(void)
+{
+    /* step 10: the Trophy Gallery's panel, info frame and text; policy-only (a mod may never hide them) */
+    unsigned toy = (1u << AT_RE_TOY_PANEL) | (1u << AT_RE_TOY_INFO) | (1u << AT_RE_TOY_TEXT);
+    unsigned m = 0; char err[96]; AtRetail r;
+    memset(&r, 0, sizeof r);
+    CHECK(AT_RE_COUNT <= 32);
+    CHECK_STR(at_retail_name(AT_RE_TOY_PANEL), "toy.panel"); CHECK_STR(at_retail_name(AT_RE_TOY_INFO), "toy.info");
+    CHECK_STR(at_retail_name(AT_RE_TOY_TEXT), "toy.text");
+    CHECK((at_retail_script_allowed() & toy) == 0);                          /* a mod may never hide a bespoke scene's element */
+    CHECK((at_retail_script_allowed() & (1u << AT_RE_HUD_DAMAGE)) != 0);     /* ... and the old rule is unchanged */
+    at_retail_set(&r, AT_RS_POLICY, toy);
+    CHECK(at_retail_hidden(&r, AT_RE_TOY_PANEL, 0) && at_retail_hidden(&r, AT_RE_TOY_TEXT, 0));
+    CHECK(!at_retail_hidden(&r, AT_RE_HUD_DAMAGE, 0));                       /* nothing else moved */
+    CHECK(!at_retail_hidden(&r, AT_RE_TOY_PANEL, 1) && at_retail_effective(&r, 1) == 0);   /* online: shown, always */
+    CHECK(at_retail_parse("toy.panel,toy.text", &m, err, sizeof err) && m == ((1u << AT_RE_TOY_PANEL) | (1u << AT_RE_TOY_TEXT)));
+}
 static void pause_machine(void)
 {
     AtPause p; memset(&p, 0, sizeof p); p.pauser = -1;
@@ -55,4 +72,4 @@ static void pause_machine(void)
     CHECK(at_pause_request_unpause(&p, 0)); at_pause_on(&p, 3, 1, 0);       /* a new pause starts without the old request */
     CHECK(at_pause_take_unpause(&p) == -1);
 }
-int main(void) { names_and_parse(); sources_and_online(); pause_machine(); ATLAS_DONE("atlas-retail"); }
+int main(void) { names_and_parse(); sources_and_online(); bespoke_ids(); pause_machine(); ATLAS_DONE("atlas-retail"); }

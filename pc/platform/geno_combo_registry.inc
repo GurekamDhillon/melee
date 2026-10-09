@@ -70,7 +70,7 @@ static int gn_combo_from(const jdoc *d, int x, const gn_profile *p, uint32_t *ou
 static int gn_combo_to(const jdoc *d, int x, const gn_profile *p, uint32_t *out)
 {
     static const char *const acts[] = { "special_n", "special_s", "special_hi", "special_lw", "", "", "", "",
-                                        "jump", "nair", "fair", "bair", "uair", "dair" };
+                                        "jump", "nair", "fair", "bair", "uair", "dair", "jump_short" };
     int i;
     if (d->n[x].type == JN_STR) {
         const char *s = d->n[x].str;

@@ -10,13 +10,13 @@ extern const char *gw_Geno_ComboStateName(int p, int s);
 static void gs_combo_target(lua_State *L, int p, unsigned t, const char *key)
 {
     static const char *const acts[] = { "special_n", "special_s", "special_hi", "special_lw", "?", "?", "?", "?",
-                                        "jump", "nair", "fair", "bair", "uair", "dair" };
+                                        "jump", "nair", "fair", "bair", "uair", "dair", "jump_short" };
     char buf[64];
     unsigned kind = t >> 28, id = t & 0xFFFF;
     if (t == GENO_TGT_AUTO) snprintf(buf, sizeof buf, "auto");
     else if (t == GENO_TGT_HELPLESS) snprintf(buf, sizeof buf, "helpless");
     else if (kind == GENO_TGT_GENO) snprintf(buf, sizeof buf, "geno:%s", gw_Geno_ComboStateName(p, (int) id));
-    else if (kind == GENO_COMBO_TGT_ACT) snprintf(buf, sizeof buf, "%s", id < 14 ? acts[id] : "?");
+    else if (kind == GENO_COMBO_TGT_ACT) snprintf(buf, sizeof buf, "%s", id < 15 ? acts[id] : "?");
     else if (id == GENO_COMBO_FROM_ANY) snprintf(buf, sizeof buf, "*");
     else snprintf(buf, sizeof buf, "motion:%u", id);
     lua_pushstring(L, buf);

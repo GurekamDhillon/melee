@@ -109,6 +109,21 @@ static int test_geno_combo_parse(void)
         rc = 1;
     }
     Geno_TestRestore();
+    /* "jump_short" is a route target (the launcher jump-cancel): parsed as the combo action GENO_CA_JUMP_SHORT, beside "jump" */
+    if (!tc_setup(TC_HEAD("11", "combo-hop") TC_STATES ",\"combo\":{\"routes\":[{\"from\":\"jab1\",\"to\":\"jump_short\",\"input\":\"jump\"},"
+                  "{\"from\":\"jab2\",\"to\":\"jump\",\"input\":\"jump\"}]}}]}")) {
+        TestFail("combo: a jump_short / jump route define was not installed");
+        Geno_TestRestore();
+        t_setup();
+        return 1;
+    }
+    if (Geno_ComboWord(tc_st->profile, 0, GENO_CR_TO) != (int) GENO_TARGET(GENO_COMBO_TGT_ACT, GENO_CA_JUMP_SHORT) ||
+        Geno_ComboWord(tc_st->profile, 1, GENO_CR_TO) != (int) GENO_TARGET(GENO_COMBO_TGT_ACT, GENO_CA_JUMP))
+    {
+        TestFail("combo: \"jump_short\" must parse to GENO_CA_JUMP_SHORT and \"jump\" to GENO_CA_JUMP");
+        rc = 1;
+    }
+    Geno_TestRestore();
     t_setup();
     return rc;
 }

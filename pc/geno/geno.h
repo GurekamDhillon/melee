@@ -578,7 +578,8 @@ enum { GENO_CW_ANY = 0, GENO_CW_GROUND = 1, GENO_CW_AIR = 2 };
 enum { /* GENO_COMBO_TGT_ACT ids: entered the way the game enters them */
     GENO_CA_SPECIAL_N = 0, GENO_CA_SPECIAL_S = 1, GENO_CA_SPECIAL_HI = 2, GENO_CA_SPECIAL_LW = 3, /* the air version in the air */
     GENO_CA_JUMP = 8,      /* ground: the jump squat; air: an air jump if one is left */
-    GENO_CA_AIR_N = 9, GENO_CA_AIR_F = 10, GENO_CA_AIR_B = 11, GENO_CA_AIR_HI = 12, GENO_CA_AIR_LW = 13
+    GENO_CA_AIR_N = 9, GENO_CA_AIR_F = 10, GENO_CA_AIR_B = 11, GENO_CA_AIR_HI = 12, GENO_CA_AIR_LW = 13,
+    GENO_CA_JUMP_SHORT = 14 /* ground: a jump squat that ends as a short hop whatever the button does (a launcher jump-cancel); air: as GENO_CA_JUMP */
 };
 #define GENO_COMBO_FROM_ANY 0xFFFFu /* a route whose "from" is "*": any move of the fighter (a string link must still be open) */
 enum { /* the words of one parsed route (gw_Geno_ComboRoute) */

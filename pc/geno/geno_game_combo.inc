@@ -356,13 +356,16 @@ static int geno_combo_enter(Fighter_GObj* gobj, Fighter* fp, GenoState* st, u32 
             /* the define's bound special (its geno.json "specials"), ground or air version */
             return Geno_SpecialEnter(gobj, id + (air ? GENO_SP_AIR_N : GENO_SP_N));
         }
-        if (id == GENO_CA_JUMP) {
+        if (id == GENO_CA_JUMP || id == GENO_CA_JUMP_SHORT) {
             if (geno_test_capture) {
                 geno_test_target = to;
                 geno_test_changes++;
                 return 1;
             }
             if (!air) {
+                /* the jump squat is skipped, so the short-hop flag the squat would have set is set here: always written (the
+                 * union holds the last action's data), 1 for jump_short; ftCo_800CB110 reads it as mv.co.jump.x0 */
+                fp->mv.co.kneebend.is_short_hop = (id == GENO_CA_JUMP_SHORT);
                 ftCo_Jump_Enter(gobj);
                 return 1;
             }

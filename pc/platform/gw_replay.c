@@ -39,6 +39,7 @@
 #include "gw_hang.h"
 #include "gw_rollback.h"
 #include "gw_slippi_pad.h"
+#include "gw_replay_matchrules.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -64,6 +65,7 @@ static struct {
     int tried;
     int active;
     int live; /* netplay: armed by a live match, no recording behind it (see rp_load) */
+    unsigned turbo; /* port recording's tagged match rule; legacy recordings remain off */
     uint8_t game_info[GW_RP_GAME_INFO];
     uint32_t seed;
     uint8_t version[4];
@@ -157,6 +159,10 @@ static int rp_parse(const uint8_t *d, size_t n) {
             }
             if (cmd == 0x36 && pass == 0) {
                 if (sz < 0x140) { rp.truncated = 1; c += 1 + sz; continue; }
+                if (gw_rp_rules_read(b, sz, &rp.turbo) < 0) {
+                    gw_log("replay: unsupported Turbo match rule 0x%08x; refusing playback", rp.turbo);
+                    return -1;
+                }
                 rp.game_start_seen = 1;
                 memcpy(rp.version, b + 1, 4);
                 memcpy(rp.game_info, b + 5, GW_RP_GAME_INFO);
@@ -303,6 +309,7 @@ static void rp_load(void) {
         gw_log("replay: %s - Slippi %u.%u.%u, frames %d..%d, seed 0x%08X, scene \"%s\"%s%s", path,
                rp.version[0], rp.version[1], rp.version[2], rp.first, rp.last, rp.seed, rp.scene,
                rp.online ? ", online (per-frame seed)" : "", rp.resync ? ", resync on" : "");
+        if (rp.turbo) gw_log("replay: match rules turbo=0x%08x", rp.turbo);
     }
     free(d);
     path = getenv("MELEE_STATE_TRACE");
@@ -414,14 +421,15 @@ uint32_t gw_Replay_ApplyMatch(void *start_melee_data) {
  * Writes the port's own match as a Slippi replay, from the same points playback reads: the
  * StartMeleeData and seed at fn_8016E730, each frame's start seed, each character's processed
  * inputs at the pre-frame point, and the post-frame state at Slippi's post-frame point. Event sizes
- * and framing are Slippi 3.19.1's, so the file is also readable by Slippi's tools; fields the port
+ * and framing follow Slippi 3.19.1, with a tagged port-only Game Start suffix for Turbo;
+ * third-party readers must honor the event-size table. Fields the port
  * has no source for (raw pad bytes, shield size, combo counters...) are zero.
  *
  * A port recording played back on the same build must reproduce every frame bit for bit - that is
  * the self-consistency test rollback rests on (tools/replay/first_div.py against the recording).
  * The raw-block length is written as 0 up front (Slippi's own convention for a replay still being
  * written) and patched at exit, so a run that dies mid-match still leaves a playable file. */
-#define GW_RP_SZ_START 0x2F8
+#define GW_RP_SZ_START GW_RP_RULES_START
 #define GW_RP_SZ_PRE 0x42
 #define GW_RP_SZ_POST 0x54
 #define GW_RP_SZ_END 0x6
@@ -551,6 +559,7 @@ int gw_Replay_Recording(void) {
 /* fn_8016E730: the match as it starts, and its seed. Arms the recording's frame counter. */
 void gw_Replay_RecordMatch(void *start_melee_data, uint32_t seed) {
     uint8_t ev[1 + GW_RP_SZ_START];
+    extern int gw_MatchTurboRules(void);
     if (!gw_Replay_Recording()) {
         return;
     }
@@ -573,11 +582,16 @@ void gw_Replay_RecordMatch(void *start_melee_data, uint32_t seed) {
         }
         ev[0x1A4] = rp.online ? 8 : 2;
     }
+    gw_rp_rules_write(ev, (unsigned) gw_MatchTurboRules());
     fwrite(ev, 1, sizeof ev, rec.f);
     rec.frame = GW_RP_FIRST_FRAME - 1;
     rec_flush_next = GW_RP_FIRST_FRAME;
-    gw_log("replay: recording the match (seed 0x%08X)", seed);
+    gw_log("replay: recording the match (seed 0x%08X, turbo=0x%08x)", seed,
+           (unsigned) gw_MatchTurboRules());
 }
+
+/* Native only: playback never reads the user's local Turbo preference. */
+int gw_Replay_TurboRules(void) { return (int) rp.turbo; }
 
 static void rec_tick(uint32_t seed) {
     uint8_t ev[1 + GW_RP_SZ_FSTART];

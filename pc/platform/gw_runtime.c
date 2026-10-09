@@ -2449,7 +2449,7 @@ void gw_SceneLaunch_SetText(const char *text) {
  * What the game asks (MatchTurboRules, from script_fighter_interrupt.inc) is, in order:
  *   - an online match: the word both peers agreed in the handshake/lobby (gw_Netplay_TurboRules);
  *     public/ranked matchmaking agrees 0. Never anything local.
- *   - a replay or Slippi match: 0 (a .slp has no field for it).
+ *   - a replay: its tagged Turbo word (legacy/upstream .slp files mean 0).
  *   - the scene's `turbo=` token, when the scene has one (scripted runs, the LAB, tests);
  *   - local Versus: the `turbo_versus` setting (Versus > Rules), in a VS scene only.
  * It is constant for a match: it is decided before the first frame and not by anything that
@@ -2457,19 +2457,20 @@ void gw_SceneLaunch_SetText(const char *text) {
 extern int gw_Netplay_TurboRules(void);
 extern int gw_Settings_Int(const char *key, int dflt);
 extern int gw_Replay_Active(void);
+extern int gw_Replay_TurboRules(void);
 static int gw_rules_in_vs;
 int gw_MatchTurboRules(void) {
   if (gw_Netplay_Enabled()) return gw_Netplay_TurboRules();
-  if (gw_Replay_Active()) return 0;
+  if (gw_Replay_Active()) return gw_Replay_TurboRules();
   if (gw_sl_loaded && gw_sl_cfg.turbo >= 0) return gw_sl_cfg.turbo;
   if (gw_rules_in_vs && gw_Settings_Int("turbo_versus", 0) != 0) return (int) GW_TURBO_V1;
   return 0;
 }
-/* the indicator's colour animation id (fighter overlay); settings.cfg `turbo_colanim` retunes it
- * without a rebuild - its look has not been seen by the agent that wrote it */
+/* The colour overlay mutates snapshotted fighter state (ftCo_800BFFD0), so its
+ * id must not depend on a per-peer setting or an unrecorded replay preference.
+ * Use the existing default in every mode; its appearance still needs game QA. */
 int gw_MatchTurboColAnim(void) {
-  int id = gw_Settings_Int("turbo_colanim", 8);
-  return (id >= 0 && id < 0x7B) ? id : 8;
+  return 8;
 }
 /* Native Turbo counters: what the simulation DID, counted where a rollback cannot rewind them (the in-game
  * counters are simulation state, so they show the final timeline; these show every execution, resimulated frames

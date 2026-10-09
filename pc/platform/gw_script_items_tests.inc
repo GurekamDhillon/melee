@@ -1,5 +1,5 @@
 /* Included before test registration, after all production item/event helpers. */
-static int test_script_item_events(void)
+static int t_script_item_events(void)
 {
     char dir[MAX_PATH],path[MAX_PATH];
     FILE* f;
@@ -81,12 +81,11 @@ static int test_script_item_events(void)
     lua_pushnil(gs.L);lua_setfield(gs.L,-2,"on_item_expire");lua_pop(gs.L,1);
     if (!ok) gw_test_fail("item hooks failed payload/port/name assertions");
     gs_update_want_events();
-    if ((!collect && gs_want_item_collect) || (!expire && gs_want_item_expire)) {
+    if (gs_want_item_collect || gs_want_item_expire) {
         gw_test_fail("item queue stayed armed after removing its only hooks");ok=0;
     }
-    /* Other scripts can legitimately keep their own producers armed. Temporarily
-     * disable those flags to check the actual producer guard independently. */
-    gs_want_item_collect=gs_want_item_expire=0;gs.nev=0;
+    /* With the isolated fixture hooks gone, the real producers must stay quiet. */
+    gs.nev=0;
     gw_ItemEvent(0,19,-1,0,0,0,0,1);
     gw_ItemEvent(1,19,-1,-1,0,0,0,1);
     if (gs.nev) {gw_test_fail("item producer stayed armed after hook removal");ok=0;}
@@ -97,4 +96,9 @@ done:
     gs_want_item_collect=collect;gs_want_item_expire=expire;gs_item_collect_families=collect_mask;gs_item_expire_families=expire_mask;
     gs.ev_dropped=dropped;gs.cur=cur;memcpy(gs.ev,saved,sizeof saved);
     return ok?0:1;
+}
+
+static int test_script_item_events(void)
+{
+    return t_isolated_events(t_script_item_events);
 }

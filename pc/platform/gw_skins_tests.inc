@@ -18,26 +18,27 @@ static int skt_said(const char *needle) {
     for (i = 0; i < skt_nmsg; ++i) if (strstr(skt_msgs[i], needle)) return 1;
     return 0;
 }
-static void skt_touch(const char *root, const char *rel) {
+static int skt_touch(const char *root, const char *rel) {
     char path[MAX_PATH], *q;
     FILE *f;
-    snprintf(path, sizeof path, "%s\\%s", root, rel);
+    snprintf(path, sizeof path, "%s/%s", root, rel);
     for (q = path + strlen(root) + 1; *q; ++q) {
         if (*q == '/' || *q == '\\') {
-            char c = *q;
             *q = '\0';
             SKT_MKDIR(path);
-            *q = c == '/' ? '\\' : c;
+            *q = '/';
         }
     }
     f = fopen(path, "wb");
-    if (f) { fputs("x", f); fclose(f); }
+    if (!f) return 0;
+    fputs("x", f);
+    return fclose(f) == 0;
 }
 static int skt_base5(int fk) { return fk == 0 ? 5 : 0; }
 
 static int test_skins_parse(void) {
     char root[MAX_PATH];
-    const char *tmp = getenv("TEMP");
+    const char *tmp = getenv("TMPDIR");
     sk_registry saved = sk_reg;
     void (*saved_sink)(const char *) = sk_sink;
     jdoc *d = (jdoc *) malloc(sizeof *d);
@@ -61,10 +62,16 @@ static int test_skins_parse(void) {
         { "{ not json", "not valid JSON" },
     };
     if (!d) return 1;
-    snprintf(root, sizeof root, "%s\\gw_skins_test_%u", tmp ? tmp : ".", (unsigned) time(NULL));
+    if (!tmp || !*tmp) tmp = getenv("TEMP");
+    if (!tmp || !*tmp) tmp = ".";
+    /* mkdir is native on Linux; unlike fopen it does not translate backslashes. */
+    snprintf(root, sizeof root, "%s/gw_skins_test_%u", tmp, (unsigned) time(NULL));
     SKT_MKDIR(root);
-    skt_touch(root, "skins/a/x.dat");
-    skt_touch(root, "skins/a/csp.gxtex");
+    if (!skt_touch(root, "skins/a/x.dat") || !skt_touch(root, "skins/a/csp.gxtex")) {
+        gw_test_fail("skins: fixture files unavailable in %s", root);
+        free(d);
+        return 1;
+    }
     memset(&sk_reg, 0, sizeof sk_reg);
     for (i = 0; i < SK_FK_MAX; ++i) sk_reg.first[i] = -1;
     sk_sink = skt_sink;

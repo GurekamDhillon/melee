@@ -10518,8 +10518,52 @@ static int test_script_lab_project(void) {
     return rc;
 }
 
+/* Event tests own their hooks and queue. A release loads Envoy/LAB at gs_init,
+ * unlike run.sh's default empty mods directory: those hooks legitimately keep
+ * producers armed and must not receive the test's synthetic events. */
+static int t_isolated_events(int (*test)(void)) {
+    int disabled[GS_MAX_SCRIPTS], n, k, rc, top, env, cur, nev, dropped, want;
+    int collect, expire, clanks, in_event;
+    unsigned collect_mask, expire_mask;
+    GsEvent *events;
+    gs_init();
+    if (!gs.L) { gw_test_fail("scripting unavailable"); return 1; }
+    events = (GsEvent *) malloc(sizeof gs.ev);
+    if (!events) { gw_test_fail("event test snapshot unavailable"); return 1; }
+    top = lua_gettop(gs.L);
+    n = gs.n;
+    cur = gs.cur; nev = gs.nev; dropped = gs.ev_dropped; want = gs.want_events;
+    collect = gs_want_item_collect; expire = gs_want_item_expire;
+    collect_mask = gs_item_collect_families; expire_mask = gs_item_expire_families;
+    clanks = gs_want_clanks; in_event = gs.in_event;
+    memcpy(events, gs.ev, sizeof gs.ev);
+    for (k = 0; k < n; ++k) {
+        disabled[k] = gs.s[k].disabled;
+        gs.s[k].disabled = k != gs.console;
+    }
+    /* A fresh console environment also keeps failed assertions from leaving
+     * hooks behind or overwriting hooks installed by an earlier test. */
+    env = gs.s[gs.console].env_ref;
+    gs.s[gs.console].env_ref = gs_new_env(gs.L);
+    gs.nev = gs.ev_dropped = gs.in_event = 0;
+    gs_update_want_events();
+    rc = test();
+    luaL_unref(gs.L, LUA_REGISTRYINDEX, gs.s[gs.console].env_ref);
+    gs.s[gs.console].env_ref = env;
+    for (k = 0; k < n; ++k) gs.s[k].disabled = disabled[k];
+    gs_update_want_events(); /* restore the zone hook cache as well */
+    gs.cur = cur; gs.nev = nev; gs.ev_dropped = dropped; gs.want_events = want;
+    gs_want_item_collect = collect; gs_want_item_expire = expire;
+    gs_item_collect_families = collect_mask; gs_item_expire_families = expire_mask;
+    gs_want_clanks = clanks; gs.in_event = in_event;
+    memcpy(gs.ev, events, sizeof gs.ev);
+    free(events);
+    lua_settop(gs.L, top);
+    return rc;
+}
+
 /* engine events: queued mid-frame, dispatched after it with the documented arguments */
-static int test_script_lab_events(void) {
+static int t_script_lab_events(void) {
     char out[512];
     union {
         float f;
@@ -10556,6 +10600,10 @@ static int test_script_lab_events(void) {
         return 1;
     }
     return 0;
+}
+
+static int test_script_lab_events(void) {
+    return t_isolated_events(t_script_lab_events);
 }
 
 /* A boss event is delivered after the frame with a one-based port and world coordinates. */

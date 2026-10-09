@@ -42,7 +42,12 @@ void gw_Snap_SessionResim(int on, int frame) { (void) on; (void) frame; }
 int gw_Snap_HasFrame(int frame) { (void) frame; return 1; }
 uint32_t gw_Snap_Checksum(int frame) { (void) frame; return 1; }
 int gw_Snap_SfxFrameEnd(int frame) { (void) frame; return 0; }
-uint32_t gw_RB_GameHash(void) { return 0x1234; }
+uint32_t gw_RB_GameHashForFrame(int frame) {
+    assert(frame == replay_frame + 1);
+    gw_RbHashRegion(0, 0);
+    gw_RbHashWord(0x1234, "seed");
+    return 0x1234;
+}
 void gw_RbViz_Push(int a, int b, int c, int d, double e, int f) {
     (void) a; (void) b; (void) c; (void) d; (void) e; (void) f;
 }
@@ -134,5 +139,48 @@ int main(void) {
     assert(gw_rb_local_fixture_reads(0) == 0 && gw_rb_local_fixture_reads(1) == 1);
     assert(!gw_rb_slippi_receive(gw_rb_epoch(), 1, 3, &bad));
     gw_rb_slippi_disable();
+    /* Diagnostics retain captured words, replace resimulations, and never label
+       an evicted frame with current values. Exercise the real recorder. */
+    rb_hash_detail_reset();
+    rb_hash_detail_begin(-80);
+    gw_RbHashSeed(0xAAAAAAAA, 0x125F5678);
+    gw_RbHashRegion(1, 2);
+    gw_RbHashWord(0xAAAAAAAA, "fp->cur_pos.x");
+    rb_hash_detail_end(0x1235);
+    assert(rb_hash_detail_find(-80)->words[0].value == 0xAAAAAAAA);
+    {
+        FILE *f = tmpfile();
+        char text[2048];
+        size_t size;
+        assert(f != NULL);
+        rb_hash_detail_emit(rb_hash_detail_find(-80), f);
+        rewind(f); size = fread(text, 1, sizeof text - 1, f); text[size] = 0;
+        assert(strstr(text, "hash,") && strstr(text, ",-80,fighter,2,0,"));
+        assert(strstr(text, "fp->cur_pos.x") && strstr(text, "AAAAAAAA"));
+        assert(strstr(text, "region_hash"));
+        assert(strstr(text, "arrived_rng,AAAAAAAA") && strstr(text, "effective_rng,125F5678"));
+        fclose(f);
+    }
+    rb_hash_detail_begin(-79);
+    gw_RbHashRegion(1, 2);
+    gw_RbHashWord(0xBBBBBBBB, "fp->cur_pos.x");
+    rb_hash_detail_end(0x4567);
+    assert(rb_hash_detail_find(-80)->words[0].value == 0xAAAAAAAA);
+    rb_hash_detail_begin(-80); /* corrected history */
+    gw_RbHashRegion(1, 2);
+    gw_RbHashWord(0xCCCCCCCC, "fp->cur_pos.x");
+    rb_hash_detail_end(0x789B);
+    assert(rb_hash_detail_find(-80)->words[0].value == 0xCCCCCCCC);
+    rb_hash_detail_begin(-80 + RB_RING);
+    rb_hash_detail_end(1);
+    assert(rb_hash_detail_find(-80) == NULL);
+    rb_hash_detail_begin(10);
+    gw_RbHashRegion(2, 0);
+    for (int i = 0; i <= RB_HASH_WORDS; ++i) gw_RbHashWord((unsigned) i, "item");
+    rb_hash_detail_end(1);
+    assert(rb_hash_detail_find(10)->overflow == 1);
+    assert(rb_hash_detail_find(10)->count == RB_HASH_WORDS);
+    rb_hash_detail_reset();
+    assert(rb_hash_detail_find(10) == NULL);
     return 0;
 }

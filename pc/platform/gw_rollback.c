@@ -52,7 +52,7 @@ extern void gw_Snap_SessionResim(int on, int frame);
 extern int gw_Snap_HasFrame(int frame);
 extern uint32_t gw_Snap_Checksum(int frame);
 extern int gw_Snap_SfxFrameEnd(int frame);
-extern uint32_t gw_RB_GameHash(void); /* fighter.c: the curated gameplay hash */
+extern uint32_t gw_RB_GameHashForFrame(int frame); /* fighter.c: effective online seed + curated words */
 extern void gw_Replay_TraceBeginIter(int iter);
 extern void gw_Replay_TraceFlushUpTo(int iter);
 
@@ -154,6 +154,8 @@ static struct {
     double cur_extra_ms;              /* load + resimulated iterations of the current rollback */
     int cur_depth;
 } rb;
+
+#include "gw_rb_hash_detail.inc"
 
 static double rb_ms(void) {
     static LARGE_INTEGER f;
@@ -400,6 +402,7 @@ void gw_RB_SceneBegin(int scene_kind) {
                 rb.hring[q].frame = INT_MIN;
             }
         }
+        rb_hash_detail_reset();
         rb.hlog_next = RB_FIRST;
         if (rb.hlog == NULL && getenv("MELEE_RB_HASHLOG") != NULL) {
             rb.hlog = fopen(getenv("MELEE_RB_HASHLOG"), "w");
@@ -1065,19 +1068,27 @@ int gw_RB_Iterations(int count) {
         rb.cur_extra_ms = 0;
     }
 
-    if (rb.hlog != NULL) {
+    if (rb.hlog != NULL || rb_hash_file != NULL) {
         int c = rb_conf(), f;
         if (c == INT_MAX || c > frame) {
             c = frame;
         }
         for (f = rb.hlog_next; f <= c + 1 && f <= frame; ++f) { /* frame = the last simulated: its hash exists */
-            uint32_t h = rb.hring[(unsigned) f % RB_RING].frame == f ? rb.hring[(unsigned) f % RB_RING].h : 0;
-            if (h != 0) {
-                fprintf(rb.hlog, "%d,%08X\n", f, h);
+            uint32_t h = gw_rb_checksum(f);
+            const RbHashDetail *d;
+            /* Use the same finality gate as the wire; do not advance past a
+             * pending correction and silently log the speculative timeline. */
+            if (!rb_hash_final(f)) break;
+            if (h != 0 && rb.hlog != NULL) fprintf(rb.hlog, "%d,%08X\n", f, h);
+            d = rb_hash_detail_find(f);
+            if (rb_hash_file != NULL) {
+                if (h != 0 && d != NULL && d->hash == h) rb_hash_detail_emit(d, rb_hash_file);
+                else fprintf(rb_hash_file, "missing,%d,%d,match,0,-1,history,0\n", rb.epoch, f);
             }
         }
         rb.hlog_next = f;
-        fflush(rb.hlog);
+        if (rb.hlog != NULL) fflush(rb.hlog);
+        if (rb_hash_file != NULL) fflush(rb_hash_file);
     }
     /* Frames whose inputs were all confirmed BEFORE this tick's deliveries are final: any wrong one
        was already resimulated by the previous tick's iterations, so their trace rows are the
@@ -1372,7 +1383,9 @@ void gw_RB_IterStart(void) {
     rb.hring[(unsigned) next % RB_RING].frame = next;
     {
         double th = rb_ms();
-        rb.hring[(unsigned) next % RB_RING].h = gw_RB_GameHash() | 1u;
+        rb_hash_detail_begin(next);
+        rb.hring[(unsigned) next % RB_RING].h = gw_RB_GameHashForFrame(next) | 1u;
+        rb_hash_detail_end(rb.hring[(unsigned) next % RB_RING].h);
         rb.ms_hash += rb_ms() - th;
         rb.n_hash++;
     }

@@ -228,11 +228,13 @@ static void GenoDefine_BuildOwn(int kind, ftData* out, int n)
     HSD_ASSERTREPORT(__LINE__, Geno_DefinePlanInt(kind, 0, 0), "Geno base none: the fighter plan is unusable (see geno: plan lines in the log)\n");
     HSD_ASSERTREPORT(__LINE__, n <= 512, "Geno base none: animation row table too large\n");
     x8 = gd_data_copy(out->x8, sizeof *x8);          /* Mario's x10..x14 are Fighter_Part numbers: roles, resolved by the own parts table */
+    if (!Geno_DefineTemplateSkeleton(kind)) {   /* a template's own model keeps its model-part visibility groups (expression meshes) and texture animations (eyes) */
     x8->x0.model_num = 0;
     x8->x0.vis_table = GenoDefine_VisTable;
     x8->x8.x8 = 0;
     for (i = 0; i < 255; ++i) GenoDefine_TobjTable[i] = &GenoDefine_TobjZero;
     x8->x8.xC = GenoDefine_TobjTable;
+    }
     out->x8 = x8;
     GenoDefine_JointFields(kind, out, x8);
     for (i = 0; i < n; ++i) { pick[i] = -1; rank[i] = 0; }

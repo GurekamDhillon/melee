@@ -24,6 +24,8 @@
 #define NCH_APP_VERSION "0.2"
 
 typedef struct { int status; uint8_t *data; size_t len; int retry_after; char err[120]; } nch_result;
+/* progress(user, bytes so far, bytes expected or 0 when the server did not say): called after every read; a nonzero return abandons the download */
+typedef int (*nch_progress_fn)(void *user, size_t got, size_t total);
 
 static char nch_override_host[64];     /* set by nch_set_override: a loopback host that is allowed besides ssbmnucleus.net */
 
@@ -102,14 +104,14 @@ static int nch_load(void) {
 }
 
 /* GET url; follows redirects (final address re-checked); at most max_bytes of body; the result owns data (free it). 0 when an HTTP status came back. */
-static int nch_get(const char *url, size_t max_bytes, nch_result *r) {
+static int nch_get_p(const char *url, size_t max_bytes, nch_result *r, nch_progress_fn prog, void *pu) {
     wchar_t wurl[1200], wua[200], host[128], path[1100];
     URL_COMPONENTS uc;
     HINTERNET ses = NULL, con = NULL, req = NULL;
     char hostc[96];
     int secure = 0;
     DWORD flags, status = 0, sz, avail;
-    size_t cap = 0, len = 0;
+    size_t cap = 0, len = 0, expect = 0;
     uint8_t *buf = NULL;
     memset(r, 0, sizeof *r);
     if (!nch_split(url, hostc, sizeof hostc, &secure) || !nch_host_ok(hostc, secure)) { snprintf(r->err, sizeof r->err, "address not allowed"); return -1; }
@@ -156,6 +158,11 @@ static int nch_get(const char *url, size_t max_bytes, nch_result *r) {
         sz = sizeof ra;
         if (nch_w.query(req, 29 /* WINHTTP_QUERY_RETRY_AFTER */ | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, &ra, &sz, WINHTTP_NO_HEADER_INDEX)) r->retry_after = (int) ra;
     }
+    {
+        DWORD cl = 0;
+        sz = sizeof cl;
+        if (nch_w.query(req, 5 /* WINHTTP_QUERY_CONTENT_LENGTH */ | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, &cl, &sz, WINHTTP_NO_HEADER_INDEX)) expect = cl;
+    }
     for (;;) {
         DWORD got = 0;
         avail = 65536;
@@ -170,6 +177,7 @@ static int nch_get(const char *url, size_t max_bytes, nch_result *r) {
         if (!nch_w.read(req, buf + len, avail, &got)) { snprintf(r->err, sizeof r->err, "connection lost (%lu)", GetLastError()); free(buf); buf = NULL; r->status = 0; goto done; }
         if (got == 0) break;
         len += got;
+        if (prog && prog(pu, len, expect)) { snprintf(r->err, sizeof r->err, "stopped"); free(buf); buf = NULL; r->status = 0; goto done; }
         if (len > max_bytes) { snprintf(r->err, sizeof r->err, "answer is larger than allowed"); free(buf); buf = NULL; r->status = 0; goto done; }
     }
     if (buf) buf[len] = '\0';
@@ -183,7 +191,8 @@ done:
 
 #else  /* the system curl */
 
-static int nch_get(const char *url, size_t max_bytes, nch_result *r) {
+static int nch_get_p(const char *url, size_t max_bytes, nch_result *r, nch_progress_fn prog, void *pu) {
+    (void) prog; (void) pu;      /* curl runs to the end: no progress to report */
     char host[96], cmd[1500], body[400], hdr[400];
     int secure = 0, code = 0;
     FILE *p;
@@ -227,4 +236,7 @@ static int nch_get(const char *url, size_t max_bytes, nch_result *r) {
 }
 
 #endif
+
+static int nch_get(const char *url, size_t max_bytes, nch_result *r) { return nch_get_p(url, max_bytes, r, NULL, NULL); }
+
 #endif

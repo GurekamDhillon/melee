@@ -3,7 +3,8 @@
  * Run: tools/port/build.sh --native-test nucleus-core. No network, no game, no disc. */
 #define _CRT_SECURE_NO_WARNINGS
 #define _CRT_NONSTDC_NO_WARNINGS
-#include "../platform/gw_nucleus_install.h"
+#include "../platform/gw_nucleus_queue.h"
+#include "../platform/gw_nucleus_image.h"
 #include "nucleus_fixture.h"
 
 static int g_fail, g_checks;
@@ -425,6 +426,230 @@ int main(void) {
         CHECK(nc_zip_extract(zipbytes, sizeof zipbytes, "Luffy Falco/Vanilla/PlFcBu.dat", &out, &olen, 10, zerr, sizeof zerr) < 0 && strstr(zerr, "too large"));
         CHECK(nc_zip_extract((const uint8_t *) "this is not a zip file at all", 29, "x", &out, &olen, 1 << 20, zerr, sizeof zerr) < 0);
         CHECK(strstr(nc_http_reason(404), "no download") && strstr(nc_http_reason(503), "later") && !strstr(nc_http_reason(404), "HTTP"));
+    }
+
+    /* ---- the pictures a mod lists (thumbnail, screenshots), and the cache schema ---- */
+    {
+        static const char *const pj =
+            "{\"id\":7001,\"title\":\"Picture Post\",\"author\":\"A\",\"type\":\"stage_skin\",\"thumbnail_url\":\"https://media.ssbmnucleus.net/posts/2026/01/post_7001/screenshot_0__thumb.webp\","
+            "\"screenshots\":[\"https://media.ssbmnucleus.net/posts/2026/01/post_7001/screenshot_0.png\",\"https://media.ssbmnucleus.net/posts/2026/01/post_7001/screenshot_1.png\","
+            "\"https://media.ssbmnucleus.net/posts/2026/01/post_7001/screenshot_2.png\",\"https://media.ssbmnucleus.net/posts/2026/01/post_7001/screenshot_3.png\"],\"files\":[]}";
+        nj_doc pd;
+        nc_catalog pc, back;
+        nc_sync ss;
+        memset(&pc, 0, sizeof pc); memset(&back, 0, sizeof back);
+        CHECK(nj_parse(&pd, pj) >= 0 && nc_cat_apply(&pc, &pd, 0) == 1);
+        nj_free(&pd);
+        CHECK_STR(pc.m[0].shot[0], "posts/2026/01/post_7001/screenshot_0.png");              /* the WebP thumbnail is not kept */
+        CHECK(pc.m[0].nshots == NC_SHOTS && !strcmp(pc.m[0].shot[2], "posts/2026/01/post_7001/screenshot_2.png"));    /* the first three only */
+        CHECK(nc_cat_save(&pc, "nc_pic_cat.jsonl") == 0 && nc_cat_load(&back, "nc_pic_cat.jsonl") == 1);
+        CHECK_STR(back.m[0].shot[0], pc.m[0].shot[0]);
+        CHECK(back.m[0].nshots == 3 && !strcmp(back.m[0].shot[1], "posts/2026/01/post_7001/screenshot_1.png"));
+        remove("nc_pic_cat.jsonl"); remove("nc_pic_cat.jsonl.tmp");
+        nc_cat_free(&pc); nc_cat_free(&back);
+        CHECK(NC_CACHE_SCHEMA >= 3);
+        CHECK(nc_sync_from_json(&ss, "{\"schema\":2,\"t0\":5,\"full\":1,\"cursor\":\"\"}") == 0 && ss.stale == 1 && ss.full == 0);       /* an older cache: fresh pass, catalog not used */
+        CHECK(nc_sync_from_json(&ss, "{\"t0\":5,\"full\":1,\"cursor\":\"\"}") == 0 && ss.stale == 1);                                           /* no schema = schema 1 */
+        {
+            nj_buf sb;
+            memset(&sb, 0, sizeof sb);
+            memset(&ss, 0, sizeof ss); ss.full = 1; ss.t0 = 9;
+            nc_sync_to_json(&ss, &sb);
+            CHECK(nc_sync_from_json(&ss, sb.s) == 0 && ss.stale == 0 && ss.full == 1 && ss.t0 == 9);
+            free(sb.s);
+        }
+        CHECK(nc_sync_from_json(&ss, "not json") != 0 && ss.stale == 1);
+    }
+
+    /* ---- the download queue ---- */
+    {
+        nq_queue *q = (nq_queue *) calloc(1, sizeof *q), *back = (nq_queue *) calloc(1, sizeof *back);
+        const char *path = "nq_test_queue.json";
+        int i;
+        nq_init(q);
+        CHECK(nq_add(q, 11, "Eleven", "Ann", 100) == 1 && nq_add(q, 12, "Twelve", "Bo", 101) == 1 && nq_add(q, 13, "Thirteen", "Cy", 102) == 1);
+        CHECK(nq_add(q, 11, "Eleven", "Ann", 103) == 0 && q->n == 3);                              /* already waiting: unchanged */
+        CHECK(nq_place(q, 11) == 1 && nq_place(q, 13) == 3 && nq_place(q, 99) == 0 && nq_pending(q) == 3);
+        CHECK(nq_toggle(q, 12, "Twelve", "Bo", 104) == -1 && q->n == 2 && nq_find(q, 12) < 0);       /* A on a queued mod takes it out */
+        CHECK(nq_toggle(q, 12, "Twelve", "Bo", 105) == 1 && nq_place(q, 12) == 3);                   /* and again: back, at the end */
+        CHECK(nq_move(q, 12, -1) == 1 && nq_place(q, 12) == 2 && nq_place(q, 13) == 3);
+        CHECK(nq_move(q, 12, -1) == 1 && nq_place(q, 12) == 1 && nq_move(q, 12, -1) == 0);        /* the top cannot go higher */
+        CHECK(nq_move(q, 13, 1) == 0 && nq_move(q, 99, 1) == 0);
+        /* the one being installed is not torn out, and nothing moves above it */
+        nq_mark_running(q, 12);
+        CHECK(nq_next(q) == nq_find(q, 11) && nq_remove(q, 12) == 0 && nq_toggle(q, 12, "", "", 0) == 0 && nq_move(q, 11, -1) == 0);
+        nq_progress(q, 12, 45); nq_progress(q, 12, 400);
+        CHECK(q->it[nq_find(q, 12)].pct == 100);
+        nq_progress(q, 12, 45);
+        nq_finish(q, 12, 1, "");
+        CHECK(q->it[nq_find(q, 12)].state == NQ_DONE && nq_pending(q) == 2);
+        nq_mark_running(q, 11);
+        nq_finish(q, 11, 0, "The post lists no download for that file.");
+        CHECK(q->it[nq_find(q, 11)].state == NQ_FAILED && q->it[nq_find(q, 11)].attempts == 1 && nq_pending(q) == 1);
+        CHECK(nq_retry(q, 11) == 1 && q->it[nq_find(q, 11)].state == NQ_QUEUED && nq_retry(q, 11) == 0 && nq_retry(q, 99) == 0);
+        nq_mark_running(q, 11); nq_finish(q, 11, 0, "Could not reach SSBM Nucleus.");
+        /* a restart: RUNNING -> QUEUED, DONE dropped, FAILED kept with its reason, the Start flag kept */
+        nq_mark_running(q, 13);
+        q->processing = 1;
+        CHECK(nq_save(q, path) == 0);
+        CHECK(nq_load(back, path) == 2 && back->processing == 1);
+        CHECK(nq_find(back, 12) < 0);
+        CHECK(back->it[nq_find(back, 13)].state == NQ_QUEUED && back->it[nq_find(back, 13)].pct == 0);
+        CHECK(back->it[nq_find(back, 11)].state == NQ_FAILED && back->it[nq_find(back, 11)].attempts == 2);
+        CHECK_STR(back->it[nq_find(back, 11)].reason, "Could not reach SSBM Nucleus.");
+        CHECK_STR(back->it[nq_find(back, 13)].title, "Thirteen"); CHECK_STR(back->it[nq_find(back, 13)].author, "Cy");
+        CHECK(back->it[nq_find(back, 13)].added == 102);
+        CHECK(back->it[0].id == 11 && back->it[1].id == 13);                                         /* the order is kept */
+        /* the file on disk: written whole, no .tmp left behind */
+        { FILE *t = fopen("nq_test_queue.json.tmp", "rb"); CHECK(t == NULL); if (t) fclose(t); }
+        /* a crash in the middle of the NEXT write leaves a half-written .tmp: the real file still loads */
+        nc_write_file("nq_test_queue.json.tmp", "{\"schema\":1,\"processing\":0,\"items\":[{\"id\":5,\"sta", 40);
+        CHECK(nq_load(back, path) == 2 && nq_find(back, 5) < 0);
+        remove("nq_test_queue.json.tmp");
+        /* a queue file that is not a queue is set aside, not used and not deleted */
+        nc_write_file(path, "{{{ not json", 12);
+        remove("nq_test_queue.json.bad");
+        CHECK(nq_load(back, path) == -1 && back->n == 0);
+        { FILE *t = fopen("nq_test_queue.json.bad", "rb"); CHECK(t != NULL); if (t) fclose(t); }
+        { FILE *t = fopen(path, "rb"); CHECK(t == NULL); if (t) fclose(t); }
+        remove("nq_test_queue.json.bad");
+        CHECK(nq_load(back, "nq_no_such_file.json") == 0 && back->n == 0);                       /* no file: an empty queue, not an error */
+        /* the explicit clears: waiting and failed go, the one being installed stays */
+        nq_init(q);
+        nq_add(q, 1, "a", "", 1); nq_add(q, 2, "b", "", 1); nq_add(q, 3, "c", "", 1); nq_add(q, 4, "d", "", 1);
+        nq_mark_running(q, 1); nq_mark_running(q, 3); nq_finish(q, 3, 1, ""); nq_mark_running(q, 4); nq_finish(q, 4, 0, "x");
+        CHECK(nq_count(q, 1u << NQ_DONE) == 1 && nq_clear_finished(q) == 1 && nq_find(q, 3) < 0);
+        CHECK(nq_clear_pending(q) == 2 && q->n == 1 && q->it[0].id == 1 && q->it[0].state == NQ_RUNNING);
+        /* the capacity */
+        nq_init(q);
+        for (i = 1; i <= NQ_MAX; ++i) nq_add(q, i, "m", "", 0);
+        CHECK(q->n == NQ_MAX && nq_add(q, NQ_MAX + 1, "m", "", 0) == -1 && nq_toggle(q, NQ_MAX + 1, "m", "", 0) == 0);
+        free(q); free(back);
+    }
+
+    /* ---- crash leftovers: unfinished installs, and the swap that replaces a mod ---- */
+    {
+        const char *mods = "nq_test_mods";
+        char p[300];
+        nc_rmtree(mods);
+        nc_mkdirs(mods);
+        snprintf(p, sizeof p, "%s/.staging-nucleus-1-fox/files/skins/nucleus-1-fox", mods); nc_mkdirs(p);
+        snprintf(p, sizeof p, "%s/.staging-nucleus-1-fox/files/skins/nucleus-1-fox/1.dat", mods); nc_write_file(p, "half", 4);
+        snprintf(p, sizeof p, "%s/.staging-old-nucleus-2-fox", mods); nc_mkdirs(p);
+        snprintf(p, sizeof p, "%s/nucleus-3-fox", mods); nc_mkdirs(p);
+        snprintf(p, sizeof p, "%s/nucleus-3-fox/mod.json", mods); nc_write_file(p, "{}", 2);
+        snprintf(p, sizeof p, "%s/.nucleus", mods); nc_mkdirs(p);
+        CHECK(nq_clean_staging(mods) == 2);
+        snprintf(p, sizeof p, "%s/.staging-nucleus-1-fox", mods); CHECK(!nc_is_dir(p));
+        snprintf(p, sizeof p, "%s/.staging-old-nucleus-2-fox", mods); CHECK(!nc_is_dir(p));
+        snprintf(p, sizeof p, "%s/nucleus-3-fox", mods); CHECK(nc_is_dir(p));             /* a real mod and the cache folder are not touched */
+        snprintf(p, sizeof p, "%s/.nucleus", mods); CHECK(nc_is_dir(p));
+        CHECK(nq_clean_staging(mods) == 0);
+        /* swap: the new folder replaces the old one, the old one is gone afterwards, nothing .staging-old is left */
+        {
+            char from[300], to[300], f[340];
+            snprintf(to, sizeof to, "%s/nucleus-3-fox", mods);
+            snprintf(from, sizeof from, "%s/.staging-nucleus-3-fox", mods);
+            nc_mkdirs(from);
+            snprintf(f, sizeof f, "%s/mod.json", from); nc_write_file(f, "{\"v\":2}", 7);
+            CHECK(nc_swap_dir(from, to) == 0 && !nc_is_dir(from));
+            snprintf(f, sizeof f, "%s/mod.json", to);
+            { char *t = nc_read_all(f, NULL); CHECK(t && !strcmp(t, "{\"v\":2}")); free(t); }
+            CHECK(nq_clean_staging(mods) == 0);
+            /* a swap that cannot happen (no source) keeps the old folder where it is */
+            CHECK(nc_swap_dir("nq_test_mods/.staging-missing", to) != 0 && nc_is_dir(to));
+            { char *t = nc_read_all(f, NULL); CHECK(t && !strcmp(t, "{\"v\":2}")); free(t); }
+        }
+        nc_rmtree(mods);
+    }
+
+    /* ---- the thumbnail disk cache: least recently used goes first ---- */
+    {
+        const char *dir = "nq_test_cache";
+        char p[300], name[40];
+        int i;
+        int64_t left;
+        nc_rmtree(dir);
+        nc_mkdirs(dir);
+        for (i = 0; i < 10; ++i) {
+            char url[80], data[1000];
+            snprintf(url, sizeof url, "https://media.ssbmnucleus.net/posts/x/%d.webp", i);
+            nq_cache_name(url, name, sizeof name);
+            snprintf(p, sizeof p, "%s/%s", dir, name);
+            memset(data, 'a' + i, sizeof data);
+            nc_write_file(p, data, sizeof data);
+            nq_touch(p, 1000000 + i * 100);                           /* file i was last used at t = 1000000 + 100 i */
+        }
+        CHECK(strlen(name) == 20 && !strcmp(name + 16, ".img"));
+        nc_write_file("nq_test_cache/stray.tmp", "x", 1);               /* an interrupted download */
+        {   /* the oldest is used again just now: it must survive the trim that follows */
+            char url0[80];
+            snprintf(url0, sizeof url0, "https://media.ssbmnucleus.net/posts/x/%d.webp", 0);
+            nq_cache_name(url0, name, sizeof name);
+            snprintf(p, sizeof p, "%s/%s", dir, name);
+            nq_touch(p, 0);
+        }
+        left = nq_cache_trim(dir, 6000);                                 /* cap 6000 of 10000: down to 5400 */
+        CHECK(left <= 5400 && left >= 4000);
+        { FILE *t = fopen("nq_test_cache/stray.tmp", "rb"); CHECK(t == NULL); if (t) fclose(t); }
+        for (i = 0; i < 10; ++i) {
+            char url[80];
+            FILE *t;
+            snprintf(url, sizeof url, "https://media.ssbmnucleus.net/posts/x/%d.webp", i);
+            nq_cache_name(url, name, sizeof name);
+            snprintf(p, sizeof p, "%s/%s", dir, name);
+            t = fopen(p, "rb");
+            if (i == 0 || i >= 6) CHECK(t != NULL);                     /* the touched one and the newest stay */
+            if (i >= 1 && i <= 4) CHECK(t == NULL);                     /* the oldest unused go first */
+            if (t) fclose(t);
+        }
+        CHECK(nq_cache_trim(dir, 1000000) == left);                      /* under the cap: nothing more is removed */
+        nc_rmtree(dir);
+    }
+
+    /* ---- the remembered filters ---- */
+    {
+        nq_prefs a, b;
+        nq_prefs_default(&a);
+        a.tab = 2; a.fighter = 11; a.show = 3; a.sort = 4;
+        snprintf(a.text, sizeof a.text, "neon \"fox\"");
+        CHECK(nq_prefs_save(&a, "nq_test_ui.json") == 0 && nq_prefs_load(&b, "nq_test_ui.json") == 1);
+        CHECK(b.tab == 2 && b.fighter == 11 && b.show == 3 && b.sort == 4 && !strcmp(b.text, "neon \"fox\""));
+        CHECK(nq_prefs_load(&b, "nq_no_such_ui.json") == 0 && b.tab == 0 && b.fighter == -1 && b.show == 0 && b.text[0] == '\0');
+        nc_write_file("nq_test_ui.json", "garbage", 7);
+        CHECK(nq_prefs_load(&b, "nq_test_ui.json") == 0 && b.fighter == -1);
+        remove("nq_test_ui.json");
+    }
+
+    /* ---- pictures: PNG decode, fitted into a fixed canvas (WebP is not decoded at all) ---- */
+    {
+        uint8_t *px = NULL, *gx = NULL, canvas[96 * 72 * 4], rgba[32 * 16 * 4], png[8192];
+        size_t gl = 0, pn;
+        int w = 0, h = 0, x, y, opaque_rows = 0;
+        char err[100];
+        for (y = 0; y < 16; ++y) for (x = 0; x < 32; ++x) {
+            uint8_t *p = rgba + (y * 32 + x) * 4;
+            p[0] = (uint8_t) (x * 8); p[1] = (uint8_t) (y * 16); p[2] = 128; p[3] = x >= 2 ? 255 : 0;
+        }
+        pn = make_png(rgba, 32, 16, png);                                   /* a synthetic 2:1 gradient */
+        CHECK(ni_decode(png, pn, &px, &w, &h, err, sizeof err) == 0 && w == 32 && h == 16);
+        CHECK(px[(5 * 32 + 10) * 4] == 80 && px[(5 * 32 + 10) * 4 + 1] == 80 && px[(5 * 32 + 10) * 4 + 2] == 128 && px[(5 * 32 + 10) * 4 + 3] == 255);
+        CHECK(px[(5 * 32 + 1) * 4 + 3] == 0);
+        ni_fit(px, w, h, 96, 72, canvas);       /* a 2:1 picture in the 4:3 canvas: full width, 48 rows, centred, transparent above and below */
+        ni_free_rgba(px, png);
+        for (y = 0; y < 72; ++y) { int row_opaque = 0; for (x = 8; x < 96; ++x) if (canvas[(y * 96 + x) * 4 + 3] > 200) row_opaque = 1; opaque_rows += row_opaque; }
+        CHECK(opaque_rows == 48 && canvas[(5 * 96 + 50) * 4 + 3] == 0 && canvas[(36 * 96 + 50) * 4 + 3] > 200 && canvas[(66 * 96 + 50) * 4 + 3] == 0);
+        CHECK(ni_make(png, pn, NI_THUMB, &gx, &gl, err, sizeof err) == 0 && !memcmp(gx, "GXTX", 4) && nc_be32(gx + 12) == 96 && nc_be32(gx + 16) == 72 && gl == 64 + 96 * 72 * 2);
+        free(gx);
+        CHECK(ni_make(png, pn, NI_SHOT, &gx, &gl, err, sizeof err) == 0 && nc_be32(gx + 12) == 256 && nc_be32(gx + 16) == 144);
+        free(gx);
+        CHECK(ni_make(png, pn, NI_ICON, &gx, &gl, err, sizeof err) == 0 && nc_be32(gx + 12) == 32 && nc_be32(gx + 16) == 32);
+        free(gx);
+        /* a WebP (or anything but a PNG) is refused, not decoded */
+        CHECK(ni_make((const uint8_t *) "RIFF\x20\0\0\0WEBPVP8 not decoded here at all", 40, NI_THUMB, &gx, &gl, err, sizeof err) < 0 && strstr(err, "not a PNG"));
+        CHECK(ni_make((const uint8_t *) "GIF89a not supported at all", 27, NI_THUMB, &gx, &gl, err, sizeof err) < 0);
+        CHECK(ni_make(png, 20, NI_THUMB, &gx, &gl, err, sizeof err) < 0);                    /* a truncated PNG is refused, not drawn */
+        CHECK(ni_make(png, pn, 9, &gx, &gl, err, sizeof err) < 0);
     }
     (void) has_url;
     nc_cat_free(&cat);

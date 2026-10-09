@@ -19,9 +19,11 @@
 #include <time.h>
 #ifdef _WIN32
 #include <windows.h>
+#include <io.h>
 #else
 #include <dirent.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #endif
 
 #define NC_API_BASE "https://ssbmnucleus.net/api/public/v1"
@@ -86,6 +88,39 @@ static int nc_icontains(const char *hay, const char *needle) {
         for (i = 0; i < n && hay[i] && tolower((unsigned char) hay[i]) == tolower((unsigned char) needle[i]); ++i) {}
         if (i == n) return 1;
     }
+    return 0;
+}
+
+/* ---- atomic files --------------------------------------------------------------------------------------- */
+
+/* rename tmp over path, replacing it in one step (Windows: MoveFileEx with REPLACE_EXISTING; elsewhere rename is already atomic). 0 ok. */
+static int nc_replace_file(const char *tmp, const char *path) {
+#ifdef _WIN32
+    return MoveFileExA(tmp, path, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) ? 0 : -1;
+#else
+    return rename(tmp, path) == 0 ? 0 : -1;
+#endif
+}
+
+/* Write path so that a crash leaves either the old file or the new one, never half of it: a sibling .tmp is written and flushed to disk, then
+ * renamed over the target. 0 ok. */
+static int nc_write_file_atomic(const char *path, const void *data, size_t n) {
+    char tmp[620];
+    FILE *fp;
+    int ok = 1;
+    snprintf(tmp, sizeof tmp, "%s.tmp", path);
+    fp = fopen(tmp, "wb");
+    if (!fp) return -1;
+    if (n && fwrite(data, 1, n, fp) != n) ok = 0;
+    if (ok && fflush(fp) != 0) ok = 0;
+#ifdef _WIN32
+    if (ok && _commit(_fileno(fp)) != 0) ok = 0;
+#else
+    if (ok && fsync(fileno(fp)) != 0) ok = 0;
+#endif
+    if (fclose(fp) != 0) ok = 0;
+    if (!ok) { remove(tmp); return -1; }
+    if (nc_replace_file(tmp, path) != 0) { remove(tmp); return -1; }
     return 0;
 }
 

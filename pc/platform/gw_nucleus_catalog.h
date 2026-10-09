@@ -6,6 +6,8 @@
 
 #include "gw_nucleus_core.h"
 
+#define NC_SHOTS 3
+
 typedef struct {
     int id;
     char filename[100], character[24], color[16];
@@ -20,6 +22,8 @@ typedef struct {
 typedef struct {
     int id, type;
     char title[80], author[40], tags[96], desc[320], page[120], created[24], updated[24];
+    char shot[NC_SHOTS][72];             /* the first screenshots' PNG addresses (NC_MEDIA_BASE stripped); a longer one is not kept. (thumbnail_url is WebP and is never used.) */
+    int nshots;
     int downloads, likes;
     int f0, nf, nf_total;               /* the files in the pool: [f0, f0 + nf); nf_total: what the API listed (may exceed NC_MAX_FILES_PER_MOD) */
     unsigned fmask;                     /* bit i: a costume file for nc_fighters[i] */
@@ -167,6 +171,17 @@ static int nc_cat_apply(nc_catalog *c, const nj_doc *d, int node) {
     nc_copy(m.page, sizeof m.page, nj_gstr(d, node, "page_url", ""));
     nc_copy(m.created, sizeof m.created, nj_gstr(d, node, "created_at", ""));
     nc_copy(m.updated, sizeof m.updated, nj_gstr(d, node, "updated_at", ""));
+    {   /* the pictures: the first screenshots, as media paths (a URL that does not fit is dropped, not cut) */
+        char tmp[300];
+        int sh = nj_get(d, node, "screenshots"), t;
+        if (sh >= 0 && d->n[sh].type == NJ_ARR) {
+            for (t = d->n[sh].first; t >= 0 && m.nshots < NC_SHOTS; t = d->n[t].next) {
+                if (d->n[t].type != NJ_STR) continue;
+                snprintf(tmp, sizeof tmp, "%s", nc_media_strip(d->pool + d->n[t].str));
+                if (strlen(tmp) < sizeof m.shot[0]) nc_copy(m.shot[m.nshots++], sizeof m.shot[0], tmp);
+            }
+        }
+    }
     m.downloads = (int) nj_gnum(d, node, "download_count", 0);
     m.likes = (int) nj_gnum(d, node, "like_count", 0);
     s = NULL;
@@ -290,6 +305,9 @@ static void nc_write_mod(nj_buf *b, const nc_catalog *c, const nc_mod *m) {
     nj_puts(b, ",\"description\":"); nj_qstr(b, m->desc);
     nj_puts(b, ",\"tags\":["); if (m->tags[0]) nj_qstr(b, m->tags); nj_puts(b, "]");
     nj_puts(b, ",\"page_url\":"); nj_qstr(b, m->page);
+    nj_puts(b, ",\"screenshots\":[");
+    for (i = 0; i < m->nshots; ++i) { nc_media_full(m->shot[i], full, sizeof full); if (i) nj_puts(b, ","); nj_qstr(b, full); }
+    nj_puts(b, "]");
     nj_puts(b, ",\"created_at\":"); nj_qstr(b, m->created);
     nj_puts(b, ",\"updated_at\":"); nj_qstr(b, m->updated);
     nj_printf(b, ",\"download_count\":%d,\"like_count\":%d,\"files_total\":%d,\"files\":[", m->downloads, m->likes, m->nf_total);
@@ -320,14 +338,10 @@ static int nc_cat_save(nc_catalog *c, const char *path) {
     nj_puts(&b, "]}\n");
     for (i = 0; i < c->n; ++i) nc_write_mod(&b, c, &c->m[i]);
     if (b.bad) { free(b.s); return -1; }
-    snprintf(tmp, sizeof tmp, "%s.tmp", path);
-    fp = fopen(tmp, "wb");
-    if (!fp) { free(b.s); return -1; }
-    if (fwrite(b.s, 1, b.n, fp) != b.n) { fclose(fp); free(b.s); remove(tmp); return -1; }
-    fclose(fp);
+    (void) tmp; (void) fp;
+    i = nc_write_file_atomic(path, b.s, b.n);       /* a crash mid-save leaves the previous cache, never half of one */
     free(b.s);
-    remove(path);
-    return rename(tmp, path) == 0 ? 0 : -1;
+    return i == 0 ? 0 : -1;
 }
 
 static char *nc_read_all(const char *path, size_t *len) {
@@ -518,12 +532,14 @@ typedef struct {
     int full;                /* 1: the first full pass finished */
     char cursor[300];        /* resume point of an unfinished full pass */
     int pages, total;
+    int stale;              /* set by nc_sync_from_json: the saved state is from an older cache schema (or unreadable): its catalog.jsonl must not be used */
     char msg[120];
 } nc_sync;
 
-/* The cache format. Bump it when a cached record gains a field the API already had (2: a file's "zip" flag): an older state starts a fresh
- * full pass, which replaces every cached mod by id (a delta poll would never refetch an unchanged mod). */
-#define NC_CACHE_SCHEMA 2
+/* The cache format. Bump it when a cached record gains a field the API already had (2: a file's "zip" flag; 3: a mod's screenshots): an
+ * older state starts a fresh full pass, which replaces every cached mod by id (a delta poll would never refetch an unchanged mod), and the engine does
+ * not load the older catalog.jsonl at all (nc_sync.stale), so nothing is installed from records that lack the field until that pass has run. */
+#define NC_CACHE_SCHEMA 3
 
 static void nc_sync_to_json(const nc_sync *s, nj_buf *b) {
     nj_printf(b, "{\"schema\":%d,\"t0\":%lld,\"since\":%lld,\"last_poll\":%lld,\"next_ok\":%lld,\"full\":%d,\"cursor\":", NC_CACHE_SCHEMA, (long long) s->t0, (long long) s->since,
@@ -542,8 +558,8 @@ static int nc_sync_from_json(nc_sync *s, const char *text) {
         s->next_ok = (int64_t) nj_gnum(&d, root, "next_ok", 0);
         s->full = (int) nj_gnum(&d, root, "full", 0);
         nc_copy(s->cursor, sizeof s->cursor, nj_gstr(&d, root, "cursor", ""));
-        if ((int) nj_gnum(&d, root, "schema", 1) < NC_CACHE_SCHEMA) memset(s, 0, sizeof *s);   /* an older cache: sync it all again */
-    }
+        if ((int) nj_gnum(&d, root, "schema", 1) < NC_CACHE_SCHEMA) { memset(s, 0, sizeof *s); s->stale = 1; }   /* an older cache: sync it all again */
+    } else s->stale = 1;
     nj_free(&d);
     return root >= 0 ? 0 : -1;
 }

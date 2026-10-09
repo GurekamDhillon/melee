@@ -289,10 +289,24 @@ static int nc_write_file(const char *path, const void *data, size_t n) {
     return fclose(fp) == 0 ? 0 : -1;
 }
 
-/* Move a folder into place; an existing target is removed first. 0 ok. */
+/* Move a finished folder into place. An existing target is first renamed aside (to .staging-old-<name> beside it: a dot folder the mods scanner skips and nq_clean_staging removes) and deleted only
+ * after the new folder is in place; if the final rename fails the old one is put back, so a crash or a failure never leaves the mod missing. 0 ok. */
 static int nc_swap_dir(const char *from, const char *to) {
-    if (nc_is_dir(to)) nc_rmtree(to);
-    return rename(from, to);
+    char old[620];
+    int had = nc_is_dir(to);
+    const char *base = to + strlen(to);
+    while (base > to && base[-1] != '/' && base[-1] != '\\') --base;
+    snprintf(old, sizeof old, "%.*s.staging-old-%s", (int) (base - to), to, base);
+    if (had) {
+        if (nc_is_dir(old)) nc_rmtree(old);
+        if (rename(to, old) != 0) return -1;
+    }
+    if (rename(from, to) != 0) {
+        if (had) rename(old, to);
+        return -1;
+    }
+    if (had) nc_rmtree(old);
+    return 0;
 }
 
 /* ---- the skin mod ---------------------------------------------------------------------------------------------- */

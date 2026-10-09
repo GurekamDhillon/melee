@@ -62,4 +62,5 @@ static const char *const fx_delta =
 static const char *const fx_removed = "{\"data\":[{\"id\":102,\"removed_at\":\"2026-03-02T10:00:00Z\"}],\"next_cursor\":null}";
 static const char *const fx_error429 = "{\"error\":{\"code\":\"rate_limited\",\"message\":\"slow down\"}}";
 
+
 #endif

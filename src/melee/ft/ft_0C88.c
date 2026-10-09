@@ -20,7 +20,8 @@ void ftCo_800C884C(Fighter_GObj* gobj)
          * A base "none" define has no donor mesh (its x5C would name another fighter's joints: the envelope resolve
          * found no JObj for them), so it has no metal model: the metal box shows the normal one. */
         extern int Geno_DefineIsNone(int kind);
-        if (Geno_DefineIsNone(fp->kind)) {
+        extern int Geno_DefineTemplateSkeleton(int kind);
+        if (Geno_DefineIsNone(fp->kind) && !Geno_DefineTemplateSkeleton(fp->kind)) {
             fp->x203C.count = 0;
             return;
         }

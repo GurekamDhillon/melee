@@ -38,6 +38,7 @@ static void* GenoDefine_VisTable[255][4];     /* no visibility groups: every row
 static u16 GenoDefine_TobjZero;
 static u16* GenoDefine_TobjTable[255];        /* no texture animations: n_costume_tobjs 0 */
 extern int Geno_DefineIsNone(int kind);
+extern int Geno_DefineTemplateSkeleton(int kind);
 extern int Geno_DefineCostumeCount(int kind);
 extern const char* Geno_DefineString(int kind, int which, int costume);
 extern int Geno_DefinePlanInt(int kind, int what, int i);
@@ -364,8 +365,10 @@ static HSD_Joint* GenoDefine_GuardTrees[3];
 static ftData_x20 GenoDefine_X20;
 static void GenoDefine_OwnTables(int kind, ftData* out)
 {
-    GenoDefine_X20.x0 = GenoDefine_GuardTrees; GenoDefine_X20.x8 = out->x20 ? out->x20->x8 : 0.0f;
-    out->x20 = &GenoDefine_X20;
+    if (!Geno_DefineTemplateSkeleton(kind)) {   /* a template's own skeleton keeps the template's guard pose trees (x20) */
+        GenoDefine_X20.x0 = GenoDefine_GuardTrees; GenoDefine_X20.x8 = out->x20 ? out->x20->x8 : 0.0f;
+        out->x20 = &GenoDefine_X20;
+    }
     out->x3C = gd_data_copy(out->x3C, sizeof *out->x3C);
     out->x40 = gd_data_copy(out->x40, sizeof *out->x40);
     out->x50 = gd_data_copy(out->x50, sizeof *out->x50);
@@ -398,7 +401,16 @@ void GenoDefine_Load(int kind, int base)
     }
     if (Geno_DefineIsNone(kind)) {
         GenoDefine_BuildOwn(kind, out, n);
-        {   /* The donor's demo rows (results / intro poses, out->x14) name figatrees authored for the DONOR's skeleton, and the
+        if (Geno_DefineTemplateSkeleton(kind)) {
+            /* template "captain": the package's model is the template's own skeleton, so the template's tables that name joints stay valid.
+             * That is checked, not trusted: the package's parts table must be the retail table, entry for entry. */
+            FighterPartsTable* own = GenoDefine_PartsTable(kind);
+            FighterPartsTable* tpl = ftPartsTable[base];
+            HSD_ASSERTREPORT(__LINE__, own != NULL && tpl != NULL && own->parts_num == tpl->parts_num &&
+                             memcmp(own->joint_to_part, tpl->joint_to_part, own->parts_num) == 0,
+                             "Geno define.template: the package's joint tree is not the template's (joint count or parts table differ)\n");
+        }
+        if (!Geno_DefineTemplateSkeleton(kind)) {   /* The donor's demo rows (results / intro poses, out->x14) name figatrees authored for the DONOR's skeleton, and the
              * results screen decodes them over this fighter's own parts table: past its end ("atree data error!", ftanim.c). A
              * fighter that is not the donor's skeleton poses with its own Wait clip instead: each demo row becomes a copy of the
              * Wait row (clip name, offset, size, script and flags; no loaded pointer), and ftData_80085B98 resolves them against
@@ -425,7 +437,7 @@ void GenoDefine_Load(int kind, int base)
     ftData_CharacterStateTables[kind] = GenoDefine_SpecificRows[kind];
     gFtDataList[kind] = out;
     OSReport("geno: native define kind %d loaded: %s; independent common/special rows; interpreter attempts %u\n",
-             kind, Geno_DefineIsNone(kind) ? "base none (own model, bank, parts, joint fields; Mario's script words, callbacks and attribute defaults are still the template)" : "retail:mario",
+             kind, Geno_DefineIsNone(kind) ? (Geno_DefineTemplateSkeleton(kind) ? "base none, template captain (own model, bank, parts, joint fields, scripts, attributes; the retail fighter's native code and tables underneath)" : "base none (own model, bank, parts, joint fields; Mario's script words, callbacks and attribute defaults are still the template)") : "retail:mario",
              GenoDefine_InterpreterAttempts[kind]);
     {
         extern int Geno_ProfilePoolWords(int p);
@@ -445,7 +457,7 @@ void GenoDefine_Load(int kind, int base)
  * walked over another skeleton): the fighter's own costume model joint tree from its TransN joint, NULL for any other fighter. */
 HSD_Joint* GenoDefine_RestPoseTree(Fighter* fp)
 {
-    if (!Geno_DefineIsNone(fp->kind)) return NULL;
+    if (!Geno_DefineIsNone(fp->kind) || Geno_DefineTemplateSkeleton(fp->kind)) return NULL;
     /* the guard walks it from FtPart_TransN (as ftCo_80091E78 does the costume's), so it is the tree below the root joint */
     return CostumeListsForeachCharacter[fp->kind].costume_list[fp->x619_costume_id].joint->child;
 }

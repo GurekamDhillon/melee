@@ -516,6 +516,9 @@ static struct gn_fm* gn_fm_for_kind(int kind)
     return p >= 0 ? r->p[p].fm : NULL;
 }
 int gw_Geno_DefineIsNone(int kind) { return gn_fm_for_kind(kind) != NULL; }
+/* 1 when the define's model keeps its template's joint tree (template "captain": the package's skeleton is the retail fighter's own,
+ * checked at load), so the template's tables that name joints (hand poses, guard poses, the metal model, the demo clips) stay valid. */
+int gw_Geno_DefineTemplateSkeleton(int kind) { return gn_fm_for_kind(kind) != NULL && gw_Geno_DefineBaseKind(kind) > 0; }
 int gw_Skins_Added(int fk); /* gw_skins_boot.inc */
 const char* gw_Skins_String(int fk, int c, int which);
 /* A base "none" define's costumes: the ones it declares plus the skins installed for it. Native: the declared ones alone. */

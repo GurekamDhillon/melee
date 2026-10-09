@@ -3310,7 +3310,8 @@ void ftColl_8007B128(Fighter_GObj* fighter_gobj, int bone_id,
          * naming one of the donor's joints) can name a joint the define has no hurtbox on. That is not a malformed
          * fighter: skip the word. (Retail data and every other define still assert.) */
         extern int Geno_DefineIsNone(int kind);
-        if (Geno_DefineIsNone(fp->kind)) {
+        extern int Geno_DefineTemplateSkeleton(int kind);
+        if (Geno_DefineIsNone(fp->kind) && !Geno_DefineTemplateSkeleton(fp->kind)) {
             return;
         }
     }

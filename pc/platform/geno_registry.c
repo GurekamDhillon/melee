@@ -2460,6 +2460,7 @@ void geno_registry_tests_register(void) {
     gw_test_register("geno_define_presentation", test_geno_define_presentation);
     gw_test_register("geno_define_skins255", test_geno_define_skins255);
     gw_test_register("geno_define_own_rows", test_geno_define_own_rows);
+    gw_test_register("geno_define_template", test_geno_define_template);
     gw_test_register("geno_gxtex_art", test_geno_gxtex_art);
     gw_test_register("geno_define_presentation_ck", test_geno_define_presentation_ck);
     gw_test_register("geno_define_s6_keys", test_geno_define_s6_keys);

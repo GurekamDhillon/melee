@@ -2514,6 +2514,11 @@ float ScriptGame_LabAnimEnd(int slot)
  * fighter into motion `msid` from its first frame, the plain Fighter_ChangeMotionState a state's
  * entry function would make. `lift` > 0: airborne and that much higher first (aerials). Floats
  * arrive as bits. Returns 0, or -1 without a fighter / row. */
+/* gd.rng(): the game's global random seed (HSD_Rand's state), read-only. A trace of it per frame names the first frame two runs part ways
+ * and so which consumer drew a different number of values (docs/geno.md 22.10). */
+extern u32* HSD_RandSeedPtr;
+int ScriptGame_RngSeed(void) { return (int) *HSD_RandSeedPtr; }
+
 int ScriptGame_LabSetMotion(int slot, int msid, int rate_bits, int lift_bits)
 {
     Fighter* fp = script_fighter(slot);

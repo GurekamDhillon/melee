@@ -2299,7 +2299,8 @@ void ftData_80085B98(Fighter* fp, int arg1, int arg2)
          * posed it. GenoDefine_Load gives such a fighter demo rows that name its own Wait clip, so
          * the base the rows' offsets are added to is its own animation bank, not the donor's. */
         extern int Geno_DefineIsNone(int kind);
-        if (Geno_DefineIsNone(fp->kind)) {
+        extern int Geno_DefineTemplateSkeleton(int kind);
+        if (Geno_DefineIsNone(fp->kind) && !Geno_DefineTemplateSkeleton(fp->kind)) {
             ftData_80085A14(fp->kind);
             temp_r30 = (u32) ftData_Table_Unk0[fp->kind].data;
         }

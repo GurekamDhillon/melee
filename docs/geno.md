@@ -3155,6 +3155,29 @@ mode (`0`) draws each combo fighter's open routes under the combo reading.
   COMBO mode does (TRUE when the next hit lands before the victim's first actionable frame), per victim x percent x DI, and
   asserts the intended route sequence.
 
+### 25.5b Authored combo tests (spec format)
+
+A combo spec is a text file `missions/combo-specs/<id>.txt` in a script mod (`key = value` lines, `#` comments), listed in
+`index.txt`; the runner (`goku-combo-tests/scripts/runner.lua`, a LAB script: P1 the fighter, P2 the victim, FD) plays it for
+every `percents` x `di` cell, per victim fighter (`missions/combo-run.txt`: `vs`, `specs`, `visible`, `trace`):
+
+| key | meaning |
+|---|---|
+| `name` | the route's label |
+| `inputs` | the attacker's tokens, in order: `A A> A^ Av` (light), `C> C< C^ Cv` (C-stick heavy), `B..` special, `X` jump, `Z` grab, `S>..` stick alone. `~tok` fires as soon as the attacker is actionable (an unrouted move, e.g. a jump or an aerial); `tok@N` fires on action frame N (frame-exact); any other token fires ASAP, the frame its route opens (state 1 of `gd.combo`) |
+| `routes` | the combo routes the tokens are meant to take, in order (the intent; a mismatch is reported) |
+| `percents`, `di` | the victim percents and the dummy DI: `none in out survival random` (seeded per cell; two-step stick as the LAB's clean DI) |
+| `min_hits`, `distance`, `p1x`, `ki` | hits a true combo needs, start spacing, start position, starting meter |
+| `expect_true` | the percents at which the spec EXPECTS a true combo; every other cell is a read |
+
+Each link is read as COMBO mode reads it (14.15): TRUE when the next hit lands before the victim's first actionable frame after
+the previous one (`T+n` frames to spare), else escapable by `En` frames, and `drop=linkN` names where the string breaks. A cell
+FAILS only when the spec expects a true combo there and the routes taken differ from `routes` or a link is escapable; every other
+cell is printed as a read. The runner prints one table per spec (victim x percent x DI: true links / links, gaps, drop, routes
+taken, meter, expectation) to `results/<name>.md` and exits 1 on a failed expectation. `--visible` plays at 60 Hz with the window
+on screen; the default runs turbo on screen too. These run as a game script, not inside `run.sh --test` (they need the fighter's
+package, which is local), so they are not in the headless 363.
+
 ### 25.6 Verified
 
 Headless suite: `geno_combo_parse` (refusals: geno 10, a missing state, an unknown input, a bad Lua gate, an attach entry;

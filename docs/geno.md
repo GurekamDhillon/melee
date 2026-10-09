@@ -2877,9 +2877,9 @@ mount from a mod; the select icon and portrait (the letters fallback). The unnam
 script frame, caller, seed) They found the one real bug of the export: `ftLib_GetKind` returned 126, so Falcon Kick's flame (`switch (ftLib_GetKind(gobj))` in
 `ftcaptainspeciallw.c`) was never spawned and the particle system drew 8 fewer randoms at that frame.
 
-**Proof** (LAB, vanilla disc, same inputs, same saved state; `tools/geno/falcon_parity` in the workspace): 296 scripted scenarios, 34,917 logic frames, retail Falcon against the define:
+**Proof** (LAB, vanilla disc, same inputs, same saved state; `tools/geno/falcon_parity` in the workspace): 310 scripted scenarios, 38,455 logic frames, retail Falcon against the define:
 per frame the action, action frame, animation frame, position, velocities, facing, percent, hitlag, hitstun, knockback, shield, jumps, intangibility, every live hitbox (bone, damage, angle,
-growth, base, size, x, y, z), a hash of all 11 hurtbox capsules and the game's RNG seed, for both fighters: **296 of 296 identical**. Retail against itself: identical (deterministic).
+growth, base, size, x, y, z), a hash of all 11 hurtbox capsules and the game's RNG seed, for both fighters: **310 of 310 identical**. Retail against itself: identical (deterministic).
 Native suite: 361 of 361.
 
 Not exercised: held items and item throws (motions 92..177, 341..346), the other fighters' capture states, wall and ceiling states (Final Destination has no walls), Kirby copying the

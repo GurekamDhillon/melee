@@ -50,8 +50,7 @@ void gw_Ui_ScenePolicyMask(int scene_kind, int window_known) {
     if (m != was) gw_log("ui: scene %d: the policy hides retail elements %u (was %u)", scene_kind, m, was);
 }
 
-/* nonzero while netplay or rollback is on: a framed scene is not drawn then (the mask is 0 online, and chrome over unhidden retail 2D would collide) */
-int gw_Ui_NetplayActive(void) { return gs_ui_online(); }
+/* gw_Ui_NetplayActive (nonzero while netplay or rollback is on: a framed scene is not drawn then) is defined once, in gw_script_ui_data.inc (same test) */
 
 /* the text gate for a scene kind: 0 until step 8's probe has recorded GO for SdToy and SdToyExp */
 int gw_Ui_ToyTextOk(int scene_kind) { (void) scene_kind; return GS_UI_TOY_TEXT_OK; }

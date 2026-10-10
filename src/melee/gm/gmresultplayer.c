@@ -1,3 +1,4 @@
+#include <string.h>
 #include "gmresultplayer.h"
 
 #include <placeholder.h>

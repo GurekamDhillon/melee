@@ -32,7 +32,7 @@ static void fs_geno_clear(void)
         if (fs_geno[i].pixels != NULL) HSD_Free(fs_geno[i].pixels);
         if (fs_geno[i].palette != NULL) HSD_Free(fs_geno[i].palette);
     }
-    memzero(fs_geno, sizeof fs_geno);
+    memset(fs_geno, 0, sizeof fs_geno);
     fs_geno_n = fs_geno_bytes = 0;
 }
 

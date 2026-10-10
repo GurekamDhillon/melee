@@ -107,7 +107,7 @@ static bool gmRst_GenoLetters(HSD_TObj* tobj, int ck)
         return false;
     }
     pix = (u8*) (((uintptr_t) allocation + 31) & ~(uintptr_t) 31);
-    memzero(pix, bytes);
+    memset(pix, 0, bytes);
     UI_TextI4(abbr, w, h, 0, pix);
     desc->image_ptr = pix;
     desc->width = (u16) w;

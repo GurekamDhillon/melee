@@ -30,8 +30,8 @@ static struct IfStockGenoBinding {
 
 static void ifStock_GenoReset(void)
 {
-    memzero(ifStock_GenoArt, sizeof ifStock_GenoArt);
-    memzero(ifStock_GenoBindings, sizeof ifStock_GenoBindings);
+    memset(ifStock_GenoArt, 0, sizeof ifStock_GenoArt);
+    memset(ifStock_GenoBindings, 0, sizeof ifStock_GenoBindings);
 }
 
 static struct IfStockGenoArt* ifStock_GenoFind(int ck, int costume, HSD_ImageDesc* current)
@@ -78,7 +78,7 @@ static struct IfStockGenoArt* ifStock_GenoFind(int ck, int costume, HSD_ImageDes
         GxTex_CopyImage(handle, pix);
         GxTex_Close(handle);
     } else {
-        memzero(pix, size);
+        memset(pix, 0, size);
         UI_TextI4(abbr, w, ht, 0, pix);
     }
     a->desc->image_ptr = pix;

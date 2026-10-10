@@ -1,4 +1,5 @@
 #if defined(TARGET_PC)
+#include <string.h>
 #include <platform/gw_ui_retail_ids.h>
 #endif
 #include "ifstock.h"

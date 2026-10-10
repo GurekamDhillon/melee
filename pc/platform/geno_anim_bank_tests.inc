@@ -177,7 +177,9 @@ static int test_geno_anim_bank_caches(void)
         gn_anim_reload.phase = 1; gn_anim_digest = saved_digest;
         if (gw_ftData_AnimBankCacheTest(ck - 1, mode, (unsigned)(uintptr_t)scratch) ||
             (mode == 3 ? gn_anim_digest == saved_digest : gn_anim_digest != saved_digest) ||
-            (mode == 0 ? gn_anim_reload.bytes == NULL : gn_anim_reload.bytes != NULL)) {
+            (mode == 0 ? gn_anim_reload.bytes == NULL : gn_anim_reload.bytes != NULL) ||
+            (mode == 1 && !strstr(gw_Geno_AnimBankStatus(), "length")) ||
+            (mode == 2 && !strstr(gw_Geno_AnimBankStatus(), "copy"))) {
             gw_test_fail("animation bank lifecycle case %d", mode); rc = 1;
         }
         free(gn_anim_reload.bytes); gn_anim_reload.bytes = NULL;

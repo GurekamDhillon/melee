@@ -76,10 +76,18 @@ void gw_Geno_AnimBankBeforeSpawn(void)
         snprintf(gn_anim_reload.text, sizeof gn_anim_reload.text,
                  "kind %d ready: validated bank installed; animation caches cleared", gn_anim_reload.kind);
     } else {
+        const char* reason;
+        switch (rc) {
+        case -1: reason = "define descriptor is unavailable"; break;
+        case -2: reason = "animation storage or file is shared by another fighter"; break;
+        case -3: reason = "cached/preloaded bank length differs from the validated file"; break;
+        case -4: reason = "no resident/preloaded bank; load the target fighter first"; break;
+        case -5: reason = "guest copy refused (address bounds or offline policy)"; break;
+        default: reason = "game cache invalidation refused"; break;
+        }
         gn_anim_reload.phase = 3;
         snprintf(gn_anim_reload.text, sizeof gn_anim_reload.text,
-                 "kind %d reload refused (%d): bank missing, shared, size changed or copy unsafe; load target/restart process",
-                 gn_anim_reload.kind, rc);
+                 "kind %d reload refused: %s; restart required", gn_anim_reload.kind, reason);
     }
     free(gn_anim_reload.bytes); gn_anim_reload.bytes = NULL;
     gw_log("geno: anim bank reload: %s", gn_anim_reload.text);

@@ -20,7 +20,7 @@ void gw_Wb_SetEnabled(int on) { g_enabled = on != 0; }
 
 /* Headless workbench (MELEE_WB_HEADLESS=1, honoured only for the workbench scene).
  * Design (2026-10-10): the game boots as normal but Aurora gets its Dawn NULL backend
- * (no GPU device; the SDL window is created hidden because Dawn still wants an HWND surface). Every GX call still
+ * (no GPU device; the SDL window is created OFFSCREEN (MELEE_WINDOW_X/Y=30000) because Dawn still wants an HWND surface; SDL_HideWindow made the null-backend present loop spin in win32u, found 2026-10-10). Every GX call still
  * lands in a real, device-less Aurora, so no texture/model/display-list shim needs a gate and
  * windowed behaviour is untouched. The scene gate is published long after Aurora starts, so
  * main() calls gw_Wb_PreScan(argc, argv) before aurora_initialize.
@@ -40,9 +40,13 @@ void gw_Wb_PreScan(int argc, char **argv)
 #ifdef _WIN32
         if (getenv("MELEE_TURBO") == NULL) _putenv("MELEE_TURBO=1");
         _putenv("MELEE_TURBO_RENDER=0");
+        _putenv("MELEE_WINDOW_X=30000");
+        _putenv("MELEE_WINDOW_Y=30000");
 #else
         if (getenv("MELEE_TURBO") == NULL) setenv("MELEE_TURBO", "1", 1);
         setenv("MELEE_TURBO_RENDER", "0", 1);
+        setenv("MELEE_WINDOW_X", "30000", 1);
+        setenv("MELEE_WINDOW_Y", "30000", 1);
 #endif
     }
 }

@@ -184,7 +184,7 @@ static bool gw_find_iso(int argc, char **argv) {
 static AuroraBackend gw_desired_backend(void) {
   const char *env = getenv("MELEE_BACKEND");
   if (gw_Wb_HeadlessRequested()) {
-    gw_log("workbench: headless (no GPU device: Dawn null backend; window hidden)");
+    gw_log("workbench: headless (no GPU device: Dawn null backend; window offscreen)");
     return BACKEND_NULL;
   }
   if (env == NULL) {
@@ -210,7 +210,7 @@ static AuroraBackend gw_desired_backend(void) {
 static AuroraBackend gw_desired_backend(void) {
   const char *env = getenv("MELEE_BACKEND");
   if (gw_Wb_HeadlessRequested()) {
-    gw_log("workbench: headless (no GPU device: Dawn null backend; window hidden)");
+    gw_log("workbench: headless (no GPU device: Dawn null backend; window offscreen)");
     return BACKEND_NULL;
   }
   if (env != NULL && _stricmp(env, "auto") == 0) {
@@ -435,10 +435,6 @@ int main(int argc, char *argv[]) {
   }
 #endif
   AuroraInfo info = aurora_initialize(argc, argv, &config);
-  if (gw_Wb_HeadlessRequested()) {
-    /* Dawn null backend still wants a surface from a real HWND, so the window exists but is never shown. */
-    SDL_HideWindow(info.window);
-  }
   gw_log("prof: GPU timestamps %s (D3D11 and most Vulkan setups have no Dawn timestamp feature; Windows: opt into D3D12 for supported adapters)",
          aurora_profiler_gpu_available() ? "available" : "unavailable");
 

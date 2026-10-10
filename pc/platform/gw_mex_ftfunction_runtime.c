@@ -2903,7 +2903,15 @@ static void gw_mex_move_call(void *gobj, int which) {
     static int first_native[4];
     static uint32_t count[4];
     uint32_t fd;
+    static unsigned seen[GW_MEX_SLOTS][4];
 
+    {
+        int ks = gw_mex_slot_of_port(gw_mex_gobj_kind(gobj));
+        if (ks >= 0 && seen[ks][which]++ == 0) {
+            gw_log("interp: MoveLogic %s_cb first call for port kind %d (row target 0x%08X, %d entries)",
+                   names[which], gw_mex_gobj_kind(gobj), target, gw_mex_movelogic_entries);
+        }
+    }
     if (target == 0) {
         gw_Mex_RestoreKind(prev);
         return;
@@ -2941,6 +2949,25 @@ static void gw_mex_move_call(void *gobj, int which) {
         gw_panic("interp: MoveLogic %s_cb: 0x%08X is neither blob code nor a bridged engine "
                  "function", names[which], target);
     }
+    {
+        /* once per distinct blob-code row callback: proves the fighter's own state code runs */
+        static uint32_t seen_code[48];
+        static int n_seen;
+        int q, dup = 0;
+        for (q = 0; q < n_seen; ++q) {
+            if (seen_code[q] == target) {
+                dup = 1;
+                break;
+            }
+        }
+        if (!dup && n_seen < 48) {
+            seen_code[n_seen++] = target;
+            fd = gw_r32((const void *)(uintptr_t)((uintptr_t)gobj + 0x2Cu));
+            gw_log("interp: MoveLogic %s_cb runs blob code 0x%08X (kind=%d motion_id=0x%X)",
+                   names[which], target, gw_mex_k->port_kind,
+                   gw_r32((const void *)(uintptr_t)(fd + 0x10u)));
+        }
+    }
     args[0] = (uint32_t)(uintptr_t)gobj;
     gw_ppc_call(target, args, 1, gw_mex_r2, gw_mex_stack_top);
     ++count[which];
@@ -2972,21 +2999,41 @@ void gw_Mex_FighterCallbackDispatch(void *gobj, void *cb) {
     ((gwmex_gobj_fn)cb)(gobj);
 }
 
-/* Rewrite Sonic's MoveLogic table in place: preserve the guest anim/input/phys/coll callbacks and
+/* The end (exclusive) of the blob's MoveLogic table that starts at `table`. Preferred: the blob's
+ * own debug symbol for it (start == table), which is exact. Fallback 1: the nearest higher
+ * override target (any slot). Fallback 2: the end of the code blob. Sonic overrides SpecialN right
+ * after his table so "next override" happened to work for him; B. Falcon and Lucina have no
+ * SpecialN override, so that rule found nothing and their tables were never wired. */
+static uint32_t gw_mex_movelogic_end(uint32_t table) {
+    uint32_t k, best = 0;
+    int j;
+    for (k = 0; k < gw_mex_ff.symbol_count; ++k) {
+        if (gw_mex_ff.symbols[k].start == table && gw_mex_ff.symbols[k].end > table) {
+            return gw_mex_ff.symbols[k].end;
+        }
+    }
+    for (j = 0; j < gw_mex_ff.override_count; ++j) {
+        uint32_t t = gw_mex_ff.overrides[j].target;
+        if (!gw_mex_ff.overrides[j].is_func_addr && t > table && (best == 0 || t < best)) {
+            best = t;
+        }
+    }
+    return best != 0 ? best : gw_mex_ff.code_base + gw_mex_ff.code_size;
+}
+
+/* Rewrite a MoveLogic table in place: preserve the guest anim/input/phys/coll callbacks and
  * replace them with native trampolines; replace cam_cb with the bridged ftCamera_UpdateCameraBox.
- * Runs once, at install, before the engine ever reads the table. */
-static void gw_mex_movelogic_setup(void) {
-    uint32_t table = gw_mex_override_target(GW_MEX_SLOT_MOVE_LOGIC);
-    uint32_t next = gw_mex_override_target(GW_MEX_SLOT_SPECIAL_N);
+ * Idempotent: a row that already holds the trampolines keeps its preserved callbacks. */
+static void gw_mex_movelogic_wire(uint32_t table, uint32_t end, const char *how) {
     uint32_t cam_native;
     int cam_kind = -1;
     int entries, i;
 
-    if (table == 0 || next <= table) {
-        gw_log("interp: MoveLogic table missing (slot3=0x%08X slot4=0x%08X)", table, next);
+    if (table == 0 || end <= table) {
+        gw_log("interp: MoveLogic table missing (table=0x%08X end=0x%08X)", table, end);
         return;
     }
-    entries = (int)((next - table) / 0x20u);
+    entries = (int)((end - table) / 0x20u);
     if (entries < 1 || entries > GW_MEX_MOVE_MAX_ENTRIES) {
         gw_log("interp: MoveLogic table size implausible (%d entries)", entries);
         return;
@@ -3001,14 +3048,17 @@ static void gw_mex_movelogic_setup(void) {
     gw_mex_movelogic_entries = entries;
     for (i = 0; i < entries; ++i) {
         uint32_t e = table + (uint32_t)i * 0x20u;
-        gw_mex_move_cb_guest[i][GW_MEX_MOVE_CB_ANIM] =
-            gw_r32((const void *)(uintptr_t)(e + 0x0Cu));
-        gw_mex_move_cb_guest[i][GW_MEX_MOVE_CB_INPUT] =
-            gw_r32((const void *)(uintptr_t)(e + 0x10u));
-        gw_mex_move_cb_guest[i][GW_MEX_MOVE_CB_PHYS] =
-            gw_r32((const void *)(uintptr_t)(e + 0x14u));
-        gw_mex_move_cb_guest[i][GW_MEX_MOVE_CB_COLL] =
-            gw_r32((const void *)(uintptr_t)(e + 0x18u));
+        if (gw_r32((const void *)(uintptr_t)(e + 0x0Cu)) !=
+            (uint32_t)(uintptr_t)gw_mex_move_anim_cb) {
+            gw_mex_move_cb_guest[i][GW_MEX_MOVE_CB_ANIM] =
+                gw_r32((const void *)(uintptr_t)(e + 0x0Cu));
+            gw_mex_move_cb_guest[i][GW_MEX_MOVE_CB_INPUT] =
+                gw_r32((const void *)(uintptr_t)(e + 0x10u));
+            gw_mex_move_cb_guest[i][GW_MEX_MOVE_CB_PHYS] =
+                gw_r32((const void *)(uintptr_t)(e + 0x14u));
+            gw_mex_move_cb_guest[i][GW_MEX_MOVE_CB_COLL] =
+                gw_r32((const void *)(uintptr_t)(e + 0x18u));
+        }
         gw_w32((void *)(uintptr_t)(e + 0x0Cu), (uint32_t)(uintptr_t)gw_mex_move_anim_cb);
         gw_w32((void *)(uintptr_t)(e + 0x10u), (uint32_t)(uintptr_t)gw_mex_move_input_cb);
         gw_w32((void *)(uintptr_t)(e + 0x14u), (uint32_t)(uintptr_t)gw_mex_move_phys_cb);
@@ -3016,9 +3066,38 @@ static void gw_mex_movelogic_setup(void) {
         gw_w32((void *)(uintptr_t)(e + 0x1Cu), cam_native);
     }
     gw_mex_movelogic_table = table;
-    gw_log("interp: MoveLogic table @ guest 0x%08X (%d MotionState entries): anim/input/phys/coll "
-           "-> trampolines, cam -> gw_ftCamera_UpdateCameraBox 0x%08X",
-           table, entries, cam_native);
+    gw_log("interp: MoveLogic table @ guest 0x%08X (%d MotionState entries, %s): "
+           "anim/input/phys/coll -> trampolines, cam -> gw_ftCamera_UpdateCameraBox 0x%08X",
+           table, entries, how, cam_native);
+}
+
+/* Runs once, at install, before the engine ever reads the table. */
+static void gw_mex_movelogic_setup(void) {
+    uint32_t table = gw_mex_override_target(GW_MEX_SLOT_MOVE_LOGIC);
+    if (table == 0) {
+        gw_log("interp: MoveLogic slot 3 not overridden (a table installed by onLoad is wired "
+               "after it runs)");
+        return;
+    }
+    gw_mex_movelogic_wire(table, gw_mex_movelogic_end(table), "slot 3");
+}
+
+/* Some blobs do not rely on slot 3: their onLoad stores a table of their own into fp->x20
+ * (Lucina's does, to a `.data.move_logic` it carries; Giga Bowser's has no slot 3 at all). Called
+ * after onLoad: if fp->x20 now points into the blob and is not the table already wired, wire that
+ * one too, so the engine's callbacks for those states reach the interpreter instead of a raw guest
+ * address. m-ex semantics: whatever fp->x20 holds is the fighter's MoveLogic. */
+static void gw_mex_movelogic_after_onload(void *gobj) {
+    uint32_t fd = gw_r32((const void *)(uintptr_t)((uintptr_t)gobj + 0x2Cu));
+    uint32_t x20;
+    if (fd < 0x80000000u || fd >= 0x80000000u + gw_mem1_size) {
+        return;
+    }
+    x20 = gw_r32((const void *)(uintptr_t)(fd + 0x20u));
+    if (x20 == 0 || x20 == gw_mex_movelogic_table || !gw_mex_in_blob(x20)) {
+        return;
+    }
+    gw_mex_movelogic_wire(x20, gw_mex_movelogic_end(x20), "installed by onLoad");
 }
 
 /* The engine site (fighter.c Fighter_UnkInitLoad_80068914) asks for the per-kind character-state
@@ -3026,6 +3105,11 @@ static void gw_mex_movelogic_setup(void) {
 void *gw_Mex_MoveLogicTable(int kind, void *vanilla) {
     int s = gw_mex_slot_of_port(kind);
     if (s >= 0 && gw_mex_kinds[s].installed == 1 && gw_mex_kinds[s].movelogic_table != 0) {
+        static unsigned handed[GW_MEX_SLOTS];
+        if (handed[s]++ == 0) {
+            gw_log("interp: MoveLogic table 0x%08X handed to port kind %d (%d entries)",
+                   gw_mex_kinds[s].movelogic_table, kind, gw_mex_kinds[s].movelogic_entries);
+        }
         return (void *)(uintptr_t)gw_mex_kinds[s].movelogic_table;
     }
     return vanilla;
@@ -3038,6 +3122,7 @@ static void gw_mex_interp_onload(void *gobj) {
     gw_log("interp: onLoad kind=%d entry=0x%08X gobj=%p running", gw_mex_k->port_kind, target, gobj);
     r3 = gw_mex_interp_run(GW_MEX_SLOT_ON_LOAD, gobj);
     gw_log("interp: onLoad kind=%d entry=0x%08X ran, r3=0x%08X", gw_mex_k->port_kind, target, r3);
+    gw_mex_movelogic_after_onload(gobj);
 }
 
 /* onFrame (slot 23) - runs Sonic's PPC onFrame per fighter per frame (Fighter_8006A360 ->

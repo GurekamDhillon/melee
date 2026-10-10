@@ -409,7 +409,7 @@ and the timers' state), `kb_vx`, `kb_vy` (knockback velocity; `vx`/`vy` stay the
 
 | function | returns |
 |---|---|
-| `gd.hitboxes(port [, all])` | active hitboxes (all = slots 0-4 on or off): `{id, state, active, thrown, group, bone, damage, angle, kbg, bkb, wbk, element, element_name, shield_damage, radius, x, y, z, px, py, pz, ox, oy, oz, hit_air, hit_ground, clank, rebound, sfx_severity, sfx_kind}`. `id` 0-3 = `fp->x914[]`, 4 = the thrown hitbox (live only while it has an owner); `x,y,z` now, `px..` last frame (the swept capsule); `bone` = joint index |
+| `gd.hitboxes(port [, all])` | active hitboxes (all = slots 0-4 on or off): `{id, state, active, thrown, group, bone, damage, angle, kbg, bkb, wbk, element, element_name, shield_damage, radius, x, y, z, px, py, pz, ox, oy, oz, hit_air, hit_ground, clank, rebound, sfx_severity, sfx_kind}`. `id` 0-3 = `fp->x914[]`, 4 = the LAB's index for the thrown hitbox `fp->x1064_thrownHitbox` (live only while it has an owner; note this is NOT what a hitbox *command* with id 4 touches, see "Hitbox command id 4" below); `x,y,z` now, `px..` last frame (the swept capsule); `bone` = joint index |
 | `gd.hurtboxes(port)` | `{id, bone, state, height ("low"/"mid"/"high"), grabbable, ax, ay, az, bx, by, bz, radius}` |
 | `gd.joints(port [, fresh])` | per joint, list position = index + 1: `{index, parent (-1 root), valid, x, y, z, sx, sy, on}` - world position from the joint's last computed matrix, `sx, sy` projected. A joint nothing used this frame keeps an OLD matrix; `fresh = true` (offline only) brings every matrix up to date first (`HSD_JObjSetupMatrix`, which recomputes only dirty matrices from the current pose, so no game state changes) |
 | `gd.dobjs(port)` | the fighter's draw list, read-only: per DObj (list position = index in `fp->dobj_list` + 1) `{index, hidden, render, tobjs = {{id, src, flags, tu, tv, su, sv, frame, fmt, w, h}}}` (MObj render mode; per TObj its GXTexMapID / GXTexGenSrc / flags, texture translate and scale, its texture anim's frame, image format and size), plus `models` (each model-part model's current state) and `costume` (the costume texture-anim TObjs, e.g. the eyes, same fields) |
@@ -3363,3 +3363,19 @@ the parsed words and the priority sort), `geno_combo_routes` (the starting press
 the Lua gate and the meter; block counts as contact; `max_links`; leaving the string), `geno_combo_digest` (every word moves
 the digest; a resimulation from a snapshot gives the same block and the same links; a define without a combo block keeps its
 digest). Full suite 363/363. Goku in a match: see the workspace `ports/goku-xv2/combo/RESULTS.md`.
+
+## Hitbox command id 4 (deliberate deviation from ACE)
+
+The create-hitbox command carries a 3-bit id, but a fighter polls four capsules (`fp->x914[0..3]`).
+Retail and ACE index `x914[id]` unchecked, so id 4 lands on `fp->xDF4[0]` (the first throw record):
+the box is written but nothing polls it. ACE's Skull Kid up-tilt (`AttackHi3`, m-ex 40) uses ids 3, 2, 1, 4
+and the fourth box is therefore inert on the disc (`_research/ace-hitbox-slot4-2026-10-10.md`).
+
+The port deviates on purpose, because the author evidently meant a fourth live box: in
+`ftAction_8007121C` (create) and `ftAction_8007162C` / `8007169C` / `80071708` (adjust damage / scale /
+flags) an id >= 4 is redirected to a capsule slot of 0-3. Create picks the slot already carrying the
+redirect mark while it is live, else the lowest disabled slot; if none is free it keeps retail indexing
+and logs. Adjust follows the mark. The mark is `HitCapsule.x43_b7`, inside the Fighter struct, so
+snapshots and rollback need nothing extra; a normal create clears it. `xDF4[0]` is never written by
+a redirected command. One log line per redirect: `ace: hitbox id 4 remapped to slot N (port=.. motion=..)`.
+Geno hitbox rows still author slots 0-3; the importer need not rewrite anything.

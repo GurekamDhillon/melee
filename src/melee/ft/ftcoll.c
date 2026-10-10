@@ -50,6 +50,9 @@
 #include <sysdolphin/baselib/debug.h>
 #include <sysdolphin/baselib/gobj.h>
 #include <sysdolphin/baselib/random.h>
+#if defined(TARGET_PC)
+#include <dolphin/os.h>
+#endif
 
 /// @todo .sdata2 order hack
 #ifdef MUST_MATCH
@@ -2648,6 +2651,32 @@ float ftColl_80079EA8(Fighter* fp, HitCapsule* hit, u32 unk_count)
 #pragma push
 #pragma dont_inline on
 #endif
+#if defined(TARGET_PC)
+/* ACE (Gecko C2 at 0x8007A180 and 0x8007A430, ftColl_8007A06C +0x114/+0x3C4) skips the hit
+ * effect/sound block when bit 1 of fp->x21FC_flag is set. That byte is the develop-mode collision
+ * bubble view (dbanim.c fn_CheckAnimationInfo cycles it 1..3; the Geno Lab sets it through
+ * ScriptGame_LabDebugDraw): modes 2 and 3 hide the hit effects so the capsules stay readable.
+ * Re-expressed here, not copied. Opt-in like the other m-ex features:
+ * MELEE_MEX=ace_bubble_view_hides_hit_fx. Normal play has the byte at 1, so this never fires. */
+static int ftColl_AceHideHitFx(Fighter_GObj* gobj)
+{
+    extern int Mex_Enabled(const char*);
+    static int logged = 0;
+    Fighter* fp = gobj->user_data;
+    if (fp == NULL || !(fp->x21FC_flag.byte & 2) ||
+        !Mex_Enabled("ace_bubble_view_hides_hit_fx"))
+    {
+        return 0;
+    }
+    if (!logged) {
+        logged = 1;
+        OSReport("ace: bubble view (x21FC bit1) active -> hit effects skipped "
+               "(ftColl_8007A06C, Gecko 0x8007A180/0x8007A430)");
+    }
+    return 1;
+}
+#endif
+
 void ftColl_8007A06C(Fighter_GObj* gobj, void* dmg_ptr, void* log, size_t idx,
                      int arg4)
 {
@@ -2717,7 +2746,11 @@ void ftColl_8007A06C(Fighter_GObj* gobj, void* dmg_ptr, void* log, size_t idx,
                                  Player_GetDefenseRatio(fp->player_id),
                                  FT_SCRIPT_VALUE(fp, 9, co->weight));
 
+#if defined(TARGET_PC)
+            if (arg4 != 0 && !ftColl_AceHideHitFx(gobj)) {
+#else
             if (arg4 != 0) {
+#endif
                 u32 u_dmg = (u32) entry->x20;
                 HitCapsule* sfx_hit = entry->hit0;
                 Fighter* sfx_fp = gobj->user_data;
@@ -2826,7 +2859,11 @@ void ftColl_8007A06C(Fighter_GObj* gobj, void* dmg_ptr, void* log, size_t idx,
 
             kb = result;
 
+#if defined(TARGET_PC)
+            if (arg4 != 0 && !ftColl_AceHideHitFx(gobj)) {
+#else
             if (arg4 != 0) {
+#endif
                 u32 u_dmg = (u32) entry->x20;
                 int sfx_id = hit_effect_ids[hit->element];
                 int severity = hit->sfx_severity;

@@ -171,6 +171,11 @@ local MODES = {
       { k = "O", label = "Facing", icon = "lab_focus", run = "cl_face" },
       { k = "PAGEUP", label = "-10 frames", icon = "lab_step_back", rep = true, run = "cl_back10" },
       { k = "PAGEDOWN", label = "+10 frames", icon = "lab_step", rep = true, run = "cl_fwd10" },
+      { k = "LEFT", label = "-1 frame", icon = "lab_step_back", rep = true, run = "cl_back1" },
+      { k = "RIGHT", label = "+1 frame", icon = "lab_step", rep = true, run = "cl_fwd1" },
+      { k = "SPACE", label = "Pause / play", icon = "lab_play", run = "cl_toggle" },
+      { k = "HOME", label = "First frame", icon = "lab_rewind", run = "cl_first" },
+      { k = "END", label = "Last frame", icon = "lab_forward", run = "cl_last" },
     } },
   { id = "launch", name = "LAUNCH", icon = "lab_launch",
     blurb = "Where a hit sends them: knockback, angle, hitstun, tumble and the arc to the blast zone, by the game's own formula.",
@@ -5140,6 +5145,7 @@ function LE.clips_tick()
   elseif cl.cam then
     gd.camera_attach(10) cl.cam = false
   end
+  if cl.row and not menu.open then LE.clips_pad() end
   if cl.row and not menu.open then
     -- a pad held or knocked while posing would take the fighter out of Wait: hold its port neutral
     pad_neutral(focus, 2)
@@ -5221,6 +5227,71 @@ ACTIONS.cl_face = function()
 end
 ACTIONS.cl_back10 = function() jump(-10) end
 ACTIONS.cl_fwd10 = function() jump(10) end
+
+-- Direct frame control (2026-10-10). A step pauses first (a running clip would carry on from the frame it was
+-- stepped to), then moves the shown frame by d; frame numbers are the panel's 1-based ones, as `clips frame <n>`.
+local function cl_pause_now()
+  if cl.slow then cl.slow = false end
+  if not gd.paused() then gd.pause() end
+end
+local function cl_step(d)
+  if cl.cur == nil then return end
+  cl_pause_now()
+  jump(d)
+end
+local function cl_goto(f)
+  if cl.cur == nil then return end
+  cl_pause_now()
+  if cl.mv then mv_apply(cl.mv, f - 1, false) else cl_show(cl.cur, f, false) end
+end
+local function cl_last_frame()
+  if cl.mv then return cl.mv.len end
+  return cl_len() or 1
+end
+ACTIONS.cl_back1 = function() cl_step(gd.key("CTRL") and -10 or -1) end
+ACTIONS.cl_fwd1 = function() cl_step(gd.key("CTRL") and 10 or 1) end
+ACTIONS.cl_first = function() cl_goto(1) end
+ACTIONS.cl_last = function() cl_goto(cl_last_frame()) end
+ACTIONS.cl_toggle = function()
+  if cl.cur == nil then return end
+  if cl.slow or not gd.paused() then
+    cl_pause_now()
+  elseif cl.speed >= 1 then
+    gd.resume()
+  else
+    cl.slow = true
+  end
+end
+LE.clips_owns_keys = function() return cl.cur ~= nil end
+LE.clips_step, LE.clips_goto, LE.clips_toggle = cl_step, cl_goto, function() ACTIONS.cl_toggle() end
+
+-- The pad: read the RAW buttons (gd.pad(port, true)), because the fighter's own port is held neutral below.
+-- D-pad left / right step -1 / +1 (held repeats), up / down +10 / -10, Y pause / play, X first frame, Z last frame.
+local PAD_CL = { LEFT = function() cl_step(-1) end, RIGHT = function() cl_step(1) end,
+  UP = function() cl_step(10) end, DOWN = function() cl_step(-10) end,
+  Y = function() ACTIONS.cl_toggle() end, X = function() cl_goto(1) end, Z = function() cl_goto(cl_last_frame()) end }
+local PAD_REP = { LEFT = true, RIGHT = true, UP = true, DOWN = true }
+local pad_held = {}
+function LE.clips_pad()
+  if cl.cur == nil or not gd.buttons then return end
+  for port = 1, 4 do
+    local ok, p = pcall(gd.pad, port, true)
+    if ok and p then
+      local h = pad_held[port]
+      if h == nil then h = {} pad_held[port] = h end
+      for name, fn in pairs(PAD_CL) do
+        local bit = gd.buttons[name]
+        if bit and (p.buttons & bit) ~= 0 then
+          h[name] = (h[name] or 0) + 1
+          local n = h[name]
+          if n == 1 or (PAD_REP[name] and n > 18 and n % 3 == 0) then fn() end
+        else
+          h[name] = 0
+        end
+      end
+    end
+  end
+end
 STATES.cl_playing = function() return cl.row ~= nil and (not gd.paused() or cl.slow) end
 
 function LE.clips_console(rest)
@@ -5301,7 +5372,7 @@ function LE.draw_clips()
     local t = mv_time()
     local a = m.anims[cl.ev] or m.anims[1]
     local run = cl.slow or not gd.paused()
-    panel(tx, 8, tw, 110, "SOURCE MOVE")
+    panel(tx, 8, tw, 138, "SOURCE MOVE")
     stxt(tx + 12, 42, m.name, "label", BONE, "left", tw - 24)
     txt(tx + 12, 58, string.format("frame %d / %d   x%g   %s   input %s", math.floor(t + 1.5), m.len, cl.speed,
       run and "PLAYING" or "PAUSED", m.inputs ~= "" and m.inputs or "-"), "caption", run and OK or GOLD, "left", tw - 24)
@@ -5315,10 +5386,12 @@ function LE.draw_clips()
     for _, h in ipairs(m.cx) do quad(sx(h[1]), by + 7, math.max(2, sx(h[1] + h[2]) - sx(h[1])), 5, ACCENT) end
     quad(sx(t), by - 2, 2, 16, GOLD)
     txt(tx + 12, 106, "red: source hitboxes  blue: cancel windows  (unverified timing)", "caption", DISABLED, "left", tw - 24)
+    txt(tx + 12, 122, "D-pad < > step 1   ^ v +/-10   Y pause   X first   Z last", "caption", MUTED, "left", tw - 24)
+    txt(tx + 12, 136, "keys: LEFT / RIGHT   PGUP / PGDN   SPACE   HOME / END", "caption", MUTED, "left", tw - 24)
     if T("skel") then draw_skeleton(p, PORT[p.port]) end
     return
   end
-  panel(tx, 8, tw, 70, "PLAYING")
+  panel(tx, 8, tw, 96, "PLAYING")
   if e then
     stxt(tx + 12, 42, e.name, "label", BONE, "left", tw - 24)
     local len = cl_len()
@@ -5331,8 +5404,10 @@ function LE.draw_clips()
       quad(tx + 12, 66, tw - 24, 4, alpha(BONE, 0x40))
       quad(tx + 12, 66, (tw - 24) * math.min(1, f / len), 4, GOLD)
     end
+    txt(tx + 12, 82, "D-pad < > step 1   ^ v +/-10   Y pause   X first   Z last", "caption", MUTED, "left", tw - 24)
+    txt(tx + 12, 96, "keys: LEFT / RIGHT   PGUP / PGDN   SPACE   HOME / END", "caption", MUTED, "left", tw - 24)
   else
-    txt(tx + 12, 46, "ENTER plays the selected clip; SPACE pauses, LEFT / RIGHT step a frame", "caption", MUTED, "left", tw - 24)
+    txt(tx + 12, 46, "ENTER plays the selected clip; SPACE or pad Y pauses, LEFT / RIGHT or D-pad step a frame", "caption", MUTED, "left", tw - 24)
   end
   if T("skel") then draw_skeleton(p, PORT[p.port]) end
 end
@@ -5716,12 +5791,14 @@ function on_tick()
   if gd.key_pressed("F") then next_port(1) end
   mode_keys()
   if offline() then
-    if gd.key_pressed("SPACE") then
-      if gd.paused() then gd.resume() else ensure_history() gd.pause() end
+    if not (in_mode("clips") and LE.clips_owns_keys()) then -- CLIPS has its own SPACE / LEFT / RIGHT (mode_keys)
+      if gd.key_pressed("SPACE") then
+        if gd.paused() then gd.resume() else ensure_history() gd.pause() end
+      end
+      local big = gd.key("CTRL") and 10 or 1
+      if repeat_key("RIGHT") then step(big) end
+      if repeat_key("LEFT") then back(big) end
     end
-    local big = gd.key("CTRL") and 10 or 1
-    if repeat_key("RIGHT") then step(big) end
-    if repeat_key("LEFT") then back(big) end
     if gd.key_pressed("F5") then gd.savestate(1) say("State 1 saved") end
     if gd.key_pressed("F8") then hot_reload() end
     if gd.key_pressed("G") and gd.history().replaying then gd.rewind_live() say("Live from here") end

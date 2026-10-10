@@ -100,6 +100,7 @@ static void gwr_boot_load(void);
 #define GW_MEX_SLOT_ON_REMOVE_HEAD_ITEM 20  /* ftData_UnkMotionStates2 */
 #define GW_MEX_SLOT_ON_DOUBLE_JUMP 32
 #define GW_MEX_SLOT_ON_USMASH 36
+#define GW_MEX_SLOT_ON_DSMASH 37
 /* The rest of m-ex's Category 2: no vanilla per-kind table, one injected call site each. Tails
  * overrides 26 and 34; Lucas overrides 33, 35, 41, 43 and 44. */
 #define GW_MEX_SLOT_ON_MODEL_RENDER 26
@@ -3302,6 +3303,12 @@ static void gw_mex_interp_usmash(void *gobj) {
     gw_mex_interp_run_logged(GW_MEX_SLOT_ON_USMASH, "onUSmash", gobj);
 }
 
+/* onDSmash (slot 37) - dispatched from doEnter (ftCo_AttackLw4.c), the down-smash enter; the same
+ * shape as onUSmash. Luigi & Boo (mex 44) overrides it. */
+static void gw_mex_interp_dsmash(void *gobj) {
+    gw_mex_interp_run_logged(GW_MEX_SLOT_ON_DSMASH, "onDSmash", gobj);
+}
+
 /* onAbsorb (slot 12) - dispatched from fighter.c's ftData_OnAbsorb call site. Lucas is the only
  * Akaneia fighter that overrides it (PSI Magnet). */
 static void gw_mex_interp_absorb(void *gobj) {
@@ -3462,6 +3469,7 @@ static int gw_mex_slot_is_wired(uint32_t slot) {
     case GW_MEX_SLOT_ON_KNOCKBACK_ENTER: case GW_MEX_SLOT_ON_KNOCKBACK_EXIT:
     case GW_MEX_SLOT_ON_FRAME: case GW_MEX_SLOT_ON_ACTION_STATE_CHANGE:
     case GW_MEX_SLOT_ON_REAPPLY_ATTR: case GW_MEX_SLOT_ON_DOUBLE_JUMP: case GW_MEX_SLOT_ON_USMASH:
+    case GW_MEX_SLOT_ON_DSMASH:
     case GW_MEX_SLOT_ON_MODEL_RENDER: case GW_MEX_SLOT_ON_ZAIR: case GW_MEX_SLOT_ON_LANDING:
     case GW_MEX_SLOT_ON_FSMASH: case GW_MEX_SLOT_ON_INTRO_L: case GW_MEX_SLOT_ON_TAUNT:
     case GW_MEX_SLOT_ON_CATCH:
@@ -3720,6 +3728,7 @@ void gw_Mex_FtFunctionInstall(int kind, void *arch_data, uint32_t arch_data_size
     gw_mex_hook(GW_MEX_EVENT_ON_DOUBLE_JUMP, kind, GW_MEX_SLOT_ON_DOUBLE_JUMP,
                 gw_mex_interp_double_jump);
     gw_mex_hook(GW_MEX_EVENT_ON_USMASH, kind, GW_MEX_SLOT_ON_USMASH, gw_mex_interp_usmash);
+    gw_mex_hook(GW_MEX_EVENT_ON_DSMASH, kind, GW_MEX_SLOT_ON_DSMASH, gw_mex_interp_dsmash);
     gw_mex_hook(GW_MEX_EVENT_ON_ZAIR, kind, GW_MEX_SLOT_ON_ZAIR, gw_mex_interp_zair);
     gw_mex_hook(GW_MEX_EVENT_ON_LANDING, kind, GW_MEX_SLOT_ON_LANDING, gw_mex_interp_landing);
     gw_mex_hook(GW_MEX_EVENT_ON_FSMASH, kind, GW_MEX_SLOT_ON_FSMASH, gw_mex_interp_fsmash);

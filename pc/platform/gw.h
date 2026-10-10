@@ -235,6 +235,7 @@ enum {
     GW_MEX_EVENT_ON_INTRO_L,          /* ftCo_800BF034 (slot 41) @800BF0EC */
     GW_MEX_EVENT_ON_TAUNT,            /* ftCo_800DEBD0 (slot 43) @800DECDC */
     GW_MEX_EVENT_ON_CATCH,            /* ftCo_800D8C54 (slot 44) @800D8CB4 */
+    GW_MEX_EVENT_ON_DSMASH,           /* ftCo_AttackLw4 doEnter (m-ex onDSmash, slot 37) @8008CC14 */
     GW_MEX_EVENT_COUNT
 };
 
@@ -313,6 +314,7 @@ void* gw_Mex_MoveLogicTable(int kind, void* vanilla);
 void gw_Mex_FighterCallbackDispatch(void* gobj, void* cb);
 void gw_Mex_OnDoubleJumpDispatch(int kind, void* gobj, void* vanilla);
 void gw_Mex_OnUSmashDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_OnDSmashDispatch(int kind, void* gobj, void* vanilla);
 void gw_Mex_OnModelRenderDispatch(int kind, void* gobj, void* arg1, void* mtx, void* vanilla);
 void gw_Mex_OnZairDispatch(int kind, void* gobj, void* vanilla);
 void gw_Mex_OnLandingDispatch(int kind, void* gobj, void* vanilla);

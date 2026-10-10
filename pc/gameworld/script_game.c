@@ -2147,7 +2147,7 @@ int ScriptGame_LabI(int slot, int field)
 const char* ScriptGame_LabAnimSymbol(int slot)
 {
     Fighter* fp = script_fighter(slot);
-    if (fp == NULL || fp->x24 == NULL || (int) fp->anim_id < 0) {
+    if (fp == NULL || fp->x24 == NULL || (int) fp->anim_id < 0 || (int) fp->anim_id > 0x3FF) {
         return NULL;
     }
     return fp->x24[fp->anim_id].x0;

@@ -206,8 +206,7 @@ static void fas_geno_art_said(int ck, int what, int tex)
     }
 }
 
-/* a base "none" define has no donor: its tile and portrait are its package's or nothing (never Mario's) */
-static bool fas_ck_is_none(int ck) { return ck >= FA_RETAIL_FIGHTERS && Geno_DefineCostumeCountCK(ck) > 0; }
+#include "gmfrontend_fighter_art.inc"
 
 static int fas_tab_of_ck(int ck) { return ck < FA_RETAIL_FIGHTERS && Geno_DefineBaseCK(ck) < 0 ? 1 : 2; }
 
@@ -415,33 +414,8 @@ static const char* fas_css_hint(char* buf)
     return Ui_CssGet(FA_CG_CPU_CARDS, 0) ? "A: pick. X/Y: costume. L/R: tabs. Down: CPUs." : "A: pick. X/Y: costume. L/R: tabs.";
 }
 
-/* The face on a port's card: the fighter's select icon, the same texture its cell shows (a define's own icon when its package has one; a base "none" define
- * without art has none: letters in the cell, no face on the card). -1 for an empty port, Random, or a fighter the roster has no art for. */
-static int fas_card_face(int ck)
-{
-    char id[12];
-    int slot, ns;
-    if (ck < 0) {
-        return -1;
-    }
-    if (ck >= FA_RETAIL_FIGHTERS) {
-        int tex = Ui_ArtGeno(ck, 0, 0);
-        if (tex >= 0) {
-            return tex;
-        }
-    }
-    if (fas_ck_is_none(ck)) {
-        return -1;
-    }
-    ns = Ui_CssGet(FA_CG_N_SLOTS, 0);
-    for (slot = 0; slot < ns && slot < fcs.n; slot++) {
-        if (Ui_CssGet(FA_CG_SLOT_CK, slot) == ck) {
-            sprintf(id, "f%d", ck);
-            return fas_art(id, fcs.icon[slot]);
-        }
-    }
-    return -1;
-}
+/* The face and the grid use exactly the same package/disc/letters choice. */
+static int fas_card_face(int ck) { return fas_fighter_icon(ck); }
 
 static void fas_submit_css(void)
 {
@@ -464,16 +438,7 @@ static void fas_submit_css(void)
                 abbr[0] = '?';
                 abbr[1] = '\0';
             }
-            tex = -1;
-            if (ck >= FA_RETAIL_FIGHTERS) {
-                tex = Ui_ArtGeno(ck, 0, 0); /* the package's own icon, when it declares one */
-                if (tex >= 0) {
-                    fas_geno_art_said(ck, 0, tex);
-                }
-            }
-            if (tex < 0 && ck >= 0 && slot < fcs.n && !fas_ck_is_none(ck)) {
-                tex = fas_art(id, fcs.icon[slot]);
-            }
+            tex = fas_fighter_icon(ck);
             Ui_SelCell(fas.h, i, id, name, abbr, tex,
                        Ui_CssGet(FA_CG_SLOT_OK, slot) ? 0u : (unsigned) FA_CELL_DISABLED, Ui_CssGet(FA_CG_SLOT_TAB, slot) == 2 ? '+' : 0);
         }
@@ -526,18 +491,7 @@ static void fas_submit_css(void)
         if (ck >= 0) {
             int cos = tck == ck ? Ui_CssGet(FA_CG_COSTUME, target) : 0;
             if (ck != fas.art_ck || cos != fas.art_cos) { /* the portrait decodes once per (fighter, costume) */
-                FsArt a;
-                a.img = NULL;
-                a.tl = NULL;
-                sprintf(id, "p%d:%d", ck, cos);
-                fas.art_tex = Ui_ArtGeno(ck, 1, cos); /* a package's or a skin's own portrait first (-1 for the disc's) */
-                if (fas.art_tex >= 0) {
-                    fas_geno_art_said(ck, 1, fas.art_tex);
-                }
-                if (fas.art_tex < 0 && !fas_ck_is_none(ck)) {
-                    mnCharSel_PcArtPortrait(ck, cos, &a.img, &a.tl);
-                    fas.art_tex = fas_art(id, a);
-                }
+                fas.art_tex = fas_fighter_portrait(ck, cos);
                 fas.art_ck = ck;
                 fas.art_cos = cos;
             }

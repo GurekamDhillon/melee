@@ -1780,6 +1780,9 @@ void gm_Scene_Results_OnEnter(void* arg0_)
 
     PAD_STACK(0x28);
 
+#if defined(TARGET_PC)
+    gmRst_GenoArtReset();
+#endif
     memzero(&lbl_8046DBE8, sizeof(lbl_8046DBE8));
     lbl_8046DBE8.x1 = 0;
     lbl_8046DBE8.x0_0 = false;
@@ -1864,5 +1867,8 @@ void gm_Scene_Results_OnEnter(void* arg0_)
 
 void gm_Scene_Results_OnExit(void* unused)
 {
+#if defined(TARGET_PC)
+    gmRst_GenoArtClose();
+#endif
     fn_801701AC();
 }

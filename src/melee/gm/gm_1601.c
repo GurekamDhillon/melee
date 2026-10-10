@@ -4277,11 +4277,15 @@ f32 gm_80168B34(CharacterKind ckind, int arg1, int arg2)
 
 #if defined(TARGET_PC)
 /* Geno slice 6: the stock-icon frame a define whose package declares a stock icon asks for instead of an atlas frame: 1000000 + ck * 256 + costume
- * (if/ifstock.c turns it into the package's image), or -1 for any fighter that declares none. */
+ * (if/ifstock.c turns it into the package's image or donorless initials), or -1 for disc art. */
 f32 gm_GenoStockFrame(int ck, int costume)
 {
     extern int Geno_DefineHasArt(int ck, int what, int costume);
-    if (ck < 0 || ck > 127 || costume < 0 || costume > 254 || !Geno_DefineHasArt(ck, 2, costume)) {
+    extern int Geno_DefineBaseCK(int ck);
+    extern int Geno_DefineArtBaseCK(int ck);
+    if (ck < 0 || ck > 127 || costume < 0 || costume > 254 ||
+        (!Geno_DefineHasArt(ck, 2, costume) &&
+         !(Geno_DefineBaseCK(ck) >= 0 && Geno_DefineArtBaseCK(ck) < 0))) {
         return -1.0F;
     }
     return 1000000.0F + (f32) (ck * 256 + costume);

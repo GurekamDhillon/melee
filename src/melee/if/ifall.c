@@ -1,5 +1,8 @@
 #include "ifall.h"
 #if defined(TARGET_PC)
+#include <workbench_render.h>
+#endif
+#if defined(TARGET_PC)
 #include "ifhud_math.h"
 #endif
 
@@ -171,7 +174,12 @@ void ifAll_ShowHUD(void)
 
 bool ifAll_IsHUDHidden(void)
 {
+#if defined(TARGET_PC)
+    extern int Wb_RenderOption(int option, int fallback);
+    return !Wb_RenderOption(WB_RENDER_HUD, !hidden);
+#else
     return hidden;
+#endif
 }
 
 static void fn_802F36B8(HSD_GObj* gobj, int unused)

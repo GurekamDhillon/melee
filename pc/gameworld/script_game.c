@@ -16,6 +16,10 @@
 #include <melee/ft/fighter.h>
 #include <melee/ft/ftcmdscript.h>
 #include <melee/ft/ftdata.h>
+#include <melee/ft/ftparts.h>
+#include <melee/ft/ftcommon.h>
+#include <melee/lb/lbcollision.h>
+#include <workbench_render.h>
 #include <melee/ft/inlines.h>
 #include <melee/ft/types.h>
 #include <melee/ft/kinds/ftCommon/forward.h>
@@ -588,7 +592,7 @@ static void script_stage_render(HSD_GObj* gobj, int code)
     int i;
     int camera_mode=Camera_8003108C();
     (void) gobj;
-    if (!script_stage_render_pass(camera_mode, code) || !script_stage_geometry || gx_suppress_draws || script_stage.cube == NULL) {
+    if (!script_stage_render_pass(camera_mode, code) || !Wb_RenderOption(WB_RENDER_STAGE, script_stage_geometry) || gx_suppress_draws || script_stage.cube == NULL) {
         return;
     }
     if (code == 2) {
@@ -678,7 +682,7 @@ static void script_stage_render(HSD_GObj* gobj, int code)
 
 static void script_stage_model_render(HSD_GObj* gobj, int code)
 {
-    if (!script_stage_geometry || gx_suppress_draws) return;
+    if (!Wb_RenderOption(WB_RENDER_STAGE, script_stage_geometry) || gx_suppress_draws) return;
     HSD_StateInvalidate(-1);
     HSD_GObj_JObjCallback(gobj, code); /* the stage's lit, textured JObj path */
 }
@@ -693,7 +697,7 @@ static void script_background_render(HSD_GObj* gobj, int code)
     /* Ordinary link4 runs after refraction but before fighter link5 and item
      * link6. Skip the earlier fighter shadow pass; do not redraw after beams. */
     if (!script_background_render_pass(code, camera != NULL && camera->hsd_obj == HSD_CObjGetCurrent(), phase) ||
-        !script_stage_geometry || gx_suppress_draws) return;
+        !Wb_RenderOption(WB_RENDER_STAGE, script_stage_geometry) || gx_suppress_draws) return;
     HSD_CObjGetViewingMtx(HSD_CObjGetCurrent(), view);
     HSD_StateInvalidate(-1);
     for (alpha = 0; alpha <= 1; ++alpha) {
@@ -2432,6 +2436,137 @@ int ScriptGame_LabStageDraw(int mask, int value)
     now |= Camera_80030B7C() ? LAB_STAGE_LEDGES : 0;
     now |= Camera_80030BA8() ? LAB_STAGE_POINTS : 0;
     return now;
+}
+
+/* Resolve roles through the fighter's actual part table, including Geno/m-ex
+ * remaps. Native wb.render uses this id in its frame_info snapshot. */
+int ScriptGame_WbTargetJoint(int slot)
+{
+    Fighter* fp = script_fighter(slot);
+    int n, role, joint;
+    if (fp == NULL || (n = lab_joint_count(fp)) == 0) return -1;
+    for (role = 0; role < 3; ++role) {
+        joint = ftParts_GetBoneIndex(fp, role == 0 ? FtPart_BustN :
+                                        role == 1 ? FtPart_HipN : FtPart_TopN);
+        if (joint >= 0 && joint < n && fp->parts[joint].joint != NULL) return joint;
+    }
+    return -1;
+}
+
+/* Same GX line setup as script_stage_render/mpLib_80059E60, but all scratch is
+ * automatic storage and colours are per vertex (no mpLib palette writes). */
+static void script_wb_lines(void)
+{
+    Mtx view;
+    HSD_TevDesc tev;
+    HSD_Chan chan = { NULL, GX_COLOR0A0, 0, {0,0,0,0}, {255,255,255,255}, 0,
+        GX_SRC_REG, GX_SRC_VTX, GX_LIGHT_NULL, GX_DF_CLAMP, GX_AF_NONE, NULL };
+    HSD_StateInvalidate(-1);
+    HSD_StateInitTev();
+    tev.flags = 0;
+    tev.stage = HSD_StateAssignTev();
+    tev.coord = 0xFF; tev.map = 0xFF; tev.color = 4;
+    tev.u.tevop.tevmode = 4;
+    HSD_SetupTevStage(&tev);
+    HSD_SetupPEMode(1, NULL);
+    HSD_SetTevRegAll();
+    HSD_StateSetNumTevStages();
+    HSD_StateSetNumTexGens();
+    HSD_StateSetNumChans(1);
+    HSD_SetupChannel(&chan);
+    GXSetCullMode(GX_CULL_NONE);
+    GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+    GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
+    GXSetCurrentMtx(GX_PNMTX0);
+    HSD_CObjGetViewingMtx(HSD_CObjGetCurrent(), view);
+    GXLoadPosMtxImm(view, GX_PNMTX0);
+}
+
+static void script_wb_line(Vec3 a, Vec3 b, u32 rgb)
+{
+    GXBegin(GX_LINES, GX_VTXFMT0, 2);
+    GXPosition3f32(a.x, a.y, a.z);
+    GXColor4u8((rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255, 255);
+    GXPosition3f32(b.x, b.y, b.z);
+    GXColor4u8((rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255, 255);
+    GXEnd();
+}
+
+/* Called only with the temporary workbench CObj current, after the world.
+ * Retail x21FC.b6 combines HIT/HURT; invoking its capsule drawers independently
+ * avoids that coupling. Hurt caches are filled on a stack copy, not the fighter. */
+void ScriptGame_WbDraw(void)
+{
+    Fighter* fp;
+    int i, pass, n;
+    if (!Wb_RenderActive() || gx_suppress_draws || (fp = script_fighter(0)) == NULL) return;
+    for (pass = 0; pass <= 2; pass += 2) {
+        if (Wb_RenderOption(WB_RENDER_HITBOXES, 0)) {
+            for (i = 0; i < 4; ++i)
+                lbColl_80009F54(&fp->x914[i], pass, fp->x34_scale.y);
+        }
+        if (Wb_RenderOption(WB_RENDER_HURTBOXES, 0)) {
+            for (i = 0; i < fp->hurt_capsules_len; ++i) {
+                HurtCapsule hurt = fp->hurt_capsules[i].capsule;
+                MtxPtr projection = ftCommon_8007F804(fp);
+                hurt.skip_update_pos = 0; /* mirror lbColl_8000A244 even in a paused single-fighter scene */
+                if (fp->x221D_b6)
+                    lbColl_8000A584(&hurt, 1, pass, projection, fp->cur_pos.z);
+                else if (fp->x1988 || fp->x198C)
+                    lbColl_8000A584(&hurt, fp->x1988 == 2 || fp->x198C == 2 ? 2 : 1,
+                                    pass, projection, fp->cur_pos.z);
+                else
+                    lbColl_8000A244(&hurt, pass, projection, fp->cur_pos.z);
+            }
+        }
+    }
+    if (Wb_RenderOption(WB_RENDER_ECB, 0) || Wb_RenderOption(WB_RENDER_BONES, 0) ||
+        Wb_RenderOption(WB_RENDER_FLOOR, 0)) {
+        script_wb_lines();
+        if (Wb_RenderOption(WB_RENDER_ECB, 0)) {
+            CollData* cd = &fp->coll_data;
+            Vec3 p[4];
+            p[0].x = cd->cur_pos.x + cd->ecb.top.x; p[0].y = cd->cur_pos.y + cd->ecb.top.y;
+            p[1].x = cd->cur_pos.x + cd->ecb.right.x; p[1].y = cd->cur_pos.y + cd->ecb.right.y;
+            p[2].x = cd->cur_pos.x + cd->ecb.bottom.x; p[2].y = cd->cur_pos.y + cd->ecb.bottom.y;
+            p[3].x = cd->cur_pos.x + cd->ecb.left.x; p[3].y = cd->cur_pos.y + cd->ecb.left.y;
+            for (i = 0; i < 4; ++i) p[i].z = cd->cur_pos.z;
+            for (i = 0; i < 4; ++i) script_wb_line(p[i], p[(i + 1) % 4], 0xFFA030);
+        }
+        if (Wb_RenderOption(WB_RENDER_BONES, 0)) {
+            n = lab_joint_count(fp);
+            for (i = 0; i < n; ++i) {
+                HSD_JObj* joint = fp->parts[i].joint;
+                HSD_JObj* parent;
+                Vec3 a, b;
+                if (!joint || !(parent = joint->parent) || lab_joint_index(fp, parent) < 0) continue;
+                HSD_JObjSetupMatrix(joint);
+                HSD_JObjSetupMatrix(parent);
+                a.x = joint->mtx[0][3]; a.y = joint->mtx[1][3]; a.z = joint->mtx[2][3];
+                b.x = parent->mtx[0][3]; b.y = parent->mtx[1][3]; b.z = parent->mtx[2][3];
+                script_wb_line(a, b, 0x80D8FF);
+            }
+        }
+        if (Wb_RenderOption(WB_RENDER_FLOOR, 0)) {
+            MapCollData* map = mpLib_8004D164();
+            CollLine* lines = mpGetGroundCollLine();
+            CollVtx* verts = mpGetGroundCollVtx();
+            if (map && lines && verts) for (i = 0; i < map->line_count; ++i) {
+                MapLine* line = lines[i].x0;
+                Vec3 a, b;
+                if (!line || !(lines[i].flags & LINE_FLAG_ENABLED) ||
+                    !(lines[i].flags & CollLine_Floor) || (lines[i].flags & LINE_FLAG_HIDDEN)) continue;
+                a.x = verts[line->v0_idx].pos.x; a.y = verts[line->v0_idx].pos.y; a.z = 0;
+                b.x = verts[line->v1_idx].pos.x; b.y = verts[line->v1_idx].pos.y; b.z = 0;
+                script_wb_line(a, b, 0x70F0A0);
+            }
+        }
+    }
+    HSD_StateInvalidate(-1);
 }
 
 /* ---- Stage 2: subaction scripts, motions ---------------------------------------------------- */

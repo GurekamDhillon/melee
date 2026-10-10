@@ -22,6 +22,20 @@
 #include <sysdolphin/baselib/cobj.h>
 #include <sysdolphin/baselib/gobj.h>
 #include <sysdolphin/baselib/state.h>
+#if defined(TARGET_PC)
+#include <workbench_render.h>
+/* Workbench draws each diagnostic independently after the world pass. Read a
+ * temporary flag value; never rewrite Fighter.x21FC_flag to take a picture. */
+static int ftDrawCommon_RenderFlag(Fighter* fp, int bit)
+{
+    int fallback = (fp->x21FC_flag.byte & (1 << (7 - bit))) != 0;
+    if (!Wb_RenderActive()) return fallback;
+    return bit == 7 ? Wb_RenderOption(WB_RENDER_MODEL, fallback) : 0;
+}
+#define FT_DRAW_FLAG(fp, bit) ftDrawCommon_RenderFlag(fp, bit)
+#else
+#define FT_DRAW_FLAG(fp, bit) ((fp)->x21FC_flag.b##bit)
+#endif
 
 static U8Vec4 ftDrawCommon_804D3A88 = { 0xFF, 0xFF, 0xFF, 0x80 };
 static U8Vec4 ftDrawCommon_804D3A8C = { 0x80, 0x80, 0xFF, 0x80 };
@@ -98,7 +112,7 @@ void ftDrawCommon_800805C8(HSD_GObj* gobj, s32 arg1, bool arg2)
 
     fighter = GET_FIGHTER(gobj);
     do_invalidate = false;
-    if (fighter->x21FC_flag.b6 != 0) {
+    if (FT_DRAW_FLAG(fighter, 6) != 0) {
         for (i = 0; i < ARRAY_SIZE(fighter->x914); i++) {
             if (lbColl_80009F54(&fighter->x914[i], arg1, fighter->x34_scale.y))
             {
@@ -160,7 +174,7 @@ void ftDrawCommon_800805C8(HSD_GObj* gobj, s32 arg1, bool arg2)
             do_invalidate = true;
         }
     }
-    if (fighter->x21FC_flag.b5 != 0) {
+    if (FT_DRAW_FLAG(fighter, 5) != 0) {
         for (i = 0; i < (unsigned) fighter->x166C; i++) {
             if (lbColl_8000A460(&fighter->x1670[i], arg1)) {
                 do_invalidate = true;
@@ -177,15 +191,15 @@ void ftDrawCommon_800805C8(HSD_GObj* gobj, s32 arg1, bool arg2)
             }
         }
     }
-    if (fighter->x21FC_flag.b3 && (ftCo_800B395C(gobj, arg1) != 0)) {
+    if (FT_DRAW_FLAG(fighter, 3) && (ftCo_800B395C(gobj, arg1) != 0)) {
         do_invalidate = true;
     }
-    if (fighter->x21FC_flag.b4 && fighter->x2223_b5 &&
+    if (FT_DRAW_FLAG(fighter, 4) && fighter->x2223_b5 &&
         lb_80014770(&fighter->dmg.x1930.x0, arg1))
     {
         do_invalidate = true;
     }
-    if (fighter->x21FC_flag.b2 != 0) {
+    if (FT_DRAW_FLAG(fighter, 2) != 0) {
         itPickup* temp_r24 = &fighter->x294_itPickup;
         if (fighter->ground_or_air == 0) {
             if (lbGx_8001E2F8(&temp_r24->gr_light_offset, &fighter->cur_pos,
@@ -207,13 +221,13 @@ void ftDrawCommon_800805C8(HSD_GObj* gobj, s32 arg1, bool arg2)
             do_invalidate = true;
         }
     }
-    if (fighter->x21FC_flag.b1 && !fighter->x2227_b2 &&
+    if (FT_DRAW_FLAG(fighter, 1) && !fighter->x2227_b2 &&
         lbColl_8000A044(&fighter->x1064_thrownHitbox, arg1,
                         fighter->x34_scale.y))
     {
         do_invalidate = true;
     }
-    if (fighter->x21FC_flag.b0 && !fighter->x2229_b4) {
+    if (FT_DRAW_FLAG(fighter, 0) && !fighter->x2229_b4) {
         for (i = 0; i < ARRAY_SIZE(fighter->x1614); i++) {
             if (lbColl_8000A1A8(&fighter->x1614[i], arg1,
                                 fighter->x34_scale.y))
@@ -226,7 +240,7 @@ void ftDrawCommon_800805C8(HSD_GObj* gobj, s32 arg1, bool arg2)
         HSD_StateInvalidate(-1);
     }
 
-    if (!fighter->x21FC_flag.b7) {
+    if (!FT_DRAW_FLAG(fighter, 7)) {
         return;
     }
 
@@ -289,7 +303,7 @@ void ftDrawCommon_80080C28(HSD_GObj* gobj, int flag_index)
     PAD_STACK(4);
 
     fighter = GET_FIGHTER(gobj);
-    if (fighter->x21FC_flag.b7 != 0) {
+    if (FT_DRAW_FLAG(fighter, 7) != 0) {
         if (!fighter->invisible && !fighter->x221E_b5 && !fighter->x2226_b5) {
             ftCo_8009F5AC(fighter);
             if (fighter->x5AC.xC[1] != NULL) {
@@ -340,7 +354,7 @@ static inline void ftDrawCommon_80080E18_inline0(HSD_GObj* gobj,
 
     Mtx sp54;
 
-    if (fp->x21FC_flag.b7 && !fp->invisible && !fp->x221E_b5 && !fp->x2226_b5)
+    if (FT_DRAW_FLAG(fp, 7) && !fp->invisible && !fp->x221E_b5 && !fp->x2226_b5)
     {
         ftParts_800750C8(fp, 0, 0);
         ftParts_800750C8(fp, 1, 0);
@@ -368,7 +382,7 @@ static inline void ftDrawCommon_80080E18_inline1(HSD_GObj* gobj,
 
     fp = GET_FIGHTER(gobj);
 
-    if (fp->x21FC_flag.b7 && !fp->invisible && !fp->x221E_b5 && !fp->x2226_b5)
+    if (FT_DRAW_FLAG(fp, 7) && !fp->invisible && !fp->x221E_b5 && !fp->x2226_b5)
     {
         ftParts_800750C8(fp, 0, 0);
         ftParts_800750C8(fp, 1, 0);
@@ -407,7 +421,12 @@ void ftDrawCommon_80080E18(HSD_GObj* gobj, int arg1)
 {
     Fighter* fp = gobj->user_data;
 
-    if (!fp->x221F_b3 && ftLib_80086A8C(gobj)) {
+    if (!fp->x221F_b3 &&
+#if defined(TARGET_PC)
+        (Wb_RenderActive() || ftLib_80086A8C(gobj))) {
+#else
+        ftLib_80086A8C(gobj)) {
+#endif
         switch (Camera_80031060()) {
         case 1:
             if (fp->x2220_b7) {

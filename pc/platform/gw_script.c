@@ -15,6 +15,7 @@
 #include "gw.h"
 #include "gw_script.h"
 #include "gw_workbench.h"
+#include "../workbench_render.h"
 #include "gw_surface.h"
 #include "gw_motion.h"
 static void gs_earned_release(unsigned owner); /* gw_script_earned.inc */
@@ -37,6 +38,10 @@ static void gs_earned_release(unsigned owner); /* gw_script_earned.inc */
 
 #include <math.h>
 #include <limits.h>
+#include <errno.h>
+#ifdef _WIN32
+#include <share.h>
+#endif
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -466,9 +471,41 @@ static void gs_stage_isolation_release_owner(int owner) {
         gs_stage_isolation_owner = 0;
     }
 }
+/* Render requests outlive the Lua call and Aurora's asynchronous PNG writer.
+ * No camera ownership, rewind state, or game debug flags are changed here. */
+static struct {
+    int pending, queued, drawn, scene_epoch, w, h;
+    int options[WB_RENDER_OPTIONS];
+    float camera[8];
+    DWORD started;
+    char capture[1024], path[1024];
+} gs_wb_render;
+static unsigned gs_wb_render_serial;
+extern int gw_gx_suppress_draws;
+/* C++ queue drain in gw_overlay.cpp; excludes older frames from the screenshot. */
+extern void gw_Wb_CaptureScreenshot(const char *path);
+extern int gw_ScriptGame_WbTargetJoint(int slot);
+int gw_Wb_RenderActive(void) {
+    return gs_wb_render.pending && gw_Wb_Enabled() && gs.match_active &&
+           gs_wb_render.scene_epoch == gs.scene_epoch && !gw_Snap_Resimulating();
+}
+int gw_Wb_RenderOption(int option, int fallback) {
+    return gw_Wb_RenderActive() && option >= 0 && option < WB_RENDER_OPTIONS ?
+        gs_wb_render.options[option] : fallback;
+}
+int gw_Wb_RenderCameraBits(int field) {
+    union { float f; int i; } v;
+    v.f = field >= 0 && field < 8 && gw_Wb_RenderActive() ? gs_wb_render.camera[field] : 0.0f;
+    return v.i;
+}
+void gw_Wb_RenderDrawn(void) {
+    if (gw_Wb_RenderActive() && !gw_gx_suppress_draws && gs_wb_render.drawn < 2)
+        ++gs_wb_render.drawn;
+}
 static int gs_hud_owner;
 int gw_Script_StatusHUDVisible(void) {
-    return gs_hud_owner == 0 || gw_RB_Enabled() || gw_Netplay_Enabled();
+    return gw_Wb_RenderOption(WB_RENDER_HUD,
+        gs_hud_owner == 0 || gw_RB_Enabled() || gw_Netplay_Enabled());
 }
 static void gs_hud_release_owner(int owner) {
     if (owner > 0 && gs_hud_owner == owner) gs_hud_owner = 0;
@@ -7126,38 +7163,15 @@ static float gs_wb_camera_number(lua_State *L, int table, const char *name, floa
     return value;
 }
 
-/* Workbench camera: presets front (0,0), side (90,0), three_quarter (45,15),
- * top (0,90); yaw/pitch are degrees and override the preset independently.
- * camera={} defaults to three_quarter, distance 60, FOV 30, bone-bounds center.
- * target_joint selects a snapshot joint id. Raw eye/interest/fov/roll still
- * work alone or override the generated pose when mixed with orbit options.
- * This intentionally uses the existing simulation camera path; a renderer-only
- * override is a separate workbench follow-up (review finding 3). */
-static void gs_wb_camera(lua_State *L, int table) {
-    static const char *const orbit_keys[] = {"preset", "yaw", "pitch", "distance", "target_joint"};
-    static const char *const raw_keys[] = {"eye", "interest", "fov", "roll"};
+/* Workbench orbit uses the same scalar snapshot as frame_info. The part table
+ * supplies the torso/root joint id; extended limbs must not move the target.
+ * Raw pose fields override the orbit without claiming the simulation camera. */
+static void gs_wb_camera(lua_State *L, int table, const GwWbFrame *frame, float pose[8]) {
     const char *preset;
-    GwWbFrame frame;
-    float yaw = 45.0f, pitch = 15.0f, distance, eye[3], interest[3];
-    int i, orbit = 0, raw = 0, target, pose;
+    float yaw = 45.0f, pitch = 15.0f, distance, delta = 0.0f;
+    int i, target;
     table = lua_absindex(L, table);
     luaL_checktype(L, table, LUA_TTABLE);
-    for (i = 0; i < 5; ++i) {
-        lua_getfield(L, table, orbit_keys[i]);
-        orbit |= !lua_isnil(L, -1);
-        lua_pop(L, 1);
-    }
-    for (i = 0; i < 4; ++i) {
-        lua_getfield(L, table, raw_keys[i]);
-        raw |= !lua_isnil(L, -1);
-        lua_pop(L, 1);
-    }
-    if (raw && !orbit) {
-        lua_pushcfunction(L, l_camera_set);
-        lua_pushvalue(L, table);
-        lua_call(L, 1, 0);
-        return;
-    }
     lua_getfield(L, table, "preset");
     preset = luaL_optstring(L, -1, "three_quarter");
     if (strcmp(preset, "front") == 0) { yaw = 0; pitch = 0; }
@@ -7171,74 +7185,169 @@ static void gs_wb_camera(lua_State *L, int table) {
     distance = gs_wb_camera_number(L, table, "distance", 60.0f);
     if (distance < 0.01f) luaL_error(L, "wb.render camera distance must be at least 0.01");
     target = gs_wb_int(L, table, "target_joint", -1);
-    if (!gs_wb_read_frame(&frame)) luaL_error(L, "no fighter on port 1");
-    if (gw_Wb_CameraOrbit(&frame, target, yaw, pitch, distance, eye, interest) != 0)
+    if (target == -1) {
+        int candidate = gw_ScriptGame_WbTargetJoint(0);
+        target = -1;
+        for (i = 0; i < frame->nbones; ++i)
+            if (frame->bones[i].joint == candidate) { target = candidate; break; }
+        /* A custom fighter may omit the usual torso role. Resolve a root from
+         * the snapshot, never a guessed joint number or a whole-body bound. */
+        for (i = 0; target < 0 && i < frame->nbones; ++i)
+            if (frame->bones[i].parent < 0) target = frame->bones[i].joint;
+        if (target < 0 && frame->nbones) target = frame->bones[0].joint;
+    }
+    if (target < 0 || gw_Wb_CameraOrbit(frame, target, yaw, pitch, distance, pose, pose + 3) != 0)
         luaL_error(L, "wb.render camera target_joint is not in the frame or has no finite pose");
-    lua_createtable(L, 0, 4);
-    pose = lua_absindex(L, -1);
     for (i = 0; i < 2; ++i) {
-        const float *v = i == 0 ? eye : interest;
-        lua_createtable(L, 0, 3);
-        gs_setnum(L, "x", v[0]); gs_setnum(L, "y", v[1]); gs_setnum(L, "z", v[2]);
-        lua_setfield(L, pose, raw_keys[i]);
+        lua_getfield(L, table, i ? "interest" : "eye");
+        if (!lua_isnil(L, -1)) gs_camera_vec(L, -1, pose + i * 3);
+        lua_pop(L, 1);
     }
-    gs_setnum(L, "fov", 30.0);
-    gs_setnum(L, "roll", 0.0);
-    for (i = 0; i < 4; ++i) {
-        lua_getfield(L, table, raw_keys[i]);
-        if (!lua_isnil(L, -1)) lua_setfield(L, pose, raw_keys[i]);
-        else lua_pop(L, 1);
+    pose[6] = gs_wb_camera_number(L, table, "fov", 30.0f);
+    pose[7] = gs_wb_camera_number(L, table, "roll", 0.0f);
+    if (pose[6] < 1.0f || pose[6] >= 179.0f) luaL_error(L, "wb.render fov must be 1..<179");
+    for (i = 0; i < 6; ++i)
+        if (!isfinite(pose[i])) luaL_error(L, "wb.render camera pose must be finite");
+    for (i = 0; i < 3; ++i) {
+        float d = pose[i] - pose[i + 3];
+        delta += d * d;
     }
-    lua_pushcfunction(L, l_camera_set);
-    lua_pushvalue(L, pose);
-    lua_call(L, 1, 0);
-    lua_pop(L, 1);
-    gw_log("workbench: camera yaw=%g pitch=%g distance=%g target_joint=%d", yaw, pitch, distance, target);
+    if (!isfinite(delta) || delta < 0.0001f)
+        luaL_error(L, "wb.render eye and interest must be distinct finite positions");
+    if (fabsf(pose[0] - pose[3]) + fabsf(pose[2] - pose[5]) < 0.000001f)
+        luaL_error(L, "wb.render vertical raw camera needs a nonzero horizontal offset");
+    gw_log("workbench: render camera target_joint=%d eye=(%g,%g,%g) interest=(%g,%g,%g)",
+        target, pose[0], pose[1], pose[2], pose[3], pose[4], pose[5]);
+}
+
+/* Aurora's libpng thread opens its destination before writing. File existence
+ * or IHDR alone is not completion. Deny sharing on Windows and require IEND;
+ * only a closed, complete private PNG may become the public view.png. */
+static int gs_wb_png_size(const char *path, int *w, int *h) {
+    static const unsigned char sig[8] = {137,80,78,71,13,10,26,10};
+    static const unsigned char end[12] = {0,0,0,0,73,69,78,68,174,66,96,130};
+    unsigned char head[24], tail[12];
+    FILE *file;
+    int ok;
+#ifdef _WIN32
+    file = _fsopen(path, "rb", _SH_DENYRW);
+#else
+    file = fopen(path, "rb");
+#endif
+    if (!file) return 0;
+    ok = fread(head, 1, sizeof head, file) == sizeof head &&
+         !memcmp(head, sig, sizeof sig) && gw_r32(head + 8) == 13 &&
+         !memcmp(head + 12, "IHDR", 4) && fseek(file, -12, SEEK_END) == 0 &&
+         fread(tail, 1, sizeof tail, file) == sizeof tail && !memcmp(tail, end, sizeof end);
+    fclose(file);
+    if (!ok || !gw_r32(head + 16) || !gw_r32(head + 20) ||
+        gw_r32(head + 16) > INT_MAX || gw_r32(head + 20) > INT_MAX) return 0;
+    *w = (int)gw_r32(head + 16); *h = (int)gw_r32(head + 20);
+    return 1;
+}
+
+static void gs_wb_render_poll(int after_draw) {
+    char json[160], path[1024];
+    int w, h, n;
+    if (!gs_wb_render.pending) return;
+    if (!gw_Wb_RenderActive() || (DWORD)(GetTickCount() - gs_wb_render.started) > 30000u) {
+        gw_log("workbench: render cancelled (scene/offline gate or capture timeout); controls restored");
+        /* Unique private names prevent a late worker from satisfying a later request. */
+        gs_wb_render.pending = 0;
+        remove(gs_wb_render.capture);
+        return;
+    }
+    if (!gs_wb_render.queued) {
+        /* Two identical paused world draws also settle Aurora's previous-pose
+         * interpolation. Queue drain then excludes any older presented frame. */
+        if (after_draw && gs_wb_render.drawn >= 2) {
+            gs_wb_render.queued = 1;
+            gw_Wb_CaptureScreenshot(gs_wb_render.capture);
+        }
+        return;
+    }
+    if (!gs_wb_png_size(gs_wb_render.capture, &w, &h)) return;
+#ifdef _WIN32
+    if (!MoveFileExA(gs_wb_render.capture, gs_wb_render.path,
+                     MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
+#else
+    if (rename(gs_wb_render.capture, gs_wb_render.path) != 0) {
+#endif
+        gw_log("workbench: render PNG publication failed; controls restored");
+        gs_wb_render.pending = 0;
+        remove(gs_wb_render.capture);
+        return;
+    }
+    n = snprintf(json, sizeof json, "{\"w\":%d,\"h\":%d,\"requested_w\":%d,\"requested_h\":%d}\n",
+        w, h, gs_wb_render.w, gs_wb_render.h);
+    /* The launcher scales to requested_w/requested_h. No renderer-wide resize
+     * or resampling is done: Aurora captures its existing presentation target. */
+    if (gw_Wb_WritePayload("view.json", json, (size_t)n, path, sizeof path) != 0) {
+        gw_log("workbench: render view.json publication failed; controls restored");
+        remove(gs_wb_render.path);
+    } else {
+        gw_log("workbench: render ready %s actual=%dx%d requested=%dx%d; controls restored",
+            gs_wb_render.path, w, h, gs_wb_render.w, gs_wb_render.h);
+    }
+    gs_wb_render.pending = 0;
 }
 
 static int l_wb_render(lua_State *L) {
-    char path[1024];
-    int w, h, len, fighter_flags, stage_flags;
+    static const char *const names[WB_RENDER_OPTIONS] = {
+        "model", "hitboxes", "hurtboxes", "ecb", "bones", "floor", "hud", "stage"
+    };
+    char path[1024], capture[1024], metadata[1024];
+    float pose[8];
+    GwWbFrame frame;
+    int w, h, len, i, options[WB_RENDER_OPTIONS] = {1,0,0,0,0,0,0,1};
     gs_require_offline(L, "wb.render");
     if (!gw_Wb_Enabled()) return luaL_error(L, "workbench mode is not enabled");
     luaL_checktype(L, 1, LUA_TTABLE);
     if (!gs_players_present(0)) return luaL_error(L, "no fighter on port 1");
+    if (gs_wb_render.pending) return luaL_error(L, "wb.render capture is still pending");
+    if (gs.wb_pending || gs.step || gs.set_motion[0])
+        return luaL_error(L, "wb.render must wait for the pending frame operation");
     w = gs_wb_int(L, 1, "w", 640);
     h = gs_wb_int(L, 1, "h", 480);
     if (w < 1 || h < 1 || w > 8192 || h > 8192) return luaL_error(L, "wb.render dimensions must be 1..8192");
     if (!gw_Wb_Dir()[0]) return luaL_error(L, "MELEE_WB_DIR is empty");
-    len = snprintf(path, sizeof path, "%s/view.png", gw_Wb_Dir());
-    if (len < 0 || (size_t)len >= sizeof path) return luaL_error(L, "workbench image path is too long");
+    len = snprintf(capture, sizeof capture, "%s/.view-%lu-%lu-%u.png", gw_Wb_Dir(),
+        (unsigned long)GetCurrentProcessId(), (unsigned long)GetTickCount(), ++gs_wb_render_serial);
+    if (len < 0 || (size_t)len >= sizeof capture) return luaL_error(L, "workbench image path is too long");
+    snprintf(path, sizeof path, "%s/view.png", gw_Wb_Dir());
+    snprintf(metadata, sizeof metadata, "%s/view.json", gw_Wb_Dir());
+    if (!gs_wb_read_frame(&frame)) return luaL_error(L, "no fighter on port 1");
     lua_getfield(L, 1, "camera");
-    if (!lua_isnil(L, -1)) gs_wb_camera(L, -1);
+    if (lua_isnil(L, -1)) { lua_pop(L, 1); lua_newtable(L); }
+    gs_wb_camera(L, -1, &frame, pose);
     lua_pop(L, 1);
     lua_getfield(L, 1, "overlays");
     if (!lua_isnil(L, -1)) {
         luaL_checktype(L, -1, LUA_TTABLE);
-        /* ftDrawCommon_800805C8 shares its HIT/HURT switch; ECB is the
-         * camera's collision draw bit (ScriptGame_LabStageDraw). */
-        fighter_flags = 0x01;
-        lua_getfield(L, -1, "model");
-        if (!lua_isnil(L, -1) && !lua_toboolean(L, -1)) fighter_flags = 0;
-        lua_pop(L, 1);
-        lua_getfield(L, -1, "hitboxes");
-        if (lua_toboolean(L, -1)) fighter_flags |= 0x02;
-        lua_pop(L, 1);
-        lua_getfield(L, -1, "hurtboxes");
-        if (lua_toboolean(L, -1)) fighter_flags |= 0x02;
-        lua_pop(L, 1);
-        lua_getfield(L, -1, "ecb");
-        stage_flags = lua_toboolean(L, -1) ? LAB_STAGE_COLL : 0;
-        lua_pop(L, 1);
-        gw_ScriptGame_LabDebugDraw(0, 1, fighter_flags);
-        gw_ScriptGame_LabStageDraw(LAB_STAGE_COLL, stage_flags);
+        for (i = 0; i < WB_RENDER_OPTIONS; ++i) {
+            lua_getfield(L, -1, names[i]);
+            if (!lua_isnil(L, -1)) {
+                luaL_checktype(L, -1, LUA_TBOOLEAN);
+                options[i] = lua_toboolean(L, -1);
+            }
+            lua_pop(L, 1);
+        }
     }
     lua_pop(L, 1);
-    /* The existing Aurora screenshot path captures the configured render
-     * resolution. It is asynchronous; EngineLink polls for the resulting PNG. */
-    remove(path); /* an older capture must not satisfy that poll */
-    gw_Screenshot(path);
-    gw_log("workbench: render requested %dx%d (Aurora render resolution)", w, h);
+    /* Validate first: a malformed request must not change a prior result. */
+    if ((remove(metadata) != 0 && errno != ENOENT) || (remove(path) != 0 && errno != ENOENT))
+        return luaL_error(L, "cannot clear previous workbench capture");
+    memset(&gs_wb_render, 0, sizeof gs_wb_render);
+    memcpy(gs_wb_render.camera, pose, sizeof pose);
+    memcpy(gs_wb_render.options, options, sizeof options);
+    strcpy(gs_wb_render.path, path);
+    strcpy(gs_wb_render.capture, capture);
+    gs_wb_render.w = w; gs_wb_render.h = h;
+    gs_wb_render.scene_epoch = gs.scene_epoch;
+    gs_wb_render.started = GetTickCount();
+    gs_wb_render.pending = 1;
+    gw_log("workbench: render requested %dx%d model=%d hit=%d hurt=%d ecb=%d bones=%d floor=%d hud=%d stage=%d",
+        w, h, options[0], options[1], options[2], options[3], options[4], options[5], options[6], options[7]);
     lua_pushfstring(L, "@%s", path);
     return 1;
 }
@@ -8307,6 +8416,7 @@ void gw_Script_Tick(void) {
         gw_TextEntryUntil = (int) GetTickCount() + 200; /* the keyboard is text, not hotkeys */
     }
     gs_wb_refresh(gs.L);
+    gs_wb_render_poll(0);
     gs_poll_keys();
     gs_fly_hotkey();
     gw_Mouse_ScriptTick();
@@ -8376,6 +8486,7 @@ void gw_Script_LabRequest(void) { gs.lab_request = 1; }
 
 
 void gw_Script_PostRender(void) {
+    gs_wb_render_poll(1);
     if (gs.wb_pending && gw_Wb_Enabled() && !gs.set_motion[0] && gs.step == 0 && !gs_in_frame) {
         char path[1024];
         if (gs_wb_snapshot(path, sizeof path, 1)) {
@@ -8391,6 +8502,7 @@ void gw_Script_PostRender(void) {
 }
 
 int gw_Script_Iterations(int count) {
+    if (gw_Wb_RenderActive()) return 0; /* hold the captured pose until PNG publication */
     if (gs_1p.barrier && gs_1p_offline()) return 0;
     gw_hang_pause((gs.paused ? 1 : 0) | (gs_hitstop_live() ? 2 : 0));
     if (gs_hitstop_live()) return 0;
@@ -9613,7 +9725,10 @@ void gw_Script_FramePost(void) {
     }
 }
 
-int gw_Script_DrawCount(void) { return gs.ndraw[!gs.build]+(gs_stage_indicator_draw()!=NULL); }
+int gw_Script_DrawCount(void) {
+    if (gw_Wb_RenderActive()) return 0; /* LAB Ready/timer, HUD panels and script debug strokes */
+    return gs.ndraw[!gs.build]+(gs_stage_indicator_draw()!=NULL);
+}
 const GwScriptDraw *gw_Script_DrawAt(int i) {
     if(i==gs.ndraw[!gs.build])return gs_stage_indicator_draw();
     return (i >= 0 && i < gs.ndraw[!gs.build]) ? &gs.draw[!gs.build][i] : NULL;
@@ -10207,6 +10322,7 @@ done:
     return rc;
 }
 
+#include "gw_script_workbench_tests.inc"
 #include "gw_script_deadline_tests.inc"
 
 #include "gw_script_contacts_tests.inc"
@@ -11856,6 +11972,7 @@ void gw_script_tests_register(void) {
     gw_test_register("script_no_hitch_api", test_script_no_hitch_api);
     gw_test_register("script_data_write_atomic", test_script_data_write_atomic);
     gw_test_register("script_camera_api", test_script_camera_api);
+    gw_test_register("workbench_png_completion", test_workbench_png_completion);
     gw_test_register("script_contacts", test_script_contacts);
     gw_test_register("script_zones_core", test_script_zones_core);
     gw_test_register("script_zones_adapter", test_script_zones_adapter);

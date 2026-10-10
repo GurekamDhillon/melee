@@ -285,6 +285,10 @@ int main(int argc, char *argv[]) {
   gw_install_crash_handler();
   gw_log("melee-pc: starting");
   gw_hang_start();
+  {
+    extern void gw_Wb_ConfigureArgs(int argc, char **argv);
+    gw_Wb_ConfigureArgs(argc, argv);
+  }
 
   /* Only the raw adapter backend implements foreground ownership. SDL's GameCube
    * driver must not claim it behind that policy, even with MELEE_SDL_GAMECUBE=1. */

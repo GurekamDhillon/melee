@@ -1,6 +1,7 @@
 /* Core runtime for the game world: startup fixups, memory regions, logging. */
 #include <ctype.h>
 #include "gw.h"
+#include "gw_workbench.h"
 #include "gw_hang.h"
 #include "gw_profiler.h"
 #include "gw_uigen.h"
@@ -1593,6 +1594,7 @@ typedef struct {
   int rule_pause;   /* 0 off, 1 on */
   int cpus;         /* `cpus=idle` 1 / `cpus=fight` 0 / unset -1: every CPU slot idles */
   int turbo;        /* `turbo=off|on|<hex rule word>` (gw_matchrules.h) / unset -1 */
+  int workbench;    /* opt-in presentation tooling, independent of GM_LAB */
   int errors;       /* count of rejected fields; a config with errors is still used */
   GwSlPlayer p[GW_SL_SLOTS];
   int enemy_team_colors; /* 0 off, 1 force untinted enemy team costumes */
@@ -1656,6 +1658,7 @@ static const struct {
        row, which gm_Mode_Lab_OnLoad seeds itself (only for a LAB scene); the 0 only marks it as a
        mode that seeds players and takes at=css|sss|match */
     {"lab", 0x2F, 0},
+    {"workbench", 0x2F, 0}, /* GM_LAB; an independent offline diagnostic gate */
     {"vs", 0x02, 0},        /* GM_VS,       GmVsMode_Melee */
     {"melee", 0x02, 0},
     {"targettest", 0x0F, -1}, /* GM_TARGET_TEST */
@@ -1705,6 +1708,7 @@ static void gw_sl_player_init(GwSlPlayer *p) {
 
 static void gw_sl_config_init(GwSceneConfig *c) {
   int i;
+  if (c == &gw_sl_cfg) gw_Wb_SetEnabled(0);
   memset(c, 0, sizeof *c);
   c->preload[0] = c->preload[1] = -1;
   c->game_mode = -1;
@@ -2048,6 +2052,8 @@ static int gw_sl_apply(GwSceneConfig *c, const char *key, const char *val) {
       if (tt_ieq(val, gw_sl_modes[i].name)) {
         c->game_mode = gw_sl_modes[i].game_mode;
         c->vs_mode = gw_sl_modes[i].vs_mode;
+        c->workbench = tt_ieq(gw_sl_modes[i].name, "workbench");
+        if (c == &gw_sl_cfg) gw_Wb_SetEnabled(c->workbench);
         c->configured = 1;
         return 0;
       }
@@ -2275,6 +2281,20 @@ static void gw_sl_parse(GwSceneConfig *c, const char *text, const char *source) 
     if (c->p[0].ckind < 0) c->p[0].ckind = 4;
     if (c->stage_ext < 0) c->stage_ext = 32;
   }
+  if (c->workbench && c->game_mode == 0x2F) {
+    int i;
+    /* SceneLaunch_SeedPlayers skips an unspecified first-four slot; do not
+     * inherit a default or previous LAB opponent. Explicit pN values still win. */
+    for (i = 1; i < GW_SL_SLOTS; ++i) {
+      if (c->p[i].ckind < 0 && !c->p[i].random) {
+        c->p[i].ckind = GW_SL_CK_NONE;
+        c->p[i].slot_type = GW_SL_PK_NA;
+      }
+    }
+  } else {
+    c->workbench = 0;
+  }
+  if (c == &gw_sl_cfg) gw_Wb_SetEnabled(c->workbench);
   gw_sl_validate_route(c);
 }
 
@@ -2336,6 +2356,37 @@ static void gw_sl_log_config(const GwSceneConfig *c) {
 static int gw_cpu_idle_sticky = -1;
 static void gw_cpu_idle_note(const GwSceneConfig *c) {
   if (c->cpus >= 0) gw_cpu_idle_sticky = c->cpus;
+}
+
+/* --workbench supplies a default scene; an explicit MELEE_SCENE still wins.
+ * Called before any scene or Lua environment is initialized (main.c). */
+void gw_Wb_ConfigureArgs(int argc, char **argv) {
+  int i;
+  const char *scene = getenv("MELEE_SCENE");
+  if (scene != NULL && scene[0]) return;
+  for (i = 1; i < argc; ++i) {
+    if (strcmp(argv[i], "--workbench") == 0) {
+      const char *mod = getenv("MELEE_WB_MOD");
+      char text[512];
+      int n;
+      if (mod == NULL || !mod[0]) {
+        gw_log("gw: workbench: --workbench needs MELEE_WB_MOD (or an explicit MELEE_SCENE)");
+        return;
+      }
+      n = snprintf(text, sizeof text, "mode=workbench;p1=geno:%s/hu;stage=fd", mod);
+      if (n < 0 || (size_t)n >= sizeof text) {
+        gw_log("gw: workbench: MELEE_WB_MOD is too long");
+        return;
+      }
+#ifdef _WIN32
+      _putenv_s("MELEE_SCENE", text);
+#else
+      setenv("MELEE_SCENE", text, 1);
+#endif
+      gw_log("gw: workbench: --workbench default scene %s", text);
+      return;
+    }
+  }
 }
 
 static void gw_sl_load(void) {

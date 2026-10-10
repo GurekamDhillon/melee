@@ -955,6 +955,67 @@ do
     expect(calls[#calls] and calls[#calls].row == 304 and calls[#calls].frame == 5, "clips play previews row 304 from frame 5")
     lab("clips frame 12")
     expect(calls[#calls] and calls[#calls].row == 304 and calls[#calls].frame == 12, "clips frame jumps within the playing clip")
+    -- direct frame control: pad and keyboard step the shown frame (panel numbering = `clips frame <n>`)
+    do
+      local P1, paused, pauses, resumes = gd.player(1), false, 0, 0
+      local rp, rpa, rr, rpd, rk, rkp = gd.paused, gd.pause, gd.resume, gd.anim_preview, env.gd.key, env.gd.key_pressed
+      local rpad = gd.pad
+      local idle = { buttons = 0, x = 0, y = 0, cx = 0, cy = 0, l = 0, r = 0 }
+      gd.pad = function(port) if mirror and port == mirror[2] then return pad end return idle end
+      gd.paused = function() return paused end
+      gd.pause = function() paused = true pauses = pauses + 1 end
+      gd.resume = function() paused = false resumes = resumes + 1 end
+      gd.anim_preview = function(port, row, frame) calls[#calls + 1] = { row = row, frame = frame }
+        P1.anim_id, P1.anim_frame_f, P1.anim_end = row, frame - 1, 60 return true end
+      lab("clips play xGOK_SPA_KMH 20"); paused = true
+      local function shown() return math.floor((P1.anim_frame_f or 0) + 1.5) end
+      expect(shown() == 20, "clips play 20 shows frame 20 (" .. shown() .. ")")
+      lab("clips frame 7")
+      expect(shown() == 7, "clips frame 7 shows frame 7 (" .. shown() .. ")")
+      local function padtap(bits) pad.buttons = bits env.on_tick() pad.buttons = 0 env.on_tick() end
+      padtap(gd.buttons.RIGHT); expect(shown() == 8, "pad D-pad right steps +1 (" .. shown() .. ")")
+      padtap(gd.buttons.LEFT); padtap(gd.buttons.LEFT); expect(shown() == 6, "pad D-pad left twice steps -2 (" .. shown() .. ")")
+      padtap(gd.buttons.UP); expect(shown() == 16, "pad D-pad up is +10 (" .. shown() .. ")")
+      padtap(gd.buttons.DOWN); expect(shown() == 6, "pad D-pad down is -10 (" .. shown() .. ")")
+      padtap(gd.buttons.Z); expect(shown() == 60, "pad Z goes to the last frame, 60 (" .. shown() .. ")")
+      padtap(gd.buttons.RIGHT); expect(shown() == 60, "stepping past the last frame stays on it (" .. shown() .. ")")
+      padtap(gd.buttons.X); expect(shown() == 1, "pad X goes to the first frame (" .. shown() .. ")")
+      padtap(gd.buttons.LEFT); expect(shown() == 1, "stepping before frame 1 stays on it (" .. shown() .. ")")
+      -- a held D-pad repeats after the delay
+      pad.buttons = gd.buttons.RIGHT
+      for _ = 1, 24 do env.on_tick() end
+      pad.buttons = 0; env.on_tick()
+      expect(shown() >= 4 and shown() <= 5, "a held D-pad right: 1 + step + repeats (" .. shown() .. ")")
+      -- pause / play: Y toggles
+      lab("clips frame 3"); paused = false; pauses, resumes = 0, 0
+      padtap(gd.buttons.Y); expect(paused and pauses == 1, "pad Y pauses a playing clip")
+      padtap(gd.buttons.Y); expect(not paused and resumes == 1, "pad Y plays a paused clip")
+      paused = false; padtap(gd.buttons.RIGHT)
+      expect(paused and shown() == 4, "a step while playing pauses first, then steps (" .. shown() .. ")")
+      -- the fighter's own port is neutral because its pad is mirrored away (a claim would hide the pad from the Lab too)
+      expect(mirror and mirror[1] == 1 and mirror[2] ~= 1 and mirror[3] == true,
+        "CLIPS mirrors the focused pad to a spare port with take (neutral fighter, readable pad)")
+      -- the keyboard: LEFT / RIGHT / HOME / END / SPACE
+      local function keytap(k, ctrl)
+        env.gd.key = function(n) return n == k or (ctrl and n == "CTRL") end
+        env.gd.key_pressed = function(n) return n == k end
+        env.on_tick()
+        env.gd.key = function() return false end env.gd.key_pressed = function() return false end
+        env.on_tick()
+      end
+      lab("clips frame 10")
+      keytap("RIGHT"); expect(shown() == 11, "key RIGHT steps +1 (" .. shown() .. ")")
+      keytap("LEFT"); expect(shown() == 10, "key LEFT steps -1 (" .. shown() .. ")")
+      keytap("RIGHT", true); expect(shown() == 20, "CTRL+RIGHT steps +10 (" .. shown() .. ")")
+      keytap("HOME"); expect(shown() == 1, "key HOME goes to frame 1 (" .. shown() .. ")")
+      keytap("END"); expect(shown() == 60, "key END goes to the last frame (" .. shown() .. ")")
+      paused = true; resumes = 0; keytap("SPACE"); expect(resumes == 1 and not paused, "key SPACE plays a paused clip")
+      keytap("SPACE"); expect(paused, "key SPACE pauses a playing clip")
+      lab("mode training") env.on_tick()
+      expect(mirror == nil, "leaving CLIPS gives the pad back (mirror cleared)")
+      lab("mode clips")
+      gd.pad, gd.paused, gd.pause, gd.resume, gd.anim_preview, env.gd.key, env.gd.key_pressed = rpad, rp, rpa, rr, rpd, rk, rkp
+    end
     lab("clips stop")
     expect(calls[#calls] and calls[#calls].row == nil, "clips stop gives the fighter its own Wait back")
     lab("clips category library")

@@ -2747,6 +2747,46 @@ float ScriptGame_LabAnimEnd(int slot)
 extern u32* HSD_RandSeedPtr;
 int ScriptGame_RngSeed(void) { return (int) *HSD_RandSeedPtr; }
 
+/* Workbench start pose. wb.frame re-enters a move from its first frame for every requested frame, and
+ * the staged lift is relative, so without a fixed start each request began where the previous one ended
+ * (an aerial climbed 40 units per request and drifted sideways). mode 0 forgets the home, 1 records the
+ * grounded position once, 2 puts the fighter back there standing on the floor, at rest.
+ * Returns 0, or -1 (no fighter, or no home recorded). */
+static int lab_wb_home_set;
+static float lab_wb_home_x, lab_wb_home_y;
+int ScriptGame_LabWbHome(int slot, int mode)
+{
+    Fighter* fp = script_fighter(slot);
+    if (fp == NULL) {
+        return -1;
+    }
+    if (mode == 0) {
+        lab_wb_home_set = 0;
+        return 0;
+    }
+    if (mode == 1) {
+        if (!lab_wb_home_set && fp->ground_or_air == GA_Ground) {
+            lab_wb_home_x = fp->cur_pos.x;
+            lab_wb_home_y = fp->cur_pos.y;
+            lab_wb_home_set = 1;
+        }
+        return lab_wb_home_set ? 0 : -1;
+    }
+    if (!lab_wb_home_set) {
+        return -1;
+    }
+    if (fp->ground_or_air != GA_Ground) {
+        ftCommon_8007D7FC(fp); /* land: the same call a landing makes */
+    }
+    fp->cur_pos.x = lab_wb_home_x;
+    fp->cur_pos.y = lab_wb_home_y;
+    fp->prev_pos = fp->cur_pos;
+    fp->self_vel.x = fp->self_vel.y = 0.0f;
+    fp->gr_vel = 0.0f;
+    mpColl_80043680(&fp->coll_data, &fp->cur_pos);
+    return 0;
+}
+
 int ScriptGame_LabSetMotion(int slot, int msid, int rate_bits, int lift_bits)
 {
     Fighter* fp = script_fighter(slot);

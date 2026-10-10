@@ -1201,21 +1201,34 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
     union Struct2070 x2070;
 #if defined(TARGET_PC)
     int lab_pose_row = -1; /* LAB preview: the row whose script/flags stay in use, -1 = none */
+    Fighter* thrown_tbl = NULL; /* a stand-in thrower whose table the thrown row is read from, NULL = arg3's own */
     if (arg3 != NULL) {
         /* A thrown victim plays the thrower's row (ftData_80085CD8(fp, thrower, ...)), timed to that thrower's
-         * release. Across a Geno base "none" define that breaks: its rows are figatrees for its own skeleton
-         * (on another fighter's joints they hang ftAnim_8006E7B8), and a victim's own row is timed to its own
-         * throws (Mario's 12-frame TMarioThrowF ends before a slower release, which also hangs). So a retail
-         * victim of a base "none" thrower keeps the pose it has (the CaptureWait loop) until released, and a
-         * base "none" victim of a retail thrower plays its own row (authored long enough to hold). */
+         * release. Across a Geno base "none" define that cannot work as is: its rows are figatrees for its own
+         * skeleton (on another fighter's joints they hang ftAnim_8006E7B8), and a victim's own row is timed to
+         * its own throws. So a retail victim of a base "none" thrower plays the thrown rows of a retail
+         * stand-in (the define's "thrown_as", Captain Falcon by default; ftData_80085B10 loads its animation
+         * bank with the define), and a base "none" victim plays its own row (authored long enough to hold).
+         * With no stand-in loaded the victim keeps the pose it has (the CaptureWait loop) until released. */
         extern int Geno_DefineIsNone(int kind);
+        extern int Geno_DefineThrownAs(int kind);
+        extern Fighter* ftData_ThrownStandIn(int kind);
         Fighter* thrower = GET_FIGHTER(arg3);
         if (thrower != NULL && thrower->kind != fp->kind) {
-            if (Geno_DefineIsNone(thrower->kind) && !Geno_DefineIsNone(fp->kind)) {
+            if (Geno_DefineIsNone(fp->kind)) {
                 arg3 = NULL;
-                flags |= Ft_MF_SkipAnim;
-            } else if (Geno_DefineIsNone(fp->kind)) {
-                arg3 = NULL;
+            } else if (Geno_DefineIsNone(thrower->kind)) {
+                int as = Geno_DefineThrownAs(thrower->kind);
+                thrown_tbl = as >= 0 ? ftData_ThrownStandIn(as) : NULL;
+                if (thrown_tbl == NULL) {
+                    static int warned;
+                    if (warned++ < 4) {
+                        OSReport("throw: kind %d thrown by base-none kind %d: stand-in kind %d has no animation bank; the victim holds its pose\n",
+                                 (int) fp->kind, (int) thrower->kind, as);
+                    }
+                    arg3 = NULL;
+                    flags |= Ft_MF_SkipAnim;
+                }
             }
         }
     }
@@ -1588,9 +1601,15 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
             }
 
             if (arg3 != NULL) {
+#if defined(TARGET_PC)
+                Fighter* tbl_fp = thrown_tbl != NULL ? thrown_tbl : (Fighter*) arg3->user_data;
+                unk_struct_x18 = &tbl_fp->x24[fp->anim_id];
+                unk_byte_ptr = &tbl_fp->x28[fp->anim_id];
+#else
                 unk_struct_x18 =
                     &((Fighter*) arg3->user_data)->x24[fp->anim_id];
                 unk_byte_ptr = &((Fighter*) arg3->user_data)->x28[fp->anim_id];
+#endif
             } else {
                 unk_struct_x18 = &fp->x24[fp->anim_id];
                 unk_byte_ptr = &fp->x28[fp->anim_id];
@@ -1606,7 +1625,11 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
             ftCo_8009E7B4(fp, unk_byte_ptr);
             if ((flags & Ft_MF_SkipAnim) == 0) {
                 if (arg3 != 0U) {
+#if defined(TARGET_PC)
+                    ftData_80085CD8(fp, thrown_tbl != NULL ? thrown_tbl : GET_FIGHTER(arg3), fp->anim_id);
+#else
                     ftData_80085CD8(fp, GET_FIGHTER(arg3), fp->anim_id);
+#endif
                     ftColl_8007B8CC(fp, arg3);
                 } else {
                     ftData_80085CD8(fp, fp, fp->anim_id);

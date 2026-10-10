@@ -54,6 +54,13 @@ bool ftCo_AttackLw4_CheckInput(Fighter_GObj* gobj)
 void doEnter(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
+#if defined(TARGET_PC)
+    {
+        /* m-ex onDSmash (slot 37), @8008CC14; same shape as onUSmash in ftCo_AttackHi4.c */
+        extern void Mex_OnDSmashDispatch(int kind, void* gobj, void* vanilla);
+        Mex_OnDSmashDispatch(fp->kind, gobj, NULL);
+    }
+#endif
     fp->allow_interrupt = false;
     Fighter_ChangeMotionState(gobj, ftCo_MS_AttackLw4, Ft_MF_None, 0, 1, 0,
                               NULL);

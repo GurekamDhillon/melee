@@ -96,6 +96,19 @@ void itPeachTurnip_Logic56_Destroyed(Item_GObj* item_gobj)
     Item* item;
 
     item = GET_ITEM(item_gobj);
+#if defined(TARGET_PC)
+    if (item->kind != It_Kind_Peach_Turnip) {
+        /* An m-ex custom article built on Peach's turnip logic (ACE Daisy's item, mex kind
+         * 288) keeps this destroyed callback but lays out its own item vars: xDE4 holds
+         * unrelated data (a float, 0xC258A3D3), not the owner that it_802BD4AC stores for the
+         * real turnip, and ftPe_SpecialLw_UnsetVeg followed it (probe_mex36 FATAL). The
+         * thrower is item->owner, which is what the real turnip stores in xDE4. */
+        if (item->owner != NULL) {
+            ftPe_SpecialLw_UnsetVeg(item->owner);
+        }
+        return;
+    }
+#endif
     if (item->xDD4_itemVar.peachturnip.xDE4_owner != NULL) {
         ftPe_SpecialLw_UnsetVeg(item->xDD4_itemVar.peachturnip.xDE4_owner);
     }

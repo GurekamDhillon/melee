@@ -1461,6 +1461,9 @@ void gw_Mex_OnCatchDispatch(int kind, void *gobj, void *vanilla) {
 void gw_Mex_OnUSmashDispatch(int kind, void *gobj, void *vanilla) {
   gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_USMASH, kind, gobj, vanilla);
 }
+void gw_Mex_OnDSmashDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_DSMASH, kind, gobj, vanilla);
+}
 void gw_Mex_OnItemPickupDispatch(int kind, void *gobj, void *arg1, void *vanilla) {
   gw_Mex_GObjDispatch2(GW_MEX_EVENT_ON_ITEM_PICKUP, kind, gobj, arg1, vanilla);
 }

@@ -1,10 +1,13 @@
 -- Workbench data check that runs identically headless (MELEE_WB_HEADLESS=1) and windowed.
--- Logs one "WBJSON <name> <frame> <json>" line per sample so a headless and a windowed run can be
+-- Writes <name>-<frame>.json into the script data folder (the log line limit truncates JSON) so a headless and a windowed run can be
 -- diffed (tools/workbench/frame_info_diff.py), then "HEADLESS_CHECK OK".
--- Env: MELEE_SCRIPT_DATA_DIR=<wb-root>, MELEE_WB_DIR=<wb-root>/pad_script (see workbench_check.lua).
+-- Env: MELEE_SCRIPT_DATA_DIR=<root>, MELEE_WB_DIR=<root>/<modid>_<scriptname> (the folder gd.data_read/data_write use); run it as a
+-- gameplay script mod (mod.json "gameplay": true) next to the fighter mod. The fighter is landed first (the scene pauses it airborne).
 local started, checked = false, false
 local items, idx, fall, ticks = nil, 0, nil, 0
 local cur, staged, requested
+local landing, landed = false, false
+local stall = 0
 
 local function build_items()
     local ids = {}
@@ -31,7 +34,13 @@ function on_tick()
     assert(ticks < 40000, "headless check timed out")
     if wb == nil or not gd.lab_mode() or not gd.player(1) then return end
     if not started then
+        -- the scene pauses the fighter in the air; ground rows (wait, jab) need it standing, so let it land first
+        if landing then
+            if gd.player(1).airborne then return end
+            gd.pause(); landing = false; return
+        end
         if not gd.paused() then return end
+        if not landed and gd.player(1).airborne then landed, landing = true, true; gd.resume(); return end
         assert(wb.load("goku-xv2", 0) == "ok")
         build_items()
         local ok, err = pcall(wb.render, {})
@@ -73,11 +82,19 @@ function on_tick()
     local json = assert(gd.data_read(file))
     local frame = tonumber(json:match('"frame":([%-0-9]+)'))
     local motion = tonumber(json:match('"motion":([%-0-9]+)'))
-    if frame ~= cur.frame or motion ~= cur.motion then return end
+    if frame ~= cur.frame or motion ~= cur.motion then
+        -- Goku's jab chains on past a short row; if the engine settles on another state, take what it reports
+        -- (headless and windowed are deterministic, so both runs settle on the same sample)
+        stall = stall + 1
+        if stall < 30 then return end
+        gd.log(string.format("HEADLESS_CHECK settled %s/%d on motion %s frame %s", cur.name, cur.frame, tostring(motion), tostring(frame)))
+    end
+    stall = 0
     assert(json:match('"schema":2'), "schema 2 expected")
     local bones = select(2, json:gsub('"parent":', ""))
     assert(bones > 20, "too few bones: " .. bones)
     assert(span(json) > 5, "bone span " .. span(json))
-    gd.log("WBJSON " .. cur.name .. " " .. cur.frame .. " " .. json)
+    gd.data_write(cur.name .. "-" .. cur.frame .. ".json", json)
+    gd.log("WBJSON " .. cur.name .. " " .. cur.frame .. " bytes=" .. #json)
     cur, requested = nil, false
 end

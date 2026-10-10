@@ -50,7 +50,14 @@ int get_anim_id(Fighter* fp, int swing_type, int arg1)
     if (arg1 != 3) {
         return lbl_803C6D70[swing_type][arg1];
     } else {
-        switch (fp->kind) {
+#if defined(TARGET_PC)
+        /* a Geno define on template "captain" swings items with Captain Falcon's smash-swing motions */
+        extern int Geno_DefineBaseKind(int kind);
+        int swing_kind = Geno_DefineBaseKind(fp->kind) >= 0 ? Geno_DefineBaseKind(fp->kind) : fp->kind;
+#else
+        int swing_kind = fp->kind;
+#endif
+        switch (swing_kind) {
         case Ft_Kind_Captain:
             return swing_type + 341;
         default:

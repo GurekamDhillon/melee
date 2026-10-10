@@ -2869,6 +2869,44 @@ until released. A base-none **victim** of a retail thrower plays its own thrown 
 reach that exact frame: the freeze and the hold check use `>=` (`ftCo_800DE5A4`, `ftCo_800DE920`), a clip that ends first stays on its last frame, and a victim in a throw is still
 freed by the grab timer. A define's throws do not set `cmd_var` 0 (ground throws end at their clip); `fn_800DD5EC` (a throw landing from the air) is capped at 600 steps.
 
+### 22.11 Template defines: a complete retail fighter as a package (Captain Falcon, 2026-10-08)
+
+`define.template` (additive inside `"geno": 10`; only with `base: "none"`): `"mario"` (the default, every earlier define) or `"captain"`. The template is the retail fighter whose
+**native code and tables** the define runs on: its special entries (`ftData_SpecialN`...), its specific state table (`ftCa_Init_MotionStateTable`, 23 states, motions 341..363), the
+callbacks, the per-kind tables `GenoDefine_InitKinds` inherits, and everything `ftLib_GetKind` (the kind switches of the specials shared with Ganondorf) asks. Fighter kind 2,
+CharacterKind 0 (so the sound bank, the announcer and the effect bank are Falcon's). Bounds follow the template: 318 animation rows (subaction 0..317) and 364 motions
+(`common_states` 0..363). A file with `template` below geno 10, or without `base: "none"`, or naming another fighter, is refused (test `geno_define_template`).
+
+What the package owns (the Falcon export, `ports/ir/tools/retail_define.py captain`, workspace): the six costume models and the animation bank (renamed copies, `GnFalcon_*.dat`,
+`GnFalconAJ.dat`), `plan.json` (joints, parts table, the `ftData` joint fields, 11 hurtboxes, a clip, flags and blend bytes for every one of the 318 rows), all 76 named attributes,
+the 35 words of the special-attribute block, and one `subactions` overlay per script row (313 overlays, 4,806 words). Mutating the package changes the game (a `Wait` timer in the
+Attack11 overlay moved its hitbox one frame; `walk_max_vel` x1.1 changed the walk): the data is live, not ignored.
+
+**Relative branches.** A retail script row calls and jumps to absolute archive pointers (`Subroutine` 5, `Goto` 7: 56 of Falcon's rows). In a define's overlay the operand is the
+**word index of the target command inside the same overlay**; the exporter lays out the row's script and every run it can reach (shared subroutines, loop targets) as one overlay. The
+registry refuses an overlay whose operand is not a command boundary (`slot_rel`), and `geno_pool_sync` turns each operand into the pool address when it fills guest memory. An
+attach profile's overlays are unchanged (absolute pointers stay refused by `tools/geno check`). Limits raised for this: `GENO_MAX_OVERLAYS` 192 -> 320, `GPL_MAX_CLIPS` 256 -> 1024 (integration: the LAB source library; Falcon alone needs 318), `GPL_MAX_MOTIONS` 351 -> 368.
+
+**The template's skeleton rule.** A template define keeps the template's joint tree, so the tables that name its joints stay valid and are used as retail does: the guard pose trees
+(`x20`), the hand poses (`x1C`), the metal model (`x5C`), the demo clips (`x14`) and the hurtbox-status words. `GenoDefine_Load` checks the package's parts table against
+`ftPartsTable[template]` entry for entry and refuses the define otherwise. `Geno_DefineTemplateSkeleton(kind)` is the switch at the five sites that used to treat every base-none define
+as a foreign skeleton (`ft_0C88.c`, `ftanim.c`, `ftcoll.c`, `ftdata.c`, `ftCo_Guard.c` via `GenoDefine_RestPoseTree`).
+
+**Still the template's, not the package's** (the honest list; `census` logs the pointer fields): the native special-move code and state callbacks; `ftData` `x18` (demo blend),
+`x1C` (hand poses), `x20` (guard trees), `x24`, `x2C` (dynamics), `x5C` (metal); the effect file (EfCa) and the sound bank, which scripts and code name by id and the engine cannot
+mount from a mod; the select icon and portrait (the letters fallback). The unnamed `ftCo_DatAttrs` fields keep Falcon's values (the copy is Falcon's).
+
+**Diagnostics added with it** (read-only): `gd.rng()` (the game's random seed; a trace of it per frame names the first frame two runs part ways), `MELEE_RAND_TRACE=<file>` (every draw: frame, caller, seed after, global flag; the offline mode of the render-determinism work) They found the one real bug of the export: `ftLib_GetKind` returned 126, so Falcon Kick's flame (`switch (ftLib_GetKind(gobj))` in
+`ftcaptainspeciallw.c`) was never spawned and the particle system drew 8 fewer randoms at that frame.
+
+**Proof** (LAB, vanilla disc, same inputs, same saved state; `tools/geno/falcon_parity` in the workspace): 310 scripted scenarios, 38,455 logic frames, retail Falcon against the define:
+per frame the action, action frame, animation frame, position, velocities, facing, percent, hitlag, hitstun, knockback, shield, jumps, intangibility, every live hitbox (bone, damage, angle,
+growth, base, size, x, y, z), a hash of all 11 hurtbox capsules and the game's RNG seed, for both fighters: **310 of 310 identical**. Retail against itself: identical (deterministic).
+Native suite: 361 of 361.
+
+Not exercised: held items and item throws (motions 92..177, 341..346), the other fighters' capture states, wall and ceiling states (Final Destination has no walls), Kirby copying the
+define, netplay with the define (it carries an online identity like any define; no match was run), the results and intro demo clips and the select art on screen.
+
 ## 23. Fighter Lua (slice 5: the first increment built 2026-10-07, the second move and the tooling 2026-10-08)
 
 A define can write a state's behaviour as Lua. The shape is deliberately small: two phases (`enter`, `frame`), a typed per-fighter state, five commands (four in the first increment; `turn` came with the second move). Physics,

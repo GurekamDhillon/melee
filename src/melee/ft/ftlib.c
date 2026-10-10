@@ -858,6 +858,17 @@ bool ftLib_80087284(HSD_GObj* gobj)
 FighterKind ftLib_GetKind(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
+#if defined(TARGET_PC)
+    {
+        /* A Geno define on template "captain" is asked which fighter it is by the native specials it shares with Captain
+         * Falcon and Ganondorf (flame effects, sounds, the punch's variants): it answers as the template. */
+        extern int Geno_DefineBaseKind(int kind);
+        extern int Geno_DefineTemplateSkeleton(int kind);
+        if (fp->kind >= Ft_Kind_Mex0 && Geno_DefineTemplateSkeleton(fp->kind)) {
+            return (FighterKind) Geno_DefineBaseKind(fp->kind);
+        }
+    }
+#endif
     return fp->kind;
 }
 

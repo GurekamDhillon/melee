@@ -1348,7 +1348,8 @@ void ftAnim_ApplyPartAnim(Fighter_GObj* gobj, s32 arg1, s32 arg2, f32 arg3)
          * and writes through a NULL joint (lbCopyJObjSRT; the Courier in Classic against Mario). The define has no hand
          * poses of its own yet, so the request is ignored. */
         extern int Geno_DefineIsNone(int kind);
-        if (Geno_DefineIsNone(fp->kind)) {
+        extern int Geno_DefineTemplateSkeleton(int kind);
+        if (Geno_DefineIsNone(fp->kind) && !Geno_DefineTemplateSkeleton(fp->kind)) {   /* a template's own skeleton keeps the template's poses */
             static unsigned char said[256];
             if (fp->kind >= 0 && fp->kind < 256 && !said[fp->kind]) {
                 said[fp->kind] = 1;

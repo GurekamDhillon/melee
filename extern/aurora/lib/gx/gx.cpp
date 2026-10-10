@@ -242,11 +242,21 @@ gfx::Viewport map_logical_viewport(const gfx::Viewport& logicalViewport) noexcep
 
   const float scaleX = static_cast<float>(targetWidth) / static_cast<float>(logicalFbWidth);
   const float scaleY = static_cast<float>(targetHeight) / static_cast<float>(logicalFbHeight);
+  // Snap to whole target pixels, outward, exactly as map_logical_scissor and the EFB copy rectangle do. A
+  // fractional edge (a 256-wide shadow map scaled by 2496/640 is 998.4 pixels) leaves the last column of the
+  // copy rectangle unrendered: it holds the cleared EFB, so a map whose border is meant to read "no shadow"
+  // reads black there, and the surface sampling that border draws a black band. The epsilon keeps a mapping
+  // that is exact up to float error (the full-frame viewport) from growing by a pixel.
+  constexpr float kSnapEps = 1.0f / 1024.0f;
+  const float left = std::floor(logicalViewport.left * scaleX + kSnapEps);
+  const float top = std::floor(logicalViewport.top * scaleY + kSnapEps);
+  const float right = std::ceil((logicalViewport.left + logicalViewport.width) * scaleX - kSnapEps);
+  const float bottom = std::ceil((logicalViewport.top + logicalViewport.height) * scaleY - kSnapEps);
   return {
-      .left = logicalViewport.left * scaleX,
-      .top = logicalViewport.top * scaleY,
-      .width = logicalViewport.width * scaleX,
-      .height = logicalViewport.height * scaleY,
+      .left = left,
+      .top = top,
+      .width = std::max(right - left, 1.0f),
+      .height = std::max(bottom - top, 1.0f),
       .znear = logicalViewport.znear,
       .zfar = logicalViewport.zfar,
   };

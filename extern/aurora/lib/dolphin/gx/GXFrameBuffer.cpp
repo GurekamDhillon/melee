@@ -27,8 +27,13 @@ aurora::Vec2<uint32_t> scale_copy_dst(u32 logicalWidth, u32 logicalHeight) {
 
   const float scaleX = static_cast<float>(targetWidth) / static_cast<float>(logicalFbWidth);
   const float scaleY = static_cast<float>(targetHeight) / static_cast<float>(logicalFbHeight);
-  const auto scaledWidth = std::max<u32>(static_cast<u32>(std::lround(static_cast<float>(logicalWidth) * scaleX)), 1);
-  const auto scaledHeight = std::max<u32>(static_cast<u32>(std::lround(static_cast<float>(logicalHeight) * scaleY)), 1);
+  // Round outward like the copy rectangle (map_logical_scissor) and the viewport, so a copy of a logical
+  // rectangle at the same size as its source keeps the source's pixel size.
+  constexpr float kSnapEps = 1.0f / 1024.0f;
+  const auto scaledWidth =
+      std::max<u32>(static_cast<u32>(std::ceil(static_cast<float>(logicalWidth) * scaleX - kSnapEps)), 1);
+  const auto scaledHeight =
+      std::max<u32>(static_cast<u32>(std::ceil(static_cast<float>(logicalHeight) * scaleY - kSnapEps)), 1);
   return {scaledWidth, scaledHeight};
 }
 } // namespace

@@ -112,3 +112,13 @@ Only no-hitch additions are carried: prior surface, profiler, SSE/palette and
 other dirty changes are preserved. The patch is already reflected here; a
 read-only reverse apply check passed. New symbols require matching rebuilt Aurora
 libraries. No rebuild, game launch or native timing/visual acceptance was run.
+
+## Viewport/copy rectangles snap to whole pixels (fd-blackline)
+
+`map_logical_viewport` (lib/gx/gx.cpp) now rounds a mapped viewport outward to whole target pixels, the way
+`map_logical_scissor` and the EFB copy rectangle already did, and `scale_copy_dst` (lib/dolphin/gx/GXFrameBuffer.cpp)
+rounds the copy size outward instead of to nearest. With the aspect viewport policy a logical 256-wide shadow-map
+viewport on a 2496-wide target is 998.4 pixels: the copy rectangle took 999 columns, the last one never rendered
+and holding the cleared EFB, so the map's border read as shadow and Final Destination's top surface drew a black
+band whenever target-width x 256 / 640 was not a whole number (e.g. a 1529x882 client). Proof and sweep:
+`pc/tools/fd_blackline_repro.py`. Needs rebuilt aurora_core / aurora_gx libraries.

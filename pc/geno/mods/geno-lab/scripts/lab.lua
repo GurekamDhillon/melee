@@ -928,6 +928,7 @@ local function set_sel(s)
 end
 
 local function menu_open(port)
+  if menu.clips_release then menu.clips_release() end -- CLIPS hands the pad back (its mirror would blank the menu's pad)
   menu.open, menu.port, menu.t, menu.tab_t, menu.sel_t = true, port, 0, 99, 99
   menu.was_paused = gd.paused()
   ensure_history()
@@ -5124,6 +5125,7 @@ function LE.clips_tick()
     if clip and in_mode("clips") then LE.clips_console("play " .. clip) end
   end
   if not in_mode("clips") or not offline() then
+    if cl.mir then LE.clips_release() end
     if cl.cam then gd.camera_attach(10) cl.cam = false end
     cl.parked = false
     return
@@ -5145,10 +5147,12 @@ function LE.clips_tick()
   elseif cl.cam then
     gd.camera_attach(10) cl.cam = false
   end
-  if cl.row and not menu.open then LE.clips_pad() end
   if cl.row and not menu.open then
     -- a pad held or knocked while posing would take the fighter out of Wait: hold its port neutral
-    pad_neutral(focus, 2)
+    -- (mirrored away, so the pad stays readable; a plain neutral claim when the mirror is refused)
+    if LE.clips_mirror() then LE.clips_pad() else pad_neutral(focus, 2) end
+  elseif cl.mir then
+    LE.clips_release()
   end
   if cl.pend == "resume" then cl.pend = nil gd.resume() end
   if cl.pend == "slow" then cl.pend = nil cl.slow = true end
@@ -5265,30 +5269,61 @@ end
 LE.clips_owns_keys = function() return cl.cur ~= nil end
 LE.clips_step, LE.clips_goto, LE.clips_toggle = cl_step, cl_goto, function() ACTIONS.cl_toggle() end
 
--- The pad: read the RAW buttons (gd.pad(port, true)), because the fighter's own port is held neutral below.
--- D-pad left / right step -1 / +1 (held repeats), up / down +10 / -10, Y pause / play, X first frame, Z last frame.
+-- The pad. The fighter's own port is held neutral while posing, and a gd.input claim blanks the port BEFORE the
+-- pad is read back (gw_script_pad.c), so a claim hides the very buttons we want. gd.mirror_pad(focus, spare, true)
+-- (the dummy recorder's trick) leaves the fighter's port neutral and shows the physical pad on a spare port,
+-- which gd.pad(spare, true) reads. D-pad left / right step -1 / +1 (held repeats), up / down +10 / -10,
+-- Y pause / play, X first frame, Z last frame, START opens the menu.
 local PAD_CL = { LEFT = function() cl_step(-1) end, RIGHT = function() cl_step(1) end,
   UP = function() cl_step(10) end, DOWN = function() cl_step(-10) end,
   Y = function() ACTIONS.cl_toggle() end, X = function() cl_goto(1) end, Z = function() cl_goto(cl_last_frame()) end }
 local PAD_REP = { LEFT = true, RIGHT = true, UP = true, DOWN = true }
 local pad_held = {}
+function LE.clips_release()
+  if cl.mir then
+    cl.mir = nil
+    pcall(gd.mirror_pad)
+    pad_held = {}
+    for port = 1, 4 do pad_neutral(port, 6) end
+  end
+end
+menu.clips_release = LE.clips_release
+-- true when the physical pad of `focus` is mirrored to a spare port (and the fighter's port is neutral)
+local function cl_mirror()
+  if cl.mir and cl.mir.from == focus then return true end
+  if not gd.mirror_pad or focus > 4 then return false end
+  local to -- a port with no fighter if there is one (a CPU port ignores its pad anyway)
+  for port = 4, 1, -1 do
+    if port ~= focus then
+      if gd.player(port) == nil then to = port break end
+      to = to or port
+    end
+  end
+  if to == nil or not pcall(gd.mirror_pad, focus, to, true) then return false end
+  cl.mir = { from = focus, to = to }
+  pad_held = {}
+  return true
+end
+LE.clips_mirror = cl_mirror
 function LE.clips_pad()
-  if cl.cur == nil or not gd.buttons then return end
-  for port = 1, 4 do
-    local ok, p = pcall(gd.pad, port, true)
-    if ok and p then
-      local h = pad_held[port]
-      if h == nil then h = {} pad_held[port] = h end
-      for name, fn in pairs(PAD_CL) do
-        local bit = gd.buttons[name]
-        if bit and (p.buttons & bit) ~= 0 then
-          h[name] = (h[name] or 0) + 1
-          local n = h[name]
-          if n == 1 or (PAD_REP[name] and n > 18 and n % 3 == 0) then fn() end
-        else
-          h[name] = 0
-        end
-      end
+  if not cl.mir or not gd.buttons then return end
+  local ok, p = pcall(gd.pad, cl.mir.to, true)
+  if not ok or p == nil then return end
+  local bit = gd.buttons.START
+  if bit and (p.buttons & bit) ~= 0 then
+    if not pad_held.START then pad_held.START = 1 menu_open(focus) return end
+  else
+    pad_held.START = nil
+  end
+  if cl.cur == nil then return end
+  for name, fn in pairs(PAD_CL) do
+    local b = gd.buttons[name]
+    if b and (p.buttons & b) ~= 0 then
+      pad_held[name] = (pad_held[name] or 0) + 1
+      local n = pad_held[name]
+      if n == 1 or (PAD_REP[name] and n > 18 and n % 3 == 0) then fn() end
+    else
+      pad_held[name] = 0
     end
   end
 end

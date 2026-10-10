@@ -961,7 +961,7 @@ do
       local rp, rpa, rr, rpd, rk, rkp = gd.paused, gd.pause, gd.resume, gd.anim_preview, env.gd.key, env.gd.key_pressed
       local rpad = gd.pad
       local idle = { buttons = 0, x = 0, y = 0, cx = 0, cy = 0, l = 0, r = 0 }
-      gd.pad = function(port) if port == 1 then return pad end return idle end
+      gd.pad = function(port) if mirror and port == mirror[2] then return pad end return idle end
       gd.paused = function() return paused end
       gd.pause = function() paused = true pauses = pauses + 1 end
       gd.resume = function() paused = false resumes = resumes + 1 end
@@ -992,9 +992,9 @@ do
       padtap(gd.buttons.Y); expect(not paused and resumes == 1, "pad Y plays a paused clip")
       paused = false; padtap(gd.buttons.RIGHT)
       expect(paused and shown() == 4, "a step while playing pauses first, then steps (" .. shown() .. ")")
-      -- the pad does not leak into the fighter: CLIPS still holds the port neutral
-      local held_neutral = inputs[1] ~= nil
-      expect(held_neutral, "CLIPS still holds the focused port neutral while the pad steps")
+      -- the fighter's own port is neutral because its pad is mirrored away (a claim would hide the pad from the Lab too)
+      expect(mirror and mirror[1] == 1 and mirror[2] ~= 1 and mirror[3] == true,
+        "CLIPS mirrors the focused pad to a spare port with take (neutral fighter, readable pad)")
       -- the keyboard: LEFT / RIGHT / HOME / END / SPACE
       local function keytap(k, ctrl)
         env.gd.key = function(n) return n == k or (ctrl and n == "CTRL") end
@@ -1011,6 +1011,9 @@ do
       keytap("END"); expect(shown() == 60, "key END goes to the last frame (" .. shown() .. ")")
       paused = true; resumes = 0; keytap("SPACE"); expect(resumes == 1 and not paused, "key SPACE plays a paused clip")
       keytap("SPACE"); expect(paused, "key SPACE pauses a playing clip")
+      lab("mode training") env.on_tick()
+      expect(mirror == nil, "leaving CLIPS gives the pad back (mirror cleared)")
+      lab("mode clips")
       gd.pad, gd.paused, gd.pause, gd.resume, gd.anim_preview, env.gd.key, env.gd.key_pressed = rpad, rp, rpa, rr, rpd, rk, rkp
     end
     lab("clips stop")

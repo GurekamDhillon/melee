@@ -457,13 +457,14 @@ void GenoDefine_Load(int kind, int base)
     {
         extern int Geno_ProfilePoolWords(int p);
         extern int Geno_PoolWords(void);
+        extern int Geno_SlotCount(void);
         extern int Geno_ProfileForKind(int kind);
         extern int Geno_OverlayCount(int p);
         extern int Geno_StateCount(int p);
         extern unsigned Geno_ProfileStorageBytes(void);
         int p = Geno_ProfileForKind(kind);
-        OSReport("geno: define budgets: kind %d overlays %d/%d, pool %d words (all profiles %d/%d), states %d/%d, arena %u/%u\n",
-                 kind, Geno_OverlayCount(p), GENO_MAX_OVERLAYS, Geno_ProfilePoolWords(p), Geno_PoolWords(), GENO_POOL_WORDS,
+        OSReport("geno: define budgets: kind %d overlays %d/%d, pool %d words (all profiles %d/%d), slots %d/%d, states %d/%d, arena %u/%u\n",
+                 kind, Geno_OverlayCount(p), GENO_MAX_OVERLAYS, Geno_ProfilePoolWords(p), Geno_PoolWords(), GENO_POOL_WORDS, Geno_SlotCount(), GENO_MAX_SLOTS,
                  Geno_StateCount(p), GENO_MAX_STATES, Geno_ProfileStorageBytes(), 2u * 1024u * 1024u /* GENO_PROFILE_STORAGE_BYTES */);
     }
 }

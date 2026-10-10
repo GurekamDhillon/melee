@@ -1997,8 +1997,11 @@ static void sn_region_diff(int next) {
                     {   /* two different MEM1 pointers: name what each pass has there (a GObj header: class, links, user data) */
                         uint32_t pa = sn_rd32(smem, sn_creg[r].va + off), pb = sn_rd32(NULL, sn_creg[r].va + off);
                         static int ptr_logs;
-                        if (ptr_logs < 12 && sn_creg[r].tag < 100 && pa >= 0x80000000u && pa < 0x81800000u &&
-                            pb >= 0x80000000u && pb < 0x81800000u && ((pa | pb) & 3) == 0) {
+                        /* Include the expanded PC arena; all twelve words below must fit. */
+                        if (ptr_logs < 12 && sn_creg[r].tag < 100 && pa >= 0x80000000u &&
+                            (uint64_t) pa + 0x30u <= 0x80000000ull + gw_mem1_size &&
+                            pb >= 0x80000000u && (uint64_t) pb + 0x30u <= 0x80000000ull + gw_mem1_size &&
+                            ((pa | pb) & 3) == 0) {
                             ++ptr_logs;
                             gw_log("snap: REGION-DIFF pointer at frame %d tag %d +0x%X: first pass %08X -> [%08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X]",
                                    next, sn_creg[r].tag, off, pa, sn_rd32(smem, pa), sn_rd32(smem, pa + 4), sn_rd32(smem, pa + 8),

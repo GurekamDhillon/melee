@@ -178,6 +178,12 @@ is not supported. No online/rollback-safety claim is made.
 
 ## Read-only scene queries
 
+`gd.match()` reports `stage` as the active internal `GrKind` and
+`stage_external` as the loaded external `StKind` (for example, a scene launched
+with `stage=ext:121` reports `stage_external == 121`). Both are `-1` outside a
+match. The external value comes from `Stage_80225194`, after stage selection,
+rather than from the requested launch text.
+
 `model_get` and `model_instances` are available from the console as well as mod
 scripts and do not fork the rewind timeline. A row contains `handle`, `model`
 (asset token), `path` (resolved mesh path), `collision_lines`, `batched` (eligible for static batching), and every instance

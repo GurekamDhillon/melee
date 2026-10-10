@@ -33,13 +33,16 @@ struct lbHeap_HeapDesc lbHeap_803BA380[LBHEAP_DESC_COUNT] = {
      * The Akaneia disc's IfAll.usd (0xE9B1C, the "all items" archive) is 0x55B8 larger than the
      * vanilla disc's, which overflows m-ex's heap 3 during match setup (the item/effect preload
      * in lbdvd.c inline2 -- EfMnData, EfCoData, ItCo, IfAll -- all land in heap 3). The measured
-     * shortfall is 0xB6B0; heap 3 is grown by 0x20000 (128 KB) to 0x51A690, donating from the
-     * main heap (which sits at ~11.3 MB and only ~35 KB in use at that point). */
-    /* Heap 4 (AllM, the fighter files) gets the PC port's 16 MB of extra MEM1 (GW_MEM1_SIZE, 40 MB):
+     * shortfall was 0xB6B0; the first PC expansion added 0x20000 (128 KB) to reach 0x51A690.
+     * Six full Geno Falcons on ACE ext:121 then left only 9,520 bytes. Give heap 3 another
+     * 8 MiB (0xD1A690 total), leaving >8 MiB for that load and a 4 MiB regression floor.
+     * GW_MEM1_SIZE in gw_runtime.c grows by the same 8 MiB (40 -> 48 MiB):
+     * lbHeap_80015900's remaining main heap and heaps 4/5 keep their capacities. */
+    /* Heap 4 (AllM, the fighter files) keeps the first 16 MiB of the PC port's extra MEM1:
        0x64B400 + 0x1000000. Two Ultimate Soras in different costumes (3.6 + 3.9 MB costume files
        on top of 0.9 MB of fighter data) failed ALLOC_FAIL heap 4 at 0x64B400; four need ~15 MB.
        The main heap (Hsd) is what is left of the arena, so it keeps its size. */
-    { 2, 1, 6, 0x800 },    { 3, 1, 2, 0x51A690 }, { 4, 2, 6, 0x164B400 },
+    { 2, 1, 6, 0x800 },    { 3, 1, 2, 0xD1A690 }, { 4, 2, 6, 0x164B400 },
     /* Heap 5 (AllA) holds each loaded fighter's complete animation archive. Sora's PlUsAJ is
      * about 4.6 MB; Classic's multi-opponent preload filled 8.8 MB of the old 9.4 MB slice and
      * failed its next 0x14D940-byte allocation. The extra 16 MB of port ARAM goes to AllA. */
@@ -423,6 +426,10 @@ void lbHeap_80015F3C(void)
         }
         desc++;
     }
+#if defined(TARGET_PC)
+    OSReport("lbHeap: PC stage heap 3 expanded capacity=%u (+8 MiB MEM1)\n",
+             lbHeap_80431FA0.heap_array[3].size);
+#endif
 }
 
 #if defined(TARGET_PC)

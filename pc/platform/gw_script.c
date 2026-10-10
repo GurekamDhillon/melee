@@ -485,6 +485,7 @@ extern int gw_gx_suppress_draws;
 /* C++ queue drain in gw_overlay.cpp; excludes older frames from the screenshot. */
 extern void gw_Wb_CaptureScreenshot(const char *path);
 extern int gw_ScriptGame_WbTargetJoint(int slot);
+extern void gw_ScriptGame_WbPrepare(int slot);
 int gw_Wb_RenderActive(void) {
     return gs_wb_render.pending && gw_Wb_Enabled() && gs.match_active &&
            gs_wb_render.scene_epoch == gs.scene_epoch && !gw_Snap_Resimulating();
@@ -7166,16 +7167,17 @@ static float gs_wb_camera_number(lua_State *L, int table, const char *name, floa
 /* Workbench orbit uses the same scalar snapshot as frame_info. The part table
  * supplies the torso/root joint id; extended limbs must not move the target.
  * Raw pose fields override the orbit without claiming the simulation camera. */
-static void gs_wb_camera(lua_State *L, int table, const GwWbFrame *frame, float pose[8]) {
+static void gs_wb_camera(lua_State *L, int table, const GwWbFrame *frame, int stage, float pose[8]) {
     const char *preset;
     float yaw = 45.0f, pitch = 15.0f, distance, delta = 0.0f;
-    int i, target;
+    int i, target, raw_pose = 0, auto_fov;
     table = lua_absindex(L, table);
     luaL_checktype(L, table, LUA_TTABLE);
     lua_getfield(L, table, "preset");
     preset = luaL_optstring(L, -1, "three_quarter");
-    if (strcmp(preset, "front") == 0) { yaw = 0; pitch = 0; }
-    else if (strcmp(preset, "side") == 0) { yaw = 90; pitch = 0; }
+    /* fighters face +/-X, so the profile ("side") camera sits on the Z axis like the match camera; "front" looks along X */
+    if (strcmp(preset, "front") == 0) { yaw = 90; pitch = 0; }
+    else if (strcmp(preset, "side") == 0) { yaw = 0; pitch = 0; }
     else if (strcmp(preset, "top") == 0) { yaw = 0; pitch = 90; }
     else if (strcmp(preset, "three_quarter") != 0)
         luaL_error(L, "wb.render unknown camera preset '%s'", preset);
@@ -7200,9 +7202,12 @@ static void gs_wb_camera(lua_State *L, int table, const GwWbFrame *frame, float 
         luaL_error(L, "wb.render camera target_joint is not in the frame or has no finite pose");
     for (i = 0; i < 2; ++i) {
         lua_getfield(L, table, i ? "interest" : "eye");
-        if (!lua_isnil(L, -1)) gs_camera_vec(L, -1, pose + i * 3);
+        if (!lua_isnil(L, -1)) { gs_camera_vec(L, -1, pose + i * 3); raw_pose = 1; }
         lua_pop(L, 1);
     }
+    lua_getfield(L, table, "fov");
+    auto_fov = lua_isnil(L, -1);
+    lua_pop(L, 1);
     pose[6] = gs_wb_camera_number(L, table, "fov", 30.0f);
     pose[7] = gs_wb_camera_number(L, table, "roll", 0.0f);
     if (pose[6] < 1.0f || pose[6] >= 179.0f) luaL_error(L, "wb.render fov must be 1..<179");
@@ -7216,8 +7221,12 @@ static void gs_wb_camera(lua_State *L, int table, const GwWbFrame *frame, float 
         luaL_error(L, "wb.render eye and interest must be distinct finite positions");
     if (fabsf(pose[0] - pose[3]) + fabsf(pose[2] - pose[5]) < 0.000001f)
         luaL_error(L, "wb.render vertical raw camera needs a nonzero horizontal offset");
-    gw_log("workbench: render camera target_joint=%d eye=(%g,%g,%g) interest=(%g,%g,%g)",
-        target, pose[0], pose[1], pose[2], pose[3], pose[4], pose[5]);
+    /* Keep explicit lenses/raw views exact. Default orbit captures retain the
+     * nearby floor when stage geometry is requested, including lifted aerials. */
+    if (stage && auto_fov && !raw_pose && pose[7] == 0.0f)
+        pose[6] = gw_Wb_CameraFloorFov(frame->floor_y, pose, pose + 3, pose[6]);
+    gw_log("workbench: render camera target_joint=%d eye=(%g,%g,%g) interest=(%g,%g,%g) fov=%g",
+        target, pose[0], pose[1], pose[2], pose[3], pose[4], pose[5], pose[6]);
 }
 
 /* Aurora's libpng thread opens its destination before writing. File existence
@@ -7317,10 +7326,6 @@ static int l_wb_render(lua_State *L) {
     snprintf(path, sizeof path, "%s/view.png", gw_Wb_Dir());
     snprintf(metadata, sizeof metadata, "%s/view.json", gw_Wb_Dir());
     if (!gs_wb_read_frame(&frame)) return luaL_error(L, "no fighter on port 1");
-    lua_getfield(L, 1, "camera");
-    if (lua_isnil(L, -1)) { lua_pop(L, 1); lua_newtable(L); }
-    gs_wb_camera(L, -1, &frame, pose);
-    lua_pop(L, 1);
     lua_getfield(L, 1, "overlays");
     if (!lua_isnil(L, -1)) {
         luaL_checktype(L, -1, LUA_TTABLE);
@@ -7334,6 +7339,10 @@ static int l_wb_render(lua_State *L) {
         }
     }
     lua_pop(L, 1);
+    lua_getfield(L, 1, "camera");
+    if (lua_isnil(L, -1)) { lua_pop(L, 1); lua_newtable(L); }
+    gs_wb_camera(L, -1, &frame, options[WB_RENDER_STAGE], pose);
+    lua_pop(L, 1);
     /* Validate first: a malformed request must not change a prior result. */
     if ((remove(metadata) != 0 && errno != ENOENT) || (remove(path) != 0 && errno != ENOENT))
         return luaL_error(L, "cannot clear previous workbench capture");
@@ -7346,6 +7355,8 @@ static int l_wb_render(lua_State *L) {
     gs_wb_render.scene_epoch = gs.scene_epoch;
     gs_wb_render.started = GetTickCount();
     gs_wb_render.pending = 1;
+    gw_log("workbench: render drawing model=%d fighter_visible=%d",
+        options[WB_RENDER_MODEL], !gw_ScriptGame_LabI(0, LAB_I_HIDDEN));
     gw_log("workbench: render requested %dx%d model=%d hit=%d hurt=%d ecb=%d bones=%d floor=%d hud=%d stage=%d",
         w, h, options[0], options[1], options[2], options[3], options[4], options[5], options[6], options[7]);
     lua_pushfstring(L, "@%s", path);
@@ -9660,6 +9671,9 @@ void gw_Script_FramePost(void) {
             const char *bench = getenv("MELEE_SYNCTEST_BENCH");
             if (bench != NULL && atoi(bench) == 1 && !gw_Netplay_Enabled() && !gw_RB_Enabled()) gw_Script_NetBuildApply();
         }
+        /* Finish Entry while its saved scale is still valid, before a hook or
+         * wb.frame can replace the motion and before pausing the simulation. */
+        if (gw_Wb_Enabled()) gw_ScriptGame_WbPrepare(0);
         gs_hook_all("on_match_start", 0, 0, 0);
         if (gw_Wb_Enabled()) {
             gs.paused = 1;

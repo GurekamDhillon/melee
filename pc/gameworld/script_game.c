@@ -2438,6 +2438,21 @@ int ScriptGame_LabStageDraw(int mask, int value)
     return now;
 }
 
+/* The workbench pauses on the first fighter frame, during Entry. Skipping to
+ * a preview motion would clear invisibility but strand Entry's squashed root
+ * scale: only ftCo_800C6B6C normally restores mv.co.entry.x8. Restore that saved
+ * scale before the normal EntryEnd exit (ftCommon_8007D92C) clears its flags and
+ * callbacks. Called once, before on_match_start hooks, only in offline workbench. */
+void ScriptGame_WbPrepare(int slot)
+{
+    Fighter* fp = script_fighter(slot);
+    if (fp == NULL || fp->motion_id < ftCo_MS_Entry ||
+        fp->motion_id > ftCo_MS_EntryEnd) return;
+    HSD_JObjSetScale(GET_JOBJ(fp->gobj), &fp->mv.co.entry.x8);
+    ftCommon_8007D92C(fp->gobj);
+    OSReport("workbench: port %d entry finished; model scale restored\n", slot + 1);
+}
+
 /* Resolve roles through the fighter's actual part table, including Geno/m-ex
  * remaps. Native wb.render uses this id in its frame_info snapshot. */
 int ScriptGame_WbTargetJoint(int slot)

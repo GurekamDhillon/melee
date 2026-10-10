@@ -14,9 +14,23 @@ local cases = {
     {overlays={floor=true}},
     {overlays={stage=false,model=false,bones=true}},
     {overlays={hud=true}},
+    {camera={preset='front'},overlays={model=false}},
+    {camera={preset='side'},overlays={model=false}},
+    {camera={preset='three_quarter'},overlays={model=false}},
+    {camera={preset='top'},overlays={model=false}},
+    {camera={preset='front',fov=30}}, -- explicit lens must stay narrow
+    {camera={preset='side'},overlays={stage=false}},
 }
 local index, pending, ticks = 1, false, 0
-local before, draw_flags, stage_flags
+local before, draw_flags, stage_flags, prepared, preparing
+local function check_fighter_height()
+    local lo,hi=math.huge,-math.huge
+    for _,j in ipairs(gd.joints(1,true)) do
+        if j.valid then lo,hi=math.min(lo,j.y),math.max(hi,j.y) end
+    end
+    -- Goku fixture: interrupted Entry left every bone within 0.2 vertical units.
+    assert(hi-lo>1,'fighter retained Entry squash after workbench preparation')
+end
 local function same_pose(a,b)
     assert(a.mode == b.mode, 'render changed camera mode')
     for _,k in ipairs({'eye','interest'}) do
@@ -30,6 +44,24 @@ function on_tick()
     if not wb or not gd.player(1) or not gd.paused() then return end
     ticks=ticks+1
     assert(ticks<20000,'workbench render timeout')
+    if not prepared then
+        assert(not gd.player(1).hidden,'workbench paused with an invisible Entry fighter')
+        check_fighter_height()
+        local dair
+        for _,row in ipairs(gd.motion_list(1)) do
+            if row.name=='AttackAirLw' then dair=row.id end
+        end
+        assert(dair,'Goku fixture needs AttackAirLw')
+        assert(wb.frame{motion=dair,frame=14,lift=40}=='pending')
+        prepared,preparing=true,true
+        return
+    end
+    if preparing then
+        local json=gd.data_read('frame.json')
+        if not json or tonumber(json:match('"frame":([%-0-9]+)'))~=14 then return end
+        check_fighter_height()
+        preparing=false
+    end
     if pending then
         local json=gd.data_read('view.json')
         if not json then return end

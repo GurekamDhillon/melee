@@ -103,6 +103,27 @@ int gw_Wb_CameraOrbit(const GwWbFrame *f, int target_joint, float yaw, float pit
     return 0;
 }
 
+float gw_Wb_CameraFloorFov(float floor_y, const float eye[3],
+                         const float interest[3], float fov)
+{
+    const float degrees = 57.29577951308232f;
+    float x = eye[0] - interest[0], y = eye[1] - interest[1];
+    float z = eye[2] - interest[2], height = interest[1] - floor_y;
+    float horizontal = sqrtf(x * x + z * z);
+    float distance = sqrtf(horizontal * horizontal + y * y);
+    float depth, required;
+    if (!isfinite(height) || fabsf(height) > 60.0f ||
+        !isfinite(distance) || distance <= 0.0f) return fov;
+    /* Project the point directly below the target into HSD's Y-up camera.
+     * Pitch changes both its depth and vertical offset; using height alone
+     * would needlessly widen top views. Keep 10% room beyond the floor. */
+    depth = distance + height * y / distance;
+    if (depth <= 0.0f) return fov; /* behind the eye: no perspective lens can fit it */
+    required = 2.0f * degrees * atan2f(1.1f * fabsf(height) * horizontal / distance, depth);
+    if (required > 178.0f) required = 178.0f;
+    return required > fov ? required : fov;
+}
+
 typedef struct {
     char *out;
     size_t cap, used;

@@ -47,11 +47,35 @@ static void test_camera_orbit(void)
     assert(gw_Wb_CameraOrbit(&f, -1, 0, 0, 60, eye, interest) == -1);
 }
 
+/* A lifted fighter's floor must be inside the default frustum, with room for
+ * the stage edge. A 30-degree lens at distance 60 clips a floor 40 units below. */
+static void test_camera_floor_fov(void)
+{
+    float eye[3] = {-60, 40, 60}, interest[3] = {-60, 40, 0};
+    float fov = gw_Wb_CameraFloorFov(0, eye, interest, 30);
+    assert(fov > 67 && fov < 75);
+    assert(40 / (60 * tanf(fov * 0.00872664626f)) < 0.95f);
+    eye[0] = 0; eye[2] = 0; /* side has the same vertical framing */
+    assert(fabsf(gw_Wb_CameraFloorFov(0, eye, interest, 30) - fov) < 0.001f);
+    assert(gw_Wb_CameraFloorFov(0, eye, interest, 90) == 90);
+    eye[1] = interest[1] = 5;
+    assert(gw_Wb_CameraFloorFov(0, eye, interest, 30) == 30);
+    eye[1] = interest[1] = 61; /* distant floor does not shrink the fighter */
+    assert(gw_Wb_CameraFloorFov(0, eye, interest, 30) == 30);
+    eye[1] = interest[1] = 60;
+    assert(gw_Wb_CameraFloorFov(0, eye, interest, 30) > 90);
+    eye[1] = interest[1] = 140; /* stage height is not necessarily zero */
+    assert(fabsf(gw_Wb_CameraFloorFov(100, eye, interest, 30) - fov) < 0.001f);
+    eye[0] = -60; eye[1] = 100; eye[2] = 0.1f; interest[1] = 40;
+    assert(gw_Wb_CameraFloorFov(0, eye, interest, 30) == 30); /* top */
+}
+
 int main(int argc, char **argv)
 {
     char out[4096];
     GwWbFrame f;
     test_camera_orbit();
+    test_camera_floor_fov();
 #ifdef _WIN32
     _putenv("MELEE_WB_DIR=");
 #else

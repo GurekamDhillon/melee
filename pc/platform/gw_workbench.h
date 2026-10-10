@@ -31,4 +31,8 @@ int gw_Wb_FrameJson(const GwWbFrame *f, const char *row, char *out, size_t cap);
  * Returns 0 on success, -1 for an invalid target/pose; never writes the frame. */
 int gw_Wb_CameraOrbit(const GwWbFrame *f, int target_joint, float yaw, float pitch,
                      float distance, float eye[3], float interest[3]);
+/* Widen an automatic lens to include the floor below a nearby target (<=60
+ * units), retaining a margin for stage geometry. Never narrows an existing lens. */
+float gw_Wb_CameraFloorFov(float floor_y, const float eye[3],
+                         const float interest[3], float fov);
 #endif

@@ -250,6 +250,7 @@ local GLOBAL_KEYS = {
   { "SPACE", "Pause / resume" }, { "RIGHT", "Step +1 (hold, CTRL x10)" },
   { "LEFT", "Step -1 (hold, CTRL x10)" }, { "F5", "Save state 1" }, { "F6", "Load state 1" },
   { "F8", "Hot reload + replay" }, { "G", "Go live (stop replaying)" },
+  { "F7", "Record input on / off" }, { "SHIFT+F7", "Play the last recording" },
   { "TAB", "Next mode (SHIFT back)" }, { "1-0", "Mode directly" }, { "F", "Focus next fighter" },
   { "H", "Hide / show the Lab UI" }, { "F3", "This help" },
   { "F4", "Performance graph" }, { "ESC", "Pause menu" },
@@ -5865,6 +5866,22 @@ function on_tick()
     end
     if gd.key_pressed("F5") then gd.savestate(1) say("State 1 saved") end
     if gd.key_pressed("F8") then hot_reload() end
+    if gd.key_pressed("F7") then
+      if gd.key("SHIFT") then
+        local st = gd.rec_status()
+        if st.mode == "playing" then gd.rec_play_stop() say("Playback stopped")
+        elseif st.last ~= "" then
+          local ok, why = gd.rec_play(st.last)
+          say(ok and ("Playing " .. st.last) or ("Cannot play: " .. tostring(why)), ok and nil or DANGER)
+        else say("Nothing recorded yet", DANGER) end
+      elseif gd.rec_status().mode == "recording" then
+        local ok, n = gd.rec_stop()
+        say(ok and string.format("Recording saved (%.1f s)", (n or 0) / 60) or tostring(n))
+      else
+        local name, why = gd.rec_start()
+        say(name and ("Recording " .. name) or ("Cannot record: " .. tostring(why)), name and nil or DANGER)
+      end
+    end
     if gd.key_pressed("G") and gd.history().replaying then gd.rewind_live() say("Live from here") end
     if gd.key_pressed("F6") then
       local ok, err = pcall(gd.loadstate, 1)
@@ -6074,6 +6091,8 @@ local function help_lines()
   out[#out + 1] = "  console: lab help | status | mode <name> | set <mode>.<toggle> on|off | hide | menu [tab] | ui on|off"
   out[#out + 1] = "           port N | history [seconds] | back N | dump [N] | move <id> [frame] | events"
   out[#out + 1] = "           states | save | load <file> | rename <file> <name> | delete <file> | reload [seconds]"
+  out[#out + 1] = "           rec start [name] | stop | mark | play [name] [map] [loop] | end | list | trim | keep-last | save-history (F7, SHIFT+F7)"
+  out[#out + 1] = "           replay (resume the logged input after a rewind) | live (stop replaying, go live)"
   out[#out + 1] = "  stage E: moves [text] | play <id|name> | kb | di none|in|out|survival | ab [record|reload|same|mirror]"
   out[#out + 1] = "           export [port] [version] | fdiff [fighter verA verB] | rollbacks [n]"
   out[#out + 1] = "  stage D: adv | card | tech [clear] | actionable | dummy [key value] | combo | drill [id | stop]"
@@ -6119,6 +6138,49 @@ gd.command("lab", function(arg)
     if menu.ui.set then menu.ui.set(rest) else gd.log("lab ui: gd.ui is not available in this build") end
   elseif cmd == "port" and n then
     focus = n
+  elseif cmd == "rec" then
+    local sub, a1, a2, a3 = rest:match("^(%S*)%s*(%S*)%s*(%S*)%s*(.-)$")
+    local function report(ok, a, b) gd.log(ok and ("ok " .. tostring(a or "")) or ("refused: " .. tostring(b or a))) end
+    if sub == "start" then local nm, why = gd.rec_start(a1 ~= "" and a1 or nil) report(nm, nm, why)
+    elseif sub == "stop" then report(gd.rec_stop())
+    elseif sub == "mark" then report(gd.rec_mark(rest:match("^mark%s*(.-)$")))
+    elseif sub == "play" then
+      local loop = a2 == "loop" or a3 == "loop"
+      local map = (a2 ~= "" and a2 ~= "loop") and a2 or nil
+      report(gd.rec_play(a1 ~= "" and a1 or gd.rec_status().last, map, loop))
+    elseif sub == "end" or sub == "unplay" then report(gd.rec_play_stop())
+    elseif sub == "trim" then
+      local nm, f, t = rest:match("^trim%s+(%S+)%s+(%d+)%s+(%d+)")
+      if nm then local d, why = gd.rec_trim(nm, tonumber(f), tonumber(t)) report(d, d, why)
+      else gd.log("lab rec trim <name> <from-frame> <to-frame>   (frame offsets from the recording's start)") end
+    elseif sub == "keep-last" then
+      local sec = tonumber(a1)
+      if sec then local d, why = gd.rec_keep_last(sec, a2 ~= "" and a2 or nil) report(d, d, why)
+      else gd.log("lab rec keep-last <seconds> [name]") end
+    elseif sub == "save-history" then
+      if a1 == "" then gd.log("lab rec save-history <name> [seconds]")
+      else local d, why = gd.rec_save_history(a1, tonumber(a2)) report(d, d, why) end
+    elseif sub == "list" then
+      local rows = gd.rec_list()
+      for _, r in ipairs(rows) do
+        gd.log(string.format("  %-24s %6s frames %6.1f s  marks %d  %s%s", r.name, tostring(r.frames or "?"), r.seconds or 0,
+          r.marks or 0, r.ok and "playable here" or "REFUSED: ", r.ok and "" or tostring(r.why)))
+      end
+      gd.log(#rows .. " recording(s)")
+    elseif sub == "status" or sub == "" then
+      local st = gd.rec_status()
+      gd.log(string.format("rec: %s %s frame %d / %d (last: %s)", st.mode, st.name, st.frame, st.frames, st.last))
+    else
+      gd.log("lab rec start [name] | stop | mark [label] | play [name] [1:2,2:1] [loop] | end | list | trim <name> <from> <to> | keep-last <s> [name] | save-history <name> [s]")
+    end
+  elseif cmd == "replay" then
+    local h = gd.history()
+    if h.replaying then
+      gd.resume()
+      gd.log(string.format("replaying the logged input for %.1f s, then live (G or lab live goes live now)", h.fwd / 60))
+    else gd.log("nothing to replay: the game is at the end of the history") end
+  elseif cmd == "live" then
+    gd.rewind_live() gd.log("live from here")
   elseif cmd == "history" and n then
     cfg.history_s = n
     history_on = false

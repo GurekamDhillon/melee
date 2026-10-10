@@ -2,7 +2,7 @@
 -- and MELEE_WB_DIR=<wb-root>/pad_script so gd.data_read reads the returned file
 -- through the existing per-script sandbox (io/os are deliberately unavailable).
 local started, staged, requested, checked = false, false, false, false
-local dair
+local dair, wait_id, wait_req, fall_id
 local step_frame
 local want = 6
 local ticks = 0
@@ -36,12 +36,33 @@ function on_tick()
         for _, row in ipairs(gd.motion_list(1)) do
             if row.name == "AttackAirLw" then dair = row.id end
             if row.name == "Fall" then fall = row.id end
+            if row.name == "Wait" then wait_id = row.id end
         end
-        assert(dair and fall, "fighter needs AttackAirLw and Fall motions")
+        assert(dair and fall and wait_id, "fighter needs AttackAirLw, Fall and Wait motions")
         -- wb.frame deliberately uses lift=0. Stage airborne first using the
         -- existing gd.set_motion lift path, then wait for its boundary.
-        assert(gd.set_motion(1, fall, 1, 1.0, 40))
-        started, staged = true, true
+        -- Plan T1 Step 4: Entry-squash regression on the wait row, frame 1, before anything else.
+        assert(wb.row{motion=wait_id} == "ok")
+        assert(wb.frame{motion=wait_id, frame=1} == "pending")
+        fall_id = fall
+        started, wait_req = true, true
+        return
+    end
+    if wait_req then
+        local reply = wb.frame_info()
+        if reply:sub(1, 1) ~= "@" then return end
+        local file = assert(reply:match("[/\\]([^/\\]+)$"), "invalid wait payload path")
+        local json = assert(gd.data_read(file))
+        if tonumber(json:match('"frame":([%-0-9]+)')) ~= 1 or tonumber(json:match('"motion":([%-0-9]+)')) ~= wait_id then return end
+        local lo, hi
+        for y in json:gmatch('"pos":{"x":[%-%.%de]+,"y":([%-%.%de]+),') do
+            y = tonumber(y); lo = (lo and lo < y) and lo or y; hi = (hi and hi > y) and hi or y
+        end
+        assert(lo and hi and hi - lo > 5, "wait/1 bone span too small (Entry squash measured 0.15): " .. tostring(hi and lo and hi - lo))
+        gd.log("WBCHECK wait_span=" .. (hi - lo))
+        wait_req = false
+        assert(gd.set_motion(1, fall_id, 1, 1.0, 40))
+        staged = true
         return
     end
     if staged then

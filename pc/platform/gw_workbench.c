@@ -19,6 +19,8 @@ int gw_Wb_Enabled(void) { return g_enabled && !gw_Wb_NetplayActive(); }
 void gw_Wb_SetEnabled(int on) { g_enabled = on != 0; }
 
 /* Headless workbench (MELEE_WB_HEADLESS=1, honoured only for the workbench scene).
+ * DEFINITION: headless = Dawn null backend, window placed offscreen, no GPU device. A no-window
+ * path is out of scope (Dawn still wants an HWND surface).
  * Design (2026-10-10): the game boots as normal but Aurora gets its Dawn NULL backend
  * (no GPU device; the SDL window is created OFFSCREEN (MELEE_WINDOW_X/Y=30000) because Dawn still wants an HWND surface; SDL_HideWindow made the null-backend present loop spin in win32u, found 2026-10-10). Every GX call still
  * lands in a real, device-less Aurora, so no texture/model/display-list shim needs a gate and

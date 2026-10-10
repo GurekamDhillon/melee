@@ -10,6 +10,7 @@
 #include "shim_vi.h"
 #include "gw_profiler.h"
 #include "gw_hang.h"
+#include "gw_workbench.h"
 #include "gc_adapter_policy.h"
 
 #include <aurora/aurora.h>
@@ -182,6 +183,10 @@ static bool gw_find_iso(int argc, char **argv) {
 #ifdef _WIN32
 static AuroraBackend gw_desired_backend(void) {
   const char *env = getenv("MELEE_BACKEND");
+  if (gw_Wb_HeadlessRequested()) {
+    gw_log("workbench: headless (no GPU device: Dawn null backend; window offscreen)");
+    return BACKEND_NULL;
+  }
   if (env == NULL) {
     return BACKEND_D3D11;
   }
@@ -204,6 +209,10 @@ static AuroraBackend gw_desired_backend(void) {
  * requested backend finds no adapter Aurora falls through its list anyway (Vulkan, OpenGL ES, Null). */
 static AuroraBackend gw_desired_backend(void) {
   const char *env = getenv("MELEE_BACKEND");
+  if (gw_Wb_HeadlessRequested()) {
+    gw_log("workbench: headless (no GPU device: Dawn null backend; window offscreen)");
+    return BACKEND_NULL;
+  }
   if (env != NULL && _stricmp(env, "auto") == 0) {
     gw_log("melee-pc: MELEE_BACKEND=auto");
     return BACKEND_AUTO;
@@ -285,6 +294,10 @@ int main(int argc, char *argv[]) {
   gw_install_crash_handler();
   gw_log("melee-pc: starting");
   gw_hang_start();
+  {
+    extern void gw_Wb_ConfigureArgs(int argc, char **argv);
+    gw_Wb_ConfigureArgs(argc, argv);
+  }
 
   /* Only the raw adapter backend implements foreground ownership. SDL's GameCube
    * driver must not claim it behind that policy, even with MELEE_SDL_GAMECUBE=1. */
@@ -297,6 +310,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
   gw_log("melee-pc: disc image <disc>");
+  gw_Wb_PreScan(argc, argv); /* may select MELEE_WB_HEADLESS: sets turbo + no-present before the turbo config reads it */
   gw_turbo_configure(argc, argv);
 
   /* Scan the Target Test mod directory now so the loader reports what it found at boot, instead of

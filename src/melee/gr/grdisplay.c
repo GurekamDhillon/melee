@@ -1,4 +1,7 @@
 #include "grdisplay.h"
+#if defined(TARGET_PC)
+#include <workbench_render.h>
+#endif
 
 #include <melee/lb/forward.h>
 
@@ -91,7 +94,7 @@ void grDisplay_801C5DB0(HSD_GObj* gobj, int code)
     /* Only the original stage callback is hidden. Script-added line/model
      * callbacks still draw, and no native material/GObj flags are changed. */
     { extern int ScriptGame_StageSlotOwned(HSD_GObj*);
-      if (!ScriptGame_StageOriginalVisible() && !ScriptGame_StageSlotOwned(gobj)) return; }
+      if (!Wb_RenderOption(WB_RENDER_STAGE, ScriptGame_StageOriginalVisible()) && !ScriptGame_StageSlotOwned(gobj)) return; }
 #endif
 
     gp = GET_GROUND(gobj);
@@ -122,7 +125,14 @@ void grDisplay_801C5DB0(HSD_GObj* gobj, int code)
             return;
         }
 
+#if defined(TARGET_PC)
+        /* Retail collision display replaces the stage mesh. Workbench ECB and
+         * floor strokes are separate, so stage visibility is independent. */
+        if (Wb_RenderOption(WB_RENDER_STAGE,
+                Camera_80030A78() == false && Camera_80030AC4() != false)) {
+#else
         if (Camera_80030A78() == false && Camera_80030AC4() != false) {
+#endif
             if (gp->x10_flags.b2 == 0) {
                 HSD_FogSet(0);
             }

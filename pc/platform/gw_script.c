@@ -14,6 +14,8 @@
  */
 #include "gw.h"
 #include "gw_script.h"
+#include "gw_workbench.h"
+#include "../workbench_render.h"
 #include "gw_surface.h"
 #include "gw_motion.h"
 static void gs_earned_release(unsigned owner); /* gw_script_earned.inc */
@@ -36,6 +38,10 @@ static void gs_earned_release(unsigned owner); /* gw_script_earned.inc */
 
 #include <math.h>
 #include <limits.h>
+#include <errno.h>
+#ifdef _WIN32
+#include <share.h>
+#endif
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -367,6 +373,8 @@ static struct {
     /* pause / step */
     int paused;
     int step;
+    int wb_pending, wb_registered, wb_row_motion, wb_entered; /* native presentation/task state only */
+    char wb_row[256];
     /* savestates */
     int pending_save, pending_load; /* slot+1, 0 = none */
     GsSaveSlot slot[GS_SAVE_SLOTS];
@@ -463,9 +471,44 @@ static void gs_stage_isolation_release_owner(int owner) {
         gs_stage_isolation_owner = 0;
     }
 }
+/* Render requests outlive the Lua call and Aurora's asynchronous PNG writer.
+ * No camera ownership, rewind state, or game debug flags are changed here. */
+static struct {
+    int pending, queued, drawn, scene_epoch, w, h;
+    int options[WB_RENDER_OPTIONS];
+    float camera[8];
+    DWORD started;
+    char capture[1024], path[1024];
+} gs_wb_render;
+static unsigned gs_wb_render_serial;
+extern int gw_gx_suppress_draws;
+/* C++ queue drain in gw_overlay.cpp; excludes older frames from the screenshot. */
+extern void gw_Wb_CaptureScreenshot(const char *path);
+extern int gw_ScriptGame_WbTargetJoint(int slot);
+extern float gw_ScriptGame_JointMtx(int slot, int i, int comp);
+extern int gw_ScriptGame_FighterFacing(int slot);
+extern void gw_ScriptGame_WbPrepare(int slot);
+int gw_Wb_RenderActive(void) {
+    return gs_wb_render.pending && gw_Wb_Enabled() && gs.match_active &&
+           gs_wb_render.scene_epoch == gs.scene_epoch && !gw_Snap_Resimulating();
+}
+int gw_Wb_RenderOption(int option, int fallback) {
+    return gw_Wb_RenderActive() && option >= 0 && option < WB_RENDER_OPTIONS ?
+        gs_wb_render.options[option] : fallback;
+}
+int gw_Wb_RenderCameraBits(int field) {
+    union { float f; int i; } v;
+    v.f = field >= 0 && field < 8 && gw_Wb_RenderActive() ? gs_wb_render.camera[field] : 0.0f;
+    return v.i;
+}
+void gw_Wb_RenderDrawn(void) {
+    if (gw_Wb_RenderActive() && !gw_gx_suppress_draws && gs_wb_render.drawn < 2)
+        ++gs_wb_render.drawn;
+}
 static int gs_hud_owner;
 int gw_Script_StatusHUDVisible(void) {
-    return gs_hud_owner == 0 || gw_RB_Enabled() || gw_Netplay_Enabled();
+    return gw_Wb_RenderOption(WB_RENDER_HUD,
+        gs_hud_owner == 0 || gw_RB_Enabled() || gw_Netplay_Enabled());
 }
 static void gs_hud_release_owner(int owner) {
     if (owner > 0 && gs_hud_owner == owner) gs_hud_owner = 0;
@@ -4228,6 +4271,19 @@ static int l_motion_list(lua_State *L) {
    the frames up to `frame` (default 1; entering is frame 1, as frame-data sites count) and
    pauses: the fighter shows that frame of the move with everything its script did on the way
    (hitboxes included). Ports set before the same boundary start together: lock-step. */
+/* Shared scheduling only; callers validate the fighter and motion first.
+ * Later gs_apply_set_motion performs the existing offline timeline fork. */
+static void gs_set_motion_core(int slot, int motion, int frame, float rate, float lift) {
+    if (frame < 1) frame = 1;
+    if (frame > 600) frame = 600;
+    gs.step = 0;
+    gs.set_motion[slot] = motion + 1;
+    gs.set_rate[slot] = rate;
+    gs.set_lift[slot] = lift;
+    gs.paused = 1;
+    gs.step = frame - 1;
+}
+
 static int l_set_motion(lua_State *L) {
     int slots[6], n = 0, k;
     int motion = (int) luaL_checkinteger(L, 2);
@@ -4261,9 +4317,7 @@ static int l_set_motion(lua_State *L) {
     if (frame > 600) frame = 600;
     gs.step = 0; /* a new request replaces one still stepping */
     for (k = 0; k < n; ++k) {
-        gs.set_motion[slots[k]] = motion + 1;
-        gs.set_rate[slots[k]] = rate;
-        gs.set_lift[slots[k]] = lift;
+        gs_set_motion_core(slots[k], motion, frame, rate, lift);
     }
     gs.paused = 1;
     gs.step = frame - 1; /* entering is frame 1 */
@@ -6917,6 +6971,471 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"hud_visible", l_hud_visible},
     {NULL, NULL}};
 
+/* Workbench calls use the normal offline console and frame-boundary machinery.
+ * Replies are strings so EngineLink can read a complete JSON/PNG file itself.
+ * A pending snapshot has frame=-1 until the scheduled logic really completed. */
+extern int gw_Replay_Active(void);
+
+int gw_Wb_NetplayActive(void) {
+    const char *slippi = getenv("MELEE_SLIPPI_MODE");
+    return gw_RB_Enabled() || gw_Netplay_Enabled() || gw_Replay_Active() ||
+           (slippi && (_stricmp(slippi, "loopback") == 0 || _stricmp(slippi, "direct") == 0));
+}
+
+static int gs_wb_int(lua_State *L, int table, const char *name, int fallback) {
+    lua_Integer value;
+    lua_getfield(L, table, name);
+    value = luaL_optinteger(L, -1, fallback);
+    lua_pop(L, 1);
+    if (value < INT_MIN || value > INT_MAX) luaL_error(L, "wb.%s is out of range", name);
+    return (int)value;
+}
+
+static void gs_wb_row(int motion) {
+    char anim[128], buf[32];
+    int kind = gw_ScriptGame_LabI(0, LAB_I_NAME_KIND);
+    int row = gw_ScriptGame_LabMotionAnim(0, motion);
+    gs.wb_row_motion = motion;
+    gs_anim_name(row >= 0 ? gw_ScriptGame_LabAnimSymbolFor(0, row) : NULL, anim, sizeof anim);
+    snprintf(gs.wb_row, sizeof gs.wb_row, "%s", gs_motion_name_at(0, kind, motion, anim, buf, sizeof buf));
+}
+
+/* Diagnostic storage belongs to the host, outside gw_snap.c's game ranges.
+ * The existing LAB getters return scalars; no buffer or native pointer crosses
+ * the PPC bridge. Keep the schema's compact list of non-null fighter joints. */
+static int gs_wb_read_frame(GwWbFrame *f) {
+    int i, n, have_root = 0;
+    if (!gw_Wb_Enabled() || !gs_players_present(0)) return 0;
+    memset(f, 0, sizeof *f);
+    /* Same lazy HSD_JObjSetupMatrix path as gd.joints(1,true). The scalar
+     * reads below do not write diagnostic scratch into snapshotted game state. */
+    gw_ScriptGame_JointsSetup(0);
+    f->motion = gw_ScriptGame_FighterI(0, SI_ACTION);
+    /* Fighter_ChangeMotionState enters time zero; gd.set_motion calls it frame 1. */
+    f->frame = (int)gw_ScriptGame_FighterF(0, SF_ANIM_FRAME) + 1;
+    if (f->frame < 1) f->frame = 1; /* -1 is reserved for a pending operation. */
+    n = gw_ScriptGame_LabI(0, LAB_I_JOINTS);
+    for (i = 0; i < n && f->nbones < 160; ++i) {
+        int parent = gw_ScriptGame_JointParent(0, i);
+        GwWbBone *b;
+        if (parent == -2) continue;
+        b = &f->bones[f->nbones++];
+        b->joint = i;
+        b->parent = parent;
+        b->x = gw_ScriptGame_JointF(0, i, 0);
+        b->y = gw_ScriptGame_JointF(0, i, 1);
+        b->z = gw_ScriptGame_JointF(0, i, 2);
+        { int k; for (k = 0; k < 12; ++k) b->m[k] = gw_ScriptGame_JointMtx(0, i, k); }
+        if (parent == -1 && !have_root) {
+            have_root = 1;
+            f->root_joint = i;
+            memcpy(f->root_m, b->m, sizeof f->root_m);
+        }
+        if (f->nbones == 1 || b->y < f->lowest_y) f->lowest_y = b->y;
+    }
+    for (i = 0; i < 4; ++i) {
+        GwWbHit *h;
+        if (gw_ScriptGame_HitI(0, i, LAB_HI_STATE) <= 0) continue;
+        h = &f->hits[f->nhits++];
+        h->slot = i;
+        h->joint = gw_ScriptGame_HitI(0, i, LAB_HI_BONE);
+        h->active = 1;
+        h->ox = gw_ScriptGame_HitF(0, i, LAB_HF_OX);
+        h->oy = gw_ScriptGame_HitF(0, i, LAB_HF_OY);
+        h->oz = gw_ScriptGame_HitF(0, i, LAB_HF_OZ);
+        h->radius = gw_ScriptGame_HitF(0, i, LAB_HF_SIZE);
+        /* ftColl_8007AD18: x4C is current world position; x58 is the previous one. */
+        h->wx = gw_ScriptGame_HitF(0, i, LAB_HF_X);
+        h->wy = gw_ScriptGame_HitF(0, i, LAB_HF_Y);
+        h->wz = gw_ScriptGame_HitF(0, i, LAB_HF_Z);
+    }
+    n = gw_ScriptGame_LabI(0, LAB_I_HURTBOXES);
+    for (i = 0; i < n && i < 15; ++i) {
+        GwWbHurt *h = &f->hurts[f->nhurts++];
+        h->joint = gw_ScriptGame_HurtI(0, i, LAB_UI_BONE);
+        h->ax = gw_ScriptGame_HurtF(0, i, LAB_UF_AX);
+        h->ay = gw_ScriptGame_HurtF(0, i, LAB_UF_AY);
+        h->az = gw_ScriptGame_HurtF(0, i, LAB_UF_AZ);
+        h->bx = gw_ScriptGame_HurtF(0, i, LAB_UF_BX);
+        h->by = gw_ScriptGame_HurtF(0, i, LAB_UF_BY);
+        h->bz = gw_ScriptGame_HurtF(0, i, LAB_UF_BZ);
+        h->radius = gw_ScriptGame_HurtF(0, i, LAB_UF_SIZE);
+    }
+    f->ecb_bx = gw_ScriptGame_LabF(0, LAB_F_ECB_BOTTOM_X);
+    f->ecb_by = gw_ScriptGame_LabF(0, LAB_F_ECB_BOTTOM_Y);
+    f->ecb_tx = gw_ScriptGame_LabF(0, LAB_F_ECB_TOP_X);
+    f->ecb_ty = gw_ScriptGame_LabF(0, LAB_F_ECB_TOP_Y);
+    f->ecb_lx = gw_ScriptGame_LabF(0, LAB_F_ECB_LEFT_X);
+    f->ecb_ly = gw_ScriptGame_LabF(0, LAB_F_ECB_LEFT_Y);
+    f->ecb_rx = gw_ScriptGame_LabF(0, LAB_F_ECB_RIGHT_X);
+    f->ecb_ry = gw_ScriptGame_LabF(0, LAB_F_ECB_RIGHT_Y);
+    f->facing = gw_ScriptGame_FighterFacing(0) < 0 ? -1 : 1;
+    f->floor_y = gw_ScriptGame_LabF(0, LAB_F_FLOOR_Y);
+    return 1;
+}
+
+static int gs_wb_snapshot(char *path, size_t cap, int completed) {
+    GwWbFrame f;
+    char json[65536];
+    int length;
+    if (!gs_wb_read_frame(&f)) { gw_log("workbench: snapshot: not enabled or no fighter"); return 0; }
+    /* Iterations consumes the whole batch before its frames run. Only
+     * PostRender may publish the completed request, even from on_frame. */
+    if (gs.wb_pending && !completed) f.frame = -1;
+    length = gw_Wb_FrameJson(&f, gs.wb_row, json, sizeof json);
+    if (length < 0) { gw_log("workbench: snapshot: frame json does not fit"); return 0; }
+    if (gw_Wb_WritePayload("frame.json", json, (size_t)length, path, cap) != 0) { gw_log("workbench: snapshot: cannot write payload (dir '%s')", gw_Wb_Dir()); return 0; }
+    return 1;
+}
+
+static int gs_wb_reply(lua_State *L) {
+    char path[1024];
+    if (!gs_players_present(0)) return luaL_error(L, "no fighter on port 1");
+    if (!gs_wb_snapshot(path, sizeof path, 0)) return luaL_error(L, "cannot write workbench frame.json (check MELEE_WB_DIR)");
+    lua_pushfstring(L, "@%s", path);
+    return 1;
+}
+
+static int l_wb_load(lua_State *L) {
+    gs_require_offline(L, "wb.load");
+    if (!gw_Wb_Enabled()) return luaL_error(L, "workbench mode is not enabled");
+    /* The scene owns package/costume selection; load only validates its fighter. */
+    if (!gs_players_present(0)) return luaL_error(L, "no fighter on port 1");
+    gs.paused = 1;
+    gw_log("workbench: load validated port 1");
+    lua_pushliteral(L, "ok");
+    return 1;
+}
+
+static int l_wb_row(lua_State *L) {
+    int motion;
+    gs_require_offline(L, "wb.row");
+    if (!gw_Wb_Enabled()) return luaL_error(L, "workbench mode is not enabled");
+    luaL_checktype(L, 1, LUA_TTABLE);
+    if (!gs_players_present(0)) return luaL_error(L, "no fighter on port 1");
+    motion = gs_wb_int(L, 1, "motion", -1);
+    if (!gs_motion_ok(0, motion)) return luaL_error(L, "no such motion for this fighter");
+    gs_wb_row(motion);
+    gw_log("workbench: row motion=%d (%s)", motion, gs.wb_row);
+    lua_pushliteral(L, "ok");
+    return 1;
+}
+
+/* frame/step/clip all return "pending" while their operation is scheduled.
+ * EngineLink must poll wb.frame_info for all three until the reply's frame
+ * matches the request (step: previous frame + n) / the pending marker clears.
+ * frame_info returns @frame.json with frame:-1 only while work is pending. */
+static int l_wb_frame(lua_State *L) {
+    int motion, frame;
+    gs_require_offline(L, "wb.frame");
+    if (!gw_Wb_Enabled()) return luaL_error(L, "workbench mode is not enabled");
+    luaL_checktype(L, 1, LUA_TTABLE);
+    if (!gs_players_present(0)) return luaL_error(L, "no fighter on port 1");
+    motion = gs_wb_int(L, 1, "motion", gs.wb_row_motion);
+    frame = gs_wb_int(L, 1, "frame", 1);
+    if (!gs_motion_ok(0, motion)) return luaL_error(L, "no such motion for this fighter");
+    if (frame < 1) frame = 1;
+    if (frame > 600) frame = 600;
+    gw_ScriptGame_LabSetPreviewRow(0, -1, 0);
+    {
+        /* optional lift (same units as gd.set_motion): an aerial staged at floor level lands before its active frames */
+        float lift = 0.0f;
+        lua_getfield(L, 1, "lift");
+        if (lua_isnumber(L, -1)) lift = (float) lua_tonumber(L, -1);
+        lua_pop(L, 1);
+        if (lift < 0.0f) lift = 0.0f;
+        if (lift > 200.0f) lift = 200.0f;
+        gs_set_motion_core(0, motion, frame, 1.0f, lift);
+    }
+    gs_wb_row(motion);
+    gs.wb_pending = 1;
+    gw_log("workbench: frame motion=%d frame=%d pending", motion, frame);
+    lua_pushliteral(L, "pending");
+    return 1;
+}
+
+static int l_wb_step(lua_State *L) {
+    int n;
+    gs_require_offline(L, "wb.step");
+    if (!gw_Wb_Enabled()) return luaL_error(L, "workbench mode is not enabled");
+    luaL_checktype(L, 1, LUA_TTABLE);
+    if (!gs_players_present(0)) return luaL_error(L, "no fighter on port 1");
+    n = gs_wb_int(L, 1, "n", 1);
+    if (n < 1) n = 1;
+    if (n > INT_MAX - gs.step) return luaL_error(L, "wb.step is out of range");
+    gs.paused = 1;
+    gs.step += n;
+    gs.wb_pending = 1;
+    gw_log("workbench: step n=%d pending", n);
+    lua_pushliteral(L, "pending");
+    return 1;
+}
+
+static int l_wb_frame_info(lua_State *L) {
+    gs_require_offline(L, "wb.frame_info");
+    if (!gw_Wb_Enabled()) return luaL_error(L, "workbench mode is not enabled");
+    return gs_wb_reply(L);
+}
+
+static int l_wb_clip(lua_State *L) {
+    char clip[256], name[128];
+    const char *requested;
+    int row, found = -1, frame;
+    gs_require_offline(L, "wb.clip");
+    if (!gw_Wb_Enabled()) return luaL_error(L, "workbench mode is not enabled");
+    luaL_checktype(L, 1, LUA_TTABLE);
+    if (!gs_players_present(0)) return luaL_error(L, "no fighter on port 1");
+    lua_getfield(L, 1, "clip");
+    requested = luaL_checkstring(L, -1);
+    if (strlen(requested) >= sizeof clip) return luaL_error(L, "wb.clip name is too long");
+    snprintf(clip, sizeof clip, "%s", requested);
+    lua_pop(L, 1);
+    frame = gs_wb_int(L, 1, "frame", 1);
+    for (row = 0; row < gw_ScriptGame_LabRowCount(0); ++row) {
+        const char *symbol = gw_ScriptGame_LabAnimSymbolFor(0, row);
+        gs_anim_name(symbol, name, sizeof name);
+        if (strcmp(clip, name) == 0 || (symbol && strcmp(clip, symbol) == 0)) { found = row; break; }
+    }
+    if (found < 0) return luaL_error(L, "no such animation clip");
+    lua_settop(L, 0);
+    lua_pushinteger(L, 1);
+    lua_pushinteger(L, found);
+    lua_pushinteger(L, frame);
+    lua_pushnumber(L, 1.0);
+    lua_pushinteger(L, 0);
+    (void)l_anim_preview(L);
+    lua_settop(L, 0);
+    snprintf(gs.wb_row, sizeof gs.wb_row, "%s", clip);
+    gs.wb_pending = 1;
+    gw_log("workbench: clip row=%d frame=%d pending", found, frame);
+    lua_pushliteral(L, "pending");
+    return 1;
+}
+
+static float gs_wb_camera_number(lua_State *L, int table, const char *name, float fallback) {
+    float value;
+    lua_getfield(L, table, name);
+    value = lua_isnil(L, -1) ? fallback : gs_camera_number(L, -1, name);
+    lua_pop(L, 1);
+    return value;
+}
+
+/* Workbench orbit uses the same scalar snapshot as frame_info. The part table
+ * supplies the torso/root joint id; extended limbs must not move the target.
+ * Raw pose fields override the orbit without claiming the simulation camera. */
+static void gs_wb_camera(lua_State *L, int table, const GwWbFrame *frame, int stage, float pose[8]) {
+    const char *preset;
+    float yaw = 45.0f, pitch = 15.0f, distance, delta = 0.0f;
+    int i, target, raw_pose = 0, auto_fov;
+    table = lua_absindex(L, table);
+    luaL_checktype(L, table, LUA_TTABLE);
+    lua_getfield(L, table, "preset");
+    preset = luaL_optstring(L, -1, "three_quarter");
+    /* fighters face +/-X, so the profile ("side") camera sits on the Z axis like the match camera; "front" looks along X */
+    if (strcmp(preset, "front") == 0) { yaw = 90; pitch = 0; }
+    else if (strcmp(preset, "side") == 0) { yaw = 0; pitch = 0; }
+    else if (strcmp(preset, "top") == 0) { yaw = 0; pitch = 90; }
+    else if (strcmp(preset, "three_quarter") != 0)
+        luaL_error(L, "wb.render unknown camera preset '%s'", preset);
+    lua_pop(L, 1);
+    yaw = gs_wb_camera_number(L, table, "yaw", yaw);
+    pitch = gs_wb_camera_number(L, table, "pitch", pitch);
+    distance = gs_wb_camera_number(L, table, "distance", 60.0f);
+    if (distance < 0.01f) luaL_error(L, "wb.render camera distance must be at least 0.01");
+    target = gs_wb_int(L, table, "target_joint", -1);
+    if (target == -1) {
+        int candidate = gw_ScriptGame_WbTargetJoint(0);
+        target = -1;
+        for (i = 0; i < frame->nbones; ++i)
+            if (frame->bones[i].joint == candidate) { target = candidate; break; }
+        /* A custom fighter may omit the usual torso role. Resolve a root from
+         * the snapshot, never a guessed joint number or a whole-body bound. */
+        for (i = 0; target < 0 && i < frame->nbones; ++i)
+            if (frame->bones[i].parent < 0) target = frame->bones[i].joint;
+        if (target < 0 && frame->nbones) target = frame->bones[0].joint;
+    }
+    if (target < 0 || gw_Wb_CameraOrbit(frame, target, yaw, pitch, distance, pose, pose + 3) != 0)
+        luaL_error(L, "wb.render camera target_joint is not in the frame or has no finite pose");
+    for (i = 0; i < 2; ++i) {
+        lua_getfield(L, table, i ? "interest" : "eye");
+        if (!lua_isnil(L, -1)) { gs_camera_vec(L, -1, pose + i * 3); raw_pose = 1; }
+        lua_pop(L, 1);
+    }
+    lua_getfield(L, table, "fov");
+    auto_fov = lua_isnil(L, -1);
+    lua_pop(L, 1);
+    pose[6] = gs_wb_camera_number(L, table, "fov", 30.0f);
+    pose[7] = gs_wb_camera_number(L, table, "roll", 0.0f);
+    if (pose[6] < 1.0f || pose[6] >= 179.0f) luaL_error(L, "wb.render fov must be 1..<179");
+    for (i = 0; i < 6; ++i)
+        if (!isfinite(pose[i])) luaL_error(L, "wb.render camera pose must be finite");
+    for (i = 0; i < 3; ++i) {
+        float d = pose[i] - pose[i + 3];
+        delta += d * d;
+    }
+    if (!isfinite(delta) || delta < 0.0001f)
+        luaL_error(L, "wb.render eye and interest must be distinct finite positions");
+    if (fabsf(pose[0] - pose[3]) + fabsf(pose[2] - pose[5]) < 0.000001f)
+        luaL_error(L, "wb.render vertical raw camera needs a nonzero horizontal offset");
+    /* Keep explicit lenses/raw views exact. Default orbit captures retain the
+     * nearby floor when stage geometry is requested, including lifted aerials. */
+    if (stage && auto_fov && !raw_pose && pose[7] == 0.0f)
+        pose[6] = gw_Wb_CameraFloorFov(frame->floor_y, pose, pose + 3, pose[6]);
+    gw_log("workbench: render camera target_joint=%d eye=(%g,%g,%g) interest=(%g,%g,%g) fov=%g",
+        target, pose[0], pose[1], pose[2], pose[3], pose[4], pose[5], pose[6]);
+}
+
+/* Aurora's libpng thread opens its destination before writing. File existence
+ * or IHDR alone is not completion. Deny sharing on Windows and require IEND;
+ * only a closed, complete private PNG may become the public view.png. */
+static int gs_wb_png_size(const char *path, int *w, int *h) {
+    static const unsigned char sig[8] = {137,80,78,71,13,10,26,10};
+    static const unsigned char end[12] = {0,0,0,0,73,69,78,68,174,66,96,130};
+    unsigned char head[24], tail[12];
+    FILE *file;
+    int ok;
+#ifdef _WIN32
+    file = _fsopen(path, "rb", _SH_DENYRW);
+#else
+    file = fopen(path, "rb");
+#endif
+    if (!file) return 0;
+    ok = fread(head, 1, sizeof head, file) == sizeof head &&
+         !memcmp(head, sig, sizeof sig) && gw_r32(head + 8) == 13 &&
+         !memcmp(head + 12, "IHDR", 4) && fseek(file, -12, SEEK_END) == 0 &&
+         fread(tail, 1, sizeof tail, file) == sizeof tail && !memcmp(tail, end, sizeof end);
+    fclose(file);
+    if (!ok || !gw_r32(head + 16) || !gw_r32(head + 20) ||
+        gw_r32(head + 16) > INT_MAX || gw_r32(head + 20) > INT_MAX) return 0;
+    *w = (int)gw_r32(head + 16); *h = (int)gw_r32(head + 20);
+    return 1;
+}
+
+static void gs_wb_render_poll(int after_draw) {
+    char json[160], path[1024];
+    int w, h, n;
+    if (!gs_wb_render.pending) return;
+    if (!gw_Wb_RenderActive() || (DWORD)(GetTickCount() - gs_wb_render.started) > 30000u) {
+        gw_log("workbench: render cancelled (scene/offline gate or capture timeout); controls restored");
+        /* Unique private names prevent a late worker from satisfying a later request. */
+        gs_wb_render.pending = 0;
+        remove(gs_wb_render.capture);
+        return;
+    }
+    if (!gs_wb_render.queued) {
+        /* Two identical paused world draws also settle Aurora's previous-pose
+         * interpolation. Queue drain then excludes any older presented frame. */
+        if (after_draw && gs_wb_render.drawn >= 2) {
+            gs_wb_render.queued = 1;
+            gw_Wb_CaptureScreenshot(gs_wb_render.capture);
+        }
+        return;
+    }
+    if (!gs_wb_png_size(gs_wb_render.capture, &w, &h)) return;
+#ifdef _WIN32
+    if (!MoveFileExA(gs_wb_render.capture, gs_wb_render.path,
+                     MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
+#else
+    if (rename(gs_wb_render.capture, gs_wb_render.path) != 0) {
+#endif
+        gw_log("workbench: render PNG publication failed; controls restored");
+        gs_wb_render.pending = 0;
+        remove(gs_wb_render.capture);
+        return;
+    }
+    n = snprintf(json, sizeof json, "{\"w\":%d,\"h\":%d,\"requested_w\":%d,\"requested_h\":%d}\n",
+        w, h, gs_wb_render.w, gs_wb_render.h);
+    /* The launcher scales to requested_w/requested_h. No renderer-wide resize
+     * or resampling is done: Aurora captures its existing presentation target. */
+    if (gw_Wb_WritePayload("view.json", json, (size_t)n, path, sizeof path) != 0) {
+        gw_log("workbench: render view.json publication failed; controls restored");
+        remove(gs_wb_render.path);
+    } else {
+        gw_log("workbench: render ready %s actual=%dx%d requested=%dx%d; controls restored",
+            gs_wb_render.path, w, h, gs_wb_render.w, gs_wb_render.h);
+    }
+    gs_wb_render.pending = 0;
+}
+
+static int l_wb_render(lua_State *L) {
+    static const char *const names[WB_RENDER_OPTIONS] = {
+        "model", "hitboxes", "hurtboxes", "ecb", "bones", "floor", "hud", "stage"
+    };
+    char path[1024], capture[1024], metadata[1024];
+    float pose[8];
+    GwWbFrame frame;
+    if (gw_Wb_Headless())
+        return luaL_error(L, "wb.render is unavailable in headless mode (MELEE_WB_HEADLESS=1); use the Blender viewer or run windowed");
+    int w, h, len, i, options[WB_RENDER_OPTIONS] = {1,0,0,0,0,0,0,1};
+    gs_require_offline(L, "wb.render");
+    if (!gw_Wb_Enabled()) return luaL_error(L, "workbench mode is not enabled");
+    luaL_checktype(L, 1, LUA_TTABLE);
+    if (!gs_players_present(0)) return luaL_error(L, "no fighter on port 1");
+    if (gs_wb_render.pending) return luaL_error(L, "wb.render capture is still pending");
+    if (gs.wb_pending || gs.step || gs.set_motion[0])
+        return luaL_error(L, "wb.render must wait for the pending frame operation");
+    w = gs_wb_int(L, 1, "w", 640);
+    h = gs_wb_int(L, 1, "h", 480);
+    if (w < 1 || h < 1 || w > 8192 || h > 8192) return luaL_error(L, "wb.render dimensions must be 1..8192");
+    if (!gw_Wb_Dir()[0]) return luaL_error(L, "MELEE_WB_DIR is empty");
+    len = snprintf(capture, sizeof capture, "%s/.view-%lu-%lu-%u.png", gw_Wb_Dir(),
+        (unsigned long)GetCurrentProcessId(), (unsigned long)GetTickCount(), ++gs_wb_render_serial);
+    if (len < 0 || (size_t)len >= sizeof capture) return luaL_error(L, "workbench image path is too long");
+    snprintf(path, sizeof path, "%s/view.png", gw_Wb_Dir());
+    snprintf(metadata, sizeof metadata, "%s/view.json", gw_Wb_Dir());
+    if (!gs_wb_read_frame(&frame)) return luaL_error(L, "no fighter on port 1");
+    lua_getfield(L, 1, "overlays");
+    if (!lua_isnil(L, -1)) {
+        luaL_checktype(L, -1, LUA_TTABLE);
+        for (i = 0; i < WB_RENDER_OPTIONS; ++i) {
+            lua_getfield(L, -1, names[i]);
+            if (!lua_isnil(L, -1)) {
+                luaL_checktype(L, -1, LUA_TBOOLEAN);
+                options[i] = lua_toboolean(L, -1);
+            }
+            lua_pop(L, 1);
+        }
+    }
+    lua_pop(L, 1);
+    lua_getfield(L, 1, "camera");
+    if (lua_isnil(L, -1)) { lua_pop(L, 1); lua_newtable(L); }
+    gs_wb_camera(L, -1, &frame, options[WB_RENDER_STAGE], pose);
+    lua_pop(L, 1);
+    /* Validate first: a malformed request must not change a prior result. */
+    if ((remove(metadata) != 0 && errno != ENOENT) || (remove(path) != 0 && errno != ENOENT))
+        return luaL_error(L, "cannot clear previous workbench capture");
+    memset(&gs_wb_render, 0, sizeof gs_wb_render);
+    memcpy(gs_wb_render.camera, pose, sizeof pose);
+    memcpy(gs_wb_render.options, options, sizeof options);
+    strcpy(gs_wb_render.path, path);
+    strcpy(gs_wb_render.capture, capture);
+    gs_wb_render.w = w; gs_wb_render.h = h;
+    gs_wb_render.scene_epoch = gs.scene_epoch;
+    gs_wb_render.started = GetTickCount();
+    gs_wb_render.pending = 1;
+    gw_log("workbench: render drawing model=%d fighter_visible=%d",
+        options[WB_RENDER_MODEL], !gw_ScriptGame_LabI(0, LAB_I_HIDDEN));
+    gw_log("workbench: render requested %dx%d model=%d hit=%d hurt=%d ecb=%d bones=%d floor=%d hud=%d stage=%d",
+        w, h, options[0], options[1], options[2], options[3], options[4], options[5], options[6], options[7]);
+    lua_pushfstring(L, "@%s", path);
+    return 1;
+}
+
+static int l_wb_reload(lua_State *L) {
+    gs_require_offline(L, "wb.reload");
+    if (!gw_Wb_Enabled()) return luaL_error(L, "workbench mode is not enabled");
+    /* geno_registry.c:gw_Geno_Reload rejects native definitions and copied
+     * motion/layout changes. There is no live package reinstall for defines. */
+    gw_log("workbench: reload needs restart");
+    return luaL_error(L, "reload needs restart");
+}
+
+static const luaL_Reg gs_wb_funcs[] = {
+    {"load", l_wb_load}, {"row", l_wb_row}, {"frame", l_wb_frame},
+    {"step", l_wb_step}, {"frame_info", l_wb_frame_info}, {"clip", l_wb_clip},
+    {"render", l_wb_render}, {"reload", l_wb_reload}, {NULL, NULL}
+};
+
 #include "gw_script_comm.inc"
 /* Lua-side helpers, compiled once into the shared base (they only use the public API). */
 static const char gs_prelude[] =
@@ -7092,7 +7611,49 @@ static void gs_build_base(lua_State *L) {
         lua_pop(L, 1);
     }
     lua_setfield(L, -2, "gd");
+    (void)gw_SceneLaunch_BootGameMode(); /* resolve the mode before registering its opt-in API */
+    gs.wb_registered = gw_Wb_Enabled();
+    if (gs.wb_registered) {
+        luaL_newlib(L, gs_wb_funcs);
+        lua_pushvalue(L, -1);
+        lua_setglobal(L, "wb");
+        lua_setfield(L, -2, "wb");
+        gw_log("workbench: Lua table registered");
+    }
     gs_base_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+}
+
+/* Scene changes can enable/disable the mode after the sandbox was created.
+ * Keep wb private to each script, and remove even saved globals outside the mode;
+ * retained function references still enforce their per-call offline gate. */
+static void gs_wb_refresh(lua_State *L) {
+    int enabled, i;
+    /* LAB CSS/SSS/restart keep the same major mode. A menu departure does
+     * not replace SceneLaunch config, so retire the launch request here.
+     * Remember entry through a temporary network/replay gate as well. */
+    if (gs.wb_entered && !gw_GenoLab_ModeActive()) {
+        gw_Wb_SetEnabled(0);
+        gs.wb_entered = 0;
+    }
+    enabled = gw_Wb_Enabled();
+    if (enabled && gw_GenoLab_ModeActive()) gs.wb_entered = 1;
+    if (enabled == gs.wb_registered || gs_base_ref == LUA_NOREF) return;
+    gs.wb_registered = enabled;
+    if (enabled) luaL_newlib(L, gs_wb_funcs); else lua_pushnil(L);
+    lua_setglobal(L, "wb");
+    lua_rawgeti(L, LUA_REGISTRYINDEX, gs_base_ref);
+    if (enabled) luaL_newlib(L, gs_wb_funcs); else lua_pushnil(L);
+    lua_setfield(L, -2, "wb");
+    lua_pop(L, 1);
+    for (i = 0; i < gs.n; ++i) {
+        if (!gs.s[i].used || gs.s[i].env_ref == LUA_NOREF) continue;
+        lua_rawgeti(L, LUA_REGISTRYINDEX, gs.s[i].env_ref);
+        if (enabled) luaL_newlib(L, gs_wb_funcs); else lua_pushnil(L);
+        lua_setfield(L, -2, "wb");
+        lua_pop(L, 1);
+    }
+    if (!enabled) { gs.wb_pending = 0; gs.wb_row[0] = '\0'; gs.wb_row_motion = -1; }
+    gw_log("workbench: Lua table %s", enabled ? "registered" : "removed");
 }
 
 /* A copy of the table at `src` whose table values are copied too, `depth` levels down. */
@@ -7113,12 +7674,13 @@ static void gs_copy_deep(lua_State *L, int src, int depth) {
 
 /* A fresh environment: the base's entries, with private copies of every library table and gd. */
 static int gs_new_env(lua_State *L) {
-    static const char *const copy[] = {"string", "table", "math", "utf8", "coroutine", "gd", NULL};
+    static const char *const copy[] = {"string", "table", "math", "utf8", "coroutine", "gd", "wb", NULL};
     int i;
     lua_rawgeti(L, LUA_REGISTRYINDEX, gs_base_ref);
     gs_copy_table(L, -1);
     for (i = 0; copy[i] != NULL; ++i) {
         lua_getfield(L, -2, copy[i]);
+        if (!lua_istable(L, -1)) { lua_pop(L, 1); continue; } /* wb is absent outside the mode */
         gs_copy_table(L, -1);
         if (strcmp(copy[i], "gd") == 0) {
             /* gd.kit and its tables (colors and its sections, roles, row): private copies too */
@@ -7631,6 +8193,7 @@ static void gs_init(void) {
     gs.cur = -1;
     gs.console = -1;
     gs.scene_kind = -1;
+    gs.wb_row_motion = -1;
     GetModuleFileNameA(NULL, gs.exe_dir, sizeof gs.exe_dir);
     slash = gw_path_separator(gs.exe_dir);
     if (slash != NULL) {
@@ -7763,6 +8326,9 @@ void gw_Script_SceneBegin(int scene_kind) {
     gs_launch_begin();
     gs_item_track_count = 0;
     gs_presentation_reset();
+    gs.wb_pending = 0;
+    gs.wb_row[0] = '\0';
+    gs.wb_row_motion = -1;
     gs.paused = 0; /* a scene change always resumes */
     gs.step = 0;
     gs.nev = 0; /* events from the scene that ended are dropped */
@@ -7918,6 +8484,8 @@ void gw_Script_Tick(void) {
     if (gs.console_open) {
         gw_TextEntryUntil = (int) GetTickCount() + 200; /* the keyboard is text, not hotkeys */
     }
+    gs_wb_refresh(gs.L);
+    gs_wb_render_poll(0);
     gs_poll_keys();
     gs_fly_hotkey();
     gw_Mouse_ScriptTick();
@@ -7987,6 +8555,14 @@ void gw_Script_LabRequest(void) { gs.lab_request = 1; }
 
 
 void gw_Script_PostRender(void) {
+    gs_wb_render_poll(1);
+    if (gs.wb_pending && gw_Wb_Enabled() && !gs.set_motion[0] && gs.step == 0 && !gs_in_frame) {
+        char path[1024];
+        if (gs_wb_snapshot(path, sizeof path, 1)) {
+            gs.wb_pending = 0;
+            gw_log("workbench: frame ready %s", path);
+        }
+    }
     gw_Shader_PostDraw(1); /* after retail HUD, before the host/ImGui overlay */
     if (gs.L == NULL) {
         return;
@@ -7995,6 +8571,7 @@ void gw_Script_PostRender(void) {
 }
 
 int gw_Script_Iterations(int count) {
+    if (gw_Wb_RenderActive()) return 0; /* hold the captured pose until PNG publication */
     if (gs_1p.barrier && gs_1p_offline()) return 0;
     gw_hang_pause((gs.paused ? 1 : 0) | (gs_hitstop_live() ? 2 : 0));
     if (gs_hitstop_live()) return 0;
@@ -9168,7 +9745,15 @@ void gw_Script_FramePost(void) {
             const char *bench = getenv("MELEE_SYNCTEST_BENCH");
             if (bench != NULL && atoi(bench) == 1 && !gw_Netplay_Enabled() && !gw_RB_Enabled()) gw_Script_NetBuildApply();
         }
+        /* Finish Entry while its saved scale is still valid, before a hook or
+         * wb.frame can replace the motion and before pausing the simulation. */
+        if (gw_Wb_Enabled()) gw_ScriptGame_WbPrepare(0);
         gs_hook_all("on_match_start", 0, 0, 0);
+        if (gw_Wb_Enabled()) {
+            gs.paused = 1;
+            gs.step = 0;
+            gw_log("workbench: fighter ready, logic paused");
+        }
         gs_cpu_log_all();
     } else if (gs.match_active) {
         gs.match_frame++;
@@ -9229,7 +9814,10 @@ void gw_Script_FramePost(void) {
 }
 
 #include "gw_script_meter.inc"
-int gw_Script_DrawCount(void) { return gs.ndraw[!gs.build]+(gs_stage_indicator_draw()!=NULL)+gs_meter_build(); }
+int gw_Script_DrawCount(void) {
+    if (gw_Wb_RenderActive()) return 0; /* LAB Ready/timer, HUD panels and script debug strokes */
+    return gs.ndraw[!gs.build]+(gs_stage_indicator_draw()!=NULL)+gs_meter_build();
+}
 const GwScriptDraw *gw_Script_DrawAt(int i) {
     int nd=gs.ndraw[!gs.build];
     const GwScriptDraw *ind;
@@ -9828,6 +10416,7 @@ done:
     return rc;
 }
 
+#include "gw_script_workbench_tests.inc"
 #include "gw_script_deadline_tests.inc"
 
 #include "gw_script_contacts_tests.inc"
@@ -11477,6 +12066,7 @@ void gw_script_tests_register(void) {
     gw_test_register("script_no_hitch_api", test_script_no_hitch_api);
     gw_test_register("script_data_write_atomic", test_script_data_write_atomic);
     gw_test_register("script_camera_api", test_script_camera_api);
+    gw_test_register("workbench_png_completion", test_workbench_png_completion);
     gw_test_register("script_contacts", test_script_contacts);
     gw_test_register("script_zones_core", test_script_zones_core);
     gw_test_register("script_zones_adapter", test_script_zones_adapter);

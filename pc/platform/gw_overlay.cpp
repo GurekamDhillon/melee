@@ -8,6 +8,18 @@
  */
 #include "gw_overlay.h"
 #include "gw.h"
+#include "shim_vi.h"
+/* aurora/gfx.hpp declares this queue fence; that header also pulls C++20
+ * draw types, while this translation unit is deliberately built as C++17. */
+namespace aurora::gfx { void synchronize(); }
+
+/* Screenshot requests are consumed by the render worker, not by end_frame.
+ * Drain older frames after the workbench world draw and before queuing the
+ * shot, so the next submitted frame has its temporary camera/visibility. */
+extern "C" void gw_Wb_CaptureScreenshot(const char *path) {
+    aurora::gfx::synchronize();
+    gw_Screenshot(path);
+}
 
 #include <imgui.h>
 

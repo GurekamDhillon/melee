@@ -168,6 +168,11 @@ static void NameTag_RenderCallback(HSD_GObj* gobj, int pass)
 void fn_802FCAC4(HSD_GObj* gobj, int pass)
 {
 #if defined(TARGET_PC)
+    /* Do not move the live nametag text offscreen just to hide a capture. */
+    { extern int Wb_RenderActive(void);
+      if (Wb_RenderActive() && ifAll_IsHUDHidden()) return; }
+#endif
+#if defined(TARGET_PC)
     extern int Ui_RetailHidden(int id); /* the name text takes the same path as retail's own hidden HUD: moved off screen */
     if (ifAll_IsHUDHidden() || un_804D6D6C || Ui_RetailHidden(AT_RE_HUD_NAMETAG)) {
 #else

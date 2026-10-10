@@ -48,6 +48,7 @@
 #include <sysdolphin/baselib/wobj.h>
 
 #if defined(TARGET_PC)
+#include <workbench_render.h>
 /* Script camera state belongs to this game TU: gw_snap.c snapshots game .bss as well as MEM1.
  * ftLib_UpdateLogicOffCamera projects against the resulting CObj during logic, so a host-only
  * camera would make offscreen damage and rollback depend on rendering. */
@@ -4155,6 +4156,9 @@ Vec3* Camera_8003019C(void)
 static inline s64 gxlink_prio8(void)
 {
     s64 prio;
+#if defined(TARGET_PC)
+    if (Wb_RenderActive()) return Wb_RenderOption(WB_RENDER_STAGE, 1) ? 8 : 0;
+#endif
 
     if (game_camera.x398_b2) {
         prio = 0;
@@ -4193,11 +4197,7 @@ static inline void render_gxlink_pass(HSD_GObj* gobj, int pass, int gxlink)
     s64 prio8;
 
     Camera_800310A0(pass);
-    if (game_camera.x398_b2) {
-        prio8 = 0;
-    } else {
-        prio8 = 8;
-    }
+    prio8 = gxlink_prio8();
     gobj->gxlink_prios = prio8;
     HSD_GObj_80390ED0(gobj, gxlink);
 }
@@ -4208,9 +4208,41 @@ static void fn_800301D0(HSD_GObj* gobj, int arg1)
     s64 prio1_a;
     HSD_CObj* cobj;
 
+#if defined(TARGET_PC)
+    HSD_CObj wb_saved;
+    HSD_WObj wb_eye, wb_interest;
+    Mtx wb_inverse;
+    int wb_camera;
+#endif
+
     cobj = gobj->hsd_obj;
     lbRefract_8002247C(cobj);
     Camera_8002A4AC(gobj);
+#if defined(TARGET_PC)
+    wb_camera = Wb_RenderActive() && cobj->eyepos && cobj->interest;
+    if (wb_camera) {
+        Vec3 eye, interest;
+        wb_saved = *cobj;
+        wb_eye = *cobj->eyepos;
+        wb_interest = *cobj->interest;
+        /* The inverse-view cache also belongs to the temporary draw pose. */
+        cobj->proj_mtx = &wb_inverse;
+        HSD_CObjSetMtxDirty(cobj);
+        eye.x = cm_script_float(Wb_RenderCameraBits(0));
+        eye.y = cm_script_float(Wb_RenderCameraBits(1));
+        eye.z = cm_script_float(Wb_RenderCameraBits(2));
+        interest.x = cm_script_float(Wb_RenderCameraBits(3));
+        interest.y = cm_script_float(Wb_RenderCameraBits(4));
+        interest.z = cm_script_float(Wb_RenderCameraBits(5));
+        HSD_CObjSetEyePosition(cobj, &eye);
+        HSD_CObjSetInterest(cobj, &interest);
+        HSD_CObjSetFov(cobj, cm_script_float(Wb_RenderCameraBits(6)));
+        HSD_CObjSetRoll(cobj, cm_script_float(Wb_RenderCameraBits(7)));
+        /* Same close-inspection clipping planes as CAMERA_PAUSE above. */
+        HSD_CObjSetNear(cobj, 0.1f);
+        HSD_CObjSetFar(cobj, 16384.0f);
+    }
+#endif
     lbShadow_8000F38C(game_camera.x399_b7);
     if (HSD_CObjSetCurrent(cobj) != 0) {
         if (!game_camera.x398_b5) {
@@ -4260,6 +4292,13 @@ static void fn_800301D0(HSD_GObj* gobj, int arg1)
         }
 #endif
 
+#if defined(TARGET_PC)
+        if (wb_camera) {
+            extern void ScriptGame_WbDraw(void);
+            ScriptGame_WbDraw();
+            Wb_RenderDrawn();
+        } else
+#endif
         if (Camera_80030AC4() != 0) {
             if (Camera_80030A78() != 0) {
                 mpLib_8005A2DC();
@@ -4273,6 +4312,15 @@ static void fn_800301D0(HSD_GObj* gobj, int arg1)
         }
         HSD_CObjEndCurrent();
     }
+#if defined(TARGET_PC)
+    if (wb_camera) {
+        /* Restore before any logic/offscreen tests or another camera can see
+         * this pose. cm_script, game_camera and their ownership never change. */
+        *cobj = wb_saved;
+        *cobj->eyepos = wb_eye;
+        *cobj->interest = wb_interest;
+    }
+#endif
 }
 
 void Camera_800304E0(HSD_GObj* gobj)

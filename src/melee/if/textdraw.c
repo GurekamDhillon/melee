@@ -243,6 +243,10 @@ void DevText_Draw(DevText* text)
 {
     int index;
     PAD_STACK(4);
+#if defined(TARGET_PC)
+    { extern int Wb_RenderActive(void);
+      if (Wb_RenderActive()) return; } /* diagnostic text is never part of a workbench image */
+#endif
     hsd_80391A04(text->scale_x, text->scale_y, text->line_width);
     if ((text->flags & DEVTEXT_FLAG_HIDEBACKGROUND) == 0) {
         {

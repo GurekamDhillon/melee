@@ -424,6 +424,10 @@ void ifMagnify_802FBBDC(HSD_GObj* gobj)
     bool should_display;
     bool is_outside;
 
+#if defined(TARGET_PC)
+    { extern int Wb_RenderActive(void);
+      if (Wb_RenderActive() && ifAll_IsHUDHidden()) return; }
+#endif
     magnify = &ifMagnify_804A1DE0;
     for (i = 0; i < 6; i++) {
         magnify->player[i].state.is_offscreen = 0;

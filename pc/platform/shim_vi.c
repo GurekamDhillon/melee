@@ -1,3 +1,4 @@
+#include "gw_workbench.h"
 #include "gw_profiler.h"
 /* VI shims and the frame driver.
  *
@@ -278,7 +279,8 @@ void gw_turbo_configure(int argc, char **argv) {
   const char *v = getenv("MELEE_TURBO");
   const char *render = getenv("MELEE_TURBO_RENDER");
   int requested = v != NULL && strcmp(v, "1") == 0;
-  int scripted = getenv("MELEE_PAD_SCRIPT") != NULL || getenv("MELEE_LAB_BATCH") != NULL;
+  int scripted = getenv("MELEE_PAD_SCRIPT") != NULL || getenv("MELEE_LAB_BATCH") != NULL ||
+                gw_Wb_HeadlessRequested(); /* headless workbench has no window to pace against: always turbo */
   int tests = 0;
   for (int i = 1; i < argc; ++i) {
     if (strcmp(argv[i], "--turbo") == 0) requested = 1;

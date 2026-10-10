@@ -7043,7 +7043,16 @@ static int l_wb_frame(lua_State *L) {
     if (frame < 1) frame = 1;
     if (frame > 600) frame = 600;
     gw_ScriptGame_LabSetPreviewRow(0, -1, 0);
-    gs_set_motion_core(0, motion, frame, 1.0f, 0.0f);
+    {
+        /* optional lift (same units as gd.set_motion): an aerial staged at floor level lands before its active frames */
+        float lift = 0.0f;
+        lua_getfield(L, 1, "lift");
+        if (lua_isnumber(L, -1)) lift = (float) lua_tonumber(L, -1);
+        lua_pop(L, 1);
+        if (lift < 0.0f) lift = 0.0f;
+        if (lift > 200.0f) lift = 200.0f;
+        gs_set_motion_core(0, motion, frame, 1.0f, lift);
+    }
     gs_wb_row(motion);
     gs.wb_pending = 1;
     gw_log("workbench: frame motion=%d frame=%d pending", motion, frame);

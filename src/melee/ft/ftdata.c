@@ -2274,21 +2274,63 @@ void ftData_80085A14(FighterKind kind)
 #if defined(TARGET_PC)
 /* The table a victim thrown by a Geno base "none" define reads its thrown rows from: kind's motion table and
  * animation bank, in a stand-in Fighter that carries only what ftData_80085CD8 and Fighter_ChangeMotionState read
- * (kind, x58C, x24, x28). NULL when kind's data or animation bank is not loaded (ftData_80085B10 loads it with
- * the define). Static data derived from loaded files: not simulation state. */
+ * (kind, x58C, x24, x28). NULL when kind's data is not loaded (ftData_80085B10 loads it with the define).
+ * Static data derived from loaded files: not simulation state.
+ *
+ * A fighter's animation file normally goes into the AllA heap (ftData_80085A14), which a package like Goku's own
+ * 23 MB bank leaves no hole for. So when the stand-in's bank is not already loaded (the real fighter is in the
+ * match), its file is read into the main heap once and a private copy of its row table points into that. */
+extern void* lbHeap_80015BD0(int heap_id, size_t size);
+extern void* lbFile_LoadToHeap(int heap_id, const char* basename, size_t* size);
+static Fighter_WaitAnimData* ftData_ThrownRows[Ft_Kind_Max];
+
+static void ftData_ThrownStandInLoad(int kind)
+{
+    ftData* fd;
+    Fighter_WaitAnimData* rows;
+    u8* buf;
+    size_t sz = 0;
+    int i, n;
+    if (kind < 0 || kind >= Ft_Kind_Max || kind == Ft_Kind_Nana || ftData_ThrownRows[kind] != NULL) {
+        return;
+    }
+    ftData_8008572C((FighterKind) kind);
+    fd = gFtDataList[kind];
+    if (fd == NULL || fd->xC == NULL || ftData_803C23E4[kind] == NULL) {
+        return;
+    }
+    if (ftData_Table_Unk0[kind].data != NULL) {
+        ftData_ThrownRows[kind] = fd->xC; /* the real fighter's bank is loaded: use its rows as they are */
+        return;
+    }
+    n = ftData_Table_Unk0[kind].count;
+    buf = (u8*) lbFile_LoadToHeap(0, ftData_803C23E4[kind], &sz);
+    rows = (Fighter_WaitAnimData*) lbHeap_80015BD0(0, (size_t) n * sizeof *rows);
+    if (buf == NULL || rows == NULL) {
+        return;
+    }
+    memcpy(rows, fd->xC, (size_t) n * sizeof *rows);
+    for (i = 0; i < n; i++) {
+        rows[i].x14 = rows[i].x8 != 0 ? (u32) (uintptr_t) (buf + rows[i].x4) : 0;
+    }
+    ftData_ThrownRows[kind] = rows;
+    OSReport("throw: stand-in kind %d: %s (0x%X bytes) read into the main heap for thrown victims\n", kind,
+             ftData_803C23E4[kind], (unsigned int) sz);
+}
+
 Fighter* ftData_ThrownStandIn(int kind)
 {
     static Fighter standin;
     ftData* fd;
-    if (kind < 0 || kind >= Ft_Kind_Max || kind == Ft_Kind_Nana) {
+    if (kind < 0 || kind >= Ft_Kind_Max || kind == Ft_Kind_Nana || ftData_ThrownRows[kind] == NULL) {
         return NULL;
     }
     fd = gFtDataList[kind];
-    if (fd == NULL || fd->xC == NULL || ftData_Table_Unk0[kind].data == NULL) {
+    if (fd == NULL) {
         return NULL;
     }
     standin.kind = kind;
-    standin.x24 = fd->xC;
+    standin.x24 = ftData_ThrownRows[kind];
     standin.x28 = fd->x10;
     standin.x58C = ftData_Table_Unk0[kind].count;
     return &standin;
@@ -2307,12 +2349,11 @@ void ftData_80085B10(Fighter* fp)
 #if defined(TARGET_PC)
     {
         /* A Geno base "none" define's victims play the thrown rows of a retail stand-in ("thrown_as", Captain
-         * Falcon by default): load its data and animation bank with the define, as a spawned Falcon would. */
+         * Falcon by default): load its rows and animation bank with the define. */
         extern int Geno_DefineThrownAs(int kind);
         int as = Geno_DefineThrownAs((int) kind);
         if (as >= 0 && as != (int) kind) {
-            ftData_8008572C((FighterKind) as);
-            ftData_80085A14((FighterKind) as);
+            ftData_ThrownStandInLoad(as);
         }
     }
 #endif

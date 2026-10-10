@@ -164,6 +164,17 @@ void lbFile_80016760(const char* basename, void** dst, size_t* size)
     lbFile_80016760_inline(0, basename, dst, size);
 }
 
+#if defined(TARGET_PC)
+/* Reads a disc file into a new block of the given heap and returns it (the caller keeps the block). */
+void* lbFile_LoadToHeap(int heap_id, const char* basename, size_t* size)
+{
+    void* dst = NULL;
+    cancel = false;
+    lbFile_80016760_inline(heap_id, basename, &dst, size);
+    return dst;
+}
+#endif
+
 bool lbFile_800168A0(int heap_id, const char* basename, void** dst,
                      size_t* size)
 {

@@ -36,6 +36,7 @@
 
 #if defined(TARGET_PC)
 #include "../../../pc/geno/geno.h"
+#include <dolphin/os.h>
 extern void Geno_FtCmd(Fighter_GObj* gobj, CommandInfo* cmd, int mode);
 #endif
 
@@ -291,6 +292,47 @@ void ftAction_800711DC(Fighter_GObj* gobj, CommandInfo* cmd)
 }
 
 /// @brief Spawns Hitboxes
+#if defined(TARGET_PC)
+/* Hitbox command ids are 3 bits but the fighter has four polled capsules (x914[0..3]). Retail and
+ * ACE index x914[id] unchecked, so id 4 lands on xDF4[0] (the first throw record), which nothing
+ * polls: ACE Skull Kid's up-tilt (AttackHi3) asks for id 4 and the box is inert on the disc.
+ * The owner decided it should work as the author evidently intended (docs/geno.md, "ACE hitbox
+ * id 4"). Port-side fixup, deliberately NOT retail: a create/adjust with id >= 4 is redirected to
+ * a capsule slot of 0-3.
+ *   create: the slot already carrying the redirect mark (x43_b7) while live, else the lowest
+ *           disabled slot; none free -> retail indexing (logged), so a full move is unchanged.
+ *   adjust: the marked live slot; none marked -> retail indexing.
+ * The mark lives in the HitCapsule itself, so it is part of the Fighter struct and needs no
+ * snapshot or netplay support. A normal create clears it (ftAction_8007121C). */
+static HitCapsule* ftAction_HitboxSlot(Fighter* fp, u32 id, int create)
+{
+    int i;
+    if (id < ARRAY_SIZE(fp->x914)) {
+        return &fp->x914[id];
+    }
+    for (i = 0; i < (int) ARRAY_SIZE(fp->x914); i++) {
+        if (fp->x914[i].x43_b7 && fp->x914[i].state != HitCapsule_Disabled) {
+            return &fp->x914[i];
+        }
+    }
+    if (create) {
+        for (i = 0; i < (int) ARRAY_SIZE(fp->x914); i++) {
+            if (fp->x914[i].state == HitCapsule_Disabled) {
+                fp->x914[i].x43_b7 = 1;
+                OSReport("ace: hitbox id %u remapped to slot %d (port=%d motion=%d)
+",
+                         id, i, (int) fp->player_id, (int) fp->motion_id);
+                return &fp->x914[i];
+            }
+        }
+        OSReport("ace: hitbox id %u: no free slot, retail indexing (port=%d motion=%d)
+", id,
+                 (int) fp->player_id, (int) fp->motion_id);
+    }
+    return &fp->x914[id];
+}
+#endif
+
 void ftAction_8007121C(Fighter_GObj* gobj, CommandInfo* cmd)
 {
     Fighter* fp;
@@ -308,8 +350,16 @@ void ftAction_8007121C(Fighter_GObj* gobj, CommandInfo* cmd)
         ftAction_800715EC(gobj, cmd);
     } else {
         hit_group = cmd->u->create_hitbox_0.hit_group;
+#if defined(TARGET_PC)
+        hitbox = ftAction_HitboxSlot(fp, cmd->u->create_hitbox_0.id, 1);
+        if (cmd->u->create_hitbox_0.id < ARRAY_SIZE(fp->x914)) {
+            hitbox->x43_b7 = 0;
+        }
+        if ((hitbox->state == HitCapsule_Disabled) ||
+#else
         if (((hitbox = &fp->x914[cmd->u->create_hitbox_0.id])->state ==
              HitCapsule_Disabled) ||
+#endif
             (hitbox->x4 != hit_group))
         {
             hitbox->x4 = hit_group;
@@ -394,7 +444,12 @@ void ftAction_800715EC(Fighter_GObj* gobj, CommandInfo* cmd)
 /// @brief Adjust Hitbox Damage
 void ftAction_8007162C(Fighter_GObj* gobj, CommandInfo* cmd)
 {
+#if defined(TARGET_PC)
+    HitCapsule* hit =
+        ftAction_HitboxSlot(GET_FIGHTER(gobj), cmd->u->set_hitbox_damage.idx, 0);
+#else
     HitCapsule* hit = &GET_FIGHTER(gobj)->x914[cmd->u->set_hitbox_damage.idx];
+#endif
     ftColl_8007ABD0(hit, cmd->u->set_hitbox_damage.value, gobj);
     NEXT_CMD(cmd);
 }
@@ -411,7 +466,11 @@ void ftAction_8007168C(Fighter_GObj* gobj, CommandInfo* cmd)
 void ftAction_8007169C(Fighter_GObj* gobj, CommandInfo* cmd)
 {
     Fighter* fp = GET_FIGHTER(gobj);
+#if defined(TARGET_PC)
+    HitCapsule* hit = ftAction_HitboxSlot(fp, cmd->u->set_hitbox_scale.idx, 0);
+#else
     HitCapsule* hit = &fp->x914[cmd->u->set_hitbox_scale.idx];
+#endif
     hit->scale = 0.003906f * cmd->u->set_hitbox_scale.value;
     NEXT_CMD(cmd);
 }
@@ -425,7 +484,11 @@ void ftAction_800716F8(Fighter_GObj* gobj, CommandInfo* cmd)
 void ftAction_80071708(Fighter_GObj* gobj, CommandInfo* cmd)
 {
     Fighter* fp = GET_FIGHTER(gobj);
+#if defined(TARGET_PC)
+    HitCapsule* hit = ftAction_HitboxSlot(fp, cmd->u->set_hitbox_x42_b57.idx, 0);
+#else
     HitCapsule* hit = &fp->x914[cmd->u->set_hitbox_x42_b57.idx];
+#endif
     switch (cmd->u->set_hitbox_x42_b57.type) {
     case 0:
         hit->x42_b5 = cmd->u->set_hitbox_x42_b57.value;

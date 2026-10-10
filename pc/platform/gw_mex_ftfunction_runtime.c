@@ -2982,8 +2982,38 @@ static void gw_mex_movelogic_setup(void) {
     int cam_kind = -1;
     int entries, i;
 
+    /* The table's extent. Preferred: the blob's own debug symbol for the table (its start is the
+     * slot-3 target; its end is exclusive), which is exact. Sonic overrides SpecialN right after
+     * the table so "next override" happened to work for him; B. Falcon and Lucina have no SpecialN
+     * override, so that rule found nothing and their MoveLogic callbacks were never wired. Fallback
+     * 1: the nearest higher override target (any slot). Fallback 2: the end of the code blob. */
+    if (table != 0) {
+        uint32_t k, best = 0;
+        for (k = 0; k < gw_mex_ff.symbol_count; ++k) {
+            if (gw_mex_ff.symbols[k].start == table && gw_mex_ff.symbols[k].end > table) {
+                best = gw_mex_ff.symbols[k].end;
+                break;
+            }
+        }
+        if (best == 0) {
+            int j;
+            best = next > table ? next : 0;
+            for (j = 0; j < gw_mex_ff.override_count; ++j) {
+                uint32_t t = gw_mex_ff.overrides[j].target;
+                if (!gw_mex_ff.overrides[j].is_func_addr && t > table && (best == 0 || t < best)) {
+                    best = t;
+                }
+            }
+            if (best == 0) {
+                best = gw_mex_ff.code_base + gw_mex_ff.code_size;
+            }
+        }
+        if (best > table) {
+            next = best;
+        }
+    }
     if (table == 0 || next <= table) {
-        gw_log("interp: MoveLogic table missing (slot3=0x%08X slot4=0x%08X)", table, next);
+        gw_log("interp: MoveLogic table missing (slot3=0x%08X end=0x%08X)", table, next);
         return;
     }
     entries = (int)((next - table) / 0x20u);

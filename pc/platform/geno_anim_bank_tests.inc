@@ -7,8 +7,8 @@ static void gn_anim_fixture(GenoPlan* plan, unsigned char bank[160])
     plan->ok = 1; plan->joints = 1; plan->nclips = 1;
     strcpy(plan->clip_name[0], "Wait");
     strcpy(plan->clip_symbol[0], "test_figatree");
-    plan->clip_bytes[0] = 105; plan->clip_frames[0] = 2;
-    gw_w32(bank, 105); gw_w32(bank + 4, 40);
+    plan->clip_bytes[0] = 106; plan->clip_frames[0] = 2;
+    gw_w32(bank, 106); gw_w32(bank + 4, 40);
     gw_w32(bank + 8, 3); gw_w32(bank + 12, 1);
     /* data: tree [0,20), nodes [20,22), track [24,36), keys [36,38). */
     gw_w32(bank + 32, 1); gw_w32(bank + 40, 0x3f800000);
@@ -26,7 +26,7 @@ static int test_geno_anim_bank_layout(void)
     char why[200];
     int i;
     struct { int at; unsigned value; } bad[] = {
-        {0, 104}, {4, 0xffffffffu}, {8, 0xffffffffu}, {12, 0xffffffffu},
+        {0, 105}, {4, 0xffffffffu}, {8, 0xffffffffu}, {12, 0xffffffffu},
         {16, 1}, {84, 40}, {88, 13}
     };
     gn_anim_fixture(&plan, bank);
@@ -47,14 +47,14 @@ static int test_geno_anim_bank_layout(void)
     if (gn_anim_bank_validate(&plan, bank, 128, 0x20000, why, sizeof why)) {
         gw_test_fail("missing plan symbol accepted"); return 1;
     }
-    gn_anim_fixture(&plan, bank); bank[104] = 'x';
+    gn_anim_fixture(&plan, bank); bank[105] = 'x';
     if (gn_anim_bank_validate(&plan, bank, 128, 0x20000, why, sizeof why)) {
         gw_test_fail("unterminated symbol accepted"); return 1;
     }
     gn_anim_fixture(&plan, bank);
     if (gn_anim_bank_validate(&plan, bank, 104, 0x20000, why, sizeof why) ||
         gn_anim_bank_validate(&plan, bank, 160, 0x20000, why, sizeof why) ||
-        gn_anim_bank_validate(&plan, bank, 128, 104, why, sizeof why)) {
+        gn_anim_bank_validate(&plan, bank, 128, 105, why, sizeof why)) {
         gw_test_fail("truncation, changed bank size or oversized clip accepted"); return 1;
     }
     plan.clip_offset[0] = 0xffffffe0u;

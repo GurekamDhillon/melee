@@ -319,14 +319,12 @@ static HitCapsule* ftAction_HitboxSlot(Fighter* fp, u32 id, int create)
         for (i = 0; i < (int) ARRAY_SIZE(fp->x914); i++) {
             if (fp->x914[i].state == HitCapsule_Disabled) {
                 fp->x914[i].x43_b7 = 1;
-                OSReport("ace: hitbox id %u remapped to slot %d (port=%d motion=%d)
-",
+                OSReport("ace: hitbox id %u remapped to slot %d (port=%d motion=%d)\n",
                          id, i, (int) fp->player_id, (int) fp->motion_id);
                 return &fp->x914[i];
             }
         }
-        OSReport("ace: hitbox id %u: no free slot, retail indexing (port=%d motion=%d)
-", id,
+        OSReport("ace: hitbox id %u: no free slot, retail indexing (port=%d motion=%d)\n", id,
                  (int) fp->player_id, (int) fp->motion_id);
     }
     return &fp->x914[id];

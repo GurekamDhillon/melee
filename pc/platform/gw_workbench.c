@@ -1,5 +1,5 @@
 /* gw_workbench.c - opt-in, offline workbench diagnostics.
- * Pure frame serialization and file publication; no game pointers or simulation state.
+ * Pure frame serialization, camera orbit math and file publication; no game pointers.
  * gw_script.c supplies the session predicate (native tests supply its seam).
  * frame.json is replaced only after the complete temporary file is closed. */
 #include "gw_workbench.h"
@@ -57,6 +57,50 @@ int gw_Wb_WritePayload(const char *name, const char *data, size_t n,
     if (failed) { remove(temp); path_out[0] = '\0'; }
     free(temp);
     return failed ? -1 : 0;
+}
+
+int gw_Wb_CameraOrbit(const GwWbFrame *f, int target_joint, float yaw, float pitch,
+                     float distance, float eye[3], float interest[3])
+{
+    const float radians = 0.017453292519943295f;
+    float horizontal;
+    int i, target = -1;
+    if (f == NULL || eye == NULL || interest == NULL || f->nbones < 1 || f->nbones > 160 ||
+        target_joint < -1 || !isfinite(yaw) || !isfinite(pitch) || !isfinite(distance) || distance <= 0)
+        return -1;
+    if (target_joint == -1) {
+        float lo[3] = {f->bones[0].x, f->bones[0].y, f->bones[0].z};
+        float hi[3] = {lo[0], lo[1], lo[2]};
+        for (i = 1; i < f->nbones; ++i) {
+            const GwWbBone *b = &f->bones[i];
+            if (b->x < lo[0]) lo[0] = b->x;
+            if (b->y < lo[1]) lo[1] = b->y;
+            if (b->z < lo[2]) lo[2] = b->z;
+            if (b->x > hi[0]) hi[0] = b->x;
+            if (b->y > hi[1]) hi[1] = b->y;
+            if (b->z > hi[2]) hi[2] = b->z;
+        }
+        for (i = 0; i < 3; ++i) interest[i] = (lo[i] + hi[i]) * 0.5f;
+    } else {
+        for (i = 0; i < f->nbones; ++i) {
+            if (f->bones[i].joint == target_joint) { target = i; break; }
+        }
+        if (target < 0) return -1;
+        interest[0] = f->bones[target].x;
+        interest[1] = f->bones[target].y;
+        interest[2] = f->bones[target].z;
+    }
+    for (i = 0; i < 3; ++i) if (!isfinite(interest[i])) return -1;
+    /* HSD's look-at uses Y-up: an exactly vertical eye makes its basis singular. */
+    if (pitch > 89.9f) pitch = 89.9f;
+    if (pitch < -89.9f) pitch = -89.9f;
+    yaw *= radians;
+    pitch *= radians;
+    horizontal = distance * cosf(pitch);
+    eye[0] = interest[0] + horizontal * sinf(yaw);
+    eye[1] = interest[1] + distance * sinf(pitch);
+    eye[2] = interest[2] + horizontal * cosf(yaw);
+    return 0;
 }
 
 typedef struct {

@@ -1,5 +1,6 @@
-/* Pure test of the workbench gate and frame JSON writer. No game link. */
+/* Pure test of the workbench gate, frame JSON and camera orbit math. No game link. */
 #include <assert.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,10 +9,49 @@
 static int netplay_stub;
 int gw_Wb_NetplayActive(void) { return netplay_stub; }
 
+/* Resolving by joint id must survive compacted/sparse bone arrays. Orbit
+ * conversion must keep the target fixed and scale the eye offset with distance. */
+static void test_camera_orbit(void)
+{
+    GwWbFrame f, before;
+    float eye[3], interest[3];
+    memset(&f, 0, sizeof f);
+    f.nbones = 2;
+    f.bones[0].joint = 7;
+    f.bones[0].x = 10; f.bones[0].y = 20; f.bones[0].z = 30;
+    f.bones[1].joint = 42;
+    f.bones[1].x = 14; f.bones[1].y = 28; f.bones[1].z = 38;
+    before = f;
+    assert(gw_Wb_CameraOrbit(&f, 7, 0, 0, 60, eye, interest) == 0);
+    assert(interest[0] == 10 && interest[1] == 20 && interest[2] == 30);
+    assert(fabsf(eye[0] - 10) < 0.001f && fabsf(eye[1] - 20) < 0.001f && fabsf(eye[2] - 90) < 0.001f);
+    assert(gw_Wb_CameraOrbit(&f, 42, 90, 0, 30, eye, interest) == 0);
+    assert(interest[0] == 14 && interest[1] == 28 && interest[2] == 38);
+    assert(fabsf(eye[0] - 44) < 0.001f && fabsf(eye[1] - 28) < 0.001f && fabsf(eye[2] - 38) < 0.001f);
+    assert(gw_Wb_CameraOrbit(&f, -1, 45, 15, 60, eye, interest) == 0);
+    assert(interest[0] == 12 && interest[1] == 24 && interest[2] == 34);
+    assert(fabsf(eye[0] - 52.980762f) < 0.001f && fabsf(eye[1] - 39.529143f) < 0.001f && fabsf(eye[2] - 74.980762f) < 0.001f);
+    /* A vertical view must remain non-collinear with HSD's Y-up vector. */
+    assert(gw_Wb_CameraOrbit(&f, 7, 0, 90, 60, eye, interest) == 0);
+    assert(eye[1] > 79.99f && eye[2] > 30.01f);
+    assert(gw_Wb_CameraOrbit(&f, 7, 0, -90, 60, eye, interest) == 0);
+    assert(eye[1] < -39.99f && eye[2] > 30.01f);
+    assert(gw_Wb_CameraOrbit(&f, 0, 0, 0, 60, eye, interest) == -1);
+    assert(gw_Wb_CameraOrbit(&f, -2, 0, 0, 60, eye, interest) == -1);
+    assert(gw_Wb_CameraOrbit(&f, 7, 0, 0, 0, eye, interest) == -1);
+    assert(gw_Wb_CameraOrbit(&f, 7, NAN, 0, 60, eye, interest) == -1);
+    assert(gw_Wb_CameraOrbit(&f, 7, 0, INFINITY, 60, eye, interest) == -1);
+    assert(gw_Wb_CameraOrbit(&f, 7, 0, 0, INFINITY, eye, interest) == -1);
+    assert(memcmp(&f, &before, sizeof f) == 0);
+    f.nbones = 0;
+    assert(gw_Wb_CameraOrbit(&f, -1, 0, 0, 60, eye, interest) == -1);
+}
+
 int main(int argc, char **argv)
 {
     char out[4096];
     GwWbFrame f;
+    test_camera_orbit();
 #ifdef _WIN32
     _putenv("MELEE_WB_DIR=");
 #else

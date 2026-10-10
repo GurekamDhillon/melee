@@ -42,9 +42,6 @@
 #include <melee/mp/mpcoll.h>
 #include "../geno/geno.h"
 #include "script_items.h"
-#if defined(TARGET_PC)
-#include "../platform/gw_workbench.h"
-#endif
 #include "script_parts.h"
 #include "script_model.h"
 #include "script_zones.h"
@@ -2075,81 +2072,6 @@ static int lab_joint_index(Fighter* fp, HSD_JObj* jobj)
     }
     return -1;
 }
-
-#if defined(TARGET_PC)
-/* Workbench snapshots follow the LAB's read-only getters. Hit world position is
- * x4C (ftColl_8007AD18); x58 is the previous swept-capsule endpoint.
- * Joint matrices are read as-is, like ScriptGame_JointF: this accessor never
- * recomputes them or writes fighter, collision, hash or rollback state. */
-int ScriptGame_WbFrame(int slot, GwWbFrame* out)
-{
-    Fighter* fp = script_fighter(slot);
-    int i, n;
-    extern int Wb_Enabled(void);
-    if (!Wb_Enabled() || fp == NULL || out == NULL) {
-        return 0;
-    }
-    memset(out, 0, sizeof *out);
-    out->motion = fp->motion_id;
-    /* Fighter_ChangeMotionState enters animation time zero; gd.set_motion
-     * counts that pose as frame 1 (ftAnim_8006E9B4 updates cur_anim_frame). */
-    out->frame = (int) fp->cur_anim_frame + 1;
-    n = lab_joint_count(fp);
-    for (i = 0; i < n && out->nbones < 160; ++i) {
-        HSD_JObj* joint = fp->parts[i].joint;
-        GwWbBone* b;
-        if (joint == NULL) {
-            continue;
-        }
-        b = &out->bones[out->nbones++];
-        b->joint = i;
-        b->parent = lab_joint_index(fp, HSD_JObjGetParent(joint));
-        b->x = joint->mtx[0][3];
-        b->y = joint->mtx[1][3];
-        b->z = joint->mtx[2][3];
-        if (out->nbones == 1 || b->y < out->lowest_y) {
-            out->lowest_y = b->y;
-        }
-    }
-    for (i = 0; i < 4 && out->nhits < 8; ++i) {
-        HitCapsule* h = &fp->x914[i];
-        GwWbHit* o;
-        if (h->state == HitCapsule_Disabled) {
-            continue;
-        }
-        o = &out->hits[out->nhits++];
-        o->slot = i;
-        o->joint = lab_joint_index(fp, h->jobj);
-        o->active = 1;
-        o->ox = h->b_offset.x; o->oy = h->b_offset.y; o->oz = h->b_offset.z;
-        o->radius = h->scale;
-        o->wx = h->x4C.x; o->wy = h->x4C.y; o->wz = h->x4C.z;
-    }
-    for (i = 0; i < fp->hurt_capsules_len && i < 15 && out->nhurts < 24; ++i) {
-        HurtCapsule* h = &fp->hurt_capsules[i].capsule;
-        GwWbHurt* o = &out->hurts[out->nhurts++];
-        o->joint = lab_joint_index(fp, h->bone);
-        o->ax = h->a_pos.x; o->ay = h->a_pos.y; o->az = h->a_pos.z;
-        o->bx = h->b_pos.x; o->by = h->b_pos.y; o->bz = h->b_pos.z;
-        o->radius = h->scale;
-    }
-    out->ecb_bx = fp->coll_data.cur_pos.x + fp->coll_data.ecb.bottom.x;
-    out->ecb_by = fp->coll_data.cur_pos.y + fp->coll_data.ecb.bottom.y;
-    out->ecb_tx = fp->coll_data.cur_pos.x + fp->coll_data.ecb.top.x;
-    out->ecb_ty = fp->coll_data.cur_pos.y + fp->coll_data.ecb.top.y;
-    out->floor_y = ScriptGame_LabF(slot, LAB_F_FLOOR_Y);
-    return 1;
-}
-
-/* Only this MEM1 diagnostic buffer crosses out of the game. A native output
- * pointer cannot be handed to the PPC interpreter. Native code decodes every
- * word with gw_r32/gw_rf32; the simulation never consumes this scratch buffer. */
-const GwWbFrame* ScriptGame_WbFrameData(int slot)
-{
-    static GwWbFrame frame;
-    return ScriptGame_WbFrame(slot, &frame) ? &frame : NULL;
-}
-#endif
 
 int ScriptGame_LabI(int slot, int field)
 {

@@ -6891,7 +6891,6 @@ static const luaL_Reg gs_gd_funcs[] = {
 /* Workbench calls use the normal offline console and frame-boundary machinery.
  * Replies are strings so EngineLink can read a complete JSON/PNG file itself.
  * A pending snapshot has frame=-1 until the scheduled logic really completed. */
-extern const GwWbFrame *gw_ScriptGame_WbFrameData(int slot);
 extern int gw_Replay_Active(void);
 
 int gw_Wb_NetplayActive(void) {
@@ -6918,25 +6917,74 @@ static void gs_wb_row(int motion) {
     snprintf(gs.wb_row, sizeof gs.wb_row, "%s", gs_motion_name_at(0, kind, motion, anim, buf, sizeof buf));
 }
 
+/* Diagnostic storage belongs to the host, outside gw_snap.c's game ranges.
+ * The existing LAB getters return scalars; no buffer or native pointer crosses
+ * the PPC bridge. Keep the schema's compact list of non-null fighter joints. */
+static int gs_wb_read_frame(GwWbFrame *f) {
+    int i, n;
+    if (!gw_Wb_Enabled() || !gs_players_present(0)) return 0;
+    memset(f, 0, sizeof *f);
+    /* Same lazy HSD_JObjSetupMatrix path as gd.joints(1,true). The scalar
+     * reads below do not write diagnostic scratch into snapshotted game state. */
+    gw_ScriptGame_JointsSetup(0);
+    f->motion = gw_ScriptGame_FighterI(0, SI_ACTION);
+    /* Fighter_ChangeMotionState enters time zero; gd.set_motion calls it frame 1. */
+    f->frame = (int)gw_ScriptGame_FighterF(0, SF_ANIM_FRAME) + 1;
+    if (f->frame < 1) f->frame = 1; /* -1 is reserved for a pending operation. */
+    n = gw_ScriptGame_LabI(0, LAB_I_JOINTS);
+    for (i = 0; i < n && f->nbones < 160; ++i) {
+        int parent = gw_ScriptGame_JointParent(0, i);
+        GwWbBone *b;
+        if (parent == -2) continue;
+        b = &f->bones[f->nbones++];
+        b->joint = i;
+        b->parent = parent;
+        b->x = gw_ScriptGame_JointF(0, i, 0);
+        b->y = gw_ScriptGame_JointF(0, i, 1);
+        b->z = gw_ScriptGame_JointF(0, i, 2);
+        if (f->nbones == 1 || b->y < f->lowest_y) f->lowest_y = b->y;
+    }
+    for (i = 0; i < 4; ++i) {
+        GwWbHit *h;
+        if (gw_ScriptGame_HitI(0, i, LAB_HI_STATE) <= 0) continue;
+        h = &f->hits[f->nhits++];
+        h->slot = i;
+        h->joint = gw_ScriptGame_HitI(0, i, LAB_HI_BONE);
+        h->active = 1;
+        h->ox = gw_ScriptGame_HitF(0, i, LAB_HF_OX);
+        h->oy = gw_ScriptGame_HitF(0, i, LAB_HF_OY);
+        h->oz = gw_ScriptGame_HitF(0, i, LAB_HF_OZ);
+        h->radius = gw_ScriptGame_HitF(0, i, LAB_HF_SIZE);
+        /* ftColl_8007AD18: x4C is current world position; x58 is the previous one. */
+        h->wx = gw_ScriptGame_HitF(0, i, LAB_HF_X);
+        h->wy = gw_ScriptGame_HitF(0, i, LAB_HF_Y);
+        h->wz = gw_ScriptGame_HitF(0, i, LAB_HF_Z);
+    }
+    n = gw_ScriptGame_LabI(0, LAB_I_HURTBOXES);
+    for (i = 0; i < n && i < 15; ++i) {
+        GwWbHurt *h = &f->hurts[f->nhurts++];
+        h->joint = gw_ScriptGame_HurtI(0, i, LAB_UI_BONE);
+        h->ax = gw_ScriptGame_HurtF(0, i, LAB_UF_AX);
+        h->ay = gw_ScriptGame_HurtF(0, i, LAB_UF_AY);
+        h->az = gw_ScriptGame_HurtF(0, i, LAB_UF_AZ);
+        h->bx = gw_ScriptGame_HurtF(0, i, LAB_UF_BX);
+        h->by = gw_ScriptGame_HurtF(0, i, LAB_UF_BY);
+        h->bz = gw_ScriptGame_HurtF(0, i, LAB_UF_BZ);
+        h->radius = gw_ScriptGame_HurtF(0, i, LAB_UF_SIZE);
+    }
+    f->ecb_bx = gw_ScriptGame_LabF(0, LAB_F_ECB_BOTTOM_X);
+    f->ecb_by = gw_ScriptGame_LabF(0, LAB_F_ECB_BOTTOM_Y);
+    f->ecb_tx = gw_ScriptGame_LabF(0, LAB_F_ECB_TOP_X);
+    f->ecb_ty = gw_ScriptGame_LabF(0, LAB_F_ECB_TOP_Y);
+    f->floor_y = gw_ScriptGame_LabF(0, LAB_F_FLOOR_Y);
+    return 1;
+}
+
 static int gs_wb_snapshot(char *path, size_t cap, int completed) {
-    const GwWbFrame *guest;
     GwWbFrame f;
     char json[65536];
-    size_t offset;
     int length;
-    if (!gw_Wb_Enabled() || !gs_players_present(0)) { gw_log("workbench: snapshot: not enabled or no fighter"); return 0; }
-    /* Preparing lazy render matrices is the existing gd.joints(1,true) path.
-     * ScriptGame_WbFrame itself reads them without modifying any joint. */
-    gw_ScriptGame_JointsSetup(0);
-    guest = gw_ScriptGame_WbFrameData(0);
-    /* guest points at a static in script_game.c (the game image), not in mem1, so gs_guest_ok does not apply */
-    if (guest == NULL) { gw_log("workbench: snapshot: guest frame data %p unusable", (const void *)guest); return 0; }
-    /* Every field of the schema is a 32-bit int/float, with no pointers or
-     * byte fields. memcpy preserves float bit patterns after BE word decode. */
-    for (offset = 0; offset < sizeof f; offset += 4) {
-        uint32_t word = gw_r32((const unsigned char *)guest + offset);
-        memcpy((unsigned char *)&f + offset, &word, 4);
-    }
+    if (!gs_wb_read_frame(&f)) { gw_log("workbench: snapshot: not enabled or no fighter"); return 0; }
     /* Iterations consumes the whole batch before its frames run. Only
      * PostRender may publish the completed request, even from on_frame. */
     if (gs.wb_pending && !completed) f.frame = -1;
@@ -6979,6 +7027,10 @@ static int l_wb_row(lua_State *L) {
     return 1;
 }
 
+/* frame/step/clip all return "pending" while their operation is scheduled.
+ * EngineLink must poll wb.frame_info for all three until the reply's frame
+ * matches the request (step: previous frame + n) / the pending marker clears.
+ * frame_info returns @frame.json with frame:-1 only while work is pending. */
 static int l_wb_frame(lua_State *L) {
     int motion, frame;
     gs_require_offline(L, "wb.frame");
@@ -7012,7 +7064,8 @@ static int l_wb_step(lua_State *L) {
     gs.step += n;
     gs.wb_pending = 1;
     gw_log("workbench: step n=%d pending", n);
-    return gs_wb_reply(L);
+    lua_pushliteral(L, "pending");
+    return 1;
 }
 
 static int l_wb_frame_info(lua_State *L) {
@@ -7052,7 +7105,86 @@ static int l_wb_clip(lua_State *L) {
     snprintf(gs.wb_row, sizeof gs.wb_row, "%s", clip);
     gs.wb_pending = 1;
     gw_log("workbench: clip row=%d frame=%d pending", found, frame);
-    return gs_wb_reply(L);
+    lua_pushliteral(L, "pending");
+    return 1;
+}
+
+static float gs_wb_camera_number(lua_State *L, int table, const char *name, float fallback) {
+    float value;
+    lua_getfield(L, table, name);
+    value = lua_isnil(L, -1) ? fallback : gs_camera_number(L, -1, name);
+    lua_pop(L, 1);
+    return value;
+}
+
+/* Workbench camera: presets front (0,0), side (90,0), three_quarter (45,15),
+ * top (0,90); yaw/pitch are degrees and override the preset independently.
+ * camera={} defaults to three_quarter, distance 60, FOV 30, bone-bounds center.
+ * target_joint selects a snapshot joint id. Raw eye/interest/fov/roll still
+ * work alone or override the generated pose when mixed with orbit options.
+ * This intentionally uses the existing simulation camera path; a renderer-only
+ * override is a separate workbench follow-up (review finding 3). */
+static void gs_wb_camera(lua_State *L, int table) {
+    static const char *const orbit_keys[] = {"preset", "yaw", "pitch", "distance", "target_joint"};
+    static const char *const raw_keys[] = {"eye", "interest", "fov", "roll"};
+    const char *preset;
+    GwWbFrame frame;
+    float yaw = 45.0f, pitch = 15.0f, distance, eye[3], interest[3];
+    int i, orbit = 0, raw = 0, target, pose;
+    table = lua_absindex(L, table);
+    luaL_checktype(L, table, LUA_TTABLE);
+    for (i = 0; i < 5; ++i) {
+        lua_getfield(L, table, orbit_keys[i]);
+        orbit |= !lua_isnil(L, -1);
+        lua_pop(L, 1);
+    }
+    for (i = 0; i < 4; ++i) {
+        lua_getfield(L, table, raw_keys[i]);
+        raw |= !lua_isnil(L, -1);
+        lua_pop(L, 1);
+    }
+    if (raw && !orbit) {
+        lua_pushcfunction(L, l_camera_set);
+        lua_pushvalue(L, table);
+        lua_call(L, 1, 0);
+        return;
+    }
+    lua_getfield(L, table, "preset");
+    preset = luaL_optstring(L, -1, "three_quarter");
+    if (strcmp(preset, "front") == 0) { yaw = 0; pitch = 0; }
+    else if (strcmp(preset, "side") == 0) { yaw = 90; pitch = 0; }
+    else if (strcmp(preset, "top") == 0) { yaw = 0; pitch = 90; }
+    else if (strcmp(preset, "three_quarter") != 0)
+        luaL_error(L, "wb.render unknown camera preset '%s'", preset);
+    lua_pop(L, 1);
+    yaw = gs_wb_camera_number(L, table, "yaw", yaw);
+    pitch = gs_wb_camera_number(L, table, "pitch", pitch);
+    distance = gs_wb_camera_number(L, table, "distance", 60.0f);
+    if (distance < 0.01f) luaL_error(L, "wb.render camera distance must be at least 0.01");
+    target = gs_wb_int(L, table, "target_joint", -1);
+    if (!gs_wb_read_frame(&frame)) luaL_error(L, "no fighter on port 1");
+    if (gw_Wb_CameraOrbit(&frame, target, yaw, pitch, distance, eye, interest) != 0)
+        luaL_error(L, "wb.render camera target_joint is not in the frame or has no finite pose");
+    lua_createtable(L, 0, 4);
+    pose = lua_absindex(L, -1);
+    for (i = 0; i < 2; ++i) {
+        const float *v = i == 0 ? eye : interest;
+        lua_createtable(L, 0, 3);
+        gs_setnum(L, "x", v[0]); gs_setnum(L, "y", v[1]); gs_setnum(L, "z", v[2]);
+        lua_setfield(L, pose, raw_keys[i]);
+    }
+    gs_setnum(L, "fov", 30.0);
+    gs_setnum(L, "roll", 0.0);
+    for (i = 0; i < 4; ++i) {
+        lua_getfield(L, table, raw_keys[i]);
+        if (!lua_isnil(L, -1)) lua_setfield(L, pose, raw_keys[i]);
+        else lua_pop(L, 1);
+    }
+    lua_pushcfunction(L, l_camera_set);
+    lua_pushvalue(L, pose);
+    lua_call(L, 1, 0);
+    lua_pop(L, 1);
+    gw_log("workbench: camera yaw=%g pitch=%g distance=%g target_joint=%d", yaw, pitch, distance, target);
 }
 
 static int l_wb_render(lua_State *L) {
@@ -7069,11 +7201,7 @@ static int l_wb_render(lua_State *L) {
     len = snprintf(path, sizeof path, "%s/view.png", gw_Wb_Dir());
     if (len < 0 || (size_t)len >= sizeof path) return luaL_error(L, "workbench image path is too long");
     lua_getfield(L, 1, "camera");
-    if (!lua_isnil(L, -1)) {
-        lua_pushcfunction(L, l_camera_set);
-        lua_pushvalue(L, -2);
-        lua_call(L, 1, 0);
-    }
+    if (!lua_isnil(L, -1)) gs_wb_camera(L, -1);
     lua_pop(L, 1);
     lua_getfield(L, 1, "overlays");
     if (!lua_isnil(L, -1)) {

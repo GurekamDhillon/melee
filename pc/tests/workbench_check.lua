@@ -3,6 +3,7 @@
 -- through the existing per-script sandbox (io/os are deliberately unavailable).
 local started, staged, requested, checked = false, false, false, false
 local dair
+local step_frame
 local want = 6
 local ticks = 0
 
@@ -50,6 +51,19 @@ function on_tick()
         staged, requested = false, true
         return
     end
+    if step_frame then
+        local reply = wb.frame_info()
+        assert(reply:sub(1, 1) == "@", "step frame_info must return a payload path")
+        local file = assert(reply:match("[/\\]([^/\\]+)$"), "invalid step payload path")
+        local json = assert(gd.data_read(file))
+        local frame = tonumber(json:match('"frame":([%-0-9]+)'))
+        if frame == -1 then return end
+        assert(frame == step_frame, "wb.step did not advance exactly one frame")
+        gd.log("WBCHECK step frame=" .. frame)
+        checked = true
+        gd.quit()
+        return
+    end
     if requested then
         local reply = wb.frame_info()
         assert(reply:sub(1, 1) == "@", "frame_info must return a payload path")
@@ -82,7 +96,8 @@ function on_tick()
         end
         assert(i == hits)
         gd.log("WBCHECK hitboxes=" .. hits .. " bones=" .. bones)
-        requested, checked = false, true
-        gd.quit()
+        assert(wb.step{n=1} == "pending", "wb.step must defer its frame payload")
+        step_frame = frame + 1
+        requested = false
     end
 end

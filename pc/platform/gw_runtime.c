@@ -1708,7 +1708,6 @@ static void gw_sl_player_init(GwSlPlayer *p) {
 
 static void gw_sl_config_init(GwSceneConfig *c) {
   int i;
-  if (c == &gw_sl_cfg) gw_Wb_SetEnabled(0);
   memset(c, 0, sizeof *c);
   c->preload[0] = c->preload[1] = -1;
   c->game_mode = -1;
@@ -2053,7 +2052,6 @@ static int gw_sl_apply(GwSceneConfig *c, const char *key, const char *val) {
         c->game_mode = gw_sl_modes[i].game_mode;
         c->vs_mode = gw_sl_modes[i].vs_mode;
         c->workbench = tt_ieq(gw_sl_modes[i].name, "workbench");
-        if (c == &gw_sl_cfg) gw_Wb_SetEnabled(c->workbench);
         c->configured = 1;
         return 0;
       }
@@ -2294,7 +2292,6 @@ static void gw_sl_parse(GwSceneConfig *c, const char *text, const char *source) 
   } else {
     c->workbench = 0;
   }
-  if (c == &gw_sl_cfg) gw_Wb_SetEnabled(c->workbench);
   gw_sl_validate_route(c);
 }
 
@@ -2389,6 +2386,15 @@ void gw_Wb_ConfigureArgs(int argc, char **argv) {
   }
 }
 
+/* Publish only the final validated route, after legacy overrides/autostart.
+ * Every scene (re)load, including a rejected route or empty config, replaces
+ * the old gate even if the previous workbench request never entered GM_LAB. */
+static void gw_sl_publish_workbench(void) {
+  int enabled = gw_sl_cfg.configured && gw_sl_cfg.workbench && gw_sl_cfg.game_mode == 0x2F;
+  gw_Wb_SetEnabled(enabled);
+  gw_log("workbench: scene gate %s", enabled ? "enabled" : "disabled");
+}
+
 static void gw_sl_load(void) {
   const char *text;
   char filebuf[4096];
@@ -2466,6 +2472,7 @@ parsed:
   if (gw_sl_cfg.game_mode == 0x0F && gw_sl_cfg.tt_ckind < 0) {
     gw_sl_cfg.tt_ckind = gw_sl_cfg.p[0].ckind;
   }
+  gw_sl_publish_workbench();
   gw_cpu_idle_note(&gw_sl_cfg);
   gw_sl_log_config(&gw_sl_cfg);
 }
@@ -2482,6 +2489,7 @@ void gw_SceneLaunch_LoadForTest(const char *text) {
   if (text != NULL) {
     gw_sl_parse(&gw_sl_cfg, text, "test");
   }
+  gw_sl_publish_workbench();
 }
 
 const void *gw_SceneLaunch_ConfigForTest(void) {
@@ -2504,6 +2512,7 @@ void gw_SceneLaunch_SetText(const char *text) {
     gw_sl_parse(&gw_sl_cfg, text, "runtime");
     gw_cpu_idle_note(&gw_sl_cfg);
   }
+  gw_sl_publish_workbench();
 }
 
 /* ---- the Turbo match rule: one native word, read by the simulation (gw_matchrules.h) -----------

@@ -259,6 +259,12 @@ void ftPe_SpecialAirSJump_Coll(HSD_GObj* gobj)
     }
 }
 
+#if defined(TARGET_PC)
+/* Kept out of line: both callers inline it and the body was then dropped, so the bridge had
+ * no native for guest 0x8011C9E0 and ACE Daisy (m-ex mex 36, Peach-derived code) died with
+ * "resolver returned NULL for guest address 0x8011C9E0". */
+__attribute__((used, noinline))
+#endif
 static void enterAirJump(Fighter_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;

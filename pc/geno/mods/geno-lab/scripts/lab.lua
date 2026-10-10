@@ -599,17 +599,24 @@ local function in_lab_match()
   return gd.lab_mode ~= nil and gd.lab_mode() and gd.match().active and offline()
 end
 
+-- A neutral hold that ENDS: gd.input claims a port until gd.release (the claim stays connected and neutral after its frames run out),
+-- so a hold made outside a task must be released by on_frame or the human's own pad stays taken over after the menu closes.
+local pad_hold = {}
+local function pad_neutral(port, frames)
+  if pcall(gd.input, port, 0, frames) then pad_hold[port] = frames + 1 end
+end
+
 local function menu_close()
   menu.open = false
   if menu.ui.close then menu.ui.close() end
   if not menu.was_paused then gd.resume() end
-  for port = 1, 6 do pcall(gd.input, port, 0, 10) end
+  for port = 1, 6 do pad_neutral(port, 10) end
 end
 
 local function menu_leave(where)
   menu.open = false
   if menu.ui.close then menu.ui.close() end
-  for port = 1, 6 do pcall(gd.input, port, 0, 10) end
+  for port = 1, 6 do pad_neutral(port, 10) end
   gd.lab_leave(where)
 end
 
@@ -5135,7 +5142,7 @@ function LE.clips_tick()
   end
   if cl.row and not menu.open then
     -- a pad held or knocked while posing would take the fighter out of Wait: hold its port neutral
-    pcall(gd.input, focus, 0, 2)
+    pad_neutral(focus, 2)
   end
   if cl.pend == "resume" then cl.pend = nil gd.resume() end
   if cl.pend == "slow" then cl.pend = nil cl.slow = true end
@@ -5787,6 +5794,9 @@ function on_scene(kind, name)
 end
 
 function on_frame()
+  for port, n in pairs(pad_hold) do
+    if n <= 1 then pcall(gd.release, port) pad_hold[port] = nil else pad_hold[port] = n - 1 end
+  end
   LE.frame()
   LE.clips_frame()
   LD.frame()

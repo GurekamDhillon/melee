@@ -269,7 +269,9 @@ static inline int geno_cmd_words(unsigned w0)
     if (op == 59) { unsigned l = (w0 >> 16) & 15; return l ? (int)l : 1; }
     return 1;
 }
-#define GENO_POOL_WORDS 16384    /* v1: all overlay words of every profile (64 KB) */
+#define GENO_POOL_WORDS 65536    /* v1: all overlay words of every profile (was 16384; stress6: six full retail defines are 6 x 4806 words, 256 KB) */
+#define GENO_MAX_SLOTS 2560      /* stress6: overlay slots over every profile (was 512); 8 full retail defines of GENO_MAX_OVERLAYS each. The registry and the game half share it. */
+_Static_assert(GENO_MAX_SLOTS >= 6 * GENO_MAX_OVERLAYS, "six full defines must fit the slot table");
 
 /* ---- v2: Geno action states (docs/geno.md section 16) ------------------------------------------
  * A profile's "states" list declares new action states. State n is Melee motion id

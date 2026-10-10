@@ -511,7 +511,7 @@ typedef struct {
 
 #define GN_NONE 0xFFFFFFFFu
 
-#define GN_MAX_SLOTS 512 /* overlay slots over every profile */
+#define GN_MAX_SLOTS GENO_MAX_SLOTS /* overlay slots over every profile (geno.h) */
 
 typedef struct {
     gn_profile* p;

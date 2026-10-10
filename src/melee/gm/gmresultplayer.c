@@ -1,3 +1,4 @@
+#include <string.h>
 #include "gmresultplayer.h"
 
 #include <placeholder.h>
@@ -30,6 +31,8 @@
 #include <sysdolphin/baselib/archive.h>
 #include <sysdolphin/baselib/fobj.h>
 #include <sysdolphin/baselib/memory.h>
+#include <melee/lb/lbarchive.h>
+#include <melee/lb/lblanguage.h>
 #endif
 
 extern ResultsData lbl_8046DBE8;
@@ -475,117 +478,8 @@ static bool gmRst_IsMex(int ck)
     return ck >= ChKind_Mex0 && ck < ChKind_Cap;
 }
 
-/* One key value of an FObj stream (fobj.c's own reader, restated): the format is the top 3 bits
- * of `frac`, the fixed-point shift the low 5. */
-static f32 gmRst_FObjValue(u8** p, u8 frac)
-{
-    u8* s = *p;
-    f32 scale = (f32) (1 << (frac & 0x1F));
-    switch (frac & 0xE0) {
-    case 0x00: {
-        union {
-            u32 u;
-            f32 f;
-        } v;
-        v.u = ((u32) s[0] << 24) | ((u32) s[1] << 16) | ((u32) s[2] << 8) | s[3];
-        *p = s + 4;
-        return v.f;
-    }
-    case 0x20:
-        *p = s + 2;
-        return (f32) (s16) ((s[0] << 8) | s[1]) / scale;
-    case 0x40:
-        *p = s + 2;
-        return (f32) (u16) ((s[0] << 8) | s[1]) / scale;
-    case 0x60:
-        *p = s + 1;
-        return (f32) (s8) s[0] / scale;
-    default:
-        *p = s + 1;
-        return (f32) s[0] / scale;
-    }
-}
-
-static u32 gmRst_FObjPacked(u8** p)
-{
-    u8* s = *p;
-    u32 v = *s & 0x7F;
-    int shift = 7;
-    while (*s++ & 0x80) {
-        v |= (u32) (*s & 0x7F) << shift;
-        shift += 7;
-    }
-    *p = s;
-    return v;
-}
-
-/* Walk the texture-image track (HSD_A_T_TIMG) of `tobj`'s animation. Returns true when a key
- * sits exactly on `frame` (a frame with no key of its own just holds the previous name), and
- * stores the largest image index any key selects in *max_img (-1 when there is no track). */
-static bool gmRst_ImageKeyAt(HSD_TObj* tobj, int frame, int* max_img)
-{
-    HSD_FObj* fo;
-    bool hit = false;
-    *max_img = -1;
-    if (tobj == NULL || tobj->aobj == NULL) {
-        return false;
-    }
-    for (fo = tobj->aobj->fobj; fo != NULL; fo = fo->next) {
-        u8* p;
-        u8* end;
-        f32 t;
-        if (fo->obj_type != HSD_A_T_TIMG || fo->ad_head == NULL) {
-            continue;
-        }
-        p = fo->ad_head;
-        end = p + fo->length;
-        t = (f32) fo->startframe;
-        while (p < end) {
-            u8 b = *p++;
-            int op = b & 0xF;
-            int n = (b >> 4) & 7;
-            int shift = 3;
-            while (b & 0x80) {
-                b = *p++;
-                n += (b & 0x7F) << shift;
-                shift += 7;
-            }
-            for (n += 1; n > 0; n--) {
-                f32 v = 0.0F;
-                u32 wait = 0;
-                switch (op) {
-                case HSD_A_OP_CON:
-                case HSD_A_OP_LIN:
-                case HSD_A_OP_SPL0:
-                    v = gmRst_FObjValue(&p, fo->frac_value);
-                    wait = gmRst_FObjPacked(&p);
-                    break;
-                case HSD_A_OP_SPL:
-                    v = gmRst_FObjValue(&p, fo->frac_value);
-                    gmRst_FObjValue(&p, fo->frac_slope);
-                    wait = gmRst_FObjPacked(&p);
-                    break;
-                case HSD_A_OP_SLP:
-                    gmRst_FObjValue(&p, fo->frac_slope);
-                    continue;
-                case HSD_A_OP_KEY:
-                    v = gmRst_FObjValue(&p, fo->frac_value);
-                    break;
-                default:
-                    return hit;
-                }
-                if ((int) t == frame) {
-                    hit = true;
-                }
-                if ((int) v > *max_img) {
-                    *max_img = (int) v;
-                }
-                t += (f32) wait;
-            }
-        }
-    }
-    return hit;
-}
+#include <geno/geno_art_anim.inc>
+#include <geno/geno_art_text.h>
 
 /* The results name frame of CharacterKind `ck` in the name strip `tobj`: retail's formula for the
  * retail cast, the external id for an m-ex fighter whose name the loaded GmRst really has, -1
@@ -597,7 +491,7 @@ static int gmRst_NameFrame(HSD_TObj* tobj, int ck, int fk)
         return (int) gm_80168B34((CharacterKind) ck, fk, 0);
     }
     ext = Mex_PortCKindToExt(ck);
-    if (ext < 0 || !Mex_ResultArtIsOwn(ck) || !gmRst_ImageKeyAt(tobj, ext, &max_img)) {
+    if (ext < 0 || !Mex_ResultArtIsOwn(ck) || !genoArt_ImageKeyAt(tobj, ext, &max_img)) {
         return -1;
     }
     return ext;
@@ -640,7 +534,7 @@ static void gmRst_DrawName(HSD_TObj* tobj, int ck, int style)
     upper[i] = '\0';
     desc = HSD_MemAlloc(sizeof(HSD_ImageDesc));
     pix = HSD_MemAlloc(w * hp / 2 + 32);
-    gmRst_ImageKeyAt(tobj, -1, &max_img);
+    genoArt_ImageKeyAt(tobj, -1, &max_img);
     if (max_img < 0) {
         max_img = 0;
     }
@@ -670,84 +564,7 @@ static void gmRst_DrawName(HSD_TObj* tobj, int ck, int style)
     tobj->imagedesc = desc;
 }
 
-/* ---- Geno slice 6: a define's own art on the results screen ---------------------------------------------------------------------------
- * Per player the screen shows (read from the DObj chains, 2026-10-08): the small stock icon beside "P1" (jobjs[7], its second DObj: a 24x24 palette image
- * the stock frame animates) and the card (jobjs[0]), whose first DObj is the faint series emblem behind the rank numeral (80x64 intensity, animated) and
- * whose second DObj is the picture of the fighter (a static 52x74 RGB5A3). A define has no frame in the atlases, so the stock icon and the picture were
- * hidden or blank. When its package declares art (presentation.stock, .portrait, .emblem: .gxtex, no palette) the TObj's image table is pointed at one
- * image built from those bytes in the scene heap, as the HUD does (ifstock.c): every entry of the table is the define's image, so whichever frame the
- * animation selects lands on it. The big Smash-logo shape at the top left is a 3D model with no texture (the neutral emblem model 11); it stays.
- * Nothing here is simulation state. what: 1 portrait, 2 stock, 3 emblem. Returns true when the art was applied. */
-extern int Geno_DefineHasArt(int ck, int what, int costume);
-extern int Geno_DefineArtOpen(int ck, int what, int costume);
-extern int GxTex_Width(int h);
-extern int GxTex_Height(int h);
-extern int GxTex_Format(int h);
-extern int GxTex_ImageSize(int h);
-extern void GxTex_CopyImage(int h, void* dst);
-extern void GxTex_Close(int h);
-
-static bool gmRst_GenoHasArt(int ck, int what, int costume)
-{
-    return ck >= 34 && ck <= 127 && Geno_DefineHasArt(ck, what, costume);
-}
-
-static bool gmRst_GenoApplyArt(HSD_TObj* tobj, int ck, int what, int costume)
-{
-    HSD_ImageDesc* desc;
-    HSD_ImageDesc** tbl;
-    u8* pix;
-    int h, w, ht, size, i;
-    if (tobj == NULL || (h = Geno_DefineArtOpen(ck, what, costume)) < 0) {
-        return false;
-    }
-    w = GxTex_Width(h);
-    ht = GxTex_Height(h);
-    size = GxTex_ImageSize(h);
-    if (GxTex_Format(h) >= 8 || w < 1 || ht < 1 || size < 1) {
-        OSReport("geno: results art of ck %d (kind %d): format %d is not usable (no palette)\n", ck, what, GxTex_Format(h));
-        GxTex_Close(h);
-        return false;
-    }
-    pix = HSD_MemAlloc(size + 32);
-    desc = HSD_MemAlloc(sizeof(HSD_ImageDesc));
-    tbl = HSD_MemAlloc(128 * sizeof(HSD_ImageDesc*));
-    if (pix == NULL || desc == NULL || tbl == NULL) {
-        GxTex_Close(h);
-        return false;
-    }
-    pix = (u8*) (((uintptr_t) pix + 31) & ~(uintptr_t) 31);
-    GxTex_CopyImage(h, pix);
-    desc->image_ptr = pix;
-    desc->width = (u16) w;
-    desc->height = (u16) ht;
-    desc->format = (GXTexFmt) GxTex_Format(h);
-    desc->mipmap = 0;
-    desc->minLOD = 0.0F;
-    desc->maxLOD = 0.0F;
-    for (i = 0; i < 128; i++) {
-        tbl[i] = desc;
-    }
-    tobj->imagetbl = tbl;
-    tobj->imagedesc = desc;
-    GxTex_Close(h);
-    OSReport("geno: results %s of ck %d: %dx%d format %d from its package\n", what == 1 ? "card picture" : what == 2 ? "stock icon" : "emblem", ck, w, ht,
-             (int) desc->format);
-    return true;
-}
-
-/* the TObj of DObj number `index` of `jobj`'s own DObj chain, or NULL */
-static HSD_TObj* gmRst_GenoTObjAt(HSD_JObj* jobj, int index)
-{
-    HSD_DObj* dobj;
-    if (jobj == NULL || (dobj = jobj->u.dobj) == NULL) {
-        return NULL;
-    }
-    for (; index > 0 && dobj != NULL; index--) {
-        dobj = dobj->next;
-    }
-    return dobj != NULL && dobj->mobj != NULL ? dobj->mobj->tobj : NULL;
-}
+#include "gmresultplayer_geno_art.inc"
 
 /* m-ex "Replace Results Stock and Emblem Matanim", per player: `jobj`'s DObj `dobj_index` takes
  * IfAll's `symbol` matanim (the first MatAnim of the MatAnimJoint the symbol names, or of the
@@ -797,15 +614,9 @@ void fn_80177748(void)
             ckind = temp_r3->player_standings[i].ckind;
             HSD_JObjClearFlagsAll(data->player_data[i].jobjs[0], JOBJ_HIDDEN);
 #if defined(TARGET_PC)
-            if (gmRst_GenoHasArt(ckind, 1, temp_r3->player_standings[i].x3_b0)) {
-                /* Geno: the package's own portrait is the card's picture (second DObj) and, when it declares one, its emblem the faint shape behind the
-                 * rank numeral (first DObj); the retail animation runs on frame 0 and the images are the package's */
-                inline0(data->player_data[i].jobjs[0], 0.0f);
-                if (!gmRst_GenoApplyArt(gmRst_GenoTObjAt(data->player_data[i].jobjs[0], 1), ckind, 1, temp_r3->player_standings[i].x3_b0)) {
-                    HSD_JObjSetFlagsAll(data->player_data[i].jobjs[0], JOBJ_HIDDEN);
-                } else if (gmRst_GenoHasArt(ckind, 3, 0)) {
-                    gmRst_GenoApplyArt(gmRst_GenoTObjAt(data->player_data[i].jobjs[0], 0), ckind, 3, 0);
-                }
+            if (gmRst_GenoCard(data->player_data[i].jobjs[0], ckind,
+                               temp_r3->player_standings[i].x3_b0)) {
+                /* Geno handled package art, retail fallback or initials. */
             } else
             if (gmRst_IsMex(ckind)) {
                 /* m-ex: IfAll's emblem atlas at insignia[external id]; no emblem at all rather
@@ -1505,10 +1316,12 @@ static inline void fn_80178BB4_init_players(ResultsData* data,
                     /* m-ex: the stock icon from IfAll's Stc_icns (the second DObj, as m-ex
                      * attaches it); none rather than another fighter's without one. */
                     bool no_stock = false;
-                    bool geno_stock = gmRst_GenoHasArt(ckind, 2, match_end->player_standings[(*i)].x3_b0);
+                    bool geno_stock = Geno_DefineBaseCK(ckind) >= 0;
+                    int geno_base = Geno_DefineArtBaseCK(ckind);
                     if (geno_stock) {
-                        /* Geno: the package's own stock icon is the small icon beside "P1"; the retail animation runs on frame 0 (see gmRst_GenoApplyArt) */
-                        taunt_frame = 0.0F;
+                        /* Establish the retail fallback before trying a package. */
+                        taunt_frame = geno_base >= 0 ? gm_80168B34(geno_base, 0,
+                            match_end->player_standings[(*i)].x3_b0) : 0.0F;
                     } else if (gmRst_IsMex(ckind)) {
                         f32 mex = gm_MexStockFrame(
                             match_end->player_standings[(*i)].ftkind,
@@ -1535,7 +1348,11 @@ static inline void fn_80178BB4_init_players(ResultsData* data,
                         !gmRst_GenoApplyArt(gmRst_GenoTObjAt(taunt_jobj, 1), ckind, 2,
                                             match_end->player_standings[(*i)].x3_b0))
                     {
-                        no_stock = true; /* the file went missing between the check and the read: hide, never another fighter's face */
+                        if (geno_base >= 0) {
+                            OSReport("geno: results stock of ck %d: retail ck %d\n", ckind, geno_base);
+                        } else {
+                            no_stock = !gmRst_GenoLetters(gmRst_GenoTObjAt(taunt_jobj, 1), ckind);
+                        }
                     }
                     if (no_stock) {
                         HSD_JObjSetFlagsAll(taunt_jobj, JOBJ_HIDDEN);

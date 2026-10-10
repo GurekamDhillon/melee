@@ -391,9 +391,10 @@ struct gn_fm {
 #define GN_PRES_PORTRAIT 1
 #define GN_PRES_STOCK 2
 #define GN_PRES_EMBLEM 3            /* the results emblem (geno 10): one file, a format without a palette */
-#define GN_PRES_KINDS 4
+#define GN_PRES_RESULTS 4           /* results card picture; absent: use portrait */
+#define GN_PRES_KINDS 5
 struct gn_pres {
-    int n[GN_PRES_KINDS];           /* entries per kind: icon and emblem 0..1, portrait and stock 0..255 (one per costume; a costume past the list uses entry 0) */
+    int n[GN_PRES_KINDS];           /* entries per kind: icon and emblem 0..1, portrait/stock/results 0..255 (one per costume; a costume past the list uses entry 0) */
     char (*file[GN_PRES_KINDS])[64];
 };
 
@@ -422,6 +423,7 @@ typedef struct {
     char define_key[40];
     int none;                                 /* slice 4: base "none" - no donor model, clips or tables */
     int tmpl;                                 /* define.template: 0 Mario (every define before), 1 retail Captain Falcon (native code and tables underneath) */
+    int art_base_ck;                          /* presentation only: retail base or explicit template; -1 for an original base-none fighter */
     int ncommon;
     int common_row[64][9]; /* motion, like, subaction, flags, move_id, anim/iasa/phys/coll */
     uint64_t iasa_warned;
@@ -2499,6 +2501,7 @@ static int test_geno_registry_reload_layout(void) {
 
 #include "gw_skins_tests.inc"
 #include "geno_define_tests.inc"
+#include "../tests/geno_css_art_registry.inc"
 #include "geno_lua_tests.inc"
 #include "geno_items_registry.inc"
 #include "geno_items_registry_tests.inc"
@@ -2516,6 +2519,7 @@ void geno_registry_tests_register(void) {
     gw_test_register("geno_lua_call", test_geno_lua_call);
     gw_test_register("geno_lua_fault_policy", test_geno_lua_fault_policy);
     gw_test_register("geno_define_presentation", test_geno_define_presentation);
+    gw_test_register("geno_css_art_registry", test_geno_css_art_registry);
     gw_test_register("geno_define_skins255", test_geno_define_skins255);
     gw_test_register("geno_define_own_rows", test_geno_define_own_rows);
     gw_test_register("geno_define_template", test_geno_define_template);

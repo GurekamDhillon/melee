@@ -101,14 +101,14 @@ static int gn_pres_name_ok(const char* s)
 }
 static int gn_define_presentation(gn_profile* p, const jdoc* d, int e, int version, const char* where)
 {
-    static const char* keys[GN_PRES_KINDS] = {"icon", "portrait", "stock", "emblem"};
+    static const char* keys[GN_PRES_KINDS] = {"icon", "portrait", "stock", "emblem", "results"};
     int pv = jd_get(d, e, "presentation"), c, k;
     struct gn_pres* pr;
     if (pv < 0) return 1;
     if (d->n[pv].type != JN_OBJ) { gw_log("geno: %s: presentation must be an object", where); return 0; }
     for (c = d->n[pv].first; c >= 0; c = d->n[c].next) {
         for (k = 0; k < GN_PRES_KINDS && strcmp(d->n[c].key, keys[k]); ++k) {}
-        if (k == GN_PRES_KINDS) { gw_log("geno: %s: presentation key \"%s\" is not known (icon, portrait, stock, emblem)", where, d->n[c].key); return 0; }
+        if (k == GN_PRES_KINDS) { gw_log("geno: %s: presentation key \"%s\" is not known (icon, portrait, stock, emblem, results)", where, d->n[c].key); return 0; }
     }
     /* Reserve only the supplied art entries in a single owned tail allocation. */
     {
@@ -146,7 +146,7 @@ static int gn_define_presentation(gn_profile* p, const jdoc* d, int e, int versi
     p->pres = pr;
     return 1;
 bad:
-    gw_log("geno: %s: presentation.%s must be one plain *.gxtex file name (portrait and stock: or 1..255 of them; icon and emblem: one)", where, keys[k]);
+    gw_log("geno: %s: presentation.%s must be one plain *.gxtex file name (portrait, stock and results: or 1..255 of them; icon and emblem: one)", where, keys[k]);
     free(pr);
     return 0;
 }
@@ -304,6 +304,9 @@ static int gn_define_parse(gn_profile* p, const jdoc* d, int e, int version, con
         }
         p->tmpl = !strcmp(d->n[v].str, "captain");
     }
+    /* A native-code default is not a visual identity. Only a retail base or an
+     * explicitly named template lends its disc art (22.11); CK 0 is Captain. */
+    p->art_base_ck = p->none && v < 0 ? -1 : p->tmpl ? GN_TMPL_CAPTAIN_CK : 8;
     v = jd_get(d, def, "common"); if (strcmp(d->n[v].str, "melee.common.v1")) goto refused;
     v = jd_get(d, def, "resources"); if (strcmp(d->n[v].str, p->none ? "mod:files" : "retail:mario")) goto refused;
     if (p->none && !gn_define_fighter(p, d, e, where)) goto refused;
@@ -560,7 +563,9 @@ static int gn_fm_team_costume(const struct gn_fm* fm, int team)
 }
 static const char* gn_pres_file(const gn_profile* p, int what, int costume)
 {
-    if (!p || !p->pres || what < 0 || what >= GN_PRES_KINDS || p->pres->n[what] < 1) return NULL;
+    if (!p || !p->pres || what < 0 || what >= GN_PRES_KINDS) return NULL;
+    if (what == GN_PRES_RESULTS && p->pres->n[what] < 1) what = GN_PRES_PORTRAIT;
+    if (p->pres->n[what] < 1) return NULL;
     if (what == GN_PRES_ICON || what == GN_PRES_EMBLEM || costume < 0 || costume >= p->pres->n[what]) costume = 0;
     return p->pres->file[what][costume];
 }
@@ -570,6 +575,13 @@ static const gn_profile* gn_define_profile_ck(int ck)
     if (!r->kinds_built) gn_build_kinds(r);
     p = gdf_profile_for_kind(&r->definitions, ck - 1);
     return p >= 0 ? &r->p[p] : NULL;
+}
+/* Art callers must not use DefineBaseCK: it also answers the implicit Mario
+ * code template of an original fighter. This read never changes ids or aliases. */
+int gw_Geno_DefineArtBaseCK(int ck)
+{
+    const gn_profile* p = gn_define_profile_ck(ck);
+    return p ? p->art_base_ck : -1;
 }
 /* how many costumes the define declares: 0 for anything that is not a base "none" define (the caller keeps its own count) */
 int gw_Geno_DefineCostumeCountCK(int ck)
@@ -594,8 +606,12 @@ int gw_Geno_DefineCostumeName(int ck, int costume, char* out, int cap)
     snprintf(out, (size_t)cap, "%s", p->fm->cos_name[costume]);
     return out[0] != 0;
 }
-/* 1 when the package declares art of this kind (0 icon, 1 portrait, 2 stock, 3 emblem) */
-int gw_Geno_DefineHasArt(int ck, int what, int costume) { return gw_Skins_HasArtCK(ck, what, costume) || gn_pres_file(gn_define_profile_ck(ck), what, costume) != NULL; }
+/* 1 when the package declares art (0 icon, 1 portrait, 2 stock, 3 emblem, 4 results/CSP). */
+int gw_Geno_DefineHasArt(int ck, int what, int costume)
+{
+    return gw_Skins_HasArtCK(ck, what == GN_PRES_RESULTS ? GN_PRES_PORTRAIT : what, costume) ||
+           gn_pres_file(gn_define_profile_ck(ck), what, costume) != NULL;
+}
 /* the file's bytes, from the mod's files/ by name: malloc'd, the caller frees; NULL when the define declares none or the file is missing
  * (logged once per file). Host only: the game side gets a gxtex handle or a kit texture, never this pointer. */
 static void* gn_pres_read(const gn_profile* p, const char* name, uint32_t* len)
@@ -635,24 +651,57 @@ int gw_Geno_DefineArtTex(int ck, int what, int costume)
     free(raw);
     return tex;
 }
-/* A gxtex handle (gw_GxTex_*: width, height, format, CopyImage, CopyTlut, Close) for the same art, for game code that builds an HSD_ImageDesc
- * of its own (the HUD stock icon, the results screen). -1 as above. The caller closes the handle. */
-int gw_Geno_DefineArtOpen(int ck, int what, int costume)
+/* Open one package file. Result/HUD TObjs carry no palette; refusing a palette
+ * here lets a results override fall through to the CSP, then the disc/letters. */
+static int gn_pres_open_file(const gn_profile* p, const char* file, int plain)
 {
     extern int gw_GxTex_OpenBlob(const unsigned char* blob, uint32_t len, const char* label);
-    const gn_profile* p;
-    const char* file;
-    uint32_t len = 0; void* raw; int h;
-    h = gw_Skins_ArtOpenCK(ck, what, costume); /* a skin costume's own art first */
-    if (h >= 0) return h;
-    p = gn_define_profile_ck(ck);
-    file = gn_pres_file(p, what, costume);
-    if (!file) return -1;
+    extern int gw_GxTex_Format(int h);
+    extern void gw_GxTex_Close(int h);
+    uint32_t len = 0;
+    void* raw;
+    int h;
+    if (!p || !file) return -1;
     raw = gn_pres_read(p, file, &len);
     if (!raw) return -1;
-    h = gw_GxTex_OpenBlob((const unsigned char*)raw, len, file); /* copies; the blob is ours to free */
+    h = gw_GxTex_OpenBlob((const unsigned char*)raw, len, file);
     free(raw);
+    if (h >= 0 && plain && gw_GxTex_Format(h) >= 8) {
+        static char said[16][64]; static int nsaid; int i;
+        for (i = 0; i < nsaid && strcmp(said[i], file); ++i) {}
+        if (i == nsaid && nsaid < 16) {
+            snprintf(said[nsaid++], sizeof said[0], "%s", file);
+            gw_log("geno: %s: presentation file %s needs a format without a palette for stock/results", p->name, file);
+        }
+        gw_GxTex_Close(h);
+        h = -1;
+    }
     return h;
+}
+/* A gxtex handle, never a native pointer. Results: results override, skin CSP,
+ * package CSP, then the caller tries the retail source or draws letters.
+ * Existing ids still hash the entry as written; resolving art hashes nothing. */
+int gw_Geno_DefineArtOpen(int ck, int what, int costume)
+{
+    extern int gw_GxTex_Format(int h);
+    extern void gw_GxTex_Close(int h);
+    const gn_profile* p = gn_define_profile_ck(ck);
+    int h, plain = what == GN_PRES_STOCK || what == GN_PRES_EMBLEM || what == GN_PRES_RESULTS;
+    if (what < 0 || what >= GN_PRES_KINDS) return -1;
+    if (what == GN_PRES_RESULTS) {
+        if (p && p->pres && p->pres->n[GN_PRES_RESULTS]) {
+            h = gn_pres_open_file(p, gn_pres_file(p, what, costume), 1);
+            if (h >= 0) return h;
+        }
+        what = GN_PRES_PORTRAIT;
+    }
+    h = gw_Skins_ArtOpenCK(ck, what, costume);
+    if (h >= 0 && plain && gw_GxTex_Format(h) >= 8) {
+        gw_GxTex_Close(h);
+        h = -1;
+    }
+    if (h >= 0) return h;
+    return gn_pres_open_file(p, gn_pres_file(p, what, costume), plain);
 }
 
 /* ---- slice 6 (geno 10): AI, Kirby copy, own sound clips ----------------------------------------------------------------------------------- */

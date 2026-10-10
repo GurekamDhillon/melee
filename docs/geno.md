@@ -2743,12 +2743,12 @@ changes when the keys are present, and not otherwise.
 
 Each name is a `.gxtex` of the mod's `files/` folder (`pc/tools/png2gx.py --allow-odd-size`; the container is the one the menus already use) and is read at run
 time with the same lookup as `plan.json`, so name them with the fighter's prefix. A missing or unusable file logs once (`geno: <name>: presentation file X is not in the mod's files/`)
-and the game falls back: the donor's art for a donor-based define, **letters and `DISC ART` for a base `none` define (never Mario's face)**, Mario's stock frame for the HUD.
+and the game falls back per section 22.12: explicit retail base/template art, then initials when neither source is usable.
 
 What reads it: the Atlas select (`gmfrontend_atlas_select.inc`, shim `Ui_ArtGeno` -> `gw_Geno_DefineArtTex` -> `gw_Kit_TexAddGxtex`: the kit's disc-art pool); the HUD stock icon
-(`ifstock.c`: `gm_GenoStockFrame` returns `20000 + ck * 32 + costume` and a wrapper that replaces `HSD_TObjReqAnimAll` in that file points the icon's own TObj image table at an
-`HSD_ImageDesc` built from the package's bytes, `gw_Geno_DefineArtOpen` -> `gw_GxTex_OpenBlob`; cached per scene). The legacy kit select keeps the donor's tile for a donor-based define
-and none for a `none` define; the retail CSS never lists a define. Logged: `geno: <name>: select icon|portrait|stock icon from its package: <file> as kit texture N`,
+(`ifstock.c`: `gm_GenoStockFrame` returns `1000000 + ck * 256 + costume` and a wrapper that replaces `HSD_TObjReqAnimAll` in that file points the icon's own TObj image table at an
+`HSD_ImageDesc` built from the package's bytes, `gw_Geno_DefineArtOpen` -> `gw_GxTex_OpenBlob`; cached per scene). The legacy kit select now also reads package art (22.12);
+the retail CSS never lists a define. Logged: `geno: <name>: select icon|portrait|stock icon from its package: <file> as kit texture N`,
 `geno: stock icon of ck N costume C: WxH format F from its package`, `frontend: character select - ck N icon|portrait from its package (kit texture T)`.
 
 **Skins** (2026-10-08): a mod of kind `skin` can add costumes to a base `none` define after its declared ones (`target: {"geno": "<define key>"}`; a donor-based define wears Mario's list, so its skins are Mario's). The select shows the skin's name, art falls back to the define's own. Format and rules: workspace `docs/mods-packaging.md` 4b.
@@ -2800,12 +2800,11 @@ A define that fights a retail fighter still changes the retail fighter's own row
 
 **The results screen** (read by dumping the DObj chains, 2026-10-08): per player `jobjs[7]` is the small stock icon beside "P1" (its second DObj, a 24x24 palette image the stock frame animates) and
 `jobjs[0]` is the card: its first DObj the faint series emblem (80x64 intensity, animated), its second the **picture of the fighter** (a static 52x74 RGB5A3). `presentation.stock` and
-`presentation.portrait` (by the player's costume) are pointed at those TObjs (`gmRst_GenoApplyArt`, the HUD's table trick); a define without portrait art hides the card picture. The big
+`presentation.results` (falling back to `presentation.portrait`, by the player's costume) are pointed at those TObjs (`gmRst_GenoApplyArt`, the HUD's table trick); missing package art uses the disc donor or initials (22.12). The big
 Smash-logo shape at the top left is a 3D model without a texture (the neutral emblem model 11 `fn_80176BF0` falls back to): it stays for every define, a package cannot replace it
 without geometry. Logged: `geno: results stock icon|card picture|emblem of ck N: WxH format F from its package`.
 
-**The Atlas select card face.** `Ui_SelCard` carries the fighter's select icon (`fas_card_face`: the define's own icon, or the roster's icon for a retail fighter; none for a base `none`
-define without art) and `at_part_sel_card` draws it at the card's left, 64x56 aspect, with the text after it; a card narrower than 150 px plus the face, an open slot, or no art draws none.
+**The Atlas select card face.** `Ui_SelCard` carries the fighter's select icon (`fas_card_face`: own icon, then the explicit retail art donor; none when both are missing, section 22.12) and `at_part_sel_card` draws it at the card's left, 64x56 aspect, with the text after it; a card narrower than 150 px plus the face, an open slot, or no art draws none.
 
 Tests: native `geno_define_s6_keys`, `geno_define_policy_ck`, `geno_gnsnd_audio`, `geno_define_records` (`run.sh --test`), the card face in `atlas-parts` and `atlas-select-adapter` (`build.sh --native-test`);
 Python `tools/geno/test_audio.py`, `test_define.py`. In the exe (2026-10-08, vanilla disc, window off screen): a team match (red 1, blue 2, green 3), Kirby inhaling a Courier under `none` and `retail:mario`
@@ -2894,7 +2893,7 @@ as a foreign skeleton (`ft_0C88.c`, `ftanim.c`, `ftcoll.c`, `ftdata.c`, `ftCo_Gu
 
 **Still the template's, not the package's** (the honest list; `census` logs the pointer fields): the native special-move code and state callbacks; `ftData` `x18` (demo blend),
 `x1C` (hand poses), `x20` (guard trees), `x24`, `x2C` (dynamics), `x5C` (metal); the effect file (EfCa) and the sound bank, which scripts and code name by id and the engine cannot
-mount from a mod; the select icon and portrait (the letters fallback). The unnamed `ftCo_DatAttrs` fields keep Falcon's values (the copy is Falcon's).
+mount from a mod. Select, stock and results art can be supplied by the package or borrowed from the explicit template at runtime (22.12). The unnamed `ftCo_DatAttrs` fields keep Falcon's values (the copy is Falcon's).
 
 **Diagnostics added with it** (read-only): `gd.rng()` (the game's random seed; a trace of it per frame names the first frame two runs part ways), `MELEE_RAND_TRACE=<file>` (every draw: frame, caller, seed after, global flag; the offline mode of the render-determinism work) They found the one real bug of the export: `ftLib_GetKind` returned 126, so Falcon Kick's flame (`switch (ftLib_GetKind(gobj))` in
 `ftcaptainspeciallw.c`) was never spawned and the particle system drew 8 fewer randoms at that frame.
@@ -2906,6 +2905,67 @@ Native suite: 361 of 361.
 
 Not exercised: held items and item throws (motions 92..177, 341..346), the other fighters' capture states, wall and ceiling states (Final Destination has no walls), Kirby copying the
 define, netplay with the define (it carries an online identity like any define; no match was run), the results and intro demo clips and the select art on screen.
+
+### 22.12 Define art resolution (2026-10-10; source and tests written, not built or run)
+
+An entry can supply all four fighter images in its existing `presentation` object.
+Files stay in the mod's `files/` directory; the game opens them with the existing GXTX v1
+decoder. No exported disc art is needed in the package or repository.
+
+```json
+"presentation": {
+  "icon": "GnFalcon_icon.gxtex",
+  "portrait": ["GnFalcon_csp.gxtex", "GnFalcon_csp_red.gxtex"],
+  "stock": "GnFalcon_stock.gxtex",
+  "results": "GnFalcon_results.gxtex",
+  "emblem": "GnFalcon_emblem.gxtex"
+}
+```
+
+| field | use and format |
+|---|---|
+| `icon` | One file for the select tile and card face. Retail aspect 64x56. |
+| `portrait` | CSP, one file or a list of 1..255 costume files. Retail aspect 136x188. |
+| `stock` | HUD and results stock icon, one file or a list of 1..255. Retail aspect 24x24. |
+| `results` | Results card picture, one file or a list of 1..255. Retail aspect 52x74; omitted or unusable: try `portrait` for compatibility. |
+| `emblem` | Existing single-file results emblem behind the rank. |
+
+A costume past a list uses entry zero. Names are printable ASCII without spaces, paths,
+colon or `..`, at most 63 characters including `.gxtex` (case-insensitive extension).
+Dimensions are 1..1024, fitted by the select; use the listed aspect for results.
+`pc/tools/png2gx.py --allow-odd-size` produces these existing containers. Select art can
+carry a palette. Stock, results and emblem package images must be non-paletted; RGB5A3
+and RGBA8 are recommended. A paletted CSP still works on select but cannot supply results.
+
+Resolution is per image: loadable own art, then the retail base/explicit `define.template`
+from the mounted disc, then initials. `base: "mario"` lends Mario's art; `base: "none",
+template: "captain"` lends Captain Falcon's, even with a full package costume list.
+An explicit Mario template also lends art. An omitted template on `base: "none"` has no
+visual donor: the implicit Mario native-code template does not lend Mario's face.
+Skin art keeps its existing priority, except an explicit `results` override precedes the
+skin CSP. Missing/bad files continue to the next source. Retail and m-ex fighters are unchanged.
+
+Both Atlas and legacy select follow this rule. The static results card explicitly reads
+the donor CSP through `mnCharSel_PcArtPortrait`; animating the series emblem alone does
+not select a portrait. Its archive remains alive through results exit. Image tables are
+sized from TIMG keys; a palette object is cloned, while its bytes stay in the archive.
+HUD substitutions restore the original atlas when a stock object is reused.
+
+`pc/geno/presentation.schema.json` is the game-owned editor contract. The handoff patch
+in `.omo/evidence/geno-css-art-workspace.patch` makes workspace `tools.geno.schema`
+read it, includes it in the source contract, extends file checking, and registers the
+`geno-css-art` native suite. Apply that patch in the workspace, then regenerate with
+`python -m tools.geno.schema`. These keys retain the existing `geno >= 9` presentation
+gate; explicit templates still require 10. Older engines may reject `results` as unknown.
+
+Lookup only creates presentation caches and copies texture bytes through scalar handles;
+it does not change fighter data, content ids or the catalogue/handshake digest.
+The existing policy of hashing declared entry metadata is unchanged (adding a declaration
+still changes that entry's id). Tests in `pc/tests/geno_css_art_test.c` use invented
+pixels and animation keys; `geno_css_art_registry` covers parsing, Captain CK0, explicit
+versus implicit donors and stable ids/digest across lookup. Python schema/file tests and
+the PID-verified CSS/HUD/results capture driver are in `pc/tests/geno_css_art_*.py`.
+All build, test, link and on-screen verification remains with the lead; see the report.
 
 ## 23. Fighter Lua (slice 5: the first increment built 2026-10-07, the second move and the tooling 2026-10-08)
 

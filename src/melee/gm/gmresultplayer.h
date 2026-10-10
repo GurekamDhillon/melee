@@ -5,6 +5,11 @@
 
 struct ResultsMatchInfo;
 
+#if defined(TARGET_PC)
+void gmRst_GenoArtReset(void);
+void gmRst_GenoArtClose(void);
+#endif
+
 /* 177724 */ void gm_80177724(struct ResultsMatchInfo*);
 /* 177748 */ void fn_80177748(void);
 /* 177920 */ void fn_80177920(HSD_GObj*);

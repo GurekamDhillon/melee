@@ -6406,6 +6406,18 @@ static MexSelectChr* mnCharSel_PcMex;
 static CSSIcon* mnCharSel_PcTable;
 static int mnCharSel_PcCount;
 
+/* Release the models before the caller releases their backing archive. */
+void mnCharSel_PcArtClose(void)
+{
+    if (mnCharSel_PcIcons != NULL && mnCharSel_PcIcons != mnCharSel_PcMenu)
+        HSD_JObjRemoveAll(mnCharSel_PcIcons);
+    if (mnCharSel_PcMenu != NULL) HSD_JObjRemoveAll(mnCharSel_PcMenu);
+    mnCharSel_PcMenu = mnCharSel_PcIcons = NULL;
+    mnCharSel_PcMex = NULL;
+    mnCharSel_PcTable = NULL;
+    mnCharSel_PcCount = 0;
+}
+
 /* The biggest colour texture under `j` (its own subtree) - an icon's art, not its I4 plate. */
 static void mnCharSel_PcBestTex(HSD_JObj* j, HSD_TObj** best, int* area, int depth)
 {
@@ -6521,8 +6533,8 @@ int mnCharSel_PcArtIcon(int i, int* ck, int* ext, HSD_ImageDesc** img, HSD_Tlut*
 int mnCharSel_PcArtPortrait(int ck, int costume, HSD_ImageDesc** img, HSD_Tlut** tlut)
 {
     extern int Geno_DefineBaseCK(int ck);
-    int base = Geno_DefineBaseCK(ck);
-    if (base >= 0) ck = base;
+    extern int Geno_DefineArtBaseCK(int ck);
+    if (Geno_DefineBaseCK(ck) >= 0) ck = Geno_DefineArtBaseCK(ck);
     extern int Mex_PortCKindToExt(int);
     HSD_JObj* j = NULL;
     HSD_TObj* t = NULL;

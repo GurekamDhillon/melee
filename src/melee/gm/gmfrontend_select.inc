@@ -26,11 +26,13 @@
  * bits on a vanilla save); retail stages follow the save, or MELEE_UNLOCK_ALL. */
 
 extern int mnCharSel_PcArtOpen(HSD_Archive* archive);
+extern void mnCharSel_PcArtClose(void);
 extern int mnCharSel_PcArtIcon(int i, int* ck, int* ext, HSD_ImageDesc** img, HSD_Tlut** tlut);
 extern int mnCharSel_PcArtPortrait(int ck, int costume, HSD_ImageDesc** img, HSD_Tlut** tlut);
 extern int Geno_DefineCount(void);
 extern int Geno_DefineCKAt(int index);
 extern int Geno_DefineBaseCK(int ck);
+extern int Geno_DefineArtBaseCK(int ck);
 extern int Geno_DefineCostumeCountCK(int ck);
 extern int Geno_DefineCostumeName(int ck, int costume, char* out, int cap);
 extern int Geno_DefineHasArt(int ck, int what, int costume);
@@ -44,6 +46,8 @@ typedef struct FsArt {
     HSD_ImageDesc* img;
     HSD_Tlut* tl;
 } FsArt;
+#include <geno/geno_art_text.h>
+#include "gmfrontend_package_art.inc"
 extern int Mex_GrKindForExt(int ext);
 extern int Settings_Str(const char* key, char* out, int cap, const char* dflt);
 extern const char* Mex_GrFile(int grkind);
@@ -72,7 +76,9 @@ static struct {
 
 static void fa_close(void)
 {
+    fs_geno_clear();
     if (fa.chr != NULL) {
+        mnCharSel_PcArtClose();
         lbArchive_80016EFC(fa.chr);
     }
     if (fa.map != NULL) {
@@ -397,12 +403,27 @@ static void fs_css_roster(void)
     {
         int d, count = Geno_DefineCount();
         for (d = 0; d < count && fcs.n < FS_MAX_FIGHTERS; ++d) {
-            int ck = Geno_DefineCKAt(d), base = Geno_DefineBaseCK(ck), source;
+            int ck = Geno_DefineCKAt(d), base = Geno_DefineArtBaseCK(ck), source;
             if (ck < 0) continue;
             for (source = 0; source < fcs.n && fcs.ck[source] != base; ++source) {}
             fcs.ck[fcs.n] = ck;
-            if (source < fcs.n && Geno_DefineCostumeCountCK(ck) == 0) fcs.icon[fcs.n] = fcs.icon[source]; /* a base "none" define has no donor art */
-            else { fcs.icon[fcs.n].img = NULL; fcs.icon[fcs.n].tl = NULL; }
+            fcs.icon[fcs.n].img = NULL;
+            fcs.icon[fcs.n].tl = NULL;
+            if (base >= 0) {
+                if (source < fcs.n) {
+                    fcs.icon[fcs.n] = fcs.icon[source];
+                } else {
+                    /* A locked/filtered base still has art in the disc roster. */
+                    for (source = 0; source < n; ++source) {
+                        int donor, ext;
+                        FsArt art;
+                        if (mnCharSel_PcArtIcon(source, &donor, &ext, &art.img, &art.tl) && donor == base) {
+                            fcs.icon[fcs.n] = art;
+                            break;
+                        }
+                    }
+                }
+            }
             fcs.ok[fcs.n++] = !fcs.online || Netplay_FighterAvailable(ck);
         }
     }
@@ -1062,7 +1083,18 @@ static void fs_build_css(void)
             continue;
         }
         sprintf(id, "ti%d", slot);
-        fs_tex_fit(id, fs_art_tex(fcs.icon[slot]), r[0], r[1], r[2], r[3], white);
+        {
+            FsArt a = fs_fighter_icon(ck, fcs.icon[slot]);
+            int tex = fs_art_tex(a);
+            if (tex >= 0) {
+                fs_tex_fit(id, tex, r[0], r[1], r[2], r[3], white);
+            } else {
+                char name[48], abbr[3];
+                if (!Geno_DefineName(ck, name, sizeof name)) Netplay_FighterName(ck, name, sizeof name);
+                genoArt_Initials(name, abbr);
+                fl_text_at(id, "heading", (r[0] + r[2]) * 0.5F, r[3] - 8.0F, "centre", 40, abbr, gold, -1);
+            }
+        }
         if (!fcs.ok[slot]) {
             int qd;
             sprintf(id, "tx%d", slot);
@@ -1150,8 +1182,15 @@ static void fs_build_css(void)
         if (s->ck >= 0) {
             FsArt a;
             sprintf(id, "cs%d", p);
-            mnCharSel_PcArtPortrait(s->ck, s->costume, &a.img, &a.tl);
-            fs_tex_fit(id, fs_art_tex(a), pr[0] + 2, pr[1] + 2, pr[2] - 2, pr[3] - 2, white);
+            a = fs_fighter_portrait(s->ck, s->costume);
+            if (a.img != NULL) {
+                fs_tex_fit(id, fs_art_tex(a), pr[0] + 2, pr[1] + 2, pr[2] - 2, pr[3] - 2, white);
+            } else {
+                char name[48], abbr[3];
+                if (!Geno_DefineName(s->ck, name, sizeof name)) Netplay_FighterName(s->ck, name, sizeof name);
+                genoArt_Initials(name, abbr);
+                fl_text_at(id, "heading", (pr[0] + pr[2]) * 0.5F, (pr[1] + pr[3]) * 0.5F, "centre", 40, abbr, gold, -1);
+            }
             if (!Geno_DefineName(s->ck, buf, 32)) Netplay_FighterName(s->ck, buf, 32);
         } else if (s->ck == FS_CK_RANDOM) {
             sprintf(id, "cq%d", p);

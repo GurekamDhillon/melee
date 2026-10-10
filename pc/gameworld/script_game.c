@@ -2765,7 +2765,9 @@ int ScriptGame_LabWbHome(int slot, int mode)
         return 0;
     }
     if (mode == 1) {
-        if (!lab_wb_home_set && fp->ground_or_air == GA_Ground) {
+        if (!lab_wb_home_set) {
+            /* Whatever the fighter stands (or hangs, if the scene paused during the spawn drop) at on the
+             * first request is the home; every later request lands it there. A jab's root was y = 10. */
             lab_wb_home_x = fp->cur_pos.x;
             lab_wb_home_y = fp->cur_pos.y;
             lab_wb_home_set = 1;

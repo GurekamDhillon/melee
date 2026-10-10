@@ -1350,6 +1350,7 @@ int gw_Skins_HasArtCK(int ck, int what, int costume);
 int gw_Skins_ArtTexCK(int ck, int what, int costume);
 int gw_Skins_ArtOpenCK(int ck, int what, int costume);
 #include "geno_define_registry.inc"
+#include "geno_anim_bank.inc"
 #include "geno_define_records.inc"
 #include "geno_lua_registry.inc"
 #include "geno_combo_registry.inc"
@@ -2501,6 +2502,7 @@ static int test_geno_registry_reload_layout(void) {
 
 #include "gw_skins_tests.inc"
 #include "geno_define_tests.inc"
+#include "geno_anim_bank_tests.inc"
 #include "../tests/geno_css_art_registry.inc"
 #include "geno_lua_tests.inc"
 #include "geno_items_registry.inc"
@@ -2508,6 +2510,11 @@ static int test_geno_registry_reload_layout(void) {
 #include "geno_items_runtime_tests.inc"
 void geno_registry_tests_register(void) {
     gw_skins_tests_register();
+    gw_test_register("geno_anim_bank_layout", test_geno_anim_bank_layout);
+    gw_test_register("geno_anim_bank_relocations", test_geno_anim_bank_relocations);
+    gw_test_register("geno_anim_bank_figatree", test_geno_anim_bank_figatree);
+    gw_test_register("geno_anim_bank_request", test_geno_anim_bank_request);
+    gw_test_register("geno_anim_bank_caches", test_geno_anim_bank_caches);
     gw_test_register("geno_define_registry", test_geno_define_registry);
     gw_test_register("geno_define_repeated_install", test_geno_define_repeated_install);
     gw_test_register("geno_define_attrs_v7", test_geno_define_attrs_v7);

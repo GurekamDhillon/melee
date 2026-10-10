@@ -1054,6 +1054,14 @@ Fighter_GObj* Fighter_Create(struct plAllocInfo* input)
     Fighter* fp;
     HSD_JObj* jobj;
 
+#if defined(TARGET_PC)
+    {
+        /* Apply authoring requests after teardown, before any new fighter can
+         * retain a figatree. The coordinator refuses online/resimulation. */
+        extern void Geno_AnimBankBeforeSpawn(void);
+        Geno_AnimBankBeforeSpawn();
+    }
+#endif
     gobj = GObj_Create(HSD_GOBJ_CLASS_FIGHTER, 8, 0);
     GObj_SetupGXLink(gobj, &ftDrawCommon_80080E18, 5U, 0U);
     /**

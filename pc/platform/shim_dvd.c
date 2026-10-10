@@ -552,6 +552,34 @@ void *gw_DVDReadFileAlloc(const char *path, uint32_t *out_size) {
   return buf;
 }
 
+/* Animation authoring needs the current host file, not the mounted size alone:
+ * reject truncation/growth instead of reading a prefix of a newly rebuilt bank.
+ * Keep the mounted metadata and netplay fingerprint untouched. */
+void* gw_DVDReadModFileFresh(const char* path, uint32_t* out_size, char* why, int cap) {
+  gw_mod_file* m;
+  FILE* f;
+  long length;
+  void* data;
+  *out_size = 0;
+  gw_mods_load();
+  m = path ? gw_mod_by_path(path) : NULL;
+  if (!m) { snprintf(why, cap, "animation bank is not a mounted mod file"); return NULL; }
+  f = fopen(m->host, "rb");
+  if (!f) { snprintf(why, cap, "cannot open animation bank %s", path); return NULL; }
+  if (fseek(f, 0, SEEK_END) != 0 || (length = ftell(f)) <= 0 ||
+      (uint64_t)length != m->size || fseek(f, 0, SEEK_SET) != 0) {
+    snprintf(why, cap, "animation bank size changed or is unreadable; restart required");
+    fclose(f); return NULL;
+  }
+  data = malloc(m->size);
+  if (!data || fread(data, 1, m->size, f) != m->size || fgetc(f) != EOF || ferror(f)) {
+    snprintf(why, cap, "cannot read a complete animation bank %s", path);
+    free(data); fclose(f); return NULL;
+  }
+  fclose(f); *out_size = m->size;
+  return data;
+}
+
 /* Synchronous read of the first `length` bytes of a disc (or mod) file. Returns the bytes read,
  * 0 when the file does not exist. For headers - e.g. an .ssm's sample-data size. */
 uint32_t gw_DVDReadPrefix(const char *path, void *dst, uint32_t length) {

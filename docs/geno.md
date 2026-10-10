@@ -738,9 +738,40 @@ What does not:
   rebuilding those rows alone cannot safely update them. Reload names the reason in
   `geno: hot reload: layout changed (...)` and **restarts the match**
   (`gd.lab_leave("restart")`: the loading screen, then the same fighters on the same stage).
-- **Disc / file data** (Pl*.dat, animations, models): these need a new match.
+- **Disc / file data** (Pl*.dat, models, animation layouts): restart the process after rebuilding.
+  A match restart alone retains cached animation banks. Compatible Geno banks have the explicit offline path below.
 - `on_init` hooks are not re-run.
 - A `geno.json` that does not parse keeps the old data.
+
+**Offline animation-bank reload** (Geno base `"none"` defines with their own bank):
+
+`gd.reload_anim_bank("goku-xv2")` reads the current mounted animation file, validates every
+clip against the **already loaded** plan, and returns `true, "pending"` or `false, reason`.
+Then call `gd.lab_leave("restart")` (or leave and start another match). Poll
+`gd.reload_anim_bank_status()`: its `phase` is `idle`, `pending`, `ready`, or `refused`,
+and `text` explains the result. The request holds a copy of the validated bytes, so a later
+edit on disk cannot replace the candidate between validation and application.
+
+Application waits until **all fighter GObjs are gone**, before the next `Fighter_Create`.
+This also releases throw victims referencing that kind's animations. It refreshes the existing
+MEM1/ARAM bank or DVD preload, clears the main bank cache and resolved main/demo row pointers,
+and discards the thrown-animation stand-in table. The next animation load rebuilds pointers
+from the refreshed bytes. Successful reloads discard LAB rewind/quick slots and invalidate
+older library states through a local bank digest; the netplay hash and definition IDs stay fixed.
+Netplay, rollback and resimulation refuse requests, and a queued request is cancelled if the
+session becomes online before application. Restart the process before using edited packages online.
+
+Only the bank is re-read. Its mounted byte length, per-clip offsets/lengths and public symbols
+must fit the loaded plan and animation buffer; HSD relocations, FigaTree joint counts, tracks
+and key streams are checked before game parsing. Shared banks and missing resident/preloaded
+storage are refused. Changed plans, models, scripts or bank layouts need the full restart path.
+
+Workbench engines expose `wb.reload_anim("goku-xv2")`: it validates the loaded fighter's bank,
+queues it, and restarts the LAB match in the same process. It returns `"pending"`; poll
+`wb.reload_anim_status()` until `"ok"` before re-selecting the clip/row and frame. Validation
+or application failure reports `reload needs restart: ...`. The existing `wb.reload()` still
+requests a process restart for full-package changes. EngineLink callers must explicitly opt
+into the animation-only command; the launcher lives in the workspace repo and is unchanged here.
 
 ### 14.11 Stage E: the creator tools
 

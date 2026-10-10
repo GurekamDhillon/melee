@@ -148,6 +148,13 @@ typedef struct ft_8045993C_t {
 /* 4598B8 */ ftData* gFtDataList[Ft_Kind_Max];
 /* 45993C */ ft_8045993C_t ft_8045993C[6];
 /* 45996C */ int ft_8045996C[Ft_Kind_Max];
+#if defined(TARGET_PC)
+static Fighter_WaitAnimData* ftData_ThrownRows[Ft_Kind_Max];
+/* A validated reload reuses the resident bank's storage, including AllA's DVD
+ * preload entry. The next ftData_80085A14 binds rows against these fresh bytes. */
+static void* ftData_AnimReloadData[Ft_Kind_Max];
+static size_t ftData_AnimBankBytes[Ft_Kind_Max];
+#endif
 
 /// @todo All one struct maybe?
 #ifdef MUST_MATCH
@@ -191,6 +198,9 @@ void ft_800852B0(void)
 #if defined(TARGET_PC)
     GenoGame_ClearProfileStorage();
     GenoDefine_ResetDescriptors();
+    memset(ftData_ThrownRows, 0, sizeof ftData_ThrownRows);
+    memset(ftData_AnimReloadData, 0, sizeof ftData_AnimReloadData);
+    memset(ftData_AnimBankBytes, 0, sizeof ftData_AnimBankBytes);
 #endif
     ftData** list;
 #if defined(TARGET_PC)
@@ -2243,7 +2253,19 @@ void ftData_80085A14(FighterKind kind)
     PAD_STACK(4);
 
     if (ftData_Table_Unk0[kind].data == NULL) {
-        lbFile_800168A0(1, ftData_803C23E4[kind], &sp18, &sp10);
+#if defined(TARGET_PC)
+        if (ftData_AnimReloadData[kind] != NULL) {
+            sp18 = ftData_AnimReloadData[kind];
+            sp10 = ftData_AnimBankBytes[kind];
+            ftData_AnimReloadData[kind] = NULL;
+        } else
+#endif
+        {
+            lbFile_800168A0(1, ftData_803C23E4[kind], &sp18, &sp10);
+        }
+#if defined(TARGET_PC)
+        ftData_AnimBankBytes[kind] = sp10;
+#endif
 #if defined(TARGET_PC)
         /* Heap 5 (AllA) holds whole animation archives; this identifies the
          * files behind a multi-fighter preload's heap report. */
@@ -2282,7 +2304,8 @@ void ftData_80085A14(FighterKind kind)
  * match), its file is read into the main heap once and a private copy of its row table points into that. */
 extern void* lbHeap_80015BD0(int heap_id, size_t size);
 extern void* lbFile_LoadToHeap(int heap_id, const char* basename, size_t* size);
-static Fighter_WaitAnimData* ftData_ThrownRows[Ft_Kind_Max];
+#include "geno/geno_anim_bank_game.inc"
+#include "geno/geno_anim_bank_cache_tests.inc"
 
 static void ftData_ThrownStandInLoad(int kind)
 {

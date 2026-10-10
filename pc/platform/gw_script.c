@@ -15,6 +15,7 @@
 #include "gw.h"
 #include "gw_script.h"
 #include "gw_workbench.h"
+#include "geno_anim_bank.h"
 #include "../workbench_render.h"
 #include "gw_surface.h"
 #include "gw_motion.h"
@@ -4652,6 +4653,35 @@ static int l_hot_reload(lua_State *L) {
     return 2;
 }
 
+/* A bank request validates now and waits for the empty-fighter spawn boundary.
+ * It never changes a live fighter, and does not reload the plan or geno.json. */
+static const char* gs_anim_bank_busy(void) {
+    if (gs.hot_phase || gs.rwt_phase || gs.rwt_arm || gs.rw_resim || gs.rw_pending_on ||
+        gs.pending_save || gs.pending_load || gs.st_pending_save[0] || gs.st_pending_load[0])
+        return "finish the pending reload/rewind/savestate operation first";
+    return NULL;
+}
+static int l_reload_anim_bank(lua_State* L) {
+    const char* define = luaL_checkstring(L, 1);
+    const char* busy;
+    char why[256];
+    gs_require_offline(L, "reload_anim_bank");
+    if (gw_ScriptGame_StageSlotsActive()) return gs_stage_state_refuse(L, "reload_anim_bank");
+    busy = gs_anim_bank_busy();
+    if (busy) return gs_push_fail(L, busy);
+    if (!gw_Geno_ReloadAnimBank(define, why, sizeof why)) return gs_push_fail(L, why);
+    gs_rw_branch();
+    lua_pushboolean(L, 1); lua_pushliteral(L, "pending"); return 2;
+}
+static int l_reload_anim_bank_status(lua_State* L) {
+    static const char* const phase[] = {"idle", "pending", "ready", "refused"};
+    int p = gw_Geno_AnimBankPhase();
+    lua_newtable(L);
+    gs_setstr(L, "phase", p >= 0 && p < 4 ? phase[p] : "refused");
+    gs_setstr(L, "text", gw_Geno_AnimBankStatus());
+    return 1;
+}
+
 /* gd.lab_peek(addr [, n]) -> hex string: n (<= 64) raw bytes of MEM1 at addr, as memory holds them
    (game memory is big-endian). Read-only, for the Lab's debugging. */
 static int l_lab_peek(lua_State *L) {
@@ -4730,7 +4760,8 @@ static void gs_identity(uint64_t out[4]) {
         const char *x = gw_Geno_ProfileHex(i);
         h = gs_fnv(h, x, strlen(x));
     }
-    out[3] = h;
+    /* Local saved-state compatibility only; never used by the netplay hash. */
+    out[3] = h ^ gw_Geno_AnimBankDigest();
 }
 
 static void gs_state_fill(GsStateHdr *h, const char *name, const char *desc) {
@@ -6893,6 +6924,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"rewind_to", l_rewind_to}, {"rewind_live", l_rewind_live}, {"rewind_test", l_rewind_test},
     {"rewind_test_result", l_rewind_test_result}, {"hot_reload", l_hot_reload},
     {"hot_reload_status", l_hot_reload_status}, {"state_save", l_state_save},
+    {"reload_anim_bank", l_reload_anim_bank}, {"reload_anim_bank_status", l_reload_anim_bank_status},
     {"state_list", l_state_list}, {"state_load", l_state_load}, {"state_delete", l_state_delete},
     {"state_rename", l_state_rename}, {"state_gen", l_state_gen}, {"lab_peek", l_lab_peek},
     {"timeline", l_timeline}, {"set_motion", l_set_motion}, {"anim_preview", l_anim_preview}, {"anim_rows", l_anim_rows}, {"mirror_pad", l_mirror_pad},
@@ -7430,6 +7462,47 @@ static int l_wb_render(lua_State *L) {
     return 1;
 }
 
+/* Explicit animation-only fast path for EngineLink. Full-package wb.reload
+ * keeps its restart fallback: rebuilding a package can change much more than
+ * its bank. Poll reload_anim_status until ok before selecting a row/frame. */
+static int l_wb_reload_anim(lua_State* L) {
+    const char* define = luaL_checkstring(L, 1);
+    const char* busy;
+    char why[256];
+    extern int gw_Geno_DefineResolve(const char* token);
+    gs_require_offline(L, "wb.reload_anim");
+    if (!gw_Wb_Enabled()) return luaL_error(L, "workbench mode is not enabled");
+    if (!gs_players_present(0) || !gw_GenoLab_ModeActive())
+        return luaL_error(L, "wb.reload_anim needs a live Workbench fighter");
+    if (gw_Geno_DefineResolve(define) != gw_ScriptGame_LabI(0, LAB_I_NAME_KIND) + 1)
+        return luaL_error(L, "wb.reload_anim must name the loaded fighter");
+    if (gw_ScriptGame_StageSlotsActive()) return gs_stage_state_refuse(L, "wb.reload_anim");
+    busy = gs_anim_bank_busy();
+    if (busy) return luaL_error(L, "%s", busy);
+    if (gs_wb_render.pending || gs.wb_pending || gs.step || gs.set_motion[0])
+        return luaL_error(L, "wb.reload_anim must wait for the pending frame/render operation");
+    if (!gw_Geno_ReloadAnimBank(define, why, sizeof why))
+        return luaL_error(L, "reload needs restart: %s", why);
+    if (!gw_GenoLab_Leave(3)) {
+        gw_Geno_AnimBankCancel();
+        return luaL_error(L, "reload needs restart: cannot restart the Workbench match");
+    }
+    gs_rw_branch();
+    gs.paused = gs.step = 0;
+    gw_log("workbench: reload_anim pending for %s; restarting match", define);
+    lua_pushliteral(L, "pending"); return 1;
+}
+static int l_wb_reload_anim_status(lua_State* L) {
+    int phase;
+    gs_require_offline(L, "wb.reload_anim_status");
+    if (!gw_Wb_Enabled()) return luaL_error(L, "workbench mode is not enabled");
+    phase = gw_Geno_AnimBankPhase();
+    if (phase == 3) return luaL_error(L, "reload needs restart: %s", gw_Geno_AnimBankStatus());
+    if (phase == 2 && gs_players_present(0) && gs.paused) lua_pushliteral(L, "ok");
+    else lua_pushstring(L, phase == 0 ? "idle" : "pending");
+    return 1;
+}
+
 static int l_wb_reload(lua_State *L) {
     gs_require_offline(L, "wb.reload");
     if (!gw_Wb_Enabled()) return luaL_error(L, "workbench mode is not enabled");
@@ -7442,7 +7515,8 @@ static int l_wb_reload(lua_State *L) {
 static const luaL_Reg gs_wb_funcs[] = {
     {"load", l_wb_load}, {"row", l_wb_row}, {"frame", l_wb_frame},
     {"step", l_wb_step}, {"frame_info", l_wb_frame_info}, {"clip", l_wb_clip},
-    {"render", l_wb_render}, {"reload", l_wb_reload}, {NULL, NULL}
+    {"render", l_wb_render}, {"reload", l_wb_reload},
+    {"reload_anim", l_wb_reload_anim}, {"reload_anim_status", l_wb_reload_anim_status}, {NULL, NULL}
 };
 
 #include "gw_script_comm.inc"
@@ -8650,6 +8724,14 @@ static void gs_rw_stop(void) {
     gs.rw_notify = 0;
     gs.rw_head = gs.rw_log_start = 0;
     gw_Snap_LabResim(0);
+}
+
+void gw_Script_AnimBankReloaded(void) {
+    int i;
+    gs_rw_stop();
+    gs.pending_save = gs.pending_load = 0;
+    gs.st_pending_save[0] = gs.st_pending_load[0] = 0;
+    for (i = 0; i < GS_SAVE_SLOTS; ++i) gs.slot[i].used = 0;
 }
 
 /* A write changed the game at this boundary (set_percent, set_motion, ...): the logged frames from
@@ -10426,6 +10508,7 @@ done:
 }
 
 #include "gw_script_workbench_tests.inc"
+#include "gw_script_anim_bank_tests.inc"
 #include "gw_script_deadline_tests.inc"
 
 #include "gw_script_contacts_tests.inc"
@@ -12076,6 +12159,8 @@ void gw_script_tests_register(void) {
     gw_test_register("script_data_write_atomic", test_script_data_write_atomic);
     gw_test_register("script_camera_api", test_script_camera_api);
     gw_test_register("workbench_png_completion", test_workbench_png_completion);
+    gw_test_register("script_anim_bank_api", test_script_anim_bank_api);
+    gw_test_register("workbench_anim_bank_gate", test_workbench_anim_bank_gate);
     gw_test_register("script_contacts", test_script_contacts);
     gw_test_register("script_zones_core", test_script_zones_core);
     gw_test_register("script_zones_adapter", test_script_zones_adapter);

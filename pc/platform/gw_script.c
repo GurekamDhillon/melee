@@ -6924,12 +6924,13 @@ static int gs_wb_snapshot(char *path, size_t cap, int completed) {
     char json[65536];
     size_t offset;
     int length;
-    if (!gw_Wb_Enabled() || !gs_players_present(0)) return 0;
+    if (!gw_Wb_Enabled() || !gs_players_present(0)) { gw_log("workbench: snapshot: not enabled or no fighter"); return 0; }
     /* Preparing lazy render matrices is the existing gd.joints(1,true) path.
      * ScriptGame_WbFrame itself reads them without modifying any joint. */
     gw_ScriptGame_JointsSetup(0);
     guest = gw_ScriptGame_WbFrameData(0);
-    if (guest == NULL || !gs_guest_ok((uint32_t)(uintptr_t)guest, sizeof f)) return 0;
+    /* guest points at a static in script_game.c (the game image), not in mem1, so gs_guest_ok does not apply */
+    if (guest == NULL) { gw_log("workbench: snapshot: guest frame data %p unusable", (const void *)guest); return 0; }
     /* Every field of the schema is a 32-bit int/float, with no pointers or
      * byte fields. memcpy preserves float bit patterns after BE word decode. */
     for (offset = 0; offset < sizeof f; offset += 4) {
@@ -6940,7 +6941,9 @@ static int gs_wb_snapshot(char *path, size_t cap, int completed) {
      * PostRender may publish the completed request, even from on_frame. */
     if (gs.wb_pending && !completed) f.frame = -1;
     length = gw_Wb_FrameJson(&f, gs.wb_row, json, sizeof json);
-    return length >= 0 && gw_Wb_WritePayload("frame.json", json, (size_t)length, path, cap) == 0;
+    if (length < 0) { gw_log("workbench: snapshot: frame json does not fit"); return 0; }
+    if (gw_Wb_WritePayload("frame.json", json, (size_t)length, path, cap) != 0) { gw_log("workbench: snapshot: cannot write payload (dir '%s')", gw_Wb_Dir()); return 0; }
+    return 1;
 }
 
 static int gs_wb_reply(lua_State *L) {

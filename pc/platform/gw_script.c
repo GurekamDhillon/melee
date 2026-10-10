@@ -373,7 +373,7 @@ static struct {
     /* pause / step */
     int paused;
     int step;
-    int wb_pending, wb_registered, wb_row_motion, wb_entered; /* native presentation/task state only */
+    int wb_pending, wb_registered, wb_row_motion, wb_entered, wb_home_epoch; /* native presentation/task state only */
     char wb_row[256];
     /* savestates */
     int pending_save, pending_load; /* slot+1, 0 = none */
@@ -3868,6 +3868,7 @@ extern float gw_ScriptGame_LabAnimEnd(int slot);
 extern int gw_ScriptGame_LabRowCount(int slot);
 extern int gw_ScriptGame_LabSetPreviewRow(int slot, int row, int facing);
 extern int gw_ScriptGame_LabSetMotion(int slot, int msid, int rate_bits, int lift_bits);
+extern int gw_ScriptGame_LabWbHome(int slot, int mode);
 extern int gw_ScriptGame_RngSeed(void);
 
 /* Command lengths in words for opcodes 10-58 (ftaction.c ftAction_803C0870) and the names the
@@ -7137,6 +7138,14 @@ static int l_wb_frame(lua_State *L) {
     if (frame < 1) frame = 1;
     if (frame > 600) frame = 600;
     gw_ScriptGame_LabSetPreviewRow(0, -1, 0);
+    /* every request starts from the same standing pose, or the staged lift and the previous move's
+       drift accumulate between requests (root y 10 -> 50 -> 86 in a Goku session) */
+    if (gs.wb_home_epoch != gs.scene_epoch + 1) {
+        gw_ScriptGame_LabWbHome(0, 0);
+        gs.wb_home_epoch = gs.scene_epoch + 1;
+    }
+    gw_ScriptGame_LabWbHome(0, 1);
+    if (gw_ScriptGame_LabWbHome(0, 2) == 0) gs_rw_branch();
     {
         /* optional lift (same units as gd.set_motion): an aerial staged at floor level lands before its active frames */
         float lift = 0.0f;

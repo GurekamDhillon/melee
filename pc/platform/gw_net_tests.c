@@ -39,6 +39,7 @@ typedef struct simnet {
   int loss_pct, dup_pct;
   uint32_t base_ms, jitter_ms;
   int blackhole;                   /* drop everything while set */
+  int old_heap_peer;               /* endpoint + 1 advertises protocol 5; 0 disables */
   simpkt q[SIM_QUEUE];
   int nq;
   uint32_t sent, dropped;
@@ -68,6 +69,13 @@ static void sim_enqueue(simnet *s, int from_id, int to, const void *data, int le
   p->from = sim_addr(from_id);
   p->len = len;
   memcpy(p->data, data, (size_t)len);
+  /* HELLO/ACCEPT: 18-byte header, then a little-endian protocol u16.
+   * Protocol 5 uses the old 40 MiB MEM1 / 0x51A690 heap 3 layout. */
+  if (s->old_heap_peer == from_id + 1 && len >= 20 &&
+      (p->data[2] == 1 || p->data[2] == 2)) {
+    p->data[18] = 5;
+    p->data[19] = 0;
+  }
 }
 
 static int sim_send(void *ctx, const gw_net_addr *to, const void *data, int len) {
@@ -422,6 +430,34 @@ static int refuse_case(int which, const char *needle) {
   free(s);
   return rv;
 }
+/* Even identical content hashes cannot make two heap layouts compatible.
+ * Exercise both an old guest's HELLO and an old host's ACCEPT. Without the
+ * protocol bump each pair would start normally, rather than refuse. */
+static int test_refuse_old_heap_layout(void) {
+  simnet *s = (simnet *)malloc(sizeof *s);
+  peer h, g;
+  int pass, i, rv = 0;
+  if (s == NULL) { gw_test_fail("old heap protocol fixture allocation"); return 1; }
+  g_pb = GW_NET_DEFAULT_PAYLOAD;
+  for (pass = 1; pass <= 2; ++pass) {
+    sim_init(s, 37 + pass);
+    s->old_heap_peer = pass;
+    make_pair(s, &h, &g, 0, 0);
+    for (i = 0; i < 400 && gw_net_state(g.net) != GW_NET_REFUSED; ++i)
+      pair_tick(s, &h, &g);
+    if (gw_net_state(g.net) != GW_NET_REFUSED ||
+        !has_event(&g, GW_NET_EV_REFUSED) ||
+        strstr(event_msg(&g, GW_NET_EV_REFUSED), "protocol version") == NULL ||
+        has_event(&h, GW_NET_EV_STARTED) || has_event(&g, GW_NET_EV_STARTED)) {
+      gw_test_fail("protocol-5 %s was not refused before match start", pass == 1 ? "host" : "guest");
+      rv = 1;
+    }
+    free_pair(&h, &g);
+  }
+  free(s);
+  return rv;
+}
+
 static int test_refuse_exe(void)  { return refuse_case(0, "different game build"); } /* was "melee-pc.exe": the build id is no longer the executable file */
 static int test_refuse_iso(void)  { return refuse_case(1, "disc"); }
 /* the host's global-data components travel in the refusal so the guest can name the difference */
@@ -770,6 +806,7 @@ static int test_udp_loopback(void) {
 void gw_net_tests_register(void) {
   gw_test_register("net_hash_addr", test_hash_addr);
   gw_test_register("net_handshake", test_handshake);
+  gw_test_register("net_refuse_old_heap_layout", test_refuse_old_heap_layout);
   gw_test_register("net_refuse_exe", test_refuse_exe);
   gw_test_register("net_refuse_iso", test_refuse_iso);
   gw_test_register("net_refuse_mods", test_refuse_mods);

@@ -51,8 +51,11 @@ extern "C" {
  * 5: HELLO and ACCEPT also carry the Envoy mode word (gw_matchbuild.h): which Envoy rule set, if any, the match
  * is played under. A version-4 peer cannot read it and cannot apply an Envoy build, so the pair refuse each
  * other at the first packet, exactly as they did for Turbo. The builds themselves are agreed per game in the
- * lobby (the scene's envoy= word), not here. */
-#define GW_NET_PROTOCOL_VERSION 5u
+ * lobby (the scene's envoy= word), not here.
+ * 6: MEM1 48 MiB and heap 3 another 8 MiB larger (gw_runtime.c, lbheap.c).
+ * Heap addresses and snapshot layout differ from protocol 5; refuse old peers
+ * before starting, even when their content hashes happen to match. */
+#define GW_NET_PROTOCOL_VERSION 6u
 #define GW_NET_MAX_BLOB 900        /* match-config blob: StartMeleeData + extras */
 #define GW_NET_MAX_SLOTS 8         /* port * 2 + follower */
 #define GW_NET_MAX_PAYLOAD 32      /* bytes of one slot's input for one frame */

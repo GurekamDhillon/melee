@@ -80,6 +80,7 @@ extern int gw_ScriptGame_CpuTechnicalState(int slot, int owner, int field);
 extern int gw_ScriptGame_CpuTechnicalTest(void);
 extern void gw_ScriptGame_SetStocks(int slot, int stocks);
 extern int gw_ScriptGame_StageKind(void);
+extern int gw_Stage_80225194(void); /* loaded external StKind, not a scene-launch request */
 extern int gw_ScriptGame_StageIsolate(int owner, int isolate);
 extern int gw_ScriptGame_StageIsolationState(int owner);
 extern void gw_ScriptGame_StageIsolationClear(int owner);
@@ -1869,10 +1870,11 @@ static int l_netplay_run(lua_State *L) {
 }
 
 static int l_match(lua_State *L) {
-    lua_createtable(L, 0, 4);
+    lua_createtable(L, 0, 5);
     gs_setbool(L, "active", gs.match_active);
     gs_setint(L, "frame", gs.match_frame);
     gs_setint(L, "stage", gs.match_active ? gw_ScriptGame_StageKind() : -1);
+    gs_setint(L, "stage_external", gs.match_active ? gw_Stage_80225194() : -1);
     gs_setbool(L, "netplay", gw_Netplay_Enabled() || gw_RB_Enabled());
     return 1;
 }

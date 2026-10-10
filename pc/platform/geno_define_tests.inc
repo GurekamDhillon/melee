@@ -219,6 +219,44 @@ static int test_geno_define_overlay_budget(void)
     return rc;
 }
 
+/* stress6: six complete retail-sized defines (300 overlays of 14 words each) in one registry: 1800 slots and
+ * 25200 pool words, past the old 512 slots / 16384 words. Slots and pool offsets must be distinct and in range. */
+#define FULL_OV 300 /* the Mario base has 303 subaction rows; a define's index must name one */
+static int test_geno_define_six_full(void)
+{
+    static gn_registry r;
+    char *text = (char*)malloc(120000), *a = (char*)malloc(100000);
+    int d, i, w, n, rc = 0;
+    if (!text || !a) { free(text); free(a); gw_test_fail("six_full: out of memory"); return 1; }
+    gn_registry_clear(&r);
+    for (d = 0; d < 6; ++d) {
+        n = 0;
+        for (i = 0; i < FULL_OV; ++i) {
+            n += snprintf(a + n, 100000 - n, "%s{\"index\":%d,\"words\":[", i ? "," : "", i);
+            for (w = 0; w < 14; ++w) n += snprintf(a + n, 100000 - n, "%s\"0x04000002\"", w ? "," : "");
+            n += snprintf(a + n, 100000 - n, "]}");
+        }
+        snprintf(text, 120000,
+            "{\"geno\":7,\"fighters\":[{\"define\":{\"key\":\"full%d\",\"name\":\"Full %d\",\"base\":\"mario\","
+            "\"common\":\"melee.common.v1\",\"resources\":\"retail:mario\"},\"subactions\":[%s]}]}", d, d, a);
+        if (gn_parse_text(&r, text, "six-full") != 1 || r.n != d + 1 || r.p[d].nov != FULL_OV) {
+            gw_test_fail("six_full: define %d: n=%d nov=%d", d, r.n, r.n > d ? r.p[d].nov : -1); rc = 1; break;
+        }
+    }
+    if (rc == 0) {
+        if (r.nslot != 6 * FULL_OV || r.npool < 6 * FULL_OV * 14 || r.npool > GENO_POOL_WORDS) {
+            gw_test_fail("six_full: nslot=%d npool=%d", r.nslot, r.npool); rc = 1;
+        }
+        for (i = 1; i < r.nslot && rc == 0; ++i)
+            if (r.slot_off[i] < r.slot_off[i - 1] + r.slot_len[i - 1] || r.slot_off[i] + r.slot_len[i] > r.npool) {
+                gw_test_fail("six_full: slot %d overlaps or leaves the pool", i); rc = 1;
+            }
+    }
+    gn_registry_clear(&r);
+    free(text); free(a);
+    return rc;
+}
+
 /* Slice 3 (geno 8): a define may declare articles and the named-sound table. The resolver is strict for a define:
  * an unknown name, a duplicate name, an id or volume out of range, or more than GENO_MAX_SOUNDS refuses the entry. */
 #define GN_T_ART(sound_refs) ",\"sounds\":[{\"name\":\"Zap\",\"retail_sfx\":234,\"volume\":100},{\"name\":\"Fade\",\"retail_sfx\":228}]," \

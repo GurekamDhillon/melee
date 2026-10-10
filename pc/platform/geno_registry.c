@@ -511,7 +511,7 @@ typedef struct {
 
 #define GN_NONE 0xFFFFFFFFu
 
-#define GN_MAX_SLOTS 512 /* overlay slots over every profile */
+#define GN_MAX_SLOTS GENO_MAX_SLOTS /* overlay slots over every profile (geno.h) */
 
 typedef struct {
     gn_profile* p;
@@ -2520,6 +2520,7 @@ void geno_registry_tests_register(void) {
     gw_test_register("geno_define_attrs_v7", test_geno_define_attrs_v7);
     gw_test_register("geno_define_v7_parse", test_geno_define_v7_parse);
     gw_test_register("geno_define_overlay_budget", test_geno_define_overlay_budget);
+    gw_test_register("geno_define_six_full", test_geno_define_six_full);
     gw_test_register("geno_define_v8_parse", test_geno_define_v8_parse);
     gw_test_register("geno_define_resolver", test_geno_define_resolver);
     gw_test_register("geno_lua_registry", test_geno_lua_registry);

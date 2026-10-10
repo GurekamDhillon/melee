@@ -85,12 +85,13 @@ unsigned char *gw_aram;
 uint32_t gw_aram_size;
 
 #define GW_MEM1_BASE ((void *)0x80000000u)
-/* 40 MB, not the GameCube's 24: the extra 16 MB all goes to the fighter-file heap (lbheap.c heap 4,
- * AllM), so four fighters with Ultimate-sized costume files (2-4 MB each, a separate file per
- * costume) fit. Melee itself ran on 48 MB dev kits; OSGetConsoleSimulatedMemSize stays at 24 MB
- * (shim_os.c) so gmmain.c does not withhold the extra the way a 48 MB kit does. Snapshots store
- * pages, not whole MEM1 copies (gw_snap.c), so the size costs rollback and the Lab little. */
-#define GW_MEM1_SIZE (40u * 1024u * 1024u)
+/* 48 MiB: the first extra 16 MiB funds lbheap.c's fighter-file heap 4 (AllM),
+ * and the next 8 MiB funds heap 3 (Stay, 0xD1A690) for six full Geno fighters
+ * plus a heavy stage. Growing both MEM1 and heap 3 preserves the main heap.
+ * OSGetConsoleSimulatedMemSize stays at 24 MiB (shim_os.c), so gmmain.c does
+ * not withhold 24 MiB as it would on a 48 MiB dev kit. Snapshot page tables,
+ * masks and bounds use gw_mem1_size; cold pages are shared (gw_snap.c). */
+#define GW_MEM1_SIZE (48u * 1024u * 1024u)
 #define GW_ARAM_SIZE (32u * 1024u * 1024u) /* AllA's extra 16 MB, lbheap.c */
 
 /* Nonzero when MEM1 was allocated with MEM_WRITE_WATCH (gw_snap.c's dirty-page savestates use

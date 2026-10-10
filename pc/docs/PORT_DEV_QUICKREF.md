@@ -133,6 +133,7 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | `MELEE_SYNCTEST_CURATED_SETUP=1` | experiment: run each fighter's `HSD_JObjSetupMatrix` over its joint tree at the top of every curated iteration, so a logic-only resimulation has the world matrices a rendered first pass has (removes the ulp-level hit/hurt position differences; does not by itself make the bench mismatch-free). |
 | `MELEE_MEX=test_no_capturecut_guard`, `test_log_capturecut` | test flags for the grab-cut fault (`ftCo_800DCE34` NULL partner): the first compiles the TARGET_PC NULL guard out to reproduce the retail-latent read of low memory, the second logs `CAPTURECUT-TRACE` at each `ftCo_8008EC90` call site with the grabber's `victim_gobj`. |
 | `MELEE_TURBO=1` / `--turbo` | accelerate simulation with a virtual clock and muted audio; requires `MELEE_PAD_SCRIPT` or `MELEE_LAB_BATCH`, refuses netplay/Slippi/fake rollback and ordinary player windows |
+| `MELEE_RAND_TRACE=<file>` | every `HSD_Rand*` draw as `n,script frame,caller,seed after,global` (LAB, VS, replays); diff two runs, resolve callers in `melee-pc.map`. `gd.rng()` reads the seed from Lua |
 | `MELEE_TURBO_RENDER=N` | present every Nth game frame in turbo (default 8, 0 never; 0-10000); hidden/minimised windows never present |
 | `MELEE_TURBO_DRAWS=1` | retain display lists and skinning on unpresented turbo match frames; normally suppressed while render callbacks still run |
 | `MELEE_FPS=u` / `MELEE_FPS=120` | uncapped / capped interpolated presentation; realtime logic remains 60 Hz |

@@ -12,6 +12,7 @@ extern int Geno_DefineIdentityWord(int kind, int high);
 extern u32 GenoDefine_StateDigest(Fighter* fp);
 void GenoDefine_InitKinds(void);
 void GenoDefine_CaptureMario(void);
+void GenoDefine_CaptureBase(int kind);
 void GenoDefine_ResetDescriptors(void);
 void GenoDefine_Load(int kind, int base);
 void GenoDefine_BindFighter(Fighter* fp);

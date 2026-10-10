@@ -1486,6 +1486,7 @@ static int l_render_test(lua_State *L) {
     return 4;
 }
 
+int gw_Script_FrameNo(void) { return gs.frame; }
 static int l_frame(lua_State *L) {
     lua_pushinteger(L, gs.frame);
     return 1;
@@ -3824,6 +3825,7 @@ extern float gw_ScriptGame_LabAnimEnd(int slot);
 extern int gw_ScriptGame_LabRowCount(int slot);
 extern int gw_ScriptGame_LabSetPreviewRow(int slot, int row, int facing);
 extern int gw_ScriptGame_LabSetMotion(int slot, int msid, int rate_bits, int lift_bits);
+extern int gw_ScriptGame_RngSeed(void);
 
 /* Command lengths in words for opcodes 10-58 (ftaction.c ftAction_803C0870) and the names the
    community decoders use (HSDRawViewer command_fighter.yml; checked against the decomp's handlers). */
@@ -6572,6 +6574,12 @@ static void gs_push_kit(lua_State *L) {
 }
 
 /* Host diagnostics only: no game memory or rollback state is read or changed. */
+/* gd.rng(): the game's global random seed as an unsigned integer (read-only; a diagnostic for comparing two runs). */
+static int l_rng(lua_State *L) {
+    lua_pushinteger(L, (lua_Integer) (uint32_t) gw_ScriptGame_RngSeed());
+    return 1;
+}
+
 static int l_perf(lua_State *L) {
     GwPerfFrame frames[GW_PERF_HISTORY];
     int requested = (int)luaL_optinteger(L, 1, 120);
@@ -6785,7 +6793,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"fighter_shader_set", l_fighter_shader_set},
     {"stage_shader", l_stage_shader},
     {"render_test", l_render_test},
-    {"log", l_log}, {"frame", l_frame}, {"time", l_time}, {"perf", l_perf}, {"prof", l_prof}, {"scene", l_scene}, {"match", l_match},
+    {"log", l_log}, {"rng", l_rng}, {"frame", l_frame}, {"time", l_time}, {"perf", l_perf}, {"prof", l_prof}, {"scene", l_scene}, {"match", l_match},
     {"fighter_recycle", l_fighter_recycle}, {"players", l_players}, {"player", l_player}, {"items", l_items}, {"fx", l_fx},
     {"camera_get", l_camera_get}, {"camera_detach", l_camera_detach},
     {"camera_attach", l_camera_attach}, {"camera_set", l_camera_set},

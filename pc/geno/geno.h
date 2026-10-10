@@ -257,7 +257,18 @@ enum {
 #define GENO_MAX_SPECIAL 64      /* v1: special_attributes entries per profile */
 #define GENO_MAX_ONLAND 16       /* v1: on_land map entries per profile */
 #define GENO_MAX_MOTION_ANIM 8   /* v5.4: "motion_anims" entries per profile */
-#define GENO_MAX_OVERLAYS 192    /* v1: subaction script overlays per profile (slice 8: was 64; Sora needs about 100) */
+#define GENO_MAX_OVERLAYS 320    /* v1: subaction script overlays per profile (slice 8: was 64; Sora needs about 100; a complete retail fighter, 275) */
+/* Words of one ftcmd command (the first word w0): the retail table (ftaction.c ftAction_803C0870, opcodes 10-58), 1/2 words for
+ * opcodes 0-9 and the Geno escape (59) with its own length field. Shared by the registry (validating a define's overlay) and the
+ * game half (relocating its branches). */
+static inline int geno_cmd_words(unsigned w0)
+{
+    static const unsigned char len[59] = {1, 1, 1, 1, 1, 2, 1, 2, 1, 1, 5, 5, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 7, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 2, 1, 4};
+    unsigned op = w0 >> 26;
+    if (op < 59) return len[op];
+    if (op == 59) { unsigned l = (w0 >> 16) & 15; return l ? (int)l : 1; }
+    return 1;
+}
 #define GENO_POOL_WORDS 16384    /* v1: all overlay words of every profile (64 KB) */
 
 /* ---- v2: Geno action states (docs/geno.md section 16) ------------------------------------------

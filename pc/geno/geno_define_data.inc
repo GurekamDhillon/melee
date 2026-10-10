@@ -9,6 +9,8 @@
 #include <sysdolphin/baselib/memory.h>
 #include <melee/ft/kinds/ftMario/forward.h>
 #include <melee/ft/kinds/ftMario/types.h>
+#include <melee/ft/kinds/ftCaptain/forward.h>
+#include <melee/ft/kinds/ftCaptain/types.h>
 #include <melee/ft/kinds/ftCommon/forward.h>
 
 MotionState* GenoDefine_CommonRows[Ft_Kind_Max];
@@ -17,7 +19,14 @@ u32 GenoDefine_ContentIdentity[Ft_Kind_Max][2];
 u32 GenoDefine_InterpreterAttempts[Ft_Kind_Max];
 extern void* PcCostumeAlloc(int bytes);
 static UnkCostumeStruct* GenoDefine_Costumes[Ft_Kind_Max - Ft_Kind_Mex0];
-static Fighter_WaitAnimData* GenoDefine_MarioBaseline;
+/* The pristine animation-row table of each template fighter (index 0 Mario, 1 retail Captain Falcon), captured before an attach can touch it. */
+static Fighter_WaitAnimData* GenoDefine_RowBaseline[2];
+static int GenoDefine_TmplIndex(int base) { return base == Ft_Kind_Captain ? 1 : 0; }
+/* The template's own specific (non-common) motion state table and its length. */
+extern MotionState ftMr_Init_MotionStateTable[];
+extern MotionState ftCa_Init_MotionStateTable[];
+static MotionState* GenoDefine_NativeSpecific(int base) { return base == Ft_Kind_Captain ? ftCa_Init_MotionStateTable : ftMr_Init_MotionStateTable; }
+static int GenoDefine_SelfCount(int base) { return base == Ft_Kind_Captain ? (int)ftCa_MS_SelfCount : (int)ftMr_MS_SelfCount; }
 /* slice 4: a base "none" define's own costume names, parts table and part-visibility stand-ins (all static, kind-indexed). */
 static Fighter_CostumeStrings* GenoDefine_CostumeStrings[Ft_Kind_Max - Ft_Kind_Mex0];
 static FighterPartsTable GenoDefine_Parts[Ft_Kind_Max - Ft_Kind_Mex0];
@@ -29,6 +38,7 @@ static void* GenoDefine_VisTable[255][4];     /* no visibility groups: every row
 static u16 GenoDefine_TobjZero;
 static u16* GenoDefine_TobjTable[255];        /* no texture animations: n_costume_tobjs 0 */
 extern int Geno_DefineIsNone(int kind);
+extern int Geno_DefineTemplateSkeleton(int kind);
 extern int Geno_DefineCostumeCount(int kind);
 extern const char* Geno_DefineString(int kind, int which, int costume);
 extern int Geno_DefinePlanInt(int kind, int what, int i);
@@ -63,18 +73,20 @@ static void* gd_data_copy(const void* source, int bytes)
 
 void GenoDefine_ResetDescriptors(void)
 {
-    GenoDefine_MarioBaseline = NULL;
+    GenoDefine_RowBaseline[0] = GenoDefine_RowBaseline[1] = NULL;
     memset(GenoDefine_CommonRows, 0, sizeof GenoDefine_CommonRows);
     memset(GenoDefine_SpecificRows, 0, sizeof GenoDefine_SpecificRows);
 }
 
 /* Capture before the first Mario attachment can change script pointers.
  * Animation-bank pointers are resolved later independently for each clone. */
-void GenoDefine_CaptureMario(void)
+void GenoDefine_CaptureMario(void) { GenoDefine_CaptureBase(Ft_Kind_Mario); }
+void GenoDefine_CaptureBase(int kind)
 {
-    if (Geno_DefineCount() && !GenoDefine_MarioBaseline && gFtDataList[0])
-        GenoDefine_MarioBaseline = gd_data_copy(gFtDataList[0]->xC,
-            ftData_Table_Unk0[0].count*sizeof(*GenoDefine_MarioBaseline));
+    int t = GenoDefine_TmplIndex(kind);
+    if (Geno_DefineCount() && !GenoDefine_RowBaseline[t] && gFtDataList[kind])
+        GenoDefine_RowBaseline[t] = gd_data_copy(gFtDataList[kind]->xC,
+            ftData_Table_Unk0[kind].count*sizeof(*GenoDefine_RowBaseline[t]));
 }
 
 void GenoDefine_InitKinds(void)
@@ -206,7 +218,8 @@ static void GenoDefine_JointFields(int kind, ftData* out, struct ftData_x8* x8)
 
 static void GenoDefine_BuildOwn(int kind, ftData* out, int n)
 {
-    extern MotionState ftMr_Init_MotionStateTable[];
+    int tbase = Geno_DefineBaseKind(kind), tself = GenoDefine_SelfCount(tbase);
+    MotionState* tspec = GenoDefine_NativeSpecific(tbase);
     int nmotions = Geno_DefinePlanInt(kind, 4, 0), njoints = Geno_DefinePlanInt(kind, 1, 0), nown = Geno_DefinePlanInt(kind, 6, 0);
     struct ftData_x8* x8;
     short pick[512];
@@ -215,11 +228,13 @@ static void GenoDefine_BuildOwn(int kind, ftData* out, int n)
     HSD_ASSERTREPORT(__LINE__, Geno_DefinePlanInt(kind, 0, 0), "Geno base none: the fighter plan is unusable (see geno: plan lines in the log)\n");
     HSD_ASSERTREPORT(__LINE__, n <= 512, "Geno base none: animation row table too large\n");
     x8 = gd_data_copy(out->x8, sizeof *x8);          /* Mario's x10..x14 are Fighter_Part numbers: roles, resolved by the own parts table */
+    if (!Geno_DefineTemplateSkeleton(kind)) {   /* a template's own model keeps its model-part visibility groups (expression meshes) and texture animations (eyes) */
     x8->x0.model_num = 0;
     x8->x0.vis_table = GenoDefine_VisTable;
     x8->x8.x8 = 0;
     for (i = 0; i < 255; ++i) GenoDefine_TobjTable[i] = &GenoDefine_TobjZero;
     x8->x8.xC = GenoDefine_TobjTable;
+    }
     out->x8 = x8;
     GenoDefine_JointFields(kind, out, x8);
     for (i = 0; i < n; ++i) { pick[i] = -1; rank[i] = 0; }
@@ -236,8 +251,8 @@ static void GenoDefine_BuildOwn(int kind, ftData* out, int n)
             int wc = Geno_DefinePlanInt(kind, 13, ftCo_MS_Wait);
             if (ws->anim_id >= 0 && ws->anim_id < n && wc >= 0) { pick[ws->anim_id] = (short) wc; rank[ws->anim_id] = 1; }
         }
-        for (m = 0; m < nmotions && m < ftCo_MS_Count + ftMr_MS_SelfCount; ++m) {
-            MotionState* st = m < ftCo_MS_Count ? &ftData_MotionStateList[m] : &ftMr_Init_MotionStateTable[m - ftCo_MS_Count];
+        for (m = 0; m < nmotions && m < ftCo_MS_Count + tself; ++m) {
+            MotionState* st = m < ftCo_MS_Count ? &ftData_MotionStateList[m] : &tspec[m - ftCo_MS_Count];
             int a = st->anim_id, c = Geno_DefinePlanInt(kind, 13, m);
             if (a < 0 || a >= n || c < 0) continue;
             /* the row's rank: the first state to name a row keeps it */
@@ -365,8 +380,10 @@ static HSD_Joint* GenoDefine_GuardTrees[3];
 static ftData_x20 GenoDefine_X20;
 static void GenoDefine_OwnTables(int kind, ftData* out)
 {
-    GenoDefine_X20.x0 = GenoDefine_GuardTrees; GenoDefine_X20.x8 = out->x20 ? out->x20->x8 : 0.0f;
-    out->x20 = &GenoDefine_X20;
+    if (!Geno_DefineTemplateSkeleton(kind)) {   /* a template's own skeleton keeps the template's guard pose trees (x20) */
+        GenoDefine_X20.x0 = GenoDefine_GuardTrees; GenoDefine_X20.x8 = out->x20 ? out->x20->x8 : 0.0f;
+        out->x20 = &GenoDefine_X20;
+    }
     out->x3C = gd_data_copy(out->x3C, sizeof *out->x3C);
     out->x40 = gd_data_copy(out->x40, sizeof *out->x40);
     out->x50 = gd_data_copy(out->x50, sizeof *out->x50);
@@ -386,9 +403,9 @@ void GenoDefine_Load(int kind, int base)
     if (gFtDataList[kind] != NULL) return;
     out = gd_data_copy(source, sizeof(*out));
     out->x0 = gd_data_copy(source->x0, sizeof(ftCo_DatAttrs));
-    out->ext_attr = gd_data_copy(source->ext_attr, sizeof(ftMario_DatAttrs));
-    HSD_ASSERTREPORT(__LINE__, GenoDefine_MarioBaseline != NULL, "Geno native Mario preset baseline unavailable\n");
-    out->xC = gd_data_copy(GenoDefine_MarioBaseline, n*sizeof(*out->xC));
+    out->ext_attr = gd_data_copy(source->ext_attr, base == Ft_Kind_Captain ? sizeof(ftCaptain_DatAttrs) : sizeof(ftMario_DatAttrs));
+    HSD_ASSERTREPORT(__LINE__, GenoDefine_RowBaseline[GenoDefine_TmplIndex(base)] != NULL, "Geno native template preset baseline unavailable\n");
+    out->xC = gd_data_copy(GenoDefine_RowBaseline[GenoDefine_TmplIndex(base)], n*sizeof(*out->xC));
     out->x14 = gd_data_copy(source->x14, demo*sizeof(*out->x14));
     for (i = 0; i < n+demo; ++i) {
         Fighter_WaitAnimData* row = i < n ? &out->xC[i] : &out->x14[i-n];
@@ -399,7 +416,16 @@ void GenoDefine_Load(int kind, int base)
     }
     if (Geno_DefineIsNone(kind)) {
         GenoDefine_BuildOwn(kind, out, n);
-        {   /* The donor's demo rows (results / intro poses, out->x14) name figatrees authored for the DONOR's skeleton, and the
+        if (Geno_DefineTemplateSkeleton(kind)) {
+            /* template "captain": the package's model is the template's own skeleton, so the template's tables that name joints stay valid.
+             * That is checked, not trusted: the package's parts table must be the retail table, entry for entry. */
+            FighterPartsTable* own = GenoDefine_PartsTable(kind);
+            FighterPartsTable* tpl = ftPartsTable[base];
+            HSD_ASSERTREPORT(__LINE__, own != NULL && tpl != NULL && own->parts_num == tpl->parts_num &&
+                             memcmp(own->joint_to_part, tpl->joint_to_part, own->parts_num) == 0,
+                             "Geno define.template: the package's joint tree is not the template's (joint count or parts table differ)\n");
+        }
+        if (!Geno_DefineTemplateSkeleton(kind)) {   /* The donor's demo rows (results / intro poses, out->x14) name figatrees authored for the DONOR's skeleton, and the
              * results screen decodes them over this fighter's own parts table: past its end ("atree data error!", ftanim.c). A
              * fighter that is not the donor's skeleton poses with its own Wait clip instead: each demo row becomes a copy of the
              * Wait row (clip name, offset, size, script and flags; no loaded pointer), and ftData_80085B98 resolves them against
@@ -414,10 +440,10 @@ void GenoDefine_Load(int kind, int base)
         GenoDefine_Census(kind, out, source);
     }
     GenoDefine_CommonRows[kind] = gd_data_copy(ftData_MotionStateList, sizeof(MotionState)*ftCo_MS_Count);
-    GenoDefine_SpecificRows[kind] = gd_data_copy(ftData_CharacterStateTables[base], sizeof(MotionState)*ftMr_MS_SelfCount);
+    GenoDefine_SpecificRows[kind] = gd_data_copy(ftData_CharacterStateTables[base], sizeof(MotionState)*GenoDefine_SelfCount(base));
     if (Geno_DefineIsNone(kind)) {
         int m, slot = kind - Ft_Kind_Mex0;
-        for (m = 0; m < ftCo_MS_Count + ftMr_MS_SelfCount && m < 512; ++m) {
+        for (m = 0; m < ftCo_MS_Count + GenoDefine_SelfCount(base) && m < 512; ++m) {
             MotionState* ms = m < ftCo_MS_Count ? &GenoDefine_CommonRows[kind][m] : &GenoDefine_SpecificRows[kind][m - ftCo_MS_Count];
             if (GenoDefine_RowRemap[slot][m] >= 0) ms->anim_id = GenoDefine_RowRemap[slot][m];
         }
@@ -426,7 +452,7 @@ void GenoDefine_Load(int kind, int base)
     ftData_CharacterStateTables[kind] = GenoDefine_SpecificRows[kind];
     gFtDataList[kind] = out;
     OSReport("geno: native define kind %d loaded: %s; independent common/special rows; interpreter attempts %u\n",
-             kind, Geno_DefineIsNone(kind) ? "base none (own model, bank, parts, joint fields; Mario's script words, callbacks and attribute defaults are still the template)" : "retail:mario",
+             kind, Geno_DefineIsNone(kind) ? (Geno_DefineTemplateSkeleton(kind) ? "base none, template captain (own model, bank, parts, joint fields, scripts, attributes; the retail fighter's native code and tables underneath)" : "base none (own model, bank, parts, joint fields; Mario's script words, callbacks and attribute defaults are still the template)") : "retail:mario",
              GenoDefine_InterpreterAttempts[kind]);
     {
         extern int Geno_ProfilePoolWords(int p);
@@ -446,7 +472,7 @@ void GenoDefine_Load(int kind, int base)
  * walked over another skeleton): the fighter's own costume model joint tree from its TransN joint, NULL for any other fighter. */
 HSD_Joint* GenoDefine_RestPoseTree(Fighter* fp)
 {
-    if (!Geno_DefineIsNone(fp->kind)) return NULL;
+    if (!Geno_DefineIsNone(fp->kind) || Geno_DefineTemplateSkeleton(fp->kind)) return NULL;
     /* the guard walks it from FtPart_TransN (as ftCo_80091E78 does the costume's), so it is the tree below the root joint */
     return CostumeListsForeachCharacter[fp->kind].costume_list[fp->x619_costume_id].joint->child;
 }

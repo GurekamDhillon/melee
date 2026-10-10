@@ -800,3 +800,44 @@ static int test_geno_define_records(void)
     remove(path); remove(bad);
     return rc;
 }
+
+/* define.template: retail Captain Falcon as the native code and tables under a base "none" define (geno 10). The registry half: parse,
+ * the template's row bounds (318 rows, 364 motions), and a define overlay's Subroutine/Goto operands as word indices. */
+#define GN_T_TMPL(ver, tmpl, extra) "{\"geno\":" #ver ",\"fighters\":[{\"define\":{\"key\":\"tc\",\"name\":\"TC\",\"base\":\"none\"," tmpl     "\"common\":\"melee.common.v1\",\"resources\":\"mod:files\"},\"fighter\":{\"plan\":\"plan.json\",\"animation\":\"bank.dat\",\"costumes\":[" GN_T_COS("a.dat", "") "]}" extra "}]}"
+static int test_geno_define_template(void)
+{
+    static gn_registry r;
+    int rc = 0;
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"captain\",", ""), "tmpl") != 1 || r.n != 1 || r.p[0].tmpl != 1) {
+        gw_test_fail("a none define with template captain was refused or misread"); rc = 1;
+    }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"mario\",", ""), "tmplm") != 1 || r.p[0].tmpl != 0) { gw_test_fail("template mario is not the default"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"fox\",", ""), "tmplf") != 0 || r.n != 0) { gw_test_fail("template fox was accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(9, "\"template\":\"captain\",", ""), "tmpl9") != 0 || r.n != 0) { gw_test_fail("template in a geno 9 file was accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    /* rows: 317 is Captain's last animation row, 318 is past it; Mario's bound stays 302 */
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"captain\",", ",\"subactions\":[{\"index\":317,\"words\":[\"0x04000002\"]}]"), "r317") != 1) { gw_test_fail("row 317 of template captain refused"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"captain\",", ",\"subactions\":[{\"index\":318,\"words\":[\"0x04000002\"]}]"), "r318") != 0) { gw_test_fail("row 318 of template captain accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, "", ",\"subactions\":[{\"index\":303,\"words\":[\"0x04000002\"]}]"), "m303") != 0) { gw_test_fail("row 303 of template mario accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"captain\",", ",\"common_states\":[{\"motion\":363}]"), "c363") != 1) { gw_test_fail("motion 363 of template captain refused"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"captain\",", ",\"common_states\":[{\"motion\":364}]"), "c364") != 0) { gw_test_fail("motion 364 of template captain accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    /* a define overlay: wait 4 (0x04000004), goto word 0 (op 7, operand = word index 0). The registry marks the slot relative. */
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"captain\",", ",\"subactions\":[{\"index\":7,\"words\":[\"0x04000004\",\"0x1C000000\",\"0\"]}]"), "goto") != 1 ||
+        r.nslot != 1 || !r.slot_rel[0]) { gw_test_fail("a define overlay with a relative Goto was refused or not marked"); rc = 1; }
+    gn_registry_clear(&r);
+    /* the operand must be a command boundary inside the overlay: word 2 here is the operand itself */
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"captain\",", ",\"subactions\":[{\"index\":7,\"words\":[\"0x04000004\",\"0x1C000000\",\"2\"]}]"), "gotobad") != 0 || r.n != 0) {
+        gw_test_fail("a Goto into the middle of a command was accepted"); rc = 1;
+    }
+    gn_registry_clear(&r);
+    return rc;
+}

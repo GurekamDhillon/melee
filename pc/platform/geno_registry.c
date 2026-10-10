@@ -501,6 +501,7 @@ typedef struct {
     int ai_set;
     int toon_on;                              /* "toon": cel shading for a base "none" model (visual only: no id, digest or simulation effect) */
     float toon[16];                           /* the built-in toon surface's 16 parameters, native floats (gw_surface ABI) */
+    struct gn_combo *combo;                   /* geno 11: the combo graph of a define with a "combo" block; NULL otherwise */
     int kb_copy;                              /* slice 6 (geno 10): "kirby_copy": "none" (-1, the default) or "retail:<fighter>" (that FighterKind) */
     int thrown_as;                            /* geno 10: "thrown_as": the retail FighterKind whose thrown rows a victim of this base "none" define plays (default Captain Falcon, 2) */
 } gn_profile;
@@ -1310,9 +1311,11 @@ static int gn_profile_reserve(gn_registry* r)
     r->p = next; r->capacity = cap; return 1;
 }
 static void gn_lua_free_all(gn_registry *r);
+static void gn_combo_free_all(gn_registry *r);
 static void gn_registry_clear(gn_registry* r)
 {
     gn_lua_free_all(r);
+    gn_combo_free_all(r);
     free(r->p); gdf_free(&r->definitions); memset(r, 0, sizeof *r);
 }
 /* skins (gw_skins_boot.inc, included below): a skin costume's own art comes before a define's or the default */
@@ -1322,6 +1325,7 @@ int gw_Skins_ArtOpenCK(int ck, int what, int costume);
 #include "geno_define_registry.inc"
 #include "geno_define_records.inc"
 #include "geno_lua_registry.inc"
+#include "geno_combo_registry.inc"
 #include "geno_define_online.h"
 #include "geno_define_online.inc"
 
@@ -1445,10 +1449,20 @@ static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod
         r->npool = pool_before; r->nslot = slots_before;
         return;
     }
+    if (!gn_combo_parse(p, d, e, where, version)) { /* geno 11: a bad "combo" block refuses the entry */
+        glua_free(p->lua); p->lua = NULL;
+        r->npool = pool_before; r->nslot = slots_before;
+        return;
+    }
+    if (!gn_meter_parse(p, d, e, where)) { /* geno 11: a bad "meter" refuses the entry */
+        glua_free(p->lua); p->lua = NULL; free(p->combo); p->combo = NULL;
+        r->npool = pool_before; r->nslot = slots_before;
+        return;
+    }
     if (p->defined) {
         int overlays = jd_get(d, e, "subactions");
         if (overlays >= 0 && (d->n[overlays].type != JN_ARR || d->n[overlays].count != p->nov)) {
-            glua_free(p->lua); p->lua = NULL; r->npool = pool_before; r->nslot = slots_before;
+            glua_free(p->lua); p->lua = NULL; free(p->combo); p->combo = NULL; r->npool = pool_before; r->nslot = slots_before;
             gw_log("geno: %s: native definition refused: invalid overlay or script budget exhausted", where);
             return;
         }

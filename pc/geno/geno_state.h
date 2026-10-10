@@ -106,6 +106,24 @@ typedef struct GenoLuaBlock {
     s32 last_fault; /* GENO_LUA_FAULT_* of the last one */
 } GenoLuaBlock;
 
+/* geno 11: the combo graph's per-fighter state (docs/geno.md section 25, geno_game_combo.inc). A SEPARATE game global
+ * (Geno_ComboBlock), so GenoState and GenoLuaBlock keep their layouts. Folded into GenoDefine_StateDigest only for a define
+ * that declares a "combo" block. Every word decides a later frame (the coverage test geno_combo_digest_coverage says so). */
+typedef struct GenoComboBlock {
+    s32 links;                  /* links taken in the current string (0: none) */
+    s32 motion;                 /* the motion the last link entered; leaving it any other way ends the string */
+    s32 last_route;             /* the route of the last link, -1 none */
+    s32 ki;                     /* the meter, hundredths, 0..ki_max */
+    u32 once[GENO_COMBO_MAX_ROUTES / 32]; /* "once" routes taken in this string */
+    s32 age[GENO_CI_COUNT];     /* logic frames since the class was pressed (hitlag frames do not count), 255 = none usable */
+    s32 dir[GENO_CI_COUNT];     /* GENO_CD_* of that press */
+    s32 hold[GENO_CI_COUNT];    /* frames the class's button has been held */
+    s32 hit;                    /* a hitbox (or an article) of the fighter hit a fighter during the current action */
+    s32 blocked;                /* a hitbox of the current action hit a shield */
+    s32 hits_seen;              /* GenoState.hit_count when the meter last paid for a hit taken */
+    s32 taken;                  /* links taken since the reset */
+} GenoComboBlock;
+
 #define GENO_SF_SCRIPT 1u /* a script used the escape since the reset */
 
 #endif

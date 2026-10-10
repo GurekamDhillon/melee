@@ -2824,6 +2824,15 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
             Fighter_UnkInitLoad_80068914_Inner1(gobj);
         }
 
+#if defined(TARGET_PC)
+        {
+            /* Geno combo graph (geno 11, pc/geno/geno_game_combo.inc): record this frame's presses every frame, hitlag
+               included (a press during hitlag stays buffered; hitlag frames do not age it). 0 work for a fighter whose
+               define has no "combo" block. */
+            extern void Geno_ComboInput(Fighter_GObj * gobj);
+            Geno_ComboInput(gobj);
+        }
+#endif
         if (!fp->x2219_b5) {
             if (fp->x1980) {
                 ftCommon_8007FFD8(fp, p_ftCommonData->x6FC);
@@ -2832,10 +2841,22 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
             ftCommon_8008031C(gobj);
             Fighter_UnkIncrementCounters_8006ABEC(gobj);
 
+#if defined(TARGET_PC)
+            {
+                /* Geno combo graph: outside hitlag, BEFORE the action's own input callback, so a route (a cancel or link
+                   window the define declares) wins over the move's retail IASA / jab chain while it is open; the retail
+                   callback runs as before when no route fires. */
+                extern int Geno_ComboTick(Fighter_GObj * gobj);
+                if (Geno_ComboTick(gobj)) {
+                    goto geno_combo_taken;
+                }
+            }
+#endif
             if (fp->input_cb) {
                 fp->input_cb(gobj);
             }
 #if defined(TARGET_PC)
+        geno_combo_taken:
             /* the interrupt window (turbo rule, script_fighter_interrupt.inc): after the action's
              * own callback, outside hitlag, only if the action is still the one that opened it */
             ScriptGame_IntrWinTick(gobj);

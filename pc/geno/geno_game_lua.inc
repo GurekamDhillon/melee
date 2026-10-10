@@ -139,6 +139,8 @@ static void geno_lua_fill(Fighter* fp, GenoState* st, GenoLuaBlock* lb, int anim
     io->w[GENO_LUA_IO_HIT_DAMAGE] = geno_lua_fbits(st->hit_damage);
     io->w[GENO_LUA_IO_HIT_FROM] = geno_lua_hit_from(fp, st);
     io->w[GENO_LUA_IO_COUNTERED] = (u32) st->counters;
+    io->w[GENO_LUA_IO_KI] = (u32) geno_combo_block(fp)->ki;       /* geno 11: 0 for a define without a combo block */
+    io->w[GENO_LUA_IO_LINKS] = (u32) geno_combo_block(fp)->links;
     for (i = 0; i < GENO_LUA_STATE_SLOTS; i++) {
         io->w[GENO_LUA_IO_STATE + i] = (u32) lb->slot[i];
     }
@@ -227,6 +229,11 @@ static int geno_lua_run(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int s, i
                                           0.0f, 1.0f, 0.0f, NULL);
             } else {
                 geno_test_changes++;
+            }
+            break;
+        case GENO_LUA_CMD_KI: /* geno 11: the combo meter; nothing for a define without a combo block */
+            if (st->profile >= 0 && Geno_ComboParam(st->profile, GENO_CP_ROUTES) > 0) {
+                geno_combo_ki_add(fp, st, (s32) a);
             }
             break;
         case GENO_LUA_CMD_TURN:

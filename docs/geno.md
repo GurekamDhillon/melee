@@ -3076,3 +3076,161 @@ drive (Lua, articles). Checked natively: every row of Goku (680), Peach (318) an
 Goku by `ports/goku-xv2/tools/movemap.py`), CLIPS lists source moves and plays their chained clips in
 order at the source speed; a bar marks the source hitbox (red) and cancel (blue) windows. Reference only:
 unverified static timing. `lab clips play <move id> [frame]`.
+
+## 25. The combo graph (geno 11, built 2026-10-08)
+
+A define can declare how its moves chain: **routes** "from move M, in a window of M's action frames, when M has hit / whiffed /
+been blocked, on the ground or in the air, an input (a class, a facing-relative direction, a hold) -> move T", with a buffer, a
+priority, a string depth and an optional meter. It is how a fighter from a game with strings and cancels (XV2 Goku's light
+chain, heavy enders, special cancels) is expressed in Melee's engine without changing Melee's rules: shield, grab, jump, DI,
+hitstun and hitlag stay Melee's, and a route is a cancel the attacker takes, never a hold on the victim.
+
+### 25.1 Format (`"geno": 11`, `GENO_VERSION` 11)
+
+```json
+"combo": {
+  "buffer": 5, "max_links": 5,
+  "ki": { "max": 100, "start": 0, "on_hit": 4, "on_taken": 1.5, "on_block": 0 },
+  "routes": [
+    { "name": "L1>L2", "from": "jab1", "to": "jab2", "input": "light", "on": "hit", "where": "ground", "window": [15, 36],
+      "source": "BCM 0/18/3; BAC 300 cancel f14+22" },
+    { "name": "L5>H finish", "from": "geno:Light5", "to": "geno:HeavyFinish", "input": "heavy", "dir": "forward", "window": [11, 30] },
+    { "name": "Lx>Dragon Rush", "from": ["jab1", "jab2", "geno:Light3"], "to": "special_s", "input": "special", "dir": "side",
+      "priority": 10 },
+    { "name": "L2>H gated", "from": "geno:Light2", "to": "geno:Heavy", "input": "heavy", "ki_cost": 10, "when": { "slot": "armed", "min": 1 } }
+  ],
+  "strings": [ { "name": "light x5 > finisher", "steps": ["jab1", "jab2", "geno:Light3", "geno:Light4", "geno:Light5", "geno:HeavyFinish"] } ]
+}
+```
+
+| key | meaning | default |
+|---|---|---|
+| `from` | `geno:<state>`, `motion:N`, a Melee move name (`jab1 jab2 jab3 rapid_jab dash_attack ftilt ftilt_any utilt dtilt fsmash fsmash_any usmash dsmash nair fair bair uair dair grab dash_grab fthrow bthrow uthrow dthrow`), `*` (any move, only while a string runs), or a list (one parsed route per source) | required |
+| `to` | a geno.json target (`geno:<state>`, `motion:N`, `auto`), a Melee move name (entered as a raw motion change), `special_n/s/hi/lw` (the define's bound special through `Geno_SpecialEnter`, the air entry in the air), `jump` (ground `ftCo_Jump_Enter`; air `ftCo_JumpAerial_Enter_Basic` when a jump is left), `nair..dair` (`ftCo_AttackAir_EnterFromMsid`, air only) | required |
+| `input` | `light` (A), `heavy` (A with a fresh smash flick by retail's thresholds, or the C-stick crossing the smash line; in the air the C-stick), `special` (B), `jump` (X/Y), `grab` (Z), `shield` (L/R digital), `none` (fires on the window and condition alone) | required |
+| `dir` | `any neutral forward back up down side`: the main stick at the press (the C-stick for a C-stick heavy), facing-relative, neutral inside PlCo `x98` | `any` |
+| `on` | `any hit whiff block contact` over the source action so far: hit = a hitbox or an article of the fighter hit a fighter; block = a hitbox hit a shield | `hit` |
+| `where` | `any ground air` | `any` |
+| `window` | [first, last] action frames (GenoState.action_time: 1-based, hitlag excluded, as counter windows and scripts count); last 0 = to the end | [1, 0] |
+| `buffer` | frames a press stays usable; hitlag frames do not age it | `combo.buffer` (5) |
+| `hold` | the button held at least this many frames (a charge); then the press's age does not matter | 0 |
+| `priority` | higher first; ties keep the file order (stable sort at load) | 0 |
+| `ki_cost`, `ki_min` | meter spent / required (meter units, kept in hundredths) | 0 |
+| `depth` | the route is taken only while the string has fewer links | `max_links` |
+| `once`, `starts` | at most once per string / begins a new string (links reset first) | false |
+| `when` | `{slot, min}`: a Lua state slot's word must be at least `min` (the table's Lua hook: the fighter's Lua writes the slot, the route reads it) | absent |
+| `source` | provenance text; not read, but in the content id | |
+| `strings` | named step lists; `tools.geno check` fails a step pair with no route | |
+
+Strict like the rest of a define: the key on an attach entry, in a file older than 11, an unknown name, a target that does not
+exist, a Lua gate naming no slot, or more than 128 routes after expansion refuses the entry with the reason in the log. The
+block is in the entry's content id, so it is in the online identity (section 24); an entry without it hashes as before. **An
+older engine ignores the key** and would load the fighter without routes under another id, which is why it took format 11.
+
+### 25.2 Where it runs
+
+`pc/geno/geno_game_combo.inc` (game half) over the words `pc/platform/geno_combo_registry.inc` parsed:
+
+- **Recording** (`Geno_ComboInput`, fighter.c's per-frame input process, every frame, hitlag included): the classes pressed
+  this frame get age 0 with their direction; older presses age by one only outside hitlag; holds count up. Heavy vs light uses
+  retail's own smash tests (`dash_smash_stick_threshold` / `dash_smash_window`, `xCC/xD0`, `xD4/xD8`, the C-stick crossing).
+- **Evaluation** (`Geno_ComboTick`, inside retail's `!x2219_b5` block, **before** the action's `input_cb`): the first route in
+  priority order whose source is the current motion, whose window holds the action frame, whose contact, ground/air, depth,
+  once, meter and Lua gate hold, and whose input is buffered (right direction, held long enough) is taken: the press is
+  consumed, the meter pays, `links` grows, the target is entered, and the retail callback is skipped that frame (as when it
+  changes the action itself). No route: retail runs exactly as before, so shield, grab, jump, IASA and the jab chain keep their
+  own priority wherever the define wrote no route.
+- **The string.** Every action change clears the buffer (the press that began a move never cancels it) and the contact
+  record. A change that is not the route's own ends the string (links 0, "once" marks cleared). `max_links` caps it; no route
+  set can loop past it.
+- **Contact** comes from ftcoll.c's hit sites: the fighter's hitbox on a fighter (beside the turbo window's hook), its hitbox on
+  a shield, its article on a fighter (`Geno_ComboContact`).
+- **The meter** (`ki`): + `on_hit` per hit landed, + `on_block` once per move that hits a shield, + `on_taken` per hit taken
+  (`Geno_OnHit`), minus `ki_cost`; clamped to [0, max]; starts at `start` at every spawn and respawn (per stock).
+
+### 25.3 State, rollback, online
+
+`Geno_ComboBlock[6][2]` (`GenoComboBlock` in `geno_state.h`: links, the last link's motion, last route, ki, once bits, per-class
+age / direction / hold, hit, blocked, hits seen, links taken) is a game global beside `Geno_StateBlock`, so savestates, the
+rewind and rollback snapshot it with no extra code. `GenoDefine_StateDigest` folds every word of it **only for a define that
+declares a combo block**; every other fighter's digest is unchanged. No host time, no pointers; the inputs are the fighter's
+own input record. The registry's words are install-time and immutable. Logs (`geno: combo link n: route r (name) motion a -> b
+at action frame f, ki k`) are rate-limited diagnostics. **Run (2026-10-09):** a bench SyncTest with Goku (rotation of four strings, `MELEE_SYNCTEST=12`): 28,800 curated checks, 2,400 rollbacks, 0 mismatching, 11 links taken; `gd.rewind_test` over 120 frames: 0 simulation bytes differ. **Not yet run:** a netplay match (the identity and digest rules cover it).
+
+### 25.4 Lua and the LAB
+
+Lua (section 23): `ctx.self.ki` (meter units), `ctx.self.combo_links`, and the command `ctx.ki(delta)` (io words 15 and 34,
+`GENO_LUA_CMD_KI` 6; additive: a define without a combo block reads 0 and the command does nothing). LAB: `gd.combo(port [,
+all])` returns `{links, max_links, ki, ki_max, last_route, last_name, taken, hit, blocked, action_frame, routes = {{index, name,
+from, to, input, dir, on, where, lo, hi, buffer, priority, ki_cost, state}}}` (the routes open now, or all with `all`; state 1 =
+open, 2 = its input is buffered: it fires this frame); `gd.combo_ki(port, n)` sets the meter (offline, a rewind branch). COMBO
+mode (`0`) draws each combo fighter's open routes under the combo reading.
+
+### 25.5 Tools
+
+- `python -m tools.geno.combo <geno.json>` (workspace): the graph as text and the checks `tools.geno check` also runs (strings
+  with a missing route, a route shadowed by an earlier one with the same trigger, input-less routes, loops reported).
+- `python ports/ir/tools/xv2_bcm_combo.py --ir <xv2 ir> --movemap <movemap.json> [--root 0/18]`: an XV2 BCM tree to a combo draft
+  (one candidate route per parent -> child BCM edge, the parent's BAC cancel window as the window, every condition Melee cannot
+  express listed as unmapped). Output stays local.
+- Combo tests (the Goku package's `combo/tests/`, workspace, local): a spec per route, a runner that reads each link the way
+  COMBO mode does (TRUE when the next hit lands before the victim's first actionable frame), per victim x percent x DI, and
+  asserts the intended route sequence.
+
+### 25.5b Authored combo tests (spec format)
+
+A combo spec is a text file `missions/combo-specs/<id>.txt` in a script mod (`key = value` lines, `#` comments), listed in
+`index.txt`; the runner (`goku-combo-tests/scripts/runner.lua`, a LAB script: P1 the fighter, P2 the victim, FD) plays it for
+every `percents` x `di` cell, per victim fighter (`missions/combo-run.txt`: `vs`, `specs`, `visible`, `trace`):
+
+| key | meaning |
+|---|---|
+| `name` | the route's label |
+| `inputs` | the attacker's tokens, in order: `A A> A^ Av` (light), `C> C< C^ Cv` (C-stick heavy), `B..` special, `X` jump, `Z` grab, `S>..` stick alone. `~tok` fires as soon as the attacker is actionable (an unrouted move, e.g. a jump or an aerial); `tok@N` fires on action frame N (frame-exact); any other token fires ASAP, the frame its route opens (state 1 of `gd.combo`) |
+| `routes` | the combo routes the tokens are meant to take, in order (the intent; a mismatch is reported) |
+| `percents`, `di` | the victim percents and the dummy DI: `none in out survival random` (seeded per cell; two-step stick as the LAB's clean DI) |
+| `min_hits`, `distance`, `p1x`, `ki` | hits a true combo needs, start spacing, start position, starting meter |
+| `expect_true` | the percents at which the spec EXPECTS a true combo; every other cell is a read |
+| `expect_di`, `expect_vs` | narrow where the expectation applies: only these DI modes / only these victims (a combo that drops with DI, or is tuned for some weights, is correct; every other cell is a read) |
+| `routes_prefix` | `1`: the routes taken may continue past `routes` (an air hit that chains on by itself) |
+| `shield` | `skip`: the spec has no SHIELD cells |
+
+Each link is read as COMBO mode reads it (14.15): TRUE when the next hit lands before the victim's first actionable frame after
+the previous one (`T+n` frames to spare), else escapable by `En` frames, and `drop=linkN` names where the string breaks. A cell
+FAILS only when the spec expects a true combo there and the routes taken differ from `routes` or a link is escapable; every other
+cell is printed as a read. The runner prints one table per spec (victim x percent x DI: true links / links, gaps, drop, routes
+taken, meter, expectation) to `results/<name>.md` and exits 1 on a failed expectation. `--visible` plays at 60 Hz with the window
+on screen; the default runs turbo on screen too. These run as a game script, not inside `run.sh --test` (they need the fighter's
+package, which is local), so they are not in the headless 363.
+
+### 25.5c Targets added after the first build
+
+- `to: "jump_short"` (`GENO_CA_JUMP_SHORT`): as `jump`, but the ground jump is always a short hop (the launcher's jump-cancel, so the air
+  string meets the victim). The route skips the jump squat, so the short-hop flag the squat would set (`mv.co.kneebend.is_short_hop`, read by
+  `ftCo_800CB110` as `mv.co.jump.x0`) is written here: 1 for `jump_short`, **0 for `jump`** (it used to inherit whatever the last action left in
+  that union word). In the air both are an air jump. Test: `geno_combo_parse` (both targets parse).
+- **Shield rule for routes.** A route is `on: hit` unless it says otherwise; a string link, an ender or a special cancel must not be `block` /
+  `contact`. On a shield the graph does nothing: only Melee's own follow-ups (the native jab chain) apply. The Goku suite asserts it (`run_combo_tests.py --shield`): the dummy shields (`single`, `hold`, then `grab` / `spot` / `roll` / `jump` at its first actionable frame after a block) while the attacker mashes the spec's tokens every 6 frames; asserted: no route fires on block, no closed loop (of 3 consecutive blocked moves the defender is actionable at least once between them), the first 6 blocked moves cost under half a full shield; reported per blocked move: frame advantage on block, shield HP lost, pushback, the defender's gap and its out-of-shield result.
+
+### 25.7 The meter HUD (`fighters[].meter`)
+
+```json
+"meter": { "name": "KI", "color": "#F2C14E", "position": [60, 438], "size": [110, 7], "max": 100 }
+```
+
+A bar for the combo ki value, drawn in matches (offline or online) in screen space (the 640x480 virtual screen of the script draw list,
+`gw_Script_DrawCount/At`): a dark back bar, the fill, a frame (white when full) and `NAME value` above it. Defaults: name `KI`, colour
+`#F2C14E`, position `[60 + 150 x slot, 438]`, size `[110, 7]`, max `combo.ki.max`. It needs a define with a combo block that declares `ki`;
+otherwise the entry is refused. It only **reads** the combo block (`GenoGame_ComboInfo`, the value the digest folds) and exists only
+while a match runs, so it cannot change the simulation, a savestate or a rollback. Code: `pc/platform/geno_combo_registry.inc`
+(`gn_meter_parse`, `gw_Geno_MeterInfo/MeterParam`), `pc/platform/gw_script_meter.inc`. Test: `geno_combo_parse` (a meter without a combo
+block and a bad colour refuse; name, colour, position, size, max read back).
+
+### 25.6 Verified
+
+Headless suite: `geno_combo_parse` (refusals: geno 10, a missing state, an unknown input, a bad Lua gate, an attach entry;
+the parsed words and the priority sort), `geno_combo_routes` (the starting press is consumed; whiff vs hit; a buffered press,
+10 hitlag frames do not age it, a press older than the buffer is dropped; heavy forward vs back by the smash test and priority;
+the Lua gate and the meter; block counts as contact; `max_links`; leaving the string), `geno_combo_digest` (every word moves
+the digest; a resimulation from a snapshot gives the same block and the same links; a define without a combo block keeps its
+digest). Full suite 363/363. Goku in a match: see the workspace `ports/goku-xv2/combo/RESULTS.md`.

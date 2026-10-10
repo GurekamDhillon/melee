@@ -4700,6 +4700,27 @@ function LD.draw_combo(show_fan)
     parts[#parts + 1] = string.format("%dh %.0f%%%s", #o.hits, o.dmg, o.escape and "" or " true")
   end
   if #parts > 0 then txt(x + 12, 470 - 30, "before: " .. table.concat(parts, "   "), "caption", MUTED) end
+  -- geno 11: the combo graph of each fighter that has one (gd.combo): links, ki, and the routes open NOW, the ones whose source,
+  -- window and condition hold (ready = its input is buffered: it fires this frame). docs/geno.md 25.
+  if gd.combo then
+    local gy = 260
+    for _, p in ipairs(gd.players()) do
+      local g = gd.combo(p.port)
+      if g then
+        local rows = math.min(#g.routes, 8)
+        panel(x, gy, w, 40 + rows * 14, string.format("P%d ROUTES", p.port), GOLD)
+        txt(x + 120, gy + 14, string.format("links %d/%d  ki %.0f/%.0f  f%d", g.links, g.max_links, g.ki, g.ki_max, g.action_frame),
+          "caption", BONE, "left", w - 130)
+        if rows == 0 then txt(x + 12, gy + 34, g.last_name ~= "" and ("last: " .. g.last_name) or "no route open", "caption", MUTED) end
+        for i = 1, rows do
+          local r = g.routes[i]
+          txt(x + 12, gy + 20 + i * 14, string.format("%s %s > %s  %s %s  f%d-%s", r.state == 2 and ">>" or "  ", r.name, r.to,
+            r.input, r.dir, r.lo, r.hi > 0 and tostring(r.hi) or "end"), "caption", r.state == 2 and OK or BONE, "left", w - 24)
+        end
+        gy = gy + 48 + rows * 14
+      end
+    end
+  end
   -- the DI fan of the last hit: the flight for each DI to the end of hitstun
   if show_fan and cb.di and gd.match().frame - cb.di.f < 90 then
     local lx, ly = 404, 8

@@ -485,6 +485,8 @@ extern int gw_gx_suppress_draws;
 /* C++ queue drain in gw_overlay.cpp; excludes older frames from the screenshot. */
 extern void gw_Wb_CaptureScreenshot(const char *path);
 extern int gw_ScriptGame_WbTargetJoint(int slot);
+extern float gw_ScriptGame_JointMtx(int slot, int i, int comp);
+extern int gw_ScriptGame_FighterFacing(int slot);
 extern void gw_ScriptGame_WbPrepare(int slot);
 int gw_Wb_RenderActive(void) {
     return gs_wb_render.pending && gw_Wb_Enabled() && gs.match_active &&
@@ -6959,7 +6961,7 @@ static void gs_wb_row(int motion) {
  * The existing LAB getters return scalars; no buffer or native pointer crosses
  * the PPC bridge. Keep the schema's compact list of non-null fighter joints. */
 static int gs_wb_read_frame(GwWbFrame *f) {
-    int i, n;
+    int i, n, have_root = 0;
     if (!gw_Wb_Enabled() || !gs_players_present(0)) return 0;
     memset(f, 0, sizeof *f);
     /* Same lazy HSD_JObjSetupMatrix path as gd.joints(1,true). The scalar
@@ -6980,6 +6982,12 @@ static int gs_wb_read_frame(GwWbFrame *f) {
         b->x = gw_ScriptGame_JointF(0, i, 0);
         b->y = gw_ScriptGame_JointF(0, i, 1);
         b->z = gw_ScriptGame_JointF(0, i, 2);
+        { int k; for (k = 0; k < 12; ++k) b->m[k] = gw_ScriptGame_JointMtx(0, i, k); }
+        if (parent == -1 && !have_root) {
+            have_root = 1;
+            f->root_joint = i;
+            memcpy(f->root_m, b->m, sizeof f->root_m);
+        }
         if (f->nbones == 1 || b->y < f->lowest_y) f->lowest_y = b->y;
     }
     for (i = 0; i < 4; ++i) {
@@ -7014,6 +7022,11 @@ static int gs_wb_read_frame(GwWbFrame *f) {
     f->ecb_by = gw_ScriptGame_LabF(0, LAB_F_ECB_BOTTOM_Y);
     f->ecb_tx = gw_ScriptGame_LabF(0, LAB_F_ECB_TOP_X);
     f->ecb_ty = gw_ScriptGame_LabF(0, LAB_F_ECB_TOP_Y);
+    f->ecb_lx = gw_ScriptGame_LabF(0, LAB_F_ECB_LEFT_X);
+    f->ecb_ly = gw_ScriptGame_LabF(0, LAB_F_ECB_LEFT_Y);
+    f->ecb_rx = gw_ScriptGame_LabF(0, LAB_F_ECB_RIGHT_X);
+    f->ecb_ry = gw_ScriptGame_LabF(0, LAB_F_ECB_RIGHT_Y);
+    f->facing = gw_ScriptGame_FighterFacing(0) < 0 ? -1 : 1;
     f->floor_y = gw_ScriptGame_LabF(0, LAB_F_FLOOR_Y);
     return 1;
 }
@@ -7308,6 +7321,8 @@ static int l_wb_render(lua_State *L) {
     char path[1024], capture[1024], metadata[1024];
     float pose[8];
     GwWbFrame frame;
+    if (gw_Wb_Headless())
+        return luaL_error(L, "wb.render is unavailable in headless mode (MELEE_WB_HEADLESS=1); use the Blender viewer or run windowed");
     int w, h, len, i, options[WB_RENDER_OPTIONS] = {1,0,0,0,0,0,0,1};
     gs_require_offline(L, "wb.render");
     if (!gw_Wb_Enabled()) return luaL_error(L, "workbench mode is not enabled");

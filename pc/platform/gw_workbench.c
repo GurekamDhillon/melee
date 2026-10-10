@@ -17,6 +17,41 @@ static int g_enabled;
 
 int gw_Wb_Enabled(void) { return g_enabled && !gw_Wb_NetplayActive(); }
 void gw_Wb_SetEnabled(int on) { g_enabled = on != 0; }
+
+/* Headless workbench (MELEE_WB_HEADLESS=1, honoured only for the workbench scene).
+ * Design (2026-10-10): the game boots as normal but Aurora gets its Dawn NULL backend
+ * (no GPU device; the SDL window is created hidden because Dawn still wants an HWND surface). Every GX call still
+ * lands in a real, device-less Aurora, so no texture/model/display-list shim needs a gate and
+ * windowed behaviour is untouched. The scene gate is published long after Aurora starts, so
+ * main() calls gw_Wb_PreScan(argc, argv) before aurora_initialize.
+ * GPU assumptions found in main.c: aurora_initialize (backend, window), gw_window_drag_install,
+ * gw_pcache_guard_run (cache file only), AuroraSetViewportPolicy; all are harmless on the Null
+ * backend. wb.render and gw_Wb_CaptureScreenshot need a real frame and are refused. */
+static int g_headless_requested;
+void gw_Wb_PreScan(int argc, char **argv)
+{
+    const char *env = getenv("MELEE_WB_HEADLESS");
+    const char *scene = getenv("MELEE_SCENE");
+    int i, workbench = scene != NULL && strstr(scene, "mode=workbench") != NULL;
+    for (i = 1; i < argc; ++i) if (argv != NULL && argv[i] != NULL && strcmp(argv[i], "--workbench") == 0) workbench = 1;
+    g_headless_requested = env != NULL && strcmp(env, "1") == 0 && workbench;
+    if (g_headless_requested) {
+        /* No swapchain: every frame is an offscreen frame (turbo with presentation off). */
+#ifdef _WIN32
+        if (getenv("MELEE_TURBO") == NULL) _putenv("MELEE_TURBO=1");
+        _putenv("MELEE_TURBO_RENDER=0");
+#else
+        if (getenv("MELEE_TURBO") == NULL) setenv("MELEE_TURBO", "1", 1);
+        setenv("MELEE_TURBO_RENDER", "0", 1);
+#endif
+    }
+}
+int gw_Wb_HeadlessRequested(void) { return g_headless_requested; }
+int gw_Wb_Headless(void)
+{
+    const char *env = getenv("MELEE_WB_HEADLESS");
+    return gw_Wb_Enabled() && env != NULL && strcmp(env, "1") == 0 && g_headless_requested;
+}
 const char *gw_Wb_Dir(void)
 {
     const char *dir = getenv("MELEE_WB_DIR");
@@ -166,6 +201,13 @@ static void wb_vec(WbJson *j, float x, float y, float z)
 {
     wb_append(j, "{\"x\":%g,\"y\":%g,\"z\":%g}", wb_number(x), wb_number(y), wb_number(z));
 }
+static void wb_mtx(WbJson *j, const float m[12])
+{
+    int i;
+    wb_append(j, ",\"mtx\":[");
+    for (i = 0; i < 12; ++i) wb_append(j, "%s%.7g", i ? "," : "", wb_number(m[i]));
+    wb_append(j, "]");
+}
 
 int gw_Wb_FrameJson(const GwWbFrame *f, const char *row, char *out, size_t cap)
 {
@@ -176,16 +218,21 @@ int gw_Wb_FrameJson(const GwWbFrame *f, const char *row, char *out, size_t cap)
     if (f == NULL || f->nbones < 0 || f->nbones > 160 ||
         f->nhits < 0 || f->nhits > 8 || f->nhurts < 0 || f->nhurts > 24) return -1;
     j.out = out; j.cap = cap; j.used = 0; j.failed = 0;
-    wb_append(&j, "{\"row\":");
+    wb_append(&j, "{\"schema\":2,\"row\":");
     wb_string(&j, row);
     wb_append(&j, ",\"motion\":%d,\"frame\":%d,\"bones\":[", f->motion, f->frame);
     for (i = 0; i < f->nbones; ++i) {
         const GwWbBone *b = &f->bones[i];
         wb_append(&j, "%s{\"joint\":%d,\"parent\":%d,\"pos\":", i ? "," : "", b->joint, b->parent);
         wb_vec(&j, b->x, b->y, b->z);
+        wb_mtx(&j, b->m);
         wb_append(&j, "}");
     }
-    wb_append(&j, "],\"hitboxes\":[");
+    wb_append(&j, "],\"root\":{\"joint\":%d,\"pos\":", f->root_joint);
+    wb_vec(&j, f->root_m[3], f->root_m[7], f->root_m[11]);
+    wb_append(&j, ",\"facing\":%d", f->facing < 0 ? -1 : 1);
+    wb_mtx(&j, f->root_m);
+    wb_append(&j, "},\"hitboxes\":[");
     for (i = 0; i < f->nhits; ++i) {
         const GwWbHit *h = &f->hits[i];
         wb_append(&j, "%s{\"slot\":%d,\"joint\":%d,\"active\":%s,\"offset\":",
@@ -204,9 +251,11 @@ int gw_Wb_FrameJson(const GwWbFrame *f, const char *row, char *out, size_t cap)
         wb_vec(&j, h->bx, h->by, h->bz);
         wb_append(&j, ",\"radius\":%g}", wb_number(h->radius));
     }
-    wb_append(&j, "],\"ecb\":{\"bottom\":{\"x\":%g,\"y\":%g},\"top\":{\"x\":%g,\"y\":%g}},"
+    wb_append(&j, "],\"ecb\":{\"bottom\":{\"x\":%g,\"y\":%g},\"top\":{\"x\":%g,\"y\":%g},"
+              "\"left\":{\"x\":%g,\"y\":%g},\"right\":{\"x\":%g,\"y\":%g}},"
               "\"floorY\":%g,\"lowestY\":%g}",
               wb_number(f->ecb_bx), wb_number(f->ecb_by), wb_number(f->ecb_tx), wb_number(f->ecb_ty),
+              wb_number(f->ecb_lx), wb_number(f->ecb_ly), wb_number(f->ecb_rx), wb_number(f->ecb_ry),
               wb_number(f->floor_y), wb_number(f->lowest_y));
     if (j.failed) { out[0] = '\0'; return -1; }
     return (int)j.used;

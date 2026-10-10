@@ -2307,6 +2307,29 @@ float ScriptGame_JointF(int slot, int i, int comp)
     return j != NULL ? j->mtx[comp][3] : 0.0f;
 }
 
+/* Element `comp` (0..11, row-major 3x4) of joint i's world matrix: the same matrix whose
+ * column 3 ScriptGame_JointF reads, read as-is. Zero for a missing joint. */
+float ScriptGame_JointMtx(int slot, int i, int comp)
+{
+    Fighter* fp = script_fighter(slot);
+    HSD_JObj* j;
+    if (fp == NULL || i < 0 || i >= lab_joint_count(fp) || comp < 0 || comp > 11) {
+        return 0.0f;
+    }
+    j = fp->parts[i].joint;
+    return j != NULL ? j->mtx[comp / 4][comp % 4] : 0.0f;
+}
+
+/* +1 when the fighter faces +X, -1 when it faces -X; 0 when the slot has no fighter. */
+int ScriptGame_FighterFacing(int slot)
+{
+    Fighter* fp = script_fighter(slot);
+    if (fp == NULL) {
+        return 0;
+    }
+    return fp->facing_dir < 0.0f ? -1 : 1;
+}
+
 /* gd.joints(port, true): bring every joint's matrix up to date before it is read. HSD computes a
  * matrix only when something needs it, so a joint nothing used this frame (no skin, hitbox or
  * effect on it) keeps an OLD matrix, and the joint probe read tens of units of error from those.

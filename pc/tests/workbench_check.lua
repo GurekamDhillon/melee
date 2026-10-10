@@ -73,8 +73,18 @@ function on_tick()
         local frame = tonumber(json:match('"frame":([%-0-9]+)'))
         if frame ~= want then return end
         assert(tonumber(json:match('"motion":([%-0-9]+)')) == dair, "snapshot has the wrong motion")
-        local hits, bones = array_count(json, "hitboxes"), array_count(json, "bones")
+        local hits, bones = array_count(json, "hitboxes"), select(2, json:gsub('"parent":', ""))
         assert(bones > 0, "snapshot has no fighter joints")
+        assert(json:match('"schema":2'), "frame_info must be schema 2")
+        do -- Entry-squash regression (span was 0.15): bone heights must span a fighter
+            local lo, hi
+            for y in json:gmatch('"pos":{"x":[%-%.%de]+,"y":([%-%.%de]+),') do
+                y = tonumber(y); lo = (lo and lo < y) and lo or y; hi = (hi and hi > y) and hi or y
+            end
+            assert(lo and hi and hi - lo > 5, "bone span too small (Entry squash?): " .. tostring(hi and lo and hi - lo))
+            local mtx = select(2, json:gsub('"mtx":%[', ""))
+            assert(mtx == bones + 1, "every bone and the root need an mtx: " .. mtx .. " vs " .. bones)
+        end
         if hits == 0 then -- startup: probe later frames (the move's active window is data, not a constant)
             assert(want < 60, "AttackAirLw has no active hitboxes up to frame 60")
             want = want + 3

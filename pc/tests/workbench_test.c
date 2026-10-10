@@ -90,6 +90,30 @@ int main(int argc, char **argv)
     gw_Wb_SetEnabled(0);
     assert(!gw_Wb_Enabled());
 
+    { /* headless gate: needs the workbench scene gate AND the pre-scan */
+        char *argvv[] = {"melee-pc", NULL};
+#ifdef _WIN32
+        _putenv("MELEE_SCENE=mode=workbench;p1=geno:x/y"); _putenv("MELEE_WB_HEADLESS=1");
+#else
+        setenv("MELEE_SCENE", "mode=workbench;p1=geno:x/y", 1); setenv("MELEE_WB_HEADLESS", "1", 1);
+#endif
+        gw_Wb_SetEnabled(0); gw_Wb_PreScan(1, argvv);
+        assert(gw_Wb_HeadlessRequested() == 1 && gw_Wb_Headless() == 0); /* gate off */
+        gw_Wb_SetEnabled(1); assert(gw_Wb_Headless() == 1);
+#ifdef _WIN32
+        _putenv("MELEE_WB_HEADLESS=");
+#else
+        unsetenv("MELEE_WB_HEADLESS");
+#endif
+        assert(gw_Wb_Headless() == 0);
+        gw_Wb_PreScan(1, argvv); assert(gw_Wb_HeadlessRequested() == 0);
+#ifdef _WIN32
+        _putenv("MELEE_SCENE=");
+#else
+        unsetenv("MELEE_SCENE");
+#endif
+        gw_Wb_SetEnabled(0);
+    }
     memset(&f, 0, sizeof f);
     f.motion = 70; f.frame = 6; f.nbones = 1; f.nhits = 1;
     f.bones[0].joint = 3; f.bones[0].parent = 1;
@@ -106,7 +130,7 @@ int main(int argc, char **argv)
     assert(strstr(out, "\"pos\":{\"x\":1.5,\"y\":2,\"z\":-0.25}"));
     assert(strstr(out, "\"world\":{\"x\":0,\"y\":4,\"z\":0}"));
     assert(strstr(out, "\"hurtboxes\":[]"));
-    assert(strstr(out, "\"ecb\":{\"bottom\":{\"x\":0,\"y\":0},\"top\":{\"x\":0,\"y\":0}}"));
+    assert(strstr(out, "\"ecb\":{\"bottom\":{\"x\":0,\"y\":0},\"top\":{\"x\":0,\"y\":0},\"left\":{\"x\":0,\"y\":0},\"right\":{\"x\":0,\"y\":0}}"));
     assert(gw_Wb_FrameJson(&f, "dair", out, 20) == -1);
     assert(gw_Wb_FrameJson(&f, "a\"b", out, sizeof out) > 0 && strstr(out, "a\\\"b"));
     assert(gw_Wb_FrameJson(&f, "a\\b\n", out, sizeof out) > 0 && strstr(out, "a\\\\b\\n"));
@@ -116,6 +140,31 @@ int main(int argc, char **argv)
     assert(gw_Wb_FrameJson(&f, "hurt", out, sizeof out) > 0);
     assert(strstr(out, "\"active\":false"));
     assert(strstr(out, "\"hurtboxes\":[{\"joint\":7,\"a\":{\"x\":0,\"y\":2,\"z\":0},\"b\":{\"x\":0,\"y\":3,\"z\":0},\"radius\":0.5}]"));
+    /* schema 2: matrices, root, facing, ECB sides */
+    f.nhurts = 0; f.hits[0].active = 1;
+    f.bones[0].m[0] = 1; f.bones[0].m[5] = 1; f.bones[0].m[10] = 1; f.bones[0].m[3] = 1.5f;
+    f.root_joint = 0; f.facing = -1; f.root_m[2] = 1; f.root_m[3] = -12.5f; f.root_m[5] = 1; f.root_m[8] = -1;
+    f.ecb_lx = -3; f.ecb_ly = 4.5f; f.ecb_rx = 3; f.ecb_ry = 4.5f;
+    assert(gw_Wb_FrameJson(&f, "wait", out, sizeof out) > 0);
+    assert(strstr(out, "\"schema\":2"));
+    assert(strstr(out, "\"mtx\":[1,0,0,1.5,0,1,0,0,0,0,1,0]"));
+    assert(strstr(out, "\"root\":{\"joint\":0,\"pos\":{\"x\":-12.5,\"y\":0,\"z\":0},\"facing\":-1,\"mtx\":[0,0,1,-12.5,0,1,0,0,-1,0,0,0]}"));
+    assert(strstr(out, "\"left\":{\"x\":-3,\"y\":4.5}"));
+    assert(strstr(out, "\"right\":{\"x\":3,\"y\":4.5}"));
+    { /* 160 bones with full matrices fit the 64 KB frame buffer used by gs_wb_snapshot */
+        static GwWbFrame big; static char big_json[65536]; int n, i;
+        memset(&big, 0, sizeof big);
+        big.nbones = 160; big.nhits = 4; big.nhurts = 15;
+        for (i = 0; i < 160; ++i) {
+            int k; big.bones[i].joint = i; big.bones[i].parent = i - 1;
+            for (k = 0; k < 12; ++k) big.bones[i].m[k] = -123.4567f - (float)k;
+            big.bones[i].x = big.bones[i].y = big.bones[i].z = -123.4567f;
+        }
+        n = gw_Wb_FrameJson(&big, "full", big_json, sizeof big_json);
+        assert(n > 0 && n < 60000);
+        big.nbones = 161;
+        assert(gw_Wb_FrameJson(&big, "full", big_json, sizeof big_json) == -1);
+    }
     { char p[256]; assert(gw_Wb_WritePayload("x.json", "{}", 2, p, sizeof p) != 0); }
     /* An optional scratch directory exercises publication on the host filesystem,
      * including replacing frame.json on Windows (CRT rename alone cannot do it). */

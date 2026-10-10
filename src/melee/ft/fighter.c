@@ -101,6 +101,8 @@
 #include <sysdolphin/baselib/gobjproc.h>
 #include <sysdolphin/baselib/gobjuserdata.h>
 #include <sysdolphin/baselib/jobj.h>
+#include <sysdolphin/baselib/dobj.h>
+#include <sysdolphin/baselib/mobj.h>
 #include <sysdolphin/baselib/lobj.h>
 #include <sysdolphin/baselib/mtx.h>
 #include <sysdolphin/baselib/random.h>
@@ -713,6 +715,26 @@ void Fighter_UnkProcessDeath_80068354(Fighter_GObj* gobj)
     ft_8007C630(gobj);
 }
 
+#if defined(TARGET_PC)
+static int gw_toon_unlit_tree(HSD_JObj* j)
+{
+    int n = 0;
+    for (; j != NULL; j = j->next) {
+        if (!(j->flags & (JOBJ_PTCL | JOBJ_SPLINE))) {
+            HSD_DObj* d;
+            for (d = j->u.dobj; d != NULL; d = d->next) {
+                if (d->mobj != NULL) {
+                    d->mobj->rendermode = (d->mobj->rendermode & ~CHANNEL_FIELD) | RENDER_CONSTANT;
+                    n++;
+                }
+            }
+        }
+        n += gw_toon_unlit_tree(j->child);
+    }
+    return n;
+}
+#endif
+
 void Fighter_UnkUpdateCostumeJoint_800686E4(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
@@ -725,6 +747,17 @@ void Fighter_UnkUpdateCostumeJoint_800686E4(Fighter_GObj* gobj)
     jobj = HSD_JObjLoadJoint(fp->x108_costume_joint);
     ftPartsPObjClearDefaultClass();
     ftParts_80073758(jobj);
+#if defined(TARGET_PC)
+    {
+        /* Geno "toon" (unlit base): the built-in toon surface lights the model itself, with a
+         * stepped ramp, so the GX channel must carry the unlit texture colour. Visual only. */
+        extern int Geno_ToonUnlit(int kind);
+        if (Geno_ToonUnlit(fp->kind)) {
+            int n = gw_toon_unlit_tree(jobj);
+            OSReport("geno toon: kind %d unlit base on %d materials\n", (int) fp->kind, n);
+        }
+    }
+#endif
 
     HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
 }
@@ -1166,6 +1199,27 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
     u8(*unk_byte_ptr)[2];
     bool animflags_bool;
     union Struct2070 x2070;
+#if defined(TARGET_PC)
+    int lab_pose_row = -1; /* LAB preview: the row whose script/flags stay in use, -1 = none */
+    if (arg3 != NULL) {
+        /* A thrown victim plays the thrower's row (ftData_80085CD8(fp, thrower, ...)), timed to that thrower's
+         * release. Across a Geno base "none" define that breaks: its rows are figatrees for its own skeleton
+         * (on another fighter's joints they hang ftAnim_8006E7B8), and a victim's own row is timed to its own
+         * throws (Mario's 12-frame TMarioThrowF ends before a slower release, which also hangs). So a retail
+         * victim of a base "none" thrower keeps the pose it has (the CaptureWait loop) until released, and a
+         * base "none" victim of a retail thrower plays its own row (authored long enough to hold). */
+        extern int Geno_DefineIsNone(int kind);
+        Fighter* thrower = GET_FIGHTER(arg3);
+        if (thrower != NULL && thrower->kind != fp->kind) {
+            if (Geno_DefineIsNone(thrower->kind) && !Geno_DefineIsNone(fp->kind)) {
+                arg3 = NULL;
+                flags |= Ft_MF_SkipAnim;
+            } else if (Geno_DefineIsNone(fp->kind)) {
+                arg3 = NULL;
+            }
+        }
+    }
+#endif
 
 #if defined(TARGET_PC)
     /* The only choke point every action state passes through, so it is the one honest answer
@@ -1496,6 +1550,17 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
                 fp->anim_id = geno_row;
             }
         }
+        {
+            /* LAB animation preview (gd.anim_preview): offline tool, -1 when unused. Pose only: the
+             * row gives its figatree; Wait's own row keeps the script words, flags and blend, so no
+             * row's commands (items, parasol, throws, effects) run (see lab_pose_row below). */
+            extern int ScriptGame_LabPreviewRow(Fighter * fp, int motion);
+            int lab_row = ScriptGame_LabPreviewRow(fp, (int) msid);
+            if (lab_row >= 0) {
+                lab_pose_row = fp->anim_id;
+                fp->anim_id = lab_row;
+            }
+        }
 #endif
         fp->frame_speed_mul = anim_speed;
         fp->x8A0_unk = anim_speed;
@@ -1530,6 +1595,13 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
                 unk_struct_x18 = &fp->x24[fp->anim_id];
                 unk_byte_ptr = &fp->x28[fp->anim_id];
             }
+#if defined(TARGET_PC)
+            if (lab_pose_row >= 0 && arg3 == NULL) {
+                /* LAB preview: the host state's own row for everything but the animation */
+                unk_struct_x18 = &fp->x24[lab_pose_row];
+                unk_byte_ptr = &fp->x28[lab_pose_row];
+            }
+#endif
             fp->x594_s32 = unk_struct_x18->x10_animCurrFlags;
             ftCo_8009E7B4(fp, unk_byte_ptr);
             if ((flags & Ft_MF_SkipAnim) == 0) {
@@ -3110,6 +3182,17 @@ void Fighter_procMap(Fighter_GObj* gobj)
     PC_PROF_BEGIN(GW_PROF_FIGHTER_COLLISION, ((GET_FIGHTER(gobj)->player_id + 1) << 16) | GET_FIGHTER(gobj)->kind);
     Fighter* fp = GET_FIGHTER(gobj);
 
+#if defined(TARGET_PC)
+    {
+        /* LAB animation preview: the posed fighter has no map collision (a clip that moves the body
+         * far from its origin would drag the ECB into the floor and launch it); Wait moves it nowhere. */
+        extern int ScriptGame_LabPreviewRow(Fighter * fp, int motion);
+        if (fp->motion_id == ftCo_MS_Wait && ScriptGame_LabPreviewRow(fp, ftCo_MS_Wait) >= 0) {
+            PC_PROF_END();
+            return;
+        }
+    }
+#endif
     if (!fp->x221F_b3) {
         if (fp->ecb_lock) {
             fp->ecb_lock--;

@@ -463,7 +463,15 @@ void lbShadow_8000F38C(s32 arg0)
 
                     if (fp2->x21FC_flag.b7) {
                         if (!fp2->invisible && !fp2->x221E_b5 &&
-                            fp2->x5AC.xC[1] != NULL)
+                            (fp2->x5AC.xC[1] != NULL
+#if defined(TARGET_PC)
+                             /* xC[1] is the costume's shadow (low-poly) parts lookup. Every
+                              * retail costume has one; a port-built model (Geno base:none,
+                              * m-ex rows past Sandbag) may not, and retail then added no
+                              * shadow object at all. Cast the full model instead. */
+                             || fp2->kind > Ft_Kind_Sandbag
+#endif
+                             ))
                         {
                             HSD_JObj* jobj = gobj->hsd_obj;
                             HSD_ShadowAddObject(fp2->x20A4.shadow, jobj);

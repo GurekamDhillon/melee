@@ -434,6 +434,11 @@ extern void SurfaceEnd(void);
 void ftDrawCommon_80080E18(HSD_GObj* gobj, int arg1)
 {
     int motion = script_motion_draw_begin(gobj);
+    {
+        /* Geno "toon": (re)select the define's built-in cel surface for this port. */
+        extern void GenoToonEnsure(int slot, int kind);
+        GenoToonEnsure(((Fighter*)gobj->user_data)->player_id + 1, ((Fighter*)gobj->user_data)->kind);
+    }
     SurfaceBegin(((Fighter*)gobj->user_data)->player_id + 1);
     ftDrawCommon_80080E18_surface_impl(gobj, arg1);
     SurfaceEnd();

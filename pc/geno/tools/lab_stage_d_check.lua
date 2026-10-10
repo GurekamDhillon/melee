@@ -937,6 +937,67 @@ do
   expect((os.clock() - t0) / 200 < 0.002, string.format("a HUD rebuild is under 2 ms of Lua (%.3f ms)", (os.clock() - t0) / 200 * 1000))
   gd.timeline = old_timeline
   lab("ui off"); lab("mode training")
+  -- CLIPS (2026-10-08): the animation library plays rows with gd.anim_preview, held in Wait
+  do
+    local calls = {}
+    local real_rows, real_prev = gd.anim_rows, gd.anim_preview
+    gd.anim_rows = function() return { { row = 14, name = "Wait", symbol = "PlyX_Share_ACTION_Wait_figatree" },
+      { row = 303, name = "xGOK_ATC_002", symbol = "xGOK_ATC_002" }, { row = 304, name = "xGOK_SPA_KMH", symbol = "xGOK_SPA_KMH" },
+      { row = 305, name = "xCMN_DMG_FLY", symbol = "xCMN_DMG_FLY" } } end
+    gd.anim_preview = function(port, row, frame, rate, face) calls[#calls + 1] = { row = row, frame = frame, face = face } return true end
+    lab("mode clips")
+    logs = {}
+    lab("clips find kmh")
+    local listed = false
+    for _, l in ipairs(logs) do if l:find("304", 1, true) and l:find("SPECIALS", 1, true) then listed = true end end
+    expect(listed, "clips find lists the Kamehameha row as a special")
+    lab("clips play xGOK_SPA_KMH 5")
+    expect(calls[#calls] and calls[#calls].row == 304 and calls[#calls].frame == 5, "clips play previews row 304 from frame 5")
+    lab("clips frame 12")
+    expect(calls[#calls] and calls[#calls].row == 304 and calls[#calls].frame == 12, "clips frame jumps within the playing clip")
+    lab("clips stop")
+    expect(calls[#calls] and calls[#calls].row == nil, "clips stop gives the fighter its own Wait back")
+    lab("clips category library")
+    logs = {}
+    lab("clips find")
+    local lib = 0
+    for _, l in ipairs(logs) do if l:match("^%s+30[345] ") then lib = lib + 1 end end
+    expect(lib == 3, "the LIBRARY category is the rows from 303 (" .. lib .. ")")
+    -- MOVES: a source move's chained clips, from the LAB mod's missions/moves-<fighter>.txt
+    local real_mr = gd.mod_read
+    gd.mod_read = function(path)
+      if path ~= "missions/moves-tester.txt" and path ~= "missions/moves-" .. tostring(gd.player(1).char_name):lower():gsub("%W", "") .. ".txt" then return nil end
+      return "# test\nM\tchara/GOK/GOK_PLAYER.bac:300\tgoku\tGOK_ATC_002\tLight\t60\nC\t0\t30\txGOK_ATC_002\t0\t29\t1\nC\t30\t30\txGOK_SPA_KMH\t10\t69\t2\nH\t12\t4\nX\t14\t20\n"
+    end
+    real_rows = gd.anim_rows
+    gd.anim_rows = function() return { { row = 303, name = "xGOK_ATC_002", symbol = "xGOK_ATC_002" },
+      { row = 304, name = "xGOK_SPA_KMH", symbol = "xGOK_SPA_KMH" } } end
+    gd.anim_preview = function(port, row, frame, rate, face) calls[#calls + 1] = { row = row, frame = frame, rate = rate } return true end
+    lab("mode training"); lab("mode clips")
+    gd.player(1).kind = (gd.player(1).kind or 0) + 1000 -- a new fighter key: the table is read again
+    lab("clips category moves")
+    lab("clips play chara/GOK/GOK_PLAYER.bac:300 13")
+    expect(calls[#calls] and calls[#calls].row == 303 and calls[#calls].frame == 13, "a source move plays its first clip at move frame 13")
+    lab("clips play chara/GOK/GOK_PLAYER.bac:300 41")
+    expect(calls[#calls] and calls[#calls].row == 304 and calls[#calls].frame == 31 and calls[#calls].rate == 2,
+      "move frame 41 is the second clip's frame 10 + 10 x2, at its own speed (" .. tostring(calls[#calls] and calls[#calls].frame) .. ")")
+    gd.mod_read = real_mr
+    lab("clips category all")
+    -- the engine refuses unknown key names ("11" from an 11th mode in the digit loop broke on_tick)
+    local real_kp = env.gd.key_pressed
+    env.gd.key_pressed = function(k)
+      if not (k:match("^%u$") or k:match("^%d$") or k:match("^F%d+$") or ({ SPACE = 1, ENTER = 1, ESCAPE = 1, TAB = 1,
+        UP = 1, DOWN = 1, LEFT = 1, RIGHT = 1, PAGEUP = 1, PAGEDOWN = 1, HOME = 1, END = 1 })[k]) then
+        error("unknown key \"" .. k .. "\"")
+      end
+      return false
+    end
+    local okt, errt = pcall(env.on_tick)
+    expect(okt, "on_tick asks only for real key names with CLIPS among the modes (" .. tostring(errt) .. ")")
+    env.gd.key_pressed = real_kp
+    gd.anim_rows, gd.anim_preview = real_rows, real_prev
+    lab("clips category all"); lab("mode training")
+  end
 -- (Task 9 adds its checks above this closing end: one block, one preamble, no new file-scope local)
 end
 for k in pairs(unknown) do u[#u + 1] = k end

@@ -290,9 +290,29 @@ void ftAnim_8006E7B8(Fighter* fp, Fighter_Part part)
     temp_r27 = fp->parts[part].xC;
     jobj = temp_r30;
     while (jobj != NULL) {
+#if defined(TARGET_PC)
+        {
+            /* Bounded: a parts table that does not match the joint tree being walked (a Geno base "none"
+             * define given another skeleton's figatree) ran i past the table forever and froze the game. */
+            int n = (int) ftPartsTable[fp->kind]->parts_num;
+            while (i < n && !fp->parts[i].flags_b1) {
+                i++;
+            }
+            if (i >= n) {
+                static int warned;
+                if (warned++ < 8) {
+                    OSReport("ftAnim: P%d kind %d motion %d anim %d: part walk from part %d ran past %d parts; stopped\n",
+                             (int) fp->player_id + 1, (int) fp->kind, (int) fp->motion_id, (int) fp->anim_id,
+                             (int) part, n);
+                }
+                break;
+            }
+        }
+#else
         while (!fp->parts[i].flags_b1) {
             i++;
         }
+#endif
         if (fp->parts[i].xC <= temp_r27 && i != part) {
             break;
         }

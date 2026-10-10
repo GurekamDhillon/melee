@@ -3001,3 +3001,55 @@ Scripted matrix: 15 scenarios of 110 s (Striker, Courier, Charger, Riposte, Cast
 ### 24.5 Not done
 
 Replay headers for netplay matches (a `.slp` cannot hold a define), voice/announcer, the Kirby copy online, an ABI-neutral heap budget.
+
+## Toon (cel) shading for base "none" defines (2026-10-08)
+
+`fighters[].toon` is an optional, visual-only block (`true` or an object). It is not folded into
+simulation state; a define that omits it is unchanged. When present, the engine selects a built-in
+WGSL surface (`builtin/geno-toon`, `pc/platform/gw_surface.cpp`) for the fighter's port on its
+first draw (`GenoToonEnsure`, from `ftDrawCommon_80080E18`) and re-asserts it after scene changes.
+A script's own `gd.fighter_shader` on that port takes precedence; releasing it restores the toon.
+
+| key | default | meaning |
+|---|---|---|
+| `bands` | 3 | light bands (2..8) of a half-Lambert ramp from a fixed eye-space key light |
+| `shadow` | 0.58 | dark band level (0..1) |
+| `shadow_tint` | [0.62,0.66,0.86] | dark band tint |
+| `light` | [0.45,0.65,0.6] | key light direction, eye space |
+| `rim` | 0.18 | rim light on the lit side |
+| `outline` / `outline_dark` | 0.28 / 0.75 | view-angle silhouette edge width and darkness (no geometry expansion) |
+| `softness` | 0.04 | band edge softness |
+| `unlit` | true | the model's MObjs are drawn with a constant channel (Fighter_UnkUpdateCostumeJoint_800686E4), so the ramp is the only lighting |
+
+Requires the Aurora GD surface patch (as `gd.fighter_shader`). The ramp is procedural; a source
+toon-ramp texture (XV2 DYT) is not sampled because surface functions have no texture binding.
+
+## LAB CLIPS: the animation library (2026-10-08)
+
+A LAB mode (TAB to it, or `lab mode clips`) listing every row of the focused fighter's animation
+table: retail rows for retail fighters; for a Geno base "none" define also its unbound `fighter.rows`
+(303 on), shown as LIBRARY. Goku XV2 declares his whole XV2 clip set there (385 rows). A clip plays
+held in place: `gd.anim_preview(port, row [, frame [, rate [, facing]]])` puts the fighter in Wait
+with that row (ScriptGame_LabPreviewRow, asked by Fighter_ChangeMotionState for Wait only), steps to
+`frame` and pauses like `gd.set_motion`; `gd.anim_preview(port, nil)` ends it; scene changes clear
+it. `gd.anim_rows(port)` lists `{row, name, symbol}`; the player table gained `anim_end`.
+
+Keys: UP/DOWN pick, ENTER play from 1, SPACE pause, LEFT/RIGHT a frame (CTRL 10), PAGEUP/PAGEDOWN
+10 frames, Z/X speed (x2 .. x0.1), V category, O facing, L loop, M model, S skeleton, B boxes, C close-up
+camera. Console: `lab clips find|play|show|frame|speed|category|stop`. `MELEE_LAB_MODE=clips` and
+`MELEE_LAB_CLIP=<row|name>` open on it. Entering CLIPS parks the other fighters (stand, 45 units away).
+Limits raised for it: GPL_MAX_CLIPS 576, GPL_MAX_OWN_ROWS 448, the registry JSON pool 16384 nodes /
+256 KB. Modes past the tenth have no digit key (TAB / `lab mode`).
+
+**Pose-only preview (fix 2026-10-08).** A previewed row gives only its figatree: Wait's own row keeps
+the script words, animation flags and blend (Fighter_ChangeMotionState, `lab_pose_row`), so no row's
+commands run (a parasol row's script asserted `ftGetParasolStatus` without a parasol), and the posed
+fighter skips map collision (Fighter_procMap) so a clip that moves the body cannot launch it. CLIPS
+holds the focused port's pad neutral while posing and leaves out the rows a Geno define's own states
+drive (Lua, articles). Checked natively: every row of Goku (680), Peach (318) and Mario (303).
+
+**MOVES category.** With `missions/moves-<fighter name>.txt` in the LAB mod (tab separated: `M` move,
+`C frame span clip start end speed`, `H frame dur` source hitbox, `X frame dur` cancel window; written for
+Goku by `ports/goku-xv2/tools/movemap.py`), CLIPS lists source moves and plays their chained clips in
+order at the source speed; a bar marks the source hitbox (red) and cancel (blue) windows. Reference only:
+unverified static timing. `lab clips play <move id> [frame]`.

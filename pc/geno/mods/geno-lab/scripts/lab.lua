@@ -147,6 +147,31 @@ local MODES = {
       { k = "X", label = "Faster", icon = "lab_forward", run = "br_faster" },
       { k = "S", label = "Stop", icon = "lab_pause", run = "br_stop" },
     } },
+  { id = "clips", name = "CLIPS", icon = "lab_timeline",
+    blurb = "Every animation in the fighter's bank, held in place: pick one, play, pause, step a frame at a time.",
+    t = {
+      { k = "L", id = "loop", label = "Loop", icon = "lab_rewind", def = true,
+        desc = "Play the clip again from frame 1 when it ends (off: stop on its last frame)." },
+      { k = "M", id = "model", label = "Model", icon = "lab_model", def = true,
+        desc = "The fighter's model. Off leaves the skeleton on its own." },
+      { k = "S", id = "skel", label = "Skeleton", icon = "lab_skeleton", def = false,
+        desc = "Bones and joints, in the port's colour." },
+      { k = "B", id = "boxes", label = "Hit / hurtboxes", icon = "lab_hitbox", def = false,
+        desc = "The game's hitbox and hurtbox draw on the posed fighter." },
+      { k = "C", id = "close", label = "Close-up camera", icon = "lab_eye", def = true,
+        desc = "Camera close on the fighter; off gives the match camera back." },
+    },
+    a = {
+      { k = "UP", label = "Up", icon = "lab_step_back", rep = true, run = "cl_up" },
+      { k = "DOWN", label = "Down", icon = "lab_step", rep = true, run = "cl_down" },
+      { k = "ENTER", label = "Play from 1", icon = "lab_play", run = "cl_play", state = "cl_playing" },
+      { k = "V", label = "Category", icon = "lab_moves", run = "cl_filter" },
+      { k = "Z", label = "Slower", icon = "lab_slowmo", run = "cl_slower" },
+      { k = "X", label = "Faster", icon = "lab_forward", run = "cl_faster" },
+      { k = "O", label = "Facing", icon = "lab_focus", run = "cl_face" },
+      { k = "PAGEUP", label = "-10 frames", icon = "lab_step_back", rep = true, run = "cl_back10" },
+      { k = "PAGEDOWN", label = "+10 frames", icon = "lab_step", rep = true, run = "cl_fwd10" },
+    } },
   { id = "launch", name = "LAUNCH", icon = "lab_launch",
     blurb = "Where a hit sends them: knockback, angle, hitstun, tumble and the arc to the blast zone, by the game's own formula.",
     t = {
@@ -300,8 +325,8 @@ end
 local function wanted_flags()
   if not cfg.on or cfg.hidden then return gd.draw.DEFAULT end
   local f = 0
-  if not in_mode("inspect") or T("model") then f = f | gd.draw.MODEL end
-  if (in_mode("hitboxes") or in_mode("frames") or in_mode("moves") or in_mode("launch") or in_mode("training") or in_mode("combo")) and T("boxes") then f = f | gd.draw.HIT | gd.draw.THROWN end
+  if (not in_mode("inspect") and not in_mode("clips")) or T("model") then f = f | gd.draw.MODEL end
+  if (in_mode("hitboxes") or in_mode("clips") or in_mode("frames") or in_mode("moves") or in_mode("launch") or in_mode("training") or in_mode("combo")) and T("boxes") then f = f | gd.draw.HIT | gd.draw.THROWN end
   return f
 end
 
@@ -574,17 +599,24 @@ local function in_lab_match()
   return gd.lab_mode ~= nil and gd.lab_mode() and gd.match().active and offline()
 end
 
+-- A neutral hold that ENDS: gd.input claims a port until gd.release (the claim stays connected and neutral after its frames run out),
+-- so a hold made outside a task must be released by on_frame or the human's own pad stays taken over after the menu closes.
+local pad_hold = {}
+local function pad_neutral(port, frames)
+  if pcall(gd.input, port, 0, frames) then pad_hold[port] = frames + 1 end
+end
+
 local function menu_close()
   menu.open = false
   if menu.ui.close then menu.ui.close() end
   if not menu.was_paused then gd.resume() end
-  for port = 1, 6 do pcall(gd.input, port, 0, 10) end
+  for port = 1, 6 do pad_neutral(port, 10) end
 end
 
 local function menu_leave(where)
   menu.open = false
   if menu.ui.close then menu.ui.close() end
-  for port = 1, 6 do pcall(gd.input, port, 0, 10) end
+  for port = 1, 6 do pad_neutral(port, 10) end
   gd.lab_leave(where)
 end
 
@@ -4944,6 +4976,368 @@ end
 end
 stage_d5()
 
+-- ---- CLIPS: the animation library (2026-10-08) -------------------------------------------------------
+-- Every row of the focused fighter's animation table, played with gd.anim_preview: the fighter stays in
+-- Wait (grounded, in place; Wait runs no move script, so no hitboxes or root motion), the row's clip
+-- plays from any frame, and the LAB's own SPACE / LEFT / RIGHT pause and step it. A Geno base "none"
+-- define lists its unbound fighter.rows (row 303 on) as LIBRARY: Goku's whole XV2 set is one.
+-- MOVES (when the LAB mod has missions/moves-<fighter>.txt, e.g. ports/goku-xv2/tools/movemap.py): a source
+-- move's chained clips play in order with its static timing; the bar marks the source's hitbox and cancel
+-- windows (reference only; unverified timing). Same pose-only playback.
+-- Its own function scope: the main chunk is at its local limit.
+;(function()
+local CATS = { "ALL", "MOVES", "LIBRARY", "ATTACKS", "SPECIALS", "MOVEMENT", "DAMAGE", "OTHER" }
+local CSPEEDS = { 2, 1, 0.5, 0.25, 0.1 }
+local cl = { key = nil, all = {}, cat = 1, sel = 1, first = 1, speed = 1, row = nil, len = nil, acc = 0,
+  face = 0, text = "", cam = false, pend = nil, slow = false }
+local OWN_FIRST = 303
+
+local function category(e)
+  local n = e.name:upper()
+  if n:find("ATC") or n:find("ATTACK") then return "ATTACKS" end
+  if n:find("SPA") or n:find("ULT") or n:find("^SPECIAL") or n:find("BLT") or n:find("KAME") then return "SPECIALS" end
+  if n:find("DMG") or n:find("DAMAGE") or n:find("DOWN") or n:find("STUN") or n:find("THROWN") then return "DAMAGE" end
+  if n:find("BAS") or n:find("WALK") or n:find("RUN") or n:find("DASH") or n:find("JUMP") or n:find("FALL")
+    or n:find("TURN") or n:find("ESC") or n:find("CLIFF") or n:find("LANDING") or n:find("SQUAT") or n:find("WAIT") then
+    return "MOVEMENT"
+  end
+  return "OTHER"
+end
+LE.clip_category = category
+
+function LE.clip_list()
+  local p = gd.player(focus)
+  if p == nil or not gd.anim_rows then return {} end
+  local key = focus .. ":" .. tostring(p.char_name) .. ":" .. tostring(p.kind)
+  if cl.key ~= key then
+    cl.key, cl.all, cl.sel, cl.first, cl.row, cl.cur, cl.mv = key, {}, 1, 1, nil, nil, nil
+    local byname, staterow = {}, {}
+    -- a Geno define's own states drive their rows with Lua and articles: not pose-only, so not listed
+    for _, mo in ipairs(gd.motion_list and gd.motion_list(focus) or {}) do
+      if mo.group == "geno" and mo.anim_id and mo.anim_id >= 0 then staterow[mo.anim_id] = mo.name end
+    end
+    for _, r in ipairs(gd.anim_rows(focus) or {}) do
+      if r.symbol ~= "" and not staterow[r.row] then
+        local e = { row = r.row, name = r.name ~= "" and r.name or r.symbol, symbol = r.symbol, lib = r.row >= OWN_FIRST }
+        e.cat = category(e)
+        cl.all[#cl.all + 1] = e
+        byname[e.name] = r.row
+      end
+    end
+    -- the source moves table (tab separated: M move / C clip event / H hit window / X cancel window)
+    cl.moves = {}
+    local fname = "missions/moves-" .. tostring(p.char_name):lower():gsub("%W", "") .. ".txt"
+    local text = gd.mod_read and gd.mod_read(fname) or nil
+    local m
+    for line in (type(text) == "string" and text or ""):gmatch("[^\n]+") do
+      local f = {}
+      for v in (line .. "\t"):gmatch("([^\t]*)\t") do f[#f + 1] = v end
+      if f[1] == "M" then
+        m = { move = true, name = f[2] .. "  " .. (f[4] or ""), id = f[2], kind = f[3] or "", clip = f[4], inputs = f[5] or "",
+          len = tonumber(f[6]) or 1, anims = {}, hits = {}, cx = {}, cat = "MOVES" }
+        cl.moves[#cl.moves + 1] = m
+      elseif m and f[1] == "C" and byname[f[4]] then
+        m.anims[#m.anims + 1] = { frame = tonumber(f[2]), play = tonumber(f[3]), row = byname[f[4]], lib = f[4],
+          start = tonumber(f[5]), last = tonumber(f[6]), speed = tonumber(f[7]) or 1 }
+      elseif m and f[1] == "H" then m.hits[#m.hits + 1] = { tonumber(f[2]), tonumber(f[3]) }
+      elseif m and f[1] == "X" then m.cx[#m.cx + 1] = { tonumber(f[2]), tonumber(f[3]) } end
+    end
+    for i = #cl.moves, 1, -1 do if #cl.moves[i].anims == 0 then table.remove(cl.moves, i) end end
+  end
+  local c, out = CATS[cl.cat], {}
+  if c == "MOVES" then
+    for _, e in ipairs(cl.moves or {}) do
+      if cl.text == "" or e.name:lower():find(cl.text, 1, true) or e.inputs:lower():find(cl.text, 1, true) then out[#out + 1] = e end
+    end
+    if cl.sel > #out then cl.sel = math.max(1, #out) end
+    return out
+  end
+  for _, e in ipairs(cl.all) do
+    local ok = c == "ALL" or (c == "LIBRARY" and e.lib) or e.cat == c
+    if ok and cl.text ~= "" then
+      ok = e.name:lower():find(cl.text, 1, true) ~= nil or e.symbol:lower():find(cl.text, 1, true) ~= nil
+    end
+    if ok then out[#out + 1] = e end
+  end
+  if cl.sel > #out then cl.sel = math.max(1, #out) end
+  return out
+end
+
+local function cl_show(e, frame, run)
+  if not offline() or e == nil then return end
+  local ok, why = gd.anim_preview(focus, e.row, frame or 1, 1, cl.face)
+  if not ok then say("Clip: " .. tostring(why), DANGER) return end
+  if cl.cur ~= e or cl.face_changed then cl.len = nil cl.face_changed = nil end
+  cl.row, cl.cur, cl.acc, cl.slow, cl.mv = e.row, e, 0, false, nil
+  cl.pend = run and (cl.speed >= 1 and "resume" or "slow") or nil
+end
+LE.clip_show = cl_show
+
+-- ---- source-move playback: event k's clip frame for move frame t, and back
+local function mv_event(m, t)
+  local k = 1
+  for i, a in ipairs(m.anims) do if a.frame <= t then k = i end end
+  return k
+end
+local function mv_apply(m, t, run)
+  if not offline() then return end
+  t = math.max(0, math.min(m.len - 1, t))
+  local k = mv_event(m, t)
+  local a = m.anims[k]
+  local f = math.max(a.start, math.min(a.last, a.start + math.floor((t - a.frame) * a.speed)))
+  local ok, why = gd.anim_preview(focus, a.row, f + 1, a.speed, cl.face)
+  if not ok then say("Move: " .. tostring(why), DANGER) return end
+  cl.mv, cl.ev, cl.row, cl.cur, cl.len, cl.acc, cl.slow = m, k, a.row, m, nil, 0, false
+  cl.pend = run and (cl.speed >= 1 and "resume" or "slow") or nil
+end
+local function mv_time()
+  local m, p = cl.mv, gd.player(focus)
+  if m == nil or p == nil then return 0 end
+  local a = m.anims[cl.ev]
+  if p.anim_id ~= a.row then return a.frame end
+  return a.frame + ((p.anim_frame_f or 0) - a.start) / (a.speed ~= 0 and a.speed or 1)
+end
+LE.clip_move_apply, LE.clip_move_time = mv_apply, mv_time
+
+local function cl_len()
+  -- only once the clip is the one playing: right after a switch the fighter still shows the old row
+  if cl.row then
+    local p = gd.player(focus)
+    if p and p.anim_id == cl.row and p.anim_end and p.anim_end > 0 then cl.len = math.floor(p.anim_end + 0.5) end
+  end
+  return cl.len
+end
+
+function LE.clips_tick()
+  if not cl.env_done and gd.lab_env and gd.match().active and gd.match().frame > 30 then
+    -- MELEE_LAB_MODE=clips opens the Lab on a mode; MELEE_LAB_CLIP=<row | name> starts a clip (ports/goku-xv2/tools/clips.ps1)
+    cl.env_done = true
+    local want = gd.lab_env("MODE")
+    if want then for i, md in ipairs(MODES) do if md.id == want:lower() then set_mode(i) end end end
+    local clip = gd.lab_env("CLIP")
+    if want or clip then gd.log("Geno Lab: start " .. tostring(want) .. " " .. tostring(clip) .. " -> " .. mode().id) end
+    if clip and in_mode("clips") then LE.clips_console("play " .. clip) end
+  end
+  if not in_mode("clips") or not offline() then
+    if cl.cam then gd.camera_attach(10) cl.cam = false end
+    cl.parked = false
+    return
+  end
+  local p = gd.player(focus)
+  if p and not cl.parked and gd.match().active then
+    -- the others stand still, out of reach: a CPU walking in would hit the posed fighter out of Wait
+    cl.parked = true
+    for _, q in ipairs(gd.players()) do
+      if q.port ~= focus then
+        pcall(gd.cpu_mode, q.port, "stand")
+        pcall(gd.teleport, q.port, p.x + (p.x < 0 and 45 or -45), p.y)
+      end
+    end
+  end
+  if p and T("close") then
+    gd.camera_set{ eye = { x = p.x, y = p.y + 11, z = 62 }, interest = { x = p.x, y = p.y + 9, z = 0 }, fov = 30 }
+    cl.cam = true
+  elseif cl.cam then
+    gd.camera_attach(10) cl.cam = false
+  end
+  if cl.row and not menu.open then
+    -- a pad held or knocked while posing would take the fighter out of Wait: hold its port neutral
+    pad_neutral(focus, 2)
+  end
+  if cl.pend == "resume" then cl.pend = nil gd.resume() end
+  if cl.pend == "slow" then cl.pend = nil cl.slow = true end
+  if cl.slow and cl.row and not menu.open then
+    -- speeds above 1 also step: two frames a tick at x2
+    cl.acc = cl.acc + cl.speed
+    local n = math.floor(cl.acc)
+    if n >= 1 then cl.acc = cl.acc - n gd.step(n) end
+  end
+end
+
+function LE.clips_frame()
+  if not in_mode("clips") or cl.row == nil then return end
+  local p = gd.player(focus)
+  if p == nil then return end
+  if cl.mv then
+    local m, running = cl.mv, (not gd.paused()) or cl.slow
+    local a, t = m.anims[cl.ev], mv_time()
+    local nxt = m.anims[cl.ev + 1]
+    if p.anim_id ~= a.row then return end
+    -- one frame early: on its last frame Wait's own anim-end handler would put the idle clip back
+    if nxt and (t >= nxt.frame - 1 or (p.anim_frame_f or 0) >= a.last - 1) then
+      mv_apply(m, nxt.frame, running)
+    elseif t >= m.len - 2 or (nxt == nil and (p.anim_frame_f or 0) >= a.last - 1) then
+      if T("loop") then if running then mv_apply(m, 0, true) end else gd.pause() cl.slow = false end
+    end
+    return
+  end
+  local len = cl_len()
+  if len and p.anim_id == cl.row and p.anim_frame_f and p.anim_frame_f >= len - 1 then
+    if T("loop") then
+      if not gd.paused() or cl.slow then cl_show(cl.cur, 1, true) end
+    else
+      gd.pause() cl.slow = false
+    end
+  end
+end
+
+local function jump(d)
+  local p = gd.player(focus)
+  if cl.cur == nil or p == nil then return end
+  if cl.mv then mv_apply(cl.mv, math.floor(mv_time() + 0.5) + d, false) return end
+  local len = cl_len() or 600
+  local f = math.max(1, math.min(len, math.floor((p.anim_frame_f or 0) + 1.5) + d))
+  cl_show(cl.cur, f, false)
+end
+
+ACTIONS.cl_up = function() cl.sel = math.max(1, cl.sel - 1) end
+ACTIONS.cl_down = function() cl.sel = math.min(#LE.clip_list(), cl.sel + 1) end
+ACTIONS.cl_play = function()
+  local e = LE.clip_list()[cl.sel]
+  if e and e.move then mv_apply(e, 0, true) say(e.name)
+  elseif e then cl_show(e, 1, true) say(e.name) end
+end
+ACTIONS.cl_filter = function()
+  cl.cat = cl.cat % #CATS + 1
+  cl.sel, cl.first = 1, 1
+  say("Category: " .. CATS[cl.cat])
+end
+ACTIONS.cl_slower = function()
+  for i, v in ipairs(CSPEEDS) do if v == cl.speed and i < #CSPEEDS then cl.speed = CSPEEDS[i + 1] break end end
+  if cl.row and not gd.paused() and cl.speed ~= 1 then gd.pause() cl.slow = true end
+  say(string.format("Speed x%g", cl.speed))
+end
+ACTIONS.cl_faster = function()
+  for i, v in ipairs(CSPEEDS) do if v == cl.speed and i > 1 then cl.speed = CSPEEDS[i - 1] break end end
+  if cl.row and cl.speed == 1 and cl.slow then cl.slow = false gd.resume() end
+  say(string.format("Speed x%g", cl.speed))
+end
+ACTIONS.cl_face = function()
+  local p = gd.player(focus)
+  local now = cl.face ~= 0 and cl.face or (p and p.facing) or 1
+  cl.face = now > 0 and -1 or 1
+  if cl.cur then jump(0) end
+  say(cl.face > 0 and "Facing right" or "Facing left")
+end
+ACTIONS.cl_back10 = function() jump(-10) end
+ACTIONS.cl_fwd10 = function() jump(10) end
+STATES.cl_playing = function() return cl.row ~= nil and (not gd.paused() or cl.slow) end
+
+function LE.clips_console(rest)
+  local sub, arg = rest:match("^(%S*)%s*(.-)$")
+  if sub == "find" or sub == "" then
+    cl.text = (arg or ""):lower()
+    cl.sel, cl.first = 1, 1
+    local list = LE.clip_list()
+    gd.log(string.format("clips: %d of %d (%s, \"%s\")", #list, #cl.all, CATS[cl.cat], cl.text))
+    for i, e in ipairs(list) do
+      if i > 80 then gd.log(string.format("  ... %d more (lab clips find <text>)", #list - 80)) break end
+      if e.move then gd.log(string.format("  %s  [%s] %df %s", e.name, e.inputs, e.len, e.kind))
+      else gd.log(string.format("  %4d %-9s %s", e.row, e.cat, e.name)) end
+    end
+  elseif sub == "play" or sub == "show" then
+    local want, fr = arg:match("^(%S+)%s*(%d*)$")
+    LE.clip_list()
+    local hit
+    for _, e in ipairs(cl.all) do if tostring(e.row) == want or e.name == want or e.symbol == want then hit = e end end
+    for _, e in ipairs(cl.moves or {}) do if e.id == want then hit = e end end
+    if hit and hit.move then
+      mv_apply(hit, (tonumber(fr) or 1) - 1, sub == "play")
+      gd.log("move " .. hit.name)
+    elseif hit then
+      for i, e in ipairs(LE.clip_list()) do if e == hit then cl.sel = i end end
+      cl_show(hit, tonumber(fr) or 1, sub == "play")
+      gd.log("clip " .. hit.row .. " " .. hit.name)
+    else
+      gd.log("lab clips play <row | name> [frame]")
+    end
+  elseif sub == "frame" then
+    if cl.cur and tonumber(arg) then cl_show(cl.cur, tonumber(arg), false) end
+  elseif sub == "speed" and tonumber(arg) then
+    cl.speed = tonumber(arg)
+    say(string.format("Speed x%g", cl.speed))
+  elseif sub == "category" then
+    for i, c in ipairs(CATS) do if c:lower() == arg:lower() then cl.cat = i end end
+    cl.sel, cl.first = 1, 1
+    gd.log("category " .. CATS[cl.cat])
+  elseif sub == "stop" then
+    cl.row, cl.cur, cl.slow = nil, nil, false
+    gd.anim_preview(focus, nil)
+    gd.log("clips: preview off")
+  else
+    gd.log("lab clips [find <text> | play <row|name> [frame] | show <row|name> [frame] | frame <n> | speed <x> | category <name> | stop]")
+  end
+end
+
+function LE.draw_clips()
+  local p = gd.player(focus)
+  if p == nil then return end
+  if not gd.anim_rows then txt(12, 30, "this build has no gd.anim_rows", "caption", DANGER) return end
+  local list = LE.clip_list()
+  local ROWS = 20
+  local x, y, w = 8, 8, 300
+  local h = 44 + ROWS * 15
+  panel(x, y, w, h, "CLIPS")
+  txt(x + 64, y + 14, string.format("%s   %s  %d / %d", fighter_name(focus), CATS[cl.cat], #list, #cl.all),
+    "caption", GOLD, "left", w - 74)
+  if cl.sel < cl.first then cl.first = cl.sel end
+  if cl.sel > cl.first + ROWS - 1 then cl.first = cl.sel - ROWS + 1 end
+  for i = cl.first, math.min(#list, cl.first + ROWS - 1) do
+    local e = list[i]
+    local yy = y + 26 + (i - cl.first) * 15
+    local on = i == cl.sel
+    if on then quad(x + 6, yy, w - 12, 14, GOLD, SHEAR) end
+    quad(x + 8, yy + 2, 3, 10, e.lib and GOLD or MUTED)
+    txt(x + 16, yy + 11, e.move and e.kind:sub(1, 5) or tostring(e.row), "caption", on and INK or DISABLED)
+    txt(x + 48, yy + 11, e.name, "caption", on and INK or BONE, "left", w - 120)
+    txt(x + w - 12, yy + 11, e.cat, "caption", on and INK or DISABLED, "right", 66)
+    if cl.cur == e then icon("lab_play", x + w - 82, yy + 1, 12, on and INK or OK) end
+  end
+  if cl.text ~= "" then txt(x + 12, y + h - 5, "find: " .. cl.text, "caption", BONE) end
+  local e = cl.cur
+  local tx, tw = 316, 316
+  if cl.mv then
+    local m = cl.mv
+    local t = mv_time()
+    local a = m.anims[cl.ev] or m.anims[1]
+    local run = cl.slow or not gd.paused()
+    panel(tx, 8, tw, 110, "SOURCE MOVE")
+    stxt(tx + 12, 42, m.name, "label", BONE, "left", tw - 24)
+    txt(tx + 12, 58, string.format("frame %d / %d   x%g   %s   input %s", math.floor(t + 1.5), m.len, cl.speed,
+      run and "PLAYING" or "PAUSED", m.inputs ~= "" and m.inputs or "-"), "caption", run and OK or GOLD, "left", tw - 24)
+    txt(tx + 12, 72, string.format("clip %d/%d %s  f%d (%d..%d x%g)", cl.ev, #m.anims, a.lib,
+      math.floor((p.anim_frame_f or 0) + 1.5), a.start, a.last, a.speed), "caption", MUTED, "left", tw - 24)
+    local bx, bw, by = tx + 12, tw - 24, 80
+    local sx = function(fr) return bx + bw * math.max(0, math.min(1, fr / math.max(1, m.len))) end
+    quad(bx, by, bw, 12, alpha(BONE, 0x30))
+    for _, an in ipairs(m.anims) do quad(sx(an.frame), by, 1, 12, alpha(BONE, 0xA0)) end
+    for _, h in ipairs(m.hits) do quad(sx(h[1]), by, math.max(2, sx(h[1] + h[2]) - sx(h[1])), 5, DANGER) end
+    for _, h in ipairs(m.cx) do quad(sx(h[1]), by + 7, math.max(2, sx(h[1] + h[2]) - sx(h[1])), 5, ACCENT) end
+    quad(sx(t), by - 2, 2, 16, GOLD)
+    txt(tx + 12, 106, "red: source hitboxes  blue: cancel windows  (unverified timing)", "caption", DISABLED, "left", tw - 24)
+    if T("skel") then draw_skeleton(p, PORT[p.port]) end
+    return
+  end
+  panel(tx, 8, tw, 70, "PLAYING")
+  if e then
+    stxt(tx + 12, 42, e.name, "label", BONE, "left", tw - 24)
+    local len = cl_len()
+    local f = math.floor((p.anim_frame_f or 0) + 1.5)
+    local run = cl.slow or not gd.paused()
+    txt(tx + 12, 60, string.format("frame %d / %s   x%g   %s   %s   row %d", f, len and tostring(len) or "?", cl.speed,
+      run and "PLAYING" or "PAUSED", (cl.face ~= 0 and cl.face or p.facing) > 0 and "facing R" or "facing L", e.row),
+      "caption", run and OK or GOLD, "left", tw - 24)
+    if len and len > 0 then
+      quad(tx + 12, 66, tw - 24, 4, alpha(BONE, 0x40))
+      quad(tx + 12, 66, (tw - 24) * math.min(1, f / len), 4, GOLD)
+    end
+  else
+    txt(tx + 12, 46, "ENTER plays the selected clip; SPACE pauses, LEFT / RIGHT step a frame", "caption", MUTED, "left", tw - 24)
+  end
+  if T("skel") then draw_skeleton(p, PORT[p.port]) end
+end
+end)()
+
 ACTIONS.cb_clear = function() LD.combo_reset() say("Combos cleared") end
 
 -- ---- ticks ----------------------------------------------------------------------------------------
@@ -5309,6 +5703,7 @@ function on_tick()
   if lab_menu_tick() then return end -- the menu owns every key while it is open
   if not cfg.on then return end
   if LE.tick() then return end -- the frame-data export owns the tick while it runs
+  LE.clips_tick()
   if gd.key_pressed("H") then
     cfg.hidden = not cfg.hidden
     if cfg.hidden then restore_draw() end
@@ -5317,7 +5712,7 @@ function on_tick()
   if gd.key_pressed("F3") then cfg.help = not cfg.help end
   if gd.key_pressed("F4") then cfg.perf = not cfg.perf gd.log("Geno Lab: performance " .. onoff(cfg.perf)) save_settings() end
   if gd.key_pressed("TAB") then set_mode(cfg.mode + (gd.key("SHIFT") and -1 or 1)) end
-  for i = 1, #MODES do if gd.key_pressed(i == 10 and "0" or tostring(i)) then set_mode(i) end end
+  for i = 1, math.min(#MODES, 10) do if gd.key_pressed(i == 10 and "0" or tostring(i)) then set_mode(i) end end -- 1-9, 0; later modes by TAB or `lab mode`
   if gd.key_pressed("F") then next_port(1) end
   mode_keys()
   if offline() then
@@ -5399,7 +5794,11 @@ function on_scene(kind, name)
 end
 
 function on_frame()
+  for port, n in pairs(pad_hold) do
+    if n <= 1 then pcall(gd.release, port) pad_hold[port] = nil else pad_hold[port] = n - 1 end
+  end
   LE.frame()
+  LE.clips_frame()
   LD.frame()
   for port, s0 in pairs(scrub) do
     local p = gd.player(port)
@@ -5484,6 +5883,7 @@ function on_draw()
   if id == "hitboxes" and T("data") then draw_hit_data() end
   if id == "frames" then draw_frames(list) end
   if id == "moves" then LE.draw_moves() end
+  if id == "clips" then LE.draw_clips() end
   if id == "launch" then LE.draw_launch() end
   if id == "ab" then LE.draw_ab() end
   if id == "training" then LD.draw() end
@@ -5650,6 +6050,8 @@ gd.command("lab", function(arg)
     LD.combo_console()
   elseif cmd == "drill" then
     LD.drill_console(rest)
+  elseif cmd == "clips" then
+    LE.clips_console(rest)
   elseif cmd == "set" then
     local mid, tid, v = rest:match("^(%w+)%.(%w+)%s+(%S+)$")
     if mid and tog[mid] and tog[mid][tid] ~= nil then

@@ -828,6 +828,32 @@ static void gw_shots_tick(uint32_t frame) {
   (void)gw_shot_next;
 }
 
+/* MELEE_RESIZE_AT="<frame>:<W>x<H>[,...]": TEST-ONLY. Resizes the window's client area (the same
+ * SDL path as a user drag) when <frame> game frames have been presented. Pair with MELEE_SHOT_AT. */
+static void gw_resize_tick(uint32_t frame) {
+  static int loaded, n;
+  static struct { uint32_t frame; int w, h; } r[GW_SHOT_MAX];
+  int i;
+  if (!loaded) {
+    const char *env = getenv("MELEE_RESIZE_AT");
+    loaded = 1;
+    while (env != NULL && *env != ' ' && n < GW_SHOT_MAX) {
+      unsigned f; int w, h, used = 0;
+      if (sscanf(env, "%u:%dx%d%n", &f, &w, &h, &used) < 3) break;
+      r[n].frame = f; r[n].w = w; r[n].h = h; ++n;
+      env += used;
+      if (*env == ',') ++env;
+    }
+    if (n > 0) gw_log("gw: MELEE_RESIZE_AT: %d resize(s) scheduled", n);
+  }
+  for (i = 0; i < n; ++i) {
+    if (r[i].frame == frame && gw_video_window != NULL) {
+      gw_log("gw: MELEE_RESIZE_AT: frame %u -> client %dx%d", frame, r[i].w, r[i].h);
+      SDL_SetWindowSize(gw_video_window, r[i].w, r[i].h);
+    }
+  }
+}
+
 /* The current render scale; 0 = Auto (window resolution). */
 float gw_Video_RenderScale(void) {
   gw_video_load();
@@ -2020,6 +2046,7 @@ void gw_frame_tick(void) {
       gw_present_overlays();
       gw_stats_note_present(0);
       gw_shots_tick(gw_presented_count + 1u);
+      gw_resize_tick(gw_presented_count + 1u);
     }
     if (gw_video_fps > 60) {
       gw_uncap_next = gw_time_ticks() + GW_TIMER_CLOCK / (uint64_t)gw_video_fps;

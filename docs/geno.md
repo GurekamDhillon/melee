@@ -3132,8 +3132,7 @@ age / direction / hold, hit, blocked, hits seen, links taken) is a game global b
 rewind and rollback snapshot it with no extra code. `GenoDefine_StateDigest` folds every word of it **only for a define that
 declares a combo block**; every other fighter's digest is unchanged. No host time, no pointers; the inputs are the fighter's
 own input record. The registry's words are install-time and immutable. Logs (`geno: combo link n: route r (name) motion a -> b
-at action frame f, ki k`) are rate-limited diagnostics. **Not yet run:** a netplay match or a bench SyncTest with a combo define
-(the identity and digest rules cover it; the run is owed).
+at action frame f, ki k`) are rate-limited diagnostics. **Run (2026-10-09):** a bench SyncTest with Goku (rotation of four strings, `MELEE_SYNCTEST=12`): 28,800 curated checks, 2,400 rollbacks, 0 mismatching, 11 links taken; `gd.rewind_test` over 120 frames: 0 simulation bytes differ. **Not yet run:** a netplay match (the identity and digest rules cover it).
 
 ### 25.4 Lua and the LAB
 
@@ -3169,6 +3168,9 @@ every `percents` x `di` cell, per victim fighter (`missions/combo-run.txt`: `vs`
 | `percents`, `di` | the victim percents and the dummy DI: `none in out survival random` (seeded per cell; two-step stick as the LAB's clean DI) |
 | `min_hits`, `distance`, `p1x`, `ki` | hits a true combo needs, start spacing, start position, starting meter |
 | `expect_true` | the percents at which the spec EXPECTS a true combo; every other cell is a read |
+| `expect_di`, `expect_vs` | narrow where the expectation applies: only these DI modes / only these victims (a combo that drops with DI, or is tuned for some weights, is correct; every other cell is a read) |
+| `routes_prefix` | `1`: the routes taken may continue past `routes` (an air hit that chains on by itself) |
+| `shield` | `skip`: the spec has no SHIELD cells |
 
 Each link is read as COMBO mode reads it (14.15): TRUE when the next hit lands before the victim's first actionable frame after
 the previous one (`T+n` frames to spare), else escapable by `En` frames, and `drop=linkN` names where the string breaks. A cell
@@ -3185,7 +3187,7 @@ package, which is local), so they are not in the headless 363.
   `ftCo_800CB110` as `mv.co.jump.x0`) is written here: 1 for `jump_short`, **0 for `jump`** (it used to inherit whatever the last action left in
   that union word). In the air both are an air jump. Test: `geno_combo_parse` (both targets parse).
 - **Shield rule for routes.** A route is `on: hit` unless it says otherwise; a string link, an ender or a special cancel must not be `block` /
-  `contact`. On a shield the graph does nothing: only Melee's own follow-ups (the native jab chain) apply. The Goku suite asserts it (below).
+  `contact`. On a shield the graph does nothing: only Melee's own follow-ups (the native jab chain) apply. The Goku suite asserts it (`run_combo_tests.py --shield`): the dummy shields (`single`, `hold`, then `grab` / `spot` / `roll` / `jump` at its first actionable frame after a block) while the attacker mashes the spec's tokens every 6 frames; asserted: no route fires on block, no closed loop (of 3 consecutive blocked moves the defender is actionable at least once between them), the first 6 blocked moves cost under half a full shield; reported per blocked move: frame advantage on block, shield HP lost, pushback, the defender's gap and its out-of-shield result.
 
 ### 25.7 The meter HUD (`fighters[].meter`)
 

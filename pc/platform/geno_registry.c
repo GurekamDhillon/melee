@@ -502,6 +502,7 @@ typedef struct {
     int toon_on;                              /* "toon": cel shading for a base "none" model (visual only: no id, digest or simulation effect) */
     float toon[16];                           /* the built-in toon surface's 16 parameters, native floats (gw_surface ABI) */
     int kb_copy;                              /* slice 6 (geno 10): "kirby_copy": "none" (-1, the default) or "retail:<fighter>" (that FighterKind) */
+    int thrown_as;                            /* geno 10: "thrown_as": the retail FighterKind whose thrown rows a victim of this base "none" define plays (default Captain Falcon, 2) */
 } gn_profile;
 
 #define GN_NONE 0xFFFFFFFFu

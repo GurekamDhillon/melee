@@ -64,7 +64,14 @@ void ftCo_800DE5A4(Fighter_GObj* arg0)
     Fighter* fp = GET_FIGHTER(arg0);
     if (fp->mv.co.thrown.unk_bool) {
         if (fp->mv.co.thrown.anim_timer) {
+#if defined(TARGET_PC)
+            /* Held-timing guard: the hold frame is the thrower's, and a victim thrown with a stand-in's row (a Geno
+             * base "none" thrower) may have a clip with other timing; reaching or passing it holds (a clip that
+             * ends first simply stays on its last frame), never waits for an exact float match that cannot come. */
+            if (fp->cur_anim_frame >= fp->mv.co.thrown.anim_timer) {
+#else
             if (fp->mv.co.thrown.anim_timer == fp->cur_anim_frame) {
+#endif
                 ftAnim_SetAnimRate(arg0, 0.0f);
                 fp->mv.co.thrown.anim_timer = 0.0f;
                 ftCommon_8007E3EC(arg0);
@@ -211,7 +218,11 @@ void ftCo_800DE920(Fighter_GObj* gobj, f32 anim_timer)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     fp->mv.co.thrown.unk_bool = true;
+#if defined(TARGET_PC)
+    if (fp->cur_anim_frame >= anim_timer) { /* held-timing guard, see ftCo_800DE5A4 */
+#else
     if (fp->cur_anim_frame == anim_timer) {
+#endif
         ftAnim_SetAnimRate(gobj, 0.0f);
         fp->mv.co.thrown.anim_timer = 0.0f;
     } else {

@@ -2846,6 +2846,29 @@ define folder this section's loader reads; the rules, who enforces each (engine,
 Verified (this build, vanilla disc, headless LAB, nothing seen on screen): a second original character with other proportions and other bone names (the workspace's `ports/geno-artist-samples/pip`) built with no converter edit
 plays idle, walk, run, jump, double jump, jab (hitbox on a declared bone, 2% to Mario), shield, grab and forward throw (6%), 15 hurtboxes, no crash (workspace `tools/geno/artist/proof.lua`), and `tools/geno/moves_check` reports 39 of its 40 scenarios as works (the dair's landing lag reads 21 against the declared 23). Before placeholder clips were held to their script length the same run reported 31 works and 9 wrong, all of them moves cut off by a too-short borrowed clip. The Courier built through the same importer: 38 works, 2 works*, 0 wrong. `run.sh --test`: 350 of 350.
 
+### 22.10 Throws across a `base: "none"` fighter: `thrown_as` (2026-10-09)
+
+When a base-none fighter grabs a retail fighter, the grab and the hold are the **victim's own** rows (CatchPull, CatchWait, the pummel reaction CatchAttack/CatchCut and its damage
+pose), attached at the same hold point as for any thrower. The four thrown rows (ThrownF, ThrownB, ThrownHi, ThrownLw) are different in the retail game: a thrown victim plays the
+**thrower's** animation row for the victim's state (`Fighter_ChangeMotionState`, `arg3` = the thrower), because those clips live in each thrower's animation bank. A base-none
+fighter has no such clips for another skeleton, so its victims play the thrown rows of a **stand-in retail thrower**, named by one fighter-level key (`"geno": 10`):
+
+```json
+"thrown_as": "captain"
+```
+
+| key | meaning |
+|---|---|
+| `thrown_as` | a retail fighter (the names `ai.like` takes; not Nana). Default `captain` (Captain Falcon). The victim is attached to the define's `TransN2` joint (`ftCo_800DB368`, as for any thrower) and plays the stand-in's ThrownF/B/Hi/Lw clip at the throw's animation speed until the throw's release (`throw_flag` b3 in the define's throw script) knocks it away. Only for a base-none define (a base-mario define is thrown with Mario's rows). Part of the entry's content id |
+
+The stand-in's data and animation bank are loaded with the define (`ftData_80085B10`, as if a Captain Falcon had spawned), so the stand-in need not be in the match. A define whose
+stand-in cannot be loaded logs `throw: kind K thrown by base-none kind N: stand-in kind S has no animation bank; the victim holds its pose` and the victim keeps its CatchWait pose
+until released. A base-none **victim** of a retail thrower plays its own thrown rows (authored long enough to hold).
+
+**Held-timing guard.** A throw script that pauses at its release (`cmd_var` 0, then `ftCo_800DE920` freezes the victim at the thrower's frame) no longer requires the victim's clip to
+reach that exact frame: the freeze and the hold check use `>=` (`ftCo_800DE5A4`, `ftCo_800DE920`), a clip that ends first stays on its last frame, and a victim in a throw is still
+freed by the grab timer. A define's throws do not set `cmd_var` 0 (ground throws end at their clip); `fn_800DD5EC` (a throw landing from the air) is capped at 600 steps.
+
 ## 23. Fighter Lua (slice 5: the first increment built 2026-10-07, the second move and the tooling 2026-10-08)
 
 A define can write a state's behaviour as Lua. The shape is deliberately small: two phases (`enter`, `frame`), a typed per-fighter state, five commands (four in the first increment; `turn` came with the second move). Physics,

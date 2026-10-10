@@ -2271,6 +2271,30 @@ void ftData_80085A14(FighterKind kind)
     }
 }
 
+#if defined(TARGET_PC)
+/* The table a victim thrown by a Geno base "none" define reads its thrown rows from: kind's motion table and
+ * animation bank, in a stand-in Fighter that carries only what ftData_80085CD8 and Fighter_ChangeMotionState read
+ * (kind, x58C, x24, x28). NULL when kind's data or animation bank is not loaded (ftData_80085B10 loads it with
+ * the define). Static data derived from loaded files: not simulation state. */
+Fighter* ftData_ThrownStandIn(int kind)
+{
+    static Fighter standin;
+    ftData* fd;
+    if (kind < 0 || kind >= Ft_Kind_Max || kind == Ft_Kind_Nana) {
+        return NULL;
+    }
+    fd = gFtDataList[kind];
+    if (fd == NULL || fd->xC == NULL || ftData_Table_Unk0[kind].data == NULL) {
+        return NULL;
+    }
+    standin.kind = kind;
+    standin.x24 = fd->xC;
+    standin.x28 = fd->x10;
+    standin.x58C = ftData_Table_Unk0[kind].count;
+    return &standin;
+}
+#endif
+
 void ftData_80085B10(Fighter* fp)
 {
     FighterKind kind = fp->kind;
@@ -2280,6 +2304,18 @@ void ftData_80085B10(Fighter* fp)
     fp->x5A8 = NULL;
     fp->x58C = ftData_Table_Unk0[kind].count;
     ftData_80085A14(kind);
+#if defined(TARGET_PC)
+    {
+        /* A Geno base "none" define's victims play the thrown rows of a retail stand-in ("thrown_as", Captain
+         * Falcon by default): load its data and animation bank with the define, as a spawned Falcon would. */
+        extern int Geno_DefineThrownAs(int kind);
+        int as = Geno_DefineThrownAs((int) kind);
+        if (as >= 0 && as != (int) kind) {
+            ftData_8008572C((FighterKind) as);
+            ftData_80085A14((FighterKind) as);
+        }
+    }
+#endif
 }
 
 void ftData_80085B98(Fighter* fp, int arg1, int arg2)

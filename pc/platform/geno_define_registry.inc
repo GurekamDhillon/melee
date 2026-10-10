@@ -178,9 +178,17 @@ static int gn_file_name_ok(const char* s, const char* ext)
 static int gn_define_s6_keys(gn_profile* p, const jdoc* d, int e, int version, const char* where)
 {
     int v, c, k;
-    p->ai_like = -1; p->ai_set = 0; p->kb_copy = -1;
-    if (version < 10 && (jd_get(d, e, "ai") >= 0 || jd_get(d, e, "kirby_copy") >= 0)) {
-        gw_log("geno: %s: ai and kirby_copy need \"geno\": 10", where); return 0;
+    p->ai_like = -1; p->ai_set = 0; p->kb_copy = -1; p->thrown_as = 2; /* Captain Falcon */
+    if (version < 10 && (jd_get(d, e, "ai") >= 0 || jd_get(d, e, "kirby_copy") >= 0 || jd_get(d, e, "thrown_as") >= 0)) {
+        gw_log("geno: %s: ai, kirby_copy and thrown_as need \"geno\": 10", where); return 0;
+    }
+    v = jd_get(d, e, "thrown_as");
+    if (v >= 0) {
+        if (d->n[v].type != JN_STR || (p->thrown_as = gn_retail_kind(d->n[v].str)) < 0) {
+            gw_log("geno: %s: thrown_as must name a retail fighter (mario, fox, captain, donkey, kirby, koopa, link, seak, ness, peach, popo, pikachu, samus, yoshi, purin, mewtwo, luigi, mars, zelda, clink, drmario, falco, pichu, gamewatch, ganon, emblem)", where);
+            p->thrown_as = 2; return 0;
+        }
+        if (!p->none) { gw_log("geno: %s: thrown_as is for a base \"none\" define (a base \"mario\" define is thrown with Mario's rows)", where); p->thrown_as = 2; return 0; }
     }
     if (version < 9 && jd_get(d, e, "audio") >= 0) { gw_log("geno: %s: audio needs \"geno\": 9", where); return 0; }
     v = jd_get(d, e, "ai");
@@ -648,6 +656,18 @@ int gw_Geno_DefineKirbyCopy(int kind)
     if (!r->kinds_built) gn_build_kinds(r);
     p = gdf_profile_for_kind(&r->definitions, kind);
     return p < 0 ? -2 : r->p[p].kb_copy;
+}
+
+/* The retail FighterKind whose thrown rows a victim of FighterKind `kind` (a base "none" define) plays: "thrown_as", default Captain Falcon (2).
+ * -1 = not a base "none" define (a victim is thrown with the real thrower's rows, as in retail). */
+int gw_Geno_DefineThrownAs(int kind)
+{
+    gn_registry* r = gn_reg(); int p;
+    if (kind < 0x21) return -1;
+    if (!r->kinds_built) gn_build_kinds(r);
+    if (gn_fm_for_kind(kind) == NULL) return -1;
+    p = gdf_profile_for_kind(&r->definitions, kind);
+    return p < 0 ? -1 : r->p[p].thrown_as;
 }
 
 /* A .gnsnd (tools/geno/audio.py): 32-byte big-endian header, then s16 big-endian samples. Decoded to native s16, or NULL (and *why) when it is not a

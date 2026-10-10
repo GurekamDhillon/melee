@@ -1293,12 +1293,20 @@ local function draw_strip()
     toggle_icon(t.icon, x + w + 3, y, 16, tog[md.id][t.id], ACCENT)
     x = x + w + 26
   end
+  -- the keys that do not fit before the status block wrap onto a second row above (CLIPS has fourteen)
+  local ay, limit, x1 = y, sa.right - 230, nil
   for _, a in ipairs(md.a) do
-    local w = key_chip(x, y, a.k, gd.key(a.k))
-    if a.state then toggle_icon(a.icon, x + w + 3, y, 16, STATES[a.state](), ACCENT)
-    else icon(a.icon, x + w + 3, y, 16, ACCENT) end
+    local kw = key_w(a.k)
+    if ay == y and x + kw + 26 > limit then
+      x1, x, ay, limit = x, 8, y - 22, sa.right - 8
+      quad(0, ay - 4, sa.w, 26, alpha(GLASS_SOLID, 0xC8))
+    end
+    local w = key_chip(x, ay, a.k, gd.key(a.k))
+    if a.state then toggle_icon(a.icon, x + w + 3, ay, 16, STATES[a.state](), ACCENT)
+    else icon(a.icon, x + w + 3, ay, 16, ACCENT) end
     x = x + w + 26
   end
+  if x1 then x = x1 end
   -- the right end: status, mode, help
   local h = gd.history()
   local status = string.format("f %d  %s", gd.match().frame,

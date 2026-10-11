@@ -6462,6 +6462,9 @@ static HSD_TObj* mnCharSel_PcOwnTex(HSD_JObj* j)
 /* Retail's cursor art. which 0: the hand (part 2 its pose, frame = retail's x5 state; part 3 its port tag, frame = colour + port * 4),
  * 1: the coin (part 4, frame = port * 4, 16 CPU). The image and palette at that frame, and the joint's translation and scale (retail units)
  * so the caller can place the parts as retail does. 0 when the disc has no such art. */
+static u32 mnCharSel_PcCursorLo;   /* the last part's TEV colour 0 (retail's hand: the navy its shading blends from) */
+u32 mnCharSel_PcArtCursorLo(void) { return mnCharSel_PcCursorLo; }
+
 int mnCharSel_PcArtCursor(int which, int part, float frame, HSD_ImageDesc** img, HSD_Tlut** tlut, float geo[4], u32* rgba)
 {
     HSD_JObj* root = which == 0 ? mnCharSel_PcHand : mnCharSel_PcToken;
@@ -6481,7 +6484,8 @@ int mnCharSel_PcArtCursor(int which, int part, float frame, HSD_ImageDesc** img,
             GXColor c = body->mobj->mat->diffuse;
             *rgba = ((u32) c.r << 24) | ((u32) c.g << 16) | ((u32) c.b << 8) | 0xFFu;
         } else if (t != NULL && t->tev != NULL) {
-            GXColor k = t->tev->konst;
+            GXColor k = t->tev->konst, l = t->tev->tev0;
+            mnCharSel_PcCursorLo = ((u32) l.r << 24) | ((u32) l.g << 16) | ((u32) l.b << 8) | 0xFFu;
             *rgba = ((u32) k.r << 24) | ((u32) k.g << 16) | ((u32) k.b << 8) | 0xFFu;
         } else if (d != NULL && d->mobj != NULL && d->mobj->mat != NULL) {
             GXColor c = d->mobj->mat->diffuse;

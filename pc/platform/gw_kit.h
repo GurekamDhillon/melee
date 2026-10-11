@@ -106,6 +106,7 @@ int gw_Kit_TexAddHsd(const char *key, int gx_fmt, const uint8_t *img, size_t img
                      int tlut_fmt, const uint8_t *tlut, int tlut_n);
 /* A .gxtex file's bytes (a mod's own art: png2gx.py's container) into the same pool; -1 when it is not a v1 .gxtex or does not fit. */
 int gw_Kit_TexAddGxtex(const char *key, const uint8_t *blob, size_t len);
+int gw_Kit_TexAddHsdShade(const char *key, int gx_fmt, const uint8_t *img, size_t img_size, int w, int h, uint32_t lo_rgba, uint32_t hi_rgba);   /* intensity -> lo..hi colour (a TEV blend), not a mask */
 int gw_Kit_TexHsdFind(const char *key);   /* the slot a key already holds, or -1; decodes nothing */
 void gw_Kit_TexHsdFrame(int frame);   /* the host calls it once per frame: the eviction clock */
 void gw_Kit_TexDropHsd(void);         /* frees the whole disc-art pool (a disc or mod change); a scene exit does not call it: the pool stays warm */

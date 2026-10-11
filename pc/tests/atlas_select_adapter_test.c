@@ -101,6 +101,7 @@ static int g_hsd_frame; void gw_Kit_TexHsdFrame(int frame) { g_hsd_frame = frame
 static int g_hsd_drops; void gw_Kit_TexDropHsd(void) { g_hsd_drops++; }
 int gw_Kit_TexAddHsd(const char *key, int gx_fmt, const uint8_t *img, size_t img_size, int w, int h, int tlut_fmt, const uint8_t *tlut, int tlut_n)
 { (void) gx_fmt; (void) img; (void) img_size; (void) w; (void) h; (void) tlut_fmt; (void) tlut; (void) tlut_n; g_art_calls++; snprintf(g_art_key, sizeof g_art_key, "%s", key); return g_art_ret; }
+int gw_Kit_TexAddHsdShade(const char *key, int gx_fmt, const uint8_t *img, size_t img_size, int w, int h, uint32_t lo, uint32_t hi) { (void) key; (void) gx_fmt; (void) img; (void) img_size; (void) w; (void) h; (void) lo; (void) hi; return -1; }
 int gw_Kit_QuadCount(void) { return g_quads; }
 int gw_Kit_QuadRoom(void) { return 16000; }
 

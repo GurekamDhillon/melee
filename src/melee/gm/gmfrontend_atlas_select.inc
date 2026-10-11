@@ -37,6 +37,8 @@ extern int Settings_Int(const char* key, int dflt);
 extern void Ui_ArtDrop(void);
 extern int Geno_DefineAudioPlay(int ck, int which, int sfx); /* a define's own clip (announcer: which 0); 1 when one was started or declared */
 extern int Ui_ArtGeno(int ck, int what, int costume); /* a Geno define's own package art as a kit texture, or -1 (what: 0 icon, 1 portrait) */
+extern int Ui_ArtDecodeShade(const char* key, int gx_fmt, const void* img, int size, int w, int h, int lo_rgba, int hi_rgba);
+extern u32 mnCharSel_PcArtCursorLo(void);
 extern void Ui_SelCursorArt(int h, int slot, int tex, int rgba, float x, float y);
 extern int mnCharSel_PcArtCursor(int which, int part, float frame, HSD_ImageDesc** img, HSD_Tlut** tlut, float geo[4], u32* rgba);
 extern int Ui_ArtDecode(const char* key, int gx_fmt, const void* img, int size, int w, int h, int tlut_fmt, const void* tlut, int tlut_n);
@@ -440,8 +442,14 @@ static void fas_submit_cursor_art(void)
     for (i = 0; i < 3; i++) {
         geo[0] = geo[1] = 0.0f;
         if (mnCharSel_PcArtCursor(0, 2, (float) i, &a.img, &a.tl, geo, &rgba)) {
-            sprintf(key, "@csshand%d", i);
-            Ui_SelCursorArt(fas.h, i, fas_art(key, a), (int) rgba, geo[0], geo[1]);
+            int tex;
+            sprintf(key, "@csshandv2_%d", i);
+            /* retail's hand is an IA8 shade map: TEV blends tev0 (navy) to konst (white) by its intensity; decoded as a mask it is a white blob */
+            tex = (int) a.img->format <= 3
+                      ? Ui_ArtDecodeShade(key, (int) a.img->format, a.img->image_ptr, fas_gx_size((int) a.img->format, (int) a.img->width, (int) a.img->height),
+                                          (int) a.img->width, (int) a.img->height, (int) mnCharSel_PcArtCursorLo(), (int) rgba)
+                      : fas_art(key, a);
+            Ui_SelCursorArt(fas.h, i, tex, (int) 0xFFFFFFFFu, geo[0], geo[1]);
             ok++;
         }
     }

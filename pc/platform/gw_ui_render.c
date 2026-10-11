@@ -726,8 +726,8 @@ static int csv_disc_coin_ok(const AtSink *s, int k) { return s->image != NULL &&
 #define CSV_DH_HX 0.40f              /* the pointing fingertip in the upright image, 0..1 */
 #define CSV_DH_HY 0.04f
 #define CSV_DH_TILT 0.35f            /* retail leans the hand to the right (radians, clockwise) */
-#define CSV_DH_TAG_DX (-18.0f)       /* the port tag's centre from the fingertip, as retail places it (canvas px) */
-#define CSV_DH_TAG_DY 45.0f
+#define CSV_DH_TAG_DX (-6.0f)        /* the port tag's centre from the hand image's centre, as retail places it (canvas px) */
+#define CSV_DH_TAG_DY 8.0f
 #define CSV_DH_GRAB_FRAME 1          /* retail's states: 0 pointing (over the panels), 1 holding a coin, 2 open (over the roster) */
 #define CSV_DH_POINT_FRAME 0
 #define CSV_DH_OPEN_FRAME 2
@@ -849,7 +849,9 @@ static void csv_hand_ex(const AtSink *s, const AtTextOps *o, float x, float y, i
         csv_image_turned(s, csv_disc[f] - 1, x, y, w, h, hu, hv, CSV_DH_TILT, csv_disc_rgba[f] | 0xFFu);
         if (csv_disc[tg]) {
             float tw = 32.0f * 0.75f * k, th = 24.0f * 0.75f * k;
-            at_sink_image(s, csv_disc[tg] - 1, x + CSV_DH_TAG_DX * k - tw * 0.5f, y + CSV_DH_TAG_DY * k - th * 0.5f, tw, th, csv_disc_rgba[tg] | 0xFFu);
+            float ddx = (0.5f - hu) * w, ddy = (0.5f - hv) * h, c = cosf(CSV_DH_TILT), sn = sinf(CSV_DH_TILT);
+            float mx = x + ddx * c - ddy * sn + CSV_DH_TAG_DX * k, my = y + ddx * sn + ddy * c + CSV_DH_TAG_DY * k;   /* on the back of the hand, as retail */
+            at_sink_image(s, csv_disc[tg] - 1, mx - tw * 0.5f, my - th * 0.5f, tw, th, csv_disc_rgba[tg] | 0xFFu);
         }
         return;
     }

@@ -323,6 +323,11 @@ int gw_Ui_ArtDecode(const char *key, int gx_fmt, const void *img, int size, int 
     return gw_Kit_TexAddHsd(key, gx_fmt, (const uint8_t *) img, size < 0 ? 0u : (size_t) size, w, h, tlut_fmt, (const uint8_t *) tlut, tlut_n);
 }
 
+/* disc art drawn by a two-colour TEV blend (retail's CSS hand): intensity picks lo..hi, the texture's own alpha stays */
+int gw_Ui_ArtDecodeShade(const char *key, int gx_fmt, const void *img, int size, int w, int h, int lo_rgba, int hi_rgba) {
+    return gw_Kit_TexAddHsdShade(key, gx_fmt, (const uint8_t *) img, size < 0 ? 0u : (size_t) size, w, h, (uint32_t) lo_rgba, (uint32_t) hi_rgba);
+}
+
 /* a Geno define's own art (its package's .gxtex, read at run time from the mod's folder): the kit texture, or -1 when the define declares none of this kind
  * or the file is missing or malformed. what: 0 icon, 1 portrait, 2 stock. The adapter then draws the tile's letters. */
 extern int gw_Geno_DefineArtTex(int ck, int what, int costume);

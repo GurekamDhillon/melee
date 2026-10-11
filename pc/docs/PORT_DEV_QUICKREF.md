@@ -71,6 +71,8 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | Variable | Effect |
 |---|---|
 | `MELEE_ISO=<path>` | disc image, if not passed as `--iso` |
+| `MELEE_SETTINGS_CFG=<path>` | override settings.cfg's path (default beside the exe); selected on the first cfg access |
+| `MELEE_<ASCII uppercase settings key>=<value>` | `Settings_Int/Str` read a nonempty variable before settings.cfg and the caller's default; live lookup, never saved. Example: `MELEE_ATLAS_SELECT_SOLO=1`. Empty variables fall back; integers retain `atoi` conversion. Existing explicit feature env checks retain precedence; see the key inventory below |
 | `MELEE_RUN_OWNER=<tag>` | launcher ownership; agents must set it and finish with `runs.py wait NAME`, then `runs.py status --owner TAG` empty |
 | `MELEE_UNATTENDED=1` | wrapper defaults: 300-second overall limit and watchdog action `exit`; `run.sh --test` sets it |
 | `MELEE_MAX_SECONDS=N` | wrapper overall limit; `run.sh --max-seconds N` overrides; 0 disables, interactive default 0 |
@@ -170,6 +172,35 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | `MELEE_GPU_LIST=1` | Linux: also probe the other power preference so the `gw: gpu:` line names both adapters |
 | `MELEE_WRITEWATCH=auto\|uffd\|softdirty\|off` | Linux: how MEM1 writes are tracked for rollback snapshots (`gw_writewatch_linux.c`). `auto` = userfaultfd write-protect, kernel 6.7+; `off` = full-copy snapshots (every save reads all 40 MB); `softdirty` = opt-in test backend (slower overall). The log says which: `snap: write-watch backend: ...` |
 | `MELEE_LOG=gobj` | log each GObj render callback address, class, owner and link before invocation (very verbose; Classic IntroEasy diagnosis) |
+
+### Settings read overrides
+
+Both native `gw_Settings_Int/Str` and game-side `Settings_Int/Str` use this rule.
+Only ASCII a-z becomes A-Z; underscores and digits stay unchanged. Keys may have
+up to 31 bytes, matching the saved key capacity; longer lookups do not use a
+truncated environment name. The environment is checked on each accessor call;
+features that cache a value keep their existing reload behavior. Setters save
+their supplied value, and crash summaries describe saved values. An override
+does not create a key in the file. Removing it reveals the saved value.
+
+Production keys affected (2026-10-11; unknown saved keys follow the same rule):
+
+| Read | Keys (each maps to `MELEE_` plus its uppercase spelling) |
+|---|---|
+| Integer | `atlas_lobby`, `atlas_pause`, `atlas_select_solo`, `auto_create_save`, `cstick_1p_attacks`, `delay`, `envoy_online`, `envoy_run_me`, `envoy_run_state`, `envoy_run_prev_me`, `envoy_run_prev_state`, `gdlp_record`, `onboarded`, `reduced_motion`, `stage_mode`, `stick_deadzone`, `turbo_online`, `turbo_versus`, `ucf`, `unlock_all`, `widescreen` |
+| String | `envoy_run`, `envoy_run_prev`, `input`, `log`, `name`, `pad_diag`, `server` |
+| Controller integer family | `ctlNN_active`, for every `NN` from `00` through `15` (16 keys) |
+| Controller string families | `ctlNN_id`, `ctlNN_pP_map`, `ctlNN_pP_name`, for every `NN` from `00` through `15` and `P` from `0` through `3` (144 keys) |
+
+These are 188 concrete production keys: 37 integer and 151 string keys.
+`MELEE_NETPLAY_SERVER` still precedes the generic `MELEE_SERVER` override for
+the `server` key. Existing `MELEE_INPUT`, `MELEE_PAD_DIAG`, `MELEE_LOG`,
+`MELEE_WIDESCREEN`, `MELEE_UNLOCK_ALL`, `MELEE_UCF`, `MELEE_GDLP_RECORD` and
+the feature switches `MELEE_NO_ONBOARD` and `MELEE_NETPLAY_TURBO/ENVOY` keep
+their existing checks and parsing. `MELEE_TURBO` is the simulation clock;
+the new `MELEE_TURBO_ONLINE` / `MELEE_TURBO_VERSUS` read overrides are match
+preferences. Settings kept in video.cfg, audio.cfg, mods/enabled.txt and the
+memory card retain their own accessors.
 
 `MELEE_WINDOW_HIDE=1` remains unsuitable for realtime play: a hidden window makes the D3D11
 present block. Turbo runs GX/EFB work offscreen and skips swapchain presentation while hidden.

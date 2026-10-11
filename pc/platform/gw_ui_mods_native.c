@@ -27,7 +27,7 @@ static int r_active(void *u, int i) { (void) u; return gw_Mods_IsActive(i); }
 static int r_set(void *u, int i, int on) { (void) u; return gw_Mods_SetEnabled(i, on); }
 static int r_save(void *u) { (void) u; return gw_Mods_Save(); }
 static int r_restart(void *u) { (void) u; return gw_Mods_RestartNeeded(); }
-static int r_locked(void *u) { const AtModsHooks *h = hooks_of(u); return h != NULL && h->locked != NULL && h->locked() != 0; }
+static int r_locked(void *u) { const AtModsHooks *h = hooks_of(u); return h != NULL && h->locked != NULL ? h->locked() : 0; }
 
 /* what the mod adds to the menus: its mod.json "menus" entries (an active mod only; an inactive one adds nothing). Its own settings entry (parent mods.self)
  * is not an addition to a menu. */

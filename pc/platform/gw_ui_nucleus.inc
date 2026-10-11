@@ -23,7 +23,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#define AT_NC_TABS 8
+#define AT_NC_TABS 9
+#define AT_NC_TAB_INCOMING 8
 #define AT_NC_TAB_INSTALLED 6
 #define AT_NC_TAB_QUEUE 7
 #define AT_NC_TAB_CATS 6                /* tabs 0..5 are the categories: Costumes, Stages, Effects, Menus, Audio, Other (the same order as NC_TAB_* in gw_nucleus_kinds.h) */
@@ -38,8 +39,8 @@
 enum { AT_NC_ST_NONE, AT_NC_ST_INSTALLED, AT_NC_ST_UPDATE, AT_NC_ST_BUSY, AT_NC_ST_REMOVED, AT_NC_ST_UNSUPPORTED };
 enum { AT_NC_Q_NONE = -1, AT_NC_Q_QUEUED = 0, AT_NC_Q_RUNNING = 1, AT_NC_Q_DONE = 2, AT_NC_Q_FAILED = 3 };      /* the same numbers as NQ_* in gw_nucleus_queue.h */
 enum { AT_NC_ACT_QUEUE = 1, AT_NC_ACT_UNINSTALL, AT_NC_ACT_PAGE, AT_NC_ACT_REFRESH, AT_NC_ACT_START, AT_NC_ACT_Q_UP, AT_NC_ACT_Q_DOWN, AT_NC_ACT_Q_REMOVE,
-       AT_NC_ACT_Q_RETRY, AT_NC_ACT_Q_CLEAR, AT_NC_ACT_Q_TIDY, AT_NC_ACT_TOGGLE };
-enum { AT_NC_VIEW_BROWSE, AT_NC_VIEW_INSTALLED, AT_NC_VIEW_QUEUE };
+       AT_NC_ACT_Q_RETRY, AT_NC_ACT_Q_CLEAR, AT_NC_ACT_Q_TIDY, AT_NC_ACT_TOGGLE, AT_NC_ACT_LOCAL_INSTALL, AT_NC_ACT_LOCAL_SCAN };
+enum { AT_NC_VIEW_BROWSE, AT_NC_VIEW_INSTALLED, AT_NC_VIEW_QUEUE, AT_NC_VIEW_INCOMING };
 enum { AT_NC_SHOW_ALL, AT_NC_SHOW_NOT_INSTALLED, AT_NC_SHOW_INSTALLED, AT_NC_SHOW_UPDATE, AT_NC_SHOW_QUEUED };
 enum { AT_NC_PIC_THUMB = 0, AT_NC_PIC_SHOT1 = 1, AT_NC_PIC_STOCK = 10 };            /* AtNcSrc.pic: 0 the list picture, 1.. the screenshots, 10 a costume's stock icon */
 
@@ -52,6 +53,7 @@ typedef struct {
     int qstate, qplace, qpct;                   /* the download queue: AT_NC_Q_* or -1 not in it; 1-based place in line; percent while running */
     int tab, enabled;                           /* the category tab (0..5) and, for an installed mod, whether it is on next boot (0: not installed, 1: off, 2: on) */
     int nshots;                                 /* screenshots the post lists (the detail shows up to three) */
+    int local_file;                             /* a dropped zip: Install, no post/link/download actions */
 } AtNcRow;
 typedef struct {
     char line[100]; int syncing, done, total, offline, restart, locked, job_state; char job_msg[140]; int catalog_n;     /* job_state: the last message, 0 none 1 working 2 ok 3 failed */
@@ -92,12 +94,12 @@ typedef struct {
 enum { AT_NA_NONE, AT_NA_BACK, AT_NA_ACT };
 typedef struct { int kind, id, what; } AtNcAction;
 
-static const char *const at_nc_tab_name[AT_NC_TABS] = { "COSTUMES", "STAGES", "EFFECTS", "MENUS", "AUDIO", "OTHER", "INSTALLED", "QUEUE" };
+static const char *const at_nc_tab_name[AT_NC_TABS] = { "COSTUMES", "STAGES", "EFFECTS", "MENUS", "AUDIO", "OTHER", "INSTALLED", "QUEUE", "INCOMING" };
 static const char *const at_nc_sort_name[5] = { "Recently updated", "Newest", "Most downloaded", "Most liked", "Title" };
 static const char *const at_nc_show_name[AT_NC_SHOW_N] = { "All", "Not installed", "Installed", "Update available", "Queued" };
 
 /* the controls at the top of a tab's list: Search, Fighter, Show, Sort; the INSTALLED tab has Search and Fighter, the QUEUE none */
-static int at_nc_ctl(const AtNcState *st) { return st->tab == AT_NC_TAB_QUEUE ? 0 : st->tab == AT_NC_TAB_INSTALLED ? 2 : AT_NC_CONTROLS; }
+static int at_nc_ctl(const AtNcState *st) { return st->tab == AT_NC_TAB_INCOMING || st->tab == AT_NC_TAB_QUEUE ? 0 : st->tab == AT_NC_TAB_INSTALLED ? 2 : AT_NC_CONTROLS; }
 
 static void at_nc_state_init(AtNcState *st) {
     memset(st, 0, sizeof *st);
@@ -108,7 +110,7 @@ static void at_nc_state_init(AtNcState *st) {
 }
 
 static void at_nc_apply_tab(AtNcState *st) {
-    st->f.view = st->tab == AT_NC_TAB_QUEUE ? AT_NC_VIEW_QUEUE : st->tab == AT_NC_TAB_INSTALLED ? AT_NC_VIEW_INSTALLED : AT_NC_VIEW_BROWSE;
+    st->f.view = st->tab == AT_NC_TAB_INCOMING ? AT_NC_VIEW_INCOMING : st->tab == AT_NC_TAB_QUEUE ? AT_NC_VIEW_QUEUE : st->tab == AT_NC_TAB_INSTALLED ? AT_NC_VIEW_INSTALLED : AT_NC_VIEW_BROWSE;
     st->f.type_mask = st->tab < AT_NC_TAB_CATS ? 1u << st->tab : 0;      /* a category tab: the engine filters by the post's tab */
     st->stale = 1;
     st->sel = st->top = at_nc_ctl(st);
@@ -233,6 +235,7 @@ static void at_nc_join(char *out, size_t cap, const char *part) {
 static void at_nc_meta(const AtNcRow *r, char *out, size_t cap) {
     char tmp[64];
     out[0] = '\0';
+    if (r->local_file) { snprintf(out, cap, "%s", r->qstate == AT_NC_Q_FAILED ? r->qreason : r->qstate == AT_NC_Q_RUNNING ? "Installing local file" : r->state == AT_NC_ST_INSTALLED ? "Installed from local file. Restart to use it." : "Local file - A: Install, Y: Details"); return; }
     if (r->state == AT_NC_ST_UNSUPPORTED && r->reason[0]) at_nc_join(out, cap, r->reason);     /* why not comes first: it is the thing to read */
     at_nc_join(out, cap, r->fighter);
     if (r->author[0]) { snprintf(tmp, sizeof tmp, "by %s", r->author); at_nc_join(out, cap, tmp); }
@@ -452,7 +455,10 @@ int at_nc_build(const AtNcSrc *s, AtNcState *st, AtScreen *sc, AtView *vw, doubl
                 }
             } else if (st->n == 0) {
                 snprintf(it->id, sizeof it->id, "%s", "none");
-                if (st->tab == AT_NC_TAB_QUEUE) {
+                if (st->tab == AT_NC_TAB_INCOMING) {
+                    snprintf(it->label, sizeof it->label, "%s", "No incoming zips");
+                    snprintf(it->sub, sizeof it->sub, "%s", "Put .zip files in your mods/_incoming folder. Z refreshes the list.");
+                } else if (st->tab == AT_NC_TAB_QUEUE) {
                     snprintf(it->label, sizeof it->label, "%s", "Your queue is empty");
                     snprintf(it->sub, sizeof it->sub, "%s", "Press A on a mod to add it, then Start to download.");
                 } else if (st->tab == AT_NC_TAB_INSTALLED) {
@@ -495,11 +501,11 @@ int at_nc_build(const AtNcSrc *s, AtNcState *st, AtScreen *sc, AtView *vw, doubl
             at_nc_put_key(sc, vw, 'Y', "Move down");
             at_nc_put_key(sc, vw, 'Z', "Clear");
         } else {
-            at_nc_put_key(sc, vw, 'A', row.qstate == AT_NC_Q_QUEUED ? "Unqueue" : row.state == AT_NC_ST_INSTALLED ? "Details" : row.state == AT_NC_ST_UNSUPPORTED ? "Why not" : "Queue");
-            at_nc_start_key(&ss, sc, vw);
+            at_nc_put_key(sc, vw, 'A', row.local_file ? "Install" : row.qstate == AT_NC_Q_QUEUED ? "Unqueue" : row.state == AT_NC_ST_INSTALLED ? "Details" : row.state == AT_NC_ST_UNSUPPORTED ? "Why not" : "Queue");
+            if (!row.local_file) at_nc_start_key(&ss, sc, vw);
             at_nc_put_key(sc, vw, 'B', "Back");
             at_nc_put_key(sc, vw, 'Y', "Details");
-            at_nc_put_key(sc, vw, 'X', "Search");
+            if (!row.local_file) at_nc_put_key(sc, vw, 'X', "Search");
         }
     } else {
         at_nc_put_key(sc, vw, 'A', cur < ctl ? (cur == 0 ? "Type" : "Change") : "OK");
@@ -510,7 +516,7 @@ int at_nc_build(const AtNcSrc *s, AtNcState *st, AtScreen *sc, AtView *vw, doubl
     }
     (void) buf; (void) rows_view;
     syncing = at_nc_corner(s, st, vw, now_ms);
-    if (!st->edit && !syncing && st->tab != AT_NC_TAB_QUEUE) at_nc_put_key(sc, vw, 'Z', "Refresh");
+    if (!st->edit && (st->tab == AT_NC_TAB_INCOMING || !syncing) && st->tab != AT_NC_TAB_QUEUE) at_nc_put_key(sc, vw, 'Z', "Refresh");
     at_nc_dialog(st, vw, ss.q_pending - (ss.q_running_pct >= 0 && ss.q_running_title[0] ? 1 : 0) + ss.q_failed);
     return 1;
 }
@@ -588,7 +594,7 @@ void at_nc_event(const AtNcSrc *s, AtNcState *st, const AtEvent *e, double now_m
         return;
     }
     if (e->type == AT_EV_BACK) { act->kind = AT_NA_BACK; return; }
-    if (e->type == AT_EV_START) { at_nc_act(act, 0, AT_NC_ACT_START); return; }
+    if (e->type == AT_EV_START) { if (st->tab != AT_NC_TAB_INCOMING) at_nc_act(act, 0, AT_NC_ACT_START); return; }
     if (e->type == AT_EV_PAGE) {
         st->tab = (st->tab + (e->a < 0 ? AT_NC_TABS - 1 : 1)) % AT_NC_TABS;
         at_nc_apply_tab(st);
@@ -604,8 +610,8 @@ void at_nc_event(const AtNcSrc *s, AtNcState *st, const AtEvent *e, double now_m
         }
         return;
     }
-    if (e->type == AT_EV_ALT && e->a == 'X') { at_nc_start_edit(st); return; }
-    if (e->type == AT_EV_ALT && e->a == 'Z') { at_nc_act(act, 0, AT_NC_ACT_REFRESH); return; }
+    if (e->type == AT_EV_ALT && e->a == 'X') { if (st->tab != AT_NC_TAB_INCOMING) at_nc_start_edit(st); return; }
+    if (e->type == AT_EV_ALT && e->a == 'Z') { at_nc_act(act, 0, st->tab == AT_NC_TAB_INCOMING ? AT_NC_ACT_LOCAL_SCAN : AT_NC_ACT_REFRESH); return; }
     if (total <= 0) return;
     if (e->type == AT_EV_MOVE) {
         if (e->a == AT_DIR_UP) st->sel = (cur + total - 1) % total;
@@ -620,6 +626,7 @@ void at_nc_event(const AtNcSrc *s, AtNcState *st, const AtEvent *e, double now_m
         if (cur < ctl) { if (cur == 0) at_nc_start_edit(st); else at_nc_cycle(s, st, cur, 1); return; }
         if (st->n == 0) return;
         if (!s->row(s->user, st->ids[cur - ctl], &row)) return;
+        if (row.local_file) { at_nc_act(act, row.id, AT_NC_ACT_LOCAL_INSTALL); return; }
         if (st->tab == AT_NC_TAB_QUEUE) {
             if (row.qstate == AT_NC_Q_FAILED) at_nc_act(act, row.id, AT_NC_ACT_Q_RETRY);
             else if (row.qstate == AT_NC_Q_RUNNING) at_nc_say(st, "This one is being installed; it can be removed when it finishes.", AT_NOTE_INFO, now_ms);
@@ -691,7 +698,8 @@ int at_nc_detail_build(const AtNcSrc *s, AtNcState *st, AtScreen *sc, AtView *vw
     snprintf(sc->items[0].id, sizeof sc->items[0].id, "%s", "hero");
     sc->items[0].iflags |= AT_ITEM_RO;
     /* the actions */
-    if (r.state == AT_NC_ST_UNSUPPORTED) at_nc_action_row(sc, "act", "Cannot be installed yet", r.reason[0] ? r.reason : "This kind of mod is shown here but not installed.");
+    if (r.local_file) at_nc_action_row(sc, "act", "Install", "Install this local zip. Restart the game to use the mod.");
+    else if (r.state == AT_NC_ST_UNSUPPORTED) at_nc_action_row(sc, "act", "Cannot be installed yet", r.reason[0] ? r.reason : "This kind of mod is shown here but not installed.");
     else if (r.qstate == AT_NC_Q_QUEUED) at_nc_action_row(sc, "act", "Take it out of the queue", "It will not be downloaded.");
     else if (r.qstate == AT_NC_Q_RUNNING) { snprintf(buf, sizeof buf, "Installing - %d%%", r.qpct); at_nc_action_row(sc, "act", buf, "It can be removed when it finishes."); }
     else if (r.qstate == AT_NC_Q_FAILED) at_nc_action_row(sc, "act", "Try again", r.qreason[0] ? r.qreason : "The last attempt failed.");
@@ -699,15 +707,15 @@ int at_nc_detail_build(const AtNcSrc *s, AtNcState *st, AtScreen *sc, AtView *vw
     else if (r.state == AT_NC_ST_INSTALLED) at_nc_action_row(sc, "act", "Installed", "Already installed.");
     else if (r.state == AT_NC_ST_REMOVED) at_nc_action_row(sc, "act", "Taken down", "Taken down from SSBM Nucleus; your copy stays.");
     else at_nc_action_row(sc, "act", "Add to the queue", "Downloads it with the others when you press Start.");
-    if (ss.q_pending > 0 || ss.q_processing) {
+    if (!r.local_file && (ss.q_pending > 0 || ss.q_processing)) {
         if (ss.q_processing) at_nc_action_row(sc, "start", "Pause the downloads", "The one being installed finishes first.");
         else { snprintf(buf, sizeof buf, "%d in the queue. Starts them one after another.", ss.q_pending); at_nc_action_row(sc, "start", "Start the downloads", buf); }
     }
     if ((r.state == AT_NC_ST_INSTALLED || r.state == AT_NC_ST_UPDATE || r.state == AT_NC_ST_REMOVED) && r.enabled > 0)
         at_nc_action_row(sc, "tog", r.enabled == 2 ? "Turn it off" : "Use this one",
                          r.enabled == 2 ? "Takes effect after a restart. Your copy stays installed." : "Turns off any other mod that replaces the same file (one active per file). Takes effect after a restart.");
-    if (r.state == AT_NC_ST_INSTALLED || r.state == AT_NC_ST_UPDATE || r.state == AT_NC_ST_REMOVED) at_nc_action_row(sc, "rm", "Uninstall", "Deletes the skin from your mods folder.");
-    at_nc_action_row(sc, "page", "Open the page", r.page[0] ? r.page : "ssbmnucleus.net");
+    if (!r.local_file && (r.state == AT_NC_ST_INSTALLED || r.state == AT_NC_ST_UPDATE || r.state == AT_NC_ST_REMOVED)) at_nc_action_row(sc, "rm", "Uninstall", "Deletes the skin from your mods folder.");
+    if (!r.local_file) at_nc_action_row(sc, "page", "Open the page", r.page[0] ? r.page : "ssbmnucleus.net");
     /* the screenshots */
     for (i = 0; i < r.nshots && i < 3; ++i) {
         tex = -1;
@@ -743,8 +751,8 @@ int at_nc_detail_build(const AtNcSrc *s, AtNcState *st, AtScreen *sc, AtView *vw
     if (r.tags[0]) at_nc_fact_row(sc, "tags", "Tags", r.tags);
     snprintf(buf, sizeof buf, "%d downloads, %d likes", r.downloads, r.likes);
     if (r.updated[0]) { char t[40]; snprintf(t, sizeof t, "updated %s", r.updated); at_nc_join(buf, sizeof buf, t); }
-    at_nc_fact_row(sc, "pop", "On SSBM Nucleus", buf);
-    at_nc_fact_row(sc, "credit", "Credit", AT_NC_CREDIT);
+    if (!r.local_file) at_nc_fact_row(sc, "pop", "On SSBM Nucleus", buf);
+    at_nc_fact_row(sc, "credit", r.local_file ? "Source" : "Credit", r.local_file ? "local file" : AT_NC_CREDIT);
     if (st->detail_sel >= sc->n_items) st->detail_sel = sc->n_items - 1;
     if (st->detail_sel < 1) st->detail_sel = sc->n_items > 1 ? 1 : 0;
     vw->focus.block = 0;
@@ -760,8 +768,8 @@ int at_nc_detail_build(const AtNcSrc *s, AtNcState *st, AtScreen *sc, AtView *vw
         else if (!strcmp(fid, "tog")) at_nc_put_key(sc, vw, 'A', r.enabled == 2 ? "Turn off" : "Use");
         else if (!strcmp(fid, "page")) at_nc_put_key(sc, vw, 'A', "Open");
     }
-    if (!ss.q_processing && ss.q_pending > 0) { snprintf(buf, sizeof buf, "Download %d", ss.q_pending); at_nc_put_key(sc, vw, 'S', buf); }
-    else if (ss.q_processing && ss.q_pending > 0) at_nc_put_key(sc, vw, 'S', "Pause");
+    if (!r.local_file && !ss.q_processing && ss.q_pending > 0) { snprintf(buf, sizeof buf, "Download %d", ss.q_pending); at_nc_put_key(sc, vw, 'S', buf); }
+    else if (!r.local_file && ss.q_processing && ss.q_pending > 0) at_nc_put_key(sc, vw, 'S', "Pause");
     at_nc_put_key(sc, vw, 'B', "Back");
     snprintf(vw->counter, sizeof vw->counter, "%d / %d", st->detail_sel + 1, sc->n_items);
     at_nc_corner(s, st, vw, now_ms);
@@ -777,7 +785,11 @@ void at_nc_detail_event(const AtNcSrc *s, AtNcState *st, const AtEvent *e, doubl
     memset(&vw, 0, sizeof vw);
     if (!at_nc_detail_build(s, st, &sc, &vw, 0.0)) { st->mode = 0; return; }
     if (e->type == AT_EV_BACK) { st->mode = 0; return; }
-    if (e->type == AT_EV_START) { at_nc_act(act, 0, AT_NC_ACT_START); return; }
+    if (e->type == AT_EV_START) {
+        AtNcRow r;
+        if (s->row(s->user, st->detail_id, &r) && !r.local_file) at_nc_act(act, 0, AT_NC_ACT_START);
+        return;
+    }
     if (e->type == AT_EV_MOVE && e->a == AT_DIR_UP) st->detail_sel = (st->detail_sel + sc.n_items - 1) % sc.n_items;
     else if (e->type == AT_EV_MOVE && e->a == AT_DIR_DOWN) st->detail_sel = (st->detail_sel + 1) % sc.n_items;
     else if (e->type == AT_EV_SCROLL) { int v = st->detail_sel + (e->a > 0 ? 1 : -1); st->detail_sel = v < 0 ? 0 : v >= sc.n_items ? sc.n_items - 1 : v; }
@@ -789,6 +801,7 @@ void at_nc_detail_event(const AtNcSrc *s, AtNcState *st, const AtEvent *e, doubl
             memset(&r, 0, sizeof r);
             r.qstate = AT_NC_Q_NONE;
             if (!s->row(s->user, st->detail_id, &r)) return;
+            if (r.local_file) { at_nc_act(act, r.id, AT_NC_ACT_LOCAL_INSTALL); return; }
             if (r.state == AT_NC_ST_UNSUPPORTED) at_nc_say(st, r.reason[0] ? r.reason : "This cannot be installed yet.", AT_NOTE_WARN, now_ms);
             else if (r.qstate == AT_NC_Q_RUNNING) at_nc_say(st, "This one is being installed right now.", AT_NOTE_INFO, now_ms);
             else if (r.qstate == AT_NC_Q_FAILED) at_nc_act(act, r.id, AT_NC_ACT_Q_RETRY);

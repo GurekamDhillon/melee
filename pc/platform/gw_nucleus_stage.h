@@ -177,7 +177,7 @@ static int nc_stage_install(const char *mods_dir, const nc_post *post, const nc_
             }
             free(png);
         }
-        snprintf(mod_id, sizeof mod_id, "nucleus-%d-cstage", post->id);
+        nc_post_mod_id(post, "cstage", mod_id, sizeof mod_id);
         snprintf(stage_dir, sizeof stage_dir, "%s/.staging-%s", mods_dir, mod_id);
         snprintf(final_dir, sizeof final_dir, "%s/%s", mods_dir, mod_id);
         nc_fix_slashes(stage_dir); nc_fix_slashes(final_dir);
@@ -191,7 +191,8 @@ static int nc_stage_install(const char *mods_dir, const nc_post *post, const nc_
             nj_buf t;
             int j;
             memset(&t, 0, sizeof t);
-            nj_printf(&t, "name=%s\nfile=%s\npost=https://%s/post/%d\nssm=%d\nreverb=%d\nreverb2=%d\n", st.name, st.file, NC_SITE, post->id, st.ssm, st.reverb, st.reverb2);
+            nj_printf(&t, "name=%s\nfile=%s\nssm=%d\nreverb=%d\nreverb2=%d\n", st.name, st.file, st.ssm, st.reverb, st.reverb2);
+            if (!post->local_key) nj_printf(&t, "post=https://%s/post/%d\n", NC_SITE, post->id);
             if (gx) nj_puts(&t, "icon=icon.gxtex\n");
             nj_printf(&t, "callbacks=%08X\nflags2=%X\n", (unsigned) st.w[1], (unsigned) st.w[10]);
             for (j = 3; j <= 9; ++j) nj_printf(&t, "w%d=%08X\n", j, (unsigned) st.w[j]);
@@ -208,14 +209,14 @@ static int nc_stage_install(const char *mods_dir, const nc_post *post, const nc_
         nj_puts(&b, ",\n  \"name\": "); nj_qstr(&b, st.name);
         nj_puts(&b, ",\n  \"version\": "); nj_qstr(&b, post->updated);
         nj_puts(&b, ",\n  \"kind\": \"stage\",\n  \"authors\": "); nj_qstr(&b, post->author);
-        nj_printf(&b, ",\n  \"description\": \"New stage from SSBM Nucleus: %s/post/%d. Online, both players need it. %s\"", NC_SITE, post->id, st.compat);
+        { char desc[800];
+            if (post->local_key) snprintf(desc, sizeof desc, "New stage from local file: %s. Online, both players need it. %s", post->local_file, st.compat);
+            else snprintf(desc, sizeof desc, "New stage from SSBM Nucleus: %s/post/%d. Online, both players need it. %s", NC_SITE, post->id, st.compat);
+            nj_puts(&b, ",\n  \"description\": "); nj_qstr(&b, desc);
+        }
         nj_puts(&b, ",\n  \"conflicts\": [");
         for (k = 0; k < ncf; ++k) { if (k) nj_puts(&b, ", "); nj_qstr(&b, conf[k]); }
-        nj_puts(&b, "],\n  \"source\": \"nucleus\",\n  \"nucleus\": {\n    \"id\": ");
-        nj_printf(&b, "%d,\n    \"author\": ", post->id); nj_qstr(&b, post->author);
-        nj_puts(&b, ",\n    \"page_url\": "); nj_qstr(&b, post->page);
-        nj_puts(&b, ",\n    \"updated_at\": "); nj_qstr(&b, post->updated);
-        nj_puts(&b, ",\n    \"installed_at\": "); nj_qstr(&b, post->installed_at);
+        nj_puts(&b, "]"); nc_post_source(&b, post);
         nj_puts(&b, ",\n    \"category\": \"cstage\",\n    \"stage\": "); nj_qstr(&b, st.name);
         nj_puts(&b, ",\n    \"compat\": "); nj_qstr(&b, st.compat);
         nj_puts(&b, ",\n    \"targets\": ["); nj_qstr(&b, target);
@@ -224,6 +225,7 @@ static int nc_stage_install(const char *mods_dir, const nc_post *post, const nc_
         k = b.bad || nc_write_file(tmp, b.s, b.n) != 0;
         free(b.s); free(dat); free(gx);
         if (k) { snprintf(res->first_err, sizeof res->first_err, "Cannot write mod.json."); nc_rmtree(stage_dir); continue; }
+        if (!nc_install_allowed(env, res->first_err, sizeof res->first_err)) { nc_rmtree(stage_dir); ++res->refused; break; }
         if (nc_swap_dir(stage_dir, final_dir) != 0) {
             nc_rmtree(stage_dir);
             snprintf(res->first_err, sizeof res->first_err, "Could not replace %s (the game may be using it). Restart and try again.", mod_id);

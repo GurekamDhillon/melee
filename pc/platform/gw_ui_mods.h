@@ -39,7 +39,7 @@ typedef struct AtModsSrc {
     int (*restart_needed)(void *u);
     int (*adds)(void *u, int i, char out[][AT_STR], int cap);                             /* "Solo > Envoy" lines from the registry */
     int (*settings)(void *u, int i, char *screen_id, int cap, char *label, int lcap);     /* 1 when the mod has its own settings entry */
-    int (*locked)(void *u);                         /* optional: 1 while mods must not be changed (a netplay session) */
+    int (*locked)(void *u);                         /* optional: 1 online, 2 worker install pending/restart required */
 } AtModsSrc;
 
 typedef struct {

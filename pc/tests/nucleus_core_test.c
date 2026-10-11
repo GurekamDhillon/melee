@@ -13,6 +13,7 @@ static int g_fail, g_checks;
 #include "nucleus_loose_tests.h"
 #include "nucleus_stage_tests.h"
 #include "nucleus_fighter_tests.h"
+#include "nucleus_local_tests.h"
 
 /* ---- the fake network ---- */
 static char g_urls[32][700];
@@ -682,6 +683,7 @@ int main(void) {
     run_loose_tests();
     run_stage_tests();
     run_fighter_tests();
+    run_local_zip_tests();
     printf("nucleus-core: %d checks, %d failed\n", g_checks, g_fail);
     return g_fail ? 1 : 0;
 }

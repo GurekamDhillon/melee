@@ -5,6 +5,7 @@
 #define NUCLEUS_FIGHTER_TESTS_H
 
 #include "../platform/gw_nucleus_fighter.h"
+#include "../platform/gw_mods_zip.h"
 
 static void run_fighter_tests(void) {
     static uint8_t zipbuf[16384], bad[16384], hsd[2048], aj[256], cdat[256];
@@ -39,6 +40,9 @@ static void run_fighter_tests(void) {
     ents[3].name = "PlZzNr.dat"; ents[3].data = cdat; ents[3].len = sizeof cdat;
     zn = nst_zip(ents, 4, zipbuf);
     in.data = zipbuf; in.len = zn;
+    env.can_commit = nst_deny_commit;
+    CHECK(nc_fighter_install(root_dir, &post, &in, 1, &env, &res, msg, sizeof msg, nst_log) < 0 && strstr(msg, "online") && !nc_is_dir("nf_mods/nucleus-901-fighter"));
+    env.can_commit = NULL;
     rc = nc_fighter_install(root_dir, &post, &in, 1, &env, &res, msg, sizeof msg, nst_log);
     if (rc != 0) printf("fighter install msg: %s | %s", msg, res.first_err);
     CHECK(rc == 0 && res.installed == 1 && !strcmp(res.mods[0], "nucleus-901-fighter"));
@@ -63,6 +67,30 @@ static void run_fighter_tests(void) {
     free(text);
     rc = nc_fighter_install(root_dir, &post, &in, 1, &env, &res, msg, sizeof msg, nst_log);   /* reinstall / update */
     CHECK(rc == 0);
+
+    /* Repeated references are separate output files. A small directory must
+     * not multiply a costume past the whole-package expansion budget. */
+    {
+        const char *one = "{\"file\":{\"fileName\":\"PlZzNr.dat\",\"jointSymbol\":\"PlyZz5K_Share_joint\"}}";
+        nj_buf many = {0};
+        char *large_json;
+        size_t biglen = 24u * 1024 * 1024;
+        uint8_t *big = (uint8_t *) calloc(1, biglen), *large_zip = (uint8_t *) malloc(biglen + 16384);
+        const char *start = strstr(json_ok, "\"costumes\":["), *end = strstr(start, "],");
+        int q;
+        nj_puts(&many, "\"costumes\":[");
+        for (q = 0; q < 9; ++q) { if (q) nj_puts(&many, ","); nj_puts(&many, one); }
+        nj_puts(&many, "]");
+        large_json = (char *) malloc(strlen(json_ok) + many.n + 1);
+        snprintf(large_json, strlen(json_ok) + many.n + 1, "%.*s%s%s", (int) (start - json_ok), json_ok, many.s, end + 1);
+        ents[0].data = (const uint8_t *) large_json; ents[0].len = strlen(large_json);
+        ents[3].data = big; ents[3].len = biglen;
+        in.data = large_zip; in.len = nst_zip(ents, 4, large_zip); post.id = 908;
+        rc = nc_fighter_install(root_dir, &post, &in, 1, &env, &res, msg, sizeof msg, nst_log);
+        CHECK(rc < 0 && strstr(msg, "200 MiB") && !nc_is_dir("nf_mods/nucleus-908-fighter"));
+        free(large_json); free(many.s); free(big); free(large_zip);
+        ents[3].data = cdat; ents[3].len = sizeof cdat;
+    }
 
     /* refusals */
     json_far = nst_sub(json_ok, "2148857528", "3000000000");
@@ -97,6 +125,54 @@ static void run_fighter_tests(void) {
     ents[0].data = (const uint8_t *) json_ok; ents[0].len = strlen(json_ok); ents[1].data = hsd; ents[1].len = hn;
     zn = nst_zip(ents, 4, zipbuf);
     post.id = 907;
+    /* Local input uses the very same MexManager validator, with no fabricated post. */
+    {
+        char local_id[64], second_id[64];
+        rc = nlz_install_data(root_dir, "My fighter.zip", zipbuf, zn, &env, &res, msg, sizeof msg, nst_log);
+        CHECK(rc == 0 && res.installed == 1);
+        snprintf(local_id, sizeof local_id, "%s", res.mods[0]);
+        CHECK(!strncmp(local_id, "local-", 6));
+        snprintf(path, sizeof path, "%s/%s/mod.json", root_dir, local_id);
+        text = nc_read_all(path, NULL);
+        CHECK(text && strstr(text, "\"source\": \"local file\"") && !strstr(text, "\"nucleus\"") && !strstr(text, "ssbmnucleus.net"));
+        free(text);
+        snprintf(path, sizeof path, "%s/%s/mexfighter.txt", root_dir, local_id);
+        text = nc_read_all(path, NULL);
+        CHECK(text && strstr(text, "pl=PlL") && !strstr(text, "post="));
+        free(text);
+        CHECK(nlz_install_data(root_dir, "renamed.zip", zipbuf, zn, &env, &res, msg, sizeof msg, nst_log) == 0);
+        CHECK_STR(res.mods[0], local_id);
+        aj[0] ^= 1; zn = nst_zip(ents, 4, zipbuf);
+        CHECK(nlz_install_data(root_dir, "My fighter.zip", zipbuf, zn, &env, &res, msg, sizeof msg, nst_log) == 0);
+        snprintf(second_id, sizeof second_id, "%s", res.mods[0]);
+        CHECK(strcmp(second_id, local_id) != 0);
+        aj[0] ^= 1; zn = nst_zip(ents, 4, zipbuf);
+
+        /* Count local, Nucleus AND manually installed fighters; reinstall at cap still works. */
+        for (i = 0; i < 28; ++i) {
+            snprintf(path, sizeof path, "%s/manual-%u", root_dir, (unsigned) i); nc_mkdirs(path);
+            snprintf(path, sizeof path, "%s/manual-%u/mexfighter.txt", root_dir, (unsigned) i);
+            nc_write_file(path, "name=Fixture\n", 13);
+        }
+        CHECK(nlz_install_data(root_dir, "same.zip", zipbuf, zn, &env, &res, msg, sizeof msg, nst_log) == 0);
+        aj[1] ^= 1; zn = nst_zip(ents, 4, zipbuf);
+        CHECK(nlz_install_data(root_dir, "new.zip", zipbuf, zn, &env, &res, msg, sizeof msg, nst_log) < 0 && strstr(msg, "31"));
+        in.data = zipbuf; in.len = zn;
+        CHECK(nc_fighter_install(root_dir, &post, &in, 1, &env, &res, msg, sizeof msg, nst_log) < 0 && strstr(msg, "31"));
+        aj[1] ^= 1; zn = nst_zip(ents, 4, zipbuf);
+        for (i = 0; i < 28; ++i) { snprintf(path, sizeof path, "%s/manual-%u", root_dir, (unsigned) i); nc_rmtree(path); }
+        snprintf(path, sizeof path, "%s/%s", root_dir, local_id); nc_rmtree(path);
+        snprintf(path, sizeof path, "%s/%s", root_dir, second_id); nc_rmtree(path);
+
+        ents[4].name = "../escape.dat"; ents[4].data = hsd; ents[4].len = hn;
+        zn = nst_zip(ents, 5, zipbuf);
+        CHECK(nlz_install_data(root_dir, "unsafe.zip", zipbuf, zn, &env, &res, msg, sizeof msg, nst_log) < 0 && strstr(msg, "path"));
+        ents[4].name = "setup.exe"; zn = nst_zip(ents, 5, zipbuf);
+        CHECK(nlz_install_data(root_dir, "unsafe.zip", zipbuf, zn, &env, &res, msg, sizeof msg, nst_log) < 0 && strstr(msg, "file type"));
+        CHECK(nlz_install_data(root_dir, "bad.zip", (const uint8_t *) "bad", 3, &env, &res, msg, sizeof msg, nst_log) < 0 && strstr(msg, "zip"));
+        CHECK(nlz_install_file(root_dir, "missing.zip", &env, &res, msg, sizeof msg, nst_log) < 0 && strstr(msg, "open"));
+        zn = nst_zip(ents, 4, zipbuf);
+    }
     for (i = 0; i < 400; ++i) {
         size_t cut = zn;
         memcpy(bad, zipbuf, zn);

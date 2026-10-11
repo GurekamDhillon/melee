@@ -6735,6 +6735,38 @@ static int gs_ui_port_read(int port, char *name, int cap, int *percent, int *sto
 }
 #include "gw_script_ui.inc"
 
+/* Console and scripts share an asynchronous job; acceptance is not completion. */
+static int l_mods_install_zip(lua_State *L) {
+    size_t len;
+    const char *path = luaL_checklstring(L, 1, &len);
+    char msg[400];
+    int ok;
+    gs_require_offline(L, "mods_install_zip");
+    if (strlen(path) != len) return luaL_error(L, "mods_install_zip: path contains a NUL byte");
+    ok = ne_queue_local(path, 0, msg, sizeof msg);
+    lua_pushboolean(L, ok); lua_pushstring(L, msg);
+    return 2;
+}
+
+static int l_mods_install_status(lua_State *L) {
+    static const char *const state[] = { "idle", "working", "installed", "failed" };
+    char path[500] = "", msg[400] = "";
+    int status = 0, restart = 0;
+    /* Lua allocations can raise: never allocate while holding a worker's lock. */
+    if (NE.inited) {
+        ne_lock();
+        status = NE.local_state; restart = NE.restart;
+        nc_copy(path, sizeof path, NE.local_path); nc_copy(msg, sizeof msg, NE.local_msg);
+        ne_unlock();
+    }
+    lua_newtable(L);
+    gs_setstr(L, "state", state[status]); gs_setstr(L, "path", path); gs_setstr(L, "message", msg);
+    gs_setbool(L, "restart", restart);
+    return 1;
+}
+
+
+
 /* gd.kit: the functions, and the kit's data as tables (colors, roles, row, shear). */
 static void gs_push_kit(lua_State *L) {
     int i, k;
@@ -6973,6 +7005,7 @@ static int l_stage_bounds(lua_State *L)
 #include "gw_script_spine_events.inc"
 
 static const luaL_Reg gs_gd_funcs[] = {
+    {"mods_install_zip", l_mods_install_zip}, {"mods_install_status", l_mods_install_status},
     {"deadline", l_deadline}, {"deadline_done", l_deadline_done},
     {"stage_slot_load", l_stage_slot_load}, {"stage_slot_info", l_stage_slot_info},
     {"stage_slot_free", l_stage_slot_free}, {"stage_slots", l_stage_slots},
@@ -8701,6 +8734,7 @@ static void gs_apply_set_motion(void);
 static void gs_rw_tick_top(void);
 
 void gw_Script_Tick(void) {
+    ne_pump(); /* local installs also report completion while the Mods screen is closed */
     gs_init();
     gw_ScriptGame_StageIsolationWatch();
     gs_fly_cursor_watch();
@@ -12193,6 +12227,18 @@ static int test_script_profiler_api(void) {
     return rc;
 }
 
+static int test_script_local_zip_api(void) {
+    char out[600];
+    int rc = t_exec("= (function() assert(type(gd.mods_install_zip)=='function'); "
+                    "local s=gd.mods_install_status(); assert(type(s.state)=='string'); "
+                    "local ok,why=gd.mods_install_zip('https://example.invalid/fighter.zip'); "
+                    "assert(ok==false and string.find(why,'local')); "
+                    "ok,why=gd.mods_install_zip('not-a-zip.txt'); assert(ok==false); "
+                    "assert(not pcall(gd.mods_install_zip,'a.zip'..string.char(0)..'bad')); return true end)()", out, sizeof out);
+    if (rc) gw_test_fail("local zip Lua API: %s", out);
+    return rc;
+}
+
 static int test_script_no_hitch_api(void) {
     char out[512];
     int rc=t_exec("= (function() "
@@ -12321,6 +12367,7 @@ void gw_script_tests_register(void) {
     gw_test_register("script_lua_runs", test_script_lua_runs);
     gw_test_register("script_profiler_api", test_script_profiler_api);
     gw_test_register("script_no_hitch_api", test_script_no_hitch_api);
+    gw_test_register("script_local_zip_api", test_script_local_zip_api);
     gw_test_register("script_data_write_atomic", test_script_data_write_atomic);
     gw_test_register("script_camera_api", test_script_camera_api);
     gw_test_register("workbench_png_completion", test_workbench_png_completion);

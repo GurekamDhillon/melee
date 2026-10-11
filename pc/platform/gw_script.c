@@ -7171,7 +7171,7 @@ static int l_wb_load(lua_State *L) {
  * jobj.h:481 and killed the engine. Refuse them with an error instead (tools/blender/geno_workbench/engine_check/sweep_rows.py finds others).
  * Keep the Workbench's copy (UNPREVIEWABLE_MOTIONS in rigmap.py, kUnpreviewable in geno_data.h) in step. */
 static int gs_wb_unpreviewable(int motion) {
-    static const int bad[] = {12, 13, 128, 129, 131, 223, 224, 225, 226, 227, 228, 239, 240, 241, 266, 267, 268, 269, 270, 277, 280, 285, 289, 290, 291, 292, 306, 308, 309, 310, 313, 314, 315, 316, 317, 318, 319, 320, 321, 323, 324, 328, 332, 333, 334, 337, 340};
+    static const int bad[] = {12, 13, 128, 129, 131, 223, 224, 225, 226, 227, 228, 239, 240, 241, 242, 243, 266, 267, 268, 269, 270, 277, 280, 285, 289, 290, 291, 292, 306, 308, 309, 310, 313, 314, 315, 316, 317, 318, 319, 320, 321, 323, 324, 328, 332, 333, 334, 337, 340};
     size_t i;
     for (i = 0; i < sizeof bad / sizeof bad[0]; ++i) if (bad[i] == motion) return 1;
     return 0;

@@ -435,6 +435,8 @@ static void gn_define_bind(gn_registry* r)
     /* Attach-only registries must not add definition-driven MxDt discovery. */
     for (i = 0; i < r->n && !r->p[i].defined; ++i) {}
     if (i == r->n) return;
+    drop = (unsigned char*)calloc((size_t)r->n + 1, 1);
+    if (!drop) { gw_log("geno: define admission refused: out of memory; definitions inactive"); return; }
     /* a Zelda / Sheik pair is admitted together: each member's partner must be an admitted define of the other template that names it back */
     do {
         changed = 0;

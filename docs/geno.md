@@ -2998,6 +2998,52 @@ versus implicit donors and stable ids/digest across lookup. Python schema/file t
 the PID-verified CSS/HUD/results capture driver are in `pc/tests/geno_css_art_*.py`.
 All build, test, link and on-screen verification remains with the lead; see the report.
 
+### 22.13 Retail template define: Fox, and how to add the next one (2026-10-10)
+
+`define.template` accepts `"fox"` (kind 1, CharacterKind 1, 327 animation rows, motions 0..375 = 341 common + 35 `ftFx_MS_SelfCount`). The package comes from the same exporter
+(`ports/ir/tools/retail_define.py fox`, workspace): 73 joints, 13 hurtboxes, 220 clips, 315 script overlays (4,532 words), 76 attributes, 53 special-attribute words (`ftFox_DatAttrs`,
+including the embedded `ReflectDesc` of the Reflector), four costumes (Nr, Or, La, Gr; teams red/blue/green), `ai.like` and `kirby_copy` fox, and `thrown_as: "fox"`.
+Falcon's output is unchanged by the generalisation (only the free-text `mod.json` description of the old hand-made package differs).
+
+**What the template carries for Fox's specials**: all four are the retail native code and the 35-state table: Blaster (the gun article and laser shot, `ftFx_SpecialN*`), Illusion (and its ghost
+article), Firefox (`SpecialHi*`), Reflector/Shine (`SpecialLw*`). The articles come from the template's item kinds named in `ftFox_DatAttrs`; the package does not own them.
+
+**A code path that asks "is this Fox?" by `fp->kind` fails for a define** (its kind is 125...). `ftLib_GetKind` already answered for template defines; the raw `fp->kind` tests did not.
+New inline `ftGetTemplateKind(fp)` (`ft/inlines.h`) answers as the template (and is the identity for every retail fighter and every non-template define). It now guards the sites found for Fox:
+`ftfoxspecials.c` (Illusion's ghost article: a define spawned Falco's Phantasm item, which never connected), `ft_0892.c` (Fox/Falco AttackS exceptions), `ft_0BEC.c`/`ft_0BF0.c`
+(the Blaster gun in the entry/revive poses), `ftwaitanim.c` (idle with an item), `ftfoxappeals.c` (Corneria appeal). Grep `Ft_Kind_<Template>` in `src/melee` for the next template.
+
+**Proof**: see the report of the lane. Same method as 22.11 (`tools/geno/falcon_parity`, workspace; the scenario file also holds Fox extras: rapid and air Blaster, Shine hold and jump-cancel, Reflector against
+a Mario fireball and a hit, Illusion, Firefox directions). Retail Fox against the define, 326 scenarios, 40,745 logic frames: 323 identical. Not identical: `bthrow`, `uthrow`, `dthrow`
+(first difference one frame after the throw's release flag: the retail run applies the throw's damage and hit effect, the define run does not; `fthrow` is identical; cause not found, owed).
+
+#### Checklist: add a retail template (Falco, Marth, Sheik, Zelda, Jigglypuff)
+
+1. **Numbers** (all from the decomp): `ftData_Table_Unk0[kind]` rows (`ftdata.c`), `<prefix>_MS_SelfCount` (`kinds/ft<X>/forward.h`), the fighter's `*_DatAttrs` struct, `CharacterKind`
+   (`pl/player.c`), costume strings (`ft<X>_Init_CostumeStrings`).
+2. **Engine, 5 places** (Fox was exactly these): a row in `gn_tmpls` (`pc/platform/geno_define_registry.inc`: name, kind, CK, rows, max motion); the `GenoDefine_TmplIndex`, `_NativeSpecific`, `_SelfCount`,
+   `_ExtAttrBytes` cases and `GENO_TMPL_COUNT` (`pc/geno/geno_define_data.inc`, plus its `_Static_assert` of the self counts); the table case in `geno_define_rows.inc`; the kind in the
+   `GenoDefine_CaptureBase` call in `ftdata.c`; the test lines in `test_geno_define_template` (parse, last row, last motion, one past each).
+3. **Kind-guard sweep**: `grep -rn "Ft_Kind_<Template>" src/melee` and `grep "fp->kind"` in `kinds/ft<X>/`: every test of the fighter's own kind that is not `ftLib_GetKind`/`ftGetTemplateKind` gets the latter.
+   Switches over `fp->kind` that list other fighters but not the template are fine as they are.
+4. **Generator** (workspace): a `FIGHTERS[...]` entry in `ports/ir/tools/retail_define.py` (kind, code, `data` symbol, rows, prefix, key, name, motions, dir, attrs struct, costumes with team colours, ai, kirby,
+   `thrown_as`); if `ext_layout` cannot read the attribute struct (a new comment style, an embedded struct) teach it (`NESTED`); `tools/geno/define.py` and `geno.schema.json`: the `template` enum and the row count.
+5. **Export and check**: `python tools/gc_extract.py "$GW_ISO_VANILLA" _build/<x>/disc --only Pl<Code>` (+ copy `PlCo.dat`); `GW_MELEE=<game> python ports/ir/tools/retail_define.py <name> --disc-dir ... --out _build/<x>/geno-<name>`;
+   `python -m tools.geno.check <dir>`; re-export Falcon and `diff -r` against the previous output (must be identical).
+6. **Parity**: mods folder with `geno-lab` + the package + `enabled.txt`; `run_parity.sh <run> <retail token> all` and `run_parity.sh <run> geno:<key> all`; `parity_diff.py`. Add Fox-style extras to
+   `falcon_parity.lua` for the fighter's specials. Expect the first run to show kind-guard misses (step 3) as a hit that connects in retail only.
+7. **Six slots**: `_build/tplfox/run6.sh`-style run (`mode=vs;p1..p6=<package>/cpu9`), FD and ACE ext 121; the log's `define budgets` line and heap 3 free.
+
+Estimates (one agent, parity included; Fox took the engine half in about an hour, the exporter was already generic):
+
+| fighter | rows / motions | cost | what is special |
+|---|---|---|---|
+| Falco | 327 / 376 (shares Fox's 35 states, `ftFc_Init_MotionStateTable`) | smallest: steps 1-6, no new engine logic | Phantasm article and laser are Falco's item kinds; `ftfoxspecialn.c` already switches on Fox/Falco via the template kind. Costumes Nr, Re, Bu, Gr. |
+| Marth | 327 / 373 (32 states) | small-medium | sword trail and hair: `ftafterimage.c` / `ftdynamics.c` / `ftCo_Attack1/Guard/Landing` switch on `Ft_Kind_Mars`: sweep them (step 3). Tipper hitbox is data. |
+| Jigglypuff | 327 / 373 (32 states) | medium | Rest, Sing (status on others) and Pound are native; 5 jumps are the carried `max_jumps` attribute (check the 76-name table includes it); `ftdynamics.c` hair/ear branches and `ftCo_ShieldBreakFly.c` test `Ft_Kind_Purin` directly. Needs a deeper parity pass for Rest (sleep timer, RNG) and Sing. |
+| Sheik | 317 / 365 (24 states) | medium | stand-alone template like the others; her chain whip and vanish are native. Costumes Nr, Re, Bu, Gr, Wh. |
+| Zelda | 311 / 359 (18 states) | large, needs a decision | Down B transforms into Sheik: `ftZd_SpecialLw_8013AEAC` calls `ftCommon_8007EFC8` with Sheik's entry and the engine swaps `fp->kind` to the partner from `pl/player.c` (`{Zelda, Seak, true}`). A define would turn into RETAIL Sheik. Options: (a) accept that (Zelda define + retail Sheik after transforming), (b) a define pair with a "transform partner" key in `geno.json` and a kind map in `ftCommon_8007EFC8`. Not started. |
+
 ## 23. Fighter Lua (slice 5: the first increment built 2026-10-07, the second move and the tooling 2026-10-08)
 
 A define can write a state's behaviour as Lua. The shape is deliberately small: two phases (`enter`, `frame`), a typed per-fighter state, five commands (four in the first increment; `turn` came with the second move). Physics,

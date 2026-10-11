@@ -10,6 +10,7 @@
 #include <melee/it/kinds/itdrmariopill.h>
 #include <melee/it/kinds/itfoxblaster.h>
 #include <melee/it/kinds/itnessbat.h>
+#include <melee/ft/inlines.h>
 
 void ftCo_800BF034(Fighter_GObj* gobj)
 {
@@ -19,7 +20,7 @@ void ftCo_800BF034(Fighter_GObj* gobj)
                               0, 1, 0, NULL);
     fp->x2219_b2 = true;
     fp->x2219_b1 = true;
-    switch (fp->kind) {
+    switch (ftGetTemplateKind(fp)) {
     case Ft_Kind_Fox: {
         ftFox_DatAttrs* da = fp->dat_attrs;
         fp->item_gobj =
@@ -54,7 +55,7 @@ void ftCo_800BF108(Fighter_GObj* gobj)
     Fighter_ChangeMotionState(gobj, ftCo_MS_Sleep, Ft_MF_None, 0, 1, 0, NULL);
     fp->x2219_b2 = true;
     fp->x2219_b1 = true;
-    switch (fp->kind) {
+    switch (ftGetTemplateKind(fp)) {
     case Ft_Kind_Fox: {
         ftFox_DatAttrs* da = fp->dat_attrs;
         fp->item_gobj =

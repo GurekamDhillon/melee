@@ -96,6 +96,22 @@ static inline s32 ftGetKind(Fighter* fp)
     return fp->kind;
 }
 
+/* The retail fighter a code path is asking about. A Geno define on a retail template (geno.md 22.11, 22.13) has its own kind number
+ * (125...), so `fp->kind == Ft_Kind_Fox` would be false for it: a path that branches on Fox/Falco/Captain by kind must ask this instead. */
+#if defined(TARGET_PC)
+extern int Geno_DefineBaseKind(int kind);
+extern int Geno_DefineTemplateSkeleton(int kind);
+#endif
+static inline s32 ftGetTemplateKind(Fighter* fp)
+{
+#if defined(TARGET_PC)
+    if (fp->kind >= Ft_Kind_Mex0 && Geno_DefineTemplateSkeleton(fp->kind)) {
+        return Geno_DefineBaseKind(fp->kind);
+    }
+#endif
+    return fp->kind;
+}
+
 static inline s32 ftGetAction(Fighter* fp)
 {
     return fp->motion_id;

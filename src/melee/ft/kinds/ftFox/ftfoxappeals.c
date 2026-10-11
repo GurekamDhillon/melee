@@ -15,6 +15,7 @@
 #include <melee/pl/player.h>
 #include <melee/pl/plbonus.h>
 #include <melee/pl/plbonuslib.h>
+#include <melee/ft/inlines.h>
 
 #define FTFOX_APPEALS_ATTACKID 0x72
 
@@ -49,7 +50,7 @@ static inline bool ftFox_CheckAppealSCount(void)
 bool ftFx_AppealS_CheckInput(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    s32 ftKind = fp->kind;
+    s32 ftKind = ftGetTemplateKind(fp);
 
     if ((ftKind == Ft_Kind_Fox || ftKind == Ft_Kind_Falco) &&
         grCorneria_801E2CE8() &&
@@ -113,7 +114,7 @@ void ftFx_AppealS_Anim(HSD_GObj* gobj)
     PAD_STACK(4);
 
     if (ftCheckThrowB3(fp)) {
-        switch (fp->kind) {
+        switch (ftGetTemplateKind(fp)) {
         case Ft_Kind_Fox:
             if (grCorneria_801E2B80()) {
                 fp->death1_cb = ftFx_AppealS_OnTakeDamage;

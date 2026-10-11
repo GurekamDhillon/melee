@@ -243,13 +243,13 @@ s32 ft_80089914(HSD_GObj* gobj, int msid)
         return false;
     }
 
-    if (fp->kind == Ft_Kind_Fox) {
+    if (ftGetTemplateKind(fp) == Ft_Kind_Fox) {
         if ((u32) (msid - ftCo_MS_AttackS3LwS) <= 2) {
             return false;
         }
     }
 
-    if (fp->kind == Ft_Kind_Falco) {
+    if (ftGetTemplateKind(fp) == Ft_Kind_Falco) {
         if ((u32) (msid - ftCo_MS_AttackS3LwS) <= 2) {
             return false;
         }

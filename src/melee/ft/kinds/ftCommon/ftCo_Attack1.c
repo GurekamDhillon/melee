@@ -26,6 +26,7 @@
 #include <melee/ft/ft_0CDD.h>
 #include <melee/ft/ftanim.h>
 #include <melee/ft/ftswing.h>
+#include <melee/ft/inlines.h>
 #include <melee/ft/kinds/ftGameWatch/ftgamewatchattack11.h>
 #include <melee/ft/types.h>
 #include <melee/it/it_26B1.h>
@@ -258,7 +259,7 @@ void ftCo_Attack12_IASA(Fighter_GObj* gobj)
 static void doAttack13(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    switch (fp->kind) {
+    switch (ftGetTemplateKind(fp)) {
     case Ft_Kind_Mars:
         doAttack12Rapid(gobj);
         return;

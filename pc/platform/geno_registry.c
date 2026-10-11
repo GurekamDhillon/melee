@@ -422,7 +422,7 @@ typedef struct {
     int defined;
     char define_key[40];
     int none;                                 /* slice 4: base "none" - no donor model, clips or tables */
-    int tmpl;                                 /* define.template: index into gn_tmpls: 0 Mario (every define before), 1 retail Captain Falcon, 2 retail Fox (native code and tables underneath) */
+    int tmpl;                                 /* define.template: index into gn_tmpls: 0 Mario (every define before), 1 retail Captain Falcon, 2 retail Fox, 3 retail Falco, 4 retail Marth (native code and tables underneath) */
     int art_base_ck;                          /* presentation only: retail base or explicit template; -1 for an original base-none fighter */
     int ncommon;
     int common_row[64][9]; /* motion, like, subaction, flags, move_id, anim/iasa/phys/coll */

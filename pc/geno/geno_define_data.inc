@@ -13,6 +13,8 @@
 #include <melee/ft/kinds/ftCaptain/types.h>
 #include <melee/ft/kinds/ftFox/forward.h>
 #include <melee/ft/kinds/ftFox/types.h>
+#include <melee/ft/kinds/ftMars/forward.h>
+#include <melee/ft/kinds/ftMars/types.h>
 #include <melee/ft/kinds/ftCommon/forward.h>
 
 MotionState* GenoDefine_CommonRows[Ft_Kind_Max];
@@ -23,18 +25,20 @@ extern void* PcCostumeAlloc(int bytes);
 static UnkCostumeStruct* GenoDefine_Costumes[Ft_Kind_Max - Ft_Kind_Mex0];
 /* The pristine animation-row table of each template fighter (index 0 Mario, 1 retail Captain Falcon, 2 retail Fox), captured before an attach can touch it.
  * Adding a template: one case in each of the four helpers below, one row in gn_tmpls (geno_define_registry.inc), one call in ftdata.c. */
-#define GENO_TMPL_COUNT 3
+#define GENO_TMPL_COUNT 5
 static Fighter_WaitAnimData* GenoDefine_RowBaseline[GENO_TMPL_COUNT];
-static int GenoDefine_TmplIndex(int base) { return base == Ft_Kind_Captain ? 1 : base == Ft_Kind_Fox ? 2 : 0; }
+static int GenoDefine_TmplIndex(int base) { return base == Ft_Kind_Captain ? 1 : base == Ft_Kind_Fox ? 2 : base == Ft_Kind_Falco ? 3 : base == Ft_Kind_Mars ? 4 : 0; }
 /* The template's own specific (non-common) motion state table and its length. */
 extern MotionState ftMr_Init_MotionStateTable[];
 extern MotionState ftCa_Init_MotionStateTable[];
 extern MotionState ftFx_Init_MotionStateTable[];
-static MotionState* GenoDefine_NativeSpecific(int base) { return base == Ft_Kind_Captain ? ftCa_Init_MotionStateTable : base == Ft_Kind_Fox ? ftFx_Init_MotionStateTable : ftMr_Init_MotionStateTable; }
-static int GenoDefine_SelfCount(int base) { return base == Ft_Kind_Captain ? (int)ftCa_MS_SelfCount : base == Ft_Kind_Fox ? (int)ftFx_MS_SelfCount : (int)ftMr_MS_SelfCount; }
+extern MotionState ftFc_Init_MotionStateTable[];
+extern MotionState ftMs_Init_MotionStateTable[];
+static MotionState* GenoDefine_NativeSpecific(int base) { return base == Ft_Kind_Captain ? ftCa_Init_MotionStateTable : base == Ft_Kind_Fox ? ftFx_Init_MotionStateTable : base == Ft_Kind_Falco ? ftFc_Init_MotionStateTable : base == Ft_Kind_Mars ? ftMs_Init_MotionStateTable : ftMr_Init_MotionStateTable; }
+static int GenoDefine_SelfCount(int base) { return base == Ft_Kind_Captain ? (int)ftCa_MS_SelfCount : base == Ft_Kind_Fox || base == Ft_Kind_Falco ? (int)ftFx_MS_SelfCount : base == Ft_Kind_Mars ? (int)ftMs_MS_SelfCount : (int)ftMr_MS_SelfCount; }
 /* the registry's per-template bounds (gn_tmpls) must match the decomp: highest motion = 341 + SelfCount - 1 */
-_Static_assert(ftCa_MS_SelfCount == 23 && ftFx_MS_SelfCount == 35, "geno template bounds (gn_tmpls in geno_define_registry.inc) are stale");
-static int GenoDefine_ExtAttrBytes(int base) { return base == Ft_Kind_Captain ? (int)sizeof(ftCaptain_DatAttrs) : base == Ft_Kind_Fox ? (int)sizeof(ftFox_DatAttrs) : (int)sizeof(ftMario_DatAttrs); }
+_Static_assert(ftCa_MS_SelfCount == 23 && ftFx_MS_SelfCount == 35 && ftMs_MS_SelfCount == 32, "geno template bounds (gn_tmpls in geno_define_registry.inc) are stale");
+static int GenoDefine_ExtAttrBytes(int base) { return base == Ft_Kind_Captain ? (int)sizeof(ftCaptain_DatAttrs) : base == Ft_Kind_Fox || base == Ft_Kind_Falco ? (int)sizeof(ftFox_DatAttrs) : base == Ft_Kind_Mars ? (int)sizeof(MarsAttributes) : (int)sizeof(ftMario_DatAttrs); }
 /* slice 4: a base "none" define's own costume names, parts table and part-visibility stand-ins (all static, kind-indexed). */
 static Fighter_CostumeStrings* GenoDefine_CostumeStrings[Ft_Kind_Max - Ft_Kind_Mex0];
 static FighterPartsTable GenoDefine_Parts[Ft_Kind_Max - Ft_Kind_Mex0];

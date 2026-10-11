@@ -265,6 +265,8 @@ static const struct { const char* name; int kind, ck, rows, maxmotion; } gn_tmpl
     { "mario",   0,  8, 303, 350 },   /* the donor of every earlier define */
     { "captain", 2,  0, 318, 363 },   /* 341 common + 23 */
     { "fox",     1,  1, 327, 375 },   /* 341 common + 35 (ftFx_MS_SelfCount, asserted in the game half) */
+    { "falco",  22, 20, 327, 375 },   /* Falco shares Fox's 35 states */
+    { "marth",  18,  9, 327, 372 },   /* 341 common + 32 (ftMs_MS_SelfCount) */
 };
 #define GN_TMPL_COUNT ((int)(sizeof gn_tmpls / sizeof gn_tmpls[0]))
 #define GN_TMPL_ROWS(p) (gn_tmpls[(p)->tmpl].rows)
@@ -305,7 +307,7 @@ static int gn_define_parse(gn_profile* p, const jdoc* d, int e, int version, con
     if (v >= 0) {
         if (!p->none || version < 10 || d->n[v].type != JN_STR ||
             (t = gn_tmpl_find(d->n[v].str)) < 0) {
-            gw_log("geno: %s: define.template must be \"mario\", \"captain\" or \"fox\", on a base \"none\" define of \"geno\": 10", where); goto refused;
+            gw_log("geno: %s: define.template must be \"mario\", \"captain\", \"fox\", \"falco\" or \"marth\", on a base \"none\" define of \"geno\": 10", where); goto refused;
         }
         p->tmpl = t;
     }

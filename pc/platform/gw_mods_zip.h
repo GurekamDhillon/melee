@@ -159,6 +159,33 @@ static int nlz_scan_incoming(const char *mods, nlz_file *out, int cap) {
     FindClose(h);
     return n;
 }
+#else
+#include <dirent.h>
+#include <sys/stat.h>
+#define NLZ_INCOMING_MAX 128
+typedef struct { char name[260]; uint64_t size, stamp; } nlz_file;
+/* Directory-only scan on the worker. Symlinks and folders are never offered. */
+static int nlz_scan_incoming(const char *mods, nlz_file *out, int cap) {
+    char path[760], full[1100];
+    DIR *d;
+    struct dirent *e;
+    struct stat st;
+    int n = 0;
+    snprintf(path, sizeof path, "%s/_incoming", mods); nc_mkdirs(path);
+    d = opendir(path);
+    if (!d) return 0;
+    while ((e = readdir(d)) != NULL) {
+        if (!nc_has_ext(e->d_name, ".zip") || n >= cap) continue;
+        snprintf(full, sizeof full, "%s/%s", path, e->d_name);
+        if (lstat(full, &st) != 0 || !S_ISREG(st.st_mode)) continue;
+        nc_copy(out[n].name, sizeof out[n].name, e->d_name);
+        out[n].size = (uint64_t) st.st_size;
+        out[n].stamp = (uint64_t) st.st_mtime;
+        ++n;
+    }
+    closedir(d);
+    return n;
+}
 #endif
 
 static int nlz_install_file(const char *mods, const char *path, const nc_loose_env *env, nc_loose_result *res,

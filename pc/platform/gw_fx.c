@@ -32,6 +32,10 @@
 
 #include <math.h>
 #include "gw_fx_render_math.h"
+
+/* gw_fx_render.cpp (R6): cosmetic camera shake / screen flash events */
+extern void gw_Fx_Shake(float amp, int frames, unsigned seed);
+extern void gw_Fx_Flash(float r, float g, float b, float a, int frames);
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1318,6 +1322,10 @@ typedef struct {
     int pkg, joint, follow, keep, situation; /* keep: emitter_life (never detached); situation 0 any, 1 ground, 2 air */
     float frame, end_frame;                   /* end_frame < 0: none */
     float off[3], rot[3], scale;
+    /* R6: a call with no package is a cosmetic event (render-only, see gw_fx_render.cpp): shake_amp > 0 and/or flash[3] > 0 */
+    float shake_amp, flash[4];
+    int shake_frames, flash_frames;
+    unsigned shake_seed;
 } fx_bcall;
 typedef struct { int subaction, game_clock, first, n; char name[32]; } fx_bstate;
 typedef struct {
@@ -1369,6 +1377,32 @@ int gw_Fx_BindLoad(const char *mod_id, const char *rel) {
             }
             if (!holds) { skipped++; continue; }
             pk = gw_Fx_Find(fj_s(&d, fj_get(&d, co, "package")));
+            {   /* "shake": {amp, frames, seed} / "flash": {color [r,g,b], alpha, frames} instead of a package */
+                const int sk = fj_get(&d, co, "shake"), fl = fj_get(&d, co, "flash");
+                if (pk < 0 && (sk >= 0 || fl >= 0) && fj_get(&d, co, "package") < 0) {
+                    if (b->ncall >= FX_BIND_CALLS || st->n >= FX_BIND_PER_STATE) break;
+                    k = &b->call[b->ncall++];
+                    memset(k, 0, sizeof *k);
+                    st->n++;
+                    k->pkg = -1;
+                    k->frame = (float) fj_num(&d, fj_get(&d, co, "frame"), 0);
+                    k->end_frame = -1.0f;
+                    k->situation = strcmp(sit, "ground") == 0 ? 1 : strcmp(sit, "air") == 0 ? 2 : 0;
+                    if (sk >= 0) {
+                        k->shake_amp = (float) fj_num(&d, fj_get(&d, sk, "amp"), 0);
+                        k->shake_frames = (int) fj_num(&d, fj_get(&d, sk, "frames"), 0);
+                        k->shake_seed = (unsigned) fj_num(&d, fj_get(&d, sk, "seed"), 1);
+                    }
+                    if (fl >= 0) {
+                        k->flash[0] = k->flash[1] = k->flash[2] = 1.0f;
+                        fj_vec(&d, fj_get(&d, fl, "color"), k->flash, 3);
+                        k->flash[3] = (float) fj_num(&d, fj_get(&d, fl, "alpha"), 0.5);
+                        k->flash_frames = (int) fj_num(&d, fj_get(&d, fl, "frames"), 6);
+                    }
+                    taken++;
+                    continue;
+                }
+            }
             if (pk < 0) { missing++; continue; }
             if (b->ncall >= FX_BIND_CALLS || st->n >= FX_BIND_PER_STATE) break;
             k = &b->call[b->ncall++];
@@ -1519,6 +1553,13 @@ void gw_Fx_Drive(int set, int owner, int motion, int anim, float anim_frame, int
             int jobj, h;
             if ((k->situation == 1 && airborne) || (k->situation == 2 && !airborne) || clock < k->frame) continue;
             dv->fired |= bit;
+            if (k->pkg < 0) { /* R6 cosmetic event: no instance, no simulation state; the bit above is rollback-restored */
+                if (k->shake_amp > 0.0f) gw_Fx_Shake(k->shake_amp, k->shake_frames, k->shake_seed);
+                if (k->flash[3] > 0.0f) gw_Fx_Flash(k->flash[0], k->flash[1], k->flash[2], k->flash[3], k->flash_frames);
+                gw_log("fx: bind %s call %d cosmetic event at frame %.1f (shake %.3f x%d, flash %.2f x%d)", b->st[st].name, i,
+                       clock, k->shake_amp, k->shake_frames, k->flash[3], k->flash_frames);
+                continue;
+            }
             /* the binding's joint is an index into the model's joint tree (depth-first); the parts table is the
              * kind's (for an m-ex slot possibly the host's), so it is only the fallback */
             jobj = fx_jobj_at(root, k->joint);
@@ -2028,7 +2069,7 @@ static int test_fx_render(void) {
     /* R2 maths */
     FXR(fx_rib_width_mul(0, 5, 0.25f) == 1.0f && fabsf(fx_rib_width_mul(4, 5, 0.25f) - 0.25f) < 1e-6f, "ribbon taper endpoints");
     FXR(fabsf(fx_rib_u(2, 5, 7.0f, 0.0f) - 0.5f) < 1e-6f && fabsf(fx_rib_u(2, 5, 7.0f, 0.5f) - 3.5f) < 1e-6f, "ribbon u");
-    FXR(fx_rib_side(a, b, cz, side) == 1 && fabsf(side[1] - 1.0f) < 1e-6f && fabsf(side[0]) < 1e-6f, "ribbon side is perpendicular to segment and view");
+    FXR(fx_rib_side(a, b, cz, side) == 1 && fabsf(fabsf(side[1]) - 1.0f) < 1e-6f && fabsf(side[0]) < 1e-6f, "ribbon side is perpendicular to segment and view");
     FXR(fx_rib_side(a, cz, cz, side) == 0, "segment along the view degenerates safely");
     /* R3 maths */
     FXR(fx_soft_fade(10.0f, 10.0f, 2.0f) == 0.0f && fx_soft_fade(12.0f, 10.0f, 2.0f) == 1.0f &&

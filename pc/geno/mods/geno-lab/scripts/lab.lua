@@ -5211,9 +5211,10 @@ function LE.clips_tick()
     end
   end
   if p and T("close") then
-    local cx, cz = LE.rm_cam()
-    if cx == nil then cx, cz = p.x, 62 end
-    gd.camera_set{ eye = { x = cx, y = p.y + 11, z = cz }, interest = { x = cx, y = p.y + 9, z = 0 }, fov = 30 }
+    local cx, cz, dy = LE.rm_cam()
+    if cx == nil then cx = p.x end
+    cz, dy = cz or 62, dy or 0
+    gd.camera_set{ eye = { x = cx, y = p.y + 11 + dy, z = cz }, interest = { x = cx, y = p.y + 9 + dy, z = 0 }, fov = 30 }
     cl.cam = true
   elseif cl.cam then
     gd.camera_attach(10) cl.cam = false
@@ -5808,7 +5809,9 @@ end
 
 -- the camera centre and distance while comparing (nil: the usual close-up)
 function LE.rm_cam()
-  if rm.cmp and rm.base_x then return rm.base_x - 6, 92 end
+  if not in_mode("remake") then return nil end
+  if rm.cmp and rm.base_x then return rm.base_x - 6, 92, 6 end
+  return nil, 62, 5 -- the fighter sits lower so the panels do not cover its head
 end
 
 -- per tick: first use loads the data and opens the first unpicked slot; focus changes rebuild the items
@@ -6037,7 +6040,9 @@ function LE.draw_remake(p)
     txt(tx + 12, 166, "PRESS Y AGAIN TO PICK " .. arm.clip, "caption", INK, "left", tw - 24)
   end
   -- the key legend (the bar below has only icons)
-  local lx, ly, lw = 440, 180, 192
+  local sa = gd.safe_area and gd.safe_area() or { right = 640 }
+  local lw = 192
+  local lx, ly = sa.right - lw - 10, 8
   panel(lx, ly, lw, 206, "KEYS")
   local L = { "UP/DOWN  prev / next clip", "A / D  clip back / forward", "N / P  next / prev slot", "Y  pick (press twice)",
     "U  undo last pick", "T  A/B last two clips", "W  compare with current", "R  set compare reference", "K  browse all / slot clips",

@@ -129,12 +129,9 @@ int main(void)
         static char big[8192];
         int n, len;
         for (n = 40; n <= 49; n += 9) {
-            len = snprintf(big, sizeof big, "local M = {}
-");
-            for (int k = 0; k < n; k++) len += snprintf(big + len, sizeof big - len, "function M.f%d(ctx) end
-", k);
-            snprintf(big + len, sizeof big - len, "return M
-");
+            len = snprintf(big, sizeof big, "local M = {}\n");
+            for (int k = 0; k < n; k++) len += snprintf(big + len, sizeof big - len, "function M.f%d(ctx) end\n", k);
+            snprintf(big + len, sizeof big - len, "return M\n");
             if (n == 40) {
                 gn_lua* g = mk(big);
                 CHECK(g != NULL, "a module of 40 functions must load");

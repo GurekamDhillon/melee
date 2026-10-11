@@ -61,6 +61,9 @@ AtRect at_csv_tile_rect(const AtCssGeom *g, int i);   /* w = 0 for a tile scroll
 enum { AT_CSS_HAND_LAYERS = 8, AT_CSS_COIN_LAYERS = 8 };
 typedef struct { int hand[2][AT_CSS_HAND_LAYERS]; int coin[AT_CSS_COIN_LAYERS]; } AtCssArt;   /* hand[0] point, hand[1] grab */
 void at_css_set_art(const AtCssArt *a);
+/* Retail's own hand and coin, decoded from the player's disc at run time (never stored): slot 0..2 hand poses, 4..7 the hand's port tag, 8..12 the
+ * coin per port and CPU, 16..20 the coin's label. tex -1 clears; x, y the part's joint offset in retail units. Preferred over the kit art. */
+void at_css_set_disc(int slot, int tex, unsigned rgba, float x, float y);
 
 #ifdef __cplusplus
 }

@@ -158,6 +158,18 @@ static void gs_ui_css_art(void) {
            miss ? " (the missing ones draw as flat shapes)" : "");
 }
 
+static void gs_ui_image_quad(void *u, int tex, const float x[4], const float y[4], unsigned rgba) {
+    static const float qu[4] = { 0.0f, 1.0f, 1.0f, 0.0f }, qv[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
+    float tx[3], ty[3], tu[3], tv[3];
+    uint32_t col[3] = { rgba, rgba, rgba };
+    int t, i, idx[2][3] = { { 0, 1, 2 }, { 0, 2, 3 } };
+    (void) u;
+    for (t = 0; t < 2; t++) {
+        for (i = 0; i < 3; i++) { tx[i] = x[idx[t][i]]; ty[i] = y[idx[t][i]]; tu[i] = qu[idx[t][i]]; tv[i] = qv[idx[t][i]]; }
+        gw_Kit_DrawTri(tex, tx, ty, tu, tv, col, NULL);
+    }
+}
+
 static void gs_ui_image(void *u, int tex, float x, float y, float w, float h, unsigned rgba) {
     (void) u;
     gw_Kit_DrawImage(tex, x, y, w, h, rgba, 0, 0.0f);
@@ -719,7 +731,7 @@ static void gs_ui_draw(void) {
     QueryPerformanceCounter(&t0);
     ops.width = gs_ui_width; ops.user = NULL;
     memset(&sink, 0, sizeof sink);
-    sink.user = NULL; sink.poly = gs_ui_poly; sink.text = gs_ui_text; sink.model = gs_ui_model_draw; sink.image = gs_ui_image;
+    sink.user = NULL; sink.poly = gs_ui_poly; sink.text = gs_ui_text; sink.model = gs_ui_model_draw; sink.image = gs_ui_image; sink.image_quad = gs_ui_image_quad;
     gs_ui_css_art();
     memset(&info, 0, sizeof info);
     first = gw_Kit_QuadCount();
@@ -1521,7 +1533,7 @@ static void gs_ui_hud_draw(void) {
     at_hud_retail_keepouts(w, ~at_retail_effective(&gs_ui_retail, gs_ui_online()), &ko);
     ops.width = gs_ui_width; ops.user = NULL;
     memset(&sink, 0, sizeof sink);                                            /* every AtSink op is set or NULL (AtSink.image arrived with the select) */
-    sink.user = NULL; sink.poly = gs_ui_poly; sink.text = gs_ui_text; sink.model = gs_ui_model_draw; sink.image = gs_ui_image;
+    sink.user = NULL; sink.poly = gs_ui_poly; sink.text = gs_ui_text; sink.model = gs_ui_model_draw; sink.image = gs_ui_image; sink.image_quad = gs_ui_image_quad;
     gs_ui_css_art();
     if (gs_ui_keepout_show) {
         int ko_first = gw_Kit_QuadCount();

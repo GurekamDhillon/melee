@@ -37,6 +37,8 @@ extern int Settings_Int(const char* key, int dflt);
 extern void Ui_ArtDrop(void);
 extern int Geno_DefineAudioPlay(int ck, int which, int sfx); /* a define's own clip (announcer: which 0); 1 when one was started or declared */
 extern int Ui_ArtGeno(int ck, int what, int costume); /* a Geno define's own package art as a kit texture, or -1 (what: 0 icon, 1 portrait) */
+extern void Ui_SelCursorArt(int h, int slot, int tex, int rgba, float x, float y);
+extern int mnCharSel_PcArtCursor(int which, int part, float frame, HSD_ImageDesc** img, HSD_Tlut** tlut, float geo[4], u32* rgba);
 extern int Ui_ArtDecode(const char* key, int gx_fmt, const void* img, int size, int w, int h, int tlut_fmt, const void* tlut, int tlut_n);
 
 extern int Ui_CssOpen(int match_type, int online, int teams);
@@ -425,6 +427,46 @@ static const char* fas_css_hint(char* buf)
 /* The face and the grid use exactly the same package/disc/letters choice. */
 static int fas_card_face(int ck) { return fas_fighter_icon(ck); }
 
+/* Retail's own cursor hand and coin, from the disc (MnSlChr's hand and token models), decoded into the kit's pool at run time like the icons:
+ * slots 0..2 the hand's poses (retail's state frames 0..2), 4..7 the hand's port tag per port, 8..12 the coin per port and CPU, 16..20 the coin's
+ * label per port and CPU. Each with retail's material colour and its joint's offset (retail units). Nothing is kept or written. */
+static void fas_submit_cursor_art(void)
+{
+    FsArt a;
+    float geo[4];
+    u32 rgba;
+    char key[24];
+    int i, ok = 0;
+    for (i = 0; i < 3; i++) {
+        geo[0] = geo[1] = 0.0f;
+        if (mnCharSel_PcArtCursor(0, 2, (float) i, &a.img, &a.tl, geo, &rgba)) {
+            sprintf(key, "@csshand%d", i);
+            Ui_SelCursorArt(fas.h, i, fas_art(key, a), (int) rgba, geo[0], geo[1]);
+            ok++;
+        }
+    }
+    for (i = 0; i < 4; i++) {
+        geo[0] = geo[1] = 0.0f;
+        if (mnCharSel_PcArtCursor(0, 3, (float) (i * 5), &a.img, &a.tl, geo, &rgba)) {
+            sprintf(key, "@csstag%d", i);
+            Ui_SelCursorArt(fas.h, 4 + i, fas_art(key, a), (int) rgba, geo[0], geo[1]);
+        }
+    }
+    for (i = 0; i < 5; i++) {
+        geo[0] = geo[1] = 0.0f;
+        if (mnCharSel_PcArtCursor(1, 3, (float) ((i < 4 ? i : 4) * 0x28), &a.img, &a.tl, geo, &rgba)) {
+            sprintf(key, "@csscoin%d", i);
+            Ui_SelCursorArt(fas.h, 8 + i, fas_art(key, a), (int) rgba, geo[0], geo[1]);
+        }
+        geo[0] = geo[1] = 0.0f;
+        if (mnCharSel_PcArtCursor(1, 4, (float) (i * 4), &a.img, &a.tl, geo, &rgba)) {
+            sprintf(key, "@csslabel%d", i);
+            Ui_SelCursorArt(fas.h, 16 + i, fas_art(key, a), (int) rgba, geo[0], geo[1]);
+        }
+    }
+    OSReport("frontend: css cursor art from the disc: %d hand poses\n", ok);
+}
+
 static void fas_submit_css(void)
 {
     char name[40], abbr[4], buf[FE_HELP_STR], sub[40], id[12], step[24];
@@ -434,6 +476,7 @@ static void fas_submit_css(void)
     Ui_CssCols(Ui_SelCols(fas.h));
     if (sig != fas.sig) {
         fas.sig = sig;
+        fas_submit_cursor_art();
         fas_submit_tabs(false, tab);
         Ui_SelBeginCells(fas.h, n);
         for (i = 0; i < n; i++) {

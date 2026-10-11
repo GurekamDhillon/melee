@@ -189,6 +189,12 @@ void gw_Ui_SelCardX(int h, int port, int puck, int hold, int zone, int drop_cell
     k->costume = costume < 0 ? 0 : costume; k->ncost = ncost < 0 ? 0 : ncost; k->ptex = ptex < 0 ? -1 : ptex;
 }
 
+/* retail's hand and coin art, decoded by the adapter from the disc this session (gmfrontend_atlas_select.inc fas_submit_cursor_art) */
+void gw_Ui_SelCursorArt(int h, int slot, int tex, int rgba, float x, float y) {
+    (void) h;
+    at_css_set_disc(slot, tex, (unsigned) rgba, x, y);
+}
+
 void gw_Ui_SelCursorX(int h, int port, int zone, int hold, int hold_port) {
     GsUiSlot *u = gs_sel_get(h);
     if (u == NULL || port < 0 || port >= AT_MAX_CURSORS) return;

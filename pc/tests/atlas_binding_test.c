@@ -120,6 +120,7 @@ int gw_Kit_DrawText(float x, float y, const char *s, int role, uint32_t rgba, in
 }
 int gw_Kit_DrawPoly4(const float x[4], const float y[4], uint32_t rgba) { (void) x; (void) y; (void) rgba; g_quads++; return 1; }
 int gw_Kit_DrawImage(int tex, float x, float y, float w, float h, uint32_t rgba, int flip, float shear) { (void) tex; (void) x; (void) y; (void) w; (void) h; (void) rgba; (void) flip; (void) shear; g_quads++; return 1; }
+int gw_Kit_DrawTri(int tex, const float x[3], const float y[3], const float u[3], const float v[3], const uint32_t col[3], const float *clip) { (void) tex; (void) x; (void) y; (void) u; (void) v; (void) col; (void) clip; return 1; }
 int gw_Kit_Tex(const char *name, const char *mod_ui) { (void) name; (void) mod_ui; return -1; }   /* no kit art here: the select draws its flat hands */
 void gw_Kit_SetTracking(float px) { g_track = px; }
 static int g_hsd_frame; void gw_Kit_TexHsdFrame(int frame) { g_hsd_frame = frame; }

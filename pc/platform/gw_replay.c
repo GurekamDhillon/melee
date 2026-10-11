@@ -1169,8 +1169,8 @@ int gw_Ucf_OfflineMode(void) {
     if (ucf_off_mode < 0) {
         const char *v = getenv("MELEE_UCF");
         if (v != NULL && v[0] != '\0') {
-            ucf_off_mode = (v[0] == '0' || v[0] == 'o' || v[0] == 'O' || v[0] == 'f' || v[0] == 'F' ||
-                            v[0] == 'n' || v[0] == 'N') ? 0 : 84;
+            ucf_off_mode = (strcmp(v, "0") == 0 || strcmp(v, "off") == 0 || strcmp(v, "OFF") == 0 ||
+                            strcmp(v, "false") == 0 || strcmp(v, "no") == 0) ? 0 : 84;
         } else {
             ucf_off_mode = gw_Settings_Int("ucf", 84) != 0 ? 84 : 0;
         }

@@ -5190,6 +5190,11 @@ function LE.clips_tick()
   if not (in_mode("clips") or in_mode("remake")) or not offline() then
     if cl.mir then LE.clips_release() end
     if cl.cam then gd.camera_attach(10) cl.cam = false end
+    if cl.row ~= nil and offline() then -- leaving the page: give the fighter its own animation back (a posed prone clip stays lying)
+      pcall(gd.anim_preview, focus, nil)
+      cl.row, cl.cur, cl.slow, cl.mv = nil, nil, false, nil
+      if LE.rm_leave then LE.rm_leave() end
+    end
     cl.parked = false
     return
   end
@@ -5807,6 +5812,11 @@ function LE.rm_cam()
 end
 
 -- per tick: first use loads the data and opens the first unpicked slot; focus changes rebuild the items
+function LE.rm_leave()
+  if rm.cmp then rm_cmp_stop() end
+  rm.shown = nil
+end
+
 function LE.rm_tick()
   if not gd.match().active or not offline() then return end
   if not rm.started then
@@ -5833,6 +5843,9 @@ function LE.rm_tick()
     end
   else
     rm_sync_list()
+    if rm.shown == nil and rm.cur and cl.row == nil then -- back on the page after leaving it: show the clip again
+      if rm.browse and rm.blist and #rm.blist > 0 then rm.bsel = (rm.bsel or 1) - 1 rm_cycle(1) elseif not rm.browse then rm_open(rm.cur) end
+    end
     if rm.key ~= cl.key then
       rm.key = cl.key
       if rm.cur then rm_open(rm.cur) end

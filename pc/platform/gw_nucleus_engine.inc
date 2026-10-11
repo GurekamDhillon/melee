@@ -1295,4 +1295,45 @@ static void ne_shutdown(void) {
     ne_save_dirty();
 }
 
+/* ---- mod sync (gw_modsync_session.inc): "match the host's mods" installs Nucleus posts by id, outside any netplay session ---- */
+
+/* Queue these posts and start the downloads. 0 = ok. The engine threads start if they have not (the catalog record is fetched by id when the catalog lacks it). */
+int gw_ms_nc_queue(const int *posts, int n) {
+    int i;
+    ne_open();
+    ne_lock();
+    for (i = 0; i < n; ++i) {
+        int at = nq_find(&NE.dq, posts[i]);
+        if (at >= 0 && NE.dq.it[at].state != NQ_QUEUED && NE.dq.it[at].state != NQ_RUNNING) { nq_retry(&NE.dq, posts[i]); at = nq_find(&NE.dq, posts[i]); if (NE.dq.it[at].state == NQ_DONE) nq_remove(&NE.dq, posts[i]), at = -1; }
+        if (at < 0 && nq_add(&NE.dq, posts[i], "", "", ne_now()) <= 0) { ne_unlock(); return -1; }
+    }
+    NE.dq.processing = 1;
+    ne_dq_changed();
+    ne_unlock();
+    ne_log("modsync: %d post%s queued", n, n == 1 ? "" : "s");
+    return 0;
+}
+
+/* 0 waiting or running (pct set), 1 installed, -1 failed (why set). */
+int gw_ms_nc_state(int post, int *pct, char *why, int cap) {
+    int st = 0, at;
+    ne_lock();
+    at = nq_find(&NE.dq, post);
+    if (at < 0) st = 1;  /* took itself out: finished and tidied */
+    else if (NE.dq.it[at].state == NQ_DONE) st = 1;
+    else if (NE.dq.it[at].state == NQ_FAILED) { st = -1; if (why && cap > 0) snprintf(why, (size_t) cap, "%s", NE.dq.it[at].reason); }
+    else if (pct) *pct = NE.dq.it[at].pct;
+    ne_unlock();
+    return st;
+}
+
+/* The mods folder name an installed post lives in. 1 = found. */
+int gw_ms_nc_folder(int post, char *folder, int cap) {
+    int i, found = 0;
+    ne_lock();
+    for (i = 0; i < NE.ninst; ++i) if (NE.inst[i].id == post) { snprintf(folder, (size_t) cap, "%s", NE.inst[i].folder); found = 1; break; }
+    ne_unlock();
+    return found;
+}
+
 #endif

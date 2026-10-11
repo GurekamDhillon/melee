@@ -21,6 +21,7 @@
 #include "gw_motion.h"
 static void gs_earned_release(unsigned owner); /* gw_script_earned.inc */
 #include "gw_mods.h"
+#include "gw_modsync.h"
 #include "gw_model_format.h"
 #include "../gameworld/script_model.h"
 #include "gw_kit.h"
@@ -1673,6 +1674,84 @@ static const char *const gs_lb_phase[] = {"off", "char_blind", "strike", "ban", 
 static const char *const gs_rnd_state[] = {"off", "looking", "matched", "timeout", "failed"};
 
 /* gd.netplay() -> the connection and the lobby, read-only (stages, groups, the screen's cursor). */
+/* gd.modsync() -> {phase, status, active, room, blocked, peer_ready, can_complete, summary, ndownload, nenable, ndisable, nmissing, rows={{id,name,state,ident,source,post}}, actions={{kind,id,name,post,why}}}
+ * gd.modsync_act("sync"[, code]) | ("cancel") | ("keep") | ("end"): the room screens' buttons for scripts and tests (gw_modsync.h). */
+extern int gw_Netplay_ModsBlock(void);
+static int l_modsync(lua_State *L) {
+    static const char *const ph[] = {"idle", "downloading", "applying", "relaunch", "failed"};
+    static const char *const rs[] = {"same", "mine_only", "theirs_only", "differs"};
+    static const char *const ak[] = {"?", "enable", "disable", "download", "missing"};
+    const gw_ms_plan *plan = NULL;
+    const gw_ms_row *rows = NULL;
+    int nrows = 0, i, p = gw_ms_phase();
+    lua_createtable(L, 0, 16);
+    gs_setstr(L, "phase", p >= 0 && p < 5 ? ph[p] : "?");
+    gs_setstr(L, "status", gw_ms_status());
+    gs_setbool(L, "active", gw_ms_session_active());
+    gs_setstr(L, "room", gw_ms_session_room());
+    gs_setbool(L, "blocked", gw_Netplay_ModsBlock());
+    gs_setbool(L, "peer_ready", gw_ms_peer_ready());
+    if (gw_ms_peer_ready() || gw_ms_plan_view(&plan, &rows, &nrows)) {
+        gw_ms_manifest *mine = (gw_ms_manifest *) malloc(sizeof *mine);
+        static gw_ms_plan live;
+        static gw_ms_row lrows[GW_MS_MAX * 2];
+        if (mine != NULL) {
+            gw_ms_build_local(mine, 0);
+            if (gw_ms_peer_ready()) {
+                nrows = gw_ms_diff(mine, gw_ms_peer(), lrows, GW_MS_MAX * 2);
+                if (nrows > GW_MS_MAX * 2) nrows = GW_MS_MAX * 2;
+                gw_ms_plan_build(mine, gw_ms_peer(), &live);
+                plan = &live;
+                rows = lrows;
+            }
+            free(mine);
+        }
+    }
+    if (plan != NULL) {
+        gs_setbool(L, "can_complete", plan->can_complete);
+        gs_setstr(L, "summary", plan->summary);
+        gs_setint(L, "ndownload", plan->ndownload);
+        gs_setint(L, "nenable", plan->nenable);
+        gs_setint(L, "ndisable", plan->ndisable);
+        gs_setint(L, "nmissing", plan->nmissing);
+        lua_createtable(L, plan->n, 0);
+        for (i = 0; i < plan->n; ++i) {
+            lua_createtable(L, 0, 5);
+            gs_setstr(L, "kind", plan->a[i].kind >= 1 && plan->a[i].kind <= 4 ? ak[plan->a[i].kind] : "?");
+            gs_setstr(L, "id", plan->a[i].id);
+            gs_setstr(L, "name", plan->a[i].name);
+            gs_setint(L, "post", plan->a[i].post);
+            gs_setstr(L, "why", plan->a[i].why);
+            lua_rawseti(L, -2, i + 1);
+        }
+        lua_setfield(L, -2, "actions");
+    }
+    lua_createtable(L, nrows, 0);
+    for (i = 0; i < nrows && rows != NULL; ++i) {
+        lua_createtable(L, 0, 6);
+        gs_setstr(L, "id", rows[i].id);
+        gs_setstr(L, "name", rows[i].name);
+        gs_setstr(L, "state", rows[i].state >= 0 && rows[i].state < 4 ? rs[rows[i].state] : "?");
+        gs_setbool(L, "ident", rows[i].ident);
+        gs_setstr(L, "source", rows[i].source);
+        gs_setint(L, "post", rows[i].post);
+        lua_rawseti(L, -2, i + 1);
+    }
+    lua_setfield(L, -2, "rows");
+    return 1;
+}
+static int l_modsync_act(lua_State *L) {
+    const char *what = luaL_checkstring(L, 1);
+    int rc = 0;
+    if (strcmp(what, "sync") == 0) rc = gw_ms_start(luaL_optstring(L, 2, gw_Netplay_Code())) == 0;
+    else if (strcmp(what, "cancel") == 0) { gw_ms_cancel(); rc = 1; }
+    else if (strcmp(what, "keep") == 0) rc = gw_ms_keep() == 0;
+    else if (strcmp(what, "end") == 0) { gw_ms_end_session(); rc = 1; }
+    else return luaL_error(L, "gd.modsync_act: unknown action \"%s\" (sync, cancel, keep, end)", what);
+    lua_pushboolean(L, rc);
+    return 1;
+}
+
 static int l_netplay(lua_State *L) {
     int ph = gw_Netplay_Phase(), lp = gw_Netplay_LobbyPhase(), rs = gw_Netplay_RandomStatus(), i;
     int n = gw_Netplay_LobbyInfo(9);
@@ -6932,7 +7011,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"mod_read", l_mod_read}, {"mod_list", l_mod_list}, {"mod_stamp", l_mod_stamp},
     {"campaign_storage", l_campaign_storage}, /* campaign-save */
     {"rgb", l_rgb}, {"label", l_label}, {"screenshot", l_screenshot}, {"quit", l_quit},
-    {"menu", l_menu}, {"netplay", l_netplay}, {"netplay_act", l_netplay_act}, {"netplay_run", l_netplay_run},
+    {"menu", l_menu}, {"netplay", l_netplay}, {"netplay_act", l_netplay_act}, {"modsync", l_modsync}, {"modsync_act", l_modsync_act}, {"netplay_run", l_netplay_run},
     /* the Geno Lab (docs/geno.md) */
     {"debug_draw", l_debug_draw}, {"debug_stage", l_debug_stage}, {"hitboxes", l_hitboxes},
     {"hurtboxes", l_hurtboxes}, {"joints", l_joints}, {"dobjs", l_dobjs},

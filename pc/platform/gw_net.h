@@ -143,6 +143,9 @@ typedef struct gw_net_config {
   /* optional: the mod set in words (gw_Mods_Describe). A host that refuses a guest for a
    * mods_hash mismatch sends it in the refusal, so the guest can name the difference. */
   const char *mods_desc;
+  /* 1 = a different mods_hash does NOT refuse the session (host side): the connection is made so the two can compare mod lists and offer
+   * to sync (gw_modsync.h). The app MUST NOT start a match until the global hashes agree (gw_netplay.c np_ms_gate). */
+  int mods_soft;
   /* both peers must agree (mismatch refuses): */
   int32_t first_frame;             /* the session's first frame number (-123) */
   uint8_t payload_bytes;           /* 0 = GW_NET_DEFAULT_PAYLOAD; at most GW_NET_MAX_PAYLOAD */
@@ -200,6 +203,8 @@ void gw_net_release(gw_net *n);
  * in the lobby. Returns 0, or < 0 if the queue is full or the message too long. */
 #define GW_NET_LOBBY_MAX 200
 int gw_net_lobby_send(gw_net *n, const void *data, int len);
+/* Host: the mods_hash the guest announced in its HELLO (0 before a guest is accepted). */
+uint64_t gw_net_peer_mods_hash(const gw_net *n);
 
 /* PUSH model: this peer's inputs for `frame`, indexed by slot (only owned slots are read). Frames
  * must be submitted contiguously from first_frame. Returns 0, or < 0 if the send window is full

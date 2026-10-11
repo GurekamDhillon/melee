@@ -12,6 +12,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "gw.h"
 #include "gw_mods.h"
+#include "gw_modsync.h"
 #include "gw_test.h"
 
 #define WIN32_LEAN_AND_MEAN
@@ -24,6 +25,8 @@
 #include <stdio.h>
 #include "gw_ui_menus_json.h"
 #include <stdlib.h>
+#include <stdarg.h>
+#include <time.h>
 #include <string.h>
 
 #define GW_MODS_ID_MAX 64
@@ -40,6 +43,8 @@ typedef struct gw_mod {
     char desc[GW_MODS_TEXT_MAX];
     char autostart[160];
     char hash[80];
+    char source[12];   /* mod.json "source": "nucleus" or "" */
+    int nucleus_post;  /* mod.json "nucleus": {"id": N}; 0 when none */
     char requires_text[GW_MODS_TEXT_MAX];
     char req[GW_MODS_LIST_MAX][GW_MODS_ID_MAX];
     int nreq;
@@ -210,6 +215,7 @@ static void mod_set_field(gw_mod *m, const char *key, const char *val) {
     else if (strcmp(key, "description") == 0) copy_str(m->desc, sizeof m->desc, val);
     else if (strcmp(key, "autostart") == 0) copy_str(m->autostart, sizeof m->autostart, val);
     else if (strcmp(key, "hash") == 0) copy_str(m->hash, sizeof m->hash, val);
+    else if (strcmp(key, "source") == 0) copy_str(m->source, sizeof m->source, val);
     else if (strcmp(key, "id") == 0 && _stricmp(val, m->id) != 0) {
         gw_log("gw: mods: %s/mod.json says id \"%s\" - the folder name wins", m->id, val);
     }
@@ -283,6 +289,23 @@ static int mod_parse_json(gw_mod *m, const char *text) {
                 if (*p != ':') return -1;
                 p = json_skip_ws(p + 1);
                 mod_engine_need(m, feat, atoi(p)); /* a non-number (e.g. true) reads as 0: no requirement */
+                p = json_skip_value(p);
+                p = json_skip_ws(p);
+                if (*p == ',') p = json_skip_ws(p + 1);
+            }
+            if (*p != '}') return -1;
+            ++p;
+        } else if (*p == '{' && strcmp(key, "nucleus") == 0) {
+            /* only "id" (the Nucleus post id) is read; the rest of the object is skipped */
+            p = json_skip_ws(p + 1);
+            while (*p && *p != '}') {
+                char nk[32];
+                p = json_string(p, nk, sizeof nk);
+                if (p == NULL) return -1;
+                p = json_skip_ws(p);
+                if (*p != ':') return -1;
+                p = json_skip_ws(p + 1);
+                if (strcmp(nk, "id") == 0 && *p >= '0' && *p <= '9') m->nucleus_post = atoi(p);
                 p = json_skip_value(p);
                 p = json_skip_ws(p);
                 if (*p == ',') p = json_skip_ws(p + 1);
@@ -609,12 +632,16 @@ static const char *default_dir(char *buf, size_t cap) {
     return buf;
 }
 
+static void ms_boot_check(const char *dir); /* gw_modsync_session.inc: a mod-sync session continues or is put right before enabled.txt is read */
+
 static gw_mods_set *boot(void) {
     if (!gw_mods_boot_loaded) {
         char dir[MAX_PATH];
         const char *en = getenv("MELEE_MODS");
         gw_mods_boot_loaded = 1;
-        set_load(&gw_mods_boot, default_dir(dir, sizeof dir), en != NULL && en[0] == '0');
+        default_dir(dir, sizeof dir);
+        if (dir[0] != ' ') ms_boot_check(dir);
+        set_load(&gw_mods_boot, dir, en != NULL && en[0] == '0');
         if (gw_mods_boot.n > 0) set_log(&gw_mods_boot);
     }
     return &gw_mods_boot;
@@ -949,6 +976,20 @@ int gw_Mods_DiffDescribe(const char *peer_desc, char *out, int cap) {
     return diff_describe(gw_Mods_Describe(), peer_desc, out, cap);
 }
 
+/* ---- the match-the-host's-mods fields (gw_modsync.h) ------------------------------------------------------------ */
+const char *gw_Mods_Source(int i) { MOD_STR(source); }
+int gw_Mods_NucleusPost(int i) {
+    gw_mod *m = mod_at(boot(), i);
+    return m != NULL ? m->nucleus_post : 0;
+}
+uint64_t gw_Mods_Digest(int i) {
+    extern void gw_DVDInit(void);
+    gw_mod *m = mod_at(boot(), i);
+    if (m == NULL) return 0;
+    gw_DVDInit(); /* the overlay must have reported this mod's files before its digest means anything */
+    return mod_digest(m);
+}
+
 /* ---- tests -------------------------------------------------------------------------------------- */
 
 static char gw_mods_test_root[MAX_PATH];
@@ -1233,6 +1274,7 @@ void gw_mods_tests_register(void) {
     gw_test_register("mods_engine", test_mods_engine);
     gw_test_register("mods_toggle_and_save", test_mods_toggle_and_save);
     gw_test_register("mods_fingerprint_and_diff", test_mods_fingerprint_and_diff);
+    gw_modsync_tests_register();
 }
 
 /* ---- who wins a disc path (the stage-select skin note) ------------------------------------------------------- */
@@ -1256,3 +1298,8 @@ int gw_Mods_WinnerOf(const char *disc_path, char *out, int cap) {
     }
     return 0;
 }
+
+/* ---- match the host's mods (gw_modsync.h): compiled in here, so it shares this file's statics ---- */
+#include "gw_modsync.inc"
+#include "gw_modsync_session.inc"
+

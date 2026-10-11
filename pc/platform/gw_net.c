@@ -198,6 +198,7 @@ struct gw_net {
   uint16_t blob_len;
   uint32_t host_rules;      /* guest: the rules word the host sent in ACCEPT */
   uint32_t host_envoy;      /* guest: the Envoy mode word the host sent in ACCEPT (protocol 5) */
+  uint64_t peer_mods;       /* host: the guest's mods_hash from its HELLO (kept when cfg.mods_soft lets a different one in) */
   int have_remote_cfg;
   int held;                          /* cfg.hold_start and gw_net_release not called yet */
   /* lobby channel: outgoing messages kept until the peer acknowledges them */
@@ -682,7 +683,7 @@ static const char *refuse_check(gw_net *n, uint32_t ver, uint64_t exe, uint64_t 
     snprintf(why, cap, "different disc image (host %08x, you %08x)", (unsigned)n->cfg.iso_hash, (unsigned)iso);
     return why;
   }
-  if (mods != n->cfg.mods_hash) {
+  if (mods != n->cfg.mods_hash && !n->cfg.mods_soft) {
     /* mods_hash is the GLOBAL game data (gw_mexid.c); the host's per-component list follows
        so the guest can say exactly what differs (gw_MexId_GlobalDiff) */
     const char *d = n->cfg.mods_desc != NULL && n->cfg.mods_desc[0] != '\0' ? n->cfg.mods_desc : "none";
@@ -746,6 +747,7 @@ static void on_packet(gw_net *n, const gw_net_addr *from, const uint8_t *buf, in
       send_refuse_to(n, from, 1, why);
       return;                            /* stay listening: a refused guest does not consume the slot */
     }
+    n->peer_mods = mods;                 /* with cfg.mods_soft a different one got here: the app decides (gw_modsync.h) */
     {
       int il = end - p >= 1 ? *p++ : 0;
       if (il > end - p) il = (int)(end - p);
@@ -1076,3 +1078,5 @@ void gw_net_report_checksum(gw_net *n, int32_t frame, uint32_t hash) {
 
 int32_t gw_net_desync_frame(const gw_net *n) { return n->desync_frame; }
 void gw_net_get_stats(const gw_net *n, gw_net_stats *out) { *out = n->st; }
+
+uint64_t gw_net_peer_mods_hash(const gw_net *n) { return n != NULL ? n->peer_mods : 0; }

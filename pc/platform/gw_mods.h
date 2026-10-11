@@ -114,6 +114,14 @@ const char *gw_Mods_Describe(void);
  * suppresses "peer lacks". Returns the number of differing mods (0 = same). */
 int gw_Mods_DiffDescribe(const char *peer_desc, char *out, int cap);
 
+/* ---- what a mod declares for the match-the-host's-mods feature (gw_modsync.h) ----
+ * mod.json "source" (top level string; "nucleus" when the mod came from Nucleus, else ""); mod.json "nucleus": {"id": N}
+ * (the Nucleus post id; 0 when none). gw_Mods_Digest is the mod's content digest (mod_digest): meaningful when the mod is
+ * mounted (the overlay has reported its files). */
+const char *gw_Mods_Source(int i);
+int gw_Mods_NucleusPost(int i);
+uint64_t gw_Mods_Digest(int i);
+
 void gw_mods_tests_register(void);
 
 #ifdef __cplusplus

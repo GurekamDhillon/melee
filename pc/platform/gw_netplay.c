@@ -63,6 +63,7 @@ static const char *np_global_describe(void) {
     return buf;
 }
 #include "gw_mods.h"
+#include "gw_modsync.h" /* different mods: say what differs and offer to match the host (gw_modsync.h) */
 
 /* gw_net.c refuse_check's text for a mods_hash (= global game data) mismatch; the host's
  * gw_MexId_GlobalDescribe follows it */
@@ -348,6 +349,9 @@ static int np_scene_envoy(const char *scene, unsigned *w) {
 }
 
 static void np_cb_lobby_any(void *user, const uint8_t *data, int len); /* delta */
+/* 1 = the two global game data hashes differ in a room (cfg.mods_soft let the connection through): no match may start (gw_modsync.h R4). The host knows the
+ * guest's hash from its HELLO at once; the guest knows the host's from the manifest header. */
+static int np_ms_global_differs(void);
 static void np_mx_pump(void); /* delta */
 void gw_Netplay_FighterName(int ck, char *out, int cap);
 
@@ -1906,6 +1910,7 @@ static int lb_apply_(int who, const char *act, int a, int b) {
         if (lb.phase != LB_READY || lb.ready[who] == (a != 0)) return 0;
         if (a != 0 && lb.run_on && lb_run_block()[0] != '\0') return 0; /* a stage run that is over, or still waiting for the other side's unlocks / stages */
         if (a != 0 && rn_check_pending()) return 0; /* the saved-run check is still running: nobody readies into a fresh run for a moment */
+        if (a != 0 && np_ms_global_differs()) return 0; /* different mods: nobody readies into a match that cannot start (the room offers to sync) */
         if (a != 0 && np.envoy) { /* Envoy cannot start: nobody gets to ready up into a countdown that ends in a refusal (after a refusal the builds are compared too) */
             char why[120];
             if (lb_env_why(why, (int) sizeof why, lb.env_block[0] != '\0')) {
@@ -2567,6 +2572,15 @@ static void lb_env_refuse(const char *why) {
 /* The match, once the countdown is over (host). */
 static void lb_go(void) {
     char m[GW_NET_LOBBY_MAX];
+    if (np_ms_global_differs()) { /* defence in depth (READY was refused already): never build a match on different game data */
+        gw_log("netplay: modsync - the game data differs, not starting a match");
+        lb.ready[0] = lb.ready[1] = 0;
+        lb.countdown = 0;
+        lb.phase = LB_READY;
+        lb.seq++;
+        lb_broadcast();
+        return;
+    }
     if (np.envoy) { /* the builds must be the same on both sides, as each reports them, before anyone loads the match */
         char why[120];
         if (lb_env_why(why, (int) sizeof why, 1)) {
@@ -2721,6 +2735,12 @@ static void np_cb_lobby(void *user, const uint8_t *data, int len) {
     } else if (!np.host && m[0] == 'G') {
         unsigned seed = 0;
         int off = 0;
+        if (np_ms_global_differs()) { /* the host should never send this; if it does, load nothing */
+            gw_log("netplay: modsync - the host started a match on different game data; leaving");
+            np_status("The host's mods differ from yours - the match was not loaded");
+            np_peer_gone_pending = 1;
+            return;
+        }
         if (sscanf(m + 2, "%u %n", &seed, &off) >= 1) {
             if (np.envoy) { /* defence in depth: the host checked the words, the guest checks the match's own word against what it staged */
                 unsigned hw = 0, mine = gw_Script_NetBuildWord();
@@ -2850,6 +2870,7 @@ static void np_lobby_tick(void) {
  * start (the loading screen, the match loading) the connection is kept serviced, so a longer
  * warm-up on one side never looks like a dead peer to the other. */
 void gw_Netplay_Background(void) {
+    gw_ms_tick(); /* a mod sync in progress (gw_modsync.h) */
     np_ka_tick();
     np_mx_pump(); /* delta: the identity lists, while the lobby sits on the CSS */
     if (np.phase == NP_CONNECTED && np.use_lobby && np.net != NULL) {
@@ -3178,6 +3199,9 @@ static int np_start_session(const gw_net_addr *peer_in, uint32_t bind_ip) {
     cfg.mods_hash = np_global_hash();
     cfg.mods_desc = np_global_describe();
     gw_MexId_PeerReset();
+    gw_ms_set_global(np_global_hash());
+    gw_ms_peer_reset();
+    cfg.mods_soft = (np.host && np.use_lobby && rnd.state != NP_RAND_MATCHED) ? 1 : 0; /* a room: meet first, compare mod lists, offer to sync; the start is gated by np_ms_global_differs */
     gw_log("netplay: global game data %s; %d fighter/stage identities; mods: %s", cfg.mods_desc,
            gw_MexId_Count(), gw_Mods_Describe()[0] != '\0' ? gw_Mods_Describe() : "none");
     cfg.first_frame = NP_FIRST_FRAME;
@@ -3289,6 +3313,7 @@ static void np_arm(void) {
 /* delta: every lobby message goes past the identity exchange first (gw_mexid.c). */
 static void np_cb_lobby_any(void *user, const uint8_t *data, int len) {
     if (gw_MexId_WireFeed(data, len)) return;
+    if (gw_ms_wire_feed(data, len)) return;
     if (np.use_lobby) np_cb_lobby(user, data, len);
 }
 
@@ -3303,7 +3328,22 @@ static void np_mx_pump(void) {
     if (st != GW_NET_ACCEPTED && st != GW_NET_STARTING) return;
     len = gw_MexId_WireNext(m, sizeof m);
     if (len > 0 && gw_net_lobby_send(np.net, m, len) == 0) gw_MexId_WireSent();
+    if (len == 0) { /* the identity list is out: the mod manifest follows (modsync) */
+        len = gw_ms_wire_next(m, sizeof m);
+        if (len > 0 && gw_net_lobby_send(np.net, m, len) == 0) gw_ms_wire_sent();
+    }
 }
+
+static int np_ms_global_differs(void) {
+    if (!np.use_lobby || np.net == NULL) return 0;
+    if (np.host) {
+        uint64_t p = gw_net_peer_mods_hash(np.net);
+        return p != 0 && p != np_global_hash();
+    }
+    return gw_ms_peer_ready() && gw_ms_peer()->global != 0 && gw_ms_peer()->global != np_global_hash();
+}
+/* For the room screens and scripts: 1 when the mods differ in a way that blocks the match (offer the sync). */
+int gw_Netplay_ModsBlock(void) { return np_ms_global_differs(); }
 
 /* One step of connecting (menu frames, or the boot wait). Returns the phase. */
 static int np_poll(void) {
@@ -3644,6 +3684,7 @@ int gw_Netplay_Rejoin(void) {
 
 /* Leave the room, whatever the step: the connection closes, the set is over. */
 void gw_Netplay_Leave(void) {
+    gw_ms_end_session(); /* a synced mod set was temporary: the player's own enabled set comes back (gw_modsync.h) */
     if (rnd.state == NP_RAND_WAITING && rdv.on) np_rdv_ctl("RANDCANCEL");
     rnd.state = NP_RAND_OFF;
     np_close();

@@ -1073,7 +1073,9 @@ do
           { "S", "1", "G", "Idle", "Wait", "GOK_BAS_STAND_S", "xGOK_BAS_STAND_S", "role", "xGOK_BAS_STAND_00_S", "" },
           { "K", "xGOK_BAS_STAND_S", "first", "no metrics" }, { "K", "xGOK_BAS_STAND_00_S", "alt", "m" }, { "K", "xGOK_NOPE", "missing", "" },
           { "S", "2", "G", "Jab 1", "Attack11", "ATC_002", "xGOK_ATC_002", "role", "xGOK_ATC_002", "" },
-          { "K", "xGOK_ATC_002", "j", "" } }
+          { "K", "xGOK_ATC_002", "j", "" },
+          { "N", "xGOK_BAS_STAND_S", "100", "Idle", "a hover idle" }, { "N", "xGOK_BAS_STAND_00_S", "100", "", "" },
+          { "N", "xGOK_ATC_002", "30", "Jab 1", "" } }
         local out = {}
         for _, r in ipairs(rows) do out[#out + 1] = table.concat(r, string.char(9)) end
         return table.concat(out, string.char(10)) .. string.char(10)
@@ -1085,7 +1087,13 @@ do
     P[1].char_name = "Goku" -- a new library key: the clip list is rebuilt from the rows above
     lab("mode remake")
     for _ = 1, 3 do print(pcall(env.on_tick)) end 
-    expect(calls[#calls] and calls[#calls].row == 304, "REMAKE opens slot 1 on its recommended candidate (row " .. tostring(calls[#calls] and calls[#calls].row) .. ")")
+    expect(calls[#calls] and calls[#calls].row == 304, "REMAKE opens in BROWSE on the first unnoted clip (row " .. tostring(calls[#calls] and calls[#calls].row) .. ")")
+    lab("remake cand 1")
+    expect(calls[#calls].row == 305, "BROWSE walks the unnoted clips first (row " .. tostring(calls[#calls].row) .. ")")
+    lab("n goes with the lunge")
+    expect(files["remake-notes.json"] and files["remake-notes.json"]:find("xGOK_ATC_002", 1, true) and files["remake-notes.json"]:find("lunge", 1, true), "a console note is saved to remake-notes.json")
+    lab("remake browse")
+    expect(calls[#calls].row == 304, "leaving BROWSE plays the slot's recommended candidate (row " .. tostring(calls[#calls].row) .. ")")
     lab("remake cand 1")
     expect(calls[#calls].row == 303, "cycling skips candidates that are not in the bank and wraps (row " .. tostring(calls[#calls].row) .. ")")
     lab("remake pick")

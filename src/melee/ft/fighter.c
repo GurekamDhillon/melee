@@ -3250,7 +3250,9 @@ void Fighter_procMap(Fighter_GObj* gobj)
         /* LAB animation preview: the posed fighter has no map collision (a clip that moves the body
          * far from its origin would drag the ECB into the floor and launch it); Wait moves it nowhere. */
         extern int ScriptGame_LabPreviewRow(Fighter * fp, int motion);
+        extern int ScriptGame_LabCleanPose(Fighter * fp);
         if (fp->motion_id == ftCo_MS_Wait && ScriptGame_LabPreviewRow(fp, ftCo_MS_Wait) >= 0) {
+            ScriptGame_LabCleanPose(fp);
             PC_PROF_END();
             return;
         }

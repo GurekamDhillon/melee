@@ -2728,6 +2728,39 @@ int ScriptGame_LabPreviewRow(Fighter* fp, int motion)
     return row;
 }
 
+/* LAB clip preview: the posed fighter's TopN must be neutral. A previewed row is held in Wait and never
+ * changes motion, so whatever a previously played clip (or a pitched rush) left on TopN stayed for good, and
+ * only a respawn rebuilt it. Seen in the REMAKE picker (labdiag log, 2026-10-11): P1's TopN scale was
+ * (1, 0.175, 1), flattening the whole body, hurtboxes included, into a smear on the floor while P2, in the
+ * same Wait row, stood normally. Each preview frame TopN's scale is made uniform again (y and z follow x:
+ * the fighter's own scale) and its pitch / roll (rotation X, Z; Y is the facing) cleared. Preview-only: this
+ * fighter has no map collision and is rebuilt from the joint tracks every frame. */
+int ScriptGame_LabCleanPose(Fighter* fp)
+{
+    HSD_JObj* top;
+    int changed = 0;
+    if (fp == NULL || fp->gobj == NULL || fp->gobj->hsd_obj == NULL) {
+        return 0;
+    }
+    top = fp->gobj->hsd_obj;
+    if (top->scale.y != top->scale.x || top->scale.z != top->scale.x) {
+        OSReport("lab preview: P%d TopN scale %.3f %.3f %.3f made uniform\n", fp->player_id + 1, top->scale.x, top->scale.y, top->scale.z);
+        top->scale.y = top->scale.x;
+        top->scale.z = top->scale.x;
+        changed = 1;
+    }
+    if (top->rotate.x != 0.0f || top->rotate.z != 0.0f) {
+        OSReport("lab preview: P%d TopN pitch %.3f roll %.3f cleared\n", fp->player_id + 1, top->rotate.x, top->rotate.z);
+        top->rotate.x = 0.0f;
+        top->rotate.z = 0.0f;
+        changed = 1;
+    }
+    if (changed) {
+        HSD_JObjSetMtxDirty(top);
+    }
+    return changed;
+}
+
 /* The playing animation's last frame. */
 float ScriptGame_LabAnimEnd(int slot)
 {

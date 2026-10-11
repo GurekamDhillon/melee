@@ -15,7 +15,7 @@
  * Owner transform: the game half attaches an effect to a guest JObj (its address and the offset of its world
  * matrix inside HSD_JObj) and the simulation reads that matrix each frame (read-only, big-endian floats).
  *
- * Budget (accepted 2026-09-26): 2000 live particles, 256 emitter instances per match. */
+ * Budget (accepted 2026-09-26): 2000 live particles, 256 emitter instances per match; raised to 512 instances and 96 emitters per package 2026-10-10 (the XV2 Kamehameha packages have 58). */
 #define _CRT_SECURE_NO_WARNINGS
 #include "gw.h"
 #include "gw_mods.h"
@@ -1943,11 +1943,12 @@ static int test_fx_sim_features(void) {
         fx_pkgs[fx_npkg] = &q; h = fx_npkg++;
         for (i = 0; i < FX_MAX_INST - 2; ++i) fx_cur.inst[i].used = 1;
         (void) gw_Fx_Attach(h, (int) (uintptr_t) mtx, 0, 0, 1);
-        fx_cur.part[0].inst = 255;
-        if (FX_MAX_INST != 256 || FX_MAX_PARTICLES != 2000 || gw_Fx_Stat(1) != 256 ||
+        fx_cur.part[0].inst = FX_MAX_INST - 1;
+        if (FX_MAX_PARTICLES != 2000 || gw_Fx_Stat(1) != FX_MAX_INST ||
             gw_Fx_Stat(4) != 1 || gw_Fx_Stat(5) != 1 ||
-            fx_cur.inst[254].em != 0 || fx_cur.inst[255].em != 1 || gw_Fx_Stat(1255) != 1) {
-            gw_test_fail("fx: 256-instance cap must refuse only priority-2 emitter (instances %d refused %d)",
+            fx_cur.inst[FX_MAX_INST - 2].em != 0 || fx_cur.inst[FX_MAX_INST - 1].em != 1 ||
+            gw_Fx_Stat(1000 + FX_MAX_INST - 1) != 1) {
+            gw_test_fail("fx: the instance cap (%d) must refuse only the priority-2 emitter (instances %d refused %d)", FX_MAX_INST,
                          gw_Fx_Stat(1), gw_Fx_Stat(4)); rc = 1;
         }
         fx_npkg--; fx_reset();

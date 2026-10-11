@@ -259,6 +259,13 @@ def main():
         shutil.rmtree(dst)
     shutil.copytree(src, dst)
     tint = [float(x) for x in a.tint.split(',')]
+    if 'nofx' in SKIP:   # ablation: no Geno effects at all (what is left on screen is Melee's own)
+        bj = dst / 'goku-xv2/fx/fx_bindings.json'
+        b = json.loads(bj.read_text(encoding='utf-8'))
+        b['states'] = []
+        bj.write_text(json.dumps(b), encoding='utf-8')
+        print('nofx: bindings emptied')
+        return
     fx = dst / 'goku-xv2/fx'
     done = [adapt_package(p, tint, a.radius) for p in sorted(fx.glob('P_TrailGokuXKame*')) if p.is_dir()]
     if not a.no_events:

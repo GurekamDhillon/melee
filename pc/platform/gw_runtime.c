@@ -1428,6 +1428,9 @@ void gw_Mex_MoveLogicDispatch(int kind, void *gobj, void *vanilla) {
 void gw_Mex_OnDoubleJumpDispatch(int kind, void *gobj, void *vanilla) {
   gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_DOUBLE_JUMP, kind, gobj, vanilla);
 }
+int gw_Mex_OnFloatDispatch(int kind, void *gobj) {
+  return gw_Mex_GObjPredDispatch(GW_MEX_EVENT_ON_FLOAT, kind, gobj, NULL);
+}
 /* ---- m-ex Category 2 ------------------------------------------------------------------
  * These have no vanilla per-kind table, so every call site passes vanilla = NULL: the hook is an
  * addition to what the engine already does, not a replacement for a table entry. The two sites

@@ -238,7 +238,7 @@ static void** ftCommonData_ExtendKindTable(void** loaded, int slot)
         if (Mex_FtSynth()) {
             /* fighters built from mods on a disc with no MxDt.dat: PlCo is the vanilla one (retail kind order), so a mod fighter reads its clone base's row */
             extern int Mex_FtBaseKind(int k);
-            extern uint32_t Mex_FtPartsTable(int internal);
+            extern unsigned int Mex_FtPartsTable(int internal);
             if (i >= Ft_Kind_Mex0 && k >= 0 && Mex_FtPartsTable(k) != 0) { /* its own skeleton: a parts row built from fighter.json's bone lookup, and no hidden-part list */
                 out[i] = slot == 0 ? (void*) (uintptr_t) Mex_FtPartsTable(k) : NULL;
                 continue;

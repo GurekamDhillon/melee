@@ -186,6 +186,8 @@ int gw_ModFighter_CKAt(int i) {
 }
 /* 1 when the fighter-table image is the synthetic one (no MxDt.dat on the disc) */
 int gw_Mex_FtSynth(void) { return gw_mexdt_synth && gw_mexdt != 0u; }
+/* how many fighter mods are loaded (online play refuses while any is: gw_netplay.c) */
+int gw_Mex_ModFighterCount(void) { mf_scan(); return mf_n; }
 
 /* ---- the image ---- */
 static uint32_t mf_at, mf_end;

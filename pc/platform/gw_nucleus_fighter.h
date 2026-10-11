@@ -178,6 +178,8 @@ static void nf_verdict(nf_fighter *o) {
 /* mod-private file stem for a post: PlN + 4 hex digits of the post id. Never a retail name (retail stems are two letters). */
 static void nf_stem(int post_id, char *out, size_t cap) { snprintf(out, cap, "PlN%04X", (unsigned) post_id & 0xFFFFu); }
 
+#define NF_MAX_MOD_FIGHTERS 31
+
 /* Installs the post's custom fighter(s). Same contract as nc_stage_install: 0 when at least one mod was written. */
 static int nc_fighter_install(const char *mods_dir, const nc_post *post, const nc_in_file *in, int nin, const nc_loose_env *env, nc_loose_result *res,
                               char *msg, size_t mcap, void (*logf)(const char *line)) {
@@ -205,6 +207,15 @@ static int nc_fighter_install(const char *mods_dir, const nc_post *post, const n
         free(js);
         if (nc_zip_extract(in[i].data, in[i].len, "sound.zip", &probe, &probel, 64u * 1024 * 1024, err, sizeof err) == 0) { f.have_sound_zip = 1; free(probe); }
         nf_verdict(&f);
+        { /* the slot cap: one m-ex slot per fighter mod; the CSS and the runtime tables hold NF_MAX_MOD_FIGHTERS of them */
+            static nc_inst others[128];
+            int on = nc_inst_scan(mods_dir, others, 128), have = 0, q;
+            for (q = 0; q < on; ++q) if (!strcmp(others[q].cat, "cfighter") && others[q].id != post->id) ++have;
+            if (have >= NF_MAX_MOD_FIGHTERS) {
+                snprintf(res->first_err, sizeof res->first_err, "Too many custom fighters: %d are installed and the game holds %d. Remove one from the Mods list first.", have, NF_MAX_MOD_FIGHTERS);
+                ++res->refused; continue;
+            }
+        }
         if (!strcmp(f.verdict, "needs-base")) {
             snprintf(res->first_err, sizeof res->first_err, "%s", f.compat); ++res->refused; continue;
         }

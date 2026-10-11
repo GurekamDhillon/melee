@@ -835,9 +835,20 @@ static void gw_diag_dump_mtx(const char *tag, const f32 *m, int n) {
   }
 }
 
+/* R6 camera shake (gw_fx_render.cpp): a cosmetic NDC shift of the perspective projection, a function of the render
+ * frame only. The game's camera objects are untouched; only the matrix submitted to the GPU moves. */
+extern void gw_Fx_ShakeOffset(float out[2]);
+
 void gw_GXSetProjection(const void *mtx, u32 type) {
   f32 native[4][4];
   gw_read_mtx44(native, mtx);
+  if (type == 0 /* GX_PERSPECTIVE */ && native[3][2] == -1.0f) {
+    float sh[2];
+    gw_Fx_ShakeOffset(sh);
+    /* ndc.x = (P00*x + P02*z) / -z: a P02 of -s shifts every point by +s */
+    native[0][2] -= sh[0];
+    native[1][2] -= sh[1];
+  }
   gw_diag_dump_mtx("proj", &native[0][0], 16);
   GXSetProjection(native, (GXProjectionType)type);
 }

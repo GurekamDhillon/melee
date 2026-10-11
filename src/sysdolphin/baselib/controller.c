@@ -75,6 +75,14 @@ void HSD_PadRenewRawStatus(bool err_check)
                         now.stat[i].err);
         }
     }
+    {
+        /* offline UCF (gw_replay.c): the raw sticks of this poll, for the pad buffer */
+        extern void Ucf_PadLatch(int port, int sx, int sy, int cx, int cy);
+        for (i = 0; i < 4; i++) {
+            Ucf_PadLatch(i, now.stat[i].stickX, now.stat[i].stickY, now.stat[i].substickX,
+                         now.stat[i].substickY);
+        }
+    }
 #endif
     if (err_check) {
         for (i = 0; i < 4; i++) {

@@ -36,6 +36,8 @@ extern void Settings_SetInt(const char* key, int value);
 extern int Settings_TextKeys(char* buf, int cap, int caret);
 extern int Settings_TextCaret(void);
 extern void PcUnlockAll_Reload(void);
+extern int Ucf_OfflineMode(void);
+extern void Ucf_Reload(void);
 extern int PcUnlockAll(void);
 extern void Netplay_ReloadServer(void);
 extern void Netplay_ServerName(char* out, int cap);
@@ -625,6 +627,16 @@ static void fsg_language(void)
     fe.reported = GM_MENU;
     fe.leaving = 1; /* the fade, then GM_MENU, which opens the game's Language screen as the legacy list's row would */
 }
+/* Controller Fix (UCF): the community controller fix Slippi online plays with (dashback, shield
+ * drop, 1.0 cardinals, SDI). Setting `ucf` (84 = 0.84, 0 = off), MELEE_UCF wins. Netplay always runs 0.84;
+ * a replay keeps the UCF it was recorded with (gw_replay.c, gw_Ucf_OfflineMode). */
+static int fsg_get_ucf(void) { return Ucf_OfflineMode() == 84; }
+static void fsg_set_ucf(int v)
+{
+    Settings_SetInt("ucf", v ? 84 : 0);
+    Ucf_Reload();
+    OSReport("frontend: SETTINGS > GAME > Controller Fix (UCF) -> %s%c", v ? "0.84" : "off", 10);
+}
 static const FrontendScreen fe_screen_erase;
 static void fsg_erase_open(void) { fe_switch_screen(&fe_screen_erase); }
 
@@ -633,6 +645,8 @@ static const FrontendItem fe_items_set_gameplay[] = {
       fsg_get_turbo, fsg_set_turbo, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "OPTIONS" },
     { FE_TOGGLE, 0, "Unlock Everything", "Every fighter, stage and option, without touching the save.",
       fsg_get_unlock, fsg_set_unlock, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "OPTIONS" },
+    { FE_TOGGLE, 0, "Controller Fix (UCF)", "UCF 0.84: dashback, shield drop, cardinals. On = like Slippi. Online is always on.",
+      fsg_get_ucf, fsg_set_ucf, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "OPTIONS" },
     { FE_ACTION, FE_DO_CALL, "Language", "English or Japanese. A opens the game's own screen; coming back returns here.",
       NULL, NULL, 0, 0, 0, NULL, fsg_fmt_language, fsg_atlas_only, fsg_language, NULL, NULL, "OPTIONS" },
     { FE_CHOICE, 0, "Mode", "How a VS match is won.", fe_get_mode, fe_set_mode, 0, 3, 1, fe_opt_mode, NULL, NULL, NULL, NULL, NULL, "MATCH RULES" },

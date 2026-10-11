@@ -821,8 +821,10 @@ static void geno_clear_action(GenoState* st)
 /* Fighter_UnkInitReset_80067C98: spawn, respawn, and the Zelda/Sheik swap. */
 void Geno_FighterReset(Fighter* fp)
 {
+    extern int Geno_DefineVoiceState(int kind, u32 owner, int motion);
     GenoState* st = geno_state(fp);
     u32 resets = st->resets;
+    if (fp->kind >= Ft_Kind_Mex0) Geno_DefineVoiceState(fp->kind, (u32) fp, -1);
     geno_zero(st, sizeof(*st));
     st->resets = resets + 1;
     st->kind = fp->kind;
@@ -889,6 +891,11 @@ void Geno_OnActionChange(Fighter_GObj* gobj)
     GenoState* st = geno_state(GET_FIGHTER(gobj));
     if (geno_inert(st)) {
         { PC_PROF_END(); return; }
+    }
+    {
+        extern int Geno_DefineVoiceState(int kind, u32 owner, int motion);
+        Fighter* fp = GET_FIGHTER(gobj);
+        if (fp->kind >= Ft_Kind_Mex0) Geno_DefineVoiceState(fp->kind, (u32) fp, fp->motion_id);
     }
     geno_clear_action(st);
     /* v5.3: ATTACK_CONNECTED belongs to one action; the previous one's result stays readable */

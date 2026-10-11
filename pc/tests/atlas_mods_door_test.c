@@ -408,6 +408,94 @@ static void scripts_cannot_touch_it(void)
     gw_Ui_SetClose(h);
 }
 
+#include "nucleus_zip_fixture.h"
+
+/* Exercise the actual worker and Incoming source with a synthetic costume. No
+ * network threads, no game/disc assets, no UI window and no existing mod folder. */
+static void local_zip_worker(void) {
+    char temp[MAX_PATH], root[500], path[500], msg[400], cache[500];
+    const char *old = getenv("MELEE_NUCLEUS_DIR");
+    char *saved = old ? _strdup(old) : NULL;
+    uint8_t dat[128] = {0}, zip[1024];
+    const char *sym = "PlyFox5KNr_Share_joint";
+    size_t dl = 56 + strlen(sym) + 1, zl;
+    nst_entry ent;
+    AtNcFilter f = {0};
+    AtNcRow row;
+    int ids[4], n = 0, k, state;
+    unsigned ver;
+    DWORD tl = GetTempPathA(sizeof temp, temp);
+    CHECK(tl > 0 && tl < sizeof temp);
+    if (!tl || tl >= sizeof temp) return;
+    snprintf(root, sizeof root, "%smods_zip_worker_%lu", temp, (unsigned long) GetCurrentProcessId());
+    snprintf(path, sizeof path, "%s/_incoming", root); nc_mkdirs(path);
+    snprintf(cache, sizeof cache, "%s/.nucleus", root); _putenv_s("MELEE_NUCLEUS_DIR", cache);
+    nc_put32(dat, (uint32_t) dl); nc_put32(dat + 4, 16); nc_put32(dat + 12, 1); memcpy(dat + 56, sym, strlen(sym) + 1);
+    ent.name = "pack/PlFxNr.dat"; ent.data = dat; ent.len = dl;
+    zl = nst_zip(&ent, 1, zip);
+    snprintf(path, sizeof path, "%s/_incoming/local costume.zip", root);
+    CHECK(nc_write_file(path, zip, zl) == 0);
+    at_nuc_mods_dir = root; g_online = 0;
+    ne_start(0);
+    f.view = AT_NC_VIEW_INCOMING;
+    for (k = 0; k < 100; ++k) { n = ne_src_filter(NULL, &f, ids, 4, &ver); if (n) break; Sleep(20); }
+    CHECK(n == 1 && ids[0] < 0);
+    CHECK(ne_src_row(NULL, ids[0], &row) && row.local_file && row.page[0] == 0 && row.installable);
+    CHECK(ne_src_act(NULL, ids[0], AT_NC_ACT_LOCAL_INSTALL));
+    state = 1;
+    for (k = 0; k < 100; ++k) { ne_lock(); state = NE.local_state; ne_unlock(); if (state != 1) break; Sleep(20); }
+    CHECK(state == 2 && NE.restart && nc_file_exists(path));
+    CHECK(ne_src_row(NULL, ids[0], &row) && row.state == AT_NC_ST_INSTALLED);
+    {
+        int h;
+        reset_door(); h = open_mods();
+        CHECK(slot_of(h)->sc.items[0].iflags & AT_ITEM_RO);
+        intent(h, AT_EV_ACCEPT, 0);
+        CHECK(g_set_calls == 0 && g_save_calls == 0);
+        CHECK(strstr(slot_of(h)->view.note.text, "restart") != NULL);
+        gw_Ui_SetClose(h);
+    }
+    CHECK(!NE.network && !NE.th_sync && !NE.th_img[0] && !NE.th_img[1]);
+    CHECK(!ne_src_act(NULL, ids[0], AT_NC_ACT_PAGE));
+    g_online = 1;
+    CHECK(!ne_queue_local(path, 0, msg, sizeof msg) && strstr(msg, "online"));
+    g_online = 0;
+    CHECK(!ne_queue_local("https://example.invalid/a.zip", 0, msg, sizeof msg));
+    /* Completion errors stay in the local status as well as the log. */
+    snprintf(path, sizeof path, "%s/missing.zip", root);
+    CHECK(ne_queue_local(path, 0, msg, sizeof msg));
+    for (k = 0; k < 100; ++k) { ne_lock(); state = NE.local_state; ne_unlock(); if (state != 1) break; Sleep(20); }
+    CHECK(state == 3 && strstr(NE.local_msg, "Cannot open"));
+    ne_shutdown();
+    /* Repeated drops do not exhaust slots, and removed row IDs never install a
+     * new file that happens to occupy the same slot. */
+    snprintf(path, sizeof path, "%s/_incoming/local costume.zip", root); remove(path);
+    for (k = 0; k < NLZ_INCOMING_MAX + 2; ++k) {
+        snprintf(path, sizeof path, "%s/_incoming/drop-%d.zip", root, k);
+        CHECK(nc_write_file(path, zip, zl) == 0);
+        ne_scan_incoming();
+        n = ne_src_filter(NULL, &f, ids, 4, &ver);
+        CHECK(n == 1 && ne_src_row(NULL, ids[0], &row));
+        remove(path);
+    }
+    CHECK(NE.nincoming < NLZ_INCOMING_MAX && !ne_src_row(NULL, -1, &row));
+    {
+        ne_job j = {0};
+        int at = ne_incoming_index(ids[0]);
+        CHECK(at >= 0);
+        if (at >= 0) {
+            j.kind = 5; j.id = ids[0]; nc_copy(j.path, sizeof j.path, path);
+            NE.incoming[at].state = 1;
+            ne_scan_incoming(); /* zip disappeared after it was queued */
+            CHECK(!ne_src_row(NULL, j.id, &row));
+            CHECK(ne_install_local(&j, msg, sizeof msg) < 0 && NE.incoming[at].state == 3);
+        }
+    }
+    at_nuc_mods_dir = ".";
+    _putenv_s("MELEE_NUCLEUS_DIR", saved ? saved : ""); free(saved);
+    nc_rmtree(root);
+}
+
 int main(void)
 {
     lua_State *L = luaL_newstate();
@@ -419,6 +507,7 @@ int main(void)
     lua_newtable(L); gs_push_ui(L); lua_setfield(L, -2, "ui"); lua_setglobal(L, "gd");
     opens_and_draws(); pad_intents(); poll_raw_bytes(); keys_and_mouse(); detail_and_the_mods_own_screen(); another_native_screen_still_refuses_to_be_covered();
     online_changes_nothing(); freeze_drops_events_and_the_ring(); scripts_cannot_touch_it();
+    local_zip_worker();
     lua_close(L);
     ATLAS_DONE("atlas mods door");
 }

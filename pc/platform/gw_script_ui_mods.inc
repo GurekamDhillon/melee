@@ -29,7 +29,16 @@ static struct {
 } gs_mods;
 static const AtModsSrc *gs_mods_test_src;   /* tests: a source over a fake folder instead of gw_Mods_* */
 
-static int gs_mods_locked(void) { return gs_ui_netplay(); }
+static int gs_mods_locked(void) {
+    int pending = 0;
+    if (gs_ui_netplay()) return 1;
+    if (NE.inited) {
+        ne_lock(); pending = NE.local_state == 1 || NE.cur_id || NE.restart; ne_unlock();
+    }
+    /* gw_Mods_Save serializes the boot registry. After a worker adds a mod,
+     * saving that old snapshot would silently remove its enabled.txt entry. */
+    return pending ? 2 : 0;
+}
 
 /* the registry holds that entry, it is visible now, and the mod that owns it has a running script (so activating it can do something) */
 static int gs_mods_entry_ok(const char *id) {

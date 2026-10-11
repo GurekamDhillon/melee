@@ -9,7 +9,7 @@ extern "C" {
 
 /* What the accessors cannot know themselves. Both may be NULL. The struct must outlive the source (the source keeps a pointer to it). */
 typedef struct {
-    int (*locked)(void);                        /* 1 while mods must not be changed: a netplay session or rollback is on */
+    int (*locked)(void);                        /* 1 online, 2 worker install pending/restart required */
     int (*entry_ok)(const char *entry_id);      /* 1 when the registry holds that entry and can open it (a mod's settings entry) */
 } AtModsHooks;
 

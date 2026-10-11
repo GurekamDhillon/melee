@@ -36,6 +36,7 @@
 #include "gw_nucleus_loose.h"
 #include "gw_nucleus_stage.h"
 #include "gw_nucleus_fighter.h"
+#include "gw_mods_zip.h"
 
 extern int gw_DVDFileExists(const char *path);
 extern void *gw_DVDReadFileAlloc(const char *path, uint32_t *out_size);
@@ -47,7 +48,8 @@ extern void *gw_DVDReadFileAlloc(const char *path, uint32_t *out_size);
 #define NE_WANT_TICKS 180            /* a picture want that was not renewed for this many ticks (3 s) is dropped */
 #define NE_DL_CAP (400ll * 1024 * 1024)
 
-typedef struct { int kind, id; } ne_job;     /* kind: 2 uninstall (installs go through the download queue) */
+typedef struct { int kind, id; char path[500]; } ne_job; /* 2 uninstall, 4 toggle, 5 local zip; one file worker serializes all writes */
+typedef struct { nlz_file file; int id, present, state; char msg[320]; } ne_incoming;
 
 enum { NE_PIC_FREE, NE_PIC_WANT, NE_PIC_BUSY, NE_PIC_READY, NE_PIC_FAILED };
 typedef struct {
@@ -86,6 +88,11 @@ static struct {
     char logq[24][220]; int nlog;
     unsigned ver;
     HANDLE th_sync, th_files, th_img[2];
+    int network, incoming_want, nincoming, next_local_id;
+    int64_t incoming_at;
+    ne_incoming incoming[NLZ_INCOMING_MAX];
+    int local_state;                          /* 0 idle, 1 queued/working, 2 installed, 3 failed */
+    char local_path[500], local_msg[400];
 } NE;
 
 static void ne_lock(void) { EnterCriticalSection(&NE.lock); }
@@ -110,6 +117,10 @@ static void ne_pump(void) {
     if (!NE.inited) return;
     ne_lock();
     n = NE.nlog;
+    if (NE.incoming_at != (int64_t) time(NULL) / 2) {
+        NE.incoming_at = (int64_t) time(NULL) / 2;
+        NE.incoming_want = 1;
+    }
     for (i = 0; i < n; ++i) memcpy(lines[i], NE.logq[i], sizeof lines[i]);
     NE.nlog = 0;
     ++NE.tick;
@@ -412,6 +423,7 @@ static int ne_env_ref(void *u, const char *path, uint8_t **buf, size_t *len) {
     return 0;
 }
 static int ne_env_exists(void *u, const char *path, size_t *len) { (void) u; *len = 0; return gw_DVDFileExists(path); }
+static int ne_env_can_commit(void *u) { (void) u; return !NE.quit && !ne_locked(); }
 static void ne_log_line(const char *line) { ne_log("%s", line); }
 
 /* a file the install takes: a loose-override kind the catalog marked supported, or (custom stage posts) the .zip stage package */
@@ -488,7 +500,7 @@ static int ne_install_loose(const nc_mod *m, const nc_file *files, char *msg, si
     ne_now_iso(iso, sizeof iso);
     post.id = m->id; post.title = m->title; post.author = m->author; post.page = m->page; post.updated = m->updated; post.installed_at = iso; post.stage = m->stage;
     memset(&env, 0, sizeof env);
-    env.ref = ne_env_ref; env.exists = ne_env_exists;
+    env.ref = ne_env_ref; env.exists = ne_env_exists; env.can_commit = ne_env_can_commit;
     ne_item_pct(90);
     if (nin == 0) { snprintf(msg, mcap, "%s", first_err[0] ? first_err : "Nothing in this post could be downloaded."); rc = -1; }
     else {
@@ -713,7 +725,7 @@ static int ne_toggle(int id, char *msg, size_t mcap) {
 static int ne_queue_step(void) {
     int idx, id, in_cat, rc, status = 0, refetched = 0;
     char title[80], msg[200];
-    if (ne_locked()) return 0;                                  /* online: the downloads wait (the screen says so) */
+    if (!NE.network || ne_locked()) return 0;                   /* local-only callers never start downloads */
     ne_lock();
     if (!NE.dq.processing) { ne_unlock(); return 0; }
     idx = nq_next(&NE.dq);
@@ -762,24 +774,89 @@ finished:
     return 1;
 }
 
+/* Caller holds the lock. Row IDs are never recycled: a stale UI action cannot
+ * install a different zip when an absent slot is reused. */
+static int ne_incoming_index(int id) {
+    int i;
+    for (i = 0; i < NE.nincoming; ++i) if (NE.incoming[i].id == id) return i;
+    return -1;
+}
+
+static void ne_scan_incoming(void) {
+    nlz_file *files = (nlz_file *) calloc(NLZ_INCOMING_MAX, sizeof *files);
+    int n, i, j, changed = 0, oldpresent[NLZ_INCOMING_MAX] = {0};
+    if (!files) return;
+    n = nlz_scan_incoming(NE.mods, files, NLZ_INCOMING_MAX);
+    ne_lock();
+    for (j = 0; j < NE.nincoming; ++j) {
+        oldpresent[j] = NE.incoming[j].present;
+        NE.incoming[j].present = 0;
+        for (i = 0; i < n; ++i) if (nc_ieq(NE.incoming[j].file.name, files[i].name)) NE.incoming[j].present = 1;
+        if (oldpresent[j] != NE.incoming[j].present) changed = 1;
+    }
+    for (i = 0; i < n; ++i) {
+        for (j = 0; j < NE.nincoming; ++j) if (nc_ieq(NE.incoming[j].file.name, files[i].name)) break;
+        if (j == NE.nincoming) {
+            for (j = 0; j < NE.nincoming; ++j) if (!NE.incoming[j].present && NE.incoming[j].state != 1) break;
+            if (j == NLZ_INCOMING_MAX) continue;
+            if (j == NE.nincoming) ++NE.nincoming;
+            memset(&NE.incoming[j], 0, sizeof NE.incoming[j]);
+            NE.incoming[j].id = --NE.next_local_id;
+            changed = 1;
+        }
+        if (NE.incoming[j].file.size != files[i].size || NE.incoming[j].file.stamp != files[i].stamp) {
+            NE.incoming[j].state = 0; NE.incoming[j].msg[0] = 0; changed = 1;
+        }
+        NE.incoming[j].file = files[i]; NE.incoming[j].present = 1;
+    }
+    if (changed) ++NE.ver;
+    ne_unlock();
+    if (changed) ne_log("local zip: %d file(s) offered in %s/_incoming", n, NE.mods);
+    free(files);
+}
+
+static int ne_install_local(const ne_job *j, char *msg, size_t mcap) {
+    nc_loose_env env = {0};
+    nc_loose_result res = {0};
+    int rc;
+    env.ref = ne_env_ref; env.exists = ne_env_exists; env.can_commit = ne_env_can_commit;
+    if (ne_locked()) { snprintf(msg, mcap, "Mods cannot be installed while you are online. Try again offline."); rc = -1; }
+    else rc = nlz_install_file(NE.mods, j->path, &env, &res, msg, mcap, ne_log_line);
+    ne_lock();
+    NE.local_state = rc == 0 ? 2 : 3;
+    if (rc == 0 || res.installed > 0) NE.restart = 1;
+    nc_copy(NE.local_msg, sizeof NE.local_msg, msg);
+    { int at = ne_incoming_index(j->id);
+    if (at >= 0) {
+        ne_incoming *f = &NE.incoming[at];
+        f->state = NE.local_state; nc_copy(f->msg, sizeof f->msg, msg);
+    }
+    }
+    ++NE.ver;
+    ne_unlock();
+    return rc;
+}
+
 static DWORD WINAPI ne_files_thread(LPVOID arg) {
     (void) arg;
     nc_mkdirs(NE.art);
     nc_mkdirs(NE.thumbs);
     while (!NE.quit) {
         ne_job j;
-        int have = 0;
+        int have = 0, scan = 0;
         ne_save_dirty();
         ne_lock();
+        if (NE.incoming_want && !ne_locked()) { scan = 1; NE.incoming_want = 0; }
         if (NE.qh != NE.qt) { j = NE.q[NE.qh]; NE.qh = (NE.qh + 1) % NE_QUEUE; have = 1; }
         ne_unlock();
+        if (scan) ne_scan_incoming();
         if (have) {
-            char msg[200];
-            int rc = j.kind == 4 ? ne_toggle(j.id, msg, sizeof msg) : ne_uninstall(j.id, msg, sizeof msg);
+            char msg[400];
+            int rc = j.kind == 5 ? ne_install_local(&j, msg, sizeof msg) : j.kind == 4 ? ne_toggle(j.id, msg, sizeof msg) : ne_uninstall(j.id, msg, sizeof msg);
             ne_scan_installed();
             if (rc == 0) { ne_lock(); NE.restart = 1; ne_unlock(); }
             ne_set_job(rc == 0 ? 2 : 3, msg, 1, 1);
-            ne_log("%s %d: %s", j.kind == 4 ? "toggle" : "uninstall", j.id, msg);
+            ne_log("%s %d: %s", j.kind == 5 ? "local zip" : j.kind == 4 ? "toggle" : "uninstall", j.id, msg);
             continue;
         }
         if (ne_queue_step()) continue;
@@ -936,7 +1013,7 @@ static DWORD WINAPI ne_img_thread(LPVOID arg) {
 /* ---- the screen's source (the game thread) ---- */
 
 /* the game thread: start the threads once, and ask for a sync (the sync itself keeps the 10-minute rule) */
-static void ne_open(void) {
+static void ne_start(int network) {
     if (!NE.inited) {
         const char *api = getenv("MELEE_NUCLEUS_API");
         DWORD tid;
@@ -955,15 +1032,46 @@ static void ne_open(void) {
         nq_cache_trim(NE.thumbs, NE.cache_cap);
         nq_cache_trim(NE.dl, NE_DL_CAP);
         ne_scan_installed();
-        NE.th_sync = CreateThread(NULL, 0, ne_sync_thread, NULL, 0, &tid);
+        NE.incoming_want = 1;
         NE.th_files = CreateThread(NULL, 0, ne_files_thread, NULL, 0, &tid);
-        NE.th_img[0] = CreateThread(NULL, 0, ne_img_thread, NULL, 0, &tid);
-        NE.th_img[1] = CreateThread(NULL, 0, ne_img_thread, NULL, 0, &tid);
-        gw_log("nucleus: browser started; cache %s, api %s", NE.dir, nc_api_base);
+        gw_log("nucleus: file worker started; local zip folder %s/_incoming", NE.mods);
         gw_log("nucleus: queue: %d entr%s restored%s%s%s", nloaded < 0 ? 0 : nloaded, nloaded == 1 ? "y" : "ies", nloaded < 0 ? " (queue.json was unreadable and was set aside as queue.json.bad)" : "",
                NE.dq.processing && nq_pending(&NE.dq) > 0 ? "; downloads were running and resume now" : "", cleaned ? "; removed an unfinished install folder" : "");
     }
-    if (!gs_ui_netplay()) { ne_lock(); if (!NE.sync_want && !NE.syncing) NE.sync_want = 1; ne_unlock(); }
+    if (network && !NE.network) {
+        DWORD tid;
+        NE.network = 1;
+        NE.th_sync = CreateThread(NULL, 0, ne_sync_thread, NULL, 0, &tid);
+        NE.th_img[0] = CreateThread(NULL, 0, ne_img_thread, NULL, 0, &tid);
+        NE.th_img[1] = CreateThread(NULL, 0, ne_img_thread, NULL, 0, &tid);
+        gw_log("nucleus: browser started; cache %s, api %s", NE.dir, nc_api_base);
+    }
+    if (network && !gs_ui_netplay()) { ne_lock(); if (!NE.sync_want && !NE.syncing) NE.sync_want = 1; ne_unlock(); }
+}
+
+static void ne_open(void) { ne_start(1); }
+
+static int ne_queue_local(const char *path, int id, char *msg, size_t mcap) {
+    ne_job j = {0};
+    DWORD n;
+    if (ne_locked()) { snprintf(msg, mcap, "Mods cannot be installed while you are online."); return 0; }
+    if (!nlz_path_ok(path)) { snprintf(msg, mcap, "Choose a local .zip file, not a URL or network path."); return 0; }
+    n = GetFullPathNameA(path, sizeof j.path, j.path, NULL);
+    if (!n || n >= sizeof j.path || !nlz_path_ok(j.path)) { snprintf(msg, mcap, "Local zip path is too long or invalid."); return 0; }
+    ne_start(0);
+    if (!NE.th_files) { snprintf(msg, mcap, "Could not start the mod installer worker."); return 0; }
+    ne_lock();
+    if (NE.local_state == 1) { ne_unlock(); snprintf(msg, mcap, "A local zip is already being installed. Wait for it to finish."); return 0; }
+    j.kind = 5; j.id = id;
+    if (!ne_enqueue(j)) { ne_unlock(); snprintf(msg, mcap, "The installer is busy. Try again shortly."); return 0; }
+    NE.local_state = 1; nc_copy(NE.local_path, sizeof NE.local_path, j.path);
+    nc_copy(NE.local_msg, sizeof NE.local_msg, "Queued local zip. Wait for the install result before restarting.");
+    { int at = ne_incoming_index(id); if (at >= 0) { NE.incoming[at].state = 1; nc_copy(NE.incoming[at].msg, 320, NE.local_msg); } }
+    ++NE.ver;
+    ne_unlock();
+    snprintf(msg, mcap, "Queued local zip. Use gd.mods_install_status() for the result.");
+    gw_log("mods: local zip queued: %s", j.path);
+    return 1;
 }
 
 static void ne_fill_row_from_mod(const nc_mod *m, const nc_file *files, AtNcRow *r) {
@@ -999,6 +1107,25 @@ static int ne_src_row(void *u, int id, AtNcRow *r) {
     int found, i, inst = -1, qi;
     const char *why = "";
     (void) u;
+    if (id < 0) {
+        ne_incoming *f;
+        int at;
+        ne_lock();
+        at = ne_incoming_index(id);
+        if (at < 0 || !NE.incoming[at].present) { ne_unlock(); return 0; }
+        f = &NE.incoming[at];
+        memset(r, 0, sizeof *r);
+        r->id = id; r->local_file = 1; r->tex = r->thumb = -1; r->qstate = AT_NC_Q_NONE;
+        r->installable = f->state != 1;
+        r->state = f->state == 2 ? AT_NC_ST_INSTALLED : AT_NC_ST_NONE;
+        nc_ascii(r->title, sizeof r->title, f->file.name);
+        nc_copy(r->kind, sizeof r->kind, "Local zip"); nc_copy(r->author, sizeof r->author, "local file");
+        nc_copy(r->desc, sizeof r->desc, f->msg[0] ? f->msg : "Install this zip from the mods/_incoming folder. The original zip stays here. Restart after installing; manage installed mods in Mods.");
+        if (f->state == 1) { r->qstate = AT_NC_Q_RUNNING; nc_copy(r->reason, sizeof r->reason, "Installing local zip"); }
+        if (f->state == 3) { r->qstate = AT_NC_Q_FAILED; nc_copy(r->qreason, sizeof r->qreason, f->msg); }
+        ne_unlock();
+        return 1;
+    }
     found = ne_copy_mod(id, &m, files);
     ne_lock();
     for (i = 0; i < NE.ninst; ++i) if (NE.inst[i].id == id) { inst = i; break; }
@@ -1098,7 +1225,9 @@ static int ne_src_filter(void *u, const AtNcFilter *f, int *ids, int cap, unsign
     (void) u;
     ne_lock();
     *version = NE.ver ? NE.ver : 1;
-    if (f->view == AT_NC_VIEW_QUEUE) {
+    if (f->view == AT_NC_VIEW_INCOMING) {
+        for (i = 0; i < NE.nincoming && n < cap; ++i) if (NE.incoming[i].present) ids[n++] = NE.incoming[i].id;
+    } else if (f->view == AT_NC_VIEW_QUEUE) {
         for (i = 0; i < NE.dq.n && n < cap; ++i) ids[n++] = NE.dq.it[i].id;
     } else if (f->view == AT_NC_VIEW_INSTALLED) {
         ne_inst_key keys[NE_INST_MAX];
@@ -1240,6 +1369,20 @@ static int ne_queue_act(int id, int what) {
 static int ne_src_act(void *u, int id, int what) {
     ne_job j;
     (void) u;
+    if (what == AT_NC_ACT_LOCAL_SCAN) { ne_lock(); NE.incoming_want = 1; ne_unlock(); return 1; }
+    if (what == AT_NC_ACT_LOCAL_INSTALL) {
+        char path[500], msg[400];
+        int ok, at;
+        ne_lock();
+        at = ne_incoming_index(id);
+        if (id >= 0 || at < 0 || !NE.incoming[at].present) { ne_unlock(); ne_say(3, "That zip is no longer in _incoming."); return 0; }
+        snprintf(path, sizeof path, "%s/_incoming/%s", NE.mods, NE.incoming[at].file.name);
+        ne_unlock();
+        ok = ne_queue_local(path, id, msg, sizeof msg);
+        ne_say(ok ? 1 : 3, msg);
+        return ok;
+    }
+    if (id < 0) return 0; /* local files have no post page, download or uninstall-by-post action */
     if (what == AT_NC_ACT_PAGE) {
         AtNcRow r;
         char url[200];

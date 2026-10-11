@@ -7,7 +7,7 @@
 
 /* ---- a fake Nucleus: rows, a filter, a download queue that behaves like the engine's, and an action log ---- */
 #define FN_MAX 400
-typedef struct { int id, type, fighter, state, downloads, nshots; char title[96], author[48]; } FRow;
+typedef struct { int id, type, fighter, state, downloads, nshots, local_file; char title[96], author[48]; } FRow;
 static FRow F[FN_MAX];
 static int fn_n, fn_ver = 1, fn_syncing, fn_locked, fn_restart, fn_job_state;
 static char fn_job_msg[140];
@@ -58,6 +58,7 @@ static int fn_row(void *u, int id, AtNcRow *r)
     memset(r, 0, sizeof *r);
     r->id = id; r->tex = -1; r->thumb = -1; r->state = F[i].state; r->downloads = F[i].downloads; r->likes = 3; r->ncostumes = F[i].type == 0 ? 2 : 0; r->nshots = F[i].nshots;
     r->qstate = AT_NC_Q_NONE;
+    r->local_file = F[i].local_file;
     snprintf(r->title, sizeof r->title, "%s", F[i].title); snprintf(r->author, sizeof r->author, "%s", F[i].author);
     snprintf(r->fighter, sizeof r->fighter, "%s", F[i].fighter >= 0 ? FL[F[i].fighter] : "");
     snprintf(r->kind, sizeof r->kind, "%s", F[i].type == 0 ? "Costume" : "Stage skin");
@@ -188,7 +189,7 @@ static void rows(void)
     AtNcSrc s = src();
     reset(&s);
     CHECK(SC.primary == AT_PRIMARY_LIST && SC.chapter == 4 && strcmp(SC.title, "NUCLEUS") == 0 && SC.n_parents == 2 && SC.preset == AT_PRESET_NONE);
-    CHECK(SC.n_tabs == 8 && strcmp(SC.tabs[0].name, "COSTUMES") == 0 && strcmp(SC.tabs[6].name, "INSTALLED") == 0 && strcmp(SC.tabs[7].name, "QUEUE") == 0 && VW.tab == 0);
+    CHECK(SC.n_tabs == 9 && strcmp(SC.tabs[0].name, "COSTUMES") == 0 && strcmp(SC.tabs[6].name, "INSTALLED") == 0 && strcmp(SC.tabs[7].name, "QUEUE") == 0 && strcmp(SC.tabs[8].name, "INCOMING") == 0 && VW.tab == 0);
     CHECK(ST.n == 300 && SC.tabs[0].count == 300);
     CHECK(strcmp(SC.items[0].id, "search") == 0 && strcmp(SC.items[1].id, "fighter") == 0 && strcmp(SC.items[2].id, "show") == 0 && strcmp(SC.items[3].id, "sort") == 0);
     CHECK(strcmp(SC.items[4].title, "Costume 000") == 0 && SC.items[4].thumb_on && SC.items[4].row_h == AT_NC_ROW_H);
@@ -228,9 +229,11 @@ static void tabs_and_filters(void)
     press(&s, ev(AT_EV_PAGE, 1, 0));
     CHECK(ST.tab == 7 && ST.f.view == AT_NC_VIEW_QUEUE && ST.n == 0 && strcmp(SC.items[0].id, "none") == 0);        /* QUEUE: empty, and it says so */
     press(&s, ev(AT_EV_PAGE, 1, 0));
+    CHECK(ST.tab == AT_NC_TAB_INCOMING && ST.f.view == AT_NC_VIEW_INCOMING);
+    press(&s, ev(AT_EV_PAGE, 1, 0));
     CHECK(ST.tab == 0 && ST.n == 300);                                  /* wraps */
     press(&s, ev(AT_EV_PAGE, -1, 0));
-    CHECK(ST.tab == 7);
+    CHECK(ST.tab == AT_NC_TAB_INCOMING);
     press(&s, ev(AT_EV_PAGE, 1, 0));
     /* the fighter row: right steps through Any, Mario... and wraps; left goes back */
     ST.sel = 1; ST.top = 0; build(&s);
@@ -595,7 +598,7 @@ static void render_fit(void)
                     CHECK(y0 >= hits.h[i].r.y - 2.5f && y1 <= hits.h[i].r.y + hits.h[i].r.h + 0.5f);          /* inside the row vertically too */
                 }
             }
-            { int tabs = 0; for (i = 0; i < hits.n; i++) if (hits.h[i].kind == AT_HIT_TAB) tabs++; CHECK(tabs == 8); }       /* the six tabs fit and are all hit-testable */
+            { int tabs = 0; for (i = 0; i < hits.n; i++) if (hits.h[i].kind == AT_HIT_TAB) tabs++; CHECK(tabs == AT_NC_TABS); }       /* the six tabs fit and are all hit-testable */
             CHECK(lint_text_overlaps() == 0);
             CHECK(find_text("Mods from SSBM Nucleus - ssbmnucleus.net") != NULL);                           /* the credit line is drawn */
             { int imgs = REC.ni; CHECK(imgs >= 3); }                                                           /* pictures were drawn for the rows with one */
@@ -649,5 +652,26 @@ int main(void)
     detail();
     window_walk();
     render_fit();
+    {
+        AtNcSrc s = src();
+        AtNcAction a;
+        AtEvent e = {0};
+        reset(&s);
+        F[0].local_file = 1;
+        fq_n = 1; fq_id[0] = 1001; fq_st[0] = AT_NC_Q_QUEUED;
+        ST.tab = AT_NC_TAB_INCOMING; at_nc_apply_tab(&ST);
+        CHECK(ST.f.view == AT_NC_VIEW_INCOMING && at_nc_ctl(&ST) == 0);
+        ST.detail_id = 1000; ST.mode = 1; ST.detail_sel = 1;
+        CHECK(at_nc_detail_build(&s, &ST, &SC, &VW, 1000.0));
+        CHECK(strcmp(SC.items[1].label, "Install") == 0);
+        CHECK(!has_key('S'));
+        for (int k = 0; k < SC.n_items; ++k) CHECK(strcmp(SC.items[k].id, "page") != 0);
+        e.type = AT_EV_ACCEPT;
+        at_nc_detail_event(&s, &ST, &e, 1000.0, &a);
+        CHECK(a.kind == AT_NA_ACT && a.what == AT_NC_ACT_LOCAL_INSTALL);
+        e.type = AT_EV_START;
+        at_nc_detail_event(&s, &ST, &e, 1000.0, &a);
+        CHECK(a.kind == AT_NA_NONE);
+    }
     ATLAS_DONE("atlas nucleus");
 }

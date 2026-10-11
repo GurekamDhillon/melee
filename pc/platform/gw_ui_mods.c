@@ -91,7 +91,10 @@ static int word_in(const char *list, const char *id)
     return 0;
 }
 
-static int is_locked(const AtModsSrc *s) { return s->locked != NULL && s->locked(s->user) != 0; }
+static int is_locked(const AtModsSrc *s) { return s->locked != NULL ? s->locked(s->user) : 0; }
+static const char *lock_note(const AtModsSrc *s) {
+    return is_locked(s) == 2 ? "Wait for installs, then restart." : "Mods cannot be changed while online.";
+}
 
 static void cat(char *out, int cap, const char *fmt, const char *a)
 {
@@ -210,7 +213,7 @@ int at_mods_build(const AtModsSrc *s, AtModsState *st, AtScreen *sc, AtView *vw,
         vw->note.from_ms = st->note_until - 3000.0;
         vw->note.until_ms = st->note_until;
     } else if (locked) {
-        snprintf(vw->note.text, sizeof vw->note.text, "%s", "Locked while online");
+        snprintf(vw->note.text, sizeof vw->note.text, "%s", locked == 2 ? "Wait for installs, then restart" : "Locked while online");
         vw->note.kind = AT_NOTE_WARN;
         vw->note.from_ms = now_ms;
         vw->note.until_ms = now_ms + 1000.0;
@@ -255,7 +258,7 @@ static void toggle(const AtModsSrc *s, AtModsState *st, int m, int on, double no
     unsigned char before[AT_MODS_MAX];
     char on_list[AT_STR], off_list[AT_STR], text[AT_STR];
     int n = s->count(s->user), i, changed, saved;
-    if (is_locked(s)) { say(st, "Mods cannot be changed while online.", AT_NOTE_WARN, now_ms); return; }
+    if (is_locked(s)) { say(st, lock_note(s), AT_NOTE_WARN, now_ms); return; }
     if (n > AT_MODS_MAX) n = AT_MODS_MAX;
     for (i = 0; i < n; i++) before[i] = (unsigned char) (s->enabled(s->user, i) != 0);
     changed = s->set_enabled(s->user, m, on);
@@ -341,7 +344,7 @@ void at_mods_event(const AtModsSrc *s, AtModsState *st, const AtEvent *e, double
         act->kind = AT_MA_DETAIL; act->arg = m;
     } else if (e->type == AT_EV_ALT && e->a == 'X') {
         int status = s->status(s->user, m);
-        if (is_locked(s)) { say(st, "Mods cannot be changed while online.", AT_NOTE_WARN, now_ms); return; }
+        if (is_locked(s)) { say(st, lock_note(s), AT_NOTE_WARN, now_ms); return; }
         if (status == AT_MOD_CONFLICT) {
             toggle(s, st, m, 0, now_ms);
         } else if (status == AT_MOD_MISSING_DEP) {

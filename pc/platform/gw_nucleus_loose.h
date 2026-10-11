@@ -103,10 +103,17 @@ typedef struct {
     int (*ref)(void *user, const char *disc_path, uint8_t **buf, size_t *len);
     /* does the disc have this file: 1 and its size, else 0 */
     int (*exists)(void *user, const char *disc_path, size_t *len);
+    /* Recheck immediately before publishing staged files; NULL for offline tools. */
+    int (*can_commit)(void *user);
 } nc_loose_env;
 
+static int nc_install_allowed(const nc_loose_env *env, char *err, size_t cap) {
+    if (!env || !env->can_commit || env->can_commit(env->user)) return 1;
+    snprintf(err, cap, "Install stopped: you went online or the game is closing. Try again offline.");
+    return 0;
+}
+
 typedef struct { int file_id, cat; const char *filename, *stem; const uint8_t *data; size_t len; } nc_in_file;
-typedef struct { int id; const char *title, *author, *page, *updated, *installed_at, *stage; } nc_post;
 
 #define NC_SIM_MIN 55            /* % of symbol names two archives share for one to be a skin of the other */
 static const char *const nc_stage_probe[] = { "GrNBa", "GrNLa", "GrSt", "GrOp", "GrPs", "GrIz" };
@@ -232,6 +239,7 @@ static int nc_list_subdirs(const char *mods_dir, char names[][64], int cap) {
     if (h == INVALID_HANDLE_VALUE) return 0;
     do {
         if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || fd.cFileName[0] == '.' || n >= cap || strlen(fd.cFileName) > 63) continue;
+        if (nc_ieq(fd.cFileName, "_incoming")) continue;
         snprintf(names[n++], 64, "%s", fd.cFileName);
     } while (FindNextFileA(h, &fd));
     FindClose(h);
@@ -242,6 +250,7 @@ static int nc_list_subdirs(const char *mods_dir, char names[][64], int cap) {
     while ((e = readdir(d)) != NULL && n < cap) {
         char path[700];
         if (e->d_name[0] == '.' || strlen(e->d_name) > 63) continue;
+        if (nc_ieq(e->d_name, "_incoming")) continue;
         snprintf(path, sizeof path, "%s/%s", mods_dir, e->d_name);
         if (nc_is_dir(path)) snprintf(names[n++], 64, "%s", e->d_name);
     }
@@ -270,6 +279,7 @@ static int nc_mod_targets(const char *mods_dir, const char *id, char targets[][6
     root = nj_parse(&d, text);
     if (root >= 0) {
         nu = nj_get(&d, root, "nucleus");
+        if (nu < 0) nu = nj_get(&d, root, "local");
         ta = nu >= 0 ? nj_get(&d, nu, "targets") : -1;
         if (ta >= 0 && d.n[ta].type == NJ_ARR)
             for (e = d.n[ta].first; e >= 0 && n < cap; e = d.n[e].next) if (d.n[e].type == NJ_STR) snprintf(targets[n++], 64, "%s", d.pool + d.n[e].str);
@@ -394,6 +404,7 @@ static void nc_loose_json(nj_buf *b, const char *mod_id, const char *kind, const
     char desc[360];
     snprintf(desc, sizeof desc, "By %s. From SSBM Nucleus: %s/post/%d.%s", post->author[0] ? post->author : "unknown", NC_SITE, post->id,
              !strcmp(cat, "stage") ? " Online, both players need the same skin for the stage to be offered." : !strcmp(cat, "menu") ? " Menu files are global: one active per file." : "");
+    if (post->local_key) snprintf(desc, sizeof desc, "From local file: %s. One active mod per disc file.", post->local_file);
     nj_puts(b, "{\n  \"id\": "); nj_qstr(b, mod_id);
     nj_puts(b, ",\n  \"name\": "); nj_qstr(b, name);
     nj_puts(b, ",\n  \"version\": "); nj_qstr(b, post->updated);
@@ -402,11 +413,7 @@ static void nc_loose_json(nj_buf *b, const char *mod_id, const char *kind, const
     nj_puts(b, ",\n  \"description\": "); nj_qstr(b, desc);
     nj_puts(b, ",\n  \"conflicts\": [");
     for (i = 0; i < ncf; ++i) { if (i) nj_puts(b, ", "); nj_qstr(b, conflicts[i]); }
-    nj_puts(b, "],\n  \"source\": \"nucleus\",\n  \"nucleus\": {\n    \"id\": ");
-    nj_printf(b, "%d,\n    \"author\": ", post->id); nj_qstr(b, post->author);
-    nj_puts(b, ",\n    \"page_url\": "); nj_qstr(b, post->page);
-    nj_puts(b, ",\n    \"updated_at\": "); nj_qstr(b, post->updated);
-    nj_puts(b, ",\n    \"installed_at\": "); nj_qstr(b, post->installed_at);
+    nj_puts(b, "]"); nc_post_source(b, post);
     nj_puts(b, ",\n    \"category\": "); nj_qstr(b, cat);
     nj_puts(b, ",\n    \"stage\": "); nj_qstr(b, stage_name);
     nj_puts(b, ",\n    \"targets\": [");
@@ -472,7 +479,7 @@ static int nc_loose_install(const char *mods_dir, const nc_post *post, const nc_
             }
         }
         snprintf(cat, sizeof cat, "%s", !strncmp(pl[g].group, "stage", 5) ? "stage" : pl[g].group);
-        snprintf(mod_id, sizeof mod_id, "nucleus-%d-%s", post->id, pl[g].group);
+        nc_post_mod_id(post, pl[g].group, mod_id, sizeof mod_id);
         snprintf(grp_name, sizeof grp_name, "%s", sub[0].what);
         if (!strcmp(cat, "stage")) snprintf(title, sizeof title, "%.60s", post->title[0] ? post->title : "Stage skin");
         else snprintf(title, sizeof title, "%.60s", post->title[0] ? post->title : "Nucleus mod");
@@ -508,6 +515,7 @@ static int nc_loose_install(const char *mods_dir, const nc_post *post, const nc_
             snprintf(tmp, sizeof tmp, "%s/mod.json", stage_dir); nc_fix_slashes(tmp);
             if (b.bad || nc_write_file(tmp, b.s, b.n) != 0) { free(b.s); nc_rmtree(stage_dir); if (!res->first_err[0]) snprintf(res->first_err, sizeof res->first_err, "Cannot write mod.json."); continue; }
             free(b.s);
+            if (!nc_install_allowed(env, res->first_err, sizeof res->first_err)) { nc_rmtree(stage_dir); ++res->refused; break; }
             if (nc_swap_dir(stage_dir, final_dir) != 0) {
                 nc_rmtree(stage_dir);
                 snprintf(res->first_err, sizeof res->first_err, "Could not replace %s (the game may be using it). Restart and try again.", mod_id);

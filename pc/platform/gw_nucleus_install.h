@@ -141,6 +141,8 @@ static const char *nz_base(const char *p, size_t n, size_t *bn) {
     return p + i;
 }
 
+#include "gw_nucleus_zip.h"
+
 /* Extracts the entry named `want` (the API's filename; the full path first, then a unique match on the file name alone) into a malloc'd buffer. */
 static int nc_zip_extract(const uint8_t *z, size_t zn, const char *want, uint8_t **out, size_t *outlen, size_t max_out, char *err, size_t ecap) {
     size_t eocd, i, cd, wl = strlen(want), wbn, found_hdr = 0;
@@ -148,9 +150,10 @@ static int nc_zip_extract(const uint8_t *z, size_t zn, const char *want, uint8_t
     int hits = 0;
     const char *wb = nz_base(want, wl, &wbn);
     *out = NULL; *outlen = 0;
+    if (nc_zip_list(z, zn, NULL, 0, err, ecap) < 0) return -1;
     if (zn < 22 || zn > 0x7FFFFFFFu) { snprintf(err, ecap, "not a zip file"); return -1; }
     for (i = zn - 22, eocd = (size_t) -1; ; --i) {
-        if (nz_u32(z + i) == 0x06054B50u) { eocd = i; break; }
+        if (nz_u32(z + i) == 0x06054B50u && i + 22 + nz_u16(z + i + 20) == zn) { eocd = i; break; }
         if (i == 0 || zn - i > 22 + 65535) break;
     }
     if (eocd == (size_t) -1) { snprintf(err, ecap, "not a zip file"); return -1; }
@@ -189,12 +192,15 @@ static int nc_zip_extract(const uint8_t *z, size_t zn, const char *want, uint8_t
             uint8_t *b = (uint8_t *) malloc(usz ? usz : 1);
             if (!b || csz != usz) { free(b); snprintf(err, ecap, "damaged zip entry"); return -1; }
             memcpy(b, z + data, usz);
+            if (nz_crc(b, usz) != nz_u32(z + h + 16)) { free(b); snprintf(err, ecap, "zip checksum mismatch"); return -1; }
             *out = b; *outlen = usz;
             return 0;
         } else if (method == 8) {
-            int ol = 0;
-            char *b = stbi_zlib_decode_noheader_malloc((const char *) z + data, (int) csz, &ol);
+            /* A corrupt deflate stream must not grow beyond its declared size. */
+            char *b = (char *) malloc(usz ? usz : 1);
+            int ol = b ? stbi_zlib_decode_noheader_buffer(b, (int) usz, (const char *) z + data, (int) csz) : -1;
             if (!b || (uint32_t) ol != usz) { if (b) stbi_image_free(b); snprintf(err, ecap, "could not unpack the file"); return -1; }
+            if (nz_crc((const uint8_t *) b, usz) != nz_u32(z + h + 16)) { free(b); snprintf(err, ecap, "zip checksum mismatch"); return -1; }
             *out = (uint8_t *) b; *outlen = (size_t) ol;
             return 0;
         }
@@ -318,8 +324,37 @@ typedef struct {
     int like, file_id;
 } nc_skin_costume;
 
+/* local_key is a content hash, never a post id. A NULL key retains Nucleus's
+ * namespace and metadata; callers zero-initialize this record. */
+typedef struct {
+    int id;
+    const char *title, *author, *page, *updated, *installed_at, *stage;
+    const char *local_key, *local_file;
+} nc_post;
+
+static void nc_post_mod_id(const nc_post *p, const char *group, char *out, size_t cap) {
+    if (p->local_key) snprintf(out, cap, "local-%s-%s", p->local_key, group);
+    else snprintf(out, cap, "nucleus-%d-%s", p->id, group);
+}
+
+/* Begin the provenance block, leaving it open for category/targets/verdict. */
+static void nc_post_source(nj_buf *b, const nc_post *p) {
+    if (p->local_key) {
+        nj_puts(b, ",\n  \"source\": \"local file\",\n  \"local\": {\n    \"file\": "); nj_qstr(b, p->local_file);
+        nj_puts(b, ",\n    \"hash\": "); nj_qstr(b, p->local_key);
+        nj_puts(b, ",\n    \"author\": "); nj_qstr(b, p->author);
+    } else {
+        nj_puts(b, ",\n  \"source\": \"nucleus\",\n  \"nucleus\": {\n    \"id\": ");
+        nj_printf(b, "%d,\n    \"author\": ", p->id); nj_qstr(b, p->author);
+        nj_puts(b, ",\n    \"page_url\": "); nj_qstr(b, p->page);
+    }
+    nj_puts(b, ",\n    \"updated_at\": "); nj_qstr(b, p->updated);
+    nj_puts(b, ",\n    \"installed_at\": "); nj_qstr(b, p->installed_at);
+}
+
 typedef struct {
     int nucleus_id;
+    const nc_post *post;                 /* local skins use the same manifest writer */
     char mod_id[64], title[80], author[40], page[120], updated[24], installed_at[24], target[24];
     int n;
     nc_skin_costume c[NC_MAX_FILES_PER_MOD];
@@ -345,16 +380,20 @@ static void nc_skin_json(const nc_skin_mod *s, nj_buf *b) {
     int i;
     char desc[200];
     snprintf(desc, sizeof desc, "By %s. From SSBM Nucleus: %s/post/%d", s->author[0] ? s->author : "unknown", NC_SITE, s->nucleus_id);
+    if (s->post && s->post->local_key) snprintf(desc, sizeof desc, "From local file: %s", s->post->local_file);
     nj_puts(b, "{\n  \"id\": "); nj_qstr(b, s->mod_id);
     nj_puts(b, ",\n  \"name\": "); nj_qstr(b, s->title);
     nj_puts(b, ",\n  \"version\": "); nj_qstr(b, s->updated);
     nj_puts(b, ",\n  \"kind\": \"skin\",\n  \"authors\": "); nj_qstr(b, s->author);
     nj_puts(b, ",\n  \"description\": "); nj_qstr(b, desc);
+    if (s->post) nc_post_source(b, s->post);
+    else {
     nj_puts(b, ",\n  \"source\": \"nucleus\",\n  \"nucleus\": {\n    \"id\": ");
     nj_printf(b, "%d,\n    \"author\": ", s->nucleus_id); nj_qstr(b, s->author);
     nj_puts(b, ",\n    \"page_url\": "); nj_qstr(b, s->page);
     nj_puts(b, ",\n    \"updated_at\": "); nj_qstr(b, s->updated);
     nj_puts(b, ",\n    \"installed_at\": "); nj_qstr(b, s->installed_at);
+    }
     nj_puts(b, ",\n    \"fighter\": "); nj_qstr(b, s->target);
     nj_puts(b, ",\n    \"files\": [");
     for (i = 0; i < s->n; ++i) nj_printf(b, "%s%d", i ? ", " : "", s->c[i].file_id);

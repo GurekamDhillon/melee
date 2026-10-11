@@ -185,12 +185,11 @@ static int nc_fighter_install(const char *mods_dir, const nc_post *post, const n
                               char *msg, size_t mcap, void (*logf)(const char *line)) {
     int i;
     char line[400];
-    (void) env;
     memset(res, 0, sizeof *res);
     for (i = 0; i < nin; ++i) {
         uint8_t *js = NULL, *dat = NULL, *aj = NULL, *cz = NULL, *cdat[32];
-        size_t jl = 0, dl = 0, al = 0, czl = 0, cl[32];
-        char err[200], mod_id[96], stem[16], stage_dir[620], final_dir[620], tmp[760], conf[16][64], target[64], tname[40][64];
+        size_t jl = 0, dl = 0, al = 0, czl = 0, cl[32], held;
+        char err[200], mod_id[96], stem[24], stage_dir[620], final_dir[620], tmp[760], conf[16][64], target[64], tname[40][64];
         nf_fighter f;
         nc_symset cs;
         nj_buf b, t;
@@ -208,9 +207,14 @@ static int nc_fighter_install(const char *mods_dir, const nc_post *post, const n
         if (nc_zip_extract(in[i].data, in[i].len, "sound.zip", &probe, &probel, 64u * 1024 * 1024, err, sizeof err) == 0) { f.have_sound_zip = 1; free(probe); }
         nf_verdict(&f);
         { /* the slot cap: one m-ex slot per fighter mod; the CSS and the runtime tables hold NF_MAX_MOD_FIGHTERS of them */
-            static nc_inst others[128];
-            int on = nc_inst_scan(mods_dir, others, 128), have = 0, q;
-            for (q = 0; q < on; ++q) if (!strcmp(others[q].cat, "cfighter") && others[q].id != post->id) ++have;
+            char others[256][64], path[760];
+            int on = nc_list_subdirs(mods_dir, others, 256), have = 0, q;
+            nc_post_mod_id(post, "fighter", mod_id, sizeof mod_id);
+            for (q = 0; q < on; ++q) {
+                if (nc_ieq(others[q], mod_id)) continue;
+                snprintf(path, sizeof path, "%s/%s/mexfighter.txt", mods_dir, others[q]);
+                if (nc_file_exists(path)) ++have;
+            }
             if (have >= NF_MAX_MOD_FIGHTERS) {
                 snprintf(res->first_err, sizeof res->first_err, "Too many custom fighters: %d are installed and the game holds %d. Remove one from the Mods list first.", have, NF_MAX_MOD_FIGHTERS);
                 ++res->refused; continue;
@@ -231,23 +235,30 @@ static int nc_fighter_install(const char *mods_dir, const nc_post *post, const n
         if (nc_zip_extract(in[i].data, in[i].len, f.anim, &aj, &al, 64u * 1024 * 1024, err, sizeof err) < 0) {
             snprintf(res->first_err, sizeof res->first_err, "The package has no %s (%s).", f.anim, err); ++res->refused; free(dat); continue;
         }
+        held = dl + al;
         for (c = 0; c < f.ncost; ++c) { /* a costume file is a .dat in the zip, or a zip of that .dat */
             char zn[80];
+            /* Nested zips and repeated references both consume output space.
+             * Bound the next allocation by what remains of the package cap. */
+            size_t limit = NZ_MAX_TOTAL - held;
+            if (limit > 24u * 1024 * 1024) limit = 24u * 1024 * 1024;
             snprintf(zn, sizeof zn, "%.*s.zip", (int) (strlen(f.cfile[c]) - (nc_has_ext(f.cfile[c], ".dat") ? 4 : 0)), f.cfile[c]);
-            if (nc_zip_extract(in[i].data, in[i].len, f.cfile[c], &cdat[c], &cl[c], 24u * 1024 * 1024, err, sizeof err) < 0) {
+            if (nc_zip_extract(in[i].data, in[i].len, f.cfile[c], &cdat[c], &cl[c], limit, err, sizeof err) < 0) {
                 cdat[c] = NULL;
-                if (nc_zip_extract(in[i].data, in[i].len, zn, &cz, &czl, 24u * 1024 * 1024, err, sizeof err) == 0) {
-                    if (nc_zip_extract(cz, czl, f.cfile[c], &cdat[c], &cl[c], 24u * 1024 * 1024, err, sizeof err) < 0) cdat[c] = NULL;
+                if (!strstr(err, "file too large") && nc_zip_extract(in[i].data, in[i].len, zn, &cz, &czl, 24u * 1024 * 1024, err, sizeof err) == 0) {
+                    if (nc_zip_extract(cz, czl, f.cfile[c], &cdat[c], &cl[c], limit, err, sizeof err) < 0) cdat[c] = NULL;
                     free(cz); cz = NULL;
                 }
             }
             if (cdat[c] == NULL) {
-                snprintf(res->first_err, sizeof res->first_err, "The package has no costume file %s.", f.cfile[c]); ++res->refused; wrote_err = 1; break;
+                snprintf(res->first_err, sizeof res->first_err, "Cannot unpack costume file %s (%.70s; fighter output limit 200 MiB).", f.cfile[c], err); ++res->refused; wrote_err = 1; break;
             }
+            held += cl[c];
         }
         if (wrote_err) { for (c = 0; c < 32; ++c) free(cdat[c]); free(dat); free(aj); continue; }
         nf_stem(post->id, stem, sizeof stem);
-        snprintf(mod_id, sizeof mod_id, "nucleus-%d-fighter", post->id);
+        if (post->local_key) snprintf(stem, sizeof stem, "PlL%s", post->local_key);
+        nc_post_mod_id(post, "fighter", mod_id, sizeof mod_id);
         snprintf(stage_dir, sizeof stage_dir, "%s/.staging-%s", mods_dir, mod_id);
         snprintf(final_dir, sizeof final_dir, "%s/%s", mods_dir, mod_id);
         nc_fix_slashes(stage_dir); nc_fix_slashes(final_dir);
@@ -271,7 +282,8 @@ static int nc_fighter_install(const char *mods_dir, const nc_post *post, const n
         free(dat); free(aj);
         if (k) { snprintf(res->first_err, sizeof res->first_err, "Cannot write to the mods folder."); nc_rmtree(stage_dir); continue; }
         memset(&t, 0, sizeof t);
-        nj_printf(&t, "name=%s\npl=%s\nplsym=%s\nanim=%sAJ.dat\nanimcount=%d\npost=https://%s/post/%d\n", f.name, target, f.sym, stem, f.animcount, NC_SITE, post->id);
+        nj_printf(&t, "name=%s\npl=%s\nplsym=%s\nanim=%sAJ.dat\nanimcount=%d\n", f.name, target, f.sym, stem, f.animcount);
+        if (!post->local_key) nj_printf(&t, "post=https://%s/post/%d\n", NC_SITE, post->id);
         for (c = 0; c < f.ncost; ++c) nj_printf(&t, "c%d=%sC%d.dat|%s|%s|%d\n", c, stem, c, f.cjoint[c], f.cmat[c], f.cvis[c]);
         if (f.demo[0][0] || f.demo[1][0] || f.demo[2][0] || f.demo[3][0]) nj_printf(&t, "demo=%s|%s|%s|%s\n", f.demo[0], f.demo[1], f.demo[2], f.demo[3]);
         if (f.victory >= 0 && f.victory <= 98) nj_printf(&t, "victory=%d\n", f.victory);
@@ -288,14 +300,14 @@ static int nc_fighter_install(const char *mods_dir, const nc_post *post, const n
         nj_puts(&b, ",\n  \"name\": "); nj_qstr(&b, f.name);
         nj_puts(&b, ",\n  \"version\": "); nj_qstr(&b, post->updated);
         nj_puts(&b, ",\n  \"kind\": \"fighter\",\n  \"authors\": "); nj_qstr(&b, post->author);
-        nj_printf(&b, ",\n  \"description\": \"New fighter from SSBM Nucleus: %s/post/%d. Online, both players need it. %s\"", NC_SITE, post->id, f.compat);
+        { char desc[800];
+            if (post->local_key) snprintf(desc, sizeof desc, "New fighter from local file: %s. Online, both players need it. %s", post->local_file, f.compat);
+            else snprintf(desc, sizeof desc, "New fighter from SSBM Nucleus: %s/post/%d. Online, both players need it. %s", NC_SITE, post->id, f.compat);
+            nj_puts(&b, ",\n  \"description\": "); nj_qstr(&b, desc);
+        }
         nj_puts(&b, ",\n  \"conflicts\": [");
         for (k = 0; k < ncf; ++k) { if (k) nj_puts(&b, ", "); nj_qstr(&b, conf[k]); }
-        nj_puts(&b, "],\n  \"source\": \"nucleus\",\n  \"nucleus\": {\n    \"id\": ");
-        nj_printf(&b, "%d,\n    \"author\": ", post->id); nj_qstr(&b, post->author);
-        nj_puts(&b, ",\n    \"page_url\": "); nj_qstr(&b, post->page);
-        nj_puts(&b, ",\n    \"updated_at\": "); nj_qstr(&b, post->updated);
-        nj_puts(&b, ",\n    \"installed_at\": "); nj_qstr(&b, post->installed_at);
+        nj_puts(&b, "]"); nc_post_source(&b, post);
         nj_puts(&b, ",\n    \"category\": \"cfighter\",\n    \"fighter\": "); nj_qstr(&b, f.name);
         nj_puts(&b, ",\n    \"verdict\": "); nj_qstr(&b, f.verdict);
         nj_puts(&b, ",\n    \"compat\": "); nj_qstr(&b, f.compat);
@@ -306,6 +318,7 @@ static int nc_fighter_install(const char *mods_dir, const nc_post *post, const n
         k = b.bad || nc_write_file(tmp, b.s, b.n) != 0;
         free(b.s);
         if (k) { snprintf(res->first_err, sizeof res->first_err, "Cannot write mod.json."); nc_rmtree(stage_dir); continue; }
+        if (!nc_install_allowed(env, res->first_err, sizeof res->first_err)) { nc_rmtree(stage_dir); ++res->refused; break; }
         if (nc_swap_dir(stage_dir, final_dir) != 0) {
             nc_rmtree(stage_dir);
             snprintf(res->first_err, sizeof res->first_err, "Could not replace %s (the game may be using it). Restart and try again.", mod_id);

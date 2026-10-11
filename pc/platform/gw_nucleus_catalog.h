@@ -488,7 +488,7 @@ static const char *nc_why_not_files(const nc_mod *m, const nc_file *files) {
                 if (strstr(fn, "oogle") || strstr(fn, "rive") || strstr(fn, "ega") || strstr(fn, "ropbox") || strstr(fn, "ediafire") || strstr(fn, "ink") || strstr(fn, "ownload")) ++ptr;
             }
         }
-        if (!nz && ptr) return "Download is an external link (the author hosts it elsewhere). Open the post page to get it; GD does not follow external links.";
+        if (!nz && ptr) return "Download is an external link. Download the zip yourself, put it in mods/_incoming, then use the Incoming tab. GD does not follow external links.";
     }
     if (m->type == NC_T_PATCH) return "xdelta patch: not a mod (it patches the whole disc).";
     if (m->nf == 0) return "No files listed in this post.";

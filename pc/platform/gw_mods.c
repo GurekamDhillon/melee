@@ -43,7 +43,7 @@ typedef struct gw_mod {
     char desc[GW_MODS_TEXT_MAX];
     char autostart[160];
     char hash[80];
-    char source[12];   /* mod.json "source": "nucleus" or "" */
+    char source[12];   /* mod.json "source": "nucleus", "local file" or "" */
     int nucleus_post;  /* mod.json "nucleus": {"id": N}; 0 when none */
     char requires_text[GW_MODS_TEXT_MAX];
     char req[GW_MODS_LIST_MAX][GW_MODS_ID_MAX];
@@ -576,6 +576,7 @@ static int set_load(gw_mods_set *s, const char *dir, int mods_off) {
     do {
         if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || fd.cFileName[0] == '.') continue;
         if (_stricmp(fd.cFileName, "targettest") == 0) continue; /* Target Test layouts, not a mod */
+        if (_stricmp(fd.cFileName, "_incoming") == 0) continue; /* zip drop folder, never a mounted mod */
         if (strlen(fd.cFileName) >= GW_MODS_ID_MAX) {
             gw_log("gw: mods: folder name %s is too long for a mod id - skipped", fd.cFileName);
             continue;
@@ -1054,6 +1055,7 @@ static int t_setup(void) {
     t_write("akaneia-sonic\\mod.json", "{\"kind\":\"fighter\",\"requires\":[\"akaneia-base\"]}");
     t_write("legacy\\PlXx.dat", "legacy");
     t_write("targettest\\mario-sample.tt", "not a mod");
+    t_write("_incoming\\fighter.zip", "not a mounted mod");
     return 0;
 }
 

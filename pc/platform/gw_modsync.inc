@@ -457,7 +457,7 @@ static void ms_want(gw_ms_plan *p, const gw_ms_entry *t) {
         snprintf(why, sizeof why, "download from SSBM Nucleus: %s", t->name);
         ms_act(p, GW_MS_ACT_DOWNLOAD, t->id, t->name, t->post, why);
     } else {
-        snprintf(why, sizeof why, "you need this mod: %s (%s)", t->name, nuc ? "from SSBM Nucleus" : "source unknown");
+        snprintf(why, sizeof why, "you need this mod: %s (%s)", t->name, nuc ? "from SSBM Nucleus" : !strcmp(t->source, "local file") ? "local file" : "source unknown");
         ms_act(p, GW_MS_ACT_MISSING, t->id, t->name, t->post, why);
     }
 }
@@ -925,6 +925,12 @@ static int test_ms_roundtrip(void) {
         return 1;
     }
     memset(&gm, 0, sizeof gm);
+    if (mod_parse_json(&gm, "{\"name\":\"Local fighter\",\"source\":\"local file\",\"local\":{\"hash\":\"1234\"}}") != 0 ||
+        strcmp(gm.source, "local file") != 0 || gm.nucleus_post != 0) {
+        gw_test_fail("local source must survive parsing without a Nucleus post");
+        return 1;
+    }
+    memset(&gm, 0, sizeof gm);
     if (mod_parse_json(&gm, "{\"nucleus\":{\"id\":\"4321\"}}") != 0 || gm.nucleus_post != 0) {
         gw_test_fail("a non-number nucleus id must read as 0");
         return 1;
@@ -1110,6 +1116,14 @@ static int test_ms_plan(void) {
     MS_NEED(a && a->kind == GW_MS_ACT_MISSING && strstr(a->why, "(source unknown)") != NULL, "ace-old: changed, non-Nucleus: missing");
     MS_NEED(ms_find_action(&plan, "ace-base") == NULL && ms_find_action(&plan, "ace-half") == NULL, "in-sync mods need no action");
     MS_NEED(ms_find_action(&plan, "skin-mine") == NULL && ms_find_action(&plan, "skin-theirs") == NULL, "skins must stay untouched");
+    {
+        gw_ms_manifest empty = {0}, local = {0};
+        gw_ms_plan lp;
+        t_ms_put(&local, "local-fixture-fighter", "Local fighter", "fighter", "local file", 0, 123, 1, 1);
+        gw_ms_plan_build(&empty, &local, &lp);
+        MS_NEED(lp.ndownload == 0 && lp.nmissing == 1 && !lp.can_complete && lp.a[0].post == 0 &&
+                strstr(lp.a[0].why, "you need this mod: Local fighter (local file)"), "local files must never queue a Nucleus download");
+    }
 
     n = gw_ms_target_ids(&mine, &plan, ids, 64);
     MS_NEED(n == 7, "target set should have 7 ids");

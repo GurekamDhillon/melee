@@ -16,7 +16,7 @@
  *
  * THE CHOICE. settings.cfg "skin_<external stage id>" = a mod id, "orig", or absent/"auto". Absent
  * keeps what the game did before the picker existed: the last mounted skin. MELEE_SKIN_<ext> in the
- * environment wins (tests). It is applied when the stage loads (Ground_801C0754 -> StageSkin_ApplyForLoad),
+ * environment wins (tests). It is applied when the stage loads (Ground_801C06B8 and _801C0754 -> StageSkin_ApplyForLoad),
  * never in the middle of a match, so the heap and the rewind snapshots of a match see one file.
  *
  * ONLINE. The host's choice decides. The host sends ";skin=<12 hex digits of the skin's content digest>"
@@ -51,6 +51,8 @@ const char *gw_Skin_RetailName(int r);
 int gw_Skin_RetailForExt(int ext);     /* row of an external stage id, -1 when it is not a retail stage */
 /* Row of the retail stage a disc path belongs to: a root-level file named <stem>[digits].<ext>. -1 otherwise. */
 int gw_Skin_FileRetail(const char *disc_path);
+/* Row of a stage archive name as a StageData row spells it ("/GrPs": the game adds the extension; "GrSt.dat" also matches). */
+int gw_Skin_NameRetail(const char *name);
 /* Bit r set for every retail stage a payload folder's root files belong to. */
 uint32_t gw_Skin_PayloadMask(const char *payload_dir);
 
@@ -83,9 +85,10 @@ int gw_StageSkin_Cycle(int ext, int dir);      /* step the choice (+1 next, -1 p
 int gw_StageSkin_Label(int ext, char *out, int cap);
 
 /* ---- applying ---- */
-/* At a stage load (grkind = the internal id): serve the files of that stage from the right provider. The match's
- * override (scene skin=) wins, then Original for an online match without one, then the local choice. */
-void gw_StageSkin_ApplyForLoad(int grkind);
+/* At a stage load (grkind = the internal id, file = the stage's archive name from its StageData row, "GrPs.dat"): serve the files of that stage from the right provider. The match's
+ * override (scene skin=) wins, then Original for an online match without one, then the local choice.
+ * phase 1 is the stage archive's preload (Ground_801C06B8), where the choice is made; phase 2 is the stage's init (Ground_801C0754), which reuses it. */
+void gw_StageSkin_ApplyForLoad(int grkind, const char *file, int phase);
 /* The scene key skin=<value>: "orig", 12+ hex digits of a content digest, or a mod id. 0 = understood. */
 int gw_StageSkin_SceneSet(const char *value);
 /* An online match is about to launch: a scene without skin= means Original. */

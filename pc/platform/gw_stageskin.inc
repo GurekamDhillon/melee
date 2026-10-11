@@ -14,7 +14,6 @@
 
 extern int gw_Settings_Str(const char *key, char *out, int cap, const char *dflt);
 extern void gw_Settings_SetStr(const char *key, const char *value);
-extern const char *gw_Mex_GrFile(int grkind);
 /* shim_dvd.c: the overlay keeps every provider of a path */
 extern int gw_DVDStageProviders(int r, int *mods, int cap);
 extern int gw_DVDStageFile(int r, int mod_index, int n, char *disc, int dcap, char *host, int hcap);
@@ -73,6 +72,19 @@ int gw_Skin_FileRetail(const char *path) {
         for (++p; (*p >= 'a' && *p <= 'z') || (*p >= 'A' && *p <= 'Z'); ++p) {
         }
         if (*p == '\0') return r;
+    }
+    return -1;
+}
+
+/* A stage's archive name as the StageData row spells it ("/GrPs", the game adds .dat / .usd; or "GrSt.dat"): its retail row, or -1. */
+int gw_Skin_NameRetail(const char *name) {
+    int r;
+    if (name == NULL) return -1;
+    while (*name == '/' || *name == '\\') ++name;
+    for (r = 0; r < SK_NRETAIL; ++r) {
+        size_t n = strlen(sk_retail[r].file);
+        if (n > 4 && _stricmp(sk_retail[r].file + n - 4, ".dat") == 0) n -= 4;
+        if (_strnicmp(name, sk_retail[r].file, n) == 0 && (name[n] == '\0' || _stricmp(name + n, ".dat") == 0)) return r;
     }
     return -1;
 }
@@ -311,11 +323,24 @@ int gw_StageSkin_Last(int *ext, char *name, int cap, uint64_t *digest) {
     return sk_last.ext >= 0 && sk_last.digest != 0;
 }
 
-void gw_StageSkin_ApplyForLoad(int grkind) {
-    const char *file = gw_Mex_GrFile(grkind);
-    int r = file != NULL ? gw_Skin_FileRetail(file) : -1, choice = 0, k, ov = sk_ov.on, net = sk_net_tick != 0;
+static struct {
+    int armed, grkind, choice;
+} sk_decided; /* the preload's decision, reused by the same stage's init */
+
+void gw_StageSkin_ApplyForLoad(int grkind, const char *file, int phase) {
+    int r = gw_Skin_NameRetail(file), choice = 0, k, ov = sk_ov.on, net = sk_net_tick != 0;
     const char *why = "choice";
     DWORD now = GetTickCount();
+    gw_log("stageskin: stage %d file %s phase %d", grkind, file != NULL ? file : "(none)", phase);
+    if (phase == 2 && sk_decided.armed && sk_decided.grkind == grkind) { /* the stage's init, after its preload decided: the same file */
+        sk_decided.armed = 0;
+        r = gw_Skin_NameRetail(file);
+        if (r >= 0 && sk_by_r[r].n > 0 && sk_decided.choice <= sk_by_r[r].n) {
+            gw_DVDSelectStage(r, sk_decided.choice == 0 ? GW_SKIN_ORIGINAL : sk_by_r[r].s[sk_decided.choice - 1].mod_index);
+        }
+        return;
+    }
+    sk_decided.armed = 0;
     if (ov && now - sk_ov.tick > SK_STALE_MS) ov = 0;
     if (net && now - sk_net_tick > SK_STALE_MS) net = 0;
     sk_last.ext = -1;
@@ -352,13 +377,16 @@ void gw_StageSkin_ApplyForLoad(int grkind) {
         choice = sk_choice_r(r);
     }
     gw_DVDSelectStage(r, choice == 0 ? GW_SKIN_ORIGINAL : sk_by_r[r].s[choice - 1].mod_index);
+    sk_decided.armed = phase == 1;
+    sk_decided.grkind = grkind;
+    sk_decided.choice = choice;
     sk_last.ext = sk_retail[r].ext;
     if (choice > 0) {
         copy_str(sk_last.name, sizeof sk_last.name, sk_by_r[r].s[choice - 1].name);
         sk_last.digest = sk_by_r[r].s[choice - 1].digest;
     }
-    gw_log("stageskin: %s loads %s (%s, %d skin(s) installed)", sk_retail[r].file, choice == 0 ? "Original" : sk_by_r[r].s[choice - 1].name, why,
-           sk_by_r[r].n);
+    gw_log("stageskin: %s loads %s (%s, %d skin(s) installed, stage %d)", sk_retail[r].file, choice == 0 ? "Original" : sk_by_r[r].s[choice - 1].name, why,
+           sk_by_r[r].n, grkind);
     memset(&sk_ov, 0, sizeof sk_ov);
     sk_net_tick = 0;
 }

@@ -596,7 +596,7 @@ void ftCo_8009E4A8(Fighter* fp)
 
 void ftCo_8009E614(Fighter* fp)
 {
-    if ((fp->kind == Ft_Kind_Mars || fp->kind == Ft_Kind_Emblem) &&
+    if ((ftGetTemplateKind(fp) == Ft_Kind_Mars || ftGetTemplateKind(fp) == Ft_Kind_Emblem) &&
         !fp->x2227_b6)
     {
         int x = lb_80011ABC();
@@ -660,7 +660,7 @@ void ftCo_8009E7B4(Fighter* fp, u8 (*arg1)[2])
                 }
             }
         } else {
-            if (fp->kind != Ft_Kind_Mars && fp->kind != Ft_Kind_Emblem) {
+            if (ftGetTemplateKind(fp) != Ft_Kind_Mars && ftGetTemplateKind(fp) != Ft_Kind_Emblem) {
                 var_r3 = 0;
             } else if (!cached_b6) {
                 if (lb_80011ABC() > 0) {

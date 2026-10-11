@@ -39,7 +39,7 @@ static inline itSword_UnkBytes* ftCo_800C2600_get_params(Fighter* fp)
             break;
         }
     } else {
-        switch (fp->kind) {
+        switch (ftGetTemplateKind(fp)) {
         case Ft_Kind_Seak:
         case Ft_Kind_Ness:
         case Ft_Kind_Peach:
@@ -428,7 +428,7 @@ void ftCo_800C2FD8(Fighter_GObj* gobj)
             }
         } else
 #endif
-        switch (fp->kind) {
+        switch (ftGetTemplateKind(fp)) {
         case Ft_Kind_Seak:
         case Ft_Kind_Ness:
         case Ft_Kind_Peach:

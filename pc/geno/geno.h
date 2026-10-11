@@ -257,7 +257,7 @@ enum {
 #define GENO_MAX_SPECIAL 64      /* v1: special_attributes entries per profile */
 #define GENO_MAX_ONLAND 16       /* v1: on_land map entries per profile */
 #define GENO_MAX_MOTION_ANIM 8   /* v5.4: "motion_anims" entries per profile */
-#define GENO_MAX_OVERLAYS 320    /* v1: subaction script overlays per profile (slice 8: was 64; Sora needs about 100; a complete retail fighter, 275) */
+#define GENO_MAX_OVERLAYS 336    /* v1: subaction script overlays per profile (slice 8: was 64; Sora needs about 100; a complete retail fighter, 275; retail Marth scripts all 327 rows, so 320 was one template short) */
 /* Words of one ftcmd command (the first word w0): the retail table (ftaction.c ftAction_803C0870, opcodes 10-58), 1/2 words for
  * opcodes 0-9 and the Geno escape (59) with its own length field. Shared by the registry (validating a define's overlay) and the
  * game half (relocating its branches). */

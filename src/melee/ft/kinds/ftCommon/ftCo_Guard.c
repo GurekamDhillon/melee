@@ -8,6 +8,7 @@
 
 #include "ftCo_0C35.h"
 #include "ftCo_Attack1.h"
+#include <melee/ft/inlines.h>
 #include "ftCo_Attack100.h"
 #include "ftCo_AttackHi3.h"
 #include "ftCo_AttackHi4.h"
@@ -428,7 +429,7 @@ void ftCo_800921DC(HSD_GObj* gobj)
 void ftCo_800923B4(Fighter_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
-    switch (fp->kind) {
+    switch (ftGetTemplateKind(fp)) {
     case Ft_Kind_Yoshi:
         ftYs_Init_8012BECC(gobj);
         return;
@@ -586,7 +587,7 @@ void ftCo_GuardOn_Coll(Fighter_GObj* gobj)
 void ftCo_800928CC(Fighter_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
-    switch (fp->kind) {
+    switch (ftGetTemplateKind(fp)) {
     case Ft_Kind_Yoshi:
         ftYs_Shield_8012C1D4(gobj);
         return;
@@ -664,7 +665,7 @@ void ftCo_80092BE8(Fighter_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
     pl_8003E114(fp->player_id, fp->is_sub_fighter, fp->shield_health);
-    switch (fp->kind) {
+    switch (ftGetTemplateKind(fp)) {
     case Ft_Kind_Yoshi:
         ftYs_Shield_8012C49C(gobj);
         return;
@@ -729,7 +730,7 @@ void ftCo_80092E50(Fighter_GObj* gobj)
     } else {
         b = false;
     }
-    switch (fp->kind) {
+    switch (ftGetTemplateKind(fp)) {
     case Ft_Kind_Yoshi:
         ftYs_Shield_8012C600(gobj, b);
         break;
@@ -891,7 +892,7 @@ static inline void ftCo_80092BE8_inline(Fighter_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
     pl_8003E114(fp->player_id, fp->is_sub_fighter, fp->shield_health);
-    switch (fp->kind) {
+    switch (ftGetTemplateKind(fp)) {
     case Ft_Kind_Yoshi:
         ftYs_Shield_8012C49C(gobj);
         return;
@@ -905,7 +906,7 @@ static inline void ftCo_800928CC_inline_arg(Fighter_GObj* gobj,
                                             AbsorbDesc* absorb)
 {
     Fighter* fp = gobj->user_data;
-    switch (fp->kind) {
+    switch (ftGetTemplateKind(fp)) {
     case Ft_Kind_Yoshi:
         ftYs_Shield_8012C1D4(gobj);
         return;
@@ -1008,7 +1009,7 @@ void ftCo_80093790(Fighter_GObj* gobj)
 void ftCo_80093850(Fighter_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
-    switch (fp->kind) {
+    switch (ftGetTemplateKind(fp)) {
     case Ft_Kind_Yoshi:
         ftYs_Shield_8012C850(gobj);
         return;
@@ -1040,7 +1041,7 @@ void ftCo_8009388C(HSD_GObj* gobj)
 void ftCo_800939B4(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    switch (fp->kind) {
+    switch (ftGetTemplateKind(fp)) {
     case Ft_Kind_Yoshi:
         ftYs_Shield_8012C914(gobj);
         return;

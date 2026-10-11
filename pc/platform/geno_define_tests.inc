@@ -855,7 +855,7 @@ static int test_geno_define_template(void)
     gn_registry_clear(&r);
     if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"fox\",", ""), "tmplf") != 1 || r.p[0].tmpl != 2) { gw_test_fail("a none define with template fox was refused or misread"); rc = 1; }
     gn_registry_clear(&r);
-    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"falco\",", ""), "tmplx") != 0 || r.n != 0) { gw_test_fail("an unknown template was accepted"); rc = 1; }
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"sheik\",", ""), "tmplx") != 0 || r.n != 0) { gw_test_fail("an unknown template was accepted"); rc = 1; }
     gn_registry_clear(&r);
     /* Fox: 327 animation rows (0..326), 376 motions (0..375) */
     if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"fox\",", ",\"subactions\":[{\"index\":326,\"words\":[\"0x04000002\"]}]"), "f326") != 1) { gw_test_fail("row 326 of template fox refused"); rc = 1; }
@@ -865,6 +865,23 @@ static int test_geno_define_template(void)
     if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"fox\",", ",\"common_states\":[{\"motion\":375}]"), "f375") != 1) { gw_test_fail("motion 375 of template fox refused"); rc = 1; }
     gn_registry_clear(&r);
     if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"fox\",", ",\"common_states\":[{\"motion\":376}]"), "f376") != 0) { gw_test_fail("motion 376 of template fox accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    /* Falco: 327 rows, motions 0..375; Marth: 327 rows, motions 0..372 */
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"falco\",", ",\"subactions\":[{\"index\":326,\"words\":[\"0x04000002\"]}]"), "fc326") != 1 || r.p[0].tmpl != 3) { gw_test_fail("row 326 of template falco refused"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"falco\",", ",\"subactions\":[{\"index\":327,\"words\":[\"0x04000002\"]}]"), "fc327") != 0) { gw_test_fail("row 327 of template falco accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"falco\",", ",\"common_states\":[{\"motion\":375}]"), "fc375") != 1) { gw_test_fail("motion 375 of template falco refused"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"falco\",", ",\"common_states\":[{\"motion\":376}]"), "fc376") != 0) { gw_test_fail("motion 376 of template falco accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"marth\",", ",\"subactions\":[{\"index\":326,\"words\":[\"0x04000002\"]}]"), "ms326") != 1 || r.p[0].tmpl != 4) { gw_test_fail("row 326 of template marth refused"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"marth\",", ",\"subactions\":[{\"index\":327,\"words\":[\"0x04000002\"]}]"), "ms327") != 0) { gw_test_fail("row 327 of template marth accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"marth\",", ",\"common_states\":[{\"motion\":372}]"), "ms372") != 1) { gw_test_fail("motion 372 of template marth refused"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"marth\",", ",\"common_states\":[{\"motion\":373}]"), "ms373") != 0) { gw_test_fail("motion 373 of template marth accepted"); rc = 1; }
     gn_registry_clear(&r);
     if (gn_parse_text(&r, GN_T_TMPL(9, "\"template\":\"captain\",", ""), "tmpl9") != 0 || r.n != 0) { gw_test_fail("template in a geno 9 file was accepted"); rc = 1; }
     gn_registry_clear(&r);

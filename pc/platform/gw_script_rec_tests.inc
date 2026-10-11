@@ -74,3 +74,239 @@ static int test_script_rec(void) {
     if (rc) { gw_test_fail("script rec (.gdlp) format/refusal mask %d", rc); return 1; }
     return 0;
 }
+
+/* ---- .gdlp version 2 ------------------------------------------------------------------------- */
+/* a whole-match file: GD head events, then Game Start and n frames of Frame Start / Pre / Post / Bookend x2 ports */
+static int t_whole(const char *path, const unsigned char *game_info, int n, int with_seg, int *rc_out) {
+    long a, b;
+    FILE *f = gr_open(path, &a, &b);
+    unsigned char head[GR_HEAD_MAX], ev[1 + 768];
+    size_t hn;
+    int i, port;
+    (void) rc_out;
+    if (f == NULL) return -1;
+    hn = gw_Gdlp_MatchHead(head, game_info);
+    fwrite(head, 1, hn, f);
+    if (with_seg) {
+        unsigned char seg[48];
+        memset(seg, 0, sizeof seg); gr_put32(seg, 5); gr_put32(seg + 4, 9);
+        gr_ev(f, GR_EV_SEGMENT, seg);
+    }
+    memset(ev, 0, sizeof ev);
+    ev[0] = 0x36; ev[1] = 3; ev[2] = 19; ev[3] = 1;
+    memcpy(ev + 5, game_info, 0x138);
+    fwrite(ev, 1, 1 + GR_SZ_START, f);
+    for (i = 0; i < n; ++i) {
+        int frame = -123 + i;
+        unsigned char fs[1 + GR_SZ_FSTART], pre[1 + GR_SZ_PRE], post[1 + GR_SZ_POST], bk[9];
+        memset(fs, 0, sizeof fs); fs[0] = 0x3A; gr_put32(fs + 1, (unsigned) frame); gr_put32(fs + 5, 0x1234u + (unsigned) i);
+        fwrite(fs, 1, sizeof fs, f);
+        for (port = 0; port < 2; ++port) {
+            memset(pre, 0, sizeof pre); pre[0] = 0x37; gr_put32(pre + 1, (unsigned) frame); pre[5] = (unsigned char) port;
+            fwrite(pre, 1, sizeof pre, f);
+        }
+        for (port = 0; port < 2; ++port) {
+            memset(post, 0, sizeof post); post[0] = 0x38; gr_put32(post + 1, (unsigned) frame); post[5] = (unsigned char) port;
+            post[7] = (unsigned char) (port ? 10 : 2); post[0x21] = 4;
+            fwrite(post, 1, sizeof post, f);
+        }
+        bk[0] = 0x3C; gr_put32(bk + 1, (unsigned) frame); gr_put32(bk + 5, (unsigned) frame);
+        fwrite(bk, 1, sizeof bk, f);
+    }
+    return gr_finish(f, a, b);
+}
+
+/* walks a container as a Slippi reader does: counts per command, the GD events skipped by size, returns 0 if the
+ * declared raw length, the size table and the end event are all consistent */
+static int t_slp_walk(const char *path, int counts[256], int *gd_events) {
+    FILE *f = fopen(path, "rb");
+    unsigned char *d;
+    long n;
+    size_t pos, end, tabend;
+    int i, ended = 0;
+    unsigned short sz[256];
+    if (f == NULL) return -1;
+    fseek(f, 0, SEEK_END); n = ftell(f); fseek(f, 0, SEEK_SET);
+    d = (unsigned char *) malloc((size_t) n);
+    if (d == NULL || fread(d, 1, (size_t) n, f) != (size_t) n) { fclose(f); free(d); return -1; }
+    fclose(f);
+    memset(counts, 0, 256 * sizeof(int));
+    memset(sz, 0, sizeof sz);
+    *gd_events = 0;
+    if (n < 20 || memcmp(d, "{U\x03raw[$U#l", 11) != 0 || d[15] != 0x35) { free(d); return -2; }
+    end = 15 + (size_t) gr_get32(d + 11);
+    tabend = 16 + (size_t) d[16];
+    for (i = 0; i < (d[16] - 1) / 3; ++i) sz[d[17 + 3 * i]] = (unsigned short) ((d[18 + 3 * i] << 8) | d[19 + 3 * i]);
+    for (pos = tabend; pos < end;) {
+        int cmd = d[pos];
+        if (sz[cmd] == 0 || pos + 1 + sz[cmd] > end) { free(d); return -3; }
+        counts[cmd]++;
+        if (cmd >= 0x90) ++*gd_events;
+        pos += 1 + sz[cmd];
+        if (cmd == 0x39) { ended = 1; break; }
+    }
+    i = (!ended || pos != end || memcmp(d + end, "U\x08metadata", 10) != 0) ? -4 : 0;
+    free(d);
+    return i;
+}
+
+static int test_script_rec_v2(void) {
+    char path[MAX_PATH], sidecar[MAX_PATH], ext[MAX_PATH], why[240];
+    GrFile g;
+    long a, b;
+    FILE *f;
+    unsigned char fe[GR_FRAME_PAYLOAD], pad[GR_PAD], *state, *got;
+    int vp[2][9], i, rc = 0;
+    size_t total = 2 * GR_STCHUNK + 12345, nread;
+    memset(vp, 0, sizeof vp);
+    memset(pad, 0x33, sizeof pad);
+    /* version 1 still reads: the old header, the old 9-event size table, no Slippi or state events */
+    gr_path(path, sizeof path, "gdlp_selftest_v1", "gdlp");
+    DeleteFileA(path);
+    gr_write_ver = 1;
+    f = gr_begin(path, 7, "gdlp_selftest_v1.gdst", &a, &b);
+    gr_write_ver = GR_VER;
+    if (f == NULL) { gw_test_fail("rec v2: cannot create the v1 file"); return 1; }
+    for (i = 0; i < 3; ++i) { unsigned char c = GR_EV_FRAME; gr_frame_bytes(fe, 7 + i, 1, pad, vp); fwrite(&c, 1, 1, f); fwrite(fe, 1, sizeof fe, f); }
+    gr_finish(f, a, b);
+    if (gr_read(path, &g, why, sizeof why) != 0 || g.ver != 1 || g.n != 3 || g.base != 7 || g.emb_size != 0 || (g.flags & (GR_FL_WHOLE | GR_FL_SLIPPI)) ||
+        !g.complete) rc |= 1;
+    else {
+        int counts[256], gd;
+        gr_free_file(&g);
+        if (t_slp_walk(path, counts, &gd) != 0 || counts[GR_EV_FRAME] != 3 || counts[GR_EV_STCHUNK] != 0) rc |= 2;
+    }
+    DeleteFileA(path);
+
+    /* version 2: the start state embedded in chunks, read back byte for byte; the sidecar wins while it exists */
+    gr_path(path, sizeof path, "gdlp_selftest_v2", "gdlp");
+    gr_path(sidecar, sizeof sidecar, "gdlp_selftest_v2", "gdst");
+    gr_path(ext, sizeof ext, "_emb_gdlp_selftest_v2", "gdst");
+    DeleteFileA(path); DeleteFileA(sidecar); DeleteFileA(ext);
+    state = (unsigned char *) malloc(total);
+    got = (unsigned char *) malloc(total);
+    if (state == NULL || got == NULL) { free(state); free(got); gw_test_fail("rec v2: out of memory"); return 1; }
+    for (i = 0; i < (int) total; ++i) state[i] = (unsigned char) (i * 31 + (i >> 8) * 7);
+    f = fopen(sidecar, "wb");
+    if (f == NULL) { free(state); free(got); gw_test_fail("rec v2: cannot write %s", sidecar); return 1; }
+    fwrite(state, 1, total, f); fclose(f);
+    f = gr_begin(path, 100, "gdlp_selftest_v2.gdst", &a, &b);
+    if (f == NULL) { free(state); free(got); gw_test_fail("rec v2: cannot create"); return 1; }
+    { unsigned char c = GR_EV_FRAME; gr_frame_bytes(fe, 100, 1, pad, vp); fwrite(&c, 1, 1, f); fwrite(fe, 1, sizeof fe, f); }
+    gr_finish(f, a, b);
+    if (gr_read(path, &g, why, sizeof why) != 0 || g.ver != 2 || g.emb_size != total || g.emb_got != total || g.n != 1) {
+        rc |= 4;
+        gw_test_fail("rec v2: read: %s ver=%u emb=%u/%u (want %u) n=%d", why, g.ver, g.emb_got, g.emb_size, (unsigned) total, g.n);
+    }
+    else {
+        char sp[MAX_PATH];
+        if (gr_state_path(&g, path, "gdlp_selftest_v2", sp, sizeof sp, why, sizeof why) != 0 || strcmp(sp, sidecar) != 0) rc |= 8; /* sidecar first */
+        DeleteFileA(sidecar);
+        if (gr_state_path(&g, path, "gdlp_selftest_v2", sp, sizeof sp, why, sizeof why) != 0 || strcmp(sp, ext) != 0) rc |= 16; /* then the embedded one */
+        else {
+            f = fopen(sp, "rb");
+            nread = f != NULL ? fread(got, 1, total + 1, f) : 0;
+            if (f) fclose(f);
+            if (nread != total || memcmp(got, state, total) != 0) rc |= 32;
+        }
+    }
+    gr_free_file(&g);
+    free(state); free(got);
+    DeleteFileA(path); DeleteFileA(sidecar); DeleteFileA(ext);
+    if (rc) { gw_test_fail("rec v2: v1 read / embedded state mask %d", rc); return 1; }
+    return 0;
+}
+
+static int test_script_rec_export(void) {
+    char path[MAX_PATH], out[MAX_PATH], why[300];
+    unsigned char gi[0x138];
+    int counts[256], gd, rc = 0, frames = 0, s;
+    GrFile g;
+    gr_path(path, sizeof path, "gdlp_selftest_whole", "gdlp");
+    gr_path(out, sizeof out, "gdlp_selftest_whole", "slp");
+    DeleteFileA(path); DeleteFileA(out);
+    memset(gi, 0, sizeof gi);
+    gi[0x0E] = 0; gi[0x0F] = 31;
+    for (s = 0; s < 6; ++s) gi[0x60 + 0x24 * s + 1] = 3;      /* every slot empty... */
+    gi[0x60] = 2;  gi[0x61] = 0;  gi[0x63] = 1;               /* ...P1 ck 2, human, costume 1 */
+    gi[0x60 + 0x24] = 10; gi[0x61 + 0x24] = 1; gi[0x63 + 0x24] = 0; /* P2 ck 10, cpu */
+    gr_mods_override = "";
+    /* a retail-only whole match: valid .gdlp, then a plain .slp with only the standard events */
+    if (t_whole(path, gi, 6, 0, NULL) != 0) { gr_mods_override = NULL; gw_test_fail("rec export: cannot write"); return 1; }
+    if (gr_read(path, &g, why, sizeof why) != 0) { rc |= 1; gw_test_fail("rec export: read: %s", why); }
+    else {
+        if (g.ver != 2 || !(g.flags & GR_FL_WHOLE) || !(g.flags & GR_FL_SLIPPI) || !(g.flags & GR_FL_RETAIL) || (g.flags & GR_FL_STATE)) rc |= 2;
+        if (!g.has_start || g.n_pre != 12 || g.n_post != 12 || g.first_frame != -123 || g.last_frame != -118 || !g.complete) {
+            rc |= 4;
+            gw_test_fail("rec export: start=%d pre=%d post=%d frames %d..%d complete=%d", g.has_start, g.n_pre, g.n_post, g.first_frame, g.last_frame, g.complete);
+        }
+        if (!g.fi[0].present || g.fi[0].chr != 2 || g.fi[0].costume != 1 || g.fi[1].chr != 10 || g.fi[2].present || g.stage != 31) rc |= 8;
+        gr_free_file(&g);
+    }
+    if (t_slp_walk(path, counts, &gd) != 0 || gd < 8 || counts[0x36] != 1 || counts[0x3C] != 6) rc |= 16; /* GD events are skipped by size, the rest is consistent */
+    if (gr_export_slp(path, out, why, sizeof why, &frames) != 0 || frames != 12) { rc |= 32; gw_test_fail("rec export: %s (frames %d)", why, frames); }
+    else if (t_slp_walk(out, counts, &gd) != 0 || gd != 0 || counts[0x36] != 1 || counts[0x37] != 12 || counts[0x38] != 12 ||
+             counts[0x3A] != 6 || counts[0x3C] != 6 || counts[0x39] != 1) rc |= 64;
+    /* refusals, each with its reason */
+    {
+        unsigned char gk[0x138];
+        memcpy(gk, gi, sizeof gk);
+        gk[0x60 + 0x24] = 40; /* a Geno / m-ex character */
+        DeleteFileA(path); DeleteFileA(out);
+        t_whole(path, gk, 2, 0, NULL);
+        if (gr_export_slp(path, out, why, sizeof why, NULL) == 0 || !strstr(why, "Geno") || gr_exists(out)) rc |= 128;
+        DeleteFileA(path);
+        t_whole(path, gi, 2, 1, NULL); /* a trim */
+        if (gr_export_slp(path, out, why, sizeof why, NULL) == 0 || !strstr(why, "trimmed") || gr_exists(out)) rc |= 256;
+        DeleteFileA(path);
+        gr_mods_override = "some-mod";
+        t_whole(path, gi, 2, 0, NULL);
+        if (gr_export_slp(path, out, why, sizeof why, NULL) == 0 || !strstr(why, "some-mod") || gr_exists(out)) rc |= 512;
+        gr_mods_override = "";
+        DeleteFileA(path);
+    }
+    {   /* a mid-match LAB clip (starts from a state) and a version 1 file */
+        long a, b;
+        FILE *f;
+        gr_mods_override = "";
+        f = gr_begin(path, 50, "gdlp_selftest_whole.gdst", &a, &b);
+        if (f != NULL) gr_finish(f, a, b);
+        if (gr_export_slp(path, out, why, sizeof why, NULL) == 0 || !strstr(why, "saved state") || gr_exists(out)) rc |= 1024;
+        DeleteFileA(path);
+        gr_write_ver = 1;
+        f = gr_begin(path, 50, NULL, &a, &b);
+        gr_write_ver = GR_VER;
+        if (f != NULL) gr_finish(f, a, b);
+        if (gr_export_slp(path, out, why, sizeof why, NULL) == 0 || !strstr(why, "format-1") || gr_exists(out)) rc |= 2048;
+    }
+    /* a whole-match file is not a LAB clip: lab rec play refuses it, and says how to play it */
+    {
+        GrFile h;
+        memset(&h, 0, sizeof h);
+        h.flags = GR_FL_WHOLE | GR_FL_SLIPPI;
+        if (gr_check(&h, why, sizeof why) == 0 || !strstr(why, "MELEE_GDLP")) rc |= 4096;
+    }
+    gr_mods_override = NULL;
+    DeleteFileA(path); DeleteFileA(out);
+    if (rc) { gw_test_fail("rec export: mask %d", rc); return 1; }
+    return 0;
+}
+
+/* R5: the rewind log keeps all four ports' pads (the PC PADStatus is 16 bytes: 4 x 16 = 64, not 48) */
+typedef char gs_log_pad_is_four_ports[(sizeof(((GsLogEntry *) 0)->pad) == 4 * sizeof(PADStatus) && sizeof(((GsLogEntry *) 0)->pad) == GR_PAD) ? 1 : -1];
+static int test_script_rec_port4(void) {
+    GsLogEntry *e = &gs_log[0];
+    unsigned char before[sizeof e->pad], ev[GR_FRAME_PAYLOAD], pads[GR_PAD];
+    int vp[2][9], i, tag = e->tag, have = e->have;
+    memcpy(before, e->pad, sizeof before);
+    memset(vp, 0, sizeof vp);
+    for (i = 0; i < GR_PAD; ++i) pads[i] = (unsigned char) (i + 1);
+    /* the log's record path: gw_LabPad_Record copies min(size, sizeof e->pad) */
+    memcpy(e->pad, pads, GR_PAD < (int) sizeof e->pad ? GR_PAD : sizeof e->pad);
+    gr_frame_bytes(ev, 1, 1, e->pad, vp);                 /* the recorder reads the same bytes (save-history) */
+    memcpy(e->pad, before, sizeof before);
+    e->tag = tag; e->have = (unsigned char) have;
+    /* port 4 is bytes 48..63: all of them reach the file */
+    for (i = 48; i < 64; ++i) if (ev[5 + i] != (unsigned char) (i + 1)) { gw_test_fail("rec port 4: byte %d lost (%d)", i, ev[5 + i]); return 1; }
+    return 0;
+}

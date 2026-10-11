@@ -813,7 +813,7 @@ replay ends at the old head. `resume` during a rewind now prints a warning that 
 The 20 s window is the rewind's, not the recorder's: use `lab rec start` before the take, or
 `lab rec save-history` inside the window.
 
-**The `.gdlp` format, version 1.** A `.gdlp` is a Slippi-framed event stream, so the container is the
+**The `.gdlp` format (version 1; version 2 is below).** A `.gdlp` is a Slippi-framed event stream, so the container is the
 `.slp` one: UBJSON `{U 3 raw [$ U # l <u32 length>`, the `0x35` Payloads event listing every event's
 payload size, the events, then the metadata block. A Slippi reader that honours the size table skips
 the GD events it does not know. All integers are big endian. The raw length is 0 while a file is being
@@ -835,10 +835,35 @@ written (Slippi's own convention) and is patched on close; a torn tail reads up 
 Playback is **refused**, with the reason on the console, unless this is the same build (exe hash),
 disc, mod set and Geno data the take was made with, and the running LAB match has the same fighters,
 costumes and stage ("recorded with other mods (it used: ...)", "this recording is P1 goku-xv2 (costume 0):
-start that match first"). Version 1 does not write the standard Game Start / Pre-Frame / Post-Frame
-events, so a `.gdlp` is not yet a valid `.slp` and there is no `.slp` export; `MELEE_SLP_RECORD` still
-records a whole stock match as `.slp`. Writing them (a fixed processed-input mirror of each GD frame) and the
-export for retail-only takes (flag 1) is the planned version 2; the state could then be embedded.
+start that match first").
+
+**Version 2** (header version 2; a version 1 file still reads, a newer one is refused). Additions:
+
+| | |
+|---|---|
+| flags | 4 = a whole match from its first frame (-123), 8 = carries the standard Slippi events, so the file is a valid `.slp` stream |
+| `0x36` Game Start, `0x3A` Frame Start, `0x37` Pre-Frame, `0x38` Post-Frame, `0x3C` Frame Bookend, `0x39` Game End | exactly the events `MELEE_SLP_RECORD` writes (Slippi 3.19.1 sizes), plus the Bookend (frame, latest finalized frame; under rollback it is only added to frames not yet flushed). Listed in the 0x35 table; Game End has method 7 (the port does not know how the match ended) |
+| `0x98` GD state chunk | 14 + 60000 bytes: chunk index u32, chunk count u32, total size u32, valid length u16, data. A LAB clip's `.gdst` is embedded, so a recording is ONE file. Playback uses the sidecar if it exists, else extracts the embedded one to `_emb_<name>.gdst` beside it. The sidecar is still written and is redundant. States over 512 MB are not embedded |
+
+In a whole-match file the GD fighter events come from the StartMeleeData (char = CharacterKind, slot type =
+PlayerInitData type, name `ck:N`), the stage is the external stage id, and there are no `0x94` GD frames:
+playback is the Slippi processed-input path (`MELEE_SLP`'s), which is the path already proven frame-exact.
+
+**Whole-match recording (R4).** `MELEE_GDLP_RECORD=1` (or `<dir>`, or one `<file>.gdlp`), or `gdlp_record=1` in
+`settings.cfg` (the env var wins; `0` turns it off; no menu row), writes every VS / LAB / netplay match from its
+first frame to `recordings/match_<unix>_<n>.gdlp`, closed when the scene ends. Not while a replay plays. Play it with
+`MELEE_GDLP=<file>` at launch (like `MELEE_SLP`: the fighters, stage and seed come from the file), refused with the
+reason in the log unless the build, disc, mods and Geno data match. Geno fighters work when the same mods are
+present; `lab rec play` refuses a whole-match file and says to use `MELEE_GDLP`.
+
+**Export (R3).** `lab rec export-slp <name> [slp-name]` / `gd.rec_export_slp(name [, out])` and
+`python pc/tools/gdlp_export.py [--info] file.gdlp [out.slp]` write the standard events as a plain `.slp`. Refused, with
+the reason, for: a Geno / non-retail fighter, a clip that starts from a saved state (mid-match), a trimmed
+excerpt, a version 1 file, a match recorded with mods, a file with no Game Start / frames. `gd.rec_list()` rows
+gain `format`, `whole`, `embedded`, `exportable`.
+
+**R5.** `gs_log.pad` is now 64 bytes (4 x 16: the PC `PADStatus` has `extButton`), so the rewind log keeps port 4;
+before, it kept 48 and port 4's pad was not replayed by a rewind.
 
 Verified by `pc/tests/lab_rec/run.sh` (a scripted 10 s Goku v Mario take, played back, the history take,
 rewind + resume, trim, keep-last: positions, percent, actions and action frames compared every frame) and the
@@ -848,8 +873,7 @@ native test `script_rec` (container, round trip, torn tail, refusals).
 timeline unconditionally: the first frame after `gd.rewind_to` dropped the logged input ahead, so `resume`
 went live with `fwd = 0` and the take was lost. It now forks only when a script unload left a cleanup pending
 (the test asserts `fwd` shrinks and the replayed frames equal the first run). Any other gameplay write during a
-replay is logged as `rewind: a gameplay write from ... dropped N logged frames`. Known gap, not fixed here: the
-rewind log (`gs_log.pad`) keeps 48 of the 64 pad bytes, so port 4's pad is not in the rewind log; the recorder keeps all four.
+replay is logged as `rewind: a gameplay write from ... dropped N logged frames`. (The rewind log used to keep 48 of the 64 pad bytes, losing port 4; fixed in format 2's lane, see R5 above.)
 
 ### 14.11 Stage E: the creator tools
 

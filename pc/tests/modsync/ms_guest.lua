@@ -69,4 +69,5 @@ gd.run(function()
     end
   end
   gd.log("MS_MATCH_STARTED blocked=" .. tostring(gd.modsync().blocked))
+  if gd.modsync().active and gd.lab_env("LEAVE") == "1" then gd.modsync_act("end") gd.log("MS_ENDED") end
 end)

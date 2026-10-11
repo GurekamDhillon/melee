@@ -271,6 +271,7 @@ int gw_Settings_TextKeys(char *buf, int cap, int caret_in) {
 /* ---- tests ------------------------------------------------------------------------------------ */
 
 #include "gw_settings_tests.inc"
+#include "../tests/settings_env_audit_native.inc"
 
 static int test_settings_roundtrip(void) {
     SettingsTestEnv env[] = {
@@ -391,4 +392,5 @@ void gw_settings_tests_register(void) {
     gw_test_register("settings_env_int", test_settings_env_int);
     gw_test_register("settings_env_str", test_settings_env_str);
     gw_test_register("settings_env_persistence", test_settings_env_persistence);
+    gw_test_register("settings_env_collisions", test_settings_env_collisions);
 }

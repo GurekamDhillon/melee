@@ -706,6 +706,80 @@ static int test_geno_define_policy_ck(void)
     return rc;
 }
 
+/* State-scoped audio must accept forward state names and reject typos instead of ringing forever. */
+static int test_geno_audio_while_states(void)
+{
+    extern int gw_Audio_StopOwnedClips(const int16_t* pcm, uint32_t owner);
+    static gn_registry r;
+    int rc = 0;
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(9, ",\"audio\":{\"voice\":[{\"sfx\":77,\"file\":\"hum.gnsnd\",\"stoppable\":true,\"while_states\":[\"Charge\",\"Fire\"]}]},"
+                                    "\"states\":[{\"name\":\"Charge\",\"subaction\":57},{\"name\":\"Fire\",\"subaction\":58}]"), "audio-states") != 1) {
+        gw_test_fail("stoppable audio with named while_states was refused"); rc = 1;
+    }
+    gn_registry_clear(&r);
+    {
+        const char* bad[] = {"[]", "[\"Missing\"]", "[\"Charge\",\"Charge\"]", "[0]", "\"Charge\""};
+        char text[768]; size_t i;
+        for (i = 0; i < sizeof bad / sizeof bad[0]; ++i) {
+            snprintf(text, sizeof text, "{\"geno\":9,\"fighters\":[{\"define\":{\"key\":\"t7\",\"name\":\"T7\",\"base\":\"mario\",\"common\":\"melee.common.v1\",\"resources\":\"retail:mario\"},"
+                "\"states\":[{\"name\":\"Charge\",\"subaction\":57}],\"audio\":{\"voice\":[{\"sfx\":77,\"file\":\"hum.gnsnd\",\"stoppable\":true,\"while_states\":%s}]}}]}", bad[i]);
+            if (gn_parse_text(&r, text, "bad-audio-states") != 0) { gw_test_fail("accepted while_states %s", bad[i]); rc = 1; }
+            gn_registry_clear(&r);
+        }
+        if (gn_parse_text(&r, GN_T_HEAD(9, ",\"audio\":{\"voice\":[{\"sfx\":77,\"file\":\"hum.gnsnd\",\"while_states\":[\"Charge\"]}]},"
+                                          "\"states\":[{\"name\":\"Charge\",\"subaction\":57}]"), "audio-not-stoppable") != 0) {
+            gw_test_fail("while_states accepted without stoppable"); rc = 1;
+        }
+        gn_registry_clear(&r);
+    }
+    {
+        gn_registry entry = gn_boot, entry_saved = gn_saved;
+        int entry_loaded = gn_boot_loaded, entry_saved_loaded = gn_saved_loaded;
+        int entry_swapped = gn_swapped, ck;
+        static int16_t tones[3][4] = {{100, -100, 100, -100}, {200, -200, 200, -200}, {300, -300, 300, -300}};
+        memset(&gn_boot, 0, sizeof gn_boot); memset(&gn_saved, 0, sizeof gn_saved);
+        gn_boot_loaded = 1; gn_saved_loaded = 0; gn_swapped = 0;
+        if (gw_Geno_TestInstall(GN_T_HEAD(9, ",\"audio\":{\"voice\":["
+            "{\"sfx\":77,\"file\":\"hum.gnsnd\",\"stoppable\":true,\"while_states\":[\"Charge\",\"Fire\"]},"
+            "{\"sfx\":78,\"file\":\"voice.gnsnd\"},{\"sfx\":79,\"file\":\"legacy.gnsnd\",\"stoppable\":true}]},"
+            "\"states\":[{\"name\":\"Charge\",\"subaction\":57},{\"name\":\"Fire\",\"subaction\":58}]")) != 1 ||
+            (ck = gw_Geno_DefineResolve("t7")) < 34) {
+            gw_test_fail("install audio lifetime fixture"); rc = 1;
+        } else {
+            gn_profile* p = (gn_profile*)gn_define_profile_ck(ck);
+            int i, kind = ck - 1;
+            for (i = 0; i < 3; ++i) {
+                p->aud->voice_clip[i].pcm = tones[i]; p->aud->voice_clip[i].frames = 4; p->aud->voice_clip[i].channels = 1;
+            }
+            gw_Geno_DefineVoicePlayOwner(kind, 77, 1); gw_Geno_DefineVoicePlayOwner(kind, 77, 1);
+            gw_Geno_DefineVoicePlayOwner(kind, 77, 2); gw_Geno_DefineVoicePlayOwner(kind, 78, 1); gw_Geno_DefineVoicePlayOwner(kind, 79, 1);
+            if (gw_Geno_DefineVoiceState(kind, 1, GENO_MOTION_BASE) || gw_Geno_DefineVoiceState(kind, 1, GENO_MOTION_BASE + 1) ||
+                gw_Geno_DefineVoiceState(0, 1, 14)) { gw_test_fail("charge, fire or retail fighter cut hum"); rc = 1; }
+            if (gw_Geno_DefineVoiceState(kind, 1, 14) != 2 || gw_Geno_DefineVoiceState(kind, 1, 14) != 0 ||
+                gw_Audio_StopOwnedClips(tones[0], 2) != 1 || gw_Audio_StopOwnedClips(tones[1], 1) != 1 || gw_Audio_StopOwnedClips(tones[2], 1) != 1) {
+                gw_test_fail("exit must cut overlapping owner hums only, preserving another fighter, voice and legacy clip"); rc = 1;
+            }
+            gw_Geno_DefineVoicePlayOwner(kind, 77, 1); gw_Geno_DefineVoicePlayOwner(kind, 77, 2);
+            gw_Geno_DefineVoicePlayOwner(kind, 78, 1); gw_Geno_DefineVoicePlayOwner(kind, 79, 1);
+            if (gw_Geno_DefineVoicePlayOwner(kind, 540001, 1) != 1 || gw_Audio_StopOwnedClips(tones[0], 1) != 0 ||
+                gw_Audio_StopOwnedClips(tones[2], 1) != 0 || gw_Audio_StopOwnedClips(tones[0], 2) != 1 || gw_Audio_StopOwnedClips(tones[1], 1) != 1) {
+                gw_test_fail("540001 must stop only its fighter's stoppable clips"); rc = 1;
+            }
+            gw_Geno_DefineVoicePlayOwner(kind, 77, 1);
+            if (gw_Geno_DefineVoiceState(kind, 1, -1) != 1) { gw_test_fail("fighter reset left its hum playing"); rc = 1; }
+            for (i = 0; i < 3; ++i) {
+                gw_Audio_StopOwnedClips(tones[i], 1); gw_Audio_StopOwnedClips(tones[i], 2);
+                p->aud->voice_clip[i].pcm = NULL;
+            }
+        }
+        gw_Geno_TestRestore(); gn_registry_clear(&gn_boot); gn_registry_clear(&gn_saved);
+        gn_boot = entry; gn_saved = entry_saved; gn_boot_loaded = entry_loaded; gn_saved_loaded = entry_saved_loaded;
+        gn_swapped = entry_swapped; ++gn_pool_gen;
+    }
+    return rc;
+}
+
 /* the .gnsnd container and the clip route: decode, the refusals, a declared-but-missing file stays silent, a loaded clip reaches the mixer */
 static int test_geno_gnsnd_audio(void)
 {

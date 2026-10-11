@@ -409,6 +409,7 @@ struct gn_aud {
     int voice_sfx[GN_MAX_VOICE];
     int voice_vol[GN_MAX_VOICE];
     int voice_stop[GN_MAX_VOICE]; /* the row is `stoppable`: the sound id 540001 (the retail "stop this voice slot" id) cuts every playing instance of its clip */
+    uint64_t voice_states[GN_MAX_VOICE]; /* optional while_states: immutable Geno state mask, zero means script stop only */
     char voice_file[GN_MAX_VOICE][64];
     struct gn_clip announcer_clip, voice_clip[GN_MAX_VOICE];
 };
@@ -1473,6 +1474,10 @@ static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod
         }
     }
     gn_add_v2(p, d, e, where);
+    if (!gn_define_audio_states(p, d, e, where)) {
+        free(p->aud); p->aud = NULL;
+        return;
+    }
     gn_add_v5(p, d, e, where);
     gn_add_v1(r, p, d, e, mod, where);
     if (!gn_lua_parse(p, d, e, mod, where, version)) { /* slice 5: a bad "lua" block refuses the entry */
@@ -2538,6 +2543,7 @@ void geno_registry_tests_register(void) {
     gw_test_register("geno_define_s6_keys", test_geno_define_s6_keys);
     gw_test_register("geno_define_policy_ck", test_geno_define_policy_ck);
     gw_test_register("geno_gnsnd_audio", test_geno_gnsnd_audio);
+    gw_test_register("geno_audio_while_states", test_geno_audio_while_states);
     gw_test_register("geno_define_records", test_geno_define_records);
     gw_test_register("geno_items_registry",gn_items_registry_test);
     gw_test_register("geno_items_physics",gn_items_physics_test);

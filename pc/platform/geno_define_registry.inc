@@ -235,7 +235,7 @@ static int gn_define_s6_keys(gn_profile* p, const jdoc* d, int e, int version, c
                 int sx, fl, vl, x, n = a->nvoice;
                 if (d->n[c].type != JN_OBJ) goto bad_voice;
                 for (x = d->n[c].first; x >= 0; x = d->n[x].next)
-                    if (strcmp(d->n[x].key, "sfx") && strcmp(d->n[x].key, "file") && strcmp(d->n[x].key, "volume") && strcmp(d->n[x].key, "stoppable")) goto bad_voice;
+                    if (strcmp(d->n[x].key, "sfx") && strcmp(d->n[x].key, "file") && strcmp(d->n[x].key, "volume") && strcmp(d->n[x].key, "stoppable") && strcmp(d->n[x].key, "while_states")) goto bad_voice;
                 sx = jd_get(d, c, "sfx"); fl = jd_get(d, c, "file"); vl = jd_get(d, c, "volume");
                 a->voice_stop[n] = 0;
                 x = jd_get(d, c, "stoppable");
@@ -263,6 +263,35 @@ static int gn_define_s6_keys(gn_profile* p, const jdoc* d, int e, int version, c
         free(a); return 0;
     }
     return 1;
+}
+
+/* Resolve after gn_add_v2 has read every state name. Audio lifetime is cosmetic, like stoppable;
+ * a nonempty allowlist keeps charge -> fire intact until the release script plays 540001. */
+static int gn_define_audio_states(gn_profile* p, const jdoc* d, int e, const char* where)
+{
+    int a, v, c, n = 0;
+    if (!p->aud) return 1;
+    a = jd_get(d, e, "audio"); v = jd_get(d, a, "voice");
+    if (v < 0) return 1;
+    for (c = d->n[v].first; c >= 0; c = d->n[c].next, ++n) {
+        int list = jd_get(d, c, "while_states"), x;
+        uint64_t mask = 0;
+        if (list < 0) continue;
+        if (!p->aud->voice_stop[n] || d->n[list].type != JN_ARR ||
+            d->n[list].count < 1 || d->n[list].count > GENO_MAX_STATES) goto bad;
+        for (x = d->n[list].first; x >= 0; x = d->n[x].next) {
+            int s;
+            if (d->n[x].type != JN_STR) goto bad;
+            for (s = 0; s < p->nstate && strcmp(p->st_name[s], d->n[x].str); ++s) {}
+            if (s == p->nstate || (mask & (1ull << s))) goto bad;
+            mask |= 1ull << s;
+        }
+        p->aud->voice_states[n] = mask;
+    }
+    return 1;
+bad:
+    gw_log("geno: %s: audio.voice[%d].while_states requires stoppable: true and 1..%d distinct Geno state names", where, n, GENO_MAX_STATES);
+    return 0;
 }
 
 /* define.template: the retail fighter a base "none" define's native code and tables come from. Fighter kind and CharacterKind of
@@ -873,23 +902,23 @@ int gw_Geno_DefineAudioHas(int ck, int which, int sfx)
 }
 /* Start the define's clip (see gw_Geno_DefineAudioHas); 1 when one was started, 0 when there is none (the caller then does what it did before).
  * Never while a rollback session is armed: a define is offline only, and a clip is not rolled back. */
-int gw_Geno_DefineAudioPlay(int ck, int which, int sfx)
+static int gn_define_audio_play(int ck, int which, int sfx, uint32_t owner)
 {
-    extern int gw_Audio_PlayClip(const int16_t* pcm, int frames, int channels, int volume);
+    extern int gw_Audio_PlayOwnedClip(const int16_t* pcm, int frames, int channels, int volume, uint32_t owner);
     extern int gw_rb_active(void);
     const gn_profile* p = gn_define_profile_ck(ck);
     const struct gn_clip* c = NULL;
     int i, vol = 127;
     if (!p || !p->aud) return 0;
     if (which == 1 && sfx == 540001) { /* the retail "stop this voice slot" id: cut the define's stoppable clips (a looping hum); 0 (vanilla stop) when it has none */
-        extern int gw_Audio_StopClips(const int16_t* pcm);
+        extern int gw_Audio_StopOwnedClips(const int16_t* pcm, uint32_t owner);
         int any = 0, stopped = 0;
         for (i = 0; i < p->aud->nvoice; ++i) {
             const struct gn_clip* sc;
             if (!p->aud->voice_stop[i]) continue;
             any = 1;
-            sc = gn_clip_load(p, &p->aud->voice_clip[i], p->aud->voice_file[i]);
-            if (sc && !gw_rb_active()) stopped += gw_Audio_StopClips(sc->pcm);
+            sc = &p->aud->voice_clip[i]; /* stopping an unloaded clip must not load it */
+            if (!gw_rb_active()) stopped += gw_Audio_StopOwnedClips(sc->pcm, owner);
         }
         if (any) gw_log("geno: %s: stop id 540001 cut %d stoppable clip instance(s)", p->name, stopped);
         return any;
@@ -911,12 +940,35 @@ int gw_Geno_DefineAudioPlay(int ck, int which, int sfx)
     }
     if (!c) return 1; /* declared but unusable: stay silent rather than fall back to the donor's voice */
     if (gw_rb_active()) return 1;
-    gw_Audio_PlayClip(c->pcm, c->frames, c->channels, vol);
+    gw_Audio_PlayOwnedClip(c->pcm, c->frames, c->channels, vol, owner);
     gw_log("geno: %s: plays its own %s (%s)", p->name, which == 0 ? "announcer call" : "voice line", which == 0 ? p->aud->announcer : p->aud->voice_file[i]);
     return 1;
 }
+int gw_Geno_DefineAudioPlay(int ck, int which, int sfx) { return gn_define_audio_play(ck, which, sfx, 0); }
 /* the same by FighterKind (the fighter code knows kind, not CK) */
 int gw_Geno_DefineVoicePlayKind(int kind, int sfx) { return kind < 0x21 ? 0 : gw_Geno_DefineAudioPlay(kind + 1, 1, sfx); }
+int gw_Geno_DefineVoicePlayOwner(int kind, int sfx, uint32_t owner) { return kind < 0x21 ? 0 : gn_define_audio_play(kind + 1, 1, sfx, owner); }
+
+/* Geno_OnActionChange calls after motion_id is set, including retail hit/dodge exits with no
+ * Geno script. The fighter address only identifies cosmetic mixer instances; it is never read
+ * back into simulation. Reset passes -1 to clear a recycled fighter's state-scoped clips. */
+int gw_Geno_DefineVoiceState(int kind, uint32_t owner, int motion)
+{
+    extern int gw_Audio_StopOwnedClips(const int16_t* pcm, uint32_t owner);
+    extern int gw_rb_active(void);
+    const gn_profile* p;
+    int i, stopped = 0, s = motion - GENO_MOTION_BASE;
+    if (kind < 0x21 || gw_rb_active()) return 0;
+    p = gn_define_profile_ck(kind + 1);
+    if (!p || !p->aud) return 0;
+    for (i = 0; i < p->aud->nvoice; ++i) {
+        uint64_t mask = p->aud->voice_states[i];
+        if (!mask || (s >= 0 && s < p->nstate && (mask & (1ull << s)))) continue;
+        stopped += gw_Audio_StopOwnedClips(p->aud->voice_clip[i].pcm, owner);
+    }
+    if (stopped) gw_log("geno: %s: state exit to %d cut %d stoppable clip instance(s), owner %08x", p->name, motion, stopped, (unsigned)owner);
+    return stopped;
+}
 
 static int gn_plan_num(const jdoc* d, int o, const char* key, int lo, int hi)
 {

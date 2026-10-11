@@ -470,6 +470,18 @@ void HSD_PadRenewMasterStatus(void)
 #else
                 mp->button = qread->button;
 #endif
+
+#if defined(TARGET_PC)
+                {
+                    /* Raw rollback/LAB samples stay raw in their logs. Map once
+                     * here, before HSD derives trigger/release edges below. */
+                    extern int FighterControls_Apply(int port, int buttons);
+                    extern int Replay_ControlsRaw(void);
+                    if (Replay_ControlsRaw()) {
+                        mp->button = FighterControls_Apply(i, mp->button);
+                    }
+                }
+#endif
                 mp->stickX = qread->stickX;
                 mp->stickY = qread->stickY;
                 mp->subStickX = qread->substickX;

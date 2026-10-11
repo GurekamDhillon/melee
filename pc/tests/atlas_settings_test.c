@@ -103,6 +103,7 @@ int gw_Kit_QuadCount(void) { return g_quads; }
 int gw_Kit_QuadRoom(void) { return 16000; }
 
 #include "atlas_nucleus_stubs.h"
+#include "atlas_fighter_controls_fake.h"
 #include "gw_script_ui.inc"
 
 static const char *lua(const char *code)
@@ -221,7 +222,7 @@ static void page_counts(void)
 {
     CHECK(ntables() == 12);
     CHECK(tbl("fe_items_set_video")->n == 7 && tbl("fe_items_set_audio")->n == 3 && tbl("fe_items_set_controls")->n == 16);      /* 12 + the four Rumble, Port N rows */
-    CHECK(tbl("fe_items_set_online")->n == 6 && tbl("fe_items_set_gameplay")->n == 12 && tbl("fe_items_remap")->n == 20 && tbl("fe_items_howto_online")->n == 6);   /* gameplay 10 + Language + Erase Data... */
+    CHECK(tbl("fe_items_set_online")->n == 6 && tbl("fe_items_set_gameplay")->n == 13 && tbl("fe_items_remap")->n == 20 && tbl("fe_items_howto_online")->n == 6);   /* gameplay includes UCF, Language and Erase Data... */
     CHECK(tbl("fe_items_erase")->n == 6);                                                                                        /* the six retail operations */
     CHECK(tbl("fe_items_vs_setup")->n == 10 && tbl("fe_items_online")->n == 9);
     CHECK(tbl("fe_items_rules")->n == 8 && tbl("fe_items_morerules")->n == 5);                                                   /* the retail Rules and More Rules screens */

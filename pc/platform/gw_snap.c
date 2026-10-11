@@ -26,6 +26,8 @@
  * are suppressed (gw_Snap_Resimulating, read by lbAudioAx).
  */
 #include "gw.h"
+#include "gw_fighter_controls.h"
+#include "gw_test.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -317,6 +319,10 @@ static int sn_load_map(void) {
             ++sn.nranges;
         }
         sn.globals_len += s->len;
+    }
+    {
+        extern int gw_FighterControls_StateSize(void);
+        sn.globals_len += (uint32_t)gw_FighterControls_StateSize();
     }
     /* RENDER-OWNED state: advanced by the render pass, which resimulated frames never get.
        Saved and restored with everything else (so it stays consistent with MEM1), but not
@@ -636,12 +642,17 @@ static uint64_t sn_h64(const uint8_t *p, size_t n, uint64_t seed) {
 
 /* ---- save / load / compare -------------------------------------------------------------------- */
 
+extern int gw_FighterControls_StateSize(void);
+extern int gw_FighterControls_StateSave(void *out, int cap);
+extern int gw_FighterControls_StateLoad(const void *in, int size);
+
 static void sn_gather(uint8_t *out) {
     int i;
     for (i = 0; i < sn.nranges; ++i) {
         memcpy(out, (const void *) (uintptr_t) sn.ranges[i].va, sn.ranges[i].len);
         out += sn.ranges[i].len;
     }
+    gw_FighterControls_StateSave(out, gw_FighterControls_StateSize());
 }
 
 /* NOT used for the ordinary restore - see gw_snap_load. Kept for the places that want the
@@ -680,6 +691,7 @@ static void sn_scatter(const uint8_t *in) {
         memcpy((void *) (uintptr_t) sn.ranges[i].va, in, sn.ranges[i].len);
         in += sn.ranges[i].len;
     }
+    gw_FighterControls_StateLoad(in, gw_FighterControls_StateSize());
     /* Rumble is a cosmetic, pad-side script interpreter: restoring it mid-script rolled its
        cursor back into a loop (k=7 hung inside HSD_PadRumbleInterpret1) and leaving it stale
        crashed on freed heap. Idle (all zero) is the only state that is always safe. */
@@ -1268,7 +1280,9 @@ static void rbv_note(int frame, uint32_t va, uint8_t was, uint8_t now, const cha
         const char *f = gw_GenoGame_StateFieldName(off);
         snprintf(field, sizeof field, "  = GenoState P%d%s .%s +0x%X", blk / 2 + 1, (blk & 1) ? " (sub)" : "",
                  f != NULL ? f : "?", off - gw_GenoGame_StateFieldBase(off));
-    } else {
+    } else if (va >= 0x80000000u && va - 0x80000000u < gw_mem1_size) {
+        /* Native globals and the controls tail cannot lie in a Fighter.
+         * In headless/pre-scene state the game's fighter list is not live. */
         int at = gw_ScriptGame_LabFighterAt(va);
         if (at >= 0) {
             int off = at & 0xFFFF;
@@ -1419,6 +1433,22 @@ static int sn_compare(int frame) {
             }
             base += sn.ranges[i].len;
         }
+        /* The native frozen controls tail is simulation state, even if a
+         * render window observed it changing during scene setup. */
+        for (i = (int) base; i < (int) sn.globals_len; ++i) {
+            if (s->globals[i] != sn.cmp_globals[i]) {
+                ++diffs;
+                if (diffs == 1) {
+                    rbv_note(frame, 0, s->globals[i], sn.cmp_globals[i],
+                             "fighter controls", i - base, NULL, 0);
+                }
+                if (logged < 24) {
+                    gw_log("snap:   fighter controls+0x%X: first pass %02X now %02X",
+                           i - base, s->globals[i], sn.cmp_globals[i]);
+                    ++logged;
+                }
+            }
+        }
     }
     sn.ms_cmp += sn_ms() - t0;
     sn.n_cmp++;
@@ -1528,6 +1558,12 @@ uint64_t gw_snap_hash(void) {
             }
             a = next;
         }
+    }
+    {
+        int size = gw_FighterControls_StateSize();
+        uint8_t *controls = sn.cmp_globals + sn.globals_len - size;
+        gw_FighterControls_StateSave(controls, size);
+        g = sn_h64(controls, size, g);
     }
     total = sn.hash_mem * 0x9E3779B97F4A7C15ull ^ (g << 17 | g >> 47);
     sn.n_hash_calls++;
@@ -3776,6 +3812,21 @@ int gw_rw_compare(double out[2], uint64_t out_h[2]) {
         }
         base += sn.ranges[r].len;
     }
+    /* Native frozen mappings always affect simulation; do not apply the
+     * game's address exclusions or measured render masks to this tail. */
+    for (; base < sn.globals_len; ++base) {
+        hc = (hc ^ rw.cap_glob[base]) * 0x100000001B3ull;
+        hl = (hl ^ g[base]) * 0x100000001B3ull;
+        if (g[base] != rw.cap_glob[base]) {
+            all += 1;
+            sim += 1;
+            if (logged++ < 40) {
+                gw_log("rewind test: fighter controls+0x%X differs (was %02X, now %02X)",
+                       base - (sn.globals_len - gw_FighterControls_StateSize()),
+                       rw.cap_glob[base], g[base]);
+            }
+        }
+    }
     gw_log("rewind test: %.0f bytes differ: %.0f simulation, %.0f render-owned (measured), %.0f disc "
            "async / pad-side / light list (%d ranges walked)", all, sim, ro_bytes, ex_bytes, rw_nex);
     out[0] = all;
@@ -3795,6 +3846,51 @@ void gw_Snap_LabResim(int on) {
     if (sn.enabled) {
         sn.cur_is_resim = on;
     }
+}
+
+/* Controls are native simulation state: changing only X/Y must be visible to
+ * peer hashes, SyncTest and the Lab's exactness compare, and undone by a load. */
+static int test_snap_fighter_controls(void) {
+    int size = gw_FighterControls_StateSize(), rc = 0;
+    void *saved = malloc(size);
+    uint64_t hx, hy, h[2];
+    double diff[2];
+    if (saved == NULL || !gw_FighterControls_StateSave(saved, size) || gw_snap_open(1) != 0) {
+        free(saved);
+        gw_test_fail("controls snapshot test could not open snapshots/save mapping");
+        return 1;
+    }
+    gw_FighterControls_MatchClear();
+    gw_FighterControls_MatchSet(0, 2, GW_FC_JUMP_X);
+    gw_snap_save(32000);
+    hx = gw_snap_hash();
+    if (gw_rw_capture() != 0) {
+        gw_test_fail("controls snapshot test could not capture baseline"); rc = 1;
+    } else {
+        gw_FighterControls_MatchSet(0, 2, GW_FC_JUMP_Y);
+        hy = gw_snap_hash();
+        int sync_diff = sn_compare(32000);
+        int rewind_rc = gw_rw_compare(diff, h);
+        if (hx == hy || sync_diff == 0 || rewind_rc != 0 || diff[1] == 0 || h[0] == h[1]) {
+            gw_test_fail("controls-only X to Y change escaped hash/SyncTest/rewind compare"); rc = 1;
+        }
+        if (gw_snap_load(32000) != 0 || gw_FighterControls_MatchGet(0) != GW_FC_JUMP_X ||
+            gw_FighterControls_Apply(0, 0x400) != 0x400 ||
+            gw_FighterControls_Apply(0, 0x800) != 0 || sn_compare(32000) != 0 ||
+            gw_snap_hash() != hx) {
+            gw_test_fail("snapshot load did not restore exact frozen X mapping and state hash"); rc = 1;
+        }
+        if (gw_rw_capture() != 0 || gw_rw_compare(diff, h) != 0 || diff[1] != 0 || h[0] != h[1]) {
+            gw_test_fail("restored controls differ in rewind exactness compare"); rc = 1;
+        }
+    }
+    gw_FighterControls_StateLoad(saved, size);
+    free(saved);
+    return rc;
+}
+
+void gw_Snap_RegisterTests(void) {
+    gw_test_register("snap_fighter_controls", test_snap_fighter_controls);
 }
 
 /* ==============================================================================================

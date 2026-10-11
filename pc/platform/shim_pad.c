@@ -558,6 +558,7 @@ static void gw_pad_apply_deadzone(const int *src) {
 }
 
 #include "gw_controls_runtime.inc"
+#include "gw_fighter_controls_runtime.inc"
 
 /* The first boot's visit to SETTINGS > CONTROLS: once, when settings.cfg has no onboarded=1, and
  * never for a run somebody automated (a scene launch, a pad script, MELEE_NO_ONBOARD=1). */
@@ -739,6 +740,13 @@ void gw_PADSetSamplingRate(int rate) {
 /* ---- tests (run.sh --test) ------------------------------------------------------------------ */
 #include "gw_test.h"
 #include "gw_controls_tests.inc"
+#include "gw_fighter_controls_tests.inc"
+
+static int test_fighter_controls_mapping(void) {
+  int line = fighter_controls_model_check();
+  if (line) gw_test_fail("fighter controls model check line %d", line);
+  return line != 0;
+}
 
 static int test_controls_mapping(void) {
   int line = controls_model_check();
@@ -781,6 +789,7 @@ void gw_pad_tests_register(void) {
   extern void gw_gc_adapter_tests_register(void);
   gw_gc_adapter_tests_register();
   gw_test_register("controls_mapping", test_controls_mapping);
+  gw_test_register("fighter_controls_mapping", test_fighter_controls_mapping);
   gw_test_register("pad_connected_sources", test_pad_connected_sources);
   gw_test_register("pad_really_used_thresholds", test_pad_really_used_thresholds);
 }

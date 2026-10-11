@@ -381,6 +381,46 @@ static void css_view_layouts(void)
 
 int main(void)
 {
+    {
+        AtSink s; AtRenderInfo info; int i, controls = 0;
+        build_css_view(&SC, &V, POOL, 26, 4, 0);
+        SC.ports[0].controls = 2;
+        s = rec_sink(); at_render_ex(&SC, &V, 640.0f, 1000.0, 1, &O, &s, &HITS, &info);
+        for (i = 0; i < HITS.n; i++)
+            if (HITS.h[i].kind == AT_HIT_ZONE && (HITS.h[i].b & 15) == AT_ZONE_CONTROLS) controls++;
+        CHECK(controls == 1);
+        SC.css_controls.open = 1; SC.css_controls.port = 0; SC.css_controls.n = 4;
+        strcpy(SC.css_controls.title, "CAPTAIN FALCON");
+        strcpy(SC.css_controls.label[0], "Layout"); strcpy(SC.css_controls.value[0], "Classic");
+        strcpy(SC.css_controls.label[1], "Jump button"); strcpy(SC.css_controls.value[1], "X + Y");
+        strcpy(SC.css_controls.label[2], "Extra"); strcpy(SC.css_controls.value[2], "Off");
+        strcpy(SC.css_controls.label[3], "Done");
+        s = rec_sink(); at_render_ex(&SC, &V, 640.0f, 1000.0, 1, &O, &s, &HITS, &info);
+        CHECK(HITS.n >= 4 && !info.capped && !info.hits_dropped);
+        for (i = 0; i < HITS.n; i++) CHECK(HITS.h[i].kind == AT_HIT_CONTROLS);
+        /* Largest declared schema on a full roster still fits all supported
+         * canvas widths, with no underlying target and no clipped row. */
+        {
+            const float widths[] = { 640.0f, 853.0f, 1140.0f };
+            int j;
+            build_css_view(&SC, &V, POOL, 129, 4, 103);
+            SC.css_controls.open = 1; SC.css_controls.n = AT_CSS_CONTROL_ROWS;
+            SC.css_controls.port = 3; SC.css_controls.row = 10;
+            strcpy(SC.css_controls.title, "A FIGHTER WITH A LONG DISPLAY NAME");
+            for (j = 0; j < 10; j++) {
+                strcpy(SC.css_controls.label[j], "An extra with a long label");
+                strcpy(SC.css_controls.value[j], "A long named layout choice");
+            }
+            for (j = 0; j < 3; j++) {
+                s = rec_sink(); at_render_ex(&SC, &V, widths[j], 1000.0, 1, &O, &s, &HITS, &info);
+                CHECK(HITS.n == 31 && !info.capped && !info.hits_dropped);
+                for (i = 0; i < HITS.n; i++) {
+                    AtRect r = HITS.h[i].r;
+                    CHECK(HITS.h[i].kind == AT_HIT_CONTROLS && r.x >= 0.0f && r.y >= 0.0f && r.x + r.w <= widths[j] && r.y + r.h <= 480.0f);
+                }
+            }
+        }
+    }
     rosters_at_three_widths(); hits_follow_layout(); placeholder_when_no_art(); style_of_the_screen(); focus_on_a_cell_has_three_cues();
     css_view_layouts();
     long_roster_scroll_follows_cursor(); entries_stay_bounded(); stages_256(); loading_screen();

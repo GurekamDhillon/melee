@@ -131,6 +131,7 @@ int gw_Kit_QuadCount(void) { return g_quads; }
 int gw_Kit_QuadRoom(void) { return 16000; }
 
 #include "atlas_nucleus_stubs.h"
+#include "atlas_fighter_controls_fake.h"
 #include "gw_script_ui.inc"
 
 /* run Lua; the result is the last value as text, or "ERR ..." */
@@ -1156,7 +1157,7 @@ static void step7_stepper_tabs_backdrop(void)
     LUA_IS("gd.ui.tab('envoy.tabs', 3); TB={}; return gd.ui.tab('envoy.tabs')", "3");
     LUA_IS("gd.ui.screen{id='envoy.tabs', tabs={{name='ONE'},{name='TWO'},{name='THREE'}}, tab=1, primary={kind='list', items={{id='b',label='B'}}}, on={tab=function(i) TB[#TB+1]=i end}}; return gd.ui.tab('envoy.tabs')", "3");
     LUA_HAS("return gd.ui.screen{id='envoy.t0', tabs={}, primary={kind='list', items={{id='a',label='A'}}}}", "tabs");
-    LUA_HAS("local t={} for i=1,9 do t[i]={name='T'..i} end return gd.ui.screen{id='envoy.t9', tabs=t, primary={kind='list', items={{id='a',label='A'}}}}", "tabs");
+    LUA_HAS("local t={} for i=1,10 do t[i]={name='T'..i} end return gd.ui.screen{id='envoy.tover', tabs=t, primary={kind='list', items={{id='a',label='A'}}}}", "tabs");
     /* a screen without tabs: L and R still reach on.page, as before; gd.ui.tab is nil */
     LUA_IS("TB={}; gd.ui.screen{id='envoy.nt', primary={kind='list', items={{id='a',label='A'}}}, on={tab=function(i) TB[#TB+1]='tab' end, page=function(d) TB[#TB+1]='page'..d end}}; gd.ui.open('envoy.nt'); gd.ui.feed('envoy.nt','r'); return table.concat(TB,',')", "page1");
     LUA_IS("return tostring(gd.ui.tab('envoy.nt'))", "nil");

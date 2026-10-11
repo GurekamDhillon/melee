@@ -15,6 +15,7 @@
 #include "gw_test.h"
 #include "gw_view_math.h"
 #include "gw_controls_model.h"
+#include "gw_settings.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -157,13 +158,81 @@ int gw_Settings_Str(const char *key, char *out, int cap, const char *dflt) {
 
 void gw_Settings_SetStr(const char *key, const char *value) {
     int i = st_find(key);
+    int added = i < 0;
+    char previous[ST_VAL];
     if (i < 0) {
         if (st.n >= ST_MAX) { st_save_ok = 0; gw_log("settings: key capacity reached"); return; }
         i = st.n++;
         snprintf(st.key[i], ST_KEY, "%s", key);
+    } else {
+        memcpy(previous, st.val[i], ST_VAL);
     }
     snprintf(st.val[i], ST_VAL, "%s", value != NULL ? value : "");
     st_save();
+    if (!st_save_ok) {
+        /* Failed menu saves must not change the preference used by the next
+         * match or get committed by a later, unrelated settings update. */
+        if (added) {
+            memset(st.key[i], 0, ST_KEY);
+            memset(st.val[i], 0, ST_VAL);
+            --st.n;
+        } else {
+            memcpy(st.val[i], previous, ST_VAL);
+        }
+        gw_log("settings: value update failed; previous preference retained");
+    }
+}
+
+/* Controller-profile deletion must reclaim rows, not write empty values or
+ * abandon generations: this table is bounded and also holds unrelated settings. */
+int gw_Settings_RemovePrefix(const char *prefix) {
+    size_t length, key_bytes, val_bytes;
+    char *backup = NULL;
+    int read, write = 0, before;
+    if (prefix == NULL || prefix[0] == '\0' || (length = strlen(prefix)) >= ST_KEY) return 0;
+    st_load();
+    before = st.n;
+    for (read = 0; read < before; ++read) {
+        if (strncmp(st.key[read], prefix, length) == 0) break;
+    }
+    key_bytes = (size_t) before * ST_KEY;
+    val_bytes = (size_t) before * ST_VAL;
+    if (read < before) {
+        /* A failed save must not leave a deletion that an unrelated later save
+         * would commit. Allocate off-stack only when rows will change. */
+        backup = malloc(key_bytes + val_bytes);
+        if (backup == NULL) {
+            st_save_ok = 0;
+            gw_log("settings: cannot stage profile value removal");
+            return 0;
+        }
+        memcpy(backup, st.key, key_bytes);
+        memcpy(backup + key_bytes, st.val, val_bytes);
+    }
+    for (read = 0; read < before; ++read) {
+        if (strncmp(st.key[read], prefix, length) == 0) continue;
+        if (write != read) {
+            memcpy(st.key[write], st.key[read], ST_KEY);
+            memcpy(st.val[write], st.val[read], ST_VAL);
+        }
+        ++write;
+    }
+    st.n = write;
+    if (write < before) {
+        memset(st.key[write], 0, (size_t)(before - write) * ST_KEY);
+        memset(st.val[write], 0, (size_t)(before - write) * ST_VAL);
+    }
+    /* Also retry a previously failed save when the requested prefix is absent. */
+    st_save();
+    if (!st_save_ok && backup != NULL) {
+        memcpy(st.key, backup, key_bytes);
+        memcpy(st.val, backup + key_bytes, val_bytes);
+        st.n = before;
+        gw_log("settings: profile value removal failed; preferences retained");
+    }
+    free(backup);
+    if (st_save_ok && before != write) gw_log("settings: removed %d profile value(s) for %s", before - write, prefix);
+    return st_save_ok;
 }
 
 int gw_Settings_Int(const char *key, int dflt) {

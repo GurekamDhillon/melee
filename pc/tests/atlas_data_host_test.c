@@ -105,6 +105,7 @@ int gw_Kit_QuadCount(void) { return g_quads; }
 int gw_Kit_QuadRoom(void) { return 16000; }
 
 #include "atlas_nucleus_stubs.h"
+#include "atlas_fighter_controls_fake.h"
 #include "gw_script_ui.inc"
 
 static const char *lua(const char *code)

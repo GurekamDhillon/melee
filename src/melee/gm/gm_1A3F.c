@@ -215,6 +215,14 @@ void gm_801A4014(GameMode* mode)
 #endif
     gm_801A4BD4();
     gm_801A4B88(info);
+#if defined(TARGET_PC)
+    {
+        /* VS on_enter resolves and records the new match's mapping. Clear the
+         * previous scene first: Script_SceneBegin runs AFTER on_enter. */
+        extern void FighterControls_MatchClear(void);
+        FighterControls_MatchClear();
+    }
+#endif
     if (scene->on_enter != NULL) {
         scene->on_enter(info->enter_data);
     }

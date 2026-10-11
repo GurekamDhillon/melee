@@ -13,6 +13,7 @@
 
 #include "gw_ui_css.h"
 #include "gw_ui_sss.h"
+#include "gw_fighter_controls.h"
 
 static int gs_set_is_open(void);   /* gw_script_ui_set.inc: the settings screens are native too, and only one native screen exists */
 
@@ -25,11 +26,11 @@ static struct {
     char spec[96];           /* the key hints last parsed (re-parsed only on a change) */
 } gs_sel = { 0, -1 };
 
-static AtCss gs_selm_css;           /* the character select's model (defined with the shims below) */
+static AtCss gs_selm_css = { .controls_port = -1 }; /* the character select's model */
 static struct { float x, y; int valid, edge, user, mouse; } gs_hand[4];   /* mouse: the pointer moved it last (a stick move clears it) */   /* the free hands (below) */
 static void gs_hand_home(GsUiSlot *u, int p);
 enum { GS_SEL_CSS, GS_SEL_SSS, GS_SEL_LOAD };
-enum { GS_SELEV_CELL = 1, GS_SELEV_CARD = 2, GS_SELEV_TAB = 3, GS_SELEV_KEY = 4, GS_SELEV_WHEEL = 5, GS_SELEV_POINTER = 6, GS_SELEV_ZONE = 7, GS_SELEV_PAD = 8, GS_SELEV_SOUND = 9 };
+enum { GS_SELEV_CELL = 1, GS_SELEV_CARD = 2, GS_SELEV_TAB = 3, GS_SELEV_KEY = 4, GS_SELEV_WHEEL = 5, GS_SELEV_POINTER = 6, GS_SELEV_ZONE = 7, GS_SELEV_PAD = 8, GS_SELEV_SOUND = 9, GS_SELEV_CONTROLS = 10 };
 
 /* the slot a handle names, or NULL when the handle is stale (the screen closed, the scene ended, another select opened since) */
 static GsUiSlot *gs_sel_get(int h) {
@@ -120,6 +121,7 @@ void gw_Ui_SelClose(int h) {
     gs_sel.h = -1;
     gs_sel.qn = 0;
     gs_ui_free_engine_slot(slot);
+    gs_selm_css.controls_port = -1;
     gs_ui_after_close();
 }
 
@@ -168,6 +170,37 @@ void gw_Ui_SelCard(int h, int port, int kind, const char *name, const char *sub,
     k->cpu_lv = cpu_lv;
     k->team = team;
     k->flags = flags;
+    k->controls = port < 4 && at_css_zone_ok(&gs_selm_css, port, port, AT_ZONE_CONTROLS)
+        ? (gw_FighterControls_Count(gs_selm_css.p[port].ck, 0) || gw_FighterControls_Count(gs_selm_css.p[port].ck, 1) ? 2 : 1) : 0;
+}
+
+/* No preference lives in the game adapter: the host submits the model's modal
+ * and schema labels directly to its native renderer. */
+void gw_Ui_SelControls(int h) {
+    GsUiSlot *u = gs_sel_get(h);
+    AtCssControlsView *v;
+    AtCss *c = &gs_selm_css;
+    int row = 0, i;
+    static const char *jump[] = { "X + Y", "X", "Y" };
+    if (u == NULL) return;
+    v = &u->sc.css_controls;
+    memset(v, 0, sizeof *v);
+    if (c->controls_port < 0) return;
+    v->open = 1; v->port = c->controls_port; v->row = c->controls_row;
+    snprintf(v->title, sizeof v->title, "%s", u->sc.ports[v->port].name);
+    if (c->controls_layouts) {
+        snprintf(v->label[row], AT_STR, "Layout");
+        gw_FighterControls_Name(c->controls_ck, 0, (int) ((c->controls_choice >> 2) & 15u), v->value[row], AT_STR);
+        row++;
+    }
+    snprintf(v->label[row], AT_STR, "Jump button");
+    snprintf(v->value[row++], AT_STR, "%s", jump[c->controls_choice & 3u]);
+    for (i = 0; i < c->controls_extras && row < AT_CSS_CONTROL_ROWS - 1; i++, row++) {
+        gw_FighterControls_Name(c->controls_ck, 1, i, v->label[row], AT_STR);
+        snprintf(v->value[row], AT_STR, "%s", c->controls_choice & (1u << (8 + i)) ? "On" : "Off");
+    }
+    snprintf(v->label[row++], AT_STR, "Done");
+    v->n = row;
 }
 
 void gw_Ui_SelCursor(int h, int port, int active, int cell, int card) {
@@ -339,8 +372,27 @@ void gw_Ui_ArtDrop(void) { gw_Kit_TexDropHsd(); }
 /* ---- the mouse over a select screen: the same priming rules as at_mouse_events (the first sample only primes; off the picture is never an event;
  * a button held from the previous scene does not click), but the events keep what they hit: a tile, a card, a tab, a key hint, the wheel ---- */
 static void gs_sel_tick_css(GsUiSlot *u);
+static void gs_sel_tick_controls(GsUiSlot *u) {
+    AtMouse *m = &u->mouse;
+    float x, y, wheel;
+    int buttons, moved, left, right, hit, mp = at_css_mouse_port(&gs_selm_css);
+    gw_Mouse_ScriptRead(&x, &y, &buttons, &wheel);
+    if (x < 0.0f || y < 0.0f) { m->valid = 0; m->buttons = buttons; return; }
+    moved = m->valid && (x != m->x || y != m->y);
+    left = m->valid && (buttons & 1) && !(m->buttons & 1);
+    right = m->valid && (buttons & 2) && !(m->buttons & 2);
+    hit = at_hit_test(&u->hits, x, y);
+    if (mp == gs_selm_css.controls_port) {
+        if (right) gs_sel_q_push(GS_SELEV_CONTROLS, gs_selm_css.controls_row, 3);
+        else if (hit >= 0 && u->hits.h[hit].kind == AT_HIT_CONTROLS && (moved || left || wheel)) {
+            gs_sel_q_push(GS_SELEV_CONTROLS, u->hits.h[hit].a, left ? u->hits.h[hit].b : wheel > 0 ? -1 : wheel < 0 ? 1 : 0);
+        }
+    }
+    m->valid = 1; m->x = x; m->y = y; m->buttons = buttons;
+}
 static void gs_sel_tick(GsUiSlot *u) {
     float x, y, wheel;
+    if (gs_selm_css.controls_port >= 0 && strcmp(u->sc.id, "select.css") == 0) { gs_sel_tick_controls(u); return; }
     if (u->sc.primary == AT_PRIMARY_CSS && gs_selm_css.puck && gs_selm_css.free) { gs_sel_tick_css(u); return; }   /* free hands: the mouse is the hand of the port it plays for */
     int buttons, hit, moved, left, right, kind = 0, idx = -1;
     AtMouse *m = &u->mouse;
@@ -484,6 +536,7 @@ unsigned gw_Ui_SelHand(int h, int port, int sx, int sy) {
     float fx = (float) sx, fy = (float) sy, m2 = fx * fx + fy * fy, dx = 0.0f, dy = 0.0f;
     unsigned ev = 0;
     if (u == NULL || u->sc.primary != AT_PRIMARY_CSS || !gs_selm_css.puck || !gs_selm_css.free || port < 0 || port > 3) return 0;
+    if (gs_selm_css.controls_port >= 0) return 0;
     s = &gs_selm_css.p[port];
     if (s->kind != AT_CSS_HMN && !s->act) { gs_hand[port].valid = 0; return 0; }
     if (!gs_hand[port].valid || !gs_hand[port].user) gs_hand_home(u, port);
@@ -557,6 +610,7 @@ static void gs_sel_live_hand(GsUiSlot *u) {
     float x, y, wheel;
     int buttons, mp;
     if (u == NULL || u->sc.primary != AT_PRIMARY_CSS || !gs_selm_css.puck || !gs_selm_css.free) return;
+    if (gs_selm_css.controls_port >= 0) return;
     mp = at_css_mouse_port(&gs_selm_css);
     if (mp < 0 || mp > 3 || !gs_hand[mp].valid || !gs_hand[mp].mouse || gw_Mouse_X() <= -1000) return;
     gw_Mouse_HandIsCursor();
@@ -583,7 +637,11 @@ static int gs_selm_costumes(void *u, int ck) { (void) u; return ck >= 0 && ck < 
 static int gs_selm_random(void *u, const struct AtCss *c) { (void) u; return c->n_slots > 1 ? c->ck[0] : 0; }
 static int gs_selm_swap(void *u, int ck) { (void) u; return ck >= 0 && ck == gs_selm_zelda ? gs_selm_sheik : ck >= 0 && ck == gs_selm_sheik ? gs_selm_zelda : -1; }
 static int gs_selm_sheik_ok_op(void *u) { (void) u; return gs_selm_sheik_ok; }
-static const AtCssOps gs_selm_ops = { 0, gs_selm_costumes, gs_selm_random, gs_selm_swap, gs_selm_sheik_ok_op };
+static int gs_selm_controls_count(void *u, int ck, int field) { (void) u; return gw_FighterControls_Count(ck, field); }
+static unsigned gs_selm_controls_get(void *u, int port, int ck) { (void) u; return gw_FighterControls_Get(port, ck); }
+static int gs_selm_controls_set(void *u, int port, int ck, unsigned choice) { (void) u; return gw_FighterControls_Set(port, ck, choice); }
+static const AtCssOps gs_selm_ops = { 0, gs_selm_costumes, gs_selm_random, gs_selm_swap, gs_selm_sheik_ok_op,
+    gs_selm_controls_count, gs_selm_controls_get, gs_selm_controls_set };
 
 /* 1 when the match type has a profile (the adapter asks before it routes a mode's state into the frontend scene) */
 int gw_Ui_CssKnown(int match_type) { return at_css_profile(match_type) != NULL; }
@@ -640,7 +698,7 @@ void gw_Ui_CssSetPortCk(int p, int ck, int costume) {
 void gw_Ui_CssEntering(int port) { int q; at_css_set_entering(&gs_selm_css, port); for (q = 0; q < 4; q++) at_css_hand_reset(&gs_selm_css, q); }
 void gw_Ui_CssTraining(int human) { int q; at_css_set_training(&gs_selm_css, human); for (q = 0; q < 4; q++) at_css_hand_reset(&gs_selm_css, q); }
 void gw_Ui_CssCols(int cols) { at_css_set_cols(&gs_selm_css, cols); }
-void gw_Ui_CssSetTab(int tab) { at_css_set_tab(&gs_selm_css, tab); }
+void gw_Ui_CssSetTab(int tab) { if (gs_selm_css.controls_port < 0) at_css_set_tab(&gs_selm_css, tab); }
 void gw_Ui_CssSetCursor(int port, int vis) {
     if (port < 0 || port > 3) return;
     gs_selm_css.p[port].cur = vis >= 0 && vis < gs_selm_css.n_vis ? vis : 0;
@@ -648,8 +706,19 @@ void gw_Ui_CssSetCursor(int port, int vis) {
 }
 unsigned gw_Ui_CssStep(int port, unsigned trig, unsigned rep, int frame) {
     AtCssIn in;
+    unsigned ev;
+    int before = gs_selm_css.controls_port;
     in.trig = trig; in.rep = rep;
-    return at_css_step(&gs_selm_css, port, in, frame);
+    ev = at_css_step(&gs_selm_css, port, in, frame);
+    if (before != gs_selm_css.controls_port)
+        gw_log("ui: css controls %s P%d fighter %d choice %04x", before < 0 ? "open" : "close", port + 1, gs_selm_css.controls_ck, gs_selm_css.controls_choice);
+    return ev;
+}
+unsigned gw_Ui_CssControl(int port, int row, int action) {
+    int before = gs_selm_css.controls_port;
+    unsigned ev = at_css_controls_point(&gs_selm_css, port, row, action);
+    if (before >= 0 && gs_selm_css.controls_port < 0) gw_log("ui: css controls close P%d", before + 1);
+    return ev;
 }
 unsigned gw_Ui_CssMouse(int port, int vis, int card, int moved, int click, int rclick, int wheel) {
     return at_css_mouse_bits(&gs_selm_css, port, vis, card, moved, click, rclick, wheel);

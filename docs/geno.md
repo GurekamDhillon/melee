@@ -3625,3 +3625,87 @@ and logs. Adjust follows the mark. The mark is `HitCapsule.x43_b7`, inside the F
 snapshots and rollback need nothing extra; a normal create clears it. `xDF4[0]` is never written by
 a redirected command. One log line per redirect: `ace: hitbox id 4 remapped to slot N (port=.. motion=..)`.
 Geno hitbox rows still author slots 0-3; the importer need not rewrite anything.
+
+## 26. Per-player fighter controls (`fighters[].controls`)
+
+Every human CSS player who has placed a fighter can choose **Jump: Both / X / Y**.
+The default is Both. A native Geno `define` can additionally declare named layouts
+and optional extras; its CSS button then reads **Controls** and opens the same
+panel with those additional rows. Fighters without a declaration expose only Jump.
+Extras begin off; the first declared layout is the fighter's default.
+
+```json
+"controls": {
+  "layouts": [
+    { "name": "Standard", "buttons": { "A": "A", "B": "B" } },
+    { "name": "Swap attacks", "buttons": { "A": "B", "B": "A" } }
+  ],
+  "extras": [
+    { "name": "Y boost", "buttons": { "Y": ["A", "B"] } }
+  ]
+}
+```
+
+These are GC input mappings, not new fighter action opcodes. A fighter implements
+the behavior associated with the resulting buttons. The accepted source and
+destination names are `A`, `B`, `X`, `Y`, `Z`, `START`, `L`, `R`, `Up`, `Down`,
+`Left`, and `Right`. A destination is one name, a nonempty array of distinct names,
+or `"none"` to consume the source. Unlisted sources retain their original mapping.
+An active extra replaces its listed source mappings after the selected layout;
+when multiple extras bind one source, the last enabled extra in declaration order
+wins. All mappings read the original input once: `X -> Y, Y -> A` cannot cascade.
+
+Jump selection removes X/Y jump destinations only from the unchosen original
+jump source. With Jump X, an unmapped Y does nothing; an explicit `Y -> B` or
+`Y -> [A, B]` can still perform that fighter's assigned action. An explicit
+`X -> Y` still jumps when X is selected. A fighter's explicit `A -> X` remains
+available regardless of the X/Y selector. Tap jump and analog input are unchanged.
+
+There are at most 16 layouts and 8 extras. Names contain 1–31 printable bytes,
+cannot have leading/trailing spaces, and must be unique within their list.
+Each row has exactly `name` and a nonempty `buttons` object with no duplicate
+sources. Unknown controls fields, unknown buttons, duplicate destinations, bad
+types, and exceeded limits invalidate the complete controls block and log a
+Both/default/no-extras fallback. The fighter still loads. Controls on an `attach`
+entry are ignored with a log. Controls declarations contribute to the fighter's
+existing content identity and online compatibility hash.
+
+Saved choices use the physical controller's active profile, the player port,
+and the stable fighter content identity; roster alias changes do not transfer
+preferences to another fighter. Creating or deleting a profile removes and
+compacts all of that profile's fighter preference keys, so reusing the same slot
+starts with default fighter choices and repeated profile cycles cannot exhaust
+the bounded settings store. If saving that removal fails, the preferences remain
+in memory and the profile action reports failure. A new profile copies the
+physical controller map only.
+Failed preference saves likewise retain the previous choice, including the
+choice frozen when the next match begins.
+Disconnected/scripted controllers use a stable
+fallback per port. New choices are Both, layout index 0, and no extras. Invalid
+saved jump/layout indexes normalize to those defaults; unavailable extra bits
+are cleared. A custom fighter lacking a stable content identity cannot save a
+preference under its transient roster alias.
+
+`pc/platform/gw_fighter_controls.h` declares the scalar menu/match interface.
+The packed choice is jump bits 0–1 (0 Both, 1 X, 2 Y), layout bits 2–5,
+extras bits 8–15 in declaration order; remaining bits are zero. `Count(ck, 0)`
+returns declared layouts, `Count(ck, 1)` extras; absent rows return zero.
+`Get/Set(port, ck, ...)` load/save preferences, and `Name` copies display text.
+Game imports omit `gw_`; native functions use it.
+
+`MatchSet` copies the normalized choice and the full map into a per-port record.
+`Apply` reads only that frozen record after rollback supplies its raw sample and
+before HSD input processing. It never reads settings or a mutable registry during
+simulation. Native `StateSize/StateSave/StateLoad` include the full frozen record
+in snapshots, including external LAB savestates. Replay metadata preserves all
+four choices and fighter IDs; `.gdlp` v3 adds event `0x99` with `GDC1` and four
+big-endian `(ck, choice)` pairs. Older replays default to Both. Processed replay
+input bypasses the raw transform so a mapping is never applied twice.
+
+Tests: `fighter_controls_mapping`, `geno_controls_schema`, and
+`geno_controls_lookup` in the headless suite; `pc/tests/fighter_controls_test.c`
+uses the production schema/model/runtime with synthetic controller identities
+and an in-memory settings store. `pc/tests/fighter_controls_settings_test.c`
+exercises the real 512-entry settings store through repeated deletion, reuse,
+reload, and failed saves. The fixture package is
+`pc/tests/fixtures/controls-fighter/` and is never mounted by normal mod discovery.

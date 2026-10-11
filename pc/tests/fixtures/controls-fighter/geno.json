@@ -1,0 +1,25 @@
+{
+  "geno": 6,
+  "fighters": [{
+    "define": {
+      "key": "controls-fixture",
+      "name": "Controls Fixture",
+      "base": "mario",
+      "common": "melee.common.v1",
+      "resources": "retail:mario"
+    },
+    "controls": {
+      "layouts": [{
+        "name": "Swap attacks",
+        "buttons": {"A": "B", "B": "A", "Y": "B"}
+      }, {
+        "name": "Standard",
+        "buttons": {"A": "A", "B": "B"}
+      }],
+      "extras": [{
+        "name": "Y boost",
+        "buttons": {"Y": ["A", "B"]}
+      }]
+    }
+  }]
+}

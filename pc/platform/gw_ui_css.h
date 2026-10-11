@@ -25,7 +25,7 @@ enum { AT_CE_MOVE = 1, AT_CE_FORWARD = 2, AT_CE_BACK = 4, AT_CE_TOAST = 8, AT_CE
 typedef struct { int kind, ck, costume, cpu_lv, team, cur, card, target;
                  int hold, zone, from_ck, act, blank, drag, val; } AtCssPort;   /* puck mode: hold = this hand carries the puck of port `target`; zone = what the hand is on in a panel (AT_ZONE_*); from_ck = the fighter the carried puck was lifted from */
 /* puck mode (Melee's own rules; local play only): the panel parts a hand can be on, top to bottom */
-enum { AT_ZONE_PUCK, AT_ZONE_TYPE, AT_ZONE_LEVEL, AT_ZONE_COSTUME, AT_ZONE_TEAM, AT_ZONE_N, AT_ZONE_NONE = 7 };   /* NONE: a free hand over a panel but not over a part of it */
+enum { AT_ZONE_PUCK, AT_ZONE_TYPE, AT_ZONE_LEVEL, AT_ZONE_COSTUME, AT_ZONE_TEAM, AT_ZONE_CONTROLS, AT_ZONE_N, AT_ZONE_NONE = 7 };   /* NONE: a free hand over a panel but not over a part of it */
 /* a mouse bit the model returns for a direct change (a slider click): play the move sound; the step ignores it */
 #define AT_CI_SOUND 0x10000u
 
@@ -36,6 +36,9 @@ typedef struct AtCssOps {
     int (*random_ck)(void *u, const struct AtCss *c);   /* a fighter for the Random tile (fs_random_ck) */
     int (*zelda_swap)(void *u, int ck);                 /* the other of the Zelda/Sheik pair for either of them, else -1 */
     int (*sheik_ok)(void *u);                           /* online: the opponent has Sheik */
+    int (*controls_count)(void *u, int ck, int field);  /* field 0 layouts, 1 opt-in extras */
+    unsigned (*controls_get)(void *u, int port, int ck);
+    int (*controls_set)(void *u, int port, int ck, unsigned choice);
 } AtCssOps;
 
 typedef struct AtCss {
@@ -53,6 +56,8 @@ typedef struct AtCss {
     AtCssPort p[4];
     int train_h, train_c;                               /* Training: the human port and the dummy's port */
     int done, back_until; char toast[80];
+    int controls_port, controls_ck, controls_row, controls_layouts, controls_extras, controls_block_frame;
+    unsigned controls_choice;                          /* a menu preference, never simulation state */
     const AtCssOps *ops;
 } AtCss;
 
@@ -89,6 +94,10 @@ void at_css_set_pad(AtCss *c, int p, int ok);
 unsigned at_css_hand_over(AtCss *c, int port, int region, int a, int b, int val);
 void at_css_drag_to(AtCss *c, int port, int level);    /* a slider in the hand (A on its handle) follows the hand: the level the hand's position means */          /* puck mode: the adapter tells the model which ports have a controller */
 void at_css_hand_reset(AtCss *c, int p);               /* puck mode: port p's hand to its start (a human with no fighter: on its own panel's puck) */                  /* the one port the mouse plays for (fs_mouse_port): the first human, the human in Training, 0 online */
+int at_css_controls_rows(const AtCss *c);             /* optional layout, jump, extras, Done */
+unsigned at_css_controls_open(AtCss *c, int port);
+/* Mouse/hand hit on an overlay row: action 0 hover, -1 previous, 1 next, 2 accept, 3 close. */
+unsigned at_css_controls_point(AtCss *c, int port, int row, int action);
 
 #ifdef __cplusplus
 }

@@ -277,6 +277,7 @@ static void draw_loading(const AtView *v, AtRect pane, const AtTextOps *o, const
 
 /* The band: four port cards in equal columns, or the matchup strip. A card is focused when a port's cursor is on it (card = its index);
  * the brackets take that port's colour. A card's hit rectangle is its slot. */
+static void csv_controls_button(const AtSink *s, const AtTextOps *o, HitCtx *hc, AtRect r, int port, int options, int focus);
 static void draw_band(const AtScreen *sc, const AtView *v, AtRect r, const AtTextOps *o, const AtSink *s, HitCtx *hc)
 {
     if (sc->band == AT_BAND_CARDS) {
@@ -290,6 +291,10 @@ static void draw_band(const AtScreen *sc, const AtView *v, AtRect r, const AtTex
             for (p = 0; p < AT_MAX_CURSORS && focus == 0; p++) if (v->cursor[p].active && v->cursor[p].card == i) focus = 1 + p;
             at_part_sel_card(s, o, rc, &sc->ports[i], focus);
             hit_add(hc, rc, AT_HIT_CARD, i, 0);
+            if (sc->ports[i].controls && !(sc->ports[i].flags & AT_CARD_CLOSED)) {
+                AtRect cr = { rc.x + 8.0f, rc.y + rc.h - 20.0f, rc.w - 16.0f, 16.0f };
+                csv_controls_button(s, o, hc, cr, i, sc->ports[i].controls, focus != 0);
+            }
         }
     } else if (sc->band == AT_BAND_MATCHUP) {
         AtSelCard shown[4];
@@ -585,6 +590,7 @@ static void csv_panel(AtCssPanel *q, AtRect box)
     q->cprev = (AtRect){ q->cmid.x, q->cmid.y, 22.0f, 14.0f };
     q->cnext = (AtRect){ q->cmid.x + q->cmid.w - 22.0f, q->cmid.y, 22.0f, 14.0f };
     q->level = (AtRect){ box.x + pad, q->cmid.y + 18.0f, w - 2.0f * pad, 14.0f };       /* the CPU level slider is the last row, at the panel's foot */
+    q->controls = q->level; /* humans use the foot row that CPUs use for their level */
     lw = 34.0f;
     nw = (q->level.w - lw - 8.0f * 2.0f) / 9.0f;
     for (i = 0; i < 9; i++) q->notch[i] = (AtRect){ q->level.x + lw + (float) i * (nw + 2.0f), q->level.y, nw, 14.0f };
@@ -928,6 +934,15 @@ static void csv_type_button(const AtSink *s, const AtTextOps *o, AtRect r, int k
     if (ring) csv_ring(s, (AtRect){ r.x - 2.0f, r.y - 2.0f, r.w + 4.0f, r.h + 4.0f }, 2.0f, ring_col);
 }
 
+static void csv_controls_button(const AtSink *s, const AtTextOps *o, HitCtx *hc, AtRect r, int port, int options, int focus)
+{
+    unsigned col = at_part_port_colour(port);
+    at_plate(s, r, focus ? col : AT_C_LIFT, focus ? AT_C_IVORY : AT_C_LINE2, 1.0f, 3.0f);
+    csv_text(s, o, AT_R_CAP12, options > 1 ? "CONTROLS" : "JUMP", r.x + r.w * 0.5f, r.y + 11.0f,
+             focus ? AT_C_INK : AT_C_IVORY, AT_ALIGN_CENTER, r.w - 8.0f);
+    hit_add(hc, r, AT_HIT_ZONE, port, AT_ZONE_CONTROLS | (2 << 4));
+}
+
 static void csv_draw_panel(const AtScreen *sc, const AtView *v, const AtCssGeom *g, int idx, const AtTextOps *o, const AtSink *s, HitCtx *hc)
 {
     const AtSelCard *k = &sc->ports[idx];
@@ -1012,6 +1027,7 @@ static void csv_draw_panel(const AtScreen *sc, const AtView *v, const AtCssGeom 
         if (zone == AT_ZONE_COSTUME) csv_ring(s, (AtRect){ q->cmid.x - 2.0f, q->cmid.y - 2.0f, q->cmid.w + 4.0f, q->cmid.h + 4.0f }, 2.0f, hcol);
     }
     /* the CPU level slider, at the foot of the panel */
+    if (k->kind == 1 && k->controls) csv_controls_button(s, o, hc, q->controls, idx, k->controls, zone == AT_ZONE_CONTROLS);
     if (k->kind == 2) {
         char lv[8];
         snprintf(lv, sizeof lv, "LV %d", k->cpu_lv);
@@ -1034,6 +1050,8 @@ static void csv_draw_panel(const AtScreen *sc, const AtView *v, const AtCssGeom 
         if (zone == AT_ZONE_LEVEL) csv_ring(s, (AtRect){ q->level.x - 2.0f, q->level.y - 3.0f, q->level.w + 4.0f, q->level.h + 6.0f }, 2.0f, hcol);
     }
 }
+
+#include "gw_ui_css_controls_render.inc"
 
 static void draw_css(const AtScreen *sc, const AtView *v, const AtLayout *L, const AtTextOps *o, const AtSink *s, HitCtx *hc)
 {
@@ -1114,6 +1132,7 @@ static void draw_css(const AtScreen *sc, const AtView *v, const AtLayout *L, con
             AtRect a = v->cursor[p].zone == AT_ZONE_PUCK ? (AtRect){ q->dock.x + q->dock.w * 0.5f + 8.0f, q->dock.y + 22.0f, 0.0f, 0.0f } :
                        v->cursor[p].zone == AT_ZONE_TYPE ? (AtRect){ q->type.x + q->type.w * 0.5f, q->type.y + 10.0f, 0.0f, 0.0f } :
                        v->cursor[p].zone == AT_ZONE_LEVEL ? (AtRect){ q->notch[4].x + 4.0f, q->notch[4].y + 6.0f, 0.0f, 0.0f } :
+                       v->cursor[p].zone == AT_ZONE_CONTROLS ? (AtRect){ q->controls.x + 12.0f, q->controls.y + q->controls.h * 0.5f, 0.0f, 0.0f } :
                        v->cursor[p].zone == AT_ZONE_COSTUME ? (AtRect){ q->cmid.x + q->cmid.w * 0.5f + 12.0f, q->cmid.y + 5.0f, 0.0f, 0.0f } :
                        (AtRect){ q->team.x + q->team.w * 0.5f, q->team.y + 10.0f, 0.0f, 0.0f };
             csv_hand_ex(s, o, a.x, a.y, p, v->cursor[p].drag >= 0 ? CSV_POSE_GRAB : CSV_POSE_POINT, 1, 1.0f);
@@ -1241,6 +1260,11 @@ void at_render_ex(const AtScreen *sc, const AtView *v, float canvas_w, double no
         }
         r.x = right - w; r.w = w; r.h = 30.0f;
         at_part_note(s, o, r, v->note.text, v->note.kind, v->note.until_ms > v->note.from_ms ? (float) ((v->note.until_ms - now) / (v->note.until_ms - v->note.from_ms)) : 0.0f);
+    }
+    if (sc->css_controls.open) {
+        hits->n = 0;
+        hc.hits = hits;
+        csv_draw_controls(sc, o, s, &hc, L.canvas.w);
     }
     if (v->dialog.open) {
         AtRect b[2];

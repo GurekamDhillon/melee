@@ -16,8 +16,10 @@
  */
 #define GR_PAD 64 /* 4 x sizeof(PADStatus): the PC struct is 16 bytes (extButton); the rewind log keeps only 48 */
 #define GR_VP 72
-#define GR_VER 2 /* 2: standard Slippi events for whole-match files, chunked embedded state, flags 4 / 8 */
+#define GR_VER 3 /* 3: frozen fighter controls; 2: whole-match Slippi/events and embedded state */
 #include "gw_replay_matchrules.h"
+#include "gw_replay_controls.h"
+#include "gw_fighter_controls.h"
 #define GR_FRAME_PAYLOAD (4 + 1 + GR_PAD + GR_VP)
 #define GR_EV_HEAD 0x90
 #define GR_EV_FIGHTER 0x91
@@ -28,10 +30,11 @@
 #define GR_EV_SEGMENT 0x96
 #define GR_EV_TEXT 0x97
 #define GR_EV_STCHUNK 0x98 /* v2: a chunk of the .gdst, so a clip is one file */
+#define GR_EV_CONTROLS 0x99 /* v3: GDC1 + four (CharacterKind, choice) pairs */
 #define GR_STCHUNK 60000
 #define GR_STCHUNK_MAX (512u << 20) /* a larger state is left as the sidecar only */
 /* the standard Slippi events of a whole-match file (sizes as gw_replay.c writes them) */
-#define GR_SZ_START GW_RP_RULES_START
+#define GR_SZ_START GW_RP_CONTROLS_START
 #define GR_SZ_PRE 0x42
 #define GR_SZ_POST 0x54
 #define GR_SZ_FSTART 0xC
@@ -52,6 +55,9 @@ typedef struct {
     uint64_t id[4];
     int stage;
     unsigned geno_version;
+    int controls_ck[4];
+    unsigned controls[4];
+    int has_controls;
     char state[41];
     unsigned state_size;
     char mods[256];
@@ -106,6 +112,7 @@ static int gr_size_of(int cmd) {
     case GR_EV_SEGMENT: return 48;
     case GR_EV_TEXT: return 256;
     case GR_EV_STCHUNK: return 12 + 2 + GR_STCHUNK;
+    case GR_EV_CONTROLS: return 36;
     case 0x36: return GR_SZ_START;
     case 0x37: return GR_SZ_PRE;
     case 0x38: return GR_SZ_POST;
@@ -117,7 +124,7 @@ static int gr_size_of(int cmd) {
 /* the first 9 are version 1's table; version 2 adds the standard Slippi events and the state chunk */
 static const unsigned char gr_cmds[] = { 0x39, GR_EV_HEAD, GR_EV_FIGHTER, GR_EV_IDENT, GR_EV_STATE,
                                          GR_EV_FRAME, GR_EV_MARK, GR_EV_SEGMENT, GR_EV_TEXT,
-                                         0x36, 0x37, 0x38, 0x3A, 0x3C, GR_EV_STCHUNK };
+                                         0x36, 0x37, 0x38, 0x3A, 0x3C, GR_EV_STCHUNK, GR_EV_CONTROLS };
 
 static void gr_dir(char *out, size_t cap) {
     char *p;
@@ -159,7 +166,7 @@ static FILE *gr_open(const char *path, long *raw_len_at, long *raw_start) {
     static const unsigned char head[] = { '{', 'U', 3, 'r', 'a', 'w', '[', '$', 'U', '#', 'l' };
     unsigned char zero[4] = { 0, 0, 0, 0 }, tab[2 + 3 * 16];
     FILE *f = fopen(path, "wb");
-    int i, n = gr_write_ver >= 2 ? (int) sizeof gr_cmds : 9;
+    int i, n = gr_write_ver >= 3 ? (int) sizeof gr_cmds : gr_write_ver == 2 ? 15 : 9;
     if (f == NULL) return NULL;
     fwrite(head, 1, sizeof head, f);
     *raw_len_at = ftell(f);
@@ -182,7 +189,7 @@ static FILE *gr_open(const char *path, long *raw_len_at, long *raw_start) {
  * the byte count. game_info NULL: the fighters are the LAB's live match; else the 0x138-byte
  * StartMeleeData of a whole match (char = CharacterKind, slot type = PlayerInitData type, name "ck:N"). */
 static size_t gr_head_events(unsigned char *buf, int base, const char *statefile, const unsigned char *game_info,
-                             int extra_flags) {
+                             int extra_flags, const GrFile *controls_source) {
     unsigned char ev[300];
     uint64_t id[4];
     int s, i, retail = 1;
@@ -240,6 +247,22 @@ static size_t gr_head_events(unsigned char *buf, int base, const char *statefile
     ev[0] = 1;
     snprintf((char *) ev + 1, 255, "%s", m != NULL ? m : "");
     GR_PUT_EV(GR_EV_TEXT);
+    if (gr_write_ver >= 3) {
+        memset(ev, 0, sizeof ev);
+        memcpy(ev, "GDC1", 4);
+        for (s = 0; s < 4; ++s) {
+            /* A trim from frame zero copies its source state without loading
+             * it. Metadata therefore comes from the source, never the live
+             * match. Legacy clips had no mapping: preserve raw passthrough. */
+            int ck = controls_source ? (controls_source->has_controls ? controls_source->controls_ck[s] : -1)
+                                     : gw_FighterControls_MatchCK(s);
+            unsigned choice = controls_source ? (controls_source->has_controls ? controls_source->controls[s] : 0)
+                                               : gw_FighterControls_MatchGet(s);
+            gr_put32(ev + 4 + 8 * s, (unsigned)ck);
+            gr_put32(ev + 8 + 8 * s, choice);
+        }
+        GR_PUT_EV(GR_EV_CONTROLS);
+    }
 #undef GR_PUT_EV
     return o;
 }
@@ -274,15 +297,20 @@ static void gr_embed_state(FILE *f, const char *statefile) {
 }
 
 /* the container, the size table and the header events for the match as it is now (a LAB clip) */
-static FILE *gr_begin(const char *path, int base, const char *statefile, long *raw_len_at, long *raw_start) {
+static FILE *gr_begin_controls(const char *path, int base, const char *statefile, long *raw_len_at,
+                              long *raw_start, const GrFile *controls_source) {
     unsigned char buf[GR_HEAD_MAX];
     size_t n;
     FILE *f = gr_open(path, raw_len_at, raw_start);
     if (f == NULL) return NULL;
-    n = gr_head_events(buf, base, statefile, NULL, 0);
+    n = gr_head_events(buf, base, statefile, NULL, 0, controls_source);
     fwrite(buf, 1, n, f);
     gr_embed_state(f, statefile);
     return f;
+}
+
+static FILE *gr_begin(const char *path, int base, const char *statefile, long *raw_len_at, long *raw_start) {
+    return gr_begin_controls(path, base, statefile, raw_len_at, raw_start, NULL);
 }
 
 static int gr_finish(FILE *f, long raw_len_at, long raw_start) {
@@ -346,6 +374,20 @@ static int gr_read(const char *path, GrFile *g, char *why, size_t cap) {
         if (pos + 1 + (size_t) sz > (size_t) n) break; /* a torn last event */
         p = d + pos + 1;
         switch (cmd) {
+        case GR_EV_CONTROLS:
+            if (sz != 36 || memcmp(p, "GDC1", 4) != 0) {
+                free(d); gr_free_file(g); snprintf(why, cap, "malformed fighter controls record"); return -1;
+            }
+            for (i = 0; i < 4; ++i) {
+                g->controls_ck[i] = (int)gr_get32(p + 4 + i * 8);
+                g->controls[i] = gr_get32(p + 8 + i * 8);
+                if (g->controls_ck[i] < -1 || g->controls_ck[i] > 0x7f ||
+                    !gw_controls_word_valid(g->controls[i])) {
+                    free(d); gr_free_file(g); snprintf(why, cap, "invalid fighter controls choice"); return -1;
+                }
+            }
+            g->has_controls = 1;
+            break;
         case GR_EV_HEAD:
             g->ver = ((unsigned) p[0] << 8) | p[1]; g->flags = p[2]; g->base = gr_get32(p + 4);
             g->unix_time = gr_get32(p + 12);
@@ -415,6 +457,7 @@ static int gr_read(const char *path, GrFile *g, char *why, size_t cap) {
     }
     free(d);
     if (g->ver == 0) { gr_free_file(g); snprintf(why, cap, "no GD header (an .slp is not a LAB recording)"); return -1; }
+    if (g->ver >= 3 && !g->has_controls) { gr_free_file(g); snprintf(why, cap, "missing fighter controls record"); return -1; }
     if (g->ver > GR_VER) { snprintf(why, cap, "recorded by a newer game (format %u, this reads %d)", g->ver, GR_VER); gr_free_file(g); return -1; }
     return 0;
 }
@@ -534,7 +577,7 @@ static int gr_export_slp(const char *src, const char *dst, char *why, size_t cap
     raw_start = ftell(o);
     tab[0] = 0x35; tab[1] = (unsigned char) (1 + 3 * sizeof keep);
     for (i = 0; i < (int) sizeof keep; ++i) {
-        int sz = gr_size_of(keep[i]);
+        int sz = (szt[keep[i]][0] << 8) | szt[keep[i]][1];
         tab[2 + 3 * i] = keep[i]; tab[3 + 3 * i] = (unsigned char) (sz >> 8); tab[4 + 3 * i] = (unsigned char) sz;
     }
     fwrite(tab, 1, sizeof tab, o);
@@ -569,7 +612,7 @@ static int gr_export_slp(const char *src, const char *dst, char *why, size_t cap
 /* ---- whole-match recording (gw_replay.c calls these at match start; MELEE_GDLP at launch) ---- */
 /* the GD header events for a whole match started with this StartMeleeData; returns bytes written to buf (GR_HEAD_MAX) */
 size_t gw_Gdlp_MatchHead(unsigned char *buf, const unsigned char *game_info) {
-    return gr_head_events(buf, -123, NULL, game_info, GR_FL_WHOLE | GR_FL_SLIPPI);
+    return gr_head_events(buf, -123, NULL, game_info, GR_FL_WHOLE | GR_FL_SLIPPI, NULL);
 }
 
 /* opens the file for a whole-match recording (container + size table). spec: MELEE_GDLP_RECORD ("1" = the
@@ -734,7 +777,7 @@ static void gr_write_trim(void) {
     int i;
     gr_path(path, sizeof path, gr.jdst, "gdlp");
     snprintf(sname, sizeof sname, "%s.gdst", gr.jdst);
-    f = gr_begin(path, gr.pf.fr[gr.jfrom].tag, sname, &a, &b);
+    f = gr_begin_controls(path, gr.pf.fr[gr.jfrom].tag, sname, &a, &b, &gr.pf);
     if (f == NULL) { gr_job_end("trim: cannot write the recording", 0); return; }
     memset(ev, 0, sizeof ev);
     gr_put32(ev, (unsigned) gr.jfrom); gr_put32(ev + 4, (unsigned) gr.jto);
@@ -863,6 +906,16 @@ static void gr_save_failed(void) {
 }
 /* a state file load that gr started finished */
 static void gr_after_load(void) {
+    if (gr.mode == GR_LOAD || (gr.mode == GR_JOB && gr.jk == 1 && gr.jphase == 1)) {
+        int d;
+        gw_FighterControls_MatchClear();
+        for (d = 0; d < 4; ++d) {
+            int s = gr.mode == GR_LOAD ? gr.map[d] : d;
+            int ck = gr.pf.has_controls ? gr.pf.controls_ck[s] : -1;
+            if (ck >= 0) gw_FighterControls_MatchSet(d, ck, gr.pf.controls[s]);
+        }
+        gw_log("rec: applied recorded fighter controls (%s)", gr.pf.has_controls ? "GDC1" : "legacy Both");
+    }
     if (gr.mode == GR_LOAD) {
         gr.tag0 = gs_ring_now();
         gr.mode = GR_PLAY;

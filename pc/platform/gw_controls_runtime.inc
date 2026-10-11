@@ -7,6 +7,7 @@
 extern void gw_Settings_SetStr(const char *, const char *);
 extern int gw_Settings_LastSaveOk(void);
 extern void gw_PADControlMotor(int, int);
+#include "gw_fighter_controls_profiles.inc"
 
 enum { CTL_PROFILES = 4, CTL_DEVICES = 16 };
 static struct {
@@ -33,6 +34,12 @@ static int ctl_capture = -1, ctl_target, ctl_also, ctl_result;
 static int ctl_pending = -1, ctl_pending_port;
 static unsigned ctl_deadline;
 static unsigned char ctl_before[4][GC_PHYSICAL];
+/* Fighter preferences share the physical controller's active profile but add
+ * the player slot. Disconnected/scripted ports use their own stable fallback. */
+static void ctl_fighter_profile(int c, int* device, int* profile) {
+    *device = ctl[c].connected ? ctl[c].device : -1;
+    *profile = ctl[c].connected ? ctl[c].profile : 0;
+}
 #include "gw_controls_presets.inc"
 static void ctl_key(char *key, int device, int profile, const char *field) {
     snprintf(key, 48, "ctl%02d_p%d_%s", device, profile, field);
@@ -133,6 +140,9 @@ void gw_Controls_ProfileAction(int action) {
             ctl_key(key, ctl[c].device, p, "map");
             gw_Settings_Str(key, value, sizeof value, "");
             if (!value[0] && p != ctl[c].profile) {
+                /* A reused slot copies only the physical map. Reclaim its
+                 * former fighter preferences so they start at defaults. */
+                if (!fc_profile_forget(ctl[c].device, p)) { ctl_result = 10; return; }
                 gw_Controls_SetProfile(p); ctl[c].map = copy; if (ctl_save(c)) ctl_result = 6; return;
             }
         }
@@ -144,8 +154,11 @@ void gw_Controls_ProfileAction(int action) {
         gw_Settings_SetStr(key, labels[(names+1)%5]);
         if (!gw_Settings_LastSaveOk()) ctl_result = 10;
     } else if (action == 2) {
+        if (!fc_profile_forget(ctl[c].device, ctl[c].profile)) { ctl_result = 10; return; }
         ctl_key(key, ctl[c].device, ctl[c].profile, "map"); gw_Settings_SetStr(key, "");
+        if (!gw_Settings_LastSaveOk()) { ctl_result = 10; return; }
         ctl_key(key, ctl[c].device, ctl[c].profile, "name"); gw_Settings_SetStr(key, "");
+        if (!gw_Settings_LastSaveOk()) { ctl_result = 10; return; }
         gw_Controls_SetProfile(0); ctl_load(c);
     } else if (action == 3) ctl_reset(c);
 }

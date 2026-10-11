@@ -5,7 +5,7 @@
  * shims: game memory is big-endian and the models are native, so this file holds no model and passes no struct. It does four things:
  *   - opens: the legacy fs_css_open / fs_sss_open have already read CSSData / SSSData and the disc's roster (fcs); this file pushes that state into
  *     the models and opens the host's native screen (Ui_SelOpen). Any refusal (MELEE_ATLAS=0, no Atlas fonts, no profile for the mode's match
- *     type, the online lobby) leaves fas.active at 0 and the legacy drawing runs as before: it is a real screen, not a stub;
+ *     type, or explicit atlas_lobby=0) leaves fas.active at 0 and the legacy drawing runs as before: it is a real screen, not a stub;
  *   - reads the pads (the legacy fs_in, the same sources) and the host's mouse events, and steps the models;
  *   - submits the view each frame: the cells only when their signature changes, the cursors, cards, explainer, keys and toast every frame;
  *   - ends the scene through the UNCHANGED legacy writers: the model's ports are copied into fcs.p[] and fs_css_finish writes CSSData exactly as
@@ -25,6 +25,8 @@ extern void Ui_SelCursor(int h, int port, int active, int cell, int card);
 extern void Ui_SelCardX(int h, int port, int puck, int hold, int zone, int drop_cell, int costume, int ncost, int ptex);
 extern void Ui_SelCursorX(int h, int port, int zone, int hold, int hold_port);
 extern void Ui_SelStatus(int h, int ready, int n_ports, const char* msg);
+extern void Ui_SelControls(int h);
+extern unsigned Ui_CssControl(int port, int row, int action);
 extern void Ui_SelExplain(int h, const char* kicker, const char* title, const char* what, const char* abbr, int tex,
                           const char* stepper_label, const char* stepper_text, const char* from);
 extern void Ui_SelKeys(int h, const char* spec);
@@ -87,7 +89,7 @@ enum { FA_CE_MOVE = 1, FA_CE_FORWARD = 2, FA_CE_BACK = 4, FA_CE_TOAST = 8, FA_CE
 enum { FA_CELL_LOCKED = 1, FA_CELL_DISABLED = 32 };
 enum { FA_CARD_OPEN = 1, FA_CARD_CLOSED = 2, FA_CARD_READY = 4, FA_CARD_FOCUS = 8 };
 enum { FA_SEL_CSS = 0, FA_SEL_SSS = 1, FA_SEL_LOAD = 2 };
-enum { FA_SELEV_CELL = 1, FA_SELEV_CARD = 2, FA_SELEV_TAB = 3, FA_SELEV_KEY = 4, FA_SELEV_WHEEL = 5, FA_SELEV_ZONE = 7, FA_SELEV_PAD = 8, FA_SELEV_SOUND = 9 };
+enum { FA_SELEV_CELL = 1, FA_SELEV_CARD = 2, FA_SELEV_TAB = 3, FA_SELEV_KEY = 4, FA_SELEV_WHEEL = 5, FA_SELEV_ZONE = 7, FA_SELEV_PAD = 8, FA_SELEV_SOUND = 9, FA_SELEV_CONTROLS = 10 };
 #define FA_CI_SOUND 0x10000u /* a bit the model's mouse functions return when they changed a value directly (AT_CI_SOUND) */
 enum { FA_NOTE_INFO = 3 };
 /* Ui_CssGet / Ui_SssGet selectors (gw_script_ui_sel.inc GS_CSSG_*, GS_SSSG_*) */
@@ -342,8 +344,8 @@ static int fas_open_css(void)
     if (css == NULL) {
         return 0;
     }
-    if (fcs.online && Settings_Int("atlas_lobby", 0) == 0) {
-        return 0; /* the online lobby's pick keeps the legacy screen until a two-client look: MELEE_ATLAS_LOBBY=1 turns the Atlas one on (Task 13 item 9) */
+    if (fcs.online && Settings_Int("atlas_lobby", 1) == 0) {
+        return 0; /* the Atlas picker exposes the match's per-fighter controls; explicit 0 retains the legacy picker */
     }
     mt = fcs.online ? 0x40 /* AT_MT_LOBBY */ : fcs.training ? 0x17 : (int) css->match_type;
     if (!Ui_CssOpen(mt, fcs.online ? 1 : 0, fcs.teams)) {
@@ -623,11 +625,12 @@ static void fas_submit_css(void)
     }
     sprintf(buf, "%d / %d", cur + 1, n);
     Ui_SelCounter(fas.h, buf);
+    Ui_SelControls(fas.h);
     if (Ui_CssGet(FA_CG_PUCK, 0)) {
         Ui_SelKeys(fas.h, fas.ntab > 1 ? "A:Coin,X:Costume,S:Start,B:Back,L:Tabs" : "A:Coin,X:Costume,S:Start,B:Back");
         return;
     }
-    Ui_SelKeys(fas.h, online ? "A:Pick,X:Costume,S:Lock in,B:Back"
+    Ui_SelKeys(fas.h, online ? "A:Pick,X:Costume,Z:Controls,S:Lock in,B:Back"
                              : fas.ntab > 1 ? "A:Pick,X:Costume,S:Start,B:Back,L:Tabs" : "A:Pick,X:Costume,S:Start,B:Back");
 }
 
@@ -672,7 +675,9 @@ static void fas_css_frame(void)
         before_cur = Ui_CssGet(FA_CG_CUR, mp);
         before_card = Ui_CssGet(FA_CG_CARD, mp);
         while (Ui_SelPoll(fas.h, &k, &a, &b)) { /* the host's mouse: what it hit and with which button */
-            if (k == FA_SELEV_CELL) {
+            if (k == FA_SELEV_CONTROLS) {
+                ev |= Ui_CssControl(mp, a, b);
+            } else if (k == FA_SELEV_CELL) {
                 mouse |= Ui_CssMouse(mp, a, -1, b == 0, b == 1, b == 2, 0);
             } else if (k == FA_SELEV_CARD) {
                 mouse |= Ui_CssMouse(mp, -1, a, b == 0, b == 1, b == 2, 0);
@@ -898,7 +903,7 @@ static void fas_sss_frame(void)
 /* ---- the loading screen ("GET READY") -------------------------------------------------------------- */
 
 /* The warm-up and the hold are the game's (fe_load_step, fl_frame_load: untouched); this only draws who fights where, the stage and the bar. fl_ld is the legacy
- * screen's own list of fighters, read the same way. The online loading screen (the lobby's) follows the lobby's gate. */
+ * screen's own list of fighters, read the same way. Loading keeps its rollout opt-in; the picker defaults on so Controls are available before lock-in. */
 static int fas_open_loading(void)
 {
     if (fl_ld.online && Settings_Int("atlas_lobby", 0) == 0) {

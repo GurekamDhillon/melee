@@ -331,7 +331,7 @@ void gw_StageSkin_ApplyForLoad(int grkind, const char *file, int phase) {
     int r = gw_Skin_NameRetail(file), choice = 0, k, ov = sk_ov.on, net = sk_net_tick != 0;
     const char *why = "choice";
     DWORD now = GetTickCount();
-    gw_log("stageskin: stage %d file %s phase %d", grkind, file != NULL ? file : "(none)", phase);
+    if (file == NULL || file[0] == 0) return; /* a row with no archive (the menus' dummy stage): not a match's stage, leave what the last match loaded */
     if (phase == 2 && sk_decided.armed && sk_decided.grkind == grkind) { /* the stage's init, after its preload decided: the same file */
         sk_decided.armed = 0;
         r = gw_Skin_NameRetail(file);

@@ -150,6 +150,7 @@ typedef struct ft_8045993C_t {
 /* 45996C */ int ft_8045996C[Ft_Kind_Max];
 #if defined(TARGET_PC)
 static Fighter_WaitAnimData* ftData_ThrownRows[Ft_Kind_Max];
+static void ftData_ThrowBankReset(void);
 /* A validated reload reuses the resident bank's storage, including AllA's DVD
  * preload entry. The next ftData_80085A14 binds rows against these fresh bytes. */
 static void* ftData_AnimReloadData[Ft_Kind_Max];
@@ -199,6 +200,7 @@ void ft_800852B0(void)
     GenoGame_ClearProfileStorage();
     GenoDefine_ResetDescriptors();
     memset(ftData_ThrownRows, 0, sizeof ftData_ThrownRows);
+    ftData_ThrowBankReset();
     memset(ftData_AnimReloadData, 0, sizeof ftData_AnimReloadData);
     memset(ftData_AnimBankBytes, 0, sizeof ftData_AnimBankBytes);
 #endif
@@ -2308,45 +2310,200 @@ extern void* lbFile_LoadToHeap(int heap_id, const char* basename, size_t* size);
 #include "geno/geno_anim_bank_game.inc"
 #include "geno/geno_anim_bank_cache_tests.inc"
 
-static void ftData_ThrownStandInLoad(int kind)
+/* Lazy, budgeted stand-in banks (geno 22.16). Each distinct "thrown_as" family's Pl<X>AJ.dat is ~1.5-1.9 MB; reading one per
+ * define at load exhausted heap 0 with six distinct families. Now the define load only prepares the stand-in's data file
+ * (ftData_ThrownStandInPrepare) and reserves GENO_THROW_BANKS bank arenas once, while the heap is still compact; the animation
+ * bank is read into an arena the first time a victim is actually thrown by that define (ftData_ThrownStandIn, called from
+ * Fighter_ChangeMotionState on the frame the victim enters the thrown state). A mid-match heap-0 allocation of ~2 MB is never
+ * made: heap 0 fragments during a match (a first version that allocated on demand hit "heap: EXHAUSTED" with 3.8 MB free).
+ *
+ * Determinism: the read is synchronous (lbFile_LoadInto waits for the disc), so the rows are there on the very frame the
+ * victim needs them, on both peers and on a resimulated frame; nothing the simulation reads (positions, damage, RNG, script
+ * state) is touched, and the pose the victim plays does not depend on whether the bank was already resident. When all arenas
+ * hold another family the least recently used is overwritten, after clearing every fighter's animation-source key (x5A4 /
+ * x5A8) that points into it so a later bank at the same address is never mistaken for it. Reset per scene. */
+#ifndef GENO_THROW_BANKS
+#define GENO_THROW_BANKS 1 /* resident banks (arenas); env MELEE_THROW_BANKS overrides, up to GENO_THROW_BANKS_MAX */
+#endif
+#define GENO_THROW_BANKS_MAX 6
+#define GENO_THROW_ROWS_MAX 512
+#define GENO_THROW_ARENA_MIN 0x1E0000u /* every retail Pl<X>AJ.dat seen is <= 0x1DAB60 */
+extern unsigned lbHeap_Free(int heap);
+extern void lbHeap_80015CA8(int heap_id, void* p);
+extern int lbFile_LoadInto(const char* basename, void* dst, size_t cap, size_t* size);
+extern size_t lbFileGetSize(const char* basename);
+
+typedef struct ftData_ThrowBank {
+    int kind; /* stand-in FighterKind resident in the arena, -1 = none */
+    u8* buf;  /* the arena: reserved at define load */
+    size_t cap, sz;
+    unsigned stamp;
+    Fighter_WaitAnimData rows[GENO_THROW_ROWS_MAX];
+} ftData_ThrowBank;
+static ftData_ThrowBank ftData_ThrowBanks[GENO_THROW_BANKS_MAX];
+static unsigned ftData_ThrowBankClock, ftData_ThrowBankLoads, ftData_ThrowBankEvicts;
+static u8 ftData_ThrownPrepared[Ft_Kind_Max];
+
+static int ftData_ThrowBankLimit(void)
 {
-    ftData* fd;
-    Fighter_WaitAnimData* rows;
-    u8* buf;
-    size_t sz = 0;
-    int i, n;
-    if (kind < 0 || kind >= Ft_Kind_Max || kind == Ft_Kind_Nana || ftData_ThrownRows[kind] != NULL) {
+    static int limit;
+    if (limit == 0) {
+        extern int Geno_ThrowBankLimit(int def); /* the env read lives on the platform side (no hosted libc here) */
+        limit = Geno_ThrowBankLimit(GENO_THROW_BANKS);
+        if (limit < 1) limit = 1;
+        if (limit > GENO_THROW_BANKS_MAX) limit = GENO_THROW_BANKS_MAX;
+    }
+    return limit;
+}
+
+static void ftData_ThrowBankReset(void)
+{
+    int i;
+    for (i = 0; i < GENO_THROW_BANKS_MAX; i++) {
+        ftData_ThrowBanks[i].kind = -1;
+        ftData_ThrowBanks[i].buf = NULL; /* the scene heap that held the arenas is gone */
+        ftData_ThrowBanks[i].cap = ftData_ThrowBanks[i].sz = 0;
+    }
+    ftData_ThrowBankLoads = ftData_ThrowBankEvicts = 0;
+    memset(ftData_ThrownPrepared, 0, sizeof ftData_ThrownPrepared);
+}
+
+static void ftData_ThrowBankReport(const char* what, int kind)
+{
+    int i, n = 0, arenas = 0;
+    unsigned bytes = 0;
+    for (i = 0; i < GENO_THROW_BANKS_MAX; i++) {
+        arenas += ftData_ThrowBanks[i].buf != NULL;
+        if (ftData_ThrowBanks[i].kind >= 0) {
+            n++;
+            bytes += (unsigned) ftData_ThrowBanks[i].sz;
+        }
+    }
+    OSReport("geno: define budgets: throw banks %d/%d, %u bytes, arenas %d, loads %u, evictions %u, heap 0 free 0x%X (%s kind %d)\n",
+             n, ftData_ThrowBankLimit(), bytes, arenas, ftData_ThrowBankLoads, ftData_ThrowBankEvicts, lbHeap_Free(0), what,
+             kind);
+}
+
+/* The bank's bytes are about to be replaced or dropped: no fighter may keep a key into it. */
+static void ftData_ThrowBankDrop(ftData_ThrowBank* b)
+{
+    HSD_GObj* gobj;
+    for (gobj = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; gobj != NULL; gobj = gobj->next) {
+        Fighter* fp = GET_FIGHTER(gobj);
+        if (fp == NULL) continue;
+        if ((u8*) fp->x5A4 >= b->buf && (u8*) fp->x5A4 < b->buf + b->cap) fp->x5A4 = NULL;
+        if ((u8*) fp->x5A8 >= b->buf && (u8*) fp->x5A8 < b->buf + b->cap) fp->x5A8 = NULL;
+    }
+    if (b->kind >= 0 && ftData_ThrownRows[b->kind] == b->rows) ftData_ThrownRows[b->kind] = NULL;
+    b->kind = -1;
+    b->sz = 0;
+}
+
+/* Define load: the stand-in's fighter data file (the motion-table rows), and the arenas (once; grown only if a bank is bigger). */
+static void ftData_ThrownStandInPrepare(int kind)
+{
+    int i, lim = ftData_ThrowBankLimit();
+    size_t need;
+    if (kind < 0 || kind >= Ft_Kind_Max || kind == Ft_Kind_Nana) {
         return;
     }
     ftData_8008572C((FighterKind) kind);
-    fd = gFtDataList[kind];
-    if (fd == NULL || fd->xC == NULL || ftData_803C23E4[kind] == NULL) {
+    if (gFtDataList[kind] == NULL || gFtDataList[kind]->xC == NULL || ftData_803C23E4[kind] == NULL ||
+        ftData_Table_Unk0[kind].count > GENO_THROW_ROWS_MAX) {
         return;
     }
-    if (ftData_Table_Unk0[kind].data != NULL) {
+    need = (lbFileGetSize(ftData_803C23E4[kind]) + 63u) & ~(size_t) 31u;
+    if (need < GENO_THROW_ARENA_MIN) need = GENO_THROW_ARENA_MIN;
+    for (i = 0; i < lim; i++) {
+        ftData_ThrowBank* b = &ftData_ThrowBanks[i];
+        if (b->buf != NULL && b->cap >= need) continue;
+        if (b->buf != NULL) { /* too small for this family: only possible while loading defines (no bank is resident) */
+            ftData_ThrowBankDrop(b);
+            lbHeap_80015CA8(0, b->buf);
+            b->buf = NULL;
+        }
+        b->buf = (u8*) lbHeap_80015BD0(0, need);
+        b->cap = b->buf != NULL ? need : 0;
+    }
+    ftData_ThrownPrepared[kind] = 1;
+    ftData_ThrowBankReport("prepared", kind);
+}
+
+static void ftData_ThrownStandInLoad(int kind)
+{
+    ftData* fd;
+    ftData_ThrowBank* b = NULL;
+    size_t sz = 0;
+    int i, n, lim = ftData_ThrowBankLimit();
+    if (kind < 0 || kind >= Ft_Kind_Max || kind == Ft_Kind_Nana || !ftData_ThrownPrepared[kind]) {
+        return;
+    }
+    for (i = 0; i < lim; i++) {
+        if (ftData_ThrowBanks[i].kind == kind) {
+            if (ftData_ThrownRows[kind] == ftData_ThrowBanks[i].rows) {
+                ftData_ThrowBanks[i].stamp = ++ftData_ThrowBankClock;
+                return;
+            }
+            b = &ftData_ThrowBanks[i]; /* invalidated (anim-bank reload): read it again into the same arena */
+            break;
+        }
+    }
+    if (b == NULL && ftData_ThrownRows[kind] != NULL) {
+        return; /* the real fighter's rows */
+    }
+    fd = gFtDataList[kind];
+    if (fd == NULL || fd->xC == NULL) {
+        return;
+    }
+    if (b == NULL && ftData_Table_Unk0[kind].data != NULL) {
         ftData_ThrownRows[kind] = fd->xC; /* the real fighter's bank is loaded: use its rows as they are */
         return;
     }
-    n = ftData_Table_Unk0[kind].count;
-    buf = (u8*) lbFile_LoadToHeap(0, ftData_803C23E4[kind], &sz);
-    rows = (Fighter_WaitAnimData*) lbHeap_80015BD0(0, (size_t) n * sizeof *rows);
-    if (buf == NULL || rows == NULL) {
+    if (b == NULL) {
+        for (i = 0; i < lim; i++) { /* a free arena, else the least recently used */
+            ftData_ThrowBank* c = &ftData_ThrowBanks[i];
+            if (c->buf == NULL) continue;
+            if (b == NULL || (c->kind < 0 && b->kind >= 0) || (c->kind >= 0 && b->kind >= 0 && c->stamp < b->stamp)) b = c;
+        }
+        if (b == NULL) {
+            return; /* no arena could be reserved: the victim holds its pose */
+        }
+        if (b->kind >= 0) {
+            int old = b->kind;
+            ftData_ThrowBankEvicts++;
+            ftData_ThrowBankDrop(b);
+            ftData_ThrowBankReport("evicted", old);
+        }
+    } else {
+        ftData_ThrowBankDrop(b);
+    }
+    if (!lbFile_LoadInto(ftData_803C23E4[kind], b->buf, b->cap, &sz)) {
         return;
     }
-    memcpy(rows, fd->xC, (size_t) n * sizeof *rows);
+    n = ftData_Table_Unk0[kind].count;
+    memcpy(b->rows, fd->xC, (size_t) n * sizeof b->rows[0]);
     for (i = 0; i < n; i++) {
-        rows[i].x14 = rows[i].x8 != 0 ? (u32) (uintptr_t) (buf + rows[i].x4) : 0;
+        b->rows[i].x14 = b->rows[i].x8 != 0 ? (u32) (uintptr_t) (b->buf + b->rows[i].x4) : 0;
     }
-    ftData_ThrownRows[kind] = rows;
-    OSReport("throw: stand-in kind %d: %s (0x%X bytes) read into the main heap for thrown victims\n", kind,
+    b->kind = kind;
+    b->sz = sz;
+    b->stamp = ++ftData_ThrowBankClock;
+    ftData_ThrownRows[kind] = b->rows;
+    ftData_ThrowBankLoads++;
+    OSReport("throw: stand-in kind %d: %s (0x%X bytes) read into a throw-bank arena for thrown victims\n", kind,
              ftData_803C23E4[kind], (unsigned int) sz);
+    ftData_ThrowBankReport("loaded", kind);
 }
 
 Fighter* ftData_ThrownStandIn(int kind)
 {
     static Fighter standin;
     ftData* fd;
-    if (kind < 0 || kind >= Ft_Kind_Max || kind == Ft_Kind_Nana || ftData_ThrownRows[kind] == NULL) {
+    if (kind < 0 || kind >= Ft_Kind_Max || kind == Ft_Kind_Nana) {
+        return NULL;
+    }
+    ftData_ThrownStandInLoad(kind); /* lazy: for a resident bank only refreshes its LRU stamp */
+    if (ftData_ThrownRows[kind] == NULL) {
         return NULL;
     }
     fd = gFtDataList[kind];
@@ -2377,7 +2534,7 @@ void ftData_80085B10(Fighter* fp)
         extern int Geno_DefineThrownAs(int kind);
         int as = Geno_DefineThrownAs((int) kind);
         if (as >= 0 && as != (int) kind) {
-            ftData_ThrownStandInLoad(as);
+            ftData_ThrownStandInPrepare(as);
         }
     }
 #endif

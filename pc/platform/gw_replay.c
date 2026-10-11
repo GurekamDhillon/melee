@@ -49,6 +49,7 @@
 #include <unistd.h> /* _exit in rp_parity_end */
 #endif
 
+extern int gw_Gdlp_CheckFile(const char *path, char *why, size_t cap); /* gw_script_rec.inc */
 #define GW_RP_GAME_INFO 0x138u
 #define GW_RP_SLOTS 8 /* 4 ports x (leader, follower) */
 #define GW_RP_FIRST_FRAME (-123)
@@ -266,6 +267,20 @@ static void rp_load(void) {
     rp.tried = 1;
     path = getenv("MELEE_SLP");
     if (path == NULL || path[0] == '\0') {
+        /* MELEE_GDLP=<file>: a whole-match recording of this port (a .slp stream in a .gdlp container). It
+           plays as MELEE_SLP does, but only on the build / disc / mods / Geno data it was made with */
+        const char *gp = getenv("MELEE_GDLP");
+        if (gp != NULL && gp[0] != '\0') {
+            char why[300];
+            if (gw_Gdlp_CheckFile(gp, why, sizeof why) != 0) {
+                gw_log("replay: MELEE_GDLP=\"%s\" refused: %s", gp, why);
+                return;
+            }
+            gw_log("replay: MELEE_GDLP=\"%s\" - identity matches (build, disc, mods, Geno data)", gp);
+            path = gp;
+        }
+    }
+    if (path == NULL || path[0] == '\0') {
         const char *lt = getenv("MELEE_RB_LIVETEST");
         if (lt != NULL && lt[0] == '1') {
             /* test only: arm live mode (as netplay does) for a scene-launched match, so the rollback session
@@ -449,10 +464,11 @@ static struct GwRecSlot {
     int frame;
     uint8_t *bytes;
     size_t len, cap;
+    int booked; /* a Frame Bookend (0x3C) is already in this frame's events (.gdlp whole-match files) */
 } rec_slots[GW_REC_RING];
 static int rec_flush_next = GW_RP_UNARMED, rec_failed;
 
-static void rec_event(const uint8_t *data, size_t len) {
+static void rec_event_for(int frame, const uint8_t *data, size_t len) {
     struct GwRecSlot *slot;
     uint8_t *p;
     size_t cap;
@@ -461,8 +477,8 @@ static void rec_event(const uint8_t *data, size_t len) {
         fwrite(data, 1, len, rec.f);
         return;
     }
-    slot = &rec_slots[(unsigned) rec.frame % GW_REC_RING];
-    if (slot->frame != rec.frame) { slot->frame = rec.frame; slot->len = 0; }
+    slot = &rec_slots[(unsigned) frame % GW_REC_RING];
+    if (slot->frame != frame) { slot->frame = frame; slot->len = 0; slot->booked = 0; }
     if (slot->len + len > slot->cap) {
         cap = slot->cap ? slot->cap * 2 : 256;
         while (cap < slot->len + len) cap *= 2;
@@ -473,6 +489,7 @@ static void rec_event(const uint8_t *data, size_t len) {
     memcpy(slot->bytes + slot->len, data, len);
     slot->len += len;
 }
+static void rec_event(const uint8_t *data, size_t len) { rec_event_for(rec.frame, data, len); }
 
 static void rec_flush_upto(int frame) {
     if (rec.f == NULL || rec_flush_next == GW_RP_UNARMED) return;
@@ -487,6 +504,27 @@ static void rec_flush_upto(int frame) {
     fflush(rec.f);
 }
 
+/* ---- whole-match .gdlp recording: MELEE_GDLP_RECORD=1|<dir>|<file.gdlp>, or settings.cfg gdlp_record=1 ----
+ * The same event stream as MELEE_SLP_RECORD, in a .gdlp container (gw_script_rec.inc): GD events (identity,
+ * fighters, mods) first, then Game Start / Frame Start / Pre / Post / Bookend / Game End, so a retail-only
+ * recording is also a valid .slp (lab rec export-slp). One file per match, closed when the scene ends.
+ * Played back with MELEE_GDLP=<file>: refused unless this build / disc / mods / Geno data match. */
+extern FILE *gw_Gdlp_OpenMatch(const char *spec, long *raw_len_at, long *raw_start, char *path_out, size_t cap);
+extern size_t gw_Gdlp_MatchHead(unsigned char *buf, const unsigned char *game_info);
+extern int gw_Gdlp_CheckFile(const char *path, char *why, size_t cap);
+extern int gw_Settings_Int(const char *key, int dflt);
+static int rec_gdlp;          /* the open file is a whole-match .gdlp */
+static char rec_gdlp_path[260];
+static int rec_gdlp_wanted(void) {
+    static int v = -1;
+    if (v < 0) {
+        const char *e = getenv("MELEE_GDLP_RECORD");
+        if (e != NULL && e[0] != '\0') v = strcmp(e, "0") != 0;
+        else v = gw_Settings_Int("gdlp_record", 0) != 0;
+    }
+    return v;
+}
+
 static void rec_be32(uint8_t *p, uint32_t v) {
     p[0] = (uint8_t) (v >> 24); p[1] = (uint8_t) (v >> 16); p[2] = (uint8_t) (v >> 8);
     p[3] = (uint8_t) v;
@@ -497,6 +535,22 @@ static void rec_bef(uint8_t *p, float f) {
     rec_be32(p, u);
 }
 
+/* Frame Bookend (0x3C): the frame, and the latest finalized frame (the frame itself: nothing is rolled back
+ * once it is written). Under rollback it joins the frame's buffered events if they are not flushed yet. */
+static void rec_bookend(int frame) {
+    uint8_t ev[9];
+    struct GwRecSlot *slot;
+    if (!rec_gdlp || rec.f == NULL || rec_failed || frame < GW_RP_FIRST_FRAME) return;
+    ev[0] = 0x3C;
+    rec_be32(ev + 1, (uint32_t) frame);
+    rec_be32(ev + 5, (uint32_t) frame);
+    if (!gw_rb_active()) { fwrite(ev, 1, sizeof ev, rec.f); return; }
+    slot = &rec_slots[(unsigned) frame % GW_REC_RING];
+    if (slot->frame != frame || slot->booked || rec_flush_next > frame) return;
+    slot->booked = 1;
+    rec_event_for(frame, ev, sizeof ev);
+}
+
 static void rec_close(void) {
     long end;
     uint8_t ev[1 + GW_RP_SZ_END], len[4];
@@ -504,6 +558,7 @@ static void rec_close(void) {
     if (rec.f == NULL) {
         return;
     }
+    if (rec_gdlp && rec.frame != GW_RP_UNARMED) rec_bookend(rec.frame);
     memset(ev, 0, sizeof ev);
     ev[0] = 0x39;
     ev[1] = 7; /* game end method: no contest - the port does not know how the run ended */
@@ -517,7 +572,15 @@ static void rec_close(void) {
     if (ferror(rec.f)) rec_failed = 1;
     if (fclose(rec.f) != 0) rec_failed = 1;
     rec.f = NULL;
-    gw_log("replay: recording closed (%ld event bytes)", end - rec.raw_start);
+    gw_log("replay: recording closed (%ld event bytes)%s%s", end - rec.raw_start, rec_gdlp ? " " : "",
+           rec_gdlp ? rec_gdlp_path : "");
+    if (rec_gdlp) { rec_gdlp = 0; rec.frame = GW_RP_UNARMED; rec_flush_next = GW_RP_UNARMED; }
+}
+
+/* the scene ended: a whole-match .gdlp is complete (Game End + metadata + length) */
+void gw_Replay_MatchRecordEnd(void) {
+    /* the scene handler also runs as a match scene begins (after RecordMatch armed this file): only a match that ran */
+    if (rec_gdlp && rec.frame > GW_RP_FIRST_FRAME - 1) rec_close();
 }
 
 /* Finite diagnostic runs bypass CRT destructors (Dawn teardown is unsafe).
@@ -528,6 +591,7 @@ int gw_Replay_FinishRecording(void) {
     return opened && !rec_failed;
 }
 
+static int rec_atexit;
 int gw_Replay_Recording(void) {
     if (!rec.tried) {
         const char *path = getenv("MELEE_SLP_RECORD");
@@ -549,11 +613,14 @@ int gw_Replay_Recording(void) {
                 rec.raw_start = ftell(rec.f);
                 fwrite(sizes, 1, sizeof sizes, rec.f);
                 atexit(rec_close);
+                rec_atexit = 1;
                 gw_log("replay: recording to %s", path);
             }
         }
     }
-    return rec.f != NULL;
+    /* a whole-match .gdlp is opened per match (gw_Replay_RecordMatch); never while a replay plays back
+       (live netplay is not a replay) */
+    return rec.f != NULL || ((!rp.active || rp.live) && rec_gdlp_wanted());
 }
 
 /* fn_8016E730: the match as it starts, and its seed. Arms the recording's frame counter. */
@@ -561,6 +628,27 @@ void gw_Replay_RecordMatch(void *start_melee_data, uint32_t seed) {
     uint8_t ev[1 + GW_RP_SZ_START];
     extern int gw_MatchTurboRules(void);
     if (!gw_Replay_Recording()) {
+        return;
+    }
+    if ((rec.f == NULL || rec_gdlp) && (!rp.active || rp.live) && rec_gdlp_wanted()) {
+        uint8_t head[800];
+        size_t n, i;
+        if (rec.f != NULL) rec_close(); /* the previous match, if its scene end was missed */
+        rec.f = gw_Gdlp_OpenMatch(getenv("MELEE_GDLP_RECORD"), &rec.raw_len_at, &rec.raw_start, rec_gdlp_path,
+                                  sizeof rec_gdlp_path);
+        if (rec.f == NULL) {
+            gw_log("replay: cannot open a whole-match recording (%s)", rec_gdlp_path);
+            return;
+        }
+        rec_gdlp = 1;
+        rec_failed = 0;
+        for (i = 0; i < GW_REC_RING; ++i) { rec_slots[i].frame = GW_RP_UNARMED; rec_slots[i].len = 0; rec_slots[i].booked = 0; }
+        n = gw_Gdlp_MatchHead(head, (const uint8_t *) start_melee_data);
+        fwrite(head, 1, n, rec.f);
+        if (!rec_atexit) { atexit(rec_close); rec_atexit = 1; }
+        gw_log("replay: recording the match to %s (.gdlp)", rec_gdlp_path);
+    }
+    if (rec.f == NULL) {
         return;
     }
     memset(ev, 0, sizeof ev);
@@ -599,6 +687,7 @@ static void rec_tick(uint32_t seed) {
         return;
     }
     fflush(rec.f); /* a killed run loses at most the frame in flight */
+    rec_bookend(rec.frame); /* the frame that just finished (.gdlp only) */
     ++rec.frame;
     rec.seed = seed;
     if (rec_flush_next == GW_RP_UNARMED) rec_flush_next = rec.frame;
@@ -606,6 +695,7 @@ static void rec_tick(uint32_t seed) {
         struct GwRecSlot *slot = &rec_slots[(unsigned) rec.frame % GW_REC_RING];
         slot->frame = rec.frame;
         slot->len = 0; /* a resimulation replaces the entire event sequence for this frame */
+        slot->booked = 0;
     }
     memset(ev, 0, sizeof ev);
     ev[0] = 0x3A;

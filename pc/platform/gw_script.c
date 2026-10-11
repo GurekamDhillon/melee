@@ -224,6 +224,7 @@ extern int gw_Geno_ProfileCount(void);
 extern const char *gw_Geno_ProfileHex(int p);
 extern uint64_t gw_net_hash_file(const char *path, size_t max_bytes);
 extern const char *gw_Mods_Describe(void);
+extern void gw_Replay_MatchRecordEnd(void);
 extern int gw_TextEntryUntil;
 /* gw_script_pad.c */
 extern void gw_script_pad_state(int ch, unsigned *buttons, int *sx, int *sy, int *cx, int *cy,
@@ -306,7 +307,7 @@ typedef struct {
     unsigned char sfx_open; /* the sound handles are still being recorded (the frame's first run) */
     unsigned char nsfx;
     unsigned char nq;       /* the voice pool's answers to the game (axdriver.c LAB_AUDIO) */
-    unsigned char pad[48];  /* PADStatus[4] as the game read them */
+    unsigned char pad[64];  /* PADStatus[4] as the game read them (4 x 16: the PC struct has extButton; 48 lost port 4) */
     int virtual_pad[2][9]; /* CPU/script input for fighter slots 5-6 */
     int sfx_id[GS_LOG_SFX], sfx_h[GS_LOG_SFX];
     unsigned char q_kind[GS_LOG_Q];
@@ -4485,7 +4486,7 @@ static void gs_rw_stop(void);
 static int gs_rw_request(int target, const char **why);
 static int l_rec_start(lua_State *L), l_rec_stop(lua_State *L), l_rec_mark(lua_State *L),
     l_rec_play(lua_State *L), l_rec_play_stop(lua_State *L), l_rec_trim(lua_State *L),
-    l_rec_keep_last(lua_State *L), l_rec_save_history(lua_State *L), l_rec_status(lua_State *L),
+    l_rec_keep_last(lua_State *L), l_rec_export_slp(lua_State *L), l_rec_save_history(lua_State *L), l_rec_status(lua_State *L),
     l_rec_list(lua_State *L);
 static void gr_tick(int at_tick), gr_after_save(void), gr_save_failed(void), gr_after_load(void),
     gr_load_failed(void), gr_external_load(void), gr_scene_end(void);
@@ -6946,7 +6947,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"motion_name", l_motion_name}, {"history", l_history}, {"step_back", l_step_back},
     {"rec_start", l_rec_start}, {"rec_stop", l_rec_stop}, {"rec_mark", l_rec_mark}, {"rec_play", l_rec_play},
     {"rec_play_stop", l_rec_play_stop}, {"rec_trim", l_rec_trim}, {"rec_keep_last", l_rec_keep_last},
-    {"rec_save_history", l_rec_save_history}, {"rec_status", l_rec_status}, {"rec_list", l_rec_list},
+    {"rec_export_slp", l_rec_export_slp}, {"rec_save_history", l_rec_save_history}, {"rec_status", l_rec_status}, {"rec_list", l_rec_list},
     {"rewind_to", l_rewind_to}, {"rewind_live", l_rewind_live}, {"rewind_test", l_rewind_test},
     {"rewind_test_result", l_rewind_test_result}, {"hot_reload", l_hot_reload},
     {"hot_reload_status", l_hot_reload_status}, {"state_save", l_state_save},
@@ -8444,6 +8445,7 @@ void gw_Script_SceneBegin(int scene_kind) {
     gs.step = 0;
     gs.nev = 0; /* events from the scene that ended are dropped */
     gr_scene_end();
+    gw_Replay_MatchRecordEnd(); /* a whole-match .gdlp (MELEE_GDLP_RECORD) ends with its scene */
     gs_rw_stop();
     memset(gs_sfx_map_from, 0xFF, sizeof gs_sfx_map_from);
     gw_rw_measure(0);
@@ -12222,6 +12224,9 @@ void gw_script_tests_register(void) {
     gw_test_register("script_fighter_armor", test_script_fighter_caps_armor);
     gw_test_register("script_sim_state", test_script_sim_state);
     gw_test_register("script_rec", test_script_rec);
+    gw_test_register("script_rec_v2", test_script_rec_v2);
+    gw_test_register("script_rec_export", test_script_rec_export);
+    gw_test_register("script_rec_port4", test_script_rec_port4);
     gw_test_register("script_hit_rules", test_script_hit_rules);
     gw_test_register("script_echo_parser", test_script_echo_parser);
     gw_test_register("script_spine_events", test_script_spine_events);

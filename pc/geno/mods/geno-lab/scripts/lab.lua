@@ -6091,7 +6091,7 @@ local function help_lines()
   out[#out + 1] = "  console: lab help | status | mode <name> | set <mode>.<toggle> on|off | hide | menu [tab] | ui on|off"
   out[#out + 1] = "           port N | history [seconds] | back N | dump [N] | move <id> [frame] | events"
   out[#out + 1] = "           states | save | load <file> | rename <file> <name> | delete <file> | reload [seconds]"
-  out[#out + 1] = "           rec start [name] | stop | mark | play [name] [map] [loop] | end | list | trim | keep-last | save-history (F7, SHIFT+F7)"
+  out[#out + 1] = "           rec start [name] | stop | mark | play [name] [map] [loop] | end | list | trim | keep-last | save-history | export-slp (F7, SHIFT+F7)"
   out[#out + 1] = "           replay (resume the logged input after a rewind) | live (stop replaying, go live)"
   out[#out + 1] = "  stage E: moves [text] | play <id|name> | kb | di none|in|out|survival | ab [record|reload|same|mirror]"
   out[#out + 1] = "           export [port] [version] | fdiff [fighter verA verB] | rollbacks [n]"
@@ -6157,6 +6157,9 @@ gd.command("lab", function(arg)
       local sec = tonumber(a1)
       if sec then local d, why = gd.rec_keep_last(sec, a2 ~= "" and a2 or nil) report(d, d, why)
       else gd.log("lab rec keep-last <seconds> [name]") end
+    elseif sub == "export-slp" then
+      if a1 == "" then gd.log("lab rec export-slp <name> [slp-name]   (a retail-only whole-match recording as a plain .slp)")
+      else local p, n = gd.rec_export_slp(a1, a2 ~= "" and a2 or nil) report(p, p, n) end
     elseif sub == "save-history" then
       if a1 == "" then gd.log("lab rec save-history <name> [seconds]")
       else local d, why = gd.rec_save_history(a1, tonumber(a2)) report(d, d, why) end
@@ -6171,7 +6174,7 @@ gd.command("lab", function(arg)
       local st = gd.rec_status()
       gd.log(string.format("rec: %s %s frame %d / %d (last: %s)", st.mode, st.name, st.frame, st.frames, st.last))
     else
-      gd.log("lab rec start [name] | stop | mark [label] | play [name] [1:2,2:1] [loop] | end | list | trim <name> <from> <to> | keep-last <s> [name] | save-history <name> [s]")
+      gd.log("lab rec start [name] | stop | mark [label] | play [name] [1:2,2:1] [loop] | end | list | trim <name> <from> <to> | keep-last <s> [name] | save-history <name> [s] | export-slp <name> [slp-name]")
     end
   elseif cmd == "replay" then
     local h = gd.history()

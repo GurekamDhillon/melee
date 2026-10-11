@@ -16,7 +16,8 @@
  */
 #define GR_PAD 64 /* 4 x sizeof(PADStatus): the PC struct is 16 bytes (extButton); the rewind log keeps only 48 */
 #define GR_VP 72
-#define GR_VER 1
+#define GR_VER 2 /* 2: standard Slippi events for whole-match files, chunked embedded state, flags 4 / 8 */
+#include "gw_replay_matchrules.h"
 #define GR_FRAME_PAYLOAD (4 + 1 + GR_PAD + GR_VP)
 #define GR_EV_HEAD 0x90
 #define GR_EV_FIGHTER 0x91
@@ -26,8 +27,18 @@
 #define GR_EV_MARK 0x95
 #define GR_EV_SEGMENT 0x96
 #define GR_EV_TEXT 0x97
+#define GR_EV_STCHUNK 0x98 /* v2: a chunk of the .gdst, so a clip is one file */
+#define GR_STCHUNK 60000
+#define GR_STCHUNK_MAX (512u << 20) /* a larger state is left as the sidecar only */
+/* the standard Slippi events of a whole-match file (sizes as gw_replay.c writes them) */
+#define GR_SZ_START GW_RP_RULES_START
+#define GR_SZ_PRE 0x42
+#define GR_SZ_POST 0x54
+#define GR_SZ_FSTART 0xC
 #define GR_FL_RETAIL 1  /* every fighter is in the retail roster (a candidate for .slp export) */
-#define GR_FL_STATE 2   /* starts from the .gdst beside it */
+#define GR_FL_STATE 2   /* starts from the .gdst beside it (or embedded) */
+#define GR_FL_WHOLE 4   /* v2: a whole match from its first frame (-123); no state, played by MELEE_GDLP */
+#define GR_FL_SLIPPI 8  /* v2: carries Game Start / Frame Start / Pre-Frame / Post-Frame: a valid .slp stream */
 enum { GR_IDLE, GR_ARM, GR_REC, GR_LOAD, GR_PLAY, GR_JOB };
 
 typedef struct { int tag; unsigned char have; unsigned char pad[GR_PAD]; int vp[2][9]; } GrFrame;
@@ -50,12 +61,17 @@ typedef struct {
     int nmarks;
     char seg_src[41];
     int seg_from, seg_to;
+    unsigned emb_size, emb_got;           /* the embedded .gdst (v2): declared / chunks read */
+    int has_start, n_pre, n_post, first_frame, last_frame; /* the standard Slippi events (v2) */
 } GrFile;
+static const char *gr_mods_override; /* tests: stands in for gw_Mods_Describe() in a header */
+static int gr_write_ver = GR_VER; /* the tests write a version 1 file to prove it still reads */
+static FILE *gr_emb_sink;         /* gr_read writes the embedded state chunks here (gr_extract_state) */
 
 static struct {
     int mode;
     char name[48], last[48];
-    char gdlp[MAX_PATH], gdst[MAX_PATH];
+    char gdlp[MAX_PATH], gdst[MAX_PATH], pgdst[MAX_PATH]; /* pgdst: the state a playback loads (sidecar or extracted) */
     FILE *f;
     long raw_len_at, raw_start;
     int base, count;
@@ -89,11 +105,19 @@ static int gr_size_of(int cmd) {
     case GR_EV_MARK: return 36;
     case GR_EV_SEGMENT: return 48;
     case GR_EV_TEXT: return 256;
+    case GR_EV_STCHUNK: return 12 + 2 + GR_STCHUNK;
+    case 0x36: return GR_SZ_START;
+    case 0x37: return GR_SZ_PRE;
+    case 0x38: return GR_SZ_POST;
+    case 0x3A: return GR_SZ_FSTART;
+    case 0x3C: return 8; /* Frame Bookend: frame i32, latest finalized frame i32 */
     }
     return -1;
 }
+/* the first 9 are version 1's table; version 2 adds the standard Slippi events and the state chunk */
 static const unsigned char gr_cmds[] = { 0x39, GR_EV_HEAD, GR_EV_FIGHTER, GR_EV_IDENT, GR_EV_STATE,
-                                         GR_EV_FRAME, GR_EV_MARK, GR_EV_SEGMENT, GR_EV_TEXT };
+                                         GR_EV_FRAME, GR_EV_MARK, GR_EV_SEGMENT, GR_EV_TEXT,
+                                         0x36, 0x37, 0x38, 0x3A, 0x3C, GR_EV_STCHUNK };
 
 static void gr_dir(char *out, size_t cap) {
     char *p;
@@ -130,14 +154,12 @@ static void gr_ev(FILE *f, int cmd, const unsigned char *payload) {
     fwrite(payload, 1, (size_t) n, f);
 }
 
-/* the container, the size table and the header events for the match as it is now */
-static FILE *gr_begin(const char *path, int base, const char *statefile, long *raw_len_at, long *raw_start) {
+/* the container and the 0x35 size table (version 1 lists only its own 9 events) */
+static FILE *gr_open(const char *path, long *raw_len_at, long *raw_start) {
     static const unsigned char head[] = { '{', 'U', 3, 'r', 'a', 'w', '[', '$', 'U', '#', 'l' };
-    unsigned char zero[4] = { 0, 0, 0, 0 }, tab[2 + 3 * 9], ev[300];
+    unsigned char zero[4] = { 0, 0, 0, 0 }, tab[2 + 3 * 16];
     FILE *f = fopen(path, "wb");
-    uint64_t id[4];
-    int s, i, retail = 1, n = (int) sizeof gr_cmds;
-    const char *m;
+    int i, n = gr_write_ver >= 2 ? (int) sizeof gr_cmds : 9;
     if (f == NULL) return NULL;
     fwrite(head, 1, sizeof head, f);
     *raw_len_at = ftell(f);
@@ -152,40 +174,114 @@ static FILE *gr_begin(const char *path, int base, const char *statefile, long *r
         tab[4 + 3 * i] = (unsigned char) sz;
     }
     fwrite(tab, 1, 2 + 3 * (size_t) n, f);
-    for (s = 0; s < 6; ++s)
-        if (gs_players_present(s) && (gw_ScriptGame_FighterI(s, SI_CHAR) < 0 || gw_ScriptGame_FighterI(s, SI_CHAR) > 25)) retail = 0;
+    return f;
+}
+
+#define GR_HEAD_MAX 700
+/* The GD header events (header, six fighters, identity, state reference, mods text) into buf; returns
+ * the byte count. game_info NULL: the fighters are the LAB's live match; else the 0x138-byte
+ * StartMeleeData of a whole match (char = CharacterKind, slot type = PlayerInitData type, name "ck:N"). */
+static size_t gr_head_events(unsigned char *buf, int base, const char *statefile, const unsigned char *game_info,
+                             int extra_flags) {
+    unsigned char ev[300];
+    uint64_t id[4];
+    int s, i, retail = 1;
+    size_t o = 0;
+    const char *m;
+    if (game_info == NULL) {
+        for (s = 0; s < 6; ++s)
+            if (gs_players_present(s) && (gw_ScriptGame_FighterI(s, SI_CHAR) < 0 || gw_ScriptGame_FighterI(s, SI_CHAR) > 25)) retail = 0;
+    } else {
+        for (s = 0; s < 4; ++s) {
+            const unsigned char *pl = game_info + 0x60 + 0x24 * s;
+            if (pl[1] != 3 && pl[0] > 25) retail = 0;
+        }
+    }
+#define GR_PUT_EV(cmd) do { buf[o++] = (unsigned char) (cmd); memcpy(buf + o, ev, (size_t) gr_size_of(cmd)); o += (size_t) gr_size_of(cmd); } while (0)
     memset(ev, 0, sizeof ev);
-    ev[0] = 0; ev[1] = GR_VER;
-    ev[2] = (unsigned char) ((retail ? GR_FL_RETAIL : 0) | (statefile != NULL ? GR_FL_STATE : 0));
+    ev[0] = (unsigned char) (gr_write_ver >> 8); ev[1] = (unsigned char) gr_write_ver;
+    ev[2] = (unsigned char) ((retail ? GR_FL_RETAIL : 0) | (statefile != NULL ? GR_FL_STATE : 0) | (gr_write_ver >= 2 ? extra_flags : 0));
     ev[3] = 6;
     gr_put32(ev + 4, (unsigned) base);
     ev[8] = 0; ev[9] = GR_PAD; ev[10] = 0; ev[11] = GR_VP;
     gr_put32(ev + 12, (unsigned) time(NULL));
-    gr_ev(f, GR_EV_HEAD, ev);
+    GR_PUT_EV(GR_EV_HEAD);
     for (s = 0; s < 6; ++s) {
-        int present = gs_players_present(s), chr = present ? gw_ScriptGame_FighterI(s, SI_CHAR) : -1;
         memset(ev, 0, sizeof ev);
-        ev[0] = (unsigned char) s; ev[1] = (unsigned char) present;
-        ev[2] = (unsigned char) (chr >> 8); ev[3] = (unsigned char) chr;
-        ev[4] = (unsigned char) (present ? gw_ScriptGame_FighterI(s, SI_COSTUME) : 0xFF);
-        ev[5] = (unsigned char) (present ? gw_ScriptGame_FighterI(s, SI_SLOT_TYPE) : 0xFF);
-        if (present) snprintf((char *) ev + 6, 24, "%s", gs_char_name(chr));
-        gr_ev(f, GR_EV_FIGHTER, ev);
+        if (game_info != NULL) {
+            const unsigned char *pl = game_info + 0x60 + 0x24 * s;
+            int present = s < 4 && pl[1] != 3;
+            ev[0] = (unsigned char) s; ev[1] = (unsigned char) present;
+            ev[2] = 0; ev[3] = present ? pl[0] : 0xFF; if (!present) ev[2] = 0xFF;
+            ev[4] = (unsigned char) (present ? pl[3] : 0xFF);
+            ev[5] = (unsigned char) (present ? pl[1] : 0xFF);
+            if (present) snprintf((char *) ev + 6, 24, "ck:%d", pl[0]);
+        } else {
+            int present = gs_players_present(s), chr = present ? gw_ScriptGame_FighterI(s, SI_CHAR) : -1;
+            ev[0] = (unsigned char) s; ev[1] = (unsigned char) present;
+            ev[2] = (unsigned char) (chr >> 8); ev[3] = (unsigned char) chr;
+            ev[4] = (unsigned char) (present ? gw_ScriptGame_FighterI(s, SI_COSTUME) : 0xFF);
+            ev[5] = (unsigned char) (present ? gw_ScriptGame_FighterI(s, SI_SLOT_TYPE) : 0xFF);
+            if (present) snprintf((char *) ev + 6, 24, "%s", gs_char_name(chr));
+        }
+        GR_PUT_EV(GR_EV_FIGHTER);
     }
     gs_identity(id);
     memset(ev, 0, sizeof ev);
     for (i = 0; i < 4; ++i) gr_put64(ev + 8 * i, id[i]);
-    gr_put32(ev + 32, (unsigned) gw_ScriptGame_StageKind());
+    gr_put32(ev + 32, game_info != NULL ? (unsigned) ((game_info[0x0E] << 8) | game_info[0x0F]) : (unsigned) gw_ScriptGame_StageKind());
     gr_put32(ev + 36, GENO_VERSION);
-    gr_ev(f, GR_EV_IDENT, ev);
+    GR_PUT_EV(GR_EV_IDENT);
     memset(ev, 0, sizeof ev);
     if (statefile != NULL) snprintf((char *) ev, 40, "%s", statefile);
-    gr_ev(f, GR_EV_STATE, ev);
-    m = gw_Mods_Describe();
+    GR_PUT_EV(GR_EV_STATE);
+    m = gr_mods_override != NULL ? gr_mods_override : gw_Mods_Describe();
     memset(ev, 0, sizeof ev);
     ev[0] = 1;
     snprintf((char *) ev + 1, 255, "%s", m != NULL ? m : "");
-    gr_ev(f, GR_EV_TEXT, ev);
+    GR_PUT_EV(GR_EV_TEXT);
+#undef GR_PUT_EV
+    return o;
+}
+
+/* version 2: the state file beside the recording, chunked into the recording (a clip is one file) */
+static void gr_embed_state(FILE *f, const char *statefile) {
+    char dir[MAX_PATH], path[MAX_PATH];
+    FILE *s;
+    long total;
+    unsigned idx, nchunks;
+    static unsigned char ev[13 + 2 + GR_STCHUNK];
+    if (gr_write_ver < 2 || statefile == NULL) return;
+    gr_dir(dir, sizeof dir);
+    snprintf(path, sizeof path, "%s\\%s", dir, statefile);
+    s = fopen(path, "rb");
+    if (s == NULL) return;
+    fseek(s, 0, SEEK_END); total = ftell(s); fseek(s, 0, SEEK_SET);
+    if (total <= 0 || (unsigned long) total > GR_STCHUNK_MAX) { fclose(s); gw_log("rec: state %s not embedded (%ld bytes)", statefile, total); return; }
+    nchunks = (unsigned) ((total + GR_STCHUNK - 1) / GR_STCHUNK);
+    for (idx = 0; idx < nchunks; ++idx) {
+        size_t want = (size_t) (total - (long) idx * GR_STCHUNK), got;
+        if (want > GR_STCHUNK) want = GR_STCHUNK;
+        ev[0] = GR_EV_STCHUNK;
+        memset(ev + 1, 0, sizeof ev - 1);
+        got = fread(ev + 1 + 14, 1, want, s);
+        gr_put32(ev + 1, idx); gr_put32(ev + 5, nchunks); gr_put32(ev + 9, (unsigned) total);
+        ev[13] = (unsigned char) (got >> 8); ev[14] = (unsigned char) got;
+        fwrite(ev, 1, sizeof ev, f);
+        if (got != want) break;
+    }
+    fclose(s);
+}
+
+/* the container, the size table and the header events for the match as it is now (a LAB clip) */
+static FILE *gr_begin(const char *path, int base, const char *statefile, long *raw_len_at, long *raw_start) {
+    unsigned char buf[GR_HEAD_MAX];
+    size_t n;
+    FILE *f = gr_open(path, raw_len_at, raw_start);
+    if (f == NULL) return NULL;
+    n = gr_head_events(buf, base, statefile, NULL, 0);
+    fwrite(buf, 1, n, f);
+    gr_embed_state(f, statefile);
     return f;
 }
 
@@ -294,6 +390,23 @@ static int gr_read(const char *path, GrFile *g, char *why, size_t cap) {
                 for (i = 0; i < 2; ++i) for (k = 0; k < 9; ++k) fr->vp[i][k] = (int) gr_get32(p + 5 + GR_PAD + (i * 9 + k) * 4);
             }
             break;
+        case GR_EV_STCHUNK:
+            g->emb_size = gr_get32(p + 8);
+            if (gr_emb_sink != NULL) {
+                unsigned idx = gr_get32(p), len = ((unsigned) p[12] << 8) | p[13];
+                if (len <= GR_STCHUNK && fseek(gr_emb_sink, (long) ((unsigned long) idx * GR_STCHUNK), SEEK_SET) == 0 &&
+                    fwrite(p + 14, 1, len, gr_emb_sink) == len) g->emb_got += len;
+            } else g->emb_got += ((unsigned) p[12] << 8) | p[13];
+            break;
+        case 0x36: g->has_start = 1; break;
+        case 0x37: g->n_pre++; break;
+        case 0x38: {
+            int fno = (int) gr_get32(p);
+            if (g->n_post == 0 || fno < g->first_frame) g->first_frame = fno;
+            if (g->n_post == 0 || fno > g->last_frame) g->last_frame = fno;
+            g->n_post++;
+            break;
+        }
         case 0x39: g->complete = 1; break;
         default: break; /* any other event: skipped by its size, as a Slippi reader does */
         }
@@ -306,15 +419,22 @@ static int gr_read(const char *path, GrFile *g, char *why, size_t cap) {
     return 0;
 }
 
-/* a recording is refused, with the reason, unless this build / mods / Geno data / match is the one it was made in */
-static int gr_check(const GrFile *g, char *why, size_t cap) {
+/* a recording is refused, with the reason, unless this build / disc / mods / Geno data is the one it was made with */
+static int gr_check_ident(const GrFile *g, char *why, size_t cap) {
     uint64_t id[4];
-    int s;
     gs_identity(id);
     if (g->id[0] != id[0]) { snprintf(why, cap, "recorded by another build of the game"); return -1; }
     if (g->id[1] != id[1]) { snprintf(why, cap, "recorded with another disc"); return -1; }
     if (g->id[2] != id[2]) { snprintf(why, cap, "recorded with other mods (it used: %s)", g->mods[0] ? g->mods : "none"); return -1; }
     if (g->id[3] != id[3] || g->geno_version != GENO_VERSION) { snprintf(why, cap, "recorded with other Geno fighter data (a define changed)"); return -1; }
+    why[0] = '\0';
+    return 0;
+}
+/* ...and, to play in the LAB, the running match must be the one it started from */
+static int gr_check(const GrFile *g, char *why, size_t cap) {
+    int s;
+    if (g->flags & GR_FL_WHOLE) { snprintf(why, cap, "a whole-match recording: play it with MELEE_GDLP=<file> at launch"); return -1; }
+    if (gr_check_ident(g, why, cap) != 0) return -1;
     if (!gs.match_active) { snprintf(why, cap, "start the LAB match first"); return -1; }
     for (s = 0; s < 6; ++s) {
         int present = gs_players_present(s);
@@ -328,6 +448,161 @@ static int gr_check(const GrFile *g, char *why, size_t cap) {
     if (gw_ScriptGame_StageKind() != g->stage) { snprintf(why, cap, "this recording is on another stage: start that match first"); return -1; }
     why[0] = '\0';
     return 0;
+}
+
+/* version 2: write the embedded .gdst of a recording to outpath; 0 = done, -1 = none / damaged */
+static int gr_extract_state(const char *gdlp, const char *outpath, char *why, size_t cap) {
+    GrFile g;
+    FILE *o = fopen(outpath, "wb");
+    int rc;
+    if (o == NULL) { snprintf(why, cap, "cannot write %s", outpath); return -1; }
+    gr_emb_sink = o;
+    rc = gr_read(gdlp, &g, why, cap);
+    gr_emb_sink = NULL;
+    fclose(o);
+    if (rc != 0) { DeleteFileA(outpath); return -1; }
+    rc = g.emb_size != 0 && g.emb_got == g.emb_size ? 0 : -1;
+    if (rc != 0) {
+        DeleteFileA(outpath);
+        if (g.emb_size) snprintf(why, cap, "the embedded state is incomplete (%u of %u bytes)", g.emb_got, g.emb_size);
+        else snprintf(why, cap, "no embedded state");
+    }
+    gr_free_file(&g);
+    return rc;
+}
+
+/* where playback finds the start state: the sidecar named in the header if it exists, else the embedded one
+ * (extracted to _emb_<name>.gdst in the recordings folder) */
+static int gr_state_path(const GrFile *g, const char *gdlp, const char *name, char *out, size_t cap, char *why, size_t wcap) {
+    char dir[MAX_PATH];
+    gr_dir(dir, sizeof dir);
+    snprintf(out, cap, "%s\\%s", dir, g->state[0] ? g->state : "none.gdst");
+    if (g->state[0] && gr_exists(out)) return 0;
+    if (g->emb_size == 0) { snprintf(why, wcap, "the recording's state file (.gdst) is missing and none is embedded"); return -1; }
+    snprintf(out, cap, "%s\\_emb_%s.gdst", dir, name);
+    return gr_extract_state(gdlp, out, why, wcap);
+}
+
+/* ---- export: a retail-only whole-match .gdlp -> a plain .slp --------------------------------- */
+static int gr_export_ok(const GrFile *g, char *why, size_t cap) {
+    int s;
+    if (g->flags & GR_FL_STATE) { snprintf(why, cap, "this clip starts from a saved state (a mid-match LAB take), not a whole match"); return -1; }
+    if (!(g->flags & GR_FL_WHOLE) || !(g->flags & GR_FL_SLIPPI)) {
+        snprintf(why, cap, g->ver < 2 ? "a format-1 recording has no Slippi events (only whole matches recorded by format 2 export)"
+                                      : "not a whole-match recording (no Slippi events)");
+        return -1;
+    }
+    if (!(g->flags & GR_FL_RETAIL)) {
+        for (s = 0; s < 6; ++s) if (g->fi[s].present && g->fi[s].chr > 25) break;
+        snprintf(why, cap, "a Geno / non-retail fighter is in this match (P%d %s): a .slp can only hold the retail roster", s + 1, s < 6 ? g->fi[s].name : "?");
+        return -1;
+    }
+    if (g->mods[0] && strcmp(g->mods, "none") != 0) { snprintf(why, cap, "recorded with mods (%s): not a retail match", g->mods); return -1; }
+    if (g->seg_to != 0) { snprintf(why, cap, "a trimmed excerpt cannot be exported as a match"); return -1; }
+    if (!g->has_start || g->n_post == 0) { snprintf(why, cap, "the recording has no Game Start / frames"); return -1; }
+    return 0;
+}
+
+/* 0 = written; -1 = refused / failed, with the reason. frames_out: post-frame events copied. */
+static int gr_export_slp(const char *src, const char *dst, char *why, size_t cap, int *frames_out) {
+    static const unsigned char keep[] = { 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3C };
+    static const char meta[] = "U\x08metadata{U\x08playedOnSU\x08melee-pc}}";
+    static const unsigned char head[] = { '{', 'U', 3, 'r', 'a', 'w', '[', '$', 'U', '#', 'l' };
+    GrFile g;
+    FILE *f, *o;
+    unsigned char *d, szt[256][2], tab[2 + 3 * 6], len[4], endev[7], zero[4] = { 0, 0, 0, 0 };
+    long n, raw_len_at, raw_start, end;
+    size_t pos, tabend;
+    int i, ended = 0, posts = 0;
+    if (gr_read(src, &g, why, cap) != 0) return -1;
+    if (gr_export_ok(&g, why, cap) != 0) { gr_free_file(&g); return -1; }
+    gr_free_file(&g);
+    f = fopen(src, "rb");
+    if (f == NULL) { snprintf(why, cap, "no such recording"); return -1; }
+    fseek(f, 0, SEEK_END); n = ftell(f); fseek(f, 0, SEEK_SET);
+    d = (unsigned char *) malloc((size_t) n + 1);
+    if (d == NULL || fread(d, 1, (size_t) n, f) != (size_t) n) { fclose(f); free(d); snprintf(why, cap, "unreadable"); return -1; }
+    fclose(f);
+    memset(szt, 0xFF, sizeof szt);
+    tabend = 16 + (size_t) d[16];
+    for (i = 0; i < (d[16] - 1) / 3; ++i) { szt[d[17 + i * 3]][0] = d[18 + i * 3]; szt[d[17 + i * 3]][1] = d[19 + i * 3]; }
+    o = fopen(dst, "wb");
+    if (o == NULL) { free(d); snprintf(why, cap, "cannot write %s", dst); return -1; }
+    fwrite(head, 1, sizeof head, o);
+    raw_len_at = ftell(o);
+    fwrite(zero, 1, 4, o);
+    raw_start = ftell(o);
+    tab[0] = 0x35; tab[1] = (unsigned char) (1 + 3 * sizeof keep);
+    for (i = 0; i < (int) sizeof keep; ++i) {
+        int sz = gr_size_of(keep[i]);
+        tab[2 + 3 * i] = keep[i]; tab[3 + 3 * i] = (unsigned char) (sz >> 8); tab[4 + 3 * i] = (unsigned char) sz;
+    }
+    fwrite(tab, 1, sizeof tab, o);
+    for (pos = tabend; pos < (size_t) n && !ended;) {
+        int cmd = d[pos], sz, k, kept = 0;
+        if (cmd == 'U' || (szt[cmd][0] == 0xFF && szt[cmd][1] == 0xFF)) break;
+        sz = (szt[cmd][0] << 8) | szt[cmd][1];
+        if (pos + 1 + (size_t) sz > (size_t) n) break;
+        for (k = 0; k < (int) sizeof keep; ++k) if (keep[k] == cmd) kept = 1;
+        if (kept) {
+            fwrite(d + pos, 1, 1 + (size_t) sz, o);
+            if (cmd == 0x38) ++posts;
+            if (cmd == 0x39) ended = 1;
+        }
+        pos += 1 + (size_t) sz;
+    }
+    if (!ended) { memset(endev, 0, sizeof endev); endev[0] = 0x39; endev[1] = 7; fwrite(endev, 1, sizeof endev, o); }
+    end = ftell(o);
+    fwrite(meta, 1, sizeof meta - 1, o);
+    gr_put32(len, (unsigned) (end - raw_start));
+    fseek(o, raw_len_at, SEEK_SET);
+    fwrite(len, 1, 4, o);
+    i = ferror(o) != 0;
+    i |= fclose(o) != 0;
+    free(d);
+    if (i) { snprintf(why, cap, "write failed"); DeleteFileA(dst); return -1; }
+    if (frames_out) *frames_out = posts;
+    why[0] = '\0';
+    return 0;
+}
+
+/* ---- whole-match recording (gw_replay.c calls these at match start; MELEE_GDLP at launch) ---- */
+/* the GD header events for a whole match started with this StartMeleeData; returns bytes written to buf (GR_HEAD_MAX) */
+size_t gw_Gdlp_MatchHead(unsigned char *buf, const unsigned char *game_info) {
+    return gr_head_events(buf, -123, NULL, game_info, GR_FL_WHOLE | GR_FL_SLIPPI);
+}
+
+/* opens the file for a whole-match recording (container + size table). spec: MELEE_GDLP_RECORD ("1" = the
+ * recordings folder, a folder, or one .gdlp path) */
+FILE *gw_Gdlp_OpenMatch(const char *spec, long *raw_len_at, long *raw_start, char *path_out, size_t cap) {
+    static int seq;
+    size_t l = spec != NULL ? strlen(spec) : 0;
+    char dir[MAX_PATH];
+    ++seq;
+    if (l > 5 && _stricmp(spec + l - 5, ".gdlp") == 0 && seq == 1) snprintf(path_out, cap, "%s", spec);
+    else if (l > 1 && strcmp(spec, "1") != 0) {
+        CreateDirectoryA(spec, NULL);
+        snprintf(path_out, cap, "%s\\match_%lld_%d.gdlp", spec, (long long) time(NULL), seq);
+    } else {
+        gr_dir(dir, sizeof dir);
+        snprintf(path_out, cap, "%s\\match_%lld_%d.gdlp", dir, (long long) time(NULL), seq);
+    }
+    return gr_open(path_out, raw_len_at, raw_start);
+}
+
+/* MELEE_GDLP: may this whole-match recording play here? 0 = yes; else why not */
+int gw_Gdlp_CheckFile(const char *path, char *why, size_t cap) {
+    GrFile g;
+    int rc;
+    if (gr_read(path, &g, why, cap) != 0) return -1;
+    if (!(g.flags & GR_FL_WHOLE) || !(g.flags & GR_FL_SLIPPI)) {
+        gr_free_file(&g);
+        snprintf(why, cap, "not a whole-match recording (a LAB clip plays with `lab rec play`)");
+        return -1;
+    }
+    rc = gr_check_ident(&g, why, cap);
+    gr_free_file(&g);
+    return rc;
 }
 
 /* ---- recording --------------------------------------------------------------------------- */
@@ -531,8 +806,7 @@ static void gr_write_history(void) {
 static void gr_tick(int at_tick) {
     if (gr.mode == GR_PLAY && gr.loop && gr.pf.n > 0 && gs.match_active && gs_ring_now() - gr.tag0 >= gr.pf.n &&
         !gs.st_pending_load[0]) {
-        gr_path(gr.gdst, sizeof gr.gdst, gr.name, "gdst");
-        snprintf(gs.st_pending_load, sizeof gs.st_pending_load, "%s", gr.gdst);
+        snprintf(gs.st_pending_load, sizeof gs.st_pending_load, "%s", gr.pgdst);
         gr.mode = GR_LOAD;
         return;
     }
@@ -692,13 +966,10 @@ static int l_rec_play(lua_State *L) {
     if (gr_read(path, &g, w, sizeof w) != 0) return gr_fail(L, w);
     if (g.n == 0) { gr_free_file(&g); return gr_fail(L, "the recording has no frames"); }
     if (gr_check(&g, w, sizeof w) != 0) { gr_free_file(&g); return gr_fail(L, w); }
-    {
-        char dir[MAX_PATH];
-        gr_dir(dir, sizeof dir);
-        snprintf(gr.gdst, sizeof gr.gdst, "%s\\%s", dir, g.state[0] ? g.state : "none.gdst");
-    }
+    if (gr_state_path(&g, path, name, gr.gdst, sizeof gr.gdst, w, sizeof w) != 0) { gr_free_file(&g); return gr_fail(L, w); }
+    snprintf(gr.pgdst, sizeof gr.pgdst, "%s", gr.gdst);
     len = gw_snap_file_header(gr.gdst, &h, sizeof h);
-    if (len < 0) { gr_free_file(&g); return gr_fail(L, "the recording's state file (.gdst) is missing"); }
+    if (len < 0) { gr_free_file(&g); return gr_fail(L, "the recording's state file (.gdst) is unreadable"); }
     if (gs_state_check(&h, len, w, sizeof w) != 0) { gr_free_file(&g); return gr_fail(L, w); }
     gr_free_file(&gr.pf);
     gr.pf = g;
@@ -746,13 +1017,9 @@ static int l_rec_trim(lua_State *L) {
     if (to > g.n) to = g.n;
     if (from >= to) { gr_free_file(&g); return gr_fail(L, "empty range (frames are 0 .. count)"); }
     if (gr_check(&g, w, sizeof w) != 0) { gr_free_file(&g); return gr_fail(L, w); }
-    {
-        char dir[MAX_PATH];
-        gr_dir(dir, sizeof dir);
-        snprintf(gr.gdst, sizeof gr.gdst, "%s\\%s", dir, g.state[0] ? g.state : "none.gdst");
-    }
+    if (gr_state_path(&g, path, name, gr.gdst, sizeof gr.gdst, w, sizeof w) != 0) { gr_free_file(&g); return gr_fail(L, w); }
     len = gw_snap_file_header(gr.gdst, &h, sizeof h);
-    if (len < 0) { gr_free_file(&g); return gr_fail(L, "the state file (.gdst) is missing"); }
+    if (len < 0) { gr_free_file(&g); return gr_fail(L, "the state file (.gdst) is unreadable"); }
     if (gs_state_check(&h, len, w, sizeof w) != 0) { gr_free_file(&g); return gr_fail(L, w); }
     gr_free_file(&gr.pf);
     gr.pf = g;
@@ -831,6 +1098,24 @@ static int l_rec_save_history(lua_State *L) {
     return 1;
 }
 
+/* gd.rec_export_slp(name [, outname]) -> path, frames | false, why: a retail whole-match recording as a plain .slp */
+static int l_rec_export_slp(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1);
+    char src[MAX_PATH], dst[MAX_PATH], w[240], oname[48];
+    int frames = 0;
+    if (!gr_name_ok(name)) return gr_fail(L, "bad recording name");
+    snprintf(oname, sizeof oname, "%s", lua_isnoneornil(L, 2) ? name : luaL_checkstring(L, 2));
+    if (!gr_name_ok(oname)) return gr_fail(L, "bad output name");
+    gr_path(src, sizeof src, name, "gdlp");
+    gr_path(dst, sizeof dst, oname, "slp");
+    if (gr_exists(dst)) return gr_fail(L, "an .slp with that name exists (nothing is overwritten)");
+    if (gr_export_slp(src, dst, w, sizeof w, &frames) != 0) return gr_fail(L, w);
+    gr_say(GS_GREEN, "exported %s (%d frames)", dst, frames);
+    lua_pushstring(L, dst);
+    lua_pushinteger(L, frames);
+    return 2;
+}
+
 static int l_rec_status(lua_State *L) {
     static const char *const names[] = { "idle", "arming", "recording", "loading", "playing", "working" };
     lua_createtable(L, 0, 10);
@@ -870,6 +1155,10 @@ static int l_rec_list(lua_State *L) {
             gs_setint(L, "marks", g.nmarks);
             gs_setbool(L, "complete", g.complete);
             gs_setbool(L, "retail", (g.flags & GR_FL_RETAIL) != 0);
+            gs_setint(L, "format", (lua_Integer) g.ver);
+            gs_setbool(L, "whole", (g.flags & GR_FL_WHOLE) != 0);
+            gs_setbool(L, "embedded", g.emb_size != 0 && g.emb_got == g.emb_size);
+            gs_setbool(L, "exportable", gr_export_ok(&g, w, sizeof w) == 0);
             gs_setstr(L, "fighters", g.fi[0].name);
             gs_setbool(L, "ok", gr_check(&g, w, sizeof w) == 0);
             gs_setstr(L, "why", w);

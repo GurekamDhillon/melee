@@ -29,6 +29,10 @@ const GwRbInput *gw_RB_InputAny(int port, int frame) {
     (void) port; (void) frame; return used_pad_on ? &used_pad : NULL;
 }
 int gw_Snap_Resimulating(void) { return 0; }
+/* the .gdlp whole-match recorder lives in gw_script_rec.inc; this fixture has no scripting */
+FILE *gw_Gdlp_OpenMatch(const char *spec, long *a, long *b, char *path, size_t cap) { (void) spec; (void) a; (void) b; (void) path; (void) cap; return NULL; }
+size_t gw_Gdlp_MatchHead(unsigned char *buf, const unsigned char *gi) { (void) buf; (void) gi; return 0; }
+int gw_Gdlp_CheckFile(const char *path, char *why, size_t cap) { (void) path; (void) why; (void) cap; return -1; }
 int gw_MatchTurboRules(void) { return 0; } /* gw_replay.c records the match rule (codex/turbo); the fixture has no runtime */
 
 static void be32(uint8_t *p, uint32_t n) {

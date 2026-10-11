@@ -85,6 +85,8 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | `MELEE_SLIPPI_TIMEOUT_MS` | `5000` | ENet and gameplay-stall timeout in ms (`1000..60000`); default preserves 3 s outage grace. Terminal loss shows a toast for 2 s before exit 2. |
 | `MELEE_SLIPPI_LOCAL_PORT`, `MELEE_SLIPPI_REMOTE_PORT` | distinct UDP ports required by loopback; Direct uses its ticket assignment |
 | `MELEE_SLIPPI_USER_JSON=<path or ->`, `MELEE_SLIPPI_CODE` | Direct profile and opponent code; `-` reads bounded profile JSON from stdin, never log it |
+| `MELEE_GDLP_RECORD=1\|<dir>\|<file.gdlp>` (or `gdlp_record=1` in settings.cfg) | record every match from its first frame as a whole-match `.gdlp` (a valid `.slp` stream plus GD events), one file per match, closed when the scene ends; env wins over the setting (`0` = off). docs/geno.md 14.20 |
+| `MELEE_GDLP=<file>` | play a whole-match `.gdlp` like `MELEE_SLP`; refused (logged) unless the build, disc, mods and Geno data match the take |
 | `MELEE_SLIPPI_EVIDENCE=<path>` | required diagnostic JSON output; pair with `MELEE_STATE_TRACE`, `MELEE_RB_HASHLOG`, `MELEE_SLP_RECORD` |
 | `MELEE_SLIPPI_RUN_SALT=<32 hex digits>` | Direct run's shared salt for reciprocal account tags; supplied by the workspace runner |
 | `MELEE_SLIPPI_MATCH_ID=<id>` | shared loopback run ID, including when using a UDP impairment relay |

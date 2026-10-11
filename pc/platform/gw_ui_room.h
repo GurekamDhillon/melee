@@ -14,6 +14,7 @@ extern "C" {
 #define AT_ROOM_STAGES 32      /* the lobby's stage list cap (LB_MAX_UI_STAGES in gmfrontend.c; the adapter asserts they match) */
 #define AT_ROOM_NAME 40        /* the legacy buffers: stage names 40, fighter names 24, player names 18 */
 #define AT_ROOM_TEXT 96
+#define AT_ROOM_MODS 5         /* rows of the lobby's mod-difference list (the last may be "+N more") */
 enum { AT_ROOM_CODE = 1, AT_ROOM_WAIT = 2, AT_ROOM_LOBBY = 3 };
 enum { AT_PH_OFF, AT_PH_CHAR_BLIND, AT_PH_STRIKE, AT_PH_BAN, AT_PH_PICK, AT_PH_CHAR_WINNER, AT_PH_CHAR_LOSER, AT_PH_READY, AT_PH_GO };
 enum { AT_STAGE_FREE, AT_STAGE_STRUCK_P1, AT_STAGE_STRUCK_P2, AT_STAGE_BANNED, AT_STAGE_PICKED };
@@ -48,6 +49,7 @@ typedef struct AtRoomView {
     int reconnecting, leave_armed, my_stage_turn, can_pick, can_ready, ready_mine;
     char phase_title[24], instruction[AT_ROOM_TEXT];
     int n_stages, cursor; AtRoomStage st[AT_ROOM_STAGES]; AtGrid grid;
+    int n_mods; char mods[AT_ROOM_MODS][AT_ROOM_TEXT];   /* modsync: the per-mod list of what differs from the peer's mods (0 = they agree) */
     char toast[AT_ROOM_TEXT]; int toast_bad;
     int fade_out;                                     /* 0..1000: the leave fade (the game's own fade does not cover host quads); drawn by the renderer's ground quad */
 } AtRoomView;

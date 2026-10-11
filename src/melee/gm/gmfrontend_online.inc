@@ -1349,6 +1349,10 @@ static void fl_status_line(char* out)
         fp_copy(out + 7, Netplay_EnvoyBlock(), FE_STR - 7);
         return;
     }
+    if (fl.art == FL_LOBBY && !fl_reconnecting()) { /* different mods (modsync) */
+        Netplay_ModsLine(out, FE_STR);
+        if (out[0] != '\0') return;
+    }
     Netplay_RoomCode(code, sizeof code);
     fl_grid_layout();
     if (fl.art == FL_LOBBY && !fl_reconnecting() && flg.pages > 1 && fl.cur >= 0 && fl.cur < flg.n) {
@@ -2288,6 +2292,12 @@ static void fl_frame_wait(u32 in)
         fe_switch_screen(&fe_screen_online);
         return;
     }
+    if (fe_np_phase == FE_NP_FAILED && host && Netplay_PeerLeft()) {
+        /* the opponent left during the short beat before the lobby opened (a guest restarting to match the host's mods does): keep the room, wait again */
+        fl.found_at = -1;
+        fe_np_phase = Netplay_Rejoin() == 0 ? FE_NP_WORKING : FE_NP_FAILED;
+        return;
+    }
     if (fe_np_phase == FE_NP_FAILED && !host) {
         /* a bad code or a dead room: back to the code, marked */
         Netplay_MenuStatus(fl.code_msg, FE_STR);
@@ -2439,6 +2449,17 @@ static void fl_frame_lobby(u32 in)
     }
     fl_lobby_events();
     p = fl_phase();
+    if ((in & MenuInput_YButton) && !Netplay_IsHost()) { /* Y: match the host's mods (modsync) */
+        char m[FE_STR];
+        Netplay_ModsLine(m, FE_STR);
+        if (m[0] != '\0') {
+            sfxForward();
+            if (Netplay_ModsAct()) {
+                fl_toast("Matching the host's mods. The game restarts and rejoins the room.", false, 300);
+                return;
+            }
+        }
+    }
     if ((in & MenuInput_YButton) && Netplay_IsHost() && Netplay_EnvoyBlock()[0] != '\0') {
         sfxForward();
         if (Netplay_EnvoyOff()) {

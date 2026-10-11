@@ -19,6 +19,10 @@ extern int Ui_RoomSetStr(const char* key, const char* s);
 extern void Ui_RoomPlayer(int who, int present, int locked, int ready, int score);
 extern void Ui_RoomPlayerName(int who, const char* name, const char* fighter);
 extern void Ui_RoomStageCount(int n);
+extern void Ui_RoomModCount(int n);
+extern void Ui_RoomMod(int i, const char* text);
+int Netplay_ModsRowCount(void);
+int Netplay_ModsRow(int i, int max_rows, char* out, int cap);
 extern void Ui_RoomStage(int i, const char* name, const char* state, int starter, int open);
 extern int Ui_RoomGridFor(int n, int starters);
 extern int Ui_RoomGridCell(int i, int* col, int* row, int* page);
@@ -134,6 +138,21 @@ static void fa_room_common(void)
     if (Netplay_EnvoyBlock()[0] != '\0' && fe_np_phase == FE_NP_LOBBY) { /* Envoy cannot start: the reason stays on the status line */
         fp_copy(b, "Envoy: ", FE_STR);
         fp_copy(b + 7, Netplay_EnvoyBlock(), FE_STR - 7);
+    }
+    if (fe_np_phase == FE_NP_LOBBY) { /* different mods: what differs, and Y matches the host's (modsync) */
+        char m[FE_STR];
+        Netplay_ModsLine(m, FE_STR);
+        if (m[0] != '\0') fp_copy(b, m, FE_STR);
+        {
+            int nm = Netplay_ModsRowCount(), mi;
+            char row[FE_STR];
+            if (nm > 5) nm = 5;
+            Ui_RoomModCount(nm);
+            for (mi = 0; mi < nm; mi++) {
+                Netplay_ModsRow(mi, 5, row, FE_STR);
+                Ui_RoomMod(mi, row);
+            }
+        }
     }
     Ui_RoomSetStr("status", b);
     Ui_RoomSetInt("turbo", pref ? Netplay_TurboPref() != 0 : Netplay_Turbo() != 0);

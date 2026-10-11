@@ -49,6 +49,9 @@ static const char *st_env_value(const char *key) {
     const char *value;
     static int reported;
     int i = 0;
+    /* fc_* keys are the per-player, per-fighter Controls choices (tap jump, layout, extras). They are saved
+     * choices a player made on the CSS, so an environment variable must never override them. */
+    if (key[0] == 'f' && key[1] == 'c' && key[2] == '_') return NULL;
     memcpy(env, "MELEE_", 6);
     for (; key[i] != '\0' && i < ST_KEY - 1; ++i) {
         char c = key[i];

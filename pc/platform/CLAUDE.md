@@ -10,7 +10,7 @@ each `gw_*.c` is that file's design note and is kept current; start there, not i
 |---|---|
 | `shim_*.c` | one SDK library each (GX, OS, PAD, CARD, AX, DVD, AR, VI, libc). `gw_<Name>` = the game's `<Name>` |
 | `gw_runtime.c` | boot, the scene launch (`MELEE_SCENE`), the frame loop's hooks |
-| `gw_settings.c` | `settings.cfg` beside the exe (`key=value`; env vars win). Game code: `Settings_Int/Str/SetInt/SetStr` |
+| `gw_settings.c` | `settings.cfg` beside the exe (`key=value`; nonempty `MELEE_<ASCII uppercase key>` wins on `Int/Str` reads, never saved). Game code: `Settings_Int/Str/SetInt/SetStr` |
 | `gw_script.c` / `gw_script_pad.c` | Lua 5.4 sandbox, the `gd` table, the console, scripted pads. `gw_script.h` says where it runs |
 | `gw_snap.c` | savestates, the LAB's long rewind, SyncTest's compare |
 | `gw_rollback.c`, `gw_netplay.c`, `gw_net.c` | rollback and the lobby |

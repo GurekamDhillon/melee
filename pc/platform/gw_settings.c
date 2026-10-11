@@ -6,9 +6,10 @@
  * video.cfg (gw_Video_*), audio.cfg (gw_Audio_*), mods/enabled.txt (gw_Mods_*), and the memory
  * card for the game's own options and rules.
  *
- * Format: one `key=value` per line, '#' comments; unknown keys are kept on save. Environment
- * variables still win over a saved value wherever a feature has one (MELEE_UNLOCK_ALL,
- * MELEE_INPUT, MELEE_NETPLAY_SERVER), so scripted tests are never steered by a saved setting.
+ * Format: one `key=value` per line, '#' comments; unknown keys are kept on save. Int/Str reads
+ * first use a nonempty MELEE_<ASCII uppercase key>, then the saved value, then the caller's
+ * default. Environment values are read live and never enter the stored table or a save.
+ * Existing feature overrides (e.g. MELEE_NETPLAY_SERVER before the "server" read) still win.
  * Game code calls these without the gw_ prefix (gwtool adds it); strings cross as bytes. */
 #include "gw.h"
 #include "gw_test.h"
@@ -37,6 +38,31 @@ static struct {
 } st;
 static int st_save_ok = 1;
 int gw_Settings_LastSaveOk(void) { return st_save_ok; }
+
+/* gmFrontend_AtlasSelect documents MELEE_ATLAS_SELECT_SOLO: apply the same
+ * convention to every read, preserving underscores/digits and ignoring empty
+ * variables like the existing feature overrides. Never truncate an env name:
+ * an overlong key must not pick up another key's override. */
+static const char *st_env_value(const char *key) {
+    char env[6 + ST_KEY];
+    const char *value;
+    static int reported;
+    int i = 0;
+    memcpy(env, "MELEE_", 6);
+    for (; key[i] != '\0' && i < ST_KEY - 1; ++i) {
+        char c = key[i];
+        env[6 + i] = c >= 'a' && c <= 'z' ? (char) (c - 'a' + 'A') : c;
+    }
+    if (key[i] != '\0' || i == 0) return NULL;
+    env[6 + i] = '\0';
+    value = getenv(env);
+    if (value == NULL || value[0] == '\0') return NULL;
+    if (!reported) {
+        reported = 1; /* these accessors are also called every frontend frame */
+        gw_log("settings: %s overrides reads only; environment values are never saved", env);
+    }
+    return value;
+}
 
 static const char *st_path(void) {
     if (st.path[0] == '\0') {
@@ -113,15 +139,20 @@ static void st_save(void) {
     }
 }
 
-/* The saved string for `key` (copied into out), or `dflt` when there is none. 1 = found. */
+/* The environment/saved string for `key`, or `dflt`. 1 = found in env or cfg. */
 int gw_Settings_Str(const char *key, char *out, int cap, const char *dflt) {
-    int i = st_find(key);
-    const char *v = i >= 0 ? st.val[i] : dflt;
+    const char *v = st_env_value(key);
+    int found = v != NULL;
     int k = 0;
-    if (out == NULL || cap <= 0) return i >= 0;
+    if (!found) {
+        int i = st_find(key);
+        found = i >= 0;
+        v = found ? st.val[i] : dflt;
+    }
+    if (out == NULL || cap <= 0) return found;
     for (; v != NULL && v[k] != '\0' && k < cap - 1; ++k) out[k] = v[k];
     out[k] = '\0';
-    return i >= 0;
+    return found;
 }
 
 void gw_Settings_SetStr(const char *key, const char *value) {
@@ -136,7 +167,10 @@ void gw_Settings_SetStr(const char *key, const char *value) {
 }
 
 int gw_Settings_Int(const char *key, int dflt) {
-    int i = st_find(key);
+    const char *v = st_env_value(key);
+    int i;
+    if (v != NULL) return atoi(v);
+    i = st_find(key);
     return i >= 0 && st.val[i][0] != '\0' ? atoi(st.val[i]) : dflt;
 }
 
@@ -236,20 +270,25 @@ int gw_Settings_TextKeys(char *buf, int cap, int caret_in) {
 
 /* ---- tests ------------------------------------------------------------------------------------ */
 
+#include "gw_settings_tests.inc"
+
 static int test_settings_roundtrip(void) {
-    char path[MAX_PATH], b[64];
+    SettingsTestEnv env[] = {
+        { "MELEE_NAME", NULL, NULL }, { "MELEE_DELAY", NULL, NULL },
+        { "MELEE_WIDESCREEN", NULL, NULL }, { "MELEE_MISSING", NULL, NULL },
+        { "MELEE_CTL00_ID", NULL, NULL }, { "MELEE_CTL00_P0_MAP", NULL, NULL },
+        { "MELEE_CTL00_P0_NAME", NULL, NULL },
+    };
+    SettingsTestFixture f;
+    char b[64];
     int rc = 0;
-    GetTempPathA(sizeof path, path);
-    strncat(path, "gw_settings_test.cfg", sizeof path - strlen(path) - 1);
-    DeleteFileA(path);
-    memset(&st, 0, sizeof st);
-    snprintf(st.path, sizeof st.path, "%s", path);
+    if (!st_test_begin(&f, env, sizeof env / sizeof env[0])) return 1;
     gw_Settings_SetStr("name", "GD");
     gw_Settings_SetInt("delay", 3);
     gw_Settings_SetInt("delay", 4);
     gw_Settings_SetInt("widescreen", 1);
     memset(&st, 0, sizeof st); /* read it back from the file */
-    snprintf(st.path, sizeof st.path, "%s", path);
+    snprintf(st.path, sizeof st.path, "%s", f.path);
     if (!gw_Settings_Str("name", b, sizeof b, "") || strcmp(b, "GD") != 0) {
         gw_test_fail("name did not round-trip");
         rc = 1;
@@ -264,7 +303,7 @@ static int test_settings_roundtrip(void) {
     }
     gw_Settings_SetInt("widescreen", 0);
     memset(&st, 0, sizeof st);
-    snprintf(st.path, sizeof st.path, "%s", path);
+    snprintf(st.path, sizeof st.path, "%s", f.path);
     if (gw_Settings_Int("widescreen", 1) != 0) {
         gw_test_fail("widescreen off did not persist");
         rc = 1;
@@ -292,7 +331,7 @@ static int test_settings_roundtrip(void) {
         gw_Settings_SetStr("ctl00_p0_map", encoded);
         gw_Settings_SetStr("ctl00_p0_name", "Tournament");
         memset(&st, 0, sizeof st);
-        snprintf(st.path, sizeof st.path, "%s", path);
+        snprintf(st.path, sizeof st.path, "%s", f.path);
         if (!gw_Settings_Str("ctl00_p0_map", loaded, sizeof loaded, "") ||
             !gc_map_decode(&after, loaded) || memcmp(&before, &after, sizeof before) ||
             gw_Settings_Int("delay", 0) != 4) {
@@ -302,8 +341,7 @@ static int test_settings_roundtrip(void) {
             gw_test_fail("controller profile name failed roundtrip"); rc = 1;
         }
     }
-    DeleteFileA(path);
-    memset(&st, 0, sizeof st);
+    st_test_end(&f);
     return rc;
 }
 
@@ -350,4 +388,7 @@ void gw_settings_tests_register(void) {
     gw_test_register("view_canvas", test_view_canvas);
     gw_test_register("view_projection_rect", test_view_projection_rect);
     gw_test_register("settings_roundtrip", test_settings_roundtrip);
+    gw_test_register("settings_env_int", test_settings_env_int);
+    gw_test_register("settings_env_str", test_settings_env_str);
+    gw_test_register("settings_env_persistence", test_settings_env_persistence);
 }

@@ -30,6 +30,10 @@ workspace `_research/frontend-menus.md`; the art itself: workspace `menu/`.
   (`fk_frame`), so a `format` callback can show live data (the CONTROLS port rows do).
 - Native code is called through unprefixed externs declared at the top of the `.inc`
   (`Settings_Int`, `gc_adapter_present`, `Pad_Value`...); the shim defines `gw_<name>`.
+- `Settings_Int/Str` read a nonempty `MELEE_<ASCII uppercase key>` before settings.cfg
+  (e.g. `MELEE_ATLAS_SELECT_SOLO=1`), then the caller's default. Empty variables fall back;
+  overrides are read live and never saved. `Settings_SetInt/Str` write the supplied saved
+  value even while a read override is active. Existing explicit feature env checks still win.
 - Strings the player sees are plain English in the tables; the launcher, not the game, is
   translated.
 - `OSReport("frontend: ...")` on every navigation: the scene trace is how a headless run is read.

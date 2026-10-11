@@ -243,6 +243,37 @@ local MODES = {
       { k = "C", label = "Clear", icon = "lab_trash", run = "cb_clear" },
     } },
 }
+do -- REMAKE (2026-10-10): the CLIPS machinery with a slot picker on top; appended last so the number keys keep their modes
+  local cm
+  for _, m in ipairs(MODES) do if m.id == "clips" then cm = m end end
+  MODES[#MODES + 1] = { id = "remake", name = "REMAKE", icon = "lab_timeline",
+    blurb = "Pick Goku's remake animations slot by slot: cycle the candidates, compare, pick, undo. Picks go to remake-picks.json.",
+    t = cm.t,
+    a = {
+      { k = "UP", label = "Prev", icon = "lab_step_back", rep = true, run = "rm_prev" },
+      { k = "DOWN", label = "Next", icon = "lab_step", rep = true, run = "rm_next" },
+      { k = "A", label = "Prev clip", icon = "lab_step_back", rep = true, run = "rm_cand_prev" },
+      { k = "D", label = "Next clip", icon = "lab_step", rep = true, run = "rm_cand_next" },
+      { k = "Y", label = "PICK", icon = "lab_save", run = "rm_pick" },
+      { k = "U", label = "Undo", icon = "lab_rewind", run = "rm_undo" },
+      { k = "T", label = "A/B", icon = "lab_ab", run = "rm_ab" },
+      { k = "W", label = "Compare", icon = "lab_mirror", run = "rm_compare" },
+      { k = "R", label = "Set ref", icon = "lab_focus", run = "rm_ref" },
+      { k = "N", label = "Next slot", icon = "lab_step", rep = true, run = "rm_slot_next" },
+      { k = "P", label = "Prev slot", icon = "lab_step_back", rep = true, run = "rm_slot_prev" },
+      { k = "E", label = "Note", icon = "lab_log", run = "rm_note_key" },
+      { k = "K", label = "Slot / Browse", icon = "lab_library", run = "rm_browse" },
+      { k = "Q", label = "Unpicked", icon = "lab_eye", run = "rm_unpicked" },
+      { k = "I", label = "In", icon = "lab_step", run = "rm_in" },
+      { k = "J", label = "Out", icon = "lab_step_back", run = "rm_out" },
+      { k = "ENTER", label = "Replay", icon = "lab_play", run = "rm_replay", state = "cl_playing" },
+      { k = "SPACE", label = "Pause / play", icon = "lab_play", run = "cl_toggle" },
+      { k = "LEFT", label = "-1 frame", icon = "lab_step_back", rep = true, run = "cl_back1" },
+      { k = "RIGHT", label = "+1 frame", icon = "lab_step", rep = true, run = "cl_fwd1" },
+      { k = "Z", label = "Slower", icon = "lab_slowmo", run = "cl_slower" },
+      { k = "X", label = "Faster", icon = "lab_forward", run = "cl_faster" },
+    } }
+end
 local MODE_BY_ID = {}
 for i, m in ipairs(MODES) do MODE_BY_ID[m.id] = i end
 
@@ -331,8 +362,8 @@ end
 local function wanted_flags()
   if not cfg.on or cfg.hidden then return gd.draw.DEFAULT end
   local f = 0
-  if (not in_mode("inspect") and not in_mode("clips")) or T("model") then f = f | gd.draw.MODEL end
-  if (in_mode("hitboxes") or in_mode("clips") or in_mode("frames") or in_mode("moves") or in_mode("launch") or in_mode("training") or in_mode("combo")) and T("boxes") then f = f | gd.draw.HIT | gd.draw.THROWN end
+  if (not in_mode("inspect") and not in_mode("clips") and not in_mode("remake")) or T("model") then f = f | gd.draw.MODEL end
+  if (in_mode("hitboxes") or in_mode("clips") or in_mode("remake") or in_mode("frames") or in_mode("moves") or in_mode("launch") or in_mode("training") or in_mode("combo")) and T("boxes") then f = f | gd.draw.HIT | gd.draw.THROWN end
   return f
 end
 
@@ -5027,6 +5058,8 @@ local CSPEEDS = { 2, 1, 0.5, 0.25, 0.1 }
 local cl = { key = nil, all = {}, cat = 1, sel = 1, first = 1, speed = 1, row = nil, len = nil, acc = 0,
   face = 0, text = "", cam = false, pend = nil, slow = false }
 local OWN_FIRST = 303
+local rm = { loaded = false, slots = {}, picks = {}, undo = {}, first = 1, items = {}, ab = {}, unpicked = false, browse = true, notes = {}, nlist = {}, nmeta = {}, bfirst = 1,
+  cmp = false, started = false }
 
 local function category(e)
   local n = e.name:upper()
@@ -5152,14 +5185,20 @@ function LE.clips_tick()
     if want then for i, md in ipairs(MODES) do if md.id == want:lower() then set_mode(i) end end end
     local clip = gd.lab_env("CLIP")
     if want or clip then gd.log("Geno Lab: start " .. tostring(want) .. " " .. tostring(clip) .. " -> " .. mode().id) end
-    if clip and in_mode("clips") then LE.clips_console("play " .. clip) end
+    if clip and (in_mode("clips") or in_mode("remake")) then LE.clips_console("play " .. clip) end
   end
-  if not in_mode("clips") or not offline() then
+  if not (in_mode("clips") or in_mode("remake")) or not offline() then
     if cl.mir then LE.clips_release() end
     if cl.cam then gd.camera_attach(10) cl.cam = false end
+    if cl.row ~= nil and offline() then -- leaving the page: give the fighter its own animation back (a posed prone clip stays lying)
+      pcall(gd.anim_preview, focus, nil)
+      cl.row, cl.cur, cl.slow, cl.mv = nil, nil, false, nil
+      if LE.rm_leave then LE.rm_leave() end
+    end
     cl.parked = false
     return
   end
+  if in_mode("remake") then LE.rm_tick() end
   local p = gd.player(focus)
   if p and not cl.parked and gd.match().active then
     -- the others stand still, out of reach: a CPU walking in would hit the posed fighter out of Wait
@@ -5172,7 +5211,10 @@ function LE.clips_tick()
     end
   end
   if p and T("close") then
-    gd.camera_set{ eye = { x = p.x, y = p.y + 11, z = 62 }, interest = { x = p.x, y = p.y + 9, z = 0 }, fov = 30 }
+    local cx, cz, dy = LE.rm_cam()
+    if cx == nil then cx = p.x end
+    cz, dy = cz or 62, dy or 0
+    gd.camera_set{ eye = { x = cx, y = p.y + 11 + dy, z = cz }, interest = { x = cx, y = p.y + 9 + dy, z = 0 }, fov = 30 }
     cl.cam = true
   elseif cl.cam then
     gd.camera_attach(10) cl.cam = false
@@ -5195,9 +5237,10 @@ function LE.clips_tick()
 end
 
 function LE.clips_frame()
-  if not in_mode("clips") or cl.row == nil then return end
+  if not (in_mode("clips") or in_mode("remake")) or cl.row == nil then return end
   local p = gd.player(focus)
   if p == nil then return end
+  if in_mode("remake") and LE.rm_frame(p) then return end
   if cl.mv then
     local m, running = cl.mv, (not gd.paused()) or cl.slow
     local a, t = m.anims[cl.ev], mv_time()
@@ -5396,6 +5439,8 @@ function LE.clips_console(rest)
     for i, c in ipairs(CATS) do if c:lower() == arg:lower() then cl.cat = i end end
     cl.sel, cl.first = 1, 1
     gd.log("category " .. CATS[cl.cat])
+  elseif sub == "note" then
+    LE.rm_note(arg)
   elseif sub == "stop" then
     cl.row, cl.cur, cl.slow = nil, nil, false
     gd.anim_preview(focus, nil)
@@ -5405,7 +5450,609 @@ function LE.clips_console(rest)
   end
 end
 
+-- ---- REMAKE: pick Goku's animations slot by slot (temporary tool, 2026-10-10) ------------------------------------
+-- Data: missions/remake-goku.txt (ports/goku-xv2/tools/remake_lab_data.py): one S line per Melee slot (55, in the plan's
+-- picking order), K lines for its candidate clips. Picks are written to the LAB's saved data as remake-picks.json (one slot
+-- per line) after every change; ports/goku-xv2/tools/remake_sheet.py --sync-picks reads them into the sheet.
+local PICKS_FILE = "remake-picks.json"
+
+-- the clip list is rebuilt by LE.clip_list only when the focused fighter's key changes: do the same cheap test here
+local function rm_sync_list()
+  local p = gd.player(focus)
+  if p == nil then return end
+  if cl.key ~= focus .. ":" .. tostring(p.char_name) .. ":" .. tostring(p.kind) then LE.clip_list() end
+end
+
+local function rm_find(name)
+  if name == nil or name == "" then return nil end
+  rm_sync_list()
+  if rm.idx_key ~= cl.key or rm.idx_n ~= #cl.all then -- by-name index, rebuilt when the fighter's list changes
+    rm.idx, rm.idx_key, rm.idx_n = {}, cl.key, #cl.all
+    for _, e in ipairs(cl.all) do rm.idx[e.name] = e end
+  end
+  if rm.idx[name] then return rm.idx[name] end
+  if name:sub(-1) == "*" then
+    local pre = name:sub(1, -2)
+    for _, e in ipairs(cl.all) do if e.name:sub(1, #pre) == pre then return e end end
+  end
+  return nil
+end
+
+local function rm_count()
+  local n = 0
+  for _, s in ipairs(rm.slots) do if rm.picks[s.n] then n = n + 1 end end
+  return n
+end
+
+local function rm_save()
+  local lines = { '{"version":1,"picks":[' }
+  local keys = {}
+  for _, s in ipairs(rm.slots) do if rm.picks[s.n] then keys[#keys + 1] = s end end
+  for i, s in ipairs(keys) do
+    local p = rm.picks[s.n]
+    local slot = (s.slot:gsub('"', "'"))
+    lines[#lines + 1] = string.format('{"n":%d,"slot":"%s","clip":"%s","in":%s,"out":%s,"browse":%s}%s', s.n,
+      slot, p.clip, p["in"] and tostring(p["in"]) or "null", p.out and tostring(p.out) or "null",
+      p.browse and "true" or "false", i < #keys and "," or "")
+  end
+  lines[#lines + 1] = "]}"
+  local ok, why = pcall(gd.data_write, PICKS_FILE, table.concat(lines, "\n") .. "\n")
+  if not ok then say("Pick file not written: " .. tostring(why), DANGER) end
+end
+
+local function rm_esc(t) return (t:gsub('[\\"]', function(c) return '\\' .. c end):gsub('%c', ' ')) end
+local function rm_unesc(t) return (t:gsub('\\(.)', '%1')) end
+local NOTES_FILE = "remake-notes.json"
+local function rm_notes_save()
+  local names = {}
+  for k in pairs(rm.notes) do names[#names + 1] = k end
+  table.sort(names)
+  local lines = { '{"version":1,"notes":[' }
+  for i, k in ipairs(names) do
+    lines[#lines + 1] = string.format('{"clip":"%s","note":"%s"}%s', k, rm_esc(rm.notes[k]), i < #names and "," or "")
+  end
+  lines[#lines + 1] = "]}"
+  local ok, why = pcall(gd.data_write, NOTES_FILE, table.concat(lines, string.char(10)) .. string.char(10))
+  if not ok then say("Note file not written: " .. tostring(why), DANGER) end
+end
+local function rm_notes_load()
+  local ok, nt = pcall(gd.data_read, NOTES_FILE)
+  if ok and type(nt) == "string" then
+    for line in nt:gmatch("[^" .. string.char(10) .. "]+") do
+      local c, n = line:match('"clip":"([^"]*)","note":"(.*)"}')
+      if c and n then rm.notes[c] = rm_unesc(n) end
+    end
+  end
+end
+local function rm_load()
+  if rm.loaded then return #rm.slots > 0 end
+  rm.loaded = true
+  local text = gd.mod_read and gd.mod_read("missions/remake-goku.txt") or nil
+  local s
+  for line in (type(text) == "string" and text or ""):gmatch("[^\n]+") do
+    local f = {}
+    line = line:gsub("\r$", "")
+    for v in (line .. "\t"):gmatch("([^\t]*)\t") do f[#f + 1] = v end
+    if f[1] == "S" then
+      s = { n = tonumber(f[2]), group = f[3] or "", slot = f[4] or "", rows = f[5] or "", cur_text = f[6] or "", cur = f[7] or "",
+        role = f[8] or "", rec = f[9] or "", combo = f[10] or "", cands = {} }
+      rm.slots[#rm.slots + 1] = s
+    elseif f[1] == "N" then
+      rm.nlist[#rm.nlist + 1] = { name = f[2], frames = f[3] or "", cand = f[4] or "", seed = f[5] or "" }
+    elseif s and f[1] == "K" then
+      s.cands[#s.cands + 1] = { name = f[2], why = f[3] or "", metrics = f[4] or "" }
+    end
+  end
+  local ok, pt = pcall(gd.data_read, PICKS_FILE)
+  if ok and type(pt) == "string" then
+    for line in pt:gmatch("[^\n]+") do
+      local n, clip = line:match('"n":(%d+)'), line:match('"clip":"([^"]*)"')
+      if n and clip then
+        rm.picks[tonumber(n)] = { clip = clip, ["in"] = tonumber(line:match('"in":(%d+)')), out = tonumber(line:match('"out":(%d+)')),
+          browse = line:find('"browse":true', 1, true) ~= nil }
+      end
+    end
+  end
+  for _, n in ipairs(rm.nlist) do if n.seed ~= "" then rm.notes[n.name] = n.seed end end
+  rm_notes_load()
+  if #rm.slots == 0 then gd.log("REMAKE: missions/remake-goku.txt is missing (run ports/goku-xv2/tools/remake_lab_data.py)") end
+  return #rm.slots > 0
+end
+
+local function rm_items(s)
+  local out = {}
+  local ce = rm_find(s.cur)
+  if ce then out[1] = { name = ce.name, e = ce, why = "the current clip: " .. s.cur_text, metrics = "", kind = "cur", listed = true } end
+  for _, c in ipairs(s.cands) do
+    local e = rm_find(c.name)
+    out[#out + 1] = { name = c.name, e = e, why = c.why, metrics = c.metrics, rec = c.name == s.rec, listed = true }
+  end
+  return out
+end
+
+local function rm_cmp_stop()
+  if rm.cmp and rm.cmp_port then
+    pcall(gd.anim_preview, rm.cmp_port, nil)
+    local p = gd.player(focus)
+    local q = gd.player(rm.cmp_port)
+    if p and q and rm.base_x then
+      pcall(gd.teleport, focus, rm.base_x, p.y)
+      pcall(gd.teleport, rm.cmp_port, rm.base_x + (rm.base_x < 0 and 45 or -45), q.y)
+    end
+  end
+  rm.cmp, rm.cmp_port = false, nil
+end
+
+local function rm_cmp_restart()
+  if rm.cmp and rm.ref and rm.ref.e and rm.cmp_port then
+    local ok, why = gd.anim_preview(rm.cmp_port, rm.ref.e.row, 1, 1, cl.face)
+    if not ok then say("Compare: " .. tostring(why), DANGER) rm_cmp_stop() end
+  end
+end
+
+local function rm_play(it)
+  if it == nil or it.e == nil then say("Not in the bank: " .. tostring(it and it.name), DANGER) return false end
+  cl_show(it.e, 1, true)
+  rm.shown = it
+  if rm.ab[1] ~= it then rm.ab[2], rm.ab[1] = rm.ab[1], it end
+  local pk = rm.cur and rm.picks[rm.cur.n]
+  if pk and pk.clip == it.name then rm.min, rm.mout = pk["in"], pk.out else rm.min, rm.mout = nil, nil end
+  rm_cmp_restart()
+  return true
+end
+
+-- the slot's items; plays the picked clip, else the recommended one, else the first that is in the bank
+local function rm_open(s)
+  rm.cur, rm.items = s, rm_items(s)
+  rm.ref = rm.items[1] and rm.items[1].kind == "cur" and rm.items[1] or nil
+  if rm.browse then return end -- BROWSE keeps the clip on screen; Y picks it for this slot
+  rm.shown = nil
+  local pk, want = rm.picks[s.n], nil
+  for _, it in ipairs(rm.items) do
+    if pk and it.name == pk.clip then want = it end
+  end
+  if not want then for _, it in ipairs(rm.items) do if it.rec and it.e then want = it end end end
+  if not want then for _, it in ipairs(rm.items) do if it.e then want = it break end end end
+  if want then rm_play(want) end
+end
+
+local function rm_vis()
+  local out = {}
+  for _, s in ipairs(rm.slots) do if not (rm.unpicked and rm.picks[s.n]) then out[#out + 1] = s end end
+  return out
+end
+
+local function rm_move(d)
+  if not rm_load() then return end
+  local vis = rm_vis()
+  if #vis == 0 then say("Every slot is picked", OK) return end
+  local pos
+  for i, s in ipairs(vis) do if s == rm.cur then pos = i end end
+  if pos then
+    pos = (pos - 1 + d) % #vis + 1
+  elseif d > 0 then
+    pos = 1
+    for i, s in ipairs(vis) do if s.n > rm.cur.n then pos = i break end end
+  else
+    pos = #vis
+    for i = #vis, 1, -1 do if vis[i].n < rm.cur.n then pos = i break end end
+  end
+  rm_open(vis[pos])
+end
+
+local function rm_noted(name) return rm.notes[name] ~= nil and rm.notes[name] ~= "" end
+
+-- every clip in CLIP-NOTES order, the ones without a note first (the list is fixed until BROWSE is entered again)
+local function rm_browse_build()
+  local keep = rm.shown and rm.shown.name
+  local un, no = {}, {}
+  for _, n in ipairs(rm.nlist) do
+    local e = rm_find(n.name)
+    if e then
+      local into = rm_noted(n.name) and no or un
+      into[#into + 1] = { name = n.name, e = e, meta = n }
+    end
+  end
+  if #rm.nlist == 0 then -- no CLIP-NOTES: the library, in bank order
+    LE.clip_list()
+    for _, e in ipairs(cl.all) do if e.lib then un[#un + 1] = { name = e.name, e = e, meta = { frames = "", cand = "" } } end end
+  end
+  rm.blist, rm.bsel = un, 1
+  for _, b in ipairs(no) do rm.blist[#rm.blist + 1] = b end
+  rm.unnoted_n = #un
+  if keep then for i, b in ipairs(rm.blist) do if b.name == keep then rm.bsel = i end end end
+end
+
+local function rm_cycle(d)
+  if rm.browse then
+    local n = #(rm.blist or {})
+    if n == 0 then return end
+    rm.bsel = (rm.bsel - 1 + d) % n + 1
+    local b = rm.blist[rm.bsel]
+    local listed = false
+    for _, it in ipairs(rm.items or {}) do if it.name == b.name then listed = true end end
+    rm_play({ name = b.name, e = b.e, why = "browsed" .. (listed and "" or " (not a plan candidate)"), metrics = "", listed = listed })
+    return
+  end
+  local its = rm.items or {}
+  if #its == 0 then return end
+  local at = 0
+  for i, it in ipairs(its) do if it == rm.shown then at = i end end
+  for k = 1, #its do
+    local j = (at - 1 + d * k) % #its + 1
+    if its[j].e then rm_play(its[j]) say(string.format("%d/%d  %s", j, #its, its[j].name)) return end
+  end
+end
+
+local function rm_frame_now()
+  local p = gd.player(focus)
+  return p and math.floor((p.anim_frame_f or 0) + 1.5) or 1
+end
+
+ACTIONS.rm_next = function() if rm.browse then rm_cycle(1) else rm_move(1) end end
+ACTIONS.rm_prev = function() if rm.browse then rm_cycle(-1) else rm_move(-1) end end
+ACTIONS.rm_cand_next = function() rm_cycle(1) end
+ACTIONS.rm_cand_prev = function() rm_cycle(-1) end
+ACTIONS.rm_replay = function() if rm.shown then rm_play(rm.shown) end end
+ACTIONS.rm_ab = function()
+  local b = rm.ab[2]
+  if b == nil then say("Nothing to toggle yet: view two clips first") return end
+  rm_play(b)
+  say("A/B: " .. b.name)
+end
+local function rm_commit()
+  local s, it = rm.cur, rm.shown
+  if s == nil or it == nil then say("Nothing shown", DANGER) return end
+  local old = rm.picks[s.n]
+  if old and old.clip == it.name and old["in"] == rm.min and old.out == rm.mout then say("Already picked: " .. it.name) return end
+  rm.undo[#rm.undo + 1] = { n = s.n, prev = old }
+  rm.picks[s.n] = { clip = it.name, ["in"] = rm.min, out = rm.mout, browse = not it.listed }
+  rm_save()
+  say("PICKED: " .. it.name .. "   (" .. rm_count() .. "/" .. #rm.slots .. ")   U undoes it", OK)
+end
+-- Y asks first: a second Y within four seconds on the same clip and slot commits, anything else lets it lapse
+ACTIONS.rm_pick = function()
+  local s, it = rm.cur, rm.shown
+  if s == nil or it == nil then say("Nothing shown", DANGER) return end
+  local a = rm.arm
+  if a and a.clip == it.name and a.slot == s.n and gd.time() < a.t then
+    rm.arm = nil
+    rm_commit()
+  else
+    rm.arm = { clip = it.name, slot = s.n, t = gd.time() + 4 }
+    say("Pick " .. it.name .. " for " .. s.slot .. "?  press Y again to confirm", GOLD)
+  end
+end
+ACTIONS.rm_pick_now = rm_commit
+ACTIONS.rm_undo = function()
+  local u = table.remove(rm.undo)
+  if u == nil then say("Nothing to undo") return end
+  rm.picks[u.n] = u.prev
+  rm_save()
+  for _, s in ipairs(rm.slots) do if s.n == u.n then rm_open(s) end end
+  say("Undone: slot " .. u.n .. (u.prev and (" back to " .. u.prev.clip) or " unpicked"))
+end
+local function rm_mark(which)
+  local s, f = rm.cur, rm_frame_now()
+  if s == nil or rm.shown == nil then return end
+  if which == "in" then rm.min = (rm.min ~= f) and f or nil else rm.mout = (rm.mout ~= f) and f or nil end
+  local pk = rm.picks[s.n]
+  if pk and pk.clip == rm.shown.name then
+    pk["in"], pk.out = rm.min, rm.mout
+    rm_save()
+  end
+  say(string.format("range %s .. %s%s", rm.min and ("in " .. rm.min) or "start", rm.mout and ("out " .. rm.mout) or "end",
+    pk and pk.clip == rm.shown.name and "" or "   (Y picks it)"))
+end
+ACTIONS.rm_in = function() rm_mark("in") end
+ACTIONS.rm_out = function() rm_mark("out") end
+ACTIONS.rm_unpicked = function()
+  rm.unpicked = not rm.unpicked
+  say("Unpicked slots only: " .. (rm.unpicked and "on" or "off"), rm.unpicked and ACCENT or DISABLED)
+  if rm.unpicked and rm.cur and rm.picks[rm.cur.n] then rm_move(1) end
+end
+ACTIONS.rm_browse = function()
+  rm.browse = not rm.browse
+  if rm.browse then
+    rm_browse_build()
+    say("BROWSE all clips: UP / DOWN plays each, E notes it, Y picks it for the slot, K = the slot's candidates")
+  else
+    say("The slot's candidates")
+    if rm.cur then rm_open(rm.cur) end
+  end
+end
+-- E: notes need the console (the engine has no text-entry door for the LAB yet): say what to type
+ACTIONS.rm_note_key = function()
+  local nm = rm.shown and rm.shown.name or "?"
+  say("Open the console (`) and type:  lab n <what it is>      for " .. nm, ACCENT)
+end
+function LE.rm_note(text)
+  rm_load()
+  local nm = (rm.shown and rm.shown.name) or (cl.cur and cl.cur.name)
+  if not nm or cl.cur and cl.cur.move then say("No clip is playing", DANGER) return end
+  text = (text or ""):gsub("^%s+", ""):gsub("%s+$", "")
+  if text == "" then gd.log("note " .. nm .. ": " .. tostring(rm.notes[nm] or "(none)")) return end
+  if text == "-" then rm.notes[nm] = nil
+  elseif text:sub(1, 1) == "+" and rm.notes[nm] then rm.notes[nm] = rm.notes[nm] .. "; " .. text:sub(2):gsub("^%s+", "")
+  else rm.notes[nm] = text:gsub("^%+%s*", "") end
+  rm_notes_save()
+  say("Noted " .. nm .. ": " .. tostring(rm.notes[nm] or "(cleared)"), OK)
+end
+ACTIONS.rm_slot_next = function() rm_move(1) end
+ACTIONS.rm_slot_prev = function() rm_move(-1) end
+ACTIONS.rm_compare = function()
+  if rm.cmp then rm_cmp_stop() say("Compare off") return end
+  local p = gd.player(focus)
+  local port
+  for _, q in ipairs(gd.players()) do
+    if q.port ~= focus and p and tostring(q.char_name) == tostring(p.char_name) then port = q.port end
+  end
+  if port == nil or p == nil then
+    say("Compare needs a second Goku on another port (launch with remake.ps1: p2=goku-xv2)", DANGER)
+    return
+  end
+  rm.cmp, rm.cmp_port, rm.base_x = true, port, p.x
+  pcall(gd.teleport, focus, p.x - 11, p.y)
+  pcall(gd.teleport, port, p.x + 11, p.y)
+  if rm.ref == nil then
+    for _, it in ipairs(rm.items or {}) do if it.rec and it.e and it ~= rm.shown then rm.ref = it end end
+  end
+  rm_cmp_restart()
+  say("Compare: left = shown, right = reference" .. (rm.ref and (" (" .. rm.ref.name .. ")") or ""))
+end
+ACTIONS.rm_ref = function()
+  if rm.shown == nil then return end
+  rm.ref = rm.shown
+  rm_cmp_restart()
+  say("Reference = " .. rm.shown.name)
+end
+
+-- the camera centre and distance while comparing (nil: the usual close-up)
+function LE.rm_cam()
+  if not in_mode("remake") then return nil end
+  if rm.cmp and rm.base_x then return rm.base_x - 6, 92, 6 end
+  return nil, 62, 5 -- the fighter sits lower so the panels do not cover its head
+end
+
+-- per tick: first use loads the data and opens the first unpicked slot; focus changes rebuild the items
+function LE.rm_leave()
+  if rm.cmp then rm_cmp_stop() end
+  rm.shown = nil
+end
+
+function LE.rm_tick()
+  if not gd.match().active or not offline() then return end
+  if not rm.started then
+    -- one step per tick: each stays well under the script's instruction budget
+    local p = gd.player(focus)
+    if p == nil or not gd.anim_rows then return end
+    rm.step = (rm.step or 0) + 1
+    if rm.step == 1 then
+      LE.clip_list()
+    elseif rm.step == 2 then
+      if not rm_load() then rm.started = true say("REMAKE: no remake-goku.txt in the mod's missions/", DANGER) end
+    elseif rm.step == 3 then
+      rm.key = cl.key
+      local first
+      for _, s in ipairs(rm.slots) do if not rm.picks[s.n] then first = s break end end
+      local env = gd.lab_env and gd.lab_env("SLOT")
+      if env then for _, s in ipairs(rm.slots) do if tostring(s.n) == env or s.slot:lower():find(env:lower(), 1, true) then first = s break end end end
+      rm_open(first or rm.slots[1])
+    elseif rm.step == 4 then
+      rm_browse_build()
+    else
+      rm.started = true
+      if rm.browse then rm.bsel = 0 rm_cycle(1) end
+    end
+  else
+    rm_sync_list()
+    if rm.shown == nil and rm.cur and cl.row == nil then -- back on the page after leaving it: show the clip again
+      if rm.browse and rm.blist and #rm.blist > 0 then rm.bsel = (rm.bsel or 1) - 1 rm_cycle(1) elseif not rm.browse then rm_open(rm.cur) end
+    end
+    if rm.key ~= cl.key then
+      rm.key = cl.key
+      if rm.cur then rm_open(rm.cur) end
+    end
+  end
+end
+
+-- per frame: loops the in / out range, and the compare reference. true when this frame's own loop handling is done
+function LE.rm_frame(p)
+  if rm.cmp and rm.cmp_port and rm.ref and rm.ref.e and (not gd.paused() or cl.slow) then
+    local q = gd.player(rm.cmp_port)
+    if q and q.anim_id == rm.ref.e.row and q.anim_end and q.anim_end > 0 and (q.anim_frame_f or 0) >= math.floor(q.anim_end + 0.5) - 1 then
+      gd.anim_preview(rm.cmp_port, rm.ref.e.row, 1, 1, cl.face)
+    end
+  end
+  local it = rm.shown
+  if it and cl.cur == it.e and rm.mout and p.anim_id == cl.row and T("loop") and (not gd.paused() or cl.slow) then
+    if math.floor((p.anim_frame_f or 0) + 1.5) >= rm.mout then
+      cl_show(cl.cur, rm.min or 1, true)
+      rm_cmp_restart()
+      return true
+    end
+  end
+  return false
+end
+
+function LE.rm_console(arg)
+  rm_load()
+  local sub, rest = arg:match("^(%S*)%s*(.-)$")
+  if sub == "slot" then
+    for _, s in ipairs(rm.slots) do
+      if tostring(s.n) == rest or s.slot:lower():find(rest:lower(), 1, true) then rm_open(s) gd.log("slot " .. s.n .. " " .. s.slot) return end
+    end
+    gd.log("no such slot")
+  elseif sub == "note" or sub == "n" then LE.rm_note(rest)
+  elseif sub == "browse" then ACTIONS.rm_browse()
+  elseif sub == "status" then
+    local nc, ex = 0, nil
+    for k, v in pairs(rm.notes) do nc = nc + 1 ex = ex or (k .. "=" .. tostring(v):byte(1, 4)) end
+    gd.log("remake notes: " .. nc .. " e.g. " .. tostring(ex))
+    gd.log(string.format("remake: started=%s step=%s slots=%d blist=%d nlist=%d shown=%s browse=%s", tostring(rm.started), tostring(rm.step), #rm.slots, #(rm.blist or {}), #rm.nlist, tostring(rm.shown and rm.shown.name), tostring(rm.browse)))
+  elseif sub == "next" then rm_move(1)
+  elseif sub == "prev" then rm_move(-1)
+  elseif sub == "cand" then rm_cycle(tonumber(rest) or 1)
+  elseif sub == "pick" then ACTIONS.rm_pick_now()
+  elseif sub == "pickkey" then ACTIONS.rm_pick()
+  elseif sub == "undo" then ACTIONS.rm_undo()
+  elseif sub == "compare" then ACTIONS.rm_compare()
+  else
+    gd.log(string.format("remake: %d/%d picked", rm_count(), #rm.slots))
+    for _, s in ipairs(rm.slots) do
+      local pk = rm.picks[s.n]
+      gd.log(string.format("  %2d %-34s %s", s.n, s.slot, pk and pk.clip or "-"))
+    end
+  end
+end
+
+function LE.draw_remake(p)
+  if not gd.anim_rows then txt(12, 30, "this build has no gd.anim_rows", "caption", DANGER) return end
+  if not rm_load() then txt(12, 30, "missions/remake-goku.txt is missing: run remake_lab_data.py", "caption", DANGER) return end
+  if not rm.started then return end
+  local x, y, w, ROWS = 8, 8, 300, 10
+  local vis = rm_vis()
+  panel(x, y, w, 44 + ROWS * 15, "REMAKE")
+  local s = rm.cur
+  txt(x + 70, y + 14, string.format("picked %d / %d%s", rm_count(), #rm.slots, rm.unpicked and "   UNPICKED ONLY" or ""),
+    "caption", rm_count() == #rm.slots and OK or GOLD, "left", w - 80)
+  local pos = 1
+  for i, v in ipairs(vis) do if v == s then pos = i end end
+  if pos < rm.first then rm.first = pos end
+  if pos > rm.first + ROWS - 1 then rm.first = pos - ROWS + 1 end
+  rm.first = math.max(1, math.min(rm.first, math.max(1, #vis - ROWS + 1)))
+  if rm.browse then
+    local nn = 0
+    for _, b in ipairs(rm.blist or {}) do if rm_noted(b.name) then nn = nn + 1 end end
+    txt(x + 70, y + 26, string.format("BROWSE %d clips, %d noted (unnoted first)", #(rm.blist or {}), nn), "caption", ACCENT, "left", w - 80)
+    local bf = math.max(1, math.min((rm.bsel or 1) - 4, #(rm.blist or {}) - ROWS + 2))
+    for i = bf, math.min(#(rm.blist or {}), bf + ROWS - 2) do
+      local b = rm.blist[i]
+      local yy = y + 26 + (i - bf + 1) * 15
+      local on = i == rm.bsel
+      if on then quad(x + 6, yy, w - 12, 14, GOLD, SHEAR) end
+      quad(x + 8, yy + 2, 3, 10, rm_noted(b.name) and OK or MUTED)
+      txt(x + 16, yy + 11, string.format("%d", i), "caption", on and INK or DISABLED)
+      txt(x + 42, yy + 11, (b.name:gsub("^x", "")), "caption", on and INK or BONE, "left", 130)
+      txt(x + w - 12, yy + 11, rm.notes[b.name] or "", "caption", on and INK or OK, "right", 120)
+    end
+  else
+    for i = rm.first, math.min(#vis, rm.first + ROWS - 1) do
+      local v = vis[i]
+      local yy = y + 26 + (i - rm.first) * 15
+      local on = v == s
+      local pk = rm.picks[v.n]
+      if on then quad(x + 6, yy, w - 12, 14, GOLD, SHEAR) end
+      quad(x + 8, yy + 2, 3, 10, pk and OK or MUTED)
+      txt(x + 16, yy + 11, string.format("%02d", v.n), "caption", on and INK or DISABLED)
+      txt(x + 36, yy + 11, v.slot, "caption", on and INK or BONE, "left", 150)
+      txt(x + w - 12, yy + 11, pk and (pk.clip:gsub("^x", ""):gsub("^GOK_", "")) or "", "caption", on and INK or OK, "right", 108)
+    end
+  end
+  -- the slot panel
+  local dy, dh = y + 44 + ROWS * 15 + 4, 200
+  panel(x, dy, w, dh, s and ("SLOT " .. s.n .. " / " .. #rm.slots) or "SLOT")
+  if s and rm.browse then
+    local b = rm.blist and rm.blist[rm.bsel]
+    txt(x + 70, dy + 14, s.group, "caption", GOLD, "left", w - 80)
+    stxt(x + 12, dy + 38, s.slot, "label", BONE, "left", w - 24)
+    txt(x + 12, dy + 52, "N / P change slot.  Y picks the shown clip for it.", "caption", MUTED, "left", w - 24)
+    local yy = dy + 70
+    for _, it in ipairs(rm.items or {}) do
+      local tag = (it.kind == "cur" and "CUR " or "") .. (it.rec and "REC " or "") .. ((rm.picks[s.n] and rm.picks[s.n].clip == it.name) and "PICKED" or "")
+      if yy < dy + dh - 40 then
+        txt(x + 12, yy, it.name, "caption", (rm.shown and rm.shown.name == it.name) and GOLD or BONE, "left", 190)
+        txt(x + w - 12, yy, tag, "caption", OK, "right", 100)
+        yy = yy + 12
+      end
+    end
+    if b and b.meta and b.meta.cand ~= "" then txt(x + 12, dy + dh - 24, "plan: candidate for " .. b.meta.cand, "caption", MUTED, "left", w - 24) end
+    local pk = rm.picks[s.n]
+    txt(x + 12, dy + dh - 8, pk and ("picked: " .. pk.clip) or "not picked", "caption", pk and OK or DISABLED, "left", w - 24)
+  elseif s then
+    txt(x + 70, dy + 14, s.group, "caption", GOLD, "left", w - 80)
+    stxt(x + 12, dy + 38, s.slot, "label", BONE, "left", w - 24)
+    local yy = dy + 52
+    for i, ln in ipairs(wrap(s.role, "caption", w - 24)) do
+      if i > 2 then break end
+      txt(x + 12, yy, ln, "caption", MUTED, "left", w - 24)
+      yy = yy + 12
+    end
+    yy = yy + 4
+    for i, it in ipairs(rm.items or {}) do
+      local on = it == rm.shown
+      if on then quad(x + 6, yy - 10, w - 12, 13, GOLD, SHEAR) end
+      local tag = (it.kind == "cur" and "CUR " or "") .. (it.rec and "REC " or "") .. ((rm.picks[s.n] and rm.picks[s.n].clip == it.name) and "PICKED" or "")
+      txt(x + 12, yy, string.format("%d  %s", i, it.name), "caption", on and INK or (it.e and BONE or DANGER), "left", 180)
+      txt(x + w - 12, yy, it.e and tag or "not in bank", "caption", on and INK or (it.e and OK or DANGER), "right", 100)
+      yy = yy + 13
+    end
+    yy = yy + 4
+    local it = rm.shown
+    if it then
+      for i, ln in ipairs(wrap(it.why, "caption", w - 24)) do
+        if i > 2 then break end
+        txt(x + 12, yy, ln, "caption", BONE, "left", w - 24)
+        yy = yy + 12
+      end
+      if it.metrics ~= "" then txt(x + 12, yy, it.metrics, "caption", MUTED, "left", w - 24) end
+    end
+    local pk = rm.picks[s.n]
+    local line = pk and ("picked: " .. pk.clip .. ((pk["in"] or pk.out) and string.format("   f%s..f%s", tostring(pk["in"] or "1"), tostring(pk.out or "end")) or "")
+      .. (pk.browse and "  (browsed)" or "")) or "not picked   (Y picks the shown clip)"
+    txt(x + 12, dy + dh - 8, line, "caption", pk and OK or DISABLED, "left", w - 24)
+  end
+  -- the playing panel
+  local tx, tw = 316, 316
+  panel(tx, 8, tw, 140, "PLAYING")
+  local e = cl.cur
+  if e and rm.shown then
+    local note = rm.notes[rm.shown.name]
+    if note and note ~= "" then
+      for i, ln in ipairs(wrap("NOTE: " .. note, "caption", tw - 24)) do
+        if i > 3 then break end
+        txt(tx + 12, 112 + (i - 1) * 12, ln, "caption", OK, "left", tw - 24)
+      end
+    else
+      txt(tx + 12, 112, "no note yet (E: how to add one)", "caption", DISABLED, "left", tw - 24)
+    end
+    local len = cl_len()
+    local f = rm_frame_now()
+    local run = cl.slow or not gd.paused()
+    stxt(tx + 12, 42, rm.shown.name, "label", BONE, "left", tw - 24)
+    txt(tx + 12, 60, string.format("frame %d / %s   x%g   %s%s", f, len and tostring(len) or "?", cl.speed, run and "PLAYING" or "PAUSED",
+      (rm.min or rm.mout) and string.format("   range %s..%s", tostring(rm.min or 1), tostring(rm.mout or "end")) or ""),
+      "caption", run and OK or GOLD, "left", tw - 24)
+    if len and len > 0 then
+      quad(tx + 12, 66, tw - 24, 4, alpha(BONE, 0x40))
+      quad(tx + 12, 66, (tw - 24) * math.min(1, f / len), 4, GOLD)
+    end
+    if rm.cmp then
+      txt(tx + 12, 84, "COMPARE  left: this clip   right: " .. (rm.ref and rm.ref.name or "none"), "caption", ACCENT, "left", tw - 24)
+      txt(tx + 12, 98, "R sets the right side to the shown clip", "caption", MUTED, "left", tw - 24)
+    else
+      txt(tx + 12, 86, "W compares with the current clip side by side", "caption", MUTED, "left", tw - 24)
+    end
+  end
+  local arm = rm.arm
+  if arm and gd.time() < arm.t and rm.shown and rm.shown.name == arm.clip then
+    quad(tx, 150, tw, 22, GOLD, SHEAR)
+    txt(tx + 12, 166, "PRESS Y AGAIN TO PICK " .. arm.clip, "caption", INK, "left", tw - 24)
+  end
+  -- the key legend (the bar below has only icons)
+  local sa = gd.safe_area and gd.safe_area() or { right = 640 }
+  local lw = 192
+  local lx, ly = sa.right - lw - 10, 8
+  panel(lx, ly, lw, 206, "KEYS")
+  local L = { "UP/DOWN  prev / next clip", "A / D  clip back / forward", "N / P  next / prev slot", "Y  pick (press twice)",
+    "U  undo last pick", "T  A/B last two clips", "W  compare with current", "R  set compare reference", "K  browse all / slot clips",
+    "Q  unpicked slots only", "I / J  range in / out", "E  how to add a note", "SPACE  pause   LEFT/RIGHT  frame", "Z / X  slower / faster" }
+  for i, ln in ipairs(L) do txt(lx + 10, ly + 26 + (i - 1) * 12, ln, "caption", i == 4 and GOLD or BONE, "left", lw - 16) end
+  if T("skel") then draw_skeleton(p, PORT[p.port]) end
+end
+
 function LE.draw_clips()
+  if in_mode("remake") then local q = gd.player(focus) if q then LE.draw_remake(q) end return end
   local p = gd.player(focus)
   if p == nil then return end
   if not gd.anim_rows then txt(12, 30, "this build has no gd.anim_rows", "caption", DANGER) return end
@@ -5856,7 +6503,7 @@ function on_tick()
   if gd.key_pressed("F") then next_port(1) end
   mode_keys()
   if offline() then
-    if not (in_mode("clips") and LE.clips_owns_keys()) then -- CLIPS has its own SPACE / LEFT / RIGHT (mode_keys)
+    if not ((in_mode("clips") or in_mode("remake")) and LE.clips_owns_keys()) then -- CLIPS has its own SPACE / LEFT / RIGHT (mode_keys)
       if gd.key_pressed("SPACE") then
         if gd.paused() then gd.resume() else ensure_history() gd.pause() end
       end
@@ -6041,7 +6688,7 @@ function on_draw()
   if id == "hitboxes" and T("data") then draw_hit_data() end
   if id == "frames" then draw_frames(list) end
   if id == "moves" then LE.draw_moves() end
-  if id == "clips" then LE.draw_clips() end
+  if id == "clips" or id == "remake" then LE.draw_clips() end
   if id == "launch" then LE.draw_launch() end
   if id == "ab" then LE.draw_ab() end
   if id == "training" then LD.draw() end
@@ -6258,6 +6905,10 @@ gd.command("lab", function(arg)
     LD.drill_console(rest)
   elseif cmd == "clips" then
     LE.clips_console(rest)
+  elseif cmd == "remake" then
+    LE.rm_console(rest)
+  elseif cmd == "n" then
+    LE.rm_note(rest)
   elseif cmd == "set" then
     local mid, tid, v = rest:match("^(%w+)%.(%w+)%s+(%S+)$")
     if mid and tog[mid] and tog[mid][tid] ~= nil then

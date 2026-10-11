@@ -1059,6 +1059,61 @@ do
     gd.anim_rows, gd.anim_preview = real_rows, real_prev
     lab("clips category all"); lab("mode training")
   end
+  -- REMAKE (2026-10-10): slot picker over the CLIPS machinery; picks persist to remake-picks.json and undo
+  do
+    local calls = {}
+    local real_rows, real_prev, real_mr = gd.anim_rows, gd.anim_preview, gd.mod_read
+    gd.anim_rows = function() return { { row = 14, name = "Wait", symbol = "W" },
+      { row = 303, name = "xGOK_BAS_STAND_S", symbol = "a" }, { row = 304, name = "xGOK_BAS_STAND_00_S", symbol = "b" },
+      { row = 305, name = "xGOK_ATC_002", symbol = "c" } } end
+    gd.anim_preview = function(port, row, frame, rate, face) calls[#calls + 1] = { port = port, row = row, frame = frame } return true end
+    gd.mod_read = function(path)
+      if path == "missions/remake-goku.txt" then
+        local rows = {
+          { "S", "1", "G", "Idle", "Wait", "GOK_BAS_STAND_S", "xGOK_BAS_STAND_S", "role", "xGOK_BAS_STAND_00_S", "" },
+          { "K", "xGOK_BAS_STAND_S", "first", "no metrics" }, { "K", "xGOK_BAS_STAND_00_S", "alt", "m" }, { "K", "xGOK_NOPE", "missing", "" },
+          { "S", "2", "G", "Jab 1", "Attack11", "ATC_002", "xGOK_ATC_002", "role", "xGOK_ATC_002", "" },
+          { "K", "xGOK_ATC_002", "j", "" },
+          { "N", "xGOK_BAS_STAND_S", "100", "Idle", "a hover idle" }, { "N", "xGOK_BAS_STAND_00_S", "100", "", "" },
+          { "N", "xGOK_ATC_002", "30", "Jab 1", "" } }
+        local out = {}
+        for _, r in ipairs(rows) do out[#out + 1] = table.concat(r, string.char(9)) end
+        return table.concat(out, string.char(10)) .. string.char(10)
+      end
+      return real_mr and real_mr(path) or nil
+    end
+    files["remake-picks.json"] = nil
+    local real_cn = P[1].char_name
+    P[1].char_name = "Goku" -- a new library key: the clip list is rebuilt from the rows above
+    lab("mode remake")
+    for _ = 1, 8 do pcall(env.on_tick) end 
+    expect(calls[#calls] and calls[#calls].row == 304, "REMAKE opens in BROWSE on the first unnoted clip (row " .. tostring(calls[#calls] and calls[#calls].row) .. ")")
+    lab("remake cand 1")
+    expect(calls[#calls].row == 305, "BROWSE walks the unnoted clips first (row " .. tostring(calls[#calls].row) .. ")")
+    lab("n goes with the lunge")
+    expect(files["remake-notes.json"] and files["remake-notes.json"]:find("xGOK_ATC_002", 1, true) and files["remake-notes.json"]:find("lunge", 1, true), "a console note is saved to remake-notes.json")
+    lab("remake browse")
+    expect(calls[#calls].row == 304, "leaving BROWSE plays the slot's recommended candidate (row " .. tostring(calls[#calls].row) .. ")")
+    lab("remake cand 1")
+    expect(calls[#calls].row == 303, "cycling skips candidates that are not in the bank and wraps (row " .. tostring(calls[#calls].row) .. ")")
+    lab("remake pickkey")
+    expect(files["remake-picks.json"] == nil, "the Y key only asks: no pick is saved on the first press")
+    lab("remake pickkey")
+    expect(files["remake-picks.json"] and files["remake-picks.json"]:find("xGOK_BAS_STAND_S", 1, true), "a second Y within the window saves the pick")
+    lab("remake undo")
+    lab("remake pick")
+    expect(files["remake-picks.json"] and files["remake-picks.json"]:find('"clip":"x', 1, true), "a pick is written to remake-picks.json")
+    lab("remake next")
+    expect(calls[#calls].row == 305, "next slot plays that slot's recommended clip")
+    lab("remake slot 1"); lab("remake undo")
+    expect(not files["remake-picks.json"]:find("xGOK_BAS_STAND_S", 1, true), "undo removes the pick from the file")
+    lab("remake pick"); lab("remake slot 2"); lab("remake pick")
+    local out = lab("remake")
+    expect(out:find("2/2 picked", 1, true), "the progress line counts picks")
+    P[1].char_name = real_cn
+    gd.anim_rows, gd.anim_preview, gd.mod_read = real_rows, real_prev, real_mr
+    lab("mode training")
+  end
 -- (Task 9 adds its checks above this closing end: one block, one preamble, no new file-scope local)
 end
 for k in pairs(unknown) do u[#u + 1] = k end

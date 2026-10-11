@@ -2145,6 +2145,14 @@ void Player_MexSetMapping(int ckind, int fkind)
     ftMapping_list[ckind].has_transformation = 0;
 }
 
+/* A Zelda / Sheik template define pair (docs/geno.md 22.15): the character kind `ckind` also owns a sub-fighter, the partner define,
+ * and Down B changes between the two player entities (ftCommon_8007EFC8). The retail rows of Zelda and Sheik say the same with retail kinds. */
+void Player_MexSetPartner(int ckind, int partner_fkind)
+{
+    ftMapping_list[ckind].extra_internal_id = partner_fkind;
+    ftMapping_list[ckind].has_transformation = 1;
+}
+
 /* Every scene begins without fighters (gmscene.c, gm_801A4BD4). A fighter freed on its own
  * (HSD_GObjFree) clears its slot through Fighter_Unload_8006DABC -> Player_80031FB0, but a scene
  * change drops the whole GObj world with its heap and runs no destructors, so vanilla leaves every

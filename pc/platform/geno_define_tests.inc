@@ -855,7 +855,7 @@ static int test_geno_define_template(void)
     gn_registry_clear(&r);
     if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"fox\",", ""), "tmplf") != 1 || r.p[0].tmpl != 2) { gw_test_fail("a none define with template fox was refused or misread"); rc = 1; }
     gn_registry_clear(&r);
-    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"sheik\",", ""), "tmplx") != 0 || r.n != 0) { gw_test_fail("an unknown template was accepted"); rc = 1; }
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"luigi\",", ""), "tmplx") != 0 || r.n != 0) { gw_test_fail("an unknown template was accepted"); rc = 1; }
     gn_registry_clear(&r);
     /* Fox: 327 animation rows (0..326), 376 motions (0..375) */
     if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"fox\",", ",\"subactions\":[{\"index\":326,\"words\":[\"0x04000002\"]}]"), "f326") != 1) { gw_test_fail("row 326 of template fox refused"); rc = 1; }
@@ -882,6 +882,39 @@ static int test_geno_define_template(void)
     if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"marth\",", ",\"common_states\":[{\"motion\":372}]"), "ms372") != 1) { gw_test_fail("motion 372 of template marth refused"); rc = 1; }
     gn_registry_clear(&r);
     if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"marth\",", ",\"common_states\":[{\"motion\":373}]"), "ms373") != 0) { gw_test_fail("motion 373 of template marth accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    /* Jigglypuff (puff): 327 rows, motions 0..372. Sheik: 317 rows, motions 0..364. Zelda: 311 rows, motions 0..358; the pair needs transform_partner */
+#define GN_T_PAIR(t) "\"template\":\"" t "\",\"transform_partner\":\"tz\","
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"puff\",", ",\"subactions\":[{\"index\":326,\"words\":[\"0x04000002\"]}]"), "pf326") != 1 || r.p[0].tmpl != 5) { gw_test_fail("row 326 of template puff refused"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"puff\",", ",\"subactions\":[{\"index\":327,\"words\":[\"0x04000002\"]}]"), "pf327") != 0) { gw_test_fail("row 327 of template puff accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"puff\",", ",\"common_states\":[{\"motion\":372}]"), "pf372") != 1) { gw_test_fail("motion 372 of template puff refused"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"puff\",", ",\"common_states\":[{\"motion\":373}]"), "pf373") != 0) { gw_test_fail("motion 373 of template puff accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, GN_T_PAIR("sheik"), ",\"subactions\":[{\"index\":316,\"words\":[\"0x04000002\"]}]"), "sk316") != 1 || r.p[0].tmpl != 6 || strcmp(r.p[0].partner_key, "tz")) { gw_test_fail("row 316 of template sheik refused or its partner key lost"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, GN_T_PAIR("sheik"), ",\"subactions\":[{\"index\":317,\"words\":[\"0x04000002\"]}]"), "sk317") != 0) { gw_test_fail("row 317 of template sheik accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, GN_T_PAIR("sheik"), ",\"common_states\":[{\"motion\":364}]"), "sk364") != 1) { gw_test_fail("motion 364 of template sheik refused"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, GN_T_PAIR("sheik"), ",\"common_states\":[{\"motion\":365}]"), "sk365") != 0) { gw_test_fail("motion 365 of template sheik accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, GN_T_PAIR("zelda"), ",\"subactions\":[{\"index\":310,\"words\":[\"0x04000002\"]}]"), "zd310") != 1 || r.p[0].tmpl != 7) { gw_test_fail("row 310 of template zelda refused"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, GN_T_PAIR("zelda"), ",\"subactions\":[{\"index\":311,\"words\":[\"0x04000002\"]}]"), "zd311") != 0) { gw_test_fail("row 311 of template zelda accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, GN_T_PAIR("zelda"), ",\"common_states\":[{\"motion\":358}]"), "zd358") != 1) { gw_test_fail("motion 358 of template zelda refused"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, GN_T_PAIR("zelda"), ",\"common_states\":[{\"motion\":359}]"), "zd359") != 0) { gw_test_fail("motion 359 of template zelda accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    /* a pair member without its partner key would crash on Down B; the key anywhere else is a mistake */
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"zelda\",", ""), "zdnp") != 0 || r.n != 0) { gw_test_fail("a zelda template without transform_partner was accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"fox\",\"transform_partner\":\"tz\",", ""), "foxp") != 0 || r.n != 0) { gw_test_fail("transform_partner on a fox template was accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_TMPL(10, "\"template\":\"zelda\",\"transform_partner\":\"Bad Key\",", ""), "zdbk") != 0 || r.n != 0) { gw_test_fail("a malformed transform_partner key was accepted"); rc = 1; }
     gn_registry_clear(&r);
     if (gn_parse_text(&r, GN_T_TMPL(9, "\"template\":\"captain\",", ""), "tmpl9") != 0 || r.n != 0) { gw_test_fail("template in a geno 9 file was accepted"); rc = 1; }
     gn_registry_clear(&r);

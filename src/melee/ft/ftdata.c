@@ -2125,7 +2125,8 @@ void ftData_8008572C(FighterKind kind)
 #endif
     }
 #if defined(TARGET_PC)
-    if (kind == Ft_Kind_Mario || kind == Ft_Kind_Captain || kind == Ft_Kind_Fox || kind == Ft_Kind_Falco || kind == Ft_Kind_Mars) GenoDefine_CaptureBase(kind);
+    if (kind == Ft_Kind_Mario || kind == Ft_Kind_Captain || kind == Ft_Kind_Fox || kind == Ft_Kind_Falco || kind == Ft_Kind_Mars ||
+        kind == Ft_Kind_Purin || kind == Ft_Kind_Seak || kind == Ft_Kind_Zelda) GenoDefine_CaptureBase(kind);
 #endif
 }
 

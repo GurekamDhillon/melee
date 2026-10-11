@@ -552,7 +552,7 @@ wgpu::RenderPipeline pipeline(const aurora::gfx::DrawContext& ctx, uint32_t kind
     }
     bs.alpha = comp(BO::Add, BF::Zero, BF::One); // the EFB's alpha is Melee's: leave it
   } else if (kind == KFlash) {
-    bs.color = comp(BO::Add, BF::SrcAlpha, BF::OneMinusSrcAlpha);
+    bs.color = comp(BO::Add, BF::SrcAlpha, BF::One); // additive and tinted: a brightening, not a grey wash
     bs.alpha = comp(BO::Add, BF::Zero, BF::One);
   } else if (kind == KBlurH || kind == KBlurV) {
     bs.color = comp(BO::Add, BF::One, BF::Zero);
@@ -615,14 +615,39 @@ wgpu::TextureView tex_view(const aurora::gfx::DrawContext& ctx, int pkg, int t) 
     td.size = {x.w, x.h, 1};
     td.format = wgpu::TextureFormat::RGBA8Unorm;
     td.usage = wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::CopyDst;
+    // a full mip chain (2x2 box filter): a texture stretched over a long strip or shrunk far away no longer shimmers
+    // or blocks. The sampler already asks for linear mip filtering; before this every texture had one level.
+    uint32_t levels = 1;
+    for (uint32_t m = std::max(x.w, x.h); m > 1; m >>= 1) ++levels;
+    td.mipLevelCount = levels;
     x.tex = ctx.device.CreateTexture(&td);
-    wgpu::TexelCopyTextureInfo dst{};
-    dst.texture = x.tex;
-    wgpu::TexelCopyBufferLayout lay{};
-    lay.bytesPerRow = x.w * 4;
-    lay.rowsPerImage = x.h;
-    wgpu::Extent3D ext{x.w, x.h, 1};
-    ctx.queue.WriteTexture(&dst, x.rgba.data(), x.rgba.size(), &lay, &ext);
+    std::vector<uint8_t> cur = x.rgba, nxt;
+    uint32_t cw = x.w, ch = x.h;
+    for (uint32_t l = 0; l < levels; ++l) {
+      wgpu::TexelCopyTextureInfo dst{};
+      dst.texture = x.tex;
+      dst.mipLevel = l;
+      wgpu::TexelCopyBufferLayout lay{};
+      lay.bytesPerRow = cw * 4;
+      lay.rowsPerImage = ch;
+      wgpu::Extent3D ext{cw, ch, 1};
+      ctx.queue.WriteTexture(&dst, cur.data(), cur.size(), &lay, &ext);
+      if (l + 1 == levels) break;
+      const uint32_t nw = std::max(1u, cw / 2), nh = std::max(1u, ch / 2);
+      nxt.assign(size_t(nw) * nh * 4, 0);
+      for (uint32_t yy = 0; yy < nh; ++yy)
+        for (uint32_t xx = 0; xx < nw; ++xx)
+          for (int c = 0; c < 4; ++c) {
+            const uint32_t x0 = std::min(cw - 1, xx * 2), x1 = std::min(cw - 1, xx * 2 + 1);
+            const uint32_t y0 = std::min(ch - 1, yy * 2), y1 = std::min(ch - 1, yy * 2 + 1);
+            const uint32_t sum = cur[(size_t(y0) * cw + x0) * 4 + c] + cur[(size_t(y0) * cw + x1) * 4 + c] +
+                                 cur[(size_t(y1) * cw + x0) * 4 + c] + cur[(size_t(y1) * cw + x1) * 4 + c];
+            nxt[(size_t(yy) * nw + xx) * 4 + c] = uint8_t((sum + 2) / 4);
+          }
+      cur.swap(nxt);
+      cw = nw;
+      ch = nh;
+    }
     x.view = x.tex.CreateView();
   }
   return x.view;
@@ -834,14 +859,48 @@ void particle_data(const fx_emitter& e, const fx_part& q, const fx_inst& in, con
 // consecutive pair becomes one segment instance (mode 3 in vs_particle): A, B, widths, u, colour ratio, alpha. Width
 // per point = the particle's simulated size (so the scale-over-life curve is the taper) x the linear taper; the
 // samplers' scroll comes from the head particle for every segment so the texture does not seam at the joints.
+void emit_strip(const fx_emitter& e, std::vector<GpuP>& pts, bool preset, std::vector<GpuP>& out);
 void build_ribbon(const fx_emitter& e, const fx_state& st, const fx_inst& in, int headIdx, const int* next,
                   const float (*view)[4], std::vector<GpuP>& out) {
+  if (e.ribbon_span_len > 0.0f) {
+    // span mode (a beam): each live particle is one straight strip from its origin along its local +Z. The particle
+    // gives the origin, the colour / alpha and the width (its simulated size); the param curve, when keyed, is the
+    // growth 0..1 of the length. The ends ease in / out in width AND alpha, so a beam has pointed ends and soft sides.
+    for (int k = headIdx; k >= 0; k = next[k]) {
+      GpuP base;
+      particle_data(e, st.part[k], in, view, base);
+      float zl = std::sqrt(base.az[0] * base.az[0] + base.az[1] * base.az[1] + base.az[2] * base.az[2]);
+      if (!(zl > 1e-6f)) continue;
+      const float g = e.param.keyed ? std::min(1.0f, std::max(0.0f, base.p1[2])) : 1.0f;
+      const float len = e.ribbon_span_len * zl * g;
+      if (!(len > 1e-4f)) continue;
+      const int n = e.ribbon_span_segs + 1;
+      std::vector<GpuP> pts(size_t(n), base);
+      const float a0 = base.c0[3] * base.c1[3];
+      for (int i = 0; i < n; ++i) {
+        const float t = float(i) / float(n - 1);
+        const float prof = fx_rib_profile(t, e.ribbon_end[0], e.ribbon_end[1]);
+        for (int c = 0; c < 3; ++c) pts[size_t(i)].p0[c] = base.p0[c] + base.az[c] / zl * len * t;
+        pts[size_t(i)].p0[3] = base.p0[3] * fx_rib_width_mul(i, n, e.ribbon_taper) * prof;
+        pts[size_t(i)].c0[3] = a0 * prof;
+        pts[size_t(i)].c1[3] = 1.0f;
+      }
+      emit_strip(e, pts, true, out);
+    }
+    return;
+  }
   std::vector<std::pair<int, int>> order; // (age, slot): youngest first, slot order breaks ties
   for (int k = headIdx; k >= 0; k = next[k]) order.emplace_back(st.part[k].age, k);
   if (order.size() < 2) return;
   std::sort(order.begin(), order.end());
   std::vector<GpuP> pts(order.size());
   for (size_t i = 0; i < order.size(); ++i) particle_data(e, st.part[order[i].second], in, view, pts[i]);
+  emit_strip(e, pts, false, out);
+}
+
+// pts: the strip's points, head first (positions p0.xyz, width p0.w, colour c0, alpha c0.a * c1.a). preset: the widths
+// already include the taper / ends (span mode), else the linear taper applies here.
+void emit_strip(const fx_emitter& e, std::vector<GpuP>& pts, bool preset, std::vector<GpuP>& out) {
   const int n = int(pts.size());
   std::vector<float> cum(size_t(n), 0.0f);
   for (int i = 1; i < n; ++i) {
@@ -855,8 +914,8 @@ void build_ribbon(const fx_emitter& e, const fx_state& st, const fx_inst& in, in
     GpuP s = A;
     std::memcpy(s.a, pts[0].a, sizeof s.a);
     std::memcpy(s.b, pts[0].b, sizeof s.b);
-    s.p0[3] = A.p0[3] * e.escale[0] * fx_rib_width_mul(i, n, e.ribbon_taper);
-    s.p1[0] = B.p0[3] * e.escale[0] * fx_rib_width_mul(i + 1, n, e.ribbon_taper);
+    s.p0[3] = preset ? A.p0[3] : A.p0[3] * fx_rib_width_mul(i, n, e.ribbon_taper);
+    s.p1[0] = preset ? B.p0[3] : B.p0[3] * fx_rib_width_mul(i + 1, n, e.ribbon_taper);
     s.p1[1] = 0.0f;
     s.p1[3] = 3.0f;
     s.ax[0] = B.p0[0]; s.ax[1] = B.p0[1]; s.ax[2] = B.p0[2];

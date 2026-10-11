@@ -434,6 +434,13 @@ static fx_pkg *fx_parse(const char *text, const char *path) {
     fj_vec(&d, fj_path(&d, root, "space", "forward"), p->forward, 3);
     fj_vec(&d, fj_path(&d, root, "space", "up"), p->up, 3);
     ems = fj_get(&d, root, "emitters");
+    {   /* a package over the cap used to lose its tail silently (26 of 58 XV2 Kamehameha emitters): say so */
+        int total = 0;
+        while (fj_at(&d, ems, total) >= 0) ++total;
+        if (total > FX_MAX_EMITTERS)
+            gw_log("fx: %s: %d emitters, the runtime keeps %d: %d DROPPED (raise FX_MAX_EMITTERS or split the package)",
+                   p->name, total, FX_MAX_EMITTERS, total - FX_MAX_EMITTERS);
+    }
     for (i = 0; (e = fj_at(&d, ems, i)) >= 0 && p->nem < FX_MAX_EMITTERS; ++i) {
         fx_emitter *m = &p->em[p->nem++];
         int t = fj_get(&d, e, "transform"), em = fj_get(&d, e, "emission"), sh = fj_get(&d, e, "shape");
@@ -463,6 +470,13 @@ static fx_pkg *fx_parse(const char *text, const char *path) {
                 m->ribbon = 1;
                 m->ribbon_taper = (float) fj_num(&d, fj_get(&d, rb, "taper"), 1);
                 m->ribbon_uv_per_unit = (float) fj_num(&d, fj_get(&d, rb, "uv_per_unit"), 0);
+                m->ribbon_span_len = (float) fj_num(&d, fj_path(&d, rb, "span", "length"), 0);
+                m->ribbon_span_segs = (int) fj_num(&d, fj_path(&d, rb, "span", "segments"), 24);
+                if (!(m->ribbon_span_len > 0.0f)) m->ribbon_span_len = 0.0f;
+                if (m->ribbon_span_segs < 2) m->ribbon_span_segs = 2;
+                if (m->ribbon_span_segs > 96) m->ribbon_span_segs = 96;
+                m->ribbon_end[0] = (float) fj_num(&d, fj_at(&d, fj_get(&d, rb, "ends"), 0), 0);
+                m->ribbon_end[1] = (float) fj_num(&d, fj_at(&d, fj_get(&d, rb, "ends"), 1), 0);
                 if (!(m->ribbon_taper >= 0.0f)) m->ribbon_taper = 0.0f;
             }
             if (rg >= 0 && d.n[rg].type == FJ_OBJ) {
@@ -2089,8 +2103,10 @@ static int test_fx_render(void) {
     { float w[2]; fx_shake_offset(100, 100, 10, 0.05f, 7, w); FXR(w[0] == v[0] && w[1] == v[1], "shake deterministic"); }
     fx_shake_offset(110, 100, 10, 0.05f, 7, v); FXR(v[0] == 0.0f && v[1] == 0.0f, "shake ends");
     fx_shake_offset(99, 100, 10, 0.05f, 7, v); FXR(v[0] == 0.0f && v[1] == 0.0f, "shake not before its start");
-    FXR(fx_flash_alpha(100, 100, 10, 0.8f) == 0.8f && fx_flash_alpha(105, 100, 10, 0.8f) > 0.39f &&
-        fx_flash_alpha(105, 100, 10, 0.8f) < 0.41f && fx_flash_alpha(110, 100, 10, 0.8f) == 0.0f, "flash fade");
+    FXR(fx_flash_alpha(100, 100, 10, 0.8f) == 0.8f && fabsf(fx_flash_alpha(105, 100, 10, 0.8f) - 0.2f) < 1e-5f &&
+        fx_flash_alpha(110, 100, 10, 0.8f) == 0.0f, "flash eases out");
+    FXR(fx_rib_profile(0.0f, 0.2f, 0.2f) == 0.0f && fx_rib_profile(0.5f, 0.2f, 0.2f) == 1.0f &&
+        fx_rib_profile(1.0f, 0.2f, 0.2f) == 0.0f && fx_rib_profile(0.1f, 0.2f, 0.0f) == 0.5f, "beam end profile");
 #undef FXR
     return rc;
 }

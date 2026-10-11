@@ -8,7 +8,9 @@ SRC/DST are `.../package/mods` dirs (they hold goku-xv2/fx/P_TrailGokuXKame*/ an
 What it does to every P_TrailGokuXKame* package:
   R1  additive emitters with bloom: tint + radius (a blue glare that reaches further), beam-mesh intensity raised
   R3  alpha-blend billboards: soft_particle distance 1.5 (no hard edge where a sprite meets the floor)
-  R2  + `rx_stream`: a camera-facing tapered ribbon streaming out of the hand along the beam (Tap/Mid/Full/Super)
+  R2  the beam body: the converter's crossed-quad `ribbon_*` meshes are replaced by three camera-facing ribbon-span layers
+      (`rx_beam_glow` wide + coloured, `rx_beam_mid` electric noise, `rx_beam_core` narrow + white) with pointed ends,
+      soft feathered sides (XV2's own trc_beam00 / trc_T2_UV01 textures, mip-mapped), scrolling, bloom on
   R5  + `rx_ring_head`: shock rings leaving the beam head, `rx_ring_gather`: a contracting ring on the charge
   R4  the rings use the dissolve shader (noise mask, independent scroll, glowing edge)
   R6  fx_bindings.json: a shake + flash call at the release frame of KameTap/Mid/Full/Super (no package)
@@ -68,11 +70,11 @@ def tex_entry(name):
     return {'name': name, 'file': f'tex/{name}.png', 'w': 128, 'h': 128, 'source_format': 'png', 'swizzle': 'rgba'}
 
 
-def sampler(slot, tex, scroll_add=(0.0, 0.0), wrap='Repeat'):
+def sampler(slot, tex, scroll_add=(0.0, 0.0), wrap='Repeat', rotate=0.0):
     return {'slot': slot, 'texture': tex, 'wrap': [wrap, wrap], 'filter': 'linear', 'sphere_map': False, 'uv_channel': 0,
             'pattern': {'mode': 'none', 'count': 0.0, 'frequency': 1.0, 'count_random': 0.0, 'table': [0], 'loop_random_start': False},
             'uv': {'scroll': [0.0, 0.0], 'scroll_add': list(scroll_add), 'scroll_random': [0.0, 0.0], 'scale': [1.0, 1.0],
-                   'scale_add': [0.0, 0.0], 'scale_random': [0.0, 0.0], 'divide': [1, 1], 'rotate': 0.0, 'rotate_add': 0.0,
+                   'scale_add': [0.0, 0.0], 'scale_random': [0.0, 0.0], 'divide': [1, 1], 'rotate': rotate, 'rotate_add': 0.0,
                    'rotate_random': 0.0, 'enable': {'scroll': 1, 'scale': 1, 'rotate': 1}}}
 
 
@@ -135,6 +137,7 @@ def build_emitter(t, name, life, scale_base, scale_keys, alpha_keys, rgb, hdr, t
 
 
 SKIP = set()
+CAP = 96   # FX_MAX_EMITTERS in pc/platform/gw_fx_internal.h
 
 
 def adapt_package(pdir, tint, radius):
@@ -145,6 +148,8 @@ def adapt_package(pdir, tint, radius):
     # R1 glare, R3 soft particles
     for e in ems:
         m = e.setdefault('material', {})
+        if 'nobloom' in SKIP and 'bloom' in m:
+            m['bloom']['intensity'] = 0.0
         b = m.get('bloom') or {}
         if 'glare' in SKIP:
             pass
@@ -168,7 +173,7 @@ def adapt_package(pdir, tint, radius):
         if n not in have:
             d['textures'].append(tex_entry(n))
     cyan = [0.45, 0.8, 1.0]
-    beam = next((e for e in ems if e['kind'] == 'mesh' and e['name'].startswith(('bas_', 'ribbon_'))), None)
+    beam = next((e for e in ems if e['kind'] == 'mesh' and e['name'].startswith('bas_')), None)
     if 'new' in SKIP:
         beam = None
     if beam is not None and name.endswith(('Tap', 'Mid', 'Full', 'Super')):
@@ -179,12 +184,31 @@ def adapt_package(pdir, tint, radius):
                                          'interval': interval, 'interval_random': 0.0, 'position_random': 0.0, 'by_distance': False,
                                          'fade': {'on_stop': True, 'alpha_frames': 0, 'fade_in_frames': 0, 'alpha_fade_in': False,
                                                   'scale_fade_in': False}}
-        # R2 ribbon stream out of the hand: particles move outward along the beam, the strip joins them
-        ems.append(build_emitter(
-            t, 'rx_stream', 16, 3.0, [[1, 1, 1, 0.0], [1.15, 1.15, 1.15, 0.3], [0.25, 0.25, 0.25, 1.0]],
-            [[0.0, 0, 0, 0.0], [1.0, 0, 0, 0.12], [1.0, 0, 0, 0.6], [0.0, 0, 0, 1.0]], cyan, 3.0,
-            [0.0, 0.0, 1.0], rot, em(2, blife, 0), [sampler(0, 'rx_streak', (-0.06, 0.0))],
-            extra={'ribbon': {'taper': 0.2, 'uv_per_unit': 0.05}}, vel=([0, 0, 1], head_z / 14.0)))
+        # R2: the beam body as three ribbon-span layers from the hand to the head (replaces the crossed-quad meshes)
+        ems[:] = [e for e in ems if not (e['kind'] == 'mesh' and e['name'].startswith('ribbon_'))]
+        n_orig = len(ems)
+        bs = beam['particle']['scale']['base'][0]
+        have_t = {x['name'] for x in d['textures']}
+        tb = 'trc_beam00' if 'trc_beam00' in have_t else 'rx_streak'
+        tn = 'trc_T2_UV01' if 'trc_T2_UV01' in have_t else 'rx_noise'
+        rot90 = math.pi / 2 if tb == 'trc_beam00' else 0.0
+        grow = [[0.0, 0, 0, 0.0], [1.0, 0, 0, 0.1], [1.0, 0, 0, 1.0]]
+        fade = [[0.0, 0, 0, 0.0], [1.0, 0, 0, 0.06], [1.0, 0, 0, 0.82], [0.0, 0, 0, 1.0]]
+        def layer(name, width, rgb, hdr, tex, scroll, uvu, ends, bloom, taper=1.0, alpha=1.0, extra_tex=None):
+            sm = [sampler(0, tex, scroll, rotate=rot90 if tex == 'trc_beam00' else 0.0)]
+            if extra_tex:
+                sm.append(sampler(1, extra_tex[0], extra_tex[1]))
+            e = build_emitter(t, name, blife, width, [[1, 1, 1, 0.0], [1, 1, 1, 1.0]],
+                              [[a[0] * alpha, 0, 0, a[3]] for a in fade], rgb, hdr, [0.0, 0.0, 0.0], rot,
+                              copy.deepcopy(beam['emission']), sm, param=grow,
+                              extra={'ribbon': {'taper': taper, 'uv_per_unit': uvu,
+                                                'span': {'length': head_z, 'segments': 28}, 'ends': ends}})
+            e['emission']['start'] = beam['emission'].get('start', 0)
+            e['material']['bloom'] = bloom
+            return e
+        ems.append(layer('rx_beam_glow', 2.6 * bs, [0.15, 0.5, 1.0], 2.4, tb, (0.0, -0.02), 0.06, [0.10, 0.05], {'threshold': 0.4, 'intensity': 1.3, 'tint': tint, 'radius': radius}, taper=0.9, alpha=0.8))
+        ems.append(layer('rx_beam_mid', 1.7 * bs, [0.4, 0.85, 1.0], 2.8, tn, (0.0, -0.035), 0.05, [0.08, 0.04], {'threshold': 0.5, 'intensity': 0.9, 'tint': tint, 'radius': radius}, alpha=0.9))
+        ems.append(layer('rx_beam_core', 0.8 * bs, [1.0, 1.0, 1.0], 4.5, tb, (0.0, -0.06), 0.09, [0.04, 0.02], {'threshold': 0.6, 'intensity': 1.6, 'tint': [0.8, 0.95, 1.0], 'radius': radius}))
         # R5 + R4 shock rings leaving the beam head (dissolve with a noise mask)
         dis = {'type': 'dissolve', 'mask': 1, 'edge': 0.25, 'edge_color': [0.7, 0.95, 1.0]}
         ems.append(build_emitter(
@@ -216,7 +240,9 @@ def adapt_package(pdir, tint, radius):
     # already filled (Mid/Full/Tap/Super have 50+) would lose anything appended: the demo's emitters go FIRST and the
     # tail is trimmed to the cap (a demo shortcut; a real fix raises the cap or splits the package).
     added = ems[n_orig:]
-    d['emitters'] = (added + ems[:n_orig])[:32]
+    d['emitters'] = added + ems[:n_orig]
+    if len(d['emitters']) > CAP:
+        print('WARNING', name, len(d['emitters']), 'emitters exceed the runtime cap', CAP, '- the tail is dropped by the runtime')
     j.write_text(json.dumps(d), encoding='utf-8')
     return name
 
@@ -242,8 +268,8 @@ def main():
             if s['state'] in ('KameTap', 'KameMid', 'KameFull', 'KameSuper'):
                 f = next(c['frame'] for c in s['calls'] if 'Muzzle' in c['package'])
                 big = s['state'] in ('KameFull', 'KameSuper')
-                s['calls'].append({'frame': f, 'shake': {'amp': 0.012 if big else 0.008, 'frames': 16 if big else 10, 'seed': 5},
-                                   'flash': {'color': [0.85, 0.95, 1.0], 'alpha': 0.5 if big else 0.3, 'frames': 5}})
+                s['calls'].append({'frame': f, 'shake': {'amp': 0.022 if big else 0.014, 'frames': 14 if big else 10, 'seed': 5},
+                                   'flash': {'color': [0.55, 0.8, 1.0], 'alpha': 0.7 if big else 0.5, 'frames': 4 if big else 3}})
         bj.write_text(json.dumps(b, indent=1), encoding='utf-8')
     print('adapted', len(done), 'packages:', ', '.join(done))
 

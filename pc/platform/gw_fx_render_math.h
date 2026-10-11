@@ -21,6 +21,13 @@ static inline float fx_rib_u(int i, int n, float cum, float uv_per_unit) {
     if (uv_per_unit > 0.0f) return cum * uv_per_unit;
     return n > 1 ? (float) i / (float) (n - 1) : 0.0f;
 }
+/* R2 beam ends: ease the strip in over the first `a` of its length and out over the last `b` (smoothstep), 1 between. */
+static inline float fx_smooth01(float x) { x = x < 0.0f ? 0.0f : x > 1.0f ? 1.0f : x; return x * x * (3.0f - 2.0f * x); }
+static inline float fx_rib_profile(float t, float a, float b) {
+    const float in = a > 1e-5f ? fx_smooth01(t / a) : 1.0f;
+    const float out = b > 1e-5f ? fx_smooth01((1.0f - t) / b) : 1.0f;
+    return in * out;
+}
 /* the camera-facing side vector of a strip segment A->B: perpendicular to the segment and to the view axis
  * (camz = the view's Z axis in world, as the billboards use). Returns 0 when the segment points along the view. */
 static inline int fx_rib_side(const float a[3], const float b[3], const float camz[3], float out[3]) {
@@ -75,11 +82,14 @@ static inline void fx_shake_offset(int frame, int start, int frames, float amp, 
     out[0] = k * ((float) (h & 0xFFFFU) / 32767.5f - 1.0f);
     out[1] = k * ((float) (h >> 16) / 32767.5f - 1.0f);
 }
-/* a flash: alpha at `frame` for a flash of peak alpha `a` over `frames` (linear fade out) */
+/* a flash: alpha at `frame` for a flash of peak alpha `a` over `frames`: full on the first frame, eased out (quadratic).
+ * It is drawn ADDITIVELY (a tinted brightening, never a grey wash). */
 static inline float fx_flash_alpha(int frame, int start, int frames, float a) {
     const int age = frame - start;
+    float k;
     if (frames <= 0 || age < 0 || age >= frames) return 0.0f;
-    return a * (1.0f - (float) age / (float) frames);
+    k = 1.0f - (float) age / (float) frames;
+    return a * k * k;
 }
 
 #ifdef __cplusplus

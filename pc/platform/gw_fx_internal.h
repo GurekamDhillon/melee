@@ -9,10 +9,10 @@ extern "C" {
 #endif
 
 #define FX_MAX_PKGS 64
-#define FX_MAX_EMITTERS 32      /* per package */
+#define FX_MAX_EMITTERS 96      /* per package (was 32: the converted XV2 Kamehameha packages have 58 and lost 26) */
 #define FX_MAX_TEX 24           /* per package */
 #define FX_MAX_MESH 24          /* per package */
-#define FX_MAX_INST 256
+#define FX_MAX_INST 512
 #define FX_MAX_PARTICLES 2000
 #define FX_RING 16              /* frames of state kept for a rollback */
 #define FX_KEYS 8
@@ -87,6 +87,9 @@ typedef struct {
     float bloom_tint[3], bloom_radius;      /* R1 glare: the bloom's colour and blur reach (1 = the base 9-tap) */
     int ribbon;                             /* R2: the emitter's particles form one camera-facing strip, newest first */
     float ribbon_taper, ribbon_uv_per_unit; /*     tail width / head width; u tiles per world unit (0 = 0..1 over the strip) */
+    float ribbon_span_len;                  /*     > 0: each particle IS a straight strip of this length along its local +Z (a beam) */
+    int ribbon_span_segs;                   /*     segments of that strip */
+    float ribbon_end[2];                    /*     fraction of the strip eased in at the origin end / out at the far end (width and alpha) */
     float soft_distance;                    /* R3: soft particles: depth fade distance in world units (0 = off) */
     int dissolve_mask;                      /* R4: sampler that is the dissolve mask (threshold = the param curve) */
     float dissolve_edge, dissolve_color[3]; /*     edge band width (0..1 of the mask) and its glow colour */

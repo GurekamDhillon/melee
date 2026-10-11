@@ -32,7 +32,9 @@ int main() {
         const float cap = 0.04f * (1.0f - (float) (f - 50) / 12.0f) + 1e-6f;
         assert(f - 50 < 12 ? (fabsf(v[0]) <= cap && fabsf(v[1]) <= cap) : (v[0] == 0.0f && v[1] == 0.0f));
     }
-    assert(fx_flash_alpha(50, 50, 4, 1.0f) == 1.0f && fx_flash_alpha(52, 50, 4, 1.0f) == 0.5f && fx_flash_alpha(54, 50, 4, 1.0f) == 0.0f);
+    assert(fx_flash_alpha(50, 50, 4, 1.0f) == 1.0f && fx_flash_alpha(52, 50, 4, 1.0f) == 0.25f && fx_flash_alpha(54, 50, 4, 1.0f) == 0.0f);
+    assert(fx_rib_profile(0.0f, 0.2f, 0.2f) == 0.0f && fx_rib_profile(0.5f, 0.2f, 0.2f) == 1.0f && fx_rib_profile(1.0f, 0.2f, 0.2f) == 0.0f);
+    assert(fx_rib_profile(0.1f, 0.2f, 0.0f) == 0.5f && fx_rib_profile(0.3f, 0.0f, 0.0f) == 1.0f);
     std::puts("fx_render_math_test: ok");
     return 0;
 }

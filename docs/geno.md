@@ -3043,6 +3043,18 @@ Estimates (one agent, parity included; Fox took the engine half in about an hour
 | Sheik | 317 / 365 (24 states) | medium | stand-alone template like the others; her chain whip and vanish are native. Costumes Nr, Re, Bu, Gr, Wh. |
 | Zelda | 311 / 359 (18 states) | large, needs a decision | Down B transforms into Sheik: `ftZd_SpecialLw_8013AEAC` calls `ftCommon_8007EFC8` with Sheik's entry and the engine swaps `fp->kind` to the partner from `pl/player.c` (`{Zelda, Seak, true}`). A define would turn into RETAIL Sheik. Options: (a) accept that (Zelda define + retail Sheik after transforming), (b) a define pair with a "transform partner" key in `geno.json` and a kind map in `ftCommon_8007EFC8`. Not started. |
 
+### 22.14 Falco and Marth templates (2026-10-10)
+
+`define.template` also accepts `"falco"` (kind 22, CharacterKind 20, 327 rows, motions 0..375: Falco shares Fox's 35-state table, `ftFc_Init_MotionStateTable`, and Fox's `ftFox_DatAttrs`) and `"marth"` (kind 18, CharacterKind 9, 327 rows, motions 0..372 = 341 + 32,
+`ftMs_Init_MotionStateTable`, `MarsAttributes`, 0x98 bytes with the embedded `AbsorbDesc` and `SwordAttrs`). Engine work was the five places of the 22.13 checklist plus `GENO_TMPL_COUNT` 5.
+**`GENO_MAX_OVERLAYS` is now 336** (was 320): retail Marth scripts all 327 rows (Falco 315, Fox 315); `GENO_MAX_SLOTS` (2560) still holds six full defines (6 x 336 = 2016).
+
+Kind guards (`ftGetTemplateKind`) added for Marth: `ftafterimage.c` (both sword-attribute switches: the sword trail reads `MarsAttributes.x78`), `ftdynamics.c` (the Mars/Emblem dynamics tests), `ftCo_Attack1.c` (Attack13 rapid),
+`ftCo_Guard.c` (shield entry/exit/damage switches), `ftCo_Landing.c`, `ftmarsspecialn.c` (Shield Breaker anim). Falco needed none beyond Fox's (the Fox sweep already used `ftGetTemplateKind` for Fox/Falco pairs).
+
+Proof (workspace `tools/geno/falcon_parity`, 344 scenarios now: 326 plus Marth extras: Dancing Blade strings, Shield Breaker hold/release, Counter, sword tip and base): retail Falco against the define, 344 of 344 identical
+(run total `49676232`); retail Marth against the define, 344 of 344 identical (`191fdbe6`). The trace has no sword-trail or hair data: those are visual and still owed.
+
 ## 23. Fighter Lua (slice 5: the first increment built 2026-10-07, the second move and the tooling 2026-10-08)
 
 A define can write a state's behaviour as Lua. The shape is deliberately small: two phases (`enter`, `frame`), a typed per-fighter state, five commands (four in the first increment; `turn` came with the second move). Physics,

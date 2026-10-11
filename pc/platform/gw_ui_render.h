@@ -44,6 +44,19 @@ int at_tiles_geometry_ex(const AtScreen *sc, const AtLayout *L, int scroll, AtRe
 /* the first visible tile row that keeps the focused tile in view */
 int at_tiles_scroll(const AtScreen *sc, const AtLayout *L, int focus_index, int scroll);
 
+/* the character select's Melee-style layout (AT_PRIMARY_CSS): one place for the drawing, the hit rectangles and the tests. Pure geometry. */
+typedef struct {
+    AtRect box, strip, coin, seg[3], team, portrait, dock, name, level, notch[9], cprev, cnext, cmid;
+} AtCssPanel;
+typedef struct {
+    AtRect field, caption, tabs;
+    int n_panels, cols, rows, rows_vis, first_row;
+    float cw, ch, gap;
+    AtCssPanel panel[AT_MAX_PORTS];
+} AtCssGeom;
+void at_csv_geometry(const AtScreen *sc, const AtView *v, const AtLayout *L, AtCssGeom *g);
+AtRect at_csv_tile_rect(const AtCssGeom *g, int i);   /* w = 0 for a tile scrolled out of the field */
+
 #ifdef __cplusplus
 }
 #endif

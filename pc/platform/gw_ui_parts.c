@@ -922,7 +922,8 @@ int at_port_mark(const AtSink *s, float cx, float cy, float r, int port, unsigne
     return 2;
 }
 
-static unsigned port_colour(int port) { return port == 0 ? AT_C_P1 : port == 1 ? AT_C_P2 : port == 2 ? AT_C_P3 : AT_C_P4; }
+static unsigned port_colour(int port) { return port == 0 ? AT_C_P1 : port == 1 ? AT_C_P2 : port == 2 ? AT_C_P3 : port == 3 ? AT_C_P4 : port == 4 ? 0xC77DFFFFu : 0xFF9A3DFFu; }
+unsigned at_part_port_colour(int port) { return port_colour(port < 0 ? 0 : port); }
 
 /* The brackets of one cursor on a cell. A lone cursor draws them outside the cell, as the focus brackets are; when several ports share the
  * cell each takes an inset of 2 + 3 * slot px inside it, so their sets never sit on top of each other. */

@@ -811,6 +811,13 @@ int gw_Geno_DefineThrownAs(int kind)
     return p < 0 ? -1 : r->p[p].thrown_as;
 }
 
+/* The resident throw stand-in bank budget (ftdata.c, GENO_THROW_BANKS): MELEE_THROW_BANKS lowers or raises it for a test; `def` otherwise. */
+int gw_Geno_ThrowBankLimit(int def)
+{
+    const char* e = getenv("MELEE_THROW_BANKS");
+    return e != NULL && *e ? atoi(e) : def;
+}
+
 /* A .gnsnd (tools/geno/audio.py): 32-byte big-endian header, then s16 big-endian samples. Decoded to native s16, or NULL (and *why) when it is not a
  * valid v1 file. Pure: the tests feed it blobs. */
 static int16_t* gn_gnsnd_decode(const unsigned char* b, uint32_t len, int* frames, int* channels, const char** why)

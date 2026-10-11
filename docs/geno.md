@@ -2697,7 +2697,7 @@ attaches packages on the fighter's states. `Geno_FxFramePost` calls `gw_Fx_Drive
 a set, before `gw_Fx_Frame`, with its motion state, subaction (`anim_id`), animation frame, Geno's `action_time`,
 situation, facing and parts table. A state is matched by `subaction`; a call fires once the state's clock (`animation`
 = the animation frame, `game` = frames since the state began) reaches `frame`, on `joint` (a depth-first index in the model's tree; the runtime walks that tree rather than trusting a remapped parts slot) x T(`offset`) R(`rotation`, degrees, X then Y then Z)
-S(`scale`), the package's axes taken as the joint's own. `follow: false` takes the matrix once (world-fixed). Ends:
+S(`scale`), the package's axes taken as the joint's own. A call may also name a second joint (`joint2`, a depth-first index like `joint`): the effect's origin is then the midpoint of the two joints' world positions, every frame, with `joint`'s axes (a ball between two hands); `offset` still applies in `joint`'s frame. `follow: false` takes the matrix once (world-fixed). Ends:
 `off` / `detach` at `end_frame`; `state_exit` (and `owner_destroy`) when the motion state or subaction changes or
 the state is entered again; `emitter_life` instances end themselves when their emission is over (one whose emitter
 never ends goes at state exit). `when`: a call is taken when every condition it lists holds (the other branch is

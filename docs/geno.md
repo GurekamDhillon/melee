@@ -3027,7 +3027,7 @@ a Mario fireball and a hit, Illusion, Firefox directions). Retail Fox against th
 3. **Kind-guard sweep**: `grep -rn "Ft_Kind_<Template>" src/melee` and `grep "fp->kind"` in `kinds/ft<X>/`: every test of the fighter's own kind that is not `ftLib_GetKind`/`ftGetTemplateKind` gets the latter.
    Switches over `fp->kind` that list other fighters but not the template are fine as they are.
 4. **Generator** (workspace): a `FIGHTERS[...]` entry in `ports/ir/tools/retail_define.py` (kind, code, `data` symbol, rows, prefix, key, name, motions, dir, attrs struct, costumes with team colours, ai, kirby,
-   `thrown_as`); if `ext_layout` cannot read the attribute struct (a new comment style, an embedded struct) teach it (`NESTED`); `tools/geno/define.py` and `geno.schema.json`: the `template` enum and the row count.
+   `thrown_as`, and a plan file name of its own: mod files are one namespace, so two packages that both ship `plan.json` load each other's plan; Fox ships `GnFox_plan.json`); if `ext_layout` cannot read the attribute struct (a new comment style, an embedded struct) teach it (`NESTED`); `tools/geno/define.py` and `geno.schema.json`: the `template` enum and the row count.
 5. **Export and check**: `python tools/gc_extract.py "$GW_ISO_VANILLA" _build/<x>/disc --only Pl<Code>` (+ copy `PlCo.dat`); `GW_MELEE=<game> python ports/ir/tools/retail_define.py <name> --disc-dir ... --out _build/<x>/geno-<name>`;
    `python -m tools.geno.check <dir>`; re-export Falcon and `diff -r` against the previous output (must be identical).
 6. **Parity**: mods folder with `geno-lab` + the package + `enabled.txt`; `run_parity.sh <run> <retail token> all` and `run_parity.sh <run> geno:<key> all`; `parity_diff.py`. Add Fox-style extras to

@@ -80,7 +80,7 @@ def pick_template(emitters):
     for e in emitters:
         if e['kind'] == 'particle' and e.get('material', {}).get('blend') == 'add':
             return e
-    return next(e for e in emitters if e['kind'] == 'particle')
+    return next((e for e in emitters if e['kind'] == 'particle'), emitters[0])
 
 
 def clone(t, name, **kw):
@@ -134,6 +134,9 @@ def build_emitter(t, name, life, scale_base, scale_keys, alpha_keys, rgb, hdr, t
     return e
 
 
+SKIP = set()
+
+
 def adapt_package(pdir, tint, radius):
     name = pdir.name
     j = pdir / f'{name}.gfx.json'
@@ -143,16 +146,19 @@ def adapt_package(pdir, tint, radius):
     for e in ems:
         m = e.setdefault('material', {})
         b = m.get('bloom') or {}
-        if m.get('blend') == 'add' and b.get('intensity', 0) > 0:
+        if 'glare' in SKIP:
+            pass
+        elif m.get('blend') == 'add' and b.get('intensity', 0) > 0:
             b['tint'] = tint
             b['radius'] = radius
             if e['kind'] == 'mesh':
                 b['threshold'] = 0.35
                 b['intensity'] = max(b['intensity'], 0.9)
             m['bloom'] = b
-        elif m.get('blend') != 'add' and e['kind'] == 'particle' and e['particle'].get('shape') == 'billboard':
+        elif 'soft' not in SKIP and m.get('blend') != 'add' and e['kind'] == 'particle' and e['particle'].get('shape') == 'billboard':
             m['soft_particle'] = {'distance': 1.5, 'volume': 1}
     t = pick_template(ems)
+    n_orig = len(ems)
     if 'tex' not in str(d.get('textures')):
         pass
     tex_dir = pdir / 'tex'
@@ -163,6 +169,8 @@ def adapt_package(pdir, tint, radius):
             d['textures'].append(tex_entry(n))
     cyan = [0.45, 0.8, 1.0]
     beam = next((e for e in ems if e['kind'] == 'mesh' and e['name'].startswith(('bas_', 'ribbon_'))), None)
+    if 'new' in SKIP:
+        beam = None
     if beam is not None and name.endswith(('Tap', 'Mid', 'Full', 'Super')):
         blife = max(beam['particle']['life'], 20)
         head_z = beam['transform']['translate'][2]
@@ -185,7 +193,7 @@ def adapt_package(pdir, tint, radius):
             [0.0, 0.0, head_z], rot, em(4, blife, 10),
             [sampler(0, 'rx_ring', (0.0, 0.0)), sampler(1, 'rx_noise', (0.015, -0.02))], shader=dis,
             param=[[0.05, 0, 0, 0.0], [0.9, 0, 0, 1.0]], extra={'ring': {'inner': 0.62, 'segments': 56}}))
-    if name.endswith(('Charge', 'SuperCharge')):
+    if name.endswith(('Charge', 'SuperCharge')) and 'new' not in SKIP:
         em2 = {'start': 0, 'duration': 0, 'one_time': False, 'rate': 1.0, 'rate_random': 0.0, 'interval': 14,
                'interval_random': 0.0, 'position_random': 0.0, 'by_distance': False,
                'fade': {'on_stop': True, 'alpha_frames': 0, 'fade_in_frames': 0, 'alpha_fade_in': False, 'scale_fade_in': False}}
@@ -195,7 +203,7 @@ def adapt_package(pdir, tint, radius):
             em2, [sampler(0, 'rx_ring')], extra={'ring': {'inner': 0.7, 'segments': 48}})
         e['transform']['translate'] = list(t['transform']['translate'])
         ems.append(e)
-    if name.endswith('Muzzle'):
+    if name.endswith('Muzzle') and 'new' not in SKIP:
         ems.append(build_emitter(
             t, 'rx_ring_muzzle', 14, 12.0, [[0.2, 0.2, 0.2, 0.0], [1.0, 1.0, 1.0, 0.4], [1.9, 1.9, 1.9, 1.0]],
             [[0.0, 0, 0, 0.0], [1.0, 0, 0, 0.1], [0.8, 0, 0, 0.5], [0.0, 0, 0, 1.0]], [0.7, 0.9, 1.0], 3.4,
@@ -204,6 +212,11 @@ def adapt_package(pdir, tint, radius):
              'position_random': 0.0, 'by_distance': False,
              'fade': {'on_stop': True, 'alpha_frames': 0, 'fade_in_frames': 0, 'alpha_fade_in': False, 'scale_fade_in': False}},
             [sampler(0, 'rx_ring')], extra={'ring': {'inner': 0.7, 'segments': 48}}))
+    # The runtime loads at most FX_MAX_EMITTERS (32) emitters per package and drops the rest, so a package the converter
+    # already filled (Mid/Full/Tap/Super have 50+) would lose anything appended: the demo's emitters go FIRST and the
+    # tail is trimmed to the cap (a demo shortcut; a real fix raises the cap or splits the package).
+    added = ems[n_orig:]
+    d['emitters'] = (added + ems[:n_orig])[:32]
     j.write_text(json.dumps(d), encoding='utf-8')
     return name
 
@@ -212,8 +225,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('src'); ap.add_argument('dst')
     ap.add_argument('--tint', default='0.55,0.8,1.0'); ap.add_argument('--radius', type=float, default=2.5)
-    ap.add_argument('--no-events', action='store_true')
+    ap.add_argument('--no-events', action='store_true'); ap.add_argument('--skip', default='', help='comma list: glare,soft,new (ablation)')
     a = ap.parse_args()
+    SKIP.update(x for x in a.skip.split(',') if x)
     src, dst = Path(a.src), Path(a.dst)
     if dst.exists():
         shutil.rmtree(dst)
@@ -229,7 +243,7 @@ def main():
                 f = next(c['frame'] for c in s['calls'] if 'Muzzle' in c['package'])
                 big = s['state'] in ('KameFull', 'KameSuper')
                 s['calls'].append({'frame': f, 'shake': {'amp': 0.012 if big else 0.008, 'frames': 16 if big else 10, 'seed': 5},
-                                   'flash': {'color': [0.75, 0.9, 1.0], 'alpha': 0.55 if big else 0.35, 'frames': 6}})
+                                   'flash': {'color': [0.85, 0.95, 1.0], 'alpha': 0.5 if big else 0.3, 'frames': 5}})
         bj.write_text(json.dumps(b, indent=1), encoding='utf-8')
     print('adapted', len(done), 'packages:', ', '.join(done))
 

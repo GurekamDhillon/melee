@@ -18,6 +18,7 @@ void gw_ax_frame_tick(void);
 
 /* Geno slice 6: play a native 32 kHz s16 clip (host-owned, outlives the process) summed into the main mix; counters: 0 clips started, 1 frames mixed. */
 int gw_Audio_PlayClip(const int16_t *pcm, int frames, int channels, int volume);
+int gw_Audio_StopClips(const int16_t *pcm); /* every playing instance of that clip; returns how many */
 uint32_t gw_Audio_ClipStat(int which);
 
 /* AI state tracked by shim_misc.c, applied by the mixer in shim_ax.c. */

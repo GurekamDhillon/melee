@@ -110,7 +110,7 @@ static void run_loose_tests(void) {
     CHECK(cat.f[nl_mod(&cat, 201)->f0].cat == NC_FC_STAGE && !strcmp(cat.f[nl_mod(&cat, 201)->f0].stem, "GrOp.dat"));
     CHECK(nl_mod(&cat, 202)->nf == 2 && !strcmp(cat.f[nl_mod(&cat, 202)->f0 + 1].stem, "GrPs1.dat"));
     CHECK(nl_mod(&cat, 203)->tab == NC_TAB_STAGES && !nc_installable_mod(&cat, nl_mod(&cat, 203)));
-    CHECK(strstr(nc_why_not(&cat, nl_mod(&cat, 203)), "Custom stage: needs conversion") != NULL);
+    CHECK(strstr(nc_why_not(&cat, nl_mod(&cat, 203)), "no .zip stage package") != NULL);
     CHECK(nl_mod(&cat, 204)->tab == NC_TAB_EFFECTS && nc_installable_mod(&cat, nl_mod(&cat, 204)));
     CHECK(cat.f[nl_mod(&cat, 204)->f0].cat == NC_FC_EFFECT && !strcmp(cat.f[nl_mod(&cat, 204)->f0].stem, "EfFxData.dat"));
     CHECK(nl_mod(&cat, 205)->tab == NC_TAB_EFFECTS && !nc_installable_mod(&cat, nl_mod(&cat, 205)) && cat.f[nl_mod(&cat, 205)->f0].cat == NC_FC_FIGHTER);

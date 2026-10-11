@@ -2327,6 +2327,7 @@ static void lbAudioAx_MexStageAudio(void)
 {
     extern int Mex_GrAudioCount(void);
     extern int Mex_GrAudioByte(int, int);
+    extern int Mex_GrAudioFirst(void); /* 71 when only custom stage mods supply rows: retail rows stay */
     int cap = ARRAY_SIZE(s32_arr_803BB6B0);
     int n = Mex_GrAudioCount();
     int i, k, filled, tail;
@@ -2339,7 +2340,7 @@ static void lbAudioAx_MexStageAudio(void)
                  cap);
         n = cap;
     }
-    for (i = filled = 0; i < n; i++) {
+    for (i = filled = Mex_GrAudioFirst(); i < n; i++) {
         int ok = 1;
         for (k = 0; k < 3; k++) {
             int b = Mex_GrAudioByte(i, k);

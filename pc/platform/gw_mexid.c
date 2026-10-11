@@ -35,6 +35,10 @@ extern const char *gw_Mex_FtAnimFile(int k);
 extern const char *gw_Mex_KirbyCapFile(int k);
 extern int gw_Mex_ExtForInternal(int k);
 extern const char *gw_Mex_FighterName(int ext);
+extern int gw_ModStage_Count(void);
+extern int gw_ModStage_ExtAt(int i);
+extern const char *gw_ModStage_File(int i);
+extern const char *gw_ModStage_Name(int i);
 extern int gw_Geno_DefineCount(void); /* slice 7: native defines are fighters of the table (gw_Geno_DefineOnlineInfo) */
 
 #define MX_CK_MEX0 0x22 /* ChKind_Mex0: m-ex slot s is CharacterKind 0x22 + s */
@@ -363,6 +367,14 @@ static void mx_build(mx_table *t) {
         }
         h = mx_stage_identity(file);
         if (h != 0) mx_add(t, GW_MEXID_STAGE, st.external_id, h, name);
+    }
+    /* custom stage mods on a vanilla disc (gw_mex_modstage.inc): identity = the stage file's content, like an m-ex added stage */
+    for (i = 0; i < gw_ModStage_Count(); ++i) {
+        const char *file = gw_ModStage_File(i);
+        uint64_t h = mx_stage_identity(file);
+        char name[40];
+        snprintf(name, sizeof name, "%s", gw_ModStage_Name(i));
+        if (h != 0 && gw_MexId_FindStage(gw_ModStage_ExtAt(i)) < 0) mx_add(t, GW_MEXID_STAGE, gw_ModStage_ExtAt(i), h, name);
     }
     gw_log("mexid: %d identities (%u fighter/stage bytes hashed) in %lu ms", t->n,
            (unsigned) (mx_bytes_hashed - before), (unsigned long) (GetTickCount() - t0));

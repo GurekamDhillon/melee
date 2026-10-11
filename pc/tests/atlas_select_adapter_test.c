@@ -544,9 +544,96 @@ static void sss_through_the_shims(void)
     gw_Ui_SssStagesEnd(); CHECK(gw_Ui_SssGet(GS_SSSG_N, 0) == AT_SSS_MAX && gw_Ui_SssGet(GS_SSSG_TYPE, AT_SSS_MAX - 1) == 3);
 }
 
+/* the Melee-style select with free hands, through the host shims: the stick moves a hand, what it is over decides what A does, a slider is dragged,
+ * the mouse is the first human's hand */
+static void css_free_hands_through_the_shims(void)
+{
+    int h, i, moved_to_tile = -1;
+    unsigned e;
+    AtLayout L;
+    AtCssGeom g;
+    GsUiSlot *u;
+    putenv("MELEE_CSS_PUCK=1"); putenv("MELEE_CSS_FREEHAND=1");
+    reset_ui();
+    css_open_vs(29, 0);
+    CHECK(gw_Ui_CssGet(GS_CSSG_PUCK, 0) == 1 && gw_Ui_CssGet(GS_CSSG_FREE, 0) == 1);
+    h = open_css(); fill_css(h, 30);
+    u = slot_of(h);
+    CHECK(u->sc.primary == AT_PRIMARY_CSS);
+    for (i = 0; i < 4; i++) { gw_Ui_SelCard(h, i, i == 0 ? 1 : 0, i == 0 ? "" : "", "", "", -1, 9, 0, 0u); gw_Ui_SelCardX(h, i, 1, 0, 0, -1, 0, 0, -1); gw_Ui_SelCursorX(h, i, 0, 0, i); }
+    gw_Ui_SelStatus(h, 0, 4, "");
+    gw_Ui_CssCols(gw_Ui_SelCols(h));
+    draw_once();
+    CHECK(u->hits.n > 30);
+    /* the first move homes the hand on its own panel: over the coin's dock */
+    e = gw_Ui_SelHand(h, 0, 0, 0);
+    CHECK(gs_hand[0].valid == 1 && gs_selm_css.p[0].card == 0 && gs_selm_css.p[0].zone == AT_ZONE_PUCK);
+    /* the stick up: the hand rises out of the panel; its own coin comes along; it ends over a tile */
+    for (i = 0; i < 60 && moved_to_tile < 0; i++) {
+        e |= gw_Ui_SelHand(h, 0, 0, 80);
+        if (gs_selm_css.p[0].card < 0 && gs_selm_css.p[0].blank == 0) moved_to_tile = i;
+    }
+    CHECK(moved_to_tile > 0 && moved_to_tile < 40 && (e & AT_CE_FORWARD) && gs_selm_css.p[0].hold == 1 && gs_selm_css.p[0].ck == AT_CK_NONE);
+    CHECK(gs_hand[0].y < 262.0f);
+    /* A on the fighter it is over: the coin is set down there */
+    e = gw_Ui_CssStep(0, AT_CI_A, 0, 100);
+    CHECK((e & AT_CE_FORWARD) && gs_selm_css.p[0].hold == 0 && gs_selm_css.p[0].ck >= 0);
+    /* the speed is retail's: a full stick (80) moves 13 px a frame, a gentle one (30) a tenth of that and under the dead zone nothing */
+    { float x0 = gs_hand[0].x; gw_Ui_SelHand(h, 0, 14, 0); CHECK(gs_hand[0].x == x0);   /* 14^2 = 196 < 200 */
+      gw_Ui_SelHand(h, 0, 80, 0); CHECK(gs_hand[0].x - x0 > 12.0f && gs_hand[0].x - x0 < 14.0f);
+      x0 = gs_hand[0].x; gw_Ui_SelHand(h, 0, 30, 0); CHECK(gs_hand[0].x - x0 > 1.2f && gs_hand[0].x - x0 < 1.7f); }
+    /* a CPU in port 2: the slider is grabbed on its handle, dragged by the stick, let go with A */
+    gw_Ui_CssPort(1, AT_CSS_CPU, 4, 0, 9, 1);
+    gw_Ui_SelCard(h, 1, 2, "KIRBY", "", "KI", -1, 9, 0, 0u);
+    draw_once();
+    at_layout(640.0f, u->sc.preset, &L); at_csv_geometry(&u->sc, &u->view, &L, &g);
+    gs_hand[0].x = g.panel[1].notch[8].x + g.panel[1].notch[8].w * 0.5f; gs_hand[0].y = g.panel[1].notch[8].y + 7.0f; gs_hand[0].user = 1;
+    gw_Ui_SelHand(h, 0, 0, 0);
+    CHECK(gs_selm_css.p[0].card == 1 && gs_selm_css.p[0].zone == AT_ZONE_LEVEL && gs_selm_css.p[0].val == 9);
+    e = gw_Ui_CssStep(0, AT_CI_A, 0, 101);
+    CHECK((e & AT_CE_FORWARD) && gs_selm_css.p[0].drag == 1);
+    for (i = 0; i < 12; i++) gw_Ui_SelHand(h, 0, -80, 0);                                   /* the stick left drags the handle left */
+    CHECK(gs_selm_css.p[1].cpu_lv < 6 && gs_selm_css.p[1].cpu_lv >= 1 && gs_hand[0].y == g.panel[1].notch[0].y + 7.0f);
+    for (i = 0; i < 40; i++) gw_Ui_SelHand(h, 0, -80, 0);
+    CHECK(gs_selm_css.p[1].cpu_lv == 1);
+    for (i = 0; i < 80; i++) gw_Ui_SelHand(h, 0, 80, 0);
+    CHECK(gs_selm_css.p[1].cpu_lv == 9);
+    gw_Ui_SelHand(h, 0, -80, 0); gw_Ui_SelHand(h, 0, -80, 0);
+    i = gs_selm_css.p[1].cpu_lv;
+    e = gw_Ui_CssStep(0, AT_CI_A, 0, 102);
+    CHECK((e & AT_CE_FORWARD) && gs_selm_css.p[0].drag == -1 && gs_selm_css.p[1].cpu_lv == i);   /* A lets go; the level stays */
+    /* the mouse is the hand of the port it plays for: moving it puts the hand under the pointer; a click is A; a press on a notch takes the handle there */
+    reset_ui();
+    css_open_vs(29, 0); gw_Ui_CssPort(0, AT_CSS_HMN, AT_CK_NONE, 0, 9, 0); gw_Ui_CssPort(1, AT_CSS_CPU, 4, 0, 9, 1);
+    h = open_css(); fill_css(h, 30); u = slot_of(h);
+    for (i = 0; i < 4; i++) { gw_Ui_SelCard(h, i, i == 0 ? 1 : i == 1 ? 2 : 0, "", "", "", -1, 9, 0, 0u); gw_Ui_SelCursorX(h, i, 0, 0, i); }
+    gw_Ui_CssCols(gw_Ui_SelCols(h)); draw_once();
+    at_layout(640.0f, u->sc.preset, &L); at_csv_geometry(&u->sc, &u->view, &L, &g);
+    gs_sel.qn = 0;
+    g_mx = 5.0f; g_my = 5.0f; g_mbuttons = 0; g_mwheel = 0.0f; gs_sel_tick(u);                     /* the first sample only primes */
+    { AtRect t = at_csv_tile_rect(&g, 4); g_mx = t.x + t.w * 0.5f; g_my = t.y + t.h * 0.5f; }
+    gs_sel_tick(u);
+    CHECK(gs_hand[0].valid == 1 && gs_hand[0].x == g_mx && gs_selm_css.p[0].cur == 4 && gs_selm_css.p[0].card == -1 && gs_selm_css.p[0].blank == 0);
+    g_mbuttons = 1; gs_sel_tick(u);
+    CHECK(gs_sel.qn >= 1 && gs_sel.q[gs_sel.qn - 1].kind == GS_SELEV_PAD && gs_sel.q[gs_sel.qn - 1].a == 1);   /* the click is the port's A */
+    g_mbuttons = 0; gs_sel_tick(u);
+    g_mx = g.panel[1].notch[2].x + 3.0f; g_my = g.panel[1].notch[2].y + 7.0f; gs_sel_tick(u);
+    CHECK(gs_selm_css.p[0].card == 1 && gs_selm_css.p[0].zone == AT_ZONE_LEVEL && gs_selm_css.p[0].val == 3);
+    g_mbuttons = 1; gs_sel_tick(u);
+    CHECK(gs_selm_css.p[1].cpu_lv == 3);                                                          /* a press on a notch: the handle jumps there */
+    e = gw_Ui_CssStep(0, AT_CI_A, 0, 120); CHECK(gs_selm_css.p[0].drag == 1);                      /* the adapter turns the press into A: the handle is held */
+    g_mx = g.panel[1].notch[7].x + 3.0f; gs_sel_tick(u);
+    CHECK(gs_selm_css.p[1].cpu_lv == 8);                                                          /* dragging with the button down */
+    g_mbuttons = 0; gs_sel_tick(u);
+    CHECK(gs_sel.q[gs_sel.qn - 1].kind == GS_SELEV_PAD && gs_sel.q[gs_sel.qn - 1].a == 3);        /* the button coming up is let go */
+    gw_Ui_CssStep(0, AT_CI_A, 0, 121); CHECK(gs_selm_css.p[0].drag == -1 && gs_selm_css.p[1].cpu_lv == 8);
+    putenv("MELEE_CSS_PUCK=0");
+}
+
 int main(void)
 {
     lua_State *L = luaL_newstate();
+    putenv("MELEE_CSS_PUCK=0");                                    /* the checks below pin the older pick-by-A select; the Melee-style one has its own */
     gs.L = L; gs.cur = 0; gs.console = 0;
     snprintf(gs.s[0].id, sizeof gs.s[0].id, "console");
     snprintf(gs.s[1].id, sizeof gs.s[1].id, "envoy/main");
@@ -555,7 +642,7 @@ int main(void)
     lua_newtable(L); gs_push_ui(L); lua_setfield(L, -2, "ui"); lua_setglobal(L, "gd");
     filled_and_drawn(); closed_on_every_exit(); owner_native_vs_mod(); mouse_port(); poll_is_big_endian(); fields_land_where_the_render_reads_them();
     art_decode_goes_to_the_kit(); atlas_off_or_no_roles_keeps_the_legacy_drawing(); stack_full_refuses(); held_menu_and_hold_do_not_matter();
-    can_open_before_routing(); a_select_opened_in_a_scene_init_survives_the_ending_scene(); a_closed_settings_door_lets_the_select_open(); art_drop_reaches_the_kit(); known_match_types(); css_through_the_shims(); css_zelda_sheik_and_online_through_the_shims(); css_mouse_through_the_shims(); sss_through_the_shims();
+    can_open_before_routing(); a_select_opened_in_a_scene_init_survives_the_ending_scene(); a_closed_settings_door_lets_the_select_open(); art_drop_reaches_the_kit(); known_match_types(); css_through_the_shims(); css_zelda_sheik_and_online_through_the_shims(); css_mouse_through_the_shims(); sss_through_the_shims(); css_free_hands_through_the_shims();
     lua_close(L);
     ATLAS_DONE("atlas select adapter");
 }

@@ -116,7 +116,7 @@ typedef struct {
     AtFocusPos focus; int scroll; AtExplainer ex;
     char key_label[AT_MAX_KEYS][AT_STR]; unsigned char key_shown[AT_MAX_KEYS];
     char counter[AT_STR]; AtNote note; AtDialog dialog; double opened_ms; unsigned port_rgba;
-    struct { int active, block, index, card, zone, hold, hold_port; } cursor[AT_MAX_CURSORS];   /* one per port on a shared screen: card -1 = on the grid, else the band's card */
+    struct { int active, block, index, card, zone, hold, hold_port; float hx, hy; int free, blank, drag; } cursor[AT_MAX_CURSORS];   /* one per port on a shared screen: card -1 = on the grid, else the band's card */
     int tab;                                          /* the active tab */
     int progress;                                     /* 0..1000, the loading bar */
     const struct AtRoomView *room;                    /* borrowed: the online room's view, set by the host every frame, NULL when the screen is released */

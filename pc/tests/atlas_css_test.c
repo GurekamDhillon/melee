@@ -409,10 +409,13 @@ static void puck_cpu(void)
     CHECK(c.p[0].card == 1 && c.p[0].zone == AT_ZONE_TYPE);                                    /* an empty slot: its type part */
     CHECK(at_css_zone_ok(&c, 0, 1, AT_ZONE_TYPE) && !at_css_zone_ok(&c, 0, 1, AT_ZONE_LEVEL) && !at_css_zone_ok(&c, 0, 1, AT_ZONE_PUCK));
     ev = press(&c, 0, AT_CI_A, 0, 6);
-    CHECK((ev & AT_CE_FORWARD) && c.p[1].kind == AT_CSS_CPU && c.p[1].ck == AT_CK_RANDOM && c.p[1].cpu_lv == 9 && c.p[0].zone == AT_ZONE_TYPE);   /* a CPU takes the Random tile, the hand stays on the button */
+    CHECK((ev & AT_CE_FORWARD) && c.p[1].kind == AT_CSS_CPU && c.p[1].ck >= 0 && c.p[1].ck < 29 && c.p[1].cpu_lv == 9 && c.p[0].zone == AT_ZONE_TYPE);   /* a CPU rolls a real tile, the hand stays on the button */
+    c.p[1].costume = 0;
     CHECK(at_css_blocker(&c, b, sizeof b) == NULL);                                            /* both are in: ready */
     press(&c, 0, 0, AT_CI_DOWN, 7);
-    CHECK(c.p[0].zone == AT_ZONE_LEVEL);                                                       /* down from the type button: no costume row for Random, so the slider */
+    CHECK(c.p[0].zone == AT_ZONE_COSTUME);                                                     /* down from the type button: the costume stepper, */
+    press(&c, 0, 0, AT_CI_DOWN, 71);
+    CHECK(c.p[0].zone == AT_ZONE_LEVEL);                                                       /* then the slider at the foot */
     press(&c, 0, 0, AT_CI_LEFT, 9); press(&c, 0, 0, AT_CI_LEFT, 10); press(&c, 0, 0, AT_CI_LEFT, 11);
     CHECK(c.p[1].cpu_lv == 6);                                                                  /* the slider */
     for (i = 0; i < 12; i++) press(&c, 0, 0, AT_CI_LEFT, 12 + i);
@@ -420,7 +423,7 @@ static void puck_cpu(void)
     for (i = 0; i < 12; i++) press(&c, 0, 0, AT_CI_RIGHT, 30 + i);
     CHECK(c.p[1].cpu_lv == 9);
     press(&c, 0, AT_CI_A, 0, 50); CHECK(c.p[1].cpu_lv == 1);                                    /* A steps and wraps */
-    press(&c, 0, 0, AT_CI_UP, 51);
+    press(&c, 0, 0, AT_CI_UP, 51); press(&c, 0, 0, AT_CI_UP, 511);
     CHECK(c.p[0].zone == AT_ZONE_PUCK && c.p[0].card == 1);
     press(&c, 0, AT_CI_A, 0, 53);
     CHECK(c.p[0].hold == 1 && c.p[0].target == 1 && c.p[0].card == -1);                         /* the hand carries the CPU's puck */
@@ -455,7 +458,7 @@ static void puck_retail(AtCss *unused)
     c.p[0].card = 1; c.p[0].zone = AT_ZONE_TYPE; c.p[1].kind = AT_CSS_OFF;
     at_css_set_pad(&c, 1, 1);
     press(&c, 0, AT_CI_A, 0, 1); CHECK(c.p[1].kind == AT_CSS_HMN && c.p[1].act == 1);          /* NA with a controller plugged in: a human, that hand wakes */
-    press(&c, 0, AT_CI_A, 0, 2); CHECK(c.p[1].kind == AT_CSS_CPU && c.p[1].ck == AT_CK_RANDOM);   /* then a CPU, which rolls the Random tile */
+    press(&c, 0, AT_CI_A, 0, 2); CHECK(c.p[1].kind == AT_CSS_CPU && c.p[1].ck >= 0 && c.p[1].ck < 29);   /* then a CPU, which rolls a real tile */
     press(&c, 0, AT_CI_A, 0, 3); CHECK(c.p[1].kind == AT_CSS_OFF && c.p[1].ck == AT_CK_NONE);   /* then NA */
     c.p[1].kind = AT_CSS_OFF; at_css_set_pad(&c, 1, 0);
     press(&c, 0, AT_CI_A, 0, 4); CHECK(c.p[1].kind == AT_CSS_CPU);                              /* no controller there: NA goes to CPU */
@@ -464,9 +467,10 @@ static void puck_retail(AtCss *unused)
     CHECK(at_css_zone_ok(&c, 0, 1, AT_ZONE_TYPE) && at_css_zone_ok(&c, 0, 0, AT_ZONE_TYPE) && !at_css_zone_ok(&c, 0, 1, AT_ZONE_PUCK));
     c.p[1].kind = AT_CSS_OFF; c.p[1].ck = AT_CK_NONE;
     c.p[0].card = 0; c.p[0].zone = AT_ZONE_TYPE;
-    press(&c, 0, AT_CI_A, 0, 5); CHECK(c.p[0].kind == AT_CSS_CPU && c.p[0].act == 1 && c.p[0].ck == AT_CK_RANDOM);
-    ev = press(&c, 0, 0, AT_CI_DOWN, 6); CHECK((ev & AT_CE_MOVE) && c.p[0].zone == AT_ZONE_LEVEL);   /* the hand still moves */
-    press(&c, 0, 0, AT_CI_UP, 6);
+    press(&c, 0, AT_CI_A, 0, 5); CHECK(c.p[0].kind == AT_CSS_CPU && c.p[0].act == 1 && c.p[0].ck >= 0);
+    ev = press(&c, 0, 0, AT_CI_DOWN, 6); CHECK((ev & AT_CE_MOVE) && c.p[0].zone == AT_ZONE_COSTUME);   /* the hand still moves */
+    press(&c, 0, 0, AT_CI_DOWN, 61); CHECK(c.p[0].zone == AT_ZONE_LEVEL);
+    press(&c, 0, 0, AT_CI_UP, 6); press(&c, 0, 0, AT_CI_UP, 62);
     press(&c, 0, AT_CI_A, 0, 7); press(&c, 0, 0, AT_CI_LEFT, 7); press(&c, 0, AT_CI_A, 0, 8);          /* so it can still grab its own coin and set it down */
     CHECK(c.p[0].hold == 0 && c.p[0].ck >= 0 && c.p[0].kind == AT_CSS_CPU);
     /* spatial moves between the parts: type button top-right, team top-left, the dock beside the portrait, costume, slider at the bottom */
@@ -501,6 +505,60 @@ static void puck_retail(AtCss *unused)
     /* and a hand that moves up onto the roster with its own coin at home takes the coin with it */
     ev = press(&c, 0, 0, AT_CI_UP, 14);
     CHECK((ev & AT_CE_FORWARD) && c.p[0].hold == 1 && c.p[0].card == -1 && c.p[0].target == 0);
+}
+
+/* free hands (Melee's analog cursor): the host says what a hand is over; A, B, X and Y act on that */
+static void puck_free(void)
+{
+    AtCss c; unsigned ev; int i, ck1;
+    fresh_puck(&c, 0x0, 0, 29);
+    c.free = 1;
+    CHECK(c.p[0].card == 0 && c.p[0].hold == 0);
+    ev = at_css_hand_over(&c, 0, 0, 3, 0, 0);                                                    /* the hand leaves the panel and is over tile 3 */
+    CHECK((ev & AT_CE_FORWARD) && c.p[0].hold == 1 && c.p[0].card == -1 && c.p[0].cur == 3 && c.p[0].blank == 0);   /* your coin comes along */
+    press(&c, 0, 0, AT_CI_RIGHT, 1); CHECK(c.p[0].cur == 3);                                       /* the direction pad does not move a free hand */
+    at_css_hand_over(&c, 0, 0, -1, 0, 0); CHECK(c.p[0].blank == 1);
+    ev = press(&c, 0, AT_CI_A, 0, 2); CHECK((ev & AT_CE_BACK) && c.p[0].hold == 1 && c.p[0].ck == AT_CK_NONE);   /* a coin set down on nothing: the blip */
+    at_css_hand_over(&c, 0, 0, 5, 0, 0);
+    ev = press(&c, 0, AT_CI_A, 0, 3); CHECK((ev & AT_CE_FORWARD) && c.p[0].ck == c.ck[c.vis[5]] && c.p[0].hold == 0);
+    at_css_hand_over(&c, 0, 0, 6, 0, 0);
+    ev = press(&c, 0, AT_CI_A, 0, 4); CHECK(ev == 0 && c.p[0].hold == 0);                         /* a free hand over a tile with no coin: nothing */
+    at_css_hand_over(&c, 0, 0, -1, 0, 0);
+    ev = press(&c, 0, AT_CI_A, 0, 5); CHECK(ev == 0);                                              /* over nothing: nothing */
+    at_css_hand_over(&c, 0, 0, 5, 0, 0);
+    ev = press(&c, 0, AT_CI_A, 0, 6); CHECK((ev & AT_CE_FORWARD) && c.p[0].hold == 1 && c.p[0].from_ck == c.ck[c.vis[5]]);   /* A over the tile the coin lies on: lifted */
+    ev = at_css_hand_over(&c, 0, 1, 0, AT_ZONE_NONE, 0);                                           /* a coin in the hand moved onto a panel goes home */
+    CHECK((ev & AT_CE_BACK) && c.p[0].hold == 0 && c.p[0].ck == AT_CK_NONE && c.p[0].card == 0 && c.p[0].zone == AT_ZONE_NONE);
+    ev = press(&c, 0, AT_CI_A, 0, 7); CHECK(ev == 0);                                              /* over a panel's body: A does nothing */
+    /* the type button: hand over it, A */
+    ev = at_css_hand_over(&c, 0, 1, 1, AT_ZONE_TYPE, 0);
+    CHECK(c.p[0].card == 1 && c.p[0].zone == AT_ZONE_TYPE && c.p[0].blank == 0);
+    ev = press(&c, 0, AT_CI_A, 0, 8);
+    CHECK(c.p[1].kind == AT_CSS_CPU && c.p[1].ck >= 0 && c.p[1].ck < 29 && c.p[1].cpu_lv == 9);   /* the CPU stands on a rolled tile */
+    ck1 = c.p[1].ck;
+    for (i = 0; i < 40; i++) { AtCss d; fresh_puck(&d, 0x0, 0, 29); d.p[0].card = 1; d.p[0].zone = AT_ZONE_TYPE; d.rng = 77u + (unsigned) i * 31u; press(&d, 0, AT_CI_A, 0, 1); CHECK(d.p[1].ck >= 0 && d.p[1].ck < 29); }
+    /* the slider: A on the handle grabs it, the hand's position drags it, A lets go; A far from the handle does nothing */
+    ev = at_css_hand_over(&c, 0, 1, 1, AT_ZONE_LEVEL, 3);                                         /* the hand over notch 3, the handle at 9 */
+    ev = press(&c, 0, AT_CI_A, 0, 9); CHECK(c.p[0].drag == -1 && c.p[1].cpu_lv == 9);
+    ev = at_css_hand_over(&c, 0, 1, 1, AT_ZONE_LEVEL, 9);
+    ev = press(&c, 0, AT_CI_A, 0, 10); CHECK((ev & AT_CE_FORWARD) && c.p[0].drag == 1);
+    at_css_drag_to(&c, 0, 5); CHECK(c.p[1].cpu_lv == 5);
+    at_css_drag_to(&c, 0, 0); CHECK(c.p[1].cpu_lv == 1);
+    at_css_drag_to(&c, 0, 40); CHECK(c.p[1].cpu_lv == 9);
+    at_css_drag_to(&c, 0, 7); CHECK(c.p[1].cpu_lv == 7);
+    ev = at_css_hand_over(&c, 0, 0, 2, 0, 0); CHECK(ev == 0 && c.p[0].card == 1);                  /* a held slider locks the hand's hover */
+    ev = press(&c, 0, AT_CI_X, 0, 11); CHECK(c.p[0].drag == 1);                                    /* other buttons do not let go */
+    ev = press(&c, 0, AT_CI_A, 0, 12); CHECK(c.p[0].drag == -1 && c.p[1].cpu_lv == 7);
+    at_css_hand_over(&c, 0, 1, 1, AT_ZONE_LEVEL, 7);
+    press(&c, 0, AT_CI_A, 0, 13); CHECK(c.p[0].drag == 1);
+    ev = press(&c, 0, AT_CI_B, 0, 14); CHECK(c.p[0].drag == -1);                                   /* B lets go too */
+    /* the costume of the CPU: hover its panel, X/Y */
+    c.p[1].costume = 0;
+    at_css_hand_over(&c, 0, 1, 1, AT_ZONE_PUCK, 0);
+    press(&c, 0, AT_CI_X, 0, 15); CHECK(c.p[1].costume == 1);
+    /* the stepped mode still works with free off */
+    { AtCss d; fresh_puck(&d, 0x0, 0, 29); CHECK(d.free == 0); press(&d, 0, AT_CI_A, 0, 1); press(&d, 0, 0, AT_CI_RIGHT, 2); CHECK(d.p[0].cur == 1); }
+    (void) ck1; (void) ev;
 }
 
 static void puck_misc(void)
@@ -559,6 +617,6 @@ int main(void)
     skins255_stepper();
     ports_join(); legacy_rules_pick_undo_back(); legacy_rules_cards(); legacy_rules_costume(); legacy_rules_start();
     profile_rules(); legacy_rules_zelda(); tabs_visible(); ports_leave(); lobby_rules(); mouse_rules(); finish_state(); finish_leaves_mode_fields_group1(); finish_leaves_mode_fields_one_player();
-    puck_rules(); puck_cpu(); puck_misc(); puck_retail(NULL);
+    puck_rules(); puck_cpu(); puck_misc(); puck_retail(NULL); puck_free();
     ATLAS_DONE("atlas css");
 }

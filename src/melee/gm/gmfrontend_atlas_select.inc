@@ -55,6 +55,7 @@ extern void Ui_CssSetPortCk(int p, int ck, int costume);
 extern unsigned Ui_CssStep(int port, unsigned trig, unsigned rep, int frame);
 extern unsigned Ui_CssMouse(int port, int vis, int card, int moved, int click, int rclick, int wheel);
 extern void Ui_CssPad(int p, int ok);
+extern unsigned Ui_SelHand(int h, int port, int sx, int sy);
 extern unsigned Ui_CssZone(int port, int card, int zone, int value, int moved, int click, int rclick, int wheel);
 extern int Ui_CssGet(int what, int i);
 extern int Ui_CssBlocker(char* out, int cap);
@@ -82,14 +83,14 @@ enum { FA_CE_MOVE = 1, FA_CE_FORWARD = 2, FA_CE_BACK = 4, FA_CE_TOAST = 8, FA_CE
 enum { FA_CELL_LOCKED = 1, FA_CELL_DISABLED = 32 };
 enum { FA_CARD_OPEN = 1, FA_CARD_CLOSED = 2, FA_CARD_READY = 4, FA_CARD_FOCUS = 8 };
 enum { FA_SEL_CSS = 0, FA_SEL_SSS = 1, FA_SEL_LOAD = 2 };
-enum { FA_SELEV_CELL = 1, FA_SELEV_CARD = 2, FA_SELEV_TAB = 3, FA_SELEV_KEY = 4, FA_SELEV_WHEEL = 5, FA_SELEV_ZONE = 7 };
+enum { FA_SELEV_CELL = 1, FA_SELEV_CARD = 2, FA_SELEV_TAB = 3, FA_SELEV_KEY = 4, FA_SELEV_WHEEL = 5, FA_SELEV_ZONE = 7, FA_SELEV_PAD = 8, FA_SELEV_SOUND = 9 };
 #define FA_CI_SOUND 0x10000u /* a bit the model's mouse functions return when they changed a value directly (AT_CI_SOUND) */
 enum { FA_NOTE_INFO = 3 };
 /* Ui_CssGet / Ui_SssGet selectors (gw_script_ui_sel.inc GS_CSSG_*, GS_SSSG_*) */
 enum { FA_CG_KIND = 0, FA_CG_CK, FA_CG_COSTUME, FA_CG_CPU_LV, FA_CG_TEAM, FA_CG_CUR, FA_CG_CARD, FA_CG_TARGET, FA_CG_DONE = 10, FA_CG_N_VIS, FA_CG_TAB,
        FA_CG_COUNT_IN, FA_CG_TRAIN_H, FA_CG_TRAIN_C, FA_CG_N_SLOTS, FA_CG_ONLINE, FA_CG_TEAMS, FA_CG_TAB_OFFERED = 20, FA_CG_TAB_COUNT, FA_CG_VIS_SLOT,
        FA_CG_SLOT_CK, FA_CG_SLOT_OK, FA_CG_SLOT_TAB, FA_CG_VIS_OF_CK, FA_CG_MOUSE_PORT, FA_CG_MAX_HUMANS = 30, FA_CG_CPU_CARDS, FA_CG_MIN_TO_START,
-       FA_CG_ENTERING, FA_CG_DUMMY, FA_CG_HAS_SSS, FA_CG_HOLD = 36, FA_CG_ZONE, FA_CG_PUCK_VIS, FA_CG_READY, FA_CG_PUCK, FA_CG_ACT };
+       FA_CG_ENTERING, FA_CG_DUMMY, FA_CG_HAS_SSS, FA_CG_HOLD = 36, FA_CG_ZONE, FA_CG_PUCK_VIS, FA_CG_READY, FA_CG_PUCK, FA_CG_ACT, FA_CG_FREE, FA_CG_DRAG };
 enum { FA_SG_N = 0, FA_SG_TAB, FA_SG_CUR, FA_SG_DONE, FA_SG_GO, FA_SG_PICK_EXT, FA_SG_N_VIS, FA_SG_VIS_SLOT, FA_SG_EXT, FA_SG_TYPE, FA_SG_OK, FA_SG_ROW,
        FA_SG_TAB_OFFERED, FA_SG_TAB_COUNT, FA_SG_TAB_OF, FA_SG_CUR_TYPE, FA_SG_TAB_FOR_EXT };
 #define FA_RETAIL_FIGHTERS 26 /* the disc's own fighters are 0..25; everything above (m-ex and Geno definitions) is "added" */
@@ -607,6 +608,15 @@ static void fas_css_frame(void)
                 Ui_CssPort(p, FS_OFF, FS_CK_NONE, 0, 9, p & 1); /* a controller left mid-screen */
             }
         }
+        if (Ui_CssGet(FA_CG_FREE, 0)) { /* free hands: the control stick moves each port's hand (retail's curve, in the host); what it did (a coin lifted or put home) sounds like the buttons do */
+            unsigned hev = 0;
+            for (p = 0; p < 4; p++) {
+                if (Ui_CssGet(FA_CG_ACT, p)) {
+                    hev |= Ui_SelHand(fas.h, p, (int) HSD_PadCopyStatus[p].stickX, (int) HSD_PadCopyStatus[p].stickY);
+                }
+            }
+            fas_sfx(hev & ~(unsigned) FA_CE_MOVE);
+        }
         mp = Ui_CssGet(FA_CG_MOUSE_PORT, 0);
         before_cur = Ui_CssGet(FA_CG_CUR, mp);
         before_card = Ui_CssGet(FA_CG_CARD, mp);
@@ -627,6 +637,16 @@ static void fas_css_frame(void)
                     sfxMove();
                 }
                 mouse |= r & 0xFFFFu;
+            } else if (k == FA_SELEV_PAD) { /* the mouse as the hand's buttons: 1 left = A, 2 right = B, 3 the button coming up (lets go of a slider it holds) */
+                if (a == 1) {
+                    mouse |= FA_CI_A;
+                } else if (a == 2) {
+                    mouse |= FA_CI_B;
+                } else if (a == 3 && Ui_CssGet(FA_CG_DRAG, mp) >= 0) {
+                    mouse |= FA_CI_A;
+                }
+            } else if (k == FA_SELEV_SOUND) {
+                fas_sfx((unsigned) a & ~(unsigned) FA_CE_MOVE);
             } else if (k == FA_SELEV_KEY) {
                 mouse |= fas_key_bits(a);
             } else if (k == FA_SELEV_WHEEL) {

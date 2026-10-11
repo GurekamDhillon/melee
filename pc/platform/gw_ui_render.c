@@ -625,7 +625,11 @@ static void csv_geometry_ph(const AtScreen *sc, const AtView *v, const AtLayout 
     if (g->rows_vis > g->rows) g->rows_vis = g->rows;
     fh = csv_field_hand(v);
     g->first_row = 0;
-    if (fh >= 0 && g->rows > g->rows_vis) {                                  /* the hand's row stays in view, in the middle when it can */
+    if (fh >= 0 && v->cursor[fh].free) {                                     /* a free hand: the host scrolls the field (at its edges, with the wheel); the rows under the hand never move by themselves */
+        g->first_row = v->scroll < 0 ? 0 : v->scroll;
+        if (g->first_row > g->rows - g->rows_vis) g->first_row = g->rows - g->rows_vis;
+        if (g->first_row < 0) g->first_row = 0;
+    } else if (fh >= 0 && g->rows > g->rows_vis) {                           /* the hand's row stays in view, in the middle when it can */
         int fr = v->cursor[fh].index / g->cols;
         g->first_row = fr - g->rows_vis / 2;
         if (g->first_row > g->rows - g->rows_vis) g->first_row = g->rows - g->rows_vis;
@@ -722,6 +726,7 @@ static void csv_draw_panel(const AtScreen *sc, const AtView *v, const AtCssGeom 
     at_poly_rect(s, box.x + (float) AT_PX_CH_S, box.y, box.w - (float) AT_PX_CH_S, 4.0f, closed ? AT_C_LINE : col);   /* the nameplate edge */
     csv_coin(s, o, q->coin.x + 9.0f, q->coin.y + 9.0f, 9.0f, idx, 0);
     if (closed) {
+        hit_add(hc, box, AT_HIT_PANEL, idx, 0);
         csv_text(s, o, AT_R_ROW16, "CLOSED", box.x + box.w * 0.5f, box.y + box.h * 0.5f, AT_C_DIM, AT_ALIGN_CENTER, box.w - 16.0f);
         return;
     }
@@ -735,7 +740,7 @@ static void csv_draw_panel(const AtScreen *sc, const AtView *v, const AtCssGeom 
         else if (k->abbr[0] != '\0') at_text(s, o, AT_R_TITLE, k->abbr, q->portrait.x + q->portrait.w * 0.5f, q->portrait.y + q->portrait.h * 0.5f + 8.0f, AT_C_DIM, AT_ALIGN_CENTER, q->portrait.w - 4.0f);
     }
     csv_ring(s, q->portrait, 1.0f, AT_C_LINE);
-    hit_add(hc, box, AT_HIT_ZONE, idx, AT_ZONE_TYPE | (2 << 4));                  /* the panel's body: a click on an empty one is the type button too */
+    hit_add(hc, box, AT_HIT_PANEL, idx, 0);                                       /* the panel's body: a free hand over it is on the panel, not on a part */
     csv_type_button(s, o, q->type, k->kind, idx, zone == AT_ZONE_TYPE, hcol);
     hit_add(hc, q->type, AT_HIT_ZONE, idx, AT_ZONE_TYPE | (2 << 4));
     if (k->kind != 0 && k->team > 0 && q->team.w >= 20.0f) {
@@ -847,20 +852,23 @@ static void draw_css(const AtScreen *sc, const AtView *v, const AtLayout *L, con
         AtRect r;
         unsigned pc = at_part_port_colour(p);
         if (!v->cursor[p].active || v->cursor[p].card >= 0 || v->cursor[p].index < 0) continue;
+        if (v->cursor[p].free && v->cursor[p].blank) continue;                  /* a free hand between tiles brackets nothing */
         r = at_csv_tile_rect(&g, v->cursor[p].index);
         if (r.w <= 0.0f) continue;
         {
             int sl = 0, of = 0, q;
             for (q = 0; q < AT_MAX_CURSORS; q++) if (v->cursor[q].active && v->cursor[q].card < 0 && v->cursor[q].index == v->cursor[p].index) { if (q < p) sl++; of++; }
             at_cell_brackets(s, r, pc, sl, of);
-            csv_hand(s, r.x + r.w * 0.55f + (float) (fh % 3) * 3.0f, r.y + r.h * 0.45f, pc);
-            if (v->cursor[p].hold) csv_coin(s, o, r.x + r.w * 0.45f, r.y + r.h * 0.5f, 10.0f, v->cursor[p].hold_port, 1);
+            if (!v->cursor[p].free) {
+                csv_hand(s, r.x + r.w * 0.55f + (float) (fh % 3) * 3.0f, r.y + r.h * 0.45f, pc);
+                if (v->cursor[p].hold) csv_coin(s, o, r.x + r.w * 0.45f, r.y + r.h * 0.5f, 10.0f, v->cursor[p].hold_port, 1);
+            }
         }
         fh++;
     }
     /* a puck carried over the panels rides at the pointer's panel */
     for (p = 0; p < AT_MAX_CURSORS; p++) {
-        if (v->cursor[p].active && v->cursor[p].card >= 0 && v->cursor[p].hold && v->cursor[p].card < n) {
+        if (v->cursor[p].active && !v->cursor[p].free && v->cursor[p].card >= 0 && v->cursor[p].hold && v->cursor[p].card < n) {
             const AtCssPanel *q = &g.panel[v->cursor[p].card];
             csv_hand(s, q->portrait.x + q->portrait.w * 0.5f, q->portrait.y + q->portrait.h * 0.4f, at_part_port_colour(p));
             csv_coin(s, o, q->portrait.x + q->portrait.w * 0.35f, q->portrait.y + q->portrait.h * 0.45f, 11.0f, v->cursor[p].hold_port, 1);
@@ -868,7 +876,7 @@ static void draw_css(const AtScreen *sc, const AtView *v, const AtLayout *L, con
     }
     /* the hand on a panel: a pointer by the part it is on */
     for (p = 0; p < AT_MAX_CURSORS; p++) {
-        if (v->cursor[p].active && v->cursor[p].card >= 0 && !v->cursor[p].hold && v->cursor[p].card < n) {
+        if (v->cursor[p].active && !v->cursor[p].free && v->cursor[p].card >= 0 && !v->cursor[p].hold && v->cursor[p].card < n) {
             const AtCssPanel *q = &g.panel[v->cursor[p].card];
             AtRect a = v->cursor[p].zone == AT_ZONE_PUCK ? (AtRect){ q->dock.x + q->dock.w * 0.5f + 8.0f, q->dock.y + 22.0f, 0.0f, 0.0f } :
                        v->cursor[p].zone == AT_ZONE_TYPE ? (AtRect){ q->type.x + q->type.w * 0.5f, q->type.y + 10.0f, 0.0f, 0.0f } :
@@ -877,6 +885,12 @@ static void draw_css(const AtScreen *sc, const AtView *v, const AtLayout *L, con
                        (AtRect){ q->team.x + q->team.w * 0.5f, q->team.y + 10.0f, 0.0f, 0.0f };
             csv_hand(s, a.x, a.y, at_part_port_colour(p));
         }
+    }
+    /* free hands, on top of everything: the pointer at the stick's position, a carried coin by it */
+    for (p = 0; p < AT_MAX_CURSORS; p++) {
+        if (!v->cursor[p].active || !v->cursor[p].free) continue;
+        if (v->cursor[p].hold) csv_coin(s, o, v->cursor[p].hx - 13.0f, v->cursor[p].hy + 13.0f, 11.0f, v->cursor[p].hold_port, 1);
+        csv_hand(s, v->cursor[p].hx, v->cursor[p].hy, at_part_port_colour(p));
     }
     /* the caption: the fighter under the hand (or the last one), what is missing, or Ready to Fight */
     {

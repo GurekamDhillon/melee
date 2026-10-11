@@ -63,6 +63,7 @@ void at_css_hand_reset(AtCss *c, int p)
     s = &c->p[p];
     s->hold = 0; s->zone = AT_ZONE_PUCK; s->from_ck = AT_CK_NONE;
     s->act = s->kind == AT_CSS_HMN;
+    s->blank = 0; s->drag = -1; s->val = 0;
     if (c->puck && s->kind == AT_CSS_HMN && s->ck == AT_CK_NONE) s->card = p;
     else s->card = -1;
 }
@@ -183,6 +184,8 @@ void at_css_open(AtCss *c, const AtCssProfile *prof, const AtCssOps *ops, int on
     c->p[0].kind = AT_CSS_HMN;                                 /* whoever came here is P1 */
     c->puck = !c->online;
     for (p = 0; p < 4; p++) c->pad_ok[p] = 1;
+    c->free = 0;
+    c->rng = 0x9E3779B9u;
     c->train_h = 0; c->train_c = 1;
     if (prof != NULL && prof->dummy_cpu) at_css_set_training(c, 0);
     else if (prof != NULL && prof->entering_port_only) at_css_set_entering(c, 0);
@@ -497,6 +500,15 @@ static int nav_zone(const AtCss *c, int port, int k, int z, int dir)
 
 /* the hand leaves a panel for the roster, at the column that card sits under. Melee: a hand that reaches the roster with its own coin not placed
  * carries the coin (mnCharSel_CursorThink: `sel_icon >= MNCS_NUM_U` after `cy9 > 0.2f`), and a NA port wakes up as a human. */
+static unsigned enter_roster(AtCss *c, int port)
+{
+    AtCssPort *s = &c->p[port];
+    unsigned ev = 0;
+    if (s->kind == AT_CSS_OFF) { s->kind = AT_CSS_HMN; s->ck = AT_CK_NONE; }
+    if (!s->hold && s->ck == AT_CK_NONE && s->kind != AT_CSS_OFF) { puck_grab(c, port, port); ev |= AT_CE_FORWARD; }
+    return ev;
+}
+
 static unsigned go_grid(AtCss *c, int port, int k)
 {
     AtCssPort *s = &c->p[port];
@@ -505,22 +517,33 @@ static unsigned go_grid(AtCss *c, int port, int k)
     s->cur = ((n - 1) / cols) * cols + k * cols / 4;
     if (s->cur >= n) s->cur = n - 1;
     s->card = -1;
-    if (s->kind == AT_CSS_OFF) { s->kind = AT_CSS_HMN; s->ck = AT_CK_NONE; }
-    if (!s->hold && s->ck == AT_CK_NONE && s->kind != AT_CSS_OFF) { puck_grab(c, port, port); ev |= AT_CE_FORWARD; }
+    ev |= enter_roster(c, port);
     return ev;
 }
 
 /* the type button (mnCharSel_CursorThink, the togglebtn box: p_kind + 1; HMN to CPU to NA to HMN, to CPU when that port has no controller).
  * A port that becomes a CPU with no fighter takes the Random tile (retail rolls a tile: mnCharSel_8025FB50). */
+static int roll_fighter(AtCss *c)                                   /* a CPU's fighter: a random tile that can be picked (mnCharSel_8025FB50) */
+{
+    int tries, slot = 0, n = c->n_slots - 1;
+    if (n < 1) return AT_CK_RANDOM;
+    for (tries = 0; tries < 64; tries++) {
+        c->rng = c->rng * 1664525u + 1013904223u;
+        slot = (int) ((c->rng >> 8) % (unsigned) n);
+        if (c->ok[slot] && c->ck[slot] >= 0) return c->ck[slot];
+    }
+    return c->ck[0] >= 0 ? c->ck[0] : AT_CK_RANDOM;
+}
+
 static void cycle_kind(AtCss *c, int k)
 {
     AtCssPort *t = &c->p[k];
     int h = held_by(c, k);
     if (h >= 0) c->p[h].hold = 0, c->p[h].target = h;
-    if (t->kind == AT_CSS_HMN) { t->kind = AT_CSS_CPU; t->cpu_lv = t->cpu_lv < 1 ? 9 : t->cpu_lv; if (t->ck == AT_CK_NONE) t->ck = AT_CK_RANDOM; }
+    if (t->kind == AT_CSS_HMN) { t->kind = AT_CSS_CPU; t->cpu_lv = t->cpu_lv < 1 ? 9 : t->cpu_lv; if (t->ck == AT_CK_NONE) { t->ck = roll_fighter(c); t->costume = t->ck >= 0 ? at_css_free_costume(c, k, t->ck, 0, 1) : 0; } }
     else if (t->kind == AT_CSS_CPU) { t->kind = AT_CSS_OFF; t->ck = AT_CK_NONE; t->costume = 0; }
     else if (c->pad_ok[k]) { t->kind = AT_CSS_HMN; t->ck = AT_CK_NONE; t->costume = 0; at_css_hand_reset(c, k); }
-    else { t->kind = AT_CSS_CPU; t->cpu_lv = 9; t->ck = AT_CK_RANDOM; t->costume = 0; }
+    else { t->kind = AT_CSS_CPU; t->cpu_lv = 9; t->ck = roll_fighter(c); t->costume = t->ck >= 0 ? at_css_free_costume(c, k, t->ck, 0, 1) : 0; }
 }
 
 static unsigned puck_cards(AtCss *c, int port, AtCssIn in)
@@ -530,6 +553,8 @@ static unsigned puck_cards(AtCss *c, int port, AtCssIn in)
     int k = s->card, z = s->zone, dir = -1, r;
     if (k < 0 || k > 3) { s->card = -1; return 0; }
     if (in.rep & AT_CI_LEFT) dir = DIR_LEFT; else if (in.rep & AT_CI_RIGHT) dir = DIR_RIGHT; else if (in.rep & AT_CI_UP) dir = DIR_UP; else if (in.rep & AT_CI_DOWN) dir = DIR_DOWN;
+    if (c->free) dir = -1;                                           /* a free hand goes where the stick takes it */
+    if (c->free && z == AT_ZONE_NONE) return ev;                      /* over the panel's body, not a part of it: nothing to press */
     if (s->hold) {                                                  /* a puck in the hand over the panels: sideways between them, up to the roster, A or B puts it home */
         if (dir == DIR_LEFT || dir == DIR_RIGHT) { int nk = next_card(c, port, k, dir == DIR_RIGHT ? 1 : -1); s->card = nk < 0 ? k : nk; ev |= AT_CE_MOVE; }
         else if (dir == DIR_UP) ev |= go_grid(c, port, k);
@@ -537,6 +562,7 @@ static unsigned puck_cards(AtCss *c, int port, AtCssIn in)
         return ev;
     }
     if (!at_css_zone_ok(c, port, k, z)) {
+        if (c->free) return ev;
         z = first_zone(c, port, k);
         if (z < 0) { s->card = -1; return 0; }
         s->zone = z;
@@ -560,7 +586,12 @@ static unsigned puck_cards(AtCss *c, int port, AtCssIn in)
         switch (z) {
         case AT_ZONE_PUCK: puck_grab(c, port, k); ev |= AT_CE_FORWARD; break;
         case AT_ZONE_TYPE: cycle_kind(c, k); ev |= c->p[k].kind == AT_CSS_OFF ? AT_CE_BACK : AT_CE_FORWARD; break;
-        case AT_ZONE_LEVEL: c->p[k].cpu_lv = c->p[k].cpu_lv >= 9 ? 1 : c->p[k].cpu_lv + 1; ev |= AT_CE_MOVE; break;
+        case AT_ZONE_LEVEL:
+            if (c->free) {                                              /* the handle: A takes hold when the hand is on it, the stick drags it, A lets go (updateGrabbedSlider) */
+                int d = s->val - c->p[k].cpu_lv;
+                if (s->val >= 1 && d >= -1 && d <= 1) { s->drag = k; ev |= AT_CE_FORWARD; }
+            } else { c->p[k].cpu_lv = c->p[k].cpu_lv >= 9 ? 1 : c->p[k].cpu_lv + 1; ev |= AT_CE_MOVE; }
+            break;
         case AT_ZONE_COSTUME: shift_costume(c, k, 1); ev |= AT_CE_MOVE; break;
         case AT_ZONE_TEAM: c->p[k].team = (c->p[k].team + 1) % 3; ev |= AT_CE_MOVE; break;
         default: break;
@@ -593,6 +624,7 @@ static unsigned puck_grid(AtCss *c, int port, AtCssIn in, int frame)
     int cols = c->cols > 0 ? c->cols : 1, n = c->n_vis, row, col, last_row, cur;
     if (s->kind == AT_CSS_OFF) { s->kind = AT_CSS_HMN; s->ck = AT_CK_NONE; }
     row = s->cur / cols; col = s->cur % cols; last_row = (n - 1) / cols;
+    if (c->free) in.rep = 0;
     if (in.rep & AT_CI_LEFT) col = col == 0 ? cols - 1 : col - 1;
     else if (in.rep & AT_CI_RIGHT) col = col == cols - 1 ? 0 : col + 1;
     else if (in.rep & AT_CI_UP) row = row == 0 ? last_row : row - 1;
@@ -615,13 +647,15 @@ static unsigned puck_grid(AtCss *c, int port, AtCssIn in, int frame)
     if (cur != s->cur) ev |= AT_CE_MOVE;
     s->cur = cur;
     if (in.trig & AT_CI_A) {
-        if (s->hold) {
+        if (s->hold && c->free && s->blank) {                      /* a coin set down where there is no fighter: the error blip */
+            ev |= AT_CE_BACK;
+        } else if (s->hold) {
             unsigned r = pick(c, port, c->vis[s->cur]);
             if (r & AT_CE_FORWARD) { s->hold = 0; s->from_ck = AT_CK_NONE; s->target = port; }
             ev |= r;
         } else {
             int o, found = -1;
-            for (o = 0; o < 4 && found < 0; o++) {
+            for (o = 0; o < 4 && found < 0 && !(c->free && s->blank); o++) {
                 int q = (port + o) % 4;                          /* your own coin first, then a CPU's */
                 if ((q == port || c->p[q].kind == AT_CSS_CPU) && at_css_puck_vis(c, q) == s->cur) found = q;
             }
@@ -629,7 +663,8 @@ static unsigned puck_grid(AtCss *c, int port, AtCssIn in, int frame)
         }
     } else if (in.trig & (AT_CI_X | AT_CI_Y)) {
         int d = (in.trig & AT_CI_X) ? 1 : -1;
-        if (s->hold) {
+        if (c->free && s->blank && s->hold) {
+        } else if (s->hold) {
             int ck = c->ck[c->vis[s->cur]];                     /* the coin over a fighter previews its costume */
             AtCssPort *t = &c->p[s->target];
             if (ck >= 0) { t->costume = at_css_free_costume(c, s->target, ck, (t->costume < ncost(c, ck) ? t->costume : 0) + d, d); ev |= AT_CE_MOVE; }
@@ -642,6 +677,39 @@ static unsigned puck_grid(AtCss *c, int port, AtCssIn in, int frame)
         else { c->back_until = frame + 150; toast(c, "Press B again to go back."); ev |= AT_CE_TOAST; }
     }
     return ev;
+}
+
+unsigned at_css_hand_over(AtCss *c, int port, int region, int a, int b, int val)
+{
+    AtCssPort *s;
+    unsigned ev = 0;
+    if (c->prof == NULL || !c->puck || port < 0 || port > 3) return 0;
+    s = &c->p[port];
+    if (s->kind != AT_CSS_HMN && !s->act) return 0;
+    if (s->drag >= 0) return 0;                                     /* the hand is locked to the slider it holds */
+    if (region == 0) {
+        if (s->card >= 0) { ev |= enter_roster(c, port); s->card = -1; }   /* from a panel onto the roster: your own coin comes with the hand, a NA port wakes */
+        if (a >= 0 && a < c->n_vis) { if (s->cur != a) ev |= AT_CE_MOVE; s->cur = a; s->blank = 0; }
+        else s->blank = 1;
+    } else {
+        if (a < 0 || a > 3) return ev;
+        if (s->card < 0 && s->hold) { puck_dock(c, port); ev |= AT_CE_BACK; }  /* a coin in the hand moved onto the panels goes home by itself */
+        if (s->card != a) ev |= AT_CE_MOVE;
+        s->card = a;
+        s->zone = b >= 0 && b < AT_ZONE_N && at_css_zone_ok(c, port, a, b) ? b : AT_ZONE_NONE;
+        s->val = s->zone == AT_ZONE_LEVEL ? val : 0;
+        s->blank = 0;
+    }
+    return ev;
+}
+
+void at_css_drag_to(AtCss *c, int port, int level)
+{
+    AtCssPort *s;
+    if (port < 0 || port > 3) return;
+    s = &c->p[port];
+    if (s->drag < 0 || s->drag > 3) return;
+    c->p[s->drag].cpu_lv = level < 1 ? 1 : (level > 9 ? 9 : level);
 }
 
 unsigned at_css_mouse_zone(AtCss *c, int port, int card, int zone, int value, int moved, int click, int rclick, int wheel)
@@ -707,6 +775,11 @@ unsigned at_css_step(AtCss *c, int port, AtCssIn in, int frame)
     n = c->n_vis;
     if (s->cur < 0 || s->cur >= n) s->cur = 0;
     if (s->target < 0 || s->target > 3 || (s->target != port && c->p[s->target].kind != AT_CSS_CPU)) { s->target = port; s->hold = 0; }   /* a CPU someone was picking for went away */
+    if (c->puck && c->free) in.rep = 0;
+    if (c->puck && s->drag >= 0) {                                  /* a slider in the hand: A lets go (B too), nothing else is read */
+        if (in.trig & (AT_CI_A | AT_CI_B)) { s->drag = -1; ev |= AT_CE_FORWARD; }
+        return ev;
+    }
     if (c->puck) {
         if (s->card < 0) ev |= puck_grid(c, port, in, frame);
         else ev |= puck_cards(c, port, in);

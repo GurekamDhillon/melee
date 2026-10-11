@@ -513,7 +513,16 @@ static void fas_submit_css(void)
         } else if (!Ui_CssBlocker(buf, FE_HELP_STR)) {
             buf[0] = '\0';
         }
-        Ui_SelStatus(fas.h, Ui_CssGet(FA_CG_READY, 0), 4, buf);
+        {
+            int panels = Settings_Int("css_panels", 4); /* a layout preview: 2 to 6 panels (the rules stay four ports; the extra panels are closed) */
+            if (panels < 2 || panels > 6) {
+                panels = 4;
+            }
+            for (p = 4; p < panels; p++) {
+                Ui_SelCard(fas.h, p, 0, "", "", "", -1, 9, 0, (unsigned) FA_CARD_CLOSED);
+            }
+            Ui_SelStatus(fas.h, Ui_CssGet(FA_CG_READY, 0), panels, buf);
+        }
     }
     for (p = 0; p < 4; p++) {
         if (Ui_CssGet(FA_CG_KIND, p) == FS_HMN) {

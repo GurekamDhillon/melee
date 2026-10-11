@@ -155,7 +155,7 @@ void gw_Ui_SelCell(int h, int i, const char *id, const char *name, const char *a
 void gw_Ui_SelCard(int h, int port, int kind, const char *name, const char *sub, const char *abbr, int tex, int cpu_lv, int team, unsigned flags) {
     GsUiSlot *u = gs_sel_get(h);
     AtSelCard *k;
-    if (u == NULL || port < 0 || port > 3) return;
+    if (u == NULL || port < 0 || port >= AT_MAX_PORTS) return;
     k = &u->sc.ports[port];
     k->port = port;
     k->kind = kind < 0 || kind > 2 ? 0 : kind;
@@ -415,8 +415,8 @@ void gw_Ui_CssSetPortCk(int p, int ck, int costume) {
     gs_selm_css.p[p].ck = ck < AT_CK_RANDOM ? AT_CK_NONE : ck;
     gs_selm_css.p[p].costume = costume < 0 ? 0 : costume;
 }
-void gw_Ui_CssEntering(int port) { at_css_set_entering(&gs_selm_css, port); }
-void gw_Ui_CssTraining(int human) { at_css_set_training(&gs_selm_css, human); }
+void gw_Ui_CssEntering(int port) { int q; at_css_set_entering(&gs_selm_css, port); for (q = 0; q < 4; q++) at_css_hand_reset(&gs_selm_css, q); }
+void gw_Ui_CssTraining(int human) { int q; at_css_set_training(&gs_selm_css, human); for (q = 0; q < 4; q++) at_css_hand_reset(&gs_selm_css, q); }
 void gw_Ui_CssCols(int cols) { at_css_set_cols(&gs_selm_css, cols); }
 void gw_Ui_CssSetTab(int tab) { at_css_set_tab(&gs_selm_css, tab); }
 void gw_Ui_CssSetCursor(int port, int vis) {

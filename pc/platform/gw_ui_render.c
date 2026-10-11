@@ -581,10 +581,10 @@ static void csv_panel(AtCssPanel *q, AtRect box)
     q->cnext = (AtRect){ q->cmid.x + q->cmid.w - 22.0f, q->cmid.y, 22.0f, 14.0f };
 }
 
-void at_csv_geometry(const AtScreen *sc, const AtView *v, const AtLayout *L, AtCssGeom *g)
+static void csv_geometry_ph(const AtScreen *sc, const AtView *v, const AtLayout *L, AtCssGeom *g, float ph)
 {
     int n = csv_nports(sc), i, count = sc->n_blocks > 0 ? at_block_count(&sc->blocks[0]) : 0, c, best_c = 0, fh;
-    float w = L->body.w, x0 = L->body.x, top = L->body.y, bottom = L->body.y + L->body.h, pw, gap = 10.0f, ph = CSV_PANEL_H, avail, tabs_h = 0.0f, px0;
+    float w = L->body.w, x0 = L->body.x, top = L->body.y, bottom = L->body.y + L->body.h, pw, gap = 10.0f, avail, tabs_h = 0.0f, px0;
     memset(g, 0, sizeof *g);
     g->n_panels = n;
     pw = (w - gap * (float) (n - 1)) / (float) n;
@@ -631,6 +631,17 @@ void at_csv_geometry(const AtScreen *sc, const AtView *v, const AtLayout *L, AtC
     {
         float fw = (float) g->cols * g->cw + (float) (g->cols - 1) * g->gap, fh2 = (float) g->rows_vis * g->ch + (float) (g->rows_vis - 1) * g->gap;
         g->field = (AtRect){ x0 + (w - fw) * 0.5f, top + tabs_h + (avail - fh2) * 0.5f, fw, fh2 };
+    }
+}
+
+void at_csv_geometry(const AtScreen *sc, const AtView *v, const AtLayout *L, AtCssGeom *g)
+{
+    float ph = CSV_PANEL_H, spare;
+    csv_geometry_ph(sc, v, L, g, ph);
+    spare = (g->caption.y - 4.0f - g->tabs.y - g->tabs.h) - g->field.h;          /* room the roster does not need: the panels take most of it (a bigger portrait) */
+    if (spare > 14.0f) {
+        ph += (spare - 8.0f) * 0.75f > 34.0f ? 34.0f : (spare - 8.0f) * 0.75f;
+        csv_geometry_ph(sc, v, L, g, ph);
     }
 }
 
@@ -817,9 +828,9 @@ static void draw_css(const AtScreen *sc, const AtView *v, const AtLayout *L, con
         for (p = 0; p < n; p++) if (sc->ports[p].puck && sc->ports[p].kind != 0 && sc->ports[p].drop_cell == i) m++;
         for (p = 0; p < n; p++) {
             if (sc->ports[p].puck && sc->ports[p].kind != 0 && sc->ports[p].drop_cell == i) {
-                float rr = r.w * 0.2f < 6.0f ? 6.0f : (r.w * 0.2f > 10.0f ? 10.0f : r.w * 0.2f);
-                float cx = r.x + r.w * 0.5f + ((float) seen - (float) (m - 1) * 0.5f) * (rr * 1.6f);
-                csv_coin(s, o, cx, r.y + r.h - rr - 3.0f, rr, p, 0);
+                float rr = r.w * 0.14f < 6.0f ? 6.0f : (r.w * 0.14f > 9.0f ? 9.0f : r.w * 0.14f);
+                float cx = r.x + rr + 3.0f + (float) seen * (rr * 1.7f);
+                csv_coin(s, o, cx, r.y + rr + 3.0f, rr, p, 0);
                 seen++;
             }
         }

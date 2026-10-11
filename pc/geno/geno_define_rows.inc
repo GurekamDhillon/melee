@@ -4,6 +4,7 @@ extern int Geno_DefineOverrideField(int kind, int row, int field);
 extern MotionState ftData_MotionStateList[];
 extern MotionState ftMr_Init_MotionStateTable[];
 extern MotionState ftCa_Init_MotionStateTable[];
+extern MotionState ftFx_Init_MotionStateTable[];
 void GenoGame_DefineApplyRows(int kind, MotionState* common, MotionState* specific, int subactions)
 {
     int i, n = Geno_DefineOverrideCount(kind);
@@ -14,7 +15,7 @@ void GenoGame_DefineApplyRows(int kind, MotionState* common, MotionState* specif
         int field, value;
         if (like >= 0) {
             /* Inheritance always reads the original preset, never a prior override. */
-            *row = like < ftCo_MS_Count ? ftData_MotionStateList[like] : (Geno_DefineBaseKind(kind) == Ft_Kind_Captain ? ftCa_Init_MotionStateTable : ftMr_Init_MotionStateTable)[like-ftCo_MS_Count];
+            *row = like < ftCo_MS_Count ? ftData_MotionStateList[like] : (Geno_DefineBaseKind(kind) == Ft_Kind_Captain ? ftCa_Init_MotionStateTable : Geno_DefineBaseKind(kind) == Ft_Kind_Fox ? ftFx_Init_MotionStateTable : ftMr_Init_MotionStateTable)[like-ftCo_MS_Count];
         }
         value = Geno_DefineOverrideField(kind, i, 2);
         HSD_ASSERTREPORT(__LINE__, value < subactions, "Geno native state references missing subaction\n");

@@ -43,7 +43,8 @@ void gw_time_advance_field(void);
  * periodic pad alarm and queued DVD/ARQ completions still make progress. */
 void gw_wait_idle(void);
 void gw_pump_events(void);
-/* Write the next presented frame to a PNG at `path` (render resolution, no host overlay).
+/* Write the next rendered frame to a PNG at `path` (render resolution).
+ * Menus include host UI; gameplay retains GX-only capture without host overlays.
  * Asynchronous: the file appears a few frames later. See also MELEE_SHOT_AT in shim_vi.c. */
 void gw_Screenshot(const char *path);
 /* Diagnostics: retraces counted, frames actually presented, gw_wait_idle calls. */

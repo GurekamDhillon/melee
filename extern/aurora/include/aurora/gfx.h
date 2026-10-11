@@ -108,6 +108,9 @@ bool aurora_frame_slot_available();
 /// Write the next presented frame to a PNG at `path` (port patch): the final image at the render
 /// resolution, without the ImGui overlay. Asynchronous - the file appears a few frames later.
 void aurora_request_screenshot(const char* path);
+/// As above, compositing the host ImGui UI at render resolution (also offscreen).
+/// Menu scenes use this because their visible content need not be in the GX EFB.
+void aurora_request_screenshot_with_overlay(const char* path);
 /// Matrix loads blended / not blended because the pairing looked wrong / with no match in the
 /// previous frame, since the last call.
 void aurora_frame_interp_stats(uint32_t* blended, uint32_t* rejected, uint32_t* missing);

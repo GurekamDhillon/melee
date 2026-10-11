@@ -242,6 +242,56 @@ void render(const wgpu::RenderPassEncoder& pass, const DrawData& drawData) noexc
   }
 }
 
+void render_at_size(const wgpu::RenderPassEncoder& pass, const DrawData& drawData,
+                    uint32_t width, uint32_t height) noexcept {
+  if (!drawData.m_impl || g_useSdlRenderer) {
+    return;
+  }
+  // The menu uses window coordinates, whereas screenshots retain the EFB's
+  // render resolution. Copy the metadata so a capture cannot alter presentation.
+  auto data = drawData.m_impl->drawData;
+  if (data.CmdListsCount == 0 || data.DisplaySize.x <= 0.f || data.DisplaySize.y <= 0.f ||
+      data.FramebufferScale.x <= 0.f || data.FramebufferScale.y <= 0.f || width == 0 || height == 0) {
+    return;
+  }
+  const auto viewport = webgpu::calculate_present_viewport(
+      static_cast<uint32_t>(data.DisplaySize.x * data.FramebufferScale.x),
+      static_cast<uint32_t>(data.DisplaySize.y * data.FramebufferScale.y), width, height);
+  if (viewport.width <= 0.f || viewport.height <= 0.f) {
+    return;
+  }
+  const float sx = data.DisplaySize.x * data.FramebufferScale.x / viewport.width;
+  const float sy = data.DisplaySize.y * data.FramebufferScale.y / viewport.height;
+  const float ox = viewport.left / data.FramebufferScale.x;
+  const float oy = viewport.top / data.FramebufferScale.y;
+  std::vector<std::unique_ptr<ImDrawList>> cropped;
+  if (sx != 1.f || sy != 1.f || ox != 0.f || oy != 0.f) {
+    // Crop by transforming private vertex/clip copies, rather than allocating
+    // the letterbox area (an ultrawide window at high render scale can exceed
+    // the device texture limit even when the EFB itself fits).
+    const auto x = [&](float p) { return data.DisplayPos.x + (p - data.DisplayPos.x - ox) * sx; };
+    const auto y = [&](float p) { return data.DisplayPos.y + (p - data.DisplayPos.y - oy) * sy; };
+    cropped.reserve(data.CmdListsCount);
+    for (int i = 0; i < data.CmdListsCount; ++i) {
+      cropped.emplace_back(data.CmdLists[i]->CloneOutput());
+      auto* list = cropped.back().get();
+      for (auto& vertex : list->VtxBuffer) {
+        vertex.pos = {x(vertex.pos.x), y(vertex.pos.y)};
+      }
+      for (auto& command : list->CmdBuffer) {
+        command.ClipRect = {x(command.ClipRect.x), y(command.ClipRect.y),
+                            x(command.ClipRect.z), y(command.ClipRect.w)};
+      }
+      data.CmdLists[i] = list;
+    }
+  }
+  // Keep DisplayPos/DisplaySize unchanged: the WGPU backend shares its MVP
+  // uniform buffer with the window pass in this same command buffer.
+  data.FramebufferScale = {static_cast<float>(width) / data.DisplaySize.x,
+                           static_cast<float>(height) / data.DisplaySize.y};
+  ImGui_ImplWGPU_RenderDrawData(&data, pass.Get());
+}
+
 ImTextureID add_texture(uint32_t width, uint32_t height, const uint8_t* data) noexcept {
   if (SDL_Renderer* renderer = window::get_sdl_renderer()) {
     SDL_Texture* texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STATIC, width, height);

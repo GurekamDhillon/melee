@@ -2093,6 +2093,12 @@ static int gw_sl_apply(GwSceneConfig *c, const char *key, const char *val) {
   if (tt_ieq(key, "stage")) {
     return gw_sl_parse_stage(val, &c->stage_ext);
   }
+  if (tt_ieq(key, "skin")) {
+    /* the stage skin this match loads (gw_stageskin.h): "orig", a skin's content digest, or its mod id. The online host's
+       setup names it; a replay recorded with one carries it. Applied at the stage's load, once. */
+    extern int gw_StageSkin_SceneSet(const char *value);
+    return gw_StageSkin_SceneSet(val);
+  }
   if (key[0] == 'p' && key[1] >= '1' && key[1] <= '6' && key[2] == '\0') {
     return gw_sl_parse_player(val, &c->p[key[1] - '1']);
   }

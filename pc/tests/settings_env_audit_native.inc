@@ -189,6 +189,7 @@ static int sa_forwarded(const char *s, const char *call, const char *arg, const 
     size_t i;
     if (!strcmp(arg, "key")) {
         if (sa_basename(path, "fighter_controls_settings_test.c") || sa_basename(path, "gw_fighter_controls_runtime.inc")) return 1; /* generated fc_* profile keys */
+        if (sa_basename(path, "gw_stageskin.inc")) return 1; /* generated skin_<external stage id> keys (gw_stageskin.h) */
         if (sa_basename(path, "gw_settings.c") && sa_in_function(s, call, "gw_Settings_SetInt")) return 1;
         if (sa_basename(path, "shim_pad.c") && sa_in_function(s, call, "gw_pad_setting")) return 1;
         if (sa_basename(path, "gmfrontend_settings.inc") &&

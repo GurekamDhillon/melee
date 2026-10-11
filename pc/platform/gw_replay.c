@@ -328,6 +328,21 @@ static void rp_load(void) {
             len += snprintf(rp.scene + len, sizeof rp.scene - (size_t) len, ";p%d=ck:%u/c%u/%s",
                             p + 1, pl[0], pl[3], pl[1] == 1 ? "cpu" : "hu");
         }
+        {   /* a .gdlp made on a stage with skins names the one it was played with in its metadata (rec_close) */
+            static const char key[] = "\x09stageSkinSU";
+            size_t i;
+            for (i = 0; i + sizeof key + 1 < (size_t) n; ++i) {
+                if (memcmp(d + i, key, sizeof key - 1) == 0) {
+                    size_t vl = d[i + sizeof key - 1], k;
+                    char tok[24];
+                    if (i + sizeof key + vl > (size_t) n) break;
+                    for (k = 0; k < sizeof tok - 1 && k < vl && d[i + sizeof key + k] != '|'; ++k) tok[k] = (char) d[i + sizeof key + k];
+                    tok[k] = '\0';
+                    len += snprintf(rp.scene + len, sizeof rp.scene - (size_t) len, ";skin=%s", tok);
+                    break;
+                }
+            }
+        }
         gw_log("replay: %s - Slippi %u.%u.%u, frames %d..%d, seed 0x%08X, scene \"%s\"%s%s", path,
                rp.version[0], rp.version[1], rp.version[2], rp.first, rp.last, rp.seed, rp.scene,
                rp.online ? ", online (per-frame seed)" : "", rp.resync ? ", resync on" : "");
@@ -583,9 +598,27 @@ static void rec_bookend(int frame) {
 static void rec_close(void) {
     long end;
     uint8_t ev[1 + GW_RP_SZ_END], len[4];
-    static const char meta[] = "U\x08metadata{U\x08playedOnSU\x08melee-pc}}";
+    static const char meta_head[] = "U\x08metadata{U\x08playedOnSU\x08melee-pc";
+    char meta[160];
+    size_t ml = sizeof meta_head - 1;
     if (rec.f == NULL) {
         return;
+    }
+    memcpy(meta, meta_head, ml);
+    {   /* a stage with skins was played: which one ("orig", or the skin's content digest | its name), so a replay loads the same file */
+        extern int gw_StageSkin_Last(int *ext, char *name, int cap, uint64_t *digest);
+        char nm[64], val[96];
+        int ext = -1, vl;
+        uint64_t dg = 0;
+        if (gw_StageSkin_Last(&ext, nm, sizeof nm, &dg)) {
+            if (dg != 0) vl = snprintf(val, sizeof val, "%012llx|%.60s", (unsigned long long) (dg & 0xFFFFFFFFFFFFull), nm);
+            else vl = snprintf(val, sizeof val, "orig|Original");
+            if (vl > 0 && vl < 96) {
+                ml += (size_t) snprintf(meta + ml, sizeof meta - ml, "U\x09stageSkinSU%c%s", (char) vl, val);
+            }
+        }
+        meta[ml++] = '}';
+        meta[ml++] = '}';
     }
     if (rec_gdlp && rec.frame != GW_RP_UNARMED) rec_bookend(rec.frame);
     memset(ev, 0, sizeof ev);
@@ -594,7 +627,7 @@ static void rec_close(void) {
     fwrite(ev, 1, sizeof ev, rec.f);
     end = ftell(rec.f);
     if (end < rec.raw_start) rec_failed = 1;
-    fwrite(meta, 1, sizeof meta - 1, rec.f);
+    fwrite(meta, 1, ml, rec.f);
     rec_be32(len, (uint32_t) (end - rec.raw_start));
     if (fseek(rec.f, rec.raw_len_at, SEEK_SET) != 0) rec_failed = 1;
     fwrite(len, 1, 4, rec.f);

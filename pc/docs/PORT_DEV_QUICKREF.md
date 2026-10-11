@@ -146,6 +146,7 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | `MELEE_FULLSCREEN=1` | start in borderless desktop fullscreen (wins over video.cfg `fullscreen`; never in turbo). F11 / Alt+Enter toggle in game and save it |
 | `MELEE_FULLSCREEN_TOGGLE_AT=N` | toggle fullscreen once at present N (unattended capture of the toggle) |
 | `MELEE_MODS_DIR=<path>` | parent of mod folders; use a Windows path (`pwd -W` in Git Bash), not `/c/...` |
+| `MELEE_SKIN_<ext>=<mod id>\|orig` | the stage skin loaded for external stage id `<ext>` (3 = Pokemon Stadium): a stage-kind mod's id, or `orig`; the saved choice is `skin_<ext>` in settings.cfg (stage select: X / Y). A scene's `skin=` key (an online host, a replay) wins for its one load. `pc/platform/gw_stageskin.h` |
 | `MELEE_NUCLEUS_DIR=<path>` | the Nucleus browser's cache folder (default `<mods dir>/.nucleus`): catalog, `queue.json` (the download queue), `ui.json` (remembered filters), `thumbs/` (pictures), `dl/` (downloads) |
 | `MELEE_NUCLEUS_CACHE_MB=<n>` | size cap of the Nucleus picture cache `thumbs/` in MB (default 200; least recently used files go first) |
 | `MELEE_NUCLEUS_API=<url>` | a loopback API base for `tools/nucleus/fixture_server.py` (`http://127.0.0.1:<port>/api/public/v1`); nothing but loopback is accepted |

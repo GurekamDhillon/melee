@@ -32,6 +32,7 @@
 #include "gw_hang.h"
 #include "shim_vi.h"
 #include "gw_overlay.h"
+#include "gw_stageskin.h"
 #include "gw_mods.h"
 
 #define WIN32_LEAN_AND_MEAN
@@ -154,13 +155,28 @@ static bool gw_name_matches(const char *name, const char *component, size_t leng
 #define GW_MOD_MAX_FILES 4096
 #define GW_MOD_PATH_MAX 260
 
+/* One mod's copy of a path. Every provider is kept (in mount order) so the stage select can serve a stage from a
+ * chosen skin instead of the last mounted one (gw_stageskin.h); the file's own host/mod/mod_index/size are the
+ * provider serving it now. */
+#define GW_MOD_PROV_MAX 48
+typedef struct gw_mod_prov {
+  char host[MAX_PATH];
+  char mod[64];
+  int mod_index;
+  uint32_t size;
+} gw_mod_prov;
+
 typedef struct gw_mod_file {
   char disc[GW_MOD_PATH_MAX]; /* disc path, '/'-separated, no leading slash */
   char host[MAX_PATH];
   char mod[64];
-  int mod_index; /* gw_Mods_* index of the mod that won this path */
+  int mod_index; /* gw_Mods_* index of the mod that serves this path */
   uint32_t size;
   int entrynum;
+  gw_mod_prov *prov; /* all providers, mount order */
+  int nprov;
+  int on_disc;  /* the disc has this path too */
+  int use_disc; /* serve the disc's copy (a stage's Original) */
 } gw_mod_file;
 
 static gw_mod_file *gw_mod_files;
@@ -188,7 +204,7 @@ static gw_mod_file *gw_mod_by_path(const char *path) {
   int i;
   path = gw_strip_slash(path);
   for (i = 0; i < gw_mod_count; ++i) {
-    if (gw_path_ieq(gw_mod_files[i].disc, path)) return &gw_mod_files[i];
+    if (gw_path_ieq(gw_mod_files[i].disc, path)) return gw_mod_files[i].use_disc ? NULL : &gw_mod_files[i];
   }
   return NULL;
 }
@@ -196,9 +212,23 @@ static gw_mod_file *gw_mod_by_path(const char *path) {
 static gw_mod_file *gw_mod_by_entrynum(int entrynum) {
   int i;
   for (i = 0; i < gw_mod_count; ++i) {
-    if (gw_mod_files[i].entrynum == entrynum) return &gw_mod_files[i];
+    if (gw_mod_files[i].entrynum == entrynum && !gw_mod_files[i].use_disc) return &gw_mod_files[i];
   }
   return NULL;
+}
+
+static void gw_mod_push_prov(gw_mod_file *m) {
+  gw_mod_prov *p;
+  if (m->nprov >= GW_MOD_PROV_MAX) return;
+  p = (gw_mod_prov *)realloc(m->prov, (size_t)(m->nprov + 1) * sizeof *p);
+  if (p == NULL) return;
+  m->prov = p;
+  p += m->nprov++;
+  memset(p, 0, sizeof *p);
+  strncpy(p->host, m->host, sizeof p->host - 1);
+  strncpy(p->mod, m->mod, sizeof p->mod - 1);
+  p->mod_index = m->mod_index;
+  p->size = m->size;
 }
 
 static void gw_mods_scan(int mod_index, const char *mod, const char *host_dir, const char *rel,
@@ -244,6 +274,7 @@ static void gw_mods_scan(int mod_index, const char *mod, const char *host_dir, c
     strncpy(m->mod, mod, sizeof m->mod - 1);
     m->mod_index = mod_index;
     m->size = fd.nFileSizeLow;
+    gw_mod_push_prov(m);
   } while (FindNextFileA(h, &fd));
   FindClose(h);
 }
@@ -308,12 +339,85 @@ static void gw_mods_load(void) {
     gw_Mods_NoteFile(m->mod_index, m->disc, gw_mod_fingerprint_size(m));
     if (e >= 0 && gw_fst_kind((uint32_t)e) == 0) {
       m->entrynum = e;
+      m->on_disc = 1;
       gw_log("gw: mods:   /%s <- %s (overrides the disc file, %u bytes)", m->disc, m->mod, m->size);
     } else {
       m->entrynum = next++;
       gw_log("gw: mods:   /%s <- %s (new file, %u bytes)", m->disc, m->mod, m->size);
     }
   }
+}
+
+/* ---- stage skins (gw_stageskin.h): choose which mod's copy of a stage's files the game reads ---- */
+
+/* The stage-kind mods (skins) that provide a file of retail stage `r`, in mount order. */
+int gw_DVDStageProviders(int r, int *mods, int cap) {
+  int n, k, out = 0, i, p;
+  if (mods == NULL || cap <= 0 || !gw_iso_open() || gw_fst_nodes == 0) return 0;
+  gw_mods_load();
+  n = gw_Mods_ActiveCount();
+  for (k = 0; k < n && out < cap; ++k) {
+    int idx = gw_Mods_ActiveAt(k), found = 0;
+    if (strcmp(gw_Mods_Kind(idx), "stage") != 0) continue;
+    for (i = 0; i < gw_mod_count && !found; ++i) {
+      if (gw_Skin_FileRetail(gw_mod_files[i].disc) != r) continue;
+      for (p = 0; p < gw_mod_files[i].nprov; ++p) found |= gw_mod_files[i].prov[p].mod_index == idx;
+    }
+    if (found) mods[out++] = idx;
+  }
+  return out;
+}
+
+/* The n-th file of retail stage `r` that mod `mod_index` provides (disc path and host path): 1, or 0 past the last. */
+int gw_DVDStageFile(int r, int mod_index, int n, char *disc, int dcap, char *host, int hcap) {
+  int i, p, seen = 0;
+  if (!gw_iso_open() || gw_fst_nodes == 0) return 0;
+  gw_mods_load();
+  for (i = 0; i < gw_mod_count; ++i) {
+    if (gw_Skin_FileRetail(gw_mod_files[i].disc) != r) continue;
+    for (p = 0; p < gw_mod_files[i].nprov; ++p) {
+      if (gw_mod_files[i].prov[p].mod_index != mod_index) continue;
+      if (seen++ != n) continue;
+      if (disc != NULL && dcap > 0) snprintf(disc, (size_t)dcap, "%s", gw_mod_files[i].disc);
+      if (host != NULL && hcap > 0) snprintf(host, (size_t)hcap, "%s", gw_mod_files[i].prov[p].host);
+      return 1;
+    }
+  }
+  return 0;
+}
+
+/* Serve every file of retail stage `r` from the provider `want` names (GW_SKIN_DEFAULT, GW_SKIN_ORIGINAL or a skin's
+ * gw_Mods_* index). Called when a stage loads, never while its files are open, so one match sees one file. */
+int gw_DVDSelectStage(int r, int want) {
+  int i, switched = 0;
+  if (!gw_iso_open() || gw_fst_nodes == 0) return 0;
+  gw_mods_load();
+  for (i = 0; i < gw_mod_count; ++i) {
+    gw_mod_file *m = &gw_mod_files[i];
+    gw_skin_prov sp[GW_MOD_PROV_MAX];
+    int p, k;
+    if (gw_Skin_FileRetail(m->disc) != r || m->nprov == 0) continue;
+    for (p = 0; p < m->nprov; ++p) {
+      sp[p].mod_index = m->prov[p].mod_index;
+      sp[p].is_skin = strcmp(gw_Mods_Kind(m->prov[p].mod_index), "stage") == 0;
+    }
+    k = gw_skin_select(sp, m->nprov, m->on_disc, want);
+    if (k < 0) {
+      switched += !m->use_disc;
+      m->use_disc = 1;
+      gw_log("gw: mods: /%s served from the disc", m->disc);
+    } else {
+      const gw_mod_prov *pv = &m->prov[k];
+      switched += m->use_disc || strcmp(m->host, pv->host) != 0;
+      m->use_disc = 0;
+      strncpy(m->host, pv->host, sizeof m->host - 1);
+      strncpy(m->mod, pv->mod, sizeof m->mod - 1);
+      m->mod_index = pv->mod_index;
+      m->size = pv->size;
+      gw_log("gw: mods: /%s served from %s (%u bytes)", m->disc, m->mod, m->size);
+    }
+  }
+  return switched;
 }
 
 /* 1 when `path` exists on the disc or in a mounted mod. Unlike DVDConvertPathToEntrynum it does

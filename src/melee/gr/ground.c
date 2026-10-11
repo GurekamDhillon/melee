@@ -261,6 +261,7 @@ extern const char* Mex_GrFile(int grkind);
 extern void* Mex_GrVanillaFn(int grkind, int slot);
 extern u32 Mex_GrFlags2(int grkind);
 extern void Mex_GrSelect(int grkind);
+extern void StageSkin_ApplyForLoad(int grkind, const char* file, int phase);
 extern void Mex_GrFunctionInit(void* archive, int grkind);
 extern void* Mex_GrCallbacks(void);
 extern void* Mex_GrRowCallbacks(int grkind);
@@ -629,6 +630,11 @@ void Ground_801C06B8(GrKind arg0)
     if (stage_datas[arg0] == NULL) {
         return;
     }
+#if defined(TARGET_PC)
+    /* Stage skins (pc/platform/gw_stageskin.h): this is the stage archive's preload, so the provider of its files is chosen here;
+     * Ground_801C0754 (the init) reuses the decision. */
+    StageSkin_ApplyForLoad(arg0, stage_datas[arg0]->data1, 1);
+#endif
     if (stage_datas[arg0]->data1 != NULL) {
         lbDvd_800178E8(4, stage_datas[arg0]->data1, 4, 4, 0, 1, 7, 16, 0);
     }
@@ -650,6 +656,9 @@ void Ground_801C0754(StageIdPair* pair)
     s32 arg3;
 #if defined(TARGET_PC)
     Ground_MexInitStages();
+    /* Stage skins (pc/platform/gw_stageskin.h): serve this stage's files from the skin the player (or the online host) chose, now,
+     * before its archive is read and never while a match runs. */
+    StageSkin_ApplyForLoad(pair->grkind, stage_datas[pair->grkind] != NULL ? stage_datas[pair->grkind]->data1 : NULL, 2);
     /* Tell the m-ex stage runtime whose row the StageData trampolines belong to, before anything
      * can call one. Harmless for a vanilla stage. */
     Mex_GrSelect(pair->grkind);

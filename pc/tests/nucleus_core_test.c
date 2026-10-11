@@ -114,15 +114,13 @@ static int nf_cli(void) {
     size_t n = 0;
     uint8_t *z = (uint8_t *) nc_read_all(zp, &n);
     int rc;
-    if (!z) { printf("cannot read %s
-", zp); return 2; }
+    if (!z) { printf("cannot read %s\n", zp); return 2; }
     memset(&post, 0, sizeof post); memset(&in, 0, sizeof in); memset(&env, 0, sizeof env);
     post.id = pid ? atoi(pid) : 1; post.title = "local"; post.author = "local"; post.page = "https://ssbmnucleus.net/post/0"; post.updated = "2026-10-10T00:00:00Z"; post.installed_at = "2026-10-10T00:00:00Z";
     in.cat = NC_FC_ARCHIVE; in.filename = "fighter.zip"; in.stem = ""; in.data = z; in.len = n;
     nc_mkdirs(md);
     rc = nc_fighter_install(md, &post, &in, 1, &env, &res, msg, sizeof msg, nst_log);
-    printf("rc=%d | %s
-", rc, msg);
+    printf("rc=%d | %s\n", rc, msg);
     return rc == 0 ? 0 : 1;
 }
 

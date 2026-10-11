@@ -537,6 +537,7 @@ enum {
     GENO_LUA_IO_NCMDS = 32,  /* out: commands queued */
     GENO_LUA_IO_FAULT = 33,  /* out: GENO_LUA_FAULT_* */
     GENO_LUA_IO_LINKS = 34,  /* in (geno 11 combo): links taken in the current combo string */
+    GENO_LUA_IO_CONNECTED = 35, /* in: 1 when a hitbox of this fighter won a hit on a fighter during the current action (GenoState.atk_connected = script value ATTACK_CONNECTED; a hit on a shield does not count) */
     GENO_LUA_IO_CMDS = 40    /* out: GENO_LUA_MAX_CMDS x 3 words (op, a, b) */
 };
 enum { /* a command's op */

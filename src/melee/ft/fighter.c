@@ -1852,7 +1852,12 @@ void Fighter_8006A1BC(Fighter_GObj* gobj)
 static bool ftSlippi_IsOffscreen(Fighter* fp)
 {
     extern int Slippi_Codes(void);
-    if (Slippi_Codes() != 2) {
+    extern int Camera_ScriptState(void);
+    /* A scripted close-up (LAB CLIPS/REMAKE) puts an onstage bystander in the
+     * magnifier. Its visual flag must not cause Fighter_8006A360's 1%/interval
+     * damage. While detached or blending back, use the stage limits just as
+     * Slippi does; actual offstage damage and the ordinary camera keep working. */
+    if (Slippi_Codes() != 2 && !Camera_ScriptState()) {
         return ifMagnify_802FC998(fp->player_id);
     }
     if (gm_GetCurrentGameMode() == GM_HOME_RUN_CONTEST || fp->x221F_b1 ||
@@ -3250,9 +3255,7 @@ void Fighter_procMap(Fighter_GObj* gobj)
         /* LAB animation preview: the posed fighter has no map collision (a clip that moves the body
          * far from its origin would drag the ECB into the floor and launch it); Wait moves it nowhere. */
         extern int ScriptGame_LabPreviewRow(Fighter * fp, int motion);
-        extern int ScriptGame_LabCleanPose(Fighter * fp);
         if (fp->motion_id == ftCo_MS_Wait && ScriptGame_LabPreviewRow(fp, ftCo_MS_Wait) >= 0) {
-            ScriptGame_LabCleanPose(fp);
             PC_PROF_END();
             return;
         }

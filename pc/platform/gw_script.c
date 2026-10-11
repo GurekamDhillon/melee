@@ -3635,7 +3635,7 @@ static int l_safe_area(lua_State *L) {
     return 1;
 }
 
-/* gd.joints(port [, fresh]) -> {{index, parent, x, y, z, sx, sy, on}, ...}; list position =
+/* gd.joints(port [, fresh]) -> {{index, parent, x, y, z, sx, sy, on, scale_x, scale_y, scale_z}, ...}; list position =
  * index + 1. fresh = true brings every joint's matrix up to date first (ScriptGame_JointsSetup);
  * without it a joint nothing used this frame reports an old matrix. Offline only. */
 static int l_joints(lua_State *L) {
@@ -3656,13 +3656,16 @@ static int l_joints(lua_State *L) {
         float x = gw_ScriptGame_JointF(slot, i, 0), y = gw_ScriptGame_JointF(slot, i, 1);
         float z = gw_ScriptGame_JointF(slot, i, 2), sx = 0.0f, sy = 0.0f, depth = 0.0f;
         int parent = gw_ScriptGame_JointParent(slot, i);
-        lua_createtable(L, 0, 8);
+        lua_createtable(L, 0, 12);
         gs_setint(L, "index", i);
         gs_setint(L, "parent", parent);
         gs_setbool(L, "valid", parent != -2);
         gs_setnum(L, "x", x);
         gs_setnum(L, "y", y);
         gs_setnum(L, "z", z);
+        gs_setnum(L, "scale_x", gw_ScriptGame_JointF(slot, i, 3));
+        gs_setnum(L, "scale_y", gw_ScriptGame_JointF(slot, i, 4));
+        gs_setnum(L, "scale_z", gw_ScriptGame_JointF(slot, i, 5));
         if (parent != -2 && gs_project(x, y, z, &sx, &sy, &depth)) {
             gs_setnum(L, "sx", sx);
             gs_setnum(L, "sy", sy);

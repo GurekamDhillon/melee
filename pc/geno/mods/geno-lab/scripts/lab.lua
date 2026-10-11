@@ -5212,12 +5212,6 @@ function LE.clips_tick()
       end
     end
   end
-  if p and cl.parked and gd.match().active then
-    -- the posed fighter's clip (hitboxes, ki) must never damage the others on these pages: hold them at 0%
-    for _, q in ipairs(gd.players()) do
-      if q.port ~= focus and (q.percent or 0) > 0 then pcall(gd.set_percent, q.port, 0) end
-    end
-  end
   if p and T("close") then
     local cx, cz, dy = LE.rm_cam()
     if cx == nil then cx = p.x end

@@ -2295,15 +2295,18 @@ float ScriptGame_HurtF(int slot, int i, int field)
 
 /* A joint's world position: the translation column of the matrix the last HSD_JObjSetupMatrix
  * left in it (read as-is, never recomputed here, so reading cannot change the game). comp 0-2 =
- * x, y, z. */
+ * x, y, z; comp 3-5 = local scale, read directly (also valid before a frame runs). */
 float ScriptGame_JointF(int slot, int i, int comp)
 {
     Fighter* fp = script_fighter(slot);
     HSD_JObj* j;
-    if (fp == NULL || i < 0 || i >= lab_joint_count(fp) || comp < 0 || comp > 2) {
+    if (fp == NULL || i < 0 || i >= lab_joint_count(fp) || comp < 0 || comp > 5) {
         return 0.0f;
     }
     j = fp->parts[i].joint;
+    if (j != NULL && comp >= 3) {
+        return comp == 3 ? j->scale.x : comp == 4 ? j->scale.y : j->scale.z;
+    }
     return j != NULL ? j->mtx[comp][3] : 0.0f;
 }
 
@@ -2465,7 +2468,9 @@ int ScriptGame_LabStageDraw(int mask, int value)
  * a preview motion would clear invisibility but strand Entry's squashed root
  * scale: only ftCo_800C6B6C normally restores mv.co.entry.x8. Restore that saved
  * scale before the normal EntryEnd exit (ftCommon_8007D92C) clears its flags and
- * callbacks. Called once, before on_match_start hooks, only in offline workbench. */
+ * callbacks. Also used by LabSetMotion: REMAKE can start during EntryStart,
+ * before ftCo_800C6B6C restores the scale. Restore it before a motion change
+ * repurposes mv.co.entry, rather than overwriting authored TopN tracks each frame. */
 void ScriptGame_WbPrepare(int slot)
 {
     Fighter* fp = script_fighter(slot);
@@ -2473,7 +2478,7 @@ void ScriptGame_WbPrepare(int slot)
         fp->motion_id > ftCo_MS_EntryEnd) return;
     HSD_JObjSetScale(GET_JOBJ(fp->gobj), &fp->mv.co.entry.x8);
     ftCommon_8007D92C(fp->gobj);
-    OSReport("workbench: port %d entry finished; model scale restored\n", slot + 1);
+    OSReport("lab pose: P%d Entry finished; saved model scale restored\n", slot + 1);
 }
 
 /* Resolve roles through the fighter's actual part table, including Geno/m-ex
@@ -2728,39 +2733,6 @@ int ScriptGame_LabPreviewRow(Fighter* fp, int motion)
     return row;
 }
 
-/* LAB clip preview: the posed fighter's TopN must be neutral. A previewed row is held in Wait and never
- * changes motion, so whatever a previously played clip (or a pitched rush) left on TopN stayed for good, and
- * only a respawn rebuilt it. Seen in the REMAKE picker (labdiag log, 2026-10-11): P1's TopN scale was
- * (1, 0.175, 1), flattening the whole body, hurtboxes included, into a smear on the floor while P2, in the
- * same Wait row, stood normally. Each preview frame TopN's scale is made uniform again (y and z follow x:
- * the fighter's own scale) and its pitch / roll (rotation X, Z; Y is the facing) cleared. Preview-only: this
- * fighter has no map collision and is rebuilt from the joint tracks every frame. */
-int ScriptGame_LabCleanPose(Fighter* fp)
-{
-    HSD_JObj* top;
-    int changed = 0;
-    if (fp == NULL || fp->gobj == NULL || fp->gobj->hsd_obj == NULL) {
-        return 0;
-    }
-    top = fp->gobj->hsd_obj;
-    if (top->scale.y != top->scale.x || top->scale.z != top->scale.x) {
-        OSReport("lab preview: P%d TopN scale %.3f %.3f %.3f made uniform\n", fp->player_id + 1, top->scale.x, top->scale.y, top->scale.z);
-        top->scale.y = top->scale.x;
-        top->scale.z = top->scale.x;
-        changed = 1;
-    }
-    if (top->rotate.x != 0.0f || top->rotate.z != 0.0f) {
-        OSReport("lab preview: P%d TopN pitch %.3f roll %.3f cleared\n", fp->player_id + 1, top->rotate.x, top->rotate.z);
-        top->rotate.x = 0.0f;
-        top->rotate.z = 0.0f;
-        changed = 1;
-    }
-    if (changed) {
-        HSD_JObjSetMtxDirty(top);
-    }
-    return changed;
-}
-
 /* The playing animation's last frame. */
 float ScriptGame_LabAnimEnd(int slot)
 {
@@ -2838,6 +2810,7 @@ int ScriptGame_LabSetMotion(int slot, int msid, int rate_bits, int lift_bits)
         return -1;
     }
     rate.i = rate_bits;
+    ScriptGame_WbPrepare(slot);
     lift.i = lift_bits;
     if (lift.f > 0.0f) {
         /* an aerial: into the air `lift` units up first (ftCommon_8007D5D4, "become airborne"),

@@ -2,7 +2,7 @@
 -- Part 1 exercises the pure state machine (scripts/mission.lua). Part 2 reuses map_editor_test.lua's
 -- gd stub (the text before "local chunk = loadfile", as tools/roguelite/test_audit_repairs.py does)
 -- and drives the editor commands and the runtime glue. Stubs only: nothing here ran in the engine.
-local function read(path) local f=assert(io.open(path,'rb')) local s=f:read('a') f:close() return s end
+local function read(path) local f=assert(io.open(path,'rb')) local s=f:read('a') f:close() return (s:gsub('\r\n','\n')) end
 local DIR='pc/scripts/examples/map_editor/scripts/'
 local passed,failed=0,0
 local function test(name,fn)

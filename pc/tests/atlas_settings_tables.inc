@@ -56,28 +56,28 @@ static const FrontendItem tbl_fe_items_set_online[] = {
     { FE_SLIDER, 0, "Input Delay", "Frames of delay in rooms you host. 2 suits most connections.", gen_get, gen_set, 0, 8, 1, NULL, gen_fmt, NULL, NULL, NULL, NULL, NULL },
     { FE_CHOICE, 0, "Stage List", "Rooms you host: the legal six, or every stage you both have.", gen_get, gen_set, 0, 1, 1, opts_fe_items_set_online_3, NULL, NULL, NULL, NULL, NULL, NULL },
     { FE_CHOICE, 0, "Turbo", "Rooms you host: a connected hit can be cancelled. Never in Random.", gen_get, gen_set, 0, 1, 1, opts_fe_items_set_online_4, NULL, NULL, NULL, NULL, NULL, NULL },
-    { FE_CHOICE, 0, "Envoy", "Rooms you host: an Envoy set with a build each. Never in Random.", gen_get, gen_set, 0, 1, 1, opts_fe_items_set_online_5, NULL, NULL, NULL, NULL, NULL, NULL },
+    { FE_CHOICE, 0, "Envoy", "Rooms you host: an Envoy set. Needs the Envoy mod. Never in Random.", gen_get, gen_set, 0, 1, 1, opts_fe_items_set_online_5, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 static const int nopts_fe_items_set_online[] = { 0, 0, 0, 2, 2, 2 };
-static const char *const opts_fe_items_set_gameplay_3[] = { "Time", "Stock", "Coin", "Bonus" };
-static const char *const opts_fe_items_set_gameplay_6[] = { "None", "Very Low", "Low", "Medium", "High", "Very High" };
-static const char *const opts_fe_items_set_gameplay_8[] = { "Off", "Auto", "On" };
+static const char *const opts_fe_items_set_gameplay_4[] = { "Time", "Stock", "Coin", "Bonus" };
+static const char *const opts_fe_items_set_gameplay_7[] = { "None", "Very Low", "Low", "Medium", "High", "Very High" };
+static const char *const opts_fe_items_set_gameplay_9[] = { "Off", "Auto", "On" };
 static const FrontendItem tbl_fe_items_set_gameplay[] = {
     { FE_TOGGLE, 0, "Turbo (Versus)", "A connected hit can be cancelled into most moves. Local Versus only.", gen_get, gen_set, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "OPTIONS" },
     { FE_TOGGLE, 0, "Unlock Everything", "Every fighter, stage and option, without touching the save.", gen_get, gen_set, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "OPTIONS" },
     { FE_TOGGLE, 0, "Controller Fix (UCF)", "UCF 0.84: dashback, shield drop, cardinals. On = like Slippi. Online is always on.", gen_get, gen_set, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "OPTIONS" },
     { FE_ACTION, FE_DO_CALL, "Language", "English or Japanese. A opens the game's own screen; coming back returns here.", NULL, NULL, 0, 0, 0, NULL, gen_fmt, gen_vis, gen_call, NULL, NULL, "OPTIONS" },
-    { FE_CHOICE, 0, "Mode", "How a VS match is won.", gen_get, gen_set, 0, 3, 1, opts_fe_items_set_gameplay_3, NULL, NULL, NULL, NULL, NULL, "MATCH RULES" },
+    { FE_CHOICE, 0, "Mode", "How a VS match is won.", gen_get, gen_set, 0, 3, 1, opts_fe_items_set_gameplay_4, NULL, NULL, NULL, NULL, NULL, "MATCH RULES" },
     { FE_SLIDER, 0, "Stocks", "Lives each player starts with.", gen_get, gen_set, 1, 99, 1, NULL, NULL, gen_vis, NULL, NULL, NULL, "MATCH RULES" },
     { FE_SLIDER, 0, "Time Limit", "0 plays without a clock.", gen_get, gen_set, 0, 99, 1, NULL, gen_fmt, NULL, NULL, NULL, NULL, "MATCH RULES" },
-    { FE_CHOICE, 0, "Items", "How often items appear.", gen_get, gen_set, -1, 4, 1, opts_fe_items_set_gameplay_6, NULL, NULL, NULL, NULL, NULL, "MATCH RULES" },
+    { FE_CHOICE, 0, "Items", "How often items appear.", gen_get, gen_set, -1, 4, 1, opts_fe_items_set_gameplay_7, NULL, NULL, NULL, NULL, NULL, "MATCH RULES" },
     { FE_SLIDER, 0, "Damage Ratio", "How far hits send fighters.", gen_get, gen_set, 5, 20, 1, NULL, gen_fmt, NULL, NULL, NULL, NULL, "MATCH RULES" },
-    { FE_CHOICE, 0, "Handicap", "Auto evens out winners and losers.", gen_get, gen_set, 0, 2, 1, opts_fe_items_set_gameplay_8, NULL, NULL, NULL, NULL, NULL, "MATCH RULES" },
+    { FE_CHOICE, 0, "Handicap", "Auto evens out winners and losers.", gen_get, gen_set, 0, 2, 1, opts_fe_items_set_gameplay_9, NULL, NULL, NULL, NULL, NULL, "MATCH RULES" },
     { FE_TOGGLE, 0, "Friendly Fire", "Team attacks hit teammates.", gen_get, gen_set, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "MATCH RULES" },
     { FE_TOGGLE, 0, "Pause", "Allow pausing during the match.", gen_get, gen_set, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "MATCH RULES" },
     { FE_ACTION, FE_DO_CALL, "Erase Data...", "Delete part of your save data. Nothing is erased until you confirm, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, gen_vis, gen_call, NULL, NULL, "SAVE DATA" },
 };
-static const int nopts_fe_items_set_gameplay[] = { 0, 0, 0, 4, 0, 0, 6, 0, 3, 0, 0, 0 };
+static const int nopts_fe_items_set_gameplay[] = { 0, 0, 0, 0, 4, 0, 0, 6, 0, 3, 0, 0, 0 };
 static const FrontendItem tbl_fe_items_erase[] = {
     { FE_ACTION, FE_DO_CALL, "Unlocked Fighters", "Lock the fighters you have unlocked again. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, gen_call, NULL, NULL, "ERASE (ASKS FIRST)" },
     { FE_ACTION, FE_DO_CALL, "Unlocked Stages", "Lock the stages you have unlocked again. You are asked first, and it cannot be undone.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, gen_call, NULL, NULL, "ERASE (ASKS FIRST)" },
@@ -164,7 +164,7 @@ static const FrontendItem tbl_fe_items_online[] = {
     { FE_ACTION, FE_DO_CALL, "Random Opponent", "Play whoever else is looking right now.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL, gen_call, NULL, NULL, NULL },
     { FE_CHOICE, 0, "Stage List", "Stages in rooms you host: the legal six, or every stage you both have.", gen_get, gen_set, 0, 1, 1, opts_fe_items_online_3, NULL, NULL, NULL, NULL, NULL, NULL },
     { FE_CHOICE, 0, "Turbo", "Rooms you host: a connected hit can be cancelled into most moves.", gen_get, gen_set, 0, 1, 1, opts_fe_items_online_4, NULL, NULL, NULL, NULL, NULL, NULL },
-    { FE_CHOICE, 0, "Envoy", "Rooms you host: a best-of set where each player fights with an Envoy build and picks a reward between games.", gen_get, gen_set, 0, 1, 1, opts_fe_items_online_5, NULL, NULL, NULL, NULL, NULL, NULL },
+    { FE_CHOICE, 0, "Envoy", "Rooms you host: a best-of set, an Envoy build each. Needs the Envoy mod.", gen_get, gen_set, 0, 1, 1, opts_fe_items_online_5, NULL, NULL, NULL, NULL, NULL, NULL },
     { FE_SLIDER, 0, "Stocks", "Stocks per game, in rooms you host.", gen_get, gen_set, 1, 9, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
     { FE_SLIDER, 0, "Time Limit", "Minutes per game, in rooms you host.", gen_get, gen_set, 1, 20, 1, NULL, gen_fmt, NULL, NULL, NULL, NULL, NULL },
     { FE_SLIDER, 0, "Input Delay", "Frames of delay in rooms you host. 2 suits most connections.", gen_get, gen_set, 0, 8, 1, NULL, gen_fmt, NULL, NULL, NULL, NULL, NULL },
@@ -176,7 +176,7 @@ static const StubTable all_tables[] = {
     { "fe_items_howto_online", tbl_fe_items_howto_online, 6, nopts_fe_items_howto_online },
     { "fe_items_set_controls", tbl_fe_items_set_controls, 16, nopts_fe_items_set_controls },
     { "fe_items_set_online", tbl_fe_items_set_online, 6, nopts_fe_items_set_online },
-    { "fe_items_set_gameplay", tbl_fe_items_set_gameplay, 12, nopts_fe_items_set_gameplay },
+    { "fe_items_set_gameplay", tbl_fe_items_set_gameplay, 13, nopts_fe_items_set_gameplay },
     { "fe_items_erase", tbl_fe_items_erase, 6, nopts_fe_items_erase },
     { "fe_items_rules", tbl_fe_items_rules, 8, nopts_fe_items_rules },
     { "fe_items_morerules", tbl_fe_items_morerules, 5, nopts_fe_items_morerules },

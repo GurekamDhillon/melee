@@ -34,6 +34,7 @@
 #include "gw_nucleus_image.h"
 #include "gw_nucleus_http.inc"
 #include "gw_nucleus_loose.h"
+#include "gw_nucleus_stage.h"
 
 extern int gw_DVDFileExists(const char *path);
 extern void *gw_DVDReadFileAlloc(const char *path, uint32_t *out_size);
@@ -411,6 +412,11 @@ static int ne_env_ref(void *u, const char *path, uint8_t **buf, size_t *len) {
 static int ne_env_exists(void *u, const char *path, size_t *len) { (void) u; *len = 0; return gw_DVDFileExists(path); }
 static void ne_log_line(const char *line) { ne_log("%s", line); }
 
+/* a file the install takes: a loose-override kind the catalog marked supported, or (custom stage posts) the .zip stage package */
+static int ne_file_usable(const nc_mod *m, const nc_file *f) {
+    if (m->type == NC_T_CUSTOM_STAGE) return nc_has_ext(f->filename, ".zip");
+    return f->supported && f->cat != NC_FC_COSTUME;
+}
 #define NE_LOOSE_FILES 24
 static int ne_install_loose(const nc_mod *m, const nc_file *files, char *msg, size_t mcap, uint8_t **zipout) {
     nc_in_file in[NE_LOOSE_FILES];
@@ -425,13 +431,13 @@ static int ne_install_loose(const nc_mod *m, const nc_file *files, char *msg, si
     nc_loose_result res;
     first_err[0] = '\0';
     memset(bufs, 0, sizeof bufs);
-    for (i = 0; i < m->nf; ++i) if (files[i].supported && files[i].cat != NC_FC_COSTUME) ++total;
+    for (i = 0; i < m->nf; ++i) if (ne_file_usable(m, &files[i])) ++total;
     for (i = 0; i < m->nf && nin < NE_LOOSE_FILES; ++i) {
         nch_result r;
         char url[400], tag[96], err[120];
         int use_zip, ok = 0;
         size_t cap = files[i].cat == NC_FC_AUDIO ? 64u * 1024 * 1024 : 32u * 1024 * 1024;
-        if (!files[i].supported || files[i].cat == NC_FC_COSTUME) continue;
+        if (!ne_file_usable(m, &files[i])) continue;
         ne_item_steps(done, total);
         memset(&r, 0, sizeof r);
         use_zip = files[i].zip;
@@ -484,7 +490,8 @@ static int ne_install_loose(const nc_mod *m, const nc_file *files, char *msg, si
     ne_item_pct(90);
     if (nin == 0) { snprintf(msg, mcap, "%s", first_err[0] ? first_err : "Nothing in this post could be downloaded."); rc = -1; }
     else {
-        rc = nc_loose_install(NE.mods, &post, in, nin, &env, &res, msg, mcap, ne_log_line);
+        rc = m->type == NC_T_CUSTOM_STAGE ? nc_stage_install(NE.mods, &post, in, nin, &env, &res, msg, mcap, ne_log_line)
+                                          : nc_loose_install(NE.mods, &post, in, nin, &env, &res, msg, mcap, ne_log_line);
         if (rc != 0 && first_err[0]) { size_t l = strlen(msg); snprintf(msg + l, mcap - l, " (%s)", first_err); }
     }
     for (i = 0; i < nin; ++i) free(bufs[i]);
@@ -1003,15 +1010,16 @@ static int ne_src_row(void *u, int id, AtNcRow *r) {
         r->tex = -1; r->thumb = -1; r->qstate = AT_NC_Q_NONE; r->id = id;
         snprintf(r->title, sizeof r->title, "%s", NE.inst[inst].name);
         snprintf(r->author, sizeof r->author, "%s", NE.inst[inst].author);
-        snprintf(r->kind, sizeof r->kind, "%s", !NE.inst[inst].cat[0] ? "Costume" : !strcmp(NE.inst[inst].cat, "stage") ? "Stage skin" : !strcmp(NE.inst[inst].cat, "fx") ? "Effects" : !strcmp(NE.inst[inst].cat, "menu") ? "Menu" : "Audio");
+        snprintf(r->kind, sizeof r->kind, "%s", !NE.inst[inst].cat[0] ? "Costume" : !strcmp(NE.inst[inst].cat, "cstage") ? "Custom stage" : !strcmp(NE.inst[inst].cat, "stage") ? "Stage skin" : !strcmp(NE.inst[inst].cat, "fx") ? "Effects" : !strcmp(NE.inst[inst].cat, "menu") ? "Menu" : "Audio");
         snprintf(r->updated, sizeof r->updated, "%.10s", NE.inst[inst].updated);
-        r->tab = !NE.inst[inst].cat[0] ? NC_TAB_COSTUMES : !strcmp(NE.inst[inst].cat, "stage") ? NC_TAB_STAGES : !strcmp(NE.inst[inst].cat, "fx") ? NC_TAB_EFFECTS : !strcmp(NE.inst[inst].cat, "menu") ? NC_TAB_MENUS : NC_TAB_AUDIO;
+        r->tab = !NE.inst[inst].cat[0] ? NC_TAB_COSTUMES : (!strcmp(NE.inst[inst].cat, "stage") || !strcmp(NE.inst[inst].cat, "cstage")) ? NC_TAB_STAGES : !strcmp(NE.inst[inst].cat, "fx") ? NC_TAB_EFFECTS : !strcmp(NE.inst[inst].cat, "menu") ? NC_TAB_MENUS : NC_TAB_AUDIO;
         if (NE.inst[inst].stage[0]) snprintf(r->fighter, sizeof r->fighter, "%s", NE.inst[inst].stage);
         {
             int f;
             for (f = 0; f < NC_NFIGHTERS && !NE.inst[inst].cat[0]; ++f) if (!strcmp(nc_fighters[f].target, NE.inst[inst].target)) snprintf(r->fighter, sizeof r->fighter, "%s", nc_fighters[f].label);
         }
         r->ncostumes = NE.inst[inst].ncost;
+        if (NE.inst[inst].compat[0]) snprintf(r->desc, sizeof r->desc, "%s", NE.inst[inst].compat);   /* custom stages: what works and what does not */
         snprintf(r->page, sizeof r->page, "https://%s/post/%d", NC_SITE, id);
     } else if (qi >= 0) {                                       /* a queued mod the catalog has not loaded yet: what the queue remembers of it */
         memset(r, 0, sizeof *r);

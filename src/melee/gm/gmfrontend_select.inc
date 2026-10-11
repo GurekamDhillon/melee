@@ -1252,6 +1252,44 @@ static bool fs_stage_unlocked(int ext)
     return gm_80164430(ext) != 0;
 }
 
+/* Custom stage mods on a vanilla disc (gw_mex_modstage.inc): their tiles follow the disc's own. The icon is the mod's
+ * own picture (icon.gxtex, RGB5A3), copied into scene memory; a stage with none shows its name as text. */
+extern int ModStage_Count(void);
+extern int ModStage_ExtAt(int i);
+extern int ModStage_IconInfo(int i);
+extern int ModStage_IconFill(int i, void* dst, int cap);
+
+static void fs_sss_add_mod_stages(void)
+{
+    int k, n = ModStage_Count();
+    for (k = 0; k < n && fcs.ns < FS_MAX_STAGES - 1; k++) {
+        int ext = ModStage_ExtAt(k), info = ModStage_IconInfo(k);
+        FsArt t;
+        t.img = NULL;
+        t.tl = NULL;
+        if (info > 0) {
+            int w = (info >> 16) & 0xFFFF, h = info & 0xFFFF, bytes = w * h * 2;
+            HSD_ImageDesc* im = HSD_MemAlloc(sizeof(HSD_ImageDesc));
+            void* px = HSD_MemAlloc(bytes);
+            if (im != NULL && px != NULL && ModStage_IconFill(k, px, bytes) == bytes) {
+                memset(im, 0, sizeof *im);
+                im->image_ptr = px;
+                im->width = (s16) w;
+                im->height = (s16) h;
+                im->format = GX_TF_RGB5A3;
+                t.img = im;
+            }
+        }
+        fcs.st_ext[fcs.ns] = ext;
+        fcs.st_type[fcs.ns] = 2;
+        fcs.st_icon[fcs.ns] = t;
+        fcs.st_row[fcs.ns] = -1;
+        fcs.st_ok[fcs.ns] = fs_stage_unlocked(ext);
+        fcs.ns++;
+        OSReport("frontend: stage select - custom stage ext %d (mod stage %d)\n", ext, k);
+    }
+}
+
 static void fs_sss_open(SSSData* sss)
 {
     int i, n;
@@ -1274,6 +1312,7 @@ static void fs_sss_open(SSSData* sss)
         fcs.st_ok[fcs.ns] = type == 3 || fs_stage_unlocked(ext);
         fcs.ns++;
     }
+    fs_sss_add_mod_stages();
     /* one Random tile, at the end */
     {
         int k, r = -1;

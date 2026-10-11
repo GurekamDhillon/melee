@@ -43,6 +43,10 @@
 /* From gw_mex_ftfunction_runtime.c (the shared PPC runtime environment). */
 extern void gw_Mex_RuntimeInit(void);
 extern uint32_t gw_Mex_MexData(uint32_t *base, uint32_t *size);
+/* gw_mex_modstage.inc: the built-at-boot stage tables of custom stage mods on a vanilla disc. */
+extern uint32_t gw_ModStage_Root(uint32_t *base, uint32_t *size);
+extern int gw_ModStage_LineTypeRow(int grkind);
+extern int gw_ModStage_AudioFirst(void);
 
 static uint32_t gra_root, gra_base, gra_size, gra_audio, gra_linetype;
 static int gra_count;
@@ -65,6 +69,9 @@ static int gra_tables(void) {
 
     gw_Mex_RuntimeInit();
     root = gw_Mex_MexData(&base, &size);
+    if (root == 0u) {
+        root = gw_ModStage_Root(&base, &size);
+    }
     if (root != gra_root || base != gra_base || size != gra_size) {
         gra_root = root;
         gra_base = base;
@@ -125,6 +132,10 @@ static int gra_tables(void) {
 
 int gw_Mex_GrAudioCount(void) { return gra_tables() ? gra_count : 0; }
 
+/* First row the audio rewrite should fill: 0 with a real mexData, 71 for the built tables of custom stage mods
+ * (their rows 0..70 are placeholders; the port's compiled retail rows must stay). */
+int gw_Mex_GrAudioFirst(void) { return gw_ModStage_AudioFirst(); }
+
 int gw_Mex_GrAudioByte(int grkind, int which) {
     uint32_t a;
     if (!gra_tables() || gra_audio == 0u || grkind < 0 || grkind >= gra_count || which < 0 ||
@@ -153,6 +164,9 @@ int gw_Mex_GrLineTypeRow(int grkind) {
     }
     if (!gra_tables() || gra_linetype == 0u || grkind >= gra_count) {
         return -1;
+    }
+    if (gw_ModStage_AudioFirst() > 0) {
+        return gw_ModStage_LineTypeRow(grkind); /* the descriptor names a vanilla stage's rows, or -1 */
     }
     if (cache_for != gra_linetype) {
         cache_for = gra_linetype;

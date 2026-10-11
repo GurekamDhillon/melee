@@ -36,6 +36,11 @@
 
 #define GW_HSD_HEADER_SIZE 0x20u
 
+/* Mod stages on a disc with no MxDt.dat: gw_mex_modstage.inc (end of this file). */
+uint32_t gw_ModStage_Root(uint32_t *base, uint32_t *size);
+static void ms_invalidate(void);
+void gw_modstage_tests_register(void);
+
 /* MexFunction header, data-relative - the same struct ftFunction uses. */
 #define GRFUNC_OFF_CODE 0x00u
 #define GRFUNC_OFF_INSTR_RELOC 0x04u
@@ -92,6 +97,9 @@ static int gr_tables(void) {
     gw_Mex_RuntimeInit();
     gr_root = gw_Mex_MexData(&gr_base, &gr_size);
     if (gr_root == 0u) {
+        gr_root = gw_ModStage_Root(&gr_base, &gr_size); /* custom stage mods on a vanilla disc, or 0 */
+    }
+    if (gr_root == 0u) {
         return 0;
     }
     meta = gr_rd(gr_root + GW_MEXDT_OFF_METADATA);
@@ -137,6 +145,7 @@ static int gr_tables(void) {
 }
 
 void gw_Mex_GrInvalidate(void) {
+    ms_invalidate();
     gr_tables_ready = 0;
     gr_root = gr_base = gr_size = gr_map = gr_desc = 0u;
     gr_int_count = gr_ext_count = 0;
@@ -1141,6 +1150,7 @@ static int test_grfunction_added_rows_parse(void) {
 }
 
 void gw_mex_grfunction_tests_register(void) {
+    gw_modstage_tests_register();
     gw_test_register("grfunction_tables", test_grfunction_tables);
     gw_test_register("grfunction_rows", test_grfunction_rows);
     gw_test_register("grfunction_row_callbacks", test_grfunction_row_callbacks);
@@ -1148,3 +1158,5 @@ void gw_mex_grfunction_tests_register(void) {
     gw_test_register("grfunction_thunk_pool_beyond_8", test_grfunction_thunk_pool_beyond_8);
     gw_test_register("grfunction_added_rows_parse", test_grfunction_added_rows_parse);
 }
+
+#include "gw_mex_modstage.inc"

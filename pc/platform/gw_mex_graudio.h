@@ -43,6 +43,7 @@ extern "C" {
 /* mexData's internal_stage_count, or 0 on a disc with no mexData (so every accessor below is
  * safe to call unconditionally). */
 int gw_Mex_GrAudioCount(void);
+int gw_Mex_GrAudioFirst(void);
 
 /* Byte `which` (0 = ssm bank id, 1 = echo, 2 = echo2) of Arch_Map_Audio[grkind].
  * Returns -1 when there is no mexData, the index is out of range, or the byte is not plausible -

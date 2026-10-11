@@ -288,6 +288,8 @@ static void *gw_mex_persist_alloc(uint32_t size) {
     return (void *) (uintptr_t) p;
 }
 
+void *gw_Mex_PersistAlloc(uint32_t size) { return gw_mex_persist_alloc(size); }
+
 /* ---- mexData: MxDt.dat ---------------------------------------------------------------------
  * m-ex's content tables (fighter/item/stage/...) ship on the disc as MxDt.dat, an HSD archive
  * whose single public symbol is literally `mexData`. The port does not author a layout - it loads

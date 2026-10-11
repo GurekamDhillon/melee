@@ -34,7 +34,8 @@ typedef struct mf_fighter {
     char demo[4][64];
     int ncost, animcount, effect, announcer, victory, bgm[2], base, ssm;
     uint32_t cb[MF_NCB];
-    int ext, internal;
+    int ext, internal, bone_count, nbones, bones[64];
+    uint32_t parts; /* guest address of this fighter's FighterPartsTable (0 = use the clone base's row) */
 } mf_fighter;
 
 static mf_fighter mf_list[MF_MAX];
@@ -87,6 +88,11 @@ static int mf_parse(const char *text, mf_fighter *o) {
         else if (!strcmp(line, "announcer")) o->announcer = atoi(eq);
         else if (!strcmp(line, "victory")) o->victory = atoi(eq);
         else if (!strcmp(line, "base")) o->base = atoi(eq);
+        else if (!strcmp(line, "bonecount")) o->bone_count = atoi(eq);
+        else if (!strcmp(line, "bones")) {
+            const char *q = eq;
+            while (*q && o->nbones < 64) { o->bones[o->nbones++] = (int) strtol(q, (char **) &q, 10); if (*q == ',') ++q; else break; }
+        }
         else if (!strcmp(line, "bgm")) {
             char *q = strchr(eq, ',');
             o->bgm[0] = atoi(eq);
@@ -314,6 +320,30 @@ static int gw_mf_build(void) {
         mf_w32(bgm + (uint32_t) e * 4u, m->bgm[0] == 0xFFFF && m->bgm[1] == 0xFFFF ? 0xFFFFFFFFu
                                                                                  : ((uint32_t) (m->bgm[0] & 0xFFFF) << 16) | (uint32_t) (m->bgm[1] & 0xFFFF));
     }
+    for (k = 0; k < mf_n; ++k) { /* a FighterPartsTable row from the fighter's own bone lookup (foreign skeletons) */
+        mf_fighter *m = &mf_list[k];
+        uint32_t tb, jtp, ptj;
+        int r;
+        m->parts = 0u;
+        if (m->bone_count < 1 || m->bone_count > 255 || m->nbones < 53) continue;
+        tb = mf_alloc(12u, 4u);
+        jtp = mf_alloc((uint32_t) m->bone_count, 4u);
+        ptj = mf_alloc(128u, 4u);
+        if (tb == 0u || jtp == 0u || ptj == 0u) { gw_log("modfighter: image allocation failed (parts %s)", m->mod); return 0; }
+        memset((void *) (uintptr_t) jtp, 0xFF, (size_t) m->bone_count);
+        memset((void *) (uintptr_t) ptj, 0xFF, 128u);
+        for (r = 0; r < m->nbones && r < 128; ++r) {
+            int j = m->bones[r];
+            if (j < 0 || j >= m->bone_count) continue; /* 255 / out of range: this role does not exist in the skeleton */
+            ((uint8_t *) (uintptr_t) ptj)[r] = (uint8_t) j;
+            if (((uint8_t *) (uintptr_t) jtp)[j] == 0xFF) ((uint8_t *) (uintptr_t) jtp)[j] = (uint8_t) r;
+        }
+        mf_w32(tb + 0u, jtp);
+        mf_w32(tb + 4u, ptj);
+        mf_w32(tb + 8u, (uint32_t) m->bone_count);
+        m->parts = tb;
+        gw_log("modfighter: %s: own parts table, %d joints, %d roles", m->name, m->bone_count, m->nbones);
+    }
     gw_mexdt = root;
     gw_mexdt_base = base;
     gw_mexdt_size = total;
@@ -361,6 +391,14 @@ static int gw_mf_base_kind(int k) {
         }
     }
     return 0;
+}
+
+/* Guest address of the PlCo-shaped FighterPartsTable built for mod fighter `internal` from its bone lookup, or 0 (the clone base's row is used). */
+uint32_t gw_Mex_FtPartsTable(int internal) {
+    int i;
+    if (!gw_mexdt_synth || gw_mexdt == 0u) return 0u;
+    for (i = 0; i < mf_n; ++i) if (mf_list[i].internal == internal) return mf_list[i].parts;
+    return 0u;
 }
 
 /* The persistent region was rewound: the image is gone, the descriptors stay. */

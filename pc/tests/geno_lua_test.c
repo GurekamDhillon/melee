@@ -124,6 +124,26 @@ int main(void)
     glua_free(g);
 
     /* ---- refused at load ---- */
+    /* the function table: 40 functions load (the cap was 24), 49 are refused */
+    {
+        static char big[8192];
+        int n, len;
+        for (n = 40; n <= 49; n += 9) {
+            len = snprintf(big, sizeof big, "local M = {}
+");
+            for (int k = 0; k < n; k++) len += snprintf(big + len, sizeof big - len, "function M.f%d(ctx) end
+", k);
+            snprintf(big + len, sizeof big - len, "return M
+");
+            if (n == 40) {
+                gn_lua* g = mk(big);
+                CHECK(g != NULL, "a module of 40 functions must load");
+                if (g) glua_free(g);
+            } else {
+                refused("49 functions", big, "more than 48 functions");
+            }
+        }
+    }
     refused("global assignment in a function", "local M = {}\nfunction M.f(ctx) total = 1 end\nreturn M\n", "assigns a global");
     refused("captured counter", "local n = 0\nlocal M = {}\nfunction M.f(ctx) n = n + 1 end\nreturn M\n", "assigns a captured variable");
     refused("captured counter in a nested function",

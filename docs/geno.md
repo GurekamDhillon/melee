@@ -3306,6 +3306,8 @@ A module is a chunk that returns a table of functions and nothing else. `ctx` is
 Commands are queued (at most 8 per call, `GENO_LUA_MAX_CMDS`) and applied in call order when the call returns, by the game half, before the next phase. The allowlist environment is
 `type`, `select`, `ipairs`, `assert`, `error`, `freeze` and `math.{abs, min, max, floor, ceil, sqrt, tointeger, huge, pi}`; nothing else exists.
 
+A module has at most 48 functions (`GLUA_MAX_FNS`; it was 24 until Goku's module reached it; the table is host-side, not state, so nothing in a hash or a snapshot changes). `build.sh --native-test geno-lua` checks that 40 functions load and 49 are refused.
+
 ### 23.3 What is enforced, and where (`pc/platform/geno_lua_core.h`, tested by `build.sh --native-test geno-lua`)
 
 - **No hidden state.** Module functions are scanned when the module loads: bytecode containing `OP_SETUPVAL` (assigns a captured variable) or `OP_SETTABUP` (assigns a global or a
@@ -3484,7 +3486,7 @@ hitstun and hitlag stay Melee's, and a route is a cancel the attacker takes, nev
 |---|---|---|
 | `from` | `geno:<state>`, `motion:N`, a Melee move name (`jab1 jab2 jab3 rapid_jab dash_attack ftilt ftilt_any utilt dtilt fsmash fsmash_any usmash dsmash nair fair bair uair dair grab dash_grab fthrow bthrow uthrow dthrow`), `*` (any move, only while a string runs), or a list (one parsed route per source) | required |
 | `to` | a geno.json target (`geno:<state>`, `motion:N`, `auto`), a Melee move name (entered as a raw motion change), `special_n/s/hi/lw` (the define's bound special through `Geno_SpecialEnter`, the air entry in the air), `jump` (ground `ftCo_Jump_Enter`; air `ftCo_JumpAerial_Enter_Basic` when a jump is left), `nair..dair` (`ftCo_AttackAir_EnterFromMsid`, air only) | required |
-| `input` | `light` (A), `heavy` (A with a fresh smash flick by retail's thresholds, or the C-stick crossing the smash line; in the air the C-stick), `special` (B), `jump` (X/Y), `grab` (Z), `shield` (L/R digital), `none` (fires on the window and condition alone) | required |
+| `input` | `light` (A), `heavy` (A with a fresh smash flick by retail's thresholds, or the C-stick crossing the smash line; in the air the C-stick), `special` (B), `jump` (X/Y), `grab` (Z), `shield` (L/R digital), `blast` (D-pad Down; a fighter's controls layout can map a face button to it: `"Y": "Down"`), `none` (fires on the window and condition alone) | required |
 | `dir` | `any neutral forward back up down side`: the main stick at the press (the C-stick for a C-stick heavy), facing-relative, neutral inside PlCo `x98` | `any` |
 | `on` | `any hit whiff block contact` over the source action so far: hit = a hitbox or an article of the fighter hit a fighter; block = a hitbox hit a shield | `hit` |
 | `where` | `any ground air` | `any` |

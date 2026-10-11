@@ -40,7 +40,7 @@
 #include "../third_party/lua-5.4.7/src/lobject.h"
 #include "../third_party/lua-5.4.7/src/lopcodes.h"
 
-#define GLUA_MAX_FNS 24
+#define GLUA_MAX_FNS 48   /* was 24: Goku's module (Kamehameha tiers, Rush, counter, ki, homing) reached it; host-side table only, not state */
 #define GLUA_NAME 32
 #define GLUA_SLOT_NAME 24
 #define GLUA_LOAD_HEAP (4u * 1024u * 1024u)

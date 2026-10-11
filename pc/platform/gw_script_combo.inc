@@ -28,7 +28,7 @@ static void gs_combo_target(lua_State *L, int p, unsigned t, const char *key)
  *   routes = { {index, name, from, to, input, dir, on, where, lo, hi, buffer, priority, ki_cost, state = 0 closed | 1 open | 2 ready}, ... } }
  * `open` is every route whose source, window and conditions hold now (2: its input is buffered too: it fires this frame). */
 static int l_combo(lua_State *L) {
-    static const char *const in[] = { "light", "heavy", "special", "jump", "grab", "shield" };
+    static const char *const in[] = { "light", "heavy", "special", "jump", "grab", "shield", "blast" };
     static const char *const dir[] = { "any", "neutral", "forward", "back", "up", "down", "side" };
     static const char *const on[] = { "any", "hit", "whiff", "block", "contact" };
     static const char *const wh[] = { "any", "ground", "air" };

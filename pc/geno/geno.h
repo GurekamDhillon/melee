@@ -577,7 +577,8 @@ enum { /* the input class a route asks for */
     GENO_CI_JUMP = 3,    /* X / Y */
     GENO_CI_GRAB = 4,    /* Z */
     GENO_CI_SHIELD = 5,  /* L / R digital */
-    GENO_CI_COUNT = 6,
+    GENO_CI_BLAST = 6,   /* D-pad Down (after a fighter's controls layout: a layout that maps Y -> Down makes Y the blast button) */
+    GENO_CI_COUNT = 7,
     GENO_CI_NONE = 15    /* no input: the route fires on its own when the window and condition hold */
 };
 enum { /* direction, relative to the facing, of the stick (C-stick for a C-stick heavy) at the press */

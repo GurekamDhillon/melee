@@ -193,7 +193,7 @@ static int gn_meter_parse(gn_profile *p, const jdoc *d, int e, const char *where
 /* 1 when the entry is fine (with or without a combo block); 0 refuses it. */
 static int gn_combo_parse(gn_profile *p, const jdoc *d, int e, const char *where, int version)
 {
-    static const char *const inputs[] = { "light", "heavy", "special", "jump", "grab", "shield" };
+    static const char *const inputs[] = { "light", "heavy", "special", "jump", "grab", "shield", "blast" };
     static const char *const dirs[] = { "any", "neutral", "forward", "back", "up", "down", "side" };
     static const char *const ons[] = { "any", "hit", "whiff", "block", "contact" };
     static const char *const wheres[] = { "any", "ground", "air" };

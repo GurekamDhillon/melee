@@ -66,6 +66,9 @@ void gw_script_pad_state(int ch, unsigned *b, int *sx, int *sy, int *cx, int *cy
 unsigned gw_script_pad_raw_buttons(int ch) { (void) ch; return g_pad; }
 static float g_mx = -1000.0f, g_my = -1000.0f, g_mwheel; static int g_mbuttons;
 void gw_Mouse_ScriptRead(float *x, float *y, int *buttons, float *wheel) { *x = g_mx; *y = g_my; *buttons = g_mbuttons; *wheel = g_mwheel; }
+void gw_Mouse_Peek(float *x, float *y, int *buttons, float *wheel) { *x = g_mx; *y = g_my; *buttons = g_mbuttons; *wheel = 0.0f; }
+int gw_Mouse_X(void) { return (int) g_mx; }
+void gw_Mouse_HandIsCursor(void) {}
 float gw_Console_ScriptWidth(void) { return 640.0f; }
 int gw_Settings_Int(const char *k, int d) { (void) k; return d; }
 static void gs_prof_setfuncs(lua_State *L, const luaL_Reg *funcs, const char *prefix) { (void) prefix; luaL_setfuncs(L, funcs, 0); }

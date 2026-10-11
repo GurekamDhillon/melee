@@ -86,6 +86,9 @@ static int g_pad_only = -1;   /* >= 0: only that channel holds g_pad (a pause sc
 unsigned gw_script_pad_raw_buttons(int ch) { return (g_pad_only < 0 || ch == g_pad_only) ? g_pad : 0u; }
 static float g_mx = -1000.0f, g_my = -1000.0f; static int g_mbuttons;
 void gw_Mouse_ScriptRead(float *x, float *y, int *buttons, float *wheel) { *x = g_mx; *y = g_my; *buttons = g_mbuttons; *wheel = 0.0f; }
+void gw_Mouse_Peek(float *x, float *y, int *buttons, float *wheel) { *x = g_mx; *y = g_my; *buttons = g_mbuttons; *wheel = 0.0f; }
+int gw_Mouse_X(void) { return (int) g_mx; }
+void gw_Mouse_HandIsCursor(void) {}
 float gw_Console_ScriptWidth(void) { return 640.0f; }
 static int g_pause_wanted;     /* the setting atlas_pause (the takeover; off by default) */
 int gw_Settings_Int(const char *k, int d) { return strcmp(k, "atlas_pause") == 0 ? g_pause_wanted : d; }

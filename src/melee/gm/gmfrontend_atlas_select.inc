@@ -573,7 +573,7 @@ static void fas_submit_css(void)
     sprintf(buf, "%d / %d", cur + 1, n);
     Ui_SelCounter(fas.h, buf);
     if (Ui_CssGet(FA_CG_PUCK, 0)) {
-        Ui_SelKeys(fas.h, fas.ntab > 1 ? "A:Puck,X:Costume,S:Start,B:Back,L:Tabs" : "A:Puck,X:Costume,S:Start,B:Back");
+        Ui_SelKeys(fas.h, fas.ntab > 1 ? "A:Coin,X:Costume,S:Start,B:Back,L:Tabs" : "A:Coin,X:Costume,S:Start,B:Back");
         return;
     }
     Ui_SelKeys(fas.h, online ? "A:Pick,X:Costume,S:Lock in,B:Back"

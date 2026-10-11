@@ -132,6 +132,8 @@ static void gs_ui_text(void *u, float x, float base, const char *s, int role, un
 }
 
 /* a disc-art texture (gw_Kit_TexAddHsd's slot) or any kit texture: drawn modulated by the tint, in order with the other quads */
+static void gs_sel_live_hand(GsUiSlot *u);   /* gw_script_ui_sel.inc */
+
 /* the select's hand and coin masks (menu/pipeline/css_tokens.py), looked up once; a missing one leaves the flat shapes */
 static void gs_ui_css_art(void) {
     static int done;
@@ -724,6 +726,7 @@ static void gs_ui_draw(void) {
     gs_ui_stat.canvas_w = gw_Console_ScriptWidth();
     if (u->native_set) gs_set_resolve(u);                          /* the rows were submitted again: the focus is valid before it is drawn */
     gs_ui_reduced = gw_Settings_Int("reduced_motion", 0) != 0;
+    gs_sel_live_hand(u);                                          /* the select: the mouse's hand sits under the pointer this frame, not last tick */
     at_render_ex(&u->sc, &u->view, gs_ui_stat.canvas_w, gs_now_ms(), gs_ui_reduced, &ops, &sink, &u->hits, &info);
     if (u->native_mods) gs_mods_drawn();
     gw_Kit_SetTracking(0.0f);                                     /* belt and braces: no draw leaves tracking set */

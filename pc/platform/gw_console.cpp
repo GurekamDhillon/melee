@@ -58,6 +58,7 @@ struct {
   bool logged = false;
   SDL_WindowID window = 0;
   float px = 0, py = 0; /* refresh stationary pointers after a resize/toggle */
+  unsigned hand_at = 0;  /* GetTickCount when a screen last said its own drawn hand is the pointer */
 } g_mouse;
 
 /* Same view as the kit: height 480, width 480*View_Aspect. Lua starts
@@ -186,11 +187,16 @@ extern "C" void gw_Mouse_Peek(float *x, float *y, int *buttons, float *wheel) {
   *wheel = g_mouse.wheel_frame;
 }
 
+/* A screen whose drawn hand follows the pointer (the character select) says so every tick: the kit's hand and the OS cursor stay hidden
+ * over the window meanwhile, so there is one pointer. */
+extern "C" void gw_Mouse_HandIsCursor(void) { g_mouse.hand_at = GetTickCount(); }
+static bool mouse_hand_is_cursor(void) { return g_mouse.hand_at != 0 && GetTickCount() - g_mouse.hand_at < 150u; }
+
 /* The cursor shows while the pointer moved in the last 3 s, over the window, and a frontend screen
  * or a script's menu wants it (both say so every frame they do). */
 extern "C" int gw_Mouse_CursorShown(void) {
   const bool wanted = g_mouse.frame - g_mouse.ui_frame <= 6u || g_mouse.frame - g_mouse.script_frame <= 6u;
-  return g_mouse.inside && wanted && GetTickCount() - g_mouse.moved_at < 3000u;
+  return g_mouse.inside && wanted && !mouse_hand_is_cursor() && GetTickCount() - g_mouse.moved_at < 3000u;
 }
 
 namespace {

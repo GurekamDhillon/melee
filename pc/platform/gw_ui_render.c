@@ -737,25 +737,33 @@ static void csv_coin(const AtSink *s, const AtTextOps *o, float cx, float cy, fl
     csv_coin_ex(s, o, cx, cy, r, port, lifted ? 1.0f : 0.0f);
 }
 
-/* an empty dock: the coin's socket, a dark ghost of its rim */
-static void csv_socket(const AtSink *s, float cx, float cy, float r)
+/* an empty dock: the coin's socket, sunk into the panel: a dark recess, the chip's inlays as dim notches, a thin ring in the port's colour,
+ * the port's number engraved where the coin will sit */
+static void csv_socket(const AtSink *s, const AtTextOps *o, float cx, float cy, float r, int port)
 {
     if (csv_art_ok(csv_art.coin, AT_CSS_COIN_LAYERS) && s->image != NULL) {
-        float side = r * 64.0f / 30.6f;
-        at_sink_image(s, csv_art.coin[1], cx - side * 0.5f, cy - side * 0.5f, side, side, csv_alpha(AT_C_INK, 0.8f));
-        at_sink_image(s, csv_art.coin[2], cx - side * 0.5f, cy - side * 0.5f, side, side, AT_C_PLATE);
-        at_sink_image(s, csv_art.coin[3], cx - side * 0.5f, cy - side * 0.5f, side, side, csv_alpha(AT_C_LINE, 0.9f));
-        at_sink_image(s, csv_art.coin[4], cx - side * 0.5f, cy - side * 0.5f, side, side, AT_C_GROUND2);
+        float side = r * 64.0f / 30.6f, x = cx - side * 0.5f, y = cy - side * 0.5f;
+        unsigned pc = csv_port_rgb(port);
+        char lab[4];
+        at_sink_image(s, csv_art.coin[1], x, y - 1.0f, side, side, csv_alpha(0xFFFFFF00u, 0.10f));      /* the lip catching the light above */
+        at_sink_image(s, csv_art.coin[1], x, y, side, side, AT_C_EDGE);
+        at_sink_image(s, csv_art.coin[2], x, y, side, side, AT_C_GROUND);
+        at_sink_image(s, csv_art.coin[3], x, y, side, side, csv_alpha(pc, 0.30f));
+        at_sink_image(s, csv_art.coin[4], x, y, side, side, AT_C_GROUND2);
+        at_sink_image(s, csv_art.coin[5], x, y, side, side, csv_alpha(pc, 0.55f));
+        at_sink_image(s, csv_art.coin[6], x - side * 0.04f, y - side * 0.05f, side, side, csv_alpha(AT_C_INK, 0.6f));   /* the recess's shadow falls down-right */
+        snprintf(lab, sizeof lab, "P%d", port + 1);
+        at_text(s, o, AT_R_CAP14, lab, cx, cy + 5.0f, csv_alpha(pc, 0.45f), AT_ALIGN_CENTER, 0.0f);
         return;
     }
     at_disc(s, cx, cy, r - 5.0f, AT_C_PLATE);
 }
 
 /* the hand's pose and how it sits: the hotspot in the texture's 64 grid (css_tokens_layout.json), the number badge's centre */
-static const float csv_hot[2][2] = { { 13.59f, 13.64f }, { 14.21f, 30.88f } };
-#define CSV_BADGE_X 37.32f
+static const float csv_hot[2][2] = { { 13.36f, 13.11f }, { 13.77f, 30.81f } };
+#define CSV_BADGE_X 37.42f
 #define CSV_BADGE_Y 33.78f
-#define CSV_HAND_SIDE 64.0f       /* the texture's side on screen at scale 1: the glove is about 40 px */
+#define CSV_HAND_SIDE 82.0f       /* the texture's side on screen at scale 1: the glove is about 60 px, Melee's hand is big */
 
 enum { CSV_POSE_POINT = 0, CSV_POSE_GRAB = 1 };
 
@@ -775,7 +783,7 @@ static void csv_hand_ex(const AtSink *s, const AtTextOps *o, float x, float y, i
             at_sink_image(s, csv_art.hand[pose][i], ox + (i == 0 ? so : 0.0f), oy + (i == 0 ? so * 1.5f : 0.0f), side, side, col[i]);
         if (port == AT_CSS_CPU_COIN) { num[0] = 'C'; num[1] = '\0'; }
         else { num[0] = (char) ('1' + (port < 0 ? 0 : port)); num[1] = '\0'; }
-        at_text(s, o, AT_R_CAP12, num, ox + CSV_BADGE_X * u, oy + CSV_BADGE_Y * u + 4.0f, AT_C_INK, AT_ALIGN_CENTER, 0.0f);
+        at_text(s, o, AT_R_CAP14, num, ox + CSV_BADGE_X * u, oy + CSV_BADGE_Y * u + 5.0f, AT_C_INK, AT_ALIGN_CENTER, 0.0f);
         return;
     }
     {   /* the flat pointer (no art) */
@@ -791,7 +799,7 @@ static void csv_hand_ex(const AtSink *s, const AtTextOps *o, float x, float y, i
 static void csv_hand_carry(const AtSink *s, const AtTextOps *o, float x, float y, int port, int coin_port, float scale)
 {
     if (csv_art_ok(csv_art.hand[CSV_POSE_GRAB], AT_CSS_HAND_LAYERS) && s->image != NULL) {
-        float r = 11.0f * scale;
+        float r = 13.0f * scale;
         csv_coin_ex(s, o, x, y, r, coin_port, 1.0f);                         /* the coin under the pointer, the pinch on its upper right rim */
         csv_hand_ex(s, o, x + r * 1.0f, y - r * 0.95f, port, CSV_POSE_GRAB, 0, scale);
         return;
@@ -887,7 +895,7 @@ static void csv_draw_panel(const AtScreen *sc, const AtView *v, const AtCssGeom 
             int art = csv_art_ok(csv_art.coin, AT_CSS_COIN_LAYERS) && s->image != NULL;
             if (!art) { at_disc(s, cx, cy, r + 2.0f, AT_C_INK); at_disc(s, cx, cy, r, AT_C_GROUND2); }
             if (!k->hold && k->drop_cell < 0) csv_coin(s, o, cx, cy, art ? r + 1.0f : r - 1.0f, idx, 0);
-            else csv_socket(s, cx, cy, art ? r + 1.0f : r);                   /* the dock is empty: the puck is in a hand or on a tile */
+            else csv_socket(s, o, cx, cy, art ? r + 1.0f : r, idx);                   /* the dock is empty: the puck is in a hand or on a tile */
             hit_add(hc, (AtRect){ cx - r, cy - r, 2.0f * r, 2.0f * r }, AT_HIT_ZONE, idx, AT_ZONE_PUCK | (2 << 4));
             if (zone == AT_ZONE_PUCK) csv_ring(s, (AtRect){ cx - r - 3.0f, cy - r - 3.0f, 2.0f * r + 6.0f, 2.0f * r + 6.0f }, 2.0f, hcol);
         }

@@ -3104,6 +3104,9 @@ static int l_key_pressed(lua_State *L) {
  * tick (+ up). Local UI input only: it never reaches the pads or a netplay peer. Polling it is what
  * shows the cursor during a match (a script's menu is open), so poll it only while one is. */
 extern void gw_Mouse_ScriptRead(float *x, float *y, int *buttons, float *wheel);
+extern void gw_Mouse_Peek(float *x, float *y, int *buttons, float *wheel);
+extern int gw_Mouse_X(void);
+extern void gw_Mouse_HandIsCursor(void);
 extern float gw_Console_ScriptWidth(void); /* the overlay canvas width (640 at 4:3, ~853 on 16:9) */
 extern void gw_Mouse_ScriptTick(void);
 static int l_mouse(lua_State *L) {

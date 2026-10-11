@@ -26,7 +26,7 @@ static struct {
 } gs_sel = { 0, -1 };
 
 static AtCss gs_selm_css;           /* the character select's model (defined with the shims below) */
-static struct { float x, y; int valid, edge, user; } gs_hand[4];   /* the free hands (below) */
+static struct { float x, y; int valid, edge, user, mouse; } gs_hand[4];   /* mouse: the pointer moved it last (a stick move clears it) */   /* the free hands (below) */
 static void gs_hand_home(GsUiSlot *u, int p);
 enum { GS_SEL_CSS, GS_SEL_SSS, GS_SEL_LOAD };
 enum { GS_SELEV_CELL = 1, GS_SELEV_CARD = 2, GS_SELEV_TAB = 3, GS_SELEV_KEY = 4, GS_SELEV_WHEEL = 5, GS_SELEV_POINTER = 6, GS_SELEV_ZONE = 7, GS_SELEV_PAD = 8, GS_SELEV_SOUND = 9 };
@@ -482,7 +482,7 @@ unsigned gw_Ui_SelHand(int h, int port, int sx, int sy) {
     }
     dx *= 0.0002f * GS_HAND_PX;
     dy *= -0.0002f * GS_HAND_PX;
-    if (dx != 0.0f || dy != 0.0f) gs_hand[port].user = 1;
+    if (dx != 0.0f || dy != 0.0f) { gs_hand[port].user = 1; gs_hand[port].mouse = 0; }
     if (s->drag >= 0) return gs_hand_drag(u, port, gs_hand[port].x + dx);
     gs_hand[port].x += dx; gs_hand[port].y += dy;
     if (gs_hand[port].x < 2.0f) gs_hand[port].x = 2.0f;
@@ -516,7 +516,7 @@ static void gs_sel_tick_css(GsUiSlot *u) {
         if (moved) {
             unsigned ev;
             if (s->drag >= 0) ev = gs_hand_drag(u, mp, x);
-            else { gs_hand[mp].x = x; gs_hand[mp].y = y; gs_hand[mp].valid = 1; gs_hand[mp].user = 1; ev = gs_hand_hover(u, mp); }
+            else { gs_hand[mp].x = x; gs_hand[mp].y = y; gs_hand[mp].valid = 1; gs_hand[mp].user = 1; gs_hand[mp].mouse = 1; ev = gs_hand_hover(u, mp); }
             if (ev) gs_sel_q_push(GS_SELEV_SOUND, (int) ev, 0);
         } else if (!gs_hand[mp].valid && (left || right)) { gs_hand[mp].x = x; gs_hand[mp].y = y; gs_hand[mp].valid = 1; gs_hand[mp].user = 1; gs_hand_hover(u, mp); }
         if (left) {
@@ -538,6 +538,20 @@ static void gs_sel_tick_css(GsUiSlot *u) {
     m->x = x;
     m->y = y;
     m->buttons = buttons;
+}
+
+/* draw time: while the pointer drives the mouse's hand, the hand is the pointer (gw_Mouse_HandIsCursor hides the kit's and the OS's), drawn at the
+ * pointer's position of this frame so it never trails it; the rules still see the tick's position. A held slider keeps its knob's own place. */
+static void gs_sel_live_hand(GsUiSlot *u) {
+    float x, y, wheel;
+    int buttons, mp;
+    if (u == NULL || u->sc.primary != AT_PRIMARY_CSS || !gs_selm_css.puck || !gs_selm_css.free) return;
+    mp = at_css_mouse_port(&gs_selm_css);
+    if (mp < 0 || mp > 3 || !gs_hand[mp].valid || !gs_hand[mp].mouse || gw_Mouse_X() <= -1000) return;
+    gw_Mouse_HandIsCursor();
+    if (gs_selm_css.p[mp].drag >= 0 || !u->view.cursor[mp].free) return;
+    gw_Mouse_Peek(&x, &y, &buttons, &wheel);
+    u->view.cursor[mp].hx = x; u->view.cursor[mp].hy = y;
 }
 
 /* ---- the models, host side ------------------------------------------------------------------------------------------------

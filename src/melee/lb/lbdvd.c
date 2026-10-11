@@ -498,6 +498,25 @@ void* lbDvd_GetPreloadedArchive(ssize_t entry_num)
 
     OSRestoreInterrupts(interrupt);
     lbDvd_800189EC(entry_num);
+#if defined(TARGET_PC)
+    /* A preloaded archive that was initialised for an earlier match (load_state 2) sits in a handle-managed heap, and a later scene's allocations can
+     * compact that heap: raw_data->addr moves but the HSD_Archive still points at the old copy (data = raw + 0x20), and the absolute pointers the first
+     * InitializeDAT wrote into the file are stale too. Symptom (found 2026-10-10 with a second LAB match on a different stage, with or without a Geno
+     * define): "Cannot find symbol ftDataMario" / lbarchive.c:87 PANIC, because the symbol table is read from the old, overwritten address. Retail never
+     * hits it (its second preload of a file starts at load_state 1). Re-read the file into the moved buffer and let the initialisation below run again. */
+    if (entry->load_state == 2 && (entry->type == 2 || entry->type == 3 || entry->type == 4) && entry->archive != NULL && entry->raw_data != NULL &&
+        ((HSD_Archive*) entry->archive->addr)->data != (u8*) entry->raw_data->addr + 0x20)
+    {
+        size_t length = 0;
+        uintptr_t dst = (uintptr_t) entry->raw_data->addr;
+        OSReport("lbDvd: preloaded archive for entry %d moved (data %p, buffer %p): reloading it\n", (int) entry_num,
+                 ((HSD_Archive*) entry->archive->addr)->data, entry->raw_data->addr);
+        length = lbFile_8001634C(entry_num);
+        lbFile_800161C4(entry_num, 0, dst, (length + 31) & ~31, dst >= 0x80000000 ? 0x21 : 0x23, 2);
+        entry->size = length;
+        entry->load_state = 1;
+    }
+#endif
     if (entry->load_state == 1) {
         PreloadEntry* entry = &preloadCache.entries[i];
         type = entry->type;

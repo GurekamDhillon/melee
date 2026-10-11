@@ -33,6 +33,7 @@
 #include <melee/ft/ftparts.h>
 #include <melee/ft/inlines.h>
 #include <melee/ft/kinds/ftCommon/forward.h>
+#include <melee/ft/kinds/ftCommon/ftCo_Escape.h>
 #include <melee/ft/kinds/ftCommon/ftCo_Fall.h>
 #include <melee/ft/kinds/ftCommon/ftCo_FallSpecial.h>
 #include <melee/ft/kinds/ftCommon/ftCo_Landing.h>
@@ -1685,6 +1686,10 @@ static int geno_target_ok(Fighter* fp, u32 target)
 static int geno_do_change(Fighter_GObj* gobj, Fighter* fp, GenoState* st, u32 target)
 {
     int msid;
+    if (target == GENO_TGT_ROLL) {
+        /* the natives' roll cancel (ftSs_SpecialNHold_IASA, ftMt_SpecialNLoop_IASA call ftCo_8009917C first): it tests the flick itself and enters the roll */
+        return fp->ground_or_air == GA_Ground && ftCo_8009917C(gobj) ? 1 : 0;
+    }
     if (target == GENO_TGT_AUTO || target == GENO_TGT_HELPLESS) {
         /* v2 geno.json shorthands: Wait on the ground, else Fall / FallSpecial */
         target = GENO_TARGET(GENO_TGT_MOTION, fp->ground_or_air == GA_Ground ? ftCo_MS_Wait

@@ -365,6 +365,7 @@ static int ne_refetch_mod(int id, int *status) {
     snprintf(url, sizeof url, "%s/mods/%d", nc_api_base, id);
     nch_get(url, NC_MAX_BODY, &r);
     *status = r.status;
+    if (r.status != 200) ne_log("refetch of post %d: HTTP %d %s", id, r.status, r.err);
     if (r.status == 200 && r.data) {
         nj_doc d;
         int root = nj_parse(&d, (const char *) r.data);

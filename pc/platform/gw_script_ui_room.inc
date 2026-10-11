@@ -181,6 +181,16 @@ void gw_Ui_RoomPlayerName(int who, const char *name, const char *fighter) {
     snprintf(gs_room.rv.pl[who].fighter, sizeof gs_room.rv.pl[who].fighter, "%s", fighter != NULL ? fighter : "");
 }
 
+/* modsync: the lobby's mod-difference list. Count first (0 clears), then each row's text. */
+void gw_Ui_RoomModCount(int n) {
+    if (gs_room_get() == NULL) return;
+    gs_room.rv.n_mods = n < 0 ? 0 : n > AT_ROOM_MODS ? AT_ROOM_MODS : n;
+}
+void gw_Ui_RoomMod(int i, const char *text) {
+    if (gs_room_get() == NULL || i < 0 || i >= AT_ROOM_MODS) return;
+    snprintf(gs_room.rv.mods[i], sizeof gs_room.rv.mods[i], "%s", text != NULL ? text : "");
+}
+
 void gw_Ui_RoomStageCount(int n) {
     if (gs_room_get() == NULL) return;
     gs_room.rv.n_stages = n < 0 ? 0 : n > AT_ROOM_STAGES ? AT_ROOM_STAGES : n;

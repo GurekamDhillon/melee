@@ -303,6 +303,15 @@ static int render_lobby(const AtRoomView *v, const AtLayout *L, const AtTextOps 
         room_card(s, o, rc(P.x + pad + (float) i * (cw + 8.0f), y, cw, 56.0f), &v->pl[i], i, i == v->me, tag, tone);
     }
     y += 64.0f;
+    if (v->n_mods > 0) {                                                        /* modsync: the mods that differ from the peer's, one per line */
+        int mi, nm = v->n_mods > AT_ROOM_MODS ? AT_ROOM_MODS : v->n_mods;
+        AtRect mp = rc(gx, y, gw, 24.0f + 17.0f * (float) nm);
+        e2(s, mp);
+        at_text(s, o, AT_R_CAP12, "MODS DIFFER FROM THE OTHER PLAYER'S", mp.x + 10.0f, mp.y + 15.0f, AT_C_MUTED, AT_ALIGN_LEFT, mp.w - 20.0f);
+        for (mi = 0; mi < nm; mi++)
+            at_text(s, o, AT_R_BODY12, v->mods[mi], mp.x + 10.0f, mp.y + 33.0f + 17.0f * (float) mi, AT_C_TEXT2, AT_ALIGN_LEFT, mp.w - 20.0f);
+        y += mp.h + 6.0f;
+    }
     /* the coin flip, or whose turn it is */
     if (v->coin_on) {
         snprintf(buf, sizeof buf, "COIN FLIP: P%d STRIKES FIRST", v->first + 1);

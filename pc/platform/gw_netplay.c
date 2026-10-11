@@ -3348,13 +3348,15 @@ int gw_Netplay_ModsBlock(void) { return np_ms_global_differs(); }
  * arrived. The text is rebuilt about twice a second; the diff rows are logged once per change. */
 static char np_ms_line[200];
 static unsigned np_ms_line_at;
+static gw_ms_row np_ms_rows[GW_MS_MAX * 2];
+static int np_ms_nrows, np_ms_shown;   /* the room's per-mod list (gw_Netplay_ModsRow): identity-changing rows first, then cosmetic ones */
 void gw_Netplay_ModsLine(char *out, int cap) {
     static gw_ms_manifest mine;
-    static gw_ms_row rows[GW_MS_MAX * 2];
+    gw_ms_row *rows = np_ms_rows;
     static gw_ms_plan plan;
     static char last_log[160];
-    if (gw_ms_phase() != GW_MS_PH_IDLE) { np_copy(out, cap, gw_ms_status()); return; }
-    if (np.net == NULL || !gw_ms_peer_ready() || !np.use_lobby) { np_copy(out, cap, ""); return; }
+    if (gw_ms_phase() != GW_MS_PH_IDLE) { np_ms_nrows = 0; np_copy(out, cap, gw_ms_status()); return; }
+    if (np.net == NULL || !gw_ms_peer_ready() || !np.use_lobby) { np_ms_nrows = 0; np_copy(out, cap, ""); return; }
     if (np_ms_line_at == 0 || GetTickCount() - np_ms_line_at > 500u) {
         int nr, ni;
         np_ms_line_at = GetTickCount() | 1u;
@@ -3362,6 +3364,14 @@ void gw_Netplay_ModsLine(char *out, int cap) {
         nr = gw_ms_diff(&mine, gw_ms_peer(), rows, GW_MS_MAX * 2);
         if (nr > GW_MS_MAX * 2) nr = GW_MS_MAX * 2;
         ni = gw_ms_ident_diffs(rows, nr);
+        { /* identity-changing rows first (stable), so a short list shows what blocks the match */
+            static gw_ms_row tmp[GW_MS_MAX * 2];
+            int a, b = 0;
+            for (a = 0; a < nr; ++a) if (rows[a].ident) tmp[b++] = rows[a];
+            for (a = 0; a < nr; ++a) if (!rows[a].ident) tmp[b++] = rows[a];
+            memcpy(rows, tmp, (size_t) nr * sizeof rows[0]);
+            np_ms_nrows = nr;
+        }
         gw_ms_plan_build(&mine, gw_ms_peer(), &plan);
         np_ms_line[0] = '\0';
         if (np_ms_global_differs()) {
@@ -3384,6 +3394,23 @@ void gw_Netplay_ModsLine(char *out, int cap) {
     }
     np_copy(out, cap, np_ms_line);
 }
+/* The room's per-mod list: how many rows (the latest ModsLine refresh), and row i as a line ("Name - the host has it, you do not").
+ * 1 when row i exists. The last row is "+N more" when the list is longer than `max_rows`. */
+int gw_Netplay_ModsRowCount(void) { return np_ms_nrows; }
+int gw_Netplay_ModsRow(int i, int max_rows, char *out, int cap) {
+    const gw_ms_row *r;
+    const char *w;
+    if (out != NULL && cap > 0) out[0] = ' ';
+    if (i < 0 || i >= np_ms_nrows || i >= max_rows) return 0;
+    if (i == max_rows - 1 && np_ms_nrows > max_rows) { snprintf(out, (size_t) cap, "+%d more (see the log)", np_ms_nrows - i); return 1; }
+    r = &np_ms_rows[i];
+    if (r->state == GW_MS_MINE_ONLY) w = "only you have it";
+    else if (r->state == GW_MS_THEIRS_ONLY) w = np.host ? "only the guest has it" : "only the host has it";
+    else w = "different version";
+    snprintf(out, (size_t) cap, "%s - %s%s", r->name[0] ? r->name : r->id, w, r->ident ? "" : " (cosmetic, fine)");
+    return 1;
+}
+
 /* Y on the room screen (guest): start the sync, or say why it cannot. 1 = started, 0 = nothing happened (the line says why). */
 int gw_Netplay_ModsAct(void) {
     char code[8];

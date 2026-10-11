@@ -2292,6 +2292,12 @@ static void fl_frame_wait(u32 in)
         fe_switch_screen(&fe_screen_online);
         return;
     }
+    if (fe_np_phase == FE_NP_FAILED && host && Netplay_PeerLeft()) {
+        /* the opponent left during the short beat before the lobby opened (a guest restarting to match the host's mods does): keep the room, wait again */
+        fl.found_at = -1;
+        fe_np_phase = Netplay_Rejoin() == 0 ? FE_NP_WORKING : FE_NP_FAILED;
+        return;
+    }
     if (fe_np_phase == FE_NP_FAILED && !host) {
         /* a bad code or a dead room: back to the code, marked */
         Netplay_MenuStatus(fl.code_msg, FE_STR);

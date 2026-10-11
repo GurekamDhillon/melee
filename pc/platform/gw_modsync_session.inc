@@ -192,7 +192,9 @@ static void ms_apply_and_relaunch(void) {
         si.cb = sizeof si;
         memset(&pi, 0, sizeof pi);
         ms_say("Restarting the game with the host's mods");
-        if (cmd != NULL && CreateProcessA(exe, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+        /* leave a supervisor's kill-on-close job when it allows that (a test supervisor ends with the first process; the player's launcher has no job) */
+        if (cmd != NULL && (CreateProcessA(exe, cmd, NULL, NULL, FALSE, CREATE_BREAKAWAY_FROM_JOB, NULL, NULL, &si, &pi) ||
+                            CreateProcessA(exe, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))) {
             CloseHandle(pi.hThread);
             CloseHandle(pi.hProcess);
             gw_log("modsync: relaunched; this process exits");

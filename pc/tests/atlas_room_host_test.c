@@ -282,6 +282,18 @@ static void intents(void)
     s = rec_sink();                                                                   /* the draw pass learns the hit rectangles */
     at_render_ex(&u->sc, &u->view, 640.0f, g_now, 0, &FAKE, &s, &u->hits, NULL);
     CHECK(u->hits.n > 0);
+    { /* modsync: the mod-difference list shifts the grid down but the tiles stay clickable */
+        int before = u->hits.n;
+        gw_Ui_RoomModCount(3); gw_Ui_RoomMod(0, "Mod A - only you have it"); gw_Ui_RoomMod(1, "Mod B - different version"); gw_Ui_RoomMod(2, "+1 more (see the log)");
+        gw_Ui_RoomFrame();
+        s = rec_sink();
+        at_render_ex(&u->sc, &u->view, 640.0f, g_now, 0, &FAKE, &s, &u->hits, NULL);
+        CHECK(u->hits.n == before && gs_room.rv.n_mods == 3);
+        gw_Ui_RoomModCount(0);
+        gw_Ui_RoomFrame();
+        s = rec_sink();
+        at_render_ex(&u->sc, &u->view, 640.0f, g_now, 0, &FAKE, &s, &u->hits, NULL);
+    }
     gs.key_now[VK_RIGHT] = 1; gs_room_tick(u); gs.key_now[VK_RIGHT] = 0;
     CHECK(gw_Ui_RoomPollName(name, sizeof name, &arg) == 1 && strcmp(name, "right") == 0);
     CHECK(gw_Ui_RoomPollName(name, sizeof name, &arg) == 0);

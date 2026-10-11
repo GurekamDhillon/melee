@@ -135,6 +135,11 @@ static void fa_room_common(void)
         fp_copy(b, "Envoy: ", FE_STR);
         fp_copy(b + 7, Netplay_EnvoyBlock(), FE_STR - 7);
     }
+    if (fe_np_phase == FE_NP_LOBBY) { /* different mods: what differs, and Y matches the host's (modsync) */
+        char m[FE_STR];
+        Netplay_ModsLine(m, FE_STR);
+        if (m[0] != '\0') fp_copy(b, m, FE_STR);
+    }
     Ui_RoomSetStr("status", b);
     Ui_RoomSetInt("turbo", pref ? Netplay_TurboPref() != 0 : Netplay_Turbo() != 0);
     Ui_RoomSetInt("envoy", pref ? Netplay_EnvoyPref() != 0 : Netplay_Envoy() != 0);

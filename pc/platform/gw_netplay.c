@@ -3344,6 +3344,55 @@ static int np_ms_global_differs(void) {
 }
 /* For the room screens and scripts: 1 when the mods differ in a way that blocks the match (offer the sync). */
 int gw_Netplay_ModsBlock(void) { return np_ms_global_differs(); }
+/* The room's mods line (modsync): what differs and what the button does. "" when the two mod lists agree where it matters or the peer's has not
+ * arrived. The text is rebuilt about twice a second; the diff rows are logged once per change. */
+static char np_ms_line[200];
+static unsigned np_ms_line_at;
+void gw_Netplay_ModsLine(char *out, int cap) {
+    static gw_ms_manifest mine;
+    static gw_ms_row rows[GW_MS_MAX * 2];
+    static gw_ms_plan plan;
+    static char last_log[160];
+    if (gw_ms_phase() != GW_MS_PH_IDLE) { np_copy(out, cap, gw_ms_status()); return; }
+    if (np.net == NULL || !gw_ms_peer_ready() || !np.use_lobby) { np_copy(out, cap, ""); return; }
+    if (np_ms_line_at == 0 || GetTickCount() - np_ms_line_at > 500u) {
+        int nr, ni;
+        np_ms_line_at = GetTickCount() | 1u;
+        gw_ms_build_local(&mine, 0);
+        nr = gw_ms_diff(&mine, gw_ms_peer(), rows, GW_MS_MAX * 2);
+        if (nr > GW_MS_MAX * 2) nr = GW_MS_MAX * 2;
+        ni = gw_ms_ident_diffs(rows, nr);
+        gw_ms_plan_build(&mine, gw_ms_peer(), &plan);
+        np_ms_line[0] = '\0';
+        if (np_ms_global_differs()) {
+            if (!np.host && plan.can_complete) snprintf(np_ms_line, sizeof np_ms_line, "Your mods differ from the host's, so no match can start. Y: match the host's mods (%s)", plan.summary);
+            else if (!np.host) snprintf(np_ms_line, sizeof np_ms_line, "Your mods differ from the host's. %s", plan.summary);
+            else snprintf(np_ms_line, sizeof np_ms_line, "The guest's mods differ from yours, so no match can start; they can match yours from their room screen");
+        } else if (ni > 0 && !np.host) {
+            snprintf(np_ms_line, sizeof np_ms_line, "Some mods differ from the host's but a match can start. Y: match the host's mods (%s)", plan.summary);
+        }
+        if (strcmp(last_log, np_ms_line) != 0) {
+            int i;
+            snprintf(last_log, sizeof last_log, "%s", np_ms_line);
+            gw_log("modsync: room - %d row(s), %d change the match: %s", nr, ni, np_ms_line[0] ? np_ms_line : "(agree)");
+            for (i = 0; i < nr && i < 16; ++i) {
+                static const char *const w[] = {"same", "you have it, they do not", "they have it, you do not", "differs"};
+                gw_log("modsync:   %s [%s]%s%s - %s", rows[i].name, rows[i].id, rows[i].source[0] ? " from " : "", rows[i].source, rows[i].ident ? w[rows[i].state] : "cosmetic, fine either way");
+            }
+            for (i = 0; i < plan.n && i < 16; ++i) gw_log("modsync:   plan %d %s: %s", plan.a[i].kind, plan.a[i].id, plan.a[i].why);
+        }
+    }
+    np_copy(out, cap, np_ms_line);
+}
+/* Y on the room screen (guest): start the sync, or say why it cannot. 1 = started, 0 = nothing happened (the line says why). */
+int gw_Netplay_ModsAct(void) {
+    char code[8];
+    if (np.host || !gw_ms_peer_ready()) return 0;
+    np_copy(code, (int) sizeof code, np.peer_code);
+    np_ms_line_at = 0;
+    return gw_ms_start(code) == 0;
+}
+
 
 /* One step of connecting (menu frames, or the boot wait). Returns the phase. */
 static int np_poll(void) {

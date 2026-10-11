@@ -1297,6 +1297,19 @@ static void ne_shutdown(void) {
 
 /* ---- mod sync (gw_modsync_session.inc): "match the host's mods" installs Nucleus posts by id, outside any netplay session ---- */
 
+/* once a frame while a sync or an install runs: write what the workers queued (they never call gw_log themselves) */
+void gw_ms_nc_pump(void) {
+    char lines[24][220];
+    int i, n;
+    if (!NE.inited) return;
+    ne_lock();
+    n = NE.nlog;
+    for (i = 0; i < n; ++i) memcpy(lines[i], NE.logq[i], sizeof lines[i]);
+    NE.nlog = 0;
+    ne_unlock();
+    for (i = 0; i < n; ++i) gw_log("nucleus: %s", lines[i]);
+}
+
 /* Queue these posts and start the downloads. 0 = ok. The engine threads start if they have not (the catalog record is fetched by id when the catalog lacks it). */
 int gw_ms_nc_queue(const int *posts, int n) {
     int i;

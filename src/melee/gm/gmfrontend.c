@@ -256,6 +256,9 @@ int Netplay_EnvoyAvailable(void);
 const char* Netplay_EnvoyBlock(void);
 int Netplay_EnvoyNote(void);
 int Netplay_EnvoyOff(void);
+void Netplay_ModsLine(char* out, int cap); /* the room's mods line (gw_netplay.c, gw_modsync.h) */
+int Netplay_ModsAct(void);
+int Netplay_ModsBlock(void);
 int Netplay_RandomBegin(int ck, int color, int stocks, int minutes, int delay);
 void Netplay_RandomCancel(void);
 int Netplay_RandomStatus(void);

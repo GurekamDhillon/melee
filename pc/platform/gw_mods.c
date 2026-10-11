@@ -640,7 +640,7 @@ static gw_mods_set *boot(void) {
         const char *en = getenv("MELEE_MODS");
         gw_mods_boot_loaded = 1;
         default_dir(dir, sizeof dir);
-        if (dir[0] != ' ') ms_boot_check(dir);
+        if (dir[0] != '\0') ms_boot_check(dir);
         set_load(&gw_mods_boot, dir, en != NULL && en[0] == '0');
         if (gw_mods_boot.n > 0) set_log(&gw_mods_boot);
     }

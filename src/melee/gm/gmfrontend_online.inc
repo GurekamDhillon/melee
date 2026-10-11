@@ -1349,6 +1349,10 @@ static void fl_status_line(char* out)
         fp_copy(out + 7, Netplay_EnvoyBlock(), FE_STR - 7);
         return;
     }
+    if (fl.art == FL_LOBBY && !fl_reconnecting()) { /* different mods (modsync) */
+        Netplay_ModsLine(out, FE_STR);
+        if (out[0] != '\0') return;
+    }
     Netplay_RoomCode(code, sizeof code);
     fl_grid_layout();
     if (fl.art == FL_LOBBY && !fl_reconnecting() && flg.pages > 1 && fl.cur >= 0 && fl.cur < flg.n) {
@@ -2439,6 +2443,17 @@ static void fl_frame_lobby(u32 in)
     }
     fl_lobby_events();
     p = fl_phase();
+    if ((in & MenuInput_YButton) && !Netplay_IsHost()) { /* Y: match the host's mods (modsync) */
+        char m[FE_STR];
+        Netplay_ModsLine(m, FE_STR);
+        if (m[0] != '\0') {
+            sfxForward();
+            if (Netplay_ModsAct()) {
+                fl_toast("Matching the host's mods. The game restarts and rejoins the room.", false, 300);
+                return;
+            }
+        }
+    }
     if ((in & MenuInput_YButton) && Netplay_IsHost() && Netplay_EnvoyBlock()[0] != '\0') {
         sfxForward();
         if (Netplay_EnvoyOff()) {

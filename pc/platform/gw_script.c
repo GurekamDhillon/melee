@@ -1677,6 +1677,8 @@ static const char *const gs_rnd_state[] = {"off", "looking", "matched", "timeout
 /* gd.modsync() -> {phase, status, active, room, blocked, peer_ready, can_complete, summary, ndownload, nenable, ndisable, nmissing, rows={{id,name,state,ident,source,post}}, actions={{kind,id,name,post,why}}}
  * gd.modsync_act("sync"[, code]) | ("cancel") | ("keep") | ("end"): the room screens' buttons for scripts and tests (gw_modsync.h). */
 extern int gw_Netplay_ModsBlock(void);
+extern int gw_ms_nc_queue(const int *posts, int n);
+extern int gw_MexId_CommonStageCount(void);
 static int l_modsync(lua_State *L) {
     static const char *const ph[] = {"idle", "downloading", "applying", "relaunch", "failed"};
     static const char *const rs[] = {"same", "mine_only", "theirs_only", "differs"};
@@ -1747,6 +1749,7 @@ static int l_modsync_act(lua_State *L) {
     else if (strcmp(what, "cancel") == 0) { gw_ms_cancel(); rc = 1; }
     else if (strcmp(what, "keep") == 0) rc = gw_ms_keep() == 0;
     else if (strcmp(what, "end") == 0) { gw_ms_end_session(); rc = 1; }
+    else if (strcmp(what, "install") == 0) { int id = (int) luaL_checkinteger(L, 2); rc = gw_ms_nc_queue(&id, 1) == 0; } /* TEST: install a Nucleus post (no room involved) */
     else return luaL_error(L, "gd.modsync_act: unknown action \"%s\" (sync, cancel, keep, end)", what);
     lua_pushboolean(L, rc);
     return 1;
@@ -1760,6 +1763,7 @@ static int l_netplay(lua_State *L) {
     gs_setstr(L, "status", gw_Netplay_Status());
     gs_setstr(L, "refusal", gw_Netplay_Refusal());
     gs_setint(L, "common_fighters", gw_MexId_CommonFighterCount());
+    gs_setint(L, "common_stages", gw_MexId_CommonStageCount());
     gs_setbool(L, "peer_defines", gw_MexId_PeerDefinesComplete());
     gs_setstr(L, "code", gw_Netplay_Code());
     gs_setbool(L, "host", gw_Netplay_IsHost());

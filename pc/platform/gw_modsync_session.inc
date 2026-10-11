@@ -19,6 +19,8 @@
 extern int gw_ms_nc_queue(const int *posts, int n);                                     /* queue and start; 0 = ok */
 extern int gw_ms_nc_state(int post, int *pct, char *why, int cap);                      /* 0 waiting/running, 1 done, -1 failed */
 extern int gw_ms_nc_folder(int post, char *folder, int cap);                            /* installed folder of that post, 1 = found */
+extern void gw_ms_nc_pump(void);
+extern int gw_ms_nc_queue(const int *posts, int n);
 extern void gw_Netplay_Leave(void);
 extern const char *gw_Netplay_Code(void);
 
@@ -203,6 +205,7 @@ static void ms_apply_and_relaunch(void) {
 
 void gw_ms_tick(void) {
     int i, pending = 0;
+    gw_ms_nc_pump();
     if (ms_s.phase == GW_MS_PH_DOWNLOADING) {
         for (i = 0; i < ms_s.nposts; ++i) {
             char why[120] = { 0 };

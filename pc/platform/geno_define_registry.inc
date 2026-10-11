@@ -267,10 +267,16 @@ static const struct { const char* name; int kind, ck, rows, maxmotion; } gn_tmpl
     { "fox",     1,  1, 327, 375 },   /* 341 common + 35 (ftFx_MS_SelfCount, asserted in the game half) */
     { "falco",  22, 20, 327, 375 },   /* Falco shares Fox's 35 states */
     { "marth",  18,  9, 327, 372 },   /* 341 common + 32 (ftMs_MS_SelfCount) */
+    { "puff",   15, 15, 327, 372 },   /* Jigglypuff (Purin): 341 common + 32 (ftPr_MS_SelfCount) */
+    { "sheik",   7, 19, 317, 364 },   /* 341 common + 24 (ftSk_MS_SelfCount); a pair member (transform_partner) */
+    { "zelda",  19, 18, 311, 358 },   /* 341 common + 18 (ftZd_MS_SelfCount); a pair member (transform_partner) */
 };
 #define GN_TMPL_COUNT ((int)(sizeof gn_tmpls / sizeof gn_tmpls[0]))
 #define GN_TMPL_ROWS(p) (gn_tmpls[(p)->tmpl].rows)
 #define GN_TMPL_MAXMOTION(p) (gn_tmpls[(p)->tmpl].maxmotion)
+/* The transform pair: Zelda (Down B) becomes Sheik and back. A define of either template names its partner define (define.transform_partner),
+ * and must be named back; the engine's two player entities then hold the two defines (docs/geno.md 22.15). */
+static int gn_tmpl_is_pair(int t) { return !strcmp(gn_tmpls[t].name, "sheik") || !strcmp(gn_tmpls[t].name, "zelda"); }
 static int gn_tmpl_find(const char* name) { int t; for (t = 0; t < GN_TMPL_COUNT; ++t) if (!strcmp(gn_tmpls[t].name, name)) return t; return -1; }
 
 /* Included after the registry types/parser helpers. Native boot metadata only.
@@ -292,7 +298,7 @@ static int gn_define_parse(gn_profile* p, const jdoc* d, int e, int version, con
     }
     for (c = d->n[def].first; c >= 0; c = d->n[c].next) {
         for (i = 0; i < 5 && strcmp(d->n[c].key, keys[i]); ++i) {}
-        if (i == 5 && !strcmp(d->n[c].key, "template")) continue;   /* optional, below */
+        if (i == 5 && (!strcmp(d->n[c].key, "template") || !strcmp(d->n[c].key, "transform_partner"))) continue;   /* optional, below */
         if (i == 5 || d->n[c].type != JN_STR) goto refused;
     }
     for (i = 0; i < 5; ++i) { v = jd_get(d, def, keys[i]); if (v < 0 || d->n[v].type != JN_STR) goto refused; }
@@ -307,9 +313,28 @@ static int gn_define_parse(gn_profile* p, const jdoc* d, int e, int version, con
     if (v >= 0) {
         if (!p->none || version < 10 || d->n[v].type != JN_STR ||
             (t = gn_tmpl_find(d->n[v].str)) < 0) {
-            gw_log("geno: %s: define.template must be \"mario\", \"captain\", \"fox\", \"falco\" or \"marth\", on a base \"none\" define of \"geno\": 10", where); goto refused;
+            gw_log("geno: %s: define.template must be \"mario\", \"captain\", \"fox\", \"falco\", \"marth\", \"puff\", \"sheik\" or \"zelda\", on a base \"none\" define of \"geno\": 10", where); goto refused;
         }
         p->tmpl = t;
+    }
+    /* define.transform_partner (geno 10, additive): the key of the other define of a Zelda / Sheik pair. Required by those two templates, refused on any other. */
+    {
+    int pv;
+    p->partner_key[0] = 0;
+    pv = jd_get(d, def, "transform_partner");
+    if (pv >= 0) {
+        int k;
+        if (!p->none || version < 10 || !gn_tmpl_is_pair(p->tmpl) || d->n[pv].type != JN_STR || !d->n[pv].str[0] || strlen(d->n[pv].str) >= 40) {
+            gw_log("geno: %s: define.transform_partner is the key of the other define of a pair, on a base \"none\" define whose template is \"zelda\" or \"sheik\" (\"geno\": 10)", where); goto refused;
+        }
+        for (k = 0; d->n[pv].str[k]; ++k) {
+            char ch = d->n[pv].str[k];
+            if (!((ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || (k && (ch == '_' || ch == '.' || ch == '-')))) goto refused;
+        }
+        snprintf(p->partner_key, sizeof p->partner_key, "%s", d->n[pv].str);
+    } else if (p->none && gn_tmpl_is_pair(p->tmpl)) {
+        gw_log("geno: %s: a \"zelda\" or \"sheik\" template needs define.transform_partner (Down B changes into the partner; with none the fighter would crash)", where); goto refused;
+    }
     }
     /* A native-code default is not a visual identity. Only a retail base or an
      * explicitly named template lends its disc art (22.11); CK 0 is Captain. */
@@ -407,15 +432,33 @@ refused:
 static void gn_define_bind(gn_registry* r)
 {
     unsigned char occupied[128] = {0};
-    int i, slot, ok = 1;
+    unsigned char* drop;
+    int i, slot, ok = 1, changed;
     gdf_free(&r->definitions);
     /* Attach-only registries must not add definition-driven MxDt discovery. */
     for (i = 0; i < r->n && !r->p[i].defined; ++i) {}
     if (i == r->n) return;
+    drop = (unsigned char*)calloc((size_t)r->n + 1, 1);
+    if (!drop) { gw_log("geno: define admission refused: out of memory; definitions inactive"); return; }
+    /* a Zelda / Sheik pair is admitted together: each member's partner must be an admitted define of the other template that names it back */
+    do {
+        changed = 0;
+        for (i = 0; i < r->n; ++i) if (r->p[i].defined && !drop[i] && r->p[i].partner_key[0]) {
+            gn_profile* p = &r->p[i];
+            int j, found = -1;
+            for (j = 0; j < r->n; ++j)
+                if (j != i && r->p[j].defined && !drop[j] && !strcmp(r->p[j].define_key, p->partner_key)) { found = j; break; }
+            if (found < 0 || r->p[found].tmpl == p->tmpl || !gn_tmpl_is_pair(r->p[found].tmpl) || strcmp(r->p[found].partner_key, p->define_key)) {
+                gw_log("geno: %s: define refused: its transform partner \"%s\" is not a loaded define of the other template (zelda / sheik) naming this one back", p->name, p->partner_key);
+                drop[i] = 1; changed = 1;
+            }
+        }
+    } while (changed);
     for (slot = 0; slot < GW_MEX_SLOT_COUNT; ++slot)
         if (gw_Mex_SlotInternal(slot) >= 0) occupied[34 + slot] = 1;
     for (i = 0; i < r->n; ++i) if (r->p[i].defined) {
         gn_profile* p = &r->p[i];
+        if (drop[i]) continue;
         if (!gdf_add(&r->definitions, p->mod, p->define_key, p->name, p->id, i)) {
             gw_log("geno: %s: native catalogue refused duplicate identity/allocation/id exhaustion", p->name);
             ok = 0; break;
@@ -430,6 +473,7 @@ static void gn_define_bind(gn_registry* r)
         int ck = gdf_alias_for_profile(&r->definitions, i);
         r->p[i].kind = ck >= 34 ? ck - 1 : -1;
     }
+    free(drop);
 }
 
 int gw_Geno_DefineCount(void)
@@ -459,6 +503,18 @@ int gw_Geno_DefineBaseKind(int kind)
     if (!r->kinds_built) gn_build_kinds(r);
     p = gdf_profile_for_kind(&r->definitions, kind);
     return p >= 0 ? gn_tmpls[gn_reg()->p[p].tmpl].kind : -1; /* native Mario (default) or the retail fighter named by define.template */
+}
+/* The FighterKind of the transform partner of define fighter `kind` (the define its sub-fighter is), or -1. */
+int gw_Geno_DefinePartnerKind(int kind)
+{
+    gn_registry* r = gn_reg();
+    int p, j;
+    if (!r->kinds_built) gn_build_kinds(r);
+    p = gdf_profile_for_kind(&r->definitions, kind);
+    if (p < 0 || !r->p[p].partner_key[0]) return -1;
+    for (j = 0; j < r->n; ++j)
+        if (r->p[j].defined && !strcmp(r->p[j].define_key, r->p[p].partner_key)) return r->p[j].kind >= 0 ? r->p[j].kind : -1;
+    return -1;
 }
 int gw_Geno_DefineBaseCK(int ck)
 {

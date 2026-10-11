@@ -494,7 +494,7 @@ void ftCo_8009E140(Fighter* fp, bool arg1)
     if (FTKB_IS_KIRBY(fp->kind)) {
         return;
     }
-    if (fp->kind == Ft_Kind_Purin) {
+    if (ftGetTemplateKind(fp) == Ft_Kind_Purin) {
         ftCo_8009CB40(fp, 0, arg1, NULL);
         return;
     }
@@ -651,7 +651,7 @@ void ftCo_8009E7B4(Fighter* fp, u8 (*arg1)[2])
         u32 cached_b6;
         if ((cached_b6 = fp->x2227_b6)) {
             if (!FTKB_IS_KIRBY(fp->kind)) {
-                if (fp->kind == Ft_Kind_Purin) {
+                if (ftGetTemplateKind(fp) == Ft_Kind_Purin) {
                     ftCo_8009CB40(fp, 0, 0, NULL);
                     return;
                 }
@@ -671,7 +671,7 @@ void ftCo_8009E7B4(Fighter* fp, u8 (*arg1)[2])
             }
             if (var_r3) {
                 if (!FTKB_IS_KIRBY(fp->kind)) {
-                    if (fp->kind == Ft_Kind_Purin) {
+                    if (ftGetTemplateKind(fp) == Ft_Kind_Purin) {
                         ftCo_8009CB40(fp, 0, 1, NULL);
                         return;
                     }
@@ -712,7 +712,7 @@ void ftCo_8009E7B4(Fighter* fp, u8 (*arg1)[2])
                 } else {
                     if (fp->x594_b3) {
                         if (!FTKB_IS_KIRBY(fp->kind)) {
-                            if (fp->kind == Ft_Kind_Purin) {
+                            if (ftGetTemplateKind(fp) == Ft_Kind_Purin) {
                                 ftCo_8009CB40(fp, 0, 0, NULL);
                                 return;
                             }
@@ -722,7 +722,7 @@ void ftCo_8009E7B4(Fighter* fp, u8 (*arg1)[2])
                         }
                     } else {
                         if (!FTKB_IS_KIRBY(fp->kind)) {
-                            if (fp->kind == Ft_Kind_Purin) {
+                            if (ftGetTemplateKind(fp) == Ft_Kind_Purin) {
                                 ftCo_8009CB40(fp, 0, 1, NULL);
                                 return;
                             }
@@ -735,7 +735,7 @@ void ftCo_8009E7B4(Fighter* fp, u8 (*arg1)[2])
             }
         }
     } else if (fp->x2227_b6 && !FTKB_IS_KIRBY(fp->kind)) {
-        if (fp->kind == Ft_Kind_Purin) {
+        if (ftGetTemplateKind(fp) == Ft_Kind_Purin) {
             ftCo_8009CB40(fp, 0, 0, NULL);
             return;
         }

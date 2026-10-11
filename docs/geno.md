@@ -3094,7 +3094,7 @@ New inline `ftGetTemplateKind(fp)` (`ft/inlines.h`) answers as the template (and
 **Proof**: see the report of the lane. Same method as 22.11 (`tools/geno/falcon_parity`, workspace; the scenario file also holds Fox extras: rapid and air Blaster, Shine hold and jump-cancel, Reflector against
 a Mario fireball and a hit, Illusion, Firefox directions). Retail Fox against the define, 326 scenarios, 40,745 logic frames: **326 of 326 identical** (run totals equal, `73d60e1c`); Falcon re-run on the same build, 326 of 326 (`795c9c86`). Two kind-guard misses were found by the diff, both `fp->kind`/`ftGetKind(fp)` reading a define as "not Fox": Illusion's ghost item (`ftfoxspecials.c`) and, found last, `ftFx_Throw_Anim` (`ftfoxspecialn.c`, `ftGetKind(fp)`): Fox's back, up and down throws fire the Blaster (electric item hits of 1.82 on the victim, three RNG-drawing hits); the define skipped the block, so the throw dealt its first 2% and nothing more. Found by logging `Fighter_UnkTakeDamage_8006CC30` (source item, element 2) on the retail run. `ftGetKind(fp)` is now unused for template fighters; grep it as well as `fp->kind`.
 
-#### Checklist: add a retail template (Falco, Marth, Sheik, Zelda, Jigglypuff)
+#### Checklist: add a retail template (Falco, Marth, Jigglypuff, Sheik and Zelda are done; see 22.14 and 22.15)
 
 1. **Numbers** (all from the decomp): `ftData_Table_Unk0[kind]` rows (`ftdata.c`), `<prefix>_MS_SelfCount` (`kinds/ft<X>/forward.h`), the fighter's `*_DatAttrs` struct, `CharacterKind`
    (`pl/player.c`), costume strings (`ft<X>_Init_CostumeStrings`).
@@ -3117,9 +3117,9 @@ Estimates (one agent, parity included; Fox took the engine half in about an hour
 |---|---|---|---|
 | Falco | 327 / 376 (shares Fox's 35 states, `ftFc_Init_MotionStateTable`) | smallest: steps 1-6, no new engine logic | Phantasm article and laser are Falco's item kinds; `ftfoxspecialn.c` already switches on Fox/Falco via the template kind. Costumes Nr, Re, Bu, Gr. |
 | Marth | 327 / 373 (32 states) | small-medium | sword trail and hair: `ftafterimage.c` / `ftdynamics.c` / `ftCo_Attack1/Guard/Landing` switch on `Ft_Kind_Mars`: sweep them (step 3). Tipper hitbox is data. |
-| Jigglypuff | 327 / 373 (32 states) | medium | Rest, Sing (status on others) and Pound are native; 5 jumps are the carried `max_jumps` attribute (check the 76-name table includes it); `ftdynamics.c` hair/ear branches and `ftCo_ShieldBreakFly.c` test `Ft_Kind_Purin` directly. Needs a deeper parity pass for Rest (sleep timer, RNG) and Sing. |
-| Sheik | 317 / 365 (24 states) | medium | stand-alone template like the others; her chain whip and vanish are native. Costumes Nr, Re, Bu, Gr, Wh. |
-| Zelda | 311 / 359 (18 states) | large, needs a decision | Down B transforms into Sheik: `ftZd_SpecialLw_8013AEAC` calls `ftCommon_8007EFC8` with Sheik's entry and the engine swaps `fp->kind` to the partner from `pl/player.c` (`{Zelda, Seak, true}`). A define would turn into RETAIL Sheik. Options: (a) accept that (Zelda define + retail Sheik after transforming), (b) a define pair with a "transform partner" key in `geno.json` and a kind map in `ftCommon_8007EFC8`. Not started. |
+| Jigglypuff | 327 / 373 (32 states) | done, 22.15 | 5 jumps are the carried `max_jumps` attribute; `ftdynamics.c` and `ftCo_ShieldBreakFly.c` guarded |
+| Sheik | 317 / 365 (24 states) | done, 22.15 | a pair member: needs `define.transform_partner` |
+| Zelda | 311 / 359 (18 states) | done, 22.15 | option (b): Down B swaps the player's two entities; the mapping row names the partner define |
 
 ### 22.14 Falco and Marth templates (2026-10-10)
 
@@ -3132,6 +3132,51 @@ Kind guards (`ftGetTemplateKind`) added for Marth: `ftafterimage.c` (both sword-
 
 Proof (workspace `tools/geno/falcon_parity`, 344 scenarios now: 326 plus Marth extras: Dancing Blade strings, Shield Breaker hold/release, Counter, sword tip and base): retail Falco against the define, 344 of 344 identical
 (run total `49676232`); retail Marth against the define, 344 of 344 identical (`191fdbe6`). The trace has no sword-trail or hair data: those are visual and still owed.
+
+### 22.15 Jigglypuff, and the Zelda / Sheik pair (2026-10-10)
+
+`define.template` also accepts `"puff"` (kind 15, CharacterKind 15, 327 rows, motions 0..372 = 341 + 32, `ftPr_Init_MotionStateTable`, `ftPurinAttributes` 0x100 bytes), `"sheik"` (kind 7, CK 19, 317 rows, motions 0..364 = 341 + 24, `ftSeakAttributes` 0x74) and
+`"zelda"` (kind 19, CK 18, 311 rows, motions 0..358 = 341 + 18, `ftZelda_DatAttrs` 0xA8 with the embedded `ReflectDesc`). `GENO_TMPL_COUNT` is 8. The three static asserts in `geno_define_data.inc` pin the self counts (32, 24, 18).
+
+**Puff**: the 5 jumps are the carried `max_jumps` attribute (nothing else to do); Rest, Sing, Pound and Rollout are the retail native code and tables. Kind guards (`ftGetTemplateKind`): `ftdynamics.c` (the six Purin tests of the hair/ear dynamics),
+`ftCo_ShieldBreakFly.c` (the Puff shield-break flag). `ftPr_Init_8013C360` (her hat) reads `FT_COSTUME_VIS_IDX` and the costume archive of `fp->kind`, which is the define's own kind and costume list: correct as it is; whether the hat renders is owed (visual).
+
+**Zelda and Sheik are one transformation, not two fighters.** `ftZd_SpecialLw_8013AEAC` / `ftSk_SpecialLw_80114758` call `ftCommon_8007EFC8`, which does NOT change `fp->kind`: a player owns two Fighter entities from the start (`player_entity[0]` and `[1]`, created by
+`Player_80031AD0` from `ftMapping_list[ckind] = {internal_id, extra_internal_id, has_transformation}`), and Down B swaps which of the two is on the field (`Player_SwapTransformedStates`, state copied from `src` to `dst`). Retail Zelda's row is `{Zelda, Seak, true}`, Sheik's `{Seak, Zelda, true}`.
+So a define pair needs exactly one thing: the define's mapping row must name the *partner define's* kind in `extra_internal_id`. No kind map in `ftCommon_8007EFC8` was needed.
+
+- **geno.json**: `define.transform_partner` (`"geno": 10`, additive like `template`): the define key of the other member. Required by templates `sheik` and `zelda` (a pair member without it would crash on Down B, so it is refused at parse), refused on any other template. An older engine refuses the unknown define key.
+- **Admission** (`gn_define_bind`): a pair is admitted together. Each member's partner must be a loaded define of the *other* template that names it back; otherwise it is refused with `define refused: its transform partner "<key>" is not a loaded define of the other template (zelda / sheik) naming this one back`, which also drops the member that named it (iterated to a fixed point). Never a fall back to retail Sheik / Zelda.
+- **Mapping**: `GenoDefine_InitKinds` calls `Player_MexSetMapping(ck, fk)` and then, for a define with a partner (`Geno_DefinePartnerKind(fk)`, registry), `Player_MexSetPartner(ck, partner_fk)` (`pl/player.c`: `extra_internal_id` and `has_transformation`). The partner's data is loaded by the existing `extra_internal_id` path of `Player_80031CB0` / `D2C`.
+  Selecting Geno Zelda or Geno Sheik on the CSS therefore creates both defines; the transformation is Geno Zelda <-> Geno Sheik in either direction.
+- Guard: `ftCo_Throw.c` (a Bowser throw of a Zelda victim) uses `ftGetTemplateKind(victim)`. Zelda's and Sheik's own code has no kind tests (`grep` of `ftZelda`, `ftSeak`: none).
+- The two packages must use plan files of their own (`GnSheik_plan.json`, `GnZelda_plan.json`) and the exporter writes the partner key itself (`retail_define.py zelda` names `geno-sheik`, `sheik` names `geno-zelda`; `--partner-key` overrides it when a package gets another key).
+
+Registry tests: `test_geno_define_template` (bounds of the three templates, the pair key required / refused / malformed). Pair admission itself is proved in the game below.
+
+**Proof** (`tools/geno/falcon_parity`, workspace; 407 scenarios now: the 344 plus Puff extras (Rest, Rest in the air and at high percent, Sing, Pound, Rollout tap / charged / air, five jumps, jumps then Rest, a shield break) and Zelda / Sheik extras (Nayru's Love, Din's Fire steered and held,
+Farore's Wind, the transform on the ground, in the air, with a hit between, at 77%, and the round trip; Needle Storm tap / charged / cancelled / air, Chain, Chain upward, Vanish)). Retail against the define, same build:
+
+| fighter | identical | run total |
+|---|---|---|
+| Jigglypuff | 407 / 407 | `f09d7835` |
+| Zelda | 407 / 407 | `23d4f08a` |
+| Sheik | 407 / 407 | `cbca4ec1` |
+| Captain Falcon | 407 / 407 | `10290d8d` |
+| Fox | 407 / 407 | `49be0bb0` |
+| Falco | 407 / 407 (see Notes) | `9f5c31e8` for hit_fsmash_p100_tech_b |
+| Marth | see the lane report | |
+
+The Zelda run exercises the pair: the define-only log shows the partner's `define budgets` line (kind 121 loaded beside kind 120) and the round-trip scenario's motions read `SpecialLw>SpecialLw2>Wait>SpecialLw>SpecialLw2>Wait>Attack11` on both sides.
+
+Notes: (1) retail Falco's `hit_fsmash_p100_tech_b` gave a different hash in one run made while other games were running (`392a8e97` once, `9f5c31e8` in two quiet runs, which is also the define's): the retail side alone, so a retail timing flake, not a define difference.
+(2) The package must be freshly exported: the six-slot experiments of the Falco lane edited `thrown_as` in a copy that looks like the package; a stand-in Fox instead of Marth shows up as 5 throw scenarios differing (the log line `throw: stand-in kind N` names which).
+
+#### Six slots (Fox, Falco, Falcon, Marth, Sheik, Puff), heap 0
+
+All six defines load (Sheik brings Zelda as the sub-fighter: seven define loads, `define budgets` lines show kinds 120..126, slots 2225 / 2560). With the packages' own `thrown_as` (fox, falco, captain, fox/mars, seak, purin, plus zelda for the partner) the match stops at scene setup:
+`heap: EXHAUSTED on 131072 bytes ... assertion "adr" failed in memory.c line 158` right after the fifth player (Sheik + Zelda) spawns: each distinct stand-in family reads its `Pl<X>AJ.dat` (1.5 MB) into the main heap (heap 0), and only about three fit.
+With all packages on one family (`thrown_as: "fox"`) the same six-slot match runs 1800 logic frames on FD and on ACE `ext:121` with no heap or crash line; heap 3 is left with about 8.4 MB free.
 
 ## 23. Fighter Lua (slice 5: the first increment built 2026-10-07, the second move and the tooling 2026-10-08)
 

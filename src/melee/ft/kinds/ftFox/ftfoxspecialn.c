@@ -552,7 +552,7 @@ void ftFx_Throw_Anim(HSD_GObj* gobj)
 {
     Fighter* fp = fp = GET_FIGHTER(gobj);
     ftFox_DatAttrs* da = fp->dat_attrs;
-    s32 ftKind = ftGetKind(fp);
+    s32 ftKind = ftGetTemplateKind(fp);
 
     if (ftKind == Ft_Kind_Fox || ftKind == Ft_Kind_Falco) {
         if (!ftAnim_IsFramesRemaining(gobj)) {

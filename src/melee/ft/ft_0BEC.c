@@ -14,6 +14,7 @@
 #include <melee/it/kinds/itdrmariopill.h>
 #include <melee/it/kinds/itfoxblaster.h>
 #include <melee/it/kinds/itnessbat.h>
+#include <melee/ft/inlines.h>
 
 static inline void setupInitialState(Fighter* fp)
 {
@@ -31,7 +32,7 @@ void ftCo_800BECB0(Fighter_GObj* gobj)
     Fighter_ChangeMotionState(gobj, ftCo_MS_DeadDown, Ft_MF_None, 0.f, 1.f,
                               0.f, NULL);
     setupInitialState(fp);
-    switch (fp->kind) {
+    switch (ftGetTemplateKind(fp)) {
     case Ft_Kind_Fox: {
         ftFox_DatAttrs* da = fp->dat_attrs;
         fp->item_gobj =
@@ -80,7 +81,7 @@ void ftCo_800BED88(Fighter_GObj* gobj)
                               0.f, NULL);
     setupInitialState(fp);
 
-    switch (fp->kind) {
+    switch (ftGetTemplateKind(fp)) {
     case Ft_Kind_Fox: {
         FoxHelper(gobj, fp);
         break;
@@ -102,7 +103,7 @@ void ftCo_800BEF04(Fighter_GObj* gobj)
     Fighter_ChangeMotionState(gobj, ftCo_MS_DeadUpStarIce, Ft_MF_None, 0.f,
                               1.f, 0.f, NULL);
     setupInitialState(fp);
-    switch (fp->kind) {
+    switch (ftGetTemplateKind(fp)) {
     case Ft_Kind_Ness: {
         fp->item_gobj =
             it_802AD590(gobj, ftParts_GetBoneIndex(fp, FtPart_RThumbNb));

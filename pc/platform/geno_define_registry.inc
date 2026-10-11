@@ -261,10 +261,15 @@ static int gn_define_s6_keys(gn_profile* p, const jdoc* d, int e, int version, c
 
 /* define.template: the retail fighter a base "none" define's native code and tables come from. Fighter kind and CharacterKind of
  * retail Captain Falcon, the animation-row count of his ftData (ftData_Table_Unk0) and his highest motion number (341 common + 23). */
-#define GN_TMPL_CAPTAIN_KIND 2
-#define GN_TMPL_CAPTAIN_CK 0
-#define GN_TMPL_ROWS(p) ((p)->tmpl ? 318 : 303)
-#define GN_TMPL_MAXMOTION(p) ((p)->tmpl ? 363 : 350)
+static const struct { const char* name; int kind, ck, rows, maxmotion; } gn_tmpls[] = {
+    { "mario",   0,  8, 303, 350 },   /* the donor of every earlier define */
+    { "captain", 2,  0, 318, 363 },   /* 341 common + 23 */
+    { "fox",     1,  1, 327, 375 },   /* 341 common + 35 (ftFx_MS_SelfCount, asserted in the game half) */
+};
+#define GN_TMPL_COUNT ((int)(sizeof gn_tmpls / sizeof gn_tmpls[0]))
+#define GN_TMPL_ROWS(p) (gn_tmpls[(p)->tmpl].rows)
+#define GN_TMPL_MAXMOTION(p) (gn_tmpls[(p)->tmpl].maxmotion)
+static int gn_tmpl_find(const char* name) { int t; for (t = 0; t < GN_TMPL_COUNT; ++t) if (!strcmp(gn_tmpls[t].name, name)) return t; return -1; }
 
 /* Included after the registry types/parser helpers. Native boot metadata only.
  * Definitions are process-immutable in GF1: changing one requires restarting.
@@ -272,7 +277,7 @@ static int gn_define_s6_keys(gn_profile* p, const jdoc* d, int e, int version, c
 static int gn_define_parse(gn_profile* p, const jdoc* d, int e, int version, const char* where)
 {
     static const char* keys[] = {"key", "name", "base", "common", "resources"};
-    int def = jd_get(d, e, "define"), c, i, v;
+    int def = jd_get(d, e, "define"), c, i, v, t;
     if (def < 0) return 0;
     /* v7 (slice 2) widens a define: the whole common attribute table, special_attributes, fx_bindings.
      * v8 (slice 3) adds articles and the named-sound table. A v6 or v7 file keeps exactly its meaning. */
@@ -299,14 +304,14 @@ static int gn_define_parse(gn_profile* p, const jdoc* d, int e, int version, con
     v = jd_get(d, def, "template");
     if (v >= 0) {
         if (!p->none || version < 10 || d->n[v].type != JN_STR ||
-            (strcmp(d->n[v].str, "mario") && strcmp(d->n[v].str, "captain"))) {
-            gw_log("geno: %s: define.template must be \"mario\" or \"captain\", on a base \"none\" define of \"geno\": 10", where); goto refused;
+            (t = gn_tmpl_find(d->n[v].str)) < 0) {
+            gw_log("geno: %s: define.template must be \"mario\", \"captain\" or \"fox\", on a base \"none\" define of \"geno\": 10", where); goto refused;
         }
-        p->tmpl = !strcmp(d->n[v].str, "captain");
+        p->tmpl = t;
     }
     /* A native-code default is not a visual identity. Only a retail base or an
      * explicitly named template lends its disc art (22.11); CK 0 is Captain. */
-    p->art_base_ck = p->none && v < 0 ? -1 : p->tmpl ? GN_TMPL_CAPTAIN_CK : 8;
+    p->art_base_ck = p->none && v < 0 ? -1 : gn_tmpls[p->tmpl].ck;
     v = jd_get(d, def, "common"); if (strcmp(d->n[v].str, "melee.common.v1")) goto refused;
     v = jd_get(d, def, "resources"); if (strcmp(d->n[v].str, p->none ? "mod:files" : "retail:mario")) goto refused;
     if (p->none && !gn_define_fighter(p, d, e, where)) goto refused;
@@ -451,9 +456,15 @@ int gw_Geno_DefineBaseKind(int kind)
     int p;
     if (!r->kinds_built) gn_build_kinds(r);
     p = gdf_profile_for_kind(&r->definitions, kind);
-    return p >= 0 ? (gn_reg()->p[p].tmpl ? GN_TMPL_CAPTAIN_KIND : 0) : -1; /* native Mario (default) or, template "captain", retail Captain Falcon */
+    return p >= 0 ? gn_tmpls[gn_reg()->p[p].tmpl].kind : -1; /* native Mario (default) or the retail fighter named by define.template */
 }
-int gw_Geno_DefineBaseCK(int ck) { int b = gw_Geno_DefineBaseKind(ck-1); return b < 0 ? -1 : b ? GN_TMPL_CAPTAIN_CK : 8; }
+int gw_Geno_DefineBaseCK(int ck)
+{
+    int b = gw_Geno_DefineBaseKind(ck-1), t;
+    if (b < 0) return -1;
+    for (t = 0; t < GN_TMPL_COUNT; ++t) if (gn_tmpls[t].kind == b) return gn_tmpls[t].ck;
+    return -1;
+}
 int gw_Geno_DefineName(int ck, char* out, int cap)
 {
     gn_registry* r = gn_reg(); int p;

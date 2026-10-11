@@ -7166,6 +7166,14 @@ static int l_wb_load(lua_State *L) {
     return 1;
 }
 
+/* Action states the bare workbench scene cannot pose. Rebirth (12) and RebirthWait (13) read the revival
+ * platform's JObj, which only exists in a stock match: running them asserted at jobj.h:481 and killed the engine.
+ * Refuse them with an error instead (tools/blender/geno_workbench/engine_check/sweep_rows.py finds others).
+ * Keep the Workbench's copy (UNPREVIEWABLE_MOTIONS in rigmap.py, kUnpreviewable in commands_rows.cpp) in step. */
+static int gs_wb_unpreviewable(int motion) {
+    return motion == 12 || motion == 13;
+}
+
 static int l_wb_row(lua_State *L) {
     int motion;
     gs_require_offline(L, "wb.row");
@@ -7174,6 +7182,7 @@ static int l_wb_row(lua_State *L) {
     if (!gs_players_present(0)) return luaL_error(L, "no fighter on port 1");
     motion = gs_wb_int(L, 1, "motion", -1);
     if (!gs_motion_ok(0, motion)) return luaL_error(L, "no such motion for this fighter");
+    if (gs_wb_unpreviewable(motion)) return luaL_error(L, "motion %d needs the revival platform and cannot be previewed in the bare scene", motion);
     gs_wb_row(motion);
     gw_log("workbench: row motion=%d (%s)", motion, gs.wb_row);
     lua_pushliteral(L, "ok");
@@ -7193,6 +7202,7 @@ static int l_wb_frame(lua_State *L) {
     motion = gs_wb_int(L, 1, "motion", gs.wb_row_motion);
     frame = gs_wb_int(L, 1, "frame", 1);
     if (!gs_motion_ok(0, motion)) return luaL_error(L, "no such motion for this fighter");
+    if (gs_wb_unpreviewable(motion)) return luaL_error(L, "motion %d needs the revival platform and cannot be previewed in the bare scene", motion);
     if (frame < 1) frame = 1;
     if (frame > 600) frame = 600;
     gw_ScriptGame_LabSetPreviewRow(0, -1, 0);

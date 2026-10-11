@@ -3178,6 +3178,10 @@ All six defines load (Sheik brings Zelda as the sub-fighter: seven define loads,
 `heap: EXHAUSTED on 131072 bytes ... assertion "adr" failed in memory.c line 158` right after the fifth player (Sheik + Zelda) spawns: each distinct stand-in family reads its `Pl<X>AJ.dat` (1.5 MB) into the main heap (heap 0), and only about three fit.
 With all packages on one family (`thrown_as: "fox"`) the same six-slot match runs 1800 logic frames on FD and on ACE `ext:121` with no heap or crash line; heap 3 is left with about 8.4 MB free.
 
+### 22.16 Throw stand-in banks are read on demand (2026-10-10)
+
+A define's `thrown_as` bank (`Pl<X>AJ.dat`, 1.5-1.9 MB) is no longer read at define load. The load only prepares the stand-in's data file and reserves `GENO_THROW_BANKS` arenas (default 1, `MELEE_THROW_BANKS` up to 6) in heap 0 while it is compact; the bank is read, synchronously, into an arena on the frame a retail victim is first thrown by that define (`ftData_ThrownStandIn`). A full budget overwrites the least recently used arena after clearing every fighter's `x5A4`/`x5A8` key into it. Defines sharing a `thrown_as` share one bank. Log: `define budgets: throw banks n/N, bytes, arenas, loads, evictions, heap 0 free`. An on-demand 2 MB allocation was tried first and hit `heap: EXHAUSTED` with 3.8 MB free (fragmentation), hence the reserved arenas. Six distinct families (Fox, Falco, Falcon, Marth, Sheik+Zelda, Puff) now load with about 3 MB of heap 0 free.
+
 ## 23. Fighter Lua (slice 5: the first increment built 2026-10-07, the second move and the tooling 2026-10-08)
 
 A define can write a state's behaviour as Lua. The shape is deliberately small: two phases (`enter`, `frame`), a typed per-fighter state, five commands (four in the first increment; `turn` came with the second move). Physics,

@@ -555,30 +555,33 @@ static int csv_field_hand(const AtView *v)
 static void csv_panel(AtCssPanel *q, AtRect box)
 {
     const float pad = 6.0f;
-    float w = box.w, sw = w < 112.0f ? 21.0f : 28.0f, py, ph, pw, nw, lw;
+    float w = box.w, py, ph, pw, nw, lw, bw;
     int i;
     memset(q, 0, sizeof *q);
     q->box = box;
     q->strip = (AtRect){ box.x + pad, box.y + 7.0f, w - 2.0f * pad, 18.0f };
     q->coin = (AtRect){ box.x + pad, box.y + 7.0f, 18.0f, 18.0f };
-    for (i = 0; i < 3; i++) q->seg[i] = (AtRect){ box.x + w - pad - sw * (float) (3 - i), box.y + 7.0f, sw, 18.0f };
-    q->team = (AtRect){ box.x + pad + 22.0f, box.y + 7.0f, box.w - 2.0f * pad - 22.0f - sw * 3.0f - 4.0f, 18.0f };
     py = box.y + 30.0f;
     ph = box.h - 30.0f - 66.0f;
     if (ph < 48.0f) ph = 48.0f;
     pw = ph * 136.0f / 188.0f;
     if (pw > w - 2.0f * pad) { pw = w - 2.0f * pad; ph = pw * 188.0f / 136.0f; }
     q->portrait = (AtRect){ box.x + w - pad - pw, py, pw, ph };
+    bw = (pw - 6.0f) * 0.5f;                                                   /* the two buttons on the portrait's top corners, as retail's CSPs carry them */
+    if (bw > 32.0f) bw = 32.0f;
+    if (bw < 20.0f) bw = 20.0f;
+    q->type = (AtRect){ q->portrait.x + q->portrait.w - bw - 2.0f, py + 2.0f, bw, 16.0f };
+    q->team = (AtRect){ q->portrait.x + 2.0f, py + 2.0f, bw, 16.0f };
     q->dock = (AtRect){ box.x + pad, py, w - 2.0f * pad - pw - 4.0f, ph };            /* the left column: the puck's dock sits in it */
-    if (q->dock.w < 30.0f) q->dock = (AtRect){ q->portrait.x, py, 30.0f, 30.0f };        /* too narrow: the dock rides the portrait's corner */
+    if (q->dock.w < 30.0f) q->dock = (AtRect){ q->portrait.x, py + ph - 30.0f, 30.0f, 30.0f };   /* too narrow: the dock rides the portrait's lower corner */
     q->name = (AtRect){ box.x + pad, py + ph + 4.0f, w - 2.0f * pad, 16.0f };
-    q->level = (AtRect){ box.x + pad, q->name.y + 20.0f, w - 2.0f * pad, 14.0f };
+    q->cmid = (AtRect){ box.x + pad, q->name.y + 20.0f, w - 2.0f * pad, 14.0f };
+    q->cprev = (AtRect){ q->cmid.x, q->cmid.y, 22.0f, 14.0f };
+    q->cnext = (AtRect){ q->cmid.x + q->cmid.w - 22.0f, q->cmid.y, 22.0f, 14.0f };
+    q->level = (AtRect){ box.x + pad, q->cmid.y + 18.0f, w - 2.0f * pad, 14.0f };       /* the CPU level slider is the last row, at the panel's foot */
     lw = 34.0f;
     nw = (q->level.w - lw - 8.0f * 2.0f) / 9.0f;
     for (i = 0; i < 9; i++) q->notch[i] = (AtRect){ q->level.x + lw + (float) i * (nw + 2.0f), q->level.y, nw, 14.0f };
-    q->cmid = (AtRect){ box.x + pad, q->level.y + 18.0f, w - 2.0f * pad, 14.0f };
-    q->cprev = (AtRect){ q->cmid.x, q->cmid.y, 22.0f, 14.0f };
-    q->cnext = (AtRect){ q->cmid.x + q->cmid.w - 22.0f, q->cmid.y, 22.0f, 14.0f };
 }
 
 static void csv_geometry_ph(const AtScreen *sc, const AtView *v, const AtLayout *L, AtCssGeom *g, float ph)
@@ -696,85 +699,73 @@ static void csv_hand(const AtSink *s, float x, float y, unsigned rgba)
 
 static const char *csv_type_word(int i) { return i == 0 ? "HMN" : i == 1 ? "CPU" : "NA"; }
 
+/* the type button (retail's togglebtn on each CSP): the state it is in, HMN, CPU or NA; A on it (a click) gives the next one */
+static void csv_type_button(const AtSink *s, const AtTextOps *o, AtRect r, int kind, int port, int ring, unsigned ring_col)
+{
+    unsigned face = kind == 1 ? at_part_port_colour(port) : kind == 2 ? AT_C_CPU : AT_C_LIFT;
+    at_plate(s, r, face, AT_C_INK, 1.0f, 3.0f);
+    at_text(s, o, AT_R_CAP12, csv_type_word(kind == 1 ? 0 : kind == 2 ? 1 : 2), r.x + r.w * 0.5f, r.y + 12.0f, kind == 0 ? AT_C_MUTED : AT_C_INK, AT_ALIGN_CENTER, 0.0f);
+    if (ring) csv_ring(s, (AtRect){ r.x - 2.0f, r.y - 2.0f, r.w + 4.0f, r.h + 4.0f }, 2.0f, ring_col);
+}
+
 static void csv_draw_panel(const AtScreen *sc, const AtView *v, const AtCssGeom *g, int idx, const AtTextOps *o, const AtSink *s, HitCtx *hc)
 {
     const AtSelCard *k = &sc->ports[idx];
     const AtCssPanel *q = &g->panel[idx];
-    unsigned col = k->kind == 2 ? AT_C_CPU : at_part_port_colour(idx), face = k->kind == 0 ? AT_C_GROUND2 : AT_C_PLATE2;
-    int closed = (k->flags & AT_CARD_CLOSED) != 0, p, hand = -1, zone = -1, i, active = k->kind == 1 ? 0 : k->kind == 2 ? 1 : 2;
+    unsigned col = k->kind == 2 ? AT_C_CPU : at_part_port_colour(idx), face = k->kind == 0 ? AT_C_GROUND2 : AT_C_PLATE2, hcol = 0;
+    int closed = (k->flags & AT_CARD_CLOSED) != 0, p, hand = -1, zone = -1, i;
     AtRect box = q->box;
+    char lab[8];
     for (p = 0; p < AT_MAX_CURSORS; p++) if (v->cursor[p].active && v->cursor[p].card == idx && !v->cursor[p].hold) { hand = p; zone = v->cursor[p].zone; break; }
-    at_plate(s, box, face, hand >= 0 ? at_part_port_colour(hand) : AT_C_EDGE, hand >= 0 ? 2.0f : 3.0f, (float) AT_PX_CH_S);
+    if (hand >= 0) hcol = at_part_port_colour(hand);
+    at_plate(s, box, face, hand >= 0 ? hcol : AT_C_EDGE, hand >= 0 ? 2.0f : 3.0f, (float) AT_PX_CH_S);
     at_poly_rect(s, box.x + (float) AT_PX_CH_S, box.y, box.w - (float) AT_PX_CH_S, 4.0f, closed ? AT_C_LINE : col);   /* the nameplate edge */
-    /* the nameplate strip: the coin, the team, the type toggle */
-    if (k->kind == 0 && !closed) {                                           /* an open slot: the whole panel says how to fill it */
-        AtRect all = { box.x + 6.0f, box.y + 30.0f, box.w - 12.0f, box.h - 36.0f };
-        csv_coin(s, o, q->coin.x + 9.0f, q->coin.y + 9.0f, 9.0f, idx, 0);
-        for (i = 0; i < 3; i++) {
-            at_plate(s, q->seg[i], i == 2 ? AT_C_LIFT : AT_C_PLATE, AT_C_EDGE2, 1.0f, 2.0f);
-            at_text(s, o, AT_R_CAP12, csv_type_word(i), q->seg[i].x + q->seg[i].w * 0.5f, q->seg[i].y + 13.0f, i == 2 ? AT_C_IVORY : AT_C_DIM, AT_ALIGN_CENTER, 0.0f);
-        }
-        csv_text(s, o, AT_R_ROW16, "OPEN", box.x + box.w * 0.5f, box.y + box.h * 0.5f - 6.0f, AT_C_MUTED, AT_ALIGN_CENTER, box.w - 16.0f);
-        csv_text(s, o, AT_R_BODY12, "A: add a CPU", box.x + box.w * 0.5f, box.y + box.h * 0.5f + 14.0f, AT_C_DIM, AT_ALIGN_CENTER, box.w - 16.0f);
-        hit_add(hc, all, AT_HIT_ZONE, idx, AT_ZONE_TYPE | (2 << 4));
-        hit_add(hc, (AtRect){ q->seg[0].x, q->seg[0].y, q->seg[2].x + q->seg[2].w - q->seg[0].x, q->seg[0].h }, AT_HIT_ZONE, idx, AT_ZONE_TYPE | (2 << 4));
-        if (zone == AT_ZONE_TYPE) csv_ring(s, (AtRect){ q->seg[0].x - 2.0f, q->seg[0].y - 2.0f, q->seg[2].x + q->seg[2].w - q->seg[0].x + 4.0f, q->seg[0].h + 4.0f }, 2.0f, at_part_port_colour(hand));
-        return;
-    }
+    csv_coin(s, o, q->coin.x + 9.0f, q->coin.y + 9.0f, 9.0f, idx, 0);
     if (closed) {
-        csv_coin(s, o, q->coin.x + 9.0f, q->coin.y + 9.0f, 9.0f, idx, 0);
         csv_text(s, o, AT_R_ROW16, "CLOSED", box.x + box.w * 0.5f, box.y + box.h * 0.5f, AT_C_DIM, AT_ALIGN_CENTER, box.w - 16.0f);
         return;
     }
-    csv_coin(s, o, q->coin.x + 9.0f, q->coin.y + 9.0f, 9.0f, idx, 0);
-    for (i = 0; i < 3; i++) {
-        int on = i == active;
-        at_plate(s, q->seg[i], on ? col : AT_C_PLATE, on ? col : AT_C_EDGE2, 1.0f, 2.0f);
-        at_text(s, o, AT_R_CAP12, csv_type_word(i), q->seg[i].x + q->seg[i].w * 0.5f, q->seg[i].y + 13.0f, on ? AT_C_INK : AT_C_DIM, AT_ALIGN_CENTER, 0.0f);
-    }
-    if (k->team > 0 && q->team.w >= 24.0f) {
-        const char *tw = k->team == 1 ? "RED" : k->team == 2 ? "BLUE" : "GREEN";
-        at_part_tag(s, o, q->team.x, q->team.y + 1.0f, tw, k->team == 1 ? AT_TAG_ROSE : k->team == 3 ? AT_TAG_JADE : AT_TAG_PLAIN, q->team.w);
-        hit_add(hc, q->team, AT_HIT_ZONE, idx, AT_ZONE_TEAM | (2 << 4));
-        if (zone == AT_ZONE_TEAM) csv_ring(s, (AtRect){ q->team.x - 2.0f, q->team.y - 1.0f, q->team.w + 4.0f, q->team.h + 2.0f }, 2.0f, at_part_port_colour(hand));
-    }
-    hit_add(hc, (AtRect){ q->seg[0].x, q->seg[0].y, q->seg[2].x + q->seg[2].w - q->seg[0].x, q->seg[0].h }, AT_HIT_ZONE, idx, AT_ZONE_TYPE | (2 << 4));
-    if (zone == AT_ZONE_TYPE) csv_ring(s, (AtRect){ q->seg[0].x - 2.0f, q->seg[0].y - 2.0f, q->seg[2].x + q->seg[2].w - q->seg[0].x + 4.0f, q->seg[0].h + 4.0f }, 2.0f, at_part_port_colour(hand));
-    /* the portrait well and the fighter */
+    snprintf(lab, sizeof lab, "P%d", idx + 1);
+    at_text(s, o, AT_R_NUM12, lab, q->coin.x + 24.0f, q->coin.y + 14.0f, AT_C_MUTED, AT_ALIGN_LEFT, 0.0f);
+    /* the portrait well, and the two buttons on it */
     at_poly_rect(s, q->portrait.x, q->portrait.y, q->portrait.w, q->portrait.h, AT_C_GROUND);
-    if (k->ptex >= 0 && s->image != NULL) at_sink_image(s, k->ptex, q->portrait.x, q->portrait.y, q->portrait.w, q->portrait.h, 0xFFFFFFFFu);
-    else if (k->ck_tex >= 0 && s->image != NULL) at_sink_image(s, k->ck_tex, q->portrait.x + 2.0f, q->portrait.y + (q->portrait.h - (q->portrait.w - 4.0f) * 56.0f / 64.0f) * 0.5f, q->portrait.w - 4.0f, (q->portrait.w - 4.0f) * 56.0f / 64.0f, 0xFFFFFFFFu);
-    else if (k->abbr[0] != '\0') at_text(s, o, AT_R_TITLE, k->abbr, q->portrait.x + q->portrait.w * 0.5f, q->portrait.y + q->portrait.h * 0.5f + 8.0f, AT_C_DIM, AT_ALIGN_CENTER, q->portrait.w - 4.0f);
-    csv_ring(s, q->portrait, 1.0f, k->ptex >= 0 ? AT_C_LINE : AT_C_LINE);
-    /* the puck's dock: a ring with the coin in it when the puck is home, the ring empty when it is in a hand or on a tile */
+    if (k->kind != 0) {
+        if (k->ptex >= 0 && s->image != NULL) at_sink_image(s, k->ptex, q->portrait.x, q->portrait.y, q->portrait.w, q->portrait.h, 0xFFFFFFFFu);
+        else if (k->ck_tex >= 0 && s->image != NULL) at_sink_image(s, k->ck_tex, q->portrait.x + 2.0f, q->portrait.y + (q->portrait.h - (q->portrait.w - 4.0f) * 56.0f / 64.0f) * 0.5f, q->portrait.w - 4.0f, (q->portrait.w - 4.0f) * 56.0f / 64.0f, 0xFFFFFFFFu);
+        else if (k->abbr[0] != '\0') at_text(s, o, AT_R_TITLE, k->abbr, q->portrait.x + q->portrait.w * 0.5f, q->portrait.y + q->portrait.h * 0.5f + 8.0f, AT_C_DIM, AT_ALIGN_CENTER, q->portrait.w - 4.0f);
+    }
+    csv_ring(s, q->portrait, 1.0f, AT_C_LINE);
+    hit_add(hc, box, AT_HIT_ZONE, idx, AT_ZONE_TYPE | (2 << 4));                  /* the panel's body: a click on an empty one is the type button too */
+    csv_type_button(s, o, q->type, k->kind, idx, zone == AT_ZONE_TYPE, hcol);
+    hit_add(hc, q->type, AT_HIT_ZONE, idx, AT_ZONE_TYPE | (2 << 4));
+    if (k->kind != 0 && k->team > 0 && q->team.w >= 20.0f) {
+        const char *tw = k->team == 1 ? "RED" : k->team == 2 ? "BLU" : "GRN";
+        unsigned tc = k->team == 1 ? AT_C_P1 : k->team == 2 ? AT_C_P2 : AT_C_P4;
+        at_plate(s, q->team, tc, AT_C_INK, 1.0f, 3.0f);
+        at_text(s, o, AT_R_CAP12, tw, q->team.x + q->team.w * 0.5f, q->team.y + 12.0f, AT_C_INK, AT_ALIGN_CENTER, 0.0f);
+        hit_add(hc, q->team, AT_HIT_ZONE, idx, AT_ZONE_TEAM | (2 << 4));
+        if (zone == AT_ZONE_TEAM) csv_ring(s, (AtRect){ q->team.x - 2.0f, q->team.y - 2.0f, q->team.w + 4.0f, q->team.h + 4.0f }, 2.0f, hcol);
+    }
+    if (k->kind == 0) {                                                       /* NA: an empty panel; the button on it is the way in */
+        csv_text(s, o, AT_R_ROW16, "OPEN", q->name.x + q->name.w * 0.5f, q->name.y + 13.0f, AT_C_MUTED, AT_ALIGN_CENTER, q->name.w);
+        csv_text(s, o, AT_R_BODY12, "A on the button", q->dock.x + q->dock.w * 0.5f, q->dock.y + q->dock.h * 0.5f, AT_C_DIM, AT_ALIGN_CENTER, q->dock.w);
+        return;
+    }
+    /* the puck's dock: a ring with the coin in it when the coin is home, the ring empty when it is in a hand or on a tile */
     {
-        float cx = q->dock.x + q->dock.w * 0.5f, cy = q->dock.y + 18.0f, r = 15.0f;
-        int home = k->puck && !k->hold && k->drop_cell < 0 && k->ck_tex < 0 && k->ptex < 0 && k->name[0] == '\0';
+        float cx = q->dock.x + q->dock.w * 0.5f, cy = q->dock.y + (q->dock.h > 40.0f ? 18.0f : 15.0f), r = 15.0f;
+        if (r > q->dock.w * 0.5f) r = q->dock.w * 0.5f;
         if (k->puck) {
             at_disc(s, cx, cy, r + 2.0f, AT_C_INK);
             at_disc(s, cx, cy, r, AT_C_GROUND2);
             if (!k->hold && k->drop_cell < 0) csv_coin(s, o, cx, cy, r - 1.0f, idx, 0);
             else at_disc(s, cx, cy, r - 5.0f, AT_C_PLATE);                  /* the dock is empty: the puck is in a hand or on a tile */
-            (void) home;
             hit_add(hc, (AtRect){ cx - r, cy - r, 2.0f * r, 2.0f * r }, AT_HIT_ZONE, idx, AT_ZONE_PUCK | (2 << 4));
-            if (zone == AT_ZONE_PUCK) csv_ring(s, (AtRect){ cx - r - 3.0f, cy - r - 3.0f, 2.0f * r + 6.0f, 2.0f * r + 6.0f }, 2.0f, at_part_port_colour(hand));
+            if (zone == AT_ZONE_PUCK) csv_ring(s, (AtRect){ cx - r - 3.0f, cy - r - 3.0f, 2.0f * r + 6.0f, 2.0f * r + 6.0f }, 2.0f, hcol);
         }
     }
     /* the name */
     if (k->name[0] != '\0') csv_text(s, o, AT_R_ROW16, k->name, q->name.x + q->name.w * 0.5f, q->name.y + 13.0f, AT_C_IVORY, AT_ALIGN_CENTER, q->name.w);
-    /* the CPU level slider */
-    if (k->kind == 2) {
-        char lv[8];
-        snprintf(lv, sizeof lv, "LV %d", k->cpu_lv);
-        at_text(s, o, AT_R_NUM12, lv, q->level.x, q->level.y + 12.0f, AT_C_TEXT2, AT_ALIGN_LEFT, 0.0f);
-        for (i = 0; i < 9; i++) {
-            int on = i < k->cpu_lv, cur = i + 1 == k->cpu_lv;
-            at_poly_rect(s, q->notch[i].x, q->notch[i].y + (cur ? 0.0f : 3.0f), q->notch[i].w, cur ? 14.0f : 8.0f, on ? (cur ? AT_C_IVORY : col) : AT_C_LINE);
-        }
-        hit_add(hc, q->level, AT_HIT_ZONE, idx, AT_ZONE_LEVEL | (2 << 4));
-        for (i = 0; i < 9; i++) hit_add(hc, (AtRect){ q->notch[i].x - 1.0f, q->notch[i].y - 2.0f, q->notch[i].w + 2.0f, 18.0f }, AT_HIT_ZONE, idx, AT_ZONE_LEVEL | ((i + 1 + 2) << 4));
-        if (zone == AT_ZONE_LEVEL) csv_ring(s, (AtRect){ q->level.x - 2.0f, q->level.y - 3.0f, q->level.w + 4.0f, q->level.h + 6.0f }, 2.0f, at_part_port_colour(hand));
-    }
     /* the costume stepper */
     if (k->ck_tex >= 0 || k->ptex >= 0 || k->ncost > 0) {
         char t[32];
@@ -789,7 +780,20 @@ static void csv_draw_panel(const AtScreen *sc, const AtView *v, const AtCssGeom 
             hit_add(hc, q->cprev, AT_HIT_ZONE, idx, AT_ZONE_COSTUME | (1 << 4));
             hit_add(hc, q->cnext, AT_HIT_ZONE, idx, AT_ZONE_COSTUME | (3 << 4));
         }
-        if (zone == AT_ZONE_COSTUME) csv_ring(s, (AtRect){ q->cmid.x - 2.0f, q->cmid.y - 2.0f, q->cmid.w + 4.0f, q->cmid.h + 4.0f }, 2.0f, at_part_port_colour(hand));
+        if (zone == AT_ZONE_COSTUME) csv_ring(s, (AtRect){ q->cmid.x - 2.0f, q->cmid.y - 2.0f, q->cmid.w + 4.0f, q->cmid.h + 4.0f }, 2.0f, hcol);
+    }
+    /* the CPU level slider, at the foot of the panel */
+    if (k->kind == 2) {
+        char lv[8];
+        snprintf(lv, sizeof lv, "LV %d", k->cpu_lv);
+        at_text(s, o, AT_R_NUM12, lv, q->level.x, q->level.y + 12.0f, AT_C_TEXT2, AT_ALIGN_LEFT, 0.0f);
+        for (i = 0; i < 9; i++) {
+            int on = i < k->cpu_lv, cur = i + 1 == k->cpu_lv;
+            at_poly_rect(s, q->notch[i].x, q->notch[i].y + (cur ? 0.0f : 3.0f), q->notch[i].w, cur ? 14.0f : 8.0f, on ? (cur ? AT_C_IVORY : col) : AT_C_LINE);
+        }
+        hit_add(hc, q->level, AT_HIT_ZONE, idx, AT_ZONE_LEVEL | (2 << 4));
+        for (i = 0; i < 9; i++) hit_add(hc, (AtRect){ q->notch[i].x - 1.0f, q->notch[i].y - 2.0f, q->notch[i].w + 2.0f, 18.0f }, AT_HIT_ZONE, idx, AT_ZONE_LEVEL | ((i + 1 + 2) << 4));
+        if (zone == AT_ZONE_LEVEL) csv_ring(s, (AtRect){ q->level.x - 2.0f, q->level.y - 3.0f, q->level.w + 4.0f, q->level.h + 6.0f }, 2.0f, hcol);
     }
 }
 
@@ -867,10 +871,10 @@ static void draw_css(const AtScreen *sc, const AtView *v, const AtLayout *L, con
         if (v->cursor[p].active && v->cursor[p].card >= 0 && !v->cursor[p].hold && v->cursor[p].card < n) {
             const AtCssPanel *q = &g.panel[v->cursor[p].card];
             AtRect a = v->cursor[p].zone == AT_ZONE_PUCK ? (AtRect){ q->dock.x + q->dock.w * 0.5f + 8.0f, q->dock.y + 22.0f, 0.0f, 0.0f } :
-                       v->cursor[p].zone == AT_ZONE_TYPE ? (AtRect){ q->seg[1].x + 8.0f, q->seg[1].y + 10.0f, 0.0f, 0.0f } :
+                       v->cursor[p].zone == AT_ZONE_TYPE ? (AtRect){ q->type.x + q->type.w * 0.5f, q->type.y + 10.0f, 0.0f, 0.0f } :
                        v->cursor[p].zone == AT_ZONE_LEVEL ? (AtRect){ q->notch[4].x + 4.0f, q->notch[4].y + 6.0f, 0.0f, 0.0f } :
                        v->cursor[p].zone == AT_ZONE_COSTUME ? (AtRect){ q->cmid.x + q->cmid.w * 0.5f + 12.0f, q->cmid.y + 5.0f, 0.0f, 0.0f } :
-                       (AtRect){ q->team.x + 10.0f, q->team.y + 8.0f, 0.0f, 0.0f };
+                       (AtRect){ q->team.x + q->team.w * 0.5f, q->team.y + 10.0f, 0.0f, 0.0f };
             csv_hand(s, a.x, a.y, at_part_port_colour(p));
         }
     }

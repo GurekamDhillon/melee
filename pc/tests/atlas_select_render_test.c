@@ -343,7 +343,9 @@ static void css_view_layouts(void)
             if (i > 0) CHECK(b->x >= g.panel[i - 1].box.x + g.panel[i - 1].box.w);
             CHECK(g.field.y + g.field.h <= b->y);
             CHECK(g.panel[i].portrait.x >= b->x && g.panel[i].portrait.x + g.panel[i].portrait.w <= b->x + b->w + 0.01f);
-            CHECK(g.panel[i].cmid.y + g.panel[i].cmid.h <= b->y + b->h);                       /* the costume row is inside the panel */
+            CHECK(g.panel[i].level.y + g.panel[i].level.h <= b->y + b->h && g.panel[i].cmid.y + g.panel[i].cmid.h <= g.panel[i].level.y);   /* the costume row, then the slider at the foot, inside the panel */
+            CHECK(g.panel[i].type.x >= g.panel[i].portrait.x && g.panel[i].type.x + g.panel[i].type.w <= g.panel[i].portrait.x + g.panel[i].portrait.w + 0.01f && g.panel[i].type.y >= g.panel[i].portrait.y);   /* the type button is on the portrait */
+            CHECK(g.panel[i].type.x + g.panel[i].type.w > g.panel[i].portrait.x + g.panel[i].portrait.w * 0.5f && g.panel[i].team.x + g.panel[i].team.w <= g.panel[i].type.x + 0.01f);   /* at its top right, the team button at its top left */
             CHECK(g.panel[i].notch[8].x + g.panel[i].notch[8].w <= b->x + b->w);
         }
         for (i = 0; i < HITS.n; i++) {

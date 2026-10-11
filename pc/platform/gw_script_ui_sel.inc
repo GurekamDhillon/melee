@@ -436,11 +436,12 @@ unsigned gw_Ui_CssMouse(int port, int vis, int card, int moved, int click, int r
 unsigned gw_Ui_CssZone(int port, int card, int zone, int value, int moved, int click, int rclick, int wheel) {
     return at_css_mouse_zone(&gs_selm_css, port, card, zone, value, moved, click, rclick, wheel);
 }
+void gw_Ui_CssPad(int p, int ok) { at_css_set_pad(&gs_selm_css, p, ok); }   /* the adapter: which ports have a controller (the type button gives a port back to a human only then) */
 int gw_Ui_CssPuckVis(int p) { return at_css_puck_vis(&gs_selm_css, p); }
 enum { GS_CSSG_KIND, GS_CSSG_CK, GS_CSSG_COSTUME, GS_CSSG_CPU_LV, GS_CSSG_TEAM, GS_CSSG_CUR, GS_CSSG_CARD, GS_CSSG_TARGET,
        GS_CSSG_DONE = 10, GS_CSSG_N_VIS, GS_CSSG_TAB, GS_CSSG_COUNT_IN, GS_CSSG_TRAIN_H, GS_CSSG_TRAIN_C, GS_CSSG_N_SLOTS, GS_CSSG_ONLINE, GS_CSSG_TEAMS,
        GS_CSSG_TAB_OFFERED = 20, GS_CSSG_TAB_COUNT, GS_CSSG_VIS_SLOT, GS_CSSG_SLOT_CK, GS_CSSG_SLOT_OK, GS_CSSG_SLOT_TAB, GS_CSSG_VIS_OF_CK, GS_CSSG_MOUSE_PORT,
-       GS_CSSG_MAX_HUMANS = 30, GS_CSSG_CPU_CARDS, GS_CSSG_MIN_TO_START, GS_CSSG_ENTERING, GS_CSSG_DUMMY, GS_CSSG_HAS_SSS, GS_CSSG_HOLD = 36, GS_CSSG_ZONE, GS_CSSG_PUCK_VIS, GS_CSSG_READY, GS_CSSG_PUCK };
+       GS_CSSG_MAX_HUMANS = 30, GS_CSSG_CPU_CARDS, GS_CSSG_MIN_TO_START, GS_CSSG_ENTERING, GS_CSSG_DUMMY, GS_CSSG_HAS_SSS, GS_CSSG_HOLD = 36, GS_CSSG_ZONE, GS_CSSG_PUCK_VIS, GS_CSSG_READY, GS_CSSG_PUCK, GS_CSSG_ACT };
 /* what: GS_CSSG_*; i: the port (0..3), the tab, the visible index, the slot or the fighter id, by what */
 int gw_Ui_CssGet(int what, int i) {
     const AtCss *c = &gs_selm_css;
@@ -450,6 +451,7 @@ int gw_Ui_CssGet(int what, int i) {
     }
     if (what == GS_CSSG_READY) return at_css_ready(c);
     if (what == GS_CSSG_PUCK) return c->puck;
+    if (what == GS_CSSG_ACT) return i >= 0 && i < 4 ? c->p[i].act : 0;
     if (what >= GS_CSSG_KIND && what <= GS_CSSG_TARGET) {
         const AtCssPort *s;
         if (i < 0 || i > 3) return 0;

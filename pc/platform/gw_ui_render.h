@@ -46,7 +46,7 @@ int at_tiles_scroll(const AtScreen *sc, const AtLayout *L, int focus_index, int 
 
 /* the character select's Melee-style layout (AT_PRIMARY_CSS): one place for the drawing, the hit rectangles and the tests. Pure geometry. */
 typedef struct {
-    AtRect box, strip, coin, seg[3], team, portrait, dock, name, level, notch[9], cprev, cnext, cmid;
+    AtRect box, strip, coin, type, team, portrait, dock, name, level, notch[9], cprev, cnext, cmid;   /* type: the HMN / CPU / NA button on the portrait's top right; team: the team button on its top left */
 } AtCssPanel;
 typedef struct {
     AtRect field, caption, tabs;

@@ -54,6 +54,7 @@ extern void Ui_CssSetTab(int tab);
 extern void Ui_CssSetPortCk(int p, int ck, int costume);
 extern unsigned Ui_CssStep(int port, unsigned trig, unsigned rep, int frame);
 extern unsigned Ui_CssMouse(int port, int vis, int card, int moved, int click, int rclick, int wheel);
+extern void Ui_CssPad(int p, int ok);
 extern unsigned Ui_CssZone(int port, int card, int zone, int value, int moved, int click, int rclick, int wheel);
 extern int Ui_CssGet(int what, int i);
 extern int Ui_CssBlocker(char* out, int cap);
@@ -88,7 +89,7 @@ enum { FA_NOTE_INFO = 3 };
 enum { FA_CG_KIND = 0, FA_CG_CK, FA_CG_COSTUME, FA_CG_CPU_LV, FA_CG_TEAM, FA_CG_CUR, FA_CG_CARD, FA_CG_TARGET, FA_CG_DONE = 10, FA_CG_N_VIS, FA_CG_TAB,
        FA_CG_COUNT_IN, FA_CG_TRAIN_H, FA_CG_TRAIN_C, FA_CG_N_SLOTS, FA_CG_ONLINE, FA_CG_TEAMS, FA_CG_TAB_OFFERED = 20, FA_CG_TAB_COUNT, FA_CG_VIS_SLOT,
        FA_CG_SLOT_CK, FA_CG_SLOT_OK, FA_CG_SLOT_TAB, FA_CG_VIS_OF_CK, FA_CG_MOUSE_PORT, FA_CG_MAX_HUMANS = 30, FA_CG_CPU_CARDS, FA_CG_MIN_TO_START,
-       FA_CG_ENTERING, FA_CG_DUMMY, FA_CG_HAS_SSS, FA_CG_HOLD = 36, FA_CG_ZONE, FA_CG_PUCK_VIS, FA_CG_READY, FA_CG_PUCK };
+       FA_CG_ENTERING, FA_CG_DUMMY, FA_CG_HAS_SSS, FA_CG_HOLD = 36, FA_CG_ZONE, FA_CG_PUCK_VIS, FA_CG_READY, FA_CG_PUCK, FA_CG_ACT };
 enum { FA_SG_N = 0, FA_SG_TAB, FA_SG_CUR, FA_SG_DONE, FA_SG_GO, FA_SG_PICK_EXT, FA_SG_N_VIS, FA_SG_VIS_SLOT, FA_SG_EXT, FA_SG_TYPE, FA_SG_OK, FA_SG_ROW,
        FA_SG_TAB_OFFERED, FA_SG_TAB_COUNT, FA_SG_TAB_OF, FA_SG_CUR_TYPE, FA_SG_TAB_FOR_EXT };
 #define FA_RETAIL_FIGHTERS 26 /* the disc's own fighters are 0..25; everything above (m-ex and Geno definitions) is "added" */
@@ -450,10 +451,19 @@ static void fas_submit_css(void)
         }
     }
     for (p = 0; p < 4; p++) {
-        int kind = Ui_CssGet(FA_CG_KIND, p), pck = Ui_CssGet(FA_CG_CK, p), cos = Ui_CssGet(FA_CG_COSTUME, p);
+        int kind = Ui_CssGet(FA_CG_KIND, p), pck = Ui_CssGet(FA_CG_CK, p), cos = Ui_CssGet(FA_CG_COSTUME, p), real_ck;
         unsigned flags = 0;
         bool closed = (online && p != 0) || (Ui_CssGet(FA_CG_DUMMY, 0) && p != Ui_CssGet(FA_CG_TRAIN_H, 0) && p != Ui_CssGet(FA_CG_TRAIN_C, 0)) ||
                       (fas.enter >= 0 && p != fas.enter);
+        real_ck = pck;
+        if (Ui_CssGet(FA_CG_PUCK, 0) && pck == FS_CK_NONE && kind != FS_OFF) { /* a coin over a fighter previews that fighter on its owner's panel, as retail's door does (sel_icon follows the coin) */
+            int q;
+            for (q = 0; q < 4; q++) {
+                if (Ui_CssGet(FA_CG_HOLD, q) && Ui_CssGet(FA_CG_TARGET, q) == p && Ui_CssGet(FA_CG_CARD, q) < 0) {
+                    pck = Ui_CssGet(FA_CG_SLOT_CK, Ui_CssGet(FA_CG_VIS_SLOT, Ui_CssGet(FA_CG_CUR, q)));
+                }
+            }
+        }
         name[0] = sub[0] = abbr[0] = '\0';
         if (kind != FS_OFF) {
             if (pck != FS_CK_NONE) {
@@ -473,11 +483,11 @@ static void fas_submit_css(void)
         } else if (kind == FS_OFF) {
             flags |= FA_CARD_OPEN;
         }
-        if (kind == FS_HMN && pck != FS_CK_NONE) {
+        if (kind == FS_HMN && real_ck != FS_CK_NONE) {
             flags |= FA_CARD_READY;
         }
         Ui_SelCard(fas.h, p, kind, name, sub, abbr, fas_card_face(pck), Ui_CssGet(FA_CG_CPU_LV, p), Ui_CssGet(FA_CG_TEAMS, 0) ? Ui_CssGet(FA_CG_TEAM, p) + 1 : 0, flags);
-        Ui_SelCursor(fas.h, p, kind == FS_HMN && !(online && p != 0) ? 1 : 0, Ui_CssGet(FA_CG_CUR, p), Ui_CssGet(FA_CG_CARD, p));
+        Ui_SelCursor(fas.h, p, (Ui_CssGet(FA_CG_PUCK, 0) ? Ui_CssGet(FA_CG_ACT, p) != 0 : kind == FS_HMN) && !(online && p != 0) ? 1 : 0, Ui_CssGet(FA_CG_CUR, p), Ui_CssGet(FA_CG_CARD, p));
         if (Ui_CssGet(FA_CG_PUCK, 0)) { /* Melee's puck rules: the panel's puck, costume and portrait, and what this hand stands on and carries */
             int hold_by = -1, q;
             for (q = 0; q < 4; q++) {
@@ -508,8 +518,7 @@ static void fas_submit_css(void)
             }
         }
         if (hp >= 0) {
-            sprintf(buf, "P%d carries %s: A on a fighter to set it down, B to put it back.", hp + 1,
-                    Ui_CssGet(FA_CG_TARGET, hp) == hp ? "a puck" : "a CPU's puck");
+            sprintf(buf, "A on a fighter sets the coin down, B puts it back.");
         } else if (!Ui_CssBlocker(buf, FE_HELP_STR)) {
             buf[0] = '\0';
         }
@@ -593,6 +602,7 @@ static void fas_css_frame(void)
     if (fe.frames >= 4) {
         for (p = 0; p < 4; p++) {
             fas_pad(p, &trig[p], &rep[p]);
+            Ui_CssPad(p, HSD_PadCopyStatus[p].err == 0);
             if (p != 0 && Ui_CssGet(FA_CG_KIND, p) == FS_HMN && HSD_PadCopyStatus[p].err != 0 && !online) {
                 Ui_CssPort(p, FS_OFF, FS_CK_NONE, 0, 9, p & 1); /* a controller left mid-screen */
             }

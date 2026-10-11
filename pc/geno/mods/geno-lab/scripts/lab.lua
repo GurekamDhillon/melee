@@ -244,10 +244,12 @@ local MODES = {
     } },
 }
 do -- REMAKE (2026-10-10): the CLIPS machinery with a slot picker on top; appended last so the number keys keep their modes
+  -- Authoring tool: it exists only when the LAB mod carries missions/remake-slots.txt (never in a release package).
+  local rdata = gd.mod_read and gd.mod_read("missions/remake-slots.txt") or nil
   local cm
   for _, m in ipairs(MODES) do if m.id == "clips" then cm = m end end
-  MODES[#MODES + 1] = { id = "remake", name = "REMAKE", icon = "lab_timeline",
-    blurb = "Pick Goku's remake animations slot by slot: cycle the candidates, compare, pick, undo. Picks go to remake-picks.json.",
+  if rdata then MODES[#MODES + 1] = { id = "remake", name = "REMAKE", icon = "lab_timeline",
+    blurb = "Pick a ported fighter's remake animations slot by slot: cycle the candidates, compare, pick, undo. Picks go to remake-picks.json.",
     t = cm.t,
     a = {
       { k = "UP", label = "Prev", icon = "lab_step_back", rep = true, run = "rm_prev" },
@@ -272,7 +274,7 @@ do -- REMAKE (2026-10-10): the CLIPS machinery with a slot picker on top; append
       { k = "RIGHT", label = "+1 frame", icon = "lab_step", rep = true, run = "cl_fwd1" },
       { k = "Z", label = "Slower", icon = "lab_slowmo", run = "cl_slower" },
       { k = "X", label = "Faster", icon = "lab_forward", run = "cl_faster" },
-    } }
+    } } end
 end
 local MODE_BY_ID = {}
 for i, m in ipairs(MODES) do MODE_BY_ID[m.id] = i end
@@ -5047,8 +5049,8 @@ stage_d5()
 -- Every row of the focused fighter's animation table, played with gd.anim_preview: the fighter stays in
 -- Wait (grounded, in place; Wait runs no move script, so no hitboxes or root motion), the row's clip
 -- plays from any frame, and the LAB's own SPACE / LEFT / RIGHT pause and step it. A Geno base "none"
--- define lists its unbound fighter.rows (row 303 on) as LIBRARY: Goku's whole XV2 set is one.
--- MOVES (when the LAB mod has missions/moves-<fighter>.txt, e.g. ports/goku-xv2/tools/movemap.py): a source
+-- define lists its unbound fighter.rows (row 303 on) as LIBRARY: a ported fighter's whole set is one.
+-- MOVES (when the LAB mod has missions/moves-<fighter>.txt, e.g. ports/<port>/tools/movemap.py): a source
 -- move's chained clips play in order with its static timing; the bar marks the source's hitbox and cancel
 -- windows (reference only; unverified timing). Same pose-only playback.
 -- Its own function scope: the main chunk is at its local limit.
@@ -5179,7 +5181,7 @@ end
 
 function LE.clips_tick()
   if not cl.env_done and gd.lab_env and gd.match().active and gd.match().frame > 30 then
-    -- MELEE_LAB_MODE=clips opens the Lab on a mode; MELEE_LAB_CLIP=<row | name> starts a clip (ports/goku-xv2/tools/clips.ps1)
+    -- MELEE_LAB_MODE=clips opens the Lab on a mode; MELEE_LAB_CLIP=<row | name> starts a clip (ports/<port>/tools/clips.ps1)
     cl.env_done = true
     local want = gd.lab_env("MODE")
     if want then for i, md in ipairs(MODES) do if md.id == want:lower() then set_mode(i) end end end
@@ -5450,10 +5452,10 @@ function LE.clips_console(rest)
   end
 end
 
--- ---- REMAKE: pick Goku's animations slot by slot (temporary tool, 2026-10-10) ------------------------------------
--- Data: missions/remake-goku.txt (ports/goku-xv2/tools/remake_lab_data.py): one S line per Melee slot (55, in the plan's
+-- ---- REMAKE: pick a ported fighter's animations slot by slot (temporary tool, 2026-10-10) ------------------------------------
+-- Data: missions/remake-slots.txt (ports/<port>/tools/remake_lab_data.py): one S line per Melee slot (55, in the plan's
 -- picking order), K lines for its candidate clips. Picks are written to the LAB's saved data as remake-picks.json (one slot
--- per line) after every change; ports/goku-xv2/tools/remake_sheet.py --sync-picks reads them into the sheet.
+-- per line) after every change; ports/<port>/tools/remake_sheet.py --sync-picks reads them into the sheet.
 local PICKS_FILE = "remake-picks.json"
 
 -- the clip list is rebuilt by LE.clip_list only when the focused fighter's key changes: do the same cheap test here
@@ -5527,7 +5529,7 @@ end
 local function rm_load()
   if rm.loaded then return #rm.slots > 0 end
   rm.loaded = true
-  local text = gd.mod_read and gd.mod_read("missions/remake-goku.txt") or nil
+  local text = gd.mod_read and gd.mod_read("missions/remake-slots.txt") or nil
   local s
   for line in (type(text) == "string" and text or ""):gmatch("[^\n]+") do
     local f = {}
@@ -5555,7 +5557,7 @@ local function rm_load()
   end
   for _, n in ipairs(rm.nlist) do if n.seed ~= "" then rm.notes[n.name] = n.seed end end
   rm_notes_load()
-  if #rm.slots == 0 then gd.log("REMAKE: missions/remake-goku.txt is missing (run ports/goku-xv2/tools/remake_lab_data.py)") end
+  if #rm.slots == 0 then gd.log("REMAKE: missions/remake-slots.txt is missing (run ports/<port>/tools/remake_lab_data.py)") end
   return #rm.slots > 0
 end
 
@@ -5788,7 +5790,7 @@ ACTIONS.rm_compare = function()
     if q.port ~= focus and p and tostring(q.char_name) == tostring(p.char_name) then port = q.port end
   end
   if port == nil or p == nil then
-    say("Compare needs a second Goku on another port (launch with remake.ps1: p2=goku-xv2)", DANGER)
+    say("Compare needs a second copy of the fighter on another port (launch with remake.ps1)", DANGER)
     return
   end
   rm.cmp, rm.cmp_port, rm.base_x = true, port, p.x
@@ -5830,7 +5832,7 @@ function LE.rm_tick()
     if rm.step == 1 then
       LE.clip_list()
     elseif rm.step == 2 then
-      if not rm_load() then rm.started = true say("REMAKE: no remake-goku.txt in the mod's missions/", DANGER) end
+      if not rm_load() then rm.started = true say("REMAKE: no remake-slots.txt in the mod's missions/", DANGER) end
     elseif rm.step == 3 then
       rm.key = cl.key
       local first
@@ -5908,7 +5910,7 @@ end
 
 function LE.draw_remake(p)
   if not gd.anim_rows then txt(12, 30, "this build has no gd.anim_rows", "caption", DANGER) return end
-  if not rm_load() then txt(12, 30, "missions/remake-goku.txt is missing: run remake_lab_data.py", "caption", DANGER) return end
+  if not rm_load() then txt(12, 30, "missions/remake-slots.txt is missing: run remake_lab_data.py", "caption", DANGER) return end
   if not rm.started then return end
   local x, y, w, ROWS = 8, 8, 300, 10
   local vis = rm_vis()

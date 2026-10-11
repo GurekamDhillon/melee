@@ -842,6 +842,7 @@ static int gs_may_run(int i) {
     return 1;
 }
 
+static const char *gs_cb_name; /* the script callback running now (for the rewind-branch diagnostic) */
 static void gs_hook_all(const char *name, int nargs_int, int a, int b) {
     int i;
     for (i = 0; i < gs.n; ++i) {
@@ -854,7 +855,9 @@ static void gs_hook_all(const char *name, int nargs_int, int a, int b) {
         if (nargs_int >= 2) {
             lua_pushinteger(gs.L, b);
         }
+        gs_cb_name = name;
         gs_pcall(i, nargs_int, 0, name);
+        gs_cb_name = NULL;
     }
 }
 
@@ -2205,8 +2208,16 @@ static int l_pause(lua_State *L) {
     gs.paused = 1;
     return 0;
 }
+static int gs_ring_now(void);
 static int l_resume(lua_State *L) {
     gs_require_gameplay(L, "resume");
+    if (gs.rw_began && gs.rw_head > gs_ring_now()) {
+        /* after gd.rewind_to the game REPLAYS the logged input (the take is not lost); it goes live
+           only at the end of the log, or on gd.rewind_live() / G. Say so: "resume" reads as "go". */
+        gw_Console_Print(GS_YELLOW, "resume: replaying the logged input for %.1f s, then live (gd.rewind_live() / G goes live now; console: lab replay)",
+                         (gs.rw_head - gs_ring_now()) / 60.0);
+        gw_log("resume: replaying the log for %d frames, then live", gs.rw_head - gs_ring_now());
+    }
     gs.paused = 0;
     gs.step = 0;
     return 0;
@@ -3135,7 +3146,9 @@ static void gs_run_tasks(void) {
                 int item_mark=gs_item_call_begin(), previous_refusal=gs_callback_refused;
                 char task_name[32];snprintf(task_name,sizeof task_name,"task%d",k);
                 gs_callback_refused=0;gw_hang_callback(s->id,task_name,1);
+                gs_cb_name = task_name;
                 rc=lua_resume(co,L,0,&nres);
+                gs_cb_name = NULL;
                 gw_hang_callback(s->id,task_name,0);
                 gs_callback_result(i,task_name,(rc!=LUA_OK && rc!=LUA_YIELD)||gs_callback_refused);
                 gs_callback_refused=previous_refusal;
@@ -4470,6 +4483,14 @@ static int gs_ring_now(void);
 static int gs_snap_ensure(int slots);
 static void gs_rw_stop(void);
 static int gs_rw_request(int target, const char **why);
+static int l_rec_start(lua_State *L), l_rec_stop(lua_State *L), l_rec_mark(lua_State *L),
+    l_rec_play(lua_State *L), l_rec_play_stop(lua_State *L), l_rec_trim(lua_State *L),
+    l_rec_keep_last(lua_State *L), l_rec_save_history(lua_State *L), l_rec_status(lua_State *L),
+    l_rec_list(lua_State *L);
+static void gr_tick(int at_tick), gr_after_save(void), gr_save_failed(void), gr_after_load(void),
+    gr_load_failed(void), gr_external_load(void), gr_scene_end(void);
+static void gr_capture(const void *st, int size);
+static int gr_feed(int tag, void *out, int size);
 static void gs_rw_branch(void);
 static int gs_states_dir(char *out, size_t cap);
 static int gs_state_check(const void *hdr, int len, char *why, size_t cap);
@@ -6923,6 +6944,9 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"project", l_project}, {"attrs", l_attrs},
     {"safe_area", l_safe_area},
     {"motion_name", l_motion_name}, {"history", l_history}, {"step_back", l_step_back},
+    {"rec_start", l_rec_start}, {"rec_stop", l_rec_stop}, {"rec_mark", l_rec_mark}, {"rec_play", l_rec_play},
+    {"rec_play_stop", l_rec_play_stop}, {"rec_trim", l_rec_trim}, {"rec_keep_last", l_rec_keep_last},
+    {"rec_save_history", l_rec_save_history}, {"rec_status", l_rec_status}, {"rec_list", l_rec_list},
     {"rewind_to", l_rewind_to}, {"rewind_live", l_rewind_live}, {"rewind_test", l_rewind_test},
     {"rewind_test_result", l_rewind_test_result}, {"hot_reload", l_hot_reload},
     {"hot_reload_status", l_hot_reload_status}, {"state_save", l_state_save},
@@ -7872,7 +7896,9 @@ static int gs_find(const char *id) {
 }
 
 static void gs_stage_cleanup_dead(void) {
-    gs_rw_branch();
+    /* Only a real cleanup forks the timeline. This ran unconditionally after every rewind (rw_notify),
+       so the first frame after gd.rewind_to dropped the logged input ahead: "resume" went live, fwd=0. */
+    if (gs_stage_cleanup_pending || gw_ScriptGame_StageSlotsActive()) gs_rw_branch();
     gs_stage_cleanup_pending = gw_ScriptGame_StageReleaseDeadOwners() != 0;
 }
 
@@ -8417,6 +8443,7 @@ void gw_Script_SceneBegin(int scene_kind) {
     gs.paused = 0; /* a scene change always resumes */
     gs.step = 0;
     gs.nev = 0; /* events from the scene that ended are dropped */
+    gr_scene_end();
     gs_rw_stop();
     memset(gs_sfx_map_from, 0xFF, sizeof gs_sfx_map_from);
     gw_rw_measure(0);
@@ -8744,6 +8771,17 @@ static void gs_rw_branch(void) {
         return;
     }
     if (gs.rw_head > now) {
+        /* a gameplay write while the log is being replayed ends the replay and drops the take: say who did it */
+        lua_Debug ar;
+        const char *who = "native";
+        char where[200];
+        where[0] = ' ';
+        if (gs.L != NULL && lua_getstack(gs.L, 1, &ar) && lua_getinfo(gs.L, "nSl", &ar)) {
+            snprintf(where, sizeof where, " at %s:%d (%s)", ar.short_src, ar.currentline, ar.name ? ar.name : "?");
+            who = "Lua";
+        }
+        gw_log("rewind: a gameplay write from %s%s (script %s, callback %s) dropped %d logged frames (replay ends here)", who, where,
+               gs.cur >= 0 && gs.cur < gs.n ? gs.s[gs.cur].id : "-", gs_cb_name ? gs_cb_name : "?", gs.rw_head - now);
         gs.rw_head = now;
     }
     if (gw_rw_drop_from(now) != 0) {
@@ -8788,6 +8826,8 @@ static int gs_rw_request(int target, const char **why) {
     return 0;
 }
 
+#include "gw_script_rec.inc"
+
 /* HSD_PadRenewMasterStatus (controller.c): the pads for a frame being replayed. 0 = not replaying,
  * 1 = `out` holds the logged statuses, 2 = the frame renewed nothing when it first ran. */
 int gw_LabPad_Replay(void *out, int size) {
@@ -8809,12 +8849,12 @@ int gw_LabPad_Replay(void *out, int size) {
             gs_render_test_pad_hash = (gs_render_test_pad_hash ^ bytes[i]) * 16777619u;
         return 1;
     }
-    if (gs.L == NULL || !gs.rw_began || !gs.match_active) {
+    if (gs.L == NULL || !gs.match_active) {
         return 0;
     }
     tag = gs_ring_now();
-    if (!gs_rw_replaying(tag)) {
-        return 0;
+    if (!gs.rw_began || !gs_rw_replaying(tag)) {
+        return gr_feed(tag, out, size); /* a LAB recording playing back (gw_script_rec.inc) */
     }
     e = &gs_log[(unsigned) tag % GS_LOG_N];
     if (e->tag != tag) {
@@ -8836,6 +8876,7 @@ int gw_LabPad_Replay(void *out, int size) {
 void gw_LabPad_Record(const void *st, int size) {
     int tag;
     GsLogEntry *e;
+    if (gs.L != NULL && !gs_rw_session()) gr_capture(st, size);
     if (gs.L == NULL || !gs.rw_began || !gs.match_active || gs_rw_session()) {
         return;
     }
@@ -9213,6 +9254,7 @@ static void gs_state_dir_of(const char *path, char *out, size_t cap) {
    or the loop top when paused (at_tick). A rewind starts a re-simulation burst, so it only
    happens at the loop top. */
 static void gs_apply_pending(int at_tick) {
+    gr_tick(at_tick);
     if (gs.pending_load || gs.st_pending_load[0] || (gs.rw_pending_on && at_tick))
         gw_motion_frame(gs.frame, 1);
     if (gs_stage_cleanup_pending) gs_stage_cleanup_dead();
@@ -9256,6 +9298,7 @@ static void gs_apply_pending(int at_tick) {
             gw_snap_load_index(slot) == 0) {
             gs_slot_restore(&gs.slot[slot]);
             gs.rw_began = 0; /* the history belongs to the timeline we just left: start over */
+            gr_external_load();
             gw_Console_Print(GS_GREEN, "loaded state %d", slot + 1);
             gs_stage_cleanup_dead();
             gs_hook_all("on_loadstate", 1, slot + 1, 0);
@@ -9277,8 +9320,10 @@ static void gs_apply_pending(int at_tick) {
             gw_Console_Print(GS_GREEN, "state saved: %s (frame %d, %.0f ms)", h.name, h.match_frame,
                              gs_now_ms() - t0);
             gw_log("lab: state saved to %s in %.0f ms", path, gs_now_ms() - t0);
+            gr_after_save();
         } else {
             gw_Console_Print(GS_RED, "state could not be saved (%s)", path);
+            gr_save_failed();
         }
     }
     if (gs.st_pending_load[0] != '\0') {
@@ -9290,14 +9335,17 @@ static void gs_apply_pending(int at_tick) {
         len = gw_snap_file_header(path, &h, sizeof h);
         if (gs_state_check(&h, len, why, sizeof why) != 0) {
             gw_Console_Print(GS_RED, "state refused: %s", why);
+            gr_load_failed();
         } else if ((rc = gw_snap_file_load(path)) != 0) {
             gw_Console_Print(GS_RED, "state not loaded: %s", rc == -2 ? "made for another memory layout"
                                                             : rc == -3 ? "the file is damaged"
                                                                        : "unreadable");
+            gr_load_failed();
         } else {
             gs_slot_restore(&h.slot);
             gs.nev = 0;
             gs.rw_began = 0; /* a new timeline */
+            if (gr.mode == GR_LOAD || gr.mode == GR_JOB) gr_after_load(); else gr_external_load();
             gw_Console_Print(GS_GREEN, "state loaded: %s (frame %d)", h.name, h.match_frame);
             gs_stage_cleanup_dead();
             gs_hook_all("on_loadstate", 1, 9, 0); /* slot 9 = the library */
@@ -10521,6 +10569,7 @@ done:
 #include "gw_script_fighter_caps_tests.inc"
 #include "gw_script_fighter_caps_armor_tests.inc"
 #include "gw_script_sim_state_tests.inc"
+#include "gw_script_rec_tests.inc"
 #include "gw_script_hit_rules_tests.inc"
 #include "gw_script_echo_tests.inc"
 #include "gw_script_spine_tests.inc"
@@ -12172,6 +12221,7 @@ void gw_script_tests_register(void) {
     gw_test_register("script_fighter_caps", test_script_fighter_caps);
     gw_test_register("script_fighter_armor", test_script_fighter_caps_armor);
     gw_test_register("script_sim_state", test_script_sim_state);
+    gw_test_register("script_rec", test_script_rec);
     gw_test_register("script_hit_rules", test_script_hit_rules);
     gw_test_register("script_echo_parser", test_script_echo_parser);
     gw_test_register("script_spine_events", test_script_spine_events);

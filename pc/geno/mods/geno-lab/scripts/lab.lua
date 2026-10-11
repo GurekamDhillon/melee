@@ -5525,6 +5525,7 @@ local function rm_load()
   local s
   for line in (type(text) == "string" and text or ""):gmatch("[^\n]+") do
     local f = {}
+    line = line:gsub("\r$", "")
     for v in (line .. "\t"):gmatch("([^\t]*)\t") do f[#f + 1] = v end
     if f[1] == "S" then
       s = { n = tonumber(f[2]), group = f[3] or "", slot = f[4] or "", rows = f[5] or "", cur_text = f[6] or "", cur = f[7] or "",
@@ -5693,7 +5694,7 @@ ACTIONS.rm_ab = function()
   rm_play(b)
   say("A/B: " .. b.name)
 end
-ACTIONS.rm_pick = function()
+local function rm_commit()
   local s, it = rm.cur, rm.shown
   if s == nil or it == nil then say("Nothing shown", DANGER) return end
   local old = rm.picks[s.n]
@@ -5701,8 +5702,22 @@ ACTIONS.rm_pick = function()
   rm.undo[#rm.undo + 1] = { n = s.n, prev = old }
   rm.picks[s.n] = { clip = it.name, ["in"] = rm.min, out = rm.mout, browse = not it.listed }
   rm_save()
-  say("PICKED: " .. it.name .. "   (" .. rm_count() .. "/" .. #rm.slots .. ")", OK)
+  say("PICKED: " .. it.name .. "   (" .. rm_count() .. "/" .. #rm.slots .. ")   U undoes it", OK)
 end
+-- Y asks first: a second Y within four seconds on the same clip and slot commits, anything else lets it lapse
+ACTIONS.rm_pick = function()
+  local s, it = rm.cur, rm.shown
+  if s == nil or it == nil then say("Nothing shown", DANGER) return end
+  local a = rm.arm
+  if a and a.clip == it.name and a.slot == s.n and gd.time() < a.t then
+    rm.arm = nil
+    rm_commit()
+  else
+    rm.arm = { clip = it.name, slot = s.n, t = gd.time() + 4 }
+    say("Pick " .. it.name .. " for " .. s.slot .. "?  press Y again to confirm", GOLD)
+  end
+end
+ACTIONS.rm_pick_now = rm_commit
 ACTIONS.rm_undo = function()
   local u = table.remove(rm.undo)
   if u == nil then say("Nothing to undo") return end
@@ -5854,10 +5869,16 @@ function LE.rm_console(arg)
     gd.log("no such slot")
   elseif sub == "note" or sub == "n" then LE.rm_note(rest)
   elseif sub == "browse" then ACTIONS.rm_browse()
+  elseif sub == "status" then
+    local nc, ex = 0, nil
+    for k, v in pairs(rm.notes) do nc = nc + 1 ex = ex or (k .. "=" .. tostring(v):byte(1, 4)) end
+    gd.log("remake notes: " .. nc .. " e.g. " .. tostring(ex))
+    gd.log(string.format("remake: started=%s step=%s slots=%d blist=%d nlist=%d shown=%s browse=%s", tostring(rm.started), tostring(rm.step), #rm.slots, #(rm.blist or {}), #rm.nlist, tostring(rm.shown and rm.shown.name), tostring(rm.browse)))
   elseif sub == "next" then rm_move(1)
   elseif sub == "prev" then rm_move(-1)
   elseif sub == "cand" then rm_cycle(tonumber(rest) or 1)
-  elseif sub == "pick" then ACTIONS.rm_pick()
+  elseif sub == "pick" then ACTIONS.rm_pick_now()
+  elseif sub == "pickkey" then ACTIONS.rm_pick()
   elseif sub == "undo" then ACTIONS.rm_undo()
   elseif sub == "compare" then ACTIONS.rm_compare()
   else
@@ -5997,6 +6018,18 @@ function LE.draw_remake(p)
       txt(tx + 12, 86, "W compares with the current clip side by side", "caption", MUTED, "left", tw - 24)
     end
   end
+  local arm = rm.arm
+  if arm and gd.time() < arm.t and rm.shown and rm.shown.name == arm.clip then
+    quad(tx, 150, tw, 22, GOLD, SHEAR)
+    txt(tx + 12, 166, "PRESS Y AGAIN TO PICK " .. arm.clip, "caption", INK, "left", tw - 24)
+  end
+  -- the key legend (the bar below has only icons)
+  local lx, ly, lw = 440, 180, 192
+  panel(lx, ly, lw, 206, "KEYS")
+  local L = { "UP/DOWN  prev / next clip", "A / D  clip back / forward", "N / P  next / prev slot", "Y  pick (press twice)",
+    "U  undo last pick", "T  A/B last two clips", "W  compare with current", "R  set compare reference", "K  browse all / slot clips",
+    "Q  unpicked slots only", "I / J  range in / out", "E  how to add a note", "SPACE  pause   LEFT/RIGHT  frame", "Z / X  slower / faster" }
+  for i, ln in ipairs(L) do txt(lx + 10, ly + 26 + (i - 1) * 12, ln, "caption", i == 4 and GOLD or BONE, "left", lw - 16) end
   if T("skel") then draw_skeleton(p, PORT[p.port]) end
 end
 

@@ -807,6 +807,10 @@ static void fx_owner_mtx(fx_inst *in) {
     if (in->owner == 0 || in->detached || in->fixed) return;
     for (r = 0; r < 3; ++r)
         for (c = 0; c < 4; ++c) M[r][c] = gw_rf32((const void *) (uintptr_t) (in->owner + in->mtx_off + (r * 4 + c) * 4));
+    if (in->owner2 != 0) { /* a binding's second joint: the origin is the midpoint of the two joints' world positions (the axes stay the first joint's) */
+        for (r = 0; r < 3; ++r)
+            M[r][3] = 0.5f * (M[r][3] + gw_rf32((const void *) (uintptr_t) (in->owner2 + in->mtx_off + (r * 4 + 3) * 4)));
+    }
     if (in->has_local) { /* a binding's joint-local offset / rotation / scale */
         float L[3][4];
         for (r = 0; r < 3; ++r)
@@ -1136,7 +1140,7 @@ static void fx_trace(int frame) {
 }
 
 /* set only around a binding's gw_Fx_Attach call (transient, never state) */
-typedef struct { float local[3][4]; uint32_t tag; int keep, follow, port, joint; } fx_attach_extra;
+typedef struct { float local[3][4]; uint32_t tag; int keep, follow, port, joint; uint32_t owner2; } fx_attach_extra;
 static const fx_attach_extra *fx_attach_ex;
 
 /* the renderer's view (gw_fx_render.cpp; game thread) */
@@ -1275,6 +1279,7 @@ int gw_Fx_Attach(int pkg, int owner, int mtx_off, int frame, int facing) {
         fx_cur.inst[i].attach_frame = frame;
         fx_cur.inst[i].facing = facing;
         fx_cur.inst[i].joint = -1;
+        fx_cur.inst[i].owner2 = 0;
         fx_basis(fx_pkgs[pkg], facing, fx_cur.inst[i].basis);
         if (fx_attach_ex != NULL) { /* a fighter binding: joint-local frame, the package's axes as the joint's own */
             float f[3] = {fx_pkgs[pkg]->forward[0], fx_pkgs[pkg]->forward[1], fx_pkgs[pkg]->forward[2]};
@@ -1292,6 +1297,7 @@ int gw_Fx_Attach(int pkg, int owner, int mtx_off, int frame, int facing) {
             fx_cur.inst[i].owner_kind = 1;
             fx_cur.inst[i].port = fx_attach_ex->port;
             fx_cur.inst[i].joint = fx_attach_ex->joint;
+            fx_cur.inst[i].owner2 = fx_attach_ex->owner2;
         }
         fx_cur.inst[i].rng = 0x811C9DC5u ^ ((uint32_t) pkg * 16777619u) ^ ((uint32_t) e << 8) ^ (uint32_t) owner ^ ((uint32_t) frame << 16);
         fx_owner_mtx(&fx_cur.inst[i]);
@@ -1345,7 +1351,7 @@ void gw_Fx_Detach(int owner) {
  * is taken when every condition it lists holds; a call under a condition that does not hold is the other branch and
  * is skipped (Sora: the unrotated AirLwImpact, no FireImpact). "owner_destroy" is treated as state exit. */
 typedef struct {
-    int pkg, joint, follow, keep, situation; /* keep: emitter_life (never detached); situation 0 any, 1 ground, 2 air */
+    int pkg, joint, joint2, follow, keep, situation; /* joint2 >= 0: the origin is the midpoint of joint and joint2 (a binding's "joint2"); keep: emitter_life (never detached); situation 0 any, 1 ground, 2 air */
     float frame, end_frame;                   /* end_frame < 0: none */
     float off[3], rot[3], scale;
     /* R6: a call with no package is a cosmetic event (render-only, see gw_fx_render.cpp): shake_amp > 0 and/or flash[3] > 0 */
@@ -1435,6 +1441,7 @@ int gw_Fx_BindLoad(const char *mod_id, const char *rel) {
             st->n++;
             k->pkg = pk;
             k->joint = (int) fj_num(&d, fj_get(&d, co, "joint"), 0);
+            k->joint2 = (int) fj_num(&d, fj_get(&d, co, "joint2"), -1);
             k->follow = fj_num(&d, fj_get(&d, co, "follow"), 1) != 0;
             k->keep = strcmp(ev, "emitter_life") == 0;
             k->situation = strcmp(sit, "ground") == 0 ? 1 : strcmp(sit, "air") == 0 ? 2 : 0;
@@ -1609,6 +1616,8 @@ void gw_Fx_Drive(int set, int owner, int motion, int anim, float anim_frame, int
             ex.follow = k->follow;
             ex.port = port;
             ex.joint = k->joint;
+            ex.owner2 = 0;
+            if (k->joint2 >= 0) ex.owner2 = (uint32_t) fx_jobj_at(root, k->joint2);
             fx_attach_ex = &ex;
             h = gw_Fx_Attach(k->pkg, jobj, 0x44, frame, facing);
             fx_attach_ex = NULL;

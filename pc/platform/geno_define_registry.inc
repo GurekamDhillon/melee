@@ -235,8 +235,14 @@ static int gn_define_s6_keys(gn_profile* p, const jdoc* d, int e, int version, c
                 int sx, fl, vl, x, n = a->nvoice;
                 if (d->n[c].type != JN_OBJ) goto bad_voice;
                 for (x = d->n[c].first; x >= 0; x = d->n[x].next)
-                    if (strcmp(d->n[x].key, "sfx") && strcmp(d->n[x].key, "file") && strcmp(d->n[x].key, "volume")) goto bad_voice;
+                    if (strcmp(d->n[x].key, "sfx") && strcmp(d->n[x].key, "file") && strcmp(d->n[x].key, "volume") && strcmp(d->n[x].key, "stoppable")) goto bad_voice;
                 sx = jd_get(d, c, "sfx"); fl = jd_get(d, c, "file"); vl = jd_get(d, c, "volume");
+                a->voice_stop[n] = 0;
+                x = jd_get(d, c, "stoppable");
+                if (x >= 0) {
+                    if (d->n[x].type != JN_BOOL) goto bad_voice;
+                    a->voice_stop[n] = d->n[x].num != 0;
+                }
                 if (sx < 0 || d->n[sx].type != JN_NUM || d->n[sx].num < 1 || d->n[sx].num > 999999 || d->n[sx].num != (int)d->n[sx].num) goto bad_voice;
                 if (fl < 0 || d->n[fl].type != JN_STR || !gn_file_name_ok(d->n[fl].str, ".gnsnd")) goto bad_voice;
                 a->voice_vol[n] = 127;
@@ -875,6 +881,19 @@ int gw_Geno_DefineAudioPlay(int ck, int which, int sfx)
     const struct gn_clip* c = NULL;
     int i, vol = 127;
     if (!p || !p->aud) return 0;
+    if (which == 1 && sfx == 540001) { /* the retail "stop this voice slot" id: cut the define's stoppable clips (a looping hum); 0 (vanilla stop) when it has none */
+        extern int gw_Audio_StopClips(const int16_t* pcm);
+        int any = 0, stopped = 0;
+        for (i = 0; i < p->aud->nvoice; ++i) {
+            const struct gn_clip* sc;
+            if (!p->aud->voice_stop[i]) continue;
+            any = 1;
+            sc = gn_clip_load(p, &p->aud->voice_clip[i], p->aud->voice_file[i]);
+            if (sc && !gw_rb_active()) stopped += gw_Audio_StopClips(sc->pcm);
+        }
+        if (any) gw_log("geno: %s: stop id 540001 cut %d stoppable clip instance(s)", p->name, stopped);
+        return any;
+    }
     if (which == 0) {
         if (!p->aud->announcer[0]) return 0;
         c = gn_clip_load(p, &p->aud->announcer_clip, p->aud->announcer);

@@ -408,6 +408,7 @@ struct gn_aud {
     int nvoice;
     int voice_sfx[GN_MAX_VOICE];
     int voice_vol[GN_MAX_VOICE];
+    int voice_stop[GN_MAX_VOICE]; /* the row is `stoppable`: the sound id 540001 (the retail "stop this voice slot" id) cuts every playing instance of its clip */
     char voice_file[GN_MAX_VOICE][64];
     struct gn_clip announcer_clip, voice_clip[GN_MAX_VOICE];
 };

@@ -1136,6 +1136,15 @@ int gw_Audio_PlayClip(const int16_t *pcm, int frames, int channels, int volume) 
     ++gw_ax_clips_started;
     return 1;
 }
+/* Stop every playing instance of one clip (its pcm buffer); returns how many were playing. A define's `stoppable` voice row (a looping hum retriggered by its script) is
+ * cut this way when the script plays the stop id (gw_Geno_DefineAudioPlay). */
+int gw_Audio_StopClips(const int16_t *pcm) {
+    int i, n = 0;
+    if (pcm == NULL) return 0;
+    for (i = 0; i < GW_AX_CLIPS; i++)
+        if (gw_ax_clip[i].pcm == pcm) { gw_ax_clip[i].pcm = NULL; n++; }
+    return n;
+}
 /* counters for the tests and the log: clips started, 32 kHz frames mixed so far */
 uint32_t gw_Audio_ClipStat(int which) { return which == 0 ? gw_ax_clips_started : gw_ax_clip_frames_mixed; }
 

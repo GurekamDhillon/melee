@@ -5450,9 +5450,16 @@ end
 -- per line) after every change; ports/goku-xv2/tools/remake_sheet.py --sync-picks reads them into the sheet.
 local PICKS_FILE = "remake-picks.json"
 
+-- the clip list is rebuilt by LE.clip_list only when the focused fighter's key changes: do the same cheap test here
+local function rm_sync_list()
+  local p = gd.player(focus)
+  if p == nil then return end
+  if cl.key ~= focus .. ":" .. tostring(p.char_name) .. ":" .. tostring(p.kind) then LE.clip_list() end
+end
+
 local function rm_find(name)
   if name == nil or name == "" then return nil end
-  LE.clip_list()
+  rm_sync_list()
   if rm.idx_key ~= cl.key or rm.idx_n ~= #cl.all then -- by-name index, rebuilt when the fighter's list changes
     rm.idx, rm.idx_key, rm.idx_n = {}, cl.key, #cl.all
     for _, e in ipairs(cl.all) do rm.idx[e.name] = e end
@@ -5651,7 +5658,7 @@ end
 
 local function rm_cycle(d)
   if rm.browse then
-    local n = #rm.blist
+    local n = #(rm.blist or {})
     if n == 0 then return end
     rm.bsel = (rm.bsel - 1 + d) % n + 1
     local b = rm.blist[rm.bsel]
@@ -5788,21 +5795,33 @@ end
 function LE.rm_tick()
   if not gd.match().active or not offline() then return end
   if not rm.started then
-    if cl.key == nil then LE.clip_list() end
+    -- one step per tick: each stays well under the script's instruction budget
     local p = gd.player(focus)
     if p == nil or not gd.anim_rows then return end
-    rm.started = true
-    if not rm_load() then say("REMAKE: no remake-goku.txt in the mod's missions/", DANGER) return end
-    rm.key = cl.key
-    local first
-    for _, s in ipairs(rm.slots) do if not rm.picks[s.n] then first = s break end end
-    local env = gd.lab_env and gd.lab_env("SLOT")
-    if env then for _, s in ipairs(rm.slots) do if tostring(s.n) == env or s.slot:lower():find(env:lower(), 1, true) then first = s break end end end
-    rm_open(first or rm.slots[1])
-    if rm.browse then rm_browse_build() rm.bsel = 0 rm_cycle(1) end
-  elseif rm.key ~= cl.key then
-    rm.key = cl.key
-    if rm.cur then rm_open(rm.cur) end
+    rm.step = (rm.step or 0) + 1
+    if rm.step == 1 then
+      LE.clip_list()
+    elseif rm.step == 2 then
+      if not rm_load() then rm.started = true say("REMAKE: no remake-goku.txt in the mod's missions/", DANGER) end
+    elseif rm.step == 3 then
+      rm.key = cl.key
+      local first
+      for _, s in ipairs(rm.slots) do if not rm.picks[s.n] then first = s break end end
+      local env = gd.lab_env and gd.lab_env("SLOT")
+      if env then for _, s in ipairs(rm.slots) do if tostring(s.n) == env or s.slot:lower():find(env:lower(), 1, true) then first = s break end end end
+      rm_open(first or rm.slots[1])
+    elseif rm.step == 4 then
+      rm_browse_build()
+    else
+      rm.started = true
+      if rm.browse then rm.bsel = 0 rm_cycle(1) end
+    end
+  else
+    rm_sync_list()
+    if rm.key ~= cl.key then
+      rm.key = cl.key
+      if rm.cur then rm_open(rm.cur) end
+    end
   end
 end
 

@@ -1086,7 +1086,7 @@ do
     local real_cn = P[1].char_name
     P[1].char_name = "Goku" -- a new library key: the clip list is rebuilt from the rows above
     lab("mode remake")
-    for _ = 1, 3 do print(pcall(env.on_tick)) end 
+    for _ = 1, 8 do pcall(env.on_tick) end 
     expect(calls[#calls] and calls[#calls].row == 304, "REMAKE opens in BROWSE on the first unnoted clip (row " .. tostring(calls[#calls] and calls[#calls].row) .. ")")
     lab("remake cand 1")
     expect(calls[#calls].row == 305, "BROWSE walks the unnoted clips first (row " .. tostring(calls[#calls].row) .. ")")

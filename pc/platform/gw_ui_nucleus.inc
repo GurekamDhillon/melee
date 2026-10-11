@@ -23,9 +23,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#define AT_NC_TABS 6
-#define AT_NC_TAB_INSTALLED 4
-#define AT_NC_TAB_QUEUE 5
+#define AT_NC_TABS 8
+#define AT_NC_TAB_INSTALLED 6
+#define AT_NC_TAB_QUEUE 7
+#define AT_NC_TAB_CATS 6                /* tabs 0..5 are the categories: Costumes, Stages, Effects, Menus, Audio, Other (the same order as NC_TAB_* in gw_nucleus_kinds.h) */
 #define AT_NC_IDS 20000
 #define AT_NC_CONTROLS 4
 #define AT_NC_ROW_H 62                  /* a mod's row: the picture box is 51 px high, the title takes two lines and the facts one */
@@ -37,7 +38,7 @@
 enum { AT_NC_ST_NONE, AT_NC_ST_INSTALLED, AT_NC_ST_UPDATE, AT_NC_ST_BUSY, AT_NC_ST_REMOVED, AT_NC_ST_UNSUPPORTED };
 enum { AT_NC_Q_NONE = -1, AT_NC_Q_QUEUED = 0, AT_NC_Q_RUNNING = 1, AT_NC_Q_DONE = 2, AT_NC_Q_FAILED = 3 };      /* the same numbers as NQ_* in gw_nucleus_queue.h */
 enum { AT_NC_ACT_QUEUE = 1, AT_NC_ACT_UNINSTALL, AT_NC_ACT_PAGE, AT_NC_ACT_REFRESH, AT_NC_ACT_START, AT_NC_ACT_Q_UP, AT_NC_ACT_Q_DOWN, AT_NC_ACT_Q_REMOVE,
-       AT_NC_ACT_Q_RETRY, AT_NC_ACT_Q_CLEAR, AT_NC_ACT_Q_TIDY };
+       AT_NC_ACT_Q_RETRY, AT_NC_ACT_Q_CLEAR, AT_NC_ACT_Q_TIDY, AT_NC_ACT_TOGGLE };
 enum { AT_NC_VIEW_BROWSE, AT_NC_VIEW_INSTALLED, AT_NC_VIEW_QUEUE };
 enum { AT_NC_SHOW_ALL, AT_NC_SHOW_NOT_INSTALLED, AT_NC_SHOW_INSTALLED, AT_NC_SHOW_UPDATE, AT_NC_SHOW_QUEUED };
 enum { AT_NC_PIC_THUMB = 0, AT_NC_PIC_SHOT1 = 1, AT_NC_PIC_STOCK = 10 };            /* AtNcSrc.pic: 0 the list picture, 1.. the screenshots, 10 a costume's stock icon */
@@ -49,6 +50,7 @@ typedef struct {
     int downloads, likes, state, installable, ncostumes, tex, files;
     int thumb;                                  /* the list picture's texture slot, or -1 (none yet, or none at all) */
     int qstate, qplace, qpct;                   /* the download queue: AT_NC_Q_* or -1 not in it; 1-based place in line; percent while running */
+    int tab, enabled;                           /* the category tab (0..5) and, for an installed mod, whether it is on next boot (0: not installed, 1: off, 2: on) */
     int nshots;                                 /* screenshots the post lists (the detail shows up to three) */
 } AtNcRow;
 typedef struct {
@@ -90,7 +92,7 @@ typedef struct {
 enum { AT_NA_NONE, AT_NA_BACK, AT_NA_ACT };
 typedef struct { int kind, id, what; } AtNcAction;
 
-static const char *const at_nc_tab_name[AT_NC_TABS] = { "COSTUMES", "STAGES", "EFFECTS", "MORE", "INSTALLED", "QUEUE" };
+static const char *const at_nc_tab_name[AT_NC_TABS] = { "COSTUMES", "STAGES", "EFFECTS", "MENUS", "AUDIO", "OTHER", "INSTALLED", "QUEUE" };
 static const char *const at_nc_sort_name[5] = { "Recently updated", "Newest", "Most downloaded", "Most liked", "Title" };
 static const char *const at_nc_show_name[AT_NC_SHOW_N] = { "All", "Not installed", "Installed", "Update available", "Queued" };
 
@@ -107,7 +109,7 @@ static void at_nc_state_init(AtNcState *st) {
 
 static void at_nc_apply_tab(AtNcState *st) {
     st->f.view = st->tab == AT_NC_TAB_QUEUE ? AT_NC_VIEW_QUEUE : st->tab == AT_NC_TAB_INSTALLED ? AT_NC_VIEW_INSTALLED : AT_NC_VIEW_BROWSE;
-    st->f.type_mask = st->tab == 0 ? 1u << 0 : st->tab == 1 ? 1u << 1 : st->tab == 2 ? 1u << 2 : st->tab == 3 ? ((1u << 3) | (1u << 4) | (1u << 5) | (1u << 6)) : 0;
+    st->f.type_mask = st->tab < AT_NC_TAB_CATS ? 1u << st->tab : 0;      /* a category tab: the engine filters by the post's tab */
     st->stale = 1;
     st->sel = st->top = at_nc_ctl(st);
     st->follow = 0;
@@ -259,9 +261,11 @@ static void at_nc_chips(const AtNcRow *r, AtItem *it) {
     else if (r->qstate == AT_NC_Q_RUNNING) { snprintf(c1, sizeof it->chip, "%d%%", r->qpct); *t1 = AT_TAG_JADE; }
     else if (r->qstate == AT_NC_Q_FAILED) { snprintf(c1, sizeof it->chip, "FAILED"); *t1 = AT_TAG_ROSE; }
     else if (r->qstate == AT_NC_Q_DONE) { snprintf(c1, sizeof it->chip, "DONE"); *t1 = AT_TAG_JADE; }
+    if (r->enabled == 1 && (r->state == AT_NC_ST_INSTALLED || r->state == AT_NC_ST_UPDATE)) sw = "OFF";
     if (sw[0] && r->state != AT_NC_ST_BUSY) {
-        if (c1[0]) { snprintf(c2, sizeof it->chip2, "%s", sw); *t2 = at_nc_state_tone(r->state); }
-        else { snprintf(c1, sizeof it->chip, "%s", sw); *t1 = at_nc_state_tone(r->state); }
+        int tone = r->enabled == 1 && r->state == AT_NC_ST_INSTALLED ? AT_TAG_PLAIN : at_nc_state_tone(r->state);
+        if (c1[0]) { snprintf(c2, sizeof it->chip2, "%s", sw); *t2 = tone; }
+        else { snprintf(c1, sizeof it->chip, "%s", sw); *t1 = tone; }
     }
 }
 
@@ -699,6 +703,9 @@ int at_nc_detail_build(const AtNcSrc *s, AtNcState *st, AtScreen *sc, AtView *vw
         if (ss.q_processing) at_nc_action_row(sc, "start", "Pause the downloads", "The one being installed finishes first.");
         else { snprintf(buf, sizeof buf, "%d in the queue. Starts them one after another.", ss.q_pending); at_nc_action_row(sc, "start", "Start the downloads", buf); }
     }
+    if ((r.state == AT_NC_ST_INSTALLED || r.state == AT_NC_ST_UPDATE || r.state == AT_NC_ST_REMOVED) && r.enabled > 0)
+        at_nc_action_row(sc, "tog", r.enabled == 2 ? "Turn it off" : "Use this one",
+                         r.enabled == 2 ? "Takes effect after a restart. Your copy stays installed." : "Turns off any other mod that replaces the same file (one active per file). Takes effect after a restart.");
     if (r.state == AT_NC_ST_INSTALLED || r.state == AT_NC_ST_UPDATE || r.state == AT_NC_ST_REMOVED) at_nc_action_row(sc, "rm", "Uninstall", "Deletes the skin from your mods folder.");
     at_nc_action_row(sc, "page", "Open the page", r.page[0] ? r.page : "ssbmnucleus.net");
     /* the screenshots */
@@ -750,6 +757,7 @@ int at_nc_detail_build(const AtNcSrc *s, AtNcState *st, AtScreen *sc, AtView *vw
             at_nc_put_key(sc, vw, 'A', r.qstate == AT_NC_Q_QUEUED ? "Unqueue" : r.qstate == AT_NC_Q_FAILED ? "Retry" : "Queue");
         else if (!strcmp(fid, "start")) at_nc_put_key(sc, vw, 'A', ss.q_processing ? "Pause" : "Start");
         else if (!strcmp(fid, "rm")) at_nc_put_key(sc, vw, 'A', "Uninstall");
+        else if (!strcmp(fid, "tog")) at_nc_put_key(sc, vw, 'A', r.enabled == 2 ? "Turn off" : "Use");
         else if (!strcmp(fid, "page")) at_nc_put_key(sc, vw, 'A', "Open");
     }
     if (!ss.q_processing && ss.q_pending > 0) { snprintf(buf, sizeof buf, "Download %d", ss.q_pending); at_nc_put_key(sc, vw, 'S', buf); }
@@ -789,6 +797,7 @@ void at_nc_detail_event(const AtNcSrc *s, AtNcState *st, const AtEvent *e, doubl
         }
         else if (!strcmp(id, "start")) at_nc_act(act, 0, AT_NC_ACT_START);
         else if (!strcmp(id, "rm")) at_nc_act(act, st->detail_id, AT_NC_ACT_UNINSTALL);
+        else if (!strcmp(id, "tog")) at_nc_act(act, st->detail_id, AT_NC_ACT_TOGGLE);
         else if (!strcmp(id, "page")) at_nc_act(act, st->detail_id, AT_NC_ACT_PAGE);
     }
 }

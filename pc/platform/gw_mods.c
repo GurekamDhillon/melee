@@ -1234,3 +1234,25 @@ void gw_mods_tests_register(void) {
     gw_test_register("mods_toggle_and_save", test_mods_toggle_and_save);
     gw_test_register("mods_fingerprint_and_diff", test_mods_fingerprint_and_diff);
 }
+
+/* ---- who wins a disc path (the stage-select skin note) ------------------------------------------------------- */
+int gw_Mods_WinnerOf(const char *disc_path, char *out, int cap) {
+    int n = gw_Mods_ActiveCount(), k;
+    if (out != NULL && cap > 0) out[0] = '\0';
+    if (disc_path == NULL || out == NULL || cap <= 0) return 0;
+    for (k = n - 1; k >= 0; --k) {
+        int i = gw_Mods_ActiveAt(k);
+        gw_mod *m = mod_at(boot(), i);
+        char path[MAX_PATH];
+        DWORD a;
+        if (m == NULL || m->payload[0] == '\0') continue;
+        snprintf(path, sizeof path, "%s\\%s", m->payload, disc_path);
+        for (char *c = path; *c; ++c) if (*c == '/') *c = '\\';
+        a = GetFileAttributesA(path);
+        if (a != INVALID_FILE_ATTRIBUTES && !(a & FILE_ATTRIBUTE_DIRECTORY)) {
+            snprintf(out, (size_t) cap, "%s", m->name[0] ? m->name : m->id);
+            return 1;
+        }
+    }
+    return 0;
+}

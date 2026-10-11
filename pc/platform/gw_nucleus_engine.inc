@@ -33,6 +33,9 @@
 #include "gw_nucleus_queue.h"
 #include "gw_nucleus_image.h"
 #include "gw_nucleus_http.inc"
+#include "gw_nucleus_loose.h"
+
+extern int gw_DVDFileExists(const char *path);
 
 #define NE_INST_MAX 256
 #define NE_QUEUE 16
@@ -174,7 +177,8 @@ static void ne_dq_changed(void) { NE.dq_dirty = 1; ++NE.ver; }
 
 static void ne_scan_installed(void) {
     nc_inst tmp[NE_INST_MAX];
-    int n = nc_inst_scan(NE.mods, tmp, NE_INST_MAX);
+    int n = nc_inst_scan(NE.mods, tmp, NE_INST_MAX), i;
+    for (i = 0; i < n; ++i) tmp[i].enabled = nc_enabled_query(NE.mods, tmp[i].folder);
     ne_lock();
     memcpy(NE.inst, tmp, (size_t) n * sizeof tmp[0]);
     NE.ninst = n;
@@ -389,6 +393,107 @@ static int ne_install(int id, char *msg, size_t mcap) {
     return rc;
 }
 
+/* ---- the install of a loose-override post (stage skin, effect, menu, audio): download each file, hand them to nc_loose_install ---- */
+
+static int ne_env_ref(void *u, const char *path, uint8_t **buf, size_t *len) {
+    char sl[100];
+    uint32_t sz = 0;
+    void *p;
+    (void) u;
+    if (!gw_DVDFileExists(path)) return -1;
+    snprintf(sl, sizeof sl, "/%s", path);
+    p = gw_DVDReadFileAlloc(sl, &sz);
+    if (!p) return -1;
+    *buf = (uint8_t *) p; *len = sz;
+    return 0;
+}
+static int ne_env_exists(void *u, const char *path, size_t *len) { (void) u; *len = 0; return gw_DVDFileExists(path); }
+static void ne_log_line(const char *line) { ne_log("%s", line); }
+
+#define NE_LOOSE_FILES 24
+static int ne_install_loose(const nc_mod *m, const nc_file *files, char *msg, size_t mcap, uint8_t **zipout) {
+    nc_in_file in[NE_LOOSE_FILES];
+    uint8_t *bufs[NE_LOOSE_FILES];
+    int nin = 0, i, total = 0, done = 0, zip_tried = 0, zip_status = 0, rc;
+    size_t ziplen = 0, held = 0;
+    uint8_t *zipbuf = NULL;
+    char first_err[160];
+    nc_post post;
+    char iso[24];
+    nc_loose_env env;
+    nc_loose_result res;
+    first_err[0] = '\0';
+    memset(bufs, 0, sizeof bufs);
+    for (i = 0; i < m->nf; ++i) if (files[i].supported && files[i].cat != NC_FC_COSTUME) ++total;
+    for (i = 0; i < m->nf && nin < NE_LOOSE_FILES; ++i) {
+        nch_result r;
+        char url[400], tag[96], err[120];
+        int use_zip, ok = 0;
+        size_t cap = files[i].cat == NC_FC_AUDIO ? 64u * 1024 * 1024 : 32u * 1024 * 1024;
+        if (!files[i].supported || files[i].cat == NC_FC_COSTUME) continue;
+        ne_item_steps(done, total);
+        memset(&r, 0, sizeof r);
+        use_zip = files[i].zip;
+        if (!use_zip) {
+            nc_download_url(m->id, files[i].id, url, sizeof url);
+            snprintf(tag, sizeof tag, "f%d_%d_%s", m->id, files[i].id, m->updated);
+            if (ne_dl(url, cap, &r, tag, done, total) == 0) ok = 1;
+            else {
+                if (NE.interrupt) { free(r.data); goto paused; }
+                ne_log("install %d: file %d: %s (HTTP %d)", m->id, files[i].id, r.err[0] ? r.err : "download failed", r.status);
+                free(r.data); memset(&r, 0, sizeof r);
+                use_zip = 1;
+            }
+        }
+        if (!ok && use_zip) {
+            if (!zip_tried) {
+                nch_result zr;
+                char ztag[96];
+                zip_tried = 1;
+                nc_download_url(m->id, 0, url, sizeof url);
+                snprintf(ztag, sizeof ztag, "z%d_%s", m->id, m->updated);
+                NE.cur_zip = 1;
+                if (ne_dl(url, 160u * 1024 * 1024, &zr, ztag, 0, total) < 0) {
+                    NE.cur_zip = 0;
+                    if (NE.interrupt) { free(zr.data); goto paused; }
+                    zip_status = zr.status ? zr.status : -1;
+                    free(zr.data);
+                } else { NE.cur_zip = 0; zipbuf = zr.data; ziplen = zr.len; *zipout = zipbuf; }
+            }
+            if (!zipbuf) { if (!first_err[0]) snprintf(first_err, sizeof first_err, "%s", nc_http_reason(zip_status < 0 ? 0 : zip_status)); ++done; continue; }
+            if (nc_zip_extract(zipbuf, ziplen, files[i].filename, &r.data, &r.len, cap, err, sizeof err) < 0) {
+                if (!first_err[0]) snprintf(first_err, sizeof first_err, "Could not unpack the post's zip: %s.", err);
+                ne_log("install %d: file %d (%s): %s", m->id, files[i].id, files[i].filename, err);
+                ++done; continue;
+            }
+        }
+        ++done;
+        held += r.len;
+        if (held > 200u * 1024 * 1024) { free(r.data); if (!first_err[0]) snprintf(first_err, sizeof first_err, "This post is too big to install at once."); break; }
+        bufs[nin] = r.data;
+        in[nin].file_id = files[i].id; in[nin].cat = files[i].cat; in[nin].filename = files[i].filename; in[nin].stem = files[i].stem;
+        in[nin].data = r.data; in[nin].len = r.len;
+        ++nin;
+    }
+    memset(&post, 0, sizeof post);
+    ne_now_iso(iso, sizeof iso);
+    post.id = m->id; post.title = m->title; post.author = m->author; post.page = m->page; post.updated = m->updated; post.installed_at = iso; post.stage = m->stage;
+    memset(&env, 0, sizeof env);
+    env.ref = ne_env_ref; env.exists = ne_env_exists;
+    ne_item_pct(90);
+    if (nin == 0) { snprintf(msg, mcap, "%s", first_err[0] ? first_err : "Nothing in this post could be downloaded."); rc = -1; }
+    else {
+        rc = nc_loose_install(NE.mods, &post, in, nin, &env, &res, msg, mcap, ne_log_line);
+        if (rc != 0 && first_err[0]) { size_t l = strlen(msg); snprintf(msg + l, mcap - l, " (%s)", first_err); }
+    }
+    for (i = 0; i < nin; ++i) free(bufs[i]);
+    return rc;
+paused:
+    for (i = 0; i < nin; ++i) free(bufs[i]);
+    snprintf(msg, mcap, "Paused.");
+    return -2;
+}
+
 static int ne_install_impl(int id, char *msg, size_t mcap, uint8_t **zipout) {
     nc_mod m;
     nc_file files[NC_MAX_FILES_PER_MOD];
@@ -400,6 +505,7 @@ static int ne_install_impl(int id, char *msg, size_t mcap, uint8_t **zipout) {
     first_err[0] = '\0';
     if (!ne_copy_mod(id, &m, files)) { snprintf(msg, mcap, "That mod is not in the catalog."); return -1; }
     if (nc_why_not_files(&m, files)[0]) { snprintf(msg, mcap, "%s", nc_why_not_files(&m, files)); return -1; }
+    if (m.type != NC_T_COSTUME) return ne_install_loose(&m, files, msg, mcap, zipout);
     for (i = 0; i < m.nf; ++i) {
         int k, seen = 0;
         if (!files[i].costume || files[i].fighter < 0 || !nc_fighters[files[i].fighter].installable) continue;
@@ -567,6 +673,29 @@ static int ne_uninstall(int id, char *msg, size_t mcap) {
     return 0;
 }
 
+/* Turn a post's installed mods on or off for the next boot. Off if any is on; on otherwise, which turns off every other mod that replaces the same file. */
+static int ne_toggle(int id, char *msg, size_t mcap) {
+    int i, n, any_on = 0, any = 0, off_n = 0;
+    nc_inst list[NE_INST_MAX];
+    char off[8][64], first_off[64];
+    first_off[0] = '\0';
+    ne_lock(); n = NE.ninst; memcpy(list, NE.inst, (size_t) n * sizeof list[0]); ne_unlock();
+    for (i = 0; i < n; ++i) if (list[i].id == id) { any = 1; if (nc_enabled_query(NE.mods, list[i].folder)) any_on = 1; }
+    if (!any) { snprintf(msg, mcap, "That mod is not installed."); return -1; }
+    for (i = 0; i < n; ++i) {
+        int r;
+        if (list[i].id != id) continue;
+        r = nc_loose_set_enabled(NE.mods, list[i].folder, !any_on, off, 8);
+        if (r < 0) { snprintf(msg, mcap, "Could not write enabled.txt."); return -1; }
+        if (r > 0 && !first_off[0]) snprintf(first_off, sizeof first_off, "%s", off[0]);
+        off_n += r;
+    }
+    if (any_on) snprintf(msg, mcap, "Turned off. The change shows after a restart.");
+    else if (off_n > 0) snprintf(msg, mcap, "Turned on; %s was turned off (same file). Restart to use it.", first_off);
+    else snprintf(msg, mcap, "Turned on. Restart to use it.");
+    return 0;
+}
+
 /* ---- the download queue's worker ---- */
 
 /* Take the first queued mod and install it. Returns 1 when it did something (so the loop asks again at once), 0 when there was nothing to do now. */
@@ -635,11 +764,11 @@ static DWORD WINAPI ne_files_thread(LPVOID arg) {
         ne_unlock();
         if (have) {
             char msg[200];
-            int rc = ne_uninstall(j.id, msg, sizeof msg);
+            int rc = j.kind == 4 ? ne_toggle(j.id, msg, sizeof msg) : ne_uninstall(j.id, msg, sizeof msg);
             ne_scan_installed();
             if (rc == 0) { ne_lock(); NE.restart = 1; ne_unlock(); }
             ne_set_job(rc == 0 ? 2 : 3, msg, 1, 1);
-            ne_log("uninstall %d: %s", j.id, msg);
+            ne_log("%s %d: %s", j.kind == 4 ? "toggle" : "uninstall", j.id, msg);
             continue;
         }
         if (ne_queue_step()) continue;
@@ -833,7 +962,8 @@ static void ne_fill_row_from_mod(const nc_mod *m, const nc_file *files, AtNcRow 
     r->id = m->id;
     snprintf(r->title, sizeof r->title, "%s", m->title);
     snprintf(r->author, sizeof r->author, "%s", m->author);
-    snprintf(r->kind, sizeof r->kind, "%s", nc_type_label[m->type]);
+    snprintf(r->kind, sizeof r->kind, "%s", (m->type == NC_T_OTHER || m->type == NC_T_GAMEPLAY) ? nc_tab_label[m->tab] : nc_type_label[m->type]);
+    r->tab = m->tab; r->enabled = 0;
     snprintf(r->updated, sizeof r->updated, "%.10s", m->updated);
     snprintf(r->page, sizeof r->page, "%s", m->page);
     snprintf(r->desc, sizeof r->desc, "%s", m->desc);
@@ -845,7 +975,11 @@ static void ne_fill_row_from_mod(const nc_mod *m, const nc_file *files, AtNcRow 
         if (fighter < 0 && files[i].fighter >= 0) fighter = files[i].fighter;
     }
     r->files = m->nf_total;
-    if (fighter >= 0) snprintf(r->fighter, sizeof r->fighter, "%s", nc_fighters[fighter].label);
+    if (fighter >= 0 && m->tab == NC_TAB_COSTUMES) snprintf(r->fighter, sizeof r->fighter, "%s", nc_fighters[fighter].label);
+    else if (m->stage[0]) snprintf(r->fighter, sizeof r->fighter, "%s", m->stage);
+    else if (m->tab == NC_TAB_STAGES) {   /* the stage the file name points at */
+        for (i = 0; i < m->nf; ++i) if (files[i].cat == NC_FC_STAGE && files[i].stem[0]) { char st[24]; snprintf(st, sizeof st, "%.*s", (int) (strchr(files[i].stem, '.') ? strchr(files[i].stem, '.') - files[i].stem : 5), files[i].stem); snprintf(r->fighter, sizeof r->fighter, "%s", nc_stage_name(st)); break; }
+    }
 }
 
 static int ne_src_row(void *u, int id, AtNcRow *r) {
@@ -868,11 +1002,13 @@ static int ne_src_row(void *u, int id, AtNcRow *r) {
         r->tex = -1; r->thumb = -1; r->qstate = AT_NC_Q_NONE; r->id = id;
         snprintf(r->title, sizeof r->title, "%s", NE.inst[inst].name);
         snprintf(r->author, sizeof r->author, "%s", NE.inst[inst].author);
-        snprintf(r->kind, sizeof r->kind, "%s", "Costume");
+        snprintf(r->kind, sizeof r->kind, "%s", !NE.inst[inst].cat[0] ? "Costume" : !strcmp(NE.inst[inst].cat, "stage") ? "Stage skin" : !strcmp(NE.inst[inst].cat, "fx") ? "Effects" : !strcmp(NE.inst[inst].cat, "menu") ? "Menu" : "Audio");
         snprintf(r->updated, sizeof r->updated, "%.10s", NE.inst[inst].updated);
+        r->tab = !NE.inst[inst].cat[0] ? NC_TAB_COSTUMES : !strcmp(NE.inst[inst].cat, "stage") ? NC_TAB_STAGES : !strcmp(NE.inst[inst].cat, "fx") ? NC_TAB_EFFECTS : !strcmp(NE.inst[inst].cat, "menu") ? NC_TAB_MENUS : NC_TAB_AUDIO;
+        if (NE.inst[inst].stage[0]) snprintf(r->fighter, sizeof r->fighter, "%s", NE.inst[inst].stage);
         {
             int f;
-            for (f = 0; f < NC_NFIGHTERS; ++f) if (!strcmp(nc_fighters[f].target, NE.inst[inst].target)) snprintf(r->fighter, sizeof r->fighter, "%s", nc_fighters[f].label);
+            for (f = 0; f < NC_NFIGHTERS && !NE.inst[inst].cat[0]; ++f) if (!strcmp(nc_fighters[f].target, NE.inst[inst].target)) snprintf(r->fighter, sizeof r->fighter, "%s", nc_fighters[f].label);
         }
         r->ncostumes = NE.inst[inst].ncost;
         snprintf(r->page, sizeof r->page, "https://%s/post/%d", NC_SITE, id);
@@ -885,6 +1021,12 @@ static int ne_src_row(void *u, int id, AtNcRow *r) {
         snprintf(r->page, sizeof r->page, "https://%s/post/%d", NC_SITE, id);
         r->installable = 1;
     } else { ne_unlock(); return 0; }
+    if (inst >= 0) {
+        int k2, any_on = 0, any = 0;
+        for (k2 = 0; k2 < NE.ninst; ++k2) if (NE.inst[k2].id == id) { any = 1; if (NE.inst[k2].enabled) any_on = 1; }
+        r->enabled = any ? (any_on ? 2 : 1) : 0;
+        r->tab = found ? r->tab : r->tab;
+    }
     if (inst >= 0) {
         int gone = nc_cat_is_gone(&NE.cat, id) || (!found && NE.sync.full);
         r->state = gone ? AT_NC_ST_REMOVED : (found && strcmp(NE.inst[inst].updated, m.updated) != 0) ? AT_NC_ST_UPDATE : AT_NC_ST_INSTALLED;
@@ -953,7 +1095,7 @@ static int ne_src_filter(void *u, const AtNcFilter *f, int *ids, int cap, unsign
             int dup = 0;
             for (k = 0; k < nk; ++k) if (keys[k].id == NE.inst[i].id) dup = 1;
             if (dup) continue;
-            if (f->text[0] && !nc_icontains(NE.inst[i].name, f->text) && !nc_icontains(NE.inst[i].author, f->text)) continue;
+            if (f->text[0] && !nc_icontains(NE.inst[i].name, f->text) && !nc_icontains(NE.inst[i].author, f->text) && !nc_icontains(NE.inst[i].stage, f->text)) continue;
             if (f->fighter >= 0 && strcmp(nc_fighters[f->fighter].target, NE.inst[i].target) != 0) continue;
             keys[nk].id = NE.inst[i].id; snprintf(keys[nk].sort_title, sizeof keys[nk].sort_title, "%s", NE.inst[i].name);
             ++nk;
@@ -965,7 +1107,7 @@ static int ne_src_filter(void *u, const AtNcFilter *f, int *ids, int cap, unsign
         int *idx = (int *) malloc((size_t) (NE.cat.n > 0 ? NE.cat.n : 1) * sizeof(int));
         nc_query_init(&q);
         snprintf(q.text, sizeof q.text, "%s", f->text);
-        q.type_mask = f->type_mask; q.fighter = f->fighter; q.sort = f->sort;
+        q.tab_mask = f->type_mask; q.fighter = (f->type_mask & 1u) ? f->fighter : -1; q.sort = f->sort;
         if (idx) {
             int m = nc_cat_filter(&NE.cat, &q, idx, NE.cat.n);
             for (i = 0; i < m && n < cap; ++i) if (ne_show_keeps(f->show, &NE.cat.m[idx[i]])) ids[n++] = NE.cat.m[idx[i]].id;
@@ -1096,6 +1238,13 @@ static int ne_src_act(void *u, int id, int what) {
     if (what == AT_NC_ACT_REFRESH) {
         if (ne_locked()) { ne_say(3, "The catalog cannot refresh while you are online."); return 0; }
         ne_lock(); if (!NE.syncing) NE.sync_want = 2; ne_unlock();
+        return 1;
+    }
+    if (what == AT_NC_ACT_TOGGLE) {
+        if (ne_locked()) { ne_say(3, "Mods cannot be changed while you are online."); return 0; }
+        j.kind = 4; j.id = id;
+        ne_say(1, "Switching");
+        if (!ne_enqueue(j)) { ne_say(3, "Busy. Try again in a moment."); return 0; }
         return 1;
     }
     if (what != AT_NC_ACT_UNINSTALL) return ne_queue_act(id, what);

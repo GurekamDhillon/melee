@@ -1537,8 +1537,17 @@ static void fs_build_sss(void)
         if (cur < fcs.ns && fcs.st_icon[cur].img != NULL) {
             fs_tex_fit("sp_art", fs_art_tex(fcs.st_icon[cur]), FS_GX0 + 13, y0 + 5, FS_GX0 + 69, y1 - 5, white);
         }
-        fl_text_at("sp_lbl", "caption", FS_GX0 + 80, y0 + 18, "left", 100,
-                   cur < fcs.ns && fcs.st_type[cur] == 3 ? "ANY STAGE" : "STAGE", muted, -1);
+        {
+            /* a stage whose file a mod replaces (a Nucleus stage skin) says so; online both players need the same skin or the stage is not offered */
+            char skin[48], cap[96];
+            const char* lbl = cur < fcs.ns && fcs.st_type[cur] == 3 ? "ANY STAGE" : "STAGE";
+            skin[0] = 0;
+            if (cur < fcs.ns && fcs.st_type[cur] != 3 && Netplay_StageSkinExt(fcs.st_ext[cur], skin, sizeof skin) != 0) {
+                sprintf(cap, "STAGE - SKIN: %s%s", skin, fcs.online ? " (both players need it)" : "");
+                lbl = cap;
+            }
+            fl_text_at("sp_lbl", "caption", FS_GX0 + 80, y0 + 18, "left", 300, lbl, muted, -1);
+        }
         if (cur < fcs.ns && fcs.st_type[cur] == 3) {
             sprintf(buf, "%s", "Random");
         } else if (cur < fcs.ns) {

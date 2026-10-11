@@ -188,7 +188,7 @@ static void rows(void)
     AtNcSrc s = src();
     reset(&s);
     CHECK(SC.primary == AT_PRIMARY_LIST && SC.chapter == 4 && strcmp(SC.title, "NUCLEUS") == 0 && SC.n_parents == 2 && SC.preset == AT_PRESET_NONE);
-    CHECK(SC.n_tabs == 6 && strcmp(SC.tabs[0].name, "COSTUMES") == 0 && strcmp(SC.tabs[4].name, "INSTALLED") == 0 && strcmp(SC.tabs[5].name, "QUEUE") == 0 && VW.tab == 0);
+    CHECK(SC.n_tabs == 8 && strcmp(SC.tabs[0].name, "COSTUMES") == 0 && strcmp(SC.tabs[6].name, "INSTALLED") == 0 && strcmp(SC.tabs[7].name, "QUEUE") == 0 && VW.tab == 0);
     CHECK(ST.n == 300 && SC.tabs[0].count == 300);
     CHECK(strcmp(SC.items[0].id, "search") == 0 && strcmp(SC.items[1].id, "fighter") == 0 && strcmp(SC.items[2].id, "show") == 0 && strcmp(SC.items[3].id, "sort") == 0);
     CHECK(strcmp(SC.items[4].title, "Costume 000") == 0 && SC.items[4].thumb_on && SC.items[4].row_h == AT_NC_ROW_H);
@@ -223,14 +223,14 @@ static void tabs_and_filters(void)
     CHECK(ST.tab == 1 && ST.n == 5 && strcmp(SC.items[4].title, "Stage 0") == 0 && SC.items[4].flags & AT_CELL_DISABLED);
     CHECK(SC.items[4].thumb_tex == -1 && SC.items[4].thumb_on);          /* no PNG: a placeholder box, never an empty gap */
     CHECK(SC.items[5].thumb_tex >= 0);                                   /* one with a screenshot gets it */
-    press(&s, ev(AT_EV_PAGE, 1, 0)); press(&s, ev(AT_EV_PAGE, 1, 0)); press(&s, ev(AT_EV_PAGE, 1, 0));
-    CHECK(ST.tab == 4 && ST.f.view == AT_NC_VIEW_INSTALLED && ST.n == 2 && SC.items[0].id[0] == 's' && SC.items[2].id[0] == 'r');   /* INSTALLED: the two that are; two controls */
+    press(&s, ev(AT_EV_PAGE, 1, 0)); press(&s, ev(AT_EV_PAGE, 1, 0)); press(&s, ev(AT_EV_PAGE, 1, 0)); press(&s, ev(AT_EV_PAGE, 1, 0)); press(&s, ev(AT_EV_PAGE, 1, 0));
+    CHECK(ST.tab == 6 && ST.f.view == AT_NC_VIEW_INSTALLED && ST.n == 2 && SC.items[0].id[0] == 's' && SC.items[2].id[0] == 'r');   /* INSTALLED: the two that are; two controls */
     press(&s, ev(AT_EV_PAGE, 1, 0));
-    CHECK(ST.tab == 5 && ST.f.view == AT_NC_VIEW_QUEUE && ST.n == 0 && strcmp(SC.items[0].id, "none") == 0);        /* QUEUE: empty, and it says so */
+    CHECK(ST.tab == 7 && ST.f.view == AT_NC_VIEW_QUEUE && ST.n == 0 && strcmp(SC.items[0].id, "none") == 0);        /* QUEUE: empty, and it says so */
     press(&s, ev(AT_EV_PAGE, 1, 0));
     CHECK(ST.tab == 0 && ST.n == 300);                                  /* wraps */
     press(&s, ev(AT_EV_PAGE, -1, 0));
-    CHECK(ST.tab == 5);
+    CHECK(ST.tab == 7);
     press(&s, ev(AT_EV_PAGE, 1, 0));
     /* the fighter row: right steps through Any, Mario... and wraps; left goes back */
     ST.sel = 1; ST.top = 0; build(&s);
@@ -347,7 +347,7 @@ static void queue_flow(void)
     /* A on an uninstalled costume queues it; the row says QUEUED #1; the QUEUE tab counts it; Start appears */
     a = press(&s, ev(AT_EV_ACCEPT, 0, 0));
     CHECK(a.kind == AT_NA_ACT && a.what == AT_NC_ACT_QUEUE && a.id == 1000 && fq_n == 1);
-    CHECK(strcmp(SC.items[4].chip, "QUEUED #1") == 0 && SC.tabs[5].count == 1 && has_key('S') && strcmp(key_label('S'), "Download 1") == 0 && strcmp(key_label('A'), "Unqueue") == 0);
+    CHECK(strcmp(SC.items[4].chip, "QUEUED #1") == 0 && SC.tabs[7].count == 1 && has_key('S') && strcmp(key_label('S'), "Download 1") == 0 && strcmp(key_label('A'), "Unqueue") == 0);
     /* A again takes it out (a toggle, not a silent drop) */
     a = press(&s, ev(AT_EV_ACCEPT, 0, 0));
     CHECK(a.what == AT_NC_ACT_QUEUE && fq_n == 0 && SC.items[4].chip[0] == '\0' && !has_key('S'));
@@ -362,7 +362,7 @@ static void queue_flow(void)
     CHECK(a.kind == AT_NA_ACT && a.what == AT_NC_ACT_START && fq_proc == 1 && strcmp(key_label('S'), "Pause") == 0);
     /* the QUEUE tab: rows in line order with their state; the entry being installed shows its percent */
     fq_st[0] = AT_NC_Q_RUNNING; fq_pct[0] = 47; fn_ver++;
-    goto_tab(&s, 5);
+    goto_tab(&s, 7);
     CHECK(ST.n == 3 && SC.n_items == 3 && SC.items[0].id[0] == 'r' && strcmp(SC.items[0].title, "Costume 001") == 0 && strcmp(SC.items[0].chip, "47%") == 0);
     CHECK(strcmp(SC.items[1].chip, "QUEUED #2") == 0 && strstr(SC.items[0].meta, "47%") != NULL);
     CHECK(strstr(VW.note.text, "Installing Costume 001 47%") != NULL);                  /* the corner follows the install while browsing */
@@ -397,7 +397,7 @@ static void queue_flow(void)
     CHECK(!VW.dialog.open && fq_n == 2 && fn_nacts == 0);
     press(&s, ev(AT_EV_ALT, 'Z', 0));
     a = press(&s, ev(AT_EV_BACK, 0, 0));                               /* B is Keep too, and it does not leave the screen */
-    CHECK(a.kind == AT_NA_NONE && !VW.dialog.open && fq_n == 2 && ST.tab == 5);
+    CHECK(a.kind == AT_NA_NONE && !VW.dialog.open && fq_n == 2 && ST.tab == 7);
     press(&s, ev(AT_EV_ALT, 'Z', 0));
     press(&s, ev(AT_EV_MOVE, AT_DIR_LEFT, 0));
     CHECK(VW.dialog.open && VW.dialog.focus == 0);
@@ -595,7 +595,7 @@ static void render_fit(void)
                     CHECK(y0 >= hits.h[i].r.y - 2.5f && y1 <= hits.h[i].r.y + hits.h[i].r.h + 0.5f);          /* inside the row vertically too */
                 }
             }
-            { int tabs = 0; for (i = 0; i < hits.n; i++) if (hits.h[i].kind == AT_HIT_TAB) tabs++; CHECK(tabs == 6); }       /* the six tabs fit and are all hit-testable */
+            { int tabs = 0; for (i = 0; i < hits.n; i++) if (hits.h[i].kind == AT_HIT_TAB) tabs++; CHECK(tabs == 8); }       /* the six tabs fit and are all hit-testable */
             CHECK(lint_text_overlaps() == 0);
             CHECK(find_text("Mods from SSBM Nucleus - ssbmnucleus.net") != NULL);                           /* the credit line is drawn */
             { int imgs = REC.ni; CHECK(imgs >= 3); }                                                           /* pictures were drawn for the rows with one */

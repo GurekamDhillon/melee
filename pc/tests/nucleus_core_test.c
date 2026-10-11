@@ -10,6 +10,7 @@
 static int g_fail, g_checks;
 #define CHECK(c) do { ++g_checks; if (!(c)) { ++g_fail; printf("FAIL %s:%d: %s\n", __FILE__, __LINE__, #c); } } while (0)
 #define CHECK_STR(a, b) do { ++g_checks; if (strcmp((a), (b)) != 0) { ++g_fail; printf("FAIL %s:%d: \"%s\" != \"%s\"\n", __FILE__, __LINE__, (a), (b)); } } while (0)
+#include "nucleus_loose_tests.h"
 
 /* ---- the fake network ---- */
 static char g_urls[32][700];
@@ -653,6 +654,7 @@ int main(void) {
     }
     (void) has_url;
     nc_cat_free(&cat);
+    run_loose_tests();
     printf("nucleus-core: %d checks, %d failed\n", g_checks, g_fail);
     return g_fail ? 1 : 0;
 }

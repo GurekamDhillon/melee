@@ -87,6 +87,8 @@ int gw_MexId_PeerCount(void);              /* entries the peer sent */
  * yet. Vanilla content is common whenever its files are unmodified on both sides. */
 int gw_MexId_OnlineFighter(int ck);
 int gw_MexId_OnlineStage(int ext);
+/* A retail stage (external id) whose Gr file is replaced by a mod (a stage skin): 1 and the mod's name in out; else 0. */
+int gw_MexId_StageSkin(int ext, char *out, int cap);
 /* Mapping between the two installs' local ids, -1 when not common or not known yet. */
 int gw_MexId_PeerCkForLocal(int ck);
 int gw_MexId_LocalCkForPeer(int peer_ck);

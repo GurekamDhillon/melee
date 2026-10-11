@@ -5,6 +5,7 @@
 #define GW_NUCLEUS_CATALOG_H
 
 #include "gw_nucleus_core.h"
+#include "gw_nucleus_kinds.h"
 
 #define NC_SHOTS 3
 
@@ -16,12 +17,17 @@ typedef struct {
     int colour_idx;                     /* the original costume this colour is, or -1 */
     int costume;                        /* 1: a costume .dat / .usd we can try to install */
     int mismatch;                       /* the API's character and the filename's slot code name different fighters */
+    int cat, supported;                 /* NC_FC_* and whether that kind of file can be installed (the installer still checks the content) */
+    char ftype[16], stem[28];           /* the API's file_type, kept so the cache round-trips; the target file name the file name points at ("GrOp.dat", "EfFxData.dat") */
     int zip;                            /* 1: the post is a zip (the API lists no per-file download_url / file_url): the file is an entry of the mod's own download */
 } nc_file;
 
 typedef struct {
     int id, type;
     char title[80], author[40], tags[96], desc[320], page[120], created[24], updated[24];
+    char stage[28];                      /* the API's "stage" (stage skins) */
+    int tab;                             /* NC_TAB_*: the browser tab it is listed in */
+    unsigned cmask;                      /* bit per NC_FC_* of its files */
     char shot[NC_SHOTS][72];             /* the first screenshots' PNG addresses (NC_MEDIA_BASE stripped); a longer one is not kept. (thumbnail_url is WebP and is never used.) */
     int nshots;
     int downloads, likes;
@@ -116,10 +122,6 @@ static int nc_colour_index(int fighter, const char *code) {
     return -1;
 }
 
-static int nc_has_ext(const char *fn, const char *ext) {
-    size_t a = strlen(fn), b = strlen(ext);
-    return a >= b && nc_ieq(fn + a - b, ext);
-}
 
 static const char *nc_media_strip(const char *url) {
     size_t n = strlen(NC_MEDIA_BASE);
@@ -145,6 +147,10 @@ static void nc_classify_file(nc_file *f, const char *file_type) {
     f->fighter = nameF >= 0 ? nameF : slotF;
     f->mismatch = nameF >= 0 && slotF >= 0 && nameF != slotF;
     f->costume = ext_ok && (!strcmp(file_type, "character_dat") || (!strcmp(file_type, "other") && slot));
+    nc_copy(f->ftype, sizeof f->ftype, file_type);
+    f->cat = nc_file_category(file_type, f->filename, f->stem, sizeof f->stem, &f->supported);
+    if (f->costume) { f->cat = NC_FC_COSTUME; f->supported = 1; }
+    else if (f->cat == NC_FC_OTHER && slot && ext_ok) f->cat = NC_FC_FIGHTER;
     f->colour_idx = f->fighter >= 0 ? nc_colour_index(f->fighter, slot && col[0] ? col : want) : -1;
     if (slot && col[0] && want && strcmp(col, want) != 0 && f->colour_idx >= 0 && nc_colour_index(f->fighter, want) >= 0) f->mismatch = 1;
 }
@@ -182,6 +188,7 @@ static int nc_cat_apply(nc_catalog *c, const nj_doc *d, int node) {
             }
         }
     }
+    nc_ascii(m.stage, sizeof m.stage, nj_gstr(d, node, "stage", ""));
     m.downloads = (int) nj_gnum(d, node, "download_count", 0);
     m.likes = (int) nj_gnum(d, node, "like_count", 0);
     s = NULL;
@@ -206,7 +213,6 @@ static int nc_cat_apply(nc_catalog *c, const nj_doc *d, int node) {
             char tmp[260];
             ++listed;
             if (nfiles >= NC_MAX_FILES_PER_MOD || d->n[e].type != NJ_OBJ) continue;
-            if (m.type != NC_T_COSTUME) continue;      /* other kinds are shown, not installed: their file lists are not kept */
             memset(&f, 0, sizeof f);
             f.id = (int) nj_gnum(d, e, "id", 0);
             nc_ascii(f.filename, sizeof f.filename, nj_gstr(d, e, "filename", ""));
@@ -231,9 +237,11 @@ static int nc_cat_apply(nc_catalog *c, const nj_doc *d, int node) {
             c->f[c->nf++] = f;
             ++nfiles;
             if (f.costume && f.fighter >= 0) m.fmask |= 1u << f.fighter;
+            m.cmask |= 1u << f.cat;
         }
     }
     m.nf = nfiles;
+    m.tab = nc_tab_of(m.type, m.cmask);
     m.nf_total = (int) nj_gnum(d, node, "files_total", listed);
     at = nc_cat_find(c, id);
     if (at >= 0) { c->m[at] = m; ++c->version; return 2; }
@@ -303,6 +311,7 @@ static void nc_write_mod(nj_buf *b, const nc_catalog *c, const nc_mod *m) {
     nj_puts(b, ",\"title\":"); nj_qstr(b, m->title);
     nj_puts(b, ",\"author\":"); nj_qstr(b, m->author);
     nj_puts(b, ",\"description\":"); nj_qstr(b, m->desc);
+    nj_puts(b, ",\"stage\":"); nj_qstr(b, m->stage);
     nj_puts(b, ",\"tags\":["); if (m->tags[0]) nj_qstr(b, m->tags); nj_puts(b, "]");
     nj_puts(b, ",\"page_url\":"); nj_qstr(b, m->page);
     nj_puts(b, ",\"screenshots\":[");
@@ -313,7 +322,7 @@ static void nc_write_mod(nj_buf *b, const nc_catalog *c, const nc_mod *m) {
     nj_printf(b, ",\"download_count\":%d,\"like_count\":%d,\"files_total\":%d,\"files\":[", m->downloads, m->likes, m->nf_total);
     for (i = 0; i < m->nf; ++i) {
         const nc_file *f = &c->f[m->f0 + i];
-        const char *ft = f->costume ? "character_dat" : "other";
+        const char *ft = f->ftype[0] ? f->ftype : f->costume ? "character_dat" : "other";
         nj_printf(b, "%s{\"id\":%d,\"file_type\":\"%s\",\"filename\":", i ? "," : "", f->id, ft); nj_qstr(b, f->filename);
         nj_puts(b, ",\"character\":"); nj_qstr(b, f->character);
         nj_puts(b, ",\"color\":"); nj_qstr(b, f->color);
@@ -398,6 +407,7 @@ static const char *const nc_sort_label[NC_SORT_N] = { "Recently updated", "Newes
 typedef struct {
     char text[48];          /* words, all of which must appear in the title, author, tags or a file name */
     unsigned type_mask;     /* 0 any, else bit (1 << NC_T_*) per accepted type */
+    unsigned tab_mask;      /* 0 any, else bit (1 << NC_TAB_*) per accepted browser tab */
     int fighter;            /* -1 any, else nc_fighters index (costume mods with a file for it) */
     int sort;               /* NC_SORT_* */
     int installable_only;   /* only mods the browser can install */
@@ -446,36 +456,36 @@ static const char *nc_http_reason(int status) {
     return "The download did not work.";
 }
 
-static int nc_installable_files(const nc_mod *m, const nc_file *files) {
-    int i;
-    if (m->type != NC_T_COSTUME) return 0;
-    for (i = 0; i < m->nf; ++i) {
-        const nc_file *f = &files[i];
-        if (f->costume && f->fighter >= 0 && nc_fighters[f->fighter].installable) return 1;
-    }
-    return 0;
-}
-static int nc_installable_mod(const nc_catalog *c, const nc_mod *m) { return nc_installable_files(m, c->f + m->f0); }
-
-/* Why a mod cannot be installed here, or "" when it can. */
+/* Why a mod cannot be installed here, or "" when it can. Costumes: a retail fighter's costume file. Every other kind: at least one file the loose-override
+ * installer takes (a retail versus stage file, an effect file, one of four menu files, an audio file); the CONTENT is checked at install. */
 static const char *nc_why_not_files(const nc_mod *m, const nc_file *files) {
     int i, any_costume = 0, any_known = 0;
-    if (m->type == NC_T_STAGE_SKIN) return "Stage skins cannot be installed yet.";
-    if (m->type == NC_T_EFFECTS) return "Effect mods cannot be installed yet.";
-    if (m->type == NC_T_CUSTOM_STAGE) return "Custom stages cannot be installed yet.";
-    if (m->type == NC_T_GAMEPLAY) return "Gameplay mods cannot be installed yet.";
-    if (m->type == NC_T_PATCH) return "Patches are for the whole disc and cannot be installed.";
-    if (m->type != NC_T_COSTUME) return "This kind of mod cannot be installed yet.";
+    const char *first = "";
+    if (m->type == NC_T_COSTUME) {
+        for (i = 0; i < m->nf; ++i) {
+            const nc_file *f = &files[i];
+            if (!f->costume) continue;
+            ++any_costume;
+            if (f->fighter >= 0) { ++any_known; if (nc_fighters[f->fighter].installable) return ""; }
+        }
+        if (!any_costume) return "No costume file in this post.";
+        if (!any_known) return "Not a retail fighter's costume.";
+        return "Sheik and Nana costumes come with Zelda and Popo (not yet).";
+    }
+    if (m->type == NC_T_CUSTOM_STAGE) return "Custom stage: needs conversion (a new stage is not a loose override).";
+    if (m->type == NC_T_PATCH) return "xdelta patch: not a mod (it patches the whole disc).";
+    if (m->nf == 0) return "No files listed in this post.";
     for (i = 0; i < m->nf; ++i) {
         const nc_file *f = &files[i];
-        if (!f->costume) continue;
-        ++any_costume;
-        if (f->fighter >= 0) { ++any_known; if (nc_fighters[f->fighter].installable) return ""; }
+        const char *why = nc_cat_why_not(f->cat, f->supported);
+        if (!why[0]) return "";
+        if (!first[0] || f->cat == NC_FC_FIGHTER) first = why;
     }
-    if (!any_costume) return "No costume file in this post.";
-    if (!any_known) return "Not a retail fighter's costume.";
-    return "Sheik and Nana costumes come with Zelda and Popo (not yet).";
+    if (m->type == NC_T_GAMEPLAY && first[0]) return "Gameplay mod: needs conversion (code or game data, not a loose file).";
+    return first;
 }
+static int nc_installable_files(const nc_mod *m, const nc_file *files) { return nc_why_not_files(m, files)[0] == '\0'; }
+static int nc_installable_mod(const nc_catalog *c, const nc_mod *m) { return nc_installable_files(m, c->f + m->f0); }
 static const char *nc_why_not(const nc_catalog *c, const nc_mod *m) { return nc_why_not_files(m, c->f + m->f0); }
 
 /* Fills out[] (at most cap) with catalog indices in the query's order; returns the count. */
@@ -495,10 +505,11 @@ static int nc_cat_filter(const nc_catalog *c, const nc_query *q, int *out, int c
         const nc_mod *m = &c->m[i];
         int w, ok = 1;
         if (q->type_mask && !(q->type_mask & (1u << m->type))) continue;
+        if (q->tab_mask && !(q->tab_mask & (1u << m->tab))) continue;
         if (q->fighter >= 0 && !(m->fmask & (1u << q->fighter))) continue;
         if (q->installable_only && !nc_installable_mod(c, m)) continue;
         for (w = 0; w < nw && ok; ++w) {
-            int f, hit = nc_icontains(m->title, words[w]) || nc_icontains(m->author, words[w]) || nc_icontains(m->tags, words[w]);
+            int f, hit = nc_icontains(m->title, words[w]) || nc_icontains(m->author, words[w]) || nc_icontains(m->tags, words[w]) || nc_icontains(m->stage, words[w]);
             for (f = 0; f < m->nf && !hit; ++f) hit = nc_icontains(c->f[m->f0 + f].filename, words[w]);
             ok = hit;
         }
@@ -536,10 +547,10 @@ typedef struct {
     char msg[120];
 } nc_sync;
 
-/* The cache format. Bump it when a cached record gains a field the API already had (2: a file's "zip" flag; 3: a mod's screenshots): an
+/* The cache format. Bump it when a cached record gains a field the API already had (2: a file's "zip" flag; 3: a mod's screenshots; 4: the file lists of every kind of post, the stage): an
  * older state starts a fresh full pass, which replaces every cached mod by id (a delta poll would never refetch an unchanged mod), and the engine does
  * not load the older catalog.jsonl at all (nc_sync.stale), so nothing is installed from records that lack the field until that pass has run. */
-#define NC_CACHE_SCHEMA 3
+#define NC_CACHE_SCHEMA 4
 
 static void nc_sync_to_json(const nc_sync *s, nj_buf *b) {
     nj_printf(b, "{\"schema\":%d,\"t0\":%lld,\"since\":%lld,\"last_poll\":%lld,\"next_ok\":%lld,\"full\":%d,\"cursor\":", NC_CACHE_SCHEMA, (long long) s->t0, (long long) s->since,

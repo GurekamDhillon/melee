@@ -217,6 +217,7 @@ BOOL DeleteFileA(const char *path);
 BOOL RemoveDirectoryA(const char *path);
 #define MOVEFILE_REPLACE_EXISTING 1u
 BOOL MoveFileExA(const char *from, const char *to, DWORD flags);
+BOOL CopyFileA(const char *from, const char *to, BOOL fail_if_exists);
 
 #include <stdlib.h> /* malloc/free/calloc/strtoull - several files reached these transitively
                       * through windows.h and don't include <stdlib.h> themselves */
@@ -226,6 +227,9 @@ BOOL MoveFileExA(const char *from, const char *to, DWORD flags);
 #define _strnicmp strncasecmp
 #define _strtoui64 strtoull
 #define _putenv_s(name, value) setenv((name), (value), 1)
+#define _fileno fileno
+#define _strdup strdup
+#define _chsize_s(fd, size) (ftruncate((fd), (off_t)(size)) == 0 ? 0 : errno) /* 0 = ok, like the CRT */
 
 /* fopen()/remove() are called throughout the platform layer with backslash-joined paths built for
  * Windows; redirect them through wrappers that normalize separators first. Defined after

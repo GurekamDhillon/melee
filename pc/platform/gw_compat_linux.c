@@ -518,6 +518,25 @@ BOOL MoveFileExA(const char *from, const char *to, DWORD flags) {
     return rename(a, b) == 0 ? TRUE : FALSE;
 }
 
+BOOL CopyFileA(const char *from, const char *to, BOOL fail_if_exists) {
+    char a[1024], b[1024], buf[65536];
+    FILE *in, *out;
+    size_t n;
+    int ok = 1;
+    gw_normalize_path(from, a, sizeof a);
+    gw_normalize_path(to, b, sizeof b);
+    if (fail_if_exists && access(b, F_OK) == 0) return FALSE;
+    in = fopen(a, "rb");
+    if (in == NULL) return FALSE;
+    out = fopen(b, "wb");
+    if (out == NULL) { fclose(in); return FALSE; }
+    while ((n = fread(buf, 1, sizeof buf, in)) > 0) if (fwrite(buf, 1, n, out) != n) { ok = 0; break; }
+    if (ferror(in)) ok = 0;
+    fclose(in);
+    if (fclose(out) != 0) ok = 0;
+    return ok ? TRUE : FALSE;
+}
+
 /* ---- misc ---- */
 DWORD GetCurrentProcessId(void) { return (DWORD)getpid(); }
 void GetSystemTimeAsFileTime(FILETIME *ft) {

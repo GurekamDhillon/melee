@@ -847,8 +847,14 @@ static void fas_submit_sss(void)
     }
     Ui_SelCursor(fas.h, 0, 1, Ui_SssGet(FA_SG_CUR, 0), -1);
     {
-        char buf[24];
-        sprintf(buf, "%d / %d", Ui_SssGet(FA_SG_CUR, 0) + 1, n);
+        char buf[96], skin[48];
+        int ext = fas_sss_cursor_ext();
+        skin[0] = '\0';
+        if (ext >= 0 && StageSkin_Label(ext, skin, sizeof skin) > 0) { /* the chosen stage skin leads the counter (X / Y change it) */
+            sprintf(buf, "SKIN: %.34s   %d / %d", skin, Ui_SssGet(FA_SG_CUR, 0) + 1, n);
+        } else {
+            sprintf(buf, "%d / %d", Ui_SssGet(FA_SG_CUR, 0) + 1, n);
+        }
         Ui_SelCounter(fas.h, buf);
     }
     {

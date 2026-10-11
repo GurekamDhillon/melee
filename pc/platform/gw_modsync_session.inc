@@ -60,6 +60,15 @@ int gw_ms_plan_view(const gw_ms_plan **plan, const gw_ms_row **rows, int *nrows)
 }
 
 /* Called by boot() before enabled.txt is read. */
+static void ms_relaunch(void);
+static void gw_ms_die(int code);
+#ifndef _WIN32
+#include <signal.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
+static int ms_pid_alive(uint32_t pid) { return kill((pid_t) pid, 0) == 0 || errno == EPERM; }
+#else
 static int ms_pid_alive(uint32_t pid) {
     HANDLE h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
     DWORD code = 0;
@@ -69,6 +78,7 @@ static int ms_pid_alive(uint32_t pid) {
     CloseHandle(h);
     return alive;
 }
+#endif
 static void ms_boot_check(const char *dir) {
     char room[8] = { 0 };
     int r = gw_ms_boot(dir, ms_now(), GetCurrentProcessId(), ms_pid_alive, room, (int) sizeof room);
@@ -174,7 +184,7 @@ static void ms_apply_and_relaunch(void) {
     gw_log("modsync: applied - %d mods enabled for the next boot", n);
     {
         const char *crash = getenv("MELEE_MODSYNC_CRASH_AT");
-        if (crash != NULL && strcmp(crash, "applied") == 0) { gw_log("modsync: TEST - dying after APPLIED"); TerminateProcess(GetCurrentProcess(), 3); }
+        if (crash != NULL && strcmp(crash, "applied") == 0) { gw_log("modsync: TEST - dying after APPLIED"); gw_ms_die(3); }
     }
     ms_s.phase = GW_MS_PH_RELAUNCH;
     gw_ms_j_set(ms_dir(), GW_MS_J_LAUNCHING, 0, ms_now());
@@ -182,6 +192,11 @@ static void ms_apply_and_relaunch(void) {
         const char *nr = getenv("MELEE_MODSYNC_NO_RELAUNCH");
         if (nr != NULL && nr[0] == '1') { ms_say("Restart the game to finish (test: relaunch skipped)"); return; }
     }
+    ms_relaunch();
+}
+
+#ifdef _WIN32
+static void ms_relaunch(void) {
     {
         char exe[MAX_PATH];
         STARTUPINFOA si;
@@ -204,6 +219,32 @@ static void ms_apply_and_relaunch(void) {
         ms_fail("Could not restart the game");
     }
 }
+static void gw_ms_die(int code) { TerminateProcess(GetCurrentProcess(), code); }
+#else
+/* Linux: start this same executable with the same arguments (/proc/self/cmdline), then leave */
+static void gw_ms_die(int code) { _exit(code); }
+static void ms_relaunch(void) {
+    char buf[8192];
+    char *argv[128];
+    int n = 0;
+    ssize_t len = 0;
+    int fd = open("/proc/self/cmdline", O_RDONLY);
+    if (fd >= 0) { len = read(fd, buf, sizeof buf - 1); close(fd); }
+    if (len > 0) {
+        char *p = buf;
+        buf[len] = 0;
+        while (p < buf + len && n < 127) { argv[n++] = p; p += strlen(p) + 1; }
+    }
+    argv[n] = NULL;
+    ms_say("Restarting the game with the host's mods");
+    if (n > 0) {
+        pid_t pid = fork();
+        if (pid == 0) { setsid(); execv("/proc/self/exe", argv); _exit(127); }
+        if (pid > 0) { gw_log("modsync: relaunched; this process exits"); _exit(0); }
+    }
+    ms_fail("Could not restart the game");
+}
+#endif
 
 void gw_ms_tick(void) {
     int i, pending = 0;

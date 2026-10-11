@@ -371,7 +371,7 @@ void end_frame(bool offscreen = false) noexcept {
       Log.info("Skipping present; window not presentable");
     }
     webgpu::gpu_prof::frame_end(encoder);
-    gfx::png::encode_screenshot(encoder); // port patch: MELEE_SHOT_AT / gw_Screenshot
+    gfx::png::encode_screenshot(encoder, imguiDrawData); // port patch: MELEE_SHOT_AT / gw_Screenshot
     const wgpu::CommandBufferDescriptor cmdBufDescriptor{.label = "Redraw command buffer"};
     const auto buffer = encoder.Finish(&cmdBufDescriptor);
     {

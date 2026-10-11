@@ -1,9 +1,11 @@
 #include "png_io.hpp"
 
 #include "../io.hpp"
+#include "../imgui.hpp"
 #include "../webgpu/gpu.hpp"
 #include "png.h"
 
+#include <algorithm>
 #include <cstring>
 #include <mutex>
 #include <string>
@@ -117,7 +119,11 @@ load_png_file(const std::filesystem::path& path) noexcept {
 namespace aurora::gfx::png {
 namespace {
 std::mutex g_shotMutex;
-std::vector<std::string> g_shotQueue;
+struct ShotRequest {
+  std::string path;
+  bool overlay = false;
+};
+std::vector<ShotRequest> g_shotQueue;
 struct ShotInFlight {
   std::string path;
   wgpu::Buffer buffer;
@@ -125,6 +131,7 @@ struct ShotInFlight {
   uint32_t height = 0;
   uint32_t bytesPerRow = 0;
   bool bgra = false;
+  bool overlay = false;
 };
 std::vector<ShotInFlight> g_shotsEncoded; // render worker only
 
@@ -148,14 +155,15 @@ void write_png(ShotInFlight shot, std::vector<uint8_t> rows) {
   if (png_image_write_to_file(&image, shot.path.c_str(), 0, rgba.data(), 0, nullptr) == 0) {
     Log.warn("screenshot: could not write {}: {}", shot.path, image.message);
   } else {
-    Log.info("screenshot: {} ({}x{})", shot.path, shot.width, shot.height);
+    Log.info("screenshot: captured {} ({}x{}, {})", shot.path, shot.width, shot.height,
+             shot.overlay ? "GX + host UI" : "GX");
   }
   png_image_free(&image);
 }
 } // namespace
 
-void encode_screenshot(const wgpu::CommandEncoder& encoder) noexcept {
-  std::vector<std::string> paths;
+void encode_screenshot(const wgpu::CommandEncoder& encoder, const imgui::DrawData& drawData) noexcept {
+  std::vector<ShotRequest> paths;
   {
     std::lock_guard lock{g_shotMutex};
     paths.swap(g_shotQueue);
@@ -174,20 +182,47 @@ void encode_screenshot(const wgpu::CommandEncoder& encoder) noexcept {
   const uint32_t width = source.size.width;
   const uint32_t height = source.size.height;
   const uint32_t bytesPerRow = (width * 4 + 255) & ~255u;
+  webgpu::TextureWithSampler composite;
+  if (std::any_of(paths.begin(), paths.end(), [](const ShotRequest& shot) { return shot.overlay; })) {
+    // Atlas CSS/SSS are host ImGui draws (gw_Console_Draw), not GX geometry.
+    // Compose into a separate target even when there is no presentable surface.
+    // Never draw into the EFB: legacy/match captures must retain its exact bytes.
+    composite = webgpu::create_render_texture(width, height, false);
+    const wgpu::TexelCopyTextureInfo src{.texture = source.texture};
+    const wgpu::TexelCopyTextureInfo dst{.texture = composite.texture};
+    const wgpu::Extent3D extent{width, height, 1};
+    encoder.CopyTextureToTexture(&src, &dst, &extent);
+    const wgpu::RenderPassColorAttachment attachment{
+        .view = composite.view,
+        .loadOp = wgpu::LoadOp::Load,
+        .storeOp = wgpu::StoreOp::Store,
+    };
+    const wgpu::RenderPassDescriptor desc{
+        .label = "Screenshot host UI",
+        .colorAttachmentCount = 1,
+        .colorAttachments = &attachment,
+    };
+    const auto pass = encoder.BeginRenderPass(&desc);
+    imgui::render_at_size(pass, drawData, width, height);
+    pass.End();
+  }
   for (auto& path : paths) {
     ShotInFlight shot;
-    shot.path = std::move(path);
+    shot.path = std::move(path.path);
     shot.width = width;
     shot.height = height;
     shot.bytesPerRow = bytesPerRow;
     shot.bgra = bgra;
+    shot.overlay = path.overlay;
     const wgpu::BufferDescriptor desc{
         .label = "Screenshot readback",
         .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::MapRead,
         .size = static_cast<uint64_t>(bytesPerRow) * height,
     };
     shot.buffer = webgpu::g_device.CreateBuffer(&desc);
-    const wgpu::TexelCopyTextureInfo src{.texture = source.texture};
+    const wgpu::TexelCopyTextureInfo src{
+        .texture = shot.overlay ? composite.texture : source.texture,
+    };
     const wgpu::TexelCopyBufferInfo dst{
         .layout = {.offset = 0, .bytesPerRow = bytesPerRow, .rowsPerImage = height},
         .buffer = shot.buffer,
@@ -232,5 +267,13 @@ extern "C" void aurora_request_screenshot(const char* path) {
     return;
   }
   std::lock_guard lock{aurora::gfx::png::g_shotMutex};
-  aurora::gfx::png::g_shotQueue.emplace_back(path);
+  aurora::gfx::png::g_shotQueue.push_back({path, false});
+}
+
+extern "C" void aurora_request_screenshot_with_overlay(const char* path) {
+  if (path == nullptr || path[0] == 0) {
+    return;
+  }
+  std::lock_guard lock{aurora::gfx::png::g_shotMutex};
+  aurora::gfx::png::g_shotQueue.push_back({path, true});
 }

@@ -328,8 +328,17 @@ void *gw_Mex_PersistAlloc(uint32_t size) { return gw_mex_persist_alloc(size); }
 #define GW_MEX_EFFECT_BANK_MAX 50u
 
 static uint32_t gw_mexdt;        /* guest address of the mexData root; 0 = not loaded */
+static int gw_mexdt_synth;  /* gw_mexdt is the synthetic fighter image of gw_mex_modfighter.inc, not a disc's MxDt.dat */
 static uint32_t gw_mexdt_base;   /* guest address of the loaded data section */
 static uint32_t gw_mexdt_size;
+
+int gw_Mex_CssIconCount(void);
+/* The fighter readers' gate: a real MxDt.dat with CSS icons, or the synthetic fighter image. Everything else keeps gw_Mex_CssIconCount()
+ * (0 for the synthetic image), so sound banks, effects, music, menus, items and stages behave as on a vanilla disc. */
+static int gw_mex_ft_on(void) {
+    if (gw_Mex_CssIconCount() > 0) return 1;
+    return gw_mexdt_synth && gw_mexdt != 0u;
+}
 
 static int gw_mexdt_in(uint32_t a, uint32_t len) {
     return a >= gw_mexdt_base && (uint64_t) a + len <= (uint64_t) gw_mexdt_base + gw_mexdt_size;
@@ -397,6 +406,11 @@ static uint32_t gw_mex_load_hsd(const char *path, const char *symbol, uint32_t f
 /* Load MxDt.dat once. Safe to call when it is absent (vanilla disc): mexData stays unloaded and
  * anything that needs it fails loudly at the point of use rather than at boot. */
 static int gw_mexdt_absent; /* MxDt.dat was looked for and is not there (vanilla disc) */
+static int gw_mf_build(void);
+static int gw_mf_base_kind(int k);
+static void gw_mf_invalidate(void);
+void gw_modfighter_tests_register(void);
+static int gw_mex_ft_on(void);
 static void gw_mexdt_load(void) {
     uint32_t root, fighter, lookup, item;
     if (gw_mexdt != 0u || gw_mexdt_absent) {
@@ -408,6 +422,7 @@ static void gw_mexdt_load(void) {
          * on each call, ~3,500 suppressed lines per 10 s on the vanilla disc. The disc and the
          * mod set are fixed for the life of the process, so the answer cannot change. */
         gw_mexdt_absent = 1;
+        gw_mf_build(); /* fighter mods on a vanilla disc: build the fighter tables (sets gw_mexdt, gw_mexdt_synth) */
         return;
     }
     /* Validate the three pointers everything below depends on, so a layout mismatch is caught
@@ -876,7 +891,7 @@ static int gw_mex_fighter_s32_for_ck(int ck, uint32_t field_off, int fallback) {
     extern int gw_Mex_PortCKindToExt(int);
     int ext = gw_Mex_PortCKindToExt(ck);
     uint32_t fighter, tbl;
-    if (ext < 0 || gw_Mex_CssIconCount() == 0) {
+    if (ext < 0 || !gw_mex_ft_on()) {
         return fallback;
     }
     fighter = gw_r32((const void *) (uintptr_t) (gw_mexdt + GW_MEXDT_OFF_FIGHTER));
@@ -1052,7 +1067,7 @@ int gw_Mex_InternalForPortKind(int fk) {
 
 static uint32_t gw_mex_ftfield(uint32_t off) {
     uint32_t fighter;
-    if (gw_Mex_CssIconCount() == 0) { /* loads mexData lazily */
+    if (!gw_mex_ft_on()) { /* loads mexData lazily */
         return 0u;
     }
     fighter = gw_r32((const void *) (uintptr_t) (gw_mexdt + GW_MEXDT_OFF_FIGHTER));
@@ -1075,7 +1090,7 @@ static int gw_mex_slot_count = -1;
 
 static void gw_mex_slots_build(void) {
     int n, k, dropped = 0;
-    if (gw_mex_slot_count >= 0 || gw_Mex_CssIconCount() == 0) {
+    if (gw_mex_slot_count >= 0 || !gw_mex_ft_on()) {
         return;
     }
     n = gw_Mex_InternalCount();
@@ -1207,7 +1222,7 @@ void *gw_Mex_FtDemoStrings(int k) {
 void *gw_Mex_FtFunc(int slot, int k) {
     uint32_t ff, tbl, g, native;
     int kind = -1;
-    if (gw_Mex_CssIconCount() == 0) {
+    if (!gw_mex_ft_on()) {
         return NULL;
     }
     ff = gw_r32((const void *) (uintptr_t) (gw_mexdt + 0x0Cu));
@@ -1257,7 +1272,7 @@ void *gw_Mex_FtFunc(int slot, int k) {
 
 static uint32_t gw_mex_kirbyfield(uint32_t off) {
     uint32_t kd;
-    if (gw_Mex_CssIconCount() == 0) { /* loads mexData lazily */
+    if (!gw_mex_ft_on()) { /* loads mexData lazily */
         return 0u;
     }
     kd = gw_r32((const void *) (uintptr_t) (gw_mexdt + GW_MEXDT_OFF_KIRBY_DATA));
@@ -1347,7 +1362,7 @@ int gw_Mex_KirbyEffectId(int k) {
 void *gw_Mex_KirbyFunc(int slot, int k) {
     uint32_t kf, tbl, g, native;
     int kind = -1;
-    if (k < 0 || slot < 0 || slot >= GW_MEX_KIRBY_FUNC_SLOTS || gw_Mex_CssIconCount() == 0) {
+    if (k < 0 || slot < 0 || slot >= GW_MEX_KIRBY_FUNC_SLOTS || !gw_mex_ft_on()) {
         return NULL;
     }
     kf = gw_r32((const void *) (uintptr_t) (gw_mexdt + GW_MEXDT_OFF_KIRBY_FUNC));
@@ -1396,7 +1411,7 @@ int gw_Mex_CostumeVisIdx(int fk, int costume) {
     int k = gw_Mex_InternalForPortKind(fk);
     uint32_t tbl;
     int32_t v;
-    if (k < 0 || costume < 0 || gw_Mex_CssIconCount() == 0 ||
+    if (k < 0 || costume < 0 || !gw_mex_ft_on() ||
         costume >= gw_Mex_FtCostumeCount(k)) {
         return costume;
     }
@@ -1414,8 +1429,11 @@ int gw_Mex_CostumeVisIdx(int fk, int costume) {
 int gw_Mex_FtBaseKind(int k) {
     uint32_t ff, tbl, g;
     int r;
-    if (gw_Mex_CssIconCount() == 0) {
+    if (!gw_mex_ft_on()) {
         return 0;
+    }
+    if (gw_mexdt_synth) {
+        return gw_mf_base_kind(k); /* the synthetic image has no retail rows to compare against */
     }
     ff = gw_r32((const void *) (uintptr_t) (gw_mexdt + 0x0Cu));
     tbl = gw_mex_word(ff, 0u, 4u);
@@ -1431,7 +1449,7 @@ int gw_Mex_FtBaseKind(int k) {
 /* mexData metadata.internal_id_count (41 on Akaneia), or 0 without mexData. */
 int gw_Mex_InternalCount(void) {
     uint32_t md;
-    if (gw_Mex_CssIconCount() == 0) { /* loads mexData lazily */
+    if (!gw_mex_ft_on()) { /* loads mexData lazily */
         return 0;
     }
     md = gw_r32((const void *) (uintptr_t) gw_mexdt);
@@ -1443,7 +1461,7 @@ int gw_Mex_InternalCount(void) {
  * emblem that exists only in Akaneia's IfAll Eblm_matanim_joint. -1 when unavailable. */
 int gw_Mex_InsigniaForExt(int ext) {
     uint32_t fighter, tbl;
-    if (ext < 0 || gw_Mex_CssIconCount() == 0) {
+    if (ext < 0 || !gw_mex_ft_on()) {
         return -1;
     }
     fighter = gw_r32((const void *) (uintptr_t) (gw_mexdt + GW_MEXDT_OFF_FIGHTER));
@@ -3648,6 +3666,7 @@ void gw_Mex_GrInvalidate(void); /* pc/platform/gw_mex_grfunction.h */
 void gw_Mex_InvalidateAfterMem1Restore(void) {
     gw_mexdt = 0u;
     gw_mexdt_absent = 0;
+    gw_mf_invalidate();
     gw_mexdt_base = 0u;
     gw_mexdt_size = 0u;
     gw_mex_mexdata_base = 0u; /* re-runs gw_Mex_RuntimeInit, re-allocating the persist region */
@@ -3661,6 +3680,11 @@ void gw_Mex_InvalidateAfterMem1Restore(void) {
 }
 
 uint32_t gw_Mex_MexData(uint32_t *base, uint32_t *size) {
+    if (gw_mexdt_synth) { /* the fighter-only image is not a disc's MxDt.dat: stages, items, audio and the CSS keep their vanilla behaviour */
+        if (base != NULL) *base = 0u;
+        if (size != NULL) *size = 0u;
+        return 0u;
+    }
     if (base != NULL) {
         *base = gw_mexdt_base;
     }
@@ -4909,6 +4933,7 @@ static int test_ppc_tail_branch_returns(void) {
 }
 
 void gw_mex_ftfunction_runtime_tests_register(void) {
+    gw_modfighter_tests_register();
     gw_test_register("mex_ft_item_id_sonic", test_mex_ft_item_id_sonic);
     gw_test_register("mex_music_tables", test_mex_music_tables);
     gw_test_register("mex_effect_banks", test_mex_effect_banks);
@@ -4930,4 +4955,5 @@ void gw_mex_ftfunction_runtime_tests_register(void) {
 }
 
 #include "gw_mex_items_query.inc"
+#include "gw_mex_modfighter.inc"
 #include "gw_roster_runtime.inc"

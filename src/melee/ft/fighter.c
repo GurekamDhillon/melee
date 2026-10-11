@@ -219,6 +219,7 @@ static void** ftCommonData_ExtendKindTable(void** loaded, int slot)
      * reassigned to the same buffer on each load and read through, so rebuilding in place is
      * safe. */
     extern int Mex_InternalForPortKind(int fk);
+    extern int Mex_FtSynth(void);
     static void* copies[2][Ft_Kind_Max];
     void** out = copies[slot];
     int i;
@@ -234,6 +235,11 @@ static void** ftCommonData_ExtendKindTable(void** loaded, int slot)
             if (own != NULL) { out[i] = own; continue; }
         }
         k = Mex_InternalForPortKind(base >= 0 ? base : i);
+        if (Mex_FtSynth()) {
+            /* fighters built from mods on a disc with no MxDt.dat: PlCo is the vanilla one (retail kind order), so a mod fighter reads its clone base's row */
+            extern int Mex_FtBaseKind(int k);
+            k = i < Ft_Kind_Mex0 ? i : (k >= 0 ? Mex_FtBaseKind(k) : -1);
+        }
         if (k < 0) {
             /* vanilla disc: retail layout, no m-ex rows - but retail's row 0x21 is real: Captain
                Falcon's throws put figatrees authored for kind 0x21 on the victim (x597_bits), so

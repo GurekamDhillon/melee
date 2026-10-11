@@ -12,6 +12,7 @@ static int g_fail, g_checks;
 #define CHECK_STR(a, b) do { ++g_checks; if (strcmp((a), (b)) != 0) { ++g_fail; printf("FAIL %s:%d: \"%s\" != \"%s\"\n", __FILE__, __LINE__, (a), (b)); } } while (0)
 #include "nucleus_loose_tests.h"
 #include "nucleus_stage_tests.h"
+#include "nucleus_fighter_tests.h"
 
 /* ---- the fake network ---- */
 static char g_urls[32][700];
@@ -101,6 +102,28 @@ static size_t make_dat(const char *const *syms, int ns, uint8_t *out) {
 
 static int has_url(const char *needle) { int i; for (i = 0; i < g_nurls; ++i) if (strstr(g_urls[i], needle)) return 1; return 0; }
 
+/* Dev tool, not a test: NF_INSTALL_ZIP=<fighter.zip> NF_INSTALL_MODS=<mods dir> NF_INSTALL_POST=<id> runs the REAL custom-fighter installer on a local zip
+ * (a fixture server stand-in for proofs) and prints its verdict. Exit 0 = installed. */
+static int nf_cli(void) {
+    const char *zp = getenv("NF_INSTALL_ZIP"), *md = getenv("NF_INSTALL_MODS"), *pid = getenv("NF_INSTALL_POST");
+    nc_post post;
+    nc_in_file in;
+    nc_loose_env env;
+    nc_loose_result res;
+    char msg[600];
+    size_t n = 0;
+    uint8_t *z = (uint8_t *) nc_read_all(zp, &n);
+    int rc;
+    if (!z) { printf("cannot read %s\n", zp); return 2; }
+    memset(&post, 0, sizeof post); memset(&in, 0, sizeof in); memset(&env, 0, sizeof env);
+    post.id = pid ? atoi(pid) : 1; post.title = "local"; post.author = "local"; post.page = "https://ssbmnucleus.net/post/0"; post.updated = "2026-10-10T00:00:00Z"; post.installed_at = "2026-10-10T00:00:00Z";
+    in.cat = NC_FC_ARCHIVE; in.filename = "fighter.zip"; in.stem = ""; in.data = z; in.len = n;
+    nc_mkdirs(md);
+    rc = nc_fighter_install(md, &post, &in, 1, &env, &res, msg, sizeof msg, nst_log);
+    printf("rc=%d | %s\n", rc, msg);
+    return rc == 0 ? 0 : 1;
+}
+
 int main(void) {
     nj_doc d;
     int root;
@@ -109,6 +132,7 @@ int main(void) {
     nc_sync_io io;
     int r;
 
+    if (getenv("NF_INSTALL_ZIP")) return nf_cli();
     memset(&io, 0, sizeof io);
     io.fetch = fake_fetch; io.now = fake_now; io.sleep_ms = fake_sleep; io.stop = fake_stop; io.checkpoint = fake_checkpoint;
 
@@ -657,6 +681,7 @@ int main(void) {
     nc_cat_free(&cat);
     run_loose_tests();
     run_stage_tests();
+    run_fighter_tests();
     printf("nucleus-core: %d checks, %d failed\n", g_checks, g_fail);
     return g_fail ? 1 : 0;
 }

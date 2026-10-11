@@ -44,7 +44,7 @@ int gw_Mex_ItemRangeAvailable(int base,int count)
     if (base<(int)GW_MEX_CUSTOM_ITEM_START || count<=0) return 0;
     last=(uint64_t)(unsigned)base+(unsigned)count-1u;
     if (last>0x7FFFFFFFu) return 0;
-    if (!gw_mexdt) return 1;
+    if (!gw_mexdt || gw_mexdt_synth) return 1; /* no disc MxDt.dat: custom item ranges are free */
     if (!gw_mex_items_tables(&custom,&runtime)) return 0;
     /* Table capacity inferred from its archive tail is contiguous. If the
      * first candidate row fits in both arrays it is reserved, even all-zero.

@@ -36,6 +36,7 @@
 #include "gw_nucleus_loose.h"
 
 extern int gw_DVDFileExists(const char *path);
+extern void *gw_DVDReadFileAlloc(const char *path, uint32_t *out_size);
 
 #define NE_INST_MAX 256
 #define NE_QUEUE 16

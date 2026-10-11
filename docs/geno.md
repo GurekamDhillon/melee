@@ -3014,8 +3014,7 @@ New inline `ftGetTemplateKind(fp)` (`ft/inlines.h`) answers as the template (and
 (the Blaster gun in the entry/revive poses), `ftwaitanim.c` (idle with an item), `ftfoxappeals.c` (Corneria appeal). Grep `Ft_Kind_<Template>` in `src/melee` for the next template.
 
 **Proof**: see the report of the lane. Same method as 22.11 (`tools/geno/falcon_parity`, workspace; the scenario file also holds Fox extras: rapid and air Blaster, Shine hold and jump-cancel, Reflector against
-a Mario fireball and a hit, Illusion, Firefox directions). Retail Fox against the define, 326 scenarios, 40,745 logic frames: 323 identical. Not identical: `bthrow`, `uthrow`, `dthrow`
-(first difference one frame after the throw's release flag: the retail run applies the throw's damage and hit effect, the define run does not; `fthrow` is identical; cause not found, owed).
+a Mario fireball and a hit, Illusion, Firefox directions). Retail Fox against the define, 326 scenarios, 40,745 logic frames: **326 of 326 identical** (run totals equal, `73d60e1c`); Falcon re-run on the same build, 326 of 326 (`795c9c86`). Two kind-guard misses were found by the diff, both `fp->kind`/`ftGetKind(fp)` reading a define as "not Fox": Illusion's ghost item (`ftfoxspecials.c`) and, found last, `ftFx_Throw_Anim` (`ftfoxspecialn.c`, `ftGetKind(fp)`): Fox's back, up and down throws fire the Blaster (electric item hits of 1.82 on the victim, three RNG-drawing hits); the define skipped the block, so the throw dealt its first 2% and nothing more. Found by logging `Fighter_UnkTakeDamage_8006CC30` (source item, element 2) on the retail run. `ftGetKind(fp)` is now unused for template fighters; grep it as well as `fp->kind`.
 
 #### Checklist: add a retail template (Falco, Marth, Sheik, Zelda, Jigglypuff)
 

@@ -2657,6 +2657,23 @@ blend mode, soft particles. `bloom`: the effect's colour above `threshold` goes 
 (blurred, added over the frame after the effects; Melee's own world never enters it) at `intensity`. A
 missing `shader` means `sprite` / `modulate` / `texture`.
 
+#### 20.2.1 Render features R1-R6 (cosmetic; every field optional, absent = the old picture)
+
+All render-only: they read the already-simulated particles or a render-frame number and write nothing the
+simulation, the rollback ring or the snapshot sees (`gw_fx_render.cpp`; the maths is `gw_fx_render_math.h`, tested by
+`fx_render` and `pc/tests/fx_render_math_test.cpp`).
+
+| field | does |
+|---|---|
+| `material.bloom.tint` [r,g,b], `.radius` (0.5..4, default 1) | R1 glare: the bloom buffer is multiplied by the tint (a blue core blooms blue) and the blur offsets by the radius (the widest bloom emitter of the frame sets it). Same 3 passes as before; cost is unchanged by the radius |
+| emitter `ribbon` {`taper`, `uv_per_unit`, `ends` [in, out], `span` {`length`, `segments`}} | R2: the emitter's live particles (not a mesh emitter) draw as ONE camera-facing strip, newest first; a point's width is its simulated size (so `particle.scale.keys` over life tapers it) times a linear `taper` (tail / head); u runs 0..1 along the strip, or `uv_per_unit` tiles per world unit; the samplers' scroll is the head particle's for every segment. Spawn by distance for a smooth trail. `span`: every particle IS a straight strip of `length` along its local +Z (a beam; the keyed `param` curve 0..1 grows the length); `ends` eases the width AND alpha in over the first and out over the last fraction (pointed ends, soft sides with a feathered texture) |
+| `material.soft_particle.distance` | R3: depth fade against the scene, over `distance` world units in front of the geometry behind the sprite (uses the depth snapshot; only taken on frames that draw such an emitter) |
+| `material.shader` {`type`: `dissolve`, `mask` (sampler, default 1), `edge` (0..1 of the mask, default 0.1), `edge_color` [r,g,b]} | R4: sampler 0 is the picture, the `mask` sampler's red channel is compared with the threshold (the `particle.param_keys` curve; no keys = 0), alpha ramps over `edge` above it and the ramp adds `edge_color`. The two samplers scroll independently through their own `uv` |
+| emitter `ring` {`inner` (0..1 of the outer radius, default 0.8), `segments` (3..256, default 48)} | R5: a generated annulus mesh (outer radius 0.5 scaled by the particle size, XY plane, u around the band, v inner to outer) drawn as a mesh emitter; scale it over life for a shock ring. Emitter rotation turns it |
+| Lua `gd.fx_shake(amp, frames[, seed])`, `gd.fx_flash(r, g, b, alpha, frames)` | R6: a decaying camera shake (amp in NDC, <= 0.2) and a screen flash. The shake offsets only the perspective projection `gw_GXSetProjection` submits (`shim_gx.c`); no CObj, camera GObj or simulation value is written, and neither call forks the LAB timeline, so both are allowed online |
+
+Limits (2026-10-10): `FX_MAX_EMITTERS` 96 per package (was 32: the log now says `N emitters, the runtime keeps 96: M DROPPED` when a package is over) and `FX_MAX_INST` 512. The flash is additive and tinted, quadratic ease-out, never a grey wash. Texture uploads carry a full mip chain.
+
 ### 20.3 The runtime API (native, `gw_fx.c`)
 
 `gw_Fx_Find(name)` loads `mods/<id>/fx/<name>/<name>.gfx.json` (the last mounting mod wins) and returns a package

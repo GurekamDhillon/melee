@@ -35,6 +35,7 @@
 #include <cstdlib>
 #include <cstring>
 #include "gw_fx_batch.hpp"
+#include "gw_fx_render_math.h"
 #include <mutex>
 #include <string>
 #include <unordered_map>
@@ -181,7 +182,7 @@ wgpu::TextureView g_white, g_black, g_depth0;
 std::unordered_map<uint64_t, wgpu::RenderPipeline> g_pipes;
 
 enum Kind : uint32_t { KParticles = 0, KBloomParticles = 1, KBlurH = 2, KBlurV = 3, KComposite = 4, KMesh = 5,
-                       KBloomMesh = 6 };
+                       KBloomMesh = 6, KFlash = 7 };
 inline bool is_mesh_kind(uint32_t k) { return k == KMesh || k == KBloomMesh; }
 
 struct Payload {
@@ -204,6 +205,9 @@ struct U {
   mat2: vec4f,        // strength.xy, alpha threshold, depth-snapshot scale (full / this target)
   mat3: vec4f,        // bloom threshold, bloom intensity, blur dir.xy
   inv_div: array<vec4f, 3>, // per sampler: 1/cols, 1/rows, atlas (1/0), 0
+  mat4: vec4f,        // bloom tint rgb, soft-particle distance (0 off); KFlash: colour rgba
+  mat5: vec4f,        // dissolve edge glow rgb, dissolve edge width
+  mat6: vec4u,        // dissolve mask sampler, dissolve threshold from the param curve (1) or 0, 0, 0
 };
 struct P {
   p0: vec4f,  // world pos, size x
@@ -240,11 +244,34 @@ struct V {
 const corners = array<vec2f, 6>(vec2f(-0.5, -0.5), vec2f(0.5, -0.5), vec2f(0.5, 0.5),
                                 vec2f(-0.5, -0.5), vec2f(0.5, 0.5), vec2f(-0.5, 0.5));
 
+// R3 / bloom helpers: view-space distance in front of the camera of a depth-buffer value (the projection's z and w
+// rows; mirrors fx_depth_to_viewz in gw_fx_render_math.h)
+fn depth_dist(zn: f32) -> f32 {
+  let r2 = u.proj[2];
+  let r3 = u.proj[3];
+  let den = zn * r3.z - r2.z;
+  return -select(0.0, (r2.w - zn * r3.w) / den, abs(den) > 1e-12);
+}
+
 @vertex fn vs_particle(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> V {
   let p = parts[ii];
   let c = corners[vi];
   var vp: vec4f;
-  if (p.p1.w > 0.5) { // oriented quad: the axes carry the size and facing
+  var o: V;
+  o.uv = vec2f(c.x + 0.5, 0.5 - c.y);
+  o.vc = vec4f(1.0);
+  if (p.p1.w > 2.5) { // R2 ribbon segment A -> B: camera-facing, width and u/colour/alpha interpolated along it
+    let a = p.p0.xyz;
+    let b = p.ax.xyz;
+    let sv = cross(b - a, u.view[2].xyz);
+    let l = length(sv);
+    let side = select(vec3f(0.0), sv / l, l > 1e-8);
+    let tt = c.x + 0.5;
+    let w = vec4f(mix(a, b, tt) + side * (c.y * mix(p.p0.w, p.p1.x, tt)), 1.0);
+    vp = vec4f(dot(u.view[0], w), dot(u.view[1], w), dot(u.view[2], w), 1.0);
+    o.uv = vec2f(mix(p.ax.w, p.ay.x, tt), 0.5 - c.y);
+    o.vc = vec4f(mix(vec3f(1.0), p.az.xyz, tt), mix(p.ay.y, p.ay.z, tt));
+  } else if (p.p1.w > 0.5) { // oriented quad: the axes carry the size and facing
     let w = vec4f(p.p0.xyz + p.ax.xyz * c.x + p.ay.xyz * c.y, 1.0);
     vp = vec4f(dot(u.view[0], w), dot(u.view[1], w), dot(u.view[2], w), 1.0);
   } else {
@@ -255,11 +282,8 @@ const corners = array<vec2f, 6>(vec2f(-0.5, -0.5), vec2f(0.5, -0.5), vec2f(0.5, 
     vp = vec4f(dot(u.view[0], w) + s.x * cr - s.y * sr, dot(u.view[1], w) + s.x * sr + s.y * cr,
                dot(u.view[2], w), 1.0);
   }
-  var o: V;
   o.pos = vec4f(dot(u.proj[0], vp), dot(u.proj[1], vp), dot(u.proj[2], vp), dot(u.proj[3], vp));
-  o.uv = vec2f(c.x + 0.5, 0.5 - c.y);
   o.ii = ii;
-  o.vc = vec4f(1.0);
   o.fres = 1.0;
   return o;
 }
@@ -347,6 +371,21 @@ fn shade(in: V) -> vec4f {
     let hi = u.inv_div[2].w;
     alpha *= clamp((in.fres - lo) / max(hi - lo, 1e-4), 0.0, 1.0);
   }
+  if (u.mat0.x == 3u) { // R4 dissolve: the mask sampler against the threshold (the param curve), a glowing edge
+    let mv = select(select(s2v, s1v, u.mat6.x == 1u), s0v, u.mat6.x == 0u).r;
+    let thr = select(0.0, p.p1.z, u.mat6.y == 1u);
+    let edge = u.mat5.w;
+    let f = clamp(select(select(0.0, 1.0, mv >= thr), (mv - thr) / edge, edge > 1e-5), 0.0, 1.0);
+    let glow = select(0.0, 1.0 - f, f > 0.0 && f < 1.0);
+    alpha *= f;
+    rgb += u.mat5.rgb * glow;
+  }
+  if (u.mat4.w > 0.0) { // R3 soft particles: fade where the sprite meets the scene (depth snapshot)
+    let sd = textureLoad(tdepth, vec2i(in.pos.xy * u.mat2.w), 0).r;
+    let scene_d = depth_dist(sd);
+    let frag_d = depth_dist(in.pos.z);
+    alpha *= select(1.0, clamp((scene_d - frag_d) / u.mat4.w, 0.0, 1.0), sd > 0.0);
+  }
   alpha = clamp(alpha, 0.0, 1.0);
   return vec4f(rgb, alpha);
 }
@@ -366,7 +405,7 @@ fn shade(in: V) -> vec4f {
   let dp = vec2i(in.pos.xy * u.mat2.w);
   let scene = textureLoad(tdepth, dp, 0).r;
   if (scene > in.pos.z + 0.00001) { discard; } // reversed Z: a larger depth is nearer
-  let b = max(c.rgb - vec3f(u.mat3.x), vec3f(0.0)) * u.mat3.y * c.a;
+  let b = max(c.rgb - vec3f(u.mat3.x), vec3f(0.0)) * u.mat3.y * c.a * u.mat4.rgb;
   return vec4f(b, 1.0);
 }
 
@@ -388,6 +427,9 @@ struct F { @builtin(position) pos: vec4f, @location(0) uv: vec2f };
     c += textureSampleLevel(tsrc, sl, in.uv - o, 0.0).rgb * w[i];
   }
   return vec4f(c, 1.0);
+}
+@fragment fn fs_flash(in: F) -> @location(0) vec4f {
+  return u.mat4; // R6 screen flash: colour and alpha from the frame's cosmetic flash event
 }
 @fragment fn fs_composite(in: F) -> @location(0) vec4f {
   return vec4f(textureSampleLevel(tsrc, sl, in.uv, 0.0).rgb, 0.0);
@@ -509,6 +551,9 @@ wgpu::RenderPipeline pipeline(const aurora::gfx::DrawContext& ctx, uint32_t kind
     default: bs.color = comp(BO::Add, BF::SrcAlpha, BF::OneMinusSrcAlpha); break;
     }
     bs.alpha = comp(BO::Add, BF::Zero, BF::One); // the EFB's alpha is Melee's: leave it
+  } else if (kind == KFlash) {
+    bs.color = comp(BO::Add, BF::SrcAlpha, BF::One); // additive and tinted: a brightening, not a grey wash
+    bs.alpha = comp(BO::Add, BF::Zero, BF::One);
   } else if (kind == KBlurH || kind == KBlurV) {
     bs.color = comp(BO::Add, BF::One, BF::Zero);
     bs.alpha = comp(BO::Add, BF::One, BF::Zero);
@@ -528,7 +573,7 @@ wgpu::RenderPipeline pipeline(const aurora::gfx::DrawContext& ctx, uint32_t kind
   fs.module = g_module;
   fs.entryPoint = kind == KParticles || kind == KMesh ? "fs_particle"
                   : kind == KBloomParticles || kind == KBloomMesh ? "fs_bloom"
-                  : kind == KComposite ? "fs_composite" : "fs_blur";
+                  : kind == KComposite ? "fs_composite" : kind == KFlash ? "fs_flash" : "fs_blur";
   fs.targetCount = L.colorAttachmentCount;
   fs.targets = ct;
   wgpu::DepthStencilState ds{};
@@ -570,14 +615,39 @@ wgpu::TextureView tex_view(const aurora::gfx::DrawContext& ctx, int pkg, int t) 
     td.size = {x.w, x.h, 1};
     td.format = wgpu::TextureFormat::RGBA8Unorm;
     td.usage = wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::CopyDst;
+    // a full mip chain (2x2 box filter): a texture stretched over a long strip or shrunk far away no longer shimmers
+    // or blocks. The sampler already asks for linear mip filtering; before this every texture had one level.
+    uint32_t levels = 1;
+    for (uint32_t m = std::max(x.w, x.h); m > 1; m >>= 1) ++levels;
+    td.mipLevelCount = levels;
     x.tex = ctx.device.CreateTexture(&td);
-    wgpu::TexelCopyTextureInfo dst{};
-    dst.texture = x.tex;
-    wgpu::TexelCopyBufferLayout lay{};
-    lay.bytesPerRow = x.w * 4;
-    lay.rowsPerImage = x.h;
-    wgpu::Extent3D ext{x.w, x.h, 1};
-    ctx.queue.WriteTexture(&dst, x.rgba.data(), x.rgba.size(), &lay, &ext);
+    std::vector<uint8_t> cur = x.rgba, nxt;
+    uint32_t cw = x.w, ch = x.h;
+    for (uint32_t l = 0; l < levels; ++l) {
+      wgpu::TexelCopyTextureInfo dst{};
+      dst.texture = x.tex;
+      dst.mipLevel = l;
+      wgpu::TexelCopyBufferLayout lay{};
+      lay.bytesPerRow = cw * 4;
+      lay.rowsPerImage = ch;
+      wgpu::Extent3D ext{cw, ch, 1};
+      ctx.queue.WriteTexture(&dst, cur.data(), cur.size(), &lay, &ext);
+      if (l + 1 == levels) break;
+      const uint32_t nw = std::max(1u, cw / 2), nh = std::max(1u, ch / 2);
+      nxt.assign(size_t(nw) * nh * 4, 0);
+      for (uint32_t yy = 0; yy < nh; ++yy)
+        for (uint32_t xx = 0; xx < nw; ++xx)
+          for (int c = 0; c < 4; ++c) {
+            const uint32_t x0 = std::min(cw - 1, xx * 2), x1 = std::min(cw - 1, xx * 2 + 1);
+            const uint32_t y0 = std::min(ch - 1, yy * 2), y1 = std::min(ch - 1, yy * 2 + 1);
+            const uint32_t sum = cur[(size_t(y0) * cw + x0) * 4 + c] + cur[(size_t(y0) * cw + x1) * 4 + c] +
+                                 cur[(size_t(y1) * cw + x0) * 4 + c] + cur[(size_t(y1) * cw + x1) * 4 + c];
+            nxt[(size_t(yy) * nw + xx) * 4 + c] = uint8_t((sum + 2) / 4);
+          }
+      cur.swap(nxt);
+      cw = nw;
+      ch = nh;
+    }
     x.view = x.tex.CreateView();
   }
   return x.view;
@@ -666,6 +736,8 @@ struct alignas(16) GpuU {
   uint32_t mat0[4], mat1[4];
   float mat2[4], mat3[4];
   float inv_div[3][4];
+  float mat4[4], mat5[4];
+  uint32_t mat6[4];
 };
 struct alignas(16) GpuP {
   float p0[4], p1[4], c0[4], c1[4], a[3][4], b[3][4], ax[4], ay[4], az[4];
@@ -783,6 +855,83 @@ void particle_data(const fx_emitter& e, const fx_part& q, const fx_inst& in, con
   }
 }
 
+// R2: an emitter with "ribbon" draws its live particles as ONE camera-facing strip, newest (the head) first. Each
+// consecutive pair becomes one segment instance (mode 3 in vs_particle): A, B, widths, u, colour ratio, alpha. Width
+// per point = the particle's simulated size (so the scale-over-life curve is the taper) x the linear taper; the
+// samplers' scroll comes from the head particle for every segment so the texture does not seam at the joints.
+void emit_strip(const fx_emitter& e, std::vector<GpuP>& pts, bool preset, std::vector<GpuP>& out);
+void build_ribbon(const fx_emitter& e, const fx_state& st, const fx_inst& in, int headIdx, const int* next,
+                  const float (*view)[4], std::vector<GpuP>& out) {
+  if (e.ribbon_span_len > 0.0f) {
+    // span mode (a beam): each live particle is one straight strip from its origin along its local +Z. The particle
+    // gives the origin, the colour / alpha and the width (its simulated size); the param curve, when keyed, is the
+    // growth 0..1 of the length. The ends ease in / out in width AND alpha, so a beam has pointed ends and soft sides.
+    for (int k = headIdx; k >= 0; k = next[k]) {
+      GpuP base;
+      particle_data(e, st.part[k], in, view, base);
+      float zl = std::sqrt(base.az[0] * base.az[0] + base.az[1] * base.az[1] + base.az[2] * base.az[2]);
+      if (!(zl > 1e-6f)) continue;
+      const float g = e.param.keyed ? std::min(1.0f, std::max(0.0f, base.p1[2])) : 1.0f;
+      const float len = e.ribbon_span_len * zl * g;
+      if (!(len > 1e-4f)) continue;
+      const int n = e.ribbon_span_segs + 1;
+      std::vector<GpuP> pts(size_t(n), base);
+      const float a0 = base.c0[3] * base.c1[3];
+      for (int i = 0; i < n; ++i) {
+        const float t = float(i) / float(n - 1);
+        const float prof = fx_rib_profile(t, e.ribbon_end[0], e.ribbon_end[1]);
+        for (int c = 0; c < 3; ++c) pts[size_t(i)].p0[c] = base.p0[c] + base.az[c] / zl * len * t;
+        pts[size_t(i)].p0[3] = base.p0[3] * fx_rib_width_mul(i, n, e.ribbon_taper) * fx_rib_curve(e.ribbon_wk, e.ribbon_nwk, t) * prof;
+        pts[size_t(i)].c0[3] = a0 * prof;
+        pts[size_t(i)].c1[3] = 1.0f;
+      }
+      emit_strip(e, pts, true, out);
+    }
+    return;
+  }
+  std::vector<std::pair<int, int>> order; // (age, slot): youngest first, slot order breaks ties
+  for (int k = headIdx; k >= 0; k = next[k]) order.emplace_back(st.part[k].age, k);
+  if (order.size() < 2) return;
+  std::sort(order.begin(), order.end());
+  std::vector<GpuP> pts(order.size());
+  for (size_t i = 0; i < order.size(); ++i) particle_data(e, st.part[order[i].second], in, view, pts[i]);
+  emit_strip(e, pts, false, out);
+}
+
+// pts: the strip's points, head first (positions p0.xyz, width p0.w, colour c0, alpha c0.a * c1.a). preset: the widths
+// already include the taper / ends (span mode), else the linear taper applies here.
+void emit_strip(const fx_emitter& e, std::vector<GpuP>& pts, bool preset, std::vector<GpuP>& out) {
+  const int n = int(pts.size());
+  std::vector<float> cum(size_t(n), 0.0f);
+  for (int i = 1; i < n; ++i) {
+    float d2 = 0.0f;
+    for (int c = 0; c < 3; ++c) { const float d = pts[size_t(i)].p0[c] - pts[size_t(i - 1)].p0[c]; d2 += d * d; }
+    cum[size_t(i)] = cum[size_t(i - 1)] + std::sqrt(d2);
+  }
+  for (int i = 0; i + 1 < n; ++i) {
+    const GpuP& A = pts[size_t(i)];
+    const GpuP& B = pts[size_t(i + 1)];
+    GpuP s = A;
+    std::memcpy(s.a, pts[0].a, sizeof s.a);
+    std::memcpy(s.b, pts[0].b, sizeof s.b);
+    s.p0[3] = preset ? A.p0[3] : A.p0[3] * fx_rib_width_mul(i, n, e.ribbon_taper);
+    s.p1[0] = preset ? B.p0[3] : B.p0[3] * fx_rib_width_mul(i + 1, n, e.ribbon_taper);
+    s.p1[1] = 0.0f;
+    s.p1[3] = 3.0f;
+    s.ax[0] = B.p0[0]; s.ax[1] = B.p0[1]; s.ax[2] = B.p0[2];
+    s.ax[3] = fx_rib_u(i, n, cum[size_t(i)], e.ribbon_uv_per_unit);
+    s.ay[0] = fx_rib_u(i + 1, n, cum[size_t(i + 1)], e.ribbon_uv_per_unit);
+    s.ay[1] = A.c0[3] * A.c1[3];
+    s.ay[2] = B.c0[3] * B.c1[3];
+    s.ay[3] = 0.0f;
+    for (int c = 0; c < 3; ++c) s.az[c] = A.c0[c] > 1e-4f ? B.c0[c] / A.c0[c] : 1.0f;
+    s.az[3] = 0.0f;
+    s.c0[3] = 1.0f;
+    s.c1[3] = 1.0f;
+    out.push_back(s);
+  }
+}
+
 void fill_material(const fx_emitter& e, GpuU& u, uint32_t kind) {
   static int flat = -1;
   if (flat < 0) { const char* v = std::getenv("MELEE_FX_DEBUGFLAT"); flat = v != nullptr && v[0] == '1'; }
@@ -810,6 +959,17 @@ void fill_material(const fx_emitter& e, GpuU& u, uint32_t kind) {
     if (k == 1) u.inv_div[1][3] = e.fresnel_lo;
     if (k == 2) u.inv_div[2][3] = e.fresnel_hi;
   }
+  // R1 glare tint, R3 soft distance (the depth snapshot is bound only on frames that asked for it), R4 dissolve
+  u.mat4[0] = e.bloom_tint[0];
+  u.mat4[1] = e.bloom_tint[1];
+  u.mat4[2] = e.bloom_tint[2];
+  u.mat4[3] = kind == KParticles || kind == KMesh ? e.soft_distance : 0.0f;
+  u.mat5[0] = e.dissolve_color[0];
+  u.mat5[1] = e.dissolve_color[1];
+  u.mat5[2] = e.dissolve_color[2];
+  u.mat5[3] = e.dissolve_edge;
+  u.mat6[0] = uint32_t(e.dissolve_mask);
+  u.mat6[1] = e.param.keyed ? 1u : 0u;
 }
 
 uint32_t g_lastFrame = ~0u;
@@ -830,6 +990,8 @@ struct FrameData {
   std::vector<GpuP> buf;
   std::vector<Group> groups;
   bool needFrame = false, needBloom = false, needDepth = false;
+  float bloomRadius = 1.0f;  // R1: the widest glare reach among this frame's bloom emitters
+  float flash[4] = {0, 0, 0, 0}; // R6: screen flash rgba (alpha 0 = none)
   uint32_t slotIdx = 0, frame = 0;
 };
 constexpr uint32_t kFrames = 4; // the GX thread consumes a frame's data before the frame ends (aurora_end_frame drains)
@@ -852,12 +1014,48 @@ extern "C" void gw_diag_fx_cam(int cobj, int code, int main_cobj, float ex, floa
          uint32_t(cobj), ex, ey, ez, uint32_t(main_cobj), mx, my, mz);
 }
 
+// ---- R6: camera shake + screen flash (cosmetic events) ---------------------------------------------------------
+// State lives here, on the game thread, outside fx_state: it is never saved or restored, and no simulation code reads
+// it. Offsets are a pure function of (render frame - start frame) (fx_shake_offset), applied only by
+// gw_Fx_ShakeOffset to the *perspective* projection the GX shim submits (shim_gx.c gw_GXSetProjection): the game's
+// camera objects (CObj eye / interest / fov, the camera GObj the fighters and rollback use) are never written. A
+// resimulated frame that re-fires the same event restarts it: harmless, since nothing reads it back.
+namespace {
+struct FxCosmetic {
+  int shakeStart = -1000000, shakeFrames = 0;
+  float shakeAmp = 0.0f;
+  uint32_t shakeSeed = 1;
+  int flashStart = -1000000, flashFrames = 0;
+  float flashColor[4] = {1, 1, 1, 0};
+} g_cos;
+} // namespace
+extern "C" void gw_Fx_Shake(float amp, int frames, unsigned seed) {
+  if (!(amp > 0.0f) || frames <= 0) return;
+  g_cos.shakeAmp = std::min(amp, 0.2f); // NDC units: 0.2 is a tenth of the screen's width
+  g_cos.shakeFrames = std::min(frames, 600);
+  g_cos.shakeSeed = seed ? seed : 1u;
+  g_cos.shakeStart = int(aurora::gfx::current_frame());
+}
+extern "C" void gw_Fx_Flash(float r, float g, float b, float a, int frames) {
+  if (!(a > 0.0f) || frames <= 0) return;
+  g_cos.flashColor[0] = r; g_cos.flashColor[1] = g; g_cos.flashColor[2] = b;
+  g_cos.flashColor[3] = std::min(a, 1.0f);
+  g_cos.flashFrames = std::min(frames, 600);
+  g_cos.flashStart = int(aurora::gfx::current_frame());
+}
+// the NDC offset to add to a perspective projection this frame (0,0 when no shake is playing)
+extern "C" void gw_Fx_ShakeOffset(float out[2]) {
+  fx_shake_offset(int(aurora::gfx::current_frame()), g_cos.shakeStart, g_cos.shakeFrames, g_cos.shakeAmp, g_cos.shakeSeed, out);
+}
+
 // Called from the Geno effects GObj's render callback (game thread, inside the camera's EFB pass), with the
 // guest address of the camera's viewing matrix (world -> view, 3x4, big-endian). Draws every live Geno particle.
 extern "C" void gw_Fx_Draw(int view_guest) {
   const fx_state* st = gw_fx_state();
-  if (st == nullptr || st->nlive <= 0 || view_guest == 0) return;
   const uint32_t frame = aurora::gfx::current_frame();
+  float flashRgba[4] = {g_cos.flashColor[0], g_cos.flashColor[1], g_cos.flashColor[2],
+                        fx_flash_alpha(int(frame), g_cos.flashStart, g_cos.flashFrames, g_cos.flashColor[3])};
+  if (st == nullptr || view_guest == 0 || (st->nlive <= 0 && !(flashRgba[3] > 0.0f))) return;
   {
     // MELEE_FX_CAMLOG=1: every call (each camera that draws link 8), every 60th frame: the view's translation
     // and the projection, to see which camera the effects take
@@ -918,6 +1116,7 @@ extern "C" void gw_Fx_Draw(int view_guest) {
   std::vector<Group> groups;
   buf.reserve(size_t(st->nlive));
   bool needFrame = false, needBloom = false, needDepth = false;
+  float bloomRadius = 1.0f;
   // Fixed linked buckets preserve particle-slot order without per-instance
   // vectors/allocations or scanning the whole pool for every emitter.
   int head[FX_MAX_INST],next[FX_MAX_PARTICLES];
@@ -935,6 +1134,9 @@ extern "C" void gw_Fx_Draw(int view_guest) {
     if (p == nullptr || in.em >= p->nem) continue;
     const fx_emitter& e = p->em[in.em];
     const int first = int(buf.size());
+    if (e.ribbon && !e.mesh) {
+      build_ribbon(e, *st, in, head[i], next, base.view, buf);
+    } else
     for (int k=head[i];k>=0;k=next[k]) {
         buf.emplace_back();
         particle_data(e, st->part[k], in, base.view, buf.back());
@@ -947,6 +1149,8 @@ extern "C" void gw_Fx_Draw(int view_guest) {
     needFrame |= e.shader == FX_SH_DISTORTION || custom_shader != 0;
     needDepth |= custom_shader != 0;
     needBloom |= e.bloom_intensity > 0.0f;
+    needDepth |= e.soft_distance > 0.0f;
+    if (e.bloom_intensity > 0.0f) bloomRadius = std::max(bloomRadius, e.bloom_radius);
   }
   gw_fx_batch_additive(groups,buf,[](const Group& g) {
     const fx_emitter& e=gw_fx_pkg(g.pkg)->em[g.em];
@@ -955,7 +1159,7 @@ extern "C" void gw_Fx_Draw(int view_guest) {
     return e.blend==FX_BLEND_ADD && (e.additive_batch ||
       gw_Shader_FxSelect(g.pkg,g.em,e.custom_shader)==0);
   });
-  if (groups.empty()) return;
+  if (groups.empty() && !(flashRgba[3] > 0.0f)) return;
   {
     // MELEE_FX_DRAWLOG=1: per emitter group, what is drawn and where it lands on screen (NDC bbox of the particle
     // centres, or of the mesh vertices), capped
@@ -1012,6 +1216,8 @@ extern "C" void gw_Fx_Draw(int view_guest) {
   fd.needFrame = needFrame;
   fd.needBloom = needBloom;
   fd.needDepth = needDepth;
+  fd.bloomRadius = bloomRadius;
+  std::memcpy(fd.flash, flashRgba, sizeof fd.flash);
   fd.slotIdx = frame % kSlots;
   fd.frame = frame;
   const uint32_t idx = uint32_t(&fd - g_frames);
@@ -1046,7 +1252,7 @@ void record_frame(const void* data, u32 size) {
   const uint32_t slotIdx = fd.slotIdx;
   Slot slot;
   slot.frame = fd.frame;
-  if (needFrame || needBloom) {
+  if (needFrame || needBloom || fd.needDepth) {
     aurora::gfx::ResolveDesc rd{};
     rd.color = needFrame;
     rd.depth = needBloom || fd.needDepth;
@@ -1172,7 +1378,7 @@ void record_frame(const void* data, u32 size) {
         std::lock_guard<std::mutex> lk(g_slotMutex);
         g_slots[slotIdx] = slot;
       }
-      push(KBlurH, nullptr, float(qw), float(qh), 1.0f, 1.0f / float(bw), 0.0f, 0);
+      push(KBlurH, nullptr, float(qw), float(qh), 1.0f, fd.bloomRadius / float(bw), 0.0f, 0);
       if (aurora::gfx::resolve_pass(colorOnly, rt)) slot.bloom[1] = rt.color;
     }
     if (slot.bloom[1] && aurora::gfx::create_pass(qw, qh)) {
@@ -1180,7 +1386,7 @@ void record_frame(const void* data, u32 size) {
         std::lock_guard<std::mutex> lk(g_slotMutex);
         g_slots[slotIdx] = slot;
       }
-      push(KBlurV, nullptr, float(qw), float(qh), 1.0f, 0.0f, 1.0f / float(qh), 1);
+      push(KBlurV, nullptr, float(qw), float(qh), 1.0f, 0.0f, fd.bloomRadius / float(qh), 1);
       if (aurora::gfx::resolve_pass(colorOnly, rt)) slot.bloom[2] = rt.color;
     }
     {
@@ -1188,6 +1394,18 @@ void record_frame(const void* data, u32 size) {
       g_slots[slotIdx] = slot;
     }
     if (slot.bloom[2]) push(KComposite, nullptr, W, H, 1.0f, 0.0f, 0.0f, 2);
+  }
+  if (fd.flash[3] > 0.0f) { // R6: the screen flash, over everything the effects drew
+    GpuU u = base;
+    Payload d{};
+    d.kind = KFlash;
+    d.slot = slotIdx;
+    d.pkg = d.em = -1;
+    d.blend = FX_BLEND_ALPHA;
+    u.screen[0] = W; u.screen[1] = H; u.screen[2] = 1.0f / W; u.screen[3] = 1.0f / H;
+    for (int c = 0; c < 4; ++c) u.mat4[c] = fd.flash[c];
+    d.uni = aurora::gfx::push_uniform(reinterpret_cast<const uint8_t*>(&u), sizeof u);
+    aurora::gfx::push_custom_draw(g_drawType, &d, sizeof d);
   }
   g_lastBloomDraws = bloomDraws;
   g_lastW = slot.w;

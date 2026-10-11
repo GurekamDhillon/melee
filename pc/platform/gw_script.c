@@ -3766,6 +3766,22 @@ static int l_fx_attach(lua_State *L) {
         gw_ScriptGame_FighterF(slot,SF_FACING)<0?-1:1,x,y,z,scale);
     lua_pushboolean(L,handle>0);return 1;
 }
+/* R6: cosmetic camera shake / screen flash. Render-only (gw_fx_render.cpp): no simulation state, no LAB fork, so they
+ * are allowed online. gd.fx_shake(amp_ndc, frames[, seed]); gd.fx_flash(r, g, b, alpha, frames). */
+extern void gw_Fx_Shake(float amp, int frames, unsigned seed);
+extern void gw_Fx_Flash(float r, float g, float b, float a, int frames);
+static int l_fx_shake(lua_State *L) {
+    float amp=(float)luaL_checknumber(L,1);int frames=(int)luaL_checkinteger(L,2);
+    lua_Integer seed=luaL_optinteger(L,3,1);
+    if(!isfinite(amp)||amp<0||frames<0)return luaL_error(L,"fx_shake requires amp >= 0 and frames >= 0");
+    gw_Fx_Shake(amp,frames,(unsigned)seed);return 0;
+}
+static int l_fx_flash(lua_State *L) {
+    float r=(float)luaL_checknumber(L,1),g=(float)luaL_checknumber(L,2),b=(float)luaL_checknumber(L,3);
+    float a=(float)luaL_checknumber(L,4);int frames=(int)luaL_checkinteger(L,5);
+    if(!isfinite(r)||!isfinite(g)||!isfinite(b)||!isfinite(a)||frames<0)return luaL_error(L,"fx_flash requires finite colour and frames >= 0");
+    gw_Fx_Flash(r,g,b,a,frames);return 0;
+}
 static int l_fx_stop(lua_State *L) {
     gs_require_offline(L,"fx_stop");gw_Fx_LabStop(gs.cur+1);return 0;
 }
@@ -6939,7 +6955,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"dobj_solid", l_dobj_solid}, {"dobj_solid_off", l_dobj_solid_off},
     {"dobj_tint", l_dobj_tint},
     {"parts", l_parts}, {"parts_id", l_parts_id}, {"parts_id_off", l_parts_id_off}, {"parts_clear", l_parts_clear},
-    {"fx_attach", l_fx_attach}, {"fx_stop", l_fx_stop},
+    {"fx_attach", l_fx_attach}, {"fx_stop", l_fx_stop}, {"fx_shake", l_fx_shake}, {"fx_flash", l_fx_flash},
     {"fx_play", l_fx_play}, {"fx_control", l_fx_control}, {"fx_end", l_fx_end}, {"fx_instance", l_fx_instance},
     {"fx_world", l_fx_world}, {"fx_move", l_fx_move},
     {"project", l_project}, {"attrs", l_attrs},

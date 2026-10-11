@@ -756,6 +756,11 @@ static void on_packet(gw_net *n, const gw_net_addr *from, const uint8_t *buf, in
         n->cfg.cb.guest_hello(n->cfg.cb.user, p, il, n->blob, &n->blob_len, GW_NET_MAX_BLOB);
       }
     }
+    if (n->blob_len > GW_NET_MAX_BLOB) {
+      n->blob_len = 0;
+      send_refuse_to(n, from, 1, "match setup exceeds transport limit");
+      return; /* remain listening: an invalid setup never consumes the peer slot */
+    }
     n->peer = *from;
     n->peer_locked = 1;
     n->session = (now(n) * 2654435761u) ^ (from->ip * 40503u) ^ ((uint32_t)from->port << 16) ^

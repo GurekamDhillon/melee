@@ -40,6 +40,8 @@
 #include "gw_rollback.h"
 #include "gw_slippi_pad.h"
 #include "gw_replay_matchrules.h"
+#include "gw_replay_controls.h"
+#include "gw_fighter_controls.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -66,6 +68,7 @@ static struct {
     int tried;
     int active;
     int live; /* netplay: armed by a live match, no recording behind it (see rp_load) */
+    unsigned controls[4]; /* frozen per-physical-port choices, not local settings */
     unsigned turbo; /* port recording's tagged match rule; legacy recordings remain off */
     uint8_t game_info[GW_RP_GAME_INFO];
     uint32_t seed;
@@ -162,6 +165,10 @@ static int rp_parse(const uint8_t *d, size_t n) {
                 if (sz < 0x140) { rp.truncated = 1; c += 1 + sz; continue; }
                 if (gw_rp_rules_read(b, sz, &rp.turbo) < 0) {
                     gw_log("replay: unsupported Turbo match rule 0x%08x; refusing playback", rp.turbo);
+                    return -1;
+                }
+                if (gw_rp_controls_read(b, sz, rp.controls) < 0) {
+                    gw_log("replay: unsupported or malformed fighter controls; refusing playback");
                     return -1;
                 }
                 rp.game_start_seen = 1;
@@ -432,6 +439,28 @@ uint32_t gw_Replay_ApplyMatch(void *start_melee_data) {
 }
 
 
+/* fn_8016E730: resolve profiles once after match setup/replay restoration.
+ * PlayerInitData +7 is the physical controller; +0 is CharacterKind. */
+void gw_FighterControls_MatchBegin(void *start_melee_data) {
+    const uint8_t *d = (const uint8_t *)start_melee_data;
+    int p;
+    extern unsigned gw_Netplay_FighterControls(int player);
+    gw_FighterControls_MatchClear();
+    for (p = 0; p < 4; ++p) {
+        const uint8_t *pl = d + 0x60 + 0x24 * p;
+        int port = pl[7], ck = pl[0];
+        unsigned choice;
+        if (pl[1] != 0 || port >= 4) continue; /* human controllers only */
+        if (rp.active && !rp.live) choice = rp.controls[port];
+        else if (rp.live) choice = gw_Netplay_FighterControls(p);
+        else choice = gw_FighterControls_Get(port, ck);
+        gw_FighterControls_MatchSet(port, ck, choice);
+        gw_log("fighter controls: frozen P%d controller %d ck %d choice 0x%04x (%s)",
+               p + 1, port + 1, ck, gw_FighterControls_MatchGet(port),
+               rp.active ? rp.live ? "online" : "replay" : "offline");
+    }
+}
+
 /* ---- recording: MELEE_SLP_RECORD=<file> ----------------------------------------------------
  * Writes the port's own match as a Slippi replay, from the same points playback reads: the
  * StartMeleeData and seed at fn_8016E730, each frame's start seed, each character's processed
@@ -444,7 +473,7 @@ uint32_t gw_Replay_ApplyMatch(void *start_melee_data) {
  * the self-consistency test rollback rests on (tools/replay/first_div.py against the recording).
  * The raw-block length is written as 0 up front (Slippi's own convention for a replay still being
  * written) and patched at exit, so a run that dies mid-match still leaves a playable file. */
-#define GW_RP_SZ_START GW_RP_RULES_START
+#define GW_RP_SZ_START GW_RP_CONTROLS_START
 #define GW_RP_SZ_PRE 0x42
 #define GW_RP_SZ_POST 0x54
 #define GW_RP_SZ_END 0x6
@@ -671,12 +700,23 @@ void gw_Replay_RecordMatch(void *start_melee_data, uint32_t seed) {
         ev[0x1A4] = rp.online ? 8 : 2;
     }
     gw_rp_rules_write(ev, (unsigned) gw_MatchTurboRules());
+    {
+        unsigned choices[4];
+        int p;
+        for (p = 0; p < 4; ++p) choices[p] = gw_FighterControls_MatchGet(p);
+        gw_rp_controls_write(ev, choices);
+    }
     fwrite(ev, 1, sizeof ev, rec.f);
     rec.frame = GW_RP_FIRST_FRAME - 1;
     rec_flush_next = GW_RP_FIRST_FRAME;
     gw_log("replay: recording the match (seed 0x%08X, turbo=0x%08x)", seed,
            (unsigned) gw_MatchTurboRules());
 }
+
+/* Processed Slippi inputs (including raw PAD fixtures reconstructed from
+ * those processed fields) already contain the mapping. LAB records use the
+ * earlier raw-controller log and therefore pass through the transform. */
+int gw_Replay_ControlsRaw(void) { return !rp.active || rp.live; }
 
 /* Native only: playback never reads the user's local Turbo preference. */
 int gw_Replay_TurboRules(void) { return (int) rp.turbo; }

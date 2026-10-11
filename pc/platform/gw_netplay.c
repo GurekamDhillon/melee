@@ -33,6 +33,8 @@
  */
 #include "gw.h"
 #include "gw_net.h"
+#include "gw_fighter_controls.h"
+#include "gw_replay_controls.h"
 #include "gw_rollback.h"
 #include "gw_mexid.h" /* delta: content identities - mods online (gw_mexid.h) */
 #include "gw_overlay.h" /* the draw rule is also visible without a persistent room */
@@ -101,6 +103,7 @@ static struct {
     int host;
     /* the setup */
     int ck, color, stage_ext, stocks, minutes, delay;
+    unsigned controls[2]; /* host/P1, guest/P2: agreed per-game choices */
     char peer_code[96];   /* guest: the host's code; host: the guest's code, for hole punching */
     char peer_name[24];   /* the opponent's player name (lobby "N"), "" none */
     uint16_t port;
@@ -164,6 +167,9 @@ int gw_Netplay_EnvoyPrefMode(void) { return np.envoy_pref == GW_ENVOY_MODE_COOP 
 int gw_Netplay_EnvoyRoomMode(void) { return np.envoy == GW_ENVOY_MODE_COOP ? 2 : np.envoy != 0; }          /* this room's agreed mode */
 int gw_Netplay_Envoy(void) { return np.envoy != 0; }
 int gw_Netplay_LocalPort(void) { return np.host ? 0 : 1; }
+unsigned gw_Netplay_FighterControls(int player) {
+    return player >= 0 && player < 2 ? np.controls[player] : 0;
+}
 int gw_Netplay_RemotePort(void) { return np.host ? 1 : 0; }
 int gw_Netplay_Delay(void) { return np.delay; }
 /* A netplay MATCH is running against a connected peer: the window must keep its input in the
@@ -477,14 +483,31 @@ static void np_cb_guest_hello(void *user, const uint8_t *info, int info_len, uin
         gck = 9;
     }
     if (gc < 0 || (gc > 254 && !(gc & 0x40000000))) gc = 0; /* a base costume 0..254, or a skin's wire costume */
+    {
+        const char *j = strstr(s, "/j");
+        unsigned word = 0;
+        if (j != NULL) sscanf(j, "/j%u", &word);
+        np.controls[0] = gw_FighterControls_Get(0, np.ck);
+        np.controls[1] = gw_controls_word_valid(word) ? word : 0;
+    }
     np_build_scene(np.scene, sizeof np.scene, np.ck, np.color, gck, gc);
     if (!np_random_matched()) { /* a public random match is always the plain scene */
         char x[200];
         np_scene_extras(x, sizeof x);
         snprintf(np.scene + strlen(np.scene), sizeof np.scene - strlen(np.scene), "%s", x);
     }
-    snprintf((char *) blob, (size_t) cap, "%s", np.scene);
-    *blob_len = (uint16_t) (strlen(np.scene) + 1);
+    {
+        int written = cap > 0 ? snprintf((char *)blob, (size_t)cap, "J %u %u %s",
+                                        np.controls[0], np.controls[1], np.scene) : -1;
+        if (written < 0 || written >= cap || written + 1 > GW_NET_MAX_BLOB) {
+            /* The transport refuses before locking the peer. Never accept a
+             * truncated scene or advertise bytes outside this output buffer. */
+            *blob_len = GW_NET_MAX_BLOB + 1;
+            gw_log("netplay: refusing oversize fighter-controls match setup");
+            return;
+        }
+        *blob_len = (uint16_t)(written + 1);
+    }
     gw_log("netplay: the guest picked \"%s\" - match \"%s\"", s, np.scene);
 }
 
@@ -1588,6 +1611,17 @@ static void lb_new_set(int host_ck, int guest_ck) {
  * the guest recomputes from its OWN state and refuses on a difference. Before a peer leaves a stage's scene the two exchange the stage-end tuple
  * (gw_Netplay_StageEnd, below); equal tuples move both directors on identically, unequal tuples end the run. The director writes nothing during a stage. */
 static void lb_send(const char *msg);
+static void lb_controls_send(void) {
+    char m[48];
+    if (np.host) snprintf(m, sizeof m, "J %u %u", np.controls[0], np.controls[1]);
+    else snprintf(m, sizeof m, "J %u", np.controls[1]);
+    lb_send(m);
+}
+static void lb_controls_local(void) {
+    int who = np.host ? 0 : 1;
+    np.controls[who] = gw_FighterControls_Get(0, np.ck);
+    lb_controls_send();
+}
 static void lb_run_abort(const char *why);
 static int lb_run_env_int(const char *name, int dflt) {
     const char *e = getenv(name);
@@ -2606,6 +2640,7 @@ static void lb_go(void) {
     np_build_scene(np.scene, sizeof np.scene, lb.ck[0], lb.color[0], lb.ck[1], lb.color[1]);
     if (lb.run_on) lb_run_scene_token();
     lb.phase = LB_GO;
+    lb_controls_send(); /* reliable channel orders frozen choices before G */
     rn_game_start();
     {   /* the host's extras (CPUs, teams, items) go first, in their own message: the base scene alone nearly fills a lobby message */
         char x[GW_NET_LOBBY_MAX];
@@ -2646,6 +2681,28 @@ static void np_cb_lobby(void *user, const uint8_t *data, int len) {
     if (len > GW_NET_LOBBY_MAX) len = GW_NET_LOBBY_MAX;
     memcpy(m, data, (size_t) len);
     m[len] = '\0';
+    if (m[0] == 'J' && m[1] == ' ') {
+        unsigned words[2] = {0, 0};
+        int k = sscanf(m + 2, "%u %u", &words[0], &words[1]);
+        if (k < (np.host ? 1 : 2) || !gw_controls_word_valid(words[0]) ||
+            (!np.host && !gw_controls_word_valid(words[1]))) {
+            gw_log("netplay: refused malformed lobby fighter controls");
+            return;
+        }
+        if (np.host) {
+            if (np.controls[1] != words[0]) {
+                np.controls[1] = words[0];
+                lb.ready[1] = 0;
+                lb.countdown = 0;
+                lb.seq++;
+                lb_controls_send();
+            }
+        } else {
+            np.controls[0] = words[0]; np.controls[1] = words[1];
+        }
+        gw_log("netplay: agreed fighter controls P1=0x%04x P2=0x%04x", np.controls[0], np.controls[1]);
+        return;
+    }
     if (m[0] == 'N' && m[1] == ' ') {
         /* the opponent's player name (SETTINGS > Online > Player Name) - printable ASCII only */
         int i, k = 0;
@@ -2886,6 +2943,7 @@ void gw_Netplay_Background(void) {
 static void np_lobby_enter(void) {
     char nm[40];
     np.phase = NP_LOBBY;
+    lb_controls_local();
     np.peer_name[0] = '\0';
     gw_Settings_Str("name", nm + 2, (int) sizeof nm - 2, "");
     if (nm[2] != '\0') {
@@ -3283,7 +3341,8 @@ static int np_start_session(const gw_net_addr *peer_in, uint32_t bind_ip) {
             np_status("Hosting. Your code %s is copied - send it to your friend", np.code);
         }
     } else {
-        snprintf(np.info, sizeof np.info, "%s/c%d", gw_MexId_TokenForCk(np.ck), np.color); /* delta */
+        snprintf(np.info, sizeof np.info, "%s/c%d/j%u", gw_MexId_TokenForCk(np.ck), np.color,
+                 gw_FighterControls_Get(0, np.ck)); /* physical picker profile, game port P2 */
         cfg.guest_info = np.info;
         cfg.guest_info_len = (uint8_t) strlen(np.info);
         if (rdv.configured) {
@@ -3487,7 +3546,18 @@ static int np_poll(void) {
                     return np.phase;
                 }
                 blob[sizeof blob - 1] = '\0';
-                snprintf(np.scene, sizeof np.scene, "%s", blob);
+                {
+                    int used = 0;
+                    if (sscanf(blob, "J %u %u %n", &np.controls[0], &np.controls[1], &used) != 2 ||
+                        used <= 0 || !gw_controls_word_valid(np.controls[0]) ||
+                        !gw_controls_word_valid(np.controls[1])) {
+                        gw_log("netplay: malformed fighter controls in ACCEPT; refusing match");
+                        np.phase = NP_FAILED;
+                        np_close();
+                        return np.phase;
+                    }
+                    snprintf(np.scene, sizeof np.scene, "%s", blob + used);
+                }
                 {
                     /* delta: the host names m-ex content by identity; if this install lacks one
                        of them, say which instead of failing to load the match (gw_mexid.c) */
@@ -4088,12 +4158,16 @@ void gw_Netplay_LobbyChar(int ck, int color) {
     np_refusal[0] = 0;
     np.ck = ck; /* remembered for the next room too */
     np.color = gw_Skins_ToWireCK(ck, color);
+    lb_controls_local();
     lb_action("CHAR", ck, np.color);
 }
 void gw_Netplay_LobbyStageAct(int i) {
     lb_action(lb.phase == LB_BAN ? "BAN" : lb.phase == LB_PICK ? "PICK" : "STRIKE", i, 0);
 }
-void gw_Netplay_LobbyReady(int on) { lb_action("READY", on != 0, 0); }
+void gw_Netplay_LobbyReady(int on) {
+    if (on) lb_controls_local(); /* edits made after the character lock are carried too */
+    lb_action("READY", on != 0, 0);
+}
 int gw_Netplay_LobbyActive(void) { return np.phase == NP_LOBBY; }
 
 /* Persistent rooms: after a room-code match both players come back to the lobby, which
@@ -4437,6 +4511,7 @@ uint32_t gw_Netplay_Handshake(uint8_t *d, int len, int keep_off, int keep_len) {
         return np.seed;
     }
     np.phase = NP_RUNNING;
+    gw_log("netplay: frozen fighter controls P1=0x%04x P2=0x%04x", np.controls[0], np.controls[1]);
     {
         char title[200];
         np_connected_title(title, sizeof title);
@@ -4754,7 +4829,46 @@ static int test_lobby_envoy(void) {
 
 /* All stages: game 1 is ban-and-pick from the coin winner; the list travels as identities in
    chunks and comes back as the same external ids; the state names the list it goes with. */
+static int test_netplay_fighter_controls(void) {
+    char blob[GW_NET_MAX_BLOB];
+    uint16_t len;
+    unsigned save[2] = {np.controls[0], np.controls[1]}, a, b;
+    int host = np.host, used = 0, rc = 0;
+    char scene[sizeof np.scene];
+    memcpy(scene, np.scene, sizeof scene);
+    np_cb_guest_hello(NULL, (const uint8_t *)"ck:9/c0/j1", (int)strlen("ck:9/c0/j1"),
+                       (uint8_t *)blob, &len, sizeof blob);
+    if (sscanf(blob, "J %u %u %n", &a, &b, &used) != 2 || used <= 0 || b != 1 ||
+        a != gw_FighterControls_Get(0, np.ck)) rc = lbt_fail("HELLO/ACCEPT keeps each player's fighter controls");
+    {
+        char received[GW_NET_MAX_BLOB + 1];
+        unsigned char tiny[8];
+        memset(received, 0x5a, sizeof received); /* bytes not actually sent remain poison */
+        if (len > GW_NET_MAX_BLOB) rc = lbt_fail("ACCEPT controls length fits its transport buffer");
+        else {
+            memcpy(received, blob, len); /* exactly the byte count gw_net sends */
+            used = 0;
+            if (len == 0 || received[len - 1] != '\0' ||
+                sscanf(received, "J %u %u %n", &a, &b, &used) != 2 || used <= 0 ||
+                strcmp(received + used, np.scene) != 0)
+                rc = lbt_fail("ACCEPT returned length carries the entire scene and NUL after controls prefix");
+        }
+        np_cb_guest_hello(NULL, (const uint8_t *)"ck:9/c0/j1", (int)strlen("ck:9/c0/j1"),
+                          tiny, &len, sizeof tiny);
+        if (len <= GW_NET_MAX_BLOB) rc = lbt_fail("oversize ACCEPT setup requests refusal instead of truncation");
+    }
+    np.host = 0;
+    np_cb_lobby(NULL, (const uint8_t *)"J 0 1", 5);
+    if (np.controls[0] != 0 || np.controls[1] != 1) rc = lbt_fail("lobby choices stay with host/P1 and guest/P2");
+    np_cb_lobby(NULL, (const uint8_t *)"J 3 64", 6);
+    if (np.controls[0] != 0 || np.controls[1] != 1) rc = lbt_fail("malformed lobby controls cannot replace choices");
+    np.host = host; np.controls[0] = save[0]; np.controls[1] = save[1];
+    memcpy(np.scene, scene, sizeof scene);
+    return rc;
+}
+
 static int test_netplay_costumes255(void) {
+    unsigned saved_controls[2] = {np.controls[0], np.controls[1]};
     char saved_scene[sizeof np.scene], blob[sizeof np.scene];
     uint16_t len;
     int c, rc = 0;
@@ -4771,6 +4885,7 @@ static int test_netplay_costumes255(void) {
         }
     }
     memcpy(np.scene, saved_scene, sizeof saved_scene);
+    np.controls[0] = saved_controls[0]; np.controls[1] = saved_controls[1];
     return rc;
 }
 
@@ -5565,6 +5680,7 @@ static int test_run_coop(void) {
 }
 
 void gw_netplay_tests_register(void) {
+    gw_test_register("netplay_fighter_controls", test_netplay_fighter_controls);
     gw_test_register("netplay_costumes255", test_netplay_costumes255);
     gw_test_register("netplay_envoyrun_record", test_run_record);
     gw_test_register("netplay_envoyrun_events", test_run_events);

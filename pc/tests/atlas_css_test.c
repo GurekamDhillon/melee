@@ -612,9 +612,87 @@ static void puck_misc(void)
     CHECK(at_css_zone_ok(&c, 0, 1, AT_ZONE_PUCK) && at_css_zone_ok(&c, 0, 1, AT_ZONE_LEVEL) && !at_css_zone_ok(&c, 0, 1, AT_ZONE_TYPE));
 }
 
+static unsigned controls_saved[4][30];
+static int controls_save_ok = 1;
+static int test_controls_count(void *u, int ck, int field)
+{ (void) u; return ck == 3 ? (field == 0 ? 3 : 2) : 0; }
+static unsigned test_controls_get(void *u, int p, int ck)
+{ (void) u; return controls_saved[p][ck]; }
+static int test_controls_set(void *u, int p, int ck, unsigned choice)
+{ (void) u; if (!controls_save_ok) return 0; controls_saved[p][ck] = choice; return 1; }
+
+static void controls_panel(void)
+{
+    AtCss c, reopened;
+    AtCssOps ops = OPS;
+    unsigned ev, bits;
+    int i;
+    ops.controls_count = test_controls_count;
+    ops.controls_get = test_controls_get;
+    ops.controls_set = test_controls_set;
+    memset(controls_saved, 0, sizeof controls_saved);
+    fresh_puck(&c, 0, 0, 29); c.ops = &ops; c.free = 1;
+    CHECK(c.controls_port == -1 && !at_css_controls_open(&c, 0));
+    c.p[0].ck = 3; c.p[0].hold = 0;
+    c.p[1].kind = AT_CSS_HMN; c.p[1].ck = 4;
+    at_css_hand_over(&c, 0, 1, 0, AT_ZONE_CONTROLS, 0);
+    CHECK(press(&c, 0, AT_CI_A, 0, 1) & AT_CE_FORWARD);
+    CHECK(c.controls_port == 0 && c.controls_choice == 0 && at_css_controls_rows(&c) == 5);
+    CHECK(!at_css_ready(&c));
+    /* Neither other controllers nor pointer hover move the coins beneath it. */
+    CHECK(!press(&c, 1, AT_CI_START | AT_CI_B, AT_CI_LEFT, 2) && c.p[1].ck == 4 && !c.done);
+    CHECK(!at_css_controls_point(&c, 1, 0, 1) && c.controls_choice == 0);
+    CHECK(!at_css_hand_over(&c, 0, 0, 3, 0, 0) && c.p[0].card == 0);
+    CHECK(!at_css_mouse_bits(&c, 0, 7, -1, 1, 1, 0, 0));
+    CHECK(!at_css_mouse_zone(&c, 0, 1, AT_ZONE_TYPE, 0, 1, 1, 0, 0));
+    press(&c, 0, 0, AT_CI_RIGHT, 3); CHECK(c.controls_choice == 4u); /* layout B */
+    press(&c, 0, 0, AT_CI_DOWN, 4);
+    press(&c, 0, 0, AT_CI_RIGHT, 5); CHECK(c.controls_choice == 5u); /* tap jump off */
+    press(&c, 0, 0, AT_CI_DOWN, 7);
+    press(&c, 0, AT_CI_A, 0, 8); CHECK(c.controls_choice == 0x105u);
+    ev = press(&c, 0, AT_CI_B, 0, 9);
+    CHECK((ev & AT_CE_BACK) && c.controls_port == -1 && c.p[0].ck == 3 && !c.p[0].hold && !c.done);
+    CHECK(!press(&c, 1, AT_CI_START, 0, 9) && !c.done); /* another port in the closing frame */
+    fresh_puck(&reopened, 0, 0, 29); reopened.ops = &ops; reopened.p[0].ck = 3;
+    at_css_controls_open(&reopened, 0);
+    CHECK(reopened.controls_choice == 0x105u); /* re-created CSS reads stored choice */
+    at_css_controls_point(&reopened, 0, 4, 2); CHECK(reopened.controls_port == -1);
+    reopened.p[0].ck = 4; at_css_controls_open(&reopened, 0);
+    CHECK(reopened.controls_choice == 0 && at_css_controls_rows(&reopened) == 2); /* retail: tap jump only */
+    at_css_controls_point(&reopened, 0, 0, -1); CHECK(reopened.controls_choice == 1); /* Off */
+    at_css_controls_point(&reopened, 0, 0, 1); CHECK(reopened.controls_choice == 0); /* back On */
+    at_css_controls_point(&reopened, 0, 0, 1); CHECK(reopened.controls_choice == 1);
+    at_css_controls_point(&reopened, 0, 1, 2);
+    reopened.p[1].kind = AT_CSS_HMN; reopened.p[1].ck = 3;
+    at_css_controls_open(&reopened, 1); CHECK(reopened.controls_choice == 0); /* separate player */
+    controls_save_ok = 0;
+    ev = at_css_controls_point(&reopened, 1, 0, 1);
+    CHECK((ev & AT_CE_TOAST) && reopened.controls_choice == 0 && strstr(reopened.toast, "saved"));
+    controls_save_ok = 1;
+    reopened.p[1].kind = AT_CSS_OFF;
+    press(&reopened, 1, 0, 0, 10); CHECK(reopened.controls_port == -1); /* unplug while open */
+    /* A mouse click uses precisely the hand's open action, and navigation wraps. */
+    bits = at_css_mouse_zone(&c, 0, 0, AT_ZONE_CONTROLS, 0, 1, 1, 0, 0);
+    press(&c, 0, bits, 0, 11); CHECK(c.controls_port == 0 && c.controls_choice == 0x105u);
+    for (i = 0; i < 5; i++) press(&c, 0, 0, AT_CI_DOWN, 12 + i);
+    CHECK(c.controls_row == 0);
+    press(&c, 0, AT_CI_START, 0, 18); CHECK(!c.done && c.controls_port == 0);
+}
+
 int main(void)
 {
+    /* A placed human can open controls only from their own panel. Zone 5 is
+     * reserved for Controls; this pins the gate before adding the overlay. */
+    {
+        AtCss c;
+        fresh_puck(&c, 0, 0, 29);
+        CHECK(!at_css_zone_ok(&c, 0, 0, 5));
+        c.p[0].ck = 3; c.p[0].hold = 0;
+        CHECK(at_css_zone_ok(&c, 0, 0, 5));
+        CHECK(!at_css_zone_ok(&c, 1, 0, 5));
+    }
     skins255_stepper();
+    controls_panel();
     ports_join(); legacy_rules_pick_undo_back(); legacy_rules_cards(); legacy_rules_costume(); legacy_rules_start();
     profile_rules(); legacy_rules_zelda(); tabs_visible(); ports_leave(); lobby_rules(); mouse_rules(); finish_state(); finish_leaves_mode_fields_group1(); finish_leaves_mode_fields_one_player();
     puck_rules(); puck_cpu(); puck_misc(); puck_retail(NULL); puck_free();

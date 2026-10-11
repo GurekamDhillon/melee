@@ -111,9 +111,12 @@ int at_css_zone_ok(const AtCss *c, int port, int k, int zone)
     case AT_ZONE_LEVEL: return kk->kind == AT_CSS_CPU;
     case AT_ZONE_COSTUME: return (kk->kind == AT_CSS_CPU || (kk->kind == AT_CSS_HMN && mine)) && kk->ck >= 0;
     case AT_ZONE_TEAM: return c->teams && (kk->kind == AT_CSS_CPU || (kk->kind == AT_CSS_HMN && mine));
+    case AT_ZONE_CONTROLS: return mine && kk->kind == AT_CSS_HMN && kk->ck >= 0 && !kk->hold && held_by(c, k) < 0;
     default: return 0;
     }
 }
+
+#include "gw_ui_css_controls.inc"
 
 static int first_zone(const AtCss *c, int port, int k)   /* the topmost zone of card k the hand can stand on, or -1 */
 {
@@ -171,6 +174,8 @@ void at_css_open(AtCss *c, const AtCssProfile *prof, const AtCssOps *ops, int on
     c->prof = prof;
     c->ops = ops;
     c->online = online != 0;
+    c->controls_port = -1;
+    c->controls_block_frame = -1;
     c->teams = teams != 0 && !c->online;                       /* fcs.teams: the rules' teams, never online */
     for (p = 0; p < 4; p++) {
         AtCssPort *s = &c->p[p];
@@ -274,6 +279,7 @@ const char *at_css_blocker(const AtCss *c, char *buf, int cap)
 {
     int p, min = c->prof != NULL ? c->prof->min_to_start : 2;
     if (cap < 1) return "";
+    if (c->controls_port >= 0) { snprintf(buf, (size_t) cap, "Close Controls to start."); return buf; }
     for (p = 0; p < 4; p++) {
         if (c->p[p].kind == AT_CSS_HMN && c->p[p].ck == AT_CK_NONE) {
             if (c->puck) snprintf(buf, (size_t) cap, "P%d: pick up your puck and drop it on a fighter.", p + 1);
@@ -475,11 +481,12 @@ static int pick_zone(const AtCss *c, int port, int k, const int *list, int n)
 static int nav_zone(const AtCss *c, int port, int k, int z, int dir)
 {
     static const int l_team_type[] = { AT_ZONE_TEAM, AT_ZONE_TYPE }, l_type[] = { AT_ZONE_TYPE }, l_team_puck[] = { AT_ZONE_TEAM, AT_ZONE_PUCK };
-    static const int l_down_top[] = { AT_ZONE_COSTUME, AT_ZONE_LEVEL, AT_ZONE_PUCK }, l_cost_level[] = { AT_ZONE_COSTUME, AT_ZONE_LEVEL }, l_level[] = { AT_ZONE_LEVEL };
+    static const int l_down_top[] = { AT_ZONE_COSTUME, AT_ZONE_LEVEL, AT_ZONE_PUCK }, l_cost_level[] = { AT_ZONE_COSTUME, AT_ZONE_LEVEL }, l_level[] = { AT_ZONE_LEVEL, AT_ZONE_CONTROLS };
     static const int l_up_cost[] = { AT_ZONE_PUCK, AT_ZONE_TEAM, AT_ZONE_TYPE }, l_up_level[] = { AT_ZONE_COSTUME, AT_ZONE_PUCK, AT_ZONE_TEAM, AT_ZONE_TYPE };
     int r;
     switch (dir) {
     case DIR_UP:
+        if (z == AT_ZONE_CONTROLS) return AT_ZONE_COSTUME;
         if (z == AT_ZONE_PUCK) return NAV_GRID;                                  /* the dock is in the left column: up from it leaves the panel */
         if (z == AT_ZONE_COSTUME) { r = pick_zone(c, port, k, l_up_cost, 3); return r < 0 ? NAV_GRID : r; }
         if (z == AT_ZONE_LEVEL) { r = pick_zone(c, port, k, l_up_level, 4); return r < 0 ? NAV_GRID : r; }
@@ -487,7 +494,7 @@ static int nav_zone(const AtCss *c, int port, int k, int z, int dir)
     case DIR_DOWN:
         if (z == AT_ZONE_TYPE || z == AT_ZONE_TEAM) { r = pick_zone(c, port, k, l_down_top, 3); return r < 0 ? NAV_STAY : r; }   /* down through the portrait: the costume stepper, the slider */
         if (z == AT_ZONE_PUCK) { r = pick_zone(c, port, k, l_cost_level, 2); return r < 0 ? NAV_STAY : r; }
-        if (z == AT_ZONE_COSTUME) { r = pick_zone(c, port, k, l_level, 1); return r < 0 ? NAV_STAY : r; }
+        if (z == AT_ZONE_COSTUME) { r = pick_zone(c, port, k, l_level, 2); return r < 0 ? NAV_STAY : r; }
         return NAV_STAY;
     case DIR_LEFT:
         if (z == AT_ZONE_TYPE) { r = pick_zone(c, port, k, l_team_puck, 2); return r < 0 ? NAV_PREV : r; }
@@ -594,6 +601,7 @@ static unsigned puck_cards(AtCss *c, int port, AtCssIn in)
             break;
         case AT_ZONE_COSTUME: shift_costume(c, k, 1); ev |= AT_CE_MOVE; break;
         case AT_ZONE_TEAM: c->p[k].team = (c->p[k].team + 1) % 3; ev |= AT_CE_MOVE; break;
+        case AT_ZONE_CONTROLS: ev |= at_css_controls_open(c, port); break;
         default: break;
         }
     } else if (in.trig & (AT_CI_X | AT_CI_Y)) {
@@ -683,7 +691,7 @@ unsigned at_css_hand_over(AtCss *c, int port, int region, int a, int b, int val)
 {
     AtCssPort *s;
     unsigned ev = 0;
-    if (c->prof == NULL || !c->puck || port < 0 || port > 3) return 0;
+    if (c->prof == NULL || !c->puck || port < 0 || port > 3 || c->controls_port >= 0) return 0;
     s = &c->p[port];
     if (s->kind != AT_CSS_HMN && !s->act) return 0;
     if (s->drag >= 0) return 0;                                     /* the hand is locked to the slider it holds */
@@ -716,6 +724,11 @@ unsigned at_css_mouse_zone(AtCss *c, int port, int card, int zone, int value, in
 {
     AtCssPort *s;
     unsigned b = rclick ? AT_CI_B : 0u;
+    if (c->controls_port >= 0) return 0;
+    if (zone == AT_ZONE_CONTROLS && at_css_zone_ok(c, port, card, zone)) {
+        if (moved || click) { c->p[port].card = card; c->p[port].zone = zone; }
+        return b | (click ? AT_CI_A : 0u);
+    }
     if (!c->puck || c->prof == NULL || port < 0 || port > 3 || card < 0 || card > 3) return b;
     s = &c->p[port];
     if (s->kind != AT_CSS_HMN && !s->act) { if (click && card == port) b |= AT_CI_A; return b; }
@@ -760,7 +773,18 @@ unsigned at_css_step(AtCss *c, int port, AtCssIn in, int frame)
     if (c->done || c->n_vis <= 0 || c->prof == NULL) return 0;
     if (c->online && port != 0) return 0;                       /* the adapter folds the other controllers into port 0 */
     if (c->prof->dummy_cpu && port != c->train_h) return 0;     /* Training: the human's input only */
+    if (c->controls_port >= 0) {
+        unsigned ce = controls_step(c, port, in);
+        c->controls_block_frame = frame;
+        return ce;
+    }
+    if (c->controls_block_frame == -2) c->controls_block_frame = frame;
+    if (c->controls_block_frame == frame) return 0;
     s = &c->p[port];
+    if ((c->online && (in.trig & AT_CI_Z)) || ((in.trig & AT_CI_A) && s->card == port && s->zone == AT_ZONE_CONTROLS)) {
+        unsigned opened = at_css_controls_open(c, port);
+        if (opened) return opened;
+    }
     cols = c->cols > 0 ? c->cols : 1;
     n = c->n_vis;
     if (s->kind != AT_CSS_HMN && !(c->puck && s->act)) {
@@ -849,6 +873,7 @@ unsigned at_css_mouse_bits(AtCss *c, int port, int vis_slot, int card, int moved
     AtCssPort *s;
     unsigned b = rclick ? AT_CI_B : 0u;                         /* fms_pad_bits: a right click is B */
     int dummy;
+    if (c->controls_port >= 0) return 0;
     if (port < 0 || port > 3 || c->prof == NULL) return b;
     s = &c->p[port];
     dummy = c->prof->dummy_cpu;

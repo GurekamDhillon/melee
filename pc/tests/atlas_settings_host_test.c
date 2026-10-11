@@ -105,6 +105,7 @@ int gw_Kit_QuadCount(void) { return g_quads; }
 int gw_Kit_QuadRoom(void) { return 16000; }
 
 #include "atlas_nucleus_stubs.h"
+#include "atlas_fighter_controls_fake.h"
 #include "gw_script_ui.inc"
 
 static const char *lua(const char *code)
@@ -313,7 +314,7 @@ static void tabs_and_focus(void)                                       /* Review
     drain_set(h);
     gw_Ui_SetTabs(h, 1, "ONLY", 0); gw_Ui_SetIntent(h, AT_EV_PAGE, 1); CHECK(spoll(h, &s, &a) == 0);   /* one tab: nothing to switch to */
     gw_Ui_SetTabs(h, 0, "", 0); CHECK(slot_of(h)->sc.n_tabs == 0);
-    gw_Ui_SetTabs(h, 9, "A,B,C,D,E,F,G,H,I", 7); CHECK(slot_of(h)->sc.n_tabs == AT_MAX_TABS && slot_of(h)->view.tab == AT_MAX_TABS - 1);   /* the record holds six */
+    gw_Ui_SetTabs(h, AT_MAX_TABS + 1, "A,B,C,D,E,F,G,H,I,J", AT_MAX_TABS); CHECK(slot_of(h)->sc.n_tabs == AT_MAX_TABS && slot_of(h)->view.tab == AT_MAX_TABS - 1);
     gw_Ui_SetClose(h);
 }
 

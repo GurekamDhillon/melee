@@ -20,6 +20,8 @@
 #include "gw.h"
 #include "gw_rollback.h"
 #include "gw_slippi_pad.h"
+#include "gw_fighter_controls.h"
+#include "gw_test.h"
 
 #include <limits.h>
 #include <stdio.h>
@@ -343,6 +345,33 @@ int gw_RB_Enabled(void) {
 int gw_rb_active(void) {
     rb_init();
     return rb.on && rb.in_match && gw_Replay_Frame() >= RB_FIRST - 1;
+}
+
+/* gmscene calls SceneBegin after the VS on_enter froze these maps. */
+static int test_rollback_fighter_controls(void) {
+    int size = gw_FighterControls_StateSize(), rc = 0;
+    void *saved = malloc(size);
+    if (saved == NULL || !gw_FighterControls_StateSave(saved, size)) {
+        free(saved); gw_test_fail("could not preserve controls for scene-hook test"); return 1;
+    }
+    gw_FighterControls_MatchClear();
+    gw_FighterControls_MatchSet(0, 2, GW_FC_TAP_OFF);
+    gw_FighterControls_MatchSet(1, 9, GW_FC_TAP_ON);
+    gw_RB_SceneBegin(2);
+    if (gw_FighterControls_MatchGet(0) != GW_FC_TAP_OFF ||
+        gw_FighterControls_MatchGet(1) != GW_FC_TAP_ON ||
+        !gw_FighterControls_TapJumpOff(0) || gw_FighterControls_TapJumpOff(1) ||
+        gw_FighterControls_Apply(0, 0xc00) != 0xc00 ||
+        gw_FighterControls_Apply(1, 0xc00) != 0xc00) {
+        gw_test_fail("post-on_enter RB_SceneBegin cleared frozen controls/tap jump"); rc = 1;
+    }
+    gw_FighterControls_StateLoad(saved, size);
+    free(saved);
+    return rc;
+}
+
+void gw_RB_RegisterTests(void) {
+    gw_test_register("rollback_fighter_controls", test_rollback_fighter_controls);
 }
 
 /* gmscene.c, at the start of every scene: a session governs VS matches only. A new match starts a

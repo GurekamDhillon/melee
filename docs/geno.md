@@ -3627,3 +3627,102 @@ and logs. Adjust follows the mark. The mark is `HitCapsule.x43_b7`, inside the F
 snapshots and rollback need nothing extra; a normal create clears it. `xDF4[0]` is never written by
 a redirected command. One log line per redirect: `ace: hitbox id 4 remapped to slot N (port=.. motion=..)`.
 Geno hitbox rows still author slots 0-3; the importer need not rewrite anything.
+
+## 26. Per-player fighter controls (`fighters[].controls`)
+
+Every human CSS player who has placed a fighter has exactly one general option:
+**Tap jump On / Off** (default On, as Melee). There is no jump-button selector for
+the general cast; X and Y always jump. The option is per player, remembered, agreed
+in netplay setup and recorded in `.gdlp`. The panel's button reads **TAP JUMP**
+and opens a one-row modal. Only a native Geno `define` that declares `controls`
+adds more: named layouts and opt-in extras, shown as additional rows (Layout first,
+then Tap jump, then the extras), and the button then reads **CONTROLS**. Extras begin
+off; the first declared layout is the fighter's default.
+
+```json
+"controls": {
+  "layouts": [
+    { "name": "A", "buttons": { "A": "A", "B": "B" } },
+    { "name": "B", "buttons": { "Y": "B" } }
+  ],
+  "extras": [
+    { "name": "Y boost", "buttons": { "Y": ["A", "B"] } }
+  ]
+}
+```
+
+These are GC input mappings, not new fighter action opcodes. A fighter implements
+the behavior associated with the resulting buttons. The accepted source and
+destination names are `A`, `B`, `X`, `Y`, `Z`, `START`, `L`, `R`, `Up`, `Down`,
+`Left`, and `Right`. A destination is one name, a nonempty array of distinct names,
+or `"none"` to consume the source. Unlisted sources retain their original mapping.
+An active extra replaces its listed source mappings after the selected layout;
+when multiple extras bind one source, the last enabled extra in declaration order
+wins. All mappings read the original input once: `X -> Y, Y -> A` cannot cascade.
+
+Rebinding jump is only possible here, inside a fighter's own layout: a layout that
+maps `"Y": "B"` leaves X as the only jump button and makes Y a different action
+(Goku's layout B is that case). Nothing else removes X or Y from jump.
+
+**Tap jump** is not a button mapping. Up on the stick cannot be removed at the pad
+without breaking up-tilt, up-smash, aerial aim and up-B, so the option is a frozen
+per-port match setting that the game-side jump requests read
+(`src/melee/ft/ft_tapjump_pc.h`, `FT_TAP_JUMP_OK`; native
+`FighterControls_TapJumpOff(port)`). With Tap jump Off only the stick-up branch of
+a jump request is skipped; stick values and timers are untouched, and X/Y and
+every other use of stick up behave as normal. Gated: grounded jump
+(`ftCo_Jump_GetInput`, relaxed `fn_800CAF78`), aerial jump (`ft_did_jump`) and the
+held-stick multijump check in `ftCo_800D730C`. Not gated: Peach's float, wall jump
+and capture escape, and the m-ex / Geno interpreter's own jump reads. Followers
+share their leader's port.
+
+There are at most 16 layouts and 8 extras. Names contain 1-31 printable bytes,
+cannot have leading/trailing spaces, and must be unique within their list.
+Each row has exactly `name` and a nonempty `buttons` object with no duplicate
+sources. Unknown controls fields, unknown buttons, duplicate destinations, bad
+types, and exceeded limits invalidate the complete controls block and log a
+default/no-extras fallback. The fighter still loads. Controls on an `attach`
+entry are ignored with a log. Controls declarations contribute to the fighter's
+existing content identity and online compatibility hash.
+
+Saved choices use the physical controller's active profile and the player port.
+Tap jump is one key per player (`fc_..._tap`) shared by every fighter; a layout and
+extras are saved per player + the stable fighter content identity (roster alias
+changes do not transfer them to another fighter), and only for a fighter that
+declares them. Creating or deleting a profile removes and compacts all of that
+profile's preference keys, so reusing the same slot starts with defaults and
+repeated profile cycles cannot exhaust the bounded settings store. If saving that
+removal fails, the preferences remain in memory and the profile action reports
+failure. A new profile copies the physical controller map only. A failed save
+retains the previous choice, including the choice frozen when the next match
+begins; one panel action writes at most one key. Disconnected/scripted
+controllers use a stable fallback per port. New choices are Tap jump On, layout
+index 0 and no extras. Invalid saved layout indexes normalize to those defaults;
+unavailable extra bits are cleared. A custom fighter lacking a stable content
+identity cannot save a layout under its transient roster alias (Tap jump still saves).
+
+`pc/platform/gw_fighter_controls.h` declares the scalar menu/match interface.
+The packed choice is Tap jump bit 0 (0 On, 1 Off; bit 1 is reserved and must be 0),
+layout bits 2-5, extras bits 8-15 in declaration order; remaining bits are zero.
+`Count(ck, 0)` returns declared layouts, `Count(ck, 1)` extras; absent rows return
+zero. `Get/Set(port, ck, ...)` load/save preferences, and `Name` copies display
+text. Game imports omit `gw_`; native functions use it.
+
+`MatchSet` copies the normalized choice and the full map into a per-port record.
+`Apply` reads only that frozen record after rollback supplies its raw sample and
+before HSD input processing, and `TapJumpOff` reads the same record from the game's
+jump checks. Neither reads settings or a mutable registry during simulation. Native
+`StateSize/StateSave/StateLoad` include the full frozen record in snapshots,
+including external LAB savestates. Replay metadata preserves all four choices and
+fighter IDs; `.gdlp` v3 adds event `0x99` with `GDC1` and four big-endian
+`(ck, choice)` pairs. Older replays default to Tap jump On. Processed replay input
+bypasses the raw transform so a mapping is never applied twice. Netplay protocol 7
+carries each player's packed word in HELLO/ACCEPT and the lobby messages.
+
+Tests: `fighter_controls_mapping`, `geno_controls_schema`, and
+`geno_controls_lookup` in the headless suite; `pc/tests/fighter_controls_test.c`
+uses the production schema/model/runtime with synthetic controller identities
+and an in-memory settings store. `pc/tests/fighter_controls_settings_test.c`
+exercises the real 512-entry settings store through repeated deletion, reuse,
+reload, and failed saves. The fixture package is
+`pc/tests/fixtures/controls-fighter/` and is never mounted by normal mod discovery.

@@ -106,6 +106,7 @@ int gw_Kit_QuadCount(void) { return g_quads; }
 int gw_Kit_QuadRoom(void) { return 16000; }
 
 #include "atlas_nucleus_stubs.h"
+#include "atlas_fighter_controls_fake.h"
 #include "gw_script_ui.inc"
 
 static const char *lua(const char *code)
@@ -636,6 +637,74 @@ static void css_free_hands_through_the_shims(void)
     putenv("MELEE_CSS_PUCK=0");
 }
 
+/* Real host/model/render routing: a hand opens the same panel the mouse edits;
+ * no underlying select event survives the modal or its closing click. */
+static void css_controls_through_the_shims(void)
+{
+    int h, i, k, a, b, found = -1;
+    unsigned e;
+    GsUiSlot *u;
+    AtRect r;
+    putenv("MELEE_CSS_PUCK=1"); putenv("MELEE_CSS_FREEHAND=1");
+    reset_ui(); memset(ui_controls_saved, 0, sizeof ui_controls_saved);
+    css_open_vs(29, 0);
+    gw_Ui_CssPort(0, AT_CSS_HMN, 3, 0, 9, 0);
+    h = open_css(); fill_css(h, 30); u = slot_of(h);
+    gw_Ui_SelCard(h, 0, 1, "CONTROLS FIXTURE", "", "CF", -1, 9, 0, 0u);
+    gw_Ui_SelCardX(h, 0, 1, 0, 0, 3, 0, 4, -1);
+    CHECK(u->sc.ports[0].controls == 2);
+    draw_once();
+    for (i = 0; i < u->hits.n; i++)
+        if (u->hits.h[i].kind == AT_HIT_ZONE && u->hits.h[i].a == 0 && (u->hits.h[i].b & 15) == AT_ZONE_CONTROLS) found = i;
+    CHECK(found >= 0);
+    if (found < 0) { gw_Ui_SelClose(h); return; }
+    r = u->hits.h[found].r;
+    gs_hand[0].x = r.x + r.w * 0.5f; gs_hand[0].y = r.y + r.h * 0.5f; gs_hand[0].user = 1; gs_hand[0].valid = 1;
+    gw_Ui_SelHand(h, 0, 0, 0);
+    CHECK(gs_selm_css.p[0].zone == AT_ZONE_CONTROLS);
+    e = gw_Ui_CssStep(0, AT_CI_A, 0, 400);
+    CHECK((e & AT_CE_FORWARD) && gs_selm_css.controls_port == 0);
+    gw_Ui_SelControls(h); draw_once();
+    CHECK(u->sc.css_controls.open && u->sc.css_controls.n == 5 && !strcmp(u->sc.css_controls.value[0], "Layout 1"));
+    CHECK(!strcmp(u->sc.css_controls.value[1], "On") && !strcmp(u->sc.css_controls.value[2], "Off"));
+    CHECK(gw_Ui_CssControl(1, 0, 1) == 0 && ui_controls_saved[0][3] == 0);
+    { float x = gs_hand[0].x; gw_Ui_SelHand(h, 0, 80, 0); CHECK(gs_hand[0].x == x); }
+    found = -1;
+    for (i = 0; i < u->hits.n; i++) {
+        CHECK(u->hits.h[i].kind == AT_HIT_CONTROLS);
+        if (u->hits.h[i].a == 1 && u->hits.h[i].b == 1) found = i;
+    }
+    CHECK(found >= 0);
+    if (found < 0) { gw_Ui_SelClose(h); return; }
+    r = u->hits.h[found].r; drain(h);
+    g_mx = r.x + r.w * 0.5f; g_my = r.y + r.h * 0.5f; g_mbuttons = 1;
+    gs_sel_tick(u); CHECK(poll(h, &k, &a, &b) == 0);           /* held opening button primes */
+    g_mbuttons = 0; gs_sel_tick(u); CHECK(poll(h, &k, &a, &b) == 0);
+    g_mbuttons = 1; gs_sel_tick(u);
+    CHECK(poll(h, &k, &a, &b) == 1 && k == GS_SELEV_CONTROLS && a == 1 && b == 1);
+    e = gw_Ui_CssControl(0, a, b); CHECK((e & AT_CE_MOVE) && ui_controls_saved[0][3] == 1);
+    gw_Ui_SelControls(h); CHECK(!strcmp(u->sc.css_controls.value[1], "Off")); /* Tap jump */
+    CHECK(gw_Ui_CssStep(0, AT_CI_START, 0, 401) == 0 && !gs_selm_css.done);
+    g_mbuttons = 2; gs_sel_tick(u);
+    CHECK(poll(h, &k, &a, &b) == 1 && k == GS_SELEV_CONTROLS && b == 3);
+    gw_Ui_CssControl(0, a, b);
+    CHECK(gs_selm_css.controls_port == -1 && gw_Ui_CssStep(0, AT_CI_A, 0, 402) == 0 && gs_selm_css.p[0].ck == 3);
+    gw_Ui_SelControls(h); CHECK(!u->sc.css_controls.open);
+    gw_Ui_SelClose(h);
+    /* Scene recreation retains the saved profile, but a retail fighter has only Tap jump. */
+    css_open_vs(29, 0); gw_Ui_CssPort(0, AT_CSS_HMN, 3, 0, 9, 0);
+    CHECK(at_css_controls_open(&gs_selm_css, 0) & AT_CE_FORWARD);
+    CHECK(gs_selm_css.controls_choice == 1);
+    at_css_controls_point(&gs_selm_css, 0, 0, 3);
+    gw_Ui_CssPort(0, AT_CSS_HMN, 4, 0, 9, 0);
+    h = open_css(); gw_Ui_SelCard(h, 0, 1, "KIRBY", "", "KI", -1, 9, 0, 0u);
+    CHECK(slot_of(h)->sc.ports[0].controls == 1);
+    at_css_controls_open(&gs_selm_css, 0); gw_Ui_SelControls(h);
+    CHECK(slot_of(h)->sc.css_controls.n == 2 && !strcmp(slot_of(h)->sc.css_controls.value[0], "On"));
+    gw_Ui_SelClose(h); CHECK(gs_selm_css.controls_port == -1);
+    putenv("MELEE_CSS_PUCK=0");
+}
+
 int main(void)
 {
     lua_State *L = luaL_newstate();
@@ -649,6 +718,7 @@ int main(void)
     filled_and_drawn(); closed_on_every_exit(); owner_native_vs_mod(); mouse_port(); poll_is_big_endian(); fields_land_where_the_render_reads_them();
     art_decode_goes_to_the_kit(); atlas_off_or_no_roles_keeps_the_legacy_drawing(); stack_full_refuses(); held_menu_and_hold_do_not_matter();
     can_open_before_routing(); a_select_opened_in_a_scene_init_survives_the_ending_scene(); a_closed_settings_door_lets_the_select_open(); art_drop_reaches_the_kit(); known_match_types(); css_through_the_shims(); css_zelda_sheik_and_online_through_the_shims(); css_mouse_through_the_shims(); sss_through_the_shims(); css_free_hands_through_the_shims();
+    css_controls_through_the_shims();
     lua_close(L);
     ATLAS_DONE("atlas select adapter");
 }

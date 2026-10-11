@@ -47,7 +47,15 @@ typedef struct { char id[AT_ID]; char title[AT_STR]; char count[24]; char note[A
 typedef struct { char name[24]; int count; } AtTab;
 /* one port's card (the band): kind 0 off, 1 human, 2 CPU (the same numbers as AT_CSS_*); ck_tex: the fighter's art slot or -1; cur: its cursor cell */
 typedef struct { int port, kind, ck_tex, cur; char name[AT_STR], sub[AT_STR]; unsigned flags; char abbr[3]; int cpu_lv, team;
-               int puck, hold, zone, drop_cell, costume, ncost, ptex; } AtSelCard;   /* puck mode (AT_PRIMARY_CSS): puck 1 = the panel shows pucks; hold: the puck is in a hand; zone: the part a hand is on (AT_ZONE_*), drop_cell: the visible tile the puck lies on or -1; costume/ncost: 0-based and the count; ptex: the portrait's art slot or -1 */
+               int puck, hold, zone, drop_cell, costume, ncost, ptex, controls; } AtSelCard;
+/* puck mode (AT_PRIMARY_CSS): puck 1 = the panel shows pucks; hold = puck in a hand;
+ * zone = part a hand is on (AT_ZONE_*); drop_cell = visible tile the puck lies on, or -1;
+ * costume/ncost = 0-based and count; ptex = portrait art slot, or -1;
+ * controls: 0 hidden, 1 jump only, 2 fighter options. */
+/* Engine-only CSS modal. Values are display strings; only the CSS model edits preferences. */
+#define AT_CSS_CONTROL_ROWS 11
+typedef struct { int open, port, row, n; char title[AT_STR];
+    char label[AT_CSS_CONTROL_ROWS][AT_STR], value[AT_CSS_CONTROL_ROWS][AT_STR]; } AtCssControlsView;
 /* an offer card: a model well (or, when model < 0 and letter != 0, a keystone arch stone with its letter), the name, ONE rule, a tag */
 typedef struct { int model, ring; char name[AT_STR]; char rule[AT_TEXT]; char tag[24]; int tag_tone; unsigned rgba; char letter; } AtOffer;
 typedef struct { char id[AT_ID]; int disabled; AtOffer offer; } AtCardRec;
@@ -90,6 +98,7 @@ typedef struct {
     AtTab tabs[AT_MAX_TABS]; int n_tabs;             /* a strip of tabs over the grid pane; 0 = none (the active one is AtView.tab) */
     int band;                                        /* AT_BAND_*: port cards or the matchup strip under the pane */
     AtSelCard ports[AT_MAX_PORTS]; int n_ports; int css_ready; char css_msg[AT_STR];                               /* the character select's port cards (step 3's offer cards are `cards`) */
+    AtCssControlsView css_controls;
     int grid_cols_auto;                              /* 1: the renderer picks the grid's columns from the pane's width (at_grid_cols) */
     int grid_cell_min, grid_cell_max;                /* auto columns: the tile size range in px (0: 36 and 56, the character select's; the stage select uses 54 and 72) */
     AtKey keys[AT_MAX_KEYS]; int n_keys;

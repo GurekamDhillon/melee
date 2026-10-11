@@ -12,7 +12,17 @@ static int test_script_rec(void) {
     vp[1][3] = 77;
     gr_path(path, sizeof path, "gdlp_selftest", "gdlp");
     DeleteFileA(path);
-    f = gr_begin(path, 100, "gdlp_selftest.gdst", &a, &b);
+    {
+        int state_size = gw_FighterControls_StateSize();
+        void *saved = malloc((size_t)state_size);
+        if (!saved || !gw_FighterControls_StateSave(saved, state_size)) { free(saved); return 1; }
+        gw_FighterControls_MatchClear();
+        gw_FighterControls_MatchSet(0, 2, 1);
+        gw_FighterControls_MatchSet(1, 9, 0);
+        f = gr_begin(path, 100, "gdlp_selftest.gdst", &a, &b);
+        gw_FighterControls_StateLoad(saved, state_size);
+        free(saved);
+    }
     if (f == NULL) { gw_test_fail("rec: cannot create %s", path); return 1; }
     memset(seg, 0, sizeof seg); gr_put32(seg, 5); gr_put32(seg + 4, 9); snprintf((char *) seg + 8, 40, "source");
     gr_ev(f, GR_EV_SEGMENT, seg);
@@ -35,6 +45,8 @@ static int test_script_rec(void) {
     if ((long) gr_get32(hdr + 11) != size - 15 - (long) (sizeof "U\x08metadata{U\x08playedOnSU\x08melee-pc}}" - 1)) rc |= 2;
     free(bytes);
     if (gr_read(path, &g, why, sizeof why) != 0) { gw_test_fail("rec: read back: %s", why); return 1; }
+    if (!g.has_controls || g.controls_ck[0] != 2 || g.controls_ck[1] != 9 ||
+        g.controls[0] != 1 || g.controls[1] != 0) rc |= 8192;
     if (g.n != 5 || g.fr[0].tag != 100 || g.fr[4].tag != 104) rc |= 4;
     if (g.fr[2].pad[0] != 0x12 || g.fr[3].have != 0 || g.fr[1].have != 1 || g.fr[4].vp[0][0] != 4 || g.fr[4].vp[1][3] != 77) rc |= 8;
     if (g.nmarks != 1 || g.marks[0].frame != 3 || strcmp(g.marks[0].label, "good") != 0) rc |= 16;
@@ -60,6 +72,32 @@ static int test_script_rec(void) {
         if (gr_check(&h, why, sizeof why) == 0 || !strstr(why, "match first")) rc |= 1024;
     }
     gr_free_file(&g);
+    /* A tagged controls record must be validated before any playback starts. */
+    {
+        unsigned short sizes[256] = {0};
+        unsigned char *raw;
+        size_t pos, at = 0;
+        GrFile bad;
+        f = fopen(path, "rb"); fseek(f, 0, SEEK_END); size = ftell(f); rewind(f);
+        raw = (unsigned char *)malloc((size_t)size);
+        if (!raw || fread(raw, 1, (size_t)size, f) != (size_t)size) { fclose(f); free(raw); return 1; }
+        fclose(f);
+        for (i = 0; i < (raw[16] - 1) / 3; ++i)
+            sizes[raw[17 + 3 * i]] = (unsigned short)((raw[18 + 3 * i] << 8) | raw[19 + 3 * i]);
+        for (pos = 16 + raw[16]; pos + 1 < (size_t)size && sizes[raw[pos]]; pos += 1 + sizes[raw[pos]])
+            if (raw[pos] == GR_EV_CONTROLS) { at = pos + 1 + 11; break; }
+        if (!at) rc |= 16384;
+        else {
+            unsigned char original = raw[at];
+            raw[at] = 3; /* reserved jump mode */
+            f = fopen(path, "wb"); fwrite(raw, 1, (size_t)size, f); fclose(f);
+            if (gr_read(path, &bad, why, sizeof why) == 0) { rc |= 16384; gr_free_file(&bad); }
+            else if (!strstr(why, "fighter controls")) rc |= 16384;
+            raw[at] = original;
+            f = fopen(path, "wb"); fwrite(raw, 1, (size_t)size, f); fclose(f);
+        }
+        free(raw);
+    }
     /* a killed game: the tail torn mid-event still reads, up to the last whole frame */
     f = fopen(path, "r+b"); fseek(f, 0, SEEK_END); size = ftell(f);
     _chsize_s(_fileno(f), size - 200); fclose(f);
@@ -75,12 +113,82 @@ static int test_script_rec(void) {
     return 0;
 }
 
+/* A zero-offset trim copies its source state without loading it. Its header
+ * must keep source controls even while the live match has opposite choices. */
+static int test_script_rec_trim_controls(void) {
+    char src[MAX_PATH], dst[MAX_PATH], name[40], why[200];
+    int size = gw_FighterControls_StateSize(), saved_version = gr_write_ver;
+    int paused = gs.paused, version, rc = 0;
+    void *saved_controls = malloc((size_t)size), *saved_rec = malloc(sizeof gr);
+    FILE *f = NULL;
+    GrFile input, output;
+    long a, b;
+    unsigned char pad[GR_PAD] = {0}, fe[GR_FRAME_PAYLOAD];
+    int vp[2][9] = {{0}};
+    memset(&input, 0, sizeof input); memset(&output, 0, sizeof output);
+    if (!saved_controls || !saved_rec || !gw_FighterControls_StateSave(saved_controls, size)) {
+        free(saved_controls); free(saved_rec); gw_test_fail("rec trim controls: cannot preserve test state"); return 1;
+    }
+    memcpy(saved_rec, &gr, sizeof gr); memset(&gr, 0, sizeof gr);
+    for (version = 2; version <= 3; ++version) {
+        snprintf(name, sizeof name, "gdlp_trim_controls_v%d", version);
+        gr_path(dst, sizeof dst, name, "gdlp");
+        gr_path(src, sizeof src, "gdlp_trim_controls_source", "gdlp");
+        DeleteFileA(src); DeleteFileA(dst);
+        gw_FighterControls_MatchClear();
+        gw_FighterControls_MatchSet(0, 2, 1); gw_FighterControls_MatchSet(1, 9, 0);
+        gr_write_ver = version;
+        f = gr_begin(src, 100, NULL, &a, &b);
+        gr_write_ver = GR_VER;
+        if (!f) { gw_test_fail("rec trim controls: cannot write source"); rc = 1; break; }
+        { unsigned char cmd = GR_EV_FRAME;
+          gr_frame_bytes(fe, 100, 1, pad, vp); fwrite(&cmd, 1, 1, f); fwrite(fe, 1, sizeof fe, f); }
+        gr_finish(f, a, b); f = NULL;
+        if (gr_read(src, &input, why, sizeof why) != 0) {
+            gw_test_fail("rec trim controls: cannot read source: %s", why); rc = 1; break;
+        }
+        gw_FighterControls_MatchSet(0, 2, 0); gw_FighterControls_MatchSet(1, 9, 1);
+        gr.pf = input; memset(&input, 0, sizeof input); /* job owns source allocations */
+        gr.jfrom = 0; gr.jto = 1; gr.mode = GR_JOB; gr.jk = 1; gr.jpaused = paused;
+        snprintf(gr.jdst, sizeof gr.jdst, "%s", name);
+        snprintf(gr.name, sizeof gr.name, "source");
+        gr_write_trim(); /* actual writer; the source state was never loaded */
+        if (gw_FighterControls_MatchGet(0) != 0 || gw_FighterControls_MatchGet(1) != 1 ||
+            gr_read(dst, &output, why, sizeof why) != 0) {
+            gw_test_fail("rec trim controls: trim touched live mapping or unreadable output"); rc = 1; break;
+        }
+        if (!output.has_controls || output.controls[0] != (version == 3 ? 1u : 0u) ||
+            output.controls[1] != 0u ||
+            output.controls_ck[0] != (version == 3 ? 2 : -1) ||
+            output.controls_ck[1] != (version == 3 ? 9 : -1)) {
+            gw_test_fail("rec trim controls: v%d source mapping replaced by live choices", version); rc = 1; break;
+        }
+        gr.pf = output; memset(&output, 0, sizeof output);
+        gr.mode = GR_LOAD; gr.map[0] = 0; gr.map[1] = 1; gr.map[2] = 2; gr.map[3] = 3;
+        gr_after_load(); /* metadata must preserve source X/Y or legacy Both */
+        if (gw_FighterControls_Apply(0, 0xc00) != 0xc00 ||
+            gw_FighterControls_TapJumpOff(0) != (version == 3 ? 1 : 0) ||
+            gw_FighterControls_TapJumpOff(1) != 0) {
+            gw_test_fail("rec trim controls: v%d trimmed playback changed the recorded tap jump setting", version); rc = 1;
+        }
+        gr_free_file(&gr.pf); DeleteFileA(src); DeleteFileA(dst);
+        if (rc) break;
+    }
+    if (f) fclose(f);
+    gr_free_file(&input); gr_free_file(&output); gr_free_file(&gr.pf);
+    DeleteFileA(src); DeleteFileA(dst);
+    memcpy(&gr, saved_rec, sizeof gr); gs.paused = paused; gr_write_ver = saved_version;
+    gw_FighterControls_StateLoad(saved_controls, size);
+    free(saved_rec); free(saved_controls);
+    return rc;
+}
+
 /* ---- .gdlp version 2 ------------------------------------------------------------------------- */
 /* a whole-match file: GD head events, then Game Start and n frames of Frame Start / Pre / Post / Bookend x2 ports */
 static int t_whole(const char *path, const unsigned char *game_info, int n, int with_seg, int *rc_out) {
     long a, b;
     FILE *f = gr_open(path, &a, &b);
-    unsigned char head[GR_HEAD_MAX], ev[1 + 768];
+    unsigned char head[GR_HEAD_MAX], ev[1 + GR_SZ_START];
     size_t hn;
     int i, port;
     (void) rc_out;
@@ -160,6 +268,16 @@ static int test_script_rec_v2(void) {
     size_t total = 2 * GR_STCHUNK + 12345, nread;
     memset(vp, 0, sizeof vp);
     memset(pad, 0x33, sizeof pad);
+    gr_path(path, sizeof path, "gdlp_selftest_v2_legacy", "gdlp");
+    gr_write_ver = 2;
+    f = gr_begin(path, 7, NULL, &a, &b);
+    gr_write_ver = GR_VER;
+    if (f == NULL) return 1;
+    gr_finish(f, a, b);
+    if (gr_read(path, &g, why, sizeof why) != 0 || g.ver != 2 || g.has_controls ||
+        g.controls[0] || g.controls[1]) rc |= 8192;
+    gr_free_file(&g);
+    DeleteFileA(path);
     /* version 1 still reads: the old header, the old 9-event size table, no Slippi or state events */
     gr_path(path, sizeof path, "gdlp_selftest_v1", "gdlp");
     DeleteFileA(path);
@@ -190,7 +308,9 @@ static int test_script_rec_v2(void) {
     f = fopen(sidecar, "wb");
     if (f == NULL) { free(state); free(got); gw_test_fail("rec v2: cannot write %s", sidecar); return 1; }
     fwrite(state, 1, total, f); fclose(f);
+    gr_write_ver = 2; /* exercise the real legacy embedded-state reader */
     f = gr_begin(path, 100, "gdlp_selftest_v2.gdst", &a, &b);
+    gr_write_ver = GR_VER;
     if (f == NULL) { free(state); free(got); gw_test_fail("rec v2: cannot create"); return 1; }
     { unsigned char c = GR_EV_FRAME; gr_frame_bytes(fe, 100, 1, pad, vp); fwrite(&c, 1, 1, f); fwrite(fe, 1, sizeof fe, f); }
     gr_finish(f, a, b);
@@ -235,7 +355,7 @@ static int test_script_rec_export(void) {
     if (t_whole(path, gi, 6, 0, NULL) != 0) { gr_mods_override = NULL; gw_test_fail("rec export: cannot write"); return 1; }
     if (gr_read(path, &g, why, sizeof why) != 0) { rc |= 1; gw_test_fail("rec export: read: %s", why); }
     else {
-        if (g.ver != 2 || !(g.flags & GR_FL_WHOLE) || !(g.flags & GR_FL_SLIPPI) || !(g.flags & GR_FL_RETAIL) || (g.flags & GR_FL_STATE)) rc |= 2;
+        if (g.ver != GR_VER || !g.has_controls || !(g.flags & GR_FL_WHOLE) || !(g.flags & GR_FL_SLIPPI) || !(g.flags & GR_FL_RETAIL) || (g.flags & GR_FL_STATE)) rc |= 2;
         if (!g.has_start || g.n_pre != 12 || g.n_post != 12 || g.first_frame != -123 || g.last_frame != -118 || !g.complete) {
             rc |= 4;
             gw_test_fail("rec export: start=%d pre=%d post=%d frames %d..%d complete=%d", g.has_start, g.n_pre, g.n_post, g.first_frame, g.last_frame, g.complete);

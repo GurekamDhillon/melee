@@ -1,0 +1,6 @@
+{
+  "id": "controls-fixture",
+  "name": "Controls Test Fixture",
+  "version": "1.0.0",
+  "description": "Test-only Geno fighter for opt-in CSS controls."
+}

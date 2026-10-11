@@ -12389,6 +12389,7 @@ void gw_script_tests_register(void) {
     gw_test_register("script_fighter_armor", test_script_fighter_caps_armor);
     gw_test_register("script_sim_state", test_script_sim_state);
     gw_test_register("script_rec", test_script_rec);
+    gw_test_register("script_rec_trim_controls", test_script_rec_trim_controls);
     gw_test_register("script_rec_v2", test_script_rec_v2);
     gw_test_register("script_rec_export", test_script_rec_export);
     gw_test_register("script_rec_port4", test_script_rec_port4);

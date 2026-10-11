@@ -2323,6 +2323,10 @@ void fn_8016E730(StartMeleeData* arg0)
         if (Replay_Active()) {
             *HSD_RandSeedPtr = Replay_ApplyMatch(arg0);
         }
+        {
+            extern void FighterControls_MatchBegin(void* start_melee_data);
+            FighterControls_MatchBegin(arg0);
+        }
         /* MELEE_SLP_RECORD: the same point, for the port's own replays */
         Replay_RecordMatch(arg0, *HSD_RandSeedPtr);
     }

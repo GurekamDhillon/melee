@@ -1,4 +1,5 @@
 #include "ftCo_JumpAerial.h"
+#include <melee/ft/ft_tapjump_pc.h>
 
 #if defined(TARGET_PC)
 #include "script_fighter_caps.h"
@@ -52,7 +53,8 @@ void ft_800CB6EC(Fighter* fp, s32 arg1)
 bool ft_did_jump(Fighter* fp, bool arg1)
 {
     if (fp->x1968_jumpsUsed < FT_CAPS_MAX_JUMPS(fp) &&
-        ((fp->input.lstick[0].y >= p_ftCommonData->tap_jump_threshold &&
+        ((FT_TAP_JUMP_OK(fp) &&
+          fp->input.lstick[0].y >= p_ftCommonData->tap_jump_threshold &&
           fp->active_timer.lstick.y < p_ftCommonData->tap_jump_window) ||
          fp->input.pressed_buttons & HSD_PAD_XY) &&
         !(arg1 && (fp->x68A < p_ftCommonData->x1C)))

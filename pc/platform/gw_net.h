@@ -54,8 +54,10 @@ extern "C" {
  * lobby (the scene's envoy= word), not here.
  * 6: MEM1 48 MiB and heap 3 another 8 MiB larger (gw_runtime.c, lbheap.c).
  * Heap addresses and snapshot layout differ from protocol 5; refuse old peers
- * before starting, even when their content hashes happen to match. */
-#define GW_NET_PROTOCOL_VERSION 6u
+ * before starting, even when their content hashes happen to match.
+ * 7: per-player fighter controls travel in HELLO/ACCEPT and reliable lobby
+ * messages; peers must agree before interpreting raw match inputs. */
+#define GW_NET_PROTOCOL_VERSION 7u
 #define GW_NET_MAX_BLOB 900        /* match-config blob: StartMeleeData + extras */
 #define GW_NET_MAX_SLOTS 8         /* port * 2 + follower */
 #define GW_NET_MAX_PAYLOAD 32      /* bytes of one slot's input for one frame */
@@ -129,7 +131,8 @@ typedef struct gw_net_callbacks {
   void (*desync)(void *user, int32_t frame, uint32_t local, uint32_t remote);
   /* Host (optional): a guest's HELLO has been accepted. `info` is the guest's cfg.guest_info (its
    * own choices, e.g. a character). The host may rewrite the match blob it is about to send:
-   * blob[0..*blob_len) in, at most `cap` bytes out. Called before the ACCEPT goes out. */
+   * blob[0..*blob_len) in, at most `cap` bytes out. A returned length over cap
+   * refuses this guest before locking the peer. Called before the ACCEPT goes out. */
   void (*guest_hello)(void *user, const uint8_t *info, int info_len, uint8_t *blob, uint16_t *blob_len,
                       int cap);
   /* LOBBY (optional): a message the peer sent with gw_net_lobby_send - delivered exactly once, in

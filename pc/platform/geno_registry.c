@@ -32,6 +32,7 @@
 #include "../geno/geno.h"
 #include "../geno/geno_plan.h"
 #include "geno_lua_core.h"
+#include "gw_fighter_controls_model.h"
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -311,6 +312,8 @@ static uint64_t gn_hash_node(const jdoc *d, int x, uint64_t h) {
     return h;
 }
 
+#include "geno_controls_schema.inc"
+
 /* ---- targets ---------------------------------------------------------------------------------- */
 
 /* Retail FighterKind -> Pl code and the names a geno.json may use for it. */
@@ -422,6 +425,7 @@ typedef struct {
     char plfile[32];
     char name[64];
     int defined;
+    GwFighterControlsSchema controls;          /* menu schema; copied into frozen match mapping */
     char define_key[40];
     char partner_key[40];                     /* define.transform_partner: the other define of a Zelda / Sheik pair ("" = none) */
     int none;                                 /* slice 4: base "none" - no donor model, clips or tables */
@@ -1360,6 +1364,13 @@ int gw_Skins_ArtOpenCK(int ck, int what, int costume);
 #include "geno_define_online.h"
 #include "geno_define_online.inc"
 
+/* Controls are declared by native definitions; absent definitions leave the
+ * universal jump selector available without inventing fighter-specific rows. */
+const GwFighterControlsSchema* gw_Geno_ControlsSchema(int ck) {
+    const gn_profile* p = gn_define_profile_ck(ck);
+    return p && (p->controls.layouts || p->controls.extras) ? &p->controls : NULL;
+}
+
 static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod, const char *where, int version) {
     static const char *const ev_names[GENO_EV_COUNT] = { "on_init", "on_frame", "on_action",
                                                          "on_land", "on_hit" };
@@ -1389,6 +1400,17 @@ static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod
         if (!p->plfile[0]) { gw_log("geno: %s: unknown attach target - refused", where); return; }
         x = jd_get(d, e, "name");
         snprintf(p->name, sizeof p->name, "%s", x >= 0 && d->n[x].type == JN_STR ? d->n[x].str : p->plfile);
+    }
+
+    x = jd_get(d, e, "controls");
+    if (x >= 0) {
+        if (!p->defined)
+            gw_log("geno: %s: controls requires a define - ignored", where);
+        else if (!gn_controls_parse(&p->controls, d, x))
+            gw_log("geno: %s: malformed controls - using Both/Default/no extras", where);
+        else
+            gw_log("geno: %s: controls %d layouts, %d opt-in extras", p->name,
+                   p->controls.layouts, p->controls.extras);
     }
 
     x = jd_get(d, e, "attributes");
@@ -2509,6 +2531,7 @@ static int test_geno_registry_reload_layout(void) {
 
 #include "gw_skins_tests.inc"
 #include "geno_define_tests.inc"
+#include "../tests/fighter_controls_registry_tests.inc"
 #include "geno_anim_bank_tests.inc"
 #include "../tests/geno_css_art_registry.inc"
 #include "geno_lua_tests.inc"
@@ -2516,6 +2539,8 @@ static int test_geno_registry_reload_layout(void) {
 #include "geno_items_registry_tests.inc"
 #include "geno_items_runtime_tests.inc"
 void geno_registry_tests_register(void) {
+    gw_test_register("geno_controls_schema", test_geno_controls_schema);
+    gw_test_register("geno_controls_lookup", test_geno_controls_lookup);
     gw_skins_tests_register();
     gw_test_register("geno_anim_bank_layout", test_geno_anim_bank_layout);
     gw_test_register("geno_anim_bank_relocations", test_geno_anim_bank_relocations);

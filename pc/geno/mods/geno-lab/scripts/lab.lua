@@ -5453,7 +5453,11 @@ local PICKS_FILE = "remake-picks.json"
 local function rm_find(name)
   if name == nil or name == "" then return nil end
   LE.clip_list()
-  for _, e in ipairs(cl.all) do if e.name == name then return e end end
+  if rm.idx_key ~= cl.key or rm.idx_n ~= #cl.all then -- by-name index, rebuilt when the fighter's list changes
+    rm.idx, rm.idx_key, rm.idx_n = {}, cl.key, #cl.all
+    for _, e in ipairs(cl.all) do rm.idx[e.name] = e end
+  end
+  if rm.idx[name] then return rm.idx[name] end
   if name:sub(-1) == "*" then
     local pre = name:sub(1, -2)
     for _, e in ipairs(cl.all) do if e.name:sub(1, #pre) == pre then return e end end
@@ -5849,6 +5853,7 @@ end
 function LE.draw_remake(p)
   if not gd.anim_rows then txt(12, 30, "this build has no gd.anim_rows", "caption", DANGER) return end
   if not rm_load() then txt(12, 30, "missions/remake-goku.txt is missing: run remake_lab_data.py", "caption", DANGER) return end
+  if not rm.started then return end
   local x, y, w, ROWS = 8, 8, 300, 10
   local vis = rm_vis()
   panel(x, y, w, 44 + ROWS * 15, "REMAKE")
@@ -5864,7 +5869,7 @@ function LE.draw_remake(p)
     local nn = 0
     for _, b in ipairs(rm.blist or {}) do if rm_noted(b.name) then nn = nn + 1 end end
     txt(x + 70, y + 26, string.format("BROWSE %d clips, %d noted (unnoted first)", #(rm.blist or {}), nn), "caption", ACCENT, "left", w - 80)
-    local bf = math.max(1, math.min(rm.bsel - 4, #(rm.blist or {}) - ROWS + 2))
+    local bf = math.max(1, math.min((rm.bsel or 1) - 4, #(rm.blist or {}) - ROWS + 2))
     for i = bf, math.min(#(rm.blist or {}), bf + ROWS - 2) do
       local b = rm.blist[i]
       local yy = y + 26 + (i - bf + 1) * 15

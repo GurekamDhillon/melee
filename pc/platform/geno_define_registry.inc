@@ -318,20 +318,23 @@ static int gn_define_parse(gn_profile* p, const jdoc* d, int e, int version, con
         p->tmpl = t;
     }
     /* define.transform_partner (geno 10, additive): the key of the other define of a Zelda / Sheik pair. Required by those two templates, refused on any other. */
+    {
+    int pv;
     p->partner_key[0] = 0;
-    v = jd_get(d, def, "transform_partner");
-    if (v >= 0) {
+    pv = jd_get(d, def, "transform_partner");
+    if (pv >= 0) {
         int k;
-        if (!p->none || version < 10 || !gn_tmpl_is_pair(p->tmpl) || d->n[v].type != JN_STR || !d->n[v].str[0] || strlen(d->n[v].str) >= 40) {
+        if (!p->none || version < 10 || !gn_tmpl_is_pair(p->tmpl) || d->n[pv].type != JN_STR || !d->n[pv].str[0] || strlen(d->n[pv].str) >= 40) {
             gw_log("geno: %s: define.transform_partner is the key of the other define of a pair, on a base \"none\" define whose template is \"zelda\" or \"sheik\" (\"geno\": 10)", where); goto refused;
         }
-        for (k = 0; d->n[v].str[k]; ++k) {
-            char ch = d->n[v].str[k];
+        for (k = 0; d->n[pv].str[k]; ++k) {
+            char ch = d->n[pv].str[k];
             if (!((ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || (k && (ch == '_' || ch == '.' || ch == '-')))) goto refused;
         }
-        snprintf(p->partner_key, sizeof p->partner_key, "%s", d->n[v].str);
+        snprintf(p->partner_key, sizeof p->partner_key, "%s", d->n[pv].str);
     } else if (p->none && gn_tmpl_is_pair(p->tmpl)) {
         gw_log("geno: %s: a \"zelda\" or \"sheik\" template needs define.transform_partner (Down B changes into the partner; with none the fighter would crash)", where); goto refused;
+    }
     }
     /* A native-code default is not a visual identity. Only a retail base or an
      * explicitly named template lends its disc art (22.11); CK 0 is Captain. */

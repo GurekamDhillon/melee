@@ -173,6 +173,20 @@ void* lbFile_LoadToHeap(int heap_id, const char* basename, size_t* size)
     lbFile_80016760_inline(heap_id, basename, &dst, size);
     return dst;
 }
+
+/* Reads a disc file into the caller's buffer (cap bytes, at least the file size rounded up to 32); 0 when it does not fit. */
+int lbFile_LoadInto(const char* basename, void* dst, size_t cap, size_t* size)
+{
+    size_t n = lbFileGetSize(basename);
+    if (dst == NULL || ROUND_UP_32(n) > cap) {
+        return 0;
+    }
+    *size = n;
+    cancel = false;
+    lbFile_80016580(basename, dst, size, lbFile_8001615C, 0);
+    waitForDisc();
+    return 1;
+}
 #endif
 
 bool lbFile_800168A0(int heap_id, const char* basename, void** dst,

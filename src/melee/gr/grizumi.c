@@ -892,7 +892,14 @@ void grIzumi_801CD220(HSD_GObj* gobj, int renderpass)
     Ground* gp = GET_GROUND(gobj);
     IzumiReflection* refl = HSD_GObjGetUserData(gp->u.izumi.xC8);
     HSD_TObj* tobj = gp->u.izumi.xC4;
-    PSMTXCopy(refl->texture_matrix, tobj->mtx);
+#if defined(TARGET_PC)
+    /* A stage skin whose water mesh no longer shares the reflection image desc
+     * leaves tobj NULL (grIzumi_801CD090 reports it). On the console the copy
+     * wrote the matrix into low memory (0x74) without effect, so the stage just
+     * had no reflection; here it is a null write, so skip it. */
+    if (tobj != NULL)
+#endif
+        PSMTXCopy(refl->texture_matrix, tobj->mtx);
     grDisplay_801C5DB0(gobj, renderpass);
 }
 

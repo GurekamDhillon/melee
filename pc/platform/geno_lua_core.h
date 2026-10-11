@@ -296,6 +296,7 @@ static int glua_go(lua_State* L)
     if (lua_type(L, 1) != LUA_TSTRING) return glua_fault(L, GENO_LUA_FAULT_COMMAND, "ctx.go takes a state name");
     name = lua_tostring(L, 1);
     if (strcmp(name, "auto") == 0) return glua_cmd(L, GENO_LUA_CMD_GO, GENO_TGT_AUTO, 0);
+    if (strcmp(name, "roll") == 0) return glua_cmd(L, GENO_LUA_CMD_GO, GENO_TGT_ROLL, 0);
     if (strcmp(name, "helpless") == 0) return glua_cmd(L, GENO_LUA_CMD_GO, GENO_TGT_HELPLESS, 0);
     for (i = 0; i < g->ntarget; i++) {
         if (strcmp(g->target_name[i], name) == 0) return glua_cmd(L, GENO_LUA_CMD_GO, GENO_TARGET(GENO_TGT_GENO, i), 0);

@@ -175,6 +175,7 @@ enum {
 /* v2, geno.json only ("auto" / "helpless"): Wait on the ground, else Fall / FallSpecial */
 #define GENO_TGT_AUTO 0xFFFFFFFEu
 #define GENO_TGT_HELPLESS 0xFFFFFFFDu
+#define GENO_TGT_ROLL 0xFFFFFFFBu /* Lua ctx.go("roll"): the roll cancel the natives' special-N IASA does (ftCo_8009917C: stick or C-stick flick on the ground); nothing otherwise */
 #define GENO_TGT_STAY 0xFFFFFFFCu /* v3 "stay" ("land": landing only grounds; the state goes on) */
 #define GENO_TGT_RAW 0x08000000u
 #define GENO_TGT_KEEP_FRAME 0x04000000u

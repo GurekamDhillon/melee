@@ -21,6 +21,22 @@ static inline float fx_rib_u(int i, int n, float cum, float uv_per_unit) {
     if (uv_per_unit > 0.0f) return cum * uv_per_unit;
     return n > 1 ? (float) i / (float) (n - 1) : 0.0f;
 }
+/* R2 span width curve: keys[n][2] = (position t 0..1 from the origin, width multiplier), linear between keys, clamped outside.
+ * n == 0: 1. This is how XV2's width-over-segment-age (a comet tail: wide at the head, thin with age) is carried: the converter
+ * maps age to position (the head is the newest segment, the origin the oldest). */
+static inline float fx_rib_curve(const float (*k)[2], int n, float t) {
+    int i;
+    if (n <= 0) return 1.0f;
+    if (t <= k[0][0]) return k[0][1];
+    for (i = 1; i < n; ++i) {
+        if (t <= k[i][0]) {
+            const float span = k[i][0] - k[i - 1][0];
+            const float f = span > 1e-6f ? (t - k[i - 1][0]) / span : 1.0f;
+            return k[i - 1][1] + (k[i][1] - k[i - 1][1]) * f;
+        }
+    }
+    return k[n - 1][1];
+}
 /* R2 beam ends: ease the strip in over the first `a` of its length and out over the last `b` (smoothstep), 1 between. */
 static inline float fx_smooth01(float x) { x = x < 0.0f ? 0.0f : x > 1.0f ? 1.0f : x; return x * x * (3.0f - 2.0f * x); }
 static inline float fx_rib_profile(float t, float a, float b) {

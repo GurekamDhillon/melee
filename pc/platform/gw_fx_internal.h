@@ -90,6 +90,8 @@ typedef struct {
     float ribbon_span_len;                  /*     > 0: each particle IS a straight strip of this length along its local +Z (a beam) */
     int ribbon_span_segs;                   /*     segments of that strip */
     float ribbon_end[2];                    /*     fraction of the strip eased in at the origin end / out at the far end (width and alpha) */
+    float ribbon_wk[8][2];                  /*     span width curve: [position 0 origin .. 1 head, width multiplier], linear between keys (XV2's width-over-age) */
+    int ribbon_nwk;
     float soft_distance;                    /* R3: soft particles: depth fade distance in world units (0 = off) */
     int dissolve_mask;                      /* R4: sampler that is the dissolve mask (threshold = the param curve) */
     float dissolve_edge, dissolve_color[3]; /*     edge band width (0..1 of the mask) and its glow colour */

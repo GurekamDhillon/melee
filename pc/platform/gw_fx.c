@@ -478,6 +478,18 @@ static fx_pkg *fx_parse(const char *text, const char *path) {
                 m->ribbon_end[0] = (float) fj_num(&d, fj_at(&d, fj_get(&d, rb, "ends"), 0), 0);
                 m->ribbon_end[1] = (float) fj_num(&d, fj_at(&d, fj_get(&d, rb, "ends"), 1), 0);
                 if (!(m->ribbon_taper >= 0.0f)) m->ribbon_taper = 0.0f;
+                {   /* "span": {"width": [[t, mult], ...]}: the width curve along the beam (t 0 = origin .. 1 = head), up to 8 keys */
+                    const int wk = fj_path(&d, rb, "span", "width");
+                    int q;
+                    m->ribbon_nwk = 0;
+                    for (q = 0; q < 8; ++q) {
+                        const int kk = fj_at(&d, wk, q);
+                        if (kk < 0) break;
+                        m->ribbon_wk[q][0] = (float) fj_num(&d, fj_at(&d, kk, 0), 0);
+                        m->ribbon_wk[q][1] = (float) fj_num(&d, fj_at(&d, kk, 1), 1);
+                        m->ribbon_nwk++;
+                    }
+                }
             }
             if (rg >= 0 && d.n[rg].type == FJ_OBJ) {
                 float inner = (float) fj_num(&d, fj_get(&d, rg, "inner"), 0.8);
@@ -2048,7 +2060,7 @@ static const char fx_render_pkg[] =
     "{\"name\":\"plain\",\"kind\":\"particle\",\"material\":{\"blend\":\"add\"}},"
     "{\"name\":\"glare\",\"kind\":\"particle\",\"material\":{\"blend\":\"add\",\"bloom\":{\"threshold\":0.5,\"intensity\":2,"
     "\"tint\":[0.2,0.5,1],\"radius\":2.5},\"soft_particle\":{\"distance\":3,\"volume\":1}}},"
-    "{\"name\":\"strip\",\"kind\":\"particle\",\"ribbon\":{\"taper\":0.25,\"uv_per_unit\":0.5},\"material\":{}},"
+    "{\"name\":\"strip\",\"kind\":\"particle\",\"ribbon\":{\"taper\":0.25,\"uv_per_unit\":0.5,\"span\":{\"length\":10,\"width\":[[0,0.5],[1,1]]}},\"material\":{}},"
     "{\"name\":\"diss\",\"kind\":\"particle\",\"material\":{\"shader\":{\"type\":\"dissolve\",\"mask\":1,\"edge\":0.2,"
     "\"edge_color\":[1,0.5,0.1]}}},"
     "{\"name\":\"band\",\"kind\":\"particle\",\"ring\":{\"inner\":0.7,\"segments\":32},\"material\":{}},"
@@ -2070,6 +2082,7 @@ static int test_fx_render(void) {
     FXR(e->soft_distance == 3.0f, "soft_particle.distance (R3)");
     e = &p->em[2];
     FXR(e->ribbon == 1 && e->ribbon_taper == 0.25f && e->ribbon_uv_per_unit == 0.5f && !e->mesh, "ribbon fields (R2)");
+    FXR(e->ribbon_nwk == 2 && e->ribbon_wk[0][1] == 0.5f && e->ribbon_wk[1][0] == 1.0f, "ribbon width curve parses");
     e = &p->em[3];
     FXR(e->shader == FX_SH_DISSOLVE && e->dissolve_mask == 1 && fabsf(e->dissolve_edge - 0.2f) < 1e-6f &&
         fabsf(e->dissolve_color[1] - 0.5f) < 1e-6f, "dissolve shader fields (R4)");
@@ -2083,6 +2096,11 @@ static int test_fx_render(void) {
     }
     /* R2 maths */
     FXR(fx_rib_width_mul(0, 5, 0.25f) == 1.0f && fabsf(fx_rib_width_mul(4, 5, 0.25f) - 0.25f) < 1e-6f, "ribbon taper endpoints");
+    {
+        const float wk[3][2] = {{0.0f, 0.5f}, {0.5f, 1.0f}, {1.0f, 0.1f}};
+        FXR(fx_rib_curve(wk, 3, 0.0f) == 0.5f && fabsf(fx_rib_curve(wk, 3, 0.25f) - 0.75f) < 1e-6f &&
+            fabsf(fx_rib_curve(wk, 3, 1.0f) - 0.1f) < 1e-6f && fx_rib_curve(wk, 0, 0.3f) == 1.0f, "ribbon width curve");
+    }
     FXR(fabsf(fx_rib_u(2, 5, 7.0f, 0.0f) - 0.5f) < 1e-6f && fabsf(fx_rib_u(2, 5, 7.0f, 0.5f) - 3.5f) < 1e-6f, "ribbon u");
     FXR(fx_rib_side(a, b, cz, side) == 1 && fabsf(fabsf(side[1]) - 1.0f) < 1e-6f && fabsf(side[0]) < 1e-6f, "ribbon side is perpendicular to segment and view");
     FXR(fx_rib_side(a, cz, cz, side) == 0, "segment along the view degenerates safely");

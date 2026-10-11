@@ -35,6 +35,7 @@ int main() {
     assert(fx_flash_alpha(50, 50, 4, 1.0f) == 1.0f && fx_flash_alpha(52, 50, 4, 1.0f) == 0.25f && fx_flash_alpha(54, 50, 4, 1.0f) == 0.0f);
     assert(fx_rib_profile(0.0f, 0.2f, 0.2f) == 0.0f && fx_rib_profile(0.5f, 0.2f, 0.2f) == 1.0f && fx_rib_profile(1.0f, 0.2f, 0.2f) == 0.0f);
     assert(fx_rib_profile(0.1f, 0.2f, 0.0f) == 0.5f && fx_rib_profile(0.3f, 0.0f, 0.0f) == 1.0f);
+    { const float wk[2][2] = {{0.0f, 1.0f}, {1.0f, 0.0f}}; assert(fx_rib_curve(wk, 2, 0.25f) == 0.75f && fx_rib_curve(wk, 2, 2.0f) == 0.0f && fx_rib_curve(wk, 0, 0.5f) == 1.0f); }
     std::puts("fx_render_math_test: ok");
     return 0;
 }

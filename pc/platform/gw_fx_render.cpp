@@ -881,7 +881,7 @@ void build_ribbon(const fx_emitter& e, const fx_state& st, const fx_inst& in, in
         const float t = float(i) / float(n - 1);
         const float prof = fx_rib_profile(t, e.ribbon_end[0], e.ribbon_end[1]);
         for (int c = 0; c < 3; ++c) pts[size_t(i)].p0[c] = base.p0[c] + base.az[c] / zl * len * t;
-        pts[size_t(i)].p0[3] = base.p0[3] * fx_rib_width_mul(i, n, e.ribbon_taper) * prof;
+        pts[size_t(i)].p0[3] = base.p0[3] * fx_rib_width_mul(i, n, e.ribbon_taper) * fx_rib_curve(e.ribbon_wk, e.ribbon_nwk, t) * prof;
         pts[size_t(i)].c0[3] = a0 * prof;
         pts[size_t(i)].c1[3] = 1.0f;
       }

@@ -189,12 +189,12 @@ Production keys affected (2026-10-11; unknown saved keys follow the same rule):
 
 | Read | Keys (each maps to `MELEE_` plus its uppercase spelling) |
 |---|---|
-| Integer | `atlas_lobby`, `atlas_pause`, `atlas_select_solo`, `auto_create_save`, `cstick_1p_attacks`, `delay`, `envoy_online`, `envoy_run_me`, `envoy_run_state`, `envoy_run_prev_me`, `envoy_run_prev_state`, `gdlp_record`, `onboarded`, `reduced_motion`, `stage_mode`, `stick_deadzone`, `turbo_online`, `turbo_versus`, `ucf`, `unlock_all`, `widescreen` |
+| Integer | `atlas_lobby`, `atlas_pause`, `atlas_select_solo`, `auto_create_save`, `css_panels`, `cstick_1p_attacks`, `delay`, `envoy_online`, `envoy_run_me`, `envoy_run_state`, `envoy_run_prev_me`, `envoy_run_prev_state`, `gdlp_record`, `onboarded`, `reduced_motion`, `stage_mode`, `stick_deadzone`, `turbo_online`, `turbo_versus`, `ucf`, `unlock_all`, `widescreen` |
 | String | `envoy_run`, `envoy_run_prev`, `input`, `log`, `name`, `pad_diag`, `server` |
 | Controller integer family | `ctlNN_active`, for every `NN` from `00` through `15` (16 keys) |
 | Controller string families | `ctlNN_id`, `ctlNN_pP_map`, `ctlNN_pP_name`, for every `NN` from `00` through `15` and `P` from `0` through `3` (144 keys) |
 
-These are 188 concrete production keys: 37 integer and 151 string keys.
+These are 189 concrete production keys: 38 integer and 151 string keys.
 `MELEE_NETPLAY_SERVER` still precedes the generic `MELEE_SERVER` override for
 the `server` key. Existing `MELEE_INPUT`, `MELEE_PAD_DIAG`, `MELEE_LOG`,
 `MELEE_WIDESCREEN`, `MELEE_UNLOCK_ALL`, `MELEE_UCF`, `MELEE_GDLP_RECORD` and
@@ -203,6 +203,51 @@ their existing checks and parsing. `MELEE_TURBO` is the simulation clock;
 the new `MELEE_TURBO_ONLINE` / `MELEE_TURBO_VERSUS` read overrides are match
 preferences. Settings kept in video.cfg, audio.cfg, mods/enabled.txt and the
 memory card retain their own accessors.
+
+### Settings/environment collision guard (2026-10-11)
+
+The native `settings_env_collisions` test reads the live game sources and the
+workspace's tools, CI and launch scripts (including the Qt launcher). It expands
+the controller and Envoy key families and `gd.lab_env("NAME")` reads. New setting
+keys and new environment names are compared without a frozen inventory. A name
+overlap fails unless the exact key/environment pair is approved in
+`pc/tests/settings_env_audit_native.inc`. Open prefixes such as `MELEE_LAB_` and
+the Qt launcher's cleared namespaces (`MELEE_NET*`, `MELEE_SLIPPI*`,
+`MELEE_SCENE*`) are reserved too. Modeled dynamic keys use their live bounds,
+tables and wrapper callsites; an unresolved settings call fails and must be
+added to the resolver. The scan includes variables written by tools and fixtures as a
+conservative guard; comments and the settings tests' synthetic variables are
+excluded. Supply `GW_MELEE` / `GW_ROOT`, or let the test locate sources from the
+compiled source path and its parent workspace. Missing/unreadable sources fail
+the test; this audit is for developer checkouts.
+
+Eight existing aliases have the same feature meaning, so no override names
+were renamed:
+
+| Key / environment | Meaning and precedence retained |
+|---|---|
+| `atlas_pause` / `MELEE_ATLAS_PAUSE` | Atlas pause takeover (`0` / `1`) |
+| `gdlp_record` / `MELEE_GDLP_RECORD` | Whole-match recording; `rec_gdlp_wanted` checks the explicit env first, preserving `0`, `1`, directories and filenames |
+| `input` / `MELEE_INPUT` | Physical input device selector; `gw_pad_setting` checks the same string first |
+| `log` / `MELEE_LOG` | Log category list, such as `quiet` or `mex,-render`; this is not an output filename |
+| `pad_diag` / `MELEE_PAD_DIAG` | Pad diagnostic level (`0`, `1`, `2`); stored as a string |
+| `ucf` / `MELEE_UCF` | Offline Controller Fix; `gw_Ucf_OfflineMode` checks the explicit env first, preserving `off`, `false`, `no` and `0.84` parsing |
+| `unlock_all` / `MELEE_UNLOCK_ALL` | Unlock reports; the existing feature env check remains first |
+| `widescreen` / `MELEE_WIDESCREEN` | Wide game canvas; the existing numeric boolean env check remains first |
+
+Similar names have separate meanings: `MELEE_TURBO` is the simulation clock,
+`MELEE_TURBO_ONLINE/VERSUS` are match preferences, and `MELEE_NETPLAY_TURBO` is a
+scripted room rule word. `MELEE_NETPLAY_ENVOY` likewise selects scripted room
+rules while `MELEE_ENVOY_ONLINE` overrides the menu preference. `MELEE_STAGE`
+and `MELEE_NETPLAY_STAGE` select a stage, while `MELEE_STAGE_MODE` selects the
+online stage-list mode. `MELEE_NETPLAY_SERVER` still precedes `MELEE_SERVER`.
+`MELEE_NO_ONBOARD` suppresses onboarding independently of `MELEE_ONBOARDED`.
+`MELEE_VOLUME`, `MELEE_SCENE`, `MELEE_WINDOW_*` and `MELEE_NETPLAY_BIND` do not
+match any current settings key. `MELEE_ATLAS_LOBBY`, `MELEE_ATLAS_SELECT_SOLO`,
+`MELEE_NAME` and `MELEE_DELAY` are settings overrides without independent
+legacy readers. Keep these distinctions when adding settings or tools; for a
+conflicting meaning, give the settings override an explicit exception name and
+update the audit's mapping rather than approving the collision.
 
 `MELEE_WINDOW_HIDE=1` remains unsuitable for realtime play: a hidden window makes the D3D11
 present block. Turbo runs GX/EFB work offscreen and skips swapchain presentation while hidden.

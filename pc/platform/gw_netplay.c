@@ -1467,6 +1467,8 @@ static const int lb_strike_counts[3] = { 1, 2, 2 }; /* 1-2-2 */
  * peer's list is not in yet (counted as available until it is). The lobby's stage list and the
  * online CSS pick ask these; A2's online CSS/SSS grey out what they refuse. */
 int gw_Netplay_FighterAvailable(int ck) { return ck >= 0 && gw_MexId_OnlineFighter(ck) != 0; }
+/* The name of the mod whose skin replaces this retail stage's file (a Nucleus stage skin), 1; else 0. The stage select shows it. */
+int gw_Netplay_StageSkinExt(int ext, char *out, int cap) { return gw_MexId_StageSkin(ext, out, cap); }
 int gw_Netplay_StageAvailable(int ext) { return ext >= 0 && gw_MexId_OnlineStage(ext) != 0; }
 
 static void lb_default_stages(void) {

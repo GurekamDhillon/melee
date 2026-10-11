@@ -91,6 +91,8 @@ const char *gw_Mods_Dir(void);           /* the mods folder in use ("" when none
 int gw_Mods_ActiveCount(void);           /* mounting mods */
 int gw_Mods_ActiveAt(int n);             /* index of the n-th mounting mod, in mount order */
 const char *gw_Mods_PayloadDir(int i);   /* host folder whose contents are disc paths */
+/* The mod that wins the disc path (the last mounted one that has the file under its payload): its name copied to out, 1; else 0. Used to tell a player that a stage skin is active. */
+int gw_Mods_WinnerOf(const char *disc_path, char *out, int cap);
 int gw_Mods_PayloadIsModDir(int i);      /* 1 = legacy layout: skip mod.json at its top level */
 /* The overlay reports every disc path it finally mounted, with the mod that won it, so the
  * netplay fingerprint covers the exact files the game will read. Order-independent. */

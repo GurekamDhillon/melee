@@ -772,6 +772,14 @@ static void fas_loading_frame(void)
         Ui_SelCard(fas.h, port, cpu ? FS_CPU : FS_HMN, name, sub, abbr, -1, cpu, 0, (fl_ld.online && i == fl_ld.me) ? (unsigned) FA_CARD_FOCUS : 0u);
     }
     Netplay_StageNameExt(fl_ld.ext, stage, 64);
+    {
+        char skin[40];
+        if (Netplay_StageSkinExt(fl_ld.ext, skin, sizeof skin) != 0) {
+            char full[64];
+            sprintf(full, "%.22s (skin: %.28s)", stage, skin);
+            memcpy(stage, full, sizeof full);
+        }
+    }
     Ui_SelExplain(fas.h, "STAGE", stage, "", "", -1, "", "", "");
     Ui_SelProgress(fas.h, (int) (fe.progress * 1000.0F));
     Ui_SelCounter(fas.h, fl_ld.ready ? "READY" : "WARMING UP");

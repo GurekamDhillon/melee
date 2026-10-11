@@ -376,7 +376,7 @@ static void nc_skin_json(const nc_skin_mod *s, nj_buf *b) {
 
 /* ---- installed mods ------------------------------------------------------------------------------------------- */
 
-typedef struct { char folder[64]; int id; char name[80], updated[24], author[40], target[24]; int ncost; } nc_inst;
+typedef struct { char folder[64]; int id; char name[80], updated[24], author[40], target[24], cat[12], stage[28]; int ncost, enabled; } nc_inst;      /* cat: "" a costume skin, else "stage" / "fx" / "menu" / "audio" */
 
 /* read one mod.json of ours; 1 when it is a Nucleus skin */
 static int nc_inst_parse(const char *folder, const char *text, nc_inst *out) {
@@ -392,7 +392,9 @@ static int nc_inst_parse(const char *folder, const char *text, nc_inst *out) {
         nc_copy(out->updated, sizeof out->updated, nj_gstr(&d, nu, "updated_at", ""));
         nc_copy(out->author, sizeof out->author, nj_gstr(&d, nu, "author", ""));
         nc_copy(out->target, sizeof out->target, nj_gstr(&d, nu, "fighter", ""));
-        co = nj_get(&d, sk, "costumes");
+        nc_copy(out->cat, sizeof out->cat, nj_gstr(&d, nu, "category", ""));
+        nc_copy(out->stage, sizeof out->stage, nj_gstr(&d, nu, "stage", ""));
+        co = sk >= 0 ? nj_get(&d, sk, "costumes") : -1;
         if (co >= 0) for (e = d.n[co].first; e >= 0; e = d.n[e].next) ++out->ncost;
         ok = out->id > 0;
     }

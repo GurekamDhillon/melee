@@ -9,6 +9,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "gw.h"
 #include "gw_mexid.h"
+#include "gw_mods.h"
 #include "gw_mex_ftfunction.h"
 #include "gw_mex_grfunction.h"
 #include "gw_test.h"
@@ -202,6 +203,18 @@ static const struct {
     { 30, "GrOk.dat", "Kongo Jungle (64)" }, { 31, "GrNBa.dat", "Battlefield" },
     { 32, "GrNLa.dat", "Final Destination" },
 };
+
+int gw_MexId_StageSkin(int ext, char *out, int cap) {
+    size_t i;
+    if (out != NULL && cap > 0) out[0] = '\0';
+    for (i = 0; i < sizeof mx_vanilla_stages / sizeof mx_vanilla_stages[0]; ++i) {
+        char file[40];
+        if (mx_vanilla_stages[i].ext != ext) continue;
+        snprintf(file, sizeof file, "%s%s", mx_vanilla_stages[i].file, strstr(mx_vanilla_stages[i].file, ".dat") != NULL ? "" : ".dat");
+        return gw_Mods_WinnerOf(file, out, cap);
+    }
+    return 0;
+}
 
 static void mx_hex(uint64_t h, char out[17]) {
     snprintf(out, 17, "%016llx", (unsigned long long) h);

@@ -476,6 +476,9 @@ static const char *nc_why_not_files(const nc_mod *m, const nc_file *files) {
         for (i = 0; i < m->nf; ++i) if (nc_has_ext(files[i].filename, ".zip")) return "";   /* a stage package: the installer checks stage.json and the stage file */
         return "Custom stage: this post has no .zip stage package GD can read.";
     }
+    if (m->type == NC_T_GAMEPLAY) { /* a MexManager fighter zip is a gameplay post: the installer checks fighter.json and says why when it is not one */
+        for (i = 0; i < m->nf; ++i) if (nc_has_ext(files[i].filename, ".zip")) return "";
+    }
     if (m->type == NC_T_PATCH) return "xdelta patch: not a mod (it patches the whole disc).";
     if (m->nf == 0) return "No files listed in this post.";
     for (i = 0; i < m->nf; ++i) {

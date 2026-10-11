@@ -427,6 +427,34 @@ static void fs_css_roster(void)
             fcs.ok[fcs.n++] = !fcs.online || Netplay_FighterAvailable(ck);
         }
     }
+    /* Fighters that arrived as MODS on a disc with no MxDt.dat (gw_mex_modfighter.inc): the disc's CSS has no icon for them, so they borrow
+     * the art of the retail fighter they were cloned from (like a Geno define), and are playable online when the opponent holds the same mod. */
+    {
+        extern int ModFighter_Count(void);
+        extern int ModFighter_CKAt(int i);
+        extern int gm_MexVanillaKind(int kind, int character_kind);
+        int d, count = ModFighter_Count();
+        for (d = 0; d < count && fcs.n < FS_MAX_FIGHTERS; ++d) {
+            int ck = ModFighter_CKAt(d), base, source, k;
+            bool dup = false;
+            if (ck < 0 || ck >= FE_NP_MAX_CK) continue;
+            for (k = 0; k < fcs.n; k++) dup |= fcs.ck[k] == ck;
+            if (dup) continue;
+            base = gm_MexVanillaKind(ck, 1);
+            fcs.ck[fcs.n] = ck;
+            fcs.icon[fcs.n].img = NULL;
+            fcs.icon[fcs.n].tl = NULL;
+            for (source = 0; source < n; ++source) {
+                int donor, ext;
+                FsArt art;
+                if (mnCharSel_PcArtIcon(source, &donor, &ext, &art.img, &art.tl) && donor == base) {
+                    fcs.icon[fcs.n] = art;
+                    break;
+                }
+            }
+            fcs.ok[fcs.n++] = !fcs.online || Netplay_FighterAvailable(ck);
+        }
+    }
     fcs.cols = 11;
     fcs.rows = 4;
     fcs.per = fcs.cols * fcs.rows;

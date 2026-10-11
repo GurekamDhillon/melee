@@ -1811,6 +1811,9 @@ void ftData_MexInitKinds(void)
         ftData_803C23E4[fk] = (char*) Mex_FtAnimFile(k);
         ftData_Table_Unk0[fk].count = Mex_FtAnimCount(k);
         ftData_803C2468[fk] = (Fighter_DemoStrings*) Mex_FtDemoStrings(k);
+        if (ftData_803C2468[fk] == NULL) {
+            ftData_803C2468[fk] = ftData_803C2468[base]; /* a mod-built row without demo symbols: the clone base's */
+        }
         ncost = Mex_FtCostumeCount(k);
         if (ncost > 0) {
             ftData_PcInstallRows(fk, ncost, 0, Mex_FtCostumeString, k);
@@ -1881,6 +1884,19 @@ void ftData_MexInitKinds(void)
         OSReport("gw: %d m-ex fighter kinds from MxDt.dat (kinds %d..%d)\n", n,
                  Ft_Kind_Mex0, Ft_Kind_Mex0 + n - 1);
     }
+}
+
+/* The retail fighter kind (0..26) whose onLoad is the native function `native`, or -1. Used by the platform to find which retail
+ * fighter a mod-built m-ex fighter row was cloned from (gw_mex_modfighter.inc). */
+int ftData_PcRetailKindOfOnLoad(u32 native)
+{
+    int r;
+    for (r = 0; r <= 26; r++) {
+        if ((u32) (uintptr_t) ftData_OnLoad[r] == native) {
+            return r;
+        }
+    }
+    return -1;
 }
 
 /* Is `kind` an m-ex fighter with a row? */

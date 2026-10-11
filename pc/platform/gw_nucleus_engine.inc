@@ -35,6 +35,7 @@
 #include "gw_nucleus_http.inc"
 #include "gw_nucleus_loose.h"
 #include "gw_nucleus_stage.h"
+#include "gw_nucleus_fighter.h"
 
 extern int gw_DVDFileExists(const char *path);
 extern void *gw_DVDReadFileAlloc(const char *path, uint32_t *out_size);
@@ -414,7 +415,7 @@ static void ne_log_line(const char *line) { ne_log("%s", line); }
 
 /* a file the install takes: a loose-override kind the catalog marked supported, or (custom stage posts) the .zip stage package */
 static int ne_file_usable(const nc_mod *m, const nc_file *f) {
-    if (m->type == NC_T_CUSTOM_STAGE) return nc_has_ext(f->filename, ".zip");
+    if (m->type == NC_T_CUSTOM_STAGE || m->type == NC_T_GAMEPLAY) return nc_has_ext(f->filename, ".zip");
     return f->supported && f->cat != NC_FC_COSTUME;
 }
 #define NE_LOOSE_FILES 24
@@ -491,6 +492,7 @@ static int ne_install_loose(const nc_mod *m, const nc_file *files, char *msg, si
     if (nin == 0) { snprintf(msg, mcap, "%s", first_err[0] ? first_err : "Nothing in this post could be downloaded."); rc = -1; }
     else {
         rc = m->type == NC_T_CUSTOM_STAGE ? nc_stage_install(NE.mods, &post, in, nin, &env, &res, msg, mcap, ne_log_line)
+           : m->type == NC_T_GAMEPLAY     ? nc_fighter_install(NE.mods, &post, in, nin, &env, &res, msg, mcap, ne_log_line)
                                           : nc_loose_install(NE.mods, &post, in, nin, &env, &res, msg, mcap, ne_log_line);
         if (rc != 0 && first_err[0]) { size_t l = strlen(msg); snprintf(msg + l, mcap - l, " (%s)", first_err); }
     }
@@ -1010,9 +1012,9 @@ static int ne_src_row(void *u, int id, AtNcRow *r) {
         r->tex = -1; r->thumb = -1; r->qstate = AT_NC_Q_NONE; r->id = id;
         snprintf(r->title, sizeof r->title, "%s", NE.inst[inst].name);
         snprintf(r->author, sizeof r->author, "%s", NE.inst[inst].author);
-        snprintf(r->kind, sizeof r->kind, "%s", !NE.inst[inst].cat[0] ? "Costume" : !strcmp(NE.inst[inst].cat, "cstage") ? "Custom stage" : !strcmp(NE.inst[inst].cat, "stage") ? "Stage skin" : !strcmp(NE.inst[inst].cat, "fx") ? "Effects" : !strcmp(NE.inst[inst].cat, "menu") ? "Menu" : "Audio");
+        snprintf(r->kind, sizeof r->kind, "%s", !NE.inst[inst].cat[0] ? "Costume" : !strcmp(NE.inst[inst].cat, "cstage") ? "Custom stage" : !strcmp(NE.inst[inst].cat, "cfighter") ? "Custom fighter" : !strcmp(NE.inst[inst].cat, "stage") ? "Stage skin" : !strcmp(NE.inst[inst].cat, "fx") ? "Effects" : !strcmp(NE.inst[inst].cat, "menu") ? "Menu" : "Audio");
         snprintf(r->updated, sizeof r->updated, "%.10s", NE.inst[inst].updated);
-        r->tab = !NE.inst[inst].cat[0] ? NC_TAB_COSTUMES : (!strcmp(NE.inst[inst].cat, "stage") || !strcmp(NE.inst[inst].cat, "cstage")) ? NC_TAB_STAGES : !strcmp(NE.inst[inst].cat, "fx") ? NC_TAB_EFFECTS : !strcmp(NE.inst[inst].cat, "menu") ? NC_TAB_MENUS : NC_TAB_AUDIO;
+        r->tab = (!NE.inst[inst].cat[0] || !strcmp(NE.inst[inst].cat, "cfighter")) ? NC_TAB_COSTUMES : (!strcmp(NE.inst[inst].cat, "stage") || !strcmp(NE.inst[inst].cat, "cstage")) ? NC_TAB_STAGES : !strcmp(NE.inst[inst].cat, "fx") ? NC_TAB_EFFECTS : !strcmp(NE.inst[inst].cat, "menu") ? NC_TAB_MENUS : NC_TAB_AUDIO;
         if (NE.inst[inst].stage[0]) snprintf(r->fighter, sizeof r->fighter, "%s", NE.inst[inst].stage);
         {
             int f;

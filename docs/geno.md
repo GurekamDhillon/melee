@@ -773,6 +773,84 @@ or application failure reports `reload needs restart: ...`. The existing `wb.rel
 requests a process restart for full-package changes. EngineLink callers must explicitly opt
 into the animation-only command; the launcher lives in the workspace repo and is unchanged here.
 
+### 14.20 The input recorder (`lab rec`, `.gdlp`)
+
+Records a LAB take so it can be replayed exactly, without the rewind window. A **recording** is two
+files in `scripts-data/geno-lab_lab/recordings/`: `<name>.gdst` (the LAB state at the first recorded
+frame, the state library's own format, so it carries the exe / disc / mods / Geno hashes) and
+`<name>.gdlp` ("GD live playback"). Playback loads the state, then feeds the logged `PADStatus[4]` (and
+the CPU slots' virtual pads) back at `HSD_PadRenewMasterStatus`, the same point the rewind log uses
+(`controller.c`). The ports are claimed for the whole playback: the real controllers are ignored. At the
+end (or `lab rec end`) they are released. The file is flushed every second, so a killed game loses
+at most one second.
+
+**Keys and commands** (also F3 help, and `lab help`):
+
+| | |
+|---|---|
+| F7 | record on / off. SHIFT+F7: play the last recording (again: stop) |
+| `lab rec start [name]` | save the state, start writing pads. No name: `rec_<unix time>`. An existing name is refused, nothing is overwritten |
+| `lab rec stop` | close the file. The take is the surviving timeline: a rewind-and-fork, or `rewind_live`, cuts the recording back to that frame; loading a state or leaving the match stops it |
+| `lab rec mark [label]` | a marker event at the current frame offset (`lab rec list` counts them) |
+| `lab rec play [name] [1:2,2:1] [loop]` | load the state, replay. The map sends a recorded port to another (`1:2` = recorded P1 plays on P2). `loop` reloads at the end |
+| `lab rec end` | stop playing now |
+| `lab rec list` | the recordings, frames, seconds, marks, and why one is refused here |
+| `lab rec trim <name> <from> <to>` | a new recording `<name>-cut` of frames [from, to) (offsets from the start). It replays to `from` (paused, fast), saves the state there, and copies the pads |
+| `lab rec keep-last <seconds> [name]` | the final N seconds (`<name>-last<N>`); `name` defaults to the last recording |
+| `lab rec save-history <name> [seconds]` | the rewind log (the last N s, default all) + its keyframe as a recording. It rewinds to the start, saves, and returns to where it was, so a take inside the window can be saved after the fact |
+| `lab replay` / `lab live` | after a rewind: resume REPLAYING the log (what `resume` does, now said out loud) / stop replaying and go live here |
+
+`gd.rec_start([name])`, `gd.rec_stop()`, `gd.rec_mark([label])`, `gd.rec_play(name [, map [, loop]])`,
+`gd.rec_play_stop()`, `gd.rec_trim(name, from, to [, new])`, `gd.rec_keep_last(seconds [, name])`,
+`gd.rec_save_history(name [, seconds])`, `gd.rec_status()` (`mode` idle / arming / recording / loading /
+playing / working, `name`, `last`, `frame`, `frames`, `loop`, `base`), `gd.rec_list()`. All return
+`true/name` or `false, why`; offline only.
+
+**The rewind trap (R2).** `gd.rewind_to` pauses at the frame; `resume` then **replays the logged input**
+forward (`gd.history().replaying`, `.fwd` shrinking) and the game goes live only when the log runs out, or
+on `gd.rewind_live()` / G / `lab live`. Nothing is truncated by resuming. It only *looks* live because the
+replay ends at the old head. `resume` during a rewind now prints a warning that says so; `lab replay` does it deliberately.
+The 20 s window is the rewind's, not the recorder's: use `lab rec start` before the take, or
+`lab rec save-history` inside the window.
+
+**The `.gdlp` format, version 1.** A `.gdlp` is a Slippi-framed event stream, so the container is the
+`.slp` one: UBJSON `{U 3 raw [$ U # l <u32 length>`, the `0x35` Payloads event listing every event's
+payload size, the events, then the metadata block. A Slippi reader that honours the size table skips
+the GD events it does not know. All integers are big endian. The raw length is 0 while a file is being
+written (Slippi's own convention) and is patched on close; a torn tail reads up to the last whole event.
+
+| event | size | content |
+|---|---|---|
+| `0x35` Payloads | 1+3n | (cmd u8, size u16) per event below |
+| `0x90` GD header | 16 | version u16 (1), flags u8 (1 = every fighter is in the retail roster, 2 = starts from the `.gdst`), ports u8 (6), base frame u32, pad bytes u16 (64), virtual-pad bytes u16 (72), unix time u32 |
+| `0x91` GD fighter | 30 | per slot 0-5: slot u8, present u8, char i16 (internal id), costume u8, slot type u8 (0xFF absent), define / fighter name char[24] (a Geno define as written, e.g. `goku-xv2`) |
+| `0x92` GD identity | 40 | exe hash, disc hash, mods hash, Geno data hash (u64 each), stage u32, GENO_VERSION u32. The Geno hash covers every profile (define) and the animation-bank digest |
+| `0x93` GD state | 44 | the `.gdst` file name char[40], u32 reserved |
+| `0x94` GD frame | 141 | match frame u32, renewed u8, PADStatus[4] 64 bytes (the PC struct is 16 bytes), virtual pads 2x9 i32 |
+| `0x95` GD mark | 36 | frame offset u32, label char[32] |
+| `0x96` GD segment | 48 | trim provenance: from u32, to u32, source recording char[40] |
+| `0x97` GD text | 256 | kind u8 (1 = the enabled mods in words, `gw_Mods_Describe`), text[255] |
+| `0x39` Game End | 6 | standard; method 7 |
+
+Playback is **refused**, with the reason on the console, unless this is the same build (exe hash),
+disc, mod set and Geno data the take was made with, and the running LAB match has the same fighters,
+costumes and stage ("recorded with other mods (it used: ...)", "this recording is P1 goku-xv2 (costume 0):
+start that match first"). Version 1 does not write the standard Game Start / Pre-Frame / Post-Frame
+events, so a `.gdlp` is not yet a valid `.slp` and there is no `.slp` export; `MELEE_SLP_RECORD` still
+records a whole stock match as `.slp`. Writing them (a fixed processed-input mirror of each GD frame) and the
+export for retail-only takes (flag 1) is the planned version 2; the state could then be embedded.
+
+Verified by `pc/tests/lab_rec/run.sh` (a scripted 10 s Goku v Mario take, played back, the history take,
+rewind + resume, trim, keep-last: positions, percent, actions and action frames compared every frame) and the
+native test `script_rec` (container, round trip, torn tail, refusals).
+
+**The R2 root cause.** After a rewind lands, the loop called `gs_stage_cleanup_dead()`, which forked the
+timeline unconditionally: the first frame after `gd.rewind_to` dropped the logged input ahead, so `resume`
+went live with `fwd = 0` and the take was lost. It now forks only when a script unload left a cleanup pending
+(the test asserts `fwd` shrinks and the replayed frames equal the first run). Any other gameplay write during a
+replay is logged as `rewind: a gameplay write from ... dropped N logged frames`. Known gap, not fixed here: the
+rewind log (`gs_log.pad`) keeps 48 of the 64 pad bytes, so port 4's pad is not in the rewind log; the recorder keeps all four.
+
 ### 14.11 Stage E: the creator tools
 
 Three new display modes (keys `6`/`7`/`8`, TAB cycles through all 8), a FRAMES toggle and a pause-menu

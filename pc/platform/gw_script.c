@@ -842,6 +842,7 @@ static int gs_may_run(int i) {
     return 1;
 }
 
+static const char *gs_cb_name; /* the script callback running now (for the rewind-branch diagnostic) */
 static void gs_hook_all(const char *name, int nargs_int, int a, int b) {
     int i;
     for (i = 0; i < gs.n; ++i) {
@@ -854,7 +855,9 @@ static void gs_hook_all(const char *name, int nargs_int, int a, int b) {
         if (nargs_int >= 2) {
             lua_pushinteger(gs.L, b);
         }
+        gs_cb_name = name;
         gs_pcall(i, nargs_int, 0, name);
+        gs_cb_name = NULL;
     }
 }
 
@@ -3143,7 +3146,9 @@ static void gs_run_tasks(void) {
                 int item_mark=gs_item_call_begin(), previous_refusal=gs_callback_refused;
                 char task_name[32];snprintf(task_name,sizeof task_name,"task%d",k);
                 gs_callback_refused=0;gw_hang_callback(s->id,task_name,1);
+                gs_cb_name = task_name;
                 rc=lua_resume(co,L,0,&nres);
+                gs_cb_name = NULL;
                 gw_hang_callback(s->id,task_name,0);
                 gs_callback_result(i,task_name,(rc!=LUA_OK && rc!=LUA_YIELD)||gs_callback_refused);
                 gs_callback_refused=previous_refusal;
@@ -7891,7 +7896,9 @@ static int gs_find(const char *id) {
 }
 
 static void gs_stage_cleanup_dead(void) {
-    gs_rw_branch();
+    /* Only a real cleanup forks the timeline. This ran unconditionally after every rewind (rw_notify),
+       so the first frame after gd.rewind_to dropped the logged input ahead: "resume" went live, fwd=0. */
+    if (gs_stage_cleanup_pending || gw_ScriptGame_StageSlotsActive()) gs_rw_branch();
     gs_stage_cleanup_pending = gw_ScriptGame_StageReleaseDeadOwners() != 0;
 }
 
@@ -8764,6 +8771,17 @@ static void gs_rw_branch(void) {
         return;
     }
     if (gs.rw_head > now) {
+        /* a gameplay write while the log is being replayed ends the replay and drops the take: say who did it */
+        lua_Debug ar;
+        const char *who = "native";
+        char where[200];
+        where[0] = ' ';
+        if (gs.L != NULL && lua_getstack(gs.L, 1, &ar) && lua_getinfo(gs.L, "nSl", &ar)) {
+            snprintf(where, sizeof where, " at %s:%d (%s)", ar.short_src, ar.currentline, ar.name ? ar.name : "?");
+            who = "Lua";
+        }
+        gw_log("rewind: a gameplay write from %s%s (script %s, callback %s) dropped %d logged frames (replay ends here)", who, where,
+               gs.cur >= 0 && gs.cur < gs.n ? gs.s[gs.cur].id : "-", gs_cb_name ? gs_cb_name : "?", gs.rw_head - now);
         gs.rw_head = now;
     }
     if (gw_rw_drop_from(now) != 0) {

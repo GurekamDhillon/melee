@@ -1,6 +1,6 @@
 /* gw_script_rec.inc - the LAB input recorder (.gdlp, "GD live playback"). Included by gw_script.c
  * right after gs_rw_request, so it sees the rewind log, the state files and the pending-operation
- * machinery. docs/geno.md 14.13 is the format reference.
+ * machinery. docs/geno.md 14.20 is the format reference.
  *
  * A recording is TWO files in <script-data>/geno-lab_lab/recordings/:
  *   <name>.gdst   the LAB state at the first recorded frame (the state library's own file format,
@@ -14,7 +14,7 @@
  * HSD_PadRenewMasterStatus, the point the rewind log uses (controller.c), so it needs nothing the
  * rewind does not. The file is flushed every second: a killed game loses at most one second.
  */
-#define GR_PAD 48
+#define GR_PAD 64 /* 4 x sizeof(PADStatus): the PC struct is 16 bytes (extButton); the rewind log keeps only 48 */
 #define GR_VP 72
 #define GR_VER 1
 #define GR_FRAME_PAYLOAD (4 + 1 + GR_PAD + GR_VP)
@@ -482,6 +482,7 @@ static void gr_write_trim(void) {
     }
     gr_finish(f, a, b);
     snprintf(gr.last, sizeof gr.last, "%s", gr.jdst);
+    gs.paused = gr.jpaused; /* the cut leaves the game as it found it */
     {
         char m[160];
         snprintf(m, sizeof m, "recording \"%s\" saved: %d frames (%.1f s) cut from \"%s\" [%d,%d)", gr.jdst,

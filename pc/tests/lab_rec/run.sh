@@ -15,9 +15,9 @@ printf 'geno-lab\ngoku-xv2\nlab-rec-tests\n' > "$pkg/enabled.txt"
 source "$ws/.env"
 export MELEE_MODS_DIR="$(cd "$pkg" && pwd -W)"
 export MELEE_SCENE='mode=lab;p1=geno:goku-xv2/hu;p2=mario/hu;stage=fd;items=off;time=0'
-export MELEE_UNATTENDED=1 MELEE_MAX_SECONDS=900 MELEE_LAB_UI=0 MELEE_TURBO=1
+export MELEE_UNATTENDED=1 MELEE_MAX_SECONDS=420 MELEE_LAB_UI=0 MELEE_TURBO=1
 export MELEE_WINDOW_X=30000 MELEE_WINDOW_Y=30000 MELEE_NETPLAY_BIND=127.0.0.1
 export MELEE_PAD_SCRIPT="$(cd "$ws/ports/goku-xv2/combo/tests" && pwd -W)/turbo_pad.lua"
 [ -n "${2:-}" ] && export MELEE_CONSOLE_PORT="$2"
-bash "$ws/tools/port/run.sh" --max-seconds 900 "$name" --iso "$GW_ISO_VANILLA"
+bash "$ws/tools/port/run.sh" --max-seconds 420 "$name" --iso "$GW_ISO_VANILLA"
 grep -a "LABREC" "$GW_BUILD_ROOT/runs/$name/melee-pc.log" || true

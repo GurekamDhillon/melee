@@ -45,7 +45,7 @@ local function observe(into)
   end
 end
 
-local function compare(label, a, b, lo, hi)
+local function compare(label, a, b, lo, hi, min)
   local n, diff, first = 0, 0, nil
   for f = lo, hi do
     if a[f] ~= nil and b[f] ~= nil then
@@ -54,7 +54,7 @@ local function compare(label, a, b, lo, hi)
     end
   end
   gd.log(string.format("LABREC %s compared=%d diff=%d%s", label, n, diff, first and (" first=" .. first .. " rec " .. tostring(a[first]) .. " got " .. tostring(b[first])) or ""))
-  check(n > 100, label .. ": too few frames compared (" .. n .. ")")
+  check(n >= (min or 100), label .. ": too few frames compared (" .. n .. ")")
   check(diff == 0, label .. ": " .. diff .. " frames differ")
   return n, diff
 end
@@ -95,19 +95,33 @@ gd.run(function()
     observe(played)
     compare("record->play", sigs, played, base, base + 599)
 
-    -- R2: rewind, then resume REPLAYS the log, not live
-    gd.wait(90)
+    -- R2: rewind, then resume REPLAYS the log, not live (the owner's trap). Frames the rewind covers are sampled first.
+    local post = {}
+    drive(120, post)
     local h0 = gd.history()
-    assert(gd.rewind_to(h0.now - 150), "rewind_to")
+    assert(gd.rewind_to(h0.now - 100), "rewind_to")
     assert(gd.wait_until(function() return not gd.history().busy end, 600), "rewind never finished")
     local h1 = gd.history()
-    check(h1.replaying and h1.fwd >= 140, "after rewind: replaying=" .. tostring(h1.replaying) .. " fwd=" .. tostring(h1.fwd))
+    check(h1.replaying and h1.fwd >= 95, "after rewind: replaying=" .. tostring(h1.replaying) .. " fwd=" .. tostring(h1.fwd))
     gd.resume()
-    gd.wait(20)
-    local h2 = gd.history()
-    check(h2.replaying and h2.fwd < h1.fwd and h2.fwd > 0, "after resume: still replaying, fwd " .. h1.fwd .. " -> " .. h2.fwd)
-    gd.log("LABREC rewind+resume replaying fwd " .. h1.fwd .. " -> " .. h2.fwd)
+    local rep, first_fwd = {}, nil
+    for _ = 1, 400 do
+      gd.wait(1)
+      local h = gd.history()
+      if first_fwd == nil then first_fwd = h.fwd end
+      if not h.replaying then break end
+      rep[gd.match().frame] = sig()
+    end
+    check(first_fwd ~= nil and first_fwd > 0 and first_fwd < h1.fwd, "after resume the first tick is still replaying: fwd " .. h1.fwd .. " -> " .. tostring(first_fwd))
+    compare("rewind->resume replay", post, rep, h0.now - 100, h0.now, 80)
+    -- go live on demand
+    assert(gd.rewind_to(gd.history().now - 60), "rewind_to 2")
+    assert(gd.wait_until(function() return not gd.history().busy end, 600), "rewind 2 never finished")
     gd.rewind_live()
+    gd.resume() -- rewind_to leaves the game paused
+    gd.wait(1)
+    local h3 = gd.history()
+    check(not h3.replaying and h3.fwd == 0, "rewind_live: replaying=" .. tostring(h3.replaying) .. " fwd=" .. tostring(h3.fwd))
     gd.wait(30)
 
     -- R3b: save-history of live play, then play it back

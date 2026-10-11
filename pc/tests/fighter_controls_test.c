@@ -126,29 +126,31 @@ static void schema_parse(void)
         }
     }
 }
-static void jump_and_explicit_maps(void)
+static void tap_and_explicit_maps(void)
 {
     unsigned short map[GW_FC_BUTTONS];
     unsigned bits;
     assert(gw_FighterControls_Count(8,0)==0 && gw_FighterControls_Count(8,1)==0);
-    assert(gw_FighterControls_Normalize(8,0xffff)==0);
+    /* A fighter without a `controls` block has exactly one option: Tap jump (bit 0). */
+    assert(gw_FighterControls_Normalize(8,0xffff)==GW_FC_TAP_OFF);
+    assert(gw_FighterControls_Normalize(8,2)==0);
     for(bits=0;bits<65536u;++bits) {
-        gw_FighterControls_MatchSet(0,8,0);
-        assert(gw_FighterControls_Apply(0,(int)bits)==(int)bits);
-        gw_FighterControls_MatchSet(0,8,1);
-        assert(gw_FighterControls_Apply(0,(int)bits)==(int)(bits&~0x800u));
-        gw_FighterControls_MatchSet(0,8,2);
-        assert(gw_FighterControls_Apply(0,(int)bits)==(int)(bits&~0x400u));
+        /* Tap jump is not a button map: no input is ever changed by it (the game-side gate reads it). */
+        gw_FighterControls_MatchSet(0,8,GW_FC_TAP_ON);
+        assert(gw_FighterControls_Apply(0,(int)bits)==(int)bits && !gw_FighterControls_TapJumpOff(0));
+        gw_FighterControls_MatchSet(0,8,GW_FC_TAP_OFF);
+        assert(gw_FighterControls_Apply(0,(int)bits)==(int)bits && gw_FighterControls_TapJumpOff(0));
     }
+    assert(!gw_FighterControls_TapJumpOff(-1) && !gw_FighterControls_TapJumpOff(4));
     gw_fc_build(&schemas[0],0u,map); /* First named layout is the fighter default. */
     assert(gw_fc_apply(map,0x100)==0x200);
-    gw_fc_build(&schemas[0],1u,map); /* X jump, explicit Y->B. */
+    gw_fc_build(&schemas[0],1u,map); /* Tap jump off changes no button: layout 0 as before. */
     assert(gw_fc_apply(map,0x800)==0x200);
     assert(gw_fc_apply(map,0x100)==0x200);
     assert(gw_fc_apply(map,0x200)==0x100);
     assert(gw_fc_apply(map,0x400)==0x400);
-    gw_fc_build(&schemas[0],1u|4u,map); /* Standard layout, extras remain off. */
-    assert(gw_fc_apply(map,0x800)==0);
+    gw_fc_build(&schemas[0],1u|4u,map); /* Standard layout: Y stays Y. */
+    assert(gw_fc_apply(map,0x800)==0x800);
     gw_fc_build(&schemas[0],1u|0x100u,map);
     assert(gw_fc_apply(map,0x800)==0x300);
     /* Maps read original input once: X->Y,Y->A never cascades. */
@@ -156,14 +158,13 @@ static void jump_and_explicit_maps(void)
     schemas[1].layout[0].dest[2]=0x800;
     schemas[1].layout[0].dest[3]=0x100;
     schemas[1].layout[0].specified|=(1u<<2)|(1u<<3);
-    gw_fc_build(&schemas[1],1u,map);
+    gw_fc_build(&schemas[1],0u,map);
     assert(gw_fc_apply(map,0x400)==0x800);
-    gw_fc_build(&schemas[1],2u,map);
-    assert(gw_fc_apply(map,0x400)==0);
+    assert(gw_fc_apply(map,0xc00)==0x900);
     schemas[1].layout[0].dest[0]=0x400; /* Explicit fighter A->jump. */
-    gw_fc_build(&schemas[1],2u,map);
+    gw_fc_build(&schemas[1],0u,map);
     assert(gw_fc_apply(map,0x100)==0x400);
-    assert(gw_FighterControls_Normalize(34,0xffffffffu)==0x100u);
+    assert(gw_FighterControls_Normalize(34,0xffffffffu)==0x101u);
     schemas[1].extras=2;
     schemas[1].extra[1]=schemas[1].extra[0];
     schemas[1].extra[1].dest[3]=0x10;
@@ -177,8 +178,9 @@ static void preference_and_freeze(void)
     unsigned char state[512], broken[512];
     int n=gw_FighterControls_StateSize();
     assert(n>0 && n<=(int)sizeof state);
+    /* Tap jump belongs to the player: every fighter, with or without options, shares it. */
     assert(gw_FighterControls_Set(0,a,1));
-    assert(gw_FighterControls_Get(0,a)==1);
+    assert(gw_FighterControls_Get(0,a)==1 && gw_FighterControls_Get(0,b)==1 && gw_FighterControls_Get(0,8)==1);
     {
         char* value=settings[setting_count-1].value;
         strcpy(value,"bad"); assert(gw_FighterControls_Get(0,a)==0);
@@ -187,16 +189,22 @@ static void preference_and_freeze(void)
         strcpy(value,"1 trailing"); assert(gw_FighterControls_Get(0,a)==0);
         strcpy(value,"1");
     }
-    assert(gw_FighterControls_Get(1,a)==0 && gw_FighterControls_Get(0,b)==0);
+    /* A layout is the fighter's own: saved per player + fighter. */
+    assert(gw_FighterControls_Set(0,a,1u|4u));
+    assert(gw_FighterControls_Get(0,a)==(1u|4u) && gw_FighterControls_Get(0,b)==1u && gw_FighterControls_Get(0,8)==1u);
+    assert(gw_FighterControls_Set(0,8,1u|4u)); /* No options on ck 8: the layout bits are dropped, tap kept. */
+    assert(gw_FighterControls_Get(0,8)==1u);
+    assert(gw_FighterControls_Get(1,a)==0 && gw_FighterControls_Get(0,255)==0);
     controller_device[1]=controller_device[0]; /* Identical hardware: slot still isolates. */
     assert(gw_FighterControls_Get(1,a)==0);
     controller_profile[0]=1;
     assert(gw_FighterControls_Get(0,a)==0);
-    assert(gw_FighterControls_Set(0,a,2));
+    assert(gw_FighterControls_Set(0,a,4));
+    assert(gw_FighterControls_Get(0,a)==4);
     controller_profile[0]=0;
-    assert(gw_FighterControls_Get(0,a)==1);
-    /* Delete a populated profile and reuse its slot: old fighter choices may
-     * never reappear. New profiles copy physical mapping only. */
+    assert(gw_FighterControls_Get(0,a)==(1u|4u));
+    /* Delete a populated profile and reuse its slot: old choices (tap jump and
+     * fighter keys alike) may never reappear. New profiles copy physical mapping only. */
     controller_profile[0]=2;
     assert(gw_FighterControls_Set(0,a,1u|0x100u));
     assert(gw_FighterControls_Get(0,a)==(1u|0x100u));
@@ -204,24 +212,24 @@ static void preference_and_freeze(void)
     assert(gw_FighterControls_Get(0,a)==0);
     assert(fc_profile_forget(controller_device[0],2)); /* Creation reclaims any unowned old slot. */
     assert(gw_FighterControls_Get(0,a)==0);
-    assert(gw_FighterControls_Set(0,a,2));
-    assert(gw_FighterControls_Get(0,a)==2);
+    assert(gw_FighterControls_Set(0,a,4));
+    assert(gw_FighterControls_Get(0,a)==4);
     controller_profile[0]=0;
-    assert(gw_FighterControls_Get(0,a)==1); /* Other profile remains isolated. */
+    assert(gw_FighterControls_Get(0,a)==(1u|4u)); /* Other profile remains isolated. */
     controller_device[0]=5;
     assert(gw_FighterControls_Get(0,a)==0);
     controller_device[0]=0;
-    fighters[0]=b; fighters[1]=a; /* Same fighters at swapped resident aliases. */
-    assert(gw_FighterControls_Get(0,b)==1 && gw_FighterControls_Get(0,a)==0);
+    fighters[0]=b; fighters[1]=a; /* Same fighters at swapped resident aliases: the layout follows identity. */
+    assert(gw_FighterControls_Get(0,b)==(1u|4u) && gw_FighterControls_Get(0,a)==1u);
     fighters[0]=a; fighters[1]=b;
-    assert(gw_FighterControls_Set(2,8,2)); /* Disconnected/scripted fallback. */
-    assert(gw_FighterControls_Get(2,8)==2 && gw_FighterControls_Get(3,8)==0);
+    assert(gw_FighterControls_Set(2,8,1)); /* Disconnected/scripted fallback. */
+    assert(gw_FighterControls_Get(2,8)==1 && gw_FighterControls_Get(3,8)==0);
     assert(!gw_FighterControls_Set(-1,a,1) && !gw_FighterControls_Set(0,255,1));
     gw_FighterControls_Name(a,0,0,label,sizeof label);
     assert(!strcmp(label,"Swap at"));
     gw_FighterControls_Name(a,0,50,label,sizeof label); assert(!label[0]);
     gw_FighterControls_MatchSet(0,a,1u|0x100u);
-    assert(gw_FighterControls_MatchGet(0)==(1u|0x100u));
+    assert(gw_FighterControls_MatchGet(0)==(1u|0x100u) && gw_FighterControls_TapJumpOff(0));
     assert(gw_FighterControls_MatchCK(0)==a);
     assert(gw_FighterControls_StateSave(state,n));
     assert(!gw_FighterControls_StateSave(state,n-1));
@@ -231,16 +239,16 @@ static void preference_and_freeze(void)
     assert(gw_FighterControls_Apply(0,0x800)==0x300);
     assert(settings_reads==before);
     gw_FighterControls_MatchClear();
-    assert(gw_FighterControls_Apply(0,0x800)==0x800);
+    assert(gw_FighterControls_Apply(0,0x800)==0x800 && !gw_FighterControls_TapJumpOff(0));
     assert(gw_FighterControls_MatchCK(0)==-1);
     assert(gw_FighterControls_StateLoad(state,n));
-    assert(gw_FighterControls_Apply(0,0x800)==0x300);
+    assert(gw_FighterControls_Apply(0,0x800)==0x300 && gw_FighterControls_TapJumpOff(0));
     memcpy(broken,state,(size_t)n); memset(broken,0xff,8);
     assert(!gw_FighterControls_StateLoad(broken,n));
     assert(gw_FighterControls_Apply(0,0x800)==0x300);
     {
         GwFighterControlsFrozen f;
-        memcpy(&f,state+8,sizeof f); f.choice=3;
+        memcpy(&f,state+8,sizeof f); f.choice=3; /* bit 1 is reserved */
         memcpy(broken,state,(size_t)n); memcpy(broken+8,&f,sizeof f);
         assert(!gw_FighterControls_StateLoad(broken,n));
         memcpy(&f,state+8,sizeof f); f.map[0]=0x80;
@@ -255,7 +263,7 @@ static void preference_and_freeze(void)
 int main(void)
 {
     assert(!fighter_controls_model_check());
-    schema_parse(); jump_and_explicit_maps(); preference_and_freeze();
+    schema_parse(); tap_and_explicit_maps(); preference_and_freeze();
     puts("fighter controls schema/mapping/profile/frozen snapshot: PASS");
     return 0;
 }

@@ -181,7 +181,6 @@ void gw_Ui_SelControls(int h) {
     AtCssControlsView *v;
     AtCss *c = &gs_selm_css;
     int row = 0, i;
-    static const char *jump[] = { "X + Y", "X", "Y" };
     if (u == NULL) return;
     v = &u->sc.css_controls;
     memset(v, 0, sizeof *v);
@@ -193,8 +192,8 @@ void gw_Ui_SelControls(int h) {
         gw_FighterControls_Name(c->controls_ck, 0, (int) ((c->controls_choice >> 2) & 15u), v->value[row], AT_STR);
         row++;
     }
-    snprintf(v->label[row], AT_STR, "Jump button");
-    snprintf(v->value[row++], AT_STR, "%s", jump[c->controls_choice & 3u]);
+    snprintf(v->label[row], AT_STR, "Tap jump");
+    snprintf(v->value[row++], AT_STR, "%s", c->controls_choice & 1u ? "Off" : "On");
     for (i = 0; i < c->controls_extras && row < AT_CSS_CONTROL_ROWS - 1; i++, row++) {
         gw_FighterControls_Name(c->controls_ck, 1, i, v->label[row], AT_STR);
         snprintf(v->value[row], AT_STR, "%s", c->controls_choice & (1u << (8 + i)) ? "On" : "Off");

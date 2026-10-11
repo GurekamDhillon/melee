@@ -392,7 +392,7 @@ int main(void)
         SC.css_controls.open = 1; SC.css_controls.port = 0; SC.css_controls.n = 4;
         strcpy(SC.css_controls.title, "CAPTAIN FALCON");
         strcpy(SC.css_controls.label[0], "Layout"); strcpy(SC.css_controls.value[0], "Classic");
-        strcpy(SC.css_controls.label[1], "Jump button"); strcpy(SC.css_controls.value[1], "X + Y");
+        strcpy(SC.css_controls.label[1], "Tap jump"); strcpy(SC.css_controls.value[1], "On");
         strcpy(SC.css_controls.label[2], "Extra"); strcpy(SC.css_controls.value[2], "Off");
         strcpy(SC.css_controls.label[3], "Done");
         s = rec_sink(); at_render_ex(&SC, &V, 640.0f, 1000.0, 1, &O, &s, &HITS, &info);

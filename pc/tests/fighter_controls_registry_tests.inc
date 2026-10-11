@@ -22,7 +22,7 @@ static int test_geno_controls_schema(void)
     }
     gw_fc_build(&r.p[0].controls,1u|0x100u,map);
     if(gw_fc_apply(map,0x800)!=0x300) {
-        gw_test_fail("explicit Y boost lost when jump is X"); rc=1; goto done;
+        gw_test_fail("explicit Y boost lost when tap jump is off"); rc=1; goto done;
     }
     gn_registry_clear(&r);
     if(gn_parse_text(&r,

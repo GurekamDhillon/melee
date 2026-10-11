@@ -666,7 +666,7 @@ static void css_controls_through_the_shims(void)
     CHECK((e & AT_CE_FORWARD) && gs_selm_css.controls_port == 0);
     gw_Ui_SelControls(h); draw_once();
     CHECK(u->sc.css_controls.open && u->sc.css_controls.n == 5 && !strcmp(u->sc.css_controls.value[0], "Layout 1"));
-    CHECK(!strcmp(u->sc.css_controls.value[1], "X + Y") && !strcmp(u->sc.css_controls.value[2], "Off"));
+    CHECK(!strcmp(u->sc.css_controls.value[1], "On") && !strcmp(u->sc.css_controls.value[2], "Off"));
     CHECK(gw_Ui_CssControl(1, 0, 1) == 0 && ui_controls_saved[0][3] == 0);
     { float x = gs_hand[0].x; gw_Ui_SelHand(h, 0, 80, 0); CHECK(gs_hand[0].x == x); }
     found = -1;
@@ -683,7 +683,7 @@ static void css_controls_through_the_shims(void)
     g_mbuttons = 1; gs_sel_tick(u);
     CHECK(poll(h, &k, &a, &b) == 1 && k == GS_SELEV_CONTROLS && a == 1 && b == 1);
     e = gw_Ui_CssControl(0, a, b); CHECK((e & AT_CE_MOVE) && ui_controls_saved[0][3] == 1);
-    gw_Ui_SelControls(h); CHECK(!strcmp(u->sc.css_controls.value[1], "X"));
+    gw_Ui_SelControls(h); CHECK(!strcmp(u->sc.css_controls.value[1], "Off")); /* Tap jump */
     CHECK(gw_Ui_CssStep(0, AT_CI_START, 0, 401) == 0 && !gs_selm_css.done);
     g_mbuttons = 2; gs_sel_tick(u);
     CHECK(poll(h, &k, &a, &b) == 1 && k == GS_SELEV_CONTROLS && b == 3);
@@ -691,7 +691,7 @@ static void css_controls_through_the_shims(void)
     CHECK(gs_selm_css.controls_port == -1 && gw_Ui_CssStep(0, AT_CI_A, 0, 402) == 0 && gs_selm_css.p[0].ck == 3);
     gw_Ui_SelControls(h); CHECK(!u->sc.css_controls.open);
     gw_Ui_SelClose(h);
-    /* Scene recreation retains the saved profile, but a retail fighter has only jump. */
+    /* Scene recreation retains the saved profile, but a retail fighter has only Tap jump. */
     css_open_vs(29, 0); gw_Ui_CssPort(0, AT_CSS_HMN, 3, 0, 9, 0);
     CHECK(at_css_controls_open(&gs_selm_css, 0) & AT_CE_FORWARD);
     CHECK(gs_selm_css.controls_choice == 1);
@@ -700,7 +700,7 @@ static void css_controls_through_the_shims(void)
     h = open_css(); gw_Ui_SelCard(h, 0, 1, "KIRBY", "", "KI", -1, 9, 0, 0u);
     CHECK(slot_of(h)->sc.ports[0].controls == 1);
     at_css_controls_open(&gs_selm_css, 0); gw_Ui_SelControls(h);
-    CHECK(slot_of(h)->sc.css_controls.n == 2 && !strcmp(slot_of(h)->sc.css_controls.value[0], "X + Y"));
+    CHECK(slot_of(h)->sc.css_controls.n == 2 && !strcmp(slot_of(h)->sc.css_controls.value[0], "On"));
     gw_Ui_SelClose(h); CHECK(gs_selm_css.controls_port == -1);
     putenv("MELEE_CSS_PUCK=0");
 }

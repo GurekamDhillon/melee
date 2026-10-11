@@ -4836,9 +4836,9 @@ static int test_netplay_fighter_controls(void) {
     int host = np.host, used = 0, rc = 0;
     char scene[sizeof np.scene];
     memcpy(scene, np.scene, sizeof scene);
-    np_cb_guest_hello(NULL, (const uint8_t *)"ck:9/c0/j2", (int)strlen("ck:9/c0/j2"),
+    np_cb_guest_hello(NULL, (const uint8_t *)"ck:9/c0/j1", (int)strlen("ck:9/c0/j1"),
                        (uint8_t *)blob, &len, sizeof blob);
-    if (sscanf(blob, "J %u %u %n", &a, &b, &used) != 2 || used <= 0 || b != 2 ||
+    if (sscanf(blob, "J %u %u %n", &a, &b, &used) != 2 || used <= 0 || b != 1 ||
         a != gw_FighterControls_Get(0, np.ck)) rc = lbt_fail("HELLO/ACCEPT keeps each player's fighter controls");
     {
         char received[GW_NET_MAX_BLOB + 1];
@@ -4853,15 +4853,15 @@ static int test_netplay_fighter_controls(void) {
                 strcmp(received + used, np.scene) != 0)
                 rc = lbt_fail("ACCEPT returned length carries the entire scene and NUL after controls prefix");
         }
-        np_cb_guest_hello(NULL, (const uint8_t *)"ck:9/c0/j2", (int)strlen("ck:9/c0/j2"),
+        np_cb_guest_hello(NULL, (const uint8_t *)"ck:9/c0/j1", (int)strlen("ck:9/c0/j1"),
                           tiny, &len, sizeof tiny);
         if (len <= GW_NET_MAX_BLOB) rc = lbt_fail("oversize ACCEPT setup requests refusal instead of truncation");
     }
     np.host = 0;
-    np_cb_lobby(NULL, (const uint8_t *)"J 1 2", 5);
-    if (np.controls[0] != 1 || np.controls[1] != 2) rc = lbt_fail("lobby choices stay with host/P1 and guest/P2");
+    np_cb_lobby(NULL, (const uint8_t *)"J 0 1", 5);
+    if (np.controls[0] != 0 || np.controls[1] != 1) rc = lbt_fail("lobby choices stay with host/P1 and guest/P2");
     np_cb_lobby(NULL, (const uint8_t *)"J 3 64", 6);
-    if (np.controls[0] != 1 || np.controls[1] != 2) rc = lbt_fail("malformed lobby controls cannot replace choices");
+    if (np.controls[0] != 0 || np.controls[1] != 1) rc = lbt_fail("malformed lobby controls cannot replace choices");
     np.host = host; np.controls[0] = save[0]; np.controls[1] = save[1];
     memcpy(np.scene, scene, sizeof scene);
     return rc;

@@ -355,16 +355,15 @@ static int test_rollback_fighter_controls(void) {
         free(saved); gw_test_fail("could not preserve controls for scene-hook test"); return 1;
     }
     gw_FighterControls_MatchClear();
-    gw_FighterControls_MatchSet(0, 2, GW_FC_JUMP_X);
-    gw_FighterControls_MatchSet(1, 9, GW_FC_JUMP_Y);
+    gw_FighterControls_MatchSet(0, 2, GW_FC_TAP_OFF);
+    gw_FighterControls_MatchSet(1, 9, GW_FC_TAP_ON);
     gw_RB_SceneBegin(2);
-    if (gw_FighterControls_MatchGet(0) != GW_FC_JUMP_X ||
-        gw_FighterControls_MatchGet(1) != GW_FC_JUMP_Y ||
-        gw_FighterControls_Apply(0, 0x400) != 0x400 ||
-        gw_FighterControls_Apply(0, 0x800) != 0 ||
-        gw_FighterControls_Apply(1, 0x400) != 0 ||
-        gw_FighterControls_Apply(1, 0x800) != 0x800) {
-        gw_test_fail("post-on_enter RB_SceneBegin cleared frozen controls/raw jump pulses"); rc = 1;
+    if (gw_FighterControls_MatchGet(0) != GW_FC_TAP_OFF ||
+        gw_FighterControls_MatchGet(1) != GW_FC_TAP_ON ||
+        !gw_FighterControls_TapJumpOff(0) || gw_FighterControls_TapJumpOff(1) ||
+        gw_FighterControls_Apply(0, 0xc00) != 0xc00 ||
+        gw_FighterControls_Apply(1, 0xc00) != 0xc00) {
+        gw_test_fail("post-on_enter RB_SceneBegin cleared frozen controls/tap jump"); rc = 1;
     }
     gw_FighterControls_StateLoad(saved, size);
     free(saved);

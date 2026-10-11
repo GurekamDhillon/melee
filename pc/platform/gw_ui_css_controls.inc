@@ -18,15 +18,14 @@ unsigned at_css_controls_open(AtCss *c, int port)
     c->controls_extras = n < 0 ? 0 : n > 8 ? 8 : n;
     c->controls_choice = c->ops && c->ops->controls_get ? c->ops->controls_get(c->ops->user, port, c->controls_ck) : 0;
     /* Stale saved options cannot select a missing layout or enable a new extra. */
-    c->controls_choice &= 0x3Fu | (((1u << c->controls_extras) - 1u) << 8);
-    if ((c->controls_choice & 3u) > 2u) c->controls_choice &= ~3u;
+    c->controls_choice &= 0x3Du | (((1u << c->controls_extras) - 1u) << 8);
     if ((int) ((c->controls_choice >> 2) & 15u) >= c->controls_layouts) c->controls_choice &= ~0x3Cu;
     return AT_CE_FORWARD;
 }
 
 unsigned at_css_controls_point(AtCss *c, int port, int row, int action)
 {
-    int jump = c->controls_layouts > 0, rows = at_css_controls_rows(c), dir = action < 0 ? -1 : 1;
+    int jump = c->controls_layouts > 0, /* the Tap jump row's index: after the layout row, if any */ rows = at_css_controls_rows(c), dir = action < 0 ? -1 : 1;
     unsigned choice = c->controls_choice;
     if (port < 0 || port > 3 || c->controls_port != port) return 0;
     if (action == 3) { c->controls_port = -1; c->controls_block_frame = -2; return AT_CE_BACK; }
@@ -42,7 +41,7 @@ unsigned at_css_controls_point(AtCss *c, int port, int row, int action)
         layout = (layout + dir + c->controls_layouts) % c->controls_layouts;
         choice = (choice & ~0x3Cu) | ((unsigned) layout << 2);
     } else if (row == jump) {
-        choice = (choice & ~3u) | (unsigned) (((int) (choice & 3u) + dir + 3) % 3);
+        choice ^= 1u; /* Tap jump: On <-> Off, whichever way the row is turned */
     } else {
         choice ^= 1u << (8 + row - jump - 1);
     }

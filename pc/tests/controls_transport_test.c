@@ -6,7 +6,7 @@
 
 int main(void) {
     unsigned char event[1 + GW_RP_CONTROLS_START] = {0};
-    unsigned want[4] = {1, 2 | (3u << 2) | (5u << 8), 0, 0xff00}, got[4];
+    unsigned want[4] = {1, 1 | (3u << 2) | (5u << 8), 0, 0xff00}, got[4];
     assert(!gw_rp_controls_read(event, GW_RP_STANDARD_START, got));
     assert(!got[0] && !got[1] && !got[2] && !got[3]);
     gw_rp_controls_write(event, want);
@@ -16,7 +16,7 @@ int main(void) {
     event[1 + GW_RP_RULES_START + 3] = '2';
     assert(gw_rp_controls_read(event, GW_RP_CONTROLS_START, got) < 0);
     gw_rp_controls_write(event, want);
-    event[1 + GW_RP_RULES_START + 7] = 3; /* reserved jump value */
+    event[1 + GW_RP_RULES_START + 7] = 2; /* reserved bit 1 */
     assert(gw_rp_controls_read(event, GW_RP_CONTROLS_START, got) < 0);
     want[0] = 0x40; /* reserved choice bit */
     gw_rp_controls_write(event, want);

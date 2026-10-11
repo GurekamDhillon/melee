@@ -2,13 +2,14 @@
  * game's imports use unprefixed names (gwtool supplies gw_). */
 #ifndef GW_FIGHTER_CONTROLS_H
 #define GW_FIGHTER_CONTROLS_H
-#define GW_FC_JUMP_MASK 3u
+/* Bit 0 is the one option every fighter has: Tap jump (0 = on, as Melee; 1 = off). Bit 1 is reserved
+ * and must be 0. Layouts and extras exist only for fighters whose Geno define declares `controls`. */
+#define GW_FC_TAP_MASK 1u
+#define GW_FC_TAP_ON 0u
+#define GW_FC_TAP_OFF 1u
 #define GW_FC_LAYOUT_MASK 0x3cu
 #define GW_FC_EXTRA_MASK 0xff00u
-#define GW_FC_CHOICE_MASK (GW_FC_JUMP_MASK | GW_FC_LAYOUT_MASK | GW_FC_EXTRA_MASK)
-#define GW_FC_JUMP_BOTH 0u
-#define GW_FC_JUMP_X 1u
-#define GW_FC_JUMP_Y 2u
+#define GW_FC_CHOICE_MASK (GW_FC_TAP_MASK | GW_FC_LAYOUT_MASK | GW_FC_EXTRA_MASK)
 #define GW_FC_LAYOUTS 0
 #define GW_FC_EXTRAS 1
 
@@ -30,6 +31,8 @@ unsigned GW_FC_API(FighterControls_MatchGet)(int port);
 int GW_FC_API(FighterControls_MatchCK)(int port);
 void GW_FC_API(FighterControls_MatchClear)(void);
 int GW_FC_API(FighterControls_Apply)(int port, int buttons);
+/* Game-side gate (ftCo_Jump, aerial jumps): 1 when this port's frozen match setting has Tap jump off. */
+int GW_FC_API(FighterControls_TapJumpOff)(int port);
 #undef GW_FC_API
 #if !defined(__powerpc__)
 /* Native snapshots copy the COMPLETE frozen mapping, never reload preferences.

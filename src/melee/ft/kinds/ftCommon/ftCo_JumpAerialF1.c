@@ -9,6 +9,7 @@
 #include "ftCo_FallAerial.h"
 #include "ftCo_ItemScrew.h"
 #include "ftCo_JumpAerial.h"
+#include <melee/ft/ft_tapjump_pc.h>
 #include <melee/ft/fighter.h>
 #include <melee/ft/ft_081B.h>
 #include <melee/ft/ft_084E.h>
@@ -70,7 +71,8 @@ bool ftCo_800D730C(Fighter_GObj* gobj, bool arg1)
             r29 = 0;
         }
         r4 = 1;
-        if (!(fp->input.lstick[0].y >= p_ftCommonData->tap_jump_threshold) &&
+        if (!(FT_TAP_JUMP_OK(fp) &&
+              fp->input.lstick[0].y >= p_ftCommonData->tap_jump_threshold) &&
             !(fp->input.held_buttons[0] & 0xC00))
         {
             r4 = 0;

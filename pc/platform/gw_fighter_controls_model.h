@@ -27,11 +27,10 @@ const GwFighterControlsSchema* gw_Geno_ControlsSchema(int ck);
 
 static unsigned gw_fc_normalize(const GwFighterControlsSchema* s, unsigned choice)
 {
-    unsigned jump=choice&GW_FC_JUMP_MASK, layout=(choice&GW_FC_LAYOUT_MASK)>>2;
+    unsigned tap=choice&GW_FC_TAP_MASK, layout=(choice&GW_FC_LAYOUT_MASK)>>2;
     unsigned extras=s && s->extras>0 ? (1u<<s->extras)-1u : 0u;
-    if(jump>GW_FC_JUMP_Y) jump=GW_FC_JUMP_BOTH;
     if(!s || layout>=(unsigned)s->layouts) layout=0;
-    return jump|(layout<<2)|(choice&(extras<<8));
+    return tap|(layout<<2)|(choice&(extras<<8));
 }
 static void gw_fc_overlay(unsigned short out[GW_FC_BUTTONS], const GwFighterControlsMap* m)
 {
@@ -41,17 +40,15 @@ static void gw_fc_overlay(unsigned short out[GW_FC_BUTTONS], const GwFighterCont
 static void gw_fc_build(const GwFighterControlsSchema* s, unsigned choice,
                         unsigned short out[GW_FC_BUTTONS])
 {
-    unsigned jump, layout;
+    unsigned layout;
     int i;
     choice=gw_fc_normalize(s,choice);
-    jump=choice&GW_FC_JUMP_MASK; layout=(choice&GW_FC_LAYOUT_MASK)>>2;
+    layout=(choice&GW_FC_LAYOUT_MASK)>>2;
     memcpy(out,gw_fc_bits,sizeof gw_fc_bits);
     if(s && s->layouts>0) gw_fc_overlay(out,&s->layout[layout]);
     if(s) for(i=0;i<s->extras;++i) if(choice&(1u<<(8+i))) gw_fc_overlay(out,&s->extra[i]);
-    /* Jump selection gates only these original sources' jump destinations.
-     * Y->B still works with X jump; an explicit fighter A->X can still jump. */
-    if(jump==GW_FC_JUMP_X) out[3]&=~0xc00u;
-    if(jump==GW_FC_JUMP_Y) out[2]&=~0xc00u;
+    /* Tap jump is not a button map: the game-side jump gate reads it (FighterControls_TapJumpOff).
+     * A fighter's own layout is the only place X/Y jump can be rebound. */
 }
 static int gw_fc_apply(const unsigned short map[GW_FC_BUTTONS], int buttons)
 {

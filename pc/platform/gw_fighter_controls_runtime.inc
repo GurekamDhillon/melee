@@ -35,24 +35,61 @@ static int fc_preference_key(int port, int ck, char key[32])
 }
 unsigned gw_FighterControls_Normalize(int ck, unsigned choice)
 { return fc_ck_valid(ck) ? gw_fc_normalize(gw_Geno_ControlsSchema(ck),choice) : 0; }
-unsigned gw_FighterControls_Get(int port, int ck)
+static int fc_has_options(int ck)
 {
-    char key[32], value[32], *end;
+    const GwFighterControlsSchema* s=fc_ck_valid(ck) ? gw_Geno_ControlsSchema(ck) : NULL;
+    return s && (s->layouts>0 || s->extras>0);
+}
+/* Tap jump belongs to the player (profile + port), not to a fighter: one key, shared by the cast. */
+static int fc_tap_key(int port, char key[32])
+{
+    int device, profile;
+    if(port<0 || port>=4) return 0;
+    ctl_fighter_profile(port,&device,&profile);
+    if(device>=0) snprintf(key,32,"fc_d%d_p%d_s%d_tap",device,profile,port);
+    else snprintf(key,32,"fc_f%d_p%d_s%d_tap",port,profile,port);
+    return 1;
+}
+static int fc_read_saved(const char* key, unsigned* out)
+{
+    char value[32], *end;
     unsigned long saved;
-    if(!fc_preference_key(port,ck,key)) return 0;
     gw_Settings_Str(key,value,sizeof value,"");
     if(!value[0] || value[0]=='-' || value[0]=='+') return 0;
     errno=0; saved=strtoul(value,&end,10);
     if(errno || *end || saved>0xfffffffful) return 0;
-    return gw_FighterControls_Normalize(ck,(unsigned)saved);
+    *out=(unsigned)saved; return 1;
+}
+unsigned gw_FighterControls_Get(int port, int ck)
+{
+    char key[32];
+    unsigned saved, choice=0;
+    if(fc_tap_key(port,key) && fc_read_saved(key,&saved)) choice|=saved&GW_FC_TAP_MASK;
+    /* Layout/extras exist only for a fighter that declares them. */
+    if(fc_has_options(ck) && fc_preference_key(port,ck,key) && fc_read_saved(key,&saved))
+        choice|=saved&~GW_FC_TAP_MASK;
+    return gw_FighterControls_Normalize(ck,choice);
+}
+static int fc_save(const char* key, unsigned value, int port)
+{
+    gw_Settings_SetInt(key,(int)value);
+    if(!gw_Settings_LastSaveOk()) { gw_log("fighter controls: P%d preference save failed",port+1); return 0; }
+    return 1;
 }
 int gw_FighterControls_Set(int port, int ck, unsigned choice)
 {
     char key[32];
-    if(!fc_preference_key(port,ck,key)) return 0;
+    unsigned old;
+    if(port<0 || port>=4 || !fc_ck_valid(ck)) return 0;
     choice=gw_FighterControls_Normalize(ck,choice);
-    gw_Settings_SetInt(key,(int)choice);
-    if(!gw_Settings_LastSaveOk()) { gw_log("fighter controls: P%d preference save failed",port+1); return 0; }
+    old=gw_FighterControls_Get(port,ck);
+    /* The panel changes one row per call: at most one key is written, so a failed save leaves both as they were. */
+    if((choice^old)&GW_FC_TAP_MASK) {
+        if(!fc_tap_key(port,key) || !fc_save(key,choice&GW_FC_TAP_MASK,port)) return 0;
+    }
+    if((choice^old)&~GW_FC_TAP_MASK) {
+        if(!fc_has_options(ck) || !fc_preference_key(port,ck,key) || !fc_save(key,choice&~GW_FC_TAP_MASK,port)) return 0;
+    }
     gw_log("fighter controls: saved P%d ck %d choice %04x",port+1,ck,choice);
     return 1;
 }
@@ -99,6 +136,8 @@ int gw_FighterControls_Apply(int port, int buttons)
     if(port<0 || port>=4 || !fc_match.port[port].active) return buttons;
     return gw_fc_apply(fc_match.port[port].map,buttons);
 }
+int gw_FighterControls_TapJumpOff(int port)
+{ return port>=0 && port<4 && fc_match.port[port].active && (fc_match.port[port].choice&GW_FC_TAP_MASK); }
 int gw_FighterControls_StateSize(void) { return (int)sizeof fc_match; }
 int gw_FighterControls_StateSave(void* out, int size)
 {
@@ -117,8 +156,7 @@ int gw_FighterControls_StateLoad(const void* in, int size)
     for(p=0;p<4;++p) {
         const GwFighterControlsFrozen* f=&ports[p];
         if(f->active!=0 && f->active!=1) return 0;
-        if(f->active && (!fc_ck_valid(f->ck) || (f->choice&~GW_FC_CHOICE_MASK) ||
-                        (f->choice&GW_FC_JUMP_MASK)>GW_FC_JUMP_Y)) return 0;
+        if(f->active && (!fc_ck_valid(f->ck) || (f->choice&~GW_FC_CHOICE_MASK))) return 0;
         for(i=0;i<GW_FC_BUTTONS;++i) if(f->map[i]&~GW_FC_BUTTON_MASK) return 0;
     }
     memcpy(&fc_match,in,sizeof fc_match); return 1;

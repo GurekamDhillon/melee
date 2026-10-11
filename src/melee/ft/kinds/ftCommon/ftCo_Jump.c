@@ -22,6 +22,7 @@
 #include <melee/ft/ft_0881.h>
 #include <melee/ft/ft_0C8C.h>
 #include <melee/ft/ft_0DF1.h>
+#include <melee/ft/ft_tapjump_pc.h>
 #include <melee/ft/ftcommon.h>
 #include <melee/ft/inlines.h>
 #include <melee/ft/kinds/ftPeach/ftpeachfloat.h>
@@ -30,7 +31,8 @@
 ftCo_JumpInput ftCo_Jump_GetInput(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    if ((fp->input.lstick[0].y >= p_ftCommonData->tap_jump_threshold) &&
+    if (FT_TAP_JUMP_OK(fp) &&
+        (fp->input.lstick[0].y >= p_ftCommonData->tap_jump_threshold) &&
         (fp->active_timer.lstick.y < p_ftCommonData->tap_jump_window))
     {
         return JumpInput_LStick;
@@ -67,7 +69,8 @@ bool fn_800CAF78(Fighter_GObj* gobj)
         return ftCo_800C5A50(gobj);
     }
 
-    if ((fp->input.lstick[0].y >=
+    if (FT_TAP_JUMP_OK(fp) &&
+        (fp->input.lstick[0].y >=
          p_ftCommonData->relaxed_tap_jump_threshold) &&
         (fp->active_timer.lstick.y < p_ftCommonData->tap_jump_window))
     {

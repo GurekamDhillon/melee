@@ -938,7 +938,7 @@ static void csv_controls_button(const AtSink *s, const AtTextOps *o, HitCtx *hc,
 {
     unsigned col = at_part_port_colour(port);
     at_plate(s, r, focus ? col : AT_C_LIFT, focus ? AT_C_IVORY : AT_C_LINE2, 1.0f, 3.0f);
-    csv_text(s, o, AT_R_CAP12, options > 1 ? "CONTROLS" : "JUMP", r.x + r.w * 0.5f, r.y + 11.0f,
+    csv_text(s, o, AT_R_CAP12, options > 1 ? "CONTROLS" : "TAP JUMP", r.x + r.w * 0.5f, r.y + 11.0f,
              focus ? AT_C_INK : AT_C_IVORY, AT_ALIGN_CENTER, r.w - 8.0f);
     hit_add(hc, r, AT_HIT_ZONE, port, AT_ZONE_CONTROLS | (2 << 4));
 }

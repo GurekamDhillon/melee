@@ -647,20 +647,21 @@ static void controls_panel(void)
     CHECK(!at_css_mouse_zone(&c, 0, 1, AT_ZONE_TYPE, 0, 1, 1, 0, 0));
     press(&c, 0, 0, AT_CI_RIGHT, 3); CHECK(c.controls_choice == 4u); /* layout B */
     press(&c, 0, 0, AT_CI_DOWN, 4);
-    press(&c, 0, 0, AT_CI_RIGHT, 5); CHECK(c.controls_choice == 5u); /* X */
-    press(&c, 0, 0, AT_CI_RIGHT, 6); CHECK(c.controls_choice == 6u); /* Y */
+    press(&c, 0, 0, AT_CI_RIGHT, 5); CHECK(c.controls_choice == 5u); /* tap jump off */
     press(&c, 0, 0, AT_CI_DOWN, 7);
-    press(&c, 0, AT_CI_A, 0, 8); CHECK(c.controls_choice == 0x106u);
+    press(&c, 0, AT_CI_A, 0, 8); CHECK(c.controls_choice == 0x105u);
     ev = press(&c, 0, AT_CI_B, 0, 9);
     CHECK((ev & AT_CE_BACK) && c.controls_port == -1 && c.p[0].ck == 3 && !c.p[0].hold && !c.done);
     CHECK(!press(&c, 1, AT_CI_START, 0, 9) && !c.done); /* another port in the closing frame */
     fresh_puck(&reopened, 0, 0, 29); reopened.ops = &ops; reopened.p[0].ck = 3;
     at_css_controls_open(&reopened, 0);
-    CHECK(reopened.controls_choice == 0x106u); /* re-created CSS reads stored choice */
+    CHECK(reopened.controls_choice == 0x105u); /* re-created CSS reads stored choice */
     at_css_controls_point(&reopened, 0, 4, 2); CHECK(reopened.controls_port == -1);
     reopened.p[0].ck = 4; at_css_controls_open(&reopened, 0);
-    CHECK(reopened.controls_choice == 0 && at_css_controls_rows(&reopened) == 2); /* retail: jump only */
-    at_css_controls_point(&reopened, 0, 0, -1); CHECK(reopened.controls_choice == 2);
+    CHECK(reopened.controls_choice == 0 && at_css_controls_rows(&reopened) == 2); /* retail: tap jump only */
+    at_css_controls_point(&reopened, 0, 0, -1); CHECK(reopened.controls_choice == 1); /* Off */
+    at_css_controls_point(&reopened, 0, 0, 1); CHECK(reopened.controls_choice == 0); /* back On */
+    at_css_controls_point(&reopened, 0, 0, 1); CHECK(reopened.controls_choice == 1);
     at_css_controls_point(&reopened, 0, 1, 2);
     reopened.p[1].kind = AT_CSS_HMN; reopened.p[1].ck = 3;
     at_css_controls_open(&reopened, 1); CHECK(reopened.controls_choice == 0); /* separate player */
@@ -672,7 +673,7 @@ static void controls_panel(void)
     press(&reopened, 1, 0, 0, 10); CHECK(reopened.controls_port == -1); /* unplug while open */
     /* A mouse click uses precisely the hand's open action, and navigation wraps. */
     bits = at_css_mouse_zone(&c, 0, 0, AT_ZONE_CONTROLS, 0, 1, 1, 0, 0);
-    press(&c, 0, bits, 0, 11); CHECK(c.controls_port == 0 && c.controls_choice == 0x106u);
+    press(&c, 0, bits, 0, 11); CHECK(c.controls_port == 0 && c.controls_choice == 0x105u);
     for (i = 0; i < 5; i++) press(&c, 0, 0, AT_CI_DOWN, 12 + i);
     CHECK(c.controls_row == 0);
     press(&c, 0, AT_CI_START, 0, 18); CHECK(!c.done && c.controls_port == 0);

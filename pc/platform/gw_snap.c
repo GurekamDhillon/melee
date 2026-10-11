@@ -3861,24 +3861,23 @@ static int test_snap_fighter_controls(void) {
         return 1;
     }
     gw_FighterControls_MatchClear();
-    gw_FighterControls_MatchSet(0, 2, GW_FC_JUMP_X);
+    gw_FighterControls_MatchSet(0, 2, GW_FC_TAP_OFF);
     gw_snap_save(32000);
     hx = gw_snap_hash();
     if (gw_rw_capture() != 0) {
         gw_test_fail("controls snapshot test could not capture baseline"); rc = 1;
     } else {
-        gw_FighterControls_MatchSet(0, 2, GW_FC_JUMP_Y);
+        gw_FighterControls_MatchSet(0, 2, GW_FC_TAP_ON);
         hy = gw_snap_hash();
         int sync_diff = sn_compare(32000);
         int rewind_rc = gw_rw_compare(diff, h);
         if (hx == hy || sync_diff == 0 || rewind_rc != 0 || diff[1] == 0 || h[0] == h[1]) {
-            gw_test_fail("controls-only X to Y change escaped hash/SyncTest/rewind compare"); rc = 1;
+            gw_test_fail("controls-only tap jump change escaped hash/SyncTest/rewind compare"); rc = 1;
         }
-        if (gw_snap_load(32000) != 0 || gw_FighterControls_MatchGet(0) != GW_FC_JUMP_X ||
-            gw_FighterControls_Apply(0, 0x400) != 0x400 ||
-            gw_FighterControls_Apply(0, 0x800) != 0 || sn_compare(32000) != 0 ||
+        if (gw_snap_load(32000) != 0 || gw_FighterControls_MatchGet(0) != GW_FC_TAP_OFF ||
+            !gw_FighterControls_TapJumpOff(0) || sn_compare(32000) != 0 ||
             gw_snap_hash() != hx) {
-            gw_test_fail("snapshot load did not restore exact frozen X mapping and state hash"); rc = 1;
+            gw_test_fail("snapshot load did not restore exact frozen tap jump and state hash"); rc = 1;
         }
         if (gw_rw_capture() != 0 || gw_rw_compare(diff, h) != 0 || diff[1] != 0 || h[0] != h[1]) {
             gw_test_fail("restored controls differ in rewind exactness compare"); rc = 1;

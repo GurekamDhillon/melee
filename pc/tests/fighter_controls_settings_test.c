@@ -34,21 +34,21 @@ int main(void)
     snprintf(st.path,sizeof st.path,"%s",path);
     /* A failed preference update must remain consistent with the CSS's old
      * displayed choice; a failed new key must not consume table capacity. */
-    assert(gw_FighterControls_Get(0,8)==GW_FC_JUMP_BOTH);
-    assert(gw_FighterControls_Set(0,8,GW_FC_JUMP_BOTH) && st.n==1);
+    assert(gw_FighterControls_Get(0,8)==GW_FC_TAP_ON);
+    assert(gw_FighterControls_Set(0,8,GW_FC_TAP_OFF) && st.n==1);
     snprintf(st.path,sizeof st.path,".omo/evidence/nonexistent-profile-save-parent/settings.cfg");
-    assert(!gw_FighterControls_Set(0,8,GW_FC_JUMP_X));
-    assert(gw_FighterControls_Get(0,8)==GW_FC_JUMP_BOTH && st.n==1);
-    assert(!gw_FighterControls_Set(1,8,GW_FC_JUMP_X));
-    assert(gw_FighterControls_Get(1,8)==GW_FC_JUMP_BOTH && st.n==1);
+    assert(!gw_FighterControls_Set(0,8,GW_FC_TAP_ON));
+    assert(gw_FighterControls_Get(0,8)==GW_FC_TAP_OFF && st.n==1);
+    assert(!gw_FighterControls_Set(1,8,GW_FC_TAP_OFF));
+    assert(gw_FighterControls_Get(1,8)==GW_FC_TAP_ON && st.n==1);
     snprintf(st.path,sizeof st.path,"%s",path);
     gw_Settings_SetInt("transaction_probe",99);
     assert(gw_Settings_LastSaveOk());
     memset(&st,0,sizeof st); snprintf(st.path,sizeof st.path,"%s",path);
-    assert(gw_FighterControls_Get(0,8)==GW_FC_JUMP_BOTH && st.n==2);
-    assert(gw_FighterControls_Get(1,8)==GW_FC_JUMP_BOTH && st.n==2);
+    assert(gw_FighterControls_Get(0,8)==GW_FC_TAP_OFF && st.n==2);
+    assert(gw_FighterControls_Get(1,8)==GW_FC_TAP_ON && st.n==2);
     gw_FighterControls_MatchSet(0,8,gw_FighterControls_Get(0,8));
-    assert(gw_FighterControls_Apply(0,0x800)==0x800);
+    assert(gw_FighterControls_Apply(0,0x800)==0x800 && gw_FighterControls_TapJumpOff(0));
     gw_FighterControls_MatchClear();
     assert(gw_Settings_RemovePrefix("fc_d") && gw_Settings_RemovePrefix("transaction_probe") && st.n==0);
     for(i=0;i<510;++i) {

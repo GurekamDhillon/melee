@@ -18,7 +18,7 @@ static int test_script_rec(void) {
         if (!saved || !gw_FighterControls_StateSave(saved, state_size)) { free(saved); return 1; }
         gw_FighterControls_MatchClear();
         gw_FighterControls_MatchSet(0, 2, 1);
-        gw_FighterControls_MatchSet(1, 9, 2);
+        gw_FighterControls_MatchSet(1, 9, 0);
         f = gr_begin(path, 100, "gdlp_selftest.gdst", &a, &b);
         gw_FighterControls_StateLoad(saved, state_size);
         free(saved);
@@ -46,7 +46,7 @@ static int test_script_rec(void) {
     free(bytes);
     if (gr_read(path, &g, why, sizeof why) != 0) { gw_test_fail("rec: read back: %s", why); return 1; }
     if (!g.has_controls || g.controls_ck[0] != 2 || g.controls_ck[1] != 9 ||
-        g.controls[0] != 1 || g.controls[1] != 2) rc |= 8192;
+        g.controls[0] != 1 || g.controls[1] != 0) rc |= 8192;
     if (g.n != 5 || g.fr[0].tag != 100 || g.fr[4].tag != 104) rc |= 4;
     if (g.fr[2].pad[0] != 0x12 || g.fr[3].have != 0 || g.fr[1].have != 1 || g.fr[4].vp[0][0] != 4 || g.fr[4].vp[1][3] != 77) rc |= 8;
     if (g.nmarks != 1 || g.marks[0].frame != 3 || strcmp(g.marks[0].label, "good") != 0) rc |= 16;
@@ -136,7 +136,7 @@ static int test_script_rec_trim_controls(void) {
         gr_path(src, sizeof src, "gdlp_trim_controls_source", "gdlp");
         DeleteFileA(src); DeleteFileA(dst);
         gw_FighterControls_MatchClear();
-        gw_FighterControls_MatchSet(0, 2, 1); gw_FighterControls_MatchSet(1, 9, 2);
+        gw_FighterControls_MatchSet(0, 2, 1); gw_FighterControls_MatchSet(1, 9, 0);
         gr_write_ver = version;
         f = gr_begin(src, 100, NULL, &a, &b);
         gr_write_ver = GR_VER;
@@ -147,18 +147,18 @@ static int test_script_rec_trim_controls(void) {
         if (gr_read(src, &input, why, sizeof why) != 0) {
             gw_test_fail("rec trim controls: cannot read source: %s", why); rc = 1; break;
         }
-        gw_FighterControls_MatchSet(0, 2, 2); gw_FighterControls_MatchSet(1, 9, 1);
+        gw_FighterControls_MatchSet(0, 2, 0); gw_FighterControls_MatchSet(1, 9, 1);
         gr.pf = input; memset(&input, 0, sizeof input); /* job owns source allocations */
         gr.jfrom = 0; gr.jto = 1; gr.mode = GR_JOB; gr.jk = 1; gr.jpaused = paused;
         snprintf(gr.jdst, sizeof gr.jdst, "%s", name);
         snprintf(gr.name, sizeof gr.name, "source");
         gr_write_trim(); /* actual writer; the source state was never loaded */
-        if (gw_FighterControls_MatchGet(0) != 2 || gw_FighterControls_MatchGet(1) != 1 ||
+        if (gw_FighterControls_MatchGet(0) != 0 || gw_FighterControls_MatchGet(1) != 1 ||
             gr_read(dst, &output, why, sizeof why) != 0) {
             gw_test_fail("rec trim controls: trim touched live mapping or unreadable output"); rc = 1; break;
         }
         if (!output.has_controls || output.controls[0] != (version == 3 ? 1u : 0u) ||
-            output.controls[1] != (version == 3 ? 2u : 0u) ||
+            output.controls[1] != 0u ||
             output.controls_ck[0] != (version == 3 ? 2 : -1) ||
             output.controls_ck[1] != (version == 3 ? 9 : -1)) {
             gw_test_fail("rec trim controls: v%d source mapping replaced by live choices", version); rc = 1; break;
@@ -166,11 +166,10 @@ static int test_script_rec_trim_controls(void) {
         gr.pf = output; memset(&output, 0, sizeof output);
         gr.mode = GR_LOAD; gr.map[0] = 0; gr.map[1] = 1; gr.map[2] = 2; gr.map[3] = 3;
         gr_after_load(); /* metadata must preserve source X/Y or legacy Both */
-        if (gw_FighterControls_Apply(0, 0x400) != 0x400 ||
-            gw_FighterControls_Apply(0, 0x800) != (version == 3 ? 0 : 0x800) ||
-            gw_FighterControls_Apply(1, 0x400) != (version == 3 ? 0 : 0x400) ||
-            gw_FighterControls_Apply(1, 0x800) != 0x800) {
-            gw_test_fail("rec trim controls: v%d trimmed playback changed raw jump semantics", version); rc = 1;
+        if (gw_FighterControls_Apply(0, 0xc00) != 0xc00 ||
+            gw_FighterControls_TapJumpOff(0) != (version == 3 ? 1 : 0) ||
+            gw_FighterControls_TapJumpOff(1) != 0) {
+            gw_test_fail("rec trim controls: v%d trimmed playback changed the recorded tap jump setting", version); rc = 1;
         }
         gr_free_file(&gr.pf); DeleteFileA(src); DeleteFileA(dst);
         if (rc) break;

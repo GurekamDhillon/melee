@@ -6,7 +6,7 @@
 #define GW_RP_CONTROLS_START (GW_RP_RULES_START + 20)
 
 static int gw_controls_word_valid(unsigned word) {
-    return !(word & ~0xff3fu) && (word & 3u) != 3u;
+    return !(word & ~0xff3du);
 }
 static void gw_rp_controls_write(unsigned char *event, const unsigned words[4]) {
     unsigned char *p = event + 1 + GW_RP_RULES_START;

@@ -31,6 +31,7 @@
 #endif
 
 #include <math.h>
+#include "gw_fx_render_math.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -184,13 +185,13 @@ static int fx_enum(const char *s, const char *const *names, int n, int def) {
 }
 /* material.shader / .bloom / blend / alpha_test, the samplers and the param curve (what the renderer reads) */
 static void fx_material_read(const fjdoc *d, int root, int e, fx_emitter *m) {
-    static const char *const sh[] = {"sprite", "warp", "distortion"}, *const col[] = {"flat", "modulate", "lerp"},
+    static const char *const sh[] = {"sprite", "warp", "distortion", "dissolve"}, *const col[] = {"flat", "modulate", "lerp"},
                               *const bl[] = {"alpha", "add", "sub", "mul", "screen"},
                               *const pat[] = {"none", "fit_life", "clamp", "loop", "random"},
                               *const wr[] = {"Mirror", "Repeat", "Clamp"};
     int ma = fj_get(d, e, "material"), s = fj_path(d, e, "material", "shader"), b = fj_get(d, ma, "bloom");
     int at = fj_get(d, ma, "alpha_test"), smps = fj_get(d, e, "samplers"), i, x, pa = fj_get(d, e, "particle");
-    m->shader = s >= 0 ? fx_enum(fj_s(d, fj_get(d, s, "type")), sh, 3, FX_SH_SPRITE) : FX_SH_SPRITE;
+    m->shader = s >= 0 ? fx_enum(fj_s(d, fj_get(d, s, "type")), sh, 4, FX_SH_SPRITE) : FX_SH_SPRITE;
     m->color_mode = s >= 0 ? fx_enum(fj_s(d, fj_get(d, s, "color")), col, 3, FX_COL_MODULATE) : FX_COL_MODULATE;
     m->offset = s >= 0 ? (int) fj_num(d, fj_get(d, s, "offset"), -1) : -1;
     m->offset_mask = fx_mask(d, fj_get(d, s, "offset_targets"));
@@ -206,6 +207,19 @@ static void fx_material_read(const fjdoc *d, int root, int e, fx_emitter *m) {
     m->alpha_threshold = (float) fj_num(d, fj_get(d, at, "threshold"), 0);
     m->bloom_threshold = (float) fj_num(d, fj_get(d, b, "threshold"), 1);
     m->bloom_intensity = (float) fj_num(d, fj_get(d, b, "intensity"), 0);
+    /* render-only extras (gw_fx_internal.h): the glare's tint / reach, soft particles, the dissolve mask */
+    m->bloom_tint[0] = m->bloom_tint[1] = m->bloom_tint[2] = 1.0f;
+    fj_vec(d, fj_get(d, b, "tint"), m->bloom_tint, 3);
+    m->bloom_radius = (float) fj_num(d, fj_get(d, b, "radius"), 1);
+    if (!(m->bloom_radius >= 0.5f)) m->bloom_radius = 1.0f;
+    if (m->bloom_radius > 4.0f) m->bloom_radius = 4.0f;
+    m->soft_distance = (float) fj_num(d, fj_path(d, ma, "soft_particle", "distance"), 0);
+    if (!(m->soft_distance > 0.0f)) m->soft_distance = 0.0f;
+    m->dissolve_mask = s >= 0 ? (int) fj_num(d, fj_get(d, s, "mask"), 1) : 1;
+    if (m->dissolve_mask < 0 || m->dissolve_mask >= FX_SAMPLERS) m->dissolve_mask = 1;
+    m->dissolve_edge = s >= 0 ? (float) fj_num(d, fj_get(d, s, "edge"), 0.1) : 0.1f;
+    m->dissolve_color[0] = 1.0f; m->dissolve_color[1] = 0.8f; m->dissolve_color[2] = 0.4f;
+    if (s >= 0) fj_vec(d, fj_get(d, s, "edge_color"), m->dissolve_color, 3);
     {
         fx_curve *k = &m->param;
         int ks = fj_get(d, pa, "param_keys"), j;
@@ -338,6 +352,44 @@ static void fx_load_mesh(fx_pkg *p, const char *pkgpath, const char *name, const
     p->nmesh_loaded++;
 }
 
+/* R5: a generated annulus mesh (outer radius 0.5, inner = inner x outer; XY plane, +Z normal): u = angle / 2pi,
+ * v = 0 at the inner edge, 1 at the outer. Shared by every emitter with the same (segments, inner). Returns the mesh index
+ * or -1. Pure maths: no state, nothing the simulation reads. */
+void gw_fx_ring_vertices(float *v, int segs, float inner) {
+    int i, k = 0;
+    for (i = 0; i < segs; ++i) {
+        const float a0 = 6.28318530718f * (float) i / (float) segs, a1 = 6.28318530718f * (float) (i + 1) / (float) segs;
+        const float c0 = cosf(a0), s0 = sinf(a0), c1 = cosf(a1), s1 = sinf(a1);
+        const float u0 = (float) i / (float) segs, u1 = (float) (i + 1) / (float) segs;
+        /* quad (inner0, outer0, outer1, inner1) as two triangles */
+        const float q[6][4] = {{inner * 0.5f * c0, inner * 0.5f * s0, u0, 0.0f}, {0.5f * c0, 0.5f * s0, u0, 1.0f},
+                               {0.5f * c1, 0.5f * s1, u1, 1.0f}, {inner * 0.5f * c0, inner * 0.5f * s0, u0, 0.0f},
+                               {0.5f * c1, 0.5f * s1, u1, 1.0f}, {inner * 0.5f * c1, inner * 0.5f * s1, u1, 0.0f}};
+        int j;
+        for (j = 0; j < 6; ++j, ++k) {
+            float *o = v + (size_t) k * 12;
+            o[0] = q[j][0]; o[1] = q[j][1]; o[2] = 0.0f; o[3] = q[j][2]; o[4] = q[j][3];
+            o[5] = 0.0f; o[6] = 0.0f; o[7] = 1.0f; o[8] = o[9] = o[10] = o[11] = 1.0f;
+        }
+    }
+}
+static int fx_gen_ring(fx_pkg *p, int segs, float inner) {
+    char name[64];
+    int q;
+    const int m = p->nmesh_loaded;
+    snprintf(name, sizeof name, "ring:%d:%.4f", segs, inner);
+    for (q = 0; q < m; ++q)
+        if (strcmp(p->mesh_name[q], name) == 0) return q;
+    if (m >= FX_MAX_MESH) return -1;
+    p->mesh_v[m] = (float *) calloc((size_t) segs * 6 * 12, sizeof(float));
+    if (p->mesh_v[m] == NULL) return -1;
+    gw_fx_ring_vertices(p->mesh_v[m], segs, inner);
+    snprintf(p->mesh_name[m], sizeof p->mesh_name[m], "%s", name);
+    p->mesh_nv[m] = segs * 6;
+    p->nmesh_loaded++;
+    return m;
+}
+
 #include "gw_fx_shaders.inc"
 
 static fx_pkg *fx_parse(const char *text, const char *path) {
@@ -397,6 +449,26 @@ static fx_pkg *fx_parse(const char *text, const char *path) {
             int q;
             for (q = 0; q < p->nmesh_loaded; ++q)
                 if (strcmp(p->mesh_name[q], mn) == 0) m->mesh_idx = q;
+        }
+        {
+            /* R2 ribbon / R5 ring (render-only): "ribbon": {taper, uv_per_unit}; "ring": {inner, segments} generates the
+             * annulus mesh (outer radius 0.5 in the local XY plane, u around the band, v inner -> outer) */
+            const int rb = fj_get(&d, e, "ribbon"), rg = fj_get(&d, e, "ring");
+            m->ribbon_taper = 1.0f;
+            if (rb >= 0 && d.n[rb].type == FJ_OBJ) {
+                m->ribbon = 1;
+                m->ribbon_taper = (float) fj_num(&d, fj_get(&d, rb, "taper"), 1);
+                m->ribbon_uv_per_unit = (float) fj_num(&d, fj_get(&d, rb, "uv_per_unit"), 0);
+                if (!(m->ribbon_taper >= 0.0f)) m->ribbon_taper = 0.0f;
+            }
+            if (rg >= 0 && d.n[rg].type == FJ_OBJ) {
+                float inner = (float) fj_num(&d, fj_get(&d, rg, "inner"), 0.8);
+                int segs = (int) fj_num(&d, fj_get(&d, rg, "segments"), 48);
+                m->ring_inner = inner > 0.0f && inner < 0.999f ? inner : 0.8f;
+                m->ring = segs < 3 ? 3 : segs > 256 ? 256 : segs;
+                m->mesh = 1;
+                m->mesh_idx = fx_gen_ring(p, m->ring, m->ring_inner);
+            }
         }
         {
             const char *ps = fj_s(&d, fj_path(&d, e, "particle", "shape"));
@@ -1913,7 +1985,76 @@ static int test_fx_sim(void) {
 }
 
 static int test_fx_lab(void);
-void gw_fx_tests_register(void) { gw_test_register("fx_sim", test_fx_sim); gw_test_register("fx_lab", test_fx_lab); gw_shader_tests_register(); }
+/* R1..R6 (render-only fields + the pure maths in gw_fx_render_math.h): the schema parses, defaults leave old effects
+ * unchanged, the ring mesh is generated, and the maths holds its invariants. */
+static const char fx_render_pkg[] =
+    "{\"geno_fx\":1,\"name\":\"r\",\"textures\":[],\"meshes\":[],\"emitters\":["
+    "{\"name\":\"plain\",\"kind\":\"particle\",\"material\":{\"blend\":\"add\"}},"
+    "{\"name\":\"glare\",\"kind\":\"particle\",\"material\":{\"blend\":\"add\",\"bloom\":{\"threshold\":0.5,\"intensity\":2,"
+    "\"tint\":[0.2,0.5,1],\"radius\":2.5},\"soft_particle\":{\"distance\":3,\"volume\":1}}},"
+    "{\"name\":\"strip\",\"kind\":\"particle\",\"ribbon\":{\"taper\":0.25,\"uv_per_unit\":0.5},\"material\":{}},"
+    "{\"name\":\"diss\",\"kind\":\"particle\",\"material\":{\"shader\":{\"type\":\"dissolve\",\"mask\":1,\"edge\":0.2,"
+    "\"edge_color\":[1,0.5,0.1]}}},"
+    "{\"name\":\"band\",\"kind\":\"particle\",\"ring\":{\"inner\":0.7,\"segments\":32},\"material\":{}},"
+    "{\"name\":\"band2\",\"kind\":\"particle\",\"ring\":{\"inner\":0.7,\"segments\":32},\"material\":{}}]}";
+
+static int test_fx_render(void) {
+    int rc = 0, i;
+    float v[2], a[3] = {0, 0, 0}, b[3] = {1, 0, 0}, cz[3] = {0, 0, 1}, side[3];
+    const fx_emitter *e;
+    fx_pkg *p = fx_parse(fx_render_pkg, "render");
+#define FXR(cond, msg) do { if (!(cond)) { gw_test_fail("fx_render: %s", msg); rc = 1; } } while (0)
+    if (p == NULL || p->nem != 6) { gw_test_fail("fx_render: the package must parse with 6 emitters"); return 1; }
+    e = &p->em[0];
+    FXR(e->bloom_tint[0] == 1.0f && e->bloom_radius == 1.0f && !e->ribbon && e->soft_distance == 0.0f &&
+        e->ring == 0 && e->shader == FX_SH_SPRITE, "defaults must leave an old effect unchanged");
+    e = &p->em[1];
+    FXR(fabsf(e->bloom_tint[2] - 1.0f) < 1e-6f && fabsf(e->bloom_tint[0] - 0.2f) < 1e-6f && e->bloom_radius == 2.5f,
+        "bloom tint / radius (R1)");
+    FXR(e->soft_distance == 3.0f, "soft_particle.distance (R3)");
+    e = &p->em[2];
+    FXR(e->ribbon == 1 && e->ribbon_taper == 0.25f && e->ribbon_uv_per_unit == 0.5f && !e->mesh, "ribbon fields (R2)");
+    e = &p->em[3];
+    FXR(e->shader == FX_SH_DISSOLVE && e->dissolve_mask == 1 && fabsf(e->dissolve_edge - 0.2f) < 1e-6f &&
+        fabsf(e->dissolve_color[1] - 0.5f) < 1e-6f, "dissolve shader fields (R4)");
+    e = &p->em[4];
+    FXR(e->ring == 32 && e->mesh && e->mesh_idx == 0 && p->mesh_nv[0] == 32 * 6, "ring mesh generated (R5)");
+    FXR(p->em[5].mesh_idx == 0 && p->nmesh_loaded == 1, "identical rings share one mesh");
+    for (i = 0; i < p->mesh_nv[0]; ++i) {
+        const float *o = p->mesh_v[0] + (size_t) i * 12;
+        const float r = sqrtf(o[0] * o[0] + o[1] * o[1]);
+        if (!(r >= 0.35f - 1e-5f && r <= 0.5f + 1e-5f) || o[4] < 0.0f || o[4] > 1.0f) { FXR(0, "ring vertex radius / v out of range"); break; }
+    }
+    /* R2 maths */
+    FXR(fx_rib_width_mul(0, 5, 0.25f) == 1.0f && fabsf(fx_rib_width_mul(4, 5, 0.25f) - 0.25f) < 1e-6f, "ribbon taper endpoints");
+    FXR(fabsf(fx_rib_u(2, 5, 7.0f, 0.0f) - 0.5f) < 1e-6f && fabsf(fx_rib_u(2, 5, 7.0f, 0.5f) - 3.5f) < 1e-6f, "ribbon u");
+    FXR(fx_rib_side(a, b, cz, side) == 1 && fabsf(side[1] - 1.0f) < 1e-6f && fabsf(side[0]) < 1e-6f, "ribbon side is perpendicular to segment and view");
+    FXR(fx_rib_side(a, cz, cz, side) == 0, "segment along the view degenerates safely");
+    /* R3 maths */
+    FXR(fx_soft_fade(10.0f, 10.0f, 2.0f) == 0.0f && fx_soft_fade(12.0f, 10.0f, 2.0f) == 1.0f &&
+        fabsf(fx_soft_fade(11.0f, 10.0f, 2.0f) - 0.5f) < 1e-6f && fx_soft_fade(5.0f, 10.0f, 2.0f) == 0.0f, "soft fade");
+    {   /* a GX-like perspective z/w rows: zn = (A*vz + B) / (-vz); invert */
+        const float r2[4] = {0, 0, -1.001f, -0.1001f}, r3[4] = {0, 0, -1, 0};
+        const float vz = -50.0f, zn = (r2[2] * vz + r2[3]) / (r3[2] * vz + r3[3]);
+        FXR(fabsf(fx_depth_to_viewz(zn, r2, r3) - vz) < 1e-3f, "depth -> view z round trip");
+    }
+    /* R4 maths */
+    FXR(fx_dissolve_alpha(0.3f, 0.5f, 0.2f) == 0.0f && fx_dissolve_alpha(0.8f, 0.5f, 0.2f) == 1.0f &&
+        fabsf(fx_dissolve_alpha(0.6f, 0.5f, 0.2f) - 0.5f) < 1e-5f, "dissolve alpha");
+    FXR(fx_dissolve_glow(0.8f, 0.5f, 0.2f) == 0.0f && fx_dissolve_glow(0.6f, 0.5f, 0.2f) > 0.4f, "dissolve glow only on the edge");
+    /* R6 maths: pure in (frame - start), decays, zero outside, deterministic (rollback-safe) */
+    fx_shake_offset(100, 100, 10, 0.05f, 7, v);
+    FXR(fabsf(v[0]) <= 0.05f && fabsf(v[1]) <= 0.05f, "shake bounded by amp");
+    { float w[2]; fx_shake_offset(100, 100, 10, 0.05f, 7, w); FXR(w[0] == v[0] && w[1] == v[1], "shake deterministic"); }
+    fx_shake_offset(110, 100, 10, 0.05f, 7, v); FXR(v[0] == 0.0f && v[1] == 0.0f, "shake ends");
+    fx_shake_offset(99, 100, 10, 0.05f, 7, v); FXR(v[0] == 0.0f && v[1] == 0.0f, "shake not before its start");
+    FXR(fx_flash_alpha(100, 100, 10, 0.8f) == 0.8f && fx_flash_alpha(105, 100, 10, 0.8f) > 0.39f &&
+        fx_flash_alpha(105, 100, 10, 0.8f) < 0.41f && fx_flash_alpha(110, 100, 10, 0.8f) == 0.0f, "flash fade");
+#undef FXR
+    return rc;
+}
+
+void gw_fx_tests_register(void) { gw_test_register("fx_render", test_fx_render); gw_test_register("fx_sim", test_fx_sim); gw_test_register("fx_lab", test_fx_lab); gw_shader_tests_register(); }
 
 /* Seeded, script-owned package handles. These do not expose/reuse pool indices. */
 int gw_Fx_LabPlay(const char *package, int jobj, int script, int port, int joint,

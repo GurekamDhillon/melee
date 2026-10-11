@@ -28,7 +28,7 @@ enum { FX_SHAPE_POINT, FX_SHAPE_SPHERE, FX_SHAPE_SPHERE_FILL, FX_SHAPE_CIRCLE, F
        FX_SHAPE_CIRCLE_DIVIDE, FX_SHAPE_SPHERE_DIVIDE, FX_SHAPE_SPHERE_DIVIDE64,
        FX_SHAPE_CYLINDER, FX_SHAPE_CYLINDER_FILL, FX_SHAPE_BOX, FX_SHAPE_BOX_FILL,
        FX_SHAPE_LINE, FX_SHAPE_LINE_DIVIDE, FX_SHAPE_RECTANGLE, FX_SHAPE_PRIMITIVE };
-enum { FX_SH_SPRITE, FX_SH_WARP, FX_SH_DISTORTION };            /* the shader library (geno.md 20.2) */
+enum { FX_SH_SPRITE, FX_SH_WARP, FX_SH_DISTORTION, FX_SH_DISSOLVE };            /* the shader library (geno.md 20.2) */
 enum { FX_COL_FLAT, FX_COL_MODULATE, FX_COL_LERP };
 enum { FX_BLEND_ALPHA, FX_BLEND_ADD, FX_BLEND_SUB, FX_BLEND_MUL, FX_BLEND_SCREEN };
 enum { FX_PAT_NONE, FX_PAT_FIT_LIFE, FX_PAT_CLAMP, FX_PAT_LOOP, FX_PAT_RANDOM };
@@ -83,6 +83,15 @@ typedef struct {
     int custom_shader;          /* host-only immutable material; 0 legacy, -1 invalid, >0 custom handle */
     int additive_batch;         /* opt-in: custom body accepts regrouped particle indices/order */
     float strength[2], alpha_threshold, bloom_threshold, bloom_intensity;
+    /* render-only extras (cosmetic; never read by the simulation, so the rollback ring is untouched): */
+    float bloom_tint[3], bloom_radius;      /* R1 glare: the bloom's colour and blur reach (1 = the base 9-tap) */
+    int ribbon;                             /* R2: the emitter's particles form one camera-facing strip, newest first */
+    float ribbon_taper, ribbon_uv_per_unit; /*     tail width / head width; u tiles per world unit (0 = 0..1 over the strip) */
+    float soft_distance;                    /* R3: soft particles: depth fade distance in world units (0 = off) */
+    int dissolve_mask;                      /* R4: sampler that is the dissolve mask (threshold = the param curve) */
+    float dissolve_edge, dissolve_color[3]; /*     edge band width (0..1 of the mask) and its glow colour */
+    int ring;                               /* R5: generated annulus mesh (segments), 0 = none */
+    float ring_inner;                       /*     inner radius / outer radius */
     fx_sampler smp[FX_SAMPLERS];
 } fx_emitter;
 

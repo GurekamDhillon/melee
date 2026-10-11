@@ -85,6 +85,7 @@ static int ns_parse_json(const char *text, ns_stage *o, char *err, size_t ecap) 
     for (k = 0; k < 11; ++k) {
         if (!keys[k][0]) continue;
         v = nj_gnum(&d, nj_get(&d, root, keys[k]) >= 0 ? root : -1, keys[k], 0.0);
+        if (k == 10) { o->w[k] = (uint32_t) v; continue; }                     /* unknownValue is flags2, not an address */
         if (!ns_word_ok(v)) { snprintf(err, ecap, "%s (%.0f) points outside the retail code: the stage was built for another clone base", keys[k], v); nj_free(&d); return -1; }
         o->w[k] = ns_word(v);
     }
@@ -94,6 +95,8 @@ static int ns_parse_json(const char *text, ns_stage *o, char *err, size_t ecap) 
     o->linetype = (int) nj_gnum(&d, root, "gdLineType", -1);
     o->have_line = o->linetype >= 0 && o->linetype < 71;
     if (!o->have_line) o->linetype = -1;
+    en = nj_get(&d, root, "items");
+    if (en >= 0 && d.n[en].type == NJ_ARR && d.n[en].first >= 0) { snprintf(err, ecap, "this stage owns custom items, which need the item tables of an m-ex disc (not supported on a vanilla disc yet)"); nj_free(&d); return -1; }
     en = nj_get(&d, root, "assets");
     if (en >= 0) nc_copy(o->icon_ref, sizeof o->icon_ref, nj_gstr(&d, en, "icon", ""));
     pl = nj_get(&d, root, "playlist");
@@ -188,7 +191,7 @@ static int nc_stage_install(const char *mods_dir, const nc_post *post, const nc_
             nj_buf t;
             int j;
             memset(&t, 0, sizeof t);
-            nj_printf(&t, "name=%s\nfile=%s\npost=%s/post/%d\nssm=%d\nreverb=%d\nreverb2=%d\n", st.name, st.file, NC_SITE, post->id, st.ssm, st.reverb, st.reverb2);
+            nj_printf(&t, "name=%s\nfile=%s\npost=https://%s/post/%d\nssm=%d\nreverb=%d\nreverb2=%d\n", st.name, st.file, NC_SITE, post->id, st.ssm, st.reverb, st.reverb2);
             if (gx) nj_puts(&t, "icon=icon.gxtex\n");
             nj_printf(&t, "callbacks=%08X\nflags2=%X\n", (unsigned) st.w[1], (unsigned) st.w[10]);
             for (j = 3; j <= 9; ++j) nj_printf(&t, "w%d=%08X\n", j, (unsigned) st.w[j]);

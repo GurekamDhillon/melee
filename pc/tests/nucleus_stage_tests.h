@@ -91,6 +91,7 @@ static void run_stage_tests(void) {
     zn = nst_zip(ents, 2, zipbuf);
     in.data = zipbuf; in.len = zn;
     rc = nc_stage_install(root_dir, &post, &in, 1, &env, &res, msg, sizeof msg, nst_log);
+    if (rc != 0) printf("stage install msg: %s | %s", msg, res.first_err);
     CHECK(rc == 0 && res.installed == 1 && !strcmp(res.mods[0], "nucleus-801-cstage"));
     snprintf(path, sizeof path, "%s/nucleus-801-cstage/mexstage.txt", root_dir); nc_fix_slashes(path);
     text = nc_read_all(path, NULL);

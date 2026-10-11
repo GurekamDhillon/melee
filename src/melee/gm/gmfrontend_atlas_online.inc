@@ -21,8 +21,6 @@ extern void Ui_RoomPlayerName(int who, const char* name, const char* fighter);
 extern void Ui_RoomStageCount(int n);
 extern void Ui_RoomModCount(int n);
 extern void Ui_RoomMod(int i, const char* text);
-int Netplay_ModsRowCount(void);
-int Netplay_ModsRow(int i, int max_rows, char* out, int cap);
 extern void Ui_RoomStage(int i, const char* name, const char* state, int starter, int open);
 extern int Ui_RoomGridFor(int n, int starters);
 extern int Ui_RoomGridCell(int i, int* col, int* row, int* page);

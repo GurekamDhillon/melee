@@ -91,7 +91,7 @@ static struct {
     bool on;
     int art;        ///< FL_* this model shows
     int frames;     ///< frames on this screen
-    char sig[512];  ///< what the model was built from
+    char sig[1024]; ///< state, status and all five FE_STR mod rows must fit
     int toast_until;
     char toast[FE_STR];
     bool toast_bad;
@@ -889,6 +889,70 @@ enum { FL_GRID_TEMPLATE, FL_GRID_SPLIT, FL_GRID_FLOW };
 #define FL_GRID_HEAD 13.0F /* a group label's strip */
 #define FL_GRID_DIV 18.0F  /* the gap the split layout's divider sits in */
 
+/* ModsLine refreshes the native diff before ModsRowCount/ModsRow read it (the same
+ * accessors as fa_room_common). Keep a snapshot even while a toast owns the status
+ * strip: a per-mod change must rebuild the legacy model on its own. */
+#define FL_MODS_ROWS 5 /* Atlas parity: the last line is +N more on overflow */
+typedef struct FlMods {
+    int n, total;
+    char line[FE_STR];
+    char row[FL_MODS_ROWS][FE_STR];
+} FlMods;
+static FlMods fl_mods;
+
+static void fl_mods_refresh(void)
+{
+    FlMods next;
+    int i;
+    memset(&next, 0, sizeof next);
+    if (fl.art == FL_LOBBY && !fl_reconnecting()) {
+        Netplay_ModsLine(next.line, FE_STR);
+        next.total = Netplay_ModsRowCount();
+        if (next.total < 0) next.total = 0;
+        next.n = next.total > FL_MODS_ROWS ? FL_MODS_ROWS : next.total;
+        for (i = 0; i < next.n; i++) {
+            Netplay_ModsRow(i, FL_MODS_ROWS, next.row[i], FE_STR);
+        }
+    }
+    if (memcmp(&fl_mods, &next, sizeof next) != 0) {
+        OSReport("frontend: lobby mods: %d differences, %d rows\n", next.total, next.n);
+        for (i = 0; i < next.n; i++) {
+            OSReport("frontend: lobby mod: %s\n", next.row[i]);
+        }
+        fl_mods = next;
+    }
+}
+
+static void fl_mods_draw(void)
+{
+    float face[3], ink[3], gold[3], bone[3], muted[3];
+    float bottom = FL_GRID_Y0 + 42.0F + 16.0F * (float) fl_mods.n;
+    int i;
+    char id[FP_ID];
+    if (fl_mods.n <= 0) return;
+    fm_tok("@face", KS_VERSUS, face);
+    fm_tok("ink", KS_VERSUS, ink);
+    fm_tok("gold", KS_VERSUS, gold);
+    fm_tok("bone", KS_VERSUS, bone);
+    fm_tok("muted", KS_VERSUS, muted);
+    fm_panel("mods_plate", FPR_OTHER, -1, FL_GRID_X0, FL_GRID_Y0,
+             FL_GRID_X0 + FL_GRID_W, bottom, face);
+    fm_panel("mods_face", FPR_OTHER, -1, FL_GRID_X0 + 2, FL_GRID_Y0 + 2,
+             FL_GRID_X0 + FL_GRID_W - 2, bottom - 2, ink);
+    fl_text_at("mods_title", "caption", FL_GRID_X0 + 12, FL_GRID_Y0 + 15,
+               "left", FL_GRID_W - 24, "MODS DIFFER FROM THE OTHER PLAYER'S", gold, -1);
+    for (i = 0; i < fl_mods.n; i++) {
+        sprintf(id, "mods_row%d", i);
+        fl_text_at(id, "caption", FL_GRID_X0 + 12, FL_GRID_Y0 + 32 + 16.0F * (float) i,
+                   "left", FL_GRID_W - 24, fl_mods.row[i], bone, -1);
+    }
+    fl_text_at("mods_action", "caption", FL_GRID_X0 + 12, bottom - 8, "left",
+               FL_GRID_W - 24, fl_mods.line[0] == '\0' ? "These differences are fine; a match can start."
+                             : Netplay_IsHost() ? "The guest can press Y to match your mods."
+                                               : "Y: Match the host's mods (restart and rejoin).",
+               muted, -1);
+}
+
 typedef struct FlGridHead {
     float x0, x1, y; ///< the strip (y = its top)
     int page, group, count;
@@ -921,6 +985,8 @@ static void fl_grid_head(float x0, float x1, float y, int page, int group, int c
 static void fl_grid_layout(void)
 {
     int n = Netplay_LobbyInfo(9), i, s = 0, c;
+    bool mods = fl_mods.n > 0 && fl.art == FL_LOBBY && !fl_reconnecting();
+    float y0 = FL_GRID_Y0, grid_h = FL_GRID_H;
     if (!Netplay_LobbyInfo(12)) {
         n = 0; /* the host's stage list is still on its way */
     }
@@ -939,7 +1005,14 @@ static void fl_grid_layout(void)
         fa_room_grid(n, s); /* Atlas: the host's grid model, so the cursor moves through the grid that is drawn */
         return;
     }
-    if (n <= 6 && c == 0) {
+    if (mods) {
+        /* The list takes the top of the grid's rect. FLOW keeps every stage
+         * reachable on pages below it, including nonblocking cosmetic diffs. */
+        float used = 50.0F + 16.0F * (float) fl_mods.n;
+        y0 += used;
+        grid_h -= used;
+    }
+    if (!mods && n <= 6 && c == 0) {
         /* the layout's big tiles (fl_build_lobby places them): positions for the cursor only */
         flg.kind = FL_GRID_TEMPLATE;
         for (i = 0; i < n; i++) {
@@ -950,7 +1023,7 @@ static void fl_grid_layout(void)
         }
         return;
     }
-    if (n <= 6) {
+    if (!mods && n <= 6) {
         /* SPLIT: the starters' block (up to 3 columns x 2 rows), a divider, the counterpicks'
            columns (2 rows each) */
         int sc = s > 3 ? 3 : s < 1 ? 1 : s, cc = (c + 1) / 2, k;
@@ -988,8 +1061,12 @@ static void fl_grid_layout(void)
         bool grouped = s > 0 && c > 0;
         float g = 5.0F, gx = 6.0F, w = (FL_GRID_W - 5.0F * gx) / 6.0F;
         float h = grouped ? 48.0F : (FL_GRID_H - 2.0F * g) / 3.0F;
-        float y = FL_GRID_Y0;
+        float y = y0;
         int page = 0, col = 0, grp = -1;
+        if (mods) {
+            h = grid_h - (grouped ? FL_GRID_HEAD : 0.0F);
+            if (h > 48.0F) h = 48.0F;
+        }
         flg.kind = FL_GRID_FLOW;
         for (i = 0; i < n; i++) {
             int gi = Netplay_LobbyStageGroup(i);
@@ -1000,9 +1077,9 @@ static void fl_grid_layout(void)
                 if (i > 0) {
                     y += h + g;
                 }
-                if (i > 0 && y + need > FL_GRID_Y0 + FL_GRID_H + 0.5F) {
+                if (i > 0 && y + need > y0 + grid_h + 0.5F) {
                     page++;
-                    y = FL_GRID_Y0;
+                    y = y0;
                     if (grouped && !new_group) {
                         fl_grid_head(FL_GRID_X0, FL_GRID_X0 + FL_GRID_W, y, page, gi, gi == 0 ? s : c);
                         y += FL_GRID_HEAD;
@@ -1767,6 +1844,7 @@ static void fl_build_lobby(void)
     const FjNode* L;
     const FjNode* G;
     FlEl e;
+    fl_mods_refresh();
     Netplay_RoomCode(code, sizeof code);
     sprintf(room, Netplay_Envoy() ? (Netplay_Turbo() ? "ROOM %s - TURBO - ENVOY" : "ROOM %s - ENVOY") : (Netplay_Turbo() ? "ROOM %s - TURBO" : "ROOM %s"), code); /* the host's match rules, shown to both */
     crumbs[2] = room;
@@ -1786,6 +1864,9 @@ static void fl_build_lobby(void)
                    ? "Cancel"
                : fl.frames < fl.leave_until ? "Leave?"
                                             : "Leave";
+    if (!fl_reconnecting() && !Netplay_IsHost() && fl_mods.line[0] != '\0') {
+        hg[nh] = "glyph_y"; ht[nh++] = "Match host";
+    }
     sprintf(title, "GAME %d", Netplay_LobbyInfo(0) > 0 ? Netplay_LobbyInfo(0) : 1);
     fm_chrome_with(title, crumbs, 3, KS_VERSUS, nh, hg, ht);
     L = fj_load("lobby_layout.json", &t, &pp);
@@ -1811,6 +1892,7 @@ static void fl_build_lobby(void)
     }
     e.port[0] = '\0';
     FL_EL("turn_arrow", "ta_");
+    fl_mods_draw();
     /* the stage grid: tile_0 is the template, placed per index on the grid's columns, so the list
        can be as long as the rules make it (rows beyond the second belong to a scrolling list) */
     G = fj_get(L, "stage_grid");
@@ -1997,6 +2079,12 @@ static void fl_signature(char* sig)
     fl_sig_int(sig, fe_np_phase);
     fl_sig_add(sig, fl_toast_now() != NULL ? fl_toast_now() : "");
     if (fl.art == FL_LOBBY) {
+        fl_mods_refresh();
+        fl_sig_int(sig, fl_mods.total);
+        fl_sig_add(sig, fl_mods.line);
+        for (i = 0; i < fl_mods.n; i++) {
+            fl_sig_add(sig, fl_mods.row[i]);
+        }
         fl_sig_int(sig, Netplay_LobbySeq());
         fl_sig_int(sig, fl.cur);
         fl_sig_int(sig, Netplay_LobbyInfo(8));

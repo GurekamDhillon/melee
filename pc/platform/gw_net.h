@@ -56,8 +56,9 @@ extern "C" {
  * Heap addresses and snapshot layout differ from protocol 5; refuse old peers
  * before starting, even when their content hashes happen to match.
  * 7: per-player fighter controls travel in HELLO/ACCEPT and reliable lobby
- * messages; peers must agree before interpreting raw match inputs. */
-#define GW_NET_PROTOCOL_VERSION 7u
+ * messages; peers must agree before interpreting raw match inputs.
+ * 8: stage-skin choice (skin= scene key, GW_MEXID_SKIN identities); retail stage identity is skin-independent. */
+#define GW_NET_PROTOCOL_VERSION 8u
 #define GW_NET_MAX_BLOB 900        /* match-config blob: StartMeleeData + extras */
 #define GW_NET_MAX_SLOTS 8         /* port * 2 + follower */
 #define GW_NET_MAX_PAYLOAD 32      /* bytes of one slot's input for one frame */

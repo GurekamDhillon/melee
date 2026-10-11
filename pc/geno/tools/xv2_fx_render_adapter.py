@@ -199,16 +199,16 @@ def adapt_package(pdir, tint, radius):
             if extra_tex:
                 sm.append(sampler(1, extra_tex[0], extra_tex[1]))
             e = build_emitter(t, name, blife, width, [[1, 1, 1, 0.0], [1, 1, 1, 1.0]],
-                              [[a[0] * alpha, 0, 0, a[3]] for a in fade], rgb, hdr, [0.0, 0.0, 0.0], rot,
+                              [[a[0] * alpha, 0, 0, a[3]] for a in fade], rgb, hdr, [0.0, 0.0, 0.0], rot,   # the head is erot(translate (0,0,L)) with the same rotation, so +Z of this frame points at it
                               copy.deepcopy(beam['emission']), sm, param=grow,
                               extra={'ribbon': {'taper': taper, 'uv_per_unit': uvu,
                                                 'span': {'length': head_z, 'segments': 28}, 'ends': ends}})
             e['emission']['start'] = beam['emission'].get('start', 0)
             e['material']['bloom'] = bloom
             return e
-        ems.append(layer('rx_beam_glow', 2.6 * bs, [0.15, 0.5, 1.0], 2.4, tb, (0.0, -0.02), 0.06, [0.10, 0.05], {'threshold': 0.4, 'intensity': 1.3, 'tint': tint, 'radius': radius}, taper=0.9, alpha=0.8))
-        ems.append(layer('rx_beam_mid', 1.7 * bs, [0.4, 0.85, 1.0], 2.8, tn, (0.0, -0.035), 0.05, [0.08, 0.04], {'threshold': 0.5, 'intensity': 0.9, 'tint': tint, 'radius': radius}, alpha=0.9))
-        ems.append(layer('rx_beam_core', 0.8 * bs, [1.0, 1.0, 1.0], 4.5, tb, (0.0, -0.06), 0.09, [0.04, 0.02], {'threshold': 0.6, 'intensity': 1.6, 'tint': [0.8, 0.95, 1.0], 'radius': radius}))
+        ems.append(layer('rx_beam_glow', 2.6 * bs, [0.1, 0.4, 1.0], 1.5, tb, (0.0, -0.02), 0.06, [0.10, 0.05], {'threshold': 0.4, 'intensity': 1.0, 'tint': tint, 'radius': radius}, taper=0.9, alpha=0.9))
+        ems.append(layer('rx_beam_mid', 1.6 * bs, [0.25, 0.7, 1.0], 1.5, tn, (0.0, -0.035), 0.05, [0.08, 0.04], {'threshold': 0.5, 'intensity': 0.5, 'tint': tint, 'radius': radius}, alpha=0.75))
+        ems.append(layer('rx_beam_core', 0.6 * bs, [0.9, 0.97, 1.0], 1.8, tb, (0.0, -0.06), 0.09, [0.04, 0.02], {'threshold': 0.7, 'intensity': 0.8, 'tint': [0.8, 0.95, 1.0], 'radius': radius}))
         # R5 + R4 shock rings leaving the beam head (dissolve with a noise mask)
         dis = {'type': 'dissolve', 'mask': 1, 'edge': 0.25, 'edge_color': [0.7, 0.95, 1.0]}
         ems.append(build_emitter(
@@ -276,7 +276,7 @@ def main():
                 f = next(c['frame'] for c in s['calls'] if 'Muzzle' in c['package'])
                 big = s['state'] in ('KameFull', 'KameSuper')
                 s['calls'].append({'frame': f, 'shake': {'amp': 0.022 if big else 0.014, 'frames': 14 if big else 10, 'seed': 5},
-                                   'flash': {'color': [0.55, 0.8, 1.0], 'alpha': 0.7 if big else 0.5, 'frames': 4 if big else 3}})
+                                   'flash': {'color': [0.55, 0.8, 1.0], 'alpha': 0.3 if big else 0.2, 'frames': 4 if big else 3}})
         bj.write_text(json.dumps(b, indent=1), encoding='utf-8')
     print('adapted', len(done), 'packages:', ', '.join(done))
 

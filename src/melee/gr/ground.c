@@ -261,6 +261,7 @@ extern const char* Mex_GrFile(int grkind);
 extern void* Mex_GrVanillaFn(int grkind, int slot);
 extern u32 Mex_GrFlags2(int grkind);
 extern void Mex_GrSelect(int grkind);
+extern void StageSkin_ApplyForLoad(int grkind);
 extern void Mex_GrFunctionInit(void* archive, int grkind);
 extern void* Mex_GrCallbacks(void);
 extern void* Mex_GrRowCallbacks(int grkind);
@@ -650,6 +651,9 @@ void Ground_801C0754(StageIdPair* pair)
     s32 arg3;
 #if defined(TARGET_PC)
     Ground_MexInitStages();
+    /* Stage skins (pc/platform/gw_stageskin.h): serve this stage's files from the skin the player (or the online host) chose, now,
+     * before its archive is read and never while a match runs. */
+    StageSkin_ApplyForLoad(pair->grkind);
     /* Tell the m-ex stage runtime whose row the StageData trampolines belong to, before anything
      * can call one. Harmless for a vanilla stage. */
     Mex_GrSelect(pair->grkind);

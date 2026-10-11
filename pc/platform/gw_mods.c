@@ -13,6 +13,7 @@
 #include "gw.h"
 #include "gw_mods.h"
 #include "gw_modsync.h"
+#include "gw_stageskin.h"
 #include "gw_test.h"
 
 #define WIN32_LEAN_AND_MEAN
@@ -62,6 +63,7 @@ typedef struct gw_mod {
     int nmenus;
     char menu_summary[GW_MODS_TEXT_MAX];
     char engine_miss[GW_MODS_TEXT_MAX]; /* mod.json "engine": the first feature this build lacks ("" = none) */
+    uint32_t skin_mask; /* kind "stage": bit r = the payload root has a file of retail stage r (gw_stageskin.h); two such mods of one stage are skins, not conflicts */
 } gw_mod;
 
 typedef struct gw_mods_set {
@@ -404,6 +406,7 @@ static void mod_load_meta(gw_mod *m, const char *moddir) {
         if (m->kind[0] != '\0') gw_log("gw: mods: %s: unknown kind \"%s\" - treated as misc", m->id, m->kind);
         copy_str(m->kind, sizeof m->kind, "misc");
     }
+    m->skin_mask = strcmp(m->kind, "stage") == 0 ? gw_Skin_PayloadMask(m->payload) : 0;
     m->requires_text[0] = '\0';
     for (i = 0; i < m->nreq; ++i) {
         size_t l = strlen(m->requires_text);
@@ -452,6 +455,9 @@ static int kind_rank(const gw_mod *m) {
 
 static int mods_conflict(const gw_mod *a, const gw_mod *b) {
     int i;
+    /* two stage mods that replace the same retail stage's files are skins of it: they mount together and the stage select picks
+       one per load (gw_stageskin.h). Nucleus lists the skins of a stage as mutual conflicts, which only meant "one file wins". */
+    if ((a->skin_mask & b->skin_mask) != 0) return 0;
     for (i = 0; i < a->ncon; ++i) {
         if (_stricmp(a->con[i], b->id) == 0) return 1;
     }
@@ -1277,6 +1283,7 @@ void gw_mods_tests_register(void) {
     gw_test_register("mods_toggle_and_save", test_mods_toggle_and_save);
     gw_test_register("mods_fingerprint_and_diff", test_mods_fingerprint_and_diff);
     gw_modsync_tests_register();
+    gw_stageskin_tests_register();
 }
 
 /* ---- who wins a disc path (the stage-select skin note) ------------------------------------------------------- */
@@ -1303,5 +1310,6 @@ int gw_Mods_WinnerOf(const char *disc_path, char *out, int cap) {
 
 /* ---- match the host's mods (gw_modsync.h): compiled in here, so it shares this file's statics ---- */
 #include "gw_modsync.inc"
+#include "gw_stageskin.inc"
 #include "gw_modsync_session.inc"
 

@@ -5,6 +5,7 @@
 #include "atlas_rec.h"
 #include "atlas_style.h"
 #include "../platform/gw_ui_render.h"
+#include "../platform/gw_ui_css.h"
 
 static const AtTextOps O = { fake_width, NULL };
 static AtScreen SC; static AtView V; static AtCell POOL[AT_MAX_EXT_CELLS]; static AtHits HITS;
@@ -303,9 +304,85 @@ static void loading_screen(void)
       CHECK(maxx <= L.primary.x + L.primary.w + 0.01f); }
 }
 
+
+/* the Melee-style character select (AT_PRIMARY_CSS): the panels for 2 to 6 ports, rosters of 26 to 129, three widths */
+static void build_css_view(AtScreen *sc, AtView *v, AtCell *pool, int n, int n_ports, int n_added)
+{
+    int i, p;
+    build_css_screen(sc, v, pool, n, n_added, 0);
+    sc->primary = AT_PRIMARY_CSS; sc->preset = AT_PRESET_NONE; sc->band = AT_BAND_NONE; sc->n_ports = n_ports;
+    sc->n_tabs = n_added > 0 ? 3 : 1;
+    for (p = 0; p < AT_MAX_PORTS; p++) {
+        AtSelCard *k = &sc->ports[p];
+        memset(k, 0, sizeof *k);
+        k->port = p; k->ck_tex = -1; k->ptex = -1; k->drop_cell = -1; k->puck = 1;
+        k->kind = p == 0 ? 1 : p == 1 ? 2 : 0;
+        if (k->kind) { snprintf(k->name, AT_STR, "%s", "CAPTAIN FALCON"); k->ncost = 6; k->costume = 2; k->cpu_lv = 5; k->drop_cell = p; }
+    }
+    for (i = 0; i < 4; i++) { v->cursor[i].active = i < 2; v->cursor[i].index = i; v->cursor[i].card = -1; }
+    v->cursor[1].card = 1; v->cursor[1].zone = AT_ZONE_LEVEL;
+    sc->css_ready = 0;
+}
+
+static void css_view_layouts(void)
+{
+    static const int sizes[] = { 26, 60, 129 }, widths[] = { 640, 853, 1140 };
+    int si, wi, np;
+    for (si = 0; si < 3; si++) for (wi = 0; wi < 3; wi++) for (np = 2; np <= 6; np++) {
+        AtSink s; AtRenderInfo info; AtLayout L; AtCssGeom g; int i, n = sizes[si], tiles = 0, notches = 0, zones = 0;
+        build_css_view(&SC, &V, POOL, n, np, n > 26 ? n - 26 : 0);
+        s = rec_sink();
+        at_render_ex(&SC, &V, (float) widths[wi], 1000.0, 1, &O, &s, &HITS, &info);
+        at_layout((float) widths[wi], AT_PRESET_NONE, &L);
+        at_csv_geometry(&SC, &V, &L, &g);
+        CHECK(info.capped == 0 && info.entries < AT_SCREEN_QUAD_WARN && info.hits_dropped == 0);
+        CHECK(g.n_panels == np && g.cols >= 6 && g.rows_vis >= 1);
+        for (i = 0; i < np; i++) {                                                           /* the panels sit in the body, in order, apart, under the field */
+            const AtRect *b = &g.panel[i].box;
+            CHECK(b->x >= L.body.x - 0.01f && b->x + b->w <= L.body.x + L.body.w + 0.01f && b->y + b->h <= 428.01f && b->w >= 79.99f);
+            if (i > 0) CHECK(b->x >= g.panel[i - 1].box.x + g.panel[i - 1].box.w);
+            CHECK(g.field.y + g.field.h <= b->y);
+            CHECK(g.panel[i].portrait.x >= b->x && g.panel[i].portrait.x + g.panel[i].portrait.w <= b->x + b->w + 0.01f);
+            CHECK(g.panel[i].level.y + g.panel[i].level.h <= b->y + b->h && g.panel[i].cmid.y + g.panel[i].cmid.h <= g.panel[i].level.y);   /* the costume row, then the slider at the foot, inside the panel */
+            CHECK(g.panel[i].type.x >= g.panel[i].portrait.x && g.panel[i].type.x + g.panel[i].type.w <= g.panel[i].portrait.x + g.panel[i].portrait.w + 0.01f && g.panel[i].type.y >= g.panel[i].portrait.y);   /* the type button is on the portrait */
+            CHECK(g.panel[i].type.x + g.panel[i].type.w > g.panel[i].portrait.x + g.panel[i].portrait.w * 0.5f && g.panel[i].team.x + g.panel[i].team.w <= g.panel[i].type.x + 0.01f);   /* at its top right, the team button at its top left */
+            CHECK(g.panel[i].notch[8].x + g.panel[i].notch[8].w <= b->x + b->w);
+        }
+        for (i = 0; i < HITS.n; i++) {
+            const AtHit *h = &HITS.h[i];
+            CHECK(h->r.x >= -0.01f && h->r.x + h->r.w <= (float) widths[wi] + 0.01f && h->r.y >= 0.0f && h->r.y + h->r.h <= 480.01f);
+            if (h->kind == AT_HIT_CELL) { tiles++; CHECK(h->r.y + h->r.h <= g.caption.y + 0.5f); }
+            if (h->kind == AT_HIT_ZONE) { zones++; notches += (h->b & 15) == AT_ZONE_LEVEL && ((h->b >> 4) - 2) >= 1; CHECK(h->a >= 0 && h->a < np); }
+        }
+        if (n == 26) CHECK(tiles == 26);                                                    /* the vanilla roster is on screen whole */
+        if (n == 129) CHECK(tiles < 129 || widths[wi] > 640);
+        CHECK(notches == 9);                                                                /* one CPU: its slider's nine notches */
+        CHECK(zones > 9);
+    }
+    /* a puck lying on a tile, a puck in a hand, and Ready to Fight each draw something */
+    {
+        AtSink s1, s2; AtRenderInfo i1, i2;
+        build_css_view(&SC, &V, POOL, 26, 4, 0);
+        s1 = rec_sink(); at_render_ex(&SC, &V, 640.0f, 1000.0, 1, &O, &s1, &HITS, &i1);
+        SC.css_ready = 1; V.cursor[0].hold = 1; V.cursor[0].hold_port = 0;
+        s2 = rec_sink(); at_render_ex(&SC, &V, 640.0f, 1000.0, 1, &O, &s2, &HITS, &i2);
+        CHECK(i2.entries > i1.entries);
+    }
+    /* the hand's row stays in view on a roster that scrolls, and a scrolled-out tile has no rectangle */
+    {
+        AtLayout L; AtCssGeom g;
+        build_css_view(&SC, &V, POOL, 129, 4, 103);
+        V.cursor[0].index = 120; V.cursor[0].card = -1; V.cursor[1].active = 0;
+        at_layout(640.0f, AT_PRESET_NONE, &L); at_csv_geometry(&SC, &V, &L, &g);
+        CHECK(g.rows > g.rows_vis && g.first_row <= 120 / g.cols && 120 / g.cols < g.first_row + g.rows_vis);
+        CHECK(at_csv_tile_rect(&g, 120).w > 0.0f && at_csv_tile_rect(&g, 0).w == 0.0f);
+    }
+}
+
 int main(void)
 {
     rosters_at_three_widths(); hits_follow_layout(); placeholder_when_no_art(); style_of_the_screen(); focus_on_a_cell_has_three_cues();
+    css_view_layouts();
     long_roster_scroll_follows_cursor(); entries_stay_bounded(); stages_256(); loading_screen();
     ATLAS_DONE("atlas select render");
 }

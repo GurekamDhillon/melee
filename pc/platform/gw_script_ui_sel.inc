@@ -25,8 +25,11 @@ static struct {
     char spec[96];           /* the key hints last parsed (re-parsed only on a change) */
 } gs_sel = { 0, -1 };
 
+static AtCss gs_selm_css;           /* the character select's model (defined with the shims below) */
+static struct { float x, y; int valid, edge, user; } gs_hand[4];   /* the free hands (below) */
+static void gs_hand_home(GsUiSlot *u, int p);
 enum { GS_SEL_CSS, GS_SEL_SSS, GS_SEL_LOAD };
-enum { GS_SELEV_CELL = 1, GS_SELEV_CARD = 2, GS_SELEV_TAB = 3, GS_SELEV_KEY = 4, GS_SELEV_WHEEL = 5, GS_SELEV_POINTER = 6 };
+enum { GS_SELEV_CELL = 1, GS_SELEV_CARD = 2, GS_SELEV_TAB = 3, GS_SELEV_KEY = 4, GS_SELEV_WHEEL = 5, GS_SELEV_POINTER = 6, GS_SELEV_ZONE = 7, GS_SELEV_PAD = 8, GS_SELEV_SOUND = 9 };
 
 /* the slot a handle names, or NULL when the handle is stale (the screen closed, the scene ended, another select opened since) */
 static GsUiSlot *gs_sel_get(int h) {
@@ -85,6 +88,7 @@ int gw_Ui_SelOpen(int kind, int match_type, const char *t0, const char *t1, cons
     sc->chapter = (t0 != NULL && strcmp(t0, "SOLO") == 0) ? 1 : 2;
     sc->primary = AT_PRIMARY_GRID;
     sc->preset = kind == GS_SEL_CSS ? AT_PRESET_NORMAL : AT_PRESET_NONE;
+    if (kind == GS_SEL_CSS && gs_selm_css.puck) { sc->primary = AT_PRIMARY_CSS; sc->preset = AT_PRESET_NONE; }   /* Melee's puck rules: the Melee-style screen (draw_css) */
     sc->port = 1;
     sc->input_feed = 1;                                            /* the game feeds the pads (the adapter reads them per port) */
     sc->grid_cols_auto = 1;
@@ -95,7 +99,8 @@ int gw_Ui_SelOpen(int kind, int match_type, const char *t0, const char *t1, cons
     memset(gs_sel.pool, 0, sizeof gs_sel.pool);
     sc->blocks[0].ext = gs_sel.pool;
     sc->blocks[0].ext_n = 0;
-    for (i = 0; i < 4; i++) { sc->ports[i].port = i; sc->ports[i].ck_tex = -1; }
+    sc->n_ports = 4;
+    for (i = 0; i < AT_MAX_PORTS; i++) { sc->ports[i].port = i; sc->ports[i].ck_tex = -1; sc->ports[i].ptex = -1; sc->ports[i].drop_cell = -1; }
     gs_sel.qn = 0;
     gs_sel.spec[0] = '\0';
     if (!at_stack_push(&gs_ui_stack, slot)) { memset(u, 0, sizeof *u); u->dialog_fn = -1; return -1; }
@@ -152,7 +157,7 @@ void gw_Ui_SelCell(int h, int i, const char *id, const char *name, const char *a
 void gw_Ui_SelCard(int h, int port, int kind, const char *name, const char *sub, const char *abbr, int tex, int cpu_lv, int team, unsigned flags) {
     GsUiSlot *u = gs_sel_get(h);
     AtSelCard *k;
-    if (u == NULL || port < 0 || port > 3) return;
+    if (u == NULL || port < 0 || port >= AT_MAX_PORTS) return;
     k = &u->sc.ports[port];
     k->port = port;
     k->kind = kind < 0 || kind > 2 ? 0 : kind;
@@ -172,6 +177,37 @@ void gw_Ui_SelCursor(int h, int port, int active, int cell, int card) {
     u->view.cursor[port].block = 0;
     u->view.cursor[port].index = cell;
     u->view.cursor[port].card = card < 0 || card > 3 ? -1 : card;
+}
+
+/* puck mode: what a panel shows beyond gw_Ui_SelCard (the puck's state, the costume, the portrait) and what a hand stands on */
+void gw_Ui_SelCardX(int h, int port, int puck, int hold, int zone, int drop_cell, int costume, int ncost, int ptex) {
+    GsUiSlot *u = gs_sel_get(h);
+    AtSelCard *k;
+    if (u == NULL || port < 0 || port >= AT_MAX_PORTS) return;
+    k = &u->sc.ports[port];
+    k->puck = puck != 0; k->hold = hold != 0; k->zone = zone; k->drop_cell = drop_cell;
+    k->costume = costume < 0 ? 0 : costume; k->ncost = ncost < 0 ? 0 : ncost; k->ptex = ptex < 0 ? -1 : ptex;
+}
+
+void gw_Ui_SelCursorX(int h, int port, int zone, int hold, int hold_port) {
+    GsUiSlot *u = gs_sel_get(h);
+    if (u == NULL || port < 0 || port >= AT_MAX_CURSORS) return;
+    u->view.cursor[port].zone = zone; u->view.cursor[port].hold = hold != 0; u->view.cursor[port].hold_port = hold_port < 0 ? port : hold_port;
+    u->view.cursor[port].free = gs_selm_css.puck && gs_selm_css.free;
+    if (u->view.cursor[port].free) {                             /* a free hand is drawn where it is */
+        if (!gs_hand[port].valid && u->view.cursor[port].active) gs_hand_home(u, port);
+        u->view.cursor[port].hx = gs_hand[port].x; u->view.cursor[port].hy = gs_hand[port].y;
+        u->view.cursor[port].blank = gs_selm_css.p[port].blank; u->view.cursor[port].drag = gs_selm_css.p[port].drag;
+    }
+}
+
+/* the caption row of the Melee-style screen: Ready to Fight, or one line of what is missing or what the hand carries */
+void gw_Ui_SelStatus(int h, int ready, int n_ports, const char *msg) {
+    GsUiSlot *u = gs_sel_get(h);
+    if (u == NULL) return;
+    u->sc.css_ready = ready != 0;
+    u->sc.n_ports = n_ports < 2 ? 4 : (n_ports > AT_MAX_PORTS ? AT_MAX_PORTS : n_ports);
+    snprintf(u->sc.css_msg, sizeof u->sc.css_msg, "%s", msg != NULL ? msg : "");
 }
 
 void gw_Ui_SelExplain(int h, const char *kicker, const char *title, const char *what, const char *abbr, int tex,
@@ -253,6 +289,12 @@ int gw_Ui_SelCols(int h) {
     AtSplit sp;
     float cmin, cmax;
     if (u == NULL) return 8;
+    if (u->sc.primary == AT_PRIMARY_CSS) {                         /* the Melee-style screen chooses its columns from the roster's size */
+        AtCssGeom g;
+        at_layout(gs_ui_stat.canvas_w > 0.0f ? gs_ui_stat.canvas_w : 640.0f, u->sc.preset, &L);
+        at_csv_geometry(&u->sc, &u->view, &L, &g);
+        return g.cols;
+    }
     at_layout(gs_ui_stat.canvas_w > 0.0f ? gs_ui_stat.canvas_w : 640.0f, u->sc.preset, &L);
     at_layout_split(&L, u->sc.n_tabs > 0, u->sc.band, &sp);
     cmin = u->sc.grid_cell_min > 0 ? (float) u->sc.grid_cell_min : 36.0f;
@@ -285,8 +327,10 @@ void gw_Ui_ArtDrop(void) { gw_Kit_TexDropHsd(); }
 
 /* ---- the mouse over a select screen: the same priming rules as at_mouse_events (the first sample only primes; off the picture is never an event;
  * a button held from the previous scene does not click), but the events keep what they hit: a tile, a card, a tab, a key hint, the wheel ---- */
+static void gs_sel_tick_css(GsUiSlot *u);
 static void gs_sel_tick(GsUiSlot *u) {
     float x, y, wheel;
+    if (u->sc.primary == AT_PRIMARY_CSS && gs_selm_css.puck && gs_selm_css.free) { gs_sel_tick_css(u); return; }   /* free hands: the mouse is the hand of the port it plays for */
     int buttons, hit, moved, left, right, kind = 0, idx = -1;
     AtMouse *m = &u->mouse;
     gw_Mouse_ScriptRead(&x, &y, &buttons, &wheel);
@@ -296,7 +340,12 @@ static void gs_sel_tick(GsUiSlot *u) {
     right = (buttons & 2) && !(m->buttons & 2) && m->valid;
     hit = at_hit_test(&u->hits, x, y);
     if (hit >= 0) { kind = u->hits.h[hit].kind; idx = kind == AT_HIT_CELL ? u->hits.h[hit].b : u->hits.h[hit].a; }
-    if (kind == AT_HIT_CELL && (moved || left || right)) gs_sel_q_push(GS_SELEV_CELL, idx, left ? 1 : right ? 2 : 0);
+    if (kind == AT_HIT_ZONE && ((int) wheel != 0 || moved || left || right)) {        /* a panel part: the card, the part, the notch or arrow, and which button (3 / 4: the wheel up / down) */
+        int b = u->hits.h[hit].b | ((int) wheel > 0 ? (3 << 12) : (int) wheel < 0 ? (4 << 12) : left ? (1 << 12) : right ? (2 << 12) : 0);
+        gs_sel_q_push(GS_SELEV_ZONE, idx, b);
+        wheel = 0.0f;
+    }
+    else if (kind == AT_HIT_CELL && (moved || left || right)) gs_sel_q_push(GS_SELEV_CELL, idx, left ? 1 : right ? 2 : 0);
     else if (kind == AT_HIT_CARD && (moved || left || right)) gs_sel_q_push(GS_SELEV_CARD, idx, left ? 1 : right ? 2 : 0);
     else if (kind == AT_HIT_TAB && left) gs_sel_q_push(GS_SELEV_TAB, idx, 0);
     else if (kind == AT_HIT_KEY && left) gs_sel_q_push(GS_SELEV_KEY, idx, 0);
@@ -309,12 +358,193 @@ static void gs_sel_tick(GsUiSlot *u) {
     m->buttons = buttons;
 }
 
+/* ---- free hands (Melee's analog cursor) ------------------------------------------------------------------------------------------------
+ * Each port's hand has a position in the UI canvas. The control stick moves it with retail's own curve (getStickDelta in mncharsel.c: the speed is
+ * 0.0002 * (|stick|^2 - 200) scene units a frame; one scene unit is GS_HAND_PX px here, so a full stick crosses the screen in about 0.8 s and a half stick
+ * in about 3.5 s); the mouse puts the hand of the port it plays for under the pointer. What the hand is over comes from the rectangles the last render
+ * drew (a tile, a panel part, a panel's body), the same ones the mouse always used, and the model (at_css_hand_over) turns that into what A, B, X and Y do. */
+#define GS_HAND_PX 10.5f
+
+static float gs_hand_canvas_w(void) { return gs_ui_stat.canvas_w > 0.0f ? gs_ui_stat.canvas_w : 640.0f; }
+
+static void gs_hand_geom(GsUiSlot *u, AtCssGeom *g, AtLayout *L) {
+    at_layout(gs_hand_canvas_w(), u->sc.preset, L);
+    at_csv_geometry(&u->sc, &u->view, L, g);
+}
+
+static void gs_hand_home(GsUiSlot *u, int p) {
+    AtLayout L;
+    AtCssGeom g;
+    const AtCssPort *s = &gs_selm_css.p[p];
+    gs_hand_geom(u, &g, &L);
+    if (s->card >= 0 && s->card < g.n_panels) {
+        gs_hand[p].x = g.panel[s->card].dock.x + g.panel[s->card].dock.w * 0.5f; gs_hand[p].y = g.panel[s->card].dock.y + 18.0f;
+    } else {
+        AtRect r = at_csv_tile_rect(&g, s->cur < 0 ? 0 : s->cur);
+        if (r.w > 0.0f) { gs_hand[p].x = r.x + r.w * 0.5f; gs_hand[p].y = r.y + r.h * 0.5f; }
+        else { gs_hand[p].x = g.field.x + g.field.w * 0.5f; gs_hand[p].y = g.field.y + g.field.h * 0.5f; }
+    }
+    gs_hand[p].valid = 1;
+    gs_hand[p].edge = 0;
+    gs_hand[p].user = 0;
+}
+
+/* what is at (x, y): region 0 a tile (a = its visible index), region 1 a panel part or a panel's body, -1 nothing the hand can be over */
+static int gs_hand_classify(GsUiSlot *u, float x, float y, int *a, int *b, int *val) {
+    int i;
+    *a = -1; *b = 0; *val = 0;
+    for (i = u->hits.n - 1; i >= 0; i--) {
+        const AtHit *h = &u->hits.h[i];
+        if (x < h->r.x || x >= h->r.x + h->r.w || y < h->r.y || y >= h->r.y + h->r.h) continue;
+        if (h->kind == AT_HIT_ZONE) { *a = h->a; *b = h->b & 15; *val = (h->b >> 4) - 2; return 1; }
+        if (h->kind == AT_HIT_CELL) { *a = h->b; return 0; }
+        if (h->kind == AT_HIT_PANEL) { *a = h->a; *b = AT_ZONE_NONE; return 1; }
+    }
+    {
+        AtLayout L;
+        AtCssGeom g;
+        gs_hand_geom(u, &g, &L);
+        if (y < g.panel[0].box.y - 1.0f) return 0;                    /* above the panels, between the tiles: the roster, over nothing */
+    }
+    return -1;
+}
+
+static unsigned gs_hand_hover(GsUiSlot *u, int p) {
+    static int last[4][4];
+    int a, b, val, region = gs_hand_classify(u, gs_hand[p].x, gs_hand[p].y, &a, &b, &val);
+    if (region < 0) return 0;
+    if (last[p][0] != region + 2 || last[p][1] != a || last[p][2] != b || last[p][3] != val) {     /* a line each time a hand is over something else (the scene's trace) */
+        last[p][0] = region + 2; last[p][1] = a; last[p][2] = b; last[p][3] = val;
+        gw_log("ui: css hand P%d at %.0f,%.0f over %s %d%s", p + 1, (double) gs_hand[p].x, (double) gs_hand[p].y, region == 0 ? "tile" : "panel", a, region == 1 ? (b == AT_ZONE_NONE ? " body" : b == AT_ZONE_PUCK ? " dock" : b == AT_ZONE_TYPE ? " type button" : b == AT_ZONE_LEVEL ? " slider" : b == AT_ZONE_COSTUME ? " costume" : " team button") : "");
+    }
+    return at_css_hand_over(&gs_selm_css, p, region, region == 0 ? a : a, b, val);
+}
+
+/* a slider in a hand: the hand slides along it, and the level is the notch it is over (retail: 0.8 * x + 0.5 across the track) */
+static unsigned gs_hand_drag(GsUiSlot *u, int p, float nx) {
+    AtLayout L;
+    AtCssGeom g;
+    const AtCssPanel *q;
+    int k = gs_selm_css.p[p].drag, lv, old;
+    float lo, hi, pitch;
+    if (k < 0 || k > 3) return 0;
+    gs_hand_geom(u, &g, &L);
+    q = &g.panel[k];
+    lo = q->notch[0].x; hi = q->notch[8].x + q->notch[8].w;
+    if (nx < lo) nx = lo;
+    if (nx > hi - 0.5f) nx = hi - 0.5f;
+    gs_hand[p].x = nx; gs_hand[p].y = q->notch[0].y + 7.0f;
+    pitch = q->notch[1].x - q->notch[0].x;
+    lv = pitch > 0.0f ? (int) ((nx - lo) / pitch) + 1 : 1;
+    old = gs_selm_css.p[k].cpu_lv;
+    at_css_drag_to(&gs_selm_css, p, lv);
+    return old != gs_selm_css.p[k].cpu_lv ? AT_CE_MOVE : 0u;
+}
+
+/* rows of a long roster scroll when a hand pushes against the field's top or bottom edge (or the wheel turns); they never follow the hand by themselves */
+static void gs_hand_scroll(GsUiSlot *u, int p, int rows_delta) {
+    AtLayout L;
+    AtCssGeom g;
+    int s;
+    gs_hand_geom(u, &g, &L);
+    s = u->view.scroll + rows_delta;
+    if (s > g.rows - g.rows_vis) s = g.rows - g.rows_vis;
+    if (s < 0) s = 0;
+    u->view.scroll = s;
+    gs_hand[p].edge = 0;
+}
+
+static void gs_hand_edge(GsUiSlot *u, int p) {
+    AtLayout L;
+    AtCssGeom g;
+    int dir = 0;
+    gs_hand_geom(u, &g, &L);
+    if (g.rows <= g.rows_vis || gs_selm_css.p[p].card >= 0) { gs_hand[p].edge = 0; return; }
+    if (gs_hand[p].y <= g.field.y + 4.0f) dir = -1;
+    else if (gs_hand[p].y >= g.field.y + g.field.h - 4.0f && gs_hand[p].y < g.caption.y) dir = 1;
+    if (dir == 0) { gs_hand[p].edge = 0; return; }
+    if (++gs_hand[p].edge >= 9) gs_hand_scroll(u, p, dir);
+}
+
+/* one frame of a port's hand: the control stick's reading (-128..127 each way) moves it. Returns AT_CE_* bits for what the move did (a coin picked up or put home). */
+unsigned gw_Ui_SelHand(int h, int port, int sx, int sy) {
+    GsUiSlot *u = gs_sel_get(h);
+    const AtCssPort *s;
+    float fx = (float) sx, fy = (float) sy, m2 = fx * fx + fy * fy, dx = 0.0f, dy = 0.0f;
+    unsigned ev = 0;
+    if (u == NULL || u->sc.primary != AT_PRIMARY_CSS || !gs_selm_css.puck || !gs_selm_css.free || port < 0 || port > 3) return 0;
+    s = &gs_selm_css.p[port];
+    if (s->kind != AT_CSS_HMN && !s->act) { gs_hand[port].valid = 0; return 0; }
+    if (!gs_hand[port].valid || !gs_hand[port].user) gs_hand_home(u, port);
+    if (m2 >= 200.0f) {                                          /* getStickDelta */
+        float adj = m2 - 200.0f, mag = sqrtf(m2);
+        dx = adj * fx / mag; dy = adj * fy / mag;
+    }
+    dx *= 0.0002f * GS_HAND_PX;
+    dy *= -0.0002f * GS_HAND_PX;
+    if (dx != 0.0f || dy != 0.0f) gs_hand[port].user = 1;
+    if (s->drag >= 0) return gs_hand_drag(u, port, gs_hand[port].x + dx);
+    gs_hand[port].x += dx; gs_hand[port].y += dy;
+    if (gs_hand[port].x < 2.0f) gs_hand[port].x = 2.0f;
+    if (gs_hand[port].x > gs_hand_canvas_w() - 2.0f) gs_hand[port].x = gs_hand_canvas_w() - 2.0f;
+    if (gs_hand[port].y < 2.0f) gs_hand[port].y = 2.0f;
+    if (gs_hand[port].y > 478.0f) gs_hand[port].y = 478.0f;
+    ev |= gs_hand_hover(u, port);
+    gs_hand_edge(u, port);
+    return ev;
+}
+
+/* the mouse over the Melee-style select: it is the hand of the port it plays for (the first human), set under the pointer; a click is that port's A (a
+ * right click its B); a press on a slider takes hold of it where the pointer is, and a drag moves it until the button comes up. Tabs and key hints
+ * are clicked as before. The wheel turns a slider or a costume stepper, or scrolls the roster. */
+static void gs_sel_tick_css(GsUiSlot *u) {
+    float x, y, wheel;
+    int buttons, moved, left, right, released, hit, kind = 0, idx = -1, mp = at_css_mouse_port(&gs_selm_css), a, b, val, region;
+    AtMouse *m = &u->mouse;
+    gw_Mouse_ScriptRead(&x, &y, &buttons, &wheel);
+    if (x < 0.0f || y < 0.0f) { m->valid = 0; m->buttons = buttons; return; }
+    moved = m->valid && (x != m->x || y != m->y);
+    left = (buttons & 1) && !(m->buttons & 1) && m->valid;
+    right = (buttons & 2) && !(m->buttons & 2) && m->valid;
+    released = !(buttons & 1) && (m->buttons & 1) && m->valid;
+    hit = at_hit_test(&u->hits, x, y);
+    if (hit >= 0) { kind = u->hits.h[hit].kind; idx = u->hits.h[hit].a; }
+    if (kind == AT_HIT_TAB && left) gs_sel_q_push(GS_SELEV_TAB, idx, 0);
+    else if (kind == AT_HIT_KEY && left) gs_sel_q_push(GS_SELEV_KEY, idx, 0);
+    else {
+        const AtCssPort *s = &gs_selm_css.p[mp];
+        if (moved) {
+            unsigned ev;
+            if (s->drag >= 0) ev = gs_hand_drag(u, mp, x);
+            else { gs_hand[mp].x = x; gs_hand[mp].y = y; gs_hand[mp].valid = 1; gs_hand[mp].user = 1; ev = gs_hand_hover(u, mp); }
+            if (ev) gs_sel_q_push(GS_SELEV_SOUND, (int) ev, 0);
+        } else if (!gs_hand[mp].valid && (left || right)) { gs_hand[mp].x = x; gs_hand[mp].y = y; gs_hand[mp].valid = 1; gs_hand[mp].user = 1; gs_hand_hover(u, mp); }
+        if (left) {
+            region = gs_hand_classify(u, x, y, &a, &b, &val);
+            if (region == 1 && b == AT_ZONE_LEVEL && val >= 1 && val <= 9 && a >= 0 && a < 4 && gs_selm_css.p[a].kind == AT_CSS_CPU) gs_selm_css.p[a].cpu_lv = val;   /* the handle jumps to the pointer, then follows it */
+            gs_hand[mp].x = x; gs_hand[mp].y = y; gs_hand[mp].valid = 1; gs_hand[mp].user = 1;
+            gs_hand_hover(u, mp);
+            gs_sel_q_push(GS_SELEV_PAD, 1, 0);
+        }
+        if (right) gs_sel_q_push(GS_SELEV_PAD, 2, 0);
+        if (released) gs_sel_q_push(GS_SELEV_PAD, 3, 0);
+    }
+    if ((int) wheel != 0) {
+        region = gs_hand_classify(u, x, y, &a, &b, &val);
+        if (region == 1 && (b == AT_ZONE_LEVEL || b == AT_ZONE_COSTUME)) gs_sel_q_push(GS_SELEV_ZONE, a, (b | ((val + 2) << 4)) | (wheel > 0 ? (3 << 12) : (4 << 12)));
+        else if (region != 1) gs_hand_scroll(u, mp, wheel > 0 ? -1 : 1);
+    }
+    m->valid = 1;
+    m->x = x;
+    m->y = y;
+    m->buttons = buttons;
+}
+
 /* ---- the models, host side ------------------------------------------------------------------------------------------------
  * The rules (gw_ui_css.c, gw_ui_sss.c) are native C structs; game code is retargeted (its memory is big-endian), so it can neither hold an AtCss nor
  * hand one over. The model lives HERE, one instance of each, and the game-side adapter drives it through scalar shims: it pushes in what only the
  * game knows (the roster, each fighter's costume count, the Zelda and Sheik ids, whether the opponent has Sheik, the ports' starting state) and
  * reads back what the model decided. The only strings that cross are NUL-terminated and written byte by byte (no endianness in a byte). */
-static AtCss gs_selm_css;
 static AtSss gs_selm_sss;
 static int gs_selm_cost[256];          /* costumes per fighter id, pushed by the adapter (0 = unknown: one) */
 static int gs_selm_zelda = -1, gs_selm_sheik = -1, gs_selm_sheik_ok = 1;
@@ -341,6 +571,14 @@ int gw_Ui_CssOpen(int match_type, int online, int teams) {
     gs_selm_zelda = gs_selm_sheik = -1;
     gs_selm_sheik_ok = 1;
     at_css_open(&gs_selm_css, p, &gs_selm_ops, online, teams);
+    {   /* MELEE_CSS_PUCK=0 keeps the older pick-by-A select (the comparison switch); online never has pucks */
+        const char *e = getenv("MELEE_CSS_PUCK");
+        if (e != NULL && e[0] == '0') { int q; gs_selm_css.puck = 0; for (q = 0; q < 4; q++) at_css_hand_reset(&gs_selm_css, q); }
+        e = getenv("MELEE_CSS_FREEHAND");                              /* the hands are free (the stick moves them) unless MELEE_CSS_FREEHAND=0: then Up/Down/Left/Right step between the parts */
+        gs_selm_css.free = gs_selm_css.puck && !(e != NULL && e[0] == '0');
+        { int q; for (q = 0; q < 4; q++) gs_hand[q].valid = 0; }
+        gs_selm_css.rng = (unsigned) (unsigned long long) gs_now_ms();
+    }
     gs_selm_n = 0;
     return 1;
 }
@@ -366,14 +604,16 @@ void gw_Ui_CssPort(int p, int kind, int ck, int costume, int cpu_lv, int team) {
     s->card = -1;
     s->target = p;
     s->cur = s->ck >= 0 ? at_css_vis_of_ck(&gs_selm_css, s->ck) : 0;
+    at_css_hand_reset(&gs_selm_css, p);
+    gs_hand[p].valid = 0;
 }
 void gw_Ui_CssSetPortCk(int p, int ck, int costume) {
     if (p < 0 || p > 3) return;
     gs_selm_css.p[p].ck = ck < AT_CK_RANDOM ? AT_CK_NONE : ck;
     gs_selm_css.p[p].costume = costume < 0 ? 0 : costume;
 }
-void gw_Ui_CssEntering(int port) { at_css_set_entering(&gs_selm_css, port); }
-void gw_Ui_CssTraining(int human) { at_css_set_training(&gs_selm_css, human); }
+void gw_Ui_CssEntering(int port) { int q; at_css_set_entering(&gs_selm_css, port); for (q = 0; q < 4; q++) at_css_hand_reset(&gs_selm_css, q); }
+void gw_Ui_CssTraining(int human) { int q; at_css_set_training(&gs_selm_css, human); for (q = 0; q < 4; q++) at_css_hand_reset(&gs_selm_css, q); }
 void gw_Ui_CssCols(int cols) { at_css_set_cols(&gs_selm_css, cols); }
 void gw_Ui_CssSetTab(int tab) { at_css_set_tab(&gs_selm_css, tab); }
 void gw_Ui_CssSetCursor(int port, int vis) {
@@ -389,13 +629,28 @@ unsigned gw_Ui_CssStep(int port, unsigned trig, unsigned rep, int frame) {
 unsigned gw_Ui_CssMouse(int port, int vis, int card, int moved, int click, int rclick, int wheel) {
     return at_css_mouse_bits(&gs_selm_css, port, vis, card, moved, click, rclick, wheel);
 }
+/* a panel part under the mouse (puck mode): the same contract as gw_Ui_CssMouse; bit 0x10000 asks for the move sound */
+unsigned gw_Ui_CssZone(int port, int card, int zone, int value, int moved, int click, int rclick, int wheel) {
+    return at_css_mouse_zone(&gs_selm_css, port, card, zone, value, moved, click, rclick, wheel);
+}
+void gw_Ui_CssPad(int p, int ok) { at_css_set_pad(&gs_selm_css, p, ok); }   /* the adapter: which ports have a controller (the type button gives a port back to a human only then) */
+int gw_Ui_CssPuckVis(int p) { return at_css_puck_vis(&gs_selm_css, p); }
 enum { GS_CSSG_KIND, GS_CSSG_CK, GS_CSSG_COSTUME, GS_CSSG_CPU_LV, GS_CSSG_TEAM, GS_CSSG_CUR, GS_CSSG_CARD, GS_CSSG_TARGET,
        GS_CSSG_DONE = 10, GS_CSSG_N_VIS, GS_CSSG_TAB, GS_CSSG_COUNT_IN, GS_CSSG_TRAIN_H, GS_CSSG_TRAIN_C, GS_CSSG_N_SLOTS, GS_CSSG_ONLINE, GS_CSSG_TEAMS,
        GS_CSSG_TAB_OFFERED = 20, GS_CSSG_TAB_COUNT, GS_CSSG_VIS_SLOT, GS_CSSG_SLOT_CK, GS_CSSG_SLOT_OK, GS_CSSG_SLOT_TAB, GS_CSSG_VIS_OF_CK, GS_CSSG_MOUSE_PORT,
-       GS_CSSG_MAX_HUMANS = 30, GS_CSSG_CPU_CARDS, GS_CSSG_MIN_TO_START, GS_CSSG_ENTERING, GS_CSSG_DUMMY, GS_CSSG_HAS_SSS };
+       GS_CSSG_MAX_HUMANS = 30, GS_CSSG_CPU_CARDS, GS_CSSG_MIN_TO_START, GS_CSSG_ENTERING, GS_CSSG_DUMMY, GS_CSSG_HAS_SSS, GS_CSSG_HOLD = 36, GS_CSSG_ZONE, GS_CSSG_PUCK_VIS, GS_CSSG_READY, GS_CSSG_PUCK, GS_CSSG_ACT, GS_CSSG_FREE, GS_CSSG_DRAG };
 /* what: GS_CSSG_*; i: the port (0..3), the tab, the visible index, the slot or the fighter id, by what */
 int gw_Ui_CssGet(int what, int i) {
     const AtCss *c = &gs_selm_css;
+    if (what == GS_CSSG_HOLD || what == GS_CSSG_ZONE || what == GS_CSSG_PUCK_VIS) {
+        if (i < 0 || i > 3) return what == GS_CSSG_PUCK_VIS ? -1 : 0;
+        return what == GS_CSSG_HOLD ? c->p[i].hold : what == GS_CSSG_ZONE ? c->p[i].zone : at_css_puck_vis(c, i);
+    }
+    if (what == GS_CSSG_READY) return at_css_ready(c);
+    if (what == GS_CSSG_PUCK) return c->puck;
+    if (what == GS_CSSG_ACT) return i >= 0 && i < 4 ? c->p[i].act : 0;
+    if (what == GS_CSSG_FREE) return c->free;
+    if (what == GS_CSSG_DRAG) return i >= 0 && i < 4 ? c->p[i].drag : -1;
     if (what >= GS_CSSG_KIND && what <= GS_CSSG_TARGET) {
         const AtCssPort *s;
         if (i < 0 || i > 3) return 0;

@@ -24,9 +24,11 @@ extern "C" {
 #define AT_TEXT 160
 #define AT_NO_MODEL (-1)
 #define AT_MAX_CARDS 4
+#define AT_MAX_PORTS 6                /* the character select's panels the renderer can lay out (the rules are four ports; six is a layout capability) */
 #define AT_MAX_LINKS 16
 
-enum { AT_PRIMARY_LIST = 1, AT_PRIMARY_GRID = 2, AT_PRIMARY_TILES = 3, AT_PRIMARY_DISPLAY = 4, AT_PRIMARY_CARDS = 5, AT_PRIMARY_ROOM = 6, AT_PRIMARY_FRAME = 7 };   /* the plan says CARDS = 3; 3 is TILES. ROOM: native only (the online room, gw_ui_room.c); Lua cannot ask for it. FRAME: native only (gw_ui_frame.h), chrome around a window onto a retail scene: no ground, no focus, no hits */
+enum { AT_PRIMARY_LIST = 1, AT_PRIMARY_GRID = 2, AT_PRIMARY_TILES = 3, AT_PRIMARY_DISPLAY = 4, AT_PRIMARY_CARDS = 5, AT_PRIMARY_ROOM = 6, AT_PRIMARY_FRAME = 7, AT_PRIMARY_CSS = 8 };   /* CSS: native only, the character select drawn Melee-style (panels, pucks, a flush icon field); see draw_css in gw_ui_render.c */
+enum { AT_PRIMARY_LAST = 8 };   /* the plan says CARDS = 3; 3 is TILES. ROOM: native only (the online room, gw_ui_room.c); Lua cannot ask for it. FRAME: native only (gw_ui_frame.h), chrome around a window onto a retail scene: no ground, no focus, no hits */
 enum { AT_CELL_LOCKED = 1, AT_CELL_EMPTY = 2, AT_CELL_MERGE = 4, AT_CELL_NEW = 8, AT_CELL_SELECTED = 16, AT_CELL_DISABLED = 32,
        AT_CELL_BANNED = 64, AT_CELL_PICKED = 128, AT_CELL_UNSET = 256, AT_CELL_P1 = 512 };   /* 64 and up: strike marks, drawing only (step 6 sets them) */
 enum { AT_BD_GROUND, AT_BD_WORLD };
@@ -44,7 +46,8 @@ typedef struct { char id[AT_ID]; char name[AT_STR]; int model, ring; unsigned fl
 typedef struct { char id[AT_ID]; char title[AT_STR]; char count[24]; char note[AT_STR]; int cols, n, stones; AtCell cells[AT_MAX_CELLS]; AtCell *ext; int ext_n; } AtBlock;
 typedef struct { char name[24]; int count; } AtTab;
 /* one port's card (the band): kind 0 off, 1 human, 2 CPU (the same numbers as AT_CSS_*); ck_tex: the fighter's art slot or -1; cur: its cursor cell */
-typedef struct { int port, kind, ck_tex, cur; char name[AT_STR], sub[AT_STR]; unsigned flags; char abbr[3]; int cpu_lv, team; } AtSelCard;
+typedef struct { int port, kind, ck_tex, cur; char name[AT_STR], sub[AT_STR]; unsigned flags; char abbr[3]; int cpu_lv, team;
+               int puck, hold, zone, drop_cell, costume, ncost, ptex; } AtSelCard;   /* puck mode (AT_PRIMARY_CSS): puck 1 = the panel shows pucks; hold: the puck is in a hand; zone: the part a hand is on (AT_ZONE_*), drop_cell: the visible tile the puck lies on or -1; costume/ncost: 0-based and the count; ptex: the portrait's art slot or -1 */
 /* an offer card: a model well (or, when model < 0 and letter != 0, a keystone arch stone with its letter), the name, ONE rule, a tag */
 typedef struct { int model, ring; char name[AT_STR]; char rule[AT_TEXT]; char tag[24]; int tag_tone; unsigned rgba; char letter; } AtOffer;
 typedef struct { char id[AT_ID]; int disabled; AtOffer offer; } AtCardRec;
@@ -86,7 +89,7 @@ typedef struct {
     AtFooter footer;
     AtTab tabs[AT_MAX_TABS]; int n_tabs;             /* a strip of tabs over the grid pane; 0 = none (the active one is AtView.tab) */
     int band;                                        /* AT_BAND_*: port cards or the matchup strip under the pane */
-    AtSelCard ports[4];                               /* the character select's port cards (step 3's offer cards are `cards`) */
+    AtSelCard ports[AT_MAX_PORTS]; int n_ports; int css_ready; char css_msg[AT_STR];                               /* the character select's port cards (step 3's offer cards are `cards`) */
     int grid_cols_auto;                              /* 1: the renderer picks the grid's columns from the pane's width (at_grid_cols) */
     int grid_cell_min, grid_cell_max;                /* auto columns: the tile size range in px (0: 36 and 56, the character select's; the stage select uses 54 and 72) */
     AtKey keys[AT_MAX_KEYS]; int n_keys;
@@ -113,7 +116,7 @@ typedef struct {
     AtFocusPos focus; int scroll; AtExplainer ex;
     char key_label[AT_MAX_KEYS][AT_STR]; unsigned char key_shown[AT_MAX_KEYS];
     char counter[AT_STR]; AtNote note; AtDialog dialog; double opened_ms; unsigned port_rgba;
-    struct { int active, block, index, card; } cursor[AT_MAX_CURSORS];   /* one per port on a shared screen: card -1 = on the grid, else the band's card */
+    struct { int active, block, index, card, zone, hold, hold_port; float hx, hy; int free, blank, drag; } cursor[AT_MAX_CURSORS];   /* one per port on a shared screen: card -1 = on the grid, else the band's card */
     int tab;                                          /* the active tab */
     int progress;                                     /* 0..1000, the loading bar */
     const struct AtRoomView *room;                    /* borrowed: the online room's view, set by the host every frame, NULL when the screen is released */

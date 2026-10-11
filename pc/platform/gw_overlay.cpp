@@ -9,6 +9,7 @@
 #include "gw_overlay.h"
 #include "gw.h"
 #include "shim_vi.h"
+#include <aurora/gfx.h>
 /* aurora/gfx.hpp declares this queue fence; that header also pulls C++20
  * draw types, while this translation unit is deliberately built as C++17. */
 namespace aurora::gfx { void synchronize(); }
@@ -19,6 +20,14 @@ namespace aurora::gfx { void synchronize(); }
 extern "C" void gw_Wb_CaptureScreenshot(const char *path) {
     aurora::gfx::synchronize();
     gw_Screenshot(path);
+}
+
+/* Only menu captures need host UI. Exclude older queued frames before requesting
+ * one, since an offscreen frame may have skipped gw_Console_Draw entirely.
+ * This fences the CPU render queue; GPU readback and PNG writing remain async. */
+extern "C" void gw_Overlay_CaptureScreenshot(const char *path) {
+    aurora::gfx::synchronize();
+    aurora_request_screenshot_with_overlay(path);
 }
 
 #include <imgui.h>

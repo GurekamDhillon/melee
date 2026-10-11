@@ -763,7 +763,8 @@ void gw_Video_PollFullscreenKeys(void) {
 
 /* ---- screenshots ----------------------------------------------------------------------------
  * gw_Screenshot(path) writes the next presented frame to a PNG: the final image at the render
- * scale, without the host ImGui overlay (the game's own DevText overlay is part of the frame).
+ * scale. Menus include host ImGui content (the Atlas CSS lives there); gameplay keeps the
+ * original GX-only image, including game DevText but excluding host overlays.
  * Aurora copies it into a readback buffer inside the frame's own command buffer and a worker thread
  * writes the file, so no frame waits; the file appears a few frames later.
  * MELEE_SHOT_AT="<frame>:<path>[,<frame>:<path>...]" takes shots unattended; <frame> counts game
@@ -773,12 +774,23 @@ void gw_aurora_request_screenshot_none(const char *path) {
 }
 #pragma comment(linker, "/alternatename:_aurora_request_screenshot=_gw_aurora_request_screenshot_none")
 
+static bool gw_shot_host_ui_pending; /* game thread only; consumed before ImGui freeze */
+extern void gw_Overlay_CaptureScreenshot(const char *path);
+
 void gw_Screenshot(const char *path) {
   if (path == NULL || path[0] == '\0') {
     return;
   }
-  gw_log("gw: screenshot requested: %s", path);
-  aurora_request_screenshot(path);
+  /* GameSceneKind (gm/forward.h): VS, sudden death and training share the
+   * gameplay capture contract. Native menus can draw entirely outside GX. */
+  const bool gameplay = gw_view_scene == 2 || gw_view_scene == 3 || gw_view_scene == 4;
+  gw_log("gw: screenshot requested: %s (%s)", path, gameplay ? "GX" : "GX + host UI");
+  if (gameplay) {
+    aurora_request_screenshot(path);
+  } else {
+    gw_Overlay_CaptureScreenshot(path);
+    gw_shot_host_ui_pending = true;
+  }
 }
 
 #define GW_SHOT_MAX 32
@@ -2044,8 +2056,11 @@ void gw_frame_tick(void) {
     gw_turbo_hidden_decided = 0;
     /* Composited over the game's output by Aurora's ImGui pass, which is why this must happen
      * before end_frame: aurora::end_frame() is what freezes the ImGui draw data. */
-    if (show) {
+    if (show || gw_shot_host_ui_pending) {
       gw_present_overlays();
+      gw_shot_host_ui_pending = false;
+    }
+    if (show) {
       gw_stats_note_present(0);
       gw_shots_tick(gw_presented_count + 1u);
       gw_resize_tick(gw_presented_count + 1u);

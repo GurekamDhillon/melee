@@ -2995,8 +2995,8 @@ static int l_label(lua_State *L) {
     return 0;
 }
 
-/* Screenshots: beta's gw_Screenshot (shim_vi.h): the NEXT presented frame is written as a PNG at
- * render resolution, overlays excluded, without blocking - the file appears a few frames later. */
+/* Screenshots: gw_Screenshot (shim_vi.h) writes the next rendered frame at render resolution.
+ * Menus include host UI; gameplay excludes host overlays. The PNG appears a few frames later. */
 #include "shim_vi.h"
 
 static int gs_screenshot(const char *path) {

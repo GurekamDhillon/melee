@@ -45,6 +45,7 @@ void  at_part_cell_ex(const AtSink *s, const AtTextOps *o, AtRect r, const AtCel
 void  at_sink_image(const AtSink *s, int tex, float x, float y, float w, float h, unsigned rgba);
 int   at_port_mark(const AtSink *s, float cx, float cy, float r, int port, unsigned rgba);   /* the shape: returns the polys used (circle 4, square 1, hexagon 3, diamond 2) */
 void  at_part_sel_card(const AtSink *s, const AtTextOps *o, AtRect r, const AtSelCard *c, int focus);   /* focus: 0 none, else 1 + the port whose cursor is on the card (its brackets take that colour) */
+unsigned at_part_port_colour(int port);   /* the port's colour (P1 red, P2 blue, P3 yellow, P4 green, P5 violet, P6 orange) */
 void  at_part_matchup(const AtSink *s, const AtTextOps *o, AtRect r, const AtSelCard *c, int n, int picker);
 void  at_cell_brackets(const AtSink *s, AtRect r, unsigned rgba, int slot, int of);        /* four registration brackets; slot/of offsets several ports on one cell */
 void  at_part_stone(const AtSink *s, const AtTextOps *o, AtRect r, const AtCell *c, int state, unsigned focus_rgba);

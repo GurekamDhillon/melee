@@ -22,7 +22,12 @@ typedef struct { unsigned trig, rep; } AtCssIn;
 /* what one step did, for the caller to turn into sound, toast and scene end (MOVE: sfxMove, FORWARD: sfxForward, BACK: sfxBack) */
 enum { AT_CE_MOVE = 1, AT_CE_FORWARD = 2, AT_CE_BACK = 4, AT_CE_TOAST = 8, AT_CE_FINISH_GO = 16, AT_CE_FINISH_BACK = 32 };
 /* cur: an index into the visible list; card -1 = on the grid, else the band card (0..3) the cursor is on; target: the port its picks go to */
-typedef struct { int kind, ck, costume, cpu_lv, team, cur, card, target; } AtCssPort;
+typedef struct { int kind, ck, costume, cpu_lv, team, cur, card, target;
+                 int hold, zone, from_ck, act, blank, drag, val; } AtCssPort;   /* puck mode: hold = this hand carries the puck of port `target`; zone = what the hand is on in a panel (AT_ZONE_*); from_ck = the fighter the carried puck was lifted from */
+/* puck mode (Melee's own rules; local play only): the panel parts a hand can be on, top to bottom */
+enum { AT_ZONE_PUCK, AT_ZONE_TYPE, AT_ZONE_LEVEL, AT_ZONE_COSTUME, AT_ZONE_TEAM, AT_ZONE_N, AT_ZONE_NONE = 7 };   /* NONE: a free hand over a panel but not over a part of it */
+/* a mouse bit the model returns for a direct change (a slider click): play the move sound; the step ignores it */
+#define AT_CI_SOUND 0x10000u
 
 struct AtCss;
 typedef struct AtCssOps {
@@ -36,6 +41,10 @@ typedef struct AtCssOps {
 typedef struct AtCss {
     const AtCssProfile *prof;
     int online, teams;
+    int free;                                           /* puck mode: the hands are free (the host moves them and says what they are over: at_css_hand_over); 0: Up/Down/Left/Right step between parts */
+    unsigned rng;                                       /* the roll for a new CPU's fighter */
+    int pad_ok[4];                                      /* puck mode: 1 when a controller is plugged into that port (the type button gives a port back to a human only then) */
+    int puck;                                           /* 1: Melee's puck rules (set by at_css_open: local play); 0: the older pick-by-A rules (online, and tests of them) */
     /* the roster: n_slots tiles, the last one the Random tile (ck AT_CK_RANDOM, in every tab). tab_of: 1 retail, 2 added, 0 every tab. */
     int n_slots, ck[AT_CSS_MAX_SLOTS];
     unsigned char ok[AT_CSS_MAX_SLOTS], tab_of[AT_CSS_MAX_SLOTS];
@@ -64,7 +73,22 @@ int at_css_count_in(const AtCss *c);
 /* fs_mouse_css without the hit test: the caller says which visible tile (-1) and which band card (-1) the pointer is on and what the mouse did
  * this frame; the cursor is moved here (hover and click) and the buttons the mouse stands for are returned (OR them into that port's trig). */
 unsigned at_css_mouse_bits(AtCss *c, int port, int vis_slot, int card, int moved, int click, int rclick, int wheel);
-int at_css_mouse_port(const AtCss *c);                  /* the one port the mouse plays for (fs_mouse_port): the first human, the human in Training, 0 online */
+int at_css_mouse_port(const AtCss *c);
+/* puck mode: the visible index of the tile port p's puck lies on, or -1 (docked, in a hand, or the port is off) */
+int at_css_puck_vis(const AtCss *c, int p);
+/* puck mode: 1 when the hand of `port` can stand on `zone` of card k's panel */
+int at_css_zone_ok(const AtCss *c, int port, int k, int zone);
+/* puck mode, the mouse on a panel part: zone, and for a level slider the level under the pointer (1..9), for a costume part -1 / +1 (the arrows); returns bits like at_css_mouse_bits */
+unsigned at_css_mouse_zone(AtCss *c, int port, int card, int zone, int value, int moved, int click, int rclick, int wheel);
+/* puck mode: 1 when everyone in is placed and the match could start (the Ready to Fight banner) */
+int at_css_ready(const AtCss *c);
+void at_css_set_pad(AtCss *c, int p, int ok);
+/* a free hand (c->free): what port's hand is over now. region 0: the roster, over visible tile a (-1: between tiles); region 1: panel a, over part b
+ * (AT_ZONE_NONE: the panel's body), val: a slider notch 1..9. Crossing from a panel to the roster brings your own coin along; from the roster to a
+ * panel, a coin in the hand goes home by itself (mnCharSel_CursorThink). Returns AT_CE_* bits. */
+unsigned at_css_hand_over(AtCss *c, int port, int region, int a, int b, int val);
+void at_css_drag_to(AtCss *c, int port, int level);    /* a slider in the hand (A on its handle) follows the hand: the level the hand's position means */          /* puck mode: the adapter tells the model which ports have a controller */
+void at_css_hand_reset(AtCss *c, int p);               /* puck mode: port p's hand to its start (a human with no fighter: on its own panel's puck) */                  /* the one port the mouse plays for (fs_mouse_port): the first human, the human in Training, 0 online */
 
 #ifdef __cplusplus
 }

@@ -136,7 +136,8 @@ static void gw_aurora_log(AuroraLogLevel level, const char *module, const char *
     const char *v = getenv("MELEE_AURORA_VERBOSE");
     verbose = (v != NULL && v[0] == '1') ? 1 : 0;
   }
-  if (level >= LOG_WARNING || (verbose && level >= LOG_INFO)) {
+  if (level >= LOG_WARNING || (level >= LOG_INFO &&
+      (verbose || strcmp(module, "aurora::gfx::png") == 0))) {
     gw_log("aurora[%s] %s: %s", names[level], module, message);
   }
   if (level == LOG_FATAL) {

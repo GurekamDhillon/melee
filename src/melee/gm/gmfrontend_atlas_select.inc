@@ -22,6 +22,9 @@ extern void Ui_SelCell(int h, int i, const char* id, const char* name, const cha
 extern void Ui_SelCard(int h, int port, int kind, const char* name, const char* sub, const char* abbr, int tex, int cpu_lv, int team,
                        unsigned flags);
 extern void Ui_SelCursor(int h, int port, int active, int cell, int card);
+extern void Ui_SelCardX(int h, int port, int puck, int hold, int zone, int drop_cell, int costume, int ncost, int ptex);
+extern void Ui_SelCursorX(int h, int port, int zone, int hold, int hold_port);
+extern void Ui_SelStatus(int h, int ready, int n_ports, const char* msg);
 extern void Ui_SelExplain(int h, const char* kicker, const char* title, const char* what, const char* abbr, int tex,
                           const char* stepper_label, const char* stepper_text, const char* from);
 extern void Ui_SelKeys(int h, const char* spec);
@@ -51,6 +54,9 @@ extern void Ui_CssSetTab(int tab);
 extern void Ui_CssSetPortCk(int p, int ck, int costume);
 extern unsigned Ui_CssStep(int port, unsigned trig, unsigned rep, int frame);
 extern unsigned Ui_CssMouse(int port, int vis, int card, int moved, int click, int rclick, int wheel);
+extern void Ui_CssPad(int p, int ok);
+extern unsigned Ui_SelHand(int h, int port, int sx, int sy);
+extern unsigned Ui_CssZone(int port, int card, int zone, int value, int moved, int click, int rclick, int wheel);
 extern int Ui_CssGet(int what, int i);
 extern int Ui_CssBlocker(char* out, int cap);
 extern int Ui_CssToast(char* out, int cap);
@@ -77,13 +83,14 @@ enum { FA_CE_MOVE = 1, FA_CE_FORWARD = 2, FA_CE_BACK = 4, FA_CE_TOAST = 8, FA_CE
 enum { FA_CELL_LOCKED = 1, FA_CELL_DISABLED = 32 };
 enum { FA_CARD_OPEN = 1, FA_CARD_CLOSED = 2, FA_CARD_READY = 4, FA_CARD_FOCUS = 8 };
 enum { FA_SEL_CSS = 0, FA_SEL_SSS = 1, FA_SEL_LOAD = 2 };
-enum { FA_SELEV_CELL = 1, FA_SELEV_CARD = 2, FA_SELEV_TAB = 3, FA_SELEV_KEY = 4, FA_SELEV_WHEEL = 5 };
+enum { FA_SELEV_CELL = 1, FA_SELEV_CARD = 2, FA_SELEV_TAB = 3, FA_SELEV_KEY = 4, FA_SELEV_WHEEL = 5, FA_SELEV_ZONE = 7, FA_SELEV_PAD = 8, FA_SELEV_SOUND = 9 };
+#define FA_CI_SOUND 0x10000u /* a bit the model's mouse functions return when they changed a value directly (AT_CI_SOUND) */
 enum { FA_NOTE_INFO = 3 };
 /* Ui_CssGet / Ui_SssGet selectors (gw_script_ui_sel.inc GS_CSSG_*, GS_SSSG_*) */
 enum { FA_CG_KIND = 0, FA_CG_CK, FA_CG_COSTUME, FA_CG_CPU_LV, FA_CG_TEAM, FA_CG_CUR, FA_CG_CARD, FA_CG_TARGET, FA_CG_DONE = 10, FA_CG_N_VIS, FA_CG_TAB,
        FA_CG_COUNT_IN, FA_CG_TRAIN_H, FA_CG_TRAIN_C, FA_CG_N_SLOTS, FA_CG_ONLINE, FA_CG_TEAMS, FA_CG_TAB_OFFERED = 20, FA_CG_TAB_COUNT, FA_CG_VIS_SLOT,
        FA_CG_SLOT_CK, FA_CG_SLOT_OK, FA_CG_SLOT_TAB, FA_CG_VIS_OF_CK, FA_CG_MOUSE_PORT, FA_CG_MAX_HUMANS = 30, FA_CG_CPU_CARDS, FA_CG_MIN_TO_START,
-       FA_CG_ENTERING, FA_CG_DUMMY, FA_CG_HAS_SSS };
+       FA_CG_ENTERING, FA_CG_DUMMY, FA_CG_HAS_SSS, FA_CG_HOLD = 36, FA_CG_ZONE, FA_CG_PUCK_VIS, FA_CG_READY, FA_CG_PUCK, FA_CG_ACT, FA_CG_FREE, FA_CG_DRAG };
 enum { FA_SG_N = 0, FA_SG_TAB, FA_SG_CUR, FA_SG_DONE, FA_SG_GO, FA_SG_PICK_EXT, FA_SG_N_VIS, FA_SG_VIS_SLOT, FA_SG_EXT, FA_SG_TYPE, FA_SG_OK, FA_SG_ROW,
        FA_SG_TAB_OFFERED, FA_SG_TAB_COUNT, FA_SG_TAB_OF, FA_SG_CUR_TYPE, FA_SG_TAB_FOR_EXT };
 #define FA_RETAIL_FIGHTERS 26 /* the disc's own fighters are 0..25; everything above (m-ex and Geno definitions) is "added" */
@@ -98,6 +105,7 @@ static struct {
     int ntab;       ///< the tabs submitted: position -> model tab id
     int tabid[4];
     int art_ck, art_cos, art_tex;
+    int pt_ck[4], pt_cos[4], pt_tex[4]; ///< each port's panel portrait: (fighter, costume) -> art slot, decoded once per change
 } fas = { 0, 0, -1, 0, -1, -1 };   /* no handle (a zero would name one), no cells submitted, no entering port */
 
 static bool fas_active(void) { return fas.active != 0; }
@@ -444,10 +452,19 @@ static void fas_submit_css(void)
         }
     }
     for (p = 0; p < 4; p++) {
-        int kind = Ui_CssGet(FA_CG_KIND, p), pck = Ui_CssGet(FA_CG_CK, p), cos = Ui_CssGet(FA_CG_COSTUME, p);
+        int kind = Ui_CssGet(FA_CG_KIND, p), pck = Ui_CssGet(FA_CG_CK, p), cos = Ui_CssGet(FA_CG_COSTUME, p), real_ck;
         unsigned flags = 0;
         bool closed = (online && p != 0) || (Ui_CssGet(FA_CG_DUMMY, 0) && p != Ui_CssGet(FA_CG_TRAIN_H, 0) && p != Ui_CssGet(FA_CG_TRAIN_C, 0)) ||
                       (fas.enter >= 0 && p != fas.enter);
+        real_ck = pck;
+        if (Ui_CssGet(FA_CG_PUCK, 0) && pck == FS_CK_NONE && kind != FS_OFF) { /* a coin over a fighter previews that fighter on its owner's panel, as retail's door does (sel_icon follows the coin) */
+            int q;
+            for (q = 0; q < 4; q++) {
+                if (Ui_CssGet(FA_CG_HOLD, q) && Ui_CssGet(FA_CG_TARGET, q) == p && Ui_CssGet(FA_CG_CARD, q) < 0) {
+                    pck = Ui_CssGet(FA_CG_SLOT_CK, Ui_CssGet(FA_CG_VIS_SLOT, Ui_CssGet(FA_CG_CUR, q)));
+                }
+            }
+        }
         name[0] = sub[0] = abbr[0] = '\0';
         if (kind != FS_OFF) {
             if (pck != FS_CK_NONE) {
@@ -467,11 +484,55 @@ static void fas_submit_css(void)
         } else if (kind == FS_OFF) {
             flags |= FA_CARD_OPEN;
         }
-        if (kind == FS_HMN && pck != FS_CK_NONE) {
+        if (kind == FS_HMN && real_ck != FS_CK_NONE) {
             flags |= FA_CARD_READY;
         }
         Ui_SelCard(fas.h, p, kind, name, sub, abbr, fas_card_face(pck), Ui_CssGet(FA_CG_CPU_LV, p), Ui_CssGet(FA_CG_TEAMS, 0) ? Ui_CssGet(FA_CG_TEAM, p) + 1 : 0, flags);
-        Ui_SelCursor(fas.h, p, kind == FS_HMN && !(online && p != 0) ? 1 : 0, Ui_CssGet(FA_CG_CUR, p), Ui_CssGet(FA_CG_CARD, p));
+        Ui_SelCursor(fas.h, p, (Ui_CssGet(FA_CG_PUCK, 0) ? Ui_CssGet(FA_CG_ACT, p) != 0 : kind == FS_HMN) && !(online && p != 0) ? 1 : 0, Ui_CssGet(FA_CG_CUR, p), Ui_CssGet(FA_CG_CARD, p));
+        if (Ui_CssGet(FA_CG_PUCK, 0)) { /* Melee's puck rules: the panel's puck, costume and portrait, and what this hand stands on and carries */
+            int hold_by = -1, q;
+            for (q = 0; q < 4; q++) {
+                if (Ui_CssGet(FA_CG_HOLD, q) && Ui_CssGet(FA_CG_TARGET, q) == p) {
+                    hold_by = q;
+                }
+            }
+            if (pck >= 0) {
+                if (pck != fas.pt_ck[p] || cos != fas.pt_cos[p]) {
+                    fas.pt_tex[p] = fas_fighter_portrait(pck, cos);
+                    fas.pt_ck[p] = pck;
+                    fas.pt_cos[p] = cos;
+                }
+            } else {
+                fas.pt_ck[p] = -9;
+            }
+            Ui_SelCardX(fas.h, p, 1, hold_by >= 0, Ui_CssGet(FA_CG_ZONE, p), Ui_CssGet(FA_CG_PUCK_VIS, p), cos, pck >= 0 ? fs_costumes(pck) : 0,
+                        pck >= 0 ? fas.pt_tex[p] : -1);
+            Ui_SelCursorX(fas.h, p, Ui_CssGet(FA_CG_ZONE, p), Ui_CssGet(FA_CG_HOLD, p), Ui_CssGet(FA_CG_TARGET, p));
+        }
+    }
+    if (Ui_CssGet(FA_CG_PUCK, 0)) { /* the caption row: Ready to Fight, or the one thing that is missing, or what the hand carries */
+        int hp = -1;
+        for (p = 0; p < 4; p++) {
+            if (Ui_CssGet(FA_CG_KIND, p) == FS_HMN && Ui_CssGet(FA_CG_HOLD, p)) {
+                hp = p;
+                break;
+            }
+        }
+        if (hp >= 0) {
+            sprintf(buf, "A on a fighter sets the coin down, B puts it back.");
+        } else if (!Ui_CssBlocker(buf, FE_HELP_STR)) {
+            buf[0] = '\0';
+        }
+        {
+            int panels = Settings_Int("css_panels", 4); /* a layout preview: 2 to 6 panels (the rules stay four ports; the extra panels are closed) */
+            if (panels < 2 || panels > 6) {
+                panels = 4;
+            }
+            for (p = 4; p < panels; p++) {
+                Ui_SelCard(fas.h, p, 0, "", "", "", -1, 9, 0, (unsigned) FA_CARD_CLOSED);
+            }
+            Ui_SelStatus(fas.h, Ui_CssGet(FA_CG_READY, 0), panels, buf);
+        }
     }
     for (p = 0; p < 4; p++) {
         if (Ui_CssGet(FA_CG_KIND, p) == FS_HMN) {
@@ -511,6 +572,10 @@ static void fas_submit_css(void)
     }
     sprintf(buf, "%d / %d", cur + 1, n);
     Ui_SelCounter(fas.h, buf);
+    if (Ui_CssGet(FA_CG_PUCK, 0)) {
+        Ui_SelKeys(fas.h, fas.ntab > 1 ? "A:Puck,X:Costume,S:Start,B:Back,L:Tabs" : "A:Puck,X:Costume,S:Start,B:Back");
+        return;
+    }
     Ui_SelKeys(fas.h, online ? "A:Pick,X:Costume,S:Lock in,B:Back"
                              : fas.ntab > 1 ? "A:Pick,X:Costume,S:Start,B:Back,L:Tabs" : "A:Pick,X:Costume,S:Start,B:Back");
 }
@@ -538,9 +603,19 @@ static void fas_css_frame(void)
     if (fe.frames >= 4) {
         for (p = 0; p < 4; p++) {
             fas_pad(p, &trig[p], &rep[p]);
+            Ui_CssPad(p, HSD_PadCopyStatus[p].err == 0);
             if (p != 0 && Ui_CssGet(FA_CG_KIND, p) == FS_HMN && HSD_PadCopyStatus[p].err != 0 && !online) {
                 Ui_CssPort(p, FS_OFF, FS_CK_NONE, 0, 9, p & 1); /* a controller left mid-screen */
             }
+        }
+        if (Ui_CssGet(FA_CG_FREE, 0)) { /* free hands: the control stick moves each port's hand (retail's curve, in the host); what it did (a coin lifted or put home) sounds like the buttons do */
+            unsigned hev = 0;
+            for (p = 0; p < 4; p++) {
+                if (Ui_CssGet(FA_CG_ACT, p)) {
+                    hev |= Ui_SelHand(fas.h, p, (int) HSD_PadCopyStatus[p].stickX, (int) HSD_PadCopyStatus[p].stickY);
+                }
+            }
+            fas_sfx(hev & ~(unsigned) FA_CE_MOVE);
         }
         mp = Ui_CssGet(FA_CG_MOUSE_PORT, 0);
         before_cur = Ui_CssGet(FA_CG_CUR, mp);
@@ -555,6 +630,23 @@ static void fas_css_frame(void)
                     Ui_CssSetTab(fas.tabid[a]);
                     sfxMove();
                 }
+            } else if (k == FA_SELEV_ZONE) { /* a part of a panel: the card, the part, the notch or arrow, the button (3 / 4: wheel up / down) */
+                int btn = (b >> 12) & 15, zone = b & 15, val = ((b >> 4) & 255) - 2;
+                unsigned r = Ui_CssZone(mp, a, zone, val, btn == 0, btn == 1, btn == 2, btn == 3 ? 1 : btn == 4 ? -1 : 0);
+                if (r & FA_CI_SOUND) {
+                    sfxMove();
+                }
+                mouse |= r & 0xFFFFu;
+            } else if (k == FA_SELEV_PAD) { /* the mouse as the hand's buttons: 1 left = A, 2 right = B, 3 the button coming up (lets go of a slider it holds) */
+                if (a == 1) {
+                    mouse |= FA_CI_A;
+                } else if (a == 2) {
+                    mouse |= FA_CI_B;
+                } else if (a == 3 && Ui_CssGet(FA_CG_DRAG, mp) >= 0) {
+                    mouse |= FA_CI_A;
+                }
+            } else if (k == FA_SELEV_SOUND) {
+                fas_sfx((unsigned) a & ~(unsigned) FA_CE_MOVE);
             } else if (k == FA_SELEV_KEY) {
                 mouse |= fas_key_bits(a);
             } else if (k == FA_SELEV_WHEEL) {
@@ -582,6 +674,24 @@ static void fas_css_frame(void)
             int now = Ui_CssGet(FA_CG_CK, p);
             if (now != ck_before[p] && now >= FA_RETAIL_FIGHTERS) {
                 Geno_DefineAudioPlay(now, 0, 0);
+            }
+        }
+        if (Ui_CssGet(FA_CG_PUCK, 0)) { /* a line per change, so a headless run can read what the hands did */
+            static int last[4][6];
+            for (p = 0; p < 4; p++) {
+                int now[6];
+                now[0] = Ui_CssGet(FA_CG_KIND, p);
+                now[1] = Ui_CssGet(FA_CG_CK, p);
+                now[2] = Ui_CssGet(FA_CG_COSTUME, p);
+                now[3] = Ui_CssGet(FA_CG_CPU_LV, p);
+                now[4] = Ui_CssGet(FA_CG_HOLD, p);
+                now[5] = Ui_CssGet(FA_CG_TEAM, p);
+                if (now[0] != last[p][0] || now[1] != last[p][1] || now[2] != last[p][2] || now[3] != last[p][3] || now[4] != last[p][4] || now[5] != last[p][5]) {
+                    OSReport("frontend: css P%d kind=%d fighter=%d costume=%d level=%d puck_in_hand=%d team=%d\n", p + 1, now[0], now[1], now[2], now[3], now[4], now[5]);
+                    for (k = 0; k < 6; k++) {
+                        last[p][k] = now[k];
+                    }
+                }
             }
         }
         fas_sfx(ev);

@@ -1157,10 +1157,58 @@ void gw_Replay_SetCursor(const int in[4]) {
 /* The Slippi frame now running, or a large negative number before the match. */
 int gw_Replay_Frame(void) { return rp.frame; }
 
+/* OFFLINE UCF (VS, training, LAB, single player: no replay playing, no netplay). The player's
+ * "Controller Fix (UCF)" setting: Off (vanilla 1.02 controls) or 0.84, the version Slippi online and
+ * every netplay match here run. Environment MELEE_UCF=off|0.84 wins over settings.cfg (`ucf`: 0 off,
+ * 84 = 0.84; default 84, owner's call 2026-10-10: same game as Slippi). A replay keeps the UCF its
+ * own Game Start recorded and netplay stays 0.84 on every port; this only drives the third case. */
+extern int gw_Settings_Int(const char *key, int dflt);
+static int ucf_off_mode = -1;
+void gw_Ucf_Reload(void) { ucf_off_mode = -1; }
+int gw_Ucf_OfflineMode(void) {
+    if (ucf_off_mode < 0) {
+        const char *v = getenv("MELEE_UCF");
+        if (v != NULL && v[0] != '\0') {
+            ucf_off_mode = (v[0] == '0' || v[0] == 'o' || v[0] == 'O' || v[0] == 'f' || v[0] == 'F' ||
+                            v[0] == 'n' || v[0] == 'N') ? 0 : 84;
+        } else {
+            ucf_off_mode = gw_Settings_Int("ucf", 84) != 0 ? 84 : 0;
+        }
+        gw_log("gw: UCF (offline play): %s", ucf_off_mode == 84 ? "0.84 (dashback, shield drop, 1.0 cardinals, SDI/tumble)" : "off (vanilla 1.02 controls)");
+    }
+    return ucf_off_mode;
+}
+
+/* Offline raw sticks: HSD_PadRenewRawStatus hands each poll's raw bytes here (the PADStatus the
+ * hardware gave, before the game's own processing); UCF reads this frame's and the ones before. */
+static int8_t ucf_hist[4][8][4];
+static unsigned ucf_head[4];
+void gw_Ucf_PadLatch(int port, int sx, int sy, int cx, int cy) {
+    int8_t *h;
+    if (port < 0 || port > 3) {
+        return;
+    }
+    ucf_head[port]++;
+    h = ucf_hist[port][ucf_head[port] & 7];
+    h[0] = (int8_t) sx;
+    h[1] = (int8_t) sy;
+    h[2] = (int8_t) cx;
+    h[3] = (int8_t) cy;
+}
+static int ucf_pad_back(int port, int which, int back) {
+    if (port < 0 || port > 3 || which < 0 || which > 3 || back < 0 || back > 7) {
+        return 0;
+    }
+    return ucf_hist[port][(ucf_head[port] - (unsigned) back) & 7][which];
+}
+
 /* UCF, as the replay's Game Start set it for this port (dashback option 1 = UCF), and whether this
  * replay's Slippi carried UCF 0.84's 1.0 cardinals. 0.84 is what Slippi 3.x installs; the 2019-era
  * 1.x recordings ran an older UCF without them. */
 int gw_Replay_UcfCardinals(int port) {
+    if (!rp.active && !rp.live) {
+        return port >= 0 && port <= 3 && gw_Ucf_OfflineMode() == 84;
+    }
     if (!rp.active || port < 0 || port > 3 || rp.ucf_dashback[port] != 1) {
         return 0;
     }
@@ -1169,7 +1217,11 @@ int gw_Replay_UcfCardinals(int port) {
 
 /* This frame's raw stick byte (0 x, 1 y, 2 c-x, 3 c-y) for the port. */
 int gw_Replay_RawStick(int port, int which) {
-    const GwRpInput *r = gw_rb_active() ? gw_RB_InputAny(port, rp.frame) : rp_cur(port, 0);
+    const GwRpInput *r;
+    if (!rp.active && !rp.live) {
+        return ucf_pad_back(port, which, 0);
+    }
+    r = gw_rb_active() ? gw_RB_InputAny(port, rp.frame) : rp_cur(port, 0);
     return r != NULL && which >= 0 && which < 4 ? r->raw[which] : 0;
 }
 
@@ -1178,6 +1230,9 @@ int gw_Replay_RawStick(int port, int which) {
  * Jan 2019 until 0.74 in Sep 2019 (slippi-ssbm-asm acc6f71, b89e160), 0.8 from Mar 2021 (bb86519)
  * and 0.84 with 3.x - so 1.x replays are 0.73. 2.x (0.74/0.8) is approximated as 0.73. */
 int gw_Replay_UcfVersion(int port) {
+    if (!rp.active && !rp.live) {
+        return port >= 0 && port <= 3 ? gw_Ucf_OfflineMode() : 0;
+    }
     if (!rp.active || port < 0 || port > 3 || rp.ucf_dashback[port] != 1) {
         return 0;
     }
@@ -1199,6 +1254,9 @@ int gw_Replay_UcfVersion(int port) {
 int gw_Replay_RawStickBack(int port, int which, int back) {
     const GwRpInput *r;
     int f = rp.frame - back;
+    if (!rp.active && !rp.live) {
+        return ucf_pad_back(port, which, back);
+    }
     if (gw_rb_active()) {
         /* what the session USED for that frame - a predicted input's raw bytes, not the truth */
         r = gw_RB_InputAny(port, f);

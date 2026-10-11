@@ -65,6 +65,7 @@ static const char *const opts_fe_items_set_gameplay_8[] = { "Off", "Auto", "On" 
 static const FrontendItem tbl_fe_items_set_gameplay[] = {
     { FE_TOGGLE, 0, "Turbo (Versus)", "A connected hit can be cancelled into most moves. Local Versus only.", gen_get, gen_set, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "OPTIONS" },
     { FE_TOGGLE, 0, "Unlock Everything", "Every fighter, stage and option, without touching the save.", gen_get, gen_set, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "OPTIONS" },
+    { FE_TOGGLE, 0, "Controller Fix (UCF)", "UCF 0.84: dashback, shield drop, cardinals. On = like Slippi. Online is always on.", gen_get, gen_set, 0, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, "OPTIONS" },
     { FE_ACTION, FE_DO_CALL, "Language", "English or Japanese. A opens the game's own screen; coming back returns here.", NULL, NULL, 0, 0, 0, NULL, gen_fmt, gen_vis, gen_call, NULL, NULL, "OPTIONS" },
     { FE_CHOICE, 0, "Mode", "How a VS match is won.", gen_get, gen_set, 0, 3, 1, opts_fe_items_set_gameplay_3, NULL, NULL, NULL, NULL, NULL, "MATCH RULES" },
     { FE_SLIDER, 0, "Stocks", "Lives each player starts with.", gen_get, gen_set, 1, 99, 1, NULL, NULL, gen_vis, NULL, NULL, NULL, "MATCH RULES" },

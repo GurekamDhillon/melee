@@ -15,6 +15,15 @@ static void fresh(AtCss *c, int match_type, int online, int teams, int n)
     int ck[130], i; unsigned char ok[130], tb[130];
     for (i = 0; i < n && i < 130; i++) { ck[i] = i; ok[i] = 1; tb[i] = i < 26 ? 1 : 2; }
     at_css_open(c, at_css_profile(match_type), &OPS, online, teams);
+    c->puck = 0; { int q; for (q = 0; q < 4; q++) at_css_hand_reset(c, q); }   /* these checks pin the older pick-by-A rules; the puck rules have their own below */
+    at_css_set_roster(c, n, ck, ok, tb);
+    at_css_set_cols(c, 8);
+}
+static void fresh_puck(AtCss *c, int match_type, int teams, int n)
+{
+    int ck[130], i; unsigned char ok[130], tb[130];
+    for (i = 0; i < n && i < 130; i++) { ck[i] = i; ok[i] = 1; tb[i] = i < 26 ? 1 : 2; }
+    at_css_open(c, at_css_profile(match_type), &OPS, 0, teams);
     at_css_set_roster(c, n, ck, ok, tb);
     at_css_set_cols(c, 8);
 }
@@ -354,10 +363,144 @@ static void skins255_stepper(void)
     CHECK(at_css_free_costume(&c, 0, 0, 128, 1) == 129);
     g_costumes = 4;
 }
+
+/* puck mode: Melee's own rules (pick up, carry, set down; the panel parts) */
+static void puck_rules(void)
+{
+    AtCss c; unsigned ev; char b[96];
+    fresh_puck(&c, 0x0, 0, 29);
+    CHECK(c.puck == 1);
+    CHECK(c.p[0].kind == AT_CSS_HMN && c.p[0].ck == AT_CK_NONE && c.p[0].card == 0 && c.p[0].zone == AT_ZONE_PUCK && !c.p[0].hold);   /* the hand starts on its own puck */
+    ev = press(&c, 0, AT_CI_A, 0, 1);
+    CHECK((ev & AT_CE_FORWARD) && c.p[0].hold == 1 && c.p[0].target == 0 && c.p[0].card == -1);                                      /* A on the puck: it is in the hand */
+    press(&c, 0, 0, AT_CI_RIGHT, 2); press(&c, 0, 0, AT_CI_RIGHT, 3);
+    CHECK(c.p[0].cur == 2 && c.p[0].ck == AT_CK_NONE);                                                                                /* carrying: nothing is picked by moving */
+    ev = press(&c, 0, AT_CI_A, 0, 4);
+    CHECK((ev & AT_CE_FORWARD) && c.p[0].ck == c.ck[c.vis[2]] && c.p[0].hold == 0 && c.p[0].target == 0);                            /* A on a tile: set down = the pick */
+    CHECK(at_css_puck_vis(&c, 0) == 2);
+    CHECK(at_css_blocker(&c, b, sizeof b) != NULL);                                                                                   /* one fighter in: two are needed */
+    ev = press(&c, 0, AT_CI_A, 0, 5);
+    CHECK(c.p[0].hold == 1 && c.p[0].ck == AT_CK_NONE && (ev & AT_CE_FORWARD));                                                       /* A on the puck's tile: lift it again */
+    ev = press(&c, 0, AT_CI_B, 0, 6);
+    CHECK(c.p[0].hold == 0 && c.p[0].card == 0 && c.p[0].zone == AT_ZONE_PUCK && (ev & AT_CE_BACK));                                  /* B with a puck in the hand: docked, the hand on the panel */
+    c.p[0].card = -1; c.p[0].cur = 5;
+    ev = press(&c, 0, AT_CI_A, 0, 7);
+    CHECK((ev & AT_CE_TOAST) && c.p[0].hold == 0 && c.p[0].ck == AT_CK_NONE && c.toast[0] != '\0');                                   /* A with no puck on an empty tile: nothing, a hint */
+    /* a put-down puck: X/Y changes its costume without lifting, B lifts it */
+    c.p[0].card = 0; press(&c, 0, AT_CI_A, 0, 9); press(&c, 0, AT_CI_A, 0, 10);            /* grab from the panel, drop on the tile under the hand (tile 5) */
+    CHECK(c.p[0].ck == c.ck[c.vis[5]]);
+    press(&c, 0, AT_CI_X, 0, 11); CHECK(c.p[0].costume == 1);
+    press(&c, 0, AT_CI_Y, 0, 12); CHECK(c.p[0].costume == 0);
+    press(&c, 0, AT_CI_B, 0, 13);
+    CHECK(c.p[0].hold == 1 && c.p[0].ck == AT_CK_NONE && c.p[0].from_ck == 5);
+    press(&c, 0, AT_CI_A, 0, 14); CHECK(c.p[0].ck == 5 && c.p[0].hold == 0);
+}
+
+static void puck_cpu(void)
+{
+    AtCss c; unsigned ev; char b[96]; int i, last;
+    fresh_puck(&c, 0x0, 0, 29);
+    press(&c, 0, AT_CI_A, 0, 1); press(&c, 0, AT_CI_A, 0, 2);                               /* P1 on tile 0 */
+    CHECK(c.p[0].ck == 0);
+    last = (c.n_vis - 1) / 8;                                                                  /* the cursor on the last row, column 2: under card 1 */
+    c.p[0].cur = last * 8 + 2; if (c.p[0].cur >= c.n_vis) c.p[0].cur = c.n_vis - 1;
+    press(&c, 0, 0, AT_CI_DOWN, 5);
+    CHECK(c.p[0].card == 1 && c.p[0].zone == AT_ZONE_TYPE);                                    /* an empty slot: its type part */
+    CHECK(at_css_zone_ok(&c, 0, 1, AT_ZONE_TYPE) && !at_css_zone_ok(&c, 0, 1, AT_ZONE_LEVEL) && !at_css_zone_ok(&c, 0, 1, AT_ZONE_PUCK));
+    ev = press(&c, 0, AT_CI_A, 0, 6);
+    CHECK((ev & AT_CE_FORWARD) && c.p[1].kind == AT_CSS_CPU && c.p[1].ck == AT_CK_NONE && c.p[1].cpu_lv == 9 && c.p[0].zone == AT_ZONE_PUCK);   /* a CPU, puck docked */
+    CHECK(at_css_blocker(&c, b, sizeof b) != NULL && strstr(b, "CPU") != NULL);                /* the match cannot start until its puck is set down */
+    press(&c, 0, 0, AT_CI_DOWN, 7);
+    CHECK(c.p[0].zone == AT_ZONE_TYPE);
+    press(&c, 0, 0, AT_CI_DOWN, 8);
+    CHECK(c.p[0].zone == AT_ZONE_LEVEL);
+    press(&c, 0, 0, AT_CI_LEFT, 9); press(&c, 0, 0, AT_CI_LEFT, 10); press(&c, 0, 0, AT_CI_LEFT, 11);
+    CHECK(c.p[1].cpu_lv == 6);                                                                  /* the slider */
+    for (i = 0; i < 12; i++) press(&c, 0, 0, AT_CI_LEFT, 12 + i);
+    CHECK(c.p[1].cpu_lv == 1);
+    for (i = 0; i < 12; i++) press(&c, 0, 0, AT_CI_RIGHT, 30 + i);
+    CHECK(c.p[1].cpu_lv == 9);
+    press(&c, 0, AT_CI_A, 0, 50); CHECK(c.p[1].cpu_lv == 1);                                    /* A steps and wraps */
+    press(&c, 0, 0, AT_CI_UP, 51); press(&c, 0, 0, AT_CI_UP, 52);
+    CHECK(c.p[0].zone == AT_ZONE_PUCK && c.p[0].card == 1);
+    press(&c, 0, AT_CI_A, 0, 53);
+    CHECK(c.p[0].hold == 1 && c.p[0].target == 1 && c.p[0].card == -1);                         /* the hand carries the CPU's puck */
+    press(&c, 0, 0, AT_CI_RIGHT, 54);
+    ev = press(&c, 0, AT_CI_A, 0, 55);
+    CHECK((ev & AT_CE_FORWARD) && c.p[1].ck >= 0 && c.p[0].hold == 0 && c.p[0].target == 0 && c.p[0].ck == 0);   /* it picked the CPU's fighter, not P1's */
+    CHECK(at_css_puck_vis(&c, 1) == c.p[0].cur);
+    CHECK(at_css_blocker(&c, b, sizeof b) == NULL && at_css_ready(&c));                          /* both placed: ready to fight */
+    /* the CPU's costume: from its own panel and with X/Y there */
+    c.p[0].card = 1; c.p[0].zone = AT_ZONE_COSTUME;
+    press(&c, 0, 0, AT_CI_RIGHT, 56); CHECK(c.p[1].costume == 1);
+    press(&c, 0, AT_CI_X, 0, 57); CHECK(c.p[1].costume == 2);
+    press(&c, 0, AT_CI_Y, 0, 58); CHECK(c.p[1].costume == 1);
+    c.p[0].zone = AT_ZONE_PUCK; press(&c, 0, AT_CI_X, 0, 59); CHECK(c.p[1].costume == 2);     /* X/Y act on the card the hand is on, whatever the part */
+    /* the CPU leaves through its type part */
+    c.p[0].zone = AT_ZONE_TYPE;
+    CHECK(at_css_zone_ok(&c, 0, 1, AT_ZONE_TYPE));
+    ev = press(&c, 0, AT_CI_A, 0, 60);
+    CHECK(c.p[1].kind == AT_CSS_OFF && c.p[1].ck == AT_CK_NONE && (ev & AT_CE_BACK));
+    /* start: START with both in finishes */
+    c.p[1].kind = AT_CSS_CPU; c.p[1].ck = 7; c.p[0].card = -1;
+    ev = press(&c, 0, AT_CI_START, 0, 61); CHECK((ev & AT_CE_FINISH_GO) && c.done);
+}
+
+static void puck_misc(void)
+{
+    AtCss c, o; unsigned ev, bits;
+    /* Sheik: lift Zelda's puck from the shared tile and set it down on the same tile: Sheik, and back */
+    fresh_puck(&c, 0x0, 0, 20);                                                                  /* ck 0..19: Sheik (20) has no tile of her own */
+    c.p[0].card = 0; press(&c, 0, AT_CI_A, 0, 2); c.p[0].cur = 19; press(&c, 0, AT_CI_A, 0, 3);
+    CHECK(c.p[0].ck == 19);
+    press(&c, 0, AT_CI_A, 0, 4); CHECK(c.p[0].hold == 1 && c.p[0].from_ck == 19);
+    press(&c, 0, AT_CI_A, 0, 5); CHECK(c.p[0].ck == 20 && c.p[0].hold == 0);
+    press(&c, 0, AT_CI_A, 0, 6); press(&c, 0, AT_CI_A, 0, 7); CHECK(c.p[0].ck == 19);
+    /* an unavailable fighter is refused and the puck stays in the hand */
+    fresh_puck(&c, 0x0, 0, 29); c.ok[3] = 0;
+    press(&c, 0, AT_CI_A, 0, 1); c.p[0].cur = 3; ev = press(&c, 0, AT_CI_A, 0, 2);
+    CHECK((ev & AT_CE_BACK) && c.p[0].hold == 1 && c.p[0].ck == AT_CK_NONE);
+    /* the mouse on a panel: the slider's notch sets the level, the arrows step the costume, a click on the puck lifts it */
+    fresh_puck(&c, 0x0, 0, 29);
+    c.p[1].kind = AT_CSS_CPU; c.p[1].ck = 4; c.p[1].cpu_lv = 9;
+    bits = at_css_mouse_zone(&c, 0, 1, AT_ZONE_LEVEL, 3, 1, 1, 0, 0);
+    CHECK(c.p[1].cpu_lv == 3 && (bits & AT_CI_SOUND) && c.p[0].card == 1 && c.p[0].zone == AT_ZONE_LEVEL);
+    bits = at_css_mouse_zone(&c, 0, 1, AT_ZONE_COSTUME, 1, 0, 1, 0, 0);
+    CHECK(c.p[1].costume == 1 && (bits & AT_CI_SOUND));
+    bits = at_css_mouse_zone(&c, 0, 1, AT_ZONE_COSTUME, -1, 0, 1, 0, 0);
+    CHECK(c.p[1].costume == 0);
+    bits = at_css_mouse_zone(&c, 0, 1, AT_ZONE_LEVEL, 0, 0, 0, 0, -1);
+    CHECK(c.p[1].cpu_lv == 2 && (bits & AT_CI_SOUND));                                          /* the wheel over the slider */
+    bits = at_css_mouse_zone(&c, 0, 1, AT_ZONE_PUCK, 0, 0, 1, 0, 0);
+    CHECK((bits & AT_CI_A) && c.p[0].zone == AT_ZONE_PUCK);
+    press(&c, 0, bits, 0, 5); CHECK(c.p[0].hold == 1 && c.p[0].target == 1);
+    bits = at_css_mouse_zone(&c, 0, 2, AT_ZONE_TYPE, 0, 1, 0, 0, 0);
+    CHECK(c.p[0].card == 2 && !(bits & AT_CI_A));                                               /* carrying: the hand follows the pointer over panels */
+    /* teams: the team part cycles Red, Blue, Green */
+    fresh_puck(&c, 0x0, 1, 29);
+    CHECK(at_css_zone_ok(&c, 0, 0, AT_ZONE_TEAM));
+    c.p[0].zone = AT_ZONE_TEAM; c.p[0].card = 0; press(&c, 0, 0, AT_CI_RIGHT, 1); CHECK(c.p[0].team == 1);
+    press(&c, 0, AT_CI_A, 0, 2); CHECK(c.p[0].team == 2);
+    /* online and the older rules: no pucks */
+    at_css_open(&o, at_css_profile(0x40), &OPS, 1, 0); CHECK(o.puck == 0);
+    at_css_open(&o, at_css_profile(0), &OPS, 0, 0); CHECK(o.puck == 1);
+    /* a human who joins mid-screen starts on their own puck */
+    fresh_puck(&c, 0x0, 0, 29);
+    press(&c, 2, AT_CI_A, 0, 1);
+    CHECK(c.p[2].kind == AT_CSS_HMN && c.p[2].card == 2 && c.p[2].zone == AT_ZONE_PUCK);
+    /* Training: the dummy's puck starts down on Random; the human can lift it */
+    fresh_puck(&c, 0x17, 0, 29);
+    CHECK(c.p[1].kind == AT_CSS_CPU && c.p[1].ck == AT_CK_RANDOM);
+    CHECK(at_css_puck_vis(&c, 1) == c.n_vis - 1);
+    c.p[0].card = 1;
+    CHECK(at_css_zone_ok(&c, 0, 1, AT_ZONE_PUCK) && at_css_zone_ok(&c, 0, 1, AT_ZONE_LEVEL) && !at_css_zone_ok(&c, 0, 1, AT_ZONE_TYPE));
+}
+
 int main(void)
 {
     skins255_stepper();
     ports_join(); legacy_rules_pick_undo_back(); legacy_rules_cards(); legacy_rules_costume(); legacy_rules_start();
     profile_rules(); legacy_rules_zelda(); tabs_visible(); ports_leave(); lobby_rules(); mouse_rules(); finish_state(); finish_leaves_mode_fields_group1(); finish_leaves_mode_fields_one_player();
+    puck_rules(); puck_cpu(); puck_misc();
     ATLAS_DONE("atlas css");
 }

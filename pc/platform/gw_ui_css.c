@@ -51,6 +51,91 @@ static void clamp_cursors(AtCss *c)
     for (p = 0; p < 4; p++) if (c->p[p].cur < 0 || c->p[p].cur >= c->n_vis) c->p[p].cur = 0;
 }
 
+
+/* ---- puck mode helpers ------------------------------------------------------------------------------ */
+
+/* a hand's start: a human with no fighter stands on its own panel at the puck (Melee: the hand starts over the coin); a port that already
+ * has its fighter (back from the stage select) stands on that tile with the puck lying there */
+void at_css_hand_reset(AtCss *c, int p)
+{
+    AtCssPort *s;
+    if (p < 0 || p > 3) return;
+    s = &c->p[p];
+    s->hold = 0; s->zone = AT_ZONE_PUCK; s->from_ck = AT_CK_NONE;
+    if (c->puck && s->kind == AT_CSS_HMN && s->ck == AT_CK_NONE) s->card = p;
+    else s->card = -1;
+}
+
+static int puck_slot_vis(const AtCss *c, int ck)         /* the visible index of the tile that shows ck (Random: the last tile), or -1 */
+{
+    int i, s = -1;
+    if (ck == AT_CK_RANDOM) s = c->n_slots - 1;
+    else if (ck >= 0) {
+        for (i = 0; i < c->n_slots - 1 && s < 0; i++) if (c->ck[i] == ck) s = i;
+        if (s < 0) {
+            int partner = swap_of(c, ck);
+            if (partner >= 0 && shares(c, partner)) for (i = 0; i < c->n_slots - 1 && s < 0; i++) if (c->ck[i] == partner) s = i;
+        }
+    }
+    if (s < 0) return -1;
+    for (i = 0; i < c->n_vis; i++) if (c->vis[i] == s) return i;
+    return -1;
+}
+
+static int held_by(const AtCss *c, int k)                /* the hand carrying port k's puck, or -1 */
+{
+    int h;
+    for (h = 0; h < 4; h++) if (c->p[h].hold && c->p[h].target == k) return h;
+    return -1;
+}
+
+int at_css_puck_vis(const AtCss *c, int p)
+{
+    if (p < 0 || p > 3 || c->p[p].kind == AT_CSS_OFF || c->p[p].ck == AT_CK_NONE || held_by(c, p) >= 0) return -1;
+    return puck_slot_vis(c, c->p[p].ck);
+}
+
+int at_css_zone_ok(const AtCss *c, int port, int k, int zone)
+{
+    const AtCssPort *kk;
+    int can_add, mine;
+    if (c->prof == NULL || k < 0 || k > 3 || port < 0 || port > 3) return 0;
+    kk = &c->p[k];
+    can_add = c->prof->cpu_cards && !c->prof->dummy_cpu;
+    mine = k == port;
+    switch (zone) {
+    case AT_ZONE_PUCK: return kk->kind == AT_CSS_CPU || (kk->kind == AT_CSS_HMN && mine);
+    case AT_ZONE_TYPE: return can_add && !mine && (kk->kind == AT_CSS_OFF || kk->kind == AT_CSS_CPU);
+    case AT_ZONE_LEVEL: return kk->kind == AT_CSS_CPU;
+    case AT_ZONE_COSTUME: return (kk->kind == AT_CSS_CPU || (kk->kind == AT_CSS_HMN && mine)) && kk->ck >= 0;
+    case AT_ZONE_TEAM: return c->teams && (kk->kind == AT_CSS_CPU || (kk->kind == AT_CSS_HMN && mine));
+    default: return 0;
+    }
+}
+
+static int first_zone(const AtCss *c, int port, int k)   /* the topmost zone of card k the hand can stand on, or -1 */
+{
+    int z;
+    for (z = 0; z < AT_ZONE_N; z++) if (at_css_zone_ok(c, port, k, z)) return z;
+    return -1;
+}
+
+static int step_zone(const AtCss *c, int port, int k, int from, int dir)   /* the next zone up (dir -1) or down (+1) from `from`, or -1 at the end */
+{
+    int z;
+    for (z = from + dir; z >= 0 && z < AT_ZONE_N; z += dir) if (at_css_zone_ok(c, port, k, z)) return z;
+    return -1;
+}
+
+int at_css_ready(const AtCss *c)
+{
+    char buf[96];
+    int h;
+    if (!c->puck) return 0;
+    for (h = 0; h < 4; h++) if (c->p[h].hold) return 0;
+    return at_css_blocker(c, buf, sizeof buf) == NULL;
+}
+
 /* ---- opening and the roster ----------------------------------------------------------------------- */
 
 void at_css_set_entering(AtCss *c, int port)
@@ -100,9 +185,11 @@ void at_css_open(AtCss *c, const AtCssProfile *prof, const AtCssOps *ops, int on
         s->target = p;
     }
     c->p[0].kind = AT_CSS_HMN;                                 /* whoever came here is P1 */
+    c->puck = !c->online;
     c->train_h = 0; c->train_c = 1;
     if (prof != NULL && prof->dummy_cpu) at_css_set_training(c, 0);
     else if (prof != NULL && prof->entering_port_only) at_css_set_entering(c, 0);
+    for (p = 0; p < 4; p++) at_css_hand_reset(c, p);
 }
 
 void at_css_set_roster(AtCss *c, int n, const int *ck, const unsigned char *ok, const unsigned char *tab_of)
@@ -189,8 +276,17 @@ const char *at_css_blocker(const AtCss *c, char *buf, int cap)
     if (cap < 1) return "";
     for (p = 0; p < 4; p++) {
         if (c->p[p].kind == AT_CSS_HMN && c->p[p].ck == AT_CK_NONE) {
-            snprintf(buf, (size_t) cap, "P%d: pick a fighter.", p + 1);
+            if (c->puck) snprintf(buf, (size_t) cap, "P%d: pick up your puck and drop it on a fighter.", p + 1);
+            else snprintf(buf, (size_t) cap, "P%d: pick a fighter.", p + 1);
             return buf;
+        }
+    }
+    if (c->puck) {
+        for (p = 0; p < 4; p++) {
+            if (c->p[p].kind == AT_CSS_CPU && c->p[p].ck == AT_CK_NONE) {
+                snprintf(buf, (size_t) cap, "P%d CPU has no fighter: pick up its puck and drop it on one.", p + 1);
+                return buf;
+            }
         }
     }
     if (at_css_count_in(c) < min) {
@@ -225,6 +321,15 @@ static unsigned pick(AtCss *c, int port, int slot)
         return AT_CE_BACK | AT_CE_TOAST;
     }
     partner = swap_of(c, ck);
+    if (c->puck && me->from_ck != AT_CK_NONE && partner >= 0 && shares(c, ck) && (me->from_ck == ck || me->from_ck == partner)) {
+        int want = me->from_ck == ck ? partner : ck;           /* a puck lifted from Zelda's tile and set down on it again turns into Sheik, and back */
+        if (want == partner && !sheik_ok(c)) {
+            toast(c, "Your opponent doesn't have Sheik.");
+            return AT_CE_BACK | AT_CE_TOAST;
+        }
+        ck = want;
+        partner = swap_of(c, ck);
+    }
     if (partner >= 0 && shares(c, ck) && (t->ck == ck || t->ck == partner)) {
         /* A on the Zelda tile again: swap Zelda and Sheik */
         if (t->ck == ck && !sheik_ok(c)) {
@@ -237,7 +342,8 @@ static unsigned pick(AtCss *c, int port, int slot)
         return AT_CE_FORWARD;
     }
     t->ck = ck;
-    t->costume = ck >= 0 ? at_css_free_costume(c, me->target, ck, 0, 1) : 0;
+    if (c->puck) t->costume = ck >= 0 ? at_css_free_costume(c, me->target, ck, t->costume < ncost(c, ck) ? t->costume : 0, 1) : 0;   /* the puck keeps its costume wherever it lands */
+    else t->costume = ck >= 0 ? at_css_free_costume(c, me->target, ck, 0, 1) : 0;
     if (me->target != port) me->target = port;                 /* the CPU has its fighter: back to picking for yourself */
     return AT_CE_FORWARD;
 }
@@ -302,6 +408,200 @@ static unsigned card_step(AtCss *c, int port, AtCssIn in)
     return ev;
 }
 
+
+/* ---- puck mode: Melee's own rules ---------------------------------------------------------------------
+ * Each port has a puck. It lives docked on its panel, in a hand, or set down on a tile. A hand (a human's cursor) picks a puck up with A on it (on the
+ * panel, or on the tile it lies on), carries it over the roster, and sets it down with A, which is the pick (fs_pick: a CPU's puck picks the CPU's
+ * fighter). B takes a set-down puck back into the hand, then docks it. A panel has parts a hand moves between with Up and Down: the puck, the type
+ * (CPU or not), the CPU level slider, the costume, the team. mncharsel.c is the reference for each. */
+
+static void shift_costume(AtCss *c, int k, int dir)
+{
+    AtCssPort *t = &c->p[k];
+    if (t->ck >= 0) t->costume = at_css_free_costume(c, k, t->ck, t->costume + dir, dir);
+}
+
+static void puck_grab(AtCss *c, int port, int k)
+{
+    AtCssPort *s = &c->p[port], *t = &c->p[k];
+    int v = at_css_puck_vis(c, k);
+    s->hold = 1; s->target = k; s->from_ck = t->ck; s->card = -1;
+    if (v >= 0) s->cur = v;
+    t->ck = AT_CK_NONE;
+}
+
+static void puck_dock(AtCss *c, int port)
+{
+    AtCssPort *s = &c->p[port];
+    int k = s->target;
+    s->hold = 0; s->from_ck = AT_CK_NONE;
+    s->target = port;
+    s->card = k >= 0 && k <= 3 ? k : port;
+    s->zone = first_zone(c, port, s->card);
+    if (s->zone < 0) { s->zone = AT_ZONE_PUCK; s->card = port; }
+}
+
+static int next_card(const AtCss *c, int port, int from, int dir)    /* the next card with something to stand on, wrapping; -1 when none */
+{
+    int i, k = from;
+    for (i = 0; i < 4; i++) {
+        k = (k + dir + 4) % 4;
+        if (first_zone(c, port, k) >= 0) return k;
+    }
+    return -1;
+}
+
+static void card_to(AtCss *c, int port, int k)                       /* the hand moves to card k, keeping its zone when the card has it */
+{
+    AtCssPort *s = &c->p[port];
+    int z = at_css_zone_ok(c, port, k, s->zone) ? s->zone : first_zone(c, port, k);
+    s->card = k;
+    s->zone = z < 0 ? AT_ZONE_PUCK : z;
+}
+
+static unsigned puck_cards(AtCss *c, int port, AtCssIn in)
+{
+    AtCssPort *s = &c->p[port];
+    unsigned ev = 0;
+    int cols = c->cols > 0 ? c->cols : 1, n = c->n_vis, k = s->card, z = s->zone;
+    if (k < 0 || k > 3) { s->card = -1; return 0; }
+    if (s->hold) {                                                  /* a puck in the hand over the panels: sideways between them, up to the roster, A or B puts it home */
+        if (in.rep & (AT_CI_LEFT | AT_CI_RIGHT)) { int nk = next_card(c, port, k, (in.rep & AT_CI_RIGHT) ? 1 : -1); s->card = nk < 0 ? k : nk; ev |= AT_CE_MOVE; }
+        else if (in.rep & AT_CI_UP) { s->cur = ((n - 1) / cols) * cols + k * cols / 4; if (s->cur >= n) s->cur = n - 1; s->card = -1; ev |= AT_CE_MOVE; }
+        else if (in.trig & (AT_CI_A | AT_CI_B)) { puck_dock(c, port); ev |= AT_CE_BACK; }
+        return ev;
+    }
+    if (!at_css_zone_ok(c, port, k, z)) {
+        z = first_zone(c, port, k);
+        if (z < 0) { s->card = -1; return 0; }
+        s->zone = z;
+    }
+    if (in.rep & (AT_CI_LEFT | AT_CI_RIGHT)) {
+        int dir = (in.rep & AT_CI_RIGHT) ? 1 : -1;
+        if (z == AT_ZONE_LEVEL) {
+            int lv = c->p[k].cpu_lv + dir;
+            if (lv >= 1 && lv <= 9) { c->p[k].cpu_lv = lv; ev |= AT_CE_MOVE; }
+        } else if (z == AT_ZONE_COSTUME) { shift_costume(c, k, dir); ev |= AT_CE_MOVE; }
+        else if (z == AT_ZONE_TEAM) { c->p[k].team = (c->p[k].team + (dir > 0 ? 1 : 2)) % 3; ev |= AT_CE_MOVE; }
+        else { int nk = next_card(c, port, k, dir); if (nk >= 0 && nk != k) { card_to(c, port, nk); ev |= AT_CE_MOVE; } }
+    } else if (in.rep & AT_CI_UP) {
+        int nz = step_zone(c, port, k, z, -1);
+        if (nz >= 0) { s->zone = nz; ev |= AT_CE_MOVE; }
+        else { s->cur = ((n - 1) / cols) * cols + k * cols / 4; if (s->cur >= n) s->cur = n - 1; s->card = -1; ev |= AT_CE_MOVE; }
+    } else if (in.rep & AT_CI_DOWN) {
+        int nz = step_zone(c, port, k, z, 1);
+        if (nz >= 0) { s->zone = nz; ev |= AT_CE_MOVE; }
+    } else if (in.trig & AT_CI_A) {
+        switch (z) {
+        case AT_ZONE_PUCK: puck_grab(c, port, k); ev |= AT_CE_FORWARD; break;
+        case AT_ZONE_TYPE:
+            if (c->p[k].kind == AT_CSS_OFF) {                       /* a CPU joins, puck docked; the hand goes to its puck */
+                c->p[k].kind = AT_CSS_CPU; c->p[k].ck = AT_CK_NONE; c->p[k].cpu_lv = 9; c->p[k].costume = 0; c->p[k].hold = 0;
+                s->zone = AT_ZONE_PUCK; ev |= AT_CE_FORWARD;
+            } else {                                                /* the CPU leaves */
+                if (held_by(c, k) >= 0) c->p[held_by(c, k)].hold = 0;
+                c->p[k].kind = AT_CSS_OFF; c->p[k].ck = AT_CK_NONE; ev |= AT_CE_BACK;
+            }
+            break;
+        case AT_ZONE_LEVEL: c->p[k].cpu_lv = c->p[k].cpu_lv >= 9 ? 1 : c->p[k].cpu_lv + 1; ev |= AT_CE_MOVE; break;
+        case AT_ZONE_COSTUME: shift_costume(c, k, 1); ev |= AT_CE_MOVE; break;
+        case AT_ZONE_TEAM: c->p[k].team = (c->p[k].team + 1) % 3; ev |= AT_CE_MOVE; break;
+        default: break;
+        }
+    } else if (in.trig & (AT_CI_X | AT_CI_Y)) {
+        if (c->p[k].ck >= 0 && (c->p[k].kind == AT_CSS_CPU || k == port)) { shift_costume(c, k, (in.trig & AT_CI_X) ? 1 : -1); ev |= AT_CE_MOVE; }
+    } else if ((in.trig & AT_CI_Z) && !c->prof->dummy_cpu) {
+        if (c->p[k].kind == AT_CSS_CPU && k != port) { c->p[k].kind = AT_CSS_OFF; c->p[k].ck = AT_CK_NONE; ev |= AT_CE_BACK; }
+        else if (k == port && port != 0 && c->prof->max_humans > 1) {
+            s->kind = AT_CSS_OFF; s->ck = AT_CK_NONE; s->card = -1; ev |= AT_CE_BACK;
+        }
+    } else if (in.trig & AT_CI_B) {
+        s->card = -1;
+        ev |= AT_CE_BACK;
+    }
+    return ev;
+}
+
+/* the hand on the roster */
+static unsigned puck_grid(AtCss *c, int port, AtCssIn in, int frame)
+{
+    AtCssPort *s = &c->p[port];
+    unsigned ev = 0;
+    int cols = c->cols > 0 ? c->cols : 1, n = c->n_vis, row, col, last_row, cur;
+    row = s->cur / cols; col = s->cur % cols; last_row = (n - 1) / cols;
+    if (in.rep & AT_CI_LEFT) col = col == 0 ? cols - 1 : col - 1;
+    else if (in.rep & AT_CI_RIGHT) col = col == cols - 1 ? 0 : col + 1;
+    else if (in.rep & AT_CI_UP) row = row == 0 ? last_row : row - 1;
+    else if (in.rep & AT_CI_DOWN) {
+        if (row + 1 > last_row || (row + 1) * cols + col >= n) {
+            if (!c->online) {                                   /* down off the roster: onto the panels */
+                int k = col * 4 / cols, own = port;
+                if (first_zone(c, port, k) < 0) k = first_zone(c, port, own) >= 0 ? own : next_card(c, port, k, 1);
+                if (s->hold) { s->card = k < 0 ? own : k; return ev | AT_CE_MOVE; }
+                if (k >= 0) { s->card = k; s->zone = first_zone(c, port, k); return ev | AT_CE_MOVE; }
+                row = 0;
+            } else row = 0;
+        } else row++;
+    }
+    if (row * cols + col >= n) {
+        col = n - 1 - row * cols;
+        if (col < 0) { row = 0; col = 0; }
+    }
+    cur = row * cols + col;
+    if (cur != s->cur) ev |= AT_CE_MOVE;
+    s->cur = cur;
+    if (in.trig & AT_CI_A) {
+        if (s->hold) {
+            unsigned r = pick(c, port, c->vis[s->cur]);
+            if (r & AT_CE_FORWARD) { s->hold = 0; s->from_ck = AT_CK_NONE; s->target = port; }
+            ev |= r;
+        } else {
+            int o, found = -1;
+            for (o = 0; o < 4 && found < 0; o++) {
+                int q = (port + o) % 4;                          /* your own puck first, then a CPU's */
+                if ((q == port || c->p[q].kind == AT_CSS_CPU) && at_css_puck_vis(c, q) == s->cur) found = q;
+            }
+            if (found >= 0) { puck_grab(c, port, found); ev |= AT_CE_FORWARD; }
+            else { toast(c, "Pick up a puck first: A on its panel, then A on a fighter."); ev |= AT_CE_BACK | AT_CE_TOAST; }
+        }
+    } else if (in.trig & (AT_CI_X | AT_CI_Y)) {
+        if (!s->hold && s->ck >= 0) { shift_costume(c, port, (in.trig & AT_CI_X) ? 1 : -1); ev |= AT_CE_MOVE; }
+    } else if (in.trig & AT_CI_B) {
+        ev |= AT_CE_BACK;
+        if (s->hold) { puck_dock(c, port); }
+        else if (s->ck != AT_CK_NONE) { puck_grab(c, port, port); }
+        else if (frame < c->back_until) { ev |= AT_CE_FINISH_BACK; c->done = 1; }
+        else { c->back_until = frame + 150; toast(c, "Press B again to go back."); ev |= AT_CE_TOAST; }
+    }
+    return ev;
+}
+
+unsigned at_css_mouse_zone(AtCss *c, int port, int card, int zone, int value, int moved, int click, int rclick, int wheel)
+{
+    AtCssPort *s;
+    unsigned b = rclick ? AT_CI_B : 0u;
+    if (!c->puck || c->prof == NULL || port < 0 || port > 3 || card < 0 || card > 3) return b;
+    s = &c->p[port];
+    if (s->kind != AT_CSS_HMN) { if (click && card == port) b |= AT_CI_A; return b; }
+    if (s->hold) {                                              /* carrying: over a panel, a click puts it home when it is that panel's */
+        if (moved || click) s->card = card;
+        if (click && card == s->target) b |= AT_CI_A;
+        return b;
+    }
+    if (!at_css_zone_ok(c, port, card, zone)) return b;
+    if (moved || click || wheel != 0) { s->card = card; s->zone = zone; }
+    if (click) {
+        if (zone == AT_ZONE_LEVEL && value >= 1 && value <= 9) { c->p[card].cpu_lv = value; b |= AT_CI_SOUND; }
+        else if (zone == AT_ZONE_COSTUME && value != 0) { shift_costume(c, card, value > 0 ? 1 : -1); b |= AT_CI_SOUND; }
+        else b |= AT_CI_A;
+    }
+    if (wheel != 0) {
+        if (zone == AT_ZONE_LEVEL) { int lv = c->p[card].cpu_lv + (wheel > 0 ? 1 : -1); if (lv >= 1 && lv <= 9) { c->p[card].cpu_lv = lv; b |= AT_CI_SOUND; } }
+        else if (zone == AT_ZONE_COSTUME) { shift_costume(c, card, wheel > 0 ? 1 : -1); b |= AT_CI_SOUND; }
+    }
+    return b;
+}
+
 /* the legacy page turn on L and R: here the tabs (the pages became tabs and scrolling) */
 static int step_tab(AtCss *c, int dir)
 {
@@ -330,6 +630,7 @@ unsigned at_css_step(AtCss *c, int port, AtCssIn in, int frame)
     if (s->kind != AT_CSS_HMN) {
         if (!c->online && c->prof->max_humans > 1 && (in.trig & (AT_CI_A | AT_CI_START))) {
             s->kind = AT_CSS_HMN; s->target = port; s->card = -1; ev |= AT_CE_FORWARD;   /* a controller joins (a CPU in its port becomes this player) */
+            if (c->puck) at_css_hand_reset(c, port);
         }
         return ev;
     }
@@ -337,8 +638,12 @@ unsigned at_css_step(AtCss *c, int port, AtCssIn in, int frame)
     else if (in.trig & AT_CI_R) { if (step_tab(c, 1)) ev |= AT_CE_MOVE; }
     n = c->n_vis;
     if (s->cur < 0 || s->cur >= n) s->cur = 0;
-    if (s->target < 0 || s->target > 3 || (s->target != port && c->p[s->target].kind != AT_CSS_CPU)) s->target = port;   /* a CPU someone was picking for went away */
-    if (s->card < 0) {
+    if (s->target < 0 || s->target > 3 || (s->target != port && c->p[s->target].kind != AT_CSS_CPU)) { s->target = port; s->hold = 0; }   /* a CPU someone was picking for went away */
+    if (c->puck) {
+        if (s->card < 0) ev |= puck_grid(c, port, in, frame);
+        else ev |= puck_cards(c, port, in);
+        if (c->done) return ev;
+    } else if (s->card < 0) {
         row = s->cur / cols; col = s->cur % cols; last_row = (n - 1) / cols;
         if (in.rep & AT_CI_LEFT) col = col == 0 ? cols - 1 : col - 1;
         else if (in.rep & AT_CI_RIGHT) col = col == cols - 1 ? 0 : col + 1;

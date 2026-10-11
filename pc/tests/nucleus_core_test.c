@@ -119,7 +119,7 @@ static int nf_cli(void) {
     post.id = pid ? atoi(pid) : 1; post.title = "local"; post.author = "local"; post.page = "https://ssbmnucleus.net/post/0"; post.updated = "2026-10-10T00:00:00Z"; post.installed_at = "2026-10-10T00:00:00Z";
     in.cat = NC_FC_ARCHIVE; in.filename = "fighter.zip"; in.stem = ""; in.data = z; in.len = n;
     nc_mkdirs(md);
-    rc = nc_fighter_install(md, &post, &in, 1, &env, &res, msg, sizeof msg, nst_log);
+    rc = getenv("NF_INSTALL_STAGE") ? nc_stage_install(md, &post, &in, 1, &env, &res, msg, sizeof msg, nst_log) : nc_fighter_install(md, &post, &in, 1, &env, &res, msg, sizeof msg, nst_log);
     printf("rc=%d | %s\n", rc, msg);
     return rc == 0 ? 0 : 1;
 }

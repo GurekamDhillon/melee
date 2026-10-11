@@ -35,6 +35,14 @@ static const struct { const char *key; int slot; } nf_cb_keys[] = {
 };
 #define NF_N_CB_KEYS ((int) (sizeof nf_cb_keys / sizeof nf_cb_keys[0]))
 
+/* fighter.json boneDefinitions.lookup key -> the engine's Fighter_Part index (src/melee/ft/forward.h). MexManager's order is not the engine's: it has waistB, and lHave / rHave sit
+ * before the thumbs. Matching is by NAME. */
+static const char *const nf_bone_names[53] = {
+    "top", "trans", "xRot", "yRot", "hip", "waist", "lLegA", "lLeg", "lKnee", "lFootA", "lFoot", "rLegA", "rLeg", "rKnee", "rFootA", "rFoot",
+    "bust", "lClavicle", "lShoulderA", "lShoulder", "lArm", "lHand", "lIndex1", "lIndex2", "lMiddle1", "lMiddle2", "lRing1", "lRing2", "lPinky1", "lPinky2", "lThumb1", "lThumb2", "lHave",
+    "neckN", "headN", "rClavicle", "rShoulderA", "rShoulder", "rArm", "rHand", "rIndex1", "rIndex2", "rMiddle1", "rMiddle2", "rRing1", "rRing2", "rPinky1", "rPinky2", "rThumb1", "rThumb2", "rHave",
+    "throw", "extra" };
+
 typedef struct {
     char name[48], sym[64], pl[64], anim[64], effect[64], post_verdict[16];
     int animcount, sound_bank, announcer, victory, music[2], ncost, items, kirby, have_sound_zip;
@@ -42,7 +50,7 @@ typedef struct {
     int cvis[32];
     char demo[4][64];
     uint32_t cb[NF_NCB];
-    int ncb;
+    int ncb, bone_count, nbones, bones[64];
     char needs[300], partial[300], compat[500]; /* needs: why it is refused; partial: what is dropped */
     char verdict[12];                            /* "works" | "partial" | "needs-base" */
 } nf_fighter;
@@ -104,6 +112,23 @@ static int nf_parse_json(const char *text, nf_fighter *o, char *err, size_t ecap
         }
     }
     if (o->ncost == 0) { snprintf(err, ecap, "fighter.json lists no costume with a file and symbols"); nj_free(&d); return -1; }
+    {   /* boneDefinitions.lookup: role -> joint index in the fighter's own skeleton (255 = none), in the engine's FtPart order */
+        int bd = nj_get(&d, root, "boneDefinitions"), lk = bd >= 0 ? nj_get(&d, bd, "lookup") : -1, c, found = 0;
+        memset(o->bones, 0xFF, sizeof o->bones);
+        if (lk >= 0 && d.n[lk].type == NJ_OBJ) {
+            for (c = d.n[lk].first; c >= 0; c = d.n[c].next) {
+                const char *key = d.n[c].key >= 0 ? d.pool + d.n[c].key : "";
+                if (!strcmp(key, "boneCount")) { o->bone_count = (int) d.n[c].num; continue; }
+                if (!strcmp(key, "trimmedSize")) continue;
+                if (d.n[c].type == NJ_NUM) {
+                    int q;
+                    for (q = 0; q < 53; ++q) if (!strcmp(key, nf_bone_names[q])) { o->bones[q] = (int) d.n[c].num; ++found; break; }
+                }
+            }
+            o->nbones = found == 53 ? 53 : 0;
+            if (o->bone_count < 1 || o->bone_count > 255 || o->nbones != 53) o->bone_count = o->nbones = 0;
+        }
+    }
     fn = nj_get(&d, root, "functions");
     if (fn < 0 || d.n[fn].type != NJ_OBJ) { snprintf(err, ecap, "fighter.json has no functions section"); nj_free(&d); return -1; }
     {
@@ -153,6 +178,8 @@ static void nf_verdict(nf_fighter *o) {
 /* mod-private file stem for a post: PlN + 4 hex digits of the post id. Never a retail name (retail stems are two letters). */
 static void nf_stem(int post_id, char *out, size_t cap) { snprintf(out, cap, "PlN%04X", (unsigned) post_id & 0xFFFFu); }
 
+#define NF_MAX_MOD_FIGHTERS 31
+
 /* Installs the post's custom fighter(s). Same contract as nc_stage_install: 0 when at least one mod was written. */
 static int nc_fighter_install(const char *mods_dir, const nc_post *post, const nc_in_file *in, int nin, const nc_loose_env *env, nc_loose_result *res,
                               char *msg, size_t mcap, void (*logf)(const char *line)) {
@@ -180,6 +207,15 @@ static int nc_fighter_install(const char *mods_dir, const nc_post *post, const n
         free(js);
         if (nc_zip_extract(in[i].data, in[i].len, "sound.zip", &probe, &probel, 64u * 1024 * 1024, err, sizeof err) == 0) { f.have_sound_zip = 1; free(probe); }
         nf_verdict(&f);
+        { /* the slot cap: one m-ex slot per fighter mod; the CSS and the runtime tables hold NF_MAX_MOD_FIGHTERS of them */
+            static nc_inst others[128];
+            int on = nc_inst_scan(mods_dir, others, 128), have = 0, q;
+            for (q = 0; q < on; ++q) if (!strcmp(others[q].cat, "cfighter") && others[q].id != post->id) ++have;
+            if (have >= NF_MAX_MOD_FIGHTERS) {
+                snprintf(res->first_err, sizeof res->first_err, "Too many custom fighters: %d are installed and the game holds %d. Remove one from the Mods list first.", have, NF_MAX_MOD_FIGHTERS);
+                ++res->refused; continue;
+            }
+        }
         if (!strcmp(f.verdict, "needs-base")) {
             snprintf(res->first_err, sizeof res->first_err, "%s", f.compat); ++res->refused; continue;
         }
@@ -241,6 +277,7 @@ static int nc_fighter_install(const char *mods_dir, const nc_post *post, const n
         if (f.victory >= 0 && f.victory <= 98) nj_printf(&t, "victory=%d\n", f.victory);
         if (f.music[0] != 0xFFFF || f.music[1] != 0xFFFF) nj_printf(&t, "bgm=%d,%d\n", f.music[0], f.music[1]);
         for (c = 0; c < NF_NCB; ++c) if (f.cb[c]) nj_printf(&t, "cb%d=0x%08X\n", c, (unsigned) f.cb[c]);
+        if (f.bone_count > 0) { nj_printf(&t, "bonecount=%d\nbones=", f.bone_count); for (c = 0; c < f.nbones; ++c) nj_printf(&t, "%s%d", c ? "," : "", f.bones[c]); nj_puts(&t, "\n"); }
         snprintf(tmp, sizeof tmp, "%s/mexfighter.txt", stage_dir); nc_fix_slashes(tmp);
         k = t.bad || nc_write_file(tmp, t.s, t.n) != 0;
         free(t.s);

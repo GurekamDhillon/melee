@@ -87,8 +87,9 @@ static const char *const nl_kinds_json =
 "{\"id\":209,\"title\":\"Delta\",\"type\":\"patch\",\"files\":[{\"id\":11,\"filename\":\"mod.xdelta\",\"file_type\":\"other\"}]},"
 "{\"id\":210,\"title\":\"Pics\",\"type\":\"other\",\"files\":[{\"id\":12,\"filename\":\"doors.png\",\"file_type\":\"other\"}]},"
 "{\"id\":211,\"title\":\"Code\",\"type\":\"gameplay_mod\",\"files\":[{\"id\":13,\"filename\":\"codes.gct\",\"file_type\":\"other\"}]},"
-"{\"id\":212,\"title\":\"Fox costume\",\"type\":\"costume\",\"files\":[{\"id\":14,\"filename\":\"PlFxLa.dat\",\"file_type\":\"character_dat\",\"character\":\"Fox\",\"color\":\"Lavender\"}]}"
-"],\"next_cursor\":null,\"total\":12}";
+"{\"id\":212,\"title\":\"Fox costume\",\"type\":\"costume\",\"files\":[{\"id\":14,\"filename\":\"PlFxLa.dat\",\"file_type\":\"character_dat\",\"character\":\"Fox\",\"color\":\"Lavender\"}]},"
+"{\"id\":213,\"title\":\"Tails\",\"type\":\"gameplay_mod\",\"files\":[{\"id\":15,\"filename\":\"Download from google drive.txt\",\"file_type\":\"other\"}]}"
+"],\"next_cursor\":null,\"total\":13}";
 
 static const nc_mod *nl_mod(const nc_catalog *c, int id) { int at = nc_cat_find((nc_catalog *) c, id); return at >= 0 ? &c->m[at] : NULL; }
 
@@ -105,7 +106,7 @@ static void run_loose_tests(void) {
     data = nj_get(&d, root, "data");
     for (e = d.n[data].first; e >= 0; e = d.n[e].next) nc_cat_apply(&cat, &d, e);
     nj_free(&d);
-    CHECK(cat.n == 12);
+    CHECK(cat.n == 13);
     CHECK(nl_mod(&cat, 201)->tab == NC_TAB_STAGES && nc_installable_mod(&cat, nl_mod(&cat, 201)));
     CHECK(cat.f[nl_mod(&cat, 201)->f0].cat == NC_FC_STAGE && !strcmp(cat.f[nl_mod(&cat, 201)->f0].stem, "GrOp.dat"));
     CHECK(nl_mod(&cat, 202)->nf == 2 && !strcmp(cat.f[nl_mod(&cat, 202)->f0 + 1].stem, "GrPs1.dat"));
@@ -121,6 +122,7 @@ static void run_loose_tests(void) {
     CHECK(nl_mod(&cat, 209)->tab == NC_TAB_OTHER && !nc_installable_mod(&cat, nl_mod(&cat, 209)) && strstr(nc_why_not(&cat, nl_mod(&cat, 209)), "xdelta patch: not a mod") != NULL);
     CHECK(nl_mod(&cat, 210)->tab == NC_TAB_OTHER && strstr(nc_why_not(&cat, nl_mod(&cat, 210)), "Image") != NULL);
     CHECK(nl_mod(&cat, 211)->tab == NC_TAB_OTHER && strstr(nc_why_not(&cat, nl_mod(&cat, 211)), "Gameplay mod: needs conversion") != NULL);
+    CHECK(nl_mod(&cat, 213) != NULL && !nc_installable_mod(&cat, nl_mod(&cat, 213)) && strstr(nc_why_not(&cat, nl_mod(&cat, 213)), "external link") != NULL);
     CHECK(nl_mod(&cat, 212)->tab == NC_TAB_COSTUMES && nc_installable_mod(&cat, nl_mod(&cat, 212)));
     why = nc_why_not(&cat, nl_mod(&cat, 212));
     CHECK(why[0] == '\0' && strstr("extra costume slots", "needs conversion") == NULL);
@@ -141,7 +143,7 @@ static void run_loose_tests(void) {
     {   /* the cache keeps the file types, the stage and the tabs */
         nc_catalog c2;
         memset(&c2, 0, sizeof c2);
-        CHECK(nc_cat_save(&cat, "nl_cache.jsonl") == 0 && nc_cat_load(&c2, "nl_cache.jsonl") == 12);
+        CHECK(nc_cat_save(&cat, "nl_cache.jsonl") == 0 && nc_cat_load(&c2, "nl_cache.jsonl") == 13);
         CHECK(nl_mod(&c2, 201)->tab == NC_TAB_STAGES && !strcmp(nl_mod(&c2, 201)->stage, "Dreamland") && !strcmp(c2.f[nl_mod(&c2, 201)->f0].ftype, "stage_dat"));
         CHECK(nl_mod(&c2, 206)->tab == NC_TAB_MENUS && nl_mod(&c2, 205)->tab == NC_TAB_EFFECTS);
         nc_cat_free(&c2);

@@ -3081,11 +3081,17 @@ static uint64_t np_build_id(void) {
 /* Start hosting or joining with the current setup. 0 on success (the connection proceeds in
  * Netplay_Poll), -1 with np.status saying why. */
 static int np_start_session(const gw_net_addr *peer_in, uint32_t bind_ip);
+extern int gw_Mex_ModFighterCount(void);
 static void np_rand_poll(void);
 static int np_begin(int bind_local) {
     gw_net_addr peer, pub, ppub, plan;
     int phas_lan = 0;
     uint32_t bind_ip = 0;
+    if (gw_Mex_ModFighterCount() > 0) {
+        np_status("Online play is not available with custom fighter mods installed (%d). Disable them in the Mods list and restart", gw_Mex_ModFighterCount());
+        gw_log("netplay: refused: %d custom fighter mod(s) are loaded; online play does not carry them yet", gw_Mex_ModFighterCount());
+        return -1;
+    }
     if (gw_turbo_enabled()) {
         np_status("Online play requires realtime mode; restart without turbo");
         gw_log("netplay: refused while turbo is active");
@@ -3512,6 +3518,11 @@ static void np_rand_poll(void) {
  * the phase is NP_WORKING and gw_Netplay_RandomStatus says how it is going. */
 int gw_Netplay_RandomBegin(int ck, int color, int stocks, int minutes, int delay) {
     uint16_t port = np_menu_port();
+    if (gw_Mex_ModFighterCount() > 0) {
+        np_status("Online play is not available with custom fighter mods installed (%d). Disable them in the Mods list and restart", gw_Mex_ModFighterCount());
+        gw_log("netplay: refused: %d custom fighter mod(s) are loaded; online play does not carry them yet", gw_Mex_ModFighterCount());
+        return -1;
+    }
     if (gw_turbo_enabled()) {
         np_status("Online play requires realtime mode; restart without turbo");
         gw_log("netplay: random queue refused while turbo is active");

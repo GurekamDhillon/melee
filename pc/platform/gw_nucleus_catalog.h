@@ -479,6 +479,17 @@ static const char *nc_why_not_files(const nc_mod *m, const nc_file *files) {
     if (m->type == NC_T_GAMEPLAY) { /* a MexManager fighter zip is a gameplay post: the installer checks fighter.json and says why when it is not one */
         for (i = 0; i < m->nf; ++i) if (nc_has_ext(files[i].filename, ".zip")) return "";
     }
+    if (m->type == NC_T_GAMEPLAY) { /* a post whose only file is a pointer ("Download from google drive.txt"): the real download is an external link, which is never followed */
+        int nz = 0, ptr = 0;
+        for (i = 0; i < m->nf; ++i) {
+            const char *fn = files[i].filename;
+            if (nc_has_ext(fn, ".zip") || nc_has_ext(fn, ".dat")) ++nz;
+            else if (nc_has_ext(fn, ".txt") || nc_has_ext(fn, ".url")) {
+                if (strstr(fn, "oogle") || strstr(fn, "rive") || strstr(fn, "ega") || strstr(fn, "ropbox") || strstr(fn, "ediafire") || strstr(fn, "ink") || strstr(fn, "ownload")) ++ptr;
+            }
+        }
+        if (!nz && ptr) return "Download is an external link (the author hosts it elsewhere). Open the post page to get it; GD does not follow external links.";
+    }
     if (m->type == NC_T_PATCH) return "xdelta patch: not a mod (it patches the whole disc).";
     if (m->nf == 0) return "No files listed in this post.";
     for (i = 0; i < m->nf; ++i) {

@@ -6404,6 +6404,8 @@ static HSD_JObj* mnCharSel_PcMenu;   /* the menu model: retail icons, the portra
 static HSD_JObj* mnCharSel_PcIcons;  /* where icon joints resolve (m-ex's icon model or the menu) */
 static MexSelectChr* mnCharSel_PcMex;
 static CSSIcon* mnCharSel_PcTable;
+static HSD_JObj* mnCharSel_PcHand;   /* retail's cursor hand and its coin (token), animated by frame only, never drawn */
+static HSD_JObj* mnCharSel_PcToken;
 static int mnCharSel_PcCount;
 
 /* Release the models before the caller releases their backing archive. */
@@ -6412,6 +6414,9 @@ void mnCharSel_PcArtClose(void)
     if (mnCharSel_PcIcons != NULL && mnCharSel_PcIcons != mnCharSel_PcMenu)
         HSD_JObjRemoveAll(mnCharSel_PcIcons);
     if (mnCharSel_PcMenu != NULL) HSD_JObjRemoveAll(mnCharSel_PcMenu);
+    if (mnCharSel_PcHand != NULL) HSD_JObjRemoveAll(mnCharSel_PcHand);
+    if (mnCharSel_PcToken != NULL) HSD_JObjRemoveAll(mnCharSel_PcToken);
+    mnCharSel_PcHand = mnCharSel_PcToken = NULL;
     mnCharSel_PcMenu = mnCharSel_PcIcons = NULL;
     mnCharSel_PcMex = NULL;
     mnCharSel_PcTable = NULL;
@@ -6437,6 +6442,81 @@ static void mnCharSel_PcBestTex(HSD_JObj* j, HSD_TObj** best, int* area, int dep
             }
         }
         mnCharSel_PcBestTex(HSD_JObjGetChild(j), best, area, depth + 1);
+    }
+}
+
+static void mnCharSel_PcImage(HSD_TObj* t, HSD_ImageDesc** img, HSD_Tlut** tlut);
+/* the first texture of joint `part`'s own meshes (not its children) */
+static HSD_TObj* mnCharSel_PcOwnTex(HSD_JObj* j)
+{
+    HSD_DObj* d = j != NULL ? HSD_JObjGetDObj(j) : NULL;
+    for (; d != NULL; d = d->next) {
+        HSD_TObj* t = d->mobj != NULL ? d->mobj->tobj : NULL;
+        for (; t != NULL; t = t->next) {
+            if (t->imagedesc != NULL && t->imagedesc->image_ptr != NULL) return t;
+        }
+    }
+    return NULL;
+}
+
+/* Retail's cursor art. which 0: the hand (part 2 its pose, frame = retail's x5 state; part 3 its port tag, frame = colour + port * 4),
+ * 1: the coin (part 4, frame = port * 4, 16 CPU). The image and palette at that frame, and the joint's translation and scale (retail units)
+ * so the caller can place the parts as retail does. 0 when the disc has no such art. */
+static u32 mnCharSel_PcCursorLo;   /* the last part's TEV colour 0 (retail's hand: the navy its shading blends from) */
+u32 mnCharSel_PcArtCursorLo(void) { return mnCharSel_PcCursorLo; }
+
+int mnCharSel_PcArtCursor(int which, int part, float frame, HSD_ImageDesc** img, HSD_Tlut** tlut, float geo[4], u32* rgba)
+{
+    HSD_JObj* root = which == 0 ? mnCharSel_PcHand : mnCharSel_PcToken;
+    HSD_JObj* j;
+    HSD_TObj* t;
+    *img = NULL;
+    *tlut = NULL;
+    if (root == NULL) return 0;
+    j = animateJoint(root, (u8) part, TOBJ_MASK | MOBJ_MASK, frame);
+    t = mnCharSel_PcOwnTex(j);
+    if (rgba != NULL) {   /* retail's colour at that frame: the texture's TEV constant (the port tags, the coin), else the material's diffuse */
+        HSD_DObj* d = j != NULL ? HSD_JObjGetDObj(j) : NULL;
+        *rgba = 0xFFFFFFFFu;
+        HSD_DObj* body = d;
+        while (body != NULL && body->mobj != NULL && body->mobj->tobj != NULL) body = body->next;
+        if (which == 1 && part == 3 && body != NULL && body->mobj != NULL && body->mobj->mat != NULL) {   /* the coin's untextured body: its animated colour */
+            GXColor c = body->mobj->mat->diffuse;
+            *rgba = ((u32) c.r << 24) | ((u32) c.g << 16) | ((u32) c.b << 8) | 0xFFu;
+        } else if (t != NULL && t->tev != NULL) {
+            GXColor k = t->tev->konst, l = t->tev->tev0;
+            mnCharSel_PcCursorLo = ((u32) l.r << 24) | ((u32) l.g << 16) | ((u32) l.b << 8) | 0xFFu;
+            *rgba = ((u32) k.r << 24) | ((u32) k.g << 16) | ((u32) k.b << 8) | 0xFFu;
+        } else if (d != NULL && d->mobj != NULL && d->mobj->mat != NULL) {
+            GXColor c = d->mobj->mat->diffuse;
+            f32 a = d->mobj->mat->alpha;
+            *rgba = ((u32) c.r << 24) | ((u32) c.g << 16) | ((u32) c.b << 8) | (u32) (a <= 0.0f ? 0 : a >= 1.0f ? 255 : (int) (a * 255.0f));
+        }
+    }
+    mnCharSel_PcImage(t, img, tlut);
+    if (geo != NULL && j != NULL) {
+        geo[0] = HSD_JObjGetTranslationX(j); geo[1] = HSD_JObjGetTranslationY(j);
+        geo[2] = HSD_JObjGetScaleX(j); geo[3] = HSD_JObjGetScaleY(j);
+    }
+    return t != NULL;
+}
+
+/* once per open: what the hand and coin models hold (the log line is the map for mnCharSel_PcArtCursor) */
+static void mnCharSel_PcCursorProbe(void)
+{
+    int w, k;
+    for (w = 0; w < 2; w++) {
+        HSD_JObj* root = w == 0 ? mnCharSel_PcHand : mnCharSel_PcToken;
+        for (k = 0; root != NULL && k < 8; k++) {
+            HSD_JObj* j = NULL;
+            HSD_TObj* t;
+            lb_80011E24(root, &j, k, -1);
+            if (j == NULL) break;
+            t = mnCharSel_PcOwnTex(j);
+            OSReport("frontend: css cursor art %s part %d: t (%.2f %.2f %.2f) s (%.2f %.2f) tex %dx%d fmt %d\n", w == 0 ? "hand" : "coin", k,
+                     HSD_JObjGetTranslationX(j), HSD_JObjGetTranslationY(j), HSD_JObjGetTranslationZ(j), HSD_JObjGetScaleX(j), HSD_JObjGetScaleY(j),
+                     t != NULL ? t->imagedesc->width : 0, t != NULL ? t->imagedesc->height : 0, t != NULL ? (int) t->imagedesc->format : -1);
+        }
     }
 }
 
@@ -6467,6 +6547,19 @@ int mnCharSel_PcArtOpen(HSD_Archive* archive)
     HSD_JObjReqAnimAll(mnCharSel_PcMenu, 0.0F);
     HSD_JObjAnimAll(mnCharSel_PcMenu);
     mnCharSel_PcIcons = mnCharSel_PcMenu;
+    mnCharSel_PcHand = m->hand.joint != NULL ? HSD_JObjLoadJoint(m->hand.joint) : NULL;
+    if (mnCharSel_PcHand != NULL) {
+        HSD_JObjAddAnimAll(mnCharSel_PcHand, m->hand.animjoint, m->hand.matanim_joint, m->hand.shapeanim_joint);
+        HSD_JObjReqAnimAll(mnCharSel_PcHand, 0.0F);
+        HSD_JObjAnimAll(mnCharSel_PcHand);
+    }
+    mnCharSel_PcToken = m->token.joint != NULL ? HSD_JObjLoadJoint(m->token.joint) : NULL;
+    if (mnCharSel_PcToken != NULL) {
+        HSD_JObjAddAnimAll(mnCharSel_PcToken, m->token.animjoint, m->token.matanim_joint, m->token.shapeanim_joint);
+        HSD_JObjReqAnimAll(mnCharSel_PcToken, 0.0F);
+        HSD_JObjAnimAll(mnCharSel_PcToken);
+    }
+    mnCharSel_PcCursorProbe();
     mnCharSel_PcCount = SELKIND_COUNT; /* retail: icons[] as authored (never rewritten there) */
 
     mnCharSel_PcMex = HSD_ArchiveGetPublicAddress(archive, "mexSelectChr");

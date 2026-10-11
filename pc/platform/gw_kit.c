@@ -944,6 +944,16 @@ static void kt_tlut(unsigned v, int fmt, int *r, int *g, int *b, int *a) {
     }
 }
 
+/* gw_Kit_TexAddHsdShade: an intensity image (I4/I8/IA4/IA8) whose intensity picks a colour between lo and hi, as a TEV stage
+ * that blends two colours by the texture does (retail's CSS hand: navy tev0 to white konst). Off: the mask decode below. */
+static int kt_shade_on;
+static int kt_shade_lo[3], kt_shade_hi[3];
+static void kt_put_i(uint8_t *out, int w, int h, int x, int y, int i, int a) {
+    if (!kt_shade_on) { kt_put(out, w, h, x, y, 255, 255, 255, a); return; }
+    kt_put(out, w, h, x, y, kt_shade_lo[0] + (kt_shade_hi[0] - kt_shade_lo[0]) * i / 255, kt_shade_lo[1] + (kt_shade_hi[1] - kt_shade_lo[1]) * i / 255,
+           kt_shade_lo[2] + (kt_shade_hi[2] - kt_shade_lo[2]) * i / 255, a);
+}
+
 /* Decodes one GX image. Masks (I4/I8/IA4/IA8) come out white with the texture's alpha - the
  * kit's mask TEV takes RGB from the tint and alpha from the texture. Returns NULL for a format
  * this does not read (CMPR) or a short image. */
@@ -969,21 +979,21 @@ static uint8_t *kt_decode(const uint8_t *img, size_t img_size, int fmt, int w, i
                 for (y = 0; y < 8; y++)
                     for (x = 0; x < 8; x += 2, off++) {
                         int hi = (img[off] >> 4) * 17, lo = (img[off] & 15) * 17;
-                        kt_put(out, w, h, x0 + x, y0 + y, 255, 255, 255, hi);
-                        kt_put(out, w, h, x0 + x + 1, y0 + y, 255, 255, 255, lo);
+                        kt_put_i(out, w, h, x0 + x, y0 + y, hi, hi);
+                        kt_put_i(out, w, h, x0 + x + 1, y0 + y, lo, lo);
                     }
                 break;
             case 1: /* I8 */
                 for (y = 0; y < 4; y++)
-                    for (x = 0; x < 8; x++, off++) kt_put(out, w, h, x0 + x, y0 + y, 255, 255, 255, img[off]);
+                    for (x = 0; x < 8; x++, off++) kt_put_i(out, w, h, x0 + x, y0 + y, img[off], img[off]);
                 break;
             case 2: /* IA4: alpha in the high nibble */
                 for (y = 0; y < 4; y++)
-                    for (x = 0; x < 8; x++, off++) kt_put(out, w, h, x0 + x, y0 + y, 255, 255, 255, (img[off] >> 4) * 17);
+                    for (x = 0; x < 8; x++, off++) kt_put_i(out, w, h, x0 + x, y0 + y, (img[off] & 15) * 17, (img[off] >> 4) * 17);
                 break;
             case 3: /* IA8: alpha byte first */
                 for (y = 0; y < 4; y++)
-                    for (x = 0; x < 4; x++, off += 2) kt_put(out, w, h, x0 + x, y0 + y, 255, 255, 255, img[off]);
+                    for (x = 0; x < 4; x++, off += 2) kt_put_i(out, w, h, x0 + x, y0 + y, img[off + 1], img[off]);
                 break;
             case 4: /* RGB565 */
                 for (y = 0; y < 4; y++)
@@ -1189,6 +1199,18 @@ static unsigned hsd_logged_formats;
  * more and a new image answers -1 (the letters stand in). A warm pool means a normal session never gets near it. The real fix is an update-in-place call in aurora. */
 #define KT_HSD_REASSIGN_MAX 384
 static int hsd_reassigned;
+
+int gw_Kit_TexAddHsd(const char *key, int gx_fmt, const uint8_t *img, size_t img_size, int w, int h,
+                     int tlut_fmt, const uint8_t *tlut, int tlut_n);
+int gw_Kit_TexAddHsdShade(const char *key, int gx_fmt, const uint8_t *img, size_t img_size, int w, int h, uint32_t lo_rgba, uint32_t hi_rgba) {
+    int t;
+    kt_shade_on = 1;
+    kt_shade_lo[0] = (int) (lo_rgba >> 24); kt_shade_lo[1] = (int) ((lo_rgba >> 16) & 255); kt_shade_lo[2] = (int) ((lo_rgba >> 8) & 255);
+    kt_shade_hi[0] = (int) (hi_rgba >> 24); kt_shade_hi[1] = (int) ((hi_rgba >> 16) & 255); kt_shade_hi[2] = (int) ((hi_rgba >> 8) & 255);
+    t = gw_Kit_TexAddHsd(key, gx_fmt, img, img_size, w, h, 0, NULL, 0);
+    kt_shade_on = 0;
+    return t;
+}
 
 int gw_Kit_TexAddHsd(const char *key, int gx_fmt, const uint8_t *img, size_t img_size, int w, int h,
                      int tlut_fmt, const uint8_t *tlut, int tlut_n) {

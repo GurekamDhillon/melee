@@ -66,6 +66,9 @@ void gw_script_pad_state(int ch, unsigned *b, int *sx, int *sy, int *cx, int *cy
 unsigned gw_script_pad_raw_buttons(int ch) { (void) ch; return g_pad; }
 static float g_mx = -1000.0f, g_my = -1000.0f, g_mwheel; static int g_mbuttons;
 void gw_Mouse_ScriptRead(float *x, float *y, int *buttons, float *wheel) { *x = g_mx; *y = g_my; *buttons = g_mbuttons; *wheel = g_mwheel; }
+void gw_Mouse_Peek(float *x, float *y, int *buttons, float *wheel) { *x = g_mx; *y = g_my; *buttons = g_mbuttons; *wheel = 0.0f; }
+int gw_Mouse_X(void) { return (int) g_mx; }
+void gw_Mouse_HandIsCursor(void) {}
 float gw_Console_ScriptWidth(void) { return 640.0f; }
 int gw_Settings_Int(const char *k, int d) { (void) k; return d; }
 static void gs_prof_setfuncs(lua_State *L, const luaL_Reg *funcs, const char *prefix) { (void) prefix; luaL_setfuncs(L, funcs, 0); }
@@ -89,11 +92,14 @@ int gw_Kit_DrawText(float x, float y, const char *s, int role, uint32_t rgba, in
 int gw_Kit_DrawPoly4(const float x[4], const float y[4], uint32_t rgba) { (void) x; (void) y; (void) rgba; g_quads++; return 1; }
 static int g_images;
 int gw_Kit_DrawImage(int tex, float x, float y, float w, float h, uint32_t rgba, int flip, float shear) { (void) tex; (void) x; (void) y; (void) w; (void) h; (void) rgba; (void) flip; (void) shear; g_quads++; g_images++; return 1; }
+int gw_Kit_DrawTri(int tex, const float x[3], const float y[3], const float u[3], const float v[3], const uint32_t col[3], const float *clip) { (void) tex; (void) x; (void) y; (void) u; (void) v; (void) col; (void) clip; return 1; }
+int gw_Kit_Tex(const char *name, const char *mod_ui) { (void) name; (void) mod_ui; return -1; }   /* no kit art here: the select draws its flat hands */
 void gw_Kit_SetTracking(float px) { g_track = px; }
 static int g_hsd_frame; void gw_Kit_TexHsdFrame(int frame) { g_hsd_frame = frame; }
 static int g_hsd_drops; void gw_Kit_TexDropHsd(void) { g_hsd_drops++; }
 int gw_Kit_TexAddHsd(const char *key, int gx_fmt, const uint8_t *img, size_t img_size, int w, int h, int tlut_fmt, const uint8_t *tlut, int tlut_n)
 { (void) gx_fmt; (void) img; (void) img_size; (void) w; (void) h; (void) tlut_fmt; (void) tlut; (void) tlut_n; g_art_calls++; snprintf(g_art_key, sizeof g_art_key, "%s", key); return g_art_ret; }
+int gw_Kit_TexAddHsdShade(const char *key, int gx_fmt, const uint8_t *img, size_t img_size, int w, int h, uint32_t lo, uint32_t hi) { (void) key; (void) gx_fmt; (void) img; (void) img_size; (void) w; (void) h; (void) lo; (void) hi; return -1; }
 int gw_Kit_QuadCount(void) { return g_quads; }
 int gw_Kit_QuadRoom(void) { return 16000; }
 

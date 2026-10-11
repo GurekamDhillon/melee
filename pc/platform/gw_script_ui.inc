@@ -132,6 +132,44 @@ static void gs_ui_text(void *u, float x, float base, const char *s, int role, un
 }
 
 /* a disc-art texture (gw_Kit_TexAddHsd's slot) or any kit texture: drawn modulated by the tint, in order with the other quads */
+static void gs_sel_live_hand(GsUiSlot *u);   /* gw_script_ui_sel.inc */
+
+/* the select's hand and coin masks (menu/pipeline/css_tokens.py), looked up once; a missing one leaves the flat shapes */
+static void gs_ui_css_art(void) {
+    static int done;
+    static const char *const hl[AT_CSS_HAND_LAYERS] = { "shadow", "ink", "fill", "cuff", "shade", "hi", "detail", "badge" };
+    static const char *const cl[AT_CSS_COIN_LAYERS] = { "shadow", "ink", "rim", "inlay", "face", "ring", "shade", "hi" };
+    AtCssArt a;
+    char nm[64];
+    int i, pose, miss = 0;
+    if (done) return;
+    done = 1;
+    for (pose = 0; pose < 2; pose++)
+        for (i = 0; i < AT_CSS_HAND_LAYERS; i++) {
+            snprintf(nm, sizeof nm, "css_hand_%s_%s", pose ? "grab" : "point", hl[i]);
+            if ((a.hand[pose][i] = gw_Kit_Tex(nm, NULL)) < 0) miss++;
+        }
+    for (i = 0; i < AT_CSS_COIN_LAYERS; i++) {
+        snprintf(nm, sizeof nm, "css_coin_%s", cl[i]);
+        if ((a.coin[i] = gw_Kit_Tex(nm, NULL)) < 0) miss++;
+    }
+    at_css_set_art(&a);
+    gw_log("ui: css hand and coin art: %d of %d masks%s", 2 * AT_CSS_HAND_LAYERS + AT_CSS_COIN_LAYERS - miss, 2 * AT_CSS_HAND_LAYERS + AT_CSS_COIN_LAYERS,
+           miss ? " (the missing ones draw as flat shapes)" : "");
+}
+
+static void gs_ui_image_quad(void *u, int tex, const float x[4], const float y[4], unsigned rgba) {
+    static const float qu[4] = { 0.0f, 1.0f, 1.0f, 0.0f }, qv[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
+    float tx[3], ty[3], tu[3], tv[3];
+    uint32_t col[3] = { rgba, rgba, rgba };
+    int t, i, idx[2][3] = { { 0, 1, 2 }, { 0, 2, 3 } };
+    (void) u;
+    for (t = 0; t < 2; t++) {
+        for (i = 0; i < 3; i++) { tx[i] = x[idx[t][i]]; ty[i] = y[idx[t][i]]; tu[i] = qu[idx[t][i]]; tv[i] = qv[idx[t][i]]; }
+        gw_Kit_DrawTri(tex, tx, ty, tu, tv, col, NULL);
+    }
+}
+
 static void gs_ui_image(void *u, int tex, float x, float y, float w, float h, unsigned rgba) {
     (void) u;
     gw_Kit_DrawImage(tex, x, y, w, h, rgba, 0, 0.0f);
@@ -693,12 +731,14 @@ static void gs_ui_draw(void) {
     QueryPerformanceCounter(&t0);
     ops.width = gs_ui_width; ops.user = NULL;
     memset(&sink, 0, sizeof sink);
-    sink.user = NULL; sink.poly = gs_ui_poly; sink.text = gs_ui_text; sink.model = gs_ui_model_draw; sink.image = gs_ui_image;
+    sink.user = NULL; sink.poly = gs_ui_poly; sink.text = gs_ui_text; sink.model = gs_ui_model_draw; sink.image = gs_ui_image; sink.image_quad = gs_ui_image_quad;
+    gs_ui_css_art();
     memset(&info, 0, sizeof info);
     first = gw_Kit_QuadCount();
     gs_ui_stat.canvas_w = gw_Console_ScriptWidth();
     if (u->native_set) gs_set_resolve(u);                          /* the rows were submitted again: the focus is valid before it is drawn */
     gs_ui_reduced = gw_Settings_Int("reduced_motion", 0) != 0;
+    gs_sel_live_hand(u);                                          /* the select: the mouse's hand sits under the pointer this frame, not last tick */
     at_render_ex(&u->sc, &u->view, gs_ui_stat.canvas_w, gs_now_ms(), gs_ui_reduced, &ops, &sink, &u->hits, &info);
     if (u->native_mods) gs_mods_drawn();
     gw_Kit_SetTracking(0.0f);                                     /* belt and braces: no draw leaves tracking set */
@@ -1493,7 +1533,8 @@ static void gs_ui_hud_draw(void) {
     at_hud_retail_keepouts(w, ~at_retail_effective(&gs_ui_retail, gs_ui_online()), &ko);
     ops.width = gs_ui_width; ops.user = NULL;
     memset(&sink, 0, sizeof sink);                                            /* every AtSink op is set or NULL (AtSink.image arrived with the select) */
-    sink.user = NULL; sink.poly = gs_ui_poly; sink.text = gs_ui_text; sink.model = gs_ui_model_draw; sink.image = gs_ui_image;
+    sink.user = NULL; sink.poly = gs_ui_poly; sink.text = gs_ui_text; sink.model = gs_ui_model_draw; sink.image = gs_ui_image; sink.image_quad = gs_ui_image_quad;
+    gs_ui_css_art();
     if (gs_ui_keepout_show) {
         int ko_first = gw_Kit_QuadCount();
         for (i = 0; i < ko.n; i++) {                                              /* 1 px outlines, for measuring them against the retail HUD */

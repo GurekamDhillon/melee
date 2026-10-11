@@ -15,6 +15,8 @@ typedef struct AtSink {
     /* A texture (a kit texture slot) drawn into x, y, w, h, tinted by rgba. NULL draws nothing: every constructor sets it or zeroes the struct,
      * and callers go through at_sink_image, which refuses a NULL op and a negative texture. */
     void (*image)(void *u, int tex, float x, float y, float w, float h, unsigned rgba);
+    /* a texture on any convex quad (corners in order: the image's top left, top right, bottom right, bottom left). NULL: callers fall back to image */
+    void (*image_quad)(void *u, int tex, const float x[4], const float y[4], unsigned rgba);
 } AtSink;
 
 enum { AT_ALIGN_LEFT = 0, AT_ALIGN_CENTER = 1, AT_ALIGN_RIGHT = 2 };   /* the same numbers as GW_KIT_ALIGN_* */

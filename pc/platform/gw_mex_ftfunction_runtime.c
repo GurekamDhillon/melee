@@ -1,7 +1,7 @@
 /* gw_mex_ftfunction_runtime.c - phase 3: run a fighter's m-ex ftFunction blob at runtime.
  *
  * This is the bridge between the phase-1 PPC interpreter and the phase-2 blob loader on one side,
- * and the engine's per-kind dispatch surface (gw_Mex_GObjDispatch) on the other. For Ft_Kind_Sonic
+ * and the engine's per-kind callback/predicate dispatch surfaces on the other. For Ft_Kind_Sonic
  * it:
  *
  *   1. allocates the relocated code + the Arch_FighterFunc (mexData) tables + a guest stack from
@@ -98,6 +98,7 @@ static void gwr_boot_load(void);
 #define GW_MEX_SLOT_ON_ITEM_DROP 18     /* ftData_OnItemDrop - m-ex onUnknownItemRelated */
 #define GW_MEX_SLOT_ON_APPLY_HEAD_ITEM 19   /* ftData_UnkMotionStates1 */
 #define GW_MEX_SLOT_ON_REMOVE_HEAD_ITEM 20  /* ftData_UnkMotionStates2 */
+#define GW_MEX_SLOT_ON_FLOAT 31           /* Header.s: Arch_FighterFunc_onFloat = 0x7C */
 #define GW_MEX_SLOT_ON_DOUBLE_JUMP 32
 #define GW_MEX_SLOT_ON_USMASH 36
 #define GW_MEX_SLOT_ON_DSMASH 37
@@ -3396,6 +3397,13 @@ GW_MEX_SPECIAL_INTERP(GW_MEX_SLOT_SPECIAL_HI_AIR, special_hi_air)
 GW_MEX_SPECIAL_INTERP(GW_MEX_SLOT_SPECIAL_LW, special_lw)
 GW_MEX_SPECIAL_INTERP(GW_MEX_SLOT_SPECIAL_LW_AIR, special_lw_air)
 
+/* Both m-ex Fighter OnFloat hooks (@8011BA54 Down+XY, @8011BAD8 JumpPeak)
+ * call slot 31 with r3 = fighter GObj, r4 = 1, then return its r3 unchanged.
+ * A void hook, or the one-argument runner, loses part of that contract. */
+static int gw_mex_interp_onfloat(void *gobj) {
+    return (int) gw_mex_interp_run_logged2(GW_MEX_SLOT_ON_FLOAT, "onFloat", gobj, 1u);
+}
+
 /* onDoubleJump (slot 32) - dispatched from ftCo_800CBAC4 (ftCo_JumpAerial.c), the common aerial-
  * jump enter. Fires when the fighter double/multi-jumps, so it needs an air jump input. */
 static void gw_mex_interp_double_jump(void *gobj) {
@@ -3542,6 +3550,7 @@ static const char *gw_mex_slot_name(uint32_t slot) {
     case 24: return "onActionStateChange";
     case 25: return "onReapplyAttr";
     case 26: return "onModelRender";
+    case 31: return "onFloat";
     case 32: return "onDoubleJump";
     case 33: return "onZair";
     case 34: return "onLanding";
@@ -3574,7 +3583,7 @@ static int gw_mex_slot_is_wired(uint32_t slot) {
     case GW_MEX_SLOT_ON_KNOCKBACK_ENTER: case GW_MEX_SLOT_ON_KNOCKBACK_EXIT:
     case GW_MEX_SLOT_ON_FRAME: case GW_MEX_SLOT_ON_ACTION_STATE_CHANGE:
     case GW_MEX_SLOT_ON_REAPPLY_ATTR: case GW_MEX_SLOT_ON_DOUBLE_JUMP: case GW_MEX_SLOT_ON_USMASH:
-    case GW_MEX_SLOT_ON_DSMASH:
+    case GW_MEX_SLOT_ON_DSMASH: case GW_MEX_SLOT_ON_FLOAT:
     case GW_MEX_SLOT_ON_MODEL_RENDER: case GW_MEX_SLOT_ON_ZAIR: case GW_MEX_SLOT_ON_LANDING:
     case GW_MEX_SLOT_ON_FSMASH: case GW_MEX_SLOT_ON_INTRO_L: case GW_MEX_SLOT_ON_TAUNT:
     case GW_MEX_SLOT_ON_CATCH:
@@ -3838,6 +3847,9 @@ void gw_Mex_FtFunctionInstall(int kind, void *arch_data, uint32_t arch_data_size
                 gw_mex_interp_special_lw_air);
     gw_mex_hook(GW_MEX_EVENT_ON_DOUBLE_JUMP, kind, GW_MEX_SLOT_ON_DOUBLE_JUMP,
                 gw_mex_interp_double_jump);
+    if (gw_mex_override_target(GW_MEX_SLOT_ON_FLOAT) != 0u) {
+        gw_Mex_PredicateRegister(GW_MEX_EVENT_ON_FLOAT, kind, gw_mex_interp_onfloat);
+    }
     gw_mex_hook(GW_MEX_EVENT_ON_USMASH, kind, GW_MEX_SLOT_ON_USMASH, gw_mex_interp_usmash);
     gw_mex_hook(GW_MEX_EVENT_ON_DSMASH, kind, GW_MEX_SLOT_ON_DSMASH, gw_mex_interp_dsmash);
     gw_mex_hook(GW_MEX_EVENT_ON_ZAIR, kind, GW_MEX_SLOT_ON_ZAIR, gw_mex_interp_zair);
@@ -4932,7 +4944,10 @@ static int test_ppc_tail_branch_returns(void) {
     return 0;
 }
 
+#include "gw_mex_onfloat_tests.inc"
+
 void gw_mex_ftfunction_runtime_tests_register(void) {
+    gw_test_register("mex_onfloat_interpreter", test_mex_onfloat_interpreter);
     gw_modfighter_tests_register();
     gw_test_register("mex_ft_item_id_sonic", test_mex_ft_item_id_sonic);
     gw_test_register("mex_music_tables", test_mex_music_tables);

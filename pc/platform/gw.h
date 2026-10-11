@@ -236,6 +236,7 @@ enum {
     GW_MEX_EVENT_ON_TAUNT,            /* ftCo_800DEBD0 (slot 43) @800DECDC */
     GW_MEX_EVENT_ON_CATCH,            /* ftCo_800D8C54 (slot 44) @800D8CB4 */
     GW_MEX_EVENT_ON_DSMASH,           /* ftCo_AttackLw4 doEnter (m-ex onDSmash, slot 37) @8008CC14 */
+    GW_MEX_EVENT_ON_FLOAT,            /* ftPe_8011BA54/8011BAD8 (slot 31), returns the float predicate */
     GW_MEX_EVENT_COUNT
 };
 
@@ -278,8 +279,7 @@ int gw_Mex_HasFSmashHook(int kind);
 
 /* Predicate dispatch for the Category 2 events (OnFloat and friends), whose return value decides
  * whether the behaviour fires: returns the registered predicate's result, else `vanilla`'s, else 0.
- * No game call site yet - Category 2 is deferred (_research/mex-tier-c-hooks.md section 7.3) - but
- * the surface is complete and tested, so a future site has a proven entry point. */
+ * OnFloat's game sites apply m-ex's input/velocity gates before dispatching. */
 int gw_Mex_GObjPredDispatch(int event, int kind, void* gobj, void* vanilla);
 
 /* Per-event dispatch wrappers for the game-side call sites (keeps the event id out of game code). */
@@ -313,6 +313,7 @@ void* gw_Mex_MoveLogicTable(int kind, void* vanilla);
  * code may have overwritten with a guest PPC pointer: interpret a guest address, else call it. */
 void gw_Mex_FighterCallbackDispatch(void* gobj, void* cb);
 void gw_Mex_OnDoubleJumpDispatch(int kind, void* gobj, void* vanilla);
+int gw_Mex_OnFloatDispatch(int kind, void* gobj);
 void gw_Mex_OnUSmashDispatch(int kind, void* gobj, void* vanilla);
 void gw_Mex_OnDSmashDispatch(int kind, void* gobj, void* vanilla);
 void gw_Mex_OnModelRenderDispatch(int kind, void* gobj, void* arg1, void* mtx, void* vanilla);

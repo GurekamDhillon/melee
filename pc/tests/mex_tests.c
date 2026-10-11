@@ -376,7 +376,10 @@ static int test_mtx_madd_matches_fma(void) {
     return 0;
 }
 
+#include "mex_onfloat_tests.inc"
+
 void MexTestRegisterAll(void) {
+    TestRegister("mex_onfloat_inputs", test_mex_onfloat_inputs);
     TestRegister("gm_Is1PMode_1p_modes", test_1p_mode_classification);
     TestRegister("gm_Is1PMode_vs_modes", test_vs_mode_is_not_1p);
     TestRegister("heap_table_shape", test_heap_table_shape);

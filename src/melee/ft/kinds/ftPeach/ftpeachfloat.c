@@ -17,6 +17,10 @@
 #include <melee/ft/kinds/ftCommon/ftCo_SpecialAir.h>
 #include <melee/ft/types.h>
 
+#if defined(TARGET_PC)
+extern int Mex_OnFloatDispatch(int kind, void* gobj);
+#endif
+
 bool ftPe_Float_CheckContinueInput(Fighter* fp)
 {
     return fp->input.lstick[0].y >= p_ftCommonData->tap_jump_threshold ||
@@ -34,6 +38,13 @@ bool ftPe_8011BA54(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     bool float_input = checkStartFloatInput(gobj);
+#if defined(TARGET_PC)
+    /* m-ex Fighter OnFloat/onFloat - Down+XY.asm @8011BA54: gate on
+     * down+X/Y first, keep Peach's own float, else return onFloat(gobj, 1). */
+    if (fp->kind != Ft_Kind_Peach && float_input) {
+        return Mex_OnFloatDispatch(fp->kind, gobj);
+    }
+#endif
     if (fp->kind == Ft_Kind_Peach && fp->u.pe.has_float && float_input) {
         ftPe_8011BB6C(gobj, true);
         return true;
@@ -44,6 +55,16 @@ bool ftPe_8011BA54(HSD_GObj* gobj)
 bool ftPe_8011BAD8(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
+#if defined(TARGET_PC)
+    /* m-ex Fighter OnFloat/onFloat - JumpPeak.asm @8011BAD8: only at/past
+     * the jump peak with stick up OR X/Y. The callback owns float availability
+     * for non-Peach kinds; their fighter union is not Peach's has_float. */
+    if (fp->kind != Ft_Kind_Peach && fp->self_vel.y <= 0 &&
+        ftPe_Float_CheckContinueInput(fp))
+    {
+        return Mex_OnFloatDispatch(fp->kind, gobj);
+    }
+#endif
     if (fp->kind == Ft_Kind_Peach) {
         if (fp->self_vel.y <= 0 && fp->u.pe.has_float) {
             if (ftPe_Float_CheckContinueInput(fp)) {

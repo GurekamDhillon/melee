@@ -946,6 +946,10 @@ do
       { row = 305, name = "xCMN_DMG_FLY", symbol = "xCMN_DMG_FLY" } } end
     gd.anim_preview = function(port, row, frame, rate, face) calls[#calls + 1] = { row = row, frame = frame, face = face } return true end
     lab("mode clips")
+    P[2].percent = 37
+    env.on_tick()
+    expect(P[2].percent == 37, "CLIPS preserves the parked fighter's existing percent")
+    P[2].percent = 0
     logs = {}
     lab("clips find kmh")
     local listed = false
@@ -1086,6 +1090,10 @@ do
     local real_cn = P[1].char_name
     P[1].char_name = "Goku" -- a new library key: the clip list is rebuilt from the rows above
     lab("mode remake")
+    P[2].percent = 37
+    env.on_tick()
+    expect(P[2].percent == 37, "REMAKE preserves the parked fighter's existing percent")
+    P[2].percent = 0
     for _ = 1, 8 do pcall(env.on_tick) end 
     expect(calls[#calls] and calls[#calls].row == 304, "REMAKE opens in BROWSE on the first unnoted clip (row " .. tostring(calls[#calls] and calls[#calls].row) .. ")")
     lab("remake cand 1")

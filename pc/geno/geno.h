@@ -546,7 +546,8 @@ enum { /* a command's op */
     GENO_LUA_CMD_HITBOX_DAMAGE = 3, /* a: hitbox mask (bit n = slot n), b: damage (float bits) */
     GENO_LUA_CMD_LOOP = 4,       /* restart the animation, the state's variables kept */
     GENO_LUA_CMD_TURN = 5,       /* flip the facing (as the script value FACING = 0); the model follows */
-    GENO_LUA_CMD_KI = 6          /* geno 11: a = signed delta to the combo meter (hundredths), clamped to [0, max] */
+    GENO_LUA_CMD_KI = 6,         /* geno 11: a = signed delta to the combo meter (hundredths), clamped to [0, max] */
+    GENO_LUA_CMD_LEDGE = 7       /* a: this action's ledge grab, as the engine value LEDGE: 0 none, 1 front, 2 front and back (Lua may open it, never narrow it below the state's default) */
 };
 enum { /* GENO_LUA_IO_FAULT */
     GENO_LUA_FAULT_NONE = 0,

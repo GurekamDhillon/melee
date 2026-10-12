@@ -890,6 +890,12 @@ void Fighter_UnkInitLoad_80068914(Fighter_GObj* gobj,
     fp->is_sub_fighter = argdata->b0;
 
     fp->x34_scale.x = Player_GetModelScale(fp->player_id);
+#if defined(TARGET_PC)
+    {
+        extern float Geno_FighterScale(Fighter * fp);
+        fp->x34_scale.x *= Geno_FighterScale(fp);
+    }
+#endif
     fp->x61C = argdata->x5;
     fp->x618_player_id = Player_GetPlayerId(fp->player_id);
     fp->x61A_controller_index = Player_GetControllerIndex(fp->player_id);

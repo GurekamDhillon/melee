@@ -50,6 +50,7 @@
 /* the native registry (gwtool adds the gw_ prefix to these references) */
 extern int Geno_ProfileForKind(int kind);
 extern int Geno_MaxJumps(int p);
+extern float Geno_Scale(int p);
 extern int Geno_JumpVyCount(int p);
 extern int Geno_JumpVyBits(int p, int i);
 extern int Geno_AttrCount(int p);
@@ -1102,6 +1103,14 @@ void Geno_ApplyAttrs(Fighter* fp)
     }
     Geno_Event(5, fp->kind, fp->player_id, n, fp->co_attrs.max_jumps);
     geno_apply_special(fp, p);
+}
+
+/* fighter.c Fighter_UnkInitLoad, right after x34_scale.x = the player's model scale: a define's own
+ * "scale" multiplies it (1.0 when the fighter is not a Geno profile or has none). */
+float Geno_FighterScale(Fighter* fp)
+{
+    int p = Geno_ProfileForKind(fp->kind);
+    return p < 0 ? 1.0f : Geno_Scale(p);
 }
 
 /* ---- multi-jump past Melee's table -----------------------------------------------------------

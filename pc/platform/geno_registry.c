@@ -13,6 +13,7 @@
  *       { "attach": "kirby" | "PlKb.dat" | "PlSh.dat",     an existing fighter, vanilla or m-ex
  *         "name": "...",                                    display only
  *         "attributes": { "gravity": 0.08, "max_jumps": 9 }, ftCo_DatAttrs fields by name
+ *         "scale": 1.2,                                     built size 0.5..2.0 (x34_scale.x: model, hurt/hitboxes, ECB, ledge, camera)
  *         "jumps": { "max": 9, "air_vy": [1.6, 1.5] },       multi-jump past Melee's 5-row table
  *         "hooks": { "on_init": [..], "on_frame": ["geno.count_frames:3"], "on_action": [..] } } ] }
  *   "define" (a brand-new fighter) is reserved for a later version and is skipped with a log line.
@@ -436,6 +437,7 @@ typedef struct {
     uint64_t iasa_warned;
     int kind; /* resolved at install; -1 = the target fighter is not on this install */
     int max_jumps; /* -1 = keep the fighter's own */
+    float scale;   /* "scale": the fighter's built size (retail x34_scale.x, like Giant / Tiny Melee's player model_scale), 0 = unset = 1.0 */
     int fx_set;    /* v5.5: "fx_bindings" (gw_fx.c binding set), -1 none */
     int njvy;
     uint32_t jvy[GENO_MAX_JUMP_VY]; /* float bits */
@@ -1467,6 +1469,14 @@ static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod
                     p->toon[(a ? 8 : 4) + k] = (float) d->n[c3].num;
         }
     }
+    x = jd_get(d, e, "scale");
+    if (x >= 0 && d->n[x].type == JN_NUM) {
+        if (d->n[x].num >= 0.5 && d->n[x].num <= 2.0) {
+            p->scale = (float) d->n[x].num;
+        } else {
+            gw_log("geno: %s: scale %g is outside 0.5..2.0 - ignored", where, d->n[x].num);
+        }
+    }
     x = jd_get(d, e, "jumps");
     if (x >= 0 && d->n[x].type == JN_OBJ) {
         int m = jd_get(d, x, "max"), v = jd_get(d, x, "air_vy");
@@ -1694,6 +1704,7 @@ int gw_Geno_ToonUnlit(int kind) {
     float t[16];
     return gw_Geno_ToonParams(kind, t) && t[15] > 0.5f;
 }
+float gw_Geno_Scale(int p) { return gn_at(p) && gn_at(p)->scale > 0.0f ? gn_at(p)->scale : 1.0f; }
 int gw_Geno_MaxJumps(int p) { return gn_at(p) ? gn_at(p)->max_jumps : -1; }
 int gw_Geno_JumpVyCount(int p) { return gn_at(p) ? gn_at(p)->njvy : 0; }
 int gw_Geno_JumpVyBits(int p, int i) {

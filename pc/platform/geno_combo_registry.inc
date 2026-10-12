@@ -193,7 +193,7 @@ static int gn_meter_parse(gn_profile *p, const jdoc *d, int e, const char *where
 /* 1 when the entry is fine (with or without a combo block); 0 refuses it. */
 static int gn_combo_parse(gn_profile *p, const jdoc *d, int e, const char *where, int version)
 {
-    static const char *const inputs[] = { "light", "heavy", "special", "jump", "grab", "shield" };
+    static const char *const inputs[] = { "light", "heavy", "special", "jump", "grab", "shield", "blast" };
     static const char *const dirs[] = { "any", "neutral", "forward", "back", "up", "down", "side" };
     static const char *const ons[] = { "any", "hit", "whiff", "block", "contact" };
     static const char *const wheres[] = { "any", "ground", "air" };
@@ -250,7 +250,7 @@ static int gn_combo_parse(gn_profile *p, const jdoc *d, int e, const char *where
         v = jd_get(d, c, "input");
         if (v >= 0 && d->n[v].type == JN_STR && _stricmp(d->n[v].str, "none") == 0) w[GENO_CR_INPUT] = GENO_CI_NONE;
         else if (v < 0) { gw_log("geno: %s: combo route %s: \"input\" is required (light, heavy, special, jump, grab, shield, none) - refused", where, rname); goto bad; }
-        else if (!gn_combo_enum(d, c, "input", 0, inputs, 6, &w[GENO_CR_INPUT], where, rname)) goto bad;
+        else if (!gn_combo_enum(d, c, "input", 0, inputs, GENO_CI_COUNT, &w[GENO_CR_INPUT], where, rname)) goto bad;
         if (!gn_combo_enum(d, c, "dir", GENO_CD_ANY, dirs, 7, &w[GENO_CR_DIR], where, rname) ||
             !gn_combo_enum(d, c, "on", GENO_CO_HIT, ons, 5, &w[GENO_CR_ON], where, rname) ||
             !gn_combo_enum(d, c, "where", GENO_CW_ANY, wheres, 3, &w[GENO_CR_WHERE], where, rname) ||

@@ -537,6 +537,7 @@ enum {
     GENO_LUA_IO_NCMDS = 32,  /* out: commands queued */
     GENO_LUA_IO_FAULT = 33,  /* out: GENO_LUA_FAULT_* */
     GENO_LUA_IO_LINKS = 34,  /* in (geno 11 combo): links taken in the current combo string */
+    GENO_LUA_IO_CONNECTED = 35, /* in: 1 when a hitbox of this fighter won a hit on a fighter during the current action (GenoState.atk_connected = script value ATTACK_CONNECTED; a hit on a shield does not count) */
     GENO_LUA_IO_CMDS = 40    /* out: GENO_LUA_MAX_CMDS x 3 words (op, a, b) */
 };
 enum { /* a command's op */
@@ -577,7 +578,8 @@ enum { /* the input class a route asks for */
     GENO_CI_JUMP = 3,    /* X / Y */
     GENO_CI_GRAB = 4,    /* Z */
     GENO_CI_SHIELD = 5,  /* L / R digital */
-    GENO_CI_COUNT = 6,
+    GENO_CI_BLAST = 6,   /* D-pad Down (after a fighter's controls layout: a layout that maps Y -> Down makes Y the blast button) */
+    GENO_CI_COUNT = 7,
     GENO_CI_NONE = 15    /* no input: the route fires on its own when the window and condition hold */
 };
 enum { /* direction, relative to the facing, of the stick (C-stick for a C-stick heavy) at the press */

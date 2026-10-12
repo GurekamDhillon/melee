@@ -3295,7 +3295,7 @@ A module is a chunk that returns a table of functions and nothing else. `ctx` is
 | field | |
 |---|---|
 | `ctx.input` | `attack`, `special`, `jump`, `shield`, `grab` with `_held` and `_pressed` booleans; `stick_x`, `stick_y`, `stick_fwd` (the same buttons the script VM's HELD / PRESSED read) |
-| `ctx.self` | `air`, `anim_ended` (booleans), `facing` (+1 / -1), `percent`, `x`, `y`, `vel_x`, `vel_y`, `action_frame`, `motion`; and what the last hit taken left (added with the Riposte): `hit_damage` (`GenoState.hit_damage`, before a counter window negated it), `hit_from` (+1 the attacker is in front of the fighter now, -1 behind, 0 no fighter attacker or not on the field: from the two positions and the facing at the time of the call), `countered` (`GenoState.counters`, hits countered since the fighter was reset). `action_frame` is the state's own clock, `GenoState.action_time`: it does NOT advance during hitlag, as the words scripts and counter windows do not |
+| `ctx.self` | `air`, `anim_ended` (booleans), `facing` (+1 / -1), `percent`, `x`, `y`, `vel_x`, `vel_y`, `action_frame`, `motion`; and what the last hit taken left (added with the Riposte): `hit_damage` (`GenoState.hit_damage`, before a counter window negated it), `connected` (1 once a hitbox of this fighter has won a hit on a fighter in the current action: script value ATTACK_CONNECTED; a hit on a shield does not count; 0 or 1, test `== 1`), `hit_from` (+1 the attacker is in front of the fighter now, -1 behind, 0 no fighter attacker or not on the field: from the two positions and the facing at the time of the call), `countered` (`GenoState.counters`, hits countered since the fighter was reset). `action_frame` is the state's own clock, `GenoState.action_time`: it does NOT advance during hitlag, as the words scripts and counter windows do not |
 | `ctx.state` | the declared slots, read and written by name; an undeclared name, a float into an `int` slot, an integer beyond 32 bits, a non-finite float, a number into a `bool` slot is a fault |
 | `ctx.go(name)` | go to the Geno state of that name, or `"auto"` (Wait on the ground, Fall in the air) `"helpless"`, or `"roll"` (the natives' roll cancel, `ftCo_8009917C`: enters Escape when the stick or C-stick was flicked on the ground, else nothing) |
 | `ctx.velocity(forward, up)` | facing-relative forward speed; on the ground the ground speed (`up` ignored), in the air both |
@@ -3305,6 +3305,8 @@ A module is a chunk that returns a table of functions and nothing else. `ctx` is
 
 Commands are queued (at most 8 per call, `GENO_LUA_MAX_CMDS`) and applied in call order when the call returns, by the game half, before the next phase. The allowlist environment is
 `type`, `select`, `ipairs`, `assert`, `error`, `freeze` and `math.{abs, min, max, floor, ceil, sqrt, tointeger, huge, pi}`; nothing else exists.
+
+A module has at most 48 functions (`GLUA_MAX_FNS`; it was 24 until Goku's module reached it; the table is host-side, not state, so nothing in a hash or a snapshot changes). `build.sh --native-test geno-lua` checks that 40 functions load and 49 are refused.
 
 ### 23.3 What is enforced, and where (`pc/platform/geno_lua_core.h`, tested by `build.sh --native-test geno-lua`)
 
@@ -3484,7 +3486,7 @@ hitstun and hitlag stay Melee's, and a route is a cancel the attacker takes, nev
 |---|---|---|
 | `from` | `geno:<state>`, `motion:N`, a Melee move name (`jab1 jab2 jab3 rapid_jab dash_attack ftilt ftilt_any utilt dtilt fsmash fsmash_any usmash dsmash nair fair bair uair dair grab dash_grab fthrow bthrow uthrow dthrow`), `*` (any move, only while a string runs), or a list (one parsed route per source) | required |
 | `to` | a geno.json target (`geno:<state>`, `motion:N`, `auto`), a Melee move name (entered as a raw motion change), `special_n/s/hi/lw` (the define's bound special through `Geno_SpecialEnter`, the air entry in the air), `jump` (ground `ftCo_Jump_Enter`; air `ftCo_JumpAerial_Enter_Basic` when a jump is left), `nair..dair` (`ftCo_AttackAir_EnterFromMsid`, air only) | required |
-| `input` | `light` (A), `heavy` (A with a fresh smash flick by retail's thresholds, or the C-stick crossing the smash line; in the air the C-stick), `special` (B), `jump` (X/Y), `grab` (Z), `shield` (L/R digital), `none` (fires on the window and condition alone) | required |
+| `input` | `light` (A), `heavy` (A with a fresh smash flick by retail's thresholds, or the C-stick crossing the smash line; in the air the C-stick), `special` (B), `jump` (X/Y), `grab` (Z), `shield` (L/R digital), `blast` (D-pad Down; a fighter's controls layout can map a face button to it: `"Y": "Down"`), `none` (fires on the window and condition alone) | required |
 | `dir` | `any neutral forward back up down side`: the main stick at the press (the C-stick for a C-stick heavy), facing-relative, neutral inside PlCo `x98` | `any` |
 | `on` | `any hit whiff block contact` over the source action so far: hit = a hitbox or an article of the fighter hit a fighter; block = a hitbox hit a shield | `hit` |
 | `where` | `any ground air` | `any` |

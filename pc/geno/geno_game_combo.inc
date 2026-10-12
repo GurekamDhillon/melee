@@ -240,6 +240,9 @@ void Geno_ComboInput(Fighter_GObj* gobj)
     if (pr & (HSD_PAD_L | HSD_PAD_R)) {
         geno_combo_press(cb, GENO_CI_SHIELD, geno_combo_dir(fp, fp->input.lstick[0].x, fp->input.lstick[0].y));
     }
+    if (pr & HSD_PAD_DPADDOWN) {
+        geno_combo_press(cb, GENO_CI_BLAST, geno_combo_dir(fp, fp->input.lstick[0].x, fp->input.lstick[0].y));
+    }
     /* holds: A for light and heavy (a C-stick held past the threshold also holds heavy), B, X/Y, Z, L/R */
     cb->hold[GENO_CI_LIGHT] = (hd & HSD_PAD_A) ? cb->hold[GENO_CI_LIGHT] + 1 : 0;
     cb->hold[GENO_CI_HEAVY] = ((hd & HSD_PAD_A) || ABS(fp->input.cstick[0].x) >= GENO_COMBO_PLCO(dash_smash_stick_threshold, 0.8f) ||
@@ -250,6 +253,7 @@ void Geno_ComboInput(Fighter_GObj* gobj)
     cb->hold[GENO_CI_JUMP] = (hd & HSD_PAD_XY) ? cb->hold[GENO_CI_JUMP] + 1 : 0;
     cb->hold[GENO_CI_GRAB] = (hd & HSD_PAD_Z) ? cb->hold[GENO_CI_GRAB] + 1 : 0;
     cb->hold[GENO_CI_SHIELD] = (hd & (HSD_PAD_L | HSD_PAD_R)) ? cb->hold[GENO_CI_SHIELD] + 1 : 0;
+    cb->hold[GENO_CI_BLAST] = (hd & HSD_PAD_DPADDOWN) ? cb->hold[GENO_CI_BLAST] + 1 : 0;
     for (i = 0; i < GENO_CI_COUNT; i++) {
         if (cb->hold[i] > 9999) {
             cb->hold[i] = 9999;

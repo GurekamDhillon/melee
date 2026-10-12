@@ -40,7 +40,7 @@
 #include "../third_party/lua-5.4.7/src/lobject.h"
 #include "../third_party/lua-5.4.7/src/lopcodes.h"
 
-#define GLUA_MAX_FNS 24
+#define GLUA_MAX_FNS 48   /* was 24: Goku's module (Kamehameha tiers, Rush, counter, ki, homing) reached it; host-side table only, not state */
 #define GLUA_NAME 32
 #define GLUA_SLOT_NAME 24
 #define GLUA_LOAD_HEAP (4u * 1024u * 1024u)
@@ -639,6 +639,7 @@ static void glua_push_ctx(gn_lua* g)
     glua_setint(L, "countered", (int32_t) gw_r32(&io[GENO_LUA_IO_COUNTERED]));
     glua_setnum(L, "ki", (double) (int32_t) gw_r32(&io[GENO_LUA_IO_KI]) / 100.0); /* geno 11: the combo meter */
     glua_setint(L, "combo_links", (int32_t) gw_r32(&io[GENO_LUA_IO_LINKS]));
+    glua_setint(L, "connected", (int32_t) gw_r32(&io[GENO_LUA_IO_CONNECTED])); /* 1: this action's hitbox has hit a fighter */
     lua_setfield(L, -2, "self");
     lua_newtable(L); /* ctx.state: an empty proxy; every access goes to the metatable */
     lua_getfield(L, LUA_REGISTRYINDEX, "geno.lua.state");

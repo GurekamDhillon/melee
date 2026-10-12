@@ -397,10 +397,14 @@ int gw_StageSkin_HostToken(int ext, int (*peer_has)(int ext, uint64_t digest), c
     if (out != NULL && cap > 0) out[0] = '\0';
     if (r < 0 || out == NULL || cap < 24) return 0;
     c = sk_choice_r(r);
-    if (c == 0) return 0; /* no token = Original online */
+    if (c == 0) {
+        gw_log("stageskin: %s: the host plays Original", sk_retail[r].file);
+        return 0; /* no token = Original online */
+    }
     d = sk_by_r[r].s[c - 1].digest;
     if (peer_has != NULL && peer_has(ext, d)) {
         snprintf(out, (size_t) cap, ";skin=%012llx", (unsigned long long) (d & SK_MASK48));
+        gw_log("stageskin: %s: the host sends \"%s\" (the opponent has it too)", sk_retail[r].file, sk_by_r[r].s[c - 1].name);
         return 0;
     }
     gw_log("stageskin: %s: the opponent does not have \"%s\" - Original for both", sk_retail[r].file, sk_by_r[r].s[c - 1].name);

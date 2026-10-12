@@ -308,7 +308,14 @@ static void np_scene_extras(char *out, size_t cap) {
     if (np.host) { /* the host's stage skin, when the guest announced it too; no token = Original on both sides */
         char sk[40];
         size_t l = strlen(out);
-        gw_StageSkin_HostToken(np.stage_ext, gw_MexId_PeerHasSkin, sk, sizeof sk);
+        sk[0] = ' ';
+        if (!gw_MexId_PeerReady()) {
+            /* The guest's HELLO (the direct-connect scene) arrives before its identity table does, so "the guest lacks the skin" cannot be
+               known yet: send no token now (Original) and decide again when the lobby starts the match, when the table is here. */
+            gw_log("stageskin: the opponent's identities have not arrived - the skin is decided at match start");
+        } else {
+            gw_StageSkin_HostToken(np.stage_ext, gw_MexId_PeerHasSkin, sk, sizeof sk);
+        }
         if (l + strlen(sk) < cap) snprintf(out + l, cap - l, "%s", sk);
     }
 }

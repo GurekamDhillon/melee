@@ -402,7 +402,7 @@ static int ne_refetch_mod(int id, int *status) {
 /* A post whose catalog record lists no files (the bulk list was captured before Nucleus processed the archive) is asked for again, one GET /mods/{id}: when the player looks at it
  * (ne_src_row), and before it is installed (ne_queue_step). At most NC_RECHECK_TRIES a session per post (nc_mod.tries) and NE_VIEW_REFETCH_MAX for the whole session, so scrolling a list of
  * old empty posts does not become a crawl. 1: a job was queued. */
-#define NE_VIEW_REFETCH_MAX 60
+#define NE_VIEW_REFETCH_MAX 30
 static int ne_enqueue(ne_job j);
 static int ne_want_refetch(int id) {
     int at, ok = 0;
@@ -930,7 +930,7 @@ static DWORD WINAPI ne_files_thread(LPVOID arg) {
         if (have && j.kind == 6) {
             int st = 0;
             if (ne_refetch_mod(j.id, &st)) ne_log("refetch of post %d: record updated", j.id);
-            Sleep(500);
+            Sleep(1000);
             continue;
         }
         if (have) {

@@ -145,6 +145,7 @@ mods folder (`docs/mods-packaging.md` in the root repo), so it can also ship rep
 - `attributes`: any `ftCo_DatAttrs` field by its decomp name (40 of them: walk/dash/jump/air/
   gravity/weight/shield...). Applied right after the engine copies the attributes from the file,
   *before* scale/metal/etc. modifiers, at spawn, respawn and every re-apply.
+- `scale` (number, 0.5-2.0, default 1.0; outside the range it is ignored with a log line): the fighter's built size. It multiplies the player's model scale into `x34_scale.x` when the fighter loads (the field Giant and Tiny Melee set per player), so the model, hurt and hitbox capsules (scaled where tested), ECB, ledge snap, camera box and the scaled attributes behave exactly as after the Lab's `gd.set_scale`. Articles and Lua constants are in world units and are not scaled by it: scale them in the same file. A respawn keeps it.
 - `jumps.max`: total jumps (ground + air, like `max_jumps`); `jumps.air_vy`: per-air-jump vertical
   impulse for multi-jump fighters (the last entry repeats). See section 10.
 - `hooks`: native hooks bound to dispatch points, as `"name"` or `"name:arg"`.

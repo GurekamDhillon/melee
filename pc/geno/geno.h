@@ -146,6 +146,7 @@ enum {
 #define GENO_BTN_SHIELD 0x08
 #define GENO_BTN_GRAB 0x10
 #define GENO_BTN_TAUNT 0x20
+#define GENO_BTN_BLAST 0x40 /* D-pad Down (the combo meter's blast input; a controls layout maps Y to it) */
 
 /* ---- v1: change action. CHG word0 [15:8] condition, [7] B is a var, [6:4] cmp, [3] NOT,
  * [2] ONCE; word1 target; word2 arg1; word3 arg2. CHGAND: same flags, word1 arg1, word2 arg2. */

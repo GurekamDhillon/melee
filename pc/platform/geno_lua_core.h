@@ -349,7 +349,7 @@ static int glua_ledge(lua_State* L)
     int ok = 0;
     if (lua_type(L, 1) == LUA_TNUMBER) m = lua_tointegerx(L, 1, &ok);
     else m = 0;
-    if (!ok || m < 0 || m > 2) return glua_fault(L, GENO_LUA_FAULT_COMMAND, "ctx.ledge takes 0 (none), 1 (front) or 2 (front and back)");
+    if (!ok || m < 0 || m > 3) return glua_fault(L, GENO_LUA_FAULT_COMMAND, "ctx.ledge takes 0 (none), 1 (front), 2 (front and back) or 3 (2, and the special fall after the move)");
     return glua_cmd(L, GENO_LUA_CMD_LEDGE, (uint32_t) m, 0);
 }
 
@@ -622,7 +622,8 @@ static void glua_push_ctx(gn_lua* g)
     static const struct { uint32_t bit; const char *held, *pressed; } btn[] = {
         {GENO_BTN_ATTACK, "attack_held", "attack_pressed"}, {GENO_BTN_SPECIAL, "special_held", "special_pressed"},
         {GENO_BTN_JUMP, "jump_held", "jump_pressed"},       {GENO_BTN_SHIELD, "shield_held", "shield_pressed"},
-        {GENO_BTN_GRAB, "grab_held", "grab_pressed"}};
+        {GENO_BTN_GRAB, "grab_held", "grab_pressed"},
+        {GENO_BTN_BLAST, "blast_held", "blast_pressed"}};
     size_t i;
     lua_createtable(L, 0, 8);
     lua_createtable(L, 0, 14);

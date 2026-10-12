@@ -905,6 +905,10 @@ void Geno_OnActionChange(Fighter_GObj* gobj)
     st->fall_limit = 0.0f;
     geno_combo_action(GET_FIGHTER(gobj), st);
     if ((s32) GET_FIGHTER(gobj)->motion_id < GENO_MOTION_BASE) {
+        if (GET_FIGHTER(gobj)->motion_id != ftCo_MS_FallSpecial && GET_FIGHTER(gobj)->motion_id != ftCo_MS_FallSpecialF &&
+            GET_FIGHTER(gobj)->motion_id != ftCo_MS_FallSpecialB) {
+            st->fall_ledge = 0; /* ctx.ledge(3) reaches only the FallSpecial that follows the move */
+        }
         st->hidden = 0; /* v3: HIDDEN lives only across Geno states (damage etc. show the fighter) */
     }
     if (st->profile >= 0) {
@@ -1362,6 +1366,9 @@ static u32 geno_buttons(Fighter* fp, int pressed)
     }
     if (b & HSD_PAD_DPADUP) {
         m |= GENO_BTN_TAUNT;
+    }
+    if (b & HSD_PAD_DPADDOWN) {
+        m |= GENO_BTN_BLAST;
     }
     return m;
 }
@@ -2448,6 +2455,7 @@ u32 GenoDefine_StateDigest(Fighter* fp)
     h = geno_dg(h, (u32) s->hit_counter);
     h = geno_dg(h, (u32) s->counters); /* slice 7 audit: fighter Lua reads it (ctx.self.countered, slice 5b), so it decides what happens next */
     h = geno_dg(h, (u32) s->ledge);
+    h = geno_dg(h, (u32) s->fall_ledge);
     h = geno_dg(h, (u32) s->motion_started);
     h = geno_dgf(h, s->motion_vy);
     h = geno_dgf(h, s->motion_facing);
@@ -2512,7 +2520,7 @@ static const struct {
     GENO_SF(enter_from), GENO_SF(hidden), GENO_SF(ledge), GENO_SF(motion_started), GENO_SF(motion_vy),
     GENO_SF(motion_land), GENO_SF(motion_facing), GENO_SF(motion_gravity), GENO_SF(enter_keep),
     GENO_SF(hit_count), GENO_SF(hit_damage), GENO_SF(hit_port), GENO_SF(hit_counter), GENO_SF(counters),
-    GENO_SF(art_spawned),
+    GENO_SF(art_spawned), GENO_SF(fall_ledge),
 };
 #define GENO_NSF ((int) (sizeof geno_sfields / sizeof geno_sfields[0]))
 

@@ -80,6 +80,7 @@ typedef struct GenoState {
     s32 hit_counter;                 /* GENO_VAL_HIT_COUNTER: it landed in a counter window */
     s32 counters;                    /* hits countered since the reset (diagnostics) */
     s32 art_spawned;                 /* articles spawned since the reset (diagnostics) */
+    s32 fall_ledge;                  /* ctx.ledge(3): the special fall (FallSpecial) after this move catches a ledge in either facing; kept across actions, cleared by the first non-Geno action that is not FallSpecial */
     /* per action (cleared on every action change, like the v1 block) */
     s32 ledge;                       /* GENO_VAL_LEDGE: -1 = the state's default */
     s32 motion_started;              /* geno.anim_motion: the first frame has been applied */

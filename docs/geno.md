@@ -594,7 +594,7 @@ browser, launch, A/B, the rollback strip, help, the event log, drill results) ke
 
 | tab | rows |
 |---|---|
-| PLAY | Resume; Step +1; Step -1; Step +10; Focus (left / right) |
+| PLAY | Resume; Step +1; Step -1; Step +10; Focus (left / right); Size (left / right, steps of 0.05, `gd.set_scale`) |
 | DISPLAY | Display mode (left / right); the current mode's toggles; Performance; Lab UI shown / hidden |
 | DUMMY | Target (left / right); Damage (left / right steps of 10, A applies `gd.set_percent`); Lock-step; Replay move; Mirror my pad |
 | STATES | Save to library; Quick save / Quick load (memory slot 1-3); Reset positions (slot 4, match start); History (2 / 5 / 10 / 20 s); Hot reload (replay 1 / 2 / 3 / 5 s); then the library, one row per saved state (A loads, Y / DELETE deletes after a confirm). Stage B, 14.10 |
@@ -1206,6 +1206,7 @@ the pad.
 - `gd.floor_below(x, y [, depth])`: `mpCheckFloor`, read-only. It clears the bounding flags it
   sets, so it is safe between frames and rewind-exact.
 - `gd.set_shield(port, health)`: offline; forks the timeline.
+- `gd.set_scale(port, s)`: the Lab's live size control, `s` clamped to 0.5-2.0 (the value in force is `player.scale`). It runs retail's size-change sequence (`ftLib_SetScale`, `ftCo_800D105C`, `ftCamera_80076064`, `ft_80081C88`) and also moves the base scale `x34_scale.x`, so the fighter behaves as one built at that size: model, hurtbox and hitbox capsules (scaled where used, from `x34_scale.y`), ECB, ledge snap, camera box, attributes, item hold scale. Offline only (refused in a netplay / rollback session); forks the timeline like `set_shield`. LAB: PLAY tab Size row (left / right, steps of 0.05) and the console line `lab scale <s>`.
 - `gd.mirror_pad(from, to, take)`.
 - `player.shield_on / shield_x / shield_y / shield_r`: `shield_hit` as the game has it this frame.
 

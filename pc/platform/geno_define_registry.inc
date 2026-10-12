@@ -916,7 +916,7 @@ unsigned gw_Geno_ThrowRegion(unsigned* size)
 {
     uint32_t base = 0, n = 0;
     gw_throw_persist_region(&base, &n);
-    *size = n;
+    gw_w32(size, n); /* the caller is game code: size is a guest pointer, big-endian */
     return base;
 }
 

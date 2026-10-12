@@ -5,6 +5,7 @@
 #define GW_MODS_ZIP_H
 #include "gw_nucleus_fighter.h"
 #include "gw_nucleus_stage.h"
+#include "gw_nucleus_bundle.h"
 
 /* Costumes use the same content typing, manifest, staging and next-boot enable
  * rules as ne_install_impl. Local archives have no API-provided art/slot hints. */
@@ -58,6 +59,9 @@ static int nlz_skin_install(const char *mods, const nc_post *post, const nc_in_f
     return 0;
 }
 
+/* what a GD mod zip install needs from the running game (the engine sets it; NULL in tools): the exe's build time and the "engine" feature rule */
+static const nc_bundle_env *nlz_bundle_env;
+
 static int nlz_install_data(const char *mods, const char *filename, const uint8_t *z, size_t zn, const nc_loose_env *env,
                             nc_loose_result *res, char *msg, size_t mcap, void (*logf)(const char *)) {
     char (*names)[260] = (char (*)[260]) calloc(NZ_MAX_ENTRIES, 260);
@@ -69,6 +73,19 @@ static int nlz_install_data(const char *mods, const char *filename, const uint8_
     memset(res, 0, sizeof *res);
     msg[0] = 0;
     if (!names) { snprintf(msg, mcap, "Out of memory."); return -1; }
+    if (nc_bundle_detect(z, zn)) {          /* a GD game folder (mods/<id>/mod.json ...): install those mod folders, never the exe */
+        nc_bundle_result br;
+        nc_post bp = {0};
+        char bkey[17], bwhen[24];
+        snprintf(bkey, sizeof bkey, "%016llx", (unsigned long long) nc_fnv64(z, zn));
+        nc_iso((int64_t) time(NULL), bwhen, sizeof bwhen);
+        bp.title = nc_basename(filename); bp.author = ""; bp.page = ""; bp.updated = bkey; bp.installed_at = bwhen; bp.stage = ""; bp.local_key = bkey; bp.local_file = nc_basename(filename);
+        rc = nc_bundle_install(mods, &bp, z, zn, env, nlz_bundle_env, &br, msg, mcap, logf);
+        res->installed = br.installed; res->files = br.files; for (i = 0; i < br.installed && i < 8; ++i) nc_copy(res->mods[res->nmods++], 64, br.ids[i]);
+        if (br.notes[0]) { size_t l = strlen(msg); snprintf(msg + l, mcap - l, "%s", br.notes); }   /* a local zip has no details page: the notes ride in the message */
+        free(names);
+        return rc;
+    }
     n = nc_zip_list(z, zn, names, NZ_MAX_ENTRIES, msg, mcap);
     if (n < 0) goto done;
     for (i = 0; i < n; ++i) {

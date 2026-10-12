@@ -33,6 +33,9 @@ typedef struct {
     int downloads, likes;
     int f0, nf, nf_total;               /* the files in the pool: [f0, f0 + nf); nf_total: what the API listed (may exceed NC_MAX_FILES_PER_MOD) */
     unsigned fmask;                     /* bit i: a costume file for nc_fighters[i] */
+    char bundle[96];                    /* "a,b": the GD mod folders (mods/<id>/) the post's zip carries (GET /mods/{id} archive_files); "" when it is not such a zip */
+    int bexe;                           /* 1: the same zip also carries a melee-pc.exe at its root (never installed; the installer says whether it is newer) */
+    int tries;                          /* single-post refetches this session that found no files (not saved; carried over while the post is unchanged) */
 } nc_mod;
 
 typedef struct {
@@ -162,10 +165,20 @@ static void nc_cat_remove_at(nc_catalog *c, int at) {
     ++c->version;
 }
 
-/* Insert or replace the mod in JSON node `node`. Returns 1 added, 2 replaced, 0 skipped (no id). */
+/* a mod folder name inside a GD mod zip: 1..40 of [A-Za-z0-9_-], not starting with '-' */
+static int nc_bundle_id_ok(const char *s, size_t n) {
+    size_t i;
+    if (n < 1 || n > 40 || s[0] == '-') return 0;
+    for (i = 0; i < n; ++i) if (!isalnum((unsigned char) s[i]) && s[i] != '_' && s[i] != '-') return 0;
+    return 1;
+}
+
+/* Insert or replace the mod in JSON node `node`. Returns 1 added, 2 replaced, 0 skipped (no id).
+ * The bulk list can be captured before Nucleus has processed a post's archive (files_total 0, no screenshots, no archive_files); a later copy of the SAME post
+ * (same updated_at) that arrives in that thin form must not wipe what a single-post refetch filled in, so the older record's files, pictures and bundle are kept. */
 static int nc_cat_apply(nc_catalog *c, const nj_doc *d, int node) {
     nc_mod m;
-    int id = (int) nj_gnum(d, node, "id", -1), at, files, e, nfiles = 0, listed = 0;
+    int id = (int) nj_gnum(d, node, "id", -1), at, files, e, nfiles = 0, listed = 0, af, have_af = 0;
     const char *s;
     if (id <= 0 || d->n[node].type != NJ_OBJ) return 0;
     memset(&m, 0, sizeof m);
@@ -243,7 +256,43 @@ static int nc_cat_apply(nc_catalog *c, const nj_doc *d, int node) {
     m.nf = nfiles;
     m.tab = nc_tab_of(m.type, m.cmask);
     m.nf_total = (int) nj_gnum(d, node, "files_total", listed);
+    af = nj_get(d, node, "archive_files");
+    if (af >= 0 && d->n[af].type == NJ_ARR) {              /* the single-post record: the zip's entries. "mods/<id>/..." folders make it a GD mod zip */
+        size_t bl = 0;
+        have_af = 1;
+        for (e = d->n[af].first; e >= 0; e = d->n[e].next) {
+            const char *fn = d->n[e].type == NJ_OBJ ? nj_gstr(d, e, "filename", "") : d->n[e].type == NJ_STR ? d->pool + d->n[e].str : "";
+            const char *sl;
+            if (!strcmp(fn, "melee-pc.exe")) { m.bexe = 1; continue; }
+            if (strncmp(fn, "mods/", 5) != 0) continue;
+            sl = strchr(fn + 5, '/');
+            if (!sl || !nc_bundle_id_ok(fn + 5, (size_t) (sl - fn - 5)) || !sl[1]) continue;
+            {
+                size_t n = (size_t) (sl - fn - 5), p = 0;
+                int dup = 0;
+                while (m.bundle[p]) {                     /* already listed? */
+                    size_t q = p;
+                    while (m.bundle[q] && m.bundle[q] != ',') ++q;
+                    if (q - p == n && !strncmp(m.bundle + p, fn + 5, n)) { dup = 1; break; }
+                    p = m.bundle[q] ? q + 1 : q;
+                }
+                if (dup || bl + n + 2 >= sizeof m.bundle) continue;
+                if (bl) m.bundle[bl++] = ',';
+                memcpy(m.bundle + bl, fn + 5, n); bl += n; m.bundle[bl] = '\0';
+            }
+        }
+    } else {                                                 /* the cache */
+        nc_copy(m.bundle, sizeof m.bundle, nj_gstr(d, node, "bundle", ""));
+        m.bexe = (int) nj_gnum(d, node, "bexe", 0);
+    }
     at = nc_cat_find(c, id);
+    if (at >= 0 && !strcmp(c->m[at].updated, m.updated)) {
+        const nc_mod *old = &c->m[at];
+        m.tries = old->tries;
+        if (!have_af && !m.bundle[0] && old->bundle[0]) { memcpy(m.bundle, old->bundle, sizeof m.bundle); m.bexe = old->bexe; }
+        if (!m.nshots && old->nshots) { memcpy(m.shot, old->shot, sizeof m.shot); m.nshots = old->nshots; }
+        if (!have_af && m.nf == 0 && old->nf > 0) { m.f0 = old->f0; m.nf = old->nf; m.nf_total = old->nf_total; m.cmask = old->cmask; m.fmask = old->fmask; m.tab = old->tab; }
+    }
     if (at >= 0) { c->m[at] = m; ++c->version; return 2; }
     if (c->n == c->cap) {
         int nc = c->cap ? c->cap * 2 : 512;
@@ -319,6 +368,7 @@ static void nc_write_mod(nj_buf *b, const nc_catalog *c, const nc_mod *m) {
     nj_puts(b, "]");
     nj_puts(b, ",\"created_at\":"); nj_qstr(b, m->created);
     nj_puts(b, ",\"updated_at\":"); nj_qstr(b, m->updated);
+    if (m->bundle[0]) { nj_puts(b, ",\"bundle\":"); nj_qstr(b, m->bundle); nj_printf(b, ",\"bexe\":%d", m->bexe); }
     nj_printf(b, ",\"download_count\":%d,\"like_count\":%d,\"files_total\":%d,\"files\":[", m->downloads, m->likes, m->nf_total);
     for (i = 0; i < m->nf; ++i) {
         const nc_file *f = &c->f[m->f0 + i];
@@ -491,7 +541,8 @@ static const char *nc_why_not_files(const nc_mod *m, const nc_file *files) {
         if (!nz && ptr) return "Download is an external link. Download the zip yourself, put it in mods/_incoming, then use the Incoming tab. GD does not follow external links.";
     }
     if (m->type == NC_T_PATCH) return "xdelta patch: not a mod (it patches the whole disc).";
-    if (m->nf == 0) return "No files listed in this post.";
+    if (m->bundle[0]) return "";                              /* a GD mod zip: the installer reads the mods/<id>/ folders and ignores the game exe */
+    if (m->nf == 0) return "Nucleus lists no files for this post yet.";
     for (i = 0; i < m->nf; ++i) {
         const nc_file *f = &files[i];
         const char *why = nc_cat_why_not(f->cat, f->supported);
@@ -679,6 +730,52 @@ static int nc_apply_removed(const nc_sync_io *io, nc_catalog *c, const char *bod
     return n;
 }
 
+/* One mod's record (the body of GET /mods/{id}) merged into the catalog. 1: it is in the catalog now. */
+static int nc_apply_one(const nc_sync_io *io, nc_catalog *c, const char *body) {
+    nj_doc d;
+    int root = nj_parse(&d, body), data, ok = 0;
+    if (root >= 0 && (data = nj_get(&d, root, "data")) >= 0) {
+        if (io && io->lock) io->lock(io->user);
+        ok = nc_cat_apply(c, &d, data) != 0;
+        if (io && io->unlock) io->unlock(io->user);
+    }
+    nj_free(&d);
+    return ok;
+}
+
+/* The bulk list is sometimes captured before Nucleus has processed a new post's archive (files_total 0, no screenshots): re-ask for those posts one by one.
+ * Only recent posts (a post that has had no files for a month has none), at most NC_RECHECK_MAX per run, and each at most NC_RECHECK_TRIES times a session. */
+#define NC_RECHECK_MAX 6
+#define NC_RECHECK_TRIES 3
+#define NC_RECHECK_AGE (30 * 86400)
+static int nc_recheck_empty(nc_catalog *c, const nc_sync_io *io) {
+    int ids[NC_RECHECK_MAX], n = 0, i, got = 0;
+    char cutoff[32], url[300], msg[120];
+    nc_resp r;
+    nc_iso(io->now(io->user) - NC_RECHECK_AGE, cutoff, sizeof cutoff);
+    if (io->lock) io->lock(io->user);
+    for (i = c->n - 1; i >= 0 && n < NC_RECHECK_MAX; --i) {
+        const nc_mod *m = &c->m[i];
+        if (m->nf == 0 && m->nf_total == 0 && !m->bundle[0] && m->tries < NC_RECHECK_TRIES && strcmp(m->created, cutoff) > 0) ids[n++] = m->id;
+    }
+    if (io->unlock) io->unlock(io->user);
+    for (i = 0; i < n; ++i) {
+        int at;
+        if (io->stop && io->stop(io->user)) break;
+        io->sleep_ms(io->user, 700);
+        snprintf(url, sizeof url, "%s/mods/%d", nc_api_base, ids[i]);
+        if (nc_get(io, url, &r, msg, sizeof msg) < 0) {
+            if (r.status < 400 || r.status >= 500) break;     /* no answer: stop, try next poll. A 4xx (hidden / gone) is counted as a try below */
+            r.body = NULL;
+        } else { if (nc_apply_one(io, c, r.body)) ++got; free(r.body); }
+        if (io->lock) io->lock(io->user);
+        at = nc_cat_find(c, ids[i]);
+        if (at >= 0 && c->m[at].nf == 0 && !c->m[at].bundle[0]) ++c->m[at].tries;
+        if (io->unlock) io->unlock(io->user);
+    }
+    return got;
+}
+
 /* Run one sync. Returns 1 when it was too soon (nothing fetched), 0 when it finished, -1 when it gave up (s->msg says why; the catalog keeps what
  * arrived). force: ignore the 10-minute rule (a person pressed Refresh) but never the back-off after a failure. */
 static int nc_sync_run(nc_sync *s, nc_catalog *c, const nc_sync_io *io, int force) {
@@ -743,6 +840,7 @@ static int nc_sync_run(nc_sync *s, nc_catalog *c, const nc_sync_io *io, int forc
         if (n < 0) { snprintf(s->msg, sizeof s->msg, "SSBM Nucleus sent something unreadable."); s->next_ok = io->now(io->user) + NC_POLL_SECONDS; return -1; }
         if (!next[0]) break;
     }
+    nc_recheck_empty(c, io);
     s->since = start;
     s->last_poll = start;
     s->next_ok = 0;

@@ -16,7 +16,7 @@ typedef struct { const char *name; const uint8_t *data; size_t len; } nst_entry;
 /* a stored zip of the entries; returns its length (out must hold everything) */
 static size_t nst_zip(const nst_entry *e, int n, uint8_t *out) {
     size_t o = 0, cd, i;
-    uint32_t offs[8];
+    uint32_t offs[64];
     int k;
     for (k = 0; k < n; ++k) {
         size_t nl = strlen(e[k].name);

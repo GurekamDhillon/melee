@@ -48,7 +48,7 @@ extern void *gw_DVDReadFileAlloc(const char *path, uint32_t *out_size);
 #define NE_WANT_TICKS 180            /* a picture want that was not renewed for this many ticks (3 s) is dropped */
 #define NE_DL_CAP (400ll * 1024 * 1024)
 
-typedef struct { int kind, id; char path[500]; } ne_job; /* 2 uninstall, 4 toggle, 5 local zip; one file worker serializes all writes */
+typedef struct { int kind, id; char path[500]; } ne_job; /* 2 uninstall, 4 toggle, 5 local zip, 6 refetch one post's record; one file worker serializes all writes */
 typedef struct { nlz_file file; int id, present, state; char msg[320]; } ne_incoming;
 
 enum { NE_PIC_FREE, NE_PIC_WANT, NE_PIC_BUSY, NE_PIC_READY, NE_PIC_FAILED };
@@ -74,6 +74,8 @@ static struct {
     int job_state;
     int64_t job_at;
     char job_msg[160];
+    int note_id; char note[240];     /* the last GD-mod-zip install's notes for that post (kept mods, a newer game build, a mod that needs a newer engine): shown in its details */
+    int view_refetch;                /* single-post refetches the browser asked for this session (a cap, see ne_want_refetch) */
     nc_inst inst[NE_INST_MAX]; int ninst;
     int restart;
     nq_queue dq;                     /* the download queue */
@@ -397,6 +399,30 @@ static int ne_refetch_mod(int id, int *status) {
     return ok;
 }
 
+/* A post whose catalog record lists no files (the bulk list was captured before Nucleus processed the archive) is asked for again, one GET /mods/{id}: when the player looks at it
+ * (ne_src_row), and before it is installed (ne_queue_step). At most NC_RECHECK_TRIES a session per post (nc_mod.tries) and NE_VIEW_REFETCH_MAX for the whole session, so scrolling a list of
+ * old empty posts does not become a crawl. 1: a job was queued. */
+#define NE_VIEW_REFETCH_MAX 60
+static int ne_enqueue(ne_job j);
+static int ne_want_refetch(int id) {
+    int at, ok = 0;
+    if (!NE.network || ne_locked()) return 0;
+    ne_lock();
+    at = nc_cat_find(&NE.cat, id);
+    if (at >= 0) {
+        nc_mod *m = &NE.cat.m[at];
+        if (m->nf == 0 && !m->bundle[0] && m->tries < NC_RECHECK_TRIES && NE.view_refetch < NE_VIEW_REFETCH_MAX) { ++m->tries; ++NE.view_refetch; ok = 1; }
+    }
+    ne_unlock();
+    if (ok) {
+        ne_job j;
+        memset(&j, 0, sizeof j);
+        j.kind = 6; j.id = id;
+        if (!ne_enqueue(j)) ok = 0;
+    }
+    return ok;
+}
+
 /* ---- the install (the queue's worker calls it) ---- */
 
 static int ne_install_impl(int id, char *msg, size_t mcap, uint8_t **zipout);
@@ -517,6 +543,52 @@ paused:
     return -2;
 }
 
+/* The running exe's build time and the engine-feature check, for the bundle installer (and the local-zip path through nlz_bundle_env). */
+static nc_bundle_env ne_benv;
+static void ne_bundle_env_init(void) {
+    const uint8_t *base = (const uint8_t *) GetModuleHandleA(NULL);
+    ne_benv.host_stamp = base ? nc_pe_stamp(base, 4096) : 0;
+    ne_benv.engine_miss = gw_Mods_JsonEngineMiss;
+    nlz_bundle_env = &ne_benv;
+}
+
+/* A GD mod zip post (nc_mod.bundle: the archive carries mods/<id>/ folders, usually with melee-pc.exe at its root): download the zip once (cached by version), install the folders,
+ * ignore the exe and say when it is newer than ours. Never replaces the running game. */
+static int ne_install_bundle(const nc_mod *m, char *msg, size_t mcap, uint8_t **zipout) {
+    nch_result zr;
+    char url[400], ztag[96], iso[24];
+    nc_post post;
+    nc_loose_env env;
+    nc_bundle_result res;
+    int rc;
+    nc_download_url(m->id, 0, url, sizeof url);
+    snprintf(ztag, sizeof ztag, "z%d_%s", m->id, m->updated);
+    NE.cur_zip = 1;
+    if (ne_dl(url, 160u * 1024 * 1024, &zr, ztag, 0, 1) < 0) {
+        NE.cur_zip = 0;
+        if (NE.interrupt) { free(zr.data); snprintf(msg, mcap, "Paused."); return -2; }
+        ne_log("install %d: zip download: %s (HTTP %d)", m->id, zr.err[0] ? zr.err : "failed", zr.status);
+        snprintf(msg, mcap, "%s", nc_http_reason(zr.status));
+        free(zr.data);
+        return -1;
+    }
+    NE.cur_zip = 0;
+    *zipout = zr.data;
+    ne_item_pct(85);
+    memset(&post, 0, sizeof post);
+    ne_now_iso(iso, sizeof iso);
+    post.id = m->id; post.title = m->title; post.author = m->author; post.page = m->page; post.updated = m->updated; post.installed_at = iso; post.stage = m->stage;
+    memset(&env, 0, sizeof env);
+    env.ref = ne_env_ref; env.exists = ne_env_exists; env.can_commit = ne_env_can_commit;
+    rc = nc_bundle_install(NE.mods, &post, zr.data, zr.len, &env, &ne_benv, &res, msg, mcap, ne_log_line);
+    ne_lock();
+    NE.note_id = m->id;
+    snprintf(NE.note, sizeof NE.note, "%s", res.notes[0] ? res.notes + 1 : "");
+    if (rc == 0 || res.installed > 0) NE.restart = 1;
+    ne_unlock();
+    return rc;
+}
+
 static int ne_install_impl(int id, char *msg, size_t mcap, uint8_t **zipout) {
     nc_mod m;
     nc_file files[NC_MAX_FILES_PER_MOD];
@@ -528,6 +600,7 @@ static int ne_install_impl(int id, char *msg, size_t mcap, uint8_t **zipout) {
     first_err[0] = '\0';
     if (!ne_copy_mod(id, &m, files)) { snprintf(msg, mcap, "That mod is not in the catalog."); return -1; }
     if (nc_why_not_files(&m, files)[0]) { snprintf(msg, mcap, "%s", nc_why_not_files(&m, files)); return -1; }
+    if (m.bundle[0]) return ne_install_bundle(&m, msg, mcap, zipout);
     if (m.type != NC_T_COSTUME) return ne_install_loose(&m, files, msg, mcap, zipout);
     for (i = 0; i < m.nf; ++i) {
         int k, seen = 0;
@@ -723,8 +796,8 @@ static int ne_toggle(int id, char *msg, size_t mcap) {
 
 /* Take the first queued mod and install it. Returns 1 when it did something (so the loop asks again at once), 0 when there was nothing to do now. */
 static int ne_queue_step(void) {
-    int idx, id, in_cat, rc, status = 0, refetched = 0;
-    char title[80], msg[200];
+    int idx, id, in_cat, rc, status = 0, refetched = 0, empty = 0;
+    char title[80], msg[400];
     if (!NE.network || ne_locked()) return 0;                   /* local-only callers never start downloads */
     ne_lock();
     if (!NE.dq.processing) { ne_unlock(); return 0; }
@@ -737,12 +810,16 @@ static int ne_queue_step(void) {
     id = NE.dq.it[idx].id;
     snprintf(title, sizeof title, "%s", NE.dq.it[idx].title);
     in_cat = nc_cat_find(&NE.cat, id) >= 0;
+    {   /* a record with no files at all may just be the bulk list's early copy of the post */
+        int at = nc_cat_find(&NE.cat, id);
+        empty = at >= 0 && NE.cat.m[at].nf == 0 && !NE.cat.m[at].bundle[0];
+    }
     nq_mark_running(&NE.dq, id);
     NE.cur_id = id; NE.cur_zip = 0; NE.interrupt = 0;
     ne_dq_changed();
     ne_unlock();
     /* the mod's record: from the catalog, else (or when the catalog is an older cache not yet replaced) straight from the API */
-    if (!in_cat || NE.cache_stale) {
+    if (!in_cat || NE.cache_stale || empty) {
         refetched = ne_refetch_mod(id, &status);
         if (!refetched && !in_cat) {
             snprintf(msg, sizeof msg, "%s", status == 404 ? "It is not on SSBM Nucleus any more." : status == 0 ? "SSBM Nucleus could not be reached. Check the connection and retry." : nc_http_reason(status));
@@ -850,6 +927,12 @@ static DWORD WINAPI ne_files_thread(LPVOID arg) {
         if (NE.qh != NE.qt) { j = NE.q[NE.qh]; NE.qh = (NE.qh + 1) % NE_QUEUE; have = 1; }
         ne_unlock();
         if (scan) ne_scan_incoming();
+        if (have && j.kind == 6) {
+            int st = 0;
+            if (ne_refetch_mod(j.id, &st)) ne_log("refetch of post %d: record updated", j.id);
+            Sleep(500);
+            continue;
+        }
         if (have) {
             char msg[400];
             int rc = j.kind == 5 ? ne_install_local(&j, msg, sizeof msg) : j.kind == 4 ? ne_toggle(j.id, msg, sizeof msg) : ne_uninstall(j.id, msg, sizeof msg);
@@ -1026,6 +1109,7 @@ static void ne_start(int network) {
         nc_mkdirs(NE.art);
         nc_mkdirs(NE.thumbs);
         NE.inited = 1;
+        ne_bundle_env_init();
         cleaned = nq_clean_staging(NE.mods);                    /* an install a crash cut short left only a .staging-* folder */
         nloaded = nq_load(&NE.dq, NE.qpath);                    /* the queue of the last session; a RUNNING entry is QUEUED again */
         nq_prefs_load(&NE.pref, NE.prefpath);
@@ -1081,7 +1165,7 @@ static void ne_fill_row_from_mod(const nc_mod *m, const nc_file *files, AtNcRow 
     r->id = m->id;
     snprintf(r->title, sizeof r->title, "%s", m->title);
     snprintf(r->author, sizeof r->author, "%s", m->author);
-    snprintf(r->kind, sizeof r->kind, "%s", (m->type == NC_T_OTHER || m->type == NC_T_GAMEPLAY) ? nc_tab_label[m->tab] : nc_type_label[m->type]);
+    snprintf(r->kind, sizeof r->kind, "%s", m->bundle[0] ? (strstr(m->tags, "ighter") ? "Fighter" : "Mod pack") : (m->type == NC_T_OTHER || m->type == NC_T_GAMEPLAY) ? nc_tab_label[m->tab] : nc_type_label[m->type]);
     r->tab = m->tab; r->enabled = 0;
     snprintf(r->updated, sizeof r->updated, "%.10s", m->updated);
     snprintf(r->page, sizeof r->page, "%s", m->page);
@@ -1127,6 +1211,7 @@ static int ne_src_row(void *u, int id, AtNcRow *r) {
         return 1;
     }
     found = ne_copy_mod(id, &m, files);
+    if (found && m.nf == 0 && !m.bundle[0]) ne_want_refetch(id);
     ne_lock();
     for (i = 0; i < NE.ninst; ++i) if (NE.inst[i].id == id) { inst = i; break; }
     qi = nq_find(&NE.dq, id);
@@ -1135,6 +1220,11 @@ static int ne_src_row(void *u, int id, AtNcRow *r) {
         why = nc_why_not_files(&m, files);
         r->installable = why[0] == '\0';
         snprintf(r->reason, sizeof r->reason, "%s", why);
+        if (NE.note_id == id && NE.note[0]) {                     /* what the last GD-mod-zip install of this post had to say, ahead of the description */
+            char tmp[320];
+            snprintf(tmp, sizeof tmp, "%s", r->desc);
+            snprintf(r->desc, sizeof r->desc, "NOTE: %s  %s", NE.note, tmp);
+        }
     } else if (inst >= 0) {
         memset(r, 0, sizeof *r);
         r->tex = -1; r->thumb = -1; r->qstate = AT_NC_Q_NONE; r->id = id;

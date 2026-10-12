@@ -14,6 +14,7 @@ static int g_fail, g_checks;
 #include "nucleus_stage_tests.h"
 #include "nucleus_fighter_tests.h"
 #include "nucleus_local_tests.h"
+#include "nucleus_bundle_tests.h"
 
 /* ---- the fake network ---- */
 static char g_urls[32][700];
@@ -673,7 +674,7 @@ int main(void) {
         CHECK(ni_make(png, pn, NI_ICON, &gx, &gl, err, sizeof err) == 0 && nc_be32(gx + 12) == 32 && nc_be32(gx + 16) == 32);
         free(gx);
         /* a WebP (or anything but a PNG) is refused, not decoded */
-        CHECK(ni_make((const uint8_t *) "RIFF\x20\0\0\0WEBPVP8 not decoded here at all", 40, NI_THUMB, &gx, &gl, err, sizeof err) < 0 && strstr(err, "not a PNG"));
+        CHECK(ni_make((const uint8_t *) "RIFF\x20\0\0\0WEBPVP8 not decoded here at all", 40, NI_THUMB, &gx, &gl, err, sizeof err) < 0 && strstr(err, "not a PNG or JPEG"));
         CHECK(ni_make((const uint8_t *) "GIF89a not supported at all", 27, NI_THUMB, &gx, &gl, err, sizeof err) < 0);
         CHECK(ni_make(png, 20, NI_THUMB, &gx, &gl, err, sizeof err) < 0);                    /* a truncated PNG is refused, not drawn */
         CHECK(ni_make(png, pn, 9, &gx, &gl, err, sizeof err) < 0);
@@ -684,6 +685,7 @@ int main(void) {
     run_stage_tests();
     run_fighter_tests();
     run_local_zip_tests();
+    run_bundle_tests();
     printf("nucleus-core: %d checks, %d failed\n", g_checks, g_fail);
     return g_fail ? 1 : 0;
 }

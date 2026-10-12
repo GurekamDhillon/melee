@@ -355,6 +355,16 @@ local function kit_ok() return K ~= nil and K.available() end
 
 local function say(text, color) notice, notice_until = { text, color or ACCENT }, gd.time() + 2.2 end
 
+-- The live size control (gd.set_scale: offline, forks the timeline; 0.5-2.0). Returns the value now in force or nil, reason.
+local function lab_size(port, v)
+  local p = gd.player(port)
+  if not (p and gd.set_scale) then return nil, "no such fighter or no gd.set_scale" end
+  v = math.max(0.5, math.min(2.0, math.floor(v * 20 + 0.5) / 20))
+  local ok, err = pcall(gd.set_scale, port, v)
+  if not ok then return nil, (tostring(err):gsub("^.-: ", "")) end
+  return v
+end
+
 local function log(text, color)
   table.insert(log_lines, { gd.match().frame, text, color or MUTED })
   while #log_lines > LOG_MAX do table.remove(log_lines, 1) end
@@ -791,6 +801,14 @@ local TABS = {
       desc = "Whose timeline, hitbox data and inspector you are looking at. Left / right to switch.",
       value = function() return fighter_name(focus) end,
       run = function() next_port(1) end, adjust = function(d) next_port(d) end },
+    { label = "Size", icon = "lab_focus",
+      desc = "The focused fighter's scale, 0.50 to 2.00 in steps of 0.05. Hurtboxes, reach, ECB and camera follow, as for a fighter built that size.",
+      value = function() local p = gd.player(focus) return p and p.scale and string.format("%.2f", p.scale) or "-" end,
+      adjust = function(d)
+        local p = gd.player(focus)
+        local v, why = lab_size(focus, (p and p.scale or 1) + d * 0.05)
+        if v then say(string.format("P%d size %.2f", focus, v)) else say(why, DANGER) end
+      end },
     -- debug movement (docs/scripting.md, gd.fly): the focused fighter flies through everything
     { label = "Fly (noclip)", icon = "lab_points", key = "F11",
       desc = "The focused fighter flies: stick moves it, A slow, B fast. No gravity, stage, blast zones or hurtboxes.",
@@ -6738,7 +6756,7 @@ local function help_lines()
   for _, k in ipairs(GLOBAL_KEYS) do g[#g + 1] = k[1] .. " " .. k[2] end
   out[#out + 1] = "  global: " .. table.concat(g, ", ")
   out[#out + 1] = "  console: lab help | status | mode <name> | set <mode>.<toggle> on|off | hide | menu [tab] | ui on|off"
-  out[#out + 1] = "           port N | history [seconds] | back N | dump [N] | move <id> [frame] | events"
+  out[#out + 1] = "           port N | scale S | history [seconds] | back N | dump [N] | move <id> [frame] | events"
   out[#out + 1] = "           states | save | load <file> | rename <file> <name> | delete <file> | reload [seconds]"
   out[#out + 1] = "           rec start [name] | stop | mark | play [name] [map] [loop] | end | list | trim | keep-last | save-history | export-slp (F7, SHIFT+F7)"
   out[#out + 1] = "           replay (resume the logged input after a rewind) | live (stop replaying, go live)"
@@ -6787,6 +6805,13 @@ gd.command("lab", function(arg)
     if menu.ui.set then menu.ui.set(rest) else gd.log("lab ui: gd.ui is not available in this build") end
   elseif cmd == "port" and n then
     focus = n
+  elseif cmd == "scale" then
+    local v = tonumber(rest)
+    if not v then gd.log("lab scale <0.5-2.0>  (the focused fighter's size; now " .. string.format("%.2f", (gd.player(focus) or {}).scale or 0) .. ")")
+    else
+      local r, why = lab_size(focus, v)
+      gd.log(r and string.format("lab scale: P%d %.2f", focus, r) or ("lab scale refused: " .. tostring(why)))
+    end
   elseif cmd == "rec" then
     local sub, a1, a2, a3 = rest:match("^(%S*)%s*(%S*)%s*(%S*)%s*(.-)$")
     local function report(ok, a, b) gd.log(ok and ("ok " .. tostring(a or "")) or ("refused: " .. tostring(b or a))) end

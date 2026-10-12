@@ -5894,6 +5894,7 @@ static int l_lab_common(lua_State *L) {
 
 extern float gw_ScriptGame_LabFloorY(int x_bits, int y_bits, int depth_bits);
 extern int gw_ScriptGame_LabSetShield(int slot, int health_bits);
+extern int gw_ScriptGame_LabSetScale(int slot, int scale_bits);
 
 /* gd.floor_below(x, y [, depth]) -> the y of the first floor line under (x, y) within `depth`
    units (default 200), or nil. Read-only (mpCheckFloor), in a match only. Stage D's dummy. */
@@ -5922,6 +5923,19 @@ static int l_set_shield(lua_State *L) {
     gs_require_offline(L, "set_shield");
     gs_rw_branch();
     gw_ScriptGame_LabSetShield(slot, gs_fbits(h < 0.0f ? 0.0f : h));
+    return 0;
+}
+
+/* gd.set_scale(port, s): the Lab's live size control, 0.5..2.0 (clamped). Sets the fighter's model
+   scale and what retail derives from it (hurt/hitbox scaling, ECB, camera box, attributes), like a
+   fighter built at that size. Offline only (refused in netplay/rollback); forks the timeline. */
+static int l_set_scale(lua_State *L) {
+    int slot = gs_slot_arg(L, 1);
+    float v = (float) luaL_checknumber(L, 2);
+    gs_require_offline(L, "set_scale");
+    if (!(v == v) || v <= 0.0f) luaL_error(L, "gd.set_scale: scale must be a positive number");
+    gs_rw_branch();
+    gw_ScriptGame_LabSetScale(slot, gs_fbits(v < 0.5f ? 0.5f : (v > 2.0f ? 2.0f : v)));
     return 0;
 }
 
@@ -7100,7 +7114,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"motion_list", l_motion_list}, {"kb_preview", l_kb_preview}, {"rollbacks", l_rollbacks},
     {"rollbacks_clear", l_rollbacks_clear}, {"lab_env", l_lab_env}, {"lab_now", l_lab_now},
     /* stage D */
-    {"lab_common", l_lab_common}, {"floor_below", l_floor_below}, {"set_shield", l_set_shield},
+    {"lab_common", l_lab_common}, {"floor_below", l_floor_below}, {"set_shield", l_set_shield}, {"set_scale", l_set_scale},
     {"stage_add_platform", l_stage_add_platform}, {"stage_add_line", l_stage_add_line},
     {"stage_add_model", l_stage_add_model},
     /* arena-hooks */

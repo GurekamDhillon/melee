@@ -52,7 +52,7 @@ gd = setmetatable({
   kb_preview = function(v, t) return { kb = 10, level = 1, tumble = false, percent = 0, weight = 100, di = "none",
     vx = 1, vy = 1, angle = 45, angle_di = 45, hitstun = 20, points = { { 1, 1 } } } end,
   hurtboxes = function() return { { ax = 0, ay = 0, bx = 0, by = 5, radius = 2, state = "normal" } } end,
-  set_shield = function(port, v) P[port].shield = v end, set_percent = function(port, v) P[port].percent = v end,
+  set_shield = function(port, v) P[port].shield = v end, set_scale = function(port, v) P[port].scale = v end, set_percent = function(port, v) P[port].percent = v end,
   fly = function(port, m) -- debug movement: nil reads; true / "on" / "toggle" / "place" / "off" / false
     if m == nil then return flying[port] == true end
     if m == "toggle" then flying[port] = not flying[port] elseif m == true or m == "on" then flying[port] = true else flying[port] = false end

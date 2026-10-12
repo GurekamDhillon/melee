@@ -18,6 +18,10 @@
 #include <melee/ft/ftdata.h>
 #include <melee/ft/ftparts.h>
 #include <melee/ft/ftcommon.h>
+#include <melee/ft/ftcamera.h>
+#include <melee/ft/ftchangeparam.h>
+#include <melee/ft/ftlib.h>
+#include <melee/ft/ft_081B.h>
 #include <melee/lb/lbcollision.h>
 #include <workbench_render.h>
 #include <melee/ft/inlines.h>
@@ -3603,6 +3607,36 @@ int ScriptGame_LabSetShield(int slot, int health_bits)
     }
     h.i = health_bits;
     fp->shield_health = h.f;
+    return 0;
+}
+
+/* gd.set_scale: the Lab's live size control. Does what retail does when a fighter changes size
+ * (the Metal Box / transform path): ftLib_SetScale (x34_scale.y, the joint scale, item hold
+ * scale), ftCo_800D105C (co_attrs rebuilt from the file and scaled), ftCamera_80076064 (camera
+ * box), ft_80081C88 (ECB, ledge snap). x34_scale.x, the base scale, moves too so the fighter
+ * behaves like one built at that size (a respawn keeps it). Hurtbox/hitbox capsules are scaled
+ * where they are used, from x34_scale.y. A gameplay write: gw_script.c forks the timeline. */
+int ScriptGame_LabSetScale(int slot, int scale_bits)
+{
+    Fighter* fp = script_fighter(slot);
+    union {
+        int i;
+        float f;
+    } s;
+    if (fp == NULL) {
+        return -1;
+    }
+    s.i = scale_bits;
+    if (s.f < 0.5f) {
+        s.f = 0.5f;
+    } else if (s.f > 2.0f) {
+        s.f = 2.0f;
+    }
+    fp->x34_scale.x = s.f;
+    ftLib_SetScale(fp->gobj, s.f);
+    ftCo_800D105C(fp->gobj);
+    ftCamera_80076064(fp);
+    ft_80081C88(fp->gobj, s.f);
     return 0;
 }
 

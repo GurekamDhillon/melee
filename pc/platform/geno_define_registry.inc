@@ -910,6 +910,16 @@ int gw_Geno_ThrowBankLimit(int def)
     }
 }
 
+/* The throw-bank region (shim_os.c): MEM1 outside heap 0 that holds the resident throw-bank arenas. Returns its start, *size its length. */
+extern void gw_throw_persist_region(uint32_t* base, uint32_t* size);
+unsigned gw_Geno_ThrowRegion(unsigned* size)
+{
+    uint32_t base = 0, n = 0;
+    gw_throw_persist_region(&base, &n);
+    *size = n;
+    return base;
+}
+
 /* A .gnsnd (tools/geno/audio.py): 32-byte big-endian header, then s16 big-endian samples. Decoded to native s16, or NULL (and *why) when it is not a
  * valid v1 file. Pure: the tests feed it blobs. */
 static int16_t* gn_gnsnd_decode(const unsigned char* b, uint32_t len, int* frames, int* channels, const char** why)

@@ -90,8 +90,10 @@ uint32_t gw_aram_size;
  * plus a heavy stage. Growing both MEM1 and heap 3 preserves the main heap.
  * OSGetConsoleSimulatedMemSize stays at 24 MiB (shim_os.c), so gmmain.c does
  * not withhold 24 MiB as it would on a 48 MiB dev kit. Snapshot page tables,
- * masks and bounds use gw_mem1_size; cold pages are shared (gw_snap.c). */
-#define GW_MEM1_SIZE (48u * 1024u * 1024u)
+ * masks and bounds use gw_mem1_size; cold pages are shared (gw_snap.c).
+ * 60 MiB: the last 12 MiB (0xC00000) is the Geno throw-bank region (shim_os.c, GW_THROW_REGION_SIZE),
+ * withheld from the arena so heap 0 keeps its size. Top is 0x83C00000, below 0x84000000. */
+#define GW_MEM1_SIZE (60u * 1024u * 1024u)
 #define GW_ARAM_SIZE (32u * 1024u * 1024u) /* AllA's extra 16 MB, lbheap.c */
 
 /* Nonzero when MEM1 was allocated with MEM_WRITE_WATCH (gw_snap.c's dirty-page savestates use

@@ -2548,9 +2548,16 @@ void ftData_80085B10(Fighter* fp)
         /* A Geno base "none" define's victims play the thrown rows of a retail stand-in ("thrown_as", Captain
          * Falcon by default): load its rows and animation bank with the define. */
         extern int Geno_DefineThrownAs(int kind);
-        int as = Geno_DefineThrownAs((int) kind);
+        extern int Geno_DefineThrownAsRow(int kind, int row);
+        int as = Geno_DefineThrownAs((int) kind), row;
         if (as >= 0 && as != (int) kind) {
             ftData_ThrownStandInPrepare(as);
+            for (row = 0; row < 4; row++) {   /* the per-throw stand-ins ("thrown_as" as an object) */
+                int ak = Geno_DefineThrownAsRow((int) kind, row);
+                if (ak >= 0 && ak != as && ak != (int) kind) {
+                    ftData_ThrownStandInPrepare(ak);
+                }
+            }
         }
     }
 #endif

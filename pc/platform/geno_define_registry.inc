@@ -179,16 +179,35 @@ static int gn_define_s6_keys(gn_profile* p, const jdoc* d, int e, int version, c
 {
     int v, c, k;
     p->ai_like = -1; p->ai_set = 0; p->kb_copy = -1; p->thrown_as = 2; /* Captain Falcon */
+    p->thrown_row[0] = p->thrown_row[1] = p->thrown_row[2] = p->thrown_row[3] = -1;
     if (version < 10 && (jd_get(d, e, "ai") >= 0 || jd_get(d, e, "kirby_copy") >= 0 || jd_get(d, e, "thrown_as") >= 0)) {
         gw_log("geno: %s: ai, kirby_copy and thrown_as need \"geno\": 10", where); return 0;
     }
     v = jd_get(d, e, "thrown_as");
     if (v >= 0) {
-        if (d->n[v].type != JN_STR || (p->thrown_as = gn_retail_kind(d->n[v].str)) < 0) {
-            gw_log("geno: %s: thrown_as must name a retail fighter (mario, fox, captain, donkey, kirby, koopa, link, seak, ness, peach, popo, pikachu, samus, yoshi, purin, mewtwo, luigi, mars, zelda, clink, drmario, falco, pichu, gamewatch, ganon, emblem)", where);
+        if (!p->none) { gw_log("geno: %s: thrown_as is for a base \"none\" define (a base \"mario\" define is thrown with Mario's rows)", where); p->thrown_as = 2; return 0; }
+        if (d->n[v].type == JN_OBJ) {
+            /* {"default": <fighter>, "f": <fighter>, "b": ..., "hi": ..., "lw": ...}: each throw's thrown row can come from its own retail thrower (a Falcon back throw, a Mewtwo forward throw) */
+            static const char* const keys[4] = {"f", "b", "hi", "lw"};
+            int c2, k2;
+            for (c2 = d->n[v].first; c2 >= 0; c2 = d->n[c2].next) {
+                int ok = !strcmp(d->n[c2].key, "default");
+                for (k2 = 0; k2 < 4 && !ok; k2++) ok = !strcmp(d->n[c2].key, keys[k2]);
+                if (!ok) { gw_log("geno: %s: thrown_as key \"%s\" is not known (default, f, b, hi, lw)", where, d->n[c2].key); p->thrown_as = 2; return 0; }
+            }
+            c2 = jd_get(d, v, "default");
+            if (c2 >= 0 && (d->n[c2].type != JN_STR || (p->thrown_as = gn_retail_kind(d->n[c2].str)) < 0)) { gw_log("geno: %s: thrown_as.default must name a retail fighter", where); p->thrown_as = 2; return 0; }
+            for (k2 = 0; k2 < 4; k2++) {
+                c2 = jd_get(d, v, keys[k2]);
+                if (c2 < 0) continue;
+                if (d->n[c2].type != JN_STR || (p->thrown_row[k2] = gn_retail_kind(d->n[c2].str)) < 0) {
+                    gw_log("geno: %s: thrown_as.%s must name a retail fighter", where, keys[k2]); p->thrown_as = 2; p->thrown_row[0] = p->thrown_row[1] = p->thrown_row[2] = p->thrown_row[3] = -1; return 0;
+                }
+            }
+        } else if (d->n[v].type != JN_STR || (p->thrown_as = gn_retail_kind(d->n[v].str)) < 0) {
+            gw_log("geno: %s: thrown_as must name a retail fighter (mario, fox, captain, donkey, kirby, koopa, link, seak, ness, peach, popo, pikachu, samus, yoshi, purin, mewtwo, luigi, mars, zelda, clink, drmario, falco, pichu, gamewatch, ganon, emblem) or an object {default, f, b, hi, lw}", where);
             p->thrown_as = 2; return 0;
         }
-        if (!p->none) { gw_log("geno: %s: thrown_as is for a base \"none\" define (a base \"mario\" define is thrown with Mario's rows)", where); p->thrown_as = 2; return 0; }
     }
     if (version < 9 && jd_get(d, e, "audio") >= 0) { gw_log("geno: %s: audio needs \"geno\": 9", where); return 0; }
     v = jd_get(d, e, "ai");
@@ -846,11 +865,44 @@ int gw_Geno_DefineThrownAs(int kind)
     return p < 0 ? -1 : r->p[p].thrown_as;
 }
 
+/* The retail FighterKind whose ThrownF (row 0), ThrownB (1), ThrownHi (2) or ThrownLw (3) a victim of `kind` plays: that throw's own "thrown_as" entry, else the default.
+ * -1 = not a base "none" define. */
+int gw_Geno_DefineThrownAsRow(int kind, int row)
+{
+    gn_registry* r = gn_reg(); int p;
+    if (kind < 0x21) return -1;
+    if (!r->kinds_built) gn_build_kinds(r);
+    if (gn_fm_for_kind(kind) == NULL) return -1;
+    p = gdf_profile_for_kind(&r->definitions, kind);
+    if (p < 0) return -1;
+    return row >= 0 && row < 4 && r->p[p].thrown_row[row] >= 0 ? r->p[p].thrown_row[row] : r->p[p].thrown_as;
+}
+
+/* How many distinct stand-in banks one define needs (its default plus its per-throw entries), for the resident bank budget. */
+static int gn_throw_banks_needed(void)
+{
+    gn_registry* r = gn_reg(); int p, most = 1;
+    for (p = 0; p < r->n; p++) {
+        int ks[5], n = 0, i, j, k;
+        if (!r->p[p].none) continue;
+        ks[n++] = r->p[p].thrown_as;
+        for (i = 0; i < 4; i++) {
+            k = r->p[p].thrown_row[i];
+            if (k < 0) continue;
+            for (j = 0; j < n && ks[j] != k; j++) {}
+            if (j == n) ks[n++] = k;
+        }
+        if (n > most) most = n;
+    }
+    return most;
+}
+
 /* The resident throw stand-in bank budget (ftdata.c, GENO_THROW_BANKS): MELEE_THROW_BANKS lowers or raises it for a test; `def` otherwise. */
 int gw_Geno_ThrowBankLimit(int def)
 {
     const char* e = getenv("MELEE_THROW_BANKS");
-    return e != NULL && *e ? atoi(e) : def;
+    int need = gn_throw_banks_needed();   /* a define with per-throw stand-ins keeps one resident bank per distinct thrower (at most 6) */
+    return e != NULL && *e ? atoi(e) : (need > def ? need : def);
 }
 
 /* A .gnsnd (tools/geno/audio.py): 32-byte big-endian header, then s16 big-endian samples. Decoded to native s16, or NULL (and *why) when it is not a

@@ -100,6 +100,11 @@ int gw_StageSkin_Last(int *ext, char *name, int cap, uint64_t *digest);
  * announced it. Returns 1 when the guest lacks the host's choice (Original is sent instead). */
 int gw_StageSkin_HostToken(int ext, int (*peer_has)(int ext, uint64_t digest), char *out, int cap);
 
+/* Alternate stage folders (an m-ex "dynamic alternate stages" loader stub with a GrXx/ folder of whole stage files): the scene key
+ * alt=<8 hex of the file name's hash, or the name>, and the online host's ";alt=<8 hex>" token (also remembers the host's own pick). */
+int gw_StageSkin_AltSceneSet(const char *value);
+int gw_StageSkin_AltToken(int ext, char *out, int cap);
+
 void gw_stageskin_tests_register(void);
 
 #ifdef __cplusplus

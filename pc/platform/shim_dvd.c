@@ -420,6 +420,172 @@ int gw_DVDSelectStage(int r, int want) {
   return switched;
 }
 
+/* ---- alternate stage folders (m-ex "dynamic alternate stages") ------------------------------------------------
+ * A mod disc built with that m-ex stage project ships a tiny GrXx.dat that is only a LOADER: its PowerPC code lists a folder
+ * named like the stage (GrNBa/) at stage load, picks one file in it and builds the stage from that file; the stub itself has
+ * no real map. The port does not run that code, so the stub used to load as the stage (2 vertices, no models) and crash.
+ * Here the overlay serves the picked alt file in place of the stub instead. The choice is made by gw_stageskin.inc.
+ * Consulted, not copied: the behaviour is read from the file names and the strings of the stub the mod ships
+ * (dynamicAlts.c), nothing of m-ex was copied. */
+#define GW_ALT_MAX 160
+#define GW_ALT_STUB_MAX (512u * 1024u)
+
+static void gw_alt_stem(int r, char *stem, size_t cap) {
+  const char *f = gw_Skin_RetailFile(r);
+  char *dot;
+  snprintf(stem, cap, "%s", f != NULL ? f : "");
+  dot = strrchr(stem, '.');
+  if (dot != NULL) *dot = '\0';
+}
+
+/* the stage's root file entry (GrNBa.dat / GrPs.usd), or -1 */
+static int gw_alt_root(int r, const char *stem) {
+  int i;
+  for (i = 0; i < gw_mod_count; ++i) {
+    const char *d = gw_mod_files[i].disc;
+    size_t n = strlen(stem), l = strlen(d);
+    if (gw_Skin_FileRetail(d) != r || l < n + 4 || strchr(d, '/') != NULL) continue;
+    if (!gw_path_ieq(d + n, ".dat") && !gw_path_ieq(d + n, ".usd")) continue;
+    if (l != n + 4) continue;
+    return i;
+  }
+  return -1;
+}
+
+/* does this file carry the loader's strings? (a real stage is megabytes; the stub a few KB) */
+static int gw_alt_is_stub(const gw_mod_file *m) {
+  FILE *f;
+  unsigned char *buf;
+  size_t n, i;
+  int hit = 0;
+  if (m->size == 0 || m->size > GW_ALT_STUB_MAX) return 0;
+  f = fopen(m->host, "rb");
+  if (f == NULL) return 0;
+  buf = (unsigned char *)malloc(m->size);
+  if (buf == NULL) { fclose(f); return 0; }
+  n = fread(buf, 1, m->size, f);
+  fclose(f);
+  for (i = 0; !hit && i + 13 <= n; ++i) {
+    if (buf[i] == 'd' && memcmp(buf + i, "dynamicAlts.c", 13) == 0) hit = 1;
+    else if (buf[i] == 'n' && i + 20 <= n && memcmp(buf + i, "no valid alts found ", 20) == 0) hit = 1;
+  }
+  free(buf);
+  return hit;
+}
+
+/* "name (L).dat": the loader reads a button tag in the file name; those alts are for a held button, not for the random pool */
+static int gw_alt_tagged(const char *name) {
+  size_t l = strlen(name);
+  const char *dot = strrchr(name, '.');
+  if (dot != NULL) l = (size_t)(dot - name);
+  return l >= 3 && name[l - 1] == ')' && name[l - 3] == '(' && strchr("LRZBXYlrzbxy", name[l - 2]) != NULL;
+}
+
+static int gw_alt_cmp(const void *a, const void *b) {
+  const char *x = *(const char *const *)a, *y = *(const char *const *)b;
+  for (;; ++x, ++y) {
+    int cx = *x >= 'A' && *x <= 'Z' ? *x + 32 : *x, cy = *y >= 'A' && *y <= 'Z' ? *y + 32 : *y;
+    if (cx != cy) return cx - cy;
+    if (cx == 0) return 0;
+  }
+}
+
+/* The alternates of retail stage `r`: names (sorted, case-insensitive), in names[]/idx[]. 0 when the stage file is not a
+ * loader stub or its folder holds no file of the stage file's extension. */
+static int gw_alt_collect(int r, int *root_out, const char **names, int *idx, int cap) {
+  char stem[32];
+  int root, i, n = 0;
+  const char *ext;
+  size_t sl;
+  if (!gw_iso_open() || gw_fst_nodes == 0) return 0;
+  gw_mods_load();
+  gw_alt_stem(r, stem, sizeof stem);
+  if (stem[0] == '\0') return 0;
+  root = gw_alt_root(r, stem);
+  if (root < 0 || !gw_alt_is_stub(&gw_mod_files[root])) return 0;
+  ext = gw_mod_files[root].disc + strlen(stem);
+  sl = strlen(stem);
+  for (i = 0; i < gw_mod_count && n < cap; ++i) {
+    const char *d = gw_mod_files[i].disc, *base;
+    size_t l = strlen(d);
+    if (l <= sl + 1 || d[sl] != '/' || strchr(d + sl + 1, '/') != NULL) continue;
+    { size_t k; int same = 1; for (k = 0; k < sl; ++k) { char a = d[k], b = stem[k]; if (a >= 'A' && a <= 'Z') a = (char)(a + 32); if (b >= 'A' && b <= 'Z') b = (char)(b + 32); if (a != b) same = 0; } if (!same) continue; }
+    base = d + sl + 1;
+    if (strlen(base) < 5 || !gw_path_ieq(base + strlen(base) - 4, ext)) continue;
+    names[n] = base;
+    idx[n] = i;
+    ++n;
+  }
+  qsort(names, (size_t)n, sizeof names[0], gw_alt_cmp); /* idx must follow: rebuild it from the sorted names */
+  for (i = 0; i < n; ++i) {
+    int j;
+    for (j = 0; j < gw_mod_count; ++j) {
+      const char *d = gw_mod_files[j].disc;
+      if (d + sl + 1 == names[i]) { idx[i] = j; break; }
+    }
+  }
+  if (root_out != NULL) *root_out = root;
+  return n;
+}
+
+/* k < 0: the number of alternates of the stage (0 = no loader stub, nothing to choose). k >= 0: the k-th name (sorted),
+ * copied to name; *tagged = 1 for a button-tagged alternate. Returns 1 when k exists. */
+int gw_DVDAltList(int r, int k, char *name, int cap, int *tagged) {
+  const char *names[GW_ALT_MAX];
+  int idx[GW_ALT_MAX], root, n = gw_alt_collect(r, &root, names, idx, GW_ALT_MAX);
+  if (k < 0) return n;
+  if (k >= n) return 0;
+  if (name != NULL && cap > 0) snprintf(name, (size_t)cap, "%s", names[k]);
+  if (tagged != NULL) *tagged = gw_alt_tagged(names[k]);
+  return 1;
+}
+
+/* 1 when the stage file the overlay serves for retail stage `r` is a loader stub (an m-ex alternate-stage loader). */
+int gw_DVDStageIsStub(int r) {
+  char stem[32];
+  int root;
+  if (!gw_iso_open() || gw_fst_nodes == 0) return 0;
+  gw_mods_load();
+  gw_alt_stem(r, stem, sizeof stem);
+  if (stem[0] == 0) return 0;
+  root = gw_alt_root(r, stem);
+  return root >= 0 && !gw_mod_files[root].use_disc && gw_alt_is_stub(&gw_mod_files[root]);
+}
+
+/* A loader stub with nothing to load: serve the disc's own copy of the stage file instead (1 when the disc has one). */
+int gw_DVDStageToDisc(int r) {
+  char stem[32];
+  int root;
+  if (!gw_iso_open() || gw_fst_nodes == 0) return 0;
+  gw_mods_load();
+  gw_alt_stem(r, stem, sizeof stem);
+  root = stem[0] != 0 ? gw_alt_root(r, stem) : -1;
+  if (root < 0 || !gw_mod_files[root].on_disc) return 0;
+  gw_mod_files[root].use_disc = 1;
+  gw_log("gw: mods: /%s served from the disc (its mod copy is a loader stub with nothing to load)", gw_mod_files[root].disc);
+  return 1;
+}
+
+/* Serve alternate `name` (a file of the stage's folder) in place of the stage file. 1 when switched, 0 when not found. */
+int gw_DVDAltSelect(int r, const char *name) {
+  const char *names[GW_ALT_MAX];
+  int idx[GW_ALT_MAX], root, k, n = gw_alt_collect(r, &root, names, idx, GW_ALT_MAX);
+  if (name == NULL) return 0;
+  for (k = 0; k < n; ++k) {
+    if (gw_path_ieq(names[k], name)) {
+      gw_mod_file *m = &gw_mod_files[root], *a = &gw_mod_files[idx[k]];
+      m->use_disc = 0;
+      strncpy(m->host, a->host, sizeof m->host - 1);
+      strncpy(m->mod, a->mod, sizeof m->mod - 1);
+      m->mod_index = a->mod_index;
+      m->size = a->size;
+      gw_log("gw: mods: /%s served from the alternate /%s (%u bytes, %s)", m->disc, a->disc, m->size, m->mod);
+      return 1;
+    }
+  }
+  return 0;
+}
+
 /* 1 when `path` exists on the disc or in a mounted mod. Unlike DVDConvertPathToEntrynum it does
  * not count as a load for the loading overlay, so presence checks can call it freely. */
 int gw_DVDFileExists(const char *path) {

@@ -1614,11 +1614,28 @@ static inline HSD_FogDesc* foo(void)
 #else
     temp_r29 = stage_datas[kind]->callbacks;
 #endif
+#if defined(TARGET_PC)
+    /* A stage file that is only a loader (an m-ex "dynamic alternate stages" stub such as a 12 KB GrNBa.dat) has no
+     * model table, or model rows with no data. Console read the zero page here; PC faults at 0x4. */
+    if (archive == NULL || archive->unk4 == NULL) {
+        OSReport("gr: stage %d has no model table in its stage file (a stub or loader file?) - no fog, background clears to black\n",
+                 kind);
+        return NULL;
+    }
+#endif
     temp_r30 = archive->unk4->unkC;
     grDatFiles_GetArchive();
     for (i = 0; i < temp_r30; i++) {
         phi_r29 = &temp_r29[i];
         if (phi_r29->flags_b1 == 1) {
+#if defined(TARGET_PC)
+            if (grDatFiles_801C6330(i) == NULL) {
+                OSReport("gr: stage %d model %d is flagged for fog but the stage file has no data for it - skipped "
+                         "(a stub or loader stage file?)\n",
+                         kind, i);
+                continue;
+            }
+#endif
 #if defined(TARGET_PC)
             if (Mex_GrTrace()) {
                 OSReport("grtrace: fog scan: matched entry %d, fogdesc=%p\n", i,
@@ -3499,11 +3516,14 @@ void Ground_801C466C(void)
 #else
     callbacks = stage_datas[stage_info.grkind]->callbacks;
 #endif
-    count = archive->unk4->unkC;
 #if defined(TARGET_PC)
+    /* a loader stub or damaged stage file: no model table (see foo() above) */
+    count = (archive != NULL && archive->unk4 != NULL) ? archive->unk4->unkC : 0;
     if (callbacks == NULL) {
         count = 0;
     }
+#else
+    count = archive->unk4->unkC;
 #endif
     archive = grDatFiles_GetArchive();
 #if defined(TARGET_PC)
@@ -3515,6 +3535,13 @@ void Ground_801C466C(void)
     for (i = 0; i < count; i++) {
         if (callbacks->flags_b0 == 1) {
             archive = grDatFiles_801C6330(i);
+#if defined(TARGET_PC)
+            if (archive == NULL) {
+                OSReport("gr: stage %d model %d is flagged for lights but the stage file has no data for it - skipped\n", stage_info.grkind, i);
+                callbacks++;
+                continue;
+            }
+#endif
             selected = Ground_801C20E0(archive, archive->unk4->unk8[i].x18);
 #if defined(TARGET_PC)
             if (Mex_GrTrace()) {

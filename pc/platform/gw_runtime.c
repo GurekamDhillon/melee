@@ -2099,6 +2099,12 @@ static int gw_sl_apply(GwSceneConfig *c, const char *key, const char *val) {
     extern int gw_StageSkin_SceneSet(const char *value);
     return gw_StageSkin_SceneSet(val);
   }
+  if (tt_ieq(key, "alt")) {
+    /* the alternate stage file of a loader-stub stage (an m-ex alternate-stage folder): the file name or 8 hex of its hash
+       (gw_stageskin.inc). The online host's setup names it so both sides load the same file. */
+    extern int gw_StageSkin_AltSceneSet(const char *value);
+    return gw_StageSkin_AltSceneSet(val);
+  }
   if (key[0] == 'p' && key[1] >= '1' && key[1] <= '6' && key[2] == '\0') {
     return gw_sl_parse_player(val, &c->p[key[1] - '1']);
   }

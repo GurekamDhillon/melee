@@ -515,6 +515,7 @@ typedef struct {
     float toon[16];                           /* the built-in toon surface's 16 parameters, native floats (gw_surface ABI) */
     struct gn_combo *combo;                   /* geno 11: the combo graph of a define with a "combo" block; NULL otherwise */
     int kb_copy;                              /* slice 6 (geno 10): "kirby_copy": "none" (-1, the default) or "retail:<fighter>" (that FighterKind) */
+    int thrown_row[4];                        /* "thrown_as" as an object: per throw (f, b, hi, lw) the retail FighterKind whose ThrownF/B/Hi/Lw row the victim plays; -1 = thrown_as */
     int thrown_as;                            /* geno 10: "thrown_as": the retail FighterKind whose thrown rows a victim of this base "none" define plays (default Captain Falcon, 2) */
 } gn_profile;
 

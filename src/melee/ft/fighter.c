@@ -1237,6 +1237,7 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
          * With no stand-in loaded the victim keeps the pose it has (the CaptureWait loop) until released. */
         extern int Geno_DefineIsNone(int kind);
         extern int Geno_DefineThrownAs(int kind);
+        extern int Geno_DefineThrownAsRow(int kind, int row);
         extern Fighter* ftData_ThrownStandIn(int kind);
         Fighter* thrower = GET_FIGHTER(arg3);
         if (thrower != NULL && thrower->kind != fp->kind) {
@@ -1244,6 +1245,9 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
                 arg3 = NULL;
             } else if (Geno_DefineIsNone(thrower->kind)) {
                 int as = Geno_DefineThrownAs(thrower->kind);
+                if (msid >= ftCo_MS_ThrownF && msid <= ftCo_MS_ThrownLw) {   /* each throw may come from its own retail thrower ("thrown_as" as an object) */
+                    as = Geno_DefineThrownAsRow(thrower->kind, msid - ftCo_MS_ThrownF);
+                }
                 thrown_tbl = as >= 0 ? ftData_ThrownStandIn(as) : NULL;
                 if (thrown_tbl == NULL) {
                     static int warned;

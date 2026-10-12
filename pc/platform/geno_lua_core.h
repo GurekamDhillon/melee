@@ -342,6 +342,17 @@ static int glua_ki(lua_State* L)
     return glua_cmd(L, GENO_LUA_CMD_KI, (uint32_t) h, 0);
 }
 
+/* ctx.ledge(mode): this action's ledge grab (the engine value LEDGE): 0 none, 1 front, 2 front and back. Cleared by every action change, so a window is held by calling it every frame. */
+static int glua_ledge(lua_State* L)
+{
+    lua_Integer m;
+    int ok = 0;
+    if (lua_type(L, 1) == LUA_TNUMBER) m = lua_tointegerx(L, 1, &ok);
+    else m = 0;
+    if (!ok || m < 0 || m > 2) return glua_fault(L, GENO_LUA_FAULT_COMMAND, "ctx.ledge takes 0 (none), 1 (front) or 2 (front and back)");
+    return glua_cmd(L, GENO_LUA_CMD_LEDGE, (uint32_t) m, 0);
+}
+
 /* ---- closure scan -------------------------------------------------------------------------------------- */
 
 static int glua_scan_proto(gn_lua* g, const Proto* p, const char* fn)
@@ -657,6 +668,8 @@ static void glua_push_ctx(gn_lua* g)
     lua_setfield(L, -2, "turn");
     lua_pushcfunction(L, glua_ki);
     lua_setfield(L, -2, "ki");
+    lua_pushcfunction(L, glua_ledge);
+    lua_setfield(L, -2, "ledge");
 }
 
 /* Runs function `fn` (an index from glua_find) over `io`. 0 = ok; GENO_LUA_FAULT_* otherwise (the io's state words and

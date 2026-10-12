@@ -646,8 +646,16 @@ static void geno_land(Fighter_GObj* gobj)
 
 /* coll "air": Melee's air collision with ledge grab (platforms pass-through while holding down,
  * like FallSpecial), landing -> geno_land */
+static void geno_coll_air_ledge(Fighter_GObj* gobj, int both, HSD_GObjEvent land);
 static void geno_cb_coll_air(Fighter_GObj* gobj)
 {
+    /* a script or Lua (PUT LEDGE 2, ctx.ledge(2)) that opens the back ledge for this action: both ledges are
+     * tested and the fighter turns to the one caught (ftCliffCommon_80081370). Any other value, and every
+     * state that never sets it (st->ledge == -1), is the retail facing-only catch below. */
+    if (geno_state(GET_FIGHTER(gobj))->ledge == 2) {
+        geno_coll_air_ledge(gobj, 1, geno_land);
+        return;
+    }
     ft_80083090(gobj, ftCo_80096CC8, geno_land);
 }
 

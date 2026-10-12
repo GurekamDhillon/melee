@@ -3304,6 +3304,7 @@ A module is a chunk that returns a table of functions and nothing else. `ctx` is
 | `ctx.hitbox_damage(mask, damage)` | as the script word HBDMG: bit n of `mask` is hitbox slot n |
 | `ctx.loop()` | restart the animation, the state's variables kept |
 | `ctx.turn()` | flip the facing (the script value FACING = 0: `facing_dir` flips and the root joint's rotation follows); a `velocity` queued after it in the same call is relative to the new facing |
+| `ctx.ledge(mode)` | this action's ledge grab, the engine value LEDGE (section 17.2): 0 none, 1 front, 2 front and back. Cleared by every action change, so hold a window by calling it every frame. A `geno.air` state whose LEDGE is 2 tests both ledges and turns the fighter to the one it catches (the retail Fire Fox end does the same); any other value, and a state that never calls it, keeps the retail facing-only catch. The collision only catches while the fighter moves down (`mpColl`: `cur_pos.y < prev_pos.y`), so a window needs a descending frame. Goku's flight opens it for its last 5 frames |
 
 Commands are queued (at most 8 per call, `GENO_LUA_MAX_CMDS`) and applied in call order when the call returns, by the game half, before the next phase. The allowlist environment is
 `type`, `select`, `ipairs`, `assert`, `error`, `freeze` and `math.{abs, min, max, floor, ceil, sqrt, tointeger, huge, pi}`; nothing else exists.

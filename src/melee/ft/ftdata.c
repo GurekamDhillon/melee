@@ -2371,7 +2371,10 @@ static u8* ftData_ThrowArenaAlloc(size_t need)
     if (ftData_ThrowRegionCur == NULL) {
         unsigned size = 0, base = Geno_ThrowRegion(&size);
         ftData_ThrowRegionCur = (u8*) (uintptr_t) base;
+        ftData_ThrowRegionLo = ftData_ThrowRegionCur;
         ftData_ThrowRegionEnd = ftData_ThrowRegionCur + size;
+        OSReport("geno: throw-bank region 0x%X, %u bytes (outside heap 0)
+", base, size);
     }
     need = (need + 31u) & ~(size_t) 31u;
     if (ftData_ThrowRegionCur != NULL && (size_t) (ftData_ThrowRegionEnd - ftData_ThrowRegionCur) >= need) {

@@ -317,6 +317,11 @@ static void np_scene_extras(char *out, size_t cap) {
             gw_StageSkin_HostToken(np.stage_ext, gw_MexId_PeerHasSkin, sk, sizeof sk);
         }
         if (l + strlen(sk) < cap) snprintf(out + l, cap - l, "%s", sk);
+        { /* an alternate-stage folder: the host picks the file, the guest loads the same one (gw_stageskin.inc) */
+            char alt[24];
+            l = strlen(out);
+            if (gw_StageSkin_AltToken(np.stage_ext, alt, sizeof alt) && l + strlen(alt) < cap) snprintf(out + l, cap - l, "%s", alt);
+        }
     }
 }
 

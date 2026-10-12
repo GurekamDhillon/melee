@@ -18,6 +18,11 @@ extern void gw_Settings_SetStr(const char *key, const char *value);
 extern int gw_DVDStageProviders(int r, int *mods, int cap);
 extern int gw_DVDStageFile(int r, int mod_index, int n, char *disc, int dcap, char *host, int hcap);
 extern int gw_DVDSelectStage(int r, int want);
+/* alternate stage folders (an m-ex loader stub plus a GrXx/ folder of whole stage files; see shim_dvd.c) */
+extern int gw_DVDAltList(int r, int k, char *name, int cap, int *tagged);
+extern int gw_DVDAltSelect(int r, const char *name);
+extern int gw_DVDStageIsStub(int r);
+extern int gw_DVDStageToDisc(int r);
 
 /* ---- 1. the pure model ------------------------------------------------------------------------- */
 
@@ -327,7 +332,7 @@ static struct {
     int armed, grkind, choice;
 } sk_decided; /* the preload's decision, reused by the same stage's init */
 
-void gw_StageSkin_ApplyForLoad(int grkind, const char *file, int phase) {
+static void sk_apply_core(int grkind, const char *file, int phase) {
     int r = gw_Skin_NameRetail(file), choice = 0, k, ov = sk_ov.on, net = sk_net_tick != 0;
     const char *why = "choice";
     DWORD now = GetTickCount();
@@ -389,6 +394,141 @@ void gw_StageSkin_ApplyForLoad(int grkind, const char *file, int phase) {
            sk_by_r[r].n, grkind);
     memset(&sk_ov, 0, sizeof sk_ov);
     sk_net_tick = 0;
+}
+
+/* ---- alternate stage folders ------------------------------------------------------------------------------
+ * A stage file that is an m-ex "dynamic alternate stages" loader stub has a folder of whole stage files beside it (GrNBa/).
+ * m-ex's own code picks one at stage load: a file tagged with a held button "(L)" when that button is down, else a random
+ * one. The port serves the picked file in place of the stub (shim_dvd.c gw_DVDAltSelect). Untagged alts form the pool.
+ * THE CHOICE: the match's scene key alt=<8 hex of the name's hash, or the name> wins; an online match without it plays the
+ * first alt in name order (both sides have the same files, the fingerprint checks); an offline match takes MELEE_ALT_<ext>
+ * (a file name), then the choice the host token already made, then a random pool member. */
+#define SK_ALT_NAME 96
+static struct { int on; DWORD tick; char want[SK_ALT_NAME]; } sk_alt_ov;
+static struct { int armed, grkind; char name[SK_ALT_NAME]; } sk_alt_decided;
+static struct { int ext; DWORD tick; char name[SK_ALT_NAME]; } sk_alt_host;
+
+static unsigned sk_alt_hash(const char *s) {
+    unsigned h = 2166136261u;
+    for (; *s; ++s) { unsigned c = (unsigned char) *s; if (c >= 'A' && c <= 'Z') c += 32; h = (h ^ c) * 16777619u; }
+    return h;
+}
+
+/* index into the stage's sorted alternates of the one matching a name or an 8-hex hash, else -1 */
+static int sk_alt_find(int r, int n, const char *want) {
+    char nm[SK_ALT_NAME];
+    char *end;
+    unsigned long hv = 0;
+    int k, hex = strlen(want) == 8;
+    if (hex) { hv = strtoul(want, &end, 16); hex = *end == '\0'; }
+    for (k = 0; k < n; ++k) {
+        if (!gw_DVDAltList(r, k, nm, sizeof nm, NULL)) break;
+        if (_stricmp(nm, want) == 0 || (hex && sk_alt_hash(nm) == (unsigned) hv)) return k;
+    }
+    return -1;
+}
+
+/* a random untagged alternate (the first alt when all are tagged), by index */
+static int sk_alt_random(int r, int n) {
+    int pool[160], np = 0, k, tagged = 0;
+    static unsigned seed;
+    if (n > 160) n = 160;
+    for (k = 0; k < n; ++k) if (gw_DVDAltList(r, k, NULL, 0, &tagged) && !tagged) pool[np++] = k;
+    if (np == 0) return 0;
+    seed = seed * 1664525u + 1013904223u + (unsigned) GetTickCount() + (unsigned) GetCurrentProcessId();
+    return pool[(seed >> 8) % (unsigned) np];
+}
+
+static int sk_alt_first_untagged(int r, int n) {
+    int k, tagged = 0;
+    for (k = 0; k < n; ++k) if (gw_DVDAltList(r, k, NULL, 0, &tagged) && !tagged) return k;
+    return 0;
+}
+
+int gw_StageSkin_AltSceneSet(const char *v) {
+    memset(&sk_alt_ov, 0, sizeof sk_alt_ov);
+    if (v == NULL || v[0] == '\0') return -1;
+    sk_alt_ov.on = 1;
+    sk_alt_ov.tick = GetTickCount();
+    copy_str(sk_alt_ov.want, sizeof sk_alt_ov.want, v);
+    return 0;
+}
+
+/* The online host's extras: ";alt=<8 hex>" when the stage has alternates. Picks (and remembers) the host's own choice too. */
+int gw_StageSkin_AltToken(int ext, char *out, int cap) {
+    int r = gw_Skin_RetailForExt(ext), n, k;
+    if (out != NULL && cap > 0) out[0] = '\0';
+    if (r < 0 || out == NULL || cap < 16) return 0;
+    n = gw_DVDAltList(r, -1, NULL, 0, NULL);
+    if (n <= 0) return 0;
+    k = sk_alt_random(r, n);
+    if (!gw_DVDAltList(r, k, sk_alt_host.name, sizeof sk_alt_host.name, NULL)) return 0;
+    sk_alt_host.ext = ext;
+    sk_alt_host.tick = GetTickCount();
+    snprintf(out, (size_t) cap, ";alt=%08x", sk_alt_hash(sk_alt_host.name));
+    gw_log("stageskin: %s: the host sends alternate \"%s\"", sk_retail[r].file, sk_alt_host.name);
+    return 1;
+}
+
+static void sk_alt_apply(int grkind, const char *file, int phase, int net) {
+    int r, n, k = -1;
+    char name[SK_ALT_NAME], envk[32];
+    const char *why = "random", *env;
+    DWORD now = GetTickCount();
+    int ov = sk_alt_ov.on && now - sk_alt_ov.tick <= SK_STALE_MS;
+    if (file == NULL || file[0] == 0) return;
+    r = gw_Skin_NameRetail(file);
+    if (r < 0) { memset(&sk_alt_ov, 0, sizeof sk_alt_ov); return; }
+    n = gw_DVDAltList(r, -1, NULL, 0, NULL);
+    env = getenv("MELEE_ALT_NONE_TEST"); /* test knob: pretend the stub's folder is empty */
+    if (env != NULL && env[0] == '1') n = 0;
+    if (n <= 0) {
+        memset(&sk_alt_ov, 0, sizeof sk_alt_ov);
+        if (phase == 1 && gw_DVDStageIsStub(r)) { /* a loader stub has no stage in it: never load it as one (it faults in stage setup) */
+            if (gw_DVDStageToDisc(r)) gw_log("stageskin: %s is an alternate-stage loader stub with no usable alternates - playing the retail stage from the disc", sk_retail[r].file);
+            else gw_log("stageskin: %s is an alternate-stage loader stub with no usable alternates and the disc has no copy - the stage may fail to load", sk_retail[r].file);
+        }
+        return;
+    }
+    if (phase == 2 && sk_alt_decided.armed && sk_alt_decided.grkind == grkind) {
+        sk_alt_decided.armed = 0;
+        gw_DVDAltSelect(r, sk_alt_decided.name);
+        return;
+    }
+    snprintf(envk, sizeof envk, "MELEE_ALT_%d", sk_retail[r].ext);
+    env = getenv(envk);
+    if (ov) {
+        why = "match";
+        k = sk_alt_find(r, n, sk_alt_ov.want);
+        if (k < 0) gw_log("stageskin: %s: the match names an alternate that is not installed here (%s) - the first one", sk_retail[r].file, sk_alt_ov.want);
+    } else if (net) {
+        why = "online match without an alternate";
+    } else if (env != NULL && env[0] != '\0') {
+        why = "environment";
+        k = sk_alt_find(r, n, env);
+    } else if (sk_alt_host.ext == sk_retail[r].ext && now - sk_alt_host.tick <= SK_STALE_MS) {
+        why = "host choice";
+        k = sk_alt_find(r, n, sk_alt_host.name);
+    } else {
+        k = sk_alt_random(r, n);
+    }
+    if (k < 0) k = sk_alt_first_untagged(r, n);
+    memset(&sk_alt_ov, 0, sizeof sk_alt_ov);
+    memset(&sk_alt_host, 0, sizeof sk_alt_host);
+    if (!gw_DVDAltList(r, k, name, sizeof name, NULL) || !gw_DVDAltSelect(r, name)) {
+        gw_log("stageskin: %s: could not serve an alternate (%d found)", sk_retail[r].file, n);
+        return;
+    }
+    gw_log("stageskin: %s is a loader stub; loads alternate \"%s\" (%s, %d alternate(s))", sk_retail[r].file, name, why, n);
+    sk_alt_decided.armed = phase == 1;
+    sk_alt_decided.grkind = grkind;
+    copy_str(sk_alt_decided.name, sizeof sk_alt_decided.name, name);
+}
+
+void gw_StageSkin_ApplyForLoad(int grkind, const char *file, int phase) {
+    int net = sk_net_tick != 0 && GetTickCount() - sk_net_tick <= SK_STALE_MS;
+    sk_apply_core(grkind, file, phase);
+    sk_alt_apply(grkind, file, phase, net); /* after the skin pick: a stub's own entry is retargeted last */
 }
 
 int gw_StageSkin_HostToken(int ext, int (*peer_has)(int ext, uint64_t digest), char *out, int cap) {

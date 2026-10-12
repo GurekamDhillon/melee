@@ -901,8 +901,13 @@ static int gn_throw_banks_needed(void)
 int gw_Geno_ThrowBankLimit(int def)
 {
     const char* e = getenv("MELEE_THROW_BANKS");
-    int need = gn_throw_banks_needed();   /* a define with per-throw stand-ins keeps one resident bank per distinct thrower (at most 6) */
-    return e != NULL && *e ? atoi(e) : (need > def ? need : def);
+    /* Two resident arenas when a define names two or more stand-in fighters (Goku: Falcon / Mewtwo / Marth), otherwise `def`. Three arenas left 0.9 MB of heap 0 at load and a Fox or
+     * Jigglypuff opponent exhausted it (2026-10-11); two leave 1.9-2.9 MB (Fox and Falco opponents, measured with MELEE_HEAP_TRACE). A throw whose stand-in is not resident reloads a
+     * bank (about 2 MB, synchronously). MELEE_THROW_BANKS overrides (1 saves the most heap, 3 keeps all three resident). */
+    {
+        int need = gn_throw_banks_needed();
+        return e != NULL && *e ? atoi(e) : (need >= 2 && def < 2 ? 2 : def);
+    }
 }
 
 /* A .gnsnd (tools/geno/audio.py): 32-byte big-endian header, then s16 big-endian samples. Decoded to native s16, or NULL (and *why) when it is not a

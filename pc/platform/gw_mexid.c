@@ -10,6 +10,7 @@
 #include "gw.h"
 #include "gw_mexid.h"
 #include "gw_mods.h"
+#include "gw_stageskin.h"
 #include "gw_mex_ftfunction.h"
 #include "gw_mex_grfunction.h"
 #include "gw_test.h"
@@ -29,6 +30,7 @@
 
 extern void *gw_DVDReadFileAlloc(const char *path, uint32_t *out_size);
 extern int gw_DVDFileExists(const char *path);
+extern int gw_DVDSelectStage(int r, int want);
 extern int gw_Mex_SlotInternal(int slot);
 extern const char *gw_Mex_FtPlFile(int k);
 extern const char *gw_Mex_FtAnimFile(int k);
@@ -188,37 +190,7 @@ static const struct {
     { "Pc", NULL, "Pichu" }, { "Gn", NULL, "Ganondorf" },
 };
 
-/* The retail VS stages by external stage id and file (a prefix when the game adds a suffix). */
-static const struct {
-    int ext;
-    const char *file, *name;
-} mx_vanilla_stages[] = {
-    { 2, "GrIz.dat", "Fountain of Dreams" }, { 3, "GrPs", "Pokemon Stadium" },
-    { 4, "GrCs.dat", "Princess Peach's Castle" }, { 5, "GrKg.dat", "Kongo Jungle" },
-    { 6, "GrZe.dat", "Brinstar" }, { 7, "GrCn", "Corneria" }, { 8, "GrSt.dat", "Yoshi's Story" },
-    { 9, "GrOt", "Onett" }, { 10, "GrMc.dat", "Mute City" }, { 11, "GrRc.dat", "Rainbow Cruise" },
-    { 12, "GrGd.dat", "Jungle Japes" }, { 13, "GrGb.dat", "Great Bay" }, { 14, "GrSh.dat", "Temple" },
-    { 15, "GrKr.dat", "Brinstar Depths" }, { 16, "GrYt.dat", "Yoshi's Island" },
-    { 17, "GrGr.dat", "Green Greens" }, { 18, "GrFs.dat", "Fourside" },
-    { 19, "GrI1.dat", "Mushroom Kingdom" }, { 20, "GrI2.dat", "Mushroom Kingdom II" },
-    { 22, "GrVe", "Venom" }, { 23, "GrPu.dat", "Poke Floats" }, { 24, "GrBb.dat", "Big Blue" },
-    { 25, "GrIm.dat", "Icicle Mountain" }, { 27, "GrFz.dat", "Flat Zone" },
-    { 28, "GrOp.dat", "Dream Land" }, { 29, "GrOy.dat", "Yoshi's Island (64)" },
-    { 30, "GrOk.dat", "Kongo Jungle (64)" }, { 31, "GrNBa.dat", "Battlefield" },
-    { 32, "GrNLa.dat", "Final Destination" },
-};
-
-int gw_MexId_StageSkin(int ext, char *out, int cap) {
-    size_t i;
-    if (out != NULL && cap > 0) out[0] = '\0';
-    for (i = 0; i < sizeof mx_vanilla_stages / sizeof mx_vanilla_stages[0]; ++i) {
-        char file[40];
-        if (mx_vanilla_stages[i].ext != ext) continue;
-        snprintf(file, sizeof file, "%s%s", mx_vanilla_stages[i].file, strstr(mx_vanilla_stages[i].file, ".dat") != NULL ? "" : ".dat");
-        return gw_Mods_WinnerOf(file, out, cap);
-    }
-    return 0;
-}
+/* The retail VS stages (external id, file, name) are gw_stageskin.h's table: a stage skin is a mod that provides one of these files. */
 
 static void mx_hex(uint64_t h, char out[17]) {
     snprintf(out, 17, "%016llx", (unsigned long long) h);
@@ -345,9 +317,17 @@ static void mx_build(mx_table *t) {
         if (h != 0) mx_add(t, GW_MEXID_FIGHTER, MX_CK_MEX0 + s, h, name != NULL ? name : pl);
     }
     mx_add_defines(t);
-    for (i = 0; i < (int) (sizeof mx_vanilla_stages / sizeof mx_vanilla_stages[0]); ++i) {
-        uint64_t h = mx_stage_identity(mx_vanilla_stages[i].file);
-        if (h != 0) mx_add(t, GW_MEXID_STAGE, mx_vanilla_stages[i].ext, h, mx_vanilla_stages[i].name);
+    for (i = 0; i < gw_Skin_RetailCount(); ++i) {
+        /* A retail stage's identity is the stage WITHOUT any skin (the disc's file, or a non-skin mod's), so two players with
+         * different skins of Pokemon Stadium still have the stage in common; the skins themselves are separate identities
+         * (GW_MEXID_SKIN) and the host's choice travels in the match setup (gw_stageskin.h). */
+        int ext = gw_Skin_RetailExt(i), nskin = gw_StageSkin_Count(ext), k;
+        uint64_t h;
+        if (nskin > 0) gw_DVDSelectStage(i, GW_SKIN_ORIGINAL);
+        h = mx_stage_identity(gw_Skin_RetailFile(i));
+        if (nskin > 0) gw_DVDSelectStage(i, GW_SKIN_DEFAULT);
+        if (h != 0) mx_add(t, GW_MEXID_STAGE, ext, h, gw_Skin_RetailName(i));
+        for (k = 0; h != 0 && k < nskin; ++k) mx_add(t, GW_MEXID_SKIN, ext, gw_StageSkin_Digest(ext, k), gw_StageSkin_Name(ext, k));
     }
     n = gw_UI_StageCount(); /* the m-ex stage-select icons: added stages whose file is here */
     for (i = 0; i < n; ++i) {
@@ -823,6 +803,15 @@ int gw_MexId_OnlineFighter(int ck) {
 int gw_MexId_OnlineStage(int ext) {
     if (!gw_MexId_PeerReady()) return -1;
     return mx_peer_local(mx_tab(), &mx_remote, (mx_tab(), gw_MexId_FindStage(ext))) >= 0;
+}
+/* 1 when the peer announced the skin (content digest) for the stage that is `ext` on this install. */
+int gw_MexId_PeerHasSkin(int ext, uint64_t digest) {
+    int pe = gw_MexId_PeerExtForLocal(ext), j;
+    if (pe < 0) return 0;
+    for (j = 0; j < mx_remote.n; ++j) {
+        if (mx_remote.e[j].kind == GW_MEXID_SKIN && mx_remote.e[j].local == pe && mx_remote.e[j].hash48 == (digest & MX_WIRE_MASK)) return 1;
+    }
+    return 0;
 }
 int gw_MexId_PeerCkForLocal(int ck) {
     return gw_MexId_PeerReady() ? mx_peer_local(mx_tab(), &mx_remote, gw_MexId_FindFighter(ck)) : -1;

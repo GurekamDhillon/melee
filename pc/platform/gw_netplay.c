@@ -36,6 +36,7 @@
 #include "gw_fighter_controls.h"
 #include "gw_replay_controls.h"
 #include "gw_rollback.h"
+#include "gw_stageskin.h"
 #include "gw_mexid.h" /* delta: content identities - mods online (gw_mexid.h) */
 #include "gw_overlay.h" /* the draw rule is also visible without a persistent room */
 #include "gw_script.h" /* charlie: gameplay scripts join the must-match set */
@@ -303,6 +304,12 @@ static void np_scene_extras(char *out, size_t cap) {
     if (n >= 0 && n <= 8) {
         size_t l = strlen(out);
         snprintf(out + l, cap - l, ";items=%d", n);
+    }
+    if (np.host) { /* the host's stage skin, when the guest announced it too; no token = Original on both sides */
+        char sk[40];
+        size_t l = strlen(out);
+        gw_StageSkin_HostToken(np.stage_ext, gw_MexId_PeerHasSkin, sk, sizeof sk);
+        if (l + strlen(sk) < cap) snprintf(out + l, cap - l, "%s", sk);
     }
 }
 
@@ -1494,8 +1501,25 @@ static const int lb_strike_counts[3] = { 1, 2, 2 }; /* 1-2-2 */
  * peer's list is not in yet (counted as available until it is). The lobby's stage list and the
  * online CSS pick ask these; A2's online CSS/SSS grey out what they refuse. */
 int gw_Netplay_FighterAvailable(int ck) { return ck >= 0 && gw_MexId_OnlineFighter(ck) != 0; }
-/* The name of the mod whose skin replaces this retail stage's file (a Nucleus stage skin), 1; else 0. The stage select shows it. */
-int gw_Netplay_StageSkinExt(int ext, char *out, int cap) { return gw_MexId_StageSkin(ext, out, cap); }
+/* The stage select's online note under a stage that has skins (gw_stageskin.h): the HOST's choice is the one both players load.
+ * The host is told when the guest lacks its pick (the match then loads Original on both sides); the guest, that the host decides.
+ * 0 = nothing to say (no match setup here, or the stage has no skin). */
+int gw_Netplay_StageSkinNote(int ext, char *out, int cap) {
+    int c;
+    if (out != NULL && cap > 0) out[0] = '\0';
+    if (out == NULL || cap < 8 || (np.phase != NP_LOBBY && np.phase != NP_CONNECTED) || gw_StageSkin_Count(ext) == 0) return 0;
+    if (!np.host) {
+        snprintf(out, (size_t) cap, "the host's skin pick applies");
+        return 1;
+    }
+    c = gw_StageSkin_Choice(ext);
+    if (c > 0 && gw_MexId_PeerReady() && !gw_MexId_PeerHasSkin(ext, gw_StageSkin_Digest(ext, c - 1))) {
+        snprintf(out, (size_t) cap, "opponent lacks it: Original for both");
+        return 1;
+    }
+    snprintf(out, (size_t) cap, "you pick the skin for both");
+    return 1;
+}
 int gw_Netplay_StageAvailable(int ext) { return ext >= 0 && gw_MexId_OnlineStage(ext) != 0; }
 
 static void lb_default_stages(void) {
@@ -4204,6 +4228,7 @@ void gw_Netplay_NoteTie(void) {
 
 /* Once connected: make the agreed match the configured scene (VS mode seeds from it). */
 void gw_Netplay_MenuLaunch(void) {
+    gw_StageSkin_NetBegin(); /* an online match plays the stage Original unless its setup names a skin (the scene's skin= key) */
     gw_SceneLaunch_SetText(np.scene);
 }
 

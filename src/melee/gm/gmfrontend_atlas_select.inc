@@ -805,6 +805,20 @@ static int fas_open_sss(void)
     return 1;
 }
 
+/* The external stage id under the cursor, or -1 (Random, or nothing). */
+static int fas_sss_cursor_ext(void)
+{
+    int cur = Ui_SssGet(FA_SG_CUR, 0), slot;
+    if (cur < 0 || cur >= Ui_SssGet(FA_SG_N_VIS, 0)) {
+        return -1;
+    }
+    slot = Ui_SssGet(FA_SG_VIS_SLOT, cur);
+    if (slot < 0 || Ui_SssGet(FA_SG_TYPE, slot) == 3) {
+        return -1;
+    }
+    return Ui_SssGet(FA_SG_EXT, slot);
+}
+
 static void fas_submit_sss(void)
 {
     char name[64], abbr[4], id[12];
@@ -833,9 +847,32 @@ static void fas_submit_sss(void)
     }
     Ui_SelCursor(fas.h, 0, 1, Ui_SssGet(FA_SG_CUR, 0), -1);
     {
-        char buf[24];
-        sprintf(buf, "%d / %d", Ui_SssGet(FA_SG_CUR, 0) + 1, n);
+        char buf[96], skin[48];
+        int ext = fas_sss_cursor_ext();
+        skin[0] = '\0';
+        if (ext >= 0 && StageSkin_Label(ext, skin, sizeof skin) > 0) { /* the chosen stage skin leads the counter (X / Y change it) */
+            sprintf(buf, "SKIN: %.34s   %d / %d", skin, Ui_SssGet(FA_SG_CUR, 0) + 1, n);
+        } else {
+            sprintf(buf, "%d / %d", Ui_SssGet(FA_SG_CUR, 0) + 1, n);
+        }
         Ui_SelCounter(fas.h, buf);
+    }
+    {
+        /* a stage with installed skins (Nucleus stage mods): the explain panel shows the chosen one and X / Y step it. Online the
+           host's pick is the one both players load (Netplay_StageSkinNote says so). */
+        int ext = fas_sss_cursor_ext();
+        char skin[48], note[48];
+        skin[0] = '\0';
+        note[0] = '\0';
+        if (ext >= 0 && StageSkin_Label(ext, skin, sizeof skin) > 0) {
+            fs_stage_name(ext, name, 64);
+            if (fcs.online) {
+                Netplay_StageSkinNote(ext, note, sizeof note);
+            }
+            Ui_SelKeys(fas.h, fas.ntab > 1 ? "A:Choose,B:Back,X:Skin,L:Tabs" : "A:Choose,B:Back,X:Skin");
+            Ui_SelExplain(fas.h, "STAGE", name, "", "", -1, "SKIN", skin, note);
+            return;
+        }
     }
     Ui_SelKeys(fas.h, fas.ntab > 1 ? "A:Choose,B:Back,L:Tabs" : "A:Choose,B:Back");
     Ui_SelExplain(fas.h, "", "", "", "", -1, "", "", "");
@@ -876,6 +913,14 @@ static void fas_sss_frame(void)
             }
         }
         trig |= mouse;
+        if (trig & (FA_CI_X | FA_CI_Y)) {
+            int ext = fas_sss_cursor_ext();
+            if (ext >= 0 && StageSkin_Count(ext) > 0) {
+                StageSkin_Cycle(ext, (trig & FA_CI_X) ? 1 : -1); /* Original, skin 1, skin 2 ...; remembered per stage */
+                sfxMove();
+                trig &= ~(unsigned) (FA_CI_X | FA_CI_Y);
+            }
+        }
         if ((trig & (FA_CI_A | FA_CI_START)) && Ui_SssGet(FA_SG_CUR_TYPE, 0) == 3) {
             int pool = Ui_SssRandomPool();
             rp = Ui_SssPickRandom(HSD_Randi(pool > 0 ? pool : 1)); /* rolled only on a pick, as the legacy did */
@@ -940,7 +985,7 @@ static void fas_loading_frame(void)
     Netplay_StageNameExt(fl_ld.ext, stage, 64);
     {
         char skin[40];
-        if (Netplay_StageSkinExt(fl_ld.ext, skin, sizeof skin) != 0) {
+        if (StageSkin_Label(fl_ld.ext, skin, sizeof skin) > 0 && (!fl_ld.online || Netplay_IsHost() != 0)) {
             char full[64];
             sprintf(full, "%.22s (skin: %.28s)", stage, skin);
             memcpy(stage, full, sizeof full);

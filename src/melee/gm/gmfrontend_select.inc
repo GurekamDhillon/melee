@@ -1519,6 +1519,14 @@ static void fs_sss_frame(void)
         fcs.st_cur = fcs.page * fcs.per + row * cols + col;
         sfxMove();
     }
+    if ((in.trig & (PAD_BUTTON_X | PAD_BUTTON_Y)) && fcs.st_cur < fcs.ns && fcs.st_type[fcs.st_cur] != 3 &&
+        StageSkin_Count(fcs.st_ext[fcs.st_cur]) > 0)
+    {
+        /* X: the next skin, Y: the one before (Original, skin 1, skin 2 ...); remembered per stage in the settings */
+        StageSkin_Cycle(fcs.st_ext[fcs.st_cur], (in.trig & PAD_BUTTON_X) ? 1 : -1);
+        sfxMove();
+        return;
+    }
     if (in.trig & (PAD_BUTTON_A | PAD_BUTTON_START)) {
         int i = fcs.st_cur;
         if (!fcs.st_ok[i]) {
@@ -1536,8 +1544,9 @@ static void fs_sss_frame(void)
 
 static void fs_build_sss(void)
 {
-    static const char* const hg[4] = { "glyph_a", "glyph_dpad", "glyph_b", "glyph_l" };
-    static const char* const ht[4] = { "Choose", "Move", "Back", "Pages" };
+    const char* hg[5] = { "glyph_a", "glyph_dpad", "glyph_b", "glyph_l", "glyph_x" };
+    const char* ht[5] = { "Choose", "Move", "Back", "Pages", "Skin" };
+    int nh = 3;
     const char* crumbs_vs[3] = { "VERSUS", "MELEE", "STAGES" };
     const char* crumbs_tr[3] = { "SOLO", "TRAINING", "STAGES" };
     const char* crumbs_md[3] = { "SOLO", fe_sel_mode, "STAGES" }; /* a named mode (LAB) */
@@ -1554,7 +1563,14 @@ static void fs_build_sss(void)
     fs_tok("muted", muted);
     fs_tok("gold", gold);
     fs_port_rgb(0, c);
-    fm_chrome_with("STAGE SELECT", crumbs, 3, solo ? KS_SOLO : KS_VERSUS, fcs.pages > 1 ? 4 : 3, hg, ht);
+    if (fcs.pages > 1) {
+        nh = 4;
+    }
+    if (fcs.st_cur < fcs.ns && fcs.st_type[fcs.st_cur] != 3 && StageSkin_Count(fcs.st_ext[fcs.st_cur]) > 0) {
+        hg[nh] = hg[4]; /* X / Y step through the stage's skins */
+        ht[nh++] = ht[4];
+    }
+    fm_chrome_with("STAGE SELECT", crumbs, 3, solo ? KS_SOLO : KS_VERSUS, nh, hg, ht);
     fl_desc(fcs.toast[0] != 0 && fl.frames < fcs.toast_until ? fcs.toast
                                                               : "Choose the stage: A. B goes back to the characters.");
     if (last > fcs.ns) {
@@ -1605,12 +1621,17 @@ static void fs_build_sss(void)
             fs_tex_fit("sp_art", fs_art_tex(fcs.st_icon[cur]), FS_GX0 + 13, y0 + 5, FS_GX0 + 69, y1 - 5, white);
         }
         {
-            /* a stage whose file a mod replaces (a Nucleus stage skin) says so; online both players need the same skin or the stage is not offered */
-            char skin[48], cap[96];
+            /* a stage with installed skins (Nucleus stage mods) shows the chosen one; X / Y step Original, skin 1, 2 ... Online the host's
+               pick is the one both players load, and the note says so (or that the opponent lacks the pick) */
+            char skin[48], cap[160], note[48];
             const char* lbl = cur < fcs.ns && fcs.st_type[cur] == 3 ? "ANY STAGE" : "STAGE";
             skin[0] = 0;
-            if (cur < fcs.ns && fcs.st_type[cur] != 3 && Netplay_StageSkinExt(fcs.st_ext[cur], skin, sizeof skin) != 0) {
-                sprintf(cap, "STAGE - SKIN: %s%s", skin, fcs.online ? " (both players need it)" : "");
+            note[0] = 0;
+            if (cur < fcs.ns && fcs.st_type[cur] != 3 && StageSkin_Label(fcs.st_ext[cur], skin, sizeof skin) > 0) {
+                if (fcs.online) {
+                    Netplay_StageSkinNote(fcs.st_ext[cur], note, sizeof note);
+                }
+                sprintf(cap, "STAGE - SKIN: %.40s%s%.40s%s", skin, note[0] != 0 ? " (" : "", note, note[0] != 0 ? ")" : "");
                 lbl = cap;
             }
             fl_text_at("sp_lbl", "caption", FS_GX0 + 80, y0 + 18, "left", 300, lbl, muted, -1);
@@ -1653,5 +1674,6 @@ static void fs_sss_sig(char* sig)
 {
     fl_sig_int(sig, fcs.page);
     fl_sig_int(sig, fcs.st_cur);
+    fl_sig_int(sig, fcs.st_cur < fcs.ns && fcs.st_type[fcs.st_cur] != 3 ? StageSkin_Choice(fcs.st_ext[fcs.st_cur]) + 64 * StageSkin_Count(fcs.st_ext[fcs.st_cur]) : -1);
     fl_sig_int(sig, fcs.toast[0] != 0 && fl.frames < fcs.toast_until);
 }

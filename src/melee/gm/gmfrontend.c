@@ -266,7 +266,11 @@ void Netplay_RandomCancel(void);
 int Netplay_RandomStatus(void);
 int Netplay_RandomSeconds(void);
 void Netplay_StageNameExt(int ext, char* out, int cap);
-int Netplay_StageSkinExt(int ext, char* out, int cap);
+int Netplay_StageSkinNote(int ext, char* out, int cap); /* the online note under a stage with skins (gw_netplay.c) */
+int StageSkin_Count(int ext);                            /* gw_stageskin.h: installed skins of a retail stage (0 = no picker) */
+int StageSkin_Choice(int ext);                           /* 0 Original, k+1 */
+int StageSkin_Cycle(int ext, int dir);
+int StageSkin_Label(int ext, char* out, int cap);
 
 enum { FE_NP_IDLE, FE_NP_WORKING, FE_NP_CONNECTED, FE_NP_FAILED, FE_NP_RUNNING, FE_NP_LOBBY };
 /* gw_netplay.c's lobby phases and stage states */

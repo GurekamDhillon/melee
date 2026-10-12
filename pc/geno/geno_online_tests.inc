@@ -42,6 +42,7 @@ static const GenoCoverField gc_state_fields[] = {
     GC_S(hit_counter, 1, ""),
     GC_S(counters, 1, "found by this audit after slice 5b: fighter Lua reads it (ctx.self.countered)"),
     GC_S(art_spawned, 0, "diagnostic: articles spawned since the reset (the live articles themselves are hashed)"),
+    GC_S(fall_ledge, 1, "ctx.ledge(3): decides the FallSpecial ledge catch"),
     GC_S(ledge, 1, ""), GC_S(motion_started, 1, ""), GC_S(motion_vy, 1, ""),
     GC_S(motion_land, 0, "diagnostic: frames the root motion has been grounded"),
     GC_S(motion_facing, 1, ""), GC_S(motion_gravity, 1, ""), GC_S(enter_keep, 1, ""), GC_S(atk_connected, 1, ""),

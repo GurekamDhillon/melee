@@ -985,6 +985,21 @@ int gw_Mods_DiffDescribe(const char *peer_desc, char *out, int cap) {
 
 /* ---- the match-the-host's-mods fields (gw_modsync.h) ------------------------------------------------------------ */
 const char *gw_Mods_Source(int i) { MOD_STR(source); }
+
+/* The Nucleus browser's bundle installer (gw_nucleus_bundle.h): does this mod.json need an engine feature (or a newer version of one) this build lacks? Same rule the scan applies
+ * when it refuses to mount the mod (mod_engine_need). 1 and a phrase in out ("needs engine pobj_palette 1 (this build: none, 0)"), else 0. */
+int gw_Mods_JsonEngineMiss(const char *json, char *out, size_t cap) {
+    gw_mod *m = (gw_mod *) calloc(1, sizeof *m);
+    int miss = 0;
+    if (out && cap) out[0] = 0;
+    if (!m) return 0;
+    snprintf(m->id, sizeof m->id, "bundle");
+    mod_parse_json(m, json);                 /* a syntax error keeps the fields read before it */
+    if (m->engine_miss[0]) { miss = 1; if (out && cap) snprintf(out, cap, "%s", m->engine_miss); }
+    free(m->menus);
+    free(m);
+    return miss;
+}
 int gw_Mods_NucleusPost(int i) {
     gw_mod *m = mod_at(boot(), i);
     return m != NULL ? m->nucleus_post : 0;

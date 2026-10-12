@@ -2359,6 +2359,30 @@ typedef struct ftData_ThrowBank {
 static ftData_ThrowBank ftData_ThrowBanks[GENO_THROW_BANKS_MAX];
 static unsigned ftData_ThrowBankClock, ftData_ThrowBankLoads, ftData_ThrowBankEvicts;
 static u8 ftData_ThrownPrepared[Ft_Kind_Max];
+/* The arenas live in a MEM1 region outside heap 0 (pc/platform/shim_os.c gw_throw_persist_region), bump-allocated
+ * from here and rewound on every scene; heap 0 is only the fallback when the region cannot hold one. */
+static u8* ftData_ThrowRegionCur;
+static u8* ftData_ThrowRegionLo;
+static u8* ftData_ThrowRegionEnd;
+
+static u8* ftData_ThrowArenaAlloc(size_t need)
+{
+    extern unsigned Geno_ThrowRegion(unsigned* size);
+    if (ftData_ThrowRegionCur == NULL) {
+        unsigned size = 0, base = Geno_ThrowRegion(&size);
+        ftData_ThrowRegionCur = (u8*) (uintptr_t) base;
+        ftData_ThrowRegionLo = ftData_ThrowRegionCur;
+        ftData_ThrowRegionEnd = ftData_ThrowRegionCur + size;
+        OSReport("geno: throw-bank region 0x%X, %u bytes (outside heap 0)\n", base, size);
+    }
+    need = (need + 31u) & ~(size_t) 31u;
+    if (ftData_ThrowRegionCur != NULL && (size_t) (ftData_ThrowRegionEnd - ftData_ThrowRegionCur) >= need) {
+        u8* p = ftData_ThrowRegionCur;
+        ftData_ThrowRegionCur += need;
+        return p;
+    }
+    return (u8*) lbHeap_80015BD0(0, need);
+}
 
 static int ftData_ThrowBankLimit(void)
 {
@@ -2381,6 +2405,7 @@ static void ftData_ThrowBankReset(void)
         ftData_ThrowBanks[i].cap = ftData_ThrowBanks[i].sz = 0;
     }
     ftData_ThrowBankLoads = ftData_ThrowBankEvicts = 0;
+    ftData_ThrowRegionCur = NULL; /* rewound: the region is re-read and bumped from its start */
     memset(ftData_ThrownPrepared, 0, sizeof ftData_ThrownPrepared);
 }
 
@@ -2435,10 +2460,12 @@ static void ftData_ThrownStandInPrepare(int kind)
         if (b->buf != NULL && b->cap >= need) continue;
         if (b->buf != NULL) { /* too small for this family: only possible while loading defines (no bank is resident) */
             ftData_ThrowBankDrop(b);
-            lbHeap_80015CA8(0, b->buf);
+            if (!(b->buf >= ftData_ThrowRegionLo && b->buf < ftData_ThrowRegionEnd)) {
+                lbHeap_80015CA8(0, b->buf); /* a heap 0 fallback; region arenas are only rewound with the scene */
+            }
             b->buf = NULL;
         }
-        b->buf = (u8*) lbHeap_80015BD0(0, need);
+        b->buf = ftData_ThrowArenaAlloc(need);
         b->cap = b->buf != NULL ? need : 0;
     }
     ftData_ThrownPrepared[kind] = 1;

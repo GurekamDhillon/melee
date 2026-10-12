@@ -237,6 +237,12 @@ static int geno_lua_run(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int s, i
                 geno_combo_ki_add(fp, st, (s32) a);
             }
             break;
+        case GENO_LUA_CMD_LEDGE: /* the same store as PUT LEDGE (clamped 0..2); honoured by the ledge-aware air collisions */
+            st->ledge = a > 2 ? 2 : (s32) a;
+            if (a == 3) {
+                st->fall_ledge = 1; /* ctx.ledge(3): also the FallSpecial after the move (Geno_FallSpecialColl) */
+            }
+            break;
         case GENO_LUA_CMD_TURN:
             fp->facing_dir = -fp->facing_dir;
             if (fp->parts != NULL) {

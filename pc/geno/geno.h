@@ -146,6 +146,7 @@ enum {
 #define GENO_BTN_SHIELD 0x08
 #define GENO_BTN_GRAB 0x10
 #define GENO_BTN_TAUNT 0x20
+#define GENO_BTN_BLAST 0x40 /* D-pad Down (the combo meter's blast input; a controls layout maps Y to it) */
 
 /* ---- v1: change action. CHG word0 [15:8] condition, [7] B is a var, [6:4] cmp, [3] NOT,
  * [2] ONCE; word1 target; word2 arg1; word3 arg2. CHGAND: same flags, word1 arg1, word2 arg2. */
@@ -546,7 +547,8 @@ enum { /* a command's op */
     GENO_LUA_CMD_HITBOX_DAMAGE = 3, /* a: hitbox mask (bit n = slot n), b: damage (float bits) */
     GENO_LUA_CMD_LOOP = 4,       /* restart the animation, the state's variables kept */
     GENO_LUA_CMD_TURN = 5,       /* flip the facing (as the script value FACING = 0); the model follows */
-    GENO_LUA_CMD_KI = 6          /* geno 11: a = signed delta to the combo meter (hundredths), clamped to [0, max] */
+    GENO_LUA_CMD_KI = 6,         /* geno 11: a = signed delta to the combo meter (hundredths), clamped to [0, max] */
+    GENO_LUA_CMD_LEDGE = 7       /* a: this action's ledge grab, as the engine value LEDGE: 0 none, 1 front, 2 front and back (Lua may open it, never narrow it below the state's default) */
 };
 enum { /* GENO_LUA_IO_FAULT */
     GENO_LUA_FAULT_NONE = 0,

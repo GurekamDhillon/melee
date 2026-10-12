@@ -542,6 +542,14 @@ static void geno_cb_nothing(Fighter_GObj* gobj) {}
 
 static void geno_cb_phys_air(Fighter_GObj* gobj)
 {
+    Fighter* fp = GET_FIGHTER(gobj);
+    if (geno_state(fp)->fall_ledge) {
+        /* a ctx.ledge(3) move (Goku's flight and its aerials): no fast fall (Firefox ignores it); gravity and drift as ft_80084DB0 */
+        fp->fall_fast = false;
+        ftCommon_Fall(fp, fp->co_attrs.gravity, fp->co_attrs.terminal_velocity);
+        ftCommon_CalcSelfAccel_Drift(fp);
+        return;
+    }
     ft_80084DB0(gobj); /* gravity (fast fall) + drift, as aerial attacks */
 }
 
@@ -557,6 +565,9 @@ static void geno_cb_phys_air_nodrift(Fighter_GObj* gobj)
 static void geno_cb_phys_air_drift(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
+    if (geno_state(fp)->fall_ledge) {
+        fp->fall_fast = false; /* a ctx.ledge(3) move: no fast fall */
+    }
     if (fp->ground_or_air == GA_Ground) {
         ft_80084F3C(gobj);
     } else {
@@ -646,8 +657,16 @@ static void geno_land(Fighter_GObj* gobj)
 
 /* coll "air": Melee's air collision with ledge grab (platforms pass-through while holding down,
  * like FallSpecial), landing -> geno_land */
+static void geno_coll_air_ledge(Fighter_GObj* gobj, int both, HSD_GObjEvent land);
 static void geno_cb_coll_air(Fighter_GObj* gobj)
 {
+    /* a script or Lua (PUT LEDGE 2, ctx.ledge(2)) that opens the back ledge for this action: both ledges are
+     * tested and the fighter turns to the one caught (ftCliffCommon_80081370). Any other value, and every
+     * state that never sets it (st->ledge == -1), is the retail facing-only catch below. */
+    if (geno_state(GET_FIGHTER(gobj))->ledge == 2) {
+        geno_coll_air_ledge(gobj, 1, geno_land);
+        return;
+    }
     ft_80083090(gobj, ftCo_80096CC8, geno_land);
 }
 
@@ -803,6 +822,7 @@ static void geno_motion_land(Fighter_GObj* gobj)
 
 /* Melee's air collision with a ledge grab in the facing direction (dir +-1) or either direction (0:
  * mpColl then tests both ledges; ftCliffCommon turns the fighter to face the ledge it caught). */
+extern int mpColl_LedgeLevelOK;
 static void geno_coll_air_ledge(Fighter_GObj* gobj, int both, HSD_GObjEvent land)
 {
     Fighter* fp = GET_FIGHTER(gobj);
@@ -810,12 +830,14 @@ static void geno_coll_air_ledge(Fighter_GObj* gobj, int both, HSD_GObjEvent land
     bool touched;
     coll->last_pos = coll->cur_pos;
     coll->cur_pos = fp->cur_pos;
+    mpColl_LedgeLevelOK = both && geno_state(fp)->fall_ledge; /* ctx.ledge(3) moves only (Goku's flight: a level or descending approach catches (retail needs a strict descent) */
     if (fp->x2064_ledgeCooldown || fp->x2224_b2) {
         touched = mpColl_80047AC8(coll, ftCo_80096CC8, gobj);
     } else {
         mpCollSetFacingDir(coll, both ? 0 : (fp->facing_dir < 0.0f ? -1 : 1));
         touched = mpColl_80047E14(coll, ftCo_80096CC8, gobj);
     }
+    mpColl_LedgeLevelOK = 0;
     fp->cur_pos = coll->cur_pos;
     if (ft_80081A00(gobj)) {
         return;
@@ -827,6 +849,19 @@ static void geno_coll_air_ledge(Fighter_GObj* gobj, int both, HSD_GObjEvent land
     if (ftCliffCommon_80081298(gobj)) {
         Geno_Event(25, fp->kind, fp->player_id, (int) fp->motion_id - GENO_MOTION_BASE, both ? 2 : 1);
     }
+}
+
+/* FallSpecial (the common special fall) for a fighter whose move asked ctx.ledge(3): the ledge is caught in either
+ * facing (as Fox's SpecialHiFall, CLIFFCATCH_BOTH). Returns 1 when it handled the frame's collision. */
+int Geno_FallSpecialColl(Fighter_GObj* gobj);
+int Geno_FallSpecialColl(Fighter_GObj* gobj)
+{
+    Fighter* fp = GET_FIGHTER(gobj);
+    if (fp->kind < Ft_Kind_Mex0 || geno_state(fp)->profile < 0 || !geno_state(fp)->fall_ledge) {
+        return 0;
+    }
+    geno_coll_air_ledge(gobj, 1, ftCo_80096D28);
+    return 1;
 }
 
 /* This action's ledge grab: a script's PUT LEDGE, else the state's "ledge" default. */

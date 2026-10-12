@@ -130,6 +130,10 @@ void ftCo_FallSpecial_Phys(Fighter_GObj* gobj)
 
 void ftCo_FallSpecial_Coll(Fighter_GObj* gobj)
 {
+    extern int Geno_FallSpecialColl(Fighter_GObj* gobj);
+    if (Geno_FallSpecialColl(gobj)) {
+        return; /* a Geno move asked for the either-facing catch (ctx.ledge(3)) */
+    }
     ft_80083090(gobj, ftCo_80096CC8, ftCo_80096D28);
 }
 

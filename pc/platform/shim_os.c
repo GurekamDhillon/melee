@@ -84,13 +84,24 @@ static uint32_t gw_costume_region_size(void) {
   extern uint32_t gw_CostumeRegionSize(void);
   return gw_CostumeRegionSize();
 }
+/* The throw-bank region (ftdata.c, ftData_ThrownStandInPrepare): up to six Geno throw-bank arenas of
+ * GENO_THROW_ARENA_MIN (0x1E0000) each, just below the costume region. It is MEM1 added on top of the
+ * 48 MiB (gw_runtime.c) and withheld from the arena, so heap 0 keeps exactly the size it has without it
+ * and the ~2 MB arenas no longer eat heap 0 on a heavy stage. */
+#define GW_THROW_REGION_SIZE 0xC00000u
+
+static uint32_t gw_throw_region_size(void) {
+  return GW_THROW_REGION_SIZE;
+}
+
 static uintptr_t gw_arena_lo;
 static uintptr_t gw_arena_hi;
 
 static void gw_arena_ensure(void) {
   if (gw_arena_lo == 0) {
     gw_arena_lo = (uintptr_t)gw_mem1 + GW_ARENA_LO_OFFSET;
-    gw_arena_hi = (uintptr_t)gw_mem1 + gw_mem1_size - GW_MEX_PERSIST_SIZE - gw_geno_region_size() - gw_costume_region_size();
+    gw_arena_hi = (uintptr_t)gw_mem1 + gw_mem1_size - GW_MEX_PERSIST_SIZE - gw_geno_region_size() - gw_costume_region_size() -
+                  gw_throw_region_size();
   }
 }
 
@@ -115,6 +126,13 @@ void gw_geno_persist_region(uint32_t *base, uint32_t *size) {
 void gw_costume_persist_region(uint32_t *base, uint32_t *size) {
   *size = gw_costume_region_size();
   *base = (uint32_t)((uintptr_t)gw_mem1 + gw_mem1_size - GW_MEX_PERSIST_SIZE - gw_geno_region_size() - *size);
+}
+
+/* Throw-bank region, below the costume region. */
+void gw_throw_persist_region(uint32_t *base, uint32_t *size) {
+  *size = gw_throw_region_size();
+  *base = (uint32_t)((uintptr_t)gw_mem1 + gw_mem1_size - GW_MEX_PERSIST_SIZE - gw_geno_region_size() -
+                     gw_costume_region_size() - *size);
 }
 
 /* ---- guest scratch for pointer arguments handed to GUEST callbacks -------------------------

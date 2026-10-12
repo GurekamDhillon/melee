@@ -32,6 +32,17 @@ static int nz_allowed(const char *name) {
     return 0;
 }
 
+/* A GD mod zip (a post that carries mods/<id>/ folders, see gw_nucleus_bundle.h) holds more kinds than a disc-override post: scripts, effect and sound banks. The bundle installer points
+ * nz_allow_fn at this for the length of its call (the file worker is one thread, and nothing else lists a zip meanwhile). The game exe is LISTED so the directory validates, never written. */
+static int nz_allowed_bundle(const char *name) {
+    static const char *const exts[] = { ".lua", ".genoasm", ".words", ".gnsnd", ".css", ".py", ".sha256", ".exe" };
+    size_t i;
+    if (nz_allowed(name)) return 1;
+    for (i = 0; i < sizeof exts / sizeof exts[0]; ++i) if (nc_has_ext(name, exts[i])) return 1;
+    return 0;
+}
+static int (*nz_allow_fn)(const char *name);
+
 /* Returns file count or -1. When names is supplied it receives every file name. */
 static int nc_zip_list(const uint8_t *z, size_t zn, char names[][260], int cap, char *err, size_t ecap) {
     size_t eocd, i, cd, end, total = 0;
@@ -78,7 +89,7 @@ static int nc_zip_list(const uint8_t *z, size_t zn, char names[][260], int cap, 
             }
         }
         if (name[nl - 1] != '/' && name[nl - 1] != '\\') {
-            if (!nz_allowed(name)) { snprintf(err, ecap, "unsupported file type in zip: %.100s", name); return -1; }
+            if (!(nz_allow_fn ? nz_allow_fn(name) : nz_allowed(name))) { snprintf(err, ecap, "unsupported file type in zip: %.100s", name); return -1; }
             if (names) {
                 if (n >= cap) { snprintf(err, ecap, "too many files in zip"); return -1; }
                 nc_copy(names[n], 260, name);

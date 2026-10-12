@@ -1,5 +1,5 @@
 /* gw_nucleus_image.h - turning the pictures SSBM Nucleus serves (PNG portraits, stock icons and screenshots) into the small textures the browser draws.
- * Pure C over stb_image (PNG only: the API's WebP thumbnails are never used); no game types, no threads, no network. The engine's picture threads call ni_make off the game thread and
+ * Pure C over stb_image (PNG and JPEG; WebP is not decoded, such a picture keeps the no-picture box); no game types, no threads, no network. The engine's picture threads call ni_make off the game thread and
  * keep the result as a .gxtex blob; the game thread uploads it (gw_Kit_TexAddGxtex) a couple per frame. Header-only (static), like gw_nucleus_core.h.
  *
  * Every picture is fitted INSIDE a fixed canvas (aspect kept, centred, transparent around), so a texture is always the same small size whatever the
@@ -14,19 +14,24 @@ static const int ni_canvas_w[NI_KINDS] = { 96, 256, 32 };
 static const int ni_canvas_h[NI_KINDS] = { 72, 144, 32 };
 #define NI_MAX_BYTES (6u * 1024u * 1024u)          /* a source picture larger than this is refused (the download limit too) */
 #define NI_MAX_DIM 2048
+#define NI_MAX_PIXELS (40u * 1000u * 1000u)        /* decoded-pixel budget (160 MB of RGBA at most, off the game thread); more is refused, anything under is shrunk by ni_fit */
 
 /* the picture's bytes -> RGBA8 (malloc'd; free with ni_free_rgba). A PNG only. 0 ok, -1 with err. */
 static int ni_decode(const uint8_t *d, size_t n, uint8_t **rgba, int *w, int *h, char *err, size_t ecap) {
     *rgba = NULL; *w = *h = 0;
     if (n < 16 || n > NI_MAX_BYTES) { snprintf(err, ecap, "not a picture"); return -1; }
-    if (!memcmp(d, "\x89PNG", 4)) {
+    if (!memcmp(d, "\x89PNG", 4) || (d[0] == 0xFF && d[1] == 0xD8 && d[2] == 0xFF)) {
+        const char *kind = d[0] == 0xFF ? "JPEG" : "PNG";
+        int iw = 0, ih = 0, ic = 0;
+        if (!stbi_info_from_memory(d, (int) n, &iw, &ih, &ic)) { snprintf(err, ecap, "%s unreadable (%s)", kind, stbi_failure_reason() ? stbi_failure_reason() : "?"); return -1; }
+        if (iw < 1 || ih < 1 || (unsigned long long) iw * (unsigned long long) ih > NI_MAX_PIXELS) { snprintf(err, ecap, "%s %dx%d is too many pixels", kind, iw, ih); return -1; }
         int comp = 0;
         unsigned char *px = stbi_load_from_memory(d, (int) n, w, h, &comp, 4);
-        if (!px) { snprintf(err, ecap, "PNG unreadable (%s)", stbi_failure_reason() ? stbi_failure_reason() : "?"); return -1; }
+        if (!px) { snprintf(err, ecap, "%s unreadable (%s)", kind, stbi_failure_reason() ? stbi_failure_reason() : "?"); return -1; }
         *rgba = px;
         return 0;
     }
-    snprintf(err, ecap, "not a PNG");
+    snprintf(err, ecap, "not a PNG or JPEG");
     return -1;
 }
 static void ni_free_rgba(uint8_t *px, const uint8_t *src) { (void) src; if (px) stbi_image_free(px); }

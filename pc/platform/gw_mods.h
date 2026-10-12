@@ -119,6 +119,8 @@ int gw_Mods_DiffDescribe(const char *peer_desc, char *out, int cap);
  * (the Nucleus post id; 0 when none). gw_Mods_Digest is the mod's content digest (mod_digest): meaningful when the mod is
  * mounted (the overlay has reported its files). */
 const char *gw_Mods_Source(int i);
+/* mod.json text -> 1 (and why, in out) when it needs an engine feature this build lacks; the Nucleus bundle installer's "needs a newer game" check */
+int gw_Mods_JsonEngineMiss(const char *json, char *out, size_t cap);
 int gw_Mods_NucleusPost(int i);
 uint64_t gw_Mods_Digest(int i);
 

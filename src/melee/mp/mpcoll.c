@@ -74,6 +74,8 @@ static void sdata2_order(void)
 #define CollisionFlagAir_StayAirborne 0x1
 #define CollisionFlagAir_PlatformPassCallback 0x2
 #define CollisionFlagAir_CanGrabLedge 0x4
+/* set by a Geno move that asked for a level-or-descending ledge catch (ctx.ledge(2/3)); retail needs a strict descent */
+int mpColl_LedgeLevelOK = 0;
 
 /// 80041C78 https://decomp.me/scratch/V6eYQ
 void mpColl_80041C78(void)
@@ -2559,7 +2561,7 @@ bool mpColl_80046904(CollData* coll, u32 flags)
         bool on_edge = c->env_flags & Collide_LeftEdge ||
                        c->env_flags & Collide_RightEdge;
 
-        if (!on_edge && c->cur_pos.y < c->prev_pos.y) {
+        if (!on_edge && (c->cur_pos.y < c->prev_pos.y || (mpColl_LedgeLevelOK && c->cur_pos.y <= c->prev_pos.y))) {
             if (c->facing_dir == 1 || c->facing_dir == 0) {
                 if (mpColl_80044164(
                         c, &c->ledge_id_left)) { // Physics_CheckForLeftLedge

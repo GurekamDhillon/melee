@@ -8,8 +8,9 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_PNG
+#define STBI_ONLY_JPEG   /* the browser's screenshots are often JPEG; costume textures stay PNG-only (nc_png_to_gxtex checks the magic) */
 #define STBI_NO_STDIO
-#define STBI_MAX_DIMENSIONS 2048
+#define STBI_MAX_DIMENSIONS 16384   /* ni_decode caps the pixel COUNT and shrinks the result; a costume PNG is still limited to 1024 */
 #include "../third_party/stb/stb_image.h"
 
 /* ---- DAT public symbols ----------------------------------------------------------------------------------- */

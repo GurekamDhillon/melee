@@ -546,8 +546,12 @@ paused:
 /* The running exe's build time and the engine-feature check, for the bundle installer (and the local-zip path through nlz_bundle_env). */
 static nc_bundle_env ne_benv;
 static void ne_bundle_env_init(void) {
+#ifdef _WIN32
     const uint8_t *base = (const uint8_t *) GetModuleHandleA(NULL);
     ne_benv.host_stamp = base ? nc_pe_stamp(base, 4096) : 0;
+#else
+    ne_benv.host_stamp = 0; /* no PE image to stamp on Linux: a bundle's exe is never compared */
+#endif
     ne_benv.engine_miss = gw_Mods_JsonEngineMiss;
     nlz_bundle_env = &ne_benv;
 }

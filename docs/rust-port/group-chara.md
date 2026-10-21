@@ -310,3 +310,48 @@ traced as its non-NULL bit + FNV-1a of its `<tu>:<name>` key. Round-5 functions 
 ### Counts
 - Ported this round: 191 (all verified). Total in the crate: 1155 of ~4340 (26.6%).
 - Stubs added: 16 TODO(group3); 79 new callback keys (TODO(group4) where the target is unported).
+
+## Round 6 (2026-10-21)
+
+### What was ported
+108 more character functions in 49 TUs (list `gen/ported_r6.txt`; code `src/chars/r6/<Char>.rs`,
+path `melee_chara::chars::r6::<Char>::<tu>::<fn>`, signature `fn(gobj: *mut HSD_GObj)`). Mostly the
+per-character `OnItemVisible` / `OnItemInvisible` hooks (53), Phys/Coll callbacks calling
+`ftCommon_ClampAirDrift`, `ftAnim_ApplyPartAnim`, `ftColl_8007AEF8`, `ftCo_AirCatchHit_Coll`,
+OnDeath hooks calling `efLib_DestroyAll`, and Phys callbacks with motion-var countdowns
+(`fp->mv.x.y--`).
+
+How: `gen/port_r6.py` = port_r5's translator plus
+- 7 new stubs in `src/stubs.rs` (panic unset): TODO(group3) `ftColl_8007AEF8`, `ftCo_AirCatchHit_Coll`,
+  `ftAnim_ApplyPartAnim`, `ftAnim_80070C48`, `ftAnim_80070CC4`; TODO(group5) `itIsHeavy`;
+  TODO(ef) `efLib_DestroyAll` (no group owns ef/ yet);
+- `Fighter_OnItemVisible` / `Fighter_OnItemInvisible` (ft/inlines.h) written out in stubs.rs over
+  `itIsHeavy` + `ftAnim_80070C48` / `80070CC4`;
+- group 3's existing ports `ftCommon_Fall` and `ftCommon_ClampAirDrift` (melee_fighter::ftcommon;
+  the oracle's ftcommon.c cut already contains their C). In practice no `ftCommon_Fall` caller
+  survived (all take `da->x` arguments rustc rejected); 13 functions call `ClampAirDrift`;
+- statement `fp->f++;` / `fp->f--;` (prefix too) rewritten to `+= 1` / `-= 1` before translation.
+62 candidates were dropped by the rustc-reject loop (the same int-to-float / anonymous-member
+cases as round 5, plus `ftCommon_Fall(fp, da->x, da->y)` argument conversions).
+1 new callback key (`gen/callbacks_r6.txt`); 6 cb.rs entries that panicked TODO(group4) now call
+round-6 ports.
+
+### FMA
+`fma_sites.py --func <the 108>` over the 49 TUs: 0 fused sites. (`ftCommon_Fall` /
+`ClampAirDrift` are group 3's; their C runs in the oracle with shipping contraction.)
+
+### Verification
+`gen/chref.py` now reads ported_r6 / callbacks_r6; 7 new C recorders in `chref_main.c` (ids 38-44;
+`itIsHeavy` traces its item gobj as NULL / non-NULL and answers from the LCG) and identical ones in
+`tests/chars_ref.rs`. Round-6 functions run 256 fighters each.
+- Result: **1250/1250 equal** (1142 + 108); the 1142 earlier hashes are unchanged.
+- Negative check: `gravityDelay - 1` -> `- 2` in `ftFx_SpecialSStart_Phys` and the flag `1` -> `0`
+  in `ftCl_Init_OnItemVisible` made exactly those two fail (2 of 1250).
+- Not proven: branch coverage (random fill), the 39 stubbed calls, unported callback targets.
+
+### Counts
+- Ported this round: 108 (all verified). Total in the crate: 1263 of ~4340 (29.1%).
+- Stubs added: 7 (5 TODO(group3), 1 TODO(group5), 1 TODO(ef)); 1 new callback key.
+- Next: typed `da->x` float arguments (int->float conversion in the translator) would take most of
+  the 62 rejected; local declarations (`Vec3 v;`, `s32 i;`) and `Player_GetPlayerSlotType(...) == k`
+  conditions (85 uses, Master/Crazy Hand) block the largest remaining groups.

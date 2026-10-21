@@ -73,6 +73,15 @@ void ftAnim_800704F0(HSD_GObj* gobj, int i, float f) { tr(34); trg(gobj); tr((u3
 void ftCo_LandingFallSpecial_Enter(HSD_GObj* gobj, bool c, float f) { tr(35); trg(gobj); tr((u32) c); trf(f); }
 STUB_G(36, Fighter_UnkSetFlag_8006CFBC)
 void ftCo_800957F4(HSD_GObj* gobj, FtMotionId msid) { tr(37); trg(gobj); tr((u32) msid); }
+/* Round 6 (gen/port_r6.py): 7 more recorders (ftCommon_Fall / ClampAirDrift run for real: the cut).
+ * itIsHeavy is reached through the ft/inlines.h Fighter_OnItemVisible/Invisible; its item gobj is traced as NULL or not. */
+STUB_G(38, ftColl_8007AEF8)
+STUB_G(39, ftCo_AirCatchHit_Coll)
+void ftAnim_ApplyPartAnim(HSD_GObj* gobj, s32 a, s32 b, float f) { tr(40); trg(gobj); tr((u32) a); tr((u32) b); trf(f); }
+void ftAnim_80070C48(HSD_GObj* gobj, s32 a) { tr(41); trg(gobj); tr((u32) a); }
+void ftAnim_80070CC4(HSD_GObj* gobj, s32 a) { tr(42); trg(gobj); tr((u32) a); }
+STUB_G(43, efLib_DestroyAll)
+bool itIsHeavy(HSD_GObj* item) { tr(44); tr(item != 0); return pick() & 1; }
 
 #include "ftcommon_extract.inc"
 #include "chref_table.inc"

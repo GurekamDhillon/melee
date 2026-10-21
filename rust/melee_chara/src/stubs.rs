@@ -169,3 +169,50 @@ pub fn ftCommon_8007E2FC(g: G) {
 pub fn ftCommon_UpdateFacing(fp: &mut Fighter) {
     melee_fighter::ftcommon::update_facing(fp)
 }
+
+// ---- Round 6 (gen/port_r6.py): more calls out of the character code. ----
+
+stub!(/// TODO(group3): `ftColl_8007AEF8(gobj)` (ft/ftcoll.c).
+    FTCOLL_8007AEF8, ftColl_8007AEF8, (g: G));
+stub!(/// TODO(group3): `ftCo_AirCatchHit_Coll(gobj)` (ft/ftcoll.c / ftCommon AirCatch).
+    FTCO_AIRCATCHHIT_COLL, ftCo_AirCatchHit_Coll, (g: G));
+stub!(/// TODO(group3): `ftAnim_ApplyPartAnim(gobj, a, b, frame)` (ft/ftanim.c).
+    FTANIM_APPLYPARTANIM, ftAnim_ApplyPartAnim, (g: G, a: i32, b: i32, frame: f32));
+stub!(/// TODO(group3): `ftAnim_80070C48(gobj, flag)` (ft/ftanim.c; reached through Fighter_OnItemVisible).
+    FTANIM_80070C48, ftAnim_80070C48, (g: G, flag: i32));
+stub!(/// TODO(group3): `ftAnim_80070CC4(gobj, flag)` (ft/ftanim.c; reached through Fighter_OnItemInvisible).
+    FTANIM_80070CC4, ftAnim_80070CC4, (g: G, flag: i32));
+stub!(/// TODO(ef): `efLib_DestroyAll(gobj)` (ef/eflib.c; no group owns ef/ yet).
+    EFLIB_DESTROYALL, efLib_DestroyAll, (g: G));
+stub!(/// TODO(group5): `itIsHeavy(item_gobj)` (it/it_26B1.c; returns bool).
+    ITISHEAVY, itIsHeavy, (item: *mut melee_types::Item_GObj) -> i32);
+
+/// `ftCommon_Fall(fp, gravity, terminal_vel)`: group 3's port.
+#[inline]
+pub fn ftCommon_Fall(fp: &mut Fighter, gravity: f32, terminal_vel: f32) {
+    melee_fighter::ftcommon::fall(fp, gravity, terminal_vel)
+}
+
+/// `ftCommon_ClampAirDrift(fp)`: group 3's port.
+#[inline]
+pub fn ftCommon_ClampAirDrift(fp: &mut Fighter) {
+    melee_fighter::ftcommon::clamp_air_drift(fp)
+}
+
+/// `Fighter_OnItemVisible(gobj, flag)` (ft/inlines.h, static inline).
+#[inline]
+pub fn Fighter_OnItemVisible(g: G, flag: i32) {
+    let item = unsafe { (*((*g).user_data as *mut Fighter)).item_gobj };
+    if itIsHeavy(item) == 0 {
+        ftAnim_80070C48(g, flag);
+    }
+}
+
+/// `Fighter_OnItemInvisible(gobj, flag)` (ft/inlines.h, static inline).
+#[inline]
+pub fn Fighter_OnItemInvisible(g: G, flag: i32) {
+    let item = unsafe { (*((*g).user_data as *mut Fighter)).item_gobj };
+    if itIsHeavy(item) == 0 {
+        ftAnim_80070CC4(g, flag);
+    }
+}

@@ -1,0 +1,2 @@
+# <setter tu> <defining tu | ext> <callback> stored or passed by round-6 ports (new ones only): gen/port_r6.py
+src/melee/ft/kinds/ftPopo/ftpopospeciallw.c src/melee/ft/kinds/ftPopo/ftpopospeciallw.c fn_80122D2C

@@ -86,6 +86,14 @@ fn install_recorders() {
         st::FTCO_LANDINGFALLSPECIAL_ENTER = Some(|g, c, f| { tr(35); trg(g); tr(c as u32); trf(f) });
         st::FIGHTER_UNKSETFLAG_8006CFBC = Some(|g| { tr(36); trg(g) });
         st::FTCO_800957F4 = Some(|g, m| { tr(37); trg(g); tr(m as u32) });
+        // round 6 (gen/port_r6.py)
+        st::FTCOLL_8007AEF8 = Some(|g| { tr(38); trg(g) });
+        st::FTCO_AIRCATCHHIT_COLL = Some(|g| { tr(39); trg(g) });
+        st::FTANIM_APPLYPARTANIM = Some(|g, a, b, f| { tr(40); trg(g); tr(a as u32); tr(b as u32); trf(f) });
+        st::FTANIM_80070C48 = Some(|g, a| { tr(41); trg(g); tr(a as u32) });
+        st::FTANIM_80070CC4 = Some(|g, a| { tr(42); trg(g); tr(a as u32) });
+        st::EFLIB_DESTROYALL = Some(|g| { tr(43); trg(g) });
+        st::ITISHEAVY = Some(|item| { tr(44); tr(!item.is_null() as u32); pick() });
     }
 }
 

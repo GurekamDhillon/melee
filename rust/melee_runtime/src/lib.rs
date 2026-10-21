@@ -14,6 +14,7 @@
 pub use melee_core;
 
 pub mod aobj;
+pub mod dobj;
 pub mod cabi;
 pub mod dat;
 pub mod fobj;
@@ -30,3 +31,4 @@ pub mod mtx;
 pub mod quatlib;
 pub mod random;
 pub mod spline;
+pub mod wobj;

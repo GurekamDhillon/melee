@@ -87,3 +87,43 @@ and the round 4 AObj, so it went next. 27 jobj.c definitions in `jobj.rs`, plus 
   RemoveAnim*, AddAnim*, JObjSortAnim, JObjUpdateFunc, Anim/AnimAll), load / ResolveRefs, Unref /
   UnrefThis / ReleaseChild / Release / Amnesia / InfoInit (class system), DispAll, SetCurrent /
   GetCurrent, the callback setters.
+
+## Port round 6: WObj and the DObj flags
+
+`wobj.c` sits on round 5's JObj (`setup_matrix`), round 1's `mtx::mult_vec` and spline
+`arc_length_point`, and round 4's AObj, so it went next; the flag half of `dobj.c` came with it.
+`fma_sites.py`: no fused site in wobj.c or dobj.c.
+
+| function(s) | module | checked against C |
+|---|---|---|
+| HSD_WObjSetPosition, SetPositionX/Y/Z, GetPosition, HSD_WObjClearFlags (inline), WObjUpdateFunc (path type 4 incl. clamp + spline, types 5-7) | `wobj.rs` | yes |
+| HSD_WObjRemoveAnim, ReqAnim, AddAnim, InterpretAnim, WObjLoad / HSD_WObjInit, HSD_WObjLoadDesc, HSD_WObjAlloc | `wobj.rs` | no (thin wrappers over the checked parts, AObj and RObj stubs) |
+| HSD_DObjSetCurrent, GetFlags, SetFlags, ClearFlags, ModifyFlags | `dobj.rs` | yes (SetCurrent: trivially, no observable output) |
+
+18 functions (13 wobj.c incl. the static UpdateFunc and the header ClearFlags, 5 dobj.c).
+
+- Native shape: `HsdWObj<R>` (`flags`, `pos`, `aobj: Option<HsdAObj<JObjId>>`, `robj: Vec<R>`),
+  GcLayout delegated to `melee_types::HSD_WObj`. Position functions take the `JObjTree` and its
+  host. InterpretAnim takes the AObj out while it runs so the update closure can write `flags`/
+  `pos` (the C reads `wobj->aobj->hsd_obj` only, which is constant during the call).
+  DObj: the native DObj record is not built yet, so the flag functions work on its `flags` word
+  (`Option<&mut u32>`, None = NULL); `DObjGlobals` holds `current_dobj`.
+- Stubs via `WObjHost` (TODO(group1 robj / jobj)): `jp->u.spline` (the native JObj keeps only the
+  DObj member of its union), RObj RemoveAnimAll / ReqAnimAll / AddAnimAll / AnimAll /
+  LoadDesc+ResolveRefsAll, and AObjLoadDesc's obj_id lookup. Path type 4 with no point from
+  `splArcLengthPoint` gives (0,0,0) (the shipping build zero-initialises the local).
+- Oracle: `oracle/build_wobj.sh` compiles wobj.c (included by `helper_wobj.c` so the static
+  UpdateFunc is reachable), dobj.c, jobj.c, spline.c, mtx.c, mtx_pc.c, gekko_fp.c, lbtrigf.c with
+  the shipping flags + `lower.py`; `driver_wobj.c` writes `tests/data/oracle_wobj.txt` (1.7 MB):
+  150 scenarios (a 3-JObj chain with random SRT, a random spline of each type 0-3 on every JObj, a
+  WObj with no AObj / a target-less AObj / an AObj targeting JObj 1 or 2, a DObj with random flags)
+  x 100 random ops (positions, axis sets, GetPosition, ClearFlags, UpdateFunc types 0-8 with
+  out-of-range and edge values, JObj SRT changes + SetMtxDirty, DObj flag ops incl. NULL). Each row
+  checks the result, WObj flags/pos, DObj flags and an FNV-1a hash of the JObjs' flags and
+  matrices. `tests/oracle_wobj.rs`: 15,000 rows, 0 failed, 1,197 path updates.
+- Mutation: dropping the bit-0 set after a path update fails 9,784 rows. Dropping the upper clamp
+  (`fv > 1 -> 1`) fails none: `splArcLengthGetParameter` already returns 1 for `s >= 1`, so the
+  clamp is not observable; it is kept as in the C.
+- Not ported: `HSD_WObjSetDefaultClass`, WObjRelease / Amnesia / InfoInit, `HSD_WObjUnref` (class
+  system); the rest of dobj.c (anim functions need MObj/PObj, Load/ResolveRefs, Remove/Alloc,
+  Disp).

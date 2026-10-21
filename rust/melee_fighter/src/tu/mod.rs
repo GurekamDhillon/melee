@@ -132,3 +132,4 @@ pub mod ftCo_PassiveWall;
 pub mod ftCo_Rebound;
 pub mod ftCo_Run;
 pub mod ftCo_ItemScrew;
+pub mod ftCo_Jump;

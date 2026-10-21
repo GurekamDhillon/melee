@@ -1,0 +1,9 @@
+[package]
+name = "melee_net"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Platform layer: rollback netplay transport (port of pc/platform/gw_net.c: UDP, handshake, input exchange, time sync, checksums) + the rollback session/driver interface"
+
+[dependencies]

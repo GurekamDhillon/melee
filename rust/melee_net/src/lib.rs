@@ -1,0 +1,56 @@
+//! Rollback netplay transport: a native port of `pc/platform/gw_net.c` (+ `gw_net.h`), wire
+//! compatible with the C build (protocol version 9), plus the rollback session interface
+//! (`gw_rollback.h`'s network-facing half), the 11-byte raw-pad payload codec of `gw_netplay.c`,
+//! and a generic rollback frame/snapshot driver.
+//!
+//! Layout:
+//! - [`wire`]: the little-endian field encoders; packet constants.
+//! - [`hash`]: FNV-1a 64 identity hashes (`gw_net_hash64`, `gw_net_hash_file`).
+//! - [`transport`]: the pluggable socket ([`Transport`]), real UDP ([`UdpTransport`]), address parsing.
+//! - [`net`]: the session object ([`Net`]): handshake, input exchange, time sync, checksums, lobby.
+//! - [`sim`]: the deterministic simulated network of `gw_net_tests.c` (loss, dup, jitter, clocks).
+//! - [`pad`]: `np_encode` / `np_decode` and [`RbInput`] (GwRbInput).
+//! - [`rollback`]: [`RollbackSession`] (what the transport talks to), [`NetAdapter`] (gw_netplay's
+//!   glue), and [`RollbackDriver`] over a [`Simulation`] with save/load snapshots.
+//!
+//! Like the C, nothing here touches game memory and everything runs from one `poll` per logic
+//! iteration on the caller's thread: no threads, no blocking.
+
+pub mod hash;
+pub mod net;
+pub mod pad;
+pub mod rollback;
+pub mod sim;
+pub mod transport;
+pub mod wire;
+
+pub use hash::{hash64, hash_file};
+pub use net::{Callbacks, Config, Event, Net, RemoteConfig, State, Stats};
+pub use pad::{np_decode, np_encode, RbInput, NP_PAYLOAD};
+pub use rollback::{NetAdapter, RollbackDriver, RollbackSession, Simulation};
+pub use transport::{addr_parse, Addr, Transport, UdpTransport};
+
+/// `GW_NET_PROTOCOL_VERSION` (gw_net.h; see its history comment for what each bump means).
+pub const PROTOCOL_VERSION: u32 = 9;
+pub const MAX_BLOB: usize = 900;
+pub const MAX_SLOTS: usize = 8;
+pub const MAX_PAYLOAD: usize = 32;
+pub const DEFAULT_PAYLOAD: usize = 9;
+pub const RING: u32 = 256;
+pub const MAX_INPUTS_PER_PACKET: i32 = 40;
+pub const NO_FRAME: i32 = i32::MIN;
+pub const MAX_GUEST_INFO: usize = 64;
+pub const HOLD_TIMEOUT_MS: u32 = 90000;
+pub const LOBBY_MAX: usize = 200;
+
+/// The Envoy mode words of gw_matchbuild.h (protocol 5), and its `gw_envoy_mode_valid`.
+pub const ENVOY_MODE_OFF: u32 = 0;
+pub const ENVOY_MODE_V1: u32 = 0x4556_0001;
+pub const ENVOY_MODE_COOP: u32 = 0x4556_0002;
+pub const ENVOY_MODE_RUN: u32 = 0x4556_0003;
+pub fn envoy_mode_valid(w: u32) -> bool {
+    matches!(w, ENVOY_MODE_OFF | ENVOY_MODE_V1 | ENVOY_MODE_COOP | ENVOY_MODE_RUN)
+}
+
+/// One slot's input for one frame (`gw_net_input`): the first `payload_bytes` are meaningful.
+pub type Input = [u8; MAX_PAYLOAD];

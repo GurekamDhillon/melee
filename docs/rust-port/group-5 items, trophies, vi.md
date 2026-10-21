@@ -379,6 +379,30 @@ index 9: GC-offset dependent, the native C reads another field), `it_8027B070` (
 stride), `mtx_reset` (global), attribute-pointer getters, item-to-item links. No other-group
 stubs were needed. Not done: no caller uses these yet; no frame-level comparison.
 
+## Round 8: 501 generated + 7 hand, `src/itfwd8.rs`, `src/itkinds8.rs`
+
+The round-7 rescan said the generated layer was used up, but its trivial-callback rule only took
+`return true;` / `return 1;` / `return;`. A scan of `it/`, `ty/`, `vi/` for unported bodies with
+no unported callees found 634, of which 214 are empty `{}` gobj callbacks (198 `Item_GObj*`, 16
+`HSD_GObj*`) and 287 `bool` callbacks that are only `return false;` / `return 0;`.
+`tests/c_oracle/gen_round8.py` (gen_round7.py with that rule widened) generates all 501 into
+`src/itfwd8.rs`. No new forwarders appeared. Hand-ported (7, `src/itkinds8.rs`): `get_min_life`,
+`it_802A13EC_inline`, `it_802A20E8_inline`, `it_802EAAEC_inline`, `it_80292394` (with itstarrod.c's
+TU-local `StarRodAttributes`, size asserted 0x10), `itDosei_UnkMotion4_GetAnimSpeed`,
+`itLinkboomerang_get_x18`. No fused sites (no arithmetic); the lowering still reports 45
+fmuladd.f32. No other-group stubs needed.
+
+**Verification** (`tests/oracle_round8.rs`, 501 + 7 tables x 48 cases, pass): same harness as
+round 7 (Item field list + `r4_pre`/`r4_h`, every item-var word, return value). Rounds 1-7's
+expected tables came out byte-identical. Mutation checks (each made the test fail): a `false`
+callback returning `true`, an empty callback writing `xCA8`, `pos.y` for `pos.x`.
+
+Left out (unchanged from round 7, plus): functions that read or write globals (`it_804D6D0C`,
+`tyList_pc_active`, `un_804D...`, `gm_80473A18`), the samusgrapple / linkhookshot `_Phys` that
+store function pointers into item vars (need typed callbacks), `it_80279720/44/68` (CmdUnion
+stride), ty/vi table readers (`tyDisplay_8031BB34` etc., need DAT/static data), and the
+`order_*` / `keep_data` data-ordering dummies (no behaviour).
+
 ## Decisions / traps
 
 - `Cargo.toml` no longer depends on melee_types/runtime/world/fighter: nothing calls them yet,

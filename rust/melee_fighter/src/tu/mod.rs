@@ -137,6 +137,8 @@ pub mod ftCo_JumpAerialF1;
 pub mod ftCo_ItemThrow;
 pub mod ftCo_ItemScopeStart;
 pub mod ftCo_ItemScopeRapid;
+pub mod ftCo_ItemScope;
+pub mod ftCo_ItemScopeFire;
 pub mod ftCo_KinokoGiantEnd;
 pub mod ftCo_DownDamage;
 pub mod ftCo_DownSpot;

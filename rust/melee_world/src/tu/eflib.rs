@@ -396,9 +396,9 @@ pub unsafe fn efLib_Create(gfx_id: i32, parent_gobj: G) -> *mut EF_Effect {
     effect
 }
 
-/// `(u32) f` as x86 cvttss2si through i64 (the native C's float->u32 conversion).
+/// `(u32) f`: gwtool's `fptoui.sat.i32` (saturating, negative / NaN -> 0), `melee_runtime::cabi::f2u32`.
 #[inline]
-pub fn f2u32(f: f32) -> u32 { f as i64 as u32 }
+pub fn f2u32(f: f32) -> u32 { melee_runtime::cabi::f2u32(f as f64) }
 /// `(u32) (10.0F * desc->lifetime)`.
 pub fn lifetime_tenths(desc: &EF_EffectDesc) -> u32 { f2u32(10.0f32 * desc.lifetime) }
 

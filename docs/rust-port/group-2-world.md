@@ -259,6 +259,34 @@ path runs mp_check_multiple, itself verified; the composition is not).
 
 Regenerate: `bash rust/melee_world/cref/gen_stage_ref.sh`.
 
+## Round 7: gr/ground.c accessors and helpers (85 functions)
+
+`src/gr/ground.rs` ports the self-contained part of src/melee/gr/ground.c as methods on
+`StageWorld` (stage_info) plus free functions: the GroundParam y/x4 getters and SetParamY, the 18
+GroundParam colour setters/getters (801C052C..801C06A4), the stage_info flag/field accessors
+(801C1D6C..801C1E84, 801C5740..801C57F0, 801C5A84..801C5ABC, 801C4D70/4DA0), the 16 camera and
+blast-zone setters (801C3880..801C39B0), 801C3D44/3DB4, 801C4338/4368/438C, the per-Ground SFX
+slot helpers (801C5440/54DC/5544/55AC/5630/5694, 801C53EC/5414), the one-line forwarders
+(801C43A4, 801C4DD0/4E20, EnableMatchCamera, 801C5840, GetP1Fighter(2), 801C5A28/5A60), the
+orientation math of 801C4B50 and 801C5AEC. `stage_info.param` stays the raw pointer the C has.
+Callees in other groups are `GroundHooks` methods whose default bodies panic with
+TODO(group1: lbaudio_ax, random, spline, lbshadow), TODO(group2: grzebes/grkongo/groldkongo,
+camera modes), TODO(group3: Player_GetEntity*), TODO(group5: Toy_*). FMA: fma_sites.py reports
+no fused site in any of these functions.
+
+`tests/ground_vs_c.rs`: `cref/gen_ground_ref.sh` cuts 801C4B50/5630/5694/5AEC verbatim into
+`cref/ground_tu.c` (spline/lbShadow/audio stand-ins), builds it with the game flags together
+with lbvector.c, lbtrigf.c, gekko_fp.c, mtx_pc.c, mtx44.c (contraction on + lower.py, the
+melee_runtime oracle recipe) and writes `tests/data/ground_ref.txt` (60000 rows: 20000 tangents
+for 4B50 incl. near-vertical and zero-y, 20000 ONB triples for 5AEC incl. b.z = +-1 and NaN
+asin, 20000 values for the 5630 volume / 5694 pan arguments). All match bit for bit. Mutation
+check: the f32-PI variant of 4B50's `M_PI - x` and dropping 5AEC's y clamp both fail.
+Unit-tested only (`gr::ground::tests::{accessors, sfx_slots}`): the accessors, setters and
+forwarders (call order through a recording hook). Not ported: the rest of ground.c (loading,
+JObj/GObj, fog/lights, map-coll, Ground_801C5940, 801C5AD0 which needs stage_datas).
+
+Regenerate: `bash rust/melee_world/cref/gen_ground_ref.sh`.
+
 ## Build notes
 
 - `cargo build -p melee_world` and `cargo test -p melee_world` pass. I ran them with

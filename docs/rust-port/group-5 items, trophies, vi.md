@@ -504,6 +504,43 @@ Left out of the 28: `it_8027A780` / `selectPokemonForOpening` (global `Item_804A
 `itSeakNeedleThrown_SetupBounce` / `_SetupDrop` (static `it_803F6FA0..` tables),
 `it_802A4BFC_sqrtf_offset` (out-of-bounds write). Not done: no caller wired; no frame-level check.
 
+## Port round 11 (night 3, round 3): 6 jobj-getter / sqrtf_accurate / HSD_Randi callers
+
+**Recount first** (round 9's rule: unique `funcs()` names over `src/melee/{it,ty,vi}/**/*.c`, ported
+when the name is defined in the oracle C): **4966 total, 1491 ported** at the start (it 1487, ty 4,
+vi 0), matching round 10. **1497 after** (it 1493, ty 4, vi 0).
+
+**TODO stubs:** none replaceable. This crate's one stub (`TODO(group1)`, the item plink list as a
+raw head pointer, itlib3.rs and now itkinds11.rs) still waits for items to move to melee_runtime's
+handle-based GObj model. Other crates' `TODO(group5)` stubs (melee_chara `itIsHeavy`, melee_world
+grlib item plink and `Toy_803124BC` / `Toy_8031234C` / `Toy_80305918`) are in their paths; untouched.
+
+**Batch** (`src/itkinds11.rs`, extractor `tests/c_oracle/gen_round11.py` -> `round11_bodies.h`):
+callers whose only unported callees are group 0's jobj.h inline getters
+(`melee_types::inline::HSD_JObjGetChild`, rotation/translation reads), MSL `sqrtf_accurate`
+(`melee_runtime::gekko`) or `HSD_Randi`: `it_80272CC0` (bone by index), `it_80274990` (model spin
+angle), `it_80271B60` (push off fighter ECBs), `it_80271F78` (push off heavy grounded items; walks
+the item plink list), `itLinkArrow_802A850C_inline_2`, `calc_dist_2d_accurate` (itluigifireball.c).
+
+**Fused sites:** 1 f32 (`calc_dist_2d_accurate`, `x*x + y*y` -> `fmadds(x, x, y*y)`) plus
+`sqrtf_accurate`'s f64 Newton fmas.
+
+**Verification** (`tests/oracle_round11.rs`, 7 tables x 48 cases, pass; oracle `round11.c`,
+contraction on + lower.py). Table 3107 draws only inputs where the fused sum differs from two f32
+roundings. ECBs are drawn with the overlap-friendly signs and one fighter / item is often put
+exactly at the item's position (the `< 0.001` random-side branch), the eligible item forced
+grounded/heavy. **Harness trap found:** the xor-multiply word hash only carries bit 31 into bit 31,
+so a sign flip of a field that is both in the field snapshot and in the case's return hash
+cancels; `r11_h` now also mixes `nudge.x >> 31` in as bit 0. (Earlier rounds share the hash; a
+sign-only error in a field hashed twice there would also cancel. Not re-audited.)
+Mutations that failed the test: un-fusing 3107's site, rotation axis select, child-walk bound,
+z - 0.02, `xDC0 |= 1` / `|= 2`, both side-sign compares, both `randi(2)` senses, the `< 0.001`
+threshold, the x13 / xDD1 / heavy filters.
+**Not caught (correct by inspection):** `it_80271F78`'s `x70_nudge.x < 0` at exactly 0 and the
+`gobj != item_gobj` self-skip (self only reaches the overlap test when it is itself eligible).
+
+Not done: no caller wired; no frame-level check.
+
 ## Decisions / traps
 
 - `Cargo.toml` no longer depends on melee_types/runtime/world/fighter: nothing calls them yet,

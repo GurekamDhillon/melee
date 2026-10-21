@@ -6,6 +6,7 @@
 #include "melee/it/itCharItems.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846 /* src/MSL/math.h */
@@ -80,6 +81,7 @@ static Item it;
 #include "round8.c"
 #include "round9.c"
 #include "round10.c"
+#include "round11.c"
 
 int main(void)
 {
@@ -146,5 +148,6 @@ int main(void)
     round8();
     round9();
     round10();
+    round11();
     return 0;
 }

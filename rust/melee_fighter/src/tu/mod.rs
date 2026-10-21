@@ -30,3 +30,4 @@ pub mod ftco_800c78b0;
 pub mod ftwaitanim;
 pub mod ftwalljump;
 pub mod ftCo_AttackS3;
+pub mod ftparts;

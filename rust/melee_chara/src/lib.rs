@@ -59,3 +59,4 @@ mod layout_tests {
         assert!(kinds > 150, "character records missing from melee_types ({kinds})");
     }
 }
+pub mod tu;

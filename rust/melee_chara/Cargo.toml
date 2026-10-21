@@ -9,3 +9,4 @@ publish.workspace = true
 melee_core.workspace = true
 melee_types.workspace = true
 melee_fighter.workspace = true
+melee_runtime.workspace = true

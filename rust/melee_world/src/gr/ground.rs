@@ -75,13 +75,13 @@ pub trait GroundHooks {
     fn groldkongo_802105c8(&mut self, g: *mut HSD_GObj) {
         unimplemented!("TODO(group2): grOldKongo_802105C8")
     }
-    /// TODO(group2: cm/camera.c, needs HSD_CObj)
+    /// Camera_SetModeToFixed: `CameraWorld` implements it (cm::camera).
     fn camera_set_mode_to_fixed(&mut self) {
-        unimplemented!("TODO(group2): Camera_SetModeToFixed")
+        unimplemented!("Camera_SetModeToFixed: forward to cm::camera::CameraWorld")
     }
-    /// TODO(group2: cm/camera.c, needs HSD_CObj)
+    /// Camera_SetModeToStandard: `CameraWorld` implements it (cm::camera).
     fn camera_set_mode_to_standard(&mut self) {
-        unimplemented!("TODO(group2): Camera_SetModeToStandard")
+        unimplemented!("Camera_SetModeToStandard: forward to cm::camera::CameraWorld")
     }
     /// TODO(group3: pl/player.c)
     fn player_get_entity(&mut self, slot: i32) -> *mut HSD_GObj {

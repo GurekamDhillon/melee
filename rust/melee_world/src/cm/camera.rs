@@ -737,3 +737,216 @@ mod tests {
         assert_eq!(w.game_camera.translation.x, 0.0);
     }
 }
+
+// ---- port round 1, night 3: more game_camera accessors, Camera_8002FE38 / 8002EEC8 /
+// 8002BC78, the PC cm_script helpers. All checked against the C by tests/camera_acc_vs_c.rs.
+
+fn to_core(v: Vec3) -> melee_core::vec::Vec3 {
+    melee_core::vec::Vec3 { x: v.x, y: v.y, z: v.z }
+}
+fn from_core(v: melee_core::vec::Vec3) -> Vec3 {
+    Vec3 { x: v.x, y: v.y, z: v.z }
+}
+
+/// camera.c's static `OrthonormalizeBasis`: `right = up x forward`, normalised, then
+/// `up = forward x right`, normalised (PSVECCrossProduct, lbVector_Normalize).
+pub fn orthonormalize_basis(forward: &Vec3, up: &mut Vec3, right: &mut Vec3) {
+    use melee_runtime::{lbvector::normalize, mtx::vec_cross};
+    let f = to_core(*forward);
+    let mut r = vec_cross(&to_core(*up), &f);
+    normalize(&mut r);
+    let mut u = vec_cross(&f, &r);
+    normalize(&mut u);
+    *right = from_core(r);
+    *up = from_core(u);
+}
+
+/// The PC camera-script pose (`CmScriptPose`, camera.c; PC only, no GC layout).
+#[derive(Clone, Copy)]
+pub struct CmScriptPose {
+    pub eye: Vec3,
+    pub interest: Vec3,
+    pub fov: f32,
+    pub roll: f32,
+}
+
+/// `cm_script_float`: the int bit pattern as an f32.
+pub fn cm_script_float(bits: i32) -> f32 {
+    f32::from_bits(bits as u32)
+}
+/// `cm_script_bits`: the f32 bit pattern as an int.
+pub fn cm_script_bits(value: f32) -> i32 {
+    value.to_bits() as i32
+}
+/// `cm_script_lerp`: `a + (b - a) * t`, one fused site.
+pub fn cm_script_lerp(a: f32, b: f32, t: f32) -> f32 {
+    fmadds(b - a, t, a)
+}
+/// `cm_script_blend`: field-wise lerp.
+pub fn cm_script_blend(a: &CmScriptPose, b: &CmScriptPose, t: f32) -> CmScriptPose {
+    let l = |x: f32, y: f32| cm_script_lerp(x, y, t);
+    CmScriptPose {
+        eye: Vec3 { x: l(a.eye.x, b.eye.x), y: l(a.eye.y, b.eye.y), z: l(a.eye.z, b.eye.z) },
+        interest: Vec3 {
+            x: l(a.interest.x, b.interest.x),
+            y: l(a.interest.y, b.interest.y),
+            z: l(a.interest.z, b.interest.z),
+        },
+        fov: l(a.fov, b.fov),
+        roll: l(a.roll, b.roll),
+    }
+}
+/// `cm_script_ease`: 1 ease-in, 2 ease-out, 3 ease-in-out (its second branch fuses), else
+/// linear.
+pub fn cm_script_ease(t: f32, ease: i32) -> f32 {
+    match ease {
+        1 => t * t,
+        2 => t * (2.0 - t),
+        3 => {
+            if t < 0.5 {
+                2.0 * t * t
+            } else {
+                fmadds(-(2.0 * (1.0 - t)), 1.0 - t, 1.0)
+            }
+        }
+        _ => t,
+    }
+}
+
+impl CameraWorld {
+    /// Camera_80030A60
+    pub fn camera_80030a60(&mut self, v: i32) {
+        self.game_camera.set_x399_b3(v as u8);
+    }
+    /// Camera_80030A78
+    pub fn camera_80030a78(&self) -> bool {
+        self.game_camera.x399_b3() != 0
+    }
+    /// Camera_80030A8C
+    pub fn camera_80030a8c(&mut self, v: i32) {
+        self.game_camera.set_x399_b4(v as u8);
+    }
+    /// Camera_SetStageVisible: `x399_b5 = (arg0 == 0)`.
+    pub fn camera_set_stage_visible(&mut self, v: i32) {
+        self.game_camera.set_x399_b5((v == 0) as u8);
+    }
+    /// Camera_80030AC4: `x399_b5 == 0`.
+    pub fn camera_80030ac4(&self) -> bool {
+        self.game_camera.x399_b5() == 0
+    }
+    /// Camera_80030AE0
+    pub fn camera_80030ae0(&mut self, v: i32) {
+        self.game_camera.set_x399_b2(v as u8);
+    }
+    /// Camera_80030AF8
+    pub fn camera_80030af8(&self) -> bool {
+        self.game_camera.x399_b2() != 0
+    }
+    /// Camera_80030B0C
+    pub fn camera_80030b0c(&mut self, v: i32) {
+        self.game_camera.set_x399_b7(v as u8);
+    }
+    /// Camera_80030B24
+    pub fn camera_80030b24(&self) -> bool {
+        self.game_camera.x399_b7() != 0
+    }
+    /// Camera_80030B38
+    pub fn camera_80030b38(&mut self, v: i32) {
+        self.game_camera.set_x39A_b0(v as u8);
+    }
+    /// Camera_80030B50
+    pub fn camera_80030b50(&self) -> bool {
+        self.game_camera.x39A_b0() != 0
+    }
+    /// Camera_80030B64
+    pub fn camera_80030b64(&mut self, v: i32) {
+        self.game_camera.set_x39A_b1(v as u8);
+    }
+    /// Camera_80030B7C
+    pub fn camera_80030b7c(&self) -> bool {
+        self.game_camera.x39A_b1() != 0
+    }
+    /// Camera_80030B90
+    pub fn camera_80030b90(&mut self, v: i32) {
+        self.game_camera.set_x39A_b2(v as u8);
+    }
+    /// Camera_80030BA8
+    pub fn camera_80030ba8(&self) -> bool {
+        self.game_camera.x39A_b2() != 0
+    }
+
+    /// Camera_8002FE38 (TARGET_PC body): enter CAMERA_BOSS_INTRO holding the current
+    /// interest / position / fov as the targets.
+    pub fn camera_8002fe38(&mut self) {
+        let gc = &mut self.game_camera;
+        gc.mode = CAMERA_BOSS_INTRO;
+        gc.set_x341_b1_b2(0);
+        gc.set_x341_b3_b4(0);
+        gc.set_x341_b5_b6(0);
+        gc.set_x341_b7(0);
+        gc.x350 = gc.transform.interest;
+        gc.transform.target_interest = gc.x350;
+        gc.x368 = gc.transform.position;
+        gc.transform.target_position = gc.x368;
+        gc.x374 = gc.transform.fov;
+        gc.transform.target_fov = gc.x374;
+    }
+    /// Camera_8002EEC8
+    pub fn camera_8002eec8(&mut self, fov: f32) {
+        if self.game_camera.mode != CAMERA_BOSS_INTRO {
+            self.camera_8002fe38();
+        }
+        self.game_camera.transform.target_fov = fov;
+    }
+    /// Camera_8002BC78: clamp a near-vertical `forward` to +-y (taking `pause_up` as up), then
+    /// orthonormalise. Returns (clamp result, right).
+    pub fn camera_8002bc78(&self, forward: &mut Vec3, up: &mut Vec3) -> (i32, Vec3) {
+        let mut clamp = 0;
+        if forward.y > 0.999 {
+            clamp = 1;
+            *forward = Vec3 { x: 0.0, y: 1.0, z: 0.0 };
+            *up = self.game_camera.pause_up;
+        } else if forward.y < -0.999 {
+            clamp = -1;
+            *forward = Vec3 { x: 0.0, y: -1.0, z: 0.0 };
+            *up = self.game_camera.pause_up;
+        }
+        let mut right = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+        orthonormalize_basis(forward, up, &mut right);
+        (clamp, right)
+    }
+}
+
+/// gr/ground.c's camera calls, wired to the ported camera.c bodies (a composite hooks owner
+/// forwards these two to its `CameraWorld`; the other GroundHooks keep their TODO defaults).
+impl crate::gr::ground::GroundHooks for CameraWorld {
+    fn camera_set_mode_to_fixed(&mut self) {
+        CameraWorld::camera_set_mode_to_fixed(self)
+    }
+    fn camera_set_mode_to_standard(&mut self) {
+        CameraWorld::camera_set_mode_to_standard(self)
+    }
+}
+
+/// gr/grlib.c's `Camera_SetQuakeOffset` call (grLib_801C9BC8 / 801C9C40), wired the same way.
+impl crate::gr::grlib::GrLibHooks for CameraWorld {
+    fn camera_set_quake_offset(&mut self, x: f32, y: f32) {
+        CameraWorld::camera_set_quake_offset(self, x, y)
+    }
+}
+
+#[cfg(test)]
+mod hook_tests {
+    use super::*;
+    #[test]
+    fn ground_and_grlib_hooks_reach_the_camera() {
+        use crate::gr::{grlib::GrLibHooks, ground::GroundHooks};
+        let mut w = CameraWorld::default();
+        GroundHooks::camera_set_mode_to_fixed(&mut w);
+        assert_eq!(w.game_camera.mode, melee_types::CAMERA_FIXED);
+        GroundHooks::camera_set_mode_to_standard(&mut w);
+        assert_eq!(w.game_camera.mode, melee_types::CAMERA_STANDARD);
+        GrLibHooks::camera_set_quake_offset(&mut w, 1.5, -2.0);
+        assert_eq!((w.game_camera.quake_offset.x, w.game_camera.quake_offset.y), (1.5, -2.0));
+    }
+}

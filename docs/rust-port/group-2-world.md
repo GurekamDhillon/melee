@@ -13,7 +13,7 @@ Function definitions in the C (counted as a `name(...)` line followed by `{`):
 | dir | functions | ported |
 |---|---|---|
 | src/melee/mp | 226 | 105 (mplib line-graph queries, line geometry, segment checks, joint list, seam stitching + floor bounds; all of mpisland.c) |
-| src/melee/cm | 182 | 0 |
+| src/melee/cm | 182 | 66 (night 3 count; see the night-3 section) |
 | src/melee/ef | 67 | 0 |
 | src/melee/gr | 2166 | 0 |
 | src/melee/if | 372 | 0 |
@@ -312,6 +312,50 @@ It_PKind_Random skipped). Not tested: 801C96F8, 801C9CEC's create path, 801C9BC8
 one-line forwarders.
 
 Regenerate: `bash rust/melee_world/cref/gen_grlib_ref.sh`.
+
+## Night 3, round 1: camera accessors vs C, 24 more camera.c functions
+
+Recount at the start (from the night-2 rows): 301 of 3013 ported, 160 of them checked against
+the C; 141 unit-tested or untested (25 camera accessors, 10 stage hook-driven + Stage_80224E64,
+81 ground.c, 23 grlib.c; that list sums to 140, one is unaccounted for in the night-2 notes).
+
+New, all in `src/cm/camera.rs` (24): Camera_80030A60, 80030A78, 80030A8C, SetStageVisible,
+80030AC4, 80030AE0, 80030AF8, 80030B0C, 80030B24, 80030B38, 80030B50, 80030B64, 80030B7C,
+80030B90, 80030BA8 (the x399/x39A bit accessors), Camera_8002FE38 (TARGET_PC body),
+Camera_8002EEC8, Camera_8002BC78 and its static inline OrthonormalizeBasis (PSVECCrossProduct /
+lbVector_Normalize from melee_runtime), and the PC script helpers cm_script_float, cm_script_bits,
+cm_script_lerp, cm_script_blend, cm_script_ease (`CmScriptPose` is PC-only, no GC layout).
+FMA: the shipping-flag IR of the cut bodies has 2 fused f32 sites, cm_script_lerp
+(`(b-a)*t + a`) and cm_script_ease case 3 (`1 - 2(1-t)*(1-t)`); the port uses fmadds at both.
+
+`tests/camera_acc_vs_c.rs`: `cref/gen_camera_acc_ref.sh` cuts these 24 bodies plus the 25
+accessors that night 2 had only unit-tested (8002F260, SetModeToStandard/Fixed, 800300F0,
+8003010C/0130/0154/0178, 80030730, Set/GetBackgroundColor, GetTransformPosition/Interest,
+80030DE4/DF8/E10, 80031060/1074/108C/10A0, 800310E8, 80031144, 800311CC/11DC,
+StageSlotClipGet) verbatim out of camera.c into `cref/camera_acc_tu.c` (a `game_camera`
+stand-in with the cm/types.h member names, `cref/camera_acc.h`), compiled with the game flags,
+contraction on + lower.py, linked with mtx_pc.c, mtx44.c, lbvector.c, lbtrigf.c, gekko_fp.c.
+8640 cases (random full state incl. NaN/denormal floats and out-of-range bitfield arguments;
+1500 each for 8002BC78 near the +-0.999 clamps, lerp, ease, blend). All match bit for bit and
+state for state, with one exception: Camera_8002BC78 with a NaN `pause_up` gives a NaN of the
+other sign (1 row; the sign of a propagated NaN through melee_runtime's vec_cross / fmadds is not
+pinned down by LLVM). The test treats NaN-vs-NaN as equal for that op only. Mutation check:
+unfusing cm_script_lerp fails 1592 rows, unfusing ease case 3 fails 8.
+
+Stubs replaced: GroundHooks::camera_set_mode_to_fixed / _standard and
+GrLibHooks::camera_set_quake_offset are implemented for `CameraWorld` (the ported camera.c
+bodies); the trait defaults now say to forward to it. Still stubs: the rest (group 1 HSD, group 3
+Player_GetEntity, group 5 Toy, other gr TUs); `StageHooks::hsd_randi` is a required method, and
+melee_runtime::random exists, but the RNG state owner is not in this crate.
+
+Not ported (aliasing): Camera_8002EB5C / 8002EC7C / 8002ED9C write `x35C.bits` / `x35C.vec`,
+a union whose byte overlap differs between the GC layout and a native one; left for when the
+camera struct's union handling is decided.
+
+Counts after this round: 325 of 3013 ported (10.8%); 209 verified against the C; 116 not
+(81 ground.c accessors, 23 grlib.c, 10 stage.c hook-driven fns, Stage_80224E64, +1 as above).
+
+Regenerate: `bash rust/melee_world/cref/gen_camera_acc_ref.sh`.
 
 ## Build notes
 

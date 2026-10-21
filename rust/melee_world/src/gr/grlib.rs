@@ -80,9 +80,9 @@ pub trait GrLibHooks {
     fn jobj_translation_xy(&mut self, j: *mut HSD_JObj) -> (f32, f32) {
         unimplemented!("TODO(group1): HSD_JObjGetTranslation")
     }
-    /// TODO(group2: wire melee_world::cm::camera's camera_set_quake_offset)
+    /// Camera_SetQuakeOffset: `CameraWorld` implements it (cm::camera).
     fn camera_set_quake_offset(&mut self, x: f32, y: f32) {
-        unimplemented!("TODO(group2): Camera_SetQuakeOffset")
+        unimplemented!("Camera_SetQuakeOffset: forward to cm::camera::CameraWorld")
     }
     /// TODO(group1: baselib/gobj.c) HSD_GObjFree
     fn gobj_free(&mut self, g: *mut HSD_GObj) {

@@ -272,12 +272,17 @@ pub fn pl_804d6470() -> &'static crate::types::pl_804D6470_t {
     unsafe { &*p }
 }
 
+// round 11: plbonus.c's primitives are ported (`crate::plbonus3`); the hooks stay settable.
+ported_hooks! {
+    PL_80038788 pl_80038788(slot: i32, kind: i32, n: i32) = crate::plbonus3::pl_80038788;
+    PL_80038824 pl_80038824(slot: i32, kind: i32) = crate::plbonus3::pl_80038824;
+    PL_80038898 pl_80038898(slot: i32, kind: i32) = crate::plbonus3::pl_80038898;
+    PL_80039418 pl_80039418(slot: i32, kind: i32) -> u32 = crate::plbonus3::pl_80039418;
+    PL_800386D8 pl_800386d8(s: &crate::types::plActionStats, n: i32) -> u32 = crate::plbonus3::pl_800386d8;
+}
 needed_hooks! {
-    PL_80038788 pl_80038788(slot: i32, kind: i32, n: i32) = "TODO(group3 plbonus) pl_80038788";
-    PL_80038824 pl_80038824(slot: i32, kind: i32) = "TODO(group3 plbonus) pl_80038824";
-    PL_80038898 pl_80038898(slot: i32, kind: i32) = "TODO(group3 plbonus) pl_80038898";
-    PL_80039418 pl_80039418(slot: i32, kind: i32) -> u32 = "TODO(group3 plbonus) pl_80039418";
-    PL_800386D8 pl_800386d8(s: &crate::types::plActionStats, n: i32) -> u32 = "TODO(group3 plbonus) pl_800386D8";
+    /// `gmDecisionGetType(kind)` (gm_16F1.c, a walk over the static `lbl_803D5A4C` table).
+    GM_DECISION_GET_TYPE gm_decision_get_type(kind: i32) -> i32 = "TODO(group6 gm) gmDecisionGetType";
     GM_8016F2F8 gm_8016f2f8(kind: i32, slot: u8) -> i32 = "TODO(group6 gm) gm_8016F2F8";
     GM_8016B6E8 gm_8016b6e8(slot: i32, v: i32) = "TODO(group6 gm) gm_8016B6E8";
 }

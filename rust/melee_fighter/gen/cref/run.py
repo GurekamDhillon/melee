@@ -74,6 +74,13 @@ EXTRACTS = {
                 # group 3 round 10: pl_8003DF44..pl_8003ED0C (src/plbonus2.rs)
                 ("src/melee/pl/plbonuslib.c", "void pl_8003DF44(", "void fn_8003EE2C("),
                 ("src/melee/pl/plbonuslib.c", "int pl_8003FBFC(", None)],
+    # group 3 round 11: plbonus.c primitives (src/plbonus3.rs)
+    "plbonusc": [("src/melee/pl/player.c", "typedef struct _ftMapping {", "/// Matches when everything"),
+                 ("src/melee/pl/player.c", "StaticPlayer* Player_GetPtrForSlot(", "void Player_80031AD0("),
+                 ("src/melee/pl/player.c", "void Player_80031DA8(", "void Player_InitOrResetPlayer("),
+                 ("src/melee/pl/player.c", "void Player_MexSetMapping(", "#endif"),
+                 ("src/melee/pl/plbonus.c", "static void setFlag(", "void pl_8003891C("),
+                 ("src/melee/pl/plbonus.c", "void pl_80038F10(", "void pl_80039450(")],
     "ft0877": [("src/melee/ft/ftcommon.c", "bool ftCommon_80080144(", "void ftCommon_80080174("),
                ("src/melee/ft/ft_0877.c", "#define TEST(expr)", None)],
     "ft0881": [("src/melee/ft/ftcommon.c", "bool ftCommon_80080144(", "void ftCommon_80080174("),

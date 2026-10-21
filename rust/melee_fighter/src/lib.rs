@@ -22,6 +22,7 @@ pub mod player;
 pub mod ftlib;
 pub mod plbonus;
 pub mod plbonus2;
+pub mod plbonus3;
 pub mod ft0877;
 pub mod ft0881;
 pub mod ft0892;

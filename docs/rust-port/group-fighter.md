@@ -3,7 +3,7 @@
 Scope: `src/melee/ft/*.c` (67 TUs), `src/melee/ft/kinds/ftCommon/*.c` (142), `src/melee/pl/*.c`
 (7): 216 TUs, ~76k lines, 3,002 function definitions (recount, port round 9: a definition line
 followed by a `{` line, static inline helpers included; the older "~2,820" left those out).
-State as of 2026-10-21 (group 3 round 10).
+State as of 2026-10-21 (group 3 round 11).
 
 ## What exists
 
@@ -11,10 +11,10 @@ State as of 2026-10-21 (group 3 round 10).
 |---|---|---|
 | Native types + GC offsets | `src/types/generated.rs` (from `gen/gen_types.py`) | 569 `#[repr(C)]` records, all built |
 | Mechanical translation of all 216 TUs | `src/c2r/` (from `gen/fix_raw.py`, feature `c2r`) | compiles (`--features c2r`), never run |
-| Hand ports, checked bit-for-bit against the C | `src/ftaction.rs`, `src/fighter.rs`, `src/ftanim.rs`, `src/ftcoll.rs`, `src/neutral_hash.rs`, `src/ftcommon.rs`, `src/ftcommon2.rs`, `src/stale.rs`, `src/player.rs`, `src/ftlib.rs`, `src/plbonus.rs`, `src/ft0877.rs`, `src/ft0881.rs`, `src/ft0892.rs`, `src/pltrick.rs`, `src/ftcommon3.rs`, `src/plbonus2.rs`, `src/compat.rs`, `src/hooks.rs` | 600 C functions (599 verified), tests pass |
+| Hand ports, checked bit-for-bit against the C | `src/ftaction.rs`, `src/fighter.rs`, `src/ftanim.rs`, `src/ftcoll.rs`, `src/neutral_hash.rs`, `src/ftcommon.rs`, `src/ftcommon2.rs`, `src/stale.rs`, `src/player.rs`, `src/ftlib.rs`, `src/plbonus.rs`, `src/ft0877.rs`, `src/ft0881.rs`, `src/ft0892.rs`, `src/pltrick.rs`, `src/ftcommon3.rs`, `src/plbonus2.rs`, `src/plbonus3.rs`, `src/compat.rs`, `src/hooks.rs` | 615 C functions (614 verified), tests pass |
 | PowerPC `.s` files | none belong to this group (inventory §3) | nothing to do |
 
-Functions: 600 of 3,002 (20.0%; 57 night 1, 39 in port round 1, 144 in port round 2, 96 in port round 3, 82 in port round 4, 34 in port round 5, 18 in port round 6, 19 in port round 7, 37 in port round 8, 50 in port round 9, 24 in round 10) are hand-ported; 599 are verified against the C (the one unverified port: `ftCommon_8007E2D0`, round 1, stores three fn pointers). All are
+Functions: 615 of 3,002 (20.5%; 57 night 1, 39 in port round 1, 144 in port round 2, 96 in port round 3, 82 in port round 4, 34 in port round 5, 18 in port round 6, 19 in port round 7, 37 in port round 8, 50 in port round 9, 24 in round 10, 15 in round 11) are hand-ported; 614 are verified against the C (the one unverified port: `ftCommon_8007E2D0`, round 1, stores three fn pointers). All are
 in the mechanical translation, which compiles; none of it has been linked or run.
 
 ### Native types (`gen/gen_types.py`)
@@ -462,6 +462,40 @@ pl_8003EC30, pl_8003EC9C, pl_8003ED0C.
   with index 2 reads past `player_entity[2]` in C; the port panics, the test drives index 0/1.
 - Not ported in that range: pl_8003E70C / pl_8003E7D4 (index the 8-entry `x598` with item kinds
   161..190, i.e. into neighbouring fields; needs a decision on reproducing that overflow).
+
+## Round 11 (2026-10-21, night 3): `src/plbonus3.rs`
+Recount first: 600 ported (599 verified, all but `ftCommon_8007E2D0`) of 3,002, as left by round
+10 (commit 02d4fb29d; no group-3 commit since). An untracked `src/ftcpu.rs` (ftCo_800A101C /
+ftCo_800B9704) and its `pub mod ftcpu;` line in lib.rs appeared in the worktree from another agent;
+it has no C reference test, is not counted here and was not committed by this round.
+
+Stubs: re-checked every `TODO(groupN)` hook against the workspace. Still none replaceable: the
+ones with a port elsewhere (`mpLineGetNext/Prev` in melee_world::mp::lines, `HSD_Randi` in
+melee_world::gr) are methods on an instance (map lines / stage RNG state), not globals a hook can
+default to; the rest have no port outside c2r/raw. Five group-3 hooks now default to this round's
+ports: `PL_80038788`, `PL_80038824`, `PL_80038898`, `PL_80039418`, `PL_800386D8` (they were
+`TODO(group3 plbonus)` panics; plbonus_ref still overrides them with tracing stubs). New needed hook:
+`GM_DECISION_GET_TYPE` (TODO(group6 gm) gmDecisionGetType; only the HSD_ASSERTs read it).
+
+15 C definitions of src/melee/pl/plbonus.c ported, all verified against the C cut verbatim
+(`gen/cref/plbonusc_ref.c`, run.py cuts `setFlag`..`pl_8003891C` and `pl_80038F10`..`pl_80039450`):
+setFlag (static), setPointValue (static inline), pl_800386D8, pl_800386E8, fn_80038700,
+pl_80038788, pl_80038824, pl_80038898, pl_80038914, pl_80038F10, fn_80038FB8, pl_8003906C,
+pl_80039238, pl_80039418, resetBonuses (static inline).
+- Test: tests/plbonusc_ref.rs, 300 cases x 50 steps = 15,000 lines (15 op kinds, all exercised):
+  return value, both out-params, trace word (gm stubs), hash of all 6 slots' x904[215], xCAC,
+  xD50/54/60/64/6C. Frame count drawn from {0, -2, 1..40, random} so both pl_Verify branches and
+  both `<=`/`%` arms run.
+- HSD_ASSERT is live in the C (debug.h -> `__assert`); the port panics in the same places.
+- No fused site (no a*b+c). Mutation checks that fail: pl_80038898's `== 0` (op 5), the xCAC reset in
+  pl_80038F10 (op 7), `< arg4` -> `<=` and `>= arg4` -> `>` in pl_8003906C (op 9), fn_80038700's
+  `<=` (op 2), the `!= -2` test (op 10). Not discriminated: `arg7 - *arg4 < arg6` vs `<=` in
+  pl_80039238 (equal floats never occur on these inputs).
+- Workspace: `cargo build --workspace` clean; `cargo test --workspace` green except
+  melee_chara chars_ref, which failed to link (LNK1104, the exe locked by a concurrent agent's run),
+  not a test failure.
+- Not ported from plbonus.c yet: pl_8003891C (reads an uninitialized local in the decomp),
+  pl_80039450 and the fn_80039618..fn_8003D2EC bonus evaluators (calls into ftLib/it/gm).
 
 ## Not done / blockers
 - **The c2r layer has never linked or run.** Everything outside group 3 is an unresolved

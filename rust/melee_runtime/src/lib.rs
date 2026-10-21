@@ -38,6 +38,7 @@ pub mod mobj;
 pub mod mtx;
 pub mod psappsrt;
 pub mod particle;
+pub mod pobj;
 pub mod quatlib;
 pub mod random;
 pub mod robj;

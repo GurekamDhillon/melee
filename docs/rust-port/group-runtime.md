@@ -507,3 +507,47 @@ the host wires it, as in round 9). No other crate has a TODO(group1) whose targe
 
 ### Count after this round
 Ported **499 of 2,297** (21.7%): **430** checked against the C, **69** not (unchanged list).
+
+## Night 3, port round 6 (round 14): pobj.c logic
+
+### Recount (start of round)
+No commit to `rust/melee_runtime` since round 13 (c24bb600f): **499 of 2,297** (430 checked
+against the C, 69 not).
+
+### Stubs whose target now exists
+None in this crate (class, jobj load/spline, dobj anim, psCamera, particle JObj still unported).
+Outside it: melee_fighter's `HSD_RANDI` / `PLINK_HEAD` / `HSD_GOBJ_FREE` hooks name targets that
+exist (`random::HsdRand`, `gobj`), but they need the process-wide HSD state the sim owns, so the
+wiring is the sim's / group 3's, not changed here.
+
+### Ported this round
+`pobj.rs`, from `pobj.c` (over the round-4 aobj/fobj ports):
+
+| function | checked against C |
+|---|---|
+| HSD_PObjGetFlags, HSD_PObjRemoveAnimByFlags, HSD_PObjRemoveAnimAllByFlags | yes |
+| HSD_PObjAddAnim, HSD_PObjAddAnimAll (AObjLoadDesc of random FObj streams) | yes |
+| HSD_PObjReqAnimByFlags, HSD_PObjReqAnimAllByFlags | yes |
+| ShapeSetSetAnimResult, PObjUpdateFunc, HSD_PObjAnim, HSD_PObjAnimAll | yes |
+| HSD_PObjClearMtxMark, HSD_PObjSetMtxMark, HSD_PObjGetMtxMark | yes (SetMtxMark's negative-idx OOB store not compared; port panics) |
+| decode_u8_xyz, decode_s8_xyz, decode_u16_xyz, decode_s16_xyz (incl. scale 0 / negative) | yes |
+
+- Native shape: `HsdPObj` (flags, n_display, `shape_set: Option<HsdShapeSet>`), `HsdShapeSet`
+  keeps both `blend` members (`bp` weights, `bl`), AObj target `()`. `next` chains are slices.
+  GcLayout delegated to `melee_types::HSD_PObj`, `HSD_ShapeSet`, `HSD_ShapeAnim`.
+- C traps kept as panics: AddAnim's HSD_ASSERT(247); AddAnimAll's `next_p(NULL)` when the anim
+  chain is shorter; an additive weight index outside `bp`.
+- FMA: 0 fmuladd in these functions (helper_pobj.ll's are in drawShapeAnim, geno_pal_compute,
+  get_shape_vertex_xyz, fmodf, sqrtf).
+- Oracle: `oracle/build_pobj.sh` (helper_pobj.c includes pobj.c + aobj.c; real fobj/id/list/
+  spline/gekko_fp; shipping flags + lower.py; lld `/FORCE:UNRESOLVED`). `tests/data/oracle_pobj.txt`:
+  20,500 rows (500 resets of a 3-PObj chain, ~1500 per op); each row checks outputs and an FNV hash
+  of every PObj, shape set, AObj + FObj state, mtx_mark and the AObj counters. 0 failed, debug and
+  release.
+- Mutations caught: weight index `type-1` (row 25), POBJ_ANIM flag test dropped (4), s8 read as u8
+  (9), ReqAnim skipped (23), `bl = -fv` (276), ClearMtxMark obj dropped (66), GetMtxMark range (263).
+- Not ported: PObj load / envelope / shape-set desc, ResolveRefs, vertex-desc setup, shape-anim
+  display-list interpretation and display, GenoPal, class functions.
+
+### Count after this round
+Ported **516 of 2,297** (22.5%): **447** checked against the C, **69** not (unchanged list).

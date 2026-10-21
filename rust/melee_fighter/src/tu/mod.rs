@@ -115,3 +115,4 @@ pub mod ftaction;
 pub mod ftCo_HammerWait;
 pub mod ftCo_HammerWalk;
 pub mod ftCo_DownBound;
+pub mod ftCo_Landing;

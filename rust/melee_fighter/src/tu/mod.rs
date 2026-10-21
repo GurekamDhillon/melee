@@ -180,6 +180,7 @@ pub mod ftCo_SquatRv;
 pub mod ftCo_SquatWait;
 pub mod ftCo_StopCeil;
 pub mod ftCo_StopWall;
+pub mod ftCo_Throw;
 pub mod ftCo_Thrown;
 pub mod ftCo_ThrownKoopa;
 pub mod ftCo_ThrownMewtwo;

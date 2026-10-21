@@ -1,0 +1,190 @@
+//! src/melee/ft/kinds/ftDrMario/ftdrmario.c: Dr. Mario's init callbacks and pill helpers.
+//! No fused sites (tools/rust-port/fma_sites.py), no float math. Smoke-tested through recording
+//! hooks by tests/tu_ftdrmario.rs.
+//!
+//! Data: the file-name strings are below; `ftDr_Init_MotionStateTable` (10 rows of
+//! Anim/IASA/Phys/Coll pointers into ftMario/ftCommon TUs, from motion 341) belongs to the
+//! motion-state dispatcher and is TODO until those callbacks are all native, and
+//! `ftDr_CostumeList` is an uninitialised 5-entry BSS array filled at load.
+#![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
+
+use melee_types::*;
+
+/// Already ported (rounds 5/6): re-exported under this TU.
+pub use crate::chars::r5::ftDrMario::ftdrmario::{
+    ftDr_Init_OnDeath, ftDr_Init_OnKnockbackEnter, ftDr_Init_OnKnockbackExit,
+};
+pub use crate::chars::r6::ftDrMario::ftdrmario::{ftDr_Init_OnItemInvisible, ftDr_Init_OnItemVisible};
+
+pub const ftDr_Init_DatFilename: &str = "PlDr.dat";
+pub const ftDr_Init_DataName: &str = "ftDataDrmario";
+pub const ftDr_Init_AnimDatFilename: &str = "PlDrAJ.dat";
+/// `ftDr_Init_DemoMotionFilenames` (result, intro, ending, vi-wait).
+pub const ftDr_Init_DemoMotionFilenames: [&str; 4] = [
+    "ftDemoResultMotionFileDrmario",
+    "ftDemoIntroMotionFileDrmario",
+    "ftDemoEndingMotionFileDrmario",
+    "ftDemoViWaitMotionFileDrmario",
+];
+/// `ftDr_Init_CostumeStrings`: (dat, joint, matanim joint) per costume.
+pub const ftDr_Init_CostumeStrings: [[&str; 3]; 5] = [
+    ["PlDrNr.dat", "PlyDrmario5K_Share_joint", "PlyDrmario5K_Share_matanim_joint"],
+    ["PlDrRe.dat", "PlyDrmario5KRe_Share_joint", "PlyDrmario5KRe_Share_matanim_joint"],
+    ["PlDrBu.dat", "PlyDrmario5KBu_Share_joint", "PlyDrmario5KBu_Share_matanim_joint"],
+    ["PlDrGr.dat", "PlyDrmario5KGr_Share_joint", "PlyDrmario5KGr_Share_matanim_joint"],
+    ["PlDrBk.dat", "PlyDrmario5KBk_Share_joint", "PlyDrmario5KBk_Share_matanim_joint"],
+];
+
+/// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
+pub mod ext {
+    use melee_types::*;
+    macro_rules! hook {
+        ($hook:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
+            pub static mut $hook: Option<fn($($t),*) $(-> $r)?> = None;
+            #[allow(non_snake_case)]
+            pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { $hook } {
+                    Some(f) => f($($a),*),
+                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            }
+        };
+    }
+    macro_rules! hook_or {
+        ($hook:ident, $name:ident, $port:path, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
+            pub static mut $hook: Option<fn($($t),*) $(-> $r)?> = None;
+            #[allow(non_snake_case)]
+            pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { $hook } {
+                    Some(f) => f($($a),*),
+                    None => $port($($a),*),
+                }
+            }
+        };
+    }
+    hook!(FTMR_INIT_ONLOADFORDRMARIO, ftMr_Init_OnLoadForDrMario, (fp: *mut Fighter));
+    hook!(FTMR_INIT_LOADSPECIALATTRS, ftMr_Init_LoadSpecialAttrs, (gobj: *mut HSD_GObj));
+    hook!(IT_8026B3F8, it_8026B3F8, (article: *mut core::ffi::c_void, kind: i32));
+    hook!(ITDRMARIOPILL_802C0DBC, itDrMarioPill_802C0DBC, (item: *mut Item_GObj));
+    hook_or!(FTCO_800DEAE8, ftCo_800DEAE8, melee_fighter::tu::ftCo_AppealS::ftCo_800DEAE8,
+             (gobj: *mut HSD_GObj, msid0: i32, msid1: i32));
+}
+
+#[inline(always)]
+unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
+    (*gobj).user_data as *mut Fighter
+}
+
+/// `ftDr_Init_80149540` as a Fighter callback entry (`take_dmg_cb` / `death2_cb`).
+pub unsafe extern "C" fn cb_ftDr_Init_80149540(g: *mut HSD_GObj) {
+    ftDr_Init_80149540(g);
+}
+
+pub fn ftDr_Init_OnLoad(gobj: *mut HSD_GObj) {
+    unsafe {
+        let fp = fpp(gobj);
+        let items = (*(*fp).ft_data).x48_items;
+        ext::ftMr_Init_OnLoadForDrMario(fp);
+        let sa = (*fp).dat_attrs as *mut ftDrMarioAttributes;
+        ext::it_8026B3F8(*items.add(1), It_Kind_DrMario_Vitamin as i32);
+        ext::it_8026B3F8(*items.add(3), (*sa).x14 as i32);
+    }
+}
+
+pub fn ftDr_Init_80149540(gobj: *mut HSD_GObj) {
+    ftDr_Init_801497CC(gobj);
+}
+
+pub fn ftDr_Init_OnItemPickup(gobj: *mut HSD_GObj, flag: i32) {
+    crate::tu::ftclink::Fighter_OnItemPickup(gobj, flag, 1, 1);
+}
+
+pub fn ftDr_Init_OnItemDrop(gobj: *mut HSD_GObj, bool1: i32) {
+    crate::tu::ftclink::Fighter_OnItemDrop(gobj, bool1, 1, 1);
+}
+
+pub fn ftDr_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
+    ext::ftMr_Init_LoadSpecialAttrs(gobj);
+}
+
+/// Drop the pill pointer (destroying the pill item) and clear the damage / death callbacks.
+pub fn ftDr_Init_801497CC(gobj: *mut HSD_GObj) {
+    unsafe {
+        if !gobj.is_null() {
+            let fp = fpp(gobj);
+            if !fp.is_null() && !(*fp).u.mr.x2240.is_null() {
+                ext::itDrMarioPill_802C0DBC((*fp).u.mr.x2240);
+                (*fp).u.mr.x2240 = core::ptr::null_mut();
+            }
+        }
+        if !gobj.is_null() {
+            let fp = fpp(gobj);
+            if !fp.is_null() {
+                (*fp).take_dmg_cb = None;
+                (*fp).death2_cb = None;
+            }
+        }
+    }
+}
+
+/// C `bool`: true unless an Appeal (341 / 342) still holds its pill.
+pub fn ftDr_Init_80149844(gobj: *mut HSD_GObj) -> bool {
+    if gobj.is_null() {
+        return true;
+    }
+    unsafe {
+        let fp = fpp(gobj);
+        if fp.is_null() {
+            return true;
+        }
+        let tmp = (*fp).motion_id as i32;
+        if tmp != 0x155 && tmp != 0x156 {
+            return true;
+        }
+        if (*fp).u.mr.x2240.is_null() {
+            return true;
+        }
+    }
+    false
+}
+
+/// Forget the pill (it was handed on) and clear the damage / death callbacks.
+pub fn ftDr_Init_801498A0(gobj: *mut HSD_GObj) {
+    unsafe {
+        if !gobj.is_null() {
+            let fp = fpp(gobj);
+            if !fp.is_null() && !(*fp).u.mr.x2240.is_null() {
+                (*fp).u.mr.x2240 = core::ptr::null_mut();
+            }
+        }
+        if !gobj.is_null() {
+            let fp = fpp(gobj);
+            if !fp.is_null() {
+                (*fp).take_dmg_cb = None;
+                (*fp).death2_cb = None;
+            }
+        }
+    }
+}
+
+/// C `u32`: `cmd_vars[1]`, or 0 without a fighter.
+pub fn ftDr_Init_801498EC(gobj: *mut HSD_GObj) -> u32 {
+    if !gobj.is_null() {
+        unsafe {
+            let fp = fpp(gobj);
+            if !fp.is_null() {
+                return (*fp).cmd_vars[1] as u32;
+            }
+        }
+    }
+    0
+}
+
+pub fn ftDr_Init_80149910(gobj: *mut HSD_GObj) {
+    unsafe {
+        let fp = fpp(gobj);
+        ext::ftCo_800DEAE8(gobj, ftMr_MS_AppealSR as i32, ftMr_MS_AppealSL as i32);
+        (*fp).cmd_vars[0] = 1;
+        (*fp).cmd_vars[1] = 0;
+    }
+}

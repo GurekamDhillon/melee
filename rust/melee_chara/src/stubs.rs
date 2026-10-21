@@ -50,16 +50,16 @@ macro_rules! stub_or {
     };
 }
 
-stub!(/// TODO(group3): `ft_80084F3C(gobj)` (ft/ft_0877.c, ground/air physics step).
-    FT_80084F3C, ft_80084F3C, (g: G));
-stub!(/// TODO(group3): `ft_80084EEC(gobj)` (ft/ft_0877.c).
-    FT_80084EEC, ft_80084EEC, (g: G));
-stub!(/// TODO(group3): `ft_80085134(gobj)` (ft/ft_0877.c).
-    FT_80085134, ft_80085134, (g: G));
-stub!(/// TODO(group3): `ft_80084DB0(gobj)` (ft/ft_0877.c).
-    FT_80084DB0, ft_80084DB0, (g: G));
-stub!(/// TODO(group3): `ft_80084FA8(gobj)` (ft/ft_0877.c).
-    FT_80084FA8, ft_80084FA8, (g: G));
+stub_or!(/// `ft_80084F3C(gobj)`: group 3's verified port (night 3 round 12, ft084e.rs) when the hook is unset.
+    FT_80084F3C, ft_80084F3C, melee_fighter::ft084e::ft_80084f3c, (g: G));
+stub_or!(/// `ft_80084EEC(gobj)`: group 3's verified port (night 3 round 12, ft084e.rs) when the hook is unset.
+    FT_80084EEC, ft_80084EEC, melee_fighter::ft084e::ft_80084eec, (g: G));
+stub_or!(/// `ft_80085134(gobj)`: group 3's verified port (night 3 round 12, ft084e.rs) when the hook is unset.
+    FT_80085134, ft_80085134, melee_fighter::ft084e::ft_80085134, (g: G));
+stub_or!(/// `ft_80084DB0(gobj)`: group 3's verified port (night 3 round 12, ft084e.rs) when the hook is unset.
+    FT_80084DB0, ft_80084DB0, melee_fighter::ft084e::ft_80084db0, (g: G));
+stub_or!(/// `ft_80084FA8(gobj)`: group 3's verified port (night 3 round 12, ft084e.rs) when the hook is unset.
+    FT_80084FA8, ft_80084FA8, melee_fighter::ft084e::ft_80084fa8, (g: G));
 stub!(/// TODO(group3): `ft_80083F88(gobj)` (ft/ft_0877.c, collision).
     FT_80083F88, ft_80083F88, (g: G));
 stub!(/// TODO(group3): `ftAnim_IsFramesRemaining(gobj)` (ft/ftanim.c).

@@ -1,0 +1,10 @@
+# <setter tu> <defining tu | ext> <callback> stored or passed by round-12 ports (new ones only): gen/port_r12.py
+src/melee/ft/kinds/ftDonkey/ftdonkeyspecialhi.c ext efLib_PauseAll
+src/melee/ft/kinds/ftDonkey/ftdonkeyspecialhi.c ext efLib_ResumeAll
+src/melee/ft/kinds/ftDonkey/ftdonkeyspecialhi.c src/melee/ft/kinds/ftDonkey/ftdonkey.c ftDk_Init_8010D774
+src/melee/ft/kinds/ftDonkey/ftdonkeyspecialn.c ext efLib_PauseAll
+src/melee/ft/kinds/ftDonkey/ftdonkeyspecialn.c ext efLib_ResumeAll
+src/melee/ft/kinds/ftDonkey/ftdonkeyspecialn.c src/melee/ft/kinds/ftDonkey/ftdonkey.c ftDk_Init_8010D774
+src/melee/ft/kinds/ftDonkey/ftdonkeyspecialn.c src/melee/ft/kinds/ftDonkey/ftdonkeyspecialn.c ftDk_SpecialN_DestroyAllEffects
+src/melee/ft/kinds/ftDonkey/ftdonkeyspecials.c src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c ftDk_SpecialLw_8010E0CC
+src/melee/ft/kinds/ftSamus/ftsamusspecialn.c src/melee/ft/kinds/ftSamus/ftsamus.c ftSs_Init_80128428

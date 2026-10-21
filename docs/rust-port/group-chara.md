@@ -598,3 +598,50 @@ chars_ref.rs gain the ftCliffCommon_80081298 recorder.
   (ftCliffCommon_80081298, TODO(group3)). Callback keys added: 4.
 - Next: nested `{ ftKb_DatAttrs* da; ... }` blocks calling ftColl (Kirby copy abilities), local
   `Vec3`s, `efSync_Spawn`, the boss helpers.
+
+## Night 4, round 1 (= round 12 of the generator, 2026-10-21)
+
+### Recount at the start
+- 1491 = 13 pure helpers + 1478 (tu, function) lines in `gen/ported*.txt` (rounds 1-11; no duplicate
+  pairs). Total 4605 definitions (no C under `ft/kinds` changed). 32.4%, as round 11 said.
+
+### Stub replacement
+- `ft_80084F3C`, `ft_80084EEC`, `ft_80085134`, `ft_80084DB0`, `ft_80084FA8` now use `stub_or!`: group 3
+  ported and verified them (`melee_fighter::ft084e`, group-fighter.md round 12). An unset hook calls
+  the port; the oracle still installs recorders. 10 stubs fall back to group 3 now.
+- Every other `stubs.rs` target checked: no committed, verified port (the `c2r`/`raw` mechanical
+  translations do not count; group 3's `ft0df.rs` with ftParts_80074A4C / ftColl_8007AEF8 is
+  uncommitted work in the tree, not used).
+
+### What was ported
+101 functions (Fox 21, Donkey 16, Zelda 14, Mewtwo 13, Nana 10, Ness 8, GameWatch 7, Samus 6,
+Seak 5, Pikachu 1; list `gen/ported_r12.txt`, code `src/chars/r12/<Char>.rs`). How: `gen/port_r12.py`
+= port_r11's translator plus
+- the "already ported" filter keyed by (tu, function) instead of by name. Rounds 1-11 skipped
+  every static whose name matched a ported function in another TU (ftDonkey's two `setCallbacks`,
+  because ftCaptain's and ftMario's were ported), and with them all their callers;
+- top-level `Fighter* fp = gobj->user_data;` read as `GET_FIGHTER(gobj)` (same value: ft/inlines.h);
+- header `static inline void f(gobj)` helpers whose body is `fp = GET_FIGHTER(gobj)` + declaration-free
+  statements (ftSamus_updateDamageDeathCBs, ftSamus_SetAttrx2334, Fighter_UnsetCmdVar0,
+  ftFox_SpecialN_CheckLoopInput, ...) expanded in place where the caller's top-level fp is GET_FIGHTER(gobj);
+- the "nothing new" filter dropped (the pair-keyed filter already excludes earlier rounds); empty
+  bodies are still skipped. 47 candidates dropped by the rustc-reject loop. 9 new callback keys.
+`gen/chref.py` reads ported_r12 keyed by (tu, name) (module path `chars::r12`), and `N_R1` now
+excludes round 12 (first run counted them as round 1, which gave 101 round-2 functions 4000 cases
+instead of 256 and changed their hashes; fixed, `tests/data/chars.txt` then only gained 101 lines).
+
+### FMA
+`tools/rust-port/fma_sites.py --func '^(<the 101>)$'` over their 24 TUs: 0 fused sites.
+
+### Verification
+- **1579/1579 equal** (1478 + 101), `cargo test -p melee_chara --test chars_ref`.
+- Negative check: ftDonkey specialn `setCallbacks` storing ftDk_Init_8010D774 into take_dmg_2_cb
+  instead of ftDk_SpecialN_DestroyAllEffects: 14 of 1579 differ (it and its 13 round-12 callers).
+- Not proven: branch coverage (random fill), the stubbed calls (traced by id + args only).
+- `cargo test --workspace` (debug) green. Under `--release`, melee_world leaves_r2 / textlib_r6 and
+  mex_import ppc_oracle fail on NaN sign bits (not this crate; noted for their owners).
+
+### Counts
+- Ported this round: 101 (all verified; none unverified). Total: 1592 of 4605 (34.6%).
+- Stubs replaced: 5 (ft_084E.c physics -> group 3's ports). Stubs added: 0.
+- Next: nested `{ Vec3 ...; }` blocks, `Vec3` locals, the Kirby hat helpers (HSD_JObj), item calls.

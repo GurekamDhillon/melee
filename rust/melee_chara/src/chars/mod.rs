@@ -92,3 +92,6 @@ pub mod r10;
 /// Round 11: gen/port_r11.py output (`static u32 const mf = ...` motion-flag masks inlined,
 /// `ftGetFacingDirInt(fp)` arguments). Path: `chars::r11::<Char>::<tu>::<fn>`.
 pub mod r11;
+/// Round 12: gen/port_r12.py output ((tu, name)-keyed ported filter, `fp = gobj->user_data`,
+/// header fp-store inlines expanded). Path: `chars::r12::<Char>::<tu>::<fn>`.
+pub mod r12;

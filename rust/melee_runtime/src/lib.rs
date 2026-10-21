@@ -22,6 +22,7 @@ pub mod gobj;
 pub mod hsd_mtx;
 pub mod hsd_util;
 pub mod id;
+pub mod jobj;
 pub mod lbtrigf;
 pub mod lbvector;
 pub mod list;

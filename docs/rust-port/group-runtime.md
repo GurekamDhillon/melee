@@ -42,3 +42,48 @@ round 2 FObj port.
   test skips that one slot while the C prints NULL.
 - Not ported: `HSD_ForeachAnim` and its ten per-type walkers (need JObj/DObj/MObj/PObj/TObj/
   LObj/CObj/WObj/RObj/Fog), the alloc-data getters/initialisers (native allocation).
+
+## Port round 5: JObj tree, flags and matrix build
+
+`jobj.c` sits on the round 1 matrix ports (`hsd_mtx::srt`/`srt_quat`, `mtx::concat`/`mult_vec`)
+and the round 4 AObj, so it went next. 27 jobj.c definitions in `jobj.rs`, plus the header inlines
+`HSD_JObjMtxIsDirty`, `HSD_JObjSetupMatrix`, `HSD_JObjSetMtxDirty`, `GetChild/GetNext/GetParent`:
+
+| function(s) | checked against C |
+|---|---|
+| HSD_JObjCheckDepend, JObjResetRST, HSD_JObjResetRST, HSD_JObjWalkTree(+WalkTree0) | yes |
+| HSD_JObjMakeMatrix (incl. the TARGET_PC m-ex scale-compensation block, bit 26, and the AObj-target translate), HSD_JObjSetupMatrixSub, HSD_JObjSetMtxDirtySub | yes (IK branches: no, see below) |
+| HSD_JObjRemove, HSD_JObjRemoveAll, RecalcParentTrspBits, UpdateParentTrspBits, HSD_JObjAddChild, HSD_JObjReparent, HSD_JObjAddNext, HSD_JObjGetPrev | yes |
+| HSD_JObjGetDObj, HSD_JObjAddDObj, HSD_JObjPrependRObj (+robj_set_next), HSD_JObjDeleteRObj | yes |
+| HSD_JObjGetFlags, SetFlags, SetFlagsAll, ClearFlags, ClearFlagsAll | yes |
+| HSD_JObjAlloc + JObjInit (`HsdJObj::new`) | the driver builds its JObjs with the same init (the real JObjInit runs through hsdNew/class.c, stubbed) |
+
+- Native shape: `JObjTree<D, R>` arena, `JObjId` links; DObj / RObj chains are `Vec<D>` / `Vec<R>`
+  (front = head); `aobj: Option<HsdAObj<JObjId>>`; `scl: Option<Vec3>`. `HsdJObj` delegates
+  `GcLayout` to `melee_types::HSD_JObj`. `HSD_Joint` input is any `JointSource`.
+- Stubs via `JObjHost` (TODO(group1 robj / class)): `HSD_RObjGetByType(.., IKHINT, 0)` bone
+  length, `HSD_RObjUpdateAll`, `resolveIKJoint1/2` (need `HSD_RObjGetGlobalPosition`), and
+  `HSD_JObjUnref`.
+- FMA: `fma_sites.py` finds no fused site in any ported function (resolveIKJoint1's one site is
+  not ported); the effector branch uses math_ppc `sqrtf` (double fma in `gekko::sqrtf`).
+- Oracle: `oracle/build_jobj.sh` compiles jobj.c, mtx.c, mtx_pc.c, gekko_fp.c, lbtrigf.c and
+  `helper_jobj.c` (accessors compiled with the game flags so the driver sees the real layouts, plus
+  the RObj stubs) with the shipping flags + `lower.py`, and `driver_jobj.c` writes
+  `tests/data/oracle_jobj.txt` (22k rows, 2.8 MB): 60 forests of 20 JObjs + 4 anchor JObjs
+  (AObj targets), 16 RObjs (half IK hints), 16 DObjs, a 48-joint HSD_Joint forest, 400 random
+  operations each (all functions above, random SRT, random flag masks incl. INSTANCE / USER_DEF /
+  INDEP / quaternion / bit 26 / effector). Each row has the op, its result and an FNV-1a hash of
+  every JObj's links, flags, SRT, mtx, scl, RObj and DObj chains (+ WalkTree and RObjUpdateAll
+  call logs). `tests/oracle_jobj.rs` replays the rows: 22,020 rows, 0 failed (260 RObjUpdateAll
+  calls, 28 effector IK-hint hits).
+- Mutation check: dropping the bit-26 compensation concat, the `<< 10` in either trsp-bit
+  function, the effector's `x_scale`, the flag-8 scl copy, or the INDEP_PARENT test in
+  SetMtxDirtySub each fail thousands of rows. (The first data set did not discriminate the `<< 10`
+  in RecalcParentTrspBits; flags 18-20 were added to the masks.)
+- The generator keeps to what the C keeps valid: never JOINT1/JOINT2 (the IK solvers are not
+  ported), no cycles, AObj targets that are standalone, RObj/DObj prepends only of objects in no
+  chain, `Remove` only with a single child, `AddChild` honouring its asserts.
+- Not ported: resolveIKJoint1/2, jobj_get_effector_checked, the anim functions (ReqAnim*,
+  RemoveAnim*, AddAnim*, JObjSortAnim, JObjUpdateFunc, Anim/AnimAll), load / ResolveRefs, Unref /
+  UnrefThis / ReleaseChild / Release / Amnesia / InfoInit (class system), DispAll, SetCurrent /
+  GetCurrent, the callback setters.

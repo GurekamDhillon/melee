@@ -8,4 +8,6 @@
 pub use melee_core;
 
 pub mod gen;
+pub mod hash;
+pub mod item;
 pub use gen::layout;

@@ -24,6 +24,7 @@ pub mod hsd_mtx;
 pub mod hsd_util;
 pub mod id;
 pub mod jobj;
+pub mod jobj_rt;
 pub mod lbtrigf;
 pub mod lbvector;
 pub mod list;

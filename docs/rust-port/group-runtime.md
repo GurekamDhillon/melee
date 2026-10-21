@@ -182,3 +182,51 @@ in `robj.rs`:
 - Not ported: the alloc-data getters / initialiser (native allocation), `HSD_RObjFree` (drop).
   Not wired yet: jobj.rs's `JObjHost::ik_hint_bone_length` / `robj_update_all` still stub;
   wiring them needs JObjUpdateFunc (jobj.c anim, not ported) and an RObj handle on the JObj.
+
+## Port round 8: JObj animation, JObjUpdateFunc, the IK solvers
+
+Round 7's RObj port was what jobj.c's IK solvers and its `JObjHost` stubs were waiting for, so the
+rest of jobj.c's logic went next. 23 jobj.c definitions in `jobj_rt.rs`:
+
+| function(s) | checked against C |
+|---|---|
+| resolveIKJoint1, resolveIKJoint2, jobj_get_effector_checked, jobj_get_joint2 / jobj_get_effector (static inlines) | yes (through HSD_JObjSetupMatrix) |
+| JObjUpdateFunc (every type but PATH and the SETBYTE / SETFLOAT callback list), HSD_JObjSetDPtclCallback (type 0x28) | yes |
+| HSD_JObjRemoveAnimByFlags / AllByFlags / RemoveAnim / RemoveAnimAll, ReqAnimByFlags / AllByFlags / ReqAnimAll / ReqAnim, JObjSortAnim, HSD_JObjAddAnim / AddAnimAll, HSD_JObjAnim, JObjAnimAll, HSD_JObjAnimAll, HSD_JObjSetCurrent / GetCurrent | no (walkers over the checked AObj / RObj ports and DObj stubs) |
+
+- Native shape: `JObjRt<X>` is the `JObjHost` for a `JObjTree<D, u32>`: `R` is an index into its
+  RObj arena `robjs` (each JObj's `robj` Vec is its chain), so the round 5 effector branch,
+  `HSD_RObjUpdateAll(jobj->robj, jobj, JObjUpdateFunc)` and the IK solvers now run for real.
+  `JObjGlobals` holds jobj.c's statics (`ufc_callbacks`, the three particle / sound callbacks,
+  `current_jobj`). `HSD_ObjData` is `ObjData` (3 words). `HsdAnimJoint` and
+  `HsdSubAnimJoint<A>` (Mat/ShapeAnimJoint, payload = the DObj port's handle) are owned trees.
+- Stubs via `JObjExt` (TODO(group1 dobj)): the four DObj anim walkers; `splArcLengthPoint` on the
+  AObj target's spline (TODO(group1 jobj spline)); AObjLoadDesc's obj_id lookup (TODO(group1 jobj
+  load)); `HSD_JObjRef` / `Unref` (TODO(group1 class)). `ext` is `Rc<RefCell<X>>` so robj.c's
+  `update_all` can take it as its `RObjHost` while `JObjRt` is its `JObjHost`.
+- Ordering difference, inside `HSD_RObjUpdateAll` only: an IK-hint `rotate_x` write (ROTX on a
+  JOINT1) and the SETBYTE / SETFLOAT / 0x28-0x2A callbacks raised by the update are applied after
+  it rather than during it. Nothing in RObjUpdateAll reads the hint; the callbacks need an
+  expression RObj of type >= 20. A PATH update from RObjUpdateAll panics (needs the spline).
+- Uninitialised locals: resolveIKJoint1's short-path branch (`|eff - origin|^2 <= 1e-8`) reads
+  `var_f28`, `var_f27`, `sp80`, `sp74` unset; the shipping build zero-initialises them and so does
+  the port. The oracle hits that branch (zero-length path: effector target = J1's parent), and a
+  non-zero value there fails 3,440 checks.
+- FMA: `fma_sites.py` finds one fused site, resolveIKJoint1's `2*(a+b) - d`, ported with
+  `fmadds`. It cannot be discriminated: `2*x` is exact, so fused and unfused agree (unfused: 0
+  checks fail). JObjUpdateFunc, resolveIKJoint2 and the walkers have none.
+- Oracle: `oracle/build_ik.sh` compiles jobj.c, robj.c, mtx.c, mtx_pc.c, gekko_fp.c, lbtrigf.c,
+  `helper_robj.c` and `helper_ik.c` with the shipping flags + `lower.py`; `driver_ik.c` writes
+  `tests/data/oracle_ik.txt` (29k rows, 3.1 MB): 400 forests of anchors, plain JObjs with JObj /
+  limit constraints, and 1-3 IK chains JOINT1 [-> JOINT2] -> EFFECTOR (IK hints with and without
+  the flip bit 4 and rotate_x, a pole on JOINT1, a limit on JOINT1 so RObjUpdateAll + remake runs,
+  limits 5 / 6 on JOINT2, an active / inactive effector target), x 50 random ops (SetupMatrix,
+  SRT change + SetMtxDirty, JObjUpdateFunc with 31 type values incl. scale-clamp and 0/1 values,
+  SetMtxDirty). Each row checks a hash of every JObj and RObj (and the dptcl callback calls) and
+  the written-back value. `tests/oracle_ik.rs`: 20,400 checks, 0 failed, debug and release.
+- Mutation: IK2's limit clamp fails 2,948 checks, IK1's flip (bit 4) 9,080, the pole rotation
+  4,467, the RObjUpdateAll call in IK1 1,878 (after the JOINT1 limit was added; 0 before), the
+  scale clamp 1,482.
+- Not ported in jobj.c: HSD_JObjDispAll (render), load (JObjLoadJointSub, JObjLoad,
+  HSD_JObjLoadJoint, ResolveRefs(+All)), the class system (SetDefaultClass, Unref, UnrefThis,
+  JObjInit as a class method, ReleaseChild, Release, Amnesia, InfoInit).

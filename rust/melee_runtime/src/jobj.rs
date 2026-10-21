@@ -8,7 +8,8 @@
 //! (`HSD_VecAlloc` / `HSD_VecFree`). The class `make_mtx` method is the default
 //! `HSD_JObjMakeMatrix` (no game class overrides it).
 //!
-//! Calls into code that is not ported yet go through [`JObjHost`]: the RObj queries
+//! Calls into code that is not ported yet go through [`JObjHost`] (round 8: `jobj_rt::JObjRt` implements
+//! it over the RObj port and the IK solvers): the RObj queries
 //! (TODO(group1 robj)), the IK solvers `resolveIKJoint1/2` (they need `HSD_RObjGetGlobalPosition`;
 //! TODO(group1 robj)) and `HSD_JObjUnref` (the HSD_Obj refcount / class release:
 //! TODO(group1 class)).

@@ -94,6 +94,8 @@ fn install_recorders() {
         st::FTANIM_80070CC4 = Some(|g, a| { tr(42); trg(g); tr(a as u32) });
         st::EFLIB_DESTROYALL = Some(|g| { tr(43); trg(g) });
         st::ITISHEAVY = Some(|item| { tr(44); tr(!item.is_null() as u32); pick() });
+        // round 8 (gen/port_r8.py)
+        st::PLAYER_GETPLAYERSLOTTYPE = Some(|slot| { tr(45); tr(slot as u32); pick() & 3 });
     }
 }
 

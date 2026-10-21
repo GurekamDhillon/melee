@@ -216,3 +216,11 @@ pub fn Fighter_OnItemInvisible(g: G, flag: i32) {
         ftAnim_80070CC4(g, flag);
     }
 }
+
+// round 8 (gen/port_r8.py)
+stub!(/// TODO(group3): `Player_GetPlayerSlotType(slot)` (pl/player.c; returns Gm_PKind, as i32).
+    PLAYER_GETPLAYERSLOTTYPE, Player_GetPlayerSlotType, (slot: i32) -> i32);
+
+/// `ftBossLib_8015BD20(gobj)` (ft/ftbosslib.c): the C body is `return;`. Ported as is.
+#[inline]
+pub fn ftBossLib_8015BD20(_g: G) {}

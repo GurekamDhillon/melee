@@ -82,6 +82,10 @@ void ftAnim_80070C48(HSD_GObj* gobj, s32 a) { tr(41); trg(gobj); tr((u32) a); }
 void ftAnim_80070CC4(HSD_GObj* gobj, s32 a) { tr(42); trg(gobj); tr((u32) a); }
 STUB_G(43, efLib_DestroyAll)
 bool itIsHeavy(HSD_GObj* item) { tr(44); tr(item != 0); return pick() & 1; }
+/* Round 8 (gen/port_r8.py): Player_GetPlayerSlotType recorder (Gm_PKind from the LCG: Human=0 / others);
+ * ftBossLib_8015BD20 is its C body (`return;`), as the Rust port is (stubs.rs). */
+Gm_PKind Player_GetPlayerSlotType(s32 slot) { tr(45); tr((u32) slot); return (Gm_PKind) (pick() & 3); }
+void ftBossLib_8015BD20(HSD_GObj* gobj) { return; }
 
 #include "ftcommon_extract.inc"
 #include "chref_table.inc"

@@ -81,3 +81,5 @@ pub mod ftSamus;
 pub mod ftSeak;
 pub mod ftYoshi;
 pub mod ftZelda;
+/// Round 8: gen/port_r8.py output (PAD_STACK forms, Player_GetPlayerSlotType conditions). Path: `chars::r8::<Char>::<tu>::<fn>`.
+pub mod r8;

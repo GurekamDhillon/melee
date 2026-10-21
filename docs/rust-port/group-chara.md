@@ -400,3 +400,39 @@ pointer assignments from calls (`fp->x1A5C = ftBossLib_GetFighterGObj(...)`), an
 - Stubs added: 0. Callback keys added: 4.
 - Next: pointer-valued assignments from calls (`ftBossLib_GetFighterGObj`), dat_attrs bitfields in
   the by-value set, local declarations, `Player_GetPlayerSlotType(...) == k` conditions.
+
+## Round 8 (2026-10-21)
+
+### What was ported
+86 more character functions in 55 TUs (list `gen/ported_r8.txt`; code `src/chars/r8/<Char>.rs`,
+path `melee_chara::chars::r8::<Char>::<tu>::<fn>`, signature `fn(gobj: *mut HSD_GObj)`): 84 Master /
+Crazy Hand `_IASA` callbacks (`if (Player_GetPlayerSlotType(fp->player_id) == Gm_PKind_Human)
+ftBossLib_8015BD20(gobj);`) plus `ftPp_SpecialS1_Anim` and `ftSk_SpecialHi_Anim` (bodies that only
+failed on a `PAD_STACK(8 * 4)`-style padding statement).
+
+How: `gen/port_r8.py` = port_r7's translator plus
+- `PAD_STACK(<expr>);`, `FORCE_PAD_STACK(<expr>);`, `FORCE_PAD_STACK_<n>;` are dropped before translation
+  (unused stack padding); a function whose only new feature is that padding passes the "nothing new"
+  filter when it emits at least one statement;
+- 1 new stub in `src/stubs.rs`: TODO(group3) `Player_GetPlayerSlotType(slot) -> i32` (pl/player.c);
+- `ftBossLib_8015BD20` (ft/ftbosslib.c, C body `return;`) ported as a no-op helper in `src/stubs.rs`.
+38 candidates were dropped by the rustc-reject loop. No new callback keys (`gen/callbacks_r8.txt` is empty).
+
+### FMA
+`fma_sites.py --func <the 86>` over the 55 TUs: 0 fused sites.
+
+### Verification
+`gen/chref.py` reads ported_r8 / callbacks_r8. New recorder id 45 `Player_GetPlayerSlotType`
+(traces the slot, answers 0 = Human / 1 from the LCG) on both sides; the C oracle defines
+`ftBossLib_8015BD20` with its real empty body.
+- Result: **1373/1373 equal** (1287 + 86); `tests/data/chars.txt` regenerated.
+- Negative checks: `player_id as i32` -> `+ 1` in `ftCh_BackAirplane1_IASA` and `== 0` -> `!= 0` in
+  `ftPp_SpecialS1_Anim` each made exactly that function fail. Flipping the Human test in a boss IASA is
+  not observable (both branches do nothing visible: the callee is empty), so it passes, correctly.
+- Not proven: branch coverage (random fill), the stubbed calls, unported callback targets.
+
+### Counts
+- Ported this round: 86 (all verified). Total in the crate: 1386 of ~4340 (31.9%).
+- Stubs added: 1 TODO(group3) (+1 ported no-op helper). Callback keys added: 0.
+- Next: `T* da = fp->ft_data->ext_attr;` dat-attr locals (37 Master Hand + 31 Crazy Hand), nested
+  `{ Fighter* fp = ...; }` blocks (23), local `Vec3` declarations (60), `static u32 const mf` masks (47).

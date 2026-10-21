@@ -2,11 +2,11 @@
 # C reference for the pure pieces of the db TU ports (tu/dbinit.rs db_filter_dpad, tu/dbsound.rs
 # db_peak_hold). Both bodies are cut verbatim (by line range, checked below) from the game C and
 # compiled natively; integer-only, so contraction does not matter.
-# Regenerates tests/data/tu_db_ref.txt. Usage: bash rust/melee_runtime/oracle/tu_db_ref.sh
+# Regenerates tests/data/tu_dbinit_ref.txt. Usage: bash rust/melee_runtime/oracle/tu_dbinit_ref.sh
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 root="$(cd "$here/../../.." && pwd)"
-out="${TMPDIR:-${TEMP:-/tmp}}/melee_runtime_tu_db_ref"
+out="${TMPDIR:-${TEMP:-/tmp}}/melee_runtime_tu_dbinit_ref"
 mkdir -p "$out"
 sed -n '179,194p' "$root/src/melee/db/dbinit.c" > "$out/dpad.inc"
 sed -n '64,72p' "$root/src/melee/db/dbsound.c" > "$out/peak.inc"
@@ -43,5 +43,5 @@ int main(void) {
 C
 CL="${CLANG:-/c/Program Files/LLVM/bin/clang.exe}"
 "$CL" -O2 -w "$out/drv.c" -I"$out" -o "$out/drv.exe"
-"$out/drv.exe" | tr -d '\r' > "$here/../tests/data/tu_db_ref.txt"
-wc -l "$here/../tests/data/tu_db_ref.txt"
+"$out/drv.exe" | tr -d '\r' > "$here/../tests/data/tu_dbinit_ref.txt"
+wc -l "$here/../tests/data/tu_dbinit_ref.txt"

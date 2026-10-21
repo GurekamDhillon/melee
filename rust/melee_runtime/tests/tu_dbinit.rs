@@ -4,10 +4,10 @@ use melee_runtime::tu::dbeffect::pad;
 use melee_runtime::tu::dbinit::{db_filter_dpad, dblkind, DbInit, DbInitHost, DbPadIn};
 use melee_types::{HSD_GObj, PADStatus};
 
-/// db_filter_dpad against the C block cut from db_RunEveryFrame (oracle/tu_db_ref.sh).
+/// db_filter_dpad against the C block cut from db_RunEveryFrame (oracle/tu_dbinit_ref.sh).
 #[test]
 fn filter_dpad_matches_c() {
-    let txt = include_str!("data/tu_db_ref.txt");
+    let txt = include_str!("data/tu_dbinit_ref.txt");
     let mut n = 0;
     for l in txt.lines().filter(|l| l.starts_with("dpad ")) {
         let v: Vec<i32> = l[5..].split(' ').map(|x| x.parse().unwrap()).collect();

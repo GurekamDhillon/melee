@@ -34,6 +34,7 @@ pub mod lbtrigf;
 pub mod lbvector;
 pub mod list;
 pub mod lobj;
+pub mod mobj;
 pub mod mtx;
 pub mod psappsrt;
 pub mod particle;

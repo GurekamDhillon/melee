@@ -470,3 +470,40 @@ unported code.
 ### Count after this round
 Ported **492 of 2,297** (21.4%): **423** checked against the C, **69** not (the 51 before + the 18
 particle/psappsrt functions above).
+
+## Night 3, port round 5 (round 13): mobj.c logic
+
+### Recount (start of round)
+No commit to `rust/melee_runtime` since round 12 (dc6cbf260): **492 of 2,297** (423 checked
+against the C, 69 not).
+
+### Stubs whose target now exists
+None. The TODO(group1 ...) stubs (class, jobj load, jobj spline, dobj anim, psCamera, particle
+JObj) still point at unported code; wobj.rs's RObj trait methods are host hooks (robj.rs exists,
+the host wires it, as in round 9). No other crate has a TODO(group1) whose target appeared.
+
+### Ported this round
+`mobj.rs`, from `mobj.c` (depends on nothing unported):
+
+| function | checked against C |
+|---|---|
+| HSD_MObjSetCurrent, HSD_MObjSetFlags, HSD_MObjClearFlags (NULL mobj incl.) | yes |
+| MObjUpdateFunc (all 13 track types + unknown 0/14/15; PE NULL or not; NULL mobj) | yes |
+| HSD_MObjSetDiffuseColor, HSD_MObjSetAlpha, HSD_MObjGetTObj | yes |
+
+- Native shape: `HsdMObj<T>` (T = TObj handle), owned `mat` / `pe`; `HsdMaterial`, `HsdPeDesc`.
+  GcLayout delegated to `melee_types::HSD_MObj`, `HSD_Material`, `HSD_PEDesc`.
+- Conversions: `(u8)(255.0 * fv)` is `fptoui` saturated to 32 bits then truncated (as tobj.c).
+- FMA: helper_mobj.ll's only fmuladds are math_ppc.h sqrtf's (unreached); none in mobj.c.
+- Oracle: `oracle/build_mobj.sh` (helper_mobj.c includes mobj.c; gekko_fp.c; shipping flags +
+  lower.py; lld `/FORCE:UNRESOLVED`, the GX/TEV/class half is never called).
+  `tests/data/oracle_mobj.txt`: 20,000 ops (~3300 per op kind) on a persistent MObj reset every
+  50 ops; each row checks the result and an FNV hash of the whole MObj state. 0 failed.
+- Mutations caught: signed f2u8 (1850 rows), alpha `fv` for `1 - fv` (880), ref1 written as ref0
+  (2319), ClearFlags `&= flags` (16533).
+- Not ported: MObj anim entry points (RemoveAnimByFlags / AddAnim / ReqAnim[ByFlags] / Anim need
+  TObj anim), MObjLoad / LoadDesc / Alloc / MaterialAlloc / Remove / class, TExp/TEV compile and
+  setup, toon/shadow textures.
+
+### Count after this round
+Ported **499 of 2,297** (21.7%): **430** checked against the C, **69** not (unchanged list).

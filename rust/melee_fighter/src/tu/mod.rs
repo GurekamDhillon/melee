@@ -75,3 +75,4 @@ pub mod ftCo_DemoCallback0;
 pub mod ftCo_DamageScrew;
 pub mod ftCo_Dash;
 pub mod ft_081b;
+pub mod ftCo_CargoTurn;

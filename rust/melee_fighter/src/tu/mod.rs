@@ -97,3 +97,4 @@ pub mod ftCo_Down;
 pub mod ftCo_DownAttack;
 pub mod ftCo_DamageSong;
 pub mod ftCo_Furafura;
+pub mod ftCo_CaptureCaptain;

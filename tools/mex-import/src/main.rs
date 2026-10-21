@@ -9,14 +9,7 @@
 //! Disc paths may also come from the environment: --vanilla defaults to $GW_ISO_VANILLA.
 //! Everything written is disc-derived: keep --out outside any repository.
 
-mod analyze;
-mod disc;
-mod hsd;
-mod layout;
-mod mexfn;
-mod pack;
-mod report;
-mod sha256;
+use mex_import::{disc, hsd, layout, pack, report};
 
 use disc::Disc;
 use std::collections::BTreeMap;

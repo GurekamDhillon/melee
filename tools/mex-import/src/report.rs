@@ -69,6 +69,10 @@ pub struct CodeReport {
     pub opaque: BTreeMap<String, u64>,
     /// TSV rows of every non-stack access.
     pub tsv: String,
+    /// Translation coverage per blob and over all of them (`crate::translate`).
+    pub translate: Vec<(String, crate::translate::Coverage)>,
+    pub translate_total: crate::translate::Coverage,
+    pub layouts: crate::remap::Layouts,
 }
 
 impl CodeReport {
@@ -82,6 +86,9 @@ impl CodeReport {
         self.errors.extend(errs);
         for b in blobs {
             let r = analyze(reg, &b);
+            let tc = crate::translate::blob_coverage(&self.layouts, &b, &r);
+            self.translate_total.add(&tc);
+            self.translate.push((r.label.clone(), tc));
             let mut c = Counts::default();
             for a in &r.accesses {
                 *c.by_class.entry(a.class).or_default() += 1;
@@ -175,6 +182,7 @@ impl CodeReport {
         for e in &self.errors {
             let _ = writeln!(s, "  error: {e}");
         }
+        s.push_str(&crate::translate::summary_text(&self.translate, &self.translate_total));
         s
     }
 

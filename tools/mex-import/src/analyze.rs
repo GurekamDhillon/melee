@@ -149,6 +149,8 @@ pub struct BlobReport {
     pub data_words: usize,
     /// Words of code regions no path from the region start reaches (padding, literal pools).
     pub unreached_words: usize,
+    /// Code offsets of every reached instruction (sorted), for the translator's coverage.
+    pub reached: Vec<u32>,
 }
 
 struct Insn {
@@ -600,12 +602,14 @@ pub fn analyze(reg: &Registry, blob: &Blob) -> BlobReport {
     }
     let mut accesses = vec![];
     let mut instructions = 0;
+    let mut reached_all: Vec<u32> = vec![];
     for pass in 0..16 {
         let last = pass == 15;
         let mut calls_all: Vec<(u32, [Val; 8])> = vec![];
         let mut acc_pass = vec![];
         let mut n_insn = 0;
         let mut unreached_pass = 0;
+        let mut reached_pass: Vec<u32> = vec![];
         for (s, e, name) in &all {
             let mut args = entry.get(s).copied().unwrap_or(unknown);
             if let Some(inf) = inferred.get(s) {
@@ -642,6 +646,7 @@ pub fn analyze(reg: &Registry, blob: &Blob) -> BlobReport {
             let mut v = vec![];
             let mut dummy = vec![];
             let reached = pcs.len();
+            reached_pass.extend(&pcs);
             for pc in pcs {
                 let mut st = states[&pc].clone();
                 step(&ctx, pc, &mut st, &mut Some(&mut v), name, &mut dummy);
@@ -690,6 +695,7 @@ pub fn analyze(reg: &Registry, blob: &Blob) -> BlobReport {
         accesses = acc_pass;
         instructions = n_insn;
         unreached_words = unreached_pass;
+        reached_all = reached_pass;
         if !changed || last {
             break;
         }
@@ -703,6 +709,11 @@ pub fn analyze(reg: &Registry, blob: &Blob) -> BlobReport {
         data_regions,
         data_words,
         unreached_words,
+        reached: {
+            reached_all.sort_unstable();
+            reached_all.dedup();
+            reached_all
+        },
     }
 }
 

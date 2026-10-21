@@ -112,3 +112,4 @@ pub mod ftCo_HammerKneeBend;
 pub mod ftCo_HammerLanding;
 pub mod ftCo_HammerTurn;
 pub mod ftaction;
+pub mod ftCo_HammerWait;

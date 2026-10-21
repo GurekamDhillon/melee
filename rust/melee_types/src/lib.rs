@@ -10,3 +10,5 @@ pub use melee_core;
 /// Generated native types + GameCube layouts (gen/gen_types.py). Never hand-edited.
 pub mod gen;
 pub use gen::*;
+pub mod neutral_hash;
+pub mod inline;

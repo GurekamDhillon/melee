@@ -136,7 +136,7 @@ against a running Rust game: no Rust simulation exists yet, so no golden has bee
 |---|---|---|---|---|---|---|
 | 0 types | melee_types | 110 header inlines | 82 | NHV1 words (8 oracle cases) + frame combine on all 10804 golden rows | 1618 records, the ONE generator (libclang ppc32), covers groups 0/3/4/5 headers | 28 inlines need other groups |
 | 1 runtime/HSD | melee_runtime | ~2000 | ~80 (gekko_fp, sqrtf, mtx, mtx44, random, lbtrigf, lbvector) | all, 11400 rows; oracle redoes gwtool fusion | Vec3/Quaternion only; DAT reader `dat.rs` (night 2) | all HSD objects (~1200), lb/db/sfx/THP |
-| 2 world | melee_world | 3013 | 36 (mplib line queries) | all, 27231 rows (oracle now contraction on + gwtool lowering, night 2) | mp types, hand-written from header comments | cm, ef, gr, if; rest of mplib |
+| 2 world | melee_world | 3013 | 50 (mplib line queries + line geometry) | all; 27231 + 50454 rows (oracles contraction on + gwtool lowering, night 2) | mp types, hand-written from header comments | cm, ef, gr, if; rest of mplib |
 | 3 fighter engine | melee_fighter | ~2820 | 57 (nh_Fighter, ftcommon movement, staling) | all (6600 + 12000 + 64 cases) | melee_types (re-exported as `crate::types`) | everything else; c2r layer (feature `c2r`) compiles, never linked |
 | 4 characters | melee_chara | ~4340 | 13 (pure helpers) | frsqrte / my_sqrtf / sumOfSquares (oracle contraction on, night 2; my_sqrtf now fused) | melee_types (re-exported as `types_gen`) | all Fighter-touching code (~99.7%) |
 | 5 items/ty/vi | melee_items | ~5000 | 9 Item-only + item hash | 8 tests (oracle contraction on, night 2; no fused sites in these) | melee_types (re-exported as `layout`) | spawn/think/collision, trophies, vi |

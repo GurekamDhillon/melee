@@ -12,12 +12,12 @@ Function definitions in the C (counted as a `name(...)` line followed by `{`):
 
 | dir | functions | ported |
 |---|---|---|
-| src/melee/mp | 226 | 36 (mplib line-graph queries) |
+| src/melee/mp | 226 | 50 (mplib line-graph queries + line geometry) |
 | src/melee/cm | 182 | 0 |
 | src/melee/ef | 67 | 0 |
 | src/melee/gr | 2166 | 0 |
 | src/melee/if | 372 | 0 |
-| total | 3013 | 36 (about 1.2%) |
+| total | 3013 | 50 (about 1.7%) |
 
 Group 2 has no PowerPC `.s` files (the repo's `.s` files are in libs/dolphin, MetroTRK and
 Runtime). None of the group's structs are in the neutral hash field list
@@ -52,6 +52,18 @@ no `StateHash` impls were needed yet.
   `vec::Vec2`/`Vec3` are here too. All of these carry `TODO(move-to-core)`: they belong to
   group 0/1 or to melee_core.
 
+- (port round 1, night 2) `mp::geom`, from src/melee/mp/mplib.c: mpRemap2d, mpLib_8004DD90_Floor,
+  mpLib_8004E090_Ceiling, mpLib_8004E398_LeftWall, mpLib_8004E684_RightWall, mpLineIntersection,
+  mpLineIntersectionH, mpLineIntersectionV, mpLib_8004ED5C, mpVtxGetPos, mpVtxSetPos,
+  mpLineSetPos, mpLib_80056758, mpGetSpeed (14), plus `geom::sqrtf` (src/MSL/math_ppc.h sqrtf;
+  `TODO(move-to-core)`, it duplicates melee_chara::pure::my_sqrtf).
+  - The C's out-params become a return value (`Option<LineHit>`, `Option<(f32, f32)>`); `None`
+    is exactly the C's -1 / false, where the C writes no out-param.
+  - FMA sites follow `fma_sites.py`: mpRemap2d 6 f64, mpLineIntersection 7 f64,
+    mpLineIntersectionH/V 1 f64 each, mpLib_8004ED5C 2 f32 (`fmadds(dx, dx, dy*dy)`), sqrtf
+    `fma(-(g*g), x, 3.0)`; the four point queries, the setters and mpGetSpeed have none.
+  - mpGetSpeed's `DbLevel >= DbLKind_DebugRom` range assert (debug ROM only) is not ported.
+
 ## Tests
 
 `tests/mplib_lines_vs_c.rs` checks the port against the real C. `cref/gen_mplib_lines_ref.sh`
@@ -67,7 +79,18 @@ Caveat: NaN results are compared only as "is NaN". On a zero-length line, PSVECN
 NaN. An x86 build makes a NaN with a different sign than a Gekko does, so the native clang
 reference cannot pin the NaN's bits.
 
-Regenerate: `bash rust/melee_world/cref/gen_mplib_lines_ref.sh`, then
+`tests/mplib_geom_vs_c.rs` does the same for `mp::geom`: `cref/gen_mplib_geom_ref.sh` cuts
+those bodies out of mplib.c (plus the line-query bodies they call), builds them i686 with
+contraction on and `melee_runtime/oracle/lower.py` (22 f32 + 21 f64 sites lowered), and writes
+`tests/data/mplib_geom_ref.txt` (50454 rows: 32 random graphs x 4 query points per line for the
+four projections and mpGetSpeed, mpLib_8004ED5C per line, replayed setters, then 6000 random
+float tuples for mpRemap2d / the three intersections / sqrtf). All match bit for bit, including
+8 endless walks. Mutation check: unfusing mpLib_8004ED5C's fmadds fails the test. Unfusing any
+f64 site (remap, intersections, sqrtf) does NOT: their multiplies are mostly f32 x f32 (exact in
+f64, so fma equals unfused), and the rest round to f32 afterwards. Those f64 fusions are right
+by the compiled IR, not proven by a vector.
+
+Regenerate: `bash rust/melee_world/cref/gen_mplib_lines_ref.sh` (and `gen_mplib_geom_ref.sh`), then
 `cd rust && cargo test -p melee_world`.
 
 ## Build notes
@@ -83,9 +106,9 @@ Regenerate: `bash rust/melee_world/cref/gen_mplib_lines_ref.sh`, then
 
 ## Next (in order)
 
-1. The rest of mplib: mpLineIntersection{,H,V}, mpRemap2d, and the floor, ceiling and wall
-   point queries (mpLib_8004DD90_Floor etc.). These are pure float code over the same state, so
-   the same C-reference harness can be extended to them.
+1. The rest of mplib: mpCheckFloor/Ceiling/LeftWall/RightWall (+Remap), mpLib_800511A4/515A0,
+   mpLib_8005199C_Floor and the joint list (needs CollJoint without raw pointers). The geom harness
+   extends to them.
 2. mpcoll.c, the collision driver. It calls into fighter and item callbacks, which get stubbed.
 3. cm/camera.c. `long double` literals become f64.
 4. gr/*: 77 stage TUs, mostly callback tables plus per-stage logic. Port the shared grlib parts

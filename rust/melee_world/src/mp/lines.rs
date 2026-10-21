@@ -55,14 +55,14 @@ enum Dir {
 
 impl GroundColl {
     #[inline]
-    fn active(&self, id: i32) -> bool {
+    pub(crate) fn active(&self, id: i32) -> bool {
         (self.line_active)(id)
     }
 
     /// `LINEID_CHECK`: HSD_ASSERTREPORT on the console.
     #[inline]
     #[track_caller]
-    fn lineid_check(&self, src_line: u32, line_id: i32) {
+    pub(crate) fn lineid_check(&self, src_line: u32, line_id: i32) {
         if line_id == -1 || line_id >= self.line_count {
             panic!("mplib.c:{src_line}:not found lineID={line_id}");
         }
@@ -74,12 +74,12 @@ impl GroundColl {
     }
 
     #[inline]
-    fn flags(&self, line_id: i32) -> u32 {
+    pub(crate) fn flags(&self, line_id: i32) -> u32 {
         self.lines[line_id as usize].flags
     }
 
     #[inline]
-    fn pos(&self, v: u16) -> (f32, f32) {
+    pub(crate) fn pos(&self, v: u16) -> (f32, f32) {
         let p = self.vtx[v as usize].pos;
         (p.x, p.y)
     }

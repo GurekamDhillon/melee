@@ -392,3 +392,40 @@ NUL-terminated inside their buffers and xC holds at least (int) x18 entries.
 
 **Not ported (looked at this round):** `gm_801891F4_GetTickRate` (reads `__OSBusClock`, a
 global), `tyDisplay_8031BB34` (returns a table pointer as s32, like `_tyDisplay_8031BBF4`).
+
+## Night 3 round 3 (2026-10-21): recount, callers of memzero
+
+**Recount.** Group total unchanged: **3,995** functions in the 166 gm/mn/if/ty/lb TUs (same
+libclang count; ~20 lbtrigf/lbvector, group 1's). Ported at the start: 269 (268 distinct
+`pub fn` names in melee_modes + the second static `checkJObjFlags` copy), all verified. After
+this round: **275 of 3,995 (6.9%)**, all verified.
+
+**TODO stubs.** None inside melee_modes. `oracle/scan_r4.py` over the current workspace: the
+only newly unlocked callers are the six memzero callers below (round 6 ported memzero) plus
+group 1's lbvector/lbtrigf functions, left to group 1. The other crates' `TODO(group6)` hooks
+still all read the global game state (`lbl_8046B6A0`, save data), not ported yet.
+
+**Ported: 6 functions, all checked bit for bit against the C** (`cargo test -p melee_modes --test oracle_r7`,
+1,800 vectors; `oracle/gen_oracle_r7.py` over gen_oracle_r4.py, `oracle/build_r7.sh`; the C side
+runs the game's own memzero / fn_801771C0 / fn_80165418 / fn_801654A0 from the callee cut):
+
+| module | C TU | functions |
+|---|---|---|
+| `hud_r7.rs` | textlib | `DevText_Erase` |
+| `gm_r7.rs` | gm_1601, gm_16A2, gmresult, gmresultplayer, gm_17C0 | `fn_80168A6C`, `fn_80169574`, `gmResult_PcWinner`, `gm_80177724`, `gm_8017C984` |
+
+- **FMA:** none (lower.py: 0 fmuladd in every cut).
+- `fn_80168A6C` reads a record the function itself defines; it is `gm_r7::Fn80168A6CSrc` with
+  `gc_layout!` GC offsets (0x0 s32**, 0x4 s32*, 0x8, 0xC; 0x10 bytes).
+- `gmResult_PcWinner`'s scratch is a function-local static the C zeroes on every call; the Rust
+  uses a zeroed local (nothing else reads the static).
+- Mutation check: `-1` for `-2` in fn_80169574 fails 400/400; xC -> x8 in fn_80168A6C 369/400;
+  `1 *` for `2 *` in DevText_Erase 185/250.
+
+**Domains restricted:** `fn_80169574` size 0..511 (the 512-byte buffer); `DevText_Erase` 2*w*h <= 512;
+`fn_80168A6C` idx 0..7 (an 8-pointer array), entries and x4 NULL 30% of the time.
+
+**Unverified ports:** none.
+
+**Next:** the 12 functions over `.c`-defined records (local records with `gc_layout!`, as
+`Fn80168A6CSrc` here), the bitfield functions (compare by value), and the tydisplay sorters.

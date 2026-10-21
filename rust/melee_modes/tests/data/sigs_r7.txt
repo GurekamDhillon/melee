@@ -1,0 +1,6 @@
+DevText_Erase buf -> void
+fn_80168A6C buf buf s32 -> void
+fn_80169574 s32 buf -> void
+gmResult_PcWinner buf -> s32
+gm_80177724 buf -> void
+gm_8017C984 buf -> void

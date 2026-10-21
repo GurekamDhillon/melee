@@ -33,6 +33,9 @@ pub mod gm_r6;
 pub mod hud_r6;
 pub mod lb_r6;
 
+pub mod gm_r7;
+pub mod hud_r7;
+
 /// `GXColor` (libs/dolphin/include/dolphin/gx/GXStruct.h). TODO(group0): melee_types does not
 /// generate it (no group-0 header reaches GXStruct.h); move it there when it does.
 #[repr(C)]

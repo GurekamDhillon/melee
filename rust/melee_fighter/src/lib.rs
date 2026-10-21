@@ -6,3 +6,10 @@
 #![allow(dead_code)]
 
 pub use melee_core;
+
+pub mod types;
+pub mod compat;
+
+/// Mechanical c2rust translation of every group-3 TU (feature `c2r`; generated, gitignored).
+#[cfg(feature = "c2r")]
+pub mod c2r;

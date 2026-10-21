@@ -7,6 +7,15 @@ publish.workspace = true
 
 [dependencies]
 melee_core.workspace = true
-melee_types.workspace = true
-melee_runtime.workspace = true
-melee_world.workspace = true
+# melee_types / melee_runtime / melee_world are being generated concurrently by other agents and
+# do not build yet; group 3 carries its own copies of shared types (TODO(move-to-core)) until they do.
+# melee_types.workspace = true
+# melee_runtime.workspace = true
+# melee_world.workspace = true
+c2rust-bitfields = { version = "=0.22.1", optional = true }
+
+[features]
+# Compile the mechanical c2rust translation of every group-3 TU (src/c2r, ~1.5M lines, ~3 min).
+# src/c2r is generated and gitignored: run tools/rust-port/transpile.sh on the group, then
+# `python rust/melee_fighter/gen/fix_raw.py` (docs/rust-port/group-3 fighter engine + common states.md).
+c2r = ["dep:c2rust-bitfields"]

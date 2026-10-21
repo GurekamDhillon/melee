@@ -127,6 +127,18 @@ impl FighterFiles {
         skeleton::FigaTree::parse(&a.data, root).map(Some)
     }
 
+    /// Animation row `anim_id`'s command script (`ftData->xC[anim_id].xC`, a DAT offset; 0 = none).
+    pub fn script_at(&self, anim_id: u32) -> u32 {
+        let d = &self.dat.data;
+        let row = be32(d, self.ft_data + 0xC) + anim_id * 0x18;
+        be32(d, row + 0xC)
+    }
+
+    /// The big-endian word at a DAT offset of PlXx.dat.
+    pub fn word(&self, at: u32) -> u32 {
+        be32(&self.dat.data, at)
+    }
+
     /// `ftData->x8->x10` (the part ftCommon_8007F6A4 rescales in ftAnim_8006FA58).
     pub fn x8_x10(&self) -> usize {
         let x8 = be32(&self.dat.data, self.ft_data + 8);

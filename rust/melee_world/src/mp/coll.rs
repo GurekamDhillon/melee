@@ -52,6 +52,8 @@ pub const COLLIDE_RIGHT_EDGE: i32 = 0x200000;
 pub const COLLIDE_EDGE: i32 = 0x800000;
 pub const COLLIDE_LEFT_LEDGE_GRAB: i32 = 0x1000000;
 pub const COLLIDE_RIGHT_LEDGE_GRAB: i32 = 0x2000000;
+pub const COLLIDE_LEFT_LEDGE_SLIP: i32 = 0x10000000;
+pub const COLLIDE_RIGHT_LEDGE_SLIP: i32 = 0x20000000;
 
 pub const COLL_FLAG_AIR_STAY_AIRBORNE: u32 = 0x1;
 pub const COLL_FLAG_AIR_PLATFORM_PASS_CALLBACK: u32 = 0x2;
@@ -91,6 +93,8 @@ pub struct CollGlobals {
 pub enum StepCb {
     /// `mpColl_80046904`.
     Air,
+    /// `mpColl_8004ACE4`.
+    Ground,
 }
 
 #[inline]
@@ -601,6 +605,7 @@ pub fn mp_coll_80043754(
         mp_coll_check_bounding(g, cd, flags);
         ret = match cb {
             StepCb::Air => mp_coll_80046904(g, st, cd, flags, floor_cb)?,
+            StepCb::Ground => mp_coll_8004ace4(g, st, cd, flags)?,
         };
         g.mp_uncheck_bounding();
         step += 1;
@@ -944,6 +949,24 @@ fn add_wall(g: &GroundColl, list: &mut [i32; MPCOLL_WALLID_MAX], n: &mut usize, 
 /// `mpColl_80044E10_RightWall` (`right` false) / `mpColl_80045B74_LeftWall` (`right` true is
 /// the left-facing-wall check against the ECB's right side): the wall checks.
 fn mp_coll_wall_check(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollData, left_wall: bool) -> bool {
+    mp_coll_wall_check_ex(g, st, cd, left_wall, false)
+}
+
+/// The wall checks; `ground` = the grounded variants (mpColl_80048AB0_RightWall /
+/// mpColl_80049778_LeftWall), which ignore the two walls next to the floor (`line_id1/2`) in
+/// the bottom-based checks.
+fn mp_coll_wall_check_ex(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollData, left_wall: bool, ground: bool) -> bool {
+    let (ex1, ex2) = if ground && g.mp_lib_80054ed8(cd.floor.index) {
+        let first = |g: &GroundColl, i: i32| if left_wall { g.mp_lib_80053448_floor(i) } else { g.mp_lib_80053394_floor(i) };
+        let second = |g: &GroundColl, i: i32| if left_wall { g.mp_lib_800534fc_floor(i) } else { g.mp_lib_800536cc_floor(i) };
+        let id1 = first(g, cd.floor.index);
+        let t = second(g, cd.floor.index);
+        (id1, if t != -1 { first(g, t) } else { -1 })
+    } else {
+        (-1, -1)
+    };
+    // `&& line_id != line_id1 && line_id != line_id2` (not in the air variant).
+    let keep = |l: i32| !ground || (l != ex1 && l != ex2);
     let mut hit_wall = false;
     let mut list = if left_wall { st.left } else { st.right };
     let mut n = 0usize;
@@ -973,7 +996,7 @@ fn mp_coll_wall_check(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollDat
     let pby = cd.prev_pos.y + cd.prev_ecb.bottom.y;
     let bx = cd.cur_pos.x + cd.ecb.bottom.x;
     let by = cd.cur_pos.y + cd.ecb.bottom.y;
-    if let Some(l) = check(g, pbx, pby, bx, by, remap) {
+    if let Some(l) = check(g, pbx, pby, bx, by, remap).filter(|&l| keep(l)) {
         add_wall(g, &mut list, &mut n, l);
         hit_wall = true;
     }
@@ -986,7 +1009,7 @@ fn mp_coll_wall_check(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollDat
         hit_wall = true;
     }
     // bottom -> side (no remap variant).
-    if let Some(l) = check(g, bx, by, sx, sy, false) {
+    if let Some(l) = check(g, bx, by, sx, sy, false).filter(|&l| keep(l)) {
         add_wall(g, &mut list, &mut n, l);
         hit_wall = true;
     }
@@ -998,7 +1021,7 @@ fn mp_coll_wall_check(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollDat
         } else {
             g.mp_lib_800511a4_right_wall(pbx, pby, psx, psy, bx, by, sx, sy, js, jo)
         };
-        if let Some(l) = r {
+        if let Some(l) = r.filter(|&l| keep(l)) {
             add_wall(g, &mut list, &mut n, l);
             hit_wall = true;
         }
@@ -1117,6 +1140,197 @@ pub fn mp_coll_80046904(
         cd.env_flags &= !COLLIDE_RIGHT_WALL_MASK;
     }
     Ok(touched_floor)
+}
+
+/// `mpColl_800488F4`: follow the floor under a grounded ECB.
+fn mp_coll_800488f4(g: &mut GroundColl, cd: &mut CollData) -> bool {
+    let floor_id = cd.floor.index;
+    let bottom = Vec3 { x: cd.cur_pos.x + cd.ecb.bottom.x, y: cd.cur_pos.y + cd.ecb.bottom.y, z: 0.0 };
+    if !g.mp_lib_80054ed8(cd.floor.index) || g.mp_line_get_kind(cd.floor.index) != COLL_LINE_FLOOR {
+        return false;
+    }
+    if let Some(h) = g.mp_lib_8004dd90_floor(floor_id, bottom) {
+        cd.floor.flags = h.flags;
+        cd.floor.normal = tv(h.normal);
+        cd.cur_pos.y += h.dist;
+        cd.floor.index = h.line_id;
+        return true;
+    }
+    let mut hit_wall = false;
+    let mut edge = g.mp_floor_get_left(floor_id);
+    if cd.cur_pos.x < edge.x {
+        let n = g.mp_line_prev_non_floor(floor_id);
+        if n != -1 && g.mp_lib_80054ed8(n) && g.mp_line_get_kind(n) & COLL_LINE_RIGHT_WALL != 0 {
+            hit_wall = true;
+        } else {
+            cd.env_flags |= COLLIDE_LEFT_LEDGE_SLIP;
+        }
+    } else {
+        edge = g.mp_floor_get_right(floor_id);
+        if cd.cur_pos.x > edge.x {
+            let n = g.mp_line_next_non_floor(floor_id);
+            if n != -1 && g.mp_lib_80054ed8(n) && g.mp_line_get_kind(n) & COLL_LINE_LEFT_WALL != 0 {
+                hit_wall = true;
+            } else {
+                cd.env_flags |= COLLIDE_RIGHT_LEDGE_SLIP;
+            }
+        }
+    }
+    if hit_wall {
+        cd.cur_pos = tv(edge);
+        return true;
+    }
+    false
+}
+
+/// `mpColl_8004A45C_Floor` (`teeter` false: walk off) / `mpColl_8004A678_Floor` (`teeter` true:
+/// stop at the edge). Only the "no edge reached" outcome is ported; reaching an edge returns
+/// NotPorted.
+fn mp_coll_floor_edge(g: &mut GroundColl, cd: &mut CollData, line_id: i32, teeter: bool) -> R<bool> {
+    if !g.mp_lib_80054ed8(line_id) || g.mp_line_get_kind(line_id) != COLL_LINE_FLOOR {
+        return Ok(false);
+    }
+    let edge = g.mp_floor_get_left(line_id);
+    if cd.cur_pos.x <= edge.x {
+        let cond = !teeter
+            || (cd.env_flags & COLLIDE_LEFT_WALL_MASK == 0 && cd.facing_dir == -1 && (cd.lstick_x as f64) > -0.75);
+        if cond {
+            return Err(NotPorted("mpColl_8004A45C/8004A678_Floor at a floor's left end"));
+        }
+    } else {
+        let edge = g.mp_floor_get_right(line_id);
+        let cond = cd.cur_pos.x >= edge.x
+            && (!teeter
+                || (cd.env_flags & COLLIDE_RIGHT_WALL_MASK == 0 && cd.facing_dir == 1 && (cd.lstick_x as f64) < 0.75));
+        if cond {
+            return Err(NotPorted("mpColl_8004A45C/8004A678_Floor at a floor's right end"));
+        }
+    }
+    Ok(false)
+}
+
+/// `mpColl_8004A908_Floor`: a different floor crossed by the bottom (then the ECB-middle) sweep.
+fn mp_coll_8004a908_floor(g: &mut GroundColl, st: &CollGlobals, cd: &mut CollData, line_id: i32) -> bool {
+    let pbx = cd.prev_pos.x + cd.prev_ecb.bottom.x;
+    let mut pby = cd.prev_pos.y + cd.prev_ecb.bottom.y;
+    let bx = cd.cur_pos.x + cd.ecb.bottom.x;
+    let by = cd.cur_pos.y + cd.ecb.bottom.y;
+    for pass in 0..2 {
+        if pass == 1 {
+            // `0.5F * (top + bottom) + prev_pos.y`: the function's one fused site.
+            pby = fmadds(0.5, cd.prev_ecb.top.y + cd.prev_ecb.bottom.y, cd.prev_pos.y);
+        }
+        let hit = if cd.x38 != st.x804d64ac {
+            g.mp_check_floor_remap(pbx, pby, bx, by, 0.0, cd.floor_skip, cd.joint_id_skip, cd.joint_id_only, None)
+        } else {
+            g.mp_check_floor(pbx, pby, bx, by, 0.0, cd.floor_skip, cd.joint_id_skip, cd.joint_id_only, None)
+        };
+        if let Some(h) = hit {
+            if h.line_id != -1 && h.line_id != line_id && (line_id == -1 || !g.mp_lines_connected(h.line_id, line_id)) {
+                cd.floor.index = h.line_id;
+                cd.floor.flags = h.flags;
+                cd.floor.normal = tv(h.normal);
+                return true;
+            }
+        }
+    }
+    false
+}
+
+/// `mpColl_8004ACE4`: one substep of grounded collision. `flags` 1: stop at edges (teeter),
+/// 2: walk off.
+pub fn mp_coll_8004ace4(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollData, flags: u32) -> R<bool> {
+    let mut touching_floor = false;
+    let left_right = 0;
+    loop {
+        let prev_b6 = cd.x34_flags.b6();
+        for left in [true, false, true, false] {
+            if mp_coll_wall_check_ex(g, st, cd, left, true) {
+                return Err(NotPorted(if left {
+                    "mpColl_80049EAC_LeftWall (ground wall push-out)"
+                } else {
+                    "mpColl_800491C8_RightWall (ground wall push-out)"
+                }));
+            }
+        }
+        if mp_coll_80044ad8_ceiling(g, st, cd, left_right) {
+            return Err(NotPorted("mpColl_8004AB80 (grounded ceiling hit)"));
+        }
+        if mp_coll_800488f4(g, cd) {
+            if mp_coll_80043bbc(g, cd).is_some() || mp_coll_80043e90(g, cd).is_some() {
+                return Err(NotPorted("mpColl_80043C6C / 80043F40 (wall at a floor end)"));
+            }
+            touching_floor = true;
+            if mp_coll_80044ad8_ceiling(g, st, cd, left_right) {
+                return Err(NotPorted("mpColl_8004AB80 (grounded ceiling hit)"));
+            }
+        } else {
+            let floor_id = cd.floor.index;
+            if g.mp_lib_80054ed8(floor_id) && g.mp_line_get_kind(floor_id) == COLL_LINE_FLOOR {
+                // flags & 1 / & 2: the edge probes (each returns false here or stops the run).
+                if flags & 1 != 0 {
+                    mp_coll_floor_edge(g, cd, floor_id, true)?;
+                } else if flags & 2 != 0 {
+                    mp_coll_floor_edge(g, cd, floor_id, false)?;
+                }
+                let old_skip = cd.floor_skip;
+                cd.floor_skip = floor_id;
+                if mp_coll_80046904(g, st, cd, 0, &mut None)? {
+                    touching_floor = true;
+                }
+                cd.floor_skip = old_skip;
+                cd.x34_flags.set_b5(1);
+            }
+        }
+        if prev_b6 == cd.x34_flags.b6() {
+            break;
+        }
+    }
+    let fi = cd.floor.index;
+    if mp_coll_8004a908_floor(g, st, cd, fi) {
+        if mp_coll_80044838_floor(g, cd, false)
+            && (mp_coll_80043bbc(g, cd).is_some() || mp_coll_80043e90(g, cd).is_some())
+        {
+            return Err(NotPorted("mpColl_80043C6C / 80043F40 (wall at a floor end)"));
+        }
+        cd.x34_flags.set_b5(0);
+        touching_floor = true;
+    }
+    if touching_floor {
+        cd.env_flags |= COLLIDE_FLOOR_PUSH;
+    }
+    Ok(touching_floor)
+}
+
+/// `inline2(coll, i)`: the substep loop with mpColl_8004ACE4, then `mpCollEnd(.., false)`.
+fn run_ground(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollData, flags: u32) -> R<bool> {
+    cd.prev_env_flags = cd.env_flags;
+    cd.env_flags = 0;
+    st.is_ecb_tiny = cd.ecb.top.y - cd.ecb.bottom.y < 6.0 && cd.ecb.right.y - cd.ecb.left.y < 6.0;
+    let r = mp_coll_80043754(g, st, StepCb::Ground, cd, flags, &mut None)?;
+    mp_coll_end(cd, r, false);
+    Ok(r)
+}
+
+/// `mpColl_8004B4B0`: JObj ECB (flags 5), `inline2(coll, 1)` (stop at edges).
+pub fn mp_coll_8004b4b0(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollData, joints: &[Vec3; 6]) -> R<bool> {
+    mp_coll_prev(cd);
+    mp_coll_load_ecb_inline(cd, 5, joints)?;
+    run_ground(g, st, cd, 1)
+}
+
+/// `mpColl_8004B108`: JObj ECB (flags 5), `inline2(coll, 0)`.
+pub fn mp_coll_8004b108(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollData, joints: &[Vec3; 6]) -> R<bool> {
+    mp_coll_prev(cd);
+    mp_coll_load_ecb_inline(cd, 5, joints)?;
+    run_ground(g, st, cd, 0)
+}
+
+/// `mpColl_8004B2DC`: JObj ECB (flags 5), `inline2(coll, 2)` (walk off edges).
+pub fn mp_coll_8004b2dc(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollData, joints: &[Vec3; 6]) -> R<bool> {
+    mp_coll_prev(cd);
+    mp_coll_load_ecb_inline(cd, 5, joints)?;
+    run_ground(g, st, cd, 2)
 }
 
 #[allow(dead_code)]

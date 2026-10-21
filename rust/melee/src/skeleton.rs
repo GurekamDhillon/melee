@@ -322,6 +322,14 @@ impl Skeleton {
         self.parts.iter().filter(|b| !b.b0 && !b.b5).find_map(|b| self.tree.get(b.joint).aobj.as_ref().map(|a| a.curr_frame))
     }
 
+    /// `ftAnim_IsFramesRemaining`, no blend: some animated part's AObj still runs
+    /// (`lb_8000B074`: an AObj without AOBJ_NO_ANIM).
+    pub fn frames_remaining(&self) -> bool {
+        self.parts.iter().filter(|b| !b.b0 && !b.b5).any(|b| {
+            self.tree.get(b.joint).aobj.as_ref().is_some_and(|a| a.flags & melee_runtime::aobj::AOBJ_NO_ANIM == 0)
+        })
+    }
+
     /// `lb_8000B1CC(jobj, NULL, &out)`.
     pub fn world_pos(&mut self, j: JObjId) -> Vec3 {
         if self.tree.get(j).parent.is_some() {

@@ -59,6 +59,22 @@ const FTCO_SM_ENTRY_START: u32 = 238;
 /// `ftCo_MS_Fall` (29) and its row `ftCo_SM_Fall` (20).
 const FTCO_MS_FALL: i32 = 29;
 const FTCO_SM_FALL: u32 = 20;
+/// `ftCo_MS_Landing` (42) and its row `ftCo_SM_Landing` (35).
+const FTCO_MS_LANDING: i32 = 42;
+const FTCO_SM_LANDING: u32 = 35;
+/// Final Destination's floor materials (mplib.c `mpLib_803BF248[Gr_Kind_Last]` = `mpLib_803BE7A8`,
+/// each entry's `x0`): the friction multiplier `mpLib_800569EC(floor.flags)` returns.
+const FD_MATERIAL_FRICTION: [f32; 20] =
+    [1.0, 1.0, 1.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.1, 0.9, 1.0, 0.2, 1.0, 0.1, 1.0, 1.0];
+
+/// `ft_GetGroundFrictionMultiplier` (not Popo/Nana) -> `mpColl_8004CA6C` on Final Destination.
+fn fd_ground_friction(fp: &Fighter) -> f32 {
+    if fp.coll_data.floor.index != -1 {
+        FD_MATERIAL_FRICTION[(fp.coll_data.floor.flags as u8) as usize]
+    } else {
+        1.0
+    }
+}
 /// The entry beam: `efAsync_Spawn(.., 0x43E, ..)` -> efAsync_Dispatch -> `efLib_Create_Attach(0x24)`.
 const EF_ENTRY_BEAM: u32 = 0x24;
 /// `Gr_Kind_Last`'s StKind in a VS match (`grGroundParam->stage_params[0].stkind`).
@@ -102,6 +118,9 @@ pub struct Player {
     /// Animation rows (`ftData->xC[smid]`) of the states the match reaches, with their figatrees.
     row_entry_start: Option<(AnimRow, FigaTree)>,
     row_fall: Option<(AnimRow, FigaTree)>,
+    row_landing: Option<(AnimRow, FigaTree)>,
+    /// `fp->mv.co.landing.allow_interrupt`.
+    landing_allow_interrupt: bool,
     /// `ftData->x44`.
     pub ecb_desc: EcbDesc,
     /// `ft_data->x0->trophy_scale` and `model_scaling` (`co_attrs`).
@@ -119,6 +138,8 @@ pub struct Player {
 struct EntryCommon {
     x6bc: i32,
     x6c0: i32,
+    x804d6524_x30: f32,
+    crowd_horiz_margin: f32,
 }
 
 /// One live effect from `efLib_Create` (EF_Effect + its JObj tree): only its particle tracks.
@@ -251,7 +272,16 @@ impl VsMatch {
         // Leaked: it lives as long as the process, as the C's archive does.
         let cd: melee_types::ftCommonData = *plco.load_at::<melee_types::ftCommonData>(ft_common).get();
         unsafe { melee_fighter::hooks::P_FT_COMMON_DATA = Box::leak(Box::new(cd)) };
-        let common = EntryCommon { x6bc: be(ft_common + 0x6BC) as i32, x6c0: be(ft_common + 0x6C0) as i32 };
+        let common = EntryCommon {
+            x6bc: be(ft_common + 0x6BC) as i32,
+            x6c0: be(ft_common + 0x6C0) as i32,
+            // Fighter_804D6524 = pData[12]; ->x30 (ftCo_800D0EC8's scaling exponent).
+            x804d6524_x30: f32::from_bits(be(be(common_root + 4 * 12) + 0x30)),
+            // gCrowdConfig = pData[21]; ->horiz_margin (+0x2C) for un_803224DC.
+            crowd_horiz_margin: f32::from_bits(be(be(common_root + 4 * 21) + 0x2C)),
+        };
+        // ft_GetGroundFrictionMultiplier for the ported ftcommon code: FD's material table.
+        unsafe { melee_fighter::hooks::GROUND_FRICTION_MUL = Some(fd_ground_friction) };
 
         let mut rand = HsdRand::default();
         rand.set_logic_seed(seed);
@@ -330,6 +360,23 @@ impl VsMatch {
                 eprintln!("melee: spawn point {slot} is under a rotated/scaled joint: position not bit-exact (TODO group1 jobj)");
             }
             let files = crate::fighter_data::FighterFiles::load(disc, name)?;
+            if std::env::var_os("MELEE_GOLDEN_SCRIPTS").is_some() {
+                // Debug: the command words of the rows the match reaches (opcode = word >> 26).
+                const LEN: [u8; 49] = [5, 5, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 7, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 2, 1, 4];
+                for row in [238u32, 20, 35, 10, 2, 3, 7, 8, 9] {
+                    let mut at = files.script_at(row);
+                    let mut out = Vec::new();
+                    while at != 0 && out.len() < 40 {
+                        let w = files.word(at);
+                        let op = w >> 26;
+                        let n = if op < 10 { if op == 5 || op == 7 { 2 } else { 1 } } else { LEN.get((op - 10) as usize).copied().unwrap_or(1) as u32 };
+                        out.push(format!("{op:#x}:{w:08X}{}", if n > 1 { format!("+{}", n - 1) } else { String::new() }));
+                        if op == 0 { break; }
+                        at += 4 * n;
+                    }
+                    eprintln!("{name} row {row}: {}", out.join(" "));
+                }
+            }
             // Fighter_Create: the costume's joint tree (HSD_JObjLoadJoint) and ftParts_SetupParts;
             // ftPartsTable[kind]->parts_num (PlCo.dat pData[4]) checks the part walk.
             let kind = fighter_kind(name)?;
@@ -433,6 +480,8 @@ impl VsMatch {
                 fall_x4: 0.0,
                 row_entry_start: files.anim_row(FTCO_SM_ENTRY_START)?.zip(files.figatree(FTCO_SM_ENTRY_START)?),
                 row_fall: files.anim_row(FTCO_SM_FALL)?.zip(files.figatree(FTCO_SM_FALL)?),
+                row_landing: files.anim_row(FTCO_SM_LANDING)?.zip(files.figatree(FTCO_SM_LANDING)?),
+                landing_allow_interrupt: false,
                 ecb_desc,
                 trophy_scale: files.trophy_scale(),
                 model_scaling: files.model_scaling(),
@@ -537,14 +586,32 @@ impl VsMatch {
                     // stays Fall (|self_vel.x / air_drift_max| <= x444 picks the neutral row).
                     fall_anim(p)?;
                 }
+                FTCO_MS_LANDING => {
+                    // ftCo_Landing_Anim: when the animation ends, ft_8008A2BC (Wait).
+                    if !p.skel.frames_remaining() {
+                        return Err(format!("player {}: Landing over -> ft_8008A2BC (Wait) not ported", p.slot + 1));
+                    }
+                }
                 m => return Err(format!("player {}: motion {m} not ported", p.slot + 1)),
             }
         }
         // s_link 2, Fighter_8006ABA0: input_cb. ftCo_Fall_IASA's checks all read pad input, and
         // the C applies none before GO (self_vel.x stays 0 in the golden with the stick held):
         // the fighters' input is all zero here. TODO(group3): the IASA checks themselves.
+        for p in &mut self.players {
+            if p.fp.motion_id == FTCO_MS_LANDING {
+                // ftCo_Landing_IASA: nothing before cur_anim_frame reaches normal_landing_lag.
+                if !(p.fp.cur_anim_frame < p.fp.co_attrs.normal_landing_lag) && p.landing_allow_interrupt {
+                    return Err(format!("player {}: ftCo_Landing_IASA input checks (Turn/Walk/attacks...) not ported", p.slot + 1));
+                }
+            }
+        }
         // s_link 4, Fighter_procUpdate: phys_cb, then the integration below.
         for p in &mut self.players {
+            // x2064_ledgeCooldown countdown (capture_timer is 0 here).
+            if p.fp.x2064_ledgeCooldown != 0 {
+                p.fp.x2064_ledgeCooldown -= 1;
+            }
             let e = &mut p.entry;
             match p.fp.motion_id {
                 FTCO_MS_ENTRY_START => {
@@ -576,12 +643,33 @@ impl VsMatch {
                     }
                     fc::calc_self_accel_drift(f);
                 }
+                FTCO_MS_LANDING => {
+                    // ftCo_Landing_Phys -> ft_80084F3C: ground friction, then the self velocity
+                    // along the floor.
+                    let f = &mut *p.fp;
+                    let mut friction = f.co_attrs.ground_friction;
+                    if fc::abs_c(f.gr_vel) > f.co_attrs.walk_max_vel {
+                        friction *= melee_fighter::hooks::common_data().friction_when_above_walk_speed;
+                    }
+                    fc::calc_ground_accel_deaccel(f, friction);
+                    fc::set_self_movement_from_grounded_movement(f);
+                }
                 _ => {}
             }
             proc_update_integrate(&mut p.fp);
+            if p.fp.ground_or_air == melee_types::GA_Ground {
+                // mpGetSpeed(floor.index, &cur_pos, &d): the floor's own motion.
+                let c = p.fp.cur_pos;
+                if let Some(d) = self.ground.mp_get_speed(p.fp.coll_data.floor.index, melee_world::vec::Vec3 { x: c.x, y: c.y, z: c.z }) {
+                    p.fp.cur_pos.x += d.x;
+                    p.fp.cur_pos.y += d.y;
+                    p.fp.cur_pos.z += d.z;
+                }
+            }
         }
         // s_link 6, Fighter_procMap (x221F_b3 clear): the ECB lock countdown, the root JObj to
         // cur_pos, the state's coll_cb, the root JObj to cur_pos again.
+        let c_common = self.common;
         for i in 0..self.players.len() {
             let p = &mut self.players[i];
             if p.fp.ecb_lock != 0 {
@@ -609,7 +697,32 @@ impl VsMatch {
                 FTCO_MS_FALL => {
                     // ftCo_Fall_Coll: ft_800831CC(gobj, ftCo_80096CC8, ft_80082B1C).
                     if ft_800831cc(&mut self.ground, &mut self.cg, p)? {
-                        return Err(format!("player {}: landed: ft_80082B1C -> Landing not ported", p.slot + 1));
+                        ft_80082b1c(&mut self.ground, p, c_common)?;
+                    }
+                }
+                FTCO_MS_LANDING => {
+                    // ftCo_Landing_Coll -> ft_80084280.
+                    if p.fp.xF8_playerNudgeVel.x != 0.0 && p.fp.xF8_playerNudgeVel.x * p.fp.facing_dir < 0.0 {
+                        return Err("ft_800827A0 (pushed by another fighter) not ported".into());
+                    }
+                    let joints = {
+                        let d = p.ecb_desc;
+                        ecb_joints(&mut p.skel, &d)
+                    };
+                    let fp = &mut *p.fp;
+                    fp.coll_data.last_pos = fp.coll_data.cur_pos;
+                    fp.coll_data.cur_pos = fp.cur_pos;
+                    fp.coll_data.lstick_x = fp.input.lstick[0].x;
+                    // ftGetFacingDirInt.
+                    mc::mp_coll_set_facing_dir(&mut fp.coll_data, if fp.facing_dir < 0.0 { -1 } else { 1 });
+                    let r = mc::mp_coll_8004b4b0(&mut self.ground, &mut self.cg, &mut fp.coll_data, &joints)
+                        .map_err(|e| format!("{} not ported", e.0))?;
+                    fp.cur_pos = fp.coll_data.cur_pos;
+                    if !r {
+                        if fp.coll_data.env_flags & mc::COLLIDE_EDGE != 0 {
+                            return Err("ftCo_8009A3C8 -> Ottotto (teeter) not ported".into());
+                        }
+                        fall_enter(p)?;
                     }
                 }
                 m => return Err(format!("player {}: coll_cb of motion {m} not ported", p.slot + 1)),
@@ -897,6 +1010,77 @@ fn change_motion_state(p: &mut Player, msid: i32, row: Option<&(AnimRow, FigaTre
             p.skel.remove_anim_all();
         }
     }
+    Ok(())
+}
+
+/// `ft_80082B1C`: the Fall landing callback. Below `ftCo_800D0EC8` (the heavy-landing speed)
+/// it is `ftCo_Landing_Enter_Basic`, above it `ft_8008A2BC` (Wait, not ported).
+fn ft_80082b1c(g: &mut GroundColl, p: &mut Player, c: EntryCommon) -> Result<(), String> {
+    // ftCo_800D0EC8 = -ftCo_CalcYScaledKnockback(p_ftCommonData->x310, x34_scale.y, 804D6524->x30).
+    let cd = melee_fighter::hooks::common_data();
+    let thr = -calc_y_scaled_knockback(cd.x310, p.fp.x34_scale.y, c.x804d6524_x30);
+    if p.fp.self_vel.y > thr {
+        return Err(format!("player {}: soft landing -> ft_8008A2BC (Wait) not ported", p.slot + 1));
+    }
+    // ftCo_Landing_Enter_Basic: no hammer (ftCo_800C5240) -> ftCo_Landing_Enter(Landing, true, 0, 0, 1).
+    if p.fp.item_gobj != core::ptr::null_mut() {
+        return Err("ftCo_800C5240 with an item: not ported".into());
+    }
+    ftcommon_8007d7fc(g, p, c)?;
+    let row = p.row_landing.clone();
+    change_motion_state(p, FTCO_MS_LANDING, row.as_ref())?;
+    p.landing_allow_interrupt = true;
+    // The per-kind switch (Mario, Peach, Marth, G&W, ICs, Kirby, Mewtwo) touches neither kind wired.
+    Ok(())
+}
+
+/// `ftCo_CalcYScaledKnockback` (ftchangeparam.c; no fused site).
+fn calc_y_scaled_knockback(arg0: f32, scale: f32, arg2: f32) -> f32 {
+    assert!(scale != 0.0, "ftchangeparam.c:0x1E: scale != 0.0F");
+    if arg2 == 0.0 {
+        return arg0;
+    }
+    if arg2 < 0.0 {
+        return arg0 / calc_y_scaled_knockback(1.0, scale, -arg2);
+    }
+    if scale >= 1.0 || arg2 <= 1.0 {
+        // One fused site: fmuladd((scale - 1) * arg0, arg2, arg0).
+        return melee_core::fp::fmadds((scale - 1.0) * arg0, arg2, arg0);
+    }
+    arg0 * scale / arg2
+}
+
+/// `ftCommon_8007D7FC`: the air-to-ground bookkeeping, then `ftCommon_8007D6A4` (land).
+fn ftcommon_8007d7fc(g: &mut GroundColl, p: &mut Player, c: EntryCommon) -> Result<(), String> {
+    let fp = &mut *p.fp;
+    if fp.ground_or_air == melee_types::GA_Air {
+        // un_803224DC(spawn, x, kb_mag): out of the floor box +- horiz_margin plays a crowd gasp.
+        let b = g.coll_box[1];
+        if fp.cur_pos.x < c.crowd_horiz_margin + b.left || fp.cur_pos.x > b.right - c.crowd_horiz_margin {
+            return Err("un_803224DC out of bounds -> un_8032201C (crowd) not ported".into());
+        }
+        if fp.x2227_b0() != 0 && fp.x1968_jumpsUsed <= 1 {
+            return Err("pl_8003FC44 (stats) not ported".into());
+        }
+    }
+    // ftCommon_8007D6A4 (TARGET_PC floor guard: the floor line must be in range and enabled).
+    let line = fp.coll_data.floor.index;
+    if !(line >= 0 && line < g.line_count && g.mp_lib_80054ed8(line)) {
+        return Err("ftCommon_PcFloorGuard: no floor under the fighter (falls)".into());
+    }
+    if unsafe { fp.anon_594.anon_0.x594_b0() } != 0 {
+        fp.self_vel.x = fp.x6A4_transNOffset.z * fp.facing_dir;
+    }
+    let max = fp.co_attrs.ground_max_horizontal_velocity;
+    fc::clamp_ground_vel(fp, max);
+    fp.ground_or_air = melee_types::GA_Ground;
+    fp.gr_vel = fp.self_vel.x;
+    fp.x1968_jumpsUsed = 0;
+    fp.x1969_walljumpUsed = 0;
+    fp.set_x2227_b0(0);
+    // ftCommon_UnlockECB.
+    fp.ecb_lock = 0;
+    fp.coll_data.x130_flags &= !mc::COLLDATA_X130_LOCKED;
     Ok(())
 }
 

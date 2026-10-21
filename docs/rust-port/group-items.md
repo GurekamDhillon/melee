@@ -67,3 +67,51 @@ typed state tables). Not done: no caller wired; no frame-level check.
 melee_chara` all pass. melee_chara's `chars_ref` fails (`character_functions_match_c`) on that
 crate's uncommitted work in progress by another agent (its gen/chref.py, chars/cb.rs, tests/data
 are modified in the tree); not touched here.
+
+## Round 13 (night 3, round 5): 29 hand ports, `src/itkinds13.rs`
+
+**Recount first** (same rule as round 12): **4966 total, 1512 ported** at the start (it 1508,
+ty 4, vi 0), matching round 12. **1541 after** (it 1537, ty 4, vi 0).
+
+**TODO stubs:** none replaceable. This crate's one stub (`TODO(group1)`, the item p-link list as a
+raw head pointer) still waits for items to move onto melee_runtime's handle-based GObj model.
+Other crates' `TODO(group5)` stubs (melee_chara `itIsHeavy`, melee_world `Toy_*` / item plink)
+are in their paths; untouched.
+
+**Batch.** From the same callee scan, functions whose callees are all ported here or that call
+nothing:
+- item.c `checkHitLag`; it_26B1.c `it_ResetStageArticleTable`;
+- 7 `*_Coll` forwarders to `it_8027C794` (Kyasarin 9, Leadead 16, Likelike 21, Octarock 8,
+  Oldkuri 11 / 7, Whitebea 11); `itZrshell_UnkMotion4_Anim` (on round 6's `it_802DDBE8`);
+- itlikelike.c `itSwapVelocity` / `swapVelocity` / `it_802D9B78`; itflipper.c `itFlipper_Repel`
+  (on round 10's inline); itfreeze.c `itFreeze_ClearLinkedItem` / `itFreeze_Logic17_Destroyed`
+  (on round 5's `it_802E37A4`);
+- attribute readers: `itClimbersBlizzard_UnkMotion0_Phys`, `it_80291CCC`, `it_80291CF4`,
+  `it_80295748`, `it_80285300`, `it_80293660`, `itDosei_UnkMotion4_GetAttrs`;
+- globals: `itMball_Destroyed` (`Item_804A0C64.x1C`), `itHeart_Logic8_Destroyed` /
+  `itTomato_Logic9_Destroyed` (`gm_80473A18.x90[i]`, written through a struct-based pointer so an
+  index past `x90[4]` lands where C's does), `it_802BDA40` (`it_803F74F8` as a pointer);
+- getters `itKyasarin_GetCollData`, `it_80299FB4_get`.
+
+**Fused sites:** none (every f32 expression is one operation or a compare; no body has an
+`a * b + c` shape that contraction could fuse).
+
+**Verification** (`tests/oracle_round13.rs`, 29 tables x 48 cases, pass; oracle `round13.c`,
+bodies `round13_bodies.h` by `gen_round13.py`, which also copies each source file's own
+`#define GET_ATTRS` ahead of its bodies). Mutations that failed the test: `<=` -> `<` and
+`<` -> `<=` and `/ 8` -> `>> 3` in `it_80291CF4`, dropping the facing flip in `itSwapVelocity`,
+`x8` -> `xC` in Blizzard, `<` -> `>` in `checkHitLag`, `b0` -> `b1` (heart), inverted tomato test,
+`b1` -> `b0` (M-ball), `idx + 2` -> `+ 1` (Kinoko), the swapped `{15, 16}` table, `x1C` -> `x18`
+(sword), the missing link clear (freeze), `y` -> `x` (S-Scope), a partial lipstick copy, the
+dropped Repel call, the dropped `it_802DDBE8` call.
+
+**Harness traps:** the sign-bit cancellation of round 11 hit again: `itSwapVelocity` flips the sign
+of both `facing_dir` and `vel.x`, which `r10_h` hashes, so dropping the flip passed until
+`r13_sh` mixed both sign bits in as bit 0. round12.c's `r12_arts[20]` is too small for
+`It_Kind_Kinoko` (26), so round 13 uses its own 40-slot table. Bitfields set by name in the
+item-var union (heart / tomato at +4, M-ball at +0) need `r4_rev` around them on the Rust side,
+since `fields::snap` hashes the overlapping words as raw bytes.
+
+Left out: `itSamusgrapple_UnkMotion0..8_Phys` / `itLinkhookshot_UnkMotion0..8_Phys` (they store
+`fn_802B7E34` / `fn_802A2E4C`, not ported), `itKyasarinegg_UnkMotion4_Anim` (falls off the end of
+a `bool` function), the `order_*` placeholders. Not done: no caller wired; no frame-level check.

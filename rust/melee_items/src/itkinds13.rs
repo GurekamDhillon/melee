@@ -1,0 +1,248 @@
+//! Port round 13 (night 3, round 5): hand ports of 29 item functions whose callees are all
+//! ported in this crate (`it_8027C794`, `it_802DDBE8`, `it_802E37A4`, `itFlipper_Repel_inline`)
+//! or call nothing. Verified against verbatim C copies (tests/c_oracle/round13_bodies.h,
+//! extracted by gen_round13.py) in tests/oracle_round13.rs.
+//!
+//! Conventions as in rounds 3 / 10-12: a followed C pointer makes the function `unsafe`
+//! (precondition: valid, as in C); globals are parameters: `Item_804A0C64` ->
+//! `&mut HSD_ObjAllocUnk`, `gm_80473A18` -> `&mut UnkAllstarData`, `it_804D6D24` -> the article
+//! table pointer, `it_804A0F60` -> the stage article table, `it_803F74F8` (itpeachparasol.c's
+//! state table) -> a slice. Callbacks that C passes a GObj take the `Item` when they only read
+//! `GET_ITEM(gobj)` (as itfwd8.rs / itkinds5.rs).
+//!
+//! No fused sites: every f32 expression here is a single operation (`vel.y += x8`,
+//! `facing_dir * y`) or a compare.
+#![allow(non_snake_case)]
+
+use crate::itfwd8::it_8027c794;
+use crate::itkinds10::it_flipper_repel_inline;
+use crate::itkinds5::it_802e37a4;
+use crate::itkinds6::it_802ddbe8;
+use crate::layout::{
+    Article, CollData, HSD_AnimJoint, HSD_GObj, HSD_ObjAllocUnk, Item, ItemStateTable, KinokoAnim,
+    UnkAllstarData, Vec as GcVec, itClimbersBlizzardAttributes, itDoseiAttributes,
+    itLikelikeAttributes, itLipstickAttributes, itSScopeAttributes, itSword_UnkArticle1,
+    itSword_UnkBytes, It_Kind_Kinoko,
+};
+
+#[inline(always)]
+unsafe fn sa<'a, T>(ip: &Item) -> &'a mut T {
+    &mut *((*ip.xC4_article_data).x4_specialAttributes as *mut T)
+}
+
+// ---- item.c -----------------------------------------------------------------------------
+
+/// `checkHitLag` (static): raise `xCBC_hitlagFrames` to `min_value`, set `xDC8 flags.xA`.
+pub fn check_hit_lag(min_value: f32, ip: &mut Item) {
+    if ip.xCBC_hitlagFrames < min_value {
+        ip.xCBC_hitlagFrames = min_value;
+    }
+    ip.xDC8_word.flags.set_xA(1);
+}
+
+// ---- it_26B1.c --------------------------------------------------------------------------
+
+/// `it_ResetStageArticleTable`: clear the 30 stage article slots (`it_804A0F60`).
+pub fn it_reset_stage_article_table(tbl: &mut [*mut Article; 30]) {
+    for e in tbl.iter_mut() {
+        *e = core::ptr::null_mut();
+    }
+}
+
+// ---- kinds ------------------------------------------------------------------------------
+
+/// `itClimbersBlizzard_UnkMotion0_Phys`: `vel.y += attrs->x8`.
+/// # Safety
+/// The special attributes are an `itClimbersBlizzardAttributes`.
+pub unsafe fn it_climbers_blizzard_unk_motion0_phys(ip: &mut Item) {
+    let a = sa::<itClimbersBlizzardAttributes>(ip);
+    ip.x40_vel.y += a.x8;
+}
+
+/// `itDosei_UnkMotion4_GetAttrs` (static inline): the special attributes.
+/// # Safety
+/// `ip.xC4_article_data` is valid.
+pub unsafe fn it_dosei_unk_motion4_get_attrs(ip: &Item) -> *mut itDoseiAttributes {
+    (*ip.xC4_article_data).x4_specialAttributes as *mut itDoseiAttributes
+}
+
+/// `itFlipper_Repel`: `itFlipper_Repel_inline` with a discarded local vector.
+pub fn it_flipper_repel(ip: &mut Item, kind: i32, pos: &GcVec) {
+    let mut v = GcVec { x: 0.0, y: 0.0, z: 0.0 };
+    it_flipper_repel_inline(ip, kind, pos, &mut v);
+}
+
+/// `itFreeze_ClearLinkedItem` (static inline): release the linked item, clear the link.
+/// # Safety
+/// A non-null `freeze.unk_1C` is a live item GObj.
+pub unsafe fn it_freeze_clear_linked_item(ip: &mut Item) {
+    let linked = ip.xDD4_itemVar.freeze.unk_1C;
+    if !linked.is_null() {
+        it_802e37a4(Some(&mut *((*linked).user_data as *mut Item)));
+        ip.xDD4_itemVar.freeze.unk_1C = core::ptr::null_mut();
+    }
+}
+
+/// `itFreeze_Logic17_Destroyed`: as `itFreeze_ClearLinkedItem`.
+/// # Safety
+/// A non-null `freeze.unk_1C` is a live item GObj.
+pub unsafe fn it_freeze_logic17_destroyed(ip: &mut Item) {
+    if !ip.xDD4_itemVar.freeze.unk_1C.is_null() {
+        let l = ip.xDD4_itemVar.freeze.unk_1C;
+        it_802e37a4(Some(&mut *((*l).user_data as *mut Item)));
+        ip.xDD4_itemVar.freeze.unk_1C = core::ptr::null_mut();
+    }
+}
+
+/// `it_80299FB4_get` (ithammerhead.c, static inline): `GET_ITEM(gobj)`.
+/// # Safety
+/// `gobj` is valid.
+pub unsafe fn it_80299fb4_get(gobj: *mut HSD_GObj) -> *mut Item {
+    (*gobj).user_data as *mut Item
+}
+
+/// `itHeart_Logic8_Destroyed`: free the all-star heart slot `xDDC` if `xDD8.b0`.
+/// # Safety
+/// `xDDC` indexes inside `gm` (as in C, `x90[i]` is not bounds-checked).
+pub unsafe fn it_heart_logic8_destroyed(ip: &mut Item, gm: &mut UnkAllstarData) {
+    let h = &ip.xDD4_itemVar.heart;
+    if h.xDD8.anon_0.b0() != 0 {
+        *(gm.x90.as_mut_ptr()).offset(h.xDDC as isize) = 0;
+    }
+}
+
+/// `it_80293660` (itkinoko.c): `((KinokoAnim*) tbl[Kinoko]->x4)[idx + 2].joint`.
+/// # Safety
+/// `tbl[It_Kind_Kinoko]` and its attributes are valid for `idx + 2`.
+pub unsafe fn it_80293660(tbl: *const *mut Article, idx: i32) -> *mut HSD_AnimJoint {
+    let a = *tbl.add(It_Kind_Kinoko as usize);
+    let anims = (*a).x4_specialAttributes as *const KinokoAnim;
+    (*anims.offset(idx as isize + 2)).joint
+}
+
+/// `itKyasarin_GetCollData` (static inline): `&ip->x378_itemColl`.
+pub fn it_kyasarin_get_coll_data(ip: &mut Item) -> *mut CollData {
+    &mut ip.x378_itemColl
+}
+
+/// `itKyasarin_UnkMotion9_Coll`: `it_8027C794`.
+pub fn it_kyasarin_unk_motion9_coll(ip: &mut Item) -> bool {
+    it_8027c794(ip)
+}
+/// `itLeadead_UnkMotion16_Coll`: `it_8027C794`.
+pub fn it_leadead_unk_motion16_coll(ip: &mut Item) -> bool {
+    it_8027c794(ip)
+}
+/// `itLikelike_UnkMotion21_Coll`: `it_8027C794`.
+pub fn it_likelike_unk_motion21_coll(ip: &mut Item) -> bool {
+    it_8027c794(ip)
+}
+/// `itOctarock_UnkMotion8_Coll`: `it_8027C794`.
+pub fn it_octarock_unk_motion8_coll(ip: &mut Item) -> bool {
+    it_8027c794(ip)
+}
+/// `itOldkuri_UnkMotion11_Coll`: `it_8027C794`.
+pub fn it_oldkuri_unk_motion11_coll(ip: &mut Item) -> bool {
+    it_8027c794(ip)
+}
+/// `itOldkuri_UnkMotion7_Coll`: `it_8027C794`.
+pub fn it_oldkuri_unk_motion7_coll(ip: &mut Item) -> bool {
+    it_8027c794(ip)
+}
+/// `itWhitebea_UnkMotion11_Coll`: `it_8027C794`.
+pub fn it_whitebea_unk_motion11_coll(ip: &mut Item) -> bool {
+    it_8027c794(ip)
+}
+
+/// `itSwapVelocity` (itlikelike.c, static inline): turn round, `vel.x = facing * attr->x0->y`.
+/// # Safety
+/// The special attributes are an `itLikelikeAttributes` whose `x0.x0_f32` is valid.
+pub unsafe fn it_swap_velocity(ip: &mut Item) {
+    let attr = sa::<itLikelikeAttributes>(ip);
+    ip.facing_dir = -ip.facing_dir;
+    ip.x40_vel.x = ip.facing_dir * (*attr.x0.x0_f32).y;
+}
+/// `swapVelocity` (itlikelike.c, static inline): `itSwapVelocity(gobj->user_data)`.
+/// # Safety
+/// As `it_swap_velocity`.
+pub unsafe fn swap_velocity(ip: &mut Item) {
+    it_swap_velocity(ip);
+}
+/// `it_802D9B78` (itlikelike.c): `swapVelocity`.
+/// # Safety
+/// As `it_swap_velocity`.
+pub unsafe fn it_802d9b78(ip: &mut Item) {
+    swap_velocity(ip);
+}
+
+/// `it_80295748` (itlipstick.c): `*pos = attrs->x4`.
+/// # Safety
+/// The special attributes are an `itLipstickAttributes`.
+pub unsafe fn it_80295748(ip: &Item, pos: &mut GcVec) {
+    *pos = sa::<itLipstickAttributes>(ip).x4;
+}
+
+/// `itMball_Destroyed`: one fewer live M-ball (`Item_804A0C64.x1C`) unless `mball.b1`.
+pub fn it_mball_destroyed(ip: &Item, unk: &mut HSD_ObjAllocUnk) {
+    if unsafe { ip.xDD4_itemVar.mball.b1() } == 0 {
+        unk.x1C = unk.x1C.wrapping_sub(1);
+    }
+}
+
+/// `it_802BDA40` (itpeachparasol.c): `{15, 16}[it_803F74F8[i].anim_id]`.
+/// # Safety
+/// `tbl[i]` exists and its `anim_id` is 0 or 1.
+pub unsafe fn it_802bda40(tbl: *const ItemStateTable, i: i32) -> i32 {
+    const IT_804D5518: [i32; 2] = [15, 16];
+    *IT_804D5518.as_ptr().offset((*tbl.offset(i as isize)).anim_id as isize)
+}
+
+/// `it_80291CCC` (itsscope.c): `*pos = attrs->x34`.
+/// # Safety
+/// The special attributes are an `itSScopeAttributes`.
+pub unsafe fn it_80291ccc(ip: &Item, pos: &mut GcVec) {
+    let a = sa::<itSScopeAttributes>(ip);
+    pos.x = a.x34.x;
+    pos.y = a.x34.y;
+    pos.z = a.x34.z;
+}
+
+/// `it_80291CF4` (itsscope.c): charge level of `arg1` frames (0, `arg1 / 8`, or 9).
+/// # Safety
+/// The special attributes are an `itSScopeAttributes`.
+pub unsafe fn it_80291cf4(ip: &Item, arg1: i32) -> i32 {
+    let a = sa::<itSScopeAttributes>(ip);
+    if arg1 <= a.x4 {
+        return 0;
+    }
+    if arg1 < a.x8.wrapping_mul(8) {
+        return arg1 / 8;
+    }
+    9
+}
+
+/// `it_80285300` (itsword.c): `&attrs->x1C`.
+/// # Safety
+/// `ip.xC4_article_data` is valid.
+pub unsafe fn it_80285300(ip: &Item) -> *mut itSword_UnkBytes {
+    let a = (*ip.xC4_article_data).x4_specialAttributes as *mut itSword_UnkArticle1;
+    core::ptr::addr_of_mut!((*a).x1C)
+}
+
+/// `itTomato_Logic9_Destroyed`: free the all-star tomato slot `x8` if `x4_b0`.
+/// # Safety
+/// `x8` indexes inside `gm` (as in C, `x90[i]` is not bounds-checked).
+pub unsafe fn it_tomato_logic9_destroyed(ip: &mut Item, gm: &mut UnkAllstarData) {
+    let t = &ip.xDD4_itemVar.tomato;
+    if t.x4_b0() != 0 {
+        *(gm.x90.as_mut_ptr()).offset(t.x8 as isize) = 0;
+    }
+}
+
+/// `itZrshell_UnkMotion4_Anim` (itzgshell.c): `it_802DDBE8`, returns false.
+/// # Safety
+/// The special attributes are an `itGShell_Attrs`.
+pub unsafe fn it_zrshell_unk_motion4_anim(ip: &mut Item) -> bool {
+    it_802ddbe8(ip);
+    false
+}

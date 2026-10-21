@@ -34,8 +34,8 @@ pub mod ext {
     }
     ext_fns! {
         ftCo_800D27C4(f: &Fighter) -> bool = k::ftco_800d27c4;
-        ftCo_800D2490(g: G, arg1: i32) = |_, _| todo!("TODO(port) ftCo_800D2490 (ftCo_KinokoSmallEnd.c)");
-        ftCo_800D2600(g: G, arg1: i32) = |_, _| todo!("TODO(port) ftCo_800D2600 (ftCo_KinokoSmallEnd.c)");
+        ftCo_800D2490(g: G, arg1: i32) = crate::tu::ftCo_KinokoSmallEnd::ftCo_800D2490;
+        ftCo_800D2600(g: G, arg1: i32) = crate::tu::ftCo_KinokoSmallEnd::ftCo_800D2600;
         fn_800D2BF8(g: G) = k::fn_800d2bf8;
         ftCo_800D2770(g: G, scale: f32) = k::ftco_800d2770;
         ftCommon_8007E2FC(g: G) = |g| crate::ftcommon2::ftcommon_8007e2fc(super::fp(g));

@@ -30,6 +30,8 @@ mod effect;
 mod fighter_data;
 mod stage;
 mod vs_match;
+mod gx_backend;
+mod view;
 
 /// What the frame driver needs from a simulation, per frame.
 pub(crate) trait Sim {
@@ -166,8 +168,9 @@ fn main() -> ExitCode {
             }
         }
         Some("golden") => golden(&args),
+        Some("view-golden") => view::view_golden(&args),
         Some(x) => {
-            eprintln!("melee: unknown command {x:?} (selftest | hashlog | golden)");
+            eprintln!("melee: unknown command {x:?} (selftest | hashlog | golden | view-golden)");
             ExitCode::from(2)
         }
     }

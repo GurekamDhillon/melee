@@ -1108,11 +1108,14 @@ dependencies = [
  "melee_chara",
  "melee_core",
  "melee_fighter",
+ "melee_gx",
  "melee_items",
  "melee_modes",
+ "melee_platform",
  "melee_runtime",
  "melee_types",
  "melee_world",
+ "winit",
 ]
 
 [[package]]
@@ -1130,6 +1133,7 @@ version = "0.1.0"
 dependencies = [
  "melee_core",
  "melee_fighter",
+ "melee_runtime",
  "melee_types",
 ]
 

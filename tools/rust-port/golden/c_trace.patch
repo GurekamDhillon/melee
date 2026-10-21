@@ -1,0 +1,198 @@
+diff --git a/pc/platform/gw_replay.c b/pc/platform/gw_replay.c
+index e27a2cd8a..7d2e6280f 100644
+--- a/pc/platform/gw_replay.c
++++ b/pc/platform/gw_replay.c
+@@ -1543,13 +1543,13 @@ int gw_Replay_PortHuman(int p) {
+  * seed after, and stream: 1 = default simulation, 0 = redirected simulation, 2 = render. */
+ /* Set by gmscene.c around the render section of the scene loop. */
+ static int gw_det_in_render;
+-static int gw_det_logic_frame;
++static int gw_det_logic_frame; int gw_gw_det_logic_frame; /* RUSTPORT_TMP */
+ /* Diagnostic completion count, deliberately not part of the gameplay hash. */
+ static uint32_t gw_det_render_serial;
+ uint32_t gw_Det_RenderSerial(void) { return gw_det_render_serial; }
+ void gw_Det_LogicFrame(int frame) {
+     static int logged;
+-    gw_det_logic_frame = frame;
++    gw_det_logic_frame = frame; gw_gw_det_logic_frame = frame;
+     if (!logged) {
+         gw_log("det: isolated render RNG; canonical callbacks on every logic frame");
+         logged = 1;
+@@ -1606,6 +1606,23 @@ void gw_Replay_RandTrace(uint32_t caller, uint32_t seed_after, int32_t global) {
+         }
+     }
+     if (gw_randf != NULL && (offline || (rp.active && rp.frame != GW_RP_UNARMED))) {
++        /* RUSTPORT_TMP_STACK */
++        if (getenv("MELEE_RAND_TRACE_STACK") != NULL) {
++            extern unsigned short __stdcall RtlCaptureStackBackTrace(unsigned long, unsigned long, void **, unsigned long *);
++            void *bt[12];
++            int nb = RtlCaptureStackBackTrace(1, 12, bt, NULL), q;
++            fprintf(gw_randf, "%d,%08X,%08X,%d", gw_det_logic_frame, caller, seed_after, (int) global);
++            for (q = 0; q < nb; ++q) fprintf(gw_randf, ",%08X", (unsigned) (uintptr_t) bt[q]);
++            {   /* stack scan: words that look like .text addresses (resolve with the map) */
++                volatile uintptr_t *sp = (volatile uintptr_t *) __builtin_frame_address(0);
++                int k, hits = 0;
++                for (k = 0; k < 2048 && hits < 40; ++k) {
++                    uintptr_t w = sp[k];
++                    if (w >= 0x10001000u && w < 0x10970000u) { fprintf(gw_randf, ",s%08X", (unsigned) w); ++hits; }
++                }
++            }
++            fputc('\n', gw_randf);
++        } else
+         gw_tb_printf(3, gw_randf, "%d,%08X,%08X,%d\n",
+                      rp.active ? rp.frame : gw_det_logic_frame, caller, seed_after, (int) global);
+     }
+@@ -1680,3 +1697,9 @@ int gw_Slippi_FrozenStadium(void) {
+     }
+     return live;
+ }
++
++/* RUSTPORT_TMP_ECB */
++#include <stdarg.h>
++static FILE* rp_ecb_f; static int rp_ecb_init;
++int gw_rp_ecb_on(void) { if (!rp_ecb_init) { const char* e = getenv("MELEE_ECB_LOG"); rp_ecb_init = 1; if (e) rp_ecb_f = fopen(e, "w"); } return rp_ecb_f != NULL; }
++void gw_rp_ecb_log(const char* fmt, ...) { va_list ap; if (!gw_rp_ecb_on()) return; va_start(ap, fmt); vfprintf(rp_ecb_f, fmt, ap); va_end(ap); fflush(rp_ecb_f); }
+diff --git a/src/melee/ft/fighter.c b/src/melee/ft/fighter.c
+index 5250877ed..bf28271b0 100644
+--- a/src/melee/ft/fighter.c
++++ b/src/melee/ft/fighter.c
+@@ -1225,6 +1225,8 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
+     bool animflags_bool;
+     union Struct2070 x2070;
+ #if defined(TARGET_PC)
++    { extern int rp_ecb_on(void); extern void rp_ecb_log(const char* fmt, ...); extern int gw_det_logic_frame; /* RUSTPORT_TMP_ECB */
++      if (rp_ecb_on()) rp_ecb_log("%d CMS p%d msid %d flags %08X start %f speed %f blend %f ga %d vel %08X %08X pos %08X %08X\n", gw_det_logic_frame, fp->player_id, (int) msid, (unsigned) flags, anim_start, anim_speed, anim_blend, fp->ground_or_air, *(unsigned*)&fp->self_vel.x, *(unsigned*)&fp->self_vel.y, *(unsigned*)&fp->cur_pos.x, *(unsigned*)&fp->cur_pos.y); }
+     int lab_pose_row = -1; /* LAB preview: the row whose script/flags stay in use, -1 = none */
+     Fighter* thrown_tbl = NULL; /* a stand-in thrower whose table the thrown row is read from, NULL = arg3's own */
+     if (arg3 != NULL) {
+@@ -2591,6 +2593,15 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
+             }
+ #endif
+             Fighter_Spaghetti_8006AD10_Inner1(fp);
++            { extern int rp_ecb_on(void); extern void rp_ecb_log(const char* fmt, ...); extern int gw_det_logic_frame; /* RUSTPORT_TMP_ECB */
++              if (rp_ecb_on()) {
++                  HSD_PadStatus* ps = &HSD_PadGameStatus[fp->x618_player_id];
++                  rp_ecb_log("%d PAD p%d btn %08X st %08X %08X sub %08X %08X aL %08X aR %08X | in l %08X %08X c %08X %08X t %08X held %08X pr %08X rel %08X go %d\n",
++                      gw_det_logic_frame, fp->player_id, ps->button, *(unsigned*)&ps->nml_stickX, *(unsigned*)&ps->nml_stickY,
++                      *(unsigned*)&ps->nml_subStickX, *(unsigned*)&ps->nml_subStickY, *(unsigned*)&ps->nml_analogL, *(unsigned*)&ps->nml_analogR,
++                      *(unsigned*)&fp->input.lstick[0].x, *(unsigned*)&fp->input.lstick[0].y, *(unsigned*)&fp->input.cstick[0].x, *(unsigned*)&fp->input.cstick[0].y,
++                      *(unsigned*)&fp->input.triggers[0], fp->input.held_buttons[0], fp->input.pressed_buttons, fp->input.released_buttons, (int) gm_8016B0FC());
++              } }
+ 
+ #if defined(TARGET_PC)
+             if (fp->x618_player_id == 0 && gm_IsCurrently1PMode_inline() != 0) {
+diff --git a/src/melee/ft/ftanim.c b/src/melee/ft/ftanim.c
+index 0abc8890d..94dc58975 100644
+--- a/src/melee/ft/ftanim.c
++++ b/src/melee/ft/ftanim.c
+@@ -1,4 +1,8 @@
+ #include "ftanim.h"
++/* RUSTPORT_TMP_ECB */
++extern int gw_det_logic_frame;
++extern int rp_ecb_on(void);
++extern void rp_ecb_log(const char* fmt, ...);
+ 
+ #include <placeholder.h>
+ 
+@@ -430,6 +434,7 @@ void ftAnim_8006EBE8(HSD_GObj* gobj, float anim_start, float anim_rate,
+     HSD_JObj* root_jobj = GET_JOBJ(gobj);
+     Fighter* fp = GET_FIGHTER(gobj);
+     HSD_JObj* anim_jobj = fp->x8AC_animSkeleton;
++    if (rp_ecb_on()) rp_ecb_log("%d EBE8 p%d anim %d start %f rate %f blend %f x594 %08X\n", gw_det_logic_frame, fp->player_id, fp->anim_id, anim_start, anim_rate, anim_blend_frames, fp->x594_s32);
+     ftAnim_80070758(root_jobj);
+     ftAnim_80070758(anim_jobj);
+     if (anim_blend_frames == 0) {
+diff --git a/src/melee/ft/kinds/ftCommon/ftCo_Landing.c b/src/melee/ft/kinds/ftCommon/ftCo_Landing.c
+index b692fa18f..9bb1d86a1 100644
+--- a/src/melee/ft/kinds/ftCommon/ftCo_Landing.c
++++ b/src/melee/ft/kinds/ftCommon/ftCo_Landing.c
+@@ -125,6 +125,8 @@ void ftCo_Landing_IASA(Fighter_GObj* gobj)
+     Fighter* fp = GET_FIGHTER(gobj);
+     PAD_STACK(8);
+     landing_lag = &fp->co_attrs.normal_landing_lag;
++    { extern int rp_ecb_on(void); extern void rp_ecb_log(const char* fmt, ...); extern int gw_det_logic_frame; /* RUSTPORT_TMP_ECB */
++      if (rp_ecb_on()) rp_ecb_log("%d LIASA p%d frame %f lag %f allow %d lx %f\n", gw_det_logic_frame, fp->player_id, fp->cur_anim_frame, *landing_lag, fp->mv.co.landing.allow_interrupt, fp->input.lstick[0].x); }
+     RETURN_IF(fp->cur_anim_frame < *landing_lag);
+     RETURN_IF(!fp->mv.co.landing.allow_interrupt);
+     RETURN_IF(ftCo_SpecialS_CheckInput(gobj));
+diff --git a/src/melee/mp/mpcoll.c b/src/melee/mp/mpcoll.c
+index e93ed9d22..25f9c0afd 100644
+--- a/src/melee/mp/mpcoll.c
++++ b/src/melee/mp/mpcoll.c
+@@ -1,4 +1,13 @@
+ #include "mpcoll.h"
++/* RUSTPORT_TMP_ECB */
++#if defined(TARGET_PC)
++extern int gw_det_logic_frame;
++extern int rp_ecb_on(void);
++extern void rp_ecb_log(const char* fmt, ...);
++static unsigned rp_u(float x){ union { float f; unsigned u; } c; c.f = x; return c.u; }
++#define RPF(v) rp_u(v)
++#define rp_ecbf() rp_ecb_on()
++#endif
+ 
+ #include <Runtime/platform.h>
+ 
+@@ -367,6 +376,22 @@ void mpColl_LoadECB_JObj(CollData* coll, u32 flags)
+         coll->x130_flags &= ~CollData_X130_Clear;
+     }
+     coll->xE4_ecb = coll->ecb;
++#if defined(TARGET_PC)
++    if (rp_ecbf()) {
++        HSD_JObj* j = coll->ecb_source.x108_joint; int n = 0;
++        while (j != NULL) {
++            int q; int ecbi = -1;
++            for (q = 0; q < 6; ++q) if (coll->ecb_source.x10C_joint[q] == j) ecbi = q;
++            rp_ecb_log("%d JT %d e%d f%08X r %08X %08X %08X %08X s %08X %08X %08X t %08X %08X %08X aobj %d\n", gw_det_logic_frame, n, ecbi, j->flags,
++                RPF(j->rotate.x), RPF(j->rotate.y), RPF(j->rotate.z), RPF(j->rotate.w), RPF(j->scale.x), RPF(j->scale.y), RPF(j->scale.z),
++                RPF(j->translate.x), RPF(j->translate.y), RPF(j->translate.z), j->aobj != NULL);
++            ++n;
++            if (j->child != NULL && !(j->flags & 0x1000)) j = j->child;
++            else if (j->next != NULL) j = j->next;
++            else { while (1) { if (j->parent == NULL) { j = NULL; break; } if (j->parent->next != NULL) { j = j->parent->next; break; } j = j->parent; } }
++        }
++    }
++#endif
+ 
+     // Loop through all collision data joints,
+     // expanding the ECB to contain them all
+@@ -374,6 +399,9 @@ void mpColl_LoadECB_JObj(CollData* coll, u32 flags)
+         float temp_x = coll->cur_pos.x;
+         float temp_y = coll->cur_pos.y;
+         lb_8000B1CC(coll->ecb_source.x10C_joint[0], NULL, &vec);
++#if defined(TARGET_PC)
++        if (rp_ecbf()) { int q; for (q = 0; q < 6; ++q) { Vec3 w; lb_8000B1CC(coll->ecb_source.x10C_joint[q], NULL, &w); rp_ecb_log("%d J%d %08X %08X %08X pos %08X %08X\n", gw_det_logic_frame, q, RPF(w.x), RPF(w.y), RPF(w.z), RPF(temp_x), RPF(temp_y)); } }
++#endif
+         left_x = right_x = vec.x - temp_x;
+         bottom_y = top_y = vec.y - temp_y;
+ 
+@@ -468,6 +496,9 @@ void mpColl_LoadECB_JObj(CollData* coll, u32 flags)
+         coll->ecb_source.x124 + 0.5F * (bottom_y + top_y);
+ #endif
+     coll->x34_flags.b0 = 0;
++#if defined(TARGET_PC)
++    if (rp_ecbf()) rp_ecb_log("%d LOADECB flags %X des T%08X B%08X R%08X,%08X L%08X,%08X\n", gw_det_logic_frame, flags, RPF(coll->desired_ecb.top.y), RPF(coll->desired_ecb.bottom.y), RPF(coll->desired_ecb.right.x), RPF(coll->desired_ecb.right.y), RPF(coll->desired_ecb.left.x), RPF(coll->desired_ecb.left.y));
++#endif
+ }
+ 
+ /// 8004293C https://decomp.me/scratch/H4EUT
+@@ -1025,6 +1056,9 @@ bool mpColl_80043754(mpColl_Callback cb, CollData* coll, u32 flags)
+         steps = 1;
+     }
+     step = 0;
++#if defined(TARGET_PC)
++    if (rp_ecbf()) rp_ecb_log("%d STEP steps %d last %08X %08X cur %08X %08X ecb T%08X B%08X R%08X,%08X L%08X,%08X des T%08X B%08X R%08X,%08X L%08X,%08X\n", gw_det_logic_frame, steps, RPF(coll->last_pos.x), RPF(coll->last_pos.y), RPF(coll->cur_pos.x), RPF(coll->cur_pos.y), RPF(coll->ecb.top.y), RPF(coll->ecb.bottom.y), RPF(coll->ecb.right.x), RPF(coll->ecb.right.y), RPF(coll->ecb.left.x), RPF(coll->ecb.left.y), RPF(coll->desired_ecb.top.y), RPF(coll->desired_ecb.bottom.y), RPF(coll->desired_ecb.right.x), RPF(coll->desired_ecb.right.y), RPF(coll->desired_ecb.left.x), RPF(coll->desired_ecb.left.y));
++#endif
+     coll->cur_pos = coll->last_pos;
+     coll->x34_flags.b5 = 0;
+     while ((step < steps) && !coll->x34_flags.b5) {
+@@ -1037,6 +1071,9 @@ bool mpColl_80043754(mpColl_Callback cb, CollData* coll, u32 flags)
+         step += 1;
+         coll->x38 = mpColl_804D64AC;
+     }
++#if defined(TARGET_PC)
++    if (rp_ecbf()) rp_ecb_log("%d END cur %08X %08X ret %d env %X ecb T%08X B%08X R%08X,%08X L%08X,%08X\n", gw_det_logic_frame, RPF(coll->cur_pos.x), RPF(coll->cur_pos.y), ret, coll->env_flags, RPF(coll->ecb.top.y), RPF(coll->ecb.bottom.y), RPF(coll->ecb.right.x), RPF(coll->ecb.right.y), RPF(coll->ecb.left.x), RPF(coll->ecb.left.y));
++#endif
+     return ret;
+ }
+ 

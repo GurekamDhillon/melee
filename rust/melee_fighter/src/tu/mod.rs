@@ -118,3 +118,4 @@ pub mod ftCo_DownBound;
 pub mod ftCo_Landing;
 pub mod ftCo_LandingAir;
 pub mod ftCo_Lift;
+pub mod ftCo_YoshiEgg;

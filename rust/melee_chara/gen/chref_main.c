@@ -101,7 +101,7 @@ static ftCommonData cd;
  * packs bitfields LSB-first while melee_types keeps them in GC order (MSB-first), so the same
  * bytes hold different values: these are compared by value, and their bytes are zeroed (both
  * sides) before the byte hash. The byte of each is found by probing a zeroed Fighter. */
-#define NBF 10
+#define NBF 13
 static int bf_get(int i)
 {
     switch (i) {
@@ -114,7 +114,10 @@ static int bf_get(int i)
     case 6: return fp.mv.ca.specialhi.x2_b0;
     case 7: return fp.mv.ca.specialhi.x2_b1;
     case 8: return fp.is_sub_fighter;
-    default: return fp.x2227_b0;
+    case 9: return fp.x2227_b0;
+    case 10: return fp.allow_interrupt;
+    case 11: return fp.invisible;
+    default: return fp.reflecting;
     }
 }
 static void bf_set(int i, int v)
@@ -129,10 +132,39 @@ static void bf_set(int i, int v)
     case 6: fp.mv.ca.specialhi.x2_b0 = v; break;
     case 7: fp.mv.ca.specialhi.x2_b1 = v; break;
     case 8: fp.is_sub_fighter = v; break;
-    default: fp.x2227_b0 = v; break;
+    case 9: fp.x2227_b0 = v; break;
+    case 10: fp.allow_interrupt = v; break;
+    case 11: fp.invisible = v; break;
+    default: fp.reflecting = v; break;
     }
 }
 static unsigned bf_byte[NBF];
+
+/* Round 3: a callback a port stores into one of Fighter's HSD_GObjEvent fields is replaced by
+ * the FNV-1a of its key "<setter tu>:<C name>" before hashing (Rust: chars::cb::CALLBACKS), so
+ * the stored function, not its address, is compared. Other values stay as they are. */
+static unsigned long long cb_key(const void* p)
+{
+    int t, j;
+    for (t = 0; t < N_CBTAB; t++)
+        for (j = 0; CBP[t][j]; j++)
+            if (CBP[t][j] == p) {
+                unsigned long long h = 0xCBF29CE484222325ull;
+                const char* c = CBN[t][j];
+                while (*c) { h ^= (unsigned char) *c++; h *= 0x100000001B3ull; }
+                return h;
+            }
+    return 0;
+}
+static void cb_normalise(void)
+{
+    int i;
+    for (i = 0; i < N_CB_OFF; i++) {
+        void** slot = (void**) ((char*) &fp + CB_OFF[i]);
+        unsigned long long k = cb_key(*slot);
+        if (k) __builtin_memcpy(slot, &k, 8);
+    }
+}
 static void bf_probe(void)
 {
     int i;
@@ -163,7 +195,7 @@ int main(int argc, char** argv)
         int k;
         /* mv.ca.specialhi.x2_b0/b1 share their byte with every other character's motion vars
          * (the mv union): only the Captain function treats that byte as bitfields */
-        unsigned bmask = strcmp(FUNCS[f].name, "ftCa_SpecialLw_800E49FC") ? 0x33F : 0x3FF;
+        unsigned bmask = strcmp(FUNCS[f].name, "ftCa_SpecialLw_800E49FC") ? ((1u << NBF) - 1) & ~0xC0u : (1u << NBF) - 1;
         if (verbose) _flushall();
         for (k = 0; k < (f < N_R1 ? CASES : CASES_R2); k++) {
             unsigned i, ret = 0;
@@ -202,6 +234,7 @@ int main(int argc, char** argv)
                 for (i = 0; i < NBF; i++) if (bmask >> i & 1) bits |= (unsigned) bf_get(i) << i;
                 for (i = 0; i < NBF; i++) if (bmask >> i & 1) ((unsigned char*) &fp)[bf_byte[i]] = 0;
                 h = fnv(h, &bits, 4);
+                cb_normalise();
                 if (verbose) printf("b%02X ", bits);
             }
             if (verbose) {

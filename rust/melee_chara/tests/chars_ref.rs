@@ -119,7 +119,7 @@ fn bytes_mut<T>(v: &mut T) -> &mut [u8] {
 
 /// The bitfields compared by value (see gen/chref_main.c: C packs LSB-first, melee_types keeps
 /// GC order, so their bytes differ by design).
-const NBF: usize = 10;
+const NBF: usize = 13;
 fn bf_get(fp: &Fighter, i: usize) -> u32 {
     (unsafe {
         match i {
@@ -132,7 +132,10 @@ fn bf_get(fp: &Fighter, i: usize) -> u32 {
             6 => fp.mv.ca.specialhi.x2_b0(),
             7 => fp.mv.ca.specialhi.x2_b1(),
             8 => fp.is_sub_fighter(),
-            _ => fp.x2227_b0(),
+            9 => fp.x2227_b0(),
+            10 => fp.allow_interrupt(),
+            11 => fp.invisible(),
+            _ => fp.reflecting(),
         }
     }) as u32
 }
@@ -148,7 +151,10 @@ fn bf_set(fp: &mut Fighter, i: usize, v: u8) {
             6 => fp.mv.ca.specialhi.set_x2_b0(v),
             7 => fp.mv.ca.specialhi.set_x2_b1(v),
             8 => fp.set_is_sub_fighter(v),
-            _ => fp.set_x2227_b0(v),
+            9 => fp.set_x2227_b0(v),
+            10 => fp.set_allow_interrupt(v),
+            11 => fp.set_invisible(v),
+            _ => fp.set_reflecting(v),
         }
     }
 }
@@ -160,6 +166,17 @@ fn bf_probe(fp: &mut Fighter) -> [usize; NBF] {
         *o = bytes(fp).iter().position(|&b| b != 0).unwrap();
     }
     out
+}
+
+/// Round 3: stored callbacks -> FNV-1a of their `<setter tu>:<C name>` key (gen/chref_main.c `cb_normalise`).
+fn cb_normalise(fp: &mut Fighter) {
+    let b = bytes_mut(fp);
+    for &off in chars_dispatch::CB_OFF {
+        let v = usize::from_le_bytes(b[off..off + 8].try_into().unwrap());
+        if let Some((_, key)) = melee_chara::chars::cb::CALLBACKS.iter().find(|(f, _)| *f as usize == v) {
+            b[off..off + 8].copy_from_slice(&fnv(FNV0, key.as_bytes()).to_le_bytes());
+        }
+    }
 }
 
 #[test]
@@ -191,7 +208,7 @@ fn character_functions_match_c() {
     for (f, name) in chars_dispatch::NAMES.iter().enumerate() {
         let mut h = FNV0;
         // mv.ca.specialhi.x2_b0/b1 share their byte with the other characters' motion vars
-        let bmask: u32 = if *name == "ftCa_SpecialLw_800E49FC" { 0x3FF } else { 0x33F };
+        let bmask: u32 = if *name == "ftCa_SpecialLw_800E49FC" { (1 << NBF) - 1 } else { ((1 << NBF) - 1) & !0xC0 };
         let on = |i: usize| bmask >> i & 1 != 0;
         for k in 0..(if f < chars_dispatch::N_R1 { CASES } else { CASES_R2 }) {
             let mut r = Rng(0x9E37_79B9u32 ^ ((f as u32).wrapping_mul(7919).wrapping_add(k.wrapping_mul(104729)).wrapping_add(1)));
@@ -264,6 +281,7 @@ fn character_functions_match_c() {
                 }
             }
             h = fnv(h, &bits.to_le_bytes());
+            cb_normalise(&mut fp);
             let sfx = unsafe { G_SFX };
             let trace = unsafe { G_TR };
             if verbose == Some(f) {

@@ -146,3 +146,58 @@ Same oracle as round 1 (`gen/chref.py`, shipping front end + `lower.py`), extend
   ~150 (`gen` scan: ~685 candidates call only these stubs + ported code).
 - Group 3: porting the 16 stubbed functions (ft_0877 physics steps, ftcoll ground/air,
   ftAnim, Fighter_ChangeMotionState) makes these 554 callbacks live.
+
+## Round 3 (2026-10-21)
+
+### What was ported
+134 more character functions in 54 TUs of 21 characters, one level above round 2. The list is
+`gen/ported_r3.txt`; the code is `src/chars/r3/<Char>.rs`, path `melee_chara::chars::r3::<Char>::<tu>::<fn>`,
+signature `fn(gobj: *mut HSD_GObj)` like round 2. Kinds:
+- Coll/Anim callbacks that branch into a round-1/2/3 port (`if (!ft_80082708(gobj)) ftFx_SpecialHiHold_GroundToAir(gobj);`);
+- GroundToAir / AirToGround / Enter functions that change state and then set fields or callbacks
+  (`fp->accessory4_cb = ftFx_SpecialHi_CreateLaunchGFX; fp->x2223_b4 = true;`);
+- callback setters / clearers (`setCallbacks`, `clearCallbacks`, `unsetCallbacks`, `ftPp_set_cbs`, ...);
+- small field setters (`ftMewtwo_SpecialHiLost_SetVars`, `ftGw_SpecialHi_ItemRescueSetNULL`, ...).
+
+How: `gen/port_r3.py` reuses port_r2.py and widens its C subset:
+- calls to round-1 ports taking only the fighter, to round-2 ports and to functions accepted this
+  round (fixpoint over the scan; a static of the caller's TU wins over a same-named function elsewhere);
+- `fp->a.b = <constant>;`, `fp->a.b = fp->c.d;` (same scalar C type), `fp->a.b += / -= <constant>;`
+  (ints wrap as under -fwrapv; floats only for a `float` constant, so no double promotion);
+- `fp->X_cb = NULL;` and `fp->X_cb = <function>;` for Fighter's HSD_GObjEvent fields;
+- `fp->flag = true/false;` for Fighter-level one-bit bitfields.
+Every field's C type and each constant cast to it is evaluated by clang from the TU (a file-scope
+static initialiser, so only real constants pass). The emitted Rust is built; any function rustc
+rejects (Rust name differs, e.g. anonymous members, or another field type) is dropped and the
+scan repeated (17 dropped). `fp` is a raw `*mut Fighter` in this round's output.
+
+Stored callbacks: `src/chars/cb.rs` (generated) has one `unsafe extern "C"` entry per stored C
+function, keyed by its defining TU (`<tu stem>__<name>`, `ext__<name>` outside ft/kinds); it calls
+the target's port when there is one, else panics. All 27 targets are unported today: **27
+TODO(group4) entries** (GFX/hitlag/damage callbacks of the characters themselves; none is group 3's).
+
+### FMA
+`fma_sites.py --func <the 134>` over the 54 TUs: no fused site (no float multiplies).
+
+### Verification
+Same oracle (`gen/chref.py`), extended:
+- round-3 functions run 256 random fighters each, like round 2;
+- bitfields compared by value: +`allow_interrupt`, `invisible`, `reflecting` (13 in all);
+  this changed the random stream, so `tests/data/chars.txt` was regenerated for all rounds;
+- callbacks: after each call both sides replace every Fighter HSD_GObjEvent field whose value is
+  a known callback by FNV-1a of `"<defining tu>:<name>"` (C: per-driver address tables, plus weak
+  definitions for callbacks no built TU defines, so each has its own address; Rust: `cb::CALLBACKS`).
+  So the test checks which function was stored, not its address.
+- Result: **841/841 equal** (153 + 554 + 134). Negative check: changing one float constant in
+  `ftCh_Init_80157B58` and storing the wrong Kirby callback in `fn_80109A08` made exactly those two fail.
+- What it does not prove: the stubbed group-3 calls and the 27 unported callback targets.
+
+### Counts
+- Ported this round: 134 (all verified). Total in the crate: 854 of ~4340 (19.7%).
+- Stubs added: 27 callback entries in `chars::cb` (TODO(group4)); no new group-3 stub.
+
+### Next round
+- 17 functions port_r3 dropped (anonymous member names such as `ftKb_PrSetCallbacks`,
+  `ftSamus_ClearThrowFlagsUnk`) and the 27 callback targets, by hand.
+- port_r3 still skips: `da` (dat_attrs) reads, conditions on fields, arithmetic beyond `+=` const,
+  item/effect/jobj calls; extending conditions to `fp->field ==/!= const` is the next cheap step.

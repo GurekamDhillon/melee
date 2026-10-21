@@ -109,3 +109,4 @@ pub mod ftCo_Catch;
 pub mod ftCo_HammerFall;
 pub mod ftCo_HammerJump;
 pub mod ftCo_HammerKneeBend;
+pub mod ftCo_HammerLanding;

@@ -5,8 +5,6 @@ edition.workspace = true
 license.workspace = true
 publish.workspace = true
 
-# Only melee_core for now: melee_types / melee_runtime / melee_world / melee_fighter are being
-# ported concurrently and do not build yet. Re-add them when the character code is ported onto
-# the real Fighter type (docs/rust-port/group-4 fighter characters.md, "Blockers").
 [dependencies]
 melee_core.workspace = true
+melee_types.workspace = true

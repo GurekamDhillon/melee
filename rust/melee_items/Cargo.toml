@@ -7,6 +7,4 @@ publish.workspace = true
 
 [dependencies]
 melee_core.workspace = true
-# melee_types / melee_runtime / melee_world / melee_fighter are re-added when group 5 code
-# calls into them; until then depending on them only couples this crate's build to their
-# in-progress state (other agents are generating them concurrently).
+melee_types.workspace = true

@@ -7,7 +7,12 @@
 
 pub use melee_core;
 
-pub mod gen;
 pub mod hash;
 pub mod item;
-pub use gen::layout;
+/// The native types (with GC offset tables) are the single generated set in `melee_types`;
+/// `layout` keeps group 5's path to them.
+pub mod layout {
+    pub use melee_types::*;
+    /// Any C function pointer (untyped until the callee crates exist).
+    pub type FnPtr = Option<unsafe extern "C" fn()>;
+}

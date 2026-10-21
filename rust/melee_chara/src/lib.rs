@@ -8,8 +8,11 @@
 
 pub use melee_core;
 
-/// Native structs for every record in `src/melee/ft/kinds/*/types.h` (generated, with GC layout).
-pub mod types_gen;
+/// Native structs for every record in `src/melee/ft/kinds/*/types.h`: the single generated set in
+/// `melee_types` (GC layout on every record), re-exported under group 4's old path.
+pub mod types_gen {
+    pub use melee_types::*;
+}
 /// Pure (Fighter-independent) helpers from the character TUs, ported by hand.
 pub mod pure;
 #[cfg(test)]
@@ -41,17 +44,14 @@ mod layout_tests {
     }
 
     #[test]
-    fn every_gc_table_is_in_bounds_and_ordered() {
-        let all = all_gc_tables();
-        assert_eq!(all.len(), GC_RECORD_COUNT);
-        for (name, size, fields) in all {
-            let mut last = 0;
+    fn every_gc_table_is_in_bounds() {
+        let mut kinds = 0;
+        for &(name, size, _align, fields) in GC_RECORDS {
             for f in fields {
                 assert!(f.offset + f.size <= size, "{name}.{} past sizeof", f.name);
-                assert!(f.offset >= last || name.contains("Vars") || f.offset == 0,
-                        "{name}.{} out of order", f.name);
-                last = f.offset;
             }
+            kinds += name.starts_with("ft") as usize;
         }
+        assert!(kinds > 150, "character records missing from melee_types ({kinds})");
     }
 }

@@ -134,12 +134,12 @@ against a running Rust game: no Rust simulation exists yet, so no golden has bee
 
 | group | crate | C functions | hand-ported | verified vs C | types + GC offsets | stubbed / missing |
 |---|---|---|---|---|---|---|
-| 0 types | melee_types | 110 header inlines | 82 | NHV1 words (8 oracle cases) + frame combine on all 10804 golden rows | 1576 records, generated (libclang ppc32) | 28 inlines need other groups; no BE file loader |
+| 0 types | melee_types | 110 header inlines | 82 | NHV1 words (8 oracle cases) + frame combine on all 10804 golden rows | 1618 records, the ONE generator (libclang ppc32), covers groups 0/3/4/5 headers | 28 inlines need other groups; no BE file loader |
 | 1 runtime/HSD | melee_runtime | ~2000 | ~80 (gekko_fp, sqrtf, mtx, mtx44, random, lbtrigf, lbvector) | all, 11400 rows; oracle redoes gwtool fusion | Vec3/Quaternion only | all HSD objects (~1200), lb/db/sfx/THP |
 | 2 world | melee_world | 3013 | 36 (mplib line queries) | all, 27231 rows (oracle without contraction, see risk 2) | mp types, hand-written from header comments | cm, ef, gr, if; rest of mplib |
-| 3 fighter engine | melee_fighter | ~2820 | 57 (nh_Fighter, ftcommon movement, staling) | all (6600 + 12000 + 64 cases) | 569 records, generated | everything else; c2r layer (feature `c2r`) compiles, never linked |
-| 4 characters | melee_chara | ~4340 | 13 (pure helpers) | frsqrte / my_sqrtf / sumOfSquares (oracle without contraction) | 172 records, generated | all Fighter-touching code (~99.7%) |
-| 5 items/ty/vi | melee_items | ~5000 | 9 Item-only + item hash | 8 tests (oracle without contraction) | 438 records, generated | spawn/think/collision, trophies, vi |
+| 3 fighter engine | melee_fighter | ~2820 | 57 (nh_Fighter, ftcommon movement, staling) | all (6600 + 12000 + 64 cases) | melee_types (re-exported as `crate::types`) | everything else; c2r layer (feature `c2r`) compiles, never linked |
+| 4 characters | melee_chara | ~4340 | 13 (pure helpers) | frsqrte / my_sqrtf / sumOfSquares (oracle without contraction) | melee_types (re-exported as `types_gen`) | all Fighter-touching code (~99.7%) |
+| 5 items/ty/vi | melee_items | ~5000 | 9 Item-only + item hash | 8 tests (oracle without contraction) | melee_types (re-exported as `layout`) | spawn/think/collision, trophies, vi |
 | 6 modes | melee_modes | n/a | 0 | none | none | all |
 | asm (10 items) | n/a | n/a | 0 | n/a | n/a | none belonged to groups 0-5; crash-screen register reads return 0 on PC |
 
@@ -156,14 +156,7 @@ against a running Rust game: no Rust simulation exists yet, so no golden has bee
 - `Cargo.lock` committed in its current consistent state.
 
 ### Not done in integration
-- **Generated types are still in four copies** (melee_types gen.rs, melee_fighter generated.rs,
-  melee_chara types_gen.rs, melee_items gen/layout.rs) with different conventions for bitfields
-  (`[u8;n]` + accessors vs one integer vs accessors), `bool` and enums. Merging their output by hand
-  is the wrong fix; the fix is ONE generator (group 0's, the most complete) run over every header,
-  emitting per-module files into melee_types, then deleting the other three generators. Until then
-  `Fighter`/`Item` in melee_fighter/melee_items are different Rust types from melee_types'.
-- **Three NHV1 implementations** (melee_types::neutral_hash, melee_fighter::neutral_hash,
-  melee_items::hash), each oracle-checked; collapse to one once the types are one.
+- (Fixed night 2, step 1: see "Night 2" below.) Types were in four generated copies and NHV1 in three.
 - Sibling crates still do not depend on each other (deps were removed while other agents were
   mid-generation). They all build now; re-add deps as each group starts calling another.
 - `PSVECNormalize` exists twice (melee_runtime::mtx::vec_normalize, melee_world::vec::ps_vec_normalize),
@@ -193,3 +186,25 @@ against a running Rust game: no Rust simulation exists yet, so no golden has bee
    asset to a gdmod file in the native format; mod PPC code is recompiled or interpreted, with field
    accesses remapped through the `GcLayout` "GC offset -> native field" tables. The game then boots
    from a vanilla disc plus those gdmods. No disc-derived output is ever committed.
+
+## Night 2 (2026-10-21)
+
+### Step 1: one type generator (done)
+- `rust/melee_types/gen/gen_types.py` now writes its probe `gen/all_types.c` itself (`write_probe`):
+  every baselib header, every `melee/*/forward.h` + `types.h`, all of `ft/*.h`, `ft/kinds/**`,
+  `pl/*.h`, `it/**`, `ty/**`, `vi/**` (799 headers) -> 1618 records, 0 missing from the
+  `-fdump-record-layouts-complete` cross-check. Every record also gets `X::zeroed()`.
+- Deleted: `melee_fighter/gen/gen_types.py` + `types_tu.c` + `src/types/generated.rs`,
+  `melee_chara/gen/gen_types.py` + `run_gen.sh` + `src/types_gen.rs`, `melee_items/tools/gen_layout.*`
+  + `src/gen/`. Old paths (`melee_fighter::types`, `melee_chara::types_gen`, `melee_items::layout`)
+  are `pub use melee_types::*` shims. Every record those three generated exists in melee_types
+  (checked by name; only anonymous-member record names differ, e.g. `plActionStats.anon_358`).
+- NHV1 is one implementation (`melee_types::neutral_hash`); `melee_fighter::neutral_hash` and
+  `melee_items::hash` are thin wrappers, so group 3's `nh_ref` and group 5's oracle tests now check
+  that one copy against the C. The fighter/items StateHash impls were dropped (melee_types has them).
+- Changes in convention for callers: bitfields are `bf_<gcoff>: [u8; n]` in GC byte order (items'
+  old one-integer form is gone), enums are int aliases (`GroundOrAir` = u32), fn pointers typed.
+- Group 4's generator laid out GC offsets WITHOUT `-DTARGET_PC`; melee_types uses `-DTARGET_PC` for
+  both parses. No `TARGET_PC` appears in `ft/kinds/*/types.h`, so character records are unaffected.
+- Not done: the gitignored `melee_fighter` `c2r` feature (fix_raw.py output) still carries per-TU
+  type copies; it was not rebuilt.

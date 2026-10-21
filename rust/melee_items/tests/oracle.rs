@@ -92,13 +92,13 @@ fn bitfield_flags_use_gc_numbering() {
     assert_eq!(it.ground_or_air, GA_AIR);
     it.xDC8_word.flags.set_x1F(1);
     // x1F is the last bit (MSB=0 numbering) of the u32 at GC +0xDC8: the word's LSB
-    assert_eq!(it.xDC8_word.flags.bf_0, 1);
+    assert_eq!(u32::from_be_bytes(it.xDC8_word.flags.bf_0), 1);
     it_802762bc(&mut it);
     assert_eq!(it.xDC8_word.flags.x1F(), 0);
     check_hit_lag(3.0, &mut it);
     assert_eq!(it.xCBC_hitlagFrames, 3.0);
     assert_eq!(it.xDC8_word.flags.xA(), 1);
-    assert_eq!(it.xDC8_word.flags.bf_0, 1 << (31 - 10));
+    assert_eq!(u32::from_be_bytes(it.xDC8_word.flags.bf_0), 1 << (31 - 10));
     it_80274f28(&mut it, -2, None, None);
     assert_eq!(unsafe { it.xDD0_flag.byte }, 0x04); // b5: bit 5 from the MSB
     assert_eq!(it.xD08, 0xFE);

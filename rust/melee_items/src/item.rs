@@ -2,11 +2,11 @@
 //! Each cites the C function it mirrors; float expressions keep the C operation order and
 //! precision (f32 unless the C promotes to f64).
 
-use crate::layout::{itSamusMissileAttributes, Item, FnPtr};
+use crate::layout::{itSamusMissileAttributes, GroundOrAir, HSD_GObj, Item};
 
 /// GroundOrAir (src/melee/ft/types.h): GA_Ground = 0, GA_Air = 1.
-pub const GA_GROUND: i32 = 0;
-pub const GA_AIR: i32 = 1;
+pub const GA_GROUND: GroundOrAir = melee_types::GA_Ground;
+pub const GA_AIR: GroundOrAir = melee_types::GA_Air;
 
 /// `Item_80269CA0` (item.c): add damage, clamp at 999.
 pub fn item_80269ca0(ip: &mut Item, damage: i32) {
@@ -36,7 +36,8 @@ pub fn it_802762bc(ip: &mut Item) {
 }
 
 /// `it_80274F28` (it_2725.c).
-pub fn it_80274f28(ip: &mut Item, arg1: i8, arg2: FnPtr, arg3: FnPtr) {
+pub fn it_80274f28(ip: &mut Item, arg1: i8, arg2: Option<unsafe extern "C" fn(*mut HSD_GObj)>,
+    arg3: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut HSD_GObj)>) {
     // SAFETY: UnkFlagStruct is a union of a byte and its bit view; both are plain bits.
     unsafe { ip.xDD0_flag.anon_0.set_b5(1) };
     ip.xD08 = arg1 as u8;

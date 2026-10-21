@@ -25,10 +25,6 @@ pub type c_bool = i32;
 #[repr(C)] pub struct Thing_803F9628 { _opaque: [u8; 0] }
 #[repr(C)] pub struct un_80302DF8_t { _opaque: [u8; 0] }
 #[repr(C)] pub struct UnkItemArticles3 { _opaque: [u8; 0] }
-#[repr(C)] pub struct ItemLogicTable { _opaque: [u8; 0] }
-#[repr(C)] pub struct ItemStateTable { _opaque: [u8; 0] }
-#[repr(C)] pub struct itSword_UnkArticle1 { _opaque: [u8; 0] }
-#[repr(C)] pub struct itSword_UnkBytes { _opaque: [u8; 0] }
 #[repr(C)] pub struct gmClassicMatchup { _opaque: [u8; 0] }
 
 /// C enum `__io_modes` (src/MSL/stdio.h:20)
@@ -3989,6 +3985,1276 @@ pub const MapLineGroup_LeftWall: MapLineGroup = 3;
 pub const MapLineGroup_Dynamic: MapLineGroup = 4;
 pub const MapLineGroup_Count: MapLineGroup = 5;
 
+/// C enum `CPUCommand` (src/melee/ft/ftcmdscript.h:6)
+pub type CPUCommand = u32;
+pub const CpuCmd_PressA: CPUCommand = 1;
+pub const CpuCmd_ReleaseA: CPUCommand = 2;
+pub const CpuCmd_PressB: CPUCommand = 3;
+pub const CpuCmd_ReleaseB: CPUCommand = 4;
+pub const CpuCmd_PressX: CPUCommand = 5;
+pub const CpuCmd_ReleaseX: CPUCommand = 6;
+pub const CpuCmd_PressY: CPUCommand = 7;
+pub const CpuCmd_ReleaseY: CPUCommand = 8;
+pub const CpuCmd_PressR: CPUCommand = 9;
+pub const CpuCmd_ReleaseR: CPUCommand = 10;
+pub const CpuCmd_PressL: CPUCommand = 11;
+pub const CpuCmd_ReleaseL: CPUCommand = 12;
+pub const CpuCmd_PressZ: CPUCommand = 13;
+pub const CpuCmd_ReleaseZ: CPUCommand = 14;
+pub const CpuCmd_PressUp: CPUCommand = 15;
+pub const CpuCmd_ReleaseUp: CPUCommand = 16;
+pub const CpuCmd_PressDown: CPUCommand = 17;
+pub const CpuCmd_ReleaseDown: CPUCommand = 18;
+pub const CpuCmd_PressRight: CPUCommand = 19;
+pub const CpuCmd_ReleaseRight: CPUCommand = 20;
+pub const CpuCmd_PressLeft: CPUCommand = 21;
+pub const CpuCmd_ReleaseLeft: CPUCommand = 22;
+pub const CpuCmd_PressStart: CPUCommand = 23;
+pub const CpuCmd_ReleaseStart: CPUCommand = 24;
+pub const CpuCmd_ReleaseAll: CPUCommand = 25;
+pub const CpuCmd_Done: CPUCommand = 127;
+pub const CpuCmd_ZeroArgEnd: CPUCommand = 127;
+pub const CpuCmd_SetLstickX: CPUCommand = 128;
+pub const CpuCmd_SetLstickY: CPUCommand = 129;
+pub const CpuCmd_SetCstickX: CPUCommand = 130;
+pub const CpuCmd_SetCstickY: CPUCommand = 131;
+pub const CpuCmd_SetRtrigger: CPUCommand = 132;
+pub const CpuCmd_SetLtrigger: CPUCommand = 133;
+pub const CpuCmd_PressAFor: CPUCommand = 134;
+pub const CpuCmd_ReleaseAFor: CPUCommand = 135;
+pub const CpuCmd_PressBFor: CPUCommand = 136;
+pub const CpuCmd_ReleaseBFor: CPUCommand = 137;
+pub const CpuCmd_PressXFor: CPUCommand = 138;
+pub const CpuCmd_ReleaseXFor: CPUCommand = 139;
+pub const CpuCmd_PressYFor: CPUCommand = 140;
+pub const CpuCmd_ReleaseYFor: CPUCommand = 141;
+pub const CpuCmd_WaitFor: CPUCommand = 142;
+pub const CpuCmd_LstickTowardDestination: CPUCommand = 143;
+pub const CpuCmd_LstickXTowardDestination: CPUCommand = 144;
+pub const CpuCmd_LstickXForward: CPUCommand = 145;
+pub const CpuCmd_WaitIfMotionId: CPUCommand = 146;
+pub const CpuCmd_Unk0x93: CPUCommand = 147;
+pub const CpuCmd_LstickTowardFighter: CPUCommand = 148;
+pub const CpuCmd_LstickXTowardFighter: CPUCommand = 149;
+pub const CpuCmd_OneArgEnd: CPUCommand = 191;
+pub const CpuCmd_LstickTowardDestinationClamped: CPUCommand = 192;
+pub const CpuCmd_LstickXTowardDestinationClamped: CPUCommand = 193;
+pub const CpuCmd_LstickForwardClamped: CPUCommand = 194;
+pub const CpuCmd_Count: CPUCommand = 195;
+
+/// C enum `ftKirby_MotionState` (src/melee/ft/kinds/ftKirby/forward.h:298)
+pub type ftKirby_MotionState = u32;
+pub const ftKb_MS_JumpAerialF1: ftKirby_MotionState = 341;
+pub const ftKb_MS_JumpAerialF2: ftKirby_MotionState = 342;
+pub const ftKb_MS_JumpAerialF3: ftKirby_MotionState = 343;
+pub const ftKb_MS_JumpAerialF4: ftKirby_MotionState = 344;
+pub const ftKb_MS_JumpAerialF5: ftKirby_MotionState = 345;
+pub const ftKb_MS_JumpAerialF1Met: ftKirby_MotionState = 346;
+pub const ftKb_MS_JumpAerialF2Met: ftKirby_MotionState = 347;
+pub const ftKb_MS_JumpAerialF3Met: ftKirby_MotionState = 348;
+pub const ftKb_MS_JumpAerialF4Met: ftKirby_MotionState = 349;
+pub const ftKb_MS_JumpAerialF5Met: ftKirby_MotionState = 350;
+pub const ftKb_MS_AttackDash: ftKirby_MotionState = 351;
+pub const ftKb_MS_AttackDashAir: ftKirby_MotionState = 352;
+pub const ftKb_MS_SpecialN: ftKirby_MotionState = 353;
+pub const ftKb_MS_SpecialNLoop: ftKirby_MotionState = 354;
+pub const ftKb_MS_SpecialNEnd: ftKirby_MotionState = 355;
+pub const ftKb_MS_SpecialNCapture0: ftKirby_MotionState = 356;
+pub const ftKb_MS_SpecialNCapture1: ftKirby_MotionState = 357;
+pub const ftKb_MS_Eat: ftKirby_MotionState = 358;
+pub const ftKb_MS_EatWait: ftKirby_MotionState = 359;
+pub const ftKb_MS_EatWalkSlow: ftKirby_MotionState = 360;
+pub const ftKb_MS_EatWalkMiddle: ftKirby_MotionState = 361;
+pub const ftKb_MS_EatWalkFast: ftKirby_MotionState = 362;
+pub const ftKb_MS_EatTurn: ftKirby_MotionState = 363;
+pub const ftKb_MS_EatJump1: ftKirby_MotionState = 364;
+pub const ftKb_MS_EatJump2: ftKirby_MotionState = 365;
+pub const ftKb_MS_EatLanding: ftKirby_MotionState = 366;
+pub const ftKb_MS_SpecialNDrink0: ftKirby_MotionState = 367;
+pub const ftKb_MS_SpecialNDrink1: ftKirby_MotionState = 368;
+pub const ftKb_MS_SpecialNSpit0: ftKirby_MotionState = 369;
+pub const ftKb_MS_SpecialNSpit1: ftKirby_MotionState = 370;
+pub const ftKb_MS_SpecialAirN: ftKirby_MotionState = 371;
+pub const ftKb_MS_SpecialAirNLoop: ftKirby_MotionState = 372;
+pub const ftKb_MS_SpecialAirNEnd: ftKirby_MotionState = 373;
+pub const ftKb_MS_SpecialAirNCapture0: ftKirby_MotionState = 374;
+pub const ftKb_MS_SpecialAirNCapture1: ftKirby_MotionState = 375;
+pub const ftKb_MS_EatAir: ftKirby_MotionState = 376;
+pub const ftKb_MS_EatFall: ftKirby_MotionState = 377;
+pub const ftKb_MS_SpecialAirNDrink0: ftKirby_MotionState = 378;
+pub const ftKb_MS_SpecialAirNDrink1: ftKirby_MotionState = 379;
+pub const ftKb_MS_SpecialAirNSpit0: ftKirby_MotionState = 380;
+pub const ftKb_MS_SpecialAirNSpit1: ftKirby_MotionState = 381;
+pub const ftKb_MS_EatTurnAir: ftKirby_MotionState = 382;
+pub const ftKb_MS_SpecialS: ftKirby_MotionState = 383;
+pub const ftKb_MS_SpecialAirS: ftKirby_MotionState = 384;
+pub const ftKb_MS_SpecialHi1: ftKirby_MotionState = 385;
+pub const ftKb_MS_SpecialHi2: ftKirby_MotionState = 386;
+pub const ftKb_MS_SpecialHi3: ftKirby_MotionState = 387;
+pub const ftKb_MS_SpecialHi4: ftKirby_MotionState = 388;
+pub const ftKb_MS_SpecialAirHi1: ftKirby_MotionState = 389;
+pub const ftKb_MS_SpecialAirHi2: ftKirby_MotionState = 390;
+pub const ftKb_MS_SpecialAirHi3: ftKirby_MotionState = 391;
+pub const ftKb_MS_SpecialAirHi4: ftKirby_MotionState = 392;
+pub const ftKb_MS_SpecialLw1: ftKirby_MotionState = 393;
+pub const ftKb_MS_SpecialLw: ftKirby_MotionState = 394;
+pub const ftKb_MS_SpecialLwEnd: ftKirby_MotionState = 395;
+pub const ftKb_MS_SpecialAirLwStart: ftKirby_MotionState = 396;
+pub const ftKb_MS_SpecialAirLw: ftKirby_MotionState = 397;
+pub const ftKb_MS_SpecialAirLwEnd: ftKirby_MotionState = 398;
+pub const ftKb_MS_MrSpecialN: ftKirby_MotionState = 399;
+pub const ftKb_MS_MrSpecialAirN: ftKirby_MotionState = 400;
+pub const ftKb_MS_LkSpecialNStart: ftKirby_MotionState = 401;
+pub const ftKb_MS_LkSpecialNLoop: ftKirby_MotionState = 402;
+pub const ftKb_MS_LkSpecialNEnd: ftKirby_MotionState = 403;
+pub const ftKb_MS_LkSpecialAirNStart: ftKirby_MotionState = 404;
+pub const ftKb_MS_LkSpecialAirNLoop: ftKirby_MotionState = 405;
+pub const ftKb_MS_LkSpecialAirNEnd: ftKirby_MotionState = 406;
+pub const ftKb_MS_SsSpecialNStart: ftKirby_MotionState = 407;
+pub const ftKb_MS_SsSpecialNHold: ftKirby_MotionState = 408;
+pub const ftKb_MS_SsSpecialNCancel: ftKirby_MotionState = 409;
+pub const ftKb_MS_SsSpecialN: ftKirby_MotionState = 410;
+pub const ftKb_MS_SsSpecialAirNStart: ftKirby_MotionState = 411;
+pub const ftKb_MS_SsSpecialAirN: ftKirby_MotionState = 412;
+pub const ftKb_MS_YsSpecialN1: ftKirby_MotionState = 413;
+pub const ftKb_MS_YsSpecialNCapture1_0: ftKirby_MotionState = 414;
+pub const ftKb_MS_YsSpecialNCapture1_1: ftKirby_MotionState = 415;
+pub const ftKb_MS_YsSpecialNCapture2_0: ftKirby_MotionState = 416;
+pub const ftKb_MS_YsSpecialNCapture2_1: ftKirby_MotionState = 417;
+pub const ftKb_MS_YsSpecialAirNCapture2: ftKirby_MotionState = 418;
+pub const ftKb_MS_YsSpecialAirNCapture1_0: ftKirby_MotionState = 419;
+pub const ftKb_MS_YsSpecialAirNCapture1_1: ftKirby_MotionState = 420;
+pub const ftKb_MS_YsSpecialAirN2_0: ftKirby_MotionState = 421;
+pub const ftKb_MS_YsSpecialAirN2_1: ftKirby_MotionState = 422;
+pub const ftKb_MS_FxSpecialNStart: ftKirby_MotionState = 423;
+pub const ftKb_MS_FxSpecialNLoop: ftKirby_MotionState = 424;
+pub const ftKb_MS_FxSpecialNEnd: ftKirby_MotionState = 425;
+pub const ftKb_MS_FxSpecialAirNStart: ftKirby_MotionState = 426;
+pub const ftKb_MS_FxSpecialAirNLoop: ftKirby_MotionState = 427;
+pub const ftKb_MS_FxSpecialAirNEnd: ftKirby_MotionState = 428;
+pub const ftKb_MS_PkSpecialN: ftKirby_MotionState = 429;
+pub const ftKb_MS_PkSpecialAirN: ftKirby_MotionState = 430;
+pub const ftKb_MS_LgSpecialN: ftKirby_MotionState = 431;
+pub const ftKb_MS_LgSpecialAirN: ftKirby_MotionState = 432;
+pub const ftKb_MS_CaSpecialN: ftKirby_MotionState = 433;
+pub const ftKb_MS_CaSpecialAirN: ftKirby_MotionState = 434;
+pub const ftKb_MS_NsSpecialNStart: ftKirby_MotionState = 435;
+pub const ftKb_MS_NsSpecialNHold0: ftKirby_MotionState = 436;
+pub const ftKb_MS_NsSpecialNHold1: ftKirby_MotionState = 437;
+pub const ftKb_MS_NsSpecialNEnd: ftKirby_MotionState = 438;
+pub const ftKb_MS_NsSpecialAirNStart: ftKirby_MotionState = 439;
+pub const ftKb_MS_NsSpecialAirNHold0: ftKirby_MotionState = 440;
+pub const ftKb_MS_NsSpecialAirNHold1: ftKirby_MotionState = 441;
+pub const ftKb_MS_NsSpecialAirNEnd: ftKirby_MotionState = 442;
+pub const ftKb_MS_KpSpecialNStart: ftKirby_MotionState = 443;
+pub const ftKb_MS_KpSpecialN: ftKirby_MotionState = 444;
+pub const ftKb_MS_KpSpecialNEnd: ftKirby_MotionState = 445;
+pub const ftKb_MS_KpSpecialAirNStart: ftKirby_MotionState = 446;
+pub const ftKb_MS_KpSpecialAirN: ftKirby_MotionState = 447;
+pub const ftKb_MS_KpSpecialAirNEnd: ftKirby_MotionState = 448;
+pub const ftKb_MS_PeSpecialLw: ftKirby_MotionState = 449;
+pub const ftKb_MS_PeSpecialLwHit: ftKirby_MotionState = 450;
+pub const ftKb_MS_PeSpecialAirLw: ftKirby_MotionState = 451;
+pub const ftKb_MS_PeSpecialAirLwHit: ftKirby_MotionState = 452;
+pub const ftKb_MS_PpSpecialN: ftKirby_MotionState = 453;
+pub const ftKb_MS_PpSpecialAirN: ftKirby_MotionState = 454;
+pub const ftKb_MS_DkSpecialNStart: ftKirby_MotionState = 455;
+pub const ftKb_MS_DkSpecialNLoop: ftKirby_MotionState = 456;
+pub const ftKb_MS_DkSpecialNCancel: ftKirby_MotionState = 457;
+pub const ftKb_MS_DkSpecialN: ftKirby_MotionState = 458;
+pub const ftKb_MS_DkSpecialNFull: ftKirby_MotionState = 459;
+pub const ftKb_MS_DkSpecialAirNStart: ftKirby_MotionState = 460;
+pub const ftKb_MS_DkSpecialAirNLoop: ftKirby_MotionState = 461;
+pub const ftKb_MS_DkSpecialAirNCancel: ftKirby_MotionState = 462;
+pub const ftKb_MS_DkSpecialAirN: ftKirby_MotionState = 463;
+pub const ftKb_MS_DkSpecialAirNFull: ftKirby_MotionState = 464;
+pub const ftKb_MS_ZdSpecialN: ftKirby_MotionState = 465;
+pub const ftKb_MS_ZdSpecialAirN: ftKirby_MotionState = 466;
+pub const ftKb_MS_SkSpecialNStart: ftKirby_MotionState = 467;
+pub const ftKb_MS_SkSpecialNLoop: ftKirby_MotionState = 468;
+pub const ftKb_MS_SkSpecialNCancel: ftKirby_MotionState = 469;
+pub const ftKb_MS_SkSpecialNEnd: ftKirby_MotionState = 470;
+pub const ftKb_MS_SkSpecialAirNStart: ftKirby_MotionState = 471;
+pub const ftKb_MS_SkSpecialAirNLoop: ftKirby_MotionState = 472;
+pub const ftKb_MS_SkSpecialAirNCancel: ftKirby_MotionState = 473;
+pub const ftKb_MS_SkSpecialAirNEnd: ftKirby_MotionState = 474;
+pub const ftKb_MS_PrSpecialNStartR: ftKirby_MotionState = 475;
+pub const ftKb_MS_PrSpecialNStartL: ftKirby_MotionState = 476;
+pub const ftKb_MS_PrSpecialNLoop: ftKirby_MotionState = 477;
+pub const ftKb_MS_PrSpecialNFull: ftKirby_MotionState = 478;
+pub const ftKb_MS_PrSpecialN1: ftKirby_MotionState = 479;
+pub const ftKb_MS_PrSpecialNTurn: ftKirby_MotionState = 480;
+pub const ftKb_MS_PrSpecialNEndR: ftKirby_MotionState = 481;
+pub const ftKb_MS_PrSpecialNEndL: ftKirby_MotionState = 482;
+pub const ftKb_MS_PrSpecialAirNStartR: ftKirby_MotionState = 483;
+pub const ftKb_MS_PrSpecialAirNStartL: ftKirby_MotionState = 484;
+pub const ftKb_MS_PrSpecialAirNLoop: ftKirby_MotionState = 485;
+pub const ftKb_MS_PrSpecialAirNFull: ftKirby_MotionState = 486;
+pub const ftKb_MS_PrSpecialAirN: ftKirby_MotionState = 487;
+pub const ftKb_MS_PrSpecialN0: ftKirby_MotionState = 488;
+pub const ftKb_MS_PrSpecialAirNEndR0: ftKirby_MotionState = 489;
+pub const ftKb_MS_PrSpecialAirNEndR1: ftKirby_MotionState = 490;
+pub const ftKb_MS_PrSpecialNHit: ftKirby_MotionState = 491;
+pub const ftKb_MS_MsSpecialNStart: ftKirby_MotionState = 492;
+pub const ftKb_MS_MsSpecialNLoop: ftKirby_MotionState = 493;
+pub const ftKb_MS_MsSpecialNEnd0: ftKirby_MotionState = 494;
+pub const ftKb_MS_MsSpecialNEnd1: ftKirby_MotionState = 495;
+pub const ftKb_MS_MsSpecialAirNStart: ftKirby_MotionState = 496;
+pub const ftKb_MS_MsSpecialAirNLoop: ftKirby_MotionState = 497;
+pub const ftKb_MS_MsSpecialAirNEnd0: ftKirby_MotionState = 498;
+pub const ftKb_MS_MsSpecialAirNEnd1: ftKirby_MotionState = 499;
+pub const ftKb_MS_MtSpecialNStart: ftKirby_MotionState = 500;
+pub const ftKb_MS_MtSpecialNLoop: ftKirby_MotionState = 501;
+pub const ftKb_MS_MtSpecialNLoopFull: ftKirby_MotionState = 502;
+pub const ftKb_MS_MtSpecialNCancel: ftKirby_MotionState = 503;
+pub const ftKb_MS_MtSpecialNEnd: ftKirby_MotionState = 504;
+pub const ftKb_MS_MtSpecialAirNStart: ftKirby_MotionState = 505;
+pub const ftKb_MS_MtSpecialAirNLoop: ftKirby_MotionState = 506;
+pub const ftKb_MS_MtSpecialAirNLoopFull: ftKirby_MotionState = 507;
+pub const ftKb_MS_MtSpecialAirNCancel: ftKirby_MotionState = 508;
+pub const ftKb_MS_MtSpecialAirNEnd: ftKirby_MotionState = 509;
+pub const ftKb_MS_GwSpecialN: ftKirby_MotionState = 510;
+pub const ftKb_MS_GwSpecialAirN: ftKirby_MotionState = 511;
+pub const ftKb_MS_DrSpecialN: ftKirby_MotionState = 512;
+pub const ftKb_MS_DrSpecialAirN: ftKirby_MotionState = 513;
+pub const ftKb_MS_ClSpecialNStart: ftKirby_MotionState = 514;
+pub const ftKb_MS_ClSpecialNLoop: ftKirby_MotionState = 515;
+pub const ftKb_MS_ClSpecialNEnd: ftKirby_MotionState = 516;
+pub const ftKb_MS_ClSpecialAirNStart: ftKirby_MotionState = 517;
+pub const ftKb_MS_ClSpecialAirNLoop: ftKirby_MotionState = 518;
+pub const ftKb_MS_ClSpecialAirNEnd: ftKirby_MotionState = 519;
+pub const ftKb_MS_FcSpecialNStart: ftKirby_MotionState = 520;
+pub const ftKb_MS_FcSpecialNLoop: ftKirby_MotionState = 521;
+pub const ftKb_MS_FcSpecialNEnd: ftKirby_MotionState = 522;
+pub const ftKb_MS_FcSpecialAirNStart: ftKirby_MotionState = 523;
+pub const ftKb_MS_FcSpecialAirNLoop: ftKirby_MotionState = 524;
+pub const ftKb_MS_FcSpecialAirNEnd: ftKirby_MotionState = 525;
+pub const ftKb_MS_PcSpecialN: ftKirby_MotionState = 526;
+pub const ftKb_MS_PcSpecialAirN: ftKirby_MotionState = 527;
+pub const ftKb_MS_GnSpecialN: ftKirby_MotionState = 528;
+pub const ftKb_MS_GnSpecialAirN: ftKirby_MotionState = 529;
+pub const ftKb_MS_FeSpecialNStart: ftKirby_MotionState = 530;
+pub const ftKb_MS_FeSpecialNLoop: ftKirby_MotionState = 531;
+pub const ftKb_MS_FeSpecialNEnd0: ftKirby_MotionState = 532;
+pub const ftKb_MS_FeSpecialNEnd1: ftKirby_MotionState = 533;
+pub const ftKb_MS_FeSpecialAirNStart: ftKirby_MotionState = 534;
+pub const ftKb_MS_FeSpecialAirNLoop: ftKirby_MotionState = 535;
+pub const ftKb_MS_FeSpecialAirNEnd0: ftKirby_MotionState = 536;
+pub const ftKb_MS_FeSpecialAirNEnd1: ftKirby_MotionState = 537;
+pub const ftKb_MS_GkSpecialNStart: ftKirby_MotionState = 538;
+pub const ftKb_MS_GkSpecialN: ftKirby_MotionState = 539;
+pub const ftKb_MS_GkSpecialNEnd: ftKirby_MotionState = 540;
+pub const ftKb_MS_GkSpecialAirNStart: ftKirby_MotionState = 541;
+pub const ftKb_MS_GkSpecialAirN: ftKirby_MotionState = 542;
+pub const ftKb_MS_GkSpecialAirNEnd: ftKirby_MotionState = 543;
+pub const ftKb_MS_Count: ftKirby_MotionState = 544;
+pub const ftKb_MS_SelfCount: ftKirby_MotionState = 203;
+
+/// C enum `ftKb_Submotion` (src/melee/ft/kinds/ftKirby/forward.h:506)
+pub type ftKb_Submotion = u32;
+pub const ftKb_SM_JumpAerialF1: ftKb_Submotion = 295;
+pub const ftKb_SM_JumpAerialF2: ftKb_Submotion = 296;
+pub const ftKb_SM_JumpAerialF3: ftKb_Submotion = 297;
+pub const ftKb_SM_JumpAerialF4: ftKb_Submotion = 298;
+pub const ftKb_SM_JumpAerialF5: ftKb_Submotion = 299;
+pub const ftKb_SM_JumpAerialF1Met: ftKb_Submotion = 300;
+pub const ftKb_SM_JumpAerialF2Met: ftKb_Submotion = 301;
+pub const ftKb_SM_JumpAerialF3Met: ftKb_Submotion = 302;
+pub const ftKb_SM_JumpAerialF4Met: ftKb_Submotion = 303;
+pub const ftKb_SM_JumpAerialF5Met: ftKb_Submotion = 304;
+pub const ftKb_SM_SpecialN: ftKb_Submotion = 305;
+pub const ftKb_SM_SpecialNLoop: ftKb_Submotion = 306;
+pub const ftKb_SM_SpecialNEnd: ftKb_Submotion = 307;
+pub const ftKb_SM_SpecialNCapture: ftKb_Submotion = 308;
+pub const ftKb_SM_Eat: ftKb_Submotion = 309;
+pub const ftKb_SM_EatWait: ftKb_Submotion = 310;
+pub const ftKb_SM_EatWalkSlow: ftKb_Submotion = 311;
+pub const ftKb_SM_EatWalkMiddle: ftKb_Submotion = 312;
+pub const ftKb_SM_EatWalkFast: ftKb_Submotion = 313;
+pub const ftKb_SM_EatJump1: ftKb_Submotion = 314;
+pub const ftKb_SM_EatJump2: ftKb_Submotion = 315;
+pub const ftKb_SM_EatLanding: ftKb_Submotion = 316;
+pub const ftKb_SM_EatTurn: ftKb_Submotion = 317;
+pub const ftKb_SM_SpecialNDrink: ftKb_Submotion = 318;
+pub const ftKb_SM_SpecialNSpit: ftKb_Submotion = 319;
+pub const ftKb_SM_SpecialAirN: ftKb_Submotion = 320;
+pub const ftKb_SM_SpecialAirNLoop: ftKb_Submotion = 321;
+pub const ftKb_SM_SpecialS: ftKb_Submotion = 322;
+pub const ftKb_SM_SpecialAirS: ftKb_Submotion = 323;
+pub const ftKb_SM_SpecialHi1: ftKb_Submotion = 324;
+pub const ftKb_SM_SpecialHi2: ftKb_Submotion = 325;
+pub const ftKb_SM_SpecialHi3: ftKb_Submotion = 326;
+pub const ftKb_SM_SpecialHi4: ftKb_Submotion = 327;
+pub const ftKb_SM_SpecialAirHi1: ftKb_Submotion = 328;
+pub const ftKb_SM_SpecialAirHi2: ftKb_Submotion = 329;
+pub const ftKb_SM_SpecialAirHi3: ftKb_Submotion = 330;
+pub const ftKb_SM_SpecialAirHiEnd: ftKb_Submotion = 331;
+pub const ftKb_SM_SpecialLw1: ftKb_Submotion = 332;
+pub const ftKb_SM_SpecialLw: ftKb_Submotion = 333;
+pub const ftKb_SM_SpecialLwEnd: ftKb_Submotion = 334;
+pub const ftKb_SM_SpecialAirLwStart: ftKb_Submotion = 335;
+pub const ftKb_SM_SpecialAirLw: ftKb_Submotion = 336;
+pub const ftKb_SM_SpecialAirLwEnd: ftKb_Submotion = 337;
+pub const ftKb_SM_MrSpecialN: ftKb_Submotion = 338;
+pub const ftKb_SM_MrSpecialAirN: ftKb_Submotion = 339;
+pub const ftKb_SM_LkSpecialNStart: ftKb_Submotion = 340;
+pub const ftKb_SM_LkSpecialNLoop: ftKb_Submotion = 341;
+pub const ftKb_SM_LkSpecialNEnd: ftKb_Submotion = 342;
+pub const ftKb_SM_LkSpecialAirNStart: ftKb_Submotion = 343;
+pub const ftKb_SM_LkSpecialAirNLoop: ftKb_Submotion = 344;
+pub const ftKb_SM_LkSpecialAirNEnd: ftKb_Submotion = 345;
+pub const ftKb_SM_SsSpecialNStart: ftKb_Submotion = 346;
+pub const ftKb_SM_SsSpecialNHold: ftKb_Submotion = 347;
+pub const ftKb_SM_SsSpecialNCancel: ftKb_Submotion = 348;
+pub const ftKb_SM_SsSpecialN: ftKb_Submotion = 349;
+pub const ftKb_SM_SsSpecialAirNStart: ftKb_Submotion = 350;
+pub const ftKb_SM_SsSpecialAirN: ftKb_Submotion = 351;
+pub const ftKb_SM_YsSpecialN1: ftKb_Submotion = 352;
+pub const ftKb_SM_YsSpecialNCapture1: ftKb_Submotion = 353;
+pub const ftKb_SM_YsSpecialNCapture2: ftKb_Submotion = 354;
+pub const ftKb_SM_YsSpecialAirNCapture2: ftKb_Submotion = 355;
+pub const ftKb_SM_YsSpecialAirCapture1: ftKb_Submotion = 356;
+pub const ftKb_SM_YsSpecialAirN2: ftKb_Submotion = 357;
+pub const ftKb_SM_FxSpecialNStart: ftKb_Submotion = 358;
+pub const ftKb_SM_FxSpecialNLoop: ftKb_Submotion = 359;
+pub const ftKb_SM_FxSpecialNEnd: ftKb_Submotion = 360;
+pub const ftKb_SM_FxSpecialAirNStart: ftKb_Submotion = 361;
+pub const ftKb_SM_FxSpecialAirNLoop: ftKb_Submotion = 362;
+pub const ftKb_SM_FxSpecialAirNEnd: ftKb_Submotion = 363;
+pub const ftKb_SM_PkSpecialN: ftKb_Submotion = 364;
+pub const ftKb_SM_PkSpecialAirN: ftKb_Submotion = 365;
+pub const ftKb_SM_LgSpecialN: ftKb_Submotion = 366;
+pub const ftKb_SM_LgSpecialAirN: ftKb_Submotion = 367;
+pub const ftKb_SM_CaSpecialN: ftKb_Submotion = 368;
+pub const ftKb_SM_CaSpecialAirN: ftKb_Submotion = 369;
+pub const ftKb_SM_NsSpecialNStart: ftKb_Submotion = 370;
+pub const ftKb_SM_NsSpecialNHold0: ftKb_Submotion = 371;
+pub const ftKb_SM_NsSpecialNHold1: ftKb_Submotion = 372;
+pub const ftKb_SM_NsSpecialNEnd: ftKb_Submotion = 373;
+pub const ftKb_SM_NsSpecialAirNStart: ftKb_Submotion = 374;
+pub const ftKb_SM_NsSpecialAirNHold0: ftKb_Submotion = 375;
+pub const ftKb_SM_NsSpecialAirNHold1: ftKb_Submotion = 376;
+pub const ftKb_SM_NsSpecialAirNEnd: ftKb_Submotion = 377;
+pub const ftKb_SM_KpSpecialNStart: ftKb_Submotion = 378;
+pub const ftKb_SM_KpSpecialN: ftKb_Submotion = 379;
+pub const ftKb_SM_KpSpecialNEnd: ftKb_Submotion = 380;
+pub const ftKb_SM_KpSpecialAirNStart: ftKb_Submotion = 381;
+pub const ftKb_SM_KpSpecialAirN: ftKb_Submotion = 382;
+pub const ftKb_SM_KpSpecialAirNEnd: ftKb_Submotion = 383;
+pub const ftKb_SM_PeSpecialLw: ftKb_Submotion = 384;
+pub const ftKb_SM_PeSpecialLwHit: ftKb_Submotion = 385;
+pub const ftKb_SM_PeSpecialAirLw: ftKb_Submotion = 386;
+pub const ftKb_SM_PeSpecialAirLwHit: ftKb_Submotion = 387;
+pub const ftKb_SM_PpSpecialN: ftKb_Submotion = 388;
+pub const ftKb_SM_PpSpecialAirN: ftKb_Submotion = 389;
+pub const ftKb_SM_DkSpecialNStart: ftKb_Submotion = 390;
+pub const ftKb_SM_DkSpecialNLoop: ftKb_Submotion = 391;
+pub const ftKb_SM_DkSpecialNCancel: ftKb_Submotion = 392;
+pub const ftKb_SM_DkSpecialN: ftKb_Submotion = 393;
+pub const ftKb_SM_DkSpecialNFull: ftKb_Submotion = 394;
+pub const ftKb_SM_DkSpecialAirNStart: ftKb_Submotion = 395;
+pub const ftKb_SM_DkSpecialAirNLoop: ftKb_Submotion = 396;
+pub const ftKb_SM_DkSpecialAirNCancel: ftKb_Submotion = 397;
+pub const ftKb_SM_DkSpecialAirN: ftKb_Submotion = 398;
+pub const ftKb_SM_DkSpecialAirNFull: ftKb_Submotion = 399;
+pub const ftKb_SM_ZdSpecialN: ftKb_Submotion = 400;
+pub const ftKb_SM_ZdSpecialAirN: ftKb_Submotion = 401;
+pub const ftKb_SM_SkSpecialNStart: ftKb_Submotion = 402;
+pub const ftKb_SM_SkSpecialNLoop: ftKb_Submotion = 403;
+pub const ftKb_SM_SkSpecialNCancel: ftKb_Submotion = 404;
+pub const ftKb_SM_SkSpecialNEnd: ftKb_Submotion = 405;
+pub const ftKb_SM_SkSpecialAirNStart: ftKb_Submotion = 406;
+pub const ftKb_SM_SkSpecialAirNLoop: ftKb_Submotion = 407;
+pub const ftKb_SM_SkSpecialAirNCancel: ftKb_Submotion = 408;
+pub const ftKb_SM_SkSpecialAirNEnd: ftKb_Submotion = 409;
+pub const ftKb_SM_PrSpecialNStartR: ftKb_Submotion = 410;
+pub const ftKb_SM_PrSpecialNStartL: ftKb_Submotion = 411;
+pub const ftKb_SM_PrSpecialNLoop: ftKb_Submotion = 412;
+pub const ftKb_SM_PrSpecialNFull: ftKb_Submotion = 413;
+pub const ftKb_SM_PrSpecialN1: ftKb_Submotion = 414;
+pub const ftKb_SM_PrSpecialNTurn: ftKb_Submotion = 415;
+pub const ftKb_SM_PrSpecialNEndR: ftKb_Submotion = 416;
+pub const ftKb_SM_PrSpecialNEndL: ftKb_Submotion = 417;
+pub const ftKb_SM_PrSpecialAirNStartR: ftKb_Submotion = 418;
+pub const ftKb_SM_PrSpecialAirNStartL: ftKb_Submotion = 419;
+pub const ftKb_SM_PrSpecialAirNLoop: ftKb_Submotion = 420;
+pub const ftKb_SM_PrSpecialAirNFull: ftKb_Submotion = 421;
+pub const ftKb_SM_PrSpecialAirN: ftKb_Submotion = 422;
+pub const ftKb_SM_PrSpecialN0: ftKb_Submotion = 423;
+pub const ftKb_SM_PrSpecialAirNEndR0: ftKb_Submotion = 424;
+pub const ftKb_SM_PrSpecialAirNEndR1: ftKb_Submotion = 425;
+pub const ftKb_SM_PrSpecialNHit: ftKb_Submotion = 426;
+pub const ftKb_SM_MsSpecialNStart: ftKb_Submotion = 427;
+pub const ftKb_SM_MsSpecialNLoop: ftKb_Submotion = 428;
+pub const ftKb_SM_MsSpecialNEnd0: ftKb_Submotion = 429;
+pub const ftKb_SM_MsSpecialNEnd1: ftKb_Submotion = 430;
+pub const ftKb_SM_MsSpecialAirNStart: ftKb_Submotion = 431;
+pub const ftKb_SM_MsSpecialAirNLoop: ftKb_Submotion = 432;
+pub const ftKb_SM_MsSpecialAirNEnd0: ftKb_Submotion = 433;
+pub const ftKb_SM_MsSpecialAirNEnd1: ftKb_Submotion = 434;
+pub const ftKb_SM_MtSpecialNStart: ftKb_Submotion = 435;
+pub const ftKb_SM_MtSpecialNLoop: ftKb_Submotion = 436;
+pub const ftKb_SM_MtSpecialNLoopFull: ftKb_Submotion = 437;
+pub const ftKb_SM_MtSpecialNCancel: ftKb_Submotion = 438;
+pub const ftKb_SM_MtSpecialNEnd: ftKb_Submotion = 439;
+pub const ftKb_SM_MtSpecialAirNStart: ftKb_Submotion = 440;
+pub const ftKb_SM_MtSpecialAirNLoop: ftKb_Submotion = 441;
+pub const ftKb_SM_MtSpecialAirNLoopFull: ftKb_Submotion = 442;
+pub const ftKb_SM_MtSpecialAirNCancel: ftKb_Submotion = 443;
+pub const ftKb_SM_MtSpecialAirNEnd: ftKb_Submotion = 444;
+pub const ftKb_SM_GwSpecialN: ftKb_Submotion = 445;
+pub const ftKb_SM_GwSpecialAirN: ftKb_Submotion = 446;
+pub const ftKb_SM_DrSpecialN: ftKb_Submotion = 447;
+pub const ftKb_SM_DrSpecialAirN: ftKb_Submotion = 448;
+pub const ftKb_SM_ClSpecialNStart: ftKb_Submotion = 449;
+pub const ftKb_SM_ClSpecialNLoop: ftKb_Submotion = 450;
+pub const ftKb_SM_ClSpecialNEnd: ftKb_Submotion = 451;
+pub const ftKb_SM_ClSpecialAirNStart: ftKb_Submotion = 452;
+pub const ftKb_SM_ClSpecialAirNLoop: ftKb_Submotion = 453;
+pub const ftKb_SM_ClSpecialAirNEnd: ftKb_Submotion = 454;
+pub const ftKb_SM_FcSpecialNStart: ftKb_Submotion = 455;
+pub const ftKb_SM_FcSpecialNLoop: ftKb_Submotion = 456;
+pub const ftKb_SM_FcSpecialNEnd: ftKb_Submotion = 457;
+pub const ftKb_SM_FcSpecialAirNStart: ftKb_Submotion = 458;
+pub const ftKb_SM_FcSpecialAirNLoop: ftKb_Submotion = 459;
+pub const ftKb_SM_FcSpecialAirNEnd: ftKb_Submotion = 460;
+pub const ftKb_SM_PcSpecialN: ftKb_Submotion = 461;
+pub const ftKb_SM_PcSpecialAirN: ftKb_Submotion = 462;
+pub const ftKb_SM_GnSpecialN: ftKb_Submotion = 463;
+pub const ftKb_SM_GnSpecialAirN: ftKb_Submotion = 464;
+pub const ftKb_SM_FeSpecialNStart: ftKb_Submotion = 465;
+pub const ftKb_SM_FeSpecialNLoop: ftKb_Submotion = 466;
+pub const ftKb_SM_FeSpecialNEnd0: ftKb_Submotion = 467;
+pub const ftKb_SM_FeSpecialNEnd1: ftKb_Submotion = 468;
+pub const ftKb_SM_FeSpecialAirNStart: ftKb_Submotion = 469;
+pub const ftKb_SM_FeSpecialAirNLoop: ftKb_Submotion = 470;
+pub const ftKb_SM_FeSpecialAirNEnd0: ftKb_Submotion = 471;
+pub const ftKb_SM_FeSpecialAirNEnd1: ftKb_Submotion = 472;
+pub const ftKb_SM_GkSpecialNStart: ftKb_Submotion = 473;
+pub const ftKb_SM_GkSpecialN: ftKb_Submotion = 474;
+pub const ftKb_SM_GkSpecialNEnd: ftKb_Submotion = 475;
+pub const ftKb_SM_GkSpecialAirNStart: ftKb_Submotion = 476;
+pub const ftKb_SM_GkSpecialAirN: ftKb_Submotion = 477;
+pub const ftKb_SM_GkSpecialAirNEnd: ftKb_Submotion = 478;
+pub const ftKb_SM_Count: ftKb_Submotion = 479;
+pub const ftKb_SM_SelfCount: ftKb_Submotion = 184;
+
+/// C enum `ftCrazyhand_MotionState` (src/melee/ft/kinds/ftCrazyHand/forward.h:6)
+pub type ftCrazyhand_MotionState = u32;
+pub const ftCh_MS_Count: ftCrazyhand_MotionState = 390;
+pub const ftCh_MS_SelfCount: ftCrazyhand_MotionState = 49;
+
+/// C enum `ftCh_Submotion` (src/melee/ft/kinds/ftCrazyHand/forward.h:11)
+pub type ftCh_Submotion = u32;
+pub const ftCh_SM_Wait1_0: ftCh_Submotion = 295;
+pub const ftCh_SM_Wait2_0: ftCh_Submotion = 296;
+pub const ftCh_SM_Slap: ftCh_Submotion = 297;
+pub const ftCh_SM_WaitSweep: ftCh_Submotion = 298;
+pub const ftCh_SM_SweepLoop: ftCh_Submotion = 299;
+pub const ftCh_SM_SweepWait: ftCh_Submotion = 300;
+pub const ftCh_SM_Writhe: ftCh_Submotion = 301;
+pub const ftCh_SM_SpiderWalkStart: ftCh_Submotion = 302;
+pub const ftCh_SM_SpiderWalkLoop: ftCh_Submotion = 303;
+pub const ftCh_SM_SpiderWalkEnd: ftCh_Submotion = 304;
+pub const ftCh_SM_RockCrushUp: ftCh_Submotion = 305;
+pub const ftCh_SM_RockCrushWait: ftCh_Submotion = 306;
+pub const ftCh_SM_RockCrushDown: ftCh_Submotion = 307;
+pub const ftCh_SM_PaperCrush: ftCh_Submotion = 308;
+pub const ftCh_SM_Poke1: ftCh_Submotion = 309;
+pub const ftCh_SM_Poke2: ftCh_Submotion = 310;
+pub const ftCh_SM_Drill: ftCh_Submotion = 311;
+pub const ftCh_SM_FingerBeamStart: ftCh_Submotion = 312;
+pub const ftCh_SM_FingerBeamLoop: ftCh_Submotion = 313;
+pub const ftCh_SM_FingerBeamEnd: ftCh_Submotion = 314;
+pub const ftCh_SM_FingerBomb: ftCh_Submotion = 315;
+pub const ftCh_SM_Wait1_1: ftCh_Submotion = 316;
+pub const ftCh_SM_Grab: ftCh_Submotion = 317;
+pub const ftCh_SM_Cancel: ftCh_Submotion = 318;
+pub const ftCh_SM_Squeezing0: ftCh_Submotion = 319;
+pub const ftCh_SM_Squeezing1: ftCh_Submotion = 320;
+pub const ftCh_SM_Squeeze: ftCh_Submotion = 321;
+pub const ftCh_SM_Throw: ftCh_Submotion = 322;
+pub const ftCh_SM_Slam: ftCh_Submotion = 323;
+pub const ftCh_SM_Fail: ftCh_Submotion = 324;
+pub const ftCh_SM_BackDisappear: ftCh_Submotion = 325;
+pub const ftCh_SM_BackPunch: ftCh_Submotion = 326;
+pub const ftCh_SM_BackCrush: ftCh_Submotion = 327;
+pub const ftCh_SM_BackAirplane1: ftCh_Submotion = 328;
+pub const ftCh_SM_BackAirplane2: ftCh_Submotion = 329;
+pub const ftCh_SM_BackAirplane3: ftCh_Submotion = 330;
+pub const ftCh_SM_TagCrush: ftCh_Submotion = 331;
+pub const ftCh_SM_TagApplaud: ftCh_Submotion = 332;
+pub const ftCh_SM_TagRockPaper: ftCh_Submotion = 333;
+pub const ftCh_SM_TagGrab: ftCh_Submotion = 334;
+pub const ftCh_SM_TagSqueeze: ftCh_Submotion = 335;
+pub const ftCh_SM_TagFail: ftCh_Submotion = 336;
+pub const ftCh_SM_TagCancel: ftCh_Submotion = 337;
+pub const ftCh_SM_Wait1_2: ftCh_Submotion = 338;
+pub const ftCh_SM_Damage: ftCh_Submotion = 339;
+pub const ftCh_SM_Damage2: ftCh_Submotion = 340;
+pub const ftCh_SM_Entry: ftCh_Submotion = 341;
+pub const ftCh_SM_Wait1_3: ftCh_Submotion = 342;
+pub const ftCh_SM_Wait2_1: ftCh_Submotion = 343;
+pub const ftCh_SM_Count: ftCh_Submotion = 344;
+pub const ftCh_SM_SelfCount: ftCh_Submotion = 49;
+
+/// C enum `ftDk_MotionState` (src/melee/ft/kinds/ftDonkey/forward.h:99)
+pub type ftDk_MotionState = u32;
+pub const ftDk_MS_HeavyWait: ftDk_MotionState = 341;
+pub const ftDk_MS_HeavyWalkSlow: ftDk_MotionState = 342;
+pub const ftDk_MS_HeavyWalkMiddle: ftDk_MotionState = 343;
+pub const ftDk_MS_HeavyWalkFast: ftDk_MotionState = 344;
+pub const ftDk_MS_HeavyTurn: ftDk_MotionState = 345;
+pub const ftDk_MS_HeavyKneebend: ftDk_MotionState = 346;
+pub const ftDk_MS_HeavyFall: ftDk_MotionState = 347;
+pub const ftDk_MS_HeavyJump: ftDk_MotionState = 348;
+pub const ftDk_MS_HeavyLanding: ftDk_MotionState = 349;
+pub const ftDk_MS_HeavyWait2: ftDk_MotionState = 350;
+pub const ftDk_MS_ThrowFWait0: ftDk_MotionState = 351;
+pub const ftDk_MS_ThrowFWalkSlow: ftDk_MotionState = 352;
+pub const ftDk_MS_ThrowFWalkMiddle: ftDk_MotionState = 353;
+pub const ftDk_MS_ThrowFWalkFast: ftDk_MotionState = 354;
+pub const ftDk_MS_ThrowFTurn: ftDk_MotionState = 355;
+pub const ftDk_MS_ThrowFKneebend: ftDk_MotionState = 356;
+pub const ftDk_MS_ThrowFFall: ftDk_MotionState = 357;
+pub const ftDk_MS_ThrowFJump: ftDk_MotionState = 358;
+pub const ftDk_MS_ThrowFLanding: ftDk_MotionState = 359;
+pub const ftDk_MS_ThrowFWait2: ftDk_MotionState = 360;
+pub const ftDk_MS_ThrowFF: ftDk_MotionState = 361;
+pub const ftDk_MS_ThrowFB: ftDk_MotionState = 362;
+pub const ftDk_MS_ThrowFHi: ftDk_MotionState = 363;
+pub const ftDk_MS_ThrowFLw: ftDk_MotionState = 364;
+pub const ftDk_MS_ThrowAirFF: ftDk_MotionState = 365;
+pub const ftDk_MS_ThrowAirFB: ftDk_MotionState = 366;
+pub const ftDk_MS_ThrowAirFHi: ftDk_MotionState = 367;
+pub const ftDk_MS_ThrowAirFLw: ftDk_MotionState = 368;
+pub const ftDk_MS_SpecialNStart: ftDk_MotionState = 369;
+pub const ftDk_MS_SpecialNLoop: ftDk_MotionState = 370;
+pub const ftDk_MS_SpecialNCancel: ftDk_MotionState = 371;
+pub const ftDk_MS_SpecialN: ftDk_MotionState = 372;
+pub const ftDk_MS_SpecialNFull: ftDk_MotionState = 373;
+pub const ftDk_MS_SpecialAirNStart: ftDk_MotionState = 374;
+pub const ftDk_MS_SpecialAirNLoop: ftDk_MotionState = 375;
+pub const ftDk_MS_SpecialAirNCancel: ftDk_MotionState = 376;
+pub const ftDk_MS_SpecialAirN: ftDk_MotionState = 377;
+pub const ftDk_MS_SpecialAirNFull: ftDk_MotionState = 378;
+pub const ftDk_MS_SpecialS: ftDk_MotionState = 379;
+pub const ftDk_MS_SpecialAirS: ftDk_MotionState = 380;
+pub const ftDk_MS_SpecialHi: ftDk_MotionState = 381;
+pub const ftDk_MS_SpecialAirHi: ftDk_MotionState = 382;
+pub const ftDk_MS_SpecialLwStart: ftDk_MotionState = 383;
+pub const ftDk_MS_SpecialLwLoop: ftDk_MotionState = 384;
+pub const ftDk_MS_SpecialLwEnd0: ftDk_MotionState = 385;
+pub const ftDk_MS_SpecialLwEnd1: ftDk_MotionState = 386;
+pub const ftDk_MS_Count: ftDk_MotionState = 387;
+pub const ftDk_MS_SelfCount: ftDk_MotionState = 46;
+
+/// C enum `ftDk_Submotion` (src/melee/ft/kinds/ftDonkey/forward.h:150)
+pub type ftDk_Submotion = u32;
+pub const ftDk_SM_HeavyWait: ftDk_Submotion = 295;
+pub const ftDk_SM_HeavyWalkSlow: ftDk_Submotion = 296;
+pub const ftDk_SM_HeavyWalkMiddle: ftDk_Submotion = 297;
+pub const ftDk_SM_HeavyWalkFast: ftDk_Submotion = 298;
+pub const ftDk_SM_HeavyTurn: ftDk_Submotion = 299;
+pub const ftDk_SM_HeavyKneebend: ftDk_Submotion = 300;
+pub const ftDk_SM_HeavyFall: ftDk_Submotion = 301;
+pub const ftDk_SM_HeavyJump: ftDk_Submotion = 302;
+pub const ftDk_SM_HeavyLanding: ftDk_Submotion = 303;
+pub const ftDk_SM_HeavyWait2: ftDk_Submotion = 304;
+pub const ftDk_SM_ThrowFWait0: ftDk_Submotion = 305;
+pub const ftDk_SM_ThrowFWalkSlow: ftDk_Submotion = 306;
+pub const ftDk_SM_ThrowFWalkMiddle: ftDk_Submotion = 307;
+pub const ftDk_SM_ThrowFWalkFast: ftDk_Submotion = 308;
+pub const ftDk_SM_ThrowFTurn: ftDk_Submotion = 309;
+pub const ftDk_SM_ThrowFKneebend: ftDk_Submotion = 310;
+pub const ftDk_SM_ThrowFFall: ftDk_Submotion = 311;
+pub const ftDk_SM_ThrowFJump: ftDk_Submotion = 312;
+pub const ftDk_SM_ThrowFLanding: ftDk_Submotion = 313;
+pub const ftDk_SM_ThrowFWait2: ftDk_Submotion = 314;
+pub const ftDk_SM_ThrowFF: ftDk_Submotion = 315;
+pub const ftDk_SM_ThrowFB: ftDk_Submotion = 316;
+pub const ftDk_SM_ThrowFHi: ftDk_Submotion = 317;
+pub const ftDk_SM_ThrowFLw: ftDk_Submotion = 318;
+pub const ftDk_SM_SpecialNStart: ftDk_Submotion = 319;
+pub const ftDk_SM_SpecialNLoop: ftDk_Submotion = 320;
+pub const ftDk_SM_SpecialNCancel: ftDk_Submotion = 321;
+pub const ftDk_SM_SpecialN: ftDk_Submotion = 322;
+pub const ftDk_SM_SpecialNFull: ftDk_Submotion = 323;
+pub const ftDk_SM_SpecialAirNStart: ftDk_Submotion = 324;
+pub const ftDk_SM_SpecialAirNLoop: ftDk_Submotion = 325;
+pub const ftDk_SM_SpecialAirNCancel: ftDk_Submotion = 326;
+pub const ftDk_SM_SpecialAirN: ftDk_Submotion = 327;
+pub const ftDk_SM_SpecialAirNFull: ftDk_Submotion = 328;
+pub const ftDk_SM_SpecialS: ftDk_Submotion = 329;
+pub const ftDk_SM_SpecialAirS: ftDk_Submotion = 330;
+pub const ftDk_SM_SpecialHi: ftDk_Submotion = 331;
+pub const ftDk_SM_SpecialAirHi: ftDk_Submotion = 332;
+pub const ftDk_SM_SpecialLwStart: ftDk_Submotion = 333;
+pub const ftDk_SM_SpecialLwLoop: ftDk_Submotion = 334;
+pub const ftDk_SM_SpecialLwEnd0: ftDk_Submotion = 335;
+pub const ftDk_SM_SpecialLwEnd1: ftDk_Submotion = 336;
+pub const ftDk_SM_Count: ftDk_Submotion = 337;
+pub const ftDk_SM_SelfCount: ftDk_Submotion = 42;
+
+/// C enum `ftMars_MotionState` (src/melee/ft/kinds/ftMars/forward.h:34)
+pub type ftMars_MotionState = u32;
+pub const ftMs_MS_SpecialNStart: ftMars_MotionState = 341;
+pub const ftMs_MS_SpecialNLoop: ftMars_MotionState = 342;
+pub const ftMs_MS_SpecialNEnd0: ftMars_MotionState = 343;
+pub const ftMs_MS_SpecialNEnd1: ftMars_MotionState = 344;
+pub const ftMs_MS_SpecialAirNStart: ftMars_MotionState = 345;
+pub const ftMs_MS_SpecialAirNLoop: ftMars_MotionState = 346;
+pub const ftMs_MS_SpecialAirNEnd0: ftMars_MotionState = 347;
+pub const ftMs_MS_SpecialAirNEnd1: ftMars_MotionState = 348;
+pub const ftMs_MS_SpecialS1: ftMars_MotionState = 349;
+pub const ftMs_MS_SpecialS2Hi: ftMars_MotionState = 350;
+pub const ftMs_MS_SpecialS2Lw: ftMars_MotionState = 351;
+pub const ftMs_MS_SpecialS3Hi: ftMars_MotionState = 352;
+pub const ftMs_MS_SpecialS3S: ftMars_MotionState = 353;
+pub const ftMs_MS_SpecialS3Lw: ftMars_MotionState = 354;
+pub const ftMs_MS_SpecialS4Hi: ftMars_MotionState = 355;
+pub const ftMs_MS_SpecialS4S: ftMars_MotionState = 356;
+pub const ftMs_MS_SpecialS4Lw: ftMars_MotionState = 357;
+pub const ftMs_MS_SpecialAirS1: ftMars_MotionState = 358;
+pub const ftMs_MS_SpecialAirS2Hi: ftMars_MotionState = 359;
+pub const ftMs_MS_SpecialAirS2Lw: ftMars_MotionState = 360;
+pub const ftMs_MS_SpecialAirS3Hi: ftMars_MotionState = 361;
+pub const ftMs_MS_SpecialAirS3S: ftMars_MotionState = 362;
+pub const ftMs_MS_SpecialAirS3Lw: ftMars_MotionState = 363;
+pub const ftMs_MS_SpecialAirS4Hi: ftMars_MotionState = 364;
+pub const ftMs_MS_SpecialAirS4S: ftMars_MotionState = 365;
+pub const ftMs_MS_SpecialAirS4Lw: ftMars_MotionState = 366;
+pub const ftMs_MS_SpecialHi: ftMars_MotionState = 367;
+pub const ftMs_MS_SpecialAirHi: ftMars_MotionState = 368;
+pub const ftMs_MS_SpecialLw: ftMars_MotionState = 369;
+pub const ftMs_MS_SpecialLwHit: ftMars_MotionState = 370;
+pub const ftMs_MS_SpecialAirLw: ftMars_MotionState = 371;
+pub const ftMs_MS_SpecialAirLwHit: ftMars_MotionState = 372;
+pub const ftMs_MS_Count: ftMars_MotionState = 373;
+pub const ftMs_MS_SelfCount: ftMars_MotionState = 32;
+
+/// C enum `ftMs_Submotion` (src/melee/ft/kinds/ftMars/forward.h:71)
+pub type ftMs_Submotion = u32;
+pub const ftMs_SM_SpecialNStart: ftMs_Submotion = 295;
+pub const ftMs_SM_SpecialNLoop: ftMs_Submotion = 296;
+pub const ftMs_SM_SpecialNEnd0: ftMs_Submotion = 297;
+pub const ftMs_SM_SpecialNEnd1: ftMs_Submotion = 298;
+pub const ftMs_SM_SpecialAirNStart: ftMs_Submotion = 299;
+pub const ftMs_SM_SpecialAirNLoop: ftMs_Submotion = 300;
+pub const ftMs_SM_SpecialAirNEnd0: ftMs_Submotion = 301;
+pub const ftMs_SM_SpecialAirNEnd1: ftMs_Submotion = 302;
+pub const ftMs_SM_SpecialS1: ftMs_Submotion = 303;
+pub const ftMs_SM_SpecialS2Hi: ftMs_Submotion = 304;
+pub const ftMs_SM_SpecialS2Lw: ftMs_Submotion = 305;
+pub const ftMs_SM_SpecialS3Hi: ftMs_Submotion = 306;
+pub const ftMs_SM_SpecialS3S: ftMs_Submotion = 307;
+pub const ftMs_SM_SpecialS3Lw: ftMs_Submotion = 308;
+pub const ftMs_SM_SpecialS4Hi: ftMs_Submotion = 309;
+pub const ftMs_SM_SpecialS4S: ftMs_Submotion = 310;
+pub const ftMs_SM_SpecialS4Lw: ftMs_Submotion = 311;
+pub const ftMs_SM_SpecialAirS1: ftMs_Submotion = 312;
+pub const ftMs_SM_SpecialAirS2Hi: ftMs_Submotion = 313;
+pub const ftMs_SM_SpecialAirS2Lw: ftMs_Submotion = 314;
+pub const ftMs_SM_SpecialAirS3Hi: ftMs_Submotion = 315;
+pub const ftMs_SM_SpecialAirS3S: ftMs_Submotion = 316;
+pub const ftMs_SM_SpecialAirS3Lw: ftMs_Submotion = 317;
+pub const ftMs_SM_SpecialAirS4Hi: ftMs_Submotion = 318;
+pub const ftMs_SM_SpecialAirS4S: ftMs_Submotion = 319;
+pub const ftMs_SM_SpecialAirS4Lw: ftMs_Submotion = 320;
+pub const ftMs_SM_SpecialHi: ftMs_Submotion = 321;
+pub const ftMs_SM_SpecialAirHi: ftMs_Submotion = 322;
+pub const ftMs_SM_SpecialLw: ftMs_Submotion = 323;
+pub const ftMs_SM_SpecialLwHit: ftMs_Submotion = 324;
+pub const ftMs_SM_SpecialAirLw: ftMs_Submotion = 325;
+pub const ftMs_SM_SpecialAirLwHit: ftMs_Submotion = 326;
+pub const ftMs_SM_Count: ftMs_Submotion = 327;
+pub const ftMs_SM_SelfCount: ftMs_Submotion = 32;
+
+/// C enum `ftKoopa_MotionState` (src/melee/ft/kinds/ftKoopa/forward.h:39)
+pub type ftKoopa_MotionState = u32;
+pub const ftKp_MS_SpecialNStart: ftKoopa_MotionState = 341;
+pub const ftKp_MS_SpecialN: ftKoopa_MotionState = 342;
+pub const ftKp_MS_SpecialNEnd: ftKoopa_MotionState = 343;
+pub const ftKp_MS_SpecialAirNStart: ftKoopa_MotionState = 344;
+pub const ftKp_MS_SpecialAirN: ftKoopa_MotionState = 345;
+pub const ftKp_MS_SpecialAirNEnd: ftKoopa_MotionState = 346;
+pub const ftKp_MS_SpecialSStart: ftKoopa_MotionState = 347;
+pub const ftKp_MS_SpecialSHit0_0: ftKoopa_MotionState = 348;
+pub const ftKp_MS_SpecialSHit1: ftKoopa_MotionState = 349;
+pub const ftKp_MS_SpecialSHit0_1: ftKoopa_MotionState = 350;
+pub const ftKp_MS_SpecialSEndF: ftKoopa_MotionState = 351;
+pub const ftKp_MS_SpecialSEndB: ftKoopa_MotionState = 352;
+pub const ftKp_MS_SpecialAirSStart: ftKoopa_MotionState = 353;
+pub const ftKp_MS_SpecialAirSHit0_0: ftKoopa_MotionState = 354;
+pub const ftKp_MS_SpecialAirSHit1: ftKoopa_MotionState = 355;
+pub const ftKp_MS_SpecialAirSHit0_1: ftKoopa_MotionState = 356;
+pub const ftKp_MS_SpecialAirSEndF: ftKoopa_MotionState = 357;
+pub const ftKp_MS_SpecialAirSEndB: ftKoopa_MotionState = 358;
+pub const ftKp_MS_SpecialHi: ftKoopa_MotionState = 359;
+pub const ftKp_MS_SpecialAirHi: ftKoopa_MotionState = 360;
+pub const ftKp_MS_SpecialLw: ftKoopa_MotionState = 361;
+pub const ftKp_MS_SpecialAirLw: ftKoopa_MotionState = 362;
+pub const ftKp_MS_SpecialLwLanding: ftKoopa_MotionState = 363;
+pub const ftKp_MS_Count: ftKoopa_MotionState = 364;
+pub const ftKp_MS_SelfCount: ftKoopa_MotionState = 23;
+
+/// C enum `ftKp_Submotion` (src/melee/ft/kinds/ftKoopa/forward.h:67)
+pub type ftKp_Submotion = u32;
+pub const ftKp_SM_SpecialNStart: ftKp_Submotion = 295;
+pub const ftKp_SM_SpecialN: ftKp_Submotion = 296;
+pub const ftKp_SM_SpecialNEnd: ftKp_Submotion = 297;
+pub const ftKp_SM_SpecialAirNStart: ftKp_Submotion = 298;
+pub const ftKp_SM_SpecialAirN: ftKp_Submotion = 299;
+pub const ftKp_SM_SpecialAirNEnd: ftKp_Submotion = 300;
+pub const ftKp_SM_SpecialSStart: ftKp_Submotion = 301;
+pub const ftKp_SM_SpecialSHit0: ftKp_Submotion = 302;
+pub const ftKp_SM_SpecialSHit1: ftKp_Submotion = 303;
+pub const ftKp_SM_SpecialSEndF: ftKp_Submotion = 304;
+pub const ftKp_SM_SpecialSEndB: ftKp_Submotion = 305;
+pub const ftKp_SM_SpecialAirSStart: ftKp_Submotion = 306;
+pub const ftKp_SM_SpecialAirSHit0: ftKp_Submotion = 307;
+pub const ftKp_SM_SpecialAirSHit1: ftKp_Submotion = 308;
+pub const ftKp_SM_SpecialAirSEndF: ftKp_Submotion = 309;
+pub const ftKp_SM_SpecialAirSEndB: ftKp_Submotion = 310;
+pub const ftKp_SM_SpecialHi: ftKp_Submotion = 311;
+pub const ftKp_SM_SpecialAirHi: ftKp_Submotion = 312;
+pub const ftKp_SM_SpecialLw: ftKp_Submotion = 313;
+pub const ftKp_SM_SpecialAirLw: ftKp_Submotion = 314;
+pub const ftKp_SM_SpecialLwLanding: ftKp_Submotion = 315;
+pub const ftKp_SM_Count: ftKp_Submotion = 316;
+pub const ftKp_SM_SelfCount: ftKp_Submotion = 21;
+
+/// C enum `ftLuigi_MotionState` (src/melee/ft/kinds/ftLuigi/forward.h:38)
+pub type ftLuigi_MotionState = u32;
+pub const ftLg_MS_SpecialN: ftLuigi_MotionState = 341;
+pub const ftLg_MS_SpecialAirN: ftLuigi_MotionState = 342;
+pub const ftLg_MS_SpecialSStart: ftLuigi_MotionState = 343;
+pub const ftLg_MS_SpecialSHold: ftLuigi_MotionState = 344;
+pub const ftLg_MS_SpecialS2: ftLuigi_MotionState = 345;
+pub const ftLg_MS_SpecialSEnd: ftLuigi_MotionState = 346;
+pub const ftLg_MS_SpecialS: ftLuigi_MotionState = 347;
+pub const ftLg_MS_SpecialSMisfire: ftLuigi_MotionState = 348;
+pub const ftLg_MS_SpecialAirSStart: ftLuigi_MotionState = 349;
+pub const ftLg_MS_SpecialAirSHold: ftLuigi_MotionState = 350;
+pub const ftLg_MS_SpecialAirS2: ftLuigi_MotionState = 351;
+pub const ftLg_MS_SpecialAirSEnd: ftLuigi_MotionState = 352;
+pub const ftLg_MS_SpecialAirS: ftLuigi_MotionState = 353;
+pub const ftLg_MS_SpecialAirSMisfire: ftLuigi_MotionState = 354;
+pub const ftLg_MS_SpecialHi: ftLuigi_MotionState = 355;
+pub const ftLg_MS_SpecialAirHi: ftLuigi_MotionState = 356;
+pub const ftLg_MS_SpecialLw: ftLuigi_MotionState = 357;
+pub const ftLg_MS_SpecialAirLw: ftLuigi_MotionState = 358;
+pub const ftLg_MS_Count: ftLuigi_MotionState = 359;
+pub const ftLg_MS_SelfCount: ftLuigi_MotionState = 18;
+
+/// C enum `ftLg_Submotion` (src/melee/ft/kinds/ftLuigi/forward.h:61)
+pub type ftLg_Submotion = u32;
+pub const ftLg_SM_SpecialN: ftLg_Submotion = 295;
+pub const ftLg_SM_SpecialAirN: ftLg_Submotion = 296;
+pub const ftLg_SM_SpecialSStart: ftLg_Submotion = 297;
+pub const ftLg_SM_SpecialSHold: ftLg_Submotion = 298;
+pub const ftLg_SM_SpecialS: ftLg_Submotion = 299;
+pub const ftLg_SM_SpecialSMisfire: ftLg_Submotion = 300;
+pub const ftLg_SM_SpecialS2: ftLg_Submotion = 301;
+pub const ftLg_SM_SpecialSEnd: ftLg_Submotion = 302;
+pub const ftLg_SM_SpecialAirSStart: ftLg_Submotion = 303;
+pub const ftLg_SM_SpecialAirSHold: ftLg_Submotion = 304;
+pub const ftLg_SM_SpecialAirS: ftLg_Submotion = 305;
+pub const ftLg_SM_SpecialAirSMisfire: ftLg_Submotion = 306;
+pub const ftLg_SM_SpecialAirSEnd: ftLg_Submotion = 307;
+pub const ftLg_SM_SpecialHi: ftLg_Submotion = 308;
+pub const ftLg_SM_SpecialAirHi: ftLg_Submotion = 309;
+pub const ftLg_SM_SpecialLw: ftLg_Submotion = 310;
+pub const ftLg_SM_SpecialAirLw: ftLg_Submotion = 311;
+pub const ftLg_SM_Count: ftLg_Submotion = 312;
+pub const ftLg_SM_SelfCount: ftLg_Submotion = 17;
+
+/// C enum `ftMewtwo_MotionState` (src/melee/ft/kinds/ftMewtwo/forward.h:46)
+pub type ftMewtwo_MotionState = u32;
+pub const ftMt_MS_SpecialNStart: ftMewtwo_MotionState = 341;
+pub const ftMt_MS_SpecialNLoop: ftMewtwo_MotionState = 342;
+pub const ftMt_MS_SpecialNLoopFull: ftMewtwo_MotionState = 343;
+pub const ftMt_MS_SpecialNCancel: ftMewtwo_MotionState = 344;
+pub const ftMt_MS_SpecialNEnd: ftMewtwo_MotionState = 345;
+pub const ftMt_MS_SpecialAirNStart: ftMewtwo_MotionState = 346;
+pub const ftMt_MS_SpecialAirNLoop: ftMewtwo_MotionState = 347;
+pub const ftMt_MS_SpecialAirNLoopFull: ftMewtwo_MotionState = 348;
+pub const ftMt_MS_SpecialAirNCancel: ftMewtwo_MotionState = 349;
+pub const ftMt_MS_SpecialAirNEnd: ftMewtwo_MotionState = 350;
+pub const ftMt_MS_SpecialS: ftMewtwo_MotionState = 351;
+pub const ftMt_MS_SpecialAirS: ftMewtwo_MotionState = 352;
+pub const ftMt_MS_SpecialHiStart: ftMewtwo_MotionState = 353;
+pub const ftMt_MS_SpecialHiLost: ftMewtwo_MotionState = 354;
+pub const ftMt_MS_SpecialHi: ftMewtwo_MotionState = 355;
+pub const ftMt_MS_SpecialAirHiStart: ftMewtwo_MotionState = 356;
+pub const ftMt_MS_SpecialAirHiLost: ftMewtwo_MotionState = 357;
+pub const ftMt_MS_SpecialAirHi: ftMewtwo_MotionState = 358;
+pub const ftMt_MS_SpecialLw: ftMewtwo_MotionState = 359;
+pub const ftMt_MS_SpecialAirLw: ftMewtwo_MotionState = 360;
+pub const ftMt_MS_Count: ftMewtwo_MotionState = 361;
+pub const ftMt_MS_SelfCount: ftMewtwo_MotionState = 20;
+
+/// C enum `ftMt_Submotion` (src/melee/ft/kinds/ftMewtwo/forward.h:71)
+pub type ftMt_Submotion = u32;
+pub const ftMt_SM_SpecialNStart: ftMt_Submotion = 295;
+pub const ftMt_SM_SpecialNLoop: ftMt_Submotion = 296;
+pub const ftMt_SM_SpecialNLoopFull: ftMt_Submotion = 297;
+pub const ftMt_SM_SpecialNCancel: ftMt_Submotion = 298;
+pub const ftMt_SM_SpecialNEnd: ftMt_Submotion = 299;
+pub const ftMt_SM_SpecialAirNStart: ftMt_Submotion = 300;
+pub const ftMt_SM_SpecialAirNLoop: ftMt_Submotion = 301;
+pub const ftMt_SM_SpecialAirNLoopFull: ftMt_Submotion = 302;
+pub const ftMt_SM_SpecialAirNCancel: ftMt_Submotion = 303;
+pub const ftMt_SM_SpecialAirNEnd: ftMt_Submotion = 304;
+pub const ftMt_SM_SpecialS: ftMt_Submotion = 305;
+pub const ftMt_SM_SpecialAirS: ftMt_Submotion = 306;
+pub const ftMt_SM_SpecialHiStart: ftMt_Submotion = 307;
+pub const ftMt_SM_SpecialHi: ftMt_Submotion = 308;
+pub const ftMt_SM_SpecialHiLost: ftMt_Submotion = 309;
+pub const ftMt_SM_SpecialAirHiStart: ftMt_Submotion = 310;
+pub const ftMt_SM_SpecialAirHi: ftMt_Submotion = 311;
+pub const ftMt_SM_SpecialLw: ftMt_Submotion = 312;
+pub const ftMt_SM_SpecialAirLw: ftMt_Submotion = 313;
+pub const ftMt_SM_Count: ftMt_Submotion = 314;
+pub const ftMt_SM_SelfCount: ftMt_Submotion = 19;
+
+/// C enum `ftPopo_MotionState` (src/melee/ft/kinds/ftPopo/forward.h:44)
+pub type ftPopo_MotionState = u32;
+pub const ftPp_MS_SpecialN: ftPopo_MotionState = 341;
+pub const ftPp_MS_SpecialAirN: ftPopo_MotionState = 342;
+pub const ftPp_MS_SpecialS1: ftPopo_MotionState = 343;
+pub const ftPp_MS_SpecialS2: ftPopo_MotionState = 344;
+pub const ftPp_MS_SpecialAirS1: ftPopo_MotionState = 345;
+pub const ftPp_MS_SpecialAirS2: ftPopo_MotionState = 346;
+pub const ftPp_MS_SpecialHiStart_0: ftPopo_MotionState = 347;
+pub const ftPp_MS_SpecialHiThrow_0: ftPopo_MotionState = 348;
+pub const ftPp_MS_SpecialHiThrow2: ftPopo_MotionState = 349;
+pub const ftPp_MS_SpecialHiStart_1: ftPopo_MotionState = 350;
+pub const ftPp_MS_SpecialHiThrow_1: ftPopo_MotionState = 351;
+pub const ftPp_MS_SpecialAirHiStart_0: ftPopo_MotionState = 352;
+pub const ftPp_MS_SpecialAirHiThrow_0: ftPopo_MotionState = 353;
+pub const ftPp_MS_SpecialAirHiThrow2: ftPopo_MotionState = 354;
+pub const ftPp_MS_SpecialAirHiStart_1: ftPopo_MotionState = 355;
+pub const ftPp_MS_SpecialAirHiThrow_1: ftPopo_MotionState = 356;
+pub const ftPp_MS_SpecialLw: ftPopo_MotionState = 357;
+pub const ftPp_MS_SpecialAirLw: ftPopo_MotionState = 358;
+pub const ftPp_MS_SpecialS_0: ftPopo_MotionState = 359;
+pub const ftPp_MS_SpecialS_1: ftPopo_MotionState = 360;
+pub const ftPp_MS_SpecialHi_0: ftPopo_MotionState = 361;
+pub const ftPp_MS_SpecialHi_1: ftPopo_MotionState = 362;
+pub const ftPp_MS_SpecialHi_2: ftPopo_MotionState = 363;
+pub const ftPp_MS_SpecialHi_3: ftPopo_MotionState = 364;
+pub const ftPp_MS_SpecialHi_4: ftPopo_MotionState = 365;
+pub const ftPp_MS_SpecialHi_5: ftPopo_MotionState = 366;
+pub const ftPp_MS_Count: ftPopo_MotionState = 367;
+pub const ftPp_MS_SelfCount: ftPopo_MotionState = 26;
+
+/// C enum `ftPp_Submotion` (src/melee/ft/kinds/ftPopo/forward.h:75)
+pub type ftPp_Submotion = u32;
+pub const ftPp_SM_SpecialN: ftPp_Submotion = 295;
+pub const ftPp_SM_SpecialAirN: ftPp_Submotion = 296;
+pub const ftPp_SM_SpecialS1: ftPp_Submotion = 297;
+pub const ftPp_SM_SpecialS2: ftPp_Submotion = 298;
+pub const ftPp_SM_SpecialAirS1: ftPp_Submotion = 299;
+pub const ftPp_SM_SpecialAirS2: ftPp_Submotion = 300;
+pub const ftPp_SM_SpecialHiStart_0: ftPp_Submotion = 301;
+pub const ftPp_SM_SpecialHiThrow_0: ftPp_Submotion = 302;
+pub const ftPp_SM_SpecialHiThrow2: ftPp_Submotion = 303;
+pub const ftPp_SM_SpecialHiStart_1: ftPp_Submotion = 304;
+pub const ftPp_SM_SpecialHiThrow_1: ftPp_Submotion = 305;
+pub const ftPp_SM_SpecialAirHiStart_0: ftPp_Submotion = 306;
+pub const ftPp_SM_SpecialAirHiThrow_0: ftPp_Submotion = 307;
+pub const ftPp_SM_SpecialAirHiThrow2: ftPp_Submotion = 308;
+pub const ftPp_SM_SpecialAirHiStart_1: ftPp_Submotion = 309;
+pub const ftPp_SM_SpecialAirHiThrow_1: ftPp_Submotion = 310;
+pub const ftPp_SM_SpecialLw: ftPp_Submotion = 311;
+pub const ftPp_SM_SpecialAirLw: ftPp_Submotion = 312;
+pub const ftPp_SM_SpecialS_0: ftPp_Submotion = 313;
+pub const ftPp_SM_SpecialS_1: ftPp_Submotion = 314;
+pub const ftPp_SM_SpecialHi_0: ftPp_Submotion = 315;
+pub const ftPp_SM_SpecialHi_1: ftPp_Submotion = 316;
+pub const ftPp_SM_SpecialHi_2: ftPp_Submotion = 317;
+pub const ftPp_SM_SpecialHi_3: ftPp_Submotion = 318;
+pub const ftPp_SM_SpecialHi_4: ftPp_Submotion = 319;
+pub const ftPp_SM_SpecialHi_5: ftPp_Submotion = 320;
+pub const ftPp_SM_Count: ftPp_Submotion = 321;
+pub const ftPp_SM_SelfCount: ftPp_Submotion = 26;
+
+/// C enum `ftPikachu_MotionState` (src/melee/ft/kinds/ftPikachu/forward.h:54)
+pub type ftPikachu_MotionState = u32;
+pub const ftPk_MS_SpecialN: ftPikachu_MotionState = 341;
+pub const ftPk_MS_SpecialAirN: ftPikachu_MotionState = 342;
+pub const ftPk_MS_SpecialSStart: ftPikachu_MotionState = 343;
+pub const ftPk_MS_SpecialSHold: ftPikachu_MotionState = 344;
+pub const ftPk_MS_SpecialS1: ftPikachu_MotionState = 345;
+pub const ftPk_MS_SpecialSEnd: ftPikachu_MotionState = 346;
+pub const ftPk_MS_SpecialS0: ftPikachu_MotionState = 347;
+pub const ftPk_MS_SpecialAirSStart: ftPikachu_MotionState = 348;
+pub const ftPk_MS_SpecialAirSHold: ftPikachu_MotionState = 349;
+pub const ftPk_MS_SpecialAirS1: ftPikachu_MotionState = 350;
+pub const ftPk_MS_SpecialAirSEnd: ftPikachu_MotionState = 351;
+pub const ftPk_MS_SpecialAirS0: ftPikachu_MotionState = 352;
+pub const ftPk_MS_SpecialHiStart0: ftPikachu_MotionState = 353;
+pub const ftPk_MS_SpecialHiStart1: ftPikachu_MotionState = 354;
+pub const ftPk_MS_SpecialHiEnd: ftPikachu_MotionState = 355;
+pub const ftPk_MS_SpecialAirHiStart0: ftPikachu_MotionState = 356;
+pub const ftPk_MS_SpecialAirHiStart1: ftPikachu_MotionState = 357;
+pub const ftPk_MS_SpecialAirHiEnd: ftPikachu_MotionState = 358;
+pub const ftPk_MS_SpecialLwStart: ftPikachu_MotionState = 359;
+pub const ftPk_MS_SpecialLwLoop0: ftPikachu_MotionState = 360;
+pub const ftPk_MS_SpecialLwLoop1: ftPikachu_MotionState = 361;
+pub const ftPk_MS_SpecialLwEnd: ftPikachu_MotionState = 362;
+pub const ftPk_MS_SpecialAirLwStart: ftPikachu_MotionState = 363;
+pub const ftPk_MS_SpecialAirLwLoop0: ftPikachu_MotionState = 364;
+pub const ftPk_MS_SpecialAirLwLoop1: ftPikachu_MotionState = 365;
+pub const ftPk_MS_SpecialAirLwEnd: ftPikachu_MotionState = 366;
+pub const ftPk_MS_Count: ftPikachu_MotionState = 367;
+pub const ftPk_MS_SelfCount: ftPikachu_MotionState = 26;
+
+/// C enum `ftPk_Submotion` (src/melee/ft/kinds/ftPikachu/forward.h:85)
+pub type ftPk_Submotion = u32;
+pub const ftPk_SM_SpecialN: ftPk_Submotion = 295;
+pub const ftPk_SM_SpecialAirN: ftPk_Submotion = 296;
+pub const ftPk_SM_SpecialSStart: ftPk_Submotion = 297;
+pub const ftPk_SM_SpecialSHold: ftPk_Submotion = 298;
+pub const ftPk_SM_SpecialS0: ftPk_Submotion = 299;
+pub const ftPk_SM_SpecialS1: ftPk_Submotion = 300;
+pub const ftPk_SM_SpecialSEnd: ftPk_Submotion = 301;
+pub const ftPk_SM_SpecialAirSStart: ftPk_Submotion = 302;
+pub const ftPk_SM_SpecialAirSHold: ftPk_Submotion = 303;
+pub const ftPk_SM_SpecialS: ftPk_Submotion = 304;
+pub const ftPk_SM_SpecialAirSEnd: ftPk_Submotion = 305;
+pub const ftPk_SM_SpecialHiStart0: ftPk_Submotion = 306;
+pub const ftPk_SM_SpecialHiStart1: ftPk_Submotion = 307;
+pub const ftPk_SM_SpecialHiEnd: ftPk_Submotion = 308;
+pub const ftPk_SM_SpecialAirHiStart0: ftPk_Submotion = 309;
+pub const ftPk_SM_SpecialAirHiStart1: ftPk_Submotion = 310;
+pub const ftPk_SM_SpecialAirHiEnd: ftPk_Submotion = 311;
+pub const ftPk_SM_SpecialLwStart: ftPk_Submotion = 312;
+pub const ftPk_SM_SpecialLwLoop0: ftPk_Submotion = 313;
+pub const ftPk_SM_SpecialLwLoop1: ftPk_Submotion = 314;
+pub const ftPk_SM_SpecialLwEnd: ftPk_Submotion = 315;
+pub const ftPk_SM_SpecialAirLwStart: ftPk_Submotion = 316;
+pub const ftPk_SM_SpecialAirLwLoop0: ftPk_Submotion = 317;
+pub const ftPk_SM_SpecialAirLwLoop1: ftPk_Submotion = 318;
+pub const ftPk_SM_SpecialAirLwEnd: ftPk_Submotion = 319;
+pub const ftPk_SM_Count: ftPk_Submotion = 320;
+pub const ftPk_SM_SelfCount: ftPk_Submotion = 25;
+
+/// C enum `ftPk_SpecialN_CmdVars` (src/melee/ft/kinds/ftPikachu/forward.h:115)
+pub type ftPk_SpecialN_CmdVars = u32;
+pub const ftPk_SpecialN_Cmd0: ftPk_SpecialN_CmdVars = 0;
+pub const ftPk_SpecialN_Cmd1: ftPk_SpecialN_CmdVars = 1;
+pub const ftPk_SpecialN_Cmd2: ftPk_SpecialN_CmdVars = 2;
+pub const ftPk_SpecialN_Cmd3: ftPk_SpecialN_CmdVars = 3;
+
+/// C enum `ftPurin_MotionState` (src/melee/ft/kinds/ftPurin/forward.h:41)
+pub type ftPurin_MotionState = u32;
+pub const ftPr_MS_JumpAerialF1: ftPurin_MotionState = 341;
+pub const ftPr_MS_JumpAerialF2: ftPurin_MotionState = 342;
+pub const ftPr_MS_JumpAerialF3: ftPurin_MotionState = 343;
+pub const ftPr_MS_JumpAerialF4: ftPurin_MotionState = 344;
+pub const ftPr_MS_JumpAerialF5: ftPurin_MotionState = 345;
+pub const ftPr_MS_SpecialNStartR: ftPurin_MotionState = 346;
+pub const ftPr_MS_SpecialNStartL: ftPurin_MotionState = 347;
+pub const ftPr_MS_SpecialNLoop: ftPurin_MotionState = 348;
+pub const ftPr_MS_SpecialNFull: ftPurin_MotionState = 349;
+pub const ftPr_MS_SpecialNRelease: ftPurin_MotionState = 350;
+pub const ftPr_MS_SpecialNTurn: ftPurin_MotionState = 351;
+pub const ftPr_MS_SpecialNEndR: ftPurin_MotionState = 352;
+pub const ftPr_MS_SpecialNEndL: ftPurin_MotionState = 353;
+pub const ftPr_MS_SpecialAirNStartR: ftPurin_MotionState = 354;
+pub const ftPr_MS_SpecialAirNStartL: ftPurin_MotionState = 355;
+pub const ftPr_MS_SpecialAirNChargeLoop: ftPurin_MotionState = 356;
+pub const ftPr_MS_SpecialAirNChargeFull: ftPurin_MotionState = 357;
+pub const ftPr_MS_SpecialAirNChargeRelease: ftPurin_MotionState = 358;
+pub const ftPr_MS_SpecialAirNStartTurn: ftPurin_MotionState = 359;
+pub const ftPr_MS_SpecialAirNEndR: ftPurin_MotionState = 360;
+pub const ftPr_MS_SpecialAirNEndL: ftPurin_MotionState = 361;
+pub const ftPr_MS_SpecialNHit: ftPurin_MotionState = 362;
+pub const ftPr_MS_SpecialS: ftPurin_MotionState = 363;
+pub const ftPr_MS_SpecialAirS: ftPurin_MotionState = 364;
+pub const ftPr_MS_SpecialHiL: ftPurin_MotionState = 365;
+pub const ftPr_MS_SpecialAirHiL: ftPurin_MotionState = 366;
+pub const ftPr_MS_SpecialHiR: ftPurin_MotionState = 367;
+pub const ftPr_MS_SpecialAirHiR: ftPurin_MotionState = 368;
+pub const ftPr_MS_SpecialLwL: ftPurin_MotionState = 369;
+pub const ftPr_MS_SpecialAirLwL: ftPurin_MotionState = 370;
+pub const ftPr_MS_SpecialLwR: ftPurin_MotionState = 371;
+pub const ftPr_MS_SpecialAirLwR: ftPurin_MotionState = 372;
+pub const ftPr_MS_Count: ftPurin_MotionState = 373;
+pub const ftPr_MS_SelfCount: ftPurin_MotionState = 32;
+
+/// C enum `ftPr_Submotion` (src/melee/ft/kinds/ftPurin/forward.h:78)
+pub type ftPr_Submotion = u32;
+pub const ftPr_SM_JumpAerialF1: ftPr_Submotion = 295;
+pub const ftPr_SM_JumpAerialF2: ftPr_Submotion = 296;
+pub const ftPr_SM_JumpAerialF3: ftPr_Submotion = 297;
+pub const ftPr_SM_JumpAerialF4: ftPr_Submotion = 298;
+pub const ftPr_SM_JumpAerialF5: ftPr_Submotion = 299;
+pub const ftPr_SM_SpecialNStartR: ftPr_Submotion = 300;
+pub const ftPr_SM_SpecialNStartL: ftPr_Submotion = 301;
+pub const ftPr_SM_SpecialNChargeLoop: ftPr_Submotion = 302;
+pub const ftPr_SM_SpecialNChargeFull: ftPr_Submotion = 303;
+pub const ftPr_SM_SpecialNChargeRelease: ftPr_Submotion = 304;
+pub const ftPr_SM_SpecialNStartTurn: ftPr_Submotion = 305;
+pub const ftPr_SM_SpecialNEndR: ftPr_Submotion = 306;
+pub const ftPr_SM_SpecialNEndL: ftPr_Submotion = 307;
+pub const ftPr_SM_SpecialAirNStartR: ftPr_Submotion = 308;
+pub const ftPr_SM_SpecialAirNStartL: ftPr_Submotion = 309;
+pub const ftPr_SM_SpecialAirNChargeLoop: ftPr_Submotion = 310;
+pub const ftPr_SM_SpecialAirNChargeFull: ftPr_Submotion = 311;
+pub const ftPr_SM_SpecialAirNChargeRelease: ftPr_Submotion = 312;
+pub const ftPr_SM_SpecialAirNStartTurn: ftPr_Submotion = 313;
+pub const ftPr_SM_SpecialAirNEndR: ftPr_Submotion = 314;
+pub const ftPr_SM_SpecialAirNEndL: ftPr_Submotion = 315;
+pub const ftPr_SM_SpecialNHit: ftPr_Submotion = 316;
+pub const ftPr_SM_SpecialS: ftPr_Submotion = 317;
+pub const ftPr_SM_SpecialAirS: ftPr_Submotion = 318;
+pub const ftPr_SM_SpecialHiL: ftPr_Submotion = 319;
+pub const ftPr_SM_SpecialAirHiL: ftPr_Submotion = 320;
+pub const ftPr_SM_SpecialHiR: ftPr_Submotion = 321;
+pub const ftPr_SM_SpecialAirHiR: ftPr_Submotion = 322;
+pub const ftPr_SM_SpecialLwL: ftPr_Submotion = 323;
+pub const ftPr_SM_SpecialAirLwL: ftPr_Submotion = 324;
+pub const ftPr_SM_SpecialLwR: ftPr_Submotion = 325;
+pub const ftPr_SM_SpecialAirLwR: ftPr_Submotion = 326;
+pub const ftPr_SM_Count: ftPr_Submotion = 327;
+pub const ftPr_SM_SelfCount: ftPr_Submotion = 32;
+
+/// C enum `ftSamus_MotionState` (src/melee/ft/kinds/ftSamus/forward.h:46)
+pub type ftSamus_MotionState = u32;
+pub const ftSs_MS_SpecialLw: ftSamus_MotionState = 341;
+pub const ftSs_MS_SpecialAirLw: ftSamus_MotionState = 342;
+pub const ftSs_MS_SpecialNStart: ftSamus_MotionState = 343;
+pub const ftSs_MS_SpecialNHold: ftSamus_MotionState = 344;
+pub const ftSs_MS_SpecialNCancel: ftSamus_MotionState = 345;
+pub const ftSs_MS_SpecialN: ftSamus_MotionState = 346;
+pub const ftSs_MS_SpecialAirNStart: ftSamus_MotionState = 347;
+pub const ftSs_MS_SpecialAirN: ftSamus_MotionState = 348;
+pub const ftSs_MS_SpecialS: ftSamus_MotionState = 349;
+pub const ftSs_MS_SpecialSSmash: ftSamus_MotionState = 350;
+pub const ftSs_MS_SpecialAirS: ftSamus_MotionState = 351;
+pub const ftSs_MS_SpecialAirSSmash: ftSamus_MotionState = 352;
+pub const ftSs_MS_SpecialHi: ftSamus_MotionState = 353;
+pub const ftSs_MS_SpecialAirHi: ftSamus_MotionState = 354;
+pub const ftSs_MS_SpecialLwBomb: ftSamus_MotionState = 355;
+pub const ftSs_MS_SpecialAirLwBomb: ftSamus_MotionState = 356;
+pub const ftSs_MS_AirCatch: ftSamus_MotionState = 357;
+pub const ftSs_MS_AirCatchHit: ftSamus_MotionState = 358;
+pub const ftSs_MS_Count: ftSamus_MotionState = 359;
+pub const ftSs_MS_SelfCount: ftSamus_MotionState = 18;
+
+/// C enum `ftSs_Submotion` (src/melee/ft/kinds/ftSamus/forward.h:69)
+pub type ftSs_Submotion = u32;
+pub const ftSs_SM_SpecialLw: ftSs_Submotion = 295;
+pub const ftSs_SM_SpecialAirLw: ftSs_Submotion = 296;
+pub const ftSs_SM_SpecialNStart: ftSs_Submotion = 297;
+pub const ftSs_SM_SpecialNHold: ftSs_Submotion = 298;
+pub const ftSs_SM_SpecialNCancel: ftSs_Submotion = 299;
+pub const ftSs_SM_SpecialN: ftSs_Submotion = 300;
+pub const ftSs_SM_SpecialAirNStart: ftSs_Submotion = 301;
+pub const ftSs_SM_SpecialAirN: ftSs_Submotion = 302;
+pub const ftSs_SM_SpecialS: ftSs_Submotion = 303;
+pub const ftSs_SM_SpecialSSmash: ftSs_Submotion = 304;
+pub const ftSs_SM_SpecialAirS: ftSs_Submotion = 305;
+pub const ftSs_SM_SpecialAirSSmash: ftSs_Submotion = 306;
+pub const ftSs_SM_SpecialHi: ftSs_Submotion = 307;
+pub const ftSs_SM_SpecialAirHi: ftSs_Submotion = 308;
+pub const ftSs_SM_SpecialLwBomb: ftSs_Submotion = 309;
+pub const ftSs_SM_SpecialAirLwBomb: ftSs_Submotion = 310;
+pub const ftSs_SM_AirCatch: ftSs_Submotion = 311;
+pub const ftSs_SM_AirCatchHit: ftSs_Submotion = 312;
+pub const ftSs_SM_Count: ftSs_Submotion = 313;
+pub const ftSs_SM_SelfCount: ftSs_Submotion = 18;
+
+/// C enum `ftSb_MotionState` (src/melee/ft/kinds/ftSandbag/forward.h:6)
+pub type ftSb_MotionState = u32;
+pub const ftSb_MS_WaitReverse: ftSb_MotionState = 341;
+pub const ftSb_MS_Count: ftSb_MotionState = 342;
+pub const ftSb_MS_SelfCount: ftSb_MotionState = 1;
+
+/// C enum `ftSb_Submotion` (src/melee/ft/kinds/ftSandbag/forward.h:12)
+pub type ftSb_Submotion = u32;
+pub const ftSb_SM_WaitReverse: ftSb_Submotion = 295;
+pub const ftSb_SM_Count: ftSb_Submotion = 296;
+pub const ftSb_SM_SelfCount: ftSb_Submotion = 1;
+
+/// C enum `ftSeak_MotionState` (src/melee/ft/kinds/ftSeak/forward.h:44)
+pub type ftSeak_MotionState = u32;
+pub const ftSk_MS_SpecialNStart: ftSeak_MotionState = 341;
+pub const ftSk_MS_SpecialNLoop: ftSeak_MotionState = 342;
+pub const ftSk_MS_SpecialNCancel: ftSeak_MotionState = 343;
+pub const ftSk_MS_SpecialNEnd: ftSeak_MotionState = 344;
+pub const ftSk_MS_SpecialAirNStart: ftSeak_MotionState = 345;
+pub const ftSk_MS_SpecialAirNLoop: ftSeak_MotionState = 346;
+pub const ftSk_MS_SpecialAirNCancel: ftSeak_MotionState = 347;
+pub const ftSk_MS_SpecialAirNEnd: ftSeak_MotionState = 348;
+pub const ftSk_MS_SpecialSStart: ftSeak_MotionState = 349;
+pub const ftSk_MS_SpecialS: ftSeak_MotionState = 350;
+pub const ftSk_MS_SpecialSEnd: ftSeak_MotionState = 351;
+pub const ftSk_MS_SpecialAirSStart: ftSeak_MotionState = 352;
+pub const ftSk_MS_SpecialAirS: ftSeak_MotionState = 353;
+pub const ftSk_MS_SpecialAirSEnd: ftSeak_MotionState = 354;
+pub const ftSk_MS_SpecialHiStart_0: ftSeak_MotionState = 355;
+pub const ftSk_MS_SpecialHiStart_1: ftSeak_MotionState = 356;
+pub const ftSk_MS_SpecialHi: ftSeak_MotionState = 357;
+pub const ftSk_MS_SpecialAirHiStart_0: ftSeak_MotionState = 358;
+pub const ftSk_MS_SpecialAirHiStart_1: ftSeak_MotionState = 359;
+pub const ftSk_MS_SpecialAirHi: ftSeak_MotionState = 360;
+pub const ftSk_MS_SpecialLw: ftSeak_MotionState = 361;
+pub const ftSk_MS_SpecialLw2: ftSeak_MotionState = 362;
+pub const ftSk_MS_SpecialAirLw: ftSeak_MotionState = 363;
+pub const ftSk_MS_SpecialAirLw2: ftSeak_MotionState = 364;
+pub const ftSk_MS_Count: ftSeak_MotionState = 365;
+pub const ftSk_MS_SelfCount: ftSeak_MotionState = 24;
+
+/// C enum `ftSk_Submotion` (src/melee/ft/kinds/ftSeak/forward.h:73)
+pub type ftSk_Submotion = u32;
+pub const ftSk_SM_SpecialNStart: ftSk_Submotion = 295;
+pub const ftSk_SM_SpecialNLoop: ftSk_Submotion = 296;
+pub const ftSk_SM_SpecialNCancel: ftSk_Submotion = 297;
+pub const ftSk_SM_SpecialNEnd: ftSk_Submotion = 298;
+pub const ftSk_SM_SpecialAirNStart: ftSk_Submotion = 299;
+pub const ftSk_SM_SpecialAirNLoop: ftSk_Submotion = 300;
+pub const ftSk_SM_SpecialAirNCancel: ftSk_Submotion = 301;
+pub const ftSk_SM_SpecialAirNEnd: ftSk_Submotion = 302;
+pub const ftSk_SM_SpecialSStart: ftSk_Submotion = 303;
+pub const ftSk_SM_SpecialSEnd: ftSk_Submotion = 304;
+pub const ftSk_SM_SpecialS: ftSk_Submotion = 305;
+pub const ftSk_SM_SpecialAirSStart: ftSk_Submotion = 306;
+pub const ftSk_SM_SpecialAirSEnd: ftSk_Submotion = 307;
+pub const ftSk_SM_SpecialAirS: ftSk_Submotion = 308;
+pub const ftSk_SM_SpecialHiStart: ftSk_Submotion = 309;
+pub const ftSk_SM_SpecialHi: ftSk_Submotion = 310;
+pub const ftSk_SM_SpecialAirHiStart: ftSk_Submotion = 311;
+pub const ftSk_SM_SpecialAirHi: ftSk_Submotion = 312;
+pub const ftSk_SM_SpecialLw: ftSk_Submotion = 313;
+pub const ftSk_SM_SpecialLw2: ftSk_Submotion = 314;
+pub const ftSk_SM_SpecialAirLw: ftSk_Submotion = 315;
+pub const ftSk_SM_SpecialAirLw2: ftSk_Submotion = 316;
+pub const ftSk_SM_Count: ftSk_Submotion = 317;
+pub const ftSk_SM_SelfCount: ftSk_Submotion = 22;
+
+/// C enum `ftYoshi_MotionState` (src/melee/ft/kinds/ftYoshi/forward.h:54)
+pub type ftYoshi_MotionState = u32;
+pub const ftYs_MS_GuardOn_0: ftYoshi_MotionState = 341;
+pub const ftYs_MS_GuardHold: ftYoshi_MotionState = 342;
+pub const ftYs_MS_GuardOff: ftYoshi_MotionState = 343;
+pub const ftYs_MS_GuardDamage: ftYoshi_MotionState = 344;
+pub const ftYs_MS_GuardOn_1: ftYoshi_MotionState = 345;
+pub const ftYs_MS_SpecialN1: ftYoshi_MotionState = 346;
+pub const ftYs_MS_SpecialN1_0: ftYoshi_MotionState = 347;
+pub const ftYs_MS_SpecialN1_1: ftYoshi_MotionState = 348;
+pub const ftYs_MS_SpecialN2_0: ftYoshi_MotionState = 349;
+pub const ftYs_MS_SpecialN2_1: ftYoshi_MotionState = 350;
+pub const ftYs_MS_SpecialAirN1_0: ftYoshi_MotionState = 351;
+pub const ftYs_MS_SpecialAirN1_1: ftYoshi_MotionState = 352;
+pub const ftYs_MS_SpecialAirN1_2: ftYoshi_MotionState = 353;
+pub const ftYs_MS_SpecialAirN2_0: ftYoshi_MotionState = 354;
+pub const ftYs_MS_SpecialAirN2_1: ftYoshi_MotionState = 355;
+pub const ftYs_MS_SpecialAirSStart_0: ftYoshi_MotionState = 356;
+pub const ftYs_MS_SpecialAirSLoop_0: ftYoshi_MotionState = 357;
+pub const ftYs_MS_SpecialAirSLoop_1: ftYoshi_MotionState = 358;
+pub const ftYs_MS_SpecialAirSEnd: ftYoshi_MotionState = 359;
+pub const ftYs_MS_SpecialAirSStart_1: ftYoshi_MotionState = 360;
+pub const ftYs_MS_SpecialAirSLoop_2: ftYoshi_MotionState = 361;
+pub const ftYs_MS_SpecialAirSLoop_3: ftYoshi_MotionState = 362;
+pub const ftYs_MS_SpecialAirSLanding: ftYoshi_MotionState = 363;
+pub const ftYs_MS_SpecialHi: ftYoshi_MotionState = 364;
+pub const ftYs_MS_SpecialAirHi: ftYoshi_MotionState = 365;
+pub const ftYs_MS_SpecialLw: ftYoshi_MotionState = 366;
+pub const ftYs_MS_SpecialLwLanding: ftYoshi_MotionState = 367;
+pub const ftYs_MS_SpecialAirLw: ftYoshi_MotionState = 368;
+pub const ftYs_MS_Count: ftYoshi_MotionState = 369;
+pub const ftYs_MS_SelfCount: ftYoshi_MotionState = 28;
+
+/// C enum `ftYs_Submotion` (src/melee/ft/kinds/ftYoshi/forward.h:87)
+pub type ftYs_Submotion = u32;
+pub const ftYs_SM_SpecialN1: ftYs_Submotion = 295;
+pub const ftYs_SM_SpecialN1_0: ftYs_Submotion = 296;
+pub const ftYs_SM_SpecialN2_1: ftYs_Submotion = 297;
+pub const ftYs_SM_SpecialAirN1_0: ftYs_Submotion = 298;
+pub const ftYs_SM_SpecialAirN1_1: ftYs_Submotion = 299;
+pub const ftYs_SM_SpecialAirN2: ftYs_Submotion = 300;
+pub const ftYs_SM_SpecialSStart: ftYs_Submotion = 301;
+pub const ftYs_SM_SpecialSLoop_0: ftYs_Submotion = 302;
+pub const ftYs_SM_SpecialSLoop_1: ftYs_Submotion = 303;
+pub const ftYs_SM_SpecialSEnd: ftYs_Submotion = 304;
+pub const ftYs_SM_SpecialAirSStart: ftYs_Submotion = 305;
+pub const ftYs_SM_SpecialAirSLoop_0: ftYs_Submotion = 306;
+pub const ftYs_SM_SpecialAirSLoop_1: ftYs_Submotion = 307;
+pub const ftYs_SM_SpecialAirSEnd: ftYs_Submotion = 308;
+pub const ftYs_SM_SpecialHi: ftYs_Submotion = 309;
+pub const ftYs_SM_SpecialAirHi: ftYs_Submotion = 310;
+pub const ftYs_SM_SpecialLw: ftYs_Submotion = 311;
+pub const ftYs_SM_SpecialLwLanding: ftYs_Submotion = 312;
+pub const ftYs_SM_SpecialAirLw: ftYs_Submotion = 313;
+pub const ftYs_SM_Count: ftYs_Submotion = 314;
+pub const ftYs_SM_SelfCount: ftYs_Submotion = 19;
+
+/// C enum `ftZd_MotionState` (src/melee/ft/kinds/ftZelda/forward.h:43)
+pub type ftZd_MotionState = u32;
+pub const ftZd_MS_SpecialN: ftZd_MotionState = 341;
+pub const ftZd_MS_SpecialAirN: ftZd_MotionState = 342;
+pub const ftZd_MS_SpecialSStart: ftZd_MotionState = 343;
+pub const ftZd_MS_SpecialSLoop: ftZd_MotionState = 344;
+pub const ftZd_MS_SpecialSEnd: ftZd_MotionState = 345;
+pub const ftZd_MS_SpecialAirSStart: ftZd_MotionState = 346;
+pub const ftZd_MS_SpecialAirSLoop: ftZd_MotionState = 347;
+pub const ftZd_MS_SpecialAirSEnd: ftZd_MotionState = 348;
+pub const ftZd_MS_SpecialHiStart_0: ftZd_MotionState = 349;
+pub const ftZd_MS_SpecialHiStart_1: ftZd_MotionState = 350;
+pub const ftZd_MS_SpecialHi: ftZd_MotionState = 351;
+pub const ftZd_MS_SpecialAirHiStart_0: ftZd_MotionState = 352;
+pub const ftZd_MS_SpecialAirHiStart_1: ftZd_MotionState = 353;
+pub const ftZd_MS_SpecialAirHi: ftZd_MotionState = 354;
+pub const ftZd_MS_SpecialLw: ftZd_MotionState = 355;
+pub const ftZd_MS_SpecialLw2: ftZd_MotionState = 356;
+pub const ftZd_MS_SpecialAirLw: ftZd_MotionState = 357;
+pub const ftZd_MS_SpecialAirLw2: ftZd_MotionState = 358;
+pub const ftZd_MS_Count: ftZd_MotionState = 359;
+pub const ftZd_MS_SelfCount: ftZd_MotionState = 18;
+
+/// C enum `ftZd_Submotion` (src/melee/ft/kinds/ftZelda/forward.h:66)
+pub type ftZd_Submotion = u32;
+pub const ftZd_SM_SpecialN: ftZd_Submotion = 295;
+pub const ftZd_SM_SpecialAirN: ftZd_Submotion = 296;
+pub const ftZd_SM_SpecialSStart: ftZd_Submotion = 297;
+pub const ftZd_SM_SpecialSLoop: ftZd_Submotion = 298;
+pub const ftZd_SM_SpecialSEnd: ftZd_Submotion = 299;
+pub const ftZd_SM_SpecialAirSStart: ftZd_Submotion = 300;
+pub const ftZd_SM_SpecialAirSLoop: ftZd_Submotion = 301;
+pub const ftZd_SM_SpecialAirSEnd: ftZd_Submotion = 302;
+pub const ftZd_SM_SpecialHiStart: ftZd_Submotion = 303;
+pub const ftZd_SM_SpecialHi: ftZd_Submotion = 304;
+pub const ftZd_SM_SpecialAirHiStart: ftZd_Submotion = 305;
+pub const ftZd_SM_SpecialAirHi: ftZd_Submotion = 306;
+pub const ftZd_SM_SpecialLw: ftZd_Submotion = 307;
+pub const ftZd_SM_SpecialLw2: ftZd_Submotion = 308;
+pub const ftZd_SM_SpecialAirLw: ftZd_Submotion = 309;
+pub const ftZd_SM_SpecialAirLw2: ftZd_Submotion = 310;
+pub const ftZd_SM_Count: ftZd_Submotion = 311;
+pub const ftZd_SM_SelfCount: ftZd_Submotion = 16;
+
+/// C enum `DbLKind` (src/melee/db/db.h:9)
+pub type DbLKind = u32;
+pub const DbLKind_Master: DbLKind = 0;
+pub const DbLKind_NoDebugRom: DbLKind = 1;
+pub const DbLKind_DebugDevelop: DbLKind = 2;
+pub const DbLKind_DebugRom: DbLKind = 3;
+pub const DbLKind_Develop: DbLKind = 4;
+
+/// C enum `itFlipper_MotionState` (src/melee/it/kinds/itflipper.h:31)
+pub type itFlipper_MotionState = u32;
+pub const FLIPPER_MS_RESTING: itFlipper_MotionState = 0;
+pub const FLIPPER_MS_FALLING: itFlipper_MotionState = 1;
+pub const FLIPPER_MS_HELD: itFlipper_MotionState = 2;
+pub const FLIPPER_MS_INFLIGHT: itFlipper_MotionState = 3;
+pub const FLIPPER_MS_AIRBORNE: itFlipper_MotionState = 4;
+pub const FLIPPER_MS_ACTIVE: itFlipper_MotionState = 5;
+pub const FLIPPER_MS_SPINNING: itFlipper_MotionState = 6;
+
 // ---- #define / static const constants (group-0 headers) ----
 pub const HSD_A_S_W0: i32 = 2;  // src/sysdolphin/baselib/forward.h:120
 pub const HSD_DEFAULT_MAX_SHAPE_VERTICES: i32 = 2000;  // src/sysdolphin/baselib/forward.h:121
@@ -4394,6 +5660,12 @@ pub const DEVTEXT_FLAG_HIDETEXT: i32 = 128;  // src/melee/if/types.h:133
 pub const DEVTEXT_FLAG_HIDEBACKGROUND: i32 = 64;  // src/melee/if/types.h:134
 pub const DEVTEXT_FLAG_NOWRAP: i32 = 32;  // src/melee/if/types.h:135
 pub const DEVTEXT_FLAG_SHOWCURSOR: i32 = 16;  // src/melee/if/types.h:136
+pub const SFX_VOLUME_MAX: i32 = 127;  // src/melee/ft/ft_0C8C.h:6
+pub const SFX_PAN_MID: i32 = 64;  // src/melee/ft/ft_0C8C.h:7
+pub const MAX_FT_PARTS: i32 = 255;  // src/melee/ft/ftparts.h:59
+pub const FT_ANIM_BUF_SIZE: i32 = 131072;  // src/melee/ft/ftparts.h:68
+pub const FTNANA_COSTUME_COUNT: i32 = 4;  // src/melee/ft/kinds/ftNana/ftnana.h:9
+pub const PL_MAX_SUB_FIGHTERS: i32 = 2;  // src/melee/pl/player.h:17
 pub const Ft_MF_None: MotionFlags = 0;  // src/melee/ft/forward.h:229
 pub const Ft_MF_KeepFastFall: MotionFlags = 1;  // src/melee/ft/forward.h:231
 pub const Ft_MF_KeepGfx: MotionFlags = 2;  // src/melee/ft/forward.h:233
@@ -4765,6 +6037,15 @@ pub type grZakoGenerator_SpawnFunc = Option<unsafe extern "C" fn(*mut Vec, i32) 
 pub type IfStatusCb = Option<unsafe extern "C" fn(i32)>;
 pub type soundtest_callback = Option<unsafe extern "C" fn(soundtest_callback_arg0) -> i32>;
 pub type itLGunRay_ItemVars = itRay_ItemVars;
+pub type cmd_t = u8;
+pub type arg_t = u8;
+pub type ftKb_Fighter = Fighter;
+pub type ftCrazyHand_DatAttrs = _ftCrazyHandAttributes;
+pub type ftDrMarioAttributes = _ftDrMarioAttributes;
+pub type ftPichuAttributes = _ftPichuAttributes;
+pub type ftSs_Fighter = Fighter;
+pub type StaticPlayer = _StaticPlayer;
+pub type it_MObjSetupFunc = Option<unsafe extern "C" fn(*mut HSD_MObj, u32, u32)>;
 
 /// C `__file_modes` (src/MSL/stdio.h:44); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
@@ -4793,6 +6074,8 @@ impl __file_modes {
     #[inline] #[allow(unused_unsafe)] pub fn binary_io(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 3, 1) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_binary_io(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 3, 1, (v as u64) & 0x1) } }
 }
+impl __file_modes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for __file_modes {
     const GC_NAME: &'static str = "__file_modes";
     const GC_SIZE: u32 = 0x4;
@@ -4824,6 +6107,8 @@ impl __file_state {
     #[inline] #[allow(unused_unsafe)] pub fn free_buffer(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 4, 1) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_free_buffer(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 4, 1, (v as u64) & 0x1) } }
 }
+impl __file_state { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for __file_state {
     const GC_NAME: &'static str = "__file_state";
     const GC_SIZE: u32 = 0x4;
@@ -4861,6 +6146,8 @@ pub struct _IO_FILE {
     pub close_proc: __close_proc,
     pub idle_proc: __idle_proc,
 }
+impl _IO_FILE { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _IO_FILE {
     const GC_NAME: &'static str = "_IO_FILE";
     const GC_SIZE: u32 = 0x48;
@@ -4897,6 +6184,8 @@ pub struct __OutStrCtrl {
     pub MaxCharCount: usize,
     pub CharsWritten: usize,
 }
+impl __OutStrCtrl { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for __OutStrCtrl {
     const GC_NAME: &'static str = "__OutStrCtrl";
     const GC_SIZE: u32 = 0xC;
@@ -4915,6 +6204,8 @@ pub struct __InStrCtrl {
     pub NextChar: *mut i8,
     pub NullCharDetected: i32,
 }
+impl __InStrCtrl { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for __InStrCtrl {
     const GC_NAME: &'static str = "__InStrCtrl";
     const GC_SIZE: u32 = 0x8;
@@ -4945,6 +6236,8 @@ pub struct OSContext {
     pub gqr: [u32; 8],
     pub psf: [f64; 32],
 }
+impl OSContext { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSContext {
     const GC_NAME: &'static str = "OSContext";
     const GC_SIZE: u32 = 0x2C8;
@@ -4980,6 +6273,8 @@ pub struct OSAlarm {
     pub period: OSTime,
     pub start: OSTime,
 }
+impl OSAlarm { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSAlarm {
     const GC_NAME: &'static str = "OSAlarm";
     const GC_SIZE: u32 = 0x28;
@@ -5024,6 +6319,8 @@ pub struct OSFontHeader {
     pub c2: u8,
     pub c3: u8,
 }
+impl OSFontHeader { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSFontHeader {
     const GC_NAME: &'static str = "OSFontHeader";
     const GC_SIZE: u32 = 0x30;
@@ -5063,6 +6360,8 @@ pub struct OSThreadQueue {
     pub head: *mut OSThread,
     pub tail: *mut OSThread,
 }
+impl OSThreadQueue { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSThreadQueue {
     const GC_NAME: &'static str = "OSThreadQueue";
     const GC_SIZE: u32 = 0x8;
@@ -5081,6 +6380,8 @@ pub struct OSThreadLink {
     pub next: *mut OSThread,
     pub prev: *mut OSThread,
 }
+impl OSThreadLink { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSThreadLink {
     const GC_NAME: &'static str = "OSThreadLink";
     const GC_SIZE: u32 = 0x8;
@@ -5099,6 +6400,8 @@ pub struct OSMutexQueue {
     pub head: *mut OSMutex,
     pub tail: *mut OSMutex,
 }
+impl OSMutexQueue { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSMutexQueue {
     const GC_NAME: &'static str = "OSMutexQueue";
     const GC_SIZE: u32 = 0x8;
@@ -5117,6 +6420,8 @@ pub struct OSMutexLink {
     pub next: *mut OSMutex,
     pub prev: *mut OSMutex,
 }
+impl OSMutexLink { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSMutexLink {
     const GC_NAME: &'static str = "OSMutexLink";
     const GC_SIZE: u32 = 0x8;
@@ -5148,6 +6453,8 @@ pub struct OSThread {
     pub stackBase: *mut u8,
     pub stackEnd: *mut u32,
 }
+impl OSThread { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSThread {
     const GC_NAME: &'static str = "OSThread";
     const GC_SIZE: u32 = 0x310;
@@ -5183,6 +6490,8 @@ pub struct OSMessageQueue {
     pub firstIndex: i32,
     pub usedCount: i32,
 }
+impl OSMessageQueue { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSMessageQueue {
     const GC_NAME: &'static str = "OSMessageQueue";
     const GC_SIZE: u32 = 0x20;
@@ -5205,6 +6514,8 @@ pub struct OSModuleQueue {
     pub head: *mut OSModuleInfo,
     pub tail: *mut OSModuleInfo,
 }
+impl OSModuleQueue { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSModuleQueue {
     const GC_NAME: &'static str = "OSModuleQueue";
     const GC_SIZE: u32 = 0x8;
@@ -5223,6 +6534,8 @@ pub struct OSModuleLink {
     pub next: *mut OSModuleInfo,
     pub prev: *mut OSModuleInfo,
 }
+impl OSModuleLink { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSModuleLink {
     const GC_NAME: &'static str = "OSModuleLink";
     const GC_SIZE: u32 = 0x8;
@@ -5246,6 +6559,8 @@ pub struct OSModuleInfo {
     pub nameSize: u32,
     pub version: u32,
 }
+impl OSModuleInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSModuleInfo {
     const GC_NAME: &'static str = "OSModuleInfo";
     const GC_SIZE: u32 = 0x20;
@@ -5279,6 +6594,8 @@ pub struct OSModuleHeader {
     pub epilog: u32,
     pub unresolved: u32,
 }
+impl OSModuleHeader { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSModuleHeader {
     const GC_NAME: &'static str = "OSModuleHeader";
     const GC_SIZE: u32 = 0x40;
@@ -5307,6 +6624,8 @@ pub struct OSSectionInfo {
     pub offset: u32,
     pub size: u32,
 }
+impl OSSectionInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSSectionInfo {
     const GC_NAME: &'static str = "OSSectionInfo";
     const GC_SIZE: u32 = 0x8;
@@ -5325,6 +6644,8 @@ pub struct OSImportInfo {
     pub id: OSModuleID,
     pub offset: u32,
 }
+impl OSImportInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSImportInfo {
     const GC_NAME: &'static str = "OSImportInfo";
     const GC_SIZE: u32 = 0x8;
@@ -5345,6 +6666,8 @@ pub struct OSRel {
     pub section: u8,
     pub addend: u32,
 }
+impl OSRel { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSRel {
     const GC_NAME: &'static str = "OSRel";
     const GC_SIZE: u32 = 0x8;
@@ -5367,6 +6690,8 @@ pub struct OSMutex {
     pub count: i32,
     pub link: OSMutexLink,
 }
+impl OSMutex { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSMutex {
     const GC_NAME: &'static str = "OSMutex";
     const GC_SIZE: u32 = 0x18;
@@ -5386,6 +6711,8 @@ const _: () = assert!(core::mem::size_of::<OSMutex>() == 48);
 pub struct OSCond {
     pub queue: OSThreadQueue,
 }
+impl OSCond { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSCond {
     const GC_NAME: &'static str = "OSCond";
     const GC_SIZE: u32 = 0x8;
@@ -5403,6 +6730,8 @@ pub struct OSResetFunctionQueue {
     pub head: *mut OSResetFunctionInfo,
     pub tail: *mut OSResetFunctionInfo,
 }
+impl OSResetFunctionQueue { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSResetFunctionQueue {
     const GC_NAME: &'static str = "OSResetFunctionQueue";
     const GC_SIZE: u32 = 0x8;
@@ -5423,6 +6752,8 @@ pub struct OSResetFunctionInfo {
     pub next: *mut OSResetFunctionInfo,
     pub prev: *mut OSResetFunctionInfo,
 }
+impl OSResetFunctionInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSResetFunctionInfo {
     const GC_NAME: &'static str = "OSResetFunctionInfo";
     const GC_SIZE: u32 = 0x10;
@@ -5447,6 +6778,8 @@ pub struct SramControl {
     pub sync: i32,
     pub callback: Option<unsafe extern "C" fn()>,
 }
+impl SramControl { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for SramControl {
     const GC_NAME: &'static str = "SramControl";
     const GC_SIZE: u32 = 0x54;
@@ -5476,6 +6809,8 @@ pub struct OSSram {
     pub language: u8,
     pub flags: u8,
 }
+impl OSSram { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSSram {
     const GC_NAME: &'static str = "OSSram";
     const GC_SIZE: u32 = 0x14;
@@ -5506,6 +6841,8 @@ pub struct OSSramEx {
     pub flashIDCheckSum: [u8; 2],
     pub _padding1: [u8; 4],
 }
+impl OSSramEx { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSSramEx {
     const GC_NAME: &'static str = "OSSramEx";
     const GC_SIZE: u32 = 0x2C;
@@ -5532,6 +6869,8 @@ pub struct SIControl {
     pub input: *mut c_void,
     pub callback: Option<unsafe extern "C" fn(i32, u32, *mut OSContext)>,
 }
+impl SIControl { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for SIControl {
     const GC_NAME: &'static str = "SIControl";
     const GC_SIZE: u32 = 0x14;
@@ -5558,6 +6897,8 @@ pub struct SIPacket {
     pub callback: Option<unsafe extern "C" fn(i32, u32, *mut OSContext)>,
     pub time: i64,
 }
+impl SIPacket { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for SIPacket {
     const GC_NAME: &'static str = "SIPacket";
     const GC_SIZE: u32 = 0x20;
@@ -5586,6 +6927,8 @@ pub struct OSStopwatch {
     pub last: i64,
     pub running: i32,
 }
+impl OSStopwatch { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSStopwatch {
     const GC_NAME: &'static str = "OSStopwatch";
     const GC_SIZE: u32 = 0x38;
@@ -5617,6 +6960,8 @@ pub struct OSCalendarTime {
     pub msec: i32,
     pub usec: i32,
 }
+impl OSCalendarTime { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSCalendarTime {
     const GC_NAME: &'static str = "OSCalendarTime";
     const GC_SIZE: u32 = 0x28;
@@ -5648,6 +6993,8 @@ pub struct DVDDiskID {
     pub streamingBufSize: u8,
     pub padding: [u8; 22],
 }
+impl DVDDiskID { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for DVDDiskID {
     const GC_NAME: &'static str = "DVDDiskID";
     const GC_SIZE: u32 = 0x20;
@@ -5681,6 +7028,8 @@ pub struct DVDCommandBlock {
     pub callback: DVDCBCallback,
     pub userData: *mut c_void,
 }
+impl DVDCommandBlock { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for DVDCommandBlock {
     const GC_NAME: &'static str = "DVDCommandBlock";
     const GC_SIZE: u32 = 0x30;
@@ -5711,6 +7060,8 @@ pub struct DVDFileInfo {
     pub length: u32,
     pub callback: DVDCallback,
 }
+impl DVDFileInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for DVDFileInfo {
     const GC_NAME: &'static str = "DVDFileInfo";
     const GC_SIZE: u32 = 0x3C;
@@ -5732,6 +7083,8 @@ pub struct DVDDir {
     pub location: u32,
     pub next: u32,
 }
+impl DVDDir { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for DVDDir {
     const GC_NAME: &'static str = "DVDDir";
     const GC_SIZE: u32 = 0xC;
@@ -5752,6 +7105,8 @@ pub struct DVDDirEntry {
     pub isDir: BOOL,
     pub name: *mut i8,
 }
+impl DVDDirEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for DVDDirEntry {
     const GC_NAME: &'static str = "DVDDirEntry";
     const GC_SIZE: u32 = 0xC;
@@ -5777,6 +7132,8 @@ pub struct DVDBB2 {
     pub userLength: u32,
     pub padding0: u32,
 }
+impl DVDBB2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for DVDBB2 {
     const GC_NAME: &'static str = "DVDBB2";
     const GC_SIZE: u32 = 0x20;
@@ -5803,6 +7160,8 @@ pub struct DVDDriveInfo {
     pub releaseDate: u32,
     pub padding: [u8; 24],
 }
+impl DVDDriveInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for DVDDriveInfo {
     const GC_NAME: &'static str = "DVDDriveInfo";
     const GC_SIZE: u32 = 0x20;
@@ -5830,6 +7189,8 @@ pub struct OSBootInfo_s {
     pub FSTLocation: *mut c_void,
     pub FSTMaxLength: u32,
 }
+impl OSBootInfo_s { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for OSBootInfo_s {
     const GC_NAME: &'static str = "OSBootInfo_s";
     const GC_SIZE: u32 = 0x40;
@@ -5855,6 +7216,8 @@ pub struct Vec2 {
     pub x: f32,
     pub y: f32,
 }
+impl Vec2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Vec2 {
     const GC_NAME: &'static str = "Vec2";
     const GC_SIZE: u32 = 0x8;
@@ -5874,6 +7237,8 @@ pub struct Vec {
     pub y: f32,
     pub z: f32,
 }
+impl Vec { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Vec {
     const GC_NAME: &'static str = "Vec";
     const GC_SIZE: u32 = 0xC;
@@ -5894,6 +7259,8 @@ pub struct S8Vec3 {
     pub y: i8,
     pub z: i8,
 }
+impl S8Vec3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for S8Vec3 {
     const GC_NAME: &'static str = "S8Vec3";
     const GC_SIZE: u32 = 0x3;
@@ -5915,6 +7282,8 @@ pub struct U8Vec4 {
     pub z: u8,
     pub w: u8,
 }
+impl U8Vec4 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for U8Vec4 {
     const GC_NAME: &'static str = "U8Vec4";
     const GC_SIZE: u32 = 0x4;
@@ -5936,6 +7305,8 @@ pub struct S16Vec {
     pub y: i16,
     pub z: i16,
 }
+impl S16Vec { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for S16Vec {
     const GC_NAME: &'static str = "S16Vec";
     const GC_SIZE: u32 = 0x6;
@@ -5955,6 +7326,8 @@ pub struct IntVec2 {
     pub x: i32,
     pub y: i32,
 }
+impl IntVec2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for IntVec2 {
     const GC_NAME: &'static str = "IntVec2";
     const GC_SIZE: u32 = 0x8;
@@ -5973,6 +7346,8 @@ pub struct S32Vec2 {
     pub x: i32,
     pub y: i32,
 }
+impl S32Vec2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for S32Vec2 {
     const GC_NAME: &'static str = "S32Vec2";
     const GC_SIZE: u32 = 0x8;
@@ -5992,6 +7367,8 @@ pub struct IntVec3 {
     pub y: i32,
     pub z: i32,
 }
+impl IntVec3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for IntVec3 {
     const GC_NAME: &'static str = "IntVec3";
     const GC_SIZE: u32 = 0xC;
@@ -6012,6 +7389,8 @@ pub struct S32Vec {
     pub y: i32,
     pub z: i32,
 }
+impl S32Vec { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for S32Vec {
     const GC_NAME: &'static str = "S32Vec";
     const GC_SIZE: u32 = 0xC;
@@ -6033,6 +7412,8 @@ pub struct Quaternion {
     pub z: f32,
     pub w: f32,
 }
+impl Quaternion { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Quaternion {
     const GC_NAME: &'static str = "Quaternion";
     const GC_SIZE: u32 = 0x10;
@@ -6054,6 +7435,8 @@ pub struct MTXStack {
     pub stackBase: *mut Mtx,
     pub stackPtr: *mut Mtx,
 }
+impl MTXStack { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MTXStack {
     const GC_NAME: &'static str = "MTXStack";
     const GC_SIZE: u32 = 0xC;
@@ -6075,6 +7458,8 @@ pub struct _objheap {
     pub size: u32,
     pub remain: u32,
 }
+impl _objheap { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _objheap {
     const GC_NAME: &'static str = "_objheap";
     const GC_SIZE: u32 = 0x10;
@@ -6094,6 +7479,8 @@ const _: () = assert!(core::mem::size_of::<_objheap>() == 16);
 pub struct _HSD_ObjAllocLink {
     pub next: *mut _HSD_ObjAllocLink,
 }
+impl _HSD_ObjAllocLink { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_ObjAllocLink {
     const GC_NAME: &'static str = "_HSD_ObjAllocLink";
     const GC_SIZE: u32 = 0x4;
@@ -6129,6 +7516,8 @@ impl _HSD_ObjAllocData {
     #[inline] #[allow(unused_unsafe)] pub fn heap_limit_flag(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 6, 1) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_heap_limit_flag(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 6, 1, (v as u64) & 0x1) } }
 }
+impl _HSD_ObjAllocData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_ObjAllocData {
     const GC_NAME: &'static str = "_HSD_ObjAllocData";
     const GC_SIZE: u32 = 0x2C;
@@ -6172,6 +7561,8 @@ pub struct HSD_FObj {
     pub d0: f32,
     pub d1: f32,
 }
+impl HSD_FObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_FObj {
     const GC_NAME: &'static str = "HSD_FObj";
     const GC_SIZE: u32 = 0x30;
@@ -6212,6 +7603,8 @@ pub struct _HSD_FObjDesc {
     pub dummy0: u8,
     pub ad: *mut u8,
 }
+impl _HSD_FObjDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_FObjDesc {
     const GC_NAME: &'static str = "_HSD_FObjDesc";
     const GC_SIZE: u32 = 0x14;
@@ -6237,6 +7630,8 @@ pub union HSD_ObjData {
     pub iv: i32,
     pub p: Vec,
 }
+impl HSD_ObjData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_ObjData {
     const GC_NAME: &'static str = "HSD_ObjData";
     const GC_SIZE: u32 = 0xC;
@@ -6255,6 +7650,8 @@ const _: () = assert!(core::mem::size_of::<HSD_ObjData>() == 12);
 pub struct _HSD_Class {
     pub class_info: *mut _HSD_ClassInfo,
 }
+impl _HSD_Class { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_Class {
     const GC_NAME: &'static str = "_HSD_Class";
     const GC_SIZE: u32 = 0x4;
@@ -6281,6 +7678,8 @@ pub struct _HSD_ClassInfoHead {
     pub nb_exist: u32,
     pub nb_peak: u32,
 }
+impl _HSD_ClassInfoHead { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_ClassInfoHead {
     const GC_NAME: &'static str = "_HSD_ClassInfoHead";
     const GC_SIZE: u32 = 0x28;
@@ -6312,6 +7711,8 @@ pub struct _HSD_ClassInfo {
     pub destroy: Option<unsafe extern "C" fn(*mut _HSD_Class)>,
     pub amnesia: Option<unsafe extern "C" fn(*mut _HSD_ClassInfo)>,
 }
+impl _HSD_ClassInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_ClassInfo {
     const GC_NAME: &'static str = "_HSD_ClassInfo";
     const GC_SIZE: u32 = 0x3C;
@@ -6333,6 +7734,8 @@ const _: () = assert!(core::mem::size_of::<_HSD_ClassInfo>() == 112);
 pub struct _HSD_FreeList {
     pub next: *mut _HSD_FreeList,
 }
+impl _HSD_FreeList { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_FreeList {
     const GC_NAME: &'static str = "_HSD_FreeList";
     const GC_SIZE: u32 = 0x4;
@@ -6353,6 +7756,8 @@ pub struct _HSD_MemoryEntry {
     pub free_list: *mut _HSD_FreeList,
     pub next: *mut _HSD_MemoryEntry,
 }
+impl _HSD_MemoryEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_MemoryEntry {
     const GC_NAME: &'static str = "_HSD_MemoryEntry";
     const GC_SIZE: u32 = 0x14;
@@ -6375,6 +7780,8 @@ pub struct HSD_Obj {
     pub ref_count: u16,
     pub ref_count_individual: u16,
 }
+impl HSD_Obj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_Obj {
     const GC_NAME: &'static str = "HSD_Obj";
     const GC_SIZE: u32 = 0x8;
@@ -6393,6 +7800,8 @@ const _: () = assert!(core::mem::size_of::<HSD_Obj>() == 16);
 pub struct _HSD_ObjInfo {
     pub parent: _HSD_ClassInfo,
 }
+impl _HSD_ObjInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_ObjInfo {
     const GC_NAME: &'static str = "_HSD_ObjInfo";
     const GC_SIZE: u32 = 0x3C;
@@ -6411,6 +7820,8 @@ pub union _callbackArg {
     pub d: u32,
     pub v: *mut c_void,
 }
+impl _callbackArg { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _callbackArg {
     const GC_NAME: &'static str = "_callbackArg";
     const GC_SIZE: u32 = 0x4;
@@ -6435,6 +7846,8 @@ pub struct HSD_AObj {
     pub fobj: *mut HSD_FObj,
     pub hsd_obj: *mut HSD_Obj,
 }
+impl HSD_AObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_AObj {
     const GC_NAME: &'static str = "HSD_AObj";
     const GC_SIZE: u32 = 0x1C;
@@ -6460,6 +7873,8 @@ pub struct HSD_AObjDesc {
     pub fobjdesc: *mut _HSD_FObjDesc,
     pub obj_id: HSD_IDKey,
 }
+impl HSD_AObjDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_AObjDesc {
     const GC_NAME: &'static str = "HSD_AObjDesc";
     const GC_SIZE: u32 = 0x10;
@@ -6483,6 +7898,8 @@ pub struct HSD_AnimJoint {
     pub robj_anim: *mut HSD_RObjAnimJoint,
     pub flags: u32,
 }
+impl HSD_AnimJoint { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_AnimJoint {
     const GC_NAME: &'static str = "HSD_AnimJoint";
     const GC_SIZE: u32 = 0x14;
@@ -6509,6 +7926,8 @@ pub struct HSD_ArchiveHeader {
     pub version: [u8; 4],
     pub pad: [u32; 2],
 }
+impl HSD_ArchiveHeader { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_ArchiveHeader {
     const GC_NAME: &'static str = "HSD_ArchiveHeader";
     const GC_SIZE: u32 = 0x20;
@@ -6531,6 +7950,8 @@ const _: () = assert!(core::mem::size_of::<HSD_ArchiveHeader>() == 32);
 pub struct HSD_ArchiveRelocationInfo {
     pub offset: u32,
 }
+impl HSD_ArchiveRelocationInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_ArchiveRelocationInfo {
     const GC_NAME: &'static str = "HSD_ArchiveRelocationInfo";
     const GC_SIZE: u32 = 0x4;
@@ -6548,6 +7969,8 @@ pub struct HSD_ArchivePublicInfo {
     pub offset: u32,
     pub symbol: u32,
 }
+impl HSD_ArchivePublicInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_ArchivePublicInfo {
     const GC_NAME: &'static str = "HSD_ArchivePublicInfo";
     const GC_SIZE: u32 = 0x8;
@@ -6566,6 +7989,8 @@ pub struct HSD_ArchiveExternInfo {
     pub offset: u32,
     pub symbol: u32,
 }
+impl HSD_ArchiveExternInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_ArchiveExternInfo {
     const GC_NAME: &'static str = "HSD_ArchiveExternInfo";
     const GC_SIZE: u32 = 0x8;
@@ -6592,6 +8017,8 @@ pub struct HSD_Archive {
     pub flags: u32,
     pub top_ptr: *mut c_void,
 }
+impl HSD_Archive { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_Archive {
     const GC_NAME: &'static str = "HSD_Archive";
     const GC_SIZE: u32 = 0x44;
@@ -6640,6 +8067,8 @@ pub struct HSD_SM {
     pub cmd_stream: *mut u32,
     pub x30: i32,
 }
+impl HSD_SM { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_SM {
     const GC_NAME: &'static str = "HSD_SM";
     const GC_SIZE: u32 = 0x34;
@@ -6683,6 +8112,8 @@ pub struct AXFX_REVSTD_DELAYLINE {
     pub inputs: *mut f32,
     pub lastOutput: f32,
 }
+impl AXFX_REVSTD_DELAYLINE { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for AXFX_REVSTD_DELAYLINE {
     const GC_NAME: &'static str = "AXFX_REVSTD_DELAYLINE";
     const GC_SIZE: u32 = 0x14;
@@ -6712,6 +8143,8 @@ pub struct AXFX_REVSTD_WORK {
     pub preDelayLine: [*mut f32; 3],
     pub preDelayPtr: [*mut f32; 3],
 }
+impl AXFX_REVSTD_WORK { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for AXFX_REVSTD_WORK {
     const GC_NAME: &'static str = "AXFX_REVSTD_WORK";
     const GC_SIZE: u32 = 0x13C;
@@ -6743,6 +8176,8 @@ pub struct AXFX_REVERBSTD {
     pub damping: f32,
     pub preDelay: f32,
 }
+impl AXFX_REVERBSTD { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for AXFX_REVERBSTD {
     const GC_NAME: &'static str = "AXFX_REVERBSTD";
     const GC_SIZE: u32 = 0x154;
@@ -6767,6 +8202,8 @@ pub struct AXFX_BUFFERUPDATE {
     pub right: *mut i32,
     pub surround: *mut i32,
 }
+impl AXFX_BUFFERUPDATE { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for AXFX_BUFFERUPDATE {
     const GC_NAME: &'static str = "AXFX_BUFFERUPDATE";
     const GC_SIZE: u32 = 0xC;
@@ -6789,6 +8226,8 @@ pub struct AXFX_REVHI_DELAYLINE {
     pub inputs: *mut f32,
     pub lastOutput: f32,
 }
+impl AXFX_REVHI_DELAYLINE { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for AXFX_REVHI_DELAYLINE {
     const GC_NAME: &'static str = "AXFX_REVHI_DELAYLINE";
     const GC_SIZE: u32 = 0x14;
@@ -6819,6 +8258,8 @@ pub struct AXFX_REVHI_WORK {
     pub preDelayLine: [*mut f32; 3],
     pub preDelayPtr: [*mut f32; 3],
 }
+impl AXFX_REVHI_WORK { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for AXFX_REVHI_WORK {
     const GC_NAME: &'static str = "AXFX_REVHI_WORK";
     const GC_SIZE: u32 = 0x1C4;
@@ -6852,6 +8293,8 @@ pub struct AXFX_REVERBHI {
     pub preDelay: f32,
     pub crosstalk: f32,
 }
+impl AXFX_REVERBHI { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for AXFX_REVERBHI {
     const GC_NAME: &'static str = "AXFX_REVERBHI";
     const GC_SIZE: u32 = 0x1E0;
@@ -6884,6 +8327,8 @@ pub struct AXFX_DELAY {
     pub feedback: [u32; 3],
     pub output: [u32; 3],
 }
+impl AXFX_DELAY { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for AXFX_DELAY {
     const GC_NAME: &'static str = "AXFX_DELAY";
     const GC_SIZE: u32 = 0x60;
@@ -6917,6 +8362,8 @@ pub struct AXFX_CHORUS_SRCINFO {
     pub trigger: u32,
     pub target: u32,
 }
+impl AXFX_CHORUS_SRCINFO { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for AXFX_CHORUS_SRCINFO {
     const GC_NAME: &'static str = "AXFX_CHORUS_SRCINFO";
     const GC_SIZE: u32 = 0x24;
@@ -6953,6 +8400,8 @@ pub struct AXFX_CHORUS_WORK {
     pub pitchOffsetPeriod: u32,
     pub src: AXFX_CHORUS_SRCINFO,
 }
+impl AXFX_CHORUS_WORK { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for AXFX_CHORUS_WORK {
     const GC_NAME: &'static str = "AXFX_CHORUS_WORK";
     const GC_SIZE: u32 = 0x90;
@@ -6984,6 +8433,8 @@ pub struct AXFX_CHORUS {
     pub variation: u32,
     pub period: u32,
 }
+impl AXFX_CHORUS { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for AXFX_CHORUS {
     const GC_NAME: &'static str = "AXFX_CHORUS";
     const GC_SIZE: u32 = 0x9C;
@@ -7021,6 +8472,8 @@ pub struct STRUCT_DSP_TASK {
     pub t_context: OSTime,
     pub t_task: OSTime,
 }
+impl STRUCT_DSP_TASK { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for STRUCT_DSP_TASK {
     const GC_NAME: &'static str = "STRUCT_DSP_TASK";
     const GC_SIZE: u32 = 0x50;
@@ -7059,6 +8512,8 @@ pub struct CARDFileInfo {
     pub length: i32,
     pub iBlock: u16,
 }
+impl CARDFileInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CARDFileInfo {
     const GC_NAME: &'static str = "CARDFileInfo";
     const GC_SIZE: u32 = 0x14;
@@ -7093,6 +8548,8 @@ pub struct CARDDir {
     pub _padding1: [u8; 2],
     pub commentAddr: u32,
 }
+impl CARDDir { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CARDDir {
     const GC_NAME: &'static str = "CARDDir";
     const GC_SIZE: u32 = 0x40;
@@ -7160,6 +8617,8 @@ pub struct CARDControl {
     pub cid: i32,
     pub diskID: *const DVDDiskID,
 }
+impl CARDControl { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CARDControl {
     const GC_NAME: &'static str = "CARDControl";
     const GC_SIZE: u32 = 0x110;
@@ -7216,6 +8675,8 @@ pub struct CARDDecParam {
     pub aramAddr: u32,
     pub outputAddr: *mut u8,
 }
+impl CARDDecParam { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CARDDecParam {
     const GC_NAME: &'static str = "CARDDecParam";
     const GC_SIZE: u32 = 0x10;
@@ -7241,6 +8702,8 @@ pub struct CARDID {
     pub checkSum: u16,
     pub checkSumInv: u16,
 }
+impl CARDID { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CARDID {
     const GC_NAME: &'static str = "CARDID";
     const GC_SIZE: u32 = 0x200;
@@ -7267,6 +8730,8 @@ pub struct CARDDirCheck {
     pub checkSum: u16,
     pub checkSumInv: u16,
 }
+impl CARDDirCheck { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CARDDirCheck {
     const GC_NAME: &'static str = "CARDDirCheck";
     const GC_SIZE: u32 = 0x40;
@@ -7301,6 +8766,8 @@ pub struct CARDStat {
     pub offsetIconTlut: u32,
     pub offsetData: u32,
 }
+impl CARDStat { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CARDStat {
     const GC_NAME: &'static str = "CARDStat";
     const GC_SIZE: u32 = 0x6C;
@@ -7334,6 +8801,8 @@ pub struct CardIconInfo {
     pub icon_format: [u8; 8],
     pub icon_speed: [u8; 8],
 }
+impl CardIconInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CardIconInfo {
     const GC_NAME: &'static str = "CardIconInfo";
     const GC_SIZE: u32 = 0x12;
@@ -7369,6 +8838,8 @@ pub struct CardState {
     pub digest: [u8; 48],
     pub num_blocks: i32,
 }
+impl CardState { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CardState {
     const GC_NAME: &'static str = "CardState";
     const GC_SIZE: u32 = 0x464;
@@ -7407,6 +8878,8 @@ pub struct CardWriteArgs {
     pub offset: i32,
     pub size: i32,
 }
+impl CardWriteArgs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CardWriteArgs {
     const GC_NAME: &'static str = "CardWriteArgs";
     const GC_SIZE: u32 = 0x1C;
@@ -7435,6 +8908,8 @@ pub struct CardReadArgs {
     pub offset: i32,
     pub size: i32,
 }
+impl CardReadArgs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CardReadArgs {
     const GC_NAME: &'static str = "CardReadArgs";
     const GC_SIZE: u32 = 0x1C;
@@ -7463,6 +8938,8 @@ pub struct CardVerifyArgs {
     pub offset: i32,
     pub size: i32,
 }
+impl CardVerifyArgs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CardVerifyArgs {
     const GC_NAME: &'static str = "CardVerifyArgs";
     const GC_SIZE: u32 = 0x1C;
@@ -7490,6 +8967,8 @@ pub struct CardSectorArgs {
     pub x10: *mut c_void,
     pub offset: i32,
 }
+impl CardSectorArgs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CardSectorArgs {
     const GC_NAME: &'static str = "CardSectorArgs";
     const GC_SIZE: u32 = 0x18;
@@ -7517,6 +8996,8 @@ pub struct CardClearArgs {
     pub x14: i32,
     pub size: i32,
 }
+impl CardClearArgs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CardClearArgs {
     const GC_NAME: &'static str = "CardClearArgs";
     const GC_SIZE: u32 = 0x1C;
@@ -7540,6 +9021,8 @@ pub struct CardCreateArgs {
     pub filename: *const i8,
     pub size: i32,
 }
+impl CardCreateArgs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CardCreateArgs {
     const GC_NAME: &'static str = "CardCreateArgs";
     const GC_SIZE: u32 = 0x8;
@@ -7559,6 +9042,8 @@ pub struct CardHeaderArgs {
     pub banner: *mut c_void,
     pub icons: *mut c_void,
 }
+impl CardHeaderArgs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CardHeaderArgs {
     const GC_NAME: &'static str = "CardHeaderArgs";
     const GC_SIZE: u32 = 0xC;
@@ -7580,6 +9065,8 @@ pub struct CardReadHeaderArgs {
     pub banner: *mut c_void,
     pub icons: *mut c_void,
 }
+impl CardReadHeaderArgs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CardReadHeaderArgs {
     const GC_NAME: &'static str = "CardReadHeaderArgs";
     const GC_SIZE: u32 = 0x10;
@@ -7599,6 +9086,8 @@ const _: () = assert!(core::mem::size_of::<CardReadHeaderArgs>() == 32);
 pub struct CardGetStatusArgs {
     pub file_no: i32,
 }
+impl CardGetStatusArgs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CardGetStatusArgs {
     const GC_NAME: &'static str = "CardGetStatusArgs";
     const GC_SIZE: u32 = 0x4;
@@ -7618,6 +9107,8 @@ pub struct CardCmd {
     /// anonymous C member
     pub anon_8: CardCmd_anon_193,
 }
+impl CardCmd { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CardCmd {
     const GC_NAME: &'static str = "CardCmd";
     const GC_SIZE: u32 = 0x24;
@@ -7653,6 +9144,8 @@ pub union CardCmd_anon_193 {
     pub read_header: CardReadHeaderArgs,
     pub get_status: CardGetStatusArgs,
 }
+impl CardCmd_anon_193 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CardCmd_anon_193 {
     const GC_NAME: &'static str = "union (anonymous at src/sysdolphin/baselib/card.h:193:5)";
     const GC_SIZE: u32 = 0x1C;
@@ -7678,6 +9171,8 @@ pub struct CardFileReqArgs {
     pub file_idx: i32,
     pub buf: *mut u8,
 }
+impl CardFileReqArgs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CardFileReqArgs {
     const GC_NAME: &'static str = "CardFileReqArgs";
     const GC_SIZE: u32 = 0x8;
@@ -7697,6 +9192,8 @@ pub struct CardCreateReqArgs {
     pub banner: *mut c_void,
     pub icons: *mut c_void,
 }
+impl CardCreateReqArgs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CardCreateReqArgs {
     const GC_NAME: &'static str = "CardCreateReqArgs";
     const GC_SIZE: u32 = 0xC;
@@ -7717,6 +9214,8 @@ pub struct CardStatusReqArgs {
     pub banner: *mut c_void,
     pub icons: *mut c_void,
 }
+impl CardStatusReqArgs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CardStatusReqArgs {
     const GC_NAME: &'static str = "CardStatusReqArgs";
     const GC_SIZE: u32 = 0xC;
@@ -7735,6 +9234,8 @@ const _: () = assert!(core::mem::size_of::<CardStatusReqArgs>() == 24);
 pub struct CardOpenReqArgs {
     pub file_no: i32,
 }
+impl CardOpenReqArgs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CardOpenReqArgs {
     const GC_NAME: &'static str = "CardOpenReqArgs";
     const GC_SIZE: u32 = 0x4;
@@ -7753,6 +9254,8 @@ pub struct CardHeaderReqArgs {
     pub banner: *mut c_void,
     pub icons: *mut c_void,
 }
+impl CardHeaderReqArgs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CardHeaderReqArgs {
     const GC_NAME: &'static str = "CardHeaderReqArgs";
     const GC_SIZE: u32 = 0xC;
@@ -7775,6 +9278,8 @@ pub struct CardRequest {
     pub anon_8: CardRequest_anon_258,
     pub callback: CardCallback,
 }
+impl CardRequest { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CardRequest {
     const GC_NAME: &'static str = "CardRequest";
     const GC_SIZE: u32 = 0x18;
@@ -7803,6 +9308,8 @@ pub union CardRequest_anon_258 {
     pub open: CardOpenReqArgs,
     pub header: CardHeaderReqArgs,
 }
+impl CardRequest_anon_258 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CardRequest_anon_258 {
     const GC_NAME: &'static str = "union (anonymous at src/sysdolphin/baselib/card.h:258:5)";
     const GC_SIZE: u32 = 0xC;
@@ -7826,6 +9333,8 @@ pub struct _Scissor {
     pub top: u16,
     pub bottom: u16,
 }
+impl _Scissor { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _Scissor {
     const GC_NAME: &'static str = "_Scissor";
     const GC_SIZE: u32 = 0x8;
@@ -7848,6 +9357,8 @@ pub struct _HSD_RectS16 {
     pub ymin: i16,
     pub ymax: i16,
 }
+impl _HSD_RectS16 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_RectS16 {
     const GC_NAME: &'static str = "_HSD_RectS16";
     const GC_SIZE: u32 = 0x8;
@@ -7870,6 +9381,8 @@ pub struct _HSD_RectF32 {
     pub ymin: f32,
     pub ymax: f32,
 }
+impl _HSD_RectF32 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_RectF32 {
     const GC_NAME: &'static str = "_HSD_RectF32";
     const GC_SIZE: u32 = 0x10;
@@ -7904,6 +9417,8 @@ pub struct HSD_CObj {
     pub view_authored_aspect: f32,
     pub view_auto: u8,
 }
+impl HSD_CObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_CObj {
     const GC_NAME: &'static str = "HSD_CObj";
     const GC_SIZE: u32 = 0x94;
@@ -7936,6 +9451,8 @@ pub union HSD_CObj_u {
     pub roll: f32,
     pub up: Vec,
 }
+impl HSD_CObj_u { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_CObj_u {
     const GC_NAME: &'static str = "union (unnamed at src/sysdolphin/baselib/cobj.h:44:5)";
     const GC_SIZE: u32 = 0xC;
@@ -7955,6 +9472,8 @@ pub union HSD_CObj_projection_param {
     pub frustum: HSD_CObj_projection_param_frustum,
     pub ortho: HSD_CObj_projection_param_ortho,
 }
+impl HSD_CObj_projection_param { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_CObj_projection_param {
     const GC_NAME: &'static str = "union (unnamed at src/sysdolphin/baselib/cobj.h:50:5)";
     const GC_SIZE: u32 = 0x10;
@@ -7974,6 +9493,8 @@ pub struct HSD_CObj_projection_param_perspective {
     pub fov: f32,
     pub aspect: f32,
 }
+impl HSD_CObj_projection_param_perspective { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_CObj_projection_param_perspective {
     const GC_NAME: &'static str = "struct (unnamed at src/sysdolphin/baselib/cobj.h:51:9)";
     const GC_SIZE: u32 = 0x8;
@@ -7994,6 +9515,8 @@ pub struct HSD_CObj_projection_param_frustum {
     pub left: f32,
     pub right: f32,
 }
+impl HSD_CObj_projection_param_frustum { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_CObj_projection_param_frustum {
     const GC_NAME: &'static str = "struct (unnamed at src/sysdolphin/baselib/cobj.h:56:9)";
     const GC_SIZE: u32 = 0x10;
@@ -8016,6 +9539,8 @@ pub struct HSD_CObj_projection_param_ortho {
     pub left: f32,
     pub right: f32,
 }
+impl HSD_CObj_projection_param_ortho { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_CObj_projection_param_ortho {
     const GC_NAME: &'static str = "struct (unnamed at src/sysdolphin/baselib/cobj.h:63:9)";
     const GC_SIZE: u32 = 0x10;
@@ -8045,6 +9570,8 @@ pub struct HSD_CameraDescCommon {
     pub nnear: f32,
     pub ffar: f32,
 }
+impl HSD_CameraDescCommon { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_CameraDescCommon {
     const GC_NAME: &'static str = "HSD_CameraDescCommon";
     const GC_SIZE: u32 = 0x30;
@@ -8085,6 +9612,8 @@ pub struct HSD_CameraDescFrustum {
     pub left: f32,
     pub right: f32,
 }
+impl HSD_CameraDescFrustum { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_CameraDescFrustum {
     const GC_NAME: &'static str = "HSD_CameraDescFrustum";
     const GC_SIZE: u32 = 0x40;
@@ -8127,6 +9656,8 @@ pub struct HSD_CameraDescPerspective {
     pub fov: f32,
     pub aspect: f32,
 }
+impl HSD_CameraDescPerspective { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_CameraDescPerspective {
     const GC_NAME: &'static str = "HSD_CameraDescPerspective";
     const GC_SIZE: u32 = 0x38;
@@ -8159,6 +9690,8 @@ pub union HSD_CObjDesc {
     pub ortho: HSD_CameraDescFrustum,
     pub perspective: HSD_CameraDescPerspective,
 }
+impl HSD_CObjDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_CObjDesc {
     const GC_NAME: &'static str = "HSD_CObjDesc";
     const GC_SIZE: u32 = 0x40;
@@ -8180,6 +9713,8 @@ pub struct HSD_CObjInfo {
     pub parent: _HSD_ObjInfo,
     pub load: Option<unsafe extern "C" fn(*mut HSD_CObj, *mut HSD_CObjDesc) -> i32>,
 }
+impl HSD_CObjInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_CObjInfo {
     const GC_NAME: &'static str = "HSD_CObjInfo";
     const GC_SIZE: u32 = 0x40;
@@ -8199,6 +9734,8 @@ pub struct HSD_CameraAnim {
     pub eye_anim: *mut HSD_WObjAnim,
     pub interest_anim: *mut HSD_WObjAnim,
 }
+impl HSD_CameraAnim { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_CameraAnim {
     const GC_NAME: &'static str = "HSD_CameraAnim";
     const GC_SIZE: u32 = 0xC;
@@ -8227,6 +9764,8 @@ pub struct PADStatus {
     pub err: i8,
     pub extButton: u32,
 }
+impl PADStatus { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for PADStatus {
     const GC_NAME: &'static str = "PADStatus";
     const GC_SIZE: u32 = 0x10;
@@ -8257,6 +9796,8 @@ pub struct HSD_RumbleData {
     pub nb_list: u16,
     pub listdatap: *mut HSD_PadRumbleListData,
 }
+impl HSD_RumbleData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_RumbleData {
     const GC_NAME: &'static str = "HSD_RumbleData";
     const GC_SIZE: u32 = 0xC;
@@ -8286,6 +9827,8 @@ impl RumbleCommand {
     #[inline] #[allow(unused_unsafe)] pub fn frame(&self) -> u16 { unsafe { melee_core_bits_get(&self.bf_0, 0, 13) as u16 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_frame(&mut self, v: u16) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 13, (v as u64) & 0x1FFF) } }
 }
+impl RumbleCommand { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for RumbleCommand {
     const GC_NAME: &'static str = "RumbleCommand";
     const GC_SIZE: u32 = 0x2;
@@ -8303,6 +9846,8 @@ pub union HSD_Rumble {
     pub def: u16,
     pub command: RumbleCommand,
 }
+impl HSD_Rumble { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_Rumble {
     const GC_NAME: &'static str = "HSD_Rumble";
     const GC_SIZE: u32 = 0x2;
@@ -8321,6 +9866,8 @@ pub struct RumbleInfo {
     pub unk2: u8,
     pub listdatap: *mut HSD_PadRumbleListData,
 }
+impl RumbleInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for RumbleInfo {
     const GC_NAME: &'static str = "RumbleInfo";
     const GC_SIZE: u32 = 0x8;
@@ -8349,6 +9896,8 @@ pub struct HSD_PadRumbleListData {
     pub listp: *mut HSD_Rumble,
     pub headp: *mut HSD_Rumble,
 }
+impl HSD_PadRumbleListData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_PadRumbleListData {
     const GC_NAME: &'static str = "HSD_PadRumbleListData";
     const GC_SIZE: u32 = 0x20;
@@ -8375,6 +9924,8 @@ const _: () = assert!(core::mem::size_of::<HSD_PadRumbleListData>() == 48);
 pub struct HSD_PadData {
     pub stat: [PADStatus; 4],
 }
+impl HSD_PadData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_PadData {
     const GC_NAME: &'static str = "HSD_PadData";
     const GC_SIZE: u32 = 0x40;
@@ -8414,6 +9965,8 @@ pub struct HSD_PadStatus {
     pub cross_dir: u8,
     pub err: i8,
 }
+impl HSD_PadStatus { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_PadStatus {
     const GC_NAME: &'static str = "HSD_PadStatus";
     const GC_SIZE: u32 = 0x44;
@@ -8480,6 +10033,8 @@ pub struct PadLibData {
     pub reset_switch: u8,
     pub rumble_info: RumbleInfo,
 }
+impl PadLibData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for PadLibData {
     const GC_NAME: &'static str = "PadLibData";
     const GC_SIZE: u32 = 0x34;
@@ -8530,6 +10085,8 @@ pub struct ARQRequest {
     pub length: u32,
     pub callback: ARQCallback,
 }
+impl ARQRequest { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ARQRequest {
     const GC_NAME: &'static str = "ARQRequest";
     const GC_SIZE: u32 = 0x20;
@@ -8562,6 +10119,8 @@ pub struct HSD_DevCom {
     pub callback: HSD_DevComCallback,
     pub args: uintptr_t,
 }
+impl HSD_DevCom { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_DevCom {
     const GC_NAME: &'static str = "HSD_DevCom";
     const GC_SIZE: u32 = 0x24;
@@ -8587,6 +10146,8 @@ pub struct _HSD_SList {
     pub next: *mut _HSD_SList,
     pub data: *mut c_void,
 }
+impl _HSD_SList { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_SList {
     const GC_NAME: &'static str = "_HSD_SList";
     const GC_SIZE: u32 = 0x8;
@@ -8606,6 +10167,8 @@ pub struct _HSD_DList {
     pub prev: *mut _HSD_DList,
     pub data: *mut c_void,
 }
+impl _HSD_DList { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_DList {
     const GC_NAME: &'static str = "_HSD_DList";
     const GC_SIZE: u32 = 0xC;
@@ -8630,6 +10193,8 @@ pub struct HSD_PObj {
     pub display: *mut u8,
     pub u: HSD_PObjUnion,
 }
+impl HSD_PObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_PObj {
     const GC_NAME: &'static str = "HSD_PObj";
     const GC_SIZE: u32 = 0x18;
@@ -8654,6 +10219,8 @@ pub union HSD_PObjUnion {
     pub shape_set: *mut HSD_ShapeSet,
     pub envelope_list: *mut _HSD_SList,
 }
+impl HSD_PObjUnion { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_PObjUnion {
     const GC_NAME: &'static str = "HSD_PObjUnion";
     const GC_SIZE: u32 = 0x4;
@@ -8678,6 +10245,8 @@ pub struct HSD_PObjDesc {
     pub display: *mut u8,
     pub u: HSD_PObjDesc_u,
 }
+impl HSD_PObjDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_PObjDesc {
     const GC_NAME: &'static str = "HSD_PObjDesc";
     const GC_SIZE: u32 = 0x18;
@@ -8702,6 +10271,8 @@ pub union HSD_PObjDesc_u {
     pub shape_set: *mut HSD_ShapeSetDesc,
     pub envelope_p: *mut *mut HSD_EnvelopeDesc,
 }
+impl HSD_PObjDesc_u { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_PObjDesc_u {
     const GC_NAME: &'static str = "union (unnamed at src/sysdolphin/baselib/pobj.h:39:5)";
     const GC_SIZE: u32 = 0x4;
@@ -8726,6 +10297,8 @@ pub struct HSD_VtxDescList {
     pub stride: u16,
     pub vertex: *mut c_void,
 }
+impl HSD_VtxDescList { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_VtxDescList {
     const GC_NAME: &'static str = "HSD_VtxDescList";
     const GC_SIZE: u32 = 0x18;
@@ -8750,6 +10323,8 @@ pub struct HSD_Envelope {
     pub jobj: *mut HSD_JObj,
     pub weight: f32,
 }
+impl HSD_Envelope { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_Envelope {
     const GC_NAME: &'static str = "HSD_Envelope";
     const GC_SIZE: u32 = 0xC;
@@ -8769,6 +10344,8 @@ pub struct HSD_EnvelopeDesc {
     pub joint: *mut HSD_Joint,
     pub weight: f32,
 }
+impl HSD_EnvelopeDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_EnvelopeDesc {
     const GC_NAME: &'static str = "HSD_EnvelopeDesc";
     const GC_SIZE: u32 = 0x8;
@@ -8795,6 +10372,8 @@ pub struct HSD_ShapeSet {
     pub blend: HSD_ShapeSet_blend,
     pub aobj: *mut HSD_AObj,
 }
+impl HSD_ShapeSet { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_ShapeSet {
     const GC_NAME: &'static str = "HSD_ShapeSet";
     const GC_SIZE: u32 = 0x24;
@@ -8821,6 +10400,8 @@ pub union HSD_ShapeSet_blend {
     pub bp: *mut f32,
     pub bl: f32,
 }
+impl HSD_ShapeSet_blend { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_ShapeSet_blend {
     const GC_NAME: &'static str = "union (unnamed at src/sysdolphin/baselib/pobj.h:76:5)";
     const GC_SIZE: u32 = 0x4;
@@ -8845,6 +10426,8 @@ pub struct HSD_ShapeSetDesc {
     pub normal_desc: *mut HSD_VtxDescList,
     pub normal_idx_list: *mut *mut u8,
 }
+impl HSD_ShapeSetDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_ShapeSetDesc {
     const GC_NAME: &'static str = "HSD_ShapeSetDesc";
     const GC_SIZE: u32 = 0x1C;
@@ -8869,6 +10452,8 @@ pub struct HSD_ShapeAnim {
     pub next: *mut HSD_ShapeAnim,
     pub aobjdesc: *mut HSD_AObjDesc,
 }
+impl HSD_ShapeAnim { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_ShapeAnim {
     const GC_NAME: &'static str = "HSD_ShapeAnim";
     const GC_SIZE: u32 = 0x8;
@@ -8888,6 +10473,8 @@ pub struct HSD_ShapeAnimJoint {
     pub next: *mut HSD_ShapeAnimJoint,
     pub shapeanimdobj: *mut HSD_ShapeAnimDObj,
 }
+impl HSD_ShapeAnimJoint { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_ShapeAnimJoint {
     const GC_NAME: &'static str = "HSD_ShapeAnimJoint";
     const GC_SIZE: u32 = 0xC;
@@ -8909,6 +10496,8 @@ pub struct HSD_PObjInfo {
     pub setup_mtx: Option<unsafe extern "C" fn(*mut HSD_PObj, Mtx, Mtx, u32)>,
     pub load: Option<unsafe extern "C" fn(*mut HSD_PObj, *mut HSD_PObjDesc) -> i32>,
 }
+impl HSD_PObjInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_PObjInfo {
     const GC_NAME: &'static str = "HSD_PObjInfo";
     const GC_SIZE: u32 = 0x48;
@@ -8934,6 +10523,8 @@ pub struct HSD_Spline {
     pub segLength: *mut f32,
     pub segPoly: *mut [f32; 5],
 }
+impl HSD_Spline { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_Spline {
     const GC_NAME: &'static str = "HSD_Spline";
     const GC_SIZE: u32 = 0x18;
@@ -8970,6 +10561,8 @@ pub struct HSD_JObj {
     pub robj: *mut HSD_RObj,
     pub id: HSD_IDKey,
 }
+impl HSD_JObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_JObj {
     const GC_NAME: &'static str = "HSD_JObj";
     const GC_SIZE: u32 = 0x88;
@@ -9002,6 +10595,8 @@ pub union HSD_JObj_u {
     pub dobj: *mut HSD_DObj,
     pub spline: *mut HSD_Spline,
 }
+impl HSD_JObj_u { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_JObj_u {
     const GC_NAME: &'static str = "union (unnamed at src/sysdolphin/baselib/jobj.h:110:15)";
     const GC_SIZE: u32 = 0x4;
@@ -9029,6 +10624,8 @@ pub struct HSD_Joint {
     pub mtx: MtxPtr,
     pub robjdesc: *mut HSD_RObjDesc,
 }
+impl HSD_Joint { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_Joint {
     const GC_NAME: &'static str = "HSD_Joint";
     const GC_SIZE: u32 = 0x40;
@@ -9056,6 +10653,8 @@ pub union HSD_Joint_u {
     pub spline: *mut HSD_Spline,
     pub ptcl: *mut _HSD_SList,
 }
+impl HSD_Joint_u { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_Joint_u {
     const GC_NAME: &'static str = "union (unnamed at src/sysdolphin/baselib/jobj.h:132:15)";
     const GC_SIZE: u32 = 0x4;
@@ -9079,6 +10678,8 @@ pub struct HSD_JObjInfo {
     pub disp: Option<unsafe extern "C" fn(*mut HSD_JObj, Mtx, Mtx, HSD_TrspMask, u32)>,
     pub release_child: Option<unsafe extern "C" fn(*mut HSD_JObj)>,
 }
+impl HSD_JObjInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_JObjInfo {
     const GC_NAME: &'static str = "HSD_JObjInfo";
     const GC_SIZE: u32 = 0x50;
@@ -9100,6 +10701,8 @@ const _: () = assert!(core::mem::size_of::<HSD_JObjInfo>() == 152);
 pub struct GXFifoObj {
     pub pad: [u8; 128],
 }
+impl GXFifoObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GXFifoObj {
     const GC_NAME: &'static str = "GXFifoObj";
     const GC_SIZE: u32 = 0x80;
@@ -9128,6 +10731,8 @@ pub struct _GXRenderModeObj {
     pub sample_pattern: [[u8; 2]; 12],
     pub vfilter: [u8; 7],
 }
+impl _GXRenderModeObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _GXRenderModeObj {
     const GC_NAME: &'static str = "_GXRenderModeObj";
     const GC_SIZE: u32 = 0x3C;
@@ -9159,6 +10764,8 @@ pub struct _GXColor {
     pub b: u8,
     pub a: u8,
 }
+impl _GXColor { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _GXColor {
     const GC_NAME: &'static str = "_GXColor";
     const GC_SIZE: u32 = 0x4;
@@ -9181,6 +10788,8 @@ pub struct _GXColorS10 {
     pub b: i16,
     pub a: i16,
 }
+impl _GXColorS10 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _GXColorS10 {
     const GC_NAME: &'static str = "_GXColorS10";
     const GC_SIZE: u32 = 0x8;
@@ -9200,6 +10809,8 @@ const _: () = assert!(core::mem::size_of::<_GXColorS10>() == 8);
 pub struct _GXTexObj {
     pub dummy: [u32; 16],
 }
+impl _GXTexObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _GXTexObj {
     const GC_NAME: &'static str = "_GXTexObj";
     const GC_SIZE: u32 = 0x40;
@@ -9216,6 +10827,8 @@ const _: () = assert!(core::mem::size_of::<_GXTexObj>() == 64);
 pub struct _GXLightObj {
     pub dummy: [u32; 16],
 }
+impl _GXLightObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _GXLightObj {
     const GC_NAME: &'static str = "_GXLightObj";
     const GC_SIZE: u32 = 0x40;
@@ -9232,6 +10845,8 @@ const _: () = assert!(core::mem::size_of::<_GXLightObj>() == 64);
 pub struct _GXTexRegion {
     pub dummy: [u32; 4],
 }
+impl _GXTexRegion { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _GXTexRegion {
     const GC_NAME: &'static str = "_GXTexRegion";
     const GC_SIZE: u32 = 0x10;
@@ -9248,6 +10863,8 @@ const _: () = assert!(core::mem::size_of::<_GXTexRegion>() == 16);
 pub struct _GXTlutObj {
     pub dummy: [u32; 10],
 }
+impl _GXTlutObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _GXTlutObj {
     const GC_NAME: &'static str = "_GXTlutObj";
     const GC_SIZE: u32 = 0x28;
@@ -9264,6 +10881,8 @@ const _: () = assert!(core::mem::size_of::<_GXTlutObj>() == 40);
 pub struct _GXTlutRegion {
     pub dummy: [u32; 4],
 }
+impl _GXTlutRegion { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _GXTlutRegion {
     const GC_NAME: &'static str = "_GXTlutRegion";
     const GC_SIZE: u32 = 0x10;
@@ -9280,6 +10899,8 @@ const _: () = assert!(core::mem::size_of::<_GXTlutRegion>() == 16);
 pub struct _GXFogAdjTable {
     pub r: [u16; 10],
 }
+impl _GXFogAdjTable { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _GXFogAdjTable {
     const GC_NAME: &'static str = "_GXFogAdjTable";
     const GC_SIZE: u32 = 0x14;
@@ -9297,6 +10918,8 @@ pub struct _GXVtxDescList {
     pub attr: _GXAttr,
     pub r#type: _GXAttrType,
 }
+impl _GXVtxDescList { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _GXVtxDescList {
     const GC_NAME: &'static str = "_GXVtxDescList";
     const GC_SIZE: u32 = 0x8;
@@ -9317,6 +10940,8 @@ pub struct _GXVtxAttrFmtList {
     pub r#type: _GXCompType,
     pub frac: u8,
 }
+impl _GXVtxAttrFmtList { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _GXVtxAttrFmtList {
     const GC_NAME: &'static str = "_GXVtxAttrFmtList";
     const GC_SIZE: u32 = 0x10;
@@ -9345,6 +10970,8 @@ pub union PPCWGPipe {
     pub f32: f32,
     pub f64: f64,
 }
+impl PPCWGPipe { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for PPCWGPipe {
     const GC_NAME: &'static str = "PPCWGPipe";
     const GC_SIZE: u32 = 0x8;
@@ -9392,6 +11019,8 @@ pub struct _HSD_TevConf {
     pub kcsel: _GXTevKColorSel,
     pub kasel: _GXTevKAlphaSel,
 }
+impl _HSD_TevConf { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_TevConf {
     const GC_NAME: &'static str = "_HSD_TevConf";
     const GC_SIZE: u32 = 0x5C;
@@ -9437,6 +11066,8 @@ pub struct HSD_TExpRes {
     pub c_use: [u8; 4],
     pub a_use: [u8; 4],
 }
+impl HSD_TExpRes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_TExpRes {
     const GC_NAME: &'static str = "HSD_TExpRes";
     const GC_SIZE: u32 = 0x2C;
@@ -9461,6 +11092,8 @@ pub struct HSD_TExpRes_reg {
     pub color: u8,
     pub alpha: u8,
 }
+impl HSD_TExpRes_reg { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_TExpRes_reg {
     const GC_NAME: &'static str = "struct (unnamed at src/sysdolphin/baselib/texp.h:88:5)";
     const GC_SIZE: u32 = 0x2;
@@ -9484,6 +11117,8 @@ pub struct _HSD_TevDesc {
     pub color: u32,
     pub u: _HSD_TevDesc_u,
 }
+impl _HSD_TevDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_TevDesc {
     const GC_NAME: &'static str = "_HSD_TevDesc";
     const GC_SIZE: u32 = 0x74;
@@ -9507,6 +11142,8 @@ pub union _HSD_TevDesc_u {
     pub tevconf: _HSD_TevConf,
     pub tevop: _HSD_TevDesc_u_tevop,
 }
+impl _HSD_TevDesc_u { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_TevDesc_u {
     const GC_NAME: &'static str = "union (unnamed at src/sysdolphin/baselib/texp.h:105:5)";
     const GC_SIZE: u32 = 0x5C;
@@ -9524,6 +11161,8 @@ const _: () = assert!(core::mem::size_of::<_HSD_TevDesc_u>() == 92);
 pub struct _HSD_TevDesc_u_tevop {
     pub tevmode: u32,
 }
+impl _HSD_TevDesc_u_tevop { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_TevDesc_u_tevop {
     const GC_NAME: &'static str = "struct (unnamed at src/sysdolphin/baselib/texp.h:107:9)";
     const GC_SIZE: u32 = 0x4;
@@ -9541,6 +11180,8 @@ pub struct _HSD_TExpTevDesc {
     pub desc: _HSD_TevDesc,
     pub tobj: *mut HSD_TObj,
 }
+impl _HSD_TExpTevDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_TExpTevDesc {
     const GC_NAME: &'static str = "_HSD_TExpTevDesc";
     const GC_SIZE: u32 = 0x78;
@@ -9559,6 +11200,8 @@ pub struct _HSD_TECommon {
     pub r#type: _HSD_TExpType,
     pub next: *mut HSD_TExp,
 }
+impl _HSD_TECommon { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_TECommon {
     const GC_NAME: &'static str = "_HSD_TECommon";
     const GC_SIZE: u32 = 0x8;
@@ -9584,6 +11227,8 @@ pub struct _HSD_TECnst {
     pub r#ref: u8,
     pub range: u8,
 }
+impl _HSD_TECnst { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_TECnst {
     const GC_NAME: &'static str = "_HSD_TECnst";
     const GC_SIZE: u32 = 0x18;
@@ -9611,6 +11256,8 @@ pub struct _HSD_TEArg {
     pub arg: u8,
     pub exp: *mut HSD_TExp,
 }
+impl _HSD_TEArg { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_TEArg {
     const GC_NAME: &'static str = "_HSD_TEArg";
     const GC_SIZE: u32 = 0x8;
@@ -9652,6 +11299,8 @@ pub struct _HSD_TETev {
     pub tex: *mut HSD_TObj,
     pub chan: u8,
 }
+impl _HSD_TETev { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_TETev {
     const GC_NAME: &'static str = "_HSD_TETev";
     const GC_SIZE: u32 = 0x6C;
@@ -9693,6 +11342,8 @@ pub union HSD_TExp {
     pub tev: _HSD_TETev,
     pub cnst: _HSD_TECnst,
 }
+impl HSD_TExp { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_TExp {
     const GC_NAME: &'static str = "HSD_TExp";
     const GC_SIZE: u32 = 0x6C;
@@ -9736,6 +11387,8 @@ pub struct HSD_TObj {
     pub coord: _GXTexCoordID,
     pub tev: *mut _HSD_TObjTev,
 }
+impl HSD_TObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_TObj {
     const GC_NAME: &'static str = "HSD_TObj";
     const GC_SIZE: u32 = 0xAC;
@@ -9793,6 +11446,8 @@ pub struct _HSD_TObjDesc {
     pub lod: *mut _HSD_TexLODDesc,
     pub tev: *mut _HSD_TObjTevDesc,
 }
+impl _HSD_TObjDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_TObjDesc {
     const GC_NAME: &'static str = "_HSD_TObjDesc";
     const GC_SIZE: u32 = 0x5C;
@@ -9829,6 +11484,8 @@ pub struct _HSD_Tlut {
     pub tlut_name: u32,
     pub n_entries: u16,
 }
+impl _HSD_Tlut { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_Tlut {
     const GC_NAME: &'static str = "_HSD_Tlut";
     const GC_SIZE: u32 = 0x10;
@@ -9851,6 +11508,8 @@ pub struct _HSD_TlutDesc {
     pub tlut_name: u32,
     pub n_entries: u16,
 }
+impl _HSD_TlutDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_TlutDesc {
     const GC_NAME: &'static str = "_HSD_TlutDesc";
     const GC_SIZE: u32 = 0x10;
@@ -9874,6 +11533,8 @@ pub struct _HSD_TexLODDesc {
     pub edgeLODEnable: GXBool,
     pub max_anisotropy: _GXAnisotropy,
 }
+impl _HSD_TexLODDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_TexLODDesc {
     const GC_NAME: &'static str = "_HSD_TexLODDesc";
     const GC_SIZE: u32 = 0x10;
@@ -9900,6 +11561,8 @@ pub struct HSD_ImageDesc {
     pub minLOD: f32,
     pub maxLOD: f32,
 }
+impl HSD_ImageDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_ImageDesc {
     const GC_NAME: &'static str = "HSD_ImageDesc";
     const GC_SIZE: u32 = 0x18;
@@ -9941,6 +11604,8 @@ pub struct _HSD_TObjTev {
     pub tev1: _GXColor,
     pub active: u32,
 }
+impl _HSD_TObjTev { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_TObjTev {
     const GC_NAME: &'static str = "_HSD_TObjTev";
     const GC_SIZE: u32 = 0x20;
@@ -9995,6 +11660,8 @@ pub struct _HSD_TObjTevDesc {
     pub tev1: _GXColor,
     pub active: u32,
 }
+impl _HSD_TObjTevDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_TObjTevDesc {
     const GC_NAME: &'static str = "_HSD_TObjTevDesc";
     const GC_SIZE: u32 = 0x20;
@@ -10033,6 +11700,8 @@ pub struct _HSD_TObjInfo {
     pub load: Option<unsafe extern "C" fn(*mut HSD_TObj, *mut _HSD_TObjDesc) -> i32>,
     pub make_texp: Option<unsafe extern "C" fn(*mut HSD_TObj, u32, u32, *mut *mut HSD_TExp, *mut *mut HSD_TExp, *mut *mut HSD_TExp)>,
 }
+impl _HSD_TObjInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_TObjInfo {
     const GC_NAME: &'static str = "_HSD_TObjInfo";
     const GC_SIZE: u32 = 0x48;
@@ -10058,6 +11727,8 @@ pub struct _HSD_TexAnim {
     pub n_imagetbl: u16,
     pub n_tluttbl: u16,
 }
+impl _HSD_TexAnim { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_TexAnim {
     const GC_NAME: &'static str = "_HSD_TexAnim";
     const GC_SIZE: u32 = 0x18;
@@ -10087,6 +11758,8 @@ pub struct HSD_MObj {
     pub tevdesc: *mut _HSD_TExpTevDesc,
     pub texp: *mut HSD_TExp,
 }
+impl HSD_MObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_MObj {
     const GC_NAME: &'static str = "HSD_MObj";
     const GC_SIZE: u32 = 0x20;
@@ -10114,6 +11787,8 @@ pub struct HSD_Material {
     pub alpha: f32,
     pub shininess: f32,
 }
+impl HSD_Material { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_Material {
     const GC_NAME: &'static str = "HSD_Material";
     const GC_SIZE: u32 = 0x14;
@@ -10145,6 +11820,8 @@ pub struct HSD_PEDesc {
     pub alpha_op: u8,
     pub alpha_comp1: u8,
 }
+impl HSD_PEDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_PEDesc {
     const GC_NAME: &'static str = "HSD_PEDesc";
     const GC_SIZE: u32 = 0xC;
@@ -10177,6 +11854,8 @@ pub struct _HSD_MObjDesc {
     pub renderdesc: *mut c_void,
     pub pedesc: *mut HSD_PEDesc,
 }
+impl _HSD_MObjDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_MObjDesc {
     const GC_NAME: &'static str = "_HSD_MObjDesc";
     const GC_SIZE: u32 = 0x18;
@@ -10199,6 +11878,8 @@ pub struct _HSD_ChanAnim {
     pub next: *mut _HSD_ChanAnim,
     pub aobjdesc: *mut HSD_AObjDesc,
 }
+impl _HSD_ChanAnim { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_ChanAnim {
     const GC_NAME: &'static str = "_HSD_ChanAnim";
     const GC_SIZE: u32 = 0x8;
@@ -10217,6 +11898,8 @@ pub struct _HSD_TevRegAnim {
     pub next: *mut _HSD_TevRegAnim,
     pub aobjdesc: *mut HSD_AObjDesc,
 }
+impl _HSD_TevRegAnim { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_TevRegAnim {
     const GC_NAME: &'static str = "_HSD_TevRegAnim";
     const GC_SIZE: u32 = 0x8;
@@ -10235,6 +11918,8 @@ pub struct _HSD_RenderAnim {
     pub chananim: *mut _HSD_ChanAnim,
     pub reganim: *mut _HSD_TevRegAnim,
 }
+impl _HSD_RenderAnim { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_RenderAnim {
     const GC_NAME: &'static str = "_HSD_RenderAnim";
     const GC_SIZE: u32 = 0x8;
@@ -10255,6 +11940,8 @@ pub struct _HSD_MatAnim {
     pub texanim: *mut _HSD_TexAnim,
     pub renderanim: *mut _HSD_RenderAnim,
 }
+impl _HSD_MatAnim { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_MatAnim {
     const GC_NAME: &'static str = "_HSD_MatAnim";
     const GC_SIZE: u32 = 0x10;
@@ -10276,6 +11963,8 @@ pub struct HSD_MatAnimJoint {
     pub next: *mut HSD_MatAnimJoint,
     pub matanim: *mut _HSD_MatAnim,
 }
+impl HSD_MatAnimJoint { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_MatAnimJoint {
     const GC_NAME: &'static str = "HSD_MatAnimJoint";
     const GC_SIZE: u32 = 0xC;
@@ -10299,6 +11988,8 @@ pub struct HSD_MObjInfo {
     pub setup_tev: Option<unsafe extern "C" fn(*mut HSD_MObj, *mut HSD_TObj, u32)>,
     pub unset: Option<unsafe extern "C" fn(*mut HSD_MObj, u32)>,
 }
+impl HSD_MObjInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_MObjInfo {
     const GC_NAME: &'static str = "HSD_MObjInfo";
     const GC_SIZE: u32 = 0x50;
@@ -10325,6 +12016,8 @@ pub struct HSD_DObj {
     pub aobj: *mut HSD_AObj,
     pub flags: u32,
 }
+impl HSD_DObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_DObj {
     const GC_NAME: &'static str = "HSD_DObj";
     const GC_SIZE: u32 = 0x18;
@@ -10349,6 +12042,8 @@ pub struct HSD_DObjDesc {
     pub mobjdesc: *mut _HSD_MObjDesc,
     pub pobjdesc: *mut HSD_PObjDesc,
 }
+impl HSD_DObjDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_DObjDesc {
     const GC_NAME: &'static str = "HSD_DObjDesc";
     const GC_SIZE: u32 = 0x10;
@@ -10370,6 +12065,8 @@ pub struct HSD_DObjInfo {
     pub disp: Option<unsafe extern "C" fn(*mut HSD_DObj, Mtx, Mtx, u32)>,
     pub load: Option<unsafe extern "C" fn(*mut HSD_DObj, *mut HSD_DObjDesc) -> i32>,
 }
+impl HSD_DObjInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_DObjInfo {
     const GC_NAME: &'static str = "HSD_DObjInfo";
     const GC_SIZE: u32 = 0x44;
@@ -10389,6 +12086,8 @@ pub struct HSD_ShapeAnimDObj {
     pub next: *mut HSD_ShapeAnimDObj,
     pub shapeanim: *mut HSD_ShapeAnim,
 }
+impl HSD_ShapeAnimDObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_ShapeAnimDObj {
     const GC_NAME: &'static str = "HSD_ShapeAnimDObj";
     const GC_SIZE: u32 = 0x8;
@@ -10410,6 +12109,8 @@ pub struct HSD_FogAdj {
     pub mtx: Mtx44,
     pub aobj: *mut HSD_AObj,
 }
+impl HSD_FogAdj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_FogAdj {
     const GC_NAME: &'static str = "HSD_FogAdj";
     const GC_SIZE: u32 = 0x50;
@@ -10436,6 +12137,8 @@ pub struct HSD_Fog {
     pub color: _GXColor,
     pub aobj: *mut HSD_AObj,
 }
+impl HSD_Fog { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_Fog {
     const GC_NAME: &'static str = "HSD_Fog";
     const GC_SIZE: u32 = 0x20;
@@ -10460,6 +12163,8 @@ pub struct HSD_FogAdjDesc {
     pub width: u16,
     pub mtx: Mtx44,
 }
+impl HSD_FogAdjDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_FogAdjDesc {
     const GC_NAME: &'static str = "HSD_FogAdjDesc";
     const GC_SIZE: u32 = 0x44;
@@ -10478,6 +12183,8 @@ const _: () = assert!(core::mem::size_of::<HSD_FogAdjDesc>() == 68);
 pub struct HSD_FogInfo {
     pub parent: _HSD_ObjInfo,
 }
+impl HSD_FogInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_FogInfo {
     const GC_NAME: &'static str = "HSD_FogInfo";
     const GC_SIZE: u32 = 0x3C;
@@ -10494,6 +12201,8 @@ const _: () = assert!(core::mem::size_of::<HSD_FogInfo>() == 112);
 pub struct HSD_FogAdjInfo {
     pub parent: _HSD_ObjInfo,
 }
+impl HSD_FogAdjInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_FogAdjInfo {
     const GC_NAME: &'static str = "HSD_FogAdjInfo";
     const GC_SIZE: u32 = 0x3C;
@@ -10514,6 +12223,8 @@ pub struct HSD_FogDesc {
     pub end: f32,
     pub color: _GXColor,
 }
+impl HSD_FogDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_FogDesc {
     const GC_NAME: &'static str = "HSD_FogDesc";
     const GC_SIZE: u32 = 0x14;
@@ -10535,6 +12246,8 @@ pub struct hsd_804D0F60_t {
     pub alloc_data: _HSD_ObjAllocData,
     pub pad: *mut c_void,
 }
+impl hsd_804D0F60_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for hsd_804D0F60_t {
     const GC_NAME: &'static str = "hsd_804D0F60_t";
     const GC_SIZE: u32 = 0x30;
@@ -10568,6 +12281,8 @@ pub struct HSD_GObj {
     pub user_data_remove_func: Option<unsafe extern "C" fn(*mut c_void)>,
     pub x34_unk: *mut c_void,
 }
+impl HSD_GObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_GObj {
     const GC_NAME: &'static str = "HSD_GObj";
     const GC_SIZE: u32 = 0x38;
@@ -10603,6 +12318,8 @@ pub struct GObjFuncs {
     pub size: u8,
     pub funcs: *mut GObjFunc,
 }
+impl GObjFuncs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GObjFuncs {
     const GC_NAME: &'static str = "GObjFuncs";
     const GC_SIZE: u32 = 0xC;
@@ -10625,6 +12342,8 @@ pub struct _HSD_GObjLibInitDataType {
     pub funcs: *mut GObjFuncs,
     pub unk_2: *mut u64,
 }
+impl _HSD_GObjLibInitDataType { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_GObjLibInitDataType {
     const GC_NAME: &'static str = "_HSD_GObjLibInitDataType";
     const GC_SIZE: u32 = 0xC;
@@ -10650,6 +12369,8 @@ pub struct _unk_gobj_struct {
     pub p_prio: u8,
     pub gobj: *mut HSD_GObj,
 }
+impl _unk_gobj_struct { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _unk_gobj_struct {
     const GC_NAME: &'static str = "_unk_gobj_struct";
     const GC_SIZE: u32 = 0x10;
@@ -10676,6 +12397,8 @@ pub union _unk_gobj_struct_anon_54 {
     /// anonymous C member
     pub anon_0: _unk_gobj_struct_anon_54_anon_56,
 }
+impl _unk_gobj_struct_anon_54 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _unk_gobj_struct_anon_54 {
     const GC_NAME: &'static str = "union (anonymous at src/sysdolphin/baselib/gobj.h:54:5)";
     const GC_SIZE: u32 = 0x4;
@@ -10711,6 +12434,8 @@ impl _unk_gobj_struct_anon_54_anon_56 {
     #[inline] #[allow(unused_unsafe)] pub fn delay_change_gobj_pri(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 4, 1) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_delay_change_gobj_pri(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 4, 1, (v as u64) & 0x1) } }
 }
+impl _unk_gobj_struct_anon_54_anon_56 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _unk_gobj_struct_anon_54_anon_56 {
     const GC_NAME: &'static str = "struct (anonymous at src/sysdolphin/baselib/gobj.h:56:9)";
     const GC_SIZE: u32 = 0x4;
@@ -10750,6 +12475,8 @@ impl HSD_GObjProc {
     #[inline] #[allow(unused_unsafe)] pub fn flags_4(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_d, 2, 2) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_flags_4(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_d, 2, 2, (v as u64) & 0x3) } }
 }
+impl HSD_GObjProc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_GObjProc {
     const GC_NAME: &'static str = "HSD_GObjProc";
     const GC_SIZE: u32 = 0x18;
@@ -10776,6 +12503,8 @@ pub struct HSD_HashEntry {
     pub key: *mut c_void,
     pub value: *mut c_void,
 }
+impl HSD_HashEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_HashEntry {
     const GC_NAME: &'static str = "HSD_HashEntry";
     const GC_SIZE: u32 = 0xC;
@@ -10794,6 +12523,8 @@ const _: () = assert!(core::mem::size_of::<HSD_HashEntry>() == 24);
 pub struct _HSD_HashClass {
     pub class_info: *mut _HSD_HashClassInfo,
 }
+impl _HSD_HashClass { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_HashClass {
     const GC_NAME: &'static str = "_HSD_HashClass";
     const GC_SIZE: u32 = 0x4;
@@ -10812,6 +12543,8 @@ pub struct _HSD_HashClassInfo {
     pub getidx: Option<unsafe extern "C" fn(*mut HSD_Hash) -> i32>,
     pub keycheck: Option<unsafe extern "C" fn(*mut HSD_Hash, *mut c_void, *mut c_void) -> i32>,
 }
+impl _HSD_HashClassInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_HashClassInfo {
     const GC_NAME: &'static str = "_HSD_HashClassInfo";
     const GC_SIZE: u32 = 0x44;
@@ -10832,6 +12565,8 @@ pub struct HSD_Hash {
     pub table: *mut *mut HSD_HashEntry,
     pub table_size: u32,
 }
+impl HSD_Hash { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_Hash {
     const GC_NAME: &'static str = "HSD_Hash";
     const GC_SIZE: u32 = 0xC;
@@ -10850,6 +12585,8 @@ const _: () = assert!(core::mem::size_of::<HSD_Hash>() == 24);
 pub struct DebugFontGlyph {
     pub data: [u8; 56],
 }
+impl DebugFontGlyph { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for DebugFontGlyph {
     const GC_NAME: &'static str = "DebugFontGlyph";
     const GC_SIZE: u32 = 0x38;
@@ -10879,6 +12616,8 @@ impl _MCCPacket {
     #[inline] #[allow(unused_unsafe)] pub fn _x4_pad(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_4, 0, 7) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set__x4_pad(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_4, 0, 7, (v as u64) & 0x7F) } }
 }
+impl _MCCPacket { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _MCCPacket {
     const GC_NAME: &'static str = "_MCCPacket";
     const GC_SIZE: u32 = 0x20;
@@ -10900,6 +12639,8 @@ pub struct MccPacketBuffer {
     pub packet: _MCCPacket,
     pub pad20: [u8; 8],
 }
+impl MccPacketBuffer { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MccPacketBuffer {
     const GC_NAME: &'static str = "MccPacketBuffer";
     const GC_SIZE: u32 = 0x28;
@@ -10941,6 +12682,8 @@ pub struct jmp_buf {
     pub fpscr: f64,
     pub pad: [i32; 8],
 }
+impl jmp_buf { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for jmp_buf {
     const GC_NAME: &'static str = "jmp_buf";
     const GC_SIZE: u32 = 0x118;
@@ -10987,6 +12730,8 @@ pub struct JpegWork {
     pub coef: [i32; 64],
     pub prev_dc: [i32; 3],
 }
+impl JpegWork { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for JpegWork {
     const GC_NAME: &'static str = "JpegWork";
     const GC_SIZE: u32 = 0x828;
@@ -11010,6 +12755,8 @@ pub struct _IDEntry {
     pub id: HSD_IDKey,
     pub data: *mut c_void,
 }
+impl _IDEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _IDEntry {
     const GC_NAME: &'static str = "_IDEntry";
     const GC_SIZE: u32 = 0xC;
@@ -11028,6 +12775,8 @@ const _: () = assert!(core::mem::size_of::<_IDEntry>() == 24);
 pub struct _HSD_IDTable {
     pub table: [*mut _IDEntry; 101],
 }
+impl _HSD_IDTable { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_IDTable {
     const GC_NAME: &'static str = "_HSD_IDTable";
     const GC_SIZE: u32 = 0x194;
@@ -11052,6 +12801,8 @@ pub struct _HSD_VIStatus {
     pub update_alpha: u8,
     pub update_z: u8,
 }
+impl _HSD_VIStatus { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_VIStatus {
     const GC_NAME: &'static str = "_HSD_VIStatus";
     const GC_SIZE: u32 = 0x54;
@@ -11077,6 +12828,8 @@ pub struct _current {
     pub vi: _HSD_VIStatus,
     pub chg_flag: u8,
 }
+impl _current { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _current {
     const GC_NAME: &'static str = "_current";
     const GC_SIZE: u32 = 0x58;
@@ -11096,6 +12849,8 @@ pub struct _XFB {
     pub status: _HSD_VIXFBDrawDispStatus,
     pub vi_all: _current,
 }
+impl _XFB { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _XFB {
     const GC_NAME: &'static str = "_XFB";
     const GC_SIZE: u32 = 0x60;
@@ -11121,6 +12876,8 @@ pub struct _HSD_VIInfo {
     pub drawdone: drawdone,
     pub perf: perf,
 }
+impl _HSD_VIInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_VIInfo {
     const GC_NAME: &'static str = "_HSD_VIInfo";
     const GC_SIZE: u32 = 0x1F4;
@@ -11145,6 +12902,8 @@ pub struct _EFB {
     pub status: _HSD_VIEFBDrawDispStatus,
     pub vi_all: _current,
 }
+impl _EFB { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _EFB {
     const GC_NAME: &'static str = "_EFB";
     const GC_SIZE: u32 = 0x5C;
@@ -11164,6 +12923,8 @@ pub struct drawdone {
     pub arg: i32,
     pub cb: HSD_VIGXDrawDoneCallback,
 }
+impl drawdone { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for drawdone {
     const GC_NAME: &'static str = "drawdone";
     const GC_SIZE: u32 = 0xC;
@@ -11183,6 +12944,8 @@ pub struct perf {
     pub frame_period: i32,
     pub frame_renew: i32,
 }
+impl perf { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for perf {
     const GC_NAME: &'static str = "perf";
     const GC_SIZE: u32 = 0x8;
@@ -11205,6 +12968,8 @@ pub struct _HSD_MemReport {
     pub heap: u32,
     pub x14_pad: [u8; 24],
 }
+impl _HSD_MemReport { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_MemReport {
     const GC_NAME: &'static str = "_HSD_MemReport";
     const GC_SIZE: u32 = 0x2C;
@@ -11230,6 +12995,8 @@ pub struct HSD_LightPoint {
     pub ref_dist: f32,
     pub dist_func: u32,
 }
+impl HSD_LightPoint { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_LightPoint {
     const GC_NAME: &'static str = "HSD_LightPoint";
     const GC_SIZE: u32 = 0x14;
@@ -11252,6 +13019,8 @@ pub struct HSD_LightPointDesc {
     pub ref_dist: f32,
     pub dist_func: u32,
 }
+impl HSD_LightPointDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_LightPointDesc {
     const GC_NAME: &'static str = "HSD_LightPointDesc";
     const GC_SIZE: u32 = 0xC;
@@ -11274,6 +13043,8 @@ pub struct HSD_LightSpot {
     pub ref_dist: f32,
     pub dist_func: u32,
 }
+impl HSD_LightSpot { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_LightSpot {
     const GC_NAME: &'static str = "HSD_LightSpot";
     const GC_SIZE: u32 = 0x14;
@@ -11298,6 +13069,8 @@ pub struct HSD_LightSpotDesc {
     pub ref_dist: f32,
     pub dist_func: u32,
 }
+impl HSD_LightSpotDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_LightSpotDesc {
     const GC_NAME: &'static str = "HSD_LightSpotDesc";
     const GC_SIZE: u32 = 0x14;
@@ -11323,6 +13096,8 @@ pub struct HSD_LightAttn {
     pub k1: f32,
     pub k2: f32,
 }
+impl HSD_LightAttn { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_LightAttn {
     const GC_NAME: &'static str = "HSD_LightAttn";
     const GC_SIZE: u32 = 0x18;
@@ -11359,6 +13134,8 @@ pub struct HSD_LObj {
     pub spec_id: _GXLightID,
     pub spec_lightobj: _GXLightObj,
 }
+impl HSD_LObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_LObj {
     const GC_NAME: &'static str = "HSD_LObj";
     const GC_SIZE: u32 = 0xD4;
@@ -11392,6 +13169,8 @@ pub union HSD_LObj_u {
     pub spot: HSD_LightSpot,
     pub attn: HSD_LightAttn,
 }
+impl HSD_LObj_u { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_LObj_u {
     const GC_NAME: &'static str = "union (unnamed at src/sysdolphin/baselib/lobj.h:64:23)";
     const GC_SIZE: u32 = 0x18;
@@ -11417,6 +13196,8 @@ pub struct HSD_LightDesc {
     pub interest: *mut HSD_WObjDesc,
     pub u: HSD_LightDesc_u,
 }
+impl HSD_LightDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_LightDesc {
     const GC_NAME: &'static str = "HSD_LightDesc";
     const GC_SIZE: u32 = 0x1C;
@@ -11444,6 +13225,8 @@ pub union HSD_LightDesc_u {
     pub spot: *mut HSD_LightSpotDesc,
     pub attn: *mut HSD_LightAttn,
 }
+impl HSD_LightDesc_u { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_LightDesc_u {
     const GC_NAME: &'static str = "union (unnamed at src/sysdolphin/baselib/lobj.h:86:5)";
     const GC_SIZE: u32 = 0x4;
@@ -11467,6 +13250,8 @@ pub struct HSD_LightAnim {
     pub position_anim: *mut HSD_WObjAnim,
     pub interest_anim: *mut HSD_WObjAnim,
 }
+impl HSD_LightAnim { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_LightAnim {
     const GC_NAME: &'static str = "HSD_LightAnim";
     const GC_SIZE: u32 = 0x10;
@@ -11487,6 +13272,8 @@ pub struct HSD_LObjInfo {
     pub parent: _HSD_ObjInfo,
     pub load: Option<unsafe extern "C" fn(*mut HSD_LObj, *mut HSD_LightDesc) -> i32>,
 }
+impl HSD_LObjInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_LObjInfo {
     const GC_NAME: &'static str = "HSD_LObjInfo";
     const GC_SIZE: u32 = 0x40;
@@ -11511,6 +13298,8 @@ pub struct _HSD_PSTexGroup {
     pub palflag: u16,
     pub texTable: [*mut u8; 1],
 }
+impl _HSD_PSTexGroup { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_PSTexGroup {
     const GC_NAME: &'static str = "_HSD_PSTexGroup";
     const GC_SIZE: u32 = 0x1C;
@@ -11535,6 +13324,8 @@ pub struct _HSD_PSFormGroup {
     pub num: u32,
     pub formTable: [*mut u8; 1],
 }
+impl _HSD_PSFormGroup { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_PSFormGroup {
     const GC_NAME: &'static str = "_HSD_PSFormGroup";
     const GC_SIZE: u32 = 0x8;
@@ -11569,6 +13360,8 @@ pub struct _HSD_PSCmdList {
     pub param3: f32,
     pub cmdList: [u8; 1],
 }
+impl _HSD_PSCmdList { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_PSCmdList {
     const GC_NAME: &'static str = "_HSD_PSCmdList";
     const GC_SIZE: u32 = 0x40;
@@ -11627,6 +13420,8 @@ pub struct HSD_psAppSRT {
     pub idnum: u16,
     pub xA2: u8,
 }
+impl HSD_psAppSRT { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_psAppSRT {
     const GC_NAME: &'static str = "HSD_psAppSRT";
     const GC_SIZE: u32 = 0xA4;
@@ -11725,6 +13520,8 @@ pub struct HSD_Particle {
     pub userdata: *mut f32,
     pub callback: Option<unsafe extern "C" fn(*mut HSD_Particle) -> i32>,
 }
+impl HSD_Particle { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_Particle {
     const GC_NAME: &'static str = "HSD_Particle";
     const GC_SIZE: u32 = 0x98;
@@ -11800,6 +13597,8 @@ pub struct _PSUserFunc {
     pub hookDelete: Option<unsafe extern "C" fn(*mut HSD_Particle) -> i32>,
     pub setUserData: Option<unsafe extern "C" fn(*mut HSD_Particle, u8, f32) -> i32>,
 }
+impl _PSUserFunc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _PSUserFunc {
     const GC_NAME: &'static str = "_PSUserFunc";
     const GC_SIZE: u32 = 0xC;
@@ -11819,6 +13618,8 @@ pub struct _auxDisc {
     pub minAngle: f32,
     pub maxAngle: f32,
 }
+impl _auxDisc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _auxDisc {
     const GC_NAME: &'static str = "_auxDisc";
     const GC_SIZE: u32 = 0x8;
@@ -11838,6 +13639,8 @@ pub struct _auxLine {
     pub y2: f32,
     pub z2: f32,
 }
+impl _auxLine { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _auxLine {
     const GC_NAME: &'static str = "_auxLine";
     const GC_SIZE: u32 = 0xC;
@@ -11856,6 +13659,8 @@ const _: () = assert!(core::mem::size_of::<_auxLine>() == 12);
 pub struct _auxTornado {
     pub vel: f32,
 }
+impl _auxTornado { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _auxTornado {
     const GC_NAME: &'static str = "_auxTornado";
     const GC_SIZE: u32 = 0x4;
@@ -11884,6 +13689,8 @@ pub struct _auxRect {
     pub zz: f32,
     pub flag: u16,
 }
+impl _auxRect { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _auxRect {
     const GC_NAME: &'static str = "_auxRect";
     const GC_SIZE: u32 = 0x34;
@@ -11914,6 +13721,8 @@ pub struct _auxCone {
     pub maxAngle: f32,
     pub height: f32,
 }
+impl _auxCone { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _auxCone {
     const GC_NAME: &'static str = "_auxCone";
     const GC_SIZE: u32 = 0xC;
@@ -11936,6 +13745,8 @@ pub struct _auxSphere {
     pub lonMid: f32,
     pub lonRange: f32,
 }
+impl _auxSphere { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _auxSphere {
     const GC_NAME: &'static str = "_auxSphere";
     const GC_SIZE: u32 = 0x14;
@@ -11981,6 +13792,8 @@ pub struct HSD_Generator {
     pub callback: Option<unsafe extern "C" fn(*mut HSD_Generator) -> i32>,
     pub aux: HSD_Generator_aux,
 }
+impl HSD_Generator { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_Generator {
     const GC_NAME: &'static str = "HSD_Generator";
     const GC_SIZE: u32 = 0x94;
@@ -12027,6 +13840,8 @@ pub union HSD_Generator_aux {
     pub cone: _auxCone,
     pub sphere: _auxSphere,
 }
+impl HSD_Generator_aux { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_Generator_aux {
     const GC_NAME: &'static str = "union (unnamed at src/sysdolphin/baselib/psstructs.h:269:5)";
     const GC_SIZE: u32 = 0x34;
@@ -12052,6 +13867,8 @@ pub struct _HSD_PerfStat {
     pub nb_mtx_load: u32,
     pub env_blend: [u32; 32],
 }
+impl _HSD_PerfStat { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _HSD_PerfStat {
     const GC_NAME: &'static str = "_HSD_PerfStat";
     const GC_SIZE: u32 = 0x90;
@@ -12074,6 +13891,8 @@ pub struct HSD_Rvalue {
     pub flags: u32,
     pub jobj: *mut HSD_JObj,
 }
+impl HSD_Rvalue { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_Rvalue {
     const GC_NAME: &'static str = "HSD_Rvalue";
     const GC_SIZE: u32 = 0xC;
@@ -12093,6 +13912,8 @@ pub struct HSD_RvalueList {
     pub flags: u32,
     pub joint: *mut HSD_Joint,
 }
+impl HSD_RvalueList { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_RvalueList {
     const GC_NAME: &'static str = "HSD_RvalueList";
     const GC_SIZE: u32 = 0x8;
@@ -12111,6 +13932,8 @@ pub struct HSD_IKHint {
     pub bone_length: f32,
     pub rotate_x: f32,
 }
+impl HSD_IKHint { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_IKHint {
     const GC_NAME: &'static str = "HSD_IKHint";
     const GC_SIZE: u32 = 0x8;
@@ -12129,6 +13952,8 @@ pub struct HSD_IKHintDesc {
     pub bone_length: f32,
     pub rotate_x: f32,
 }
+impl HSD_IKHintDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_IKHintDesc {
     const GC_NAME: &'static str = "HSD_IKHintDesc";
     const GC_SIZE: u32 = 0x8;
@@ -12149,6 +13974,8 @@ pub struct HSD_Exp {
     pub nb_args: u32,
     pub is_bytecode: u8,
 }
+impl HSD_Exp { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_Exp {
     const GC_NAME: &'static str = "HSD_Exp";
     const GC_SIZE: u32 = 0x10;
@@ -12169,6 +13996,8 @@ pub union HSD_Exp_expr {
     pub func: Option<unsafe extern "C" fn(*mut c_void) -> f32>,
     pub bytecode: *mut u8,
 }
+impl HSD_Exp_expr { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_Exp_expr {
     const GC_NAME: &'static str = "union (unnamed at src/sysdolphin/baselib/robj.h:40:5)";
     const GC_SIZE: u32 = 0x4;
@@ -12187,6 +14016,8 @@ pub struct HSD_ExpDesc {
     pub func: Option<unsafe extern "C" fn(*mut c_void) -> f32>,
     pub rvalue: *mut HSD_RvalueList,
 }
+impl HSD_ExpDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_ExpDesc {
     const GC_NAME: &'static str = "HSD_ExpDesc";
     const GC_SIZE: u32 = 0x8;
@@ -12205,6 +14036,8 @@ pub struct HSD_ByteCodeExpDesc {
     pub bytecode: *mut u8,
     pub rvalue: *mut HSD_RvalueList,
 }
+impl HSD_ByteCodeExpDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_ByteCodeExpDesc {
     const GC_NAME: &'static str = "HSD_ByteCodeExpDesc";
     const GC_SIZE: u32 = 0x8;
@@ -12225,6 +14058,8 @@ pub struct HSD_RObj {
     pub u: HSD_RObj_u,
     pub aobj: *mut HSD_AObj,
 }
+impl HSD_RObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_RObj {
     const GC_NAME: &'static str = "HSD_RObj";
     const GC_SIZE: u32 = 0x1C;
@@ -12247,6 +14082,8 @@ pub union HSD_RObj_u {
     pub limit: f32,
     pub ik_hint: HSD_IKHint,
 }
+impl HSD_RObj_u { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_RObj_u {
     const GC_NAME: &'static str = "union (unnamed at src/sysdolphin/baselib/robj.h:62:5)";
     const GC_SIZE: u32 = 0x10;
@@ -12268,6 +14105,8 @@ pub struct HSD_RObjDesc {
     pub flags: u32,
     pub u: HSD_RObjDesc_u,
 }
+impl HSD_RObjDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_RObjDesc {
     const GC_NAME: &'static str = "HSD_RObjDesc";
     const GC_SIZE: u32 = 0xC;
@@ -12291,6 +14130,8 @@ pub union HSD_RObjDesc_u {
     pub joint: *mut HSD_Joint,
     pub limit: f32,
 }
+impl HSD_RObjDesc_u { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_RObjDesc_u {
     const GC_NAME: &'static str = "union (unnamed at src/sysdolphin/baselib/robj.h:74:5)";
     const GC_SIZE: u32 = 0x4;
@@ -12313,6 +14154,8 @@ pub struct HSD_RObjAnimJoint {
     pub next: *mut HSD_RObjAnimJoint,
     pub aobjdesc: *mut HSD_AObjDesc,
 }
+impl HSD_RObjAnimJoint { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_RObjAnimJoint {
     const GC_NAME: &'static str = "HSD_RObjAnimJoint";
     const GC_SIZE: u32 = 0x8;
@@ -12339,6 +14182,8 @@ pub struct HSD_Shadow {
     pub intensity: u8,
     pub user_data: *mut c_void,
 }
+impl HSD_Shadow { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_Shadow {
     const GC_NAME: &'static str = "HSD_Shadow";
     const GC_SIZE: u32 = 0x28;
@@ -12374,6 +14219,8 @@ pub struct HSD_ViewingRect {
     pub right: f32,
     pub perspective: i32,
 }
+impl HSD_ViewingRect { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_ViewingRect {
     const GC_NAME: &'static str = "HSD_ViewingRect";
     const GC_SIZE: u32 = 0x54;
@@ -12400,6 +14247,8 @@ const _: () = assert!(core::mem::size_of::<HSD_ViewingRect>() == 84);
 pub struct TextGlyphTexture {
     pub data: [u8; 512],
 }
+impl TextGlyphTexture { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TextGlyphTexture {
     const GC_NAME: &'static str = "TextGlyphTexture";
     const GC_SIZE: u32 = 0x200;
@@ -12417,6 +14266,8 @@ pub struct TextKerning {
     pub left: u8,
     pub right: u8,
 }
+impl TextKerning { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TextKerning {
     const GC_NAME: &'static str = "TextKerning";
     const GC_SIZE: u32 = 0x2;
@@ -12435,6 +14286,8 @@ pub struct SIS {
     pub kerning: *mut TextKerning,
     pub textures: *mut TextGlyphTexture,
 }
+impl SIS { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for SIS {
     const GC_NAME: &'static str = "SIS";
     const GC_SIZE: u32 = 0x8;
@@ -12454,6 +14307,8 @@ pub struct SisBlock {
     pub data: *mut HSD_Text,
     pub size: u32,
 }
+impl SisBlock { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for SisBlock {
     const GC_NAME: &'static str = "SisBlock";
     const GC_SIZE: u32 = 0xC;
@@ -12475,6 +14330,8 @@ pub struct sisLib_803A7664_t {
     pub x8: u32,
     pub xC: u32,
 }
+impl sisLib_803A7664_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for sisLib_803A7664_t {
     const GC_NAME: &'static str = "sisLib_803A7664_t";
     const GC_SIZE: u32 = 0x10;
@@ -12537,6 +14394,8 @@ pub struct HSD_Text {
     pub alignment: u8,
     pub x9F: u8,
 }
+impl HSD_Text { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_Text {
     const GC_NAME: &'static str = "HSD_Text";
     const GC_SIZE: u32 = 0xA0;
@@ -12603,6 +14462,8 @@ pub struct sislib_UnkAlloc3 {
     pub xE: u8,
     pub xF: u8,
 }
+impl sislib_UnkAlloc3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for sislib_UnkAlloc3 {
     const GC_NAME: &'static str = "sislib_UnkAlloc3";
     const GC_SIZE: u32 = 0x10;
@@ -12627,6 +14488,8 @@ pub struct HSD_SObjDesc {
     pub image: *mut HSD_ImageDesc,
     pub tlut: *mut _HSD_Tlut,
 }
+impl HSD_SObjDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_SObjDesc {
     const GC_NAME: &'static str = "HSD_SObjDesc";
     const GC_SIZE: u32 = 0x8;
@@ -12645,6 +14508,8 @@ pub struct HSD_SObjDesc2 {
     pub desc: HSD_SObjDesc,
     pub image2: *mut HSD_ImageDesc,
 }
+impl HSD_SObjDesc2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_SObjDesc2 {
     const GC_NAME: &'static str = "HSD_SObjDesc2";
     const GC_SIZE: u32 = 0xC;
@@ -12687,6 +14552,8 @@ pub struct HSD_SObj {
     pub x70_tlutobj: _GXTlutObj,
     pub x7C_texobj: _GXTexObj,
 }
+impl HSD_SObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_SObj {
     const GC_NAME: &'static str = "HSD_SObj";
     const GC_SIZE: u32 = 0xF8;
@@ -12738,6 +14605,8 @@ pub union HSD_SObj_anon_43 {
     /// anonymous C member
     pub anon_0: HSD_SObj_anon_43_anon_45,
 }
+impl HSD_SObj_anon_43 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_SObj_anon_43 {
     const GC_NAME: &'static str = "union (anonymous at src/sysdolphin/baselib/sobjlib.h:43:16)";
     const GC_SIZE: u32 = 0x4;
@@ -12762,6 +14631,8 @@ pub struct HSD_SObj_anon_43_anon_45 {
     pub x3A: u8,
     pub x3B: u8,
 }
+impl HSD_SObj_anon_43_anon_45 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_SObj_anon_43_anon_45 {
     const GC_NAME: &'static str = "struct (anonymous at src/sysdolphin/baselib/sobjlib.h:45:9)";
     const GC_SIZE: u32 = 0x4;
@@ -12783,6 +14654,8 @@ pub union HSD_SObj_anon_52 {
     /// anonymous C member
     pub anon_0: HSD_SObj_anon_52_anon_54,
 }
+impl HSD_SObj_anon_52 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_SObj_anon_52 {
     const GC_NAME: &'static str = "union (anonymous at src/sysdolphin/baselib/sobjlib.h:52:16)";
     const GC_SIZE: u32 = 0x4;
@@ -12807,6 +14680,8 @@ pub struct HSD_SObj_anon_52_anon_54 {
     pub x3E: u8,
     pub x3F: u8,
 }
+impl HSD_SObj_anon_52_anon_54 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_SObj_anon_52_anon_54 {
     const GC_NAME: &'static str = "struct (anonymous at src/sysdolphin/baselib/sobjlib.h:54:9)";
     const GC_SIZE: u32 = 0x4;
@@ -12837,6 +14712,8 @@ pub struct HSD_Chan {
     pub attn_fn: _GXAttnFn,
     pub aobj: *mut HSD_AObj,
 }
+impl HSD_Chan { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_Chan {
     const GC_NAME: &'static str = "HSD_Chan";
     const GC_SIZE: u32 = 0x30;
@@ -12881,6 +14758,8 @@ pub struct _AXPBMIX {
     pub vAuxAS: u16,
     pub vDeltaAuxAS: u16,
 }
+impl _AXPBMIX { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _AXPBMIX {
     const GC_NAME: &'static str = "_AXPBMIX";
     const GC_SIZE: u32 = 0x24;
@@ -12920,6 +14799,8 @@ pub struct _AXPBITD {
     pub targetShiftL: u16,
     pub targetShiftR: u16,
 }
+impl _AXPBITD { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _AXPBITD {
     const GC_NAME: &'static str = "_AXPBITD";
     const GC_SIZE: u32 = 0xE;
@@ -12944,6 +14825,8 @@ pub struct _AXPBUPDATE {
     pub dataHi: u16,
     pub dataLo: u16,
 }
+impl _AXPBUPDATE { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _AXPBUPDATE {
     const GC_NAME: &'static str = "_AXPBUPDATE";
     const GC_SIZE: u32 = 0xE;
@@ -12970,6 +14853,8 @@ pub struct _AXPBDPOP {
     pub aAuxAS: i16,
     pub aAuxBS: i16,
 }
+impl _AXPBDPOP { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _AXPBDPOP {
     const GC_NAME: &'static str = "_AXPBDPOP";
     const GC_SIZE: u32 = 0x12;
@@ -12995,6 +14880,8 @@ pub struct _AXPBVE {
     pub currentVolume: u16,
     pub currentDelta: i16,
 }
+impl _AXPBVE { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _AXPBVE {
     const GC_NAME: &'static str = "_AXPBVE";
     const GC_SIZE: u32 = 0x4;
@@ -13014,6 +14901,8 @@ pub struct _AXPBFIR {
     pub coefsHi: u16,
     pub coefsLo: u16,
 }
+impl _AXPBFIR { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _AXPBFIR {
     const GC_NAME: &'static str = "_AXPBFIR";
     const GC_SIZE: u32 = 0x6;
@@ -13039,6 +14928,8 @@ pub struct _AXPBADDR {
     pub currentAddressHi: u16,
     pub currentAddressLo: u16,
 }
+impl _AXPBADDR { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _AXPBADDR {
     const GC_NAME: &'static str = "_AXPBADDR";
     const GC_SIZE: u32 = 0x10;
@@ -13066,6 +14957,8 @@ pub struct _AXPBADPCM {
     pub yn1: u16,
     pub yn2: u16,
 }
+impl _AXPBADPCM { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _AXPBADPCM {
     const GC_NAME: &'static str = "_AXPBADPCM";
     const GC_SIZE: u32 = 0x28;
@@ -13089,6 +14982,8 @@ pub struct _AXPBSRC {
     pub currentAddressFrac: u16,
     pub last_samples: [u16; 4],
 }
+impl _AXPBSRC { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _AXPBSRC {
     const GC_NAME: &'static str = "_AXPBSRC";
     const GC_SIZE: u32 = 0xE;
@@ -13110,6 +15005,8 @@ pub struct _AXPBADPCMLOOP {
     pub loop_yn1: u16,
     pub loop_yn2: u16,
 }
+impl _AXPBADPCMLOOP { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _AXPBADPCMLOOP {
     const GC_NAME: &'static str = "_AXPBADPCMLOOP";
     const GC_SIZE: u32 = 0x6;
@@ -13147,6 +15044,8 @@ pub struct _AXPB {
     pub adpcmLoop: _AXPBADPCMLOOP,
     pub pad: [u16; 3],
 }
+impl _AXPB { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _AXPB {
     const GC_NAME: &'static str = "_AXPB";
     const GC_SIZE: u32 = 0xC0;
@@ -13197,6 +15096,8 @@ pub struct _AXVPB {
     pub itdBuffer: *mut c_void,
     pub pb: _AXPB,
 }
+impl _AXVPB { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _AXVPB {
     const GC_NAME: &'static str = "_AXVPB";
     const GC_SIZE: u32 = 0x1F8;
@@ -13228,6 +15129,8 @@ const _: () = assert!(core::mem::size_of::<_AXVPB>() == 536);
 pub struct _AXPBITDBUFFER {
     pub data: [i16; 32],
 }
+impl _AXPBITDBUFFER { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _AXPBITDBUFFER {
     const GC_NAME: &'static str = "_AXPBITDBUFFER";
     const GC_SIZE: u32 = 0x40;
@@ -13244,6 +15147,8 @@ const _: () = assert!(core::mem::size_of::<_AXPBITDBUFFER>() == 64);
 pub struct _AXPBU {
     pub data: [u16; 128],
 }
+impl _AXPBU { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _AXPBU {
     const GC_NAME: &'static str = "_AXPBU";
     const GC_SIZE: u32 = 0x100;
@@ -13286,6 +15191,8 @@ pub struct _AXSPB {
     pub dpopBSLo: u16,
     pub dpopBSDelta: i16,
 }
+impl _AXSPB { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _AXSPB {
     const GC_NAME: &'static str = "_AXSPB";
     const GC_SIZE: u32 = 0x36;
@@ -13334,6 +15241,8 @@ pub struct _AXPROFILE {
     pub axFrameEnd: u64,
     pub axNumVoices: u32,
 }
+impl _AXPROFILE { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _AXPROFILE {
     const GC_NAME: &'static str = "_AXPROFILE";
     const GC_SIZE: u32 = 0x38;
@@ -13358,6 +15267,8 @@ pub struct AX_AUX_DATA {
     pub r: *mut i32,
     pub s: *mut i32,
 }
+impl AX_AUX_DATA { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for AX_AUX_DATA {
     const GC_NAME: &'static str = "AX_AUX_DATA";
     const GC_SIZE: u32 = 0xC;
@@ -13376,6 +15287,8 @@ const _: () = assert!(core::mem::size_of::<AX_AUX_DATA>() == 24);
 pub struct HSD_SynthSFXGroup {
     pub arsize: i32,
 }
+impl HSD_SynthSFXGroup { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_SynthSFXGroup {
     const GC_NAME: &'static str = "HSD_SynthSFXGroup";
     const GC_SIZE: u32 = 0x4;
@@ -13409,6 +15322,8 @@ pub struct HSD_SynthSFXNode {
     pub x48: f32,
     pub x4C: f32,
 }
+impl HSD_SynthSFXNode { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_SynthSFXNode {
     const GC_NAME: &'static str = "HSD_SynthSFXNode";
     const GC_SIZE: u32 = 0x50;
@@ -13445,6 +15360,8 @@ pub struct HSD_SynthSFXNode_user_vol {
     /// anonymous C member
     pub anon_8: HSD_SynthSFXNode_user_vol_anon_37,
 }
+impl HSD_SynthSFXNode_user_vol { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_SynthSFXNode_user_vol {
     const GC_NAME: &'static str = "struct (unnamed at src/sysdolphin/baselib/synth.static.h:34:14)";
     const GC_SIZE: u32 = 0xC;
@@ -13466,6 +15383,8 @@ pub union HSD_SynthSFXNode_user_vol_anon_37 {
     pub x8: u8,
     pub x8_float: f32,
 }
+impl HSD_SynthSFXNode_user_vol_anon_37 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_SynthSFXNode_user_vol_anon_37 {
     const GC_NAME: &'static str = "union (anonymous at src/sysdolphin/baselib/synth.static.h:37:9)";
     const GC_SIZE: u32 = 0x4;
@@ -13486,6 +15405,8 @@ pub struct Anon_anon_49 {
     pub x8: Option<unsafe extern "C" fn(i32, i32)>,
     pub xC: i32,
 }
+impl Anon_anon_49 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Anon_anon_49 {
     const GC_NAME: &'static str = "struct (unnamed at src/sysdolphin/baselib/synth.static.h:49:8)";
     const GC_SIZE: u32 = 0x10;
@@ -13507,6 +15428,8 @@ pub struct Anon_anon_64 {
     pub x1788: f32,
     pub x178C: i32,
 }
+impl Anon_anon_64 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Anon_anon_64 {
     const GC_NAME: &'static str = "struct (unnamed at src/sysdolphin/baselib/synth.static.h:64:8)";
     const GC_SIZE: u32 = 0xC;
@@ -13528,6 +15451,8 @@ pub struct Anon_anon_76 {
     pub x8: i32,
     pub pad: [i8; 20],
 }
+impl Anon_anon_76 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Anon_anon_76 {
     const GC_NAME: &'static str = "struct (unnamed at src/sysdolphin/baselib/synth.static.h:76:8)";
     const GC_SIZE: u32 = 0x20;
@@ -13552,6 +15477,8 @@ pub struct HSD_TExpDag {
     pub dist: u8,
     pub depend: [*mut HSD_TExpDag; 8],
 }
+impl HSD_TExpDag { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_TExpDag {
     const GC_NAME: &'static str = "HSD_TExpDag";
     const GC_SIZE: u32 = 0x28;
@@ -13577,6 +15504,8 @@ pub struct HSD_WObj {
     pub aobj: *mut HSD_AObj,
     pub robj: *mut HSD_RObj,
 }
+impl HSD_WObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_WObj {
     const GC_NAME: &'static str = "HSD_WObj";
     const GC_SIZE: u32 = 0x20;
@@ -13599,6 +15528,8 @@ pub struct HSD_WObjDesc {
     pub pos: Vec,
     pub robjdesc: *mut HSD_RObjDesc,
 }
+impl HSD_WObjDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_WObjDesc {
     const GC_NAME: &'static str = "HSD_WObjDesc";
     const GC_SIZE: u32 = 0x14;
@@ -13618,6 +15549,8 @@ pub struct HSD_WObjInfo {
     pub parent: _HSD_ObjInfo,
     pub load: Option<unsafe extern "C" fn(*mut HSD_WObj, *mut HSD_WObjDesc) -> i32>,
 }
+impl HSD_WObjInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_WObjInfo {
     const GC_NAME: &'static str = "HSD_WObjInfo";
     const GC_SIZE: u32 = 0x40;
@@ -13636,6 +15569,8 @@ pub struct HSD_WObjAnim {
     pub aobjdesc: *mut HSD_AObjDesc,
     pub robjanim: *mut HSD_RObjAnimJoint,
 }
+impl HSD_WObjAnim { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_WObjAnim {
     const GC_NAME: &'static str = "HSD_WObjAnim";
     const GC_SIZE: u32 = 0x8;
@@ -13661,6 +15596,8 @@ pub struct lbColl_80008D30_arg1 {
     pub sfx_severity: i32,
     pub sfx_kind: enum_t,
 }
+impl lbColl_80008D30_arg1 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lbColl_80008D30_arg1 {
     const GC_NAME: &'static str = "lbColl_80008D30_arg1";
     const GC_SIZE: u32 = 0x24;
@@ -13686,6 +15623,8 @@ pub struct CmSubjectExtents {
     pub h: Vec2,
     pub v: Vec,
 }
+impl CmSubjectExtents { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CmSubjectExtents {
     const GC_NAME: &'static str = "CmSubjectExtents";
     const GC_SIZE: u32 = 0x14;
@@ -13726,6 +15665,8 @@ impl CmSubject {
     #[inline] #[allow(unused_unsafe)] pub fn was_framed(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_c, 5, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_was_framed(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_c, 5, 1, (v as u64) & 0x1) } }
 }
+impl CmSubject { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CmSubject {
     const GC_NAME: &'static str = "CmSubject";
     const GC_SIZE: u32 = 0x6C;
@@ -13759,6 +15700,8 @@ pub struct CameraTransformState {
     pub fov: f32,
     pub target_fov: f32,
 }
+impl CameraTransformState { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CameraTransformState {
     const GC_NAME: &'static str = "CameraTransformState";
     const GC_SIZE: u32 = 0x38;
@@ -13785,6 +15728,8 @@ pub struct CameraBounds {
     pub total_subjects: i32,
     pub z_pos: f32,
 }
+impl CameraBounds { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CameraBounds {
     const GC_NAME: &'static str = "CameraBounds";
     const GC_SIZE: u32 = 0x18;
@@ -13818,6 +15763,8 @@ pub struct Camera_x2D0 {
     pub unk2C: f32,
     pub callback: Option<unsafe extern "C" fn(*mut Camera_x2D0)>,
 }
+impl Camera_x2D0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Camera_x2D0 {
     const GC_NAME: &'static str = "Camera_x2D0";
     const GC_SIZE: u32 = 0x34;
@@ -13847,6 +15794,8 @@ pub struct CameraQuake {
     pub epicenter: Vec,
     pub kind: CmQuakeKind,
 }
+impl CameraQuake { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CameraQuake {
     const GC_NAME: &'static str = "CameraQuake";
     const GC_SIZE: u32 = 0x10;
@@ -13874,6 +15823,8 @@ pub struct CameraDebugMode {
     pub free_fov: f32,
     pub _58: [u8; 4],
 }
+impl CameraDebugMode { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CameraDebugMode {
     const GC_NAME: &'static str = "CameraDebugMode";
     const GC_SIZE: u32 = 0x5C;
@@ -14032,6 +15983,8 @@ impl Camera {
     #[inline] #[allow(unused_unsafe)] pub fn x39A_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_398, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x39A_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_398, 0, 1, (v as u64) & 0x1) } }
 }
+impl Camera { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Camera {
     const GC_NAME: &'static str = "Camera";
     const GC_SIZE: u32 = 0x39C;
@@ -14121,6 +16074,8 @@ pub union Camera_x344 {
     pub vec: Vec,
     pub cb: Option<unsafe extern "C" fn(*mut Vec) -> i32>,
 }
+impl Camera_x344 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Camera_x344 {
     const GC_NAME: &'static str = "union (unnamed at src/melee/cm/types.h:172:17)";
     const GC_SIZE: u32 = 0xC;
@@ -14141,6 +16096,8 @@ pub union Camera_x35C {
     pub cb: Option<unsafe extern "C" fn(*mut Vec) -> i32>,
     pub bits: Camera_x35C_bits,
 }
+impl Camera_x35C { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Camera_x35C {
     const GC_NAME: &'static str = "union (unnamed at src/melee/cm/types.h:178:17)";
     const GC_SIZE: u32 = 0xC;
@@ -14172,6 +16129,8 @@ impl Camera_x35C_bits {
     #[inline] #[allow(unused_unsafe)] pub fn b2(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 5, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b2(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 5, 1, (v as u64) & 0x1) } }
 }
+impl Camera_x35C_bits { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Camera_x35C_bits {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/cm/types.h:181:9)";
     const GC_SIZE: u32 = 0x4;
@@ -14192,6 +16151,8 @@ pub union Camera_x378 {
     pub f32_v: f32,
     pub s32_v: i32,
 }
+impl Camera_x378 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Camera_x378 {
     const GC_NAME: &'static str = "union (unnamed at src/melee/cm/types.h:191:17)";
     const GC_SIZE: u32 = 0x4;
@@ -14210,6 +16171,8 @@ pub union Camera_x37C {
     pub s32_v: i32,
     pub f32_v: f32,
 }
+impl Camera_x37C { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Camera_x37C {
     const GC_NAME: &'static str = "union (unnamed at src/melee/cm/types.h:196:17)";
     const GC_SIZE: u32 = 0x4;
@@ -14286,6 +16249,8 @@ pub struct CameraUnkGlobals {
     pub xE8: f32,
     pub xEC: f32,
 }
+impl CameraUnkGlobals { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CameraUnkGlobals {
     const GC_NAME: &'static str = "CameraUnkGlobals";
     const GC_SIZE: u32 = 0xF0;
@@ -14361,6 +16326,8 @@ const _: () = assert!(core::mem::size_of::<CameraUnkGlobals>() == 240);
 pub struct CameraModeCallbacks {
     pub callback: [Option<unsafe extern "C" fn(*mut c_void)>; 9],
 }
+impl CameraModeCallbacks { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CameraModeCallbacks {
     const GC_NAME: &'static str = "CameraModeCallbacks";
     const GC_SIZE: u32 = 0x24;
@@ -14382,6 +16349,8 @@ pub struct CameraInputs {
     pub buttons_pressed: u64,
     pub buttons_triggered: u64,
 }
+impl CameraInputs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CameraInputs {
     const GC_NAME: &'static str = "CameraInputs";
     const GC_SIZE: u32 = 0x20;
@@ -14406,6 +16375,8 @@ pub struct StaticModelDesc {
     pub matanim_joint: *mut HSD_MatAnimJoint,
     pub shapeanim_joint: *mut HSD_ShapeAnimJoint,
 }
+impl StaticModelDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for StaticModelDesc {
     const GC_NAME: &'static str = "StaticModelDesc";
     const GC_SIZE: u32 = 0x10;
@@ -14428,6 +16399,8 @@ pub struct DynamicModelDesc {
     pub matanims: *mut *mut HSD_MatAnimJoint,
     pub shapeanims: *mut *mut HSD_ShapeAnimJoint,
 }
+impl DynamicModelDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for DynamicModelDesc {
     const GC_NAME: &'static str = "DynamicModelDesc";
     const GC_SIZE: u32 = 0x10;
@@ -14448,6 +16421,8 @@ pub struct SceneCameraDesc {
     pub desc: *mut HSD_CObjDesc,
     pub anims: *mut *mut HSD_CameraAnim,
 }
+impl SceneCameraDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for SceneCameraDesc {
     const GC_NAME: &'static str = "SceneCameraDesc";
     const GC_SIZE: u32 = 0x8;
@@ -14466,6 +16441,8 @@ pub struct LightList {
     pub desc: *mut HSD_LightDesc,
     pub anims: *mut *mut HSD_LightAnim,
 }
+impl LightList { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for LightList {
     const GC_NAME: &'static str = "LightList";
     const GC_SIZE: u32 = 0x8;
@@ -14484,6 +16461,8 @@ pub struct SceneFogDesc {
     pub desc: *mut HSD_FogDesc,
     pub anims: *mut *mut HSD_CameraAnim,
 }
+impl SceneFogDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for SceneFogDesc {
     const GC_NAME: &'static str = "SceneFogDesc";
     const GC_SIZE: u32 = 0x8;
@@ -14504,6 +16483,8 @@ pub struct SceneDesc {
     pub lights: *mut *mut LightList,
     pub fogs: *mut SceneFogDesc,
 }
+impl SceneDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for SceneDesc {
     const GC_NAME: &'static str = "SceneDesc";
     const GC_SIZE: u32 = 0x10;
@@ -14536,6 +16517,8 @@ pub struct EF_Effect {
     pub x2A: i8,
     pub x2B: i8,
 }
+impl EF_Effect { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for EF_Effect {
     const GC_NAME: &'static str = "EF_Effect";
     const GC_SIZE: u32 = 0x2C;
@@ -14566,6 +16549,8 @@ pub struct EF_EffectDesc {
     pub lifetime: f32,
     pub model_desc: StaticModelDesc,
 }
+impl EF_EffectDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for EF_EffectDesc {
     const GC_NAME: &'static str = "EF_EffectDesc";
     const GC_SIZE: u32 = 0x14;
@@ -14589,6 +16574,8 @@ pub struct EF_QueuedEffect {
     pub extra1: f32,
     pub extra2: f32,
 }
+impl EF_QueuedEffect { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for EF_QueuedEffect {
     const GC_NAME: &'static str = "EF_QueuedEffect";
     const GC_SIZE: u32 = 0x24;
@@ -14613,6 +16600,8 @@ pub struct EF_DAT_Entry {
     pub effDataTable_name: *mut i8,
     pub data: *mut c_void,
 }
+impl EF_DAT_Entry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for EF_DAT_Entry {
     const GC_NAME: &'static str = "EF_DAT_Entry";
     const GC_SIZE: u32 = 0xC;
@@ -14631,6 +16620,8 @@ const _: () = assert!(core::mem::size_of::<EF_DAT_Entry>() == 24);
 pub struct EF_QueuedEffect_ObjAlloc {
     pub pad_0: [i8; 36],
 }
+impl EF_QueuedEffect_ObjAlloc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for EF_QueuedEffect_ObjAlloc {
     const GC_NAME: &'static str = "EF_QueuedEffect_ObjAlloc";
     const GC_SIZE: u32 = 0x24;
@@ -14647,6 +16638,8 @@ const _: () = assert!(core::mem::size_of::<EF_QueuedEffect_ObjAlloc>() == 36);
 pub struct WaitStruct {
     pub u: WaitStruct_u,
 }
+impl WaitStruct { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for WaitStruct {
     const GC_NAME: &'static str = "WaitStruct";
     const GC_SIZE: u32 = 0x8;
@@ -14664,6 +16657,8 @@ pub union WaitStruct_u {
     pub p: WaitStruct_u_p,
     pub i: WaitStruct_u_i,
 }
+impl WaitStruct_u { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for WaitStruct_u {
     const GC_NAME: &'static str = "union (unnamed at src/melee/ft/ftwaitanim.h:7:5)";
     const GC_SIZE: u32 = 0x8;
@@ -14682,6 +16677,8 @@ pub struct WaitStruct_u_p {
     pub x: *mut i32,
     pub y: *mut i32,
 }
+impl WaitStruct_u_p { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for WaitStruct_u_p {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/ftwaitanim.h:8:9)";
     const GC_SIZE: u32 = 0x8;
@@ -14700,6 +16697,8 @@ pub struct WaitStruct_u_i {
     pub x: i32,
     pub y: i32,
 }
+impl WaitStruct_u_i { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for WaitStruct_u_i {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/ftwaitanim.h:12:9)";
     const GC_SIZE: u32 = 0x8;
@@ -14719,6 +16718,8 @@ pub struct ftCaptain_FighterVars {
     pub during_specials: u32,
     pub _x8: [u8; 240],
 }
+impl ftCaptain_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCaptain_FighterVars {
     const GC_NAME: &'static str = "ftCaptain_FighterVars";
     const GC_SIZE: u32 = 0xF8;
@@ -14771,6 +16772,8 @@ pub struct ftCaptain_DatAttrs {
     pub speciallw_ground_traction: f32,
     pub speciallw_air_landing_traction: f32,
 }
+impl ftCaptain_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCaptain_DatAttrs {
     const GC_NAME: &'static str = "ftCaptain_DatAttrs";
     const GC_SIZE: u32 = 0x8C;
@@ -14823,6 +16826,8 @@ pub union ftCaptain_MotionVars {
     pub specialhi: ftCaptainSpecialHiVars,
     pub speciallw: ftCaptainSpecialLwVars,
 }
+impl ftCaptain_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCaptain_MotionVars {
     const GC_NAME: &'static str = "ftCaptain_MotionVars";
     const GC_SIZE: u32 = 0xC;
@@ -14840,6 +16845,8 @@ impl GcLayout for ftCaptain_MotionVars {
 pub struct ftCaptainSpecialSVars {
     pub grav: f32,
 }
+impl ftCaptainSpecialSVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCaptainSpecialSVars {
     const GC_NAME: &'static str = "ftCaptainSpecialSVars";
     const GC_SIZE: u32 = 0x4;
@@ -14886,6 +16893,8 @@ impl ftCaptainSpecialHiVars {
     #[inline] #[allow(unused_unsafe)] pub fn x2_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_2, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x2_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_2, 0, 1, (v as u64) & 0x1) } }
 }
+impl ftCaptainSpecialHiVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCaptainSpecialHiVars {
     const GC_NAME: &'static str = "ftCaptainSpecialHiVars";
     const GC_SIZE: u32 = 0xC;
@@ -14914,6 +16923,8 @@ pub struct ftCaptainSpecialLwVars {
     pub friction: f32,
     pub x4: i32,
 }
+impl ftCaptainSpecialLwVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCaptainSpecialLwVars {
     const GC_NAME: &'static str = "ftCaptainSpecialLwVars";
     const GC_SIZE: u32 = 0xC;
@@ -14936,6 +16947,8 @@ pub struct ftCollisionBox {
     pub left: Vec2,
     pub right: Vec2,
 }
+impl ftCollisionBox { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCollisionBox {
     const GC_NAME: &'static str = "ftCollisionBox";
     const GC_SIZE: u32 = 0x18;
@@ -14960,6 +16973,8 @@ pub struct ftHurtboxInit {
     pub b_offset: Vec,
     pub scale: f32,
 }
+impl ftHurtboxInit { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftHurtboxInit {
     const GC_NAME: &'static str = "ftHurtboxInit";
     const GC_SIZE: u32 = 0x28;
@@ -15051,6 +17066,8 @@ pub union ftCommon_MotionVars {
     pub throw_: ftCommon_MotionVars_throw_,
     pub capturewait: ftCommon_MotionVars_capturewait,
 }
+impl ftCommon_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars {
     const GC_NAME: &'static str = "ftCommon_MotionVars";
     const GC_SIZE: u32 = 0x64;
@@ -15148,6 +17165,8 @@ pub struct ftCommon_MotionVars_common {
     pub x4C: Vec,
     pub x58: Vec,
 }
+impl ftCommon_MotionVars_common { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_common {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:33:5)";
     const GC_SIZE: u32 = 0x64;
@@ -15184,6 +17203,8 @@ pub struct ftCommon_MotionVars_walk {
     pub fast_anim_rate: f32,
     pub accel_mul: f32,
 }
+impl ftCommon_MotionVars_walk { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_walk {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:48:5)";
     const GC_SIZE: u32 = 0x24;
@@ -15215,6 +17236,8 @@ pub struct ftCommon_MotionVars_turn {
     pub just_turned: i32,
     pub x1C: HSD_Pad,
 }
+impl ftCommon_MotionVars_turn { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_turn {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:59:5)";
     const GC_SIZE: u32 = 0x20;
@@ -15241,6 +17264,8 @@ pub struct ftCommon_MotionVars_turnrun {
     pub pad_x10: [u8; 4],
     pub x14: i32,
 }
+impl ftCommon_MotionVars_turnrun { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_turnrun {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:70:5)";
     const GC_SIZE: u32 = 0x18;
@@ -15261,6 +17286,8 @@ pub struct ftCommon_MotionVars_dash {
     pub x0: f32,
     pub x4: i32,
 }
+impl ftCommon_MotionVars_dash { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_dash {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:76:5)";
     const GC_SIZE: u32 = 0x8;
@@ -15279,6 +17306,8 @@ pub struct ftCommon_MotionVars_run {
     pub x0: f32,
     pub x4: f32,
 }
+impl ftCommon_MotionVars_run { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_run {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:80:5)";
     const GC_SIZE: u32 = 0x8;
@@ -15297,6 +17326,8 @@ pub struct ftCommon_MotionVars_runbrake {
     pub x0: i32,
     pub frames: f32,
 }
+impl ftCommon_MotionVars_runbrake { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_runbrake {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:84:5)";
     const GC_SIZE: u32 = 0x8;
@@ -15315,6 +17346,8 @@ pub struct ftCommon_MotionVars_kneebend {
     pub is_short_hop: i32,
     pub jump_input: ftCo_JumpInput,
 }
+impl ftCommon_MotionVars_kneebend { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_kneebend {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:88:5)";
     const GC_SIZE: u32 = 0x8;
@@ -15334,6 +17367,8 @@ pub struct ftCommon_MotionVars_jump {
     pub x4: i32,
     pub jump_mul: f32,
 }
+impl ftCommon_MotionVars_jump { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_jump {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:92:5)";
     const GC_SIZE: u32 = 0xC;
@@ -15353,6 +17388,8 @@ pub struct ftCommon_MotionVars_jumpaerial {
     pub x0: i32,
     pub init_h_vel: f32,
 }
+impl ftCommon_MotionVars_jumpaerial { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_jumpaerial {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:97:5)";
     const GC_SIZE: u32 = 0x8;
@@ -15371,6 +17408,8 @@ pub struct ftCommon_MotionVars_fall {
     pub smid: FtMotionId,
     pub x4: f32,
 }
+impl ftCommon_MotionVars_fall { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_fall {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:101:5)";
     const GC_SIZE: u32 = 0x8;
@@ -15389,6 +17428,8 @@ pub struct ftCommon_MotionVars_fallaerial {
     pub smid: FtMotionId,
     pub x4: f32,
 }
+impl ftCommon_MotionVars_fallaerial { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_fallaerial {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:105:5)";
     const GC_SIZE: u32 = 0x8;
@@ -15407,6 +17448,8 @@ pub struct ftCommon_MotionVars_squat {
     pub x0: i32,
     pub x4: f32,
 }
+impl ftCommon_MotionVars_squat { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_squat {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:109:5)";
     const GC_SIZE: u32 = 0x8;
@@ -15424,6 +17467,8 @@ const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_squat>() == 8);
 pub struct ftCommon_MotionVars_landing {
     pub allow_interrupt: i32,
 }
+impl ftCommon_MotionVars_landing { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_landing {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:113:5)";
     const GC_SIZE: u32 = 0x4;
@@ -15440,6 +17485,8 @@ const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_landing>() == 4);
 pub struct ftCommon_MotionVars_attack1 {
     pub x0: i32,
 }
+impl ftCommon_MotionVars_attack1 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_attack1 {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:116:5)";
     const GC_SIZE: u32 = 0x4;
@@ -15457,6 +17504,8 @@ pub struct ftCommon_MotionVars_attack100 {
     pub x0: i32,
     pub x4: i32,
 }
+impl ftCommon_MotionVars_attack100 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_attack100 {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:119:5)";
     const GC_SIZE: u32 = 0x8;
@@ -15474,6 +17523,8 @@ const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_attack100>() == 8
 pub struct ftCommon_MotionVars_attackdash {
     pub x0: i32,
 }
+impl ftCommon_MotionVars_attackdash { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_attackdash {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:123:5)";
     const GC_SIZE: u32 = 0x4;
@@ -15490,6 +17541,8 @@ const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_attackdash>() == 
 pub struct ftCommon_MotionVars_attacklw3 {
     pub x0: i32,
 }
+impl ftCommon_MotionVars_attacklw3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_attacklw3 {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:126:5)";
     const GC_SIZE: u32 = 0x4;
@@ -15515,6 +17568,8 @@ pub struct ftCommon_MotionVars_damage {
     pub x1A: u8,
     pub x1B: u8,
 }
+impl ftCommon_MotionVars_damage { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_damage {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:129:5)";
     const GC_SIZE: u32 = 0x1C;
@@ -15542,6 +17597,8 @@ pub struct ftCommon_MotionVars_damageice {
     pub rot_speed: f32,
     pub ice_coll: ftCollisionBox,
 }
+impl ftCommon_MotionVars_damageice { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_damageice {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:141:5)";
     const GC_SIZE: u32 = 0x20;
@@ -15560,6 +17617,8 @@ const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_damageice>() == 3
 pub struct ftCommon_MotionVars_damageicejump {
     pub escape_timer: f32,
 }
+impl ftCommon_MotionVars_damageicejump { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_damageicejump {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:146:5)";
     const GC_SIZE: u32 = 0x4;
@@ -15587,6 +17646,8 @@ pub struct ftCommon_MotionVars_guard {
     pub x28: *mut c_void,
     pub x2C: f32,
 }
+impl ftCommon_MotionVars_guard { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_guard {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:149:5)";
     const GC_SIZE: u32 = 0x30;
@@ -15614,6 +17675,8 @@ const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_guard>() == 56);
 pub struct ftCommon_MotionVars_itemget {
     pub x0: i32,
 }
+impl ftCommon_MotionVars_itemget { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_itemget {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:163:5)";
     const GC_SIZE: u32 = 0x4;
@@ -15635,6 +17698,8 @@ pub struct ftCommon_MotionVars_fighterthrow {
     pub self_vel_y: f32,
     pub self_vel_x: f32,
 }
+impl ftCommon_MotionVars_fighterthrow { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_fighterthrow {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:166:5)";
     const GC_SIZE: u32 = 0x18;
@@ -15664,6 +17729,8 @@ pub struct ftCommon_MotionVars_itemthrow {
     pub x1C: *mut c_void,
     pub x20: i32,
 }
+impl ftCommon_MotionVars_itemthrow { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_itemthrow {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:174:5)";
     const GC_SIZE: u32 = 0x24;
@@ -15690,6 +17757,8 @@ pub struct ftCommon_MotionVars_itemthrow4 {
     pub anim_spd: f32,
     pub x8: Vec,
 }
+impl ftCommon_MotionVars_itemthrow4 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_itemthrow4 {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:185:5)";
     const GC_SIZE: u32 = 0x14;
@@ -15714,6 +17783,8 @@ pub struct ftCommon_MotionVars_fallspecial {
     pub landing_lag: f32,
     pub allow_interrupt: i32,
 }
+impl ftCommon_MotionVars_fallspecial { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_fallspecial {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:190:5)";
     const GC_SIZE: u32 = 0x1C;
@@ -15738,6 +17809,8 @@ pub struct ftCommon_MotionVars_lift {
     pub x4: f32,
     pub x8: i32,
 }
+impl ftCommon_MotionVars_lift { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_lift {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:199:5)";
     const GC_SIZE: u32 = 0xC;
@@ -15756,6 +17829,8 @@ const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_lift>() == 12);
 pub struct ftCommon_MotionVars_downwait {
     pub x0: f32,
 }
+impl ftCommon_MotionVars_downwait { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_downwait {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:204:5)";
     const GC_SIZE: u32 = 0x4;
@@ -15773,6 +17848,8 @@ pub struct ftCommon_MotionVars_downspot {
     pub pad_x0: [u8; 4],
     pub x4: u8,
 }
+impl ftCommon_MotionVars_downspot { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_downspot {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:207:5)";
     const GC_SIZE: u32 = 0x5;
@@ -15790,6 +17867,8 @@ const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_downspot>() == 5)
 pub struct ftCommon_MotionVars_catch_ {
     pub x0: f32,
 }
+impl ftCommon_MotionVars_catch_ { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_catch_ {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:211:5)";
     const GC_SIZE: u32 = 0x4;
@@ -15807,6 +17886,8 @@ pub struct ftCommon_MotionVars_escape {
     pub x0: i32,
     pub x4: i32,
 }
+impl ftCommon_MotionVars_escape { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_escape {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:214:5)";
     const GC_SIZE: u32 = 0x8;
@@ -15825,6 +17906,8 @@ pub struct ftCommon_MotionVars_escapeair {
     pub timer: i32,
     pub self_vel: Vec,
 }
+impl ftCommon_MotionVars_escapeair { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_escapeair {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:218:5)";
     const GC_SIZE: u32 = 0x10;
@@ -15843,6 +17926,8 @@ pub struct ftCommon_MotionVars_rebound {
     pub x0: f32,
     pub anim_speed: f32,
 }
+impl ftCommon_MotionVars_rebound { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_rebound {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:222:5)";
     const GC_SIZE: u32 = 0x8;
@@ -15861,6 +17946,8 @@ pub struct ftCommon_MotionVars_downreflect {
     pub pad_x0: [u8; 4],
     pub x4: u8,
 }
+impl ftCommon_MotionVars_downreflect { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_downreflect {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:226:5)";
     const GC_SIZE: u32 = 0x5;
@@ -15879,6 +17966,8 @@ pub struct ftCommon_MotionVars_pass {
     pub x0: i32,
     pub x4: f32,
 }
+impl ftCommon_MotionVars_pass { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_pass {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:230:5)";
     const GC_SIZE: u32 = 0x8;
@@ -15898,6 +17987,8 @@ pub struct ftCommon_MotionVars_cliff {
     pub x4: f32,
     pub x8: i32,
 }
+impl ftCommon_MotionVars_cliff { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_cliff {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:234:5)";
     const GC_SIZE: u32 = 0xC;
@@ -15916,6 +18007,8 @@ const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_cliff>() == 12);
 pub struct ftCommon_MotionVars_cliffjump {
     pub x0: i32,
 }
+impl ftCommon_MotionVars_cliffjump { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_cliffjump {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:243:5)";
     const GC_SIZE: u32 = 0x4;
@@ -15932,6 +18025,8 @@ const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_cliffjump>() == 4
 pub struct ftCommon_MotionVars_cargoturn {
     pub x0: i32,
 }
+impl ftCommon_MotionVars_cargoturn { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_cargoturn {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:246:5)";
     const GC_SIZE: u32 = 0x4;
@@ -15950,6 +18045,8 @@ pub struct ftCommon_MotionVars_cargokneebend {
     pub x4: i32,
     pub x8: f32,
 }
+impl ftCommon_MotionVars_cargokneebend { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_cargokneebend {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:249:5)";
     const GC_SIZE: u32 = 0xC;
@@ -15969,6 +18066,8 @@ pub struct ftCommon_MotionVars_shouldered {
     pub x0: f32,
     pub x4: i32,
 }
+impl ftCommon_MotionVars_shouldered { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_shouldered {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:254:5)";
     const GC_SIZE: u32 = 0x8;
@@ -15986,6 +18085,8 @@ const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_shouldered>() == 
 pub struct ftCommon_MotionVars_downdamage {
     pub x0: f32,
 }
+impl ftCommon_MotionVars_downdamage { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_downdamage {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:258:5)";
     const GC_SIZE: u32 = 0x4;
@@ -16009,6 +18110,8 @@ pub struct ftCommon_MotionVars_yoshiegg {
     pub x18: Vec,
     pub scale: Vec,
 }
+impl ftCommon_MotionVars_yoshiegg { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_yoshiegg {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:261:5)";
     const GC_SIZE: u32 = 0x30;
@@ -16036,6 +18139,8 @@ pub struct ftCommon_MotionVars_capturekoopa {
     pub xC: f32,
     pub x10: f32,
 }
+impl ftCommon_MotionVars_capturekoopa { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_capturekoopa {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:271:5)";
     const GC_SIZE: u32 = 0x14;
@@ -16064,6 +18169,8 @@ pub struct ftCommon_MotionVars_capturekirby {
     pub x28: *mut c_void,
     pub scale: Vec,
 }
+impl ftCommon_MotionVars_capturekirby { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_capturekirby {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:278:5)";
     const GC_SIZE: u32 = 0x38;
@@ -16097,6 +18204,8 @@ pub struct ftCommon_MotionVars_thrownkirby {
     pub scale: Vec,
     pub coll_box: ftCollisionBox,
 }
+impl ftCommon_MotionVars_thrownkirby { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_thrownkirby {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:289:5)";
     const GC_SIZE: u32 = 0x40;
@@ -16131,6 +18240,8 @@ pub union ftCommon_MotionVars_thrownkirby_anon_296 {
     /// anonymous C member
     pub anon_0: ftCommon_MotionVars_thrownkirby_anon_296_anon_298,
 }
+impl ftCommon_MotionVars_thrownkirby_anon_296 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_thrownkirby_anon_296 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/ft/kinds/ftCommon/types.h:296:9)";
     const GC_SIZE: u32 = 0x1;
@@ -16182,6 +18293,8 @@ impl ftCommon_MotionVars_thrownkirby_anon_296_anon_298 {
     #[inline] #[allow(unused_unsafe)] pub fn x18_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x18_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl ftCommon_MotionVars_thrownkirby_anon_296_anon_298 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_thrownkirby_anon_296_anon_298 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/ft/kinds/ftCommon/types.h:298:13)";
     const GC_SIZE: u32 = 0x1;
@@ -16208,6 +18321,8 @@ pub struct ftCommon_MotionVars_bury {
     pub x20: enum_t,
     pub translate: Vec,
 }
+impl ftCommon_MotionVars_bury { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_bury {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:312:5)";
     const GC_SIZE: u32 = 0x30;
@@ -16228,6 +18343,8 @@ const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_bury>() == 48);
 pub struct ftCommon_MotionVars_buryjump {
     pub x0: f32,
 }
+impl ftCommon_MotionVars_buryjump { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_buryjump {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:319:5)";
     const GC_SIZE: u32 = 0x4;
@@ -16247,6 +18364,8 @@ pub struct ftCommon_MotionVars_passivewall {
     pub x8: i32,
     pub vel_y_exponent: i32,
 }
+impl ftCommon_MotionVars_passivewall { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_passivewall {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:322:5)";
     const GC_SIZE: u32 = 0x10;
@@ -16267,6 +18386,8 @@ pub struct ftCommon_MotionVars_aircatchhit {
     pub x0: i32,
     pub x4: f32,
 }
+impl ftCommon_MotionVars_aircatchhit { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_aircatchhit {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:328:5)";
     const GC_SIZE: u32 = 0x8;
@@ -16284,6 +18405,8 @@ const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_aircatchhit>() ==
 pub struct ftCommon_MotionVars_aircatch {
     pub x0: f32,
 }
+impl ftCommon_MotionVars_aircatch { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_aircatch {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:332:5)";
     const GC_SIZE: u32 = 0x4;
@@ -16304,6 +18427,8 @@ pub struct ftCommon_MotionVars_warpstar {
     pub x1C: i32,
     pub ecb: ftCollisionBox,
 }
+impl ftCommon_MotionVars_warpstar { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_warpstar {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:335:5)";
     const GC_SIZE: u32 = 0x38;
@@ -16326,6 +18451,8 @@ pub struct ftCommon_MotionVars_hammerkneebend {
     pub x4: i32,
     pub x8: f32,
 }
+impl ftCommon_MotionVars_hammerkneebend { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_hammerkneebend {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:342:5)";
     const GC_SIZE: u32 = 0xC;
@@ -16345,6 +18472,8 @@ pub struct ftCommon_MotionVars_hammerlanding {
     pub x0: *mut c_void,
     pub x4: f32,
 }
+impl ftCommon_MotionVars_hammerlanding { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_hammerlanding {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:347:5)";
     const GC_SIZE: u32 = 0x8;
@@ -16362,6 +18491,8 @@ const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_hammerlanding>() 
 pub struct ftCommon_MotionVars_captureleadead {
     pub x0: *mut Item_GObj,
 }
+impl ftCommon_MotionVars_captureleadead { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_captureleadead {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:351:5)";
     const GC_SIZE: u32 = 0x4;
@@ -16381,6 +18512,8 @@ pub struct ftCommon_MotionVars_capturedamage {
     pub pad_x8: [u8; 16],
     pub x18: *mut HSD_JObj,
 }
+impl ftCommon_MotionVars_capturedamage { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_capturedamage {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:354:5)";
     const GC_SIZE: u32 = 0x1C;
@@ -16407,6 +18540,8 @@ pub struct ftCommon_MotionVars_entry {
     pub x28: f32,
     pub x2C: ftCollisionBox,
 }
+impl ftCommon_MotionVars_entry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_entry {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:360:5)";
     const GC_SIZE: u32 = 0x44;
@@ -16431,6 +18566,8 @@ pub struct ftCommon_MotionVars_capturelikelike {
     pub x0: *mut Item_GObj,
     pub x4: i32,
 }
+impl ftCommon_MotionVars_capturelikelike { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_capturelikelike {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:370:5)";
     const GC_SIZE: u32 = 0x8;
@@ -16450,6 +18587,8 @@ pub struct ftCommon_MotionVars_mushroom {
     pub x4: HSD_GObjEvent,
     pub x8: i32,
 }
+impl ftCommon_MotionVars_mushroom { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_mushroom {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:374:5)";
     const GC_SIZE: u32 = 0xC;
@@ -16470,6 +18609,8 @@ pub struct ftCommon_MotionVars_barrel {
     pub x4: i32,
     pub x8: *mut Item_GObj,
 }
+impl ftCommon_MotionVars_barrel { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_barrel {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:379:5)";
     const GC_SIZE: u32 = 0xC;
@@ -16488,6 +18629,8 @@ const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_barrel>() == 16);
 pub struct ftCommon_MotionVars_unk_800D2890 {
     pub x0: HSD_GObjEvent,
 }
+impl ftCommon_MotionVars_unk_800D2890 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_unk_800D2890 {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:384:5)";
     const GC_SIZE: u32 = 0x4;
@@ -16506,6 +18649,8 @@ pub struct ftCommon_MotionVars_unk_800D331C {
     pub x6C: i32,
     pub x70: i32,
 }
+impl ftCommon_MotionVars_unk_800D331C { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_unk_800D331C {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:387:5)";
     const GC_SIZE: u32 = 0x34;
@@ -16526,6 +18671,8 @@ pub struct ftCommon_MotionVars_unk_800D34E0 {
     pub x6C: i32,
     pub x70: i32,
 }
+impl ftCommon_MotionVars_unk_800D34E0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_unk_800D34E0 {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:392:5)";
     const GC_SIZE: u32 = 0x34;
@@ -16548,6 +18695,8 @@ pub struct ftCommon_MotionVars_unk_800D3680 {
     pub x70: i32,
     pub x74: *mut c_void,
 }
+impl ftCommon_MotionVars_unk_800D3680 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_unk_800D3680 {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:397:5)";
     const GC_SIZE: u32 = 0x38;
@@ -16568,6 +18717,8 @@ const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_unk_800D3680>() =
 pub struct ftCommon_MotionVars_unk_deadleft {
     pub x40: i32,
 }
+impl ftCommon_MotionVars_unk_deadleft { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_unk_deadleft {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:404:5)";
     const GC_SIZE: u32 = 0x4;
@@ -16590,6 +18741,8 @@ pub struct ftCommon_MotionVars_unk_deadup {
     pub x5C: Vec,
     pub x68: i32,
 }
+impl ftCommon_MotionVars_unk_deadup { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_unk_deadup {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:407:5)";
     const GC_SIZE: u32 = 0x2C;
@@ -16615,6 +18768,8 @@ pub struct ftCommon_MotionVars_thrown {
     pub x8: *mut c_void,
     pub xC: u8,
 }
+impl ftCommon_MotionVars_thrown { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_thrown {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:416:5)";
     const GC_SIZE: u32 = 0x10;
@@ -16634,6 +18789,8 @@ const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_thrown>() == 24);
 pub struct ftCommon_MotionVars_parasol_open {
     pub prev_msid: FtMotionId,
 }
+impl ftCommon_MotionVars_parasol_open { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_parasol_open {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:422:5)";
     const GC_SIZE: u32 = 0x4;
@@ -16652,6 +18809,8 @@ pub struct ftCommon_MotionVars_swing {
     pub x4: i32,
     pub x8: f32,
 }
+impl ftCommon_MotionVars_swing { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_swing {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:425:5)";
     const GC_SIZE: u32 = 0xC;
@@ -16673,6 +18832,8 @@ pub struct ftCommon_MotionVars_throw_ {
     pub x8: i32,
     pub xC: Vec,
 }
+impl ftCommon_MotionVars_throw_ { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_throw_ {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:430:5)";
     const GC_SIZE: u32 = 0x18;
@@ -16695,6 +18856,8 @@ pub struct ftCommon_MotionVars_capturewait {
     pub x8: i32,
     pub xC: u8,
 }
+impl ftCommon_MotionVars_capturewait { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommon_MotionVars_capturewait {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:436:5)";
     const GC_SIZE: u32 = 0x10;
@@ -16725,6 +18888,8 @@ pub struct SmallerHitCapsule {
     pub element: u32,
     pub pad_34: [i8; 252],
 }
+impl SmallerHitCapsule { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for SmallerHitCapsule {
     const GC_NAME: &'static str = "SmallerHitCapsule";
     const GC_SIZE: u32 = 0x130;
@@ -16755,6 +18920,8 @@ pub struct TetherAttributes {
     pub x3C: f32,
     pub pos_x_1: f32,
 }
+impl TetherAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TetherAttributes {
     const GC_NAME: &'static str = "TetherAttributes";
     const GC_SIZE: u32 = 0x44;
@@ -16775,6 +18942,8 @@ pub struct ftDonkey_FighterVars {
     pub x222C: i32,
     pub x2230: i32,
 }
+impl ftDonkey_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftDonkey_FighterVars {
     const GC_NAME: &'static str = "ftDonkey_FighterVars";
     const GC_SIZE: u32 = 0x8;
@@ -16796,6 +18965,8 @@ pub union ftDonkey_MotionVars {
     pub unk7: ftDonkey_State7Vars,
     pub unk8: ftDonkey_State8Vars,
 }
+impl ftDonkey_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftDonkey_MotionVars {
     const GC_NAME: &'static str = "ftDonkey_MotionVars";
     const GC_SIZE: u32 = 0x18;
@@ -16821,6 +18992,8 @@ pub struct ftDonkey_SpecialNVars {
     pub x10: i32,
     pub x14: i32,
 }
+impl ftDonkey_SpecialNVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftDonkey_SpecialNVars {
     const GC_NAME: &'static str = "ftDonkey_SpecialNVars";
     const GC_SIZE: u32 = 0x18;
@@ -16842,6 +19015,8 @@ const _: () = assert!(core::mem::size_of::<ftDonkey_SpecialNVars>() == 24);
 pub struct ftDonkey_SpecialLwVars {
     pub x0: i32,
 }
+impl ftDonkey_SpecialLwVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftDonkey_SpecialLwVars {
     const GC_NAME: &'static str = "ftDonkey_SpecialLwVars";
     const GC_SIZE: u32 = 0x4;
@@ -16860,6 +19035,8 @@ pub struct ftDonkey_State5Vars {
     pub x4: i32,
     pub x8: f32,
 }
+impl ftDonkey_State5Vars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftDonkey_State5Vars {
     const GC_NAME: &'static str = "ftDonkey_State5Vars";
     const GC_SIZE: u32 = 0xC;
@@ -16880,6 +19057,8 @@ pub struct ftDonkey_State7Vars {
     pub x4: i32,
     pub x8: f32,
 }
+impl ftDonkey_State7Vars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftDonkey_State7Vars {
     const GC_NAME: &'static str = "ftDonkey_State7Vars";
     const GC_SIZE: u32 = 0xC;
@@ -16899,6 +19078,8 @@ pub struct ftDonkey_State8Vars {
     pub x0: i32,
     pub x4: f32,
 }
+impl ftDonkey_State8Vars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftDonkey_State8Vars {
     const GC_NAME: &'static str = "ftDonkey_State8Vars";
     const GC_SIZE: u32 = 0x8;
@@ -16929,6 +19110,8 @@ pub struct _ftDonkeyAttributes {
     pub SpecialHi: _ftDonkeyAttributes_SpecialHi,
     pub SpecialLw: _ftDonkeyAttributes_SpecialLw,
 }
+impl _ftDonkeyAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _ftDonkeyAttributes {
     const GC_NAME: &'static str = "_ftDonkeyAttributes";
     const GC_SIZE: u32 = 0x74;
@@ -16960,6 +19143,8 @@ pub struct _ftDonkeyAttributes_cargo_hold {
     pub x24_JUMP_STARTUP_LAG: f32,
     pub x28_LANDING_LAG: f32,
 }
+impl _ftDonkeyAttributes_cargo_hold { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _ftDonkeyAttributes_cargo_hold {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftDonkey/types.h:59:5)";
     const GC_SIZE: u32 = 0xC;
@@ -16981,6 +19166,8 @@ pub struct _ftDonkeyAttributes_SpecialN {
     pub x34_PUNCH_HORIZONTAL_VEL: f32,
     pub x38_LANDING_LAG: f32,
 }
+impl _ftDonkeyAttributes_SpecialN { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _ftDonkeyAttributes_SpecialN {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftDonkey/types.h:66:5)";
     const GC_SIZE: u32 = 0x10;
@@ -17002,6 +19189,8 @@ pub struct _ftDonkeyAttributes_SpecialS {
     pub x40_MOMENTUM_TRANSITION_MODIFIER: f32,
     pub x44_AERIAL_GRAVITY: f32,
 }
+impl _ftDonkeyAttributes_SpecialS { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _ftDonkeyAttributes_SpecialS {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftDonkey/types.h:74:5)";
     const GC_SIZE: u32 = 0xC;
@@ -17026,6 +19215,8 @@ pub struct _ftDonkeyAttributes_SpecialHi {
     pub x60_AERIAL_MOBILITY: f32,
     pub x64_LANDING_LAG: f32,
 }
+impl _ftDonkeyAttributes_SpecialHi { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _ftDonkeyAttributes_SpecialHi {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftDonkey/types.h:83:5)";
     const GC_SIZE: u32 = 0x1C;
@@ -17050,6 +19241,8 @@ pub struct _ftDonkeyAttributes_SpecialLw {
     pub x6C: f32,
     pub x70: f32,
 }
+impl _ftDonkeyAttributes_SpecialLw { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _ftDonkeyAttributes_SpecialLw {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftDonkey/types.h:94:5)";
     const GC_SIZE: u32 = 0xC;
@@ -17078,6 +19271,8 @@ impl HitResult {
     #[inline] #[allow(unused_unsafe)] pub fn skip_update_pos(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_4, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_skip_update_pos(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_4, 7, 1, (v as u64) & 0x1) } }
 }
+impl HitResult { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HitResult {
     const GC_NAME: &'static str = "HitResult";
     const GC_SIZE: u32 = 0x24;
@@ -17098,6 +19293,8 @@ pub struct HitVictim {
     pub victim: *mut c_void,
     pub x4: u32,
 }
+impl HitVictim { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HitVictim {
     const GC_NAME: &'static str = "HitVictim";
     const GC_SIZE: u32 = 0x8;
@@ -17219,6 +19416,8 @@ impl HitCapsule {
     #[inline] #[allow(unused_unsafe)] pub fn x43_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_40, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x43_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_40, 0, 1, (v as u64) & 0x1) } }
 }
+impl HitCapsule { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HitCapsule {
     const GC_NAME: &'static str = "HitCapsule";
     const GC_SIZE: u32 = 0x138;
@@ -17292,6 +19491,8 @@ impl HitCapsule_anon_83 {
     #[inline] #[allow(unused_unsafe)] pub fn hit_grabbed_victim_only(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_hit_grabbed_victim_only(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 7, 1, (v as u64) & 0x1) } }
 }
+impl HitCapsule_anon_83 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HitCapsule_anon_83 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/lb/types.h:83:16)";
     const GC_SIZE: u32 = 0x4;
@@ -17343,6 +19544,8 @@ impl HurtCapsule {
     #[inline] #[allow(unused_unsafe)] pub fn x24_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_24, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x24_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_24, 0, 1, (v as u64) & 0x1) } }
 }
+impl HurtCapsule { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HurtCapsule {
     const GC_NAME: &'static str = "HurtCapsule";
     const GC_SIZE: u32 = 0x44;
@@ -17375,6 +19578,8 @@ pub struct FighterHurtCapsule {
     pub height: HurtHeight,
     pub is_grabbable: i32,
 }
+impl FighterHurtCapsule { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for FighterHurtCapsule {
     const GC_NAME: &'static str = "FighterHurtCapsule";
     const GC_SIZE: u32 = 0x4C;
@@ -17398,6 +19603,8 @@ pub struct ReflectDesc {
     pub x1C_speed_mul: f32,
     pub x20_behavior: u8,
 }
+impl ReflectDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ReflectDesc {
     const GC_NAME: &'static str = "ReflectDesc";
     const GC_SIZE: u32 = 0x24;
@@ -17422,6 +19629,8 @@ pub struct AbsorbDesc {
     pub x4_offset: Vec,
     pub x10_size: f32,
 }
+impl AbsorbDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for AbsorbDesc {
     const GC_NAME: &'static str = "AbsorbDesc";
     const GC_SIZE: u32 = 0x14;
@@ -17451,6 +19660,8 @@ impl ShieldDesc {
     #[inline] #[allow(unused_unsafe)] pub fn flags(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_1c, 0, 8) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_flags(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_1c, 0, 8, (v as u64) & 0xFF) } }
 }
+impl ShieldDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ShieldDesc {
     const GC_NAME: &'static str = "ShieldDesc";
     const GC_SIZE: u32 = 0x20;
@@ -17478,6 +19689,8 @@ pub struct lbRefract_CallbackData {
     pub callback0: *mut c_void,
     pub callback1: *mut c_void,
 }
+impl lbRefract_CallbackData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lbRefract_CallbackData {
     const GC_NAME: &'static str = "lbRefract_CallbackData";
     const GC_SIZE: u32 = 0x20;
@@ -17519,6 +19732,8 @@ impl _ECBFlagStruct {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl _ECBFlagStruct { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _ECBFlagStruct {
     const GC_NAME: &'static str = "_ECBFlagStruct";
     const GC_SIZE: u32 = 0x1;
@@ -17540,6 +19755,8 @@ pub struct SurfaceData {
     pub flags: u32,
     pub normal: Vec,
 }
+impl SurfaceData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for SurfaceData {
     const GC_NAME: &'static str = "SurfaceData";
     const GC_SIZE: u32 = 0x14;
@@ -17561,6 +19778,8 @@ pub struct _itECB {
     pub right: f32,
     pub left: f32,
 }
+impl _itECB { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _itECB {
     const GC_NAME: &'static str = "_itECB";
     const GC_SIZE: u32 = 0x10;
@@ -17583,6 +19802,8 @@ pub struct _ftECB {
     pub right: Vec2,
     pub left: Vec2,
 }
+impl _ftECB { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _ftECB {
     const GC_NAME: &'static str = "_ftECB";
     const GC_SIZE: u32 = 0x20;
@@ -17607,6 +19828,8 @@ pub struct ECBSource {
     pub x128: f32,
     pub x12C: f32,
 }
+impl ECBSource { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ECBSource {
     const GC_NAME: &'static str = "ECBSource";
     const GC_SIZE: u32 = 0x2C;
@@ -17637,6 +19860,8 @@ pub union ECBSource_anon_186 {
     /// anonymous C member
     pub anon_0_0: ECBSource_anon_186_anon_191,
 }
+impl ECBSource_anon_186 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ECBSource_anon_186 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/lb/types.h:186:18)";
     const GC_SIZE: u32 = 0x1C;
@@ -17662,6 +19887,8 @@ pub struct ECBSource_anon_186_anon_187 {
     pub x108_joint: *mut HSD_JObj,
     pub x10C_joint: [*mut HSD_JObj; 6],
 }
+impl ECBSource_anon_186_anon_187 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ECBSource_anon_186_anon_187 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/lb/types.h:187:22)";
     const GC_SIZE: u32 = 0x1C;
@@ -17683,6 +19910,8 @@ pub struct ECBSource_anon_186_anon_191 {
     pub back: f32,
     pub angle: f32,
 }
+impl ECBSource_anon_186_anon_191 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ECBSource_anon_186_anon_191 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/lb/types.h:191:22)";
     const GC_SIZE: u32 = 0x14;
@@ -17736,6 +19965,8 @@ pub struct CollData {
     pub right_facing_wall: SurfaceData,
     pub ceiling: SurfaceData,
 }
+impl CollData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CollData {
     const GC_NAME: &'static str = "CollData";
     const GC_SIZE: u32 = 0x19C;
@@ -17786,6 +20017,8 @@ pub struct HSD_AllocEntry {
     pub addr: *mut c_void,
     pub size: usize,
 }
+impl HSD_AllocEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_AllocEntry {
     const GC_NAME: &'static str = "HSD_AllocEntry";
     const GC_SIZE: u32 = 0xC;
@@ -17805,6 +20038,8 @@ pub struct PreloadCacheSceneEntry {
     pub color: u8,
     pub x5: u8,
 }
+impl PreloadCacheSceneEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for PreloadCacheSceneEntry {
     const GC_NAME: &'static str = "PreloadCacheSceneEntry";
     const GC_SIZE: u32 = 0x8;
@@ -17836,6 +20071,8 @@ pub struct PreloadEntry {
     pub archive: *mut HSD_AllocEntry,
     pub effect_index: i32,
 }
+impl PreloadEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for PreloadEntry {
     const GC_NAME: &'static str = "PreloadEntry";
     const GC_SIZE: u32 = 0x1C;
@@ -17869,6 +20106,8 @@ pub struct GameCache {
     pub stkind: StKind,
     pub entries: [PreloadCacheSceneEntry; 8],
 }
+impl GameCache { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GameCache {
     const GC_NAME: &'static str = "GameCache";
     const GC_SIZE: u32 = 0x48;
@@ -17892,6 +20131,8 @@ pub struct PreloadedGameModeState {
     pub game_cache: GameCache,
     pub mode_scene_changes: i32,
 }
+impl PreloadedGameModeState { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for PreloadedGameModeState {
     const GC_NAME: &'static str = "PreloadedGameModeState";
     const GC_SIZE: u32 = 0x54;
@@ -17916,6 +20157,8 @@ pub struct PreloadCache {
     pub preloaded: i32,
     pub x974: *mut c_void,
 }
+impl PreloadCache { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for PreloadCache {
     const GC_NAME: &'static str = "PreloadCache";
     const GC_SIZE: u32 = 0x978;
@@ -17947,6 +20190,8 @@ pub struct CameraBlurData {
     pub efb_copy: *mut HSD_ImageDesc,
     pub tint_factor: f32,
 }
+impl CameraBlurData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CameraBlurData {
     const GC_NAME: &'static str = "CameraBlurData";
     const GC_SIZE: u32 = 0x24;
@@ -17974,6 +20219,8 @@ pub struct lb_80432A68_38_t {
     pub lb_error: i32,
     pub hsd_result: i32,
 }
+impl lb_80432A68_38_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lb_80432A68_38_t {
     const GC_NAME: &'static str = "lb_80432A68_38_t";
     const GC_SIZE: u32 = 0x8;
@@ -17993,6 +20240,8 @@ pub struct lbCardNew_SnapshotEntry {
     pub file_no: i16,
     pub blocks: u16,
 }
+impl lbCardNew_SnapshotEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lbCardNew_SnapshotEntry {
     const GC_NAME: &'static str = "lbCardNew_SnapshotEntry";
     const GC_SIZE: u32 = 0x8;
@@ -18013,6 +20262,8 @@ pub struct ColorOverlay_UnkInner {
     pub x4: [u8; 119],
     pub x7B: u8,
 }
+impl ColorOverlay_UnkInner { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ColorOverlay_UnkInner {
     const GC_NAME: &'static str = "ColorOverlay_UnkInner";
     const GC_SIZE: u32 = 0x7C;
@@ -18034,6 +20285,8 @@ pub union ColorOverlay_x8_t {
     pub light_rot2: ColorOverlay_x8_t_light_rot2,
     pub unk: ColorOverlay_x8_t_unk,
 }
+impl ColorOverlay_x8_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ColorOverlay_x8_t {
     const GC_NAME: &'static str = "ColorOverlay_x8_t";
     const GC_SIZE: u32 = 0x4;
@@ -18064,6 +20317,8 @@ impl ColorOverlay_x8_t_light_rot1 {
     #[inline] #[allow(unused_unsafe)] pub fn yz(&self) -> i32 { unsafe { (((melee_core_bits_get(&self.bf_0, 0, 13) as i64) << (64 - 13)) >> (64 - 13)) as i32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_yz(&mut self, v: i32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 13, (v as u64) & 0x1FFF) } }
 }
+impl ColorOverlay_x8_t_light_rot1 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ColorOverlay_x8_t_light_rot1 {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/lb/types.h:333:5)";
     const GC_SIZE: u32 = 0x4;
@@ -18114,6 +20369,8 @@ impl ColorOverlay_x8_t_light_rot2 {
     #[inline] #[allow(unused_unsafe)] pub fn yz(&self) -> i32 { unsafe { (((melee_core_bits_get(&self.bf_0, 0, 12) as i64) << (64 - 12)) >> (64 - 12)) as i32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_yz(&mut self, v: i32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 12, (v as u64) & 0xFFF) } }
 }
+impl ColorOverlay_x8_t_light_rot2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ColorOverlay_x8_t_light_rot2 {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/lb/types.h:338:5)";
     const GC_SIZE: u32 = 0x4;
@@ -18147,6 +20404,8 @@ impl ColorOverlay_x8_t_unk {
     #[inline] #[allow(unused_unsafe)] pub fn timer(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 26) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_timer(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 26, (v as u64) & 0x3FFFFFF) } }
 }
+impl ColorOverlay_x8_t_unk { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ColorOverlay_x8_t_unk {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/lb/types.h:350:5)";
     const GC_SIZE: u32 = 0x4;
@@ -18221,6 +20480,8 @@ impl ColorOverlay {
     #[inline] #[allow(unused_unsafe)] pub fn x7C_flag8(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_7c, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x7C_flag8(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_7c, 0, 1, (v as u64) & 0x1) } }
 }
+impl ColorOverlay { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ColorOverlay {
     const GC_NAME: &'static str = "ColorOverlay";
     const GC_SIZE: u32 = 0x80;
@@ -18275,6 +20536,8 @@ pub union ColorOverlay_x28_colanim {
     pub i: enum_t,
     pub ptr: *mut ColorOverlay_UnkInner,
 }
+impl ColorOverlay_x28_colanim { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ColorOverlay_x28_colanim {
     const GC_NAME: &'static str = "union (unnamed at src/melee/lb/types.h:368:5)";
     const GC_SIZE: u32 = 0x4;
@@ -18306,6 +20569,8 @@ pub struct lb_80011A50_t {
     pub unk_angle_int: i32,
     pub next: *mut lb_80011A50_t,
 }
+impl lb_80011A50_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lb_80011A50_t {
     const GC_NAME: &'static str = "lb_80011A50_t";
     const GC_SIZE: u32 = 0x38;
@@ -18337,6 +20602,8 @@ pub struct lb_80014638_arg0_t {
     pub x0: Vec,
     pub xC: Vec,
 }
+impl lb_80014638_arg0_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lb_80014638_arg0_t {
     const GC_NAME: &'static str = "lb_80014638_arg0_t";
     const GC_SIZE: u32 = 0x18;
@@ -18356,6 +20623,8 @@ pub struct lb_80014638_arg1_t {
     pub unk_y: f32,
     pub x8: Vec,
 }
+impl lb_80014638_arg1_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lb_80014638_arg1_t {
     const GC_NAME: &'static str = "lb_80014638_arg1_t";
     const GC_SIZE: u32 = 0x14;
@@ -18376,6 +20645,8 @@ pub struct Fighter_804D653C_t {
     pub unk4: u8,
     pub unk5: u8,
 }
+impl Fighter_804D653C_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_804D653C_t {
     const GC_NAME: &'static str = "Fighter_804D653C_t";
     const GC_SIZE: u32 = 0x8;
@@ -18401,6 +20672,8 @@ pub struct lb_00F9_UnkDesc1Inner {
     pub unk_34: f32,
     pub unk_38: f32,
 }
+impl lb_00F9_UnkDesc1Inner { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lb_00F9_UnkDesc1Inner {
     const GC_NAME: &'static str = "lb_00F9_UnkDesc1Inner";
     const GC_SIZE: u32 = 0x3C;
@@ -18424,6 +20697,8 @@ const _: () = assert!(core::mem::size_of::<lb_00F9_UnkDesc1Inner>() == 60);
 pub struct lb_00F9_UnkDesc1 {
     pub array: [lb_00F9_UnkDesc1Inner; 2],
 }
+impl lb_00F9_UnkDesc1 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lb_00F9_UnkDesc1 {
     const GC_NAME: &'static str = "lb_00F9_UnkDesc1";
     const GC_SIZE: u32 = 0x78;
@@ -18457,6 +20732,8 @@ pub struct lb_00F9_UnkDesc0 {
     pub unk_88: f32,
     pub unk_8C: f32,
 }
+impl lb_00F9_UnkDesc0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lb_00F9_UnkDesc0 {
     const GC_NAME: &'static str = "lb_00F9_UnkDesc0";
     const GC_SIZE: u32 = 0x90;
@@ -18494,6 +20771,8 @@ pub union PolymorphicDesc {
     pub absorb: AbsorbDesc,
     pub hurt: HurtCapsule,
 }
+impl PolymorphicDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for PolymorphicDesc {
     const GC_NAME: &'static str = "PolymorphicDesc";
     const GC_SIZE: u32 = 0x90;
@@ -18515,6 +20794,8 @@ pub struct DynamicsData {
     pub next: *mut DynamicsData,
     pub unk_94: i32,
 }
+impl DynamicsData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for DynamicsData {
     const GC_NAME: &'static str = "DynamicsData";
     const GC_SIZE: u32 = 0x98;
@@ -18534,6 +20815,8 @@ pub struct DynamicsDesc {
     pub count: u32,
     pub pos: Vec,
 }
+impl DynamicsDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for DynamicsDesc {
     const GC_NAME: &'static str = "DynamicsDesc";
     const GC_SIZE: u32 = 0x14;
@@ -18553,6 +20836,8 @@ pub struct BoneDynamicsDesc {
     pub bone_id: enum_t,
     pub dyn_desc: DynamicsDesc,
 }
+impl BoneDynamicsDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for BoneDynamicsDesc {
     const GC_NAME: &'static str = "BoneDynamicsDesc";
     const GC_SIZE: u32 = 0x18;
@@ -18570,6 +20855,8 @@ const _: () = assert!(core::mem::size_of::<BoneDynamicsDesc>() == 32);
 pub struct lb_8000FD18_t {
     pub pad_0: [i8; 148],
 }
+impl lb_8000FD18_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lb_8000FD18_t {
     const GC_NAME: &'static str = "lb_8000FD18_t";
     const GC_SIZE: u32 = 0x94;
@@ -18586,6 +20873,8 @@ const _: () = assert!(core::mem::size_of::<lb_8000FD18_t>() == 148);
 pub struct lb_804D63A0_t {
     pub entries: [DynamicsData; 320],
 }
+impl lb_804D63A0_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lb_804D63A0_t {
     const GC_NAME: &'static str = "lb_804D63A0_t";
     const GC_SIZE: u32 = 0xBE00;
@@ -18601,6 +20890,8 @@ impl GcLayout for lb_804D63A0_t {
 pub struct lb_804D63A8_t {
     pub entries: [lb_80011A50_t; 8],
 }
+impl lb_804D63A8_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lb_804D63A8_t {
     const GC_NAME: &'static str = "lb_804D63A8_t";
     const GC_SIZE: u32 = 0x1C0;
@@ -18620,6 +20911,8 @@ pub struct lbColl_8000A10C_arg0_t {
     pub x8: Vec,
     pub x14: Vec,
 }
+impl lbColl_8000A10C_arg0_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lbColl_8000A10C_arg0_t {
     const GC_NAME: &'static str = "lbColl_8000A10C_arg0_t";
     const GC_SIZE: u32 = 0x20;
@@ -18648,6 +20941,8 @@ impl Command_00 {
     #[inline] #[allow(unused_unsafe)] pub fn value(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 26) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_value(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 26, (v as u64) & 0x3FFFFFF) } }
 }
+impl Command_00 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Command_00 {
     const GC_NAME: &'static str = "Command_00";
     const GC_SIZE: u32 = 0x4;
@@ -18673,6 +20968,8 @@ impl Command_02 {
     #[inline] #[allow(unused_unsafe)] pub fn value(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 26) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_value(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 26, (v as u64) & 0x3FFFFFF) } }
 }
+impl Command_02 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Command_02 {
     const GC_NAME: &'static str = "Command_02";
     const GC_SIZE: u32 = 0x4;
@@ -18698,6 +20995,8 @@ impl Command_03 {
     #[inline] #[allow(unused_unsafe)] pub fn value(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 26) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_value(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 26, (v as u64) & 0x3FFFFFF) } }
 }
+impl Command_03 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Command_03 {
     const GC_NAME: &'static str = "Command_03";
     const GC_SIZE: u32 = 0x4;
@@ -18714,6 +21013,8 @@ impl GcLayout for Command_03 {
 pub struct Command_04 {
     pub x: u32,
 }
+impl Command_04 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Command_04 {
     const GC_NAME: &'static str = "Command_04";
     const GC_SIZE: u32 = 0x4;
@@ -18730,6 +21031,8 @@ const _: () = assert!(core::mem::size_of::<Command_04>() == 4);
 pub struct Command_05 {
     pub ptr: *mut CmdUnion,
 }
+impl Command_05 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Command_05 {
     const GC_NAME: &'static str = "Command_05";
     const GC_SIZE: u32 = 0x4;
@@ -18746,6 +21049,8 @@ const _: () = assert!(core::mem::size_of::<Command_05>() == 8);
 pub struct Command_07 {
     pub ptr: *mut CmdUnion,
 }
+impl Command_07 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Command_07 {
     const GC_NAME: &'static str = "Command_07";
     const GC_SIZE: u32 = 0x4;
@@ -18774,6 +21079,8 @@ impl Command_09 {
     #[inline] #[allow(unused_unsafe)] pub fn param_2(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 18) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_param_2(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 18, (v as u64) & 0x3FFFF) } }
 }
+impl Command_09 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Command_09 {
     const GC_NAME: &'static str = "Command_09";
     const GC_SIZE: u32 = 0x4;
@@ -18803,6 +21110,8 @@ impl unk0 {
     #[inline] #[allow(unused_unsafe)] pub fn unk2(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 18) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk2(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 18, (v as u64) & 0x3FFFF) } }
 }
+impl unk0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk0 {
     const GC_NAME: &'static str = "unk0";
     const GC_SIZE: u32 = 0x4;
@@ -18835,6 +21144,8 @@ impl unk1 {
     #[inline] #[allow(unused_unsafe)] pub fn unk2(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 3, 1) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk2(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 3, 1, (v as u64) & 0x1) } }
 }
+impl unk1 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk1 {
     const GC_NAME: &'static str = "unk1";
     const GC_SIZE: u32 = 0x4;
@@ -18862,6 +21173,8 @@ impl set_throw_flags {
     #[inline] #[allow(unused_unsafe)] pub fn hit_idx(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 26) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_hit_idx(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 26, (v as u64) & 0x3FFFFFF) } }
 }
+impl set_throw_flags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for set_throw_flags {
     const GC_NAME: &'static str = "set_throw_flags";
     const GC_SIZE: u32 = 0x4;
@@ -18887,6 +21200,8 @@ impl unk3 {
     #[inline] #[allow(unused_unsafe)] pub fn unk1(&self) -> i32 { unsafe { (((melee_core_bits_get(&self.bf_0, 0, 25) as i64) << (64 - 25)) >> (64 - 25)) as i32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk1(&mut self, v: i32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 25, (v as u64) & 0x1FFFFFF) } }
 }
+impl unk3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk3 {
     const GC_NAME: &'static str = "unk3";
     const GC_SIZE: u32 = 0x4;
@@ -18912,6 +21227,8 @@ impl unk4 {
     #[inline] #[allow(unused_unsafe)] pub fn unk1(&self) -> u16 { unsafe { melee_core_bits_get(&self.bf_0, 2, 8) as u16 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk1(&mut self, v: u16) { unsafe { melee_core_bits_set(&mut self.bf_0, 2, 8, (v as u64) & 0xFF) } }
 }
+impl unk4 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk4 {
     const GC_NAME: &'static str = "unk4";
     const GC_SIZE: u32 = 0x2;
@@ -18937,6 +21254,8 @@ impl unk5 {
     #[inline] #[allow(unused_unsafe)] pub fn unk1(&self) -> i32 { unsafe { (((melee_core_bits_get(&self.bf_0, 0, 18) as i64) << (64 - 18)) >> (64 - 18)) as i32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk1(&mut self, v: i32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 18, (v as u64) & 0x3FFFF) } }
 }
+impl unk5 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk5 {
     const GC_NAME: &'static str = "unk5";
     const GC_SIZE: u32 = 0x4;
@@ -18962,6 +21281,8 @@ impl unk6 {
     #[inline] #[allow(unused_unsafe)] pub fn unk1(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 1, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk1(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 1, 1, (v as u64) & 0x1) } }
 }
+impl unk6 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk6 {
     const GC_NAME: &'static str = "unk6";
     const GC_SIZE: u32 = 0x1;
@@ -18987,6 +21308,8 @@ impl set_airborne_state {
     #[inline] #[allow(unused_unsafe)] pub fn state(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 26) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_state(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 26, (v as u64) & 0x3FFFFFF) } }
 }
+impl set_airborne_state { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for set_airborne_state {
     const GC_NAME: &'static str = "set_airborne_state";
     const GC_SIZE: u32 = 0x4;
@@ -19003,6 +21326,8 @@ impl GcLayout for set_airborne_state {
 pub struct unk8 {
     pub unk0: i32,
 }
+impl unk8 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk8 {
     const GC_NAME: &'static str = "unk8";
     const GC_SIZE: u32 = 0x4;
@@ -19034,6 +21359,8 @@ impl part_anim {
     #[inline] #[allow(unused_unsafe)] pub fn unk3(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 12) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk3(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 12, (v as u64) & 0xFFF) } }
 }
+impl part_anim { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for part_anim {
     const GC_NAME: &'static str = "part_anim";
     const GC_SIZE: u32 = 0x4;
@@ -19064,6 +21391,8 @@ impl unk9 {
     #[inline] #[allow(unused_unsafe)] pub fn unk2(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 13) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk2(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 13, (v as u64) & 0x1FFF) } }
 }
+impl unk9 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk9 {
     const GC_NAME: &'static str = "unk9";
     const GC_SIZE: u32 = 0x4;
@@ -19096,6 +21425,8 @@ impl unk10 {
     #[inline] #[allow(unused_unsafe)] pub fn unk3(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 13) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk3(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 13, (v as u64) & 0x1FFF) } }
 }
+impl unk10 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk10 {
     const GC_NAME: &'static str = "unk10";
     const GC_SIZE: u32 = 0x4;
@@ -19123,6 +21454,8 @@ impl unk11 {
     #[inline] #[allow(unused_unsafe)] pub fn unk1(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 26) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk1(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 26, (v as u64) & 0x3FFFFFF) } }
 }
+impl unk11 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk11 {
     const GC_NAME: &'static str = "unk11";
     const GC_SIZE: u32 = 0x4;
@@ -19154,6 +21487,8 @@ impl unk12 {
     #[inline] #[allow(unused_unsafe)] pub fn unk3(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 14) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk3(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 14, (v as u64) & 0x3FFF) } }
 }
+impl unk12 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk12 {
     const GC_NAME: &'static str = "unk12";
     const GC_SIZE: u32 = 0x4;
@@ -19184,6 +21519,8 @@ impl unk13 {
     #[inline] #[allow(unused_unsafe)] pub fn unk2(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 18) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk2(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 18, (v as u64) & 0x3FFFF) } }
 }
+impl unk13 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk13 {
     const GC_NAME: &'static str = "unk13";
     const GC_SIZE: u32 = 0x4;
@@ -19210,6 +21547,8 @@ impl unk14 {
     #[inline] #[allow(unused_unsafe)] pub fn unk1(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 2, 8) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk1(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 2, 8, (v as u64) & 0xFF) } }
 }
+impl unk14 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk14 {
     const GC_NAME: &'static str = "unk14";
     const GC_SIZE: u32 = 0x4;
@@ -19235,6 +21574,8 @@ impl unk15 {
     #[inline] #[allow(unused_unsafe)] pub fn unk1(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 26) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk1(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 26, (v as u64) & 0x3FFFFFF) } }
 }
+impl unk15 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk15 {
     const GC_NAME: &'static str = "unk15";
     const GC_SIZE: u32 = 0x4;
@@ -19263,6 +21604,8 @@ impl unk16 {
     #[inline] #[allow(unused_unsafe)] pub fn unk4(&self) -> i32 { unsafe { (((melee_core_bits_get(&self.bf_0, 0, 25) as i64) << (64 - 25)) >> (64 - 25)) as i32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk4(&mut self, v: i32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 25, (v as u64) & 0x1FFFFFF) } }
 }
+impl unk16 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk16 {
     const GC_NAME: &'static str = "unk16";
     const GC_SIZE: u32 = 0x4;
@@ -19289,6 +21632,8 @@ impl unk17 {
     #[inline] #[allow(unused_unsafe)] pub fn unk1(&self) -> i32 { unsafe { (((melee_core_bits_get(&self.bf_0, 0, 26) as i64) << (64 - 26)) >> (64 - 26)) as i32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk1(&mut self, v: i32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 26, (v as u64) & 0x3FFFFFF) } }
 }
+impl unk17 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk17 {
     const GC_NAME: &'static str = "unk17";
     const GC_SIZE: u32 = 0x4;
@@ -19314,6 +21659,8 @@ impl unk18 {
     #[inline] #[allow(unused_unsafe)] pub fn damage_amount(&self) -> i32 { unsafe { (((melee_core_bits_get(&self.bf_0, 0, 26) as i64) << (64 - 26)) >> (64 - 26)) as i32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_damage_amount(&mut self, v: i32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 26, (v as u64) & 0x3FFFFFF) } }
 }
+impl unk18 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk18 {
     const GC_NAME: &'static str = "unk18";
     const GC_SIZE: u32 = 0x4;
@@ -19339,6 +21686,8 @@ impl unk19 {
     #[inline] #[allow(unused_unsafe)] pub fn unk1(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 26) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk1(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 26, (v as u64) & 0x3FFFFFF) } }
 }
+impl unk19 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk19 {
     const GC_NAME: &'static str = "unk19";
     const GC_SIZE: u32 = 0x4;
@@ -19364,6 +21713,8 @@ impl unk20 {
     #[inline] #[allow(unused_unsafe)] pub fn unk1(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 26) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk1(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 26, (v as u64) & 0x3FFFFFF) } }
 }
+impl unk20 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk20 {
     const GC_NAME: &'static str = "unk20";
     const GC_SIZE: u32 = 0x4;
@@ -19392,6 +21743,8 @@ impl unk21 {
     #[inline] #[allow(unused_unsafe)] pub fn unk2(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 1, 8) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk2(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 1, 8, (v as u64) & 0xFF) } }
 }
+impl unk21 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk21 {
     const GC_NAME: &'static str = "unk21";
     const GC_SIZE: u32 = 0x4;
@@ -19421,6 +21774,8 @@ impl set_hitbox_damage {
     #[inline] #[allow(unused_unsafe)] pub fn value(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 23) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_value(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 23, (v as u64) & 0x7FFFFF) } }
 }
+impl set_hitbox_damage { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for set_hitbox_damage {
     const GC_NAME: &'static str = "set_hitbox_damage";
     const GC_SIZE: u32 = 0x4;
@@ -19450,6 +21805,8 @@ impl set_hitbox_scale {
     #[inline] #[allow(unused_unsafe)] pub fn value(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 23) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_value(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 23, (v as u64) & 0x7FFFFF) } }
 }
+impl set_hitbox_scale { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for set_hitbox_scale {
     const GC_NAME: &'static str = "set_hitbox_scale";
     const GC_SIZE: u32 = 0x4;
@@ -19482,6 +21839,8 @@ impl set_hitbox_x42_b57 {
     #[inline] #[allow(unused_unsafe)] pub fn value(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_value(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl set_hitbox_x42_b57 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for set_hitbox_x42_b57 {
     const GC_NAME: &'static str = "set_hitbox_x42_b57";
     const GC_SIZE: u32 = 0x4;
@@ -19512,6 +21871,8 @@ impl set_cmd_var {
     #[inline] #[allow(unused_unsafe)] pub fn value(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 24) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_value(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 24, (v as u64) & 0xFFFFFF) } }
 }
+impl set_cmd_var { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for set_cmd_var {
     const GC_NAME: &'static str = "set_cmd_var";
     const GC_SIZE: u32 = 0x4;
@@ -19541,6 +21902,8 @@ impl set_hurt_state {
     #[inline] #[allow(unused_unsafe)] pub fn state(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 18) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_state(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 18, (v as u64) & 0x3FFFF) } }
 }
+impl set_hurt_state { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for set_hurt_state {
     const GC_NAME: &'static str = "set_hurt_state";
     const GC_SIZE: u32 = 0x4;
@@ -19567,6 +21930,8 @@ impl set_jab_combo {
     #[inline] #[allow(unused_unsafe)] pub fn disabled(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 26) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_disabled(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 26, (v as u64) & 0x3FFFFFF) } }
 }
+impl set_jab_combo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for set_jab_combo {
     const GC_NAME: &'static str = "set_jab_combo";
     const GC_SIZE: u32 = 0x4;
@@ -19592,6 +21957,8 @@ impl set_jab_rapid {
     #[inline] #[allow(unused_unsafe)] pub fn state(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 26) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_state(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 26, (v as u64) & 0x3FFFFFF) } }
 }
+impl set_jab_rapid { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for set_jab_rapid {
     const GC_NAME: &'static str = "set_jab_rapid";
     const GC_SIZE: u32 = 0x4;
@@ -19620,6 +21987,8 @@ impl set_dobj_flags {
     #[inline] #[allow(unused_unsafe)] pub fn value(&self) -> i32 { unsafe { (((melee_core_bits_get(&self.bf_0, 0, 19) as i64) << (64 - 19)) >> (64 - 19)) as i32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_value(&mut self, v: i32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 19, (v as u64) & 0x7FFFF) } }
 }
+impl set_dobj_flags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for set_dobj_flags {
     const GC_NAME: &'static str = "set_dobj_flags";
     const GC_SIZE: u32 = 0x4;
@@ -19649,6 +22018,8 @@ impl set_throw_hitbox_0 {
     #[inline] #[allow(unused_unsafe)] pub fn damage(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 23) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_damage(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 23, (v as u64) & 0x7FFFFF) } }
 }
+impl set_throw_hitbox_0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for set_throw_hitbox_0 {
     const GC_NAME: &'static str = "set_throw_hitbox_0";
     const GC_SIZE: u32 = 0x4;
@@ -19678,6 +22049,8 @@ impl set_throw_hitbox_1 {
     #[inline] #[allow(unused_unsafe)] pub fn hit_x28(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 5, 9) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_hit_x28(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 5, 9, (v as u64) & 0x1FF) } }
 }
+impl set_throw_hitbox_1 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for set_throw_hitbox_1 {
     const GC_NAME: &'static str = "set_throw_hitbox_1";
     const GC_SIZE: u32 = 0x4;
@@ -19710,6 +22083,8 @@ impl set_throw_hitbox_2 {
     #[inline] #[allow(unused_unsafe)] pub fn sfx_kind(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 4, 4) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_sfx_kind(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 4, 4, (v as u64) & 0xF) } }
 }
+impl set_throw_hitbox_2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for set_throw_hitbox_2 {
     const GC_NAME: &'static str = "set_throw_hitbox_2";
     const GC_SIZE: u32 = 0x4;
@@ -19737,6 +22112,8 @@ impl unk27 {
     #[inline] #[allow(unused_unsafe)] pub fn value(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 26) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_value(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 26, (v as u64) & 0x3FFFFFF) } }
 }
+impl unk27 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk27 {
     const GC_NAME: &'static str = "unk27";
     const GC_SIZE: u32 = 0x4;
@@ -19762,6 +22139,8 @@ impl set_article_vis {
     #[inline] #[allow(unused_unsafe)] pub fn value(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 26) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_value(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 26, (v as u64) & 0x3FFFFFF) } }
 }
+impl set_article_vis { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for set_article_vis {
     const GC_NAME: &'static str = "set_article_vis";
     const GC_SIZE: u32 = 0x4;
@@ -19787,6 +22166,8 @@ impl set_fighter_vis {
     #[inline] #[allow(unused_unsafe)] pub fn value(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 26) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_value(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 26, (v as u64) & 0x3FFFFFF) } }
 }
+impl set_fighter_vis { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for set_fighter_vis {
     const GC_NAME: &'static str = "set_fighter_vis";
     const GC_SIZE: u32 = 0x4;
@@ -19821,6 +22202,8 @@ impl set_tex_anim {
     #[inline] #[allow(unused_unsafe)] pub fn frame(&self) -> i32 { unsafe { (((melee_core_bits_get(&self.bf_0, 0, 11) as i64) << (64 - 11)) >> (64 - 11)) as i32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_frame(&mut self, v: i32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 11, (v as u64) & 0x7FF) } }
 }
+impl set_tex_anim { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for set_tex_anim {
     const GC_NAME: &'static str = "set_tex_anim";
     const GC_SIZE: u32 = 0x4;
@@ -19852,6 +22235,8 @@ impl unk31 {
     #[inline] #[allow(unused_unsafe)] pub fn unk1(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 16) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk1(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 16, (v as u64) & 0xFFFF) } }
 }
+impl unk31 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk31 {
     const GC_NAME: &'static str = "unk31";
     const GC_SIZE: u32 = 0x4;
@@ -19881,6 +22266,8 @@ impl unk32 {
     #[inline] #[allow(unused_unsafe)] pub fn unk1(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 13) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk1(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 13, (v as u64) & 0x1FFF) } }
 }
+impl unk32 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk32 {
     const GC_NAME: &'static str = "unk32";
     const GC_SIZE: u32 = 0x4;
@@ -19910,6 +22297,8 @@ impl unk33 {
     #[inline] #[allow(unused_unsafe)] pub fn unk1(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 13) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk1(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 13, (v as u64) & 0x1FFF) } }
 }
+impl unk33 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk33 {
     const GC_NAME: &'static str = "unk33";
     const GC_SIZE: u32 = 0x4;
@@ -19948,6 +22337,8 @@ impl spawn_gfx_0 {
     #[inline] #[allow(unused_unsafe)] pub fn unk1(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 15) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk1(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 15, (v as u64) & 0x7FFF) } }
 }
+impl spawn_gfx_0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for spawn_gfx_0 {
     const GC_NAME: &'static str = "spawn_gfx_0";
     const GC_SIZE: u32 = 0x4;
@@ -19977,6 +22368,8 @@ impl spawn_gfx_1 {
     #[inline] #[allow(unused_unsafe)] pub fn unkFloat(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 16) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unkFloat(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 16, (v as u64) & 0xFFFF) } }
 }
+impl spawn_gfx_1 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for spawn_gfx_1 {
     const GC_NAME: &'static str = "spawn_gfx_1";
     const GC_SIZE: u32 = 0x4;
@@ -20002,6 +22395,8 @@ impl spawn_gfx_2 {
     #[inline] #[allow(unused_unsafe)] pub fn offsetY(&self) -> i16 { unsafe { (((melee_core_bits_get(&self.bf_0, 0, 16) as i64) << (64 - 16)) >> (64 - 16)) as i16 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_offsetY(&mut self, v: i16) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 16, (v as u64) & 0xFFFF) } }
 }
+impl spawn_gfx_2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for spawn_gfx_2 {
     const GC_NAME: &'static str = "spawn_gfx_2";
     const GC_SIZE: u32 = 0x4;
@@ -20027,6 +22422,8 @@ impl spawn_gfx_3 {
     #[inline] #[allow(unused_unsafe)] pub fn rangeZ(&self) -> u16 { unsafe { melee_core_bits_get(&self.bf_0, 0, 16) as u16 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_rangeZ(&mut self, v: u16) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 16, (v as u64) & 0xFFFF) } }
 }
+impl spawn_gfx_3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for spawn_gfx_3 {
     const GC_NAME: &'static str = "spawn_gfx_3";
     const GC_SIZE: u32 = 0x4;
@@ -20052,6 +22449,8 @@ impl spawn_gfx_4 {
     #[inline] #[allow(unused_unsafe)] pub fn rangeX(&self) -> u16 { unsafe { melee_core_bits_get(&self.bf_0, 0, 16) as u16 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_rangeX(&mut self, v: u16) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 16, (v as u64) & 0xFFFF) } }
 }
+impl spawn_gfx_4 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for spawn_gfx_4 {
     const GC_NAME: &'static str = "spawn_gfx_4";
     const GC_SIZE: u32 = 0x4;
@@ -20092,6 +22491,8 @@ impl spawn_hitbox_0 {
     #[inline] #[allow(unused_unsafe)] pub fn damage(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 10) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_damage(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 10, (v as u64) & 0x3FF) } }
 }
+impl spawn_hitbox_0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for spawn_hitbox_0 {
     const GC_NAME: &'static str = "spawn_hitbox_0";
     const GC_SIZE: u32 = 0x4;
@@ -20122,6 +22523,8 @@ impl spawn_hitbox_1 {
     #[inline] #[allow(unused_unsafe)] pub fn z_offset(&self) -> i32 { unsafe { (((melee_core_bits_get(&self.bf_0, 0, 16) as i64) << (64 - 16)) >> (64 - 16)) as i32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_z_offset(&mut self, v: i32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 16, (v as u64) & 0xFFFF) } }
 }
+impl spawn_hitbox_1 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for spawn_hitbox_1 {
     const GC_NAME: &'static str = "spawn_hitbox_1";
     const GC_SIZE: u32 = 0x4;
@@ -20147,6 +22550,8 @@ impl spawn_hitbox_2 {
     #[inline] #[allow(unused_unsafe)] pub fn x_offset(&self) -> i32 { unsafe { (((melee_core_bits_get(&self.bf_0, 0, 16) as i64) << (64 - 16)) >> (64 - 16)) as i32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x_offset(&mut self, v: i32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 16, (v as u64) & 0xFFFF) } }
 }
+impl spawn_hitbox_2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for spawn_hitbox_2 {
     const GC_NAME: &'static str = "spawn_hitbox_2";
     const GC_SIZE: u32 = 0x4;
@@ -20190,6 +22595,8 @@ impl spawn_hitbox_3 {
     #[inline] #[allow(unused_unsafe)] pub fn rebound(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_rebound(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl spawn_hitbox_3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for spawn_hitbox_3 {
     const GC_NAME: &'static str = "spawn_hitbox_3";
     const GC_SIZE: u32 = 0x4;
@@ -20236,6 +22643,8 @@ impl spawn_hitbox_4 {
     #[inline] #[allow(unused_unsafe)] pub fn hit_aerial(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_hit_aerial(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl spawn_hitbox_4 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for spawn_hitbox_4 {
     const GC_NAME: &'static str = "spawn_hitbox_4";
     const GC_SIZE: u32 = 0x4;
@@ -20287,6 +22696,8 @@ impl spawn_hitbox_5 {
     #[inline] #[allow(unused_unsafe)] pub fn x1_b7(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x1_b7(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl spawn_hitbox_5 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for spawn_hitbox_5 {
     const GC_NAME: &'static str = "spawn_hitbox_5";
     const GC_SIZE: u32 = 0x4;
@@ -20328,6 +22739,8 @@ impl it_create_hitbox_0 {
     #[inline] #[allow(unused_unsafe)] pub fn damage(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 13) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_damage(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 13, (v as u64) & 0x1FFF) } }
 }
+impl it_create_hitbox_0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for it_create_hitbox_0 {
     const GC_NAME: &'static str = "it_create_hitbox_0";
     const GC_SIZE: u32 = 0x4;
@@ -20374,6 +22787,8 @@ impl it_create_hitbox_4 {
     #[inline] #[allow(unused_unsafe)] pub fn x40_b2(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x40_b2(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl it_create_hitbox_4 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for it_create_hitbox_4 {
     const GC_NAME: &'static str = "it_create_hitbox_4";
     const GC_SIZE: u32 = 0x4;
@@ -20415,6 +22830,8 @@ impl spawn_hitbox_skip {
     #[inline] #[allow(unused_unsafe)] pub fn xF_b4(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_f, 3, 1) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_xF_b4(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_f, 3, 1, (v as u64) & 0x1) } }
 }
+impl spawn_hitbox_skip { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for spawn_hitbox_skip {
     const GC_NAME: &'static str = "spawn_hitbox_skip";
     const GC_SIZE: u32 = 0x10;
@@ -20447,6 +22864,8 @@ impl sound_effect_0 {
     #[inline] #[allow(unused_unsafe)] pub fn unknown(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 18) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unknown(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 18, (v as u64) & 0x3FFFF) } }
 }
+impl sound_effect_0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for sound_effect_0 {
     const GC_NAME: &'static str = "sound_effect_0";
     const GC_SIZE: u32 = 0x4;
@@ -20464,6 +22883,8 @@ impl GcLayout for sound_effect_0 {
 pub struct sound_effect_1 {
     pub sfx_id: u32,
 }
+impl sound_effect_1 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for sound_effect_1 {
     const GC_NAME: &'static str = "sound_effect_1";
     const GC_SIZE: u32 = 0x4;
@@ -20492,6 +22913,8 @@ impl sound_effect_2 {
     #[inline] #[allow(unused_unsafe)] pub fn panning(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 8) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_panning(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 8, (v as u64) & 0xFF) } }
 }
+impl sound_effect_2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for sound_effect_2 {
     const GC_NAME: &'static str = "sound_effect_2";
     const GC_SIZE: u32 = 0x4;
@@ -20527,6 +22950,8 @@ impl pseudo_random_sfx_0 {
     #[inline] #[allow(unused_unsafe)] pub fn random_range(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 6) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_random_range(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 6, (v as u64) & 0x3F) } }
 }
+impl pseudo_random_sfx_0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for pseudo_random_sfx_0 {
     const GC_NAME: &'static str = "pseudo_random_sfx_0";
     const GC_SIZE: u32 = 0x4;
@@ -20546,6 +22971,8 @@ impl GcLayout for pseudo_random_sfx_0 {
 pub struct pseudo_random_sfx_1 {
     pub sfx_id: u32,
 }
+impl pseudo_random_sfx_1 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for pseudo_random_sfx_1 {
     const GC_NAME: &'static str = "pseudo_random_sfx_1";
     const GC_SIZE: u32 = 0x4;
@@ -20577,6 +23004,8 @@ impl stage_sfx_0 {
     #[inline] #[allow(unused_unsafe)] pub fn pitch_select(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 8) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_pitch_select(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 8, (v as u64) & 0xFF) } }
 }
+impl stage_sfx_0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for stage_sfx_0 {
     const GC_NAME: &'static str = "stage_sfx_0";
     const GC_SIZE: u32 = 0x4;
@@ -20595,6 +23024,8 @@ impl GcLayout for stage_sfx_0 {
 pub struct stage_sfx_1 {
     pub sfx_id: u32,
 }
+impl stage_sfx_1 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for stage_sfx_1 {
     const GC_NAME: &'static str = "stage_sfx_1";
     const GC_SIZE: u32 = 0x4;
@@ -20620,6 +23051,8 @@ impl stage_sfx_2 {
     #[inline] #[allow(unused_unsafe)] pub fn x2_b0_15(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 16) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x2_b0_15(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 16, (v as u64) & 0xFFFF) } }
 }
+impl stage_sfx_2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for stage_sfx_2 {
     const GC_NAME: &'static str = "stage_sfx_2";
     const GC_SIZE: u32 = 0x4;
@@ -20648,6 +23081,8 @@ impl stage_sfx_3 {
     #[inline] #[allow(unused_unsafe)] pub fn x3_b0_7(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 8) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x3_b0_7(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 8, (v as u64) & 0xFF) } }
 }
+impl stage_sfx_3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for stage_sfx_3 {
     const GC_NAME: &'static str = "stage_sfx_3";
     const GC_SIZE: u32 = 0x4;
@@ -20686,6 +23121,8 @@ impl footstep_fx_0 {
     #[inline] #[allow(unused_unsafe)] pub fn x3_b0_7(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 8) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x3_b0_7(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 8, (v as u64) & 0xFF) } }
 }
+impl footstep_fx_0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for footstep_fx_0 {
     const GC_NAME: &'static str = "footstep_fx_0";
     const GC_SIZE: u32 = 0x4;
@@ -20724,6 +23161,8 @@ impl unk_fx_0 {
     #[inline] #[allow(unused_unsafe)] pub fn x3_b0_7(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 8) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x3_b0_7(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 8, (v as u64) & 0xFF) } }
 }
+impl unk_fx_0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for unk_fx_0 {
     const GC_NAME: &'static str = "unk_fx_0";
     const GC_SIZE: u32 = 0x4;
@@ -20755,6 +23194,8 @@ impl smash_charge_0 {
     #[inline] #[allow(unused_unsafe)] pub fn charge_rate(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 16) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_charge_rate(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 16, (v as u64) & 0xFFFF) } }
 }
+impl smash_charge_0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for smash_charge_0 {
     const GC_NAME: &'static str = "smash_charge_0";
     const GC_SIZE: u32 = 0x4;
@@ -20781,6 +23222,8 @@ impl smash_charge_1 {
     #[inline] #[allow(unused_unsafe)] pub fn x1_b0_23(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 24) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x1_b0_23(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 24, (v as u64) & 0xFFFFFF) } }
 }
+impl smash_charge_1 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for smash_charge_1 {
     const GC_NAME: &'static str = "smash_charge_1";
     const GC_SIZE: u32 = 0x4;
@@ -20809,6 +23252,8 @@ impl wind_fx_0 {
     #[inline] #[allow(unused_unsafe)] pub fn bone(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 8) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_bone(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 8, (v as u64) & 0xFF) } }
 }
+impl wind_fx_0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for wind_fx_0 {
     const GC_NAME: &'static str = "wind_fx_0";
     const GC_SIZE: u32 = 0x4;
@@ -20835,6 +23280,8 @@ impl wind_fx_1 {
     #[inline] #[allow(unused_unsafe)] pub fn x(&self) -> i16 { unsafe { (((melee_core_bits_get(&self.bf_0, 0, 16) as i64) << (64 - 16)) >> (64 - 16)) as i16 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x(&mut self, v: i16) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 16, (v as u64) & 0xFFFF) } }
 }
+impl wind_fx_1 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for wind_fx_1 {
     const GC_NAME: &'static str = "wind_fx_1";
     const GC_SIZE: u32 = 0x4;
@@ -20860,6 +23307,8 @@ impl wind_fx_2 {
     #[inline] #[allow(unused_unsafe)] pub fn mag(&self) -> i16 { unsafe { (((melee_core_bits_get(&self.bf_0, 0, 16) as i64) << (64 - 16)) >> (64 - 16)) as i16 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_mag(&mut self, v: i16) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 16, (v as u64) & 0xFFFF) } }
 }
+impl wind_fx_2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for wind_fx_2 {
     const GC_NAME: &'static str = "wind_fx_2";
     const GC_SIZE: u32 = 0x4;
@@ -20885,6 +23334,8 @@ impl wind_fx_3 {
     #[inline] #[allow(unused_unsafe)] pub fn decay(&self) -> i16 { unsafe { (((melee_core_bits_get(&self.bf_0, 0, 16) as i64) << (64 - 16)) >> (64 - 16)) as i16 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_decay(&mut self, v: i16) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 16, (v as u64) & 0xFFFF) } }
 }
+impl wind_fx_3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for wind_fx_3 {
     const GC_NAME: &'static str = "wind_fx_3";
     const GC_SIZE: u32 = 0x4;
@@ -20978,6 +23429,8 @@ pub union CmdUnion {
     pub wind_fx_2: wind_fx_2,
     pub wind_fx_3: wind_fx_3,
 }
+impl CmdUnion { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CmdUnion {
     const GC_NAME: &'static str = "CmdUnion";
     const GC_SIZE: u32 = 0x4;
@@ -21077,6 +23530,8 @@ pub struct CommandInfo {
     pub loop_count_dup: u32,
     pub unk_x18: u32,
 }
+impl CommandInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CommandInfo {
     const GC_NAME: &'static str = "CommandInfo";
     const GC_SIZE: u32 = 0x24;
@@ -21102,6 +23557,8 @@ pub union CommandInfo_anon_1008 {
     pub ptr: [*mut u32; 1],
     pub u: *mut CmdUnion,
 }
+impl CommandInfo_anon_1008 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CommandInfo_anon_1008 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/lb/types.h:1008:5)";
     const GC_SIZE: u32 = 0x4;
@@ -21147,6 +23604,8 @@ impl LbShadow {
     #[inline] #[allow(unused_unsafe)] pub fn x0_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x0_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl LbShadow { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for LbShadow {
     const GC_NAME: &'static str = "LbShadow";
     const GC_SIZE: u32 = 0x8;
@@ -21171,6 +23630,8 @@ pub struct S8Vec2 {
     pub x: i8,
     pub y: i8,
 }
+impl S8Vec2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for S8Vec2 {
     const GC_NAME: &'static str = "S8Vec2";
     const GC_SIZE: u32 = 0x2;
@@ -21189,6 +23650,8 @@ pub struct U8Vec2 {
     pub x: u8,
     pub y: u8,
 }
+impl U8Vec2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for U8Vec2 {
     const GC_NAME: &'static str = "U8Vec2";
     const GC_SIZE: u32 = 0x2;
@@ -21206,6 +23669,8 @@ const _: () = assert!(core::mem::size_of::<U8Vec2>() == 2);
 pub struct ftFox_FighterVars {
     pub x222C_blasterGObj: *mut HSD_GObj,
 }
+impl ftFox_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftFox_FighterVars {
     const GC_NAME: &'static str = "ftFox_FighterVars";
     const GC_SIZE: u32 = 0x4;
@@ -21222,6 +23687,8 @@ const _: () = assert!(core::mem::size_of::<ftFox_FighterVars>() == 8);
 pub struct ftFoxSpecialN {
     pub isBlasterLoop: i32,
 }
+impl ftFoxSpecialN { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftFoxSpecialN {
     const GC_NAME: &'static str = "ftFoxSpecialN";
     const GC_SIZE: u32 = 0x4;
@@ -21241,6 +23708,8 @@ pub struct ftFoxSpecialS {
     pub blendFrames: [f32; 4],
     pub ghostGObj: *mut HSD_GObj,
 }
+impl ftFoxSpecialS { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftFoxSpecialS {
     const GC_NAME: &'static str = "ftFoxSpecialS";
     const GC_SIZE: u32 = 0x48;
@@ -21264,6 +23733,8 @@ pub struct ftFoxSpecialHi {
     pub unk: i32,
     pub unk2: i32,
 }
+impl ftFoxSpecialHi { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftFoxSpecialHi {
     const GC_NAME: &'static str = "ftFoxSpecialHi";
     const GC_SIZE: u32 = 0x14;
@@ -21287,6 +23758,8 @@ pub struct ftFoxSpecialLw {
     pub isRelease: i32,
     pub gravityDelay: i32,
 }
+impl ftFoxSpecialLw { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftFoxSpecialLw {
     const GC_NAME: &'static str = "ftFoxSpecialLw";
     const GC_SIZE: u32 = 0x10;
@@ -21307,6 +23780,8 @@ pub struct ftFoxAppealS {
     pub facingDir: i32,
     pub animCount: i32,
 }
+impl ftFoxAppealS { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftFoxAppealS {
     const GC_NAME: &'static str = "ftFoxAppealS";
     const GC_SIZE: u32 = 0x8;
@@ -21328,6 +23803,8 @@ pub union ftFox_MotionVars {
     pub SpecialLw: ftFoxSpecialLw,
     pub AppealS: ftFoxAppealS,
 }
+impl ftFox_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftFox_MotionVars {
     const GC_NAME: &'static str = "ftFox_MotionVars";
     const GC_SIZE: u32 = 0x48;
@@ -21392,6 +23869,8 @@ pub struct ftFox_DatAttrs {
     pub xAC_FOX_REFLECTOR_FALL_ACCEL: f32,
     pub xB0_FOX_REFLECTOR_REFLECTION: ReflectDesc,
 }
+impl ftFox_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftFox_DatAttrs {
     const GC_NAME: &'static str = "ftFox_DatAttrs";
     const GC_SIZE: u32 = 0xD4;
@@ -21468,6 +23947,8 @@ pub struct ftGameWatch_FighterVars {
     pub x2268_panicGObj: *mut HSD_GObj,
     pub x226C_rescueGObj: *mut HSD_GObj,
 }
+impl ftGameWatch_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftGameWatch_FighterVars {
     const GC_NAME: &'static str = "ftGameWatch_FighterVars";
     const GC_SIZE: u32 = 0x44;
@@ -21500,6 +23981,8 @@ const _: () = assert!(core::mem::size_of::<ftGameWatch_FighterVars>() == 112);
 pub struct ftGameWatchChef {
     pub sausageCount: [i32; 6],
 }
+impl ftGameWatchChef { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftGameWatchChef {
     const GC_NAME: &'static str = "ftGameWatchChef";
     const GC_SIZE: u32 = 0x18;
@@ -21516,6 +23999,8 @@ const _: () = assert!(core::mem::size_of::<ftGameWatchChef>() == 24);
 pub struct ftGameWatchJudge {
     pub rollVar: [i32; 9],
 }
+impl ftGameWatchJudge { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftGameWatchJudge {
     const GC_NAME: &'static str = "ftGameWatchJudge";
     const GC_SIZE: u32 = 0x24;
@@ -21553,6 +24038,8 @@ pub struct _ftGameWatchAttributes {
     pub x7C_GAMEWATCH_PANIC_TURN_FRAMES: f32,
     pub x80_GAMEWATCH_PANIC_ABSORPTION: AbsorbDesc,
 }
+impl _ftGameWatchAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _ftGameWatchAttributes {
     const GC_NAME: &'static str = "_ftGameWatchAttributes";
     const GC_SIZE: u32 = 0x94;
@@ -21592,6 +24079,8 @@ pub union ftGameWatch_MotionVars {
     pub SpecialN: ftGameWatch_SpecialNVars,
     pub SpecialLw: ftGameWatch_SpecialLwVars,
 }
+impl ftGameWatch_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftGameWatch_MotionVars {
     const GC_NAME: &'static str = "ftGameWatch_MotionVars";
     const GC_SIZE: u32 = 0x8;
@@ -21610,6 +24099,8 @@ const _: () = assert!(core::mem::size_of::<ftGameWatch_MotionVars>() == 8);
 pub struct ftGameWatch_Attack11Vars {
     pub unk: i32,
 }
+impl ftGameWatch_Attack11Vars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftGameWatch_Attack11Vars {
     const GC_NAME: &'static str = "ftGameWatch_Attack11Vars";
     const GC_SIZE: u32 = 0x4;
@@ -21627,6 +24118,8 @@ pub struct ftGameWatch_SpecialNVars {
     pub isChefLoopDisable: i32,
     pub maxSausage: i32,
 }
+impl ftGameWatch_SpecialNVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftGameWatch_SpecialNVars {
     const GC_NAME: &'static str = "ftGameWatch_SpecialNVars";
     const GC_SIZE: u32 = 0x8;
@@ -21645,6 +24138,8 @@ pub struct ftGameWatch_SpecialLwVars {
     pub isRelease: i32,
     pub turnFrames: i32,
 }
+impl ftGameWatch_SpecialLwVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftGameWatch_SpecialLwVars {
     const GC_NAME: &'static str = "ftGameWatch_SpecialLwVars";
     const GC_SIZE: u32 = 0x8;
@@ -21663,6 +24158,8 @@ pub struct DObjList {
     pub count: u32,
     pub data: *mut *mut HSD_DObj,
 }
+impl DObjList { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for DObjList {
     const GC_NAME: &'static str = "DObjList";
     const GC_SIZE: u32 = 0x8;
@@ -21682,6 +24179,8 @@ pub struct CostumeTObjList {
     pub x5D0: *mut u16,
     pub costume_tobjs: [*mut HSD_TObj; 5],
 }
+impl CostumeTObjList { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CostumeTObjList {
     const GC_NAME: &'static str = "CostumeTObjList";
     const GC_SIZE: u32 = 0x1C;
@@ -21701,6 +24200,8 @@ pub struct TempS {
     pub x0: i32,
     pub x4: *mut u8,
 }
+impl TempS { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TempS {
     const GC_NAME: &'static str = "TempS";
     const GC_SIZE: u32 = 0x8;
@@ -21719,6 +24220,8 @@ pub struct FtPartsVisLookup {
     pub x0: i32,
     pub x4: *mut TempS,
 }
+impl FtPartsVisLookup { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for FtPartsVisLookup {
     const GC_NAME: &'static str = "FtPartsVisLookup";
     const GC_SIZE: u32 = 0x8;
@@ -21738,6 +24241,8 @@ pub struct FtPartsVis {
     pub cleared: [u8; 5],
     pub xC: [*mut FtPartsVisLookup; 5],
 }
+impl FtPartsVis { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for FtPartsVis {
     const GC_NAME: &'static str = "FtPartsVis";
     const GC_SIZE: u32 = 0x20;
@@ -21799,6 +24304,8 @@ impl ftKb_FighterVars {
     #[inline] #[allow(unused_unsafe)] pub fn xF4_b0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_f4, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_xF4_b0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_f4, 7, 1, (v as u64) & 0x1) } }
 }
+impl ftKb_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftKb_FighterVars {
     const GC_NAME: &'static str = "ftKb_FighterVars";
     const GC_SIZE: u32 = 0xF8;
@@ -21865,6 +24372,8 @@ impl ftKb_Hat {
     #[inline] #[allow(unused_unsafe)] pub fn x8_b0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_8, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x8_b0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_8, 7, 1, (v as u64) & 0x1) } }
 }
+impl ftKb_Hat { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftKb_Hat {
     const GC_NAME: &'static str = "ftKb_Hat";
     const GC_SIZE: u32 = 0x44;
@@ -21892,6 +24401,8 @@ pub struct ftKb_SpecialNMs_DatAttrs {
     pub air_horizontal_momentum_preservation: f32,
     pub air_horizontal_deceleration_rate: f32,
 }
+impl ftKb_SpecialNMs_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftKb_SpecialNMs_DatAttrs {
     const GC_NAME: &'static str = "ftKb_SpecialNMs_DatAttrs";
     const GC_SIZE: u32 = 0x14;
@@ -22152,6 +24663,8 @@ pub struct ftKb_DatAttrs {
     pub specialn_pe_absorbdesc: AbsorbDesc,
     pub specialn_zd_reflectdesc: ReflectDesc,
 }
+impl ftKb_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftKb_DatAttrs {
     const GC_NAME: &'static str = "ftKb_DatAttrs";
     const GC_SIZE: u32 = 0x424;
@@ -22411,6 +24924,8 @@ pub union ftKb_MotionVars {
     pub specialn_kp: ftKb_SpecialNKp_Vars,
     pub speciallw: ftKb_SpecialLWVars,
 }
+impl ftKb_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftKb_MotionVars {
     const GC_NAME: &'static str = "ftKb_MotionVars";
     const GC_SIZE: u32 = 0xAC;
@@ -22430,6 +24945,8 @@ const _: () = assert!(core::mem::size_of::<ftKb_MotionVars>() == 172);
 pub struct ftKb_SpecialNPe_Vars {
     pub facing_dir: i32,
 }
+impl ftKb_SpecialNPe_Vars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftKb_SpecialNPe_Vars {
     const GC_NAME: &'static str = "ftKb_SpecialNPe_Vars";
     const GC_SIZE: u32 = 0x4;
@@ -22454,6 +24971,8 @@ pub struct ftKb_SpecialHiVars {
     pub pad1: [i8; 96],
     pub xC4: f32,
 }
+impl ftKb_SpecialHiVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftKb_SpecialHiVars {
     const GC_NAME: &'static str = "ftKb_SpecialHiVars";
     const GC_SIZE: u32 = 0x88;
@@ -22479,6 +24998,8 @@ pub union ftKb_SpecialHiVars_x8 {
     pub i: i32,
     pub f: f32,
 }
+impl ftKb_SpecialHiVars_x8 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftKb_SpecialHiVars_x8 {
     const GC_NAME: &'static str = "union (unnamed at src/melee/ft/kinds/ftKirby/types.h:386:23)";
     const GC_SIZE: u32 = 0x4;
@@ -22497,6 +25018,8 @@ pub union ftKb_SpecialHiVars_x10 {
     pub i: i32,
     pub f: f32,
 }
+impl ftKb_SpecialHiVars_x10 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftKb_SpecialHiVars_x10 {
     const GC_NAME: &'static str = "union (unnamed at src/melee/ft/kinds/ftKirby/types.h:391:23)";
     const GC_SIZE: u32 = 0x4;
@@ -22517,6 +25040,8 @@ pub struct ftKb_SpecialNKp_Vars {
     pub x14: i32,
     pub x18: i32,
 }
+impl ftKb_SpecialNKp_Vars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftKb_SpecialNKp_Vars {
     const GC_NAME: &'static str = "ftKb_SpecialNKp_Vars";
     const GC_SIZE: u32 = 0x1C;
@@ -22548,6 +25073,8 @@ pub struct ftKb_SpecialLWVars {
     pub x84: f32,
     pub x88: [f32; 9],
 }
+impl ftKb_SpecialLWVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftKb_SpecialLWVars {
     const GC_NAME: &'static str = "ftKb_SpecialLWVars";
     const GC_SIZE: u32 = 0xAC;
@@ -22577,6 +25104,8 @@ pub struct ftKoopa_FighterVars {
     pub x222C: f32,
     pub x2230: f32,
 }
+impl ftKoopa_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftKoopa_FighterVars {
     const GC_NAME: &'static str = "ftKoopa_FighterVars";
     const GC_SIZE: u32 = 0x8;
@@ -22596,6 +25125,8 @@ pub union ftKoopa_MotionVars {
     pub specials: ftKoopa_SpecialSVars,
     pub specialn: ftKoopa_SpecialNVars,
 }
+impl ftKoopa_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftKoopa_MotionVars {
     const GC_NAME: &'static str = "ftKoopa_MotionVars";
     const GC_SIZE: u32 = 0x1C;
@@ -22617,6 +25148,8 @@ pub struct ftKoopa_State1Vars {
     pub x8: *mut c_void,
     pub xC: i32,
 }
+impl ftKoopa_State1Vars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftKoopa_State1Vars {
     const GC_NAME: &'static str = "ftKoopa_State1Vars";
     const GC_SIZE: u32 = 0x10;
@@ -22642,6 +25175,8 @@ pub struct ftKoopa_SpecialSVars {
     pub x14: i32,
     pub x18: i32,
 }
+impl ftKoopa_SpecialSVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftKoopa_SpecialSVars {
     const GC_NAME: &'static str = "ftKoopa_SpecialSVars";
     const GC_SIZE: u32 = 0x1C;
@@ -22670,6 +25205,8 @@ pub struct ftKoopa_SpecialNVars {
     pub x14: i32,
     pub x18: i32,
 }
+impl ftKoopa_SpecialNVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftKoopa_SpecialNVars {
     const GC_NAME: &'static str = "ftKoopa_SpecialNVars";
     const GC_SIZE: u32 = 0x1C;
@@ -22731,6 +25268,8 @@ pub struct _ftKoopaAttributes {
     pub x98: f32,
     pub x9C: f32,
 }
+impl _ftKoopaAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _ftKoopaAttributes {
     const GC_NAME: &'static str = "_ftKoopaAttributes";
     const GC_SIZE: u32 = 0xA0;
@@ -22787,6 +25326,8 @@ pub struct _ftKoopaVars {
     pub x0: f32,
     pub x4: f32,
 }
+impl _ftKoopaVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _ftKoopaVars {
     const GC_NAME: &'static str = "_ftKoopaVars";
     const GC_SIZE: u32 = 0x8;
@@ -22805,6 +25346,8 @@ pub struct ftMars_FighterVars {
     pub x222C: u32,
     pub _x4: [u8; 244],
 }
+impl ftMars_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMars_FighterVars {
     const GC_NAME: &'static str = "ftMars_FighterVars";
     const GC_SIZE: u32 = 0xF8;
@@ -22836,6 +25379,8 @@ pub struct SwordAttrs {
     pub x18: f32,
     pub x1C: f32,
 }
+impl SwordAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for SwordAttrs {
     const GC_NAME: &'static str = "SwordAttrs";
     const GC_SIZE: u32 = 0x20;
@@ -22892,6 +25437,8 @@ pub struct _MarsAttributes {
     pub x64: AbsorbDesc,
     pub x78: SwordAttrs,
 }
+impl _MarsAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _MarsAttributes {
     const GC_NAME: &'static str = "_MarsAttributes";
     const GC_SIZE: u32 = 0x98;
@@ -22937,6 +25484,8 @@ pub union ftMars_MotionVars {
     pub specials: ftMars_SpecialSVars,
     pub speciallw: ftMars_SpecialLwVars,
 }
+impl ftMars_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMars_MotionVars {
     const GC_NAME: &'static str = "ftMars_MotionVars";
     const GC_SIZE: u32 = 0x4;
@@ -22956,6 +25505,8 @@ const _: () = assert!(core::mem::size_of::<ftMars_MotionVars>() == 4);
 pub struct ftMars_Unk0MotionVars {
     pub x0: i32,
 }
+impl ftMars_Unk0MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMars_Unk0MotionVars {
     const GC_NAME: &'static str = "ftMars_Unk0MotionVars";
     const GC_SIZE: u32 = 0x4;
@@ -22972,6 +25523,8 @@ const _: () = assert!(core::mem::size_of::<ftMars_Unk0MotionVars>() == 4);
 pub struct ftMars_SpecialNVars {
     pub cur_frame: i32,
 }
+impl ftMars_SpecialNVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMars_SpecialNVars {
     const GC_NAME: &'static str = "ftMars_SpecialNVars";
     const GC_SIZE: u32 = 0x4;
@@ -22988,6 +25541,8 @@ const _: () = assert!(core::mem::size_of::<ftMars_SpecialNVars>() == 4);
 pub struct ftMars_SpecialSVars {
     pub x0: i32,
 }
+impl ftMars_SpecialSVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMars_SpecialSVars {
     const GC_NAME: &'static str = "ftMars_SpecialSVars";
     const GC_SIZE: u32 = 0x4;
@@ -23004,6 +25559,8 @@ const _: () = assert!(core::mem::size_of::<ftMars_SpecialSVars>() == 4);
 pub struct ftMars_SpecialLwVars {
     pub x0: i32,
 }
+impl ftMars_SpecialLwVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMars_SpecialLwVars {
     const GC_NAME: &'static str = "ftMars_SpecialLwVars";
     const GC_SIZE: u32 = 0x4;
@@ -23061,6 +25618,8 @@ pub struct ftLk_DatAttrs {
     pub xC4: AbsorbDesc,
     pub xD8: f32,
 }
+impl ftLk_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftLk_DatAttrs {
     const GC_NAME: &'static str = "ftLk_DatAttrs";
     const GC_SIZE: u32 = 0xDC;
@@ -23125,6 +25684,8 @@ pub struct ftLk_FighterVars {
     pub x18: *mut Item_GObj,
     pub x1C: u32,
 }
+impl ftLk_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftLk_FighterVars {
     const GC_NAME: &'static str = "ftLk_FighterVars";
     const GC_SIZE: u32 = 0x20;
@@ -23149,6 +25710,8 @@ pub union ftLk_MotionVars {
     pub attackair: ftLk_AttackAirVars,
     pub specialn: ftLk_SpecialNVars,
 }
+impl ftLk_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftLk_MotionVars {
     const GC_NAME: &'static str = "ftLk_MotionVars";
     const GC_SIZE: u32 = 0x1C;
@@ -23166,6 +25729,8 @@ const _: () = assert!(core::mem::size_of::<ftLk_MotionVars>() == 28);
 pub struct ftLk_AttackAirVars {
     pub lw_frame_start: f32,
 }
+impl ftLk_AttackAirVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftLk_AttackAirVars {
     const GC_NAME: &'static str = "ftLk_AttackAirVars";
     const GC_SIZE: u32 = 0x4;
@@ -23185,6 +25750,8 @@ pub struct ftLk_SpecialNVars {
     pub x14: f32,
     pub unk_timer: i32,
 }
+impl ftLk_SpecialNVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftLk_SpecialNVars {
     const GC_NAME: &'static str = "ftLk_SpecialNVars";
     const GC_SIZE: u32 = 0x1C;
@@ -23206,6 +25773,8 @@ pub struct ftLk_SpecialN_Vec3Group {
     pub b: Vec,
     pub c: Vec,
 }
+impl ftLk_SpecialN_Vec3Group { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftLk_SpecialN_Vec3Group {
     const GC_NAME: &'static str = "ftLk_SpecialN_Vec3Group";
     const GC_SIZE: u32 = 0x24;
@@ -23227,6 +25796,8 @@ pub struct ftLuigi_FighterVars {
     pub x2234: u32,
     pub _xc: [u8; 236],
 }
+impl ftLuigi_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftLuigi_FighterVars {
     const GC_NAME: &'static str = "ftLuigi_FighterVars";
     const GC_SIZE: u32 = 0xF8;
@@ -23283,6 +25854,8 @@ pub struct _ftLuigiAttributes {
     pub x90_LUIGI_CYCLONE_TAP_GRAVITY: f32,
     pub x94_LUIGI_CYCLONE_LANDING_LAG: i32,
 }
+impl _ftLuigiAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _ftLuigiAttributes {
     const GC_NAME: &'static str = "_ftLuigiAttributes";
     const GC_SIZE: u32 = 0x98;
@@ -23337,6 +25910,8 @@ pub struct ftLuigiSpecialS {
     pub chargeFrames: i32,
     pub isMisfire: i32,
 }
+impl ftLuigiSpecialS { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftLuigiSpecialS {
     const GC_NAME: &'static str = "ftLuigiSpecialS";
     const GC_SIZE: u32 = 0x8;
@@ -23357,6 +25932,8 @@ pub struct ftLuigiSpecialLw {
     pub _x8: i32,
     pub isUnkColl: i32,
 }
+impl ftLuigiSpecialLw { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftLuigiSpecialLw {
     const GC_NAME: &'static str = "ftLuigiSpecialLw";
     const GC_SIZE: u32 = 0x10;
@@ -23377,6 +25954,8 @@ pub union ftLuigi_MotionVars {
     pub SpecialS: ftLuigiSpecialS,
     pub SpecialLw: ftLuigiSpecialLw,
 }
+impl ftLuigi_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftLuigi_MotionVars {
     const GC_NAME: &'static str = "ftLuigi_MotionVars";
     const GC_SIZE: u32 = 0x10;
@@ -23400,6 +25979,8 @@ pub struct ftMario_FighterVars {
     pub x2240: *mut HSD_GObj,
     pub _x18: [u8; 224],
 }
+impl ftMario_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMario_FighterVars {
     const GC_NAME: &'static str = "ftMario_FighterVars";
     const GC_SIZE: u32 = 0xF8;
@@ -23425,6 +26006,8 @@ pub struct ftMario_DatAttrs {
     pub speciallw: ftMario_SpecialLw_DatAttrs,
     pub cape_reflection: ReflectDesc,
 }
+impl ftMario_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMario_DatAttrs {
     const GC_NAME: &'static str = "ftMario_DatAttrs";
     const GC_SIZE: u32 = 0x84;
@@ -23448,6 +26031,8 @@ pub struct ftMario_SpecialS_DatAttrs {
     pub terminal_vel: f32,
     pub cape_kind: ItemKind,
 }
+impl ftMario_SpecialS_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMario_SpecialS_DatAttrs {
     const GC_NAME: &'static str = "ftMario_SpecialS_DatAttrs";
     const GC_SIZE: u32 = 0x18;
@@ -23475,6 +26060,8 @@ pub struct ftMario_SpecialHi_DatAttrs {
     pub grav: f32,
     pub vel_mul: f32,
 }
+impl ftMario_SpecialHi_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMario_SpecialHi_DatAttrs {
     const GC_NAME: &'static str = "ftMario_SpecialHi_DatAttrs";
     const GC_SIZE: u32 = 0x20;
@@ -23507,6 +26094,8 @@ pub struct ftMario_SpecialLw_DatAttrs {
     pub tap_grav: f32,
     pub landing_lag: i32,
 }
+impl ftMario_SpecialLw_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMario_SpecialLw_DatAttrs {
     const GC_NAME: &'static str = "ftMario_SpecialLw_DatAttrs";
     const GC_SIZE: u32 = 0x28;
@@ -23538,6 +26127,8 @@ pub struct ftMario_SpecialLw_ECB {
     pub x10: u32,
     pub x14: u32,
 }
+impl ftMario_SpecialLw_ECB { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMario_SpecialLw_ECB {
     const GC_NAME: &'static str = "ftMario_SpecialLw_ECB";
     const GC_SIZE: u32 = 0x18;
@@ -23560,6 +26151,8 @@ const _: () = assert!(core::mem::size_of::<ftMario_SpecialLw_ECB>() == 24);
 pub struct ftMarioSpecialS {
     pub reflecting: i32,
 }
+impl ftMarioSpecialS { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMarioSpecialS {
     const GC_NAME: &'static str = "ftMarioSpecialS";
     const GC_SIZE: u32 = 0x4;
@@ -23579,6 +26172,8 @@ pub struct ftMarioSpecialLw {
     pub _x8: i32,
     pub isUnkColl: i32,
 }
+impl ftMarioSpecialLw { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMarioSpecialLw {
     const GC_NAME: &'static str = "ftMarioSpecialLw";
     const GC_SIZE: u32 = 0x10;
@@ -23599,6 +26194,8 @@ pub union ftMario_MotionVars {
     pub SpecialS: ftMarioSpecialS,
     pub SpecialLw: ftMarioSpecialLw,
 }
+impl ftMario_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMario_MotionVars {
     const GC_NAME: &'static str = "ftMario_MotionVars";
     const GC_SIZE: u32 = 0x10;
@@ -23625,6 +26222,8 @@ pub struct ftMasterhand_FighterVars {
     pub x2254: i32,
     pub x2258: i32,
 }
+impl ftMasterhand_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMasterhand_FighterVars {
     const GC_NAME: &'static str = "ftMasterhand_FighterVars";
     const GC_SIZE: u32 = 0x30;
@@ -23729,6 +26328,8 @@ pub struct ftMasterHand_SpecialAttrs {
     pub x174: i32,
     pub x178: f32,
 }
+impl ftMasterHand_SpecialAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMasterHand_SpecialAttrs {
     const GC_NAME: &'static str = "ftMasterHand_SpecialAttrs";
     const GC_SIZE: u32 = 0x17C;
@@ -23831,6 +26432,8 @@ pub union ftMasterHand_MotionVars {
     pub ch_dmg: ftCrazyHand_DamageVars,
     pub ch_backcrush: ftCrazyHand_BackCrushVars,
 }
+impl ftMasterHand_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMasterHand_MotionVars {
     const GC_NAME: &'static str = "ftMasterHand_MotionVars";
     const GC_SIZE: u32 = 0x7C;
@@ -23878,6 +26481,8 @@ pub struct ftMasterHand_Unk0Vars {
     pub x74: i32,
     pub x78: i32,
 }
+impl ftMasterHand_Unk0Vars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMasterHand_Unk0Vars {
     const GC_NAME: &'static str = "ftMasterHand_Unk0Vars";
     const GC_SIZE: u32 = 0x7C;
@@ -23920,6 +26525,8 @@ pub struct ftMasterHand_Unk4Vars {
     pub x4: i32,
     pub x8: i32,
 }
+impl ftMasterHand_Unk4Vars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMasterHand_Unk4Vars {
     const GC_NAME: &'static str = "ftMasterHand_Unk4Vars";
     const GC_SIZE: u32 = 0xC;
@@ -23939,6 +26546,8 @@ pub struct ftMasterHand_Unk13Vars {
     pub x0: f32,
     pub x4: f32,
 }
+impl ftMasterHand_Unk13Vars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMasterHand_Unk13Vars {
     const GC_NAME: &'static str = "ftMasterHand_Unk13Vars";
     const GC_SIZE: u32 = 0x8;
@@ -23960,6 +26569,8 @@ pub struct ftMasterHand_FingerBeamVars {
     pub x3C: *mut Item_GObj,
     pub x40: *mut Item_GObj,
 }
+impl ftMasterHand_FingerBeamVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMasterHand_FingerBeamVars {
     const GC_NAME: &'static str = "ftMasterHand_FingerBeamVars";
     const GC_SIZE: u32 = 0x44;
@@ -23984,6 +26595,8 @@ pub struct ftMasterHand_GrabVars {
     pub x30: *mut Item_GObj,
     pub x34: *mut Item_GObj,
 }
+impl ftMasterHand_GrabVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMasterHand_GrabVars {
     const GC_NAME: &'static str = "ftMasterHand_GrabVars";
     const GC_SIZE: u32 = 0x38;
@@ -24011,6 +26624,8 @@ pub struct ftMasterHand_Damage_0 {
     pub x3C: *mut Item_GObj,
     pub x40: *mut Item_GObj,
 }
+impl ftMasterHand_Damage_0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMasterHand_Damage_0 {
     const GC_NAME: &'static str = "ftMasterHand_Damage_0";
     const GC_SIZE: u32 = 0x44;
@@ -24036,6 +26651,8 @@ pub struct ftCrazyHand_DamageVars {
     pub x60: i32,
     pub x64: i32,
 }
+impl ftCrazyHand_DamageVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCrazyHand_DamageVars {
     const GC_NAME: &'static str = "ftCrazyHand_DamageVars";
     const GC_SIZE: u32 = 0x68;
@@ -24057,6 +26674,8 @@ pub struct ftCrazyHand_BackCrushVars {
     pub x50: Vec,
     pub x5C: i32,
 }
+impl ftCrazyHand_BackCrushVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCrazyHand_BackCrushVars {
     const GC_NAME: &'static str = "ftCrazyHand_BackCrushVars";
     const GC_SIZE: u32 = 0x60;
@@ -24080,6 +26699,8 @@ pub struct ftMewtwo_FighterVars {
     pub x2238_shadowBallGObj: *mut HSD_GObj,
     pub x223C_isConfusionBoost: i32,
 }
+impl ftMewtwo_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMewtwo_FighterVars {
     const GC_NAME: &'static str = "ftMewtwo_FighterVars";
     const GC_SIZE: u32 = 0x14;
@@ -24106,6 +26727,8 @@ pub struct ftMewtwoSpecialHi {
     pub velY: f32,
     pub groundVelX: f32,
 }
+impl ftMewtwoSpecialHi { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMewtwoSpecialHi {
     const GC_NAME: &'static str = "ftMewtwoSpecialHi";
     const GC_SIZE: u32 = 0x1C;
@@ -24134,6 +26757,8 @@ impl ftMewtwoSpecialS {
     #[inline] #[allow(unused_unsafe)] pub fn isConfusionReflect(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_isConfusionReflect(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 7, 1, (v as u64) & 0x1) } }
 }
+impl ftMewtwoSpecialS { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMewtwoSpecialS {
     const GC_NAME: &'static str = "ftMewtwoSpecialS";
     const GC_SIZE: u32 = 0x1;
@@ -24153,6 +26778,8 @@ pub struct ftMewtwoSpecialN {
     pub releaseLag: i32,
     pub chargeLevel: f32,
 }
+impl ftMewtwoSpecialN { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMewtwoSpecialN {
     const GC_NAME: &'static str = "ftMewtwoSpecialN";
     const GC_SIZE: u32 = 0x14;
@@ -24175,6 +26802,8 @@ pub union ftMewtwo_MotionVars {
     pub SpecialS: ftMewtwoSpecialS,
     pub SpecialHi: ftMewtwoSpecialHi,
 }
+impl ftMewtwo_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftMewtwo_MotionVars {
     const GC_NAME: &'static str = "ftMewtwo_MotionVars";
     const GC_SIZE: u32 = 0x1C;
@@ -24217,6 +26846,8 @@ pub struct _ftMewtwoAttributes {
     pub x80_MEWTWO_DISABLE_OFFSET_X: f32,
     pub x84_MEWTWO_DISABLE_OFFSET_Y: f32,
 }
+impl _ftMewtwoAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _ftMewtwoAttributes {
     const GC_NAME: &'static str = "_ftMewtwoAttributes";
     const GC_SIZE: u32 = 0x88;
@@ -24264,6 +26895,8 @@ pub struct ftNess_FighterVars {
     pub bat_gobj: *mut HSD_GObj,
     pub pkthunder_gfx: u32,
 }
+impl ftNess_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftNess_FighterVars {
     const GC_NAME: &'static str = "ftNess_FighterVars";
     const GC_SIZE: u32 = 0x24;
@@ -24289,6 +26922,8 @@ pub struct ftNess_YoyoVars {
     pub isChargeDisable: i32,
     pub isPosUpdateMod: i32,
 }
+impl ftNess_YoyoVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftNess_YoyoVars {
     const GC_NAME: &'static str = "ftNess_YoyoVars";
     const GC_SIZE: u32 = 0x10;
@@ -24312,6 +26947,8 @@ pub union ftNess_MotionVars {
     pub specialhi: ftNess_SpecialHiVars,
     pub speciallw: ftNess_SpecialLwVars,
 }
+impl ftNess_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftNess_MotionVars {
     const GC_NAME: &'static str = "ftNess_MotionVars";
     const GC_SIZE: u32 = 0x50;
@@ -24335,6 +26972,8 @@ pub struct ftNess_SpecialNVars {
     pub falling_acceleration_delay: i32,
     pub charge_release_delay: i32,
 }
+impl ftNess_SpecialNVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftNess_SpecialNVars {
     const GC_NAME: &'static str = "ftNess_SpecialNVars";
     const GC_SIZE: u32 = 0x10;
@@ -24367,6 +27006,8 @@ pub struct ftNess_SpecialHiVars {
     pub unkVar3: f32,
     pub unkVar4: f32,
 }
+impl ftNess_SpecialHiVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftNess_SpecialHiVars {
     const GC_NAME: &'static str = "ftNess_SpecialHiVars";
     const GC_SIZE: u32 = 0x50;
@@ -24400,6 +27041,8 @@ pub struct ftNess_SpecialLwVars {
     pub gravityDelay: i32,
     pub x10: i32,
 }
+impl ftNess_SpecialLwVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftNess_SpecialLwVars {
     const GC_NAME: &'static str = "ftNess_SpecialLwVars";
     const GC_SIZE: u32 = 0x14;
@@ -24462,6 +27105,8 @@ pub struct ftNessAttributes {
     pub xB4_YOYO_REHIT_RATE: f32,
     pub xB8_BASEBALL_BAT: ReflectDesc,
 }
+impl ftNessAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftNessAttributes {
     const GC_NAME: &'static str = "ftNessAttributes";
     const GC_SIZE: u32 = 0xDC;
@@ -24527,6 +27172,8 @@ pub struct ftPeach_FighterVars {
     pub toad_gobj: *mut Item_GObj,
     pub veg_gobj: *mut Item_GObj,
 }
+impl ftPeach_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPeach_FighterVars {
     const GC_NAME: &'static str = "ftPeach_FighterVars";
     const GC_SIZE: u32 = 0x20;
@@ -24588,6 +27235,8 @@ pub struct ftPe_DatAttrs {
     pub xA8: f32,
     pub xAC: AbsorbDesc,
 }
+impl ftPe_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPe_DatAttrs {
     const GC_NAME: &'static str = "ftPe_DatAttrs";
     const GC_SIZE: u32 = 0xC0;
@@ -24643,6 +27292,8 @@ pub struct ftPe_ItemChance {
     pub randi_max: i32,
     pub kind: ItemKind,
 }
+impl ftPe_ItemChance { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPe_ItemChance {
     const GC_NAME: &'static str = "ftPe_ItemChance";
     const GC_SIZE: u32 = 0x8;
@@ -24663,6 +27314,8 @@ pub union ftPe_MotionVars {
     pub specialhi: ftPe_SpecialHiVars,
     pub specialn: ftPe_SpecialNVars,
 }
+impl ftPe_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPe_MotionVars {
     const GC_NAME: &'static str = "ftPe_MotionVars";
     const GC_SIZE: u32 = 0x4;
@@ -24682,6 +27335,8 @@ const _: () = assert!(core::mem::size_of::<ftPe_MotionVars>() == 4);
 pub struct ftPe_FloatAttackVars {
     pub x0: i32,
 }
+impl ftPe_FloatAttackVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPe_FloatAttackVars {
     const GC_NAME: &'static str = "ftPe_FloatAttackVars";
     const GC_SIZE: u32 = 0x4;
@@ -24698,6 +27353,8 @@ const _: () = assert!(core::mem::size_of::<ftPe_FloatAttackVars>() == 4);
 pub struct ftPe_SpecialSVars {
     pub x0: i32,
 }
+impl ftPe_SpecialSVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPe_SpecialSVars {
     const GC_NAME: &'static str = "ftPe_SpecialSVars";
     const GC_SIZE: u32 = 0x4;
@@ -24714,6 +27371,8 @@ const _: () = assert!(core::mem::size_of::<ftPe_SpecialSVars>() == 4);
 pub struct ftPe_SpecialHiVars {
     pub kind: ItemKind,
 }
+impl ftPe_SpecialHiVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPe_SpecialHiVars {
     const GC_NAME: &'static str = "ftPe_SpecialHiVars";
     const GC_SIZE: u32 = 0x4;
@@ -24730,6 +27389,8 @@ const _: () = assert!(core::mem::size_of::<ftPe_SpecialHiVars>() == 4);
 pub struct ftPe_SpecialNVars {
     pub facing_dir: i32,
 }
+impl ftPe_SpecialNVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPe_SpecialNVars {
     const GC_NAME: &'static str = "ftPe_SpecialNVars";
     const GC_SIZE: u32 = 0x4;
@@ -24746,6 +27407,8 @@ const _: () = assert!(core::mem::size_of::<ftPe_SpecialNVars>() == 4);
 pub struct ftPikachu_FighterVars {
     pub filler0: [i8; 248],
 }
+impl ftPikachu_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPikachu_FighterVars {
     const GC_NAME: &'static str = "ftPikachu_FighterVars";
     const GC_SIZE: u32 = 0xF8;
@@ -24812,6 +27475,8 @@ pub struct _ftPikachuAttributes {
     pub xDC: u32,
     pub height_attributes: ftCollisionBox,
 }
+impl _ftPikachuAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _ftPikachuAttributes {
     const GC_NAME: &'static str = "_ftPikachuAttributes";
     const GC_SIZE: u32 = 0xF8;
@@ -24881,6 +27546,8 @@ pub union ftPikachu_MotionVars {
     pub specialhi: ftPikachu_SpecialHiVars,
     pub speciallw: ftPikachu_SpecialLwVars,
 }
+impl ftPikachu_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPikachu_MotionVars {
     const GC_NAME: &'static str = "ftPikachu_MotionVars";
     const GC_SIZE: u32 = 0x28;
@@ -24900,6 +27567,8 @@ const _: () = assert!(core::mem::size_of::<ftPikachu_MotionVars>() == 40);
 pub struct ftPikachu_State2Vars {
     pub x0: i32,
 }
+impl ftPikachu_State2Vars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPikachu_State2Vars {
     const GC_NAME: &'static str = "ftPikachu_State2Vars";
     const GC_SIZE: u32 = 0x4;
@@ -24916,6 +27585,8 @@ const _: () = assert!(core::mem::size_of::<ftPikachu_State2Vars>() == 4);
 pub struct ftPikachu_State3Vars {
     pub x0: i32,
 }
+impl ftPikachu_State3Vars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPikachu_State3Vars {
     const GC_NAME: &'static str = "ftPikachu_State3Vars";
     const GC_SIZE: u32 = 0x4;
@@ -24939,6 +27610,8 @@ pub struct ftPikachu_SpecialHiVars {
     pub x1C: Vec2,
     pub x24: f32,
 }
+impl ftPikachu_SpecialHiVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPikachu_SpecialHiVars {
     const GC_NAME: &'static str = "ftPikachu_SpecialHiVars";
     const GC_SIZE: u32 = 0x28;
@@ -24963,6 +27636,8 @@ pub struct ftPikachu_SpecialLwVars {
     pub x0: *mut Item_GObj,
     pub x4: i32,
 }
+impl ftPikachu_SpecialLwVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPikachu_SpecialLwVars {
     const GC_NAME: &'static str = "ftPikachu_SpecialLwVars";
     const GC_SIZE: u32 = 0x8;
@@ -24994,6 +27669,8 @@ impl ftPopo_FighterVars {
     #[inline] #[allow(unused_unsafe)] pub fn x2230_b0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_4, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x2230_b0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_4, 7, 1, (v as u64) & 0x1) } }
 }
+impl ftPopo_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPopo_FighterVars {
     const GC_NAME: &'static str = "ftPopo_FighterVars";
     const GC_SIZE: u32 = 0x28;
@@ -25080,6 +27757,8 @@ pub struct ftIceClimberAttributes {
     pub x14C: f32,
     pub _150: [u8; 12],
 }
+impl ftIceClimberAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftIceClimberAttributes {
     const GC_NAME: &'static str = "ftIceClimberAttributes";
     const GC_SIZE: u32 = 0x15C;
@@ -25161,6 +27840,8 @@ pub union ftPp_MotionVars {
     pub unk_80123954: ftPp_MotionVars_unk_80123954,
     pub speciallw: ftPp_MotionVars_speciallw,
 }
+impl ftPp_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPp_MotionVars {
     const GC_NAME: &'static str = "ftPp_MotionVars";
     const GC_SIZE: u32 = 0x20;
@@ -25185,6 +27866,8 @@ pub struct ftPp_SpecialSVars {
     pub x18: i32,
     pub x1C: f32,
 }
+impl ftPp_SpecialSVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPp_SpecialSVars {
     const GC_NAME: &'static str = "ftPp_SpecialSVars";
     const GC_SIZE: u32 = 0x20;
@@ -25209,6 +27892,8 @@ pub struct ftPp_SpecialSVars_x8_t {
     pub x0: i32,
     pub x4: *mut HSD_GObj,
 }
+impl ftPp_SpecialSVars_x8_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPp_SpecialSVars_x8_t {
     const GC_NAME: &'static str = "ftPp_SpecialSVars_x8_t";
     const GC_SIZE: u32 = 0x8;
@@ -25226,6 +27911,8 @@ const _: () = assert!(core::mem::size_of::<ftPp_SpecialSVars_x8_t>() == 16);
 pub struct ftPp_MotionVars_unk_80123954 {
     pub x0: i32,
 }
+impl ftPp_MotionVars_unk_80123954 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPp_MotionVars_unk_80123954 {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftPopo/types.h:102:5)";
     const GC_SIZE: u32 = 0x4;
@@ -25249,6 +27936,8 @@ impl ftPp_MotionVars_speciallw {
     #[inline] #[allow(unused_unsafe)] pub fn x4_b0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_4, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x4_b0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_4, 7, 1, (v as u64) & 0x1) } }
 }
+impl ftPp_MotionVars_speciallw { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPp_MotionVars_speciallw {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/kinds/ftPopo/types.h:105:5)";
     const GC_SIZE: u32 = 0x8;
@@ -25269,6 +27958,8 @@ pub struct ftPurin_FighterVars {
     pub x2240: DObjList,
     pub x2248: FtPartsVis,
 }
+impl ftPurin_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPurin_FighterVars {
     const GC_NAME: &'static str = "ftPurin_FighterVars";
     const GC_SIZE: u32 = 0x3C;
@@ -25290,6 +27981,8 @@ pub union ftPurin_MotionVars {
     pub specialhi: ftPurin_SpecialHiVars,
     pub specialn: ftPurin_SpecialNVars,
 }
+impl ftPurin_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPurin_MotionVars {
     const GC_NAME: &'static str = "ftPurin_MotionVars";
     const GC_SIZE: u32 = 0x40;
@@ -25307,6 +28000,8 @@ const _: () = assert!(core::mem::size_of::<ftPurin_MotionVars>() == 64);
 pub struct ftPurin_SpecialHiVars {
     pub x0: i32,
 }
+impl ftPurin_SpecialHiVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPurin_SpecialHiVars {
     const GC_NAME: &'static str = "ftPurin_SpecialHiVars";
     const GC_SIZE: u32 = 0x4;
@@ -25336,6 +28031,8 @@ pub struct ftPurin_SpecialNVars {
     pub x30: i32,
     pub x34: Vec,
 }
+impl ftPurin_SpecialNVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftPurin_SpecialNVars {
     const GC_NAME: &'static str = "ftPurin_SpecialNVars";
     const GC_SIZE: u32 = 0x40;
@@ -25425,6 +28122,8 @@ pub struct _ftPurinAttributes {
     pub xF4: f32,
     pub _F8: [u8; 8],
 }
+impl _ftPurinAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _ftPurinAttributes {
     const GC_NAME: &'static str = "_ftPurinAttributes";
     const GC_SIZE: u32 = 0x100;
@@ -25511,6 +28210,8 @@ pub struct ftSamus_FighterVars {
     pub x2244: u32,
     pub x2248: u32,
 }
+impl ftSamus_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftSamus_FighterVars {
     const GC_NAME: &'static str = "ftSamus_FighterVars";
     const GC_SIZE: u32 = 0x20;
@@ -25582,6 +28283,8 @@ pub struct _ftSamusAttributes {
     pub xCC: f32,
     pub xD0: *mut c_void,
 }
+impl _ftSamusAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _ftSamusAttributes {
     const GC_NAME: &'static str = "_ftSamusAttributes";
     const GC_SIZE: u32 = 0xD4;
@@ -25646,6 +28349,8 @@ pub struct UNK_SAMUS_S1 {
     pub x8_anim_joint: *mut HSD_AnimJoint,
     pub xC_matanim_joint: *mut HSD_MatAnimJoint,
 }
+impl UNK_SAMUS_S1 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for UNK_SAMUS_S1 {
     const GC_NAME: &'static str = "UNK_SAMUS_S1";
     const GC_SIZE: u32 = 0x10;
@@ -25670,6 +28375,8 @@ pub union ftSamus_MotionVars {
     pub unk6: ftSamus_State6Vars,
     pub unk7: ftSamus_State7Vars,
 }
+impl ftSamus_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftSamus_MotionVars {
     const GC_NAME: &'static str = "ftSamus_MotionVars";
     const GC_SIZE: u32 = 0xC;
@@ -25691,6 +28398,8 @@ const _: () = assert!(core::mem::size_of::<ftSamus_MotionVars>() == 12);
 pub struct ftSamus_State2Vars {
     pub x0: i32,
 }
+impl ftSamus_State2Vars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftSamus_State2Vars {
     const GC_NAME: &'static str = "ftSamus_State2Vars";
     const GC_SIZE: u32 = 0x4;
@@ -25709,6 +28418,8 @@ pub struct ftSamus_State3Vars {
     pub x4: i32,
     pub x8: f32,
 }
+impl ftSamus_State3Vars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftSamus_State3Vars {
     const GC_NAME: &'static str = "ftSamus_State3Vars";
     const GC_SIZE: u32 = 0xC;
@@ -25729,6 +28440,8 @@ pub struct ftSamus_GrappleVars {
     pub x4: f32,
     pub x8: f32,
 }
+impl ftSamus_GrappleVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftSamus_GrappleVars {
     const GC_NAME: &'static str = "ftSamus_GrappleVars";
     const GC_SIZE: u32 = 0xC;
@@ -25747,6 +28460,8 @@ const _: () = assert!(core::mem::size_of::<ftSamus_GrappleVars>() == 12);
 pub struct ftSamus_State5Vars {
     pub x0: i32,
 }
+impl ftSamus_State5Vars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftSamus_State5Vars {
     const GC_NAME: &'static str = "ftSamus_State5Vars";
     const GC_SIZE: u32 = 0x4;
@@ -25763,6 +28478,8 @@ const _: () = assert!(core::mem::size_of::<ftSamus_State5Vars>() == 4);
 pub struct ftSamus_State6Vars {
     pub x0: i32,
 }
+impl ftSamus_State6Vars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftSamus_State6Vars {
     const GC_NAME: &'static str = "ftSamus_State6Vars";
     const GC_SIZE: u32 = 0x4;
@@ -25779,6 +28496,8 @@ const _: () = assert!(core::mem::size_of::<ftSamus_State6Vars>() == 4);
 pub struct ftSamus_State7Vars {
     pub x0: f32,
 }
+impl ftSamus_State7Vars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftSamus_State7Vars {
     const GC_NAME: &'static str = "ftSamus_State7Vars";
     const GC_SIZE: u32 = 0x4;
@@ -25795,6 +28514,8 @@ const _: () = assert!(core::mem::size_of::<ftSamus_State7Vars>() == 4);
 pub struct ftSandbag_FighterVars {
     pub filler0: [i8; 248],
 }
+impl ftSandbag_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftSandbag_FighterVars {
     const GC_NAME: &'static str = "ftSandbag_FighterVars";
     const GC_SIZE: u32 = 0xF8;
@@ -25816,6 +28537,8 @@ pub struct ftSeak_FighterVars {
     pub x3C: [Vec; 4],
     pub lstick_delta: Vec,
 }
+impl ftSeak_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftSeak_FighterVars {
     const GC_NAME: &'static str = "ftSeak_FighterVars";
     const GC_SIZE: u32 = 0x78;
@@ -25865,6 +28588,8 @@ pub struct _ftSeakAttributes {
     pub x6C: f32,
     pub x70: f32,
 }
+impl _ftSeakAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _ftSeakAttributes {
     const GC_NAME: &'static str = "_ftSeakAttributes";
     const GC_SIZE: u32 = 0x74;
@@ -25929,6 +28654,8 @@ pub struct itChainSegment {
     pub x4C: f32,
     pub x50: f32,
 }
+impl itChainSegment { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itChainSegment {
     const GC_NAME: &'static str = "itChainSegment";
     const GC_SIZE: u32 = 0x54;
@@ -25967,6 +28694,8 @@ pub union ftSeak_MotionVars {
     pub specials: ftSeak_SpecialSVars,
     pub specialhi: ftSeakSpecialHi,
 }
+impl ftSeak_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftSeak_MotionVars {
     const GC_NAME: &'static str = "ftSeak_MotionVars";
     const GC_SIZE: u32 = 0x30;
@@ -25996,6 +28725,8 @@ pub struct ftSeak_SpecialNVars {
     pub x28: i32,
     pub x2C: i32,
 }
+impl ftSeak_SpecialNVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftSeak_SpecialNVars {
     const GC_NAME: &'static str = "ftSeak_SpecialNVars";
     const GC_SIZE: u32 = 0x30;
@@ -26034,6 +28765,8 @@ pub struct ftSeak_SpecialSVars {
     pub x28: i32,
     pub x2C: i32,
 }
+impl ftSeak_SpecialSVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftSeak_SpecialSVars {
     const GC_NAME: &'static str = "ftSeak_SpecialSVars";
     const GC_SIZE: u32 = 0x30;
@@ -26071,6 +28804,8 @@ pub struct ftSeakSpecialHi {
     pub x28: i32,
     pub x2C: i32,
 }
+impl ftSeakSpecialHi { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftSeakSpecialHi {
     const GC_NAME: &'static str = "ftSeakSpecialHi";
     const GC_SIZE: u32 = 0x30;
@@ -26098,6 +28833,8 @@ pub struct ftYoshi_FighterVars {
     pub x222C: Vec,
     pub x2238: *mut Item_GObj,
 }
+impl ftYoshi_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftYoshi_FighterVars {
     const GC_NAME: &'static str = "ftYoshi_FighterVars";
     const GC_SIZE: u32 = 0x10;
@@ -26180,6 +28917,8 @@ pub struct _ftYoshiAttributes {
     pub x128: f32,
     pub x12C: [u8; 12],
 }
+impl _ftYoshiAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _ftYoshiAttributes {
     const GC_NAME: &'static str = "_ftYoshiAttributes";
     const GC_SIZE: u32 = 0x138;
@@ -26279,6 +29018,8 @@ pub struct ftYs_DatAttrs {
     pub pad_114: [i8; 4],
     pub speciallw_star_offset: Vec2,
 }
+impl ftYs_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftYs_DatAttrs {
     const GC_NAME: &'static str = "ftYs_DatAttrs";
     const GC_SIZE: u32 = 0x120;
@@ -26316,6 +29057,8 @@ pub struct S_UNK_YOSHI2 {
     pub x8_end_index: i32,
     pub xC_start_index: *mut u8,
 }
+impl S_UNK_YOSHI2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for S_UNK_YOSHI2 {
     const GC_NAME: &'static str = "S_UNK_YOSHI2";
     const GC_SIZE: u32 = 0x10;
@@ -26336,6 +29079,8 @@ pub struct S_UNK_YOSHI1 {
     pub x0: i32,
     pub unk_struct: *mut S_UNK_YOSHI2,
 }
+impl S_UNK_YOSHI1 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for S_UNK_YOSHI1 {
     const GC_NAME: &'static str = "S_UNK_YOSHI1";
     const GC_SIZE: u32 = 0x8;
@@ -26356,6 +29101,8 @@ pub union ftYoshi_MotionVars {
     pub specialhi: ftYoshi_SpecialHiVars,
     pub guard: ftYoshi_GuardVars,
 }
+impl ftYoshi_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftYoshi_MotionVars {
     const GC_NAME: &'static str = "ftYoshi_MotionVars";
     const GC_SIZE: u32 = 0x34;
@@ -26389,6 +29136,8 @@ impl ftYoshi_SpecialNVars {
     #[inline] #[allow(unused_unsafe)] pub fn x0_b3(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 4, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x0_b3(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 4, 1, (v as u64) & 0x1) } }
 }
+impl ftYoshi_SpecialNVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftYoshi_SpecialNVars {
     const GC_NAME: &'static str = "ftYoshi_SpecialNVars";
     const GC_SIZE: u32 = 0x1;
@@ -26419,6 +29168,8 @@ pub struct ftYoshi_SpecialSVars {
     pub x2C: i32,
     pub x30: i32,
 }
+impl ftYoshi_SpecialSVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftYoshi_SpecialSVars {
     const GC_NAME: &'static str = "ftYoshi_SpecialSVars";
     const GC_SIZE: u32 = 0x34;
@@ -26448,6 +29199,8 @@ pub struct ftYoshi_SpecialHiVars {
     pub x0: i32,
     pub x4: i32,
 }
+impl ftYoshi_SpecialHiVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftYoshi_SpecialHiVars {
     const GC_NAME: &'static str = "ftYoshi_SpecialHiVars";
     const GC_SIZE: u32 = 0x8;
@@ -26473,6 +29226,8 @@ pub struct ftYoshi_GuardVars {
     pub x20: i32,
     pub x24: i32,
 }
+impl ftYoshi_GuardVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftYoshi_GuardVars {
     const GC_NAME: &'static str = "ftYoshi_GuardVars";
     const GC_SIZE: u32 = 0x28;
@@ -26497,6 +29252,8 @@ const _: () = assert!(core::mem::size_of::<ftYoshi_GuardVars>() == 48);
 pub struct ftZakoBoy_FighterVars {
     pub filler0: [i8; 248],
 }
+impl ftZakoBoy_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftZakoBoy_FighterVars {
     const GC_NAME: &'static str = "ftZakoBoy_FighterVars";
     const GC_SIZE: u32 = 0xF8;
@@ -26513,6 +29270,8 @@ const _: () = assert!(core::mem::size_of::<ftZakoBoy_FighterVars>() == 248);
 pub struct _ftZakoboyAttributes {
     pub x0: i32,
 }
+impl _ftZakoboyAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _ftZakoboyAttributes {
     const GC_NAME: &'static str = "_ftZakoboyAttributes";
     const GC_SIZE: u32 = 0x4;
@@ -26529,6 +29288,8 @@ const _: () = assert!(core::mem::size_of::<_ftZakoboyAttributes>() == 4);
 pub struct ftZelda_FighterVars {
     pub x222C: *mut HSD_GObj,
 }
+impl ftZelda_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftZelda_FighterVars {
     const GC_NAME: &'static str = "ftZelda_FighterVars";
     const GC_SIZE: u32 = 0x4;
@@ -26578,6 +29339,8 @@ pub struct ftZelda_DatAttrs {
     pub x80: f32,
     pub x84: ReflectDesc,
 }
+impl ftZelda_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftZelda_DatAttrs {
     const GC_NAME: &'static str = "ftZelda_DatAttrs";
     const GC_SIZE: u32 = 0xA8;
@@ -26629,6 +29392,8 @@ pub union ftZelda_MotionVars {
     pub specialn: ftZelda_SpecialNVars,
     pub specials: ftZelda_SpecialSVars,
 }
+impl ftZelda_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftZelda_MotionVars {
     const GC_NAME: &'static str = "ftZelda_MotionVars";
     const GC_SIZE: u32 = 0x1C;
@@ -26651,6 +29416,8 @@ pub struct ftZelda_SpecialHiVars {
     pub x10: Vec2,
     pub x18: f32,
 }
+impl ftZelda_SpecialHiVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftZelda_SpecialHiVars {
     const GC_NAME: &'static str = "ftZelda_SpecialHiVars";
     const GC_SIZE: u32 = 0x1C;
@@ -26671,6 +29438,8 @@ const _: () = assert!(core::mem::size_of::<ftZelda_SpecialHiVars>() == 28);
 pub struct ftZelda_SpecialNVars {
     pub x0: i32,
 }
+impl ftZelda_SpecialNVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftZelda_SpecialNVars {
     const GC_NAME: &'static str = "ftZelda_SpecialNVars";
     const GC_SIZE: u32 = 0x4;
@@ -26690,6 +29459,8 @@ pub struct ftZelda_SpecialSVars {
     pub x8: i32,
     pub xC: i32,
 }
+impl ftZelda_SpecialSVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftZelda_SpecialSVars {
     const GC_NAME: &'static str = "ftZelda_SpecialSVars";
     const GC_SIZE: u32 = 0x10;
@@ -26713,6 +29484,8 @@ pub struct Menu {
     pub unk3: u8,
     pub text: *mut HSD_Text,
 }
+impl Menu { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Menu {
     const GC_NAME: &'static str = "Menu";
     const GC_SIZE: u32 = 0x8;
@@ -26735,6 +29508,8 @@ pub struct CountEntry {
     pub pad: [u8; 3],
     pub stat_value: u32,
 }
+impl CountEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CountEntry {
     const GC_NAME: &'static str = "CountEntry";
     const GC_SIZE: u32 = 0x8;
@@ -26824,6 +29599,8 @@ impl PlayerInitData {
     #[inline] #[allow(unused_unsafe)] pub fn xD_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_c, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_xD_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_c, 0, 1, (v as u64) & 0x1) } }
 }
+impl PlayerInitData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for PlayerInitData {
     const GC_NAME: &'static str = "PlayerInitData";
     const GC_SIZE: u32 = 0x24;
@@ -26875,6 +29652,8 @@ pub struct lbl_8046B668_t {
     pub arr1: [i8; 28],
     pub arr2: [i8; 28],
 }
+impl lbl_8046B668_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lbl_8046B668_t {
     const GC_NAME: &'static str = "lbl_8046B668_t";
     const GC_SIZE: u32 = 0x38;
@@ -26894,6 +29673,8 @@ pub struct PerfLabelLine {
     pub unk_04: i32,
     pub text: [i8; 128],
 }
+impl PerfLabelLine { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for PerfLabelLine {
     const GC_NAME: &'static str = "PerfLabelLine";
     const GC_SIZE: u32 = 0x88;
@@ -26913,6 +29694,8 @@ pub struct lbl_8046B378_t {
     pub line0: PerfLabelLine,
     pub line1: PerfLabelLine,
 }
+impl lbl_8046B378_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lbl_8046B378_t {
     const GC_NAME: &'static str = "lbl_8046B378_t";
     const GC_SIZE: u32 = 0x110;
@@ -27093,6 +29876,8 @@ impl StartMeleeRules {
     #[inline] #[allow(unused_unsafe)] pub fn x5_7(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x5_7(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl StartMeleeRules { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for StartMeleeRules {
     const GC_NAME: &'static str = "StartMeleeRules";
     const GC_SIZE: u32 = 0x60;
@@ -27189,6 +29974,8 @@ impl StartMeleeRules_anon_250 {
     #[inline] #[allow(unused_unsafe)] pub fn x10_b1(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_10, 6, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x10_b1(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_10, 6, 1, (v as u64) & 0x1) } }
 }
+impl StartMeleeRules_anon_250 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for StartMeleeRules_anon_250 {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/mn/types.h:250:5)";
     const GC_SIZE: u32 = 0x11;
@@ -27207,6 +29994,8 @@ pub struct StartMeleeData {
     pub rules: StartMeleeRules,
     pub players: [PlayerInitData; 6],
 }
+impl StartMeleeData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for StartMeleeData {
     const GC_NAME: &'static str = "StartMeleeData";
     const GC_SIZE: u32 = 0x138;
@@ -27231,6 +30020,8 @@ pub struct VsModeData {
     pub unk_0x7: u8,
     pub start: StartMeleeData,
 }
+impl VsModeData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for VsModeData {
     const GC_NAME: &'static str = "VsModeData";
     const GC_SIZE: u32 = 0x140;
@@ -27258,6 +30049,8 @@ pub struct CSSData {
     pub ko_counts: *mut u8,
     pub vs: VsModeData,
 }
+impl CSSData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CSSData {
     const GC_NAME: &'static str = "CSSData";
     const GC_SIZE: u32 = 0x148;
@@ -27279,6 +30072,8 @@ pub struct CSSModeInfo {
     pub mode_teams_frame: u16,
     pub enter_sfx: i32,
 }
+impl CSSModeInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CSSModeInfo {
     const GC_NAME: &'static str = "CSSModeInfo";
     const GC_SIZE: u32 = 0x8;
@@ -27307,6 +30102,8 @@ pub struct CSSIcon {
     pub bound_u: f32,
     pub bound_d: f32,
 }
+impl CSSIcon { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CSSIcon {
     const GC_NAME: &'static str = "CSSIcon";
     const GC_SIZE: u32 = 0x1C;
@@ -27334,6 +30131,8 @@ pub struct CSSIconsData {
     pub gnw_name: [u8; 28],
     pub mode_info: [CSSModeInfo; 24],
 }
+impl CSSIconsData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CSSIconsData {
     const GC_NAME: &'static str = "CSSIconsData";
     const GC_SIZE: u32 = 0xDC;
@@ -27374,6 +30173,8 @@ pub struct CSSDoor {
     pub teambtn_left: f32,
     pub teambtn_right: f32,
 }
+impl CSSDoor { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CSSDoor {
     const GC_NAME: &'static str = "CSSDoor";
     const GC_SIZE: u32 = 0x24;
@@ -27422,6 +30223,8 @@ pub struct CSSTagData {
     pub state: u8,
     pub use_tag: u8,
 }
+impl CSSTagData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CSSTagData {
     const GC_NAME: &'static str = "CSSTagData";
     const GC_SIZE: u32 = 0x1C;
@@ -27455,6 +30258,8 @@ pub struct CSSTag {
     pub xa: u8,
     pub xb: u8,
 }
+impl CSSTag { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CSSTag {
     const GC_NAME: &'static str = "CSSTag";
     const GC_SIZE: u32 = 0xC;
@@ -27487,6 +30292,8 @@ pub struct CSSKOStar {
     pub x18: i32,
     pub x1c: i32,
 }
+impl CSSKOStar { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CSSKOStar {
     const GC_NAME: &'static str = "CSSKOStar";
     const GC_SIZE: u32 = 0x20;
@@ -27511,6 +30318,8 @@ const _: () = assert!(core::mem::size_of::<CSSKOStar>() == 40);
 pub struct CSSDoorsData {
     pub doors: [CSSDoor; 4],
 }
+impl CSSDoorsData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CSSDoorsData {
     const GC_NAME: &'static str = "CSSDoorsData";
     const GC_SIZE: u32 = 0x90;
@@ -27550,6 +30359,8 @@ pub struct CSSDoorsMisc {
     pub cpubtn_top: f32,
     pub cpubtn_btm: f32,
 }
+impl CSSDoorsMisc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CSSDoorsMisc {
     const GC_NAME: &'static str = "CSSDoorsMisc";
     const GC_SIZE: u32 = 0x30;
@@ -27599,6 +30410,8 @@ pub struct CSSDoorsData2 {
     pub x10c: f32,
     pub ko_stars: [CSSKOStar; 4],
 }
+impl CSSDoorsData2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CSSDoorsData2 {
     const GC_NAME: &'static str = "CSSDoorsData2";
     const GC_SIZE: u32 = 0xA0;
@@ -27625,6 +30438,8 @@ const _: () = assert!(core::mem::size_of::<CSSDoorsData2>() == 192);
 pub struct mnSnap_804A0B90_t {
     pub pad_0: [i8; 614400],
 }
+impl mnSnap_804A0B90_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for mnSnap_804A0B90_t {
     const GC_NAME: &'static str = "mnSnap_804A0B90_t";
     const GC_SIZE: u32 = 0x96000;
@@ -27646,6 +30461,8 @@ pub struct SSSData {
     pub start_game: u8,
     pub vs: VsModeData,
 }
+impl SSSData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for SSSData {
     const GC_NAME: &'static str = "SSSData";
     const GC_SIZE: u32 = 0x148;
@@ -27668,6 +30485,8 @@ pub struct AnimLoopSettings {
     pub end_frame: f32,
     pub loop_frame: f32,
 }
+impl AnimLoopSettings { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for AnimLoopSettings {
     const GC_NAME: &'static str = "AnimLoopSettings";
     const GC_SIZE: u32 = 0xC;
@@ -27698,6 +30517,8 @@ pub struct Diagram {
     pub col_header_text: *mut HSD_Text,
     pub row_header_text: *mut HSD_Text,
 }
+impl Diagram { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Diagram {
     const GC_NAME: &'static str = "Diagram";
     const GC_SIZE: u32 = 0x50;
@@ -27730,6 +30551,8 @@ pub struct MenuKindData {
     pub selection_count: u8,
     pub think: Option<unsafe extern "C" fn(*mut HSD_GObj)>,
 }
+impl MenuKindData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MenuKindData {
     const GC_NAME: &'static str = "MenuKindData";
     const GC_SIZE: u32 = 0x14;
@@ -27755,6 +30578,8 @@ pub struct MnDiagram2RowLayout {
     pub label_ids: [u16; 24],
     pub unit_glyph_ids: [u16; 24],
 }
+impl MnDiagram2RowLayout { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MnDiagram2RowLayout {
     const GC_NAME: &'static str = "MnDiagram2RowLayout";
     const GC_SIZE: u32 = 0x90;
@@ -27804,6 +30629,8 @@ pub struct Diagram2 {
     pub row_icons: [*mut HSD_Text; 10],
     pub header_text: *mut HSD_Text,
 }
+impl Diagram2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Diagram2 {
     const GC_NAME: &'static str = "Diagram2";
     const GC_SIZE: u32 = 0xC8;
@@ -27860,6 +30687,8 @@ pub struct Diagram3 {
     pub row_icons: [*mut HSD_Text; 5],
     pub popup_gobj: *mut HSD_GObj,
 }
+impl Diagram3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Diagram3 {
     const GC_NAME: &'static str = "Diagram3";
     const GC_SIZE: u32 = 0x78;
@@ -27891,6 +30720,8 @@ pub struct GlyphVariantEntry {
     pub jobjs: [*mut HSD_JObj; 7],
     pub text: *mut HSD_Text,
 }
+impl GlyphVariantEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GlyphVariantEntry {
     const GC_NAME: &'static str = "GlyphVariantEntry";
     const GC_SIZE: u32 = 0x24;
@@ -27925,6 +30756,8 @@ pub struct NameNewEntry {
     pub name_disp_text: *mut HSD_Text,
     pub desc_text: *mut HSD_Text,
 }
+impl NameNewEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for NameNewEntry {
     const GC_NAME: &'static str = "NameNewEntry";
     const GC_SIZE: u32 = 0x6C;
@@ -27960,6 +30793,8 @@ pub struct MnInfoData {
     pub right_column: [*mut HSD_Text; 4],
     pub description: *mut HSD_Text,
 }
+impl MnInfoData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MnInfoData {
     const GC_NAME: &'static str = "MnInfoData";
     const GC_SIZE: u32 = 0x2C;
@@ -27990,6 +30825,8 @@ pub struct soundtest_user_data {
     pub unk18: *mut HSD_Text,
     pub unk1C: *mut HSD_Text,
 }
+impl soundtest_user_data { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for soundtest_user_data {
     const GC_NAME: &'static str = "soundtest_user_data";
     const GC_SIZE: u32 = 0x20;
@@ -28018,6 +30855,8 @@ pub union UnkFlagStruct {
     /// anonymous C member
     pub anon_0: UnkFlagStruct_anon_27,
 }
+impl UnkFlagStruct { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for UnkFlagStruct {
     const GC_NAME: &'static str = "UnkFlagStruct";
     const GC_SIZE: u32 = 0x1;
@@ -28069,6 +30908,8 @@ impl UnkFlagStruct_anon_27 {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl UnkFlagStruct_anon_27 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for UnkFlagStruct_anon_27 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/gm/types.h:27:5)";
     const GC_SIZE: u32 = 0x1;
@@ -28099,6 +30940,8 @@ impl UnkMultimanData {
     #[inline] #[allow(unused_unsafe)] pub fn x0_0(&self) -> u16 { unsafe { melee_core_bits_get(&self.bf_0, 7, 1) as u16 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x0_0(&mut self, v: u16) { unsafe { melee_core_bits_set(&mut self.bf_0, 7, 1, (v as u64) & 0x1) } }
 }
+impl UnkMultimanData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for UnkMultimanData {
     const GC_NAME: &'static str = "UnkMultimanData";
     const GC_SIZE: u32 = 0x8;
@@ -28124,6 +30967,8 @@ pub struct DebugGameOverData {
     pub x16: u16,
     pub x18: u16,
 }
+impl DebugGameOverData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for DebugGameOverData {
     const GC_NAME: &'static str = "DebugGameOverData";
     const GC_SIZE: u32 = 0x1C;
@@ -28151,6 +30996,8 @@ pub struct un_804A1F48_t {
     pub x4: i32,
     pub x8: *mut c_void,
 }
+impl un_804A1F48_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for un_804A1F48_t {
     const GC_NAME: &'static str = "un_804A1F48_t";
     const GC_SIZE: u32 = 0xC;
@@ -28172,6 +31019,8 @@ pub struct GameSceneInfo {
     pub enter_data: *mut c_void,
     pub exit_data: *mut c_void,
 }
+impl GameSceneInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GameSceneInfo {
     const GC_NAME: &'static str = "GameSceneInfo";
     const GC_SIZE: u32 = 0xC;
@@ -28195,6 +31044,8 @@ pub struct GameModeState {
     pub on_exit: Option<unsafe extern "C" fn(*mut GameModeState)>,
     pub info: GameSceneInfo,
 }
+impl GameModeState { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GameModeState {
     const GC_NAME: &'static str = "GameModeState";
     const GC_SIZE: u32 = 0x18;
@@ -28221,6 +31072,8 @@ pub struct GameMode {
     pub on_init: Option<unsafe extern "C" fn()>,
     pub states: *mut GameModeState,
 }
+impl GameMode { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GameMode {
     const GC_NAME: &'static str = "GameMode";
     const GC_SIZE: u32 = 0x14;
@@ -28246,6 +31099,8 @@ pub struct GameScene {
     pub on_exit: Option<unsafe extern "C" fn(*mut c_void)>,
     pub unused: *mut c_void,
 }
+impl GameScene { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GameScene {
     const GC_NAME: &'static str = "GameScene";
     const GC_SIZE: u32 = 0x14;
@@ -28272,6 +31127,8 @@ pub struct GamePrefs {
     pub saved_language: u8,
     pub stage_mask: u32,
 }
+impl GamePrefs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GamePrefs {
     const GC_NAME: &'static str = "GamePrefs";
     const GC_SIZE: u32 = 0x20;
@@ -28313,6 +31170,8 @@ pub struct GmStats {
     pub coins_swiped: i32,
     pub coins_lost: i32,
 }
+impl GmStats { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GmStats {
     const GC_NAME: &'static str = "GmStats";
     const GC_SIZE: u32 = 0x44;
@@ -28355,6 +31214,8 @@ pub struct FighterData {
     pub x7B: i8,
     pub x7C: FighterData_x7C,
 }
+impl FighterData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for FighterData {
     const GC_NAME: &'static str = "FighterData";
     const GC_SIZE: u32 = 0xAC;
@@ -28426,6 +31287,8 @@ impl FighterData_x7C {
     #[inline] #[allow(unused_unsafe)] pub fn b13_to_15(&self) -> u16 { unsafe { melee_core_bits_get(&self.bf_0, 0, 3) as u16 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b13_to_15(&mut self, v: u16) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 3, (v as u64) & 0x7) } }
 }
+impl FighterData_x7C { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for FighterData_x7C {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gm/types.h:176:16)";
     const GC_SIZE: u32 = 0x30;
@@ -28473,6 +31336,8 @@ pub struct NameTagData {
     pub x1A2: i8,
     pub padding_x1A2: u8,
 }
+impl NameTagData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for NameTagData {
     const GC_NAME: &'static str = "NameTagData";
     const GC_SIZE: u32 = 0x1A4;
@@ -28496,6 +31361,8 @@ const _: () = assert!(core::mem::size_of::<NameTagData>() == 420);
 pub struct NameTagDataBank {
     pub inner: [NameTagData; 19],
 }
+impl NameTagDataBank { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for NameTagDataBank {
     const GC_NAME: &'static str = "NameTagDataBank";
     const GC_SIZE: u32 = 0x1F2C;
@@ -28532,6 +31399,8 @@ pub struct GameRules {
     pub x13: u8,
     pub unk_14: i32,
 }
+impl GameRules { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GameRules {
     const GC_NAME: &'static str = "GameRules";
     const GC_SIZE: u32 = 0x18;
@@ -28575,6 +31444,8 @@ pub struct gmm_retval_ED98 {
     pub x18: i32,
     pub x1C: i32,
 }
+impl gmm_retval_ED98 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for gmm_retval_ED98 {
     const GC_NAME: &'static str = "gmm_retval_ED98";
     const GC_SIZE: u32 = 0x20;
@@ -28599,6 +31470,8 @@ pub struct gmm_retval_EDB0 {
     pub x0: i32,
     pub x4: i32,
 }
+impl gmm_retval_EDB0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for gmm_retval_EDB0 {
     const GC_NAME: &'static str = "gmm_retval_EDB0";
     const GC_SIZE: u32 = 0x8;
@@ -28626,6 +31499,8 @@ pub struct gmm_retval_EDBC {
     pub xB0: [i32; 25],
     pub x114: [i32; 25],
 }
+impl gmm_retval_EDBC { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for gmm_retval_EDBC {
     const GC_NAME: &'static str = "gmm_retval_EDBC";
     const GC_SIZE: u32 = 0x178;
@@ -28655,6 +31530,8 @@ pub struct gmm_x1868_1A8_t {
     pub x5: u8,
     pub x6: u8,
 }
+impl gmm_x1868_1A8_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for gmm_x1868_1A8_t {
     const GC_NAME: &'static str = "gmm_x1868_1A8_t";
     const GC_SIZE: u32 = 0x8;
@@ -28718,6 +31595,8 @@ pub struct GmSaveData {
     pub padding_trophy_flags: [u8; 14],
     pub x1F2C: [FighterData; 25],
 }
+impl GmSaveData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GmSaveData {
     const GC_NAME: &'static str = "GmSaveData";
     const GC_SIZE: u32 = 0x1790;
@@ -28778,6 +31657,8 @@ pub struct GmCardData {
     pub save_data: GmSaveData,
     pub nametag_banks: [NameTagDataBank; 7],
 }
+impl GmCardData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GmCardData {
     const GC_NAME: &'static str = "GmCardData";
     const GC_SIZE: u32 = 0xF1C8;
@@ -28799,6 +31680,8 @@ pub struct gmm_x0_528_t {
     pub nametag: u8,
     pub x5: u8,
 }
+impl gmm_x0_528_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for gmm_x0_528_t {
     const GC_NAME: &'static str = "gmm_x0_528_t";
     const GC_SIZE: u32 = 0x6;
@@ -28823,6 +31706,8 @@ pub struct gmm_x0_584_t {
     pub unk_586: u8,
     pub unk_587: i8,
 }
+impl gmm_x0_584_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for gmm_x0_584_t {
     const GC_NAME: &'static str = "gmm_x0_584_t";
     const GC_SIZE: u32 = 0x4;
@@ -28900,6 +31785,8 @@ impl EventData {
     #[inline] #[allow(unused_unsafe)] pub fn xB_7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_b, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_xB_7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_b, 0, 1, (v as u64) & 0x1) } }
 }
+impl EventData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for EventData {
     const GC_NAME: &'static str = "EventData";
     const GC_SIZE: u32 = 0x58;
@@ -28956,6 +31843,8 @@ pub struct gmm_x0_vsdata {
     pub unk_528: gmm_x0_528_t,
     pub unk_530: EventData,
 }
+impl gmm_x0_vsdata { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for gmm_x0_vsdata {
     const GC_NAME: &'static str = "gmm_x0_vsdata";
     const GC_SIZE: u32 = 0x6C;
@@ -28976,6 +31865,8 @@ pub struct gmm_x0_44_t {
     pub times: [u32; 293],
     pub pad_500: [i8; 28],
 }
+impl gmm_x0_44_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for gmm_x0_44_t {
     const GC_NAME: &'static str = "gmm_x0_44_t";
     const GC_SIZE: u32 = 0x4D8;
@@ -28995,6 +31886,8 @@ pub struct gmm_x0_vsmodes {
     pub nametags: [i8; 4],
     pub table: [VsModeData; 15],
 }
+impl gmm_x0_vsmodes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for gmm_x0_vsmodes {
     const GC_NAME: &'static str = "gmm_x0_vsmodes";
     const GC_SIZE: u32 = 0x12C8;
@@ -29020,6 +31913,8 @@ pub struct gmm_x0 {
     pub x1850: GameRules,
     pub thing: GmCardData,
 }
+impl gmm_x0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for gmm_x0 {
     const GC_NAME: &'static str = "gmm_x0";
     const GC_SIZE: u32 = 0x10A30;
@@ -29113,6 +32008,8 @@ impl Placeholder_8016AE38_flags_2 {
     #[inline] #[allow(unused_unsafe)] pub fn x2_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x2_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl Placeholder_8016AE38_flags_2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Placeholder_8016AE38_flags_2 {
     const GC_NAME: &'static str = "Placeholder_8016AE38_flags_2";
     const GC_SIZE: u32 = 0x3;
@@ -29176,6 +32073,8 @@ impl lbl_8046B6A0_FighterMatchInfoFlags {
     #[inline] #[allow(unused_unsafe)] pub fn x4_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x4_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl lbl_8046B6A0_FighterMatchInfoFlags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lbl_8046B6A0_FighterMatchInfoFlags {
     const GC_NAME: &'static str = "lbl_8046B6A0_FighterMatchInfoFlags";
     const GC_SIZE: u32 = 0x1;
@@ -29210,6 +32109,8 @@ pub struct VsSceneFighter {
     pub xB: u8,
     pub xC: u16,
 }
+impl VsSceneFighter { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for VsSceneFighter {
     const GC_NAME: &'static str = "VsSceneFighter";
     const GC_SIZE: u32 = 0xE;
@@ -29247,6 +32148,8 @@ pub union VsSceneFighter_anon_483 {
     pub anon_0: VsSceneFighter_anon_483_anon_484,
     pub flags: lbl_8046B6A0_FighterMatchInfoFlags,
 }
+impl VsSceneFighter_anon_483 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for VsSceneFighter_anon_483 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/gm/types.h:483:5)";
     const GC_SIZE: u32 = 0x1;
@@ -29298,6 +32201,8 @@ impl VsSceneFighter_anon_483_anon_484 {
     #[inline] #[allow(unused_unsafe)] pub fn x4_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x4_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl VsSceneFighter_anon_483_anon_484 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for VsSceneFighter_anon_483_anon_484 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/gm/types.h:484:9)";
     const GC_SIZE: u32 = 0x1;
@@ -29325,6 +32230,8 @@ pub struct datetime {
     pub minute: u8,
     pub second: u8,
 }
+impl datetime { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for datetime {
     const GC_NAME: &'static str = "datetime";
     const GC_SIZE: u32 = 0x8;
@@ -29348,6 +32255,8 @@ pub struct gm_8017DB6C_arg0_t {
     pub x1: u8,
     pub _1: [u8; 10],
 }
+impl gm_8017DB6C_arg0_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for gm_8017DB6C_arg0_t {
     const GC_NAME: &'static str = "gm_8017DB6C_arg0_t";
     const GC_SIZE: u32 = 0xC;
@@ -29371,6 +32280,8 @@ pub struct gmMainLib_8046B0F0_t {
     pub x10: i32,
     pub x14: i32,
 }
+impl gmMainLib_8046B0F0_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for gmMainLib_8046B0F0_t {
     const GC_NAME: &'static str = "gmMainLib_8046B0F0_t";
     const GC_SIZE: u32 = 0x18;
@@ -29393,6 +32304,8 @@ pub struct gm_803DF94C_t {
     pub x0: Option<unsafe extern "C" fn(*mut HSD_GObj)>,
     pub x4: Option<unsafe extern "C" fn(i32)>,
 }
+impl gm_803DF94C_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for gm_803DF94C_t {
     const GC_NAME: &'static str = "gm_803DF94C_t";
     const GC_SIZE: u32 = 0x8;
@@ -29414,6 +32327,8 @@ pub struct MatchTeamData {
     pub is_small_loser: u8,
     pub active: u8,
 }
+impl MatchTeamData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MatchTeamData {
     const GC_NAME: &'static str = "MatchTeamData";
     const GC_SIZE: u32 = 0xC;
@@ -29485,6 +32400,8 @@ pub struct MatchPlayerData {
     pub xA0: i32,
     pub xA4: u32,
 }
+impl MatchPlayerData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MatchPlayerData {
     const GC_NAME: &'static str = "MatchPlayerData";
     const GC_SIZE: u32 = 0xA8;
@@ -29556,6 +32473,8 @@ pub union MatchPlayerData_anon_543 {
     pub anon_0: MatchPlayerData_anon_543_anon_544,
     pub x3: u8,
 }
+impl MatchPlayerData_anon_543 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MatchPlayerData_anon_543 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/gm/types.h:543:5)";
     const GC_SIZE: u32 = 0x1;
@@ -29587,6 +32506,8 @@ impl MatchPlayerData_anon_543_anon_544 {
     #[inline] #[allow(unused_unsafe)] pub fn x3_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x3_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl MatchPlayerData_anon_543_anon_544 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MatchPlayerData_anon_543_anon_544 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/gm/types.h:544:9)";
     const GC_SIZE: u32 = 0x1;
@@ -29605,6 +32526,8 @@ pub struct UnkResultPlayerData {
     pub x0: [u8; 257],
     pub x104: [i32; 257],
 }
+impl UnkResultPlayerData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for UnkResultPlayerData {
     const GC_NAME: &'static str = "UnkResultPlayerData";
     const GC_SIZE: u32 = 0x508;
@@ -29637,6 +32560,8 @@ pub struct MatchEnd {
     pub _x448: [u8; 4],
     pub x44C: [UnkResultPlayerData; 6],
 }
+impl MatchEnd { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MatchEnd {
     const GC_NAME: &'static str = "MatchEnd";
     const GC_SIZE: u32 = 0x227C;
@@ -29670,6 +32595,8 @@ pub struct MatchExitInfo {
     pub x8: i32,
     pub match_end: MatchEnd,
 }
+impl MatchExitInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MatchExitInfo {
     const GC_NAME: &'static str = "MatchExitInfo";
     const GC_SIZE: u32 = 0x2288;
@@ -29700,6 +32627,8 @@ impl ResultsMatchInfo {
     #[inline] #[allow(unused_unsafe)] pub fn x0_1(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 6, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x0_1(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 6, 1, (v as u64) & 0x1) } }
 }
+impl ResultsMatchInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ResultsMatchInfo {
     const GC_NAME: &'static str = "ResultsMatchInfo";
     const GC_SIZE: u32 = 0x2284;
@@ -29726,6 +32655,8 @@ pub struct gmPlayerData {
     pub x6: u8,
     pub mode: u8,
 }
+impl gmPlayerData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for gmPlayerData {
     const GC_NAME: &'static str = "gmPlayerData";
     const GC_SIZE: u32 = 0x8;
@@ -29754,6 +32685,8 @@ pub struct Unk1PData_x24 {
     pub attack_ratio: f32,
     pub defense_ratio: f32,
 }
+impl Unk1PData_x24 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Unk1PData_x24 {
     const GC_NAME: &'static str = "Unk1PData_x24";
     const GC_SIZE: u32 = 0xC;
@@ -29787,6 +32720,8 @@ pub struct Unk1PData_xC {
     pub x20: u32,
     pub x24: [Unk1PData_x24; 3],
 }
+impl Unk1PData_xC { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Unk1PData_xC {
     const GC_NAME: &'static str = "Unk1PData_xC";
     const GC_SIZE: u32 = 0x3C;
@@ -29831,6 +32766,8 @@ pub struct Unk1PData {
     pub x6C: Option<unsafe extern "C" fn(u8, u8) -> f32>,
     pub x70: Option<unsafe extern "C" fn(u8, u8) -> f32>,
 }
+impl Unk1PData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Unk1PData {
     const GC_NAME: &'static str = "Unk1PData";
     const GC_SIZE: u32 = 0x74;
@@ -29871,6 +32808,8 @@ pub struct UnkAdventureData {
     pub x7C: u8,
     pub pad_x7D: [i8; 3],
 }
+impl UnkAdventureData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for UnkAdventureData {
     const GC_NAME: &'static str = "UnkAdventureData";
     const GC_SIZE: u32 = 0x80;
@@ -29901,6 +32840,8 @@ pub struct UnkAllstarData {
     pub x96: [u8; 6],
     pub x9C: u32,
 }
+impl UnkAllstarData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for UnkAllstarData {
     const GC_NAME: &'static str = "UnkAllstarData";
     const GC_SIZE: u32 = 0xA0;
@@ -29953,6 +32894,8 @@ pub struct TmData {
     pub x534: [*mut HSD_Text; 3],
     pub pad_x540: [u8; 52],
 }
+impl TmData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TmData {
     const GC_NAME: &'static str = "TmData";
     const GC_SIZE: u32 = 0x574;
@@ -30014,6 +32957,8 @@ pub struct TmUnkMenuData {
     pub xF: u8,
     pub pad_X10: [u8; 2],
 }
+impl TmUnkMenuData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TmUnkMenuData {
     const GC_NAME: &'static str = "TmUnkMenuData";
     const GC_SIZE: u32 = 0x12;
@@ -30051,6 +32996,8 @@ pub struct UnkSelections {
     pub x6: u16,
     pub pad_x4: [u8; 2],
 }
+impl UnkSelections { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for UnkSelections {
     const GC_NAME: &'static str = "UnkSelections";
     const GC_SIZE: u32 = 0xA;
@@ -30094,6 +33041,8 @@ pub struct NameData {
     pub rumble_toggle: i32,
     pub x198: *mut c_void,
 }
+impl NameData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for NameData {
     const GC_NAME: &'static str = "NameData";
     const GC_SIZE: u32 = 0x4C;
@@ -30132,6 +33081,8 @@ pub struct CameraVsData {
     /// anonymous C member
     pub anon_4: CameraVsData_anon_819,
 }
+impl CameraVsData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CameraVsData {
     const GC_NAME: &'static str = "CameraVsData";
     const GC_SIZE: u32 = 0x10;
@@ -30155,6 +33106,8 @@ pub union CameraVsData_anon_819 {
     pub anon_0: CameraVsData_anon_819_anon_820,
     pub text: [*mut HSD_Text; 3],
 }
+impl CameraVsData_anon_819 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CameraVsData_anon_819 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/gm/types.h:819:5)";
     const GC_SIZE: u32 = 0xC;
@@ -30177,6 +33130,8 @@ pub struct CameraVsData_anon_819_anon_820 {
     pub slot_b: *mut HSD_Text,
     pub bottom_text: *mut HSD_Text,
 }
+impl CameraVsData_anon_819_anon_820 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CameraVsData_anon_819_anon_820 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/gm/types.h:820:9)";
     const GC_SIZE: u32 = 0xC;
@@ -30198,6 +33153,8 @@ pub struct TmVsData {
     pub char_id: [u32; 4],
     pub color: [u32; 4],
 }
+impl TmVsData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TmVsData {
     const GC_NAME: &'static str = "TmVsData";
     const GC_SIZE: u32 = 0x34;
@@ -30218,6 +33175,8 @@ pub struct gm_DbPauseInputHandlers {
     pub check_pause: Predicate,
     pub check_framestep: Predicate,
 }
+impl gm_DbPauseInputHandlers { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for gm_DbPauseInputHandlers {
     const GC_NAME: &'static str = "gm_DbPauseInputHandlers";
     const GC_SIZE: u32 = 0x8;
@@ -30253,6 +33212,8 @@ impl gm_801677C0_s {
     #[inline] #[allow(unused_unsafe)] pub fn unk_38_1(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_28, 6, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk_38_1(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_28, 6, 1, (v as u64) & 0x1) } }
 }
+impl gm_801677C0_s { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for gm_801677C0_s {
     const GC_NAME: &'static str = "gm_801677C0_s";
     const GC_SIZE: u32 = 0x30;
@@ -30282,6 +33243,8 @@ pub struct gm_80479D58_t {
     pub unk_C: i32,
     pub unk_10: gm_801677C0_s,
 }
+impl gm_80479D58_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for gm_80479D58_t {
     const GC_NAME: &'static str = "gm_80479D58_t";
     const GC_SIZE: u32 = 0x40;
@@ -30332,6 +33295,8 @@ impl ResultsPlayerData {
     #[inline] #[allow(unused_unsafe)] pub fn x0_567(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 3) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x0_567(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 3, (v as u64) & 0x7) } }
 }
+impl ResultsPlayerData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ResultsPlayerData {
     const GC_NAME: &'static str = "ResultsPlayerData";
     const GC_SIZE: u32 = 0xD8;
@@ -30407,6 +33372,8 @@ impl ResultsData {
     #[inline] #[allow(unused_unsafe)] pub fn x0_7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x0_7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl ResultsData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ResultsData {
     const GC_NAME: &'static str = "ResultsData";
     const GC_SIZE: u32 = 0x5A8;
@@ -30459,6 +33426,8 @@ pub struct gm_803DE650_t {
     pub xE: u8,
     pub xF: u8,
 }
+impl gm_803DE650_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for gm_803DE650_t {
     const GC_NAME: &'static str = "gm_803DE650_t";
     const GC_SIZE: u32 = 0x10;
@@ -30492,6 +33461,8 @@ pub struct ChallengerData {
     pub prev_mode: u8,
     pub x8: u16,
 }
+impl ChallengerData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ChallengerData {
     const GC_NAME: &'static str = "ChallengerData";
     const GC_SIZE: u32 = 0xA;
@@ -30516,6 +33487,8 @@ pub struct VsApproachData {
     pub cpu_ckind: u8,
     pub human_slot: u8,
 }
+impl VsApproachData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for VsApproachData {
     const GC_NAME: &'static str = "VsApproachData";
     const GC_SIZE: u32 = 0x2;
@@ -30536,6 +33509,8 @@ pub struct MenuEnterData {
     pub load_assets: u8,
     pub x3: i8,
 }
+impl MenuEnterData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MenuEnterData {
     const GC_NAME: &'static str = "MenuEnterData";
     const GC_SIZE: u32 = 0x4;
@@ -30556,6 +33531,8 @@ pub struct MenuExitData {
     pub pending_mode: i8,
     pub _1: [u8; 3],
 }
+impl MenuExitData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MenuExitData {
     const GC_NAME: &'static str = "MenuExitData";
     const GC_SIZE: u32 = 0x4;
@@ -30581,6 +33558,8 @@ pub struct gm_803DDEC8Struct {
     pub pad09: [u8; 3],
     pub xC: *mut gmClassicMatchup,
 }
+impl gm_803DDEC8Struct { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for gm_803DDEC8Struct {
     const GC_NAME: &'static str = "gm_803DDEC8Struct";
     const GC_SIZE: u32 = 0x10;
@@ -30618,6 +33597,8 @@ pub struct CssSubStruct {
     pub text: *mut HSD_Text,
     pub pad200: [u8; 4],
 }
+impl CssSubStruct { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CssSubStruct {
     const GC_NAME: &'static str = "CssSubStruct";
     const GC_SIZE: u32 = 0x204;
@@ -30651,6 +33632,8 @@ pub struct TrainingModeState {
     pub players: [PlayerInitData; 4],
     pub result_cache: [i32; 4],
 }
+impl TrainingModeState { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TrainingModeState {
     const GC_NAME: &'static str = "TrainingModeState";
     const GC_SIZE: u32 = 0x114;
@@ -30679,6 +33662,8 @@ pub struct gm_8049E548_t {
     pub unk_E: i8,
     pub pad_F: [i8; 1],
 }
+impl gm_8049E548_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for gm_8049E548_t {
     const GC_NAME: &'static str = "gm_8049E548_t";
     const GC_SIZE: u32 = 0x10;
@@ -30705,6 +33690,8 @@ pub struct TmBoxArrays {
     pub box3: *mut c_void,
     pub box4: *mut c_void,
 }
+impl TmBoxArrays { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TmBoxArrays {
     const GC_NAME: &'static str = "TmBoxArrays";
     const GC_SIZE: u32 = 0xC;
@@ -30738,6 +33725,8 @@ pub struct Lbl804799B8_t {
     pub xF: u8,
     pub pad2: [u8; 16],
 }
+impl Lbl804799B8_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Lbl804799B8_t {
     const GC_NAME: &'static str = "Lbl804799B8_t";
     const GC_SIZE: u32 = 0x20;
@@ -30792,6 +33781,8 @@ pub struct Lbl804799D8_t {
     pub x70: Vec,
     pub _pad2: [u8; 4],
 }
+impl Lbl804799D8_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Lbl804799D8_t {
     const GC_NAME: &'static str = "Lbl804799D8_t";
     const GC_SIZE: u32 = 0x80;
@@ -30836,6 +33827,8 @@ pub struct Lbl804799D8_t_x2A {
     pub done: u8,
     pub r#loop: u8,
 }
+impl Lbl804799D8_t_x2A { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Lbl804799D8_t_x2A {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gm/types.h:1059:5)";
     const GC_SIZE: u32 = 0x6;
@@ -30869,6 +33862,8 @@ pub struct TmAnimTimers {
     pub x38: [u8; 4],
     pub pad_x3C: [u8; 4],
 }
+impl TmAnimTimers { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TmAnimTimers {
     const GC_NAME: &'static str = "TmAnimTimers";
     const GC_SIZE: u32 = 0x40;
@@ -30902,6 +33897,8 @@ pub struct TmAnimTimers_x1D {
     pub x1: u8,
     pub x2: u8,
 }
+impl TmAnimTimers_x1D { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TmAnimTimers_x1D {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gm/types.h:1090:5)";
     const GC_SIZE: u32 = 0x6;
@@ -30925,6 +33922,8 @@ pub struct lbl_803D9F0C_t {
     pub x4: i32,
     pub x8: i32,
 }
+impl lbl_803D9F0C_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lbl_803D9F0C_t {
     const GC_NAME: &'static str = "lbl_803D9F0C_t";
     const GC_SIZE: u32 = 0xC;
@@ -30944,6 +33943,8 @@ pub struct lbl_803DA2E0_t {
     pub x0: [u8; 32],
     pub x20: [f32; 41],
 }
+impl lbl_803DA2E0_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lbl_803DA2E0_t {
     const GC_NAME: &'static str = "lbl_803DA2E0_t";
     const GC_SIZE: u32 = 0xC4;
@@ -31021,6 +34022,8 @@ impl lbl_8046B488_t {
     #[inline] #[allow(unused_unsafe)] pub fn unk_10_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_10, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk_10_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_10, 0, 1, (v as u64) & 0x1) } }
 }
+impl lbl_8046B488_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lbl_8046B488_t {
     const GC_NAME: &'static str = "lbl_8046B488_t";
     const GC_SIZE: u32 = 0x1E0;
@@ -31078,6 +34081,8 @@ pub struct TmSettingTable {
     pub min: [[u8; 2]; 6],
     pub max: [[u8; 2]; 6],
 }
+impl TmSettingTable { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TmSettingTable {
     const GC_NAME: &'static str = "TmSettingTable";
     const GC_SIZE: u32 = 0x58;
@@ -31098,6 +34103,8 @@ pub struct TmAnimFrames {
     pub end: u16,
     pub r#loop: u16,
 }
+impl TmAnimFrames { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TmAnimFrames {
     const GC_NAME: &'static str = "TmAnimFrames";
     const GC_SIZE: u32 = 0x6;
@@ -31117,6 +34124,8 @@ pub union TmAnimFrameTable {
     pub states: [TmAnimFrames; 6],
     pub words: [i32; 9],
 }
+impl TmAnimFrameTable { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TmAnimFrameTable {
     const GC_NAME: &'static str = "TmAnimFrameTable";
     const GC_SIZE: u32 = 0x24;
@@ -31154,6 +34163,8 @@ pub struct BracketEntrySlot {
     pub x54: u16,
     pub pad56: [u8; 2],
 }
+impl BracketEntrySlot { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for BracketEntrySlot {
     const GC_NAME: &'static str = "BracketEntrySlot";
     const GC_SIZE: u32 = 0x2C;
@@ -31210,6 +34221,8 @@ pub struct BracketEntry {
     pub pad29: [u8; 3],
     pub slots: [BracketEntrySlot; 4],
 }
+impl BracketEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for BracketEntry {
     const GC_NAME: &'static str = "BracketEntry";
     const GC_SIZE: u32 = 0xDC;
@@ -31249,6 +34262,8 @@ pub struct lbl_803D9D20_t {
     pub x59: [u8; 25],
     pub x72: [u8; 26],
 }
+impl lbl_803D9D20_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lbl_803D9D20_t {
     const GC_NAME: &'static str = "lbl_803D9D20_t";
     const GC_SIZE: u32 = 0x8C;
@@ -31272,6 +34287,8 @@ pub struct lbl_803DA0D0_t {
     pub pad_0xDE: [u8; 2],
     pub bounce_y: [f32; 41],
 }
+impl lbl_803DA0D0_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lbl_803DA0D0_t {
     const GC_NAME: &'static str = "lbl_803DA0D0_t";
     const GC_SIZE: u32 = 0x184;
@@ -31295,6 +34312,8 @@ pub struct gm_8019ECAC_OnEnter_t {
     pub pad_x8: [u8; 12],
     pub x14: u32,
 }
+impl gm_8019ECAC_OnEnter_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for gm_8019ECAC_OnEnter_t {
     const GC_NAME: &'static str = "gm_8019ECAC_OnEnter_t";
     const GC_SIZE: u32 = 0x18;
@@ -31343,6 +34362,8 @@ pub struct VsSceneState {
     pub pad_8C: [i8; 448],
     pub x24C: MatchEnd,
 }
+impl VsSceneState { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for VsSceneState {
     const GC_NAME: &'static str = "VsSceneState";
     const GC_SIZE: u32 = 0x24C8;
@@ -31388,6 +34409,8 @@ pub struct VsSceneController {
     pub state: VsSceneState,
     pub start: StartMeleeRules,
 }
+impl VsSceneController { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for VsSceneController {
     const GC_NAME: &'static str = "VsSceneController";
     const GC_SIZE: u32 = 0x2528;
@@ -31406,6 +34429,8 @@ pub struct FighterPartsTable {
     pub part_to_joint: *mut u8,
     pub parts_num: u32,
 }
+impl FighterPartsTable { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for FighterPartsTable {
     const GC_NAME: &'static str = "FighterPartsTable";
     const GC_SIZE: u32 = 0xC;
@@ -31437,6 +34462,8 @@ pub struct FallCommon {
     pub x560_radians: f32,
     pub x564: f32,
 }
+impl FallCommon { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for FallCommon {
     const GC_NAME: &'static str = "FallCommon";
     const GC_SIZE: u32 = 0x48;
@@ -31949,6 +34976,8 @@ pub struct ftCommonData {
     pub x808: Vec,
     pub x814: i32,
 }
+impl ftCommonData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCommonData {
     const GC_NAME: &'static str = "ftCommonData";
     const GC_SIZE: u32 = 0x818;
@@ -32449,6 +35478,8 @@ pub struct _FtSFXArr {
     pub num: i32,
     pub sfx_ids: *mut i32,
 }
+impl _FtSFXArr { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _FtSFXArr {
     const GC_NAME: &'static str = "_FtSFXArr";
     const GC_SIZE: u32 = 0x8;
@@ -32479,6 +35510,8 @@ pub struct FtSFX {
     pub x30: i32,
     pub x34: i32,
 }
+impl FtSFX { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for FtSFX {
     const GC_NAME: &'static str = "FtSFX";
     const GC_SIZE: u32 = 0x38;
@@ -32517,6 +35550,8 @@ pub struct ftData_x44_t {
     pub ledge_snap_y: f32,
     pub ledge_snap_height: f32,
 }
+impl ftData_x44_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftData_x44_t {
     const GC_NAME: &'static str = "ftData_x44_t";
     const GC_SIZE: u32 = 0x1C;
@@ -32543,6 +35578,8 @@ pub struct ftData_x8_x8 {
     pub x8: u32,
     pub xC: *mut *mut u16,
 }
+impl ftData_x8_x8 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftData_x8_x8 {
     const GC_NAME: &'static str = "ftData_x8_x8";
     const GC_SIZE: u32 = 0x8;
@@ -32561,6 +35598,8 @@ pub struct FtPartsDesc {
     pub model_num: u32,
     pub vis_table: *mut [*mut c_void; 4],
 }
+impl FtPartsDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for FtPartsDesc {
     const GC_NAME: &'static str = "FtPartsDesc";
     const GC_SIZE: u32 = 0x8;
@@ -32579,6 +35618,8 @@ pub struct ftData_x20 {
     pub x0: *mut *mut HSD_Joint,
     pub x8: f32,
 }
+impl ftData_x20 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftData_x20 {
     const GC_NAME: &'static str = "ftData_x20";
     const GC_SIZE: u32 = 0x8;
@@ -32597,6 +35638,8 @@ pub struct ftData_x34 {
     pub x0: Fighter_Part,
     pub scale: f32,
 }
+impl ftData_x34 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftData_x34 {
     const GC_NAME: &'static str = "ftData_x34";
     const GC_SIZE: u32 = 0x8;
@@ -32616,6 +35659,8 @@ pub struct ftData_x38 {
     pub x4: Vec,
     pub x10: f32,
 }
+impl ftData_x38 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftData_x38 {
     const GC_NAME: &'static str = "ftData_x38";
     const GC_SIZE: u32 = 0x14;
@@ -32637,6 +35682,8 @@ pub struct ftData_x1C {
     pub x4: *mut u8,
     pub x8: *mut *mut HSD_AnimJoint,
 }
+impl ftData_x1C { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftData_x1C {
     const GC_NAME: &'static str = "ftData_x1C";
     const GC_SIZE: u32 = 0xC;
@@ -32657,6 +35704,8 @@ pub struct ftData_x30 {
     pub count: i32,
     pub inits: *mut ftHurtboxInit,
 }
+impl ftData_x30 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftData_x30 {
     const GC_NAME: &'static str = "ftData_x30";
     const GC_SIZE: u32 = 0x8;
@@ -32675,6 +35724,8 @@ pub struct _ThrowFlags {
     /// anonymous C member
     pub anon_0: _ThrowFlags_anon_730,
 }
+impl _ThrowFlags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _ThrowFlags {
     const GC_NAME: &'static str = "_ThrowFlags";
     const GC_SIZE: u32 = 0x4;
@@ -32701,6 +35752,8 @@ pub union _ThrowFlags_anon_730 {
     pub anon_0: _ThrowFlags_anon_730_anon_731,
     pub flags: u32,
 }
+impl _ThrowFlags_anon_730 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _ThrowFlags_anon_730 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/ft/types.h:730:5)";
     const GC_SIZE: u32 = 0x4;
@@ -32752,6 +35805,8 @@ impl _ThrowFlags_anon_730_anon_731 {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl _ThrowFlags_anon_730_anon_731 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _ThrowFlags_anon_730_anon_731 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/ft/types.h:731:9)";
     const GC_SIZE: u32 = 0x1;
@@ -32777,6 +35832,8 @@ pub struct ftCo_DatAttrs_xBC_t {
     pub x10: Vec,
     pub x1C: f32,
 }
+impl ftCo_DatAttrs_xBC_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCo_DatAttrs_xBC_t {
     const GC_NAME: &'static str = "ftCo_DatAttrs_xBC_t";
     const GC_SIZE: u32 = 0x20;
@@ -32877,6 +35934,8 @@ pub struct ftCo_DatAttrs {
     pub x17C: f32,
     pub weight_independent_throws_mask: u8,
 }
+impl ftCo_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCo_DatAttrs {
     const GC_NAME: &'static str = "ftCo_DatAttrs";
     const GC_SIZE: u32 = 0x184;
@@ -32979,6 +36038,8 @@ pub struct Fighter_WaitAnimData {
     pub x10_animCurrFlags: i32,
     pub x14: u32,
 }
+impl Fighter_WaitAnimData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_WaitAnimData {
     const GC_NAME: &'static str = "Fighter_WaitAnimData";
     const GC_SIZE: u32 = 0x18;
@@ -33023,6 +36084,8 @@ pub struct ftData {
     pub x58: *mut ftData_x58_t,
     pub x5C: *mut HSD_Joint,
 }
+impl ftData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftData {
     const GC_NAME: &'static str = "ftData";
     const GC_SIZE: u32 = 0x60;
@@ -33068,6 +36131,8 @@ pub struct ftData_x8 {
     pub x13: u8,
     pub x14: u8,
 }
+impl ftData_x8 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftData_x8 {
     const GC_NAME: &'static str = "ftData_x8";
     const GC_SIZE: u32 = 0x18;
@@ -33095,6 +36160,8 @@ pub struct FighterBone {
     /// anonymous C member
     pub anon_c: FighterBone_anon_935,
 }
+impl FighterBone { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for FighterBone {
     const GC_NAME: &'static str = "FighterBone";
     const GC_SIZE: u32 = 0x10;
@@ -33139,6 +36206,8 @@ pub union FighterBone_anon_910 {
     pub anon_0_0: FighterBone_anon_910_anon_929,
     pub flags8: u16,
 }
+impl FighterBone_anon_910 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for FighterBone_anon_910 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/ft/types.h:910:5)";
     const GC_SIZE: u32 = 0x2;
@@ -33225,6 +36294,8 @@ impl FighterBone_anon_910_anon_911 {
     #[inline] #[allow(unused_unsafe)] pub fn flags2_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_flags2_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl FighterBone_anon_910_anon_911 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for FighterBone_anon_910_anon_911 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/ft/types.h:911:9)";
     const GC_SIZE: u32 = 0x2;
@@ -33256,6 +36327,8 @@ pub struct FighterBone_anon_910_anon_929 {
     pub hi: u8,
     pub lo: u8,
 }
+impl FighterBone_anon_910_anon_929 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for FighterBone_anon_910_anon_929 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/ft/types.h:929:9)";
     const GC_SIZE: u32 = 0x2;
@@ -33275,6 +36348,8 @@ pub union FighterBone_anon_935 {
     pub anon_0: FighterBone_anon_935_anon_936,
     pub flagsC: u32,
 }
+impl FighterBone_anon_935 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for FighterBone_anon_935 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/ft/types.h:935:5)";
     const GC_SIZE: u32 = 0x4;
@@ -33300,6 +36375,8 @@ impl FighterBone_anon_935_anon_936 {
     #[inline] #[allow(unused_unsafe)] pub fn xD(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_1, 1, 7) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_xD(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_1, 1, 7, (v as u64) & 0x7F) } }
 }
+impl FighterBone_anon_935_anon_936 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for FighterBone_anon_935_anon_936 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/ft/types.h:936:9)";
     const GC_SIZE: u32 = 0x2;
@@ -33331,6 +36408,8 @@ pub struct _SmashAttr {
     pub x2137: i8,
     pub x2138_smashSinceHitbox: f32,
 }
+impl _SmashAttr { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _SmashAttr {
     const GC_NAME: &'static str = "_SmashAttr";
     const GC_SIZE: u32 = 0x28;
@@ -33364,6 +36443,8 @@ pub struct itPickup {
     pub gr_heavy_offset: Quaternion,
     pub air_light_offset: Quaternion,
 }
+impl itPickup { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itPickup {
     const GC_NAME: &'static str = "itPickup";
     const GC_SIZE: u32 = 0x30;
@@ -33387,6 +36468,8 @@ pub struct UnkCostumeStruct {
     pub pad_x10: u32,
     pub x14_archive: *mut HSD_Archive,
 }
+impl UnkCostumeStruct { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for UnkCostumeStruct {
     const GC_NAME: &'static str = "UnkCostumeStruct";
     const GC_SIZE: u32 = 0x18;
@@ -33409,6 +36492,8 @@ pub struct UnkCostumeList {
     pub costume_list: *mut UnkCostumeStruct,
     pub numCostumes: u8,
 }
+impl UnkCostumeList { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for UnkCostumeList {
     const GC_NAME: &'static str = "UnkCostumeList";
     const GC_SIZE: u32 = 0x8;
@@ -33434,6 +36519,8 @@ pub struct MotionState {
     pub coll_cb: HSD_GObjEvent,
     pub cam_cb: HSD_GObjEvent,
 }
+impl MotionState { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MotionState {
     const GC_NAME: &'static str = "MotionState";
     const GC_SIZE: u32 = 0x20;
@@ -33470,6 +36557,8 @@ pub union MotionState_anon_994 {
     /// anonymous C member
     pub anon_0: MotionState_anon_994_anon_997,
 }
+impl MotionState_anon_994 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MotionState_anon_994 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/ft/types.h:994:5)";
     const GC_SIZE: u32 = 0x4;
@@ -33507,6 +36596,8 @@ impl MotionState_anon_994_anon_997 {
     #[inline] #[allow(unused_unsafe)] pub fn move_id(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 8) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_move_id(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 8, (v as u64) & 0xFF) } }
 }
+impl MotionState_anon_994_anon_997 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MotionState_anon_994_anon_997 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/ft/types.h:997:9)";
     const GC_SIZE: u32 = 0x4;
@@ -33560,6 +36651,8 @@ impl MotionState_anon_994_anon_997_anon_999 {
     #[inline] #[allow(unused_unsafe)] pub fn x9_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x9_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl MotionState_anon_994_anon_997_anon_999 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MotionState_anon_994_anon_997_anon_999 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/ft/types.h:999:13)";
     const GC_SIZE: u32 = 0x1;
@@ -33584,6 +36677,8 @@ pub struct Fighter_CostumeStrings {
     pub joint_name: *mut i8,
     pub matanim_joint_name: *mut i8,
 }
+impl Fighter_CostumeStrings { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_CostumeStrings {
     const GC_NAME: &'static str = "Fighter_CostumeStrings";
     const GC_SIZE: u32 = 0xC;
@@ -33605,6 +36700,8 @@ pub struct Fighter_DemoStrings {
     pub ending_filename: *mut i8,
     pub vi_wait_filename: *mut i8,
 }
+impl Fighter_DemoStrings { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_DemoStrings {
     const GC_NAME: &'static str = "Fighter_DemoStrings";
     const GC_SIZE: u32 = 0x10;
@@ -33626,6 +36723,8 @@ pub union Struct2070 {
     pub anon_0: Struct2070_anon_1036,
     pub x2070_int: i32,
 }
+impl Struct2070 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Struct2070 {
     const GC_NAME: &'static str = "Struct2070";
     const GC_SIZE: u32 = 0x4;
@@ -33701,6 +36800,8 @@ impl Struct2070_anon_1036 {
     #[inline] #[allow(unused_unsafe)] pub fn count_specials(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_1, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_count_specials(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_1, 0, 1, (v as u64) & 0x1) } }
 }
+impl Struct2070_anon_1036 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Struct2070_anon_1036 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/ft/types.h:1036:19)";
     const GC_SIZE: u32 = 0x4;
@@ -33734,6 +36835,8 @@ pub struct Struct2074 {
     pub anon_10: Struct2074_anon_1061,
     pub x2088: u16,
 }
+impl Struct2074 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Struct2074 {
     const GC_NAME: &'static str = "Struct2074";
     const GC_SIZE: u32 = 0x18;
@@ -33771,6 +36874,8 @@ pub union Struct2074_anon_1061 {
     /// anonymous C member
     pub anon_0: Struct2074_anon_1061_anon_1063,
 }
+impl Struct2074_anon_1061 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Struct2074_anon_1061 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/ft/types.h:1061:19)";
     const GC_SIZE: u32 = 0x4;
@@ -33854,6 +36959,8 @@ impl Struct2074_anon_1061_anon_1063 {
     #[inline] #[allow(unused_unsafe)] pub fn x2085_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x2085_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl Struct2074_anon_1061_anon_1063 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Struct2074_anon_1061_anon_1063 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/ft/types.h:1063:9)";
     const GC_SIZE: u32 = 0x2;
@@ -33886,6 +36993,8 @@ pub struct ftDeviceUnk3 {
     pub r#type: u32,
     pub active_cb: ftDevice_Callback0,
 }
+impl ftDeviceUnk3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftDeviceUnk3 {
     const GC_NAME: &'static str = "ftDeviceUnk3";
     const GC_SIZE: u32 = 0xC;
@@ -33905,6 +37014,8 @@ pub struct ftDeviceUnk4 {
     pub x0: i32,
     pub x4: *mut c_void,
 }
+impl ftDeviceUnk4 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftDeviceUnk4 {
     const GC_NAME: &'static str = "ftDeviceUnk4";
     const GC_SIZE: u32 = 0x8;
@@ -33924,6 +37035,8 @@ pub struct ftDeviceUnk5 {
     pub x4: ftCommon_BuryType,
     pub cb: Option<unsafe extern "C" fn(*mut c_void, *mut Fighter_GObj) -> i32>,
 }
+impl ftDeviceUnk5 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftDeviceUnk5 {
     const GC_NAME: &'static str = "ftDeviceUnk5";
     const GC_SIZE: u32 = 0xC;
@@ -33950,6 +37063,8 @@ pub struct Fighter_x1A88_xFC_t {
     pub cur_pos: Vec,
     pub facing_dir: f32,
 }
+impl Fighter_x1A88_xFC_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_x1A88_xFC_t {
     const GC_NAME: &'static str = "Fighter_x1A88_xFC_t";
     const GC_SIZE: u32 = 0x1C;
@@ -34126,6 +37241,8 @@ impl CpuFighter {
     #[inline] #[allow(unused_unsafe)] pub fn xFB_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_f8, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_xFB_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_f8, 0, 1, (v as u64) & 0x1) } }
 }
+impl CpuFighter { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CpuFighter {
     const GC_NAME: &'static str = "CpuFighter";
     const GC_SIZE: u32 = 0x57C;
@@ -34231,6 +37348,8 @@ impl GcLayout for CpuFighter {
 pub struct Fighter_x59C_t {
     pub x0: [u8; 32768],
 }
+impl Fighter_x59C_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_x59C_t {
     const GC_NAME: &'static str = "Fighter_x59C_t";
     const GC_SIZE: u32 = 0x8000;
@@ -34277,6 +37396,8 @@ impl UnkPlBonusBits {
     #[inline] #[allow(unused_unsafe)] pub fn x2_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_2, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x2_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_2, 0, 1, (v as u64) & 0x1) } }
 }
+impl UnkPlBonusBits { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for UnkPlBonusBits {
     const GC_NAME: &'static str = "UnkPlBonusBits";
     const GC_SIZE: u32 = 0x4;
@@ -34348,6 +37469,8 @@ impl ft_800898B4_t {
     #[inline] #[allow(unused_unsafe)] pub fn x11_b4(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_10, 3, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x11_b4(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_10, 3, 1, (v as u64) & 0x1) } }
 }
+impl ft_800898B4_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ft_800898B4_t {
     const GC_NAME: &'static str = "ft_800898B4_t";
     const GC_SIZE: u32 = 0x14;
@@ -34383,6 +37506,8 @@ pub struct Fighter_x1614_t {
     pub x14: Vec,
     pub x20: Vec,
 }
+impl Fighter_x1614_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_x1614_t {
     const GC_NAME: &'static str = "Fighter_x1614_t";
     const GC_SIZE: u32 = 0x2C;
@@ -34408,6 +37533,8 @@ pub struct Fighter_x8B0_t {
     pub x10: i8,
     pub x11: i8,
 }
+impl Fighter_x8B0_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_x8B0_t {
     const GC_NAME: &'static str = "Fighter_x8B0_t";
     const GC_SIZE: u32 = 0x14;
@@ -34430,6 +37557,8 @@ pub struct Fighter_x20B0_t {
     pub x0: Vec,
     pub xC: Vec,
 }
+impl Fighter_x20B0_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_x20B0_t {
     const GC_NAME: &'static str = "Fighter_x20B0_t";
     const GC_SIZE: u32 = 0x18;
@@ -34455,6 +37584,8 @@ pub struct Fighter_x2D0_t {
     pub x2C: enum_t,
     pub x30: enum_t,
 }
+impl Fighter_x2D0_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_x2D0_t {
     const GC_NAME: &'static str = "Fighter_x2D0_t";
     const GC_SIZE: u32 = 0x34;
@@ -34484,6 +37615,8 @@ pub struct Fighter_x1670_t {
     pub x18: Vec,
     pub x24: i32,
 }
+impl Fighter_x1670_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_x1670_t {
     const GC_NAME: &'static str = "Fighter_x1670_t";
     const GC_SIZE: u32 = 0x28;
@@ -34506,6 +37639,8 @@ pub struct FtInputTimers {
     pub lstick: U8Vec2,
     pub trigger: u8,
 }
+impl FtInputTimers { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for FtInputTimers {
     const GC_NAME: &'static str = "FtInputTimers";
     const GC_SIZE: u32 = 0x3;
@@ -35238,6 +38373,8 @@ impl Fighter {
     #[inline] #[allow(unused_unsafe)] pub fn x222A_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_221c, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x222A_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_221c, 0, 1, (v as u64) & 0x1) } }
 }
+impl Fighter { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter {
     const GC_NAME: &'static str = "Fighter";
     const GC_SIZE: u32 = 0x23EC;
@@ -35712,6 +38849,8 @@ pub union Fighter_anon_1364 {
     pub anon_0_0: Fighter_anon_1364_anon_1379,
     pub x594_s32: i32,
 }
+impl Fighter_anon_1364 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_anon_1364 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/ft/types.h:1364:19)";
     const GC_SIZE: u32 = 0x4;
@@ -35770,6 +38909,8 @@ impl Fighter_anon_1364_anon_1365 {
     #[inline] #[allow(unused_unsafe)] pub fn x594_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x594_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl Fighter_anon_1364_anon_1365 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_anon_1364_anon_1365 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/ft/types.h:1365:9)";
     const GC_SIZE: u32 = 0x4;
@@ -35802,6 +38943,8 @@ impl Fighter_anon_1364_anon_1365_x596_bits {
     #[inline] #[allow(unused_unsafe)] pub fn x7(&self) -> u16 { unsafe { melee_core_bits_get(&self.bf_0, 6, 3) as u16 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x7(&mut self, v: u16) { unsafe { melee_core_bits_set(&mut self.bf_0, 6, 3, (v as u64) & 0x7) } }
 }
+impl Fighter_anon_1364_anon_1365_x596_bits { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_anon_1364_anon_1365_x596_bits {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/types.h:1374:26)";
     const GC_SIZE: u32 = 0x2;
@@ -35833,6 +38976,8 @@ impl Fighter_anon_1364_anon_1379 {
     #[inline] #[allow(unused_unsafe)] pub fn x597_bits(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 6) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x597_bits(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 6, (v as u64) & 0x3F) } }
 }
+impl Fighter_anon_1364_anon_1379 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_anon_1364_anon_1379 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/ft/types.h:1379:9)";
     const GC_SIZE: u32 = 0x4;
@@ -35852,6 +38997,8 @@ pub struct Fighter_x5F4_arr {
     pub prev: i8,
     pub idx: i8,
 }
+impl Fighter_x5F4_arr { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_x5F4_arr {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/types.h:1396:19)";
     const GC_SIZE: u32 = 0x2;
@@ -35874,6 +39021,8 @@ pub struct Fighter_input {
     pub pressed_buttons: HSD_Pad,
     pub released_buttons: HSD_Pad,
 }
+impl Fighter_input { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_input {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/types.h:1408:19)";
     const GC_SIZE: u32 = 0x50;
@@ -35961,6 +39110,8 @@ pub struct dmg {
     pub x1958: f32,
     pub x195c_hitlag_frames: f32,
 }
+impl dmg { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for dmg {
     const GC_NAME: &'static str = "dmg";
     const GC_SIZE: u32 = 0x134;
@@ -36046,6 +39197,8 @@ pub struct Fighter_ReflectAttr {
     pub x1A38_speedMul: f32,
     pub x1A3C_damageOver: i32,
 }
+impl Fighter_ReflectAttr { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_ReflectAttr {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/types.h:1575:19)";
     const GC_SIZE: u32 = 0x14;
@@ -36068,6 +39221,8 @@ pub struct Fighter_AbsorbAttr {
     pub x1A44_damageTaken: i32,
     pub x1A48_hitsTaken: i32,
 }
+impl Fighter_AbsorbAttr { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_AbsorbAttr {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ft/types.h:1583:19)";
     const GC_SIZE: u32 = 0xC;
@@ -36088,6 +39243,8 @@ pub union Fighter_anon_1705 {
     /// anonymous C member
     pub anon_0: Fighter_anon_1705_anon_1707,
 }
+impl Fighter_anon_1705 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_anon_1705 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/ft/types.h:1705:19)";
     const GC_SIZE: u32 = 0x4;
@@ -36139,6 +39296,8 @@ impl Fighter_anon_1705_anon_1707 {
     #[inline] #[allow(unused_unsafe)] pub fn throw_flags_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_throw_flags_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl Fighter_anon_1705_anon_1707 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_anon_1705_anon_1707 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/ft/types.h:1707:9)";
     const GC_SIZE: u32 = 0x1;
@@ -36188,6 +39347,8 @@ impl Fighter_anon_1746 {
     #[inline] #[allow(unused_unsafe)] pub fn x221B_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x221B_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl Fighter_anon_1746 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_anon_1746 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/ft/types.h:1746:19)";
     const GC_SIZE: u32 = 0x1;
@@ -36239,6 +39400,8 @@ pub union Fighter_FighterVars {
     pub gl: ftZakoBoy_FighterVars,
     pub zd: ftZelda_FighterVars,
 }
+impl Fighter_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_FighterVars {
     const GC_NAME: &'static str = "Fighter_FighterVars";
     const GC_SIZE: u32 = 0xF8;
@@ -36311,6 +39474,8 @@ pub union Fighter_MotionVars {
     pub ys: ftYoshi_MotionVars,
     pub zd: ftZelda_MotionVars,
 }
+impl Fighter_MotionVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Fighter_MotionVars {
     const GC_NAME: &'static str = "Fighter_MotionVars";
     const GC_SIZE: u32 = 0xAC;
@@ -36363,6 +39528,8 @@ impl gmScriptEventDefault {
     #[inline] #[allow(unused_unsafe)] pub fn value1(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 26) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_value1(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 26, (v as u64) & 0x3FFFFFF) } }
 }
+impl gmScriptEventDefault { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for gmScriptEventDefault {
     const GC_NAME: &'static str = "gmScriptEventDefault";
     const GC_SIZE: u32 = 0x4;
@@ -36380,6 +39547,8 @@ pub struct ftData_UnkCountStruct {
     pub data: *mut c_void,
     pub count: i32,
 }
+impl ftData_UnkCountStruct { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftData_UnkCountStruct {
     const GC_NAME: &'static str = "ftData_UnkCountStruct";
     const GC_SIZE: u32 = 0x8;
@@ -36398,6 +39567,8 @@ pub struct UnkFloat6_Camera {
     pub x0: Vec,
     pub xC: Vec,
 }
+impl UnkFloat6_Camera { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for UnkFloat6_Camera {
     const GC_NAME: &'static str = "UnkFloat6_Camera";
     const GC_SIZE: u32 = 0x18;
@@ -36416,6 +39587,8 @@ pub struct ftData_UnkModelStruct {
     pub model_events: [Fighter_ModelEvent; 127],
     pub getter: [Option<unsafe extern "C" fn(*mut HSD_GObj) -> *mut HSD_JObj>; 127],
 }
+impl ftData_UnkModelStruct { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftData_UnkModelStruct {
     const GC_NAME: &'static str = "ftData_UnkModelStruct";
     const GC_SIZE: u32 = 0x3F8;
@@ -36447,6 +39620,8 @@ impl ftData_80085FD4_ret {
     #[inline] #[allow(unused_unsafe)] pub fn x10_b1(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_10, 6, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x10_b1(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_10, 6, 1, (v as u64) & 0x1) } }
 }
+impl ftData_80085FD4_ret { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftData_80085FD4_ret {
     const GC_NAME: &'static str = "ftData_80085FD4_ret";
     const GC_SIZE: u32 = 0x18;
@@ -36468,6 +39643,8 @@ impl GcLayout for ftData_80085FD4_ret {
 pub struct ArticleDynamicBones {
     pub array: [BoneDynamicsDesc; 10],
 }
+impl ArticleDynamicBones { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ArticleDynamicBones {
     const GC_NAME: &'static str = "ArticleDynamicBones";
     const GC_SIZE: u32 = 0xF0;
@@ -36488,6 +39665,8 @@ pub struct ftDynamics {
     pub x8: *mut ftData_x38,
     pub x10: *mut *mut *mut FigaTree,
 }
+impl ftDynamics { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftDynamics {
     const GC_NAME: &'static str = "ftDynamics";
     const GC_SIZE: u32 = 0x14;
@@ -36510,6 +39689,8 @@ pub struct ftDynamics_anon_1979 {
     pub dynamicsNum: i32,
     pub ftDynamicBones: *mut ArticleDynamicBones,
 }
+impl ftDynamics_anon_1979 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftDynamics_anon_1979 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/ft/types.h:1979:5)";
     const GC_SIZE: u32 = 0x8;
@@ -36529,6 +39710,8 @@ pub struct KirbyHatStruct {
     pub desc: FtPartsDesc,
     pub hat_dynamics: [*mut ftDynamics; 5],
 }
+impl KirbyHatStruct { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for KirbyHatStruct {
     const GC_NAME: &'static str = "KirbyHatStruct";
     const GC_SIZE: u32 = 0x20;
@@ -36553,6 +39736,8 @@ pub struct Kirby_Unk {
     pub x18: *mut ftDynamics,
     pub x1C: *mut ftDynamics,
 }
+impl Kirby_Unk { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Kirby_Unk {
     const GC_NAME: &'static str = "Kirby_Unk";
     const GC_SIZE: u32 = 0x20;
@@ -36576,6 +39761,8 @@ pub struct ft_80459B88_t {
     pub x0: *mut Kirby_Unk,
     pub hats: [*mut KirbyHatStruct; 127],
 }
+impl ft_80459B88_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ft_80459B88_t {
     const GC_NAME: &'static str = "ft_80459B88_t";
     const GC_SIZE: u32 = 0x200;
@@ -36604,6 +39791,8 @@ pub struct IKState {
     pub angle_max: f32,
     pub angle_limit: f32,
 }
+impl IKState { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for IKState {
     const GC_NAME: &'static str = "IKState";
     const GC_SIZE: u32 = 0x58;
@@ -36640,6 +39829,8 @@ pub struct DmgLogEntry {
     pub x20: f32,
     pub size_of_xC: usize,
 }
+impl DmgLogEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for DmgLogEntry {
     const GC_NAME: &'static str = "DmgLogEntry";
     const GC_SIZE: u32 = 0x28;
@@ -36667,6 +39858,8 @@ pub union DmgLogEntry_anon_2030 {
     pub hit0: *mut HitCapsule,
     pub unk_anim0: *mut DynamicsDesc,
 }
+impl DmgLogEntry_anon_2030 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for DmgLogEntry_anon_2030 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/ft/types.h:2030:15)";
     const GC_SIZE: u32 = 0x4;
@@ -36685,6 +39878,8 @@ pub union DmgLogEntry_anon_2035 {
     pub hit1: *mut HitCapsule,
     pub hurt1: *mut FighterHurtCapsule,
 }
+impl DmgLogEntry_anon_2035 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for DmgLogEntry_anon_2035 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/ft/types.h:2035:15)";
     const GC_SIZE: u32 = 0x4;
@@ -36713,6 +39908,8 @@ pub struct ftData_x58_t {
     pub pad_12: [u8; 6],
     pub x18: f32,
 }
+impl ftData_x58_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftData_x58_t {
     const GC_NAME: &'static str = "ftData_x58_t";
     const GC_SIZE: u32 = 0x1C;
@@ -36758,6 +39955,8 @@ pub struct ftCo_803C6594_t {
     pub x4C: f32,
     pub next: *mut ftCo_803C6594_t,
 }
+impl ftCo_803C6594_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ftCo_803C6594_t {
     const GC_NAME: &'static str = "ftCo_803C6594_t";
     const GC_SIZE: u32 = 0x54;
@@ -36795,6 +39994,8 @@ pub struct StageBlastZone {
     pub top: f32,
     pub bottom: f32,
 }
+impl StageBlastZone { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for StageBlastZone {
     const GC_NAME: &'static str = "StageBlastZone";
     const GC_SIZE: u32 = 0x10;
@@ -36837,6 +40038,8 @@ pub struct StageCameraInfo {
     pub fixed_cam_vert_angle: f32,
     pub fixed_cam_horz_angle: f32,
 }
+impl StageCameraInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for StageCameraInfo {
     const GC_NAME: &'static str = "StageCameraInfo";
     const GC_SIZE: u32 = 0x74;
@@ -36933,6 +40136,8 @@ pub struct StageInfo {
     pub x740: i32,
     pub x744_pad: [u8; 4],
 }
+impl StageInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for StageInfo {
     const GC_NAME: &'static str = "StageInfo";
     const GC_SIZE: u32 = 0x748;
@@ -37032,6 +40237,8 @@ impl StageInfo_unk8C {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl StageInfo_unk8C { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for StageInfo_unk8C {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:66:5)";
     const GC_SIZE: u32 = 0x1;
@@ -37055,6 +40262,8 @@ pub struct GroundItemData {
     pub unk0: i32,
     pub unk4: *mut Article,
 }
+impl GroundItemData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GroundItemData {
     const GC_NAME: &'static str = "GroundItemData";
     const GC_SIZE: u32 = 0x8;
@@ -37077,6 +40286,8 @@ pub struct StageCallbacks {
     /// anonymous C member
     pub anon_10: StageCallbacks_anon_135,
 }
+impl StageCallbacks { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for StageCallbacks {
     const GC_NAME: &'static str = "StageCallbacks";
     const GC_SIZE: u32 = 0x14;
@@ -37107,6 +40318,8 @@ pub union StageCallbacks_anon_135 {
     /// anonymous C member
     pub anon_0: StageCallbacks_anon_135_anon_137,
 }
+impl StageCallbacks_anon_135 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for StageCallbacks_anon_135 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/gr/types.h:135:15)";
     const GC_SIZE: u32 = 0x4;
@@ -37158,6 +40371,8 @@ impl StageCallbacks_anon_135_anon_137 {
     #[inline] #[allow(unused_unsafe)] pub fn flags_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_flags_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl StageCallbacks_anon_135_anon_137 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for StageCallbacks_anon_135_anon_137 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/gr/types.h:137:9)";
     const GC_SIZE: u32 = 0x1;
@@ -37182,6 +40397,8 @@ pub struct GrJoint {
     pub y: i16,
     pub z: i16,
 }
+impl GrJoint { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GrJoint {
     const GC_NAME: &'static str = "GrJoint";
     const GC_SIZE: u32 = 0x6;
@@ -37212,6 +40429,8 @@ pub struct StageData {
     pub joints: *mut GrJoint,
     pub joint_count: usize,
 }
+impl StageData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for StageData {
     const GC_NAME: &'static str = "StageData";
     const GC_SIZE: u32 = 0x34;
@@ -37240,6 +40459,8 @@ pub struct StageIdPair {
     pub grkind: GrKind,
     pub stkind: StKind,
 }
+impl StageIdPair { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for StageIdPair {
     const GC_NAME: &'static str = "StageIdPair";
     const GC_SIZE: u32 = 0x8;
@@ -37264,6 +40485,8 @@ pub struct GroundVars_unk {
     pub xDC: i32,
     pub xE0: i32,
 }
+impl GroundVars_unk { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GroundVars_unk {
     const GC_NAME: &'static str = "GroundVars_unk";
     const GC_SIZE: u32 = 0x20;
@@ -37293,6 +40516,8 @@ pub struct GroundVars_izumi {
     pub xD8: i32,
     pub xDC: f32,
 }
+impl GroundVars_izumi { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GroundVars_izumi {
     const GC_NAME: &'static str = "GroundVars_izumi";
     const GC_SIZE: u32 = 0x1C;
@@ -37321,6 +40546,8 @@ pub struct GroundVars_izumi2 {
     pub xD8: i32,
     pub xDC: f32,
 }
+impl GroundVars_izumi2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GroundVars_izumi2 {
     const GC_NAME: &'static str = "GroundVars_izumi2";
     const GC_SIZE: u32 = 0x1C;
@@ -37351,6 +40578,8 @@ pub struct GroundVars_izumi3 {
     pub xD8: f32,
     pub xDC: f32,
 }
+impl GroundVars_izumi3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GroundVars_izumi3 {
     const GC_NAME: &'static str = "GroundVars_izumi3";
     const GC_SIZE: u32 = 0x1C;
@@ -37384,6 +40613,8 @@ pub struct GroundVars_flatzone {
     pub xD0: i32,
     pub xD4: i32,
 }
+impl GroundVars_flatzone { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GroundVars_flatzone {
     const GC_NAME: &'static str = "GroundVars_flatzone";
     const GC_SIZE: u32 = 0x14;
@@ -37415,6 +40646,8 @@ pub struct GroundVars_flatzone3 {
     pub xC9: u8,
     pub xCA: u8,
 }
+impl GroundVars_flatzone3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GroundVars_flatzone3 {
     const GC_NAME: &'static str = "GroundVars_flatzone3";
     const GC_SIZE: u32 = 0x7;
@@ -37443,6 +40676,8 @@ pub struct grDynamicAttr_UnkStruct {
     pub unk1C: i32,
     pub x0_fill: [u8; 4],
 }
+impl grDynamicAttr_UnkStruct { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grDynamicAttr_UnkStruct {
     const GC_NAME: &'static str = "grDynamicAttr_UnkStruct";
     const GC_SIZE: u32 = 0x24;
@@ -37469,6 +40704,8 @@ pub struct GroundVars_flatzone2 {
     pub xD0: i32,
     pub timer: i32,
 }
+impl GroundVars_flatzone2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GroundVars_flatzone2 {
     const GC_NAME: &'static str = "GroundVars_flatzone2";
     const GC_SIZE: u32 = 0x14;
@@ -37499,6 +40736,8 @@ pub struct grKongo_GroundVars {
     pub xE6: i16,
     pub xE8: f32,
 }
+impl grKongo_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grKongo_GroundVars {
     const GC_NAME: &'static str = "grKongo_GroundVars";
     const GC_SIZE: u32 = 0x28;
@@ -37525,6 +40764,8 @@ const _: () = assert!(core::mem::size_of::<grKongo_GroundVars>() == 56);
 pub union grKongo_GroundVars_u {
     pub taru: grKongo_GroundVars_u_taru,
 }
+impl grKongo_GroundVars_u { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grKongo_GroundVars_u {
     const GC_NAME: &'static str = "union (unnamed at src/melee/gr/types.h:266:17)";
     const GC_SIZE: u32 = 0x4;
@@ -37541,6 +40782,8 @@ const _: () = assert!(core::mem::size_of::<grKongo_GroundVars_u>() == 8);
 pub struct grKongo_GroundVars_u_taru {
     pub keep: *mut c_void,
 }
+impl grKongo_GroundVars_u_taru { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grKongo_GroundVars_u_taru {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:267:9)";
     const GC_SIZE: u32 = 0x4;
@@ -37567,6 +40810,8 @@ pub struct grKongo_GroundVars2 {
     pub xE4: f32,
     pub xE8: f32,
 }
+impl grKongo_GroundVars2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grKongo_GroundVars2 {
     const GC_NAME: &'static str = "grKongo_GroundVars2";
     const GC_SIZE: u32 = 0x28;
@@ -37604,6 +40849,8 @@ pub struct grKongo_GroundVars3 {
     pub xE4: f32,
     pub xE8: f32,
 }
+impl grKongo_GroundVars3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grKongo_GroundVars3 {
     const GC_NAME: &'static str = "grKongo_GroundVars3";
     const GC_SIZE: u32 = 0x28;
@@ -37636,6 +40883,8 @@ pub struct grKraid_GroundVars {
     pub xC: f32,
     pub x10: i32,
 }
+impl grKraid_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grKraid_GroundVars {
     const GC_NAME: &'static str = "grKraid_GroundVars";
     const GC_SIZE: u32 = 0x14;
@@ -37666,6 +40915,8 @@ pub struct grKraid_GroundVars2 {
     pub x10: *mut HSD_JObj,
     pub x14: *mut HSD_JObj,
 }
+impl grKraid_GroundVars2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grKraid_GroundVars2 {
     const GC_NAME: &'static str = "grKraid_GroundVars2";
     const GC_SIZE: u32 = 0x18;
@@ -37693,6 +40944,8 @@ pub struct grZakoGenerator_SpawnDesc {
     pub x2: u8,
     pub respawn: u8,
 }
+impl grZakoGenerator_SpawnDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grZakoGenerator_SpawnDesc {
     const GC_NAME: &'static str = "grZakoGenerator_SpawnDesc";
     const GC_SIZE: u32 = 0x4;
@@ -37712,6 +40965,8 @@ pub struct grZakoGenerator_Spawn {
     pub pos0: Vec,
     pub pos1: Vec,
 }
+impl grZakoGenerator_Spawn { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grZakoGenerator_Spawn {
     const GC_NAME: &'static str = "grZakoGenerator_Spawn";
     const GC_SIZE: u32 = 0x18;
@@ -37735,6 +40990,8 @@ pub struct grZakoGenerator_Config {
     pub r#gen: *mut HSD_Generator,
     pub x18: i32,
 }
+impl grZakoGenerator_Config { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grZakoGenerator_Config {
     const GC_NAME: &'static str = "grZakoGenerator_Config";
     const GC_SIZE: u32 = 0x1C;
@@ -37760,6 +41017,8 @@ pub struct grZakoGenerator_Entry {
     pub x4: *mut Item_GObj,
     pub x8: i32,
 }
+impl grZakoGenerator_Entry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grZakoGenerator_Entry {
     const GC_NAME: &'static str = "grZakoGenerator_Entry";
     const GC_SIZE: u32 = 0xC;
@@ -37779,6 +41038,8 @@ const _: () = assert!(core::mem::size_of::<grZakoGenerator_Entry>() == 24);
 pub struct grZakoGenerator_Data {
     pub entries: [grZakoGenerator_Entry; 81],
 }
+impl grZakoGenerator_Data { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grZakoGenerator_Data {
     const GC_NAME: &'static str = "grZakoGenerator_Data";
     const GC_SIZE: u32 = 0x3CC;
@@ -37825,6 +41086,8 @@ pub struct grCorneria_GroundVars {
     pub x128: *mut HSD_GObj,
     pub x12C: *mut HSD_JObj,
 }
+impl grCorneria_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCorneria_GroundVars {
     const GC_NAME: &'static str = "grCorneria_GroundVars";
     const GC_SIZE: u32 = 0x6C;
@@ -37871,6 +41134,8 @@ pub union grCorneria_GroundVars_xC4 {
     pub flags: grCorneria_GroundVars_xC4_flags,
     pub value: u8,
 }
+impl grCorneria_GroundVars_xC4 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCorneria_GroundVars_xC4 {
     const GC_NAME: &'static str = "union (unnamed at src/melee/gr/types.h:368:5)";
     const GC_SIZE: u32 = 0x1;
@@ -37899,6 +41164,8 @@ impl grCorneria_GroundVars_xC4_flags {
     #[inline] #[allow(unused_unsafe)] pub fn b2(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 5, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b2(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 5, 1, (v as u64) & 0x1) } }
 }
+impl grCorneria_GroundVars_xC4_flags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCorneria_GroundVars_xC4_flags {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:369:9)";
     const GC_SIZE: u32 = 0x1;
@@ -37917,6 +41184,8 @@ pub union grCorneria_GroundVars_xC6 {
     pub flags: grCorneria_GroundVars_xC6_flags,
     pub value: u8,
 }
+impl grCorneria_GroundVars_xC6 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCorneria_GroundVars_xC6 {
     const GC_NAME: &'static str = "union (unnamed at src/melee/gr/types.h:377:5)";
     const GC_SIZE: u32 = 0x1;
@@ -37939,6 +41208,8 @@ impl grCorneria_GroundVars_xC6_flags {
     #[inline] #[allow(unused_unsafe)] pub fn b0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 7, 1, (v as u64) & 0x1) } }
 }
+impl grCorneria_GroundVars_xC6_flags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCorneria_GroundVars_xC6_flags {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:378:9)";
     const GC_SIZE: u32 = 0x1;
@@ -37955,6 +41226,8 @@ pub union grCorneria_GroundVars_offset_y {
     pub val: f32,
     pub flags: grCorneria_GroundVars_offset_y_flags,
 }
+impl grCorneria_GroundVars_offset_y { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCorneria_GroundVars_offset_y {
     const GC_NAME: &'static str = "union (unnamed at src/melee/gr/types.h:390:5)";
     const GC_SIZE: u32 = 0x4;
@@ -37977,6 +41250,8 @@ impl grCorneria_GroundVars_offset_y_flags {
     #[inline] #[allow(unused_unsafe)] pub fn b0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 7, 1, (v as u64) & 0x1) } }
 }
+impl grCorneria_GroundVars_offset_y_flags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCorneria_GroundVars_offset_y_flags {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:392:9)";
     const GC_SIZE: u32 = 0x1;
@@ -38004,6 +41279,8 @@ pub struct grStarFox_GroundVars {
     pub xFC: i32,
     pub x100: i32,
 }
+impl grStarFox_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grStarFox_GroundVars {
     const GC_NAME: &'static str = "grStarFox_GroundVars";
     const GC_SIZE: u32 = 0x40;
@@ -38033,6 +41310,8 @@ pub union grStarFox_GroundVars_xC4 {
     pub value: u8,
     pub word: u32,
 }
+impl grStarFox_GroundVars_xC4 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grStarFox_GroundVars_xC4 {
     const GC_NAME: &'static str = "union (unnamed at src/melee/gr/types.h:420:20)";
     const GC_SIZE: u32 = 0x4;
@@ -38056,6 +41335,8 @@ impl grStarFox_GroundVars_xC4_flags {
     #[inline] #[allow(unused_unsafe)] pub fn b0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 7, 1, (v as u64) & 0x1) } }
 }
+impl grStarFox_GroundVars_xC4_flags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grStarFox_GroundVars_xC4_flags {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:421:9)";
     const GC_SIZE: u32 = 0x1;
@@ -38089,6 +41370,8 @@ pub struct grCorneria_GroundVars2 {
     pub xFC: i32,
     pub x100: i32,
 }
+impl grCorneria_GroundVars2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCorneria_GroundVars2 {
     const GC_NAME: &'static str = "grCorneria_GroundVars2";
     const GC_SIZE: u32 = 0x40;
@@ -38123,6 +41406,8 @@ pub union grCorneria_GroundVars2_xC4 {
     pub flags: grCorneria_GroundVars2_xC4_flags,
     pub value: u8,
 }
+impl grCorneria_GroundVars2_xC4 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCorneria_GroundVars2_xC4 {
     const GC_NAME: &'static str = "union (unnamed at src/melee/gr/types.h:445:22)";
     const GC_SIZE: u32 = 0x1;
@@ -38145,6 +41430,8 @@ impl grCorneria_GroundVars2_xC4_flags {
     #[inline] #[allow(unused_unsafe)] pub fn b0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 7, 1, (v as u64) & 0x1) } }
 }
+impl grCorneria_GroundVars2_xC4_flags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCorneria_GroundVars2_xC4_flags {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:446:9)";
     const GC_SIZE: u32 = 0x1;
@@ -38161,6 +41448,8 @@ pub struct grKinokoRoute_GroundVars_Entry {
     pub pos: Vec,
     pub jobj: *mut HSD_JObj,
 }
+impl grKinokoRoute_GroundVars_Entry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grKinokoRoute_GroundVars_Entry {
     const GC_NAME: &'static str = "grKinokoRoute_GroundVars_Entry";
     const GC_SIZE: u32 = 0x10;
@@ -38178,6 +41467,8 @@ const _: () = assert!(core::mem::size_of::<grKinokoRoute_GroundVars_Entry>() == 
 pub struct grKinokoRoute_GroundVars {
     pub entries: [grKinokoRoute_GroundVars_Entry; 4],
 }
+impl grKinokoRoute_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grKinokoRoute_GroundVars {
     const GC_NAME: &'static str = "grKinokoRoute_GroundVars";
     const GC_SIZE: u32 = 0x40;
@@ -38207,6 +41498,8 @@ impl grKinokoRoute_GroundVars2 {
     #[inline] #[allow(unused_unsafe)] pub fn flags_0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_flags_0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 7, 1, (v as u64) & 0x1) } }
 }
+impl grKinokoRoute_GroundVars2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grKinokoRoute_GroundVars2 {
     const GC_NAME: &'static str = "grKinokoRoute_GroundVars2";
     const GC_SIZE: u32 = 0x18;
@@ -38242,6 +41535,8 @@ pub struct grSmashTaunt_GroundVars {
     pub xE8: f32,
     pub xEC: f32,
 }
+impl grSmashTaunt_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grSmashTaunt_GroundVars {
     const GC_NAME: &'static str = "grSmashTaunt_GroundVars";
     const GC_SIZE: u32 = 0x2C;
@@ -38274,6 +41569,8 @@ pub struct grVenom_Platform_GroundVars {
     pub upper_jobj: *mut HSD_JObj,
     pub lower_jobj: *mut HSD_JObj,
 }
+impl grVenom_Platform_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grVenom_Platform_GroundVars {
     const GC_NAME: &'static str = "grVenom_Platform_GroundVars";
     const GC_SIZE: u32 = 0x10;
@@ -38314,6 +41611,8 @@ pub struct grVenom_GroundVars {
     pub xFC: i32,
     pub x100: i32,
 }
+impl grVenom_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grVenom_GroundVars {
     const GC_NAME: &'static str = "grVenom_GroundVars";
     const GC_SIZE: u32 = 0x40;
@@ -38357,6 +41656,8 @@ pub union grVenom_GroundVars_anon_516 {
     pub xC4: u32,
     pub xC4_flags: grVenom_GroundVars_anon_516_xC4_flags,
 }
+impl grVenom_GroundVars_anon_516 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grVenom_GroundVars_anon_516 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/gr/types.h:516:21)";
     const GC_SIZE: u32 = 0x4;
@@ -38379,6 +41680,8 @@ impl grVenom_GroundVars_anon_516_xC4_flags {
     #[inline] #[allow(unused_unsafe)] pub fn b0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 7, 1, (v as u64) & 0x1) } }
 }
+impl grVenom_GroundVars_anon_516_xC4_flags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grVenom_GroundVars_anon_516_xC4_flags {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:520:9)";
     const GC_SIZE: u32 = 0x1;
@@ -38395,6 +41698,8 @@ pub union grVenom_GroundVars_anon_529 {
     pub xDC: f32,
     pub linked_gobj: *mut Ground_GObj,
 }
+impl grVenom_GroundVars_anon_529 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grVenom_GroundVars_anon_529 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/gr/types.h:529:21)";
     const GC_SIZE: u32 = 0x4;
@@ -38413,6 +41718,8 @@ pub union grVenom_GroundVars_anon_533 {
     pub xE0: f32,
     pub xE0_int: i32,
 }
+impl grVenom_GroundVars_anon_533 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grVenom_GroundVars_anon_533 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/gr/types.h:533:21)";
     const GC_SIZE: u32 = 0x4;
@@ -38431,6 +41738,8 @@ pub union grVenom_GroundVars_anon_537 {
     pub xE4: f32,
     pub xE4_int: i32,
 }
+impl grVenom_GroundVars_anon_537 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grVenom_GroundVars_anon_537 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/gr/types.h:537:21)";
     const GC_SIZE: u32 = 0x4;
@@ -38449,6 +41758,8 @@ pub union grVenom_GroundVars_anon_541 {
     pub xE8: f32,
     pub xE8_int: i32,
 }
+impl grVenom_GroundVars_anon_541 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grVenom_GroundVars_anon_541 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/gr/types.h:541:21)";
     const GC_SIZE: u32 = 0x4;
@@ -38467,6 +41778,8 @@ pub union grVenom_GroundVars_anon_545 {
     pub xEC: f32,
     pub xEC_int: i32,
 }
+impl grVenom_GroundVars_anon_545 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grVenom_GroundVars_anon_545 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/gr/types.h:545:21)";
     const GC_SIZE: u32 = 0x4;
@@ -38491,6 +41804,8 @@ pub struct grVenom_GroundVars2 {
     pub xDC: *mut HSD_JObj,
     pub xE0_state: grVenom_GroundVars2_xE0_state,
 }
+impl grVenom_GroundVars2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grVenom_GroundVars2 {
     const GC_NAME: &'static str = "grVenom_GroundVars2";
     const GC_SIZE: u32 = 0x20;
@@ -38515,6 +41830,8 @@ pub union grVenom_GroundVars2_xE0_state {
     /// anonymous C member
     pub anon_0: grVenom_GroundVars2_xE0_state_anon_570,
 }
+impl grVenom_GroundVars2_xE0_state { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grVenom_GroundVars2_xE0_state {
     const GC_NAME: &'static str = "union (unnamed at src/melee/gr/types.h:564:21)";
     const GC_SIZE: u32 = 0x2;
@@ -38551,6 +41868,8 @@ impl grVenom_GroundVars2_xE0_state_xE0_state_pad {
     #[inline] #[allow(unused_unsafe)] pub fn padding2(&self) -> u16 { unsafe { melee_core_bits_get(&self.bf_0, 0, 7) as u16 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_padding2(&mut self, v: u16) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 7, (v as u64) & 0x7F) } }
 }
+impl grVenom_GroundVars2_xE0_state_xE0_state_pad { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grVenom_GroundVars2_xE0_state_xE0_state_pad {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:565:9)";
     const GC_SIZE: u32 = 0x2;
@@ -38595,6 +41914,8 @@ impl grVenom_GroundVars2_xE0_state_anon_570 {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl grVenom_GroundVars2_xE0_state_anon_570 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grVenom_GroundVars2_xE0_state_anon_570 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/gr/types.h:570:9)";
     const GC_SIZE: u32 = 0x1;
@@ -38625,6 +41946,8 @@ pub struct grArwing_GroundVars {
     pub xE0: Vec,
     pub xEC: f32,
 }
+impl grArwing_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grArwing_GroundVars {
     const GC_NAME: &'static str = "grArwing_GroundVars";
     const GC_SIZE: u32 = 0x2C;
@@ -38658,6 +41981,8 @@ pub struct grGreatBay_GroundVars {
     pub xDC: f32,
     pub xE0: f32,
 }
+impl grGreatBay_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grGreatBay_GroundVars {
     const GC_NAME: &'static str = "grGreatBay_GroundVars";
     const GC_SIZE: u32 = 0x20;
@@ -38691,6 +42016,8 @@ impl grGreatBay_GroundVars_xC5 {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl grGreatBay_GroundVars_xC5 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grGreatBay_GroundVars_xC5 {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:597:5)";
     const GC_SIZE: u32 = 0x1;
@@ -38713,6 +42040,8 @@ pub struct grGreatBay_GroundVars2 {
     pub x1C: f32,
     pub jobj: *mut HSD_JObj,
 }
+impl grGreatBay_GroundVars2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grGreatBay_GroundVars2 {
     const GC_NAME: &'static str = "grGreatBay_GroundVars2";
     const GC_SIZE: u32 = 0x24;
@@ -38752,6 +42081,8 @@ impl grGreatBay_GroundVars2_x12 {
     #[inline] #[allow(unused_unsafe)] pub fn b4567(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 4) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b4567(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 4, (v as u64) & 0xF) } }
 }
+impl grGreatBay_GroundVars2_x12 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grGreatBay_GroundVars2_x12 {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:614:5)";
     const GC_SIZE: u32 = 0x1;
@@ -38780,6 +42111,8 @@ pub struct grGreatBay_GroundVars3 {
     pub xEC: f32,
     pub xF0: i32,
 }
+impl grGreatBay_GroundVars3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grGreatBay_GroundVars3 {
     const GC_NAME: &'static str = "grGreatBay_GroundVars3";
     const GC_SIZE: u32 = 0x30;
@@ -38814,6 +42147,8 @@ pub struct grGreatBay_GroundVars4 {
     pub xE4: Vec,
     pub xF0: *mut Item_GObj,
 }
+impl grGreatBay_GroundVars4 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grGreatBay_GroundVars4 {
     const GC_NAME: &'static str = "grGreatBay_GroundVars4";
     const GC_SIZE: u32 = 0x30;
@@ -38840,6 +42175,8 @@ pub struct grGarden_GroundVars {
     pub xc4: i32,
     pub xc8: i32,
 }
+impl grGarden_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grGarden_GroundVars {
     const GC_NAME: &'static str = "grGarden_GroundVars";
     const GC_SIZE: u32 = 0x8;
@@ -38859,6 +42196,8 @@ pub struct grGarden_GroundVars2 {
     pub xc8: i8,
     pub xcc: i32,
 }
+impl grGarden_GroundVars2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grGarden_GroundVars2 {
     const GC_NAME: &'static str = "grGarden_GroundVars2";
     const GC_SIZE: u32 = 0xC;
@@ -38899,6 +42238,8 @@ pub struct grIceMt_GroundVars {
     pub x100: [i16; 4],
     pub x108: [i16; 8],
 }
+impl grIceMt_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grIceMt_GroundVars {
     const GC_NAME: &'static str = "grIceMt_GroundVars";
     const GC_SIZE: u32 = 0x54;
@@ -38959,6 +42300,8 @@ impl grIceMt_GObj1_GroundVars {
     #[inline] #[allow(unused_unsafe)] pub fn x0_b1(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 6, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x0_b1(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 6, 1, (v as u64) & 0x1) } }
 }
+impl grIceMt_GObj1_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grIceMt_GObj1_GroundVars {
     const GC_NAME: &'static str = "grIceMt_GObj1_GroundVars";
     const GC_SIZE: u32 = 0x84;
@@ -38988,6 +42331,8 @@ impl GcLayout for grIceMt_GObj1_GroundVars {
 pub struct grIceMt_BG_GroundVars {
     pub x0: f32,
 }
+impl grIceMt_BG_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grIceMt_BG_GroundVars {
     const GC_NAME: &'static str = "grIceMt_BG_GroundVars";
     const GC_SIZE: u32 = 0x4;
@@ -39010,6 +42355,8 @@ pub struct grIceMt_FA364_State {
     pub pad: i16,
     pub cur: f32,
 }
+impl grIceMt_FA364_State { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grIceMt_FA364_State {
     const GC_NAME: &'static str = "grIceMt_FA364_State";
     const GC_SIZE: u32 = 0x10;
@@ -39033,6 +42380,8 @@ pub struct grIceMt_GObj9_GObj10_UnderUpperIdPair {
     pub under: i16,
     pub upper: i16,
 }
+impl grIceMt_GObj9_GObj10_UnderUpperIdPair { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grIceMt_GObj9_GObj10_UnderUpperIdPair {
     const GC_NAME: &'static str = "grIceMt_GObj9_GObj10_UnderUpperIdPair";
     const GC_SIZE: u32 = 0x4;
@@ -39051,6 +42400,8 @@ pub struct grIceMt_GObj9_GObj10_x0 {
     pub ids: grIceMt_GObj9_GObj10_UnderUpperIdPair,
     pub state: grIceMt_FA364_State,
 }
+impl grIceMt_GObj9_GObj10_x0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grIceMt_GObj9_GObj10_x0 {
     const GC_NAME: &'static str = "grIceMt_GObj9_GObj10_x0";
     const GC_SIZE: u32 = 0x14;
@@ -39073,6 +42424,8 @@ pub struct grIceMt_GObj9_GroundVars {
     pub x30: [i16; 10],
     pub pad_1C: [i8; 252],
 }
+impl grIceMt_GObj9_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grIceMt_GObj9_GroundVars {
     const GC_NAME: &'static str = "grIceMt_GObj9_GroundVars";
     const GC_SIZE: u32 = 0x140;
@@ -39118,6 +42471,8 @@ impl grIceMt_GObj10_GroundVars {
     #[inline] #[allow(unused_unsafe)] pub fn x14_b4(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_14, 3, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x14_b4(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_14, 3, 1, (v as u64) & 0x1) } }
 }
+impl grIceMt_GObj10_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grIceMt_GObj10_GroundVars {
     const GC_NAME: &'static str = "grIceMt_GObj10_GroundVars";
     const GC_SIZE: u32 = 0x24;
@@ -39154,6 +42509,8 @@ pub struct grInishie1_Block {
     pub x20: i16,
     pub x22: i16,
 }
+impl grInishie1_Block { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grInishie1_Block {
     const GC_NAME: &'static str = "grInishie1_Block";
     const GC_SIZE: u32 = 0x24;
@@ -39203,6 +42560,8 @@ pub struct grInishie1_GroundVars {
     pub x108: *mut HSD_JObj,
     pub x10C: *mut HSD_JObj,
 }
+impl grInishie1_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grInishie1_GroundVars {
     const GC_NAME: &'static str = "grInishie1_GroundVars";
     const GC_SIZE: u32 = 0x4C;
@@ -39248,6 +42607,8 @@ pub struct grInishie1_GroundVars2 {
     pub xD8: i16,
     pub xDA: i16,
 }
+impl grInishie1_GroundVars2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grInishie1_GroundVars2 {
     const GC_NAME: &'static str = "grInishie1_GroundVars2";
     const GC_SIZE: u32 = 0x18;
@@ -39273,6 +42634,8 @@ pub struct grInishie1_GroundVars3 {
     pub xC8: i32,
     pub xCC: i32,
 }
+impl grInishie1_GroundVars3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grInishie1_GroundVars3 {
     const GC_NAME: &'static str = "grInishie1_GroundVars3";
     const GC_SIZE: u32 = 0xC;
@@ -39298,6 +42661,8 @@ pub struct grInishie2_GroundVars {
     pub xD4: u32,
     pub xD8: Vec,
 }
+impl grInishie2_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grInishie2_GroundVars {
     const GC_NAME: &'static str = "grInishie2_GroundVars";
     const GC_SIZE: u32 = 0x20;
@@ -39347,6 +42712,8 @@ impl grInishie2_GroundVars_xC4_flags {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl grInishie2_GroundVars_xC4_flags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grInishie2_GroundVars_xC4_flags {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:821:5)";
     const GC_SIZE: u32 = 0x1;
@@ -39382,6 +42749,8 @@ pub struct grOldKongo_GroundVars {
     pub xE8: f32,
     pub xEC: f32,
 }
+impl grOldKongo_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grOldKongo_GroundVars {
     const GC_NAME: &'static str = "grOldKongo_GroundVars";
     const GC_SIZE: u32 = 0x2C;
@@ -39418,6 +42787,8 @@ pub struct grOldPupupu_GroundVars {
     pub xDC: i32,
     pub xE0: i32,
 }
+impl grOldPupupu_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grOldPupupu_GroundVars {
     const GC_NAME: &'static str = "grOldPupupu_GroundVars";
     const GC_SIZE: u32 = 0x20;
@@ -39442,6 +42813,8 @@ pub struct grOldPupupu_GroundVars2 {
     pub xC4: i16,
     pub xC6: i16,
 }
+impl grOldPupupu_GroundVars2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grOldPupupu_GroundVars2 {
     const GC_NAME: &'static str = "grOldPupupu_GroundVars2";
     const GC_SIZE: u32 = 0x4;
@@ -39461,6 +42834,8 @@ pub struct grInishie2_GroundVars2 {
     pub xC8: *mut HSD_GObj,
     pub xCC: *mut HSD_GObj,
 }
+impl grInishie2_GroundVars2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grInishie2_GroundVars2 {
     const GC_NAME: &'static str = "grInishie2_GroundVars2";
     const GC_SIZE: u32 = 0xC;
@@ -39484,6 +42859,8 @@ pub struct grInishie2_GroundVars3 {
     pub xCC: Vec,
     pub xD8: Vec,
 }
+impl grInishie2_GroundVars3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grInishie2_GroundVars3 {
     const GC_NAME: &'static str = "grInishie2_GroundVars3";
     const GC_SIZE: u32 = 0x20;
@@ -39531,6 +42908,8 @@ impl grInishie2_GroundVars3_xC8_flags {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl grInishie2_GroundVars3_xC8_flags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grInishie2_GroundVars3_xC8_flags {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:883:5)";
     const GC_SIZE: u32 = 0x1;
@@ -39573,6 +42952,8 @@ impl grStadium_GroundVars {
     #[inline] #[allow(unused_unsafe)] pub fn xC4_b1(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 6, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_xC4_b1(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 6, 1, (v as u64) & 0x1) } }
 }
+impl grStadium_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grStadium_GroundVars {
     const GC_NAME: &'static str = "grStadium_GroundVars";
     const GC_SIZE: u32 = 0x28;
@@ -39636,6 +43017,8 @@ impl grStadium_Display {
     #[inline] #[allow(unused_unsafe)] pub fn xF8_2(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_34, 5, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_xF8_2(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_34, 5, 1, (v as u64) & 0x1) } }
 }
+impl grStadium_Display { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grStadium_Display {
     const GC_NAME: &'static str = "grStadium_Display";
     const GC_SIZE: u32 = 0x38;
@@ -39684,6 +43067,8 @@ impl grStadium_type9_GroundVars {
     #[inline] #[allow(unused_unsafe)] pub fn xC4_b1(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 6, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_xC4_b1(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 6, 1, (v as u64) & 0x1) } }
 }
+impl grStadium_type9_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grStadium_type9_GroundVars {
     const GC_NAME: &'static str = "grStadium_type9_GroundVars";
     const GC_SIZE: u32 = 0x14;
@@ -39713,6 +43098,8 @@ pub struct grYorster_TrackElement {
     pub x18: *mut HSD_JObj,
     pub x1C: *mut HSD_GObj,
 }
+impl grYorster_TrackElement { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grYorster_TrackElement {
     const GC_NAME: &'static str = "grYorster_TrackElement";
     const GC_SIZE: u32 = 0x20;
@@ -39739,6 +43126,8 @@ pub struct grYorster_GroundVars {
     pub xC4: i32,
     pub elements: [grYorster_TrackElement; 9],
 }
+impl grYorster_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grYorster_GroundVars {
     const GC_NAME: &'static str = "grYorster_GroundVars";
     const GC_SIZE: u32 = 0x124;
@@ -39766,6 +43155,8 @@ impl grZebes_GroundVars {
     #[inline] #[allow(unused_unsafe)] pub fn x0_b0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x0_b0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 7, 1, (v as u64) & 0x1) } }
 }
+impl grZebes_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grZebes_GroundVars {
     const GC_NAME: &'static str = "grZebes_GroundVars";
     const GC_SIZE: u32 = 0x18;
@@ -39785,6 +43176,8 @@ impl GcLayout for grZebes_GroundVars {
 pub struct grZebes_GroundVars2 {
     pub xC4: i16,
 }
+impl grZebes_GroundVars2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grZebes_GroundVars2 {
     const GC_NAME: &'static str = "grZebes_GroundVars2";
     const GC_SIZE: u32 = 0x2;
@@ -39802,6 +43195,8 @@ pub struct grZebes_GroundVars3 {
     pub xC4: *mut Item_GObj,
     pub xC8: i32,
 }
+impl grZebes_GroundVars3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grZebes_GroundVars3 {
     const GC_NAME: &'static str = "grZebes_GroundVars3";
     const GC_SIZE: u32 = 0x8;
@@ -39832,6 +43227,8 @@ pub struct grZebes_GroundVars4 {
     pub xE8: i32,
     pub xEC: u32,
 }
+impl grZebes_GroundVars4 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grZebes_GroundVars4 {
     const GC_NAME: &'static str = "grZebes_GroundVars4";
     const GC_SIZE: u32 = 0x2C;
@@ -39879,6 +43276,8 @@ pub struct grZebes_GroundVars5 {
     pub xFC: u32,
     pub x100: u32,
 }
+impl grZebes_GroundVars5 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grZebes_GroundVars5 {
     const GC_NAME: &'static str = "grZebes_GroundVars5";
     const GC_SIZE: u32 = 0x40;
@@ -39920,6 +43319,8 @@ pub struct grRCruise_Entry {
     pub x10: f32,
     pub x14: *mut HSD_JObj,
 }
+impl grRCruise_Entry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grRCruise_Entry {
     const GC_NAME: &'static str = "grRCruise_Entry";
     const GC_SIZE: u32 = 0x18;
@@ -39954,6 +43355,8 @@ impl grRCruise_SubEntry {
     #[inline] #[allow(unused_unsafe)] pub fn x1_b0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_1, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x1_b0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_1, 7, 1, (v as u64) & 0x1) } }
 }
+impl grRCruise_SubEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grRCruise_SubEntry {
     const GC_NAME: &'static str = "grRCruise_SubEntry";
     const GC_SIZE: u32 = 0x10;
@@ -39976,6 +43379,8 @@ pub struct Map_VanishDesc {
     pub x2: i16,
     pub x4: i32,
 }
+impl Map_VanishDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Map_VanishDesc {
     const GC_NAME: &'static str = "Map_VanishDesc";
     const GC_SIZE: u32 = 0x8;
@@ -39996,6 +43401,8 @@ pub struct Map_VanishEntry {
     pub x2: i16,
     pub jobj: *mut HSD_JObj,
 }
+impl Map_VanishEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Map_VanishEntry {
     const GC_NAME: &'static str = "Map_VanishEntry";
     const GC_SIZE: u32 = 0x8;
@@ -40032,6 +43439,8 @@ pub struct grRCruise_GroundVars {
     pub vanish: *mut Map_VanishDesc,
     pub pad_74: [u8; 12],
 }
+impl grRCruise_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grRCruise_GroundVars {
     const GC_NAME: &'static str = "grRCruise_GroundVars";
     const GC_SIZE: u32 = 0x80;
@@ -40092,6 +43501,8 @@ impl grRCruise_GroundVars_xC4 {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl grRCruise_GroundVars_xC4 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grRCruise_GroundVars_xC4 {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:1059:5)";
     const GC_SIZE: u32 = 0x1;
@@ -40116,6 +43527,8 @@ pub struct grRCruise_GroundVars2 {
     pub xD0: DynamicsDesc,
     pub xEC: *mut HSD_GObj,
 }
+impl grRCruise_GroundVars2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grRCruise_GroundVars2 {
     const GC_NAME: &'static str = "grRCruise_GroundVars2";
     const GC_SIZE: u32 = 0x2C;
@@ -40141,6 +43554,8 @@ pub struct grFigureGet_GroundVars {
     pub x28: [*mut HSD_GObj; 3],
     pub x34: [*mut Item_GObj; 3],
 }
+impl grFigureGet_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grFigureGet_GroundVars {
     const GC_NAME: &'static str = "grFigureGet_GroundVars";
     const GC_SIZE: u32 = 0x40;
@@ -40166,6 +43581,8 @@ pub struct grFourside_GroundVars {
     pub x4: *mut HSD_JObj,
     pub x8: *mut HSD_JObj,
 }
+impl grFourside_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grFourside_GroundVars {
     const GC_NAME: &'static str = "grFourside_GroundVars";
     const GC_SIZE: u32 = 0xC;
@@ -40192,6 +43609,8 @@ pub struct grFourside_CraneVars {
     pub x18: f32,
     pub x1C: f32,
 }
+impl grFourside_CraneVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grFourside_CraneVars {
     const GC_NAME: &'static str = "grFourside_CraneVars";
     const GC_SIZE: u32 = 0x20;
@@ -40242,6 +43661,8 @@ impl grFourside_CraneVars_x1 {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl grFourside_CraneVars_x1 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grFourside_CraneVars_x1 {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:1114:21)";
     const GC_SIZE: u32 = 0x1;
@@ -40270,6 +43691,8 @@ pub struct grFourside_UfoVars {
     pub x8: i32,
     pub xC: *mut CmSubject,
 }
+impl grFourside_UfoVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grFourside_UfoVars {
     const GC_NAME: &'static str = "grFourside_UfoVars";
     const GC_SIZE: u32 = 0x10;
@@ -40295,6 +43718,8 @@ pub struct grFourside_GroundVars2 {
     pub x4: i32,
     pub x8: i32,
 }
+impl grFourside_GroundVars2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grFourside_GroundVars2 {
     const GC_NAME: &'static str = "grFourside_GroundVars2";
     const GC_SIZE: u32 = 0xC;
@@ -40351,6 +43776,8 @@ impl grGreens_BlockVars {
     #[inline] #[allow(unused_unsafe)] pub fn x1_7(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x1_7(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl grGreens_BlockVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grGreens_BlockVars {
     const GC_NAME: &'static str = "grGreens_BlockVars";
     const GC_SIZE: u32 = 0x20;
@@ -40388,6 +43815,8 @@ pub struct grGreens_GroundVars {
     pub x18: i32,
     pub x1C: i32,
 }
+impl grGreens_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grGreens_GroundVars {
     const GC_NAME: &'static str = "grGreens_GroundVars";
     const GC_SIZE: u32 = 0x20;
@@ -40412,6 +43841,8 @@ pub union grGreens_GroundVars_x0_flags {
     pub anon_0: grGreens_GroundVars_x0_flags_anon_1172,
     pub whole_thing: i32,
 }
+impl grGreens_GroundVars_x0_flags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grGreens_GroundVars_x0_flags {
     const GC_NAME: &'static str = "union (unnamed at src/melee/gr/types.h:1171:21)";
     const GC_SIZE: u32 = 0x4;
@@ -40463,6 +43894,8 @@ impl grGreens_GroundVars_x0_flags_anon_1172 {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl grGreens_GroundVars_x0_flags_anon_1172 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grGreens_GroundVars_x0_flags_anon_1172 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/gr/types.h:1172:9)";
     const GC_SIZE: u32 = 0x1;
@@ -40494,6 +43927,8 @@ pub struct grGreens_GroundVars2 {
     pub x20: i32,
     pub x24: i32,
 }
+impl grGreens_GroundVars2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grGreens_GroundVars2 {
     const GC_NAME: &'static str = "grGreens_GroundVars2";
     const GC_SIZE: u32 = 0x28;
@@ -40545,6 +43980,8 @@ pub struct grMuteCity_GroundVars {
     pub x12C: f32,
     pub x130: f32,
 }
+impl grMuteCity_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grMuteCity_GroundVars {
     const GC_NAME: &'static str = "grMuteCity_GroundVars";
     const GC_SIZE: u32 = 0x70;
@@ -40610,6 +44047,8 @@ impl grMuteCity_GroundVars_xD0_flags {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl grMuteCity_GroundVars_xD0_flags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grMuteCity_GroundVars_xD0_flags {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:1211:21)";
     const GC_SIZE: u32 = 0x1;
@@ -40635,6 +44074,8 @@ pub struct grMuteCity_GroundVars2 {
     pub xD0: f32,
     pub saved_colors: [_GXColor; 4],
 }
+impl grMuteCity_GroundVars2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grMuteCity_GroundVars2 {
     const GC_NAME: &'static str = "grMuteCity_GroundVars2";
     const GC_SIZE: u32 = 0x20;
@@ -40681,6 +44122,8 @@ impl grMuteCity_GroundVars2_xC4_flags {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl grMuteCity_GroundVars2_xC4_flags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grMuteCity_GroundVars2_xC4_flags {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:1245:21)";
     const GC_SIZE: u32 = 0x1;
@@ -40711,6 +44154,8 @@ pub struct grOnett_AwningData {
     pub cooldown: i16,
     pub flag: i16,
 }
+impl grOnett_AwningData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grOnett_AwningData {
     const GC_NAME: &'static str = "grOnett_AwningData";
     const GC_SIZE: u32 = 0x1C;
@@ -40738,6 +44183,8 @@ pub struct grOnett_GroundVars {
     pub r#gen: *mut HSD_Generator,
     pub subject: *mut CmSubject,
 }
+impl grOnett_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grOnett_GroundVars {
     const GC_NAME: &'static str = "grOnett_GroundVars";
     const GC_SIZE: u32 = 0x44;
@@ -40761,6 +44208,8 @@ pub struct grOnett_Building_GroundVars {
     pub frame: i32,
     pub timer: u32,
 }
+impl grOnett_Building_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grOnett_Building_GroundVars {
     const GC_NAME: &'static str = "grOnett_Building_GroundVars";
     const GC_SIZE: u32 = 0x10;
@@ -40808,6 +44257,8 @@ impl grOnett_Car_GroundVars {
     #[inline] #[allow(unused_unsafe)] pub fn x0_b0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x0_b0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 7, 1, (v as u64) & 0x1) } }
 }
+impl grOnett_Car_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grOnett_Car_GroundVars {
     const GC_NAME: &'static str = "grOnett_Car_GroundVars";
     const GC_SIZE: u32 = 0x68;
@@ -40859,6 +44310,8 @@ pub struct grBigBlue_GroundData {
     pub x44: Vec,
     pub x50: i32,
 }
+impl grBigBlue_GroundData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grBigBlue_GroundData {
     const GC_NAME: &'static str = "grBigBlue_GroundData";
     const GC_SIZE: u32 = 0x54;
@@ -40894,6 +44347,8 @@ pub struct grBigBlue_ManagerVars {
     pub event_extra: *mut c_void,
     pub data: [grBigBlue_GroundData; 3],
 }
+impl grBigBlue_ManagerVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grBigBlue_ManagerVars {
     const GC_NAME: &'static str = "grBigBlue_ManagerVars";
     const GC_SIZE: u32 = 0x11C;
@@ -40922,6 +44377,8 @@ pub struct grBigBlue_PlatformVars {
     pub velocity: Vec,
     pub xEC: f32,
 }
+impl grBigBlue_PlatformVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grBigBlue_PlatformVars {
     const GC_NAME: &'static str = "grBigBlue_PlatformVars";
     const GC_SIZE: u32 = 0x2C;
@@ -40953,6 +44410,8 @@ pub struct grBigBlue_RoadVars {
     pub pad_F2: [u8; 6],
     pub rotation: f32,
 }
+impl grBigBlue_RoadVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grBigBlue_RoadVars {
     const GC_NAME: &'static str = "grBigBlue_RoadVars";
     const GC_SIZE: u32 = 0x38;
@@ -40992,6 +44451,8 @@ pub struct grBigBlue_CarLane {
     pub angular_velocity: f32,
     pub x110: f32,
 }
+impl grBigBlue_CarLane { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grBigBlue_CarLane {
     const GC_NAME: &'static str = "grBigBlue_CarLane";
     const GC_SIZE: u32 = 0x40;
@@ -41034,6 +44495,8 @@ pub union grBigBlue_CarLane_anon_1386 {
     /// anonymous C member
     pub anon_0_0: grBigBlue_CarLane_anon_1386_anon_1394,
 }
+impl grBigBlue_CarLane_anon_1386 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grBigBlue_CarLane_anon_1386 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/gr/types.h:1386:5)";
     const GC_SIZE: u32 = 0x2;
@@ -41071,6 +44534,8 @@ impl grBigBlue_CarLane_anon_1386_anon_1388 {
     #[inline] #[allow(unused_unsafe)] pub fn state_hi(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_state_hi(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl grBigBlue_CarLane_anon_1386_anon_1388 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grBigBlue_CarLane_anon_1386_anon_1388 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/gr/types.h:1388:9)";
     const GC_SIZE: u32 = 0x2;
@@ -41101,6 +44566,8 @@ impl grBigBlue_CarLane_anon_1386_anon_1394 {
     #[inline] #[allow(unused_unsafe)] pub fn pad_slot_1(&self) -> u16 { unsafe { melee_core_bits_get(&self.bf_0, 0, 4) as u16 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_pad_slot_1(&mut self, v: u16) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 4, (v as u64) & 0xF) } }
 }
+impl grBigBlue_CarLane_anon_1386_anon_1394 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grBigBlue_CarLane_anon_1386_anon_1394 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/gr/types.h:1394:9)";
     const GC_SIZE: u32 = 0x2;
@@ -41123,6 +44590,8 @@ pub struct grBigBlue_CarVars {
     pub pad_D2: [u8; 2],
     pub lanes: [grBigBlue_CarLane; 4],
 }
+impl grBigBlue_CarVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grBigBlue_CarVars {
     const GC_NAME: &'static str = "grBigBlue_CarVars";
     const GC_SIZE: u32 = 0x110;
@@ -41144,6 +44613,8 @@ pub struct grBigBlue_GroundVars {
     /// anonymous C member
     pub anon_0: grBigBlue_GroundVars_anon_1430,
 }
+impl grBigBlue_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grBigBlue_GroundVars {
     const GC_NAME: &'static str = "grBigBlue_GroundVars";
     const GC_SIZE: u32 = 0x11C;
@@ -41189,6 +44660,8 @@ pub union grBigBlue_GroundVars_anon_1430 {
     pub road: grBigBlue_RoadVars,
     pub car: grBigBlue_CarVars,
 }
+impl grBigBlue_GroundVars_anon_1430 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grBigBlue_GroundVars_anon_1430 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/gr/types.h:1430:5)";
     const GC_SIZE: u32 = 0x11C;
@@ -41236,6 +44709,8 @@ pub struct grBigBlue_GroundVars_anon_1430_anon_1431 {
     pub pad_3: [i8; 4],
     pub data: [grBigBlue_GroundData; 3],
 }
+impl grBigBlue_GroundVars_anon_1430_anon_1431 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grBigBlue_GroundVars_anon_1430_anon_1431 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/gr/types.h:1431:9)";
     const GC_SIZE: u32 = 0x11C;
@@ -41278,6 +44753,8 @@ pub union grBigBlue_GroundVars_anon_1430_anon_1431_anon_1432 {
     /// anonymous C member
     pub anon_0_0_: grBigBlue_GroundVars_anon_1430_anon_1431_anon_1432_anon_1444,
 }
+impl grBigBlue_GroundVars_anon_1430_anon_1431_anon_1432 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grBigBlue_GroundVars_anon_1430_anon_1431_anon_1432 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/gr/types.h:1432:13)";
     const GC_SIZE: u32 = 0x4;
@@ -41313,6 +44790,8 @@ pub struct grBigBlue_GroundVars_anon_1430_anon_1431_anon_1432_anon_1434 {
     pub x2: u8,
     pub x3: u8,
 }
+impl grBigBlue_GroundVars_anon_1430_anon_1431_anon_1432_anon_1434 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grBigBlue_GroundVars_anon_1430_anon_1431_anon_1432_anon_1434 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/gr/types.h:1434:17)";
     const GC_SIZE: u32 = 0x4;
@@ -41339,6 +44818,8 @@ impl grBigBlue_GroundVars_anon_1430_anon_1431_anon_1432_anon_1440 {
     #[inline] #[allow(unused_unsafe)] pub fn x0_b1(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x0_b1(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 7, 1, (v as u64) & 0x1) } }
 }
+impl grBigBlue_GroundVars_anon_1430_anon_1431_anon_1432_anon_1440 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grBigBlue_GroundVars_anon_1430_anon_1431_anon_1432_anon_1440 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/gr/types.h:1440:17)";
     const GC_SIZE: u32 = 0x4;
@@ -41382,6 +44863,8 @@ impl grBigBlue_GroundVars_anon_1430_anon_1431_anon_1432_anon_1444 {
     #[inline] #[allow(unused_unsafe)] pub fn nibble_lo(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 4) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_nibble_lo(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 4, (v as u64) & 0xF) } }
 }
+impl grBigBlue_GroundVars_anon_1430_anon_1431_anon_1432_anon_1444 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grBigBlue_GroundVars_anon_1430_anon_1431_anon_1432_anon_1444 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/gr/types.h:1444:17)";
     const GC_SIZE: u32 = 0x4;
@@ -41414,6 +44897,8 @@ pub struct grBigBlueRoute_GroundVars {
     pub x108: i16,
     pub x10A: i16,
 }
+impl grBigBlueRoute_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grBigBlueRoute_GroundVars {
     const GC_NAME: &'static str = "grBigBlueRoute_GroundVars";
     const GC_SIZE: u32 = 0x48;
@@ -41441,6 +44926,8 @@ pub struct grBigBlueRoute_Track {
     pub offset: Vec,
     pub jobj: *mut HSD_JObj,
 }
+impl grBigBlueRoute_Track { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grBigBlueRoute_Track {
     const GC_NAME: &'static str = "grBigBlueRoute_Track";
     const GC_SIZE: u32 = 0x10;
@@ -41462,6 +44949,8 @@ pub struct grBigBlueRoute_GroundVars2 {
     pub xCC: Vec,
     pub tracks: [grBigBlueRoute_Track; 4],
 }
+impl grBigBlueRoute_GroundVars2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grBigBlueRoute_GroundVars2 {
     const GC_NAME: &'static str = "grBigBlueRoute_GroundVars2";
     const GC_SIZE: u32 = 0x54;
@@ -41485,6 +44974,8 @@ pub struct grCastle_GroundVars {
     pub pad: [u8; 20],
     pub xE0: *mut *mut HSD_Spline,
 }
+impl grCastle_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCastle_GroundVars {
     const GC_NAME: &'static str = "grCastle_GroundVars";
     const GC_SIZE: u32 = 0x20;
@@ -41505,6 +44996,8 @@ pub struct grCastle_GroundVars3 {
     pub pad_0: [u8; 28],
     pub x1C: [DynamicsDesc; 12],
 }
+impl grCastle_GroundVars3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCastle_GroundVars3 {
     const GC_NAME: &'static str = "grCastle_GroundVars3";
     const GC_SIZE: u32 = 0x10C;
@@ -41526,6 +45019,8 @@ pub struct grCastle_GroundVars4 {
     pub xDA: i16,
     pub xDC: i16,
 }
+impl grCastle_GroundVars4 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCastle_GroundVars4 {
     const GC_NAME: &'static str = "grCastle_GroundVars4";
     const GC_SIZE: u32 = 0x1A;
@@ -41550,6 +45045,8 @@ pub struct grCastle_GroundVars2 {
     pub xD0: i16,
     pub xD2: i16,
 }
+impl grCastle_GroundVars2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCastle_GroundVars2 {
     const GC_NAME: &'static str = "grCastle_GroundVars2";
     const GC_SIZE: u32 = 0x10;
@@ -41573,6 +45070,8 @@ pub struct grCastle_GroundVars5 {
     pub pad_C8: [u8; 4],
     pub xCC: *mut HSD_GObj,
 }
+impl grCastle_GroundVars5 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCastle_GroundVars5 {
     const GC_NAME: &'static str = "grCastle_GroundVars5";
     const GC_SIZE: u32 = 0xC;
@@ -41596,6 +45095,8 @@ pub struct grCastle_GroundVars6 {
     pub pad_CA: [u8; 2],
     pub xCC: i32,
 }
+impl grCastle_GroundVars6 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCastle_GroundVars6 {
     const GC_NAME: &'static str = "grCastle_GroundVars6";
     const GC_SIZE: u32 = 0xC;
@@ -41620,6 +45121,8 @@ pub struct grCastle_GroundVars7 {
     pub xD4: u32,
     pub xD8: i32,
 }
+impl grCastle_GroundVars7 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCastle_GroundVars7 {
     const GC_NAME: &'static str = "grCastle_GroundVars7";
     const GC_SIZE: u32 = 0x18;
@@ -41644,6 +45147,8 @@ pub struct grCastle_Platform {
     pub timer: i16,
     pub wind: f32,
 }
+impl grCastle_Platform { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCastle_Platform {
     const GC_NAME: &'static str = "grCastle_Platform";
     const GC_SIZE: u32 = 0x10;
@@ -41664,6 +45169,8 @@ const _: () = assert!(core::mem::size_of::<grCastle_Platform>() == 24);
 pub struct grCastle_GroundVars8 {
     pub plat: [grCastle_Platform; 2],
 }
+impl grCastle_GroundVars8 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCastle_GroundVars8 {
     const GC_NAME: &'static str = "grCastle_GroundVars8";
     const GC_SIZE: u32 = 0x20;
@@ -41697,6 +45204,8 @@ impl grCastle_GroundVars9 {
     #[inline] #[allow(unused_unsafe)] pub fn xDE_b0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_1a, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_xDE_b0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_1a, 7, 1, (v as u64) & 0x1) } }
 }
+impl grCastle_GroundVars9 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCastle_GroundVars9 {
     const GC_NAME: &'static str = "grCastle_GroundVars9";
     const GC_SIZE: u32 = 0x10C;
@@ -41735,6 +45244,8 @@ pub struct grCastle_GroundVars10 {
     pub pad_7A: [u8; 2],
     pub baseY: [f32; 5],
 }
+impl grCastle_GroundVars10 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCastle_GroundVars10 {
     const GC_NAME: &'static str = "grCastle_GroundVars10";
     const GC_SIZE: u32 = 0x90;
@@ -41770,6 +45281,8 @@ pub struct grCastle_GroundVars11 {
     pub xD4: u32,
     pub xD8: u32,
 }
+impl grCastle_GroundVars11 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCastle_GroundVars11 {
     const GC_NAME: &'static str = "grCastle_GroundVars11";
     const GC_SIZE: u32 = 0x18;
@@ -41819,6 +45332,8 @@ impl grCastle_GroundVars11_xC4 {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl grCastle_GroundVars11_xC4 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCastle_GroundVars11_xC4 {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:1591:21)";
     const GC_SIZE: u32 = 0x1;
@@ -41843,6 +45358,8 @@ pub struct grCastle_GroundVars12 {
     pub xD0: i16,
     pub xD2: i16,
 }
+impl grCastle_GroundVars12 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grCastle_GroundVars12 {
     const GC_NAME: &'static str = "grCastle_GroundVars12";
     const GC_SIZE: u32 = 0x10;
@@ -41863,6 +45380,8 @@ pub struct grPura_GroundVars {
     pub xC6: i16,
     pub xC8: i16,
 }
+impl grPura_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grPura_GroundVars {
     const GC_NAME: &'static str = "grPura_GroundVars";
     const GC_SIZE: u32 = 0x6;
@@ -41882,6 +45401,8 @@ pub struct grPura_GroundVars2 {
     pub xC4: u32,
     pub xC8: *mut HSD_JObj,
 }
+impl grPura_GroundVars2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grPura_GroundVars2 {
     const GC_NAME: &'static str = "grPura_GroundVars2";
     const GC_SIZE: u32 = 0x8;
@@ -41900,6 +45421,8 @@ pub struct grPura_GroundVars3 {
     pub xC4: [*mut HSD_JObj; 25],
     pub x128: [*mut CmSubject; 25],
 }
+impl grPura_GroundVars3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grPura_GroundVars3 {
     const GC_NAME: &'static str = "grPura_GroundVars3";
     const GC_SIZE: u32 = 0xC8;
@@ -41918,6 +45441,8 @@ pub struct Randall {
     pub timer: i16,
     pub jobj: *mut HSD_JObj,
 }
+impl Randall { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Randall {
     const GC_NAME: &'static str = "Randall";
     const GC_SIZE: u32 = 0x8;
@@ -41937,6 +45462,8 @@ pub struct ShyGuys {
     pub pattern: i8,
     pub timer: i32,
 }
+impl ShyGuys { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ShyGuys {
     const GC_NAME: &'static str = "ShyGuys";
     const GC_SIZE: u32 = 0x8;
@@ -41964,6 +45491,8 @@ pub struct grShrineroute_GroundVars {
     pub xD4: u32,
     pub platforms: [grShrineroute_GroundVars_platforms; 3],
 }
+impl grShrineroute_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grShrineroute_GroundVars {
     const GC_NAME: &'static str = "grShrineroute_GroundVars";
     const GC_SIZE: u32 = 0x44;
@@ -41990,6 +45519,8 @@ pub struct grShrineroute_GroundVars_platforms {
     pub offset: Vec,
     pub jobj: *mut HSD_JObj,
 }
+impl grShrineroute_GroundVars_platforms { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grShrineroute_GroundVars_platforms {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:1653:21)";
     const GC_SIZE: u32 = 0x10;
@@ -42012,6 +45543,8 @@ pub struct grShrineroute_GroundVars2 {
     pub x16C: *mut HSD_LObj,
     pub x170: *mut HSD_LObj,
 }
+impl grShrineroute_GroundVars2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grShrineroute_GroundVars2 {
     const GC_NAME: &'static str = "grShrineroute_GroundVars2";
     const GC_SIZE: u32 = 0xB0;
@@ -42041,6 +45574,8 @@ pub struct grShrineroute_GroundVars3 {
     pub xE0: f32,
     pub xE4: *mut HSD_JObj,
 }
+impl grShrineroute_GroundVars3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grShrineroute_GroundVars3 {
     const GC_NAME: &'static str = "grShrineroute_GroundVars3";
     const GC_SIZE: u32 = 0x24;
@@ -42068,6 +45603,8 @@ pub struct grNBa_BG_Vars {
     pub prev: i32,
     pub timer: i32,
 }
+impl grNBa_BG_Vars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grNBa_BG_Vars {
     const GC_NAME: &'static str = "grNBa_BG_Vars";
     const GC_SIZE: u32 = 0x10;
@@ -42094,6 +45631,8 @@ pub struct Last_GroundVars {
     pub xDC: f32,
     pub xE0: *mut HSD_Generator,
 }
+impl Last_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Last_GroundVars {
     const GC_NAME: &'static str = "Last_GroundVars";
     const GC_SIZE: u32 = 0x20;
@@ -42122,6 +45661,8 @@ pub struct grPushOn_GroundVars {
     pub point_light: *mut HSD_LObj,
     pub spot_light: *mut HSD_LObj,
 }
+impl grPushOn_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grPushOn_GroundVars {
     const GC_NAME: &'static str = "grPushOn_GroundVars";
     const GC_SIZE: u32 = 0xB0;
@@ -42158,6 +45699,8 @@ impl ScrollVars {
     #[inline] #[allow(unused_unsafe)] pub fn x0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 7, 1, (v as u64) & 0x1) } }
 }
+impl ScrollVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ScrollVars {
     const GC_NAME: &'static str = "ScrollVars";
     const GC_SIZE: u32 = 0x48;
@@ -42188,6 +45731,8 @@ pub struct grHomeRun_GroundVars {
     pub bg_gobj: [*mut HSD_GObj; 4],
     pub xE8_flags: grHomeRun_GroundVars_xE8_flags,
 }
+impl grHomeRun_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grHomeRun_GroundVars {
     const GC_NAME: &'static str = "grHomeRun_GroundVars";
     const GC_SIZE: u32 = 0x28;
@@ -42236,6 +45781,8 @@ impl grHomeRun_GroundVars_xE8_flags {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl grHomeRun_GroundVars_xE8_flags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grHomeRun_GroundVars_xE8_flags {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:1727:21)";
     const GC_SIZE: u32 = 0x1;
@@ -42262,6 +45809,8 @@ pub struct grHomeRun_GroundVars2 {
     pub xCC: i32,
     pub xD0: f32,
 }
+impl grHomeRun_GroundVars2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grHomeRun_GroundVars2 {
     const GC_NAME: &'static str = "grHomeRun_GroundVars2";
     const GC_SIZE: u32 = 0x10;
@@ -42282,6 +45831,8 @@ const _: () = assert!(core::mem::size_of::<grHomeRun_GroundVars2>() == 16);
 pub struct Map_Chikuwa {
     pub pad_0: [i8; 408],
 }
+impl Map_Chikuwa { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Map_Chikuwa {
     const GC_NAME: &'static str = "Map_Chikuwa";
     const GC_SIZE: u32 = 0x198;
@@ -42344,6 +45895,8 @@ impl Map_GroundVars {
     #[inline] #[allow(unused_unsafe)] pub fn xC4_b31(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_xC4_b31(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl Map_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Map_GroundVars {
     const GC_NAME: &'static str = "Map_GroundVars";
     const GC_SIZE: u32 = 0x140;
@@ -42399,6 +45952,8 @@ impl grOldYoshi_Cloud {
     #[inline] #[allow(unused_unsafe)] pub fn xC4_567(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 3, 8) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_xC4_567(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 3, 8, (v as u64) & 0xFF) } }
 }
+impl grOldYoshi_Cloud { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grOldYoshi_Cloud {
     const GC_NAME: &'static str = "grOldYoshi_Cloud";
     const GC_SIZE: u32 = 0x14;
@@ -42420,6 +45975,8 @@ impl GcLayout for grOldYoshi_Cloud {
 pub struct grOldYoshi_Cloud_GroundVars {
     pub cloud: [grOldYoshi_Cloud; 3],
 }
+impl grOldYoshi_Cloud_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grOldYoshi_Cloud_GroundVars {
     const GC_NAME: &'static str = "grOldYoshi_Cloud_GroundVars";
     const GC_SIZE: u32 = 0x3C;
@@ -42436,6 +45993,8 @@ pub struct grOldYoshi_Guest_GroundVars {
     pub xC4: i16,
     pub xC6: i16,
 }
+impl grOldYoshi_Guest_GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grOldYoshi_Guest_GroundVars {
     const GC_NAME: &'static str = "grOldYoshi_Guest_GroundVars";
     const GC_SIZE: u32 = 0x4;
@@ -42465,6 +46024,8 @@ pub struct Ground {
     pub xC0: f32,
     pub u: GroundVars,
 }
+impl Ground { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Ground {
     const GC_NAME: &'static str = "Ground";
     const GC_SIZE: u32 = 0x204;
@@ -42519,6 +46080,8 @@ impl Ground_x10_flags {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl Ground_x10_flags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Ground_x10_flags {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:1804:5)";
     const GC_SIZE: u32 = 0x1;
@@ -42562,6 +46125,8 @@ impl Ground_x11_flags {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl Ground_x11_flags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Ground_x11_flags {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:1814:5)";
     const GC_SIZE: u32 = 0x1;
@@ -42679,6 +46244,8 @@ pub union GroundVars {
     pub car: grBigBlueRoute_GroundVars,
     pub carnull: GroundVars_carnull,
 }
+impl GroundVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GroundVars {
     const GC_NAME: &'static str = "GroundVars";
     const GC_SIZE: u32 = 0x140;
@@ -42793,6 +46360,8 @@ pub struct GroundVars_carnull {
     pub coll_jobj: *mut *mut HSD_JObj,
     pub rank: *mut u8,
 }
+impl GroundVars_carnull { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GroundVars_carnull {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/gr/types.h:1959:9)";
     const GC_SIZE: u32 = 0xC;
@@ -42819,6 +46388,8 @@ pub struct StageParam {
     pub x18: i16,
     pub x1A: [i16; 37],
 }
+impl StageParam { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for StageParam {
     const GC_NAME: &'static str = "StageParam";
     const GC_SIZE: u32 = 0x64;
@@ -42884,6 +46455,8 @@ pub struct GroundParam {
     pub xD4: _GXColor,
     pub xD8: _GXColor,
 }
+impl GroundParam { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GroundParam {
     const GC_NAME: &'static str = "GroundParam";
     const GC_SIZE: u32 = 0xDC;
@@ -42942,6 +46515,8 @@ pub struct UnkStageDatInternal {
     pub x0_fill: [u8; 4],
     pub unk4: u32,
 }
+impl UnkStageDatInternal { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for UnkStageDatInternal {
     const GC_NAME: &'static str = "UnkStageDatInternal";
     const GC_SIZE: u32 = 0x8;
@@ -42971,6 +46546,8 @@ pub struct UnkStageDat_x8_t {
     pub x2C: *mut i16,
     pub x30: i32,
 }
+impl UnkStageDat_x8_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for UnkStageDat_x8_t {
     const GC_NAME: &'static str = "UnkStageDat_x8_t";
     const GC_SIZE: u32 = 0x34;
@@ -43006,6 +46583,8 @@ impl GroundShadowEntry {
     #[inline] #[allow(unused_unsafe)] pub fn flag(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_4, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_flag(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_4, 7, 1, (v as u64) & 0x1) } }
 }
+impl GroundShadowEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for GroundShadowEntry {
     const GC_NAME: &'static str = "GroundShadowEntry";
     const GC_SIZE: u32 = 0x8;
@@ -43033,6 +46612,8 @@ pub struct UnkStageDat {
     pub unk28: *mut *mut UnkStageDatInternal,
     pub unk2C: i32,
 }
+impl UnkStageDat { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for UnkStageDat {
     const GC_NAME: &'static str = "UnkStageDat";
     const GC_SIZE: u32 = 0x30;
@@ -43062,6 +46643,8 @@ pub struct UnkArchiveStruct {
     pub unk4: *mut UnkStageDat,
     pub unk8: u32,
 }
+impl UnkArchiveStruct { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for UnkArchiveStruct {
     const GC_NAME: &'static str = "UnkArchiveStruct";
     const GC_SIZE: u32 = 0xC;
@@ -43084,6 +46667,8 @@ pub struct grZebesRoute_LightData {
     pub upper_point_pos: Vec,
     pub lower_point_pos: Vec,
 }
+impl grZebesRoute_LightData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for grZebesRoute_LightData {
     const GC_NAME: &'static str = "grZebesRoute_LightData";
     const GC_SIZE: u32 = 0x3C;
@@ -43122,6 +46707,8 @@ impl RouteEntryFlags {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl RouteEntryFlags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for RouteEntryFlags {
     const GC_NAME: &'static str = "RouteEntryFlags";
     const GC_SIZE: u32 = 0x1;
@@ -43152,6 +46739,8 @@ pub struct RouteEntry {
     pub x24: f32,
     pub x28: *mut c_void,
 }
+impl RouteEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for RouteEntry {
     const GC_NAME: &'static str = "RouteEntry";
     const GC_SIZE: u32 = 0x2C;
@@ -43202,6 +46791,8 @@ impl IfDamageFlags {
     #[inline] #[allow(unused_unsafe)] pub fn unk1(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk1(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl IfDamageFlags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for IfDamageFlags {
     const GC_NAME: &'static str = "IfDamageFlags";
     const GC_SIZE: u32 = 0x1;
@@ -43224,6 +46815,8 @@ pub struct UnknownClassTypeE {
     pub padding: [i32; 36],
     pub unk28: *mut HSD_JObj,
 }
+impl UnknownClassTypeE { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for UnknownClassTypeE {
     const GC_NAME: &'static str = "UnknownClassTypeE";
     const GC_SIZE: u32 = 0x94;
@@ -43254,6 +46847,8 @@ pub struct IfDamageState {
     pub velocity_y: [f32; 4],
     pub jobjs: [*mut HSD_JObj; 4],
 }
+impl IfDamageState { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for IfDamageState {
     const GC_NAME: &'static str = "IfDamageState";
     const GC_SIZE: u32 = 0x64;
@@ -43290,6 +46885,8 @@ pub struct HudIndex {
     pub damage_mark_matanims: *mut *mut HSD_MatAnimJoint,
     pub damage_mark_shapeanims: *mut *mut HSD_ShapeAnimJoint,
 }
+impl HudIndex { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HudIndex {
     const GC_NAME: &'static str = "HudIndex";
     const GC_SIZE: u32 = 0x278;
@@ -43314,6 +46911,8 @@ pub struct Element_803F9628_Obj_14 {
     pub padding: [i32; 6],
     pub unk1C: i32,
 }
+impl Element_803F9628_Obj_14 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Element_803F9628_Obj_14 {
     const GC_NAME: &'static str = "Element_803F9628_Obj_14";
     const GC_SIZE: u32 = 0x1C;
@@ -43358,6 +46957,8 @@ impl Element_803F9628_x12 {
     #[inline] #[allow(unused_unsafe)] pub fn x7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl Element_803F9628_x12 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Element_803F9628_x12 {
     const GC_NAME: &'static str = "Element_803F9628_x12";
     const GC_SIZE: u32 = 0x1;
@@ -43392,6 +46993,8 @@ pub struct Element_803F9628 {
     pub x20: u32,
     pub x24: u32,
 }
+impl Element_803F9628 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Element_803F9628 {
     const GC_NAME: &'static str = "Element_803F9628";
     const GC_SIZE: u32 = 0x28;
@@ -43446,6 +47049,8 @@ impl Placeholder_8016AE50_flags {
     #[inline] #[allow(unused_unsafe)] pub fn unk1(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_unk1(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl Placeholder_8016AE50_flags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Placeholder_8016AE50_flags {
     const GC_NAME: &'static str = "Placeholder_8016AE50_flags";
     const GC_SIZE: u32 = 0x1;
@@ -43470,6 +47075,8 @@ pub struct Placeholder_8016AE50_ret_val {
     pub unk1: u8,
     pub flags: Placeholder_8016AE50_flags,
 }
+impl Placeholder_8016AE50_ret_val { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Placeholder_8016AE50_ret_val {
     const GC_NAME: &'static str = "Placeholder_8016AE50_ret_val";
     const GC_SIZE: u32 = 0x3;
@@ -43490,6 +47097,8 @@ pub struct ifMagnifyPlayer {
     pub idesc: *mut HSD_ImageDesc,
     pub state: ifMagnifyPlayer_state,
 }
+impl ifMagnifyPlayer { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ifMagnifyPlayer {
     const GC_NAME: &'static str = "ifMagnifyPlayer";
     const GC_SIZE: u32 = 0x10;
@@ -43520,6 +47129,8 @@ impl ifMagnifyPlayer_state {
     #[inline] #[allow(unused_unsafe)] pub fn edge(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 6) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_edge(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 6, (v as u64) & 0x3F) } }
 }
+impl ifMagnifyPlayer_state { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ifMagnifyPlayer_state {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/if/types.h:115:5)";
     const GC_SIZE: u32 = 0x1;
@@ -43544,6 +47155,8 @@ pub struct ifMagnify {
     pub image_descs: [HSD_ImageDesc; 5],
     pub pad: [u8; 4],
 }
+impl ifMagnify { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ifMagnify {
     const GC_NAME: &'static str = "ifMagnify";
     const GC_SIZE: u32 = 0xF0;
@@ -43591,6 +47204,8 @@ impl DevText {
     #[inline] #[allow(unused_unsafe)] pub fn current_color(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_27, 0, 2) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_current_color(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_27, 0, 2, (v as u64) & 0x3) } }
 }
+impl DevText { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for DevText {
     const GC_NAME: &'static str = "DevText";
     const GC_SIZE: u32 = 0x34;
@@ -43635,6 +47250,8 @@ pub struct un_804D6EF4_t {
     pub x5D: i8,
     pub x5E: i8,
 }
+impl un_804D6EF4_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for un_804D6EF4_t {
     const GC_NAME: &'static str = "un_804D6EF4_t";
     const GC_SIZE: u32 = 0x60;
@@ -43664,6 +47281,8 @@ pub struct un_80301C64_t {
     pub x0: *mut c_void,
     pub x4: i32,
 }
+impl un_80301C64_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for un_80301C64_t {
     const GC_NAME: &'static str = "un_80301C64_t";
     const GC_SIZE: u32 = 0x8;
@@ -43688,6 +47307,8 @@ pub struct un_80304138_objalloc_t_x8 {
     pub x18: f32,
     pub x1C: f32,
 }
+impl un_80304138_objalloc_t_x8 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for un_80304138_objalloc_t_x8 {
     const GC_NAME: &'static str = "un_80304138_objalloc_t_x8";
     const GC_SIZE: u32 = 0x20;
@@ -43719,6 +47340,8 @@ pub struct un_80304138_objalloc_t {
     pub prev: *mut un_80304138_objalloc_t,
     pub next: *mut un_80304138_objalloc_t,
 }
+impl un_80304138_objalloc_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for un_80304138_objalloc_t {
     const GC_NAME: &'static str = "un_80304138_objalloc_t";
     const GC_SIZE: u32 = 0x20;
@@ -43744,6 +47367,8 @@ pub struct IfStockUserData {
     pub player: u8,
     pub mode: u8,
 }
+impl IfStockUserData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for IfStockUserData {
     const GC_NAME: &'static str = "IfStockUserData";
     const GC_SIZE: u32 = 0x2;
@@ -43773,6 +47398,8 @@ pub struct ifStock_804A1378_per_player {
     pub coins: i32,
     pub stocks: i32,
 }
+impl ifStock_804A1378_per_player { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ifStock_804A1378_per_player {
     const GC_NAME: &'static str = "ifStock_804A1378_per_player";
     const GC_SIZE: u32 = 0x50;
@@ -43803,6 +47430,8 @@ pub struct IfStockStealAnim {
     pub mid: Vec,
     pub end: Vec,
 }
+impl IfStockStealAnim { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for IfStockStealAnim {
     const GC_NAME: &'static str = "IfStockStealAnim";
     const GC_SIZE: u32 = 0x24;
@@ -43826,6 +47455,8 @@ pub struct ifStock_804A1378_x204 {
     pub anim: [u8; 7],
     pub steal: [IfStockStealAnim; 2],
 }
+impl ifStock_804A1378_x204 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ifStock_804A1378_x204 {
     const GC_NAME: &'static str = "ifStock_804A1378_x204";
     const GC_SIZE: u32 = 0x54;
@@ -43857,6 +47488,8 @@ pub struct ifStock_804A1378 {
     pub jobj_d: *mut HSD_JObj,
     pub x204: [ifStock_804A1378_x204; 6],
 }
+impl ifStock_804A1378 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ifStock_804A1378 {
     const GC_NAME: &'static str = "ifStock_804A1378";
     const GC_SIZE: u32 = 0x3FC;
@@ -43887,6 +47520,8 @@ pub struct ifStock_804A1774 {
     pub x108: i32,
     pub x10C: [*mut HSD_GObj; 131],
 }
+impl ifStock_804A1774 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ifStock_804A1774 {
     const GC_NAME: &'static str = "ifStock_804A1774";
     const GC_SIZE: u32 = 0x318;
@@ -43911,6 +47546,8 @@ pub struct ifStock_804A1ACC {
     pub x108: *mut HSD_GObj,
     pub x10C: [*mut HSD_GObj; 130],
 }
+impl ifStock_804A1ACC { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ifStock_804A1ACC {
     const GC_NAME: &'static str = "ifStock_804A1ACC";
     const GC_SIZE: u32 = 0x314;
@@ -43932,6 +47569,8 @@ pub struct IfStockData {
     pub x0: [u8; 12],
     pub anim: [IfStockStealAnim; 2],
 }
+impl IfStockData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for IfStockData {
     const GC_NAME: &'static str = "IfStockData";
     const GC_SIZE: u32 = 0x54;
@@ -43949,6 +47588,8 @@ const _: () = assert!(core::mem::size_of::<IfStockData>() == 84);
 pub struct IfStockDataOffset {
     pub x0: [u8; 516],
 }
+impl IfStockDataOffset { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for IfStockDataOffset {
     const GC_NAME: &'static str = "IfStockDataOffset";
     const GC_SIZE: u32 = 0x204;
@@ -43965,6 +47606,8 @@ const _: () = assert!(core::mem::size_of::<IfStockDataOffset>() == 516);
 pub struct itCLinkMilk_ItemVars {
     pub x0: *mut Fighter_GObj,
 }
+impl itCLinkMilk_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itCLinkMilk_ItemVars {
     const GC_NAME: &'static str = "itCLinkMilk_ItemVars";
     const GC_SIZE: u32 = 0x4;
@@ -43988,6 +47631,8 @@ impl itClimbersBlizzard_ItemVars {
     #[inline] #[allow(unused_unsafe)] pub fn flag0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_4, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_flag0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_4, 7, 1, (v as u64) & 0x1) } }
 }
+impl itClimbersBlizzard_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itClimbersBlizzard_ItemVars {
     const GC_NAME: &'static str = "itClimbersBlizzard_ItemVars";
     const GC_SIZE: u32 = 0x8;
@@ -44008,6 +47653,8 @@ pub struct itClimbersBlizzardAttributes {
     pub xC: f32,
     pub x10: f32,
 }
+impl itClimbersBlizzardAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itClimbersBlizzardAttributes {
     const GC_NAME: &'static str = "itClimbersBlizzardAttributes";
     const GC_SIZE: u32 = 0x14;
@@ -44036,6 +47683,8 @@ impl itClimbersIce_ItemVars {
     #[inline] #[allow(unused_unsafe)] pub fn x8_b0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_8, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x8_b0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_8, 7, 1, (v as u64) & 0x1) } }
 }
+impl itClimbersIce_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itClimbersIce_ItemVars {
     const GC_NAME: &'static str = "itClimbersIce_ItemVars";
     const GC_SIZE: u32 = 0xC;
@@ -44063,6 +47712,8 @@ pub struct itClimbersStringAttributes {
     pub x24_joint: *mut HSD_Joint,
     pub x28_joint: *mut HSD_Joint,
 }
+impl itClimbersStringAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itClimbersStringAttributes {
     const GC_NAME: &'static str = "itClimbersStringAttributes";
     const GC_SIZE: u32 = 0x2C;
@@ -44101,6 +47752,8 @@ pub struct itClimbersIceAttributes {
     pub x2C: i32,
     pub x30: u32,
 }
+impl itClimbersIceAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itClimbersIceAttributes {
     const GC_NAME: &'static str = "itClimbersIceAttributes";
     const GC_SIZE: u32 = 0x34;
@@ -44129,6 +47782,8 @@ const _: () = assert!(core::mem::size_of::<itClimbersIceAttributes>() == 52);
 pub struct itNessbat_ItemVars {
     pub x0: *mut HSD_GObj,
 }
+impl itNessbat_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itNessbat_ItemVars {
     const GC_NAME: &'static str = "itNessbat_ItemVars";
     const GC_SIZE: u32 = 0x4;
@@ -44147,6 +47802,8 @@ pub struct itNesspkthundertrail_ItemVars {
     pub x4: i32,
     pub x8: i32,
 }
+impl itNesspkthundertrail_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itNesspkthundertrail_ItemVars {
     const GC_NAME: &'static str = "itNesspkthundertrail_ItemVars";
     const GC_SIZE: u32 = 0xC;
@@ -44168,6 +47825,8 @@ pub struct itDrMarioPill_ItemVars {
     pub x8: f32,
     pub xC: f32,
 }
+impl itDrMarioPill_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itDrMarioPill_ItemVars {
     const GC_NAME: &'static str = "itDrMarioPill_ItemVars";
     const GC_SIZE: u32 = 0x10;
@@ -44191,6 +47850,8 @@ pub struct itDrMarioPillAttributes {
     pub xC: f32,
     pub x10: f32,
 }
+impl itDrMarioPillAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itDrMarioPillAttributes {
     const GC_NAME: &'static str = "itDrMarioPillAttributes";
     const GC_SIZE: u32 = 0x14;
@@ -44233,6 +47894,8 @@ pub struct itHitodemanAttributes {
     pub x54: f32,
     pub x58: f32,
 }
+impl itHitodemanAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itHitodemanAttributes {
     const GC_NAME: &'static str = "itHitodemanAttributes";
     const GC_SIZE: u32 = 0x5C;
@@ -44274,6 +47937,8 @@ pub struct itFireAttributes {
     pub x8: f32,
     pub xC: f32,
 }
+impl itFireAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itFireAttributes {
     const GC_NAME: &'static str = "itFireAttributes";
     const GC_SIZE: u32 = 0x10;
@@ -44293,6 +47958,8 @@ const _: () = assert!(core::mem::size_of::<itFireAttributes>() == 16);
 pub struct itThunderAttributes {
     pub x0: f32,
 }
+impl itThunderAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itThunderAttributes {
     const GC_NAME: &'static str = "itThunderAttributes";
     const GC_SIZE: u32 = 0x4;
@@ -44319,6 +47986,8 @@ pub struct itFoxBlaster_ItemVars {
     pub set_sfx_var2: i32,
     pub owner: *mut HSD_GObj,
 }
+impl itFoxBlaster_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itFoxBlaster_ItemVars {
     const GC_NAME: &'static str = "itFoxBlaster_ItemVars";
     const GC_SIZE: u32 = 0xAC;
@@ -44346,6 +48015,8 @@ pub struct itGamewatchrescue_ItemVars {
     pub xDD4: i32,
     pub xDD8: *mut Item_GObj,
 }
+impl itGamewatchrescue_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itGamewatchrescue_ItemVars {
     const GC_NAME: &'static str = "itGamewatchrescue_ItemVars";
     const GC_SIZE: u32 = 0x8;
@@ -44378,6 +48049,8 @@ pub struct itLeadead_ItemVars {
     pub xE4C_scale: f32,
     pub xE50: _itECB,
 }
+impl itLeadead_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLeadead_ItemVars {
     const GC_NAME: &'static str = "itLeadead_ItemVars";
     const GC_SIZE: u32 = 0x8C;
@@ -44418,6 +48091,8 @@ pub struct FoxBlasterAttr {
     pub x20: f32,
     pub x24: f32,
 }
+impl FoxBlasterAttr { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for FoxBlasterAttr {
     const GC_NAME: &'static str = "FoxBlasterAttr";
     const GC_SIZE: u32 = 0x28;
@@ -44446,6 +48121,8 @@ pub struct itFoxLaser_ItemVars {
     pub speed: f32,
     pub pos: Vec,
 }
+impl itFoxLaser_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itFoxLaser_ItemVars {
     const GC_NAME: &'static str = "itFoxLaser_ItemVars";
     const GC_SIZE: u32 = 0x18;
@@ -44483,6 +48160,8 @@ pub struct itArwingLaser_ItemVars {
     pub xE48: i32,
     pub xE4C: i32,
 }
+impl itArwingLaser_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itArwingLaser_ItemVars {
     const GC_NAME: &'static str = "itArwingLaser_ItemVars";
     const GC_SIZE: u32 = 0x7C;
@@ -44526,6 +48205,8 @@ pub struct FoxLaserAttr {
     pub x20: f32,
     pub x24: f32,
 }
+impl FoxLaserAttr { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for FoxLaserAttr {
     const GC_NAME: &'static str = "FoxLaserAttr";
     const GC_SIZE: u32 = 0x28;
@@ -44553,6 +48234,8 @@ pub struct itFoxIllusion_ItemVars {
     pub xDD8: f32,
     pub xDDC: *mut HSD_JObj,
 }
+impl itFoxIllusion_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itFoxIllusion_ItemVars {
     const GC_NAME: &'static str = "itFoxIllusion_ItemVars";
     const GC_SIZE: u32 = 0xC;
@@ -44572,6 +48255,8 @@ pub struct FoxIllusionAttr {
     pub x0: f32,
     pub x4: f32,
 }
+impl FoxIllusionAttr { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for FoxIllusionAttr {
     const GC_NAME: &'static str = "FoxIllusionAttr";
     const GC_SIZE: u32 = 0x8;
@@ -44589,6 +48274,8 @@ const _: () = assert!(core::mem::size_of::<FoxIllusionAttr>() == 8);
 pub struct itKirbyHammer_ItemVars {
     pub x0: u32,
 }
+impl itKirbyHammer_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itKirbyHammer_ItemVars {
     const GC_NAME: &'static str = "itKirbyHammer_ItemVars";
     const GC_SIZE: u32 = 0x4;
@@ -44608,6 +48295,8 @@ pub struct itKirbyCutterBeam_ItemVars {
     pub dir: Vec,
     pub init_pos: Vec,
 }
+impl itKirbyCutterBeam_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itKirbyCutterBeam_ItemVars {
     const GC_NAME: &'static str = "itKirbyCutterBeam_ItemVars";
     const GC_SIZE: u32 = 0x20;
@@ -44636,6 +48325,8 @@ pub struct itKirby2F23_ItemVars {
     pub x1E8: Vec,
     pub x1F4: f32,
 }
+impl itKirby2F23_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itKirby2F23_ItemVars {
     const GC_NAME: &'static str = "itKirby2F23_ItemVars";
     const GC_SIZE: u32 = 0x1F8;
@@ -44697,6 +48388,8 @@ impl ItemLink {
     #[inline] #[allow(unused_unsafe)] pub fn x2C_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_2c, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x2C_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_2c, 0, 1, (v as u64) & 0x1) } }
 }
+impl ItemLink { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ItemLink {
     const GC_NAME: &'static str = "ItemLink";
     const GC_SIZE: u32 = 0x1D8;
@@ -44752,6 +48445,8 @@ pub struct itLinkHookshot_ItemVars {
     pub x5C: f32,
     pub x60: f32,
 }
+impl itLinkHookshot_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLinkHookshot_ItemVars {
     const GC_NAME: &'static str = "itLinkHookshot_ItemVars";
     const GC_SIZE: u32 = 0x64;
@@ -44815,6 +48510,8 @@ pub struct itLinkHookshotAttributes {
     pub x58: *mut HSD_Joint,
     pub x5C: *mut HSD_Joint,
 }
+impl itLinkHookshotAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLinkHookshotAttributes {
     const GC_NAME: &'static str = "itLinkHookshotAttributes";
     const GC_SIZE: u32 = 0x60;
@@ -44861,6 +48558,8 @@ pub struct itLinkBomb_ItemVars {
     pub xC: f32,
     pub x10: *mut Item_GObj,
 }
+impl itLinkBomb_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLinkBomb_ItemVars {
     const GC_NAME: &'static str = "itLinkBomb_ItemVars";
     const GC_SIZE: u32 = 0x14;
@@ -44896,6 +48595,8 @@ pub struct itLinkBombAttributes {
     pub x30: f32,
     pub vel: [f32; 3],
 }
+impl itLinkBombAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLinkBombAttributes {
     const GC_NAME: &'static str = "itLinkBombAttributes";
     const GC_SIZE: u32 = 0x40;
@@ -44942,6 +48643,8 @@ pub struct itLinkBoomerang_ItemVars {
     pub xF90: [*mut HSD_JObj; 2],
     pub xF98: *mut Item_GObj,
 }
+impl itLinkBoomerang_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLinkBoomerang_ItemVars {
     const GC_NAME: &'static str = "itLinkBoomerang_ItemVars";
     const GC_SIZE: u32 = 0x1C8;
@@ -44977,6 +48680,8 @@ pub struct AnimBundle {
     pub matanim: *mut HSD_MatAnimJoint,
     pub shapeanim: *mut HSD_ShapeAnimJoint,
 }
+impl AnimBundle { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for AnimBundle {
     const GC_NAME: &'static str = "AnimBundle";
     const GC_SIZE: u32 = 0xC;
@@ -45015,6 +48720,8 @@ pub struct itLinkBoomerangAttributes {
     pub x4C_anim: AnimBundle,
     pub x58_anim: AnimBundle,
 }
+impl itLinkBoomerangAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLinkBoomerangAttributes {
     const GC_NAME: &'static str = "itLinkBoomerangAttributes";
     const GC_SIZE: u32 = 0x64;
@@ -45087,6 +48794,8 @@ pub struct itLinkArrow_ItemVars {
     pub xEC: f32,
     pub xF0: i32,
 }
+impl itLinkArrow_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLinkArrow_ItemVars {
     const GC_NAME: &'static str = "itLinkArrow_ItemVars";
     const GC_SIZE: u32 = 0xF4;
@@ -45150,6 +48859,8 @@ pub struct itLinkArrowAttributes {
     pub x28: *mut HSD_Joint,
     pub x2C: f32,
 }
+impl itLinkArrowAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLinkArrowAttributes {
     const GC_NAME: &'static str = "itLinkArrowAttributes";
     const GC_SIZE: u32 = 0x30;
@@ -45178,6 +48889,8 @@ pub struct itLinkBow_ItemVars {
     pub x0: f32,
     pub x4: *mut HSD_GObj,
 }
+impl itLinkBow_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLinkBow_ItemVars {
     const GC_NAME: &'static str = "itLinkBow_ItemVars";
     const GC_SIZE: u32 = 0x8;
@@ -45195,6 +48908,8 @@ const _: () = assert!(core::mem::size_of::<itLinkBow_ItemVars>() == 16);
 pub struct itMasterHandBullet_ItemVars {
     pub x0: f32,
 }
+impl itMasterHandBullet_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itMasterHandBullet_ItemVars {
     const GC_NAME: &'static str = "itMasterHandBullet_ItemVars";
     const GC_SIZE: u32 = 0x4;
@@ -45211,6 +48926,8 @@ const _: () = assert!(core::mem::size_of::<itMasterHandBullet_ItemVars>() == 4);
 pub struct itMasterHandBulletAttributes {
     pub x0: f32,
 }
+impl itMasterHandBulletAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itMasterHandBulletAttributes {
     const GC_NAME: &'static str = "itMasterHandBulletAttributes";
     const GC_SIZE: u32 = 0x4;
@@ -45230,6 +48947,8 @@ pub struct itMasterHandLaser_ItemVars {
     pub x8: i32,
     pub x10: *mut HSD_JObj,
 }
+impl itMasterHandLaser_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itMasterHandLaser_ItemVars {
     const GC_NAME: &'static str = "itMasterHandLaser_ItemVars";
     const GC_SIZE: u32 = 0x10;
@@ -45250,6 +48969,8 @@ pub struct itMasterHandLaserAttributes {
     pub x0: f32,
     pub x4: f32,
 }
+impl itMasterHandLaserAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itMasterHandLaserAttributes {
     const GC_NAME: &'static str = "itMasterHandLaserAttributes";
     const GC_SIZE: u32 = 0x8;
@@ -45270,6 +48991,8 @@ pub struct itPeachToadSporeAttributes {
     pub x8_speed_decay_rate: f32,
     pub xc_angle: f32,
 }
+impl itPeachToadSporeAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itPeachToadSporeAttributes {
     const GC_NAME: &'static str = "itPeachToadSporeAttributes";
     const GC_SIZE: u32 = 0x10;
@@ -45291,6 +49014,8 @@ pub struct itPeachTurnipAttributes {
     pub x4_length: i32,
     pub x8: [itPeachTurnipAttributes_x8; 8],
 }
+impl itPeachTurnipAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itPeachTurnipAttributes {
     const GC_NAME: &'static str = "itPeachTurnipAttributes";
     const GC_SIZE: u32 = 0x48;
@@ -45310,6 +49035,8 @@ pub struct itPeachTurnipAttributes_x8 {
     pub x0_odds: i32,
     pub x4_damage: i32,
 }
+impl itPeachTurnipAttributes_x8 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itPeachTurnipAttributes_x8 {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/it/itCharItems.h:560:5)";
     const GC_SIZE: u32 = 0x8;
@@ -45332,6 +49059,8 @@ pub struct itPeachTurnip_ItemVars {
     pub xDE4_owner: *mut HSD_GObj,
     pub xDE8_scl: f32,
 }
+impl itPeachTurnip_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itPeachTurnip_ItemVars {
     const GC_NAME: &'static str = "itPeachTurnip_ItemVars";
     const GC_SIZE: u32 = 0x18;
@@ -45359,6 +49088,8 @@ pub struct itPikachutJoltGround_ItemVars {
     pub xDF4: Vec,
     pub xE00: Vec,
 }
+impl itPikachutJoltGround_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itPikachutJoltGround_ItemVars {
     const GC_NAME: &'static str = "itPikachutJoltGround_ItemVars";
     const GC_SIZE: u32 = 0x38;
@@ -45386,6 +49117,8 @@ pub struct itPikachutJoltAir_ItemVars {
     pub xDE8: Vec,
     pub xDF4: i32,
 }
+impl itPikachutJoltAir_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itPikachutJoltAir_ItemVars {
     const GC_NAME: &'static str = "itPikachutJoltAir_ItemVars";
     const GC_SIZE: u32 = 0x24;
@@ -45416,6 +49149,8 @@ pub struct itPikachuthunder_ItemVars {
     pub x34: *mut Item_GObj,
     pub x38: *mut Item_GObj,
 }
+impl itPikachuthunder_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itPikachuthunder_ItemVars {
     const GC_NAME: &'static str = "itPikachuthunder_ItemVars";
     const GC_SIZE: u32 = 0x3C;
@@ -45445,6 +49180,8 @@ pub struct itPikachutJoltGroundAttributes {
     pub x8: f32,
     pub xC: f32,
 }
+impl itPikachutJoltGroundAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itPikachutJoltGroundAttributes {
     const GC_NAME: &'static str = "itPikachutJoltGroundAttributes";
     const GC_SIZE: u32 = 0x10;
@@ -45466,6 +49203,8 @@ pub struct itPikachuthunderAttributes {
     pub x4: f32,
     pub x8: f32,
 }
+impl itPikachuthunderAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itPikachuthunderAttributes {
     const GC_NAME: &'static str = "itPikachuthunderAttributes";
     const GC_SIZE: u32 = 0xC;
@@ -45490,6 +49229,8 @@ pub struct itSamusBombAttributes {
     pub x14: f32,
     pub x18: f32,
 }
+impl itSamusBombAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itSamusBombAttributes {
     const GC_NAME: &'static str = "itSamusBombAttributes";
     const GC_SIZE: u32 = 0x1C;
@@ -45513,6 +49254,8 @@ pub struct itSamusBomb_ItemVars {
     pub x0: i32,
     pub owner: *mut Fighter_GObj,
 }
+impl itSamusBomb_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itSamusBomb_ItemVars {
     const GC_NAME: &'static str = "itSamusBomb_ItemVars";
     const GC_SIZE: u32 = 0x8;
@@ -45547,6 +49290,8 @@ pub struct itSamusChargeshot_ItemVars {
     pub xE34: f32,
     pub padding: [u32; 15],
 }
+impl itSamusChargeshot_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itSamusChargeshot_ItemVars {
     const GC_NAME: &'static str = "itSamusChargeshot_ItemVars";
     const GC_SIZE: u32 = 0xA0;
@@ -45587,6 +49332,8 @@ pub struct itSamusChargeShot_Attributes {
     pub x18: f32,
     pub x1C: f32,
 }
+impl itSamusChargeShot_Attributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itSamusChargeShot_Attributes {
     const GC_NAME: &'static str = "itSamusChargeShot_Attributes";
     const GC_SIZE: u32 = 0x20;
@@ -45617,6 +49364,8 @@ pub struct itSamusGrapple_ItemVars {
     pub x15: u8,
     pub x16: u8,
 }
+impl itSamusGrapple_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itSamusGrapple_ItemVars {
     const GC_NAME: &'static str = "itSamusGrapple_ItemVars";
     const GC_SIZE: u32 = 0x18;
@@ -45683,6 +49432,8 @@ pub struct itSamusGrappleAttributes {
     pub xA8: *mut *mut HSD_MatAnimJoint,
     pub xAC: *mut *mut HSD_ShapeAnimJoint,
 }
+impl itSamusGrappleAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itSamusGrappleAttributes {
     const GC_NAME: &'static str = "itSamusGrappleAttributes";
     const GC_SIZE: u32 = 0xB0;
@@ -45757,6 +49508,8 @@ pub struct itSamusMissileAttributes {
     pub x38: f32,
     pub x3C: f32,
 }
+impl itSamusMissileAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itSamusMissileAttributes {
     const GC_NAME: &'static str = "itSamusMissileAttributes";
     const GC_SIZE: u32 = 0x40;
@@ -45792,6 +49545,8 @@ pub struct itSamusMissile_ItemVars {
     pub owner: *mut Fighter_GObj,
     pub x10: *mut HSD_GObj,
 }
+impl itSamusMissile_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itSamusMissile_ItemVars {
     const GC_NAME: &'static str = "itSamusMissile_ItemVars";
     const GC_SIZE: u32 = 0x14;
@@ -45812,6 +49567,8 @@ const _: () = assert!(core::mem::size_of::<itSamusMissile_ItemVars>() == 32);
 pub struct itSeakNeedleHeld_ItemVars {
     pub owner: *mut Fighter_GObj,
 }
+impl itSeakNeedleHeld_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itSeakNeedleHeld_ItemVars {
     const GC_NAME: &'static str = "itSeakNeedleHeld_ItemVars";
     const GC_SIZE: u32 = 0x4;
@@ -45836,6 +49593,8 @@ pub struct itSeakNeedleThrown_ItemVars {
     pub xDF8: f32,
     pub xDFC: f32,
 }
+impl itSeakNeedleThrown_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itSeakNeedleThrown_ItemVars {
     const GC_NAME: &'static str = "itSeakNeedleThrown_ItemVars";
     const GC_SIZE: u32 = 0x2C;
@@ -45867,6 +49626,8 @@ pub struct itSeakChain_ItemVars {
     pub x18: i32,
     pub history: [Vec; 15],
 }
+impl itSeakChain_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itSeakChain_ItemVars {
     const GC_NAME: &'static str = "itSeakChain_ItemVars";
     const GC_SIZE: u32 = 0xD0;
@@ -45914,6 +49675,8 @@ pub struct itSeakChain_Attrs {
     pub x64_joint: *mut HSD_Joint,
     pub x68_joint: *mut HSD_Joint,
 }
+impl itSeakChain_Attrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itSeakChain_Attrs {
     const GC_NAME: &'static str = "itSeakChain_Attrs";
     const GC_SIZE: u32 = 0x6C;
@@ -45959,6 +49722,8 @@ pub struct itClimbersString_ItemVars {
     pub pad_10: [u8; 4],
     pub x14: *mut HSD_JObj,
 }
+impl itClimbersString_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itClimbersString_ItemVars {
     const GC_NAME: &'static str = "itClimbersString_ItemVars";
     const GC_SIZE: u32 = 0x18;
@@ -45983,6 +49748,8 @@ pub struct itZeldaDinFireExplode_ItemVars {
     pub xDDC: *mut HSD_GObj,
     pub xDE0: i32,
 }
+impl itZeldaDinFireExplode_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itZeldaDinFireExplode_ItemVars {
     const GC_NAME: &'static str = "itZeldaDinFireExplode_ItemVars";
     const GC_SIZE: u32 = 0x10;
@@ -46006,6 +49773,8 @@ pub struct itZeldaDinFireExplodeAttributes {
     pub xC: f32,
     pub x10: f32,
 }
+impl itZeldaDinFireExplodeAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itZeldaDinFireExplodeAttributes {
     const GC_NAME: &'static str = "itZeldaDinFireExplodeAttributes";
     const GC_SIZE: u32 = 0x14;
@@ -46037,6 +49806,8 @@ impl itUnk4_ItemVars {
     #[inline] #[allow(unused_unsafe)] pub fn xDEC_b1(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_18, 6, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_xDEC_b1(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_18, 6, 1, (v as u64) & 0x1) } }
 }
+impl itUnk4_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itUnk4_ItemVars {
     const GC_NAME: &'static str = "itUnk4_ItemVars";
     const GC_SIZE: u32 = 0x48;
@@ -46056,6 +49827,8 @@ pub struct itGamewatchchef_ItemVars {
     pub x0: i32,
     pub x4: i32,
 }
+impl itGamewatchchef_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itGamewatchchef_ItemVars {
     const GC_NAME: &'static str = "itGamewatchchef_ItemVars";
     const GC_SIZE: u32 = 0x8;
@@ -46077,6 +49850,8 @@ pub struct itGamewatchchefAttrEntry {
     pub xC: f32,
     pub x10: f32,
 }
+impl itGamewatchchefAttrEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itGamewatchchefAttrEntry {
     const GC_NAME: &'static str = "itGamewatchchefAttrEntry";
     const GC_SIZE: u32 = 0x14;
@@ -46101,6 +49876,8 @@ pub struct itGamewatchchefAttributes {
     pub xC: f32,
     pub entries: [itGamewatchchefAttrEntry; 1],
 }
+impl itGamewatchchefAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itGamewatchchefAttributes {
     const GC_NAME: &'static str = "itGamewatchchefAttributes";
     const GC_SIZE: u32 = 0x24;
@@ -46121,6 +49898,8 @@ const _: () = assert!(core::mem::size_of::<itGamewatchchefAttributes>() == 40);
 pub struct itGamewatchparachuteAttributes {
     pub x0: *mut c_void,
 }
+impl itGamewatchparachuteAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itGamewatchparachuteAttributes {
     const GC_NAME: &'static str = "itGamewatchparachuteAttributes";
     const GC_SIZE: u32 = 0x4;
@@ -46143,6 +49922,8 @@ pub struct itHinoarashi_ItemVars {
     pub x6C: Vec,
     pub x78: f32,
 }
+impl itHinoarashi_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itHinoarashi_ItemVars {
     const GC_NAME: &'static str = "itHinoarashi_ItemVars";
     const GC_SIZE: u32 = 0x7C;
@@ -46169,6 +49950,8 @@ pub struct itHinoarashiAttributes {
     pub x10: f32,
     pub x14: f32,
 }
+impl itHinoarashiAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itHinoarashiAttributes {
     const GC_NAME: &'static str = "itHinoarashiAttributes";
     const GC_SIZE: u32 = 0x18;
@@ -46190,6 +49973,8 @@ const _: () = assert!(core::mem::size_of::<itHinoarashiAttributes>() == 24);
 pub struct itTools_ItemVars {
     pub x0: i32,
 }
+impl itTools_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itTools_ItemVars {
     const GC_NAME: &'static str = "itTools_ItemVars";
     const GC_SIZE: u32 = 0x4;
@@ -46212,6 +49997,8 @@ pub struct itToolsMotionAttrs {
     pub x14: f32,
     pub x18: f32,
 }
+impl itToolsMotionAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itToolsMotionAttrs {
     const GC_NAME: &'static str = "itToolsMotionAttrs";
     const GC_SIZE: u32 = 0x1C;
@@ -46238,6 +50025,8 @@ pub struct itToolsAttributes {
     pub xC: i32,
     pub motions: [itToolsMotionAttrs; 1],
 }
+impl itToolsAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itToolsAttributes {
     const GC_NAME: &'static str = "itToolsAttributes";
     const GC_SIZE: u32 = 0x2C;
@@ -46264,6 +50053,8 @@ pub struct itNessYoyo_ItemVars {
     pub pad_14: [i8; 4],
     pub x18: *mut HSD_JObj,
 }
+impl itNessYoyo_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itNessYoyo_ItemVars {
     const GC_NAME: &'static str = "itNessYoyo_ItemVars";
     const GC_SIZE: u32 = 0x1C;
@@ -46287,6 +50078,8 @@ pub struct itCapsule_ItemVars {
     pub x0: i32,
     pub x4: i32,
 }
+impl itCapsule_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itCapsule_ItemVars {
     const GC_NAME: &'static str = "itCapsule_ItemVars";
     const GC_SIZE: u32 = 0x8;
@@ -46305,6 +50098,8 @@ pub struct ItCapsuleAttr {
     pub x0: i32,
     pub x4: i32,
 }
+impl ItCapsuleAttr { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ItCapsuleAttr {
     const GC_NAME: &'static str = "ItCapsuleAttr";
     const GC_SIZE: u32 = 0x8;
@@ -46327,6 +50122,8 @@ pub struct itStar_ItemVars {
     pub xvel: f32,
     pub yvel: f32,
 }
+impl itStar_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itStar_ItemVars {
     const GC_NAME: &'static str = "itStar_ItemVars";
     const GC_SIZE: u32 = 0x18;
@@ -46370,6 +50167,8 @@ pub struct itSword_ItemVars {
     pub x54: i32,
     pub x58: f32,
 }
+impl itSword_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itSword_ItemVars {
     const GC_NAME: &'static str = "itSword_ItemVars";
     const GC_SIZE: u32 = 0x5C;
@@ -46411,6 +50210,8 @@ pub struct itBatAttributes {
     pub x8: i32,
     pub xC_vel: f32,
 }
+impl itBatAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itBatAttributes {
     const GC_NAME: &'static str = "itBatAttributes";
     const GC_SIZE: u32 = 0x10;
@@ -46444,6 +50245,8 @@ pub struct itBombHei_ItemVars {
     pub _E08: i32,
     pub xE0C: Vec,
 }
+impl itBombHei_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itBombHei_ItemVars {
     const GC_NAME: &'static str = "itBombHei_ItemVars";
     const GC_SIZE: u32 = 0x44;
@@ -46482,6 +50285,8 @@ pub struct itBombHeiAttributes {
     pub x1C: f32,
     pub x20: Vec,
 }
+impl itBombHeiAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itBombHeiAttributes {
     const GC_NAME: &'static str = "itBombHeiAttributes";
     const GC_SIZE: u32 = 0x2C;
@@ -46510,6 +50315,8 @@ pub struct itBox_ItemVars {
     pub rot_vel_x: f32,
     pub rot_vel_y: f32,
 }
+impl itBox_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itBox_ItemVars {
     const GC_NAME: &'static str = "itBox_ItemVars";
     const GC_SIZE: u32 = 0x14;
@@ -46531,6 +50338,8 @@ pub struct itEvYoshiEgg_DatAttrs {
     pub x0: i32,
     pub x4: *mut u32,
 }
+impl itEvYoshiEgg_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itEvYoshiEgg_DatAttrs {
     const GC_NAME: &'static str = "itEvYoshiEgg_DatAttrs";
     const GC_SIZE: u32 = 0x8;
@@ -46549,6 +50358,8 @@ pub struct itEvYoshiEgg_ItemVars {
     pub xDD4: i32,
     pub xDD8: i32,
 }
+impl itEvYoshiEgg_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itEvYoshiEgg_ItemVars {
     const GC_NAME: &'static str = "itEvYoshiEgg_ItemVars";
     const GC_SIZE: u32 = 0x8;
@@ -46568,6 +50379,8 @@ pub struct itWstar_ItemVars {
     pub xDD8: f32,
     pub xDDC: i32,
 }
+impl itWstar_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itWstar_ItemVars {
     const GC_NAME: &'static str = "itWstar_ItemVars";
     const GC_SIZE: u32 = 0xC;
@@ -46587,6 +50400,8 @@ pub struct itWstarAttrEntry {
     pub x0_anim_joint: *mut HSD_AnimJoint,
     pub x4_sfx: enum_t,
 }
+impl itWstarAttrEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itWstarAttrEntry {
     const GC_NAME: &'static str = "itWstarAttrEntry";
     const GC_SIZE: u32 = 0x8;
@@ -46614,6 +50429,8 @@ pub struct itWstarAttributes {
     pub x24_count: i32,
     pub x28_entries: [itWstarAttrEntry; 1],
 }
+impl itWstarAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itWstarAttributes {
     const GC_NAME: &'static str = "itWstarAttributes";
     const GC_SIZE: u32 = 0x30;
@@ -46650,6 +50467,8 @@ pub struct itKyasarin_ItemVars {
     pub x38: i32,
     pub x3C: i32,
 }
+impl itKyasarin_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itKyasarin_ItemVars {
     const GC_NAME: &'static str = "itKyasarin_ItemVars";
     const GC_SIZE: u32 = 0x40;
@@ -46694,6 +50513,8 @@ pub struct itKyasarinAttributes {
     pub x44: i32,
     pub x48: i32,
 }
+impl itKyasarinAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itKyasarinAttributes {
     const GC_NAME: &'static str = "itKyasarinAttributes";
     const GC_SIZE: u32 = 0x4C;
@@ -46730,6 +50551,8 @@ pub struct itKyasarinEgg_ItemVars {
     pub x20: i32,
     pub x24: f32,
 }
+impl itKyasarinEgg_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itKyasarinEgg_ItemVars {
     const GC_NAME: &'static str = "itKyasarinEgg_ItemVars";
     const GC_SIZE: u32 = 0x28;
@@ -46752,6 +50575,8 @@ pub struct itKyasarinEggAttributes {
     pub xC: i32,
     pub x10: i32,
 }
+impl itKyasarinEggAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itKyasarinEggAttributes {
     const GC_NAME: &'static str = "itKyasarinEggAttributes";
     const GC_SIZE: u32 = 0x14;
@@ -46779,6 +50604,8 @@ pub struct itHououAttr {
     pub x18: f32,
     pub x1C: f32,
 }
+impl itHououAttr { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itHououAttr {
     const GC_NAME: &'static str = "itHououAttr";
     const GC_SIZE: u32 = 0x20;
@@ -46818,6 +50645,8 @@ pub struct itLugiaAttributes {
     pub x3C: f32,
     pub x40: f32,
 }
+impl itLugiaAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLugiaAttributes {
     const GC_NAME: &'static str = "itLugiaAttributes";
     const GC_SIZE: u32 = 0x44;
@@ -46857,6 +50686,8 @@ pub struct itBoxAttributes {
     pub bounce_angle_threshold: f32,
     pub break_vel_threshold: f32,
 }
+impl itBoxAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itBoxAttributes {
     const GC_NAME: &'static str = "itBoxAttributes";
     const GC_SIZE: u32 = 0x20;
@@ -46887,6 +50718,8 @@ pub struct itDosei_ItemVars {
     pub xDF4: f32,
     pub xDF8: Vec,
 }
+impl itDosei_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itDosei_ItemVars {
     const GC_NAME: &'static str = "itDosei_ItemVars";
     const GC_SIZE: u32 = 0x30;
@@ -46915,6 +50748,8 @@ pub struct itHeart_ItemVars {
     pub xDE8_float: f32,
     pub xDEC: f32,
 }
+impl itHeart_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itHeart_ItemVars {
     const GC_NAME: &'static str = "itHeart_ItemVars";
     const GC_SIZE: u32 = 0x1C;
@@ -46937,6 +50772,8 @@ pub union itHeart_ItemVars_xDD8 {
     pub anon_0: itHeart_ItemVars_xDD8_anon_254,
     pub flags: u32,
 }
+impl itHeart_ItemVars_xDD8 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itHeart_ItemVars_xDD8 {
     const GC_NAME: &'static str = "union (unnamed at src/melee/it/itCommonItems.h:253:5)";
     const GC_SIZE: u32 = 0x4;
@@ -46988,6 +50825,8 @@ impl itHeart_ItemVars_xDD8_anon_254 {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl itHeart_ItemVars_xDD8_anon_254 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itHeart_ItemVars_xDD8_anon_254 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/it/itCommonItems.h:254:9)";
     const GC_SIZE: u32 = 0x1;
@@ -47016,6 +50855,8 @@ pub struct HeartContainerAttr {
     pub x14: f32,
     pub x18: f32,
 }
+impl HeartContainerAttr { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HeartContainerAttr {
     const GC_NAME: &'static str = "HeartContainerAttr";
     const GC_SIZE: u32 = 0x1C;
@@ -47038,6 +50879,8 @@ pub union HeartContainerAttr_x4 {
     pub bits: HeartContainerAttr_x4_bits,
     pub flags: u32,
 }
+impl HeartContainerAttr_x4 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HeartContainerAttr_x4 {
     const GC_NAME: &'static str = "union (unnamed at src/melee/it/itCommonItems.h:274:5)";
     const GC_SIZE: u32 = 0x4;
@@ -47081,6 +50924,8 @@ impl HeartContainerAttr_x4_bits {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl HeartContainerAttr_x4_bits { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HeartContainerAttr_x4_bits {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/it/itCommonItems.h:275:9)";
     const GC_SIZE: u32 = 0x1;
@@ -47111,6 +50956,8 @@ impl itTomato_ItemVars {
     #[inline] #[allow(unused_unsafe)] pub fn x4_b0(&self) -> i32 { unsafe { (((melee_core_bits_get(&self.bf_4, 7, 1) as i64) << (64 - 1)) >> (64 - 1)) as i32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x4_b0(&mut self, v: i32) { unsafe { melee_core_bits_set(&mut self.bf_4, 7, 1, (v as u64) & 0x1) } }
 }
+impl itTomato_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itTomato_ItemVars {
     const GC_NAME: &'static str = "itTomato_ItemVars";
     const GC_SIZE: u32 = 0xC;
@@ -47133,6 +50980,8 @@ pub struct MaximTomatoSpecialAttr {
     pub x10: i32,
     pub x14: f32,
 }
+impl MaximTomatoSpecialAttr { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MaximTomatoSpecialAttr {
     const GC_NAME: &'static str = "MaximTomatoSpecialAttr";
     const GC_SIZE: u32 = 0x18;
@@ -47154,6 +51003,8 @@ const _: () = assert!(core::mem::size_of::<MaximTomatoSpecialAttr>() == 24);
 pub struct itLGun_ItemVars {
     pub timer: i32,
 }
+impl itLGun_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLGun_ItemVars {
     const GC_NAME: &'static str = "itLGun_ItemVars";
     const GC_SIZE: u32 = 0x4;
@@ -47171,6 +51022,8 @@ pub struct ItLGunAttr {
     pub max_ammo: i32,
     pub pos: Vec,
 }
+impl ItLGunAttr { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ItLGunAttr {
     const GC_NAME: &'static str = "ItLGunAttr";
     const GC_SIZE: u32 = 0x10;
@@ -47191,6 +51044,8 @@ pub struct itRay_ItemVars {
     pub speed: f32,
     pub pos: Vec,
 }
+impl itRay_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itRay_ItemVars {
     const GC_NAME: &'static str = "itRay_ItemVars";
     const GC_SIZE: u32 = 0x18;
@@ -47212,6 +51067,8 @@ pub struct ItLGunRayAttr {
     pub lifetime: f32,
     pub max_scale: f32,
 }
+impl ItLGunRayAttr { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ItLGunRayAttr {
     const GC_NAME: &'static str = "ItLGunRayAttr";
     const GC_SIZE: u32 = 0xC;
@@ -47236,6 +51093,8 @@ pub struct itLGunBeam_ItemVars {
     pub lifetime: f32,
     pub xE04: i32,
 }
+impl itLGunBeam_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLGunBeam_ItemVars {
     const GC_NAME: &'static str = "itLGunBeam_ItemVars";
     const GC_SIZE: u32 = 0x34;
@@ -47262,6 +51121,8 @@ pub struct ItLGunBeamAttr {
     pub xC: f32,
     pub x10: f32,
 }
+impl ItLGunBeamAttr { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ItLGunBeamAttr {
     const GC_NAME: &'static str = "ItLGunBeamAttr";
     const GC_SIZE: u32 = 0x14;
@@ -47283,6 +51144,8 @@ pub struct itLipstickAttributes {
     pub x0: i32,
     pub x4: Vec,
 }
+impl itLipstickAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLipstickAttributes {
     const GC_NAME: &'static str = "itLipstickAttributes";
     const GC_SIZE: u32 = 0x10;
@@ -47301,6 +51164,8 @@ pub struct itLipstickSpore_ItemVars {
     pub xDD4: i32,
     pub xDD8: f32,
 }
+impl itLipstickSpore_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLipstickSpore_ItemVars {
     const GC_NAME: &'static str = "itLipstickSpore_ItemVars";
     const GC_SIZE: u32 = 0x8;
@@ -47321,6 +51186,8 @@ pub struct itEgg_ItemVars {
     pub _8: [u8; 88],
     pub heal_amount: i32,
 }
+impl itEgg_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itEgg_ItemVars {
     const GC_NAME: &'static str = "itEgg_ItemVars";
     const GC_SIZE: u32 = 0x64;
@@ -47372,6 +51239,8 @@ pub struct itHeiho_ItemVars {
     pub x74: f32,
     pub x78: f32,
 }
+impl itHeiho_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itHeiho_ItemVars {
     const GC_NAME: &'static str = "itHeiho_ItemVars";
     const GC_SIZE: u32 = 0x80;
@@ -47425,6 +51294,8 @@ pub struct itFlipper_ItemVars {
     pub xDE8_isStageFixed: i32,
     pub xDEC_stageAnchor: *mut HSD_JObj,
 }
+impl itFlipper_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itFlipper_ItemVars {
     const GC_NAME: &'static str = "itFlipper_ItemVars";
     const GC_SIZE: u32 = 0x1C;
@@ -47456,6 +51327,8 @@ pub struct itFlipper_DatAttrs {
     pub x20_spinDecay: f32,
     pub x24_maxSpinVel: f32,
 }
+impl itFlipper_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itFlipper_DatAttrs {
     const GC_NAME: &'static str = "itFlipper_DatAttrs";
     const GC_SIZE: u32 = 0x28;
@@ -47481,6 +51354,8 @@ const _: () = assert!(core::mem::size_of::<itFlipper_DatAttrs>() == 40);
 pub struct itHarisen_DatAttrs {
     pub x0_scale: f32,
 }
+impl itHarisen_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itHarisen_DatAttrs {
     const GC_NAME: &'static str = "itHarisen_DatAttrs";
     const GC_SIZE: u32 = 0x4;
@@ -47498,6 +51373,8 @@ pub struct itFoods_ItemVars {
     pub x0: u32,
     pub heal_amount: u32,
 }
+impl itFoods_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itFoods_ItemVars {
     const GC_NAME: &'static str = "itFoods_ItemVars";
     const GC_SIZE: u32 = 0x8;
@@ -47518,6 +51395,8 @@ pub struct itFoodsAttributes {
     pub x8: i32,
     pub xC: i32,
 }
+impl itFoodsAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itFoodsAttributes {
     const GC_NAME: &'static str = "itFoodsAttributes";
     const GC_SIZE: u32 = 0x10;
@@ -47538,6 +51417,8 @@ pub struct itWhispyApple_ItemVars {
     pub xDD4_heal: i32,
     pub xDD8: i32,
 }
+impl itWhispyApple_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itWhispyApple_ItemVars {
     const GC_NAME: &'static str = "itWhispyApple_ItemVars";
     const GC_SIZE: u32 = 0x8;
@@ -47560,6 +51441,8 @@ pub struct itWhispyAppleAttributes {
     pub x14: f32,
     pub x18: f32,
 }
+impl itWhispyAppleAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itWhispyAppleAttributes {
     const GC_NAME: &'static str = "itWhispyAppleAttributes";
     const GC_SIZE: u32 = 0x1C;
@@ -47587,6 +51470,8 @@ pub struct itFreeze_ItemVars {
     pub unk_1C: *mut Item_GObj,
     pub x20: *mut c_void,
 }
+impl itFreeze_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itFreeze_ItemVars {
     const GC_NAME: &'static str = "itFreeze_ItemVars";
     const GC_SIZE: u32 = 0x24;
@@ -47613,6 +51498,8 @@ pub struct itUnkAttributes {
     pub xC: f32,
     pub x10: f32,
 }
+impl itUnkAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itUnkAttributes {
     const GC_NAME: &'static str = "itUnkAttributes";
     const GC_SIZE: u32 = 0x14;
@@ -47634,6 +51521,8 @@ pub struct itMato_ItemVars {
     pub x0: *mut HSD_JObj,
     pub x4: *mut HSD_JObj,
 }
+impl itMato_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itMato_ItemVars {
     const GC_NAME: &'static str = "itMato_ItemVars";
     const GC_SIZE: u32 = 0x8;
@@ -47652,6 +51541,8 @@ pub struct itMBallAttributes {
     pub x0: f32,
     pub x4: f32,
 }
+impl itMBallAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itMBallAttributes {
     const GC_NAME: &'static str = "itMBallAttributes";
     const GC_SIZE: u32 = 0x8;
@@ -47686,6 +51577,8 @@ pub struct itLikelikeAttributes {
     pub x3E: i8,
     pub x40: [lbColl_80008D30_arg1; 2],
 }
+impl itLikelikeAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLikelikeAttributes {
     const GC_NAME: &'static str = "itLikelikeAttributes";
     const GC_SIZE: u32 = 0x88;
@@ -47720,6 +51613,8 @@ pub union itLikelikeAttributes_x0 {
     pub x0_f32: *mut Vec,
     pub x0_s32: *mut S32Vec,
 }
+impl itLikelikeAttributes_x0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLikelikeAttributes_x0 {
     const GC_NAME: &'static str = "union (unnamed at src/melee/it/itCommonItems.h:618:5)";
     const GC_SIZE: u32 = 0x4;
@@ -47749,6 +51644,8 @@ pub struct itLikelike_ItemVars {
     pub x50: *mut HSD_GObj,
     pub x54: *mut HurtCapsule,
 }
+impl itLikelike_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLikelike_ItemVars {
     const GC_NAME: &'static str = "itLikelike_ItemVars";
     const GC_SIZE: u32 = 0x58;
@@ -47778,6 +51675,8 @@ pub struct itHammerheadAttributes {
     pub initial_velocity: f32,
     pub x4: f32,
 }
+impl itHammerheadAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itHammerheadAttributes {
     const GC_NAME: &'static str = "itHammerheadAttributes";
     const GC_SIZE: u32 = 0x8;
@@ -47822,6 +51721,8 @@ impl itMBall_ItemVars {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl itMBall_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itMBall_ItemVars {
     const GC_NAME: &'static str = "itMBall_ItemVars";
     const GC_SIZE: u32 = 0x1;
@@ -47845,6 +51746,8 @@ pub struct itTomatoVars {
     pub x0: i32,
     pub x4: i32,
 }
+impl itTomatoVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itTomatoVars {
     const GC_NAME: &'static str = "itTomatoVars";
     const GC_SIZE: u32 = 0x8;
@@ -47881,6 +51784,8 @@ pub struct itTincle_ItemVars {
     pub x64: *mut HSD_GObj,
     pub x68: _itECB,
 }
+impl itTincle_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itTincle_ItemVars {
     const GC_NAME: &'static str = "itTincle_ItemVars";
     const GC_SIZE: u32 = 0x78;
@@ -47938,6 +51843,8 @@ pub struct itTincleAttributes {
     pub x54: i8,
     pub x55: i8,
 }
+impl itTincleAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itTincleAttributes {
     const GC_NAME: &'static str = "itTincleAttributes";
     const GC_SIZE: u32 = 0x58;
@@ -47979,6 +51886,8 @@ pub struct itGShell_HurtInit {
     pub b_offset: Vec,
     pub scale: f32,
 }
+impl itGShell_HurtInit { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itGShell_HurtInit {
     const GC_NAME: &'static str = "itGShell_HurtInit";
     const GC_SIZE: u32 = 0x20;
@@ -48097,6 +52006,8 @@ impl itGShell_ItemVars {
     #[inline] #[allow(unused_unsafe)] pub fn xE1C_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_48, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_xE1C_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_48, 0, 1, (v as u64) & 0x1) } }
 }
+impl itGShell_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itGShell_ItemVars {
     const GC_NAME: &'static str = "itGShell_ItemVars";
     const GC_SIZE: u32 = 0x78;
@@ -48192,6 +52103,8 @@ impl itRShell_ItemVars {
     #[inline] #[allow(unused_unsafe)] pub fn xDF4_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_20, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_xDF4_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_20, 0, 1, (v as u64) & 0x1) } }
 }
+impl itRShell_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itRShell_ItemVars {
     const GC_NAME: &'static str = "itRShell_ItemVars";
     const GC_SIZE: u32 = 0x58;
@@ -48225,6 +52138,8 @@ pub struct itRshellAttributes {
     pub _pad: [u8; 20],
     pub x14: Vec,
 }
+impl itRshellAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itRshellAttributes {
     const GC_NAME: &'static str = "itRshellAttributes";
     const GC_SIZE: u32 = 0x20;
@@ -48269,6 +52184,8 @@ impl itMsBomb_ItemVars {
     #[inline] #[allow(unused_unsafe)] pub fn xDD4_b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_xDD4_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl itMsBomb_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itMsBomb_ItemVars {
     const GC_NAME: &'static str = "itMsBomb_ItemVars";
     const GC_SIZE: u32 = 0x1;
@@ -48299,6 +52216,8 @@ pub struct itZeldaDinFire_ItemVars {
     pub xDF0: f32,
     pub xDF4: u32,
 }
+impl itZeldaDinFire_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itZeldaDinFire_ItemVars {
     const GC_NAME: &'static str = "itZeldaDinFire_ItemVars";
     const GC_SIZE: u32 = 0x24;
@@ -48329,6 +52248,8 @@ pub struct itPokemonAttributes {
     pub x14: i32,
     pub x18: i32,
 }
+impl itPokemonAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itPokemonAttributes {
     const GC_NAME: &'static str = "itPokemonAttributes";
     const GC_SIZE: u32 = 0x1C;
@@ -48358,6 +52279,8 @@ pub struct itKamexAttributes {
     pub x18: f32,
     pub x1C: f32,
 }
+impl itKamexAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itKamexAttributes {
     const GC_NAME: &'static str = "itKamexAttributes";
     const GC_SIZE: u32 = 0x20;
@@ -48388,6 +52311,8 @@ pub struct itPokemon_ItemVars {
     /// anonymous C member
     pub anon_70: itPokemon_ItemVars_anon_862,
 }
+impl itPokemon_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itPokemon_ItemVars {
     const GC_NAME: &'static str = "itPokemon_ItemVars";
     const GC_SIZE: u32 = 0x74;
@@ -48413,6 +52338,8 @@ pub union itPokemon_ItemVars_anon_862 {
     pub xE44: f32,
     pub xE44_s32: i32,
 }
+impl itPokemon_ItemVars_anon_862 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itPokemon_ItemVars_anon_862 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/it/itCommonItems.h:862:5)";
     const GC_SIZE: u32 = 0x4;
@@ -48437,6 +52364,8 @@ pub struct itKabigon_ItemVars {
     pub xE44: i32,
     pub xE48: i32,
 }
+impl itKabigon_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itKabigon_ItemVars {
     const GC_NAME: &'static str = "itKabigon_ItemVars";
     const GC_SIZE: u32 = 0x78;
@@ -48473,6 +52402,8 @@ pub struct itHitodeman_ItemVars {
     pub x8C: f32,
     pub x90: *mut HSD_GObj,
 }
+impl itHitodeman_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itHitodeman_ItemVars {
     const GC_NAME: &'static str = "itHitodeman_ItemVars";
     const GC_SIZE: u32 = 0x94;
@@ -48503,6 +52434,8 @@ pub struct itTargetVars {
     pub x0: i32,
     pub jobj: *mut HSD_JObj,
 }
+impl itTargetVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itTargetVars {
     const GC_NAME: &'static str = "itTargetVars";
     const GC_SIZE: u32 = 0x8;
@@ -48523,6 +52456,8 @@ pub struct MewVars {
     pub x8: f32,
     pub xC: f32,
 }
+impl MewVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MewVars {
     const GC_NAME: &'static str = "MewVars";
     const GC_SIZE: u32 = 0x10;
@@ -48560,6 +52495,8 @@ pub struct itCoinAttributes {
     pub x44: f32,
     pub x48: f32,
 }
+impl itCoinAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itCoinAttributes {
     const GC_NAME: &'static str = "itCoinAttributes";
     const GC_SIZE: u32 = 0x4C;
@@ -48599,6 +52536,8 @@ pub struct itCoin_ItemVars {
     pub x10: i32,
     pub x14: *mut HSD_GObj,
 }
+impl itCoin_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itCoin_ItemVars {
     const GC_NAME: &'static str = "itCoin_ItemVars";
     const GC_SIZE: u32 = 0x18;
@@ -48621,6 +52560,8 @@ pub struct itFFlower_ItemVars {
     pub x0: i32,
     pub x4: u32,
 }
+impl itFFlower_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itFFlower_ItemVars {
     const GC_NAME: &'static str = "itFFlower_ItemVars";
     const GC_SIZE: u32 = 0x8;
@@ -48643,6 +52584,8 @@ pub struct FFlowerAttr {
     pub x10: f32,
     pub x14: f32,
 }
+impl FFlowerAttr { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for FFlowerAttr {
     const GC_NAME: &'static str = "FFlowerAttr";
     const GC_SIZE: u32 = 0x18;
@@ -48665,6 +52608,8 @@ pub struct itFFlowerFlame_ItemVars {
     pub pos: Vec,
     pub unk: f32,
 }
+impl itFFlowerFlame_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itFFlowerFlame_ItemVars {
     const GC_NAME: &'static str = "itFFlowerFlame_ItemVars";
     const GC_SIZE: u32 = 0x10;
@@ -48693,6 +52638,8 @@ pub struct itHassam_ItemVars {
     pub x5C: Vec,
     pub x68: f32,
 }
+impl itHassam_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itHassam_ItemVars {
     const GC_NAME: &'static str = "itHassam_ItemVars";
     const GC_SIZE: u32 = 0x70;
@@ -48721,6 +52668,8 @@ pub struct itKinoko_ItemVars {
     pub x0: f32,
     pub x4: Vec,
 }
+impl itKinoko_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itKinoko_ItemVars {
     const GC_NAME: &'static str = "itKinoko_ItemVars";
     const GC_SIZE: u32 = 0x10;
@@ -48774,6 +52723,8 @@ pub struct itNokoNoko_ItemVars {
     pub x98: f32,
     pub x9C: f32,
 }
+impl itNokoNoko_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itNokoNoko_ItemVars {
     const GC_NAME: &'static str = "itNokoNoko_ItemVars";
     const GC_SIZE: u32 = 0xA0;
@@ -48827,6 +52778,8 @@ pub struct itNokoNoko_DatAttrs2 {
     pub x0: i32,
     pub x4: f32,
 }
+impl itNokoNoko_DatAttrs2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itNokoNoko_DatAttrs2 {
     const GC_NAME: &'static str = "itNokoNoko_DatAttrs2";
     const GC_SIZE: u32 = 0x8;
@@ -48846,6 +52799,8 @@ pub struct itNokoNoko_DatAttrs {
     pub x4: f32,
     pub x8: f32,
 }
+impl itNokoNoko_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itNokoNoko_DatAttrs {
     const GC_NAME: &'static str = "itNokoNoko_DatAttrs";
     const GC_SIZE: u32 = 0xC;
@@ -48877,6 +52832,8 @@ pub struct itTaruAttributes {
     pub x30: f32,
     pub x34: f32,
 }
+impl itTaruAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itTaruAttributes {
     const GC_NAME: &'static str = "itTaruAttributes";
     const GC_SIZE: u32 = 0x38;
@@ -48911,6 +52868,8 @@ pub struct itTaru_ItemVars {
     pub xDE4: f32,
     pub xDE8: Vec,
 }
+impl itTaru_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itTaru_ItemVars {
     const GC_NAME: &'static str = "itTaru_ItemVars";
     const GC_SIZE: u32 = 0x20;
@@ -48940,6 +52899,8 @@ pub struct itTarucann_ItemVars {
     pub x24: i32,
     pub x28: f32,
 }
+impl itTarucann_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itTarucann_ItemVars {
     const GC_NAME: &'static str = "itTarucann_ItemVars";
     const GC_SIZE: u32 = 0x2C;
@@ -48984,6 +52945,8 @@ pub struct itTaruCann_DatAttrs {
     pub x4C: f32,
     pub x50: f32,
 }
+impl itTaruCann_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itTaruCann_DatAttrs {
     const GC_NAME: &'static str = "itTaruCann_DatAttrs";
     const GC_SIZE: u32 = 0x54;
@@ -49021,6 +52984,8 @@ pub struct itKusudama_ItemVars {
     pub x0: i32,
     pub x4: i32,
 }
+impl itKusudama_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itKusudama_ItemVars {
     const GC_NAME: &'static str = "itKusudama_ItemVars";
     const GC_SIZE: u32 = 0x8;
@@ -49049,6 +53014,8 @@ pub struct itKusudamaAttributes {
     pub x28: f32,
     pub x2C: f32,
 }
+impl itKusudamaAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itKusudamaAttributes {
     const GC_NAME: &'static str = "itKusudamaAttributes";
     const GC_SIZE: u32 = 0x30;
@@ -49086,6 +53053,8 @@ pub struct itKlap_ItemVars {
     pub x24: f32,
     pub x28: f32,
 }
+impl itKlap_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itKlap_ItemVars {
     const GC_NAME: &'static str = "itKlap_ItemVars";
     const GC_SIZE: u32 = 0x2C;
@@ -49113,6 +53082,8 @@ pub struct itLeadeadAttr_x0 {
     pub x0: i32,
     pub x4: f32,
 }
+impl itLeadeadAttr_x0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLeadeadAttr_x0 {
     const GC_NAME: &'static str = "itLeadeadAttr_x0";
     const GC_SIZE: u32 = 0x8;
@@ -49139,6 +53110,8 @@ pub struct itLeadeadAttributes {
     pub x1C: i16,
     pub x1E: i8,
 }
+impl itLeadeadAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLeadeadAttributes {
     const GC_NAME: &'static str = "itLeadeadAttributes";
     const GC_SIZE: u32 = 0x20;
@@ -49166,6 +53139,8 @@ pub struct itChicorita_ItemVars {
     pub x60: i32,
     pub x64: f32,
 }
+impl itChicorita_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itChicorita_ItemVars {
     const GC_NAME: &'static str = "itChicorita_ItemVars";
     const GC_SIZE: u32 = 0x68;
@@ -49187,6 +53162,8 @@ pub struct itHouou_ItemVars {
     pub start_pos: Vec,
     pub vel_accum: f32,
 }
+impl itHouou_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itHouou_ItemVars {
     const GC_NAME: &'static str = "itHouou_ItemVars";
     const GC_SIZE: u32 = 0x74;
@@ -49207,6 +53184,8 @@ pub struct itChicoritaAttr {
     pub scale: f32,
     pub x4: i32,
 }
+impl itChicoritaAttr { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itChicoritaAttr {
     const GC_NAME: &'static str = "itChicoritaAttr";
     const GC_SIZE: u32 = 0x8;
@@ -49229,6 +53208,8 @@ pub struct itMarilAttributes {
     pub x10: f32,
     pub x14: f32,
 }
+impl itMarilAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itMarilAttributes {
     const GC_NAME: &'static str = "itMarilAttributes";
     const GC_SIZE: u32 = 0x18;
@@ -49254,6 +53235,8 @@ pub struct itMaril_ItemVars {
     pub x68: f32,
     pub x6C: Vec,
 }
+impl itMaril_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itMaril_ItemVars {
     const GC_NAME: &'static str = "itMaril_ItemVars";
     const GC_SIZE: u32 = 0x78;
@@ -49275,6 +53258,8 @@ pub union itMaril_ItemVars_x60 {
     pub anon_0: itMaril_ItemVars_x60_anon_1175,
     pub flags: u32,
 }
+impl itMaril_ItemVars_x60 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itMaril_ItemVars_x60 {
     const GC_NAME: &'static str = "union (unnamed at src/melee/it/itCommonItems.h:1174:5)";
     const GC_SIZE: u32 = 0x4;
@@ -49326,6 +53311,8 @@ impl itMaril_ItemVars_x60_anon_1175 {
     #[inline] #[allow(unused_unsafe)] pub fn x7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl itMaril_ItemVars_x60_anon_1175 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itMaril_ItemVars_x60_anon_1175 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/it/itCommonItems.h:1175:9)";
     const GC_SIZE: u32 = 0x1;
@@ -49354,6 +53341,8 @@ pub struct itLizardon_ItemVars {
     pub x70: i32,
     pub x74: [i32; 4],
 }
+impl itLizardon_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLizardon_ItemVars {
     const GC_NAME: &'static str = "itLizardon_ItemVars";
     const GC_SIZE: u32 = 0x84;
@@ -49384,6 +53373,8 @@ pub struct itLizardonAttributes {
     pub x28: i32,
     pub x2C: i32,
 }
+impl itLizardonAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLizardonAttributes {
     const GC_NAME: &'static str = "itLizardonAttributes";
     const GC_SIZE: u32 = 0x30;
@@ -49414,6 +53405,8 @@ pub struct itLuckyAttributes {
     pub x14: i32,
     pub x18: i32,
 }
+impl itLuckyAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLuckyAttributes {
     const GC_NAME: &'static str = "itLuckyAttributes";
     const GC_SIZE: u32 = 0x1C;
@@ -49437,6 +53430,8 @@ pub struct itLuckyEggAttributes {
     pub x0: f32,
     pub x4: i32,
 }
+impl itLuckyEggAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLuckyEggAttributes {
     const GC_NAME: &'static str = "itLuckyEggAttributes";
     const GC_SIZE: u32 = 0x8;
@@ -49457,6 +53452,8 @@ pub struct itLucky_ItemVars {
     pub x64: i32,
     pub x68: i32,
 }
+impl itLucky_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLucky_ItemVars {
     const GC_NAME: &'static str = "itLucky_ItemVars";
     const GC_SIZE: u32 = 0x6C;
@@ -49480,6 +53477,8 @@ pub struct itChicoritaLeafAttr {
     pub xC: f32,
     pub x10: f32,
 }
+impl itChicoritaLeafAttr { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itChicoritaLeafAttr {
     const GC_NAME: &'static str = "itChicoritaLeafAttr";
     const GC_SIZE: u32 = 0x14;
@@ -49500,6 +53499,8 @@ const _: () = assert!(core::mem::size_of::<itChicoritaLeafAttr>() == 20);
 pub struct it_2728_DatAttrs {
     pub fighter: *mut Fighter,
 }
+impl it_2728_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for it_2728_DatAttrs {
     const GC_NAME: &'static str = "it_2728_DatAttrs";
     const GC_SIZE: u32 = 0x4;
@@ -49530,6 +53531,8 @@ pub struct itPokemonSpawn_ItemVars {
     pub x58: i32,
     pub x5C: i32,
 }
+impl itPokemonSpawn_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itPokemonSpawn_ItemVars {
     const GC_NAME: &'static str = "itPokemonSpawn_ItemVars";
     const GC_SIZE: u32 = 0x60;
@@ -49579,6 +53582,8 @@ pub struct itMewtwoShadowball_ItemVars {
     pub x58: Vec,
     pub x64: f32,
 }
+impl itMewtwoShadowball_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itMewtwoShadowball_ItemVars {
     const GC_NAME: &'static str = "itMewtwoShadowball_ItemVars";
     const GC_SIZE: u32 = 0x68;
@@ -49629,6 +53634,8 @@ pub struct itMewtwoShadowball_DatAttrs {
     pub x38: f32,
     pub x3C: f32,
 }
+impl itMewtwoShadowball_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itMewtwoShadowball_DatAttrs {
     const GC_NAME: &'static str = "itMewtwoShadowball_DatAttrs";
     const GC_SIZE: u32 = 0x40;
@@ -49671,6 +53678,8 @@ pub struct itPokemonSpawn_DatAttrs {
     pub pokemon_spawn_weights: [i32; 30],
     pub _pad: [u8; 520],
 }
+impl itPokemonSpawn_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itPokemonSpawn_DatAttrs {
     const GC_NAME: &'static str = "itPokemonSpawn_DatAttrs";
     const GC_SIZE: u32 = 0x2BC;
@@ -49717,6 +53726,8 @@ pub struct itZako_ItemVars {
     pub x58: i32,
     pub x5C: i32,
 }
+impl itZako_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itZako_ItemVars {
     const GC_NAME: &'static str = "itZako_ItemVars";
     const GC_SIZE: u32 = 0x60;
@@ -49752,6 +53763,8 @@ const _: () = assert!(core::mem::size_of::<itZako_ItemVars>() == 104);
 pub struct itZako_DatAttrs {
     pub scale: f32,
 }
+impl itZako_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itZako_DatAttrs {
     const GC_NAME: &'static str = "itZako_DatAttrs";
     const GC_SIZE: u32 = 0x4;
@@ -49768,6 +53781,8 @@ const _: () = assert!(core::mem::size_of::<itZako_DatAttrs>() == 4);
 pub struct itGamewatch_ItemVars {
     pub attr: *mut c_void,
 }
+impl itGamewatch_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itGamewatch_ItemVars {
     const GC_NAME: &'static str = "itGamewatch_ItemVars";
     const GC_SIZE: u32 = 0x4;
@@ -49784,6 +53799,8 @@ const _: () = assert!(core::mem::size_of::<itGamewatch_ItemVars>() == 8);
 pub struct itYoshiEggLay_ItemVars {
     pub x0: f32,
 }
+impl itYoshiEggLay_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itYoshiEggLay_ItemVars {
     const GC_NAME: &'static str = "itYoshiEggLay_ItemVars";
     const GC_SIZE: u32 = 0x4;
@@ -49806,6 +53823,8 @@ pub struct itYoshiEggLay_DatAttrs {
     pub x24: f32,
     pub kind: ItemKind,
 }
+impl itYoshiEggLay_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itYoshiEggLay_DatAttrs {
     const GC_NAME: &'static str = "itYoshiEggLay_DatAttrs";
     const GC_SIZE: u32 = 0x2C;
@@ -49828,6 +53847,8 @@ const _: () = assert!(core::mem::size_of::<itYoshiEggLay_DatAttrs>() == 44);
 pub struct itUnk2_ItemVars {
     pub x0: f32,
 }
+impl itUnk2_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itUnk2_ItemVars {
     const GC_NAME: &'static str = "itUnk2_ItemVars";
     const GC_SIZE: u32 = 0x4;
@@ -49847,6 +53868,8 @@ pub struct itUnk2_DatAttrs {
     pub float1: f32,
     pub float2: f32,
 }
+impl itUnk2_DatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itUnk2_DatAttrs {
     const GC_NAME: &'static str = "itUnk2_DatAttrs";
     const GC_SIZE: u32 = 0x20;
@@ -49869,6 +53892,8 @@ pub struct it_2E5A_SubVars {
     pub x8: Vec,
     pub x14: Vec,
 }
+impl it_2E5A_SubVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for it_2E5A_SubVars {
     const GC_NAME: &'static str = "it_2E5A_SubVars";
     const GC_SIZE: u32 = 0x20;
@@ -49895,6 +53920,8 @@ pub struct it_2E5A_ItemVars {
     pub x18: UnkFlagStruct,
     pub sub: it_2E5A_SubVars,
 }
+impl it_2E5A_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for it_2E5A_ItemVars {
     const GC_NAME: &'static str = "it_2E5A_ItemVars";
     const GC_SIZE: u32 = 0x3C;
@@ -49924,6 +53951,8 @@ pub struct it_2E5A_TierEntry {
     pub scale: f32,
     pub ecb: _itECB,
 }
+impl it_2E5A_TierEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for it_2E5A_TierEntry {
     const GC_NAME: &'static str = "it_2E5A_TierEntry";
     const GC_SIZE: u32 = 0x2C;
@@ -49959,6 +53988,8 @@ pub struct it_2E5A_Attrs {
     pub x2C: [f32; 4],
     pub tiers: [it_2E5A_TierEntry; 3],
 }
+impl it_2E5A_Attrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for it_2E5A_Attrs {
     const GC_NAME: &'static str = "it_2E5A_Attrs";
     const GC_SIZE: u32 = 0xC0;
@@ -49993,6 +54024,8 @@ pub struct it_802E5FXX_struct {
     pub x14: i32,
     pub x18: i32,
 }
+impl it_802E5FXX_struct { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for it_802E5FXX_struct {
     const GC_NAME: &'static str = "it_802E5FXX_struct";
     const GC_SIZE: u32 = 0x1C;
@@ -50022,6 +54055,8 @@ pub struct itYaku_ItemVars {
     pub x18: Option<unsafe extern "C" fn(*mut Item_GObj, *mut Ground, *mut Vec, *mut HSD_GObj, f32)>,
     pub x1C: Option<unsafe extern "C" fn(*mut Item_GObj, *mut Ground, *mut HSD_GObj)>,
 }
+impl itYaku_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itYaku_ItemVars {
     const GC_NAME: &'static str = "itYaku_ItemVars";
     const GC_SIZE: u32 = 0x20;
@@ -50047,6 +54082,8 @@ pub union itYaku_ItemVars_anon_1452 {
     pub x4: *mut HSD_JObj,
     pub x4_vec: Vec,
 }
+impl itYaku_ItemVars_anon_1452 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itYaku_ItemVars_anon_1452 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/it/itCommonItems.h:1452:5)";
     const GC_SIZE: u32 = 0xC;
@@ -50073,6 +54110,8 @@ pub struct itWhiteBea_ItemVars {
     pub x40: i32,
     pub x44: i32,
 }
+impl itWhiteBea_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itWhiteBea_ItemVars {
     const GC_NAME: &'static str = "itWhiteBea_ItemVars";
     const GC_SIZE: u32 = 0x48;
@@ -50105,6 +54144,8 @@ pub struct itWhiteBeaAttributes {
     pub x10: f32,
     pub x14: i16,
 }
+impl itWhiteBeaAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itWhiteBeaAttributes {
     const GC_NAME: &'static str = "itWhiteBeaAttributes";
     const GC_SIZE: u32 = 0x18;
@@ -50129,6 +54170,8 @@ pub struct itWhiteBeaAttributes_anon_1476 {
     pub x0: i32,
     pub x4: f32,
 }
+impl itWhiteBeaAttributes_anon_1476 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itWhiteBeaAttributes_anon_1476 {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/it/itCommonItems.h:1476:14)";
     const GC_SIZE: u32 = 0x8;
@@ -50152,6 +54195,8 @@ pub struct itOctarock_ItemVars {
     pub pad_30: [i8; 2],
     pub x32: i16,
 }
+impl itOctarock_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itOctarock_ItemVars {
     const GC_NAME: &'static str = "itOctarock_ItemVars";
     const GC_SIZE: u32 = 0x34;
@@ -50178,6 +54223,8 @@ pub struct itSScopeAttributes {
     pub xC: [f32; 10],
     pub x34: Vec,
 }
+impl itSScopeAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itSScopeAttributes {
     const GC_NAME: &'static str = "itSScopeAttributes";
     const GC_SIZE: u32 = 0x40;
@@ -50199,6 +54246,8 @@ pub struct itScopeBeam_ItemVars {
     pub x0: i32,
     pub x4: f32,
 }
+impl itScopeBeam_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itScopeBeam_ItemVars {
     const GC_NAME: &'static str = "itScopeBeam_ItemVars";
     const GC_SIZE: u32 = 0x8;
@@ -50225,6 +54274,8 @@ pub struct itsonansAttributes {
     pub x20: f32,
     pub x24: i32,
 }
+impl itsonansAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itsonansAttributes {
     const GC_NAME: &'static str = "itsonansAttributes";
     const GC_SIZE: u32 = 0x28;
@@ -50253,6 +54304,8 @@ pub struct itSonans_ItemVars {
     pub x64: f32,
     pub x68: f32,
 }
+impl itSonans_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itSonans_ItemVars {
     const GC_NAME: &'static str = "itSonans_ItemVars";
     const GC_SIZE: u32 = 0x6C;
@@ -50273,6 +54326,8 @@ pub struct itStarRodStar_ItemVars {
     pub x0: i32,
     pub x4: f32,
 }
+impl itStarRodStar_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itStarRodStar_ItemVars {
     const GC_NAME: &'static str = "itStarRodStar_ItemVars";
     const GC_SIZE: u32 = 0x8;
@@ -50293,6 +54348,8 @@ pub struct itTosakinto_ItemVars {
     pub x64_vel_x: f32,
     pub x68_sfx_id: i32,
 }
+impl itTosakinto_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itTosakinto_ItemVars {
     const GC_NAME: &'static str = "itTosakinto_ItemVars";
     const GC_SIZE: u32 = 0x6C;
@@ -50314,6 +54371,8 @@ pub struct itTosakinto_Attrs {
     pub x4_life_timer: f32,
     pub x8_vel_x: f32,
 }
+impl itTosakinto_Attrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itTosakinto_Attrs {
     const GC_NAME: &'static str = "itTosakinto_Attrs";
     const GC_SIZE: u32 = 0xC;
@@ -50333,6 +54392,8 @@ pub struct itMDisableAttributes {
     pub lifetime: f32,
     pub x_vel: f32,
 }
+impl itMDisableAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itMDisableAttributes {
     const GC_NAME: &'static str = "itMDisableAttributes";
     const GC_SIZE: u32 = 0x8;
@@ -50350,6 +54411,8 @@ const _: () = assert!(core::mem::size_of::<itMDisableAttributes>() == 8);
 pub struct itMDisable_ItemVars {
     pub owner: *mut Fighter_GObj,
 }
+impl itMDisable_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itMDisable_ItemVars {
     const GC_NAME: &'static str = "itMDisable_ItemVars";
     const GC_SIZE: u32 = 0x4;
@@ -50368,6 +54431,8 @@ pub struct itNessPKFirepillarAttributes {
     pub x4: f32,
     pub scale: f32,
 }
+impl itNessPKFirepillarAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itNessPKFirepillarAttributes {
     const GC_NAME: &'static str = "itNessPKFirepillarAttributes";
     const GC_SIZE: u32 = 0xC;
@@ -50398,6 +54463,8 @@ pub struct itKoopaFlame_ItemVars {
     pub x44_spawned: i32,
     pub x48_gfx: i32,
 }
+impl itKoopaFlame_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itKoopaFlame_ItemVars {
     const GC_NAME: &'static str = "itKoopaFlame_ItemVars";
     const GC_SIZE: u32 = 0x4C;
@@ -50433,6 +54500,8 @@ pub struct itOctarockAttributes {
     pub x18: f32,
     pub x1C: i16,
 }
+impl itOctarockAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itOctarockAttributes {
     const GC_NAME: &'static str = "itOctarockAttributes";
     const GC_SIZE: u32 = 0x20;
@@ -50460,6 +54529,8 @@ pub struct itOldottosea_ItemVars {
     pub x28: i32,
     pub x2C: i16,
 }
+impl itOldottosea_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itOldottosea_ItemVars {
     const GC_NAME: &'static str = "itOldottosea_ItemVars";
     const GC_SIZE: u32 = 0x30;
@@ -50490,6 +54561,8 @@ pub struct itPatapata_ItemVars {
     pub x40: i32,
     pub x44: i32,
 }
+impl itPatapata_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itPatapata_ItemVars {
     const GC_NAME: &'static str = "itPatapata_ItemVars";
     const GC_SIZE: u32 = 0x48;
@@ -50517,6 +54590,8 @@ pub struct itPatapataDatAttrs {
     pub pad: [u8; 4],
     pub x4: f32,
 }
+impl itPatapataDatAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itPatapataDatAttrs {
     const GC_NAME: &'static str = "itPatapataDatAttrs";
     const GC_SIZE: u32 = 0x8;
@@ -50549,6 +54624,8 @@ pub struct itPatapataAttributes {
     pub x38: f32,
     pub x3C: f32,
 }
+impl itPatapataAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itPatapataAttributes {
     const GC_NAME: &'static str = "itPatapataAttributes";
     const GC_SIZE: u32 = 0x40;
@@ -50591,6 +54668,8 @@ pub struct itOldottoseaAttributes {
     pub x24: f32,
     pub x28: i8,
 }
+impl itOldottoseaAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itOldottoseaAttributes {
     const GC_NAME: &'static str = "itOldottoseaAttributes";
     const GC_SIZE: u32 = 0x2C;
@@ -50619,6 +54698,8 @@ pub struct itOldottoseaAttributes_anon_1640 {
     pub x0: i32,
     pub x4: f32,
 }
+impl itOldottoseaAttributes_anon_1640 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itOldottoseaAttributes_anon_1640 {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/it/itCommonItems.h:1640:16)";
     const GC_SIZE: u32 = 0x8;
@@ -50639,6 +54720,8 @@ pub struct itFreezerAttributes {
     pub x8: f32,
     pub xC: i32,
 }
+impl itFreezerAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itFreezerAttributes {
     const GC_NAME: &'static str = "itFreezerAttributes";
     const GC_SIZE: u32 = 0x10;
@@ -50659,6 +54742,8 @@ pub struct itFreezer_ItemVars {
     pub _0: [u8; 96],
     pub x60: i32,
 }
+impl itFreezer_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itFreezer_ItemVars {
     const GC_NAME: &'static str = "itFreezer_ItemVars";
     const GC_SIZE: u32 = 0x64;
@@ -50679,6 +54764,8 @@ pub struct itFushigibana_ItemVars {
     pub x61: [u8; 3],
     pub x64: f32,
 }
+impl itFushigibana_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itFushigibana_ItemVars {
     const GC_NAME: &'static str = "itFushigibana_ItemVars";
     const GC_SIZE: u32 = 0x68;
@@ -50699,6 +54786,8 @@ pub struct itFushigibanaAttributes {
     pub x4: f32,
     pub x8: f32,
 }
+impl itFushigibanaAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itFushigibanaAttributes {
     const GC_NAME: &'static str = "itFushigibanaAttributes";
     const GC_SIZE: u32 = 0xC;
@@ -50725,6 +54814,8 @@ pub struct itkireihana_ItemVars {
     pub timer_unk2: i32,
     pub x70: f32,
 }
+impl itkireihana_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itkireihana_ItemVars {
     const GC_NAME: &'static str = "itkireihana_ItemVars";
     const GC_SIZE: u32 = 0x74;
@@ -50752,6 +54843,8 @@ pub struct itkireihanaAttributes {
     pub x8: u32,
     pub xC: u32,
 }
+impl itkireihanaAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itkireihanaAttributes {
     const GC_NAME: &'static str = "itkireihanaAttributes";
     const GC_SIZE: u32 = 0x10;
@@ -50777,6 +54870,8 @@ pub struct itKabigonAttributes {
     pub x14: i32,
     pub x18: f32,
 }
+impl itKabigonAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itKabigonAttributes {
     const GC_NAME: &'static str = "itKabigonAttributes";
     const GC_SIZE: u32 = 0x1C;
@@ -50802,6 +54897,8 @@ pub struct itMatadogasAttributes {
     pub x8: f32,
     pub xC: f32,
 }
+impl itMatadogasAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itMatadogasAttributes {
     const GC_NAME: &'static str = "itMatadogasAttributes";
     const GC_SIZE: u32 = 0x10;
@@ -50824,6 +54921,8 @@ pub struct itThunder_ItemVars {
     pub x64: i32,
     pub x68: f32,
 }
+impl itThunder_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itThunder_ItemVars {
     const GC_NAME: &'static str = "itThunder_ItemVars";
     const GC_SIZE: u32 = 0x6C;
@@ -50846,6 +54945,8 @@ pub struct itThunderPokemonAttributes {
     pub x8: f32,
     pub xC: u32,
 }
+impl itThunderPokemonAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itThunderPokemonAttributes {
     const GC_NAME: &'static str = "itThunderPokemonAttributes";
     const GC_SIZE: u32 = 0x10;
@@ -50870,6 +54971,8 @@ pub struct itOldkuri_ItemVars {
     pub xDF8: i32,
     pub xDFC: i32,
 }
+impl itOldkuri_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itOldkuri_ItemVars {
     const GC_NAME: &'static str = "itOldkuri_ItemVars";
     const GC_SIZE: u32 = 0x2C;
@@ -50897,6 +55000,8 @@ pub struct itUnknown_ItemVars {
     pub x78: itUnknown_ItemVars_x78,
     pub x84: i32,
 }
+impl itUnknown_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itUnknown_ItemVars {
     const GC_NAME: &'static str = "itUnknown_ItemVars";
     const GC_SIZE: u32 = 0x88;
@@ -50920,6 +55025,8 @@ pub union itUnknown_ItemVars_x64 {
     pub f: f32,
     pub i: i32,
 }
+impl itUnknown_ItemVars_x64 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itUnknown_ItemVars_x64 {
     const GC_NAME: &'static str = "union (unnamed at src/melee/it/itCommonItems.h:1744:22)";
     const GC_SIZE: u32 = 0x4;
@@ -50938,6 +55045,8 @@ pub union itUnknown_ItemVars_x68 {
     pub f: f32,
     pub i: i32,
 }
+impl itUnknown_ItemVars_x68 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itUnknown_ItemVars_x68 {
     const GC_NAME: &'static str = "union (unnamed at src/melee/it/itCommonItems.h:1748:22)";
     const GC_SIZE: u32 = 0x4;
@@ -50956,6 +55065,8 @@ pub union itUnknown_ItemVars_x78 {
     pub vec: Vec,
     pub dir: i32,
 }
+impl itUnknown_ItemVars_x78 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itUnknown_ItemVars_x78 {
     const GC_NAME: &'static str = "union (unnamed at src/melee/it/itCommonItems.h:1753:22)";
     const GC_SIZE: u32 = 0xC;
@@ -50976,6 +55087,8 @@ pub struct itGreatFoxLaser_Attrs {
     pub x8: f32,
     pub xC: f32,
 }
+impl itGreatFoxLaser_Attrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itGreatFoxLaser_Attrs {
     const GC_NAME: &'static str = "itGreatFoxLaser_Attrs";
     const GC_SIZE: u32 = 0x10;
@@ -51004,6 +55117,8 @@ pub struct itUnknownAttributes {
     pub x20: itUnknownAttributes_x20,
     pub x24: [*mut HSD_Joint; 26],
 }
+impl itUnknownAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itUnknownAttributes {
     const GC_NAME: &'static str = "itUnknownAttributes";
     const GC_SIZE: u32 = 0x8C;
@@ -51030,6 +55145,8 @@ pub union itUnknownAttributes_x0 {
     pub f: f32,
     pub i: i32,
 }
+impl itUnknownAttributes_x0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itUnknownAttributes_x0 {
     const GC_NAME: &'static str = "union (unnamed at src/melee/it/itCommonItems.h:1768:15)";
     const GC_SIZE: u32 = 0x4;
@@ -51048,6 +55165,8 @@ pub union itUnknownAttributes_x18 {
     pub f: f32,
     pub i: i32,
 }
+impl itUnknownAttributes_x18 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itUnknownAttributes_x18 {
     const GC_NAME: &'static str = "union (unnamed at src/melee/it/itCommonItems.h:1777:15)";
     const GC_SIZE: u32 = 0x4;
@@ -51066,6 +55185,8 @@ pub union itUnknownAttributes_x1C {
     pub f: f32,
     pub i: i32,
 }
+impl itUnknownAttributes_x1C { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itUnknownAttributes_x1C {
     const GC_NAME: &'static str = "union (unnamed at src/melee/it/itCommonItems.h:1781:15)";
     const GC_SIZE: u32 = 0x4;
@@ -51084,6 +55205,8 @@ pub union itUnknownAttributes_x20 {
     pub f: f32,
     pub i: i32,
 }
+impl itUnknownAttributes_x20 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itUnknownAttributes_x20 {
     const GC_NAME: &'static str = "union (unnamed at src/melee/it/itCommonItems.h:1785:15)";
     const GC_SIZE: u32 = 0x4;
@@ -51103,6 +55226,8 @@ pub struct itCrazyHandBombAttributes {
     pub x4: f32,
     pub x8: f32,
 }
+impl itCrazyHandBombAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itCrazyHandBombAttributes {
     const GC_NAME: &'static str = "itCrazyHandBombAttributes";
     const GC_SIZE: u32 = 0xC;
@@ -51129,6 +55254,8 @@ pub struct itLugia_ItemVars {
     pub x98_pad: [u8; 12],
     pub xA4: i32,
 }
+impl itLugia_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itLugia_ItemVars {
     const GC_NAME: &'static str = "itLugia_ItemVars";
     const GC_SIZE: u32 = 0xA8;
@@ -51160,6 +55287,8 @@ pub struct itGreatFoxLaser_ItemVars {
     pub x38: i16,
     pub x3A: i16,
 }
+impl itGreatFoxLaser_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itGreatFoxLaser_ItemVars {
     const GC_NAME: &'static str = "itGreatFoxLaser_ItemVars";
     const GC_SIZE: u32 = 0x3C;
@@ -51186,6 +55315,8 @@ pub struct itMatadogas_ItemVars {
     pub x64: i32,
     pub x68: i32,
 }
+impl itMatadogas_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itMatadogas_ItemVars {
     const GC_NAME: &'static str = "itMatadogas_ItemVars";
     const GC_SIZE: u32 = 0x6C;
@@ -51206,6 +55337,8 @@ pub struct itYoshiEggThrowAttributes {
     pub x0: f32,
     pub x4: f32,
 }
+impl itYoshiEggThrowAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itYoshiEggThrowAttributes {
     const GC_NAME: &'static str = "itYoshiEggThrowAttributes";
     const GC_SIZE: u32 = 0x8;
@@ -51225,6 +55358,8 @@ pub struct ScopeBeamFloats {
     pub scale: f32,
     pub lifetime: f32,
 }
+impl ScopeBeamFloats { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ScopeBeamFloats {
     const GC_NAME: &'static str = "ScopeBeamFloats";
     const GC_SIZE: u32 = 0xC;
@@ -51246,6 +55381,8 @@ pub struct ScopeBeamAttrs {
     pub x78: f32,
     pub x7C: f32,
 }
+impl ScopeBeamAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ScopeBeamAttrs {
     const GC_NAME: &'static str = "ScopeBeamAttrs";
     const GC_SIZE: u32 = 0x80;
@@ -51269,6 +55406,8 @@ pub struct itPKFlush_ItemVars {
     pub xDE0_PKFlash_Owner: *mut HSD_GObj,
     pub xDE4_PKFlash: i32,
 }
+impl itPKFlush_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itPKFlush_ItemVars {
     const GC_NAME: &'static str = "itPKFlush_ItemVars";
     const GC_SIZE: u32 = 0x14;
@@ -51291,6 +55430,8 @@ pub struct itPKFlushExplode_ItemVars {
     pub xDD8: f32,
     pub xDDC: *mut HSD_GObj,
 }
+impl itPKFlushExplode_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itPKFlushExplode_ItemVars {
     const GC_NAME: &'static str = "itPKFlushExplode_ItemVars";
     const GC_SIZE: u32 = 0xC;
@@ -51319,6 +55460,8 @@ pub struct itFlashAttributes {
     pub x24_FLASH_UNK3: f32,
     pub x28_FLASH_EXPLOSION_DELAY: f32,
 }
+impl itFlashAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itFlashAttributes {
     const GC_NAME: &'static str = "itFlashAttributes";
     const GC_SIZE: u32 = 0x2C;
@@ -51349,6 +55492,8 @@ pub struct itFlashExplAttributes {
     pub xC_FLASH_EXPL_BASE_DAMAGE: f32,
     pub x10_FLASH_EXPL_DAMAGE_MUL: f32,
 }
+impl itFlashExplAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itFlashExplAttributes {
     const GC_NAME: &'static str = "itFlashExplAttributes";
     const GC_SIZE: u32 = 0x14;
@@ -51373,6 +55518,8 @@ pub struct itPKThunderAttributes {
     pub xC_PKTHUNDER_STICK_THRESHOLD: f32,
     pub x10_PKTHUNDER_TURN_RADIUS: f32,
 }
+impl itPKThunderAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itPKThunderAttributes {
     const GC_NAME: &'static str = "itPKThunderAttributes";
     const GC_SIZE: u32 = 0x14;
@@ -51403,6 +55550,8 @@ pub struct itPKThunder_ItemVars {
     pub xF04: *mut HSD_GObj,
     pub xF08: *mut HSD_GObj,
 }
+impl itPKThunder_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for itPKThunder_ItemVars {
     const GC_NAME: &'static str = "itPKThunder_ItemVars";
     const GC_SIZE: u32 = 0x138;
@@ -51431,6 +55580,8 @@ pub struct PokemonSelectionState {
     pub previous_kind: ItemKind,
     pub rare_spawned: i32,
 }
+impl PokemonSelectionState { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for PokemonSelectionState {
     const GC_NAME: &'static str = "PokemonSelectionState";
     const GC_SIZE: u32 = 0xC;
@@ -51450,6 +55601,8 @@ pub struct CameraBoxFlags {
     /// anonymous C member
     pub anon_0: CameraBoxFlags_anon_30,
 }
+impl CameraBoxFlags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CameraBoxFlags {
     const GC_NAME: &'static str = "CameraBoxFlags";
     const GC_SIZE: u32 = 0x1;
@@ -51496,6 +55649,8 @@ impl CameraBoxFlags_anon_30 {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl CameraBoxFlags_anon_30 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CameraBoxFlags_anon_30 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/it/types.h:30:5)";
     const GC_SIZE: u32 = 0x1;
@@ -51517,6 +55672,8 @@ impl GcLayout for CameraBoxFlags_anon_30 {
 pub struct flag32 {
     pub flags: flag32_flags,
 }
+impl flag32 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for flag32 {
     const GC_NAME: &'static str = "flag32";
     const GC_SIZE: u32 = 0x4;
@@ -51619,6 +55776,8 @@ impl flag32_flags {
     #[inline] #[allow(unused_unsafe)] pub fn x1F(&self) -> u32 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u32 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x1F(&mut self, v: u32) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl flag32_flags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for flag32_flags {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/it/types.h:42:5)";
     const GC_SIZE: u32 = 0x4;
@@ -51661,6 +55820,8 @@ impl GcLayout for flag32_flags {
 pub struct DynamicBoneTable {
     pub bones: [*mut HSD_JObj; 100],
 }
+impl DynamicBoneTable { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for DynamicBoneTable {
     const GC_NAME: &'static str = "DynamicBoneTable";
     const GC_SIZE: u32 = 0x190;
@@ -51679,6 +55840,8 @@ pub struct Item_DynamicBones {
     pub skeleton: *mut HSD_JObj,
     pub dyn_desc: DynamicsDesc,
 }
+impl Item_DynamicBones { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Item_DynamicBones {
     const GC_NAME: &'static str = "Item_DynamicBones";
     const GC_SIZE: u32 = 0x1C;
@@ -51752,6 +55915,8 @@ impl ItemAttr {
     #[inline] #[allow(unused_unsafe)] pub fn x1_8(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x1_8(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl ItemAttr { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ItemAttr {
     const GC_NAME: &'static str = "ItemAttr";
     const GC_SIZE: u32 = 0x84;
@@ -51801,6 +55966,8 @@ pub struct ItemDynamics {
     pub count: i32,
     pub dyn_descs: *mut BoneDynamicsDesc,
 }
+impl ItemDynamics { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ItemDynamics {
     const GC_NAME: &'static str = "ItemDynamics";
     const GC_SIZE: u32 = 0x8;
@@ -51821,6 +55988,8 @@ pub struct ItemStateDesc {
     pub x8_parameters: *mut HSD_ShapeAnimJoint,
     pub xC_script: *mut c_void,
 }
+impl ItemStateDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ItemStateDesc {
     const GC_NAME: &'static str = "ItemStateDesc";
     const GC_SIZE: u32 = 0x10;
@@ -51840,6 +56009,8 @@ const _: () = assert!(core::mem::size_of::<ItemStateDesc>() == 32);
 pub struct ItemStateArray {
     pub x0_itemStateDesc: [ItemStateDesc; 8],
 }
+impl ItemStateArray { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ItemStateArray {
     const GC_NAME: &'static str = "ItemStateArray";
     const GC_SIZE: u32 = 0x80;
@@ -51859,6 +56030,8 @@ pub struct ItemModelDesc {
     pub x8_bone_attach_id: i32,
     pub xC_bit_field: u8,
 }
+impl ItemModelDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ItemModelDesc {
     const GC_NAME: &'static str = "ItemModelDesc";
     const GC_SIZE: u32 = 0x10;
@@ -51881,6 +56054,8 @@ pub struct ItHurtBoneDesc {
     pub b_offset: Vec,
     pub scale: f32,
 }
+impl ItHurtBoneDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ItHurtBoneDesc {
     const GC_NAME: &'static str = "ItHurtBoneDesc";
     const GC_SIZE: u32 = 0x20;
@@ -51901,6 +56076,8 @@ pub struct ItHurtBoneList {
     pub count: i32,
     pub descs: *mut ItHurtBoneDesc,
 }
+impl ItHurtBoneList { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ItHurtBoneList {
     const GC_NAME: &'static str = "ItHurtBoneList";
     const GC_SIZE: u32 = 0x8;
@@ -51923,6 +56100,8 @@ pub struct Article {
     pub x10_modelDesc: *mut ItemModelDesc,
     pub x14_dynamics: *mut ItemDynamics,
 }
+impl Article { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Article {
     const GC_NAME: &'static str = "Article";
     const GC_SIZE: u32 = 0x18;
@@ -51951,6 +56130,8 @@ pub struct it_266F_ItemVars {
     pub x18: UnkFlagStruct,
     pub x1C: lbColl_8000A10C_arg0_t,
 }
+impl it_266F_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for it_266F_ItemVars {
     const GC_NAME: &'static str = "it_266F_ItemVars";
     const GC_SIZE: u32 = 0x3C;
@@ -51973,6 +56154,8 @@ impl GcLayout for it_266F_ItemVars {
 pub struct ItemModStruct {
     pub x0_unk: _GXColor,
 }
+impl ItemModStruct { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ItemModStruct {
     const GC_NAME: &'static str = "ItemModStruct";
     const GC_SIZE: u32 = 0x4;
@@ -52000,6 +56183,8 @@ impl ItemHitbox {
     #[inline] #[allow(unused_unsafe)] pub fn x138_b1_7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_138, 0, 7) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x138_b1_7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_138, 0, 7, (v as u64) & 0x7F) } }
 }
+impl ItemHitbox { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ItemHitbox {
     const GC_NAME: &'static str = "ItemHitbox";
     const GC_SIZE: u32 = 0x13C;
@@ -52023,6 +56208,8 @@ pub struct xB6C_t {
     pub xB84: Vec,
     pub xB90: u32,
 }
+impl xB6C_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for xB6C_t {
     const GC_NAME: &'static str = "xB6C_t";
     const GC_SIZE: u32 = 0x28;
@@ -52226,6 +56413,8 @@ pub struct Item {
     pub xDD4_itemVar: Item_ItemVars,
     pub mex_original_owner: *mut HSD_GObj,
 }
+impl Item { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Item {
     const GC_NAME: &'static str = "Item";
     const GC_SIZE: u32 = 0xFD0;
@@ -52426,6 +56615,8 @@ pub union Item_anon_477 {
     pub xDAA_flag: UnkFlagStruct,
     pub xDAA_byte: u8,
 }
+impl Item_anon_477 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Item_anon_477 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/it/types.h:477:5)";
     const GC_SIZE: u32 = 0x1;
@@ -52443,6 +56634,8 @@ pub union Item_anon_485 {
     pub xDBC_itcmd_var4: flag32,
     pub xDBC_itcmd_var4_word: u32,
 }
+impl Item_anon_485 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Item_anon_485 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/it/types.h:485:5)";
     const GC_SIZE: u32 = 0x4;
@@ -52477,6 +56670,8 @@ impl Item_xDCC_flag {
     #[inline] #[allow(unused_unsafe)] pub fn b4567(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 4) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b4567(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 4, (v as u64) & 0xF) } }
 }
+impl Item_xDCC_flag { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Item_xDCC_flag {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/it/types.h:492:5)";
     const GC_SIZE: u32 = 0x1;
@@ -52618,6 +56813,8 @@ pub union Item_ItemVars {
     pub zeldadinfireexplode: itZeldaDinFireExplode_ItemVars,
     pub _x0: [u8; 504],
 }
+impl Item_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Item_ItemVars {
     const GC_NAME: &'static str = "Item_ItemVars";
     const GC_SIZE: u32 = 0x1F8;
@@ -52755,6 +56952,8 @@ impl GcLayout for Item_ItemVars {
 pub struct sdata_ItemGXLink {
     pub x0_renderFunc: GObj_RenderFunc,
 }
+impl sdata_ItemGXLink { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for sdata_ItemGXLink {
     const GC_NAME: &'static str = "sdata_ItemGXLink";
     const GC_SIZE: u32 = 0x4;
@@ -52772,6 +56971,8 @@ pub struct r13_ItemTable {
     pub filler: i32,
     pub x0_article: [*mut Article; 159],
 }
+impl r13_ItemTable { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for r13_ItemTable {
     const GC_NAME: &'static str = "r13_ItemTable";
     const GC_SIZE: u32 = 0x280;
@@ -52794,6 +56995,8 @@ pub struct BobOmbRain {
     pub x18: i32,
     pub x1C: UnkFlagStruct,
 }
+impl BobOmbRain { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for BobOmbRain {
     const GC_NAME: &'static str = "BobOmbRain";
     const GC_SIZE: u32 = 0x20;
@@ -52830,6 +57033,8 @@ pub struct SpawnItem {
     pub x47_flag: UnkFlagStruct,
     pub x48_ground_or_air: GroundOrAir,
 }
+impl SpawnItem { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for SpawnItem {
     const GC_NAME: &'static str = "SpawnItem";
     const GC_SIZE: u32 = 0x4C;
@@ -52924,6 +57129,8 @@ pub struct ItemCommonData {
     pub x158: f32,
     pub x15C: f32,
 }
+impl ItemCommonData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ItemCommonData {
     const GC_NAME: &'static str = "ItemCommonData";
     const GC_SIZE: u32 = 0x160;
@@ -53008,6 +57215,8 @@ pub struct Item_r13_Data {
     pub x10: i32,
     pub x14: i32,
 }
+impl Item_r13_Data { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Item_r13_Data {
     const GC_NAME: &'static str = "Item_r13_Data";
     const GC_SIZE: u32 = 0x18;
@@ -53039,6 +57248,8 @@ pub struct Item_FtTrack {
     pub count: usize,
     pub x154: UnkFlagStruct,
 }
+impl Item_FtTrack { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Item_FtTrack {
     const GC_NAME: &'static str = "Item_FtTrack";
     const GC_SIZE: u32 = 0x158;
@@ -53064,6 +57275,8 @@ impl GcLayout for Item_FtTrack {
 pub struct x1C_struct {
     pub x1C: i32,
 }
+impl x1C_struct { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for x1C_struct {
     const GC_NAME: &'static str = "x1C_struct";
     const GC_SIZE: u32 = 0x4;
@@ -53105,6 +57318,8 @@ pub struct HSD_ObjAllocUnk {
     pub x60: i32,
     pub x64: i32,
 }
+impl HSD_ObjAllocUnk { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_ObjAllocUnk {
     const GC_NAME: &'static str = "HSD_ObjAllocUnk";
     const GC_SIZE: u32 = 0x68;
@@ -53149,6 +57364,8 @@ pub struct ItemPickTable {
     pub x8: u16,
     pub xC: *mut u16,
 }
+impl ItemPickTable { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ItemPickTable {
     const GC_NAME: &'static str = "ItemPickTable";
     const GC_SIZE: u32 = 0x10;
@@ -53171,6 +57388,8 @@ pub struct RandomItemSpawner {
     pub x14: i32,
     pub x18: u64,
 }
+impl RandomItemSpawner { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for RandomItemSpawner {
     const GC_NAME: &'static str = "RandomItemSpawner";
     const GC_SIZE: u32 = 0x20;
@@ -53194,6 +57413,8 @@ pub struct HSD_ObjAllocUnk5 {
     pub xA: u16,
     pub xC: u16,
 }
+impl HSD_ObjAllocUnk5 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for HSD_ObjAllocUnk5 {
     const GC_NAME: &'static str = "HSD_ObjAllocUnk5";
     const GC_SIZE: u32 = 0x10;
@@ -53217,6 +57438,8 @@ pub struct DamageLogEntry {
     pub x8: *mut HitCapsule,
     pub xC: *mut HurtCapsule,
 }
+impl DamageLogEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for DamageLogEntry {
     const GC_NAME: &'static str = "DamageLogEntry";
     const GC_SIZE: u32 = 0x10;
@@ -53243,6 +57466,8 @@ pub struct it_8026C47C_arg0_t {
     pub unk18: i32,
     pub unk1C: i32,
 }
+impl it_8026C47C_arg0_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for it_8026C47C_arg0_t {
     const GC_NAME: &'static str = "it_8026C47C_arg0_t";
     const GC_SIZE: u32 = 0x20;
@@ -53268,6 +57493,8 @@ pub struct it_8026F3D4_arg1_t {
     pub x4: ItemKind,
     pub x8: *mut Item_GObj,
 }
+impl it_8026F3D4_arg1_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for it_8026F3D4_arg1_t {
     const GC_NAME: &'static str = "it_8026F3D4_arg1_t";
     const GC_SIZE: u32 = 0xC;
@@ -53294,6 +57521,8 @@ pub struct mpIsland_80458E88_t {
     pub x1C: *mut mp_UnkStruct0,
     pub x20: *mut mp_UnkStruct0,
 }
+impl mpIsland_80458E88_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for mpIsland_80458E88_t {
     const GC_NAME: &'static str = "mpIsland_80458E88_t";
     const GC_SIZE: u32 = 0x24;
@@ -53319,6 +57548,8 @@ pub struct mpIsland_PaletteEntry {
     pub kind: mp_Terrain,
     pub color: _GXColor,
 }
+impl mpIsland_PaletteEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for mpIsland_PaletteEntry {
     const GC_NAME: &'static str = "mpIsland_PaletteEntry";
     const GC_SIZE: u32 = 0x8;
@@ -53336,6 +57567,8 @@ const _: () = assert!(core::mem::size_of::<mpIsland_PaletteEntry>() == 8);
 pub struct mpIsland_Palette {
     pub x0: [mpIsland_PaletteEntry; 20],
 }
+impl mpIsland_Palette { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for mpIsland_Palette {
     const GC_NAME: &'static str = "mpIsland_Palette";
     const GC_SIZE: u32 = 0xA0;
@@ -53362,6 +57595,8 @@ pub struct mp_UnkStruct0 {
     pub x2A: i16,
     pub ptr: *mut mp_UnkStruct3,
 }
+impl mp_UnkStruct0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for mp_UnkStruct0 {
     const GC_NAME: &'static str = "mp_UnkStruct0";
     const GC_SIZE: u32 = 0x30;
@@ -53395,6 +57630,8 @@ pub struct MapLine {
     pub hi_flags: u16,
     pub lo_flags: u16,
 }
+impl MapLine { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MapLine {
     const GC_NAME: &'static str = "MapLine";
     const GC_SIZE: u32 = 0x10;
@@ -53419,6 +57656,8 @@ pub struct CollLine {
     pub x0: *mut MapLine,
     pub flags: u32,
 }
+impl CollLine { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CollLine {
     const GC_NAME: &'static str = "CollLine";
     const GC_SIZE: u32 = 0x8;
@@ -53437,6 +57676,8 @@ pub struct mpisland {
     pub x0: [i32; 8],
     pub x20: [i32; 8],
 }
+impl mpisland { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for mpisland {
     const GC_NAME: &'static str = "mpisland";
     const GC_SIZE: u32 = 0x40;
@@ -53456,6 +57697,8 @@ pub struct mp_UnkStruct3 {
     pub x4: i32,
     pub xC: i32,
 }
+impl mp_UnkStruct3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for mp_UnkStruct3 {
     const GC_NAME: &'static str = "mp_UnkStruct3";
     const GC_SIZE: u32 = 0xC;
@@ -53478,6 +57721,8 @@ pub struct CollVtx {
     pub x10: f32,
     pub x14: f32,
 }
+impl CollVtx { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CollVtx {
     const GC_NAME: &'static str = "CollVtx";
     const GC_SIZE: u32 = 0x18;
@@ -53499,6 +57744,8 @@ pub struct MapLineRange {
     pub start: i16,
     pub count: i16,
 }
+impl MapLineRange { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MapLineRange {
     const GC_NAME: &'static str = "MapLineRange";
     const GC_SIZE: u32 = 0x4;
@@ -53522,6 +57769,8 @@ pub struct MapJoint {
     pub vtx_start: i16,
     pub vtx_count: i16,
 }
+impl MapJoint { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MapJoint {
     const GC_NAME: &'static str = "MapJoint";
     const GC_SIZE: u32 = 0x28;
@@ -53561,6 +57810,8 @@ impl CollJoint {
     #[inline] #[allow(unused_unsafe)] pub fn xE(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_e, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_xE(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_e, 7, 1, (v as u64) & 0x1) } }
 }
+impl CollJoint { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for CollJoint {
     const GC_NAME: &'static str = "CollJoint";
     const GC_SIZE: u32 = 0x34;
@@ -53594,6 +57845,8 @@ pub struct MapCollData {
     pub joint_count: i32,
     pub x2C: i32,
 }
+impl MapCollData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for MapCollData {
     const GC_NAME: &'static str = "MapCollData";
     const GC_SIZE: u32 = 0x30;
@@ -53620,6 +57873,8 @@ pub struct mpCollisionBox {
     pub left: f32,
     pub right: f32,
 }
+impl mpCollisionBox { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for mpCollisionBox {
     const GC_NAME: &'static str = "mpCollisionBox";
     const GC_SIZE: u32 = 0x10;
@@ -53643,6 +57898,8 @@ pub struct plAllocInfo {
     /// anonymous C member
     pub anon_6: plAllocInfo_anon_14,
 }
+impl plAllocInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for plAllocInfo {
     const GC_NAME: &'static str = "plAllocInfo";
     const GC_SIZE: u32 = 0x8;
@@ -53696,6 +57953,8 @@ impl plAllocInfo_anon_14 {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl plAllocInfo_anon_14 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for plAllocInfo_anon_14 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/pl/types.h:14:5)";
     const GC_SIZE: u32 = 0x1;
@@ -53722,6 +57981,8 @@ pub struct plAllocInfo2 {
     /// anonymous C member
     pub anon_c: plAllocInfo2_anon_34,
 }
+impl plAllocInfo2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for plAllocInfo2 {
     const GC_NAME: &'static str = "plAllocInfo2";
     const GC_SIZE: u32 = 0x10;
@@ -53775,6 +58036,8 @@ impl plAllocInfo2_anon_34 {
     #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl plAllocInfo2_anon_34 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for plAllocInfo2_anon_34 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/pl/types.h:34:5)";
     const GC_SIZE: u32 = 0x1;
@@ -53804,6 +58067,8 @@ pub struct plAttackStats {
     pub x1A4_count: u32,
     pub x1A8: u32,
 }
+impl plAttackStats { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for plAttackStats {
     const GC_NAME: &'static str = "plAttackStats";
     const GC_SIZE: u32 = 0x1AC;
@@ -53861,6 +58126,8 @@ impl plActionStats {
     #[inline] #[allow(unused_unsafe)] pub fn x5BC_b3(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_5bc, 4, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x5BC_b3(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_5bc, 4, 1, (v as u64) & 0x1) } }
 }
+impl plActionStats { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for plActionStats {
     const GC_NAME: &'static str = "plActionStats";
     const GC_SIZE: u32 = 0x5C0;
@@ -53909,6 +58176,8 @@ pub union plActionStats_anon_65 {
     /// anonymous C member
     pub anon_0: plActionStats_anon_65_anon_67,
 }
+impl plActionStats_anon_65 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for plActionStats_anon_65 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/pl/types.h:65:16)";
     const GC_SIZE: u32 = 0x1AC;
@@ -53943,6 +58212,8 @@ pub struct plActionStats_anon_65_anon_67 {
     pub x4FC_count: u32,
     pub x500: u32,
 }
+impl plActionStats_anon_65_anon_67 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for plActionStats_anon_65_anon_67 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/pl/types.h:67:9)";
     const GC_SIZE: u32 = 0x1AC;
@@ -53968,6 +58239,8 @@ pub struct pl_x8C0_t {
     pub x0: i32,
     pub x4: [pl_x8C0_t_x4; 5],
 }
+impl pl_x8C0_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for pl_x8C0_t {
     const GC_NAME: &'static str = "pl_x8C0_t";
     const GC_SIZE: u32 = 0x18;
@@ -53992,6 +58265,8 @@ impl pl_x8C0_t_x4 {
     #[inline] #[allow(unused_unsafe)] pub fn x3_b0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_3, 7, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x3_b0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_3, 7, 1, (v as u64) & 0x1) } }
 }
+impl pl_x8C0_t_x4 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for pl_x8C0_t_x4 {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/pl/types.h:102:5)";
     const GC_SIZE: u32 = 0x4;
@@ -54010,6 +58285,8 @@ pub struct pl_x8D8_t {
     pub x0: i32,
     pub x4: [pl_x8D8_t_x4; 5],
 }
+impl pl_x8D8_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for pl_x8D8_t {
     const GC_NAME: &'static str = "pl_x8D8_t";
     const GC_SIZE: u32 = 0x2C;
@@ -54036,6 +58313,8 @@ impl pl_x8D8_t_x4 {
     #[inline] #[allow(unused_unsafe)] pub fn x4_b1(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_4, 6, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x4_b1(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_4, 6, 1, (v as u64) & 0x1) } }
 }
+impl pl_x8D8_t_x4 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for pl_x8D8_t_x4 {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/pl/types.h:111:5)";
     const GC_SIZE: u32 = 0x8;
@@ -54057,6 +58336,8 @@ pub struct pl_x5EC_t {
     pub xC: u32,
     pub x10: [pl_x5EC_t_x10; 6],
 }
+impl pl_x5EC_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for pl_x5EC_t {
     const GC_NAME: &'static str = "pl_x5EC_t";
     const GC_SIZE: u32 = 0x88;
@@ -54088,6 +58369,8 @@ impl pl_x5EC_t_x10 {
     #[inline] #[allow(unused_unsafe)] pub fn x12_b0(&self) -> u16 { unsafe { melee_core_bits_get(&self.bf_12, 7, 1) as u16 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_x12_b0(&mut self, v: u16) { unsafe { melee_core_bits_set(&mut self.bf_12, 7, 1, (v as u64) & 0x1) } }
 }
+impl pl_x5EC_t_x10 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for pl_x5EC_t_x10 {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/pl/types.h:123:5)";
     const GC_SIZE: u32 = 0x14;
@@ -54147,6 +58430,8 @@ pub struct StaleMoveTable {
     pub xCEC: i32,
     pub xCF0: i32,
 }
+impl StaleMoveTable { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for StaleMoveTable {
     const GC_NAME: &'static str = "StaleMoveTable";
     const GC_SIZE: u32 = 0xCF4;
@@ -54201,6 +58486,8 @@ pub struct StaleMoveTable_StaleMoves {
     pub move_id: u16,
     pub attack_instance: u16,
 }
+impl StaleMoveTable_StaleMoves { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for StaleMoveTable_StaleMoves {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/pl/types.h:136:16)";
     const GC_SIZE: u32 = 0x4;
@@ -54275,6 +58562,8 @@ pub struct pl_StaleMoveTableExt_t {
     pub xDD0: pl_StaleMoveTableExt_t_xDD0,
     pub xDD1: pl_StaleMoveTableExt_t_xDD1,
 }
+impl pl_StaleMoveTableExt_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for pl_StaleMoveTableExt_t {
     const GC_NAME: &'static str = "pl_StaleMoveTableExt_t";
     const GC_SIZE: u32 = 0xDD4;
@@ -54349,6 +58638,8 @@ pub union pl_StaleMoveTableExt_t_xDD0 {
     /// anonymous C member
     pub anon_0: pl_StaleMoveTableExt_t_xDD0_anon_239,
 }
+impl pl_StaleMoveTableExt_t_xDD0 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for pl_StaleMoveTableExt_t_xDD0 {
     const GC_NAME: &'static str = "union (unnamed at src/melee/pl/types.h:237:16)";
     const GC_SIZE: u32 = 0x1;
@@ -54400,6 +58691,8 @@ impl pl_StaleMoveTableExt_t_xDD0_anon_239 {
     #[inline] #[allow(unused_unsafe)] pub fn bit7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_bit7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl pl_StaleMoveTableExt_t_xDD0_anon_239 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for pl_StaleMoveTableExt_t_xDD0_anon_239 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/pl/types.h:239:9)";
     const GC_SIZE: u32 = 0x1;
@@ -54424,6 +58717,8 @@ pub union pl_StaleMoveTableExt_t_xDD1 {
     /// anonymous C member
     pub anon_0: pl_StaleMoveTableExt_t_xDD1_anon_252,
 }
+impl pl_StaleMoveTableExt_t_xDD1 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for pl_StaleMoveTableExt_t_xDD1 {
     const GC_NAME: &'static str = "union (unnamed at src/melee/pl/types.h:250:16)";
     const GC_SIZE: u32 = 0x1;
@@ -54475,6 +58770,8 @@ impl pl_StaleMoveTableExt_t_xDD1_anon_252 {
     #[inline] #[allow(unused_unsafe)] pub fn bit7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
     #[inline] #[allow(unused_unsafe)] pub fn set_bit7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
 }
+impl pl_StaleMoveTableExt_t_xDD1_anon_252 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for pl_StaleMoveTableExt_t_xDD1_anon_252 {
     const GC_NAME: &'static str = "struct (anonymous at src/melee/pl/types.h:252:9)";
     const GC_SIZE: u32 = 0x1;
@@ -54501,6 +58798,8 @@ pub struct pl_800386E8_arg0_t {
     pub unk_5AC: i32,
     pub unk_5B0: i32,
 }
+impl pl_800386E8_arg0_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for pl_800386E8_arg0_t {
     const GC_NAME: &'static str = "pl_800386E8_arg0_t";
     const GC_SIZE: u32 = 0x5B4;
@@ -54617,6 +58916,8 @@ pub struct pl_804D6470_t {
     pub x17C: i32,
     pub x180: f32,
 }
+impl pl_804D6470_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for pl_804D6470_t {
     const GC_NAME: &'static str = "pl_804D6470_t";
     const GC_SIZE: u32 = 0x184;
@@ -54730,6 +59031,8 @@ pub struct TySortElem {
     pub key: i32,
     pub val: f32,
 }
+impl TySortElem { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TySortElem {
     const GC_NAME: &'static str = "TySortElem";
     const GC_SIZE: u32 = 0x8;
@@ -54755,6 +59058,8 @@ pub struct TyModeState {
     pub x8: u16,
     pub xA: u16,
 }
+impl TyModeState { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyModeState {
     const GC_NAME: &'static str = "TyModeState";
     const GC_SIZE: u32 = 0xC;
@@ -54786,6 +59091,8 @@ pub struct ToyAnimState {
     pub x11: i8,
     pub pad_12: [u8; 2],
 }
+impl ToyAnimState { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ToyAnimState {
     const GC_NAME: &'static str = "ToyAnimState";
     const GC_SIZE: u32 = 0x14;
@@ -54811,6 +59118,8 @@ pub struct ToyEntry {
     /// anonymous C member
     pub anon_4: ToyEntry_anon_46,
 }
+impl ToyEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ToyEntry {
     const GC_NAME: &'static str = "ToyEntry";
     const GC_SIZE: u32 = 0x8;
@@ -54831,6 +59140,8 @@ pub union ToyEntry_anon_46 {
     pub value_byte: i8,
     pub value: i32,
 }
+impl ToyEntry_anon_46 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ToyEntry_anon_46 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/ty/types.h:46:5)";
     const GC_SIZE: u32 = 0x4;
@@ -54859,6 +59170,8 @@ pub struct TrophyData {
     pub x22: i8,
     pub x23: i8,
 }
+impl TrophyData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TrophyData {
     const GC_NAME: &'static str = "TrophyData";
     const GC_SIZE: u32 = 0x24;
@@ -54894,6 +59207,8 @@ pub struct TyListArg {
     pub x2C: f32,
     pub x30: f32,
 }
+impl TyListArg { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyListArg {
     const GC_NAME: &'static str = "TyListArg";
     const GC_SIZE: u32 = 0x34;
@@ -54931,6 +59246,8 @@ pub struct Toy {
     pub pad_3E8: [i8; 4],
     pub trophyCount: i16,
 }
+impl Toy { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Toy {
     const GC_NAME: &'static str = "Toy";
     const GC_SIZE: u32 = 0x3F0;
@@ -54965,6 +59282,8 @@ pub struct TyDspEntry {
     pub x08: f32,
     pub x0C: f32,
 }
+impl TyDspEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyDspEntry {
     const GC_NAME: &'static str = "TyDspEntry";
     const GC_SIZE: u32 = 0x10;
@@ -54987,6 +59306,8 @@ pub struct ToySubStructS_ {
     pub pad0: [u8; 16],
     pub x10: i16,
 }
+impl ToySubStructS_ { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ToySubStructS_ {
     const GC_NAME: &'static str = "ToySubStructS_";
     const GC_SIZE: u32 = 0x12;
@@ -55021,6 +59342,8 @@ pub struct ToyGlobalsS_ {
     pub x150: *mut c_void,
     pub x154: i16,
 }
+impl ToyGlobalsS_ { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ToyGlobalsS_ {
     const GC_NAME: &'static str = "ToyGlobalsS_";
     const GC_SIZE: u32 = 0x158;
@@ -55057,6 +59380,8 @@ pub struct TyFiguponED4 {
     pub pad_08: [u8; 4],
     pub xC: u32,
 }
+impl TyFiguponED4 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyFiguponED4 {
     const GC_NAME: &'static str = "TyFiguponED4";
     const GC_SIZE: u32 = 0x10;
@@ -55078,6 +59403,8 @@ pub struct ToyModelFile {
     pub archive_name: [i8; 32],
     pub symbol_name: [i8; 48],
 }
+impl ToyModelFile { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ToyModelFile {
     const GC_NAME: &'static str = "ToyModelFile";
     const GC_SIZE: u32 = 0x54;
@@ -55102,6 +59429,8 @@ pub struct ToyListEntry {
     pub pad_12: [u8; 2],
     pub archive: *mut HSD_Archive,
 }
+impl ToyListEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ToyListEntry {
     const GC_NAME: &'static str = "ToyListEntry";
     const GC_SIZE: u32 = 0x18;
@@ -55131,6 +59460,8 @@ pub struct TyDisplayData {
     pub pad_156: u8,
     pub visible_count: i8,
 }
+impl TyDisplayData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyDisplayData {
     const GC_NAME: &'static str = "TyDisplayData";
     const GC_SIZE: u32 = 0x158;
@@ -55169,6 +59500,8 @@ pub struct Toy26B8 {
     /// anonymous C member
     pub anon_3f0: Toy26B8_anon_185,
 }
+impl Toy26B8 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Toy26B8 {
     const GC_NAME: &'static str = "Toy26B8";
     const GC_SIZE: u32 = 0x404;
@@ -55202,6 +59535,8 @@ pub union Toy26B8_anon_185 {
     pub anim: ToyAnimState,
     pub x3F0: *mut HSD_GObj,
 }
+impl Toy26B8_anon_185 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Toy26B8_anon_185 {
     const GC_NAME: &'static str = "union (anonymous at src/melee/ty/types.h:185:17)";
     const GC_SIZE: u32 = 0x14;
@@ -55221,6 +59556,8 @@ pub struct _Toy_804A26B8_t {
     pub x4: *mut c_void,
     pub x8: *mut c_void,
 }
+impl _Toy_804A26B8_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for _Toy_804A26B8_t {
     const GC_NAME: &'static str = "_Toy_804A26B8_t";
     const GC_SIZE: u32 = 0xC;
@@ -55241,6 +59578,8 @@ pub struct TyViewData {
     pub x4: i8,
     pub pad_5: [i8; 3],
 }
+impl TyViewData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyViewData {
     const GC_NAME: &'static str = "TyViewData";
     const GC_SIZE: u32 = 0x8;
@@ -55270,6 +59609,8 @@ pub struct TyFiguponData {
     pub x28: u8,
     pub x29: u8,
 }
+impl TyFiguponData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyFiguponData {
     const GC_NAME: &'static str = "TyFiguponData";
     const GC_SIZE: u32 = 0x2C;
@@ -55298,6 +59639,8 @@ pub struct TyDspPos {
     pub x: f32,
     pub z: f32,
 }
+impl TyDspPos { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyDspPos {
     const GC_NAME: &'static str = "TyDspPos";
     const GC_SIZE: u32 = 0x8;
@@ -55321,6 +59664,8 @@ pub struct TyDspGrid {
     pub sort: [TySortElem; 301],
     pub pos: [TyDspPos; 301],
 }
+impl TyDspGrid { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyDspGrid {
     const GC_NAME: &'static str = "TyDspGrid";
     const GC_SIZE: u32 = 0x12E4;
@@ -55371,6 +59716,8 @@ pub struct TyDspConfig {
     pub x78: *mut HSD_GObj,
     pub x7C: i32,
 }
+impl TyDspConfig { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyDspConfig {
     const GC_NAME: &'static str = "TyDspConfig";
     const GC_SIZE: u32 = 0x80;
@@ -55415,6 +59762,8 @@ const _: () = assert!(core::mem::size_of::<TyDspConfig>() == 144);
 pub struct TyDspArchNames {
     pub entries: [*const i8; 43],
 }
+impl TyDspArchNames { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyDspArchNames {
     const GC_NAME: &'static str = "TyDspArchNames";
     const GC_SIZE: u32 = 0xAC;
@@ -55434,6 +59783,8 @@ pub struct TyDspNameTables {
     pub arch_names: TyDspArchNames,
     pub terminator: i32,
 }
+impl TyDspNameTables { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyDspNameTables {
     const GC_NAME: &'static str = "TyDspNameTables";
     const GC_SIZE: u32 = 0x208;
@@ -55462,6 +59813,8 @@ pub struct TyDspBgData {
     pub x104: i16,
     pub pad_106: [u8; 2],
 }
+impl TyDspBgData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyDspBgData {
     const GC_NAME: &'static str = "TyDspBgData";
     const GC_SIZE: u32 = 0x108;
@@ -55489,6 +59842,8 @@ pub struct TyDspArchiveHolder {
     pub pad_4: [u8; 16],
     pub archive: *mut HSD_Archive,
 }
+impl TyDspArchiveHolder { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyDspArchiveHolder {
     const GC_NAME: &'static str = "TyDspArchiveHolder";
     const GC_SIZE: u32 = 0x18;
@@ -55507,6 +59862,8 @@ const _: () = assert!(core::mem::size_of::<TyDspArchiveHolder>() == 32);
 pub struct TyDspBaseData {
     pub x00: [i8; 56],
 }
+impl TyDspBaseData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyDspBaseData {
     const GC_NAME: &'static str = "TyDspBaseData";
     const GC_SIZE: u32 = 0x38;
@@ -55536,6 +59893,8 @@ pub struct TyListGobjEntry {
     pub pad_15: u8,
     pub x16: i8,
 }
+impl TyListGobjEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyListGobjEntry {
     const GC_NAME: &'static str = "TyListGobjEntry";
     const GC_SIZE: u32 = 0x18;
@@ -55576,6 +59935,8 @@ pub struct TyListRow {
     pub pad_2C: [u8; 4],
     pub x30: f32,
 }
+impl TyListRow { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyListRow {
     const GC_NAME: &'static str = "TyListRow";
     const GC_SIZE: u32 = 0x34;
@@ -55606,6 +59967,8 @@ pub struct DigitInit {
     pub x8: i32,
     pub xC: i32,
 }
+impl DigitInit { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for DigitInit {
     const GC_NAME: &'static str = "DigitInit";
     const GC_SIZE: u32 = 0x10;
@@ -55630,6 +59993,8 @@ pub struct ToyNameData {
     pub x8: i16,
     pub xA: i16,
 }
+impl ToyNameData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ToyNameData {
     const GC_NAME: &'static str = "ToyNameData";
     const GC_SIZE: u32 = 0xC;
@@ -55652,6 +60017,8 @@ pub struct TyLightSymbolEntry {
     pub name: *mut i8,
     pub unk: *mut c_void,
 }
+impl TyLightSymbolEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyLightSymbolEntry {
     const GC_NAME: &'static str = "TyLightSymbolEntry";
     const GC_SIZE: u32 = 0x8;
@@ -55670,6 +60037,8 @@ pub struct TyLightIndexEntry {
     pub idx: i32,
     pub pad: [u8; 8],
 }
+impl TyLightIndexEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyLightIndexEntry {
     const GC_NAME: &'static str = "TyLightIndexEntry";
     const GC_SIZE: u32 = 0xC;
@@ -55689,6 +60058,8 @@ pub struct TyLightFile {
     pub symbols: [TyLightSymbolEntry; 6],
     pub entries: [TyLightIndexEntry; 1],
 }
+impl TyLightFile { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyLightFile {
     const GC_NAME: &'static str = "TyLightFile";
     const GC_SIZE: u32 = 0x108;
@@ -55709,6 +60080,8 @@ pub struct tyUnkStruct {
     pub x4: *mut c_void,
     pub x8: *mut HSD_GObj,
 }
+impl tyUnkStruct { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for tyUnkStruct {
     const GC_NAME: &'static str = "tyUnkStruct";
     const GC_SIZE: u32 = 0xC;
@@ -55731,6 +60104,8 @@ pub struct TyCleanupObj {
     pub xC: *mut c_void,
     pub x10: *mut c_void,
 }
+impl TyCleanupObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyCleanupObj {
     const GC_NAME: &'static str = "TyCleanupObj";
     const GC_SIZE: u32 = 0x14;
@@ -55752,6 +60127,8 @@ pub struct TyGObjX8_ {
     pub pad: [u8; 40],
     pub x28: *mut HSD_CObj,
 }
+impl TyGObjX8_ { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyGObjX8_ {
     const GC_NAME: &'static str = "TyGObjX8_";
     const GC_SIZE: u32 = 0x2C;
@@ -55780,6 +60157,8 @@ pub struct TyCameraData_ {
     pub pad30: [u8; 40],
     pub x58: i32,
 }
+impl TyCameraData_ { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyCameraData_ {
     const GC_NAME: &'static str = "TyCameraData_";
     const GC_SIZE: u32 = 0x5C;
@@ -55810,6 +60189,8 @@ pub struct ToyDataJObj {
     pub pad08: [u8; 56],
     pub x40: i32,
 }
+impl ToyDataJObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ToyDataJObj {
     const GC_NAME: &'static str = "ToyDataJObj";
     const GC_SIZE: u32 = 0x44;
@@ -55830,6 +60211,8 @@ pub struct ToyDataX8 {
     pub pad0: [u8; 40],
     pub x28: *mut ToyDataJObj,
 }
+impl ToyDataX8 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ToyDataX8 {
     const GC_NAME: &'static str = "ToyDataX8";
     const GC_SIZE: u32 = 0x2C;
@@ -55850,6 +60233,8 @@ pub struct tyLightData {
     pub _pad1: [i8; 72],
     pub x58: *mut c_void,
 }
+impl tyLightData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for tyLightData {
     const GC_NAME: &'static str = "tyLightData";
     const GC_SIZE: u32 = 0x5C;
@@ -55873,6 +60258,8 @@ pub struct tyDispData {
     pub x14C: *mut HSD_Text,
     pub x150: *mut HSD_Text,
 }
+impl tyDispData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for tyDispData {
     const GC_NAME: &'static str = "tyDispData";
     const GC_SIZE: u32 = 0x154;
@@ -55894,6 +60281,8 @@ pub struct un_804D6E68_t {
     pub pad: [u8; 24],
     pub x18: f32,
 }
+impl un_804D6E68_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for un_804D6E68_t {
     const GC_NAME: &'static str = "un_804D6E68_t";
     const GC_SIZE: u32 = 0x1C;
@@ -55914,6 +60303,8 @@ pub struct ToyJObjNode {
     pub x8: [u8; 56],
     pub x40: i32,
 }
+impl ToyJObjNode { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ToyJObjNode {
     const GC_NAME: &'static str = "ToyJObjNode";
     const GC_SIZE: u32 = 0x44;
@@ -55942,6 +60333,8 @@ pub struct ToyCameraControl {
     pub interests: [Vec; 8],
     pub has_position_anim: [i8; 8],
 }
+impl ToyCameraControl { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ToyCameraControl {
     const GC_NAME: &'static str = "ToyCameraControl";
     const GC_SIZE: u32 = 0xE4;
@@ -55969,6 +60362,8 @@ pub struct ToyTransitionObj {
     pub x20: i32,
     pub x24: i32,
 }
+impl ToyTransitionObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ToyTransitionObj {
     const GC_NAME: &'static str = "ToyTransitionObj";
     const GC_SIZE: u32 = 0x28;
@@ -56011,6 +60406,8 @@ pub struct Toy6E68 {
     pub x60: i8,
     pub x61: i8,
 }
+impl Toy6E68 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Toy6E68 {
     const GC_NAME: &'static str = "Toy6E68";
     const GC_SIZE: u32 = 0x64;
@@ -56052,6 +60449,8 @@ pub struct Ty25Entry {
     pub pad: [u8; 20],
     pub x14: *mut c_void,
 }
+impl Ty25Entry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for Ty25Entry {
     const GC_NAME: &'static str = "Ty25Entry";
     const GC_SIZE: u32 = 0x18;
@@ -56089,6 +60488,8 @@ pub struct TyListState {
     pub x2A4: f32,
     pub x2A8: f32,
 }
+impl TyListState { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyListState {
     const GC_NAME: &'static str = "TyListState";
     const GC_SIZE: u32 = 0x2AC;
@@ -56126,6 +60527,8 @@ pub struct TyListData {
     pub pad: [u8; 40],
     pub cobj: *mut HSD_CObj,
 }
+impl TyListData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyListData {
     const GC_NAME: &'static str = "TyListData";
     const GC_SIZE: u32 = 0x2C;
@@ -56144,6 +60547,8 @@ pub struct SisFontData {
     pub pad: [u8; 1256],
     pub digits: *mut u8,
 }
+impl SisFontData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for SisFontData {
     const GC_NAME: &'static str = "SisFontData";
     const GC_SIZE: u32 = 0x4EC;
@@ -56163,6 +60568,8 @@ pub struct TyListWaitData {
     pub x20: u32,
     pub x24: i32,
 }
+impl TyListWaitData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyListWaitData {
     const GC_NAME: &'static str = "TyListWaitData";
     const GC_SIZE: u32 = 0x28;
@@ -56192,6 +60599,8 @@ pub struct ToyED8Data {
     pub x54: u32,
     pub x58: *mut c_void,
 }
+impl ToyED8Data { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ToyED8Data {
     const GC_NAME: &'static str = "ToyED8Data";
     const GC_SIZE: u32 = 0x5C;
@@ -56221,6 +60630,8 @@ pub struct TyArchiveData {
     pub pad: [u8; 76],
     pub data: *mut c_void,
 }
+impl TyArchiveData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyArchiveData {
     const GC_NAME: &'static str = "TyArchiveData";
     const GC_SIZE: u32 = 0x54;
@@ -56240,6 +60651,8 @@ pub struct TyFiguponInner {
     pub pad: [u8; 77],
     pub x4D: u8,
 }
+impl TyFiguponInner { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyFiguponInner {
     const GC_NAME: &'static str = "TyFiguponInner";
     const GC_SIZE: u32 = 0x4E;
@@ -56270,6 +60683,8 @@ pub struct TyFiguponUD {
     pub x44: f32,
     pub pad_48: [u8; 16],
 }
+impl TyFiguponUD { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for TyFiguponUD {
     const GC_NAME: &'static str = "TyFiguponUD";
     const GC_SIZE: u32 = 0x58;
@@ -56302,6 +60717,8 @@ pub struct ToyParamEditor {
     pub repeat_delay: u8,
     pub values: [i16; 9],
 }
+impl ToyParamEditor { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ToyParamEditor {
     const GC_NAME: &'static str = "ToyParamEditor";
     const GC_SIZE: u32 = 0x18;
@@ -56321,6 +60738,8 @@ const _: () = assert!(core::mem::size_of::<ToyParamEditor>() == 32);
 pub struct ToyTable {
     pub entries: [ToyEntry; 9],
 }
+impl ToyTable { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ToyTable {
     const GC_NAME: &'static str = "ToyTable";
     const GC_SIZE: u32 = 0x48;
@@ -56342,6 +60761,8 @@ pub struct ToyEntryData {
     pub x12: [u8; 2],
     pub x14: *mut HSD_Archive,
 }
+impl ToyEntryData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ToyEntryData {
     const GC_NAME: &'static str = "ToyEntryData";
     const GC_SIZE: u32 = 0x18;
@@ -56363,6 +60784,8 @@ const _: () = assert!(core::mem::size_of::<ToyEntryData>() == 40);
 pub struct PosArray {
     pub xy: [i32; 2],
 }
+impl PosArray { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for PosArray {
     const GC_NAME: &'static str = "PosArray";
     const GC_SIZE: u32 = 0x8;
@@ -56379,6 +60802,8 @@ const _: () = assert!(core::mem::size_of::<PosArray>() == 8);
 pub struct PosArrayFull {
     pub a: [PosArray; 7],
 }
+impl PosArrayFull { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for PosArrayFull {
     const GC_NAME: &'static str = "PosArrayFull";
     const GC_SIZE: u32 = 0x38;
@@ -56396,6 +60821,8 @@ pub struct lbl_803FDDE4_t {
     pub symbols: [lbl_803FDDE4_t_symbols; 6],
     pub values: [lbl_803FDDE4_t_values; 6],
 }
+impl lbl_803FDDE4_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lbl_803FDDE4_t {
     const GC_NAME: &'static str = "lbl_803FDDE4_t";
     const GC_SIZE: u32 = 0x78;
@@ -56414,6 +60841,8 @@ pub struct lbl_803FDDE4_t_symbols {
     pub name: *mut i8,
     pub empty: *mut c_void,
 }
+impl lbl_803FDDE4_t_symbols { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lbl_803FDDE4_t_symbols {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ty/types.h:612:5)";
     const GC_SIZE: u32 = 0x8;
@@ -56433,6 +60862,8 @@ pub struct lbl_803FDDE4_t_values {
     pub color: _GXColor,
     pub flag: i32,
 }
+impl lbl_803FDDE4_t_values { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for lbl_803FDDE4_t_values {
     const GC_NAME: &'static str = "struct (unnamed at src/melee/ty/types.h:616:5)";
     const GC_SIZE: u32 = 0xC;
@@ -56456,6 +60887,8 @@ pub struct ViCharaDesc {
     pub spawn_count: i32,
     pub unk: i32,
 }
+impl ViCharaDesc { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
 impl GcLayout for ViCharaDesc {
     const GC_NAME: &'static str = "ViCharaDesc";
     const GC_SIZE: u32 = 0xC;
@@ -56470,6 +60903,1572 @@ impl GcLayout for ViCharaDesc {
     ];
 }
 const _: () = assert!(core::mem::size_of::<ViCharaDesc>() == 12);
+
+/// C `EF_ParamEntry` (src/melee/ef/eflib.h:11); GameCube size 0x8, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct EF_ParamEntry {
+    pub gobj: *mut c_void,
+    pub gfx_id: u16,
+    pub alpha: u16,
+}
+impl EF_ParamEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for EF_ParamEntry {
+    const GC_NAME: &'static str = "EF_ParamEntry";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("gobj", 0x0, 4, "void *"),
+        GcField::new("gfx_id", 0x4, 2, "u16"),
+        GcField::new("alpha", 0x6, 2, "u16"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<EF_ParamEntry>() == 16);
+
+/// C `Fighter_804D64FC_t` (src/melee/ft/fighter.h:19); GameCube size 0x28, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct Fighter_804D64FC_t {
+    pub cmdscripts: *mut *mut u8,
+    pub x4: *mut *mut c_void,
+    pub x8: *mut *mut c_void,
+    pub xC: *mut *mut c_void,
+    pub x10: *mut *mut c_void,
+    pub x14: *mut *mut c_void,
+    pub x18: *mut *mut c_void,
+    pub x1C: *mut *mut c_void,
+    pub x20: *mut f32,
+    pub x24: *mut c_void,
+}
+impl Fighter_804D64FC_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for Fighter_804D64FC_t {
+    const GC_NAME: &'static str = "Fighter_804D64FC_t";
+    const GC_SIZE: u32 = 0x28;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("cmdscripts", 0x0, 4, "u8 **"),
+        GcField::new("x4", 0x4, 4, "void **"),
+        GcField::new("x8", 0x8, 4, "void **"),
+        GcField::new("xC", 0xC, 4, "void **"),
+        GcField::new("x10", 0x10, 4, "void **"),
+        GcField::new("x14", 0x14, 4, "void **"),
+        GcField::new("x18", 0x18, 4, "void **"),
+        GcField::new("x1C", 0x1C, 4, "void **"),
+        GcField::new("x20", 0x20, 4, "float *"),
+        GcField::new("x24", 0x24, 4, "void *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<Fighter_804D64FC_t>() == 80);
+
+/// C `Fighter_804D6518_t` (src/melee/ft/fighter.h:93); GameCube size 0x8, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct Fighter_804D6518_t {
+    pub x0: f32,
+    pub x4: f32,
+}
+impl Fighter_804D6518_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for Fighter_804D6518_t {
+    const GC_NAME: &'static str = "Fighter_804D6518_t";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "f32"),
+        GcField::new("x4", 0x4, 4, "f32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<Fighter_804D6518_t>() == 8);
+
+/// C `Fighter_804D651C_t` (src/melee/ft/fighter.h:98); GameCube size 0x24, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct Fighter_804D651C_t {
+    pub x0: f32,
+    pub x4: f32,
+    pub x8: f32,
+    pub xC: f32,
+    pub x10: f32,
+    pub x14: f32,
+    pub x18: f32,
+    pub x1C: f32,
+    pub x20: f32,
+}
+impl Fighter_804D651C_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for Fighter_804D651C_t {
+    const GC_NAME: &'static str = "Fighter_804D651C_t";
+    const GC_SIZE: u32 = 0x24;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "f32"),
+        GcField::new("x4", 0x4, 4, "f32"),
+        GcField::new("x8", 0x8, 4, "f32"),
+        GcField::new("xC", 0xC, 4, "f32"),
+        GcField::new("x10", 0x10, 4, "f32"),
+        GcField::new("x14", 0x14, 4, "f32"),
+        GcField::new("x18", 0x18, 4, "f32"),
+        GcField::new("x1C", 0x1C, 4, "f32"),
+        GcField::new("x20", 0x20, 4, "f32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<Fighter_804D651C_t>() == 36);
+
+/// C `Fighter_804D6520_t` (src/melee/ft/fighter.h:110); GameCube size 0x3C, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct Fighter_804D6520_t {
+    pub x0: f32,
+    pub x4: f32,
+    pub x8: f32,
+    pub xC: f32,
+    pub x10: f32,
+    pub x14: f32,
+    pub x18: f32,
+    pub x1C: f32,
+    pub x20: f32,
+    pub x24: f32,
+    pub x28: f32,
+    pub x2C: f32,
+    pub x30: f32,
+    pub x34: f32,
+    pub x38: f32,
+}
+impl Fighter_804D6520_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for Fighter_804D6520_t {
+    const GC_NAME: &'static str = "Fighter_804D6520_t";
+    const GC_SIZE: u32 = 0x3C;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "f32"),
+        GcField::new("x4", 0x4, 4, "f32"),
+        GcField::new("x8", 0x8, 4, "f32"),
+        GcField::new("xC", 0xC, 4, "f32"),
+        GcField::new("x10", 0x10, 4, "f32"),
+        GcField::new("x14", 0x14, 4, "f32"),
+        GcField::new("x18", 0x18, 4, "f32"),
+        GcField::new("x1C", 0x1C, 4, "f32"),
+        GcField::new("x20", 0x20, 4, "f32"),
+        GcField::new("x24", 0x24, 4, "f32"),
+        GcField::new("x28", 0x28, 4, "f32"),
+        GcField::new("x2C", 0x2C, 4, "f32"),
+        GcField::new("x30", 0x30, 4, "f32"),
+        GcField::new("x34", 0x34, 4, "f32"),
+        GcField::new("x38", 0x38, 4, "f32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<Fighter_804D6520_t>() == 60);
+
+/// C `Fighter_804D6524_t` (src/melee/ft/fighter.h:128); GameCube size 0x9C, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct Fighter_804D6524_t {
+    pub x0: f32,
+    pub x4: f32,
+    pub x8: f32,
+    pub xC: f32,
+    pub x10: f32,
+    pub x14: f32,
+    pub x18: f32,
+    pub x1C: f32,
+    pub x20: f32,
+    pub x24: f32,
+    pub x28: f32,
+    pub x2C: f32,
+    pub x30: f32,
+    pub x34: f32,
+    pub x38: f32,
+    pub x3C: f32,
+    pub x40: f32,
+    pub x44: f32,
+    pub x48: f32,
+    pub x4C: f32,
+    pub x50: f32,
+    pub x54: f32,
+    pub x58: f32,
+    pub x5C: f32,
+    pub x60: f32,
+    pub x64: f32,
+    pub x68: f32,
+    pub x6C: f32,
+    pub x70: f32,
+    pub x74: f32,
+    pub x78: f32,
+    pub x7C: f32,
+    pub x80: f32,
+    pub x84: f32,
+    pub x88: f32,
+    pub x8C: f32,
+    pub x90: f32,
+    pub x94: f32,
+    pub x98: f32,
+}
+impl Fighter_804D6524_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for Fighter_804D6524_t {
+    const GC_NAME: &'static str = "Fighter_804D6524_t";
+    const GC_SIZE: u32 = 0x9C;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "float"),
+        GcField::new("x4", 0x4, 4, "float"),
+        GcField::new("x8", 0x8, 4, "float"),
+        GcField::new("xC", 0xC, 4, "float"),
+        GcField::new("x10", 0x10, 4, "float"),
+        GcField::new("x14", 0x14, 4, "float"),
+        GcField::new("x18", 0x18, 4, "float"),
+        GcField::new("x1C", 0x1C, 4, "float"),
+        GcField::new("x20", 0x20, 4, "float"),
+        GcField::new("x24", 0x24, 4, "float"),
+        GcField::new("x28", 0x28, 4, "float"),
+        GcField::new("x2C", 0x2C, 4, "float"),
+        GcField::new("x30", 0x30, 4, "float"),
+        GcField::new("x34", 0x34, 4, "float"),
+        GcField::new("x38", 0x38, 4, "float"),
+        GcField::new("x3C", 0x3C, 4, "float"),
+        GcField::new("x40", 0x40, 4, "float"),
+        GcField::new("x44", 0x44, 4, "float"),
+        GcField::new("x48", 0x48, 4, "float"),
+        GcField::new("x4C", 0x4C, 4, "float"),
+        GcField::new("x50", 0x50, 4, "float"),
+        GcField::new("x54", 0x54, 4, "float"),
+        GcField::new("x58", 0x58, 4, "float"),
+        GcField::new("x5C", 0x5C, 4, "float"),
+        GcField::new("x60", 0x60, 4, "float"),
+        GcField::new("x64", 0x64, 4, "float"),
+        GcField::new("x68", 0x68, 4, "float"),
+        GcField::new("x6C", 0x6C, 4, "float"),
+        GcField::new("x70", 0x70, 4, "float"),
+        GcField::new("x74", 0x74, 4, "float"),
+        GcField::new("x78", 0x78, 4, "float"),
+        GcField::new("x7C", 0x7C, 4, "float"),
+        GcField::new("x80", 0x80, 4, "float"),
+        GcField::new("x84", 0x84, 4, "float"),
+        GcField::new("x88", 0x88, 4, "float"),
+        GcField::new("x8C", 0x8C, 4, "float"),
+        GcField::new("x90", 0x90, 4, "float"),
+        GcField::new("x94", 0x94, 4, "float"),
+        GcField::new("x98", 0x98, 4, "float"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<Fighter_804D6524_t>() == 156);
+
+/// C `Fighter_ShakeTable_t` (src/melee/ft/fighter.h:170); GameCube size 0x8, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct Fighter_ShakeTable_t {
+    pub x0: *mut Vec2,
+    pub x4: i32,
+}
+impl Fighter_ShakeTable_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for Fighter_ShakeTable_t {
+    const GC_NAME: &'static str = "Fighter_ShakeTable_t";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "Vec2 *"),
+        GcField::new("x4", 0x4, 4, "int"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<Fighter_ShakeTable_t>() == 16);
+
+/// C `Fighter_804D6540_x0_t` (src/melee/ft/fighter.h:183); GameCube size 0x4, align 1.
+#[repr(C, align(1))]
+#[derive(Clone, Copy)]
+pub struct Fighter_804D6540_x0_t {
+    pub x0: u8,
+    pub x1: u8,
+    pub x2: u8,
+    pub x3: u8,
+}
+impl Fighter_804D6540_x0_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for Fighter_804D6540_x0_t {
+    const GC_NAME: &'static str = "Fighter_804D6540_x0_t";
+    const GC_SIZE: u32 = 0x4;
+    const GC_ALIGN: u32 = 1;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 1, "u8"),
+        GcField::new("x1", 0x1, 1, "u8"),
+        GcField::new("x2", 0x2, 1, "u8"),
+        GcField::new("x3", 0x3, 1, "u8"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<Fighter_804D6540_x0_t>() == 4);
+
+/// C `Fighter_804D6540_t` (src/melee/ft/fighter.h:189); GameCube size 0x8, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct Fighter_804D6540_t {
+    pub x0: *mut Fighter_804D6540_x0_t,
+    pub x4: i32,
+}
+impl Fighter_804D6540_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for Fighter_804D6540_t {
+    const GC_NAME: &'static str = "Fighter_804D6540_t";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "Fighter_804D6540_x0_t *"),
+        GcField::new("x4", 0x4, 4, "int"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<Fighter_804D6540_t>() == 16);
+
+/// C `TechAiPolicy` (src/melee/ft/technical_ai_policy.h:6); GameCube size 0x38, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct TechAiPolicy {
+    pub seed: u32,
+    pub skill: i32,
+    pub delay: i32,
+    pub wait: i32,
+    pub r#type: i32,
+    pub motion: i32,
+    pub fired: i32,
+    pub accepted: i32,
+    pub cooldown: i32,
+    pub opportunities: i32,
+    pub lcancels: i32,
+    pub techs: i32,
+    pub misses: i32,
+    pub last_event: i32,
+}
+impl TechAiPolicy { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for TechAiPolicy {
+    const GC_NAME: &'static str = "TechAiPolicy";
+    const GC_SIZE: u32 = 0x38;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("seed", 0x0, 4, "unsigned int"),
+        GcField::new("skill", 0x4, 4, "int"),
+        GcField::new("delay", 0x8, 4, "int"),
+        GcField::new("wait", 0xC, 4, "int"),
+        GcField::new("type", 0x10, 4, "int"),
+        GcField::new("motion", 0x14, 4, "int"),
+        GcField::new("fired", 0x18, 4, "int"),
+        GcField::new("accepted", 0x1C, 4, "int"),
+        GcField::new("cooldown", 0x20, 4, "int"),
+        GcField::new("opportunities", 0x24, 4, "int"),
+        GcField::new("lcancels", 0x28, 4, "int"),
+        GcField::new("techs", 0x2C, 4, "int"),
+        GcField::new("misses", 0x30, 4, "int"),
+        GcField::new("last_event", 0x34, 4, "int"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<TechAiPolicy>() == 56);
+
+/// C `TechAiObservation` (src/melee/ft/technical_ai_policy.h:11); GameCube size 0x18, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct TechAiObservation {
+    pub r#type: i32,
+    pub motion: i32,
+    pub floor: i32,
+    pub fresh_shoulder: i32,
+    pub tech_unlocked: i32,
+    pub eta: f32,
+}
+impl TechAiObservation { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for TechAiObservation {
+    const GC_NAME: &'static str = "TechAiObservation";
+    const GC_SIZE: u32 = 0x18;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("type", 0x0, 4, "int"),
+        GcField::new("motion", 0x4, 4, "int"),
+        GcField::new("floor", 0x8, 4, "int"),
+        GcField::new("fresh_shoulder", 0xC, 4, "int"),
+        GcField::new("tech_unlocked", 0x10, 4, "int"),
+        GcField::new("eta", 0x14, 4, "float"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<TechAiObservation>() == 24);
+
+/// C `ItemStateTable` (src/melee/it/kinds/types.h:12); GameCube size 0x10, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct ItemStateTable {
+    pub anim_id: enum_t,
+    pub animated: HSD_GObjPredicate,
+    pub physics_updated: HSD_GObjEvent,
+    pub collided: HSD_GObjPredicate,
+}
+impl ItemStateTable { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for ItemStateTable {
+    const GC_NAME: &'static str = "ItemStateTable";
+    const GC_SIZE: u32 = 0x10;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("anim_id", 0x0, 4, "enum_t"),
+        GcField::new("animated", 0x4, 4, "HSD_GObjPredicate"),
+        GcField::new("physics_updated", 0x8, 4, "HSD_GObjEvent"),
+        GcField::new("collided", 0xC, 4, "HSD_GObjPredicate"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<ItemStateTable>() == 32);
+
+/// C `ItemLogicTable` (src/melee/it/kinds/types.h:22); GameCube size 0x3C, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct ItemLogicTable {
+    pub states: *mut ItemStateTable,
+    pub spawned: HSD_GObjEvent,
+    pub destroyed: HSD_GObjEvent,
+    pub picked_up: HSD_GObjEvent,
+    pub dropped: HSD_GObjEvent,
+    pub thrown: HSD_GObjEvent,
+    pub dmg_dealt: HSD_GObjPredicate,
+    pub dmg_received: HSD_GObjPredicate,
+    pub entered_air: HSD_GObjEvent,
+    pub reflected: HSD_GObjPredicate,
+    pub clanked: HSD_GObjPredicate,
+    pub absorbed: HSD_GObjPredicate,
+    pub shield_bounced: HSD_GObjPredicate,
+    pub hit_shield: HSD_GObjPredicate,
+    pub evt_unk: HSD_GObjInteraction,
+}
+impl ItemLogicTable { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for ItemLogicTable {
+    const GC_NAME: &'static str = "ItemLogicTable";
+    const GC_SIZE: u32 = 0x3C;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("states", 0x0, 4, "ItemStateTable *"),
+        GcField::new("spawned", 0x4, 4, "HSD_GObjEvent"),
+        GcField::new("destroyed", 0x8, 4, "HSD_GObjEvent"),
+        GcField::new("picked_up", 0xC, 4, "HSD_GObjEvent"),
+        GcField::new("dropped", 0x10, 4, "HSD_GObjEvent"),
+        GcField::new("thrown", 0x14, 4, "HSD_GObjEvent"),
+        GcField::new("dmg_dealt", 0x18, 4, "HSD_GObjPredicate"),
+        GcField::new("dmg_received", 0x1C, 4, "HSD_GObjPredicate"),
+        GcField::new("entered_air", 0x20, 4, "HSD_GObjEvent"),
+        GcField::new("reflected", 0x24, 4, "HSD_GObjPredicate"),
+        GcField::new("clanked", 0x28, 4, "HSD_GObjPredicate"),
+        GcField::new("absorbed", 0x2C, 4, "HSD_GObjPredicate"),
+        GcField::new("shield_bounced", 0x30, 4, "HSD_GObjPredicate"),
+        GcField::new("hit_shield", 0x34, 4, "HSD_GObjPredicate"),
+        GcField::new("evt_unk", 0x38, 4, "HSD_GObjInteraction"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<ItemLogicTable>() == 120);
+
+/// C `itSword_UnkBytes` (src/melee/it/kinds/types.h:54); GameCube size 0x14, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct itSword_UnkBytes {
+    pub x0: f32,
+    pub x4: f32,
+    pub x8: u8,
+    pub x9: u8,
+    pub xA: u8,
+    pub xB: u8,
+    pub xC: u8,
+    pub xD: u8,
+    pub xE: u8,
+    pub xF: u8,
+    pub x10: u8,
+}
+impl itSword_UnkBytes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for itSword_UnkBytes {
+    const GC_NAME: &'static str = "itSword_UnkBytes";
+    const GC_SIZE: u32 = 0x14;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "f32"),
+        GcField::new("x4", 0x4, 4, "f32"),
+        GcField::new("x8", 0x8, 1, "u8"),
+        GcField::new("x9", 0x9, 1, "u8"),
+        GcField::new("xA", 0xA, 1, "u8"),
+        GcField::new("xB", 0xB, 1, "u8"),
+        GcField::new("xC", 0xC, 1, "u8"),
+        GcField::new("xD", 0xD, 1, "u8"),
+        GcField::new("xE", 0xE, 1, "u8"),
+        GcField::new("xF", 0xF, 1, "u8"),
+        GcField::new("x10", 0x10, 1, "u8"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<itSword_UnkBytes>() == 20);
+
+/// C `itSword_UnkArticle1` (src/melee/it/kinds/types.h:68); GameCube size 0x30, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct itSword_UnkArticle1 {
+    pub x0: *mut c_void,
+    pub x4: *mut c_void,
+    pub x8: *mut c_void,
+    pub xC: f32,
+    pub x10: f32,
+    pub x14: f32,
+    pub x18: i32,
+    pub x1C: itSword_UnkBytes,
+}
+impl itSword_UnkArticle1 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for itSword_UnkArticle1 {
+    const GC_NAME: &'static str = "itSword_UnkArticle1";
+    const GC_SIZE: u32 = 0x30;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "void *"),
+        GcField::new("x4", 0x4, 4, "void *"),
+        GcField::new("x8", 0x8, 4, "void *"),
+        GcField::new("xC", 0xC, 4, "float"),
+        GcField::new("x10", 0x10, 4, "float"),
+        GcField::new("x14", 0x14, 4, "float"),
+        GcField::new("x18", 0x18, 4, "int"),
+        GcField::new("x1C", 0x1C, 20, "itSword_UnkBytes"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<itSword_UnkArticle1>() == 64);
+
+/// C `_m2c_stack_ftCo_800A3554` (src/melee/ft/kinds/ftCommon/ftCo_0A01.h:10); GameCube size 0x38, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct _m2c_stack_ftCo_800A3554 {
+    pub pad_0: [i8; 16],
+    pub f: f32,
+    pub vec: Vec,
+    pub pad_20: [i8; 24],
+}
+impl _m2c_stack_ftCo_800A3554 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for _m2c_stack_ftCo_800A3554 {
+    const GC_NAME: &'static str = "_m2c_stack_ftCo_800A3554";
+    const GC_SIZE: u32 = 0x38;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("pad_0", 0x0, 16, "char[16]"),
+        GcField::new("f", 0x10, 4, "f32"),
+        GcField::new("vec", 0x14, 12, "Vec3"),
+        GcField::new("pad_20", 0x20, 24, "char[24]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_m2c_stack_ftCo_800A3554>() == 56);
+
+/// C `_ftCrazyHandAttributes` (src/melee/ft/kinds/ftCrazyHand/types.h:8); GameCube size 0x144, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct _ftCrazyHandAttributes {
+    pub x0: i32,
+    pub x4: i32,
+    pub x8: i32,
+    pub xC: i32,
+    pub x10: f32,
+    pub x14: f32,
+    pub x18: f32,
+    pub x1C: f32,
+    pub x20: f32,
+    pub x24: f32,
+    pub x28: f32,
+    pub x2C: f32,
+    pub x30_pos2: Vec2,
+    pub x38: f32,
+    pub x3C: f32,
+    pub x40: f32,
+    pub x44: f32,
+    pub x48: i32,
+    pub x4C: f32,
+    pub x50: f32,
+    pub x54: i32,
+    pub x58: i32,
+    pub x5C: f32,
+    pub x60: f32,
+    pub x64: i32,
+    pub x68: f32,
+    pub x6C: f32,
+    pub x70: f32,
+    pub x74: i32,
+    pub x78: i32,
+    pub x7C: f32,
+    pub x80: f32,
+    pub x84: f32,
+    pub x88_pos: Vec2,
+    pub x90: f32,
+    pub x94: f32,
+    pub x98: f32,
+    pub x9C: f32,
+    pub xA0: f32,
+    pub xA4: f32,
+    pub xA8_pos: Vec2,
+    pub xB0: f32,
+    pub xB4: f32,
+    pub xB8: f32,
+    pub xBC_pos: Vec2,
+    pub xC4_pos: Vec2,
+    pub xCC_pos: Vec2,
+    pub xD4: f32,
+    pub xD8: f32,
+    pub xDC: f32,
+    pub xE0: f32,
+    pub xE4: f32,
+    pub xE8: f32,
+    pub xEC: f32,
+    pub xF0: i32,
+    pub xF4: i32,
+    pub xF8: i32,
+    pub xFC: f32,
+    pub x100: i32,
+    pub x104: f32,
+    pub x108: f32,
+    pub x10C: f32,
+    pub x110_pos: Vec2,
+    pub x118_pos: Vec2,
+    pub x120: f32,
+    pub x124: i32,
+    pub x128: i32,
+    pub x12C_pos: Vec2,
+    pub x134_pos: Vec2,
+    pub x13C_pos: Vec2,
+}
+impl _ftCrazyHandAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for _ftCrazyHandAttributes {
+    const GC_NAME: &'static str = "_ftCrazyHandAttributes";
+    const GC_SIZE: u32 = 0x144;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "s32"),
+        GcField::new("x4", 0x4, 4, "s32"),
+        GcField::new("x8", 0x8, 4, "s32"),
+        GcField::new("xC", 0xC, 4, "s32"),
+        GcField::new("x10", 0x10, 4, "float"),
+        GcField::new("x14", 0x14, 4, "float"),
+        GcField::new("x18", 0x18, 4, "float"),
+        GcField::new("x1C", 0x1C, 4, "float"),
+        GcField::new("x20", 0x20, 4, "float"),
+        GcField::new("x24", 0x24, 4, "float"),
+        GcField::new("x28", 0x28, 4, "float"),
+        GcField::new("x2C", 0x2C, 4, "float"),
+        GcField::new("x30_pos2", 0x30, 8, "Vec2"),
+        GcField::new("x38", 0x38, 4, "float"),
+        GcField::new("x3C", 0x3C, 4, "float"),
+        GcField::new("x40", 0x40, 4, "float"),
+        GcField::new("x44", 0x44, 4, "float"),
+        GcField::new("x48", 0x48, 4, "s32"),
+        GcField::new("x4C", 0x4C, 4, "float"),
+        GcField::new("x50", 0x50, 4, "float"),
+        GcField::new("x54", 0x54, 4, "s32"),
+        GcField::new("x58", 0x58, 4, "s32"),
+        GcField::new("x5C", 0x5C, 4, "float"),
+        GcField::new("x60", 0x60, 4, "float"),
+        GcField::new("x64", 0x64, 4, "s32"),
+        GcField::new("x68", 0x68, 4, "float"),
+        GcField::new("x6C", 0x6C, 4, "float"),
+        GcField::new("x70", 0x70, 4, "float"),
+        GcField::new("x74", 0x74, 4, "s32"),
+        GcField::new("x78", 0x78, 4, "s32"),
+        GcField::new("x7C", 0x7C, 4, "float"),
+        GcField::new("x80", 0x80, 4, "float"),
+        GcField::new("x84", 0x84, 4, "float"),
+        GcField::new("x88_pos", 0x88, 8, "Vec2"),
+        GcField::new("x90", 0x90, 4, "float"),
+        GcField::new("x94", 0x94, 4, "float"),
+        GcField::new("x98", 0x98, 4, "float"),
+        GcField::new("x9C", 0x9C, 4, "float"),
+        GcField::new("xA0", 0xA0, 4, "float"),
+        GcField::new("xA4", 0xA4, 4, "float"),
+        GcField::new("xA8_pos", 0xA8, 8, "Vec2"),
+        GcField::new("xB0", 0xB0, 4, "float"),
+        GcField::new("xB4", 0xB4, 4, "float"),
+        GcField::new("xB8", 0xB8, 4, "float"),
+        GcField::new("xBC_pos", 0xBC, 8, "Vec2"),
+        GcField::new("xC4_pos", 0xC4, 8, "Vec2"),
+        GcField::new("xCC_pos", 0xCC, 8, "Vec2"),
+        GcField::new("xD4", 0xD4, 4, "float"),
+        GcField::new("xD8", 0xD8, 4, "float"),
+        GcField::new("xDC", 0xDC, 4, "float"),
+        GcField::new("xE0", 0xE0, 4, "float"),
+        GcField::new("xE4", 0xE4, 4, "float"),
+        GcField::new("xE8", 0xE8, 4, "float"),
+        GcField::new("xEC", 0xEC, 4, "float"),
+        GcField::new("xF0", 0xF0, 4, "s32"),
+        GcField::new("xF4", 0xF4, 4, "s32"),
+        GcField::new("xF8", 0xF8, 4, "s32"),
+        GcField::new("xFC", 0xFC, 4, "float"),
+        GcField::new("x100", 0x100, 4, "s32"),
+        GcField::new("x104", 0x104, 4, "float"),
+        GcField::new("x108", 0x108, 4, "float"),
+        GcField::new("x10C", 0x10C, 4, "float"),
+        GcField::new("x110_pos", 0x110, 8, "Vec2"),
+        GcField::new("x118_pos", 0x118, 8, "Vec2"),
+        GcField::new("x120", 0x120, 4, "float"),
+        GcField::new("x124", 0x124, 4, "s32"),
+        GcField::new("x128", 0x128, 4, "s32"),
+        GcField::new("x12C_pos", 0x12C, 8, "Vec2"),
+        GcField::new("x134_pos", 0x134, 8, "Vec2"),
+        GcField::new("x13C_pos", 0x13C, 8, "Vec2"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_ftCrazyHandAttributes>() == 324);
+
+/// C `_ftDrMarioAttributes` (src/melee/ft/kinds/ftDrMario/types.h:6); GameCube size 0x18, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct _ftDrMarioAttributes {
+    pub pad_x0: [u8; 4],
+    pub x4: u32,
+    pub pad_x8: [u8; 4],
+    pub xC: u32,
+    pub pad_x10: [u8; 4],
+    pub x14: u32,
+}
+impl _ftDrMarioAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for _ftDrMarioAttributes {
+    const GC_NAME: &'static str = "_ftDrMarioAttributes";
+    const GC_SIZE: u32 = 0x18;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("pad_x0", 0x0, 4, "u8[4]"),
+        GcField::new("x4", 0x4, 4, "u32"),
+        GcField::new("pad_x8", 0x8, 4, "u8[4]"),
+        GcField::new("xC", 0xC, 4, "u32"),
+        GcField::new("pad_x10", 0x10, 4, "u8[4]"),
+        GcField::new("x14", 0x14, 4, "u32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_ftDrMarioAttributes>() == 24);
+
+/// C `ftKirby_CopyName` (src/melee/ft/kinds/ftKirby/ftkirby.h:15); GameCube size 0x8, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct ftKirby_CopyName {
+    pub filename: *mut i8,
+    pub name: *mut i8,
+}
+impl ftKirby_CopyName { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for ftKirby_CopyName {
+    const GC_NAME: &'static str = "ftKirby_CopyName";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("filename", 0x0, 4, "char *"),
+        GcField::new("name", 0x4, 4, "char *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<ftKirby_CopyName>() == 16);
+
+/// C `ftPichu_FighterVars` (src/melee/ft/kinds/ftPichu/types.h:6); GameCube size 0x100, align 1.
+#[repr(C, align(1))]
+#[derive(Clone, Copy)]
+pub struct ftPichu_FighterVars {
+    pub filler0: [i8; 256],
+}
+impl ftPichu_FighterVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for ftPichu_FighterVars {
+    const GC_NAME: &'static str = "ftPichu_FighterVars";
+    const GC_SIZE: u32 = 0x100;
+    const GC_ALIGN: u32 = 1;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("filler0", 0x0, 256, "char[256]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<ftPichu_FighterVars>() == 256);
+
+/// C `_ftPichuAttributes` (src/melee/ft/kinds/ftPichu/types.h:10); GameCube size 0xE0, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct _ftPichuAttributes {
+    pub x0_padding: [u32; 5],
+    pub x14: u32,
+    pub x18: u32,
+    pub x18_padding: [u32; 48],
+    pub xDC: u32,
+}
+impl _ftPichuAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for _ftPichuAttributes {
+    const GC_NAME: &'static str = "_ftPichuAttributes";
+    const GC_SIZE: u32 = 0xE0;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0_padding", 0x0, 20, "u32[5]"),
+        GcField::new("x14", 0x14, 4, "u32"),
+        GcField::new("x18", 0x18, 4, "u32"),
+        GcField::new("x18_padding", 0x1C, 192, "u32[48]"),
+        GcField::new("xDC", 0xDC, 4, "u32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_ftPichuAttributes>() == 224);
+
+/// C `_StaticPlayer` (src/melee/pl/player.h:19); GameCube size 0xE90, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct _StaticPlayer {
+    pub player_state: enum_t,
+    pub ckind: CharacterKind,
+    pub pkind: Gm_PKind,
+    pub transformed: [u8; 2],
+    pub unk0E: i16,
+    pub player_poses: _StaticPlayer_player_poses,
+    pub facing_direction: f32,
+    pub costume_id: u8,
+    pub unk45: u8,
+    pub controller_index: i8,
+    pub team: u8,
+    pub player_id: u8,
+    pub cpu_level: u8,
+    pub cpu_type: u8,
+    pub handicap: u8,
+    pub unk4C: i8,
+    pub unk4D: i8,
+    pub unk4E: i8,
+    pub unk4F: i8,
+    pub unk50: f32,
+    pub attack_ratio: f32,
+    pub defense_ratio: f32,
+    pub model_scale: f32,
+    pub staminas: _StaticPlayer_staminas,
+    pub falls: [i32; 2],
+    pub kos_by_player: [u32; 6],
+    pub match_frame_count: u32,
+    pub self_destructs: u16,
+    pub stocks: i8,
+    pub unk8F: i8,
+    pub current_coins: i32,
+    pub total_coins: i32,
+    pub unk98: i32,
+    pub unk9C: i32,
+    pub joystick_direction_input_count: [i32; 2],
+    pub nametag_slot_id: i32,
+    pub flags: _StaticPlayer_flags,
+    pub more_flags: _StaticPlayer_more_flags,
+    pub flagsAE: _StaticPlayer_flagsAE,
+    pub unkAF: i8,
+    pub player_entity: [*mut HSD_GObj; 2],
+    pub struct_func: Option<unsafe extern "C" fn(i32)>,
+    pub stale_moves: StaleMoveTable,
+    pub xDB0: [u8; 224],
+}
+impl _StaticPlayer { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for _StaticPlayer {
+    const GC_NAME: &'static str = "_StaticPlayer";
+    const GC_SIZE: u32 = 0xE90;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("player_state", 0x0, 4, "enum_t"),
+        GcField::new("ckind", 0x4, 4, "CharacterKind"),
+        GcField::new("pkind", 0x8, 4, "Gm_PKind"),
+        GcField::new("transformed", 0xC, 2, "u8[2]"),
+        GcField::new("unk0E", 0xE, 2, "s16"),
+        GcField::new("player_poses", 0x10, 48, "union (unnamed at src/melee/pl/player.h:32:5)"),
+        GcField::new("facing_direction", 0x40, 4, "f32"),
+        GcField::new("costume_id", 0x44, 1, "u8"),
+        GcField::new("unk45", 0x45, 1, "u8"),
+        GcField::new("controller_index", 0x46, 1, "s8"),
+        GcField::new("team", 0x47, 1, "u8"),
+        GcField::new("player_id", 0x48, 1, "u8"),
+        GcField::new("cpu_level", 0x49, 1, "u8"),
+        GcField::new("cpu_type", 0x4A, 1, "u8"),
+        GcField::new("handicap", 0x4B, 1, "u8"),
+        GcField::new("unk4C", 0x4C, 1, "s8"),
+        GcField::new("unk4D", 0x4D, 1, "s8"),
+        GcField::new("unk4E", 0x4E, 1, "s8"),
+        GcField::new("unk4F", 0x4F, 1, "s8"),
+        GcField::new("unk50", 0x50, 4, "f32"),
+        GcField::new("attack_ratio", 0x54, 4, "f32"),
+        GcField::new("defense_ratio", 0x58, 4, "f32"),
+        GcField::new("model_scale", 0x5C, 4, "f32"),
+        GcField::new("staminas", 0x60, 8, "union (unnamed at src/melee/pl/player.h:70:5)"),
+        GcField::new("falls", 0x68, 8, "s32[2]"),
+        GcField::new("kos_by_player", 0x70, 24, "u32[6]"),
+        GcField::new("match_frame_count", 0x88, 4, "u32"),
+        GcField::new("self_destructs", 0x8C, 2, "u16"),
+        GcField::new("stocks", 0x8E, 1, "s8"),
+        GcField::new("unk8F", 0x8F, 1, "s8"),
+        GcField::new("current_coins", 0x90, 4, "int"),
+        GcField::new("total_coins", 0x94, 4, "s32"),
+        GcField::new("unk98", 0x98, 4, "s32"),
+        GcField::new("unk9C", 0x9C, 4, "s32"),
+        GcField::new("joystick_direction_input_count", 0xA0, 8, "s32[2]"),
+        GcField::new("nametag_slot_id", 0xA8, 4, "int"),
+        GcField::new("flags", 0xAC, 1, "struct (unnamed at src/melee/pl/player.h:106:14)"),
+        GcField::new("more_flags", 0xAD, 1, "struct (unnamed at src/melee/pl/player.h:117:14)"),
+        GcField::new("flagsAE", 0xAE, 1, "struct (unnamed at src/melee/pl/player.h:127:14)"),
+        GcField::new("unkAF", 0xAF, 1, "s8"),
+        GcField::new("player_entity", 0xB0, 8, "HSD_GObj *[2]"),
+        GcField::new("struct_func", 0xB8, 4, "void (*)(s32)"),
+        GcField::new("stale_moves", 0xBC, 3316, "StaleMoveTable"),
+        GcField::new("xDB0", 0xDB0, 224, "u8[224]"),
+    ];
+}
+
+/// C `union (unnamed at src/melee/pl/player.h:32:5)` (src/melee/pl/player.h:32); GameCube size 0x30, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub union _StaticPlayer_player_poses {
+    pub byVecName: _StaticPlayer_player_poses_byVecName,
+    pub byIndex: [Vec; 4],
+}
+impl _StaticPlayer_player_poses { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for _StaticPlayer_player_poses {
+    const GC_NAME: &'static str = "union (unnamed at src/melee/pl/player.h:32:5)";
+    const GC_SIZE: u32 = 0x30;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("byVecName", 0x0, 48, "struct (unnamed at src/melee/pl/player.h:33:9)"),
+        GcField::new("byIndex", 0x0, 48, "Vec3[4]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_StaticPlayer_player_poses>() == 48);
+
+/// C `struct (unnamed at src/melee/pl/player.h:33:9)` (src/melee/pl/player.h:33); GameCube size 0x30, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct _StaticPlayer_player_poses_byVecName {
+    pub nametag_pos: Vec,
+    pub transformed_player_pos: Vec,
+    pub spawn_platform_final_pos: Vec,
+    pub some_other_player_pos: Vec,
+}
+impl _StaticPlayer_player_poses_byVecName { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for _StaticPlayer_player_poses_byVecName {
+    const GC_NAME: &'static str = "struct (unnamed at src/melee/pl/player.h:33:9)";
+    const GC_SIZE: u32 = 0x30;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("nametag_pos", 0x0, 12, "Vec3"),
+        GcField::new("transformed_player_pos", 0xC, 12, "Vec3"),
+        GcField::new("spawn_platform_final_pos", 0x18, 12, "Vec3"),
+        GcField::new("some_other_player_pos", 0x24, 12, "Vec3"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_StaticPlayer_player_poses_byVecName>() == 48);
+
+/// C `union (unnamed at src/melee/pl/player.h:70:5)` (src/melee/pl/player.h:70); GameCube size 0x8, align 2.
+#[repr(C, align(2))]
+#[derive(Clone, Copy)]
+pub union _StaticPlayer_staminas {
+    pub byName: _StaticPlayer_staminas_byName,
+    pub byIndex: [i16; 4],
+}
+impl _StaticPlayer_staminas { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for _StaticPlayer_staminas {
+    const GC_NAME: &'static str = "union (unnamed at src/melee/pl/player.h:70:5)";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 2;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("byName", 0x0, 8, "struct (unnamed at src/melee/pl/player.h:71:9)"),
+        GcField::new("byIndex", 0x0, 8, "s16[4]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_StaticPlayer_staminas>() == 8);
+
+/// C `struct (unnamed at src/melee/pl/player.h:71:9)` (src/melee/pl/player.h:71); GameCube size 0x8, align 2.
+#[repr(C, align(2))]
+#[derive(Clone, Copy)]
+pub struct _StaticPlayer_staminas_byName {
+    pub damage_percent: i16,
+    pub damage_percent_alt_or_start_hp: i16,
+    pub stamina: i16,
+    pub unk66: i16,
+}
+impl _StaticPlayer_staminas_byName { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for _StaticPlayer_staminas_byName {
+    const GC_NAME: &'static str = "struct (unnamed at src/melee/pl/player.h:71:9)";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 2;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("damage_percent", 0x0, 2, "s16"),
+        GcField::new("damage_percent_alt_or_start_hp", 0x2, 2, "s16"),
+        GcField::new("stamina", 0x4, 2, "s16"),
+        GcField::new("unk66", 0x6, 2, "s16"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_StaticPlayer_staminas_byName>() == 8);
+
+/// C `struct (unnamed at src/melee/pl/player.h:106:14)` (src/melee/pl/player.h:106); GameCube size 0x1, align 1.
+#[repr(C, align(1))]
+#[derive(Clone, Copy)]
+pub struct _StaticPlayer_flags {
+    /// bitfield bytes GC +0x0..+0x1, GameCube byte order
+    pub bf_0: [u8; 1],
+}
+impl _StaticPlayer_flags {
+    /// C bitfield `b0:1` at GC +0x0 bit 0 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 7, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 7, 1, (v as u64) & 0x1) } }
+    /// C bitfield `b1:1` at GC +0x0 bit 1 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b1(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 6, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b1(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 6, 1, (v as u64) & 0x1) } }
+    /// C bitfield `b2:1` at GC +0x0 bit 2 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b2(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 5, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b2(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 5, 1, (v as u64) & 0x1) } }
+    /// C bitfield `b3:1` at GC +0x0 bit 3 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b3(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 4, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b3(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 4, 1, (v as u64) & 0x1) } }
+    /// C bitfield `b4:1` at GC +0x0 bit 4 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b4(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 3, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b4(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 3, 1, (v as u64) & 0x1) } }
+    /// C bitfield `is_metal:1` at GC +0x0 bit 5 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn is_metal(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 2, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_is_metal(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 2, 1, (v as u64) & 0x1) } }
+    /// C bitfield `b6:1` at GC +0x0 bit 6 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b6(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 1, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b6(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 1, 1, (v as u64) & 0x1) } }
+    /// C bitfield `b7:1` at GC +0x0 bit 7 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
+}
+impl _StaticPlayer_flags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for _StaticPlayer_flags {
+    const GC_NAME: &'static str = "struct (unnamed at src/melee/pl/player.h:106:14)";
+    const GC_SIZE: u32 = 0x1;
+    const GC_ALIGN: u32 = 1;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::bitfield("b0", 0x0, 1, 0, 1, "u8"),
+        GcField::bitfield("b1", 0x0, 1, 1, 1, "u8"),
+        GcField::bitfield("b2", 0x0, 1, 2, 1, "u8"),
+        GcField::bitfield("b3", 0x0, 1, 3, 1, "u8"),
+        GcField::bitfield("b4", 0x0, 1, 4, 1, "u8"),
+        GcField::bitfield("is_metal", 0x0, 1, 5, 1, "u8"),
+        GcField::bitfield("b6", 0x0, 1, 6, 1, "u8"),
+        GcField::bitfield("b7", 0x0, 1, 7, 1, "u8"),
+    ];
+}
+
+/// C `struct (unnamed at src/melee/pl/player.h:117:14)` (src/melee/pl/player.h:117); GameCube size 0x1, align 1.
+#[repr(C, align(1))]
+#[derive(Clone, Copy)]
+pub struct _StaticPlayer_more_flags {
+    /// bitfield bytes GC +0x0..+0x1, GameCube byte order
+    pub bf_0: [u8; 1],
+}
+impl _StaticPlayer_more_flags {
+    /// C bitfield `b0:1` at GC +0x0 bit 0 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 7, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 7, 1, (v as u64) & 0x1) } }
+    /// C bitfield `b1:1` at GC +0x0 bit 1 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b1(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 6, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b1(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 6, 1, (v as u64) & 0x1) } }
+    /// C bitfield `b2:1` at GC +0x0 bit 2 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b2(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 5, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b2(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 5, 1, (v as u64) & 0x1) } }
+    /// C bitfield `b3:1` at GC +0x0 bit 3 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b3(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 4, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b3(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 4, 1, (v as u64) & 0x1) } }
+    /// C bitfield `b4:1` at GC +0x0 bit 4 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b4(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 3, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b4(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 3, 1, (v as u64) & 0x1) } }
+    /// C bitfield `b5:1` at GC +0x0 bit 5 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b5(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 2, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b5(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 2, 1, (v as u64) & 0x1) } }
+    /// C bitfield `b6:2` at GC +0x0 bit 6 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b6(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 2) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b6(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 2, (v as u64) & 0x3) } }
+}
+impl _StaticPlayer_more_flags { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for _StaticPlayer_more_flags {
+    const GC_NAME: &'static str = "struct (unnamed at src/melee/pl/player.h:117:14)";
+    const GC_SIZE: u32 = 0x1;
+    const GC_ALIGN: u32 = 1;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::bitfield("b0", 0x0, 1, 0, 1, "u8"),
+        GcField::bitfield("b1", 0x0, 1, 1, 1, "u8"),
+        GcField::bitfield("b2", 0x0, 1, 2, 1, "u8"),
+        GcField::bitfield("b3", 0x0, 1, 3, 1, "u8"),
+        GcField::bitfield("b4", 0x0, 1, 4, 1, "u8"),
+        GcField::bitfield("b5", 0x0, 1, 5, 1, "u8"),
+        GcField::bitfield("b6", 0x0, 1, 6, 2, "u8"),
+    ];
+}
+
+/// C `struct (unnamed at src/melee/pl/player.h:127:14)` (src/melee/pl/player.h:127); GameCube size 0x1, align 1.
+#[repr(C, align(1))]
+#[derive(Clone, Copy)]
+pub struct _StaticPlayer_flagsAE {
+    /// bitfield bytes GC +0x0..+0x1, GameCube byte order
+    pub bf_0: [u8; 1],
+}
+impl _StaticPlayer_flagsAE {
+    /// C bitfield `b0:1` at GC +0x0 bit 0 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 7, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 7, 1, (v as u64) & 0x1) } }
+    /// C bitfield `b1:1` at GC +0x0 bit 1 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b1(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 6, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b1(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 6, 1, (v as u64) & 0x1) } }
+    /// C bitfield `b2:1` at GC +0x0 bit 2 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b2(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 5, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b2(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 5, 1, (v as u64) & 0x1) } }
+    /// C bitfield `b3:1` at GC +0x0 bit 3 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b3(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 4, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b3(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 4, 1, (v as u64) & 0x1) } }
+    /// C bitfield `b4:1` at GC +0x0 bit 4 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b4(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 3, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b4(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 3, 1, (v as u64) & 0x1) } }
+    /// C bitfield `b5:1` at GC +0x0 bit 5 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b5(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 2, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b5(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 2, 1, (v as u64) & 0x1) } }
+    /// C bitfield `b6:1` at GC +0x0 bit 6 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b6(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 1, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b6(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 1, 1, (v as u64) & 0x1) } }
+    /// C bitfield `b7:1` at GC +0x0 bit 7 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 1, (v as u64) & 0x1) } }
+}
+impl _StaticPlayer_flagsAE { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for _StaticPlayer_flagsAE {
+    const GC_NAME: &'static str = "struct (unnamed at src/melee/pl/player.h:127:14)";
+    const GC_SIZE: u32 = 0x1;
+    const GC_ALIGN: u32 = 1;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::bitfield("b0", 0x0, 1, 0, 1, "u8"),
+        GcField::bitfield("b1", 0x0, 1, 1, 1, "u8"),
+        GcField::bitfield("b2", 0x0, 1, 2, 1, "u8"),
+        GcField::bitfield("b3", 0x0, 1, 3, 1, "u8"),
+        GcField::bitfield("b4", 0x0, 1, 4, 1, "u8"),
+        GcField::bitfield("b5", 0x0, 1, 5, 1, "u8"),
+        GcField::bitfield("b6", 0x0, 1, 6, 1, "u8"),
+        GcField::bitfield("b7", 0x0, 1, 7, 1, "u8"),
+    ];
+}
+
+/// C `it_804D6D40_t` (src/melee/it/it_3F14.h:12); GameCube size 0x1C, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct it_804D6D40_t {
+    pub x0: i32,
+    pub x4: f32,
+    pub x8: f32,
+    pub xC: f32,
+    pub x10: f32,
+    pub x14: f32,
+    pub x18: f32,
+}
+impl it_804D6D40_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for it_804D6D40_t {
+    const GC_NAME: &'static str = "it_804D6D40_t";
+    const GC_SIZE: u32 = 0x1C;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "s32"),
+        GcField::new("x4", 0x4, 4, "f32"),
+        GcField::new("x8", 0x8, 4, "f32"),
+        GcField::new("xC", 0xC, 4, "f32"),
+        GcField::new("x10", 0x10, 4, "f32"),
+        GcField::new("x14", 0x14, 4, "f32"),
+        GcField::new("x18", 0x18, 4, "f32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<it_804D6D40_t>() == 28);
+
+/// C `it_804D6D20_t` (src/melee/it/it_3F14.h:22); GameCube size 0x18, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct it_804D6D20_t {
+    pub x0: *mut ItemCommonData,
+    pub x4: *mut *mut Article,
+    pub x8: *mut *mut Article,
+    pub xC: *mut *mut Article,
+    pub x10: *mut it_804D6D40_t,
+    pub x14: *mut Fighter_804D653C_t,
+}
+impl it_804D6D20_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for it_804D6D20_t {
+    const GC_NAME: &'static str = "it_804D6D20_t";
+    const GC_SIZE: u32 = 0x18;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "ItemCommonData *"),
+        GcField::new("x4", 0x4, 4, "Article **"),
+        GcField::new("x8", 0x8, 4, "Article **"),
+        GcField::new("xC", 0xC, 4, "Article **"),
+        GcField::new("x10", 0x10, 4, "it_804D6D40_t *"),
+        GcField::new("x14", 0x14, 4, "Fighter_804D653C_t *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<it_804D6D20_t>() == 48);
+
+/// C `itYoyoAttributes` (src/melee/it/itYoyo.h:8); GameCube size 0x60, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct itYoyoAttributes {
+    pub x0_CHARGE_SPAWN_POS: i32,
+    pub x4_UPSMASH_CHARGE_STRING_LENGTH: i32,
+    pub x8_DOWNSMASH_CHARGE_STRING_LENGTH: i32,
+    pub xC_SIZE: f32,
+    pub x10_UNK1: f32,
+    pub x14_UNK2_RAD: f32,
+    pub x18_SPIN_TEXANIM_SPEED: f32,
+    pub x1C_UNK_TEXANIM_SPEED: f32,
+    pub x20_UNK_TEXANIM_MOD: f32,
+    pub x24_YOYO_RELEASE_VEL_X: f32,
+    pub x28_YOYO_PULL_STRENGTH: f32,
+    pub x2C_UNK3_MOD: f32,
+    pub x30_YOYO_RELEASE_VEL_Y: f32,
+    pub x34_GRAVITY: f32,
+    pub x38_GRAVITY_MOD: f32,
+    pub x3C_YOYO_PULL_STRENGTH_2: f32,
+    pub x40_UPSMASH_YOYO_ROT_FRAME: i32,
+    pub x44_UPSMASH_YOYO_NUDGE_FRAME: i32,
+    pub x48_DOWNSMASH_YOYO_ROT_FRAME: i32,
+    pub x4C_DOWNSMASH_YOYO_NUDGE_FRAME: i32,
+    pub x50_string_joint: *mut HSD_Joint,
+    pub x54_yoyo_joint: *mut HSD_Joint,
+    pub x58_yoyo_matanim: *mut HSD_MatAnimJoint,
+    pub x5C_UNK7: i32,
+}
+impl itYoyoAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for itYoyoAttributes {
+    const GC_NAME: &'static str = "itYoyoAttributes";
+    const GC_SIZE: u32 = 0x60;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0_CHARGE_SPAWN_POS", 0x0, 4, "s32"),
+        GcField::new("x4_UPSMASH_CHARGE_STRING_LENGTH", 0x4, 4, "s32"),
+        GcField::new("x8_DOWNSMASH_CHARGE_STRING_LENGTH", 0x8, 4, "s32"),
+        GcField::new("xC_SIZE", 0xC, 4, "float"),
+        GcField::new("x10_UNK1", 0x10, 4, "float"),
+        GcField::new("x14_UNK2_RAD", 0x14, 4, "float"),
+        GcField::new("x18_SPIN_TEXANIM_SPEED", 0x18, 4, "float"),
+        GcField::new("x1C_UNK_TEXANIM_SPEED", 0x1C, 4, "float"),
+        GcField::new("x20_UNK_TEXANIM_MOD", 0x20, 4, "float"),
+        GcField::new("x24_YOYO_RELEASE_VEL_X", 0x24, 4, "float"),
+        GcField::new("x28_YOYO_PULL_STRENGTH", 0x28, 4, "float"),
+        GcField::new("x2C_UNK3_MOD", 0x2C, 4, "float"),
+        GcField::new("x30_YOYO_RELEASE_VEL_Y", 0x30, 4, "float"),
+        GcField::new("x34_GRAVITY", 0x34, 4, "float"),
+        GcField::new("x38_GRAVITY_MOD", 0x38, 4, "float"),
+        GcField::new("x3C_YOYO_PULL_STRENGTH_2", 0x3C, 4, "float"),
+        GcField::new("x40_UPSMASH_YOYO_ROT_FRAME", 0x40, 4, "s32"),
+        GcField::new("x44_UPSMASH_YOYO_NUDGE_FRAME", 0x44, 4, "s32"),
+        GcField::new("x48_DOWNSMASH_YOYO_ROT_FRAME", 0x48, 4, "s32"),
+        GcField::new("x4C_DOWNSMASH_YOYO_NUDGE_FRAME", 0x4C, 4, "s32"),
+        GcField::new("x50_string_joint", 0x50, 4, "HSD_Joint *"),
+        GcField::new("x54_yoyo_joint", 0x54, 4, "HSD_Joint *"),
+        GcField::new("x58_yoyo_matanim", 0x58, 4, "HSD_MatAnimJoint *"),
+        GcField::new("x5C_UNK7", 0x5C, 4, "s32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<itYoyoAttributes>() == 112);
+
+/// C `itDoseiAttributes` (src/melee/it/kinds/itdosei.h:12); GameCube size 0x18, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct itDoseiAttributes {
+    pub unk0: f32,
+    pub unk4: i32,
+    pub unk8: f32,
+    pub unkC: i32,
+    pub unk10: i32,
+    pub unk14: i32,
+}
+impl itDoseiAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for itDoseiAttributes {
+    const GC_NAME: &'static str = "itDoseiAttributes";
+    const GC_SIZE: u32 = 0x18;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("unk0", 0x0, 4, "f32"),
+        GcField::new("unk4", 0x4, 4, "s32"),
+        GcField::new("unk8", 0x8, 4, "f32"),
+        GcField::new("unkC", 0xC, 4, "s32"),
+        GcField::new("unk10", 0x10, 4, "s32"),
+        GcField::new("unk14", 0x14, 4, "s32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<itDoseiAttributes>() == 24);
+
+/// C `KinokoAnim` (src/melee/it/kinds/itkinoko.h:10); GameCube size 0x4, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct KinokoAnim {
+    pub joint: *mut HSD_AnimJoint,
+}
+impl KinokoAnim { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for KinokoAnim {
+    const GC_NAME: &'static str = "KinokoAnim";
+    const GC_SIZE: u32 = 0x4;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("joint", 0x0, 4, "HSD_AnimJoint *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<KinokoAnim>() == 8);
+
+/// C `KinokoAttrs` (src/melee/it/kinds/itkinoko.h:14); GameCube size 0xC, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct KinokoAttrs {
+    pub x0: f32,
+    pub x4: f32,
+    pub x8: i32,
+}
+impl KinokoAttrs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for KinokoAttrs {
+    const GC_NAME: &'static str = "KinokoAttrs";
+    const GC_SIZE: u32 = 0xC;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "f32"),
+        GcField::new("x4", 0x4, 4, "f32"),
+        GcField::new("x8", 0x8, 4, "s32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<KinokoAttrs>() == 12);
+
+/// C `itKirbyCutterBeamAttributes` (src/melee/it/kinds/itkirbycutterbeam.h:10); GameCube size 0x10, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct itKirbyCutterBeamAttributes {
+    pub x0_speed: f32,
+    pub x4_vel: f32,
+    pub x8_lifetime: f32,
+    pub xC_decel: f32,
+}
+impl itKirbyCutterBeamAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for itKirbyCutterBeamAttributes {
+    const GC_NAME: &'static str = "itKirbyCutterBeamAttributes";
+    const GC_SIZE: u32 = 0x10;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0_speed", 0x0, 4, "f32"),
+        GcField::new("x4_vel", 0x4, 4, "f32"),
+        GcField::new("x8_lifetime", 0x8, 4, "f32"),
+        GcField::new("xC_decel", 0xC, 4, "f32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<itKirbyCutterBeamAttributes>() == 16);
+
+/// C `itLipstickSporeAttributes` (src/melee/it/kinds/itlipstickspore.h:10); GameCube size 0x1C, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct itLipstickSporeAttributes {
+    pub x0: f32,
+    pub x4: f32,
+    pub x8: f32,
+    pub xC: f32,
+    pub x10: f32,
+    pub x14: i32,
+    pub x18: i32,
+}
+impl itLipstickSporeAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for itLipstickSporeAttributes {
+    const GC_NAME: &'static str = "itLipstickSporeAttributes";
+    const GC_SIZE: u32 = 0x1C;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "f32"),
+        GcField::new("x4", 0x4, 4, "f32"),
+        GcField::new("x8", 0x8, 4, "f32"),
+        GcField::new("xC", 0xC, 4, "f32"),
+        GcField::new("x10", 0x10, 4, "f32"),
+        GcField::new("x14", 0x14, 4, "s32"),
+        GcField::new("x18", 0x18, 4, "s32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<itLipstickSporeAttributes>() == 28);
+
+/// C `itSamusGrapple_Hitbox` (src/melee/it/kinds/itsamusgrapple.h:12); GameCube size 0x14, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct itSamusGrapple_Hitbox {
+    pub create_hitbox_0: spawn_hitbox_0,
+    pub create_hitbox_1: spawn_hitbox_1,
+    pub create_hitbox_2: spawn_hitbox_2,
+    pub create_hitbox_3: spawn_hitbox_3,
+    pub create_hitbox_4: spawn_hitbox_4,
+}
+impl itSamusGrapple_Hitbox { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for itSamusGrapple_Hitbox {
+    const GC_NAME: &'static str = "itSamusGrapple_Hitbox";
+    const GC_SIZE: u32 = 0x14;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("create_hitbox_0", 0x0, 4, "struct spawn_hitbox_0"),
+        GcField::new("create_hitbox_1", 0x4, 4, "struct spawn_hitbox_1"),
+        GcField::new("create_hitbox_2", 0x8, 4, "struct spawn_hitbox_2"),
+        GcField::new("create_hitbox_3", 0xC, 4, "struct spawn_hitbox_3"),
+        GcField::new("create_hitbox_4", 0x10, 4, "struct spawn_hitbox_4"),
+    ];
+}
+
+/// C `itSamusGrapple_HitboxData` (src/melee/it/kinds/itsamusgrapple.h:20); GameCube size 0x18, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct itSamusGrapple_HitboxData {
+    pub create_hitbox: itSamusGrapple_Hitbox,
+    /// bitfield bytes GC +0x14..+0x16, GameCube byte order
+    pub bf_14: [u8; 2],
+}
+impl itSamusGrapple_HitboxData {
+    /// C bitfield `x133_0:1` at GC +0x14 bit 0 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn x133_0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_14, 15, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_x133_0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_14, 15, 1, (v as u64) & 0x1) } }
+    /// C bitfield `x133_1:1` at GC +0x14 bit 1 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn x133_1(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_14, 14, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_x133_1(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_14, 14, 1, (v as u64) & 0x1) } }
+    /// C bitfield `x133_2:1` at GC +0x14 bit 2 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn x133_2(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_14, 13, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_x133_2(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_14, 13, 1, (v as u64) & 0x1) } }
+    /// C bitfield `x133_3:1` at GC +0x14 bit 3 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn x133_3(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_14, 12, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_x133_3(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_14, 12, 1, (v as u64) & 0x1) } }
+    /// C bitfield `x133_4:1` at GC +0x14 bit 4 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn x133_4(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_14, 11, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_x133_4(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_14, 11, 1, (v as u64) & 0x1) } }
+    /// C bitfield `x133_5:1` at GC +0x14 bit 5 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn x133_5(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_14, 10, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_x133_5(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_14, 10, 1, (v as u64) & 0x1) } }
+    /// C bitfield `x133_6:1` at GC +0x14 bit 6 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn x133_6(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_14, 9, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_x133_6(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_14, 9, 1, (v as u64) & 0x1) } }
+    /// C bitfield `x133_7:1` at GC +0x14 bit 7 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn x133_7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_14, 8, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_x133_7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_14, 8, 1, (v as u64) & 0x1) } }
+    /// C bitfield `x134_0:1` at GC +0x15 bit 0 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn x134_0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_14, 7, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_x134_0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_14, 7, 1, (v as u64) & 0x1) } }
+    /// C bitfield `x134_1:1` at GC +0x15 bit 1 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn x134_1(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_14, 6, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_x134_1(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_14, 6, 1, (v as u64) & 0x1) } }
+    /// C bitfield `x134_2:1` at GC +0x15 bit 2 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn x134_2(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_14, 5, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_x134_2(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_14, 5, 1, (v as u64) & 0x1) } }
+    /// C bitfield `x134_3:1` at GC +0x15 bit 3 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn x134_3(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_14, 4, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_x134_3(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_14, 4, 1, (v as u64) & 0x1) } }
+    /// C bitfield `x134_4:1` at GC +0x15 bit 4 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn x134_4(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_14, 3, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_x134_4(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_14, 3, 1, (v as u64) & 0x1) } }
+    /// C bitfield `x134_5:1` at GC +0x15 bit 5 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn x134_5(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_14, 2, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_x134_5(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_14, 2, 1, (v as u64) & 0x1) } }
+    /// C bitfield `x134_6:1` at GC +0x15 bit 6 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn x134_6(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_14, 1, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_x134_6(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_14, 1, 1, (v as u64) & 0x1) } }
+    /// C bitfield `x134_7:1` at GC +0x15 bit 7 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn x134_7(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_14, 0, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_x134_7(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_14, 0, 1, (v as u64) & 0x1) } }
+}
+impl itSamusGrapple_HitboxData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for itSamusGrapple_HitboxData {
+    const GC_NAME: &'static str = "itSamusGrapple_HitboxData";
+    const GC_SIZE: u32 = 0x18;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("create_hitbox", 0x0, 20, "itSamusGrapple_Hitbox"),
+        GcField::bitfield("x133_0", 0x14, 1, 0, 1, "u8"),
+        GcField::bitfield("x133_1", 0x14, 1, 1, 1, "u8"),
+        GcField::bitfield("x133_2", 0x14, 1, 2, 1, "u8"),
+        GcField::bitfield("x133_3", 0x14, 1, 3, 1, "u8"),
+        GcField::bitfield("x133_4", 0x14, 1, 4, 1, "u8"),
+        GcField::bitfield("x133_5", 0x14, 1, 5, 1, "u8"),
+        GcField::bitfield("x133_6", 0x14, 1, 6, 1, "u8"),
+        GcField::bitfield("x133_7", 0x14, 1, 7, 1, "u8"),
+        GcField::bitfield("x134_0", 0x15, 1, 0, 1, "u8"),
+        GcField::bitfield("x134_1", 0x15, 1, 1, 1, "u8"),
+        GcField::bitfield("x134_2", 0x15, 1, 2, 1, "u8"),
+        GcField::bitfield("x134_3", 0x15, 1, 3, 1, "u8"),
+        GcField::bitfield("x134_4", 0x15, 1, 4, 1, "u8"),
+        GcField::bitfield("x134_5", 0x15, 1, 5, 1, "u8"),
+        GcField::bitfield("x134_6", 0x15, 1, 6, 1, "u8"),
+        GcField::bitfield("x134_7", 0x15, 1, 7, 1, "u8"),
+    ];
+}
+
+/// C `_m2c_stack_it_802B64FC` (src/melee/it/kinds/itsamusmissile.h:10); GameCube size 0x48, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct _m2c_stack_it_802B64FC {
+    pub pad_0: [i8; 16],
+    pub vec0: Vec,
+    pub vec1: Vec,
+    pub vec2: Vec,
+    pub vec3: Vec,
+    pub pad_40: [i8; 8],
+}
+impl _m2c_stack_it_802B64FC { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for _m2c_stack_it_802B64FC {
+    const GC_NAME: &'static str = "_m2c_stack_it_802B64FC";
+    const GC_SIZE: u32 = 0x48;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("pad_0", 0x0, 16, "char[16]"),
+        GcField::new("vec0", 0x10, 12, "Vec3"),
+        GcField::new("vec1", 0x1C, 12, "Vec3"),
+        GcField::new("vec2", 0x28, 12, "Vec3"),
+        GcField::new("vec3", 0x34, 12, "Vec3"),
+        GcField::new("pad_40", 0x40, 8, "char[8]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_m2c_stack_it_802B64FC>() == 72);
+
+/// C `_m2c_stack_itSamusmissile_UnkMotion0_Phys` (src/melee/it/kinds/itsamusmissile.h:19); GameCube size 0x60, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct _m2c_stack_itSamusmissile_UnkMotion0_Phys {
+    pub pad_0: [i8; 64],
+    pub vec: Vec,
+    pub pad_4C: [i8; 20],
+}
+impl _m2c_stack_itSamusmissile_UnkMotion0_Phys { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for _m2c_stack_itSamusmissile_UnkMotion0_Phys {
+    const GC_NAME: &'static str = "_m2c_stack_itSamusmissile_UnkMotion0_Phys";
+    const GC_SIZE: u32 = 0x60;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("pad_0", 0x0, 64, "char[64]"),
+        GcField::new("vec", 0x40, 12, "Vec3"),
+        GcField::new("pad_4C", 0x4C, 20, "char[20]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_m2c_stack_itSamusmissile_UnkMotion0_Phys>() == 96);
+
+/// C `itSeakNeedleThrownAttributes` (src/melee/it/kinds/itseakneedlethrown.h:13); GameCube size 0xC, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct itSeakNeedleThrownAttributes {
+    pub x0: f32,
+    pub x4: f32,
+    pub x8: f32,
+}
+impl itSeakNeedleThrownAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcLayout for itSeakNeedleThrownAttributes {
+    const GC_NAME: &'static str = "itSeakNeedleThrownAttributes";
+    const GC_SIZE: u32 = 0xC;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "f32"),
+        GcField::new("x4", 0x4, 4, "f32"),
+        GcField::new("x8", 0x8, 4, "f32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<itSeakNeedleThrownAttributes>() == 12);
 
 /// Every generated GameCube record layout, for the DAT loader, serialisers and the m-ex map.
 pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
@@ -58049,6 +64048,48 @@ pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<lbl_803FDDE4_t_symbols as GcLayout>::GC_NAME, <lbl_803FDDE4_t_symbols as GcLayout>::GC_SIZE, <lbl_803FDDE4_t_symbols as GcLayout>::GC_ALIGN, <lbl_803FDDE4_t_symbols as GcLayout>::GC_FIELDS),
     (<lbl_803FDDE4_t_values as GcLayout>::GC_NAME, <lbl_803FDDE4_t_values as GcLayout>::GC_SIZE, <lbl_803FDDE4_t_values as GcLayout>::GC_ALIGN, <lbl_803FDDE4_t_values as GcLayout>::GC_FIELDS),
     (<ViCharaDesc as GcLayout>::GC_NAME, <ViCharaDesc as GcLayout>::GC_SIZE, <ViCharaDesc as GcLayout>::GC_ALIGN, <ViCharaDesc as GcLayout>::GC_FIELDS),
+    (<EF_ParamEntry as GcLayout>::GC_NAME, <EF_ParamEntry as GcLayout>::GC_SIZE, <EF_ParamEntry as GcLayout>::GC_ALIGN, <EF_ParamEntry as GcLayout>::GC_FIELDS),
+    (<Fighter_804D64FC_t as GcLayout>::GC_NAME, <Fighter_804D64FC_t as GcLayout>::GC_SIZE, <Fighter_804D64FC_t as GcLayout>::GC_ALIGN, <Fighter_804D64FC_t as GcLayout>::GC_FIELDS),
+    (<Fighter_804D6518_t as GcLayout>::GC_NAME, <Fighter_804D6518_t as GcLayout>::GC_SIZE, <Fighter_804D6518_t as GcLayout>::GC_ALIGN, <Fighter_804D6518_t as GcLayout>::GC_FIELDS),
+    (<Fighter_804D651C_t as GcLayout>::GC_NAME, <Fighter_804D651C_t as GcLayout>::GC_SIZE, <Fighter_804D651C_t as GcLayout>::GC_ALIGN, <Fighter_804D651C_t as GcLayout>::GC_FIELDS),
+    (<Fighter_804D6520_t as GcLayout>::GC_NAME, <Fighter_804D6520_t as GcLayout>::GC_SIZE, <Fighter_804D6520_t as GcLayout>::GC_ALIGN, <Fighter_804D6520_t as GcLayout>::GC_FIELDS),
+    (<Fighter_804D6524_t as GcLayout>::GC_NAME, <Fighter_804D6524_t as GcLayout>::GC_SIZE, <Fighter_804D6524_t as GcLayout>::GC_ALIGN, <Fighter_804D6524_t as GcLayout>::GC_FIELDS),
+    (<Fighter_ShakeTable_t as GcLayout>::GC_NAME, <Fighter_ShakeTable_t as GcLayout>::GC_SIZE, <Fighter_ShakeTable_t as GcLayout>::GC_ALIGN, <Fighter_ShakeTable_t as GcLayout>::GC_FIELDS),
+    (<Fighter_804D6540_x0_t as GcLayout>::GC_NAME, <Fighter_804D6540_x0_t as GcLayout>::GC_SIZE, <Fighter_804D6540_x0_t as GcLayout>::GC_ALIGN, <Fighter_804D6540_x0_t as GcLayout>::GC_FIELDS),
+    (<Fighter_804D6540_t as GcLayout>::GC_NAME, <Fighter_804D6540_t as GcLayout>::GC_SIZE, <Fighter_804D6540_t as GcLayout>::GC_ALIGN, <Fighter_804D6540_t as GcLayout>::GC_FIELDS),
+    (<TechAiPolicy as GcLayout>::GC_NAME, <TechAiPolicy as GcLayout>::GC_SIZE, <TechAiPolicy as GcLayout>::GC_ALIGN, <TechAiPolicy as GcLayout>::GC_FIELDS),
+    (<TechAiObservation as GcLayout>::GC_NAME, <TechAiObservation as GcLayout>::GC_SIZE, <TechAiObservation as GcLayout>::GC_ALIGN, <TechAiObservation as GcLayout>::GC_FIELDS),
+    (<ItemStateTable as GcLayout>::GC_NAME, <ItemStateTable as GcLayout>::GC_SIZE, <ItemStateTable as GcLayout>::GC_ALIGN, <ItemStateTable as GcLayout>::GC_FIELDS),
+    (<ItemLogicTable as GcLayout>::GC_NAME, <ItemLogicTable as GcLayout>::GC_SIZE, <ItemLogicTable as GcLayout>::GC_ALIGN, <ItemLogicTable as GcLayout>::GC_FIELDS),
+    (<itSword_UnkBytes as GcLayout>::GC_NAME, <itSword_UnkBytes as GcLayout>::GC_SIZE, <itSword_UnkBytes as GcLayout>::GC_ALIGN, <itSword_UnkBytes as GcLayout>::GC_FIELDS),
+    (<itSword_UnkArticle1 as GcLayout>::GC_NAME, <itSword_UnkArticle1 as GcLayout>::GC_SIZE, <itSword_UnkArticle1 as GcLayout>::GC_ALIGN, <itSword_UnkArticle1 as GcLayout>::GC_FIELDS),
+    (<_m2c_stack_ftCo_800A3554 as GcLayout>::GC_NAME, <_m2c_stack_ftCo_800A3554 as GcLayout>::GC_SIZE, <_m2c_stack_ftCo_800A3554 as GcLayout>::GC_ALIGN, <_m2c_stack_ftCo_800A3554 as GcLayout>::GC_FIELDS),
+    (<_ftCrazyHandAttributes as GcLayout>::GC_NAME, <_ftCrazyHandAttributes as GcLayout>::GC_SIZE, <_ftCrazyHandAttributes as GcLayout>::GC_ALIGN, <_ftCrazyHandAttributes as GcLayout>::GC_FIELDS),
+    (<_ftDrMarioAttributes as GcLayout>::GC_NAME, <_ftDrMarioAttributes as GcLayout>::GC_SIZE, <_ftDrMarioAttributes as GcLayout>::GC_ALIGN, <_ftDrMarioAttributes as GcLayout>::GC_FIELDS),
+    (<ftKirby_CopyName as GcLayout>::GC_NAME, <ftKirby_CopyName as GcLayout>::GC_SIZE, <ftKirby_CopyName as GcLayout>::GC_ALIGN, <ftKirby_CopyName as GcLayout>::GC_FIELDS),
+    (<ftPichu_FighterVars as GcLayout>::GC_NAME, <ftPichu_FighterVars as GcLayout>::GC_SIZE, <ftPichu_FighterVars as GcLayout>::GC_ALIGN, <ftPichu_FighterVars as GcLayout>::GC_FIELDS),
+    (<_ftPichuAttributes as GcLayout>::GC_NAME, <_ftPichuAttributes as GcLayout>::GC_SIZE, <_ftPichuAttributes as GcLayout>::GC_ALIGN, <_ftPichuAttributes as GcLayout>::GC_FIELDS),
+    (<_StaticPlayer as GcLayout>::GC_NAME, <_StaticPlayer as GcLayout>::GC_SIZE, <_StaticPlayer as GcLayout>::GC_ALIGN, <_StaticPlayer as GcLayout>::GC_FIELDS),
+    (<_StaticPlayer_player_poses as GcLayout>::GC_NAME, <_StaticPlayer_player_poses as GcLayout>::GC_SIZE, <_StaticPlayer_player_poses as GcLayout>::GC_ALIGN, <_StaticPlayer_player_poses as GcLayout>::GC_FIELDS),
+    (<_StaticPlayer_player_poses_byVecName as GcLayout>::GC_NAME, <_StaticPlayer_player_poses_byVecName as GcLayout>::GC_SIZE, <_StaticPlayer_player_poses_byVecName as GcLayout>::GC_ALIGN, <_StaticPlayer_player_poses_byVecName as GcLayout>::GC_FIELDS),
+    (<_StaticPlayer_staminas as GcLayout>::GC_NAME, <_StaticPlayer_staminas as GcLayout>::GC_SIZE, <_StaticPlayer_staminas as GcLayout>::GC_ALIGN, <_StaticPlayer_staminas as GcLayout>::GC_FIELDS),
+    (<_StaticPlayer_staminas_byName as GcLayout>::GC_NAME, <_StaticPlayer_staminas_byName as GcLayout>::GC_SIZE, <_StaticPlayer_staminas_byName as GcLayout>::GC_ALIGN, <_StaticPlayer_staminas_byName as GcLayout>::GC_FIELDS),
+    (<_StaticPlayer_flags as GcLayout>::GC_NAME, <_StaticPlayer_flags as GcLayout>::GC_SIZE, <_StaticPlayer_flags as GcLayout>::GC_ALIGN, <_StaticPlayer_flags as GcLayout>::GC_FIELDS),
+    (<_StaticPlayer_more_flags as GcLayout>::GC_NAME, <_StaticPlayer_more_flags as GcLayout>::GC_SIZE, <_StaticPlayer_more_flags as GcLayout>::GC_ALIGN, <_StaticPlayer_more_flags as GcLayout>::GC_FIELDS),
+    (<_StaticPlayer_flagsAE as GcLayout>::GC_NAME, <_StaticPlayer_flagsAE as GcLayout>::GC_SIZE, <_StaticPlayer_flagsAE as GcLayout>::GC_ALIGN, <_StaticPlayer_flagsAE as GcLayout>::GC_FIELDS),
+    (<it_804D6D40_t as GcLayout>::GC_NAME, <it_804D6D40_t as GcLayout>::GC_SIZE, <it_804D6D40_t as GcLayout>::GC_ALIGN, <it_804D6D40_t as GcLayout>::GC_FIELDS),
+    (<it_804D6D20_t as GcLayout>::GC_NAME, <it_804D6D20_t as GcLayout>::GC_SIZE, <it_804D6D20_t as GcLayout>::GC_ALIGN, <it_804D6D20_t as GcLayout>::GC_FIELDS),
+    (<itYoyoAttributes as GcLayout>::GC_NAME, <itYoyoAttributes as GcLayout>::GC_SIZE, <itYoyoAttributes as GcLayout>::GC_ALIGN, <itYoyoAttributes as GcLayout>::GC_FIELDS),
+    (<itDoseiAttributes as GcLayout>::GC_NAME, <itDoseiAttributes as GcLayout>::GC_SIZE, <itDoseiAttributes as GcLayout>::GC_ALIGN, <itDoseiAttributes as GcLayout>::GC_FIELDS),
+    (<KinokoAnim as GcLayout>::GC_NAME, <KinokoAnim as GcLayout>::GC_SIZE, <KinokoAnim as GcLayout>::GC_ALIGN, <KinokoAnim as GcLayout>::GC_FIELDS),
+    (<KinokoAttrs as GcLayout>::GC_NAME, <KinokoAttrs as GcLayout>::GC_SIZE, <KinokoAttrs as GcLayout>::GC_ALIGN, <KinokoAttrs as GcLayout>::GC_FIELDS),
+    (<itKirbyCutterBeamAttributes as GcLayout>::GC_NAME, <itKirbyCutterBeamAttributes as GcLayout>::GC_SIZE, <itKirbyCutterBeamAttributes as GcLayout>::GC_ALIGN, <itKirbyCutterBeamAttributes as GcLayout>::GC_FIELDS),
+    (<itLipstickSporeAttributes as GcLayout>::GC_NAME, <itLipstickSporeAttributes as GcLayout>::GC_SIZE, <itLipstickSporeAttributes as GcLayout>::GC_ALIGN, <itLipstickSporeAttributes as GcLayout>::GC_FIELDS),
+    (<itSamusGrapple_Hitbox as GcLayout>::GC_NAME, <itSamusGrapple_Hitbox as GcLayout>::GC_SIZE, <itSamusGrapple_Hitbox as GcLayout>::GC_ALIGN, <itSamusGrapple_Hitbox as GcLayout>::GC_FIELDS),
+    (<itSamusGrapple_HitboxData as GcLayout>::GC_NAME, <itSamusGrapple_HitboxData as GcLayout>::GC_SIZE, <itSamusGrapple_HitboxData as GcLayout>::GC_ALIGN, <itSamusGrapple_HitboxData as GcLayout>::GC_FIELDS),
+    (<_m2c_stack_it_802B64FC as GcLayout>::GC_NAME, <_m2c_stack_it_802B64FC as GcLayout>::GC_SIZE, <_m2c_stack_it_802B64FC as GcLayout>::GC_ALIGN, <_m2c_stack_it_802B64FC as GcLayout>::GC_FIELDS),
+    (<_m2c_stack_itSamusmissile_UnkMotion0_Phys as GcLayout>::GC_NAME, <_m2c_stack_itSamusmissile_UnkMotion0_Phys as GcLayout>::GC_SIZE, <_m2c_stack_itSamusmissile_UnkMotion0_Phys as GcLayout>::GC_ALIGN, <_m2c_stack_itSamusmissile_UnkMotion0_Phys as GcLayout>::GC_FIELDS),
+    (<itSeakNeedleThrownAttributes as GcLayout>::GC_NAME, <itSeakNeedleThrownAttributes as GcLayout>::GC_SIZE, <itSeakNeedleThrownAttributes as GcLayout>::GC_ALIGN, <itSeakNeedleThrownAttributes as GcLayout>::GC_FIELDS),
 ];
 
 /// Read `w` bits of a GameCube big-endian bitfield byte run, `shift` bits up from its LSB.

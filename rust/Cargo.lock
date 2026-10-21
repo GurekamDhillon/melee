@@ -42,6 +42,7 @@ name = "melee_chara"
 version = "0.1.0"
 dependencies = [
  "melee_core",
+ "melee_types",
 ]
 
 [[package]]
@@ -54,6 +55,7 @@ version = "0.1.0"
 dependencies = [
  "c2rust-bitfields",
  "melee_core",
+ "melee_types",
 ]
 
 [[package]]
@@ -61,6 +63,7 @@ name = "melee_items"
 version = "0.1.0"
 dependencies = [
  "melee_core",
+ "melee_types",
 ]
 
 [[package]]

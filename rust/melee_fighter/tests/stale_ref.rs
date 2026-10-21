@@ -82,7 +82,7 @@ fn staling_matches_c() {
                         .attacks
                         .total
                         .wrapping_add(s.hits.by_attack_counts[5])
-                        .wrapping_add(unsafe { s.anon1.x358_hits.thrown_item_count })
+                        .wrapping_add(unsafe { s.anon_358.x358_hits.thrown_item_count })
                         .wrapping_add(s.x504[3] as u32)
                         .wrapping_add(s.x598[7])
                         .wrapping_add(s.x5B8[1] as u32)

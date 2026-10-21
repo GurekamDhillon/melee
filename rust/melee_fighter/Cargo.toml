@@ -7,9 +7,7 @@ publish.workspace = true
 
 [dependencies]
 melee_core.workspace = true
-# melee_types / melee_runtime / melee_world are being generated concurrently by other agents and
-# do not build yet; group 3 carries its own copies of shared types (TODO(move-to-core)) until they do.
-# melee_types.workspace = true
+melee_types.workspace = true
 # melee_runtime.workspace = true
 # melee_world.workspace = true
 c2rust-bitfields = { version = "=0.22.1", optional = true }

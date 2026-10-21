@@ -180,7 +180,7 @@ pub fn reset_action_stats(slot: u32) {
     let st = action_stats(slot as i32);
     clear_attack_stats(&mut st.attacks);
     clear_attack_stats(&mut st.hits);
-    clear_attack_stats(unsafe { &mut st.anon1.x358_hits });
+    clear_attack_stats(unsafe { &mut st.anon_358.x358_hits });
     for v in st.x504.iter_mut().take(StatsAttack_Count as usize) {
         *v = 0;
     }

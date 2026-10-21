@@ -3,7 +3,7 @@
 Scope: `src/melee/ft/*.c` (67 TUs), `src/melee/ft/kinds/ftCommon/*.c` (142), `src/melee/pl/*.c`
 (7): 216 TUs, ~76k lines, 3,002 function definitions (recount, port round 9: a definition line
 followed by a `{` line, static inline helpers included; the older "~2,820" left those out).
-State as of 2026-10-21 (group 3 round 12).
+State as of 2026-10-21 (group 3 round 13).
 
 ## What exists
 
@@ -11,10 +11,10 @@ State as of 2026-10-21 (group 3 round 12).
 |---|---|---|
 | Native types + GC offsets | `src/types/generated.rs` (from `gen/gen_types.py`) | 569 `#[repr(C)]` records, all built |
 | Mechanical translation of all 216 TUs | `src/c2r/` (from `gen/fix_raw.py`, feature `c2r`) | compiles (`--features c2r`), never run |
-| Hand ports, checked bit-for-bit against the C | `src/ftaction.rs`, `src/fighter.rs`, `src/ftanim.rs`, `src/ftcoll.rs`, `src/neutral_hash.rs`, `src/ftcommon.rs`, `src/ftcommon2.rs`, `src/stale.rs`, `src/player.rs`, `src/ftlib.rs`, `src/plbonus.rs`, `src/ft0877.rs`, `src/ft0881.rs`, `src/ft0892.rs`, `src/pltrick.rs`, `src/ftcommon3.rs`, `src/plbonus2.rs`, `src/plbonus3.rs`, `src/ft084e.rs`, `src/compat.rs`, `src/hooks.rs` | 634 C functions (633 verified), tests pass |
+| Hand ports, checked bit-for-bit against the C | `src/ftaction.rs`, `src/fighter.rs`, `src/ftanim.rs`, `src/ftcoll.rs`, `src/neutral_hash.rs`, `src/ftcommon.rs`, `src/ftcommon2.rs`, `src/stale.rs`, `src/player.rs`, `src/ftlib.rs`, `src/plbonus.rs`, `src/ft0877.rs`, `src/ft0881.rs`, `src/ft0892.rs`, `src/pltrick.rs`, `src/ftcommon3.rs`, `src/plbonus2.rs`, `src/plbonus3.rs`, `src/ft084e.rs`, `src/ft0df.rs`, `src/compat.rs`, `src/hooks.rs` | 674 C functions (673 verified), tests pass |
 | PowerPC `.s` files | none belong to this group (inventory §3) | nothing to do |
 
-Functions: 634 of 3,002 (21.1%; 57 night 1, 39 in port round 1, 144 in port round 2, 96 in port round 3, 82 in port round 4, 34 in port round 5, 18 in port round 6, 19 in port round 7, 37 in port round 8, 50 in port round 9, 24 in round 10, 15 in round 11, 19 in round 12) are hand-ported; 633 are verified against the C (the one unverified port: `ftCommon_8007E2D0`, round 1, stores three fn pointers). All are
+Functions: 674 of 3,002 (22.5%; 57 night 1, 39 in port round 1, 144 in port round 2, 96 in port round 3, 82 in port round 4, 34 in port round 5, 18 in port round 6, 19 in port round 7, 37 in port round 8, 50 in port round 9, 24 in round 10, 15 in round 11, 19 in round 12, 40 in round 13) are hand-ported; 673 are verified against the C (the one unverified port: `ftCommon_8007E2D0`, round 1, stores three fn pointers). All are
 in the mechanical translation, which compiles; none of it has been linked or run.
 
 ### Native types (`gen/gen_types.py`)
@@ -532,6 +532,45 @@ ft_8008A1FC, ft_8008A244 and its static inline ft_8008A244_inline.
   (one transient doctest "can't find crate melee_items" during a concurrent rebuild, green on
   rerun). melee_chara does not compile at the moment: group 4's uncommitted `src/chars/r11`
   work in progress (missing ftDonkey/ftFox/ftKoopa functions), not this round's change.
+
+## Round 13 (2026-10-21, night 3): `src/ft0df.rs`
+Recount first: 634 ported (633 verified, all but `ftCommon_8007E2D0`) of 3,002, as left by round
+12 (commit 91694f421; no group-3 commit since). A definition scan of the 216 TUs (definition line
+followed by a `{` line) finds 3,001; the one-off from the recorded 3,002 is a counting-rule edge,
+not chased; 3,002 is kept as the denominator. The untracked `src/ftcpu.rs` (another agent's, no C
+reference test) and its `pub mod ftcpu;` line are still in the worktree; not counted, not committed.
+
+Stubs: re-checked every `TODO(groupN)` hook against the workspace (grep for a global port of each
+name outside c2r/raw). None replaceable: HSD_GObjFree, HSD_Randi, lbAudioAx_*, Camera_*, ifStatus_*,
+gm_*, un_803224DC, it_80294E78/8029A89C/8029A8F4/8028B08C/802BDA40, efLib_DestroyAll, mpLib_8004D164
+have no global port (melee_world's gobj_free / randi are instance methods). One group-3 hook now
+defaults to this round's port: `FTCO_800DEEE8` (ftCo_800DEEE8). New hooks: `IT_8026B30C` (defaults to
+group 5's verified melee_items::itlib::it_8026b30c), `GM_8016B0FC` (TODO(group6 gm)),
+`FTANIM_SET_ANIM_RATE`, `FTCO_800C0200`, `FTCO_800BFFD0` (TODO(group3 ftanim/ftcolanim)); new global
+`hooks::FIGHTER_SMASH_CHARGE_SHAKE_TABLE` (PlCo `pData[11]`, TODO(move-to-core)).
+
+40 C definitions ported, all verified against the C cut verbatim (`gen/cref/ft0df_ref.c`):
+- all of ft_0DF0.c (6): ftCo_800DEE84, 800DEEA8, 800DEEB8, 800DEEE8, 800DEF38, 800DF0D0;
+- all of ft_0DF1.c (21): canUseCstick (static inline), ftCo_800DF1C8, DF21C, DF2D8, DF30C, DF3A8,
+  DF3DC, DF478, DF50C, DF608, DF644, DF678, DF6F8, DF72C, DF79C, DF7F4, DF844, DF878, DF8B0,
+  DF8E8, DF910;
+- ftcoll.c (6): ftColl_8007AEE0, 8007AEF8, 8007AF10, 8007AF28, 8007B8A8, 8007B8CC;
+- ftdevice.c (3): ftCo_800C0658, 800C0674, 800C0694 (C tests `(int) ptr != 0`: the Rust truncates
+  the native pointer to 32 bits the same way, which reads the unioned `i`);
+- ftparts.c (4): ftParts_80074A4C, 80074A74, 80074A8C, 80074ACC.
+- Test: tests/ft0df_ref.rs, 40 ops x 600 random fighters = 24,000 lines: return value, a hash of
+  smash_attrs + every skip_update_pos bit + thrown-hitbox owner/team + HitCapsule jobj/b_offset +
+  x5F4_arr + x221D_b2, and a trace hash of every out-of-cut call (gm, it, SetAnimRate, colanim,
+  Player_8003544C, rumble, SFX) with arguments. Floats on a 1/20 grid plus 0, -0, NaN, +-1 so
+  equal-threshold `<` vs `<=` cases occur. The cut includes ftCommon_8007EBAC/ECD4,
+  ftCo_GetCStickAngle and lbtrigf.c atan2f (Rust: melee_runtime::lbtrigf).
+- Fused sites: ftCo_800DEEB8 `(mul - 1) * (frames / hold) + 1` **discriminated** (un-fusing fails
+  op 2); ftCo_800DF608 `SQ(x) + SQ(y)` ported fused (left product) but **not discriminated**
+  (un-fusing and fusing the other product both still pass: no input lands between the two roundings).
+- Mutation checks that fail: `<=` -> `<` in ftCo_800DF878 (op 23), `>=` -> `>` on the shake index
+  wrap in ftCo_800DEF38 (op 4), the ftCo_800C0658 select (op 33).
+- Workspace: `cargo build --workspace` clean; `cargo test --workspace --no-fail-fast` all green
+  (a rerun hit LNK1104 on melee_chara chars_ref, the exe locked by a concurrent agent's run).
 
 ## Not done / blockers
 - **The c2r layer has never linked or run.** Everything outside group 3 is an unresolved

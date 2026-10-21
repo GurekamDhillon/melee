@@ -131,6 +131,18 @@ EXTRACTS = {
                ("src/melee/ft/ft_08A1.c", "fn:ft_8008A1FC", None),
                ("src/melee/ft/ft_08A1.c", "fn:ft_8008A244_inline", None),
                ("src/melee/ft/ft_08A1.c", "fn:ft_8008A244", None)],
+    # group 3 round 13: ft_0DF0.c + ft_0DF1.c + ftcoll/ftdevice/ftparts leaves (src/ft0df.rs)
+    "ft0df": [("src/melee/lb/lbtrigf.c", "#define SIGN_BIT", "float acosf("),
+              ("src/melee/lb/lbtrigf.c", "#define SILVER_RATIO_1_CONJUGATE", None),
+              *[("src/melee/ft/ftcommon.c", "fn:" + n, None) for n in
+                ("ftCommon_8007EBAC", "ftCommon_8007ECD4", "ftCo_GetCStickAngle")],
+              ("src/melee/ft/ft_0DF0.c", "void ftCo_800DEE84(", None),
+              ("src/melee/ft/ft_0DF1.c", "static inline bool canUseCstick(", None),
+              *[("src/melee/ft/ftcoll.c", "fn:ftColl_" + n, None) for n in
+                ("8007AEE0", "8007AEF8", "8007AF10", "8007AF28", "8007B8A8", "8007B8CC")],
+              *[("src/melee/ft/ftdevice.c", "fn:ftCo_" + n, None) for n in ("800C0658", "800C0674", "800C0694")],
+              *[("src/melee/ft/ftparts.c", "fn:ftParts_" + n, None) for n in
+                ("80074A4C", "80074A74", "80074A8C", "80074ACC")]],
     "ftcommon": [("src/melee/ft/ftcommon.c", "void ftCommon_CalcGroundAccel_Deaccel(", "void ftCommon_UnlockECB("),
                  ("src/melee/ft/ftcommon.c", "void ftCommon_UpdateFacing(", "void ftCommon_8007DB24(")],
 }

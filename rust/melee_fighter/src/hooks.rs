@@ -107,7 +107,7 @@ pub static mut IT_8029A89C: Option<fn(item: *mut Item_GObj, f: f32)> = None;
 pub static mut IT_8029A8F4: Option<fn(item: *mut Item_GObj, v: &Vec3)> = None;
 /// TODO(group3 ftCommon states): `ftCo_80090690(fp, &shift)` (non-NULL -> Some(shift)).
 pub static mut FTCO_80090690: Option<fn(fp: &mut Fighter) -> Option<Vec2>> = None;
-/// TODO(group3 ftCommon states): `ftCo_800DEEE8(fp, &shift)` (non-NULL -> Some(shift)).
+/// Override for `ftCo_800DEEE8(fp, &shift)` (non-NULL -> Some(shift)); unset = `crate::ft0df` (round 13).
 pub static mut FTCO_800DEEE8: Option<fn(fp: &mut Fighter) -> Option<Vec2>> = None;
 /// `Fighter_GrabMashShake` (fighter.h, PlCo data). TODO(move-to-core): fighter loader.
 pub static mut FIGHTER_GRAB_MASH_SHAKE: *const Fighter_ShakeTable_t = core::ptr::null();
@@ -162,7 +162,8 @@ pub fn it_80294e78(item: *mut Item_GObj, f: f32) { need(unsafe { IT_80294E78 }, 
 pub fn it_8029a89c(item: *mut Item_GObj, f: f32) { need(unsafe { IT_8029A89C }, "TODO(group5 it) it_8029A89C")(item, f) }
 pub fn it_8029a8f4(item: *mut Item_GObj, v: &Vec3) { need(unsafe { IT_8029A8F4 }, "TODO(group5 it) it_8029A8F4")(item, v) }
 pub fn ftco_80090690(fp: &mut Fighter) -> Option<Vec2> { need(unsafe { FTCO_80090690 }, "TODO(group3 ftCo) ftCo_80090690")(fp) }
-pub fn ftco_800deee8(fp: &mut Fighter) -> Option<Vec2> { need(unsafe { FTCO_800DEEE8 }, "TODO(group3 ftCo) ftCo_800DEEE8")(fp) }
+/// Unset: the port in `crate::ft0df` (group 3 round 13).
+pub fn ftco_800deee8(fp: &mut Fighter) -> Option<Vec2> { match unsafe { FTCO_800DEEE8 } { Some(f) => f(fp), None => crate::ft0df::ftco_800deee8(fp) } }
 /// `*Fighter_GrabMashShake`. Panics if not installed.
 pub fn grab_mash_shake() -> &'static Fighter_ShakeTable_t {
     let p = unsafe { FIGHTER_GRAB_MASH_SHAKE };
@@ -511,4 +512,31 @@ needed_hooks! {
 ported_hooks! {
     PL_8003DFF4 pl_8003dff4(slot: i32, sub: i32, id: i32) = crate::plbonus2::pl_8003dff4;
     PL_8003EA08 pl_8003ea08(slot: i32, sub: i32) = crate::plbonus2::pl_8003ea08;
+}
+
+// ---- group 3 round 13 (ft_0DF0.c / ft_0DF1.c smash charge + C-stick tests) -----------------
+/// `Fighter_SmashChargeShakeTable` (fighter.h, PlCo `pData[11]`). TODO(move-to-core): fighter loader.
+pub static mut FIGHTER_SMASH_CHARGE_SHAKE_TABLE: *const Fighter_ShakeTable_t = core::ptr::null();
+/// `*Fighter_SmashChargeShakeTable`. Panics if not installed.
+pub fn smash_charge_shake_table() -> &'static Fighter_ShakeTable_t {
+    let p = unsafe { FIGHTER_SMASH_CHARGE_SHAKE_TABLE };
+    assert!(!p.is_null(), "Fighter_SmashChargeShakeTable not loaded");
+    unsafe { &*p }
+}
+mod it13 {
+    use crate::types::{Item, Item_GObj};
+    /// `it_8026B30C` (group 5's melee_items::itlib port, verified there).
+    pub fn it_8026b30c(g: *mut Item_GObj) -> i32 {
+        unsafe { melee_items::itlib::it_8026b30c(&*((*g).user_data as *const Item)) }
+    }
+}
+ported_hooks! {
+    IT_8026B30C it_8026b30c(i: I) -> i32 = it13::it_8026b30c;
+}
+needed_hooks! {
+    /// `gm_8016B0FC()`: single-button mode enabled.
+    GM_8016B0FC gm_8016b0fc() -> bool = "TODO(group6 gm) gm_8016B0FC";
+    FTANIM_SET_ANIM_RATE ftanim_set_anim_rate(g: G, rate: f32) = "TODO(group3 ftanim) ftAnim_SetAnimRate";
+    FTCO_800C0200 ftco_800c0200(fp: &mut Fighter, i: i32) = "TODO(group3 ftcolanim) ftCo_800C0200";
+    FTCO_800BFFD0 ftco_800bffd0(fp: &mut Fighter, kind: i32, b: i32) -> bool = "TODO(group3 ftcolanim) ftCo_800BFFD0";
 }

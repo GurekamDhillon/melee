@@ -1394,6 +1394,16 @@ pub const NAMES: &[&str] = &[
     "ftMh_MS_375_80154C78",
     "ftMh_MS_378_80154CF8",
     "ftMh_WalkLoop_Phys",
+    "ftCh_Cancel_Anim",
+    "ftCh_FingerBeamEnd_Anim",
+    "ftCh_Init_8015A184",
+    "ftKp_SpecialLw_Enter",
+    "ftMh_BackAirplane2_Anim",
+    "ftMh_MS_368_80153A64",
+    "ftMh_Grab_Anim",
+    "ifStage251",
+    "ftSk_SpecialHi_80113EAC_inline",
+    "ftSk_SpecialHi_80113F68_inline",
 ];
 
 #[allow(clippy::too_many_arguments)]
@@ -2789,6 +2799,16 @@ pub fn call(which: usize, g: *mut HSD_GObj, fp: &mut Fighter, a: f32, ia: i32, n
         1386 => { melee_chara::chars::r9::ftMasterHand::ftmasterhandwait11::ftMh_MS_375_80154C78(g); 0 },
         1387 => { melee_chara::chars::r9::ftMasterHand::ftmasterhandwait11::ftMh_MS_378_80154CF8(g); 0 },
         1388 => { melee_chara::chars::r9::ftMasterHand::ftmasterhandwalk::ftMh_WalkLoop_Phys(g); 0 },
+        1389 => { melee_chara::chars::r10::ftCrazyHand::ftcrazyhandcancel::ftCh_Cancel_Anim(g); 0 },
+        1390 => { melee_chara::chars::r10::ftCrazyHand::ftcrazyhandfingerbeam::ftCh_FingerBeamEnd_Anim(g); 0 },
+        1391 => { melee_chara::chars::r10::ftCrazyHand::ftcrazyhandsqueezing0::ftCh_Init_8015A184(g); 0 },
+        1392 => { melee_chara::chars::r10::ftKoopa::ftkoopaspeciallw::ftKp_SpecialLw_Enter(g); 0 },
+        1393 => { melee_chara::chars::r10::ftMasterHand::ftmasterhandbackairplane1::ftMh_BackAirplane2_Anim(g); 0 },
+        1394 => { melee_chara::chars::r10::ftMasterHand::ftmasterhandbackairplane2::ftMh_MS_368_80153A64(g); 0 },
+        1395 => { melee_chara::chars::r10::ftMasterHand::ftmasterhandbackdisappear::ftMh_Grab_Anim(g); 0 },
+        1396 => { melee_chara::chars::r10::ftMasterHand::ftmasterhandwait10::ifStage251(g); 0 },
+        1397 => { melee_chara::chars::r10::ftSeak::ftseakspecialhi::ftSk_SpecialHi_80113EAC_inline(g); 0 },
+        1398 => { melee_chara::chars::r10::ftSeak::ftseakspecialhi::ftSk_SpecialHi_80113F68_inline(g); 0 },
         _ => unreachable!(),
     }
 }

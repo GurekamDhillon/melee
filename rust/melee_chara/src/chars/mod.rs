@@ -86,3 +86,6 @@ pub mod r8;
 
 /// Round 9: gen/port_r9.py output (`T* da = fp->ft_data->ext_attr;` locals). Path: `chars::r9::<Char>::<tu>::<fn>`.
 pub mod r9;
+/// Round 10: gen/port_r10.py output (nested `{ Fighter* fp = ...; }` blocks, `x = x =` initializers,
+/// `ca = &fp->co_attrs` locals, `a = b = 0` chains). Path: `chars::r10::<Char>::<tu>::<fn>`.
+pub mod r10;

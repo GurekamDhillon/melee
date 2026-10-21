@@ -1,0 +1,11 @@
+# Round-10 character functions (gen/port_r10.py output): <tu> <function>, checked by gen/chref.py
+src/melee/ft/kinds/ftCrazyHand/ftcrazyhandcancel.c ftCh_Cancel_Anim
+src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam.c ftCh_FingerBeamEnd_Anim
+src/melee/ft/kinds/ftCrazyHand/ftcrazyhandsqueezing0.c ftCh_Init_8015A184
+src/melee/ft/kinds/ftKoopa/ftkoopaspeciallw.c ftKp_SpecialLw_Enter
+src/melee/ft/kinds/ftMasterHand/ftmasterhandbackairplane1.c ftMh_BackAirplane2_Anim
+src/melee/ft/kinds/ftMasterHand/ftmasterhandbackairplane2.c ftMh_MS_368_80153A64
+src/melee/ft/kinds/ftMasterHand/ftmasterhandbackdisappear.c ftMh_Grab_Anim
+src/melee/ft/kinds/ftMasterHand/ftmasterhandwait10.c ifStage251
+src/melee/ft/kinds/ftSeak/ftseakspecialhi.c ftSk_SpecialHi_80113EAC_inline
+src/melee/ft/kinds/ftSeak/ftseakspecialhi.c ftSk_SpecialHi_80113F68_inline

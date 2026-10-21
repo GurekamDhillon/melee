@@ -486,3 +486,54 @@ and all 1373 earlier hashes are unchanged (diff of `tests/data/chars.txt`: 16 li
 - Unverified: none counted. Stubs replaced: 0 (no verified target exists).
 - Next: the boss helpers (`ftBossLib_*`, `ftCh_UpdateBossMotion`, `ftMh` inlines) would open most of
   the remaining ~70 ext_attr users; nested `{ Fighter* fp = ...; }` blocks; local `Vec3`s.
+
+## Night 3, round 2 (= round 10 of the generator, 2026-10-21)
+
+### Recount at the start
+- Ported before this round: 1402 = 13 pure helpers + 1389 functions in `gen/ported*.txt` (rounds 1-9,
+  no duplicates). Total: 4605 definitions (round 9's recount, unchanged). 1402/4605 = 30.4%.
+
+### Stub replacement
+Group 3 has since ported and verified (ftcommon2.rs / ftcommon3.rs, group-fighter.md rounds 7-8)
+four of our stub targets: `ftCommon_8007D7FC`, `ftCommon_8007DB24`, `ftCommon_8007D92C`,
+`ftCommon_8007EBAC`. They now use `stub_or!` in `src/stubs.rs`: the hook stays (the oracle installs
+recorders through it), and an unset hook calls group 3's port instead of panicking. The others (ft_0877
+physics/collision, ftanim, Fighter_ChangeMotionState, ftParts, ftCo_Fall_Enter, ft_8008A2BC,
+Player_GetPlayerSlotType, efLib/itIsHeavy, ...) still have no verified port outside c2r and stay
+panicking stubs. Note: group 3's 8007D7FC/DB24/D92C call group 3's own hooks (mpLib, efLib,
+ftCo_Fall_Enter, ft_8008A2BC), some of which still panic until installed.
+
+### What was ported
+10 functions (Crazy Hand 3, Master Hand 4, Koopa 1, Seak 2; list `gen/ported_r10.txt`, code
+`src/chars/r10/<Char>.rs`). How: `gen/port_r10.py` = port_r9's translator plus semantics-preserving
+rewrites of the stripped C body before translation:
+- `Fighter* fp = fp = GET_FIGHTER(gobj)` and any `T* x = x = e` initializer -> `T* x = e`;
+- a bare nested block `{ Fighter* fp = GET_FIGHTER(gobj); ... }` at depth 0 of a function whose
+  top-level fp is the same `GET_FIGHTER(gobj)`: the inner declaration and braces are removed, only
+  when no other name declared in the block appears outside it;
+- `ftCo_DatAttrs* ca = &fp->co_attrs;` / `= getFtAttrs(fp);` (inlines.h: `return &fp->co_attrs;`)
+  -> `fp->co_attrs.` when the local is only used as `ca->`;
+- `a = b = ... = 0;` over `fp->` lvalues and a zero literal -> separate `= 0` stores;
+- a function changed by a rewrite passes the "nothing new" filter if it emits a statement.
+40 candidates were dropped by the rustc-reject loop (mostly round 9's). The rewrites unlock few
+functions by themselves: most rewritten bodies still hit locals (`Vec3`, `int`), item calls or
+preprocessor blocks (skip-reason histogram via a scan of port_r10.rewrite + Fn7.block).
+
+### FMA
+`tools/rust-port/fma_sites.py --func '^(<the 10>)$'` over the 9 TUs: 0 fused sites.
+
+### Verification
+`gen/chref.py` reads ported_r10 / callbacks_r10 (module path `chars::r10`). Oracle unchanged.
+- Result: **1399/1399 equal** (1389 + 10); `tests/data/chars.txt` regenerated, earlier 1389 hashes
+  unchanged. (A first run forgot R10 in chref.py's `N_R1` count, so the 10 functions after round 1's
+  block ran 4000 cases instead of 256 and their hashes moved; fixed, both sides had agreed anyway.)
+- Negative checks: `self_vel.z = 0` -> `1.0` in `ftCh_FingerBeamEnd_Anim` and msid 361 -> 362 in
+  `ftKp_SpecialLw_Enter` made exactly those two fail (2 of 1399).
+- Not proven: branch coverage (random fill), the stubbed calls.
+
+### Counts
+- Ported this round: 10 (all verified; none unverified). Total: 1412 of 4605 (30.7%).
+- Stubs replaced: 4 (fall back to group 3's verified ports). Stubs added: 0. Callback keys added: 1.
+- Next: local `Vec3`/`int` declarations, `static u32 const mf` masks, `ftGetFacingDirInt(fp)`
+  (inline: `facing_dir < 0 ? -1 : +1`), the boss helpers (`ftBossLib_*`, `ftCh_GrabUnk1_8015BC88`,
+  `ftMh_MS_389_80151018`).

@@ -92,3 +92,4 @@ pub mod ftCo_BarrelWait;
 pub mod ftCo_Bury;
 pub mod ftanim;
 pub mod ftCo_DamageBind;
+pub mod ftCo_DamageFall;

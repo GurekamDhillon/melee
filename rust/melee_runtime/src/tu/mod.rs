@@ -7,3 +7,4 @@ pub mod dbitem;
 pub mod dbsound;
 pub mod dbscreenshot;
 pub mod dberror;
+pub mod dbanim;

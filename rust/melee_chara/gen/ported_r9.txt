@@ -1,0 +1,17 @@
+# Round-9 character functions (gen/port_r9.py output): <tu> <function>, checked by gen/chref.py
+src/melee/ft/kinds/ftCrazyHand/ftcrazyhandentry.c fn_80156F6C
+src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam.c ftCh_Init_80158F34
+src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam.c ftCh_Init_80159098
+src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam.c fn_80159288
+src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingergun2.c ftCh_GrabUnk1_8015ABD0
+src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingergun2.c ftCh_GrabUnk1_8015AC50
+src/melee/ft/kinds/ftCrazyHand/ftcrazyhandwait10.c ftCh_Init_80156310
+src/melee/ft/kinds/ftCrazyHand/ftcrazyhandwalk.c ftCh_WalkLoop_Anim
+src/melee/ft/kinds/ftMasterHand/ftmasterhandbackdisappear.c ftMh_MS_374_801546D8
+src/melee/ft/kinds/ftMasterHand/ftmasterhandbackdisappear.c ftMh_MS_381_8015483C
+src/melee/ft/kinds/ftMasterHand/ftmasterhandbackdisappear.c ftMh_MS_375_80154A2C
+src/melee/ft/kinds/ftMasterHand/ftmasterhandrockcrush.c ftMh_RockCrushUp_Anim
+src/melee/ft/kinds/ftMasterHand/ftmasterhandslap.c ftMh_MS_349_80151CA8
+src/melee/ft/kinds/ftMasterHand/ftmasterhandwait11.c ftMh_MS_375_80154C78
+src/melee/ft/kinds/ftMasterHand/ftmasterhandwait11.c ftMh_MS_378_80154CF8
+src/melee/ft/kinds/ftMasterHand/ftmasterhandwalk.c ftMh_WalkLoop_Phys

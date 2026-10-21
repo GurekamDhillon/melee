@@ -128,6 +128,9 @@ static u64 fnv(u64 h, const void* p, unsigned n)
 
 static Fighter fp;
 static u32 attrs[ATTR_WORDS];
+/* round 9: fp->ft_data->ext_attr (read-only for the ported functions): the attrs block reversed */
+static u32 ext_attrs[ATTR_WORDS];
+static ftData ftd;
 static ftCommonData cd;
 
 /* Bitfields the ported functions (and the ftCommon helpers they call) read or write. Native C
@@ -279,6 +282,7 @@ int main(int argc, char** argv)
             float a;
             int ia, nul, o1, o2;
             Vec3 v3;
+            ftData* ft_data_saved;
             Vec2 v2;
             u32* w = (u32*) &fp;
             rs = 0x9E3779B9u ^ (f * 7919u + (u32) k * 104729u + 1u);
@@ -290,6 +294,10 @@ int main(int argc, char** argv)
             w = (u32*) &cd;
             for (i = 0; i < sizeof cd / 4; i++) w[i] = slot(8);
             fp.dat_attrs = attrs;
+            for (i = 0; i < ATTR_WORDS; i++) ext_attrs[i] = attrs[ATTR_WORDS - 1 - i];
+            ftd.ext_attr = ext_attrs;
+            ft_data_saved = fp.ft_data;
+            fp.ft_data = &ftd;
             p_ftCommonData = &cd;
             g_sfx = 0;
             g_fric = rf();
@@ -306,6 +314,7 @@ int main(int argc, char** argv)
             g.user_data = &fp;
             FUNCS[f].drv((int) f, &g, &fp, a, ia, nul, &v3, &v2, &o1, &o2, &ret);
             fp.dat_attrs = 0;
+            fp.ft_data = ft_data_saved;
             {
                 unsigned bits = 0;
                 for (i = 0; i < NBF; i++) if (bmask >> i & 1) bits |= (unsigned) bf_get(i) << i;

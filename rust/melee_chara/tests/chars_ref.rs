@@ -264,6 +264,9 @@ fn character_functions_match_c() {
 
     let mut fp: Box<Fighter> = Box::new(Fighter::zeroed());
     let mut attrs: Box<[u32; ATTR_WORDS]> = Box::new([0; ATTR_WORDS]);
+    // round 9: fp->ft_data->ext_attr, the attrs block reversed (C `ext_attrs` / `ftd`)
+    let mut ext_attrs: Box<[u32; ATTR_WORDS]> = Box::new([0; ATTR_WORDS]);
+    let mut ftd: Box<melee_types::ftData> = Box::new(unsafe { core::mem::zeroed() });
     let mut cd: Box<ftCommonData> = Box::new(ftCommonData::zeroed());
     let bf_byte = bf_probe(&mut fp);
 
@@ -318,6 +321,12 @@ fn character_functions_match_c() {
                 }
             }
             fp.dat_attrs = attrs.as_mut_ptr() as *mut _;
+            for i in 0..ATTR_WORDS {
+                ext_attrs[i] = attrs[ATTR_WORDS - 1 - i];
+            }
+            ftd.ext_attr = ext_attrs.as_mut_ptr() as *mut _;
+            let ft_data_saved = fp.ft_data;
+            fp.ft_data = &mut *ftd;
             unsafe {
                 hooks::P_FT_COMMON_DATA = &*cd;
                 G_SFX = 0;
@@ -343,6 +352,7 @@ fn character_functions_match_c() {
             let ret = chars_dispatch::call(f, &mut *gobj, &mut fp, a, ia, nul, &mut v3, &mut v2, &mut o1, &mut o2);
 
             fp.dat_attrs = core::ptr::null_mut();
+            fp.ft_data = ft_data_saved;
             let mut bits = 0u32;
             for i in 0..NBF {
                 if on(i) {

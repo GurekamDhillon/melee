@@ -436,3 +436,53 @@ How: `gen/port_r8.py` = port_r7's translator plus
 - Stubs added: 1 TODO(group3) (+1 ported no-op helper). Callback keys added: 0.
 - Next: `T* da = fp->ft_data->ext_attr;` dat-attr locals (37 Master Hand + 31 Crazy Hand), nested
   `{ Fighter* fp = ...; }` blocks (23), local `Vec3` declarations (60), `static u32 const mf` masks (47).
+
+## Night 3, round 1 (= round 9 of the generator, 2026-10-21)
+
+### Recount at the start
+- Ported before this round: 1386 = 13 pure helpers + 1373 functions in `gen/ported*.txt` (153 + 554 +
+  134 + 110 + 191 + 108 + 37 + 86; list lines minus headers, no duplicates). Matches the night-2 row.
+- Total recounted: **4605** function definitions in the 232 `src/melee/ft/kinds/*/*.c` files outside
+  ftCommon (top-level `name(...) {` at brace depth 0, comments/preprocessor stripped; 4549 distinct
+  names, statics repeat across TUs). The old "~4340" was an estimate. 1386/4605 = 30.1%.
+
+### Stub replacement
+None possible. Every one of the 40 `melee_chara::stubs` targets (ft_0877, ftcoll, ftanim,
+Fighter_ChangeMotionState, ftParts, efLib_DestroyAll, itIsHeavy, Player_GetPlayerSlotType, ...) exists
+elsewhere only in group 3's mechanical `c2r`/`raw` translation (feature `c2r`, never run, not verified),
+not as a verified port; the same holds for the 87 distinct TODO(group4) targets in `chars::cb`.
+Wiring a stub to unverified c2r code would break the "verified" rule, so they stay.
+
+### What was ported
+16 functions (Master Hand 8, Crazy Hand 8; list `gen/ported_r9.txt`, code `src/chars/r9/<Char>.rs`,
+path `melee_chara::chars::r9::<Char>::<tu>::<fn>`): `_Init` / motion-enter helpers and Anim/Phys
+callbacks that read `T* da = fp->ft_data->ext_attr;` (positions, timers) and call already-stubbed
+group-3 functions or earlier rounds' ports.
+
+How: `gen/port_r9.py` = port_r8's translator plus
+- `T* x = fp->ft_data->ext_attr;` locals become read-only pseudo fields (round 4's dat_attrs
+  mechanism, separate index per type in `tu.ea`), emitted as
+  `(*((*(*fp).ft_data).ext_attr as *const melee_types::T)).f`;
+- a function using such a local passes the "nothing new" filter.
+40 candidates were dropped by the rustc-reject loop (38 the same as round 8's). Of the ~88
+ext_attr users, most also call unported boss helpers (`ftBossLib_*`, `ftCh_UpdateBossMotion`,
+`ftMh_*` inlines) and stay out. No new stubs, no new callback keys.
+
+### FMA
+`fma_sites.py --func '^(<the 16>)$'` over the 10 TUs: 0 fused sites.
+
+### Verification
+Oracle (both sides, `gen/chref_main.c` and `tests/chars_ref.rs`): `fp->ft_data` points at a zeroed
+`ftData` whose `ext_attr` is a second attrs block (the dat_attrs block reversed, so a port reading
+the wrong block differs); the random `ft_data` word is restored before hashing, so the random stream
+and all 1373 earlier hashes are unchanged (diff of `tests/data/chars.txt`: 16 lines added only).
+- Result: **1389/1389 equal** (1373 + 16).
+- Negative checks: `ext_attr` -> `dat_attrs` in `ftCh_Init_80158F34` and `.x20` -> `.x1C` in
+  `fn_80156F6C` made exactly those two fail (2 of 1389).
+- Not proven: branch coverage (random fill), the stubbed calls.
+
+### Counts
+- Ported this round: 16 (all verified; none unverified). Total: 1402 of 4605 (30.4%).
+- Unverified: none counted. Stubs replaced: 0 (no verified target exists).
+- Next: the boss helpers (`ftBossLib_*`, `ftCh_UpdateBossMotion`, `ftMh` inlines) would open most of
+  the remaining ~70 ext_attr users; nested `{ Fighter* fp = ...; }` blocks; local `Vec3`s.

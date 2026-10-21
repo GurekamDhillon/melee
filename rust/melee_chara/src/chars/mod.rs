@@ -83,3 +83,6 @@ pub mod ftYoshi;
 pub mod ftZelda;
 /// Round 8: gen/port_r8.py output (PAD_STACK forms, Player_GetPlayerSlotType conditions). Path: `chars::r8::<Char>::<tu>::<fn>`.
 pub mod r8;
+
+/// Round 9: gen/port_r9.py output (`T* da = fp->ft_data->ext_attr;` locals). Path: `chars::r9::<Char>::<tu>::<fn>`.
+pub mod r9;

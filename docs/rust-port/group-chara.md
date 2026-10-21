@@ -261,3 +261,52 @@ changes the stream for all rounds).
   `Fighter_OnKnockbackEnter/Exit`, `ft_CheckGroundAndLedge`, `Fighter_ClearCmdVars`;
   ~280 functions), `Player_GetPlayerSlotType` (group 6, 42), `static MotionFlags const mf`
   locals (49), non-constant right-hand sides (arithmetic, 40), `COPY_ATTRS` (26).
+
+## Round 5 (2026-10-21)
+
+### What was ported
+191 more character functions in 62 TUs of 29 characters (the list is `gen/ported_r5.txt`; code
+`src/chars/r5/<Char>.rs`, path `melee_chara::chars::r5::<Char>::<tu>::<fn>`, signature
+`fn(gobj: *mut HSD_GObj)`). Mostly Coll callbacks (`ft_80082C74(gobj, <edge cb>)`,
+`ft_8008403C(gobj, <landing cb>)`), OnDeath / OnKnockbackEnter/Exit hooks (`ftParts_80074A4C`,
+`Fighter_OnKnockbackEnter`), Anim callbacks ending in `ftCommon_8007D92C`, landing-lag Coll
+callbacks (`ftCo_LandingFallSpecial_Enter(gobj, false, da->x)`), and Enter functions using
+`Fighter_ClearCmdVars` / `ftCommon_8007E2F4` / `ftAnim_SetAnimRate`.
+
+How: `gen/port_r5.py` = port_r4's translator plus
+- 16 new group-3 stubs in `src/stubs.rs` (TODO(group3), panic unset): `ft_80082C74`, `ft_8008403C`,
+  `ft_800841B8`, `ft_80084104`, `ftParts_80074A4C`, `ftParts_80074B0C`, `ft_CheckGroundAndLedge`,
+  `ftCommon_8007DB24`, `ftCommon_8007D92C`, `ftCo_Wait_IASA`, `ftCommon_8007EBAC`,
+  `ftAnim_SetAnimRate`, `ftAnim_800704F0`, `ftCo_LandingFallSpecial_Enter`,
+  `Fighter_UnkSetFlag_8006CFBC`, `ftCo_800957F4`. (Group 3 already has ports of 8007D92C,
+  8007DB24, 8007EBAC in melee_fighter; they call melee_fighter hooks the chars test does not
+  record yet, so they stay stubs here. Switching them is the next cheap step.)
+- three calls to group 3's existing ports: `ftCommon_8007E2F4`, `ftCommon_8007E2FC`
+  (melee_fighter::ftcommon2), `ftCommon_UpdateFacing` (melee_fighter::ftcommon); the oracle runs
+  their C bodies (new cut range in `chref.py` FTCOMMON);
+- `Fighter_OnKnockbackEnter/Exit`, `Fighter_ClearCmdVars` (ft/inlines.h) written out in stubs.rs;
+- argument kinds: HSD_GObjEvent (function name -> `chars::cb` entry, NULL -> None) and s16/u8
+  constants (clang evaluates `(s16)(expr)`).
+60 functions were dropped by the rustc-reject loop (mostly int-to-float argument conversions
+such as `ftCo_80096900(..., 1, da->x)` and anonymous member names).
+
+Callbacks: `cb.rs` now covers rounds 3-5 (133 entries; 79 new keys in `gen/callbacks_r5.txt`,
+including callbacks passed as arguments). 91 are TODO(group4) panics.
+
+### FMA
+`fma_sites.py --func <the 191>` over the 62 TUs: 0 fused sites (no float arithmetic).
+
+### Verification
+`gen/chref.py` (shipping front end + lower.py), now reading ported_r5 / callbacks_r5. New C
+recorders in `chref_main.c` and identical ones in `tests/chars_ref.rs`; a callback argument is
+traced as its non-NULL bit + FNV-1a of its `<tu>:<name>` key. Round-5 functions run 256 fighters.
+- Result: **1142/1142 equal** (951 + 191). `cargo test --workspace` green (excluding another
+  agent's uncommitted `mex_import` crate, whose own tests fail).
+- Negative check: changing `ftParts_80074A4C(gobj, 0, 0)` to `(gobj, 0, 1)` in `ftCa_Init_OnDeath`
+  made exactly that function fail (1 of 1142).
+- Not proven: branch coverage (random fill), the 32 stubbed group-3 calls (16 + 16), the 91
+  unported callback targets.
+
+### Counts
+- Ported this round: 191 (all verified). Total in the crate: 1155 of ~4340 (26.6%).
+- Stubs added: 16 TODO(group3); 79 new callback keys (TODO(group4) where the target is unported).

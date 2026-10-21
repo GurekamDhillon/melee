@@ -69,7 +69,36 @@ fn install_recorders() {
         });
         hooks::GENO_GROUND_EDGE = Some(|fp, landing| { tr(17); trfp(fp); tr(landing as u32) });
         hooks::PL_8003FC44 = Some(|slot, sub| { tr(18); tr(slot as u32); tr(sub as u32) });
+        // round 5 (gen/port_r5.py)
+        st::FT_80082C74 = Some(|g, cb| { tr(19); trg(g); trc(cb) });
+        st::FT_8008403C = Some(|g, cb| { tr(20); trg(g); trc(cb) });
+        st::FT_800841B8 = Some(|g, cb| { tr(21); trg(g); trc(cb) });
+        st::FT_80084104 = Some(|g| { tr(22); trg(g) });
+        st::FTPARTS_80074A4C = Some(|g, a, b| { tr(24); trg(g); tr(a as u32); tr(b as u32) });
+        st::FTPARTS_80074B0C = Some(|g, a, b| { tr(25); trg(g); tr(a as u32); tr(b as u32) });
+        st::FT_CHECKGROUNDANDLEDGE = Some(|g, d| { tr(26); trg(g); tr(d as u32); pick() });
+        st::FTCOMMON_8007DB24 = Some(|g| { tr(28); trg(g) });
+        st::FTCOMMON_8007D92C = Some(|g| { tr(29); trg(g) });
+        st::FTCO_WAIT_IASA = Some(|g| { tr(30); trg(g) });
+        st::FTCOMMON_8007EBAC = Some(|fp, a, b| { tr(32); trfp(fp); tr(a); tr(b) });
+        st::FTANIM_SETANIMRATE = Some(|g, r| { tr(33); trg(g); trf(r) });
+        st::FTANIM_800704F0 = Some(|g, i, f| { tr(34); trg(g); tr(i as u32); trf(f) });
+        st::FTCO_LANDINGFALLSPECIAL_ENTER = Some(|g, c, f| { tr(35); trg(g); tr(c as u32); trf(f) });
+        st::FIGHTER_UNKSETFLAG_8006CFBC = Some(|g| { tr(36); trg(g) });
+        st::FTCO_800957F4 = Some(|g, m| { tr(37); trg(g); tr(m as u32) });
     }
+}
+
+/// Round 5: an HSD_GObjEvent argument as its non-NULL bit + FNV-1a of its chars::cb key (C `trc`).
+fn trc(cb: melee_types::HSD_GObjEvent) {
+    let k = match cb {
+        None => 0,
+        Some(f) => melee_chara::chars::cb::CALLBACKS.iter().find(|(e, _)| *e as usize == f as usize)
+            .map(|(_, key)| fnv(FNV0, key.as_bytes())).unwrap_or(0),
+    };
+    tr(cb.is_some() as u32);
+    tr(k as u32);
+    tr((k >> 32) as u32);
 }
 
 struct Rng(u32);

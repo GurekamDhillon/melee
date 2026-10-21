@@ -53,6 +53,26 @@ void ftCo_80096900(HSD_GObj* gobj, int a, int b, bool c, float d, float e)
 { tr(16); trg(gobj); tr((u32) a); tr((u32) b); tr((u32) c); trf(d); trf(e); }
 void Geno_GroundEdge(Fighter* fp, int landing) { tr(17); tr(fp == g_self->user_data); tr((u32) landing); }
 void pl_8003FC44(int slot, int sub) { tr(18); tr((u32) slot); tr((u32) sub); }
+/* Round 5 (gen/port_r5.py): 16 more group-3 recorders (ftCommon_8007E2F4/E2FC run for real: the cut). An HSD_GObjEvent argument is traced as
+ * its non-NULL bit plus the FNV-1a of its "<setter tu>:<name>" key (cb_key below; Rust: chars::cb). */
+static unsigned long long cb_key(const void* p);
+static void trc(HSD_GObjEvent cb) { unsigned long long k = cb_key((const void*) cb); tr(cb != 0); tr((u32) k); tr((u32) (k >> 32)); }
+void ft_80082C74(HSD_GObj* gobj, HSD_GObjEvent cb) { tr(19); trg(gobj); trc(cb); }
+void ft_8008403C(HSD_GObj* gobj, HSD_GObjEvent cb) { tr(20); trg(gobj); trc(cb); }
+void ft_800841B8(HSD_GObj* gobj, HSD_GObjEvent cb) { tr(21); trg(gobj); trc(cb); }
+STUB_G(22, ft_80084104)
+void ftParts_80074A4C(HSD_GObj* gobj, int a, int b) { tr(24); trg(gobj); tr((u32) a); tr((u32) b); }
+void ftParts_80074B0C(HSD_GObj* gobj, int a, int b) { tr(25); trg(gobj); tr((u32) a); tr((u32) b); }
+bool ft_CheckGroundAndLedge(HSD_GObj* gobj, int dir) { tr(26); trg(gobj); tr((u32) dir); return pick() & 1; }
+STUB_G(28, ftCommon_8007DB24)
+STUB_G(29, ftCommon_8007D92C)
+STUB_G(30, ftCo_Wait_IASA)
+void ftCommon_8007EBAC(Fighter* fp, u32 a, u32 b) { tr(32); tr(fp == g_self->user_data); tr(a); tr(b); }
+void ftAnim_SetAnimRate(HSD_GObj* gobj, float r) { tr(33); trg(gobj); trf(r); }
+void ftAnim_800704F0(HSD_GObj* gobj, int i, float f) { tr(34); trg(gobj); tr((u32) i); trf(f); }
+void ftCo_LandingFallSpecial_Enter(HSD_GObj* gobj, bool c, float f) { tr(35); trg(gobj); tr((u32) c); trf(f); }
+STUB_G(36, Fighter_UnkSetFlag_8006CFBC)
+void ftCo_800957F4(HSD_GObj* gobj, FtMotionId msid) { tr(37); trg(gobj); tr((u32) msid); }
 
 #include "ftcommon_extract.inc"
 #include "chref_table.inc"
@@ -147,6 +167,7 @@ static unsigned bf_byte[NBF];
  * the stored function, not its address, is compared. Other values stay as they are. */
 static unsigned long long cb_key(const void* p)
 {
+    if (!p) return 0;
     int t, j;
     for (t = 0; t < N_CBTAB; t++)
         for (j = 0; CBP[t][j]; j++)

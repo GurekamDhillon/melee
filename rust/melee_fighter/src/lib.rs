@@ -32,3 +32,4 @@ pub mod ftaction;
 pub mod fighter;
 pub mod ftanim;
 pub mod ftcoll;
+pub mod ft084e;

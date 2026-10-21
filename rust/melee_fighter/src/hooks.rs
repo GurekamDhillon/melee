@@ -5,7 +5,7 @@
 //! Single-threaded game state, like the C globals they replace: set them before the match.
 #![allow(static_mut_refs)]
 
-use crate::types::{ftCommonData, CmSubject, Fighter, Fighter_ShakeTable_t, FighterKind, HSD_GObj, HSD_JObj, Item_GObj, S32Vec2, Vec2, Vec3};
+use crate::types::{ftCommonData, CmSubject, Fighter, Fighter_804D6520_t, Fighter_ShakeTable_t, FighterKind, HSD_GObj, HSD_JObj, Item_GObj, S32Vec2, Vec2, Vec3};
 
 /// `ScriptGame_ModValue(player_id, field, base)` behind `FT_SCRIPT_VALUE` (ft/forward.h).
 pub static mut SCRIPT_MOD_VALUE: Option<fn(player_id: i32, field: i32, base: f32) -> f32> = None;
@@ -19,6 +19,18 @@ pub static mut GROUND_FRICTION_MUL: Option<fn(fp: &Fighter) -> f32> = None;
 /// `p_ftCommonData` (fighter.h): PlCo's common fighter constants, loaded from the DAT.
 /// TODO(move-to-core): owned by the fighter loader once ftdata is ported.
 pub static mut P_FT_COMMON_DATA: *const ftCommonData = core::ptr::null();
+
+/// `Fighter_804D6520` (fighter.h, PlCo `pData[13]`): bunny-hood movement multipliers.
+/// TODO(move-to-core): owned by the fighter loader (Fighter_LoadCommonData) once ftdata is ported.
+pub static mut FIGHTER_804D6520: *const Fighter_804D6520_t = core::ptr::null();
+
+/// `*Fighter_804D6520`. Panics if it has not been installed.
+#[inline]
+pub fn fighter_804d6520() -> &'static Fighter_804D6520_t {
+    let p = unsafe { FIGHTER_804D6520 };
+    assert!(!p.is_null(), "Fighter_804D6520 not loaded");
+    unsafe { &*p }
+}
 
 /// `FT_SCRIPT_VALUE(fp, field, base)`.
 #[inline]

@@ -123,6 +123,14 @@ EXTRACTS = {
                  ("ftColl_800765E0", "getEnvDmg", "inlineB1", "getUnkVal")],
                *[("src/melee/ft/ftcommon.c", "fn:" + n, None) for n in
                  ("ftCo_GetLStickAngle", "ftCo_GetCStickAngle", "ftCommon_8007D9D4")]],
+    # group 3 round 12: ft_084E.c + two ft_081B.c tail functions + ft_08A1.c stick test (src/ft084e.rs)
+    "ft084e": [("src/melee/ft/ftcommon.c", "void ftCommon_CalcGroundAccel_Deaccel(", "void ftCommon_UnlockECB("),
+               ("src/melee/ft/ft_084E.c", "void ft_80084E1C(", None),
+               ("src/melee/ft/ft_081B.c", "fn:ft_80084CB0", None),
+               ("src/melee/ft/ft_081B.c", "fn:ft_80084DB0", None),
+               ("src/melee/ft/ft_08A1.c", "fn:ft_8008A1FC", None),
+               ("src/melee/ft/ft_08A1.c", "fn:ft_8008A244_inline", None),
+               ("src/melee/ft/ft_08A1.c", "fn:ft_8008A244", None)],
     "ftcommon": [("src/melee/ft/ftcommon.c", "void ftCommon_CalcGroundAccel_Deaccel(", "void ftCommon_UnlockECB("),
                  ("src/melee/ft/ftcommon.c", "void ftCommon_UpdateFacing(", "void ftCommon_8007DB24(")],
 }

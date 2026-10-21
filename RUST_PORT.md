@@ -382,3 +382,27 @@ against a running Rust game: no Rust simulation exists yet, so no golden has bee
   defaults are only the fields the hash reads, not all of Fighter_UnkInitReset; stocks 3 is the
   scene's, not read from the VS rules struct. `MELEE_GOLDEN_DUMP=1` prints the start state.
 - Other scenarios are not wired (only falcon/fox and FD).
+
+## End of night 2: summary (2026-10-21)
+Functions ported (all bit-exact vs the shipping-contraction C unless noted in the row):
+group 1 ~236 of ~2000 (~12%), group 2 301 of 3013 (10%), group 3 526 of ~2820 (19%),
+group 4 1386 of ~4340 (32%), group 5 1446 of ~5000 (29%), group 6 251 (of 543 scanned
+leaves/callers; gm/mn/if/ty/lb total not counted). Totals are estimates from each group's doc.
+`cargo build --workspace` clean, `cargo test --workspace --no-fail-fast` all green at 95307a264.
+
+## Night 3: plan, in order
+1. **Golden seed (group 1):** port particle.c / generator.c (hsd_8039930C, hsd_8039DAD4,
+   hsd_8039EE24, hsd_8039F05C) and the entry-effect spawns, so `seed` matches pad_falcon_fox_fd
+   from frame 0 (C draws 54 before frame 0, then 19/25/19/7/22).
+2. **Past frame 5 (groups 1+3):** Fighter_ChangeMotionState, ftCo_800C6408 EntryStart, DObj/AObj
+   anim walkers (remove the `JObjExt` stubs), the per-frame fighter update; target frame 10 (Fox).
+3. **JObj load/ResolveRefs + DAT-driven spawn** so stage spawns go through the JObj system
+   (drops the "no rotated parent" approximation), then wire the other three goldens.
+4. **Groups 2/4/5:** keep porting the callers of what the golden needs first (ground.c rest,
+   mplib, item spawn/think, chara callbacks behind `chars::cb`); shrink the TODO(groupN) panics.
+5. **Platform step 3 (present):** join melee_gx to melee_platform's winit loop (swapchain),
+   port shim_gx.c, EFB copies; connect melee_audio to the synth; wire melee_net to a rollback
+   port of gw_rollback.c once the sim can save/load.
+6. **User checks** (cannot be done unattended): visuals of a real scene, audio by ear, the
+   adapter's stick rest offset / trigger 255 reading vs the C build, HID adapter, a gamepad,
+   online play against another machine.

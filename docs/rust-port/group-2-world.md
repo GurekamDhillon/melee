@@ -514,6 +514,45 @@ another agent's uncommitted work and are left out of this commit.
 
 Regenerate: `bash rust/melee_world/cref/gen_ground_r5_ref.sh`.
 
+## Night 3, round 6: recount, 20 DevText / HUD and stage leaves vs C
+
+Recount at the start (rule: a line starting with an identifier, containing `(` and no `;`,
+followed by a line starting with `{`; `awk` over src/melee/{mp,cm,ef,gr,if}/*.c): mp 226,
+cm 182, ef 67, gr 2167, if 373 = **3015**. Round 5 reported if 372 / 3014; src/melee/if has
+not changed since that commit, so the earlier tally was one short (not traced further).
+Ported 1149, verified 1033 carried from round 5.
+
+Stubs whose target now exists elsewhere: none found. The remaining TODO(group*) panics in
+this crate (camera.rs, grlib.rs, ground.rs, stage.rs, mp/*) still name HSD JObj/CObj/GObj,
+particle and fighter functions that exist only as transpiled `raw/` modules or not at all.
+`ifStock_802F8298_step_anim` is already ported by melee_modes (hud_ptr.rs); not re-counted.
+
+New, all verified against the C (`tests/textlib_r6_vs_c.rs`, `cref/gen_textlib_r6_ref.sh`,
+84159 rows: 60000 random DevText op rows with full state + glyph buffer before/after, 4096
+colours, 20000 vectors; bodies cut verbatim, game flags + lower.py; 0 f32 fmuladd (the 3 f64
+sites are math_ppc.h's unused sqrtf inline), so no fused sites):
+- `hud::textlib` (if/textlib.c): DevText_EraseFirstLine, DevText_SetCursorXY,
+  DevText_SetCursorX, DevText_HideCursor, DevText_80302AC0, DevText_ShowBackground,
+  DevText_HideBackground, DevText_ShowText, DevText_HideText, DevText_SetScale, DevText_SetXY,
+  DevText_StoreColorIndex, DevText_SetTextColor, DevText_SetBGColor, DevText_Erase,
+  DevText_AdvanceLine (static inline), DevText_Print, DevText_PrintInt; textlib_1.c `adjust`.
+- `gr::leaves::grstadium_mul_vec` (grpstadium.c `mul_vec`).
+Conventions: the glyph buffer is a slice (not `DevText.buf`); a cell is the native C's
+`DevTextGlyph` (byte 1 bits 0-1 = colour). DevText's +0x27 bitfield stays in melee_types' GC
+byte order; the test converts from the PC layout the C dumps. Mutation-checked: the
+EraseFirstLine loop bound, the glyph colour mask, the SetXY minimum and the NOWRAP test all
+fail; `c*50/100` -> `c/2` in `adjust` passes (equivalent for u8).
+Not taken: DevText_Create / find_by_id / DevText_Printf (pool + draw list, vsnprintf).
+
+Counts after this round: 1169 of 3015 ported (38.8%); 1053 verified against the C; 116 not
+(unchanged: 81 ground.c accessors, 23 grlib.c, 10 stage.c hook-driven fns, Stage_80224E64, +1).
+
+Workspace: `cargo test -p melee_world` green. `cargo test --workspace` fails to build the
+`melee` bin (E0063 `appsrt_hook_lists`, E0609 `entry_timer`) from other agents' uncommitted
+rust/melee/src changes; not touched here.
+
+Regenerate: `bash rust/melee_world/cref/gen_textlib_r6_ref.sh`.
+
 ## Build notes
 
 - `cargo build -p melee_world` and `cargo test -p melee_world` pass. I ran them with

@@ -99,3 +99,11 @@ pub fn barrel_release_value(mut xc6: i16) -> i16 {
     barrel_release(&mut xc6);
     xc6
 }
+
+/// grpstadium.c `mul_vec` (static inline): scales each component by `m` (three f32 muls,
+/// no fused sites). Night 3 round 6, `tests/textlib_r6_vs_c.rs`.
+pub fn grstadium_mul_vec(v: &mut Vec3, m: f32) {
+    v.x *= m;
+    v.y *= m;
+    v.z *= m;
+}

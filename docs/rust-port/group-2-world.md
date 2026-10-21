@@ -12,12 +12,12 @@ Function definitions in the C (counted as a `name(...)` line followed by `{`):
 
 | dir | functions | ported |
 |---|---|---|
-| src/melee/mp | 226 | 88 (mplib line-graph queries, line geometry, segment checks, joint list) |
+| src/melee/mp | 226 | 105 (mplib line-graph queries, line geometry, segment checks, joint list, seam stitching + floor bounds; all of mpisland.c) |
 | src/melee/cm | 182 | 0 |
 | src/melee/ef | 67 | 0 |
 | src/melee/gr | 2166 | 0 |
 | src/melee/if | 372 | 0 |
-| total | 3013 | 88 (about 2.9%) |
+| total | 3013 | 105 (about 3.5%) |
 
 Group 2 has no PowerPC `.s` files (the repo's `.s` files are in libs/dolphin, MetroTRK and
 Runtime). None of the group's structs are in the neutral hash field list
@@ -105,6 +105,25 @@ no `StateHash` impls were needed yet.
     f64 Newton steps = `geom::sqrtf`). Not ported (need HSD_JObj / other groups' callbacks):
     mpLib_800552B0, mpLib_80055E9C, mpJointSet/Get/ClearCb1/2, mpLib_8005811C.
 
+- (port round 4, night 2) `mp::stitch`, from src/melee/mp/mplib.c (5): mpLib_800581DC,
+  mpLib_80058560, mpLib_80058614_Floor, mpLib_800587FC, mpLib_80058820; and `mp::island`, all of
+  src/melee/mp/mpisland.c (12): mpIsland_8005A6F8, 8005A728, 8005AB54, 8005AC14, 8005AC8C,
+  8005ACE8, 8005AE1C, 8005B004, 8005B334, and the PC-only StageSlotFree, ScriptRecycle,
+  ScriptBatch.
+  - `GroundColl` gains `stage_joint` (the PC `ScriptGame_StageJoint` hook, default false),
+    `coll_box` (`mpLib_80458868[2]`), `map_ranges` (`mpLib_804D64B4->ranges`) and `islands`.
+  - Islands (`mp_UnkStruct0`, `HSD_MemAlloc(0x2C)`) live in an arena, `Islands::segs`, in
+    allocation order; every link is an index (-1 = NULL) and `HSD_Free` only marks `freed`, so
+    an index equals the C's allocation ordinal. `x2A`/`ptr` are never written by mpisland.c.
+    The C's pointer-to-pointer list params become values returned as `(list, free)` pairs.
+  - `GroundColl::mp_island_drain_refresh` runs the queued `mpScriptIslandRefresh` calls through
+    mpIsland_8005B334, as the console build does at each call site. The PC build's routing of a
+    script joint's refresh to the batch dirty mark (scriptBatchDepth) is not ported:
+    TODO(group2: PC script batch).
+  - Stubs: `grDynamicAttr_801CA224` (TODO(group2: gr/grdynamicattr.c)) and the GObj_Create /
+    HSD_GObj_SetupProc of mpLib_80058820 (TODO(group1: baselib/gobj.c)) are no-ops.
+  - FMA: fma_sites.py finds no fused site in any of these 17 functions.
+
 ## Tests
 
 `tests/mplib_lines_vs_c.rs` checks the port against the real C. `cref/gen_mplib_lines_ref.sh`
@@ -154,7 +173,21 @@ every line; 160 mpLib_80056C54 walks per graph, 463 returning true). All match b
 Mutation check: unfusing the x lerp in mpLib_80056C54 fails the test, so that fusion is proven by
 a vector.
 
-Regenerate: `bash rust/melee_world/cref/gen_mplib_lines_ref.sh` (and `gen_mplib_geom_ref.sh`, `gen_mplib_check_ref.sh`, `gen_mplib_joint_ref.sh`), then
+`tests/mpisland_vs_c.rs` does the same for `mp::island` + `mp::stitch`: `cref/gen_mpisland_ref.sh`
+cuts the lines/geom/joint/check bodies plus the stitch range of mplib.c and all of mpisland.c
+(with `mpScriptIslandRefresh` = mpIsland_8005B334, HSD_MemAlloc a numbered pool), builds them
+i686 with contraction on + lower.py, and writes `tests/data/mpisland_ref.txt` (26629 rows: 128
+random graphs, a third of them with ring chains, 70 random ops each over island builds/refreshes,
+script batches, slot frees, stitching, the floor-bounds pass, joint add/hide/bounding and flag
+edits, and 4 query kinds). After every op the whole island state (every list, each segment's
+allocation index and fields), every MapLine `*_id1`, every joint's flags/xE and both boxes must
+match; 6376 ops and 1707 query results match, plus 10 endless walks caught by the budget in both.
+Mutation check: flipping mpIsland_8005AE1C's enabled test, never reusing the free list in
+8005B004, dropping 800581DC's one-way unlink, and dropping 80058614's script-joint xE clear or
+its floor-flag test each fail the test. Thin spots: mpIsland_8005AC14 finds an island in only 4
+queries and AB54 in 31; the free list is non-empty in only a few states.
+
+Regenerate: `bash rust/melee_world/cref/gen_mplib_lines_ref.sh` (and `gen_mplib_geom_ref.sh`, `gen_mplib_check_ref.sh`, `gen_mplib_joint_ref.sh`, `gen_mpisland_ref.sh`), then
 `cd rust && cargo test -p melee_world`.
 
 ## Build notes
@@ -170,8 +203,8 @@ Regenerate: `bash rust/melee_world/cref/gen_mplib_lines_ref.sh` (and `gen_mplib_
 
 ## Next (in order)
 
-1. The rest of mplib: mpLib_800581DC, mpLib_80058560/80058614, mpLibLoad/mpPruneEmptyLines,
-   mp/mpisland.c (to drain `island_refresh`), then the HSD_JObj-driven mpLib_80055E9C once
+1. The rest of mplib: mpLibLoad/mpPruneEmptyLines, the PC script batch around
+   mpScriptIslandRefresh, then the HSD_JObj-driven mpLib_80055E9C once
    group 1's JObj is usable.
 2. mpcoll.c, the collision driver. It calls into fighter and item callbacks, which get stubbed.
 3. cm/camera.c. `long double` literals become f64.

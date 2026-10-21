@@ -15,6 +15,10 @@ fn all_lines_active(_: i32) -> bool {
     true
 }
 
+fn no_stage_joint(_: i32) -> bool {
+    false
+}
+
 /// The ground collision state mplib keeps in globals.
 #[derive(Clone, Debug)]
 pub struct GroundColl {
@@ -43,6 +47,15 @@ pub struct GroundColl {
     /// mark), queued in order. TODO(group2: mpisland.c + script batch): drain into the island
     /// rebuild once mp/mpisland.c is ported.
     pub island_refresh: Vec<super::joint::IslandRefresh>,
+    /// `ScriptGame_StageJoint` hook (PC build: the joint belongs to a Lua script room).
+    /// Default: no joint is a script joint.
+    pub stage_joint: LineActiveFn,
+    /// `mpLib_80458868[2]` (stage bounds; [1] is the floor-line box of mpLib_80058614_Floor).
+    pub coll_box: [MpCollisionBox; 2],
+    /// `mpLib_804D64B4->ranges` (the whole map's per-group line ranges).
+    pub map_ranges: [MapLineRange; MAP_LINE_GROUP_COUNT],
+    /// mpisland.c state (`mpIsland_80458E88` and its heap segments).
+    pub islands: super::island::Islands,
 }
 
 impl Default for GroundColl {
@@ -60,6 +73,10 @@ impl Default for GroundColl {
             joint_active: all_lines_active,
             joint_list_end: -1,
             island_refresh: Vec::new(),
+            stage_joint: no_stage_joint,
+            coll_box: [MpCollisionBox::default(); 2],
+            map_ranges: [MapLineRange::default(); MAP_LINE_GROUP_COUNT],
+            islands: Default::default(),
         }
     }
 }

@@ -116,7 +116,7 @@ impl GroundColl {
     /// The line ids a joint's group walk visits: the group's range, then (if the Dynamic count
     /// is nonzero) the Dynamic range entered by the C's `goto`, which runs the body once before
     /// the `i < count` test.
-    fn joint_lines(&self, joint: usize, group: usize) -> Vec<i32> {
+    pub(crate) fn joint_lines(&self, joint: usize, group: usize) -> Vec<i32> {
         let mj = &self.map_joints[self.joints[joint].inner as usize];
         let (s, c) = (mj.ranges[group].start as i32, mj.ranges[group].count as i32);
         let mut v: Vec<i32> = (0..c.max(0)).map(|i| s + i).collect();

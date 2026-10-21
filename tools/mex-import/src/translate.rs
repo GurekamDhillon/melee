@@ -129,13 +129,15 @@ pub fn blob_coverage(l: &Layouts, blob: &Blob, rep: &BlobReport) -> Coverage {
         } else {
             *c.bad.entry(format!("{} op{}{}", op.family(), w >> 26, if w >> 26 == 31 || w >> 26 == 19 { format!(" xo{}", (w >> 1) & 0x3FF) } else { String::new() })).or_default() += 1;
         }
+        // Out-of-blob branches, as the vanilla address they mean (mexfn::vanilla_target: a rel24
+        // displacement wraps at BLOB_BASE).
         if let Op::B { target, lk: true } | Op::Bc { target, lk: true, .. } = op {
             if !(lo..hi).contains(&target) {
-                c.bridge_targets.insert(target);
+                c.bridge_targets.insert(crate::mexfn::vanilla_target(target));
             }
         } else if let Op::B { target, lk: false } = op {
             if !(lo..hi).contains(&target) {
-                c.bridge_targets.insert(target);
+                c.bridge_targets.insert(crate::mexfn::vanilla_target(target));
             }
         }
     }
@@ -191,7 +193,16 @@ pub fn summary_text(per_blob: &[(String, Coverage)], total: &Coverage) -> String
         t.no_native
     );
     let _ = writeln!(s, "  untyped accesses resolved at run time by address: {}; stack/global: {}", t.runtime, t.stack_global);
-    let _ = writeln!(s, "  bridge: {} distinct out-of-blob call targets", t.bridge_targets.len());
+    let named = t.bridge_targets.iter().filter(|&&a| crate::layout::vanilla_name(a).is_some()).count();
+    // m-ex's own helper block (MexTK trampolines over gmResultCharacterData, see
+    // gw_mex_ftfunction_runtime.c): MEX_IndexFighterItem, MEX_GetData, calloc, ...
+    let mex = t.bridge_targets.iter().filter(|&&a| (0x803D_7038..0x803D_78E8).contains(&a)).count();
+    let _ = writeln!(
+        s,
+        "  bridge: {} distinct out-of-blob call targets: {named} vanilla functions (symbols.txt), {mex} m-ex helpers (0x803D7038..), {} other",
+        t.bridge_targets.len(),
+        t.bridge_targets.len() - named - mex
+    );
     let mut bl: Vec<(String, u64)> = t.blockers.iter().map(|(r, m)| (r.clone(), m.values().sum())).collect();
     bl.sort_by(|a, b| b.1.cmp(&a.1));
     for (r, n) in bl.iter().take(8) {

@@ -2,7 +2,8 @@
 //!   aliases.rs: melee_types typedef aliases (`pub type Vec3 = Vec;`, `pub type Vec2Ptr = *mut
 //!     Vec2;`), so a field typed `Vec3` resolves to the record GC_RECORDS names `Vec`.
 //!   returns.rs: vanilla functions declared `T *name(` in the decomp headers (src/**/*.h), keyed
-//!     by their GC address from config/GALE01/symbols.txt: a `bl` to one leaves r3 = T*.
+//!     by their GC address from config/GALE01/symbols.txt: a `bl` to one leaves r3 = T*; and
+//!     NAMES, every symbols.txt function by address (bridge logs).
 use std::collections::{BTreeMap, HashMap};
 use std::fmt::Write;
 use std::path::{Path, PathBuf};
@@ -208,6 +209,15 @@ fn returns(root: &Path) -> String {
     let mut o = String::from("pub static RETURNS: &[(u32, &str, &str)] = &[\n");
     for (a, (n, t)) in found {
         writeln!(o, "    ({a:#x}, {n:?}, {t:?}),").unwrap();
+    }
+    o.push_str("];\n");
+    // Every vanilla function's name by address (symbols.txt), for bridge logs.
+    let mut by_addr: Vec<(u32, &String)> = addr.iter().map(|(n, a)| (*a, n)).collect();
+    by_addr.sort();
+    by_addr.dedup_by_key(|e| e.0);
+    o.push_str("pub static NAMES: &[(u32, &str)] = &[\n");
+    for (a, n) in by_addr {
+        writeln!(o, "    ({a:#x}, {n:?}),").unwrap();
     }
     o.push_str("];\n");
     o

@@ -123,6 +123,8 @@ impl Default for EntryVars {
 pub struct Player {
     pub slot: i32,
     pub fp: Box<Fighter>,
+    /// An m-ex fighter's ftFunction code (crate::mex), run on `fp` at onLoad / onFrame.
+    pub mex: Option<crate::mex::MexFighter>,
     pub entry: EntryVars,
     /// The fighter's JObj tree (`GET_JOBJ(gobj)`) and parts.
     pub skel: Skeleton,
@@ -365,7 +367,11 @@ fn fighter_kind(name: &str) -> Result<FighterKind, String> {
     match name {
         "falcon" => Ok(Ft_Kind_Captain),
         "fox" => Ok(Ft_Kind_Fox),
-        _ => Err(format!("fighter {name:?} not wired yet (falcon, fox)")),
+        // Akaneia's Wolf: an m-ex fighter built on Fox (its ftFunction overrides some slots; the
+        // rest is Fox's vanilla code, as m-ex's per-kind tables copy them). The native match runs
+        // it as Fox's kind with Wolf's files: crate::fighter_data::files_for.
+        "wolf" => Ok(Ft_Kind_Fox),
+        _ => Err(format!("fighter {name:?} not wired yet (falcon, fox, wolf)")),
     }
 }
 
@@ -438,6 +444,8 @@ impl VsMatch {
             let (file, table, idx) = match *name {
                 "falcon" => ("EfCaData.dat", "effCaptainDataTable", 4),
                 "fox" => ("EfFxData.dat", "effFoxDataTable", 3),
+                // Wolf's own bank takes Fox's index: a match here has one Fox-kind fighter.
+                "wolf" => ("EfWfData.dat", "effWolfDataTable", 3),
                 n => return Err(format!("effect bank of {n:?} not wired")),
             };
             let b = crate::effect::EffectBank::load(&disc.read(file)?, file, table)?;
@@ -543,7 +551,9 @@ impl VsMatch {
                 let a = DatArchive::parse(&disc.read(nr)?).map_err(|e| format!("{nr}: {e}"))?;
                 let at = a.public_offset(sym).ok_or(format!("{nr}: no {sym}"))?;
                 let tables = be(common_root + 0x10);
-                let pt = be(tables + 4 * kind as u32);
+                // ftPartsTable is indexed by the INTERNAL fighter id: an m-ex fighter's is its MxDt.dat
+                // row (m-ex inserts its fighters before Master Hand), not the vanilla kind it runs as.
+                let pt = be(tables + 4 * crate::mex::internal_id(disc, name)?.unwrap_or(kind as u32));
                 // ftParts_80074E58's flags_b4 parts: part_to_joint[FtPart_TransN] and [0x35].
                 let p2j = be(pt + 4) as usize;
                 let b4 = [plco.data[p2j + 1] as usize, plco.data[p2j + 0x35] as usize];
@@ -632,9 +642,19 @@ impl VsMatch {
             let x14 = Vec3 { x: x8.x, y: melee_fighter::hooks::common_data().x6C4, z: x8.z };
             skel.set_scale(root, x14);
             let entry = EntryVars { timer: 5 * (slot + 1), x4: fp.cur_pos.y, x8, x14, ..Default::default() };
+            // Fighter_Create -> Mex_OnLoadDispatch (fighter.c TARGET_PC, after ftParts_SetupParts and
+            // the anim/colour setup): an m-ex fighter's onLoad override (slot 0).
+            let mut mex = match crate::fighter_data::files_for(name) {
+                Some((file, data_name, _)) => crate::mex::MexFighter::load(file, data_name, &disc.read(file)?)?,
+                None => None,
+            };
+            if let Some(m) = &mut mex {
+                m.run(crate::mex::SLOT_ON_LOAD, slot, &mut fp);
+            }
             players.push(Player {
                 slot,
                 fp,
+                mex,
                 entry,
                 skel,
                 animating: false,
@@ -705,6 +725,11 @@ impl VsMatch {
         }
 
         Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists })
+    }
+
+    /// The m-ex fighters' code-run report (crate::mex), one block per such fighter.
+    pub fn mex_report(&self) -> String {
+        self.players.iter().filter_map(|p| p.mex.as_ref().map(|m| format!("p{}: {}", p.slot + 1, m.report()))).collect()
     }
 
     fn words(&self) -> FrameWords {
@@ -891,6 +916,11 @@ impl VsMatch {
                     }
                 }
                 m => return Err(format!("player {}: motion {m} not ported", p.slot + 1)),
+            }
+            // The end of Fighter_8006A360 (fighter.c TARGET_PC): Mex_OnFrameDispatch(kind) runs an
+            // m-ex fighter's onFrame override (slot 23) through the PPC interpreter.
+            if let Some(m) = &mut p.mex {
+                m.run(crate::mex::SLOT_ON_FRAME, p.slot, &mut p.fp);
             }
         }
         // s_link 2, Fighter_8006ABA0: input_cb. ftCo_Fall_IASA's checks all read pad input, and

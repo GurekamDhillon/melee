@@ -1115,6 +1115,7 @@ dependencies = [
  "melee_runtime",
  "melee_types",
  "melee_world",
+ "mex_import",
  "winit",
 ]
 

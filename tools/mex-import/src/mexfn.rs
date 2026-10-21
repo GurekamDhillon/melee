@@ -13,6 +13,20 @@ use crate::hsd::Archive;
 
 pub const BLOB_BASE: u32 = 0xC000_0000; // where the analysis relocates a blob (outside MEM1)
 
+/// The vanilla address an out-of-blob branch at BLOB_BASE means.
+///
+/// m-ex links a blob to sit in MEM1, a rel24 `b`/`bl` away from the game's text; at BLOB_BASE
+/// (0xC0000000, 1 GiB away) the relocated displacement no longer fits its 26 bits, so the
+/// decoded target is the intended one modulo 2^26 (ip + sext26(f - at) == f mod 2^26). Vanilla
+/// text is below 0x84000000, so its low 26 bits name it. Other targets come back unchanged.
+pub fn vanilla_target(t: u32) -> u32 {
+    if (0xBE00_0000..0xC200_0000).contains(&t) {
+        0x8000_0000 | (t & 0x03FF_FFFF)
+    } else {
+        t
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Owner {
     Fighter,
@@ -61,6 +75,12 @@ fn cstr(ar: &Archive, p: u32) -> Option<String> {
 
 /// Parse one MEXFunction header at data offset `b`. None when it does not fit the archive.
 pub fn parse_at(ar: &Archive, b: u32, owner: Owner, label: String) -> Result<Blob, String> {
+    parse_at_base(ar, b, owner, label, BLOB_BASE)
+}
+
+/// As [`parse_at`], relocated to run at guest address `base` (an executing host places the blob
+/// in MEM1 range, within rel24 reach of the game's text, as the C build's gw_ftfunction_load does).
+pub fn parse_at_base(ar: &Archive, b: u32, owner: Owner, label: String, base: u32) -> Result<Blob, String> {
     let r = |o: u32| ar.u32(b + o);
     let (code_off, rel_off, rel_n, fn_off, fn_n, code_size, dbg_n, dbg_off) =
         (r(0), r(4), r(8), r(0xC), r(0x10), r(0x14), r(0x18), r(0x1C));
@@ -83,8 +103,8 @@ pub fn parse_at(ar: &Archive, b: u32, owner: Owner, label: String) -> Result<Blo
         if o + 4 > code.len() {
             continue;
         }
-        let at = BLOB_BASE.wrapping_add(rl.code_off);
-        let f = if rl.target & 0xF000_0000 == 0x8000_0000 { rl.target } else { BLOB_BASE.wrapping_add(rl.target) };
+        let at = base.wrapping_add(rl.code_off);
+        let f = if rl.target & 0xF000_0000 == 0x8000_0000 { rl.target } else { base.wrapping_add(rl.target) };
         let w = u32::from_be_bytes(code[o..o + 4].try_into().unwrap());
         let put16 = |code: &mut Vec<u8>, v: u16| code[o..o + 2].copy_from_slice(&v.to_be_bytes());
         match rl.flag {

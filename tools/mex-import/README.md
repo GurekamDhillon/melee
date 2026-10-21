@@ -55,9 +55,31 @@ across the blob's own functions. Nothing here was checked against a run of the c
 - `cargo test -p mex_import` (unit: sha256 vectors, FST walk, slug/JSON/resolve parity, layout
   resolution, two synthetic PPC dataflow cases); `-- --ignored` partitions Akaneia's delta.
 
+## Running mod code in the native build (2026-10-21, platform-3)
+
+`melee golden --scenario pad_falcon_wolf_fd --mods <out> --enable akaneia-base,akaneia-wolf`
+(or `MELEE_MODS_DIR`) mounts the gdmods over the vanilla disc (`rust/melee/src/mods.rs`: the
+gw_mods.h resolution, file side) and runs Akaneia's Wolf as P2 in the headless FD match:
+Wolf's PlWf/PlWfNr/PlWfAJ/EfWfData + the base's PlCo/MxDt/IfAll come from the mods, the
+ftPartsTable row is Wolf's MxDt internal id (27), the kind it runs as is Fox (its m-ex base),
+and its `ftFunction` runs through `ppc::Machine` over `remap::GuestSpace` on the native
+`Fighter` (`rust/melee/src/mex.rs`): onLoad (slot 0) at Fighter_Create, onFrame (slot 23) at the
+end of Fighter_8006A360. The blob is relocated to 0x81800000 for execution (`mexfn::parse_at_base`;
+at BLOB_BASE a rel24 `bl` to vanilla text wraps, `mexfn::vanilla_target`). Bridge: memcpy,
+memset, MEX_IndexFighterItem bound; anything else ends the callback and is counted by name.
+Verified locally: Wolf's onLoad runs to its return (28 insns: memcpy of its 0xD4-byte attributes
+into fp->dat_attrs_backup, fp->dat_attrs set, 2 articles indexed from ftData.x48_items in the
+relocated DAT), onFrame 217/217 returned; 216 frames written (same stop as falcon/fox:
+ftCo_Walk_IASA with a button); P1's column identical to the falcon/fox run on every frame, P2
+diverges at frame 70 (Wolf's attributes/animations). Mounting only `akaneia-base` leaves the
+falcon/fox CSV byte-identical. No C golden exists for this scenario.
+
 ## Not done
 
-- Mod PPC code is inventoried, not translated or executed natively (the C build interprets it).
+- Only Wolf is wired (fighter_data::files_for); only slots 0 and 23 are called; 536 of 538
+  vanilla bridge targets and 6 of 7 m-ex helpers are unbound; r2 (mexData) and r13 are unbacked.
+- `tests/ppc_oracle.rs` passes in debug but 4 of 6000 cases differ in `--release` (pre-existing,
+  not investigated here).
 - No m-ex DOL patch / Gecko code handling (the C build reimplements m-ex in C; see
   `docs/mods-packaging.md` in the workspace).
 - Type inference is unproven per slot; `ArrayElem` mappings are candidates; character-private

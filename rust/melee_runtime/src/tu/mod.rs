@@ -8,3 +8,4 @@ pub mod dbsound;
 pub mod dbscreenshot;
 pub mod dberror;
 pub mod dbanim;
+pub mod dbbonus;

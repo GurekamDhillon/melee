@@ -34,6 +34,8 @@ pub struct CollJointRt {
     pub next: i32,
     pub inner: i32,
     pub flags: u32,
+    /// `xE` (set when the joint's lines changed; read by mpcoll/ground code).
+    pub x_e: bool,
     pub bounding_min: Vec2,
     pub bounding_max: Vec2,
 }
@@ -41,6 +43,7 @@ melee_core::gc_layout!(CollJointRt, "CollJoint", size 0x34, align 4, [
     next @ 0x0: 4 "CollJoint*",
     inner @ 0x4: 4 "MapJoint*",
     flags @ 0x8: 4 "u32",
+    x_e @ 0xE: 1 "bool",
     bounding_min @ 0x10: 8 "Vec2",
     bounding_max @ 0x18: 8 "Vec2",
 ]);

@@ -12,12 +12,12 @@ Function definitions in the C (counted as a `name(...)` line followed by `{`):
 
 | dir | functions | ported |
 |---|---|---|
-| src/melee/mp | 226 | 71 (mplib line-graph queries, line geometry, segment checks) |
+| src/melee/mp | 226 | 88 (mplib line-graph queries, line geometry, segment checks, joint list) |
 | src/melee/cm | 182 | 0 |
 | src/melee/ef | 67 | 0 |
 | src/melee/gr | 2166 | 0 |
 | src/melee/if | 372 | 0 |
-| total | 3013 | 71 (about 2.4%) |
+| total | 3013 | 88 (about 2.9%) |
 
 Group 2 has no PowerPC `.s` files (the repo's `.s` files are in libs/dolphin, MetroTRK and
 Runtime). None of the group's structs are in the neutral hash field list
@@ -84,6 +84,27 @@ no `StateHash` impls were needed yet.
     direction dot product only; their dist2 is split over statements), 800511A4/800515A0 6 f32,
     8005199C 1 f32 (`dy/dx*(x-x0)+y0`); the rest none.
 
+- (port round 3, night 2) `mp::joint`, from src/melee/mp/mplib.c (17): mpJointHide, mpJointUnhide,
+  mpJointUpdateDynamics, mpLib_80055E24, mpJointUpdateBounding, mpLib_8005667C, mpJointFromLine,
+  mpLib_80056C54, mpLib_80057424, mpLib_80057528, mpLib_800575B0, mpJointListAdd,
+  mpJointListUnlink, mpLib_80057BC0, mpLib_80057FDC, mpLib_80058044, mpJointSetB10.
+  - `GroundColl` gains `joint_list_end` (`jointListEnd`) and `CollJointRt` gains `x_e` (`xE`,
+    +0xE). mpJointListUnlink takes a joint index instead of a `CollJoint*`; mpJointFromLine scans
+    `joints.len()` (= `mpLib_804D64B4->joint_count`).
+  - `mpScriptIslandRefresh` (mpIsland_8005B334, or the PC script-batch dirty mark) is a stub:
+    every call is queued in `GroundColl::island_refresh` in order. TODO(group2: mp/mpisland.c and
+    the PC script batch).
+  - mpJointUpdateDynamics' HSD_ASSERT on a zero-length Dynamic line is a panic.
+  - mpLib_80056C54 returns `Option<FloorWalk>` (`None` = the early `return false` that writes
+    nothing). Its possibly-uninitialised `total_dist_f27` starts at 0, as the shipping build's
+    `-ftrivial-auto-var-init=zero` makes it. Its `sqrtf_store(.., sqrt_tmp - 4)` writes out of
+    bounds; in the shipping build's optimised IR (clang -O2 ppc32, SHIP flags from fma_sites.py,
+    without -disable-llvm-passes) that store and the sqrt_tmp alloca are gone, so the port has
+    no side effect there and the oracle patches the pointer in bounds (see the gen script).
+  - FMA per fma_sites.py: only mpLib_80056C54 fuses (3 f32 `t*(b-a)+a`, plus sqrtf_store's three
+    f64 Newton steps = `geom::sqrtf`). Not ported (need HSD_JObj / other groups' callbacks):
+    mpLib_800552B0, mpLib_80055E9C, mpJointSet/Get/ClearCb1/2, mpLib_8005811C.
+
 ## Tests
 
 `tests/mplib_lines_vs_c.rs` checks the port against the real C. `cref/gen_mplib_lines_ref.sh`
@@ -123,7 +144,17 @@ vector lands on the tie where fusing flips the result. Those fusions are right b
 (fma_sites.py), not proven by a vector. The script takes `LOWER_PY=` (another agent was mid-edit
 on lower.py; the data was generated with the committed HEAD copy).
 
-Regenerate: `bash rust/melee_world/cref/gen_mplib_lines_ref.sh` (and `gen_mplib_geom_ref.sh`, `gen_mplib_check_ref.sh`), then
+`tests/mplib_joint_vs_c.rs` does the same for `mp::joint`: `cref/gen_mplib_joint_ref.sh` cuts the
+joint bodies out of mplib.c (plus lines/geom), builds them i686 with contraction on + lower.py
+(25 f32 sites lowered), and writes `tests/data/mplib_joint_ref.txt` (36065 rows: 64 random graphs
+with 1-7 joints carrying vertex ranges; 80 random joint/line edits each, after every one the full
+state is compared: list start/end, each joint's next/flags/xE/bounds, every line's flags, every
+MapLine lo_flags, every vertex x10/x14 and the ordered island-refresh calls; mpJointFromLine for
+every line; 160 mpLib_80056C54 walks per graph, 463 returning true). All match bit for bit.
+Mutation check: unfusing the x lerp in mpLib_80056C54 fails the test, so that fusion is proven by
+a vector.
+
+Regenerate: `bash rust/melee_world/cref/gen_mplib_lines_ref.sh` (and `gen_mplib_geom_ref.sh`, `gen_mplib_check_ref.sh`, `gen_mplib_joint_ref.sh`), then
 `cd rust && cargo test -p melee_world`.
 
 ## Build notes
@@ -139,8 +170,9 @@ Regenerate: `bash rust/melee_world/cref/gen_mplib_lines_ref.sh` (and `gen_mplib_
 
 ## Next (in order)
 
-1. The rest of mplib: the joint list edits (mpJointListAdd/Unlink, mpJointHide/Unhide,
-   mpJointUpdateBounding, mpLib_80056C54, mpLib_800581DC ...) on `CollJointRt`; mpLibLoad.
+1. The rest of mplib: mpLib_800581DC, mpLib_80058560/80058614, mpLibLoad/mpPruneEmptyLines,
+   mp/mpisland.c (to drain `island_refresh`), then the HSD_JObj-driven mpLib_80055E9C once
+   group 1's JObj is usable.
 2. mpcoll.c, the collision driver. It calls into fighter and item callbacks, which get stubbed.
 3. cm/camera.c. `long double` literals become f64.
 4. gr/*: 77 stage TUs, mostly callback tables plus per-stage logic. Port the shared grlib parts

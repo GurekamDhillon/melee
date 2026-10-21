@@ -37,6 +37,12 @@ pub struct GroundColl {
     pub did_check_bounding: bool,
     /// `ScriptGame_StageJointActive` hook (PC build). Default: every joint active.
     pub joint_active: LineActiveFn,
+    /// `jointListEnd` (-1 = NULL).
+    pub joint_list_end: i32,
+    /// Calls to `mpScriptIslandRefresh` (`mpIsland_8005B334`, or the PC script-batch dirty
+    /// mark), queued in order. TODO(group2: mpisland.c + script batch): drain into the island
+    /// rebuild once mp/mpisland.c is ported.
+    pub island_refresh: Vec<super::joint::IslandRefresh>,
 }
 
 impl Default for GroundColl {
@@ -52,6 +58,8 @@ impl Default for GroundColl {
             joint_list_start: -1,
             did_check_bounding: false,
             joint_active: all_lines_active,
+            joint_list_end: -1,
+            island_refresh: Vec::new(),
         }
     }
 }

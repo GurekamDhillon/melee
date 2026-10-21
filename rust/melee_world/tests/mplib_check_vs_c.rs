@@ -175,6 +175,7 @@ fn check_matches_c() {
                     flags: int(2) as u32,
                     bounding_min: Vec2 { x: hx(f[3]), y: hx(f[4]) },
                     bounding_max: Vec2 { x: hx(f[5]), y: hx(f[6]) },
+                    ..Default::default()
                 });
                 g.map_joints.push(mj);
                 JOINT_ACTIVE.with(|a| a.borrow_mut().push(int(7) != 0));

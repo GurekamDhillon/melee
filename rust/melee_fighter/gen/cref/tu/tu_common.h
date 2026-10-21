@@ -38,7 +38,7 @@ static Fighter F2;
 static HSD_GObj GO, GO2, IGO;
 static ftCommonData CD;
 static u32 SRV[16];
-static u32 SR(int i) { return SRV[i] & 1; }
+static u32 SR(int i) { return (SRV[i & 15] >> (i >> 4)) & 1; }
 
 static void zero(void* p, unsigned n) { unsigned char* b = p; while (n--) *b++ = 0; }
 static void tu_init(void) { GO.user_data = &F; GO2.user_data = &F2; p_ftCommonData = &CD; }

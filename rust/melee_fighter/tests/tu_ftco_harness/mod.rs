@@ -6,7 +6,7 @@ pub static mut TR: u32 = 0;
 pub fn t(v: u32) { unsafe { TR = TR.wrapping_mul(31).wrapping_add(v) } }
 pub fn b(f: f32) -> u32 { f.to_bits() }
 pub static mut SRV: [u32; 16] = [0; 16];
-pub fn sr(i: usize) -> bool { unsafe { SRV[i] & 1 != 0 } }
+pub fn sr(i: usize) -> bool { unsafe { (SRV[i & 15] >> (i >> 4)) & 1 != 0 } }
 pub static mut RS: u32 = 0;
 pub fn rnd() -> u32 {
     unsafe {

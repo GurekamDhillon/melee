@@ -115,3 +115,52 @@ since `fields::snap` hashes the overlapping words as raw bytes.
 Left out: `itSamusgrapple_UnkMotion0..8_Phys` / `itLinkhookshot_UnkMotion0..8_Phys` (they store
 `fn_802B7E34` / `fn_802A2E4C`, not ported), `itKyasarinegg_UnkMotion4_Anim` (falls off the end of
 a `bool` function), the `order_*` placeholders. Not done: no caller wired; no frame-level check.
+
+## Round 14 (night 3, round 6): 26 hand ports, `src/itkinds14.rs`
+
+**Recount first** (same rule as rounds 12-13): **4966 total, 1541 ported** at the start (it 1537,
+ty 4, vi 0), matching round 13. **1567 after** (it 1563, ty 4, vi 0).
+
+**TODO stubs:** none replaceable. The crate's one stub (`TODO(group1)`, the item p-link list as a
+raw head pointer; now also `it_8026C47C`) still waits: melee_runtime's `gobj.rs` keeps
+`plink_head: Vec<Option<GObjId>>`, ids rather than the GC-layout `HSD_GObj*` chain the item code
+walks. Other crates' `TODO(group5)` stubs (melee_chara `itIsHeavy`) are in their paths; untouched.
+
+**Batch** (the callee scan again: 102 unported names whose callees are all in the oracle):
+- it_2725.c `get_bone_by_id`; itsword.c `it_80285314` (on round 11's `it_80272CC0`);
+- itanimlist.c `it_80279768` / `it_80279720` / `it_80279744` (`CommandInfo` step + `set_throw_flags.hit_idx`);
+- itspawn.c `it_8026C47C` (kind bitmap over the p-link list, on round 3's `it_80272828`);
+- kinds: `itYoshistar_UnkMotion0_Phys`, `itSamusbomb_UnkMotion2_Phys` (4-step `my_sqrtf` =
+  `my_sqrtf_accurate`, melee_runtime `lbvector::normalize_xy`), `itNesspkfirepillar_Logic24_DmgReceived`,
+  `likelikeVelocity` (on round 13's `swapVelocity`), `it_802AB9C0` (on `it_802AC5D8`),
+  `itPikachutjoltair_UnkMotion0_Anim_inline` (on `it_802B3368`), `itPikachuthunder_UnkMotion2_ScaleCall`,
+  `it_802B22B8_inline`, `fn_80280974_inline` (BombHei), `it_80291D38` (S-Scope, charge 0..9),
+  `it_8028B08C` (Parasol; `it_803F5AB0` passed as a slice);
+- empty `it_802D14D0`, `it_802F1340`; getters `it_802D472C_inline`, `fn_802A33A0_GetFighter`,
+  itzgshell `get_attrs`, `itDosei_GetJObj`, itparasol `jobj_child`, `it_802C248C_joint24/28`.
+
+**Fused sites:** 3 f32: `vel.x += accel * facing_dir` (Yoshi star), `VEC2_SQ_LEN` ->
+`fmadds(x, x, y*y)` (Samus bomb), `-((xC9C * x4) - life)` -> `-fmsubs` (PK Fire pillar).
+
+**Verification** (`tests/oracle_round14.rs`, 28 tables x 48 cases, pass; oracle `round14.c`, bodies
+`round14_bodies.h` by `gen_round14.py`; round14.c supplies ityoshistar.c's file-local `StarAttrs`
+verbatim and `#define my_sqrtf my_sqrtf_accurate` for itsamusbomb.c). Two extra edge tables
+(3427 Samus bomb with `xC` = the contracted length or one ulp under; 3428 Like-Like at
+`|d| == limit`). Mutations caught: un-fusing each of the 3 sites, swapping the fused operands,
+`<=` -> `<` (pillar), `x48 >= 4` -> `>= 5` / `> 4`, `<` -> `<=` on both Like-Like axes, `&&` -> `||`,
+`> xC` -> `>=`, the kind loop bound and the `& 31` word step, bone 5 -> 4, bone table index, the
+pika_scale operand swap, dropped `xD5C = 0` / `it_80275444` / `it_8026B3A8` / owner / x13 / link
+calls, the parasol table order, accel -> speed, x24 vs x28 joint, x0 -> x1 flag, hit_idx -> opcode.
+**Survived (unobservable by these inputs):** 4-step -> 3-step `my_sqrtf` in the Samus bomb (the
+fourth Newton step does not change the f32 result on any drawn input); the port follows the source.
+
+**Harness traps (new):** (1) pointers stored into the item-var union alias fields `fields::snap`
+hashes (heal amounts at +0 etc.), and pointer values differ between the sides: clear them before
+the hash. (2) `R() & 1` / `R() & 3` on the raw LCG cycles with period 2 / 4 (the low bits of an
+LCG mod 2^32), so a coin like `(R() & 1) ? a : b` is fixed per draw position: round 14 draws
+`(R() >> 16) & n`. (3) C's `ABS(RM())` evaluates `RM()` twice; take it into a temporary.
+
+Left out: `it_802E6380_tier` (reads `tiers[1].threshold` through `(s32*)&tiers[0].ecb + 9`, a GC
+offset alias that lands in a pointer on the native layout), `itKyasarinegg_UnkMotion4_Anim`, the
+`order_*` placeholders, the hookshot `ItemLink` inlines, the ty/vi call-free helpers (next round).
+Not done: no caller wired; no frame-level check.

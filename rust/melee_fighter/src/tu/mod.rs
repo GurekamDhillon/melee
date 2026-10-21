@@ -72,3 +72,4 @@ pub mod ftCo_CliffEscape;
 pub mod ftCo_CliffJump;
 pub mod ftCo_CliffWait;
 pub mod ftCo_DemoCallback0;
+pub mod ftCo_DamageScrew;

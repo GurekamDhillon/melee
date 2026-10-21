@@ -537,3 +537,64 @@ preprocessor blocks (skip-reason histogram via a scan of port_r10.rewrite + Fn7.
 - Next: local `Vec3`/`int` declarations, `static u32 const mf` masks, `ftGetFacingDirInt(fp)`
   (inline: `facing_dir < 0 ? -1 : +1`), the boss helpers (`ftBossLib_*`, `ftCh_GrabUnk1_8015BC88`,
   `ftMh_MS_389_80151018`).
+
+## Night 3, round 3 (= round 11 of the generator, 2026-10-21)
+
+### Recount at the start
+- Ported before this round: 1412 = 13 pure helpers + 1399 (tu, function) lines in `gen/ported*.txt`
+  (153 + 554 + 134 + 110 + 191 + 108 + 37 + 86 + 16 + 10; no duplicate (tu, name) pairs; three names,
+  `doAnim0` / `doAnim1` / `setCallbacks`, are distinct statics in different TUs). Total: 4605
+  definitions (round 9's recount; no C changed under `ft/kinds`). 1412/4605 = 30.7%, as round 10 said.
+
+### Stub replacement
+- `Fighter_UnkSetFlag_8006CFBC` now uses `stub_or!`: group 3 ported and verified it (ft/fighter.c,
+  `melee_fighter::fighter::fighter_unk_set_flag_8006cfbc`, group-fighter.md round 10), so an unset hook
+  calls that port instead of panicking. 5 stubs fall back to group 3 now.
+- Every other `stubs.rs` target checked against the workspace (outside `c2r`/`raw`): none has a
+  verified port yet (ft_0877 physics, ftcoll, ftanim, Fighter_ChangeMotionState, ftParts,
+  Player_GetPlayerSlotType: group 3's player.rs has GetPlayerState, not GetPlayerSlotType).
+- `efLib_PauseAll` / `efLib_ResumeAll` (new `ext__` entries in `chars::cb`, stored by this round's
+  `Fighter_SetEffectHitlagCallbacks` expansions) have verified ports in `melee_world::ef::eflib`,
+  but those take the effect plink heads as an argument (the GObj list owner is not settled) and
+  melee_chara does not depend on melee_world, so the entries still panic (the label says
+  TODO(group3), the generator's default for ext targets; the owner is group 2 / ef). Storing the
+  pointer is what the ports do and what the oracle checks.
+
+### What was ported
+79 functions (Kirby 45, Mars 8, Captain 6, Fox 5, Popo 4, Nana 3, Mewtwo 2, Yoshi 2, Zelda 2,
+Pikachu 1, Seak 1; list `gen/ported_r11.txt`, code `src/chars/r11/<Char>.rs`). How: `gen/port_r11.py`
+= port_r10's translator plus
+- `static u32 const mf = <constant expr>;` locals: declaration removed, uses replaced by
+  `((u32) (expr))`, the value evaluated by clang from the TU like every constant argument;
+  skipped when the name is address-taken or assigned;
+- `ftGetFacingDirInt(fp)` int arguments -> `(if (*fp).facing_dir < 0.0f32 { -1i32 } else { 1i32 })`
+  (ft/inlines.h; NaN gives +1 on both sides);
+- conditions `fp->f & K` / `!(fp->f & K)` (integer field, constant K: held/pressed buttons) ->
+  `(((*fp).f as u32) & K) != 0` / `== 0` (C's usual arithmetic conversion to unsigned);
+- header inlines expanded in place: `Fighter_SetEffectHitlagCallbacks(fp)` (two hitlag callback
+  stores) and Kirby's `ftKb_SpecialN_set_cbs` / `_set_cbs2(gobj)` (death2_cb / take_dmg_cb, in their
+  order; only where the caller's top-level fp is `GET_FIGHTER(gobj)`);
+- `ftCliffCommon_80081298(gobj)` (ledge-grab check, returns bool) through a new TODO(group3) stub
+  (`stubs::FTCLIFFCOMMON_80081298`, recorder id 46 on both sides of the oracle).
+46 candidates were dropped by the rustc-reject loop (round 10's 40 + 6). 4 new callback keys
+(`callbacks_r11.txt`). The mask rule alone opened few functions: most mask users also have nested
+`{ ftKb_DatAttrs* da; ... }` blocks calling ftColl (Kirby copy abilities).
+
+### FMA
+`tools/rust-port/fma_sites.py --func '^(<the 79>)$'` over the 18 TUs: 0 fused sites.
+
+### Verification
+`gen/chref.py` reads ported_r11 / callbacks_r11 (module path `chars::r11`); chref_main.c and
+chars_ref.rs gain the ftCliffCommon_80081298 recorder.
+- Result: **1478/1478 equal** (1399 + 79); `tests/data/chars.txt`: 79 lines added, none changed.
+- Negative checks: `-1i32` -> `1i32` in `ftFx_SpecialHiHoldAir_Coll`'s facing argument, `== 0` ->
+  `!= 0` in a Kirby `held_buttons & HSD_PAD_B` condition, mask 0xC4C508C -> 0xC4C508D in
+  `ftKb_SpecialNGw_8010CC6C`: the test failed with 4 of 1478 differing (the 3 mutated functions plus, presumably, an r11 caller of the mutated Kirby function; the name list was not captured because a concurrent group-3 edit then broke the melee_fighter build).
+- Not proven: branch coverage (random fill), the stubbed calls (traced by id + args only).
+
+### Counts
+- Ported this round: 79 (all verified; none unverified). Total: 1491 of 4605 (32.4%).
+- Stubs replaced: 1 (Fighter_UnkSetFlag_8006CFBC -> group 3's port). Stubs added: 1
+  (ftCliffCommon_80081298, TODO(group3)). Callback keys added: 4.
+- Next: nested `{ ftKb_DatAttrs* da; ... }` blocks calling ftColl (Kirby copy abilities), local
+  `Vec3`s, `efSync_Spawn`, the boss helpers.

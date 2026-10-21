@@ -96,6 +96,8 @@ fn install_recorders() {
         st::ITISHEAVY = Some(|item| { tr(44); tr(!item.is_null() as u32); pick() });
         // round 8 (gen/port_r8.py)
         st::PLAYER_GETPLAYERSLOTTYPE = Some(|slot| { tr(45); tr(slot as u32); pick() & 3 });
+        // round 11 (gen/port_r11.py)
+        st::FTCLIFFCOMMON_80081298 = Some(|g| { tr(46); trg(g); pick() });
     }
 }
 

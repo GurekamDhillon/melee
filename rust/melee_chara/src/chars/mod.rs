@@ -89,3 +89,6 @@ pub mod r9;
 /// Round 10: gen/port_r10.py output (nested `{ Fighter* fp = ...; }` blocks, `x = x =` initializers,
 /// `ca = &fp->co_attrs` locals, `a = b = 0` chains). Path: `chars::r10::<Char>::<tu>::<fn>`.
 pub mod r10;
+/// Round 11: gen/port_r11.py output (`static u32 const mf = ...` motion-flag masks inlined,
+/// `ftGetFacingDirInt(fp)` arguments). Path: `chars::r11::<Char>::<tu>::<fn>`.
+pub mod r11;

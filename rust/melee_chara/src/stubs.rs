@@ -141,8 +141,8 @@ stub!(/// TODO(group3): `ftAnim_800704F0(gobj, tobj_idx, frame)` (ft/ftanim.c).
     FTANIM_800704F0, ftAnim_800704F0, (g: G, tobj_idx: i32, frame: f32));
 stub!(/// TODO(group3): `ftCo_LandingFallSpecial_Enter(gobj, allow_interrupt, landing_lag)`.
     FTCO_LANDINGFALLSPECIAL_ENTER, ftCo_LandingFallSpecial_Enter, (g: G, allow_interrupt: i32, landing_lag: f32));
-stub!(/// TODO(group3): `Fighter_UnkSetFlag_8006CFBC(gobj)` (ft/fighter.c).
-    FIGHTER_UNKSETFLAG_8006CFBC, Fighter_UnkSetFlag_8006CFBC, (g: G));
+stub_or!(/// `Fighter_UnkSetFlag_8006CFBC(gobj)` (ft/fighter.c): group 3's verified port (night 3) when the hook is unset.
+    FIGHTER_UNKSETFLAG_8006CFBC, Fighter_UnkSetFlag_8006CFBC, melee_fighter::fighter::fighter_unk_set_flag_8006cfbc, (g: G));
 stub!(/// TODO(group3): `ftCo_800957F4(gobj, msid)` (ftCommon/ftCo_ItemThrow.c).
     FTCO_800957F4, ftCo_800957F4, (g: G, msid: i32));
 
@@ -241,3 +241,6 @@ stub!(/// TODO(group3): `Player_GetPlayerSlotType(slot)` (pl/player.c; returns G
 /// `ftBossLib_8015BD20(gobj)` (ft/ftbosslib.c): the C body is `return;`. Ported as is.
 #[inline]
 pub fn ftBossLib_8015BD20(_g: G) {}
+
+stub!(/// TODO(group3): `ftCliffCommon_80081298(gobj)` (ft/ftcliffcommon.c, ledge grab check; returns bool).
+    FTCLIFFCOMMON_80081298, ftCliffCommon_80081298, (g: G) -> i32);

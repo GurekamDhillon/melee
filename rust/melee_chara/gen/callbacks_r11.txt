@@ -1,0 +1,24 @@
+# <setter tu> <defining tu | ext> <callback> stored or passed by round-11 ports (new ones only): gen/port_r11.py
+src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c ext efLib_PauseAll
+src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c ext efLib_ResumeAll
+src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c ftCa_SpecialHi_800E400C
+src/melee/ft/kinds/ftCaptain/ftcaptainspecialn.c ext efLib_PauseAll
+src/melee/ft/kinds/ftCaptain/ftcaptainspecialn.c ext efLib_ResumeAll
+src/melee/ft/kinds/ftKirby/ftkirbyspecialdonkey.c ext efLib_PauseAll
+src/melee/ft/kinds/ftKirby/ftkirbyspecialdonkey.c ext efLib_ResumeAll
+src/melee/ft/kinds/ftKirby/ftkirbyspecialdonkey.c src/melee/ft/kinds/ftKirby/ftkirby.c ftKb_Init_800EE74C
+src/melee/ft/kinds/ftKirby/ftkirbyspecialdonkey.c src/melee/ft/kinds/ftKirby/ftkirby.c ftKb_Init_800EE7B8
+src/melee/ft/kinds/ftKirby/ftkirbyspecialhi.c ext efLib_PauseAll
+src/melee/ft/kinds/ftKirby/ftkirbyspecialhi.c ext efLib_ResumeAll
+src/melee/ft/kinds/ftKirby/ftkirbyspecialhi.c src/melee/ft/kinds/ftKirby/ftkirby.c ftKb_Init_800EE74C
+src/melee/ft/kinds/ftKirby/ftkirbyspecialhi.c src/melee/ft/kinds/ftKirby/ftkirby.c ftKb_Init_800EE7B8
+src/melee/ft/kinds/ftKirby/ftkirbyspecialmewtwo.c src/melee/ft/kinds/ftKirby/ftkirby.c ftKb_Init_800EE74C
+src/melee/ft/kinds/ftKirby/ftkirbyspecialmewtwo.c src/melee/ft/kinds/ftKirby/ftkirby.c ftKb_Init_800EE7B8
+src/melee/ft/kinds/ftKirby/ftkirbyspecialsamus.c src/melee/ft/kinds/ftKirby/ftkirby.c ftKb_Init_800EE74C
+src/melee/ft/kinds/ftKirby/ftkirbyspecialsamus.c src/melee/ft/kinds/ftKirby/ftkirby.c ftKb_Init_800EE7B8
+src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c src/melee/ft/kinds/ftKirby/ftkirby.c ftKb_Init_800EE74C
+src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c src/melee/ft/kinds/ftKirby/ftkirby.c ftKb_Init_800EE7B8
+src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c fn_80106DB0
+src/melee/ft/kinds/ftNana/ftnanaspecials.c ext efLib_PauseAll
+src/melee/ft/kinds/ftNana/ftnanaspecials.c ext efLib_ResumeAll
+src/melee/ft/kinds/ftNana/ftnanaspecials.c src/melee/ft/kinds/ftNana/ftnana.c ftNn_Init_80122FAC

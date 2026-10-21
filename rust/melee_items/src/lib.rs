@@ -13,6 +13,8 @@ pub mod item;
 pub mod itlib;
 pub mod itlib3;
 pub mod itkinds;
+pub mod itkinds5;
+pub mod itfwd;
 /// The native types (with GC offset tables) are the single generated set in `melee_types`;
 /// `layout` keeps group 5's path to them.
 pub mod layout {

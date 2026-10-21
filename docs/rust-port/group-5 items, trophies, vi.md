@@ -223,6 +223,67 @@ random numbers or other items (e.g. `it_802E79C8`, item-to-item links); ~680 bod
 `return false;`/empty were not counted or ported. Not done: no frame-level comparison; the state
 tables that would call these are still untyped function pointers.
 
+## Round 5 (night 3): 257 forwarders + 79 kind functions, `src/itfwd.rs`, `src/itkinds5.rs`
+
+Chosen by a scan of `src/melee/it` for bodies whose every call is to a function already in the C
+oracle (so already ported), then read by hand. `tests/c_oracle/gen_round5.py` does the forwarder
+part mechanically:
+
+- **`itfwd.rs` (257, generated)**: every one-statement forwarder `[return] f(gobj[, ref]);` whose
+  callee is ported: 150 `EvtUnk` -> `it_8026B894`, 29 `Reflected` -> `it_80273030`, 15 each to
+  `it_802751D8` / `it_8026B724` / `it_8026B73C`, 9 -> `it_8027A344`, 5 -> `it_80273130`, and 19 to
+  round-4 kind functions (`itChicorita_Phys`, `itHarisen_Logic24_DmgDealt`, `decrease_lifetimer`,
+  `it_802E657C`, ...). The Rust signature follows the callee's (`unsafe`, `&ItemCommonData`).
+  Skipped: `itKyasarinegg_UnkMotion4_Anim` (a `bool` function with no `return`, UB in C).
+- **`itkinds5.rs` (79, by hand)**: item-var getters/setters (pikachuthunder, tincle, it_2E5A,
+  freeze, zgshell...), the GObj-reference cleanups that also forget an item-var pointer (samus
+  bomb/grapple/missile, seak chain, link hookshot/bomb/boomerang, mewtwo disable, peach turnip,
+  climbers ice, pikachu thunder, hitodeman), the NULL-guarded owner clears (`it_802AC5D8`,
+  `it_802C3D44`, `it_802AAA50`, ...), fall / damping physics (starrod, tomato, foods, bat,
+  hammerhead, unknown, flipper inflight, whispy apple, thunder, tosakinto), the beam sword blend
+  state (`it_80284FC4`, `it_80285024`, `it_80285084/140/1FC`, `it_802852B8`), scope beam
+  life/scale, `it_802F23AC` (squared distance as f64), and the pure `it_802D48B0` (approach-and-
+  clamp).
+
+Fused sites (`fma_sites.py` on every source TU, every hand-ported function): f32 `fmadds` in
+`itUnknown_UnkMotion0_Phys` 1, `it_8028D56C` 1 (`fmadds(f1, -x, (-y)*f2)`), `it_802F23AC` 2
+(`fmadds(dz, dz, fmadds(dx, dx, dy*dy))`), `it_27CF_Logic114_DmgReceived` 1
+(`fmadds(-(f32)xCA0, x0, life)`); f64 (true fma) in `it_2E5A_UnkMotion1_Anim` 1. Forwarders have no
+arithmetic. The oracle's lowering now reports 27 fmuladd.f32 (22 + these 5).
+
+**Verification** (`tests/oracle_round5.rs`, 257 + 87 tables x 48 cases, pass): the generator
+extracts every ported body unchanged into `round5_bodies.h` and emits both sides' cases for the
+forwarders; `round5.c` / `tests/round5/hand_cases.rs` hold the hand cases. Same harness as round 4
+(round-2 189-field fill + `r4_pre` item vars, special attributes, command vars; hash of all of it
++ every item-var word after the call). The EvtUnk cases put the reference GObj into the item-var
+pointer half the time so the "forget it" branch runs. Mutation checks (each made the test fail):
+un-fusing each f32 site (`it_802F23AC`'s outer site, `itUnknown` and `it_27CF` only in the
+targeted moderate-input tables 1127/1130/1151), not clearing the climbers-ice / peach-turnip
+pointer, `msid == 4` in the sword, `< 0xA` in the flipper, a wrong tarucann flag, `<=` for `<` in
+the sword step, a forwarder passing NULL. **Not distinguishable**: un-fusing the f64 site in
+`it_2E5A_UnkMotion1_Anim`: an exhaustive sweep over every finite non-negative f32 `|vel.y|` gives
+the same f32 for `fma(0.1, y, 1.0)` and `0.1*y + 1.0`, so the fused port is right but no vector
+can tell. The `NULL` branches of the `Option` (GObj NULL-guard) functions are not exercised: the
+harness always passes an item.
+
+Traps found:
+- r4_pre picks each item-var word's kind with `R() % 4` and the commands draw flags with
+  `R() & 1`; the LCG's low bits cycle, so some combinations never occur (e.g. sword `xC == 0` with
+  `x4 < x8`, or "preset the pointer" right after a non-NULL `PTR()`). A mutation in the sword
+  step and in an EvtUnk clear first passed. Round 5's own draws use `R() >> 16`, and
+  `r5_sword()` fills the sword blend words from the high bits (tables 1176-1178).
+- round1.c's `decrease_lifetimer` takes the Item (cast `GET_ITEM`); round5.c adds a verbatim
+  GObj-taking copy under `#define decrease_lifetimer decrease_lifetimer_g`, as round 4 did for
+  `it_80275158`.
+
+Signatures: as round 4; a C `gobj != NULL` / `ip != NULL` guard becomes `Option<&Item>`; returned
+item-var GObj pointers are raw `*mut HSD_GObj`. No other-group stubs were needed. Left out: the
+`itSamusgrapple_UnkMotion*_Phys` / `itLinkhookshot_UnkMotion*_Phys` setters (they store
+unported callbacks), `GET_ATTRS` users (per-file macros), item-var bitfield writers
+(`itMball_Destroyed` also needs a global), ItemLink / CommandInfo / SpawnItem helpers, toy (ty)
+and vi functions (all touch HSD/global state), ~700 empty / `return false;` bodies. Not done: no
+caller uses these yet; no frame-level comparison.
+
 ## Decisions / traps
 
 - `Cargo.toml` no longer depends on melee_types/runtime/world/fighter: nothing calls them yet,

@@ -178,6 +178,51 @@ Left out: `it_8027B070` (Fighter `Struct2070` bitfield copy), the per-kind state
 (~680 one-liners and ~250 small bodies on kind-specific vars; next round), `it_ResetStageArticleTable`.
 No other-group stubs were needed. Not done: no caller uses these yet; no frame-level comparison.
 
+## Round 4 (night 3): 248 per-kind state callbacks, `src/itkinds.rs`
+
+Chosen by a scan of `src/melee/it/kinds/*.c` (112 TUs) for bodies of 4-40 lines whose every
+call is to an already-ported function, that touch no GObj/JObj, fighter, effect, HSD or global
+data, then read by hand. 138 of them share five one-statement shapes and are emitted from
+templates: fall (`it_80272860` with the item's `x10_fall_speed`/`x14_fall_speed_max`, 86), fall
+while airborne (10), `itColl_BounceOffVictim; return false` (23), `vel.y -= fall_speed` (10,
+airborne-only 6), `it_80273030; return false` (3). The other 110 are hand ported: life-timer
+ticks, item-var copies/counters, special-attribute physics (Kinoko, Dosei, Leadead, Freeze,
+Freezer, Houou, Kireihana, Kamex, Linkbomb, Samus missile, Sonans, Gshell, Flipper, Chicorita,
+it_2E5A, Lugia, Matadogas, ...), reflect/bounce variants, owner/msid getters.
+
+Fused sites (`fma_sites.py` on all 112 TUs, every ported function checked): 1 f32 site each in
+`itHitodeman_UnkMotion1_Phys` (`vel.x = -fmadds(-facing_dir, x4C, -vel.x)`; clang folds the
+outer subtraction), `itKamex_UnkMotion1_Phys`, `itLinkbomb_UnkMotion4_Phys`,
+`itSamusmissile_UnkMotion1_Phys`; every other one 0.
+
+**Verification** (`tests/oracle_round4.rs`, 249 tables x 48 cases, pass): `round4_bodies.h` is
+extracted unchanged from the decomp; `round4.c` reuses round 2's LCG / 189-field fill+snap and
+adds `r4_pre`: ground_or_air (0..2), the four item-command vars, anim frame (1/4 exactly 16.0) and
+speed, xCCC, xCA8, the ItemAttr fall speeds, the ItemCommonData floats the callees read, a
+256-word special-attributes block, and every 32-bit word of the 504-byte item-var union (zero,
+0..3, or a float). The hash adds all of those plus every item-var word after the call, so any
+write anywhere in the union is compared. `sizeof(Item_ItemVars)` is checked equal (504) on both
+sides. Item-var bitfields (`gshell.xDEC_*`, `linkbomb.x0`, `it_2E5A.x18`) are LSB-first in the x86
+C and GC-numbered in melee_types, so the Rust side bit-reverses that byte around the call.
+Mutation checks (each made the test fail): un-fusing each of the 4 sites (Samus missile only
+after adding targeted table 600: moderate inputs, clamp disabled; the random table clamps every
+case where fusing matters), dropping the assignment-as-condition in
+`itNesspkfirepillar_UnkMotion0_Phys`, wrong bit in the gshell and linkbomb flags.
+
+Trap found: round1.c's `it_80275158` copy takes the Item (its `GET_ITEM` is a cast), so
+`round4_bodies.h` adds a verbatim GObj-taking copy under `#define it_80275158 it_80275158_g` for
+`itHammerHead_Logic40_Spawned`. `it_802762BC` (ported in round 0) was missing from the oracle TU
+and is copied there too.
+
+Signatures: as round 3; functions that read `xCC_item_attr` or the special attributes are
+`unsafe`. `itGamewatchchef_UnkMotion0_Phys` indexes the C's `entries[1]` past its declared
+length, ported as pointer arithmetic. `itGShell_Attrs` (file-local) is a native struct with its
+own `gc_layout!` (0x40). `it_8028D4E4` reuses round 1's `itRshell_ClampVel` (same body). No
+other-group stubs were needed. Left out: kind callbacks that touch GObj/JObj, fighters, effects,
+random numbers or other items (e.g. `it_802E79C8`, item-to-item links); ~680 bodies that are only
+`return false;`/empty were not counted or ported. Not done: no frame-level comparison; the state
+tables that would call these are still untyped function pointers.
+
 ## Decisions / traps
 
 - `Cargo.toml` no longer depends on melee_types/runtime/world/fighter: nothing calls them yet,

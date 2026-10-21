@@ -7,5 +7,4 @@ publish.workspace = true
 
 [dependencies]
 melee_core.workspace = true
-melee_types.workspace = true
-melee_runtime.workspace = true
+# melee_types / melee_runtime: re-add once group 0/1 types are used (they were mid-edit by concurrent agents).

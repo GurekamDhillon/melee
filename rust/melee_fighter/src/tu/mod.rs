@@ -117,3 +117,4 @@ pub mod ftCo_HammerWalk;
 pub mod ftCo_DownBound;
 pub mod ftCo_Landing;
 pub mod ftCo_LandingAir;
+pub mod ftCo_Lift;

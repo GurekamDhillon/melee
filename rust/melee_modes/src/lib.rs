@@ -19,6 +19,10 @@ pub mod gm_ptr;
 pub mod hud_ptr;
 pub mod lb_ptr;
 pub mod mn_ptr;
+/// Round 4: callers of rounds 1-3 (and of other groups' ported code), `tests/oracle_r4.rs`.
+pub mod gm_r4;
+pub mod lb_r4;
+pub mod mn_r4;
 
 /// `GXColor` (libs/dolphin/include/dolphin/gx/GXStruct.h). TODO(group0): melee_types does not
 /// generate it (no group-0 header reaches GXStruct.h); move it there when it does.

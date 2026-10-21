@@ -101,7 +101,7 @@ static ftCommonData cd;
  * packs bitfields LSB-first while melee_types keeps them in GC order (MSB-first), so the same
  * bytes hold different values: these are compared by value, and their bytes are zeroed (both
  * sides) before the byte hash. The byte of each is found by probing a zeroed Fighter. */
-#define NBF 13
+#define NBF 14
 static int bf_get(int i)
 {
     switch (i) {
@@ -117,7 +117,8 @@ static int bf_get(int i)
     case 9: return fp.x2227_b0;
     case 10: return fp.allow_interrupt;
     case 11: return fp.invisible;
-    default: return fp.reflecting;
+    case 12: return fp.reflecting;
+    default: return fp.x2218_b4;
     }
 }
 static void bf_set(int i, int v)
@@ -135,7 +136,8 @@ static void bf_set(int i, int v)
     case 9: fp.x2227_b0 = v; break;
     case 10: fp.allow_interrupt = v; break;
     case 11: fp.invisible = v; break;
-    default: fp.reflecting = v; break;
+    case 12: fp.reflecting = v; break;
+    default: fp.x2218_b4 = v; break;
     }
 }
 static unsigned bf_byte[NBF];

@@ -119,7 +119,7 @@ fn bytes_mut<T>(v: &mut T) -> &mut [u8] {
 
 /// The bitfields compared by value (see gen/chref_main.c: C packs LSB-first, melee_types keeps
 /// GC order, so their bytes differ by design).
-const NBF: usize = 13;
+const NBF: usize = 14;
 fn bf_get(fp: &Fighter, i: usize) -> u32 {
     (unsafe {
         match i {
@@ -135,7 +135,8 @@ fn bf_get(fp: &Fighter, i: usize) -> u32 {
             9 => fp.x2227_b0(),
             10 => fp.allow_interrupt(),
             11 => fp.invisible(),
-            _ => fp.reflecting(),
+            12 => fp.reflecting(),
+            _ => fp.x2218_b4(),
         }
     }) as u32
 }
@@ -154,7 +155,8 @@ fn bf_set(fp: &mut Fighter, i: usize, v: u8) {
             9 => fp.set_x2227_b0(v),
             10 => fp.set_allow_interrupt(v),
             11 => fp.set_invisible(v),
-            _ => fp.set_reflecting(v),
+            12 => fp.set_reflecting(v),
+            _ => fp.set_x2218_b4(v),
         }
     }
 }

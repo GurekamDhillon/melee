@@ -46,6 +46,8 @@ pub fn caps_max_jumps(fp: &Fighter) -> i32 {
 pub mod r2;
 /// Round 3: gen/port_r3.py output (field assignments, calls into round-1/2 ports). Path: `chars::r3::<Char>::<tu>::<fn>`.
 pub mod r3;
+/// Round 4: gen/port_r4.py output (conditions on fields, else-if, calls into round-3 ports). Path: `chars::r4::<Char>::<tu>::<fn>`.
+pub mod r4;
 /// Callback entries stored into Fighter by the round-3 ports (gen/port_r3.py).
 pub mod cb;
 

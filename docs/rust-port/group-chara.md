@@ -201,3 +201,63 @@ Same oracle (`gen/chref.py`), extended:
   `ftSamus_ClearThrowFlagsUnk`) and the 27 callback targets, by hand.
 - port_r3 still skips: `da` (dat_attrs) reads, conditions on fields, arithmetic beyond `+=` const,
   item/effect/jobj calls; extending conditions to `fp->field ==/!= const` is the next cheap step.
+
+## Round 4 (2026-10-21)
+
+### What was ported
+110 more character functions in 48 TUs, the next level up from round 3. The list is
+`gen/ported_r4.txt`; the code is `src/chars/r4/<Char>.rs`, path `melee_chara::chars::r4::<Char>::<tu>::<fn>`,
+signature `fn(gobj: *mut HSD_GObj)` like rounds 2-3. Kinds: Anim/Coll callbacks that branch on a
+field (`if (fp->motion_id == ftMh_MS_Wait1_0 || ...)`, `if (fp->cmd_vars[0] != 0)`, Kirby
+`u.kb.x64`), state Enter / SetVars functions that copy `dat_attrs` values into motion vars
+(`ftKb_SetNsFlashAttr`, Ness PK Flash, ...), callback setters that store new callbacks, and
+`else if` chains.
+
+How: `gen/port_r4.py` reuses port_r3.py and widens its C subset:
+- `if` conditions `fp->a.b OP <const>` (== != < > <= >=), `fp->a.b`, `!fp->a.b`, joined with
+  `&&` / `||` / parentheses, mixed with round 2's call conditions. Each comparison follows C's
+  usual arithmetic conversions, decided from the types clang reports for the TU: int-or-narrower
+  vs int compares as i32, anything with `unsigned int` as u32 (field converted `as u32`, as C
+  does), f32 vs float as f32, f32 vs double as f64, f32 vs int as f32 (constant converted).
+  The constant's bits come from clang in its own type. Pointer fields `== / != NULL` -> `is_null()`;
+- `else if`;
+- `fp->arr[<int>]` constant indices (`cmd_vars[0]`);
+- `T* da = fp->dat_attrs;` / `getFtSpecialAttrs(fp)` locals, read only: `da->x` becomes
+  `(*((*fp).dat_attrs as *const T)).x` (writes through `da` are rejected);
+- the `getFighter(gobj)` / `Fighter* ft = GET_FIGHTER(gobj)` / `Fighter* fp; fp = GET_FIGHTER(gobj);`
+  spellings; struct copies `fp->a = fp->b;` (Vec3) when rustc accepts the types;
+- calls into round-3 ports and this round's (fixpoint), `X_cb = &fn;`.
+Bitfields only where the test compares them by value: `x2218_b4` was added to that list
+(14 now; chref_main.c and chars_ref.rs). rustc-rejected functions are dropped and the scan repeated
+(45 dropped in all, mostly enum-typed fields, anonymous member names, `mv` union bitfields).
+
+Stored callbacks: port_r4 rewrites `src/chars/cb.rs` over rounds 3+4 (port_r3.write_cb) and lists
+the 28 new keys in `gen/callbacks_r4.txt` (`callbacks_r3.txt` unchanged; chref.py reads both).
+55 entries now, all TODO(group4) panics (none of their targets is a round-4 port).
+
+### FMA
+`tools/rust-port/fma_sites.py --func <the 110>` over the 48 TUs: 0 fused sites in all 110 (no float
+multiplies; float work is compares and copies).
+
+### Verification
+Same oracle (`gen/chref.py`), now reading `ported_r4.txt` and both callback lists; round-4
+functions run 256 random fighters each. `tests/data/chars.txt` regenerated (the 14th bitfield
+changes the stream for all rounds).
+- Result: **951/951 equal** (153 + 554 + 134 + 110).
+- Negative check: changing a motion id in `ftCh_Init_80156018`, `== 0` -> `!= 0` in
+  `ftKb_SpecialAirS_Enter` and swapping one `dat_attrs` field in `ftKb_SetNsFlashAttr` made those
+  fail (the test reported 4 functions differing; my output filter showed only those three, so the fourth was not identified).
+- Not proven: branch coverage. 256 random fighters (motion_id biased to 330-630, fields often 0)
+  reach most `== 0` / motion-id branches but nothing guarantees every branch of every function
+  is taken; the stubbed group-3 calls and the 55 unported callback targets.
+
+### Counts
+- Ported this round: 110 (all verified). Total in the crate: 964 of ~4340 (22.2%).
+- Stubs added: 28 callback entries in `chars::cb` (TODO(group4)); no new group-3 stub.
+
+### Next round
+- The biggest blockers in the remaining scan: group-3 calls not stubbed yet (`ft_80082C74`,
+  `ft_8008403C`, `ftCommon_8007E2F4`, `ftParts_80074A4C`, `Fighter_OnItemVisible/Invisible`,
+  `Fighter_OnKnockbackEnter/Exit`, `ft_CheckGroundAndLedge`, `Fighter_ClearCmdVars`;
+  ~280 functions), `Player_GetPlayerSlotType` (group 6, 42), `static MotionFlags const mf`
+  locals (49), non-constant right-hand sides (arithmetic, 40), `COPY_ATTRS` (26).

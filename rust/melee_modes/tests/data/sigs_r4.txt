@@ -1,0 +1,30 @@
+bitset_set buf u32 -> void
+bitset_clear buf u32 -> void
+bitset_test buf u32 -> u32
+bitset_test_word buf u32 -> u32
+gm_SetupHumanPlayer buf u8 u8 u8 u8 -> void
+gm_SetupCpuPlayer buf u8 u8 u8 u8 -> void
+gm_MatchHasMultipleWinners buf -> s32
+gm_801B07E8_layer buf buf buf buf buf buf -> void
+gmVsMelee_UpdateKOCounts buf buf -> void
+fn_801771C0 buf -> void
+DevText_SetCursorX buf s32 -> void
+lb_8000D148 f32 f32 f32 f32 f32 f32 f32 -> s32
+groundHeight buf buf -> f32
+calc_acos f32 -> f32
+lbShadow_8000E9F0 buf buf f32 -> void
+fn_800253D8 buf -> s32
+fn_800256BC buf -> s32
+fn_80025B44 buf -> s32
+fn_80025CBC buf -> s32
+fn_800259EC buf -> s32
+fn_80025A98 buf -> s32
+lbAudioAx_800264E4 buf -> s32
+lb_800138CC buf ptr -> void
+lb_800138D8 buf s8 -> void
+lb_8001204C buf buf buf s32 -> s32
+mnDiagram3_GetPopupSpacing buf buf -> f32
+mnDiagram3_GetPopupY buf f32 u8 -> f32
+mnDiagram3_GetRowSpacing buf -> f32
+mnName_TextWidth f32 buf -> f32
+mnVibration_GetCursorYSpacing f32 buf -> f32

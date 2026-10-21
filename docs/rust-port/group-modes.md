@@ -235,10 +235,70 @@ fused value, so those two are fused by the IR alone.
 example `fn_801656A8` arg1 < 6, `ifStatus_GetStoredTranslationX` < 4 and `is_character_unlocked` n < 64.
 Out of range, the Rust panics on the index, where the C reads past the array.
 
+## Round 4 (night 2, 2026-10-21): callers of rounds 1-3, objects behind pointers
+
+**Picking the batch.** `oracle/scan_r4.py` scans the gm, mn, if, ty and lb TUs for functions with
+no indirect call, no bitfield, no non-const file-scope variable, no asm and a non-pointer return,
+whose every callee is already ported (in melee_modes, or another crate's `pub fn` of that name),
+and repeats to a fixed point. It finds 39. Round 4 ports 30 of them. The other 9 are
+lbvector.c's `lbVector_CosAngle`, `_Rotate`, `_RotateAboutUnitAxis`, `_NormalizeXY`,
+`_CreateEulerMatrix`, `_sqrtf_accurate`, `_Len_xy_accurate` and `_AngleXY`, and lbtrigf's `atan2f`.
+Group 1 already ported them in `melee_runtime::{lbvector, lbtrigf}`.
+
+**Ported: 30 functions, all checked bit for bit against the C** (`cargo test -p melee_modes --test oracle_r4`,
+14,300 vectors).
+
+| module | C TUs | functions |
+|---|---|---|
+| `gm_r4.rs` | gmmain_lib, gm_1B03, gm_1601, gmtrainingmode, gmvsmelee, gmresult, textlib | 11: `bitset_set/clear/test/test_word`, `gm_SetupHumanPlayer`, `gm_SetupCpuPlayer`, `gm_MatchHasMultipleWinners`, `gm_801B07E8_layer`, `gmVsMelee_UpdateKOCounts`, `fn_801771C0`, `DevText_SetCursorX` |
+| `lb_r4.rs` | lb_00CE, lb_00F9, lb_020A, lbshadow, lbaudio_ax, lbspdisplay | 14: `lb_8000D148`, `groundHeight`, `calc_acos`, `lbShadow_8000E9F0`, `fn_800253D8`, `fn_800256BC`, `fn_80025B44`, `fn_80025CBC`, `fn_800259EC`, `fn_80025A98`, `lbAudioAx_800264E4`, `lb_800138CC`, `lb_800138D8`, `lb_8001204C` |
+| `mn_r4.rs` | mndiagram3, mnname, mnvibration | 5: `mnDiagram3_GetPopupSpacing`, `mnDiagram3_GetPopupY`, `mnDiagram3_GetRowSpacing`, `mnName_TextWidth`, `mnVibration_GetCursorYSpacing` |
+
+- Callees from other groups are called directly, no stubs: `melee_runtime::lbtrigf::acosf`,
+  `melee_runtime::gekko::sqrtf` (MSL math_ppc.h), and melee_types' `inline.rs` jobj/gobj accessors.
+- `lbShadow_8000E9F0` is the one group 4 has as `unimplemented!("TODO(group1)")` in
+  `melee_world/src/gr/ground.rs`; it can now call `melee_modes::lb_r4::lbShadow_8000E9F0`.
+- `lbAudioAx_UserData` comes from `lbaudio_ax.static.h`, which melee_types does not scan, so it
+  is defined in `lb_r4.rs` with a `gc_layout!` table (size 0x48; TODO(group0)).
+- A gobj's user data, a spline's `cv` and the jobj tree are reached through raw pointers with
+  `unsafe` and a SAFETY note, as the C dereferences them. `HSD_JObjGetTranslation*` asserts its
+  jobj; the Rust panics on NULL there.
+
+**Oracle** (`oracle/gen_oracle_r4.py`, `oracle/build_r4.sh` -> `tests/data/vectors_r4.txt`), built
+on round 3's buffers and generator:
+- Every game function a cut function calls is cut too, transitively, and renamed, so the C side
+  runs the game's own callees (`calcPan`, `gm_801B05F4`, `acosf`/`atanf`, the spline tangents...),
+  not the Rust ports. 17 callees are cut this way. `pc/gameworld/gekko_fp.c` is linked for
+  `__frsqrte`, and main.c defines MSL float.c's NaN/inf words and an aborting `__assert`.
+- Links: `l:<from>:<off>:<to>` stores buffer `to`'s address in buffer `from` (`ffff` = NULL).
+  Buffers after the argument ones are reachable only through links: a gobj's user data, a
+  spline's control points, `Diagram3.jobjs[8/9]`, a random jobj tree of 1-8 nodes with
+  consistent child/next/parent links and random `JOBJ_INSTANCE` flags.
+- Before hashing, both sides rewrite every 8-byte word that points into a buffer as
+  (buffer, offset), so stored pointers (`lb_8001204C`'s results, the links) compare by target.
+- Rerun with `bash rust/melee_modes/oracle/build_r4.sh`.
+
+**FMA.** `fma_sites.py` finds fused sites in two of the 30: `lb_8000D148` (5) and
+`mnDiagram3_GetPopupY` (1). I swapped each `fmadds` for an unfused `a*b + c` in a scratch
+copy, one at a time. All 6 are caught: 15/250 rows for `GetPopupY` and 6 to 40 of 6,000 rows
+for each `lb_8000D148` site. `lb_8000D148` returns a bool, so random inputs almost never see the
+last bit. The generator adds boundary rows: it emulates the f32 arithmetic in Python and puts
+the threshold where the fused and unfused intermediate values disagree.
+
+**Domains restricted:** `bitset_*` bit < 4096 (the 512-byte buffer); `lbShadow_8000E9F0` numcv >= 2
+(numcv 1 with u = 1 and type 0 reads `cv[-1]`); `lb_800138CC/D8` always get a user-data buffer
+(the C does not check it). The sound functions get NULL gobjs and NULL user data.
+
+**Not verified:** the test runs on a snapshot of HEAD plus these files, because other agents'
+uncommitted work in `melee_chara` stopped the live worktree from compiling at the time
+(see the commit message).
+
 ## Next round
 - Bitfield-touching functions: compare field values, not bytes, or add a native<->GC bitfield bridge.
 - Generate the records that `.c` files define (TODO(group0)), then port the 12 functions above.
 - gm_1601's save-data getters (`gm_80162968`, `gm_GetPlayTime`, ...) need a `GameSave` state object.
 - The non-const static tables in gm_17E4/gm_17EB (`lbl_803D7AC0`, ...): check whether they are ever
   written, then treat them as const.
-- Callers of rounds 1-3, one level up (the scan with "calls only ported functions").
+- Callers of round 4 (rerun `oracle/scan_r4.py`; it lists near misses with one unported callee).
+- Leaf functions with nested pointers that round 3 skipped (`Command_04/05/07`, `DevText_NumToStr`,
+  `_tyDisplay_8031830C`...): round 4's links make them testable.

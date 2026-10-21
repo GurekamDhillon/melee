@@ -205,6 +205,7 @@ struct PipelineKey {
 
 /// Offscreen GX renderer.
 pub struct Renderer {
+    pub adapter: wgpu::Adapter,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
     pub adapter_info: wgpu::AdapterInfo,
@@ -223,6 +224,8 @@ pub struct Renderer {
     empty_sampler: wgpu::Sampler,
     /// WGSL sources that failed to compile, with naga's message.
     pub shader_errors: Vec<String>,
+    blit: HashMap<wgpu::TextureFormat, (wgpu::RenderPipeline, wgpu::BindGroupLayout)>,
+    blit_sampler: Option<wgpu::Sampler>,
 }
 
 fn fnv(d: &[u8]) -> u64 {
@@ -238,12 +241,27 @@ impl Renderer {
     /// A headless renderer with a `width` x `height` target. `backends` defaults to the platform's
     /// primary backends; WGPU_BACKEND (e.g. `dx12`, `vulkan`) overrides as in wgpu.
     pub fn new(width: u32, height: u32) -> Result<Self, String> {
+        Self::with_instance(&Self::instance(), None, width, height)
+    }
+
+    /// The wgpu instance [`Renderer::new`] uses (primary backends, WGPU_BACKEND overrides).
+    pub fn instance() -> wgpu::Instance {
         let backends = wgpu::Backends::from_env().unwrap_or(wgpu::Backends::PRIMARY);
-        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor { backends, ..Default::default() });
+        wgpu::Instance::new(&wgpu::InstanceDescriptor { backends, ..Default::default() })
+    }
+
+    /// A renderer on `instance` whose adapter can present to `surface` (when given). The EFB
+    /// stays an offscreen `width` x `height` target; [`Renderer::blit_to`] scales it out.
+    pub fn with_instance(
+        instance: &wgpu::Instance,
+        surface: Option<&wgpu::Surface<'_>>,
+        width: u32,
+        height: u32,
+    ) -> Result<Self, String> {
         let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::HighPerformance,
             force_fallback_adapter: false,
-            compatible_surface: None,
+            compatible_surface: surface,
         }))
         .map_err(|e| format!("no adapter: {e}"))?;
         let adapter_info = adapter.get_info();
@@ -272,7 +290,7 @@ impl Renderer {
         };
         let color = mk_target(
             COLOR_FORMAT,
-            wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC,
+            wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::TEXTURE_BINDING,
             "GX EFB color",
         );
         let depth = mk_target(DEPTH_FORMAT, wgpu::TextureUsages::RENDER_ATTACHMENT, "GX EFB depth");
@@ -343,6 +361,7 @@ impl Renderer {
         let empty_view = empty.create_view(&Default::default());
         let empty_sampler = device.create_sampler(&wgpu::SamplerDescriptor::default());
         Ok(Self {
+            adapter,
             device,
             queue,
             adapter_info,
@@ -360,6 +379,8 @@ impl Renderer {
             empty_view,
             empty_sampler,
             shader_errors: Vec::new(),
+            blit: HashMap::new(),
+            blit_sampler: None,
         })
     }
 
@@ -522,6 +543,13 @@ impl Renderer {
 
     /// Clear the target to `state`'s copy-clear colour / depth, draw `draws`, return RGBA8 pixels.
     pub fn render(&mut self, state: &GxState, draws: &[DrawCmd]) -> Vec<u8> {
+        self.render_frame(state, draws);
+        self.read_color()
+    }
+
+    /// [`Renderer::render`] without the readback: clear, draw, submit (the EFB stays on the GPU
+    /// for [`Renderer::blit_to`] / [`Renderer::read_color`]).
+    pub fn render_frame(&mut self, state: &GxState, draws: &[DrawCmd]) {
         // Pack every draw's vertices, array snapshots and uniforms into three buffers.
         let mut vbuf: Vec<u8> = Vec::new();
         let mut abuf: Vec<u8> = Vec::new();
@@ -713,8 +741,123 @@ impl Renderer {
             }
         }
         self.queue.submit([enc.finish()]);
-        self.read_color()
     }
+
+    /// Scale the EFB colour target onto `target` (a swapchain image of `format`), filling it. This
+    /// is the display half of GXCopyDisp + VI: alpha is forced to 1 (the EFB's alpha is not the
+    /// display's), filtering is linear like the XFB scaler.
+    pub fn blit_to(&mut self, target: &wgpu::TextureView, format: wgpu::TextureFormat) {
+        const BLIT_WGSL: &str = "
+@group(0) @binding(0) var efb: texture_2d<f32>;
+@group(0) @binding(1) var smp: sampler;
+struct VsOut { @builtin(position) pos: vec4<f32>, @location(0) uv: vec2<f32> };
+@vertex fn vs_main(@builtin(vertex_index) i: u32) -> VsOut {
+    let uv = vec2<f32>(f32((i << 1u) & 2u), f32(i & 2u));
+    var o: VsOut;
+    o.pos = vec4<f32>(uv.x * 2.0 - 1.0, 1.0 - uv.y * 2.0, 0.0, 1.0);
+    o.uv = uv;
+    return o;
+}
+@fragment fn fs_main(v: VsOut) -> @location(0) vec4<f32> {
+    return vec4<f32>(textureSample(efb, smp, v.uv).rgb, 1.0);
+}
+";
+        if !self.blit.contains_key(&format) {
+            let module = self.device.create_shader_module(wgpu::ShaderModuleDescriptor {
+                label: Some("EFB blit"),
+                source: wgpu::ShaderSource::Wgsl(BLIT_WGSL.into()),
+            });
+            let bgl = self.device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("EFB blit"),
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+            });
+            let layout = self.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: Some("EFB blit"),
+                bind_group_layouts: &[&bgl],
+                push_constant_ranges: &[],
+            });
+            let pipeline = self.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                label: Some("EFB blit"),
+                layout: Some(&layout),
+                vertex: wgpu::VertexState {
+                    module: &module,
+                    entry_point: Some("vs_main"),
+                    compilation_options: Default::default(),
+                    buffers: &[],
+                },
+                primitive: wgpu::PrimitiveState::default(),
+                depth_stencil: None,
+                multisample: wgpu::MultisampleState::default(),
+                fragment: Some(wgpu::FragmentState {
+                    module: &module,
+                    entry_point: Some("fs_main"),
+                    compilation_options: Default::default(),
+                    targets: &[Some(wgpu::ColorTargetState { format, blend: None, write_mask: wgpu::ColorWrites::ALL })],
+                }),
+                multiview: None,
+                cache: None,
+            });
+            self.blit.insert(format, (pipeline, bgl));
+        }
+        if self.blit_sampler.is_none() {
+            self.blit_sampler = Some(self.device.create_sampler(&wgpu::SamplerDescriptor {
+                label: Some("EFB blit"),
+                mag_filter: wgpu::FilterMode::Linear,
+                min_filter: wgpu::FilterMode::Linear,
+                ..Default::default()
+            }));
+        }
+        let (pipeline, bgl) = &self.blit[&format];
+        let view = self.color.create_view(&Default::default());
+        let bg = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("EFB blit"),
+            layout: bgl,
+            entries: &[
+                wgpu::BindGroupEntry { binding: 0, resource: wgpu::BindingResource::TextureView(&view) },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::Sampler(self.blit_sampler.as_ref().unwrap()),
+                },
+            ],
+        });
+        let mut enc = self.device.create_command_encoder(&Default::default());
+        {
+            let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("EFB blit"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: target,
+                    depth_slice: None,
+                    resolve_target: None,
+                    ops: wgpu::Operations { load: wgpu::LoadOp::Clear(wgpu::Color::BLACK), store: wgpu::StoreOp::Store },
+                })],
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            });
+            pass.set_pipeline(pipeline);
+            pass.set_bind_group(0, &bg, &[]);
+            pass.draw(0..3, 0..1);
+        }
+        self.queue.submit([enc.finish()]);
+    }
+
 
     /// Copy the colour target back to the CPU (RGBA8, row-major, tight rows).
     pub fn read_color(&self) -> Vec<u8> {

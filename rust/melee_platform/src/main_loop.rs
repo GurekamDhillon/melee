@@ -25,7 +25,9 @@ pub trait Game {
     /// One 60 Hz logic frame.
     fn tick(&mut self, pads: &mut PadSystem);
     /// Draw. `alpha` in [0,1): how far into the next tick real time is.
-    fn present(&mut self, _window: &Window, _alpha: f64) {}
+    fn present(&mut self, _window: &Arc<Window>, _alpha: f64) {}
+    /// The window's client area changed (physical pixels); reconfigure a swapchain here.
+    fn resized(&mut self, _width: u32, _height: u32) {}
     /// Return true to end the loop (checked after every tick).
     fn should_quit(&self) -> bool {
         false
@@ -145,6 +147,7 @@ impl<G: Game> ApplicationHandler for App<G> {
     fn window_event(&mut self, el: &ActiveEventLoop, _id: WindowId, ev: WindowEvent) {
         match ev {
             WindowEvent::CloseRequested => el.exit(),
+            WindowEvent::Resized(sz) => self.game.resized(sz.width, sz.height),
             WindowEvent::Focused(f) => {
                 if f {
                     self.focus_lost_at = None;

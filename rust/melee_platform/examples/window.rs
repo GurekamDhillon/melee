@@ -31,7 +31,7 @@ impl Game for Demo {
         }
         self.frames += 1;
     }
-    fn present(&mut self, _w: &Window, _alpha: f64) {
+    fn present(&mut self, _w: &std::sync::Arc<Window>, _alpha: f64) {
         self.presents += 1;
     }
     fn should_quit(&self) -> bool {

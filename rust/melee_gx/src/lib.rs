@@ -7,7 +7,9 @@
 //! * [`draw`]: draws resolved against that state (vertex bytes, index buffer, arrays, uniforms).
 //! * [`shader`]: TEV/vertex pipeline -> WGSL, byte-identical to Aurora's generator.
 //! * [`texture`]: GameCube texture formats -> RGBA8.
-//! * [`render::Renderer`]: wgpu backend drawing [`draw::DrawCmd`]s into an offscreen target.
+//! * [`render::Renderer`]: wgpu backend drawing [`draw::DrawCmd`]s into an offscreen EFB, blitted
+//!   to a swapchain by [`render::Renderer::blit_to`].
+//! * [`shim::GxShim`]: port of `pc/platform/shim_gx.c`, the layer game GX calls go through.
 //!
 //! Verified against Aurora itself (oracle/ + tests/oracle.rs): texture decode and WGSL text bit for
 //! bit, GX state after API sequences, and an offscreen render of a test display list against
@@ -20,6 +22,7 @@ pub mod draw;
 pub mod render;
 pub mod resources;
 pub mod shader;
+pub mod shim;
 pub mod state;
 pub mod texture;
 

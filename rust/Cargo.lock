@@ -1141,8 +1141,6 @@ version = "0.1.0"
 dependencies = [
  "c2rust-bitfields",
  "melee_core",
- "melee_items",
- "melee_runtime",
  "melee_types",
 ]
 
@@ -1188,7 +1186,10 @@ name = "melee_platform"
 version = "0.1.0"
 dependencies = [
  "gilrs",
+ "melee_gx",
  "melee_types",
+ "png",
+ "wgpu",
  "windows-sys 0.59.0",
  "winit",
 ]

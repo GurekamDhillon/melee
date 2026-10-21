@@ -1538,6 +1538,18 @@ impl Gx {
             self.wf32(m[i / 4][i % 4]);
         }
     }
+    /// `GXGetProjectionv` (GXGet.cpp): `[0]` is 0 for perspective, 1 otherwise, then the six
+    /// projection parameters as GXSetProjection stored them.
+    pub fn get_projectionv(&self) -> [f32; 7] {
+        let mut p = [0.0f32; 7];
+        p[0] = if self.sh.proj_type == GX_PERSPECTIVE { 0.0 } else { 1.0 };
+        p[1..].copy_from_slice(&self.sh.proj_mtx);
+        p
+    }
+    /// `GXGetViewportv`: left, top, width, height, near, far as last set (before jitter).
+    pub fn get_viewportv(&self) -> [f32; 6] {
+        self.sh.vp
+    }
     pub fn set_viewport(&mut self, left: f32, top: f32, w: f32, h: f32, nz: f32, fz: f32) {
         self.set_viewport_jitter(left, top, w, h, nz, fz, 1);
     }

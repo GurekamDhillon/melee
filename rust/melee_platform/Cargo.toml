@@ -8,6 +8,9 @@ description = "Platform layer: window + 60 Hz main loop (winit), PAD input (gilr
 
 [dependencies]
 melee_types.workspace = true
+melee_gx = { path = "../melee_gx" }
+wgpu = "27"
+png = "0.18"
 winit = "0.30"
 gilrs = "0.11"
 

@@ -92,6 +92,7 @@ pub mod ftCo_Bury;
 pub mod ftanim;
 pub mod ftCo_DamageBind;
 pub mod ftCo_DamageFall;
+pub mod ftCo_Damage;
 pub mod ftCo_Down;
 pub mod ftCo_DownAttack;
 pub mod ftCo_DamageSong;

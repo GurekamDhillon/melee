@@ -153,6 +153,10 @@ pub struct Player {
     /// `fp->x60C`: queued `efAsync_Spawn`s (flushed in the fighter's s_link 9 proc), in
     /// queue order (the C prepends, so the flush runs the newest first).
     ef_queue: Vec<QueuedEffect>,
+    /// Effect work a motion change did before s_link 9 (`efAsync_QueueFlush` of the queue, then
+    /// `ftCommon_8007DB24`'s `efLib_DestroyAll`), replayed in order at the s_link 9 proc: nothing
+    /// between a fighter's motion change and its s_link 9 proc reads the effects.
+    ef_ops: Vec<EfOp>,
     /// PlXx.dat's data (command scripts are DAT offsets into it).
     pdat: Arc<Vec<u8>>,
     /// The command script (`x3E4_fighterCmdScript.u` as a DAT offset, 0 = NULL) and its stack
@@ -165,6 +169,30 @@ pub struct Player {
     /// `x221D_b3` (input history primed) and `x221D_b4` (input locked until GO).
     x221d_b3: bool,
     input_locked: bool,
+    /// The fighter's files (any other animation row, loaded on first use into `rows`).
+    files: Arc<crate::fighter_data::FighterFiles>,
+    rows: HashMap<u32, Option<(AnimRow, FigaTree)>>,
+    /// `ftPartsTable[kind]->part_to_joint` (`ftParts_GetBoneIndex`).
+    part_to_joint: Vec<u8>,
+    /// `fp->dat_attrs` for Captain Falcon (`ftData->x4`, `ftCaptain_DatAttrs`).
+    ca_attrs: Option<melee_types::ftCaptain_DatAttrs>,
+    /// `fp->mv.ca.speciallw`: `x0` (hit count) and `friction`.
+    ca_lw_x0: f32,
+    ca_lw_friction: f32,
+    /// `fp->x914[4]`: the live hitboxes (only where they are: no hit detection is ported, so
+    /// [`VsMatch::hit_guard`] stops the run when one comes near the other fighter).
+    hitboxes: [Option<Hitbox>; 4],
+    /// `fp->mv.co.attack1.x0` (A pressed again inside the jab window).
+    attack1_x0: bool,
+}
+
+/// A live `HitCapsule` (`ftAction_8007121C`): its part, size and offset.
+#[derive(Clone, Copy, Debug)]
+pub struct Hitbox {
+    pub part: usize,
+    pub scale: f32,
+    pub offset: Vec3,
+    pub hit_group: u32,
 }
 
 /// `ftCo_Walk`'s motion vars (ft/types.h `mv.co.walk`).
@@ -201,6 +229,13 @@ pub struct QueuedEffect {
     pub part: usize,
     pub params: Vec3,
     pub extra1: f32,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum EfOp {
+    Spawn(QueuedEffect),
+    /// `efLib_DestroyAll(gobj)`.
+    DestroyAll,
 }
 
 /// `EF_SPAWN_ATTACH_PARAM` / `EF_SPAWN_POS_OFFSET_PARAM` (ef/types.h spawn kinds 3 and 5).
@@ -262,7 +297,8 @@ pub struct VsMatch {
     /// joint is `(instance << 24) | offset`).
     joint_mtx: HashMap<JObjRef, Mtx>,
     common: EntryCommon,
-    effect_banks: Vec<crate::effect::EffectBank>,
+    /// `efAsync_DatEntries[bank]` that are loaded (0 common, 3 Fox, 4 Captain).
+    effect_banks: Vec<Option<crate::effect::EffectBank>>,
     effects: Vec<Effect>,
     next_effect_instance: u32,
     /// Bank 0's command lists that `efLib_Cb_PtclAppSRTHook` acts on (0x96, 0x97, 0x98, 0x21B).
@@ -392,7 +428,22 @@ impl VsMatch {
             }
             ps.load_bank(0, Arc::new(b), None);
         }
-        let effect_banks = vec![efco];
+        let mut effect_banks: Vec<Option<crate::effect::EffectBank>> = (0..51).map(|_| None).collect();
+        effect_banks[0] = Some(efco);
+        // The fighters' own banks (efAsync_LoadAsync at fighter load: ftCa / ftFx OnLoad), each
+        // registering its particle bank under the same index.
+        for name in fighters {
+            let (file, table, idx) = match *name {
+                "falcon" => ("EfCaData.dat", "effCaptainDataTable", 4),
+                "fox" => ("EfFxData.dat", "effFoxDataTable", 3),
+                n => return Err(format!("effect bank of {n:?} not wired")),
+            };
+            let b = crate::effect::EffectBank::load(&disc.read(file)?, file, table)?;
+            if let Some(pb) = b.particles()? {
+                ps.load_bank(idx, Arc::new(pb), None);
+            }
+            effect_banks[idx] = Some(b);
+        }
         // The VS scene's OnEnter: ifStatus_802F6EA4(1, .., fn_8016B7B4, fn_8016B7F8), the "Ready"
         // HUD (IfAll.usd: the English disc's language file). Its JObj animations are played to
         // frame 0 at creation and stepped once per frame by its s_link 0 proc (if_802F73C4) from
@@ -484,6 +535,7 @@ impl VsMatch {
             // Fighter_Create: the costume's joint tree (HSD_JObjLoadJoint) and ftParts_SetupParts;
             // ftPartsTable[kind]->parts_num (PlCo.dat pData[4]) checks the part walk.
             let kind = fighter_kind(name)?;
+            let part_to_joint;
             let skel = {
                 let (nr, sym) = crate::fighter_data::costume_for(name).ok_or("no costume file")?;
                 let a = DatArchive::parse(&disc.read(nr)?).map_err(|e| format!("{nr}: {e}"))?;
@@ -493,6 +545,7 @@ impl VsMatch {
                 // ftParts_80074E58's flags_b4 parts: part_to_joint[FtPart_TransN] and [0x35].
                 let p2j = be(pt + 4) as usize;
                 let b4 = [plco.data[p2j + 1] as usize, plco.data[p2j + 0x35] as usize];
+                part_to_joint = plco.data[p2j..p2j + 0x40].to_vec();
                 Skeleton::load(&a.data, at, files.x8_x10(), files.model_scaling(), be(pt + 8), b4)?
             };
             let mut fp: Box<Fighter> = Box::new(Fighter::zeroed());
@@ -602,6 +655,7 @@ impl VsMatch {
                 trophy_scale: files.trophy_scale(),
                 model_scaling: files.model_scaling(),
                 ef_queue: Vec::new(),
+                ef_ops: Vec::new(),
                 pdat: Arc::new(files.dat.data.clone()),
                 script: 0,
                 script_sp: 0,
@@ -609,6 +663,19 @@ impl VsMatch {
                 part_anim: files.part_anim_data(),
                 x221d_b3: false,
                 input_locked: false,
+                ca_attrs: if kind == Ft_Kind_Captain {
+                    let x4 = be32(&files.dat.data, files.ft_data + 4);
+                    Some(*files.dat.load_at::<melee_types::ftCaptain_DatAttrs>(x4).get())
+                } else {
+                    None
+                },
+                files: Arc::new(files),
+                rows: HashMap::new(),
+                part_to_joint,
+                ca_lw_x0: 0.0,
+                ca_lw_friction: 1.0,
+                hitboxes: [None; 4],
+                attack1_x0: false,
             });
             // ... Fighter_ChangeMotionState(Entry): no animation, cur_anim_frame -1;
             // ftaction.c:1408 frame_count = cur_anim_frame + x898_unk. Then ft_80084CB0: the
@@ -695,7 +762,7 @@ impl VsMatch {
         for p in &mut self.players {
             if p.animating {
                 // ftAnim_8006E9B4, no blend (x8A4 == 0), x594_b0 / x594_b2 clear.
-                p.skel.anim(&mut AObjGlobals::default())?;
+                body_anim(p)?;
                 p.fp.cur_anim_frame = p.skel.curr_frame().ok_or("ftAnim_8006F3DC: no animated part")?;
             }
             // ftAnim_8006EBA4: ftAction_80073240 (the command script), ftAnim_800707B0 (the x8B0
@@ -775,6 +842,42 @@ impl VsMatch {
                     };
                     set_anim_rate(p, rate);
                 }
+                m if (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => {
+                    // ftCo_Attack11/12/13_Anim: ft_8008A2BC when the animation ends.
+                    if !p.skel.frames_remaining() {
+                        ft_8008a2bc(p, &mut self.rand)?;
+                    }
+                }
+                FTCA_MS_SPECIAL_LW => {
+                    // ftCa_SpecialLw_Anim: at the end, SpecialLwEnd (ground) or EndAir.
+                    if !p.skel.frames_remaining() {
+                        let fp = &mut *p.fp;
+                        fp.cmd_vars[2] = 0;
+                        fp.cmd_vars[1] = 0;
+                        fp.cmd_vars[0] = 0;
+                        fp.anon_2210.throw_flags = 0;
+                        if fp.ground_or_air == melee_types::GA_Ground {
+                            ftcommon_8007d7fc(&mut self.ground, p, c)?;
+                            let lag = p.ca_attrs.as_ref().ok_or("no Captain attrs")?.speciallw_ground_lag_mul;
+                            let row = load_row(p, FTCA_SM_SPECIAL_LW_END)?;
+                            change_motion_state_full(p, FTCA_MS_SPECIAL_LW_END, row.as_ref(), 0.0, lag, &mut self.rand)?;
+                        } else {
+                            melee_fighter::ftcommon2::ftcommon_8007d5d4(fp);
+                            let row = load_row(p, FTCA_SM_SPECIAL_LW_END_AIR)?;
+                            change_motion_state(p, FTCA_MS_SPECIAL_LW_END_AIR, row.as_ref(), &mut self.rand)?;
+                        }
+                    }
+                }
+                FTCA_MS_SPECIAL_LW_END | FTCA_MS_SPECIAL_LW_END_AIR => {
+                    // ftCa_SpecialLwEnd_Anim -> ftCommon_8007D92C.
+                    if !p.skel.frames_remaining() {
+                        if p.fp.ground_or_air == melee_types::GA_Air {
+                            fall_enter(p, &mut self.rand)?;
+                        } else {
+                            ft_8008a2bc(p, &mut self.rand)?;
+                        }
+                    }
+                }
                 m => return Err(format!("player {}: motion {m} not ported", p.slot + 1)),
             }
         }
@@ -844,6 +947,81 @@ impl VsMatch {
                     // ftCo_Walk_Phys -> ftWalkCommon_800E0060.
                     walk_phys(p);
                 }
+                m if (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => {
+                    // ftCo_Attack1x_Phys -> ft_80084FA8 -> ft_80085030(friction, facing_dir).
+                    let f = &mut *p.fp;
+                    let mut fr = f.co_attrs.ground_friction;
+                    if fc::abs_c(f.gr_vel) > f.co_attrs.walk_max_vel {
+                        fr *= melee_fighter::hooks::common_data().friction_when_above_walk_speed;
+                    }
+                    if x594_b0(f) {
+                        f.xE4_ground_accel_1 = melee_core::fp::fmadds(f.x6A4_transNOffset.z, f.facing_dir, -f.gr_vel);
+                    } else {
+                        fc::calc_ground_accel_deaccel(f, fr);
+                    }
+                    fc::set_self_movement_from_grounded_movement(f);
+                }
+                FTCA_MS_SPECIAL_LW | FTCA_MS_SPECIAL_LW_END | FTCA_MS_SPECIAL_LW_END_AIR if p.fp.ground_or_air != melee_types::GA_Ground => {
+                    // The airborne halves: ftPartSetRotZ(fp, 0, 0), then SpecialLw: ft_80085134 +
+                    // the friction + 800E3EAC; SpecialLwEnd: ft_80084EEC + the friction;
+                    // SpecialLwEndAir: cmd_vars[0] ? ft_80084EEC : ft_80085134.
+                    p.skel.set_part_rot(0, 2, 0.0);
+                    let f = &mut *p.fp;
+                    let m = f.motion_id;
+                    let anim_vel = m == FTCA_MS_SPECIAL_LW || (m == FTCA_MS_SPECIAL_LW_END_AIR && f.cmd_vars[0] == 0);
+                    if anim_vel {
+                        // ft_80085134.
+                        f.self_vel.x = f.x6A4_transNOffset.z * f.facing_dir;
+                        f.self_vel.y = f.x6A4_transNOffset.y;
+                    } else {
+                        // ft_80084EEC.
+                        let (gr, t) = (f.co_attrs.gravity, f.co_attrs.terminal_velocity);
+                        fc::fall(f, gr, t);
+                        let fr = f.co_attrs.aerial_friction;
+                        fc::calc_self_accel_deaccel(f, fr);
+                    }
+                    if m != FTCA_MS_SPECIAL_LW_END_AIR {
+                        let fr = p.ca_lw_friction;
+                        f.self_vel.x *= fr;
+                        f.self_vel.y *= fr;
+                    }
+                    if m == FTCA_MS_SPECIAL_LW {
+                        ftca_800e3eac(p)?;
+                    }
+                }
+                FTCA_MS_SPECIAL_LW | FTCA_MS_SPECIAL_LW_END | FTCA_MS_SPECIAL_LW_END_AIR => {
+                    // ftCa_SpecialLw_Phys / ftCa_SpecialLwEnd_Phys / EndAir_Phys (grounded halves).
+                    ftcommon_8007e5ac(p);
+                    let traction = p.ca_attrs.as_ref().ok_or("no Captain attrs")?.speciallw_ground_traction;
+                    let f = &mut *p.fp;
+                    if f.motion_id == FTCA_MS_SPECIAL_LW_END_AIR {
+                        // ftCa_SpecialLwEndAir_Phys on the ground: ft_80085088 only (no friction).
+                        ft_80085088(f);
+                    } else if f.motion_id == FTCA_MS_SPECIAL_LW {
+                        ft_80085088(f);
+                    } else if f.cmd_vars[2] != 0 {
+                        let fr = traction * f.co_attrs.ground_friction;
+                        fc::calc_ground_accel_deaccel(f, fr);
+                        fc::set_self_movement_from_grounded_movement(f);
+                    } else {
+                        // ft_80084F3C.
+                        let mut friction = f.co_attrs.ground_friction;
+                        if fc::abs_c(f.gr_vel) > f.co_attrs.walk_max_vel {
+                            friction *= melee_fighter::hooks::common_data().friction_when_above_walk_speed;
+                        }
+                        fc::calc_ground_accel_deaccel(f, friction);
+                        fc::set_self_movement_from_grounded_movement(f);
+                    }
+                    // ftCa_Special_Inline_Friction.
+                    if f.motion_id != FTCA_MS_SPECIAL_LW_END_AIR {
+                        let fr = p.ca_lw_friction;
+                        f.self_vel.x *= fr;
+                        f.self_vel.y *= fr;
+                    }
+                    if f.motion_id == FTCA_MS_SPECIAL_LW {
+                        ftca_800e3eac(p)?;
+                    }
+                }
                 FTCO_MS_LANDING | FTCO_MS_TURN | FTCO_MS_WAIT => {
                     // (Wait: then ftColl_8007AEE0, a hurtbox reset; not hashed.)
                     // ftCo_Landing_Phys / ftCo_Turn_Phys -> ft_80084F3C: ground friction, then the
@@ -902,6 +1080,73 @@ impl VsMatch {
                         ft_80082b1c(&mut self.ground, p, c_common, &mut self.rand)?;
                     }
                 }
+                m if (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => {
+                    // ftCo_Attack1x_Coll -> ft_80084104: ft_800827A0 (mpColl_8004B2DC), else Fall.
+                    let joints = {
+                        let d = p.ecb_desc;
+                        ecb_joints(&mut p.skel, &d)
+                    };
+                    let fp = &mut *p.fp;
+                    fp.coll_data.last_pos = fp.coll_data.cur_pos;
+                    fp.coll_data.cur_pos = fp.cur_pos;
+                    let r = mc::mp_coll_8004b2dc(&mut self.ground, &mut self.cg, &mut fp.coll_data, &joints)
+                        .map_err(|e| format!("{} not ported", e.0))?;
+                    fp.cur_pos = fp.coll_data.cur_pos;
+                    if !r {
+                        fall_enter(p, &mut self.rand)?;
+                    }
+                }
+                FTCA_MS_SPECIAL_LW | FTCA_MS_SPECIAL_LW_END | FTCA_MS_SPECIAL_LW_END_AIR if p.fp.ground_or_air != melee_types::GA_Ground => {
+                    // The airborne halves: ft_80081D0C (mpColl_800471F8), a floor -> ftCommon_8007D7FC.
+                    let joints = {
+                        let d = p.ecb_desc;
+                        ecb_joints(&mut p.skel, &d)
+                    };
+                    let fp = &mut *p.fp;
+                    fp.coll_data.last_pos = fp.coll_data.cur_pos;
+                    fp.coll_data.cur_pos = fp.cur_pos;
+                    let r = mc::mp_coll_800471f8(&mut self.ground, &mut self.cg, &mut fp.coll_data, &joints)
+                        .map_err(|e| format!("{} not ported", e.0))?;
+                    fp.cur_pos = fp.coll_data.cur_pos;
+                    if r {
+                        ftcommon_8007d7fc(&mut self.ground, p, c_common)?;
+                    }
+                    if p.fp.motion_id == FTCA_MS_SPECIAL_LW && p.fp.cmd_vars[0] != 0 {
+                        let env = p.fp.coll_data.env_flags;
+                        let fd = p.fp.facing_dir;
+                        if (fd == -1.0 && env & mc::COLLIDE_RIGHT_WALL_HUG != 0) || (fd == 1.0 && env & mc::COLLIDE_LEFT_WALL_HUG != 0) {
+                            return Err("Falcon Kick into a wall (SpecialHiThrow1) not ported".into());
+                        }
+                    }
+                }
+                FTCA_MS_SPECIAL_LW | FTCA_MS_SPECIAL_LW_END | FTCA_MS_SPECIAL_LW_END_AIR => {
+                    // ftCa_SpecialLw_Coll / ftCa_SpecialLwEnd_Coll (grounded): ft_80082708, no floor
+                    // -> ftCommon_8007D5D4.
+                    if p.fp.motion_id != FTCA_MS_SPECIAL_LW && p.fp.cmd_vars[1] != 0 {
+                        return Err("ftCa_SpecialLwEnd_Coll: ft_800827A0 not ported".into());
+                    }
+                    let joints = {
+                        let d = p.ecb_desc;
+                        ecb_joints(&mut p.skel, &d)
+                    };
+                    let fp = &mut *p.fp;
+                    fp.coll_data.last_pos = fp.coll_data.cur_pos;
+                    fp.coll_data.cur_pos = fp.cur_pos;
+                    let r = mc::mp_coll_8004b108(&mut self.ground, &mut self.cg, &mut fp.coll_data, &joints)
+                        .map_err(|e| format!("{} not ported", e.0))?;
+                    fp.cur_pos = fp.coll_data.cur_pos;
+                    if !r {
+                        melee_fighter::ftcommon2::ftcommon_8007d5d4(fp);
+                    }
+                    // ftCa_SpecialLw_Coll's wall check (cmd_vars[0] and a wall hug on the facing side).
+                    let env = fp.coll_data.env_flags;
+                    if fp.motion_id == FTCA_MS_SPECIAL_LW && fp.cmd_vars[0] != 0
+                        && ((fp.facing_dir == -1.0 && env & mc::COLLIDE_RIGHT_WALL_HUG != 0)
+                            || (fp.facing_dir == 1.0 && env & mc::COLLIDE_LEFT_WALL_HUG != 0))
+                    {
+                        return Err("Falcon Kick into a wall (SpecialHiThrow1) not ported".into());
+                    }
+                }
                 FTCO_MS_TURN => {
                     // ftCo_Turn_Coll -> ft_80083F88: ft_80082708 (mpColl_8004B108); no floor -> Fall.
                     let joints = {
@@ -950,9 +1195,41 @@ impl VsMatch {
         }
         // s_link 9, Fighter_8006C80C: efAsync_QueueFlush(&fp->x60C).
         for i in 0..self.players.len() {
+            for op in std::mem::take(&mut self.players[i].ef_ops) {
+                match op {
+                    EfOp::Spawn(e) => self.ef_dispatch(i, e)?,
+                    EfOp::DestroyAll => self.ef_destroy_all(i),
+                }
+            }
             let q = std::mem::take(&mut self.players[i].ef_queue);
             for e in q.into_iter().rev() {
                 self.ef_dispatch(i, e)?;
+            }
+        }
+        Ok(())
+    }
+
+    /// Hit detection (ftColl / the hit procs) is not ported. A live hitbox only matters when it
+    /// can reach the other fighter's hurtboxes, so the run stops when one comes within
+    /// `HIT_GUARD_MARGIN` (plus its own size and offset) of the other fighter's position.
+    fn hit_guard(&mut self) -> Result<(), String> {
+        for a in 0..self.players.len() {
+            for k in 0..4 {
+                let Some(h) = self.players[a].hitboxes[k] else { continue };
+                let pa = &mut self.players[a];
+                let j = pa.skel.part(h.part);
+                let w = pa.skel.world_pos(j);
+                let reach = h.scale + (h.offset.x * h.offset.x + h.offset.y * h.offset.y + h.offset.z * h.offset.z).sqrt() + HIT_GUARD_MARGIN;
+                for b in 0..self.players.len() {
+                    if b == a {
+                        continue;
+                    }
+                    let c = self.players[b].fp.cur_pos;
+                    let (dx, dy) = (w.x - c.x, w.y - (c.y + 10.0));
+                    if dx * dx + dy * dy < reach * reach {
+                        return Err(format!("player {}'s hitbox {k} reaches player {}: hit detection not ported", a + 1, b + 1));
+                    }
+                }
             }
         }
         Ok(())
@@ -981,7 +1258,29 @@ impl VsMatch {
                 let scale = self.players[i].model_scaling;
                 self.ef_create(EF_ENTRY_BEAM, i, scale, None)
             }
+            (EF_SPAWN_ATTACH_PARAM, 0x490) => {
+                // efAlt_Spawn: efLib_Create_Attach(0xFA2, gobj, foot joint), params.z = the
+                // angle, update = efLib_Cb_SetRotYZ_FromParamZ_FighterDir (rotation: render only).
+                self.ef_create(0xFA2, i, 1.0, None)
+            }
             (k, g) => Err(format!("efAsync_Dispatch kind {k} gfx {g:#x} is not ported")),
+        }
+    }
+
+    /// `efLib_DestroyAll(gobj)`: every effect of player `i` freed after
+    /// `HSD_JObjWalkTree(jobj, hsd_8039D688)` released the generators on its joints.
+    fn ef_destroy_all(&mut self, i: usize) {
+        let mut k = 0;
+        while k < self.effects.len() {
+            if self.effects[k].owner != i {
+                k += 1;
+                continue;
+            }
+            let e = self.effects.remove(k);
+            let mut host = Host { rand: &mut self.rand, joint_mtx: &self.joint_mtx, appsrt_hook_lists: &self.appsrt_hook_lists };
+            for t in &e.tracks {
+                self.ps.gen_release_jobj(&mut host, Some(t.joint));
+            }
         }
     }
 
@@ -989,7 +1288,7 @@ impl VsMatch {
     /// efAsync_Dispatch's anim queue (`HSD_JObjAnimAll` right away).
     fn ef_create(&mut self, gfx_id: u32, owner: usize, scale: f32, fixed_pos: Option<[f32; 3]>) -> Result<(), String> {
         let bank = (gfx_id / 1000) as usize;
-        let b = self.effect_banks.get(bank).ok_or(format!("effect bank {bank} not loaded"))?;
+        let b = self.effect_banks.get(bank).and_then(|b| b.as_ref()).ok_or(format!("effect bank {bank} not loaded"))?;
         let desc = b.desc(gfx_id % 1000);
         let inst = self.next_effect_instance;
         self.next_effect_instance += 1;
@@ -1016,7 +1315,7 @@ impl VsMatch {
     fn effect_matrices(&mut self, k: usize) {
         let e = &self.effects[k];
         let fp = &self.players[e.owner].fp;
-        let d = &self.effect_banks[e.bank].archive.data;
+        let d = &self.effect_banks[e.bank].as_ref().unwrap().archive.data;
         let pos = e.fixed_pos.unwrap_or([fp.cur_pos.x, fp.cur_pos.y, fp.cur_pos.z]);
         for t in &e.tracks {
             let m = crate::stage::bind_pose_matrix_rooted(d, &t.chain, pos, [e.scale; 3]);
@@ -1224,6 +1523,8 @@ fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         FTCO_MS_TURN => turn_iasa(p),
         FTCO_MS_WAIT => wait_iasa(p, rand),
         m if (FTCO_MS_WALK_SLOW..=FTCO_MS_WALK_FAST).contains(&m) => walk_iasa(p, rand),
+        FTCA_MS_SPECIAL_LW | FTCA_MS_SPECIAL_LW_END | FTCA_MS_SPECIAL_LW_END_AIR => Ok(()), // input_cb NULL
+        m if (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => attack1_iasa(p, rand),
         m => Err(format!("player {}: input_cb of motion {m} not ported", p.slot + 1)),
     }
 }
@@ -1272,7 +1573,7 @@ fn ground_stick_gate(p: &Player, what: &str) -> Result<(), String> {
     let cd = melee_fighter::hooks::common_data();
     let fp = &*p.fp;
     let i = &fp.input;
-    if i.pressed_buttons != 0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 || i.triggers[0] != 0.0 || i.held_buttons[0] & (input::HSD_PAD_A | input::HSD_PAD_B | input::HSD_PAD_Z | input::HSD_PAD_LR) != 0 {
+    if i.pressed_buttons & !PAD_STICK_DIRS != 0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 || i.triggers[0] != 0.0 || i.held_buttons[0] & (input::HSD_PAD_Z | input::HSD_PAD_LR) != 0 {
         return Err(format!("player {}: {what} with a button / C-stick / trigger: not ported", p.slot + 1));
     }
     if jump_get_input(fp) {
@@ -1287,8 +1588,174 @@ fn ground_stick_gate(p: &Player, what: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// `ftCo_Catch_CheckInput` (ftCo_800951D0 needs an item; fn_800D8E94 / fn_800D952C pass for
+/// the kinds wired): L/R held and A pressed.
+fn catch_check(p: &Player) -> Result<bool, String> {
+    let fp = &*p.fp;
+    if !fp.item_gobj.is_null() {
+        return Err("ftCo_800951D0 (item throw) not ported".into());
+    }
+    if fp.input.held_buttons[0] & input::HSD_PAD_LR != 0 && fp.input.pressed_buttons & input::HSD_PAD_A != 0 {
+        return Err(format!("player {}: ftCo_Catch_CheckInput -> Catch not ported", p.slot + 1));
+    }
+    Ok(false)
+}
+
+/// The grounded special checks, in the IASAs' order: `ftCo_SpecialS_CheckInput`,
+/// `ftCo_Attack100_CheckInput` (up-B), `ftCo_800D6824` (neutral B), `ftCo_800D68C0` (down-B).
+/// Each reads its press counter (`x688`, `x686`, `x689`, `x687`: 0 on the frame of the press,
+/// Fighter_Spaghetti_8006AD10); `ftData_Special*[kind]` is set for every kind wired.
+fn special_checks(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
+    let fp = &*p.fp;
+    let who = p.slot + 1;
+    if fp.x688 == 0 {
+        return Err(format!("player {who}: ftCo_SpecialS_CheckInput (side-B, kind {}) not ported", fp.kind));
+    }
+    if fp.x686 == 0 {
+        return Err(format!("player {who}: ftCo_Attack100_CheckInput (up-B, kind {}) not ported", fp.kind));
+    }
+    if fp.x689 == 0 {
+        return Err(format!("player {who}: ftCo_800D6824 (neutral B, kind {}) not ported", fp.kind));
+    }
+    if fp.x687 == 0 {
+        return match fp.kind {
+            Ft_Kind_Captain => ftca_speciallw_enter(p, rand).map(|_| true),
+            k => Err(format!("player {who}: ftCo_800D68C0 (down-B, kind {k}) not ported")),
+        };
+    }
+    Ok(false)
+}
+
+/// The grounded attack checks of the IASAs (`ftCo_AttackS4/Hi4/Lw4/S3/Hi3/Lw3_CheckInput`,
+/// then `ftCo_Attack1_CheckInput`). Only the jab is wired: with A pressed, a neutral stick and
+/// no C-stick no smash or tilt check passes (each needs a stick past a positive threshold);
+/// anything else stops the run. `ftCo_Attack1_CheckInput` without A counts the jab window
+/// (`hitlag_mul`) down.
+fn attack_checks(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
+    let fp = &mut *p.fp;
+    let i = &fp.input;
+    let a = i.pressed_buttons & input::HSD_PAD_A != 0;
+    if i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 {
+        return Err(format!("player {}: C-stick smash / tilt checks not ported", p.slot + 1));
+    }
+    if !a {
+        if fp.hitlag_mul > 0.0 {
+            fp.hitlag_mul -= 1.0;
+        }
+        return Ok(false);
+    }
+    if i.lstick[0].x != 0.0 || i.lstick[0].y != 0.0 {
+        return Err(format!("player {}: A with the stick held (smash / tilt checks) not ported", p.slot + 1));
+    }
+    // ftCo_Attack1_CheckInput.
+    if !fp.item_gobj.is_null() {
+        return Err("ftCo_Attack1_CheckInput with an item not ported".into());
+    }
+    if fp.hitlag_mul > 0.0 && fp.x2218_b1() != 0 && (fp.unk_msid == 44 || fp.unk_msid == 45) {
+        return Err(format!("player {}: jab 2/3 from the jab window (doAttack12/13) not ported", p.slot + 1));
+    }
+    if fp.kind == melee_types::Ft_Kind_GameWatch {
+        return Err("ftGw_Attack11_Enter not ported".into());
+    }
+    attack11_enter(p, rand)?;
+    Ok(true)
+}
+
+/// `checkAttack11` (ftCo_Attack1.c): no item to pick up (`ftpickupitem_80094790`: no items
+/// here), Attack11 (`Ft_MF_None` for the kinds wired), one `ftAnim_8006EBA4`, the jab window.
+fn attack11_enter(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    p.fp.set_allow_interrupt(0);
+    p.fp.set_x2218_b1(0);
+    let row = load_row(p, melee_types::ftCo_SM_Attack11 as u32)?;
+    change_motion_state(p, FTCO_MS_ATTACK11, row.as_ref(), rand)?;
+    anim_step(p, rand)?;
+    let fp = &mut *p.fp;
+    fp.hitlag_mul = fp.co_attrs.jab_2_input_window;
+    fp.unk_msid = FTCO_MS_ATTACK11;
+    fp.set_x2218_b2(0);
+    p.attack1_x0 = false;
+    fp.x1A54 = 0;
+    Ok(())
+}
+
+/// `doAttack12Normal` / `doAttack13` (not Pikachu / Pichu / Marth): Attack12 or Attack13, with
+/// no `ftAnim_8006EBA4` step.
+fn attack1n_enter(p: &mut Player, rand: &mut HsdRand, msid: i32) -> Result<(), String> {
+    if matches!(p.fp.kind, melee_types::Ft_Kind_Pikachu | melee_types::Ft_Kind_Pichu | melee_types::Ft_Kind_Mars) {
+        return Err("rapid-jab kinds' Attack12/13 not ported".into());
+    }
+    p.fp.set_allow_interrupt(0);
+    p.fp.set_x2218_b1(0);
+    let smid = if msid == FTCO_MS_ATTACK11 + 1 { melee_types::ftCo_SM_Attack12 } else { melee_types::ftCo_SM_Attack13 } as u32;
+    let row = load_row(p, smid)?;
+    change_motion_state(p, msid, row.as_ref(), rand)?;
+    if msid == FTCO_MS_ATTACK11 + 1 {
+        let fp = &mut *p.fp;
+        fp.hitlag_mul = fp.co_attrs.jab_3_input_window;
+        fp.unk_msid = msid;
+        p.attack1_x0 = false;
+    }
+    Ok(())
+}
+
+/// `ftCo_Attack11_IASA` / `ftCo_Attack12_IASA` (Attack13's is `ftCo_Attack_800D6A50` + Wait's).
+fn attack1_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    let allow = p.fp.allow_interrupt() != 0;
+    if allow {
+        let i = &p.fp.input;
+        if i.pressed_buttons & input::HSD_PAD_A != 0 && (i.lstick[0].x != 0.0 || i.lstick[0].y != 0.0) || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 {
+            return Err(format!("player {}: jab IASA smash / tilt checks not ported", p.slot + 1));
+        }
+    }
+    // ftCo_Attack_800D6A50: A presses and releases count toward the rapid jab.
+    {
+        let fp = &mut *p.fp;
+        if (fp.input.pressed_buttons | fp.input.released_buttons) & input::HSD_PAD_A != 0 {
+            fp.x1A54 += 1;
+        }
+        if fp.x1A54 >= fp.co_attrs.rapid_jab_window && fp.x2218_b2() != 0 {
+            return Err(format!("player {}: rapid jab (fn_800D6AC4) not ported", p.slot + 1));
+        }
+    }
+    if p.fp.motion_id == FTCO_MS_ATTACK11 + 2 {
+        if allow {
+            return wait_iasa(p, rand);
+        }
+        return Ok(());
+    }
+    // checkAttack12 / checkAttack13.
+    {
+        let fp = &mut *p.fp;
+        if fp.hitlag_mul > 0.0 {
+            fp.hitlag_mul -= 1.0;
+            if fp.input.pressed_buttons & input::HSD_PAD_A != 0 {
+                p.attack1_x0 = true;
+            }
+        }
+        if p.attack1_x0 && fp.x2218_b1() != 0 {
+            let next = fp.motion_id + 1;
+            return attack1n_enter(p, rand, next);
+        }
+    }
+    if allow {
+        ground_stick_gate(p, "ftCo_Attack11_IASA")?;
+        let cd = melee_fighter::hooks::common_data();
+        let fp = &*p.fp;
+        if fp.input.lstick[0].x * fp.facing_dir <= cd.x34 {
+            return turn_enter_basic(p, rand);
+        }
+        if fp.input.lstick[0].x * fp.facing_dir >= cd.walk_stick_threshold {
+            return walk_enter(p, 0.0, rand);
+        }
+    }
+    Ok(())
+}
+
 /// `ftCo_Wait_IASA`.
 fn wait_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    if special_checks(p, rand)? || catch_check(p)? || attack_checks(p, rand)? {
+        return Ok(());
+    }
     ground_stick_gate(p, "ftCo_Wait_IASA")?;
     let cd = melee_fighter::hooks::common_data();
     let fp = &*p.fp;
@@ -1303,6 +1770,9 @@ fn wait_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
 
 /// `ftCo_Walk_IASA`.
 fn walk_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    if catch_check(p)? || special_checks(p, rand)? || attack_checks(p, rand)? {
+        return Ok(());
+    }
     ground_stick_gate(p, "ftCo_Walk_IASA")?;
     let cd = melee_fighter::hooks::common_data();
     let fp = &*p.fp;
@@ -1462,11 +1932,134 @@ fn turn_enter_basic(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     anim_step(p, rand)
 }
 
+/// The main stick's direction bits in `HSD_PadStatus.button` (0x10000..0x80000): no grounded
+/// check reads them.
+const PAD_STICK_DIRS: u32 = 0xF_0000;
+
+/// [`VsMatch::hit_guard`]'s margin around a fighter (a fighter's hurtboxes reach about 20
+/// units from its position).
+const HIT_GUARD_MARGIN: f32 = 30.0;
+
+/// `ftCo_MS_Attack11` (44); Attack12 / Attack13 follow.
+const FTCO_MS_ATTACK11: i32 = 44;
+
+/// `ftCa_MS_SpecialLw` (357), `SpecialLwEnd` (358) and their rows (`ftCa_SM_SpecialLw` 311, 312).
+const FTCA_MS_SPECIAL_LW: i32 = 357;
+const FTCA_MS_SPECIAL_LW_END: i32 = 358;
+/// `ftCa_MS_SpecialLwEndAir` (362) and its row (`ftCa_SM_SpecialLwEndAir` 315).
+const FTCA_MS_SPECIAL_LW_END_AIR: i32 = 362;
+const FTCA_SM_SPECIAL_LW_END_AIR: u32 = 315;
+const FTCA_SM_SPECIAL_LW: u32 = 311;
+const FTCA_SM_SPECIAL_LW_END: u32 = 312;
+
+/// `ftData->xC[smid]` with its figatree (cached).
+fn load_row(p: &mut Player, smid: u32) -> Result<Option<(AnimRow, FigaTree)>, String> {
+    if let Some(r) = p.rows.get(&smid) {
+        return Ok(r.clone());
+    }
+    let r = p.files.anim_row(smid)?.zip(p.files.figatree(smid)?);
+    p.rows.insert(smid, r.clone());
+    Ok(r)
+}
+
+/// `ftParts_GetBoneIndex(fp, part)`.
+fn bone_index(p: &Player, part: u32) -> usize {
+    p.part_to_joint[part as usize] as usize
+}
+
+/// `ftCa_SpecialLw_Enter` (Falcon Kick on the ground). `deal_dmg_cb = ftCa_SpecialHi_800E400C`
+/// and Fighter_SetEffectHitlagCallbacks are not modelled (no hit reaches them here).
+fn ftca_speciallw_enter(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    let fp = &mut *p.fp;
+    fp.cmd_vars[2] = 0;
+    fp.cmd_vars[1] = 0;
+    fp.cmd_vars[0] = 0;
+    fp.anon_2210.throw_flags = 0;
+    p.ca_lw_x0 = 0.0;
+    p.ca_lw_friction = 1.0;
+    let row = load_row(p, FTCA_SM_SPECIAL_LW)?;
+    change_motion_state(p, FTCA_MS_SPECIAL_LW, row.as_ref(), rand)?;
+    anim_step(p, rand)
+}
+
+/// `ftCommon_8007DB24`: `x2219_b0 = 0`, `efLib_DestroyAll(gobj)` (deferred, `ef_ops`).
+fn ftcommon_8007db24(p: &mut Player) {
+    p.fp.set_x2219_b0(0);
+    p.ef_ops.push(EfOp::DestroyAll);
+}
+
+/// `ftCommon_8007E5AC`: the root's Z rotation to the floor angle.
+fn ftcommon_8007e5ac(p: &mut Player) {
+    let n = p.fp.coll_data.floor.normal;
+    let t = -melee_runtime::lbtrigf::atan2f(n.x, n.y);
+    p.skel.set_part_rot(0, 2, t);
+}
+
+/// `ft_80085088`: the TransN velocity on the ground (x594_b0), else ground friction; then
+/// `ftCommon_SetSelfMovementFromGroundedMovement`.
+fn ft_80085088(fp: &mut Fighter) {
+    if x594_b0(fp) {
+        fp.gr_vel = fp.x6A4_transNOffset.z * fp.facing_dir;
+    } else {
+        let f = fp.co_attrs.ground_friction;
+        fc::calc_ground_accel_deaccel(fp, f);
+    }
+    fc::set_self_movement_from_grounded_movement(fp);
+}
+
+/// `ftCa_SpecialHi_800E3EAC`: the script's throw flag b1 spawns the flame on the foot
+/// (`efAsync_Spawn(gobj, &x60C, 3, 0x490, RFootJA (SpecialLw) / LFootJA (SpecialAirLw), &angle)`).
+fn ftca_800e3eac(p: &mut Player) -> Result<(), String> {
+    let fp = &mut *p.fp;
+    if unsafe { fp.anon_2210.anon_0.throw_flags_b1() } == 0 {
+        return Ok(());
+    }
+    unsafe { fp.anon_2210.anon_0.set_throw_flags_b1(0) };
+    if fp.x2219_b0() != 0 {
+        ftcommon_8007db24(p);
+        return Ok(());
+    }
+    let (angle, part) = match fp.motion_id {
+        0x165 => (0.0f32, melee_types::FtPart_RFootJA),
+        0x167 => return Err("Falcon Kick flame in the air (LFootJA, flame angle) not wired".into()),
+        _ => return Err("ftCa_SpecialHi_800E3EAC: sp1C / part uninitialised (C UB) for this motion".into()),
+    };
+    fp.set_x2219_b0(1);
+    let part = bone_index(p, part);
+    p.ef_queue.push(QueuedEffect { kind: EF_SPAWN_ATTACH_PARAM, gfx: 0x490, part, params: Vec3 { x: angle, y: 0.0, z: 0.0 }, extra1: 0.0 });
+    Ok(())
+}
+
+/// `fp->x594_b0` (the row's TransN root-motion flag).
+fn x594_b0(fp: &Fighter) -> bool {
+    unsafe { fp.anon_594.anon_0.x594_b0() != 0 }
+}
+
+/// `ftAnim_8006E9B4`'s skeleton step; with `x594_b0` the TransN part of `ftAnim_8006E054`:
+/// `x698 = x68C`, `x68C = translation * scale` (`ftCommon_GetModelScale`, or `model_scaling`
+/// with `x594_b6`), `x6B0 = x6A4`, `x6A4 = x68C - x698` (lbVector_Diff).
+fn body_anim(p: &mut Player) -> Result<(), String> {
+    let b0 = x594_b0(&p.fp);
+    if b0 && unsafe { p.fp.anon_594.anon_0.x594_b5() } != 0 {
+        return Err("x594_b5 (part 0x35 root motion) not ported".into());
+    }
+    if let Some(t) = p.skel.anim(&mut AObjGlobals::default(), b0)? {
+        let fp = &mut *p.fp;
+        let s = if unsafe { fp.anon_594.anon_0.x594_b6() } == 0 { fp.x34_scale.y * fp.co_attrs.model_scaling } else { fp.co_attrs.model_scaling };
+        fp.x698 = fp.x68C_transNPos;
+        fp.x68C_transNPos = melee_types::Vec { x: t.x * s, y: t.y * s, z: t.z * s };
+        fp.x6B0 = fp.x6A4_transNOffset;
+        let (a, b) = (fp.x68C_transNPos, fp.x698);
+        fp.x6A4_transNOffset = melee_types::Vec { x: a.x - b.x, y: a.y - b.y, z: a.z - b.z };
+    }
+    Ok(())
+}
+
 /// `ftAnim_8006EBA4`: the body animation (ftAnim_8006E9B4, no blend), the command script, the
 /// hand poses (ftAnim_800707B0) and ftCo_800DB500 (no item).
 fn anim_step(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     if p.animating {
-        p.skel.anim(&mut AObjGlobals::default())?;
+        body_anim(p)?;
         p.fp.cur_anim_frame = p.skel.curr_frame().ok_or("ftAnim_8006F3DC: no animated part")?;
     }
     ftaction_80073240(p, rand)?;
@@ -1634,11 +2227,225 @@ fn ftaction_run(p: &mut Player, rand: &mut HsdRand, skip: bool) -> Result<(), St
             // (skip table): three words.
             0x36 if skip => p.script += 12,
             0x36 => ftaction_80072cd8(p, rand)?,
+            // ftAction_80071028: spawn an effect (5 words; skipped when invisible);
+            // ftAction_800711DC (skip table).
+            0x0A if skip => p.script += 20,
+            0x0A => ftaction_80071028(p, rand)?,
+            // ftAction_8007121C: create a hitbox (5 words); ftAction_800715EC (skip table).
+            0x0B if skip => p.script += 20,
+            0x0B => ftaction_8007121c(p)?,
+            // ftAction_8007162C (damage) / 80071708 (flags): one word each, not modelled.
+            0x0C | 0x0E => p.script += 4,
+            // ftAction_8007169C: hitbox size.
+            0x0D if skip => p.script += 4,
+            0x0D => {
+                let id = ((w >> 23) & 7) as usize;
+                if let Some(h) = p.hitboxes.get_mut(id).and_then(|h| h.as_mut()) {
+                    h.scale = 0.003906f32 * (w & 0x7F_FFFF) as f32;
+                }
+                p.script += 4;
+            }
+            // ftAction_80071784: ftColl_8007AFC8 (remove hitbox `id`); ftAction_800717D8:
+            // ftColl_8007AFF8 (remove all). The skip table steps over them.
+            0x0F | 0x10 if skip => p.script += 4,
+            0x0F => {
+                let id = (w & 0x3FF_FFFF) as usize;
+                if let Some(h) = p.hitboxes.get_mut(id) {
+                    *h = None;
+                }
+                p.script += 4;
+            }
+            0x10 => {
+                p.hitboxes = [None; 4];
+                p.fp.set_x2219_b3(0);
+                p.script += 4;
+            }
+            // ftAction_80071820: cmd_vars[idx] = value (both tables).
+            0x13 => {
+                let idx = ((w >> 24) & 3) as usize;
+                p.fp.cmd_vars[idx] = w & 0xFF_FFFF;
+                p.script += 4;
+            }
+            // ftAction_800718A4: throw flag b3 (+ cmd_timer = the script timer) or b4.
+            0x14 => {
+                match value {
+                    0 => {
+                        unsafe { p.fp.anon_2210.anon_0.set_throw_flags_b3(1) };
+                        p.fp.cmd_timer = p.fp.x3E4_fighterCmdScript.timer;
+                    }
+                    1 => unsafe { p.fp.anon_2210.anon_0.set_throw_flags_b4(1) },
+                    _ => {}
+                }
+                p.script += 4;
+            }
+            // ftAction_80071908 / 8007192C / 80071974: throw flags b1 / b2 / b0;
+            // ftAction_80071950: allow_interrupt.
+            0x15 => {
+                unsafe { p.fp.anon_2210.anon_0.set_throw_flags_b1(1) };
+                p.script += 4;
+            }
+            0x16 => {
+                unsafe { p.fp.anon_2210.anon_0.set_throw_flags_b2(1) };
+                p.script += 4;
+            }
+            0x17 => {
+                p.fp.set_allow_interrupt(1);
+                p.script += 4;
+            }
+            0x18 => {
+                unsafe { p.fp.anon_2210.anon_0.set_throw_flags_b0(1) };
+                p.script += 4;
+            }
+            // ftAction_80071998: the airborne state.
+            0x19 => {
+                match value {
+                    1 => melee_fighter::ftcommon2::ftcommon_8007d5d4(&mut p.fp),
+                    2 => melee_fighter::ftcommon2::ftcommon_8007d60c(&mut p.fp),
+                    0 => return Err("script ftCommon_8007D7FC (land) not wired".into()),
+                    _ => {}
+                }
+                p.script += 4;
+            }
+            // ftAction_80071A14 / 80071A58 / 80071A9C: body / hurt-capsule states (the
+            // hurtboxes; read only by hit detection, which is not ported). One word each.
+            0x1A | 0x1B | 0x1C => p.script += 4,
+            // ftAction_80071AE8: jab combo allowed (x2218_b1); ftAction_80071B28: x2218_b2.
+            0x1D => {
+                if value == 0 || !p.fp.x197C.is_null() {
+                    p.fp.set_x2218_b1(1);
+                }
+                p.script += 4;
+            }
+            0x1E => {
+                p.fp.set_x2218_b2((value & 1) as u8);
+                p.script += 4;
+            }
+            // ftAction_80071D40 / 80071D94 / 80071DCC: model part / DObj visibility (render).
+            0x1F | 0x20 | 0x21 => p.script += 4,
+            // ftAction_80071F78 / 80071FA0: x221E_b4 / x221E_b5.
+            0x24 => {
+                p.fp.set_x221E_b4((value & 1) as u8);
+                p.script += 4;
+            }
+            0x25 => {
+                p.fp.set_x221E_b5((value & 1) as u8);
+                p.script += 4;
+            }
+            // ftAction_80071FC8: a random sound out of up to six (HSD_Randi(range)), 7 words;
+            // ftAction_800722C8 (skip table).
+            0x26 if skip => p.script += 28,
+            0x26 => {
+                let range = (w & 0x3F) as i32;
+                let behavior = (w >> 6) & 0xF;
+                let pick = rand.randi(range);
+                let sfx = be32(&p.pdat, p.script + 4 + 4 * pick as u32) as i32;
+                if behavior == 0 && (332..=515).contains(&sfx) {
+                    return Err(format!("ft_PlaySFX {sfx}: ft_80087D0C's remap and the pitch draw not wired"));
+                }
+                p.script += 28;
+            }
+            // ftAction_80071B50: a sound command; ftAction_80071CA4 (skip table): three words.
+            0x11 if skip => p.script += 12,
+            0x11 => ftaction_80071b50(p)?,
             op => return Err(format!("command script opcode {op:#x} (ftAction_803C06E8[{}]) not ported", op as i32 - 10)),
         }
         if p.fp.x3E4_fighterCmdScript.timer == F32_MAX {
             break;
         }
+    }
+    Ok(())
+}
+
+/// `ftAction_80071028`: the effect command -> `ftCo_8009F834(gobj, gfx, bone, common, destroy,
+/// offset, range, unk)` (offsets and ranges in 1/256 units, read in the C's swapped order).
+fn ftaction_80071028(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    if p.fp.invisible() != 0 {
+        p.script += 20;
+        return Ok(());
+    }
+    let w = [0u32, 4, 8, 12, 16].map(|o| be32(&p.pdat, p.script + o));
+    let use_unk_bone = (w[0] >> 15) & 1 != 0;
+    if use_unk_bone {
+        return Err("ftAction_80071028 useUnkBone (ft_data->x8->x12) not wired".into());
+    }
+    let bone = (w[0] >> 18) & 0xFF;
+    let common = (w[0] >> 17) & 1 != 0;
+    let destroy = (w[0] >> 16) & 1 != 0;
+    let gfx = w[1] >> 16;
+    let k = 0.003906f32;
+    let hi = |x: u32| ((x >> 16) as i16) as f32;
+    let lo_s = |x: u32| ((x & 0xFFFF) as i16) as f32;
+    let lo_u = |x: u32| (x & 0xFFFF) as f32;
+    let hi_u = |x: u32| (x >> 16) as f32;
+    let offset = Vec3 { x: k * hi(w[2]), y: k * lo_s(w[2]), z: k * hi(w[3]) };
+    let range = Vec3 { x: k * lo_u(w[3]), y: k * hi_u(w[4]), z: k * lo_u(w[4]) };
+    p.script += 20;
+    if destroy {
+        p.fp.set_x2219_b0(1);
+    }
+    let part = match bone {
+        0x8D => return Err("ftCo_8009F834 part 0x8D (ft_data->x54 cycle) not wired".into()),
+        0x8E => return Err("ftCo_8009F834 part 0x8E (ft_data->x8->x10) not wired".into()),
+        b if common => bone_index(p, b),
+        b => b as usize,
+    };
+    ftco_8009f834(p, rand, gfx, part, offset, range)
+}
+
+/// `ftAction_8007121C`: create (or refresh) hitbox `id` on a part (`ftParts_GetBoneIndex` for
+/// common bone ids); `x2219_b3` set on a new one; `ftCommon_80080484`. Damage staling and the
+/// rest of the HitCapsule are not modelled (read only by hit detection).
+fn ftaction_8007121c(p: &mut Player) -> Result<(), String> {
+    let w = [0u32, 4, 8, 12, 16].map(|o| be32(&p.pdat, p.script + o));
+    // spawn_hitbox_skip.xF_b4: byte 0xF (word 3's low byte) bit 4 (MSB first) = 0x08.
+    if w[3] & 0x08 != 0 && unsafe { p.fp.x1064_thrownHitbox.anon_134.owner.is_null() } {
+        p.script += 20;
+        return Ok(());
+    }
+    let id = ((w[0] >> 23) & 7) as usize;
+    let hit_group = (w[0] >> 20) & 7;
+    let bone = ((w[0] >> 11) & 0xFF) as usize;
+    let common = (w[0] >> 10) & 1 != 0;
+    if id >= 4 {
+        return Err(format!("hitbox id {id} (PC slot remap) not wired"));
+    }
+    let part = if common { bone_index(p, bone as u32) } else { bone };
+    let size = (w[1] >> 16) as f32;
+    let z = ((w[1] & 0xFFFF) as i16) as f32;
+    let y = ((w[2] >> 16) as i16) as f32;
+    let x = ((w[2] & 0xFFFF) as i16) as f32;
+    let k = 0.003906f32;
+    let fresh = match &p.hitboxes[id] {
+        None => true,
+        Some(h) => h.hit_group != hit_group,
+    };
+    if fresh {
+        p.fp.set_x2219_b3(1);
+    }
+    p.hitboxes[id] = Some(Hitbox { part, scale: k * size, offset: Vec3 { x: k * z, y: k * y, z: k * x }, hit_group });
+    if p.fp.smash_attrs.x2138_smashSinceHitbox == -1.0 {
+        p.fp.smash_attrs.x2138_smashSinceHitbox = 0.0;
+    }
+    p.script += 20;
+    Ok(())
+}
+
+/// `ftAction_80071B50`: behaviours 0-6 play `sfx` (word 2) on a channel, 10-15 stop one; no
+/// audio here. Only `ft_PlaySFX` (behaviour 0) draws from the RNG, `HSD_Randi(200)` for a
+/// remapped id in 332..370 (`ft_80087D0C`, not ported: such ids stop the run).
+fn ftaction_80071b50(p: &mut Player) -> Result<(), String> {
+    let w0 = be32(&p.pdat, p.script);
+    let behavior = (w0 >> 18) & 0xFF;
+    match behavior {
+        0..=6 => {
+            let sfx = be32(&p.pdat, p.script + 4) as i32;
+            if behavior == 0 && (332..=515).contains(&sfx) {
+                return Err(format!("ft_PlaySFX {sfx}: ft_80087D0C's remap and the HSD_Randi(200) pitch draw not wired"));
+            }
+            p.script += 12;
+        }
+        10..=15 => p.script += 12,
+        _ => p.script += 8,
     }
     Ok(())
 }
@@ -1740,6 +2547,10 @@ fn ftco_8009f834(p: &mut Player, rand: &mut HsdRand, gfx_id: u32, part: usize, o
             p.ef_queue.push(QueuedEffect { kind: EF_SPAWN_POS_OFFSET_PARAM, gfx: gfx_id, part, params: sp84, extra1: sp80 });
             Ok(())
         }
+        // efAsync_Spawn(.., EF_SPAWN_CAMERA_SHAKE, 2 / 3 / 4, joint, &sp84): a camera quake at
+        // s_link 9 (Camera_RequestQuake). The camera is not simulated; the C trace shows it
+        // draws nothing from the RNG.
+        0x513..=0x515 => Ok(()),
         g => Err(format!("ftCo_8009F834 gfx {g:#x} not wired")),
     }
 }
@@ -1788,12 +2599,33 @@ fn change_motion_state(p: &mut Player, msid: i32, row: Option<&(AnimRow, FigaTre
     change_motion_state_at(p, msid, row, 0.0, rand)
 }
 
+/// `Fighter_ChangeMotionState(gobj, msid, 0, anim_start, anim_speed, 0.0, NULL)`.
+fn change_motion_state_at(p: &mut Player, msid: i32, row: Option<&(AnimRow, FigaTree)>, anim_start: f32, rand: &mut HsdRand) -> Result<(), String> {
+    change_motion_state_full(p, msid, row, anim_start, 1.0, rand)
+}
+
 /// `Fighter_ChangeMotionState(gobj, msid, 0, anim_start, 1.0, 0.0, NULL)` (see
 /// [`change_motion_state`]); a nonzero `anim_start` takes the C's start-mid-animation path
 /// (`ftAnim_8006EBE8(start - speed)`, two `ftAnim_8006E9B4` steps, `timer = -start`,
 /// `ftAction_80073354`, the script run in its skip table).
-fn change_motion_state_at(p: &mut Player, msid: i32, row: Option<&(AnimRow, FigaTree)>, anim_start: f32, rand: &mut HsdRand) -> Result<(), String> {
+fn change_motion_state_full(p: &mut Player, msid: i32, row: Option<&(AnimRow, FigaTree)>, anim_start: f32, anim_speed: f32, rand: &mut HsdRand) -> Result<(), String> {
+    // efAsync_QueueFlush(gobj, &fp->x60C) (newest first) and, with x2219_b0 and no
+    // Ft_MF_KeepGfx, ftCommon_8007DB24 (efLib_DestroyAll): replayed at s_link 9 (`ef_ops`).
+    for q in std::mem::take(&mut p.ef_queue).into_iter().rev() {
+        p.ef_ops.push(EfOp::Spawn(q));
+    }
+    if p.fp.x2219_b0() != 0 {
+        ftcommon_8007db24(p);
+    }
+    if p.fp.x2219_b3() != 0 {
+        // ftColl_8007AFF8: every hitbox off (Ft_MF_SkipHit is never passed here).
+        p.hitboxes = [None; 4];
+        p.fp.set_x2219_b3(0);
+    }
     let fp = &mut p.fp;
+    if !(14..=17).contains(&msid) {
+        fp.hitlag_mul = 0.0;
+    }
     fp.motion_id = msid;
     let root = p.skel.root;
     p.skel.set_translate(root, melee_runtime::mtx::Vec3 { x: fp.cur_pos.x, y: fp.cur_pos.y, z: fp.cur_pos.z });
@@ -1806,7 +2638,6 @@ fn change_motion_state_at(p: &mut Player, msid: i32, row: Option<&(AnimRow, Figa
     p.skel.set_part_rot(0, 0, 0.0);
     p.skel.set_part_rot(0, 1, (core::f64::consts::FRAC_PI_2 * fp.facing_dir as f64) as f32);
     p.skel.set_part_rot(0, 2, 0.0);
-    let anim_speed = 1.0f32;
     fp.frame_speed_mul = anim_speed;
     fp.x8A0_unk = anim_speed;
     fp.cur_anim_frame = anim_start - fp.frame_speed_mul;
@@ -1815,8 +2646,8 @@ fn change_motion_state_at(p: &mut Player, msid: i32, row: Option<&(AnimRow, Figa
     let bone_index = unsafe { fp.anon_594.anon_0.x596_bits.x7() };
     match row {
         Some((r, tree)) => {
-            if r.flags & 0xA000_0000 != 0 {
-                return Err(format!("anim row flags {:#x}: x594_b0 / x594_b2 paths not ported", r.flags));
+            if r.flags & 0x2000_0000 != 0 {
+                return Err(format!("anim row flags {:#x}: x594_b2 path not ported", r.flags));
             }
             if r.flags & 0x0400_0000 != 0 {
                 return Err(format!("anim row flags {:#x}: x594_b5 path not ported", r.flags));
@@ -1833,20 +2664,39 @@ fn change_motion_state_at(p: &mut Player, msid: i32, row: Option<&(AnimRow, Figa
             if anim_start != 0.0 {
                 p.skel.attach(tree, anim_start - anim_speed, anim_speed, r.looping(), blend);
                 p.animating = true;
-                p.skel.anim(&mut AObjGlobals::default())?;
+                body_anim(p)?;
                 p.fp.cur_anim_frame = p.skel.curr_frame().ok_or("ftAnim_8006F3DC: no animated part")?;
+                if x594_b0(&p.fp) {
+                    let fp = &mut *p.fp;
+                    fp.x6B0 = melee_types::Vec { x: 0.0, y: 0.0, z: 0.0 };
+                    fp.x6A4_transNOffset = melee_types::Vec { x: 0.0, y: 0.0, z: 0.0 };
+                    fp.x698 = fp.x68C_transNPos;
+                }
                 p.fp.x3E4_fighterCmdScript.timer = -anim_start;
             } else {
                 p.skel.attach(tree, anim_start, anim_speed, r.looping(), blend);
                 p.animating = true;
                 p.fp.x3E4_fighterCmdScript.timer = 0.0;
             }
-            p.skel.anim(&mut AObjGlobals::default())?;
+            body_anim(p)?;
             p.fp.cur_anim_frame = p.skel.curr_frame().ok_or("ftAnim_8006F3DC: no animated part")?;
             if bone_index != 0 && r.blend != 0 {
                 // The previous row's x596_bits.x7 part: its anim-skeleton translation and
                 // rotation onto the body (HSD_JObjSetTranslate, ftParts_JObjSetRotation).
                 p.skel.copy_part_tr(bone_index as usize);
+            }
+            if x594_b0(&p.fp) {
+                let fp = &mut *p.fp;
+                if anim_start == 0.0 {
+                    fp.x6B0 = melee_types::Vec { x: 0.0, y: 0.0, z: 0.0 };
+                    fp.x6A4_transNOffset = melee_types::Vec { x: 0.0, y: 0.0, z: 0.0 };
+                    fp.x698 = fp.x68C_transNPos;
+                } else if fp.ground_or_air == melee_types::GA_Ground {
+                    // (Ft_MF_SkipAnimVel clear in every change wired here.)
+                    let v = fp.x6A4_transNOffset.z * fp.facing_dir;
+                    fp.self_vel.x = v;
+                    fp.gr_vel = v;
+                }
             }
             if anim_start != 0.0 {
                 // ftAction_80073354: catch the script up through the skip table.
@@ -2007,7 +2857,7 @@ impl Sim for VsMatch {
         if self.stopped.is_some() {
             return false;
         }
-        let r = self.fighters().and_then(|_| self.stage_anim()).and_then(|_| {
+        let r = self.fighters().and_then(|_| self.hit_guard()).and_then(|_| self.stage_anim()).and_then(|_| {
             let rand = &mut self.rand;
             self.last_bg.update(&mut || rand.randf());
             self.effects_update()

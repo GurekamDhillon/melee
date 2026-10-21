@@ -404,11 +404,32 @@ impl Skeleton {
     /// then `ftAnim_8006E7B8(fp, FtPart_TopN)`. Blend: the second skeleton runs
     /// (`HSD_JObjAnimAll`) and `ftAnim_8006FE9C` / `ftAnim_8006FF74` blend or copy it onto the
     /// body. Err: an animation event (particle / sound / user callback key) that is not wired.
-    pub fn anim(&mut self, ag: &mut AObjGlobals) -> Result<(), String> {
+    ///
+    /// `transn` (`x594_b0`): the TransN root-motion path, `ftAnim_8006E054(fp, root or
+    /// x8AC_animSkeleton, TransN joint, part 0x35)` with `x594_b5` clear: the walk animates every
+    /// joint, and the TransN joint's animated translation is returned and replaced by zero
+    /// (`HSD_JObjSetTranslate(jobj, &0)`); the caller turns it into `x68C` / `x698` / `x6A4`.
+    pub fn anim(&mut self, ag: &mut AObjGlobals, transn: bool) -> Result<Option<Vec3>, String> {
+        let transn_part = self.b4_parts[0];
         if self.blend_frames == 0.0 {
             self.tree.clear_flags_all(Some(self.root), hj::JOBJ_USE_QUATERNION);
-            self.anim_body(ag)?;
-            return Ok(());
+            if !transn {
+                self.anim_body(ag)?;
+                return Ok(None);
+            }
+            // ftAnim_8006E054(fp, root, TransN, 0x35): the whole tree in part (DFS) order.
+            ag.init_end_callback();
+            let mut out = None;
+            for i in 0..self.parts.len() {
+                let j = self.parts[i].joint;
+                jobj_anim(&mut self.tree, j, ag)?;
+                if i == transn_part {
+                    out = Some(self.tree.get(j).translate);
+                    self.set_translate(j, Vec3 { x: 0.0, y: 0.0, z: 0.0 });
+                }
+            }
+            ag.invoke_callbacks();
+            return Ok(out);
         }
         // lbGetJObjFramerate(x8AC): the first JObj with an AObj in preorder.
         let framerate = find_aobj(&self.tree2, Some(self.parts2[0])).map_or(0.0, |j| self.tree2.get(j).aobj.as_ref().unwrap().framerate);
@@ -424,12 +445,23 @@ impl Skeleton {
             t_inv = 1.0 - t;
         }
         self.anim_body(ag)?;
-        // HSD_JObjAnimAll(anim_jobj).
+        // HSD_JObjAnimAll(anim_jobj), or with x594_b0 ftAnim_8006E054(fp, anim_jobj,
+        // parts[TransN].x4_jobj2, ..): the same walk, the TransN copy's translation taken out.
         ag.init_end_callback();
         let mut order = Vec::new();
         preorder(&self.tree2, self.parts2[0], &mut order);
+        let transn_j = self.parts2[transn_part];
+        let mut out = None;
         for j in order {
             jobj_anim(&mut self.tree2, j, ag)?;
+            if transn && j == transn_j {
+                out = Some(self.tree2.get(j).translate);
+                let o = self.tree2.get_mut(j);
+                o.translate = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+                if o.flags & hj::JOBJ_MTX_INDEP_SRT == 0 {
+                    self.tree2.set_mtx_dirty(Some(j));
+                }
+            }
         }
         ag.invoke_callbacks();
         for i in 1..self.parts.len() {
@@ -445,7 +477,7 @@ impl Skeleton {
                 copy_srt(&self.tree2, src, &mut self.tree, dst);
             }
         }
-        Ok(())
+        Ok(out)
     }
 
     /// `ftAnim_8006E7B8(fp, FtPart_TopN)`: every animated part's `HSD_JObjAnim`.

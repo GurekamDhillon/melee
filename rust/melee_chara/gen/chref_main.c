@@ -87,6 +87,16 @@ bool itIsHeavy(HSD_GObj* item) { tr(44); tr(item != 0); return pick() & 1; }
 Gm_PKind Player_GetPlayerSlotType(s32 slot) { tr(45); tr((u32) slot); return (Gm_PKind) (pick() & 3); }
 /* Round 11 (gen/port_r11.py): ftCliffCommon_80081298 recorder. */
 bool ftCliffCommon_80081298(HSD_GObj* gobj) { tr(46); trg(gobj); return pick() & 1; }
+/* Round 13 (gen/port_r13.py): 9 recorders for calls that default to group 3's ports in Rust. */
+STUB_G(47, ftColl_8007AEE0)
+STUB_G(48, ftColl_8007AF10)
+STUB_G(49, ft_80085004)
+STUB_G(50, ft_80085088)
+STUB_G(51, ft_800850B4)
+STUB_G(52, ft_80085154)
+STUB_G(53, ft_800851C0)
+STUB_G(54, ft_800851D0)
+STUB_G(55, ft_80085204)
 void ftBossLib_8015BD20(HSD_GObj* gobj) { return; }
 
 #include "ftcommon_extract.inc"

@@ -121,8 +121,8 @@ stub!(/// TODO(group3): `ft_800841B8(gobj, cb)` (ft/ft_0877.c).
     FT_800841B8, ft_800841B8, (g: G, cb: HSD_GObjEvent));
 stub!(/// TODO(group3): `ft_80084104(gobj)` (ft/ft_0877.c).
     FT_80084104, ft_80084104, (g: G));
-stub!(/// TODO(group3): `ftParts_80074A4C(gobj, model_idx, val)` (ft/ftparts.c).
-    FTPARTS_80074A4C, ftParts_80074A4C, (g: G, model_idx: i32, val: i32));
+stub_or!(/// `ftParts_80074A4C(gobj, model_idx, val)` (ft/ftparts.c): group 3's verified port (round 13, ft0df.rs) when the hook is unset.
+    FTPARTS_80074A4C, ftParts_80074A4C, melee_fighter::ft0df::ftparts_80074a4c, (g: G, model_idx: i32, val: i32));
 stub!(/// TODO(group3): `ftParts_80074B0C(gobj, model_idx, val)` (ft/ftparts.c).
     FTPARTS_80074B0C, ftParts_80074B0C, (g: G, model_idx: i32, val: i32));
 stub!(/// TODO(group3): `ft_CheckGroundAndLedge(gobj, direction)` (ft/ftcoll.c; returns bool).
@@ -189,8 +189,8 @@ pub fn ftCommon_UpdateFacing(fp: &mut Fighter) {
 
 // ---- Round 6 (gen/port_r6.py): more calls out of the character code. ----
 
-stub!(/// TODO(group3): `ftColl_8007AEF8(gobj)` (ft/ftcoll.c).
-    FTCOLL_8007AEF8, ftColl_8007AEF8, (g: G));
+stub_or!(/// `ftColl_8007AEF8(gobj)` (ft/ftcoll.c): group 3's verified port (round 13, ft0df.rs) when the hook is unset.
+    FTCOLL_8007AEF8, ftColl_8007AEF8, melee_fighter::ft0df::ftcoll_8007aef8, (g: G));
 stub!(/// TODO(group3): `ftCo_AirCatchHit_Coll(gobj)` (ft/ftcoll.c / ftCommon AirCatch).
     FTCO_AIRCATCHHIT_COLL, ftCo_AirCatchHit_Coll, (g: G));
 stub!(/// TODO(group3): `ftAnim_ApplyPartAnim(gobj, a, b, frame)` (ft/ftanim.c).
@@ -244,3 +244,23 @@ pub fn ftBossLib_8015BD20(_g: G) {}
 
 stub!(/// TODO(group3): `ftCliffCommon_80081298(gobj)` (ft/ftcliffcommon.c, ledge grab check; returns bool).
     FTCLIFFCOMMON_80081298, ftCliffCommon_80081298, (g: G) -> i32);
+
+// ---- Round 13 (gen/port_r13.py): group 3's verified gobj-only ports the character code calls. ----
+stub_or!(/// `ftColl_8007AEE0(gobj)` (ft/ftcoll.c): group 3's verified port (round 13, ft0df.rs) when the hook is unset.
+    FTCOLL_8007AEE0, ftColl_8007AEE0, melee_fighter::ft0df::ftcoll_8007aee0, (g: G));
+stub_or!(/// `ftColl_8007AF10(gobj)` (ft/ftcoll.c): group 3's verified port (round 13, ft0df.rs) when the hook is unset.
+    FTCOLL_8007AF10, ftColl_8007AF10, melee_fighter::ft0df::ftcoll_8007af10, (g: G));
+stub_or!(/// `ft_80085004(gobj)` (ft/ft_084E.c): group 3's verified port (round 12, ft084e.rs) when the hook is unset.
+    FT_80085004, ft_80085004, melee_fighter::ft084e::ft_80085004, (g: G));
+stub_or!(/// `ft_80085088(gobj)` (ft/ft_084E.c): group 3's verified port (round 12, ft084e.rs) when the hook is unset.
+    FT_80085088, ft_80085088, melee_fighter::ft084e::ft_80085088, (g: G));
+stub_or!(/// `ft_800850B4(gobj)` (ft/ft_084E.c): group 3's verified port (round 12, ft084e.rs) when the hook is unset.
+    FT_800850B4, ft_800850B4, melee_fighter::ft084e::ft_800850b4, (g: G));
+stub_or!(/// `ft_80085154(gobj)` (ft/ft_084E.c): group 3's verified port (round 12, ft084e.rs) when the hook is unset.
+    FT_80085154, ft_80085154, melee_fighter::ft084e::ft_80085154, (g: G));
+stub_or!(/// `ft_800851C0(gobj)` (ft/ft_084E.c): group 3's verified port (round 12, ft084e.rs) when the hook is unset.
+    FT_800851C0, ft_800851C0, melee_fighter::ft084e::ft_800851c0, (g: G));
+stub_or!(/// `ft_800851D0(gobj)` (ft/ft_084E.c): group 3's verified port (round 12, ft084e.rs) when the hook is unset.
+    FT_800851D0, ft_800851D0, melee_fighter::ft084e::ft_800851d0, (g: G));
+stub_or!(/// `ft_80085204(gobj)` (ft/ft_084E.c): group 3's verified port (round 12, ft084e.rs) when the hook is unset.
+    FT_80085204, ft_80085204, melee_fighter::ft084e::ft_80085204, (g: G));

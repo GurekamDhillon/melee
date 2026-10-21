@@ -98,6 +98,16 @@ fn install_recorders() {
         st::PLAYER_GETPLAYERSLOTTYPE = Some(|slot| { tr(45); tr(slot as u32); pick() & 3 });
         // round 11 (gen/port_r11.py)
         st::FTCLIFFCOMMON_80081298 = Some(|g| { tr(46); trg(g); pick() });
+        // round 13 (gen/port_r13.py)
+        st::FTCOLL_8007AEE0 = Some(|g| { tr(47); trg(g) });
+        st::FTCOLL_8007AF10 = Some(|g| { tr(48); trg(g) });
+        st::FT_80085004 = Some(|g| { tr(49); trg(g) });
+        st::FT_80085088 = Some(|g| { tr(50); trg(g) });
+        st::FT_800850B4 = Some(|g| { tr(51); trg(g) });
+        st::FT_80085154 = Some(|g| { tr(52); trg(g) });
+        st::FT_800851C0 = Some(|g| { tr(53); trg(g) });
+        st::FT_800851D0 = Some(|g| { tr(54); trg(g) });
+        st::FT_80085204 = Some(|g| { tr(55); trg(g) });
     }
 }
 

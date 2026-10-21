@@ -1,0 +1,13 @@
+# Round-13 character functions (gen/port_r13.py output): <tu> <function>, checked by gen/chref.py
+src/melee/ft/kinds/ftGameWatch/ftgamewatchspecialhi.c ftGw_SpecialHi_Phys
+src/melee/ft/kinds/ftGameWatch/ftgamewatchspecialhi.c ftGw_SpecialAirHi_Phys
+src/melee/ft/kinds/ftGameWatch/ftgamewatchspeciallw.c ftGw_SpecialLw_Phys
+src/melee/ft/kinds/ftKirby/ftkirbyspecialpeach.c ftKb_PeSpecialLw_Phys
+src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c ftKp_SpecialSStart_Phys
+src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c ftKp_SpecialSEndF_Phys
+src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c ftKp_SpecialSEndB_Phys
+src/melee/ft/kinds/ftMario/ftmariospecialhi.c ftMr_SpecialHi_Phys
+src/melee/ft/kinds/ftMars/ftmarsspeciallw.c ftMs_SpecialLw_Phys
+src/melee/ft/kinds/ftMars/ftmarsspecials.c ftMs_SpecialS3_Phys
+src/melee/ft/kinds/ftMars/ftmarsspecials.c ftMs_SpecialS4_Phys
+src/melee/ft/kinds/ftPeach/ftpeachspecialn.c ftPe_SpecialN_Phys

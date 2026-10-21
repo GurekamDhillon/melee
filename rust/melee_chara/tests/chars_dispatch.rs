@@ -1584,6 +1584,18 @@ pub const NAMES: &[&str] = &[
     "ftZd_SpecialAirSStart_Coll",
     "ftZd_SpecialAirSLoop_Coll",
     "ftZd_SpecialAirSEnd_Coll",
+    "ftGw_SpecialHi_Phys",
+    "ftGw_SpecialAirHi_Phys",
+    "ftGw_SpecialLw_Phys",
+    "ftKb_PeSpecialLw_Phys",
+    "ftKp_SpecialSStart_Phys",
+    "ftKp_SpecialSEndF_Phys",
+    "ftKp_SpecialSEndB_Phys",
+    "ftMr_SpecialHi_Phys",
+    "ftMs_SpecialLw_Phys",
+    "ftMs_SpecialS3_Phys",
+    "ftMs_SpecialS4_Phys",
+    "ftPe_SpecialN_Phys",
 ];
 
 #[allow(clippy::too_many_arguments)]
@@ -3169,6 +3181,18 @@ pub fn call(which: usize, g: *mut HSD_GObj, fp: &mut Fighter, a: f32, ia: i32, n
         1576 => { melee_chara::chars::r12::ftZelda::ftzeldaspecials::ftZd_SpecialAirSStart_Coll(g); 0 },
         1577 => { melee_chara::chars::r12::ftZelda::ftzeldaspecials::ftZd_SpecialAirSLoop_Coll(g); 0 },
         1578 => { melee_chara::chars::r12::ftZelda::ftzeldaspecials::ftZd_SpecialAirSEnd_Coll(g); 0 },
+        1579 => { melee_chara::chars::r13::ftGameWatch::ftgamewatchspecialhi::ftGw_SpecialHi_Phys(g); 0 },
+        1580 => { melee_chara::chars::r13::ftGameWatch::ftgamewatchspecialhi::ftGw_SpecialAirHi_Phys(g); 0 },
+        1581 => { melee_chara::chars::r13::ftGameWatch::ftgamewatchspeciallw::ftGw_SpecialLw_Phys(g); 0 },
+        1582 => { melee_chara::chars::r13::ftKirby::ftkirbyspecialpeach::ftKb_PeSpecialLw_Phys(g); 0 },
+        1583 => { melee_chara::chars::r13::ftKoopa::ftkoopaspecials::ftKp_SpecialSStart_Phys(g); 0 },
+        1584 => { melee_chara::chars::r13::ftKoopa::ftkoopaspecials::ftKp_SpecialSEndF_Phys(g); 0 },
+        1585 => { melee_chara::chars::r13::ftKoopa::ftkoopaspecials::ftKp_SpecialSEndB_Phys(g); 0 },
+        1586 => { melee_chara::chars::r13::ftMario::ftmariospecialhi::ftMr_SpecialHi_Phys(g); 0 },
+        1587 => { melee_chara::chars::r13::ftMars::ftmarsspeciallw::ftMs_SpecialLw_Phys(g); 0 },
+        1588 => { melee_chara::chars::r13::ftMars::ftmarsspecials::ftMs_SpecialS3_Phys(g); 0 },
+        1589 => { melee_chara::chars::r13::ftMars::ftmarsspecials::ftMs_SpecialS4_Phys(g); 0 },
+        1590 => { melee_chara::chars::r13::ftPeach::ftpeachspecialn::ftPe_SpecialN_Phys(g); 0 },
         _ => unreachable!(),
     }
 }

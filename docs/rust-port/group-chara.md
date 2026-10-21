@@ -645,3 +645,45 @@ instead of 256 and changed their hashes; fixed, `tests/data/chars.txt` then only
 - Ported this round: 101 (all verified; none unverified). Total: 1592 of 4605 (34.6%).
 - Stubs replaced: 5 (ft_084E.c physics -> group 3's ports). Stubs added: 0.
 - Next: nested `{ Vec3 ...; }` blocks, `Vec3` locals, the Kirby hat helpers (HSD_JObj), item calls.
+
+## Night 4, round 2 (= round 13 of the generator, 2026-10-21)
+
+### Recount at the start
+- 1592 = 13 pure helpers + 1579 (tu, function) lines in `gen/ported*.txt` (rounds 1-12; no duplicate
+  pairs). Total 4605 definitions (no C under `ft/kinds` changed). 34.6%, as round 12 said.
+
+### Stub replacement
+- `ftParts_80074A4C` and `ftColl_8007AEF8` now use `stub_or!`: group 3 committed and verified them in
+  its round 13 (`melee_fighter::ft0df`, group-fighter.md). 12 stubs fall back to group 3 now.
+- Every other `stubs.rs` target re-checked (committed, non-`c2r`/`raw` ports): none. `ftAnim_SetAnimRate`
+  is only a hook in group 3 too; `ftParts_80074B0C`, ftcoll ground/air, ftanim, ChangeMotionState,
+  itIsHeavy, Player_GetPlayerSlotType: no port.
+- 9 new `stub_or!` hooks, each defaulting to a verified group-3 port the character code calls:
+  `ftColl_8007AEE0`, `ftColl_8007AF10` (ft0df.rs) and `ft_80085004`, `ft_80085088`, `ft_800850B4`,
+  `ft_80085154`, `ft_800851C0`, `ft_800851D0`, `ft_80085204` (ft084e.rs). Oracle recorders 47-55
+  (`gen/chref_main.c`, `tests/chars_ref.rs`).
+
+### What was ported
+12 functions, all `_Phys` callbacks (GameWatch 3, Koopa 3, Mars 3, Kirby 1, Mario 1, Peach 1; list
+`gen/ported_r13.txt`, code `src/chars/r13/<Char>.rs`). How: `gen/port_r13.py` = port_r12's translator
+with the 9 calls above known and calls into round-12 ports. 48 candidates dropped by the rustc-reject
+loop (round 12's 47 + 1). No new callback keys.
+
+### FMA
+`tools/rust-port/fma_sites.py --func '^(<the 12>)$'` over their 8 TUs: 0 fused sites.
+
+### Verification
+- **1591/1591 equal** (1579 + 12), `cargo test -p melee_chara --test chars_ref`; `tests/data/chars.txt`
+  gained 12 lines, none changed.
+- Negative check: `st::ft_800850B4` -> `st::ft_80085088` in a round-13 ftKoopa function: 1 of 1591 differ.
+- Not proven: branch coverage (random fill), the stubbed calls (traced by id + args only; the 9 new
+  hooks run group 3's ports in the game, which group 3 verified separately).
+- `cargo build --workspace` clean; `cargo test --workspace --no-fail-fast` green except one run where
+  the melee_chara doctest could not find `melee_fighter` (E0463) while another agent was rebuilding;
+  `cargo test -p melee_chara --doc` alone passes.
+
+### Counts
+- Ported this round: 12 (all verified; none unverified). Total: 1604 of 4605 (34.8%).
+- Stubs replaced: 2. Stubs added: 9 (all `stub_or!` to verified group-3 ports).
+- Next: nested `{ Vec3 ...; }` blocks, `Vec3` locals, the Kirby hat helpers (HSD_JObj), item calls;
+  the cheap "new callee" path is nearly exhausted.

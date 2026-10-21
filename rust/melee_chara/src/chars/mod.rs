@@ -95,3 +95,6 @@ pub mod r11;
 /// Round 12: gen/port_r12.py output ((tu, name)-keyed ported filter, `fp = gobj->user_data`,
 /// header fp-store inlines expanded). Path: `chars::r12::<Char>::<tu>::<fn>`.
 pub mod r12;
+/// Round 13: gen/port_r13.py output (calls to 9 more of group 3's verified ft084e / ft0df ports).
+/// Path: `chars::r13::<Char>::<tu>::<fn>`.
+pub mod r13;

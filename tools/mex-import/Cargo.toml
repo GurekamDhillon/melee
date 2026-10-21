@@ -1,0 +1,19 @@
+# m-ex disc importer (platform track step 5/5). Offline tool, never part of the game.
+# Reads the user's own vanilla + m-ex discs, writes gdmods (mods/<id>/mod.json + files/), and
+# inventories the mods' PowerPC code against melee_types' GameCube offset tables.
+# Its output is disc-derived: never commit it (see README.md).
+[package]
+name = "mex_import"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+workspace = "../../rust"
+
+[[bin]]
+name = "mex-import"
+path = "src/main.rs"
+
+[dependencies]
+melee_core.workspace = true
+melee_types.workspace = true

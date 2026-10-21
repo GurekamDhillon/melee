@@ -24,6 +24,9 @@ MINE = {
     "tu_ftcaptainspecials": [(CA + "ftcaptainspecials.c", "fn:ftCa_SpecialAirSStart_Phys", None),
                              (CA + "ftcaptainspecials.c", "fn:ftCa_SpecialAirS_Phys", None)],
     "tu_ftclink": [("src/melee/ft/kinds/ftCLink/ftclink.c", "fn:ftCl_Init_80149114", None)],
+    # shard 249-256: the driver #includes the game TU itself (plus two lbvector.c cuts)
+    "tu_ftcrazyhandrockcrush0": [("src/melee/lb/lbvector.c", "fn:lbVector_Diff", None),
+                                 ("src/melee/lb/lbvector.c", "fn:lbVector_Normalize", None)],
 }
 run.EXTRACTS.update(MINE)
 run.HERE = HERE

@@ -95,3 +95,4 @@ pub mod ftCo_DamageBind;
 pub mod ftCo_DamageFall;
 pub mod ftCo_Down;
 pub mod ftCo_DownAttack;
+pub mod ftCo_DamageSong;

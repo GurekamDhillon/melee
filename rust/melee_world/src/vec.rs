@@ -1,32 +1,11 @@
 //! Vec2 / Vec3 and the SDK vector ops group 2 needs.
 //!
-//! TODO(move-to-core): Vec/PSVEC* belong to group 0/1 (melee_types / melee_runtime).
+//! Vec2/Vec3 and frsqrte now come from melee_core. This crate keeps its own PSVECNormalize because it was
+//! verified against mplib.c; melee_runtime::mtx::vec_normalize is the group-1 copy (dedupe next).
 
 use crate::gekko::{force25, frsqrte};
 
-#[repr(C)]
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
-pub struct Vec2 {
-    pub x: f32,
-    pub y: f32,
-}
-melee_core::gc_layout!(Vec2, "Vec2", size 0x8, align 4, [
-    x @ 0x0: 4 "f32",
-    y @ 0x4: 4 "f32",
-]);
-
-#[repr(C)]
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
-pub struct Vec3 {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-}
-melee_core::gc_layout!(Vec3, "Vec3", size 0xC, align 4, [
-    x @ 0x0: 4 "f32",
-    y @ 0x4: 4 "f32",
-    z @ 0x8: 4 "f32",
-]);
+pub use melee_core::vec::{Vec2, Vec3};
 
 /// `PSVECNormalize` as emulated by pc/gameworld/mtx_pc.c (one Newton step over the hardware
 /// frsqrte estimate; NOT a correctly rounded normalize).

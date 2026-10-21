@@ -4,63 +4,8 @@
 //! yet; see docs/rust-port/group-4 fighter characters.md. Expected values for the tests come
 //! from the C compiled natively (gen/ref_pure.c, gen/run_ref.sh -> src/pure_ref.rs).
 
-/// Gekko `frsqrte` estimate, bit-exact (port of `__frsqrte` in pc/gameworld/gekko_fp.c,
-/// itself from Dolphin's ApproximateReciprocalSquareRoot).
-/// TODO(move-to-core): group 1 (melee_runtime) owns gekko_fp; replace with its version.
-pub fn frsqrte(val: f64) -> f64 {
-    const BASE_DEC: [(i64, i64); 32] = [
-        (0x1a7e800, -0x568), (0x17cb800, -0x4f3), (0x1552800, -0x48d), (0x130c000, -0x435),
-        (0x10f2000, -0x3e7), (0x0eff000, -0x3a2), (0x0d2e000, -0x365), (0x0b7c000, -0x32e),
-        (0x09e5000, -0x2fc), (0x0867000, -0x2d0), (0x06ff000, -0x2a8), (0x05ab800, -0x283),
-        (0x046a000, -0x261), (0x0339800, -0x243), (0x0218800, -0x226), (0x0105800, -0x20b),
-        (0x3ffa000, -0x7a4), (0x3c29000, -0x700), (0x38aa000, -0x670), (0x3572000, -0x5f2),
-        (0x3279000, -0x584), (0x2fb7000, -0x524), (0x2d26000, -0x4cc), (0x2ac0000, -0x47e),
-        (0x2881000, -0x43a), (0x2665000, -0x3fa), (0x2468000, -0x3c2), (0x2287000, -0x38e),
-        (0x20c1000, -0x35e), (0x1f12000, -0x332), (0x1d79000, -0x30a), (0x1bf4000, -0x2e6),
-    ];
-    const EXP_MASK: i64 = 0x7FF << 52;
-    const MANT_MASK: i64 = (1 << 52) - 1;
-    const SIGN: i64 = i64::MIN;
-    const QUIET: u64 = 1 << 51;
-    let nan = f64::from_bits(EXP_MASK as u64 | QUIET);
-
-    let integral = val.to_bits() as i64;
-    let mut mantissa = integral & MANT_MASK;
-    let sign = integral & SIGN;
-    let mut exponent = integral & EXP_MASK;
-
-    if mantissa == 0 && exponent == 0 {
-        return f64::from_bits(if sign != 0 { (SIGN | EXP_MASK) as u64 } else { EXP_MASK as u64 });
-    }
-    if exponent == EXP_MASK {
-        if mantissa == 0 {
-            return if sign != 0 { nan } else { 0.0 };
-        }
-        return f64::from_bits(val.to_bits() | QUIET);
-    }
-    if sign != 0 {
-        return nan;
-    }
-    if exponent == 0 {
-        loop {
-            exponent -= 1 << 52;
-            mantissa <<= 1;
-            if mantissa & (1 << 52) != 0 {
-                break;
-            }
-        }
-        mantissa &= MANT_MASK;
-        exponent += 1 << 52;
-    }
-    let exponent_lsb = exponent & (1 << 52);
-    // C: signed 64-bit division truncating toward zero (Rust `/` on i64 does the same).
-    exponent = ((0x3FF << 52) - ((exponent - (0x3FE << 52)) / 2)) & EXP_MASK;
-    let mut out = sign | exponent;
-    let i = ((exponent_lsb | mantissa) >> 37) as i32;
-    let (base, dec) = BASE_DEC[(i / 2048) as usize];
-    out |= (base + dec * (i % 2048) as i64) << 26;
-    f64::from_bits(out as u64)
-}
+/// Gekko `frsqrte` (now in melee_core::fp; this crate's tests still check it on 220 inputs).
+pub use melee_core::fp::frsqrte;
 
 /// `my_sqrtf`, the static inline copied into ftCrazyHand (fingerbeam, rockcrush0),
 /// ftMasterHand (backdisappear, fingergun, poke, walk) and ftSeak (specialhi): an frsqrte

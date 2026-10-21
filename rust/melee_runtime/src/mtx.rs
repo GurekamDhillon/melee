@@ -11,28 +11,9 @@
 //! returned by value, which is what the C does through its temporary in the aliased case.
 
 use crate::gekko::{cosf, frsqrte, sinf, sqrtf, tanf};
-use melee_core::fp::fmadds;
+use melee_core::fp::{fmadds, force25};
 
-/// `Vec` / `Point3d` (`{ f32 x, y, z; }`). TODO(move-to-core): shared by every group.
-#[repr(C)]
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
-pub struct Vec3 {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-}
-melee_core::gc_layout!(Vec3, "Vec", size 0xC, align 4, [
-    x @ 0x0: 4 "f32",
-    y @ 0x4: 4 "f32",
-    z @ 0x8: 4 "f32",
-]);
-impl melee_core::hash::StateHash for Vec3 {
-    fn state_hash(&self, h: &mut melee_core::hash::StateHasher) {
-        self.x.state_hash(h);
-        self.y.state_hash(h);
-        self.z.state_hash(h);
-    }
-}
+pub use melee_core::vec::Vec3;
 
 /// `Quaternion` (`{ f32 x, y, z, w; }`). TODO(move-to-core).
 #[repr(C)]
@@ -234,13 +215,6 @@ pub fn vec_sub(a: &Vec3, b: &Vec3) -> Vec3 {
 
 pub fn vec_scale(v: &Vec3, s: f32) -> Vec3 {
     Vec3 { x: v.x * s, y: v.y * s, z: v.z * s }
-}
-
-/// Dolphin's Force25Bit (frC operand of a single-precision multiply keeps 25 mantissa bits).
-#[inline]
-fn force25(d: f64) -> f64 {
-    let u = d.to_bits();
-    f64::from_bits((u & 0xFFFF_FFFF_F800_0000).wrapping_add(u & 0x800_0000))
 }
 
 /// `PSVECNormalize`: one Newton step on the hardware estimate; NOT correctly rounded, and a

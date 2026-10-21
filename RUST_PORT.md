@@ -64,7 +64,7 @@ order: `melee_core` (fp: `fmadds`/`fmsubs` as f64-then-f32; gc: `GcField`, `GcLa
 64 over big-endian canonical bytes so a C walker over guest memory can match), `melee_types` (g0),
 `melee_runtime` (g1), `melee_world` (g2), `melee_fighter` (g3, incl. ftCommon + pl), `melee_chara`
 (g4), `melee_items` (g5), `melee_modes` (g6), and the `melee` bin that links all (prints a self-test).
-Group crates are empty stubs. Not built yet: the ppc32 record-layout dump -> `gc_layout!` generator.
+(Status: see "Integration, night 1" below.)
 
 ## Golden corpus (phase 1)
 - `MELEE_NEUTRAL_HASHLOG=<csv>`: byte-order-neutral gameplay hash (`RB_NeutralHash`, fighter.c),
@@ -119,3 +119,77 @@ Details: `docs/rust-port/group-0 types + GC layout table.md`.
   cut verbatim): NHV1 fighter hash, 33 ftcommon.c movement helpers, staling (plstale/plattack/ft_0881).
 - Trap: `HitCapsule::hit_grabbed_victim_only` is a `:1` unioned with the owner pointer, i.e. the GC
   address MSB (1 for every heap pointer); see `melee_fighter::compat`. `ABS(-0.0)` is -0.0, not abs().
+
+## Integration, night 1 (2026-10-21; supersedes the per-group notes where they disagree)
+
+`cd rust && cargo build --workspace && cargo test --workspace` pass on stable 1.96 with no
+warnings (25 test binaries, all green). Groups 2, 4 and 5 left no section of their own here; their
+detail is in `docs/rust-port/group-2-world.md`, `group-4 fighter characters.md`,
+`group-5 items, trophies, vi.md`. Group 6 (`melee_modes`) was not started.
+
+### Status per group
+
+"Verified" means checked bit for bit against the game's own C compiled natively (an oracle), not
+against a running Rust game: no Rust simulation exists yet, so no golden has been reproduced by Rust.
+
+| group | crate | C functions | hand-ported | verified vs C | types + GC offsets | stubbed / missing |
+|---|---|---|---|---|---|---|
+| 0 types | melee_types | 110 header inlines | 82 | NHV1 words (8 oracle cases) + frame combine on all 10804 golden rows | 1576 records, generated (libclang ppc32) | 28 inlines need other groups; no BE file loader |
+| 1 runtime/HSD | melee_runtime | ~2000 | ~80 (gekko_fp, sqrtf, mtx, mtx44, random, lbtrigf, lbvector) | all, 11400 rows; oracle redoes gwtool fusion | Vec3/Quaternion only | all HSD objects (~1200), lb/db/sfx/THP |
+| 2 world | melee_world | 3013 | 36 (mplib line queries) | all, 27231 rows (oracle without contraction, see risk 2) | mp types, hand-written from header comments | cm, ef, gr, if; rest of mplib |
+| 3 fighter engine | melee_fighter | ~2820 | 57 (nh_Fighter, ftcommon movement, staling) | all (6600 + 12000 + 64 cases) | 569 records, generated | everything else; c2r layer (feature `c2r`) compiles, never linked |
+| 4 characters | melee_chara | ~4340 | 13 (pure helpers) | frsqrte / my_sqrtf / sumOfSquares (oracle without contraction) | 172 records, generated | all Fighter-touching code (~99.7%) |
+| 5 items/ty/vi | melee_items | ~5000 | 9 Item-only + item hash | 8 tests (oracle without contraction) | 438 records, generated | spawn/think/collision, trophies, vi |
+| 6 modes | melee_modes | n/a | 0 | none | none | all |
+| asm (10 items) | n/a | n/a | 0 | n/a | n/a | none belonged to groups 0-5; crash-screen register reads return 0 on PC |
+
+### Done in integration
+- Deduped the hand-written float/vector helpers into `melee_core`: `fp::{frsqrte, fres, force25}`
+  (from melee_runtime::gekko; identical copies deleted from melee_world::gekko and
+  melee_chara::pure) and `vec::{Vec2, Vec3}` (from melee_runtime::mtx and melee_world::vec, with
+  GC layout + StateHash). Old paths re-export, so every crate's oracle tests now run on the moved
+  code, and pass.
+- `melee` bin: a headless frame driver (`Sim` trait -> `nh_game` -> NHV1 CSV writer).
+  `melee hashlog --words G.csv --out C.csv` replays the words of an existing CSV through it; all 4
+  goldens round-trip and `compare_golden.py` reports identical (3601/3601/1801/1801 frames). This
+  checks the frame combine and the CSV format only. **It is not a simulation.**
+- `Cargo.lock` committed in its current consistent state.
+
+### Not done in integration
+- **Generated types are still in four copies** (melee_types gen.rs, melee_fighter generated.rs,
+  melee_chara types_gen.rs, melee_items gen/layout.rs) with different conventions for bitfields
+  (`[u8;n]` + accessors vs one integer vs accessors), `bool` and enums. Merging their output by hand
+  is the wrong fix; the fix is ONE generator (group 0's, the most complete) run over every header,
+  emitting per-module files into melee_types, then deleting the other three generators. Until then
+  `Fighter`/`Item` in melee_fighter/melee_items are different Rust types from melee_types'.
+- **Three NHV1 implementations** (melee_types::neutral_hash, melee_fighter::neutral_hash,
+  melee_items::hash), each oracle-checked; collapse to one once the types are one.
+- Sibling crates still do not depend on each other (deps were removed while other agents were
+  mid-generation). They all build now; re-add deps as each group starts calling another.
+- `PSVECNormalize` exists twice (melee_runtime::mtx::vec_normalize, melee_world::vec::ps_vec_normalize),
+  each verified by its own oracle; not merged because the world oracle ran without contraction.
+
+### Risks found while integrating
+1. The golden check proves only `nh_game`'s combine; the per-fighter words still come from the C.
+2. **Oracle flag mismatch.** Groups 2, 4 and 5 built their C oracles with `-ffp-contract=off`; group 1
+   showed the real build contracts. Those results are bit-exact against uncontracted C, not
+   necessarily against the game. Concrete case: `melee_chara::pure::my_sqrtf` computes
+   `3.0 - g*g*x` unfused, which group 1 found is a double fma in the real build (math_ppc.h sqrtf).
+   Re-run those oracles through `melee_runtime/oracle/lower.py` (contract on + gwtool lowering).
+3. Float->int saturation, div-by-zero and oversize-shift rules live in `melee_runtime::cabi`, not core yet.
+
+## Night 2: next steps, in order
+1. **One type generator** (above), so Fighter/Item/HSD types exist once in melee_types with the
+   GC offset table (the m-ex offset map). Point groups 3-5 at it and delete their copies.
+2. **Re-run the group 2/4/5 oracles with contraction on** and fix any fused sites.
+3. **Big-endian DAT/archive loader** driven by `GcLayout` (relocation table -> native structs with
+   real pointers or indices). Without it nothing data-driven (fighters, stages) can run.
+4. **HSD core** (GObj/JObj/AObj, process lists) in melee_runtime, then the frame loop: replace
+   `WordReplay` with a real `Sim`; first target is `melee hashlog` matching `pad_falcon_fox_fd` frame 0.
+5. **Platform layer** (new crate, e.g. `melee_platform`): winit window, wgpu for GX (port the GX/TEV
+   state model the C build gets from Aurora), cpal for AX audio, gilrs for PAD, std::fs for DVD.
+   Rendering is checked visually + render_test; logic stays on the hash oracle.
+6. **m-ex importer** (offline tool, not in the game): read the user's m-ex disc once and write each
+   asset to a gdmod file in the native format; mod PPC code is recompiled or interpreted, with field
+   accesses remapped through the `GcLayout` "GC offset -> native field" tables. The game then boots
+   from a vanilla disc plus those gdmods. No disc-derived output is ever committed.

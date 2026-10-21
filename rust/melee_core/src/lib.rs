@@ -9,6 +9,7 @@
 pub mod fp;
 pub mod gc;
 pub mod hash;
+pub mod vec;
 
 /// Crate version, used by the `melee` binary to prove each crate links.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

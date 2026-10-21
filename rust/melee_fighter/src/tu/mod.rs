@@ -70,3 +70,4 @@ pub mod ftCo_CliffClimb;
 pub mod ftCo_CliffAttack;
 pub mod ftCo_CliffEscape;
 pub mod ftCo_CliffJump;
+pub mod ftCo_CliffWait;

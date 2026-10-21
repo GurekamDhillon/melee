@@ -14,3 +14,5 @@ pub mod compat;
 #[cfg(feature = "c2r")]
 pub mod c2r;
 pub mod neutral_hash;
+pub mod hooks;
+pub mod ftcommon;

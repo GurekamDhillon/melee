@@ -31,7 +31,8 @@ FLAGS = ["--target=x86_64-pc-windows-msvc", "-std=c99", "-nostdinc", "-fno-built
 # name -> list of (game source, first line starting with, stop before line starting with)
 EXTRACTS = {
     "nh": [("src/melee/ft/fighter.c", "static u32 nh_Mix(", "/* Kept in game memory")],
-    "stale": [],
+    "ftcommon": [("src/melee/ft/ftcommon.c", "void ftCommon_CalcGroundAccel_Deaccel(", "void ftCommon_UnlockECB("),
+                 ("src/melee/ft/ftcommon.c", "void ftCommon_UpdateFacing(", "void ftCommon_8007DB24(")],
 }
 
 

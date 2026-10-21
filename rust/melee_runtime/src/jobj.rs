@@ -9,10 +9,9 @@
 //! `HSD_JObjMakeMatrix` (no game class overrides it).
 //!
 //! Calls into code that is not ported yet go through [`JObjHost`] (round 8: `jobj_rt::JObjRt` implements
-//! it over the RObj port and the IK solvers): the RObj queries
-//! (TODO(group1 robj)), the IK solvers `resolveIKJoint1/2` (they need `HSD_RObjGetGlobalPosition`;
-//! TODO(group1 robj)) and `HSD_JObjUnref` (the HSD_Obj refcount / class release:
-//! TODO(group1 class)).
+//! it over the RObj port and the IK solvers): the RObj queries, the IK solvers
+//! `resolveIKJoint1/2` (all real in `JObjRt`) and `HSD_JObjUnref` (the HSD_Obj refcount / class
+//! release: TODO(group1 class)).
 //!
 //! FMA: `fma_sites.py` finds no fused site in any function ported here; the matrix code is the
 //! round 1/2 `hsd_mtx` / `mtx` ports (fused where mtx.c / mtx_pc.c fuse) and the effector branch
@@ -129,13 +128,13 @@ pub trait JointSource {
 /// The not-yet-ported code jobj.c calls.
 pub trait JObjHost<D, R> {
     /// `HSD_RObjGetByType(robj, REFTYPE_IKHINT, 0)` -> `u.ik_hint.bone_length`.
-    /// TODO(group1 robj).
+    /// Real in `jobj_rt::JObjRt` (robj.rs `get_by_type`).
     fn ik_hint_bone_length(&mut self, robj: &[R]) -> Option<f32>;
-    /// `HSD_RObjUpdateAll(jobj->robj, jobj, JObjUpdateFunc)`. TODO(group1 robj).
+    /// `HSD_RObjUpdateAll(jobj->robj, jobj, JObjUpdateFunc)`. Real in `JObjRt`.
     fn robj_update_all(&mut self, tree: &mut JObjTree<D, R>, jobj: JObjId);
-    /// `resolveIKJoint1`. TODO(group1 robj): needs HSD_RObjGetGlobalPosition.
+    /// `resolveIKJoint1`. Real in `JObjRt`.
     fn resolve_ik_joint1(&mut self, tree: &mut JObjTree<D, R>, jobj: JObjId);
-    /// `resolveIKJoint2`. TODO(group1 robj).
+    /// `resolveIKJoint2`. Real in `JObjRt`.
     fn resolve_ik_joint2(&mut self, tree: &mut JObjTree<D, R>, jobj: JObjId);
     /// `HSD_JObjUnref` (refcount + class release). TODO(group1 class).
     fn unref(&mut self, tree: &mut JObjTree<D, R>, jobj: JObjId);

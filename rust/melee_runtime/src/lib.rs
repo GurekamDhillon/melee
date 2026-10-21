@@ -14,8 +14,10 @@
 pub use melee_core;
 
 pub mod aobj;
+pub mod bytecode;
 pub mod dobj;
 pub mod cabi;
+pub mod cobj;
 pub mod dat;
 pub mod fobj;
 pub mod gekko;
@@ -25,6 +27,7 @@ pub mod hsd_util;
 pub mod id;
 pub mod jobj;
 pub mod jobj_rt;
+pub mod lb_00ce;
 pub mod lbtrigf;
 pub mod lbvector;
 pub mod list;

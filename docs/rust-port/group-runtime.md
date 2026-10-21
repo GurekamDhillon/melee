@@ -230,3 +230,82 @@ rest of jobj.c's logic went next. 23 jobj.c definitions in `jobj_rt.rs`:
 - Not ported in jobj.c: HSD_JObjDispAll (render), load (JObjLoadJointSub, JObjLoad,
   HSD_JObjLoadJoint, ResolveRefs(+All)), the class system (SetDefaultClass, Unref, UnrefThis,
   JObjInit as a class method, ReleaseChild, Release, Amnesia, InfoInit).
+
+## Night 3, port round 1 (round 9): recount, bytecode, lb_00CE math, CObj logic
+
+### Recount (start of round)
+Total: **2,297** distinct function definitions in group 1's TUs (`src/sysdolphin/baselib/*.c`
+1,502, `src/melee/lb/*.c` 655, `db` 92, `sfx` 23, plus gekko_fp.c, mtx_pc.c, mtx44.c; IR
+`define`s from `tools/rust-port/fma_sites.py` over every TU, header inlines counted once; MSL's
+math_ppc inlines are among them). The old "~2000" was an estimate.
+Ported before this round (from each round's table above and in the night-1 doc): **316**, of which
+**271** are checked against the C and **45** are not (aobj 5, wobj 6, robj 18, round-8 jobj 16;
+each listed in its round). The RUST_PORT.md row said "~235"; that total predated rounds 6-8.
+
+### Stubs whose target now exists
+- `RObjHost::byte_code_eval` (robj.rs): `HSD_ByteCodeEval` is ported (`bytecode.rs`); the trait
+  method stays (the implementation needs the host's `HsdRand`), its TODO is replaced by the
+  pointer to `bytecode::byte_code_eval`.
+- jobj.rs `JObjHost` docs: the RObj / IK entries were still marked TODO(group1 robj) although
+  `jobj_rt::JObjRt` implements them for real since round 8; comments corrected.
+- Not done: wobj.rs `WObjHost`'s RObj methods (`robj_*_anim_all`, `robj_load_desc`) could be
+  backed by robj.rs, but `HsdWObj<R>` is generic over the RObj handle and the robj.rs walkers take
+  `&mut [HsdRObj]`; wiring needs a concrete `R` (as `JObjRt` did for JObj). Left as is.
+
+### Ported this round
+
+| C TU | function(s) | module | checked against C |
+|---|---|---|---|
+| baselib/bytecode.c | HSD_ByteCodeEval (every opcode) | `bytecode.rs` | yes |
+| lb/lb_00CE.c | expf, powf, powi | `lb_00ce.rs` | yes |
+| baselib/cobj.c | SetMtxDirty, MtxIsDirty, Get/Set/ClearFlags, Get/SetInterest, Get/SetEyePosition, GetEyeVector, GetEyeDistance, upvec2roll, roll2upvec, Get/SetUpVector, GetLeftVector, SetRoll, SetupViewingMtx, GetViewingMtx, GetViewingMtxPtr(+Direct), GetInvViewingMtxPtr(+Direct), Get/SetFov, Get/SetAspect, GetAuthoredAspect, UpdateView (TARGET_PC), Get/SetTop, Bottom, Left, Right, Get/SetNear, Far, Get/SetScissor, SetScissorx4, GetViewportf, SetViewport, SetViewportf, SetViewportfx4, Get/SetProjectionType, SetPerspective, SetFrustum, SetOrtho, GetPerspective, GetOrtho, makeProjectionMtx; the static inlines vec_get_x, vec_get_abs_y, cobj_get_up_x, get_up_vector_for_viewing_mtx(_inner); util.h vec_normalize_check | `cobj.rs` | yes (62) |
+| baselib/cobj.c | Get/SetInterestWObj, Get/SetEyePositionWObj | `cobj.rs` | no (field accessors; the driver never calls them) |
+
+70 functions: 66 checked against the C, 4 not.
+
+- bytecode.c: the `HSD_SList` of `void*` is a `Vec<u32>` (top at the end; only the low word of a
+  stack slot is ever read). `logf` (opcode 0x13) is the host CRT's in the shipping build (MSL
+  math.c is not compiled, nothing else defines it); the port uses `f32::ln`, which on Windows is the
+  same CRT `logf`, and the oracle links that CRT, so 0x13 is checked only CRT against CRT. Integer
+  `/` and `%` use `cabi::sdiv` / `srem` (gwtool's safe division); the oracle has no division
+  lowering (native idiv traps), so it only divides by non-zero, non -1 constants.
+- lb_00CE.c: both series loop until the partial sum stops changing. In f32 `expf(|x| >= ~13)`
+  reaches `inf/inf` (term and factorial both overflow) and **never terminates, in the C too**, as
+  does `expf(NaN)` and `powf(x, y)` when `y * 2*atanh(..)` is `0 * inf`. The port keeps that.
+  The oracle keeps to |x| <= 10. (`lb_8000D008` / `lb_8000D148` from the same TU were ported by
+  group 6 in `melee_modes::lb`; not duplicated.)
+- cobj.c native shape: `HsdCObj<R>` owns its eye / interest WObjs; the `u {roll; up}` union is one
+  `Vec3` (`roll` = `u.x`); `projection_param` is `[f32; 4]`; `proj_mtx` is `Option<Mtx>`, a new
+  one zeroed (the C's is uninitialised object memory, read only when the view matrix is
+  singular). `HSD_CObjUpdateView` reads the platform's `View_ProjectionScaleBits()`; the callers
+  take its float as `proj_scale`. GcLayout delegated to `melee_types::HSD_CObj` (0x94 with the
+  TARGET_PC tail). The TARGET_PC `diag_cobj_view` call in SetupViewingMtx (logging only) is not
+  ported.
+- FMA (`fma_sites.py`): bytecode.c none of its own (inlined MSL fmodf, math_ppc sqrtf); lb_00CE's
+  three none; cobj.c: roll2upvec's two `a*a + b*b` (ported with `fmadds`), the setup*Camera ones
+  are not ported. Discriminated: unfusing roll2upvec's |eye.y| ~ 1 branch fails 3 rows (after a dedicated
+  near-vertical op was added), the other branch reaches the test's 50-failure stop by row 360.
+- Oracles: `oracle/build_bytecode.sh` (bytecode.c, list.c, random.c, lb_00CE.c, lbtrigf.c,
+  gekko_fp.c) -> `tests/data/oracle_bytecode.txt` (2.5 MB): 3000 expf, 3000 powf, 2000 powi rows
+  and 20,000 random stack programs (tracked depth, branches / jumps over net-zero blocks, every
+  opcode, random seed in and out). `tests/oracle_bytecode.rs`: 48,000 checks, 0 failed, debug and
+  release. Mutations: 0x37 `==` -> `!=` fails 91, swapped atan2f args 92, `Randi(2)` -> 3 206,
+  expf's factorial off by one 6,198.
+  `oracle/build_cobj.sh` (cobj.c through `helper_cobj.c`, over the real wobj.c, jobj.c, mtx.c,
+  mtx_pc.c, mtx44.c, gekko_fp.c, lbtrigf.c) -> `tests/data/oracle_cobj.txt` (4.1 MB): 500 cameras
+  x 60 random ops (all 53 op kinds incl. NULL cameras, vertical eyes, up vectors along the eye,
+  WObj moves); each row checks the results and an FNV-1a hash of the whole camera + WObj state.
+  `tests/oracle_cobj.rs`: 30,000 rows, 0 failed, debug and release. NaN is canonicalised (the
+  C's view matrices from degenerate look-ats carry 7fc/ffc NaNs; same crate-level NaN-sign
+  property as round 7). Mutations (the test stops at 50 failures): dropping UpdateView's scale hits 50 by row 1,391,
+  the interest dirty bit by row 1,138, DegToRad in f64 by row 3,034, `upvec2roll`'s +-pi/2
+  constant by row 959.
+  Not discriminated: upvec2roll's `1 - |dot| < FLT_MIN` vs `< 0` (an up vector exactly along
+  the eye gives `dot == 1` either way).
+- WObjs in the oracle have no AObj target (the local-space path is wobj.c's, checked in round 6).
+- Not ported in cobj.c: the display half (EraseScreen, SetCurrent / EndCurrent, setupOffscreen /
+  Normal / TopHalf / BottomHalf camera: GX), the anim functions, load / init / class, GetCurrent.
+
+### Count after this round
+Ported **386 of 2,297** (16.8%): **337** checked against the C, **49** not (the 45 above + the
+4 CObj WObj accessors).

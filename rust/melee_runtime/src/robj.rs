@@ -12,7 +12,8 @@
 //! gets the tree, the object, the type and the value (`None` for the C's NULL).
 //!
 //! Calls into code that is not ported go through [`RObjHost`]: `HSD_JObjRefThis` /
-//! `HSD_JObjUnrefThis` (TODO(group1 class)) and `HSD_ByteCodeEval` (TODO(group1 bytecode)).
+//! `HSD_JObjUnrefThis` (TODO(group1 class)) and `HSD_ByteCodeEval` (ported: an implementation calls `bytecode::byte_code_eval` with
+//! the game's `HsdRand`; the host owns the random state).
 //! `expEvaluate`'s argument buffer (`arg_buf`, `arg_buf_size`) is [`RObjGlobals`]; the native
 //! buffer starts zeroed (the C's HSD_MemAlloc memory is uninitialised).
 //!
@@ -195,7 +196,8 @@ pub trait RObjHost {
     fn jobj_ref_this(&mut self, j: JObjId);
     /// `HSD_JObjUnrefThis` (NULL-safe in the C). TODO(group1 class).
     fn jobj_unref_this(&mut self, j: Option<JObjId>);
-    /// `HSD_ByteCodeEval(bytecode, args, nb_args)`. TODO(group1 bytecode).
+    /// `HSD_ByteCodeEval(bytecode, args, nb_args)`: implement with `crate::bytecode::byte_code_eval`
+    /// (it needs the host's `HsdRand`).
     fn byte_code_eval(&mut self, bytecode: Option<&[u8]>, args: &[f32], nb_args: u32) -> f32;
 }
 

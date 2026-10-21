@@ -14,8 +14,10 @@
 //!     storage keeps GameCube byte order, as melee_types documents);
 //!   * a pointer field is accessed only as its whole 4-byte word: a load hands the guest a
 //!     handle (the guest address of a region registered for that native pointer, registering one
-//!     for a pointer to a known record on the way), a store maps a handle back to the native
-//!     pointer; a partial pointer access or a store of a non-handle faults;
+//!     for a pointer to a known record on the way; a native pointer into a bytes region is the
+//!     matching guest address there), a store maps a handle (or an address inside a bytes
+//!     region) back to the native pointer; a partial pointer access or a store of anything else
+//!     faults;
 //!   * padding and fields without a native counterpart (GC 4-byte `size_t` vs native 8) live in a
 //!     per-region shadow of GC bytes (padding) or fault (mismatched widths).
 //!
@@ -158,11 +160,17 @@ pub struct GuestSpace {
     /// Next guest address handed to an auto-registered native object.
     next: u32,
     pub trace: Option<Vec<Rewrite>>,
+    /// Guest-only values of native pointer fields, by (region base, GC offset): what the guest
+    /// reads there instead of a handle for the native pointer, which stays as it is. For an
+    /// object the host keeps outside the native struct (the native match leaves `Fighter.ft_data`
+    /// null and reads the fighter's ftData from its DAT bytes, so the guest gets those bytes'
+    /// guest address). A guest store to the field drops the override.
+    pub ptr_override: HashMap<(u32, u32), u32>,
 }
 
 impl GuestSpace {
     pub fn new() -> GuestSpace {
-        GuestSpace { layouts: Layouts::new(), regions: vec![], next: 0x9000_0000, trace: None }
+        GuestSpace { layouts: Layouts::new(), regions: vec![], next: 0x9000_0000, trace: None, ptr_override: HashMap::new() }
     }
 
     /// Plain guest memory at `base` (code, stack, mod data).
@@ -211,10 +219,14 @@ impl GuestSpace {
             return Ok(0);
         }
         for r in &self.regions {
-            if let Backing::Native { ptr, .. } = r.backing {
-                if ptr as usize == p {
-                    return Ok(r.base);
+            match &r.backing {
+                Backing::Native { ptr, .. } if *ptr as usize == p => return Ok(r.base),
+                // A native pointer into a bytes region (a buffer the host handed a void* field,
+                // e.g. Fighter.dat_attrs_backup) is that region's guest address.
+                Backing::Bytes(b) if p >= b.as_ptr() as usize && p < b.as_ptr() as usize + b.len() => {
+                    return Ok(r.base + (p - b.as_ptr() as usize) as u32);
                 }
+                _ => {}
             }
         }
         match pointee {
@@ -229,8 +241,15 @@ impl GuestSpace {
         if h == 0 {
             return Some(0);
         }
-        self.regions.iter().find(|r| r.base == h).and_then(|r| match r.backing {
-            Backing::Native { ptr, .. } => Some(ptr as usize),
+        if let Some(r) = self.regions.iter().find(|r| r.base == h) {
+            if let Backing::Native { ptr, .. } = r.backing {
+                return Some(ptr as usize);
+            }
+        }
+        // A guest address inside a bytes region -> the native address of that byte (the Vec's
+        // heap buffer; regions never resize).
+        self.regions.iter().find(|r| h >= r.base && h < r.base + r.size).and_then(|r| match &r.backing {
+            Backing::Bytes(b) => Some(b.as_ptr() as usize + (h - r.base) as usize),
             _ => None,
         })
     }
@@ -249,6 +268,9 @@ impl GuestSpace {
                 if let Loc::Ptr(nat, 0, pointee) = self.layouts.locate(rec, o) {
                     if n != 4 {
                         return Err(Fault::Mem(ea));
+                    }
+                    if let Some(&h) = self.ptr_override.get(&(r.base, o)) {
+                        return Ok(h as u64);
                     }
                     // SAFETY: add_native's contract; nat is inside the native object.
                     let p = unsafe { (ptr.add(nat) as *const usize).read_unaligned() };
@@ -290,6 +312,8 @@ impl GuestSpace {
                 return Err(Fault::Mem(ea));
             }
             let p = self.native_of(v as u32).ok_or(Fault::Mem(ea))?;
+            let base = self.regions[i].base;
+            self.ptr_override.remove(&(base, o));
             // SAFETY: add_native's contract.
             unsafe { (ptr.add(nat) as *mut usize).write_unaligned(p) };
             return Ok(());

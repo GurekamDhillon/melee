@@ -6,6 +6,10 @@ use std::io::{Read, Seek, SeekFrom};
 pub struct Disc {
     f: std::fs::File,
     fst: Vec<u8>,
+    /// gdmods mounted over the disc (`crate::mods`): a mounted file answers before the disc.
+    pub mods: Option<crate::mods::Mods>,
+    /// Files answered by a mod, in read order (for the run log).
+    pub from_mods: Vec<String>,
 }
 
 fn be32(b: &[u8], at: usize) -> u32 {
@@ -17,11 +21,21 @@ impl Disc {
         let mut f = std::fs::File::open(path).map_err(|e| format!("{path}: {e}"))?;
         let h = read_at(&mut f, 0x424, 8)?;
         let fst = read_at(&mut f, be32(&h, 0) as u64, be32(&h, 4) as usize)?;
-        Ok(Self { f, fst })
+        Ok(Self { f, fst, mods: None, from_mods: vec![] })
     }
 
     /// A root-level or nested file by bare name (case-insensitive), as `iso_file` in tests/dat.rs.
     pub fn read(&mut self, want: &str) -> Result<Vec<u8>, String> {
+        if let Some(p) = self.mods.as_ref().and_then(|m| m.lookup(want)) {
+            let v = std::fs::read(p).map_err(|e| format!("{}: {e}", p.display()))?;
+            self.from_mods.push(want.to_string());
+            return Ok(v);
+        }
+        self.read_vanilla(want)
+    }
+
+    /// The vanilla disc's own copy, ignoring mounted mods.
+    pub fn read_vanilla(&mut self, want: &str) -> Result<Vec<u8>, String> {
         let fst = &self.fst;
         let n = be32(fst, 8) as usize;
         let names = &fst[n * 12..];

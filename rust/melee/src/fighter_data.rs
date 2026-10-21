@@ -47,6 +47,9 @@ pub fn files_for(name: &str) -> Option<(&'static str, &'static str, &'static str
     match name {
         "falcon" => Some(("PlCa.dat", "ftDataCaptain", "PlCaAJ.dat")),
         "fox" => Some(("PlFx.dat", "ftDataFox", "PlFxAJ.dat")),
+        // m-ex fighters: their files come from a mounted gdmod (crate::mods); MxDt.dat's
+        // fighter table names them (`mex-import tables`).
+        "wolf" => Some(("PlWf.dat", "ftDataWolf", "PlWfAJ.dat")),
         _ => None,
     }
 }
@@ -57,6 +60,7 @@ pub fn costume_for(name: &str) -> Option<(&'static str, &'static str)> {
     match name {
         "falcon" => Some(("PlCaNr.dat", "PlyCaptain5K_Share_joint")),
         "fox" => Some(("PlFxNr.dat", "PlyFox5K_Share_joint")),
+        "wolf" => Some(("PlWfNr.dat", "PlyWolf5K_Share_joint")),
         _ => None,
     }
 }

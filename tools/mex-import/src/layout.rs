@@ -16,6 +16,11 @@ mod returns {
     include!(concat!(env!("OUT_DIR"), "/returns.rs"));
 }
 
+/// The symbols.txt name of the vanilla function at `addr` (None when not a function start).
+pub fn vanilla_name(addr: u32) -> Option<&'static str> {
+    returns::NAMES.binary_search_by_key(&addr, |e| e.0).ok().map(|i| returns::NAMES[i].1)
+}
+
 pub struct Registry {
     pub records: Vec<(&'static str, u32, &'static [GcField])>,
     by_name: HashMap<&'static str, usize>,

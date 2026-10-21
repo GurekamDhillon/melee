@@ -8,7 +8,7 @@
 //! ```text
 //! melee selftest
 //! melee hashlog --words GOLDEN.csv --out CANDIDATE.csv [--frames N]
-//! melee golden --iso DISC.iso --out CANDIDATE.csv [--scenario pad_falcon_fox_fd] [--frames N] [--seed-from GOLDEN.csv] [--audio]
+//! melee golden --iso DISC.iso --out CANDIDATE.csv [--scenario pad_falcon_fox_fd|pad_falcon_wolf_fd] [--mods DIR [--enable id,id]] [--frames N] [--seed-from GOLDEN.csv] [--audio]
 //! ```
 //!
 //! `hashlog --words` is a PLUMBING check, not a simulation: the per-fighter and item words
@@ -26,6 +26,8 @@ use std::io::Write;
 use std::process::ExitCode;
 
 mod disc;
+mod mex;
+mod mods;
 mod effect;
 mod fighter_data;
 mod stage;
@@ -217,7 +219,7 @@ fn golden(args: &[String]) -> ExitCode {
     let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
     let iso = get("--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok());
     let (Some(iso), Some(out)) = (iso, get("--out")) else {
-        eprintln!("usage: melee golden --iso DISC.iso --out CANDIDATE.csv [--scenario pad_falcon_fox_fd] [--frames N] [--audio]");
+        eprintln!("usage: melee golden --iso DISC.iso --out CANDIDATE.csv [--scenario pad_falcon_fox_fd|pad_falcon_wolf_fd] [--mods DIR [--enable id,id]] [--frames N] [--audio]");
         return ExitCode::from(2);
     };
     let scenario = get("--scenario").unwrap_or_else(|| "pad_falcon_fox_fd".into());
@@ -225,13 +227,44 @@ fn golden(args: &[String]) -> ExitCode {
     // (the C dump shows stocks=3 in this time match; Player_GetStocks feeds the hash).
     let (stage, fighters): (&str, &[&str]) = match scenario.as_str() {
         "pad_falcon_fox_fd" => ("GrNLa.dat", &["falcon", "fox"]),
+        // The same pads and stage with P2 an m-ex fighter: Akaneia's Wolf from its gdmods
+        // (`mex-import import`, then --mods DIR or MELEE_MODS_DIR). No C golden exists for it.
+        "pad_falcon_wolf_fd" => ("GrNLa.dat", &["falcon", "wolf"]),
         s => {
             eprintln!("melee: scenario {s:?} not wired (pad_falcon_fox_fd)");
             return ExitCode::from(2);
         }
     };
     let frames = get("--frames").and_then(|s| s.parse().ok());
-    let res = disc::Disc::open(&iso).and_then(|mut d| vs_match::VsMatch::new(&mut d, stage, fighters, 12345, 3));
+    // gdmods over the disc: --mods DIR [--enable id,id] (else MELEE_MODS_DIR / enabled.txt).
+    let mods = match get("--mods") {
+        Some(dir) => {
+            let en: Option<Vec<String>> = get("--enable").map(|s| s.split(',').map(str::to_string).collect());
+            mods::Mods::open(std::path::Path::new(&dir), en.as_deref()).map(Some)
+        }
+        None => mods::Mods::from_env(),
+    };
+    let mods = match mods {
+        Ok(m) => m,
+        Err(e) => {
+            eprintln!("melee: mods: {e}");
+            return ExitCode::FAILURE;
+        }
+    };
+    if let Some(m) = &mods {
+        let ids: Vec<&str> = m.active.iter().map(|m| m.id.as_str()).collect();
+        eprintln!("melee: mods mounted: {} ({} files)", ids.join(", "), m.files());
+    }
+    let mut from_mods = vec![];
+    let res = disc::Disc::open(&iso).and_then(|mut d| {
+        d.mods = mods;
+        let r = vs_match::VsMatch::new(&mut d, stage, fighters, 12345, 3);
+        from_mods = std::mem::take(&mut d.from_mods);
+        r
+    });
+    if !from_mods.is_empty() {
+        eprintln!("melee: read from mods: {}", from_mods.join(" "));
+    }
     let mut sim = match res {
         Ok(s) => s,
         Err(e) => {
@@ -293,6 +326,7 @@ fn golden(args: &[String]) -> ExitCode {
             if let Some(why) = &sim.stopped {
                 eprintln!("melee: stopped: {why}");
             }
+            eprint!("{}", sim.mex_report());
             ExitCode::SUCCESS
         }
         Err(e) => {

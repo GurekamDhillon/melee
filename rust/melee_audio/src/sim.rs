@@ -68,6 +68,49 @@ pub fn play_bgm(file: &str) -> bool {
     with(|s| s.lb_play_bgm_file(file, 0x7F, 1)).unwrap_or(false)
 }
 
+/// `lbAudioAx_800233EC(id)`: Kirby's copy-ability voice remap. Without a sound, the id unchanged
+/// (as the C answers with kirbytm.ssm not loaded and `id` outside bank 0x21).
+pub fn lbaudioax_800233ec(id: i32) -> i32 {
+    with(|s| s.lb_audio_ax_800233ec(id)).unwrap_or(id)
+}
+
+/// `lbAudioAx_80024DC4(id)`: defer a sound effect.
+pub fn lbaudioax_80024dc4(id: i32) {
+    with(|s| s.lb_audio_ax_80024dc4(id));
+}
+pub fn lbaudioax_80024fdc() {
+    with(|s| s.lb_audio_ax_80024fdc());
+}
+pub fn lbaudioax_80024ff4() {
+    with(|s| s.lb_audio_ax_80024ff4());
+}
+pub fn lbaudioax_8002500c(n: i32) {
+    with(|s| s.lb_audio_ax_8002500c(n));
+}
+pub fn lbaudioax_80025038(n: i32) {
+    with(|s| s.lb_audio_ax_80025038(n));
+}
+
+/// `lbAudioAx_800230C8` with the hook's `&mut` out-parameters.
+pub fn lbaudioax_800230c8(i: i32, lo: &mut i32, hi: &mut i32) -> i32 {
+    crate::lbaudio::lb_800230c8(i, Some(lo), Some(hi))
+}
+
+/// Start BGM `id` (`lbAudioAx_80023F28`); 1 = nothing started.
+pub fn play_bgm_id(id: i32) -> i32 {
+    with(|s| s.lb_audio_ax_80023f28(id)).unwrap_or(1)
+}
+
+/// `lbAudioAx_8002785C` (VS): load the players' and the stage's SSM banks.
+pub fn load_match_banks(ckinds: &[i32], stkind: i32, grkind: i32) {
+    with(|s| s.lb_load_match_banks(ckinds, stkind, grkind));
+}
+
+/// One game frame of audio: `lbAudioAx_80027DF8` (deferred sfx, the two loop voices).
+pub fn game_frame() {
+    with(|s| s.lb_audio_ax_80027df8());
+}
+
 static VCLOCK: Mutex<u32> = Mutex::new(0);
 
 /// A deterministic DSP schedule for headless runs: 10 sub-frames per 3 video frames (5 ms

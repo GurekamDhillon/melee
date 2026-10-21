@@ -176,19 +176,40 @@ fn main() -> ExitCode {
     }
 }
 
-/// Boot melee_audio from the disc (smash2.sem + main.ssm) and set the fighter sfx hooks to it.
+/// Boot melee_audio from the disc (smash2.sem + main.ssm, bank sizes from lbaudio_ax.c's table)
+/// and set every lbAudioAx hook the ported fighter code calls to it.
 fn install_audio(iso: &str) -> Result<(), String> {
     let mut snd = melee_audio::Sound::new();
-    snd.boot(Box::new(melee_audio::sound::DiscFs::open(iso)?), [2045824, 0x180000, 0x700000 - 2045824 - 0x180000])?;
+    snd.boot(Box::new(melee_audio::sound::DiscFs::open(iso)?), melee_audio::lbaudio::boot_bank_sizes())?;
     melee_audio::sim::install(snd);
+    use melee_audio::{lbaudio as lb, sim};
     use melee_fighter::hooks as h;
     unsafe {
-        h::LBAUDIOAX_800237A8 = Some(melee_audio::sim::lbaudioax_800237a8);
-        h::LBAUDIOAX_80023870 = Some(melee_audio::sim::lbaudioax_80023870);
-        h::LBAUDIOAX_80024B94 = Some(melee_audio::sim::lbaudioax_80024b94);
+        h::LBAUDIOAX_800237A8 = Some(sim::lbaudioax_800237a8);
+        h::LBAUDIOAX_80023870 = Some(sim::lbaudioax_80023870);
+        h::LBAUDIOAX_80024B94 = Some(sim::lbaudioax_80024b94);
+        h::LBAUDIOAX_800233EC = Some(sim::lbaudioax_800233ec);
+        h::LBAUDIOAX_80023130 = Some(lb::lb_80023130);
+        h::LBAUDIOAX_800230C8 = Some(sim::lbaudioax_800230c8);
+        h::LBAUDIOAX_80023220 = Some(lb::lb_80023220);
+        h::LBAUDIOAX_80024DC4 = Some(sim::lbaudioax_80024dc4);
+        h::LBAUDIOAX_80024FDC = Some(sim::lbaudioax_80024fdc);
+        h::LBAUDIOAX_80024FF4 = Some(sim::lbaudioax_80024ff4);
+        h::LBAUDIOAX_8002500C = Some(sim::lbaudioax_8002500c);
+        h::LBAUDIOAX_80025038 = Some(sim::lbaudioax_80025038);
     }
-    eprintln!("melee: audio booted (smash2.sem + main.ssm), fighter sfx hooks set");
+    eprintln!("melee: audio booted (smash2.sem + main.ssm), lbAudioAx hooks set");
     Ok(())
+}
+
+/// The match's audio start (lbAudioAx_8002785C + the BGM): the players' and the stage's SSM
+/// banks, then the picked BGM.
+fn start_match_audio(sim: &vs_match::VsMatch, ckinds: &[i32]) {
+    melee_audio::sim::load_match_banks(ckinds, vs_match::STKIND_FD, melee_types::Gr_Kind_Last as i32);
+    let r = melee_audio::sim::play_bgm_id(sim.bgm);
+    let loaded = melee_audio::sim::with(|s| s.lb.state.iter().enumerate().filter(|(_, &x)| x == 2).map(|(i, _)| melee_audio::lbaudio::SSM_FILES[i]).collect::<Vec<_>>());
+    eprintln!("melee: match audio: banks {:?}, bgm {} ({}) {}", loaded.unwrap_or_default(), sim.bgm,
+        melee_audio::lbaudio::HPS_FILES.get(sim.bgm as usize).unwrap_or(&"?"), if r == 0 { "started" } else { "not started" });
 }
 
 /// `melee golden`: the native VS match for a golden scenario (vs_match.rs).
@@ -239,10 +260,12 @@ fn golden(args: &[String]) -> ExitCode {
             eprintln!("melee: --audio: {e}");
             return ExitCode::FAILURE;
         }
+        start_match_audio(&sim, &[melee_types::CKind_Captain as i32, melee_types::CKind_Fox as i32]);
     }
     impl Sim for SeedFrom<'_> {
         fn step(&mut self) -> bool {
             let r = self.sim.step();
+            melee_audio::sim::game_frame();
             melee_audio::sim::virtual_frame();
             r
         }

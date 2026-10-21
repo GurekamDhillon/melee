@@ -393,6 +393,182 @@ impl StageWorld {
     pub fn ground_801c5aa4(&mut self, b: bool) { self.stage_info.unk8C.set_b1(b as u8); }
     /// Ground_801C5ABC
     pub fn ground_801c5abc(&self) -> bool { self.stage_info.unk8C.b1() != 0 }
+
+    // ---- night 3 round 5: the map-gobj / x280 / x694 tables and the stage-param scale ----
+
+    /// Ground_801C2AD8: `&stage_info.xA0`.
+    pub fn ground_801c2ad8(&mut self) -> &mut i32 { &mut self.stage_info.xA0 }
+    /// Ground_MexParamStkind (TARGET_PC, static): the stkind whose StageParam row applies.
+    pub fn ground_mex_param_stkind(&self, stkind: StKind) -> StKind {
+        let Some(param) = self.param() else { return stkind };
+        let p = param.stage_params;
+        let count = param.stage_param_count as isize;
+        if p.is_null() || count <= 0 {
+            return stkind;
+        }
+        // SAFETY: `stage_params` points at `stage_param_count` rows, as the C assumes.
+        let rows = unsafe { core::slice::from_raw_parts(p, count as usize) };
+        if rows.iter().any(|r| r.stkind == stkind) {
+            return stkind;
+        }
+        if let Some(r) = rows.iter().find(|r| r.stkind == u32::MAX) {
+            return r.stkind;
+        }
+        if count == 1 {
+            return rows[0].stkind;
+        }
+        stkind
+    }
+    /// Ground_801C2AE8: `(0.01f * param->x68) * (0.01f * row->x18)` for the stkind's row
+    /// (no fused sites). The C spins forever when no row matches; this panics instead.
+    pub fn ground_801c2ae8(&self, stkind: StKind) -> f32 {
+        let stkind = self.ground_mex_param_stkind(stkind);
+        let param = self.param().expect("stage_info.param is NULL");
+        let mut p = param.stage_params;
+        for _ in 0..param.stage_param_count {
+            // SAFETY: as in ground_mex_param_stkind.
+            let r = unsafe { &*p };
+            if r.stkind == stkind {
+                return (0.01f32 * param.x68 as f32) * (0.01f32 * r.x18 as f32);
+            }
+            p = p.wrapping_add(1);
+        }
+        panic!("ground.c:0x927: not found stage param in DAT (the C spins here)");
+    }
+    /// Ground_GetMapGObj: `stage_info.map_gobjs[map_id]` (index checked; the C is not).
+    pub fn ground_get_map_gobj(&self, map_id: i32) -> *mut Ground_GObj { self.stage_info.map_gobjs[map_id as usize] }
+    /// Ground_801C2BBC (static): `stage_info.map_gobjs[index] = map_gobj`.
+    pub fn ground_801c2bbc(&mut self, map_gobj: *mut Ground_GObj, index: i32) {
+        self.stage_info.map_gobjs[index as usize] = map_gobj;
+    }
+    /// Ground_801C2BD4 (static): add `arg0` to `x694` unless present; HSD_ASSERT(2381) when full.
+    pub fn ground_801c2bd4(&mut self, arg0: *mut core::ffi::c_void) {
+        let t = &mut self.stage_info.x694;
+        if t.iter().any(|&e| e == arg0) {
+            return;
+        }
+        match t.iter().position(|e| e.is_null()) {
+            Some(i) => t[i] = arg0,
+            None => panic!("ground.c:2381: i!=Gr_CObj_Max"),
+        }
+    }
+    /// Ground_801C2C8C: is `arg0` in `x694`.
+    pub fn ground_801c2c8c(&self, arg0: *mut core::ffi::c_void) -> bool {
+        self.stage_info.x694.iter().any(|&e| e == arg0)
+    }
+    /// Ground_801C2CF4: `stage_info.x280[i]`.
+    pub fn ground_801c2cf4(&self, i: i32) -> *mut HSD_JObj { self.stage_info.x280[i as usize] }
+    /// Ground_801C2D0C: `stage_info.x280[i] = jobj`.
+    pub fn ground_801c2d0c(&mut self, i: i32, jobj: *mut HSD_JObj) { self.stage_info.x280[i as usize] = jobj; }
+
+    // ---- per-stage scroll-offset getters (Ground_GetMapGObj + the gobj's Ground) ----
+
+    /// grRCruise_80201918 (gr/grrcruise.c): map 3's `u.scroll.x1C`, else zero.
+    pub fn grrcruise_80201918(&self, vec: &mut Vec) {
+        let g = self.ground_get_map_gobj(3);
+        // SAFETY: map_gobjs hold null or live Ground GObjs whose user_data is null or a Ground.
+        unsafe {
+            if !g.is_null() {
+                let gp = (*g).user_data as *mut Ground;
+                if !gp.is_null() {
+                    *vec = (*gp).u.scroll.x1C;
+                    return;
+                }
+            }
+        }
+        vec.x = 0.0; vec.y = 0.0; vec.z = 0.0;
+    }
+    /// grBigBlue_801EF7D8 (gr/grbigblue.c): (-10, 0, 0) while map 34 has a Ground, else zero.
+    pub fn grbigblue_801ef7d8(&self, pos: &mut Vec) {
+        let g = self.ground_get_map_gobj(34);
+        // SAFETY: as above.
+        if !g.is_null() && unsafe { !(*g).user_data.is_null() } {
+            pos.x = -10.0;
+            pos.y = 0.0;
+            pos.z = 0.0;
+        } else {
+            pos.z = 0.0; pos.y = 0.0; pos.x = 0.0;
+        }
+    }
+    /// grIceMt_801FA728 (gr/gricemt.c): (0, -u.icemt.x10, 0) of map 10 (stkind 0x4C) or 9.
+    pub fn gricemt_801fa728(&self, arg0: &mut Vec) {
+        let id = if self.stage_80225194() == 0x4C { 10 } else { 9 };
+        let g = self.ground_get_map_gobj(id);
+        // SAFETY: as above.
+        unsafe {
+            if !g.is_null() {
+                let gp = (*g).user_data as *mut Ground;
+                if !gp.is_null() {
+                    arg0.x = 0.0;
+                    arg0.y = -(*gp).u.icemt.x10;
+                    arg0.z = 0.0;
+                    return;
+                }
+            }
+        }
+        arg0.z = 0.0; arg0.y = 0.0; arg0.x = 0.0;
+    }
+
+    // ---- night 3 round 5: fog colour, tilt, the light-list scan, the xC callback ----
+
+    /// Ground_801C20D0: `stage_info.cam_info.cam_vertical_tilt`.
+    pub fn ground_801c20d0(&self) -> f32 { self.stage_info.cam_info.cam_vertical_tilt }
+    /// Ground_801C205C: set the stage fog's colour (`GET_FOG(stage_info.x12C)->color`) when the
+    /// fog gobj, `color` and the fog all exist.
+    pub fn ground_801c205c(&mut self, color: Option<&GXColor>) {
+        let g = self.stage_info.x12C;
+        if let (false, Some(c)) = (g.is_null(), color) {
+            // SAFETY: x12C is null or the live fog GObj, whose hsd_obj is null or an HSD_Fog.
+            unsafe {
+                let fog = (*g).hsd_obj as *mut HSD_Fog;
+                if !fog.is_null() {
+                    (*fog).color = *c;
+                }
+            }
+        }
+    }
+    /// Ground_801C2090: read the stage fog's colour into `color`; true when it was read.
+    pub fn ground_801c2090(&self, color: Option<&mut GXColor>) -> bool {
+        let g = self.stage_info.x12C;
+        if let (false, Some(c)) = (g.is_null(), color) {
+            // SAFETY: as in ground_801c205c.
+            unsafe {
+                let fog = (*g).hsd_obj as *mut HSD_Fog;
+                if !fog.is_null() {
+                    *c = (*fog).color;
+                    return true;
+                }
+            }
+        }
+        false
+    }
+}
+
+/// Ground_801C498C: the first gobj on the light plink list (`HSD_GObjPLinkHead[3]`, passed in)
+/// whose classifier is HSD_GOBJ_CLASS_GROUND, or null.
+///
+/// # Safety
+/// `head` is null or a well-formed `next`-linked list of live GObjs.
+pub unsafe fn ground_801c498c(head: *mut HSD_GObj) -> *mut HSD_GObj {
+    let mut g = head;
+    while !g.is_null() {
+        if (*g).classifier as i32 == HSD_GOBJ_CLASS_GROUND {
+            break;
+        }
+        g = (*g).next;
+    }
+    g
+}
+
+/// Ground_801C1D38 (static): call the Ground's `xC_callback` when set.
+///
+/// # Safety
+/// `gobj` is a live Ground GObj (the C reads `user_data` unchecked).
+pub unsafe fn ground_801c1d38(gobj: *mut HSD_GObj) {
+    let gp = (*gobj).user_data as *mut Ground;
+    if let Some(cb) = (*gp).xC_callback {
+        cb(gobj);
+    }
 }
 
 /// Ground_GetP1Fighter

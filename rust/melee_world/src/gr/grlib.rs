@@ -120,18 +120,6 @@ pub trait GrLibHooks {
     fn foreach_anim_set_loop(&mut self, j: *mut HSD_JObj) {
         unimplemented!("TODO(group1): HSD_ForeachAnim")
     }
-    /// TODO(group2: gr/grrcruise.c)
-    fn grrcruise_80201918(&mut self, v: &mut Vec3) {
-        unimplemented!("TODO(group2): grRCruise_80201918")
-    }
-    /// TODO(group2: gr/grbigblue.c)
-    fn grbigblue_801ef7d8(&mut self, v: &mut Vec3) {
-        unimplemented!("TODO(group2): grBigBlue_801EF7D8")
-    }
-    /// TODO(group2: gr/gricemt.c)
-    fn gricemt_801fa728(&mut self, v: &mut Vec3) {
-        unimplemented!("TODO(group2): grIceMt_801FA728")
-    }
     /// TODO(group3: the HSD_GOBJ_PLINK_FIGHTER list) each fighter's `coll_data`, in list order
     fn fighter_colls(&mut self) -> std::vec::Vec<*const CollData> {
         unimplemented!("TODO(group3): fighter plink")
@@ -337,9 +325,17 @@ impl StageWorld {
     /// grLib_801C9E60
     pub fn grlib_801c9e60(&self, h: &mut dyn GrLibHooks, v: &mut Vec3) -> bool {
         match self.stage_info.grkind {
-            Gr_Kind_RCruise => h.grrcruise_80201918(v),
-            Gr_Kind_BigBlue => h.grbigblue_801ef7d8(v),
-            Gr_Kind_Icemt => h.gricemt_801fa728(v),
+            // The three per-stage getters are ported on StageWorld (gr::ground, night 3 round 5).
+            Gr_Kind_RCruise | Gr_Kind_BigBlue | Gr_Kind_Icemt => {
+                let _ = h;
+                let mut t = Vec { x: v.x, y: v.y, z: v.z };
+                match self.stage_info.grkind {
+                    Gr_Kind_RCruise => self.grrcruise_80201918(&mut t),
+                    Gr_Kind_BigBlue => self.grbigblue_801ef7d8(&mut t),
+                    _ => self.gricemt_801fa728(&mut t),
+                }
+                *v = Vec3 { x: t.x, y: t.y, z: t.z };
+            }
             _ => {
                 v.z = 0.0;
                 v.y = 0.0;
@@ -417,9 +413,6 @@ mod tests {
             out.y = -(i as f32);
             true
         }
-        fn grbigblue_801ef7d8(&mut self, v: &mut Vec3) {
-            v.x = 7.0;
-        }
         fn fighter_colls(&mut self) -> std::vec::Vec<*const CollData> {
             self.fighters.iter().map(|c| &**c as *const _).collect()
         }
@@ -486,8 +479,9 @@ mod tests {
         assert!(!w.grlib_801c9e60(&mut h, &mut v));
         assert_eq!(v, Vec3 { x: 0.0, y: 0.0, z: 0.0 });
         w.stage_info.grkind = Gr_Kind_BigBlue;
-        assert!(w.grlib_801c9e60(&mut h, &mut v));
-        assert_eq!(v.x, 7.0);
+        v.x = 7.0;
+        assert!(w.grlib_801c9e60(&mut h, &mut v)); // no map gobj 34: zeroed
+        assert_eq!(v, Vec3 { x: 0.0, y: 0.0, z: 0.0 });
         assert!(w.grlib_801c9cec(&mut h, QuakeKind_Loop).is_null());
         assert!(w.grlib_801c9cec(&mut h, QuakeKind_None).is_null());
     }

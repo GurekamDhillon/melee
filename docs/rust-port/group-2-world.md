@@ -477,6 +477,43 @@ agent also has uncommitted gr/grlast.rs and gr/bgm.rs in this crate; not part of
 Regenerate: `bash rust/melee_world/cref/gen_forward_r4_ref.sh` (also regenerates
 `src/gr/forward.rs`).
 
+## Night 3, round 5: recount, 17 ground.c / per-stage getters vs C, 3 grlib stubs replaced
+
+Recount at the start (same rule, `name(...)` line then `{`): mp 226, cm 182, ef 67, gr 2167,
+if 372 = **3014** (unchanged). Ported 1132, verified 1016 (tally carried from round 4).
+
+Stubs whose target now exists: `GrLibHooks::grrcruise_80201918` / `grbigblue_801ef7d8` /
+`gricemt_801fa728` (TODO(group2) panics) are gone; grLib_801C9E60 now calls the ported
+StageWorld getters (melee_types `Vec` <-> `Vec3` copy). The grlib unit test now checks the
+real grBigBlue result (zero vector with no map gobj 34). Nothing outside the crate became
+replaceable: the other TODO(group1) names exist only as transpiled `raw/` modules, not ports.
+
+New, all verified against the C (`tests/ground_r5_vs_c.rs`, `cref/gen_ground_r5_ref.sh`,
+21400 rows; bodies cut verbatim, game flags + lower.py; 0 f32 fmuladd after lowering, so no
+fused sites; mutation-checked: count==1 fallback, the 0x4C stkind, the 2AE8 product grouping,
+the classifier compare, the fog-colour copy, the 2090 return, and a doubled callback all fail):
+- `StageWorld`: Ground_MexParamStkind (TARGET_PC), Ground_801C2AD8, Ground_801C2AE8 (stage
+  param scale; the C's OSReport + spin when no row matches is a panic here, rows predicted by
+  the driver, not run), Ground_GetMapGObj, Ground_801C2BBC, Ground_801C2BD4 (x694 add, assert
+  when full -> panic), Ground_801C2C8C, Ground_801C2CF4, Ground_801C2D0C, Ground_801C20D0,
+  Ground_801C205C / Ground_801C2090 (stage fog colour set/get through `stage_info.x12C`),
+  grRCruise_80201918, grBigBlue_801EF7D8, grIceMt_801FA728.
+- free fns: Ground_801C498C (first GROUND-class gobj on the light plink list, head passed in),
+  Ground_801C1D38 (the Ground's xC_callback).
+The first twelve were written by an earlier, interrupted run of this round and left uncommitted
+with a broken driver (`__builtin_setjmp` across the loop crashed after a few thousand rows, and
+the file only held M rows); the driver now uses an assert flag and predicts the spin case.
+
+Counts after this round: 1149 of 3014 ported (38.1%); 1033 verified against the C; 116 not
+(unchanged: 81 ground.c accessors, 23 grlib.c, 10 stage.c hook-driven fns, Stage_80224E64, +1).
+
+Workspace: `cargo test -p melee_world` green. `cargo test --workspace` currently fails to build
+melee_chara (`E0583: file not found for module r11`, another agent's uncommitted
+chars/mod.rs); not touched here. gr/grlast.rs, gr/bgm.rs and their two gr/mod.rs lines are
+another agent's uncommitted work and are left out of this commit.
+
+Regenerate: `bash rust/melee_world/cref/gen_ground_r5_ref.sh`.
+
 ## Build notes
 
 - `cargo build -p melee_world` and `cargo test -p melee_world` pass. I ran them with

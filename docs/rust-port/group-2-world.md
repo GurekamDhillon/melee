@@ -287,6 +287,32 @@ JObj/GObj, fog/lights, map-coll, Ground_801C5940, 801C5AD0 which needs stage_dat
 
 Regenerate: `bash rust/melee_world/cref/gen_ground_ref.sh`.
 
+## Round 8: gr/grlib.c (all 24 functions)
+
+`src/gr/grlib.rs` ports every function in src/melee/gr/grlib.c: the generator helpers
+(801C96F8 incl. the AppSRT scale by Ground_801C0498, 801C97DC/9808/9834/9854/9874, 801C98A0 and
+the recursive 801C9908 that kills every generator on a joint subtree), 801C99C0, the four-point
+matrix 801C9A10/9A70 (`GrLib::mtx` is the static `grLib_8049EF58`), the DynamicsDesc forwarders
+801C9B20/9B6C/9B8C, the quake GObj 801C9CEC plus its two static procs 801C9BC8/9C40, x708
+get/set 801C9E40/9E50, 801C9E60, PointInsideColl and 801C9EE8. Callees go through `GrLibHooks`
+(defaults panic: TODO(group1: particle/psappsrt/jobj/gobj/lb_00F9), TODO(group2: ground.c
+Ground_801C2D24, grrcruise/grbigblue/gricemt, camera wiring), TODO(group3/5: fighter and item
+plinks, given as CollData lists)).
+
+FMA: fma_sites.py reports 4 fused sites, all in PointInsideColl (`0.5f*h + offset`,
+`0.5f*(t+b) + pos`, x and y); the port uses mul_add there. `tests/grlib_vs_c.rs`:
+`cref/gen_grlib_ref.sh` cuts PointInsideColl verbatim into a TU over a stand-in CollData,
+compiled with the game flags, contraction on + lower.py (4 fmuladd lowered), and writes
+`tests/data/grlib_ref.txt` (40000 rows, a third placed exactly on an edge +-2 ulp, one NaN).
+All match. No mutation check is possible: every fused multiply is by 0.5f, which is exact, so
+fused and unfused agree on all normal inputs (an unfused variant passed every row).
+Unit-tested only (`gr::grlib::tests`): 801C98A0/9908 (kill order, instance stop, null),
+801C9A10/9A70, 801C9E40/9E50/9E60, 801C9CEC's early returns, 801C9EE8 (fighter/item lists,
+It_PKind_Random skipped). Not tested: 801C96F8, 801C9CEC's create path, 801C9BC8/9C40, and the
+one-line forwarders.
+
+Regenerate: `bash rust/melee_world/cref/gen_grlib_ref.sh`.
+
 ## Build notes
 
 - `cargo build -p melee_world` and `cargo test -p melee_world` pass. I ran them with
@@ -306,7 +332,6 @@ Regenerate: `bash rust/melee_world/cref/gen_ground_ref.sh`.
 2. mpcoll.c, the collision driver. It calls into fighter and item callbacks, which get stubbed.
 3. The rest of cm/camera.c (subject list, mode callbacks, pause/debug cameras, CObj setup),
    once HSD_CObj exists; gr/stage.c getters are now ported (wire CamStage to StageWorld). `long double` literals become f64.
-4. gr/*: 77 stage TUs, mostly callback tables plus per-stage logic. Port the shared grlib parts
-   first.
+4. gr/*: the per-stage TUs, mostly callback tables plus per-stage logic (grlib is done).
 5. if/* (HUD) and ef/* (effects). These are mostly render-side; whatever touches the RNG has to
    keep the draw order, or the golden seed column breaks.

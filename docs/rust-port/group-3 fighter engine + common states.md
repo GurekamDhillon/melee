@@ -301,6 +301,39 @@ because every play path goes through ft_80087D0C).
   must change to i32.
 - New panicking hooks: lbAudioAx_80023870 / 80026510 / 800265C4 (TODO(group1 lb)).
 
+## Port round 7 (2026-10-21): `src/ft0892.rs`, `src/pltrick.rs`
+All 12 C definitions of src/melee/ft/ft_0892.c (ft_800892D4, 80089460, 800895E0, 80089768,
+80089824, 80089884, 80089890, 8008989C, 800898A8, 800898B4, 800898C0, 80089914) plus
+`ftGetTemplateKind` (ft/inlines.h, as `ft0892::template_kind`), and 7 of pltrick.c's 10
+definitions: the table pl_803BCE70, pl_80037B2C, 80037BC0, 80037C60, 80037DF4, 80037ECC,
+800384DC, 80038628. Not ported: fn_80037F00, pl_80038144 (need ifMagnify, gm, more plbonuslib).
+Verified against the C cut verbatim (`gen/cref/ft0892_ref.c`; run.py cuts all of ft_0892.c, the
+two pltrick.c ranges, plAttack_80037B08 and Player_GetActionStats).
+- Test: one fighter with random Struct2070/2074/x18d4/x18d8 fields, random action stats for its
+  slot, random attack counter (incl. 0xFFFF wrap). 19 ops x 300 = 5,700 lines (return value, hash
+  of every touched field by name + the whole plActionStats + counter, trace word). All ops hit.
+- Fused sites: none (`fma_sites.py` over ft_0892.c and pltrick.c).
+- **Byte order (game is big-endian).** `union Struct2070 { struct {s8; bits; u8 x2073}; int }`:
+  the port keeps GC byte order in the struct view, and the int view is
+  `ft0892::s2070_gc_int` / `s2070_from_gc_int` (big-endian). Int arguments that the C puns
+  (`ft_800895E0(fp, int)`, `pl_80037C60(g, s32)`, `pl_800384DC(g, int, void*)`) take a
+  `Struct2070`; callers convert with `s2070_from_gc_int` (it_279C passes a bare x2073 value as
+  that int: in the game that lands in x2073). The native C oracle lays the two literals of
+  ft_800895E0 (0x240063 Luigi, 0x44003D item) out little-endian, so both sides hash them as tags
+  A1/A2 instead of fields: the literal paths are checked as taken, not their field contents.
+- `by_attack_hi[id]` (pl_80037C60, id >= 100) and `by_attack_counts[id]` (pl_80037BC0) are
+  unchecked in C. The port increments u32 fields as the C for ids that land on u32 fields
+  (tested up to id 115), does a big-endian byte increment for by_attack_hi 116/117 (x5B8/x5BC;
+  untested, the native C differs) and panics for by_attack_hi id >= 118 (past plActionStats into
+  the GC StaticPlayer). pl_80037B2C returns 0 for idx >= 100 (C has no return there).
+- Mutation checks that fail: either literal (op 2), Mewtwo exclusion (op 11), 113 in 800898C0
+  (op 10), x2084_b6 -> b5 (op 1), dropping x2072_b2 in 80037C60 (op 4), id 0x63 -> 0x64 and the
+  x10_b7 test in 800384DC (op 17).
+- Hooks: `FT_800898B4` now defaults to the port; new ported hooks `PL_80037C60` (pltrick),
+  `PL_8003FE40` (plbonus). New panicking hooks: it_8026B6C8 (TODO(group5 it)),
+  ftFx_AppealS_CheckIfUsed (TODO(group4 ftFx)), pl_8003DFF4 (TODO(group3 plbonuslib)),
+  `FTDATA_80085FD4_X8` = `ftData_80085FD4(fp, i)->x8` (TODO(group3 ftdata)).
+
 ## Not done / blockers
 - **The c2r layer has never linked or run.** Everything outside group 3 is an unresolved
   `extern "C"` (HSD, lb, mp, it, gm, PC hooks). It cannot be checked against the goldens until

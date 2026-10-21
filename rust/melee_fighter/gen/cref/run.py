@@ -77,6 +77,12 @@ EXTRACTS = {
     "ft0881": [("src/melee/ft/ftcommon.c", "bool ftCommon_80080144(", "void ftCommon_80080174("),
                ("src/melee/ft/ft_0877.c", "#define TEST(expr)", None),
                ("src/melee/ft/ft_0881.c", "#if defined(TARGET_PC)", "void ft_800890BC(")],
+    "ft0892": [("src/melee/pl/player.c", "static inline void Player_CheckSlot(", "/// Matches when everything"),
+               ("src/melee/pl/player.c", "plActionStats* Player_GetActionStats(", "struct pl_x5EC_t* Player_GetUnk6A8Ptr("),
+               ("src/melee/pl/plattack.c", "u16 plAttack_80037B08(", None),
+               ("src/melee/ft/ft_0892.c", "void lbBgFlash_80020E38(", None),
+               ("src/melee/pl/pltrick.c", "int pl_803BCE70[16]", "static void fn_80037F00("),
+               ("src/melee/pl/pltrick.c", "void pl_800384DC(", None)],
     "ftcommon": [("src/melee/ft/ftcommon.c", "void ftCommon_CalcGroundAccel_Deaccel(", "void ftCommon_UnlockECB("),
                  ("src/melee/ft/ftcommon.c", "void ftCommon_UpdateFacing(", "void ftCommon_8007DB24(")],
 }

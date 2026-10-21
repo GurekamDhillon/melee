@@ -281,7 +281,6 @@ needed_hooks! {
     PL_80038898 pl_80038898(slot: i32, kind: i32) = "TODO(group3 plbonus) pl_80038898";
     PL_80039418 pl_80039418(slot: i32, kind: i32) -> u32 = "TODO(group3 plbonus) pl_80039418";
     PL_800386D8 pl_800386d8(s: &crate::types::plActionStats, n: i32) -> u32 = "TODO(group3 plbonus) pl_800386D8";
-    FT_800898B4 ft_800898b4(g: G) -> *mut crate::types::ft_800898B4_t = "TODO(group3 ft_0892) ft_800898B4";
     GM_8016F2F8 gm_8016f2f8(kind: i32, slot: u8) -> i32 = "TODO(group6 gm) gm_8016F2F8";
     GM_8016B6E8 gm_8016b6e8(slot: i32, v: i32) = "TODO(group6 gm) gm_8016B6E8";
 }
@@ -330,4 +329,18 @@ needed_hooks! {
     LBAUDIOAX_80023870 lbaudioax_80023870(sfx: i32, vol: i32, pan: i32, chan: i32) -> i32 = "TODO(group1 lb) lbAudioAx_80023870";
     LBAUDIOAX_80026510 lbaudioax_80026510(g: G) -> bool = "TODO(group1 lb) lbAudioAx_80026510";
     LBAUDIOAX_800265C4 lbaudioax_800265c4(g: G, sfx: i32) -> bool = "TODO(group1 lb) lbAudioAx_800265C4";
+}
+
+// ---- port round 7 (ft/ft_0892.c, pl/pltrick.c attack stats) ------------------------------
+ported_hooks! {
+    PL_80037C60 pl_80037c60(g: G, prev: crate::types::Struct2070) = crate::pltrick::pl_80037c60;
+    FT_800898B4 ft_800898b4(g: G) -> *mut crate::types::ft_800898B4_t = crate::ft0892::ft_800898b4;
+    PL_8003FE40 pl_8003fe40(slot: i32, sub: i32) = crate::plbonus::pl_8003fe40;
+}
+needed_hooks! {
+    IT_8026B6C8 it_8026b6c8(g: *mut crate::types::Item_GObj) -> i32 = "TODO(group5 it) it_8026B6C8";
+    FTFX_APPEALS_CHECK_IF_USED ftfx_appeals_check_if_used(fp: &mut Fighter) -> bool = "TODO(group4 ftFx) ftFx_AppealS_CheckIfUsed";
+    PL_8003DFF4 pl_8003dff4(slot: i32, sub: i32, id: i32) = "TODO(group3 plbonuslib) pl_8003DFF4";
+    /// `ftData_80085FD4(fp, i)->x8`.
+    FTDATA_80085FD4_X8 ftdata_80085fd4_x8(fp: &mut Fighter, i: i32) -> usize = "TODO(group3 ftdata) ftData_80085FD4";
 }

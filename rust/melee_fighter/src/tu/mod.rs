@@ -137,3 +137,4 @@ pub mod ftCo_JumpAerial;
 pub mod ftCo_JumpAerialF1;
 pub mod ftCo_ItemThrow;
 pub mod ftCo_ItemScopeStart;
+pub mod ftCo_ItemScopeRapid;

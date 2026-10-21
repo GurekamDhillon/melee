@@ -10,10 +10,10 @@ State as of 2026-10-21.
 |---|---|---|
 | Native types + GC offsets | `src/types/generated.rs` (from `gen/gen_types.py`) | 569 `#[repr(C)]` records, all built |
 | Mechanical translation of all 216 TUs | `src/c2r/` (from `gen/fix_raw.py`, feature `c2r`) | compiles (`--features c2r`), never run |
-| Hand ports, checked bit-for-bit against the C | `src/neutral_hash.rs`, `src/ftcommon.rs`, `src/ftcommon2.rs`, `src/stale.rs`, `src/player.rs`, `src/compat.rs`, `src/hooks.rs` | 240 C functions, tests pass |
+| Hand ports, checked bit-for-bit against the C | `src/neutral_hash.rs`, `src/ftcommon.rs`, `src/ftcommon2.rs`, `src/stale.rs`, `src/player.rs`, `src/ftlib.rs`, `src/compat.rs`, `src/hooks.rs` | 336 C functions, tests pass |
 | PowerPC `.s` files | none belong to this group (inventory §3) | nothing to do |
 
-Functions: 240 of ~2,820 (about 8.5%; 57 night 1, 39 in port round 1, 144 in port round 2; 239 verified) are hand-ported and verified against the C. All ~2,820 are
+Functions: 336 of ~2,820 (about 11.9%; 57 night 1, 39 in port round 1, 144 in port round 2, 96 in port round 3; 335 verified) are hand-ported and verified against the C. All ~2,820 are
 in the mechanical translation, which compiles; none of it has been linked or run.
 
 ### Native types (`gen/gen_types.py`)
@@ -62,6 +62,7 @@ in the mechanical translation, which compiles; none of it has been linked or run
 | module | C functions | test | cases |
 |---|---|---|---|
 | `neutral_hash.rs` | `nh_Mix`, `nh_CpuFlags`, `nh_Fighter` (fighter.c, TARGET_PC) + item/game word, `StateHash for Fighter` | `tests/nh_ref.rs` | 64 fighters, all fields + every CPU flag bitfield |
+| `ftlib.rs` | 96 of ft/ftlib.c (port round 3, below) | `tests/ftlib_ref.rs` | 10,440 (87 ops x 120, 6 fighters + random p-link list) |
 | `player.rs` | 144 of player.c: the player-table accessors (port round 2, below) | `tests/player_ref.rs` | 200 tables x 60 ops (144 op kinds, all exercised) |
 | `ftcommon2.rs` | 39 more of ftcommon.c (port round 1, below) | `tests/ftcommon2_ref.rs` | 10,200 (34 ops x 300) |
 | `ftcommon.rs` | 33 functions of ftcommon.c (ground/air accel, drift, friction, KB friction, fall/ascend, CheckFallFast, facing, CalcHitlag) | `tests/ftcommon_ref.rs` | 6,600 (33 x 200) |
@@ -180,6 +181,38 @@ changing UpdateMatchFrameCount's 0xFFFF test fails the test.
   retail data.
 - Not ported from player.c: Player_80031AD0 (Fighter_Create), 80031CB0 / 80031D2C (ftData
   preload, Geno, lbDvd), Player_InitOrResetPlayer and the rest (allocators, archives, JObj).
+
+## Port round 3 (2026-10-21): `src/ftlib.rs`
+96 C definitions of src/melee/ft/ftlib.c (93 functions plus the static inlines `sgn`,
+`vector_add`, `helper`), verified against the C cut verbatim (`gen/cref/ftlib_ref.c`; run.py cuts
+ftlib.c 800860C4..800871A8, 80087284..80087508, 800876B4..8008777C, 800877D4..EOF, plus the
+already-ported ftcommon.c 8007ED2C, GetModelScale, 80080144, 80080174 so SetScale / 80087140 /
+8008746C run the real C). Six fighters with ftData / attrs / sfx / CmSubject / bone tables, a
+random fighter p-link list (0-6 entries, random order), 87 ops x 120 cases = 10,440 lines; each
+prints the return value (gobj/joint/pointer results as an identity index), the out-params, a hash
+of every mutable field of all six fighters, and the stub trace word. All 87 ops are exercised
+(the test asserts it). Mutation check: dropping `!x221F_b1` from 80086F4C fails (op 55 case 11).
+- Signature shape: `g: *mut HSD_GObj` like the C (`gobj->user_data` is the Fighter); the p-link
+  list comes from `hooks::plink_head` (TODO(group1 HSD)).
+- TARGET_PC paths ported: 80086A8C returns true + UpdateLogicOffCamera; Slippi Whispy fix in
+  800864A8; Geno template kinds in GetKind; m-ex relative crowd sfx in 8008746C.
+- Fused sites: 8008627C and 80086368, `dx*dx + dy*dy` -> `fmadds(dx, dx, dy*dy)`. **Not
+  discriminated**: un-fusing both still passes (the result is an argmin over gobjs and these
+  inputs never flip it). Right by the IR (fma_sites.py) only.
+- `dmg.x1830_percent` is a float: 800870F0 converts int->float, 80087120 and 80086198 float->int
+  (saturating, same as fctiwz except NaN, see Traps 3; inputs contain no NaN).
+- `ftLib_800870BC` reads `p_ftCommonData->x6D8[controller_index]`, a 1-element array read past
+  its end (into `x6DC_colorsByPlayer`), kept as raw pointer arithmetic.
+- The 16 `ftLib_*` hooks player.c calls (`FTLIB_*`) now default to these ports (setting one still
+  overrides it); `PLAYER_GET_MORE_FLAGS_BIT4` defaults to `player::get_more_flags_bit4`.
+  New panicking hooks: HSD_GObjPLinkHead / HSD_Randi (group1 HSD), lb_8000B1CC (group1 lb),
+  Camera_80030A50 / LogicToScreen / 80031154 (group2 cm), Slippi_Codes (pc), Geno_DefineBaseKind,
+  Mex_SsmForPortKind (pc), ftParts_GetBoneIndex, Fighter_UpdateModelScale / ResetInputData /
+  UnkProcessDeath, ftCommon_8007E6DC / 8007E82C / 8007D92C, ftData_80085560, pl_8003E4A4,
+  ftAnim_IsFramesRemaining (group3, not yet ported), ftGw/ftKb Init (group4).
+  `GENO_DEFINE_TEMPLATE_SKELETON` defaults to 0 (vanilla: no Geno defines).
+- Not ported from ftlib.c: 800871A8 (metal box: ftCo/it/camera/sfx), 80087508 / 80087574 /
+  80087610 (archive preloading), 8008777C (atan2f, waits on group 1's MSL).
 
 ## Not done / blockers
 - **The c2r layer has never linked or run.** Everything outside group 3 is an unresolved

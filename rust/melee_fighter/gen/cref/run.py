@@ -58,6 +58,13 @@ EXTRACTS = {
                ("src/melee/pl/player.c", "StaticPlayer* Player_GetPtrForSlot(", "void Player_80031AD0("),
                ("src/melee/pl/player.c", "void Player_80031DA8(", "void Player_InitOrResetPlayer("),
                ("src/melee/pl/player.c", "void Player_MexSetMapping(", "#endif")],
+    "ftlib": [("src/melee/ft/ftcommon.c", "void ftCommon_8007ED2C(", "void ftCommon_8007ED50("),
+              ("src/melee/ft/ftcommon.c", "float ftCommon_GetModelScale(", "void ftCommon_8007F6A4("),
+              ("src/melee/ft/ftcommon.c", "bool ftCommon_80080144(", "void ftCommon_8008021C("),
+              ("src/melee/ft/ftlib.c", "s32 ftLib_800860C4(", "void ftLib_800871A8("),
+              ("src/melee/ft/ftlib.c", "bool ftLib_80087284(", "void ftLib_80087508("),
+              ("src/melee/ft/ftlib.c", "void ftLib_800876B4(", "float ftLib_8008777C("),
+              ("src/melee/ft/ftlib.c", "bool ftLib_800877D4(", None)],
     "ftcommon": [("src/melee/ft/ftcommon.c", "void ftCommon_CalcGroundAccel_Deaccel(", "void ftCommon_UnlockECB("),
                  ("src/melee/ft/ftcommon.c", "void ftCommon_UpdateFacing(", "void ftCommon_8007DB24(")],
 }

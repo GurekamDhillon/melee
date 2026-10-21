@@ -5,7 +5,7 @@
 //! Single-threaded game state, like the C globals they replace: set them before the match.
 #![allow(static_mut_refs)]
 
-use crate::types::{ftCommonData, Fighter, Fighter_ShakeTable_t, FighterKind, HSD_GObj, Item_GObj, Vec2, Vec3};
+use crate::types::{ftCommonData, CmSubject, Fighter, Fighter_ShakeTable_t, FighterKind, HSD_GObj, HSD_JObj, Item_GObj, S32Vec2, Vec2, Vec3};
 
 /// `ScriptGame_ModValue(player_id, field, base)` behind `FT_SCRIPT_VALUE` (ft/forward.h).
 pub static mut SCRIPT_MOD_VALUE: Option<fn(player_id: i32, field: i32, base: f32) -> f32> = None;
@@ -178,37 +178,88 @@ macro_rules! needed_hooks {
 }
 type G = *mut HSD_GObj;
 needed_hooks! {
-    FTLIB_800867E8 ftlib_800867e8(g: G) = "TODO(group3 ftlib) ftLib_800867E8";
-    FTLIB_8008688C ftlib_8008688c(g: G) = "TODO(group3 ftlib) ftLib_8008688C";
     FTKB_SPECIALN_800EED50 ftkb_specialn_800eed50(a: i32, b: i32) = "TODO(group4 ftKb) ftKb_SpecialN_800EED50";
-    FTLIB_8008701C ftlib_8008701c(g: G) -> bool = "TODO(group3 ftlib) ftLib_8008701C";
     FTCO_800D4F24 ftco_800d4f24(g: G, i: i32) = "TODO(group3 ftCo) ftCo_800D4F24";
     HSD_GOBJ_FREE hsd_gobj_free(g: G) = "TODO(group1 HSD) HSD_GObjFree";
     FTCO_800D4FF4 ftco_800d4ff4(g: G) = "TODO(group3 ftCo) ftCo_800D4FF4";
     IFSTATUS_802F6E1C ifstatus_802f6e1c(slot: i32) = "TODO(group6 if) ifStatus_802F6E1C";
-    FTLIB_800873CC ftlib_800873cc(g: G) -> bool = "TODO(group3 ftlib) ftLib_800873CC";
-    FTLIB_80087140 ftlib_80087140(g: G) = "TODO(group3 ftlib) ftLib_80087140";
-    FTLIB_80086664 ftlib_80086664(g: G, v: &Vec3) = "TODO(group3 ftlib) ftLib_80086664";
     FTDEMO_SET_FACING_DIRECTION ftdemo_set_facing_direction(g: G, d: f32) = "TODO(group3 ftdemo) ftDemo_SetFacingDirection";
-    FTLIB_800869F8 ftlib_800869f8(g: G) -> f32 = "TODO(group3 ftlib) ftLib_800869F8";
-    FTLIB_SET_SCALE ftlib_set_scale(g: G, s: f32) = "TODO(group3 ftlib) ftLib_SetScale";
     FT_80087BEC ft_80087bec(g: G, v: i32) = "TODO(group3 ftlib) ft_80087BEC";
     FT_80087BC0 ft_80087bc0(g: G, v: i32) = "TODO(group3 ftlib) ft_80087BC0";
     GM_8016C5C0 gm_8016c5c0(slot: i32) -> i32 = "TODO(group6 gm) gm_8016C5C0";
-    FTLIB_800870F0 ftlib_800870f0(g: G, v: i32) = "TODO(group3 ftlib) ftLib_800870F0";
     IFSTATUS_802F6D10 ifstatus_802f6d10(slot: i32) = "TODO(group6 if) ifStatus_802F6D10";
     GM_8016B168 gm_8016b168() -> bool = "TODO(group6 gm) gm_8016B168";
     IFSTATUS_802F69C0 ifstatus_802f69c0(a: i32, b: i32) = "TODO(group6 if) ifStatus_802F69C0";
     IFSTATUS_802F6AF8 ifstatus_802f6af8(slot: i32) = "TODO(group6 if) ifStatus_802F6AF8";
     GM_GET_FRAME_COUNT gm_get_frame_count() -> u32 = "TODO(group6 gm) gm_GetFrameCount";
     IFSTATUS_802F6C04 ifstatus_802f6c04(slot: i32) = "TODO(group6 if) ifStatus_802F6C04";
-    FTLIB_80086F4C ftlib_80086f4c(g: G) -> bool = "TODO(group3 ftlib) ftLib_80086F4C";
-    FTLIB_80086F80 ftlib_80086f80(g: G) -> f32 = "TODO(group3 ftlib) ftLib_80086F80";
-    FTLIB_GET_KIND ftlib_get_kind(g: G) -> FighterKind = "TODO(group3 ftlib) ftLib_GetKind";
-    FTLIB_80087300 ftlib_80087300(g: G) -> i32 = "TODO(group3 ftlib) ftLib_80087300";
     FT_80087AC0 ft_80087ac0(g: G, v: i32) = "TODO(group3 ftlib) ft_80087AC0";
-    FTLIB_80086A4C ftlib_80086a4c(g: G, v: f32) = "TODO(group3 ftlib) ftLib_80086A4C";
     FT_80087BAC ft_80087bac(g: G, v: i32) = "TODO(group3 ftlib) ft_80087BAC";
-    FTLIB_80086BB4 ftlib_80086bb4(g: G) -> bool = "TODO(group3 ftlib) ftLib_80086BB4";
-    FTLIB_80086B90 ftlib_80086b90(g: G, v: &mut Vec3) = "TODO(group3 ftlib) ftLib_80086B90";
+}
+
+// ---- port round 3 (ft/ftlib.c) -----------------------------------------------------------
+// ftLib_* hooks that player.c calls now default to the ports in `crate::ftlib`; setting one
+// overrides it (the player.c test does, with trace stubs).
+
+macro_rules! ported_hooks {
+    ($($stat:ident $func:ident ($($a:ident: $t:ty),*) $(-> $r:ty)? = $port:path;)*) => {$(
+        #[doc = concat!("Override for `", stringify!($port), "`; unset = the port.")]
+        pub static mut $stat: Option<fn($($t),*) $(-> $r)?> = None;
+        pub fn $func($($a: $t),*) $(-> $r)? {
+            match unsafe { $stat } { Some(f) => f($($a),*), None => $port($($a),*) }
+        }
+    )*};
+}
+ported_hooks! {
+    FTLIB_800867E8 ftlib_800867e8(g: G) = crate::ftlib::ftlib_800867e8;
+    FTLIB_8008688C ftlib_8008688c(g: G) = crate::ftlib::ftlib_8008688c;
+    FTLIB_8008701C ftlib_8008701c(g: G) -> bool = crate::ftlib::ftlib_8008701c;
+    FTLIB_800873CC ftlib_800873cc(g: G) -> bool = crate::ftlib::ftlib_800873cc;
+    FTLIB_80087140 ftlib_80087140(g: G) = crate::ftlib::ftlib_80087140;
+    FTLIB_80086664 ftlib_80086664(g: G, v: &Vec3) = crate::ftlib::ftlib_80086664;
+    FTLIB_800869F8 ftlib_800869f8(g: G) -> f32 = crate::ftlib::ftlib_800869f8;
+    FTLIB_SET_SCALE ftlib_set_scale(g: G, s: f32) = crate::ftlib::set_scale;
+    FTLIB_800870F0 ftlib_800870f0(g: G, v: i32) = crate::ftlib::ftlib_800870f0;
+    FTLIB_80086F4C ftlib_80086f4c(g: G) -> bool = crate::ftlib::ftlib_80086f4c;
+    FTLIB_80086F80 ftlib_80086f80(g: G) -> f32 = crate::ftlib::ftlib_80086f80;
+    FTLIB_GET_KIND ftlib_get_kind(g: G) -> FighterKind = crate::ftlib::get_kind;
+    FTLIB_80087300 ftlib_80087300(g: G) -> i32 = crate::ftlib::ftlib_80087300;
+    FTLIB_80086A4C ftlib_80086a4c(g: G, v: f32) = crate::ftlib::ftlib_80086a4c;
+    FTLIB_80086BB4 ftlib_80086bb4(g: G) -> bool = crate::ftlib::ftlib_80086bb4;
+    FTLIB_80086B90 ftlib_80086b90(g: G, v: &mut Vec3) = crate::ftlib::ftlib_80086b90;
+    PLAYER_GET_MORE_FLAGS_BIT4 player_get_more_flags_bit4(slot: i32) -> u8 = crate::player::get_more_flags_bit4;
+}
+
+/// TARGET_PC `Geno_DefineTemplateSkeleton(kind)`. Unset (vanilla, no Geno defines): 0.
+pub static mut GENO_DEFINE_TEMPLATE_SKELETON: Option<fn(kind: i32) -> i32> = None;
+pub fn geno_define_template_skeleton(kind: i32) -> i32 {
+    match unsafe { GENO_DEFINE_TEMPLATE_SKELETON } { Some(f) => f(kind), None => 0 }
+}
+
+needed_hooks! {
+    /// `HSD_GObjPLinkHead[link]`.
+    PLINK_HEAD plink_head(link: i32) -> G = "TODO(group1 HSD) HSD_GObjPLinkHead";
+    HSD_RANDI hsd_randi(n: i32) -> i32 = "TODO(group1 HSD) HSD_Randi";
+    LB_8000B1CC lb_8000b1cc(j: *mut HSD_JObj, off: &Vec3, out: &mut Vec3) = "TODO(group1 lb) lb_8000B1CC";
+    /// TARGET_PC `Slippi_Codes()` (pc/platform).
+    SLIPPI_CODES slippi_codes() -> i32 = "TODO(pc) Slippi_Codes";
+    FTPARTS_GET_BONE_INDEX ftparts_get_bone_index(fp: &Fighter, i: i32) -> i32 = "TODO(group3 ftparts) ftParts_GetBoneIndex";
+    FIGHTER_UPDATE_MODEL_SCALE fighter_update_model_scale(g: G) = "TODO(group3 fighter) Fighter_UpdateModelScale";
+    FTCOMMON_8007E6DC ftcommon_8007e6dc(g: G, o: G, i: i32) = "TODO(group3 ftcommon) ftCommon_8007E6DC";
+    FTCOMMON_8007E82C ftcommon_8007e82c(g: G) = "TODO(group3 ftcommon) ftCommon_8007E82C";
+    FTCOMMON_8007D92C ftcommon_8007d92c(g: G) = "TODO(group3 ftcommon) ftCommon_8007D92C";
+    FIGHTER_RESET_INPUT_DATA fighter_reset_input_data(g: G) = "TODO(group3 fighter) Fighter_ResetInputData_80068854";
+    FIGHTER_UNK_PROCESS_DEATH fighter_unk_process_death(g: G) = "TODO(group3 fighter) Fighter_UnkProcessDeath_80068354";
+    CAMERA_80030A50 camera_80030a50() -> G = "TODO(group2 cm) Camera_80030A50";
+    CAMERA_LOGIC_TO_SCREEN camera_logic_to_screen(s: *mut CmSubject, out: &mut S32Vec2) -> bool = "TODO(group2 cm) Camera_LogicToScreen";
+    CAMERA_80031154 camera_80031154(v: &mut Vec3) -> bool = "TODO(group2 cm) Camera_80031154";
+    FTDATA_80085560 ftdata_80085560(a: i32, b: i32) = "TODO(group3 ftdata) ftData_80085560";
+    GENO_DEFINE_BASE_KIND geno_define_base_kind(kind: i32) -> i32 = "TODO(pc geno) Geno_DefineBaseKind";
+    MEX_SSM_FOR_PORT_KIND mex_ssm_for_port_kind(kind: i32) -> i32 = "TODO(pc mex) Mex_SsmForPortKind";
+    PL_8003E4A4 pl_8003e4a4(slot: i32, sub: i32, p: *mut core::ffi::c_void, a: i32) = "TODO(group3 pl) pl_8003E4A4";
+    FTANIM_IS_FRAMES_REMAINING ftanim_is_frames_remaining(g: G) -> bool = "TODO(group3 ftanim) ftAnim_IsFramesRemaining";
+    FTGW_INIT_8014A7F4 ftgw_init_8014a7f4(g: G, d: *mut core::ffi::c_void) = "TODO(group4 ftGw) ftGw_Init_8014A7F4";
+    FTGW_INIT_8014A814 ftgw_init_8014a814(g: G, d: *mut core::ffi::c_void) = "TODO(group4 ftGw) ftGw_Init_8014A814";
+    FTKB_INIT_800EEB00 ftkb_init_800eeb00(g: G, d: *mut core::ffi::c_void) = "TODO(group4 ftKb) ftKb_Init_800EEB00";
+    FTKB_INIT_800EEB1C ftkb_init_800eeb1c(g: G, d: *mut core::ffi::c_void) = "TODO(group4 ftKb) ftKb_Init_800EEB1C";
 }

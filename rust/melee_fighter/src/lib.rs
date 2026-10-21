@@ -19,3 +19,4 @@ pub mod ftcommon;
 pub mod ftcommon2;
 pub mod stale;
 pub mod player;
+pub mod ftlib;

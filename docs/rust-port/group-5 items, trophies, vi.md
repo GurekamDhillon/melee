@@ -403,6 +403,60 @@ store function pointers into item vars (need typed callbacks), `it_80279720/44/6
 stride), ty/vi table readers (`tyDisplay_8031BB34` etc., need DAT/static data), and the
 `order_*` / `keep_data` data-ordering dummies (no behaviour).
 
+## Round 9 (night 3): 26 hand ports, `src/itkinds9.rs`
+
+**Recount first.** Same regex as the scans (`funcs()` of gen_round8.py) over `src/melee/{it,ty,vi}/**/*.c`,
+unique names: it 4653, ty 217, vi 99 = **4966**. A name counts as ported when its verbatim C copy
+is in the oracle (`tests/c_oracle/*.c|*.h`): **1442 before this round** (it 1440, ty 2; the
+earlier "1446" also counted header and duplicate inlines), **1468 after** (it 1464, ty 4).
+Same-named file-local inlines (e.g. five `my_sqrtf`) count once.
+
+**TODO stubs:** this crate has one, `TODO(group1)` in `itlib3.rs` (the `HSD_GObjPLinkHead` item
+list passed as a raw head pointer). melee_runtime now has a native GObj runtime (`gobj.rs`,
+`plink_head: Vec<Option<GObjId>>`), but it uses handles, not the `HSD_GObj` records this crate
+works on, so the stub stays until items move to that model. Other crates' `TODO(group5)` stubs
+(melee_chara `itIsHeavy`) were not touched (not this group's paths; `itlib::it_is_heavy` exists).
+
+**Batch.** After round 8, 139 unported names have no unported callee; nearly all need globals,
+static data tables, unported callbacks or UB-dependent reads (list in round 8). The callee that
+unblocks most is `Item_80268E5C` (state change, 234 callers; needs JObj, effects, anim). Cheapest
+new layer: callers whose *only* unported callee is `HSD_Randi` / `HSD_Randf` (group 1 ported
+random.c as `melee_runtime::random::HsdRand`) or `__frsqrte` (`melee_core::fp::frsqrte`). Ported
+(26; extractor `tests/c_oracle/gen_round9.py` writes `round9_bodies.h`):
+- sqrt inlines: `sqrtf_store`, `itzako_sqrtf`, `_tyDisplay_80318CB4_sqrt_store`,
+  `sqrtf_accurate_store`, `sqrtf_accurate_local`, `sqrtf_accurate_sp18`, `my_sqrtf` (it_26B1.c's),
+  `my_sqrtf_accurate`, `_Toy_80309338` (toy.c distance);
+- RNG: `randi_perm`, `randi_perm_int`, `itKyasarin_Randi`, `attrRand`, `it_8026C65C` (item pick),
+  `itTaru_RandCheck`, `it_80278800_rand_vec`, `it_802CBAA8_inline`, `it_802CBD24_inline`,
+  `samus_grapple_calc_grav`, `it_802B9328_grav`, `it_8026F53C` (drop velocity),
+  `it_80286340`, `it_8028A114`, `it_80289BE8_inline`, `it_802E61C4`, `it_802BD32C` (turnip pick).
+
+The RNG is a parameter (`rand: &mut HsdRand`), as `it_804D6D28` is (`&ItemCommonData`).
+
+**Fused sites:** 12 new f32 (oracle lowering 45 -> 57 fmuladd.f32): `_Toy_80309338` 2,
+`it_80278800_rand_vec` 3, the two grapple gravities 2 each, `it_80289BE8_inline` 2 (left
+product of `a*r - b*c`), `it_802E61C4` 1; plus one f64 fma per Newton step (as `gekko::sqrtf`).
+
+**Verification** (`tests/oracle_round9.rs`, 29 tables x 48 cases, pass): round 8's harness; the
+oracle compiles the game's `sysdolphin/baselib/random.c` (TARGET_PC); each RNG case sets
+`*HSD_RandSeedPtr` / `HsdRand.seed` from the case LCG and hashes the seed after the call, so the
+draw count and order are checked. Extra tables: 2927/2928 force the gravity branch (next draw >
+0.9), 2929 picks inputs where the fused `0.6f*r + |v|` differs from two f32 roundings (0.6% of
+draws). Mutation checks that failed the test: un-fusing rand_vec, both kusudama sites (and fusing
+the other product), both Toy sites, both samus gravity sites (only with 2929), box `r < sum2`
+dropped, turnip index, pick table bound, lizardon operands, drop velocity field.
+**Not caught (correct by IR only):** `it_802E61C4`'s fused site and its `< 1` clamp boundary;
+3 vs 4 Newton steps and the un-fused Newton step (results converge for these inputs);
+`it_802B9328_grav`'s sites are provably equivalent (factor 1.0, exact product); the f64 `> 0.9`
+compare is provably equivalent to f32 (no k/65536 lies between 0.9f and 0.9).
+
+Trap: the oracle's target (x86_64-pc-windows-msvc) evaluates call arguments right to left, so
+`H(f(), *HSD_RandSeedPtr)` read the seed before the draw; `SEED_H` sequences it.
+
+Left out: `it_802A4BFC_sqrtf_offset` (writes `*(&y + 6)`, out of bounds), the needle setups
+(static `it_803F6FE0`.. tables), `selectPokemonForOpening` / `it_8027A780` (global
+`Item_804A0E24`). Not done: no caller uses these yet; no frame-level comparison.
+
 ## Decisions / traps
 
 - `Cargo.toml` no longer depends on melee_types/runtime/world/fighter: nothing calls them yet,

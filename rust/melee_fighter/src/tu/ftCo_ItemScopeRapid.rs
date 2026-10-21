@@ -42,18 +42,18 @@ pub mod ext {
         ftCommon_ClampAirDrift(fp: &mut Fighter) = crate::ftcommon::clamp_air_drift;
         ftCommon_8007D7FC(fp: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
-        fn_800D8378(g: G) = |_| todo!("TODO(port) fn_800D8378 (ftCo_ItemScopeFire.c)");
+        fn_800D8378(g: G) = crate::tu::ftCo_ItemScopeFire::fn_800D8378;
         ft_800892A0(g: G) = |_| todo!("TODO(port) ft_800892A0 (ft_0892.c)");
         ft_80089824(g: G) = crate::ft0892::ft_80089824;
-        fn_800D86E0(g: G) = |_| todo!("TODO(port) fn_800D86E0 (ftCo_ItemScopeEnd.c)");
-        fn_800D874C(g: G) = |_| todo!("TODO(port) fn_800D874C (ftCo_ItemScopeEnd.c)");
+        fn_800D86E0(g: G) = crate::tu::ftCo_ItemScope::fn_800D86E0;
+        fn_800D874C(g: G) = crate::tu::ftCo_ItemScope::fn_800D874C;
         it_8026B594(item: *mut HSD_GObj) -> bool = |i| crate::tu::ftCo_ItemScopeStart::ext::it_8026B594(i);
         ftCo_800CDE54(g: G) = crate::tu::ft_0cdd::ftco_800cde54;
         ftCo_800CDE74(g: G) = |g| crate::tu::ftCo_ItemScopeStart::ext::ftCo_800CDE74(g);
         ft_800841B8(g: G, cb: fn(G)) = crate::tu::ft_081b::ft_800841b8;
         ft_80082C74(g: G, cb: fn(G)) = crate::tu::ft_081b::ft_80082c74;
         it_80291DAC(item: *mut HSD_GObj, n: i32) -> i32 = |i, n| crate::tu::ftCo_ItemScopeStart::ext::it_80291DAC(i, n);
-        fn_800D84D4(g: G, n: i32) = |_, _| todo!("TODO(port) fn_800D84D4 (ftCo_ItemScopeFire.c)");
+        fn_800D84D4(g: G, n: i32) = crate::tu::ftCo_ItemScopeFire::fn_800D84D4;
     }
 }
 

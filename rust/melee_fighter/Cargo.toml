@@ -8,12 +8,15 @@ publish.workspace = true
 [dependencies]
 melee_core.workspace = true
 melee_types.workspace = true
-# melee_runtime.workspace = true
+# group 1's MSL atan2f (lbtrigf) for the ftcommon.c stick angles (port round 9)
+melee_runtime.workspace = true
+# group 5's item accessors behind the IT_* hooks' defaults (port round 9)
+melee_items.workspace = true
 # melee_world.workspace = true
 c2rust-bitfields = { version = "=0.22.1", optional = true }
 
 [features]
 # Compile the mechanical c2rust translation of every group-3 TU (src/c2r, ~1.5M lines, ~3 min).
 # src/c2r is generated and gitignored: run tools/rust-port/transpile.sh on the group, then
-# `python rust/melee_fighter/gen/fix_raw.py` (docs/rust-port/group-3 fighter engine + common states.md).
+# `python rust/melee_fighter/gen/fix_raw.py` (docs/rust-port/group-fighter.md).
 c2r = ["dep:c2rust-bitfields"]

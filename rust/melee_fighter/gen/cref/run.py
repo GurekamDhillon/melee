@@ -13,7 +13,7 @@ be the game's own is cut out of the game's .c file (EXTRACTS) rather than retype
 to rust/melee_fighter/tests/data/<name>.txt, which the tests read. The data is computed from C
 source only: no disc data.
 """
-import os, subprocess, sys
+import os, re, subprocess, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -96,6 +96,24 @@ EXTRACTS = {
                   ("src/melee/ft/ftcommon.c", "void ftCommon_8007F6A4(", "void ftCommon_8007F76C("),
                   ("src/melee/ft/ftcommon.c", "void ftCommon_8007F824(", "void ftCommon_8007FF74("),
                   ("src/melee/ft/ft_0881.c", "void ft_80088770(", "void ft_80088828(")],
+    # port round 9: "fn:NAME" cuts one definition (signature line through its closing "}" line)
+    "ftleaf": [("src/melee/lb/lbtrigf.c", "#define SIGN_BIT", "float acosf("),
+               ("src/melee/lb/lbtrigf.c", "#define SILVER_RATIO_1_CONJUGATE", None),
+               *[("src/melee/ft/ftaction.c", "fn:ftAction_" + a, None) for a in (
+                   "800711DC 800715EC 8007168C 800716F8 80071774 800717C8 80071810 80071CA4 "
+                   "80071D30 80071F0C 800722C8 800726C0 80072E24 80072FE0 8007309C 8007320C "
+                   "8007296C 800729C4 80072A4C 80072AAC 80072B04 80072B84 80072BE4 80072C5C "
+                   "80073108 80071908 8007192C 80071950 80071974").split()],
+               ("src/melee/ft/fighter.c", "u32 Fighter_NewSpawn_80068E40(", "void Fighter_80068E64("),
+               ("src/melee/ft/fighter.c", "static struct {", "/* UCF 0.84's cardinal snap"),
+               *[("src/melee/ft/fighter.c", "fn:" + n, None) for n in
+                 ("Fighter_GetPosX", "Fighter_GetPosY", "Fighter_UnkSetFlag_8006CFBC", "setBit")],
+               *[("src/melee/ft/ftanim.c", "fn:" + n, None) for n in
+                 ("scale_inline", "get_part_joint", "ftAnim_8007077C", "ftAnim_80070FB4")],
+               *[("src/melee/ft/ftcoll.c", "fn:" + n, None) for n in
+                 ("ftColl_800765E0", "getEnvDmg", "inlineB1", "getUnkVal")],
+               *[("src/melee/ft/ftcommon.c", "fn:" + n, None) for n in
+                 ("ftCo_GetLStickAngle", "ftCo_GetCStickAngle", "ftCommon_8007D9D4")]],
     "ftcommon": [("src/melee/ft/ftcommon.c", "void ftCommon_CalcGroundAccel_Deaccel(", "void ftCommon_UnlockECB("),
                  ("src/melee/ft/ftcommon.c", "void ftCommon_UpdateFacing(", "void ftCommon_8007DB24(")],
 }
@@ -105,6 +123,13 @@ def extract(name):
     parts = []
     for src, start, stop in EXTRACTS.get(name, []):
         lines = (ROOT / src).read_text(encoding="utf-8").splitlines()
+        if start.startswith("fn:"):
+            pat = re.compile(r"\b" + re.escape(start[3:]) + r"\s*\(")
+            i = next(k for k, l in enumerate(lines) if pat.search(l) and not l.lstrip().startswith(("/", "*"))
+                     and not l.rstrip().endswith(";") and k + 1 < len(lines) and lines[k + 1] == "{")
+            j = next(k for k in range(i, len(lines)) if lines[k] == "}") + 1
+            parts.append(f"/* extracted from {src}:{i + 1}-{j} by gen/cref/run.py */\n" + "\n".join(lines[i:j]) + "\n")
+            continue
         # start "^X": begin one line earlier (at the `#if` that opens X's block)
         pre = 1 if start.startswith("^") else 0
         start = start[pre:]

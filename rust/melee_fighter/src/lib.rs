@@ -26,3 +26,7 @@ pub mod ft0881;
 pub mod ft0892;
 pub mod pltrick;
 pub mod ftcommon3;
+pub mod ftaction;
+pub mod fighter;
+pub mod ftanim;
+pub mod ftcoll;

@@ -565,3 +565,18 @@ pub fn ftcommon_8007fe84(g: G, item: G, arg2: i32, arg3: f32) {
     c2::ftcommon_8007ebac(f, 2, 0);
     apply_head_item_cb(g);
 }
+
+// ---- port round 9: the ftcommon.c atan2f stick angles (group 1's MSL atan2f) -------------
+
+/// `ftCo_GetLStickAngle`: `atan2f(lstick.y, ABS(lstick.x))` (ABS keeps -0.0).
+pub fn ftco_get_lstick_angle(fp: &Fighter) -> f32 {
+    melee_runtime::lbtrigf::atan2f(fp.input.lstick[0].y, abs_c(fp.input.lstick[0].x))
+}
+/// `ftCo_GetCStickAngle`.
+pub fn ftco_get_cstick_angle(fp: &Fighter) -> f32 {
+    melee_runtime::lbtrigf::atan2f(fp.input.cstick[0].y, abs_c(fp.input.cstick[0].x))
+}
+/// `ftCommon_8007D9D4`: `atan2f(lstick.y, lstick.x)`.
+pub fn ftcommon_8007d9d4(fp: &Fighter) -> f32 {
+    melee_runtime::lbtrigf::atan2f(fp.input.lstick[0].y, fp.input.lstick[0].x)
+}

@@ -303,8 +303,6 @@ pub fn geno_define_voice_play_owner(kind: i32, sfx: i32, owner: *mut Fighter) ->
 }
 
 needed_hooks! {
-    IT_IS_HEAVY it_is_heavy(g: G) -> bool = "TODO(group5 it) itIsHeavy";
-    IT_GET_KIND it_get_kind(g: G) -> i32 = "TODO(group5 it) itGetKind";
     FTCO_800C06B4 ftco_800c06b4(fp: &mut Fighter) -> i32 = "TODO(group3 ftCo) ftCo_800C06B4";
     FTCO_800A101C ftco_800a101c(fp: &mut Fighter, kind: i32, level: i32, x14: i32) = "TODO(group3 ftCo) ftCo_800A101C";
     LBAUDIOAX_800233EC lbaudioax_800233ec(id: i32) -> i32 = "TODO(group1 lb) lbAudioAx_800233EC";
@@ -334,7 +332,6 @@ ported_hooks! {
     PL_8003FE40 pl_8003fe40(slot: i32, sub: i32) = crate::plbonus::pl_8003fe40;
 }
 needed_hooks! {
-    IT_8026B6C8 it_8026b6c8(g: *mut crate::types::Item_GObj) -> i32 = "TODO(group5 it) it_8026B6C8";
     FTFX_APPEALS_CHECK_IF_USED ftfx_appeals_check_if_used(fp: &mut Fighter) -> bool = "TODO(group4 ftFx) ftFx_AppealS_CheckIfUsed";
     PL_8003DFF4 pl_8003dff4(slot: i32, sub: i32, id: i32) = "TODO(group3 plbonuslib) pl_8003DFF4";
     /// `ftData_80085FD4(fp, i)->x8`.
@@ -398,7 +395,6 @@ needed_hooks! {
     MEX_ON_KNOCKBACK_EXIT mex_on_knockback_exit(kind: i32, g: G) = "TODO(pc mex + group3 ftdata) Mex_OnKnockbackExitDispatch";
     MEX_ON_REMOVE_HEAD_ITEM mex_on_remove_head_item(kind: i32, g: G) = "TODO(pc mex + group3 ftdata) Mex_OnRemoveHeadItemDispatch";
     MEX_ON_APPLY_HEAD_ITEM mex_on_apply_head_item(kind: i32, g: G) = "TODO(pc mex + group3 ftdata) Mex_OnApplyHeadItemDispatch";
-    IT_GET_MOTION_ID it_get_motion_id(i: I) -> i32 = "TODO(group5 it) itGetMotionId";
     IT_8028B08C it_8028b08c(i: I, state: i32) -> i32 = "TODO(group5 it) it_8028B08C";
     IT_802BDA40 it_802bda40(i: I, v: i32) -> i32 = "TODO(group5 it) it_802BDA40";
     /// `parasol_table_1[idx](item, v)`: it_8028B718 / B780 / B7E8 / B850 / B648 / B6B0 / B618.
@@ -413,11 +409,35 @@ needed_hooks! {
     FTCO_800D105C ftco_800d105c(g: G) = "TODO(group3 ftCo) ftCo_800D105C";
     FT_80081C88 ft_80081c88(g: G, s: f32) = "TODO(group3 ft_081B) ft_80081C88";
     IT_80294EB0 it_80294eb0(i: I, a: &Vec3, b: &Vec3) = "TODO(group5 it) it_80294EB0";
-    IT_8026B54C it_8026b54c(i: I) -> f32 = "TODO(group5 it) it_8026B54C";
     ITEM_8026A8EC item_8026a8ec(i: I) = "TODO(group5 it) Item_8026A8EC";
-    IT_8026BD0C it_8026bd0c(i: I) = "TODO(group5 it) it_8026BD0C";
     ITEM_8026ABD8 item_8026abd8(i: I, v: &Vec3, f: f32) = "TODO(group5 it) Item_8026ABD8";
     ITEM_8026AB54 item_8026ab54(i: I, g: G, part: i32) = "TODO(group5 it) Item_8026AB54";
-    IT_8026BCF4 it_8026bcf4(i: I) = "TODO(group5 it) it_8026BCF4";
     IT_8029A748 it_8029a748(g: G, pos: &Vec3, part: i32, dir: f32) -> I = "TODO(group5 it) it_8029A748";
+}
+
+// ---- port round 9: item calls whose group-5 port now exists (melee_items::itlib) ----------
+// `gobj->user_data` is the Item (GET_ITEM). Each stays overridable (the ref tests trace them).
+mod it5 {
+    use crate::types::{Item, Item_GObj};
+    use melee_items::itlib as il;
+    #[inline(always)]
+    fn ip<'a>(g: *mut Item_GObj) -> &'a mut Item {
+        unsafe { &mut *((*g).user_data as *mut Item) }
+    }
+    pub fn it_is_heavy(g: *mut Item_GObj) -> bool { unsafe { il::it_is_heavy(ip(g)) } }
+    pub fn it_get_kind(g: *mut Item_GObj) -> i32 { il::it_get_kind(ip(g)) }
+    pub fn it_8026b6c8(g: *mut Item_GObj) -> i32 { il::it_8026b6c8(ip(g)) as i32 }
+    pub fn it_get_motion_id(g: *mut Item_GObj) -> i32 { il::it_get_motion_id(ip(g)) }
+    pub fn it_8026b54c(g: *mut Item_GObj) -> f32 { unsafe { il::it_8026b54c(ip(g)) } }
+    pub fn it_8026bd0c(g: *mut Item_GObj) { il::it_8026bd0c(ip(g)) }
+    pub fn it_8026bcf4(g: *mut Item_GObj) { il::it_8026bcf4(ip(g)) }
+}
+ported_hooks! {
+    IT_IS_HEAVY it_is_heavy(g: G) -> bool = it5::it_is_heavy;
+    IT_GET_KIND it_get_kind(g: G) -> i32 = it5::it_get_kind;
+    IT_8026B6C8 it_8026b6c8(g: I) -> i32 = it5::it_8026b6c8;
+    IT_GET_MOTION_ID it_get_motion_id(i: I) -> i32 = it5::it_get_motion_id;
+    IT_8026B54C it_8026b54c(i: I) -> f32 = it5::it_8026b54c;
+    IT_8026BD0C it_8026bd0c(i: I) = it5::it_8026bd0c;
+    IT_8026BCF4 it_8026bcf4(i: I) = it5::it_8026bcf4;
 }

@@ -1,8 +1,9 @@
 # Group 3: fighter engine + common states (`rust/melee_fighter`)
 
 Scope: `src/melee/ft/*.c` (67 TUs), `src/melee/ft/kinds/ftCommon/*.c` (142), `src/melee/pl/*.c`
-(7): 216 TUs, ~76k lines, about 2,820 function definitions (regex count over the C).
-State as of 2026-10-21.
+(7): 216 TUs, ~76k lines, 3,002 function definitions (recount, port round 9: a definition line
+followed by a `{` line, static inline helpers included; the older "~2,820" left those out).
+State as of 2026-10-21 (port round 9).
 
 ## What exists
 
@@ -10,10 +11,10 @@ State as of 2026-10-21.
 |---|---|---|
 | Native types + GC offsets | `src/types/generated.rs` (from `gen/gen_types.py`) | 569 `#[repr(C)]` records, all built |
 | Mechanical translation of all 216 TUs | `src/c2r/` (from `gen/fix_raw.py`, feature `c2r`) | compiles (`--features c2r`), never run |
-| Hand ports, checked bit-for-bit against the C | `src/neutral_hash.rs`, `src/ftcommon.rs`, `src/ftcommon2.rs`, `src/stale.rs`, `src/player.rs`, `src/ftlib.rs`, `src/plbonus.rs`, `src/ft0877.rs`, `src/ft0881.rs`, `src/ft0892.rs`, `src/pltrick.rs`, `src/ftcommon3.rs`, `src/compat.rs`, `src/hooks.rs` | 526 C functions, tests pass |
+| Hand ports, checked bit-for-bit against the C | `src/ftaction.rs`, `src/fighter.rs`, `src/ftanim.rs`, `src/ftcoll.rs`, `src/neutral_hash.rs`, `src/ftcommon.rs`, `src/ftcommon2.rs`, `src/stale.rs`, `src/player.rs`, `src/ftlib.rs`, `src/plbonus.rs`, `src/ft0877.rs`, `src/ft0881.rs`, `src/ft0892.rs`, `src/pltrick.rs`, `src/ftcommon3.rs`, `src/compat.rs`, `src/hooks.rs` | 576 C functions (575 verified), tests pass |
 | PowerPC `.s` files | none belong to this group (inventory §3) | nothing to do |
 
-Functions: 526 of ~2,820 (about 18.7%; 57 night 1, 39 in port round 1, 144 in port round 2, 96 in port round 3, 82 in port round 4, 34 in port round 5, 18 in port round 6, 19 in port round 7, 37 in port round 8; 525 verified) are hand-ported and verified against the C. All ~2,820 are
+Functions: 576 of 3,002 (19.2%; 57 night 1, 39 in port round 1, 144 in port round 2, 96 in port round 3, 82 in port round 4, 34 in port round 5, 18 in port round 6, 19 in port round 7, 37 in port round 8, 50 in port round 9) are hand-ported; 575 are verified against the C (the one unverified port: `ftCommon_8007E2D0`, round 1, stores three fn pointers). All are
 in the mechanical translation, which compiles; none of it has been linked or run.
 
 ### Native types (`gen/gen_types.py`)
@@ -61,6 +62,7 @@ in the mechanical translation, which compiles; none of it has been linked or run
 ### Hand ports (verified)
 | module | C functions | test | cases |
 |---|---|---|---|
+| `ftaction.rs`, `fighter.rs`, `ftanim.rs`, `ftcoll.rs`, `ftcommon3.rs` (angles) | 50 leaf functions (port round 9, below) | `tests/ftleaf_ref.rs` | 10,000 (50 ops x 200) |
 | `neutral_hash.rs` | `nh_Mix`, `nh_CpuFlags`, `nh_Fighter` (fighter.c, TARGET_PC) + item/game word, `StateHash for Fighter` | `tests/nh_ref.rs` | 64 fighters, all fields + every CPU flag bitfield |
 | `ftcommon3.rs` | 37 more of ftcommon.c (port round 8, below) | `tests/ftcommon3_ref.rs` | 10,200 (34 ops x 300) |
 | `ft0881.rs` | 18 of ft/ft_0881.c (port round 6, below) | `tests/ft0881_ref.rs` | 5,100 (17 ops x 300) |
@@ -374,6 +376,52 @@ one line early, at the `#if defined(TARGET_PC)` opening the floor-guard block).
   the nine m-ex dispatchers, gm_8016B0B4 (TODO(group6 gm)), and 17 item calls (TODO(group5 it)).
 - Not ported from ftcommon.c: the atan2f users (ftCo_GetLStickAngle, GetCStickAngle, 8007D9D4,
   8007E5AC; need group 1's MSL), 8007EFC8 (transform swap, ~25 callees), PcFloorGuardTest.
+
+## Port round 9 (2026-10-21): leaves of ftaction / fighter / ftanim / ftcoll + stick angles
+Recount first: 526 ported before this round (525 verified), of 3,002 definitions.
+
+Stubs replaced by ports that now exist elsewhere: the seven group-5 item hooks group 3 calls
+(`IT_IS_HEAVY`, `IT_GET_KIND`, `IT_8026B6C8`, `IT_GET_MOTION_ID`, `IT_8026B54C`, `IT_8026BD0C`,
+`IT_8026BCF4`) now default to `melee_items::itlib` (verified by group 5) through `gobj->user_data`
+instead of panicking; still overridable (the ref tests install tracing stubs). Wiring test:
+`tests/hooks_items.rs`. melee_fighter now depends on melee_items and melee_runtime (no cycle).
+Not replaced, and why: `HSD_RANDI` / `PLINK_HEAD` (group 1 has them, but as methods on a
+`Random` / GObj-system instance, no global to default to), `MP_LINE_GET_NEXT/PREV` (group 2's
+are methods on a map-lines instance), the lbAudioAx, gm, if, cm hooks (no port exists yet).
+
+50 C definitions ported, all verified against the C cut verbatim (`gen/cref/ftleaf_ref.c`;
+run.py gained a `fn:NAME` extract that cuts one definition through its closing `}`):
+- ft/ftaction.c (29, `src/ftaction.rs`): the 16 `SKIP_CMD` handlers (800711DC, 800715EC, 8007168C,
+  800716F8, 80071774, 800717C8, 80071810, 80071CA4, 80071D30, 80071F0C, 800722C8, 800726C0,
+  80072E24, 80072FE0, 8007309C, 8007320C), the 9 `NEXT_CMD`-only ones (8007296C, 800729C4,
+  80072A4C, 80072AAC, 80072B04, 80072B84, 80072BE4, 80072C5C, 80073108) and the 4 flag setters
+  (80071908 / 8007192C / 80071974 throw_flags_b1 / b2 / b0, 80071950 allow_interrupt).
+  Handlers that read `CmdUnion` bitfields are left: the C build declares them LSB-first (x86) over
+  command words whose in-memory byte order on the native build is not decided; that needs one
+  decision shared with groups 1/4/5 (lbcommand, item commands) before porting.
+- ft/fighter.c (10, `src/fighter.rs`): Fighter_NewSpawn_80068E40 (static counter
+  `Fighter_804D64F8`), Fighter_UnkSetFlag_8006CFBC, setBit, Fighter_GetPosX / GetPosY, and the
+  TARGET_PC UCF 0.84 block: ftUcf_PadBufferPush, ftUcf_PadRaw, ftUcf_FlickCounter,
+  ftUcf_RimUnits, ftUcf_FlickCount (static `ftUcf_Pad[4]`).
+- ft/ftanim.c (4, `src/ftanim.rs`): scale_inline, get_part_joint, ftAnim_8007077C, ftAnim_80070FB4.
+- ft/ftcoll.c (4, `src/ftcoll.rs`): ftColl_800765E0 (statics `dmg_log0_idx/1_idx`), getEnvDmg,
+  inlineB1, getUnkVal.
+- ft/ftcommon.c (3, appended to `src/ftcommon3.rs`): ftCo_GetLStickAngle, ftCo_GetCStickAngle,
+  ftCommon_8007D9D4, through group 1's `melee_runtime::lbtrigf::atan2f`; the C side links the real
+  lbtrigf.c atan2f + TARGET_PC atanf (cut verbatim), so the test checks the composition too.
+- Test: one fighter with random flags / sticks / x8B0 slots, random statics (spawn counter near
+  wrap, pad rings with out-of-range idx), 50 ops x 200 = 10,000 lines (return bits, hash of every
+  written field and static, command-pointer delta). Floats include +-0, NaN, random bit patterns.
+- Fused sites: ftUcf_RimUnits' f64 `|v| * 80.0 - 1e-4` (contracted to fma by the shipping build;
+  ported as `mul_add`). Not discriminated and cannot be: an f32 times 80 is exact in f64, so fused
+  and unfused agree. No other a*b+c in the batch.
+- Mutation checks that fail: a skip count (op 10), `> 1936` -> `>=` (op 38; the driver forces
+  raw-y deltas of 43..45 in half the cases), the flick counter increment / the -0.609375 test /
+  the timer `<= 1` (op 38), RimUnits' `+ 2` (op 37), getEnvDmg's `return 1` (op 44),
+  scale_inline's multiply-by-reciprocal vs divide (op 39), the spawn counter's wrap to 1 (op 29),
+  inlineB1's `<` (op 45), the throw-flag bit (op 25), x8B0 x11 (op 41), x221A_b1 (op 30).
+  Not discriminated: `ABS(x)` vs `x.abs()` in the angle getters: atan2f gives the same result for
+  x = +0 and -0 here (only a negative-sign NaN would differ; ABS keeps it, abs() clears it).
 
 ## Not done / blockers
 - **The c2r layer has never linked or run.** Everything outside group 3 is an unresolved

@@ -334,7 +334,7 @@ def main(out):
                 todo.append(x)
                 cut.setdefault(defs[x][0], []).append(x)
     allnames = sorted(seen, key=len, reverse=True)
-    ident = re.compile(r"(?<![A-Za-z0-9_])(" + "|".join(allnames) + r")(?![A-Za-z0-9_])")
+    ident = re.compile(r"(?<![A-Za-z0-9_.])(?<!->)(" + "|".join(allnames) + r")(?![A-Za-z0-9_])")
 
     # record types the row builders need
     ud_tu = tus["src/melee/lb/lbaudio_ax.c"]

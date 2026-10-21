@@ -293,6 +293,57 @@ the threshold where the fused and unfused intermediate values disagree.
 uncommitted work in `melee_chara` stopped the live worktree from compiling at the time
 (see the commit message).
 
+## Night 3 round 1 (2026-10-21): group total, nested-pointer leaves
+
+**Group total.** libclang over the 166 gm, mn, if, ty and lb TUs in `game_tus.txt` (scan_r4.py's
+parse, counting every function defined in the TU itself, static inlines included): **3,995
+functions**. That includes lbtrigf.c / lbvector.c, which group 1 ports (`melee_runtime`), about
+20 functions. Ported before this round: 251 (250 distinct C names; `checkJObjFlags` is two
+static copies). After it: **261 of 3,995 (6.5%)**.
+
+**TODO stubs.** melee_modes has no stubs to replace: every callee in rounds 1-4 was already
+ported. Other crates hold `TODO(group6)` hooks (melee_fighter `hooks.rs`: `gm_8016B168`,
+`gm_GetFrameCount`, `ifStatus_802F6*`...; melee_world `gm_8016B238/3A0`, `gm_IsCurrently1PMode`;
+melee_chara `CAPS_MAX_JUMPS`). All of them read the global game state (`lbl_8046B6A0` match
+state, save data), which is not ported yet, so none could be wired this round.
+
+**Ported: 10 functions, all checked bit for bit against the C** (`cargo test -p melee_modes --test oracle_r5`,
+2,650 vectors). They are the round-3 near misses whose only obstacle was a pointer inside a pointee,
+now testable with round 4's links.
+
+| module | C TU | functions |
+|---|---|---|
+| `lb_r5.rs` | lbcommand | `Command_04`, `Command_05`, `Command_07` |
+| `hud_r5.rs` | textdraw, ifstock, toy | `DevText_StrLen`, `DevText_NumToStr`, `DevText_AddToList`, `copyColor`, `_Toy_8030FE48_link_entries` |
+| `mn_r5.rs` | mnnamenew | `GetAutoNameCharacter` |
+| `gm_r5.rs` | gmmain_lib | `SetDefaultHandicaps` |
+
+- **FMA:** none of the 10 does float arithmetic (lower.py: 0 fmuladd in every cut).
+- `Command_04` keeps the C's `((u32*) info)[loop_count + 3] -= 1` "hack to match": on the native
+  layout (u at 8, loop_count at 16, event_return at 24) it decrements whatever 4-byte word sits
+  at byte 4*(loop_count+3), so the Rust does the same on the record's bytes. `loop_count - 1` is
+  u32 arithmetic: with loop_count 1 the decrement hits loop_count itself and the C then reads
+  `event_return[0xFFFFFFFF]` and faults natively (on the GC it wrapped to -1). Domain: 2..4.
+- Mutation check: `>` for `>=` in `DevText_AddToList` fails 54/250 rows; a wrong ring head in
+  `_Toy_8030FE48_link_entries` fails 214/250.
+
+**Oracle** (`oracle/gen_oracle_r5.py` over `gen_oracle_r4.py`, `oracle/build_r5.sh` ->
+`tests/data/vectors_r5.txt`): only the function list, domains and row builders are new.
+`gen_oracle_r4.py`'s callee renamer no longer renames member names after `.`/`->`
+(`u->Command_05.ptr`); its round-4 vectors regenerate byte-identical.
+
+**Domains restricted:** `Command_04` loop_count 2..4, and event_return[0] is never a buffer link
+(loop_count 3/4 decrement one half of it, and a moved address no longer compares by target);
+`Command_05` loop_count 0..2; `GetAutoNameCharacter` index 0..511 (the name buffer);
+`_Toy_8030FE48_link_entries` count 0..13 (13 entries); `DevText_StrLen` strings NUL-terminated
+inside the buffer.
+
+**Not ported / skipped this round:** `gm_80172DD4` (scan_r4 listed it because another crate has a
+`pub fn inline1`, a name collision; gm_16F1's `inline1` reads the save data), `Locate`
+(lbarchive: adds a native pointer into u32 relocation slots, no native meaning) and
+`_tyDisplay_8031BBF4` (returns a string's address as s32). The big tydisplay sorters
+(`_tyDisplay_8031830C/80318714`, ~780 tokens each) are next.
+
 ## Next round
 - Bitfield-touching functions: compare field values, not bytes, or add a native<->GC bitfield bridge.
 - Generate the records that `.c` files define (TODO(group0)), then port the 12 functions above.

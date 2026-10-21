@@ -1,0 +1,10 @@
+Command_04 buf -> void
+Command_05 buf -> void
+Command_07 buf -> void
+DevText_StrLen buf -> s32
+DevText_NumToStr s32 buf -> void
+DevText_AddToList buf buf -> void
+GetAutoNameCharacter buf s32 -> u8
+copyColor buf buf -> void
+SetDefaultHandicaps buf -> void
+_Toy_8030FE48_link_entries buf s32 -> void

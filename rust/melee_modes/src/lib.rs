@@ -23,6 +23,11 @@ pub mod mn_ptr;
 pub mod gm_r4;
 pub mod lb_r4;
 pub mod mn_r4;
+/// Round 5: leaf functions over nested pointers that round 3 skipped, `tests/oracle_r5.rs`.
+pub mod gm_r5;
+pub mod hud_r5;
+pub mod lb_r5;
+pub mod mn_r5;
 
 /// `GXColor` (libs/dolphin/include/dolphin/gx/GXStruct.h). TODO(group0): melee_types does not
 /// generate it (no group-0 header reaches GXStruct.h); move it there when it does.

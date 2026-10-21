@@ -91,9 +91,43 @@ matrix; spline.c feeds JObj path animation). 31 C definitions ported; every fuse
   These are stateful (no pure oracle); they need a decision on native object ownership
   (arena + indices vs Box) before porting.
 
+## Port round 2 (night 2): the FObj keyframe interpreter, util.c, crypt.c
+
+FObj (fobj.c) is the leaf under every AObj: each animated joint/material/texture/light channel
+is an FObj byte stream decoded frame by frame. It is deterministic given the FObj state and the
+anim bytes, so it got a C oracle even though it is "object system" code. 32 C definitions ported:
+
+- `fobj.rs` (24/30): SetState, GetState, ReqAnim(+All), StopAnim(+All, incl. the inline
+  FObj_FlushKeyData), parseFloat, parseOpCode, parsePackInfo, parseWait, FObjLaunchKeyData,
+  FObjLoadWait, FObjAnimCON/Linear/SPL0/SPL/SLP/Key, FObjLoadData, FObjUpdateAnim,
+  HSD_FObjInterpretAnim(+All), HSD_FObjLoadDesc. Not ported: GetAllocData, InitAllocData,
+  Remove, RemoveAll, Alloc, Free (objalloc pool; native `Vec<HsdFObj>` ownership replaces them).
+  One fused site (`d0*time + p0`, FObjUpdateAnim linear), matches `fma_sites.py`.
+- `hsd_util.rs`: util.c 3/3 (HSD_MulColor, HSD_GetNbBits, HSD_Index2PosNrmMtx; plus
+  HSD_identityMtx) and crypt.c 5/5 (HSD_Checksum, encryptByte, decryptByte, HSD_Encrypt,
+  HSD_Decrypt). No float code.
+- Native shape: `HsdFObj { ad: usize offset, ad_head: Arc<[u8]>, .. }`; the `next` list is a slice;
+  the update callback is `Option<&mut dyn FnMut(obj_type, f32)>` (the C passes a zeroed
+  HSD_ObjData of which only `fv` is written, and drops callee writes). `HsdFObj`/`HsdFObjDesc`/
+  `GxColor` implement `GcLayout` (FObj/FObjDesc delegate to the generated `melee_types` tables).
+- Divergences (documented in code): a byte read past the end of `ad_head` gives 0 (C reads
+  adjacent memory); a state nibble 7..15 returns instead of the C's infinite loop (only reachable
+  via an external SetState); `encrypt`/`decrypt` on < 16 bytes return -1 (C over-reads).
+- Oracle: `oracle/build_anim.sh` (fobj.c, util.c, crypt.c, spline.c; same flags + `lower.py`;
+  `stubs_anim.c` gives a calloc HSD_ObjAlloc) -> `tests/data/oracle_anim.txt` (65,000 rows:
+  1,000 generated anim streams of mixed op/frac/pack/wait encodings incl. raw random bytes and
+  truncated lengths, 60 frames each at rates 1/0.5/3/random incl. negative, with StopAnim,
+  re-ReqAnim and null callbacks; 2,000 util/crypt rows). `tests/oracle_anim.rs`: 135,519
+  checks (every callback value and the full FObj state after every frame), all bit-identical.
+  Mutation check: unfusing the one fused site fails 517 checks.
+- `lower.py` now also applies gwtool's variable-shift rule (amount >= width -> 0 / sign fill).
+  The first oracle run disagreed in 116 checks because parseWait/parsePackInfo shift by >= 32 on
+  random streams (native x86 masks the amount; gwtool gives 0); with the rule both agree.
+  Regenerating `oracle_vectors.txt` and `oracle_hsd.txt` with the new `lower.py` changed nothing.
+
 ## Not ported
 
-About 111 of the group's ~2,000 C function definitions are ported (~4%). Everything below is
+About 143 of the group's ~2,000 C function definitions are ported (~7%). Everything below is
 untouched:
 
 - `src/sysdolphin/baselib` (~1,200 functions, 48k lines): the HSD object system (JObj, DObj, MObj,

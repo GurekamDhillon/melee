@@ -2,7 +2,8 @@
 # compiled C oracle computes what the real (clang + gwtool) build computes:
 #   lowerFMulAdd:  f32 llvm.fmuladd -> fptrunc(fpext a * fpext b + fpext c); f64 -> llvm.fma.f64
 #   makeArithmeticSafe (float->int only): fptosi/fptoui to i32 -> llvm.fpto[su]i.sat.i32
-# Integer div/rem/shift safety is not applied (no such operand reaches the oracle's inputs).
+#   makeArithmeticSafe (variable shifts): i32/i64 shift by >= width -> 0 (ashr: sign fill)
+# Integer div/rem safety is not applied (no such operand reaches the oracle's inputs).
 import re
 import sys
 
@@ -52,6 +53,21 @@ def nrep(m):
 src, k2 = fpn.subn(nrep, src)
 k += k2
 assert not re.search(r'= fpto[su]i (float|double) [^ ]+ to i(8|16)\b', src), 'narrow fptosi: add'
+sh = re.compile(r'^(\s*)(%[\w.]+) = (shl|lshr|ashr)((?: nuw| nsw| exact)*) (i32|i64) ([^,]+), (%[\w.]+)$', re.M)
+
+
+def srep(m):
+    ind, r, op, fl, t, a, b = m.groups()
+    w = 32 if t == 'i32' else 64
+    q = f'%gws{r.lstrip("%")}'
+    out = (f'{ind}{q}b = icmp uge {t} {b}, {w}\n{ind}{q}m = and {t} {b}, {w - 1}\n'
+           f'{ind}{q}r = {op} {t} {a}, {q}m\n')
+    if op == 'ashr':
+        out += f'{ind}{q}f = ashr {t} {a}, {w - 1}\n'
+    return out + f'{ind}{r} = select i1 {q}b, {t} {q + "f" if op == "ashr" else "0"}, {t} {q}r'
+
+
+src, ns = sh.subn(srep, src)
 src += ''.join(f'\ndeclare i32 {name}({t})' for name, t in sorted(used)) + '\n'
 open(sys.argv[2], 'w').write(src)
-print(sys.argv[1], n, 'fmuladd.f32 lowered,', k, 'fptoi saturated')
+print(sys.argv[1], n, 'fmuladd.f32 lowered,', k, 'fptoi saturated,', ns, 'variable shifts made safe')

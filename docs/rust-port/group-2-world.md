@@ -12,12 +12,12 @@ Function definitions in the C (counted as a `name(...)` line followed by `{`):
 
 | dir | functions | ported |
 |---|---|---|
-| src/melee/mp | 226 | 50 (mplib line-graph queries + line geometry) |
+| src/melee/mp | 226 | 71 (mplib line-graph queries, line geometry, segment checks) |
 | src/melee/cm | 182 | 0 |
 | src/melee/ef | 67 | 0 |
 | src/melee/gr | 2166 | 0 |
 | src/melee/if | 372 | 0 |
-| total | 3013 | 50 (about 1.7%) |
+| total | 3013 | 71 (about 2.4%) |
 
 Group 2 has no PowerPC `.s` files (the repo's `.s` files are in libs/dolphin, MetroTRK and
 Runtime). None of the group's structs are in the neutral hash field list
@@ -64,6 +64,26 @@ no `StateHash` impls were needed yet.
     `fma(-(g*g), x, 3.0)`; the four point queries, the setters and mpGetSpeed have none.
   - mpGetSpeed's `DbLevel >= DbLKind_DebugRom` range assert (debug ROM only) is not ported.
 
+- (port round 2, night 2) `mp::check`, from src/melee/mp/mplib.c (21): mpScriptInvalidateBounding,
+  mpCheckedBounding, mpBoundingCheck, mpBoundingCheck2, mpBoundingCheck3, mpUncheckBounding,
+  mpCheckFloor, mpCheckFloorRemap, mpCheckCeiling, mpCheckCeilingRemap, mpCheckLeftWall,
+  mpCheckLeftWallRemap, mpCheckRightWall, mpCheckRightWallRemap, mpLib_800511A4_RightWall,
+  mpLib_800515A0_LeftWall, mpLib_8005199C_Floor, mpLib_80051BA8_Floor, mpCheckMultiple, mpCheckAll,
+  mpCheckAllRemap.
+  - The joint list (`groundCollJoint`, `jointListStart`, `didCheckBounding`) is now in
+    `GroundColl` as `joints: Vec<CollJointRt>` (index links, -1 = NULL; `gc_layout!` with the
+    CollJoint offsets of the fields it keeps), `map_joints`, `joint_list_start`,
+    `did_check_bounding`. The PC `ScriptGame_StageJointActive` checks are the `joint_active` hook.
+    The raw-pointer `types::CollJoint` stays for the jobj/callback fields (not used yet).
+  - The C's `goto block_8` into the line loop (the Dynamic range) runs the body once before testing
+    the count; `GroundColl::joint_lines` keeps that.
+  - Out-params become `Option<SegHit>` / `Option<i32>` / `(i32, Option<Vec3>)`; `None` is exactly
+    where the C writes nothing. mpCheckFloor's `cb(gobj, line)` is a closure (`LineFilter`).
+    mpLib_80051BA8's `dir == 0` HSD_ASSERT is a panic.
+  - FMA per fma_sites.py: mpCheckFloor/Ceiling 2 f32 (`SQ+SQ`), the 4 Remap variants 2 f32 (the
+    direction dot product only; their dist2 is split over statements), 800511A4/800515A0 6 f32,
+    8005199C 1 f32 (`dy/dx*(x-x0)+y0`); the rest none.
+
 ## Tests
 
 `tests/mplib_lines_vs_c.rs` checks the port against the real C. `cref/gen_mplib_lines_ref.sh`
@@ -90,7 +110,20 @@ f64 site (remap, intersections, sqrtf) does NOT: their multiplies are mostly f32
 f64, so fma equals unfused), and the rest round to f32 afterwards. Those f64 fusions are right
 by the compiled IR, not proven by a vector.
 
-Regenerate: `bash rust/melee_world/cref/gen_mplib_lines_ref.sh` (and `gen_mplib_geom_ref.sh`), then
+`tests/mplib_check_vs_c.rs` does the same for `mp::check`: `cref/gen_mplib_check_ref.sh` cuts the
+mpCheck*/mpLib_8005xxxx and bounding bodies out of mplib.c (plus the lines/geom bodies), builds
+them i686 with contraction on + lower.py (49 f32 sites), and writes `tests/data/mplib_check_ref.txt`
+(58522 rows: 48 random graphs, each with 1-6 random joints (ranges, flags, boxes, list order, active
+table), 72 segment queries each through all 15 query functions, half of them aimed through a line's
+midpoint, a quarter run with the bounding box pre-checked). Every result, every float bit, and
+`didCheckBounding` plus every joint's flags after each call match. Mutation check: breaking the
+flat-floor normal or dropping the goto's once-through Dynamic body fails the test. Unfusing any of
+the f32 sites does NOT: they only feed min-distance comparisons and a dot-product sign, and no
+vector lands on the tie where fusing flips the result. Those fusions are right by the compiled IR
+(fma_sites.py), not proven by a vector. The script takes `LOWER_PY=` (another agent was mid-edit
+on lower.py; the data was generated with the committed HEAD copy).
+
+Regenerate: `bash rust/melee_world/cref/gen_mplib_lines_ref.sh` (and `gen_mplib_geom_ref.sh`, `gen_mplib_check_ref.sh`), then
 `cd rust && cargo test -p melee_world`.
 
 ## Build notes
@@ -106,9 +139,8 @@ Regenerate: `bash rust/melee_world/cref/gen_mplib_lines_ref.sh` (and `gen_mplib_
 
 ## Next (in order)
 
-1. The rest of mplib: mpCheckFloor/Ceiling/LeftWall/RightWall (+Remap), mpLib_800511A4/515A0,
-   mpLib_8005199C_Floor and the joint list (needs CollJoint without raw pointers). The geom harness
-   extends to them.
+1. The rest of mplib: the joint list edits (mpJointListAdd/Unlink, mpJointHide/Unhide,
+   mpJointUpdateBounding, mpLib_80056C54, mpLib_800581DC ...) on `CollJointRt`; mpLibLoad.
 2. mpcoll.c, the collision driver. It calls into fighter and item callbacks, which get stubbed.
 3. cm/camera.c. `long double` literals become f64.
 4. gr/*: 77 stage TUs, mostly callback tables plus per-stage logic. Port the shared grlib parts

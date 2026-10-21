@@ -27,6 +27,16 @@ pub struct GroundColl {
     /// `mpLib_804D64B4->line_count`.
     pub line_count: i32,
     pub line_active: LineActiveFn,
+    /// `groundCollJoint` (natively: list links are indices, see [`super::check::CollJointRt`]).
+    pub joints: Vec<super::check::CollJointRt>,
+    /// The DAT `MapJoint` array that `CollJointRt::inner` indexes.
+    pub map_joints: Vec<MapJoint>,
+    /// `jointListStart` (-1 = NULL).
+    pub joint_list_start: i32,
+    /// `didCheckBounding`.
+    pub did_check_bounding: bool,
+    /// `ScriptGame_StageJointActive` hook (PC build). Default: every joint active.
+    pub joint_active: LineActiveFn,
 }
 
 impl Default for GroundColl {
@@ -37,6 +47,11 @@ impl Default for GroundColl {
             map_lines: Vec::new(),
             line_count: 0,
             line_active: all_lines_active,
+            joints: Vec::new(),
+            map_joints: Vec::new(),
+            joint_list_start: -1,
+            did_check_bounding: false,
+            joint_active: all_lines_active,
         }
     }
 }

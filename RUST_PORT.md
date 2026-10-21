@@ -137,7 +137,7 @@ against a running Rust game: no Rust simulation exists yet, so no golden has bee
 | 0 types | melee_types | 110 header inlines | 82 | NHV1 words (8 oracle cases) + frame combine on all 10804 golden rows | 1618 records, the ONE generator (libclang ppc32), covers groups 0/3/4/5 headers | 28 inlines need other groups |
 | 1 runtime/HSD | melee_runtime | ~2000 | ~111 (gekko_fp, sqrtf, mtx, mtx44, random, lbtrigf, lbvector; round 1: baselib mtx.c 14/22, quatlib 6/6, spline 11/11) | all: 11400 rows + 33000 rows (oracle_hsd, 66k checks); oracle redoes gwtool fusion | Vec3/Quaternion only; DAT reader `dat.rs` (night 2) | all HSD objects (~1200), lb/db/sfx/THP |
 | 2 world | melee_world | 3013 | 50 (mplib line queries + line geometry) | all; 27231 + 50454 rows (oracles contraction on + gwtool lowering, night 2) | mp types, hand-written from header comments | cm, ef, gr, if; rest of mplib |
-| 3 fighter engine | melee_fighter | ~2820 | 57 (nh_Fighter, ftcommon movement, staling) | all (6600 + 12000 + 64 cases) | melee_types (re-exported as `crate::types`) | everything else; c2r layer (feature `c2r`) compiles, never linked |
+| 3 fighter engine | melee_fighter | ~2820 | 96 (nh_Fighter, ftcommon movement, staling; port round 1: +39 ftcommon.c field logic) | 95 (6600 + 12000 + 64 + 10200 cases; cref now built with shipping contraction + lower.py, port round 1) | melee_types (re-exported as `crate::types`) | everything else; c2r layer (feature `c2r`) compiles, never linked |
 | 4 characters | melee_chara | ~4340 | 13 (pure helpers) | frsqrte / my_sqrtf / sumOfSquares (oracle contraction on, night 2; my_sqrtf now fused) | melee_types (re-exported as `types_gen`) | all Fighter-touching code (~99.7%) |
 | 5 items/ty/vi | melee_items | ~5000 | 38: 9 Item-only + 29 leaf helpers (round 1, `helpers.rs`) + item hash | 18 tests vs C oracle (contraction on + lower.py; 8 f32 + 1 f64 fused sites, 2 of them not exercised by a vector) | melee_types (re-exported as `layout`) | spawn/think/collision, trophies, vi |
 | 6 modes | melee_modes | n/a | 0 | none | none | all |
@@ -230,7 +230,8 @@ against a running Rust game: no Rust simulation exists yet, so no golden has bee
 - Not proven: since the oracle rows did not change, no test currently fails on the unfused form
   of those three sites; they are right by the IR, not by a discriminating vector.
   A 20M-input Rust experiment found no f32 result difference for my_sqrtf fused vs unfused.
-- Still uncontracted: group 3's `gen/cref/run.py` and group 0's `gen/nh_oracle.py` (-ffp-contract=off).
+- Still uncontracted: group 0's `gen/nh_oracle.py` (-ffp-contract=off). (Group 3's `gen/cref/run.py`
+  was switched to contraction on + lower.py in group 3 port round 1; nh/stale/ftcommon unchanged.)
   NHV1 has no float arithmetic; group 3's ftcommon has 12 fused sites in ftcommon.c functions
   (`fma_sites.py src/melee/ft/ftcommon.c`), only CalcHitlag among the ported ones.
 

@@ -10,10 +10,10 @@ State as of 2026-10-21.
 |---|---|---|
 | Native types + GC offsets | `src/types/generated.rs` (from `gen/gen_types.py`) | 569 `#[repr(C)]` records, all built |
 | Mechanical translation of all 216 TUs | `src/c2r/` (from `gen/fix_raw.py`, feature `c2r`) | compiles (`--features c2r`), never run |
-| Hand ports, checked bit-for-bit against the C | `src/neutral_hash.rs`, `src/ftcommon.rs`, `src/stale.rs`, `src/compat.rs`, `src/hooks.rs` | 57 C functions, tests pass |
+| Hand ports, checked bit-for-bit against the C | `src/neutral_hash.rs`, `src/ftcommon.rs`, `src/ftcommon2.rs`, `src/stale.rs`, `src/compat.rs`, `src/hooks.rs` | 96 C functions, tests pass |
 | PowerPC `.s` files | none belong to this group (inventory §3) | nothing to do |
 
-Functions: 57 of ~2,820 (about 2%) are hand-ported and verified against the C. All ~2,820 are
+Functions: 96 of ~2,820 (about 3.4%; 57 night 1, 39 in port round 1, 95 verified) are hand-ported and verified against the C. All ~2,820 are
 in the mechanical translation, which compiles; none of it has been linked or run.
 
 ### Native types (`gen/gen_types.py`)
@@ -62,13 +62,19 @@ in the mechanical translation, which compiles; none of it has been linked or run
 | module | C functions | test | cases |
 |---|---|---|---|
 | `neutral_hash.rs` | `nh_Mix`, `nh_CpuFlags`, `nh_Fighter` (fighter.c, TARGET_PC) + item/game word, `StateHash for Fighter` | `tests/nh_ref.rs` | 64 fighters, all fields + every CPU flag bitfield |
+| `ftcommon2.rs` | 39 more of ftcommon.c (port round 1, below) | `tests/ftcommon2_ref.rs` | 10,200 (34 ops x 300) |
 | `ftcommon.rs` | 33 functions of ftcommon.c (ground/air accel, drift, friction, KB friction, fall/ascend, CheckFallFast, facing, CalcHitlag) | `tests/ftcommon_ref.rs` | 6,600 (33 x 200) |
 | `stale.rs` | plstale.c (5), plattack.c (3), ft_0881.c staling (5), player.c accessors (8) | `tests/stale_ref.rs` | 300 sequences x 40 ops |
 | `compat.rs` | HitCapsule `hit_grabbed_victim_only` GC semantics | unit test | - |
 
 How the C reference works: `gen/cref/run.py` compiles each `gen/cref/<name>_ref.c` natively
 with clang (the same flags as `tools/rust-port/gen_cc.py`, plus `pc/gameworld/gekko_fp.c` for
-`__frsqrte`) against the real headers. The game code under test is either `#include`d whole
+`__frsqrte`) against the real headers. Since port round 1 it uses the SHIPPING contraction:
+`-ffp-contract=on -O2 -Xclang -disable-llvm-passes -ftrivial-auto-var-init=zero` to LLVM IR,
+then `rust/melee_runtime/oracle/lower.py` (gwtool's fmadds / fma / saturating float->int), then
+link. Re-running nh, stale and ftcommon this way gave byte-identical expected files. A driver
+must contain no `a*b+c` of its own (it would be fused too and the inputs would differ from the
+Rust test's); check with `awk '/^define/{f=$0} /xp = fmul double/{print f}' rust/target/cref/<n>__<n>_ref.lo.ll`. The game code under test is either `#include`d whole
 (plstale.c, plattack.c) or cut verbatim out of the game's .c by start/stop markers (never
 retyped). The programs print their outputs to `tests/data/<name>.txt`. The Rust test repeats the
 same xorshift-driven inputs and compares every line.
@@ -105,11 +111,38 @@ cd rust && cargo build -p melee_fighter --features c2r
 4. **`CpuFighter::csP` points into its own `buffer`.** Copying a native `Fighter` by value leaves
    it pointing at the old copy. The neutral hash uses the offset (`cpu_script_offset`), never
    the pointer. The real port should store an index.
-5. **Fused multiply-add.** The C build (the oracle) uses `-ffp-contract=off`, so the ports never
-   fuse `a*b+c`. The original MWCC GameCube code may fuse. Matching the C build is the target.
+5. **Fused multiply-add** (corrected night 2). The shipping C build fuses every `a*b+c` clang
+   contracts (`tools/rust-port/fma_sites.py`); the ports fuse exactly those sites with
+   `melee_core::fp::fmadds`, and the cref oracle is built the same way (above).
 6. **Sibling crates did not build.** `melee_types`/`melee_runtime`/`melee_world` did not build
    while this was done (other agents generating them). `Cargo.toml` has them commented out, and
    the shared types this group needs are generated here with `TODO(move-to-core)`.
+
+## Port round 1 (2026-10-21): `src/ftcommon2.rs`
+39 C definitions of ftcommon.c, all field logic, verified on 10,200 generated cases against the C
+cut verbatim (`gen/cref/ftcommon2_ref.c`, 13 extract ranges in run.py):
+SandbagGetKnockbackDeaccelX/Y, UnlockECB, 8007D5D4, 8007D60C, UseAllJumps, 8007D780, InitGrab,
+GrabMash, 8007E2A4, 8007E2D0 (setter; not exercised by the test: fn-pointer args), 8007E2F4,
+8007E2FC, 8007EBAC, 8007ECD4, 8007ED2C, 8007ED50, 8007EE0C, 8007EFC0, GetModelScale, 8007F76C,
+8007F7B4, 8007F804, 8007F8B4, my_fminf, 8007FDA0, 8007FF74, 8007FFD8, 80080144, 80080174,
+8008021C, 8008031C, 80080460, 80080474, 80080484, 800804A0, 800804EC, 800804FC
+That is 39 C definitions: 37 functions plus the static inlines `_func_8007E2FC_inline` and
+`my_fminf`. 38 are verified; `ftCommon_8007E2D0` (stores three fn pointers) is ported but not in
+the test.
+- Fused sites (fma_sites.py): 8007ED50, 8007EE0C, 8007FDA0, 80080174, one f32 each -> fmadds.
+  Discriminated: un-fusing `x710*x2024+x708` (8007FDA0/80080174) fails the test (op 21 case
+  34). Un-fusing 8007ED50/8007EE0C still passes: the int truncation hides the difference on
+  these inputs, so those two are right by the IR only.
+- New hooks (`hooks.rs`): Geno_GroundEdge (vanilla no-op), pl_8003FC44 / pl_800402D0 /
+  pl_80040460 / Player_8003544C / Player_UpdateJoystickCountByIndex (TODO(group3 pl)),
+  lb_80014574 / HSD_PadRumbleRemoveId / lb_800145C0 (TODO(group1), rumble, no-op default),
+  un_803224DC (TODO(group6)), it_80294E78 / it_8029A89C / it_8029A8F4 (TODO(group5)),
+  ftCo_80090690 / ftCo_800DEEE8 (TODO(group3 ftCo states)), `Fighter_GrabMashShake`.
+  Hooks with no neutral default panic when reached unset (never a silent wrong value).
+- Not ported from ftcommon.c yet: 8007D6A4/8007D7FC (PC floor guard calls mpLib + Lua event),
+  the nudge pass 8007DD7C/8007DFD0/8007E0E4 (GObj list + mpLineGetNext/Prev), JObj users
+  (8007E358, 8007E3EC, SetAccessory, 8007F6A4...), item callers (8007E6DC..., ftGetParasolStatus,
+  8007EEC8/EF5C), the m-ex table dispatches (8007F578..8007F9B4), atan2f users.
 
 ## Not done / blockers
 - **The c2r layer has never linked or run.** Everything outside group 3 is an unresolved

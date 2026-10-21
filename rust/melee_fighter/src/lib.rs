@@ -16,4 +16,5 @@ pub mod c2r;
 pub mod neutral_hash;
 pub mod hooks;
 pub mod ftcommon;
+pub mod ftcommon2;
 pub mod stale;

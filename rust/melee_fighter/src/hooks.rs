@@ -5,7 +5,7 @@
 //! Single-threaded game state, like the C globals they replace: set them before the match.
 #![allow(static_mut_refs)]
 
-use crate::types::{ftCommonData, Fighter};
+use crate::types::{ftCommonData, Fighter, Fighter_ShakeTable_t, Item_GObj, Vec2, Vec3};
 
 /// `ScriptGame_ModValue(player_id, field, base)` behind `FT_SCRIPT_VALUE` (ft/forward.h).
 pub static mut SCRIPT_MOD_VALUE: Option<fn(player_id: i32, field: i32, base: f32) -> f32> = None;
@@ -57,5 +57,91 @@ pub fn ground_friction_mul(fp: &Fighter) -> f32 {
 pub fn common_data() -> &'static ftCommonData {
     let p = unsafe { P_FT_COMMON_DATA };
     assert!(!p.is_null(), "p_ftCommonData not loaded");
+    unsafe { &*p }
+}
+
+// ---- round 2 (ftcommon.c field logic) ----------------------------------------------------
+// Calls whose owner is not ported yet. A hook with no vanilla-neutral default panics when it is
+// reached unset ("TODO(group): ..."), so a missing port is loud, never a silent wrong value.
+// Rumble (lb/HSD pad) is output only, never game state, so its default is a no-op.
+
+/// `Geno_GroundEdge(fp, landing)` (pc/geno, TARGET_PC). Vanilla: returns at once (no Geno fighter).
+pub static mut GENO_GROUND_EDGE: Option<fn(fp: &mut Fighter, landing: i32)> = None;
+/// TODO(group3 pl): `pl_8003FC44(slot, is_sub)` (pl/plbonuslib.c), not ported.
+pub static mut PL_8003FC44: Option<fn(slot: i32, sub: i32)> = None;
+/// TODO(group3 pl): `pl_800402D0(slot, is_sub, mashed)` (pl/plbonuslib.c), not ported.
+pub static mut PL_800402D0: Option<fn(slot: i32, sub: i32, r: i32)> = None;
+/// TODO(group3 pl): `pl_80040460(slot, is_sub)` (pl/plbonuslib.c), not ported.
+pub static mut PL_80040460: Option<fn(slot: i32, sub: i32)> = None;
+/// TODO(group3 pl): `Player_8003544C(slot, is_sub)` (pl/player.c, player table), not ported.
+pub static mut PLAYER_8003544C: Option<fn(slot: i32, sub: i32) -> bool> = None;
+/// TODO(group3 pl): `Player_UpdateJoystickCountByIndex(slot, is_sub)` (pl/player.c), not ported.
+pub static mut PLAYER_UPDATE_JOYSTICK_COUNT: Option<fn(slot: i32, sub: i32)> = None;
+/// TODO(group1 lb): `lb_80014574(port, id, a, b)` (rumble start). Default no-op.
+pub static mut LB_RUMBLE_START: Option<fn(port: u8, id: i32, a: i32, b: i32)> = None;
+/// TODO(group1 HSD pad): `HSD_PadRumbleRemoveId(port, id)`. Default no-op.
+pub static mut HSD_PAD_RUMBLE_REMOVE_ID: Option<fn(port: u8, id: i32)> = None;
+/// TODO(group1 lb): `lb_800145C0(port)` (rumble stop). Default no-op.
+pub static mut LB_RUMBLE_STOP: Option<fn(port: u8)> = None;
+/// TODO(group6 un): `un_803224DC(spawn, pos_x, kb_mag)`, not ported.
+pub static mut UN_803224DC: Option<fn(spawn: i32, x: f32, kb: f32) -> bool> = None;
+/// TODO(group5 it): `it_80294E78(item, scale)`.
+pub static mut IT_80294E78: Option<fn(item: *mut Item_GObj, f: f32)> = None;
+/// TODO(group5 it): `it_8029A89C(item, scale)`.
+pub static mut IT_8029A89C: Option<fn(item: *mut Item_GObj, f: f32)> = None;
+/// TODO(group5 it): `it_8029A8F4(item, &scale)`.
+pub static mut IT_8029A8F4: Option<fn(item: *mut Item_GObj, v: &Vec3)> = None;
+/// TODO(group3 ftCommon states): `ftCo_80090690(fp, &shift)` (non-NULL -> Some(shift)).
+pub static mut FTCO_80090690: Option<fn(fp: &mut Fighter) -> Option<Vec2>> = None;
+/// TODO(group3 ftCommon states): `ftCo_800DEEE8(fp, &shift)` (non-NULL -> Some(shift)).
+pub static mut FTCO_800DEEE8: Option<fn(fp: &mut Fighter) -> Option<Vec2>> = None;
+/// `Fighter_GrabMashShake` (fighter.h, PlCo data). TODO(move-to-core): fighter loader.
+pub static mut FIGHTER_GRAB_MASH_SHAKE: *const Fighter_ShakeTable_t = core::ptr::null();
+
+#[inline]
+fn need<T>(h: Option<T>, what: &str) -> T {
+    match h {
+        Some(f) => f,
+        None => panic!("{what} is not ported; install its hook (melee_fighter::hooks)"),
+    }
+}
+
+pub fn geno_ground_edge(fp: &mut Fighter, landing: i32) {
+    if let Some(f) = unsafe { GENO_GROUND_EDGE } {
+        f(fp, landing)
+    }
+}
+pub fn pl_8003fc44(slot: i32, sub: i32) { need(unsafe { PL_8003FC44 }, "TODO(group3 pl) pl_8003FC44")(slot, sub) }
+pub fn pl_800402d0(slot: i32, sub: i32, r: i32) { need(unsafe { PL_800402D0 }, "TODO(group3 pl) pl_800402D0")(slot, sub, r) }
+pub fn pl_80040460(slot: i32, sub: i32) { need(unsafe { PL_80040460 }, "TODO(group3 pl) pl_80040460")(slot, sub) }
+pub fn player_8003544c(slot: i32, sub: i32) -> bool { need(unsafe { PLAYER_8003544C }, "TODO(group3 pl) Player_8003544C")(slot, sub) }
+pub fn player_update_joystick_count(slot: i32, sub: i32) {
+    need(unsafe { PLAYER_UPDATE_JOYSTICK_COUNT }, "TODO(group3 pl) Player_UpdateJoystickCountByIndex")(slot, sub)
+}
+pub fn lb_rumble_start(port: u8, id: i32, a: i32, b: i32) {
+    if let Some(f) = unsafe { LB_RUMBLE_START } {
+        f(port, id, a, b)
+    }
+}
+pub fn hsd_pad_rumble_remove_id(port: u8, id: i32) {
+    if let Some(f) = unsafe { HSD_PAD_RUMBLE_REMOVE_ID } {
+        f(port, id)
+    }
+}
+pub fn lb_rumble_stop(port: u8) {
+    if let Some(f) = unsafe { LB_RUMBLE_STOP } {
+        f(port)
+    }
+}
+pub fn un_803224dc(spawn: i32, x: f32, kb: f32) -> bool { need(unsafe { UN_803224DC }, "TODO(group6 un) un_803224DC")(spawn, x, kb) }
+pub fn it_80294e78(item: *mut Item_GObj, f: f32) { need(unsafe { IT_80294E78 }, "TODO(group5 it) it_80294E78")(item, f) }
+pub fn it_8029a89c(item: *mut Item_GObj, f: f32) { need(unsafe { IT_8029A89C }, "TODO(group5 it) it_8029A89C")(item, f) }
+pub fn it_8029a8f4(item: *mut Item_GObj, v: &Vec3) { need(unsafe { IT_8029A8F4 }, "TODO(group5 it) it_8029A8F4")(item, v) }
+pub fn ftco_80090690(fp: &mut Fighter) -> Option<Vec2> { need(unsafe { FTCO_80090690 }, "TODO(group3 ftCo) ftCo_80090690")(fp) }
+pub fn ftco_800deee8(fp: &mut Fighter) -> Option<Vec2> { need(unsafe { FTCO_800DEEE8 }, "TODO(group3 ftCo) ftCo_800DEEE8")(fp) }
+/// `*Fighter_GrabMashShake`. Panics if not installed.
+pub fn grab_mash_shake() -> &'static Fighter_ShakeTable_t {
+    let p = unsafe { FIGHTER_GRAB_MASH_SHAKE };
+    assert!(!p.is_null(), "Fighter_GrabMashShake not loaded");
     unsafe { &*p }
 }

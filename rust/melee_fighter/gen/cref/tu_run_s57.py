@@ -15,6 +15,13 @@ TU_EXTRACTS = {
     "tu_ftwalkcommon": [(FC, "void ftCommon_CalcGroundAccel_Deaccel(", "void ftCommon_UnlockECB("),
                         ("src/melee/ft/ftwalkcommon.c", "FtWalkType ftWalkCommon_GetWalkType(", None)],
     "tu_ftwalljump": [("src/melee/ft/ftwalljump.c", "static int const max_input_frames", None)],
+    "tu_ft_0819": [("src/melee/ft/ft_0819.c", "void ft_80081938(", None)],
+    "tu_ft_07C1": [("src/melee/ft/ft_07C1.c", "void ft_8007C114(", None)],
+    "tu_ft_081B": [("src/melee/ft/ft_081B.c", "void ft_80081B38(", "GroundOrAir ft_80081D0C("),
+                   ("src/melee/ft/ft_081B.c", "bool ft_80081DD4(", "bool ft_800821DC("),
+                   ("src/melee/ft/ft_081B.c", "ftCollisionBox* ft_80082838(", "bool ft_80082888("),
+                   ("src/melee/ft/ft_081B.c", "bool ft_80084CE4(", "void ft_80084DB0(")],
+
 }
 
 if __name__ == "__main__":

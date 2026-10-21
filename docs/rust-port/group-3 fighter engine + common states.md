@@ -10,10 +10,10 @@ State as of 2026-10-21.
 |---|---|---|
 | Native types + GC offsets | `src/types/generated.rs` (from `gen/gen_types.py`) | 569 `#[repr(C)]` records, all built |
 | Mechanical translation of all 216 TUs | `src/c2r/` (from `gen/fix_raw.py`, feature `c2r`) | compiles (`--features c2r`), never run |
-| Hand ports, checked bit-for-bit against the C | `src/neutral_hash.rs`, `src/ftcommon.rs`, `src/ftcommon2.rs`, `src/stale.rs`, `src/player.rs`, `src/ftlib.rs`, `src/plbonus.rs`, `src/compat.rs`, `src/hooks.rs` | 418 C functions, tests pass |
+| Hand ports, checked bit-for-bit against the C | `src/neutral_hash.rs`, `src/ftcommon.rs`, `src/ftcommon2.rs`, `src/stale.rs`, `src/player.rs`, `src/ftlib.rs`, `src/plbonus.rs`, `src/ft0877.rs`, `src/compat.rs`, `src/hooks.rs` | 452 C functions, tests pass |
 | PowerPC `.s` files | none belong to this group (inventory §3) | nothing to do |
 
-Functions: 418 of ~2,820 (about 14.8%; 57 night 1, 39 in port round 1, 144 in port round 2, 96 in port round 3, 82 in port round 4; 417 verified) are hand-ported and verified against the C. All ~2,820 are
+Functions: 452 of ~2,820 (about 16.0%; 57 night 1, 39 in port round 1, 144 in port round 2, 96 in port round 3, 82 in port round 4, 34 in port round 5; 451 verified) are hand-ported and verified against the C. All ~2,820 are
 in the mechanical translation, which compiles; none of it has been linked or run.
 
 ### Native types (`gen/gen_types.py`)
@@ -62,6 +62,7 @@ in the mechanical translation, which compiles; none of it has been linked or run
 | module | C functions | test | cases |
 |---|---|---|---|
 | `neutral_hash.rs` | `nh_Mix`, `nh_CpuFlags`, `nh_Fighter` (fighter.c, TARGET_PC) + item/game word, `StateHash for Fighter` | `tests/nh_ref.rs` | 64 fighters, all fields + every CPU flag bitfield |
+| `ft0877.rs` | all 34 of ft/ft_0877.c (port round 5, below) | `tests/ft0877_ref.rs` | 10,200 (34 ops x 300) |
 | `plbonus.rs` | 82: all of pl/pl_040D.c (22) + plbonuslib.c pl_8003FBFC..EOF (59) + its inline `unk_cond` (port round 4, below) | `tests/plbonus_ref.rs` | 15,000 (300 tables x 50 ops, 81 op kinds) |
 | `ftlib.rs` | 96 of ft/ftlib.c (port round 3, below) | `tests/ftlib_ref.rs` | 10,440 (87 ops x 120, 6 fighters + random p-link list) |
 | `player.rs` | 144 of player.c: the player-table accessors (port round 2, below) | `tests/player_ref.rs` | 200 tables x 60 ops (144 op kinds, all exercised) |
@@ -249,6 +250,33 @@ same player.c ranges as player_ref plus `pl_040D.c` from pl_80040DDC to EOF, plb
   out-of-range values panic here. pl_8004049C's HSD_ASSERTREPORT on a bad player panics.
 - Not ported from plbonuslib.c: plBonusLib_8003D514 .. pl_8003FAA8 (ftLib/item/stage callers,
   the sqrtf/fused-site functions).
+
+## Port round 5 (2026-10-21): `src/ft0877.rs`
+All 34 C definitions of src/melee/ft/ft_0877.c, verified against the C cut verbatim
+(`gen/cref/ft0877_ref.c`; run.py cuts ft_0877.c from `#define TEST` to EOF plus ftcommon.c
+`ftCommon_80080144`): ft_800877F8, 80087818, 80087838, 80087858, 80087878, 800878BC, 80087900,
+80087944, 80087988, 800879D8, 800879F8, 80087A18, 80087A80, 80087A8C, 80087A98, 80087AA4,
+80087AB4, 80087AC0, 80087AEC, 80087B34, 80087BAC, 80087BC0, 80087BEC, ft_GetFtKindMask,
+80087C58, 80087C64, 80087C70, 80087D0C, 8008805C, 80088080, 800880AC, 800880D8, 80088110,
+ft_PlaySFX. One op per function.
+- Test: six fighters, random p-link list, random fields; the trace word starts from a random value
+  per case so stub results vary. 34 ops x 300 = 10,200 lines (return value, hash of
+  invisible/x2228_b5/x1988/x2164/x2168/x2160 of all six fighters, trace word). All ops exercised.
+- Fused sites: ft_80087B34 only, five f32 fmuladd (`x*x + y*y` -> `fmadds(x, x, y*y)`).
+  **Discriminated**: the driver sometimes makes two velocity vectors swapped copies (equal in exact
+  math), and un-fusing `v1` fails (op 19 case 164).
+- Mutation checks that fail: dropping `|| v == 0x80` in 80087A18 (op 11), the case-13 fallthrough
+  in 80087D0C (op 27), case 2 of 80087C70 (op 26), `|=` -> `^=` in GetFtKindMask (op 23).
+  Not discriminated: PlaySFX's random-pan range end (370 vs 369; no stub returns 370).
+- TARGET_PC paths ported: m-ex relative sfx ids (5000..9999) in 80087D0C, Geno voice owner in
+  ft_PlaySFX (new hook `GENO_DEFINE_VOICE_PLAY_OWNER`, unset = 0 = vanilla path).
+- Hooks: `PLAY_SFX` (ftcommon's CheckFallFast) now defaults to the port (it used to be a no-op);
+  the eight `FT_80087*` hooks player.c / plbonus call now default to the ports. New panicking hooks:
+  itIsHeavy / itGetKind (TODO(group5 it)), ftGetParasolStatus (TODO(group3 ftcommon)),
+  ftCo_800C06B4 / ftCo_800A101C (TODO(group3 ftCo)), lbAudioAx_800233EC / 80023130 / 800230C8 /
+  80023220 / 80024DC4 / 80024FDC / 80024FF4 / 8002500C / 80025038 / 800237A8 / 80024B94
+  (TODO(group1 lb)). Sound is therefore loud-unported: ft_PlaySFX panics unless those are set.
+- `Geno_DefineVoicePlayOwner` takes the fighter pointer (the C passes `(u32) fp`).
 
 ## Not done / blockers
 - **The c2r layer has never linked or run.** Everything outside group 3 is an unresolved

@@ -21,3 +21,4 @@ pub mod stale;
 pub mod player;
 pub mod ftlib;
 pub mod plbonus;
+pub mod ft0877;

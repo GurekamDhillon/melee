@@ -11,7 +11,7 @@ use crate::types::{ftCommonData, CmSubject, Fighter, Fighter_ShakeTable_t, Fight
 pub static mut SCRIPT_MOD_VALUE: Option<fn(player_id: i32, field: i32, base: f32) -> f32> = None;
 /// `Geno_FallLimit(fp, terminal)` (ftCommon_Fall, TARGET_PC).
 pub static mut GENO_FALL_LIMIT: Option<fn(fp: &Fighter, terminal: f32) -> f32> = None;
-/// `ft_PlaySFX(fp, id, volume, pan)` (ft/ft_0877.c; sound is group 1).
+/// Override for `ft_PlaySFX(fp, id, volume, pan)`; unset = `crate::ft0877::play_sfx` (round 5).
 pub static mut PLAY_SFX: Option<fn(fp: &mut Fighter, id: i32, vol: i32, pan: i32)> = None;
 /// `ft_GetGroundFrictionMultiplier(fp)` (ft/ft_0877.c, reads the stage's floor material: group 2).
 pub static mut GROUND_FRICTION_MUL: Option<fn(fp: &Fighter) -> f32> = None;
@@ -39,8 +39,10 @@ pub fn geno_fall_limit(fp: &Fighter, terminal: f32) -> f32 {
 
 #[inline]
 pub fn play_sfx(fp: &mut Fighter, id: i32, vol: i32, pan: i32) {
-    if let Some(f) = unsafe { PLAY_SFX } {
-        f(fp, id, vol, pan)
+    match unsafe { PLAY_SFX } {
+        Some(f) => f(fp, id, vol, pan),
+        // C parameters are u8: callers' values are truncated, as the C call converts them.
+        None => crate::ft0877::play_sfx(fp, id, vol as u8, pan as u8),
     }
 }
 
@@ -184,8 +186,6 @@ needed_hooks! {
     FTCO_800D4FF4 ftco_800d4ff4(g: G) = "TODO(group3 ftCo) ftCo_800D4FF4";
     IFSTATUS_802F6E1C ifstatus_802f6e1c(slot: i32) = "TODO(group6 if) ifStatus_802F6E1C";
     FTDEMO_SET_FACING_DIRECTION ftdemo_set_facing_direction(g: G, d: f32) = "TODO(group3 ftdemo) ftDemo_SetFacingDirection";
-    FT_80087BEC ft_80087bec(g: G, v: i32) = "TODO(group3 ftlib) ft_80087BEC";
-    FT_80087BC0 ft_80087bc0(g: G, v: i32) = "TODO(group3 ftlib) ft_80087BC0";
     GM_8016C5C0 gm_8016c5c0(slot: i32) -> i32 = "TODO(group6 gm) gm_8016C5C0";
     IFSTATUS_802F6D10 ifstatus_802f6d10(slot: i32) = "TODO(group6 if) ifStatus_802F6D10";
     GM_8016B168 gm_8016b168() -> bool = "TODO(group6 gm) gm_8016B168";
@@ -193,8 +193,6 @@ needed_hooks! {
     IFSTATUS_802F6AF8 ifstatus_802f6af8(slot: i32) = "TODO(group6 if) ifStatus_802F6AF8";
     GM_GET_FRAME_COUNT gm_get_frame_count() -> u32 = "TODO(group6 gm) gm_GetFrameCount";
     IFSTATUS_802F6C04 ifstatus_802f6c04(slot: i32) = "TODO(group6 if) ifStatus_802F6C04";
-    FT_80087AC0 ft_80087ac0(g: G, v: i32) = "TODO(group3 ftlib) ft_80087AC0";
-    FT_80087BAC ft_80087bac(g: G, v: i32) = "TODO(group3 ftlib) ft_80087BAC";
 }
 
 // ---- port round 3 (ft/ftlib.c) -----------------------------------------------------------
@@ -283,11 +281,46 @@ needed_hooks! {
     PL_80038898 pl_80038898(slot: i32, kind: i32) = "TODO(group3 plbonus) pl_80038898";
     PL_80039418 pl_80039418(slot: i32, kind: i32) -> u32 = "TODO(group3 plbonus) pl_80039418";
     PL_800386D8 pl_800386d8(s: &crate::types::plActionStats, n: i32) -> u32 = "TODO(group3 plbonus) pl_800386D8";
-    FT_80087A8C ft_80087a8c(g: G) -> f32 = "TODO(group3 ft_0877) ft_80087A8C";
-    FT_80087A98 ft_80087a98(g: G) -> i32 = "TODO(group3 ft_0877) ft_80087A98";
-    FT_80087AA4 ft_80087aa4(g: G) -> bool = "TODO(group3 ft_0877) ft_80087AA4";
-    FT_80087AB4 ft_80087ab4(g: G) -> u8 = "TODO(group3 ft_0877) ft_80087AB4";
     FT_800898B4 ft_800898b4(g: G) -> *mut crate::types::ft_800898B4_t = "TODO(group3 ft_0892) ft_800898B4";
     GM_8016F2F8 gm_8016f2f8(kind: i32, slot: u8) -> i32 = "TODO(group6 gm) gm_8016F2F8";
     GM_8016B6E8 gm_8016b6e8(slot: i32, v: i32) = "TODO(group6 gm) gm_8016B6E8";
+}
+
+// ---- port round 5 (ft/ft_0877.c) ---------------------------------------------------------
+// ft_0877 hooks that player.c / plbonus call now default to `crate::ft0877`.
+ported_hooks! {
+    FT_80087BEC ft_80087bec(g: G, v: i32) = crate::ft0877::ft_80087bec;
+    FT_80087BC0 ft_80087bc0(g: G, v: i32) = crate::ft0877::ft_80087bc0;
+    FT_80087AC0 ft_80087ac0(g: G, v: i32) = crate::ft0877::ft_80087ac0;
+    FT_80087BAC ft_80087bac(g: G, v: i32) = crate::ft0877::ft_80087bac;
+    FT_80087A8C ft_80087a8c(g: G) -> f32 = crate::ft0877::ft_80087a8c;
+    FT_80087A98 ft_80087a98(g: G) -> i32 = crate::ft0877::ft_80087a98;
+    FT_80087AA4 ft_80087aa4(g: G) -> bool = crate::ft0877::ft_80087aa4;
+    FT_80087AB4 ft_80087ab4(g: G) -> u8 = crate::ft0877::ft_80087ab4;
+}
+
+/// TARGET_PC `Geno_DefineVoicePlayOwner(kind, sfx, owner)` (pc/geno). Unset (vanilla, no Geno
+/// voice defines): 0, i.e. the normal sfx path.
+pub static mut GENO_DEFINE_VOICE_PLAY_OWNER: Option<fn(kind: i32, sfx: i32, owner: *mut Fighter) -> i32> = None;
+pub fn geno_define_voice_play_owner(kind: i32, sfx: i32, owner: *mut Fighter) -> i32 {
+    match unsafe { GENO_DEFINE_VOICE_PLAY_OWNER } { Some(f) => f(kind, sfx, owner), None => 0 }
+}
+
+needed_hooks! {
+    IT_IS_HEAVY it_is_heavy(g: G) -> bool = "TODO(group5 it) itIsHeavy";
+    IT_GET_KIND it_get_kind(g: G) -> i32 = "TODO(group5 it) itGetKind";
+    FT_GET_PARASOL_STATUS ft_get_parasol_status(g: G) -> i32 = "TODO(group3 ftcommon) ftGetParasolStatus";
+    FTCO_800C06B4 ftco_800c06b4(fp: &mut Fighter) -> i32 = "TODO(group3 ftCo) ftCo_800C06B4";
+    FTCO_800A101C ftco_800a101c(fp: &mut Fighter, kind: i32, level: i32, x14: i32) = "TODO(group3 ftCo) ftCo_800A101C";
+    LBAUDIOAX_800233EC lbaudioax_800233ec(id: i32) -> i32 = "TODO(group1 lb) lbAudioAx_800233EC";
+    LBAUDIOAX_80023130 lbaudioax_80023130(sfx: i32) -> i32 = "TODO(group1 lb) lbAudioAx_80023130";
+    LBAUDIOAX_800230C8 lbaudioax_800230c8(ssm: i32, off: &mut i32, out: &mut i32) -> i32 = "TODO(group1 lb) lbAudioAx_800230C8";
+    LBAUDIOAX_80023220 lbaudioax_80023220(ssm: i32) -> i32 = "TODO(group1 lb) lbAudioAx_80023220";
+    LBAUDIOAX_80024DC4 lbaudioax_80024dc4(sfx: i32) = "TODO(group1 lb) lbAudioAx_80024DC4";
+    LBAUDIOAX_80024FDC lbaudioax_80024fdc() = "TODO(group1 lb) lbAudioAx_80024FDC";
+    LBAUDIOAX_80024FF4 lbaudioax_80024ff4() = "TODO(group1 lb) lbAudioAx_80024FF4";
+    LBAUDIOAX_8002500C lbaudioax_8002500c(n: i32) = "TODO(group1 lb) lbAudioAx_8002500C";
+    LBAUDIOAX_80025038 lbaudioax_80025038(n: i32) = "TODO(group1 lb) lbAudioAx_80025038";
+    LBAUDIOAX_800237A8 lbaudioax_800237a8(sfx: i32, vol: i32, pan: i32) -> i32 = "TODO(group1 lb) lbAudioAx_800237A8";
+    LBAUDIOAX_80024B94 lbaudioax_80024b94(h: i32, v: i32) -> i32 = "TODO(group1 lb) lbAudioAx_80024B94";
 }

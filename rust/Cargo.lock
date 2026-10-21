@@ -1141,6 +1141,8 @@ version = "0.1.0"
 dependencies = [
  "c2rust-bitfields",
  "melee_core",
+ "melee_items",
+ "melee_runtime",
  "melee_types",
 ]
 

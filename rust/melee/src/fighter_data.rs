@@ -10,6 +10,10 @@
 use melee_runtime::dat::DatArchive;
 use melee_types::ftCo_DatAttrs;
 
+// Declared here (not in main.rs) so this round touches only the integration files it owns.
+#[path = "skeleton.rs"]
+pub mod skeleton;
+
 fn be32(b: &[u8], at: u32) -> u32 {
     u32::from_be_bytes(b[at as usize..at as usize + 4].try_into().unwrap())
 }
@@ -41,6 +45,26 @@ pub fn files_for(name: &str) -> Option<(&'static str, &'static str, &'static str
         "fox" => Some(("PlFx.dat", "ftDataFox", "PlFxAJ.dat")),
         _ => None,
     }
+}
+
+/// Costume 0's model file and joint symbol (ftcaptain.c `nr_dat` / `nr_joint`, ftfox.c
+/// `ftFx_Init_803C7C00` / `803C7C0C`).
+pub fn costume_for(name: &str) -> Option<(&'static str, &'static str)> {
+    match name {
+        "falcon" => Some(("PlCaNr.dat", "PlyCaptain5K_Share_joint")),
+        "fox" => Some(("PlFxNr.dat", "PlyFox5K_Share_joint")),
+        _ => None,
+    }
+}
+
+/// `ftData->x44` (`ftData_x44_t`): the six ECB part indices, `unkC` and the ledge snap box.
+#[derive(Clone, Copy, Debug)]
+pub struct EcbDesc {
+    pub parts: [i16; 6],
+    pub unk_c: f32,
+    pub ledge_snap_x: f32,
+    pub ledge_snap_y: f32,
+    pub ledge_snap_height: f32,
 }
 
 impl FighterFiles {
@@ -87,5 +111,40 @@ impl FighterFiles {
         let a = DatArchive::parse(slice).map_err(|e| format!("AJ row {anim_id}: {e}"))?;
         let root = a.publics.first().map(|p| p.offset).ok_or(format!("AJ row {anim_id}: no root"))?;
         Ok(Some(AnimRow { frames: f32::from_bits(be32(&a.data, root + 8)), flags }))
+    }
+
+    /// Animation row `anim_id`'s figatree (`ftData_80085CD8` -> `fp->x590`).
+    pub fn figatree(&self, anim_id: u32) -> Result<Option<skeleton::FigaTree>, String> {
+        let d = &self.dat.data;
+        let row = be32(d, self.ft_data + 0xC) + anim_id * 0x18;
+        let (off, size) = (be32(d, row + 4) as usize, be32(d, row + 8) as usize);
+        if size == 0 {
+            return Ok(None);
+        }
+        let slice = self.aj.get(off..off + size).ok_or("AJ row out of range")?;
+        let a = DatArchive::parse(slice).map_err(|e| format!("AJ row {anim_id}: {e}"))?;
+        let root = a.publics.first().map(|p| p.offset).ok_or(format!("AJ row {anim_id}: no root"))?;
+        skeleton::FigaTree::parse(&a.data, root).map(Some)
+    }
+
+    /// `ftData->x8->x10` (the part ftCommon_8007F6A4 rescales in ftAnim_8006FA58).
+    pub fn x8_x10(&self) -> usize {
+        let x8 = be32(&self.dat.data, self.ft_data + 8);
+        self.dat.data[x8 as usize + 0x10] as usize
+    }
+
+    /// `ftData->x44`.
+    pub fn ecb_desc(&self) -> EcbDesc {
+        let d = &self.dat.data;
+        let at = be32(d, self.ft_data + 0x44);
+        let h = |o: u32| u16::from_be_bytes(d[(at + o) as usize..][..2].try_into().unwrap()) as i16;
+        let f = |o: u32| f32::from_bits(be32(d, at + o));
+        EcbDesc {
+            parts: [h(0), h(2), h(4), h(6), h(8), h(0xA)],
+            unk_c: f(0xC),
+            ledge_snap_x: f(0x10),
+            ledge_snap_y: f(0x14),
+            ledge_snap_height: f(0x18),
+        }
     }
 }

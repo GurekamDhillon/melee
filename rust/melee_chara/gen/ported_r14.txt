@@ -1,0 +1,9 @@
+# Round-14 character functions (gen/port_r14.py output): <tu> <function>, checked by gen/chref.py
+src/melee/ft/kinds/ftFox/ftfoxspecialn.c ftFx_SpecialN_ClearBlaster
+src/melee/ft/kinds/ftFox/ftfoxspecialn.c ftFox_SpecialN_RemoveBlasterNULL
+src/melee/ft/kinds/ftSeak/ftseakspecials.c ftSk_SpecialSStart_Coll
+src/melee/ft/kinds/ftSeak/ftseakspecials.c ftSk_SpecialAirSStart_Coll
+src/melee/ft/kinds/ftSeak/ftseakspecials.c ftSk_SpecialS_80111440
+src/melee/ft/kinds/ftSeak/ftseakspecials.c ftSk_SpecialS_801114E4
+src/melee/ft/kinds/ftSeak/ftseakspecials.c ftSk_SpecialAirSEnd_Coll
+src/melee/ft/kinds/ftSeak/ftseakspecials.c ftSk_SpecialS_80111D54

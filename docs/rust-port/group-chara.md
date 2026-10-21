@@ -687,3 +687,53 @@ loop (round 12's 47 + 1). No new callback keys.
 - Stubs replaced: 2. Stubs added: 9 (all `stub_or!` to verified group-3 ports).
 - Next: nested `{ Vec3 ...; }` blocks, `Vec3` locals, the Kirby hat helpers (HSD_JObj), item calls;
   the cheap "new callee" path is nearly exhausted.
+
+## Night 4, round 3 (= round 14 of the generator, 2026-10-21)
+
+### Recount at the start
+- 1604 = 13 pure helpers + 1591 (tu, function) lines in `gen/ported*.txt` (rounds 1-13; no duplicate
+  pairs). Total 4605 definitions (no C under `ft/kinds` changed). 34.8%, as round 13 said.
+
+### Stub replacement
+- `itIsHeavy` (TODO(group5)) now uses `stub_or!`: group 5's verified `melee_items::itlib::it_is_heavy`
+  (group-items.md round 2), reached through `melee_fighter::hooks::it_is_heavy` (unset default = that
+  port). Reached by Fighter_OnItemVisible / OnItemInvisible. 13 stubs fall back to other groups' ports.
+- Re-checked the rest against committed ports since round 13 (group 3 round 14: ftdmgfall.rs,
+  ftParts_GetBoneIndex / 8007506C): no other stub target is ported. `ftCommon_8007E2D0` is ported
+  (ftcommon2.rs) but its grabbed_cb argument is a two-argument HSD_GObjInteraction the cb registry does
+  not model yet; its 11 character callers stay unported.
+
+### What was ported
+8 functions (Seak 6: ftseakspecials SpecialSStart_Coll / AirSStart_Coll / AirSEnd_Coll and
+ftSk_SpecialS_80111440 / 801114E4 / 80111D54; Fox 2: ftFx_SpecialN_ClearBlaster,
+ftFox_SpecialN_RemoveBlasterNULL). List `gen/ported_r14.txt`, code `src/chars/r14/<Char>.rs`.
+How: `gen/port_r14.py` = port_r13's translator plus
+- `Fighter_SetDamageCallback(gobj, cb);` (ft/inlines.h) expanded to `fp->take_dmg_cb = cb;
+  fp->death2_cb = cb;` where the caller's top-level fp is GET_FIGHTER(gobj);
+- nested blocks at body depth 0: `{ Fighter* fpX = GET_FIGHTER(gobj) | gobj->user_data; ... }` with fpX
+  renamed fp (same value; skipped when the body assigns gobj or uses fpX outside the block, or the
+  block declares anything else), and declaration-free bare `{ ... }` blocks flattened.
+50 candidates dropped by the rustc-reject loop (round 13's 48 + 2). 4 new callback keys
+(`callbacks_r14.txt`). The SetDamageCallback rule alone opened only the 2 Fox functions: the other
+callers (Fox SpecialN, Koopa SpecialHi) also call efSync_Spawn / items / Fighter_ClearCmdVars.
+
+### FMA
+`tools/rust-port/fma_sites.py --func '^(<the 8>)$'` over the 2 TUs: 0 fused sites.
+
+### Verification
+- `gen/chref.py` reads ported_r14 / callbacks_r14 (module path `chars::r14`, excluded from N_R1).
+- **1599/1599 equal** (1591 + 8), `cargo test -p melee_chara --test chars_ref`; `tests/data/chars.txt`
+  gained 8 lines, none changed.
+- Negative check: accessory4_cb stored as ftSk_SpecialS_80110EE8 instead of 8011097C in
+  ftSk_SpecialS_80111440: 2 of 1599 differ (it and its round-14 caller ftSk_SpecialSStart_Coll).
+- Not proven: branch coverage (random fill), the stubbed calls (traced by id + args only; the oracle
+  still installs its itIsHeavy recorder, so the new default is not exercised here; group 5 verified it).
+- `cargo build --workspace` clean; `cargo test --workspace --no-fail-fast` green.
+
+### Counts
+- Ported this round: 8 (all verified; none unverified). Total: 1612 of 4605 (35.0%).
+- Stubs replaced: 1 (itIsHeavy -> group 5's port). Stubs added: 0. Callback keys added: 4.
+- Next: the mechanical path is exhausted for one-statement rules. What blocks most remaining functions
+  (scan of first skip reasons): local declarations (`Vec3` 116, scalar locals ~170), efSync_Spawn (30),
+  Kirby hat / HSD_JObj helpers, `ftCommon_8007E2D0` with HSD_GObjInteraction callbacks (11),
+  `ftCheckThrowB0` conditions (6), group-3 `ftCommon_CalcSelfAccel_Deaccel` / `ft_800824A0` (not ported).

@@ -1596,6 +1596,14 @@ pub const NAMES: &[&str] = &[
     "ftMs_SpecialS3_Phys",
     "ftMs_SpecialS4_Phys",
     "ftPe_SpecialN_Phys",
+    "ftFx_SpecialN_ClearBlaster",
+    "ftFox_SpecialN_RemoveBlasterNULL",
+    "ftSk_SpecialSStart_Coll",
+    "ftSk_SpecialAirSStart_Coll",
+    "ftSk_SpecialS_80111440",
+    "ftSk_SpecialS_801114E4",
+    "ftSk_SpecialAirSEnd_Coll",
+    "ftSk_SpecialS_80111D54",
 ];
 
 #[allow(clippy::too_many_arguments)]
@@ -3193,6 +3201,14 @@ pub fn call(which: usize, g: *mut HSD_GObj, fp: &mut Fighter, a: f32, ia: i32, n
         1588 => { melee_chara::chars::r13::ftMars::ftmarsspecials::ftMs_SpecialS3_Phys(g); 0 },
         1589 => { melee_chara::chars::r13::ftMars::ftmarsspecials::ftMs_SpecialS4_Phys(g); 0 },
         1590 => { melee_chara::chars::r13::ftPeach::ftpeachspecialn::ftPe_SpecialN_Phys(g); 0 },
+        1591 => { melee_chara::chars::r14::ftFox::ftfoxspecialn::ftFx_SpecialN_ClearBlaster(g); 0 },
+        1592 => { melee_chara::chars::r14::ftFox::ftfoxspecialn::ftFox_SpecialN_RemoveBlasterNULL(g); 0 },
+        1593 => { melee_chara::chars::r14::ftSeak::ftseakspecials::ftSk_SpecialSStart_Coll(g); 0 },
+        1594 => { melee_chara::chars::r14::ftSeak::ftseakspecials::ftSk_SpecialAirSStart_Coll(g); 0 },
+        1595 => { melee_chara::chars::r14::ftSeak::ftseakspecials::ftSk_SpecialS_80111440(g); 0 },
+        1596 => { melee_chara::chars::r14::ftSeak::ftseakspecials::ftSk_SpecialS_801114E4(g); 0 },
+        1597 => { melee_chara::chars::r14::ftSeak::ftseakspecials::ftSk_SpecialAirSEnd_Coll(g); 0 },
+        1598 => { melee_chara::chars::r14::ftSeak::ftseakspecials::ftSk_SpecialS_80111D54(g); 0 },
         _ => unreachable!(),
     }
 }

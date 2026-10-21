@@ -98,3 +98,6 @@ pub mod r12;
 /// Round 13: gen/port_r13.py output (calls to 9 more of group 3's verified ft084e / ft0df ports).
 /// Path: `chars::r13::<Char>::<tu>::<fn>`.
 pub mod r13;
+/// Round 14: gen/port_r14.py output (`Fighter_SetDamageCallback(gobj, cb)` expanded in place).
+/// Path: `chars::r14::<Char>::<tu>::<fn>`.
+pub mod r14;

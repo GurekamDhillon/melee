@@ -201,8 +201,13 @@ stub!(/// TODO(group3): `ftAnim_80070CC4(gobj, flag)` (ft/ftanim.c; reached thro
     FTANIM_80070CC4, ftAnim_80070CC4, (g: G, flag: i32));
 stub!(/// TODO(ef): `efLib_DestroyAll(gobj)` (ef/eflib.c; no group owns ef/ yet).
     EFLIB_DESTROYALL, efLib_DestroyAll, (g: G));
-stub!(/// TODO(group5): `itIsHeavy(item_gobj)` (it/it_26B1.c; returns bool).
-    ITISHEAVY, itIsHeavy, (item: *mut melee_types::Item_GObj) -> i32);
+/// Group 5's verified `itIsHeavy` port (melee_items::itlib::it_is_heavy, reached through group 3's
+/// `melee_fighter::hooks::it_is_heavy`, whose unset default is that port), as the C's bool (0/1).
+fn it_is_heavy_port(item: *mut melee_types::Item_GObj) -> i32 {
+    melee_fighter::hooks::it_is_heavy(item as *mut melee_types::HSD_GObj) as i32
+}
+stub_or!(/// `itIsHeavy(item_gobj)` (it/it_26B1.c; returns bool): group 5's verified port when the hook is unset.
+    ITISHEAVY, itIsHeavy, it_is_heavy_port, (item: *mut melee_types::Item_GObj) -> i32);
 
 /// `ftCommon_Fall(fp, gravity, terminal_vel)`: group 3's port.
 #[inline]

@@ -1,0 +1,5 @@
+# <setter tu> <defining tu | ext> <callback> stored or passed by round-14 ports (new ones only): gen/port_r14.py
+src/melee/ft/kinds/ftSeak/ftseakspecials.c src/melee/ft/kinds/ftSeak/ftseak.c ftSk_Init_80110198
+src/melee/ft/kinds/ftSeak/ftseakspecials.c src/melee/ft/kinds/ftSeak/ftseakspecials.c ftSk_SpecialS_8011097C
+src/melee/ft/kinds/ftSeak/ftseakspecials.c src/melee/ft/kinds/ftSeak/ftseakspecials.c ftSk_SpecialS_80110EE8
+src/melee/ft/kinds/ftSeak/ftseakspecials.c src/melee/ft/kinds/ftSeak/ftseakspecials.c ftSk_SpecialS_ChainSomething

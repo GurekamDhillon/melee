@@ -10,10 +10,10 @@ State as of 2026-10-21.
 |---|---|---|
 | Native types + GC offsets | `src/types/generated.rs` (from `gen/gen_types.py`) | 569 `#[repr(C)]` records, all built |
 | Mechanical translation of all 216 TUs | `src/c2r/` (from `gen/fix_raw.py`, feature `c2r`) | compiles (`--features c2r`), never run |
-| Hand ports, checked bit-for-bit against the C | `src/neutral_hash.rs`, `src/ftcommon.rs`, `src/ftcommon2.rs`, `src/stale.rs`, `src/player.rs`, `src/ftlib.rs`, `src/plbonus.rs`, `src/ft0877.rs`, `src/compat.rs`, `src/hooks.rs` | 452 C functions, tests pass |
+| Hand ports, checked bit-for-bit against the C | `src/neutral_hash.rs`, `src/ftcommon.rs`, `src/ftcommon2.rs`, `src/stale.rs`, `src/player.rs`, `src/ftlib.rs`, `src/plbonus.rs`, `src/ft0877.rs`, `src/ft0881.rs`, `src/compat.rs`, `src/hooks.rs` | 470 C functions, tests pass |
 | PowerPC `.s` files | none belong to this group (inventory §3) | nothing to do |
 
-Functions: 452 of ~2,820 (about 16.0%; 57 night 1, 39 in port round 1, 144 in port round 2, 96 in port round 3, 82 in port round 4, 34 in port round 5; 451 verified) are hand-ported and verified against the C. All ~2,820 are
+Functions: 470 of ~2,820 (about 16.7%; 57 night 1, 39 in port round 1, 144 in port round 2, 96 in port round 3, 82 in port round 4, 34 in port round 5, 18 in port round 6; 469 verified) are hand-ported and verified against the C. All ~2,820 are
 in the mechanical translation, which compiles; none of it has been linked or run.
 
 ### Native types (`gen/gen_types.py`)
@@ -62,6 +62,7 @@ in the mechanical translation, which compiles; none of it has been linked or run
 | module | C functions | test | cases |
 |---|---|---|---|
 | `neutral_hash.rs` | `nh_Mix`, `nh_CpuFlags`, `nh_Fighter` (fighter.c, TARGET_PC) + item/game word, `StateHash for Fighter` | `tests/nh_ref.rs` | 64 fighters, all fields + every CPU flag bitfield |
+| `ft0881.rs` | 18 of ft/ft_0881.c (port round 6, below) | `tests/ft0881_ref.rs` | 5,100 (17 ops x 300) |
 | `ft0877.rs` | all 34 of ft/ft_0877.c (port round 5, below) | `tests/ft0877_ref.rs` | 10,200 (34 ops x 300) |
 | `plbonus.rs` | 82: all of pl/pl_040D.c (22) + plbonuslib.c pl_8003FBFC..EOF (59) + its inline `unk_cond` (port round 4, below) | `tests/plbonus_ref.rs` | 15,000 (300 tables x 50 ops, 81 op kinds) |
 | `ftlib.rs` | 96 of ft/ftlib.c (port round 3, below) | `tests/ftlib_ref.rs` | 10,440 (87 ops x 120, 6 fighters + random p-link list) |
@@ -277,6 +278,28 @@ ft_PlaySFX. One op per function.
   80023220 / 80024DC4 / 80024FDC / 80024FF4 / 8002500C / 80025038 / 800237A8 / 80024B94
   (TODO(group1 lb)). Sound is therefore loud-unported: ft_PlaySFX panics unless those are set.
 - `Geno_DefineVoicePlayOwner` takes the fighter pointer (the C passes `(u32) fp`).
+
+## Port round 6 (2026-10-21): `src/ft0881.rs`
+The 18 remaining C definitions of src/melee/ft/ft_0881.c (its staling tail is in `stale.rs`):
+17 functions ft_800881D8, 80088328, 80088478, 80088510, 800885A8, 80088640, ftCo_800886D8,
+80088770, 800887CC, 80088828, 80088884, 800888E0, 8008893C, 80088998, 800889F4, 80088A50,
+80088C5C, plus the static inline `inline0` (folded into ftCo_800886D8).
+Verified against the C cut verbatim (`gen/cref/ft0881_ref.c`; run.py cuts ft_0881.c from its
+TARGET_PC `FT_GENO_VOICE` block to `ft_800890BC`, plus all of ft_0877.c and ftCommon_80080144,
+because every play path goes through ft_80087D0C).
+- Test: six fighters (kinds incl. Samus, Game & Watch, m-ex 33/34 for the Geno voice path),
+  random player_id / is_sub_fighter / x2225_b6, random channel handles (a third are -1), sfx arg
+  0x83D60 / 0x83D61 / m-ex relative / random. 17 ops x 300 = 5,100 lines (hash of all ten sfx
+  words of all six fighters + trace word). All ops exercised.
+- Mutation checks that fail: 80088328's stop calling 80088770 instead of 800887CC (op 1 case 1);
+  dropping Samus from the x2225_b6 allow-list (op 0 case 12).
+- Fused sites: none (`fma_sites.py src/melee/ft/ft_0881.c`).
+- Driver trap found: clang for x86_64-pc-windows-msvc evaluates call arguments right to left,
+  so a driver must never pass two `rnd()` calls in one argument list (now drawn into locals).
+- `lbAudioAx_800265C4` returns `bool` but 80088C5C tests `== 1`; the stub returns 0/1/2 in C and
+  the Rust hook (bool) models it as `== 1`. If group 1's port returns >1 values this hook shape
+  must change to i32.
+- New panicking hooks: lbAudioAx_80023870 / 80026510 / 800265C4 (TODO(group1 lb)).
 
 ## Not done / blockers
 - **The c2r layer has never linked or run.** Everything outside group 3 is an unresolved

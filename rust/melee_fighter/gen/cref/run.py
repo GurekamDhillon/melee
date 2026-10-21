@@ -74,6 +74,9 @@ EXTRACTS = {
                 ("src/melee/pl/plbonuslib.c", "int pl_8003FBFC(", None)],
     "ft0877": [("src/melee/ft/ftcommon.c", "bool ftCommon_80080144(", "void ftCommon_80080174("),
                ("src/melee/ft/ft_0877.c", "#define TEST(expr)", None)],
+    "ft0881": [("src/melee/ft/ftcommon.c", "bool ftCommon_80080144(", "void ftCommon_80080174("),
+               ("src/melee/ft/ft_0877.c", "#define TEST(expr)", None),
+               ("src/melee/ft/ft_0881.c", "#if defined(TARGET_PC)", "void ft_800890BC(")],
     "ftcommon": [("src/melee/ft/ftcommon.c", "void ftCommon_CalcGroundAccel_Deaccel(", "void ftCommon_UnlockECB("),
                  ("src/melee/ft/ftcommon.c", "void ftCommon_UpdateFacing(", "void ftCommon_8007DB24(")],
 }

@@ -1,7 +1,8 @@
 //! Bit-for-bit comparison against the C build's arithmetic. `tests/data/oracle_vectors.txt` is
 //! produced by `oracle/build.sh` from the C sources (pc/gameworld/{gekko_fp,mtx_pc}.c, mtx44.c,
-//! baselib/random.c, math_ppc.h), compiled with the real build's contraction + gwtool lowering.
+//! baselib/random.c, lb/lbtrigf.c, math_ppc.h), compiled with the real build's contraction + gwtool lowering.
 use melee_runtime::gekko::*;
+use melee_runtime::lbtrigf;
 use melee_runtime::mtx::{self, Mtx, Quaternion, Vec3};
 use melee_runtime::random::HsdRand;
 
@@ -88,6 +89,13 @@ fn matches_c_build() {
                 fl.eq("sinf", ln, sinf(x).to_bits(), r.u());
                 fl.eq("cosf", ln, cosf(x).to_bits(), r.u());
                 fl.eq("tanf", ln, tanf(x).to_bits(), r.u());
+            }
+            "atan" => {
+                let (x, y, u) = (r.f(), r.f(), r.f());
+                fl.eq("atanf", ln, lbtrigf::atanf(x).to_bits(), r.u());
+                fl.eq("atan2f", ln, lbtrigf::atan2f(y, x).to_bits(), r.u());
+                fl.eq("acosf", ln, lbtrigf::acosf(u).to_bits(), r.u());
+                fl.eq("asinf", ln, lbtrigf::asinf(u).to_bits(), r.u());
             }
             "sqrt" => {
                 let x = r.f();

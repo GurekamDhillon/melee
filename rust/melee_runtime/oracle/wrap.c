@@ -28,3 +28,5 @@ float w_sqrtf_accurate(float x)
     return x;
 }
 void Replay_RandTrace(unsigned c, unsigned s, int st) { (void)c; (void)s; (void)st; }
+int MSL_TrigF_80400770[] = { 0x7FFFFFFF }; /* src/MSL/float.c */
+int MSL_TrigF_80400774[] = { 0x7F800000 };

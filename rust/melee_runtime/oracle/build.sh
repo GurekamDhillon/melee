@@ -16,7 +16,7 @@ F=(--target=x86_64-pc-windows-msvc -std=c99 -nostdinc -fno-builtin -DLINT -DTARG
    "-D_Static_assert(a,b)=" -Dsize_t=gc_size_t)
 LL=()
 for f in pc/gameworld/mtx_pc.c pc/gameworld/gekko_fp.c libs/dolphin/src/dolphin/mtx/mtx44.c \
-         src/sysdolphin/baselib/random.c "$HERE/wrap.c"; do
+         src/sysdolphin/baselib/random.c src/melee/lb/lbtrigf.c "$HERE/wrap.c"; do
   n=$(basename "$f" .c)
   "$CL" "${F[@]}" "$f" -o "$OUT/$n.ll"
   python "$HERE/lower.py" "$OUT/$n.ll" "$OUT/$n.lo.ll"

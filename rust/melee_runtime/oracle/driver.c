@@ -8,6 +8,7 @@ typedef f32 Mtx[3][4]; typedef f32 Mtx44[4][4];
 double __frsqrte(double); double __fres(double);
 float sinf(float); float cosf(float); float tanf(float);
 float w_sqrtf(float); float w_sqrtf_accurate(float);
+float atanf(float); float atan2f(float, float); float acosf(float); float asinf(float);
 void PSMTXIdentity(Mtx); void PSMTXConcat(Mtx, Mtx, Mtx); void PSMTXTranspose(Mtx, Mtx);
 u32 PSMTXInverse(Mtx, Mtx); void PSMTXTrans(Mtx, f32, f32, f32); void PSMTXScale(Mtx, f32, f32, f32);
 void PSMTXRotAxisRad(Mtx, Vec*, f32); void MTXRotRad(Mtx, char, f32); void PSMTXQuat(Mtx, Quaternion*);
@@ -57,6 +58,11 @@ int main(int argc, char** argv)
         if (i < 40) x = bf((u32) i * 0x1000000u);
         fprintf(o, "trig"); pf(x); pf(sinf(x)); pf(cosf(x)); pf(tanf(x)); fprintf(o, "\n");
         fprintf(o, "sqrt"); pf(x); pf(w_sqrtf(x)); pf(w_sqrtf_accurate(x)); fprintf(o, "\n");
+    }
+    for (i = 0; i < 2000; i++) {
+        f32 x = (i % 3) ? rf(3) : anyf(), y = (i % 3 == 1) ? rf(3) : anyf(), u = rf(1.2f);
+        if (i < 16) { x = (i & 1) ? -0.0f : 0.0f; y = (i & 2) ? -1.0f : ((i & 4) ? 0.0f : 2.0f); if (i & 8) u = (i & 1) ? 1.0f : -1.0f; }
+        fprintf(o, "atan"); pf(x); pf(y); pf(u); pf(atanf(x)); pf(atan2f(y, x)); pf(acosf(u)); pf(asinf(u)); fprintf(o, "\n");
     }
     for (i = 0; i < 400; i++) {
         Mtx a, b, c; Mtx44 p; Vec v, w, z, r; Quaternion q; f32 s;

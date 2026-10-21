@@ -457,6 +457,53 @@ Left out: `it_802A4BFC_sqrtf_offset` (writes `*(&y + 6)`, out of bounds), the ne
 (static `it_803F6FE0`.. tables), `selectPokemonForOpening` / `it_8027A780` (global
 `Item_804A0E24`). Not done: no caller uses these yet; no frame-level comparison.
 
+## Round 10 (night 3, round 2): 23 hand ports, `src/itkinds10.rs`
+
+**Recount first** (same rule as round 9: unique names over `src/melee/{it,ty,vi}/**/*.c`, ported
+when the verbatim C copy is in the oracle): **4966 total, 1468 ported** at the start (it 1464,
+ty 4, vi 0), matching round 9's figure. **1491 after** (it 1487, ty 4, vi 0).
+
+**TODO stubs:** unchanged. This crate's one stub (`TODO(group1)`, itlib3.rs, the item plink list
+as a raw head pointer) still waits for items to move to melee_runtime's handle-based GObj model.
+The `TODO(group5)` stubs in other crates (melee_chara `itIsHeavy`; melee_world grlib item plink,
+ground.c `Toy_803124BC` / `Toy_8031234C` / `Toy_80305918`) are in their paths, not touched.
+
+**Batch.** Group 1 now has native, C-verified `lbVector_*` (lbvector.rs), `atan2f` / `acosf`
+(lbtrigf.rs) and MSL `sinf` / `cosf` (gekko.rs). Scan (`funcs()` of gen_round8.py; unported
+callees all in {those, HSD_Randi/Randf, __frsqrte}): 28 names; ported 23:
+- itcoll / itmaplib: `it_80271830` (ECB rotate, RotateAboutUnitAxis), `it_8027649C` and its
+  `_ref` inline (surface angle), `it_80277040` (steep-slope slide), `it_8027770C` (wall bounce);
+- itzako: `it_8027B798` (knockback launch velocity), `it_8027BB1C` (Euler rotate);
+- kinds: `it_802E628C`, `it_802863BC` (box), `itFlipper_Repel_inline`,
+  `itFoxBlaster_SetShotAngle`, `it_80293DCC` (hammer), `it_802D61C8` (hinoarashi),
+  `it_802D4494` / `it_802D4510` (hitodeman), `itKoopaFlame_UnkMotion0_Phys`,
+  `itLgunbeam_UnkMotion0_Phys`, `it_802A2320` (boomerang), `it_2725_Logic101_ShieldBounced`,
+  `it_802D6740` (maril), `itPikachutjoltground_UnkMotion0_Phys`,
+  `itSamuschargeshot_UnkMotion8_Phys`, `it_802EC870` (tincle).
+
+Globals are parameters: `it_804D6D28` -> `&ItemCommonData`, `p_ftCommonData` -> `&ftCommonData`,
+the RNG -> `&mut HsdRand`. `itHammerData` (ithammer.c-local) is defined in itkinds10.rs.
+
+**Fused sites:** 9 f32: `it_8027770C` 2 (dot), `it_8027BB1C` 6, `it_802E628C` 1 (all counted in
+the oracle IR). Trap: the C IR for `a*c - b*s` is `fmuladd(a, c, fneg(b*s))`, but after the
+optimiser folds `fadd x, fneg y` into `fsub` the NaN sign of `b*s` survives (x86's default NaN is
+negative). `fmadds(a, c, -(b*s))` flips it; `fmsubs(a, c, b*s)` matches (same rounding).
+
+**Verification** (`tests/oracle_round10.rs`, 25 tables x 48 cases, pass). The oracle (round10.c)
+compiles the game's lbtrigf.c and verbatim copies of the lbvector.c functions reached plus
+mtx_pc.c's PSVECCrossProduct (`round10_callees.h`, also written by gen_round10.py; including all
+of lbvector.c drags in lbVector_WorldToScreen's CObj/GX deps); sinf/cosf are round 7's gekko_fp.c
+copies. Extra tables: 3024 picks nearly orthogonal vel/normal pairs where the fused dot sign
+differs from un-fusing either site; 3025 is 3008 with facing +-1 (so the fused add is visible).
+Mutations that failed the test: un-fusing each of the 9 sites, tincle integer `x24 / 2`, hammer
+`+ x0`, it_80277040's `xC30 == xC2C` and `>=` counter compare, both angle-wrap loops.
+**Not caught (correct by inspection):** `it_802E628C`'s range bounds at exactly `k*pi/3` (needs
+`arg8` on a bound), `it_8027B798`'s `< 1.5707964f` threshold (angles in [1.5, 1.5708) not drawn).
+
+Left out of the 28: `it_8027A780` / `selectPokemonForOpening` (global `Item_804A0E24`),
+`itSeakNeedleThrown_SetupBounce` / `_SetupDrop` (static `it_803F6FA0..` tables),
+`it_802A4BFC_sqrtf_offset` (out-of-bounds write). Not done: no caller wired; no frame-level check.
+
 ## Decisions / traps
 
 - `Cargo.toml` no longer depends on melee_types/runtime/world/fighter: nothing calls them yet,

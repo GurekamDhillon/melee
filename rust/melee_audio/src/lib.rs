@@ -24,6 +24,7 @@ pub mod ax;
 pub mod disc;
 pub mod fx;
 pub mod layout;
+pub mod lbaudio;
 pub mod output;
 pub mod sem;
 pub mod sim;

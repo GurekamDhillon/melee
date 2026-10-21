@@ -220,6 +220,8 @@ pub struct Sound {
     pub(crate) aux_flags: u32,
     /// AXDriver_804D6038: the stream's synth handle.
     pub stream_vid: i32,
+    /// lbaudio_ax.c's file statics (banks, deferred sfx, heartbeat loops, current BGM).
+    pub lb: crate::lbaudio::LbState,
     /// AXDriver_804D77E0 / 77E4 / 77E8.
     pub(crate) stream_pitch_dirty: i32,
     pub(crate) stream_pitch: i32,
@@ -289,6 +291,7 @@ impl Sound {
             stream_pitch: 0,
             stream_started_at: 0,
             drv_installed: false,
+            lb: crate::lbaudio::LbState::default(),
         }
     }
 
@@ -319,6 +322,8 @@ impl Sound {
     pub fn boot(&mut self, fs: Box<dyn AudioFs>, bank_sizes: [i32; 3]) -> Result<(), String> {
         self.fs = Some(fs);
         let total: i32 = bank_sizes.iter().sum();
+        self.lb.bank_size = bank_sizes;
+        self.lb.total_size = total;
         self.init_multi_pstream(total);
         let rv = crate::sound::default_reverb_std(1.88);
         self.setup_aux(0, 2, &rv);

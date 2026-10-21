@@ -4,8 +4,9 @@
 //! is audible. Needs GW_ISO_VANILLA (skips without it); nothing from the disc is written.
 //!
 //! The four lbAudioAx bank-table lookups ft_80087d0c makes (800233EC, 80023130, 800230C8,
-//! 80023220) belong to group 1 and are not ported; this test stubs them to the vanilla answer
-//! for a main.ssm sound (id unchanged, bank 0, no size-variant offset).
+//! 80023220) are melee_audio::lbaudio's ports. The second half loads a match's banks the way
+//! lbAudioAx_8002785C does (Captain, Fox, Final Destination), plays a captain.ssm sound and the
+//! stage BGM, and checks both are audible.
 
 use melee_fighter::hooks as h;
 use melee_fighter::types::Fighter;
@@ -26,18 +27,17 @@ fn fighter_sfx_play_through_the_sound_stack() {
         return;
     };
     let mut snd = melee_audio::Sound::new();
-    snd.boot(Box::new(melee_audio::sound::DiscFs::open(&iso).unwrap()), [2045824, 0x180000, 0x700000 - 2045824 - 0x180000])
+    snd.boot(Box::new(melee_audio::sound::DiscFs::open(&iso).unwrap()), melee_audio::lbaudio::boot_bank_sizes())
         .unwrap();
     melee_audio::sim::install(snd);
     unsafe {
         h::LBAUDIOAX_800237A8 = Some(melee_audio::sim::lbaudioax_800237a8);
         h::LBAUDIOAX_80023870 = Some(melee_audio::sim::lbaudioax_80023870);
         h::LBAUDIOAX_80024B94 = Some(melee_audio::sim::lbaudioax_80024b94);
-        // Test stubs for group 1's tables (see the file comment).
-        h::LBAUDIOAX_800233EC = Some(|id| id);
-        h::LBAUDIOAX_80023130 = Some(|_| 0);
-        h::LBAUDIOAX_800230C8 = Some(|_, _, _| 1);
-        h::LBAUDIOAX_80023220 = Some(|_| 0);
+        h::LBAUDIOAX_800233EC = Some(melee_audio::sim::lbaudioax_800233ec);
+        h::LBAUDIOAX_80023130 = Some(melee_audio::lbaudio::lb_80023130);
+        h::LBAUDIOAX_800230C8 = Some(melee_audio::sim::lbaudioax_800230c8);
+        h::LBAUDIOAX_80023220 = Some(melee_audio::lbaudio::lb_80023220);
     }
 
     let mut f: Box<Fighter> = Box::new(Fighter::zeroed());
@@ -65,5 +65,25 @@ fn fighter_sfx_play_through_the_sound_stack() {
     sub_frames(200);
     assert!(!melee_audio::sim::sfx_check(h2), "the voice still plays after its key-off");
     assert!(!melee_audio::sim::sfx_check(h1), "ft_PlaySFX's sound never ended");
+
+    // A match's banks: captain.ssm, fox.ssm and last.ssm (FD, GrKind 37) committed into bank 2.
+    melee_audio::sim::load_match_banks(&[0, 2], 0x20, 37);
+    let st = melee_audio::sim::with(|s| s.lb.state).unwrap();
+    for b in [6usize, 11, 0x35] {
+        assert_eq!(st[b], 2, "bank {} not loaded", melee_audio::lbaudio::SSM_FILES[b]);
+    }
+    assert_eq!(st.iter().filter(|&&x| x == 2).count(), 3);
+    // A captain.ssm sound (its bank's first id), through the same path ft_PlaySFX takes.
+    f.x2160 = -1;
+    melee_fighter::ft0877::play_sfx(&mut f, melee_audio::lbaudio::BANK_RANGE[6][0], 0x7F, 0x40);
+    assert!(f.x2160 >= 0, "captain sfx handle {}", f.x2160);
+    let peak = sub_frames(30);
+    assert!(peak > 1000, "captain.ssm sound silent (peak {peak})");
+    sub_frames(400);
+    // The FD BGM (Ground_801C24F8's pick in vs_match is 78, sp_end.hps).
+    assert_eq!(melee_audio::sim::play_bgm_id(78), 0);
+    assert_eq!(melee_audio::sim::play_bgm_id(78), 1, "a playing BGM restarted");
+    let peak = sub_frames(300);
+    assert!(peak > 1000, "BGM silent (peak {peak})");
     melee_audio::sim::uninstall();
 }

@@ -91,7 +91,7 @@ fn fd_ground_friction(fp: &Fighter) -> f32 {
 /// The entry beam: `efAsync_Spawn(.., 0x43E, ..)` -> efAsync_Dispatch -> `efLib_Create_Attach(0x24)`.
 const EF_ENTRY_BEAM: u32 = 0x24;
 /// `Gr_Kind_Last`'s StKind in a VS match (`grGroundParam->stage_params[0].stkind`).
-const STKIND_FD: i32 = 0x20;
+pub const STKIND_FD: i32 = 0x20;
 /// efLib's particle procs (eflib.c `efLib_particles_proc_main` / `_aux`, TARGET_PC masks).
 const PTCL_MASK_MAIN: u32 = 0x20000 | 0x40000;
 const PTCL_MASK_AUX: u32 = 0x10000 | 0x80000;
@@ -290,6 +290,8 @@ pub struct VsMatch {
     pub frame: i32,
     /// Set when a frame needs code that is not ported; the run ends before logging that frame.
     pub stopped: Option<String>,
+    /// The match BGM `Ground_801C24F8` picked (an `hps_files` index; lbAudioAx_80023F28 plays it).
+    pub bgm: i32,
     last_bg: LastBg,
     dptcl: Vec<DptclAnim>,
     aobj_globals: AObjGlobals,
@@ -702,7 +704,7 @@ impl VsMatch {
             eprintln!("bgm {} alt {:?}; seed before frame 0 {:08X}; particle tracks {}", pick.bgm, pick.alt_flag, rand.logic_seed(), dptcl.len());
         }
 
-        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists })
+        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists })
     }
 
     fn words(&self) -> FrameWords {

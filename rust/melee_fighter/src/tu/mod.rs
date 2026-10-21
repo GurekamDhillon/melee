@@ -63,3 +63,4 @@ pub mod ftcliffcommon;
 pub mod ft_0df0;
 pub mod ft_0df1;
 pub mod ft_07c6;
+pub mod ftCo_Barrel;

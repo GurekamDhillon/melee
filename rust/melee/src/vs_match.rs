@@ -842,6 +842,16 @@ impl VsMatch {
                     };
                     set_anim_rate(p, rate);
                 }
+                FTCO_MS_CATCH => {
+                    // ftCo_Catch_Anim: fn_800D8EC8 (Link) / fn_800D9558 (Samus) do nothing for
+                    // the kinds wired; Wait when the animation ends.
+                    if matches!(p.fp.kind, melee_types::Ft_Kind_Link | melee_types::Ft_Kind_CLink | melee_types::Ft_Kind_Samus) {
+                        return Err("tether grab (fn_800D8EC8 / fn_800D9558) not ported".into());
+                    }
+                    if !p.skel.frames_remaining() {
+                        ft_8008a2bc(p, &mut self.rand)?;
+                    }
+                }
                 m if (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => {
                     // ftCo_Attack11/12/13_Anim: ft_8008A2BC when the animation ends.
                     if !p.skel.frames_remaining() {
@@ -946,6 +956,13 @@ impl VsMatch {
                 m if (FTCO_MS_WALK_SLOW..=FTCO_MS_WALK_FAST).contains(&m) => {
                     // ftCo_Walk_Phys -> ftWalkCommon_800E0060.
                     walk_phys(p);
+                }
+                FTCO_MS_CATCH => {
+                    // ftCo_Catch_Phys.
+                    let f = &mut *p.fp;
+                    let fr = melee_fighter::hooks::common_data().x64 * f.co_attrs.ground_friction;
+                    fc::calc_ground_accel_deaccel(f, fr);
+                    fc::set_self_movement_from_grounded_movement(f);
                 }
                 m if (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => {
                     // ftCo_Attack1x_Phys -> ft_80084FA8 -> ft_80085030(friction, facing_dir).
@@ -1080,8 +1097,9 @@ impl VsMatch {
                         ft_80082b1c(&mut self.ground, p, c_common, &mut self.rand)?;
                     }
                 }
-                m if (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => {
-                    // ftCo_Attack1x_Coll -> ft_80084104: ft_800827A0 (mpColl_8004B2DC), else Fall.
+                m if m == FTCO_MS_CATCH || (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => {
+                    // ftCo_Attack1x_Coll -> ft_80084104: ft_800827A0 (mpColl_8004B2DC), else Fall;
+                    // ftCo_Catch_Coll -> ft_800841B8(fn_800D8E30): the same, the grab cleanup first.
                     let joints = {
                         let d = p.ecb_desc;
                         ecb_joints(&mut p.skel, &d)
@@ -1093,6 +1111,9 @@ impl VsMatch {
                         .map_err(|e| format!("{} not ported", e.0))?;
                     fp.cur_pos = fp.coll_data.cur_pos;
                     if !r {
+                        if p.fp.motion_id == FTCO_MS_CATCH {
+                            return Err("Catch off the floor: fn_800D949C / fn_800D9C64 not ported".into());
+                        }
                         fall_enter(p, &mut self.rand)?;
                     }
                 }
@@ -1238,6 +1259,32 @@ impl VsMatch {
     /// efAsync_QueueProcessDeferred -> efSync_Spawn -> efAsync_Dispatch, for player `i`.
     fn ef_dispatch(&mut self, i: usize, q: QueuedEffect) -> Result<(), String> {
         match (q.kind, q.gfx) {
+            (EF_SPAWN_POS_OFFSET_PARAM, g @ (0x400 | 0x401)) => {
+                // lb_8000B1CC(jobj, &params, &pos), then efAsync_Dispatch:
+                // efLib_CreateGenerator_Translate_FacingDir(0x5A, &pos, 0x401 ? dir : -dir):
+                // hsd_8039F05C(0, 0, 0x5A) + an AppSRT (status 1) at pos, rot.y = +-pi/2 and
+                // kind |= 0x40000 for a negative direction.
+                let p = &mut self.players[i];
+                let j = p.skel.part(q.part);
+                let pos = p.skel.world_point(j, q.params);
+                let dir = if g == 0x401 { q.extra1 } else { -q.extra1 };
+                let mut host = Host { rand: &mut self.rand, joint_mtx: &self.joint_mtx, appsrt_hook_lists: &self.appsrt_hook_lists };
+                if let Some(gen) = self.ps.gen_create(&mut host, 0, 0, 0x5A) {
+                    let srt = match self.ps.gen(gen).appsrt {
+                        Some(a) => Some(a),
+                        None => Some(self.ps.add_generator_appsrt_begin(gen, 1)),
+                    };
+                    let Some(srt) = srt else { return Ok(()) };
+                    let a = self.ps.srt_mut(srt);
+                    a.translate = pos;
+                    let half_pi = core::f32::consts::FRAC_PI_2;
+                    a.rot.y = if dir < 0.0 { -half_pi } else { half_pi };
+                    if dir < 0.0 {
+                        self.ps.gen_mut(gen).kind |= 0x40000;
+                    }
+                }
+                Ok(())
+            }
             (EF_SPAWN_POS_OFFSET_PARAM, 0x404) => {
                 // efAsync_QueueProcessDeferred: lb_8000B1CC(jobj, &params, &pos) (a zero offset
                 // is the joint's world translation), then efSync_Spawn -> efAsync_Dispatch:
@@ -1512,21 +1559,36 @@ fn any_input(fp: &Fighter) -> bool {
 fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     match p.fp.motion_id {
         FTCO_MS_ENTRY | FTCO_MS_ENTRY_START | FTCO_MS_ENTRY_END => Ok(()), // empty IASAs
-        FTCO_MS_FALL => {
-            // ftCo_Fall_IASA_Inner: every check reads input.
-            if any_input(&p.fp) {
-                return Err(format!("player {}: ftCo_Fall_IASA with input: not ported", p.slot + 1));
-            }
-            Ok(())
-        }
+        FTCO_MS_FALL => fall_iasa(p),
         FTCO_MS_LANDING => landing_iasa(p, rand),
         FTCO_MS_TURN => turn_iasa(p),
         FTCO_MS_WAIT => wait_iasa(p, rand),
         m if (FTCO_MS_WALK_SLOW..=FTCO_MS_WALK_FAST).contains(&m) => walk_iasa(p, rand),
         FTCA_MS_SPECIAL_LW | FTCA_MS_SPECIAL_LW_END | FTCA_MS_SPECIAL_LW_END_AIR => Ok(()), // input_cb NULL
         m if (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => attack1_iasa(p, rand),
+        FTCO_MS_CATCH => Ok(()), // ftCo_Catch_IASA is empty
         m => Err(format!("player {}: input_cb of motion {m} not ported", p.slot + 1)),
     }
+}
+
+/// `ftCo_Fall_IASA_Inner` with no item, no parasol and not Peach: every check but the aerial
+/// jump needs a press (B: SpecialAir; A: AttackAir / item checks; L/R: EscapeAir; X/Y: the
+/// jump) or the C-stick (`ftCo_800DF478`); the jump also fires on a tap of the stick up
+/// (`ftCo_JumpAerial_CheckInput`). Any of those stops the run.
+fn fall_iasa(p: &mut Player) -> Result<(), String> {
+    let cd = melee_fighter::hooks::common_data();
+    let fp = &*p.fp;
+    let i = &fp.input;
+    if !fp.item_gobj.is_null() {
+        return Err("ftCo_Fall_IASA with an item not ported".into());
+    }
+    if i.pressed_buttons & !PAD_STICK_DIRS != 0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 {
+        return Err(format!("player {}: ftCo_Fall_IASA with a press / C-stick: not ported", p.slot + 1));
+    }
+    if i.lstick[0].y >= cd.tap_jump_threshold && (fp.active_timer.lstick.y as i32) < cd.tap_jump_window as i32 {
+        return Err(format!("player {}: ftCo_JumpAerial_CheckInput (tap) not ported", p.slot + 1));
+    }
+    Ok(())
 }
 
 /// `ftCo_Landing_IASA`.
@@ -1596,9 +1658,21 @@ fn catch_check(p: &Player) -> Result<bool, String> {
         return Err("ftCo_800951D0 (item throw) not ported".into());
     }
     if fp.input.held_buttons[0] & input::HSD_PAD_LR != 0 && fp.input.pressed_buttons & input::HSD_PAD_A != 0 {
-        return Err(format!("player {}: ftCo_Catch_CheckInput -> Catch not ported", p.slot + 1));
+        return Ok(true);
     }
     Ok(false)
+}
+
+/// `ftCo_800D8C54(gobj, ftCo_MS_Catch)`: self accel cleared, `mv.co.catch_.x0 = 0`, Catch.
+/// `ftCommon_8007E2D0`'s grab callbacks are not modelled (a grab needs hit detection, which
+/// [`VsMatch::hit_guard`] stops before).
+fn catch_enter(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    let fp = &mut *p.fp;
+    fp.x74_self_accel.z = 0.0;
+    fp.x74_self_accel.y = 0.0;
+    fp.x74_self_accel.x = 0.0;
+    let row = load_row(p, melee_types::ftCo_SM_Catch as u32)?;
+    change_motion_state(p, FTCO_MS_CATCH, row.as_ref(), rand)
 }
 
 /// The grounded special checks, in the IASAs' order: `ftCo_SpecialS_CheckInput`,
@@ -1753,7 +1827,13 @@ fn attack1_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
 
 /// `ftCo_Wait_IASA`.
 fn wait_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
-    if special_checks(p, rand)? || catch_check(p)? || attack_checks(p, rand)? {
+    if special_checks(p, rand)? {
+        return Ok(());
+    }
+    if catch_check(p)? {
+        return catch_enter(p, rand);
+    }
+    if attack_checks(p, rand)? {
         return Ok(());
     }
     ground_stick_gate(p, "ftCo_Wait_IASA")?;
@@ -1770,7 +1850,10 @@ fn wait_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
 
 /// `ftCo_Walk_IASA`.
 fn walk_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
-    if catch_check(p)? || special_checks(p, rand)? || attack_checks(p, rand)? {
+    if catch_check(p)? {
+        return catch_enter(p, rand);
+    }
+    if special_checks(p, rand)? || attack_checks(p, rand)? {
         return Ok(());
     }
     ground_stick_gate(p, "ftCo_Walk_IASA")?;
@@ -1939,6 +2022,9 @@ const PAD_STICK_DIRS: u32 = 0xF_0000;
 /// [`VsMatch::hit_guard`]'s margin around a fighter (a fighter's hurtboxes reach about 20
 /// units from its position).
 const HIT_GUARD_MARGIN: f32 = 30.0;
+
+/// `ftCo_MS_Catch` (212).
+const FTCO_MS_CATCH: i32 = 212;
 
 /// `ftCo_MS_Attack11` (44); Attack12 / Attack13 follow.
 const FTCO_MS_ATTACK11: i32 = 44;
@@ -2320,6 +2406,9 @@ fn ftaction_run(p: &mut Player, rand: &mut HsdRand, skip: bool) -> Result<(), St
                 p.fp.set_x2218_b2((value & 1) as u8);
                 p.script += 4;
             }
+            // ftAction_80071E04: the throw's hit data (xDF4[idx], 3 words; read only by a throw,
+            // which needs a grab, which needs hit detection); ftAction_80071F0C (skip table).
+            0x22 => p.script += 12,
             // ftAction_80071D40 / 80071D94 / 80071DCC: model part / DObj visibility (render).
             0x1F | 0x20 | 0x21 => p.script += 4,
             // ftAction_80071F78 / 80071FA0: x221E_b4 / x221E_b5.
@@ -2545,6 +2634,12 @@ fn ftco_8009f834(p: &mut Player, rand: &mut HsdRand, gfx_id: u32, part: usize, o
                 0.0
             };
             p.ef_queue.push(QueuedEffect { kind: EF_SPAWN_POS_OFFSET_PARAM, gfx: gfx_id, part, params: sp84, extra1: sp80 });
+            Ok(())
+        }
+        0x3ED | 0x3EF | 0x3F0 | 0x3F1 | 0x3F2 | 0x3F5 | 0x3FE | 0x400 | 0x401 | 0x4D9 => {
+            // EF_SPAWN_POS_OFFSET_PARAM(gfx, joint, &sp84, &fp->facing_dir).
+            let extra1 = p.fp.facing_dir;
+            p.ef_queue.push(QueuedEffect { kind: EF_SPAWN_POS_OFFSET_PARAM, gfx: gfx_id, part, params: sp84, extra1 });
             Ok(())
         }
         // efAsync_Spawn(.., EF_SPAWN_CAMERA_SHAKE, 2 / 3 / 4, joint, &sp84): a camera quake at
@@ -2819,8 +2914,16 @@ fn fall_anim(p: &mut Player) -> Result<(), String> {
         (FTCO_SM_FALL as i32, 0.0)
     };
     p.fall_x4 += cd.x448 * (v - p.fall_x4);
-    if p.fall_x4 != 0.0 {
-        return Err(format!("Fall blend {} toward row {smid}: ftAnim_8006EDD0 + the skeleton blend are not ported", p.fall_x4));
+    if p.fall_x4 != 0.0 && smid != p.fall_smid {
+        // ftAnim_8006EDD0(fp, smid, cur_anim_frame, 1), HSD_JObjAnimAll(x8AC), then
+        // ftAnim_8006FE9C(TransN, x4, 1 - x4) or ftAnim_8006FF74 at x4 == 1.
+        let (row, tree) = load_row(p, smid as u32)?.ok_or(format!("Fall row {smid} has no figatree"))?;
+        let frame = p.fp.cur_anim_frame;
+        p.skel.anim_skeleton_set(&tree, frame, 1.0, row.looping());
+        p.skel.anim_all2(&mut AObjGlobals::default())?;
+        let x4 = p.fall_x4;
+        p.skel.blend_from2(x4, 1.0 - x4, x4 != 1.0);
+        p.fall_smid = smid;
     }
     Ok(())
 }

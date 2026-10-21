@@ -325,6 +325,75 @@ impl Skeleton {
         // ftAnim_80070758(root_jobj), ftAnim_80070758(anim_jobj).
         self.remove_anims();
         let to2 = blend != 0.0;
+        self.attach_tracks(tree, to2);
+        // ftAnim_80070710 (ReqAnimAllByFlags(.., 1, anim_start)) on the tree(s), LOOP, rate.
+        for t in [&mut self.tree, &mut self.tree2] {
+            for o in &mut t.nodes {
+                if let Some(a) = &mut o.aobj {
+                    a.req_anim(anim_start);
+                    if looping {
+                        a.set_flags(AOBJ_LOOP);
+                    }
+                    a.set_rate(anim_rate);
+                }
+            }
+        }
+        self.blend_frames = blend;
+        self.blend_frame = 0.0;
+    }
+
+    /// `ftAnim_8006EDD0(fp, smid, frame, rate)`: a figatree on the anim skeleton alone
+    /// (`ftAnim_80070758(x8AC)`, `ftAnim_8006FB88(TransN, ..)`, `ftAnim_80070A10(TopN, tree)`,
+    /// ReqAnim, LOOP when the row loops, the rate); the body and the blend state are untouched.
+    pub fn anim_skeleton_set(&mut self, tree: &FigaTree, frame: f32, rate: f32, looping: bool) {
+        for o in &mut self.tree2.nodes {
+            o.aobj = None;
+        }
+        self.attach_tracks(tree, true);
+        for o in &mut self.tree2.nodes {
+            if let Some(a) = &mut o.aobj {
+                a.req_anim(frame);
+                if looping {
+                    a.set_flags(AOBJ_LOOP);
+                }
+                a.set_rate(rate);
+            }
+        }
+    }
+
+    /// `HSD_JObjAnimAll(x8AC_animSkeleton)`.
+    pub fn anim_all2(&mut self, ag: &mut AObjGlobals) -> Result<(), String> {
+        ag.init_end_callback();
+        let mut order = Vec::new();
+        preorder(&self.tree2, self.parts2[0], &mut order);
+        for j in order {
+            jobj_anim(&mut self.tree2, j, ag)?;
+        }
+        ag.invoke_callbacks();
+        Ok(())
+    }
+
+    /// `ftAnim_8006FE9C(fp, TransN, t, t_inv)` (`t_inv != 0`) or `ftAnim_8006FF74(fp, TransN)`:
+    /// the anim skeleton blended (the b4 parts copied) or copied onto the body.
+    pub fn blend_from2(&mut self, t: f32, t_inv: f32, lerp: bool) {
+        for i in 1..self.parts.len() {
+            let b = self.parts[i];
+            if b.b0 || b.b5 {
+                continue;
+            }
+            let (src, dst) = (self.parts2[i], b.joint);
+            if lerp && !self.b4_parts.contains(&i) {
+                lb_8000c490(&self.tree2, src, &mut self.tree, dst, t, t_inv);
+            } else {
+                copy_srt(&self.tree2, src, &mut self.tree, dst);
+            }
+        }
+    }
+
+    /// The joints reset from the costume descriptors (`ftAnim_8006FA58` on the body /
+    /// `ftAnim_8006FB88` on the anim skeleton, from TransN) and the figatree's tracks attached
+    /// (`ftAnim_8006F4C8`).
+    fn attach_tracks(&mut self, tree: &FigaTree, to2: bool) {
         // ftAnim_8006FA58 / ftAnim_8006FB88(fp, FtPart_TransN, costume_joint->child).
         let joints = std::mem::take(&mut self.joints);
         for (k, jd) in joints.iter().skip(1).enumerate() {
@@ -367,20 +436,6 @@ impl Skeleton {
             i += 1;
             track += n as u8 as usize;
         }
-        // ftAnim_80070710 (ReqAnimAllByFlags(.., 1, anim_start)) on the tree(s), LOOP, rate.
-        for t in [&mut self.tree, &mut self.tree2] {
-            for o in &mut t.nodes {
-                if let Some(a) = &mut o.aobj {
-                    a.req_anim(anim_start);
-                    if looping {
-                        a.set_flags(AOBJ_LOOP);
-                    }
-                    a.set_rate(anim_rate);
-                }
-            }
-        }
-        self.blend_frames = blend;
-        self.blend_frame = 0.0;
     }
 
     /// `HSD_JObjRemoveAnimAllByFlags(.., 1)` on both skeletons (`ftAnim_80070758` twice).
@@ -671,6 +726,14 @@ impl Skeleton {
             let (t, j) = if blend { (&self.tree2, self.parts2[i]) } else { (&self.tree, b.joint) };
             t.get(j).aobj.as_ref().is_some_and(|a| a.flags & melee_runtime::aobj::AOBJ_NO_ANIM == 0)
         })
+    }
+
+    /// `lb_8000B1CC(jobj, &offset, &out)`: `PSMTXMultVec(jobj's world matrix, offset)` (the
+    /// matrix set up first; a root joint uses its own SRT matrix the same way).
+    pub fn world_point(&mut self, j: JObjId, o: Vec3) -> Vec3 {
+        self.tree.setup_matrix(&mut NoRObj, Some(j));
+        let m = self.tree.get(j).mtx;
+        melee_runtime::mtx::mult_vec(&m, &o)
     }
 
     /// `lb_8000B1CC(jobj, NULL, &out)`.

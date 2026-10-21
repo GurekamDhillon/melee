@@ -1,0 +1,193 @@
+//! One decoded draw: what Aurora's `push_gx_draw` hands the renderer (`DrawData`), resolved
+//! against the state at the moment of the draw. Port of `command_processor.cpp`'s
+//! `prepare_idx_buffer`, `calc_vtx_size`, `max_index_for_attr` and the parts of `push_gx_draw`
+//! that are not caching.
+use crate::consts::*;
+use crate::resources::GxData;
+use crate::shader::{self, PipelineConfig, ShaderInfo};
+use crate::state::*;
+
+/// A vertex array as a draw sees it: the bytes `[0, needed)` of the array are what the shader may
+/// read (Aurora uploads exactly that much, or more).
+#[derive(Clone, Debug)]
+pub struct ArraySnap {
+    pub data: GxData,
+    pub needed: u32,
+}
+
+#[derive(Clone, Debug)]
+pub struct DrawCmd {
+    pub prim: u32,
+    pub fmt: u32,
+    pub config: PipelineConfig,
+    pub info: ShaderInfo,
+    pub uniform: Vec<u8>,
+    /// Raw vertex bytes from the command stream (big-endian GC layout).
+    pub verts: Vec<u8>,
+    pub vtx_count: u32,
+    /// 16-bit indices into this draw's vertices (Aurora's index buffer); empty = plain triangles.
+    pub indices: Vec<u16>,
+    pub instance_count: u32,
+    /// Indexed attribute arrays, by attribute (POS..TEX7 -> 0..11).
+    pub arrays: [Option<ArraySnap>; MAX_INDEX_ATTR],
+    pub current_pn_mtx: u32,
+    /// Texture objects bound to each map at draw time (only sampled ones matter).
+    pub textures: [TexObj; MAX_TEXTURES],
+    pub tluts: Vec<TlutObj>,
+    pub render_viewport: Viewport,
+    pub render_scissor: ClipRect,
+}
+
+/// Aurora `calc_vtx_size`.
+pub fn calc_vtx_size(st: &GxState, fmt: u32) -> u32 {
+    let vf = &st.vtx_fmts[fmt as usize];
+    let mut n = 0u32;
+    for i in GX_VA_PNMTXIDX..=GX_VA_TEX7 {
+        let af = vf[i as usize];
+        match st.vtx_desc[i as usize] {
+            GX_DIRECT => n += shader::comp_type_size(i, af.ty) as u32 * shader::comp_cnt_count(i, af.cnt) as u32,
+            GX_INDEX8 => n += if i == GX_VA_NRM && af.cnt == GX_NRM_NBT3 { 3 } else { 1 },
+            GX_INDEX16 => n += if i == GX_VA_NRM && af.cnt == GX_NRM_NBT3 { 6 } else { 2 },
+            _ => {}
+        }
+    }
+    n
+}
+
+fn attr_stream_offset(st: &GxState, attr: u32, fmt: u32) -> u32 {
+    let vf = &st.vtx_fmts[fmt as usize];
+    let mut off = 0;
+    for i in GX_VA_PNMTXIDX..attr {
+        let af = vf[i as usize];
+        match st.vtx_desc[i as usize] {
+            GX_DIRECT => off += shader::comp_type_size(i, af.ty) as u32 * shader::comp_cnt_count(i, af.cnt) as u32,
+            GX_INDEX8 => off += if i == GX_VA_NRM && af.cnt == GX_NRM_NBT3 { 3 } else { 1 },
+            GX_INDEX16 => off += if i == GX_VA_NRM && af.cnt == GX_NRM_NBT3 { 6 } else { 2 },
+            _ => {}
+        }
+    }
+    off
+}
+
+fn max_index_for_attr(st: &GxState, attr: u32, fmt: u32, verts: &[u8], n: u16) -> u32 {
+    let vs = calc_vtx_size(st, fmt) as usize;
+    let off = attr_stream_offset(st, attr, fmt) as usize;
+    let af = st.vtx_fmts[fmt as usize][attr as usize];
+    let nbt3 = attr == GX_VA_NRM && af.cnt == GX_NRM_NBT3;
+    let idx16 = st.vtx_desc[attr as usize] == GX_INDEX16;
+    let sub = if nbt3 { 3 } else { 1 };
+    let mut max = 0u32;
+    for v in 0..n as usize {
+        let p = v * vs + off;
+        for c in 0..sub {
+            let idx = if idx16 {
+                u16::from_be_bytes([verts[p + c * 2], verts[p + c * 2 + 1]]) as u32
+            } else {
+                verts[p + c] as u32
+            };
+            max = max.max(idx);
+        }
+    }
+    max
+}
+
+/// Aurora `prepare_idx_buffer` (vtxStart = 0).
+pub fn prepare_idx_buffer(prim: u32, vtx_count: u16) -> Vec<u16> {
+    let mut b = Vec::new();
+    match prim {
+        GX_QUADS => {
+            let mut v = 0u16;
+            while v < vtx_count {
+                b.extend_from_slice(&[v, v + 1, v + 2, v + 2, v + 3, v]);
+                v += 4;
+            }
+        }
+        GX_TRIANGLES => b.extend(0..vtx_count),
+        GX_TRIANGLEFAN => {
+            for v in 0..vtx_count {
+                if v < 3 {
+                    b.push(v);
+                } else {
+                    b.extend_from_slice(&[0, v - 1, v]);
+                }
+            }
+        }
+        GX_TRIANGLESTRIP => {
+            for v in 0..vtx_count {
+                if v < 3 {
+                    b.push(v);
+                } else if v & 1 == 0 {
+                    b.extend_from_slice(&[v - 2, v - 1, v]);
+                } else {
+                    b.extend_from_slice(&[v - 1, v - 2, v]);
+                }
+            }
+        }
+        GX_LINES | GX_LINESTRIP | GX_POINTS => b.extend_from_slice(&[0, 1, 3, 3, 2, 0]),
+        _ => panic!("unsupported primitive type {prim}"),
+    }
+    b
+}
+
+/// Build a draw from the current state (Aurora `push_gx_draw` + `handle_draw_unmerged`).
+pub fn build_draw(
+    st: &mut GxState,
+    prim: u32,
+    fmt: u32,
+    vtx_count: u16,
+    verts: Vec<u8>,
+    indices: Option<Vec<u16>>,
+) -> Option<DrawCmd> {
+    if vtx_count == 0 {
+        return None;
+    }
+    let mut arrays: [Option<ArraySnap>; MAX_INDEX_ATTR] = Default::default();
+    for i in GX_VA_POS..=GX_VA_TEX7 {
+        let t = st.vtx_desc[i as usize];
+        if t != GX_INDEX8 && t != GX_INDEX16 {
+            continue;
+        }
+        let af = st.vtx_fmts[fmt as usize][i as usize];
+        let a = &st.arrays[i as usize];
+        let needed = max_index_for_attr(st, i, fmt, &verts, vtx_count) * a.stride as u32
+            + shader::comp_type_size(i, af.ty) as u32 * shader::comp_cnt_count(i, af.cnt) as u32;
+        let Some(data) = a.data.clone() else {
+            st.warnings.push(format!("indexed attr {i} has no array"));
+            return None;
+        };
+        assert!(needed <= a.size, "indexed attr {i} references {needed} bytes, array is {} bytes", a.size);
+        arrays[(i - GX_VA_POS) as usize] = Some(ArraySnap { data, needed });
+    }
+    let config = shader::populate_pipeline_config(st, prim, fmt);
+    let info = shader::build_shader_info(&config.shader);
+    let textures: [TexObj; MAX_TEXTURES] = st.loaded_textures.clone();
+    let uniform = shader::fill_uniform(st, &info, &textures);
+    let indices = match indices {
+        Some(i) => i,
+        None if prim != GX_TRIANGLES => prepare_idx_buffer(prim, vtx_count),
+        None => Vec::new(),
+    };
+    let instance_count = match prim {
+        GX_LINES => vtx_count as u32 / 2,
+        GX_LINESTRIP => vtx_count as u32 - 1,
+        GX_POINTS => vtx_count as u32,
+        _ => 1,
+    };
+    Some(DrawCmd {
+        prim,
+        fmt,
+        config,
+        info,
+        uniform,
+        verts,
+        vtx_count: vtx_count as u32,
+        indices,
+        instance_count,
+        arrays,
+        current_pn_mtx: st.current_pn_mtx,
+        textures,
+        tluts: st.loaded_tluts.to_vec(),
+        render_viewport: st.render_viewport,
+        render_scissor: st.render_scissor,
+    })
+}

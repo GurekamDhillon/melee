@@ -142,6 +142,7 @@ against a running Rust game: no Rust simulation exists yet, so no golden has bee
 | 5 items/ty/vi | melee_items | ~5000 | 171: 9 Item-only + 29 leaf helpers (round 1, `helpers.rs`) + 103 Item accessors from it_26B1/it_2725/ithitbox/itmaplib/itcoll (round 2, `itlib.rs`) + 30 next-layer it_2725/it_26B1/it_279C/itanimlist/itcoll/item/ithitbox/itmaplib/itspawn/itzako functions (round 3, `itlib3.rs`) + item hash | 20 tests vs C oracle (contraction on + lower.py; 18 f32 + 1 f64 fused sites, 2 of them (round 1) not exercised by a vector; rounds 2-3 hash 189 Item fields per case, 104x48 + 32x48 cases) | melee_types (re-exported as `layout`) | spawn/think/collision, per-kind state callbacks, trophies, vi |
 | 6 modes | melee_modes | 346 leaf fns found (gm/mn/if/ty/lb) | 98 fns: round 1 72 leaves (gm 32, mn 17, if+ty 8, lb 15); round 2 26 callers/const-table readers (gm 21, mn 2, lb 3) | all 98, 80030 vectors (oracle contraction on + lower.py; FMA discriminating for fe_ease, calc_dist_sq; NaN compared as any-NaN) | melee_types; melee_runtime::lbtrigf::atanf (lb_8000D008); local `GXColor`, `UnlockableCharacterData` (gc_layout) | 255 pointer-arg leaves, callers of other groups' code, global-state functions; detail docs/rust-port/group-modes.md |
 | platform (step 1/5) | melee_platform | shim_pad.c PADRead, gc_adapter.c (+decode.h), gw_script_pad.c txt script, Aurora PADRead/PADClamp | PADStatus pipeline, adapter (WinUSB + HID, reader + hotplug threads, focus suspend/resume, rumble), Aurora pad arithmetic, txt pad script, winit 60 Hz loop, headless runner | PADClamp/ClampCircle/ClampTrigger all inputs + adapter decode 4000-report stream vs the C/C++ compiled natively (oracle/build.sh); real WUP-028 read over WinUSB on this machine | PADStatus from melee_types (GC 0x10) | WinUSB-less Linux adapter, Lua/live/bot pads, ctl_poll remap, stick dead-zone setting, gamepad rumble, Aurora mapping files |
+| platform (step 2/5) | melee_gx | Aurora's GX: lib/dolphin/gx encoders (~45 GX* calls + GXInit), lib/gx regs.cpp BP/CP/XF decode + command_processor.cpp, shader.cpp + shader_info.cpp (TEV/XF -> WGSL, uniforms), gx.cpp populate_pipeline_config/blend/depth, gfx/texture_convert.cpp | API -> FIFO -> decoded GXState, display-list record/call, draw resolution (index buffers, array snapshots, uniforms), WGSL generation, all GC texture formats + TLUTs, wgpu offscreen renderer (push constants for Aurora's immediates) | vs Aurora itself (oracle/build.py links the shipping aurora_gx.lib): 145 texture cases bit-exact, 400 random ShaderConfigs WGSL byte-identical, 300 random GX API sequences -> identical ShaderConfig/pipeline/uniform bytes/WGSL, test display list rendered offscreen = Aurora's screenshot (0 of 307200 pixels differ, wgpu Vulkan and DX12 vs Dawn D3D11) | GXTexObj/GXTlutObj/GXLightObj/GXColor carry GcLayout with the SDK's GC offsets | pc/platform/shim_gx.c layer (indirect-stage guard, GXInitFogAdjTable, fog scope, GXProject, VI draw-done), EFB copies (GXCopyTex/Disp), palettes, frame interpolation, draw merging/caches, lines/points untested on GPU, swapchain/present |
 | asm (10 items) | n/a | n/a | 0 | n/a | n/a | none belonged to groups 0-5; crash-screen register reads return 0 on PC |
 
 ### Done in integration
@@ -289,3 +290,45 @@ against a running Rust game: no Rust simulation exists yet, so no golden has bee
 - Not ported: Linux adapter (`gc_adapter_linux.inc`), Lua/live/bot pads and gd.input claims,
   ctl_poll remapping, stick dead-zone setting, gamepad rumble, Aurora per-device mapping files and
   per-type default maps, diagnostics/overlay/profiling. No rendering yet (step 2: wgpu).
+
+## Platform track, step 2: melee_gx (2026-10-21)
+- Crate `rust/melee_gx`: a port of the GX the C build gets from Aurora (`extern/aurora`), same
+  architecture: `api::Gx` = the GX API encoders of `lib/dolphin/gx/*.cpp` + the `__GXData` shadow
+  registers, writing BP/CP/XF/`GX_AURORA` commands into a big-endian FIFO (or a display list);
+  `state::GxState::process` = `regs.cpp` + `command_processor.cpp` decode (BP mask, register dedupe,
+  cull swap, tref channel remap, VAT/VCD, XF matrices/lights/viewport/projection); draws become
+  `draw::DrawCmd` (raw vertex bytes, Aurora's index buffers, array snapshots, uniform bytes).
+  `shader` = `shader.cpp`/`shader_info.cpp`/`attr_fmt.cpp`/`populate_pipeline_config`, generating
+  Aurora's WGSL text byte for byte; `texture` = `texture_convert.cpp` (I4/I8/IA4/IA8/RGB565/RGB5A3/
+  RGBA8/CMPR, C4/C8/C14X2 + IA8/RGB565/RGB5A3 TLUTs, arbitrary-mip check); `render::Renderer` =
+  wgpu 27 offscreen target with Aurora's resource model (vbuf/abuf storage, 256-aligned dynamic
+  uniforms, 64-byte immediates as push constants, reversed Z, CW front faces, Aurora's blend/depth
+  mapping). Pointers in the FIFO are handles (`resources`); game data stays GC big-endian bytes.
+- Verified (`cargo test -p melee_gx`), against Aurora's own code, not a re-implementation:
+  `oracle/build.py` compiles `oracle/oracle.cpp` with the flags CMake used for aurora_gx and links
+  the shipping Aurora build (`_build/agents/rustgold/ax86m`, MSVC x86), then writes tests/data:
+  `tex_oracle.txt` (145 decode cases, FNV of the output), `shader_oracle.txt` (400 random configs,
+  WGSL length + FNV + uniform size), `state_oracle.txt` (GXInit state + 300 random sequences of 36
+  kinds of GX call; ShaderConfig, pipeline state, uniform-byte and WGSL hashes) and
+  `render_aurora.png` (Aurora's screenshot of `oracle/scene.inc`: a 2-stage-TEV textured quad /
+  strip / fan from an INDEX8 S16 position array, and a per-vertex-lit alpha-blended pair of
+  triangles, both via GXCallDisplayList). All match exactly; tests/render.rs draws the same scene
+  and gets 0 differing pixels on wgpu Vulkan and DX12 (RTX 5070) vs Dawn D3D11. Negative check: a
+  one-character change in the generator fails 251/400 WGSL cases and the state test.
+- WGSL for wgpu (`render::adapt_wgsl`, applied after generation, so the oracle compares Aurora's
+  text): `var<immediate>` -> `var<push_constant>`; naga rejects `ptr<storage, ...>` function
+  parameters, so they become a buffer selector (0 = vbuf, 1 = abuf); naga does not fold builtins
+  over abstract floats (`mix(0.0, 0.0, 0.0)` in an all-constant alpha combiner), so literals on alpha
+  combiner lines are typed `f32(...)` (exact values).
+- Traps: the game calls GXInit (aurora_initialize does not); Aurora skips a draw while its pipeline
+  compiles asynchronously (the oracle screenshots at frame 60); this Dawn build has no Vulkan and its
+  D3D12 swapchain faults in `WaitForQueueSerial` in the oracle harness on this machine (oracle uses
+  D3D11); `aurora_shutdown` faults after the device is destroyed (oracle `_Exit`s); Aurora writes its
+  pipeline-coverage db to %LOCALAPPDATA%\GD Melee while the oracle runs.
+- Not ported / not verified: the `pc/platform/shim_gx.c` layer above Aurora (indirect-stage guard,
+  GXInitFogAdjTable, fog scope, GXProject/GXGet*, VI draw-done routing, draw suppression during
+  resimulation), EFB copies (GXCopyTex/GXCopyDisp; logged), PC palette / surface programs / frame
+  interpolation / motion capture, Aurora's draw merging and pipeline/uniform/texture caches (every
+  draw recomputes; the renderer caches pipelines, samplers and decoded textures), texture
+  replacements, swapchain/present (step 3 joins this to melee_platform's winit loop), MSAA.
+  Lines/points, fog, indirect texturing and emboss are WGSL-verified but not rendered by a test.

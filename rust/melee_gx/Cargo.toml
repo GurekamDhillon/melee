@@ -1,0 +1,16 @@
+[package]
+name = "melee_gx"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "GX on wgpu: GX API + FIFO decode (port of Aurora's GX), TEV -> WGSL, GC texture decode, offscreen renderer"
+
+[dependencies]
+melee_core.workspace = true
+wgpu = "27"
+pollster = "0.4"
+bytemuck = "1"
+
+[dev-dependencies]
+png = "0.18"

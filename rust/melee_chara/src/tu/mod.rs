@@ -6,3 +6,4 @@ pub mod ftclinkappeals;
 pub mod ftcaptain;
 pub mod ftcaptainspecialhi;
 pub mod ftcaptainspeciallw;
+pub mod ftcaptainspeciallw;

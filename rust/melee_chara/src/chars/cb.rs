@@ -36,12 +36,12 @@ pub unsafe extern "C" fn ftCo_LandingAir__ftCo_LandingAir_EnterWithLag(g: *mut H
 
 /// `fn_801588B8` (defined in src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam0.c).
 pub unsafe extern "C" fn ftcrazyhandfingerbeam0__fn_801588B8(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_801588B8 (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam0.c) is not ported");
+    crate::tu::ftcrazyhandfingerbeam0::fn_801588B8(g);
 }
 
 /// `fn_80158534` (defined in src/melee/ft/kinds/ftCrazyHand/ftcrazyhandpoke.c).
 pub unsafe extern "C" fn ftcrazyhandpoke__fn_80158534(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_80158534 (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandpoke.c) is not ported");
+    crate::tu::ftcrazyhandpoke::fn_80158534(g);
 }
 
 /// `fn_801577B4` (defined in src/melee/ft/kinds/ftCrazyHand/ftcrazyhandsweepwait.c).

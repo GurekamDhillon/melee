@@ -2,6 +2,7 @@ gm_GetNextColor u8 -> u8
 bitset_mask u32 -> u32
 bitset64_mask u32 -> s64
 selkind_mask u8 -> s32
+selkind_bit s32 u8 -> s32
 fe_np_zero - -> s32
 fe_rgba u8 u8 u8 u8 -> color
 fe_ease f32 -> f32
@@ -23,6 +24,26 @@ fn_80160840 u8 -> u8
 gm_80160854 u8 u8 u8 u8 -> u32
 fn_801653E8 u8 -> f32
 fn_8016588C_clamp s32 -> s32
+gm_801601C4_inner s8 -> s32
+gm_801601C4_noinline s8 -> s32
+gm_80160244_inner s8 -> s32
+gm_80160244_noinline s8 -> s32
+gm_SelKindToUnlockIndex s32 -> u8
+gm_CKindToUnlockIndex s32 -> s8
+get_unlockable_selkind_by_bit_index s32 -> u8
+gm_GetCKindByUnlockIndex s32 -> u8
+fn_80160710 s32 -> u8
+gm_GetChallengerStKind s32 -> s32
+fn_801607A8 s32 -> u8
+fn_801607F4 s32 -> u8
+gm_80160968 u32 -> color
+gm_SelKindToCKind u8 -> u8
+gm_CKindToSelKind u8 -> u8
+fn_8016419C u8 -> f32
+fn_801641B4 u8 -> f32
+gm_801641CC u8 -> u16
+getStageUnlockIndex u8 -> u8
+getStageUnlockNotifyId u8 -> u8
 fn_801724C8 - -> s32
 fn_8017AD04 s32 s32 -> s32
 fn_8017AD28 s32 -> s32
@@ -39,6 +60,7 @@ DevText_Clamp s32 s32 -> s32
 adjust color -> color
 calcPan s32 s32 s32 s32 -> s32
 convertSdkResult s32 -> s32
+convertHsdResult s32 -> s32
 isSmall f32 -> s32
 same s32 s32 -> s32
 RGB565_TO_RGB5A3 u16 -> u16
@@ -50,6 +72,8 @@ lbTime_8000AF24 u32 s32 -> u32
 lbTime_8000AF74 u32 s32 -> u32
 expf f32 -> f32
 powi s32 s32 -> s32
+powf f32 f32 -> f32
+lb_8000D008 f32 f32 -> f32
 approximatelyZeroVec3 vec3 -> s32
 absf f32 -> f32
 toMeters f32 -> f32
@@ -64,6 +88,8 @@ mnDiagram2_IsPercentageStat u8 -> s32
 mnDiagram2_IsIconOnlyStat u8 -> s32
 GetSelectionFrameOffset s32 -> s32
 mn_8022C010 s32 s32 -> s32
+mn_GetDigitAt s32 s32 -> s32
+mn_GetDigitCount s32 -> s32
 signedCharactersEqual s8 u8 -> s32
 unsignedCharacter s32 -> u8
 mnVibration_GetPreviousCursorRow s32 -> s32

@@ -68,6 +68,34 @@ FUNCS = {
     "src/melee/ty/tydisplay.c": ["_tyDisplay_80318CB4_calc_dist_sq"],
 }
 
+# Round 2: callers of round-1 functions and readers of file-scope const tables (scalar in/out).
+ROUND2 = {
+    "src/melee/gm/gm_1601.c": ["gm_801601C4_inner", "gm_801601C4_noinline", "gm_80160244_inner",
+                               "gm_80160244_noinline", "gm_SelKindToUnlockIndex", "gm_CKindToUnlockIndex",
+                               "get_unlockable_selkind_by_bit_index", "gm_GetCKindByUnlockIndex",
+                               "fn_80160710", "gm_GetChallengerStKind", "fn_801607A8", "fn_801607F4",
+                               "gm_80160968", "gm_SelKindToCKind", "gm_CKindToSelKind", "fn_8016419C",
+                               "fn_801641B4", "gm_801641CC", "getStageUnlockIndex", "getStageUnlockNotifyId"],
+    "src/melee/gm/gmmain_lib.c": ["selkind_bit"],
+    "src/melee/lb/lb_00CE.c": ["powf", "lb_8000D008"],
+    "src/melee/lb/lbcardnew.c": ["convertHsdResult"],
+    "src/melee/mn/mnmain.c": ["mn_GetDigitAt", "mn_GetDigitCount"],
+}
+for _t, _n in ROUND2.items():
+    FUNCS.setdefault(_t, []).extend(_n)
+
+# Callees from other groups, cut (renamed o_<name>) but not dispatched or tested here.
+HELPERS = {"src/melee/lb/lbtrigf.c": ["lbTrigf_Fmadds", "lbTrigf_Fnmsubs", "atanf"]}
+
+# Macros defined under #if blocks the depth-0 #define scan cannot pick (TARGET_PC branch).
+EXTRA = {
+    "src/melee/lb/lbtrigf.c": ["#define BITWISE(f) (*(u32*) &f)", "#define SIGNED_BITWISE(f) ((s32) BITWISE(f))"],
+    "src/melee/gm/gm_1601.c": [
+        "#define GM_IS_MEX_CK(ck) ((u32) (ck) >= ChKind_Mex0 && (u32) (ck) < ChKind_Cap)",
+        "#define GM_CK_TO_SELKIND(ck) (GM_IS_MEX_CK(ck) ? ckind_to_selkind_map[ChKind_Popo] : ckind_to_selkind_map[ck])",
+    ],
+}
+
 # Domains where the C has undefined behaviour that gwtool redefines (oversize shift, div by
 # zero) or falls off the end; lower.py does not model those, so the oracle stays inside.
 DOMAIN = {
@@ -81,6 +109,18 @@ DOMAIN = {
     # the multiples of 1/16 in 12.625 <= |x| <= 14.6875 (the C spins forever too), so the oracle
     # keeps |x| <= 12 (plus 20, -40 and +-inf, which terminate).
     "expf": ["expf"],
+    # round 2: table indices kept inside the tables (the C reads past them otherwise)
+    "gm_80160968": [list(range(9)) + [0x100, 0x203, 0xFFFFFF08]],
+    "gm_SelKindToCKind": [list(range(0x1C))],
+    "gm_CKindToSelKind": [list(range(0x21)) + list(range(0x22, 0x80))],
+    "gm_CKindToUnlockIndex": [list(range(0x21)) + list(range(0x22, 0x80)) + [0x105, -251]],
+    "gm_GetCKindByUnlockIndex": [list(range(-3, 16)) + [0x100, -0x100]],
+    "fn_8016419C": [list(range(1, 10))],
+    "fn_801641B4": [list(range(1, 10))],
+    "gm_801641CC": [list(range(30))],
+    "selkind_bit": [None, list(range(32))],
+    "mn_GetDigitAt": [None, list(range(32))],
+    "powf": ["powf"],
 }
 
 R = random.Random(0x6D6F646573)
@@ -143,12 +183,27 @@ MASK = {"s8": 0xFF, "u8": 0xFF, "s16": 0xFFFF, "u16": 0xFFFF, "s32": 0xFFFFFFFF,
         "s64": (1 << 64) - 1, "u64": (1 << 64) - 1, "f32": 0xFFFFFFFF, "color": 0xFFFFFFFF}
 
 
+def proto(c):
+    def ct(t):
+        t = t.get_canonical()
+        return "int" if t.kind == T.ENUM else t.spelling
+    a = ", ".join(ct(x.type) for x in c.get_arguments()) or "void"
+    return f"{ct(c.result_type)} o_{c.spelling}({a});"
+
+
 def main(out):
+    import re
     out = Path(out)
+    allnames = set(n for v in FUNCS.values() for n in v) | set(n for v in HELPERS.values() for n in v)
+    ident = re.compile(r"\b(" + "|".join(sorted(allnames, key=len, reverse=True)) + r")\b")
+    protos = {}
+    files = []
     out.mkdir(parents=True, exist_ok=True)
     idx = ci.Index.create()
     sigs, inputs, tus = {}, [], []
-    for tu_path, names in FUNCS.items():
+    for tu_path, names0 in list(HELPERS.items()) + list(FUNCS.items()):
+        helper = tu_path in HELPERS and names0 is HELPERS[tu_path]
+        names = list(names0)
         src = open(tu_path, "rb").read()
         tu = idx.parse(tu_path, args=g.NAT)
         found = {}
@@ -158,7 +213,20 @@ def main(out):
                 found[c.spelling] = c
         missing = set(names) - set(found)
         assert not missing, (tu_path, missing)
-        stem = Path(tu_path).stem
+        for n in names:
+            protos[n] = proto(found[n])
+        stem = Path(tu_path).stem + ("_h" if helper else "")
+        # file-scope variables defined in this .c that the cut functions read
+        tuvars = {}
+        for c in tu.cursor.get_children():
+            if (c.kind == K.VAR_DECL and c.location.file
+                    and Path(str(c.location.file)).resolve() == Path(tu_path).resolve()):
+                tuvars[c.spelling] = c
+        used = []
+        for n in names:
+            for d in found[n].walk_preorder():
+                if d.kind == K.DECL_REF_EXPR and d.referenced is not None and d.referenced.spelling in tuvars and d.referenced.spelling not in used:
+                    used.append(d.referenced.spelling)
         lines = src.decode("utf-8", "replace").splitlines()
         pre = []
         for ln in lines:
@@ -173,17 +241,25 @@ def main(out):
             elif s.startswith("#include") or (s.startswith("#define") and not s.endswith("\\")
                                             and "(" not in s.split()[1]):
                 pre.append(s)
-        body = ["/* generated by gen_oracle.py from " + tu_path + "; do not edit */"] + pre + [""]
+        body = ["/* generated by gen_oracle.py from " + tu_path + "; do not edit */"] + pre + EXTRA.get(tu_path, []) + [""]
+        for v in used:
+            c = tuvars[v]
+            body.append(src[c.extent.start.offset:c.extent.end.offset].decode() + ";")
+        body.append("")
+        body.append("@@PROTOS@@")
         disp = []
         for n in names:
             c = found[n]
             text = src[c.extent.start.offset:c.extent.end.offset].decode()
             head, rest = text.split("{", 1)
-            # rename the definition and give it internal linkage (`expf`/`powi` clash with MSL)
+            # rename every cut function o_<name> (`expf`/`powi` clash with MSL), calls included
             i = head.rfind(n)
             head = head[:i] + "o_" + n + head[i + len(n):]
             head = head.replace("static ", "").replace("inline ", "")
-            body.append("static " + head + "{" + rest + "\n")
+            rest = ident.sub(lambda m: "o_" + m.group(1), rest)
+            body.append(head + "{" + rest + "\n")
+            if helper:
+                continue
             args = [kind_of(a.type) for a in c.get_arguments()]
             ret = c.result_type.get_canonical()
             rk = "void" if ret.kind == T.VOID else ("s32" if ret.kind == T.BOOL else kind_of(c.result_type))
@@ -223,6 +299,18 @@ def main(out):
                 ex = [f32(x) for x in [0.0, -0.0, 1e-30, 1e-7, 0.5, 1.0, -1.0, 2.5, -2.5, 10.0, -10.0, 12.0, -12.0, 20.0, -40.0, float('inf'), float('-inf')]]
                 ex += [f32(i * 0.0625) for i in range(-192, 193)] + [f32(R.uniform(-12, 12)) for _ in range(800)]
                 sets = [ex]
+            elif dm == ["powf"]:
+                import math
+                pr = [(0.0, 3.0), (-0.0, 1.0), (0.0, float("nan")), (1.0, 5.0), (2.0, 10.0), (10.0, 2.0), (0.5, -3.0),
+                      (100.0, 2.5), (0.01, -2.5), (4.0, 0.5)]
+                for _ in range(1400):
+                    a = math.exp(R.uniform(-4.5, 4.5))
+                    lim = 12.0 / max(abs(math.log(a)), 1e-3)
+                    pr.append((a, R.uniform(-lim, lim)))
+                rows = [[f32(a), f32(b)] for a, b in pr]
+                for r in rows:
+                    inputs.append(n + "".join(f" {x:x}" for x in r))
+                continue
             else:
                 sets = [d if d is not None else dom(a, len(flat) > 1) for a, d in zip(flat, dm + [None] * (len(flat) - len(dm)))]
             rows = [[]]
@@ -251,8 +339,11 @@ def main(out):
         import re
         disp_ = re.sub(r"\n        return (.*);\n    \}", r"\n        *out = \1; return 0;\n    }", disp_)
         disp_ = re.sub(r"(GXColor r = [^;]*;) \*out = ", r"\1 *out = ", disp_)
-        (out / f"o_{stem}.c").write_text(head_ + f"int run_{stem}(" + disp_ + "\n")
+        files.append((stem, set(names), head_ + f"int run_{stem}(" + disp_ + "\n"))
         tus.append(stem)
+    for stem, mine, text in files:
+        ext = sorted(n for n in allnames if re.search(r"\bo_" + n + r"\(", text))
+        (out / f"o_{stem}.c").write_text(text.replace("@@PROTOS@@", "\n".join(protos[n] for n in ext)))
     m = ["#include <stdio.h>", "#include <stdlib.h>", "#include <string.h>"]
     m += [f"int run_{s}(const char*, const unsigned long long*, unsigned long long*);" for s in tus]
     m += ["double __frsqrte(double x) { (void) x; abort(); return 0; } /* math_ppc.h sqrtf, never called */", "int main(void) {", "    char line[512];",

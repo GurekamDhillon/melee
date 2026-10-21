@@ -194,3 +194,64 @@ pub fn absf(x: f32) -> f32 {
         x
     }
 }
+
+// ---- Round 2 ----
+
+/// lbcardnew.c `convertHsdResult`: HSD memcard result -> LbCardResult, else the SDK mapping.
+pub fn convertHsdResult(hsd_result: i32) -> i32 {
+    match hsd_result {
+        0 | 1 => 0,
+        -261..=-258 => 2,
+        -263 | -262 | -257 => 3,
+        -267..=-264 => 10,
+        _ => convertSdkResult(hsd_result),
+    }
+}
+
+/// lb_00CE.c `powf`: `expf(y * 2 * atanh-series((x-1)/(x+1)))`, all f32 (no fused site). Like
+/// `expf` it need not terminate; the oracle keeps x > 0 and |y ln x| <= 12.
+pub fn powf(arg0: f32, arg1: f32) -> f32 {
+    if arg0 == 0.0 {
+        return 0.0;
+    }
+    let mut k: i32 = 1;
+    let mut term = (arg0 - 1.0) / (1.0 + arg0);
+    let mut sum = term;
+    let sq = term * term;
+    loop {
+        k += 2;
+        term *= sq;
+        let prev = sum;
+        sum += term / k as f32;
+        if sum == prev {
+            break;
+        }
+    }
+    expf(arg1 * (2.0 * sum))
+}
+
+/// lb_00CE.c `lb_8000D008`: atan2(y, x) with a 1e-5 dead zone around x = 0, through group 1's
+/// lbtrigf `atanf`. The x < 0 branch is f64 (`M_PI - atanf`); no fused site.
+pub fn lb_8000D008(point_y: f32, point_x: f32) -> f32 {
+    use melee_runtime::lbtrigf::atanf;
+    if point_x < 0.00001 && point_x > -0.00001 {
+        if point_y < 0.00001 && point_y > -0.00001 {
+            return 0.0;
+        }
+        let s: i32 = if point_y < 0.0 { -1 } else { 1 };
+        return (core::f64::consts::FRAC_PI_2 * s as f64) as f32;
+    }
+    if point_x > 0.0 {
+        return atanf(point_y / point_x);
+    }
+    let mut y = point_y;
+    if point_x < 0.0 {
+        let mut q = point_y / point_x;
+        if q < 0.0 {
+            q = -q;
+        }
+        let s: i32 = if point_y < 0.0 { -1 } else { 1 };
+        y = (s as f64 * (core::f64::consts::PI - atanf(q) as f64)) as f32;
+    }
+    y
+}

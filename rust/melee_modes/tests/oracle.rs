@@ -1,4 +1,4 @@
-//! Group 6 round 1: every ported leaf function against the C, bit for bit.
+//! Group 6 rounds 1 and 2: every ported function against the C, bit for bit.
 //! tests/data/vectors.txt is written by oracle/build.sh: the C functions cut verbatim from their
 //! game TUs, compiled with contraction on + gwtool's lowering (melee_runtime/oracle/lower.py).
 //! Each line: `name a0 a1 ... = r`, every value the raw bits of its C type in hex.
@@ -97,12 +97,40 @@ fn eval(name: &str, a: &[u64]) -> u64 {
         "mnVibration_GetNextCursorRow" => i(mnVibration_GetNextCursorRow(s32(0))),
         "mnVibration_GetPadIndex" => mnVibration_GetPadIndex(s32(0)) as u64,
         "_tyDisplay_80318CB4_calc_dist_sq" => fb(_tyDisplay_80318CB4_calc_dist_sq(f(a[0]), f(a[1]))),
+        // round 2
+        "gm_801601C4_inner" => i(gm_801601C4_inner(s8(0))),
+        "gm_801601C4_noinline" => i(gm_801601C4_noinline(s8(0))),
+        "gm_80160244_inner" => i(gm_80160244_inner(s8(0))),
+        "gm_80160244_noinline" => i(gm_80160244_noinline(s8(0))),
+        "gm_SelKindToUnlockIndex" => gm_SelKindToUnlockIndex(s32(0)) as u64,
+        "gm_CKindToUnlockIndex" => gm_CKindToUnlockIndex(s32(0)) as u8 as u64,
+        "get_unlockable_selkind_by_bit_index" => get_unlockable_selkind_by_bit_index(s32(0)) as u64,
+        "gm_GetCKindByUnlockIndex" => gm_GetCKindByUnlockIndex(s32(0)) as u64,
+        "fn_80160710" => fn_80160710(s32(0)) as u64,
+        "gm_GetChallengerStKind" => i(gm_GetChallengerStKind(s32(0))),
+        "fn_801607A8" => fn_801607A8(s32(0)) as u64,
+        "fn_801607F4" => fn_801607F4(s32(0)) as u64,
+        "gm_80160968" => gm_80160968(u32_(0)).to_u32() as u64,
+        "gm_SelKindToCKind" => gm_SelKindToCKind(u8_(0)) as u64,
+        "gm_CKindToSelKind" => gm_CKindToSelKind(u8_(0)) as u64,
+        "fn_8016419C" => fb(fn_8016419C(u8_(0))),
+        "fn_801641B4" => fb(fn_801641B4(u8_(0))),
+        "gm_801641CC" => gm_801641CC(u8_(0)) as u64,
+        "getStageUnlockIndex" => getStageUnlockIndex(u8_(0)) as u64,
+        "getStageUnlockNotifyId" => getStageUnlockNotifyId(u8_(0)) as u64,
+        "selkind_bit" => i(selkind_bit(s32(0), u8_(1))),
+        "powf" => fb(powf(f(a[0]), f(a[1]))),
+        "lb_8000D008" => fb(lb_8000D008(f(a[0]), f(a[1]))),
+        "convertHsdResult" => i(convertHsdResult(s32(0))),
+        "mn_GetDigitAt" => i(mn_GetDigitAt(s32(0), s32(1))),
+        "mn_GetDigitCount" => i(mn_GetDigitCount(s32(0))),
         _ => panic!("no port for {name}"),
     }
 }
 
 const F32_RET: &[&str] = &["fe_ease", "fe_row_y", "fn_8018F71C", "direction", "fn_801653E8", "inlineA1",
-    "expf", "absf", "toMeters", "toFeet", "_tyDisplay_80318CB4_calc_dist_sq"];
+    "expf", "absf", "toMeters", "toFeet", "_tyDisplay_80318CB4_calc_dist_sq",
+    "fn_8016419C", "fn_801641B4", "powf", "lb_8000D008"];
 
 #[test]
 fn group6_leaf_functions_match_c() {
@@ -131,5 +159,5 @@ fn group6_leaf_functions_match_c() {
     }
     let bad: Vec<_> = per.iter().filter(|(_, v)| v.1 > 0).collect();
     assert!(bad.is_empty(), "mismatches {bad:?}\n{}", first_bad.join("\n"));
-    assert_eq!(per.len(), 72, "functions covered");
+    assert_eq!(per.len(), 98, "functions covered (72 round 1 + 26 round 2)");
 }

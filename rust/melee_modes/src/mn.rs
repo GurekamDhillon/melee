@@ -101,3 +101,26 @@ pub fn mnVibration_GetNextCursorRow(cursor_row: i32) -> i32 {
 pub fn mnVibration_GetPadIndex(port: i32) -> u8 {
     port as u8
 }
+
+// ---- Round 2 ----
+
+/// mnmain.c `mn_GetDigitAt`: `(n / 10^place) % 10` through lb_00CE `powi` (place 0..31, where
+/// the wrapping 10^place is never 0).
+pub fn mn_GetDigitAt(arg0: i32, arg1: i32) -> i32 {
+    arg0.wrapping_div(crate::lb::powi(10, arg1)).wrapping_rem(10)
+}
+
+/// mnmain.c `mn_GetDigitCount`: decimal digits of `num`, at most 11.
+pub fn mn_GetDigitCount(num: i32) -> i32 {
+    if num == 0 {
+        return 1;
+    }
+    let mut count = 0;
+    while num / crate::lb::powi(10, count) != 0 {
+        count += 1;
+        if count >= 11 {
+            break;
+        }
+    }
+    count
+}

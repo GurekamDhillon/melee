@@ -105,3 +105,4 @@ pub mod ftCo_CatchCut;
 pub mod ftCo_CatchPull;
 pub mod ftCo_CatchWait;
 pub mod ftCo_CatchAttack;
+pub mod ftCo_Catch;

@@ -10,10 +10,10 @@ State as of 2026-10-21.
 |---|---|---|
 | Native types + GC offsets | `src/types/generated.rs` (from `gen/gen_types.py`) | 569 `#[repr(C)]` records, all built |
 | Mechanical translation of all 216 TUs | `src/c2r/` (from `gen/fix_raw.py`, feature `c2r`) | compiles (`--features c2r`), never run |
-| Hand ports, checked bit-for-bit against the C | `src/neutral_hash.rs`, `src/ftcommon.rs`, `src/ftcommon2.rs`, `src/stale.rs`, `src/compat.rs`, `src/hooks.rs` | 96 C functions, tests pass |
+| Hand ports, checked bit-for-bit against the C | `src/neutral_hash.rs`, `src/ftcommon.rs`, `src/ftcommon2.rs`, `src/stale.rs`, `src/player.rs`, `src/compat.rs`, `src/hooks.rs` | 240 C functions, tests pass |
 | PowerPC `.s` files | none belong to this group (inventory §3) | nothing to do |
 
-Functions: 96 of ~2,820 (about 3.4%; 57 night 1, 39 in port round 1, 95 verified) are hand-ported and verified against the C. All ~2,820 are
+Functions: 240 of ~2,820 (about 8.5%; 57 night 1, 39 in port round 1, 144 in port round 2; 239 verified) are hand-ported and verified against the C. All ~2,820 are
 in the mechanical translation, which compiles; none of it has been linked or run.
 
 ### Native types (`gen/gen_types.py`)
@@ -62,6 +62,7 @@ in the mechanical translation, which compiles; none of it has been linked or run
 | module | C functions | test | cases |
 |---|---|---|---|
 | `neutral_hash.rs` | `nh_Mix`, `nh_CpuFlags`, `nh_Fighter` (fighter.c, TARGET_PC) + item/game word, `StateHash for Fighter` | `tests/nh_ref.rs` | 64 fighters, all fields + every CPU flag bitfield |
+| `player.rs` | 144 of player.c: the player-table accessors (port round 2, below) | `tests/player_ref.rs` | 200 tables x 60 ops (144 op kinds, all exercised) |
 | `ftcommon2.rs` | 39 more of ftcommon.c (port round 1, below) | `tests/ftcommon2_ref.rs` | 10,200 (34 ops x 300) |
 | `ftcommon.rs` | 33 functions of ftcommon.c (ground/air accel, drift, friction, KB friction, fall/ascend, CheckFallFast, facing, CalcHitlag) | `tests/ftcommon_ref.rs` | 6,600 (33 x 200) |
 | `stale.rs` | plstale.c (5), plattack.c (3), ft_0881.c staling (5), player.c accessors (8) | `tests/stale_ref.rs` | 300 sequences x 40 ops |
@@ -144,6 +145,42 @@ the test.
   (8007E358, 8007E3EC, SetAccessory, 8007F6A4...), item callers (8007E6DC..., ftGetParasolStatus,
   8007EEC8/EF5C), the m-ex table dispatches (8007F578..8007F9B4), atan2f users.
 
+## Port round 2 (2026-10-21): `src/player.rs`
+144 C definitions of src/melee/pl/player.c, verified against the C cut verbatim
+(`gen/cref/player_ref.c`; run.py extracts `ftMapping_list`/`player_slots`, Player_GetPtrForSlot..
+Player_80031900, Player_80031DA8..Player_80036978, and the TARGET_PC Player_MexSetMapping /
+MexSetPartner / ForgetEntities). 200 random player tables x 60 random ops; after each op the
+return value, the out-vector, the stub trace word and the whole touched slot are printed; at the
+end every slot and the first 40 mapping rows. 33,200 lines compared, every one of the 144 op kinds
+exercised (the test asserts it). Mutation check: dropping the clamp in GetRemainingHPByIndex or
+changing UpdateMatchFrameCount's 0xFFFF test fails the test.
+- Ported: hasExtraFighterId, Player_80031790, 80031848, func_8008688C_wrapper, 80031900,
+  800319C4, 80031DA8, 80031DC8, 80031EBC, 80031FB0, 80032070, 8003219C, 8003221C,
+  Get/SetPlayerState/Character, 800325C8, 80032610, LoadPlayerCoords, 80032768, 80032828,
+  800328D4, 80032A04, SetPlayerAndEntityFacingDirection, 80032BB0, SetScale, spawn/some pos
+  get/set, 80032F30/FA4, facing get/set/conditional, costume, controller, team, player id, cpu
+  level/type (+entity), handicap, unk50, attack/defense ratio (TARGET_PC ScriptGame_ModValue),
+  model scale, 80033BB8, GetP1Stock, LoseStock, coins, total coins, unk98/9C, GetEntity(AtIndex),
+  SwapTransformedStates, damage/HUD damage/HP by index, other stamina, remaining HP (+by index),
+  every flags / more_flags / flagsAE bit get/set, falls (4), KOs (2), match frame count (2),
+  self destructs (3), 800353BC, 8003544C, nametag, unk4C/4D/45, 80036058, 800360D8,
+  SetStructFunc, GetUnk6A8Ptr, GetStaleMoveTableIndexPtr2, 80036394, 80036428, joystick count
+  (2), 800366DC, 80036790, 80036844, 800368F8, 80036978, MexSetMapping, MexSetPartner,
+  ForgetEntities. `ftMapping_list` is `player::FT_MAPPING_LIST` (ChKind_Cap rows, as TARGET_PC).
+  `Player_8003248C` now has a table-reading wrapper (`player::player_8003248c`; the night-1
+  `stale::slot_type_for` is not counted again).
+- Fused sites: none in player.c (`fma_sites.py src/melee/pl/player.c`: 0 in every function).
+- Hooks: `hooks::PLAYER_8003544C` / `PLAYER_UPDATE_JOYSTICK_COUNT` now default to the ports.
+  33 new panicking hooks (`needed_hooks!` in hooks.rs): ftLib_* / ft_8008* (TODO(group3 ftlib)),
+  ftCo_800D4F24 / 800D4FF4 (TODO(group3 ftCo)), ftDemo_SetFacingDirection (TODO(group3 ftdemo)),
+  ftKb_SpecialN_800EED50 (TODO(group4)), HSD_GObjFree (TODO(group1)), ifStatus_* and gm_*
+  (TODO(group6)). `hooks::script_mod_value(slot, ..)` is the slot-keyed form of SCRIPT_MOD_VALUE.
+- Differences kept on purpose: `transformed[i]` >= 2 panics (C reads the neighbouring field);
+  `Player_SetFlagsAEBit1` returns () (C: declared u8, returns nothing). Neither is reachable with
+  retail data.
+- Not ported from player.c: Player_80031AD0 (Fighter_Create), 80031CB0 / 80031D2C (ftData
+  preload, Geno, lbDvd), Player_InitOrResetPlayer and the rest (allocators, archives, JObj).
+
 ## Not done / blockers
 - **The c2r layer has never linked or run.** Everything outside group 3 is an unresolved
   `extern "C"` (HSD, lb, mp, it, gm, PC hooks). It cannot be checked against the goldens until
@@ -154,4 +191,4 @@ the test.
   depends on group 1's MSL/math_ppc port (`__frsqrte`). They are left to the mechanical layer.
 - **Next steps:** switch c2r modules onto `crate::types` TU by TU, then replace them with hand
   ports, verified the same way (cref harness first). The best candidates are the rest of
-  ftcommon.c, ftlib.c and player.c, which are mostly field logic.
+  ftcommon.c and ftlib.c (player.c's accessors are done; port round 2), which are mostly field logic.

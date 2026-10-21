@@ -5,7 +5,7 @@
 //! Single-threaded game state, like the C globals they replace: set them before the match.
 #![allow(static_mut_refs)]
 
-use crate::types::{ftCommonData, Fighter, Fighter_ShakeTable_t, Item_GObj, Vec2, Vec3};
+use crate::types::{ftCommonData, Fighter, Fighter_ShakeTable_t, FighterKind, HSD_GObj, Item_GObj, Vec2, Vec3};
 
 /// `ScriptGame_ModValue(player_id, field, base)` behind `FT_SCRIPT_VALUE` (ft/forward.h).
 pub static mut SCRIPT_MOD_VALUE: Option<fn(player_id: i32, field: i32, base: f32) -> f32> = None;
@@ -73,9 +73,9 @@ pub static mut PL_8003FC44: Option<fn(slot: i32, sub: i32)> = None;
 pub static mut PL_800402D0: Option<fn(slot: i32, sub: i32, r: i32)> = None;
 /// TODO(group3 pl): `pl_80040460(slot, is_sub)` (pl/plbonuslib.c), not ported.
 pub static mut PL_80040460: Option<fn(slot: i32, sub: i32)> = None;
-/// TODO(group3 pl): `Player_8003544C(slot, is_sub)` (pl/player.c, player table), not ported.
+/// `Player_8003544C(slot, is_sub)` override; unset = `crate::player::player_8003544c`.
 pub static mut PLAYER_8003544C: Option<fn(slot: i32, sub: i32) -> bool> = None;
-/// TODO(group3 pl): `Player_UpdateJoystickCountByIndex(slot, is_sub)` (pl/player.c), not ported.
+/// `Player_UpdateJoystickCountByIndex` override; unset = `crate::player` port.
 pub static mut PLAYER_UPDATE_JOYSTICK_COUNT: Option<fn(slot: i32, sub: i32)> = None;
 /// TODO(group1 lb): `lb_80014574(port, id, a, b)` (rumble start). Default no-op.
 pub static mut LB_RUMBLE_START: Option<fn(port: u8, id: i32, a: i32, b: i32)> = None;
@@ -114,9 +114,19 @@ pub fn geno_ground_edge(fp: &mut Fighter, landing: i32) {
 pub fn pl_8003fc44(slot: i32, sub: i32) { need(unsafe { PL_8003FC44 }, "TODO(group3 pl) pl_8003FC44")(slot, sub) }
 pub fn pl_800402d0(slot: i32, sub: i32, r: i32) { need(unsafe { PL_800402D0 }, "TODO(group3 pl) pl_800402D0")(slot, sub, r) }
 pub fn pl_80040460(slot: i32, sub: i32) { need(unsafe { PL_80040460 }, "TODO(group3 pl) pl_80040460")(slot, sub) }
-pub fn player_8003544c(slot: i32, sub: i32) -> bool { need(unsafe { PLAYER_8003544C }, "TODO(group3 pl) Player_8003544C")(slot, sub) }
+/// Unset: the port in `crate::player` (port round 2).
+pub fn player_8003544c(slot: i32, sub: i32) -> bool {
+    match unsafe { PLAYER_8003544C } {
+        Some(f) => f(slot, sub),
+        None => crate::player::player_8003544c(slot, sub),
+    }
+}
+/// Unset: the port in `crate::player` (port round 2).
 pub fn player_update_joystick_count(slot: i32, sub: i32) {
-    need(unsafe { PLAYER_UPDATE_JOYSTICK_COUNT }, "TODO(group3 pl) Player_UpdateJoystickCountByIndex")(slot, sub)
+    match unsafe { PLAYER_UPDATE_JOYSTICK_COUNT } {
+        Some(f) => f(slot, sub),
+        None => crate::player::update_joystick_count_by_index(slot, sub),
+    }
 }
 pub fn lb_rumble_start(port: u8, id: i32, a: i32, b: i32) {
     if let Some(f) = unsafe { LB_RUMBLE_START } {
@@ -144,4 +154,61 @@ pub fn grab_mash_shake() -> &'static Fighter_ShakeTable_t {
     let p = unsafe { FIGHTER_GRAB_MASH_SHAKE };
     assert!(!p.is_null(), "Fighter_GrabMashShake not loaded");
     unsafe { &*p }
+}
+
+// ---- port round 2 (pl/player.c) ----------------------------------------------------------
+// `G` is a fighter entity (`HSD_GObj*`). Each hook panics when reached unset.
+
+/// `ScriptGame_ModValue(slot, field, base)` with a player slot (player.c's attack/defense ratio).
+#[inline]
+pub fn script_mod_value(slot: i32, field: i32, base: f32) -> f32 {
+    match unsafe { SCRIPT_MOD_VALUE } {
+        Some(f) => f(slot, field, base),
+        None => base,
+    }
+}
+
+macro_rules! needed_hooks {
+    ($($(#[$m:meta])* $stat:ident $func:ident ($($a:ident: $t:ty),*) $(-> $r:ty)? = $what:literal;)*) => {$(
+        $(#[$m])*
+        pub static mut $stat: Option<fn($($t),*) $(-> $r)?> = None;
+        #[doc = concat!("Calls `", stringify!($stat), "`; ", $what, ".")]
+        pub fn $func($($a: $t),*) $(-> $r)? { need(unsafe { $stat }, $what)($($a),*) }
+    )*};
+}
+type G = *mut HSD_GObj;
+needed_hooks! {
+    FTLIB_800867E8 ftlib_800867e8(g: G) = "TODO(group3 ftlib) ftLib_800867E8";
+    FTLIB_8008688C ftlib_8008688c(g: G) = "TODO(group3 ftlib) ftLib_8008688C";
+    FTKB_SPECIALN_800EED50 ftkb_specialn_800eed50(a: i32, b: i32) = "TODO(group4 ftKb) ftKb_SpecialN_800EED50";
+    FTLIB_8008701C ftlib_8008701c(g: G) -> bool = "TODO(group3 ftlib) ftLib_8008701C";
+    FTCO_800D4F24 ftco_800d4f24(g: G, i: i32) = "TODO(group3 ftCo) ftCo_800D4F24";
+    HSD_GOBJ_FREE hsd_gobj_free(g: G) = "TODO(group1 HSD) HSD_GObjFree";
+    FTCO_800D4FF4 ftco_800d4ff4(g: G) = "TODO(group3 ftCo) ftCo_800D4FF4";
+    IFSTATUS_802F6E1C ifstatus_802f6e1c(slot: i32) = "TODO(group6 if) ifStatus_802F6E1C";
+    FTLIB_800873CC ftlib_800873cc(g: G) -> bool = "TODO(group3 ftlib) ftLib_800873CC";
+    FTLIB_80087140 ftlib_80087140(g: G) = "TODO(group3 ftlib) ftLib_80087140";
+    FTLIB_80086664 ftlib_80086664(g: G, v: &Vec3) = "TODO(group3 ftlib) ftLib_80086664";
+    FTDEMO_SET_FACING_DIRECTION ftdemo_set_facing_direction(g: G, d: f32) = "TODO(group3 ftdemo) ftDemo_SetFacingDirection";
+    FTLIB_800869F8 ftlib_800869f8(g: G) -> f32 = "TODO(group3 ftlib) ftLib_800869F8";
+    FTLIB_SET_SCALE ftlib_set_scale(g: G, s: f32) = "TODO(group3 ftlib) ftLib_SetScale";
+    FT_80087BEC ft_80087bec(g: G, v: i32) = "TODO(group3 ftlib) ft_80087BEC";
+    FT_80087BC0 ft_80087bc0(g: G, v: i32) = "TODO(group3 ftlib) ft_80087BC0";
+    GM_8016C5C0 gm_8016c5c0(slot: i32) -> i32 = "TODO(group6 gm) gm_8016C5C0";
+    FTLIB_800870F0 ftlib_800870f0(g: G, v: i32) = "TODO(group3 ftlib) ftLib_800870F0";
+    IFSTATUS_802F6D10 ifstatus_802f6d10(slot: i32) = "TODO(group6 if) ifStatus_802F6D10";
+    GM_8016B168 gm_8016b168() -> bool = "TODO(group6 gm) gm_8016B168";
+    IFSTATUS_802F69C0 ifstatus_802f69c0(a: i32, b: i32) = "TODO(group6 if) ifStatus_802F69C0";
+    IFSTATUS_802F6AF8 ifstatus_802f6af8(slot: i32) = "TODO(group6 if) ifStatus_802F6AF8";
+    GM_GET_FRAME_COUNT gm_get_frame_count() -> u32 = "TODO(group6 gm) gm_GetFrameCount";
+    IFSTATUS_802F6C04 ifstatus_802f6c04(slot: i32) = "TODO(group6 if) ifStatus_802F6C04";
+    FTLIB_80086F4C ftlib_80086f4c(g: G) -> bool = "TODO(group3 ftlib) ftLib_80086F4C";
+    FTLIB_80086F80 ftlib_80086f80(g: G) -> f32 = "TODO(group3 ftlib) ftLib_80086F80";
+    FTLIB_GET_KIND ftlib_get_kind(g: G) -> FighterKind = "TODO(group3 ftlib) ftLib_GetKind";
+    FTLIB_80087300 ftlib_80087300(g: G) -> i32 = "TODO(group3 ftlib) ftLib_80087300";
+    FT_80087AC0 ft_80087ac0(g: G, v: i32) = "TODO(group3 ftlib) ft_80087AC0";
+    FTLIB_80086A4C ftlib_80086a4c(g: G, v: f32) = "TODO(group3 ftlib) ftLib_80086A4C";
+    FT_80087BAC ft_80087bac(g: G, v: i32) = "TODO(group3 ftlib) ft_80087BAC";
+    FTLIB_80086BB4 ftlib_80086bb4(g: G) -> bool = "TODO(group3 ftlib) ftLib_80086BB4";
+    FTLIB_80086B90 ftlib_80086b90(g: G, v: &mut Vec3) = "TODO(group3 ftlib) ftLib_80086B90";
 }

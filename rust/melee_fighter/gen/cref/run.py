@@ -54,6 +54,10 @@ EXTRACTS = {
                   ("src/melee/ft/ftcommon.c", 'void ftCommon_8007F8B4(', 'extern void (*ftData_UnkMotionStates2'),
                   ("src/melee/ft/ftcommon.c", 'static inline float my_fminf(', 'void ftCommon_8007FE84('),
                   ("src/melee/ft/ftcommon.c", 'void ftCommon_8007FF74(', '#if defined(TARGET_PC)')],
+    "player": [("src/melee/pl/player.c", "typedef struct _ftMapping {", "/// Matches when everything"),
+               ("src/melee/pl/player.c", "StaticPlayer* Player_GetPtrForSlot(", "void Player_80031AD0("),
+               ("src/melee/pl/player.c", "void Player_80031DA8(", "void Player_InitOrResetPlayer("),
+               ("src/melee/pl/player.c", "void Player_MexSetMapping(", "#endif")],
     "ftcommon": [("src/melee/ft/ftcommon.c", "void ftCommon_CalcGroundAccel_Deaccel(", "void ftCommon_UnlockECB("),
                  ("src/melee/ft/ftcommon.c", "void ftCommon_UpdateFacing(", "void ftCommon_8007DB24(")],
 }

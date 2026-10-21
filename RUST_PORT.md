@@ -147,6 +147,7 @@ against a running Rust game: no Rust simulation exists yet, so no golden has bee
 | platform (step 4/5) | melee_net | pc/platform/gw_net.c (+gw_net.h): UDP transport, HELLO/ACCEPT/REFUSE handshake (protocol 9: rules + Envoy words, mods_soft, guest_info/guest_hello, hold_start), READY/START/START_ACK start-time agreement, redundant INPUT exchange with acks, RTT + GGPO frame-advantage time sync, piggybacked checksums/desync, reliable lobby channel, interrupt/timeout/quit; gw_netplay.c np_encode/np_decode + np_cb_* glue; gw_rollback.h network-facing interface | all of gw_net.c (`net.rs`, line for line), std::net UDP transport, gw_net_tests.c's simnet (`sim.rs`), 11-byte pad codec (`pad.rs`), `RollbackSession` trait + `NetAdapter` (the np_cb_* glue) + a generic `RollbackDriver` over a save/load `Simulation` (delay, prediction, rollback, stall, waits, final checksums; NOT a port of gw_rollback.c) | wire-exact vs gw_net.c itself built as shipping shims are (clang i686-pc-windows-msvc -O2; oracle/build.sh): 24.9k-line transcript over 27 scenarios (clean/lossy/hostile/pull inputs, time sync on/off, desync push/pull, 11 refusal/agree cases, old-protocol peers, blackhole, timeout, quit, lobby+hold) = every datagram's bytes (FNV, session id masked), event, desync and lobby delivery and end state, line for line; mutations fail it (the EMA's x0.125 is exact, so fused vs unfused cannot differ there); Rust<->C over real UDP 127.0.0.1 both directions (oracle/net_peer.c, 300 frames each way + checksums + config); all 26 gw_net_tests.c tests ported and passing (incl. real-UDP loopback); rollback driver: two peers over the lossy simnet, every final checksum equal to each other and to an offline run (172 rollbacks at 60 ms) | gw_net/GwRbInput are native-only (exe memory, never MEM1): no GC layout | not wired to the game loop; gw_rollback.c itself (gmscene/gw_snap/replay coupling, epochs `_e` API, Slippi mode) not ported; gw_netplay.c lobby/app layer (pick-ban, modsync, netdir, stage runs) not ported; IPv4 only like the C; Linux EMSGSIZE mapped by errno 90 untested |
 | platform (step 5/5) | mex_import (`tools/mex-import`, bin `mex-import`) | workspace `tools/mex_port/make_mod_from_disc.py` + `split_modpack.py` (+ `mex_hsd.py` GCM/HSD readers, `dump_ftfunction.py`/`dump_itfunction.py` MEXFunction parse) | all of the packer/splitter (GCM FST reader, byte-compare delta, MxDt.dat tables + fighter/stage claims, mod.json + digest, sha256); m-ex code inventory: ftFunction/grFunction/itFunction blobs relocated, register-type dataflow, every D-form access mapped through `melee_types::GC_RECORDS` to a native field path | Akaneia + ACE: output byte-identical to the Python tools on the same discs (477 / 1168 files incl. mod.json, sha256); code coverage 59.5% (Akaneia, 86k insns) / 61.4% (ACE, 112k insns) of struct-offset accesses mapped; types are inferred, not checked against execution | uses melee_types' GC tables + typedef aliases; vanilla `T *` returns from decomp headers + symbols.txt (build.rs) | mod PPC not translated/run natively; no DOL/Gecko patches; no RVZ/CISO (no nod); character `dat_attrs` structs unmapped (no vanilla record) |
 | asm (10 items) | n/a | n/a | 0 | n/a | n/a | none belonged to groups 0-5; crash-screen register reads return 0 on PC |
+| integration: native golden run | melee (bin) | the frame loop + match start of `pad_falcon_fox_fd` | `melee golden`: ISO reader, GrNLa.dat spawn points (map_head walk), PlCo.dat start shield, VS match start (Entry, airborne via ported ftCommon_8007D5D4, ported player stocks), ftCo_Entry_Anim | s0/s2 equal to the golden on frames 0-4; `seed` (so `hash`) diverges from frame 0 | uses melee_types Fighter | seed draws (HSD particle generator), ftCo_800C6408 EntryStart at frame 5 and everything after |
 
 ### Done in integration
 - Deduped the hand-written float/vector helpers into `melee_core`: `fp::{frsqrte, fres, force25}`
@@ -349,3 +350,35 @@ against a running Rust game: no Rust simulation exists yet, so no golden has bee
   user_data), Unknown, indexed, or ArrayElem candidates. Types are inferred from assumed callback
   seeds (r3 = owner GObj), not proven per slot.
 - Not done: translating or running mod PPC natively, DOL/Gecko patches, RVZ/WIA images.
+
+## Native golden run: pad_falcon_fox_fd (2026-10-21)
+- `melee golden --iso <disc> --out C.csv` (`rust/melee/src/vs_match.rs`, `stage.rs`, `disc.rs`) is
+  the first real `Sim`: it reads `GrNLa.dat` and `PlCo.dat` from the user's disc (local only, not
+  written anywhere), starts the VS match and steps frames until the next frame needs unported code.
+  `compare_golden.py docs/rust-port/golden/pad_falcon_fox_fd.csv C.csv --allow-short`.
+- Ground truth for frame 0 came from the C build itself (a scratch Lua pad script that logged
+  `gd.player()` each frame, hashes unchanged): both fighters are in Entry (322), airborne, at
+  (-60, 10, 0) and (60, 10, 0), facing +1/-1, shield 60, cmd frame_count -1, jumps used 1,
+  x67F = x680 = 255, stocks 3. A brute force over the NHV1 word confirmed exactly that tuple.
+- **Result: 5 frames (0-4) written. First diverging frame: 0. First diverging field: `seed`
+  (golden 9D38619F, native 00003039 = MELEE_TEST_SEED 12345 undrawn), hence `hash`.** `s0` and `s2`
+  (every fighter field) are equal on all 5 frames; with `--seed-from <golden>` (diagnostic: copies
+  the golden seed column) `compare_golden.py` reports the 5 frames identical, so the frame combine
+  and the fighter words are right and the seed is the only difference there.
+- The seed: the C build draws 54 times (12345 -> 9D38619F) before frame 0, then 19, 25, 19, 7, 22,
+  42, 56, ... per frame (MELEE_RAND_TRACE + melee-pc.map). Every draw in logic frames 29-34 (golden
+  0-5) comes from the HSD particle generator for the entry effects: `hsd_8039930C` (particle.c),
+  `hsd_8039DAD4`, `hsd_8039EE24`, `hsd_8039F05C` (generator.c). Matching `seed` needs
+  generator.c/particle.c ported (group 1) plus the ef/ entry-effect spawns that drive them. (So
+  particle state, excluded from the hash, still reaches it through the RNG.)
+- Where the run stops: frame 5, Falcon's Entry timer (Player_GetUnk4C = 5; Fox's is 10) reaches 0
+  and `ftCo_Entry_Anim` calls `ftCo_800C6408` (EntryStart: Fighter_ChangeMotionState, the entry
+  animation; the C then moves y to 0x1.438386p+3 by frame 6). Not ported: Fighter_ChangeMotionState,
+  the fighter animation/figatree path (group 1 DObj/AObj walkers are stubs) and the per-frame
+  fighter update (fighter.c Fighter_UnkProcess*); Fox diverges the same way at frame 10.
+- Approximations in what runs: the spawn point's world translation is composed from the joint
+  descriptors (exact only with no rotation/scale above it; FD's are, `SpawnPoint::exact`), not
+  through the JObj system; the Entry timer lives beside the Fighter, not in `fp->mv`; fighter
+  defaults are only the fields the hash reads, not all of Fighter_UnkInitReset; stocks 3 is the
+  scene's, not read from the VS rules struct. `MELEE_GOLDEN_DUMP=1` prints the start state.
+- Other scenarios are not wired (only falcon/fox and FD).

@@ -1,1 +1,9 @@
 pub mod dbeffect;
+pub mod dballoc;
+pub mod dbcpu;
+pub mod dbcamera;
+pub mod dbinit;
+pub mod dbitem;
+pub mod dbsound;
+pub mod dbscreenshot;
+pub mod dberror;

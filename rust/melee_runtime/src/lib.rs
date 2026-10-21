@@ -20,6 +20,7 @@ pub mod cabi;
 pub mod cobj;
 pub mod dat;
 pub mod fobj;
+pub mod fog;
 pub mod gekko;
 pub mod gobj;
 pub mod hsd_mtx;

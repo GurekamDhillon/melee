@@ -375,3 +375,47 @@ the round 1 PSVEC ports, and nothing else ported depends on what it still lacks,
 
 ### Count after this round
 Ported **427 of 2,297** (18.6%): **378** checked against the C, **49** not (unchanged list).
+
+## Night 3, port round 3 (round 11): fog.c logic
+
+### Recount (start of round)
+No group 1 commit since round 10 (`git log -- rust/melee_runtime`): **427 of 2,297** (378 checked
+against the C, 49 not). Still not counted: `generator.rs` / `particle.rs` / `psappsrt.rs` (+
+`oracle_generator`, which passes) in the working tree. They are another agent's uncommitted work
+(the golden-seed track; `rust/melee/src/{effect,stage,vs_match}.rs` were being edited at the same
+time and use `particle.rs`). This round leaves them alone and does not commit their three
+`pub mod` lines in `lib.rs`.
+
+### Stubs whose target now exists
+None. The TODO(group1 class / jobj load / jobj spline / dobj / robj) stubs still point at code
+nobody has ported. wobj.rs's RObj methods are as described in round 9.
+
+### Ported this round
+`fog.rs`, from `fog.c`. It depends only on round 4's AObj, so it was the lowest-level file left:
+
+| function | checked against C |
+|---|---|
+| FogUpdateFunc (tracks 1, 2, 5-8, 20; every other type is a no-op) | yes |
+| HSD_FogInit (desc / viewport), HSD_FogAdjInit (desc / viewport) | yes |
+| HSD_FogSet (NULL fog, adj width != 0, projection types 0 / 1 / other, range clamp) through a `FogGx` trait | yes, except that no row has range exactly 641 |
+| HSD_FogReqAnim, HSD_FogReqAnimByFlags, HSD_FogInterpretAnim, HSD_Fog_8037DE7C | yes, but only with AObjs that have no FObj tracks |
+| HSD_FogLoadDesc, HSD_FogAdjLoadDesc | yes |
+| HSD_FogAlloc, HSD_FogAdjAlloc (a zeroed native record) | no: exercised only through LoadDesc |
+
+- Conversions: the colour bytes and the `u16` widths are `fptoui` saturated to 32 bits and then
+  truncated. `cabi::f2u8` and `f2u16` saturate as signed and would be wrong here. The centre is
+  `cabi::f2i16`. `PSMTXCopy` and `PSMTXIdentity` write only rows 0-2 of the Mtx44.
+- FMA: helper_fog.ll has 0 fmuladds; lower.py reports 9 fptoi sites, all of them fog.c's.
+- Oracle: `oracle/build_fog.sh` compiles fog.c through `helper_fog.c` (GX recorded, CObj faked)
+  over the real aobj.c, fobj.c, id.c, list.c, spline.c, mtx_pc.c and gekko_fp.c, with the shipping
+  flags + lower.py. `tests/data/oracle_fog.txt` has 8,000 ops (2.9 MB, every op kind > 680). Each
+  row checks the GX call log (args as bits) and the whole fog state. `tests/oracle_fog.rs`: 0
+  failed.
+- Mutations: these fail: signed u8 colour (row 344), copying all 4 matrix rows (row 1), signed u16
+  width (row 67), Rust `as i16` centre (row 1192), +1 for -1 in the type-0 projection (row 15).
+  The clamp `> 641` is **not** caught.
+- Not ported: FogRelease, FogInfoInit, FogAdjInfoInit (class system).
+
+### Count after this round
+Ported **439 of 2,297** (19.1%): **388** checked against the C, **51** not (the 49 before + the
+two Alloc functions).

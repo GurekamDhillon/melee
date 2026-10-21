@@ -525,3 +525,35 @@ not yet declared), plus LNK1104 file locks from concurrent test runs; every mele
 
 **Next:** the two large-record getters above, the bitfield functions (compare by value), the
 tydisplay sorters.
+
+## Night 3 round 6 (2026-10-21): lbrefract texel callbacks, fn_80025E38, gm leaves
+
+**Recount.** Group total still **3,995** (no gm/mn/if/ty/lb TU changed since the night-3 count,
+`git log` over src/melee/{gm,mn,if,ty,lb}). Ported at the start: **288**, all verified.
+After this round: **298 of 3,995 (7.5%)**, all verified.
+
+**TODO stubs.** None replaceable: `GXColor` is still not generated, `FigaTree` and
+`gmClassicMatchup` are still opaque in melee_types.
+
+**Ported: 10 functions, all checked bit for bit against the C** (`cargo test -p melee_modes --test oracle_r10`,
+4,950 vectors; `oracle/gen_oracle_r10.py` over gen_oracle_r4.py, `oracle/build_r10.sh`):
+
+| module | C TU | functions |
+|---|---|---|
+| `lb_r10.rs` | lbrefract, lbaudio_ax | `fn_80021F70`, `fn_80021FB4`, `fn_80021FF8`, `fn_8002206C`, `fn_80025E38` |
+| `gm_r10.rs` | gm_1601, gm_17C0, gm_1832, gmtoulib | `fn_80161004`, `gm_801688AC`, `fn_8017DE54`, `fn_801859C8`, `gmTournament_SetTripleRightCoords` |
+
+- **FMA:** none (lower.py: 0 fmuladd); fn_80025E38's float->int conversion is the saturating one
+  gwtool's lowering produces (2 fptoi saturated in the cut).
+- `fn_801859C8` dereferences `gobj` unchecked, so its gobj argument is never NULL in the rows (an
+  earlier generator run with a NULL gobj segfaulted the C oracle and left a truncated vector file).
+- Mutation check (each fails its function only): x40 mask 177->205/400 (fn_801859C8), pkind 0->1
+  231/300, x18/3->/2 168/250, RGB565 b/8->b/4 543/600, out 0xFF->0xFE 589+499/600,
+  VOL_MAX 0x7E 193/600, 3-count->2-count 171/600, pkind!=3->!=2 65/400, arg9->arg8 599/600.
+
+**Unverified ports:** none.
+
+**Workspace:** `cargo build --workspace` green; every melee_modes test passes (private target dir).
+
+**Next:** `mnSnap_GetLoadPhotoIdx`, `fn_80180630_GetX118` (large .c records), bitfield functions,
+tydisplay sorters.

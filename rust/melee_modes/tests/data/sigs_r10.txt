@@ -1,0 +1,10 @@
+fn_80021F70 buf u32 u32 u8 u8 u32 -> void
+fn_80021FB4 buf u32 u32 u8 u8 u8 u8 -> void
+fn_80021FF8 buf u32 u32 buf buf buf buf -> void
+fn_8002206C buf s32 u32 buf buf buf buf -> void
+fn_80025E38 buf -> s32
+fn_80161004 buf -> s32
+gm_801688AC buf -> s32
+fn_8017DE54 u8 buf -> s32
+fn_801859C8 buf -> void
+gmTournament_SetTripleRightCoords buf buf buf buf buf buf buf -> void

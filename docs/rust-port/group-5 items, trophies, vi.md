@@ -345,6 +345,40 @@ by `it_8028B08C` / `it_802BDA40`), `CommandInfo` / `SpawnItem` helpers, `StarAtt
 `StarRodAttributes` users (file-local types not in melee_types), Fighter readers, ty and vi.
 Not done: no caller uses these yet; no frame-level comparison.
 
+## Round 7 (night 5): 1 generated + 12 hand, `src/itfwd7.rs`, `src/itkinds7.rs`
+
+Rescanning with round 6 counted as ported (`tests/c_oracle/gen_round7.py`, gen_round6.py with
+round 7's HAND list) finds only one new forwarder (`itFreeze_UnkMotion0_Phys` -> `it_8028EDBC`)
+and no new trivial callbacks: the generated layer is used up. A scan for unported bodies whose
+every call is already ported found 76; most need globals, unported callbacks, item-to-item GObj
+links or bitfields in x86/GC-dependent positions. Hand-ported (12): `it_802A3C98`,
+`it_802A6A78_normalize_diff` and `_rev` (hookshot vector normalisers), `vec3_eq_mtx`,
+`link_fighter_compare`, `it_2F28_UnkMotion0_Phys`, `bisectValue` (itspawn.c), `it_802E614C`
+(SpawnItem fill), `itTarucann_UnkMotion9_Anim_inline`, `itKyasarin_SetFallCollPos`,
+`itArwinglaser_GetCollArg`, `getRandMax`.
+
+`sqrtf`: item TUs get MSL's math_ppc.h `extern inline sqrtf` (frsqrte + 3 Newton steps, f64 fused),
+not the CRT's. The crate now depends on melee_runtime for `gekko::sqrtf`; round7.c includes
+math_ppc.h and pc/gameworld/gekko_fp.c's `__frsqrte` (its sinf/cosf/tanf/__fres renamed so the
+other rounds are unchanged; their tables came out identical). Fused sites (`fma_sites.py`): f32
+2 each in the three normalisers (`x*x + y*y + z*z` = `fma(z, z, fma(x, x, y*y))`), 1 in
+`it_2F28_UnkMotion0_Phys`; lowering now reports 45 fmuladd.f32.
+
+**Verification** (`tests/oracle_round7.rs`, 1 + 12 tables x 48 cases, pass): same harness as
+round 6; vector inputs are drawn as 0 / any `RF()` / moderate `RM()`, with `a == b` one time in 8
+for the zero-length branch. Mutation checks (each made the test fail): un-fusing both sites or
+only the inner one in the normalisers, un-fusing `it_2F28`, swapping `_rev`'s operands, `>=` in
+`bisectValue`, CRT `f32::sqrt` instead of MSL `sqrtf`. **Not distinguishable**: the f64
+`(f64) 1.0F / len` reciprocal vs an f32 division (double rounding of a quotient is exact for
+f32), so the port keeps the f64 form from the source. `SpawnItem.x44_flag` is hashed in the C's
+x86 bit order; the Rust side reverses the byte.
+
+Left out (for later rounds): `it_802E6380_tier` (reads `tiers[0].ecb` as an `s32` array at
+index 9: GC-offset dependent, the native C reads another field), `it_8027B070` (Fighter
+`Struct2070` bitfield copy), `it_80279720` / `it_80279768` (CmdUnion / flag32 bitfields, `++cmd->u`
+stride), `mtx_reset` (global), attribute-pointer getters, item-to-item links. No other-group
+stubs were needed. Not done: no caller uses these yet; no frame-level comparison.
+
 ## Decisions / traps
 
 - `Cargo.toml` no longer depends on melee_types/runtime/world/fighter: nothing calls them yet,

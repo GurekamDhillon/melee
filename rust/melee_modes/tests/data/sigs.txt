@@ -1,0 +1,72 @@
+gm_GetNextColor u8 -> u8
+bitset_mask u32 -> u32
+bitset64_mask u32 -> s64
+selkind_mask u8 -> s32
+fe_np_zero - -> s32
+fe_rgba u8 u8 u8 u8 -> color
+fe_ease f32 -> f32
+fe_row_y s32 -> f32
+gm_8017BE84 u32 -> s32
+gm_WasMatchCanceled u8 -> s32
+gmRst_IsMex s32 -> s32
+fn_8018F3D0 s32 -> s32
+fn_8018F6DC s32 -> s32
+fn_8018F6FC s32 -> s32
+fn_8018F71C s32 s32 -> f32
+fn_8018FA24_inline0 s32 -> s32
+gm_801905F0_inline0 s32 -> s32
+fn_801953C8_GetPreviousPosition s32 s32 -> s32
+direction f32 -> f32
+gm_801601C4 s8 -> s32
+gm_80160244 s8 -> s32
+fn_80160840 u8 -> u8
+gm_80160854 u8 u8 u8 u8 -> u32
+fn_801653E8 u8 -> f32
+fn_8016588C_clamp s32 -> s32
+fn_801724C8 - -> s32
+fn_8017AD04 s32 s32 -> s32
+fn_8017AD28 s32 -> s32
+fn_8017AD48 s32 -> s32
+fn_8017AD78 s32 -> s32
+BossHook_Kind s32 -> s32
+gm_Is1PMode u8 -> s32
+inlineA1 f32 -> f32
+ifStock_802F89F8_count s32 -> s32
+ifStock_802F89F8_divisor s32 -> s32
+ifStock_802F89F8_digit s32 s32 -> s32
+fn_802FFCC8 s32 -> s32
+DevText_Clamp s32 s32 -> s32
+adjust color -> color
+calcPan s32 s32 s32 s32 -> s32
+convertSdkResult s32 -> s32
+isSmall f32 -> s32
+same s32 s32 -> s32
+RGB565_TO_RGB5A3 u16 -> u16
+lbSnap_8001E204 - -> s32
+lbSnap_8001E210 - -> s32
+lbTime_8000AEC8 u32 u32 -> u32
+lbTime_8000AEE4 u32 s32 -> u32
+lbTime_8000AF24 u32 s32 -> u32
+lbTime_8000AF74 u32 s32 -> u32
+expf f32 -> f32
+powi s32 s32 -> s32
+approximatelyZeroVec3 vec3 -> s32
+absf f32 -> f32
+toMeters f32 -> f32
+toFeet f32 -> f32
+equalU8 u8 u8 -> s32
+getIconOffset u32 -> s32
+inline_is_row_time s32 -> s32
+inline_is_row_char s32 -> s32
+mnDiagram2_IsTimeStat u8 -> s32
+mnDiagram2_IsDistanceStat u8 -> s32
+mnDiagram2_IsPercentageStat u8 -> s32
+mnDiagram2_IsIconOnlyStat u8 -> s32
+GetSelectionFrameOffset s32 -> s32
+mn_8022C010 s32 s32 -> s32
+signedCharactersEqual s8 u8 -> s32
+unsignedCharacter s32 -> u8
+mnVibration_GetPreviousCursorRow s32 -> s32
+mnVibration_GetNextCursorRow s32 -> s32
+mnVibration_GetPadIndex s32 -> u8
+_tyDisplay_80318CB4_calc_dist_sq f32 f32 -> f32

@@ -284,6 +284,67 @@ unported callbacks), `GET_ATTRS` users (per-file macros), item-var bitfield writ
 and vi functions (all touch HSD/global state), ~700 empty / `return false;` bodies. Not done: no
 caller uses these yet; no frame-level comparison.
 
+## Round 6 (night 4): 130 generated + 40 hand, `src/itfwd6.rs`, `src/itkinds6.rs`
+
+Chosen by rescanning `src/melee/it` with round 5's ports counted as ported: bodies whose every
+call is to a function in the C oracle. `tests/c_oracle/gen_round6.py` (gen_round5.py extended)
+generates:
+
+- **`itfwd6.rs` (130, generated)**: 5 forwarders (3 `EvtUnk` whose argument carries a
+  `(HSD_GObj*)` cast, round 5 skipped them; 2 second-order: `itMaril_UnkMotion3_Anim` ->
+  `itMaril_UnkMotion2_Anim`, `itZRShell_Logic12_Reflected` -> `itZGShell_Logic11_Reflected`) and
+  125 non-static callbacks whose body is only `return true;` / `return 1;` (99) or `return;`
+  (26), taking `(gobj)` or `(gobj, ref)`. The trivial ones are counted separately in the status
+  table; they exist so the state tables can be typed later.
+- **`itkinds6.rs` (40, by hand)**: `it_8027574C`, `it_802762B0`, the climbers-string and yoyo
+  `EvtUnk`s, the clinkmilk / nessbat removers, likelike `it_802DB358`, fox blaster
+  (`it_802AE608` and three static-inline helpers), PK thunder history shifts, falls (Dr. Mario
+  pill, togepy, tools), hassam gravity, the freezie / barrel / barrel-cannon ground speeds
+  (`it_8028EDBC`, `it_802874F0`, `it_802962E0`), shadow-ball reflect (angle wrap in f64), maril
+  turn-around, scope level, wstar box, five sword blend inlines, zgshell tick and capsule
+  (`it_802DDBE8`, `itZrshell_UnkMotion3_Anim`, `it_802DFF14`), leadead wall test, three
+  ItemLink helpers, `test_comp`, `it_link_attr_math`, `samus_grapple_fighter_compare`,
+  `it_8026F3D4_check_kind`. File-local `static inline` helpers are included: later rounds'
+  callers inline them.
+
+Fused sites (`fma_sites.py` on each source TU): f32 `fmadds` in `it_8028EDBC` 1, `it_802874F0`
+3, `it_802962E0` 4 (compound `+=` contracts too), `test_comp` 3. None elsewhere. `M_PI` / `M_TAU`
+are `double` macros: `it_2725_Logic101_Reflected` and the maril turn compute in f64. The oracle's
+lowering now reports 38 fmuladd.f32 (27 + 11).
+
+**Verification** (`tests/oracle_round6.rs`, 130 + 46 tables x 48 cases, pass): same harness as
+round 5 (round-2 field fill + `r4_pre`; hash of the fields + every item-var word), with extra
+hashes where a function writes outside them (`xB54`, hurtbox 0, the ItemLink vectors, the
+collision box, the first 24 special-attribute words for `it_link_attr_math`). Targeted tables:
+moderate inputs for the three fused physics functions and `test_comp` (2119-2121, 2138), the
+scope-level boundaries (2124), and a zgshell byte with b0/b1 set next to a due timer (2131).
+Mutation checks (each made the test fail): un-fusing each of the 11 sites, f32 instead of f64
+for `M_PI` (both functions), `xE08_b1` test inverted (only after 2131), `<=`/`<` at both scope
+boundaries (only after 2124), the ItemLink copy order, the hookshot `f0` select and product
+order, the shift direction, a wrong motion id, a wrong wall bit, the capsule raise axis.
+
+Traps found:
+- The item-var bitfield bytes must stay in x86 order on the C side: only the Rust side
+  bit-reverses them around the call (`r4_rev`). Reversing in the C too made maril and zgshell
+  fail.
+- A raw pointer left in an item var is hashed as its address, which differs between the C and
+  Rust processes: `it_802DB358` stores `grab_victim`, so both sides turn it into a `PIDX` index
+  before hashing.
+- `itSword_UnkArticle1` starts with three pointers, so its fields are not at their GC word
+  offsets in the native special-attribute block; the cases set them through the struct.
+- `it_2725_Logic101_Reflected` never ends for infinite or huge angles (`x + tau == x`); the cases
+  draw the angle with `RM()` (|x| < 128), and the doc comment states the precondition.
+
+Signatures: as round 5. `it_802DFF14` copies the shell's `itGShell_HurtInit` into a zeroed
+`HurtCapsule` (the C casts the pointer; `it_80271534` reads only the shared offsets and scale).
+No other-group stubs were needed. Left out: item-to-item functions (`it_802E79C8`,
+`it_802AB9C0`, `itFreeze_Logic17_Destroyed`, pikachu joltair/thunder links), functions that store
+unported callbacks (`it_80274F28`, `it_802AE1D0`, the samus grapple / link hookshot setters),
+globals (`gm_80473A18`, `Item_804A0C64`, `it_804D6D0C/08`, `it_804D6D24`, the state tables read
+by `it_8028B08C` / `it_802BDA40`), `CommandInfo` / `SpawnItem` helpers, `StarAttrs` /
+`StarRodAttributes` users (file-local types not in melee_types), Fighter readers, ty and vi.
+Not done: no caller uses these yet; no frame-level comparison.
+
 ## Decisions / traps
 
 - `Cargo.toml` no longer depends on melee_types/runtime/world/fighter: nothing calls them yet,
@@ -299,7 +360,7 @@ caller uses these yet; no frame-level comparison.
 
 ## Not done / blockers
 
-- About 0.2% of the group's functions (9 of ~5,000) are ported. The rest is coupled to HSD_GObj
+- (Superseded count, see the status table: 925 ported after round 6.) About 0.2% of the group's functions (9 of ~5,000) are ported. The rest is coupled to HSD_GObj
   / HSD_JObj (group 1), the ground/collision code (group 2) and Fighter (group 3): 148 ft TUs
   include it and 74 it TUs include ft. Porting item.c's spawn/think/collision needs those
   crates' native APIs first, or a shared `extern "C"`-style call table agreed across groups.

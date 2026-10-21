@@ -15,9 +15,9 @@ Function definitions in the C (counted as a `name(...)` line followed by `{`):
 | src/melee/mp | 226 | 105 (mplib line-graph queries, line geometry, segment checks, joint list, seam stitching + floor bounds; all of mpisland.c) |
 | src/melee/cm | 182 | 66 (night 3 count; see the night-3 section) |
 | src/melee/ef | 67 | 0 |
-| src/melee/gr | 2166 | 0 |
-| src/melee/if | 372 | 0 |
-| total | 3013 | 105 (about 3.5%) |
+| src/melee/gr | 2167 | see the round sections (stage.c, ground.c, grlib.c, night-3 r2 leaves) |
+| src/melee/if | 372 | 8 (night 3 r2) |
+| total | 3014 | 341 after night 3 round 2 (11.3%); 225 verified vs C |
 
 Group 2 has no PowerPC `.s` files (the repo's `.s` files are in libs/dolphin, MetroTRK and
 Runtime). None of the group's structs are in the neutral hash field list
@@ -356,6 +356,43 @@ Counts after this round: 325 of 3013 ported (10.8%); 209 verified against the C;
 (81 ground.c accessors, 23 grlib.c, 10 stage.c hook-driven fns, Stage_80224E64, +1 as above).
 
 Regenerate: `bash rust/melee_world/cref/gen_camera_acc_ref.sh`.
+
+## Night 3, round 2: recount, 16 gr/if leaves vs C, 3 stubs replaced
+
+Recount at the start: the function-definition count (a `name(...)` line followed by `{`) is now
+3014 (gr/ has 2167, one more than night 1's 2166); ported 325, verified against the C 209, as the
+round-1 notes say. 116 ported but not checked against the C (listed in round 1).
+
+New, all verified bit for bit (`tests/leaves_r2_vs_c.rs`, 70269 rows from
+`cref/gen_leaves_r2_ref.sh`: the bodies cut verbatim out of the game C, `static`/`inline`
+dropped, game flags, contraction on + lower.py, stand-in Ground / HSD_GObj with the members the
+bodies touch):
+- `gr::leaves` (8): grGreens_80213AB4, grOldPupupu_8021128C, grStadium_ScaleColor,
+  grMc_DistanceSquared, grZebes_Subtract, grInishie1 fabsf_inline, grKongo_801D8270,
+  grOldKongo_802105AC.
+- `hud::leaves` (8, the first if/ functions; module `hud` because `if` is a keyword):
+  DevText_StrLen, DevText_NumToStr, DevText_Clamp, ifStock_802F89F8_count / _divisor / _digit,
+  ifnametag inlineA1, ifstatus foo (its s8 toggle `ifStatus_804D6D61` is passed in).
+FMA: the IR has 2 fused f32 sites, both in grMc_DistanceSquared; the port uses `fmadds`
+(gwtool's double-rounded lowering). Mutation check: an unfused version fails rows
+(`distance_squared_fusion_is_observable`). Inputs include NaN, +-inf, +-0, denormals, i32::MIN
+(NumToStr's wrapped `-num`), and float->int out of range (inlineA1, saturating as gwtool makes
+it). Not covered: ifStock divisor/digit with position >= 32 (10^32 wraps to 0, a divide by zero
+the oracle cannot run natively; the port uses cabi::sdiv, the C build's x/0 semantics).
+
+Stubs replaced (targets now exist):
+- `GroundHooks::grkongo_801d8270` / `groldkongo_802105ac` default to the ported bodies.
+- `GrLibHooks::jobj_translation_xy` reads `j->translate` through melee_types::inline
+  (HSD_JObjGetTranslationX/Y), with the inlines' null assert.
+Not replaced, and why: splGetSplinePoint exists in melee_runtime::spline, but the hook returns a
+Vec3 while the C leaves `*p` untouched for u outside [0, 1]; changing that needs the hook to take
+the out-param, left for the Ground_801C4B50 caller rework. lbShadow_8000E9F0 is in melee_modes,
+which depends on melee_world (cycle). HSD_Randi / GObj / JObj / particle hooks: melee_runtime's
+versions are arena/id based, the hooks take raw pointers; they wait for one object model.
+
+Counts after this round: 341 of 3014 ported (11.3%); 225 verified against the C; 116 not.
+
+Regenerate: `bash rust/melee_world/cref/gen_leaves_r2_ref.sh`.
 
 ## Build notes
 

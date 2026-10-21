@@ -59,17 +59,19 @@ pub trait GroundHooks {
     fn grzebes_801da3f4(&mut self, arg: *mut core::ffi::c_void) {
         unimplemented!("TODO(group2): grZebes_801DA3F4")
     }
-    /// TODO(group2: gr/grkongo.c)
+    /// grKongo_801D8270 (gr/grkongo.c): ported in `gr::leaves`.
     fn grkongo_801d8270(&mut self, g: *mut HSD_GObj) {
-        unimplemented!("TODO(group2): grKongo_801D8270")
+        // SAFETY: the C dereferences `GET_GROUND(gobj)` unchecked; callers pass a live Ground GObj.
+        unsafe { super::leaves::grkongo_801d8270(g) }
     }
     /// TODO(group2: gr/grkongo.c)
     fn grkongo_801d828c(&mut self, g: *mut HSD_GObj) {
         unimplemented!("TODO(group2): grKongo_801D828C")
     }
-    /// TODO(group2: gr/groldkongo.c)
+    /// grOldKongo_802105AC (gr/groldkongo.c): ported in `gr::leaves`.
     fn groldkongo_802105ac(&mut self, g: *mut HSD_GObj) {
-        unimplemented!("TODO(group2): grOldKongo_802105AC")
+        // SAFETY: the C dereferences `GET_GROUND(gobj)` unchecked; callers pass a live Ground GObj.
+        unsafe { super::leaves::groldkongo_802105ac(g) }
     }
     /// TODO(group2: gr/groldkongo.c)
     fn groldkongo_802105c8(&mut self, g: *mut HSD_GObj) {

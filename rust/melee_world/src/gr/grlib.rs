@@ -76,9 +76,13 @@ pub trait GrLibHooks {
     fn jobj_anim_all(&mut self, j: *mut HSD_JObj) {
         unimplemented!("TODO(group1): HSD_JObjAnimAll")
     }
-    /// TODO(group1: baselib/jobj.h) HSD_JObjGetTranslationX/Y
+    /// HSD_JObjGetTranslationX/Y (baselib/jobj.h inlines, melee_types::inline): `j->translate`.
+    /// The inlines' `HSD_ASSERT(jobj)` is the null check.
     fn jobj_translation_xy(&mut self, j: *mut HSD_JObj) -> (f32, f32) {
-        unimplemented!("TODO(group1): HSD_JObjGetTranslation")
+        assert!(!j.is_null(), "HSD_JObjGetTranslation: jobj");
+        // SAFETY: non-null, and the caller passes a live JObj as the C does.
+        let j = unsafe { &*j };
+        (melee_types::inline::HSD_JObjGetTranslationX(j), melee_types::inline::HSD_JObjGetTranslationY(j))
     }
     /// Camera_SetQuakeOffset: `CameraWorld` implements it (cm::camera).
     fn camera_set_quake_offset(&mut self, x: f32, y: f32) {

@@ -82,3 +82,16 @@ Group crates are empty stubs. Not built yet: the ppc32 record-layout dump -> `gc
   before the next PADRead); use frames=2. `pc/tests/gdlp_whole/pad.lua` has the same bug (its
   fighters stand still). (3) A fresh lane's Aurora dep copy can fail on read-only `.git` packs
   (`dawn-src.pending`): `attrib -R /S`, delete, robocopy the dep in by hand.
+
+## Float contraction (group 1, 2026-10-21; corrects inventory.md section 3)
+- The C build compiles with clang's default `-ffp-contract=on`: each `a*b+c` / `a*b-c` / `c-a*b`
+  inside one expression is `llvm.fmuladd`, which gwtool lowers to `fmadds` (f32: f64 multiply,
+  f64 add, then f32) or a true `fma` (f64). A port must fuse exactly those sites: LHS multiply
+  first, compound `+=` included (`docs/rust-port/group-1 runtime, math, HSD (core + render).md`).
+  c2rust ran with `-ffp-contract=off`, so raw output has lost every fusion; check the C IR.
+- gwtool also defines float->int casts (saturate to i32, then truncate for narrow types), div/rem
+  by zero and oversize shifts; uninitialised locals are 0. Helpers: `melee_runtime::cabi`.
+- C oracle: `rust/melee_runtime/oracle/build.sh` (native IR + gwtool's float rewrites redone in
+  `lower.py`) -> `tests/data/oracle_vectors.txt`, checked bit for bit by `tests/oracle.rs`.
+- Ported and oracle-equal: gekko_fp.c, math_ppc.h sqrtf, mtx_pc.c, mtx44.c, baselib/random.c,
+  lb/lbtrigf.c, lb/lbvector.c (not WorldToScreen). The rest of group 1 (HSD objects) is not ported.

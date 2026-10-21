@@ -41,4 +41,5 @@ pub mod quatlib;
 pub mod random;
 pub mod robj;
 pub mod spline;
+pub mod tobj;
 pub mod wobj;

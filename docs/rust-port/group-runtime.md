@@ -419,3 +419,54 @@ nobody has ported. wobj.rs's RObj methods are as described in round 9.
 ### Count after this round
 Ported **439 of 2,297** (19.1%): **388** checked against the C, **51** not (the 49 before + the
 two Alloc functions).
+
+## Night 3, port round 4 (round 12): tobj.c logic
+
+### Recount (start of round)
+Since round 11 (8cc2cf4d8) the sim agent's efa84f09f committed the particle work into this crate
+(`generator.rs`, `particle.rs`, `psappsrt.rs`, `oracle_generator`). Counted now:
+- **checked vs C (23)**, through `oracle_generator` (32.4k rows; direct op or reached from one):
+  generator.c HSD_StageSlotParticlesClear, hsd_8039D1E4, D1EC, D214, D354, D3AC, D4DC, D580,
+  D5DC, D688, D71C, D9C8, DAD4, EE24, EFAC, F05C, F6CC (17); psappsrt.c psInitAppSRT,
+  psAddParticleAppSRT_begin, psAttachGeneratorAppSRT, psAttachParticleAppSRT,
+  psRemoveGeneratorSRT, psRemoveParticleAppSRT (6).
+- **not checked vs a C oracle (18)**: psAddGeneratorAppSRT, psAddGeneratorAppSRT_begin (only
+  behind F05C's kind 0x20000, not shown to be hit); particle.c HSD_StageSlotParticleLinkClear,
+  hsd_803983A4, 80398A08, 80398F0C, 80398F8C, 803991D8, 8039930C, 8039CEAC, 8039CF4C, 8039D048,
+  8039D0A0, psEnableTexture, psGenerateParticle0, psInitDataBankLoad, psInitDataBankLocate,
+  psReadFloat/psSpawnChild (16; evidence is only the synthetic `particle/tests.rs` and the
+  pad_falcon_fox_fd golden seed matching frames 0-63, which is end-to-end, not per function).
+Recount: **480 of 2,297** (411 checked, 69 not).
+
+### Stubs whose target now exists
+None found: the TODO(group1 ...) stubs (class, jobj load, jobj spline, dobj, robj) still point at
+unported code.
+
+### Ported this round
+`tobj.rs`, from `tobj.c` (needs only round 1's mtx/HSD_MkRotationMtx):
+
+| function | checked against C |
+|---|---|
+| HSD_TexMapID2PTTexMtx, HSD_TGTex2Index, HSD_TexCoordID2TexGenSrc, HSD_TexCoord2Index, HSD_Index2TexCoord, HSD_TexMtx2Index, HSD_Index2TexMtx, HSD_Index2TexMap, HSD_TexMap2Index | yes, every valid input (out-of-range inputs panic in both; not compared) |
+| DifferentTluts (non-MUST_MATCH: entry counts only) | yes |
+| MakeTextureMtx (epsilon 1e-10 per tobj.c, GX_MIRROR offset) | yes |
+| TObjUpdateFunc (all 24 track types + unknown 0/25/26; PC `s32` tlut_no) | yes |
+
+- Native shape: `HsdTObj<I>` (I = image-desc handle), owned `lod` / `tev`, `has_tluttbl` flag.
+  GcLayout delegated to `melee_types::HSD_TObj`, `_HSD_TObjTev`, `_HSD_Tlut`, `_HSD_TexLODDesc`.
+- `HSD_TexCoordID2TexGenSrc(GX_TEXCOORD7)` asserts in the C (case falls into default); kept.
+- Conversions: TEV/konst bytes are `fptoui` saturated to 32 bits then truncated (not
+  `cabi::f2u8`); TIMG index and tlut_no are `cabi::f2i32`.
+- FMA: 0 fmuladd in MakeTextureMtx / TObjUpdateFunc (callees' sites are the ported mtx code's).
+- Oracle: `oracle/build_tobj.sh` (helper_tobj.c includes tobj.c; real mtx.c, mtx_pc.c,
+  gekko_fp.c, lbtrigf.c; shipping flags + lower.py; links with lld `/FORCE:UNRESOLVED` since the
+  GX/TEV half is never called). `tests/data/oracle_tobj.txt`: 20,000 rows, ~5000 per op;
+  update rows hash the whole TObj state after each op on a persistent TObj. 0 failed, debug and
+  release.
+- Mutations caught: signed `f2u8` (2548 rows), mirror term rewritten as `scale/repeat` (49),
+  `(u8)` tlut_no (668), `repeat * (1/scale)` (1009), rot.z not negated (3899).
+- Not ported: TObj anim entry points (need AObj per TObj), load/alloc/class, GX setup / TExp.
+
+### Count after this round
+Ported **492 of 2,297** (21.4%): **423** checked against the C, **69** not (the 51 before + the 18
+particle/psappsrt functions above).

@@ -46,7 +46,7 @@ pub unsafe extern "C" fn ftcrazyhandpoke__fn_80158534(g: *mut HSD_GObj) {
 
 /// `fn_801577B4` (defined in src/melee/ft/kinds/ftCrazyHand/ftcrazyhandsweepwait.c).
 pub unsafe extern "C" fn ftcrazyhandsweepwait__fn_801577B4(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_801577B4 (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandsweepwait.c) is not ported");
+    crate::tu::ftcrazyhandsweepwait::fn_801577B4(g)
 }
 
 /// `ftDk_Init_8010D774` (defined in src/melee/ft/kinds/ftDonkey/ftdonkey.c).

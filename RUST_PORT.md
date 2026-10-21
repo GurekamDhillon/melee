@@ -65,3 +65,20 @@ order: `melee_core` (fp: `fmadds`/`fmsubs` as f64-then-f32; gc: `GcField`, `GcLa
 `melee_runtime` (g1), `melee_world` (g2), `melee_fighter` (g3, incl. ftCommon + pl), `melee_chara`
 (g4), `melee_items` (g5), `melee_modes` (g6), and the `melee` bin that links all (prints a self-test).
 Group crates are empty stubs. Not built yet: the ppc32 record-layout dump -> `gc_layout!` generator.
+
+## Golden corpus (phase 1)
+- `MELEE_NEUTRAL_HASHLOG=<csv>`: byte-order-neutral gameplay hash (`RB_NeutralHash`, fighter.c),
+  RB_GameHash's field set by logical value, minus PC-only add-ons. Spec + GC offsets:
+  `docs/rust-port/neutral-hash.md`. The Rust port must reproduce this exactly.
+- Native code must not pass a pointer into game code to receive results (game stores are
+  big-endian); results come back one u32 at a time (`RB_NeutralHashWord`).
+- Record: `tools/rust-port/golden/record.sh` (runs each scenario twice, requires identical CSVs);
+  goldens in `docs/rust-port/golden/*.csv`; compare with `tools/rust-port/compare_golden.py`.
+- Build root: `_build/agents/rustgold` (agent_new.sh's root half, run against this worktree).
+- Traps found recording it (2026-10-21): (1) MSVC `std::chrono::current_zone()` throws for the
+  Windows zone "British Columbia Standard Time" (ICU lacks it) and every exe died at boot frame 2,
+  the shared baseline too; `extern/aurora/lib/dolphin/os/OSTime.cpp` now falls back to the CRT.
+  (2) `gd.input(port, spec, 1)` from `on_frame_pre` is never read in turbo (the hold is consumed
+  before the next PADRead); use frames=2. `pc/tests/gdlp_whole/pad.lua` has the same bug (its
+  fighters stand still). (3) A fresh lane's Aurora dep copy can fail on read-only `.git` packs
+  (`dawn-src.pending`): `attrib -R /S`, delete, robocopy the dep in by hand.

@@ -4421,6 +4421,155 @@ u32 RB_GameHashForFrame(int frame)
 }
 #undef ftRb_Mix
 
+/* BYTE-ORDER-NEUTRAL GAMEPLAY HASH (MELEE_NEUTRAL_HASHLOG, docs/rust-port/neutral-hash.md).
+ * The curated gameplay fields of RB_GameHash, every one read as a LOGICAL value through its C
+ * field (never raw bytes, never a pointer, never a struct offset), so a native little-endian
+ * Rust port computes the identical words from its own structs. Bitfields are packed by this
+ * function's own rule (first declared field in the most significant bits). PC-only add-ons
+ * (Turbo window word, Geno define digest, Envoy build word, Geno article stable kinds) are left
+ * out: a vanilla port has none of them. RB_NeutralHashWord(i): [0] hash, [1] seed, [2] item count, [3] item sum,
+ * [4..15] per-slot fighter words (slot = player*2 + follower, 0 when absent). Keep in sync with
+ * the doc and tools/rust-port; the field order is part of the format. */
+static u32 nh_Mix(u32 h, u32 v)
+{
+    h ^= v;
+    h *= 0x01000193u;
+    h ^= h >> 15;
+    return h;
+}
+
+static u32 nh_CpuFlags(const struct CpuFighter* c)
+{
+    u32 w = 0;
+#define NH_BITS(field, width) w = (w << (width)) | ((u32) (c->field) & ((1u << (width)) - 1u))
+    NH_BITS(xF8_b0, 1); NH_BITS(xF8_b12, 2); NH_BITS(xF8_b34, 2); NH_BITS(xF8_b5, 1); NH_BITS(xF8_b6, 1); NH_BITS(xF8_b7, 1);
+    NH_BITS(xF9_b0, 1); NH_BITS(xF9_b1, 1); NH_BITS(xF9_b2, 1); NH_BITS(xF9_b3, 1);
+    NH_BITS(xF9_b4, 1); NH_BITS(xF9_b5, 1); NH_BITS(xF9_b6, 1); NH_BITS(xF9_b7, 1);
+    NH_BITS(xFA_b0, 1); NH_BITS(xFA_b1, 1); NH_BITS(xFA_b2, 1); NH_BITS(xFA_b34, 2); NH_BITS(xFA_b5, 1); NH_BITS(xFA_b6, 1); NH_BITS(xFA_b7, 1);
+    NH_BITS(xFB_b0, 1); NH_BITS(xFB_b1, 1); NH_BITS(xFB_b2, 1); NH_BITS(xFB_b3, 1);
+    NH_BITS(xFB_b4, 1); NH_BITS(xFB_b5, 1); NH_BITS(xFB_b6, 1); NH_BITS(xFB_b7, 1);
+#undef NH_BITS
+    return w;
+}
+
+static u32 nh_Fighter(Fighter* fp, int slot)
+{
+    u32 h = 0x811C9DC5u;
+    h = nh_Mix(h, (u32) slot + 0x100u);
+    h = nh_Mix(h, (u32) fp->motion_id);
+    h = nh_Mix(h, ftRb_Bits(fp->cur_pos.x));
+    h = nh_Mix(h, ftRb_Bits(fp->cur_pos.y));
+    h = nh_Mix(h, ftRb_Bits(fp->cur_pos.z));
+    h = nh_Mix(h, ftRb_Bits(fp->self_vel.x));
+    h = nh_Mix(h, ftRb_Bits(fp->self_vel.y));
+    h = nh_Mix(h, ftRb_Bits(fp->dmg.x1830_percent));
+    h = nh_Mix(h, ftRb_Bits(fp->facing_dir));
+    h = nh_Mix(h, (u32) fp->ground_or_air);
+    h = nh_Mix(h, ftRb_Bits(fp->x8c_kb_vel.x));
+    h = nh_Mix(h, ftRb_Bits(fp->x8c_kb_vel.y));
+    h = nh_Mix(h, ftRb_Bits(fp->gr_vel));
+    h = nh_Mix(h, ftRb_Bits(fp->dmg.x195c_hitlag_frames));
+    h = nh_Mix(h, (u32) fp->x2219_b5);
+    h = nh_Mix(h, ftRb_Bits(fp->shield_health));
+    h = nh_Mix(h, ftRb_Bits(fp->x3E4_fighterCmdScript.frame_count));
+    h = nh_Mix(h, (u32) fp->x1968_jumpsUsed);
+    h = nh_Mix(h, (u32) fp->x67F);
+    h = nh_Mix(h, (u32) fp->x680);
+    h = nh_Mix(h, (u32) Player_GetStocks(fp->player_id));
+    if (ftCo_IsCpuControlled(fp)) {
+        struct CpuFighter* c = &fp->cpu;
+        u32 off = 0;
+        if ((u8*) c->csP >= (u8*) c->buffer && (u8*) c->csP <= (u8*) c->buffer + sizeof c->buffer) {
+            off = (u32) ((u8*) c->csP - (u8*) c->buffer);
+        }
+        h = nh_Mix(h, 0x43505541u);
+        h = nh_Mix(h, (u32) c->buttons);
+        h = nh_Mix(h, ((u32) (u8) c->lstick.x << 24) | ((u32) (u8) c->lstick.y << 16) | ((u32) (u8) c->cstick.x << 8) | (u32) (u8) c->cstick.y);
+        h = nh_Mix(h, ((u32) c->ltrigger << 8) | (u32) c->rtrigger);
+        h = nh_Mix(h, (u32) c->kind);
+        h = nh_Mix(h, (u32) c->level);
+        h = nh_Mix(h, (u32) c->x14);
+        h = nh_Mix(h, (u32) c->x18);
+        h = nh_Mix(h, (u32) c->x1C);
+        h = nh_Mix(h, (u32) c->x20);
+        h = nh_Mix(h, (u32) c->x24);
+        h = nh_Mix(h, (u32) c->x28);
+        h = nh_Mix(h, (u32) c->x2C);
+        h = nh_Mix(h, (u32) c->x30);
+        h = nh_Mix(h, (u32) c->x34);
+        h = nh_Mix(h, ftRb_Bits(c->x38));
+        h = nh_Mix(h, ftRb_Bits(c->x3C));
+        h = nh_Mix(h, ftRb_Bits(c->x40));
+        h = nh_Mix(h, (u32) c->x7C);
+        h = nh_Mix(h, (u32) c->x80);
+        h = nh_Mix(h, (u32) c->x84);
+        h = nh_Mix(h, (u32) c->xC8);
+        h = nh_Mix(h, (u32) c->xEC);
+        h = nh_Mix(h, (u32) c->command_duration);
+        h = nh_Mix(h, off);
+        h = nh_Mix(h, nh_CpuFlags(c));
+    }
+    return h;
+}
+
+/* Kept in game memory and read back one word at a time through RB_NeutralHashWord, so the
+ * platform side gets register return values (logical) and never reads guest-byte-order memory. */
+static u32 nh_out[16];
+
+u32 RB_NeutralHashWord(int i)
+{
+    return i >= 0 && i < 16 ? nh_out[i] : 0;
+}
+
+u32 RB_NeutralHash(void)
+{
+    extern u32* HSD_RandSeedPtr;
+    u32* out = nh_out;
+    HSD_GObj* g;
+    u32 h = 0x811C9DC5u, sum = 0, n = 0;
+    int i, j;
+    for (i = 0; i < 16; i++) {
+        out[i] = 0;
+    }
+    out[1] = *HSD_RandSeedPtr;
+    h = nh_Mix(h, 0x4E485631u); /* "NHV1": format version */
+    h = nh_Mix(h, out[1]);
+    for (i = 0; i < 6; i++) {
+        for (j = 0; j < 2; j++) {
+            HSD_GObj* fg = Player_GetEntityAtIndex(i, j);
+            if (fg == NULL || fg->user_data == NULL) {
+                continue;
+            }
+            out[4 + i * 2 + j] = nh_Fighter(fg->user_data, i * 2 + j);
+            h = nh_Mix(h, out[4 + i * 2 + j]);
+        }
+    }
+    for (g = HSD_GObjPLinkHead != NULL ? HSD_GObjPLinkHead[HSD_GOBJ_PLINK_ITEM] : NULL; g != NULL; g = g->next) {
+        Item* ip = g->user_data;
+        u32 ih;
+        if (ip == NULL) {
+            continue;
+        }
+        ih = nh_Mix(0x4954454Du, (u32) ip->kind);
+        ih = nh_Mix(ih, (u32) ip->msid);
+        ih = nh_Mix(ih, ftRb_Bits(ip->pos.x));
+        ih = nh_Mix(ih, ftRb_Bits(ip->pos.y));
+        ih = nh_Mix(ih, ftRb_Bits(ip->pos.z));
+        ih = nh_Mix(ih, ftRb_Bits(ip->x40_vel.x));
+        ih = nh_Mix(ih, ftRb_Bits(ip->x40_vel.y));
+        ih = nh_Mix(ih, ftRb_Bits(ip->x40_vel.z));
+        sum += ih;
+        n++;
+    }
+    out[2] = n;
+    out[3] = sum;
+    h = nh_Mix(h, 0x4954434Eu);
+    h = nh_Mix(h, n);
+    h = nh_Mix(h, sum);
+    out[0] = h;
+    return h;
+}
+
 /* NEGATIVE CONTROL (gw_rollback.c rb_perturb, MELEE_RB_PERTURB=<field>, code = the field's number there): perturb ONE hashed value of the first fighter found
  * (port order), or the first item. Test only; never reached without the env switch. */
 void RB_Perturb(int code)

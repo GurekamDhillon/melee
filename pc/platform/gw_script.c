@@ -10118,6 +10118,36 @@ void gw_Script_FramePost(void) {
                     (unsigned long long) gw_snap_hash());
             fflush(hashlog);
         }
+        {   /* MELEE_NEUTRAL_HASHLOG: the byte-order-neutral gameplay hash (fighter.c RB_NeutralHash,
+             * docs/rust-port/neutral-hash.md), the golden oracle for the native Rust port */
+            static FILE *nhlog;
+            static int nh_tried;
+            extern uint32_t gw_RB_NeutralHash(void);
+            extern uint32_t gw_RB_NeutralHashWord(int i);
+            if (!nh_tried) {
+                const char *path = getenv("MELEE_NEUTRAL_HASHLOG");
+                nh_tried = 1;
+                if (path != NULL && path[0] != 0) {
+                    nhlog = fopen(path, "w");
+                    if (nhlog != NULL) {
+                        int k;
+                        fprintf(nhlog, "frame,hash,seed,items,itemsum");
+                        for (k = 0; k < 12; k++) fprintf(nhlog, ",s%d", k);
+                        fprintf(nhlog, "\n");
+                        gw_log("gw: neutral hash trace: %s", path);
+                    } else gw_log("gw: neutral hash trace: cannot open %s", path);
+                }
+            }
+            if (nhlog != NULL) {
+                int k;
+                uint32_t h = gw_RB_NeutralHash();
+                fprintf(nhlog, "%d,%08X,%08X,%u,%08X", gs.match_frame, (unsigned) h, (unsigned) gw_RB_NeutralHashWord(1),
+                        (unsigned) gw_RB_NeutralHashWord(2), (unsigned) gw_RB_NeutralHashWord(3));
+                for (k = 0; k < 12; k++) fprintf(nhlog, ",%08X", (unsigned) gw_RB_NeutralHashWord(4 + k));
+                fprintf(nhlog, "\n");
+                fflush(nhlog);
+            }
+        }
         { extern void gw_snap_xlog(int frame); gw_snap_xlog(gs.match_frame); } /* MELEE_XHASH_LOG: the cross-platform digest (gw_snap.c) */
     }
 }

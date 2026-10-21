@@ -1,6 +1,7 @@
 #include <chrono>
 #include <ctime>
 #include <mutex>
+#include <stdexcept>
 
 #include "internal.hpp"
 #include <aurora/time.hpp>
@@ -21,8 +22,15 @@ OSTime s_gameEpochOffset;
 
 LocalTime system_time_to_local_time(SystemTime time) {
 #if defined(__cpp_lib_chrono) && __cpp_lib_chrono >= 201907L
-  return chrono::zoned_time(chrono::current_zone(), time).get_local_time();
-#else
+  // MSVC's current_zone() maps the Windows zone through ICU and throws for a zone ICU does not
+  // know yet (seen 2026-10: "British Columbia Standard Time"), which killed every boot. Fall back to
+  // the C runtime below instead.
+  try {
+    return chrono::zoned_time(chrono::current_zone(), time).get_local_time();
+  } catch (const std::exception&) {
+  }
+#endif
+  {
   // Apple libc++ currently ships <chrono> with the C++20 timezone database API disabled
   // (_LIBCPP_HAS_TIME_ZONE_DATABASE == 0), so zoned_time/current_zone are unavailable there.
   const auto wholeSeconds = chrono::floor<chrono::seconds>(time);
@@ -45,13 +53,20 @@ LocalTime system_time_to_local_time(SystemTime time) {
       chrono::hours{localTm.tm_hour} + chrono::minutes{localTm.tm_min} + chrono::seconds{localTm.tm_sec};
   return LocalTime{chrono::duration_cast<SystemDuration>(localDate.time_since_epoch()) +
                    chrono::duration_cast<SystemDuration>(localTimeOfDay) + fractionalSeconds};
-#endif
+  }
 }
 
 SystemTime local_time_to_system_time(LocalTime time) {
 #if defined(__cpp_lib_chrono) && __cpp_lib_chrono >= 201907L
-  return chrono::zoned_time(chrono::current_zone(), time).get_sys_time();
-#else
+  // MSVC's current_zone() maps the Windows zone through ICU and throws for a zone ICU does not
+  // know yet (seen 2026-10: "British Columbia Standard Time"), which killed every boot. Fall back to
+  // the C runtime below instead.
+  try {
+    return chrono::zoned_time(chrono::current_zone(), time).get_sys_time();
+  } catch (const std::exception&) {
+  }
+#endif
+  {
   // Apple libc++ currently ships <chrono> with the C++20 timezone database API disabled
   // (_LIBCPP_HAS_TIME_ZONE_DATABASE == 0), so zoned_time/current_zone are unavailable there.
   const auto& localDays = chrono::floor<chrono::days>(time);
@@ -74,7 +89,7 @@ SystemTime local_time_to_system_time(LocalTime time) {
                 "hms precision must be in microseconds");
 
   return chrono::system_clock::from_time_t(utcTime) + hms.subseconds();
-#endif
+  }
 }
 
 template <typename Duration>

@@ -151,6 +151,7 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | `MELEE_NUCLEUS_CACHE_MB=<n>` | size cap of the Nucleus picture cache `thumbs/` in MB (default 200; least recently used files go first) |
 | `MELEE_NUCLEUS_API=<url>` | a loopback API base for `tools/nucleus/fixture_server.py` (`http://127.0.0.1:<port>/api/public/v1`); nothing but loopback is accepted |
 | `MELEE_TURBO_HASHLOG=<path>` | optional per-match-frame full snapshot hash CSV for realtime/turbo parity checks |
+| `MELEE_NEUTRAL_HASHLOG=<path>` | per-match-frame byte-order-neutral gameplay hash CSV (`RB_NeutralHash`, fighter.c): the Rust-port golden oracle; format and field list in `docs/rust-port/neutral-hash.md` |
 | `MELEE_XHASH_LOG=<csv>` | cross-platform state digest, one row per live match frame: `frame,rb,wide,mem,glob` (RB_GameHash; every fighter's and item's struct/GObj/joint tree with heap addresses and sound ids masked; masked MEM1; masked game globals). Words that point into the image are masked so a Windows and a Linux run compare (`tools/xplat/`, `docs/xplat-netplay.md` in the workspace). Needs no write-watch, so it runs on Linux |
 | `MELEE_XHASH_DUMP_FRAMES=a,b` / `_DUMP_DIR` | also write the masked MEM1 / globals / regions of those frames for `tools/xplat/xhash_diff.py` |
 | `MELEE_XHASH_SKIP=lo-hi,...` / `_PTR=lo-hi` / `_MEM_EVERY=N` | MEM1 ranges hashed as zero (audio blocks, thread contexts); the masked pointer range (default 10000000-20000000); compute the expensive `mem`/`glob` columns every Nth frame only |

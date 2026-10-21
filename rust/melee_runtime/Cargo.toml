@@ -7,3 +7,4 @@ publish.workspace = true
 
 [dependencies]
 melee_core.workspace = true
+melee_types.workspace = true

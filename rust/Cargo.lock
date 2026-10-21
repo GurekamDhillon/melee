@@ -84,6 +84,7 @@ name = "melee_runtime"
 version = "0.1.0"
 dependencies = [
  "melee_core",
+ "melee_types",
 ]
 
 [[package]]

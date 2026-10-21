@@ -45,6 +45,10 @@ COMMON = ["-std=c99", "-nostdinc", "-fno-builtin", "-DLINT", "-DTARGET_PC", "-fn
 PPC = ["--target=ppc32-none-eabi"] + COMMON
 NAT = ["--target=x86_64-pc-windows-msvc", "-D_Static_assert(a,b)=", "-Dsize_t=gc_size_t"] + COMMON
 SRC = GEN / "all_types.c"
+# Records whose GcDecode is hand-written in src/decode.rs (a union chosen by a flags field).
+# The generator still emits `gc_decode_fields` for them (fields at GC offsets, union = first
+# member); the hand impl calls it and then fixes the union.
+HAND_DECODE = {"HSD_Joint", "HSD_RObjDesc"}
 
 
 def write_probe():
@@ -293,6 +297,7 @@ class Gen:
         e("#![allow(non_camel_case_types, non_snake_case, non_upper_case_globals, dead_code, clippy::all)]")
         e("use core::ffi::c_void;")
         e("use melee_core::gc::{GcField, GcLayout};")
+        e("use melee_core::gcdecode::{GcDecode, GcDecoder, GcPointee};")
         e()
         e("/// GameCube C typedef names that are not Rust primitives.")
         e("pub type s8 = i8;\npub type s16 = i16;\npub type s32 = i32;\npub type s64 = i64;")
@@ -328,6 +333,8 @@ class Gen:
         for n in self.opaque:
             if n not in defined:
                 e(f"#[repr(C)] pub struct {n} {{ _opaque: [u8; 0] }}")
+                e(f"impl GcPointee for {n} {{ fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self "
+                  f"{{ d.issue(format!(\"pointer to incomplete {n} at {{t:#x}}: read as null\")); core::ptr::null_mut() }} }}")
         e()
         self.out.extend(body)
         e("/// Every generated GameCube record layout, for the DAT loader, serialisers and the m-ex map.")
@@ -485,6 +492,7 @@ class Gen:
             and (f.get_field_offsetof() // 8) % f.type.get_align() != 0 for f in c.get_children())
         src = rel(loc(c)[0])
         rust_fields, gc_fields, accessors = [], [], []
+        dec = []  # (rust field, GC byte offset, rust type) for the GcDecode impl
         used = set()
 
         def fname(n, off):
@@ -505,6 +513,7 @@ class Gen:
                 nm2 = self.rec_name[loc(f)]
                 fn_ = fname(None, off)
                 rust_fields.append(f"    /// anonymous C member\n    pub {fn_}: {nm2},")
+                dec.append((fn_, off, nm2))
                 gc_fields.append(f'        GcField::new("(anon)", 0x{off:X}, {f.type.get_size()}, "{nm2}"),')
                 for lf, lo_ in self.leaves(f, off * 8):
                     if lf.is_bitfield():
@@ -530,6 +539,7 @@ class Gen:
                 hi = max((r.get_field_offsetof() + r.get_bitfield_width() + 7) // 8 for r in run)
                 store = fname(f"bf_{lo:x}", lo)
                 rust_fields.append(f"    /// bitfield bytes GC +0x{lo:X}..+0x{hi:X}, GameCube byte order\n    pub {store}: [u8; {hi - lo}],")
+                dec.append((store, lo, f"[u8; {hi - lo}]"))
                 for r in run:
                     bo, w = r.get_field_offsetof(), r.get_bitfield_width()
                     us = r.type.get_size()
@@ -560,6 +570,7 @@ class Gen:
             ty = self.rty(f.type)
             fn_ = fname(f.spelling, off)
             rust_fields.append(f"    pub {ident(fn_)}: {ty},")
+            dec.append((ident(fn_), off, ty))
             cn = f.spelling or "(anon)"
             gc_fields.append(f'        GcField::new("{cn}", 0x{off:X}, {f.type.get_size() if f.type.get_size() > 0 else 0}, "{f.type.spelling}"),')
             i += 1
@@ -583,6 +594,44 @@ class Gen:
             e("}")
         e(f"impl {nm} {{ /// All-zero value (every generated record is plain data: null pointers, None fns). ")
         e("    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }")
+        # GcDecode: each field from its GC offset (fn pointers stay None; a union takes its
+        # first member, see melee_core::gcdecode).
+        live = [x for x in dec if "fn(" not in x[2]]
+        uni = None
+        if union:
+            # Which member is live is not in the bytes; the relocation table says whether the
+            # first word is a pointer. Pointer member if it is, else a pointer-free scalar one.
+            scal = re.compile(r"^(\[)*(u8|i8|u16|i16|u32|i32|u64|i64|f32|f64|usize|isize|bool)(; \d+\])*$")
+            ptr_m = next((x for x in live if x[2].startswith("*")), None)
+            sc_m = next((x for x in live if scal.match(x[2]) or self.is_int_alias(x[2])), None)
+            if ptr_m and sc_m:
+                uni = (ptr_m, sc_m)
+                live = []
+            else:
+                live = live[:1]
+        hand = nm in HAND_DECODE
+        if hand:  # tag-selected unions: impl in src/decode.rs; this one is unused
+            e(f"/// GcDecode for `{nm}` is hand-written (src/decode.rs): its union is selected by a tag field.")
+            e(f"impl {nm} {{ #[allow(unused_variables, unused_mut, unused_unsafe, dead_code)]")
+            e("    pub(crate) fn gc_decode_fields(d: &mut GcDecoder<'_>, at: u32) -> Self {")
+        else:
+            e(f"impl GcDecode for {nm} {{")
+            e(f"    const GC_BYTES: u32 = 0x{size:X};")
+        if not hand:
+            e("    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }")
+            e("    #[allow(unused_variables, unused_mut, unused_unsafe)]")
+            e("    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {")
+        e("        let mut v = Self::zeroed();")
+        for fn_, off, ty in live:
+            e(f"        v.{fn_} = <{ty} as GcDecode>::gc_decode(d, at + 0x{off:X});")
+        if uni:
+            (pf, po, pt), (sf, so, st) = uni
+            e(f"        if d.is_reloc(at) {{ v.{pf} = <{pt} as GcDecode>::gc_decode(d, at + 0x{po:X}); }}")
+            e(f"        else {{ v.{sf} = <{st} as GcDecode>::gc_decode(d, at + 0x{so:X}); }}")
+        e("        v")
+        e("    }")
+        e("}")
+        e(f"impl GcPointee for {nm} {{ fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self {{ d.object::<{nm}>(t) }} }}")
         e(f"impl GcLayout for {nm} {{")
         e(f'    const GC_NAME: &\'static str = "{c.spelling or nm}";')
         e(f"    const GC_SIZE: u32 = 0x{size:X};")
@@ -595,6 +644,14 @@ class Gen:
         if nat and not has_bf and not packed and fields and not self.has_bf_deep(c):
             e(f"const _: () = assert!(core::mem::size_of::<{nm}>() == {nat[0]});")
         e()
+
+    def is_int_alias(self, ty):
+        """A typedef/enum name that maps to a scalar (enums are int aliases here)."""
+        td = self.typedefs.get(ty)
+        if td is None:
+            return False
+        c = td.underlying_typedef_type.get_canonical()
+        return c.kind in PRIM and c.kind != T.VOID or c.kind == T.ENUM
 
     def leaves(self, rec, base_bits):
         """Named fields reachable through anonymous members (C lets the parent name them)."""

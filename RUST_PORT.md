@@ -134,8 +134,8 @@ against a running Rust game: no Rust simulation exists yet, so no golden has bee
 
 | group | crate | C functions | hand-ported | verified vs C | types + GC offsets | stubbed / missing |
 |---|---|---|---|---|---|---|
-| 0 types | melee_types | 110 header inlines | 82 | NHV1 words (8 oracle cases) + frame combine on all 10804 golden rows | 1618 records, the ONE generator (libclang ppc32), covers groups 0/3/4/5 headers | 28 inlines need other groups; no BE file loader |
-| 1 runtime/HSD | melee_runtime | ~2000 | ~80 (gekko_fp, sqrtf, mtx, mtx44, random, lbtrigf, lbvector) | all, 11400 rows; oracle redoes gwtool fusion | Vec3/Quaternion only | all HSD objects (~1200), lb/db/sfx/THP |
+| 0 types | melee_types | 110 header inlines | 82 | NHV1 words (8 oracle cases) + frame combine on all 10804 golden rows | 1618 records, the ONE generator (libclang ppc32), covers groups 0/3/4/5 headers | 28 inlines need other groups |
+| 1 runtime/HSD | melee_runtime | ~2000 | ~80 (gekko_fp, sqrtf, mtx, mtx44, random, lbtrigf, lbvector) | all, 11400 rows; oracle redoes gwtool fusion | Vec3/Quaternion only; DAT reader `dat.rs` (night 2) | all HSD objects (~1200), lb/db/sfx/THP |
 | 2 world | melee_world | 3013 | 36 (mplib line queries) | all, 27231 rows (oracle now contraction on + gwtool lowering, night 2) | mp types, hand-written from header comments | cm, ef, gr, if; rest of mplib |
 | 3 fighter engine | melee_fighter | ~2820 | 57 (nh_Fighter, ftcommon movement, staling) | all (6600 + 12000 + 64 cases) | melee_types (re-exported as `crate::types`) | everything else; c2r layer (feature `c2r`) compiles, never linked |
 | 4 characters | melee_chara | ~4340 | 13 (pure helpers) | frsqrte / my_sqrtf / sumOfSquares (oracle contraction on, night 2; my_sqrtf now fused) | melee_types (re-exported as `types_gen`) | all Fighter-touching code (~99.7%) |
@@ -233,3 +233,31 @@ against a running Rust game: no Rust simulation exists yet, so no golden has bee
 - Still uncontracted: group 3's `gen/cref/run.py` and group 0's `gen/nh_oracle.py` (-ffp-contract=off).
   NHV1 has no float arithmetic; group 3's ftcommon has 12 fused sites in ftcommon.c functions
   (`fma_sites.py src/melee/ft/ftcommon.c`), only CalcHitlag among the ported ones.
+
+### Step 3: DAT/HSD archive reader (done, synthetic-tested)
+- `melee_runtime::dat`: `DatArchive::parse` (port of `HSD_ArchiveParse`: header, data block,
+  relocation table, public roots, externs, symbol strings; the C's file_size "byte-order
+  mismatch" check; bad relocations rejected), `public_offset` / `extern_name`
+  (`HSD_ArchiveGetPublicAddress` / `HSD_ArchiveGetExtern`), `load::<T>(root)` -> `Loaded<T>`
+  (native root + `GcArena` owning every reached object + issue list). `DatBuilder` writes
+  synthetic archives. The file is never patched in place (the C's `Locate`).
+- `melee_core::gcdecode`: `GcDecode` / `GcPointee` + `GcDecoder`. Generated for all 1618 records
+  by gen_types.py: each field decoded at its GC offset (scalars byte-swapped, bitfield bytes
+  copied as-is, nested records recursive, pointers followed only through the relocation set,
+  each (offset, type) decoded once, so cycles share objects; a work queue, not recursion).
+- Unions: `HSD_Joint.u` (JOBJ_SPLINE / JOBJ_PTCL / dobj) and `HSD_RObjDesc.u` (ROBJ_TYPE_MASK) are
+  hand-written in `melee_types/src/decode.rs` (gen `HAND_DECODE`). Other unions: pointer member
+  if the first word is relocated, else first scalar member (heuristic).
+- Limits (left zero + reported in `issues`): `void*` targets (e.g. HSD_ImageDesc pixel data,
+  display lists: need a typed hand decoder), function pointers, and "pointer to first element"
+  arrays (only element 0 decodes; `GcDecoder::array(target, n)` when the count is known, e.g.
+  `MtxPtr` = `f32 (*)[4]` decodes one row).
+- Tests: `cargo test -p melee_runtime --test dat` (5 synthetic: header/tables, HSD_Joint graph
+  with cycle/strings/dobj/matrix, shared decoder, malformed files, unrelocated word).
+  Opt-in disc check, run locally on the user's vanilla ISO (nothing written or committed):
+  `GW_ISO_VANILLA=... cargo test -p melee_runtime --test dat -- --ignored --nocapture`:
+  PlFxNr.dat/PlCaNr.dat parse, joint trees decode (Fox 73 joints / 1300 objects, Falcon 63 /
+  1290), no out-of-bounds; ~350 issues each, mostly void* image data and words that some
+  pointer-to-array or mis-typed pointer reaches as the wrong type (e.g. an HSD_ExpDesc reached
+  as an HSD_Joint). Values were not compared against the C loader's output: no C-vs-Rust oracle
+  for loaded data yet. GrNBa/GrNLa parse but have no `*_joint` roots (stage roots are map_head etc).

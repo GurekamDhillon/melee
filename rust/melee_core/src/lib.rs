@@ -8,6 +8,7 @@
 
 pub mod fp;
 pub mod gc;
+pub mod gcdecode;
 pub mod hash;
 pub mod vec;
 

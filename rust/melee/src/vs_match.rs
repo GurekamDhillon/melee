@@ -62,6 +62,13 @@ const FTCO_SM_ENTRY_START: u32 = 238;
 /// `ftCo_MS_Fall` (29) and its row `ftCo_SM_Fall` (20).
 const FTCO_MS_FALL: i32 = 29;
 const FTCO_SM_FALL: u32 = 20;
+/// `ftCo_MS_Wait` (14), `WalkSlow`.. `WalkFast` (15..17), their rows (`ftCo_SM_Wait1_0` 2,
+/// `WalkSlow`.. 7..9).
+const FTCO_MS_WAIT: i32 = 14;
+const FTCO_SM_WAIT: u32 = 2;
+const FTCO_MS_WALK_SLOW: i32 = 15;
+const FTCO_MS_WALK_FAST: i32 = 17;
+const FTCO_SM_WALK_SLOW: u32 = 7;
 /// `ftCo_MS_Turn` (18) and its row `ftCo_SM_Turn` (10).
 const FTCO_MS_TURN: i32 = 18;
 const FTCO_SM_TURN: u32 = 10;
@@ -126,6 +133,11 @@ pub struct Player {
     row_fall: Option<(AnimRow, FigaTree)>,
     row_landing: Option<(AnimRow, FigaTree)>,
     row_turn: Option<(AnimRow, FigaTree)>,
+    row_wait: Option<(AnimRow, FigaTree)>,
+    /// WalkSlow, WalkMiddle, WalkFast.
+    row_walk: [Option<(AnimRow, FigaTree)>; 3],
+    /// `fp->mv.co.walk`.
+    walk: WalkVars,
     /// `fp->mv.co.turn` (has_turned, just_turned, facing_after, frames_to_turn, x8, x1C).
     turn: TurnVars,
     /// `fp->mv.co.landing.allow_interrupt`.
@@ -153,6 +165,20 @@ pub struct Player {
     /// `x221D_b3` (input history primed) and `x221D_b4` (input locked until GO).
     x221d_b3: bool,
     input_locked: bool,
+}
+
+/// `ftCo_Walk`'s motion vars (ft/types.h `mv.co.walk`).
+#[derive(Clone, Copy, Debug, Default)]
+pub struct WalkVars {
+    pub x0: f32,
+    pub accel_mul: f32,
+    pub msid: i32,
+    pub slow_anim_frame: f32,
+    pub middle_anim_frame: f32,
+    pub fast_anim_frame: f32,
+    pub slow_anim_rate: f32,
+    pub middle_anim_rate: f32,
+    pub fast_anim_rate: f32,
 }
 
 /// `ftCo_Turn`'s motion vars (ft/types.h `mv.co.turn`).
@@ -464,7 +490,10 @@ impl VsMatch {
                 let at = a.public_offset(sym).ok_or(format!("{nr}: no {sym}"))?;
                 let tables = be(common_root + 0x10);
                 let pt = be(tables + 4 * kind as u32);
-                Skeleton::load(&a.data, at, files.x8_x10(), files.model_scaling(), be(pt + 8))?
+                // ftParts_80074E58's flags_b4 parts: part_to_joint[FtPart_TransN] and [0x35].
+                let p2j = be(pt + 4) as usize;
+                let b4 = [plco.data[p2j + 1] as usize, plco.data[p2j + 0x35] as usize];
+                Skeleton::load(&a.data, at, files.x8_x10(), files.model_scaling(), be(pt + 8), b4)?
             };
             let mut fp: Box<Fighter> = Box::new(Fighter::zeroed());
             fp.kind = kind;
@@ -560,6 +589,13 @@ impl VsMatch {
                 row_fall: files.anim_row(FTCO_SM_FALL)?.zip(files.figatree(FTCO_SM_FALL)?),
                 row_landing: files.anim_row(FTCO_SM_LANDING)?.zip(files.figatree(FTCO_SM_LANDING)?),
                 row_turn: files.anim_row(FTCO_SM_TURN)?.zip(files.figatree(FTCO_SM_TURN)?),
+                row_wait: files.anim_row(FTCO_SM_WAIT)?.zip(files.figatree(FTCO_SM_WAIT)?),
+                row_walk: [
+                    files.anim_row(FTCO_SM_WALK_SLOW)?.zip(files.figatree(FTCO_SM_WALK_SLOW)?),
+                    files.anim_row(FTCO_SM_WALK_SLOW + 1)?.zip(files.figatree(FTCO_SM_WALK_SLOW + 1)?),
+                    files.anim_row(FTCO_SM_WALK_SLOW + 2)?.zip(files.figatree(FTCO_SM_WALK_SLOW + 2)?),
+                ],
+                walk: WalkVars::default(),
                 turn: TurnVars::default(),
                 landing_allow_interrupt: false,
                 ecb_desc,
@@ -578,6 +614,10 @@ impl VsMatch {
             // ftaction.c:1408 frame_count = cur_anim_frame + x898_unk. Then ft_80084CB0: the
             // entry box is the ECB the probe left.
             let p = players.last_mut().unwrap();
+            // Fighter_Create_Inline2: x2DC/x2E0/x2E4 = the Walk rows' lengths (lbAnim_8001E8F8).
+            p.fp.x2DC = p.row_walk[0].as_ref().map_or(0.0, |r| r.0.frames);
+            p.fp.x2E0 = p.row_walk[1].as_ref().map_or(0.0, |r| r.0.frames);
+            p.fp.x2E4 = p.row_walk[2].as_ref().map_or(0.0, |r| r.0.frames);
             // Fighter_Create -> ftLib_800867E8: Fighter_ResetInputData_80068854, x221D_b4 = true.
             input::reset_input(&mut p.fp);
             p.input_locked = true;
@@ -703,14 +743,37 @@ impl VsMatch {
                         p.fp.facing_dir = -p.fp.facing_dir;
                     }
                     if !p.skel.frames_remaining() {
-                        return Err(format!("player {}: Turn over -> ft_8008A2BC (Wait) not ported", p.slot + 1));
+                        ft_8008a2bc(p, &mut self.rand)?;
                     }
                 }
                 FTCO_MS_LANDING => {
                     // ftCo_Landing_Anim: when the animation ends, ft_8008A2BC (Wait).
                     if !p.skel.frames_remaining() {
-                        return Err(format!("player {}: Landing over -> ft_8008A2BC (Wait) not ported", p.slot + 1));
+                        ft_8008a2bc(p, &mut self.rand)?;
                     }
+                }
+                FTCO_MS_WAIT => {
+                    // ftCo_Wait_Anim -> ftCo_8008A7A8(gobj, ft_data->x24): a new random idle
+                    // animation when this one ends.
+                    if !p.skel.frames_remaining() {
+                        return Err(format!("player {}: Wait over -> ftCo_8008A7A8 (random idle) not ported", p.slot + 1));
+                    }
+                }
+                m if (FTCO_MS_WALK_SLOW..=FTCO_MS_WALK_FAST).contains(&m) => {
+                    // ftCo_Walk_Anim -> ftWalkCommon_800DFDDC: the animation rate from the speed.
+                    let fp = &*p.fp;
+                    let mut v = if fd_ground_friction(fp) < 1.0 { p.walk.x0 } else { fp.gr_vel };
+                    let rate = if v * fp.facing_dir <= 0.0 {
+                        0.0
+                    } else {
+                        v = fc::abs_c(v);
+                        match fp.motion_id - p.walk.msid {
+                            0 => v / p.walk.slow_anim_rate,
+                            1 => v / p.walk.middle_anim_rate,
+                            _ => v / p.walk.fast_anim_rate,
+                        }
+                    };
+                    set_anim_rate(p, rate);
                 }
                 m => return Err(format!("player {}: motion {m} not ported", p.slot + 1)),
             }
@@ -777,7 +840,12 @@ impl VsMatch {
                     }
                     fc::calc_self_accel_drift(f);
                 }
-                FTCO_MS_LANDING | FTCO_MS_TURN => {
+                m if (FTCO_MS_WALK_SLOW..=FTCO_MS_WALK_FAST).contains(&m) => {
+                    // ftCo_Walk_Phys -> ftWalkCommon_800E0060.
+                    walk_phys(p);
+                }
+                FTCO_MS_LANDING | FTCO_MS_TURN | FTCO_MS_WAIT => {
+                    // (Wait: then ftColl_8007AEE0, a hurtbox reset; not hashed.)
                     // ftCo_Landing_Phys / ftCo_Turn_Phys -> ft_80084F3C: ground friction, then the
                     // self velocity along the floor.
                     let f = &mut *p.fp;
@@ -850,8 +918,8 @@ impl VsMatch {
                         fall_enter(p, &mut self.rand)?;
                     }
                 }
-                FTCO_MS_LANDING => {
-                    // ftCo_Landing_Coll -> ft_80084280.
+                m if m == FTCO_MS_LANDING || m == FTCO_MS_WAIT || (FTCO_MS_WALK_SLOW..=FTCO_MS_WALK_FAST).contains(&m) => {
+                    // ftCo_Landing_Coll / ftCo_Wait_Coll / ftCo_Walk_Coll -> ft_80084280.
                     if p.fp.xF8_playerNudgeVel.x != 0.0 && p.fp.xF8_playerNudgeVel.x * p.fp.facing_dir < 0.0 {
                         return Err("ft_800827A0 (pushed by another fighter) not ported".into());
                     }
@@ -1154,6 +1222,8 @@ fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         }
         FTCO_MS_LANDING => landing_iasa(p, rand),
         FTCO_MS_TURN => turn_iasa(p),
+        FTCO_MS_WAIT => wait_iasa(p, rand),
+        m if (FTCO_MS_WALK_SLOW..=FTCO_MS_WALK_FAST).contains(&m) => walk_iasa(p, rand),
         m => Err(format!("player {}: input_cb of motion {m} not ported", p.slot + 1)),
     }
 }
@@ -1193,6 +1263,192 @@ fn landing_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     if i.lstick[0].x * fp.facing_dir >= cd.walk_stick_threshold {
         return Err(format!("player {}: ftCo_Walk_Enter not ported", p.slot + 1));
     }
+    Ok(())
+}
+
+/// The stick-only grounded checks every grounded IASA ends with, after the press / C-stick /
+/// trigger checks (which stop the run here): jump, dash, squat.
+fn ground_stick_gate(p: &Player, what: &str) -> Result<(), String> {
+    let cd = melee_fighter::hooks::common_data();
+    let fp = &*p.fp;
+    let i = &fp.input;
+    if i.pressed_buttons != 0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 || i.triggers[0] != 0.0 || i.held_buttons[0] & (input::HSD_PAD_A | input::HSD_PAD_B | input::HSD_PAD_Z | input::HSD_PAD_LR) != 0 {
+        return Err(format!("player {}: {what} with a button / C-stick / trigger: not ported", p.slot + 1));
+    }
+    if jump_get_input(fp) {
+        return Err(format!("player {}: ftCo_Jump_CheckInput (KneeBend) not ported", p.slot + 1));
+    }
+    if fc::abs_c(i.lstick[0].x) >= cd.dash_smash_stick_threshold && (fp.active_timer.lstick.x as i32) < cd.dash_smash_window as i32 {
+        return Err(format!("player {}: ftCo_Dash_CheckInput (Dash / smash turn) not ported", p.slot + 1));
+    }
+    if i.lstick[0].y < -cd.x90 {
+        return Err(format!("player {}: ftCo_800D5FB0 (Squat) not ported", p.slot + 1));
+    }
+    Ok(())
+}
+
+/// `ftCo_Wait_IASA`.
+fn wait_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    ground_stick_gate(p, "ftCo_Wait_IASA")?;
+    let cd = melee_fighter::hooks::common_data();
+    let fp = &*p.fp;
+    if fp.input.lstick[0].x * fp.facing_dir <= cd.x34 {
+        return turn_enter_basic(p, rand);
+    }
+    if fp.input.lstick[0].x * fp.facing_dir >= cd.walk_stick_threshold {
+        return walk_enter(p, 0.0, rand);
+    }
+    Ok(())
+}
+
+/// `ftCo_Walk_IASA`.
+fn walk_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    ground_stick_gate(p, "ftCo_Walk_IASA")?;
+    let cd = melee_fighter::hooks::common_data();
+    let fp = &*p.fp;
+    // ft_8008A244: stick back or under the walk threshold -> Wait.
+    let x = fp.input.lstick[0].x;
+    if x * fp.facing_dir < 0.0 || fc::abs_c(x) < cd.walk_stick_threshold {
+        return ft_8008a2bc(p, rand);
+    }
+    // ftWalkCommon_800DFEC8(gobj, ftCo_Walk_Enter): a walk-speed band change restarts the walk
+    // row at the matching phase.
+    let ty = walk_type(p);
+    if p.walk.msid + ty != p.fp.motion_id {
+        let frame = match ty {
+            0 => p.walk.slow_anim_frame,
+            1 => p.walk.middle_anim_frame,
+            _ => p.walk.fast_anim_frame,
+        };
+        // ftAnim_8006F484: the end frame (lbGetJObjEndFrame of the animating skeleton).
+        let end = p.skel.end_frame();
+        let init = p.fp.cur_anim_frame;
+        let quotient = melee_runtime::cabi::f2i32((init / end) as f64);
+        let adjusted = melee_core::fp::fmadds(-end, quotient as f32, p.fp.cur_anim_frame);
+        let final_frame = melee_runtime::cabi::f2i32((frame * (adjusted / end)) as f64);
+        return walk_enter(p, final_frame as f32, rand);
+    }
+    Ok(())
+}
+
+/// `ftWalkCommon_GetWalkType_800DFBF8_fake`.
+fn walk_type(p: &Player) -> i32 {
+    let cd = melee_fighter::hooks::common_data();
+    let fp = &*p.fp;
+    let v = fc::abs_c(fp.gr_vel);
+    let m = p.walk.accel_mul;
+    if v >= m * (cd.walk_fast_stick_threshold * fp.co_attrs.walk_max_vel) {
+        2
+    } else if v >= m * (cd.walk_middle_animation_stick_threshold * fp.co_attrs.walk_max_vel) {
+        1
+    } else {
+        0
+    }
+}
+
+/// `ftCo_Walk_Enter(gobj, frame)` -> `ftWalkCommon_800DFCA4(gobj, WalkSlow, 0, frame,
+/// x2DC, x2E0, x2E4, slow_walk_max, mid_walk_point, fast_walk_min, accel_mul)`.
+fn walk_enter(p: &mut Player, frame: f32, rand: &mut HsdRand) -> Result<(), String> {
+    let fp = &*p.fp;
+    if fp.is_metal() != 0 || fp.x34_scale.y != 1.0 || !fp.x197C.is_null() {
+        return Err("ftCo_Walk_Enter accel_mul (metal / scale / x197C) not wired".into());
+    }
+    let accel_mul = 1.0f32;
+    p.walk.accel_mul = accel_mul;
+    let ty = walk_type(p);
+    let msid = FTCO_MS_WALK_SLOW + ty;
+    let row = p.row_walk[ty as usize].clone();
+    change_motion_state_at(p, msid, row.as_ref(), frame, rand)?;
+    anim_step(p, rand)?;
+    let fp = &*p.fp;
+    p.walk.x0 = fp.gr_vel;
+    p.walk.msid = FTCO_MS_WALK_SLOW;
+    p.walk.slow_anim_frame = fp.x2DC;
+    p.walk.middle_anim_frame = fp.x2E0;
+    p.walk.fast_anim_frame = fp.x2E4;
+    p.walk.slow_anim_rate = fp.co_attrs.slow_walk_max;
+    p.walk.middle_anim_rate = fp.co_attrs.mid_walk_point;
+    p.walk.fast_anim_rate = fp.co_attrs.fast_walk_min;
+    Ok(())
+}
+
+/// `ftWalkCommon_800E0060` (no fused site).
+fn walk_phys(p: &mut Player) {
+    let cd = melee_fighter::hooks::common_data();
+    let accel_mul = p.walk.accel_mul;
+    let fp = &mut *p.fp;
+    let x = fp.input.lstick[0].x;
+    let mut accel = x * fp.co_attrs.walk_accel_mul * accel_mul;
+    // getWalkAccel.
+    accel += if x > 0.0 { accel_mul * fp.co_attrs.walk_accel_base } else { accel_mul * -fp.co_attrs.walk_accel_base };
+    let target_vel = x * fp.co_attrs.walk_max_vel * accel_mul;
+    if target_vel != 0.0 {
+        let mult = fp.gr_vel / target_vel;
+        if mult > 0.0 && mult < 1.0 {
+            accel *= (1.0 - mult) * cd.walk_accel_taper_gain;
+        }
+    }
+    p.walk.x0 = target_vel * cd.x440;
+    let friction = fp.co_attrs.ground_friction;
+    fc::calc_ground_accel_dash_run(fp, accel, target_vel, friction);
+    fc::set_self_movement_from_grounded_movement(fp);
+}
+
+/// `ftAnim_SetAnimRate` (x2223_b0 clear) -> `ftAnim_8006F0FC`: every AObj of both skeletons
+/// and `frame_speed_mul`.
+fn set_anim_rate(p: &mut Player, rate: f32) {
+    p.skel.set_rate(rate);
+    p.fp.frame_speed_mul = rate;
+}
+
+/// `ft_8008A2BC` -> `ft_8008A348(gobj, 0)`: Wait (no item, grounded, not Peach / Link).
+fn ft_8008a2bc(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    if p.fp.ground_or_air == melee_types::GA_Air {
+        return Err("ft_8008A348 from the air (ftCommon_8007D7FC) not wired".into());
+    }
+    let row = p.row_wait.clone();
+    change_motion_state(p, FTCO_MS_WAIT, row.as_ref(), rand)?;
+    // ftCo_8008A698 (an item) is false; ftCommon_8007EFC0(fp, x5F0).
+    let v = melee_fighter::hooks::common_data().x5F0;
+    melee_fighter::ftcommon2::ftcommon_8007efc0(&mut p.fp, v);
+    Ok(())
+}
+
+/// `ftAction_80072CD8`: the footstep (`ft_80084BFC`, the floor material's step sound and
+/// effect), then the script's own sound command.
+fn ftaction_80072cd8(p: &mut Player, _rand: &mut HsdRand) -> Result<(), String> {
+    let w0 = be32(&p.pdat, p.script);
+    let mut sp60 = 1;
+    let fp = &*p.fp;
+    if fp.ground_or_air == melee_types::GA_Ground && fp.coll_data.floor.index != -1 {
+        let m = (fp.coll_data.floor.flags as u8) as usize;
+        let (sfx, play, gfx) = FD_STEP[m];
+        let (sp64, gfx_id) = if sfx != -1 { (sfx, gfx) } else { (-1, gfx) };
+        if sfx == -1 {
+            sp60 = 1;
+        } else {
+            sp60 = play;
+        }
+        if sp64 != -1 {
+            return Err(format!("footstep material sfx {sp64:#x} (ft_PlaySFX pitch draw / sound remap) not wired"));
+        }
+        if gfx_id != -1 {
+            return Err(format!("footstep gfx {gfx_id:#x} not wired"));
+        }
+    }
+    if sp60 != 0 {
+        // ftAction_80071B50(gobj, cmd): the script's own sound command (3 words).
+        let behavior = (w0 >> 18) & 0xFF;
+        if behavior <= 6 {
+            let sfx = be32(&p.pdat, p.script + 4) as i32;
+            if (332..=370).contains(&sfx) {
+                return Err(format!("ft_PlaySFX {sfx}: the HSD_Randi(200) pitch draw needs ft_80087D0C's remap (not wired)"));
+            }
+        } else if behavior >= 10 {
+            return Err("ftAction_80071B50 stop-sound behaviours not wired".into());
+        }
+    }
+    p.script += 12;
     Ok(())
 }
 
@@ -1261,6 +1517,13 @@ fn turn_iasa(p: &mut Player) -> Result<(), String> {
 /// `ftAction_80073240`: run the command script up to the current frame (lbcommand.c's
 /// Command_00..08 and the ftAction_803C06E8 commands the wired scripts use).
 fn ftaction_80073240(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    ftaction_run(p, rand, false)
+}
+
+/// `ftAction_80073240` (`skip` false: the ftAction_803C06E8 table) or `ftAction_80073354`
+/// (`skip` true: the ftAction_803C07AC table, whose entries mostly just step over a command;
+/// its throw_flags resets are not modelled: no throws here).
+fn ftaction_run(p: &mut Player, rand: &mut HsdRand, skip: bool) -> Result<(), String> {
     const F32_MAX: f32 = 3.4028235e38;
     let fp = &mut *p.fp;
     fp.x3E4_fighterCmdScript.frame_count = fp.cur_anim_frame + fp.x898_unk;
@@ -1339,11 +1602,12 @@ fn ftaction_80073240(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
                 p.script += 4;
                 c.timer = F32_MAX;
             }
-            // ftAction_800727C8: ftAnim_ApplyPartAnim(gobj, unk1, unk2, (f32) unk3).
+            // ftAction_800727C8: ftAnim_ApplyPartAnim(gobj, unk1, unk2, (f32) unk3);
+            // ftAction_8007283C (skip table): the same with blend 0.
             0x29 => {
                 let slot = ((w >> 19) & 0x7F) as usize;
                 let anim = (((w >> 12) & 0x7F) as i32) << 25 >> 25; // s32 unk2 : 7
-                let blend = (w & 0xFFF) as f32;
+                let blend = if skip { 0.0 } else { (w & 0xFFF) as f32 };
                 let pd = p.part_anim[slot].clone().ok_or("ftData->x1C slot missing")?;
                 let pdat = p.pdat.clone();
                 p.skel.apply_part_anim(&pdat, &pd, slot, anim, blend)?;
@@ -1362,8 +1626,14 @@ fn ftaction_80073240(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
                 }
                 p.script += 4;
             }
-            // ftAction_80072E4C: the landing dust (+ the floor material's landing sound).
+            // ftAction_80072E4C: the landing dust (+ the floor material's landing sound);
+            // ftAction_80072FE0 (skip table): three words.
+            0x37 if skip => p.script += 12,
             0x37 => ftaction_80072e4c(p, rand)?,
+            // ftAction_80072CD8: the footstep (floor material sound / effect); ftAction_80072E24
+            // (skip table): three words.
+            0x36 if skip => p.script += 12,
+            0x36 => ftaction_80072cd8(p, rand)?,
             op => return Err(format!("command script opcode {op:#x} (ftAction_803C06E8[{}]) not ported", op as i32 - 10)),
         }
         if p.fp.x3E4_fighterCmdScript.timer == F32_MAX {
@@ -1372,6 +1642,13 @@ fn ftaction_80073240(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     }
     Ok(())
 }
+
+/// Final Destination's floor-material step rows (mplib.c `mpLib_803BE7A8`: x4[0] (step sfx),
+/// x14[0] (play-default flag), x14[1] (step gfx)) per material.
+const FD_STEP: [(i32, i32, i32); 20] = [
+    (-1, 0, -1), (0x161, 1, -1), (0x152, 1, -1), (0x155, 1, -1), (0x16D, 1, -1), (0x15B, 1, -1), (0x158, 1, -1), (0x16A, 1, -1), (0x15E, 0, -1), (-1, 0, -1),
+    (0x14F, 1, -1), (-1, 0, -1), (-1, 0, -1), (-1, 0, -1), (0x14C, 1, -1), (0x164, 1, -1), (0x170, 0, -1), (0x15E, 1, -1), (0x167, 1, -1), (-1, 0, -1),
+];
 
 /// Final Destination's floor-material sound/effect rows (mplib.c `mpLib_803BE7A8`, fields
 /// x20[0] (landing sfx), x30[0] (play-default flag) and x30[1] (landing gfx)) per material.
@@ -1508,6 +1785,14 @@ fn entry_end(p: &mut Player, c: EntryCommon, rand: &mut HsdRand) -> Result<(), S
 /// with none (`anim_id == -1`) `ftAnim_80070758` drops the AObjs and frame_count stays.
 /// TODO(group3 fighter.c): the whole Fighter_ChangeMotionState.
 fn change_motion_state(p: &mut Player, msid: i32, row: Option<&(AnimRow, FigaTree)>, rand: &mut HsdRand) -> Result<(), String> {
+    change_motion_state_at(p, msid, row, 0.0, rand)
+}
+
+/// `Fighter_ChangeMotionState(gobj, msid, 0, anim_start, 1.0, 0.0, NULL)` (see
+/// [`change_motion_state`]); a nonzero `anim_start` takes the C's start-mid-animation path
+/// (`ftAnim_8006EBE8(start - speed)`, two `ftAnim_8006E9B4` steps, `timer = -start`,
+/// `ftAction_80073354`, the script run in its skip table).
+fn change_motion_state_at(p: &mut Player, msid: i32, row: Option<&(AnimRow, FigaTree)>, anim_start: f32, rand: &mut HsdRand) -> Result<(), String> {
     let fp = &mut p.fp;
     fp.motion_id = msid;
     let root = p.skel.root;
@@ -1521,27 +1806,59 @@ fn change_motion_state(p: &mut Player, msid: i32, row: Option<&(AnimRow, FigaTre
     p.skel.set_part_rot(0, 0, 0.0);
     p.skel.set_part_rot(0, 1, (core::f64::consts::FRAC_PI_2 * fp.facing_dir as f64) as f32);
     p.skel.set_part_rot(0, 2, 0.0);
-    fp.frame_speed_mul = 1.0;
-    fp.cur_anim_frame = 0.0 - fp.frame_speed_mul;
+    let anim_speed = 1.0f32;
+    fp.frame_speed_mul = anim_speed;
+    fp.x8A0_unk = anim_speed;
+    fp.cur_anim_frame = anim_start - fp.frame_speed_mul;
     fp.x898_unk = 0.0;
+    // bone_index = x596_bits.x7, read before x594 changes (the previous row's flags).
+    let bone_index = unsafe { fp.anon_594.anon_0.x596_bits.x7() };
     match row {
         Some((r, tree)) => {
             if r.flags & 0xA000_0000 != 0 {
                 return Err(format!("anim row flags {:#x}: x594_b0 / x594_b2 paths not ported", r.flags));
             }
-            // x3E4_fighterCmdScript.u = row->xC; loop_count = 0; (anim_start 0) timer = 0.
+            if r.flags & 0x0400_0000 != 0 {
+                return Err(format!("anim row flags {:#x}: x594_b5 path not ported", r.flags));
+            }
+            // fp->x594_s32 = row->x10_animCurrFlags (stored in GameCube byte order, which the
+            // generated bitfield accessors read).
+            fp.anon_594.x594_s32 = i32::from_ne_bytes(r.flags.to_be_bytes());
+            // anim_blend 0.0 -> the row's default blend byte.
+            let blend = r.blend as f32;
+
+            // x3E4_fighterCmdScript.u = row->xC; loop_count = 0.
             p.script = r.script;
             p.script_sp = 0;
-            fp.x3E4_fighterCmdScript.timer = 0.0;
-            p.skel.attach(tree, 0.0, fp.frame_speed_mul, r.looping());
-            p.animating = true;
+            if anim_start != 0.0 {
+                p.skel.attach(tree, anim_start - anim_speed, anim_speed, r.looping(), blend);
+                p.animating = true;
+                p.skel.anim(&mut AObjGlobals::default())?;
+                p.fp.cur_anim_frame = p.skel.curr_frame().ok_or("ftAnim_8006F3DC: no animated part")?;
+                p.fp.x3E4_fighterCmdScript.timer = -anim_start;
+            } else {
+                p.skel.attach(tree, anim_start, anim_speed, r.looping(), blend);
+                p.animating = true;
+                p.fp.x3E4_fighterCmdScript.timer = 0.0;
+            }
             p.skel.anim(&mut AObjGlobals::default())?;
             p.fp.cur_anim_frame = p.skel.curr_frame().ok_or("ftAnim_8006F3DC: no animated part")?;
-            // ftCo_800C0408 (colour-animation scripts: render only), then ftAction_80073240.
-            ftaction_80073240(p, rand)?;
+            if bone_index != 0 && r.blend != 0 {
+                // The previous row's x596_bits.x7 part: its anim-skeleton translation and
+                // rotation onto the body (HSD_JObjSetTranslate, ftParts_JObjSetRotation).
+                p.skel.copy_part_tr(bone_index as usize);
+            }
+            if anim_start != 0.0 {
+                // ftAction_80073354: catch the script up through the skip table.
+                ftaction_run(p, rand, true)?;
+            } else {
+                // ftCo_800C0408 (colour-animation scripts: render only), then ftAction_80073240.
+                ftaction_80073240(p, rand)?;
+            }
         }
         None => {
-            // anim_id == -1: x3E4.u = NULL, the AObjs dropped.
+            // anim_id == -1: x594 = 0, x3E4.u = NULL, the AObjs dropped, x8A4 = x8A8 = 0.
+            fp.anon_594.x594_s32 = 0;
             p.animating = false;
             p.script = 0;
             p.skel.remove_anim_all();

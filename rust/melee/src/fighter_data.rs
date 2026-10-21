@@ -24,6 +24,8 @@ pub struct AnimRow {
     pub flags: u32,
     /// The row's command script (`xC`, a DAT offset into PlXx.dat; 0 = none).
     pub script: u32,
+    /// `fp->x28[anim_id][0]` (`ftData->x10`): the default blend frames into this row.
+    pub blend: u8,
 }
 
 impl AnimRow {
@@ -112,7 +114,9 @@ impl FighterFiles {
         let slice = self.aj.get(off..off + size).ok_or("AJ row out of range")?;
         let a = DatArchive::parse(slice).map_err(|e| format!("AJ row {anim_id}: {e}"))?;
         let root = a.publics.first().map(|p| p.offset).ok_or(format!("AJ row {anim_id}: no root"))?;
-        Ok(Some(AnimRow { frames: f32::from_bits(be32(&a.data, root + 8)), flags, script: be32(d, row + 0xC) }))
+        let x10 = be32(d, self.ft_data + 0x10);
+        let blend = if x10 != 0 { d[(x10 + 2 * anim_id) as usize] } else { 0 };
+        Ok(Some(AnimRow { frames: f32::from_bits(be32(&a.data, root + 8)), flags, script: be32(d, row + 0xC), blend }))
     }
 
     /// Animation row `anim_id`'s figatree (`ftData_80085CD8` -> `fp->x590`).

@@ -23,7 +23,9 @@ use melee_runtime::aobj::{AObjGlobals, HsdAObj, AOBJ_LOOP};
 use melee_runtime::fobj::HsdFObj;
 use melee_runtime::jobj::{self as hj, JObjHost, JObjId, JObjTree};
 use melee_runtime::jobj_rt::{self, ObjData, UfcEvent};
+use melee_core::fp::fmadds;
 use melee_runtime::mtx::Vec3;
+use melee_runtime::quatlib;
 use std::sync::Arc;
 
 pub type Tree = JObjTree<(), ()>;
@@ -180,12 +182,17 @@ pub struct Skeleton {
     x8_x10: usize,
     /// `1 / ftData->x0->model_scaling`.
     inv_model_scaling: f32,
+    /// `x8A4_animBlendFrames` / `x8A8_anim_frame`.
+    pub blend_frames: f32,
+    pub blend_frame: f32,
+    /// `parts[i].flags_b4`: `ftParts_GetBoneIndex(TransN)` and `(0x35)` (ftParts_80074E58).
+    b4_parts: [usize; 2],
 }
 
 impl Skeleton {
     /// `HSD_JObjLoadJoint(costume_joint)` + `ftParts_SetupParts`. `parts_num` checks the walk
     /// (`ftPartsTable[kind]->parts_num`; the kinds wired have no `Fighter_804D6540` skip list).
-    pub fn load(d: &[u8], root_joint: u32, x8_x10: usize, model_scaling: f32, parts_num: u32) -> Result<Self, String> {
+    pub fn load(d: &[u8], root_joint: u32, x8_x10: usize, model_scaling: f32, parts_num: u32, b4_parts: [usize; 2]) -> Result<Self, String> {
         let mut tree = Tree::new();
         let root = load_joint_sub(&mut tree, d, root_joint, None)?.ok_or("costume joint is NULL")?;
         // ftParts_SetupParts.
@@ -258,7 +265,20 @@ impl Skeleton {
         }
         // ftAnim_8007077C: every slot's x10 / x11 = -1.
         let slot = PartSlot { x4: 0.0, x8: 0.0, xc: 0.0, x10: -1, x11: -1 };
-        Ok(Skeleton { tree, root, parts, tree2, parts2, x8b0: [slot; 5], joints, x8_x10, inv_model_scaling: 1.0 / model_scaling })
+        Ok(Skeleton {
+            tree,
+            root,
+            parts,
+            tree2,
+            parts2,
+            x8b0: [slot; 5],
+            joints,
+            x8_x10,
+            inv_model_scaling: 1.0 / model_scaling,
+            blend_frames: 0.0,
+            blend_frame: 0.0,
+            b4_parts,
+        })
     }
 
     pub fn part(&self, i: usize) -> JObjId {
@@ -298,66 +318,138 @@ impl Skeleton {
         }
     }
 
-    /// `ftAnim_8006EBE8(gobj, anim_start, anim_rate, 0)` (no blend, same-kind figatree).
-    pub fn attach(&mut self, tree: &FigaTree, anim_start: f32, anim_rate: f32, looping: bool) {
-        // ftAnim_80070758(root) (and the anim skeleton's: no blend skeleton here).
-        self.remove_anim_all();
-        // ftAnim_8006FA58(fp, FtPart_TransN, costume_joint->child).
+    /// `ftAnim_8006EBE8(gobj, anim_start, anim_rate, blend)` (same-kind figatree). With a
+    /// blend the figatree goes on the second skeleton (`x4_jobj2`) and `ftAnim_8006E9B4` blends
+    /// it onto the body over `blend` frames.
+    pub fn attach(&mut self, tree: &FigaTree, anim_start: f32, anim_rate: f32, looping: bool, blend: f32) {
+        // ftAnim_80070758(root_jobj), ftAnim_80070758(anim_jobj).
+        self.remove_anims();
+        let to2 = blend != 0.0;
+        // ftAnim_8006FA58 / ftAnim_8006FB88(fp, FtPart_TransN, costume_joint->child).
         let joints = std::mem::take(&mut self.joints);
         for (k, jd) in joints.iter().skip(1).enumerate() {
             let i = 1 + k;
             let b = self.parts[i];
+            let (t, j) = if to2 { (&mut self.tree2, self.parts2[i]) } else { (&mut self.tree, b.joint) };
             if i == self.x8_x10 {
                 if b.b0 {
                     unreachable!("lb_8000B760 on a dynamics part");
                 } else if !b.b5 {
-                    lb_8000b5dc(&mut self.tree, b.joint, jd);
+                    lb_8000b5dc(t, j, jd);
                 }
                 // ftCommon_8007F6A4: HSD_JObjSetScale(1 / model_scaling).
                 let v = self.inv_model_scaling;
-                self.set_scale(b.joint, Vec3 { x: v, y: v, z: v });
+                let o = t.get_mut(j);
+                o.scale = Vec3 { x: v, y: v, z: v };
+                if o.flags & hj::JOBJ_MTX_INDEP_SRT == 0 {
+                    t.set_mtx_dirty(Some(j));
+                }
             } else if b.b0 {
                 unreachable!("lb_8000B6A4 on a dynamics part");
             } else if !b.b5 {
-                lb_8000b4fc(&mut self.tree, b.joint, jd);
+                lb_8000b4fc(t, j, jd);
             }
         }
         self.joints = joints;
-        // ftAnim_8006FE08 -> ftAnim_8006F4C8(fp, false, x590).
+        // ftAnim_8006FE08 -> ftAnim_8006F4C8(fp, do_blending, x590).
         let mut i = 0usize;
         let mut track = 0usize;
         for &n in &tree.nodes {
             let b = self.parts[i];
             if !b.b0 && !b.b5 {
-                lbanim_8001e6d8(&mut self.tree, b.joint, tree, &tree.tracks[track..], n);
+                if to2 {
+                    let j = self.parts2[i];
+                    lbanim_8001e6d8(&mut self.tree2, j, tree, &tree.tracks[track..], n);
+                } else {
+                    lbanim_8001e6d8(&mut self.tree, b.joint, tree, &tree.tracks[track..], n);
+                }
             }
             i += 1;
             track += n as u8 as usize;
         }
-        // ftAnim_80070710: HSD_JObjReqAnimAllByFlags(root, 1, anim_start); LOOP; rate.
-        for o in &mut self.tree.nodes {
-            if let Some(a) = &mut o.aobj {
-                a.req_anim(anim_start);
-                if looping {
-                    a.set_flags(AOBJ_LOOP);
+        // ftAnim_80070710 (ReqAnimAllByFlags(.., 1, anim_start)) on the tree(s), LOOP, rate.
+        for t in [&mut self.tree, &mut self.tree2] {
+            for o in &mut t.nodes {
+                if let Some(a) = &mut o.aobj {
+                    a.req_anim(anim_start);
+                    if looping {
+                        a.set_flags(AOBJ_LOOP);
+                    }
+                    a.set_rate(anim_rate);
                 }
-                a.set_rate(anim_rate);
+            }
+        }
+        self.blend_frames = blend;
+        self.blend_frame = 0.0;
+    }
+
+    /// `HSD_JObjRemoveAnimAllByFlags(.., 1)` on both skeletons (`ftAnim_80070758` twice).
+    fn remove_anims(&mut self) {
+        for t in [&mut self.tree, &mut self.tree2] {
+            for o in &mut t.nodes {
+                o.aobj = None;
             }
         }
     }
 
-    /// `HSD_JObjRemoveAnimAllByFlags(root, 1)`: every JObj's AObj (the tree has no INSTANCE).
+    /// Fighter_ChangeMotionState's `anim_id == -1` tail: both skeletons' AObjs dropped and the
+    /// blend reset (x8A4 = x8A8 = 0).
     pub fn remove_anim_all(&mut self) {
-        for o in &mut self.tree.nodes {
-            o.aobj = None;
-        }
+        self.remove_anims();
+        self.blend_frames = 0.0;
+        self.blend_frame = 0.0;
     }
 
-    /// The no-blend half of `ftAnim_8006E9B4`: `HSD_JObjClearFlagsAll(root, QUATERNION)` then
-    /// `ftAnim_8006E7B8(fp, FtPart_TopN)` (every part's `HSD_JObjAnim`). Err: an animation event
-    /// (particle / sound / user callback key) that is not wired.
+    /// `ftAnim_8006E9B4` (x594_b0 clear). No blend: `HSD_JObjClearFlagsAll(root, QUATERNION)`
+    /// then `ftAnim_8006E7B8(fp, FtPart_TopN)`. Blend: the second skeleton runs
+    /// (`HSD_JObjAnimAll`) and `ftAnim_8006FE9C` / `ftAnim_8006FF74` blend or copy it onto the
+    /// body. Err: an animation event (particle / sound / user callback key) that is not wired.
     pub fn anim(&mut self, ag: &mut AObjGlobals) -> Result<(), String> {
-        self.tree.clear_flags_all(Some(self.root), hj::JOBJ_USE_QUATERNION);
+        if self.blend_frames == 0.0 {
+            self.tree.clear_flags_all(Some(self.root), hj::JOBJ_USE_QUATERNION);
+            self.anim_body(ag)?;
+            return Ok(());
+        }
+        // lbGetJObjFramerate(x8AC): the first JObj with an AObj in preorder.
+        let framerate = find_aobj(&self.tree2, Some(self.parts2[0])).map_or(0.0, |j| self.tree2.get(j).aobj.as_ref().unwrap().framerate);
+        self.blend_frame += framerate;
+        let (t, t_inv);
+        if self.blend_frames <= self.blend_frame {
+            self.blend_frame = self.blend_frames;
+            t = 1.0f32;
+            t_inv = 0.0f32;
+        } else {
+            let remaining = self.blend_frames - self.blend_frame;
+            t = framerate / (framerate + remaining);
+            t_inv = 1.0 - t;
+        }
+        self.anim_body(ag)?;
+        // HSD_JObjAnimAll(anim_jobj).
+        ag.init_end_callback();
+        let mut order = Vec::new();
+        preorder(&self.tree2, self.parts2[0], &mut order);
+        for j in order {
+            jobj_anim(&mut self.tree2, j, ag)?;
+        }
+        ag.invoke_callbacks();
+        for i in 1..self.parts.len() {
+            let b = self.parts[i];
+            if b.b0 || b.b5 {
+                continue;
+            }
+            let (src, dst) = (self.parts2[i], b.joint);
+            if t_inv != 0.0 && !self.b4_parts.contains(&i) {
+                lb_8000c490(&self.tree2, src, &mut self.tree, dst, t, t_inv);
+            } else {
+                // lbCopyJObjSRT (ftAnim_8006FF74, and the b4 parts of ftAnim_8006FE9C).
+                copy_srt(&self.tree2, src, &mut self.tree, dst);
+            }
+        }
+        Ok(())
+    }
+
+    /// `ftAnim_8006E7B8(fp, FtPart_TopN)`: every animated part's `HSD_JObjAnim`.
+    fn anim_body(&mut self, ag: &mut AObjGlobals) -> Result<(), String> {
         ag.init_end_callback();
         for i in 0..self.parts.len() {
             let b = self.parts[i];
@@ -369,8 +461,12 @@ impl Skeleton {
         Ok(())
     }
 
-    /// `ftAnim_8006F3DC`, no blend: the first animated part's AObj frame.
+    /// `ftAnim_8006F3DC`: no blend, the first animated part's AObj frame; blend,
+    /// `lbGetJObjCurrFrame(x8AC_animSkeleton)`.
     pub fn curr_frame(&self) -> Option<f32> {
+        if self.blend_frames != 0.0 {
+            return Some(find_aobj(&self.tree2, Some(self.parts2[0])).map_or(0.0, |j| self.tree2.get(j).aobj.as_ref().unwrap().curr_frame));
+        }
         self.parts.iter().filter(|b| !b.b0 && !b.b5).find_map(|b| self.tree.get(b.joint).aobj.as_ref().map(|a| a.curr_frame))
     }
 
@@ -503,11 +599,45 @@ impl Skeleton {
         }
     }
 
+    /// Fighter_ChangeMotionState's `bone_index` copy: `HSD_JObjSetTranslate(joint, jobj2's
+    /// translation)`, then `ftParts_JObjSetRotation(joint, jobj2's rotate)` (`HSD_JObjSetRotation`
+    /// + clear JOBJ_USE_QUATERNION).
+    pub fn copy_part_tr(&mut self, part: usize) {
+        let src = self.tree2.get(self.parts2[part]).clone();
+        let j = self.parts[part].joint;
+        self.set_translate(j, src.translate);
+        let o = self.tree.get_mut(j);
+        o.rotate = src.rotate;
+        if o.flags & hj::JOBJ_MTX_INDEP_SRT == 0 {
+            self.tree.set_mtx_dirty(Some(j));
+        }
+        self.tree.clear_flags(Some(j), hj::JOBJ_USE_QUATERNION);
+    }
+
+    /// `ftAnim_8006F0FC`: `HSD_ForeachAnim(.., AObjSetRate)` on both skeletons.
+    pub fn set_rate(&mut self, rate: f32) {
+        for t in [&mut self.tree, &mut self.tree2] {
+            for o in &mut t.nodes {
+                if let Some(a) = &mut o.aobj {
+                    a.set_rate(rate);
+                }
+            }
+        }
+    }
+
+    /// `ftAnim_8006F484`: `lbGetJObjEndFrame` of the body (no blend) or the anim skeleton.
+    pub fn end_frame(&self) -> f32 {
+        let (t, r) = if self.blend_frames == 0.0 { (&self.tree, self.root) } else { (&self.tree2, self.parts2[0]) };
+        find_aobj(t, Some(r)).map_or(0.0, |j| t.get(j).aobj.as_ref().unwrap().end_frame)
+    }
+
     /// `ftAnim_IsFramesRemaining`, no blend: some animated part's AObj still runs
     /// (`lb_8000B074`: an AObj without AOBJ_NO_ANIM).
     pub fn frames_remaining(&self) -> bool {
-        self.parts.iter().filter(|b| !b.b0 && !b.b5).any(|b| {
-            self.tree.get(b.joint).aobj.as_ref().is_some_and(|a| a.flags & melee_runtime::aobj::AOBJ_NO_ANIM == 0)
+        let blend = self.blend_frames != 0.0;
+        self.parts.iter().enumerate().filter(|(_, b)| !b.b0 && !b.b5).any(|(i, b)| {
+            let (t, j) = if blend { (&self.tree2, self.parts2[i]) } else { (&self.tree, b.joint) };
+            t.get(j).aobj.as_ref().is_some_and(|a| a.flags & melee_runtime::aobj::AOBJ_NO_ANIM == 0)
         })
     }
 
@@ -521,6 +651,90 @@ impl Skeleton {
             self.tree.get(j).translate
         }
     }
+}
+
+/// `lbFindJObjWithAObj`: preorder (child, then next; no INSTANCE check).
+fn find_aobj(t: &Tree, j: Option<JObjId>) -> Option<JObjId> {
+    let j = j?;
+    if t.get(j).aobj.is_some() {
+        return Some(j);
+    }
+    find_aobj(t, t.get(j).child).or_else(|| find_aobj(t, t.get(j).next))
+}
+
+/// `JObjAnimAll`'s visiting order (the jobj, then each child's subtree; INSTANCE stops).
+fn preorder(t: &Tree, j: JObjId, out: &mut Vec<JObjId>) {
+    out.push(j);
+    if t.get(j).flags & hj::JOBJ_INSTANCE == 0 {
+        let mut c = t.get(j).child;
+        while let Some(x) = c {
+            preorder(t, x, out);
+            c = t.get(x).next;
+        }
+    }
+}
+
+/// `lbCopyJObjSRT(src, dst)` across the two skeletons.
+fn copy_srt(ts: &Tree, src: JObjId, td: &mut Tree, dst: JObjId) {
+    let s = ts.get(src);
+    let (r, sc, tr, q) = (s.rotate, s.scale, s.translate, s.flags & hj::JOBJ_USE_QUATERNION != 0);
+    let o = td.get_mut(dst);
+    o.rotate = r;
+    o.scale = sc;
+    o.translate = tr;
+    if q {
+        td.set_flags(Some(dst), hj::JOBJ_USE_QUATERNION);
+    } else {
+        td.clear_flags(Some(dst), hj::JOBJ_USE_QUATERNION);
+    }
+    td.set_flags(Some(dst), hj::JOBJ_MTX_DIRTY);
+}
+
+/// `lb_8000C490(jobj1 = src, jobj2 = dst, arg2 = dst, t, t_inv)`: translation and scale lerp
+/// (`a*t + b*t_inv`, six fused sites), rotation by quaternion slerp unless both are close Euler
+/// angles.
+fn lb_8000c490(ts: &Tree, src: JObjId, td: &mut Tree, dst: JObjId, t: f32, t_inv: f32) {
+    let a = ts.get(src).clone();
+    let b = td.get(dst).clone();
+    let lerp = |x: f32, y: f32| fmadds(x, t, y * t_inv);
+    {
+        let o = td.get_mut(dst);
+        o.translate = Vec3 { x: lerp(a.translate.x, b.translate.x), y: lerp(a.translate.y, b.translate.y), z: lerp(a.translate.z, b.translate.z) };
+        o.scale = Vec3 { x: lerp(a.scale.x, b.scale.x), y: lerp(a.scale.y, b.scale.y), z: lerp(a.scale.z, b.scale.z) };
+    }
+    let q1f = a.flags & hj::JOBJ_USE_QUATERNION != 0;
+    let q2f = b.flags & hj::JOBJ_USE_QUATERNION != 0;
+    let abs = |x: f32| if x < 0.0 { -x } else { x };
+    if !q1f && !q2f {
+        let (dx, dy, dz) = (a.rotate.x - b.rotate.x, a.rotate.y - b.rotate.y, a.rotate.z - b.rotate.z);
+        if abs(dx) <= 0.0001 && abs(dy) <= 0.0001 && abs(dz) <= 0.0001 {
+            td.get_mut(dst).rotate = a.rotate;
+            td.clear_flags(Some(dst), hj::JOBJ_USE_QUATERNION);
+            td.set_flags(Some(dst), hj::JOBJ_MTX_DIRTY);
+            return;
+        }
+    }
+    let quat = |o: &melee_runtime::jobj::HsdJObj<(), ()>, q: bool| {
+        if q {
+            o.rotate
+        } else {
+            quatlib::euler_to_quat(&Vec3 { x: o.rotate.x, y: o.rotate.y, z: o.rotate.z })
+        }
+    };
+    let q1 = quat(&a, q1f);
+    let mut q2 = quat(&b, q2f);
+    let sq = |x: f32| x * x;
+    let sum_sums = sq(q1.x + q2.x) + sq(q1.y + q2.y) + sq(q1.z + q2.z) + sq(q1.w + q2.w);
+    let sum_diffs = sq(q1.x - q2.x) + sq(q1.y - q2.y) + sq(q1.z - q2.z) + sq(q1.w - q2.w);
+    if sum_diffs > sum_sums {
+        q2.x = -q2.x;
+        q2.y = -q2.y;
+        q2.z = -q2.z;
+        q2.w = -q2.w;
+    }
+    td.get_mut(dst).rotate = quatlib::slerp(&q1, &q2, t_inv);
+    td.set_flags(Some(dst), hj::JOBJ_USE_QUATERNION);
+    td.set_flags(Some(dst), hj::JOBJ_MTX_DIRTY);
 }
 
 /// `JObjLoadJointSub` + `JObjLoad`: child first, then next; flags |= desc flags.

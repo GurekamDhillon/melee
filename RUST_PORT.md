@@ -95,3 +95,17 @@ Group crates are empty stubs. Not built yet: the ppc32 record-layout dump -> `gc
   `lower.py`) -> `tests/data/oracle_vectors.txt`, checked bit for bit by `tests/oracle.rs`.
 - Ported and oracle-equal: gekko_fp.c, math_ppc.h sqrtf, mtx_pc.c, mtx44.c, baselib/random.c,
   lb/lbtrigf.c, lb/lbvector.c (not WorldToScreen). The rest of group 1 (HSD objects) is not ported.
+
+## Group 0: melee_types (types + GC layout table)
+
+Details: `docs/rust-port/group-0 types + GC layout table.md`.
+- Types are GENERATED, not transpiled: `python rust/melee_types/gen/gen_types.py` (Windows Python
+  + `pip install --user libclang==18.1.1`) parses every group-0 header with libclang as
+  ppc32-none-eabi -DTARGET_PC (GC offsets, cross-checked against -fdump-record-layouts-complete)
+  and as x86_64-msvc (native size asserts). Output `rust/melee_types/src/gen.rs` is committed.
+- Every record implements `melee_core::gc::GcLayout`; `melee_types::GC_RECORDS` lists them all.
+- Bitfields are `bf_<gcoff>: [u8; n]` in GC byte order with `name()`/`set_name()` accessors.
+- Enums are int aliases + consts; `long`=i32, `bool`(MSL int)=i32, `size_t`=usize.
+- Trap: the C typedef `Vec` shadows `std::vec::Vec` under `use melee_types::*`.
+- `melee_types::neutral_hash` computes NHV1 from native structs; tested against the C functions
+  compiled natively (gen/nh_oracle.py) and against all 10804 golden rows.

@@ -36,7 +36,14 @@ pub mod ext {
     hook!(FTCO_800DB368, ftCo_800DB368, (vic_fp: *mut Fighter, fp: *mut Fighter));
     hook!(FTCO_800DE2A8, ftCo_800DE2A8, (gobj: *mut HSD_GObj, vic: *mut HSD_GObj));
     hook!(FTCO_800DE7C0, ftCo_800DE7C0, (gobj: *mut HSD_GObj, a: i32, b: i32));
-    hook!(FTPARTSETROTY, ftPartSetRotY, (fp: *mut Fighter, part: i32, v: f32));
+    /// Recording hook; unset, the native `melee_fighter::tu::ftparts` port runs.
+    pub static mut FTPARTSETROTY: Option<fn(*mut Fighter, i32, f32)> = None;
+    pub fn ftPartSetRotY(fp: *mut Fighter, part: i32, v: f32) {
+        match unsafe { FTPARTSETROTY } {
+            Some(f) => f(fp, part, v),
+            None => melee_fighter::tu::ftparts::ftPartSetRotY(unsafe { &*fp }, part, v),
+        }
+    }
 
     /// `ftCo_8009CA0C` as a grabbed (interaction) callback entry.
     pub unsafe extern "C" fn cb_ftCo_8009CA0C(g: *mut HSD_GObj, v: *mut HSD_GObj) {

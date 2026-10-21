@@ -65,6 +65,13 @@ EXTRACTS = {
               ("src/melee/ft/ftlib.c", "bool ftLib_80087284(", "void ftLib_80087508("),
               ("src/melee/ft/ftlib.c", "void ftLib_800876B4(", "float ftLib_8008777C("),
               ("src/melee/ft/ftlib.c", "bool ftLib_800877D4(", None)],
+    "plbonus": [("src/melee/pl/player.c", "typedef struct _ftMapping {", "/// Matches when everything"),
+                ("src/melee/pl/player.c", "StaticPlayer* Player_GetPtrForSlot(", "void Player_80031AD0("),
+                ("src/melee/pl/player.c", "void Player_80031DA8(", "void Player_InitOrResetPlayer("),
+                ("src/melee/pl/player.c", "void Player_MexSetMapping(", "#endif"),
+                ("src/melee/pl/pl_040D.c", "void pl_80040DDC(", None),
+                ("src/melee/pl/plbonuslib.c", "static inline bool unk_cond(", "void pl_8003D644("),
+                ("src/melee/pl/plbonuslib.c", "int pl_8003FBFC(", None)],
     "ftcommon": [("src/melee/ft/ftcommon.c", "void ftCommon_CalcGroundAccel_Deaccel(", "void ftCommon_UnlockECB("),
                  ("src/melee/ft/ftcommon.c", "void ftCommon_UpdateFacing(", "void ftCommon_8007DB24(")],
 }

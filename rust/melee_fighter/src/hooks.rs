@@ -67,11 +67,11 @@ pub fn common_data() -> &'static ftCommonData {
 
 /// `Geno_GroundEdge(fp, landing)` (pc/geno, TARGET_PC). Vanilla: returns at once (no Geno fighter).
 pub static mut GENO_GROUND_EDGE: Option<fn(fp: &mut Fighter, landing: i32)> = None;
-/// TODO(group3 pl): `pl_8003FC44(slot, is_sub)` (pl/plbonuslib.c), not ported.
+/// `pl_8003FC44(slot, is_sub)` override; unset = `crate::plbonus` port (round 4).
 pub static mut PL_8003FC44: Option<fn(slot: i32, sub: i32)> = None;
-/// TODO(group3 pl): `pl_800402D0(slot, is_sub, mashed)` (pl/plbonuslib.c), not ported.
+/// `pl_800402D0(slot, is_sub, mashed)` override; unset = `crate::plbonus` port (round 4).
 pub static mut PL_800402D0: Option<fn(slot: i32, sub: i32, r: i32)> = None;
-/// TODO(group3 pl): `pl_80040460(slot, is_sub)` (pl/plbonuslib.c), not ported.
+/// `pl_80040460(slot, is_sub)` override; unset = `crate::plbonus` port (round 4).
 pub static mut PL_80040460: Option<fn(slot: i32, sub: i32)> = None;
 /// `Player_8003544C(slot, is_sub)` override; unset = `crate::player::player_8003544c`.
 pub static mut PLAYER_8003544C: Option<fn(slot: i32, sub: i32) -> bool> = None;
@@ -111,9 +111,9 @@ pub fn geno_ground_edge(fp: &mut Fighter, landing: i32) {
         f(fp, landing)
     }
 }
-pub fn pl_8003fc44(slot: i32, sub: i32) { need(unsafe { PL_8003FC44 }, "TODO(group3 pl) pl_8003FC44")(slot, sub) }
-pub fn pl_800402d0(slot: i32, sub: i32, r: i32) { need(unsafe { PL_800402D0 }, "TODO(group3 pl) pl_800402D0")(slot, sub, r) }
-pub fn pl_80040460(slot: i32, sub: i32) { need(unsafe { PL_80040460 }, "TODO(group3 pl) pl_80040460")(slot, sub) }
+pub fn pl_8003fc44(slot: i32, sub: i32) { match unsafe { PL_8003FC44 } { Some(f) => f(slot, sub), None => crate::plbonus::pl_8003fc44(slot, sub) } }
+pub fn pl_800402d0(slot: i32, sub: i32, r: i32) { match unsafe { PL_800402D0 } { Some(f) => f(slot, sub, r), None => crate::plbonus::pl_800402d0(slot, sub, r) } }
+pub fn pl_80040460(slot: i32, sub: i32) { match unsafe { PL_80040460 } { Some(f) => f(slot, sub), None => crate::plbonus::pl_80040460(slot, sub) } }
 /// Unset: the port in `crate::player` (port round 2).
 pub fn player_8003544c(slot: i32, sub: i32) -> bool {
     match unsafe { PLAYER_8003544C } {
@@ -262,4 +262,32 @@ needed_hooks! {
     FTGW_INIT_8014A814 ftgw_init_8014a814(g: G, d: *mut core::ffi::c_void) = "TODO(group4 ftGw) ftGw_Init_8014A814";
     FTKB_INIT_800EEB00 ftkb_init_800eeb00(g: G, d: *mut core::ffi::c_void) = "TODO(group4 ftKb) ftKb_Init_800EEB00";
     FTKB_INIT_800EEB1C ftkb_init_800eeb1c(g: G, d: *mut core::ffi::c_void) = "TODO(group4 ftKb) ftKb_Init_800EEB1C";
+}
+
+// ---- port round 4 (pl/pl_040D.c, pl/plbonuslib.c tail) -------------------------------------
+
+/// `pl_804D6470` (player.c .bss): plbonus.c's constants table, set by `pl_80038914`'s loader.
+/// TODO(group3 plbonus): owned by the plbonus.c port.
+pub static mut PL_804D6470: *const crate::types::pl_804D6470_t = core::ptr::null();
+/// `*pl_804D6470`. Panics if the table has not been installed.
+#[inline]
+pub fn pl_804d6470() -> &'static crate::types::pl_804D6470_t {
+    let p = unsafe { PL_804D6470 };
+    assert!(!p.is_null(), "pl_804D6470 not loaded");
+    unsafe { &*p }
+}
+
+needed_hooks! {
+    PL_80038788 pl_80038788(slot: i32, kind: i32, n: i32) = "TODO(group3 plbonus) pl_80038788";
+    PL_80038824 pl_80038824(slot: i32, kind: i32) = "TODO(group3 plbonus) pl_80038824";
+    PL_80038898 pl_80038898(slot: i32, kind: i32) = "TODO(group3 plbonus) pl_80038898";
+    PL_80039418 pl_80039418(slot: i32, kind: i32) -> u32 = "TODO(group3 plbonus) pl_80039418";
+    PL_800386D8 pl_800386d8(s: &crate::types::plActionStats, n: i32) -> u32 = "TODO(group3 plbonus) pl_800386D8";
+    FT_80087A8C ft_80087a8c(g: G) -> f32 = "TODO(group3 ft_0877) ft_80087A8C";
+    FT_80087A98 ft_80087a98(g: G) -> i32 = "TODO(group3 ft_0877) ft_80087A98";
+    FT_80087AA4 ft_80087aa4(g: G) -> bool = "TODO(group3 ft_0877) ft_80087AA4";
+    FT_80087AB4 ft_80087ab4(g: G) -> u8 = "TODO(group3 ft_0877) ft_80087AB4";
+    FT_800898B4 ft_800898b4(g: G) -> *mut crate::types::ft_800898B4_t = "TODO(group3 ft_0892) ft_800898B4";
+    GM_8016F2F8 gm_8016f2f8(kind: i32, slot: u8) -> i32 = "TODO(group6 gm) gm_8016F2F8";
+    GM_8016B6E8 gm_8016b6e8(slot: i32, v: i32) = "TODO(group6 gm) gm_8016B6E8";
 }

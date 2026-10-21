@@ -10,10 +10,10 @@ State as of 2026-10-21.
 |---|---|---|
 | Native types + GC offsets | `src/types/generated.rs` (from `gen/gen_types.py`) | 569 `#[repr(C)]` records, all built |
 | Mechanical translation of all 216 TUs | `src/c2r/` (from `gen/fix_raw.py`, feature `c2r`) | compiles (`--features c2r`), never run |
-| Hand ports, checked bit-for-bit against the C | `src/neutral_hash.rs`, `src/ftcommon.rs`, `src/ftcommon2.rs`, `src/stale.rs`, `src/player.rs`, `src/ftlib.rs`, `src/compat.rs`, `src/hooks.rs` | 336 C functions, tests pass |
+| Hand ports, checked bit-for-bit against the C | `src/neutral_hash.rs`, `src/ftcommon.rs`, `src/ftcommon2.rs`, `src/stale.rs`, `src/player.rs`, `src/ftlib.rs`, `src/plbonus.rs`, `src/compat.rs`, `src/hooks.rs` | 418 C functions, tests pass |
 | PowerPC `.s` files | none belong to this group (inventory §3) | nothing to do |
 
-Functions: 336 of ~2,820 (about 11.9%; 57 night 1, 39 in port round 1, 144 in port round 2, 96 in port round 3; 335 verified) are hand-ported and verified against the C. All ~2,820 are
+Functions: 418 of ~2,820 (about 14.8%; 57 night 1, 39 in port round 1, 144 in port round 2, 96 in port round 3, 82 in port round 4; 417 verified) are hand-ported and verified against the C. All ~2,820 are
 in the mechanical translation, which compiles; none of it has been linked or run.
 
 ### Native types (`gen/gen_types.py`)
@@ -62,6 +62,7 @@ in the mechanical translation, which compiles; none of it has been linked or run
 | module | C functions | test | cases |
 |---|---|---|---|
 | `neutral_hash.rs` | `nh_Mix`, `nh_CpuFlags`, `nh_Fighter` (fighter.c, TARGET_PC) + item/game word, `StateHash for Fighter` | `tests/nh_ref.rs` | 64 fighters, all fields + every CPU flag bitfield |
+| `plbonus.rs` | 82: all of pl/pl_040D.c (22) + plbonuslib.c pl_8003FBFC..EOF (59) + its inline `unk_cond` (port round 4, below) | `tests/plbonus_ref.rs` | 15,000 (300 tables x 50 ops, 81 op kinds) |
 | `ftlib.rs` | 96 of ft/ftlib.c (port round 3, below) | `tests/ftlib_ref.rs` | 10,440 (87 ops x 120, 6 fighters + random p-link list) |
 | `player.rs` | 144 of player.c: the player-table accessors (port round 2, below) | `tests/player_ref.rs` | 200 tables x 60 ops (144 op kinds, all exercised) |
 | `ftcommon2.rs` | 39 more of ftcommon.c (port round 1, below) | `tests/ftcommon2_ref.rs` | 10,200 (34 ops x 300) |
@@ -213,6 +214,41 @@ of every mutable field of all six fighters, and the stub trace word. All 87 ops 
   `GENO_DEFINE_TEMPLATE_SKELETON` defaults to 0 (vanilla: no Geno defines).
 - Not ported from ftlib.c: 800871A8 (metal box: ftCo/it/camera/sfx), 80087508 / 80087574 /
   80087610 (archive preloading), 8008777C (atan2f, waits on group 1's MSL).
+
+## Port round 4 (2026-10-21): `src/plbonus.rs`
+82 C definitions, verified against the C cut verbatim (`gen/cref/plbonus_ref.c`; run.py cuts the
+same player.c ranges as player_ref plus `pl_040D.c` from pl_80040DDC to EOF, plbonuslib.c
+`unk_cond`..`pl_8003D644` and `pl_8003FBFC`..EOF):
+- pl_040D.c, all 22: pl_80040DDC, 80040ED4, 80040FBC, 800410F4, 800411C4, 80041280, 800412D0,
+  80041300, 8004134C, fn_8004138C, 800414C0, 80041524, fn_800415B0, 80041720, 80041744,
+  fn_80041770, 8004182C, 800418F4, 800419AC, 80041B08, fn_80041BC8, 80041BFC.
+- plbonuslib.c, 59 + static inline `unk_cond`: pl_8003FBFC, FC20, FC44, FC88, FDA0, FDC8, FDF4,
+  FE1C, FE40, FE64, FED0, FF44, FFDC, 80040048, 0120, 01F0, 0270, 02D0, 0330, 0374, 03C0, 03FC,
+  0460, 049C, 0614, 065C, 0688, 07C8, 0870, 0894, 08B8, 08DC, 0900, 0924, 0948, 0A04, 0A30, 0A54,
+  0A78, 0A9C, 0AF0, 0B18, 0B3C, 0B64, 0B8C, 0BD8, 0BFC, 0C24, 0C48, 0C6C, 0C90, 0CB4, 0CD8, 0CFC,
+  0D20, 0D44, 0D68, 0D8C, 0DB8. The header inlines `pl_CalculateAverage` (plbonusinline.h) and
+  `pl_CheckIfSameTeam` (pl/inlines.h) are ported too but not counted (group 0 header inlines).
+- Test: 300 random tables (6 slots: stale-table extension fields, x5EC / x8C0 / x8D8 rings,
+  action stats, entities, team, state) + random pl_804D6470 constants, 50 ops each; per op the
+  return value, the stub trace word and a hash of every field these functions write, all 6 slots.
+  15,000 lines, all 81 op kinds exercised (asserted). Mutation check: reading
+  `by_attack_counts[DownAttackD + k]` instead of `+ k + 1` in pl_80040A9C fails (case 0 step 41);
+  wrapping the 8C0 ring at 3 instead of 4 fails (case 3 step 48).
+- Fused sites: none (`fma_sites.py src/melee/pl/pl_040D.c src/melee/pl/plbonuslib.c`: the only
+  sites in plbonuslib.c are in pl_8003ED0C, fn_8003F294, fn_8003F654, pl_8003FAA8, not ported).
+- Bitfields: the GC (MSB-first) and native-C (LSB-first) bit orders differ, so the test hashes
+  fields through accessors, never raw bytes. `xDD0` / `xDD1` are unions; bits go through `anon_0`.
+- float -> int / u32 returns (800412D0, 80041300, 80040B3C, 80040B64, 80040BFC) saturate as
+  gwtool's lowering does (`as`; NaN not generated).
+- Hooks: `PL_8003FC44` / `PL_800402D0` / `PL_80040460` (ftcommon2's calls) now default to these
+  ports. New: `PL_804D6470` (constants table pointer, TODO(group3 plbonus) loader) and panicking
+  hooks pl_80038788 / 80038824 / 80038898 / 80039418 / 800386D8 (TODO(group3 plbonus): plbonus.c),
+  ft_80087A8C / A98 / AA4 / AB4 (TODO(group3 ft_0877)), ft_800898B4 (TODO(group3 ft_0892)),
+  gm_8016F2F8 / gm_8016B6E8 (TODO(group6 gm)).
+- C quirks kept: ring indices (`x8C0.x0`, `x8D8.x0`) and the `x5EC.x0` slot are unchecked in C;
+  out-of-range values panic here. pl_8004049C's HSD_ASSERTREPORT on a bad player panics.
+- Not ported from plbonuslib.c: plBonusLib_8003D514 .. pl_8003FAA8 (ftLib/item/stage callers,
+  the sqrtf/fused-site functions).
 
 ## Not done / blockers
 - **The c2r layer has never linked or run.** Everything outside group 3 is an unresolved

@@ -68,3 +68,4 @@ pub mod ftcmdscript;
 pub mod ftcolanim;
 pub mod ftCo_CliffClimb;
 pub mod ftCo_CliffAttack;
+pub mod ftCo_CliffEscape;

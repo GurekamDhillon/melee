@@ -2,3 +2,4 @@
 pub mod ftcaptainspecialn;
 pub mod ftcaptainspecials;
 pub mod ftclink;
+pub mod ftclinkappeals;

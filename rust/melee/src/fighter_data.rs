@@ -22,6 +22,8 @@ fn be32(b: &[u8], at: u32) -> u32 {
 pub struct AnimRow {
     pub frames: f32,
     pub flags: u32,
+    /// The row's command script (`xC`, a DAT offset into PlXx.dat; 0 = none).
+    pub script: u32,
 }
 
 impl AnimRow {
@@ -110,7 +112,7 @@ impl FighterFiles {
         let slice = self.aj.get(off..off + size).ok_or("AJ row out of range")?;
         let a = DatArchive::parse(slice).map_err(|e| format!("AJ row {anim_id}: {e}"))?;
         let root = a.publics.first().map(|p| p.offset).ok_or(format!("AJ row {anim_id}: no root"))?;
-        Ok(Some(AnimRow { frames: f32::from_bits(be32(&a.data, root + 8)), flags }))
+        Ok(Some(AnimRow { frames: f32::from_bits(be32(&a.data, root + 8)), flags, script: be32(d, row + 0xC) }))
     }
 
     /// Animation row `anim_id`'s figatree (`ftData_80085CD8` -> `fp->x590`).
@@ -137,6 +139,26 @@ impl FighterFiles {
     /// The big-endian word at a DAT offset of PlXx.dat.
     pub fn word(&self, at: u32) -> u32 {
         be32(&self.dat.data, at)
+    }
+
+    /// `ftData->x1C[slot]` (`ftData_x1C`: first part, part list, AnimJoint* array) for the five
+    /// hand-pose slots; None where the table has no entry.
+    pub fn part_anim_data(&self) -> [Option<skeleton::PartAnimData>; 5] {
+        let d = &self.dat.data;
+        let tab = be32(d, self.ft_data + 0x1C);
+        core::array::from_fn(|i| {
+            if tab == 0 {
+                return None;
+            }
+            let e = be32(d, tab + 4 * i as u32);
+            if e == 0 {
+                return None;
+            }
+            let x0 = u16::from_be_bytes(d[e as usize..][..2].try_into().unwrap()) as usize;
+            let n = u16::from_be_bytes(d[e as usize + 2..][..2].try_into().unwrap()) as usize;
+            let list = be32(d, e + 4) as usize;
+            Some(skeleton::PartAnimData { x0, parts: d[list..list + n].to_vec(), x8: be32(d, e + 8) })
+        })
     }
 
     /// `ftData->x8->x10` (the part ftCommon_8007F6A4 rescales in ftAnim_8006FA58).

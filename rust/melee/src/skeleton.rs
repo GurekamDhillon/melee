@@ -146,10 +146,34 @@ impl JObjHost<(), ()> for NoRObj {
     fn unref(&mut self, _: &mut Tree, _: JObjId) {}
 }
 
+/// `Fighter_x8B0_t`: a part-animation (hand pose) slot.
+#[derive(Clone, Copy, Debug)]
+pub struct PartSlot {
+    pub x4: f32,
+    pub x8: f32,
+    pub xc: f32,
+    pub x10: i8,
+    pub x11: i8,
+}
+
+/// `ftData->x1C[slot]` (`ftData_x1C`): the slot's first part, its part list and its AnimJoints.
+#[derive(Clone, Debug)]
+pub struct PartAnimData {
+    pub x0: usize,
+    pub parts: Vec<u8>,
+    /// `x8`: the AnimJoint* array (a DAT offset; entry `i` is pose `i`'s tree).
+    pub x8: u32,
+}
+
 pub struct Skeleton {
     pub tree: Tree,
     pub root: JObjId,
     pub parts: Vec<Bone>,
+    /// `x8AC_animSkeleton` / `parts[i].x4_jobj2`: the second instance of the costume tree.
+    pub tree2: Tree,
+    pub parts2: Vec<JObjId>,
+    /// `fp->x8B0[5]`.
+    pub x8b0: [PartSlot; 5],
     /// The costume joint descriptors in `ftAnim_GetNextJointInTree` order (DFS, no INSTANCE check).
     joints: Vec<JointDesc>,
     /// `ftData->x8->x10` (the part `ftCommon_8007F6A4` rescales).
@@ -206,7 +230,35 @@ impl Skeleton {
             stack.push(jd.next);
             stack.push(jd.child);
         }
-        Ok(Skeleton { tree, root, parts, joints, x8_x10, inv_model_scaling: 1.0 / model_scaling })
+        // ftAnim_8006FE48: x8AC_animSkeleton = ftParts_8007482C(costume joint) (HSD_JObjLoadJoint
+        // under the ftIntpJObj class: same SRT/flags), parts[i].x4_jobj2 in the same walk order.
+        let mut tree2 = Tree::new();
+        let root2 = load_joint_sub(&mut tree2, d, root_joint, None)?.ok_or("costume joint is NULL")?;
+        let mut parts2 = Vec::new();
+        let mut j = Some(root2);
+        while let Some(x) = j {
+            parts2.push(x);
+            let o = tree2.get(x);
+            if o.flags & hj::JOBJ_INSTANCE == 0 && o.child.is_some() {
+                j = o.child;
+                continue;
+            }
+            if o.next.is_some() {
+                j = o.next;
+                continue;
+            }
+            let mut y = x;
+            j = loop {
+                let Some(p) = tree2.get(y).parent else { break None };
+                if let Some(n) = tree2.get(p).next {
+                    break Some(n);
+                }
+                y = p;
+            };
+        }
+        // ftAnim_8007077C: every slot's x10 / x11 = -1.
+        let slot = PartSlot { x4: 0.0, x8: 0.0, xc: 0.0, x10: -1, x11: -1 };
+        Ok(Skeleton { tree, root, parts, tree2, parts2, x8b0: [slot; 5], joints, x8_x10, inv_model_scaling: 1.0 / model_scaling })
     }
 
     pub fn part(&self, i: usize) -> JObjId {
@@ -320,6 +372,135 @@ impl Skeleton {
     /// `ftAnim_8006F3DC`, no blend: the first animated part's AObj frame.
     pub fn curr_frame(&self) -> Option<f32> {
         self.parts.iter().filter(|b| !b.b0 && !b.b5).find_map(|b| self.tree.get(b.joint).aobj.as_ref().map(|a| a.curr_frame))
+    }
+
+    /// `ftAnim_ApplyPartAnim(gobj, slot, anim, blend)` (+ `ftAnim_80070904`): the hand pose's
+    /// AnimJoint on the second skeleton's parts, played to frame 0, and those parts marked
+    /// `flags_b5` (the body animation skips them; ftAnim_800707B0 copies the pose over).
+    pub fn apply_part_anim(&mut self, d: &[u8], data: &PartAnimData, slot: usize, anim: i32, blend: f32) -> Result<(), String> {
+        let aj_root = be32(d, data.x8 + 4 * anim as u32);
+        let s = &mut self.x8b0[slot];
+        s.x11 = anim as i8;
+        s.x4 = blend;
+        s.x8 = 0.0;
+        if blend != 0.0 {
+            return Err("ftAnim_ApplyPartAnim with a blend (lb_8000BFF0 / lb_8000C490) not wired".into());
+        }
+        s.xc = 0.0;
+        // ftAnim_80070904: the AnimJoint tree in ftAnim_GetNextAnimJointInTree order.
+        let mut i = data.x0;
+        let mut stack = vec![aj_root];
+        let mut g = AObjGlobals::default();
+        while let Some(aj) = stack.pop() {
+            if aj == 0 {
+                continue;
+            }
+            if i >= self.parts.len() {
+                break; // TARGET_PC: past the fighter's parts
+            }
+            let aobjdesc = be32(d, aj + 8);
+            if !self.parts[i].b0 && aobjdesc != 0 {
+                let j2 = self.parts2[i];
+                // HSD_JObjAddAnim(jobj2, animjoint, NULL, NULL).
+                let mut fobj = Vec::new();
+                let mut fo = be32(d, aobjdesc + 8);
+                while fo != 0 {
+                    let ad = be32(d, fo + 16) as usize;
+                    fobj.push(melee_runtime::fobj::HsdFObjDesc {
+                        length: be32(d, fo + 4),
+                        startframe: bef(d, fo + 8),
+                        type_: d[fo as usize + 12],
+                        frac_value: d[fo as usize + 13],
+                        frac_slope: d[fo as usize + 14],
+                        ad: Arc::from(&d[ad..]),
+                    });
+                    fo = be32(d, fo);
+                }
+                if be32(d, aobjdesc + 12) != 0 {
+                    return Err("hand-pose AObjDesc with an obj_id: not wired".into());
+                }
+                let desc = melee_runtime::aobj::HsdAObjDesc { flags: be32(d, aobjdesc), end_frame: bef(d, aobjdesc + 4), fobjdesc: fobj, obj_id: 0 };
+                let mut a: HsdAObj<JObjId> = HsdAObj::load_desc(&desc, |_| None);
+                jobj_rt::sort_anim(Some(&mut a));
+                self.tree2.get_mut(j2).aobj = Some(a);
+                if be32(d, aj + 0x10) & 1 != 0 {
+                    self.tree2.set_flags(Some(j2), hj::JOBJ_CLASSICAL_SCALE);
+                } else {
+                    self.tree2.clear_flags(Some(j2), hj::JOBJ_CLASSICAL_SCALE);
+                }
+                if be32(d, aj + 0xC) != 0 {
+                    return Err("hand-pose AnimJoint with RObj anims: not wired".into());
+                }
+                self.tree2.clear_flags(Some(j2), hj::JOBJ_USE_QUATERNION);
+                if let Some(a) = &mut self.tree2.get_mut(j2).aobj {
+                    a.req_anim(0.0);
+                }
+                jobj_anim(&mut self.tree2, j2, &mut g)?;
+                self.parts[i].b5 = true;
+            }
+            i += 1;
+            // ftAnim_GetNextAnimJointInTree: child first, then next.
+            stack.push(be32(d, aj + 4));
+            stack.push(be32(d, aj));
+        }
+        Ok(())
+    }
+
+    /// `ftAnim_800707B0`: copy (or blend) the active hand poses onto the body.
+    pub fn part_anim_update(&mut self, data: &[Option<PartAnimData>; 5]) -> Result<(), String> {
+        for i in 0..5 {
+            let s = &mut self.x8b0[i];
+            if s.x11 == -1 {
+                continue;
+            }
+            let pd = data[i].as_ref().ok_or("ftData->x1C slot missing")?;
+            s.x8 += s.xc;
+            let var_f29 = if s.x4 <= s.x8 {
+                s.x8 = s.x4;
+                0.0
+            } else {
+                let t = s.xc / (s.xc + (s.x4 - s.x8));
+                1.0 - t
+            };
+            for &part in &pd.parts {
+                let part = part as usize;
+                if self.parts[part].b5 {
+                    if var_f29 != 0.0 {
+                        return Err("ftAnim_800707B0 blend (lb_8000C490) not wired".into());
+                    }
+                    // lbCopyJObjSRT(x4_jobj2, joint).
+                    let src = self.tree2.get(self.parts2[part]).clone();
+                    let dj = self.parts[part].joint;
+                    {
+                        let o = self.tree.get_mut(dj);
+                        o.rotate = src.rotate;
+                        o.scale = src.scale;
+                        o.translate = src.translate;
+                    }
+                    if src.flags & hj::JOBJ_USE_QUATERNION != 0 {
+                        self.tree.set_flags(Some(dj), hj::JOBJ_USE_QUATERNION);
+                    } else {
+                        self.tree.clear_flags(Some(dj), hj::JOBJ_USE_QUATERNION);
+                    }
+                    self.tree.set_flags(Some(dj), hj::JOBJ_MTX_DIRTY);
+                }
+            }
+        }
+        Ok(())
+    }
+
+    /// `ftAnim_80070F28`: end every active slot (its parts lose `flags_b5`).
+    pub fn clear_part_anims(&mut self, data: &[Option<PartAnimData>; 5]) {
+        for i in 0..5 {
+            if self.x8b0[i].x11 != -1 {
+                if let Some(pd) = &data[i] {
+                    for &part in &pd.parts {
+                        self.parts[part as usize].b5 = false;
+                    }
+                }
+                self.x8b0[i].x11 = -1;
+            }
+        }
     }
 
     /// `ftAnim_IsFramesRemaining`, no blend: some animated part's AObj still runs

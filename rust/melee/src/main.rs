@@ -8,7 +8,7 @@
 //! ```text
 //! melee selftest
 //! melee hashlog --words GOLDEN.csv --out CANDIDATE.csv [--frames N]
-//! melee golden --iso DISC.iso --out CANDIDATE.csv [--scenario pad_falcon_fox_fd] [--frames N] [--seed-from GOLDEN.csv]
+//! melee golden --iso DISC.iso --out CANDIDATE.csv [--scenario pad_falcon_fox_fd] [--frames N] [--seed-from GOLDEN.csv] [--audio]
 //! ```
 //!
 //! `hashlog --words` is a PLUMBING check, not a simulation: the per-fighter and item words
@@ -173,12 +173,27 @@ fn main() -> ExitCode {
     }
 }
 
+/// Boot melee_audio from the disc (smash2.sem + main.ssm) and set the fighter sfx hooks to it.
+fn install_audio(iso: &str) -> Result<(), String> {
+    let mut snd = melee_audio::Sound::new();
+    snd.boot(Box::new(melee_audio::sound::DiscFs::open(iso)?), [2045824, 0x180000, 0x700000 - 2045824 - 0x180000])?;
+    melee_audio::sim::install(snd);
+    use melee_fighter::hooks as h;
+    unsafe {
+        h::LBAUDIOAX_800237A8 = Some(melee_audio::sim::lbaudioax_800237a8);
+        h::LBAUDIOAX_80023870 = Some(melee_audio::sim::lbaudioax_80023870);
+        h::LBAUDIOAX_80024B94 = Some(melee_audio::sim::lbaudioax_80024b94);
+    }
+    eprintln!("melee: audio booted (smash2.sem + main.ssm), fighter sfx hooks set");
+    Ok(())
+}
+
 /// `melee golden`: the native VS match for a golden scenario (vs_match.rs).
 fn golden(args: &[String]) -> ExitCode {
     let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
     let iso = get("--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok());
     let (Some(iso), Some(out)) = (iso, get("--out")) else {
-        eprintln!("usage: melee golden --iso DISC.iso --out CANDIDATE.csv [--scenario pad_falcon_fox_fd] [--frames N]");
+        eprintln!("usage: melee golden --iso DISC.iso --out CANDIDATE.csv [--scenario pad_falcon_fox_fd] [--frames N] [--audio]");
         return ExitCode::from(2);
     };
     let scenario = get("--scenario").unwrap_or_else(|| "pad_falcon_fox_fd".into());
@@ -214,9 +229,19 @@ fn golden(args: &[String]) -> ExitCode {
         sim: &'a mut vs_match::VsMatch,
         golden: Option<WordReplay>,
     }
+    // `--audio`: boot the ported sound stack from the same disc and route the fighter code's
+    // lbAudioAx hooks to it; the DSP runs on melee_audio::sim::virtual_frame's fixed schedule.
+    if args.iter().any(|a| a == "--audio") {
+        if let Err(e) = install_audio(&iso) {
+            eprintln!("melee: --audio: {e}");
+            return ExitCode::FAILURE;
+        }
+    }
     impl Sim for SeedFrom<'_> {
         fn step(&mut self) -> bool {
-            self.sim.step()
+            let r = self.sim.step();
+            melee_audio::sim::virtual_frame();
+            r
         }
         fn frame_words(&self) -> FrameWords {
             let mut w = self.sim.frame_words();

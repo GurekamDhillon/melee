@@ -14,4 +14,6 @@ device = ["dep:cpal"]
 
 [dependencies]
 melee_types.workspace = true
+# The game's own powf (lb_00CE.c) and MSL sqrtf (math_ppc.h), which axdriver.c / synth.c call.
+melee_runtime.workspace = true
 cpal = { version = "0.15.3", optional = true }

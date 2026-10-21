@@ -8,12 +8,19 @@ pub const VPB_PRIORITY: usize = 0x0C;
 pub const VPB_CALLBACK: usize = 0x10;
 pub const VPB_USER_CONTEXT: usize = 0x14;
 pub const VPB_INDEX: usize = 0x18;
+/// `AXVPB.sync` (u32; synth.c clears bit 0x400 and tests 0x20).
+pub const VPB_SYNC: usize = 0x1C;
 /// `AXVPB.pb`.
 pub const VPB_PB: usize = 0x138;
 /// `pb.state` (u16).
 pub const VPB_PB_STATE: usize = VPB_PB + 0x0E;
 /// `pb.itd.flag` (u16).
 pub const VPB_ITD_FLAG: usize = VPB_PB + 0x36;
+/// `AXPBITD` fields relative to `pb.itd` (= [`VPB_ITD_FLAG`]).
+pub const ITD_SHIFT_L: usize = 0x06;
+pub const ITD_SHIFT_R: usize = 0x08;
+pub const ITD_TARGET_L: usize = 0x0A;
+pub const ITD_TARGET_R: usize = 0x0C;
 /// `pb.ve.currentVolume` (u16).
 pub const VPB_VE_VOL: usize = VPB_PB + 0x64;
 /// `pb.addr.currentAddressHi/Lo` (u32).
@@ -85,6 +92,11 @@ mod tests {
         assert_eq!(off::<_AXVPB>("userContext"), VPB_USER_CONTEXT);
         assert_eq!(off::<_AXVPB>("index"), VPB_INDEX);
         assert_eq!(off::<_AXVPB>("pb"), VPB_PB);
+        assert_eq!(off::<_AXVPB>("sync"), VPB_SYNC);
+        assert_eq!(off::<_AXPBITD>("shiftL"), ITD_SHIFT_L);
+        assert_eq!(off::<_AXPBITD>("shiftR"), ITD_SHIFT_R);
+        assert_eq!(off::<_AXPBITD>("targetShiftL"), ITD_TARGET_L);
+        assert_eq!(off::<_AXPBITD>("targetShiftR"), ITD_TARGET_R);
         assert!(_AXVPB::GC_SIZE as usize <= VPB_SIZE);
         assert_eq!(VPB_PB + off::<_AXPB>("state"), VPB_PB_STATE);
         assert_eq!(VPB_PB + off::<_AXPB>("itd") + off::<_AXPBITD>("flag"), VPB_ITD_FLAG);

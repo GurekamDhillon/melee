@@ -1104,6 +1104,7 @@ dependencies = [
 name = "melee"
 version = "0.1.0"
 dependencies = [
+ "melee_audio",
  "melee_chara",
  "melee_core",
  "melee_fighter",
@@ -1119,6 +1120,7 @@ name = "melee_audio"
 version = "0.1.0"
 dependencies = [
  "cpal",
+ "melee_runtime",
  "melee_types",
 ]
 

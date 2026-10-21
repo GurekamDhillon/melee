@@ -23,6 +23,7 @@ MINE = {
                              (CA + "ftcaptainspecialn.c", "fn:ftCa_SpecialAirN_IASA", None)],
     "tu_ftcaptainspecials": [(CA + "ftcaptainspecials.c", "fn:ftCa_SpecialAirSStart_Phys", None),
                              (CA + "ftcaptainspecials.c", "fn:ftCa_SpecialAirS_Phys", None)],
+    "tu_ftclink": [("src/melee/ft/kinds/ftCLink/ftclink.c", "fn:ftCl_Init_80149114", None)],
 }
 run.EXTRACTS.update(MINE)
 run.HERE = HERE

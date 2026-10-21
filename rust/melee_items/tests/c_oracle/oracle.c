@@ -82,6 +82,7 @@ static Item it;
 #include "round9.c"
 #include "round10.c"
 #include "round11.c"
+#include "round12.c"
 
 int main(void)
 {
@@ -149,5 +150,6 @@ int main(void)
     round9();
     round10();
     round11();
+    round12();
     return 0;
 }

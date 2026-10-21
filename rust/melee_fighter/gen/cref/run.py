@@ -28,9 +28,12 @@ FLAGS = ["--target=x86_64-pc-windows-msvc", "-std=c99", "-nostdinc", "-fno-built
          "-isystem", str(ROOT / "libs/dolphin/include"), "-isystem", str(ROOT / "libs/dolphin/src"),
          "-isystem", GALE, "-include", str(ROOT / "src/MSL/math_ppc.h")]
 
-# name -> list of (game source, first line starting with, stop before line starting with)
+# name -> list of (game source, first line starting with, stop before line starting with | None = EOF)
 EXTRACTS = {
     "nh": [("src/melee/ft/fighter.c", "static u32 nh_Mix(", "/* Kept in game memory")],
+    "stale": [("src/melee/pl/player.c", "static inline void Player_CheckSlot(", "/// Matches when everything"),
+              ("src/melee/pl/player.c", "plActionStats* Player_GetActionStats(", "struct pl_x5EC_t* Player_GetUnk6A8Ptr("),
+              ("src/melee/ft/ft_0881.c", "void ft_800890BC(", None)],
     "ftcommon": [("src/melee/ft/ftcommon.c", "void ftCommon_CalcGroundAccel_Deaccel(", "void ftCommon_UnlockECB("),
                  ("src/melee/ft/ftcommon.c", "void ftCommon_UpdateFacing(", "void ftCommon_8007DB24(")],
 }
@@ -41,7 +44,7 @@ def extract(name):
     for src, start, stop in EXTRACTS.get(name, []):
         lines = (ROOT / src).read_text(encoding="utf-8").splitlines()
         i = next(k for k, l in enumerate(lines) if l.startswith(start))
-        j = next(k for k in range(i, len(lines)) if lines[k].startswith(stop))
+        j = len(lines) if stop is None else next(k for k in range(i, len(lines)) if lines[k].startswith(stop))
         parts.append(f"/* extracted from {src}:{i + 1}-{j} by gen/cref/run.py */\n" + "\n".join(lines[i:j]) + "\n")
     (BUILD / f"{name}_extract.inc").write_text("".join(parts), encoding="utf-8")
 

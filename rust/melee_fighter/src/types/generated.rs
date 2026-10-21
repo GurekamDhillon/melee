@@ -4,6 +4,115 @@
 use core::ffi::c_void;
 use melee_core::gc::{GcField, GcLayout};
 
+/// `struct DObjList` (src/melee/ft/dobjlist.h:14); GameCube size 0x8.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct DObjList {
+    pub count: u32,
+    pub data: *mut *mut HSD_DObj,
+}
+impl GcLayout for DObjList {
+    const GC_NAME: &'static str = "DObjList";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("count", 0x0, 4, "u32"),
+        GcField::new("data", 0x4, 4, "HSD_DObj **"),
+    ];
+}
+impl DObjList {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct CostumeTObjList` (src/melee/ft/dobjlist.h:19); GameCube size 0x1c.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct CostumeTObjList {
+    pub n_costume_tobjs: u32,
+    pub x5D0: *mut u16,
+    pub costume_tobjs: [*mut HSD_TObj; 5],
+}
+impl GcLayout for CostumeTObjList {
+    const GC_NAME: &'static str = "CostumeTObjList";
+    const GC_SIZE: u32 = 0x1c;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("n_costume_tobjs", 0x0, 4, "u32"),
+        GcField::new("x5D0", 0x4, 4, "u16 *"),
+        GcField::new("costume_tobjs", 0x8, 20, "HSD_TObj *[5]"),
+    ];
+}
+impl CostumeTObjList {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct TempS` (src/melee/ft/dobjlist.h:25); GameCube size 0x8.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct TempS {
+    pub x0: i32,
+    pub x4: *mut u8,
+}
+impl GcLayout for TempS {
+    const GC_NAME: &'static str = "TempS";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "int"),
+        GcField::new("x4", 0x4, 4, "u8 *"),
+    ];
+}
+impl TempS {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct FtPartsVisLookup` (src/melee/ft/dobjlist.h:30); GameCube size 0x8.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct FtPartsVisLookup {
+    pub x0: i32,
+    pub x4: *mut TempS,
+}
+impl GcLayout for FtPartsVisLookup {
+    const GC_NAME: &'static str = "FtPartsVisLookup";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "int"),
+        GcField::new("x4", 0x4, 4, "TempS *"),
+    ];
+}
+impl FtPartsVisLookup {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct FtPartsVis` (src/melee/ft/dobjlist.h:35); GameCube size 0x20.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct FtPartsVis {
+    pub model_num: u32,
+    pub cleared: [u8; 5],
+    pub xC: [*mut FtPartsVisLookup; 5],
+}
+impl GcLayout for FtPartsVis {
+    const GC_NAME: &'static str = "FtPartsVis";
+    const GC_SIZE: u32 = 0x20;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("model_num", 0x0, 4, "u32"),
+        GcField::new("cleared", 0x4, 5, "u8[5]"),
+        GcField::new("xC", 0xc, 20, "FtPartsVisLookup *[5]"),
+    ];
+}
+impl FtPartsVis {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
 /// `struct WaitStruct` (src/melee/ft/ftwaitanim.h:6); GameCube size 0x8.
 #[repr(C)]
 #[derive(Clone, Copy)]
@@ -1236,115 +1345,6 @@ impl GcLayout for ftGameWatch_SpecialLwVars {
     ];
 }
 impl ftGameWatch_SpecialLwVars {
-    /// All-zero value (C `memset(0)`).
-    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
-}
-
-/// `struct DObjList` (src/melee/ft/dobjlist.h:14); GameCube size 0x8.
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct DObjList {
-    pub count: u32,
-    pub data: *mut *mut HSD_DObj,
-}
-impl GcLayout for DObjList {
-    const GC_NAME: &'static str = "DObjList";
-    const GC_SIZE: u32 = 0x8;
-    const GC_ALIGN: u32 = 4;
-    const GC_FIELDS: &'static [GcField] = &[
-        GcField::new("count", 0x0, 4, "u32"),
-        GcField::new("data", 0x4, 4, "HSD_DObj **"),
-    ];
-}
-impl DObjList {
-    /// All-zero value (C `memset(0)`).
-    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
-}
-
-/// `struct CostumeTObjList` (src/melee/ft/dobjlist.h:19); GameCube size 0x1c.
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct CostumeTObjList {
-    pub n_costume_tobjs: u32,
-    pub x5D0: *mut u16,
-    pub costume_tobjs: [*mut HSD_TObj; 5],
-}
-impl GcLayout for CostumeTObjList {
-    const GC_NAME: &'static str = "CostumeTObjList";
-    const GC_SIZE: u32 = 0x1c;
-    const GC_ALIGN: u32 = 4;
-    const GC_FIELDS: &'static [GcField] = &[
-        GcField::new("n_costume_tobjs", 0x0, 4, "u32"),
-        GcField::new("x5D0", 0x4, 4, "u16 *"),
-        GcField::new("costume_tobjs", 0x8, 20, "HSD_TObj *[5]"),
-    ];
-}
-impl CostumeTObjList {
-    /// All-zero value (C `memset(0)`).
-    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
-}
-
-/// `struct TempS` (src/melee/ft/dobjlist.h:25); GameCube size 0x8.
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct TempS {
-    pub x0: i32,
-    pub x4: *mut u8,
-}
-impl GcLayout for TempS {
-    const GC_NAME: &'static str = "TempS";
-    const GC_SIZE: u32 = 0x8;
-    const GC_ALIGN: u32 = 4;
-    const GC_FIELDS: &'static [GcField] = &[
-        GcField::new("x0", 0x0, 4, "int"),
-        GcField::new("x4", 0x4, 4, "u8 *"),
-    ];
-}
-impl TempS {
-    /// All-zero value (C `memset(0)`).
-    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
-}
-
-/// `struct FtPartsVisLookup` (src/melee/ft/dobjlist.h:30); GameCube size 0x8.
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct FtPartsVisLookup {
-    pub x0: i32,
-    pub x4: *mut TempS,
-}
-impl GcLayout for FtPartsVisLookup {
-    const GC_NAME: &'static str = "FtPartsVisLookup";
-    const GC_SIZE: u32 = 0x8;
-    const GC_ALIGN: u32 = 4;
-    const GC_FIELDS: &'static [GcField] = &[
-        GcField::new("x0", 0x0, 4, "int"),
-        GcField::new("x4", 0x4, 4, "TempS *"),
-    ];
-}
-impl FtPartsVisLookup {
-    /// All-zero value (C `memset(0)`).
-    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
-}
-
-/// `struct FtPartsVis` (src/melee/ft/dobjlist.h:35); GameCube size 0x20.
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct FtPartsVis {
-    pub model_num: u32,
-    pub cleared: [u8; 5],
-    pub xC: [*mut FtPartsVisLookup; 5],
-}
-impl GcLayout for FtPartsVis {
-    const GC_NAME: &'static str = "FtPartsVis";
-    const GC_SIZE: u32 = 0x20;
-    const GC_ALIGN: u32 = 4;
-    const GC_FIELDS: &'static [GcField] = &[
-        GcField::new("model_num", 0x0, 4, "u32"),
-        GcField::new("cleared", 0x4, 5, "u8[5]"),
-        GcField::new("xC", 0xc, 20, "FtPartsVisLookup *[5]"),
-    ];
-}
-impl FtPartsVis {
     /// All-zero value (C `memset(0)`).
     pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
 }
@@ -10893,6 +10893,407 @@ impl ftCo_803C6594_t {
     pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
 }
 
+/// `struct Fighter_804D64FC_t` (src/melee/ft/fighter.h:19); GameCube size 0x28.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Fighter_804D64FC_t {
+    pub cmdscripts: *mut *mut u8,
+    pub x4: *mut *mut c_void,
+    pub x8: *mut *mut c_void,
+    pub xC: *mut *mut c_void,
+    pub x10: *mut *mut c_void,
+    pub x14: *mut *mut c_void,
+    pub x18: *mut *mut c_void,
+    pub x1C: *mut *mut c_void,
+    pub x20: *mut f32,
+    pub x24: *mut c_void,
+}
+impl GcLayout for Fighter_804D64FC_t {
+    const GC_NAME: &'static str = "Fighter_804D64FC_t";
+    const GC_SIZE: u32 = 0x28;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("cmdscripts", 0x0, 4, "u8 **"),
+        GcField::new("x4", 0x4, 4, "void **"),
+        GcField::new("x8", 0x8, 4, "void **"),
+        GcField::new("xC", 0xc, 4, "void **"),
+        GcField::new("x10", 0x10, 4, "void **"),
+        GcField::new("x14", 0x14, 4, "void **"),
+        GcField::new("x18", 0x18, 4, "void **"),
+        GcField::new("x1C", 0x1c, 4, "void **"),
+        GcField::new("x20", 0x20, 4, "float *"),
+        GcField::new("x24", 0x24, 4, "void *"),
+    ];
+}
+impl Fighter_804D64FC_t {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct Fighter_804D6518_t` (src/melee/ft/fighter.h:93); GameCube size 0x8.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Fighter_804D6518_t {
+    pub x0: f32,
+    pub x4: f32,
+}
+impl GcLayout for Fighter_804D6518_t {
+    const GC_NAME: &'static str = "Fighter_804D6518_t";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "f32"),
+        GcField::new("x4", 0x4, 4, "f32"),
+    ];
+}
+impl Fighter_804D6518_t {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct Fighter_804D651C_t` (src/melee/ft/fighter.h:98); GameCube size 0x24.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Fighter_804D651C_t {
+    pub x0: f32,
+    pub x4: f32,
+    pub x8: f32,
+    pub xC: f32,
+    pub x10: f32,
+    pub x14: f32,
+    pub x18: f32,
+    pub x1C: f32,
+    pub x20: f32,
+}
+impl GcLayout for Fighter_804D651C_t {
+    const GC_NAME: &'static str = "Fighter_804D651C_t";
+    const GC_SIZE: u32 = 0x24;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "f32"),
+        GcField::new("x4", 0x4, 4, "f32"),
+        GcField::new("x8", 0x8, 4, "f32"),
+        GcField::new("xC", 0xc, 4, "f32"),
+        GcField::new("x10", 0x10, 4, "f32"),
+        GcField::new("x14", 0x14, 4, "f32"),
+        GcField::new("x18", 0x18, 4, "f32"),
+        GcField::new("x1C", 0x1c, 4, "f32"),
+        GcField::new("x20", 0x20, 4, "f32"),
+    ];
+}
+impl Fighter_804D651C_t {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct Fighter_804D6520_t` (src/melee/ft/fighter.h:110); GameCube size 0x3c.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Fighter_804D6520_t {
+    pub x0: f32,
+    pub x4: f32,
+    pub x8: f32,
+    pub xC: f32,
+    pub x10: f32,
+    pub x14: f32,
+    pub x18: f32,
+    pub x1C: f32,
+    pub x20: f32,
+    pub x24: f32,
+    pub x28: f32,
+    pub x2C: f32,
+    pub x30: f32,
+    pub x34: f32,
+    pub x38: f32,
+}
+impl GcLayout for Fighter_804D6520_t {
+    const GC_NAME: &'static str = "Fighter_804D6520_t";
+    const GC_SIZE: u32 = 0x3c;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "f32"),
+        GcField::new("x4", 0x4, 4, "f32"),
+        GcField::new("x8", 0x8, 4, "f32"),
+        GcField::new("xC", 0xc, 4, "f32"),
+        GcField::new("x10", 0x10, 4, "f32"),
+        GcField::new("x14", 0x14, 4, "f32"),
+        GcField::new("x18", 0x18, 4, "f32"),
+        GcField::new("x1C", 0x1c, 4, "f32"),
+        GcField::new("x20", 0x20, 4, "f32"),
+        GcField::new("x24", 0x24, 4, "f32"),
+        GcField::new("x28", 0x28, 4, "f32"),
+        GcField::new("x2C", 0x2c, 4, "f32"),
+        GcField::new("x30", 0x30, 4, "f32"),
+        GcField::new("x34", 0x34, 4, "f32"),
+        GcField::new("x38", 0x38, 4, "f32"),
+    ];
+}
+impl Fighter_804D6520_t {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct Fighter_804D6524_t` (src/melee/ft/fighter.h:128); GameCube size 0x9c.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Fighter_804D6524_t {
+    pub x0: f32,
+    pub x4: f32,
+    pub x8: f32,
+    pub xC: f32,
+    pub x10: f32,
+    pub x14: f32,
+    pub x18: f32,
+    pub x1C: f32,
+    pub x20: f32,
+    pub x24: f32,
+    pub x28: f32,
+    pub x2C: f32,
+    pub x30: f32,
+    pub x34: f32,
+    pub x38: f32,
+    pub x3C: f32,
+    pub x40: f32,
+    pub x44: f32,
+    pub x48: f32,
+    pub x4C: f32,
+    pub x50: f32,
+    pub x54: f32,
+    pub x58: f32,
+    pub x5C: f32,
+    pub x60: f32,
+    pub x64: f32,
+    pub x68: f32,
+    pub x6C: f32,
+    pub x70: f32,
+    pub x74: f32,
+    pub x78: f32,
+    pub x7C: f32,
+    pub x80: f32,
+    pub x84: f32,
+    pub x88: f32,
+    pub x8C: f32,
+    pub x90: f32,
+    pub x94: f32,
+    pub x98: f32,
+}
+impl GcLayout for Fighter_804D6524_t {
+    const GC_NAME: &'static str = "Fighter_804D6524_t";
+    const GC_SIZE: u32 = 0x9c;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "float"),
+        GcField::new("x4", 0x4, 4, "float"),
+        GcField::new("x8", 0x8, 4, "float"),
+        GcField::new("xC", 0xc, 4, "float"),
+        GcField::new("x10", 0x10, 4, "float"),
+        GcField::new("x14", 0x14, 4, "float"),
+        GcField::new("x18", 0x18, 4, "float"),
+        GcField::new("x1C", 0x1c, 4, "float"),
+        GcField::new("x20", 0x20, 4, "float"),
+        GcField::new("x24", 0x24, 4, "float"),
+        GcField::new("x28", 0x28, 4, "float"),
+        GcField::new("x2C", 0x2c, 4, "float"),
+        GcField::new("x30", 0x30, 4, "float"),
+        GcField::new("x34", 0x34, 4, "float"),
+        GcField::new("x38", 0x38, 4, "float"),
+        GcField::new("x3C", 0x3c, 4, "float"),
+        GcField::new("x40", 0x40, 4, "float"),
+        GcField::new("x44", 0x44, 4, "float"),
+        GcField::new("x48", 0x48, 4, "float"),
+        GcField::new("x4C", 0x4c, 4, "float"),
+        GcField::new("x50", 0x50, 4, "float"),
+        GcField::new("x54", 0x54, 4, "float"),
+        GcField::new("x58", 0x58, 4, "float"),
+        GcField::new("x5C", 0x5c, 4, "float"),
+        GcField::new("x60", 0x60, 4, "float"),
+        GcField::new("x64", 0x64, 4, "float"),
+        GcField::new("x68", 0x68, 4, "float"),
+        GcField::new("x6C", 0x6c, 4, "float"),
+        GcField::new("x70", 0x70, 4, "float"),
+        GcField::new("x74", 0x74, 4, "float"),
+        GcField::new("x78", 0x78, 4, "float"),
+        GcField::new("x7C", 0x7c, 4, "float"),
+        GcField::new("x80", 0x80, 4, "float"),
+        GcField::new("x84", 0x84, 4, "float"),
+        GcField::new("x88", 0x88, 4, "float"),
+        GcField::new("x8C", 0x8c, 4, "float"),
+        GcField::new("x90", 0x90, 4, "float"),
+        GcField::new("x94", 0x94, 4, "float"),
+        GcField::new("x98", 0x98, 4, "float"),
+    ];
+}
+impl Fighter_804D6524_t {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct Fighter_ShakeTable_t` (src/melee/ft/fighter.h:170); GameCube size 0x8.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Fighter_ShakeTable_t {
+    pub x0: *mut Vec2,
+    pub x4: i32,
+}
+impl GcLayout for Fighter_ShakeTable_t {
+    const GC_NAME: &'static str = "Fighter_ShakeTable_t";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "Vec2 *"),
+        GcField::new("x4", 0x4, 4, "int"),
+    ];
+}
+impl Fighter_ShakeTable_t {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct Fighter_804D6540_x0_t` (src/melee/ft/fighter.h:183); GameCube size 0x4.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Fighter_804D6540_x0_t {
+    pub x0: u8,
+    pub x1: u8,
+    pub x2: u8,
+    pub x3: u8,
+}
+impl GcLayout for Fighter_804D6540_x0_t {
+    const GC_NAME: &'static str = "Fighter_804D6540_x0_t";
+    const GC_SIZE: u32 = 0x4;
+    const GC_ALIGN: u32 = 1;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 1, "u8"),
+        GcField::new("x1", 0x1, 1, "u8"),
+        GcField::new("x2", 0x2, 1, "u8"),
+        GcField::new("x3", 0x3, 1, "u8"),
+    ];
+}
+impl Fighter_804D6540_x0_t {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct Fighter_804D6540_t` (src/melee/ft/fighter.h:189); GameCube size 0x8.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Fighter_804D6540_t {
+    pub x0: *mut Fighter_804D6540_x0_t,
+    pub x4: i32,
+}
+impl GcLayout for Fighter_804D6540_t {
+    const GC_NAME: &'static str = "Fighter_804D6540_t";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "Fighter_804D6540_x0_t *"),
+        GcField::new("x4", 0x4, 4, "int"),
+    ];
+}
+impl Fighter_804D6540_t {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct TechAiPolicy` (src/melee/ft/technical_ai_policy.h:6); GameCube size 0x38.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct TechAiPolicy {
+    pub seed: u32,
+    pub skill: i32,
+    pub delay: i32,
+    pub wait: i32,
+    pub r#type: i32,
+    pub motion: i32,
+    pub fired: i32,
+    pub accepted: i32,
+    pub cooldown: i32,
+    pub opportunities: i32,
+    pub lcancels: i32,
+    pub techs: i32,
+    pub misses: i32,
+    pub last_event: i32,
+}
+impl GcLayout for TechAiPolicy {
+    const GC_NAME: &'static str = "TechAiPolicy";
+    const GC_SIZE: u32 = 0x38;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("seed", 0x0, 4, "unsigned int"),
+        GcField::new("skill", 0x4, 4, "int"),
+        GcField::new("delay", 0x8, 4, "int"),
+        GcField::new("wait", 0xc, 4, "int"),
+        GcField::new("type", 0x10, 4, "int"),
+        GcField::new("motion", 0x14, 4, "int"),
+        GcField::new("fired", 0x18, 4, "int"),
+        GcField::new("accepted", 0x1c, 4, "int"),
+        GcField::new("cooldown", 0x20, 4, "int"),
+        GcField::new("opportunities", 0x24, 4, "int"),
+        GcField::new("lcancels", 0x28, 4, "int"),
+        GcField::new("techs", 0x2c, 4, "int"),
+        GcField::new("misses", 0x30, 4, "int"),
+        GcField::new("last_event", 0x34, 4, "int"),
+    ];
+}
+impl TechAiPolicy {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct TechAiObservation` (src/melee/ft/technical_ai_policy.h:11); GameCube size 0x18.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct TechAiObservation {
+    pub r#type: i32,
+    pub motion: i32,
+    pub floor: i32,
+    pub fresh_shoulder: i32,
+    pub tech_unlocked: i32,
+    pub eta: f32,
+}
+impl GcLayout for TechAiObservation {
+    const GC_NAME: &'static str = "TechAiObservation";
+    const GC_SIZE: u32 = 0x18;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("type", 0x0, 4, "int"),
+        GcField::new("motion", 0x4, 4, "int"),
+        GcField::new("floor", 0x8, 4, "int"),
+        GcField::new("fresh_shoulder", 0xc, 4, "int"),
+        GcField::new("tech_unlocked", 0x10, 4, "int"),
+        GcField::new("eta", 0x14, 4, "float"),
+    ];
+}
+impl TechAiObservation {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _m2c_stack_ftCo_800A3554` (src/melee/ft/kinds/ftCommon/ftCo_0A01.h:10); GameCube size 0x38.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _m2c_stack_ftCo_800A3554 {
+    pub pad_0: [i8; 16],
+    pub f: f32,
+    pub vec: Vec,
+    pub pad_20: [i8; 24],
+}
+impl GcLayout for _m2c_stack_ftCo_800A3554 {
+    const GC_NAME: &'static str = "_m2c_stack_ftCo_800A3554";
+    const GC_SIZE: u32 = 0x38;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("pad_0", 0x0, 16, "char[16]"),
+        GcField::new("f", 0x10, 4, "f32"),
+        GcField::new("vec", 0x14, 12, "Vec3"),
+        GcField::new("pad_20", 0x20, 24, "char[24]"),
+    ];
+}
+impl _m2c_stack_ftCo_800A3554 {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
 /// `struct plAllocInfo` (src/melee/pl/types.h:10); GameCube size 0x8.
 #[repr(C)]
 #[derive(Clone, Copy)]
@@ -11574,6 +11975,209 @@ impl GcLayout for pl_804D6470_t {
     ];
 }
 impl pl_804D6470_t {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _StaticPlayer` (src/melee/pl/player.h:19); GameCube size 0xe90.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _StaticPlayer {
+    pub player_state: i32,
+    pub ckind: CharacterKind,
+    pub pkind: Gm_PKind,
+    pub transformed: [u8; 2],
+    pub unk0E: i16,
+    pub player_poses: _StaticPlayer_player_poses,
+    pub facing_direction: f32,
+    pub costume_id: u8,
+    pub unk45: u8,
+    pub controller_index: i8,
+    pub team: u8,
+    pub player_id: u8,
+    pub cpu_level: u8,
+    pub cpu_type: u8,
+    pub handicap: u8,
+    pub unk4C: i8,
+    pub unk4D: i8,
+    pub unk4E: i8,
+    pub unk4F: i8,
+    pub unk50: f32,
+    pub attack_ratio: f32,
+    pub defense_ratio: f32,
+    pub model_scale: f32,
+    pub staminas: _StaticPlayer_staminas,
+    pub falls: [i32; 2],
+    pub kos_by_player: [u32; 6],
+    pub match_frame_count: u32,
+    pub self_destructs: u16,
+    pub stocks: i8,
+    pub unk8F: i8,
+    pub current_coins: i32,
+    pub total_coins: i32,
+    pub unk98: i32,
+    pub unk9C: i32,
+    pub joystick_direction_input_count: [i32; 2],
+    pub nametag_slot_id: i32,
+    pub flags: _StaticPlayer_flags,
+    pub more_flags: _StaticPlayer_more_flags,
+    pub flagsAE: _StaticPlayer_flagsAE,
+    pub unkAF: i8,
+    pub player_entity: [*mut HSD_GObj; 2],
+    pub struct_func: Option<unsafe extern "C" fn(i32)>,
+    pub stale_moves: StaleMoveTable,
+    pub xDB0: [u8; 224],
+}
+impl GcLayout for _StaticPlayer {
+    const GC_NAME: &'static str = "_StaticPlayer";
+    const GC_SIZE: u32 = 0xe90;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("player_state", 0x0, 4, "enum_t"),
+        GcField::new("ckind", 0x4, 4, "CharacterKind"),
+        GcField::new("pkind", 0x8, 4, "Gm_PKind"),
+        GcField::new("transformed", 0xc, 2, "u8[2]"),
+        GcField::new("unk0E", 0xe, 2, "s16"),
+        GcField::new("player_poses", 0x10, 48, "union <anon>"),
+        GcField::new("facing_direction", 0x40, 4, "f32"),
+        GcField::new("costume_id", 0x44, 1, "u8"),
+        GcField::new("unk45", 0x45, 1, "u8"),
+        GcField::new("controller_index", 0x46, 1, "s8"),
+        GcField::new("team", 0x47, 1, "u8"),
+        GcField::new("player_id", 0x48, 1, "u8"),
+        GcField::new("cpu_level", 0x49, 1, "u8"),
+        GcField::new("cpu_type", 0x4a, 1, "u8"),
+        GcField::new("handicap", 0x4b, 1, "u8"),
+        GcField::new("unk4C", 0x4c, 1, "s8"),
+        GcField::new("unk4D", 0x4d, 1, "s8"),
+        GcField::new("unk4E", 0x4e, 1, "s8"),
+        GcField::new("unk4F", 0x4f, 1, "s8"),
+        GcField::new("unk50", 0x50, 4, "f32"),
+        GcField::new("attack_ratio", 0x54, 4, "f32"),
+        GcField::new("defense_ratio", 0x58, 4, "f32"),
+        GcField::new("model_scale", 0x5c, 4, "f32"),
+        GcField::new("staminas", 0x60, 8, "union <anon>"),
+        GcField::new("falls", 0x68, 8, "s32[2]"),
+        GcField::new("kos_by_player", 0x70, 24, "u32[6]"),
+        GcField::new("match_frame_count", 0x88, 4, "u32"),
+        GcField::new("self_destructs", 0x8c, 2, "u16"),
+        GcField::new("stocks", 0x8e, 1, "s8"),
+        GcField::new("unk8F", 0x8f, 1, "s8"),
+        GcField::new("current_coins", 0x90, 4, "int"),
+        GcField::new("total_coins", 0x94, 4, "s32"),
+        GcField::new("unk98", 0x98, 4, "s32"),
+        GcField::new("unk9C", 0x9c, 4, "s32"),
+        GcField::new("joystick_direction_input_count", 0xa0, 8, "s32[2]"),
+        GcField::new("nametag_slot_id", 0xa8, 4, "int"),
+        GcField::new("flags", 0xac, 1, "struct <anon>"),
+        GcField::new("more_flags", 0xad, 1, "struct <anon>"),
+        GcField::new("flagsAE", 0xae, 1, "struct <anon>"),
+        GcField::new("unkAF", 0xaf, 1, "s8"),
+        GcField::new("player_entity", 0xb0, 8, "HSD_GObj *[2]"),
+        GcField::new("struct_func", 0xb8, 4, "void (*)(s32)"),
+        GcField::new("stale_moves", 0xbc, 3316, "StaleMoveTable"),
+        GcField::new("xDB0", 0xdb0, 224, "u8[224]"),
+    ];
+}
+impl _StaticPlayer {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_DObj` (src/sysdolphin/baselib/dobj.h:14); GameCube size 0x18.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_DObj {
+    pub parent: _HSD_Class,
+    pub next: *mut HSD_DObj,
+    pub mobj: *mut HSD_MObj,
+    pub pobj: *mut HSD_PObj,
+    pub aobj: *mut HSD_AObj,
+    pub flags: u32,
+}
+impl GcLayout for HSD_DObj {
+    const GC_NAME: &'static str = "HSD_DObj";
+    const GC_SIZE: u32 = 0x18;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("parent", 0x0, 4, "HSD_Class"),
+        GcField::new("next", 0x4, 4, "HSD_DObj *"),
+        GcField::new("mobj", 0x8, 4, "HSD_MObj *"),
+        GcField::new("pobj", 0xc, 4, "HSD_PObj *"),
+        GcField::new("aobj", 0x10, 4, "HSD_AObj *"),
+        GcField::new("flags", 0x14, 4, "u32"),
+    ];
+}
+impl HSD_DObj {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_TObj` (src/sysdolphin/baselib/tobj.h:132); GameCube size 0xac.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_TObj {
+    pub parent: HSD_Obj,
+    pub next: *mut HSD_TObj,
+    pub id: u32,
+    pub src: u32,
+    pub mtxid: u32,
+    pub rotate: Quaternion,
+    pub scale: Vec,
+    pub translate: Vec,
+    pub wrap_s: u32,
+    pub wrap_t: u32,
+    pub repeat_s: u8,
+    pub repeat_t: u8,
+    pub flags: u32,
+    pub blending: f32,
+    pub magFilt: u32,
+    pub imagedesc: *mut HSD_ImageDesc,
+    pub tlut: *mut _HSD_Tlut,
+    pub lod: *mut _HSD_TexLODDesc,
+    pub aobj: *mut HSD_AObj,
+    pub imagetbl: *mut *mut HSD_ImageDesc,
+    pub tluttbl: *mut *mut _HSD_Tlut,
+    pub tlut_no: i32,
+    pub mtx: [[f32; 4]; 3],
+    pub coord: u32,
+    pub tev: *mut _HSD_TObjTev,
+}
+impl GcLayout for HSD_TObj {
+    const GC_NAME: &'static str = "HSD_TObj";
+    const GC_SIZE: u32 = 0xac;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("parent", 0x0, 8, "HSD_Obj"),
+        GcField::new("next", 0x8, 4, "HSD_TObj *"),
+        GcField::new("id", 0xc, 4, "GXTexMapID"),
+        GcField::new("src", 0x10, 4, "GXTexGenSrc"),
+        GcField::new("mtxid", 0x14, 4, "u32"),
+        GcField::new("rotate", 0x18, 16, "Quaternion"),
+        GcField::new("scale", 0x28, 12, "Vec3"),
+        GcField::new("translate", 0x34, 12, "Vec3"),
+        GcField::new("wrap_s", 0x40, 4, "GXTexWrapMode"),
+        GcField::new("wrap_t", 0x44, 4, "GXTexWrapMode"),
+        GcField::new("repeat_s", 0x48, 1, "u8"),
+        GcField::new("repeat_t", 0x49, 1, "u8"),
+        GcField::new("flags", 0x4c, 4, "u32"),
+        GcField::new("blending", 0x50, 4, "f32"),
+        GcField::new("magFilt", 0x54, 4, "GXTexFilter"),
+        GcField::new("imagedesc", 0x58, 4, "struct HSD_ImageDesc *"),
+        GcField::new("tlut", 0x5c, 4, "struct _HSD_Tlut *"),
+        GcField::new("lod", 0x60, 4, "struct _HSD_TexLODDesc *"),
+        GcField::new("aobj", 0x64, 4, "HSD_AObj *"),
+        GcField::new("imagetbl", 0x68, 4, "struct HSD_ImageDesc **"),
+        GcField::new("tluttbl", 0x6c, 4, "struct _HSD_Tlut **"),
+        GcField::new("tlut_no", 0x70, 4, "s32"),
+        GcField::new("mtx", 0x74, 48, "Mtx"),
+        GcField::new("coord", 0xa4, 4, "GXTexCoordID"),
+        GcField::new("tev", 0xa8, 4, "struct _HSD_TObjTev *"),
+    ];
+}
+impl HSD_TObj {
     /// All-zero value (C `memset(0)`).
     pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
 }
@@ -13613,6 +14217,54 @@ impl AbsorbDesc {
     pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
 }
 
+/// `struct HSD_JObj` (src/sysdolphin/baselib/jobj.h:104); GameCube size 0x88.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_JObj {
+    pub object: HSD_Obj,
+    pub next: *mut HSD_JObj,
+    pub parent: *mut HSD_JObj,
+    pub child: *mut HSD_JObj,
+    pub flags: u32,
+    pub u: HSD_JObj_u,
+    pub rotate: Quaternion,
+    pub scale: Vec,
+    pub translate: Vec,
+    pub mtx: [[f32; 4]; 3],
+    pub scl: *mut Vec,
+    pub envelopemtx: *mut [f32; 4],
+    pub aobj: *mut HSD_AObj,
+    pub robj: *mut HSD_RObj,
+    pub id: u32,
+}
+impl GcLayout for HSD_JObj {
+    const GC_NAME: &'static str = "HSD_JObj";
+    const GC_SIZE: u32 = 0x88;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("object", 0x0, 8, "HSD_Obj"),
+        GcField::new("next", 0x8, 4, "HSD_JObj *"),
+        GcField::new("parent", 0xc, 4, "HSD_JObj *"),
+        GcField::new("child", 0x10, 4, "HSD_JObj *"),
+        GcField::new("flags", 0x14, 4, "u32"),
+        GcField::new("u", 0x18, 4, "union <anon>"),
+        GcField::new("rotate", 0x1c, 16, "Quaternion"),
+        GcField::new("scale", 0x2c, 12, "Vec3"),
+        GcField::new("translate", 0x38, 12, "Vec3"),
+        GcField::new("mtx", 0x44, 48, "Mtx"),
+        GcField::new("scl", 0x74, 4, "Vec3 *"),
+        GcField::new("envelopemtx", 0x78, 4, "MtxPtr"),
+        GcField::new("aobj", 0x7c, 4, "HSD_AObj *"),
+        GcField::new("robj", 0x80, 4, "HSD_RObj *"),
+        GcField::new("id", 0x84, 4, "HSD_IDKey"),
+    ];
+}
+impl HSD_JObj {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
 /// `union ftKb_SpecialHiVars::<anon>` (src/melee/ft/kinds/ftKirby/types.h:386); GameCube size 0x4.
 #[repr(C)]
 #[derive(Clone, Copy)]
@@ -13696,6 +14348,96 @@ impl ftPp_MotionVars_speciallw {
     pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
     #[inline] pub fn x4_b0(&self) -> u8 { bf_get!(self.bf_4, 0, 1, u8) }
     #[inline] pub fn set_x4_b0(&mut self, v: u8) { bf_set!(self.bf_4, 0, 1, v) }
+}
+
+/// `struct HSD_Joint` (src/sysdolphin/baselib/jobj.h:127); GameCube size 0x40.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_Joint {
+    pub class_name: *mut i8,
+    pub flags: u32,
+    pub child: *mut HSD_Joint,
+    pub next: *mut HSD_Joint,
+    pub u: HSD_Joint_u,
+    pub rotation: Vec,
+    pub scale: Vec,
+    pub position: Vec,
+    pub mtx: *mut [f32; 4],
+    pub robjdesc: *mut HSD_RObjDesc,
+}
+impl GcLayout for HSD_Joint {
+    const GC_NAME: &'static str = "HSD_Joint";
+    const GC_SIZE: u32 = 0x40;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("class_name", 0x0, 4, "char *"),
+        GcField::new("flags", 0x4, 4, "u32"),
+        GcField::new("child", 0x8, 4, "HSD_Joint *"),
+        GcField::new("next", 0xc, 4, "HSD_Joint *"),
+        GcField::new("u", 0x10, 4, "union <anon>"),
+        GcField::new("rotation", 0x14, 12, "Vec3"),
+        GcField::new("scale", 0x20, 12, "Vec3"),
+        GcField::new("position", 0x2c, 12, "Vec3"),
+        GcField::new("mtx", 0x38, 4, "MtxPtr"),
+        GcField::new("robjdesc", 0x3c, 4, "HSD_RObjDesc *"),
+    ];
+}
+impl HSD_Joint {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_AnimJoint` (src/sysdolphin/baselib/aobj.h:57); GameCube size 0x14.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_AnimJoint {
+    pub child: *mut HSD_AnimJoint,
+    pub next: *mut HSD_AnimJoint,
+    pub aobjdesc: *mut HSD_AObjDesc,
+    pub robj_anim: *mut HSD_RObjAnimJoint,
+    pub flags: u32,
+}
+impl GcLayout for HSD_AnimJoint {
+    const GC_NAME: &'static str = "HSD_AnimJoint";
+    const GC_SIZE: u32 = 0x14;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("child", 0x0, 4, "HSD_AnimJoint *"),
+        GcField::new("next", 0x4, 4, "HSD_AnimJoint *"),
+        GcField::new("aobjdesc", 0x8, 4, "HSD_AObjDesc *"),
+        GcField::new("robj_anim", 0xc, 4, "HSD_RObjAnimJoint *"),
+        GcField::new("flags", 0x10, 4, "u32"),
+    ];
+}
+impl HSD_AnimJoint {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_MatAnimJoint` (src/sysdolphin/baselib/mobj.h:136); GameCube size 0xc.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_MatAnimJoint {
+    pub child: *mut HSD_MatAnimJoint,
+    pub next: *mut HSD_MatAnimJoint,
+    pub matanim: *mut _HSD_MatAnim,
+}
+impl GcLayout for HSD_MatAnimJoint {
+    const GC_NAME: &'static str = "HSD_MatAnimJoint";
+    const GC_SIZE: u32 = 0xc;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("child", 0x0, 4, "HSD_MatAnimJoint *"),
+        GcField::new("next", 0x4, 4, "HSD_MatAnimJoint *"),
+        GcField::new("matanim", 0x8, 4, "HSD_MatAnim *"),
+    ];
+}
+impl HSD_MatAnimJoint {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
 }
 
 /// `struct lbColl_80008D30_arg1` (src/melee/lb/forward.h:106); GameCube size 0x24.
@@ -13974,6 +14716,44 @@ impl GcLayout for Quaternion {
     ];
 }
 impl Quaternion {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_Archive` (src/sysdolphin/baselib/archive.h:35); GameCube size 0x44.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_Archive {
+    pub header: HSD_ArchiveHeader,
+    pub data: *mut u8,
+    pub reloc_info: *mut HSD_ArchiveRelocationInfo,
+    pub public_info: *mut HSD_ArchivePublicInfo,
+    pub extern_info: *mut HSD_ArchiveExternInfo,
+    pub symbols: *mut i8,
+    pub next: *mut HSD_Archive,
+    pub name: *mut i8,
+    pub flags: u32,
+    pub top_ptr: *mut c_void,
+}
+impl GcLayout for HSD_Archive {
+    const GC_NAME: &'static str = "HSD_Archive";
+    const GC_SIZE: u32 = 0x44;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("header", 0x0, 32, "HSD_ArchiveHeader"),
+        GcField::new("data", 0x20, 4, "u8 *"),
+        GcField::new("reloc_info", 0x24, 4, "HSD_ArchiveRelocationInfo *"),
+        GcField::new("public_info", 0x28, 4, "HSD_ArchivePublicInfo *"),
+        GcField::new("extern_info", 0x2c, 4, "HSD_ArchiveExternInfo *"),
+        GcField::new("symbols", 0x30, 4, "char *"),
+        GcField::new("next", 0x34, 4, "HSD_Archive *"),
+        GcField::new("name", 0x38, 4, "char *"),
+        GcField::new("flags", 0x3c, 4, "u32"),
+        GcField::new("top_ptr", 0x40, 4, "void *"),
+    ];
+}
+impl HSD_Archive {
     /// All-zero value (C `memset(0)`).
     pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
 }
@@ -14306,6 +15086,56 @@ impl ColorOverlay {
     #[inline] pub fn set_x7C_flag7(&mut self, v: u8) { bf_set!(self.bf_7c, 6, 1, v) }
     #[inline] pub fn x7C_flag8(&self) -> u8 { bf_get!(self.bf_7c, 7, 1, u8) }
     #[inline] pub fn set_x7C_flag8(&mut self, v: u8) { bf_set!(self.bf_7c, 7, 1, v) }
+}
+
+/// `struct HSD_LObj` (src/sysdolphin/baselib/lobj.h:55); GameCube size 0xd4.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_LObj {
+    pub parent: HSD_Obj,
+    pub flags: u16,
+    pub priority: u16,
+    pub next: *mut HSD_LObj,
+    pub color: _GXColor,
+    pub hw_color: _GXColor,
+    pub position: *mut HSD_WObj,
+    pub interest: *mut HSD_WObj,
+    pub u: HSD_LObj_u,
+    pub shininess: f32,
+    pub lvec: Vec,
+    pub aobj: *mut HSD_AObj,
+    pub id: u32,
+    pub lightobj: _GXLightObj,
+    pub spec_id: u32,
+    pub spec_lightobj: _GXLightObj,
+}
+impl GcLayout for HSD_LObj {
+    const GC_NAME: &'static str = "HSD_LObj";
+    const GC_SIZE: u32 = 0xd4;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("parent", 0x0, 8, "HSD_Obj"),
+        GcField::new("flags", 0x8, 2, "u16"),
+        GcField::new("priority", 0xa, 2, "u16"),
+        GcField::new("next", 0xc, 4, "HSD_LObj *"),
+        GcField::new("color", 0x10, 4, "GXColor"),
+        GcField::new("hw_color", 0x14, 4, "GXColor"),
+        GcField::new("position", 0x18, 4, "HSD_WObj *"),
+        GcField::new("interest", 0x1c, 4, "HSD_WObj *"),
+        GcField::new("u", 0x20, 24, "union <anon>"),
+        GcField::new("shininess", 0x38, 4, "f32"),
+        GcField::new("lvec", 0x3c, 12, "Vec3"),
+        GcField::new("aobj", 0x48, 4, "HSD_AObj *"),
+        GcField::new("id", 0x4c, 4, "GXLightID"),
+        GcField::new("lightobj", 0x50, 64, "GXLightObj"),
+        GcField::new("spec_id", 0x90, 4, "GXLightID"),
+        GcField::new("spec_lightobj", 0x94, 64, "GXLightObj"),
+    ];
+}
+impl HSD_LObj {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
 }
 
 /// `union Fighter::<anon>` (src/melee/ft/types.h:1364); GameCube size 0x4.
@@ -15222,6 +16052,460 @@ impl pl_StaleMoveTableExt_t_xDD1 {
     pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
 }
 
+/// `union _StaticPlayer::<anon>` (src/melee/pl/player.h:32); GameCube size 0x30.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub union _StaticPlayer_player_poses {
+    pub byVecName: _StaticPlayer_player_poses_byVecName,
+    pub byIndex: [Vec; 4],
+}
+impl GcLayout for _StaticPlayer_player_poses {
+    const GC_NAME: &'static str = "_StaticPlayer_player_poses";
+    const GC_SIZE: u32 = 0x30;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("byVecName", 0x0, 48, "struct <anon>"),
+        GcField::new("byIndex", 0x0, 48, "Vec3[4]"),
+    ];
+}
+impl _StaticPlayer_player_poses {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `union _StaticPlayer::<anon>` (src/melee/pl/player.h:70); GameCube size 0x8.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub union _StaticPlayer_staminas {
+    pub byName: _StaticPlayer_staminas_byName,
+    pub byIndex: [i16; 4],
+}
+impl GcLayout for _StaticPlayer_staminas {
+    const GC_NAME: &'static str = "_StaticPlayer_staminas";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 2;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("byName", 0x0, 8, "struct <anon>"),
+        GcField::new("byIndex", 0x0, 8, "s16[4]"),
+    ];
+}
+impl _StaticPlayer_staminas {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _StaticPlayer::<anon>` (src/melee/pl/player.h:106); GameCube size 0x1.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _StaticPlayer_flags {
+    /// Bitfields at GC +0x0, MSB-first (PPC) bit order.
+    pub bf_0: [u8; 1],
+}
+impl GcLayout for _StaticPlayer_flags {
+    const GC_NAME: &'static str = "_StaticPlayer_flags";
+    const GC_SIZE: u32 = 0x1;
+    const GC_ALIGN: u32 = 1;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::bitfield("b0", 0x0, 1, 0, 1, "u8"),
+        GcField::bitfield("b1", 0x0, 1, 1, 1, "u8"),
+        GcField::bitfield("b2", 0x0, 1, 2, 1, "u8"),
+        GcField::bitfield("b3", 0x0, 1, 3, 1, "u8"),
+        GcField::bitfield("b4", 0x0, 1, 4, 1, "u8"),
+        GcField::bitfield("is_metal", 0x0, 1, 5, 1, "u8"),
+        GcField::bitfield("b6", 0x0, 1, 6, 1, "u8"),
+        GcField::bitfield("b7", 0x0, 1, 7, 1, "u8"),
+    ];
+}
+impl _StaticPlayer_flags {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+    #[inline] pub fn b0(&self) -> u8 { bf_get!(self.bf_0, 0, 1, u8) }
+    #[inline] pub fn set_b0(&mut self, v: u8) { bf_set!(self.bf_0, 0, 1, v) }
+    #[inline] pub fn b1(&self) -> u8 { bf_get!(self.bf_0, 1, 1, u8) }
+    #[inline] pub fn set_b1(&mut self, v: u8) { bf_set!(self.bf_0, 1, 1, v) }
+    #[inline] pub fn b2(&self) -> u8 { bf_get!(self.bf_0, 2, 1, u8) }
+    #[inline] pub fn set_b2(&mut self, v: u8) { bf_set!(self.bf_0, 2, 1, v) }
+    #[inline] pub fn b3(&self) -> u8 { bf_get!(self.bf_0, 3, 1, u8) }
+    #[inline] pub fn set_b3(&mut self, v: u8) { bf_set!(self.bf_0, 3, 1, v) }
+    #[inline] pub fn b4(&self) -> u8 { bf_get!(self.bf_0, 4, 1, u8) }
+    #[inline] pub fn set_b4(&mut self, v: u8) { bf_set!(self.bf_0, 4, 1, v) }
+    #[inline] pub fn is_metal(&self) -> u8 { bf_get!(self.bf_0, 5, 1, u8) }
+    #[inline] pub fn set_is_metal(&mut self, v: u8) { bf_set!(self.bf_0, 5, 1, v) }
+    #[inline] pub fn b6(&self) -> u8 { bf_get!(self.bf_0, 6, 1, u8) }
+    #[inline] pub fn set_b6(&mut self, v: u8) { bf_set!(self.bf_0, 6, 1, v) }
+    #[inline] pub fn b7(&self) -> u8 { bf_get!(self.bf_0, 7, 1, u8) }
+    #[inline] pub fn set_b7(&mut self, v: u8) { bf_set!(self.bf_0, 7, 1, v) }
+}
+
+/// `struct _StaticPlayer::<anon>` (src/melee/pl/player.h:117); GameCube size 0x1.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _StaticPlayer_more_flags {
+    /// Bitfields at GC +0x0, MSB-first (PPC) bit order.
+    pub bf_0: [u8; 1],
+}
+impl GcLayout for _StaticPlayer_more_flags {
+    const GC_NAME: &'static str = "_StaticPlayer_more_flags";
+    const GC_SIZE: u32 = 0x1;
+    const GC_ALIGN: u32 = 1;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::bitfield("b0", 0x0, 1, 0, 1, "u8"),
+        GcField::bitfield("b1", 0x0, 1, 1, 1, "u8"),
+        GcField::bitfield("b2", 0x0, 1, 2, 1, "u8"),
+        GcField::bitfield("b3", 0x0, 1, 3, 1, "u8"),
+        GcField::bitfield("b4", 0x0, 1, 4, 1, "u8"),
+        GcField::bitfield("b5", 0x0, 1, 5, 1, "u8"),
+        GcField::bitfield("b6", 0x0, 1, 6, 2, "u8"),
+    ];
+}
+impl _StaticPlayer_more_flags {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+    #[inline] pub fn b0(&self) -> u8 { bf_get!(self.bf_0, 0, 1, u8) }
+    #[inline] pub fn set_b0(&mut self, v: u8) { bf_set!(self.bf_0, 0, 1, v) }
+    #[inline] pub fn b1(&self) -> u8 { bf_get!(self.bf_0, 1, 1, u8) }
+    #[inline] pub fn set_b1(&mut self, v: u8) { bf_set!(self.bf_0, 1, 1, v) }
+    #[inline] pub fn b2(&self) -> u8 { bf_get!(self.bf_0, 2, 1, u8) }
+    #[inline] pub fn set_b2(&mut self, v: u8) { bf_set!(self.bf_0, 2, 1, v) }
+    #[inline] pub fn b3(&self) -> u8 { bf_get!(self.bf_0, 3, 1, u8) }
+    #[inline] pub fn set_b3(&mut self, v: u8) { bf_set!(self.bf_0, 3, 1, v) }
+    #[inline] pub fn b4(&self) -> u8 { bf_get!(self.bf_0, 4, 1, u8) }
+    #[inline] pub fn set_b4(&mut self, v: u8) { bf_set!(self.bf_0, 4, 1, v) }
+    #[inline] pub fn b5(&self) -> u8 { bf_get!(self.bf_0, 5, 1, u8) }
+    #[inline] pub fn set_b5(&mut self, v: u8) { bf_set!(self.bf_0, 5, 1, v) }
+    #[inline] pub fn b6(&self) -> u8 { bf_get!(self.bf_0, 6, 2, u8) }
+    #[inline] pub fn set_b6(&mut self, v: u8) { bf_set!(self.bf_0, 6, 2, v) }
+}
+
+/// `struct _StaticPlayer::<anon>` (src/melee/pl/player.h:127); GameCube size 0x1.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _StaticPlayer_flagsAE {
+    /// Bitfields at GC +0x0, MSB-first (PPC) bit order.
+    pub bf_0: [u8; 1],
+}
+impl GcLayout for _StaticPlayer_flagsAE {
+    const GC_NAME: &'static str = "_StaticPlayer_flagsAE";
+    const GC_SIZE: u32 = 0x1;
+    const GC_ALIGN: u32 = 1;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::bitfield("b0", 0x0, 1, 0, 1, "u8"),
+        GcField::bitfield("b1", 0x0, 1, 1, 1, "u8"),
+        GcField::bitfield("b2", 0x0, 1, 2, 1, "u8"),
+        GcField::bitfield("b3", 0x0, 1, 3, 1, "u8"),
+        GcField::bitfield("b4", 0x0, 1, 4, 1, "u8"),
+        GcField::bitfield("b5", 0x0, 1, 5, 1, "u8"),
+        GcField::bitfield("b6", 0x0, 1, 6, 1, "u8"),
+        GcField::bitfield("b7", 0x0, 1, 7, 1, "u8"),
+    ];
+}
+impl _StaticPlayer_flagsAE {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+    #[inline] pub fn b0(&self) -> u8 { bf_get!(self.bf_0, 0, 1, u8) }
+    #[inline] pub fn set_b0(&mut self, v: u8) { bf_set!(self.bf_0, 0, 1, v) }
+    #[inline] pub fn b1(&self) -> u8 { bf_get!(self.bf_0, 1, 1, u8) }
+    #[inline] pub fn set_b1(&mut self, v: u8) { bf_set!(self.bf_0, 1, 1, v) }
+    #[inline] pub fn b2(&self) -> u8 { bf_get!(self.bf_0, 2, 1, u8) }
+    #[inline] pub fn set_b2(&mut self, v: u8) { bf_set!(self.bf_0, 2, 1, v) }
+    #[inline] pub fn b3(&self) -> u8 { bf_get!(self.bf_0, 3, 1, u8) }
+    #[inline] pub fn set_b3(&mut self, v: u8) { bf_set!(self.bf_0, 3, 1, v) }
+    #[inline] pub fn b4(&self) -> u8 { bf_get!(self.bf_0, 4, 1, u8) }
+    #[inline] pub fn set_b4(&mut self, v: u8) { bf_set!(self.bf_0, 4, 1, v) }
+    #[inline] pub fn b5(&self) -> u8 { bf_get!(self.bf_0, 5, 1, u8) }
+    #[inline] pub fn set_b5(&mut self, v: u8) { bf_set!(self.bf_0, 5, 1, v) }
+    #[inline] pub fn b6(&self) -> u8 { bf_get!(self.bf_0, 6, 1, u8) }
+    #[inline] pub fn set_b6(&mut self, v: u8) { bf_set!(self.bf_0, 6, 1, v) }
+    #[inline] pub fn b7(&self) -> u8 { bf_get!(self.bf_0, 7, 1, u8) }
+    #[inline] pub fn set_b7(&mut self, v: u8) { bf_set!(self.bf_0, 7, 1, v) }
+}
+
+/// `struct _HSD_Class` (src/sysdolphin/baselib/class.h:14); GameCube size 0x4.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_Class {
+    pub class_info: *mut _HSD_ClassInfo,
+}
+impl GcLayout for _HSD_Class {
+    const GC_NAME: &'static str = "_HSD_Class";
+    const GC_SIZE: u32 = 0x4;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("class_info", 0x0, 4, "struct _HSD_ClassInfo *"),
+    ];
+}
+impl _HSD_Class {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_MObj` (src/sysdolphin/baselib/mobj.h:71); GameCube size 0x20.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_MObj {
+    pub parent: _HSD_Class,
+    pub rendermode: u32,
+    pub tobj: *mut HSD_TObj,
+    pub mat: *mut HSD_Material,
+    pub pe: *mut HSD_PEDesc,
+    pub aobj: *mut HSD_AObj,
+    pub tevdesc: *mut _HSD_TExpTevDesc,
+    pub texp: *mut HSD_TExp,
+}
+impl GcLayout for HSD_MObj {
+    const GC_NAME: &'static str = "HSD_MObj";
+    const GC_SIZE: u32 = 0x20;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("parent", 0x0, 4, "HSD_Class"),
+        GcField::new("rendermode", 0x4, 4, "u32"),
+        GcField::new("tobj", 0x8, 4, "HSD_TObj *"),
+        GcField::new("mat", 0xc, 4, "HSD_Material *"),
+        GcField::new("pe", 0x10, 4, "HSD_PEDesc *"),
+        GcField::new("aobj", 0x14, 4, "HSD_AObj *"),
+        GcField::new("tevdesc", 0x18, 4, "struct _HSD_TExpTevDesc *"),
+        GcField::new("texp", 0x1c, 4, "HSD_TExp *"),
+    ];
+}
+impl HSD_MObj {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_PObj` (src/sysdolphin/baselib/pobj.h:17); GameCube size 0x18.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_PObj {
+    pub parent: _HSD_Class,
+    pub next: *mut HSD_PObj,
+    pub verts: *mut HSD_VtxDescList,
+    pub flags: u16,
+    pub n_display: u16,
+    pub display: *mut u8,
+    pub u: HSD_PObjUnion,
+}
+impl GcLayout for HSD_PObj {
+    const GC_NAME: &'static str = "HSD_PObj";
+    const GC_SIZE: u32 = 0x18;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("parent", 0x0, 4, "HSD_Class"),
+        GcField::new("next", 0x4, 4, "HSD_PObj *"),
+        GcField::new("verts", 0x8, 4, "HSD_VtxDescList *"),
+        GcField::new("flags", 0xc, 2, "u16"),
+        GcField::new("n_display", 0xe, 2, "u16"),
+        GcField::new("display", 0x10, 4, "u8 *"),
+        GcField::new("u", 0x14, 4, "union HSD_PObjUnion"),
+    ];
+}
+impl HSD_PObj {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_AObj` (src/sysdolphin/baselib/aobj.h:40); GameCube size 0x1c.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_AObj {
+    pub flags: u32,
+    pub curr_frame: f32,
+    pub rewind_frame: f32,
+    pub end_frame: f32,
+    pub framerate: f32,
+    pub fobj: *mut HSD_FObj,
+    pub hsd_obj: *mut HSD_Obj,
+}
+impl GcLayout for HSD_AObj {
+    const GC_NAME: &'static str = "HSD_AObj";
+    const GC_SIZE: u32 = 0x1c;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("flags", 0x0, 4, "u32"),
+        GcField::new("curr_frame", 0x4, 4, "f32"),
+        GcField::new("rewind_frame", 0x8, 4, "f32"),
+        GcField::new("end_frame", 0xc, 4, "f32"),
+        GcField::new("framerate", 0x10, 4, "f32"),
+        GcField::new("fobj", 0x14, 4, "HSD_FObj *"),
+        GcField::new("hsd_obj", 0x18, 4, "struct HSD_Obj *"),
+    ];
+}
+impl HSD_AObj {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_Obj` (src/sysdolphin/baselib/object.h:60); GameCube size 0x8.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_Obj {
+    pub parent: _HSD_Class,
+    pub ref_count: u16,
+    pub ref_count_individual: u16,
+}
+impl GcLayout for HSD_Obj {
+    const GC_NAME: &'static str = "HSD_Obj";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("parent", 0x0, 4, "struct _HSD_Class"),
+        GcField::new("ref_count", 0x4, 2, "u16"),
+        GcField::new("ref_count_individual", 0x6, 2, "u16"),
+    ];
+}
+impl HSD_Obj {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_ImageDesc` (src/sysdolphin/baselib/tobj.h:224); GameCube size 0x18.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_ImageDesc {
+    pub image_ptr: *mut c_void,
+    pub width: u16,
+    pub height: u16,
+    pub format: u32,
+    pub mipmap: u32,
+    pub minLOD: f32,
+    pub maxLOD: f32,
+}
+impl GcLayout for HSD_ImageDesc {
+    const GC_NAME: &'static str = "HSD_ImageDesc";
+    const GC_SIZE: u32 = 0x18;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("image_ptr", 0x0, 4, "void *"),
+        GcField::new("width", 0x4, 2, "u16"),
+        GcField::new("height", 0x6, 2, "u16"),
+        GcField::new("format", 0x8, 4, "GXTexFmt"),
+        GcField::new("mipmap", 0xc, 4, "u32"),
+        GcField::new("minLOD", 0x10, 4, "f32"),
+        GcField::new("maxLOD", 0x14, 4, "f32"),
+    ];
+}
+impl HSD_ImageDesc {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _HSD_Tlut` (src/sysdolphin/baselib/tobj.h:194); GameCube size 0x10.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_Tlut {
+    pub lut: *mut c_void,
+    pub fmt: u32,
+    pub tlut_name: u32,
+    pub n_entries: u16,
+}
+impl GcLayout for _HSD_Tlut {
+    const GC_NAME: &'static str = "_HSD_Tlut";
+    const GC_SIZE: u32 = 0x10;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("lut", 0x0, 4, "void *"),
+        GcField::new("fmt", 0x4, 4, "GXTlutFmt"),
+        GcField::new("tlut_name", 0x8, 4, "u32"),
+        GcField::new("n_entries", 0xc, 2, "u16"),
+    ];
+}
+impl _HSD_Tlut {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _HSD_TexLODDesc` (src/sysdolphin/baselib/tobj.h:216); GameCube size 0x10.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_TexLODDesc {
+    pub minFilt: u32,
+    pub LODBias: f32,
+    pub bias_clamp: u8,
+    pub edgeLODEnable: u8,
+    pub max_anisotropy: u32,
+}
+impl GcLayout for _HSD_TexLODDesc {
+    const GC_NAME: &'static str = "_HSD_TexLODDesc";
+    const GC_SIZE: u32 = 0x10;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("minFilt", 0x0, 4, "GXTexFilter"),
+        GcField::new("LODBias", 0x4, 4, "f32"),
+        GcField::new("bias_clamp", 0x8, 1, "GXBool"),
+        GcField::new("edgeLODEnable", 0x9, 1, "GXBool"),
+        GcField::new("max_anisotropy", 0xc, 4, "GXAnisotropy"),
+    ];
+}
+impl _HSD_TexLODDesc {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _HSD_TObjTev` (src/sysdolphin/baselib/tobj.h:234); GameCube size 0x20.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_TObjTev {
+    pub color_op: u8,
+    pub alpha_op: u8,
+    pub color_bias: u8,
+    pub alpha_bias: u8,
+    pub color_scale: u8,
+    pub alpha_scale: u8,
+    pub color_clamp: u8,
+    pub alpha_clamp: u8,
+    pub color_a: u8,
+    pub color_b: u8,
+    pub color_c: u8,
+    pub color_d: u8,
+    pub alpha_a: u8,
+    pub alpha_b: u8,
+    pub alpha_c: u8,
+    pub alpha_d: u8,
+    pub konst: _GXColor,
+    pub tev0: _GXColor,
+    pub tev1: _GXColor,
+    pub active: u32,
+}
+impl GcLayout for _HSD_TObjTev {
+    const GC_NAME: &'static str = "_HSD_TObjTev";
+    const GC_SIZE: u32 = 0x20;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("color_op", 0x0, 1, "u8"),
+        GcField::new("alpha_op", 0x1, 1, "u8"),
+        GcField::new("color_bias", 0x2, 1, "u8"),
+        GcField::new("alpha_bias", 0x3, 1, "u8"),
+        GcField::new("color_scale", 0x4, 1, "u8"),
+        GcField::new("alpha_scale", 0x5, 1, "u8"),
+        GcField::new("color_clamp", 0x6, 1, "u8"),
+        GcField::new("alpha_clamp", 0x7, 1, "u8"),
+        GcField::new("color_a", 0x8, 1, "u8"),
+        GcField::new("color_b", 0x9, 1, "u8"),
+        GcField::new("color_c", 0xa, 1, "u8"),
+        GcField::new("color_d", 0xb, 1, "u8"),
+        GcField::new("alpha_a", 0xc, 1, "u8"),
+        GcField::new("alpha_b", 0xd, 1, "u8"),
+        GcField::new("alpha_c", 0xe, 1, "u8"),
+        GcField::new("alpha_d", 0xf, 1, "u8"),
+        GcField::new("konst", 0x10, 4, "GXColor"),
+        GcField::new("tev0", 0x14, 4, "GXColor"),
+        GcField::new("tev1", 0x18, 4, "GXColor"),
+        GcField::new("active", 0x1c, 4, "u32"),
+    ];
+}
+impl _HSD_TObjTev {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
 /// `struct WaitStruct::<anon>::<anon>` (src/melee/ft/ftwaitanim.h:8); GameCube size 0x8.
 #[repr(C)]
 #[derive(Clone, Copy)]
@@ -15281,6 +16565,106 @@ impl GcLayout for ftCommon_MotionVars_thrownkirby_anon1 {
     ];
 }
 impl ftCommon_MotionVars_thrownkirby_anon1 {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `union HSD_JObj::<anon>` (src/sysdolphin/baselib/jobj.h:110); GameCube size 0x4.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub union HSD_JObj_u {
+    pub ptcl: *mut _HSD_SList,
+    pub dobj: *mut HSD_DObj,
+    pub spline: *mut HSD_Spline,
+}
+impl GcLayout for HSD_JObj_u {
+    const GC_NAME: &'static str = "HSD_JObj_u";
+    const GC_SIZE: u32 = 0x4;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("ptcl", 0x0, 4, "HSD_SList *"),
+        GcField::new("dobj", 0x0, 4, "struct HSD_DObj *"),
+        GcField::new("spline", 0x0, 4, "HSD_Spline *"),
+    ];
+}
+impl HSD_JObj_u {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `union HSD_Joint::<anon>` (src/sysdolphin/baselib/jobj.h:132); GameCube size 0x4.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub union HSD_Joint_u {
+    pub dobjdesc: *mut HSD_DObjDesc,
+    pub spline: *mut HSD_Spline,
+    pub ptcl: *mut _HSD_SList,
+}
+impl GcLayout for HSD_Joint_u {
+    const GC_NAME: &'static str = "HSD_Joint_u";
+    const GC_SIZE: u32 = 0x4;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("dobjdesc", 0x0, 4, "HSD_DObjDesc *"),
+        GcField::new("spline", 0x0, 4, "HSD_Spline *"),
+        GcField::new("ptcl", 0x0, 4, "HSD_SList *"),
+    ];
+}
+impl HSD_Joint_u {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_AObjDesc` (src/sysdolphin/baselib/aobj.h:50); GameCube size 0x10.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_AObjDesc {
+    pub flags: u32,
+    pub end_frame: f32,
+    pub fobjdesc: *mut _HSD_FObjDesc,
+    pub obj_id: u32,
+}
+impl GcLayout for HSD_AObjDesc {
+    const GC_NAME: &'static str = "HSD_AObjDesc";
+    const GC_SIZE: u32 = 0x10;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("flags", 0x0, 4, "u32"),
+        GcField::new("end_frame", 0x4, 4, "f32"),
+        GcField::new("fobjdesc", 0x8, 4, "HSD_FObjDesc *"),
+        GcField::new("obj_id", 0xc, 4, "HSD_IDKey"),
+    ];
+}
+impl HSD_AObjDesc {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _HSD_MatAnim` (src/sysdolphin/baselib/mobj.h:129); GameCube size 0x10.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_MatAnim {
+    pub next: *mut _HSD_MatAnim,
+    pub aobjdesc: *mut HSD_AObjDesc,
+    pub texanim: *mut _HSD_TexAnim,
+    pub renderanim: *mut _HSD_RenderAnim,
+}
+impl GcLayout for _HSD_MatAnim {
+    const GC_NAME: &'static str = "_HSD_MatAnim";
+    const GC_SIZE: u32 = 0x10;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("next", 0x0, 4, "struct _HSD_MatAnim *"),
+        GcField::new("aobjdesc", 0x4, 4, "HSD_AObjDesc *"),
+        GcField::new("texanim", 0x8, 4, "struct _HSD_TexAnim *"),
+        GcField::new("renderanim", 0xc, 4, "struct _HSD_RenderAnim *"),
+    ];
+}
+impl _HSD_MatAnim {
     /// All-zero value (C `memset(0)`).
     pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
 }
@@ -17633,6 +19017,102 @@ impl FighterBone_anon1_anon1 {
     #[inline] pub fn set_flags2_b7(&mut self, v: u8) { bf_set!(self.bf_0, 15, 1, v) }
 }
 
+/// `struct HSD_ArchiveHeader` (src/sysdolphin/baselib/archive.h:10); GameCube size 0x20.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_ArchiveHeader {
+    pub file_size: u32,
+    pub data_size: u32,
+    pub nb_reloc: u32,
+    pub nb_public: u32,
+    pub nb_extern: u32,
+    pub version: [u8; 4],
+    pub pad: [u32; 2],
+}
+impl GcLayout for HSD_ArchiveHeader {
+    const GC_NAME: &'static str = "HSD_ArchiveHeader";
+    const GC_SIZE: u32 = 0x20;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("file_size", 0x0, 4, "u32"),
+        GcField::new("data_size", 0x4, 4, "u32"),
+        GcField::new("nb_reloc", 0x8, 4, "u32"),
+        GcField::new("nb_public", 0xc, 4, "u32"),
+        GcField::new("nb_extern", 0x10, 4, "u32"),
+        GcField::new("version", 0x14, 4, "u8[4]"),
+        GcField::new("pad", 0x18, 8, "u32[2]"),
+    ];
+}
+impl HSD_ArchiveHeader {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_ArchiveRelocationInfo` (src/sysdolphin/baselib/archive.h:21); GameCube size 0x4.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_ArchiveRelocationInfo {
+    pub offset: u32,
+}
+impl GcLayout for HSD_ArchiveRelocationInfo {
+    const GC_NAME: &'static str = "HSD_ArchiveRelocationInfo";
+    const GC_SIZE: u32 = 0x4;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("offset", 0x0, 4, "u32"),
+    ];
+}
+impl HSD_ArchiveRelocationInfo {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_ArchivePublicInfo` (src/sysdolphin/baselib/archive.h:25); GameCube size 0x8.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_ArchivePublicInfo {
+    pub offset: u32,
+    pub symbol: u32,
+}
+impl GcLayout for HSD_ArchivePublicInfo {
+    const GC_NAME: &'static str = "HSD_ArchivePublicInfo";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("offset", 0x0, 4, "u32"),
+        GcField::new("symbol", 0x4, 4, "u32"),
+    ];
+}
+impl HSD_ArchivePublicInfo {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_ArchiveExternInfo` (src/sysdolphin/baselib/archive.h:30); GameCube size 0x8.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_ArchiveExternInfo {
+    pub offset: u32,
+    pub symbol: u32,
+}
+impl GcLayout for HSD_ArchiveExternInfo {
+    const GC_NAME: &'static str = "HSD_ArchiveExternInfo";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("offset", 0x0, 4, "u32"),
+        GcField::new("symbol", 0x4, 4, "u32"),
+    ];
+}
+impl HSD_ArchiveExternInfo {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
 /// `struct MotionState::<anon>::<anon>` (src/melee/ft/types.h:997); GameCube size 0x4.
 #[repr(C)]
 #[derive(Clone, Copy)]
@@ -17818,6 +19298,50 @@ impl GcLayout for ColorOverlay_x28_colanim {
     ];
 }
 impl ColorOverlay_x28_colanim {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `union HSD_LObj::<anon>` (src/sysdolphin/baselib/lobj.h:64); GameCube size 0x18.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub union HSD_LObj_u {
+    pub point: HSD_LightPoint,
+    pub spot: HSD_LightSpot,
+    pub attn: HSD_LightAttn,
+}
+impl GcLayout for HSD_LObj_u {
+    const GC_NAME: &'static str = "HSD_LObj_u";
+    const GC_SIZE: u32 = 0x18;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("point", 0x0, 20, "HSD_LightPoint"),
+        GcField::new("spot", 0x0, 20, "HSD_LightSpot"),
+        GcField::new("attn", 0x0, 24, "HSD_LightAttn"),
+    ];
+}
+impl HSD_LObj_u {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _GXLightObj` (libs/dolphin/include/dolphin/gx/GXStruct.h:45); GameCube size 0x40.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _GXLightObj {
+    pub dummy: [u32; 16],
+}
+impl GcLayout for _GXLightObj {
+    const GC_NAME: &'static str = "_GXLightObj";
+    const GC_SIZE: u32 = 0x40;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("dummy", 0x0, 64, "u32[16]"),
+    ];
+}
+impl _GXLightObj {
     /// All-zero value (C `memset(0)`).
     pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
 }
@@ -18274,6 +19798,314 @@ impl pl_StaleMoveTableExt_t_xDD1_anon1 {
     #[inline] pub fn set_bit7(&mut self, v: u8) { bf_set!(self.bf_0, 7, 1, v) }
 }
 
+/// `struct _StaticPlayer::<anon>::<anon>` (src/melee/pl/player.h:33); GameCube size 0x30.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _StaticPlayer_player_poses_byVecName {
+    pub nametag_pos: Vec,
+    pub transformed_player_pos: Vec,
+    pub spawn_platform_final_pos: Vec,
+    pub some_other_player_pos: Vec,
+}
+impl GcLayout for _StaticPlayer_player_poses_byVecName {
+    const GC_NAME: &'static str = "_StaticPlayer_player_poses_byVecName";
+    const GC_SIZE: u32 = 0x30;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("nametag_pos", 0x0, 12, "Vec3"),
+        GcField::new("transformed_player_pos", 0xc, 12, "Vec3"),
+        GcField::new("spawn_platform_final_pos", 0x18, 12, "Vec3"),
+        GcField::new("some_other_player_pos", 0x24, 12, "Vec3"),
+    ];
+}
+impl _StaticPlayer_player_poses_byVecName {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _StaticPlayer::<anon>::<anon>` (src/melee/pl/player.h:71); GameCube size 0x8.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _StaticPlayer_staminas_byName {
+    pub damage_percent: i16,
+    pub damage_percent_alt_or_start_hp: i16,
+    pub stamina: i16,
+    pub unk66: i16,
+}
+impl GcLayout for _StaticPlayer_staminas_byName {
+    const GC_NAME: &'static str = "_StaticPlayer_staminas_byName";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 2;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("damage_percent", 0x0, 2, "s16"),
+        GcField::new("damage_percent_alt_or_start_hp", 0x2, 2, "s16"),
+        GcField::new("stamina", 0x4, 2, "s16"),
+        GcField::new("unk66", 0x6, 2, "s16"),
+    ];
+}
+impl _StaticPlayer_staminas_byName {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _HSD_ClassInfo` (src/sysdolphin/baselib/class.h:32); GameCube size 0x3c.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_ClassInfo {
+    pub head: _HSD_ClassInfoHead,
+    pub alloc: Option<unsafe extern "C" fn(*mut _HSD_ClassInfo) -> *mut _HSD_Class>,
+    pub init: Option<unsafe extern "C" fn(*mut _HSD_Class) -> i32>,
+    pub release: Option<unsafe extern "C" fn(*mut _HSD_Class)>,
+    pub destroy: Option<unsafe extern "C" fn(*mut _HSD_Class)>,
+    pub amnesia: Option<unsafe extern "C" fn(*mut _HSD_ClassInfo)>,
+}
+impl GcLayout for _HSD_ClassInfo {
+    const GC_NAME: &'static str = "_HSD_ClassInfo";
+    const GC_SIZE: u32 = 0x3c;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("head", 0x0, 40, "struct _HSD_ClassInfoHead"),
+        GcField::new("alloc", 0x28, 4, "HSD_Class *(*)(struct _HSD_ClassInfo *)"),
+        GcField::new("init", 0x2c, 4, "int (*)(struct _HSD_Class *)"),
+        GcField::new("release", 0x30, 4, "void (*)(struct _HSD_Class *)"),
+        GcField::new("destroy", 0x34, 4, "void (*)(struct _HSD_Class *)"),
+        GcField::new("amnesia", 0x38, 4, "void (*)(struct _HSD_ClassInfo *)"),
+    ];
+}
+impl _HSD_ClassInfo {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_Material` (src/sysdolphin/baselib/mobj.h:82); GameCube size 0x14.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_Material {
+    pub ambient: _GXColor,
+    pub diffuse: _GXColor,
+    pub specular: _GXColor,
+    pub alpha: f32,
+    pub shininess: f32,
+}
+impl GcLayout for HSD_Material {
+    const GC_NAME: &'static str = "HSD_Material";
+    const GC_SIZE: u32 = 0x14;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("ambient", 0x0, 4, "GXColor"),
+        GcField::new("diffuse", 0x4, 4, "GXColor"),
+        GcField::new("specular", 0x8, 4, "GXColor"),
+        GcField::new("alpha", 0xc, 4, "f32"),
+        GcField::new("shininess", 0x10, 4, "f32"),
+    ];
+}
+impl HSD_Material {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_PEDesc` (src/sysdolphin/baselib/mobj.h:90); GameCube size 0xc.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_PEDesc {
+    pub flags: u8,
+    pub ref0: u8,
+    pub ref1: u8,
+    pub dst_alpha: u8,
+    pub r#type: u8,
+    pub src_factor: u8,
+    pub dst_factor: u8,
+    pub logic_op: u8,
+    pub z_comp: u8,
+    pub alpha_comp0: u8,
+    pub alpha_op: u8,
+    pub alpha_comp1: u8,
+}
+impl GcLayout for HSD_PEDesc {
+    const GC_NAME: &'static str = "HSD_PEDesc";
+    const GC_SIZE: u32 = 0xc;
+    const GC_ALIGN: u32 = 1;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("flags", 0x0, 1, "u8"),
+        GcField::new("ref0", 0x1, 1, "u8"),
+        GcField::new("ref1", 0x2, 1, "u8"),
+        GcField::new("dst_alpha", 0x3, 1, "u8"),
+        GcField::new("type", 0x4, 1, "u8"),
+        GcField::new("src_factor", 0x5, 1, "u8"),
+        GcField::new("dst_factor", 0x6, 1, "u8"),
+        GcField::new("logic_op", 0x7, 1, "u8"),
+        GcField::new("z_comp", 0x8, 1, "u8"),
+        GcField::new("alpha_comp0", 0x9, 1, "u8"),
+        GcField::new("alpha_op", 0xa, 1, "u8"),
+        GcField::new("alpha_comp1", 0xb, 1, "u8"),
+    ];
+}
+impl HSD_PEDesc {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _HSD_TExpTevDesc` (src/sysdolphin/baselib/texp.h:113); GameCube size 0x78.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_TExpTevDesc {
+    pub desc: _HSD_TevDesc,
+    pub tobj: *mut HSD_TObj,
+}
+impl GcLayout for _HSD_TExpTevDesc {
+    const GC_NAME: &'static str = "_HSD_TExpTevDesc";
+    const GC_SIZE: u32 = 0x78;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("desc", 0x0, 116, "struct _HSD_TevDesc"),
+        GcField::new("tobj", 0x74, 4, "HSD_TObj *"),
+    ];
+}
+impl _HSD_TExpTevDesc {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `union HSD_TExp` (src/sysdolphin/baselib/texp.h:168); GameCube size 0x6c.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub union HSD_TExp {
+    pub r#type: u32,
+    pub comm: _HSD_TECommon,
+    pub tev: _HSD_TETev,
+    pub cnst: _HSD_TECnst,
+}
+impl GcLayout for HSD_TExp {
+    const GC_NAME: &'static str = "HSD_TExp";
+    const GC_SIZE: u32 = 0x6c;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("type", 0x0, 4, "HSD_TExpType"),
+        GcField::new("comm", 0x0, 8, "struct _HSD_TECommon"),
+        GcField::new("tev", 0x0, 108, "struct _HSD_TETev"),
+        GcField::new("cnst", 0x0, 24, "struct _HSD_TECnst"),
+    ];
+}
+impl HSD_TExp {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_VtxDescList` (src/sysdolphin/baselib/pobj.h:46); GameCube size 0x18.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_VtxDescList {
+    pub attr: u32,
+    pub attr_type: u32,
+    pub comp_cnt: u32,
+    pub comp_type: u32,
+    pub frac: u8,
+    pub stride: u16,
+    pub vertex: *mut c_void,
+}
+impl GcLayout for HSD_VtxDescList {
+    const GC_NAME: &'static str = "HSD_VtxDescList";
+    const GC_SIZE: u32 = 0x18;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("attr", 0x0, 4, "GXAttr"),
+        GcField::new("attr_type", 0x4, 4, "GXAttrType"),
+        GcField::new("comp_cnt", 0x8, 4, "GXCompCnt"),
+        GcField::new("comp_type", 0xc, 4, "GXCompType"),
+        GcField::new("frac", 0x10, 1, "u8"),
+        GcField::new("stride", 0x12, 2, "u16"),
+        GcField::new("vertex", 0x14, 4, "void *"),
+    ];
+}
+impl HSD_VtxDescList {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `union HSD_PObjUnion` (src/sysdolphin/baselib/pobj.h:25); GameCube size 0x4.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub union HSD_PObjUnion {
+    pub jobj: *mut HSD_JObj,
+    pub shape_set: *mut HSD_ShapeSet,
+    pub envelope_list: *mut _HSD_SList,
+}
+impl GcLayout for HSD_PObjUnion {
+    const GC_NAME: &'static str = "HSD_PObjUnion";
+    const GC_SIZE: u32 = 0x4;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("jobj", 0x0, 4, "HSD_JObj *"),
+        GcField::new("shape_set", 0x0, 4, "HSD_ShapeSet *"),
+        GcField::new("envelope_list", 0x0, 4, "HSD_SList *"),
+    ];
+}
+impl HSD_PObjUnion {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_FObj` (src/sysdolphin/baselib/fobj.h:32); GameCube size 0x30.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_FObj {
+    pub next: *mut HSD_FObj,
+    pub ad: *mut u8,
+    pub ad_head: *mut u8,
+    pub length: u32,
+    pub flags: u8,
+    pub op: u8,
+    pub op_intrp: u8,
+    pub obj_type: u8,
+    pub frac_value: u8,
+    pub frac_slope: u8,
+    pub nb_pack: u16,
+    pub startframe: i16,
+    pub fterm: u16,
+    pub time: f32,
+    pub p0: f32,
+    pub p1: f32,
+    pub d0: f32,
+    pub d1: f32,
+}
+impl GcLayout for HSD_FObj {
+    const GC_NAME: &'static str = "HSD_FObj";
+    const GC_SIZE: u32 = 0x30;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("next", 0x0, 4, "struct HSD_FObj *"),
+        GcField::new("ad", 0x4, 4, "u8 *"),
+        GcField::new("ad_head", 0x8, 4, "u8 *"),
+        GcField::new("length", 0xc, 4, "u32"),
+        GcField::new("flags", 0x10, 1, "u8"),
+        GcField::new("op", 0x11, 1, "u8"),
+        GcField::new("op_intrp", 0x12, 1, "u8"),
+        GcField::new("obj_type", 0x13, 1, "u8"),
+        GcField::new("frac_value", 0x14, 1, "u8"),
+        GcField::new("frac_slope", 0x15, 1, "u8"),
+        GcField::new("nb_pack", 0x16, 2, "u16"),
+        GcField::new("startframe", 0x18, 2, "s16"),
+        GcField::new("fterm", 0x1a, 2, "u16"),
+        GcField::new("time", 0x1c, 4, "f32"),
+        GcField::new("p0", 0x20, 4, "f32"),
+        GcField::new("p1", 0x24, 4, "f32"),
+        GcField::new("d0", 0x28, 4, "f32"),
+        GcField::new("d1", 0x2c, 4, "f32"),
+    ];
+}
+impl HSD_FObj {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
 /// `struct ftCommon_MotionVars::<anon>::<anon>::<anon>` (src/melee/ft/kinds/ftCommon/types.h:298); GameCube size 0x1.
 #[repr(C)]
 #[derive(Clone, Copy)]
@@ -18315,6 +20147,174 @@ impl ftCommon_MotionVars_thrownkirby_anon1_anon1 {
     #[inline] pub fn set_x18_b6(&mut self, v: u8) { bf_set!(self.bf_0, 6, 1, v) }
     #[inline] pub fn x18_b7(&self) -> u8 { bf_get!(self.bf_0, 7, 1, u8) }
     #[inline] pub fn set_x18_b7(&mut self, v: u8) { bf_set!(self.bf_0, 7, 1, v) }
+}
+
+/// `struct _HSD_SList` (src/sysdolphin/baselib/list.h:6); GameCube size 0x8.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_SList {
+    pub next: *mut _HSD_SList,
+    pub data: *mut c_void,
+}
+impl GcLayout for _HSD_SList {
+    const GC_NAME: &'static str = "_HSD_SList";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("next", 0x0, 4, "struct _HSD_SList *"),
+        GcField::new("data", 0x4, 4, "void *"),
+    ];
+}
+impl _HSD_SList {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_Spline` (src/sysdolphin/baselib/spline.h:6); GameCube size 0x18.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_Spline {
+    pub r#type: u8,
+    pub numcv: i16,
+    pub tension: f32,
+    pub cv: *mut Vec,
+    pub totalLength: f32,
+    pub segLength: *mut f32,
+    pub segPoly: *mut [f32; 5],
+}
+impl GcLayout for HSD_Spline {
+    const GC_NAME: &'static str = "HSD_Spline";
+    const GC_SIZE: u32 = 0x18;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("type", 0x0, 1, "u8"),
+        GcField::new("numcv", 0x2, 2, "s16"),
+        GcField::new("tension", 0x4, 4, "f32"),
+        GcField::new("cv", 0x8, 4, "Vec3 *"),
+        GcField::new("totalLength", 0xc, 4, "f32"),
+        GcField::new("segLength", 0x10, 4, "f32 *"),
+        GcField::new("segPoly", 0x14, 4, "f32 (*)[5]"),
+    ];
+}
+impl HSD_Spline {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_DObjDesc` (src/sysdolphin/baselib/dobj.h:23); GameCube size 0x10.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_DObjDesc {
+    pub class_name: *mut i8,
+    pub next: *mut HSD_DObjDesc,
+    pub mobjdesc: *mut _HSD_MObjDesc,
+    pub pobjdesc: *mut HSD_PObjDesc,
+}
+impl GcLayout for HSD_DObjDesc {
+    const GC_NAME: &'static str = "HSD_DObjDesc";
+    const GC_SIZE: u32 = 0x10;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("class_name", 0x0, 4, "char *"),
+        GcField::new("next", 0x4, 4, "HSD_DObjDesc *"),
+        GcField::new("mobjdesc", 0x8, 4, "HSD_MObjDesc *"),
+        GcField::new("pobjdesc", 0xc, 4, "HSD_PObjDesc *"),
+    ];
+}
+impl HSD_DObjDesc {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _HSD_FObjDesc` (src/sysdolphin/baselib/fobj.h:53); GameCube size 0x14.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_FObjDesc {
+    pub next: *mut _HSD_FObjDesc,
+    pub length: u32,
+    pub startframe: f32,
+    pub r#type: u8,
+    pub frac_value: u8,
+    pub frac_slope: u8,
+    pub dummy0: u8,
+    pub ad: *mut u8,
+}
+impl GcLayout for _HSD_FObjDesc {
+    const GC_NAME: &'static str = "_HSD_FObjDesc";
+    const GC_SIZE: u32 = 0x14;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("next", 0x0, 4, "struct _HSD_FObjDesc *"),
+        GcField::new("length", 0x4, 4, "u32"),
+        GcField::new("startframe", 0x8, 4, "f32"),
+        GcField::new("type", 0xc, 1, "u8"),
+        GcField::new("frac_value", 0xd, 1, "u8"),
+        GcField::new("frac_slope", 0xe, 1, "u8"),
+        GcField::new("dummy0", 0xf, 1, "u8"),
+        GcField::new("ad", 0x10, 4, "u8 *"),
+    ];
+}
+impl _HSD_FObjDesc {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _HSD_TexAnim` (src/sysdolphin/baselib/tobj.h:272); GameCube size 0x18.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_TexAnim {
+    pub next: *mut _HSD_TexAnim,
+    pub id: u32,
+    pub aobjdesc: *mut HSD_AObjDesc,
+    pub imagetbl: *mut *mut HSD_ImageDesc,
+    pub tluttbl: *mut *mut _HSD_TlutDesc,
+    pub n_imagetbl: u16,
+    pub n_tluttbl: u16,
+}
+impl GcLayout for _HSD_TexAnim {
+    const GC_NAME: &'static str = "_HSD_TexAnim";
+    const GC_SIZE: u32 = 0x18;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("next", 0x0, 4, "struct _HSD_TexAnim *"),
+        GcField::new("id", 0x4, 4, "GXTexMapID"),
+        GcField::new("aobjdesc", 0x8, 4, "HSD_AObjDesc *"),
+        GcField::new("imagetbl", 0xc, 4, "struct HSD_ImageDesc **"),
+        GcField::new("tluttbl", 0x10, 4, "struct _HSD_TlutDesc **"),
+        GcField::new("n_imagetbl", 0x14, 2, "u16"),
+        GcField::new("n_tluttbl", 0x16, 2, "u16"),
+    ];
+}
+impl _HSD_TexAnim {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _HSD_RenderAnim` (src/sysdolphin/baselib/mobj.h:124); GameCube size 0x8.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_RenderAnim {
+    pub chananim: *mut _HSD_ChanAnim,
+    pub reganim: *mut _HSD_TevRegAnim,
+}
+impl GcLayout for _HSD_RenderAnim {
+    const GC_NAME: &'static str = "_HSD_RenderAnim";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("chananim", 0x0, 4, "struct _HSD_ChanAnim *"),
+        GcField::new("reganim", 0x4, 4, "struct _HSD_TevRegAnim *"),
+    ];
+}
+impl _HSD_RenderAnim {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
 }
 
 /// `struct MotionState::<anon>::<anon>::<anon>` (src/melee/ft/types.h:999); GameCube size 0x1.
@@ -18513,6 +20513,92 @@ impl ColorOverlay_UnkInner {
     pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
 }
 
+/// `struct HSD_LightPoint` (src/sysdolphin/baselib/lobj.h:16); GameCube size 0x14.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_LightPoint {
+    pub cutoff: f32,
+    pub point_func: u32,
+    pub ref_br: f32,
+    pub ref_dist: f32,
+    pub dist_func: u32,
+}
+impl GcLayout for HSD_LightPoint {
+    const GC_NAME: &'static str = "HSD_LightPoint";
+    const GC_SIZE: u32 = 0x14;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("cutoff", 0x0, 4, "f32"),
+        GcField::new("point_func", 0x4, 4, "u32"),
+        GcField::new("ref_br", 0x8, 4, "f32"),
+        GcField::new("ref_dist", 0xc, 4, "f32"),
+        GcField::new("dist_func", 0x10, 4, "u32"),
+    ];
+}
+impl HSD_LightPoint {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_LightSpot` (src/sysdolphin/baselib/lobj.h:30); GameCube size 0x14.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_LightSpot {
+    pub cutoff: f32,
+    pub spot_func: u32,
+    pub ref_br: f32,
+    pub ref_dist: f32,
+    pub dist_func: u32,
+}
+impl GcLayout for HSD_LightSpot {
+    const GC_NAME: &'static str = "HSD_LightSpot";
+    const GC_SIZE: u32 = 0x14;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("cutoff", 0x0, 4, "f32"),
+        GcField::new("spot_func", 0x4, 4, "u32"),
+        GcField::new("ref_br", 0x8, 4, "f32"),
+        GcField::new("ref_dist", 0xc, 4, "f32"),
+        GcField::new("dist_func", 0x10, 4, "u32"),
+    ];
+}
+impl HSD_LightSpot {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_LightAttn` (src/sysdolphin/baselib/lobj.h:46); GameCube size 0x18.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_LightAttn {
+    pub a0: f32,
+    pub a1: f32,
+    pub a2: f32,
+    pub k0: f32,
+    pub k1: f32,
+    pub k2: f32,
+}
+impl GcLayout for HSD_LightAttn {
+    const GC_NAME: &'static str = "HSD_LightAttn";
+    const GC_SIZE: u32 = 0x18;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("a0", 0x0, 4, "f32"),
+        GcField::new("a1", 0x4, 4, "f32"),
+        GcField::new("a2", 0x8, 4, "f32"),
+        GcField::new("k0", 0xc, 4, "f32"),
+        GcField::new("k1", 0x10, 4, "f32"),
+        GcField::new("k2", 0x14, 4, "f32"),
+    ];
+}
+impl HSD_LightAttn {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
 /// `struct Fighter::<anon>::<anon>::<anon>` (src/melee/ft/types.h:1374); GameCube size 0x2.
 #[repr(C)]
 #[derive(Clone, Copy)]
@@ -18556,6 +20642,370 @@ impl GcLayout for ECBSource_anon1 {
     ];
 }
 impl ECBSource_anon1 {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _HSD_ClassInfoHead` (src/sysdolphin/baselib/class.h:18); GameCube size 0x28.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_ClassInfoHead {
+    pub info_init: Option<unsafe extern "C" fn()>,
+    pub flags: u32,
+    pub library_name: *mut i8,
+    pub class_name: *mut i8,
+    pub obj_size: i16,
+    pub info_size: i16,
+    pub parent: *mut _HSD_ClassInfo,
+    pub next: *mut _HSD_ClassInfo,
+    pub child: *mut _HSD_ClassInfo,
+    pub nb_exist: u32,
+    pub nb_peak: u32,
+}
+impl GcLayout for _HSD_ClassInfoHead {
+    const GC_NAME: &'static str = "_HSD_ClassInfoHead";
+    const GC_SIZE: u32 = 0x28;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("info_init", 0x0, 4, "void (*)(void)"),
+        GcField::new("flags", 0x4, 4, "u32"),
+        GcField::new("library_name", 0x8, 4, "char *"),
+        GcField::new("class_name", 0xc, 4, "char *"),
+        GcField::new("obj_size", 0x10, 2, "s16"),
+        GcField::new("info_size", 0x12, 2, "s16"),
+        GcField::new("parent", 0x14, 4, "struct _HSD_ClassInfo *"),
+        GcField::new("next", 0x18, 4, "struct _HSD_ClassInfo *"),
+        GcField::new("child", 0x1c, 4, "struct _HSD_ClassInfo *"),
+        GcField::new("nb_exist", 0x20, 4, "u32"),
+        GcField::new("nb_peak", 0x24, 4, "u32"),
+    ];
+}
+impl _HSD_ClassInfoHead {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _HSD_TevDesc` (src/sysdolphin/baselib/texp.h:98); GameCube size 0x74.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_TevDesc {
+    pub next: *mut _HSD_TevDesc,
+    pub flags: u32,
+    pub stage: u32,
+    pub coord: u32,
+    pub map: u32,
+    pub color: u32,
+    pub u: _HSD_TevDesc_u,
+}
+impl GcLayout for _HSD_TevDesc {
+    const GC_NAME: &'static str = "_HSD_TevDesc";
+    const GC_SIZE: u32 = 0x74;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("next", 0x0, 4, "struct _HSD_TevDesc *"),
+        GcField::new("flags", 0x4, 4, "u32"),
+        GcField::new("stage", 0x8, 4, "u32"),
+        GcField::new("coord", 0xc, 4, "u32"),
+        GcField::new("map", 0x10, 4, "u32"),
+        GcField::new("color", 0x14, 4, "u32"),
+        GcField::new("u", 0x18, 92, "union <anon>"),
+    ];
+}
+impl _HSD_TevDesc {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _HSD_TECommon` (src/sysdolphin/baselib/texp.h:118); GameCube size 0x8.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_TECommon {
+    pub r#type: u32,
+    pub next: *mut HSD_TExp,
+}
+impl GcLayout for _HSD_TECommon {
+    const GC_NAME: &'static str = "_HSD_TECommon";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("type", 0x0, 4, "HSD_TExpType"),
+        GcField::new("next", 0x4, 4, "HSD_TExp *"),
+    ];
+}
+impl _HSD_TECommon {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _HSD_TETev` (src/sysdolphin/baselib/texp.h:142); GameCube size 0x6c.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_TETev {
+    pub r#type: u32,
+    pub next: *mut HSD_TExp,
+    pub c_ref: i32,
+    pub c_dst: u8,
+    pub c_op: u8,
+    pub c_clamp: u8,
+    pub c_bias: u8,
+    pub c_scale: u8,
+    pub c_range: u8,
+    pub a_ref: i32,
+    pub a_dst: u8,
+    pub a_op: u8,
+    pub a_clamp: u8,
+    pub a_bias: u8,
+    pub a_scale: u8,
+    pub tex_swap: u8,
+    pub ras_swap: u8,
+    pub kcsel: u8,
+    pub kasel: u8,
+    pub c_in: [_HSD_TEArg; 4],
+    pub a_in: [_HSD_TEArg; 4],
+    pub tex: *mut HSD_TObj,
+    pub chan: u8,
+}
+impl GcLayout for _HSD_TETev {
+    const GC_NAME: &'static str = "_HSD_TETev";
+    const GC_SIZE: u32 = 0x6c;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("type", 0x0, 4, "HSD_TExpType"),
+        GcField::new("next", 0x4, 4, "HSD_TExp *"),
+        GcField::new("c_ref", 0x8, 4, "s32"),
+        GcField::new("c_dst", 0xc, 1, "u8"),
+        GcField::new("c_op", 0xd, 1, "u8"),
+        GcField::new("c_clamp", 0xe, 1, "u8"),
+        GcField::new("c_bias", 0xf, 1, "u8"),
+        GcField::new("c_scale", 0x10, 1, "u8"),
+        GcField::new("c_range", 0x11, 1, "u8"),
+        GcField::new("a_ref", 0x14, 4, "s32"),
+        GcField::new("a_dst", 0x18, 1, "u8"),
+        GcField::new("a_op", 0x19, 1, "u8"),
+        GcField::new("a_clamp", 0x1a, 1, "u8"),
+        GcField::new("a_bias", 0x1b, 1, "u8"),
+        GcField::new("a_scale", 0x1c, 1, "u8"),
+        GcField::new("tex_swap", 0x1d, 1, "u8"),
+        GcField::new("ras_swap", 0x1e, 1, "u8"),
+        GcField::new("kcsel", 0x1f, 1, "u8"),
+        GcField::new("kasel", 0x20, 1, "u8"),
+        GcField::new("c_in", 0x24, 32, "HSD_TEArg[4]"),
+        GcField::new("a_in", 0x44, 32, "HSD_TEArg[4]"),
+        GcField::new("tex", 0x64, 4, "HSD_TObj *"),
+        GcField::new("chan", 0x68, 1, "u8"),
+    ];
+}
+impl _HSD_TETev {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _HSD_TECnst` (src/sysdolphin/baselib/texp.h:123); GameCube size 0x18.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_TECnst {
+    pub r#type: u32,
+    pub next: *mut HSD_TExp,
+    pub val: *mut c_void,
+    pub comp: u32,
+    pub ctype: u32,
+    pub reg: u8,
+    pub idx: u8,
+    pub r#ref: u8,
+    pub range: u8,
+}
+impl GcLayout for _HSD_TECnst {
+    const GC_NAME: &'static str = "_HSD_TECnst";
+    const GC_SIZE: u32 = 0x18;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("type", 0x0, 4, "HSD_TExpType"),
+        GcField::new("next", 0x4, 4, "HSD_TExp *"),
+        GcField::new("val", 0x8, 4, "void *"),
+        GcField::new("comp", 0xc, 4, "HSD_TEInput"),
+        GcField::new("ctype", 0x10, 4, "HSD_TEType"),
+        GcField::new("reg", 0x14, 1, "u8"),
+        GcField::new("idx", 0x15, 1, "u8"),
+        GcField::new("ref", 0x16, 1, "u8"),
+        GcField::new("range", 0x17, 1, "u8"),
+    ];
+}
+impl _HSD_TECnst {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_ShapeSet` (src/sysdolphin/baselib/pobj.h:67); GameCube size 0x24.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_ShapeSet {
+    pub flags: u16,
+    pub nb_shape: u16,
+    pub nb_vertex_index: i32,
+    pub vertex_desc: *mut HSD_VtxDescList,
+    pub vertex_idx_list: *mut *mut u8,
+    pub nb_normal_index: i32,
+    pub normal_desc: *mut HSD_VtxDescList,
+    pub normal_idx_list: *mut *mut u8,
+    pub blend: HSD_ShapeSet_blend,
+    pub aobj: *mut HSD_AObj,
+}
+impl GcLayout for HSD_ShapeSet {
+    const GC_NAME: &'static str = "HSD_ShapeSet";
+    const GC_SIZE: u32 = 0x24;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("flags", 0x0, 2, "u16"),
+        GcField::new("nb_shape", 0x2, 2, "u16"),
+        GcField::new("nb_vertex_index", 0x4, 4, "int"),
+        GcField::new("vertex_desc", 0x8, 4, "HSD_VtxDescList *"),
+        GcField::new("vertex_idx_list", 0xc, 4, "u8 **"),
+        GcField::new("nb_normal_index", 0x10, 4, "s32"),
+        GcField::new("normal_desc", 0x14, 4, "HSD_VtxDescList *"),
+        GcField::new("normal_idx_list", 0x18, 4, "u8 **"),
+        GcField::new("blend", 0x1c, 4, "union <anon>"),
+        GcField::new("aobj", 0x20, 4, "HSD_AObj *"),
+    ];
+}
+impl HSD_ShapeSet {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _HSD_MObjDesc` (src/sysdolphin/baselib/mobj.h:105); GameCube size 0x18.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_MObjDesc {
+    pub class_name: *mut i8,
+    pub rendermode: u32,
+    pub texdesc: *mut _HSD_TObjDesc,
+    pub mat: *mut HSD_Material,
+    pub renderdesc: *mut c_void,
+    pub pedesc: *mut HSD_PEDesc,
+}
+impl GcLayout for _HSD_MObjDesc {
+    const GC_NAME: &'static str = "_HSD_MObjDesc";
+    const GC_SIZE: u32 = 0x18;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("class_name", 0x0, 4, "char *"),
+        GcField::new("rendermode", 0x4, 4, "u32"),
+        GcField::new("texdesc", 0x8, 4, "struct _HSD_TObjDesc *"),
+        GcField::new("mat", 0xc, 4, "HSD_Material *"),
+        GcField::new("renderdesc", 0x10, 4, "void *"),
+        GcField::new("pedesc", 0x14, 4, "HSD_PEDesc *"),
+    ];
+}
+impl _HSD_MObjDesc {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_PObjDesc` (src/sysdolphin/baselib/pobj.h:32); GameCube size 0x18.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_PObjDesc {
+    pub class_name: *mut i8,
+    pub next: *mut HSD_PObjDesc,
+    pub verts: *mut HSD_VtxDescList,
+    pub flags: u16,
+    pub n_display: u16,
+    pub display: *mut u8,
+    pub u: HSD_PObjDesc_u,
+}
+impl GcLayout for HSD_PObjDesc {
+    const GC_NAME: &'static str = "HSD_PObjDesc";
+    const GC_SIZE: u32 = 0x18;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("class_name", 0x0, 4, "char *"),
+        GcField::new("next", 0x4, 4, "HSD_PObjDesc *"),
+        GcField::new("verts", 0x8, 4, "HSD_VtxDescList *"),
+        GcField::new("flags", 0xc, 2, "u16"),
+        GcField::new("n_display", 0xe, 2, "u16"),
+        GcField::new("display", 0x10, 4, "u8 *"),
+        GcField::new("u", 0x14, 4, "union <anon>"),
+    ];
+}
+impl HSD_PObjDesc {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _HSD_TlutDesc` (src/sysdolphin/baselib/tobj.h:209); GameCube size 0x10.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_TlutDesc {
+    pub lut: *mut c_void,
+    pub fmt: u32,
+    pub tlut_name: u32,
+    pub n_entries: u16,
+}
+impl GcLayout for _HSD_TlutDesc {
+    const GC_NAME: &'static str = "_HSD_TlutDesc";
+    const GC_SIZE: u32 = 0x10;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("lut", 0x0, 4, "void *"),
+        GcField::new("fmt", 0x4, 4, "GXTlutFmt"),
+        GcField::new("tlut_name", 0x8, 4, "u32"),
+        GcField::new("n_entries", 0xc, 2, "u16"),
+    ];
+}
+impl _HSD_TlutDesc {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _HSD_ChanAnim` (src/sysdolphin/baselib/mobj.h:114); GameCube size 0x8.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_ChanAnim {
+    pub next: *mut _HSD_ChanAnim,
+    pub aobjdesc: *mut HSD_AObjDesc,
+}
+impl GcLayout for _HSD_ChanAnim {
+    const GC_NAME: &'static str = "_HSD_ChanAnim";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("next", 0x0, 4, "struct _HSD_ChanAnim *"),
+        GcField::new("aobjdesc", 0x4, 4, "HSD_AObjDesc *"),
+    ];
+}
+impl _HSD_ChanAnim {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _HSD_TevRegAnim` (src/sysdolphin/baselib/mobj.h:119); GameCube size 0x8.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_TevRegAnim {
+    pub next: *mut _HSD_TevRegAnim,
+    pub aobjdesc: *mut HSD_AObjDesc,
+}
+impl GcLayout for _HSD_TevRegAnim {
+    const GC_NAME: &'static str = "_HSD_TevRegAnim";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("next", 0x0, 4, "struct _HSD_TevRegAnim *"),
+        GcField::new("aobjdesc", 0x4, 4, "HSD_AObjDesc *"),
+    ];
+}
+impl _HSD_TevRegAnim {
     /// All-zero value (C `memset(0)`).
     pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
 }
@@ -18606,6 +21056,154 @@ impl GcLayout for ECBSource_anon1_anon1 {
     ];
 }
 impl ECBSource_anon1_anon1 {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `union _HSD_TevDesc::<anon>` (src/sysdolphin/baselib/texp.h:105); GameCube size 0x5c.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub union _HSD_TevDesc_u {
+    pub tevconf: _HSD_TevConf,
+    pub tevop: _HSD_TevDesc_u_tevop,
+}
+impl GcLayout for _HSD_TevDesc_u {
+    const GC_NAME: &'static str = "_HSD_TevDesc_u";
+    const GC_SIZE: u32 = 0x5c;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("tevconf", 0x0, 92, "HSD_TevConf"),
+        GcField::new("tevop", 0x0, 4, "struct <anon>"),
+    ];
+}
+impl _HSD_TevDesc_u {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _HSD_TEArg` (src/sysdolphin/baselib/texp.h:135); GameCube size 0x8.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_TEArg {
+    pub r#type: u8,
+    pub sel: u8,
+    pub arg: u8,
+    pub exp: *mut HSD_TExp,
+}
+impl GcLayout for _HSD_TEArg {
+    const GC_NAME: &'static str = "_HSD_TEArg";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("type", 0x0, 1, "u8"),
+        GcField::new("sel", 0x1, 1, "u8"),
+        GcField::new("arg", 0x2, 1, "u8"),
+        GcField::new("exp", 0x4, 4, "HSD_TExp *"),
+    ];
+}
+impl _HSD_TEArg {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `union HSD_ShapeSet::<anon>` (src/sysdolphin/baselib/pobj.h:76); GameCube size 0x4.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub union HSD_ShapeSet_blend {
+    pub bp: *mut f32,
+    pub bl: f32,
+}
+impl GcLayout for HSD_ShapeSet_blend {
+    const GC_NAME: &'static str = "HSD_ShapeSet_blend";
+    const GC_SIZE: u32 = 0x4;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("bp", 0x0, 4, "f32 *"),
+        GcField::new("bl", 0x0, 4, "f32"),
+    ];
+}
+impl HSD_ShapeSet_blend {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _HSD_TObjDesc` (src/sysdolphin/baselib/tobj.h:173); GameCube size 0x5c.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_TObjDesc {
+    pub class_name: *mut i8,
+    pub next: *mut _HSD_TObjDesc,
+    pub id: u32,
+    pub src: u32,
+    pub rotate: Vec,
+    pub scale: Vec,
+    pub translate: Vec,
+    pub wrap_s: u32,
+    pub wrap_t: u32,
+    pub repeat_s: u8,
+    pub repeat_t: u8,
+    pub blend_flags: u32,
+    pub blending: f32,
+    pub magFilt: u32,
+    pub imagedesc: *mut HSD_ImageDesc,
+    pub tlutdesc: *mut _HSD_TlutDesc,
+    pub lod: *mut _HSD_TexLODDesc,
+    pub tev: *mut _HSD_TObjTevDesc,
+}
+impl GcLayout for _HSD_TObjDesc {
+    const GC_NAME: &'static str = "_HSD_TObjDesc";
+    const GC_SIZE: u32 = 0x5c;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("class_name", 0x0, 4, "char *"),
+        GcField::new("next", 0x4, 4, "struct _HSD_TObjDesc *"),
+        GcField::new("id", 0x8, 4, "GXTexMapID"),
+        GcField::new("src", 0xc, 4, "GXTexGenSrc"),
+        GcField::new("rotate", 0x10, 12, "Vec3"),
+        GcField::new("scale", 0x1c, 12, "Vec3"),
+        GcField::new("translate", 0x28, 12, "Vec3"),
+        GcField::new("wrap_s", 0x34, 4, "GXTexWrapMode"),
+        GcField::new("wrap_t", 0x38, 4, "GXTexWrapMode"),
+        GcField::new("repeat_s", 0x3c, 1, "u8"),
+        GcField::new("repeat_t", 0x3d, 1, "u8"),
+        GcField::new("blend_flags", 0x40, 4, "u32"),
+        GcField::new("blending", 0x44, 4, "f32"),
+        GcField::new("magFilt", 0x48, 4, "GXTexFilter"),
+        GcField::new("imagedesc", 0x4c, 4, "struct HSD_ImageDesc *"),
+        GcField::new("tlutdesc", 0x50, 4, "struct _HSD_TlutDesc *"),
+        GcField::new("lod", 0x54, 4, "struct _HSD_TexLODDesc *"),
+        GcField::new("tev", 0x58, 4, "struct _HSD_TObjTevDesc *"),
+    ];
+}
+impl _HSD_TObjDesc {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `union HSD_PObjDesc::<anon>` (src/sysdolphin/baselib/pobj.h:39); GameCube size 0x4.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub union HSD_PObjDesc_u {
+    pub joint: *mut HSD_Joint,
+    pub shape_set: *mut HSD_ShapeSetDesc,
+    pub envelope_p: *mut *mut HSD_EnvelopeDesc,
+}
+impl GcLayout for HSD_PObjDesc_u {
+    const GC_NAME: &'static str = "HSD_PObjDesc_u";
+    const GC_SIZE: u32 = 0x4;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("joint", 0x0, 4, "HSD_Joint *"),
+        GcField::new("shape_set", 0x0, 4, "HSD_ShapeSetDesc *"),
+        GcField::new("envelope_p", 0x0, 4, "HSD_EnvelopeDesc **"),
+    ];
+}
+impl HSD_PObjDesc_u {
     /// All-zero value (C `memset(0)`).
     pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
 }
@@ -18684,6 +21282,204 @@ impl lb_00F9_UnkDesc1 {
     pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
 }
 
+/// `struct _HSD_TevConf` (src/sysdolphin/baselib/texp.h:58); GameCube size 0x5c.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_TevConf {
+    pub clr_op: u32,
+    pub clr_a: u32,
+    pub clr_b: u32,
+    pub clr_c: u32,
+    pub clr_d: u32,
+    pub clr_scale: u32,
+    pub clr_bias: u32,
+    pub clr_clamp: u8,
+    pub clr_out_reg: u32,
+    pub alpha_op: u32,
+    pub alpha_a: u32,
+    pub alpha_b: u32,
+    pub alpha_c: u32,
+    pub alpha_d: u32,
+    pub alpha_scale: u32,
+    pub alpha_bias: u32,
+    pub alpha_clamp: u8,
+    pub alpha_out_reg: u32,
+    pub mode: u32,
+    pub ras_swap: u32,
+    pub tex_swap: u32,
+    pub kcsel: u32,
+    pub kasel: u32,
+}
+impl GcLayout for _HSD_TevConf {
+    const GC_NAME: &'static str = "_HSD_TevConf";
+    const GC_SIZE: u32 = 0x5c;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("clr_op", 0x0, 4, "GXTevOp"),
+        GcField::new("clr_a", 0x4, 4, "GXTevColorArg"),
+        GcField::new("clr_b", 0x8, 4, "GXTevColorArg"),
+        GcField::new("clr_c", 0xc, 4, "GXTevColorArg"),
+        GcField::new("clr_d", 0x10, 4, "GXTevColorArg"),
+        GcField::new("clr_scale", 0x14, 4, "GXTevScale"),
+        GcField::new("clr_bias", 0x18, 4, "GXTevBias"),
+        GcField::new("clr_clamp", 0x1c, 1, "u8"),
+        GcField::new("clr_out_reg", 0x20, 4, "GXTevRegID"),
+        GcField::new("alpha_op", 0x24, 4, "GXTevOp"),
+        GcField::new("alpha_a", 0x28, 4, "GXTevAlphaArg"),
+        GcField::new("alpha_b", 0x2c, 4, "GXTevAlphaArg"),
+        GcField::new("alpha_c", 0x30, 4, "GXTevAlphaArg"),
+        GcField::new("alpha_d", 0x34, 4, "GXTevAlphaArg"),
+        GcField::new("alpha_scale", 0x38, 4, "GXTevScale"),
+        GcField::new("alpha_bias", 0x3c, 4, "GXTevBias"),
+        GcField::new("alpha_clamp", 0x40, 1, "u8"),
+        GcField::new("alpha_out_reg", 0x44, 4, "GXTevRegID"),
+        GcField::new("mode", 0x48, 4, "GXTevClampMode"),
+        GcField::new("ras_swap", 0x4c, 4, "GXTevSwapSel"),
+        GcField::new("tex_swap", 0x50, 4, "GXTevSwapSel"),
+        GcField::new("kcsel", 0x54, 4, "GXTevKColorSel"),
+        GcField::new("kasel", 0x58, 4, "GXTevKAlphaSel"),
+    ];
+}
+impl _HSD_TevConf {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _HSD_TevDesc::<anon>::<anon>` (src/sysdolphin/baselib/texp.h:107); GameCube size 0x4.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_TevDesc_u_tevop {
+    pub tevmode: u32,
+}
+impl GcLayout for _HSD_TevDesc_u_tevop {
+    const GC_NAME: &'static str = "_HSD_TevDesc_u_tevop";
+    const GC_SIZE: u32 = 0x4;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("tevmode", 0x0, 4, "u32"),
+    ];
+}
+impl _HSD_TevDesc_u_tevop {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct _HSD_TObjTevDesc` (src/sysdolphin/baselib/tobj.h:249); GameCube size 0x20.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct _HSD_TObjTevDesc {
+    pub color_op: u8,
+    pub alpha_op: u8,
+    pub color_bias: u8,
+    pub alpha_bias: u8,
+    pub color_scale: u8,
+    pub alpha_scale: u8,
+    pub color_clamp: u8,
+    pub alpha_clamp: u8,
+    pub color_a: u8,
+    pub color_b: u8,
+    pub color_c: u8,
+    pub color_d: u8,
+    pub alpha_a: u8,
+    pub alpha_b: u8,
+    pub alpha_c: u8,
+    pub alpha_d: u8,
+    pub konst: _GXColor,
+    pub tev0: _GXColor,
+    pub tev1: _GXColor,
+    pub active: u32,
+}
+impl GcLayout for _HSD_TObjTevDesc {
+    const GC_NAME: &'static str = "_HSD_TObjTevDesc";
+    const GC_SIZE: u32 = 0x20;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("color_op", 0x0, 1, "u8"),
+        GcField::new("alpha_op", 0x1, 1, "u8"),
+        GcField::new("color_bias", 0x2, 1, "u8"),
+        GcField::new("alpha_bias", 0x3, 1, "u8"),
+        GcField::new("color_scale", 0x4, 1, "u8"),
+        GcField::new("alpha_scale", 0x5, 1, "u8"),
+        GcField::new("color_clamp", 0x6, 1, "u8"),
+        GcField::new("alpha_clamp", 0x7, 1, "u8"),
+        GcField::new("color_a", 0x8, 1, "u8"),
+        GcField::new("color_b", 0x9, 1, "u8"),
+        GcField::new("color_c", 0xa, 1, "u8"),
+        GcField::new("color_d", 0xb, 1, "u8"),
+        GcField::new("alpha_a", 0xc, 1, "u8"),
+        GcField::new("alpha_b", 0xd, 1, "u8"),
+        GcField::new("alpha_c", 0xe, 1, "u8"),
+        GcField::new("alpha_d", 0xf, 1, "u8"),
+        GcField::new("konst", 0x10, 4, "GXColor"),
+        GcField::new("tev0", 0x14, 4, "GXColor"),
+        GcField::new("tev1", 0x18, 4, "GXColor"),
+        GcField::new("active", 0x1c, 4, "u32"),
+    ];
+}
+impl _HSD_TObjTevDesc {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_ShapeSetDesc` (src/sysdolphin/baselib/pobj.h:83); GameCube size 0x1c.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_ShapeSetDesc {
+    pub flags: u16,
+    pub nb_shape: u16,
+    pub nb_vertex_index: i32,
+    pub vertex_desc: *mut HSD_VtxDescList,
+    pub vertex_idx_list: *mut *mut u8,
+    pub nb_normal_index: i32,
+    pub normal_desc: *mut HSD_VtxDescList,
+    pub normal_idx_list: *mut *mut u8,
+}
+impl GcLayout for HSD_ShapeSetDesc {
+    const GC_NAME: &'static str = "HSD_ShapeSetDesc";
+    const GC_SIZE: u32 = 0x1c;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("flags", 0x0, 2, "u16"),
+        GcField::new("nb_shape", 0x2, 2, "u16"),
+        GcField::new("nb_vertex_index", 0x4, 4, "s32"),
+        GcField::new("vertex_desc", 0x8, 4, "HSD_VtxDescList *"),
+        GcField::new("vertex_idx_list", 0xc, 4, "u8 **"),
+        GcField::new("nb_normal_index", 0x10, 4, "s32"),
+        GcField::new("normal_desc", 0x14, 4, "HSD_VtxDescList *"),
+        GcField::new("normal_idx_list", 0x18, 4, "u8 **"),
+    ];
+}
+impl HSD_ShapeSetDesc {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
+/// `struct HSD_EnvelopeDesc` (src/sysdolphin/baselib/pobj.h:62); GameCube size 0x8.
+// TODO(move-to-core): shared type, generated here until melee_types owns it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct HSD_EnvelopeDesc {
+    pub joint: *mut HSD_Joint,
+    pub weight: f32,
+}
+impl GcLayout for HSD_EnvelopeDesc {
+    const GC_NAME: &'static str = "HSD_EnvelopeDesc";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("joint", 0x0, 4, "HSD_Joint *"),
+        GcField::new("weight", 0x4, 4, "f32"),
+    ];
+}
+impl HSD_EnvelopeDesc {
+    /// All-zero value (C `memset(0)`).
+    pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
+}
+
 /// `struct lb_00F9_UnkDesc1Inner` (src/melee/lb/types.h:441); GameCube size 0x3c.
 // TODO(move-to-core): shared type, generated here until melee_types owns it.
 #[repr(C)]
@@ -18720,39 +21516,7 @@ impl lb_00F9_UnkDesc1Inner {
 
 /// Opaque here (only reached by pointer). TODO(move-to-core)
 #[repr(C)]
-pub struct HSD_DObj { _opaque: [u8; 0] }
-
-/// Opaque here (only reached by pointer). TODO(move-to-core)
-#[repr(C)]
-pub struct HSD_TObj { _opaque: [u8; 0] }
-
-/// Opaque here (only reached by pointer). TODO(move-to-core)
-#[repr(C)]
-pub struct HSD_JObj { _opaque: [u8; 0] }
-
-/// Opaque here (only reached by pointer). TODO(move-to-core)
-#[repr(C)]
-pub struct HSD_Joint { _opaque: [u8; 0] }
-
-/// Opaque here (only reached by pointer). TODO(move-to-core)
-#[repr(C)]
-pub struct HSD_AnimJoint { _opaque: [u8; 0] }
-
-/// Opaque here (only reached by pointer). TODO(move-to-core)
-#[repr(C)]
-pub struct HSD_MatAnimJoint { _opaque: [u8; 0] }
-
-/// Opaque here (only reached by pointer). TODO(move-to-core)
-#[repr(C)]
-pub struct HSD_Archive { _opaque: [u8; 0] }
-
-/// Opaque here (only reached by pointer). TODO(move-to-core)
-#[repr(C)]
 pub struct Item { _opaque: [u8; 0] }
-
-/// Opaque here (only reached by pointer). TODO(move-to-core)
-#[repr(C)]
-pub struct HSD_LObj { _opaque: [u8; 0] }
 
 /// Opaque here (only reached by pointer). TODO(move-to-core)
 #[repr(C)]
@@ -18761,6 +21525,22 @@ pub struct FigaTree { _opaque: [u8; 0] }
 /// Opaque here (only reached by pointer). TODO(move-to-core)
 #[repr(C)]
 pub struct HSD_GObjProc { _opaque: [u8; 0] }
+
+/// Opaque here (only reached by pointer). TODO(move-to-core)
+#[repr(C)]
+pub struct HSD_RObj { _opaque: [u8; 0] }
+
+/// Opaque here (only reached by pointer). TODO(move-to-core)
+#[repr(C)]
+pub struct HSD_RObjDesc { _opaque: [u8; 0] }
+
+/// Opaque here (only reached by pointer). TODO(move-to-core)
+#[repr(C)]
+pub struct HSD_RObjAnimJoint { _opaque: [u8; 0] }
+
+/// Opaque here (only reached by pointer). TODO(move-to-core)
+#[repr(C)]
+pub struct HSD_WObj { _opaque: [u8; 0] }
 
 /// Opaque here (only reached by pointer). TODO(move-to-core)
 #[repr(C)]
@@ -20365,6 +23145,471 @@ pub const CostumeId_Blue: u32 = 2;
 pub const CostumeId_Green: u32 = 3;
 pub const CostumeId_Extra1: u32 = 4;
 pub const CostumeId_Extra2: u32 = 5;
+pub const CpuCmd_PressA: u32 = 1;
+pub const CpuCmd_ReleaseA: u32 = 2;
+pub const CpuCmd_PressB: u32 = 3;
+pub const CpuCmd_ReleaseB: u32 = 4;
+pub const CpuCmd_PressX: u32 = 5;
+pub const CpuCmd_ReleaseX: u32 = 6;
+pub const CpuCmd_PressY: u32 = 7;
+pub const CpuCmd_ReleaseY: u32 = 8;
+pub const CpuCmd_PressR: u32 = 9;
+pub const CpuCmd_ReleaseR: u32 = 10;
+pub const CpuCmd_PressL: u32 = 11;
+pub const CpuCmd_ReleaseL: u32 = 12;
+pub const CpuCmd_PressZ: u32 = 13;
+pub const CpuCmd_ReleaseZ: u32 = 14;
+pub const CpuCmd_PressUp: u32 = 15;
+pub const CpuCmd_ReleaseUp: u32 = 16;
+pub const CpuCmd_PressDown: u32 = 17;
+pub const CpuCmd_ReleaseDown: u32 = 18;
+pub const CpuCmd_PressRight: u32 = 19;
+pub const CpuCmd_ReleaseRight: u32 = 20;
+pub const CpuCmd_PressLeft: u32 = 21;
+pub const CpuCmd_ReleaseLeft: u32 = 22;
+pub const CpuCmd_PressStart: u32 = 23;
+pub const CpuCmd_ReleaseStart: u32 = 24;
+pub const CpuCmd_ReleaseAll: u32 = 25;
+pub const CpuCmd_Done: u32 = 127;
+pub const CpuCmd_ZeroArgEnd: u32 = 127;
+pub const CpuCmd_SetLstickX: u32 = 128;
+pub const CpuCmd_SetLstickY: u32 = 129;
+pub const CpuCmd_SetCstickX: u32 = 130;
+pub const CpuCmd_SetCstickY: u32 = 131;
+pub const CpuCmd_SetRtrigger: u32 = 132;
+pub const CpuCmd_SetLtrigger: u32 = 133;
+pub const CpuCmd_PressAFor: u32 = 134;
+pub const CpuCmd_ReleaseAFor: u32 = 135;
+pub const CpuCmd_PressBFor: u32 = 136;
+pub const CpuCmd_ReleaseBFor: u32 = 137;
+pub const CpuCmd_PressXFor: u32 = 138;
+pub const CpuCmd_ReleaseXFor: u32 = 139;
+pub const CpuCmd_PressYFor: u32 = 140;
+pub const CpuCmd_ReleaseYFor: u32 = 141;
+pub const CpuCmd_WaitFor: u32 = 142;
+pub const CpuCmd_LstickTowardDestination: u32 = 143;
+pub const CpuCmd_LstickXTowardDestination: u32 = 144;
+pub const CpuCmd_LstickXForward: u32 = 145;
+pub const CpuCmd_WaitIfMotionId: u32 = 146;
+pub const CpuCmd_Unk0x93: u32 = 147;
+pub const CpuCmd_LstickTowardFighter: u32 = 148;
+pub const CpuCmd_LstickXTowardFighter: u32 = 149;
+pub const CpuCmd_OneArgEnd: u32 = 191;
+pub const CpuCmd_LstickTowardDestinationClamped: u32 = 192;
+pub const CpuCmd_LstickXTowardDestinationClamped: u32 = 193;
+pub const CpuCmd_LstickForwardClamped: u32 = 194;
+pub const CpuCmd_Count: u32 = 195;
+pub const ftKb_MS_JumpAerialF1: u32 = 341;
+pub const ftKb_MS_JumpAerialF2: u32 = 342;
+pub const ftKb_MS_JumpAerialF3: u32 = 343;
+pub const ftKb_MS_JumpAerialF4: u32 = 344;
+pub const ftKb_MS_JumpAerialF5: u32 = 345;
+pub const ftKb_MS_JumpAerialF1Met: u32 = 346;
+pub const ftKb_MS_JumpAerialF2Met: u32 = 347;
+pub const ftKb_MS_JumpAerialF3Met: u32 = 348;
+pub const ftKb_MS_JumpAerialF4Met: u32 = 349;
+pub const ftKb_MS_JumpAerialF5Met: u32 = 350;
+pub const ftKb_MS_AttackDash: u32 = 351;
+pub const ftKb_MS_AttackDashAir: u32 = 352;
+pub const ftKb_MS_SpecialN: u32 = 353;
+pub const ftKb_MS_SpecialNLoop: u32 = 354;
+pub const ftKb_MS_SpecialNEnd: u32 = 355;
+pub const ftKb_MS_SpecialNCapture0: u32 = 356;
+pub const ftKb_MS_SpecialNCapture1: u32 = 357;
+pub const ftKb_MS_Eat: u32 = 358;
+pub const ftKb_MS_EatWait: u32 = 359;
+pub const ftKb_MS_EatWalkSlow: u32 = 360;
+pub const ftKb_MS_EatWalkMiddle: u32 = 361;
+pub const ftKb_MS_EatWalkFast: u32 = 362;
+pub const ftKb_MS_EatTurn: u32 = 363;
+pub const ftKb_MS_EatJump1: u32 = 364;
+pub const ftKb_MS_EatJump2: u32 = 365;
+pub const ftKb_MS_EatLanding: u32 = 366;
+pub const ftKb_MS_SpecialNDrink0: u32 = 367;
+pub const ftKb_MS_SpecialNDrink1: u32 = 368;
+pub const ftKb_MS_SpecialNSpit0: u32 = 369;
+pub const ftKb_MS_SpecialNSpit1: u32 = 370;
+pub const ftKb_MS_SpecialAirN: u32 = 371;
+pub const ftKb_MS_SpecialAirNLoop: u32 = 372;
+pub const ftKb_MS_SpecialAirNEnd: u32 = 373;
+pub const ftKb_MS_SpecialAirNCapture0: u32 = 374;
+pub const ftKb_MS_SpecialAirNCapture1: u32 = 375;
+pub const ftKb_MS_EatAir: u32 = 376;
+pub const ftKb_MS_EatFall: u32 = 377;
+pub const ftKb_MS_SpecialAirNDrink0: u32 = 378;
+pub const ftKb_MS_SpecialAirNDrink1: u32 = 379;
+pub const ftKb_MS_SpecialAirNSpit0: u32 = 380;
+pub const ftKb_MS_SpecialAirNSpit1: u32 = 381;
+pub const ftKb_MS_EatTurnAir: u32 = 382;
+pub const ftKb_MS_SpecialS: u32 = 383;
+pub const ftKb_MS_SpecialAirS: u32 = 384;
+pub const ftKb_MS_SpecialHi1: u32 = 385;
+pub const ftKb_MS_SpecialHi2: u32 = 386;
+pub const ftKb_MS_SpecialHi3: u32 = 387;
+pub const ftKb_MS_SpecialHi4: u32 = 388;
+pub const ftKb_MS_SpecialAirHi1: u32 = 389;
+pub const ftKb_MS_SpecialAirHi2: u32 = 390;
+pub const ftKb_MS_SpecialAirHi3: u32 = 391;
+pub const ftKb_MS_SpecialAirHi4: u32 = 392;
+pub const ftKb_MS_SpecialLw1: u32 = 393;
+pub const ftKb_MS_SpecialLw: u32 = 394;
+pub const ftKb_MS_SpecialLwEnd: u32 = 395;
+pub const ftKb_MS_SpecialAirLwStart: u32 = 396;
+pub const ftKb_MS_SpecialAirLw: u32 = 397;
+pub const ftKb_MS_SpecialAirLwEnd: u32 = 398;
+pub const ftKb_MS_MrSpecialN: u32 = 399;
+pub const ftKb_MS_MrSpecialAirN: u32 = 400;
+pub const ftKb_MS_LkSpecialNStart: u32 = 401;
+pub const ftKb_MS_LkSpecialNLoop: u32 = 402;
+pub const ftKb_MS_LkSpecialNEnd: u32 = 403;
+pub const ftKb_MS_LkSpecialAirNStart: u32 = 404;
+pub const ftKb_MS_LkSpecialAirNLoop: u32 = 405;
+pub const ftKb_MS_LkSpecialAirNEnd: u32 = 406;
+pub const ftKb_MS_SsSpecialNStart: u32 = 407;
+pub const ftKb_MS_SsSpecialNHold: u32 = 408;
+pub const ftKb_MS_SsSpecialNCancel: u32 = 409;
+pub const ftKb_MS_SsSpecialN: u32 = 410;
+pub const ftKb_MS_SsSpecialAirNStart: u32 = 411;
+pub const ftKb_MS_SsSpecialAirN: u32 = 412;
+pub const ftKb_MS_YsSpecialN1: u32 = 413;
+pub const ftKb_MS_YsSpecialNCapture1_0: u32 = 414;
+pub const ftKb_MS_YsSpecialNCapture1_1: u32 = 415;
+pub const ftKb_MS_YsSpecialNCapture2_0: u32 = 416;
+pub const ftKb_MS_YsSpecialNCapture2_1: u32 = 417;
+pub const ftKb_MS_YsSpecialAirNCapture2: u32 = 418;
+pub const ftKb_MS_YsSpecialAirNCapture1_0: u32 = 419;
+pub const ftKb_MS_YsSpecialAirNCapture1_1: u32 = 420;
+pub const ftKb_MS_YsSpecialAirN2_0: u32 = 421;
+pub const ftKb_MS_YsSpecialAirN2_1: u32 = 422;
+pub const ftKb_MS_FxSpecialNStart: u32 = 423;
+pub const ftKb_MS_FxSpecialNLoop: u32 = 424;
+pub const ftKb_MS_FxSpecialNEnd: u32 = 425;
+pub const ftKb_MS_FxSpecialAirNStart: u32 = 426;
+pub const ftKb_MS_FxSpecialAirNLoop: u32 = 427;
+pub const ftKb_MS_FxSpecialAirNEnd: u32 = 428;
+pub const ftKb_MS_PkSpecialN: u32 = 429;
+pub const ftKb_MS_PkSpecialAirN: u32 = 430;
+pub const ftKb_MS_LgSpecialN: u32 = 431;
+pub const ftKb_MS_LgSpecialAirN: u32 = 432;
+pub const ftKb_MS_CaSpecialN: u32 = 433;
+pub const ftKb_MS_CaSpecialAirN: u32 = 434;
+pub const ftKb_MS_NsSpecialNStart: u32 = 435;
+pub const ftKb_MS_NsSpecialNHold0: u32 = 436;
+pub const ftKb_MS_NsSpecialNHold1: u32 = 437;
+pub const ftKb_MS_NsSpecialNEnd: u32 = 438;
+pub const ftKb_MS_NsSpecialAirNStart: u32 = 439;
+pub const ftKb_MS_NsSpecialAirNHold0: u32 = 440;
+pub const ftKb_MS_NsSpecialAirNHold1: u32 = 441;
+pub const ftKb_MS_NsSpecialAirNEnd: u32 = 442;
+pub const ftKb_MS_KpSpecialNStart: u32 = 443;
+pub const ftKb_MS_KpSpecialN: u32 = 444;
+pub const ftKb_MS_KpSpecialNEnd: u32 = 445;
+pub const ftKb_MS_KpSpecialAirNStart: u32 = 446;
+pub const ftKb_MS_KpSpecialAirN: u32 = 447;
+pub const ftKb_MS_KpSpecialAirNEnd: u32 = 448;
+pub const ftKb_MS_PeSpecialLw: u32 = 449;
+pub const ftKb_MS_PeSpecialLwHit: u32 = 450;
+pub const ftKb_MS_PeSpecialAirLw: u32 = 451;
+pub const ftKb_MS_PeSpecialAirLwHit: u32 = 452;
+pub const ftKb_MS_PpSpecialN: u32 = 453;
+pub const ftKb_MS_PpSpecialAirN: u32 = 454;
+pub const ftKb_MS_DkSpecialNStart: u32 = 455;
+pub const ftKb_MS_DkSpecialNLoop: u32 = 456;
+pub const ftKb_MS_DkSpecialNCancel: u32 = 457;
+pub const ftKb_MS_DkSpecialN: u32 = 458;
+pub const ftKb_MS_DkSpecialNFull: u32 = 459;
+pub const ftKb_MS_DkSpecialAirNStart: u32 = 460;
+pub const ftKb_MS_DkSpecialAirNLoop: u32 = 461;
+pub const ftKb_MS_DkSpecialAirNCancel: u32 = 462;
+pub const ftKb_MS_DkSpecialAirN: u32 = 463;
+pub const ftKb_MS_DkSpecialAirNFull: u32 = 464;
+pub const ftKb_MS_ZdSpecialN: u32 = 465;
+pub const ftKb_MS_ZdSpecialAirN: u32 = 466;
+pub const ftKb_MS_SkSpecialNStart: u32 = 467;
+pub const ftKb_MS_SkSpecialNLoop: u32 = 468;
+pub const ftKb_MS_SkSpecialNCancel: u32 = 469;
+pub const ftKb_MS_SkSpecialNEnd: u32 = 470;
+pub const ftKb_MS_SkSpecialAirNStart: u32 = 471;
+pub const ftKb_MS_SkSpecialAirNLoop: u32 = 472;
+pub const ftKb_MS_SkSpecialAirNCancel: u32 = 473;
+pub const ftKb_MS_SkSpecialAirNEnd: u32 = 474;
+pub const ftKb_MS_PrSpecialNStartR: u32 = 475;
+pub const ftKb_MS_PrSpecialNStartL: u32 = 476;
+pub const ftKb_MS_PrSpecialNLoop: u32 = 477;
+pub const ftKb_MS_PrSpecialNFull: u32 = 478;
+pub const ftKb_MS_PrSpecialN1: u32 = 479;
+pub const ftKb_MS_PrSpecialNTurn: u32 = 480;
+pub const ftKb_MS_PrSpecialNEndR: u32 = 481;
+pub const ftKb_MS_PrSpecialNEndL: u32 = 482;
+pub const ftKb_MS_PrSpecialAirNStartR: u32 = 483;
+pub const ftKb_MS_PrSpecialAirNStartL: u32 = 484;
+pub const ftKb_MS_PrSpecialAirNLoop: u32 = 485;
+pub const ftKb_MS_PrSpecialAirNFull: u32 = 486;
+pub const ftKb_MS_PrSpecialAirN: u32 = 487;
+pub const ftKb_MS_PrSpecialN0: u32 = 488;
+pub const ftKb_MS_PrSpecialAirNEndR0: u32 = 489;
+pub const ftKb_MS_PrSpecialAirNEndR1: u32 = 490;
+pub const ftKb_MS_PrSpecialNHit: u32 = 491;
+pub const ftKb_MS_MsSpecialNStart: u32 = 492;
+pub const ftKb_MS_MsSpecialNLoop: u32 = 493;
+pub const ftKb_MS_MsSpecialNEnd0: u32 = 494;
+pub const ftKb_MS_MsSpecialNEnd1: u32 = 495;
+pub const ftKb_MS_MsSpecialAirNStart: u32 = 496;
+pub const ftKb_MS_MsSpecialAirNLoop: u32 = 497;
+pub const ftKb_MS_MsSpecialAirNEnd0: u32 = 498;
+pub const ftKb_MS_MsSpecialAirNEnd1: u32 = 499;
+pub const ftKb_MS_MtSpecialNStart: u32 = 500;
+pub const ftKb_MS_MtSpecialNLoop: u32 = 501;
+pub const ftKb_MS_MtSpecialNLoopFull: u32 = 502;
+pub const ftKb_MS_MtSpecialNCancel: u32 = 503;
+pub const ftKb_MS_MtSpecialNEnd: u32 = 504;
+pub const ftKb_MS_MtSpecialAirNStart: u32 = 505;
+pub const ftKb_MS_MtSpecialAirNLoop: u32 = 506;
+pub const ftKb_MS_MtSpecialAirNLoopFull: u32 = 507;
+pub const ftKb_MS_MtSpecialAirNCancel: u32 = 508;
+pub const ftKb_MS_MtSpecialAirNEnd: u32 = 509;
+pub const ftKb_MS_GwSpecialN: u32 = 510;
+pub const ftKb_MS_GwSpecialAirN: u32 = 511;
+pub const ftKb_MS_DrSpecialN: u32 = 512;
+pub const ftKb_MS_DrSpecialAirN: u32 = 513;
+pub const ftKb_MS_ClSpecialNStart: u32 = 514;
+pub const ftKb_MS_ClSpecialNLoop: u32 = 515;
+pub const ftKb_MS_ClSpecialNEnd: u32 = 516;
+pub const ftKb_MS_ClSpecialAirNStart: u32 = 517;
+pub const ftKb_MS_ClSpecialAirNLoop: u32 = 518;
+pub const ftKb_MS_ClSpecialAirNEnd: u32 = 519;
+pub const ftKb_MS_FcSpecialNStart: u32 = 520;
+pub const ftKb_MS_FcSpecialNLoop: u32 = 521;
+pub const ftKb_MS_FcSpecialNEnd: u32 = 522;
+pub const ftKb_MS_FcSpecialAirNStart: u32 = 523;
+pub const ftKb_MS_FcSpecialAirNLoop: u32 = 524;
+pub const ftKb_MS_FcSpecialAirNEnd: u32 = 525;
+pub const ftKb_MS_PcSpecialN: u32 = 526;
+pub const ftKb_MS_PcSpecialAirN: u32 = 527;
+pub const ftKb_MS_GnSpecialN: u32 = 528;
+pub const ftKb_MS_GnSpecialAirN: u32 = 529;
+pub const ftKb_MS_FeSpecialNStart: u32 = 530;
+pub const ftKb_MS_FeSpecialNLoop: u32 = 531;
+pub const ftKb_MS_FeSpecialNEnd0: u32 = 532;
+pub const ftKb_MS_FeSpecialNEnd1: u32 = 533;
+pub const ftKb_MS_FeSpecialAirNStart: u32 = 534;
+pub const ftKb_MS_FeSpecialAirNLoop: u32 = 535;
+pub const ftKb_MS_FeSpecialAirNEnd0: u32 = 536;
+pub const ftKb_MS_FeSpecialAirNEnd1: u32 = 537;
+pub const ftKb_MS_GkSpecialNStart: u32 = 538;
+pub const ftKb_MS_GkSpecialN: u32 = 539;
+pub const ftKb_MS_GkSpecialNEnd: u32 = 540;
+pub const ftKb_MS_GkSpecialAirNStart: u32 = 541;
+pub const ftKb_MS_GkSpecialAirN: u32 = 542;
+pub const ftKb_MS_GkSpecialAirNEnd: u32 = 543;
+pub const ftKb_MS_Count: u32 = 544;
+pub const ftKb_MS_SelfCount: u32 = 203;
+pub const ftKb_SM_JumpAerialF1: u32 = 295;
+pub const ftKb_SM_JumpAerialF2: u32 = 296;
+pub const ftKb_SM_JumpAerialF3: u32 = 297;
+pub const ftKb_SM_JumpAerialF4: u32 = 298;
+pub const ftKb_SM_JumpAerialF5: u32 = 299;
+pub const ftKb_SM_JumpAerialF1Met: u32 = 300;
+pub const ftKb_SM_JumpAerialF2Met: u32 = 301;
+pub const ftKb_SM_JumpAerialF3Met: u32 = 302;
+pub const ftKb_SM_JumpAerialF4Met: u32 = 303;
+pub const ftKb_SM_JumpAerialF5Met: u32 = 304;
+pub const ftKb_SM_SpecialN: u32 = 305;
+pub const ftKb_SM_SpecialNLoop: u32 = 306;
+pub const ftKb_SM_SpecialNEnd: u32 = 307;
+pub const ftKb_SM_SpecialNCapture: u32 = 308;
+pub const ftKb_SM_Eat: u32 = 309;
+pub const ftKb_SM_EatWait: u32 = 310;
+pub const ftKb_SM_EatWalkSlow: u32 = 311;
+pub const ftKb_SM_EatWalkMiddle: u32 = 312;
+pub const ftKb_SM_EatWalkFast: u32 = 313;
+pub const ftKb_SM_EatJump1: u32 = 314;
+pub const ftKb_SM_EatJump2: u32 = 315;
+pub const ftKb_SM_EatLanding: u32 = 316;
+pub const ftKb_SM_EatTurn: u32 = 317;
+pub const ftKb_SM_SpecialNDrink: u32 = 318;
+pub const ftKb_SM_SpecialNSpit: u32 = 319;
+pub const ftKb_SM_SpecialAirN: u32 = 320;
+pub const ftKb_SM_SpecialAirNLoop: u32 = 321;
+pub const ftKb_SM_SpecialS: u32 = 322;
+pub const ftKb_SM_SpecialAirS: u32 = 323;
+pub const ftKb_SM_SpecialHi1: u32 = 324;
+pub const ftKb_SM_SpecialHi2: u32 = 325;
+pub const ftKb_SM_SpecialHi3: u32 = 326;
+pub const ftKb_SM_SpecialHi4: u32 = 327;
+pub const ftKb_SM_SpecialAirHi1: u32 = 328;
+pub const ftKb_SM_SpecialAirHi2: u32 = 329;
+pub const ftKb_SM_SpecialAirHi3: u32 = 330;
+pub const ftKb_SM_SpecialAirHiEnd: u32 = 331;
+pub const ftKb_SM_SpecialLw1: u32 = 332;
+pub const ftKb_SM_SpecialLw: u32 = 333;
+pub const ftKb_SM_SpecialLwEnd: u32 = 334;
+pub const ftKb_SM_SpecialAirLwStart: u32 = 335;
+pub const ftKb_SM_SpecialAirLw: u32 = 336;
+pub const ftKb_SM_SpecialAirLwEnd: u32 = 337;
+pub const ftKb_SM_MrSpecialN: u32 = 338;
+pub const ftKb_SM_MrSpecialAirN: u32 = 339;
+pub const ftKb_SM_LkSpecialNStart: u32 = 340;
+pub const ftKb_SM_LkSpecialNLoop: u32 = 341;
+pub const ftKb_SM_LkSpecialNEnd: u32 = 342;
+pub const ftKb_SM_LkSpecialAirNStart: u32 = 343;
+pub const ftKb_SM_LkSpecialAirNLoop: u32 = 344;
+pub const ftKb_SM_LkSpecialAirNEnd: u32 = 345;
+pub const ftKb_SM_SsSpecialNStart: u32 = 346;
+pub const ftKb_SM_SsSpecialNHold: u32 = 347;
+pub const ftKb_SM_SsSpecialNCancel: u32 = 348;
+pub const ftKb_SM_SsSpecialN: u32 = 349;
+pub const ftKb_SM_SsSpecialAirNStart: u32 = 350;
+pub const ftKb_SM_SsSpecialAirN: u32 = 351;
+pub const ftKb_SM_YsSpecialN1: u32 = 352;
+pub const ftKb_SM_YsSpecialNCapture1: u32 = 353;
+pub const ftKb_SM_YsSpecialNCapture2: u32 = 354;
+pub const ftKb_SM_YsSpecialAirNCapture2: u32 = 355;
+pub const ftKb_SM_YsSpecialAirCapture1: u32 = 356;
+pub const ftKb_SM_YsSpecialAirN2: u32 = 357;
+pub const ftKb_SM_FxSpecialNStart: u32 = 358;
+pub const ftKb_SM_FxSpecialNLoop: u32 = 359;
+pub const ftKb_SM_FxSpecialNEnd: u32 = 360;
+pub const ftKb_SM_FxSpecialAirNStart: u32 = 361;
+pub const ftKb_SM_FxSpecialAirNLoop: u32 = 362;
+pub const ftKb_SM_FxSpecialAirNEnd: u32 = 363;
+pub const ftKb_SM_PkSpecialN: u32 = 364;
+pub const ftKb_SM_PkSpecialAirN: u32 = 365;
+pub const ftKb_SM_LgSpecialN: u32 = 366;
+pub const ftKb_SM_LgSpecialAirN: u32 = 367;
+pub const ftKb_SM_CaSpecialN: u32 = 368;
+pub const ftKb_SM_CaSpecialAirN: u32 = 369;
+pub const ftKb_SM_NsSpecialNStart: u32 = 370;
+pub const ftKb_SM_NsSpecialNHold0: u32 = 371;
+pub const ftKb_SM_NsSpecialNHold1: u32 = 372;
+pub const ftKb_SM_NsSpecialNEnd: u32 = 373;
+pub const ftKb_SM_NsSpecialAirNStart: u32 = 374;
+pub const ftKb_SM_NsSpecialAirNHold0: u32 = 375;
+pub const ftKb_SM_NsSpecialAirNHold1: u32 = 376;
+pub const ftKb_SM_NsSpecialAirNEnd: u32 = 377;
+pub const ftKb_SM_KpSpecialNStart: u32 = 378;
+pub const ftKb_SM_KpSpecialN: u32 = 379;
+pub const ftKb_SM_KpSpecialNEnd: u32 = 380;
+pub const ftKb_SM_KpSpecialAirNStart: u32 = 381;
+pub const ftKb_SM_KpSpecialAirN: u32 = 382;
+pub const ftKb_SM_KpSpecialAirNEnd: u32 = 383;
+pub const ftKb_SM_PeSpecialLw: u32 = 384;
+pub const ftKb_SM_PeSpecialLwHit: u32 = 385;
+pub const ftKb_SM_PeSpecialAirLw: u32 = 386;
+pub const ftKb_SM_PeSpecialAirLwHit: u32 = 387;
+pub const ftKb_SM_PpSpecialN: u32 = 388;
+pub const ftKb_SM_PpSpecialAirN: u32 = 389;
+pub const ftKb_SM_DkSpecialNStart: u32 = 390;
+pub const ftKb_SM_DkSpecialNLoop: u32 = 391;
+pub const ftKb_SM_DkSpecialNCancel: u32 = 392;
+pub const ftKb_SM_DkSpecialN: u32 = 393;
+pub const ftKb_SM_DkSpecialNFull: u32 = 394;
+pub const ftKb_SM_DkSpecialAirNStart: u32 = 395;
+pub const ftKb_SM_DkSpecialAirNLoop: u32 = 396;
+pub const ftKb_SM_DkSpecialAirNCancel: u32 = 397;
+pub const ftKb_SM_DkSpecialAirN: u32 = 398;
+pub const ftKb_SM_DkSpecialAirNFull: u32 = 399;
+pub const ftKb_SM_ZdSpecialN: u32 = 400;
+pub const ftKb_SM_ZdSpecialAirN: u32 = 401;
+pub const ftKb_SM_SkSpecialNStart: u32 = 402;
+pub const ftKb_SM_SkSpecialNLoop: u32 = 403;
+pub const ftKb_SM_SkSpecialNCancel: u32 = 404;
+pub const ftKb_SM_SkSpecialNEnd: u32 = 405;
+pub const ftKb_SM_SkSpecialAirNStart: u32 = 406;
+pub const ftKb_SM_SkSpecialAirNLoop: u32 = 407;
+pub const ftKb_SM_SkSpecialAirNCancel: u32 = 408;
+pub const ftKb_SM_SkSpecialAirNEnd: u32 = 409;
+pub const ftKb_SM_PrSpecialNStartR: u32 = 410;
+pub const ftKb_SM_PrSpecialNStartL: u32 = 411;
+pub const ftKb_SM_PrSpecialNLoop: u32 = 412;
+pub const ftKb_SM_PrSpecialNFull: u32 = 413;
+pub const ftKb_SM_PrSpecialN1: u32 = 414;
+pub const ftKb_SM_PrSpecialNTurn: u32 = 415;
+pub const ftKb_SM_PrSpecialNEndR: u32 = 416;
+pub const ftKb_SM_PrSpecialNEndL: u32 = 417;
+pub const ftKb_SM_PrSpecialAirNStartR: u32 = 418;
+pub const ftKb_SM_PrSpecialAirNStartL: u32 = 419;
+pub const ftKb_SM_PrSpecialAirNLoop: u32 = 420;
+pub const ftKb_SM_PrSpecialAirNFull: u32 = 421;
+pub const ftKb_SM_PrSpecialAirN: u32 = 422;
+pub const ftKb_SM_PrSpecialN0: u32 = 423;
+pub const ftKb_SM_PrSpecialAirNEndR0: u32 = 424;
+pub const ftKb_SM_PrSpecialAirNEndR1: u32 = 425;
+pub const ftKb_SM_PrSpecialNHit: u32 = 426;
+pub const ftKb_SM_MsSpecialNStart: u32 = 427;
+pub const ftKb_SM_MsSpecialNLoop: u32 = 428;
+pub const ftKb_SM_MsSpecialNEnd0: u32 = 429;
+pub const ftKb_SM_MsSpecialNEnd1: u32 = 430;
+pub const ftKb_SM_MsSpecialAirNStart: u32 = 431;
+pub const ftKb_SM_MsSpecialAirNLoop: u32 = 432;
+pub const ftKb_SM_MsSpecialAirNEnd0: u32 = 433;
+pub const ftKb_SM_MsSpecialAirNEnd1: u32 = 434;
+pub const ftKb_SM_MtSpecialNStart: u32 = 435;
+pub const ftKb_SM_MtSpecialNLoop: u32 = 436;
+pub const ftKb_SM_MtSpecialNLoopFull: u32 = 437;
+pub const ftKb_SM_MtSpecialNCancel: u32 = 438;
+pub const ftKb_SM_MtSpecialNEnd: u32 = 439;
+pub const ftKb_SM_MtSpecialAirNStart: u32 = 440;
+pub const ftKb_SM_MtSpecialAirNLoop: u32 = 441;
+pub const ftKb_SM_MtSpecialAirNLoopFull: u32 = 442;
+pub const ftKb_SM_MtSpecialAirNCancel: u32 = 443;
+pub const ftKb_SM_MtSpecialAirNEnd: u32 = 444;
+pub const ftKb_SM_GwSpecialN: u32 = 445;
+pub const ftKb_SM_GwSpecialAirN: u32 = 446;
+pub const ftKb_SM_DrSpecialN: u32 = 447;
+pub const ftKb_SM_DrSpecialAirN: u32 = 448;
+pub const ftKb_SM_ClSpecialNStart: u32 = 449;
+pub const ftKb_SM_ClSpecialNLoop: u32 = 450;
+pub const ftKb_SM_ClSpecialNEnd: u32 = 451;
+pub const ftKb_SM_ClSpecialAirNStart: u32 = 452;
+pub const ftKb_SM_ClSpecialAirNLoop: u32 = 453;
+pub const ftKb_SM_ClSpecialAirNEnd: u32 = 454;
+pub const ftKb_SM_FcSpecialNStart: u32 = 455;
+pub const ftKb_SM_FcSpecialNLoop: u32 = 456;
+pub const ftKb_SM_FcSpecialNEnd: u32 = 457;
+pub const ftKb_SM_FcSpecialAirNStart: u32 = 458;
+pub const ftKb_SM_FcSpecialAirNLoop: u32 = 459;
+pub const ftKb_SM_FcSpecialAirNEnd: u32 = 460;
+pub const ftKb_SM_PcSpecialN: u32 = 461;
+pub const ftKb_SM_PcSpecialAirN: u32 = 462;
+pub const ftKb_SM_GnSpecialN: u32 = 463;
+pub const ftKb_SM_GnSpecialAirN: u32 = 464;
+pub const ftKb_SM_FeSpecialNStart: u32 = 465;
+pub const ftKb_SM_FeSpecialNLoop: u32 = 466;
+pub const ftKb_SM_FeSpecialNEnd0: u32 = 467;
+pub const ftKb_SM_FeSpecialNEnd1: u32 = 468;
+pub const ftKb_SM_FeSpecialAirNStart: u32 = 469;
+pub const ftKb_SM_FeSpecialAirNLoop: u32 = 470;
+pub const ftKb_SM_FeSpecialAirNEnd0: u32 = 471;
+pub const ftKb_SM_FeSpecialAirNEnd1: u32 = 472;
+pub const ftKb_SM_GkSpecialNStart: u32 = 473;
+pub const ftKb_SM_GkSpecialN: u32 = 474;
+pub const ftKb_SM_GkSpecialNEnd: u32 = 475;
+pub const ftKb_SM_GkSpecialAirNStart: u32 = 476;
+pub const ftKb_SM_GkSpecialAirN: u32 = 477;
+pub const ftKb_SM_GkSpecialAirNEnd: u32 = 478;
+pub const ftKb_SM_Count: u32 = 479;
+pub const ftKb_SM_SelfCount: u32 = 184;
+pub type Fighter_GObj = HSD_GObj;
+pub type FtSFXArr = _FtSFXArr;
+pub type MarsAttributes = _MarsAttributes;
+pub type SmashAttr = _SmashAttr;
+pub type StaticPlayer = _StaticPlayer;
+pub type ThrowFlags = _ThrowFlags;
+pub type ftDonkeyAttributes = _ftDonkeyAttributes;
+pub type ftGameWatchAttributes = _ftGameWatchAttributes;
+pub type ftKb_Fighter = Fighter;
+pub type ftKoopaAttributes = _ftKoopaAttributes;
+pub type ftKoopaVars = _ftKoopaVars;
+pub type ftLuigiAttributes = _ftLuigiAttributes;
+pub type ftMewtwoAttributes = _ftMewtwoAttributes;
+pub type ftPikachuAttributes = _ftPikachuAttributes;
+pub type ftPurinAttributes = _ftPurinAttributes;
+pub type ftSeakAttributes = _ftSeakAttributes;
+pub type ftSs_DatAttrs = _ftSamusAttributes;
+pub type ftYoshiAttributes = _ftYoshiAttributes;
+pub type ftZakoboyAttributes = _ftZakoboyAttributes;
+pub type CPUCommand = u32;
 pub type CharacterKind = u32;
 pub type CostumeId = u32;
 pub type CpuKind = u32;
@@ -20392,6 +23637,8 @@ pub type ftFx_Submotion = u32;
 pub type ftGameWatch_MotionState = u32;
 pub type ftGameWatch_PanicLevel = u32;
 pub type ftGw_Submotion = u32;
+pub type ftKb_Submotion = u32;
+pub type ftKirby_MotionState = u32;
 pub type ftLink_MotionState = u32;
 pub type ftLk_SpecialNIndex = u32;
 pub type ftLk_Submotion = u32;

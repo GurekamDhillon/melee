@@ -6,3 +6,7 @@
 #![allow(dead_code)]
 
 pub use melee_core;
+
+/// Generated native types + GameCube layouts (gen/gen_types.py). Never hand-edited.
+pub mod gen;
+pub use gen::*;

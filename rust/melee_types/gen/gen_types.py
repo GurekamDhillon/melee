@@ -1,0 +1,656 @@
+#!/usr/bin/env python3
+"""Generate rust/melee_types/src/gen.rs: native Rust types + GameCube layout tables for group 0.
+
+  python rust/melee_types/gen/gen_types.py [--check]      (run from the worktree root, Windows)
+
+Mechanical, never hand-edited. Two clang parses of gen/all_types.c (every group-0 header):
+  * ppc32-none-eabi -DTARGET_PC  -- the layout the game (and the PC build's guest memory) uses;
+    gives every GC offset / size / align / PPC bit position. Same ASTRecordLayout that
+    `clang -Xclang -fdump-record-layouts-complete` prints; gen/ppc32_layouts.txt is that dump,
+    and this script cross-checks every record size against it.
+  * x86_64-pc-windows-msvc -DTARGET_PC -- the native C layout; for every record with no
+    bitfields the generated Rust gets a compile-time size assert against it.
+
+Type mapping (native): C long = i32 (LLP64, as on GC), long double = f64, bool (MSL int) = i32,
+size_t = usize, pointers = *mut T / *const T, function pointers = Option<unsafe extern "C" fn>,
+enums = integer type alias + pub consts. Bitfields are stored as one byte array per run, holding
+the GameCube bytes in GameCube (big-endian, MSB-first) order, with generated get/set accessors:
+endian-neutral, and the bit positions are the GC ones by construction.
+Needs: pip install --user libclang==18.1.1 (bindings; the dll is LLVM's own).
+"""
+import os, re, subprocess, sys
+from collections import OrderedDict
+from pathlib import Path
+import clang.cindex as ci
+
+LLVM = Path(os.environ.get("LLVM_DIR", r"C:\Program Files\LLVM"))
+ci.Config.set_library_file(str(LLVM / "bin" / "libclang.dll"))
+import ctypes
+_lib = ctypes.CDLL(str(LLVM / "bin" / "libclang.dll"))
+_lib.clang_Cursor_isAnonymousRecordDecl.argtypes = [ci.Cursor]
+_lib.clang_Cursor_isAnonymousRecordDecl.restype = ctypes.c_uint
+for _f in ("clang_Cursor_isMacroFunctionLike", "clang_Cursor_isMacroBuiltin"):
+    getattr(_lib, _f).argtypes = [ci.Cursor]; getattr(_lib, _f).restype = ctypes.c_uint
+ci.Cursor.is_anonymous_record_decl = lambda self: bool(_lib.clang_Cursor_isAnonymousRecordDecl(self))
+K = ci.CursorKind
+T = ci.TypeKind
+ROOT = Path(__file__).resolve().parents[3]
+GEN = Path(__file__).resolve().parent
+GALE = os.environ.get("GALE_INCLUDE") or str((ROOT / "../../melee/build/GALE01/include").resolve())
+COMMON = ["-std=c99", "-nostdinc", "-fno-builtin", "-DLINT", "-DTARGET_PC", "-fno-short-enums",
+          "-fsigned-char", "-mlong-double-64", "-fno-strict-aliasing", "-fwrapv", "-fcommon",
+          "-fgnu89-inline", "-w", "-Isrc", "-Ipc", "-Ipc/gameworld", "-isystem", "src/MSL",
+          "-isystem", "libs/dolphin/include", "-isystem", "libs/dolphin/src", "-isystem", GALE,
+          "-include", "src/MSL/math_ppc.h"]
+PPC = ["--target=ppc32-none-eabi"] + COMMON
+NAT = ["--target=x86_64-pc-windows-msvc", "-D_Static_assert(a,b)=", "-Dsize_t=gc_size_t"] + COMMON
+SRC = GEN / "all_types.c"
+
+RUST_KW = set("as break const continue crate else enum extern false fn for if impl in let loop match mod move mut pub ref return self Self static struct super trait true type unsafe use where while async await dyn abstract become box do final macro override priv typeof unsized virtual yield try gen".split())
+NORAW = {"self", "Self", "super", "crate", "_"}
+PRIM_TYPEDEFS = {"u8": "u8", "s8": "i8", "u16": "u16", "s16": "i16", "u32": "u32", "s32": "i32",
+                 "u64": "u64", "s64": "i64", "f32": "f32", "f64": "f64", "bool": "i32",
+                 "size_t": "usize", "gc_size_t": "usize", "ptrdiff_t": "isize", "char": "i8",
+                 "f128": "f64", "i8": "i8", "i16": "i16", "i32": "i32", "i64": "i64", "usize": "usize",
+                 "isize": "isize", "str": "str"}
+PRIM = {T.CHAR_S: "i8", T.SCHAR: "i8", T.CHAR_U: "u8", T.UCHAR: "u8", T.SHORT: "i16", T.USHORT: "u16",
+        T.INT: "i32", T.UINT: "u32", T.LONG: "i32", T.ULONG: "u32", T.LONGLONG: "i64",
+        T.ULONGLONG: "u64", T.FLOAT: "f32", T.DOUBLE: "f64", T.LONGDOUBLE: "f64", T.BOOL: "bool",
+        T.VOID: "c_void"}
+SIGNED = {"i8", "i16", "i32", "i64"}
+
+
+def ident(n):
+    if n in NORAW:
+        return n + "_"
+    return "r#" + n if n in RUST_KW else n
+
+
+def loc(c):
+    l = c.location
+    f = Path(l.file.name).resolve().as_posix() if l.file else "?"
+    return (f, l.line, l.column)
+
+
+def rel(f):
+    try:
+        return Path(f).resolve().relative_to(ROOT).as_posix()
+    except ValueError:
+        return f
+
+
+def parse(args):
+    idx = ci.Index.create()
+    opts = ci.TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD
+    cwd = os.getcwd(); os.chdir(ROOT)
+    try:
+        tu = idx.parse(str(SRC.relative_to(ROOT)), args=args, options=opts)
+    finally:
+        os.chdir(cwd)
+    errs = [d for d in tu.diagnostics if d.severity >= ci.Diagnostic.Error]
+    if errs:
+        raise SystemExit("clang errors:\n" + "\n".join(str(e) for e in errs[:20]))
+    return tu
+
+
+class Gen:
+    def __init__(self, tu, native):
+        self.tu = tu
+        self.native_size = native          # loc -> (size, has_bitfields)
+        self.rec_name = {}                 # canonical decl loc -> rust name
+        self.records = OrderedDict()       # loc -> cursor (definitions)
+        self.enums = OrderedDict()
+        self.typedefs = OrderedDict()
+        self.opaque = OrderedDict()
+        self.used_names = set()
+        self.out = []
+
+    # ---------- naming ----------
+    def collect(self):
+        def walk(c, parent_name=None):
+            for ch in c.get_children():
+                if ch.kind in (K.STRUCT_DECL, K.UNION_DECL) and ch.is_definition():
+                    self.records.setdefault(loc(ch), ch)
+                    walk(ch)
+                elif ch.kind == K.ENUM_DECL and ch.is_definition():
+                    self.enums.setdefault(loc(ch), ch)
+                elif ch.kind == K.TYPEDEF_DECL:
+                    self.typedefs.setdefault(ch.spelling, ch)
+                elif ch.kind == K.FIELD_DECL:
+                    pass
+        walk(self.tu.cursor)
+        # typedef names for anonymous records/enums
+        anon_td = {}
+        for n, td in self.typedefs.items():
+            u = td.underlying_typedef_type
+            while u.kind == T.ELABORATED:
+                u = u.get_named_type()
+            if u.kind in (T.RECORD, T.ENUM):
+                d = u.get_declaration()
+                if self.is_anon(d):
+                    anon_td.setdefault(loc(d), n)
+        self.anon_td = anon_td
+        for l, c in self.records.items():
+            self.rec_name[l] = self.name_record(c)
+        for l, c in self.enums.items():
+            if self.is_anon(c):
+                self.rec_name[l] = anon_td.get(l)  # None -> constants only
+            else:
+                self.rec_name[l] = c.spelling
+
+    @staticmethod
+    def is_anon(c):
+        s = c.spelling
+        return (not s) or "(unnamed" in s or "(anonymous" in s or c.is_anonymous()
+
+    def name_record(self, c):
+        l = loc(c)
+        if l in self.rec_name:
+            return self.rec_name[l]
+        if not self.is_anon(c):
+            n = c.spelling
+        elif l in self.anon_td:
+            n = self.anon_td[l]
+        else:
+            p = c.semantic_parent
+            pn = self.name_record(p) if p and p.kind in (K.STRUCT_DECL, K.UNION_DECL) else "Anon"
+            fld = None
+            if p is not None:
+                for ch in p.get_children():
+                    if ch.kind == K.FIELD_DECL:
+                        t = ch.type
+                        while t.kind in (T.CONSTANTARRAY, T.INCOMPLETEARRAY):
+                            t = t.element_type
+                        t = t.get_canonical()
+                        if t.kind == T.RECORD and loc(t.get_declaration()) == l:
+                            fld = ch.spelling or None
+                            break
+            n = f"{pn}_{fld}" if fld else f"{pn}_anon_{c.location.line}"
+        base = n; i = 2
+        while n in self.used_names:
+            n = f"{base}_{i}"; i += 1
+        self.used_names.add(n)
+        self.rec_name[l] = n
+        return n
+
+    # ---------- types ----------
+    def rty(self, t, in_param=False):
+        """Native Rust spelling of clang type t (from the ppc parse)."""
+        if "__builtin_va_list" in t.spelling or t.spelling == "va_list":
+            return "*mut c_void"
+        if t.kind == T.ELABORATED:
+            return self.rty(t.get_named_type(), in_param)
+        if t.kind == T.TYPEDEF:
+            n = t.get_declaration().spelling
+            if n in PRIM_TYPEDEFS:
+                return PRIM_TYPEDEFS[n]
+            u = t.get_declaration().underlying_typedef_type
+            uc = u.get_canonical()
+            if uc.kind in (T.RECORD, T.ENUM):
+                d = uc.get_declaration()
+                if d.is_definition() or uc.kind == T.ENUM:
+                    return self.decl_name(d, uc)
+            return n
+        if t.kind in PRIM:
+            return PRIM[t.kind]
+        if t.kind == T.POINTER:
+            p = t.get_pointee()
+            pc = p.get_canonical()
+            if pc.kind in (T.FUNCTIONPROTO, T.FUNCTIONNOPROTO):
+                if p.kind in (T.TYPEDEF, T.ELABORATED) and self.fn_typedef_name(p):
+                    return f"Option<{self.fn_typedef_name(p)}>"
+                return f"Option<{self.fnty(pc if p.kind not in (T.FUNCTIONPROTO, T.FUNCTIONNOPROTO) else p)}>"
+            q = "*const" if p.is_const_qualified() else "*mut"
+            return f"{q} {self.rty(p)}"
+        if t.kind == T.CONSTANTARRAY:
+            if in_param:
+                return f"*mut {self.rty(t.element_type)}"
+            return f"[{self.rty(t.element_type)}; {t.element_count}]"
+        if t.kind in (T.INCOMPLETEARRAY, T.VARIABLEARRAY, T.DEPENDENTSIZEDARRAY):
+            if in_param:
+                return f"*mut {self.rty(t.element_type)}"
+            return f"[{self.rty(t.element_type)}; 0]"
+        if t.kind == T.RECORD:
+            return self.decl_name(t.get_declaration(), t)
+        if t.kind == T.ENUM:
+            return self.decl_name(t.get_declaration(), t)
+        if t.kind in (T.FUNCTIONPROTO, T.FUNCTIONNOPROTO):
+            return self.fnty(t)
+        if "__builtin_va_list" in t.spelling or t.kind == T.UNEXPOSED and "va_list" in t.spelling:
+            return "*mut c_void"
+        c = t.get_canonical()
+        if c.kind != t.kind:
+            return self.rty(c, in_param)
+        raise ValueError(f"unmapped type {t.spelling} kind={t.kind}")
+
+    def fn_typedef_name(self, p):
+        while p.kind == T.ELABORATED:
+            p = p.get_named_type()
+        if p.kind == T.TYPEDEF:
+            n = p.get_declaration().spelling
+            if n not in PRIM_TYPEDEFS:
+                return n
+        return None
+
+    def fnty(self, t):
+        args = []
+        if t.kind == T.FUNCTIONPROTO:
+            args = [self.rty(a, True) for a in t.argument_types()]
+            if t.is_function_variadic():
+                args.append("...")
+        r = t.get_result()
+        rs = "" if r.get_canonical().kind == T.VOID else f" -> {self.rty(r)}"
+        if "..." in args and len(args) == 1:
+            args = []  # Rust needs at least one fixed arg before ...
+        return f"unsafe extern \"C\" fn({', '.join(args)}){rs}"
+
+    def decl_name(self, d, t):
+        if d.kind == K.ENUM_DECL:
+            # find definition
+            dd = d.get_definition() or d
+            n = self.rec_name.get(loc(dd))
+            return n if n else PRIM[dd.enum_type.get_canonical().kind]
+        dd = d.get_definition()
+        if dd is None:
+            n = d.spelling
+            self.opaque.setdefault(n, None)
+            return n
+        return self.rec_name[loc(dd)]
+
+    # ---------- emission ----------
+    def emit(self, s=""):
+        self.out.append(s)
+
+    def gen(self):
+        self.collect()
+        e = self.emit
+        e("// @generated by rust/melee_types/gen/gen_types.py from rust/melee_types/gen/all_types.c.")
+        e("// Do not edit. Regenerate: python rust/melee_types/gen/gen_types.py")
+        e("#![allow(non_camel_case_types, non_snake_case, non_upper_case_globals, dead_code, clippy::all)]")
+        e("use core::ffi::c_void;")
+        e("use melee_core::gc::{GcField, GcLayout};")
+        e()
+        e("/// GameCube C typedef names that are not Rust primitives.")
+        e("pub type s8 = i8;\npub type s16 = i16;\npub type s32 = i32;\npub type s64 = i64;")
+        e("/// MSL `bool` is `typedef int bool` (4 bytes, as on the GameCube).")
+        e("pub type c_bool = i32;")
+        e()
+        body = []
+        self.out, saved = body, self.out
+        ok = 0
+        for l, c in self.enums.items():
+            self.gen_enum(c)
+        typedef_lines = []
+        self.emitted_td = set()
+        for n, td in self.typedefs.items():
+            s = self.gen_typedef(n, td)
+            if s:
+                typedef_lines.append(s)
+                if s.startswith("pub type"):
+                    self.emitted_td.add(n)
+        self.gen_consts()
+        self.emit("// ---- typedefs ----")
+        self.out.extend(typedef_lines)
+        self.emit()
+        registry = []
+        for l, c in self.records.items():
+            nm = self.rec_name[l]
+            self.gen_record(c, nm)
+            registry.append(nm)
+        self.out = saved
+        # opaque decls (only for names never defined)
+        defined = set(v for v in self.rec_name.values() if v) | self.emitted_td
+        e("// ---- incomplete C types (only ever used behind pointers) ----")
+        for n in self.opaque:
+            if n not in defined:
+                e(f"#[repr(C)] pub struct {n} {{ _opaque: [u8; 0] }}")
+        e()
+        self.out.extend(body)
+        e("/// Every generated GameCube record layout, for the DAT loader, serialisers and the m-ex map.")
+        e("pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[")
+        for n in registry:
+            e(f"    (<{n} as GcLayout>::GC_NAME, <{n} as GcLayout>::GC_SIZE, <{n} as GcLayout>::GC_ALIGN, <{n} as GcLayout>::GC_FIELDS),")
+        e("];")
+        return "\n".join(self.out) + "\n"
+
+    GROUP_RE = re.compile(r"src/(melee/[a-z]+/(types|forward)\.h|sysdolphin/baselib/[^/]+\.h)$")
+
+    def gen_consts(self):
+        """#define NAME <numeric expr> and `static T const NAME = expr;` from group-0 headers."""
+        lib = _lib
+        self.emit("// ---- #define / static const constants (group-0 headers) ----")
+        n = 0
+        for c in self.tu.cursor.get_children():
+            if not c.location.file or not self.GROUP_RE.search(rel(c.location.file.name)):
+                continue
+            if c.kind == K.MACRO_DEFINITION:
+                if lib.clang_Cursor_isMacroFunctionLike(c) or lib.clang_Cursor_isMacroBuiltin(c):
+                    continue
+                toks = [t.spelling for t in c.get_tokens()][1:]
+                cty = None
+            elif c.kind == K.VAR_DECL and c.storage_class == ci.StorageClass.STATIC and c.type.is_const_qualified():
+                toks = [t.spelling for t in c.get_tokens()]
+                if "=" not in toks:
+                    continue
+                toks = toks[toks.index("=") + 1:]
+                if toks and toks[-1] == ";":
+                    toks = toks[:-1]
+                try:
+                    cty = self.rty(c.type)
+                except ValueError:
+                    continue
+            else:
+                continue
+            name = c.spelling
+            if name in self.used_names or not toks or name.startswith("__"):
+                continue
+            r = self.const_expr(toks, cty)
+            if r is None:
+                continue
+            self.used_names.add(name)
+            self.emit(f"pub const {ident(name)}: {r[0]} = {r[1]};  // {rel(c.location.file.name)}:{c.location.line}")
+            n += 1
+        self.emit()
+        self.n_consts = n
+
+    INT_RE = re.compile(r"^(0[xX][0-9a-fA-F]+|\d+)[uUlL]*$")
+    FLT_RE = re.compile(r"^(\d+\.\d*|\.\d+|\d+)([eE][-+]?\d+)?([fF])?$")
+
+    def const_expr(self, toks, cty):
+        if len(toks) >= 2 and toks[0] == "(" and toks[-1] == ")" and all(t not in "()" for t in toks[1:-1]):
+            toks = toks[1:-1]
+        neg = ""
+        if toks and toks[0] == "-" and len(toks) == 2:
+            neg, toks = "-", toks[1:]
+        if len(toks) == 1 and ("." in toks[0] or toks[0][-1] in "fF") and not toks[0].lower().startswith("0x"):
+            m = self.FLT_RE.match(toks[0])
+            if not m:
+                return None
+            ty = cty if cty in ("f32", "f64") else ("f32" if m.group(3) else "f64")
+            lit = toks[0].rstrip("fF")
+            if lit.endswith("."):
+                lit += "0"
+            if lit.startswith("."):
+                lit = "0" + lit
+            if "." not in lit and "e" not in lit.lower():
+                lit += ".0"
+            return ty, f"{neg}{lit}"
+        py = []
+        for t in toks:
+            if self.INT_RE.match(t):
+                py.append(str(int(t.rstrip("uUlL"), 0)))
+            elif t in ("+", "-", "*", "<<", ">>", "|", "&", "~", "(", ")", "^"):
+                py.append(t)
+            else:
+                return None
+        try:
+            v = eval(" ".join(neg and ["-"] or []) + " ".join(py), {"__builtins__": {}})
+        except Exception:
+            return None
+        if not isinstance(v, int):
+            return None
+        if cty and cty in set(PRIM_TYPEDEFS.values()) | {"u8", "u16", "u32", "u64", "i8", "i16", "i32", "i64"} | set(self.typedefs):
+            ty = cty
+            if ty in ("u8", "u16", "u32", "u64") or (ty in self.typedefs and v >= 0x80000000):
+                v &= (1 << 64) - 1 if ty == "u64" else 0xFFFFFFFF
+            return ty, str(v)
+        if -2**31 <= v < 2**31:
+            return "i32", str(v)
+        if 0 <= v < 2**32:
+            return "u32", str(v)
+        return "i64", str(v)
+
+    def gen_enum(self, c):
+        nm = self.rec_name.get(loc(c))
+        ut = PRIM[c.enum_type.get_canonical().kind]
+        src = rel(loc(c)[0])
+        if nm and nm not in PRIM_TYPEDEFS:
+            self.emit(f"/// C enum `{nm}` ({src}:{c.location.line})")
+            self.emit(f"pub type {nm} = {ut};")
+            cty = nm
+        else:
+            cty = ut
+        for k in c.get_children():
+            if k.kind == K.ENUM_CONSTANT_DECL:
+                if k.spelling in self.used_names:
+                    continue
+                self.used_names.add(k.spelling)
+                v = k.enum_value
+                if ut.startswith("u") and v < 0:
+                    v &= 0xFFFFFFFF
+                self.emit(f"pub const {ident(k.spelling)}: {cty} = {v};")
+        self.emit()
+
+    def gen_typedef(self, n, td):
+        if n in PRIM_TYPEDEFS:
+            return None
+        u = td.underlying_typedef_type
+        uc = u
+        while uc.kind == T.ELABORATED:
+            uc = uc.get_named_type()
+        if uc.kind in (T.RECORD, T.ENUM):
+            d = uc.get_declaration()
+            dd = d.get_definition()
+            if dd is not None:
+                tgt = self.rec_name.get(loc(dd))
+                if tgt == n:
+                    return None
+                if tgt is None:
+                    return f"pub type {n} = {PRIM[dd.enum_type.get_canonical().kind]};"
+                return f"pub type {n} = {tgt};"
+            # typedef of an incomplete struct
+            if d.spelling == n:
+                self.opaque.setdefault(n, None)
+                return None
+        try:
+            r = self.rty(u)
+        except ValueError as ex:
+            return f"// skipped typedef {n}: {ex}"
+        if r == n:
+            return None
+        return f"pub type {n} = {r};"
+
+    def gen_record(self, c, nm):
+        union = c.kind == K.UNION_DECL
+        ppc_t = c.type
+        size, align = ppc_t.get_size(), ppc_t.get_align()
+        fields = [f for f in c.get_children() if f.kind == K.FIELD_DECL or
+                  (f.kind in (K.STRUCT_DECL, K.UNION_DECL) and f.is_anonymous_record_decl())]
+        packed = any(ch.kind == K.PACKED_ATTR for ch in c.get_children()) or any(
+            f.kind == K.FIELD_DECL and not f.is_bitfield() and f.type.get_align() > 0
+            and (f.get_field_offsetof() // 8) % f.type.get_align() != 0 for f in c.get_children())
+        src = rel(loc(c)[0])
+        rust_fields, gc_fields, accessors = [], [], []
+        used = set()
+
+        def fname(n, off):
+            n = n or f"anon_{off:x}"
+            if n == "_" or n in used:
+                n = f"_x{off:x}" if n == "_" else f"{n}_{off:x}"
+            while n in used:
+                n += "_"
+            used.add(n)
+            return n
+
+        i = 0
+        has_bf = False
+        while i < len(fields):
+            f = fields[i]
+            if f.kind != K.FIELD_DECL:  # C11 anonymous struct/union member
+                off = self.anon_offset(c, f)
+                nm2 = self.rec_name[loc(f)]
+                fn_ = fname(None, off)
+                rust_fields.append(f"    /// anonymous C member\n    pub {fn_}: {nm2},")
+                gc_fields.append(f'        GcField::new("(anon)", 0x{off:X}, {f.type.get_size()}, "{nm2}"),')
+                for lf, lo_ in self.leaves(f, off * 8):
+                    if lf.is_bitfield():
+                        us = lf.type.get_size(); unit = (lo_ // (us * 8)) * us
+                        gc_fields.append(f'        GcField::bitfield("{lf.spelling}", 0x{unit:X}, {us}, {lo_ - unit * 8}, {lf.get_bitfield_width()}, "{lf.type.spelling}"),')
+                    else:
+                        gc_fields.append(f'        GcField::new("{lf.spelling}", 0x{lo_ // 8:X}, {max(lf.type.get_size(), 0)}, "{lf.type.spelling}"),')
+                i += 1
+                continue
+            boff = f.get_field_offsetof()
+            if f.is_bitfield():
+                has_bf = True
+                run = []
+                while i < len(fields) and fields[i].is_bitfield():
+                    if fields[i].get_bitfield_width() > 0:
+                        run.append(fields[i])
+                    i += 1
+                    if union:
+                        break
+                if not run:
+                    continue
+                lo = min(r.get_field_offsetof() for r in run) // 8
+                hi = max((r.get_field_offsetof() + r.get_bitfield_width() + 7) // 8 for r in run)
+                store = fname(f"bf_{lo:x}", lo)
+                rust_fields.append(f"    /// bitfield bytes GC +0x{lo:X}..+0x{hi:X}, GameCube byte order\n    pub {store}: [u8; {hi - lo}],")
+                for r in run:
+                    bo, w = r.get_field_offsetof(), r.get_bitfield_width()
+                    us = r.type.get_size()
+                    unit = (bo // (us * 8)) * us
+                    cn = r.spelling or f"anon_bf_{bo:x}"
+                    gc_fields.append(f'        GcField::bitfield("{cn}", 0x{unit:X}, {us}, {bo - unit * 8}, {w}, "{r.type.spelling}"),')
+                    ty = self.rty(r.type)
+                    canon = r.type.get_canonical()
+                    signed = PRIM.get(canon.kind, "u32") in SIGNED
+                    is_bool = canon.kind == T.BOOL
+                    gty = "bool" if is_bool else ty
+                    shift = (hi - lo) * 8 - (bo - lo * 8) - w
+                    mask = (1 << w) - 1
+                    a = ident(cn) if r.spelling else cn
+                    rd = f"melee_core_bits_get(&self.{store}, {shift}, {w})"
+                    if is_bool:
+                        getter = f"{rd} != 0"
+                    elif signed:
+                        getter = f"((({rd} as i64) << (64 - {w})) >> (64 - {w})) as {ty}"
+                    else:
+                        getter = f"{rd} as {ty}"
+                    accessors.append(
+                        f"    /// C bitfield `{cn}:{w}` at GC +0x{bo // 8:X} bit {bo % 8} (MSB = 0)\n"
+                        f"    #[inline] #[allow(unused_unsafe)] pub fn {a}(&self) -> {gty} {{ unsafe {{ {getter} }} }}\n"
+                        f"    #[inline] #[allow(unused_unsafe)] pub fn set_{cn}(&mut self, v: {gty}) {{ unsafe {{ melee_core_bits_set(&mut self.{store}, {shift}, {w}, (v as u64) & 0x{mask:X}) }} }}")
+                continue
+            off = boff // 8
+            ty = self.rty(f.type)
+            fn_ = fname(f.spelling, off)
+            rust_fields.append(f"    pub {ident(fn_)}: {ty},")
+            cn = f.spelling or "(anon)"
+            gc_fields.append(f'        GcField::new("{cn}", 0x{off:X}, {f.type.get_size() if f.type.get_size() > 0 else 0}, "{f.type.spelling}"),')
+            i += 1
+        kw = "union" if union else "struct"
+        nat = self.native_size.get(loc(c))
+        rep = "C, packed" if packed else f"C, align({nat[1]})" if nat and nat[1] > 0 else "C"
+        e = self.emit
+        e(f"/// C `{c.spelling or nm}` ({src}:{c.location.line}); GameCube size 0x{size:X}, align {align}.")
+        e(f"#[repr({rep})]")
+        e("#[derive(Clone, Copy)]")
+        e(f"pub {kw} {nm} {{")
+        if not rust_fields and not union:
+            rust_fields.append("    _empty: [u8; 0],")
+        for rf in rust_fields:
+            e(rf)
+        e("}")
+        if accessors:
+            e(f"impl {nm} {{")
+            for a in accessors:
+                e(a)
+            e("}")
+        e(f"impl GcLayout for {nm} {{")
+        e(f'    const GC_NAME: &\'static str = "{c.spelling or nm}";')
+        e(f"    const GC_SIZE: u32 = 0x{size:X};")
+        e(f"    const GC_ALIGN: u32 = {align};")
+        e("    const GC_FIELDS: &'static [GcField] = &[")
+        for g in gc_fields:
+            e(g)
+        e("    ];")
+        e("}")
+        if nat and not has_bf and not packed and fields and not self.has_bf_deep(c):
+            e(f"const _: () = assert!(core::mem::size_of::<{nm}>() == {nat[0]});")
+        e()
+
+    def leaves(self, rec, base_bits):
+        """Named fields reachable through anonymous members (C lets the parent name them)."""
+        for ch in rec.get_children():
+            if ch.kind == K.FIELD_DECL and ch.spelling:
+                yield ch, base_bits + rec.type.get_offset(ch.spelling)
+            elif ch.kind in (K.STRUCT_DECL, K.UNION_DECL) and ch.is_anonymous_record_decl():
+                yield from self.leaves(ch, base_bits + self.anon_offset(rec, ch) * 8)
+
+    def anon_offset(self, parent, anon):
+        for lf, lo in self.leaves(anon, 0):
+            return (parent.type.get_offset(lf.spelling) - lo) // 8
+        return 0
+
+    def has_bf_deep(self, c, seen=None):
+        seen = seen or set()
+        if loc(c) in seen:
+            return False
+        seen.add(loc(c))
+        for f in c.get_children():
+            if f.kind in (K.STRUCT_DECL, K.UNION_DECL) and f.is_anonymous_record_decl():
+                if self.has_bf_deep(f, seen):
+                    return True
+            if f.kind == K.FIELD_DECL:
+                if f.is_bitfield() or re.search(r"size_t", f.type.spelling):
+                    return True
+                t = f.type.get_canonical()
+                while t.kind in (T.CONSTANTARRAY, T.INCOMPLETEARRAY):
+                    t = t.element_type.get_canonical()
+                if t.kind == T.RECORD:
+                    d = t.get_declaration().get_definition()
+                    if d is not None and self.has_bf_deep(d, seen):
+                        return True
+        return False
+
+
+def native_sizes():
+    tu = parse(NAT)
+    out = {}
+
+    def walk(c):
+        for ch in c.get_children():
+            if ch.kind in (K.STRUCT_DECL, K.UNION_DECL) and ch.is_definition():
+                out[loc(ch)] = (ch.type.get_size(), ch.type.get_align())
+                walk(ch)
+    walk(tu.cursor)
+    return out
+
+
+def dump_check(records):
+    """Cross-check sizes against clang's -fdump-record-layouts-complete text."""
+    clang = str(LLVM / "bin" / "clang.exe")
+    r = subprocess.run([clang, *PPC, "-fsyntax-only", "-Xclang", "-fdump-record-layouts-complete",
+                        str(SRC.relative_to(ROOT))], cwd=ROOT, capture_output=True, text=True)
+    (GEN / "ppc32_layouts.txt").write_text(r.stdout, newline="\n")
+    sizes = re.findall(r"\| \[sizeof=(\d+), align=(\d+)", r.stdout)
+    want = sorted((c.type.get_size(), c.type.get_align()) for c in records.values())
+    got = sorted((int(a), int(b)) for a, b in sizes)
+    missing = [w for w in want if w not in got]
+    return len(sizes), len(missing)
+
+
+def main():
+    nat = native_sizes()
+    tu = parse(PPC)
+    g = Gen(tu, nat)
+    txt = g.gen()
+    n_dump, miss = dump_check(g.records)
+    helpers = (
+        "\n/// Read `w` bits of a GameCube big-endian bitfield byte run, `shift` bits up from its LSB.\n"
+        "#[inline]\nfn melee_core_bits_get(b: &[u8], shift: u32, w: u32) -> u64 {\n"
+        "    let mut v: u128 = 0;\n    for &x in b { v = (v << 8) | x as u128; }\n"
+        "    ((v >> shift) as u64) & (((1u128 << w) - 1) as u64)\n}\n"
+        "#[inline]\nfn melee_core_bits_set(b: &mut [u8], shift: u32, w: u32, val: u64) {\n"
+        "    let mut v: u128 = 0;\n    for &x in b.iter() { v = (v << 8) | x as u128; }\n"
+        "    let m = ((1u128 << w) - 1) << shift;\n    v = (v & !m) | (((val as u128) << shift) & m);\n"
+        "    for x in b.iter_mut().rev() { *x = v as u8; v >>= 8; }\n}\n")
+    out = ROOT / "rust/melee_types/src/gen.rs"
+    out.write_text(txt + helpers, newline="\n")
+    print(f"gen_types: {len(g.records)} records, {len(g.enums)} enums, {len(g.typedefs)} typedefs, "
+          f"{len(g.opaque)} opaque refs, {g.n_consts} constants; dump has {n_dump} layouts, {miss} generated layouts missing from dump -> {out}")
+
+
+if __name__ == "__main__":
+    main()

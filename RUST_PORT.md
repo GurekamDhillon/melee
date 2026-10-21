@@ -136,10 +136,10 @@ against a running Rust game: no Rust simulation exists yet, so no golden has bee
 |---|---|---|---|---|---|---|
 | 0 types | melee_types | 110 header inlines | 82 | NHV1 words (8 oracle cases) + frame combine on all 10804 golden rows | 1618 records, the ONE generator (libclang ppc32), covers groups 0/3/4/5 headers | 28 inlines need other groups; no BE file loader |
 | 1 runtime/HSD | melee_runtime | ~2000 | ~80 (gekko_fp, sqrtf, mtx, mtx44, random, lbtrigf, lbvector) | all, 11400 rows; oracle redoes gwtool fusion | Vec3/Quaternion only | all HSD objects (~1200), lb/db/sfx/THP |
-| 2 world | melee_world | 3013 | 36 (mplib line queries) | all, 27231 rows (oracle without contraction, see risk 2) | mp types, hand-written from header comments | cm, ef, gr, if; rest of mplib |
+| 2 world | melee_world | 3013 | 36 (mplib line queries) | all, 27231 rows (oracle now contraction on + gwtool lowering, night 2) | mp types, hand-written from header comments | cm, ef, gr, if; rest of mplib |
 | 3 fighter engine | melee_fighter | ~2820 | 57 (nh_Fighter, ftcommon movement, staling) | all (6600 + 12000 + 64 cases) | melee_types (re-exported as `crate::types`) | everything else; c2r layer (feature `c2r`) compiles, never linked |
-| 4 characters | melee_chara | ~4340 | 13 (pure helpers) | frsqrte / my_sqrtf / sumOfSquares (oracle without contraction) | melee_types (re-exported as `types_gen`) | all Fighter-touching code (~99.7%) |
-| 5 items/ty/vi | melee_items | ~5000 | 9 Item-only + item hash | 8 tests (oracle without contraction) | melee_types (re-exported as `layout`) | spawn/think/collision, trophies, vi |
+| 4 characters | melee_chara | ~4340 | 13 (pure helpers) | frsqrte / my_sqrtf / sumOfSquares (oracle contraction on, night 2; my_sqrtf now fused) | melee_types (re-exported as `types_gen`) | all Fighter-touching code (~99.7%) |
+| 5 items/ty/vi | melee_items | ~5000 | 9 Item-only + item hash | 8 tests (oracle contraction on, night 2; no fused sites in these) | melee_types (re-exported as `layout`) | spawn/think/collision, trophies, vi |
 | 6 modes | melee_modes | n/a | 0 | none | none | all |
 | asm (10 items) | n/a | n/a | 0 | n/a | n/a | none belonged to groups 0-5; crash-screen register reads return 0 on PC |
 
@@ -208,3 +208,28 @@ against a running Rust game: no Rust simulation exists yet, so no golden has bee
   both parses. No `TARGET_PC` appears in `ft/kinds/*/types.h`, so character records are unaffected.
 - Not done: the gitignored `melee_fighter` `c2r` feature (fix_raw.py output) still carries per-TU
   type copies; it was not rebuilt.
+
+### Step 2: FMA contraction, groups 2/4/5 re-checked (done)
+- Shipping build, verified from `_build/masstest/pipe_win.sh` (what `build_objects.py` runs per game
+  TU): `_toolchains/llvm` clang 23.1.1, `--target=ppc32-none-eabi -O2 -Xclang -disable-llvm-passes`,
+  no `-ffp-contract` flag, so clang's default `on`: every `a*b+c` within one expression is
+  `llvm.fmuladd`. gwtool runs with `GW_GWTOOL_FLAGS` empty, so `--no-exact-fmuladd` is off and
+  `lowerFMulAdd` turns every f32 site into fmadds (f64 mul+add, one f32 rounding), f64 into `fma`.
+- Tool: `python tools/rust-port/fma_sites.py [-v] [--func RE] <tu.c>...` runs that exact front end
+  and prints per-function fmuladd sites. Use it before porting any float code.
+- Oracles rebuilt with contraction on + `melee_runtime/oracle/lower.py`:
+  `melee_world/cref/gen_mplib_lines_ref.sh` (15 f32 sites lowered), `melee_chara/gen/run_ref.sh`
+  (6 f64 fma), `melee_items/tests/c_oracle/gen_expected.sh` (0 sites). All three outputs came out
+  bit-identical to the uncontracted ones: the existing inputs do not discriminate.
+- Ports fixed to fuse where the shipping IR fuses:
+  `melee_world::mp::lines::check_link` (`SQ(dx)+SQ(dy) < 4.0` in mpLineGetNext/Prev and the
+  CheckInline variants: `fmadds(dx, dx, dy*dy)`); `melee_chara::pure::my_sqrtf` (all 7 copies:
+  `(-(g*g)).mul_add(x, 3.0)`, true f64 fma); `melee_fighter::ftcommon::calc_hitlag`
+  (`ftCommon_CalcHitlag`: `fmadds(dmg, x198, x19C)`; group 3, found by running fma_sites.py over
+  its ported functions). Group 5's 9 ported item functions have 0 sites (checked).
+- Not proven: since the oracle rows did not change, no test currently fails on the unfused form
+  of those three sites; they are right by the IR, not by a discriminating vector.
+  A 20M-input Rust experiment found no f32 result difference for my_sqrtf fused vs unfused.
+- Still uncontracted: group 3's `gen/cref/run.py` and group 0's `gen/nh_oracle.py` (-ffp-contract=off).
+  NHV1 has no float arithmetic; group 3's ftcommon has 12 fused sites in ftcommon.c functions
+  (`fma_sites.py src/melee/ft/ftcommon.c`), only CalcHitlag among the ported ones.

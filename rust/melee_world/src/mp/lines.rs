@@ -105,8 +105,11 @@ impl GroundColl {
                         (ax, ay, bx, by)
                     }
                 };
-                // C: SQ(f32) + SQ(f32) < 4.0 (promoted to double; 4.0 is exact in f32).
-                if ((sq(ax - bx) + sq(ay - by)) as f64) < 4.0 {
+                // C: SQ(dx) + SQ(dy) < 4.0. The shipping build contracts the sum into one
+                // llvm.fmuladd.f32 (fmadds(dx, dx, dy*dy); tools/rust-port/fma_sites.py), then
+                // compares in double (4.0 is exact in f32).
+                let (dx, dy) = (ax - bx, ay - by);
+                if (melee_core::fp::fmadds(dx, dx, sq(dy)) as f64) < 4.0 {
                     return result;
                 }
             }

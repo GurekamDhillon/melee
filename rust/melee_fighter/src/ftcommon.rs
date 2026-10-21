@@ -396,7 +396,8 @@ fn trunc_i32(f: f32) -> i32 {
 
 pub fn calc_hitlag(dmg: i32, msid: i32, mul: f32) -> f32 {
     let cd = common_data();
-    let tmp = trunc_i32(dmg as f32 * cd.x198 + cd.x19C);
+    // `dmg * x198 + x19C` is one llvm.fmuladd.f32 in the shipping build (fma_sites.py) -> fmadds.
+    let tmp = trunc_i32(melee_core::fp::fmadds(dmg as f32, cd.x198, cd.x19C));
     let mut result = trunc_i32(tmp as f32 * mul) as f32;
     if (msid as u32).wrapping_sub(ftCo_MS_Squat as u32) <= 1 {
         result = trunc_i32(result * cd.x1A0) as f32;

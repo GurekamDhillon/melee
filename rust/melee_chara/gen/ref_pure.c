@@ -1,5 +1,5 @@
 /* Reference values for rust/melee_chara/src/pure.rs, from the C sources compiled natively.
- * Build+run: rust/melee_chara/gen/run_ref.sh (clang, -O2 -ffp-contract=off, x86-64 baseline).
+ * Build+run: rust/melee_chara/gen/run_ref.sh (clang contraction on + gwtool lowering, as shipped).
  * Prints a Rust table: (input bits, my_sqrtf bits, frsqrte bits) and sumOfSquares cases. */
 #include <stdio.h>
 #include <string.h>

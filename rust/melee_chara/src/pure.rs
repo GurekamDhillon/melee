@@ -11,13 +11,16 @@ pub use melee_core::fp::frsqrte;
 /// ftMasterHand (backdisappear, fingergun, poke, walk) and ftSeak (specialhi): an frsqrte
 /// estimate plus three f64 Newton-Raphson steps, then `(float)(x * guess)`.
 /// The operation order is the C's; f64 throughout, one final rounding to f32.
+/// The shipping build contracts `3.0 - guess*guess*x` into one `llvm.fmuladd.f64`
+/// (`fmuladd(-(g*g), x, 3.0)`, all 7 copies; tools/rust-port/fma_sites.py), which gwtool
+/// lowers to a true f64 fma: `(-(g*g)).mul_add(x, 3.0)`.
 pub fn my_sqrtf(x: f32) -> f32 {
     if x > 0.0 {
         let xd = x as f64;
         let mut guess = frsqrte(xd);
-        guess = 0.5 * guess * (3.0 - guess * guess * xd);
-        guess = 0.5 * guess * (3.0 - guess * guess * xd);
-        guess = 0.5 * guess * (3.0 - guess * guess * xd);
+        guess = 0.5 * guess * (-(guess * guess)).mul_add(xd, 3.0);
+        guess = 0.5 * guess * (-(guess * guess)).mul_add(xd, 3.0);
+        guess = 0.5 * guess * (-(guess * guess)).mul_add(xd, 3.0);
         return (xd * guess) as f32;
     }
     x

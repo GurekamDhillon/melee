@@ -9,6 +9,7 @@
 pub use melee_core;
 
 pub mod cm;
+pub mod gr;
 pub mod gekko;
 pub mod mp;
 pub mod vec;

@@ -232,6 +232,33 @@ accessors are checked by a unit test (`cm::camera::tests::accessors`), not again
 
 Regenerate: `bash rust/melee_world/cref/gen_camera_ref.sh`.
 
+## Round 6: gr/stage.c (45 functions)
+
+`src/gr/stage.rs` ports all of src/melee/gr/stage.c plus `Stage_StageSlotSelect`
+(stage_stage_slot_retail.inc) and the read side of `ScriptGame_ArenaBound`
+(pc/gameworld/script_arena.inc, `ScriptArenaView::bound`), TARGET_PC bodies throughout: the 24
+camera / blast-zone / pause-cam / angle getters, CalcUnkCamY(Bounds), UnkSetVec3TCam_Offset,
+SetVecToFixedCamPos, the fixed-camera floor projection 80224CAC (lbVector_ApplyEulerRotation from
+melee_runtime), 80224DC8, the spawn helpers 80224E38/80224E64/80224FDC, 80225074, the StKind ->
+GrKind map (286 vanilla rows generated from the C initializer, 384 with the m-ex tail) with
+Stage_MexInitIds/8022519C/802251B4, and the selected-stage forwarders 802251E8/8022524C/80225298/
+802252E4/8022532C/80225194. Globals live in `StageWorld`; Ground_*, HSD_Randi, gm_*, lbAudioAx
+and the Mex_* queries are `StageHooks` (TODO(group2: gr/ground.c), TODO(group1), TODO(group6),
+TODO(pc: mex)). FMA: fma_sites.py reports only Stage_80224CAC's two lines; both fused.
+
+`tests/stage_vs_c.rs`: `cref/gen_stage_ref.sh` cuts the getter range, the map + MexInitIds +
+8022519C, the slot-select .inc, ScriptGame_ArenaBound and lbvector's sin/cos/Rotate/
+ApplyEulerRotation, builds them i686 with contraction on + lower.py (12 f32 sites), and writes
+`tests/data/stage_ref.txt` (20616 rows: 20000 random stage_info + script-arena states, a quarter
+with an arena owner, every getter + the three Vec3 outputs; 80224DC8 over -20..119; the full
+384-entry map after the m-ex fill with a fixed synthetic m-ex config; StageSlotSelect for -2..89).
+All match bit for bit (34 functions). Mutation check: unfusing 80224CAC's x line fails the test.
+Unit-tested only (`gr::stage::tests::hook_driven`, call order through a recording hook):
+80225074, 80224FDC, 80224E38 and the seven forwarders. Not tested at all: 80224E64 (its kind-4
+path runs mp_check_multiple, itself verified; the composition is not).
+
+Regenerate: `bash rust/melee_world/cref/gen_stage_ref.sh`.
+
 ## Build notes
 
 - `cargo build -p melee_world` and `cargo test -p melee_world` pass. I ran them with
@@ -250,7 +277,7 @@ Regenerate: `bash rust/melee_world/cref/gen_camera_ref.sh`.
    group 1's JObj is usable.
 2. mpcoll.c, the collision driver. It calls into fighter and item callbacks, which get stubbed.
 3. The rest of cm/camera.c (subject list, mode callbacks, pause/debug cameras, CObj setup),
-   once gr/stage.c getters and HSD_CObj exist. `long double` literals become f64.
+   once HSD_CObj exists; gr/stage.c getters are now ported (wire CamStage to StageWorld). `long double` literals become f64.
 4. gr/*: 77 stage TUs, mostly callback tables plus per-stage logic. Port the shared grlib parts
    first.
 5. if/* (HUD) and ef/* (effects). These are mostly render-side; whatever touches the RNG has to

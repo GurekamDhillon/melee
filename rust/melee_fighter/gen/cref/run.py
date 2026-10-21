@@ -83,6 +83,19 @@ EXTRACTS = {
                ("src/melee/ft/ft_0892.c", "void lbBgFlash_80020E38(", None),
                ("src/melee/pl/pltrick.c", "int pl_803BCE70[16]", "static void fn_80037F00("),
                ("src/melee/pl/pltrick.c", "void pl_800384DC(", None)],
+    "ftcommon3": [("src/melee/ft/ftcommon.c", "void ftCommon_ClampGroundVel(", "void ftCommon_ApplyGroundedKnockbackFriction("),
+                  ("src/melee/ft/ftcommon.c", "void ftCommon_UnlockECB(", "^/* Script collision"),
+                  ("src/melee/ft/ftcommon.c", "^/* Script collision", "float ftCo_GetLStickAngle("),
+                  ("src/melee/ft/ftcommon.c", "void ftCommon_8007DB24(", "void ftCommon_InitGrab("),
+                  ("src/melee/ft/ftcommon.c", "void ftCommon_8007DD7C(", "HSD_GObj* ftCommon_8007E2A4("),
+                  ("src/melee/ft/ftcommon.c", "void ftCommon_8007E358(", "void ftCommon_8007E5AC("),
+                  ("src/melee/ft/ftcommon.c", "void ftCommon_SetAccessory(", "void ftCommon_8007EA90("),
+                  ("src/melee/ft/ftcommon.c", "void ftCommon_8007EA90(", "void ftCommon_8007ECD4("),
+                  ("src/melee/ft/ftcommon.c", "void ftCommon_8007EEC8(", "void ftCommon_8007EFC0("),
+                  ("src/melee/ft/ftcommon.c", "extern void (*ftData_OnItemInvisible[])", "float ftCommon_GetModelScale("),
+                  ("src/melee/ft/ftcommon.c", "void ftCommon_8007F6A4(", "void ftCommon_8007F76C("),
+                  ("src/melee/ft/ftcommon.c", "void ftCommon_8007F824(", "void ftCommon_8007FF74("),
+                  ("src/melee/ft/ft_0881.c", "void ft_80088770(", "void ft_80088828(")],
     "ftcommon": [("src/melee/ft/ftcommon.c", "void ftCommon_CalcGroundAccel_Deaccel(", "void ftCommon_UnlockECB("),
                  ("src/melee/ft/ftcommon.c", "void ftCommon_UpdateFacing(", "void ftCommon_8007DB24(")],
 }
@@ -92,7 +105,10 @@ def extract(name):
     parts = []
     for src, start, stop in EXTRACTS.get(name, []):
         lines = (ROOT / src).read_text(encoding="utf-8").splitlines()
-        i = next(k for k, l in enumerate(lines) if l.startswith(start))
+        # start "^X": begin one line earlier (at the `#if` that opens X's block)
+        pre = 1 if start.startswith("^") else 0
+        start = start[pre:]
+        i = next(k for k, l in enumerate(lines) if l.startswith(start)) - pre
         # stop "^X": stop one line earlier (before the `#if` that opens X's block)
         back = 1 if stop and stop.startswith("^") else 0
         stop = stop[back:] if stop else stop

@@ -25,3 +25,4 @@ pub mod ft0877;
 pub mod ft0881;
 pub mod ft0892;
 pub mod pltrick;
+pub mod ftcommon3;

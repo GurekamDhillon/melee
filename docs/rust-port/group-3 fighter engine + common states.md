@@ -10,10 +10,10 @@ State as of 2026-10-21.
 |---|---|---|
 | Native types + GC offsets | `src/types/generated.rs` (from `gen/gen_types.py`) | 569 `#[repr(C)]` records, all built |
 | Mechanical translation of all 216 TUs | `src/c2r/` (from `gen/fix_raw.py`, feature `c2r`) | compiles (`--features c2r`), never run |
-| Hand ports, checked bit-for-bit against the C | `src/neutral_hash.rs`, `src/ftcommon.rs`, `src/ftcommon2.rs`, `src/stale.rs`, `src/player.rs`, `src/ftlib.rs`, `src/plbonus.rs`, `src/ft0877.rs`, `src/ft0881.rs`, `src/compat.rs`, `src/hooks.rs` | 470 C functions, tests pass |
+| Hand ports, checked bit-for-bit against the C | `src/neutral_hash.rs`, `src/ftcommon.rs`, `src/ftcommon2.rs`, `src/stale.rs`, `src/player.rs`, `src/ftlib.rs`, `src/plbonus.rs`, `src/ft0877.rs`, `src/ft0881.rs`, `src/ft0892.rs`, `src/pltrick.rs`, `src/ftcommon3.rs`, `src/compat.rs`, `src/hooks.rs` | 526 C functions, tests pass |
 | PowerPC `.s` files | none belong to this group (inventory §3) | nothing to do |
 
-Functions: 470 of ~2,820 (about 16.7%; 57 night 1, 39 in port round 1, 144 in port round 2, 96 in port round 3, 82 in port round 4, 34 in port round 5, 18 in port round 6; 469 verified) are hand-ported and verified against the C. All ~2,820 are
+Functions: 526 of ~2,820 (about 18.7%; 57 night 1, 39 in port round 1, 144 in port round 2, 96 in port round 3, 82 in port round 4, 34 in port round 5, 18 in port round 6, 19 in port round 7, 37 in port round 8; 525 verified) are hand-ported and verified against the C. All ~2,820 are
 in the mechanical translation, which compiles; none of it has been linked or run.
 
 ### Native types (`gen/gen_types.py`)
@@ -62,6 +62,7 @@ in the mechanical translation, which compiles; none of it has been linked or run
 | module | C functions | test | cases |
 |---|---|---|---|
 | `neutral_hash.rs` | `nh_Mix`, `nh_CpuFlags`, `nh_Fighter` (fighter.c, TARGET_PC) + item/game word, `StateHash for Fighter` | `tests/nh_ref.rs` | 64 fighters, all fields + every CPU flag bitfield |
+| `ftcommon3.rs` | 37 more of ftcommon.c (port round 8, below) | `tests/ftcommon3_ref.rs` | 10,200 (34 ops x 300) |
 | `ft0881.rs` | 18 of ft/ft_0881.c (port round 6, below) | `tests/ft0881_ref.rs` | 5,100 (17 ops x 300) |
 | `ft0877.rs` | all 34 of ft/ft_0877.c (port round 5, below) | `tests/ft0877_ref.rs` | 10,200 (34 ops x 300) |
 | `plbonus.rs` | 82: all of pl/pl_040D.c (22) + plbonuslib.c pl_8003FBFC..EOF (59) + its inline `unk_cond` (port round 4, below) | `tests/plbonus_ref.rs` | 15,000 (300 tables x 50 ops, 81 op kinds) |
@@ -333,6 +334,46 @@ two pltrick.c ranges, plAttack_80037B08 and Player_GetActionStats).
   `PL_8003FE40` (plbonus). New panicking hooks: it_8026B6C8 (TODO(group5 it)),
   ftFx_AppealS_CheckIfUsed (TODO(group4 ftFx)), pl_8003DFF4 (TODO(group3 plbonuslib)),
   `FTDATA_80085FD4_X8` = `ftData_80085FD4(fp, i)->x8` (TODO(group3 ftdata)).
+
+## Port round 8 (2026-10-21): `src/ftcommon3.rs`
+37 more C definitions of src/melee/ft/ftcommon.c: ftCommon_8007D6A4 (with the TARGET_PC statics
+`ftCommon_PcFloorGuard` / `ftCommon_PcFloorValid`), 8007D7FC, 8007D92C, 8007DB24, 8007DB58,
+8007DD7C, 8007DFD0, 8007E0E4, 8007E358, 8007E3EC, SetAccessory, 8007E690, 8007E6DC, 8007E79C,
+8007E7E4, 8007E82C, 8007E83C, ftGetParasolStatus, 8007EA90, 8007EC30, 8007EEC8, 8007EF5C,
+8007F578, 8007F5CC, 8007F6A4, 8007F824, 8007F86C, 8007F8E8, 8007F948 + `_func_8007F948_inline`,
+8007F9B4, 8007FA00, 8007FA58, 8007FC7C, 8007FE84.
+Verified against the C cut verbatim (`gen/cref/ftcommon3_ref.c`; run.py cuts 13 ftcommon.c ranges
+plus ft_0881.c's ft_80088770 / ft_800887CC; run.py's start marker now takes a leading `^` to begin
+one line early, at the `#if defined(TARGET_PC)` opening the floor-guard block).
+- Test: six fighters, random p-link list, three items with random kind/motion, random fields,
+  trace word seeded per case. 34 ops x 300 = 10,200 lines (return value, hash of every written
+  field of all six fighters, trace word). The HSD_JObj header inlines are redirected to stubs by
+  macro in the C, hooks in Rust.
+- Fused sites: 8007DD7C / 8007DFD0 two each (`x2C4.x * facing + v.x`), 8007E3EC three
+  (`x1A7C += d * x1A6C`); all `fmadds`. **Discriminated**: odd nudge cases make the arg side
+  cancel exactly unfused (other side exactly 0), so un-fusing the arg side fails (op 5 case 47);
+  un-fusing x1A7C.z fails (op 9 case 0). Not discriminated: the other-fighter side of the nudge
+  (zeroed in those cases), and 8007DFD0's own fused pair beyond what op 6 hits.
+- Other mutation checks that fail: the f64 `phi > M_PI` compare done in f32 (op 18; the angle
+  stub returns `(float) M_PI` 1 in 8), dropping Player_SetUnk98 (op 18), parasol table-3 NULL
+  check (op 16), x700 clamp in 8007FC7C (op 32), `(float) x2024 + arg8` truncation (op 32),
+  `x221E_b3 = arg1` keeping only bit 0 (op 23), phi_r28 in 8007DD7C (op 5), 8007DFD0's x45C
+  (op 6), the mpLineGetPrev adjacency (op 5). Not discriminated now: PcFloorGuard's every-120th
+  report (needs >120 misses for one player; it was hit before the trace seed was randomised).
+- TARGET_PC paths ported: the missing-floor guard (falls through ftCo_Fall_Enter instead of
+  landing; `PC_FLOOR_MISSES` is a never-reset static like the C), Script_GameEvent on landing
+  (hook, default no-op), the m-ex `Mex_On*Dispatch` calls (hooks; they also stand for the
+  ftData_* per-kind tables, TODO(pc mex + group3 ftdata)), the parasol table-3 bounds check.
+- `it_8026B54C` returns float (it_26B1.h): 8007FA58 truncates it into x2014 / 8007F948's arg.
+- Hooks: `FTCOMMON_8007E6DC` / `8007E82C` / `8007D92C` and `FT_GET_PARASOL_STATUS` now default to
+  these ports. New ported overrides: FTLIB_80086FD4, FTLIB_800866DC, PLAYER_GET_ENTITY,
+  PLAYER_GET_UNK98 / SET_UNK98. New panicking hooks: mpLib_8004D164 / mpLineGetNext / Prev
+  (TODO(group2 mp)), ft_80084A18 / ft_80081C88 (TODO(group3 ft_081B)), ftCo_Fall_Enter,
+  ftCo_800C5240 / 800C5500 / 800D105C / ftCo_Damage_CalcAngle (TODO(group3 ftCo)), ft_8008A2BC,
+  efLib_DestroyAll, the HSD_JObj ops (TODO(group1 HSD)), pl_8003EA08 (TODO(group3 plbonuslib)),
+  the nine m-ex dispatchers, gm_8016B0B4 (TODO(group6 gm)), and 17 item calls (TODO(group5 it)).
+- Not ported from ftcommon.c: the atan2f users (ftCo_GetLStickAngle, GetCStickAngle, 8007D9D4,
+  8007E5AC; need group 1's MSL), 8007EFC8 (transform swap, ~25 callees), PcFloorGuardTest.
 
 ## Not done / blockers
 - **The c2r layer has never linked or run.** Everything outside group 3 is an unresolved

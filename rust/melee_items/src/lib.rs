@@ -6,3 +6,6 @@
 #![allow(dead_code)]
 
 pub use melee_core;
+
+pub mod gen;
+pub use gen::layout;

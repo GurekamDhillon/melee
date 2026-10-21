@@ -13,6 +13,8 @@ pub use melee_core;
 pub mod types_gen {
     pub use melee_types::*;
 }
+/// Hand ports of character functions, one module per C TU (verified: tests/chars_ref.rs).
+pub mod chars;
 /// Pure (Fighter-independent) helpers from the character TUs, ported by hand.
 pub mod pure;
 #[cfg(test)]

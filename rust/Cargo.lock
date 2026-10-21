@@ -630,6 +630,7 @@ name = "melee_chara"
 version = "0.1.0"
 dependencies = [
  "melee_core",
+ "melee_fighter",
  "melee_types",
 ]
 

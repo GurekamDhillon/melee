@@ -1,0 +1,229 @@
+//! The hand-ported character functions (src/chars) vs the game's C, compiled the way the
+//! shipping build compiles it (clang contraction on + gwtool lowering). Expected values:
+//! tests/data/chars.txt from gen/chref.py (C driver gen/chref_main.c). This file repeats the
+//! C's fill order exactly; each function runs on 4000 random fighters and the per-function FNV
+//! hash over the whole Fighter, its dat_attrs block, the common data, the return value and the
+//! out-params must match. Set CHARS_VERBOSE=<index> to print one function's per-case lines in
+//! the format of `chref.py -v` (rust/target/chref/chars_verbose.txt).
+#![allow(static_mut_refs)]
+
+mod chars_dispatch;
+
+use melee_chara::types_gen::{ftCommonData, Fighter, Vec2, Vec3};
+use melee_fighter::hooks;
+
+const CASES: u32 = 4000;
+const ATTR_WORDS: usize = 1024;
+const FNV0: u64 = 0xCBF2_9CE4_8422_2325;
+
+static mut G_FRIC: f32 = 0.0;
+static mut G_SFX: u32 = 0;
+
+struct Rng(u32);
+impl Rng {
+    fn rnd(&mut self) -> u32 {
+        self.0 ^= self.0 << 13;
+        self.0 ^= self.0 >> 17;
+        self.0 ^= self.0 << 5;
+        self.0
+    }
+    fn rf(&mut self) -> f32 {
+        let k = self.rnd() % 16;
+        if k == 0 {
+            return 0.0;
+        }
+        if k == 1 {
+            return -0.0;
+        }
+        ((self.rnd() % 2001) as i32 - 1000) as f32 / 7.0
+    }
+    fn slot(&mut self, small: u32) -> u32 {
+        let k = self.rnd() % 8;
+        if k < 3 {
+            return self.rnd() % small;
+        }
+        if k == 3 {
+            return 0;
+        }
+        self.rf().to_bits()
+    }
+}
+
+fn fnv(mut h: u64, b: &[u8]) -> u64 {
+    for &x in b {
+        h ^= x as u64;
+        h = h.wrapping_mul(0x0000_0100_0000_01B3);
+    }
+    h
+}
+
+fn bytes<T>(v: &T) -> &[u8] {
+    unsafe { core::slice::from_raw_parts(v as *const T as *const u8, core::mem::size_of::<T>()) }
+}
+fn bytes_mut<T>(v: &mut T) -> &mut [u8] {
+    unsafe { core::slice::from_raw_parts_mut(v as *mut T as *mut u8, core::mem::size_of::<T>()) }
+}
+
+/// The bitfields compared by value (see gen/chref_main.c: C packs LSB-first, melee_types keeps
+/// GC order, so their bytes differ by design).
+const NBF: usize = 8;
+fn bf_get(fp: &Fighter, i: usize) -> u32 {
+    (unsafe {
+        match i {
+            0 => fp.fall_fast(),
+            1 => fp.x2219_b5(),
+            2 => fp.x221F_b3(),
+            3 => fp.x2223_b4(),
+            4 => fp.anon_2210.anon_0.throw_flags_b0(),
+            5 => fp.x2070.anon_0.x2071_b6(),
+            6 => fp.mv.ca.specialhi.x2_b0(),
+            _ => fp.mv.ca.specialhi.x2_b1(),
+        }
+    }) as u32
+}
+fn bf_set(fp: &mut Fighter, i: usize, v: u8) {
+    unsafe {
+        match i {
+            0 => fp.set_fall_fast(v),
+            1 => fp.set_x2219_b5(v),
+            2 => fp.set_x221F_b3(v),
+            3 => fp.set_x2223_b4(v),
+            4 => fp.anon_2210.anon_0.set_throw_flags_b0(v),
+            5 => fp.x2070.anon_0.set_x2071_b6(v),
+            6 => fp.mv.ca.specialhi.set_x2_b0(v),
+            _ => fp.mv.ca.specialhi.set_x2_b1(v),
+        }
+    }
+}
+fn bf_probe(fp: &mut Fighter) -> [usize; NBF] {
+    let mut out = [0; NBF];
+    for (i, o) in out.iter_mut().enumerate() {
+        bytes_mut(fp).fill(0);
+        bf_set(fp, i, 1);
+        *o = bytes(fp).iter().position(|&b| b != 0).unwrap();
+    }
+    out
+}
+
+#[test]
+fn character_functions_match_c() {
+    unsafe {
+        hooks::GROUND_FRICTION_MUL = Some(|_| G_FRIC);
+        hooks::PLAY_SFX = Some(|_, id, vol, pan| G_SFX = G_SFX.wrapping_add((id + vol + pan) as u32));
+    }
+    let expected = include_str!("data/chars.txt");
+    let mut lines = expected.lines();
+    let verbose: Option<usize> = std::env::var("CHARS_VERBOSE").ok().and_then(|s| s.parse().ok());
+
+    let mut fp: Box<Fighter> = Box::new(Fighter::zeroed());
+    let mut attrs: Box<[u32; ATTR_WORDS]> = Box::new([0; ATTR_WORDS]);
+    let mut cd: Box<ftCommonData> = Box::new(ftCommonData::zeroed());
+    let bf_byte = bf_probe(&mut fp);
+
+    // header: native sizes and the bitfield bytes must agree with the C, or nothing below can
+    let mut hdr = lines.next().unwrap().split_whitespace().skip(1);
+    assert_eq!(hdr.next().unwrap().parse::<usize>().unwrap(), core::mem::size_of::<Fighter>(), "sizeof(Fighter)");
+    assert_eq!(hdr.next().unwrap().parse::<usize>().unwrap(), core::mem::size_of::<ftCommonData>(), "sizeof(ftCommonData)");
+    for (i, b) in bf_byte.iter().enumerate() {
+        assert_eq!(hdr.next().unwrap().parse::<usize>().unwrap(), *b, "byte of bitfield {i}");
+    }
+
+    let mut bad = Vec::new();
+    for (f, name) in chars_dispatch::NAMES.iter().enumerate() {
+        let mut h = FNV0;
+        // mv.ca.specialhi.x2_b0/b1 share their byte with the other characters' motion vars
+        let bmask: u32 = if *name == "ftCa_SpecialLw_800E49FC" { 0xFF } else { 0x3F };
+        let on = |i: usize| bmask >> i & 1 != 0;
+        for k in 0..CASES {
+            let mut r = Rng(0x9E37_79B9u32 ^ ((f as u32).wrapping_mul(7919).wrapping_add(k.wrapping_mul(104729)).wrapping_add(1)));
+            {
+                let w = unsafe {
+                    core::slice::from_raw_parts_mut(&mut *fp as *mut Fighter as *mut u32, core::mem::size_of::<Fighter>() / 4)
+                };
+                for x in w.iter_mut() {
+                    *x = r.slot(400);
+                }
+            }
+            fp.motion_id = (if r.rnd() % 4 != 0 { 330 + r.rnd() % 300 } else { r.rnd() % 1000 }) as _;
+            for (i, &b) in bf_byte.iter().enumerate() {
+                if on(i) {
+                    bytes_mut(&mut *fp)[b] = 0;
+                }
+            }
+            for i in 0..NBF {
+                let v = (r.rnd() & 1) as u8;
+                if on(i) {
+                    bf_set(&mut fp, i, v);
+                }
+            }
+            for x in attrs.iter_mut() {
+                *x = r.slot(8);
+            }
+            {
+                let w = unsafe {
+                    core::slice::from_raw_parts_mut(&mut *cd as *mut ftCommonData as *mut u32, core::mem::size_of::<ftCommonData>() / 4)
+                };
+                for x in w.iter_mut() {
+                    *x = r.slot(8);
+                }
+            }
+            fp.dat_attrs = attrs.as_mut_ptr() as *mut _;
+            unsafe {
+                hooks::P_FT_COMMON_DATA = &*cd;
+                G_SFX = 0;
+                G_FRIC = r.rf();
+            }
+            let a = r.rf();
+            let mut ia = (r.rnd() % 4) as i32;
+            if r.rnd() % 2 != 0 {
+                ia = (r.rnd() % 20) as i32;
+            }
+            let nul = r.rnd() % 10 == 0;
+            let mut o1 = r.rnd() as i32;
+            let mut o2 = r.rnd() as i32;
+            let mut v3 = Vec3 { x: r.rf(), y: r.rf(), z: r.rf() };
+            let mut v2 = Vec2 { x: r.rf(), y: r.rf() };
+
+            let ret = chars_dispatch::call(f, &mut fp, a, ia, nul, &mut v3, &mut v2, &mut o1, &mut o2);
+
+            fp.dat_attrs = core::ptr::null_mut();
+            let mut bits = 0u32;
+            for i in 0..NBF {
+                if on(i) {
+                    bits |= bf_get(&fp, i) << i;
+                }
+            }
+            for (i, &b) in bf_byte.iter().enumerate() {
+                if on(i) {
+                    bytes_mut(&mut *fp)[b] = 0;
+                }
+            }
+            h = fnv(h, &bits.to_le_bytes());
+            let sfx = unsafe { G_SFX };
+            if verbose == Some(f) {
+                println!(
+                    "b{:02X} {} {} {:08X} {:08X} {:08X} {:08X} {:08X} {:08X} {} {} {:08X} {:016X} {:016X} {:016X}",
+                    bits, f, k, ret, v3.x.to_bits(), v3.y.to_bits(), v3.z.to_bits(), v2.x.to_bits(), v2.y.to_bits(),
+                    o1, o2, sfx, fnv(FNV0, bytes(&*fp)), fnv(FNV0, bytes(&*attrs)), fnv(FNV0, bytes(&*cd))
+                );
+            }
+            h = fnv(h, bytes(&*fp));
+            h = fnv(h, bytes(&*attrs));
+            h = fnv(h, bytes(&*cd));
+            h = fnv(h, &ret.to_le_bytes());
+            h = fnv(h, bytes(&v3));
+            h = fnv(h, bytes(&v2));
+            h = fnv(h, &o1.to_le_bytes());
+            h = fnv(h, &o2.to_le_bytes());
+            h = fnv(h, &sfx.to_le_bytes());
+        }
+        let line = lines.next().expect("chars.txt shorter than the dispatch table");
+        let (cname, chash) = line.split_once(' ').unwrap();
+        assert_eq!(cname, *name, "chars.txt and gen/ported.txt out of step");
+        let want = u64::from_str_radix(chash, 16).unwrap();
+        if want != h {
+            bad.push(format!("{f} {name}"));
+        }
+    }
+    assert!(bad.is_empty(), "{} of {} functions differ from the C:\n{}", bad.len(), chars_dispatch::NAMES.len(), bad.join("\n"));
+}

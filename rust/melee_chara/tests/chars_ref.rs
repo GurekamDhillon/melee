@@ -9,15 +9,68 @@
 
 mod chars_dispatch;
 
-use melee_chara::types_gen::{ftCommonData, Fighter, Vec2, Vec3};
+use melee_chara::stubs as st;
+use melee_chara::types_gen::{ftCommonData, Fighter, HSD_GObj, Vec2, Vec3};
 use melee_fighter::hooks;
 
 const CASES: u32 = 4000;
+/// Round-2 callbacks (index >= N_R1): thin wrappers checked through the stub trace.
+const CASES_R2: u32 = 256;
 const ATTR_WORDS: usize = 1024;
 const FNV0: u64 = 0xCBF2_9CE4_8422_2325;
 
 static mut G_FRIC: f32 = 0.0;
 static mut G_SFX: u32 = 0;
+
+// Round 2: recorders for the group-3 stubs, the same as gen/chref_main.c's (id + non-pointer
+// args; gobj as 0 = NULL / 1 = the fighter's own / 2 = other; returns from an LCG on G_SEED).
+static mut G_TR: u32 = 0;
+static mut G_SEED: u32 = 0;
+static mut G_SELF: *mut HSD_GObj = core::ptr::null_mut();
+fn tr(x: u32) {
+    unsafe { G_TR = (G_TR ^ x).wrapping_mul(16777619) }
+}
+fn trf(f: f32) {
+    tr(f.to_bits())
+}
+fn trg(p: *mut HSD_GObj) {
+    tr(if p.is_null() { 0 } else if p == unsafe { G_SELF } { 1 } else { 2 })
+}
+fn trfp(fp: &Fighter) {
+    tr((fp as *const Fighter as *mut core::ffi::c_void == unsafe { (*G_SELF).user_data }) as u32)
+}
+fn pick() -> i32 {
+    unsafe {
+        G_SEED = G_SEED.wrapping_mul(1103515245).wrapping_add(12345);
+        ((G_SEED >> 16) & 1) as i32
+    }
+}
+fn install_recorders() {
+    unsafe {
+        st::FT_80084F3C = Some(|g| { tr(1); trg(g) });
+        st::FT_80084EEC = Some(|g| { tr(2); trg(g) });
+        st::FT_80085134 = Some(|g| { tr(3); trg(g) });
+        st::FT_80084DB0 = Some(|g| { tr(4); trg(g) });
+        st::FT_80084FA8 = Some(|g| { tr(5); trg(g) });
+        st::FT_80083F88 = Some(|g| { tr(6); trg(g) });
+        st::FTANIM_ISFRAMESREMAINING = Some(|g| { tr(7); trg(g); pick() });
+        st::FTANIM_8006EBA4 = Some(|g| { tr(8); trg(g) });
+        st::FIGHTER_CHANGEMOTIONSTATE = Some(|g, msid, flags, a, b, c, g3| {
+            tr(9); trg(g); tr(msid as u32); tr(flags); trf(a); trf(b); trf(c); trg(g3)
+        });
+        st::FT_8008A2BC = Some(|g| { tr(10); trg(g) });
+        st::FTCO_FALL_ENTER = Some(|g| { tr(11); trg(g) });
+        st::FT_80081D0C = Some(|g| { tr(12); trg(g); pick() });
+        st::FT_80082708 = Some(|g| { tr(13); trg(g); pick() });
+        st::FT_800827A0 = Some(|g| { tr(14); trg(g); pick() });
+        st::FTCOMMON_8007D7FC = Some(|fp| { tr(15); trfp(fp) });
+        st::FTCO_80096900 = Some(|g, a, b, c, d, e| {
+            tr(16); trg(g); tr(a as u32); tr(b as u32); tr(c as u32); trf(d); trf(e)
+        });
+        hooks::GENO_GROUND_EDGE = Some(|fp, landing| { tr(17); trfp(fp); tr(landing as u32) });
+        hooks::PL_8003FC44 = Some(|slot, sub| { tr(18); tr(slot as u32); tr(sub as u32) });
+    }
+}
 
 struct Rng(u32);
 impl Rng {
@@ -66,7 +119,7 @@ fn bytes_mut<T>(v: &mut T) -> &mut [u8] {
 
 /// The bitfields compared by value (see gen/chref_main.c: C packs LSB-first, melee_types keeps
 /// GC order, so their bytes differ by design).
-const NBF: usize = 8;
+const NBF: usize = 10;
 fn bf_get(fp: &Fighter, i: usize) -> u32 {
     (unsafe {
         match i {
@@ -77,7 +130,9 @@ fn bf_get(fp: &Fighter, i: usize) -> u32 {
             4 => fp.anon_2210.anon_0.throw_flags_b0(),
             5 => fp.x2070.anon_0.x2071_b6(),
             6 => fp.mv.ca.specialhi.x2_b0(),
-            _ => fp.mv.ca.specialhi.x2_b1(),
+            7 => fp.mv.ca.specialhi.x2_b1(),
+            8 => fp.is_sub_fighter(),
+            _ => fp.x2227_b0(),
         }
     }) as u32
 }
@@ -91,7 +146,9 @@ fn bf_set(fp: &mut Fighter, i: usize, v: u8) {
             4 => fp.anon_2210.anon_0.set_throw_flags_b0(v),
             5 => fp.x2070.anon_0.set_x2071_b6(v),
             6 => fp.mv.ca.specialhi.set_x2_b0(v),
-            _ => fp.mv.ca.specialhi.set_x2_b1(v),
+            7 => fp.mv.ca.specialhi.set_x2_b1(v),
+            8 => fp.set_is_sub_fighter(v),
+            _ => fp.set_x2227_b0(v),
         }
     }
 }
@@ -111,6 +168,8 @@ fn character_functions_match_c() {
         hooks::GROUND_FRICTION_MUL = Some(|_| G_FRIC);
         hooks::PLAY_SFX = Some(|_, id, vol, pan| G_SFX = G_SFX.wrapping_add((id + vol + pan) as u32));
     }
+    install_recorders();
+    let mut gobj: Box<HSD_GObj> = Box::new(HSD_GObj::zeroed());
     let expected = include_str!("data/chars.txt");
     let mut lines = expected.lines();
     let verbose: Option<usize> = std::env::var("CHARS_VERBOSE").ok().and_then(|s| s.parse().ok());
@@ -132,9 +191,9 @@ fn character_functions_match_c() {
     for (f, name) in chars_dispatch::NAMES.iter().enumerate() {
         let mut h = FNV0;
         // mv.ca.specialhi.x2_b0/b1 share their byte with the other characters' motion vars
-        let bmask: u32 = if *name == "ftCa_SpecialLw_800E49FC" { 0xFF } else { 0x3F };
+        let bmask: u32 = if *name == "ftCa_SpecialLw_800E49FC" { 0x3FF } else { 0x33F };
         let on = |i: usize| bmask >> i & 1 != 0;
-        for k in 0..CASES {
+        for k in 0..(if f < chars_dispatch::N_R1 { CASES } else { CASES_R2 }) {
             let mut r = Rng(0x9E37_79B9u32 ^ ((f as u32).wrapping_mul(7919).wrapping_add(k.wrapping_mul(104729)).wrapping_add(1)));
             {
                 let w = unsafe {
@@ -183,8 +242,14 @@ fn character_functions_match_c() {
             let mut o2 = r.rnd() as i32;
             let mut v3 = Vec3 { x: r.rf(), y: r.rf(), z: r.rf() };
             let mut v2 = Vec2 { x: r.rf(), y: r.rf() };
+            unsafe {
+                G_SEED = r.rnd();
+                G_TR = 0;
+                G_SELF = &mut *gobj;
+            }
+            gobj.user_data = &mut *fp as *mut Fighter as *mut _;
 
-            let ret = chars_dispatch::call(f, &mut fp, a, ia, nul, &mut v3, &mut v2, &mut o1, &mut o2);
+            let ret = chars_dispatch::call(f, &mut *gobj, &mut fp, a, ia, nul, &mut v3, &mut v2, &mut o1, &mut o2);
 
             fp.dat_attrs = core::ptr::null_mut();
             let mut bits = 0u32;
@@ -200,11 +265,12 @@ fn character_functions_match_c() {
             }
             h = fnv(h, &bits.to_le_bytes());
             let sfx = unsafe { G_SFX };
+            let trace = unsafe { G_TR };
             if verbose == Some(f) {
                 println!(
-                    "b{:02X} {} {} {:08X} {:08X} {:08X} {:08X} {:08X} {:08X} {} {} {:08X} {:016X} {:016X} {:016X}",
+                    "b{:02X} {} {} {:08X} {:08X} {:08X} {:08X} {:08X} {:08X} {} {} {:08X} {:016X} {:016X} {:016X} {:08X}",
                     bits, f, k, ret, v3.x.to_bits(), v3.y.to_bits(), v3.z.to_bits(), v2.x.to_bits(), v2.y.to_bits(),
-                    o1, o2, sfx, fnv(FNV0, bytes(&*fp)), fnv(FNV0, bytes(&*attrs)), fnv(FNV0, bytes(&*cd))
+                    o1, o2, sfx, fnv(FNV0, bytes(&*fp)), fnv(FNV0, bytes(&*attrs)), fnv(FNV0, bytes(&*cd)), trace
                 );
             }
             h = fnv(h, bytes(&*fp));
@@ -216,6 +282,7 @@ fn character_functions_match_c() {
             h = fnv(h, &o1.to_le_bytes());
             h = fnv(h, &o2.to_le_bytes());
             h = fnv(h, &sfx.to_le_bytes());
+            h = fnv(h, &trace.to_le_bytes());
         }
         let line = lines.next().expect("chars.txt shorter than the dispatch table");
         let (cname, chash) = line.split_once(' ').unwrap();

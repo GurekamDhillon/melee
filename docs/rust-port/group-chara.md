@@ -76,3 +76,73 @@ convention); `ftSs_SpecialLw_80129158` / `ftSs_SpecialN_801291A8` test the gobj 
   or wait for group 3.
 - Typed `HSD_GObjEvent` callbacks (the ~40 callback setters skipped here) and the MotionState
   tables, which would also take the 384 empty callbacks.
+
+## Round 2 (2026-10-21)
+
+### What was ported
+554 more character functions in 135 TUs of 26 characters (all of `ft/kinds/*` except ftCommon;
+ftCLink, ftDrMario and ftSandbag are new this round). They are the thin callbacks one level above
+round 1: every one calls group-3 code that is not ported yet, or the ported
+`ftCommon_8007D5D4` / `ftCommon_8007D60C`. Kinds, by body:
+- 362 Phys/Coll callbacks that are one call: `ft_80084F3C` (166), `ft_80084EEC` (97),
+  `ft_80085134` (56), `ft_80084DB0` (24), `ft_80084FA8` (12), `ft_80083F88` (7);
+- 72 Anim callbacks `if (!ftAnim_IsFramesRemaining(gobj)) ft_8008A2BC / ftCo_Fall_Enter / ...`;
+- 89 motion-state transitions: `Fighter_ChangeMotionState(...)` with constant arguments
+  (+ `ftAnim_8006EBA4`), `ftCommon_GroundToAirStateChange` / `AirToGroundStateChange`
+  (ftCommon/inlines.h, ported as `stubs::ftCommon_*StateChange`), `8007D60C` + state change;
+- 31 Coll callbacks guarding a state change on `ft_80082708` / `ft_80081D0C` / `ft_800827A0`.
+
+The list is `gen/ported_r2.txt`; the code is `src/chars/r2/<Char>.rs`, path
+`melee_chara::chars::r2::<Char>::<tu>::<fn>` (C names kept). Signature: `fn(gobj: *mut HSD_GObj)`
+(the raw gobj: these pass it on to group 3), `fp` is `(*gobj).user_data` as in ftlib.
+
+How: `gen/port_r2.py` translates a C subset mechanically (GET_FIGHTER, PAD_STACK, calls to the
+known group-3 functions with `gobj` / `fp` / `NULL` / constant / `fp->field` arguments, `if/else`
+on a call result, `return`). Anything outside the subset is skipped and left for hand porting.
+Every constant argument (motion ids, `MotionFlags` statics such as `transition_flags0`,
+float literals) is evaluated by clang from the TU itself, so the Rust carries the exact bits with
+the C spelling in a comment. The output is checked in and is not hand-edited; the translator is
+a porting aid, the check below is what verifies it.
+
+### Stubs (TODO(group3))
+`src/stubs.rs`: 16 settable hooks, unset = panic `TODO(group3): <name> is not ported`:
+`ft_80084F3C`, `ft_80084EEC`, `ft_80085134`, `ft_80084DB0`, `ft_80084FA8`, `ft_80083F88`,
+`ftAnim_IsFramesRemaining`, `ftAnim_8006EBA4`, `Fighter_ChangeMotionState`, `ft_8008A2BC`,
+`ftCo_Fall_Enter`, `ft_80081D0C`, `ft_80082708`, `ft_800827A0`, `ftCommon_8007D7FC`,
+`ftCo_80096900`. `bool`/`GroundOrAir` returns are `i32`. `ftCommon_8007D5D4/D60C` call group
+3's ports (`melee_fighter::ftcommon2`). When group 3 ports one of the 16, its hook default
+should become that port.
+
+### FMA
+`tools/rust-port/fma_sites.py --func <the 554 names>` over the 135 TUs: no fused site in any
+of them (they do no float arithmetic; float arguments are constants or field reads).
+
+### Verification
+Same oracle as round 1 (`gen/chref.py`, shipping front end + `lower.py`), extended:
+- `gen/chref_main.c` defines the 16 group-3 functions as recorders: each mixes its id and
+  every non-pointer argument (a gobj argument as NULL / own / other) into a trace word, and a
+  value-returning one answers from an LCG seeded per case. `ftCommon_8007D5D4/D60C` run for real
+  (cut verbatim from ftcommon.c with the round-1 helpers); their callees `Geno_GroundEdge` /
+  `pl_8003FC44` are recorders too. `tests/chars_ref.rs` installs identical recorders in
+  `melee_chara::stubs` and `melee_fighter::hooks`.
+- The per-function hash now also covers the trace word. Round-2 functions run 256 random
+  fighters each (round 1 keeps 4000).
+- Bitfields compared by value: +`is_sub_fighter`, `x2227_b0` (read by `ftCommon_8007D60C`), 10 in all.
+  This changed the random stream, so all of `tests/data/chars.txt` was regenerated (round 1 included).
+- Result: **707/707 equal** (153 round 1 + 554 round 2). Negative check: changing one motion id
+  in `ftMh_MS_365_80153730` and one `== 0` in `ftZd_SpecialHi_Anim` made exactly those two fail.
+- What this proves: each callback's own logic (which calls, in which order, with which
+  arguments, under which branch outcomes) matches the C. It does not prove anything about the
+  stubbed group-3 functions; the 554 functions do nothing useful in a game until those exist.
+
+### Counts
+- Ported this round: 554 (all verified). Total in the crate: 720 of ~4340 (16.6%).
+- Stubs added: 16 (TODO(group3)).
+
+### Next round
+- `gen/port_r2.py` skips: bodies with field writes/arithmetic, calls to round-1 functions,
+  callback-pointer setters, attrs reads (`da`), items/effects/jobj. Extending the subset to
+  `fp->x = <const or field>` assignments and calls into round-1 ports would take the next
+  ~150 (`gen` scan: ~685 candidates call only these stubs + ported code).
+- Group 3: porting the 16 stubbed functions (ft_0877 physics steps, ftcoll ground/air,
+  ftAnim, Fighter_ChangeMotionState) makes these 554 callbacks live.

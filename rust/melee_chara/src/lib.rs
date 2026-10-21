@@ -15,6 +15,8 @@ pub mod types_gen {
 }
 /// Hand ports of character functions, one module per C TU (verified: tests/chars_ref.rs).
 pub mod chars;
+/// Hooks for the group-3 functions the character code calls that are not ported yet (TODO(group3)).
+pub mod stubs;
 /// Pure (Fighter-independent) helpers from the character TUs, ported by hand.
 pub mod pure;
 #[cfg(test)]

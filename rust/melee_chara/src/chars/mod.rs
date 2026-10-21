@@ -41,6 +41,10 @@ pub fn caps_max_jumps(fp: &Fighter) -> i32 {
     }
 }
 
+/// Round 2: thin callbacks translated by gen/port_r2.py (Coll/Phys/Anim wrappers, motion-state
+/// transitions) that call group 3 through [`crate::stubs`]. Path: `chars::r2::<Char>::<tu>::<fn>`.
+pub mod r2;
+
 pub mod ftCaptain;
 pub mod ftCrazyHand;
 pub mod ftDonkey;

@@ -21,6 +21,39 @@ ftCommonData* p_ftCommonData;
 /* script_fighter_caps.h (TARGET_PC): vanilla = no caps script, the attribute itself */
 int ScriptGame_CapsMaxJumps(Fighter* fp) { return fp->co_attrs.max_jumps; }
 
+/* Round 2: the group-3 calls the translated callbacks make (melee_chara::stubs). Each stub
+ * records its call (id + every non-pointer argument; a gobj argument as 1 = the fighter's own,
+ * 0 = NULL, 2 = other) into g_tr, and a value-returning one answers from g_seed. tests/chars_ref.rs
+ * installs the same recorders. Group 3's real ftCommon_8007D5D4/8007D60C run (cut below); their
+ * own callees Geno_GroundEdge / pl_8003FC44 are recorders too. */
+static u32 g_tr, g_seed;
+static HSD_GObj* g_self;
+static void tr(u32 x) { g_tr = (g_tr ^ x) * 16777619u; }
+static void trf(float f) { union { float f; u32 u; } c; c.f = f; tr(c.u); }
+static void trg(void* p) { tr(p == 0 ? 0u : p == (void*) g_self ? 1u : 2u); }
+static u32 pick(void) { g_seed = g_seed * 1103515245u + 12345u; return g_seed >> 16; }
+#define STUB_G(id, name) void name(HSD_GObj* gobj) { tr(id); trg(gobj); }
+STUB_G(1, ft_80084F3C)
+STUB_G(2, ft_80084EEC)
+STUB_G(3, ft_80085134)
+STUB_G(4, ft_80084DB0)
+STUB_G(5, ft_80084FA8)
+STUB_G(6, ft_80083F88)
+STUB_G(8, ftAnim_8006EBA4)
+STUB_G(10, ft_8008A2BC)
+STUB_G(11, ftCo_Fall_Enter)
+bool ftAnim_IsFramesRemaining(HSD_GObj* gobj) { tr(7); trg(gobj); return pick() & 1; }
+GroundOrAir ft_80081D0C(HSD_GObj* gobj) { tr(12); trg(gobj); return pick() & 1; }
+GroundOrAir ft_80082708(HSD_GObj* gobj) { tr(13); trg(gobj); return pick() & 1; }
+bool ft_800827A0(HSD_GObj* gobj) { tr(14); trg(gobj); return pick() & 1; }
+void Fighter_ChangeMotionState(HSD_GObj* gobj, FtMotionId msid, MotionFlags flags, f32 a, f32 b, f32 c, HSD_GObj* g3)
+{ tr(9); trg(gobj); tr((u32) msid); tr(flags); trf(a); trf(b); trf(c); trg(g3); }
+void ftCommon_8007D7FC(Fighter* fp) { tr(15); tr(fp == g_self->user_data); }
+void ftCo_80096900(HSD_GObj* gobj, int a, int b, bool c, float d, float e)
+{ tr(16); trg(gobj); tr((u32) a); tr((u32) b); tr((u32) c); trf(d); trf(e); }
+void Geno_GroundEdge(Fighter* fp, int landing) { tr(17); tr(fp == g_self->user_data); tr((u32) landing); }
+void pl_8003FC44(int slot, int sub) { tr(18); tr((u32) slot); tr((u32) sub); }
+
 #include "ftcommon_extract.inc"
 #include "chref_table.inc"
 
@@ -29,6 +62,8 @@ int strcmp(const char*, const char*);
 int _flushall(void);
 
 #define CASES 4000
+/* round-2 callbacks (index >= N_R1) are thin wrappers checked through the stub trace: fewer cases */
+#define CASES_R2 256
 #define ATTR_WORDS 1024
 
 static u32 rs;
@@ -66,7 +101,7 @@ static ftCommonData cd;
  * packs bitfields LSB-first while melee_types keeps them in GC order (MSB-first), so the same
  * bytes hold different values: these are compared by value, and their bytes are zeroed (both
  * sides) before the byte hash. The byte of each is found by probing a zeroed Fighter. */
-#define NBF 8
+#define NBF 10
 static int bf_get(int i)
 {
     switch (i) {
@@ -77,7 +112,9 @@ static int bf_get(int i)
     case 4: return fp.throw_flags_b0;
     case 5: return fp.x2070.x2071_b6;
     case 6: return fp.mv.ca.specialhi.x2_b0;
-    default: return fp.mv.ca.specialhi.x2_b1;
+    case 7: return fp.mv.ca.specialhi.x2_b1;
+    case 8: return fp.is_sub_fighter;
+    default: return fp.x2227_b0;
     }
 }
 static void bf_set(int i, int v)
@@ -90,7 +127,9 @@ static void bf_set(int i, int v)
     case 4: fp.throw_flags_b0 = v; break;
     case 5: fp.x2070.x2071_b6 = v; break;
     case 6: fp.mv.ca.specialhi.x2_b0 = v; break;
-    default: fp.mv.ca.specialhi.x2_b1 = v; break;
+    case 7: fp.mv.ca.specialhi.x2_b1 = v; break;
+    case 8: fp.is_sub_fighter = v; break;
+    default: fp.x2227_b0 = v; break;
     }
 }
 static unsigned bf_byte[NBF];
@@ -124,9 +163,9 @@ int main(int argc, char** argv)
         int k;
         /* mv.ca.specialhi.x2_b0/b1 share their byte with every other character's motion vars
          * (the mv union): only the Captain function treats that byte as bitfields */
-        unsigned bmask = strcmp(FUNCS[f].name, "ftCa_SpecialLw_800E49FC") ? 0x3F : 0xFF;
+        unsigned bmask = strcmp(FUNCS[f].name, "ftCa_SpecialLw_800E49FC") ? 0x33F : 0x3FF;
         if (verbose) _flushall();
-        for (k = 0; k < CASES; k++) {
+        for (k = 0; k < (f < N_R1 ? CASES : CASES_R2); k++) {
             unsigned i, ret = 0;
             float a;
             int ia, nul, o1, o2;
@@ -152,6 +191,9 @@ int main(int argc, char** argv)
             o1 = (int) rnd(); o2 = (int) rnd();
             v3.x = rf(); v3.y = rf(); v3.z = rf();
             v2.x = rf(); v2.y = rf();
+            g_seed = rnd();
+            g_tr = 0;
+            g_self = &g;
             g.user_data = &fp;
             FUNCS[f].drv((int) f, &g, &fp, a, ia, nul, &v3, &v2, &o1, &o2, &ret);
             fp.dat_attrs = 0;
@@ -164,9 +206,9 @@ int main(int argc, char** argv)
             }
             if (verbose) {
                 u64 hf = fnv(0xCBF29CE484222325ull, &fp, sizeof fp);
-                printf("%u %d %08X %08X %08X %08X %08X %08X %d %d %08X %016llX %016llX %016llX\n", f, k,
+                printf("%u %d %08X %08X %08X %08X %08X %08X %d %d %08X %016llX %016llX %016llX %08X\n", f, k,
                        ret, B(v3.x), B(v3.y), B(v3.z), B(v2.x), B(v2.y), o1, o2, g_sfx, hf,
-                       fnv(0xCBF29CE484222325ull, attrs, sizeof attrs), fnv(0xCBF29CE484222325ull, &cd, sizeof cd));
+                       fnv(0xCBF29CE484222325ull, attrs, sizeof attrs), fnv(0xCBF29CE484222325ull, &cd, sizeof cd), g_tr);
             }
             h = fnv(h, &fp, sizeof fp);
             h = fnv(h, attrs, sizeof attrs);
@@ -177,6 +219,7 @@ int main(int argc, char** argv)
             h = fnv(h, &o1, 4);
             h = fnv(h, &o2, 4);
             h = fnv(h, &g_sfx, 4);
+            h = fnv(h, &g_tr, 4);
         }
         if (!verbose) printf("%s %016llX\n", FUNCS[f].name, h);
     }

@@ -138,6 +138,46 @@ global becomes `&ItemCommonData`; an out-of-range hitbox/hurtbox index panics wh
 write past the array. No other-group stubs were needed. Not done: no caller uses these yet, and
 `it_80272818`/`it_80272D1C` (Fighter / GObj classifier) were left out.
 
+## Round 3 (night 3): 30 next-layer functions, `src/itlib3.rs`
+
+Chosen by a scan of it/ty/vi for bodies whose every call is to an already-ported function (or
+none), then read by hand, library TUs first:
+
+- it_2725.c (11): `it_80272818`, `it_80272828`, `it_80272860`, `it_80272D1C`,
+  `itColl_BounceOffVictim`, `it_80273500`, `it_80274658`, `it_80274D04`, `it_80275174`,
+  `it_80275328`, `it_80275390`
+- it_26B1.c (3): `it_8026B3C0`, `it_8026C3FC`, `it_8026C42C` (item p-link list walks)
+- it_279C.c (4): `it_8027A13C`, `it_8027A344`, `it_8027A364`, `it_8027AAA0` (pokemon spawn)
+- itanimlist.c (2): `it_802795EC`, `it_802796FC` (item script commands)
+- itcoll.c (1): `it_80270CD8` (knockback); item.c (4): `Item_80268E40`, `Item_80269CC4`,
+  `Item_8026AE60`, `Item_IsGrabbable`; ithitbox.c: `it_802756E0`; itmaplib.c: `it_80276CEC`;
+  itspawn.c: `it_8026CA4C`; itzako.c: `it_8027B730`, `it_8027CBFC`
+
+Fused sites (`fma_sites.py`): `itColl_BounceOffVictim` 1, `it_80270CD8` 6 (clang turns
+`a*b + c*d` into `fmuladd(a, b, c*d)`), `it_8026CA4C` 1; all f32 (`fmadds`). Every other one 0.
+
+**Verification** (`tests/oracle_round3.rs`, 32 tables x 48 cases, pass): `round3_bodies.h` is
+extracted unchanged from the decomp; `round3.c` reuses round 2's LCG / 189-field fill+snap and
+additionally hashes every field a function touches outside that list (pokemon/zako vars, the
+`Item_80269CC4` reset set, `xC2C`, `xDAC`, spin speed, ItemLink, CommandInfo advance, side items of
+a 0..3-long GObj list). Globals are redirected to statics in C and are parameters in Rust.
+Script commands are written through the C bitfields on one side and the generated GC-order
+setters on the other, so this also checks `set_hitbox_scale` / `set_throw_flags` bit numbering.
+Mutation checks (each made the test fail): un-fusing each of the 8 sites. Two of them
+(`it_80270CD8`'s no-`x28` inner site, `it_8026CA4C`) were only hit after adding targeted tables
+231/232 (small `x80_float[9]`; `arg4 = (n - 0.99) / w` +-1 ulp). Swapped flag bit, dropped case
+label, wrong constant also fail. `fmadds` vs a single-rounding f32 fma is not distinguished.
+
+Decisions: `(s32) f` ports as Rust `as i32` (gwtool lowers `fptosi` to saturating
+`fptosi.sat`, NaN -> 0, same semantics). `it_80276CEC`'s uninitialised `coll_index` is 0
+(`-ftrivial-auto-var-init=zero`). `it_8027AAA0` takes the spawner and the spawned `Item`
+separately. The p-link head (`HSD_GObjPLinkHead[HSD_GOBJ_PLINK_ITEM]`) is a parameter:
+TODO(group1) take it from the native GObj runtime. Script pointers advance by
+`size_of::<CmdUnion>()` (native), not 4 GC bytes: correct for a natively decoded script only.
+Left out: `it_8027B070` (Fighter `Struct2070` bitfield copy), the per-kind state callbacks
+(~680 one-liners and ~250 small bodies on kind-specific vars; next round), `it_ResetStageArticleTable`.
+No other-group stubs were needed. Not done: no caller uses these yet; no frame-level comparison.
+
 ## Decisions / traps
 
 - `Cargo.toml` no longer depends on melee_types/runtime/world/fighter: nothing calls them yet,

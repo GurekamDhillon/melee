@@ -1,0 +1,24 @@
+[package]
+name = "melee_platform"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Platform layer: window + 60 Hz main loop (winit), PAD input (gilrs, GameCube adapter, keyboard), headless mode"
+
+[dependencies]
+melee_types.workspace = true
+winit = "0.30"
+gilrs = "0.11"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = [
+    "Win32_Foundation",
+    "Win32_Devices_HumanInterfaceDevice",
+    "Win32_Devices_DeviceAndDriverInstallation",
+    "Win32_Devices_Usb",
+    "Win32_Storage_FileSystem",
+    "Win32_System_IO",
+    "Win32_System_Threading",
+    "Win32_Security",
+] }

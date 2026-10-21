@@ -141,6 +141,7 @@ against a running Rust game: no Rust simulation exists yet, so no golden has bee
 | 4 characters | melee_chara | ~4340 | 13 (pure helpers) | frsqrte / my_sqrtf / sumOfSquares (oracle contraction on, night 2; my_sqrtf now fused) | melee_types (re-exported as `types_gen`) | all Fighter-touching code (~99.7%) |
 | 5 items/ty/vi | melee_items | ~5000 | 38: 9 Item-only + 29 leaf helpers (round 1, `helpers.rs`) + item hash | 18 tests vs C oracle (contraction on + lower.py; 8 f32 + 1 f64 fused sites, 2 of them not exercised by a vector) | melee_types (re-exported as `layout`) | spawn/think/collision, trophies, vi |
 | 6 modes | melee_modes | n/a | 0 | none | none | all |
+| platform (step 1/5) | melee_platform | shim_pad.c PADRead, gc_adapter.c (+decode.h), gw_script_pad.c txt script, Aurora PADRead/PADClamp | PADStatus pipeline, adapter (WinUSB + HID, reader + hotplug threads, focus suspend/resume, rumble), Aurora pad arithmetic, txt pad script, winit 60 Hz loop, headless runner | PADClamp/ClampCircle/ClampTrigger all inputs + adapter decode 4000-report stream vs the C/C++ compiled natively (oracle/build.sh); real WUP-028 read over WinUSB on this machine | PADStatus from melee_types (GC 0x10) | WinUSB-less Linux adapter, Lua/live/bot pads, ctl_poll remap, stick dead-zone setting, gamepad rumble, Aurora mapping files |
 | asm (10 items) | n/a | n/a | 0 | n/a | n/a | none belonged to groups 0-5; crash-screen register reads return 0 on PC |
 
 ### Done in integration
@@ -262,3 +263,29 @@ against a running Rust game: no Rust simulation exists yet, so no golden has bee
   pointer-to-array or mis-typed pointer reaches as the wrong type (e.g. an HSD_ExpDesc reached
   as an HSD_Joint). Values were not compared against the C loader's output: no C-vs-Rust oracle
   for loaded data yet. GrNBa/GrNLa parse but have no `*_joint` roots (stage roots are map_head etc).
+
+## Platform track, step 1: melee_platform (2026-10-21)
+- Crate `rust/melee_platform`: `pad` (PADStatus = `melee_types::PADStatus`, constants, Aurora's
+  PADClamp/PADClampCircle), `adapter` (port of `pc/platform/gc_adapter.c`: reader thread holding the
+  newest report, hotplug scanner, focus-following ownership, `MELEE_PAD_IGNORE_ADAPTER`/`MELEE_UNATTENDED`,
+  recalibrate, rumble-on-change; transports WinUSB then HID like the C; `decode` = gc_adapter_decode.h),
+  `aurora` (Aurora's PADRead per-port arithmetic: keyboard bindings, standard button map, default
+  axis map + dead zones, trigger emulation), `gamepads` (gilrs -> SDL-convention raw values,
+  connection-order ports), `script` (`MELEE_PAD_SCRIPT` .txt + `MELEE_PAD_CHANNELS`), `pad_read`
+  (`PadSystem::read` = shim_pad.c `gw_PADRead` order: Aurora layer, mode-NONE/suspended disconnect,
+  F9 recal, adapter override, idle port 0, script, L+R+Y+X+Start combo -> Aurora's no-op
+  PADRecalibrate), `main_loop` (winit 0.30 window; exact 60 Hz fixed step in integer ns*60, max 5
+  catch-up ticks; present gets alpha; 100 ms focus-loss debounce; `run_headless`).
+- The game calls `PadSystem::read` itself inside `Game::tick` (as HSD_PadRenewRawStatus calls PADRead).
+- `button` is native-order u16: the C's bswap16/gw_w16 exist only for big-endian game memory.
+- Verified: `cargo test -p melee_platform` (oracle: 3 clamp functions over every input, decode over a
+  4000-report LCG stream with recal, equal to `oracle/oracle.cpp` built from the shipping sources;
+  pipeline/adapter-lifecycle/script/clock tests with a fake device). `cargo run -p melee_platform
+  --example window -- 4` opened a window, ran 240 ticks in 4.03 s with 0 dropped, and read a real
+  WUP-028 (Zadig/WinUSB) controller in port 1. Not verified: the HID transport on hardware (this
+  machine's adapter is WinUSB-bound), gilrs gamepads and keyboard on hardware (no gamepad attached;
+  keyboard map is unit-tested only), Aurora gamepad arithmetic against the C++ (hand-checked values
+  only; SDL axis values vs gilrs floats are a conversion, not identical device readings).
+- Not ported: Linux adapter (`gc_adapter_linux.inc`), Lua/live/bot pads and gd.input claims,
+  ctl_poll remapping, stick dead-zone setting, gamepad rumble, Aurora per-device mapping files and
+  per-type default maps, diagnostics/overlay/profiling. No rendering yet (step 2: wgpu).

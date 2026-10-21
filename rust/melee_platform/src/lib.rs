@@ -1,0 +1,21 @@
+//! Platform layer, step 1: window + 60 Hz main loop (winit), PAD input, headless mode.
+//!
+//! * [`pad`]: `PADStatus` (melee_types, with its GC layout), constants, `PADClamp`.
+//! * [`adapter`]: the raw GameCube USB adapter (port of `pc/platform/gc_adapter.c`).
+//! * [`aurora`]: Aurora's `PADRead` arithmetic over keyboard bindings and SDL-style gamepads.
+//! * [`gamepads`]: gilrs -> SDL-style raw gamepads.
+//! * [`script`]: the txt pad script (`MELEE_PAD_SCRIPT`).
+//! * [`pad_read`]: the game-facing `PADRead` (port of `shim_pad.c` `gw_PADRead`).
+//! * [`main_loop`]: fixed-step logic decoupled from presentation; headless runner.
+pub mod log;
+pub mod pad;
+pub mod adapter;
+pub mod aurora;
+pub mod gamepads;
+pub mod script;
+pub mod pad_read;
+pub mod main_loop;
+
+pub use main_loop::{run_headless, run_windowed, FixedStep, Game, WindowConfig};
+pub use pad::PADStatus;
+pub use pad_read::{InputMode, PadSystem, Source};

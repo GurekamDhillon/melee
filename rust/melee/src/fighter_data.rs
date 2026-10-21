@@ -14,6 +14,19 @@ fn be32(b: &[u8], at: u32) -> u32 {
     u32::from_be_bytes(b[at as usize..at as usize + 4].try_into().unwrap())
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct AnimRow {
+    pub frames: f32,
+    pub flags: u32,
+}
+
+impl AnimRow {
+    /// `x594_b1_loop`.
+    pub fn looping(&self) -> bool {
+        self.flags & 0x4000_0000 != 0
+    }
+}
+
 pub struct FighterFiles {
     pub dat: DatArchive,
     pub ft_data: u32,
@@ -55,17 +68,24 @@ impl FighterFiles {
         f32::from_bits(be32(&self.dat.data, attrs + off))
     }
 
-    /// The figatree length of animation row `anim_id`, or None when the row has no animation.
-    pub fn anim_frames(&self, anim_id: u32) -> Result<Option<f32>, String> {
+    /// `ftData->x0` decoded (`Fighter_UnkInitLoad` copies it to `fp->co_attrs`; vanilla's
+    /// FT_SCRIPT_VALUE is the identity).
+    pub fn attrs(&self) -> ftCo_DatAttrs {
+        *self.dat.load_at::<ftCo_DatAttrs>(be32(&self.dat.data, self.ft_data)).get()
+    }
+
+    /// Animation row `anim_id`: its figatree length (`HSD_AObj.end_frame`) and the row's
+    /// `x10_animCurrFlags` (`fp->x594`; MSB-first bits: b1 = 0x40000000 loop). None: no figatree.
+    pub fn anim_row(&self, anim_id: u32) -> Result<Option<AnimRow>, String> {
         let d = &self.dat.data;
         let row = be32(d, self.ft_data + 0xC) + anim_id * 0x18;
-        let (off, size) = (be32(d, row + 4) as usize, be32(d, row + 8) as usize);
+        let (off, size, flags) = (be32(d, row + 4) as usize, be32(d, row + 8) as usize, be32(d, row + 0x10));
         if size == 0 {
             return Ok(None);
         }
         let slice = self.aj.get(off..off + size).ok_or("AJ row out of range")?;
         let a = DatArchive::parse(slice).map_err(|e| format!("AJ row {anim_id}: {e}"))?;
         let root = a.publics.first().map(|p| p.offset).ok_or(format!("AJ row {anim_id}: no root"))?;
-        Ok(Some(f32::from_bits(be32(&a.data, root + 8))))
+        Ok(Some(AnimRow { frames: f32::from_bits(be32(&a.data, root + 8)), flags }))
     }
 }

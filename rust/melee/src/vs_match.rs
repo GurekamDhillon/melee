@@ -20,15 +20,19 @@
 //!   `grLib_801C99C0` -> `hsd_8039EFAC(0, 0x1E, 30000, jobj)`); FD's sway gobj
 //!   (`grLast_8021ADD0`); then efLib's two particle procs (`hsd_8039CEAC` + `hsd_8039EE24`, masks
 //!   0x60000 and 0x90000), the ported particle system (melee_runtime::particle).
-//!   When a fighter's Entry timer reaches 0 the C calls `ftCo_800C6408` (EntryStart:
-//!   Fighter_ChangeMotionState + the entry animation and its effects), which is not ported: the
-//!   run stops there and says so.
+//! - Then the entry sequence (`VsMatch::fighters`): Entry -> `ftCo_800C6408` EntryStart (+ the
+//!   entry beam effect, efLib, whose particle tracks spawn bank-0 generators) -> `ftCo_800C6B6C`
+//!   EntryEnd -> `ftCo_Fall_Enter` Fall. The run stops when a falling fighter reaches the floor:
+//!   environment collision (mpColl) and the bone-driven ECB are not ported. Frame 64 is 1 ulp off
+//!   in y for that reason (RUST_PORT.md, sim round 1).
 //! - Approximations (none read by the frame hash): the emitter's JObj matrix is the joint's bind
 //!   pose (the stage JObjs are not instantiated); the CPU init's floor probe is skipped (x54/x64);
 //!   `Toy_80305058`'s trophy choice is not computed (its draw is); the background map state machine
 //!   (`grLast_8021B2E8`/`8021B5C4`) is not run (its first change needs 1800+ frames).
 
+use crate::fighter_data::AnimRow;
 use crate::{FrameWords, Sim};
+use melee_fighter::ftcommon as fc;
 use melee_fighter::stale;
 use melee_runtime::aobj::{AObjGlobals, HsdAObj};
 use melee_runtime::dat::DatArchive;
@@ -48,6 +52,9 @@ const FTCO_MS_ENTRY_START: i32 = 323;
 const FTCO_MS_ENTRY_END: i32 = 324;
 /// `ftCo_SM_EntryStart` (ft/kinds/ftCommon/forward.h): EntryStart's animation row.
 const FTCO_SM_ENTRY_START: u32 = 238;
+/// `ftCo_MS_Fall` (29) and its row `ftCo_SM_Fall` (20).
+const FTCO_MS_FALL: i32 = 29;
+const FTCO_SM_FALL: u32 = 20;
 /// The entry beam: `efAsync_Spawn(.., 0x43E, ..)` -> efAsync_Dispatch -> `efLib_Create_Attach(0x24)`.
 const EF_ENTRY_BEAM: u32 = 0x24;
 /// `Gr_Kind_Last`'s StKind in a VS match (`grGroundParam->stage_params[0].stkind`).
@@ -72,13 +79,17 @@ pub struct Player {
     pub slot: i32,
     pub fp: Box<Fighter>,
     pub entry: EntryVars,
-    /// The current animation's `HSD_AObj.end_frame` (None: `anim_id == -1`).
-    anim_end: Option<f32>,
-    /// `ftData->xC[ftCo_SM_EntryStart]`'s figatree length.
-    entry_start_frames: Option<f32>,
+    /// The first animated part's AObj (`ftAnim_8006F3DC` reads its frame); None: `anim_id == -1`.
+    anim: Option<HsdAObj<()>>,
+    /// Animation rows (`ftData->xC[smid]`) of the states the match reaches.
+    row_entry_start: Option<AnimRow>,
+    row_fall: Option<AnimRow>,
     /// `ft_data->x0->trophy_scale` and `model_scaling` (`co_attrs`).
     trophy_scale: f32,
     model_scaling: f32,
+    /// `fp->mv.co.fall.smid` / `.x4` (the Fall row and its blend weight).
+    fall_smid: i32,
+    fall_x4: f32,
     /// `fp->x60C`: queued `efAsync_Spawn`s (flushed in the fighter's s_link 9 proc).
     ef_queue: Vec<u32>,
 }
@@ -212,6 +223,10 @@ impl VsMatch {
         let ft_common = be(common);
         let start_shield = f32::from_bits(be(ft_common + 0x260));
         // ftCommonData +0x6BC / +0x6C0: the EntryStart / EntryEnd durations.
+        // Fighter_LoadCommonData: p_ftCommonData for the ported ftcommon code (melee_fighter::hooks).
+        // Leaked: it lives as long as the process, as the C's archive does.
+        let cd: melee_types::ftCommonData = *plco.load_at::<melee_types::ftCommonData>(ft_common).get();
+        unsafe { melee_fighter::hooks::P_FT_COMMON_DATA = Box::leak(Box::new(cd)) };
         let common = EntryCommon { x6bc: be(ft_common + 0x6BC) as i32, x6c0: be(ft_common + 0x6C0) as i32 };
 
         let mut rand = HsdRand::default();
@@ -280,8 +295,11 @@ impl VsMatch {
             if !sp.exact {
                 eprintln!("melee: spawn point {slot} is under a rotated/scaled joint: position not bit-exact (TODO group1 jobj)");
             }
+            let files = crate::fighter_data::FighterFiles::load(disc, name)?;
             let mut fp: Box<Fighter> = Box::new(Fighter::zeroed());
             fp.kind = fighter_kind(name)?;
+            // Fighter_UnkInitLoad: fp->co_attrs = *ft_data->x0.
+            fp.co_attrs = files.attrs();
             fp.player_id = slot as u8;
             // fighter.c Fighter_UnkInitReset/Fighter_ResetInputData_80068854 defaults that the hash reads.
             fp.shield_health = start_shield;
@@ -312,15 +330,17 @@ impl VsMatch {
                     slot + 1, fp.kind, fp.motion_id, (fp.cur_pos.x, fp.cur_pos.y, fp.cur_pos.z), fp.facing_dir, fp.ground_or_air,
                     fp.shield_health, fp.x3E4_fighterCmdScript.frame_count, fp.x1968_jumpsUsed, fp.x67F, fp.x680, stale::stocks(slot));
             }
-            let files = crate::fighter_data::FighterFiles::load(disc, name)?;
             // ftCo_800C61B0: entry.x4 (= mv.co.common.x4.x) = cur_pos.y.
             let entry = EntryVars { timer: 5 * (slot + 1), x4: fp.cur_pos.y, ..Default::default() };
             players.push(Player {
                 slot,
                 fp,
                 entry,
-                anim_end: None,
-                entry_start_frames: files.anim_frames(FTCO_SM_ENTRY_START)?,
+                anim: None,
+                fall_smid: 0,
+                fall_x4: 0.0,
+                row_entry_start: files.anim_row(FTCO_SM_ENTRY_START)?,
+                row_fall: files.anim_row(FTCO_SM_FALL)?,
                 trophy_scale: files.trophy_scale(),
                 model_scaling: files.model_scaling(),
                 ef_queue: Vec::new(),
@@ -344,6 +364,13 @@ impl VsMatch {
             // Slot = player*2 + follower; is_cpu false (human scenario).
             let s = p.slot * 2;
             w.slots[s as usize] = Some(nh_fighter(&p.fp, s, stale::stocks(p.slot), false));
+            if std::env::var_os("MELEE_GOLDEN_FRAMES").is_some() {
+                let f = &p.fp;
+                eprintln!("NHD f{} s{} m{} pos {:08X} {:08X} {:08X} vel {:08X} {:08X} ga {} fc {:08X} j {} 67F {} 680 {} shield {:08X}",
+                    self.frame, s, f.motion_id, f.cur_pos.x.to_bits(), f.cur_pos.y.to_bits(), f.cur_pos.z.to_bits(),
+                    f.self_vel.x.to_bits(), f.self_vel.y.to_bits(), f.ground_or_air, f.x3E4_fighterCmdScript.frame_count.to_bits(),
+                    f.x1968_jumpsUsed, f.x67F, f.x680, f.shield_health.to_bits());
+            }
         }
         w
     }
@@ -374,9 +401,9 @@ impl VsMatch {
         // ftAction_80073240's frame_count = cur_anim_frame + x898), then the state's anim_cb.
         for p in &mut self.players {
             let fp = &mut p.fp;
-            if let Some(end) = p.anim_end {
-                // HSD_AObjInterpretAnim at rate 1 without the loop flag: stops at end_frame.
-                fp.cur_anim_frame = (fp.cur_anim_frame + fp.frame_speed_mul).min(end);
+            if let Some(a) = &mut p.anim {
+                a.interpret_anim(&mut AObjGlobals::default(), &mut None);
+                fp.cur_anim_frame = a.curr_frame;
             }
             fp.x3E4_fighterCmdScript.frame_count = fp.cur_anim_frame + fp.x898_unk;
             match fp.motion_id {
@@ -398,13 +425,23 @@ impl VsMatch {
                     // ftCo_EntryEnd_Anim (Player_GetFlagsBit4 is clear in a plain VS match)
                     p.entry.timer -= 1;
                     if p.entry.timer == 0 {
-                        return Err(format!("player {}: EntryEnd over -> ftCommon_8007D92C (Fall) is not ported", p.slot + 1));
+                        // ftCommon_8007D92C: airborne -> ftCo_Fall_Enter.
+                        fall_enter(p)?;
                     }
+                }
+                FTCO_MS_FALL => {
+                    // ftCo_Fall_Anim -> ftCo_Fall_Anim_Inner(&fall.x4, Fall, FallF, FallB) and
+                    // ftCo_800CC988(fall.x4): with no air drift the blend stays 0 and the row
+                    // stays Fall (|self_vel.x / air_drift_max| <= x444 picks the neutral row).
+                    fall_anim(p)?;
                 }
                 m => return Err(format!("player {}: motion {m} not ported", p.slot + 1)),
             }
         }
-        // s_link 3, Fighter_Spaghetti_8006AD10: phys_cb.
+        // s_link 2, Fighter_8006ABA0: input_cb. ftCo_Fall_IASA's checks all read pad input, and
+        // the C applies none before GO (self_vel.x stays 0 in the golden with the stick held):
+        // the fighters' input is all zero here. TODO(group3): the IASA checks themselves.
+        // s_link 4, Fighter_procUpdate: phys_cb, then the integration below.
         for p in &mut self.players {
             let e = &mut p.entry;
             match p.fp.motion_id {
@@ -420,11 +457,33 @@ impl VsMatch {
                     e.x28 = e.x20 * t;
                     p.fp.cur_pos.y = e.x4 + e.x28;
                 }
+                FTCO_MS_FALL => {
+                    // ftCo_Fall_Phys -> ft_80084DB0: fall-fast check, fall, air drift.
+                    let f = &mut *p.fp;
+                    fc::check_fall_fast(f);
+                    if f.fall_fast() != 0 {
+                        fc::fall_fast(f);
+                    } else {
+                        let (g, t) = (f.co_attrs.gravity, f.co_attrs.terminal_velocity);
+                        fc::fall(f, g, t);
+                    }
+                    fc::calc_self_accel_drift(f);
+                }
                 _ => {}
             }
+            proc_update_integrate(&mut p.fp);
         }
         // s_link 6, Fighter_procMap: the entry states' coll_cb (ft_80083E64 with the entry ECB,
-        // bottom = -x28) cannot reach FD's floor from y >= 10. TODO(group3 ftcoll).
+        // bottom = -x28) cannot reach FD's floor from y >= 10. Fall's (ft_800831CC with the
+        // animated ECB) can once the fighter is at the floor: not ported, so the run stops when
+        // a falling fighter is below y = 0. TODO(group3 ftcoll + group2 mpcoll).
+        for p in &self.players {
+            if p.fp.motion_id == FTCO_MS_FALL && p.fp.cur_pos.y < 0.0 {
+                return Err(format!(
+                    "player {}: falling at y {} -> ftCo_Fall_Coll (ft_800831CC, ECB vs floor) is not ported",
+                    p.slot + 1, p.fp.cur_pos.y));
+            }
+        }
         // s_link 9, Fighter_8006C80C: efAsync_QueueFlush(&fp->x60C).
         for i in 0..self.players.len() {
             let q = std::mem::take(&mut self.players[i].ef_queue);
@@ -558,7 +617,7 @@ impl VsMatch {
 /// `ftCo_800BFFD0(0x75)` (neither hashed nor drawing from the RNG).
 fn entry_start(p: &mut Player, c: EntryCommon) {
     p.entry.timer = c.x6bc;
-    change_motion_state(p, FTCO_MS_ENTRY_START, p.entry_start_frames);
+    change_motion_state(p, FTCO_MS_ENTRY_START, p.row_entry_start);
     // temp_f0 = x34_scale.y * co_attrs.trophy_scale (x34_scale.y = Player_GetModelScale = 1 in VS).
     let s = 1.0f32 * p.trophy_scale;
     p.entry.x24 = s;
@@ -584,17 +643,91 @@ fn entry_end(p: &mut Player, c: EntryCommon) {
 /// `x898 = 0`; with an animation row `ftAnim_8006E9B4` steps it to frame 0 and
 /// `ftAction_80073240` sets `frame_count`; with none (`anim_id == -1`) frame_count stays.
 /// TODO(group3 fighter.c): the whole Fighter_ChangeMotionState.
-fn change_motion_state(p: &mut Player, msid: i32, anim_frames: Option<f32>) {
+fn change_motion_state(p: &mut Player, msid: i32, row: Option<AnimRow>) {
     let fp = &mut p.fp;
     fp.motion_id = msid;
     fp.frame_speed_mul = 1.0;
     fp.cur_anim_frame = 0.0 - fp.frame_speed_mul;
     fp.x898_unk = 0.0;
-    p.anim_end = anim_frames;
-    if let Some(end) = anim_frames {
-        fp.cur_anim_frame = (fp.cur_anim_frame + fp.frame_speed_mul).min(end);
+    p.anim = row.map(|r| {
+        // ftAnim_8006EBE8: the figatree's AObjs at anim_start 0 (ftAnim_80070710 = ReqAnimAll),
+        // AOBJ_LOOP when x594_b1, rate anim_speed; then ftAnim_8006E9B4 interprets once (the
+        // first play does not advance) and ftAction_80073240 sets frame_count.
+        let mut a: HsdAObj<()> = HsdAObj::alloc();
+        a.set_end_frame(r.frames);
+        a.req_anim(0.0);
+        if r.looping() {
+            a.set_flags(melee_runtime::aobj::AOBJ_LOOP);
+        }
+        a.set_rate(fp.frame_speed_mul);
+        a.interpret_anim(&mut AObjGlobals::default(), &mut None);
+        fp.cur_anim_frame = a.curr_frame;
         fp.x3E4_fighterCmdScript.frame_count = fp.cur_anim_frame + fp.x898_unk;
+        a
+    });
+}
+
+/// `ftCo_Fall_Enter` (not Master/Crazy Hand; no hammer, `x2224_b2` clear).
+fn fall_enter(p: &mut Player) -> Result<(), String> {
+    if p.fp.item_gobj != core::ptr::null_mut() {
+        return Err("ftCo_800C5240 with an item: not ported".into());
     }
+    // Fighter_ChangeMotionState(Fall, Ft_MF_KeepFastFall, 0, 1, 0).
+    change_motion_state(p, FTCO_MS_FALL, p.row_fall);
+    fc::clamp_air_drift(&mut p.fp);
+    p.fall_smid = FTCO_SM_FALL as i32;
+    p.fall_x4 = 0.0;
+    Ok(())
+}
+
+/// `ftCo_Fall_Anim_Inner(gobj, &fall.x4, Fall, FallF, FallB)` + `ftCo_800CC988`.
+fn fall_anim(p: &mut Player) -> Result<(), String> {
+    let cd = melee_fighter::hooks::common_data();
+    let fp = &p.fp;
+    let mut frac = fp.self_vel.x / fp.co_attrs.air_drift_max;
+    if frac > 1.0 {
+        frac = 1.0;
+    } else if frac < -1.0 {
+        frac = -1.0;
+    }
+    let abs = fc::abs_c(frac);
+    let (smid, v) = if abs > cd.x444 {
+        (if frac * fp.facing_dir > 0.0 { 21 } else { 22 }, (abs - cd.x444) / (1.0 - cd.x444))
+    } else {
+        (FTCO_SM_FALL as i32, 0.0)
+    };
+    p.fall_x4 += cd.x448 * (v - p.fall_x4);
+    if p.fall_x4 != 0.0 {
+        return Err(format!("Fall blend {} toward row {smid}: ftAnim_8006EDD0 + the skeleton blend are not ported", p.fall_x4));
+    }
+    Ok(())
+}
+
+/// The airborne, no-knockback part of `Fighter_procUpdate` after phys_cb: `self_vel +=
+/// self_accel`, then `cur_pos += selfVel + kb_vel + atk_shield_kb` (+ nudge, + wind: zero on FD).
+/// TODO(group3 fighter.c): the whole procUpdate (knockback decay, ground path, mpGetSpeed).
+fn proc_update_integrate(fp: &mut Fighter) {
+    debug_assert!(fp.x8c_kb_vel.x == 0.0 && fp.x8c_kb_vel.y == 0.0 && fp.dmg.x1948 == 0);
+    fp.gr_vel += fp.xE4_ground_accel_1 + fp.xE8_ground_accel_2;
+    fp.xE4_ground_accel_1 = 0.0;
+    fp.xE8_ground_accel_2 = 0.0;
+    fp.self_vel.x += fp.x74_self_accel.x;
+    fp.self_vel.y += fp.x74_self_accel.y;
+    fp.self_vel.z += fp.x74_self_accel.z;
+    fp.x74_self_accel.x = 0.0;
+    fp.x74_self_accel.y = 0.0;
+    fp.x74_self_accel.z = 0.0;
+    let v = fp.self_vel;
+    fp.cur_pos.x += fp.xF8_playerNudgeVel.x;
+    fp.cur_pos.z += fp.xF8_playerNudgeVel.y;
+    fp.cur_pos.x += v.x;
+    fp.cur_pos.y += v.y;
+    fp.cur_pos.z += v.z;
+    fp.cur_pos.x += fp.x8c_kb_vel.x;
+    fp.cur_pos.y += fp.x8c_kb_vel.y;
+    fp.cur_pos.x += fp.x98_atk_shield_kb.x;
+    fp.cur_pos.y += fp.x98_atk_shield_kb.y;
+    fp.cur_pos.z += fp.x98_atk_shield_kb.z;
 }
 
 impl Sim for VsMatch {

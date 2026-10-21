@@ -1,0 +1,5 @@
+# <setter tu> <defining tu | ext> <callback> stored or passed by round-7 ports (new ones only): gen/port_r7.py
+src/melee/ft/kinds/ftCrazyHand/ftcrazyhandcapturedamagecrazyhand.c src/melee/ft/kinds/ftCommon/ftCo_CapturePulled.c ftCo_800DB464
+src/melee/ft/kinds/ftMasterHand/ftmasterhandcapturemasterhand.c src/melee/ft/kinds/ftCommon/ftCo_CapturePulled.c ftCo_800DB464
+src/melee/ft/kinds/ftPopo/ftpopospecialn.c src/melee/ft/kinds/ftPopo/ftpopospecialn.c ftPp_SpecialN_8011F500
+src/melee/ft/kinds/ftSamus/ftsamusspecials.c src/melee/ft/kinds/ftSamus/ftsamusspecialn.c ftSs_SpecialS_8012A074

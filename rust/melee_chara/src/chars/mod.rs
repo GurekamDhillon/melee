@@ -52,6 +52,8 @@ pub mod r4;
 pub mod r5;
 /// Round 6: gen/port_r6.py output (6 more stubbed calls, group 3's ftCommon_Fall / ClampAirDrift, `fp->x++` / `--`). Path: `chars::r6::<Char>::<tu>::<fn>`.
 pub mod r6;
+/// Round 7: gen/port_r7.py output (float field arguments as `as f32`, no "nothing new" filter). Path: `chars::r7::<Char>::<tu>::<fn>`.
+pub mod r7;
 /// Callback entries stored into Fighter by the round-3 ports (gen/port_r3.py).
 pub mod cb;
 

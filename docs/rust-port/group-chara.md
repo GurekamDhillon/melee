@@ -355,3 +355,48 @@ round-6 ports.
 - Next: typed `da->x` float arguments (int->float conversion in the translator) would take most of
   the 62 rejected; local declarations (`Vec3 v;`, `s32 i;`) and `Player_GetPlayerSlotType(...) == k`
   conditions (85 uses, Master/Crazy Hand) block the largest remaining groups.
+
+## Round 7 (2026-10-21)
+
+### What was ported
+37 more character functions in 25 TUs (list `gen/ported_r7.txt`; code `src/chars/r7/<Char>.rs`,
+path `melee_chara::chars::r7::<Char>::<tu>::<fn>`, signature `fn(gobj: *mut HSD_GObj)`). Mostly
+Up-B / Down-B / Neutral-B `_Enter`s that clear `fp->throw_flags`, `_Anim` / `_Coll` callbacks ending
+in `ftCo_80096900(gobj, ..., da->mobility, da->landing_lag)` (FallSpecial) with float attributes, and
+Master/Crazy Hand capture callbacks writing `invisible` / `x2220_b3`.
+
+How: `gen/port_r7.py` = port_r6's translator plus
+- a `float` call argument that is a Fighter or dat_attrs field becomes `(field as f32)` (C's implicit
+  conversion; int/double -> float round to nearest like Rust `as`, f32 -> f32 is a no-op);
+- `fp->throw_flags` / `fp->x594_s32` (members of anonymous unions) map to melee_types'
+  `anon_2210` / `anon_594`;
+- bitfields `x2222_b2`, `x2220_b3`, `x221E_b6` join the by-value set (`KNOWN_BF`, oracle bf 14-16);
+- the "nothing new" filter is now "uses a new stub, assigns, or has a float field argument" (the
+  384 empty callbacks still stay out);
+- emit-time skip reasons go to `port_r7.WHY`, the last cargo stderr to `rust/target/port_r7/cargo_stderr.txt`.
+No new stubs. 4 new callback keys (`gen/callbacks_r7.txt`); cb.rs now has 137 entries, 88 still panic TODO(group4).
+Still rejected (37 candidates): ~21 bitfield writes/compares outside the by-value set (mostly `da`
+bitfields and `x2_b0`-style motion-var bits), 6 non-GObjEvent pointer args, 3 type mismatches,
+pointer assignments from calls (`fp->x1A5C = ftBossLib_GetFighterGObj(...)`), and their callers.
+
+### FMA
+`fma_sites.py --func <the 37>` over the 25 TUs: 0 fused sites.
+
+### Verification
+`gen/chref.py` reads ported_r7 / callbacks_r7. Oracle changes (both sides):
+- NBF 14 -> 17 (the three new bitfields). This changes the random stream, so all of
+  `tests/data/chars.txt` was regenerated.
+- `THROW_WORD`: the 20 ported functions that write the whole `throw_flags` word (closed over
+  callers) hash the byte of `throw_flags_b0` as bytes instead of comparing b0 by value. Without
+  this a wrong word value was invisible (found by the negative check: `throw_flags = 1` in
+  `ftMr_SpecialHi_Enter` passed).
+- Result: **1287/1287 equal** (1250 + 37).
+- Negative checks: `.x28 as f32` -> `.x28 as i32 as f32` in `ftMs_SpecialHi_Anim` and
+  `throw_flags = 0` -> `1` in `ftMr_SpecialHi_Enter` each made exactly that function fail.
+- Not proven: branch coverage (random fill), the stubbed calls, unported callback targets.
+
+### Counts
+- Ported this round: 37 (all verified). Total in the crate: 1300 of ~4340 (30.0%).
+- Stubs added: 0. Callback keys added: 4.
+- Next: pointer-valued assignments from calls (`ftBossLib_GetFighterGObj`), dat_attrs bitfields in
+  the by-value set, local declarations, `Player_GetPlayerSlotType(...) == k` conditions.

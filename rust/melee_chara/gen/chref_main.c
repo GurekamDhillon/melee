@@ -130,7 +130,7 @@ static ftCommonData cd;
  * packs bitfields LSB-first while melee_types keeps them in GC order (MSB-first), so the same
  * bytes hold different values: these are compared by value, and their bytes are zeroed (both
  * sides) before the byte hash. The byte of each is found by probing a zeroed Fighter. */
-#define NBF 14
+#define NBF 17
 static int bf_get(int i)
 {
     switch (i) {
@@ -147,6 +147,9 @@ static int bf_get(int i)
     case 10: return fp.allow_interrupt;
     case 11: return fp.invisible;
     case 12: return fp.reflecting;
+    case 14: return fp.x2222_b2;
+    case 15: return fp.x2220_b3;
+    case 16: return fp.x221E_b6;
     default: return fp.x2218_b4;
     }
 }
@@ -166,10 +169,47 @@ static void bf_set(int i, int v)
     case 10: fp.allow_interrupt = v; break;
     case 11: fp.invisible = v; break;
     case 12: fp.reflecting = v; break;
+    case 14: fp.x2222_b2 = v; break;
+    case 15: fp.x2220_b3 = v; break;
+    case 16: fp.x221E_b6 = v; break;
     default: fp.x2218_b4 = v; break;
     }
 }
 static unsigned bf_byte[NBF];
+
+/* Round 7: functions that write (or call a port that writes) the whole word fp->throw_flags and
+ * never touch throw_flags_b*: for them throw_flags_b0 (bf 4) is not a bitfield, so its byte is
+ * hashed as bytes (a by-value b0 would hide a wrong word value: C and Rust put b0 in different
+ * bits). List: every ported function whose C body assigns throw_flags, closed over callers. */
+static const char* THROW_WORD[] = {
+    "ftCa_SpecialAirLw_Anim",
+    "ftCa_SpecialAirLw_Anim_inline",
+    "ftKb_SpecialNLg_800F9614",
+    "ftKb_SpecialNLg_800F9684",
+    "ftLg_SpecialAirN_Enter",
+    "ftLg_SpecialHi_Enter",
+    "ftLg_SpecialN_Enter",
+    "ftMr_SpecialAirN_Enter",
+    "ftMr_SpecialHi_Enter",
+    "ftMr_SpecialN_Enter",
+    "ftMs_SpecialHi_Enter",
+    "ftMt_SpecialAirLw_Enter",
+    "ftMt_SpecialLw_Enter",
+    "ftPk_SpecialAirLw_Enter",
+    "ftPk_SpecialLw_Enter",
+    "ftPp_SpecialN_Enter",
+    "ftSamus_ClearThrowFlagsUnk",
+    "ftYs_SpecialAirHi_Enter",
+    "ftYs_SpecialHi_Enter",
+    "resetCmdAndThrow",
+};
+static int throw_word(const char* n)
+{
+    unsigned i;
+    for (i = 0; i < sizeof THROW_WORD / sizeof *THROW_WORD; i++)
+        if (!strcmp(n, THROW_WORD[i])) return 1;
+    return 0;
+}
 
 /* Round 3: a callback a port stores into one of Fighter's HSD_GObjEvent fields is replaced by
  * the FNV-1a of its key "<setter tu>:<C name>" before hashing (Rust: chars::cb::CALLBACKS), so
@@ -228,6 +268,7 @@ int main(int argc, char** argv)
         /* mv.ca.specialhi.x2_b0/b1 share their byte with every other character's motion vars
          * (the mv union): only the Captain function treats that byte as bitfields */
         unsigned bmask = strcmp(FUNCS[f].name, "ftCa_SpecialLw_800E49FC") ? ((1u << NBF) - 1) & ~0xC0u : (1u << NBF) - 1;
+        if (throw_word(FUNCS[f].name)) bmask &= ~0x10u;
         if (verbose) _flushall();
         for (k = 0; k < (f < N_R1 ? CASES : CASES_R2); k++) {
             unsigned i, ret = 0;

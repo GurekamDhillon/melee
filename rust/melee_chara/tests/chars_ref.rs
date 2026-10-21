@@ -156,7 +156,7 @@ fn bytes_mut<T>(v: &mut T) -> &mut [u8] {
 
 /// The bitfields compared by value (see gen/chref_main.c: C packs LSB-first, melee_types keeps
 /// GC order, so their bytes differ by design).
-const NBF: usize = 14;
+const NBF: usize = 17;
 fn bf_get(fp: &Fighter, i: usize) -> u32 {
     (unsafe {
         match i {
@@ -173,6 +173,9 @@ fn bf_get(fp: &Fighter, i: usize) -> u32 {
             10 => fp.allow_interrupt(),
             11 => fp.invisible(),
             12 => fp.reflecting(),
+            14 => fp.x2222_b2(),
+            15 => fp.x2220_b3(),
+            16 => fp.x221E_b6(),
             _ => fp.x2218_b4(),
         }
     }) as u32
@@ -193,10 +196,37 @@ fn bf_set(fp: &mut Fighter, i: usize, v: u8) {
             10 => fp.set_allow_interrupt(v),
             11 => fp.set_invisible(v),
             12 => fp.set_reflecting(v),
+            14 => fp.set_x2222_b2(v),
+            15 => fp.set_x2220_b3(v),
+            16 => fp.set_x221E_b6(v),
             _ => fp.set_x2218_b4(v),
         }
     }
 }
+/// Round 7: whole-word `throw_flags` writers (gen/chref_main.c THROW_WORD): bf 4 is hashed as bytes.
+const THROW_WORD: &[&str] = &[
+    "ftCa_SpecialAirLw_Anim",
+    "ftCa_SpecialAirLw_Anim_inline",
+    "ftKb_SpecialNLg_800F9614",
+    "ftKb_SpecialNLg_800F9684",
+    "ftLg_SpecialAirN_Enter",
+    "ftLg_SpecialHi_Enter",
+    "ftLg_SpecialN_Enter",
+    "ftMr_SpecialAirN_Enter",
+    "ftMr_SpecialHi_Enter",
+    "ftMr_SpecialN_Enter",
+    "ftMs_SpecialHi_Enter",
+    "ftMt_SpecialAirLw_Enter",
+    "ftMt_SpecialLw_Enter",
+    "ftPk_SpecialAirLw_Enter",
+    "ftPk_SpecialLw_Enter",
+    "ftPp_SpecialN_Enter",
+    "ftSamus_ClearThrowFlagsUnk",
+    "ftYs_SpecialAirHi_Enter",
+    "ftYs_SpecialHi_Enter",
+    "resetCmdAndThrow",
+];
+
 fn bf_probe(fp: &mut Fighter) -> [usize; NBF] {
     let mut out = [0; NBF];
     for (i, o) in out.iter_mut().enumerate() {
@@ -247,7 +277,10 @@ fn character_functions_match_c() {
     for (f, name) in chars_dispatch::NAMES.iter().enumerate() {
         let mut h = FNV0;
         // mv.ca.specialhi.x2_b0/b1 share their byte with the other characters' motion vars
-        let bmask: u32 = if *name == "ftCa_SpecialLw_800E49FC" { (1 << NBF) - 1 } else { ((1 << NBF) - 1) & !0xC0 };
+        let mut bmask: u32 = if *name == "ftCa_SpecialLw_800E49FC" { (1 << NBF) - 1 } else { ((1 << NBF) - 1) & !0xC0 };
+        if THROW_WORD.contains(name) {
+            bmask &= !0x10;
+        }
         let on = |i: usize| bmask >> i & 1 != 0;
         for k in 0..(if f < chars_dispatch::N_R1 { CASES } else { CASES_R2 }) {
             let mut r = Rng(0x9E37_79B9u32 ^ ((f as u32).wrapping_mul(7919).wrapping_add(k.wrapping_mul(104729)).wrapping_add(1)));

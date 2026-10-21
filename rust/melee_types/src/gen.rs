@@ -16,10 +16,6 @@ pub type c_bool = i32;
 // ---- incomplete C types (only ever used behind pointers) ----
 #[repr(C)] pub struct _cobj_Unk1 { _opaque: [u8; 0] }
 impl GcPointee for _cobj_Unk1 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.issue(format!("pointer to incomplete _cobj_Unk1 at {t:#x}: read as null")); core::ptr::null_mut() } }
-#[repr(C)] pub struct FigaTrack { _opaque: [u8; 0] }
-impl GcPointee for FigaTrack { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.issue(format!("pointer to incomplete FigaTrack at {t:#x}: read as null")); core::ptr::null_mut() } }
-#[repr(C)] pub struct FigaTree { _opaque: [u8; 0] }
-impl GcPointee for FigaTree { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.issue(format!("pointer to incomplete FigaTree at {t:#x}: read as null")); core::ptr::null_mut() } }
 #[repr(C)] pub struct ftDeviceUnk2 { _opaque: [u8; 0] }
 impl GcPointee for ftDeviceUnk2 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.issue(format!("pointer to incomplete ftDeviceUnk2 at {t:#x}: read as null")); core::ptr::null_mut() } }
 #[repr(C)] pub struct Unk80433380_48 { _opaque: [u8; 0] }
@@ -90352,6 +90348,91 @@ impl GcLayout for itSeakNeedleThrownAttributes {
 }
 const _: () = assert!(core::mem::size_of::<itSeakNeedleThrownAttributes>() == 12);
 
+/// C `FigaTrack` (src/melee/lb/lbanim.h:9); GameCube size 0xC, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct FigaTrack {
+    pub length: u16,
+    pub startframe: u16,
+    pub obj_type: u8,
+    pub frac_value: u8,
+    pub frac_slope: u8,
+    pub ad_head: *mut u8,
+}
+impl FigaTrack { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for FigaTrack {
+    const GC_BYTES: u32 = 0xC;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.length = <u16 as GcDecode>::gc_decode(d, at + 0x0);
+        v.startframe = <u16 as GcDecode>::gc_decode(d, at + 0x2);
+        v.obj_type = <u8 as GcDecode>::gc_decode(d, at + 0x4);
+        v.frac_value = <u8 as GcDecode>::gc_decode(d, at + 0x5);
+        v.frac_slope = <u8 as GcDecode>::gc_decode(d, at + 0x6);
+        v.ad_head = <*mut u8 as GcDecode>::gc_decode(d, at + 0x8);
+        v
+    }
+}
+impl GcPointee for FigaTrack { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<FigaTrack>(t) } }
+impl GcLayout for FigaTrack {
+    const GC_NAME: &'static str = "FigaTrack";
+    const GC_SIZE: u32 = 0xC;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("length", 0x0, 2, "u16"),
+        GcField::new("startframe", 0x2, 2, "u16"),
+        GcField::new("obj_type", 0x4, 1, "u8"),
+        GcField::new("frac_value", 0x5, 1, "u8"),
+        GcField::new("frac_slope", 0x6, 1, "u8"),
+        GcField::new("ad_head", 0x8, 4, "u8 *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<FigaTrack>() == 16);
+
+/// C `FigaTree` (src/melee/lb/lbanim.h:18); GameCube size 0x14, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct FigaTree {
+    pub r#type: i32,
+    pub flags: u32,
+    pub frames: f32,
+    pub nodes: *mut i8,
+    pub tracks: *mut FigaTrack,
+}
+impl FigaTree { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for FigaTree {
+    const GC_BYTES: u32 = 0x14;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.r#type = <i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.flags = <u32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.frames = <f32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.nodes = <*mut i8 as GcDecode>::gc_decode(d, at + 0xC);
+        v.tracks = <*mut FigaTrack as GcDecode>::gc_decode(d, at + 0x10);
+        v
+    }
+}
+impl GcPointee for FigaTree { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<FigaTree>(t) } }
+impl GcLayout for FigaTree {
+    const GC_NAME: &'static str = "FigaTree";
+    const GC_SIZE: u32 = 0x14;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("type", 0x0, 4, "int"),
+        GcField::new("flags", 0x4, 4, "u32"),
+        GcField::new("frames", 0x8, 4, "f32"),
+        GcField::new("nodes", 0xC, 4, "s8 *"),
+        GcField::new("tracks", 0x10, 4, "FigaTrack *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<FigaTree>() == 32);
+
 /// Every generated GameCube record layout, for the DAT loader, serialisers and the m-ex map.
 pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<__file_modes as GcLayout>::GC_NAME, <__file_modes as GcLayout>::GC_SIZE, <__file_modes as GcLayout>::GC_ALIGN, <__file_modes as GcLayout>::GC_FIELDS),
@@ -91972,6 +92053,8 @@ pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<_m2c_stack_it_802B64FC as GcLayout>::GC_NAME, <_m2c_stack_it_802B64FC as GcLayout>::GC_SIZE, <_m2c_stack_it_802B64FC as GcLayout>::GC_ALIGN, <_m2c_stack_it_802B64FC as GcLayout>::GC_FIELDS),
     (<_m2c_stack_itSamusmissile_UnkMotion0_Phys as GcLayout>::GC_NAME, <_m2c_stack_itSamusmissile_UnkMotion0_Phys as GcLayout>::GC_SIZE, <_m2c_stack_itSamusmissile_UnkMotion0_Phys as GcLayout>::GC_ALIGN, <_m2c_stack_itSamusmissile_UnkMotion0_Phys as GcLayout>::GC_FIELDS),
     (<itSeakNeedleThrownAttributes as GcLayout>::GC_NAME, <itSeakNeedleThrownAttributes as GcLayout>::GC_SIZE, <itSeakNeedleThrownAttributes as GcLayout>::GC_ALIGN, <itSeakNeedleThrownAttributes as GcLayout>::GC_FIELDS),
+    (<FigaTrack as GcLayout>::GC_NAME, <FigaTrack as GcLayout>::GC_SIZE, <FigaTrack as GcLayout>::GC_ALIGN, <FigaTrack as GcLayout>::GC_FIELDS),
+    (<FigaTree as GcLayout>::GC_NAME, <FigaTree as GcLayout>::GC_SIZE, <FigaTree as GcLayout>::GC_ALIGN, <FigaTree as GcLayout>::GC_FIELDS),
 ];
 
 /// Read `w` bits of a GameCube big-endian bitfield byte run, `shift` bits up from its LSB.

@@ -44,6 +44,46 @@ are comments citing m-ex patches.
 
 `cargo build -p melee_items` and `cargo test -p melee_items` pass with no warnings.
 
+## Round 1 (night 2): 30 leaf functions, `src/helpers.rs`
+
+Chosen by scanning it/ty/vi for function bodies that call nothing (a regex pass, so a candidate
+list, not a call graph) and taking the ones that are pure math or touch only `Item` /
+`ItemLink` fields. Ported, each verified against its verbatim C copy in
+`tests/c_oracle/round1.c` (compiled by `gen_expected.sh`: x86_64, `-ffp-contract=on` + group 1's
+`lower.py`, i.e. the shipping build's contraction and gwtool lowering):
+
+- vector: `product_xy` (itmaplib), `product_xyz` (itzako), `neg_dot` (itleadead),
+  `_tyDisplay_80318CB4_calc_dist_sq`, `it_link_lerp` (itlinkhookshot)
+- angles: `it_8027B798_CalcAngle` (itzako), `clamp_tau`, `clamp_pi_tau`, `clamp_angle_pi`,
+  `norm_xF74_from_angle` (itlinkboomerang), `itDosei_FacingAngle`
+- scalar: `itLinkboomerang_UnkMotion3_Phys_add_clamp`, `fsign_inline`, `float_sign_int_inline`
+  (itlinkbomb), `inline_fabsf` (ittaru), `lt_zero` (itnokonoko), `getX` (itoctarockstone),
+  `pika_scale` (itpikachuthunder), `tyFigupon_StoreDigits`
+- items: `itColl_chkECBOverlap`, `it_802763E0` (ceiling flag), `decrease_lifetimer`
+  (itpeachturnip), `it_80275158` (lifetime; the global `it_804D6D28` is a parameter),
+  `itRshell_ClampVel`, `itRshell_UM5_Accel`, `itRshell_UM5_AddVelAndCheck`,
+  `itRshell_UM5C_Reverse`, `itSeakChain_clamp_x10`, `itSeakChain_clamp_x14`
+- plus the file-local `itRShell_Attrs` as a native struct with its own `gc_layout!` (0x58).
+
+Fused sites (`tools/rust-port/fma_sites.py` on each TU): product_xy 1, product_xyz 2, neg_dot 2
+(clang folds the negations: `fmadds(-ax, bx, -(ay*by))`), calc_dist_sq 1, it_link_lerp 1,
+CalcAngle 1 (f32); itDosei_FacingAngle 1 f64 (true fma). All others 0. The oracle lowered
+exactly these 8 f32 sites. Mutation check: un-fusing product_xy/xyz, neg_dot, dist_sq or lerp makes
+the tests fail; un-fusing **CalcAngle or FacingAngle does not** (no vector hits a case where it
+matters), so those two are correct by the compiled IR only.
+
+Inputs: 96 rows per table (32/40 for the integer ones) from a pool of edge values (signed zeros,
++-1, pi/tau neighbours, inf, NaN, denormal) plus random bits and scaled randoms. NaN results
+are compared as "both NaN", not by bits: the sign/payload of an x86 NaN depends on operand order
+in the instruction each compiler picks (it showed up in neg_dot and UM5_Accel) and is not
+modelled as game state. Every non-NaN result is bit-compared.
+
+Signature changes vs the C: an `Item_GObj*` used only through `GET_ITEM` becomes `&mut Item`;
+`ip->xC4_article_data->x4_specialAttributes` becomes an `&itRShell_Attrs` parameter; the
+`it_804D6D28` global becomes `&ItemCommonData`. No other-group stubs were needed this round.
+`cargo test -p melee_items`: 18 tests pass. Not done: nothing above calls these yet (their C
+callers need GObj/JObj/collision), so no frame-level comparison.
+
 ## Decisions / traps
 
 - `Cargo.toml` no longer depends on melee_types/runtime/world/fighter: nothing calls them yet,

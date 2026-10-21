@@ -70,6 +70,7 @@ static unsigned next(void) { rng = rng * 1103515245u + 12345u; return rng; }
 static f32 rf(void) { return ((s32) (next() >> 8) - 0x7FFFFF) / 65536.0f; }
 
 static Item it;
+#include "round1.c"
 
 int main(void)
 {
@@ -126,5 +127,6 @@ int main(void)
         printf("    (0x%08X, 0x%08X, 0x%08X),\n", bits(fd), bits(a), bits(it.xDD4_itemVar.linkboomerang.xF78));
     }
     printf("];\n");
+    round1();
     return 0;
 }

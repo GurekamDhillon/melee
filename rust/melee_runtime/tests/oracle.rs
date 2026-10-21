@@ -1,8 +1,9 @@
 //! Bit-for-bit comparison against the C build's arithmetic. `tests/data/oracle_vectors.txt` is
 //! produced by `oracle/build.sh` from the C sources (pc/gameworld/{gekko_fp,mtx_pc}.c, mtx44.c,
-//! baselib/random.c, lb/lbtrigf.c, math_ppc.h), compiled with the real build's contraction + gwtool lowering.
+//! baselib/random.c, lb/lbtrigf.c, lb/lbvector.c, math_ppc.h), compiled with the real build's contraction + gwtool lowering.
 use melee_runtime::gekko::*;
 use melee_runtime::lbtrigf;
+use melee_runtime::lbvector;
 use melee_runtime::mtx::{self, Mtx, Quaternion, Vec3};
 use melee_runtime::random::HsdRand;
 
@@ -68,7 +69,7 @@ fn matches_c_build() {
     let mut fl = Fails::default();
     let mut rng = HsdRand::default();
     rng.set_logic_seed(0x12345678);
-    let (mut m3_i, mut rand_i) = (0usize, 0i32);
+    let (mut m3_i, mut rand_i, mut lbv_i) = (0usize, 0i32, 0u32);
     for (ln, line) in DATA.lines().enumerate() {
         let mut it = line.split_whitespace();
         let tag = it.next().unwrap();
@@ -96,6 +97,64 @@ fn matches_c_build() {
                 fl.eq("atan2f", ln, lbtrigf::atan2f(y, x).to_bits(), r.u());
                 fl.eq("acosf", ln, lbtrigf::acosf(u).to_bits(), r.u());
                 fl.eq("asinf", ln, lbtrigf::asinf(u).to_bits(), r.u());
+            }
+            "lbv" => {
+                let a = r.v();
+                let b = r.v();
+                let c = r.v();
+                let ang = r.f();
+                let f = r.f();
+                let axis: i32 = r.0.next().unwrap().parse().unwrap();
+                let m = r.m();
+                let mut t = a;
+                let l = lbvector::normalize(&mut t);
+                fl.eq("lbv normalize", ln, [l.to_bits()], [r.u()]);
+                fl.vec("lbv normalize v", ln, t, &mut r);
+                let mut t = a;
+                let l = lbvector::normalize_xy(&mut t);
+                fl.eq("lbv normalize_xy", ln, [l.to_bits()], [r.u()]);
+                fl.vec("lbv normalize_xy v", ln, t, &mut r);
+                fl.vec("lbv crossnorm", ln, lbvector::crossprod_normalized(&a, &b), &mut r);
+                fl.eq("lbv angle", ln, lbvector::angle(&a, &b).to_bits(), r.u());
+                fl.eq("lbv angle_xy", ln, lbvector::angle_xy(&a, &b).to_bits(), r.u());
+                fl.eq("lbv cos_angle", ln, lbvector::cos_angle(&a, &b).to_bits(), r.u());
+                let mut ax = c;
+                lbvector::normalize(&mut ax);
+                let ax_c = r.v(); // the axis the C used (normalized c, or (1,0,0))
+                if ax_c.x == 1.0 && ax_c.y == 0.0 && ax_c.z == 0.0 {
+                    ax = ax_c;
+                }
+                fl.eq("lbv axis", ln, [ax.x, ax.y, ax.z].map(f32::to_bits), [ax_c.x, ax_c.y, ax_c.z].map(f32::to_bits));
+                let mut t = a;
+                lbvector::rotate_about_unit_axis(&mut t, &ax, ang);
+                fl.vec("lbv rot_unit_axis", ln, t, &mut r);
+                let mut t = a;
+                lbvector::rotate(&mut t, axis, ang);
+                fl.vec("lbv rotate", ln, t, &mut r);
+                let mut t = a;
+                let mut n = b;
+                lbvector::normalize(&mut n);
+                lbvector::mirror(&mut t, &n);
+                fl.vec("lbv mirror", ln, t, &mut r);
+                fl.vec("lbv lerp", ln, lbvector::lerp(&a, &b, f), &mut r);
+                fl.vec("lbv de38", ln, lbvector::bezier_8000de38(&m, f), &mut r);
+                fl.vec("lbv euler_onb", ln, lbvector::euler_angles_from_onb(&a, &b, &c), &mut r);
+                let mut na = a;
+                lbvector::normalize(&mut na);
+                let mut nc = c;
+                lbvector::normalize(&mut nc);
+                fl.vec("lbv euler_ponb", ln, lbvector::euler_angles_from_partial_onb(&na, &nc), &mut r);
+                let mut t = a;
+                lbvector::apply_euler_rotation(&mut t, &Vec3 { x: ang, y: f, z: -ang });
+                fl.vec("lbv apply_euler", ln, t, &mut r);
+                let q = Quaternion { x: ang, y: f, z: -ang * 0.5, w: 0.0 };
+                fl.mtx("lbv euler_mtx", ln, &lbvector::create_euler_matrix(&q), &mut r, 3);
+                let c2 = Vec3 { x: ang, y: f, z: -ang };
+                let small = lbv_i % 7 == 0;
+                lbv_i += 1;
+                let (l, d) = lbvector::project_8000e838(&a, if small { &a } else { &b }, &c2);
+                fl.eq("lbv e838", ln, l.to_bits(), r.u());
+                fl.vec("lbv e838 d", ln, d, &mut r);
             }
             "sqrt" => {
                 let x = r.f();

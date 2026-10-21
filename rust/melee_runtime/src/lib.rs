@@ -16,5 +16,6 @@ pub use melee_core;
 pub mod cabi;
 pub mod gekko;
 pub mod lbtrigf;
+pub mod lbvector;
 pub mod mtx;
 pub mod random;

@@ -8,6 +8,14 @@ typedef f32 Mtx[3][4]; typedef f32 Mtx44[4][4];
 double __frsqrte(double); double __fres(double);
 float sinf(float); float cosf(float); float tanf(float);
 float w_sqrtf(float); float w_sqrtf_accurate(float);
+typedef Vec Vec3;
+float lbVector_Normalize(Vec3*); float lbVector_NormalizeXY(Vec3*); Vec3* lbVector_CrossprodNormalized(Vec3*, Vec3*, Vec3*);
+float lbVector_Angle(Vec3*, Vec3*); float lbVector_AngleXY(Vec3*, Vec3*); void lbVector_RotateAboutUnitAxis(Vec3*, Vec3*, float);
+void lbVector_Rotate(Vec3*, int, float); void lbVector_Mirror(Vec3*, Vec3*); float lbVector_CosAngle(Vec3*, Vec3*);
+Vec3* lbVector_Lerp(Vec3*, Vec3*, Vec3*, float); Vec3* lbVector_8000DE38(Mtx, Vec3*, float);
+Vec3* lbVector_EulerAnglesFromONB(Vec3*, Vec3*, Vec3*, Vec3*); Vec3* lbVector_EulerAnglesFromPartialONB(Vec3*, Vec3*, Vec3*);
+Vec3* lbVector_ApplyEulerRotation(Vec3*, Vec3*); void lbVector_CreateEulerMatrix(Mtx, Quaternion*);
+float lbVector_8000E838(Vec3*, Vec3*, Vec3*, Vec3*);
 float atanf(float); float atan2f(float, float); float acosf(float); float asinf(float);
 void PSMTXIdentity(Mtx); void PSMTXConcat(Mtx, Mtx, Mtx); void PSMTXTranspose(Mtx, Mtx);
 u32 PSMTXInverse(Mtx, Mtx); void PSMTXTrans(Mtx, f32, f32, f32); void PSMTXScale(Mtx, f32, f32, f32);
@@ -63,6 +71,28 @@ int main(int argc, char** argv)
         f32 x = (i % 3) ? rf(3) : anyf(), y = (i % 3 == 1) ? rf(3) : anyf(), u = rf(1.2f);
         if (i < 16) { x = (i & 1) ? -0.0f : 0.0f; y = (i & 2) ? -1.0f : ((i & 4) ? 0.0f : 2.0f); if (i & 8) u = (i & 1) ? 1.0f : -1.0f; }
         fprintf(o, "atan"); pf(x); pf(y); pf(u); pf(atanf(x)); pf(atan2f(y, x)); pf(acosf(u)); pf(asinf(u)); fprintf(o, "\n");
+    }
+    for (i = 0; i < 1500; i++) {
+        Vec a, b, c, r, ax; Mtx m; Quaternion q; f32 ang = (i % 2) ? rf(4) : rf(8), f = rf(1.5f); int axis = ""[i % 4];
+        a.x = rf(50); a.y = rf(50); a.z = rf(50); b.x = rf(50); b.y = rf(50); b.z = rf(50); c.x = rf(50); c.y = rf(50); c.z = rf(50);
+        if (i % 5 == 0) b.z = (i % 10) ? 1.0f : -1.0f;
+        rm(&m[0][0], 12); ax = c; lbVector_Normalize(&ax); if (i % 9 == 0) { ax.x = 1; ax.y = 0; ax.z = 0; }
+        fprintf(o, "lbv"); pf(a.x); pf(a.y); pf(a.z); pf(b.x); pf(b.y); pf(b.z); pf(c.x); pf(c.y); pf(c.z); pf(ang); pf(f); fprintf(o, " %d", axis); pm(&m[0][0], 12);
+        r = a; pf(lbVector_Normalize(&r)); pf(r.x); pf(r.y); pf(r.z);
+        r = a; pf(lbVector_NormalizeXY(&r)); pf(r.x); pf(r.y); pf(r.z);
+        lbVector_CrossprodNormalized(&a, &b, &r); pf(r.x); pf(r.y); pf(r.z);
+        pf(lbVector_Angle(&a, &b)); pf(lbVector_AngleXY(&a, &b)); pf(lbVector_CosAngle(&a, &b));
+        r = a; lbVector_RotateAboutUnitAxis(&r, &ax, ang); pf(ax.x); pf(ax.y); pf(ax.z); pf(r.x); pf(r.y); pf(r.z);
+        r = a; lbVector_Rotate(&r, axis, ang); pf(r.x); pf(r.y); pf(r.z);
+        r = a; ax = b; lbVector_Normalize(&ax); lbVector_Mirror(&r, &ax); pf(r.x); pf(r.y); pf(r.z);
+        lbVector_Lerp(&a, &b, &r, f); pf(r.x); pf(r.y); pf(r.z);
+        lbVector_8000DE38(m, &r, f); pf(r.x); pf(r.y); pf(r.z);
+        lbVector_EulerAnglesFromONB(&r, &a, &b, &c); pf(r.x); pf(r.y); pf(r.z);
+        ax = a; lbVector_Normalize(&ax); r = c; lbVector_Normalize(&r); { Vec cc = r; lbVector_EulerAnglesFromPartialONB(&r, &ax, &cc); } pf(r.x); pf(r.y); pf(r.z);
+        r = a; c.x = ang; c.y = f; c.z = -ang; lbVector_ApplyEulerRotation(&r, &c); pf(r.x); pf(r.y); pf(r.z);
+        q.x = ang; q.y = f; q.z = -ang * 0.5f; q.w = 0; lbVector_CreateEulerMatrix(m, &q); pm(&m[0][0], 12);
+        pf(lbVector_8000E838(&a, (i % 7 == 0) ? &a : &b, &c, &r)); pf(r.x); pf(r.y); pf(r.z);
+        fprintf(o, "%c", 10);
     }
     for (i = 0; i < 400; i++) {
         Mtx a, b, c; Mtx44 p; Vec v, w, z, r; Quaternion q; f32 s;

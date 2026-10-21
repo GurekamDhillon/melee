@@ -30,3 +30,11 @@ float w_sqrtf_accurate(float x)
 void Replay_RandTrace(unsigned c, unsigned s, int st) { (void)c; (void)s; (void)st; }
 int MSL_TrigF_80400770[] = { 0x7FFFFFFF }; /* src/MSL/float.c */
 int MSL_TrigF_80400774[] = { 0x7F800000 };
+/* Link stubs for lbVector_WorldToScreen, which the oracle never calls (not ported yet). */
+void GXProject(void) {}
+void HSD_CObjGetEyePosition(void) {}
+void HSD_CObjGetInterest(void) {}
+int HSD_CObjGetProjectionType(void) { return 0; }
+void HSD_CObjGetUpVector(void) {}
+void* HSD_CObjGetViewingMtxPtr(void) { return 0; }
+void __assert(void) {}

@@ -31,6 +31,7 @@ pub mod lb_00ce;
 pub mod lbtrigf;
 pub mod lbvector;
 pub mod list;
+pub mod lobj;
 pub mod mtx;
 pub mod quatlib;
 pub mod random;

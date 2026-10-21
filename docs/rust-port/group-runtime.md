@@ -309,3 +309,69 @@ each listed in its round). The RUST_PORT.md row said "~235"; that total predated
 ### Count after this round
 Ported **386 of 2,297** (16.8%): **337** checked against the C, **49** not (the 45 above + the
 4 CObj WObj accessors).
+
+## Night 3, port round 2 (round 10): LObj logic
+
+### Recount (start of round)
+No group 1 commit since round 9 (`git log -- rust/melee_runtime`), so the committed count is
+round 9's: **386 of 2,297** (337 checked against the C, 49 not). Not counted: the uncommitted
+`particle.rs` / `generator.rs` / `psappsrt.rs` (+ `oracle_generator`) in the working tree, another
+agent's work in progress (not touched or committed by this round; `lib.rs`'s three `pub mod` lines
+for them are left unstaged).
+
+### Stubs whose target now exists
+None newly available. Checked: the TODO(group1 class / jobj load / jobj spline / dobj) stubs in
+jobj.rs, jobj_rt.rs, robj.rs, aobj.rs, wobj.rs and particle.rs still point at unported code
+(class system, JObj load, DObj/MObj/PObj anim). wobj.rs's RObj methods stay as described in round 9.
+
+### Ported this round
+`lobj.c` sits on round 6's WObj (`set_position`, `get_position`), round 4's AObj (type only) and
+the round 1 PSVEC ports, and nothing else ported depends on what it still lacks, so it went next.
+`lobj.rs`, 41 definitions, **all checked against the C**:
+
+| function(s) | checked against C |
+|---|---|
+| HSD_LObjGetFlags, SetFlags, ClearFlags, GetType, the header inline HSD_LObjGetPriority (u8 of the u16 field) | yes |
+| HSD_LObjGetLightMaskDiffuse / AttnFunc / Alpha / Specular | yes, but only at 0 (their statics are written by HSD_LObjSetupInit, GX, not ported) |
+| HSD_LObjSetActive, GetNbActive, GetActiveByID, GetActiveByIndex, ClearActive, HSD_LightID2Index, HSD_Index2LightID | yes |
+| LObjUpdateFunc (every track type 0-25, raw / spot params, colour channels) | yes |
+| HSD_LObjAddCurrent, HSD_LObjUnrefThis, DeleteCurrent, the static inline LObjRemoveAll, DeleteCurrentAll, SetCurrentAll, the static inline LObjReplaceAll, HSD_LObj_803668EC, GetCurrentByType, HSD_LObjRemoveAll | yes |
+| HSD_LObjSetColor, GetColor, SetSpot, SetDistAttn, SetAttnA, SetAttnK, SetAttn | yes |
+| HSD_LObjSetPosition, GetPosition, SetInterest, GetInterest, GetPositionWObj, GetInterestWObj, GetLightVector | yes |
+
+- Native shape: `LObjSystem<R>` is an arena of `Option<HsdLObj<R>>` (None = destroyed by
+  UnrefThis) plus lobj.c's statics; `current_lights` is a `Vec` in list order; `next` is an arena
+  id. `HsdLObj::ref_count` keeps `ref_INC` / `ref_DEC` exactly (post-decrement: a light is
+  destroyed only when its count is 0 on entry, and the count wraps to 0xFFFF). The union `u` is six
+  raw words (point / spot / attn members at the C offsets). GcLayout delegated to
+  `melee_types::HSD_LObj`. The GX light objects are not kept.
+- Float->u8: `LObjUpdateFunc`'s `color.r = 255.0 * fv` is `fptoui double to i8`, which gwtool
+  lowers to `llvm.fptoui.sat.i32` + truncate (unsigned saturation). **`cabi::f2u8` saturates
+  signed** and differs for negative values (e.g. fv = -0.5: C 0, `f2u8` 0x81). lobj.rs uses its own
+  `f2u8_unsigned`; with `cabi::f2u8` 563 rows fail. `cabi::f2u8` is left as is (its one user,
+  melee_world `gr/leaves.rs`, should check whether its C target is unsigned).
+- FMA: `fma_sites.py` finds no fused site in lobj.c's ported functions.
+- Oracle: `oracle/build_lobj.sh` compiles lobj.c (through `helper_lobj.c`, statics reachable),
+  wobj.c, list.c, jobj.c, mtx.c, spline.c, dobj.c, mtx_pc.c, gekko_fp.c, lbtrigf.c, mtx44.c with
+  the shipping flags + `lower.py` (4 fptoi sites saturated in lobj.c); the class methods are a
+  fake HSD_ClassInfo whose release counts and destroy marks the light dead (memory kept).
+  `driver_lobj.c` writes `tests/data/oracle_lobj.txt` (24.3k rows, 4.1 MB): 300 scenarios of 8
+  lights (random refcounts 0-2, flags, priorities incl. > 0xFF, colours, WObjs present or not,
+  union words, acyclic `next` chains) x 80 random ops over all 32 op kinds (NULL lights, colour
+  values < 0 and > 1, VIS at exactly 0.5, IDs and indices out of range). Each row checks the
+  results and an FNV-1a hash of the whole state (active table, current list, release count, every
+  light). `tests/oracle_lobj.rs`: 24,000 rows, 0 failed, debug and release; every op kind > 700
+  rows.
+- Mutation: signed f2u8 fails 563 rows, a u16 priority compare 84, `>=` for `>` in AddCurrent's
+  insertion 758, the spot ref_dist word (3) written as attn a1's (1) 832; `ref_DEC` testing 1
+  instead of 0 panics (destroyed light used).
+- The driver keeps to what the C keeps valid: SetActive only while a non-ambient slot is left
+  (`nb_active_lights++` past 9 writes out of bounds), chain walks only over live lights, IDs
+  passed to HSD_LightID2Index only from the nine valid ones (others assert; the port panics).
+- Not ported in lobj.c: the GX half (HSD_LObjSetup, SetupSpecularInit, setup_*_lightobj,
+  SetupInit), the anim functions (Anim / AnimAll / ReqAnim / ReqAnimAll / AddAnim / AddAnimAll),
+  LObjLoad / LoadDesc / Alloc, the class functions (Set/GetDefaultClass, LObjRelease, Amnesia,
+  InfoInit), Set{Position,Interest}WObj (`HSD_WObjUnref`'s class release).
+
+### Count after this round
+Ported **427 of 2,297** (18.6%): **378** checked against the C, **49** not (unchanged list).

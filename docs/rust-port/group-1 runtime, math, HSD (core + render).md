@@ -125,9 +125,59 @@ anim bytes, so it got a C oracle even though it is "object system" code. 32 C de
   random streams (native x86 masks the amount; gwtool gives 0); with the rule both agree.
   Regenerating `oracle_vectors.txt` and `oracle_hsd.txt` with the new `lower.py` changed nothing.
 
+## Port round 3 (night 3): the GObj system
+
+The GObj layer is the base of the object system (every fighter, item, stage, camera and HUD
+object is an HSD_GObj with procs and a render link), and it calls no other HSD object code, so it
+went first. 36 C definitions ported to `gobj.rs` (no float code; `fma_sites.py` finds 0 sites):
+
+- gobjplink.c 5/5: GObj_PReorder, CreateGObj, GObj_Create, HSD_GObjFree,
+  HSD_GObjPLink_ChangeGObjPri_Unk (+ the static inlines gobj_first_lower/higher_prio).
+- gobjgxlink.c 7/7: GObj_GXReorder, GObj_SetupGXLink, GObj_SetupGXLinkMax(+Sorted),
+  HSD_GObjGXLink_8039084C / 80390908 / 803909D8.
+- gobjproc.c 6/6: QueueProc, UnqueueProc, UnlinkProcFromGObj, HSD_GObj_SetupProc, RemoveProc,
+  RemoveAllProcs.
+- gobjobject.c 4/4, gobjuserdata.c 2/2, gobjinit.c 2/2 (HSD_GObjSetInitDefaults, HSD_GObjInit).
+- gobj.c 10/16: 80390C5C/C84/CAC/CD4, HSD_GObj_RunProcs (delayed free / reprioritise /
+  remove-proc requests), 80390EB8, 80390ED0 (camera render walk), 80390FC0 (max-link walk),
+  80391260, 803912A8. Not ported: LObjCallback, JObjCallback, FogCallback, 803910D8 (CObj),
+  80391120 / 803911C0 (HSD_Obj refcount release): they need LObj/JObj/CObj/Fog/class.c. The
+  obj-kind table names them as `KindFunc` built-ins and the host runs them (TODO(group1)).
+- Native shape: one `GObjSystem<F, O>` owns both pools (slot arenas, `GObjId` / `ProcId`) and
+  every gobj.c global; list links are ids. `F` is the callback token type (on_invoke, render_cb,
+  user_data_remove_func, obj-kind funcs), `O` the opaque object handle (hsd_obj, user_data).
+  Callbacks go through the `GObjHost` trait, which gets `&mut GObjSystem` back so callbacks can
+  re-enter. `HsdGObj`, `HsdGObjProc`, `HsdGObjLibInitData`, `DelayedProcInfo` delegate
+  `GcLayout` to the generated melee_types records. `unk_2` (pause-mask pointer) is
+  `GObjSystem::pause_mask`. The PC hooks (ScriptGame_StageSlot*, Snap_SkipRenderCb,
+  HSD_RandRender*) are host methods with the no-script defaults; the profiler zones and the
+  `gobj_trace_render` log are not ported. HSD_ASSERTs are `assert!`.
+- Oracle (stateful, not a pure function): `oracle/build_gobj.sh` compiles the 7 TUs with the
+  shipping flags + `lower.py`, links `driver_gobj.c` (a seeded random operation generator) and
+  `stubs_gobj.c` (HSD_ObjAlloc with serial headers, never reusing memory) and writes
+  `tests/data/oracle_gobj.txt`: 40 seeds (5 with the 63/63/2 defaults, the rest small random
+  link counts) x 400 operations: create in all four placements, free, reprioritise, queue and
+  remove procs, every GX link call, flag ops, RunProcs with random pause masks and proc
+  callbacks that free / reprioritise / remove their own proc / add procs / create gobjs / relink
+  themselves (the delayed paths), both render walks, object and user-data attach/detach/find.
+  Every callback is logged, and after each operation the FNV-1a hash of a full state dump (all
+  p/gx lists both ways, proc queues with prev links and flags, ProcList, every gobj's fields
+  and proc chain, phase and delayed block) is written. `tests/oracle_gobj.rs` runs a mirror of
+  the generator on the Rust: all 55,818 transcript lines equal (16,000 state hashes, 5,660 proc
+  invokes, 7,530 renders).
+- Mutation check: priority comparison, ProcList fallback and the ChangePri flags_3 rewrite each
+  fail the test when changed. Not discriminated: the `s_link == CurrentInvokedSLink` term of
+  QueueProc's NextInvokedProc fix-up (needs a delayed requeue landing next to the running proc
+  in another queue); it is right by reading the C, not by a failing vector.
+- The generator only issues operations the C keeps memory-safe: inside a proc callback it never
+  frees or unhooks another gobj's procs (the C's NextInvokedProc would dangle), and it never
+  calls SetupGXLink on an already linked gobj or uses a position from another p_link.
+- Divergence: HSD_GObjInit drops the previous init's gobjs and procs (the C leaks them in their
+  old pools); like the C it does not reset the invoked-s_link / next-proc / delayed type fields.
+
 ## Not ported
 
-About 143 of the group's ~2,000 C function definitions are ported (~7%). Everything below is
+About 179 of the group's ~2,000 C function definitions are ported (~9%; rounds 1-3). Everything below is
 untouched:
 
 - `src/sysdolphin/baselib` (~1,200 functions, 48k lines): the HSD object system (JObj, DObj, MObj,

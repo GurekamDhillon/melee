@@ -17,6 +17,7 @@ pub mod cabi;
 pub mod dat;
 pub mod fobj;
 pub mod gekko;
+pub mod gobj;
 pub mod hsd_mtx;
 pub mod hsd_util;
 pub mod lbtrigf;

@@ -121,3 +121,4 @@ pub mod ftCo_Lift;
 pub mod ftCo_YoshiEgg;
 pub mod ftCo_KinokoGiantStart;
 pub mod ftCo_KinokoSmallEnd;
+pub mod ftCo_KinokoSmallStart;

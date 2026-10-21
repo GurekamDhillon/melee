@@ -572,6 +572,38 @@ group 5's verified melee_items::itlib::it_8026b30c), `GM_8016B0FC` (TODO(group6 
 - Workspace: `cargo build --workspace` clean; `cargo test --workspace --no-fail-fast` all green
   (a rerun hit LNK1104 on melee_chara chars_ref, the exe locked by a concurrent agent's run).
 
+## Round 14 (2026-10-21, night 3): `src/ftdmgfall.rs`
+Recount first: 674 ported (673 verified, all but `ftCommon_8007E2D0`) of 3,002, as left by round
+13 (commit 726f0140b; no group-3 commit since).
+
+Stubs: re-checked every `TODO(groupN)` hook against the workspace (grep for a global `pub fn` of
+each name outside c2r/raw). None replaceable by another group's port: HSD_GObjFree, HSD_Randi,
+lb_8000B1CC, Camera_*, ifStatus_*, gm_*, un_803224DC, it_80294E78/8029A89C/8029A8F4,
+efLib_DestroyAll, HSD_JObjSetTranslate have no global port; mpLineGetNext/Prev and HSD_Randi are
+instance methods (melee_world, melee_runtime::random); melee_audio's lbAudioAx_* (sim.rs) are a
+process-wide stateful Sound with no C oracle, installed by `melee golden --audio`, so the hooks stay.
+Two group-3 hooks now default to this round's ports: `FTCO_80090690` (ftCo_80090690) and
+`FTPARTS_GET_BONE_INDEX` (ftParts_GetBoneIndex, moved to `ported_hooks!`). New hooks:
+`FT_800889F4` and `FT_80084DB0` (default to the ft0881 / ft084e ports), `FT_80081DD4`
+(TODO(group3 ft_081B)); new globals `hooks::FIGHTER_804D6530`, `FT_PARTS_TABLE`,
+`FIGHTER_804D6540` (PlCo / fighter-loader tables, TODO(move-to-core)).
+
+10 C definitions ported, all verified against the C cut verbatim (`gen/cref/ftdmgfall_ref.c`):
+- ftCo_DamageFall.c (7): ftCo_80090574, static calcShift, ftCo_80090594, ftCo_80090690,
+  ftCo_80090718, ftCo_DamageFall_Anim, ftCo_DamageFall_Phys;
+- ftparts.c (3): ftParts_GetBoneIndex, ftPartsRemap, ftParts_8007506C.
+- Test: tests/ftdmgfall_ref.rs, 10 ops x 1500 random cases = 15,000 lines: return value, hash of
+  every `fp->dmg` model-shift field, and a trace of ft_80081DD4 / ft_PlaySFX / ft_80084DB0 /
+  ft_800889F4 calls with arguments. PlCo factors span 1..1e5 so calcShift's float->u16 conversion
+  saturates and wraps. The cut includes ftCommon_CalcHitlag (ftcommon.rs).
+- Fused sites: calcShift `x168 * hitlag + x16C` and ftCo_80090690 `-x1900 * x + vec.y`, both
+  **discriminated** (un-fusing fails op 1 / op 3).
+- Mutation checks that fail: `as u16` without the u32 saturation step (op 1), `<` -> `<=` on
+  ftPartsRemap's parts_num bound (op 8), dropping the `(u8)(u32)` table-count store (op 2).
+- Not compared: ftPartsRemap's TARGET_PC OSReport text (the Rust logs the same first 4 hits to
+  stderr; the C stub swallows it). Diagnostic only.
+- Workspace: `cargo build --workspace` clean; `cargo test --workspace --no-fail-fast` all green.
+
 ## Not done / blockers
 - **The c2r layer has never linked or run.** Everything outside group 3 is an unresolved
   `extern "C"` (HSD, lb, mp, it, gm, PC hooks). It cannot be checked against the goldens until

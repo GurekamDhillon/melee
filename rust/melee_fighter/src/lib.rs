@@ -34,4 +34,5 @@ pub mod ftanim;
 pub mod ftcoll;
 pub mod ft084e;
 pub mod ft0df;
+pub mod ftdmgfall;
 pub mod ftcpu;

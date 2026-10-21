@@ -143,6 +143,13 @@ EXTRACTS = {
               *[("src/melee/ft/ftdevice.c", "fn:ftCo_" + n, None) for n in ("800C0658", "800C0674", "800C0694")],
               *[("src/melee/ft/ftparts.c", "fn:ftParts_" + n, None) for n in
                 ("80074A4C", "80074A74", "80074A8C", "80074ACC")]],
+    # group 3 round 14: ftCo_DamageFall.c model-shift leaves + ftparts.c table lookups (src/ftdmgfall.rs)
+    "ftdmgfall": [("src/melee/ft/ftcommon.c", "fn:ftCommon_CalcHitlag", None),
+                  ("src/melee/ft/kinds/ftCommon/ftCo_DamageFall.c", "void ftCo_80090574(", "void ftCo_80090780("),
+                  ("src/melee/ft/kinds/ftCommon/ftCo_DamageFall.c", "void ftCo_DamageFall_Anim(", "#if defined(TARGET_PC)"),
+                  ("src/melee/ft/kinds/ftCommon/ftCo_DamageFall.c", "fn:ftCo_DamageFall_Phys", None),
+                  *[("src/melee/ft/ftparts.c", "fn:" + n, None) for n in
+                    ("ftParts_GetBoneIndex", "ftPartsRemap", "ftParts_8007506C")]],
     "ftcommon": [("src/melee/ft/ftcommon.c", "void ftCommon_CalcGroundAccel_Deaccel(", "void ftCommon_UnlockECB("),
                  ("src/melee/ft/ftcommon.c", "void ftCommon_UpdateFacing(", "void ftCommon_8007DB24(")],
 }

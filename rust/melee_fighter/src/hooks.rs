@@ -5,7 +5,7 @@
 //! Single-threaded game state, like the C globals they replace: set them before the match.
 #![allow(static_mut_refs)]
 
-use crate::types::{ftCommonData, CmSubject, Fighter, Fighter_804D6520_t, Fighter_ShakeTable_t, FighterKind, HSD_GObj, HSD_JObj, Item_GObj, S32Vec2, Vec2, Vec3};
+use crate::types::{FighterPartsTable, Fighter_804D6540_t, FtSFXArr, ftCommonData, CmSubject, Fighter, Fighter_804D6520_t, Fighter_ShakeTable_t, FighterKind, HSD_GObj, HSD_JObj, Item_GObj, S32Vec2, Vec2, Vec3};
 
 /// `ScriptGame_ModValue(player_id, field, base)` behind `FT_SCRIPT_VALUE` (ft/forward.h).
 pub static mut SCRIPT_MOD_VALUE: Option<fn(player_id: i32, field: i32, base: f32) -> f32> = None;
@@ -105,7 +105,7 @@ pub static mut IT_80294E78: Option<fn(item: *mut Item_GObj, f: f32)> = None;
 pub static mut IT_8029A89C: Option<fn(item: *mut Item_GObj, f: f32)> = None;
 /// TODO(group5 it): `it_8029A8F4(item, &scale)`.
 pub static mut IT_8029A8F4: Option<fn(item: *mut Item_GObj, v: &Vec3)> = None;
-/// TODO(group3 ftCommon states): `ftCo_80090690(fp, &shift)` (non-NULL -> Some(shift)).
+/// Override for `ftCo_80090690(fp, &shift)` (non-NULL -> Some(shift)); unset = `crate::ftdmgfall` (round 14).
 pub static mut FTCO_80090690: Option<fn(fp: &mut Fighter) -> Option<Vec2>> = None;
 /// Override for `ftCo_800DEEE8(fp, &shift)` (non-NULL -> Some(shift)); unset = `crate::ft0df` (round 13).
 pub static mut FTCO_800DEEE8: Option<fn(fp: &mut Fighter) -> Option<Vec2>> = None;
@@ -161,7 +161,8 @@ pub fn un_803224dc(spawn: i32, x: f32, kb: f32) -> bool { need(unsafe { UN_80322
 pub fn it_80294e78(item: *mut Item_GObj, f: f32) { need(unsafe { IT_80294E78 }, "TODO(group5 it) it_80294E78")(item, f) }
 pub fn it_8029a89c(item: *mut Item_GObj, f: f32) { need(unsafe { IT_8029A89C }, "TODO(group5 it) it_8029A89C")(item, f) }
 pub fn it_8029a8f4(item: *mut Item_GObj, v: &Vec3) { need(unsafe { IT_8029A8F4 }, "TODO(group5 it) it_8029A8F4")(item, v) }
-pub fn ftco_80090690(fp: &mut Fighter) -> Option<Vec2> { need(unsafe { FTCO_80090690 }, "TODO(group3 ftCo) ftCo_80090690")(fp) }
+/// Unset: the port in `crate::ftdmgfall` (group 3 round 14).
+pub fn ftco_80090690(fp: &mut Fighter) -> Option<Vec2> { match unsafe { FTCO_80090690 } { Some(f) => f(fp), None => crate::ftdmgfall::ftco_80090690(fp) } }
 /// Unset: the port in `crate::ft0df` (group 3 round 13).
 pub fn ftco_800deee8(fp: &mut Fighter) -> Option<Vec2> { match unsafe { FTCO_800DEEE8 } { Some(f) => f(fp), None => crate::ft0df::ftco_800deee8(fp) } }
 /// `*Fighter_GrabMashShake`. Panics if not installed.
@@ -193,6 +194,7 @@ macro_rules! needed_hooks {
 }
 type G = *mut HSD_GObj;
 needed_hooks! {
+    FT_80081DD4 ft_80081dd4(g: G) = "TODO(group3 ft_081B) ft_80081DD4";
     FTKB_SPECIALN_800EED50 ftkb_specialn_800eed50(a: i32, b: i32) = "TODO(group4 ftKb) ftKb_SpecialN_800EED50";
     FTCO_800D4F24 ftco_800d4f24(g: G, i: i32) = "TODO(group3 ftCo) ftCo_800D4F24";
     HSD_GOBJ_FREE hsd_gobj_free(g: G) = "TODO(group1 HSD) HSD_GObjFree";
@@ -222,6 +224,9 @@ macro_rules! ported_hooks {
     )*};
 }
 ported_hooks! {
+    FTPARTS_GET_BONE_INDEX ftparts_get_bone_index(fp: &Fighter, i: i32) -> i32 = crate::ftdmgfall::ftparts_get_bone_index;
+    FT_800889F4 ft_800889f4(fp: &mut Fighter, sfx: *const FtSFXArr) = crate::ft0881::ft_800889f4;
+    FT_80084DB0 ft_80084db0(g: G) = crate::ft084e::ft_80084db0;
     FTLIB_800867E8 ftlib_800867e8(g: G) = crate::ftlib::ftlib_800867e8;
     FTLIB_8008688C ftlib_8008688c(g: G) = crate::ftlib::ftlib_8008688c;
     FTLIB_8008701C ftlib_8008701c(g: G) -> bool = crate::ftlib::ftlib_8008701c;
@@ -254,7 +259,6 @@ needed_hooks! {
     LB_8000B1CC lb_8000b1cc(j: *mut HSD_JObj, off: &Vec3, out: &mut Vec3) = "TODO(group1 lb) lb_8000B1CC";
     /// TARGET_PC `Slippi_Codes()` (pc/platform).
     SLIPPI_CODES slippi_codes() -> i32 = "TODO(pc) Slippi_Codes";
-    FTPARTS_GET_BONE_INDEX ftparts_get_bone_index(fp: &Fighter, i: i32) -> i32 = "TODO(group3 ftparts) ftParts_GetBoneIndex";
     FIGHTER_UPDATE_MODEL_SCALE fighter_update_model_scale(g: G) = "TODO(group3 fighter) Fighter_UpdateModelScale";
     FIGHTER_RESET_INPUT_DATA fighter_reset_input_data(g: G) = "TODO(group3 fighter) Fighter_ResetInputData_80068854";
     FIGHTER_UNK_PROCESS_DEATH fighter_unk_process_death(g: G) = "TODO(group3 fighter) Fighter_UnkProcessDeath_80068354";
@@ -539,4 +543,31 @@ needed_hooks! {
     FTANIM_SET_ANIM_RATE ftanim_set_anim_rate(g: G, rate: f32) = "TODO(group3 ftanim) ftAnim_SetAnimRate";
     FTCO_800C0200 ftco_800c0200(fp: &mut Fighter, i: i32) = "TODO(group3 ftcolanim) ftCo_800C0200";
     FTCO_800BFFD0 ftco_800bffd0(fp: &mut Fighter, kind: i32, b: i32) -> bool = "TODO(group3 ftcolanim) ftCo_800BFFD0";
+}
+
+// ---- group 3 round 14 (ftCo_DamageFall.c / ftparts.c) ----------------------------------------
+/// `Fighter_804D6530` (fighter.h, PlCo data): hit model-shift tables; even entries are `Vec2*`
+/// arrays, odd entries a count stored in the pointer word. TODO(move-to-core): fighter loader.
+pub static mut FIGHTER_804D6530: *mut *mut Vec2 = core::ptr::null_mut();
+/// `ftPartsTable` (fighter.h): per-kind joint/part maps. TODO(move-to-core): fighter loader.
+pub static mut FT_PARTS_TABLE: *mut *mut FighterPartsTable = core::ptr::null_mut();
+/// `Fighter_804D6540` (fighter.h): per-kind part bit tables. TODO(move-to-core): fighter loader.
+pub static mut FIGHTER_804D6540: *mut *mut Fighter_804D6540_t = core::ptr::null_mut();
+/// `Fighter_804D6530`. Panics if it has not been installed.
+pub fn fighter_804d6530() -> *mut *mut Vec2 {
+    let p = unsafe { FIGHTER_804D6530 };
+    assert!(!p.is_null(), "Fighter_804D6530 not loaded");
+    p
+}
+/// `ftPartsTable`. Panics if it has not been installed.
+pub fn ft_parts_table() -> *mut *mut FighterPartsTable {
+    let p = unsafe { FT_PARTS_TABLE };
+    assert!(!p.is_null(), "ftPartsTable not loaded");
+    p
+}
+/// `Fighter_804D6540`. Panics if it has not been installed.
+pub fn fighter_804d6540() -> *mut *mut Fighter_804D6540_t {
+    let p = unsafe { FIGHTER_804D6540 };
+    assert!(!p.is_null(), "Fighter_804D6540 not loaded");
+    p
 }

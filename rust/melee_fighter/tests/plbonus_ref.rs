@@ -6,6 +6,7 @@
 
 use melee_fighter::hooks as h;
 use melee_fighter::plbonus as pb;
+use melee_fighter::plbonus2 as p2;
 use melee_fighter::player::get_stale_move_table_index_ptr2;
 use melee_fighter::stale::PLAYER_SLOTS;
 use melee_fighter::types::*;
@@ -16,6 +17,10 @@ static mut GA: HSD_GObj = unsafe { core::mem::zeroed() };
 static mut GB: HSD_GObj = unsafe { core::mem::zeroed() };
 static mut KB: ft_800898B4_t = unsafe { core::mem::zeroed() };
 static mut TAB: pl_804D6470_t = unsafe { core::mem::zeroed() };
+static mut GI: HSD_GObj = unsafe { core::mem::zeroed() };
+static mut S2074: Struct2074 = unsafe { core::mem::zeroed() };
+const IKINDS: [i32; 12] = [0, 7, 6, 16, 34, 35, 3, 38, 205, 225, 226, 40];
+const MKINDS: [i32; 10] = [0, 7, 6, 16, 34, 3, 205, 225, 226, 1];
 
 fn t(v: u32) {
     unsafe { TR = TR.wrapping_mul(31).wrapping_add(v) }
@@ -28,6 +33,13 @@ fn b(f: f32) -> u32 {
 }
 fn e(g: *mut HSD_GObj) -> u32 {
     if g.is_null() { 0 } else if g == &raw mut GA { 1 } else if g == &raw mut GB { 2 } else { 3 }
+}
+fn ent3(k: u32) -> *mut HSD_GObj {
+    match k {
+        0 => core::ptr::null_mut(),
+        1 => &raw mut GA,
+        _ => &raw mut GB,
+    }
 }
 fn rnd() -> u32 {
     unsafe {
@@ -68,7 +80,7 @@ fn install() {
         });
         h::FTLIB_80087300 = Some(|g| {
             t(0x1C0 + e(g));
-            (tr() % 11) as i32
+            (tr() % 7) as i32
         });
         h::GM_8016B168 = Some(|| {
             t(0x140);
@@ -132,6 +144,56 @@ fn install() {
         h::GM_8016B6E8 = Some(|s, v| {
             t(0x3B0 + s as u32);
             t(v as u32)
+        });
+        // round 10
+        h::IT_GET_KIND = Some(|g| {
+            t(0x4C0 + e(g));
+            IKINDS[(tr() % 12) as usize]
+        });
+        h::IT_8026B7E8 = Some(|g| {
+            t(0x420 + e(g));
+            (tr() % 3 == 0) as i32
+        });
+        h::IT_8026B774 = Some(|g, a| {
+            t(0x410 + e(g));
+            t(a as u32);
+            (tr() >> 3) & 1 != 0
+        });
+        h::IT_GET_OWNER = Some(|g| {
+            t(0x430 + e(g));
+            ent3(tr() % 3)
+        });
+        h::FTLIB_80086960 = Some(|g| {
+            t(0x440 + e(g));
+            (tr() >> 1) & 1 != 0
+        });
+        h::FTLIB_80086BE0 = Some(|g| {
+            t(0x450 + e(g));
+            (tr() % 6) as u8
+        });
+        h::FTLIB_800874BC = Some(|g| {
+            t(0x460 + e(g));
+            ((tr() >> 4) & 1) as i32
+        });
+        h::IT_8026B7BC = Some(|g| {
+            t(0x470 + e(g));
+            ((tr() >> 2) & 1) as i32
+        });
+        h::IT_8026B960 = Some(|g| {
+            t(0x480 + e(g));
+            ((tr() % 2001) as i32 - 1000) as f32 / 7.0
+        });
+        h::IT_8026B7CC = Some(|g| {
+            t(0x490 + e(g));
+            (tr() % 8) as i32
+        });
+        h::IT_8026C1D4 = Some(|| {
+            t(0x4A0);
+            tr() % 4
+        });
+        h::FT_800898A8 = Some(|g| {
+            t(0x4B0 + e(g));
+            &raw mut S2074
         });
     }
 }
@@ -227,6 +289,26 @@ fn init_slot(slot: usize) {
         a.attacks.by_attack_counts[i] = rnd();
     }
     a.anon_358.x358_hits.total = rnd();
+    let s = &mut x.x0_staleMoveTable;
+    for i in 0..39 {
+        s.x674[i] = rnd() % 4;
+        s.x710[i] = (rnd() % 4) as i32;
+        s.x7AC[i] = (rnd() % 4) as i32;
+    }
+    s.xCD8 = rnd() as i32;
+    s.xCA8 = rnd() % 4;
+    s.xC70 = rf();
+    s.xC74 = rf();
+    for i in 0..6 {
+        s.xC78[i] = rf();
+    }
+    s.xC98 = rf();
+    s.xCA0 = rf();
+    s.xCA4 = (rnd() % 100) as i32;
+    x.xD08 = rnd();
+    x.xD10 = rnd() as i32;
+    x.xD44 = rnd();
+    x.xD6C = if rnd() % 2 != 0 { 6 } else { (rnd() % 6) as i32 };
 }
 
 static mut H: u32 = 0;
@@ -271,6 +353,20 @@ fn hash_slot(slot: i32) {
         hh(x.xDD1.anon_0.bit4() as u32);
         hh(x.xDD1.anon_0.bit6() as u32);
     }
+    for i in 0..39 {
+        hh(s.x674[i]);
+        hh(s.x710[i] as u32);
+        hh(s.x7AC[i] as u32);
+    }
+    for v in [s.xCD8 as u32, s.xCA8, b(s.xC6C), b(s.xC70), b(s.xC74)] {
+        hh(v);
+    }
+    for f in s.xC78 {
+        hh(b(f));
+    }
+    for v in [b(s.xC98), b(s.xC60), b(s.xC64), b(s.xCA0), s.xCA4 as u32, x.xD08, x.xD10 as u32, x.xD44, x.xD54, x.xD6C as u32] {
+        hh(v);
+    }
 }
 
 const ITEMS: [i32; 14] = [
@@ -279,7 +375,7 @@ const ITEMS: [i32; 14] = [
     It_Kind_Old_Octa as i32, It_Kind_Octarock as i32, It_Kind_Old_Otto as i32, It_Kind_Ottosea as i32,
     It_Kind_Whitebea as i32, 0,
 ];
-const NOPS: u32 = 81;
+const NOPS: u32 = 104;
 
 #[test]
 fn plbonus_matches_c() {
@@ -308,6 +404,11 @@ fn plbonus_matches_c() {
             TAB.x124 = rnd();
             TAB.x4C = rf();
             TAB.xEC = rnd() as i32;
+            TAB.x84 = rf();
+            TAB.x138 = rnd() % 4;
+            TAB.xB4 = rnd();
+            TAB.x180 = rf();
+            S2074.x207C.y = 0;
         }
         for step in 0..50 {
             let slot = (rnd() % 6) as i32;
@@ -321,6 +422,9 @@ fn plbonus_matches_c() {
             let d = rf();
             let ee = rf();
             let w8 = (w % 8) as u16;
+            let q = if rnd() % 3 == 0 { 0x59 } else { w % 20 };
+            let a5 = match w % 4 { 0 => 0x34, 1 => 0x5C, 2 => 0x5D, _ => w };
+            let gi = &raw mut GI;
             let mut ret: u32 = 0;
             seen[op as usize] = true;
             match op {
@@ -405,12 +509,42 @@ fn plbonus_matches_c() {
                 78 => ret = b(pb::pl_80040d68(slot)),
                 79 => pb::pl_80040d8c(slot, c),
                 80 => ret = pb::pl_80040db8(slot) as u32,
+                81 => p2::pl_8003df44(slot, bb & 1),
+                82 => p2::pl_8003dff4(slot, bb & 1, q),
+                83 => p2::pl_8003e058(z7, c, a, bb),
+                84 => p2::pl_8003e0e8(slot, bb),
+                85 => p2::pl_8003e114(slot, c, d),
+                86 => p2::pl_8003e150(slot, c),
+                87 => p2::pl_8003e17c(slot, c, gi),
+                88 => ret = p2::pl_8003e2cc(slot, (w % 39) as u32),
+                89 => ret = p2::pl_8003e334(slot, (w % 39) as u32),
+                90 => ret = p2::pl_8003e39c(slot) as u32,
+                91 => ret = p2::pl_8003e420(slot),
+                92 => {
+                    let mut moves = [0i32; 6];
+                    for m in moves.iter_mut() {
+                        *m = MKINDS[(rnd() % 10) as usize];
+                    }
+                    p2::pl_8003e4a4(slot, bb & 1 != 0, &moves[..a as usize]);
+                }
+                93 => p2::pl_8003e854(slot, bb & 1, gi),
+                94 => p2::pl_8003e978(slot, bb & 1 != 0, gi),
+                95 => p2::fn_8003e998(slot, bb & 1),
+                96 => p2::pl_8003ea08(slot, bb),
+                97 => p2::pl_8003ea40(slot, c, a, bb & 1, z7),
+                98 => p2::pl_8003ea74(slot, bb),
+                99 => p2::pl_8003eaac(slot, bb & 1, q),
+                100 => p2::pl_8003eb30(d, z7, c, if bb == 2 { 6 } else { a }, bb & 1, a5),
+                101 => p2::pl_8003ec30(slot, bb, w % 4, d),
+                102 => p2::pl_8003ec9c(slot, bb, d, ee),
+                103 => p2::pl_8003ed0c(slot, c, a, bb, d),
                 _ => unreachable!(),
             }
             unsafe { H = 0x811C9DC5 };
             for i in 0..6 {
                 hash_slot(i);
             }
+            hh(unsafe { S2074.x207C.y } as u32);
             let got = format!("{} {} {} {:x} {:x} {:x}", k, step, op, ret, tr(), unsafe { H });
             assert_eq!(Some(got.as_str()), lines.next(), "case {k} step {step} op {op}");
             n += 1;

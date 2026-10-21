@@ -333,7 +333,6 @@ ported_hooks! {
 }
 needed_hooks! {
     FTFX_APPEALS_CHECK_IF_USED ftfx_appeals_check_if_used(fp: &mut Fighter) -> bool = "TODO(group4 ftFx) ftFx_AppealS_CheckIfUsed";
-    PL_8003DFF4 pl_8003dff4(slot: i32, sub: i32, id: i32) = "TODO(group3 plbonuslib) pl_8003DFF4";
     /// `ftData_80085FD4(fp, i)->x8`.
     FTDATA_80085FD4_X8 ftdata_80085fd4_x8(fp: &mut Fighter, i: i32) -> usize = "TODO(group3 ftdata) ftData_80085FD4";
 }
@@ -373,9 +372,7 @@ needed_hooks! {
     FTCO_FALL_ENTER ftco_fall_enter(g: G) = "TODO(group3 ftCo) ftCo_Fall_Enter";
     FT_8008A2BC ft_8008a2bc(g: G) = "TODO(group3 ft_08A1) ft_8008A2BC";
     EFLIB_DESTROY_ALL eflib_destroy_all(g: G) = "TODO(group1 ef) efLib_DestroyAll";
-    HSD_JOBJ_GET_TRANSLATION hsd_jobj_get_translation(j: *mut HSD_JObj, out: &mut Vec3) = "TODO(group1 HSD) HSD_JObjGetTranslation";
     HSD_JOBJ_SET_TRANSLATE hsd_jobj_set_translate(j: *mut HSD_JObj, v: &Vec3) = "TODO(group1 HSD) HSD_JObjSetTranslate";
-    HSD_JOBJ_MTX_IS_DIRTY hsd_jobj_mtx_is_dirty(j: *mut HSD_JObj) -> bool = "TODO(group1 HSD) HSD_JObjMtxIsDirty";
     HSD_JOBJ_SET_SCALE hsd_jobj_set_scale(j: *mut HSD_JObj, v: &Vec3) = "TODO(group1 HSD) HSD_JObjSetScale";
     HSD_JOBJ_LOAD_JOINT hsd_jobj_load_joint(j: *mut crate::types::HSD_Joint) -> *mut HSD_JObj = "TODO(group1 HSD) HSD_JObjLoadJoint";
     /// `HSD_JObjAddAnimAll(j, an, NULL, NULL)`.
@@ -383,7 +380,6 @@ needed_hooks! {
     HSD_JOBJ_REQ_ANIM_ALL hsd_jobj_req_anim_all(j: *mut HSD_JObj, f: f32) = "TODO(group1 HSD) HSD_JObjReqAnimAll";
     FTCO_800C5240 ftco_800c5240(g: G) -> bool = "TODO(group3 ftCo) ftCo_800C5240";
     FTCO_800C5500 ftco_800c5500(g: G) = "TODO(group3 ftCo) ftCo_800C5500";
-    PL_8003EA08 pl_8003ea08(slot: i32, sub: i32) = "TODO(group3 plbonuslib) pl_8003EA08";
     /// TARGET_PC `Mex_OnItemDropExtDispatch(kind, gobj, arg, ftData_OnItemDropExt[kind])`
     /// (m-ex Arch_FighterFunc slot 16 + the ftdata.c table).
     MEX_ON_ITEM_DROP_EXT mex_on_item_drop_ext(kind: i32, g: G, a: i32) = "TODO(pc mex + group3 ftdata) Mex_OnItemDropExtDispatch";
@@ -404,8 +400,6 @@ needed_hooks! {
     GM_8016B0B4 gm_8016b0b4() -> bool = "TODO(group6 gm) gm_8016B0B4";
     FTCO_DAMAGE_CALC_ANGLE ftco_damage_calc_angle(fp: &mut Fighter, kb: f32) -> f32 = "TODO(group3 ftCo) ftCo_Damage_CalcAngle";
     IT_802E5F8C it_802e5f8c(g: G, v: &Vec3, a: i32, b: i32, ang: f32, kb: f32) -> i32 = "TODO(group5 it) it_802E5F8C";
-    IT_80284FC4 it_80284fc4(i: I, a: i32, f: f32) = "TODO(group5 it) it_80284FC4";
-    IT_80285024 it_80285024(i: I, a: i32) = "TODO(group5 it) it_80285024";
     FTCO_800D105C ftco_800d105c(g: G) = "TODO(group3 ftCo) ftCo_800D105C";
     FT_80081C88 ft_80081c88(g: G, s: f32) = "TODO(group3 ft_081B) ft_80081C88";
     IT_80294EB0 it_80294eb0(i: I, a: &Vec3, b: &Vec3) = "TODO(group5 it) it_80294EB0";
@@ -440,4 +434,64 @@ ported_hooks! {
     IT_8026B54C it_8026b54c(i: I) -> f32 = it5::it_8026b54c;
     IT_8026BD0C it_8026bd0c(i: I) = it5::it_8026bd0c;
     IT_8026BCF4 it_8026bcf4(i: I) = it5::it_8026bcf4;
+}
+
+// ---- group 3 round 10: stubs whose port now exists elsewhere -------------------------------
+// it_80284FC4 / it_80285024: group 5's itsword.c ports (melee_items::itkinds5, verified there).
+// HSD_JObjGetTranslation / HSD_JObjMtxIsDirty: melee_types::inline (the jobj.h inlines).
+mod r10 {
+    use crate::types::{HSD_JObj, Item, Item_GObj, Vec3};
+    #[inline(always)]
+    fn ip<'a>(g: *mut Item_GObj) -> &'a mut Item {
+        unsafe { &mut *((*g).user_data as *mut Item) }
+    }
+    pub fn it_80284fc4(g: *mut Item_GObj, a: i32, f: f32) { melee_items::itkinds5::it_80284fc4(ip(g), a, f) }
+    pub fn it_80285024(g: *mut Item_GObj, a: i32) { melee_items::itkinds5::it_80285024(ip(g), a) }
+    pub fn jobj_get_translation(j: *mut HSD_JObj, out: &mut Vec3) {
+        melee_types::inline::HSD_JObjGetTranslation(unsafe { &*j }, out)
+    }
+    pub fn jobj_mtx_is_dirty(j: *mut HSD_JObj) -> bool { melee_types::inline::HSD_JObjMtxIsDirty(unsafe { &*j }) }
+}
+ported_hooks! {
+    IT_80284FC4 it_80284fc4(i: I, a: i32, f: f32) = r10::it_80284fc4;
+    IT_80285024 it_80285024(i: I, a: i32) = r10::it_80285024;
+    HSD_JOBJ_GET_TRANSLATION hsd_jobj_get_translation(j: *mut HSD_JObj, out: &mut Vec3) = r10::jobj_get_translation;
+    HSD_JOBJ_MTX_IS_DIRTY hsd_jobj_mtx_is_dirty(j: *mut HSD_JObj) -> bool = r10::jobj_mtx_is_dirty;
+}
+
+// ---- group 3 round 10: calls out of plbonuslib.c pl_8003DF44..pl_8003ED0C -----------------
+mod it10 {
+    use crate::types::{HSD_GObj, Item, Item_GObj};
+    use melee_items::itlib as il;
+    #[inline(always)]
+    fn ip<'a>(g: *mut Item_GObj) -> &'a mut Item {
+        unsafe { &mut *((*g).user_data as *mut Item) }
+    }
+    pub fn it_8026b7e8(g: *mut Item_GObj) -> i32 { il::it_8026b7e8(ip(g)) }
+    pub fn it_8026b774(g: *mut Item_GObj, a: u8) -> bool { il::it_8026b774(ip(g), a) }
+    pub fn it_8026b7bc(g: *mut Item_GObj) -> i32 { il::it_8026b7bc(ip(g)) }
+    pub fn it_8026b960(g: *mut Item_GObj) -> f32 { il::it_8026b960(ip(g)) }
+    pub fn it_8026b7cc(g: *mut Item_GObj) -> i32 { il::it_8026b7cc(ip(g)) }
+    /// `itGetOwner` (it_26B1.c): `GET_ITEM(gobj)->owner`.
+    pub fn it_get_owner(g: *mut Item_GObj) -> *mut HSD_GObj { ip(g).owner }
+}
+ported_hooks! {
+    IT_8026B7E8 it_8026b7e8(i: I) -> i32 = it10::it_8026b7e8;
+    IT_8026B774 it_8026b774(i: I, a: u8) -> bool = it10::it_8026b774;
+    IT_8026B7BC it_8026b7bc(i: I) -> i32 = it10::it_8026b7bc;
+    IT_8026B960 it_8026b960(i: I) -> f32 = it10::it_8026b960;
+    IT_8026B7CC it_8026b7cc(i: I) -> i32 = it10::it_8026b7cc;
+    IT_GET_OWNER it_get_owner(i: I) -> G = it10::it_get_owner;
+    FTLIB_80086960 ftlib_80086960(g: G) -> bool = crate::ftlib::ftlib_80086960;
+    FTLIB_80086BE0 ftlib_80086be0(g: G) -> u8 = crate::ftlib::ftlib_80086be0;
+    FTLIB_800874BC ftlib_800874bc(g: G) -> i32 = crate::ftlib::ftlib_800874bc;
+    FT_800898A8 ft_800898a8(g: G) -> *mut crate::types::Struct2074 = crate::ft0892::ft_800898a8;
+}
+needed_hooks! {
+    /// `it_8026C1D4()`: the L-Gun's `timer` special attribute (`it_804D6D24[It_Kind_L_Gun]`).
+    IT_8026C1D4 it_8026c1d4() -> u32 = "TODO(group5 it) it_8026C1D4";
+}
+ported_hooks! {
+    PL_8003DFF4 pl_8003dff4(slot: i32, sub: i32, id: i32) = crate::plbonus2::pl_8003dff4;
+    PL_8003EA08 pl_8003ea08(slot: i32, sub: i32) = crate::plbonus2::pl_8003ea08;
 }

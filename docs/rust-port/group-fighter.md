@@ -3,7 +3,7 @@
 Scope: `src/melee/ft/*.c` (67 TUs), `src/melee/ft/kinds/ftCommon/*.c` (142), `src/melee/pl/*.c`
 (7): 216 TUs, ~76k lines, 3,002 function definitions (recount, port round 9: a definition line
 followed by a `{` line, static inline helpers included; the older "~2,820" left those out).
-State as of 2026-10-21 (port round 9).
+State as of 2026-10-21 (group 3 round 10).
 
 ## What exists
 
@@ -11,10 +11,10 @@ State as of 2026-10-21 (port round 9).
 |---|---|---|
 | Native types + GC offsets | `src/types/generated.rs` (from `gen/gen_types.py`) | 569 `#[repr(C)]` records, all built |
 | Mechanical translation of all 216 TUs | `src/c2r/` (from `gen/fix_raw.py`, feature `c2r`) | compiles (`--features c2r`), never run |
-| Hand ports, checked bit-for-bit against the C | `src/ftaction.rs`, `src/fighter.rs`, `src/ftanim.rs`, `src/ftcoll.rs`, `src/neutral_hash.rs`, `src/ftcommon.rs`, `src/ftcommon2.rs`, `src/stale.rs`, `src/player.rs`, `src/ftlib.rs`, `src/plbonus.rs`, `src/ft0877.rs`, `src/ft0881.rs`, `src/ft0892.rs`, `src/pltrick.rs`, `src/ftcommon3.rs`, `src/compat.rs`, `src/hooks.rs` | 576 C functions (575 verified), tests pass |
+| Hand ports, checked bit-for-bit against the C | `src/ftaction.rs`, `src/fighter.rs`, `src/ftanim.rs`, `src/ftcoll.rs`, `src/neutral_hash.rs`, `src/ftcommon.rs`, `src/ftcommon2.rs`, `src/stale.rs`, `src/player.rs`, `src/ftlib.rs`, `src/plbonus.rs`, `src/ft0877.rs`, `src/ft0881.rs`, `src/ft0892.rs`, `src/pltrick.rs`, `src/ftcommon3.rs`, `src/plbonus2.rs`, `src/compat.rs`, `src/hooks.rs` | 600 C functions (599 verified), tests pass |
 | PowerPC `.s` files | none belong to this group (inventory §3) | nothing to do |
 
-Functions: 576 of 3,002 (19.2%; 57 night 1, 39 in port round 1, 144 in port round 2, 96 in port round 3, 82 in port round 4, 34 in port round 5, 18 in port round 6, 19 in port round 7, 37 in port round 8, 50 in port round 9) are hand-ported; 575 are verified against the C (the one unverified port: `ftCommon_8007E2D0`, round 1, stores three fn pointers). All are
+Functions: 600 of 3,002 (20.0%; 57 night 1, 39 in port round 1, 144 in port round 2, 96 in port round 3, 82 in port round 4, 34 in port round 5, 18 in port round 6, 19 in port round 7, 37 in port round 8, 50 in port round 9, 24 in round 10) are hand-ported; 599 are verified against the C (the one unverified port: `ftCommon_8007E2D0`, round 1, stores three fn pointers). All are
 in the mechanical translation, which compiles; none of it has been linked or run.
 
 ### Native types (`gen/gen_types.py`)
@@ -422,6 +422,46 @@ run.py gained a `fn:NAME` extract that cuts one definition through its closing `
   inlineB1's `<` (op 45), the throw-flag bit (op 25), x8B0 x11 (op 41), x221A_b1 (op 30).
   Not discriminated: `ABS(x)` vs `x.abs()` in the angle getters: atan2f gives the same result for
   x = +0 and -0 here (only a negative-sign NaN would differ; ABS keeps it, abs() clears it).
+
+## Round 10 (2026-10-21, night 3): `src/plbonus2.rs` + four stubs replaced
+Recount first: 576 ported before this round (575 verified: all but `ftCommon_8007E2D0`), of
+3,002 definitions (the round-9 rule; a quick re-scan with a slightly different regex finds 2,989,
+the difference is in what counts as a definition line, not in the ported set).
+
+Stubs replaced by ports that now exist elsewhere (wiring test: `tests/hooks_items.rs`
+`round10_hooks_default_to_ports`): `IT_80284FC4` / `IT_80285024` -> group 5's
+`melee_items::itkinds5` (itsword.c, verified there); `HSD_JOBJ_GET_TRANSLATION` /
+`HSD_JOBJ_MTX_IS_DIRTY` -> `melee_types::inline` (the jobj.h inlines). Also two group-3 hooks now
+default to this round's ports: `PL_8003DFF4`, `PL_8003EA08`. Checked and not replaceable: the
+rest of the TODO hooks have only c2r `raw/` translations elsewhere (unverified), or a port that
+is a method on an instance (HSD_GObj / Random / map lines / JObj tree) with no global to default to.
+
+24 C definitions of src/melee/pl/plbonuslib.c ported, all verified against the C cut verbatim
+(the `plbonus` cref grew a `pl_8003DF44`..`fn_8003EE2C` cut): pl_8003DF44, pl_8003DFF4,
+pl_8003E058, pl_8003E0E8, pl_8003E114, pl_8003E150, pl_8003E17C, pl_8003E2CC, pl_8003E334,
+pl_8003E39C, pl_8003E420, match_item_kind (static inline), pl_8003E4A4, pl_8003E854,
+pl_8003E978, fn_8003E998, pl_8003EA08, pl_8003EA40, pl_8003EA74, pl_8003EAAC, pl_8003EB30,
+pl_8003EC30, pl_8003EC9C, pl_8003ED0C.
+- Test: tests/plbonus_ref.rs, now 104 ops x 50 steps x 300 cases = 15,000 lines (was 81 ops);
+  the slot hash gained every field these write (x674/x710/x7AC, xC60..xCA8, xCD8, xD08, xD10,
+  xD44, xD54, xD6C, Struct2074.x207C.y). New tracing hooks: IT_8026B7E8 / B774 / B7BC / B960 /
+  B7CC / IT_GET_OWNER (default to melee_items::itlib), FTLIB_80086960 / 80086BE0 / 800874BC,
+  FT_800898A8 (default to group 3's ports), IT_8026C1D4 (TODO(group5 it), panics unset).
+  The ftLib_80087300 stub now returns 0..6 (a slot or 6), since pl_8003DF44 indexes with it; the
+  C's `__assert` stub now prints and exits instead of spinning.
+- Fused site: pl_8003ED0C `xCA0 * (n - 1) + arg2` (fmadds). **Discriminated** (un-fusing fails
+  case 44 step 47 op 103).
+- Mutation checks that fail: `arg5 - 0x5C <= 1U` (op 100), 0x34 test (op 100), xC78 accumulate
+  (op 100), the x138 reset in pl_8003E4A4 (op 92), `it_8026B7E8 == 1` (op 87), xD6C store in
+  pl_8003E854 (op 93), x207C.y store (op 94), xD54 store (op 81), case 3 in pl_8003EC30 (op 101),
+  xD10 reset (op 102). Not discriminated: `<=` vs `<` against `x180` in pl_8003E854 (equality
+  with a random float never happens).
+- C quirks: pl_8003E4A4 with a kind match_item_kind does not map gives -1, which passes the C's
+  signed `< Pl_ItemLog_Terminate` and stores to `seen[-1]` (it hung the oracle by clobbering the
+  loop counter); the port skips it, the test only feeds mapped kinds. `Player_GetEntityAtIndex`
+  with index 2 reads past `player_entity[2]` in C; the port panics, the test drives index 0/1.
+- Not ported in that range: pl_8003E70C / pl_8003E7D4 (index the 8-entry `x598` with item kinds
+  161..190, i.e. into neighbouring fields; needs a decision on reproducing that overflow).
 
 ## Not done / blockers
 - **The c2r layer has never linked or run.** Everything outside group 3 is an unresolved

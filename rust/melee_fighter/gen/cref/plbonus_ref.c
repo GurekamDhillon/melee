@@ -28,7 +28,9 @@ static u32 B(float f) { union { float f; u32 u; } c; c.f = f; return c.u; }
 static HSD_GObj ga, gb;
 static u32 E(HSD_GObj* g) { return g == NULL ? 0u : g == &ga ? 1u : g == &gb ? 2u : 3u; }
 
-void __assert(const char* file, u32 line, const char* cond) { (void) file; (void) line; (void) cond; for (;;) {} }
+int printf(const char*, ...);
+void exit(int);
+void __assert(const char* file, u32 line, const char* cond) { printf("ASSERT %s:%u %s\n", file, (unsigned) line, cond); exit(3); }
 void OSReport(char* fmt, ...) { (void) fmt; }
 float ScriptGame_ModValue(int slot, int field, float base) { T(0x220u + (u32) slot * 2u + (u32) field); T(B(base)); return base; }
 
@@ -59,7 +61,7 @@ void ifStatus_802F6C04(s32 s) { T(0x180u + (u32) s); }
 bool ftLib_80086F4C(HSD_GObj* g) { T(0x190u + E(g)); return (g_tr >> 2) & 1; }
 float ftLib_80086F80(HSD_GObj* g) { T(0x1A0u + E(g)); return (float) (int) (g_tr % 777u) / 3.0f; }
 FighterKind ftLib_GetKind(HSD_GObj* g) { T(0x1B0u + E(g)); return (FighterKind) (g_tr % 40u); }
-s32 ftLib_80087300(HSD_GObj* g) { T(0x1C0u + E(g)); return (s32) (g_tr % 11u); }
+s32 ftLib_80087300(HSD_GObj* g) { T(0x1C0u + E(g)); return (s32) (g_tr % 7u); /* round 10: a slot or 6 (pl_8003DF44 indexes with it) */ }
 void ft_80087AC0(Fighter_GObj* g, s32 v) { T(0x1D0u + E(g)); T((u32) v); }
 void ftLib_80086A4C(HSD_GObj* g, float f) { T(0x1E0u + E(g)); T(B(f)); }
 void ft_80087BAC(Fighter_GObj* g, s32 v) { T(0x1F0u + E(g)); T((u32) v); }
@@ -89,6 +91,25 @@ u8 ft_80087AB4(Fighter_GObj* g) { T(0x380u + E(g)); return (u8) (g_tr % 3u); }
 ft_800898B4_t* ft_800898B4(Fighter_GObj* g) { T(0x390u + E(g)); g_kb.kb_applied1 = (float) (int) (g_tr % 400u) / 2.0f; return &g_kb; }
 int gm_8016F2F8(int k, unsigned char s) { T(0x3A0u); T((u32) k); T((u32) s); return (int) (g_tr % 50u); }
 void gm_8016B6E8(int s, int v) { T(0x3B0u + (u32) s); T((u32) v); }
+/* round 10 (pl_8003DF44..pl_8003ED0C): item / ftLib / ft_0892 calls */
+#include <melee/it/it_26B1.h>
+static struct Struct2074 g_s2074;
+static HSD_GObj gi;
+static const int ikinds[12] = { 0, 7, 6, 16, 34, 35, 3, 38, 205, 225, 226, 40 };
+/* pl_8003E4A4 inputs: only kinds match_item_kind maps (an unmapped one stores to seen[-1] in the C) */
+static const int mkinds[10] = { 0, 7, 6, 16, 34, 3, 205, 225, 226, 1 };
+ItemKind itGetKind(Item_GObj* g) { T(0x4C0u + E(g)); return (ItemKind) ikinds[g_tr % 12u]; }
+s32 it_8026B7E8(Item_GObj* g) { T(0x420u + E(g)); return g_tr % 3u == 0; }
+bool it_8026B774(Item_GObj* g, u8 a) { T(0x410u + E(g)); T((u32) a); return (g_tr >> 3) & 1; }
+HSD_GObj* itGetOwner(Item_GObj* g) { u32 k; T(0x430u + E(g)); k = g_tr % 3u; return k == 0 ? NULL : k == 1 ? &ga : &gb; }
+bool ftLib_80086960(HSD_GObj* g) { T(0x440u + E(g)); return (g_tr >> 1) & 1; }
+u8 ftLib_80086BE0(HSD_GObj* g) { T(0x450u + E(g)); return (u8) (g_tr % 6u); }
+s32 ftLib_800874BC(HSD_GObj* g) { T(0x460u + E(g)); return (s32) ((g_tr >> 4) & 1); }
+s32 it_8026B7BC(Item_GObj* g) { T(0x470u + E(g)); return (s32) ((g_tr >> 2) & 1); }
+float it_8026B960(Item_GObj* g) { T(0x480u + E(g)); return (float) ((int) (g_tr % 2001u) - 1000) / 7.0f; }
+s32 it_8026B7CC(Item_GObj* g) { T(0x490u + E(g)); return (s32) (g_tr % 8u); }
+u32 it_8026C1D4(void) { T(0x4A0u); return g_tr % 4u; }
+struct Struct2074* ft_800898A8(Fighter_GObj* g) { T(0x4B0u + E(g)); return &g_s2074; }
 
 #include "plbonus_extract.inc"
 
@@ -148,6 +169,12 @@ static void init_slot(int slot)
     a->attacks.specials_count = rnd();
     for (i = 30; i < 70; i++) a->attacks.by_attack_counts[i] = rnd();
     a->x358_hits.total = rnd();
+    /* round 10 fields */
+    for (i = 0; i < Pl_ItemLog_Terminate; i++) { s->x674[i] = rnd() % 4; s->x710[i] = (int) (rnd() % 4); s->x7AC[i] = (int) (rnd() % 4); }
+    s->xCD8 = (int) rnd(); s->xCA8 = rnd() % 4; s->xC70 = rf(); s->xC74 = rf();
+    for (i = 0; i < 6; i++) s->xC78[i] = rf();
+    s->xC98 = rf(); s->xCA0 = rf(); s->xCA4 = (int) (rnd() % 100);
+    x->xD08 = rnd(); x->xD10 = (int) rnd(); x->xD44 = rnd(); x->xD6C = rnd() % 2 ? 6 : (int) (rnd() % 6);
 }
 
 static u32 H;
@@ -169,13 +196,18 @@ static void hash_slot(int slot)
     h((u32) s->xC68); h(s->xC90); h(s->xCAC); h((u32) s->xCB0); h(B(s->xCDC)); h(B(s->xCE0)); h(s->xCE4); h(s->xCE8);
     h((u32) s->xCEC); h((u32) s->xCF0); h(B(x->xCF8)); h(x->xD4C); h(x->xD50); h(x->xD60); h((u32) x->xD70);
     h(x->xDD0.bit0); h(x->xDD0.bit5); h(x->xDD1.bit4); h(x->xDD1.bit6);
+    for (i = 0; i < Pl_ItemLog_Terminate; i++) { h(s->x674[i]); h((u32) s->x710[i]); h((u32) s->x7AC[i]); }
+    h((u32) s->xCD8); h(s->xCA8); h(B(s->xC6C)); h(B(s->xC70)); h(B(s->xC74));
+    for (i = 0; i < 6; i++) h(B(s->xC78[i]));
+    h(B(s->xC98)); h(B(s->xC60)); h(B(s->xC64)); h(B(s->xCA0)); h((u32) s->xCA4);
+    h(x->xD08); h((u32) x->xD10); h(x->xD44); h(x->xD54); h((u32) x->xD6C);
 }
 
 static const int items[14] = { It_Kind_Old_Kuri, It_Kind_Kuriboh, It_Kind_Heiho, It_Kind_Nokonoko,
     It_Kind_Patapata, It_Kind_Likelike, It_Kind_Old_Lead, It_Kind_Leadead, It_Kind_Old_Octa,
     It_Kind_Octarock, It_Kind_Old_Otto, It_Kind_Ottosea, It_Kind_Whitebea, 0 };
 
-#define NOPS 81
+#define NOPS 104
 
 int main(void)
 {
@@ -189,6 +221,8 @@ int main(void)
         tab.x4 = (int) (rnd() % 6); tab.x17C = (int) (rnd() % 5); tab.xD4 = rf(); tab.x38 = rf();
         tab.x98 = rf(); tab.xA0 = rf(); tab.xA4 = rnd(); tab.xB0 = rnd(); tab.x124 = rnd();
         tab.x4C = rf(); tab.xEC = (int) rnd();
+        tab.x84 = rf(); tab.x138 = rnd() % 4; tab.xB4 = rnd(); tab.x180 = rf();
+        g_s2074.x207C.y = 0;
         for (step = 0; step < 50; step++) {
             int slot = (int) (rnd() % 6);
             u32 op = rnd() % NOPS;
@@ -200,6 +234,9 @@ int main(void)
             int it = items[rnd() % 14];
             float d = rf();
             float e = rf();
+            int q = rnd() % 3 == 0 ? 0x59 : w % 20;
+            int a5 = w % 4 == 0 ? 0x34 : w % 4 == 1 ? 0x5C : w % 4 == 2 ? 0x5D : w;
+            int moves[6];
             u32 ret = 0;
             switch (op) {
             case 0: pl_80040DDC(slot); break;
@@ -283,9 +320,37 @@ int main(void)
             case 78: ret = B(pl_80040D68(slot)); break;
             case 79: pl_80040D8C(slot, c); break;
             case 80: ret = (u32) pl_80040DB8(slot); break;
+            /* round 10 */
+            case 81: pl_8003DF44(slot, b & 1); break;
+            case 82: pl_8003DFF4(slot, b & 1, q); break;
+            case 83: pl_8003E058(z7, c, a, b); break;
+            case 84: pl_8003E0E8(slot, b); break;
+            case 85: pl_8003E114(slot, c, d); break;
+            case 86: pl_8003E150(slot, c); break;
+            case 87: pl_8003E17C(slot, c, &gi); break;
+            case 88: ret = pl_8003E2CC(slot, (Pl_ItemLog) (w % 39)); break;
+            case 89: ret = pl_8003E334(slot, (Pl_ItemLog) (w % 39)); break;
+            case 90: ret = (u32) pl_8003E39C(slot); break;
+            case 91: ret = pl_8003E420(slot); break;
+            case 92:
+                for (i = 0; i < 6; i++) moves[i] = mkinds[rnd() % 10];
+                pl_8003E4A4(slot, b & 1, moves, a);
+                break;
+            case 93: pl_8003E854(slot, b & 1, &gi); break;
+            case 94: pl_8003E978(slot, b & 1, &gi); break;
+            case 95: fn_8003E998(slot, b & 1); break;
+            case 96: pl_8003EA08(slot, b); break;
+            case 97: pl_8003EA40(slot, c, a, b & 1, z7); break;
+            case 98: pl_8003EA74(slot, b); break;
+            case 99: pl_8003EAAC(slot, b & 1, q); break;
+            case 100: pl_8003EB30(d, z7, c, b == 2 ? 6 : a, b & 1, a5); break;
+            case 101: pl_8003EC30(slot, b, w % 4, d); break;
+            case 102: pl_8003EC9C(slot, b, d, e); break;
+            case 103: pl_8003ED0C(slot, c, a, b, d); break;
             }
             H = 0x811C9DC5u;
             for (i = 0; i < 6; i++) hash_slot(i);
+            h((u32) g_s2074.x207C.y);
             printf("%d %d %u %x %x %x\n", k, step, op, ret, g_tr, H);
         }
     }

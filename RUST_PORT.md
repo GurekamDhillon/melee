@@ -109,3 +109,13 @@ Details: `docs/rust-port/group-0 types + GC layout table.md`.
 - Trap: the C typedef `Vec` shadows `std::vec::Vec` under `use melee_types::*`.
 - `melee_types::neutral_hash` computes NHV1 from native structs; tested against the C functions
   compiled natively (gen/nh_oracle.py) and against all 10804 golden rows.
+
+## Group 3: fighter engine + ftCommon + pl (2026-10-21; detail: docs/rust-port/group-3 fighter engine + common states.md)
+- Native types with a GC offset record: `rust/melee_fighter/gen/gen_types.py` (libclang, ppc32 parse)
+  -> `src/types/generated.rs`, 569 `#[repr(C)]` records each with a `GcLayout` table; Fighter 0x23EC.
+- All 216 TUs compile as a mechanical native translation: `gen/fix_raw.py` over the raw c2rust
+  output -> `src/c2r` (gitignored, 50 MB), `cargo build -p melee_fighter --features c2r`. Not linked/run.
+- Hand ports verified bit-for-bit against the C (gen/cref/run.py compiles the game's own C natively,
+  cut verbatim): NHV1 fighter hash, 33 ftcommon.c movement helpers, staling (plstale/plattack/ft_0881).
+- Trap: `HitCapsule::hit_grabbed_victim_only` is a `:1` unioned with the owner pointer, i.e. the GC
+  address MSB (1 for every heap pointer); see `melee_fighter::compat`. `ABS(-0.0)` is -0.0, not abs().

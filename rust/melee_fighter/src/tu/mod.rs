@@ -100,3 +100,4 @@ pub mod ftCo_Furafura;
 pub mod ftCo_CaptureCaptain;
 pub mod ftCo_MissFoot;
 pub mod ftCo_KneeBend;
+pub mod ftcommon;

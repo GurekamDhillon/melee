@@ -14,6 +14,11 @@ pub mod gm;
 pub mod hud;
 pub mod lb;
 pub mod mn;
+/// Round 3: leaf functions over game structs (pointer arguments), `tests/oracle_ptr.rs`.
+pub mod gm_ptr;
+pub mod hud_ptr;
+pub mod lb_ptr;
+pub mod mn_ptr;
 
 /// `GXColor` (libs/dolphin/include/dolphin/gx/GXStruct.h). TODO(group0): melee_types does not
 /// generate it (no group-0 header reaches GXStruct.h); move it there when it does.

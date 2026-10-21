@@ -119,11 +119,126 @@ now covers 98 functions with 80,030 vectors.
   `expf`, its series need not terminate.
 - Out of these domains the Rust panics on a table index where the C reads past the table.
 
+## Round 3 (night 2, 2026-10-21): leaf functions over game structs
+
+**Picking the batch.** I re-ran the libclang scan over the gm, mn, if, ty and lb TUs for functions that
+take a pointer, have no call and no file-scope variable, and return a non-pointer. I dropped any whose
+body dereferences a pointer it did not get as an argument (`p->a->b`, pointer locals). That leaves 158.
+Round 3 ports 123 of them.
+
+**Ported: 123 functions, all checked bit for bit against the C.** `cargo test -p melee_modes --test oracle_ptr`
+runs 30,750 vectors, 250 per function.
+
+| module | C TUs | functions |
+|---|---|---|
+| `gm_ptr.rs` | gmcamera, gmclassic, gmgiant, gmlightning, gmmain_lib, gmregcommon, gmregenddisp, gmresult, gmslomo, gmstaffroll, gmsupersudden, gmtiny, gmtoulib, gmtou_0, gmtou_1, gmvs, gmvsmelee, gm_1601, gm_1798, gm_17C0, gm_181A, gm_1884, gm_1A3F, gm_1B03 | 52 |
+| `hud_ptr.rs` (if + ty) | ifprize, ifstatus, ifstock, soundtest, textlib, textlib_1, tydisplay, tyfigupon | 22 |
+| `lb_ptr.rs` | lbanim, lbcardnew, lbcollision, lbcommand, lbshadow, lbsnap, lbspdisplay, lbvector, lb_00B0, lb_00F9, lb_013B, lb_0146 | 29 C functions, 28 Rust (`checkJObjFlags` is one Rust function for the two identical static copies, tested under both names) |
+| `mn_ptr.rs` | mncharsel, mndiagram, mndiagram3, mngallery, mninfo, mninfobonus, mnmain, mnname, mnnamenew, mnsound, mnstagesw, mn_22EC | 20 |
+
+The structs are the melee_types records. `gmClassicMatchup` and `FigaTree` are opaque there, because
+they are defined in a `.c` and behind an unscanned header, so they are defined locally with `gc_layout!`
+(TODO(group0)). No function needed another group's code, so there are no stubs.
+
+Pointer conventions:
+- A pointer the C dereferences becomes a reference.
+- It becomes a slice when the C indexes it, and an `Option` when the C checks it for NULL.
+- A pointer the C only stores or compares stays a raw pointer. Examples are `lbColl_800089B8`'s victim,
+  `lb_8000CE30`'s next and `fn_80191240_save_root_jobj`'s jobj.
+
+**Oracle** (`oracle/gen_oracle_ptr.py`, `oracle/build_ptr.sh` -> `tests/data/vectors_ptr.txt`):
+- Each function is cut verbatim and renamed `o_<name>`, as in rounds 1 and 2. Types that the `.c` itself
+  declares and the cut uses are cut too (e.g. `gmClassicMatchup`).
+- Each pointer argument the body dereferences gets a buffer of max(512, sizeof) bytes, or N elements
+  for the array readers listed in `BUFN`.
+- The buffer is filled from a seed by a generator implemented in both main.c and the test (splitmix64
+  words: zeros, small ints, bytes, floats in +-500 and +-2, and raw bits with bit 30 clear, so never
+  NaN or inf).
+- The C views the bytes as its own struct, the Rust as the melee_types record. The test asserts
+  `size_of::<T>()` equals the C `sizeof` for every view.
+- Both sides print the return value and an FNV-1a 64 hash of every buffer afterwards.
+- Pointers the body only stores are passed as plain 64-bit values (0, small, and random).
+- **Bitfield packing.** The cut C is compiled for `x86_64-pc-windows-gnu -mno-ms-bitfields`, not the
+  msvc target that the round 1-2 oracle and melee_types' native check use.
+  - The two targets have the same LLP64 data layout. Itanium bitfield packing puts the fields after a
+    bitfield run at the GameCube offsets melee_types uses. MSVC packing moves them:
+    `StartMeleeRules.x6` is at 8 under msvc, but at 6 on the GC and in melee_types.
+  - On the msvc target the 6 functions over StartMeleeData/CSSData failed for exactly this reason.
+    melee_types only size-asserts records without bitfields against msvc, so its records with
+    bitfields are GC-offset, not msvc-native.
+  - clang 23 refuses `-mno-ms-bitfields` on the msvc target ("Itanium-compatible layout for the Microsoft
+    C++ ABI is not yet supported").
+- **Functions that read or write a bitfield are refused** (3: `initVsPlayer`, `gmMultiman_InitTimedRules`,
+  `fn_801BA1B4`). melee_types stores bitfield bytes in GC bit order, so the byte images differ. They
+  need a field-level comparison.
+- **Fixups** (`f:` tokens) store values after the fill, so loops terminate and indices stay in bounds:
+  - terminators for `gmClassic_GetMatchupCount` (0x148), `un_80303FD4_first/count` (9) and
+    `firstState` (0xFF)
+  - `Command_06`'s loop_count, 1..3
+  - `gm_801B0730`'s 1-based slot, 1..4
+  - `tyDisplay_SetGridSize`'s count, <= 2540; beyond that the s8 row counter wraps and the C loops forever
+  - small row caps for `mnCharSel_MexPackRows`; a random cap near -10^9 makes its fill loop run 10^9
+    times
+  - runs of full-width spaces for `checkStringRest`
+- Rerun with `bash rust/melee_modes/oracle/build_ptr.sh`.
+
+**FMA.** `fma_sites.py` finds fused sites in 11 of the 123. Each `fmadds` in the Rust is one of them,
+and every other `a*b+c` stays unfused:
+
+| function | fused sites |
+|---|---|
+| `lbColl_80005EBC` | 9 |
+| `lbColl_80005FC0` | 5 |
+| `end` | 2 |
+| `sqrDistance` | 2 |
+| `splGetCardinalTangent` | 14 |
+| `splGetBSplineTangent` | 11 |
+| `splGetBezierTangent` | 12 |
+| `lbVector_Mirror` | 3 |
+| `lb_800103D8` | 1 |
+| `lb_80014638` | 2 |
+| `getVolumePosition` | 1 |
+
+I swapped `fmadds` for an unfused `a*c+b` in a scratch copy. The vectors then catch 9 of the 11
+(11 to 125 failing rows each). They do not catch `end` or `lb_80014638`, which only compare the
+fused value, so those two are fused by the IR alone.
+
+**Things the C does that the port keeps:**
+- `firstState` (gm_1A3F.c): its `break` only leaves a `do {} while (0)`, so it always returns the
+  first state's id, or 0 when the table starts with 0xFF. `next_id` has no effect.
+- `gm_80166CCC`: the second team loop runs to 6 over the 5-entry `team_standings`, so it reads
+  `team_standings[5].active`, a byte inside `player_standings[0]`. The Rust reads that byte by offset
+  from the MatchEnd base. MatchEnd has no pointers before it, so this is the same byte on the GC.
+- `checkStringRest` (mnname.c): the full-width space literal is compiled from a UTF-8 source, so the
+  shipping build compares E3 80, not the GameCube's Shift-JIS 81 40 (`mn_ptr::FULLWIDTH_SPACE`).
+- `un_802FE918_update_x3`: `new_x3` is uninitialised in the C when nothing matches. The shipping
+  build's `-ftrivial-auto-var-init=zero` makes it 0.
+- `lbColl_80008D30`: `damage` is a u32 -> f32 conversion.
+
+**Not ported from the 158:**
+- 13 bitfield functions: the 3 the generator refused (above), plus 10 left out of `FUNCS` by hand
+  for the same reason: `gmMultiman_InitScoreRules`, `lbColl_80008688/80008820` (HitCapsule
+  `x40_b4`), `lb_80013BE4`, `lb_80013FF0`, `lb_80014234`, `lb_80014498`, `lb_800144C8`
+  (ColorOverlay `x7C_*`), and `DevText_StoreColorIndex` and `DevText_SetTextColor`
+  (`current_color:2`).
+- 7 empty functions (`fn_801A4BD0`, the OnExit stubs, `fn_8019BA04`, `fn_80021C18`, ...).
+- 12 functions over types melee_types does not generate because they are defined in `.c` files or
+  unscanned headers: `gm_801BC00C_GetCharacterKind`, `fn_80180630_GetX118`, `gm_801AB200_HasCheck`,
+  `getStKind`, `lbArq_80014ABC`, `lbHeap_ResetHeap`, `lbSnap_GetSaveDataOffset`,
+  `mnCount_InitUserData`, `mnGallery_80259604`, `mn_80231634`, `mnSnap_GetLoadPhotoIdx` and
+  `mnVibration_GetCursorRow`.
+- `fn_801B9FB8`, which stores a function's address (`gm_80165290`).
+- `fn_801661E0`, which returns its argument cast to `s32`.
+- `fn_80166A8C`, whose body is MWCC inline asm only, so it has no PC body.
+
+**Domains restricted:** index arguments stay inside their arrays (`DOMAIN` in gen_oracle_ptr.py), for
+example `fn_801656A8` arg1 < 6, `ifStatus_GetStoredTranslationX` < 4 and `is_character_unlocked` n < 64.
+Out of range, the Rust panics on the index, where the C reads past the array.
+
 ## Next round
-- The 255 pointer-taking leaves: struct-in, struct-out helpers over the melee_types records. Check them with
-  zeroed and randomised native structs; the C side needs those records laid out natively.
-- gm_1601's large family of save-data getters (`gm_80162968`, `gm_GetPlayTime`, ...): each calls one
-  gmMainLib accessor over the global save struct. They need a `GameSave` state object in Rust, with the
-  accessors as `TODO(group)` stubs or ports.
-- The non-const static tables (`lbl_803D7AC0`, `lbl_803D85F0`, ... in gm_17E4/gm_17EB) are probably
-  never written. Check that, then treat them as const.
+- Bitfield-touching functions: compare field values, not bytes, or add a native<->GC bitfield bridge.
+- Generate the records that `.c` files define (TODO(group0)), then port the 12 functions above.
+- gm_1601's save-data getters (`gm_80162968`, `gm_GetPlayTime`, ...) need a `GameSave` state object.
+- The non-const static tables in gm_17E4/gm_17EB (`lbl_803D7AC0`, ...): check whether they are ever
+  written, then treat them as const.
+- Callers of rounds 1-3, one level up (the scan with "calls only ported functions").

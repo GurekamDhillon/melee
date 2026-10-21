@@ -56,17 +56,17 @@ pub unsafe extern "C" fn ftdonkey__ftDk_Init_8010D774(g: *mut HSD_GObj) {
 
 /// `ftDk_MS_345_800E0294` (defined in src/melee/ft/kinds/ftDonkey/ftdonkeyheavyturn.c).
 pub unsafe extern "C" fn ftdonkeyheavyturn__ftDk_MS_345_800E0294(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftDk_MS_345_800E0294 (src/melee/ft/kinds/ftDonkey/ftdonkeyheavyturn.c) is not ported");
+    crate::tu::ftdonkeyheavyturn::ftDk_MS_345_800E0294(g);
 }
 
 /// `ftDk_MS_346_800E05E4` (defined in src/melee/ft/kinds/ftDonkey/ftdonkeyheavywait1.c).
 pub unsafe extern "C" fn ftdonkeyheavywait1__ftDk_MS_346_800E05E4(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftDk_MS_346_800E05E4 (src/melee/ft/kinds/ftDonkey/ftdonkeyheavywait1.c) is not ported");
+    crate::tu::ftdonkeyheavywait1::ftDk_MS_346_800E05E4(g);
 }
 
 /// `ftDk_SpecialLw_8010E0CC` (defined in src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
 pub unsafe extern "C" fn ftdonkeyspeciallw__ftDk_SpecialLw_8010E0CC(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftDk_SpecialLw_8010E0CC (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c) is not ported");
+    crate::tu::ftdonkeyspeciallw::ftDk_SpecialLw_8010E0CC(g);
 }
 
 /// `ftDk_SpecialN_DestroyAllEffects` (defined in src/melee/ft/kinds/ftDonkey/ftdonkeyspecialn.c).

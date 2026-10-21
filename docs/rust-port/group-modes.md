@@ -429,3 +429,46 @@ runs the game's own memzero / fn_801771C0 / fn_80165418 / fn_801654A0 from the c
 
 **Next:** the 12 functions over `.c`-defined records (local records with `gc_layout!`, as
 `Fn80168A6CSrc` here), the bitfield functions (compare by value), and the tydisplay sorters.
+
+## Night 3 round 4 (2026-10-21): recount, leftover lb leaves over nested pointers
+
+**Recount.** Group total unchanged: **3,995** functions in the 166 gm/mn/if/ty/lb TUs (libclang
+definition count from `oracle/scan_r4.py`; ~20 lbtrigf/lbvector, group 1's). Ported at the start:
+**275** (274 distinct C names among melee_modes' `pub fn`/`pub unsafe fn` + the second static
+`checkJObjFlags` copy), all verified. After this round: **280 of 3,995 (7.0%)**, all verified.
+`scan_r4.py` now also counts `pub unsafe fn` as ported (it missed them before, so its "mine" set
+under-counted by a few; the counts above were always taken by name, not from the scan).
+
+**TODO stubs.** None inside melee_modes. Rerunning `scan_r4.py`: no newly unlocked callers
+besides group 1's lbvector/lbtrigf functions; the other crates' `TODO(group6)` hooks still read
+the global game state. The c2r externs in melee_fighter (`ftcoll.rs`, `ftcpuattack.rs`,
+`ft_07C1.rs`) for `lbColl_CopyHitCapsule` / `lbColl_8000ACFC` can now bind to `melee_modes::lb_r8`
+(not touched: group 4's crate).
+
+**Ported: 5 functions, all checked bit for bit against the C** (`cargo test -p melee_modes --test oracle_r8`,
+1,950 vectors; `oracle/gen_oracle_r8.py` over gen_oracle_r4.py, `oracle/build_r8.sh`):
+
+| module | C TU | functions |
+|---|---|---|
+| `lb_r8.rs` | lbcollision, lb_00B0, lbspdisplay | `lbColl_CopyHitCapsule`, `lbColl_8000ACFC`, `lb_8000B09C`, `lb_8000B134`, `lb_80011B74` |
+
+- These are the "missing []" near-misses of scan_r4 (no callee, no global, no bitfield) that round 3
+  skipped for nested pointers. Rows: random JObj trees (1-9 joints, INSTANCE flag, AObjs with
+  NO_ANIM/REWINDED combos), DObj chains of 1-6 with MObjs, and victim arrays seeded with the
+  victim argument's value 15% of the time (true in 182/400, 102/500, 116/500 rows).
+- **FMA:** none (lower.py: 0 fmuladd in every cut).
+- `lbColl_CopyHitCapsule`: the C struct assignment copies HitVictim's 4 tail-padding bytes; a
+  field-wise Rust copy failed 250/250 rows on those bytes, so the Rust copies each element
+  bytewise.
+- Mutation check: REWINDED bit 26 -> 25 fails 50/500; dropping the JOBJ_INSTANCE test fails
+  81/500 and 117/500; victims_1 -> victims_2 165/400; `|=` -> `^=` 257/300.
+
+**Unverified ports:** none.
+
+**Workspace tests:** `cargo build --workspace` green; `cargo test --workspace --no-fail-fast`
+fails only `melee_chara` chars_ref and `melee_fighter` plbonus_ref, both crates with other agents'
+uncommitted edits in the worktree at the time; every melee_modes test passes.
+
+**Next:** gm/mn inline getters over `.c`-defined records (`getStKind`, `gm_801AB200_HasCheck`,
+`gm_801BC00C_GetCharacterKind`, `mnVibration_GetCursorRow`, `mnSnap_GetLoadPhotoIdx`, ...), the
+bitfield functions, and the tydisplay sorters.

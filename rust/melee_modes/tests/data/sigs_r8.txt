@@ -1,0 +1,5 @@
+lbColl_CopyHitCapsule buf buf -> void
+lbColl_8000ACFC ptr buf -> s32
+lb_8000B09C buf -> s32
+lb_8000B134 buf -> s32
+lb_80011B74 buf u32 -> void

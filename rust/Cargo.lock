@@ -1182,6 +1182,11 @@ dependencies = [
 [[package]]
 name = "melee_net"
 version = "0.1.0"
+dependencies = [
+ "melee_fighter",
+ "melee_runtime",
+ "melee_types",
+]
 
 [[package]]
 name = "melee_platform"

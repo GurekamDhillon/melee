@@ -20,6 +20,7 @@ pub mod hash;
 pub mod net;
 pub mod pad;
 pub mod rollback;
+pub mod session;
 pub mod sim;
 pub mod transport;
 pub mod wire;

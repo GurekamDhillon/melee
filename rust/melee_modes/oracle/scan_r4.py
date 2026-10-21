@@ -13,12 +13,12 @@ ci, K, T = g.ci, g.K, g.T
 NAT = [a.replace("x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu") for a in g.NAT] + ["-mno-ms-bitfields"]
 mine = set()
 for f in glob.glob("rust/melee_modes/src/*.rs"):
-    mine |= set(re.findall(r"pub fn ([A-Za-z0-9_]+)", open(f, encoding="utf-8").read()))
+    mine |= set(re.findall(r"pub (?:unsafe )?fn ([A-Za-z0-9_]+)", open(f, encoding="utf-8").read()))
 other = set()
 for f in glob.glob("rust/*/src/**/*.rs", recursive=True):
     if "/raw/" in f.replace("\\", "/") or "melee_modes" in f:
         continue
-    other |= set(re.findall(r"pub fn ([A-Za-z0-9_]+)", open(f, encoding="utf-8", errors="replace").read()))
+    other |= set(re.findall(r"pub (?:unsafe )?fn ([A-Za-z0-9_]+)", open(f, encoding="utf-8", errors="replace").read()))
 tus = [l.strip() for l in open("docs/rust-port/game_tus.txt") if re.search(r"melee/(gm|mn|if|ty|lb)/", l)]
 idx = ci.Index.create()
 info = {}

@@ -38,6 +38,19 @@ def frep(m):
 
 
 src, k = fp.subn(frep, src)
+# Narrow targets: gwtool saturates to i32 first, then truncates (cabi::f2i16 etc.).
+fpn = re.compile(r'^(\s*)(%[\w.]+) = fpto([su])i (float|double) ([^ ]+) to (i8|i16)$', re.M)
+
+
+def nrep(m):
+    ind, r, su, t, v, w = m.groups()
+    name = f'@llvm.fpto{su}i.sat.i32.{"f32" if t == "float" else "f64"}'
+    used.add((name, t))
+    return f'{ind}%gwn{r.lstrip("%")} = call i32 {name}({t} {v})\n{ind}{r} = trunc i32 %gwn{r.lstrip("%")} to {w}'
+
+
+src, k2 = fpn.subn(nrep, src)
+k += k2
 assert not re.search(r'= fpto[su]i (float|double) [^ ]+ to i(8|16)\b', src), 'narrow fptosi: add'
 src += ''.join(f'\ndeclare i32 {name}({t})' for name, t in sorted(used)) + '\n'
 open(sys.argv[2], 'w').write(src)

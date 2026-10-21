@@ -51,6 +51,9 @@ this crate has run inside the game).
 | `src/sysdolphin/baselib/random.c` (+ `random.h` `randi`) | `random.rs` | all 8, incl. the PC render stream |
 | `src/melee/lb/lbtrigf.c` | `lbtrigf.rs` | `atanf` (PC), `atan2f`, `acosf`, `asinf`, `lb_sqrtf` (5/5) |
 | `src/melee/lb/lbvector.c` + `lbvector.h` | `lbvector.rs` | 22 of 23 (not `lbVector_WorldToScreen`: needs HSD_CObj, GXProject) |
+| `src/sysdolphin/baselib/mtx.c` (+ mtx.h `fabsf_bitwise`) | `hsd_mtx.rs` | 14 of 22: inverse (+ aliased form), inverse-concat, inverse-transpose, determinant, GetRotation/Translate/Scale, MkRotationMtx, MtxQuat, SRT, SRTQuat, ScaledAdd (port round 1) |
+| `src/sysdolphin/baselib/quatlib.c` | `quatlib.rs` | 6/6 (port round 1) |
+| `src/sysdolphin/baselib/spline.c` | `spline.rs` | 11/11 incl. statics (port round 1) |
 
 Struct records: `Vec3` and `Quaternion` carry `gc_layout!` GameCube offsets; `Mtx`/`Mtx44` are
 plain `[[f32; 4]; N]` (same element order as the GC). `Vec3` implements `StateHash`. These
@@ -61,9 +64,36 @@ what the C computes through its temporary in the aliased case. `PSMTXInverse` re
 `HsdRand` holds random.c's statics; a stage seed redirect is `SeedSlot::Redirected(*mut u32)`
 until stage state exists natively.
 
+## Port round 1 (night 2): baselib math, lowest level first
+
+mtx.c / quatlib.c / spline.c are the leaves under JObj (HSD_MtxSRT/SRTQuat build every joint
+matrix; spline.c feeds JObj path animation). 31 C definitions ported; every fused site matches
+`fma_sites.py` (mtx.c 118 f32 sites, quatlib 38, spline 45).
+
+- Oracle: `oracle/build_hsd.sh` (same flags + `lower.py` as build.sh; links mtx_pc, gekko_fp,
+  lbtrigf, wrap.c and `stubs_hsd.c` for sqrtf/fabsf/ObjAlloc) -> `tests/data/oracle_hsd.txt`
+  (33,000 rows, generated inputs only), replayed by `tests/oracle_hsd.rs`: 66,000 checks, all
+  bit-identical. `lower.py` now also lowers narrow `fptosi` (s16/s8: saturate to i32, then
+  truncate), needed by splGetSplinePoint's `(s16)t`.
+- Mutation check (unfuse one site, rerun): detected for every function except two sites:
+  (1) the Simpson accumulation `var += 4.0F * f(t)` in splArcLengthGetParameter (30,000
+  single-segment bisection rows still give the same result; the bisection only flips on rare
+  comparisons) and (2) slerp's `1.0F - 2.0F*t` (2t is exact, so fused == unfused; harmless).
+  (1) is right by the IR, not by a failing vector.
+- API: matrices returned by value; `HSD_MtxInverse(m, m)` is a separate `inverse_in_place`
+  because the C reads `src[r][3]` after writing `dest[0..r][3]` (different result from the
+  non-aliased call, reproduced). Spline takes a borrowed `Spline<'_>` view (slices for cv,
+  segLength, segPoly) instead of the raw `HSD_Spline` pointers. `None` where the C leaves the
+  output untouched.
+- Not ported in mtx.c: HSD_VecAlloc/Free, HSD_MtxAlloc/Free, the four `*AllocData` functions
+  (HSD_ObjAlloc pool wrappers; they wait for objalloc.c / the object system).
+- Not started this round: the object system itself (HSD_Obj/class.c, GObj, JObj, AObj, DObj).
+  These are stateful (no pure oracle); they need a decision on native object ownership
+  (arena + indices vs Box) before porting.
+
 ## Not ported
 
-About 80 of the group's ~2,000 C function definitions are ported (~4%). Everything below is
+About 111 of the group's ~2,000 C function definitions are ported (~4%). Everything below is
 untouched:
 
 - `src/sysdolphin/baselib` (~1,200 functions, 48k lines): the HSD object system (JObj, DObj, MObj,

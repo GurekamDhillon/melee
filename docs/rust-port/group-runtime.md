@@ -127,3 +127,58 @@ and the round 4 AObj, so it went next. 27 jobj.c definitions in `jobj.rs`, plus 
 - Not ported: `HSD_WObjSetDefaultClass`, WObjRelease / Amnesia / InfoInit, `HSD_WObjUnref` (class
   system); the rest of dobj.c (anim functions need MObj/PObj, Load/ResolveRefs, Remove/Alloc,
   Disp).
+
+## Port round 7: RObj (constraints, limits, expressions)
+
+`robj.c` sits on round 5's JObj (`setup_matrix`, `make_matrix`), the round 1/2 matrix and PSVEC
+ports and round 4's AObj, and it is what jobj.c's IK solvers and `HSD_RObjUpdateAll` stubs were
+waiting for, so it went next. 38 robj.c definitions plus mtx.h's `HSD_MtxColMag` / `HSD_MtxColVec`
+in `robj.rs`:
+
+| function(s) | checked against C |
+|---|---|
+| HSD_RObjSetFlags, HSD_RObjGetByType (+ the static inlined copy), HSD_RObjGetConstraintType, HSD_RObjGetGlobalPosition | yes |
+| HSD_RObjUpdateAll with set_dirup_matrix, resolveCnsDirUp, resolveCnsOrientation (both branches), resolveLimits, expEvaluate; HSD_MtxColMag, HSD_MtxColVec | yes |
+| HSD_RObjLoadDesc, expLoadDesc, bcexpLoadDesc, loadRvalue, dummy_func, HSD_RObjResolveRefs(+All), HSD_RvalueResolveRefs(+All), HSD_RObjSetConstraintObj | yes |
+| RObjUpdateFunc, HSD_RObjAnim(+All), RemoveAnimByFlags / AllByFlags / All, ReqAnimByFlags / AllByFlags / All, AddAnim(+All) | no (thin wrappers over the checked AObj port) |
+| HSD_RObjRemove(+All), HSD_RObjAlloc, HSD_RvalueAlloc / Remove / RemoveAll, _HSD_RObjForgetMemory | no (native allocation; their only effect is the ref/unref host calls) |
+
+- Native shape: an RObj chain is a `Vec<HsdRObj>` / slice in list order; the C union is `RObjU`
+  (one field per member, read by the type bits as in the C; reading a member after `SetFlags`
+  ORs in new type bits is not modelled, the game never does it). `HsdRObjDesc::u` is the enum
+  `RObjDescU`; `HSD_RvalueList` arrays are slices without the NULL terminator; the update
+  callback is `RObjUpdate` (tree, obj, type, `Option<RObjVal>`). `HsdRObj` / `HsdRObjDesc`
+  delegate `GcLayout` to `melee_types::HSD_RObj` / `HSD_RObjDesc`. `RObjGlobals` holds
+  expEvaluate's `arg_buf` (zeroed natively; the C's HSD_MemAlloc buffer is uninitialised).
+- Stubs via `RObjHost`: `HSD_JObjRefThis` / `HSD_JObjUnrefThis` (TODO(group1 class)),
+  `HSD_ByteCodeEval` (TODO(group1 bytecode)). ID lookups (`HSD_IDGetData`) and AObjLoadDesc's
+  obj_id lookup are closures.
+- FMA: `fma_sites.py` finds no fused site in robj.c's own functions; `HSD_MtxColMag` has two
+  (`fmadds(m2, m2, fmadds(m0, m0, m1*m1))`), the rest are math_ppc `sqrtf` and the PSVEC/HSD_Mtx
+  ports. The oracle discriminates ColMag's fusion: unfused, 927 checks fail.
+- Oracle: `oracle/build_robj.sh` compiles robj.c, jobj.c, mtx.c, mtx_pc.c, gekko_fp.c, lbtrigf.c
+  and `helper_robj.c` with the shipping flags + `lower.py`; `driver_robj.c` writes
+  `tests/data/oracle_robj.txt` (23k rows, 2.4 MB): 400 scenarios, each a 3-12 JObj forest
+  (random SRT, CLASSICAL_SCALE, scl) and a 1-10 RObj chain built by LoadDesc + ResolveRefsAll
+  (+ random SetConstraintObj) from random descs of every type (JObj constraints of subtype 1-5,
+  limits 0-13, expressions with fn0 / fn1 / NULL func, bytecode with and without code, IK
+  hints, rvalue lists over all 26 argument bits incl. unhandled ones), then 40 random ops
+  (UpdateAll on a random JObj, GetGlobalPosition types 0-5, GetByType, SetFlags, SRT change +
+  SetMtxDirty, SetupMatrix). The callback hashes every call and writes the orientation /
+  position vectors into the object's matrix (so later reads see them, as JObjUpdateFunc's
+  would). `tests/oracle_robj.rs`: 16,619 checks, 0 failed, 27,018 callback calls, debug and
+  release.
+- NaN: the hashes canonicalise NaN. Degenerate matrices (zero columns written by the
+  orientation callback) make get_scale / vec_normalize produce NaN; the C (x86 SSE) gives
+  0xFFC00000 and the Rust port gives 0x7FC00000 in a debug build but 0xFFC00000 in release (the
+  f64 path in `vec_normalize`/`frsqrte` is not sign-stable across opt levels). 27 checks
+  differed only by that sign before canonicalising. This is a crate-level property of round 1's
+  `mtx::vec_normalize`, not of robj.c; it matters only if a game NaN's bits are stored and read.
+- Mutation: dropping the parent-chain concat in resolveCnsOrientation fails 770 checks, the
+  expEvaluate deg->rad scale 1,352, LoadDesc's limit conversion for subtype 6 1,342, the obj
+  column magnitude 2,898, resolveLimits case 11's translate.y (vs z) 1,160. Not discriminated:
+  resolveCnsDirUp's `up = (0,0,1)` fallback (needs `|1 - dot| < 1e-10`; the random data never
+  hits it).
+- Not ported: the alloc-data getters / initialiser (native allocation), `HSD_RObjFree` (drop).
+  Not wired yet: jobj.rs's `JObjHost::ik_hint_bone_length` / `robj_update_all` still stub;
+  wiring them needs JObjUpdateFunc (jobj.c anim, not ported) and an RObj handle on the JObj.

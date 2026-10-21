@@ -30,5 +30,6 @@ pub mod list;
 pub mod mtx;
 pub mod quatlib;
 pub mod random;
+pub mod robj;
 pub mod spline;
 pub mod wobj;

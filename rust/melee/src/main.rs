@@ -26,6 +26,8 @@ use std::io::Write;
 use std::process::ExitCode;
 
 mod disc;
+mod effect;
+mod fighter_data;
 mod stage;
 mod vs_match;
 

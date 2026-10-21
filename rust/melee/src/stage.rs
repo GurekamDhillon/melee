@@ -102,3 +102,132 @@ fn world_translation(d: &[u8], chain: &[u32]) -> ([f32; 3], bool) {
     }
     ([m[0][3], m[1][3], m[2][3]], exact)
 }
+
+/// The stage file's particle bank: `map_ptcl` / `map_texg`, located once
+/// (`grDatFiles_801C5FC0` -> `psInitDataBankLocate`). `Ground` then loads it into banks 0x40
+/// (`grDatFiles_801C6038`) and 0x1E (ground.c ~873).
+pub fn particle_bank(a: &DatArchive) -> Result<Option<melee_runtime::particle::PsBankData>, String> {
+    match (a.public_offset("map_ptcl"), a.public_offset("map_texg")) {
+        (Some(c), Some(t)) => {
+            let data: std::sync::Arc<[u8]> = std::sync::Arc::from(&a.data[..]);
+            melee_runtime::particle::PsBankData::locate(&data, c, t).map(Some)
+        }
+        _ => Ok(None),
+    }
+}
+
+/// A joint animation track that spawns particles (FObj type 0x28, `HSD_A_J_PTCL`): its joint
+/// (DAT offset of the `HSD_Joint`, with the ancestor chain for the world matrix) and its AObj.
+pub struct DptclTrack {
+    pub joint: u32,
+    pub chain: Vec<u32>,
+    pub aobj: melee_runtime::aobj::HsdAObjDesc,
+}
+
+/// Every particle track of map gobj `gobj`'s animation `anim` (`map_head->unk8[gobj].unk4[anim]`
+/// walked in parallel with the joint tree `unk8[gobj].unk0`). Only the 0x28 FObjs are kept: the
+/// others move the JObj, which the frame hash never reads.
+pub fn dptcl_tracks(a: &DatArchive, gobj: u32, anim: u32) -> Vec<DptclTrack> {
+    let d = &a.data;
+    let Some(head) = a.public_offset("map_head") else { return Vec::new() };
+    let (gobjs, n) = (be32(d, head + 8), be32(d, head + 12));
+    if gobj >= n {
+        return Vec::new();
+    }
+    let e = gobjs + gobj * 0x34;
+    let (root, anims) = (be32(d, e), be32(d, e + 4));
+    if anims == 0 || !a.is_reloc(e + 4) {
+        return Vec::new();
+    }
+    let aj_root = be32(d, anims + 4 * anim);
+    dptcl_tracks_of(a, root, aj_root)
+}
+
+/// Every particle track (FObj 0x28) of animjoint tree `aj_root` walked in parallel with joint tree
+/// `root` (`HSD_JObjAddAnimAll`'s pairing: child with child, next with next).
+pub fn dptcl_tracks_of(a: &DatArchive, root: u32, aj_root: u32) -> Vec<DptclTrack> {
+    use melee_runtime::aobj::HsdAObjDesc;
+    use melee_runtime::fobj::HsdFObjDesc;
+    let d = &a.data;
+    let mut out = Vec::new();
+    // (joint, animjoint, chain)
+    let mut stack = vec![(root, aj_root, Vec::<u32>::new())];
+    while let Some((j, aj, chain)) = stack.pop() {
+        if j == 0 || aj == 0 {
+            continue;
+        }
+        let mut c = chain.clone();
+        c.push(j);
+        let aobj = be32(d, aj + 8);
+        if aobj != 0 {
+            let mut fobjs = Vec::new();
+            let mut fo = be32(d, aobj + 8);
+            while fo != 0 {
+                let (len, ty) = (be32(d, fo + 4), d[fo as usize + 12]);
+                if ty == 0x28 {
+                    let ad = be32(d, fo + 16) as usize;
+                    fobjs.push(HsdFObjDesc {
+                        length: len,
+                        startframe: bef(d, fo + 8),
+                        type_: ty,
+                        frac_value: d[fo as usize + 13],
+                        frac_slope: d[fo as usize + 14],
+                        ad: std::sync::Arc::from(&d[ad..(ad + len as usize).min(d.len())]),
+                    });
+                }
+                fo = be32(d, fo);
+            }
+            if !fobjs.is_empty() {
+                out.push(DptclTrack {
+                    joint: j,
+                    chain: c.clone(),
+                    aobj: HsdAObjDesc { flags: be32(d, aobj), end_frame: bef(d, aobj + 4), fobjdesc: fobjs, obj_id: be32(d, aobj + 12) },
+                });
+            }
+        }
+        let flags = be32(d, j + 4);
+        stack.push((be32(d, j + 0xC), be32(d, aj + 4), chain));
+        if flags & JOBJ_INSTANCE == 0 {
+            stack.push((be32(d, j + 8), be32(d, aj), c));
+        }
+    }
+    out
+}
+
+/// The world matrix of a joint chain from the joint descriptors (bind pose: no animation, the
+/// `HSD_MtxSRT` order; see `world_translation` for exactness). TODO(group1 jobj): the animated
+/// JObj matrix.
+pub fn bind_pose_matrix(d: &[u8], chain: &[u32]) -> melee_runtime::mtx::Mtx {
+    use melee_runtime::mtx::{self, Vec3};
+    let mut m = mtx::identity();
+    for &j in chain {
+        let (r, s, t) = srt(d, j);
+        let v = |a: [f32; 3]| Vec3 { x: a[0], y: a[1], z: a[2] };
+        let l = melee_runtime::hsd_mtx::srt(&v(s), &v(r), &v(t), None);
+        m = mtx::concat(&m, &l);
+    }
+    m
+}
+
+/// `grGroundParam` (for the music rows).
+pub fn ground_param(a: &DatArchive) -> Option<u32> {
+    a.public_offset("grGroundParam")
+}
+
+/// As [`bind_pose_matrix`], with the root joint's translation and scale replaced (an effect root
+/// positioned by its RObj constraint, `lb_8000C1C0`, and scaled by `efAsync_SetEffectScaleXYZ`).
+pub fn bind_pose_matrix_rooted(d: &[u8], chain: &[u32], root_t: [f32; 3], root_s: [f32; 3]) -> melee_runtime::mtx::Mtx {
+    use melee_runtime::mtx::{self, Vec3};
+    let v = |a: [f32; 3]| Vec3 { x: a[0], y: a[1], z: a[2] };
+    let mut m = mtx::identity();
+    for (i, &j) in chain.iter().enumerate() {
+        let (r, mut s, mut t) = srt(d, j);
+        if i == 0 {
+            s = root_s;
+            t = root_t;
+        }
+        let l = melee_runtime::hsd_mtx::srt(&v(s), &v(r), &v(t), None);
+        m = mtx::concat(&m, &l);
+    }
+    m
+}

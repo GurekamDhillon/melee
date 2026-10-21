@@ -139,7 +139,7 @@ against a running Rust game: no Rust simulation exists yet, so no golden has bee
 | 2 world | melee_world | 3013 | 50 (mplib line queries + line geometry) | all; 27231 + 50454 rows (oracles contraction on + gwtool lowering, night 2) | mp types, hand-written from header comments | cm, ef, gr, if; rest of mplib |
 | 3 fighter engine | melee_fighter | ~2820 | 57 (nh_Fighter, ftcommon movement, staling) | all (6600 + 12000 + 64 cases) | melee_types (re-exported as `crate::types`) | everything else; c2r layer (feature `c2r`) compiles, never linked |
 | 4 characters | melee_chara | ~4340 | 13 (pure helpers) | frsqrte / my_sqrtf / sumOfSquares (oracle contraction on, night 2; my_sqrtf now fused) | melee_types (re-exported as `types_gen`) | all Fighter-touching code (~99.7%) |
-| 5 items/ty/vi | melee_items | ~5000 | 39: 9 Item-only + 30 leaf helpers (round 1, `helpers.rs`) + item hash | 18 tests vs C oracle (contraction on + lower.py; 8 f32 + 1 f64 fused sites, 2 of them not exercised by a vector) | melee_types (re-exported as `layout`) | spawn/think/collision, trophies, vi |
+| 5 items/ty/vi | melee_items | ~5000 | 38: 9 Item-only + 29 leaf helpers (round 1, `helpers.rs`) + item hash | 18 tests vs C oracle (contraction on + lower.py; 8 f32 + 1 f64 fused sites, 2 of them not exercised by a vector) | melee_types (re-exported as `layout`) | spawn/think/collision, trophies, vi |
 | 6 modes | melee_modes | n/a | 0 | none | none | all |
 | asm (10 items) | n/a | n/a | 0 | n/a | n/a | none belonged to groups 0-5; crash-screen register reads return 0 on PC |
 

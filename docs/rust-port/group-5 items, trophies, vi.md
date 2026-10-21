@@ -44,7 +44,7 @@ are comments citing m-ex patches.
 
 `cargo build -p melee_items` and `cargo test -p melee_items` pass with no warnings.
 
-## Round 1 (night 2): 30 leaf functions, `src/helpers.rs`
+## Round 1 (night 2): 29 leaf functions, `src/helpers.rs`
 
 Chosen by scanning it/ty/vi for function bodies that call nothing (a regex pass, so a candidate
 list, not a call graph) and taking the ones that are pure math or touch only `Item` /

@@ -1,0 +1,105 @@
+# sizeof assertions that fail on x86_64 (pass-1 of gen_compile_commands.py --check, no masking)
+sizeof(CardTask) == 84': (sizeof(CardTask
+sizeof(_tyDisplay_804A2DD0) == 0x18
+sizeof(expr) == size
+sizeof(gm_80473814) == 0x204
+sizeof(ifStock_804A1378) == 0x3FC
+sizeof(ifStock_804A1774) == 0x318
+sizeof(ifStock_804A1A8C) == 0x40
+sizeof(ifStock_804A1ACC) == 0x314
+sizeof(itZeldaDinFire_ItemVars) == 36': (sizeof(itZeldaDinFire_ItemVars
+sizeof(lbMemory_804318B0) == 0x6F0
+sizeof(struct BracketEntry) == 220': (sizeof(struct BracketEntry
+sizeof(struct BracketEntrySlot) == 44': (sizeof(struct BracketEntrySlot
+sizeof(struct Camera) == 924': (sizeof(struct Camera
+sizeof(struct CardActiveRequest) == 16': (sizeof(CardActiveRequest
+sizeof(struct CardCmd) == 36': (sizeof(CardCmd
+sizeof(struct CardCmdBuf) == 40': (sizeof(CardCmdBuf
+sizeof(struct CardRequest) == 24': (sizeof(CardRequest
+sizeof(struct CardState) == 1124': (sizeof(CardState
+sizeof(struct CollJoint) == 52': (sizeof(struct CollJoint
+sizeof(struct ColorOverlay) == 128': (sizeof(struct ColorOverlay
+sizeof(struct CpuFighter) == 1404': (sizeof(struct CpuFighter
+sizeof(struct DevText) == 52': (sizeof(struct DevText
+sizeof(struct DevText_Pool) == 1712': (sizeof(struct DevText_Pool
+sizeof(struct DmgLogEntry) == 40': (sizeof(struct DmgLogEntry
+sizeof(struct DynamicBoneTable) == 400': (sizeof(struct DynamicBoneTable
+sizeof(struct DynamicsData) == 152': (sizeof(struct DynamicsData
+sizeof(struct EF_DAT_Entry) == 12': (sizeof(EF_DAT_Entry
+sizeof(struct EF_ParamEntry) == 8': (sizeof(EF_ParamEntry
+sizeof(struct Fighter) == 9196': (sizeof(struct Fighter
+sizeof(struct FighterBone) == 16': (sizeof(struct FighterBone
+sizeof(struct FighterHurtCapsule) == 76': (sizeof(FighterHurtCapsule
+sizeof(struct Fighter_804D653C_t) == 8': (sizeof(struct Fighter_804D653C_t
+sizeof(struct GameScene) == 20': (sizeof(struct GameScene
+sizeof(struct Ground) == 516': (sizeof(struct Ground
+sizeof(struct HSD_Archive) == 68': (sizeof(struct HSD_Archive
+sizeof(struct HSD_JObj) == 136': (sizeof(struct HSD_JObj
+sizeof(struct HSD_SObjDesc) == 8': (sizeof(struct HSD_SObjDesc
+sizeof(struct HSD_SObjDesc2) == 12': (sizeof(struct HSD_SObjDesc2
+sizeof(struct Heap) == 28': (sizeof(struct Heap
+sizeof(struct HitCapsule) == 312': (sizeof(HitCapsule
+sizeof(struct Item) == 4048': (sizeof(struct Item
+sizeof(struct ItemLink) == 472': (sizeof(struct ItemLink
+sizeof(struct Item_DynamicBones) == 28': (sizeof(struct Item_DynamicBones
+sizeof(struct MemEntry) == 12': (sizeof(struct MemEntry
+sizeof(struct Menu) == 8': (sizeof(struct Menu
+sizeof(struct ParticleConsoleState) == 40': (sizeof(struct ParticleConsoleState
+sizeof(struct PerfLabelLine) == 136': (sizeof(PerfLabelLine
+sizeof(struct ResultsData) == 1448': (sizeof(struct ResultsData
+sizeof(struct StageInfo) == 1864': (sizeof(struct StageInfo
+sizeof(struct TmBoxArrays) == 12': (sizeof(struct TmBoxArrays
+sizeof(struct TmData) == 1396': (sizeof(struct TmData
+sizeof(struct ToyAnimState) == 20': (sizeof(ToyAnimState
+sizeof(struct ToyCameraControl) == 228': (sizeof(ToyCameraControl
+sizeof(struct ToyED8Data) == 92': (sizeof(struct ToyED8Data
+sizeof(struct TyListState) == 684': (sizeof(struct TyListState
+sizeof(struct TyViewData) == 8': (sizeof(struct TyViewData
+sizeof(struct Unk80433380) == 96': (sizeof(struct Unk80433380
+sizeof(struct UnkAdventureData) == 128': (sizeof(struct UnkAdventureData
+sizeof(struct UnkAllstarData) == 160': (sizeof(struct UnkAllstarData
+sizeof(struct UnkStageDat_x8_t) == 52': (sizeof(struct UnkStageDat_x8_t
+sizeof(struct VsSceneController) == 9512': (sizeof(struct VsSceneController
+sizeof(struct _HSD_ObjAllocData) == 44': (sizeof(struct _HSD_ObjAllocData
+sizeof(struct _Toy_804A26B8_t) == 12': (sizeof(struct _Toy_804A26B8_t
+sizeof(struct _ftPurinAttributes) == 256': (sizeof(ftPurinAttributes
+sizeof(struct _m2c_stack_it_802BB290) == 168': (sizeof(struct _m2c_stack_it_802BB290
+sizeof(struct enterMenu0_Data) == 8': (sizeof(struct enterMenu0_Data
+sizeof(struct exitIntroData) == 4': (sizeof(struct exitIntroData
+sizeof(struct ftDeviceUnk4) == 8': (sizeof(struct ftDeviceUnk4
+sizeof(struct ftDeviceUnk5) == 12': (sizeof(struct ftDeviceUnk5
+sizeof(struct ftKb_FighterVars) == 248': (sizeof(struct ftKb_FighterVars
+sizeof(struct ftYs_DatAttrs) == 288': (sizeof(struct ftYs_DatAttrs
+sizeof(struct ft_80459B88_t) == 4 + 4 * Ft_Kind_Max': (sizeof(struct ft_80459B88_t
+sizeof(struct gmClassicSceneData) == 1376': (sizeof(gmClassicSceneData
+sizeof(struct gmClassic_803DDEC8Data) == 752': (sizeof(gmClassic_803DDEC8Data
+sizeof(struct gm_1832_804736C0_t) == 64': (sizeof(struct gm_1832_804736C0_t
+sizeof(struct gmm_x0) == 68144': (sizeof(struct gmm_x0
+sizeof(struct gmm_x0_vsmodes) == 6224 - 1416': (sizeof(struct gmm_x0_vsmodes
+sizeof(struct grBigBlue_CarVars) == 272': (sizeof(struct grBigBlue_CarVars
+sizeof(struct grBigBlue_ManagerVars) == 284': (sizeof(struct grBigBlue_ManagerVars
+sizeof(struct grGreens_BlockVars) == 32': (sizeof(struct grGreens_BlockVars
+sizeof(struct grMc_CarEntry) == 44': (sizeof(grMc_CarEntry
+sizeof(struct itSeakChain_Attrs) == 108': (sizeof(struct itSeakChain_Attrs
+sizeof(struct lbHeap_HeapState) == 16 + 7 * 28': (sizeof(struct lbHeap_HeapState
+sizeof(struct lb_804D63A0_t) == 48640': (sizeof(struct lb_804D63A0_t
+sizeof(struct lb_804D63A8_t) == 448': (sizeof(struct lb_804D63A8_t
+sizeof(struct lbl_803FDDE4_t) == 120': (sizeof(struct lbl_803FDDE4_t
+sizeof(struct lbl_8046B378_t) == 272': (sizeof(lbl_8046B378_t
+sizeof(struct lbl_8046B488_event_player_init_cb_t) == 448': (sizeof(struct lbl_8046B488_event_player_init_cb_t
+sizeof(struct lbl_8046B488_t) == 480': (sizeof(struct lbl_8046B488_t
+sizeof(struct lbl_80472ED8_t) == 1724': (sizeof(lbl_80472ED8_t
+sizeof(struct mnDiagram_Assets) == 280': (sizeof(mnDiagram_Assets
+sizeof(struct mnDiagram_PopupData) == 76': (sizeof(mnDiagram_PopupData
+sizeof(struct mnGallery_804D6C88_userdata) == 36': (sizeof(struct mnGallery_804D6C88_userdata
+sizeof(struct mnGallery_child_userdata) == 8': (sizeof(struct mnGallery_child_userdata
+sizeof(struct stateMachine) == 20': (sizeof(struct stateMachine
+sizeof(struct un_80301C64_t) == 8': (sizeof(struct un_80301C64_t
+sizeof(struct un_80304138_objalloc_t) == 32': (sizeof(struct un_80304138_objalloc_t
+sizeof(struct un_80304138_objalloc_t_x8) == 32': (sizeof(struct un_80304138_objalloc_t_x8
+sizeof(struct un_804A1F48_t) == 12': (sizeof(struct un_804A1F48_t
+sizeof(un_803F9E08) == 0x10
+sizeof(un_803F9E60) == 0x38
+sizeof(union GroundVars) == 320': (sizeof(union GroundVars
+sizeof(union HSD_CObjDesc) == 64': (sizeof(HSD_CObjDesc
+sizeof(union PolymorphicDesc) == 144': (sizeof(union PolymorphicDesc

@@ -1,0 +1,543 @@
+//! Output side of shim_ax.c: the frame driver (`gw_ax_frame_tick`), master volume
+//! (`gw_Audio_Volume` / `gw_Audio_SetVolume`, `audio.cfg`), `MELEE_AUDIO_DUMP` WAV capture, and
+//! the device: a lock-free single-producer/single-consumer ring drained by a cpal callback
+//! (the C used an SDL3 audio stream). None of this is game-visible.
+//!
+//! Pacing is as in the C: with a device, the number of 5 ms sub-frames to generate per call is
+//! the shortfall of the ring against its target cushion (the device clock plays the DSP's 5 ms
+//! interrupt); without one (turbo, headless, no device), the wall clock drives the synth.
+//! Differences from the SDL path: cpal has no stream resampler, so when the device will not run
+//! at 32 kHz the callback resamples linearly to the device rate, and the gain is applied there.
+
+use std::fs::File;
+use std::io::{Seek, SeekFrom, Write};
+use std::path::PathBuf;
+use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+
+use crate::ax::Ax;
+use crate::{FRAME_SAMPLES, RATE};
+
+/// 512 ms of stereo frames (the C's 65536-byte ring).
+pub const RING_FRAMES: u32 = 16384;
+/// 80 ms of catch-up per call.
+pub const MAX_BURST: u32 = 16;
+
+/// SPSC ring of stereo frames, each packed as `L as u16 | (R as u16) << 16`.
+pub struct Ring {
+    buf: Box<[AtomicU32]>,
+    /// frames produced / consumed (monotonic, wrapping)
+    w: AtomicU32,
+    r: AtomicU32,
+    pub underruns: AtomicU32,
+    pub overruns: AtomicU32,
+}
+
+impl Default for Ring {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Ring {
+    pub fn new() -> Self {
+        Ring {
+            buf: (0..RING_FRAMES).map(|_| AtomicU32::new(0)).collect(),
+            w: AtomicU32::new(0),
+            r: AtomicU32::new(0),
+            underruns: AtomicU32::new(0),
+            overruns: AtomicU32::new(0),
+        }
+    }
+    /// Frames currently buffered.
+    pub fn len(&self) -> u32 {
+        self.w.load(Ordering::Acquire).wrapping_sub(self.r.load(Ordering::Acquire))
+    }
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+    /// Producer: push interleaved stereo; drops what does not fit (counted as an overrun).
+    pub fn push(&self, stereo: &[i16]) {
+        let w = self.w.load(Ordering::Relaxed);
+        let avail = RING_FRAMES - w.wrapping_sub(self.r.load(Ordering::Acquire));
+        let mut n = (stereo.len() / 2) as u32;
+        if avail < n {
+            self.overruns.fetch_add(1, Ordering::Relaxed);
+            n = avail;
+        }
+        for k in 0..n {
+            let l = stereo[k as usize * 2] as u16 as u32;
+            let r = stereo[k as usize * 2 + 1] as u16 as u32;
+            self.buf[(w.wrapping_add(k) % RING_FRAMES) as usize].store(l | r << 16, Ordering::Relaxed);
+        }
+        self.w.store(w.wrapping_add(n), Ordering::Release);
+    }
+    /// Consumer: one frame, or None on underrun.
+    pub fn pop(&self) -> Option<(i16, i16)> {
+        let r = self.r.load(Ordering::Relaxed);
+        if self.w.load(Ordering::Acquire) == r {
+            return None;
+        }
+        let v = self.buf[(r % RING_FRAMES) as usize].load(Ordering::Relaxed);
+        self.r.store(r.wrapping_add(1), Ordering::Release);
+        Some((v as u16 as i16, (v >> 16) as u16 as i16))
+    }
+}
+
+// ---- master volume --------------------------------------------------------------------------
+
+fn cfg_path() -> PathBuf {
+    std::env::current_exe()
+        .ok()
+        .and_then(|p| p.parent().map(|d| d.join("audio.cfg")))
+        .unwrap_or_else(|| PathBuf::from("audio.cfg"))
+}
+
+/// `atoi`: leading whitespace, optional sign, digits; 0 when none.
+fn atoi(s: &str) -> i32 {
+    let s = s.trim_start();
+    let (neg, rest) = match s.as_bytes().first() {
+        Some(b'-') => (true, &s[1..]),
+        Some(b'+') => (false, &s[1..]),
+        _ => (false, s),
+    };
+    let mut v: i64 = 0;
+    for c in rest.bytes().take_while(u8::is_ascii_digit) {
+        v = (v * 10 + (c - b'0') as i64).min(i32::MAX as i64 + 1);
+    }
+    (if neg { -v } else { v }).clamp(i32::MIN as i64, i32::MAX as i64) as i32
+}
+
+/// Master volume 0..100: MELEE_VOLUME, else `volume = N` in audio.cfg beside the exe, else 100.
+pub fn load_volume() -> i32 {
+    let mut vol = 100;
+    if let Ok(text) = std::fs::read_to_string(cfg_path()) {
+        for line in text.lines() {
+            let l = line.trim_start();
+            if let Some(rest) = l.strip_prefix("volume") {
+                if let Some(v) = rest.trim_start().strip_prefix('=') {
+                    let v = v.trim_start();
+                    if v.starts_with(|c: char| c.is_ascii_digit() || c == '-' || c == '+') {
+                        vol = atoi(v).clamp(0, 100);
+                    }
+                }
+            }
+        }
+    }
+    if let Ok(env) = std::env::var("MELEE_VOLUME") {
+        if !env.is_empty() {
+            vol = atoi(&env).clamp(0, 100);
+        }
+    }
+    vol
+}
+
+/// Write audio.cfg (the settings menu's gw_Audio_SetVolume).
+pub fn save_volume(percent: i32) -> std::io::Result<()> {
+    std::fs::write(
+        cfg_path(),
+        format!("# melee-pc audio settings (the game rewrites this file)\nvolume = {}\n", percent.clamp(0, 100)),
+    )
+}
+
+// ---- WAV capture ----------------------------------------------------------------------------
+
+/// 32 kHz stereo s16 WAV; sizes refreshed about once a second so a crash leaves a playable file.
+pub struct Wav {
+    f: File,
+    bytes: u32,
+}
+
+impl Wav {
+    pub fn create(path: &str) -> std::io::Result<Wav> {
+        let mut f = File::create(path)?;
+        f.write_all(&Self::header(0))?;
+        Ok(Wav { f, bytes: 0 })
+    }
+    fn header(data: u32) -> [u8; 44] {
+        let mut h = [0u8; 44];
+        h[0..4].copy_from_slice(b"RIFF");
+        h[4..8].copy_from_slice(&(36 + data).to_le_bytes());
+        h[8..16].copy_from_slice(b"WAVEfmt ");
+        h[16] = 16;
+        h[20] = 1; // PCM
+        h[22] = 2; // stereo
+        h[24..28].copy_from_slice(&RATE.to_le_bytes());
+        h[28..32].copy_from_slice(&(RATE * 4).to_le_bytes());
+        h[32] = 4;
+        h[34] = 16;
+        h[36..40].copy_from_slice(b"data");
+        h[40..44].copy_from_slice(&data.to_le_bytes());
+        h
+    }
+    pub fn write(&mut self, stereo: &[i16]) {
+        let bytes: Vec<u8> = stereo.iter().flat_map(|s| s.to_le_bytes()).collect();
+        if self.f.write_all(&bytes).is_err() {
+            return;
+        }
+        self.bytes = self.bytes.wrapping_add(bytes.len() as u32);
+        if self.bytes % (FRAME_SAMPLES as u32 * 4 * 200) == 0 {
+            let _ = self.finish();
+        }
+    }
+    fn finish(&mut self) -> std::io::Result<()> {
+        let pos = self.f.stream_position()?;
+        self.f.seek(SeekFrom::Start(0))?;
+        self.f.write_all(&Self::header(self.bytes))?;
+        self.f.seek(SeekFrom::Start(pos))?;
+        self.f.flush()
+    }
+}
+
+impl Drop for Wav {
+    fn drop(&mut self) {
+        let _ = self.finish();
+    }
+}
+
+// ---- the device -----------------------------------------------------------------------------
+
+#[cfg(feature = "device")]
+mod device {
+    use super::*;
+    use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+
+    pub struct Device {
+        _stream: cpal::Stream,
+        pub rate: u32,
+    }
+
+    struct Feed {
+        ring: Arc<Ring>,
+        gain: Arc<AtomicU32>,
+        /// 16.16 phase step of the 32 kHz source per device frame.
+        step: u32,
+        frac: u32,
+        cur: (i16, i16),
+        next: (i16, i16),
+    }
+
+    impl Feed {
+        fn frame(&mut self) -> (f32, f32) {
+            if self.step == 0x10000 {
+                self.cur = self.pop();
+            } else {
+                self.frac += self.step;
+                while self.frac >= 0x10000 {
+                    self.frac -= 0x10000;
+                    self.cur = self.next;
+                    self.next = self.pop();
+                }
+            }
+            let t = self.frac as f32 / 65536.0;
+            let g = f32::from_bits(self.gain.load(Ordering::Relaxed)) / 32768.0;
+            let (a, b) = (self.cur, self.next);
+            if self.step == 0x10000 {
+                return (a.0 as f32 * g, a.1 as f32 * g);
+            }
+            (
+                (a.0 as f32 + (b.0 as f32 - a.0 as f32) * t) * g,
+                (a.1 as f32 + (b.1 as f32 - a.1 as f32) * t) * g,
+            )
+        }
+        fn pop(&mut self) -> (i16, i16) {
+            self.ring.pop().unwrap_or_else(|| {
+                self.ring.underruns.fetch_add(1, Ordering::Relaxed);
+                (0, 0)
+            })
+        }
+    }
+
+    fn fill<T: cpal::SizedSample + cpal::FromSample<f32>>(feed: &mut Feed, data: &mut [T], ch: usize) {
+        for f in data.chunks_mut(ch) {
+            let (l, r) = feed.frame();
+            for (c, s) in f.iter_mut().enumerate() {
+                let v = match c {
+                    0 => l,
+                    1 => r,
+                    _ => 0.0,
+                };
+                *s = T::from_sample(if ch == 1 { (l + r) * 0.5 } else { v });
+            }
+        }
+    }
+
+    impl Device {
+        /// The default output device, preferring 32 kHz stereo.
+        pub fn open(ring: Arc<Ring>, gain: Arc<AtomicU32>) -> Result<Device, String> {
+            let host = cpal::default_host();
+            let dev = host.default_output_device().ok_or("no default output device")?;
+            let want = cpal::SampleRate(RATE);
+            let cfg = dev
+                .supported_output_configs()
+                .ok()
+                .and_then(|mut it| {
+                    it.find(|c| c.channels() >= 2 && c.min_sample_rate() <= want && c.max_sample_rate() >= want)
+                })
+                .map(|c| c.with_sample_rate(want))
+                .map_or_else(|| dev.default_output_config().map_err(|e| e.to_string()), Ok)?;
+            let rate = cfg.sample_rate().0;
+            let ch = cfg.channels() as usize;
+            let fmt = cfg.sample_format();
+            let config: cpal::StreamConfig = cfg.into();
+            let mut feed = Feed {
+                ring,
+                gain,
+                step: (((RATE as u64) << 16) / rate as u64).max(1) as u32,
+                frac: 0,
+                cur: (0, 0),
+                next: (0, 0),
+            };
+            if rate == RATE {
+                feed.step = 0x10000;
+            }
+            let err = |e| eprintln!("melee_audio: stream error: {e}");
+            macro_rules! build {
+                ($t:ty) => {
+                    dev.build_output_stream(&config, move |d: &mut [$t], _: &_| fill(&mut feed, d, ch), err, None)
+                };
+            }
+            let stream = match fmt {
+                cpal::SampleFormat::F32 => build!(f32),
+                cpal::SampleFormat::I16 => build!(i16),
+                cpal::SampleFormat::U16 => build!(u16),
+                cpal::SampleFormat::I32 => build!(i32),
+                other => return Err(format!("unsupported sample format {other:?}")),
+            }
+            .map_err(|e| e.to_string())?;
+            stream.play().map_err(|e| e.to_string())?;
+            Ok(Device { _stream: stream, rate })
+        }
+    }
+}
+
+// ---- frame driver ---------------------------------------------------------------------------
+
+/// Driver settings (the C read these from the environment; [`DriverConfig::from_env`] still does).
+#[derive(Clone, Debug)]
+pub struct DriverConfig {
+    /// Turbo: keep the 5 ms synth/DSP clock but never open a device (MELEE_TURBO).
+    pub turbo: bool,
+    /// Ring cushion in sub-frames (MELEE_AUDIO_LATENCY_MS / 5, from 10..200 ms; default 12).
+    pub target_frames: u32,
+    pub nofx: bool,
+    pub dump: Option<String>,
+    /// Open the output device (false for tests / headless).
+    pub device: bool,
+}
+
+impl DriverConfig {
+    pub fn from_env(turbo: bool) -> Self {
+        let mut target_frames = 12;
+        if let Ok(v) = std::env::var("MELEE_AUDIO_LATENCY_MS") {
+            target_frames = ((atoi(&v).clamp(10, 200) / 5) as u32).max(2);
+        }
+        DriverConfig {
+            turbo,
+            target_frames,
+            nofx: std::env::var_os("MELEE_AUDIO_NOFX").is_some(),
+            dump: std::env::var("MELEE_AUDIO_DUMP").ok().filter(|s| !s.is_empty()),
+            device: true,
+        }
+    }
+}
+
+/// gw_ax_frame_tick's state.
+pub struct Driver {
+    pub cfg: DriverConfig,
+    pub ring: Arc<Ring>,
+    gain: Arc<AtomicU32>,
+    volume: i32,
+    #[cfg(feature = "device")]
+    device: Option<device::Device>,
+    dev_ok: bool,
+    attempted: bool,
+    wav: Option<Wav>,
+    last_tick: Option<Instant>,
+}
+
+const FRAME_DUR: Duration = Duration::from_millis(5);
+const STALL: Duration = Duration::from_millis(100);
+
+impl Driver {
+    pub fn new(cfg: DriverConfig) -> Self {
+        Driver {
+            cfg,
+            ring: Arc::new(Ring::new()),
+            gain: Arc::new(AtomicU32::new(1.0f32.to_bits())),
+            volume: -1,
+            #[cfg(feature = "device")]
+            device: None,
+            dev_ok: false,
+            attempted: false,
+            wav: None,
+            last_tick: None,
+        }
+    }
+
+    /// Whether an output device is playing.
+    pub fn device_open(&self) -> bool {
+        self.dev_ok
+    }
+
+    pub fn volume(&mut self) -> i32 {
+        if self.volume < 0 {
+            self.volume = load_volume();
+        }
+        self.volume
+    }
+
+    /// gw_Audio_SetVolume: live gain change + audio.cfg save.
+    pub fn set_volume(&mut self, ax: &mut Ax, percent: i32) {
+        self.volume = percent.clamp(0, 100);
+        self.apply_volume();
+        let _ = save_volume(self.volume);
+        if let Some(l) = ax.log.as_mut() {
+            l(&format!("gw: AX: master volume {}%", self.volume));
+        }
+    }
+
+    fn apply_volume(&mut self) {
+        let v = self.volume() as f32 / 100.0;
+        self.gain.store(v.to_bits(), Ordering::Relaxed);
+    }
+
+    fn open(&mut self, ax: &mut Ax) {
+        if self.attempted {
+            return;
+        }
+        self.attempted = true;
+        let log = |ax: &mut Ax, s: String| {
+            if let Some(l) = ax.log.as_mut() {
+                l(&s);
+            }
+        };
+        if self.cfg.turbo {
+            log(ax, "gw: AX: turbo mute (virtual 5 ms DSP clock, no output device)".into());
+            return;
+        }
+        ax.nofx = self.cfg.nofx;
+        if let Some(p) = self.cfg.dump.clone() {
+            match Wav::create(&p) {
+                Ok(w) => {
+                    self.wav = Some(w);
+                    log(ax, format!("gw: AX: capturing mix to {p}"));
+                }
+                Err(_) => log(ax, format!("gw: AX: cannot open {p} for capture")),
+            }
+        }
+        if !self.cfg.device {
+            return;
+        }
+        #[cfg(feature = "device")]
+        match device::Device::open(self.ring.clone(), self.gain.clone()) {
+            Ok(d) => {
+                self.apply_volume();
+                let rate = d.rate;
+                self.device = Some(d);
+                self.dev_ok = true;
+                log(ax, format!("gw: AX: master volume {}%", self.volume()));
+                log(
+                    ax,
+                    format!(
+                        "gw: AX: audio device open ({rate} Hz device, 32 kHz stereo s16 mix, {} ms target latency)",
+                        self.cfg.target_frames * 5
+                    ),
+                );
+            }
+            Err(e) => log(ax, format!("gw: AX: audio device failed: {e}")),
+        }
+    }
+
+    /// gw_ax_frame_tick, called once per video frame on the game thread. `callback_registered`
+    /// is whether the game has registered its AX callback (AXRegisterCallback; nothing runs
+    /// until it has). `sub_frame` is called once per 5 ms sub-frame to generate: it runs the
+    /// game's AX callback, then `ax.run_frame(aram)`, and returns that output. Returns the
+    /// number of sub-frames generated.
+    pub fn tick(
+        &mut self,
+        ax: &mut Ax,
+        callback_registered: bool,
+        mut sub_frame: impl FnMut(&mut Ax) -> [i16; FRAME_SAMPLES * 2],
+    ) -> u32 {
+        let now = Instant::now();
+        if !callback_registered {
+            self.last_tick = Some(now);
+            return 0;
+        }
+        if !self.attempted {
+            self.open(ax);
+        }
+        let mut n = if self.dev_ok {
+            let buffered = self.ring.len() / FRAME_SAMPLES as u32;
+            self.cfg.target_frames.saturating_sub(buffered)
+        } else {
+            let Some(last) = self.last_tick else {
+                self.last_tick = Some(now);
+                return 0;
+            };
+            let elapsed = now.saturating_duration_since(last);
+            if elapsed > STALL {
+                self.last_tick = Some(now);
+                return 0;
+            }
+            let n = (elapsed.as_nanos() / FRAME_DUR.as_nanos()) as u32;
+            self.last_tick = Some(last + FRAME_DUR * n);
+            n
+        };
+        n = n.min(MAX_BURST);
+        ax.underruns = self.ring.underruns.load(Ordering::Relaxed);
+        ax.overruns = self.ring.overruns.load(Ordering::Relaxed);
+        for _ in 0..n {
+            let out = sub_frame(ax);
+            if self.cfg.turbo {
+                continue; // the voice writeback is game-visible; the sound is not
+            }
+            if let Some(w) = self.wav.as_mut() {
+                w.write(&out);
+            }
+            if self.dev_ok {
+                self.ring.push(&out);
+            }
+        }
+        n
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ring_roundtrip_and_overrun() {
+        let r = Ring::new();
+        assert_eq!(r.pop(), None);
+        r.push(&[1, -2, 3, -4]);
+        assert_eq!(r.len(), 2);
+        assert_eq!(r.pop(), Some((1, -2)));
+        assert_eq!(r.pop(), Some((3, -4)));
+        let big = vec![7i16; (RING_FRAMES as usize + 10) * 2];
+        r.push(&big);
+        assert_eq!(r.len(), RING_FRAMES);
+        assert_eq!(r.overruns.load(Ordering::Relaxed), 1);
+    }
+
+    #[test]
+    fn atoi_like_c() {
+        assert_eq!(atoi("  42x"), 42);
+        assert_eq!(atoi("-7"), -7);
+        assert_eq!(atoi("abc"), 0);
+    }
+
+    #[test]
+    fn wall_clock_tick_without_device() {
+        let mut ax = Ax::new();
+        let mut d = Driver::new(DriverConfig { turbo: false, target_frames: 12, nofx: false, dump: None, device: false });
+        let aram = vec![0u8; 64];
+        assert_eq!(d.tick(&mut ax, true, |ax| *ax.run_frame(&aram)), 0); // first call arms the clock
+        std::thread::sleep(Duration::from_millis(22));
+        let n = d.tick(&mut ax, true, |ax| *ax.run_frame(&aram));
+        assert!((4..=MAX_BURST).contains(&n), "{n}");
+    }
+}

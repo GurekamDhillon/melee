@@ -1,0 +1,17 @@
+[package]
+name = "melee_audio"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Platform layer: AX voice pool + DSP-ADPCM mixer + AXFX reverb/delay (port of pc/platform/shim_ax.c), output on cpal"
+
+[features]
+default = ["device"]
+# The cpal output device. Without it the mixer, the frame driver's wall-clock path and the WAV
+# capture still work (headless / turbo runs never open a device anyway).
+device = ["dep:cpal"]
+
+[dependencies]
+melee_types.workspace = true
+cpal = { version = "0.15.3", optional = true }

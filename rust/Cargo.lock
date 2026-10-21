@@ -698,6 +698,8 @@ name = "melee_world"
 version = "0.1.0"
 dependencies = [
  "melee_core",
+ "melee_runtime",
+ "melee_types",
 ]
 
 [[package]]

@@ -124,6 +124,33 @@ no `StateHash` impls were needed yet.
     HSD_GObj_SetupProc of mpLib_80058820 (TODO(group1: baselib/gobj.c)) are no-ops.
   - FMA: fma_sites.py finds no fused site in any of these 17 functions.
 
+- (port round 5, night 2) `cm::camera`, from src/melee/cm/camera.c (42): the framing and
+  follow math Camera_80029124, 8002928C, 800293E0, 8002958C, 80029AAC, 80029BC4, 80029C88,
+  80029CF8, Camera_ApplyQuake, 8002E158; the quake bookkeeping Camera_SetQuakeOffset,
+  UpdateQuakes, RequestQuake, StopQuake, SetQuakeScale; and the `game_camera` accessors
+  8002F260, SetModeToStandard, SetModeToFixed, 800300F0, 8003010C, 80030130, 80030154, 80030178,
+  80030730, Set/GetBackgroundColor, GetTransformPosition/Interest, 80030DE4, 80030DF8,
+  80030E10, 80031060, 80031074, 8003108C, 800310A0, 800310E8, 80031144, 80031154, 8003118C,
+  800311CC, 800311DC and the PC Camera_StageSlotClipGet.
+  - First use of melee_types in this crate: `Camera`, `CmSubject`, `CameraBounds`,
+    `CameraTransformState`, `CameraUnkGlobals` (GC offsets kept). melee_world now depends on
+    melee_types and melee_runtime (MSL `tanf` from `melee_runtime::gekko`).
+  - Globals live in `CameraWorld`: `game_camera`, `cm_803BCCA0` (`globals`, from the C
+    initializer), the used part of `cm_803BCB64` (`desc`), and the `cm_804D6468` list as
+    `subjects` in `->prev` walk order (a subject is its index).
+  - Stage getters (`Stage_GetCam*`, `Stage_UnkSetVec3TCam_Offset`, `Ground_801C4368`) are plain
+    inputs in `CamStage`: TODO(group2: gr/stage.c, gr/ground.c). The PC `cm_fly_*` wrappers are
+    ported (`geno_fly_any`, `script_lift_bounds`, per-subject `geno_fly_subject`).
+  - Stubs: `HSD_GObjFree` in UpdateQuakes (TODO(group1: baselib/gobj.c)) and `grLib_801C9CEC` in
+    RequestQuake (TODO(group2: gr/grlib.c)) are counted in `CameraWorld::stubs`.
+  - ApplyQuake takes the PC gate `gm_IsCurrently1PMode_inline() && !Mex_Enabled(..)` as a bool
+    (TODO(group6)); the PC `diag_cam_translate` print is not ported. The C's HSD_ASSERTs in
+    80029CF8 panic.
+  - Uninitialised locals follow the shipping build's `-ftrivial-auto-var-init=zero`: 8002E158's
+    `var_f4` (case 3), RequestQuake's `quake_length` (unknown kind), GetBackgroundColor's alpha.
+  - FMA per fma_sites.py: 8002958C 5, 80029AAC 2 + get_follow_speed 1, 80029C88 3, 80029CF8 7 +
+    get_y_bias 1, ApplyQuake 2, 8002E158 1 (all f32 -> `fmadds`); the rest none.
+
 ## Tests
 
 `tests/mplib_lines_vs_c.rs` checks the port against the real C. `cref/gen_mplib_lines_ref.sh`
@@ -190,6 +217,21 @@ queries and AB54 in 31; the free list is non-empty in only a few states.
 Regenerate: `bash rust/melee_world/cref/gen_mplib_lines_ref.sh` (and `gen_mplib_geom_ref.sh`, `gen_mplib_check_ref.sh`, `gen_mplib_joint_ref.sh`, `gen_mpisland_ref.sh`), then
 `cd rust && cargo test -p melee_world`.
 
+`tests/camera_vs_c.rs` does the same for `cm::camera`: `cref/gen_camera_ref.sh` cuts the
+struct definitions out of cm/types.h and the bodies (plus the PC `cm_fly_*` block) out of
+camera.c, builds them i686 with contraction on + lower.py (22 f32 sites lowered) and gekko_fp.c's
+tanf, and writes `tests/data/camera_ref.txt` (43280 rows: 3000 random framing cases with 0-6
+subjects of random state/timers/extents, random stage camera values, fly/script-lift flags and
+1P gate, each running 80029124/80031154/8003118C per subject, then 800293E0, 8002958C,
+80029AAC, 80029BC4, 80029C88, 80029CF8 and ApplyQuake in sequence; 2000 8002E158 cases over all
+four modes; 300 random RequestQuake/StopQuake/UpdateQuakes sequences, full quake state after
+each op). All match bit for bit. Mutation check: unfusing any one of seven sites (8002958C,
+80029AAC, 80029CF8 base and target_interest.x, 80029C88, ApplyQuake, 8002E158) fails the test.
+Not covered: no case reaches 80029CF8's asserts; 8003118C only with in-range distances; the 25
+accessors are checked by a unit test (`cm::camera::tests::accessors`), not against the C.
+
+Regenerate: `bash rust/melee_world/cref/gen_camera_ref.sh`.
+
 ## Build notes
 
 - `cargo build -p melee_world` and `cargo test -p melee_world` pass. I ran them with
@@ -207,7 +249,8 @@ Regenerate: `bash rust/melee_world/cref/gen_mplib_lines_ref.sh` (and `gen_mplib_
    mpScriptIslandRefresh, then the HSD_JObj-driven mpLib_80055E9C once
    group 1's JObj is usable.
 2. mpcoll.c, the collision driver. It calls into fighter and item callbacks, which get stubbed.
-3. cm/camera.c. `long double` literals become f64.
+3. The rest of cm/camera.c (subject list, mode callbacks, pause/debug cameras, CObj setup),
+   once gr/stage.c getters and HSD_CObj exist. `long double` literals become f64.
 4. gr/*: 77 stage TUs, mostly callback tables plus per-stage logic. Port the shared grlib parts
    first.
 5. if/* (HUD) and ef/* (effects). These are mostly render-side; whatever touches the RNG has to

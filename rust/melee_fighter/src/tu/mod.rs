@@ -67,3 +67,4 @@ pub mod ftCo_Barrel;
 pub mod ftcmdscript;
 pub mod ftcolanim;
 pub mod ftCo_CliffClimb;
+pub mod ftCo_CliffAttack;

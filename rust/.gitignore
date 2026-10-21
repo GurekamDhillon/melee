@@ -1,0 +1,4 @@
+/target
+# Raw c2rust output (~180 MB for all 993 TUs). Regenerate with tools/rust-port/transpile.sh;
+# commit a raw file only alongside the hand port that replaces it, if at all.
+*/src/raw/

@@ -1,0 +1,11 @@
+[package]
+name = "melee_world"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+melee_core.workspace = true
+melee_types.workspace = true
+melee_runtime.workspace = true

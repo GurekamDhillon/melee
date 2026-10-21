@@ -102,3 +102,4 @@ pub mod ftCo_MissFoot;
 pub mod ftCo_KneeBend;
 pub mod ftcommon;
 pub mod ftCo_CatchCut;
+pub mod ftCo_CatchPull;

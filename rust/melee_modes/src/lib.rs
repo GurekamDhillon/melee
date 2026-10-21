@@ -37,6 +37,11 @@ pub mod gm_r7;
 pub mod hud_r7;
 /// Round 8 (night 3 round 4): lb leaves over nested pointers, `tests/oracle_r8.rs`.
 pub mod lb_r8;
+/// Round 9 (night 3 round 5): lb_80011C18, empty/setter/getter functions over .c-defined
+/// records, `tests/oracle_r9.rs`.
+pub mod gm_r9;
+pub mod lb_r9;
+pub mod mn_r9;
 
 /// `GXColor` (libs/dolphin/include/dolphin/gx/GXStruct.h). TODO(group0): melee_types does not
 /// generate it (no group-0 header reaches GXStruct.h); move it there when it does.

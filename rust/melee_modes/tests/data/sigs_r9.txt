@@ -1,0 +1,8 @@
+lb_80011C18 buf u32 -> void
+fn_80021C18 ptr ptr s32 -> void
+lbSnap_GetSaveDataOffset buf -> s32
+fn_8018FBD8 buf s32 -> void
+getStKind buf -> s32
+gm_801AB200_HasCheck buf -> u8
+gm_801BC00C_GetCharacterKind buf -> s32
+mnVibration_GetCursorRow buf -> u8

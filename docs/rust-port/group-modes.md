@@ -472,3 +472,56 @@ uncommitted edits in the worktree at the time; every melee_modes test passes.
 **Next:** gm/mn inline getters over `.c`-defined records (`getStKind`, `gm_801AB200_HasCheck`,
 `gm_801BC00C_GetCharacterKind`, `mnVibration_GetCursorRow`, `mnSnap_GetLoadPhotoIdx`, ...), the
 bitfield functions, and the tydisplay sorters.
+
+## Night 3 round 5 (2026-10-21): recount, lb_80011C18, getters over .c-defined records
+
+**Recount.** Group total unchanged: **3,995** functions in the 166 gm/mn/if/ty/lb TUs (libclang
+definition count from `oracle/scan_r4.py`; ~20 lbtrigf/lbvector, group 1's). Ported at the start:
+**280** (279 distinct C names among melee_modes' `pub fn`/`pub unsafe fn`, besides the
+`GXColor::to_u32`/`from_u32` helpers, + the second static `checkJObjFlags` copy), all verified.
+After this round: **288 of 3,995 (7.2%)**, all verified.
+
+**TODO stubs.** None inside melee_modes to replace: `FigaTree` and `gmClassicMatchup` are still
+opaque in melee_types and `GXColor` is still not generated. `scan_r4.py` rerun: the only newly
+ready caller in this group is `lb_80011C18` (ported below); the rest of its ready list is group 1's
+lbvector/lbtrigf.
+
+**Ported: 8 functions, all checked bit for bit against the C** (`cargo test -p melee_modes --test oracle_r9`,
+2,250 vectors; `oracle/gen_oracle_r9.py` over gen_oracle_r4.py, `oracle/build_r9.sh`):
+
+| module | C TU | functions |
+|---|---|---|
+| `lb_r9.rs` | lbspdisplay, lb_0219, lbsnap | `lb_80011C18`, `fn_80021C18`, `lbSnap_GetSaveDataOffset` |
+| `gm_r9.rs` | gmtoulib, gm_1879, gmstaffroll, gmevent | `fn_8018FBD8`, `getStKind`, `gm_801AB200_HasCheck`, `gm_801BC00C_GetCharacterKind` |
+| `mn_r9.rs` | mnvibration | `mnVibration_GetCursorRow` |
+
+- New local records with `gc_layout!` GC offsets: `Unk80433380_0` (0x3C), `gm_80187F48_EnterData`
+  (0x4), `StaffEntryData` (0x14 GC / 0x20 native), `gm_801BAB40_src` (0x1C), `MnVibrationData`
+  (0x98 GC / 0x128 native). The C side views the same buffers as its own .c-defined struct; the
+  test asserts the Rust sizes equal the C sizeof.
+- `lb_80011C18` rows: random JObj trees of 1-5 joints (child/next/parent), flags with JOBJ_PTCL,
+  JOBJ_SPLINE, both, or neither; u.dobj a 1-2 DObj chain (each with an MObj) or NULL (20%). The C
+  oracle's main.c holds 32 buffers, so trees are kept small (a 9-joint, 4-DObj row overflowed it).
+- `lbSnap_GetSaveDataOffset` is `xC + offsetof(x38)` (0x38 on GC and native: no pointers in the
+  record); `fn_8018FBD8` sign-extends the s32 into `user_data`, as the native int-to-pointer cast.
+- gen_oracle_r9 adds the `StaffEntryCheck` typedef by hand (`EXTRA`): the cut copies only types the
+  function references directly.
+- **FMA:** none (lower.py: 0 fmuladd in every cut).
+- Mutation check: dropping the `jobj->next` block of lb_80011C18 fails 29/500, `|=` -> `^=` 177/500;
+  zero-extending the s8 in gm_801BC00C fails 69/250; zero-extending fn_8018FBD8's s32 85/250.
+
+**Unverified ports:** none.
+
+**Not ported (looked at):** `mnSnap_GetLoadPhotoIdx` and `fn_80180630_GetX118` (one-line getters,
+but over 0x2A8/0x158-byte .c records with ~80/~50 fields to lay out; next round),
+`fn_801B9FB8` (stores the address of `gm_80165290`: a function-pointer value the harness cannot
+compare across C and Rust).
+
+**Workspace tests:** `cargo build --workspace` green. `cargo test --workspace` does not build at
+this moment because of other agents' uncommitted work in the worktree (melee_runtime
+`tests/oracle_generator.rs` and `melee/src/stage.rs` use `melee_runtime::generator`/`particle`,
+not yet declared), plus LNK1104 file locks from concurrent test runs; every melee_modes test passes
+(run with a private CARGO_TARGET_DIR).
+
+**Next:** the two large-record getters above, the bitfield functions (compare by value), the
+tydisplay sorters.

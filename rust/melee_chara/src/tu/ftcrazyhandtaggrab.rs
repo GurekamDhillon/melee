@@ -38,6 +38,9 @@ unsafe fn func_8015ADD0_inline(gobj: *mut HSD_GObj) {
         (*fp).self_vel.z = 0.0;
         (*fp).self_vel.y = 0.0;
         (*fp).self_vel.x = 0.0;
+        // Native 8-byte pointers make `grab.x28..x34` overlap `unk0.x20/x38/x3C/x40` (they are
+        // disjoint on the GameCube), so read the unk0 fields before the grab pointers are nulled.
+        let (u20, u38, u3C, u40) = ((*fp).mv.ch.unk0.x20, (*fp).mv.ch.unk0.x38, (*fp).mv.ch.unk0.x3C, (*fp).mv.ch.unk0.x40);
         ext::it_802F046C((*fp).mv.ch.grab.x28);
         ext::it_802F046C((*fp).mv.ch.grab.x2C);
         ext::it_802F046C((*fp).mv.ch.grab.x30);
@@ -46,10 +49,10 @@ unsafe fn func_8015ADD0_inline(gobj: *mut HSD_GObj) {
         (*fp).mv.ch.grab.x2C = core::ptr::null_mut();
         (*fp).mv.ch.grab.x30 = core::ptr::null_mut();
         (*fp).mv.ch.grab.x34 = core::ptr::null_mut();
-        ext::lbAudioAx_800236B8((*fp).mv.ch.unk0.x38);
-        ext::lbAudioAx_800236B8((*fp).mv.ch.unk0.x3C);
-        ext::lbAudioAx_800236B8((*fp).mv.ch.unk0.x40);
-        if (*fp).mv.ch.unk0.x20 != 0 {
+        ext::lbAudioAx_800236B8(u38);
+        ext::lbAudioAx_800236B8(u3C);
+        ext::lbAudioAx_800236B8(u40);
+        if u20 != 0 {
             ext::ftCh_GrabUnk1_8015B800((*fp).victim_gobj);
         }
         (*fp).self_vel.y = (*da).x12C_pos.x;

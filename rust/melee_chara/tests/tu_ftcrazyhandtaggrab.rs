@@ -14,6 +14,13 @@ fn smoke() {
         t::ext::LBAUDIOAX_800236B8 = Some(|id| log(format!("stop{id}")));
         t::ext::LBAUDIOAX_8002438C = Some(|id| log(format!("snd{id:x}")));
         t::ext::FTCH_GRABUNK1_8015B800 = Some(|_| log("victim"));
+        melee_fighter::hooks::LBAUDIOAX_800233EC = Some(|_| 0);
+        melee_fighter::hooks::LBAUDIOAX_80023130 = Some(|_| 0);
+        melee_fighter::hooks::LBAUDIOAX_80023220 = Some(|_| 0);
+        melee_fighter::hooks::LBAUDIOAX_800237A8 = Some(|_, _, _| 0);
+        melee_fighter::hooks::LBAUDIOAX_80024DC4 = Some(|_| ());
+        melee_fighter::hooks::LBAUDIOAX_80023870 = Some(|_, _, _, _| 0);
+        melee_fighter::hooks::LBAUDIOAX_80024B94 = Some(|_, _| 0);
         melee_fighter::hooks::PLAY_SFX = Some(|_, id, v, p| log(format!("sfx{id:x} {v} {p}")));
     }
     t::ftCh_TagGrab_Coll(gp);

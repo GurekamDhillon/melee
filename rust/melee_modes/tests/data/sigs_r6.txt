@@ -1,0 +1,8 @@
+un_80302EA4 buf -> s32
+un_80302FFC_maxlen buf -> s32
+my_fmodf f32 f32 -> f32
+gmMainLib_AdjustNameTags buf u8 -> void
+lb_8000B074 buf -> s32
+memzero buf s32 -> void
+un_802FFCD0 s32 buf -> void
+fn_80194658_get_value buf -> s32

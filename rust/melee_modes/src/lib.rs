@@ -28,6 +28,10 @@ pub mod gm_r5;
 pub mod hud_r5;
 pub mod lb_r5;
 pub mod mn_r5;
+/// Round 6 (night 3 round 2): callers of round 5 and leftover leaves, `tests/oracle_r6.rs`.
+pub mod gm_r6;
+pub mod hud_r6;
+pub mod lb_r6;
 
 /// `GXColor` (libs/dolphin/include/dolphin/gx/GXStruct.h). TODO(group0): melee_types does not
 /// generate it (no group-0 header reaches GXStruct.h); move it there when it does.

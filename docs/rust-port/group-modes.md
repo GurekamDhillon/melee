@@ -353,3 +353,42 @@ inside the buffer.
 - Callers of round 4 (rerun `oracle/scan_r4.py`; it lists near misses with one unported callee).
 - Leaf functions with nested pointers that round 3 skipped (`Command_04/05/07`, `DevText_NumToStr`,
   `_tyDisplay_8031830C`...): round 4's links make them testable.
+
+## Night 3 round 2 (2026-10-21): recount, callers of round 5, leftover leaves
+
+**Recount.** Group total unchanged: **3,995** functions in the 166 gm/mn/if/ty/lb TUs (same
+libclang count as round 1; ~20 of them lbtrigf/lbvector, group 1's). Ported at the start: 261
+(all verified). After this round: **269 of 3,995 (6.7%)**, all verified.
+
+**TODO stubs.** Still none inside melee_modes. Rerunning `oracle/scan_r4.py` over the current
+workspace: the other crates' `TODO(group6)` hooks all still need the global game state
+(`lbl_8046B6A0`, save data), and the scan's only newly unlocked callers are this round's two
+textlib_1 functions plus group 1's lbvector/lbtrigf functions (`lbVector_*`, `atan2f`), left to
+group 1.
+
+**Ported: 8 functions, all checked bit for bit against the C** (`cargo test -p melee_modes --test oracle_r6`,
+3,500 vectors; `oracle/gen_oracle_r6.py` over gen_oracle_r4.py, `oracle/build_r6.sh`):
+
+| module | C TU | functions |
+|---|---|---|
+| `hud_r6.rs` | textlib_1, soundtest | `un_80302EA4`, `un_80302FFC_maxlen` (callers of round 5's `DevText_StrLen`; the C side runs the cut `DevText_StrLen`), `un_802FFCD0` |
+| `lb_r6.rs` | lbrefract, lb_00B0 | `my_fmodf`, `lb_8000B074`, `memzero` |
+| `gm_r6.rs` | gmmain_lib, gmtou_0 | `gmMainLib_AdjustNameTags`, `fn_80194658_get_value` |
+
+- **FMA:** one fused site, `my_fmodf`'s `a - b * (float) q` = fmuladd(-b, q, a) (lower.py: 1
+  lowered). The unfused form fails 912/1,500 rows, so the vectors discriminate.
+- `un_80302EA4`'s `(int) x18` is a float->int conversion lower.py saturates (1 site); the
+  vectors use 0, 0.5, 1, 1.9, 2, 2.5, 3 and -1. Mutation `<= 1` -> `< 1` on x0 fails 29/400
+  rows; rounding instead of truncating x18 is NOT caught (the extra string rarely changes the
+  maximum), so the truncation is checked by reading only.
+- The dispatcher defines `fabsf` as a sign-bit clear (the fabs instruction): `-fno-builtin`
+  leaves my_fmodf's call unresolved otherwise.
+
+**Domains restricted:** `my_fmodf` finite a in +-1000, b in +-50 and nonzero (|a/b| stays far
+inside s64: lower.py does not model gwtool's float->s64 conversion, so an out-of-range or NaN
+quotient is unverified; the Rust saturates); `memzero` size 0..512 (a negative size loops
+forever in the C); `un_802FFCD0` count -3..127 (the 512-byte buffer); `un_80302EA4` strings are
+NUL-terminated inside their buffers and xC holds at least (int) x18 entries.
+
+**Not ported (looked at this round):** `gm_801891F4_GetTickRate` (reads `__OSBusClock`, a
+global), `tyDisplay_8031BB34` (returns a table pointer as s32, like `_tyDisplay_8031BBF4`).

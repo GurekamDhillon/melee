@@ -10,6 +10,7 @@ pub use melee_core;
 pub mod hash;
 pub mod helpers;
 pub mod item;
+pub mod itlib;
 /// The native types (with GC offset tables) are the single generated set in `melee_types`;
 /// `layout` keeps group 5's path to them.
 pub mod layout {

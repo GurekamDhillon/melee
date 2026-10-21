@@ -1,5 +1,6 @@
 //! melee_items against values computed by the C (tests/c_oracle/oracle.c, compiled natively).
 #[path = "c_oracle/expected.rs"]
+#[allow(dead_code)]
 mod expected;
 
 use melee_core::gc::GcLayout;

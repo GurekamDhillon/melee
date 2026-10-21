@@ -84,6 +84,60 @@ Signature changes vs the C: an `Item_GObj*` used only through `GET_ITEM` becomes
 `cargo test -p melee_items`: 18 tests pass. Not done: nothing above calls these yet (their C
 callers need GObj/JObj/collision), so no frame-level comparison.
 
+## Round 2 (night 2): 103 Item accessors, `src/itlib.rs`
+
+The `Item`-only getters, setters and small helpers of five TUs, all callees-free (a regex scan
+for bodies that call nothing, then read by hand):
+
+- it_26B1.c (49): `it_8026B294`, `itIsHeavy`, `it_8026B2D8`, `itGetKind`, `it_8026B30C`,
+  `itGetHoldKind`, `itGetDamageMultiplier`, `it_8026B344`, `itGetGrabRangeX/Y`, `it_8026B390`,
+  `it_8026B3A8`, `it_8026B424`, `it_8026B47C`, `it_8026B4F0`, `it_8026B54C/560/574`,
+  `it_8026B588`, `it_8026B594`, `it_8026B6C8`, `it_8026B718`, `it_8026B724`, `it_8026B73C`,
+  `it_8026B774`, `itGetMotionId`, `itGetTeamId`, `it_8026B7BC/7CC/7E8`, `it_8026B894`,
+  `it_8026B924`, `it_8026B960`, `it_8026BB88`, `it_8026BBCC`, `it_8026BC68`, `itGetAttackId`,
+  `it_8026BCF4/D0C/D24/D3C/D54/D6C/D84/D9C`, `it_8026BDCC`, `it_8026BE28`, `it_8026C1E8`,
+  `it_8026C334`
+- it_2725.c (24): `it_80273030`, `it_80273130`, `it_8027346C/484/49C`, `it_802734B4`,
+  `it_80274C60/C78/C88`, `it_80274D6C`, `it_80274DAC`, `it_80274DFC`, `it_80274E44`,
+  `it_80274ECC`, `it_80274EF8`, `it_80274F10`, `it_802750E8`, `it_802751D8`,
+  `it_80275210/228/240/258/270`, `it_802753BC`
+- ithitbox.c (19): `it_802753DC` .. `it_802758D4` (hitbox flags, scale, state, max damage)
+- itmaplib.c (5): `it_802762D8`, `it_80276308`, `it_80276348`, `it_802763B8`, `it_80276408`
+- itcoll.c (6): `it_802714C0`, `it_80271508`, `it_80271534`, `it_80271590`, `it_80272280`,
+  `it_80272298`
+
+Fused sites (`fma_sites.py` on each TU): `it_8026B344` 1 and `it_8026B424` 1 (f32); every other
+function 0. The oracle's lowering reports 10 fmuladd.f32 (8 from round 1 + these 2).
+
+**Verification** (`tests/oracle_round2.rs`, 104 tables x 48 cases, all pass): `round2_bodies.h`
+holds the C bodies extracted unchanged from the decomp files; `round2.c` calls them through a
+real `HSD_GObj` whose `user_data` is the Item. Both sides fill 189 Item fields (plus the
+ItemAttr / Article / itUnkAttributes / ItemCommonData the functions follow) from the same LCG
+(`c_oracle/gen_round2_fields.py` emits the C and Rust fill/snapshot code from one list), run the
+function, and compare a hash of all 189 fields + return value + an output Vec3. Bitfield units
+are compared as their GameCube big-endian value, built field by field in C and read from the
+Rust `bf_*` bytes, so this also checks melee_types' bit numbering for flag32, UnkFlagStruct,
+CameraBoxFlags, the `xDCC` flags, HitCapsule +0x40 and HurtCapsule +0x24. Inputs never contain
+inf/NaN; pointers are drawn from {NULL, gobj A, gobj B} and hashed as an index.
+Mutation checks (each made the test fail): un-fusing `it_8026B344` (only after adding a
+moderate-magnitude input set; random exponents alone never hit it) and `it_8026B424`, wrong flag
+bit, `<` for `<=` in `it_802758D4` (only the signed-zero table hits it), bool-normalising
+`it_802750E8` / `it_80274ECC`, wrong `xCB0_source_ply`, `x0_78` vs `x0_hold_kind`.
+
+Traps found:
+- `bool` is `int` in the shipping build (`-isystem src/MSL`, `src/MSL/stdbool.h`), but `_Bool`
+  in this oracle (clang's stdbool). `it_802750E8` returns `xDC0 & mask` unnormalised and
+  `it_80274ECC` stores an int argument to a u8, so the ports return/take `i32` and `round2.c`
+  compiles its copies with `#define bool int`. Round 1's oracle copies still get `_Bool` (none of
+  them depends on it).
+- C `bool` return values that are `true`/`false` literals are ported as Rust `bool`.
+
+Signatures: the GObj becomes `&Item`/`&mut Item`; a followed C pointer (`xCC_item_attr`,
+`xC4_article_data`) makes the function `unsafe` (documented precondition); the `it_804D6D28`
+global becomes `&ItemCommonData`; an out-of-range hitbox/hurtbox index panics where the C would
+write past the array. No other-group stubs were needed. Not done: no caller uses these yet, and
+`it_80272818`/`it_80272D1C` (Fighter / GObj classifier) were left out.
+
 ## Decisions / traps
 
 - `Cargo.toml` no longer depends on melee_types/runtime/world/fighter: nothing calls them yet,

@@ -71,6 +71,7 @@ static f32 rf(void) { return ((s32) (next() >> 8) - 0x7FFFFF) / 65536.0f; }
 
 static Item it;
 #include "round1.c"
+#include "round2.c"
 
 int main(void)
 {
@@ -128,5 +129,6 @@ int main(void)
     }
     printf("];\n");
     round1();
+    round2();
     return 0;
 }

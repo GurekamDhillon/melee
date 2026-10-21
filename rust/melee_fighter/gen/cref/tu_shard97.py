@@ -18,6 +18,7 @@ MINE = {
     "tu_ftco_0d72": [(CO + "ftCo_0D72.c", "fn:ftCo_800D72A0", None)],
     "tu_ftco_0c35": [("src/melee/ft/ftcommon.c", "fn:ftCommon_800804FC", None),
                      (CO + "ftCo_0C35.c", "static void inlineA0(", None)],
+    "tu_ftco_0d8e": [(CO + "ftCo_0D8E.c", "typedef struct {", None)],
     "tu_ftco_aircatch": [(CO + "ftCo_AirCatch.c", "fn:ftCo_800C3CC0", None),
                          (CO + "ftCo_AirCatch.c", "fn:ftCo_AirCatch_Phys", None),
                          (CO + "ftCo_AirCatch.c", "fn:ftCo_AirCatchHit_Phys", None),

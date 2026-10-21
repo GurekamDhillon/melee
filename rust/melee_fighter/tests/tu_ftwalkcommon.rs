@@ -1,6 +1,6 @@
 //! src/tu/ftwalkcommon.rs vs the C of src/melee/ft/ftwalkcommon.c (gen/cref/tu_ftwalkcommon_ref.c,
 //! expected log in tests/data/tu_ftwalkcommon.txt; regenerate with
-//! `python rust/melee_fighter/gen/cref/tu_run.py tu_ftwalkcommon`). Fill order must match the C.
+//! `python rust/melee_fighter/gen/cref/tu_run_s57.py tu_ftwalkcommon`). Fill order must match the C.
 #![allow(static_mut_refs)]
 
 use melee_fighter::hooks;

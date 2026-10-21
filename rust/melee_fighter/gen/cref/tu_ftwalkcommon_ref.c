@@ -1,6 +1,6 @@
 /* C reference for src/tu/ftwalkcommon.rs: all of src/melee/ft/ftwalkcommon.c plus the
  * ftcommon.c ground-accel helpers it calls, cut verbatim into tu_ftwalkcommon_extract.inc by
- * gen/cref/tu_run.py; callees outside the TU are logging stubs. tests/tu_ftwalkcommon.rs
+ * gen/cref/tu_run_s57.py; callees outside the TU are logging stubs. tests/tu_ftwalkcommon.rs
  * repeats the fill order and compares the log and an FNV hash of the whole native Fighter. */
 #include "ft/types.h"
 #include "ft/forward.h"

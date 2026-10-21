@@ -30,6 +30,9 @@
 //!   `Toy_80305058`'s trophy choice is not computed (its draw is); the background map state machine
 //!   (`grLast_8021B2E8`/`8021B5C4`) is not run (its first change needs 1800+ frames).
 
+#[path = "input.rs"]
+pub mod input;
+
 use crate::fighter_data::skeleton::{FigaTree, Skeleton};
 use crate::fighter_data::{AnimRow, EcbDesc};
 use crate::{FrameWords, Sim};
@@ -59,6 +62,9 @@ const FTCO_SM_ENTRY_START: u32 = 238;
 /// `ftCo_MS_Fall` (29) and its row `ftCo_SM_Fall` (20).
 const FTCO_MS_FALL: i32 = 29;
 const FTCO_SM_FALL: u32 = 20;
+/// `ftCo_MS_Turn` (18) and its row `ftCo_SM_Turn` (10).
+const FTCO_MS_TURN: i32 = 18;
+const FTCO_SM_TURN: u32 = 10;
 /// `ftCo_MS_Landing` (42) and its row `ftCo_SM_Landing` (35).
 const FTCO_MS_LANDING: i32 = 42;
 const FTCO_SM_LANDING: u32 = 35;
@@ -119,6 +125,9 @@ pub struct Player {
     row_entry_start: Option<(AnimRow, FigaTree)>,
     row_fall: Option<(AnimRow, FigaTree)>,
     row_landing: Option<(AnimRow, FigaTree)>,
+    row_turn: Option<(AnimRow, FigaTree)>,
+    /// `fp->mv.co.turn` (has_turned, just_turned, facing_after, frames_to_turn, x8, x1C).
+    turn: TurnVars,
     /// `fp->mv.co.landing.allow_interrupt`.
     landing_allow_interrupt: bool,
     /// `ftData->x44`.
@@ -141,6 +150,20 @@ pub struct Player {
     script_ret: [u32; 8],
     /// `ftData->x1C`: the hand-pose slots.
     part_anim: [Option<crate::fighter_data::skeleton::PartAnimData>; 5],
+    /// `x221D_b3` (input history primed) and `x221D_b4` (input locked until GO).
+    x221d_b3: bool,
+    input_locked: bool,
+}
+
+/// `ftCo_Turn`'s motion vars (ft/types.h `mv.co.turn`).
+#[derive(Clone, Copy, Debug, Default)]
+pub struct TurnVars {
+    pub has_turned: bool,
+    pub just_turned: bool,
+    pub facing_after: f32,
+    pub frames_to_turn: f32,
+    pub x8: f32,
+    pub x1c: u32,
 }
 
 /// `EF_QueuedEffect`: an `efAsync_Spawn` waiting for the s_link 9 flush.
@@ -197,6 +220,10 @@ pub struct VsMatch {
     /// mplib's map collision (`groundCollLine` & co.) and mpcoll's statics.
     pub ground: GroundColl,
     pub cg: CollGlobals,
+    /// `HSD_PadGameStatus[4]`.
+    pub pads: [input::PadStatus; 4],
+    /// The golden frame whose s_link 0 runs the GO callback (input unlock).
+    go_frame: i32,
     pub rand: HsdRand,
     pub ps: PsSystem,
     pub frame: i32,
@@ -340,6 +367,30 @@ impl VsMatch {
             ps.load_bank(0, Arc::new(b), None);
         }
         let effect_banks = vec![efco];
+        // The VS scene's OnEnter: ifStatus_802F6EA4(1, .., fn_8016B7B4, fn_8016B7F8), the "Ready"
+        // HUD (IfAll.usd: the English disc's language file). Its JObj animations are played to
+        // frame 0 at creation and stepped once per frame by its s_link 0 proc (if_802F73C4) from
+        // golden frame 0, so they end, and fn_8016B7F8 unlocks the fighters' input
+        // (ftLib_800868A4), in the proc run of golden frame ceil(end) - 1.
+        if std::env::var_os("MELEE_GOLDEN_PADTEST").is_some() {
+            let mut pads = [input::PadStatus::default(); 2];
+            for g in 0..1801 {
+                for port in 0..2 {
+                    pads[port].renew(&input::pad_fixed(port, g));
+                    let q = &pads[port];
+                    eprintln!("{} PAD p{} btn {:08X} st {:08X} {:08X} sub {:08X} {:08X} aL {:08X} aR {:08X}", g, port, q.button,
+                        q.nml_stick_x.to_bits(), q.nml_stick_y.to_bits(), q.nml_sub_x.to_bits(), q.nml_sub_y.to_bits(),
+                        q.nml_analog_l.to_bits(), q.nml_analog_r.to_bits());
+                }
+            }
+        }
+        let go_frame = {
+            let ifall = disc.read("IfAll.usd")?;
+            match input::ready_hud_end_frame(&ifall)? {
+                Some(end) => end.ceil() as i32 - 1,
+                None => i32::MAX,
+            }
+        };
 
         // grLast_OnInit -> grLast_8021A9C4 (map gobj 3) -> grLast_8021B920(1): the level gobjs
         // 4..8 are created in order; gobj 7's on_init is grLast_8021AC30.
@@ -508,6 +559,8 @@ impl VsMatch {
                 row_entry_start: files.anim_row(FTCO_SM_ENTRY_START)?.zip(files.figatree(FTCO_SM_ENTRY_START)?),
                 row_fall: files.anim_row(FTCO_SM_FALL)?.zip(files.figatree(FTCO_SM_FALL)?),
                 row_landing: files.anim_row(FTCO_SM_LANDING)?.zip(files.figatree(FTCO_SM_LANDING)?),
+                row_turn: files.anim_row(FTCO_SM_TURN)?.zip(files.figatree(FTCO_SM_TURN)?),
+                turn: TurnVars::default(),
                 landing_allow_interrupt: false,
                 ecb_desc,
                 trophy_scale: files.trophy_scale(),
@@ -518,11 +571,16 @@ impl VsMatch {
                 script_sp: 0,
                 script_ret: [0; 8],
                 part_anim: files.part_anim_data(),
+                x221d_b3: false,
+                input_locked: false,
             });
             // ... Fighter_ChangeMotionState(Entry): no animation, cur_anim_frame -1;
             // ftaction.c:1408 frame_count = cur_anim_frame + x898_unk. Then ft_80084CB0: the
             // entry box is the ECB the probe left.
             let p = players.last_mut().unwrap();
+            // Fighter_Create -> ftLib_800867E8: Fighter_ResetInputData_80068854, x221D_b4 = true.
+            input::reset_input(&mut p.fp);
+            p.input_locked = true;
             change_motion_state(p, FTCO_MS_ENTRY, None, &mut rand)?;
             p.fp.x3E4_fighterCmdScript.frame_count = p.fp.cur_anim_frame + p.fp.x898_unk;
             let e = p.fp.coll_data.ecb;
@@ -537,7 +595,7 @@ impl VsMatch {
             eprintln!("bgm {} alt {:?}; seed before frame 0 {:08X}; particle tracks {}", pick.bgm, pick.alt_flag, rand.logic_seed(), dptcl.len());
         }
 
-        Ok(Self { players, ground, cg, rand, ps, frame: -1, stopped: None, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists })
+        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists })
     }
 
     fn words(&self) -> FrameWords {
@@ -579,6 +637,19 @@ impl VsMatch {
     /// proc, then every fighter's s_link 3 proc, ...). Err: the frame needs an unported state.
     fn fighters(&mut self) -> Result<(), String> {
         let c = self.common;
+        // The frame's HSD_PadRenewStatus (the pad script's sample for this frame).
+        let g = self.frame + 1;
+        for port in 0..4 {
+            let raw = input::pad_fixed(port, g);
+            self.pads[port].renew(&raw);
+        }
+        // s_link 0, the Ready HUD's proc (p_link 14, after the fighters' s_link 0 proc
+        // Fighter_8006A1BC, which has nothing to do here): at its end, GO.
+        if g == self.go_frame {
+            for p in &mut self.players {
+                p.input_locked = false;
+            }
+        }
         // s_link 1, Fighter_8006A360: the animation step (ftAnim_8006EBA4: AObj frame, then
         // ftAction_80073240's frame_count = cur_anim_frame + x898), then the state's anim_cb.
         for p in &mut self.players {
@@ -621,6 +692,20 @@ impl VsMatch {
                     // stays Fall (|self_vel.x / air_drift_max| <= x444 picks the neutral row).
                     fall_anim(p)?;
                 }
+                FTCO_MS_TURN => {
+                    // ftCo_Turn_Anim: ftCo_Turn_Anim_Inner, then Wait when the animation ends.
+                    let t = &mut p.turn;
+                    if t.frames_to_turn > 0.0 {
+                        t.frames_to_turn -= 1.0;
+                    } else if !t.has_turned {
+                        t.has_turned = true;
+                        t.just_turned = true;
+                        p.fp.facing_dir = -p.fp.facing_dir;
+                    }
+                    if !p.skel.frames_remaining() {
+                        return Err(format!("player {}: Turn over -> ft_8008A2BC (Wait) not ported", p.slot + 1));
+                    }
+                }
                 FTCO_MS_LANDING => {
                     // ftCo_Landing_Anim: when the animation ends, ft_8008A2BC (Wait).
                     if !p.skel.frames_remaining() {
@@ -633,12 +718,26 @@ impl VsMatch {
         // s_link 2, Fighter_8006ABA0: input_cb. ftCo_Fall_IASA's checks all read pad input, and
         // the C applies none before GO (self_vel.x stays 0 in the golden with the stick held):
         // the fighters' input is all zero here. TODO(group3): the IASA checks themselves.
-        for p in &mut self.players {
-            if p.fp.motion_id == FTCO_MS_LANDING {
-                // ftCo_Landing_IASA: nothing before cur_anim_frame reaches normal_landing_lag.
-                if !(p.fp.cur_anim_frame < p.fp.co_attrs.normal_landing_lag) && p.landing_allow_interrupt {
-                    return Err(format!("player {}: ftCo_Landing_IASA input checks (Turn/Walk/attacks...) not ported (frame {} lag {})", p.slot + 1, p.fp.cur_anim_frame, p.fp.co_attrs.normal_landing_lag));
+        // s_link 3, Fighter_Spaghetti_8006AD10: the input step, then (outside hitlag) the
+        // smash-charge state, the stick-activity stats, the press counters and input_cb.
+        for i in 0..self.players.len() {
+            let port = self.players[i].slot as usize;
+            let pad = self.pads[port];
+            let p = &mut self.players[i];
+            let locked = p.input_locked;
+            input::fighter_input(&mut p.fp, &pad, &mut p.x221d_b3, locked);
+            if p.fp.x2219_b5() == 0 {
+                if !p.fp.x1980.is_null() {
+                    return Err("ftCommon_8007FFD8 (x1980 item) not ported".into());
                 }
+                // ftCo_800DF0D0: smash-charge state machine (state None here).
+                if p.fp.smash_attrs.state != 0 {
+                    return Err("ftCo_800DF0D0 smash charge state not wired".into());
+                }
+                ftcommon_8008031c(&mut p.fp);
+                let jump = jump_get_input(&p.fp);
+                input::increment_counters(&mut p.fp, jump);
+                input_cb(p, &mut self.rand)?;
             }
         }
         // s_link 4, Fighter_procUpdate: phys_cb, then the integration below.
@@ -678,9 +777,9 @@ impl VsMatch {
                     }
                     fc::calc_self_accel_drift(f);
                 }
-                FTCO_MS_LANDING => {
-                    // ftCo_Landing_Phys -> ft_80084F3C: ground friction, then the self velocity
-                    // along the floor.
+                FTCO_MS_LANDING | FTCO_MS_TURN => {
+                    // ftCo_Landing_Phys / ftCo_Turn_Phys -> ft_80084F3C: ground friction, then the
+                    // self velocity along the floor.
                     let f = &mut *p.fp;
                     let mut friction = f.co_attrs.ground_friction;
                     if fc::abs_c(f.gr_vel) > f.co_attrs.walk_max_vel {
@@ -733,6 +832,22 @@ impl VsMatch {
                     // ftCo_Fall_Coll: ft_800831CC(gobj, ftCo_80096CC8, ft_80082B1C).
                     if ft_800831cc(&mut self.ground, &mut self.cg, p)? {
                         ft_80082b1c(&mut self.ground, p, c_common, &mut self.rand)?;
+                    }
+                }
+                FTCO_MS_TURN => {
+                    // ftCo_Turn_Coll -> ft_80083F88: ft_80082708 (mpColl_8004B108); no floor -> Fall.
+                    let joints = {
+                        let d = p.ecb_desc;
+                        ecb_joints(&mut p.skel, &d)
+                    };
+                    let fp = &mut *p.fp;
+                    fp.coll_data.last_pos = fp.coll_data.cur_pos;
+                    fp.coll_data.cur_pos = fp.cur_pos;
+                    let r = mc::mp_coll_8004b108(&mut self.ground, &mut self.cg, &mut fp.coll_data, &joints)
+                        .map_err(|e| format!("{} not ported", e.0))?;
+                    fp.cur_pos = fp.coll_data.cur_pos;
+                    if !r {
+                        fall_enter(p, &mut self.rand)?;
                     }
                 }
                 FTCO_MS_LANDING => {
@@ -994,6 +1109,153 @@ fn ecb_joints(skel: &mut Skeleton, d: &EcbDesc) -> [Vec3; 6] {
 
 fn be32(d: &[u8], at: u32) -> u32 {
     u32::from_be_bytes(d[at as usize..at as usize + 4].try_into().unwrap())
+}
+
+/// `ftCommon_8008031C`: the stick/trigger activity stats (Player_UpdateJoystickCountByIndex is
+/// a stats counter, not hashed and not run here) and the activity timers they reset.
+fn ftcommon_8008031c(fp: &mut Fighter) {
+    let cd = melee_fighter::hooks::common_data();
+    let t = fp.activity_timer;
+    if (fc::abs_c(fp.input.lstick[0].x) >= cd.x7B8 && (t.lstick.x as f32) < cd.x7C0)
+        || (fc::abs_c(fp.input.lstick[0].y) >= cd.x7B8 && (t.lstick.y as f32) < cd.x7C0)
+    {
+        fp.activity_timer.lstick.y = 0xFE;
+        fp.activity_timer.lstick.x = 0xFE;
+    }
+    if fc::abs_c(fp.input.triggers[0]) >= cd.x7BC && (fp.activity_timer.trigger as f32) < cd.x7C0 {
+        fp.activity_timer.trigger = 0xFE;
+    }
+}
+
+/// `ftCo_Jump_GetInput` (tap jump on: the default control setting).
+fn jump_get_input(fp: &Fighter) -> bool {
+    let cd = melee_fighter::hooks::common_data();
+    (fp.input.lstick[0].y >= cd.tap_jump_threshold && (fp.active_timer.lstick.y as i32) < cd.tap_jump_window as i32)
+        || fp.input.pressed_buttons & input::HSD_PAD_XY != 0
+}
+
+/// Any input an IASA check could act on (sticks, C-stick, trigger, presses)?
+fn any_input(fp: &Fighter) -> bool {
+    let i = &fp.input;
+    i.lstick[0].x != 0.0 || i.lstick[0].y != 0.0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 || i.triggers[0] != 0.0
+        || i.pressed_buttons != 0 || i.held_buttons[0] != 0
+}
+
+/// The motion's `input_cb` (IASA).
+fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    match p.fp.motion_id {
+        FTCO_MS_ENTRY | FTCO_MS_ENTRY_START | FTCO_MS_ENTRY_END => Ok(()), // empty IASAs
+        FTCO_MS_FALL => {
+            // ftCo_Fall_IASA_Inner: every check reads input.
+            if any_input(&p.fp) {
+                return Err(format!("player {}: ftCo_Fall_IASA with input: not ported", p.slot + 1));
+            }
+            Ok(())
+        }
+        FTCO_MS_LANDING => landing_iasa(p, rand),
+        FTCO_MS_TURN => turn_iasa(p),
+        m => Err(format!("player {}: input_cb of motion {m} not ported", p.slot + 1)),
+    }
+}
+
+/// `ftCo_Landing_IASA`.
+fn landing_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    let fp = &*p.fp;
+    let lag = fp.co_attrs.normal_landing_lag;
+    if fp.cur_anim_frame < lag || !p.landing_allow_interrupt {
+        return Ok(());
+    }
+    let cd = melee_fighter::hooks::common_data();
+    let i = &fp.input;
+    // SpecialS / Attack100 (up-B) / 800D6824 / 800D68C0 (down-B) / Catch / smash and tilt
+    // attacks / jab / 80091A4C (guard) / 800DE9D8: each needs a press, the C-stick or the
+    // trigger; none is wired.
+    if i.pressed_buttons != 0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 || i.triggers[0] != 0.0 || i.held_buttons[0] & (input::HSD_PAD_A | input::HSD_PAD_B | input::HSD_PAD_Z) != 0 {
+        return Err(format!("player {}: ftCo_Landing_IASA with a button / C-stick / trigger: not ported", p.slot + 1));
+    }
+    // ftCo_Jump_CheckInput (tap jump).
+    if jump_get_input(fp) {
+        return Err(format!("player {}: ftCo_Jump_CheckInput (KneeBend) not ported", p.slot + 1));
+    }
+    // ftCo_Dash_CheckInput.
+    if fc::abs_c(i.lstick[0].x) >= cd.dash_smash_stick_threshold && (fp.active_timer.lstick.x as i32) < cd.dash_smash_window as i32 {
+        return Err(format!("player {}: ftCo_Dash_CheckInput (Dash / smash turn) not ported", p.slot + 1));
+    }
+    // ftCo_SquatWait_CheckInput (only in the first frame past the lag).
+    if fp.cur_anim_frame < fp.frame_speed_mul + lag && i.lstick[0].y < -cd.x90 {
+        return Err(format!("player {}: ftCo_SquatWait_CheckInput not ported", p.slot + 1));
+    }
+    // ftCo_Turn_CheckInput -> ftCo_800C97A8.
+    if i.lstick[0].x * fp.facing_dir <= cd.x34 {
+        return turn_enter_basic(p, rand);
+    }
+    // ftCo_Walk_CheckInput -> ftWalkCommon_800DFC70.
+    if i.lstick[0].x * fp.facing_dir >= cd.walk_stick_threshold {
+        return Err(format!("player {}: ftCo_Walk_Enter not ported", p.slot + 1));
+    }
+    Ok(())
+}
+
+/// `ftCo_Turn_Enter_Basic` -> `ftCo_Turn_Enter(gobj, Turn, 0, 0, standing_turn_frames, 0)`:
+/// the turn vars, Fighter_ChangeMotionState, then one `ftAnim_8006EBA4` step right away.
+fn turn_enter_basic(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    let frames = p.fp.co_attrs.standing_turn_frames;
+    p.turn = TurnVars { has_turned: false, just_turned: false, facing_after: -p.fp.facing_dir, frames_to_turn: frames, x8: 0.0, x1c: 0 };
+    let row = p.row_turn.clone();
+    change_motion_state(p, FTCO_MS_TURN, row.as_ref(), rand)?;
+    anim_step(p, rand)
+}
+
+/// `ftAnim_8006EBA4`: the body animation (ftAnim_8006E9B4, no blend), the command script, the
+/// hand poses (ftAnim_800707B0) and ftCo_800DB500 (no item).
+fn anim_step(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    if p.animating {
+        p.skel.anim(&mut AObjGlobals::default())?;
+        p.fp.cur_anim_frame = p.skel.curr_frame().ok_or("ftAnim_8006F3DC: no animated part")?;
+    }
+    ftaction_80073240(p, rand)?;
+    p.skel.part_anim_update(&p.part_anim)
+}
+
+/// `ftCo_Turn_IASA` with no button, C-stick or trigger input (each attack / special / catch /
+/// guard check needs one): the facing flip around the checks, the tap jump, fn_800C9C2C (the
+/// smash-turn dash), the press latch.
+fn turn_iasa(p: &mut Player) -> Result<(), String> {
+    let cd = melee_fighter::hooks::common_data();
+    if p.turn.just_turned {
+        p.fp.input.pressed_buttons |= p.turn.x1c;
+    }
+    if !p.turn.has_turned {
+        p.fp.facing_dir = -p.fp.facing_dir;
+    }
+    let i = &p.fp.input;
+    if i.pressed_buttons != 0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 || i.triggers[0] != 0.0 || i.held_buttons[0] & (input::HSD_PAD_A | input::HSD_PAD_B | input::HSD_PAD_Z) != 0 {
+        return Err(format!("player {}: ftCo_Turn_IASA with a button / C-stick / trigger: not ported", p.slot + 1));
+    }
+    if !p.turn.has_turned {
+        p.fp.facing_dir = -p.fp.facing_dir;
+    }
+    if jump_get_input(&p.fp) {
+        return Err(format!("player {}: ftCo_Jump_CheckInput (KneeBend) not ported", p.slot + 1));
+    }
+    // fn_800C9C2C.
+    let fp = &*p.fp;
+    if fp.input.lstick[0].x * p.turn.facing_after >= cd.dash_smash_stick_threshold && (fp.active_timer.lstick.x as i32) < cd.dash_smash_window as i32 {
+        p.turn.x8 = p.turn.facing_after;
+    }
+    if p.turn.just_turned && p.turn.x8 != 0.0 && p.fp.input.lstick[0].x * p.turn.facing_after >= cd.dash_smash_stick_threshold {
+        return Err(format!("player {}: ftCo_Dash_Enter (turn into a dash) not ported", p.slot + 1));
+    }
+    if p.fp.input.pressed_buttons & input::HSD_PAD_A != 0 {
+        p.turn.x1c |= input::HSD_PAD_A;
+    }
+    if p.fp.input.pressed_buttons & input::HSD_PAD_B != 0 {
+        p.turn.x1c |= input::HSD_PAD_B;
+    }
+    if p.turn.just_turned {
+        p.turn.just_turned = false;
+    }
+    Ok(())
 }
 
 /// `ftAction_80073240`: run the command script up to the current frame (lbcommand.c's

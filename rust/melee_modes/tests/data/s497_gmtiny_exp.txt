@@ -1,0 +1,707 @@
+== gm_801B8DA8 0000000000000100
+L gmVsMelee_EnterCss P:11c90 P:1f68 I:5
+L gmFrontend_AtlasSelect P:11c90 I:0 N
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=c2
+  preload=81
+  flags=bdbe
+  on_enter=X:5bdfae78c4f4efb5
+  on_exit=X:684569bf0001dd6e
+  info.scene_kind=0
+  info.enter_data=X:8ef6794b0aa7ec67
+  info.exit_data=X:df9a9686b10cc5cc
+== gm_801B8DA8 0000000000000101
+L gmVsMelee_EnterCss P:11c90 P:1f68 I:5
+L gmFrontend_AtlasSelect P:11c90 I:0 N
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=59
+  preload=e9
+  flags=3a28
+  on_enter=X:4789f1e815f2b93e
+  on_exit=X:923748a61b0b72fd
+  info.scene_kind=7f
+  info.enter_data=X:844e5a79d3684138
+  info.exit_data=X:903da3fc386f8015
+== gm_801B8DA8 0000000000000102
+L gmVsMelee_EnterCss P:11c90 P:1f68 I:5
+L gmFrontend_AtlasSelect P:11c90 I:0 N
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=60
+  preload=52
+  flags=1a39
+  on_enter=X:4ec13dc7b7a281eb
+  on_exit=X:9d52696285de4165
+  info.scene_kind=a1
+  info.enter_data=X:86519ee18bdbd137
+  info.exit_data=X:722d26ba0311c0f5
+== gm_801B8DD4 0000000000000200
+L gmVsMelee_ExitCss P:11c90 P:1f68
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=60
+  preload=2
+  flags=81fd
+  on_enter=X:651d4bd48345c2e9
+  on_exit=X:5ad71ba8fa43db6c
+  info.scene_kind=64
+  info.enter_data=X:885268a9a29cd8b4
+  info.exit_data=X:fc3218089adc8f72
+== gm_801B8DD4 0000000000000201
+L gmVsMelee_ExitCss P:11c90 P:1f68
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=1d
+  preload=59
+  flags=4f01
+  on_enter=X:a1b4c4eabb2745fd
+  on_exit=X:a15a2049a0b77d9
+  info.scene_kind=ce
+  info.enter_data=X:52b08e3e4349d1b9
+  info.exit_data=X:f5791b6c5c20321c
+== gm_801B8DD4 0000000000000202
+L gmVsMelee_ExitCss P:11c90 P:1f68
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=91
+  preload=22
+  flags=89c9
+  on_enter=X:e1c48ce9e971c7aa
+  on_exit=X:c9747413cbcab0ef
+  info.scene_kind=85
+  info.enter_data=X:6e2340b1068b0d0a
+  info.exit_data=X:c75be828ddd274b2
+== gm_801B8DFC 0000000000000300
+L gmVsMelee_EnterSss P:11c90 P:1f68
+L gmFrontend_AtlasSelect P:11c90 I:1 N
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=2b
+  preload=45
+  flags=6c9c
+  on_enter=X:6bbda49c2f1bb876
+  on_exit=X:e02cdb94fab1152d
+  info.scene_kind=ff
+  info.enter_data=X:2eebfb74670fcbd5
+  info.exit_data=X:8b11040c455d06c8
+== gm_801B8DFC 0000000000000301
+L gmVsMelee_EnterSss P:11c90 P:1f68
+L gmFrontend_AtlasSelect P:11c90 I:1 N
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=8d
+  preload=2b
+  flags=d7cf
+  on_enter=X:c4159a51d1165540
+  on_exit=X:832430d31518cf3a
+  info.scene_kind=d2
+  info.enter_data=X:4f36d2d7bac34583
+  info.exit_data=X:41407699b3405b1a
+== gm_801B8DFC 0000000000000302
+L gmVsMelee_EnterSss P:11c90 P:1f68
+L gmFrontend_AtlasSelect P:11c90 I:1 N
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=5e
+  preload=5e
+  flags=633c
+  on_enter=X:c5dbf600e0a4ec1b
+  on_exit=X:83ea9f2cb4459e26
+  info.scene_kind=f2
+  info.enter_data=X:b7f5fcf826b1dbb8
+  info.exit_data=X:8f2fc086583ba6bd
+== gm_801B8E24 0000000000000400
+L gmVsMelee_ExitSss P:11c90 P:1f68 I:0
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=b1
+  preload=76
+  flags=dc32
+  on_enter=X:d88eeba5f1cadb9b
+  on_exit=X:89504d1db8ad9e94
+  info.scene_kind=53
+  info.enter_data=X:684c8e5e1db30f7b
+  info.exit_data=X:5e7bd09ae7f74f77
+== gm_801B8E24 0000000000000401
+L gmVsMelee_ExitSss P:11c90 P:1f68 I:0
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=d1
+  preload=7d
+  flags=fe0c
+  on_enter=X:bac4754624419107
+  on_exit=X:281269121c9944d1
+  info.scene_kind=fb
+  info.enter_data=X:8767c4fe5ea793cd
+  info.exit_data=X:f3d547a6c19e498f
+== gm_801B8E24 0000000000000402
+L gmVsMelee_ExitSss P:11c90 P:1f68 I:0
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=fe
+  preload=ac
+  flags=e8b6
+  on_enter=X:16e6f04079b783a7
+  on_exit=X:834e14c0dc8c6a64
+  info.scene_kind=74
+  info.enter_data=X:5ab47f66b866ad3e
+  info.exit_data=X:21629ec6edca99d5
+== fn_801B8E50 0000000000000500
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=91
+  preload=eb
+  flags=397
+  on_enter=X:5e6047a4b9d94457
+  on_exit=X:33107bb915d5e544
+  info.scene_kind=e9
+  info.enter_data=X:6c1dadfbaadbd69b
+  info.exit_data=X:49a9beccfca43474
+D a:11cc0 PlayerInitData 1
+  #=0
+  ckind=80
+  slot_type=2a
+  stocks=4c
+  color=35
+  slot=aa
+  spawn_pos=b7
+  spawn_dir=74
+  sub_color=eb
+  handicap=d8
+  team=c
+  nametag=f2
+  xB=1
+  rumble_enabled=1
+  xC_b1=1
+  vs_metal=0
+  xC_b3=1
+  vs_invisible=1
+  xC_b5=1
+  xC_b6=1
+  xC_b7=0
+  xD_b0=0
+  xD_b1=1
+  xD_b2=0
+  xD_b3=0
+  xD_b4=0
+  xD_b5=0
+  xD_b6=1
+  xD_b7=1
+  cpu_kind=2b
+  cpu_level=ac
+  damage=6223
+  damage1=5323
+  hp=d41
+  attack_ratio=f3f800000
+  defense_ratio=f3f000000
+  model_scale=f3eb33333
+== fn_801B8E50 0000000000000501
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=ac
+  preload=a6
+  flags=eb14
+  on_enter=X:56cff46858be924a
+  on_exit=X:fcfead7f206f1d46
+  info.scene_kind=bf
+  info.enter_data=X:b4c6545da40ee1c6
+  info.exit_data=X:6aed2641f794c7b0
+D a:11cc0 PlayerInitData 1
+  #=0
+  ckind=27
+  slot_type=a5
+  stocks=4b
+  color=a4
+  slot=2a
+  spawn_pos=f1
+  spawn_dir=5
+  sub_color=5d
+  handicap=b5
+  team=b5
+  nametag=e2
+  xB=1
+  rumble_enabled=1
+  xC_b1=0
+  vs_metal=1
+  xC_b3=1
+  vs_invisible=1
+  xC_b5=1
+  xC_b6=1
+  xC_b7=0
+  xD_b0=0
+  xD_b1=0
+  xD_b2=1
+  xD_b3=0
+  xD_b4=1
+  xD_b5=1
+  xD_b6=1
+  xD_b7=0
+  cpu_kind=7d
+  cpu_level=b2
+  damage=c55f
+  damage1=c61b
+  hp=b08f
+  attack_ratio=f3f800000
+  defense_ratio=f3f000000
+  model_scale=f3eb33333
+== fn_801B8E50 0000000000000502
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=23
+  preload=93
+  flags=2608
+  on_enter=X:acf623be4c99631c
+  on_exit=X:a9801bf87e615759
+  info.scene_kind=4b
+  info.enter_data=X:1e82b98d1278ae9b
+  info.exit_data=X:75fda4b91c519c4f
+D a:11cc0 PlayerInitData 1
+  #=0
+  ckind=2d
+  slot_type=fb
+  stocks=b2
+  color=3b
+  slot=fd
+  spawn_pos=93
+  spawn_dir=61
+  sub_color=fa
+  handicap=9a
+  team=85
+  nametag=8e
+  xB=1
+  rumble_enabled=1
+  xC_b1=1
+  vs_metal=0
+  xC_b3=0
+  vs_invisible=0
+  xC_b5=1
+  xC_b6=0
+  xC_b7=1
+  xD_b0=1
+  xD_b1=0
+  xD_b2=0
+  xD_b3=1
+  xD_b4=1
+  xD_b5=0
+  xD_b6=1
+  xD_b7=0
+  cpu_kind=7
+  cpu_level=f9
+  damage=f83f
+  damage1=e8
+  hp=5b32
+  attack_ratio=f3f800000
+  defense_ratio=f3f000000
+  model_scale=f3eb33333
+== gm_801B8E74 0000000000000600
+L gmVsMelee_EnterVs P:11c90 P:1f68 N F:fn_801B8E50
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=9f
+  preload=4
+  flags=4de8
+  on_enter=X:d89eced4c7c45d99
+  on_exit=X:a4ac4f66d994b91f
+  info.scene_kind=1a
+  info.enter_data=X:8faf1550c6a8e5fa
+  info.exit_data=X:7d82bcd629fa113
+== gm_801B8E74 0000000000000601
+L gmVsMelee_EnterVs P:11c90 P:1f68 N F:fn_801B8E50
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=b7
+  preload=d8
+  flags=fb78
+  on_enter=X:d859d3c554590415
+  on_exit=X:eb7ed2e1816d838e
+  info.scene_kind=50
+  info.enter_data=X:3f75bbd2b5f84536
+  info.exit_data=X:99989771d808a89
+== gm_801B8E74 0000000000000602
+L gmVsMelee_EnterVs P:11c90 P:1f68 N F:fn_801B8E50
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=de
+  preload=5b
+  flags=69be
+  on_enter=X:ce8241d7bbc4c44e
+  on_exit=X:9f9f579e868d4770
+  info.scene_kind=31
+  info.enter_data=X:4214c20a64f8649d
+  info.exit_data=X:5b17c5d44a5ddc41
+== gm_801B8EA8 0000000000000700
+L gmVsMelee_ExitVs P:11c90 I:4 I:3
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=3c
+  preload=d6
+  flags=aa12
+  on_enter=X:c8f863bff9ca84b4
+  on_exit=X:60e52841b9133f95
+  info.scene_kind=7f
+  info.enter_data=X:4d5a09ab81f22618
+  info.exit_data=X:1475f174cccc25e7
+== gm_801B8EA8 0000000000000701
+L gmVsMelee_ExitVs P:11c90 I:4 I:3
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=53
+  preload=12
+  flags=e9c8
+  on_enter=X:5ec890bebbcb4d9b
+  on_exit=X:4f8462eb230f2781
+  info.scene_kind=f7
+  info.enter_data=X:b70fb04df05837d9
+  info.exit_data=X:213538bd0327f495
+== gm_801B8EA8 0000000000000702
+L gmVsMelee_ExitVs P:11c90 I:4 I:3
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=7d
+  preload=1
+  flags=a096
+  on_enter=X:5d1d6a01442cde6c
+  on_exit=X:5818904e03c01da
+  info.scene_kind=f1
+  info.enter_data=X:7bb9bd3ba8a1ae1e
+  info.exit_data=X:a2e4c1bfe85146ec
+== gm_801B8ED0 0000000000000800
+L gmVsMelee_EnterSuddenDeath P:11c90 P:1f68 N F:fn_801B8E50
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=b4
+  preload=39
+  flags=cc33
+  on_enter=X:c1262fac6b247234
+  on_exit=X:c9106cd90e3fb7c7
+  info.scene_kind=e7
+  info.enter_data=X:90dd175d7b87a968
+  info.exit_data=X:abd344ff0c3f4967
+== gm_801B8ED0 0000000000000801
+L gmVsMelee_EnterSuddenDeath P:11c90 P:1f68 N F:fn_801B8E50
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=4d
+  preload=1d
+  flags=dc5
+  on_enter=X:1854555cf041520
+  on_exit=X:868b4ee44f1b5f0a
+  info.scene_kind=46
+  info.enter_data=X:bffce0118f33087a
+  info.exit_data=X:9b98f6a80543cb51
+== gm_801B8ED0 0000000000000802
+L gmVsMelee_EnterSuddenDeath P:11c90 P:1f68 N F:fn_801B8E50
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=59
+  preload=99
+  flags=1441
+  on_enter=X:6ad22d8d51306e34
+  on_exit=X:dac2620a077cf7b5
+  info.scene_kind=b6
+  info.enter_data=X:176f32dd85597dbf
+  info.exit_data=X:5a729bacc4511e9e
+== gm_801B8F04 0000000000000900
+L gmVsMelee_ExitSuddenDeath P:11c90
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=5b
+  preload=8a
+  flags=b83f
+  on_enter=X:af3e0d032199af1b
+  on_exit=X:dff93bb53e2f2d32
+  info.scene_kind=17
+  info.enter_data=X:2d1aa528f3a035da
+  info.exit_data=X:5799c33c75de9185
+== gm_801B8F04 0000000000000901
+L gmVsMelee_ExitSuddenDeath P:11c90
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=15
+  preload=3d
+  flags=23c4
+  on_enter=X:b5ef06a824803351
+  on_exit=X:c42ad2bd7a7a43b9
+  info.scene_kind=6b
+  info.enter_data=X:c2d05ab137fc14fc
+  info.exit_data=X:e64c455f0c9d3ba6
+== gm_801B8F04 0000000000000902
+L gmVsMelee_ExitSuddenDeath P:11c90
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=77
+  preload=53
+  flags=3e44
+  on_enter=X:eac5df985d049cd1
+  on_exit=X:92b7734d0c7a3dd1
+  info.scene_kind=f0
+  info.enter_data=X:806d9d2e2effb28d
+  info.exit_data=X:be376ea85b7fa980
+== gm_801B8F24 0000000000000a00
+L gmVsMelee_EnterResults P:11c90
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=e8
+  preload=7d
+  flags=a922
+  on_enter=X:46b5635c91f6ca5a
+  on_exit=X:3583eee27558e76f
+  info.scene_kind=af
+  info.enter_data=X:75c8a25ff8923ae0
+  info.exit_data=X:f7e23d90191f142a
+== gm_801B8F24 0000000000000a01
+L gmVsMelee_EnterResults P:11c90
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=7b
+  preload=f6
+  flags=9228
+  on_enter=X:36b79ea76f3db1dc
+  on_exit=X:2aafa23816d568d2
+  info.scene_kind=14
+  info.enter_data=X:a8e22f845fc0dcb4
+  info.exit_data=X:939f6332ba2baed
+== gm_801B8F24 0000000000000a02
+L gmVsMelee_EnterResults P:11c90
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=7
+  preload=fc
+  flags=17d2
+  on_enter=X:42f511f959f3c779
+  on_exit=X:5dca3e5163240aa0
+  info.scene_kind=90
+  info.enter_data=X:a1d5e36d5ffcaecc
+  info.exit_data=X:88be5c7f2835146f
+== gm_801B8F44 0000000000000b00
+L gmVsMelee_ExitResults P:11c90 P:1f68 I:0
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=1
+  preload=cd
+  flags=b7f7
+  on_enter=X:2fe576d4fcbb1fa4
+  on_exit=X:cad150948f263e6
+  info.scene_kind=a3
+  info.enter_data=X:83fb39a866b6315c
+  info.exit_data=X:743d1a09ab6681da
+== gm_801B8F44 0000000000000b01
+L gmVsMelee_ExitResults P:11c90 P:1f68 I:0
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=7a
+  preload=d2
+  flags=246d
+  on_enter=X:94a592467d3a854f
+  on_exit=X:af38bbe42470241a
+  info.scene_kind=9b
+  info.enter_data=X:bb4e993e2d666900
+  info.exit_data=X:52310f132770e41e
+== gm_801B8F44 0000000000000b02
+L gmVsMelee_ExitResults P:11c90 P:1f68 I:0
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=1d
+  preload=32
+  flags=a54b
+  on_enter=X:41475069410cb3f8
+  on_exit=X:351519e66a6e55b4
+  info.scene_kind=e8
+  info.enter_data=X:349075cc3bb5b02b
+  info.exit_data=X:895dd0f620411535
+== gm_Mode_TinyVs_OnInit 0000000000000c00
+L gm_InitVsMode P:1f68
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=64
+  preload=5e
+  flags=d1f3
+  on_enter=X:159b726d6d91c83
+  on_exit=X:88abbbc43d492495
+  info.scene_kind=b2
+  info.enter_data=X:f85e3f9014a86f3
+  info.exit_data=X:6b75702596599572
+== gm_Mode_TinyVs_OnInit 0000000000000c01
+L gm_InitVsMode P:1f68
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=74
+  preload=26
+  flags=f1b
+  on_enter=X:9d6e7133fb4f6726
+  on_exit=X:2e5de7538db2b8af
+  info.scene_kind=3f
+  info.enter_data=X:1cce1efba7b942be
+  info.exit_data=X:36ef56d11f3356d8
+== gm_Mode_TinyVs_OnInit 0000000000000c02
+L gm_InitVsMode P:1f68
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=52
+  preload=ae
+  flags=e0a0
+  on_enter=X:ac6c1c7eaca2ed6b
+  on_exit=X:dbb832aa0845ce49
+  info.scene_kind=a7
+  info.enter_data=X:9a6eae6437e51d6f
+  info.exit_data=X:d57d5ab35a5a6427
+== gm_Mode_TinyVs_OnLoad 0000000000000d00
+L gmVsMelee_ResetKOCounts
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=fc
+  preload=cf
+  flags=a0c0
+  on_enter=X:279b238f5790e8d1
+  on_exit=X:ed592c8975516f3f
+  info.scene_kind=20
+  info.enter_data=X:424824b1b6ad6a1
+  info.exit_data=X:d92f773d85394d9
+== gm_Mode_TinyVs_OnLoad 0000000000000d01
+L gmVsMelee_ResetKOCounts
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=1
+  preload=86
+  flags=8087
+  on_enter=X:9772caeb60c3d2b7
+  on_exit=X:c42903f1dff4e47b
+  info.scene_kind=ce
+  info.enter_data=X:e8e7f1de5c0f6a6b
+  info.exit_data=X:c8535fd4ab67e24f
+== gm_Mode_TinyVs_OnLoad 0000000000000d02
+L gmVsMelee_ResetKOCounts
+ret -
+D a:11c90 GameModeState 1
+  #=0
+  id=51
+  preload=95
+  flags=3b1d
+  on_enter=X:727835d66559bc44
+  on_exit=X:9410d79adeb80bf5
+  info.scene_kind=ff
+  info.enter_data=X:4e5327a6adc650d0
+  info.exit_data=X:3a61b830102da1a6
+== __table_gm_Mode_TinyVs_States 0000000000000001
+D g:gm_Mode_TinyVs_States GameModeState 9
+  #=0
+  id=0
+  preload=3
+  flags=0
+  on_enter=F:gm_801B8DA8
+  on_exit=F:gm_801B8DD4
+  info.scene_kind=8
+  info.enter_data=G:gmVsMelee_CssData+0
+  info.exit_data=G:gmVsMelee_CssData+0
+  #=1
+  id=1
+  preload=3
+  flags=0
+  on_enter=F:gm_801B8DFC
+  on_exit=F:gm_801B8E24
+  info.scene_kind=9
+  info.enter_data=G:gmVsMelee_SssData+0
+  info.exit_data=G:gmVsMelee_SssData+0
+  #=2
+  id=2
+  preload=3
+  flags=0
+  on_enter=F:gm_801B8E74
+  on_exit=F:gm_801B8EA8
+  info.scene_kind=2
+  info.enter_data=G:gmVsMelee_StartData+0
+  info.exit_data=G:gmVsMelee_VsExitInfo+0
+  #=3
+  id=3
+  preload=3
+  flags=0
+  on_enter=F:gm_801B8ED0
+  on_exit=F:gm_801B8F04
+  info.scene_kind=3
+  info.enter_data=G:gmVsMelee_StartData+0
+  info.exit_data=G:gmVsMelee_SuddenDeathExitInfo+0
+  #=4
+  id=4
+  preload=3
+  flags=0
+  on_enter=F:gm_801B8F24
+  on_exit=F:gm_801B8F44
+  info.scene_kind=5
+  info.enter_data=G:gmVsMelee_ResultsEnterData+0
+  info.exit_data=N
+  #=5
+  id=80
+  preload=2
+  flags=0
+  on_enter=F:gm_ModeState_Approach_OnEnter
+  on_exit=N
+  info.scene_kind=29
+  info.enter_data=G:gmVsMelee_ApproachData+0
+  info.exit_data=G:gmVsMelee_ApproachData+0
+  #=6
+  id=81
+  preload=2
+  flags=0
+  on_enter=F:gm_ModeState_ApproachVs_OnEnter
+  on_exit=F:gm_ModeState_ApproachVs_OnExit
+  info.scene_kind=2
+  info.enter_data=G:gmVsMelee_StartData+0
+  info.exit_data=G:gmVsMelee_VsExitInfo+0
+  #=7
+  id=c0
+  preload=2
+  flags=0
+  on_enter=F:gm_ModeState_Prize_OnEnter
+  on_exit=F:gm_ModeState_Prize_OnExit
+  info.scene_kind=27
+  info.enter_data=G:if_Scene_Prize_EnterData+0
+  info.exit_data=N
+  #=8
+  id=ff
+  preload=0
+  flags=0
+  on_enter=N
+  on_exit=N
+  info.scene_kind=0
+  info.enter_data=N
+  info.exit_data=N

@@ -44,6 +44,10 @@ pub mod lb_r9;
 pub mod mn_r9;
 pub mod gm_r10;
 pub mod lb_r10;
+/// Test hook ABI of the `ext` modules of `tu::*` (state oracles, tests/s497_*.rs).
+pub mod hook;
+/// One module per C translation unit (docs/rust-port: TU-granular ports).
+pub mod tu;
 
 /// `GXColor` (libs/dolphin/include/dolphin/gx/GXStruct.h). TODO(group0): melee_types does not
 /// generate it (no group-0 header reaches GXStruct.h); move it there when it does.

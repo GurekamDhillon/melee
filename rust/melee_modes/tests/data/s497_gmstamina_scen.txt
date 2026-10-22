@@ -1,0 +1,2369 @@
+begin gm_801B91C8 1000
+bf a:1000 gmm_x0 1 10002000
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 10002000
+bf a:11cc0 CSSData 1 10012cc0
+RET gm_GetGameModeStateEnterData a:11cc0
+call a:11c90
+gdump gm_804975F8
+dump a:11c90 GameModeState 1
+dump a:11cc0 CSSData 1
+end
+begin gm_801B91C8 1001
+bf a:1000 gmm_x0 1 10012001
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 10012001
+bf a:11cc0 CSSData 1 10022cc1
+RET gm_GetGameModeStateEnterData a:11cc0
+call a:11c90
+gdump gm_804975F8
+dump a:11c90 GameModeState 1
+dump a:11cc0 CSSData 1
+end
+begin gm_801B91C8 1002
+bf a:1000 gmm_x0 1 10022002
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 10022002
+bf a:11cc0 CSSData 1 10032cc2
+RET gm_GetGameModeStateEnterData a:11cc0
+call a:11c90
+gdump gm_804975F8
+dump a:11c90 GameModeState 1
+dump a:11cc0 CSSData 1
+end
+begin gm_801B91C8 1003
+bf a:1000 gmm_x0 1 10032003
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 10032003
+bf a:11cc0 CSSData 1 10042cc3
+RET gm_GetGameModeStateEnterData a:11cc0
+call a:11c90
+gdump gm_804975F8
+dump a:11c90 GameModeState 1
+dump a:11cc0 CSSData 1
+end
+begin gm_801B91C8 1004
+bf a:1000 gmm_x0 1 10042004
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 10042004
+bf a:11cc0 CSSData 1 10052cc4
+RET gm_GetGameModeStateEnterData a:11cc0
+call a:11c90
+gdump gm_804975F8
+dump a:11c90 GameModeState 1
+dump a:11cc0 CSSData 1
+end
+begin gm_801B91C8 1005
+bf a:1000 gmm_x0 1 10052005
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 10052005
+bf a:11cc0 CSSData 1 10062cc5
+RET gm_GetGameModeStateEnterData a:11cc0
+call a:11c90
+gdump gm_804975F8
+dump a:11c90 GameModeState 1
+dump a:11cc0 CSSData 1
+end
+begin gm_801B922C 2000
+bf a:1000 gmm_x0 1 20003000
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 20003000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801B922C 2001
+bf a:1000 gmm_x0 1 20013001
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 20013001
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801B9254 2000
+bf a:1000 gmm_x0 1 20003000
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 20003000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801B9254 2001
+bf a:1000 gmm_x0 1 20013001
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 20013001
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801B927C 3000
+bf a:1000 gmm_x0 1 30004000
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 30004000
+bf a:11cc0 SSSData 1 30014cc0
+W 11cc4 1 0
+RET gm_GetGameModeStateExitData a:11cc0
+call a:11c90
+dump a:11c90 GameModeState 1
+dump a:11cc0 SSSData 1
+dump a:2238 VsModeData 1
+end
+begin gm_801B927C 3001
+bf a:1000 gmm_x0 1 30014001
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 30014001
+bf a:11cc0 SSSData 1 30024cc1
+W 11cc4 1 1
+RET gm_GetGameModeStateExitData a:11cc0
+call a:11c90
+dump a:11c90 GameModeState 1
+dump a:11cc0 SSSData 1
+dump a:2238 VsModeData 1
+end
+begin gm_801B927C 3002
+bf a:1000 gmm_x0 1 30024002
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 30024002
+bf a:11cc0 SSSData 1 30034cc2
+W 11cc4 1 2
+RET gm_GetGameModeStateExitData a:11cc0
+call a:11c90
+dump a:11c90 GameModeState 1
+dump a:11cc0 SSSData 1
+dump a:2238 VsModeData 1
+end
+begin gm_801B927C 3003
+bf a:1000 gmm_x0 1 30034003
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 30034003
+bf a:11cc0 SSSData 1 30044cc3
+W 11cc4 1 0
+RET gm_GetGameModeStateExitData a:11cc0
+call a:11c90
+dump a:11c90 GameModeState 1
+dump a:11cc0 SSSData 1
+dump a:2238 VsModeData 1
+end
+begin gm_801B927C 3004
+bf a:1000 gmm_x0 1 30044004
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 30044004
+bf a:11cc0 SSSData 1 30054cc4
+W 11cc4 1 1
+RET gm_GetGameModeStateExitData a:11cc0
+call a:11c90
+dump a:11c90 GameModeState 1
+dump a:11cc0 SSSData 1
+dump a:2238 VsModeData 1
+end
+begin gm_801B927C 3005
+bf a:1000 gmm_x0 1 30054005
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 30054005
+bf a:11cc0 SSSData 1 30064cc5
+W 11cc4 1 ff
+RET gm_GetGameModeStateExitData a:11cc0
+call a:11c90
+dump a:11c90 GameModeState 1
+dump a:11cc0 SSSData 1
+dump a:2238 VsModeData 1
+end
+begin gm_801B931C 4000
+bf a:1000 gmm_x0 1 40005000
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 40005000
+bf a:11cc0 StartMeleeData 1 40015cc0
+RET gm_GetGameModeStateEnterData a:11cc0
+call a:11c90
+dump a:11c90 GameModeState 1
+dump a:11cc0 StartMeleeData 1
+dump a:2238 VsModeData 1
+end
+begin gm_801B931C 4001
+bf a:1000 gmm_x0 1 40015001
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 40015001
+bf a:11cc0 StartMeleeData 1 40025cc1
+RET gm_GetGameModeStateEnterData a:11cc0
+call a:11c90
+dump a:11c90 GameModeState 1
+dump a:11cc0 StartMeleeData 1
+dump a:2238 VsModeData 1
+end
+begin gm_801B931C 4002
+bf a:1000 gmm_x0 1 40025002
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 40025002
+bf a:11cc0 StartMeleeData 1 40035cc2
+RET gm_GetGameModeStateEnterData a:11cc0
+call a:11c90
+dump a:11c90 GameModeState 1
+dump a:11cc0 StartMeleeData 1
+dump a:2238 VsModeData 1
+end
+begin gm_801B931C 4003
+bf a:1000 gmm_x0 1 40035003
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 40035003
+bf a:11cc0 StartMeleeData 1 40045cc3
+RET gm_GetGameModeStateEnterData a:11cc0
+call a:11c90
+dump a:11c90 GameModeState 1
+dump a:11cc0 StartMeleeData 1
+dump a:2238 VsModeData 1
+end
+begin gm_801B931C 4004
+bf a:1000 gmm_x0 1 40045004
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 40045004
+bf a:11cc0 StartMeleeData 1 40055cc4
+RET gm_GetGameModeStateEnterData a:11cc0
+call a:11c90
+dump a:11c90 GameModeState 1
+dump a:11cc0 StartMeleeData 1
+dump a:2238 VsModeData 1
+end
+begin gm_801B931C 4005
+bf a:1000 gmm_x0 1 40055005
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 40055005
+bf a:11cc0 StartMeleeData 1 40065cc5
+RET gm_GetGameModeStateEnterData a:11cc0
+call a:11c90
+dump a:11c90 GameModeState 1
+dump a:11cc0 StartMeleeData 1
+dump a:2238 VsModeData 1
+end
+begin gm_801B9560 5000
+bf a:1000 gmm_x0 1 50006000
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 50006000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801B9560 5001
+bf a:1000 gmm_x0 1 50016001
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 50016001
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_Mode_StaminaVs_OnInit 6000
+bf a:1000 gmm_x0 1 60007000
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 60007000
+call 
+end
+begin gm_Mode_StaminaVs_OnLoad 6000
+bf a:1000 gmm_x0 1 60007000
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 60007000
+call 
+end
+begin gm_801B9600 7000
+bf a:1000 gmm_x0 1 70008000
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70008000
+W 2248 1 2
+GW gm_804975F8 4 4 1
+GW gm_804975F8 8 4 1
+GW gm_804975F8 c 4 0
+GW gm_804975F8 10 4 1
+RET Player_GetPlayerSlotType s:0 s:4 s:1 s:3 s:4 s:3 s:3 s:4 s:0 s:2 s:1 s:2
+RET Player_GetStocks s:1 s:0 s:0 s:0
+RET Player_GetTeam s:1 s:1 s:1 s:2 s:0 s:1 s:1 s:0 s:2 s:1 s:1
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7001
+bf a:1000 gmm_x0 1 70018001
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70018001
+W 2248 1 2
+GW gm_804975F8 4 4 1
+GW gm_804975F8 8 4 1
+GW gm_804975F8 c 4 0
+GW gm_804975F8 10 4 1
+RET Player_GetPlayerSlotType s:3 s:2 s:2 s:0 s:0 s:2 s:2 s:1 s:3 s:2 s:4 s:0
+RET Player_GetStocks s:3 s:3 s:0 s:3
+RET Player_GetTeam s:0 s:2 s:2 s:0 s:2 s:1 s:2 s:0 s:0 s:0 s:2
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7002
+bf a:1000 gmm_x0 1 70028002
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70028002
+W 2248 1 2
+GW gm_804975F8 4 4 1
+GW gm_804975F8 8 4 2
+GW gm_804975F8 c 4 0
+GW gm_804975F8 10 4 1
+RET Player_GetPlayerSlotType s:1 s:0 s:4 s:2 s:0 s:2 s:4 s:3
+RET Player_GetStocks s:3 s:3 s:0 s:0
+RET Player_GetTeam s:0 s:0 s:0 s:1 s:1 s:2 s:1 s:1 s:2 s:2 s:0
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7003
+bf a:1000 gmm_x0 1 70038003
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70038003
+W 2248 1 0
+GW gm_804975F8 4 4 2
+GW gm_804975F8 8 4 2
+GW gm_804975F8 c 4 2
+GW gm_804975F8 10 4 1
+RET Player_GetPlayerSlotType s:4 s:2 s:0 s:3 s:2 s:3 s:4 s:3
+RET Player_GetStocks s:3 s:1 s:0 s:0
+RET Player_GetTeam s:1 s:0 s:2 s:1
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7004
+bf a:1000 gmm_x0 1 70048004
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70048004
+W 2248 1 2
+GW gm_804975F8 4 4 2
+GW gm_804975F8 8 4 0
+GW gm_804975F8 c 4 2
+GW gm_804975F8 10 4 0
+RET Player_GetPlayerSlotType s:0 s:2 s:4 s:0 s:3 s:2 s:3 s:1 s:2 s:1 s:2 s:2
+RET Player_GetStocks s:1 s:3 s:0 s:0
+RET Player_GetTeam s:2 s:0 s:0 s:1 s:2 s:1 s:0 s:0 s:0 s:2 s:0
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7005
+bf a:1000 gmm_x0 1 70058005
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70058005
+W 2248 1 0
+GW gm_804975F8 4 4 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 c 4 0
+GW gm_804975F8 10 4 0
+RET Player_GetPlayerSlotType s:3 s:4 s:0 s:3
+RET Player_GetStocks s:0 s:1 s:1 s:1
+RET Player_GetTeam s:2 s:2 s:2 s:2
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7006
+bf a:1000 gmm_x0 1 70068006
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70068006
+W 2248 1 0
+GW gm_804975F8 4 4 0
+GW gm_804975F8 8 4 1
+GW gm_804975F8 c 4 0
+GW gm_804975F8 10 4 2
+RET Player_GetPlayerSlotType s:3 s:2 s:3 s:0 s:4 s:2 s:3 s:0 s:1 s:0 s:4 s:2
+RET Player_GetStocks s:0 s:3 s:0 s:0
+RET Player_GetTeam s:2 s:2 s:2 s:0
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7007
+bf a:1000 gmm_x0 1 70078007
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70078007
+W 2248 1 2
+GW gm_804975F8 4 4 1
+GW gm_804975F8 8 4 0
+GW gm_804975F8 c 4 0
+GW gm_804975F8 10 4 1
+RET Player_GetPlayerSlotType s:1 s:0 s:3 s:3
+RET Player_GetStocks s:1 s:0 s:0 s:0
+RET Player_GetTeam s:1 s:0 s:0 s:2
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7008
+bf a:1000 gmm_x0 1 70088008
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70088008
+W 2248 1 1
+GW gm_804975F8 4 4 2
+GW gm_804975F8 8 4 2
+GW gm_804975F8 c 4 1
+GW gm_804975F8 10 4 1
+RET Player_GetPlayerSlotType s:4 s:0 s:0 s:2
+RET Player_GetStocks s:0 s:0 s:3 s:3
+RET Player_GetTeam s:1 s:0 s:0 s:2 s:0 s:1 s:2
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7009
+bf a:1000 gmm_x0 1 70098009
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70098009
+W 2248 1 1
+GW gm_804975F8 4 4 0
+GW gm_804975F8 8 4 1
+GW gm_804975F8 c 4 1
+GW gm_804975F8 10 4 1
+RET Player_GetPlayerSlotType s:3 s:3 s:3 s:3 s:2 s:2 s:4 s:2
+RET Player_GetStocks s:3 s:3 s:1 s:0
+RET Player_GetTeam s:1 s:1 s:2 s:0
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 700a
+bf a:1000 gmm_x0 1 700a800a
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 700a800a
+W 2248 1 0
+GW gm_804975F8 4 4 2
+GW gm_804975F8 8 4 1
+GW gm_804975F8 c 4 1
+GW gm_804975F8 10 4 0
+RET Player_GetPlayerSlotType s:3 s:3 s:0 s:4 s:4 s:3 s:2 s:4 s:0 s:4 s:2 s:1
+RET Player_GetStocks s:0 s:3 s:3 s:0
+RET Player_GetTeam s:0 s:2 s:0 s:1
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 700b
+bf a:1000 gmm_x0 1 700b800b
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 700b800b
+W 2248 1 1
+GW gm_804975F8 4 4 0
+GW gm_804975F8 8 4 2
+GW gm_804975F8 c 4 1
+GW gm_804975F8 10 4 2
+RET Player_GetPlayerSlotType s:3 s:4 s:0 s:3 s:1 s:1 s:4 s:0
+RET Player_GetStocks s:0 s:0 s:0 s:1
+RET Player_GetTeam s:1 s:0 s:0 s:1 s:2 s:0 s:2 s:1 s:2 s:1 s:2
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 700c
+bf a:1000 gmm_x0 1 700c800c
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 700c800c
+W 2248 1 1
+GW gm_804975F8 4 4 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 c 4 0
+GW gm_804975F8 10 4 1
+RET Player_GetPlayerSlotType s:2 s:4 s:2 s:3 s:2 s:3 s:4 s:3
+RET Player_GetStocks s:3 s:3 s:0 s:0
+RET Player_GetTeam s:1 s:0 s:0 s:2 s:1 s:2 s:1 s:1 s:2 s:2 s:0
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 700d
+bf a:1000 gmm_x0 1 700d800d
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 700d800d
+W 2248 1 2
+GW gm_804975F8 4 4 0
+GW gm_804975F8 8 4 1
+GW gm_804975F8 c 4 1
+GW gm_804975F8 10 4 0
+RET Player_GetPlayerSlotType s:1 s:4 s:1 s:3
+RET Player_GetStocks s:3 s:0 s:0 s:0
+RET Player_GetTeam s:1 s:2 s:2 s:0
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 700e
+bf a:1000 gmm_x0 1 700e800e
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 700e800e
+W 2248 1 0
+GW gm_804975F8 4 4 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 c 4 1
+GW gm_804975F8 10 4 0
+RET Player_GetPlayerSlotType s:4 s:3 s:0 s:4 s:3 s:3 s:1 s:1 s:3 s:3 s:3 s:4
+RET Player_GetStocks s:3 s:3 s:0 s:1
+RET Player_GetTeam s:2 s:1 s:1 s:0
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 700f
+bf a:1000 gmm_x0 1 700f800f
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 700f800f
+W 2248 1 0
+GW gm_804975F8 4 4 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 c 4 0
+GW gm_804975F8 10 4 1
+RET Player_GetPlayerSlotType s:4 s:0 s:1 s:3 s:2 s:4 s:3 s:3
+RET Player_GetStocks s:0 s:0 s:0 s:0
+RET Player_GetTeam s:0 s:2 s:0 s:0 s:0 s:1 s:1 s:0 s:2 s:0 s:2
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7010
+bf a:1000 gmm_x0 1 70108010
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70108010
+W 2248 1 2
+GW gm_804975F8 4 4 2
+GW gm_804975F8 8 4 0
+GW gm_804975F8 c 4 1
+GW gm_804975F8 10 4 2
+RET Player_GetPlayerSlotType s:3 s:4 s:3 s:2
+RET Player_GetStocks s:0 s:1 s:1 s:0
+RET Player_GetTeam s:2 s:2 s:0 s:0 s:0 s:1 s:2 s:0 s:2 s:2 s:2
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7011
+bf a:1000 gmm_x0 1 70118011
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70118011
+W 2248 1 2
+GW gm_804975F8 4 4 2
+GW gm_804975F8 8 4 0
+GW gm_804975F8 c 4 2
+GW gm_804975F8 10 4 0
+RET Player_GetPlayerSlotType s:0 s:0 s:3 s:1
+RET Player_GetStocks s:0 s:1 s:0 s:0
+RET Player_GetTeam s:2 s:2 s:0 s:0 s:1 s:1 s:0
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7012
+bf a:1000 gmm_x0 1 70128012
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70128012
+W 2248 1 1
+GW gm_804975F8 4 4 1
+GW gm_804975F8 8 4 1
+GW gm_804975F8 c 4 0
+GW gm_804975F8 10 4 1
+RET Player_GetPlayerSlotType s:2 s:2 s:3 s:3
+RET Player_GetStocks s:1 s:0 s:3 s:0
+RET Player_GetTeam s:0 s:2 s:1 s:2
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7013
+bf a:1000 gmm_x0 1 70138013
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70138013
+W 2248 1 2
+GW gm_804975F8 4 4 2
+GW gm_804975F8 8 4 1
+GW gm_804975F8 c 4 0
+GW gm_804975F8 10 4 0
+RET Player_GetPlayerSlotType s:3 s:2 s:1 s:4 s:4 s:1 s:0 s:3 s:3 s:4 s:1 s:1
+RET Player_GetStocks s:0 s:3 s:3 s:0
+RET Player_GetTeam s:1 s:1 s:0 s:1 s:1 s:0 s:1
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7014
+bf a:1000 gmm_x0 1 70148014
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70148014
+W 2248 1 1
+GW gm_804975F8 4 4 2
+GW gm_804975F8 8 4 1
+GW gm_804975F8 c 4 2
+GW gm_804975F8 10 4 1
+RET Player_GetPlayerSlotType s:0 s:1 s:1 s:4
+RET Player_GetStocks s:3 s:3 s:0 s:0
+RET Player_GetTeam s:2 s:0 s:1 s:2 s:2 s:0 s:1 s:2 s:2 s:2 s:1
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7015
+bf a:1000 gmm_x0 1 70158015
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70158015
+W 2248 1 1
+GW gm_804975F8 4 4 1
+GW gm_804975F8 8 4 1
+GW gm_804975F8 c 4 1
+GW gm_804975F8 10 4 0
+RET Player_GetPlayerSlotType s:2 s:3 s:3 s:4 s:3 s:3 s:3 s:0 s:3 s:3 s:3 s:2
+RET Player_GetStocks s:0 s:0 s:0 s:0
+RET Player_GetTeam s:2 s:2 s:2 s:1 s:1 s:0 s:0
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7016
+bf a:1000 gmm_x0 1 70168016
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70168016
+W 2248 1 0
+GW gm_804975F8 4 4 2
+GW gm_804975F8 8 4 2
+GW gm_804975F8 c 4 1
+GW gm_804975F8 10 4 1
+RET Player_GetPlayerSlotType s:3 s:3 s:2 s:1 s:2 s:3 s:3 s:2 s:2 s:1 s:3 s:1
+RET Player_GetStocks s:1 s:0 s:0 s:3
+RET Player_GetTeam s:2 s:1 s:1 s:0
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7017
+bf a:1000 gmm_x0 1 70178017
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70178017
+W 2248 1 1
+GW gm_804975F8 4 4 2
+GW gm_804975F8 8 4 0
+GW gm_804975F8 c 4 1
+GW gm_804975F8 10 4 1
+RET Player_GetPlayerSlotType s:1 s:4 s:2 s:1
+RET Player_GetStocks s:3 s:0 s:3 s:1
+RET Player_GetTeam s:1 s:2 s:1 s:0
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7018
+bf a:1000 gmm_x0 1 70188018
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70188018
+W 2248 1 1
+GW gm_804975F8 4 4 2
+GW gm_804975F8 8 4 2
+GW gm_804975F8 c 4 1
+GW gm_804975F8 10 4 0
+RET Player_GetPlayerSlotType s:3 s:1 s:0 s:3 s:3 s:2 s:1 s:2 s:0 s:0 s:0 s:4
+RET Player_GetStocks s:3 s:0 s:0 s:0
+RET Player_GetTeam s:0 s:1 s:0 s:1 s:0 s:0 s:0 s:0 s:1 s:0 s:2
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7019
+bf a:1000 gmm_x0 1 70198019
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70198019
+W 2248 1 0
+GW gm_804975F8 4 4 0
+GW gm_804975F8 8 4 1
+GW gm_804975F8 c 4 1
+GW gm_804975F8 10 4 0
+RET Player_GetPlayerSlotType s:1 s:2 s:3 s:2
+RET Player_GetStocks s:0 s:0 s:0 s:0
+RET Player_GetTeam s:2 s:1 s:0 s:2 s:1 s:1 s:0 s:2 s:0 s:1 s:2
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 701a
+bf a:1000 gmm_x0 1 701a801a
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 701a801a
+W 2248 1 1
+GW gm_804975F8 4 4 0
+GW gm_804975F8 8 4 2
+GW gm_804975F8 c 4 0
+GW gm_804975F8 10 4 1
+RET Player_GetPlayerSlotType s:0 s:0 s:1 s:1 s:1 s:3 s:2 s:3
+RET Player_GetStocks s:3 s:0 s:0 s:0
+RET Player_GetTeam s:0 s:0 s:0 s:1 s:2 s:2 s:2 s:2 s:2 s:0 s:0
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 701b
+bf a:1000 gmm_x0 1 701b801b
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 701b801b
+W 2248 1 1
+GW gm_804975F8 4 4 1
+GW gm_804975F8 8 4 1
+GW gm_804975F8 c 4 2
+GW gm_804975F8 10 4 1
+RET Player_GetPlayerSlotType s:1 s:4 s:4 s:3
+RET Player_GetStocks s:3 s:1 s:1 s:3
+RET Player_GetTeam s:2 s:1 s:1 s:0 s:2 s:0 s:0 s:2 s:0 s:1 s:1
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 701c
+bf a:1000 gmm_x0 1 701c801c
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 701c801c
+W 2248 1 1
+GW gm_804975F8 4 4 2
+GW gm_804975F8 8 4 1
+GW gm_804975F8 c 4 0
+GW gm_804975F8 10 4 0
+RET Player_GetPlayerSlotType s:2 s:0 s:1 s:2
+RET Player_GetStocks s:0 s:3 s:0 s:0
+RET Player_GetTeam s:0 s:1 s:1 s:1
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 701d
+bf a:1000 gmm_x0 1 701d801d
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 701d801d
+W 2248 1 1
+GW gm_804975F8 4 4 2
+GW gm_804975F8 8 4 1
+GW gm_804975F8 c 4 2
+GW gm_804975F8 10 4 0
+RET Player_GetPlayerSlotType s:2 s:4 s:3 s:4 s:2 s:3 s:2 s:3
+RET Player_GetStocks s:0 s:1 s:3 s:3
+RET Player_GetTeam s:2 s:0 s:2 s:0 s:0 s:1 s:1
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 701e
+bf a:1000 gmm_x0 1 701e801e
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 701e801e
+W 2248 1 1
+GW gm_804975F8 4 4 2
+GW gm_804975F8 8 4 2
+GW gm_804975F8 c 4 0
+GW gm_804975F8 10 4 1
+RET Player_GetPlayerSlotType s:1 s:2 s:1 s:1 s:1 s:3 s:1 s:1
+RET Player_GetStocks s:0 s:1 s:0 s:3
+RET Player_GetTeam s:0 s:0 s:0 s:1 s:2 s:0 s:1 s:2 s:2 s:1 s:1
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 701f
+bf a:1000 gmm_x0 1 701f801f
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 701f801f
+W 2248 1 1
+GW gm_804975F8 4 4 1
+GW gm_804975F8 8 4 1
+GW gm_804975F8 c 4 2
+GW gm_804975F8 10 4 0
+RET Player_GetPlayerSlotType s:1 s:3 s:0 s:3
+RET Player_GetStocks s:3 s:1 s:0 s:0
+RET Player_GetTeam s:2 s:1 s:0 s:0 s:2 s:0 s:2 s:2 s:2 s:0 s:0
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7020
+bf a:1000 gmm_x0 1 70208020
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70208020
+W 2248 1 1
+GW gm_804975F8 4 4 2
+GW gm_804975F8 8 4 1
+GW gm_804975F8 c 4 0
+GW gm_804975F8 10 4 0
+RET Player_GetPlayerSlotType s:4 s:3 s:4 s:1 s:2 s:2 s:0 s:4 s:0 s:4 s:4 s:1
+RET Player_GetStocks s:1 s:0 s:0 s:0
+RET Player_GetTeam s:1 s:1 s:0 s:1 s:2 s:0 s:0
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7021
+bf a:1000 gmm_x0 1 70218021
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70218021
+W 2248 1 2
+GW gm_804975F8 4 4 2
+GW gm_804975F8 8 4 0
+GW gm_804975F8 c 4 1
+GW gm_804975F8 10 4 2
+RET Player_GetPlayerSlotType s:4 s:0 s:3 s:0
+RET Player_GetStocks s:3 s:1 s:3 s:0
+RET Player_GetTeam s:0 s:1 s:1 s:2
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7022
+bf a:1000 gmm_x0 1 70228022
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70228022
+W 2248 1 0
+GW gm_804975F8 4 4 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 c 4 0
+GW gm_804975F8 10 4 0
+RET Player_GetPlayerSlotType s:0 s:1 s:3 s:3 s:3 s:0 s:4 s:1 s:4 s:3 s:3 s:1
+RET Player_GetStocks s:0 s:3 s:0 s:0
+RET Player_GetTeam s:0 s:2 s:0 s:2
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7023
+bf a:1000 gmm_x0 1 70238023
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70238023
+W 2248 1 1
+GW gm_804975F8 4 4 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 c 4 2
+GW gm_804975F8 10 4 0
+RET Player_GetPlayerSlotType s:1 s:4 s:4 s:3 s:4 s:4 s:4 s:0
+RET Player_GetStocks s:3 s:0 s:0 s:0
+RET Player_GetTeam s:0 s:1 s:1 s:1 s:2 s:0 s:2 s:2 s:2 s:0 s:0
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7024
+bf a:1000 gmm_x0 1 70248024
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70248024
+W 2248 1 2
+GW gm_804975F8 4 4 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 c 4 1
+GW gm_804975F8 10 4 0
+RET Player_GetPlayerSlotType s:2 s:0 s:2 s:1 s:2 s:3 s:1 s:3
+RET Player_GetStocks s:0 s:3 s:0 s:0
+RET Player_GetTeam s:1 s:1 s:1 s:0 s:1 s:2 s:1
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7025
+bf a:1000 gmm_x0 1 70258025
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70258025
+W 2248 1 0
+GW gm_804975F8 4 4 2
+GW gm_804975F8 8 4 0
+GW gm_804975F8 c 4 0
+GW gm_804975F8 10 4 2
+RET Player_GetPlayerSlotType s:3 s:1 s:0 s:3 s:0 s:4 s:4 s:2
+RET Player_GetStocks s:1 s:1 s:3 s:0
+RET Player_GetTeam s:0 s:2 s:0 s:2 s:0 s:2 s:0 s:1 s:2 s:0 s:2
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7026
+bf a:1000 gmm_x0 1 70268026
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70268026
+W 2248 1 1
+GW gm_804975F8 4 4 1
+GW gm_804975F8 8 4 1
+GW gm_804975F8 c 4 0
+GW gm_804975F8 10 4 1
+RET Player_GetPlayerSlotType s:4 s:3 s:4 s:1 s:2 s:3 s:4 s:1 s:3 s:2 s:0 s:0
+RET Player_GetStocks s:0 s:3 s:3 s:0
+RET Player_GetTeam s:0 s:0 s:2 s:2 s:2 s:0 s:0 s:2 s:2 s:2 s:2
+call 
+gdump gm_804975F8
+end
+begin gm_801B9600 7027
+bf a:1000 gmm_x0 1 70278027
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 70278027
+W 2248 1 0
+GW gm_804975F8 4 4 0
+GW gm_804975F8 8 4 1
+GW gm_804975F8 c 4 1
+GW gm_804975F8 10 4 1
+RET Player_GetPlayerSlotType s:4 s:3 s:3 s:2
+RET Player_GetStocks s:0 s:0 s:1 s:1
+RET Player_GetTeam s:1 s:2 s:0 s:1 s:1 s:0 s:1
+call 
+gdump gm_804975F8
+end
+begin fn_801B96E8 8000
+bf a:1000 gmm_x0 1 80009000
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80009000
+W 2248 1 1
+GW gm_804975F8 0 2 64
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 1
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 64
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 65
+RET Player_GetPlayerSlotType s:0 s:1 s:3 s:0 s:1 s:1 s:0 s:3
+RET Player_GetStocks s:1 s:1 s:0 s:1
+RET Player_GetTeam s:1 s:0 s:2 s:1 s:1
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8001
+bf a:1000 gmm_x0 1 80019001
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80019001
+W 2248 1 1
+GW gm_804975F8 0 2 64
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 63
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 1
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 64
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 0
+RET Player_GetPlayerSlotType s:0 s:0 s:0 s:3
+RET Player_GetStocks s:1 s:1 s:0 s:0
+RET Player_GetTeam s:1 s:1 s:1 s:2 s:1
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8002
+bf a:1000 gmm_x0 1 80029002
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80029002
+W 2248 1 1
+GW gm_804975F8 0 2 64
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 65
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 1
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 0
+RET Player_GetPlayerSlotType s:3 s:0 s:3 s:1 s:1 s:1 s:3 s:1
+RET Player_GetStocks s:1 s:1 s:0 s:1
+RET Player_GetTeam s:2 s:0 s:1 s:1 s:1
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8003
+bf a:1000 gmm_x0 1 80039003
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80039003
+W 2248 1 1
+GW gm_804975F8 0 2 1
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 63
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 64
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 0
+RET Player_GetPlayerSlotType s:1 s:1 s:3 s:1
+RET Player_GetStocks s:0 s:0 s:1 s:1
+RET Player_GetTeam s:0 s:2 s:1 s:1 s:2
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8004
+bf a:1000 gmm_x0 1 80049004
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80049004
+W 2248 1 0
+GW gm_804975F8 0 2 0
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 65
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 1
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 0
+RET Player_GetPlayerSlotType s:0 s:3 s:3 s:0
+RET Player_GetStocks s:1 s:0 s:0 s:1
+RET Player_GetTeam s:0 s:1 s:0 s:1 s:0
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8005
+bf a:1000 gmm_x0 1 80059005
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80059005
+W 2248 1 0
+GW gm_804975F8 0 2 63
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 64
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 65
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 64
+RET Player_GetPlayerSlotType s:0 s:3 s:0 s:0
+RET Player_GetStocks s:1 s:0 s:0 s:1
+RET Player_GetTeam s:2 s:0 s:2 s:0 s:1
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8006
+bf a:1000 gmm_x0 1 80069006
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80069006
+W 2248 1 1
+GW gm_804975F8 0 2 64
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 65
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 63
+RET Player_GetPlayerSlotType s:0 s:3 s:1 s:1
+RET Player_GetStocks s:0 s:1 s:1 s:1
+RET Player_GetTeam s:2 s:1 s:1 s:0 s:0
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8007
+bf a:1000 gmm_x0 1 80079007
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80079007
+W 2248 1 0
+GW gm_804975F8 0 2 32
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 64
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 65
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 63
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 63
+RET Player_GetPlayerSlotType s:0 s:1 s:3 s:3 s:0 s:0 s:3 s:3
+RET Player_GetStocks s:0 s:1 s:1 s:1
+RET Player_GetTeam s:2 s:2 s:2 s:2 s:0
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8008
+bf a:1000 gmm_x0 1 80089008
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80089008
+W 2248 1 1
+GW gm_804975F8 0 2 0
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 63
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 1
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 64
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 64
+RET Player_GetPlayerSlotType s:0 s:0 s:1 s:0 s:1 s:0 s:3 s:1
+RET Player_GetStocks s:0 s:1 s:0 s:1
+RET Player_GetTeam s:2 s:1 s:1 s:2 s:2
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8009
+bf a:1000 gmm_x0 1 80099009
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80099009
+W 2248 1 0
+GW gm_804975F8 0 2 63
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 32
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 63
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 65
+RET Player_GetPlayerSlotType s:1 s:1 s:3 s:3
+RET Player_GetStocks s:1 s:1 s:1 s:1
+RET Player_GetTeam s:2 s:2 s:1 s:2 s:0
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 800a
+bf a:1000 gmm_x0 1 800a900a
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 800a900a
+W 2248 1 1
+GW gm_804975F8 0 2 32
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 64
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 65
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 64
+RET Player_GetPlayerSlotType s:1 s:3 s:0 s:1 s:1 s:0 s:1 s:1
+RET Player_GetStocks s:1 s:0 s:0 s:1
+RET Player_GetTeam s:2 s:1 s:1 s:2 s:1
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 800b
+bf a:1000 gmm_x0 1 800b900b
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 800b900b
+W 2248 1 1
+GW gm_804975F8 0 2 0
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 1
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 0
+RET Player_GetPlayerSlotType s:3 s:1 s:1 s:0 s:0 s:1 s:3 s:0
+RET Player_GetStocks s:0 s:1 s:1 s:0
+RET Player_GetTeam s:0 s:0 s:2 s:1 s:1
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 800c
+bf a:1000 gmm_x0 1 800c900c
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 800c900c
+W 2248 1 0
+GW gm_804975F8 0 2 0
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 32
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 64
+RET Player_GetPlayerSlotType s:0 s:1 s:1 s:0
+RET Player_GetStocks s:0 s:0 s:1 s:1
+RET Player_GetTeam s:0 s:2 s:1 s:1 s:0
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 800d
+bf a:1000 gmm_x0 1 800d900d
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 800d900d
+W 2248 1 1
+GW gm_804975F8 0 2 0
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 32
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 64
+RET Player_GetPlayerSlotType s:1 s:1 s:0 s:3 s:0 s:1 s:1 s:0
+RET Player_GetStocks s:1 s:0 s:1 s:0
+RET Player_GetTeam s:0 s:2 s:0 s:1 s:2
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 800e
+bf a:1000 gmm_x0 1 800e900e
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 800e900e
+W 2248 1 0
+GW gm_804975F8 0 2 1
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 63
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 64
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 32
+RET Player_GetPlayerSlotType s:0 s:1 s:1 s:3
+RET Player_GetStocks s:1 s:1 s:0 s:1
+RET Player_GetTeam s:0 s:1 s:0 s:1 s:1
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 800f
+bf a:1000 gmm_x0 1 800f900f
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 800f900f
+W 2248 1 0
+GW gm_804975F8 0 2 65
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 32
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 32
+RET Player_GetPlayerSlotType s:1 s:0 s:1 s:3 s:0 s:0 s:0 s:0
+RET Player_GetStocks s:1 s:1 s:1 s:1
+RET Player_GetTeam s:1 s:2 s:0 s:0 s:0
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8010
+bf a:1000 gmm_x0 1 80109010
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80109010
+W 2248 1 0
+GW gm_804975F8 0 2 1
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 64
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 63
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 63
+RET Player_GetPlayerSlotType s:1 s:3 s:0 s:3 s:3 s:3 s:3 s:1
+RET Player_GetStocks s:0 s:1 s:1 s:1
+RET Player_GetTeam s:0 s:2 s:0 s:0 s:1
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8011
+bf a:1000 gmm_x0 1 80119011
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80119011
+W 2248 1 0
+GW gm_804975F8 0 2 65
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 64
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 32
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 65
+RET Player_GetPlayerSlotType s:0 s:0 s:0 s:0
+RET Player_GetStocks s:1 s:1 s:1 s:1
+RET Player_GetTeam s:0 s:1 s:1 s:1 s:0
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8012
+bf a:1000 gmm_x0 1 80129012
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80129012
+W 2248 1 0
+GW gm_804975F8 0 2 64
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 32
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 65
+RET Player_GetPlayerSlotType s:0 s:1 s:1 s:1 s:0 s:1 s:0 s:1
+RET Player_GetStocks s:1 s:1 s:1 s:0
+RET Player_GetTeam s:0 s:1 s:2 s:1 s:0
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8013
+bf a:1000 gmm_x0 1 80139013
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80139013
+W 2248 1 0
+GW gm_804975F8 0 2 1
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 65
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 32
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 0
+RET Player_GetPlayerSlotType s:1 s:3 s:3 s:1
+RET Player_GetStocks s:0 s:1 s:1 s:0
+RET Player_GetTeam s:1 s:0 s:1 s:0 s:0
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8014
+bf a:1000 gmm_x0 1 80149014
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80149014
+W 2248 1 0
+GW gm_804975F8 0 2 65
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 64
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 32
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 1
+RET Player_GetPlayerSlotType s:3 s:0 s:1 s:0
+RET Player_GetStocks s:1 s:0 s:1 s:1
+RET Player_GetTeam s:2 s:0 s:1 s:0 s:0
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8015
+bf a:1000 gmm_x0 1 80159015
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80159015
+W 2248 1 0
+GW gm_804975F8 0 2 0
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 32
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 32
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 63
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 65
+RET Player_GetPlayerSlotType s:3 s:1 s:1 s:0
+RET Player_GetStocks s:1 s:0 s:1 s:1
+RET Player_GetTeam s:1 s:2 s:2 s:0 s:2
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8016
+bf a:1000 gmm_x0 1 80169016
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80169016
+W 2248 1 0
+GW gm_804975F8 0 2 ffff
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 63
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 1
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 0
+RET Player_GetPlayerSlotType s:3 s:0 s:3 s:0 s:1 s:3 s:1 s:0
+RET Player_GetStocks s:1 s:0 s:1 s:0
+RET Player_GetTeam s:1 s:2 s:1 s:1 s:2
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8017
+bf a:1000 gmm_x0 1 80179017
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80179017
+W 2248 1 1
+GW gm_804975F8 0 2 63
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 1
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 1
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 65
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 32
+RET Player_GetPlayerSlotType s:3 s:0 s:1 s:1
+RET Player_GetStocks s:1 s:1 s:0 s:1
+RET Player_GetTeam s:2 s:1 s:0 s:1 s:2
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8018
+bf a:1000 gmm_x0 1 80189018
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80189018
+W 2248 1 1
+GW gm_804975F8 0 2 1
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 63
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 64
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 64
+RET Player_GetPlayerSlotType s:0 s:1 s:1 s:3
+RET Player_GetStocks s:0 s:0 s:0 s:1
+RET Player_GetTeam s:0 s:0 s:2 s:1 s:2
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8019
+bf a:1000 gmm_x0 1 80199019
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80199019
+W 2248 1 1
+GW gm_804975F8 0 2 ffff
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 64
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 32
+RET Player_GetPlayerSlotType s:0 s:0 s:3 s:3 s:1 s:1 s:1 s:3
+RET Player_GetStocks s:1 s:0 s:0 s:1
+RET Player_GetTeam s:1 s:0 s:1 s:2 s:1
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 801a
+bf a:1000 gmm_x0 1 801a901a
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 801a901a
+W 2248 1 0
+GW gm_804975F8 0 2 64
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 64
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 63
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 65
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 0
+RET Player_GetPlayerSlotType s:3 s:3 s:1 s:3
+RET Player_GetStocks s:1 s:0 s:1 s:0
+RET Player_GetTeam s:2 s:1 s:1 s:0 s:2
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 801b
+bf a:1000 gmm_x0 1 801b901b
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 801b901b
+W 2248 1 1
+GW gm_804975F8 0 2 64
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 63
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 64
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 1
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 64
+RET Player_GetPlayerSlotType s:1 s:0 s:0 s:1
+RET Player_GetStocks s:1 s:0 s:1 s:1
+RET Player_GetTeam s:0 s:2 s:0 s:2 s:2
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 801c
+bf a:1000 gmm_x0 1 801c901c
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 801c901c
+W 2248 1 1
+GW gm_804975F8 0 2 0
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 32
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 0
+RET Player_GetPlayerSlotType s:0 s:3 s:3 s:1 s:0 s:1 s:1 s:1
+RET Player_GetStocks s:0 s:1 s:0 s:1
+RET Player_GetTeam s:0 s:2 s:0 s:0 s:2
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 801d
+bf a:1000 gmm_x0 1 801d901d
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 801d901d
+W 2248 1 0
+GW gm_804975F8 0 2 0
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 64
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 1
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 63
+RET Player_GetPlayerSlotType s:3 s:1 s:1 s:0 s:3 s:3 s:1 s:1
+RET Player_GetStocks s:0 s:1 s:0 s:0
+RET Player_GetTeam s:2 s:0 s:0 s:0 s:0
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 801e
+bf a:1000 gmm_x0 1 801e901e
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 801e901e
+W 2248 1 1
+GW gm_804975F8 0 2 0
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 1
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 32
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 64
+RET Player_GetPlayerSlotType s:3 s:1 s:3 s:1 s:3 s:3 s:1 s:3
+RET Player_GetStocks s:0 s:1 s:0 s:1
+RET Player_GetTeam s:2 s:0 s:1 s:2 s:0
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 801f
+bf a:1000 gmm_x0 1 801f901f
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 801f901f
+W 2248 1 1
+GW gm_804975F8 0 2 1
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 32
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 63
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 32
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 0
+RET Player_GetPlayerSlotType s:0 s:0 s:0 s:3
+RET Player_GetStocks s:1 s:1 s:0 s:0
+RET Player_GetTeam s:0 s:0 s:0 s:1 s:2
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8020
+bf a:1000 gmm_x0 1 80209020
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80209020
+W 2248 1 0
+GW gm_804975F8 0 2 64
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 63
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 63
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 64
+RET Player_GetPlayerSlotType s:0 s:3 s:3 s:1
+RET Player_GetStocks s:1 s:0 s:0 s:0
+RET Player_GetTeam s:0 s:1 s:2 s:0 s:1
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8021
+bf a:1000 gmm_x0 1 80219021
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80219021
+W 2248 1 1
+GW gm_804975F8 0 2 65
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 63
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 0
+RET Player_GetPlayerSlotType s:0 s:3 s:3 s:1
+RET Player_GetStocks s:0 s:0 s:1 s:0
+RET Player_GetTeam s:1 s:1 s:1 s:0 s:0
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8022
+bf a:1000 gmm_x0 1 80229022
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80229022
+W 2248 1 1
+GW gm_804975F8 0 2 1
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 1
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 32
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 63
+RET Player_GetPlayerSlotType s:1 s:0 s:0 s:1 s:3 s:1 s:1 s:0
+RET Player_GetStocks s:0 s:0 s:0 s:0
+RET Player_GetTeam s:1 s:1 s:2 s:2 s:0
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8023
+bf a:1000 gmm_x0 1 80239023
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80239023
+W 2248 1 0
+GW gm_804975F8 0 2 0
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 1
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 64
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 65
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 64
+RET Player_GetPlayerSlotType s:3 s:0 s:3 s:0
+RET Player_GetStocks s:1 s:1 s:0 s:1
+RET Player_GetTeam s:1 s:1 s:1 s:2 s:1
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8024
+bf a:1000 gmm_x0 1 80249024
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80249024
+W 2248 1 0
+GW gm_804975F8 0 2 ffff
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 32
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 32
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 63
+RET Player_GetPlayerSlotType s:1 s:0 s:3 s:0 s:1 s:3 s:3 s:0
+RET Player_GetStocks s:0 s:0 s:1 s:1
+RET Player_GetTeam s:2 s:0 s:2 s:0 s:0
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8025
+bf a:1000 gmm_x0 1 80259025
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80259025
+W 2248 1 0
+GW gm_804975F8 0 2 1
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 65
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 64
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 65
+RET Player_GetPlayerSlotType s:1 s:0 s:0 s:3
+RET Player_GetStocks s:1 s:0 s:1 s:1
+RET Player_GetTeam s:0 s:1 s:0 s:2 s:0
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8026
+bf a:1000 gmm_x0 1 80269026
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80269026
+W 2248 1 0
+GW gm_804975F8 0 2 63
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 64
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 65
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 1
+RET Player_GetPlayerSlotType s:1 s:0 s:1 s:3
+RET Player_GetStocks s:1 s:0 s:1 s:0
+RET Player_GetTeam s:1 s:0 s:1 s:2 s:2
+call a:11c90
+gdump gm_804975F8
+end
+begin fn_801B96E8 8027
+bf a:1000 gmm_x0 1 80279027
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 80279027
+W 2248 1 1
+GW gm_804975F8 0 2 65
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 32
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 64
+RET Player_GetPlayerSlotType s:3 s:1 s:0 s:3
+RET Player_GetStocks s:1 s:1 s:1 s:1
+RET Player_GetTeam s:1 s:0 s:2 s:0 s:2
+call a:11c90
+gdump gm_804975F8
+end
+begin gm_801B97C4 9000
+bf a:1000 gmm_x0 1 9000a000
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9000a000
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 1
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 64
+call s:3 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 9001
+bf a:1000 gmm_x0 1 9001a001
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9001a001
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 1
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 1
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 1
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 1
+call s:3 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 9002
+bf a:1000 gmm_x0 1 9002a002
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9002a002
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 64
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 64
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 1
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 64
+call s:3 s:2
+gdump gm_804975F8
+end
+begin gm_801B97C4 9003
+bf a:1000 gmm_x0 1 9003a003
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9003a003
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 1
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 0
+call s:3 s:2
+gdump gm_804975F8
+end
+begin gm_801B97C4 9004
+bf a:1000 gmm_x0 1 9004a004
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9004a004
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 1
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 64
+call s:6 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 9005
+bf a:1000 gmm_x0 1 9005a005
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9005a005
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 64
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 64
+call s:3 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 9006
+bf a:1000 gmm_x0 1 9006a006
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9006a006
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 1
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 0
+call s:4 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 9007
+bf a:1000 gmm_x0 1 9007a007
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9007a007
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 64
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 1
+call s:3 s:1
+gdump gm_804975F8
+end
+begin gm_801B97C4 9008
+bf a:1000 gmm_x0 1 9008a008
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9008a008
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 64
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 1
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 64
+call s:4 s:1
+gdump gm_804975F8
+end
+begin gm_801B97C4 9009
+bf a:1000 gmm_x0 1 9009a009
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9009a009
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 1
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 64
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 0
+call s:3 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 900a
+bf a:1000 gmm_x0 1 900aa00a
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 900aa00a
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 1
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 1
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 1
+call s:5 s:1
+gdump gm_804975F8
+end
+begin gm_801B97C4 900b
+bf a:1000 gmm_x0 1 900ba00b
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 900ba00b
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 1
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 64
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 1
+call s:4 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 900c
+bf a:1000 gmm_x0 1 900ca00c
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 900ca00c
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 0
+call s:1 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 900d
+bf a:1000 gmm_x0 1 900da00d
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 900da00d
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 1
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 0
+call s:0 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 900e
+bf a:1000 gmm_x0 1 900ea00e
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 900ea00e
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 64
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 1
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 64
+call s:2 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 900f
+bf a:1000 gmm_x0 1 900fa00f
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 900fa00f
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 64
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 0
+call s:2 s:2
+gdump gm_804975F8
+end
+begin gm_801B97C4 9010
+bf a:1000 gmm_x0 1 9010a010
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9010a010
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 64
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 1
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 1
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 0
+call s:4 s:1
+gdump gm_804975F8
+end
+begin gm_801B97C4 9011
+bf a:1000 gmm_x0 1 9011a011
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9011a011
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 1
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 0
+call s:0 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 9012
+bf a:1000 gmm_x0 1 9012a012
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9012a012
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 1
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 64
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 1
+call s:4 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 9013
+bf a:1000 gmm_x0 1 9013a013
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9013a013
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 1
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 1
+call s:0 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 9014
+bf a:1000 gmm_x0 1 9014a014
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9014a014
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 64
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 1
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 64
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 0
+call s:3 s:1
+gdump gm_804975F8
+end
+begin gm_801B97C4 9015
+bf a:1000 gmm_x0 1 9015a015
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9015a015
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 1
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 1
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 64
+call s:2 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 9016
+bf a:1000 gmm_x0 1 9016a016
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9016a016
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 1
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 64
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 0
+call s:5 s:1
+gdump gm_804975F8
+end
+begin gm_801B97C4 9017
+bf a:1000 gmm_x0 1 9017a017
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9017a017
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 64
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 64
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 64
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 1
+call s:2 s:1
+gdump gm_804975F8
+end
+begin gm_801B97C4 9018
+bf a:1000 gmm_x0 1 9018a018
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9018a018
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 64
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 64
+call s:3 s:1
+gdump gm_804975F8
+end
+begin gm_801B97C4 9019
+bf a:1000 gmm_x0 1 9019a019
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9019a019
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 64
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 64
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 64
+call s:3 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 901a
+bf a:1000 gmm_x0 1 901aa01a
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 901aa01a
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 1
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 1
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 64
+call s:6 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 901b
+bf a:1000 gmm_x0 1 901ba01b
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 901ba01b
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 1
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 1
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 64
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 64
+call s:5 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 901c
+bf a:1000 gmm_x0 1 901ca01c
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 901ca01c
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 1
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 1
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 0
+call s:0 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 901d
+bf a:1000 gmm_x0 1 901da01d
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 901da01d
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 64
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 64
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 1
+call s:5 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 901e
+bf a:1000 gmm_x0 1 901ea01e
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 901ea01e
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 64
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 64
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 64
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 1
+call s:2 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 901f
+bf a:1000 gmm_x0 1 901fa01f
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 901fa01f
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 64
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 1
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 64
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 0
+call s:1 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 9020
+bf a:1000 gmm_x0 1 9020a020
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9020a020
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 64
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 64
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 1
+call s:6 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 9021
+bf a:1000 gmm_x0 1 9021a021
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9021a021
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 64
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 64
+call s:4 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 9022
+bf a:1000 gmm_x0 1 9022a022
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9022a022
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 64
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 1
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 0
+call s:1 s:1
+gdump gm_804975F8
+end
+begin gm_801B97C4 9023
+bf a:1000 gmm_x0 1 9023a023
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9023a023
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 1
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 64
+GW gm_804975F8 c 4 0
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 0
+call s:4 s:1
+gdump gm_804975F8
+end
+begin gm_801B97C4 9024
+bf a:1000 gmm_x0 1 9024a024
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9024a024
+GW gm_804975F8 4 4 1
+GW gm_804975F8 14 2 1
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 1
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 1
+call s:2 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 9025
+bf a:1000 gmm_x0 1 9025a025
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9025a025
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 64
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 0
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 64
+GW gm_804975F8 10 4 1
+GW gm_804975F8 1a 2 64
+call s:4 s:0
+gdump gm_804975F8
+end
+begin gm_801B97C4 9026
+bf a:1000 gmm_x0 1 9026a026
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9026a026
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 64
+GW gm_804975F8 8 4 1
+GW gm_804975F8 16 2 1
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 1
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 0
+call s:5 s:2
+gdump gm_804975F8
+end
+begin gm_801B97C4 9027
+bf a:1000 gmm_x0 1 9027a027
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f 9027a027
+GW gm_804975F8 4 4 0
+GW gm_804975F8 14 2 0
+GW gm_804975F8 8 4 0
+GW gm_804975F8 16 2 64
+GW gm_804975F8 c 4 1
+GW gm_804975F8 18 2 0
+GW gm_804975F8 10 4 0
+GW gm_804975F8 1a 2 0
+call s:3 s:0
+gdump gm_804975F8
+end
+begin fn_801B9850 a000
+bf a:1000 gmm_x0 1 a000b000
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f a000b000
+RET Player_GetPlayerSlotType s:1 s:0 s:0 s:1
+RET GObj_Create a:11c90
+call 
+gdump gm_804975F8
+end
+begin fn_801B9850 a001
+bf a:1000 gmm_x0 1 a001b001
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f a001b001
+RET Player_GetPlayerSlotType s:0 s:0 s:1 s:3
+RET GObj_Create a:11c90
+call 
+gdump gm_804975F8
+end
+begin fn_801B9850 a002
+bf a:1000 gmm_x0 1 a002b002
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f a002b002
+RET Player_GetPlayerSlotType s:3 s:1 s:1 s:3
+RET GObj_Create a:11c90
+call 
+gdump gm_804975F8
+end
+begin fn_801B9850 a003
+bf a:1000 gmm_x0 1 a003b003
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f a003b003
+RET Player_GetPlayerSlotType s:3 s:1 s:0 s:0
+RET GObj_Create a:11c90
+call 
+gdump gm_804975F8
+end
+begin fn_801B9850 a004
+bf a:1000 gmm_x0 1 a004b004
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f a004b004
+RET Player_GetPlayerSlotType s:0 s:0 s:0 s:0
+RET GObj_Create a:11c90
+call 
+gdump gm_804975F8
+end
+begin fn_801B9850 a005
+bf a:1000 gmm_x0 1 a005b005
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f a005b005
+RET Player_GetPlayerSlotType s:3 s:0 s:3 s:3
+RET GObj_Create a:11c90
+call 
+gdump gm_804975F8
+end
+begin fn_801B9850 a006
+bf a:1000 gmm_x0 1 a006b006
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f a006b006
+RET Player_GetPlayerSlotType s:3 s:0 s:3 s:1
+RET GObj_Create a:11c90
+call 
+gdump gm_804975F8
+end
+begin fn_801B9850 a007
+bf a:1000 gmm_x0 1 a007b007
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f a007b007
+RET Player_GetPlayerSlotType s:1 s:3 s:3 s:3
+RET GObj_Create a:11c90
+call 
+gdump gm_804975F8
+end
+begin fn_801B9850 a008
+bf a:1000 gmm_x0 1 a008b008
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f a008b008
+RET Player_GetPlayerSlotType s:3 s:0 s:3 s:0
+RET GObj_Create a:11c90
+call 
+gdump gm_804975F8
+end
+begin fn_801B9850 a009
+bf a:1000 gmm_x0 1 a009b009
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f a009b009
+RET Player_GetPlayerSlotType s:1 s:3 s:0 s:1
+RET GObj_Create a:11c90
+call 
+gdump gm_804975F8
+end
+begin fn_801B9850 a00a
+bf a:1000 gmm_x0 1 a00ab00a
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f a00ab00a
+RET Player_GetPlayerSlotType s:1 s:3 s:1 s:0
+RET GObj_Create a:11c90
+call 
+gdump gm_804975F8
+end
+begin fn_801B9850 a00b
+bf a:1000 gmm_x0 1 a00bb00b
+GSET gmMainLib_804D3EE0 1000
+bf a:1590 VsModeData f a00bb00b
+RET Player_GetPlayerSlotType s:0 s:0 s:1 s:3
+RET GObj_Create a:11c90
+call 
+gdump gm_804975F8
+end
+begin __table_gm_Mode_StaminaVs_States 1
+dump g:gm_Mode_StaminaVs_States GameModeState 4
+end

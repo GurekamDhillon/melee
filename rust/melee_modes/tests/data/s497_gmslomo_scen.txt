@@ -1,0 +1,245 @@
+begin gm_801BA50C 100
+bf a:1000 gmm_x0 1 1001100
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA50C 101
+bf a:1000 gmm_x0 1 1011101
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA50C 102
+bf a:1000 gmm_x0 1 1021102
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA538 200
+bf a:1000 gmm_x0 1 2001200
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA538 201
+bf a:1000 gmm_x0 1 2011201
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA538 202
+bf a:1000 gmm_x0 1 2021202
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA560 300
+bf a:1000 gmm_x0 1 3001300
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA560 301
+bf a:1000 gmm_x0 1 3011301
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA560 302
+bf a:1000 gmm_x0 1 3021302
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA588 400
+bf a:1000 gmm_x0 1 4001400
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA588 401
+bf a:1000 gmm_x0 1 4011401
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA588 402
+bf a:1000 gmm_x0 1 4021402
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin fn_801BA5B4 500
+bf a:1000 gmm_x0 1 5001500
+GSET gmMainLib_804D3EE0 1000
+bf a:11cc0 StartMeleeData 1 50121c0
+call a:11cc0 n
+dump a:11c90 GameModeState 1
+dump a:11cc0 StartMeleeData 1
+end
+begin fn_801BA5B4 501
+bf a:1000 gmm_x0 1 5011501
+GSET gmMainLib_804D3EE0 1000
+bf a:11cc0 StartMeleeData 1 50221c1
+bf a:11e20 StartMeleeData 1 5022321
+call a:11cc0 a:11e20
+dump a:11c90 GameModeState 1
+dump a:11cc0 StartMeleeData 1
+end
+begin fn_801BA5B4 502
+bf a:1000 gmm_x0 1 5021502
+GSET gmMainLib_804D3EE0 1000
+bf a:11cc0 StartMeleeData 1 50321c2
+bf a:11e20 StartMeleeData 1 5032322
+call a:11cc0 a:11e20
+dump a:11c90 GameModeState 1
+dump a:11cc0 StartMeleeData 1
+end
+begin gm_801BA5C0 600
+bf a:1000 gmm_x0 1 6001600
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA5C0 601
+bf a:1000 gmm_x0 1 6011601
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA5C0 602
+bf a:1000 gmm_x0 1 6021602
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA5F4 700
+bf a:1000 gmm_x0 1 7001700
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA5F4 701
+bf a:1000 gmm_x0 1 7011701
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA5F4 702
+bf a:1000 gmm_x0 1 7021702
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA61C 800
+bf a:1000 gmm_x0 1 8001800
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA61C 801
+bf a:1000 gmm_x0 1 8011801
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA61C 802
+bf a:1000 gmm_x0 1 8021802
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA650 900
+bf a:1000 gmm_x0 1 9001900
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA650 901
+bf a:1000 gmm_x0 1 9011901
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA650 902
+bf a:1000 gmm_x0 1 9021902
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA670 a00
+bf a:1000 gmm_x0 1 a001a00
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA670 a01
+bf a:1000 gmm_x0 1 a011a01
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA670 a02
+bf a:1000 gmm_x0 1 a021a02
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA690 b00
+bf a:1000 gmm_x0 1 b001b00
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA690 b01
+bf a:1000 gmm_x0 1 b011b01
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_801BA690 b02
+bf a:1000 gmm_x0 1 b021b02
+GSET gmMainLib_804D3EE0 1000
+call a:11c90
+dump a:11c90 GameModeState 1
+end
+begin gm_Mode_SlowMo_OnInit c00
+bf a:1000 gmm_x0 1 c001c00
+GSET gmMainLib_804D3EE0 1000
+call 
+dump a:11c90 GameModeState 1
+end
+begin gm_Mode_SlowMo_OnInit c01
+bf a:1000 gmm_x0 1 c011c01
+GSET gmMainLib_804D3EE0 1000
+call 
+dump a:11c90 GameModeState 1
+end
+begin gm_Mode_SlowMo_OnInit c02
+bf a:1000 gmm_x0 1 c021c02
+GSET gmMainLib_804D3EE0 1000
+call 
+dump a:11c90 GameModeState 1
+end
+begin gm_Mode_SlowMo_OnLoad d00
+bf a:1000 gmm_x0 1 d001d00
+GSET gmMainLib_804D3EE0 1000
+call 
+dump a:11c90 GameModeState 1
+end
+begin gm_Mode_SlowMo_OnLoad d01
+bf a:1000 gmm_x0 1 d011d01
+GSET gmMainLib_804D3EE0 1000
+call 
+dump a:11c90 GameModeState 1
+end
+begin gm_Mode_SlowMo_OnLoad d02
+bf a:1000 gmm_x0 1 d021d02
+GSET gmMainLib_804D3EE0 1000
+call 
+dump a:11c90 GameModeState 1
+end
+begin __table_gm_Mode_SlowMo_States 1
+dump g:gm_Mode_SlowMo_States GameModeState 9
+end

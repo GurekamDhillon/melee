@@ -194,7 +194,7 @@ def kind_of(t):
             return "fn"
         if p.kind == T.RECORD:
             n = p.get_declaration().spelling
-            return {"HSD_GObj": "G", "Fighter": "FP", "Vec3": "v3", "Vec2": "v2"}.get(n, "p")
+            return {"HSD_GObj": "G", "Fighter": "FP", "Vec3": "v3", "Vec": "v3", "Vec2": "v2"}.get(n, "p")
         if p.kind == T.FLOAT:
             return "pf"
         if p.kind in (T.INT, T.UINT, T.LONG, T.ULONG):
@@ -449,6 +449,19 @@ def cexpr_bf(path):
     return "OF." + path
 
 
+def extract_include(stem, entries):
+    """The game source cut verbatim (gen/cref/run.py EXTRACTS semantics) -> an .inc the driver includes."""
+    if not entries:
+        return None
+    sys.path.insert(0, str(ROOT / "rust/melee_fighter/gen/cref"))
+    import run as R
+    R.BUILD = BUILD
+    key = f"oracle_{stem}"
+    R.EXTRACTS[key] = entries
+    R.extract(key)
+    return (BUILD / f"{key}_extract.inc").as_posix()
+
+
 def build(stem, verbose_fn=None):
     spec = load_spec(stem)
     OUTS.clear()
@@ -476,10 +489,13 @@ def build(stem, verbose_fn=None):
         fspecs.append(f)
     # ---- descriptor tables
     prefer = spec.get("prefer", [])
-    D = {"Fighter": pr.descs("Fighter", prefer), "ftCommonData": pr.descs("ftCommonData")}
+    D = {"Fighter": pr.descs("Fighter", prefer), "ftCommonData": pr.descs("ftCommonData"), "HSD_JObj": pr.descs("HSD_JObj")}
     attr_types = spec.get("attr_types", [])
     ext_types = spec.get("ext_types", attr_types)
-    for t in set(attr_types) | set(ext_types):
+    alltypes = set(attr_types) | set(ext_types)
+    for f in fspecs:
+        alltypes |= set(f.get("attrs", [])) | set(f.get("exts", []))
+    for t in sorted(alltypes):
         D[t] = pr.descs(t)
 
     # ---- bitfield table
@@ -496,6 +512,9 @@ def build(stem, verbose_fn=None):
     drv_head.append('#include "oracle.h"')
     drv_head.append(spec.get("pre_c", ""))
     drv_head.append(f'#include "{srcpath}"')
+    ext_inc = extract_include(stem, spec.get("extracts"))
+    if ext_inc:
+        drv_head.append(f'#include "{ext_inc}"')
     drv1 = "\n".join(drv_head) + "\nint main(void) { return 0; }\n"
     p1 = BUILD / f"{stem}_p1.c"
     p1.write_text(drv1, encoding="utf-8")
@@ -539,6 +558,8 @@ def build(stem, verbose_fn=None):
         S.append("#define efSync_Spawn(g, o, ...) oracle_efsync(OPP_NARG(__VA_ARGS__), g, o, __VA_ARGS__)")
     S.append(spec.get("pre_c", ""))
     S.append(f'#include "{srcpath}"')
+    if ext_inc:
+        S.append(f'#include "{ext_inc}"')
     S.append(spec.get("data_c", ""))
     S.append("/* ---- generated stubs ---- */")
     for n in sorted(stub_info):
@@ -568,14 +589,19 @@ def build(stem, verbose_fn=None):
     S.append(f"#define NBF {len(bfs)}")
     S.append("static unsigned bf_byte[NBF + 1];")
     # fill
-    S.append("static void world_fill_types(void)\n{")
-    for t in attr_types:
-        S.append(f"    ofill(OATTR, D_{t}, (int) ND_{t});")
-    for t in attr_types:
-        S.append(f"    ofill(OBACKUP, D_{t}, (int) ND_{t});")
-    for t in ext_types:
-        S.append(f"    ofill(OEXT, D_{t}, (int) ND_{t});")
-    S.append("}")
+    S.append("static void world_fill_types(int fi)\n{\n    switch (fi) {")
+    for fi, f in enumerate(fspecs):
+        at = f.get("attrs", attr_types)
+        et = f.get("exts", at if "attrs" in f else ext_types)
+        S.append(f"    case {fi}:")
+        for t in at:
+            S.append(f"        ofill(OATTR, D_{t}, (int) ND_{t});")
+        for t in at:
+            S.append(f"        ofill(OBACKUP, D_{t}, (int) ND_{t});")
+        for t in et:
+            S.append(f"        ofill(OEXT, D_{t}, (int) ND_{t});")
+        S.append("        break;")
+    S.append("    default: break;\n    }\n}")
     S.append("static void world_links(void)\n{")
     S.append(spec.get("links_c", ""))
     for path, target in spec.get("opt_links", []):
@@ -628,9 +654,9 @@ def build(stem, verbose_fn=None):
         if rk == "v":
             S.append(f"    case {fi}: {call}; *retbits = 0; return 0;")
         elif rk == "f":
-            S.append(f"    case {fi}: {{ float r = {call}; *retbits = B_(r); return B_(r); }}")
+            S.append(f"    case {fi}: {{ float r = {call}; *retbits = BC_(r); return BC_(r); }}")
         elif rk == "d":
-            S.append(f"    case {fi}: {{ double r = {call}; *retbits = (u32) D_(r); return D_(r); }}")
+            S.append(f"    case {fi}: {{ double r = {call}; *retbits = (u32) DC_(r); return DC_(r); }}")
         elif rk in ("i", "q"):
             S.append(f"    case {fi}: {{ u32 r = (u32) {call}; *retbits = r; return r; }}")
         else:
@@ -673,14 +699,19 @@ def build(stem, verbose_fn=None):
     for n, expr in spec.get("fnvals", {}).items():
         R.append(f"    ofn(({expr}) as usize);")
     R.append("}")
-    R.append("unsafe fn world_fill_types(w: &mut World) {")
-    for t_ in attr_types:
-        R.append(f"    ofill(w.attr.as_mut_ptr(), D_{t_});")
-    for t_ in attr_types:
-        R.append(f"    ofill(w.backup.as_mut_ptr(), D_{t_});")
-    for t_ in ext_types:
-        R.append(f"    ofill(w.ext.as_mut_ptr(), D_{t_});")
-    R.append("}")
+    R.append("unsafe fn world_fill_types(w: &mut World, fi: usize) {\n    match fi {")
+    for fi, f in enumerate(fspecs):
+        at = f.get("attrs", attr_types)
+        et = f.get("exts", at if "attrs" in f else ext_types)
+        R.append(f"        {fi} => {{")
+        for t_ in at:
+            R.append(f"            ofill(w.attr.as_mut_ptr(), D_{t_});")
+        for t_ in at:
+            R.append(f"            ofill(w.backup.as_mut_ptr(), D_{t_});")
+        for t_ in et:
+            R.append(f"            ofill(w.ext.as_mut_ptr(), D_{t_});")
+        R.append("        }")
+    R.append("        _ => {}\n    }\n}")
     R.append("unsafe fn world_links(w: &mut World) {")
     R.append("    let f: *mut Fighter = &mut *w.f;")
     R.append(spec.get("links_rs", ""))
@@ -738,9 +769,9 @@ def build(stem, verbose_fn=None):
         if rk == "v":
             R.append(f"        {fi} => {{ {call}; (0, 0) }}")
         elif rk == "f":
-            R.append(f"        {fi} => {{ let r = {call}; (r.to_bits() as u64, r.to_bits()) }}")
+            R.append(f"        {fi} => {{ let r = {call}; (bc(r) as u64, bc(r)) }}")
         elif rk == "d":
-            R.append(f"        {fi} => {{ let r = {call}; (r.to_bits(), r.to_bits() as u32) }}")
+            R.append(f"        {fi} => {{ let r = {call}; (dc(r), dc(r) as u32) }}")
         elif rk in ("i", "q"):
             R.append(f"        {fi} => {{ let r = {call} as u32; (r as u64, r) }}")
         else:
@@ -780,9 +811,11 @@ def ship_obj(c, stem):
 
 
 def gekko_obj():
-    gk = BUILD / "gekko_fp.obj"
+    """pc/gameworld/gekko_fp.c (sinf, cosf, __frsqrte...) through the same shipping front end + gwtool
+    lowering as the game code (saturating float->int, fused double fma)."""
+    gk = BUILD / "gekko_fp_lowered.obj"
     if not gk.exists():
-        run([CLANG, *COMMON, "-O2", "-c", str(ROOT / "pc/gameworld/gekko_fp.c"), "-o", str(gk)], "gekko_fp")
+        gk = ship_obj(ROOT / "pc/gameworld/gekko_fp.c", "gekko_fp_lowered")
     return gk
 
 
@@ -838,7 +871,7 @@ static void zero_bytes(void* p, unsigned n)
 """
 
 C_MAIN = r"""
-static void world_case_fill(void)
+static void world_case_fill(int fi)
 {
     int i;
     zero_bytes(&OF, sizeof OF);
@@ -856,8 +889,9 @@ static void world_case_fill(void)
     zero_bytes(&OCD, sizeof OCD);
     ofill(&OF, D_Fighter, (int) ND_Fighter);
     ofill(&OVF, D_Fighter, (int) ND_Fighter);
-    world_fill_types();
+    world_fill_types(fi);
     ofill(&OCD, D_ftCommonData, (int) ND_ftCommonData);
+    for (i = 0; i < 4; i++) ofill(&OJO[i], D_HSD_JObj, (int) ND_HSD_JObj);
     OG.user_data = &OF;
     OG.hsd_obj = &OJO[0];
     OVG.user_data = &OVF;
@@ -889,6 +923,16 @@ static void bf_probe(void)
         for (j = 0; j < sizeof OF; j++) if (b[j]) break;
         bf_byte[i] = j;
     }
+}
+
+static u64_ hfl(u64_ h, const float* p, int n)
+{
+    int i;
+    for (i = 0; i < n; i++) {
+        u32 b = BC_(p[i]);
+        h = fnv(h, &b, 4);
+    }
+    return h;
 }
 
 static u64_ img_hash(const void* p, unsigned n, const ODesc* d, int nd, unsigned bfmask)
@@ -929,7 +973,7 @@ int main(int argc, char** argv)
             u32 retbits = 0;
             int i;
             rs = 0x9E3779B9u ^ ((u32) fi * 7919u + (u32) k * 104729u + 1u);
-            world_case_fill();
+            world_case_fill(fi);
             {
                 u32 m = rnd() % 3;
                 int mid = (int) (rnd() % 1000);
@@ -966,11 +1010,11 @@ int main(int argc, char** argv)
             h = fnv(h, &hO, 8); h = fnv(h, &rv, 8); h = fnv(h, &bits, 4);
             h = fnv(h, &hF, 8); h = fnv(h, &hV, 8); h = fnv(h, &hG, 8); h = fnv(h, &hA, 8);
             h = fnv(h, &hB, 8); h = fnv(h, &hE, 8); h = fnv(h, &hC, 8); h = fnv(h, &hJ, 8);
-            h = fnv(h, AV3, sizeof AV3); h = fnv(h, AV2, sizeof AV2); h = fnv(h, APF, sizeof APF);
+            h = hfl(h, (const float*) AV3, 6); h = hfl(h, (const float*) AV2, 4); h = hfl(h, APF, 2);
             h = fnv(h, API, sizeof API);
             if (vb)
-                printf("%d %016llx ret=%llx bf=%x F=%016llx V=%016llx G=%016llx A=%016llx B=%016llx E=%016llx C=%016llx J=%016llx L=%016llx\n  %s\n",
-                       k, h, rv, bits, hF, hV, hG, hA, hB, hE, hC, hJ, hO, LG);
+                printf("%d %016llx ret=%llx bf=%x F=%016llx V=%016llx G=%016llx A=%016llx B=%016llx E=%016llx C=%016llx J=%016llx L=%016llx A3=%08x,%08x,%08x\n  %s\n",
+                       k, h, rv, bits, hF, hV, hG, hA, hB, hE, hC, hJ, hO, B_(AV3[0].x), B_(AV3[0].y), B_(AV3[0].z), LG);
             agg = fnv(agg, &h, 8);
         }
         if (!verbose) printf("%s %016llx\n", fn->name, agg);
@@ -1038,7 +1082,7 @@ unsafe fn world_reg(w: &mut World) {
     oreg(w.items.as_ptr(), 64);
     oreg(OSCR.as_ptr(), 256);
 }
-unsafe fn world_case_fill(w: &mut World) {
+unsafe fn world_case_fill(w: &mut World, fi: usize) {
     *w.f = Fighter::zeroed();
     *w.vf = Fighter::zeroed();
     *w.og = core::mem::zeroed();
@@ -1054,8 +1098,11 @@ unsafe fn world_case_fill(w: &mut World) {
     *w.cd = ftCommonData::zeroed();
     ofill(&mut *w.f as *mut Fighter as *mut u8, D_Fighter);
     ofill(&mut *w.vf as *mut Fighter as *mut u8, D_Fighter);
-    world_fill_types(w);
+    world_fill_types(w, fi);
     ofill(&mut *w.cd as *mut ftCommonData as *mut u8, D_ftCommonData);
+    for i in 0..4 {
+        ofill(&mut w.jo[i] as *mut HSD_JObj as *mut u8, D_HSD_JObj);
+    }
     w.og.user_data = &mut *w.f as *mut Fighter as *mut c_void;
     w.og.hsd_obj = &mut w.jo[0] as *mut HSD_JObj as *mut _;
     w.ovg.user_data = &mut *w.vf as *mut Fighter as *mut c_void;
@@ -1135,7 +1182,7 @@ fn state_matches_c() {
             for k in 0..fnn.n {
                 let mut h = FNV0;
                 RS = 0x9E37_79B9u32 ^ ((fi as u32).wrapping_mul(7919).wrapping_add(k.wrapping_mul(104729)).wrapping_add(1));
-                world_case_fill(&mut w);
+                world_case_fill(&mut w, fi);
                 {
                     let m = rnd() % 3;
                     let mut mid = (rnd() % 1000) as i32;
@@ -1202,14 +1249,14 @@ fn state_matches_c() {
                 for x in [hf, hv, hg, ha, hb, he, hc, hj] {
                     h = fnv(h, &x.to_le_bytes());
                 }
-                h = fnv(h, bytes(&a.v3));
-                h = fnv(h, bytes(&a.v2));
-                h = fnv(h, bytes(&a.pf));
+                h = fnv(h, &canon_f32_bytes(&[a.v3[0].x, a.v3[0].y, a.v3[0].z, a.v3[1].x, a.v3[1].y, a.v3[1].z]));
+                h = fnv(h, &canon_f32_bytes(&[a.v2[0].x, a.v2[0].y, a.v2[1].x, a.v2[1].y]));
+                h = fnv(h, &canon_f32_bytes(&a.pf));
                 h = fnv(h, bytes(&a.pi));
                 if vb {
                     println!(
-                        "{} {:016x} ret={:x} bf={:x} F={:016x} V={:016x} G={:016x} A={:016x} B={:016x} E={:016x} C={:016x} J={:016x} L={:016x}\n  {}",
-                        k, h, rv, bits, hf, hv, hg, ha, hb, he, hc, hj, ho, LG
+                        "{} {:016x} ret={:x} bf={:x} F={:016x} V={:016x} G={:016x} A={:016x} B={:016x} E={:016x} C={:016x} J={:016x} L={:016x} A3={:08x},{:08x},{:08x}\n  {}",
+                        k, h, rv, bits, hf, hv, hg, ha, hb, he, hc, hj, ho, a.v3[0].x.to_bits(), a.v3[0].y.to_bits(), a.v3[0].z.to_bits(), LG
                     );
                 }
                 agg = fnv(agg, &h.to_le_bytes());

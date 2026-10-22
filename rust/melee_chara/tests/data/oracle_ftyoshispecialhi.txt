@@ -1,0 +1,7 @@
+hdr 11560 2072 10908 148 11384 2136 1928 10924
+ftYs_SpecialS_8012DF18 4c0d3ac1cd4d5b3d
+ftYs_SpecialS_8012DF8C 92310617923b9d2b
+fn_8012E110 21eaa44a1b370136
+ftYs_SpecialS_8012E270 72f8f82ec98529e5
+ftYs_SpecialHi_Coll 7f1f3c15dbb7ea15
+ftYs_SpecialAirHi_Coll cc688a01ee358dad

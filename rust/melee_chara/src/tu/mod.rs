@@ -89,3 +89,4 @@ pub mod ftinl;
 pub mod ftboy;
 pub mod ftgirl;
 pub mod ftzelda;
+pub mod ftyoshispecialhi;

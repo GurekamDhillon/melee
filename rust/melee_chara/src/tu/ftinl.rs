@@ -20,6 +20,7 @@ pub mod ext {
         |fp: *mut Fighter| unsafe { melee_fighter::ftcommon2::ftcommon_8007d5d4(&mut *fp) });
     hook_or!(FTCOMMON_8007D7FC, ftCommon_8007D7FC, (fp: *mut Fighter),
         |fp: *mut Fighter| unsafe { melee_fighter::ftcommon3::ftcommon_8007d7fc(&mut *fp) });
+    hook!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, (jobj: *mut HSD_JObj));
     hook!(FIGHTER_CHANGEMOTIONSTATE, Fighter_ChangeMotionState,
         (gobj: *mut HSD_GObj, msid: i32, flags: u32, anim_start: f32, anim_speed: f32, anim_blend: f32, arg3: *mut HSD_GObj));
 }
@@ -142,4 +143,30 @@ pub unsafe fn copy_attrs<T: Copy>(gobj: *mut HSD_GObj) {
     let sa2 = (*fp).dat_attrs as *mut T;
     let ext_attr = (*(*fp).ft_data).ext_attr as *const T;
     *sa2 = *ext_attr;
+}
+
+/// `HSD_JObjMtxIsDirty(jobj)` (jobj.h inline).
+pub unsafe fn HSD_JObjMtxIsDirty(jobj: *mut HSD_JObj) -> bool {
+    let fl = (*jobj).flags;
+    fl & JOBJ_USER_DEF_MTX as u32 == 0 && fl & JOBJ_MTX_DIRTY as u32 != 0
+}
+
+/// The `HSD_JObjSetMtxDirty(jobj)` macro (jobj.h).
+pub unsafe fn HSD_JObjSetMtxDirty(jobj: *mut HSD_JObj) {
+    if !jobj.is_null() && !HSD_JObjMtxIsDirty(jobj) {
+        ext::HSD_JObjSetMtxDirtySub(jobj);
+    }
+}
+
+/// `HSD_JObjSetScale(jobj, scale)` (jobj.h inline; the asserts are debug-only).
+pub unsafe fn HSD_JObjSetScale(jobj: *mut HSD_JObj, scale: *const Vec3) {
+    (*jobj).scale = *scale;
+    if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+        HSD_JObjSetMtxDirty(jobj);
+    }
+}
+
+/// `HSD_JObjGetScale(jobj, scale)` (jobj.h inline).
+pub unsafe fn HSD_JObjGetScale(jobj: *mut HSD_JObj, scale: *mut Vec3) {
+    *scale = (*jobj).scale;
 }

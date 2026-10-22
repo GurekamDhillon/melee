@@ -86,6 +86,15 @@ static u64_ D_(double f)
     c.f = f;
     return c.u;
 }
+/* NaN payload and sign depend on operand order (a compiler may swap commutative operands), not on the
+ * game: every NaN is compared as the default quiet NaN. */
+static u32 cf32(u32 b) { return ((b & 0x7F800000u) == 0x7F800000u && (b & 0x7FFFFFu)) ? 0x7FC00000u : b; }
+static u64_ cf64(u64_ b)
+{
+    return ((b & 0x7FF0000000000000ull) == 0x7FF0000000000000ull && (b & 0xFFFFFFFFFFFFFull)) ? 0x7FF8000000000000ull : b;
+}
+static u32 BC_(float f) { return cf32(B_(f)); }
+static u64_ DC_(double f) { return cf64(D_(f)); }
 
 /* ---------------------------------------------------------------- regions, pointer names */
 typedef struct { const unsigned char* b; u64_ n; } OReg;
@@ -162,8 +171,8 @@ static void lg_hmin(u64_ v) /* minimal width */
     lg_hx(v, n);
 }
 static void lg_int(u32 v) { lg_u(v); lg_c(','); }
-static void lg_f(float f) { lg_c('f'); lg_hx(B_(f), 8); lg_c(','); }
-static void lg_d(double f) { lg_c('d'); lg_hx(D_(f), 16); lg_c(','); }
+static void lg_f(float f) { lg_c('f'); lg_hx(BC_(f), 8); lg_c(','); }
+static void lg_d(double f) { lg_c('d'); lg_hx(DC_(f), 16); lg_c(','); }
 static void lg_ptr(const void* p) { lg_c('@'); lg_hmin(normptr(p)); lg_c(','); }
 static void lg_v3(const Vec3* p)
 {
@@ -171,11 +180,11 @@ static void lg_v3(const Vec3* p)
     lg_hmin(normptr(p));
     if (p) {
         lg_c('[');
-        lg_hx(B_(p->x), 8);
+        lg_hx(BC_(p->x), 8);
         lg_c(' ');
-        lg_hx(B_(p->y), 8);
+        lg_hx(BC_(p->y), 8);
         lg_c(' ');
-        lg_hx(B_(p->z), 8);
+        lg_hx(BC_(p->z), 8);
         lg_c(']');
     }
     lg_c(',');
@@ -186,9 +195,9 @@ static void lg_v2(const Vec2* p)
     lg_hmin(normptr(p));
     if (p) {
         lg_c('[');
-        lg_hx(B_(p->x), 8);
+        lg_hx(BC_(p->x), 8);
         lg_c(' ');
-        lg_hx(B_(p->y), 8);
+        lg_hx(BC_(p->y), 8);
         lg_c(']');
     }
     lg_c(',');
@@ -199,7 +208,7 @@ static void lg_pf(const float* p)
     lg_hmin(normptr(p));
     if (p) {
         lg_c('[');
-        lg_hx(B_(*p), 8);
+        lg_hx(BC_(*p), 8);
         lg_c(']');
     }
     lg_c(',');
@@ -222,11 +231,11 @@ static void lg_oV3(Vec3* p)
         p->y = rf();
         p->z = rf();
         lg_c('<');
-        lg_hx(B_(p->x), 8);
+        lg_hx(BC_(p->x), 8);
         lg_c(' ');
-        lg_hx(B_(p->y), 8);
+        lg_hx(BC_(p->y), 8);
         lg_c(' ');
-        lg_hx(B_(p->z), 8);
+        lg_hx(BC_(p->z), 8);
         lg_c('>');
     }
 }
@@ -236,9 +245,9 @@ static void lg_oV2(Vec2* p)
         p->x = rf();
         p->y = rf();
         lg_c('<');
-        lg_hx(B_(p->x), 8);
+        lg_hx(BC_(p->x), 8);
         lg_c(' ');
-        lg_hx(B_(p->y), 8);
+        lg_hx(BC_(p->y), 8);
         lg_c('>');
     }
 }
@@ -247,7 +256,7 @@ static void lg_oPF(float* p)
     if (p) {
         *p = rf();
         lg_c('<');
-        lg_hx(B_(*p), 8);
+        lg_hx(BC_(*p), 8);
         lg_c('>');
     }
 }
@@ -261,8 +270,8 @@ static void lg_oPI(int* p)
     }
 }
 static void lg_retu(u32 v) { lg_c('='); lg_u(v); }
-static void lg_retf(float f) { lg_c('='); lg_c('f'); lg_hx(B_(f), 8); }
-static void lg_retd(double f) { lg_c('='); lg_c('d'); lg_hx(D_(f), 16); }
+static void lg_retf(float f) { lg_c('='); lg_c('f'); lg_hx(BC_(f), 8); }
+static void lg_retd(double f) { lg_c('='); lg_c('d'); lg_hx(DC_(f), 16); }
 static void lg_retp(const void* p) { lg_c('='); lg_c('@'); lg_hmin(normptr(p)); }
 
 /* ---------------------------------------------------------------- struct fill by field kind */
@@ -330,13 +339,22 @@ static void ofill(void* base, const ODesc* d, int n)
 static void onorm(unsigned char* img, const ODesc* d, int n)
 {
     int i;
-    for (i = 0; i < n; i++)
+    for (i = 0; i < n; i++) {
+        unsigned j;
         if (d[i].kind == 'p') {
             const void* v = *(const void* const*) (img + d[i].off);
             u64_ k = normptr(v);
-            unsigned j;
             for (j = 0; j < 8; j++) img[d[i].off + j] = (unsigned char) (k >> (8 * j));
+        } else if (d[i].kind == 'f') {
+            u32 b = (u32) img[d[i].off] | (u32) img[d[i].off + 1] << 8 | (u32) img[d[i].off + 2] << 16 | (u32) img[d[i].off + 3] << 24;
+            put32(img + d[i].off, cf32(b));
+        } else if (d[i].kind == 'd') {
+            u64_ b = 0;
+            for (j = 0; j < 8; j++) b |= (u64_) img[d[i].off + j] << (8 * j);
+            b = cf64(b);
+            for (j = 0; j < 8; j++) img[d[i].off + j] = (unsigned char) (b >> (8 * j));
         }
+    }
 }
 
 /* ---------------------------------------------------------------- efSync_Spawn (variadic) */

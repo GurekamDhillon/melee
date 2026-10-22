@@ -67,6 +67,33 @@ pub fn gen_b() -> i32 {
     (rnd() & 1) as i32
 }
 
+/// NaN payload and sign depend on operand order, not on the game: every NaN is compared as the
+/// default quiet NaN (oracle.h `cf32`).
+pub fn cf32(b: u32) -> u32 {
+    if (b & 0x7F80_0000) == 0x7F80_0000 && (b & 0x7F_FFFF) != 0 {
+        0x7FC0_0000
+    } else {
+        b
+    }
+}
+pub fn cf64(b: u64) -> u64 {
+    if (b & 0x7FF0_0000_0000_0000) == 0x7FF0_0000_0000_0000 && (b & 0xF_FFFF_FFFF_FFFF) != 0 {
+        0x7FF8_0000_0000_0000
+    } else {
+        b
+    }
+}
+pub fn bc(f: f32) -> u32 {
+    cf32(f.to_bits())
+}
+pub fn dc(f: f64) -> u64 {
+    cf64(f.to_bits())
+}
+/// Raw bytes of a float array with every NaN canonicalised (the C `hash_f`).
+pub fn canon_f32_bytes(v: &[f32]) -> Vec<u8> {
+    v.iter().flat_map(|f| bc(*f).to_le_bytes()).collect()
+}
+
 pub const FNV0: u64 = 0xCBF2_9CE4_8422_2325;
 pub fn fnv(mut h: u64, b: &[u8]) -> u64 {
     for &x in b {
@@ -141,12 +168,12 @@ pub fn lg_int(v: u32) {
 }
 pub fn lg_f(f: f32) {
     lg_c('f');
-    lg_hx(f.to_bits() as u64, 8);
+    lg_hx(bc(f) as u64, 8);
     lg_c(',');
 }
 pub fn lg_d(f: f64) {
     lg_c('d');
-    lg_hx(f.to_bits(), 16);
+    lg_hx(dc(f), 16);
     lg_c(',');
 }
 pub fn lg_ptr(p: usize) {
@@ -160,11 +187,11 @@ pub fn lg_v3(p: *const Vec3) {
     if !p.is_null() {
         let v = unsafe { &*p };
         lg_c('[');
-        lg_hx(v.x.to_bits() as u64, 8);
+        lg_hx(bc(v.x) as u64, 8);
         lg_c(' ');
-        lg_hx(v.y.to_bits() as u64, 8);
+        lg_hx(bc(v.y) as u64, 8);
         lg_c(' ');
-        lg_hx(v.z.to_bits() as u64, 8);
+        lg_hx(bc(v.z) as u64, 8);
         lg_c(']');
     }
     lg_c(',');
@@ -175,9 +202,9 @@ pub fn lg_v2(p: *const Vec2) {
     if !p.is_null() {
         let v = unsafe { &*p };
         lg_c('[');
-        lg_hx(v.x.to_bits() as u64, 8);
+        lg_hx(bc(v.x) as u64, 8);
         lg_c(' ');
-        lg_hx(v.y.to_bits() as u64, 8);
+        lg_hx(bc(v.y) as u64, 8);
         lg_c(']');
     }
     lg_c(',');
@@ -187,7 +214,7 @@ pub fn lg_pf(p: *const f32) {
     lg_hmin(normptr(p as usize));
     if !p.is_null() {
         lg_c('[');
-        lg_hx(unsafe { *p }.to_bits() as u64, 8);
+        lg_hx(bc(unsafe { *p }) as u64, 8);
         lg_c(']');
     }
     lg_c(',');
@@ -209,11 +236,11 @@ pub fn lg_ov3(p: *mut Vec3) {
         v.y = rf();
         v.z = rf();
         lg_c('<');
-        lg_hx(v.x.to_bits() as u64, 8);
+        lg_hx(bc(v.x) as u64, 8);
         lg_c(' ');
-        lg_hx(v.y.to_bits() as u64, 8);
+        lg_hx(bc(v.y) as u64, 8);
         lg_c(' ');
-        lg_hx(v.z.to_bits() as u64, 8);
+        lg_hx(bc(v.z) as u64, 8);
         lg_c('>');
     }
 }
@@ -223,9 +250,9 @@ pub fn lg_ov2(p: *mut Vec2) {
         v.x = rf();
         v.y = rf();
         lg_c('<');
-        lg_hx(v.x.to_bits() as u64, 8);
+        lg_hx(bc(v.x) as u64, 8);
         lg_c(' ');
-        lg_hx(v.y.to_bits() as u64, 8);
+        lg_hx(bc(v.y) as u64, 8);
         lg_c('>');
     }
 }
@@ -233,7 +260,7 @@ pub fn lg_opf(p: *mut f32) {
     if !p.is_null() {
         unsafe { *p = rf() };
         lg_c('<');
-        lg_hx(unsafe { *p }.to_bits() as u64, 8);
+        lg_hx(bc(unsafe { *p }) as u64, 8);
         lg_c('>');
     }
 }
@@ -252,12 +279,12 @@ pub fn lg_retu(v: u32) {
 pub fn lg_retf(f: f32) {
     lg_c('=');
     lg_c('f');
-    lg_hx(f.to_bits() as u64, 8);
+    lg_hx(bc(f) as u64, 8);
 }
 pub fn lg_retd(f: f64) {
     lg_c('=');
     lg_c('d');
-    lg_hx(f.to_bits(), 16);
+    lg_hx(dc(f), 16);
 }
 pub fn lg_retp(p: usize) {
     lg_c('=');
@@ -313,10 +340,16 @@ pub unsafe fn ofill(base: *mut u8, d: &[ODesc]) {
 }
 pub unsafe fn onorm(img: &mut [u8], d: &[ODesc]) {
     for &(off, _, kind) in d {
+        let o = off as usize;
         if kind == b'p' {
-            let o = off as usize;
             let v = usize::from_le_bytes(img[o..o + 8].try_into().unwrap());
             img[o..o + 8].copy_from_slice(&normptr(v).to_le_bytes());
+        } else if kind == b'f' {
+            let b = u32::from_le_bytes(img[o..o + 4].try_into().unwrap());
+            img[o..o + 4].copy_from_slice(&cf32(b).to_le_bytes());
+        } else if kind == b'd' {
+            let b = u64::from_le_bytes(img[o..o + 8].try_into().unwrap());
+            img[o..o + 8].copy_from_slice(&cf64(b).to_le_bytes());
         }
     }
 }

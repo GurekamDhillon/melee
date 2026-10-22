@@ -205,7 +205,9 @@ class Walker:
             return
         if k == T.CONSTANTARRAY:
             n = c.get_array_size()
-            el = canon(c.element_type)
+            st_ = strip(t)
+            elt = st_.element_type if st_.kind == T.CONSTANTARRAY else c.element_type
+            el = canon(elt)
             if el.kind in INTK and INTK[el.kind][0] == 8:
                 e.c.append(f"tuo_bytes({path_c}, &{cx_}, sizeof({cx_}));")
                 e.r.append(f"v.bytes({path_r}, &mut {rx_} as *mut _ as *mut u8, core::mem::size_of_val(&{rx_}));")
@@ -219,7 +221,7 @@ class Walker:
                     sub = Emit()
                     base = self.trail
                     self.trail = f"{base}[{ix}]"
-                    self.leaf(sub, c.element_type, f"{cx_}[{ix}]", f"{rx_}[{ix}]",
+                    self.leaf(sub, elt, f"{cx_}[{ix}]", f"{rx_}[{ix}]",
                               f"tuo_cati(_pb{nb}, {path_c}, \"\", {ix})", f"&format!(\"{{}}[{{}}]\", {self.strip_amp(path_r)}, {ix})", rtype_hint)
                     self.trail = base
                     e.c.append(f"{{ char _pb{nb}[600];")
@@ -235,7 +237,7 @@ class Walker:
             sub = Emit()
             base = self.trail
             self.trail = base + "[]" if self.prune is not None else base
-            self.leaf(sub, c.element_type, f"{cx_}[{i}]", f"{rx_}[{i}]",
+            self.leaf(sub, elt, f"{cx_}[{i}]", f"{rx_}[{i}]",
                       f"tuo_cati(_pb{nb}, {path_c}, \"\", {i})", f"&format!(\"{{}}[{{}}]\", {self.strip_amp(path_r)}, {i})", rtype_hint)
             self.trail = base
             e.c.append(f"{{ char _pb{nb}[600]; int {i}; for({i}=0;{i}<{n};{i}++) {{")

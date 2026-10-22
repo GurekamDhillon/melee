@@ -3,6 +3,7 @@
 use crate::mtu_harness::*;
 use super::m;
 use melee_types::*;
+use super::m::{DebugResultsData, DebugMemcardData, enterMenu0_Data, exitIntroData};
 use super::m::*;
 use core::ffi::c_void;
 
@@ -10,7 +11,7 @@ use core::ffi::c_void;
 pub fn install() {
     use m::ext::hook::*;
     unsafe {
-        HSD_Randi = Some(|a0| { t(1000); t(a0 as u32); fv() as _ });
+        HSD_Randi = Some(|a0| { t(1000); t(a0 as u32); if a0 > 0 { (rnd() % a0 as u32) as i32 } else { 0 } });
         gm_80166A98 = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9| { t(1001); t(pi(a0)); t(a1 as u32); t(a2 as u32); t(a3 as u32); t(a4 as u32); t(a5 as u32); t(a6 as u32); t(a7 as u32); t(a8 as u32); t(a9 as u32); fv() as _ });
         gm_80168F88 = Some(|| { t(1002); });
         gm_801701A0 = Some(|| { t(1003); });

@@ -3,6 +3,7 @@
 use crate::mtu_harness::*;
 use super::m;
 use melee_types::*;
+use super::m::*;
 use core::ffi::c_void;
 
 
@@ -17,8 +18,8 @@ pub fn install() {
 }
 
 pub fn freg_all() {
-    freg(m::gm_801BED3C as usize);
-    freg(m::gm_801BEDA8 as usize);
+    freg(m::gm_801BED3C as *const () as usize);
+    freg(m::gm_801BEDA8 as *const () as usize);
 }
 
 pub fn fill_CSSData(p: &mut CSSData) {

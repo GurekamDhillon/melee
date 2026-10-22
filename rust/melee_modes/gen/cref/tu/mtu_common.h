@@ -2,6 +2,7 @@
  * rust/melee_modes/tests/mtu_harness/mod.rs: same xorshift, same fill draws, same trace hash,
  * same pointer / function ids. */
 extern int printf(const char*, ...);
+extern int fflush(void*);
 void __assert(const char* file, u32 line, const char* cond) { (void) file; (void) line; (void) cond; for (;;) {} }
 void OSReport(char* f, ...) { (void) f; }
 
@@ -77,6 +78,14 @@ static u32 FI(const void* f)
     if (f == 0) return 0;
     for (i = 0; i < NF; i++) if (FP[i] == f) return (u32) (i + 1);
     return 0xFFFFFFFEu;
+}
+/* a function address truncated to 32 bits ((s32) fnptr): named by the registered function it is */
+static u32 FI32(u32 v)
+{
+    int i;
+    if (v == 0) return 0;
+    for (i = 0; i < NF; i++) if ((u32) (unsigned long long) FP[i] == v) return (u32) (i + 1);
+    return 0xFFFFFFFDu;
 }
 /* a data pointer that is really a function address (UNK_T slots) gets the function's id */
 static u32 PI(const void* p)

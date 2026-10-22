@@ -7,6 +7,7 @@ pub mod support;
 pub mod gmcameramode;
 pub mod gmclassic;
 pub mod gmdebugmode;
+pub mod gmevent;
 pub mod gmfixedcamera;
 pub mod gmgiant;
 pub mod gmgover;

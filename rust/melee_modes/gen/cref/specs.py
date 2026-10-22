@@ -73,5 +73,58 @@ SPECS = {
                             "if !a5.is_null() { *a5 = fv() as u8 }"),
         }),
 }
+SPECS["gmevent"] = dict(
+    src="src/melee/gm/gmevent.c",
+    types=["GameModeState", "EventData", "PlayerInitData", "StartMeleeData", "CSSData", "PreloadedGameModeState",
+           "MatchExitInfo", "VsSceneController", "MatchEnd", "gm_801BAB40_src", "gm_evinit", "gm_evbonus",
+           "gm_evstage_table", "gm_804D6900_t", "gm_804D6900_x4_t", "StartMeleeRules"],
+    null_ret_ok=["HSD_GObj_SetupProc"],
+    custom_stubs={
+        # lbArchive_LoadSymbols(file, &dst, "symbol", 0): variadic; the Rust ext is fixed-arity
+        "lbArchive_LoadSymbols": dict(
+            c="HSD_Archive* lbArchive_LoadSymbols(const char* a0, void* a1, ...) { __builtin_va_list ap; "
+              "const char* sym; int z; __builtin_va_start(ap, a1); sym = __builtin_va_arg(ap, const char*); "
+              "z = __builtin_va_arg(ap, int); __builtin_va_end(ap); T(@ID@); T(SH(a0)); T(PI(a1)); T(SH(sym)); "
+              "T((u32) z); return 0; }",
+            ext="fn lbArchive_LoadSymbols(a0: *const u8, a1: *mut c_void, a2: *const u8, a3: i32) -> *mut c_void;",
+            hook="|a0, a1, a2, a3| { t(@ID@); t(sh(a0)); t(pi(a1)); t(sh(a2)); t(a3 as u32); core::ptr::null_mut() }"),
+    },
+    ret={
+        "GObj_Create": ("&GNEW", "&raw mut super::GNEW"),
+        "Player_GetEntity": ("((fv() & 1) ? &GOA[a0 & 3] : 0)",
+                             "if fv() & 1 != 0 { &raw mut super::GOA[(a0 & 3) as usize] } else { core::ptr::null_mut() }"),
+        "Player_GetEntityAtIndex": ("((fv() & 1) ? &GOA[a0 & 3] : 0)",
+                                    "if fv() & 1 != 0 { &raw mut super::GOA[(a0 & 3) as usize] } else { core::ptr::null_mut() }"),
+        "gmVs_GetSceneController": ("&VSC", "&raw mut super::VSC"),
+        "gmVs_GetSceneState": ("&VSS", "&raw mut super::VSS"),
+        "gm_8016B774": ("&MEND", "&raw mut super::MEND"),
+        "lbDvd_GetPreloadCacheScene": ("&PCS", "&raw mut super::PCS"),
+        "gm_8016AEEC": ("((fv() & 1) ? 0 : fv())", "if fv() & 1 != 0 { 0 } else { fv() }"),
+        "gm_8016AEFC": ("((fv() & 1) ? 0x3B : fv() % 70)", "if fv() & 1 != 0 { 0x3B } else { (fv() % 70) as u16 }"),
+        "Player_GetStocks": ("((int) (fv() % 5) - 1)", "(fv() % 5) as i32 - 1"),
+        "Player_GetP1Stock": ("((int) (fv() % 5) - 1)", "(fv() % 5) as i32 - 1"),
+        "Player_GetRemainingHP": ("((int) (fv() % 5) - 1)", "(fv() % 5) as i32 - 1"),
+        "Player_GetPlayerSlotType": ("(fv() % 4)", "fv() % 4"),
+        "ftLib_GetKind": ("(fv() % 9)", "fv() % 9"),
+        "Player_80036394": ("(fv() % 9)", "fv() % 9"),
+        "ftBossLib_8015C74C": ("((int) (fv() % 40))", "(fv() % 40) as i32"),
+        "ftBossLib_8015C7EC": ("((int) (fv() % 40))", "(fv() % 40) as i32"),
+        "ftBossLib_8015C92C": ("((int) (fv() % 40))", "(fv() % 40) as i32"),
+    },
+    effects={
+        "gm_8016EDDC": ("hash_PlayerInitData(a1);", "hash_PlayerInitData(&*a1);"),
+        "itEvYoshiEgg_Spawn": ("T(B(a0->x)); T(B(a0->y)); T(B(a0->z));",
+                               "t((*a0).x.to_bits()); t((*a0).y.to_bits()); t((*a0).z.to_bits());"),
+        "gm_80166378": ("hash_MatchEnd(a0); a0->n_team_winners = (u8) (fv() % 3); a0->team_winners[0] = (u8) (fv() % 6);",
+                        "hash_MatchEnd(&*a0); (*a0).n_team_winners = (fv() % 3) as u8; (*a0).team_winners[0] = (fv() % 6) as u8;"),
+        "gm_801B0730": ("if (a1) *a1 = (s8) fv(); if (a2) *a2 = (u8) fv(); if (a3) *a3 = (u8) fv(); "
+                        "if (a4) *a4 = (u8) fv(); if (a5) *a5 = (u8) fv();",
+                        "if !a1.is_null() { *a1 = fv() as i8 } if !a2.is_null() { *a2 = fv() as u8 } "
+                        "if !a3.is_null() { *a3 = fv() as u8 } if !a4.is_null() { *a4 = fv() as u8 } "
+                        "if !a5.is_null() { *a5 = fv() as u8 }"),
+    },
+    # (s32) of a function address: the trace names the function by its low 32 bits
+    fn32_args={"gm_8016A404": [0]},
+)
 for _s in SPECS.values():
     _s["common_ret"] = COMMON_RET

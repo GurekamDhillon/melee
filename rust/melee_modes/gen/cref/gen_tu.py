@@ -455,13 +455,21 @@ def build(stem, spec, want_ext):
         rcls = arg_class(rt)
         va = ft.is_function_variadic()
         if va:
-            continue  # variadic (OSReport): defined in mtu_common.h
+            cs = spec.get("custom_stubs", {}).get(n)
+            if cs:  # a variadic callee the spec models by hand (fixed-arity on the Rust side)
+                c_out.append(cs["c"].replace("@ID@", str(sid[n])))
+                ext_fns.append("    " + cs["ext"])
+                r_out.append(("@@HOOK@@", f"        m::ext::hook::{n} = Some({cs['hook'].replace('@ID@', str(sid[n]))});"))
+            continue  # other variadics (OSReport): defined in mtu_common.h
         params = ", ".join(f"__typeof__({p.spelling}) a{i}" for i, p in enumerate(ptys)) or "void"
         ret_t = "void" if rcls == "void" else f"__typeof__({rt.spelling})"
-        body_c = [f"T({sid[n]});"] + [c_trace(arg_class(p), f"a{i}") for i, p in enumerate(ptys)]
+        f32a = spec.get("fn32_args", {}).get(n, [])
+        body_c = [f"T({sid[n]});"] + [(f"T(FI32((u32) a{i}));" if i in f32a else c_trace(arg_class(p), f"a{i}"))
+                                      for i, p in enumerate(ptys)]
         rparams = ", ".join(f"a{i}: {rust_ty(p)}" for i, p in enumerate(ptys))
         rret = "" if rcls == "void" else f" -> {rust_ty(rt)}"
-        body_r = [f"t({sid[n]});"] + [r_trace(arg_class(p), f"a{i}") for i, p in enumerate(ptys)]
+        body_r = [f"t({sid[n]});"] + [(f"t(fi32(a{i} as u32));" if i in f32a else r_trace(arg_class(p), f"a{i}"))
+                                      for i, p in enumerate(ptys)]
         if n in eff:
             body_c.append(eff[n][0])
             body_r.append(eff[n][1])
@@ -487,6 +495,12 @@ def build(stem, spec, want_ext):
     # fill / hash
     walker = Walk(tu)
     local_types = []
+    fwd = []
+    for tn in spec.get("types", ()):
+        cn_ = ("struct " + tn) if tn in tu.tagged else tn
+        fwd.append(f"static void fill_{tn}({cn_}* p);")
+        fwd.append(f"static void hash_{tn}(const {cn_}* p);")
+    c_out[1:1] = fwd
     for tn in spec.get("types", ()):
         cdef, rdef = walker.gen(tn)
         c_out.append(cdef)

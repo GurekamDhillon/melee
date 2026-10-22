@@ -96,6 +96,20 @@ pub fn fi<F: Copy>(f: Option<F>) -> u32 {
         }
     }
 }
+/// A function address truncated to 32 bits (`(s32) fnptr`): named by the registered function it is.
+pub fn fi32(v: u32) -> u32 {
+    if v == 0 {
+        return 0;
+    }
+    unsafe {
+        for (i, &x) in FP.iter().enumerate() {
+            if x as u32 == v {
+                return (i + 1) as u32;
+            }
+        }
+    }
+    0xFFFF_FFFD
+}
 /// A data pointer that is really a function address (UNK_T slots) gets the function's id.
 pub fn pi<T>(p: *const T) -> u32 {
     let a = p as usize;

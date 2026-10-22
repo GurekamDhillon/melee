@@ -15,11 +15,16 @@ pub mod ext {
     use crate::tu::hookmac::hook;
     use melee_types::*;
     hook!(GOBJ_SETUPGXLINK, GObj_SetupGXLink, (gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, gx_link: u8, priority: u32));
-    /// `grDisplay_801C5DB0` is only ever passed as a render callback (never called here): an
-    /// `extern "C"` function so it can be stored in `GObj_RenderFunc`.
+    /// Hook behind [`grDisplay_801C5DB0`] for the TUs that call it directly (grizumi's render callbacks).
+    pub static mut GRDISPLAY_801C5DB0: Option<fn(*mut HSD_GObj, i32)> = None;
+    /// `grDisplay_801C5DB0`: an `extern "C"` function so it can be stored in `GObj_RenderFunc`
+    /// (most TUs only pass it as a render callback); a direct call goes to the hook above.
     #[allow(non_snake_case)]
-    pub unsafe extern "C" fn grDisplay_801C5DB0(_a0: *mut HSD_GObj, _a1: i32) {
-        panic!("TODO: grDisplay_801C5DB0 is not ported");
+    pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) {
+        match GRDISPLAY_801C5DB0 {
+            Some(f) => f(a0, a1),
+            None => panic!("TODO: grDisplay_801C5DB0 is not ported"),
+        }
     }
     hook!(HSD_GOBJ_SETUPPROC, HSD_GObj_SetupProc, (a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc);
     hook!(GRANIME_801C8138, grAnime_801C8138, (a0: *mut HSD_GObj, a1: enum_t, a2: i32));

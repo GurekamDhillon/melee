@@ -27,6 +27,18 @@ def stub_c(name, fn):
 
 O.stub_c = stub_c
 
+# An `Mtx` parameter (float[3][4], decays to float(*)[4]) is an ordinary pointer to the stubs.
+_kind_of = O.kind_of
+
+
+def kind_of(t):
+    if t.get_canonical().kind == O.T.CONSTANTARRAY:
+        return "p"
+    return _kind_of(t)
+
+
+O.kind_of = kind_of
+
 # spec key `patch=[(old, new), ...]`: text edits applied to the game's .c before the oracle compiles
 # it (each `old` must occur exactly once). Used where the C reaches a field through a GameCube byte
 # offset (`(u8*) p + 0xC4`, `char pad[0xDD8]`) that does not exist in the native layout: the patch

@@ -44,6 +44,8 @@ pub mod lb_r9;
 pub mod mn_r9;
 pub mod gm_r10;
 pub mod lb_r10;
+/// Native per-TU ports (src/melee/**/<stem>.c -> src/tu/<stem>.rs), `tests/tu_<stem>.rs`.
+pub mod tu;
 
 /// `GXColor` (libs/dolphin/include/dolphin/gx/GXStruct.h). TODO(group0): melee_types does not
 /// generate it (no group-0 header reaches GXStruct.h); move it there when it does.

@@ -1,0 +1,62 @@
+// BEGIN GENERATED EXT (rust/melee_modes/gen/cref/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn gmFrontend_AtlasSelect(a0: *mut GameModeState, a1: i32, a2: *const i8);
+    fn gmVsMelee_EnterCss(a0: *mut GameModeState, a1: *mut VsModeData, a2: u32);
+    fn gmVsMelee_EnterResults(a0: *mut GameModeState);
+    fn gmVsMelee_EnterSss(a0: *mut GameModeState, a1: *mut VsModeData);
+    fn gmVsMelee_EnterSuddenDeath(a0: *mut GameModeState, a1: *mut VsModeData, a2: Option<unsafe extern "C" fn(*mut StartMeleeData, *mut StartMeleeData)>, a3: Option<unsafe extern "C" fn(*mut PlayerInitData, *mut PlayerInitData)>);
+    fn gmVsMelee_EnterVs(a0: *mut GameModeState, a1: *mut VsModeData, a2: Option<unsafe extern "C" fn(*mut StartMeleeData, *mut StartMeleeData)>, a3: Option<unsafe extern "C" fn(*mut PlayerInitData, *mut PlayerInitData)>);
+    fn gmVsMelee_ExitCss(a0: *mut GameModeState, a1: *mut VsModeData);
+    fn gmVsMelee_ExitResults(a0: *mut GameModeState, a1: *mut VsModeData, a2: u8);
+    fn gmVsMelee_ExitSss(a0: *mut GameModeState, a1: *mut VsModeData, a2: u8);
+    fn gmVsMelee_ExitSuddenDeath(a0: *mut GameModeState);
+    fn gmVsMelee_ExitVs(a0: *mut GameModeState, a1: u8, a2: u8);
+    fn gmVsMelee_ResetKOCounts();
+    fn gm_80165290(a0: i32);
+    fn gm_InitVsMode(a0: *mut VsModeData);
+    fn gm_ModeState_ApproachVs_OnEnter(a0: *mut GameModeState);
+    fn gm_ModeState_ApproachVs_OnExit(a0: *mut GameModeState);
+    fn gm_ModeState_Approach_OnEnter(a0: *mut GameModeState);
+    fn gm_ModeState_Prize_OnEnter(a0: *mut GameModeState);
+    fn gm_ModeState_Prize_OnExit(a0: *mut GameModeState);
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn gm_80165290(a0: i32) { super::gm_80165290(a0) }
+        pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnEnter(a0: *mut GameModeState) { super::gm_ModeState_ApproachVs_OnEnter(a0) }
+        pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnExit(a0: *mut GameModeState) { super::gm_ModeState_ApproachVs_OnExit(a0) }
+        pub unsafe extern "C" fn gm_ModeState_Approach_OnEnter(a0: *mut GameModeState) { super::gm_ModeState_Approach_OnEnter(a0) }
+        pub unsafe extern "C" fn gm_ModeState_Prize_OnEnter(a0: *mut GameModeState) { super::gm_ModeState_Prize_OnEnter(a0) }
+        pub unsafe extern "C" fn gm_ModeState_Prize_OnExit(a0: *mut GameModeState) { super::gm_ModeState_Prize_OnExit(a0) }
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut gmMainLib_804D3EE0: *mut gmm_x0 = unsafe { core::mem::zeroed() };
+    pub static mut gmVsMelee_ApproachData: VsApproachData = unsafe { core::mem::zeroed() };
+    pub static mut gmVsMelee_CssData: CSSData = unsafe { core::mem::zeroed() };
+    pub static mut gmVsMelee_ResultsEnterData: ResultsMatchInfo = unsafe { core::mem::zeroed() };
+    pub static mut gmVsMelee_SssData: SSSData = unsafe { core::mem::zeroed() };
+    pub static mut gmVsMelee_StartData: StartMeleeData = unsafe { core::mem::zeroed() };
+    pub static mut gmVsMelee_SuddenDeathExitInfo: MatchExitInfo = unsafe { core::mem::zeroed() };
+    pub static mut gmVsMelee_VsExitInfo: MatchExitInfo = unsafe { core::mem::zeroed() };
+    pub static mut if_Scene_Prize_EnterData: un_804A1F48_t = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

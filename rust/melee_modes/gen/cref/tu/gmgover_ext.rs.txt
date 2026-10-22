@@ -1,0 +1,39 @@
+// BEGIN GENERATED EXT (rust/melee_modes/gen/cref/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn gm_80164430(a0: u16) -> i32;
+    fn gm_80164504(a0: u16);
+    fn gm_80172898(a0: u16) -> i32;
+    fn gm_80173224(a0: i32, a1: i32) -> u8;
+    fn gm_80173754(a0: u8, a1: u8) -> i32;
+    fn gm_8017390C(a0: i32, a1: i32);
+    fn gm_80173EEC();
+    fn gm_InitChallengerData(a0: u8, a1: u8, a2: u8, a3: u8, a4: u8, a5: u8);
+    fn gm_SetNewGameModePending();
+    fn gm_SetPendingGameMode(a0: u8);
+    fn lbMthp_8001F800();
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+}
+// END GENERATED EXT

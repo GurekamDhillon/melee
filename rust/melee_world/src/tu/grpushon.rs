@@ -74,7 +74,7 @@ pub struct grPushon_YakumonoParam {
     pub xC: *mut DynamicsDesc,
     pub x10: *mut DynamicsDesc,
     pub x14: *mut DynamicsDesc,
-    pub x18: u8,
+    pub x18: i32,
     pub x1c: [grPushOn_Entry; 0x1E],
     pub x10c: [grPushOn_Lookup; 0x21],
 }
@@ -85,7 +85,7 @@ melee_core::gc_layout!(grPushon_YakumonoParam, "grPushon_YakumonoParam", size 0x
     xC @ 0xC: 4 "DynamicsDesc*",
     x10 @ 0x10: 4 "DynamicsDesc*",
     x14 @ 0x14: 4 "DynamicsDesc*",
-    x18 @ 0x18: 1 "bool",
+    x18 @ 0x18: 4 "bool",
     x1c @ 0x1C: 240 "grPushOn_Entry[30]",
     x10c @ 0x10C: 264 "grPushOn_Lookup[33]",
 ]);
@@ -182,13 +182,14 @@ pub unsafe extern "C" fn grPushOn_80218330() {
 
 pub unsafe extern "C" fn grPushOn_80218378() {
     ext::grZakoGenerator_801CAE04(core::ptr::null_mut());
-    let mut val = (*yakumono_param).x18 != 0;
-    if val {
-        val = ext::HSD_Randi((*yakumono_param).x18 as i32) != 0;
+    // `bool` is `int` in the game's headers
+    let mut val = (*yakumono_param).x18;
+    if val != 0 {
+        val = ext::HSD_Randi((*yakumono_param).x18);
     } else {
-        val = false;
+        val = 0;
     }
-    if !val {
+    if val == 0 {
         // PPC evaluates call arguments left to right
         let a = ext::Ground_801C5840();
         let b = ext::Ground_801C5940();

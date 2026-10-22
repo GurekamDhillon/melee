@@ -47,7 +47,7 @@ unsafe fn mkypp() -> *mut t::grPushon_YakumonoParam {
     (*p).xC = az(16) as *mut DynamicsDesc;
     (*p).x10 = az(16) as *mut DynamicsDesc;
     (*p).x14 = az(16) as *mut DynamicsDesc;
-    (*p).x18 = (rnd() & 1) as u8;
+    (*p).x18 = (rnd() & 1) as i32;
     for i in 0..0x1E {
         (*p).x1c[i].x0 = rnd() as i32;
         (*p).x1c[i].x4 = rnd() as i16;

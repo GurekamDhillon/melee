@@ -75,3 +75,4 @@ impl GXColor {
         GXColor { r, g, b, a }
     }
 }
+

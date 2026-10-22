@@ -50,6 +50,7 @@ DEF_CASES = 300
 class PtrWalk(gen_tu.Walk):
     """gen_tu.Walk plus: pointer fields inside a union view are linked to the pools."""
     inview = 0
+    nulls = {}
 
     def one(self, t, f, cexpr, rexpr, cf, ch, rf, rh, depth):
         c = canon(t)
@@ -70,8 +71,13 @@ class PtrWalk(gen_tu.Walk):
                 nm = pt.get_declaration().spelling
                 if nm in VIEW_POOLS:
                     ce, re_ = VIEW_POOLS[nm]
-                    cf.append(f"{cexpr} = {ce};")
-                    rf.append(f"{rexpr} = {re_} as _;")
+                    mod = PtrWalk.nulls.get(f.spelling) if f is not None else None
+                    if mod:
+                        cf.append(f"{cexpr} = (fv() % {mod} == 0) ? 0 : {ce};")
+                        rf.append(f"{rexpr} = if fv() % {mod} == 0 {{ core::ptr::null_mut() }} else {{ {re_} as _ }};")
+                    else:
+                        cf.append(f"{cexpr} = {ce};")
+                        rf.append(f"{rexpr} = {re_} as _;")
             return
         return super().one(t, f, cexpr, rexpr, cf, ch, rf, rh, depth)
 
@@ -202,6 +208,7 @@ def prep(stem, spec):
     if used:
         spec["unions"] = {"GroundVars": used}
     spec["_used"] = used
+    PtrWalk.nulls = spec.get("view_null", {})
     return spec, fview, order
 
 
@@ -271,6 +278,9 @@ static int USELH;
 static float rf_(void) { return ((float) (rnd() >> 8) / 16777216.0f - 0.5f) * 4.0f; }
 static float rgx_(void) { u32 sel = rnd() & 3; if (sel == 0) return rf_(); return rg(); }
 #define rg() rgx_()
+/* TV: trace a Vec; WV: fill one (stubs that write an out-parameter) */
+static void TV(const Vec* p) { if (p) { T(B(p->x)); T(B(p->y)); T(B(p->z)); } }
+static void WV(Vec* p) { if (p) { p->x = rg(); p->y = rg(); p->z = rg(); } }
 @DECL@
 #include "@STEM@_gen.h"
 
@@ -280,7 +290,7 @@ static void reset_world(void)
     zero(GO, sizeof GO); zero(GR, sizeof GR); zero(JP, sizeof JP); zero(&CD, sizeof CD); zero(V3, sizeof V3);
     for (i = 0; i < 4; i++) fill_HSD_GObj(&GO[i]);
     for (i = 0; i < 4; i++) fill_Ground(&GR[i]);
-    for (i = 0; i < 16; i++) fill_HSD_JObj(&JP[i]);
+    for (i = 0; i < 16; i++) { fill_HSD_JObj(&JP[i]); JP[i].flags &= ~JOBJ_USE_QUATERNION; }
     fill_CollData(&CD);
     for (i = 0; i < 4; i++) { V3[i].x = rw(); V3[i].y = rw(); V3[i].z = rw(); }
     for (i = 0; i < 4; i++) { GO[i].user_data = &GR[i]; GR[i].gobj = &GO[i]; GO[i].hsd_obj = &JP[i * 4]; }
@@ -350,6 +360,16 @@ static mut JP: [HSD_JObj; 16] = unsafe { core::mem::zeroed() };
 static mut CD: CollData = unsafe { core::mem::zeroed() };
 static mut V3: [Vec; 4] = unsafe { core::mem::zeroed() };
 static mut USELH: i32 = 0;
+pub fn tv(p: *const Vec) {
+    if !p.is_null() {
+        unsafe { t((*p).x.to_bits()); t((*p).y.to_bits()); t((*p).z.to_bits()); }
+    }
+}
+pub fn wv(p: *mut Vec) {
+    if !p.is_null() {
+        unsafe { (*p).x = rgx(); (*p).y = rgx(); (*p).z = rgx(); }
+    }
+}
 pub fn rgx() -> f32 {
     let sel = rnd() & 3;
     if sel == 0 { ((rnd() >> 8) as f32 / 16777216.0 - 0.5) * 4.0 } else { mtu_harness::rg() }
@@ -364,7 +384,7 @@ unsafe fn reset_world() {
     V3 = core::mem::zeroed();
     for i in 0..4 { g::fill_HSD_GObj(&mut GO[i]); }
     for i in 0..4 { g::fill_Ground(&mut GR[i]); }
-    for i in 0..16 { g::fill_HSD_JObj(&mut JP[i]); }
+    for i in 0..16 { g::fill_HSD_JObj(&mut JP[i]); JP[i].flags &= !(JOBJ_USE_QUATERNION as u32); }
     g::fill_CollData(&mut CD);
     for i in 0..4 { V3[i].x = rw(); V3[i].y = rw(); V3[i].z = rw(); }
     for i in 0..4 {

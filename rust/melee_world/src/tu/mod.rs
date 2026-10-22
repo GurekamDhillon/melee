@@ -6,3 +6,4 @@ pub mod efsync;
 pub mod efasync;
 pub mod efalt;
 pub mod groldyoshi;
+pub mod groldkongo;

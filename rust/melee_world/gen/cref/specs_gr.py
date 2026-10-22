@@ -51,5 +51,9 @@ m::yakumono_param = &raw mut YP;""",
     pre={"grOldYoshi_8020F088": ("NJ = 1;", "NJ = true;")},
     cases={"fn_8020F2A8": 600, "grOldYoshi_8020EC10": 1000, "grOldYoshi_8020F088": 600},
 )
+import importlib, pathlib
+for _f in sorted(pathlib.Path(__file__).resolve().parent.glob("spec_*.py")):
+    _m = importlib.import_module(_f.stem)
+    SPECS[_f.stem[len("spec_"):]] = _m.SPEC
 for _s in SPECS.values():
     _s.setdefault("common_ret", COMMON_RET)

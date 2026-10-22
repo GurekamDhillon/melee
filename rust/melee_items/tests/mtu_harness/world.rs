@@ -40,6 +40,8 @@ pub fn pick_ItemStateTable() -> *mut ItemStateTable { let r = rnd(); unsafe { if
 pub fn pick_ItemStateDesc() -> *mut ItemStateDesc { let r = rnd(); unsafe { if r % 6 == 0 { null_mut() } else { &raw mut SDS[((r >> 8) % 3) as usize] } } }
 pub fn pick_ItemCommonData() -> *mut ItemCommonData { let r = rnd(); unsafe { if r % 6 == 0 { null_mut() } else { &raw mut ICD[((r >> 8) % 1) as usize] } } }
 pub fn pick_CollData() -> *mut CollData { let r = rnd(); unsafe { if r % 6 == 0 { null_mut() } else { &raw mut CDT[((r >> 8) % 2) as usize] } } }
+pub fn pick_igo() -> *mut HSD_GObj { let r = rnd(); unsafe { if r & 3 == 0 { null_mut() } else { &raw mut GO[((r >> 8) % 4) as usize] } } }
+pub fn pick_fgo() -> *mut HSD_GObj { let r = rnd(); unsafe { if r & 3 == 0 { null_mut() } else { &raw mut GO[4 + ((r >> 8) % 3) as usize] } } }
 pub fn pick_hit() -> *mut HitCapsule { let r = rnd(); let q = rnd(); unsafe { &raw mut IT[(r % 4) as usize].x5D4_hitboxes[(q % 4) as usize].hit } }
 pub fn pick_hurt() -> *mut HurtCapsule { let r = rnd(); let q = rnd(); unsafe { &raw mut IT[(r % 4) as usize].xACC_itemHurtbox[(q % 2) as usize] } }
 pub unsafe extern "C" fn cbev1(g: *mut HSD_GObj) { t(7001); t(pi(g)); }

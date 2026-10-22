@@ -646,6 +646,7 @@ def build(stem, spec, want_ext):
     c_out.append("}")
     c_out.extend(f"// stub {n} = {sid[n]}" for n in names)
 
+    (HERE / "tu" / f"{stem}_data.txt").write_text(chr(10).join(sorted(data)) + chr(10), encoding="utf-8", newline=chr(10))
     cfile = HERE / "tu" / f"{stem}_gen.h"
     cfile.write_text("\n".join(c_out) + "\n", encoding="utf-8", newline="\n")
 

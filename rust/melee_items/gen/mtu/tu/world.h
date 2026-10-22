@@ -34,6 +34,8 @@ static ItemStateTable* pick_ItemStateTable(void) { u32 r = rnd(); return (r % 6)
 static ItemStateDesc* pick_ItemStateDesc(void) { u32 r = rnd(); return (r % 6) == 0 ? 0 : &SDS[(r >> 8) % 3]; }
 static ItemCommonData* pick_ItemCommonData(void) { u32 r = rnd(); return (r % 6) == 0 ? 0 : &ICD[(r >> 8) % 1]; }
 static CollData* pick_CollData(void) { u32 r = rnd(); return (r % 6) == 0 ? 0 : &CDT[(r >> 8) % 2]; }
+static HSD_GObj* pick_igo(void) { u32 r = rnd(); return (r & 3) == 0 ? 0 : &GO[(r >> 8) % 4]; }
+static HSD_GObj* pick_fgo(void) { u32 r = rnd(); return (r & 3) == 0 ? 0 : &GO[4 + (r >> 8) % 3]; }
 static HitCapsule* pick_hit(void) { u32 r = rnd(); u32 q = rnd(); return &IT[r % 4].x5D4_hitboxes[q % 4].hit; }
 static HurtCapsule* pick_hurt(void) { u32 r = rnd(); u32 q = rnd(); return &IT[r % 4].xACC_itemHurtbox[q % 2]; }
 /* recording callbacks that struct fields and arguments name */

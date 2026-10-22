@@ -48,6 +48,8 @@ def world_c(tu):
     for t, a, n in POOLS:
         c.append(f"static {ctype(tu, t)}* pick_{t}(void) {{ u32 r = rnd(); return (r % 6) == 0 ? 0 : &{a}[(r >> 8) % {n}]; }}")
     c += [
+        "static HSD_GObj* pick_igo(void) { u32 r = rnd(); return (r & 3) == 0 ? 0 : &GO[(r >> 8) % 4]; }",
+        "static HSD_GObj* pick_fgo(void) { u32 r = rnd(); return (r & 3) == 0 ? 0 : &GO[4 + (r >> 8) % 3]; }",
         "static HitCapsule* pick_hit(void) { u32 r = rnd(); u32 q = rnd(); return &IT[r % 4].x5D4_hitboxes[q % 4].hit; }",
         "static HurtCapsule* pick_hurt(void) { u32 r = rnd(); u32 q = rnd(); return &IT[r % 4].xACC_itemHurtbox[q % 2]; }",
         "/* recording callbacks that struct fields and arguments name */",
@@ -94,6 +96,8 @@ def world_rs():
     for t, a, n in POOLS:
         r.append(f"pub fn pick_{t}() -> *mut {t} {{ let r = rnd(); unsafe {{ if r % 6 == 0 {{ null_mut() }} else {{ &raw mut {a}[((r >> 8) % {n}) as usize] }} }} }}")
     r += [
+        "pub fn pick_igo() -> *mut HSD_GObj { let r = rnd(); unsafe { if r & 3 == 0 { null_mut() } else { &raw mut GO[((r >> 8) % 4) as usize] } } }",
+        "pub fn pick_fgo() -> *mut HSD_GObj { let r = rnd(); unsafe { if r & 3 == 0 { null_mut() } else { &raw mut GO[4 + ((r >> 8) % 3) as usize] } } }",
         "pub fn pick_hit() -> *mut HitCapsule { let r = rnd(); let q = rnd(); unsafe { &raw mut IT[(r % 4) as usize].x5D4_hitboxes[(q % 4) as usize].hit } }",
         "pub fn pick_hurt() -> *mut HurtCapsule { let r = rnd(); let q = rnd(); unsafe { &raw mut IT[(r % 4) as usize].xACC_itemHurtbox[(q % 2) as usize] } }",
         "pub unsafe extern \"C\" fn cbev1(g: *mut HSD_GObj) { t(7001); t(pi(g)); }",
@@ -254,6 +258,16 @@ def hash_rs():
     return "\n".join(h)
 
 
+# data globals of other TUs that need a hand-made value (pointers into the pools); the generated fill / hash skip them.
+# name -> (C setup, Rust setup, C hash, Rust hash)
+COMMON_GLOBALS = {
+    "it_804D6D28": ("it_804D6D28 = &ICD[0];", "m::ext::it_804D6D28 = &raw mut ICD[0];",
+                    "HM(PI(it_804D6D28));", "hm(pi(m::ext::it_804D6D28));"),
+    "HSD_GObjPLinkHead": ("HSD_GObjPLinkHead = PLINK;", "m::ext::HSD_GObjPLinkHead = (&raw mut PLINK) as *mut *mut HSD_GObj;",
+                          "HM(PI(HSD_GObjPLinkHead));", "hm(pi(m::ext::HSD_GObjPLinkHead));"),
+}
+
+
 # ------------------------------------------------------------------------------ argument binding
 PTR = {  # pointee record -> (C expr, Rust expr)
     "HSD_GObj": ("&GO[rnd() % 4]", "&raw mut GO[(rnd() % 4) as usize]"),
@@ -357,6 +371,12 @@ def emit(stem):
     (ROOT / "rust/melee_items/tests/mtu_harness/world.rs").write_text(world_rs(), encoding="utf-8", newline="\n")
     ops = ops_of(tu, stem, cfg)
     nops = len(ops)
+    dnames = (HERE / "tu" / f"{stem}_data.txt").read_text(encoding="utf-8").split()
+    gl = [COMMON_GLOBALS[n] for n in dnames if n in COMMON_GLOBALS]
+    gsetup_c = chr(10).join("    " + g[0] for g in gl)
+    gsetup_r = chr(10).join("    " + g[1] for g in gl)
+    ghash_c = chr(10).join("    " + g[2] for g in gl)
+    ghash_r = chr(10).join("    " + g[3] for g in gl)
 
     setup_hdr = [setup_c(), hash_c(None)]
     c = [f"/* TU: {spec['src']} */",
@@ -364,8 +384,8 @@ def emit(stem):
          " * recording stub. Written by gen/mtu/mk_driver.py. Each line: op case ret state-hash trace-hash. */",
          cfg.get("c_pre", ""), "#include TU_SRC", '#include "mtu_common.h"', '#include "world.h"', f'#include "{stem}_gen.h"', "",
          setup_hdr[0], setup_hdr[1], cfg.get("c_extra", ""), "",
-         "static void setup_stem(void)", "{", "    int i;", "    (void) i;", cfg.get("setup", ("", ""))[0], "}", "",
-         "static void hash_stem(void)", "{", "    int i;", "    (void) i;", "    hashg_all();", cfg.get("hash", ("", ""))[0], "}", "",
+         "static void setup_stem(void)", "{", "    int i;", "    (void) i;", gsetup_c, cfg.get("setup", ("", ""))[0], "}", "",
+         "static void hash_stem(void)", "{", "    int i;", "    (void) i;", "    hashg_all();", ghash_c, cfg.get("hash", ("", ""))[0], "}", "",
          "int main(int argc, char** argv)", "{", "    int op, k, only = -1;",
          "    if (argc > 1) only = atoi(argv[1]);",
          "    preg_world();", "    freg_all();", "    freg_world();", cfg.get("pregs", ("", ""))[0],
@@ -391,8 +411,8 @@ def emit(stem):
          "#![allow(static_mut_refs, non_snake_case, non_upper_case_globals, unused_imports, unused_mut, unused_assignments, unused_variables, unused_unsafe)]",
          "mod mtu_harness;", "use core::ffi::c_void;", "use core::ptr::null_mut;", "use melee_types::*;", f"use melee_items::tu::{stem} as m;",
          "use mtu_harness::*;", f'#[path = "mtu/{stem}_gen.rs"]', "mod g;", "", cfg.get("rs_extra", ""), "",
-         "unsafe fn setup_stem() {", cfg.get("setup", ("", ""))[1], "}", "",
-         "unsafe fn hash_stem() {", "    g::hashg_all();", cfg.get("hash", ("", ""))[1], "}", "",
+         "unsafe fn setup_stem() {", gsetup_r, cfg.get("setup", ("", ""))[1], "}", "",
+         "unsafe fn hash_stem() {", "    g::hashg_all();", ghash_r, cfg.get("hash", ("", ""))[1], "}", "",
          "#[test]", f"fn {stem}_matches_c() {{", "    unsafe {", "        g::install();", "        preg_world();", "        g::freg_all();",
          "        freg_world();", cfg.get("pregs", ("", ""))[1],
          f'        let mut c = Check::new(include_str!("data/mtu_{stem}.txt"));', "        let mut total = 0u32;",

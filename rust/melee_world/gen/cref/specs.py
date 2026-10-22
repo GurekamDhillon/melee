@@ -25,5 +25,28 @@ SPECS["grfzerocar"] = dict(
         "HSD_JObjAlloc": ("&JP[JN++ & 63]", "{ let i = super::JN; super::JN += 1; &raw mut super::JP[i & 63] }"),
         "grDatFiles_801C6330": ("&ARCH", "&raw mut super::ARCH"),
     })
+SPECS["grgarden"] = dict(
+    src="src/melee/gr/grgarden.c",
+    types=["HSD_GObj", "Ground", "HSD_JObj", "StageCallbacks", "StageData", "Vec", "HSD_Generator",
+           "HSD_psAppSRT", "grGarden_YakumonoParam"],
+    unions={"GroundVars": ["garden", "garden2"]},
+    null_ret_ok=["HSD_GObj_SetupProc", "grZakoGenerator_801CAE04"],
+    ret={
+        "Ground_801C3FA4": ("&JO[a1 & 7]", "&raw mut super::JO[(a1 & 7) as usize]"),
+        "Ground_GetStageGObj": ("(((fv() & 7) == 0) ? 0 : &GS[a0 & 7])",
+                                "if fv() & 7 == 0 { core::ptr::null_mut() } else { &raw mut super::GS[(a0 & 7) as usize] }"),
+        "Ground_GetYakumonoParam": ("&YP", "&raw mut super::YP as *mut c_void"),
+        "Mex_GrBind": ("a0", "a0"),
+        "grLib_801C96F8": ("(((fv() & 3) == 0) ? 0 : &GEN)", "if fv() & 3 == 0 { core::ptr::null_mut() } else { &raw mut super::GEN }"),
+        "grMaterial_801C8CFC": ("&GI", "&raw mut super::GI"),
+        "ftLib_80086B80": ("rw()", "rw()"),
+        "Stage_80225194": ("((fv() & 1) ? 62 : fv())", "if fv() & 1 != 0 { 62 } else { fv() }"),
+        "gm_8016B238": ("((fv() & 1) ? 0 : fv())", "if fv() & 1 != 0 { 0 } else { fv() as i32 }"),
+    },
+    effects={
+        "ftLib_80086644": ("a1->x = rw(); a1->y = rw(); a1->z = rw();", "(*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw();"),
+        "ftLib_80086684": ("a1->x = rw(); a1->y = rw(); a1->z = rw();", "(*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw();"),
+        "lb_8000B1CC": ("a2->x = rw(); a2->y = rw(); a2->z = rw();", "(*a2).x = rw(); (*a2).y = rw(); (*a2).z = rw();"),
+    })
 for _s in SPECS.values():
     _s.setdefault("common_ret", COMMON_RET)

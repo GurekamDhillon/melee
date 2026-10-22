@@ -5,3 +5,6 @@ pub mod eflib;
 pub mod efsync;
 pub mod efasync;
 pub mod efalt;
+pub(crate) mod hookmac;
+pub mod grinl;
+pub mod grlib;

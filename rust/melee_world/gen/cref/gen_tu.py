@@ -283,9 +283,10 @@ class Walk:
 
     """Field-by-field fill/hash of one C record type (bitfields by value, pointers by id)."""
 
-    def __init__(self, tu, unions=None):
+    def __init__(self, tu, unions=None, skip=()):
         self.tu = tu
         self.unions = unions or {}
+        self.skip = tuple(skip)
 
     def rec_of(self, name):
         t = self.tu.types.get(name)
@@ -331,6 +332,8 @@ class Walk:
     def one(self, t, f, cexpr, rexpr, cf, ch, rf, rh, depth):
         c = canon(t)
         k = c.kind
+        if any(cexpr.endswith(x) for x in self.skip):
+            return
         if k != T.CONSTANTARRAY and not (k == T.RECORD and not (c.get_declaration().get_definition() or c.get_declaration()).kind == K.UNION_DECL):
             # field name in the debug dump (MTU_DBG): C and Rust print the same text
             nm = cexpr.replace('"', '')
@@ -520,7 +523,7 @@ def build(stem, spec, want_ext):
         if addr:
             ext_cb.append((n, rparams, rret, argnames))
     # fill / hash
-    walker = Walk(tu, spec.get("unions"))
+    walker = Walk(tu, spec.get("unions"), spec.get("skip", ()))
     local_types = []
     fwd = []
     for tn in spec.get("types", ()):

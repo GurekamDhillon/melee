@@ -1,14 +1,14 @@
 """Helpers for the driver descriptions in drivers.py / tus/*.py (mk_tu.py): the common op shapes."""
 
 
-def vg(name, usel=0):
+def vg(name, usel=0, a="G"):
     """void f(Ground_GObj*)"""
-    return dict(name=name, c=f"{name}(&G);", r=f"m::{name}(&raw mut G);", usel=usel)
+    return dict(name=name, c=f"{name}(&{a});", r=f"m::{name}(&raw mut {a});", usel=usel)
 
 
-def pg(name, usel=0):
+def pg(name, usel=0, a="G"):
     """bool f(Ground_GObj*)"""
-    return dict(name=name, c=f"ret = (u32) {name}(&G);", r=f"ret = m::{name}(&raw mut G) as u32;", usel=usel)
+    return dict(name=name, c=f"ret = (u32) {name}(&{a});", r=f"ret = m::{name}(&raw mut {a}) as u32;", usel=usel)
 
 
 def v0(name):

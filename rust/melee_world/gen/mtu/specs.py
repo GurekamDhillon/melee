@@ -124,5 +124,88 @@ SPECS["textlib_1"] = dict(
           "if (*f == 'f') { T64(__builtin_va_arg(ap, double)); } else { T((u32) __builtin_va_arg(ap, int)); } f++; } __builtin_va_end(ap); }",
         ext="fn DevText_Printf(a0: *mut DevText, a1: *const i8, a2: &[crate::tu::textlib::PrintfArg]);",
         hook="|a0, a1, a2| { t(@ID@); t(pi(a0)); t(sh(a1 as *const u8)); for a in a2 { match a { melee_world::tu::textlib::PrintfArg::Int(v) => t(*v as u32), melee_world::tu::textlib::PrintfArg::Dbl(d) => t64(*d), _ => {} } } }")})
+SPECS["if_2F72"] = dict(
+    src="src/melee/if/if_2F72.c",
+    types=["HSD_GObj", "Element_803F9628", "HudIndex", "HSD_JObj"],
+    data_size={"ifStatus_803F9628": 8},
+    skip_stubs=["memzero"], skip_data=["result"],
+    ret={
+        "GObj_Create": ("(((fv() & 3) == 0) ? 0 : &NG[fv() % 4])", "if fv() & 3 == 0 { core::ptr::null_mut() } else { &raw mut super::NG[(fv() % 4) as usize] }"),
+        "HSD_JObjLoadJoint": ("(((fv() & 3) == 0) ? 0 : &NJ[fv() % 4])", "if fv() & 3 == 0 { core::ptr::null_mut() } else { &raw mut super::NJ[(fv() % 4) as usize] }"),
+        "HSD_GObj_SetupProc": ("&PROC0", "&raw mut super::PROC0"),
+        "ifAll_GetArchive": ("&ARCP", "&raw mut super::ARCP"),
+        "ifAll_GetPlayerHUDPosition": ("&HPOS[(u32) a0 % 6]", "&raw mut super::HPOS[(a0 as u32 % 6) as usize]"),
+        "ifStatus_GetHUDInfo": ("&HI", "&raw mut super::HI"),
+        "Player_80036428": ("(int) (fv() % 6)", "(fv() % 6) as i32"),
+        "gm_8016AEC8": ("gm_ret()", "super::gm_ret()"),
+        "lbGetJObjCurrFrame": ("(float) (fv() % 40) / 2.0f", "(fv() % 40) as f32 / 2.0"),
+    },
+    custom_stubs={"lbArchive_LoadSections": dict(
+        c="void lbArchive_LoadSections(HSD_Archive* a0, void** a1, ...) { __builtin_va_list ap; const char* sym; int z; "
+          "__builtin_va_start(ap, a1); sym = __builtin_va_arg(ap, const char*); z = __builtin_va_arg(ap, int); __builtin_va_end(ap); "
+          "T(@ID@); T(PI(a0)); T(PI(a1)); T(SH(sym)); T((u32) z); *a1 = ((fv() & 1) ? (void*) DMDA : 0); }",
+        ext="fn lbArchive_LoadSections(a0: *mut HSD_Archive, a1: *mut *mut c_void, a2: *const u8, a3: i32);",
+        hook="|a0, a1, a2, a3| { t(@ID@); t(pi(a0)); t(pi(a1)); t(sh(a2)); t(a3 as u32); *a1 = if fv() & 1 != 0 { &raw mut super::DMDA as *mut c_void } else { core::ptr::null_mut() }; }")})
+SPECS["if_2FD9"] = dict(
+    src="src/melee/if/if_2FD9.c",
+    types=["HSD_GObj"],
+    skip_data=["result"],
+    ret={
+        "Player_GetPlayerSlotType": ("(Gm_PKind) (fv() % 3)", "fv() % 3"),
+        "GObj_Create": ("&NG[fv() % 4]", "&raw mut super::NG[(fv() % 4) as usize]"),
+        "HSD_JObjLoadJoint": ("&NJ[fv() % 4]", "&raw mut super::NJ[(fv() % 4) as usize]"),
+        "HSD_GObj_SetupProc": ("&PROC0", "&raw mut super::PROC0"),
+        "ifAll_GetArchive": ("&ARCP", "&raw mut super::ARCP"),
+    },
+    custom_stubs={"lbArchive_LoadSections": dict(
+        c="void lbArchive_LoadSections(HSD_Archive* a0, void** a1, ...) { __builtin_va_list ap; const char* sym; int z; "
+          "__builtin_va_start(ap, a1); sym = __builtin_va_arg(ap, const char*); z = __builtin_va_arg(ap, int); __builtin_va_end(ap); "
+          "T(@ID@); T(PI(a0)); T(PI(a1)); T(SH(sym)); T((u32) z); *a1 = (void*) DMDA; }",
+        ext="fn lbArchive_LoadSections(a0: *mut HSD_Archive, a1: *mut *mut c_void, a2: *const u8, a3: i32);",
+        hook="|a0, a1, a2, a3| { t(@ID@); t(pi(a0)); t(pi(a1)); t(sh(a2)); t(a3 as u32); *a1 = &raw mut super::DMDA as *mut c_void; }")})
+SPECS["if_2FF2"] = dict(
+    src="src/melee/if/if_2FF2.c",
+    types=["HSD_GObj", "HSD_Text"],
+    skip_stubs=["memzero"],
+    ret={
+        "HSD_SisLib_803A6754": ("&TX[fv() % 3]", "&raw mut super::TX[(fv() % 3) as usize]"),
+        "GObj_Create": ("(((fv() & 3) == 0) ? 0 : &NG[fv() % 4])", "if fv() & 3 == 0 { core::ptr::null_mut() } else { &raw mut super::NG[(fv() % 4) as usize] }"),
+        "ifAll_GetHUDGObj": ("&HG", "&raw mut super::HG"),
+        "ifAll_GetPlayerHUDPosition": ("&HPOS[(u32) a0 % 6]", "&raw mut super::HPOS[(a0 as u32 % 6) as usize]"),
+        "HSD_LObjLoadDesc": ("&LO", "&raw mut super::LO"),
+        "HSD_CObjLoadDesc": ("((fv() & 1) ? &CO : 0)", "if fv() & 1 != 0 { &raw mut super::CO } else { core::ptr::null_mut() }"),
+        "DevText_Setup": ("((fv() & 1) ? &HG : 0)", "if fv() & 1 != 0 { &raw mut super::HG } else { core::ptr::null_mut() }"),
+        "HSD_GObj_SetupProc": ("&PROC0", "&raw mut super::PROC0"),
+        "gm_8016B774": ("&ME", "&raw mut super::ME"),
+    },
+    effects={
+        "HSD_CObjLoadDesc": (
+            "{ HSD_CameraDescPerspective* d = (HSD_CameraDescPerspective*) a0; T(B(d->nnear)); T(B(d->ffar)); T(B(d->fov)); T(B(d->aspect)); T(B(d->roll)); "
+            "T(d->flags); T(d->projection_type); T(RH(&d->viewport, 8)); T(RH(&d->scissor, 8)); T(PI(d->up_vector)); T(PI(d->class_name)); "
+            "T(B(d->eyepos->pos.x)); T(B(d->eyepos->pos.y)); T(B(d->eyepos->pos.z)); T(B(d->interest->pos.x)); T(B(d->interest->pos.y)); T(B(d->interest->pos.z)); "
+            "T(PI(d->eyepos->robjdesc)); T(PI(d->eyepos->class_name)); }",
+            "{ let d = &*(a0 as *mut HSD_CameraDescPerspective); t(d.nnear.to_bits()); t(d.ffar.to_bits()); t(d.fov.to_bits()); t(d.aspect.to_bits()); t(d.roll.to_bits()); "
+            "t(d.flags as u32); t(d.projection_type as u32); t(rh(&d.viewport)); t(rh(&d.scissor)); t(pi(d.up_vector)); t(pi(d.class_name)); "
+            "t((*d.eyepos).pos.x.to_bits()); t((*d.eyepos).pos.y.to_bits()); t((*d.eyepos).pos.z.to_bits()); t((*d.interest).pos.x.to_bits()); t((*d.interest).pos.y.to_bits()); t((*d.interest).pos.z.to_bits()); "
+            "t(pi((*d.eyepos).robjdesc)); t(pi((*d.eyepos).class_name)); }"),
+        "HSD_LObjLoadDesc": (
+            "{ HSD_LightDesc* d; for (d = a0; d; d = d->next) { T(d->flags); T(d->attnflags); T(RH(&d->color, 4)); T(PI(d->class_name)); "
+            "if (d->position) { T(B(d->position->pos.x)); T(B(d->position->pos.y)); T(B(d->position->pos.z)); } else T(0xAAAA); "
+            "T(PI(d->interest)); if (d->u.point) { T(B(d->u.point->ref_br)); T(B(d->u.point->ref_dist)); T(d->u.point->dist_func); } else T(0xBBBB); } }",
+            "{ let mut d = a0; while !d.is_null() { t((*d).flags as u32); t((*d).attnflags as u32); t(rh(&(*d).color)); t(pi((*d).class_name)); "
+            "if !(*d).position.is_null() { t((*(*d).position).pos.x.to_bits()); t((*(*d).position).pos.y.to_bits()); t((*(*d).position).pos.z.to_bits()); } else { t(0xAAAA); } "
+            "t(pi((*d).interest)); if !(*d).u.point.is_null() { t((*(*d).u.point).ref_br.to_bits()); t((*(*d).u.point).ref_dist.to_bits()); t((*(*d).u.point).dist_func); } else { t(0xBBBB); } d = (*d).next; } }"),
+    },
+    custom_stubs={
+        "HSD_SisLib_803A70A0": dict(
+            c="s32 HSD_SisLib_803A70A0(HSD_Text* a0, s32 a1, char* a2, ...) { __builtin_va_list ap; const char* f = a2; T(@ID@); T(PI(a0)); T((u32) a1); T(SH(a2)); "
+              "__builtin_va_start(ap, a2); while (*f) { if (*f++ == '%') { f++; T((u32) __builtin_va_arg(ap, int)); } } __builtin_va_end(ap); return (s32) fv(); }",
+            ext="fn HSD_SisLib_803A70A0(a0: *mut HSD_Text, a1: i32, a2: *const i8, a3: &[i32]) -> i32;",
+            hook="|a0, a1, a2, a3| { t(@ID@); t(pi(a0)); t(a1 as u32); t(sh(a2 as *const u8)); for v in a3 { t(*v as u32); } fv() as i32 }"),
+        "HSD_SisLib_803A6B98": dict(
+            c="int HSD_SisLib_803A6B98(HSD_Text* a0, float a1, float a2, const char* a3, ...) { __builtin_va_list ap; const char* f = a3; T(@ID@); T(PI(a0)); T(B(a1)); T(B(a2)); T(SH(a3)); "
+              "__builtin_va_start(ap, a3); while (*f) { if (*f++ == '%') { f++; T((u32) __builtin_va_arg(ap, int)); } } __builtin_va_end(ap); return (int) fv(); }",
+            ext="fn HSD_SisLib_803A6B98(a0: *mut HSD_Text, a1: f32, a2: f32, a3: *const i8, a4: &[i32]) -> i32;",
+            hook="|a0, a1, a2, a3, a4| { t(@ID@); t(pi(a0)); t(a1.to_bits()); t(a2.to_bits()); t(sh(a3 as *const u8)); for v in a4 { t(*v as u32); } fv() as i32 }")})
 for _s in SPECS.values():
     _s["common_ret"] = COMMON_RET

@@ -366,6 +366,12 @@ void tuo_arg_s(const char* s)
     if (!s) { cln += sprintf(cl + cln, "\"\"null"); return; }
     cln += sprintf(cl + cln, "\"%.200s\"", s);
 }
+void tuo_arg_bytes(const void* p, size_t n)
+{
+    sep();
+    cln += sprintf(cl + cln, "x");
+    for (size_t i = 0; i < n; i++) cln += sprintf(cl + cln, "%02x", ((const unsigned char*) p)[i]);
+}
 void tuo_call_end(void) { cl[cln++] = ')'; cl[cln] = 0; tuo_emit("%s", cl); }
 /* generated return values: key is "ret:<name>" */
 u64 tuo_ret_int(const char* name, int bits, int sgn)

@@ -330,6 +330,13 @@ impl V {
         }
         write!(self.cl, "\"{t}\"").unwrap();
     }
+    pub fn arg_bytes(&mut self, p: *const u8, n: usize) {
+        self.sep();
+        self.cl.push('x');
+        for i in 0..n {
+            write!(self.cl, "{:02x}", unsafe { *p.add(i) }).unwrap();
+        }
+    }
     pub fn call_end(&mut self) {
         self.cl.push(')');
         let l = std::mem::take(&mut self.cl);

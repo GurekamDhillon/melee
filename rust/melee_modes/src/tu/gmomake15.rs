@@ -39,7 +39,7 @@ pub mod ext {
     }
     // ---- callee hooks ----
     hook!(H_GObj_Create, GObj_Create, (a0: u16, a1: u8, a2: u8) -> *mut melee_types::HSD_GObj);
-    hook!(H_gm_801A9DD0, gm_801A9DD0, (a0: *mut melee_types::HSD_GObj, a1: u16, a2: u16, a3: i32, a4: i32));
+    hook_or!(H_gm_801A9DD0, gm_801A9DD0, crate::tu::gmopening::gm_801A9DD0, (a0: *mut melee_types::HSD_GObj, a1: u16, a2: u16, a3: i32, a4: i32));
     hook!(H_HSD_GObjObject_80390A70, HSD_GObjObject_80390A70, (a0: *mut melee_types::HSD_GObj, a1: u8, a2: *mut core::ffi::c_void));
     hook!(H_GObj_SetupGXLink, GObj_SetupGXLink, (a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32));
     hook!(H_lbMthp_8001F67C, lbMthp_8001F67C, (a0: *mut melee_types::HSD_GObj, a1: i32));
@@ -47,7 +47,7 @@ pub mod ext {
     hook!(H_lbAudioAx_80023F28, lbAudioAx_80023F28, (a0: i32) -> i32);
     hook!(H_lbAudioAx_80024E50, lbAudioAx_80024E50, (a0: i32));
     hook!(H_lbMthp_8001F410, lbMthp_8001F410, (a0: *const i8, a1: *mut u32, a2: *mut core::ffi::c_void, a3: u32, a4: i32));
-    hook!(H_fn_801AA0E8, fn_801AA0E8, ());
+    hook_or!(H_fn_801AA0E8, fn_801AA0E8, crate::tu::gmopening::fn_801AA0E8, ());
     hook!(H_lbMthp_8001F578, lbMthp_8001F578, ());
     hook!(H_lbMthp_8001F5C4, lbMthp_8001F5C4, () -> i32);
     hook!(H_lbMthp_8001F604, lbMthp_8001F604, () -> i32);

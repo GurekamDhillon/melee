@@ -17,6 +17,7 @@ F=(--target=x86_64-pc-windows-gnu -mno-ms-bitfields -std=c99 -nostdinc -fno-buil
    -I. -Isrc -Ipc -Ipc/gameworld -isystem src/MSL -isystem libs/dolphin/include -isystem libs/dolphin/src
    -isystem "$GALE" -include src/MSL/math_ppc.h "-D_Static_assert(a,b)=" -Dsize_t=gc_size_t)
 "$CL" "${F[@]}" "$OUT/unit.c" -o "$OUT/unit.ll"
+python "$HERE/guest_patch.py" "$OUT"
 python "$WT/rust/melee_runtime/oracle/lower.py" "$OUT/unit.ll" "$OUT/unit.lo.ll"
 "$CL" -O1 -w "$OUT/unit.lo.ll" "$OUT/stubs.c" "$HERE/tuo_rt.c" -o "$OUT/oracle.exe"
 mkdir -p "$HERE/../../tests/data" "$HERE/../../tests/tuo_gen"

@@ -3,3 +3,5 @@
 pub mod gmomake15;
 pub mod gmpause;
 pub mod gmprogressive;
+pub mod gmmovieend;
+pub mod gmopening;

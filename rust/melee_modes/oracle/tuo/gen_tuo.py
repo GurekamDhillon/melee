@@ -49,6 +49,7 @@ for m in re.finditer(r"^pub (?:struct|union) (\w+) \{\n(.*?)^\}", GEN_RS, re.M |
     for fm in re.finditer(r"^    pub (r#)?(\w+): (.+?),$", m.group(2), re.M):
         flds.append((fm.group(2), fm.group(3)))
     RS_STRUCTS[m.group(1)] = flds
+RS_ALIAS = dict(re.findall(r"^pub type (\w+) = (\w+);", GEN_RS, re.M))
 RS_NAMES = set(re.findall(r"^pub (?:struct|union|type|enum) (\w+)", GEN_RS, re.M))
 
 
@@ -231,7 +232,10 @@ class Walker:
         """Fields of record `decl` (inline). cx_/rx_ are the C / Rust places of the record."""
         fields = [f for f in decl.get_children() if f.kind == K.FIELD_DECL or
                   (f.kind in (K.STRUCT_DECL, K.UNION_DECL) and f.is_anonymous_record_decl())]
-        rfields = list(RS_STRUCTS.get(rname.split("::")[-1], [])) if rname and rname.startswith("melee_types::") else None
+        rkey = rname.split("::")[-1] if rname else None
+        while rkey in RS_ALIAS and rkey not in RS_STRUCTS:
+            rkey = RS_ALIAS[rkey]
+        rfields = list(RS_STRUCTS.get(rkey, [])) if rname and rname.startswith("melee_types::") else None
         anon_i = 0
         ranon = [n for (n, ty) in (rfields or []) if n.startswith("anon_")]
         rtys = dict(rfields or [])
@@ -496,6 +500,17 @@ def main():
             else:
                 extern_decl.append(f"__typeof__({name}) {name};")
 
+    guest = []
+    for addr, (gname, ctype, rtyp) in spec.get("GUEST_VARS", {}).items():
+        sym = f"tuo_g_{gname}"
+        extern_decl.append(f"{ctype} {sym};")
+        signed = addr - (1 << 32) if addr >= (1 << 31) else addr
+        guest.append(f"{signed} {sym}")
+        gl_c.append(f'  tuo_regglobal("{gname}", (void*)&{sym}, sizeof({sym}), 0, 1);')
+        path = f"{rust_mod}::ext::{gname}"
+        gl_r.append(f'    Global {{ name: "{gname}", p: unsafe {{ &raw mut {path} as *mut u8 }}, size: core::mem::size_of::<{rtyp}>(), vis: None, fill: true }},')
+        ext_globals_rs.append((gname, rtyp))
+    (out / "guest.txt").write_text("\n".join(guest) + "\n")
     # ---- cases ----
     cases = spec.get("CASES", {})
     cfg = []
@@ -614,7 +629,7 @@ def main():
     # ---- stubs ----
     stubs_c = ['#include <string.h>', 'extern void tuo_call_begin(const char*); extern void tuo_call_end(void);',
                'extern void tuo_arg_i(long long); extern void tuo_arg_u(unsigned long long); extern void tuo_arg_f32(unsigned);',
-               'extern void tuo_arg_f64(unsigned long long); extern void tuo_arg_p(const void*); extern void tuo_arg_s(const char*);',
+               'extern void tuo_arg_f64(unsigned long long); extern void tuo_arg_p(const void*); extern void tuo_arg_s(const char*); extern void tuo_arg_bytes(const void*, unsigned long long);',
                'extern unsigned long long tuo_ret_int(const char*, int, int); extern unsigned tuo_ret_f32(const char*);',
                'extern unsigned long long tuo_ret_f64(const char*); extern void* tuo_ret_ptr(const char*);',
                'extern void tuo_regfn(const char*, void*); extern void* tuo_leaf_ptr(const char*);', '']
@@ -704,7 +719,11 @@ def main():
             elif p.kind == T.POINTER:
                 cargs.append(f"void* a{i}")
                 rparams.append(f"a{i}: {rust_type(G, a.type)}")
-                if is_char_ptr(a.type):
+                pb = spec.get("PTR_BYTES", {}).get(name, {}).get(i)
+                if pb:
+                    logs.append(f"tuo_arg_bytes(a{i}, {pb});")
+                    rlogs.append(f"v.arg_bytes(a{i} as *const u8, {pb});")
+                elif is_char_ptr(a.type):
                     logs.append(f"tuo_arg_s((const char*) a{i});")
                     rlogs.append(f"v.arg_s(a{i} as *const u8);")
                 else:
@@ -782,7 +801,7 @@ def main():
     for k, v in links.items():
         m = re.match(r"(?:new|maybe|ptrs):([^:]+)", v)
         if m:
-            cn = m.group(1)
+            cn = m.group(1).replace("~", " ")
             self_decl = find_record(tu, cn)
             if self_decl is None:
                 raise SystemExit(f"tuo: no record type {cn}")
@@ -913,8 +932,8 @@ def main():
             ex.append(f"    hook!(H_{nm}, {nm}, ({ps}){' -> ' + rt_ if rt_ else ''});")
     ex.append("    // ---- extern globals ----")
     for name, cur in ext_globals_rs:
-        t = cur.type
-        ex.append(f"    pub static mut {name}: {rust_type(G, t)} = unsafe {{ core::mem::zeroed() }};")
+        rt_ = cur if isinstance(cur, str) else rust_type(G, cur.type)
+        ex.append(f"    pub static mut {name}: {rt_} = unsafe {{ core::mem::zeroed() }};")
     ex.append("}")
     (out / "ext.rs.txt").write_text("\n".join(ex) + "\n")
     print(f"unit.c {len(uc)} lines, {len(declared) - len(set(declared) & defined)} callees, {len(glob)} globals, {len(G.order)} types")

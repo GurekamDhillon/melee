@@ -154,11 +154,23 @@ vis_GXTexObj(v, &format!("{}.x7C_texobj", path), &mut (*p).x7C_texobj as *mut _ 
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn vis_GXTexObj(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::GXTexObj; unsafe {
-v.bytes(path, vp, core::mem::size_of_val(&*p));
+{
+for _i1 in 0..16usize {
+if v.set() { (*p).dummy[_i1] = v.leaf_int(&format!("{}[{}]", format!("{}.dummy", path), _i1), 32, 0) as _; } else { v.dump_u(&format!("{}[{}]", format!("{}.dummy", path), _i1), (((*p).dummy[_i1]) as u32) as u64); }
+}
+}
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn vis_GXTlutObj(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::GXTlutObj; unsafe {
-v.bytes(path, vp, core::mem::size_of_val(&*p));
+{
+for _i2 in 0..10usize {
+if v.set() { (*p).dummy[_i2] = v.leaf_int(&format!("{}[{}]", format!("{}.dummy", path), _i2), 32, 0) as _; } else { v.dump_u(&format!("{}[{}]", format!("{}.dummy", path), _i2), (((*p).dummy[_i2]) as u32) as u64); }
+}
+}
+} }
+#[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
+fn gv_gm_804D6858(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut *mut melee_types::HSD_GObj; unsafe {
+if v.set() { (*p) = v.leaf_ptr(path) as _; } else { v.dump_p(path, ((*p)) as usize); }
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn gv_HSD_SObjLib_804D7960(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut u8; unsafe {
@@ -172,66 +184,68 @@ if v.set() { (*p) = unsafe { core::mem::transmute::<usize, _>(v.leaf_ptr(path)) 
 fn gv_gmMainLib_8046B0F0(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::gmMainLib_8046B0F0_t; unsafe {
 vis_struct_gmMainLib_8046B0F0_t(v, path, &mut (*p) as *mut _ as *mut u8);
 } }
-unsafe extern "C" fn s_GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut melee_types::HSD_GObj { let v = vv(); v.call_begin("GObj_Create"); v.arg_u(a0 as u64); v.arg_u(a1 as u64); v.arg_u(a2 as u64); v.call_end(); v.ret_ptr("GObj_Create") as _ }
-unsafe extern "C" fn s_gm_801A9DD0(a0: *mut melee_types::HSD_GObj, a1: u16, a2: u16, a3: i32, a4: i32) { let v = vv(); v.call_begin("gm_801A9DD0"); v.arg_p(a0 as usize); v.arg_u(a1 as u64); v.arg_u(a2 as u64); v.arg_i(a3 as i64); v.arg_i(a4 as i64); v.call_end();  }
-unsafe extern "C" fn s_HSD_GObjObject_80390A70(a0: *mut melee_types::HSD_GObj, a1: u8, a2: *mut core::ffi::c_void) { let v = vv(); v.call_begin("HSD_GObjObject_80390A70"); v.arg_p(a0 as usize); v.arg_u(a1 as u64); v.arg_p(a2 as usize); v.call_end();  }
-unsafe extern "C" fn s_GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32) { let v = vv(); v.call_begin("GObj_SetupGXLink"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.arg_u(a3 as u64); v.call_end();  }
-unsafe extern "C" fn s_lbMthp_8001F67C(a0: *mut melee_types::HSD_GObj, a1: i32) { let v = vv(); v.call_begin("lbMthp_8001F67C"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.call_end();  }
-unsafe extern "C" fn s_lbMthp_8001F624(a0: *mut melee_types::HSD_GObj, a1: i32, a2: i32) -> *mut melee_types::HSD_SObj { let v = vv(); v.call_begin("lbMthp_8001F624"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.arg_i(a2 as i64); v.call_end(); v.ret_ptr("lbMthp_8001F624") as _ }
-unsafe extern "C" fn s_lbAudioAx_80023F28(a0: i32) -> i32 { let v = vv(); v.call_begin("lbAudioAx_80023F28"); v.arg_i(a0 as i64); v.call_end(); v.ret_int("lbAudioAx_80023F28", 32, 1) as _ }
-unsafe extern "C" fn s_lbAudioAx_80024E50(a0: i32) { let v = vv(); v.call_begin("lbAudioAx_80024E50"); v.arg_i(a0 as i64); v.call_end();  }
-unsafe extern "C" fn s_lbMthp_8001F410(a0: *const i8, a1: *mut u32, a2: *mut core::ffi::c_void, a3: u32, a4: i32) { let v = vv(); v.call_begin("lbMthp_8001F410"); v.arg_s(a0 as *const u8); v.arg_p(a1 as usize); v.arg_p(a2 as usize); v.arg_u(a3 as u64); v.arg_i(a4 as i64); v.call_end();  }
-unsafe extern "C" fn s_fn_801AA0E8() { let v = vv(); v.call_begin("fn_801AA0E8");  v.call_end();  }
-unsafe extern "C" fn s_lbMthp_8001F578() { let v = vv(); v.call_begin("lbMthp_8001F578");  v.call_end();  }
-unsafe extern "C" fn s_lbMthp_8001F5C4() -> i32 { let v = vv(); v.call_begin("lbMthp_8001F5C4");  v.call_end(); v.ret_int("lbMthp_8001F5C4", 32, 1) as _ }
-unsafe extern "C" fn s_lbMthp_8001F604() -> i32 { let v = vv(); v.call_begin("lbMthp_8001F604");  v.call_end(); v.ret_int("lbMthp_8001F604", 32, 1) as _ }
-unsafe extern "C" fn s_gm_GetButtonsTriggered(a0: u8) -> u64 { let v = vv(); v.call_begin("gm_GetButtonsTriggered"); v.arg_u(a0 as u64); v.call_end(); v.ret_int("gm_GetButtonsTriggered", 64, 0) as _ }
-unsafe extern "C" fn s_lbAudioAx_800236DC() -> i32 { let v = vv(); v.call_begin("lbAudioAx_800236DC");  v.call_end(); v.ret_int("lbAudioAx_800236DC", 32, 1) as _ }
-unsafe extern "C" fn s_gm_801A4B74() { let v = vv(); v.call_begin("gm_801A4B74");  v.call_end();  }
-unsafe extern "C" fn s_gm_801A4B60() { let v = vv(); v.call_begin("gm_801A4B60");  v.call_end();  }
-unsafe extern "C" fn s_gmMainLib_8015DB0C(a0: u8) { let v = vv(); v.call_begin("gmMainLib_8015DB0C"); v.arg_u(a0 as u64); v.call_end();  }
-unsafe extern "C" fn s_gm_SetPendingGameMode(a0: u8) { let v = vv(); v.call_begin("gm_SetPendingGameMode"); v.arg_u(a0 as u64); v.call_end();  }
-unsafe extern "C" fn s_gm_SetNewGameModePending() { let v = vv(); v.call_begin("gm_SetNewGameModePending");  v.call_end();  }
-unsafe extern "C" fn s_lbAudioAx_80024030(a0: i32) { let v = vv(); v.call_begin("lbAudioAx_80024030"); v.arg_i(a0 as i64); v.call_end();  }
+unsafe extern "C" fn s_GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut melee_types::HSD_GObj { let v = vv(); v.call_begin("GObj_Create"); v.arg_u(a0 as u64); v.arg_u(a1 as u64); v.arg_u(a2 as u64); v.call_end();  v.ret_ptr("GObj_Create") as _ }
+unsafe extern "C" fn s_gm_801A9DD0(a0: *mut melee_types::HSD_GObj, a1: u16, a2: u16, a3: i32, a4: i32) { let v = vv(); v.call_begin("gm_801A9DD0"); v.arg_p(a0 as usize); v.arg_u(a1 as u64); v.arg_u(a2 as u64); v.arg_i(a3 as i64); v.arg_i(a4 as i64); v.call_end();   }
+unsafe extern "C" fn s_HSD_GObjObject_80390A70(a0: *mut melee_types::HSD_GObj, a1: u8, a2: *mut core::ffi::c_void) { let v = vv(); v.call_begin("HSD_GObjObject_80390A70"); v.arg_p(a0 as usize); v.arg_u(a1 as u64); v.arg_p(a2 as usize); v.call_end();   }
+unsafe extern "C" fn s_GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32) { let v = vv(); v.call_begin("GObj_SetupGXLink"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.arg_u(a3 as u64); v.call_end();   }
+unsafe extern "C" fn s_lbMthp_8001F67C(a0: *mut melee_types::HSD_GObj, a1: i32) { let v = vv(); v.call_begin("lbMthp_8001F67C"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.call_end();   }
+unsafe extern "C" fn s_lbMthp_8001F624(a0: *mut melee_types::HSD_GObj, a1: i32, a2: i32) -> *mut melee_types::HSD_SObj { let v = vv(); v.call_begin("lbMthp_8001F624"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.arg_i(a2 as i64); v.call_end();  v.ret_ptr("lbMthp_8001F624") as _ }
+unsafe extern "C" fn s_lbAudioAx_80023F28(a0: i32) -> i32 { let v = vv(); v.call_begin("lbAudioAx_80023F28"); v.arg_i(a0 as i64); v.call_end();  v.ret_int("lbAudioAx_80023F28", 32, 1) as _ }
+unsafe extern "C" fn s_lbAudioAx_80024E50(a0: i32) { let v = vv(); v.call_begin("lbAudioAx_80024E50"); v.arg_i(a0 as i64); v.call_end();   }
+unsafe extern "C" fn s_lbMthp_8001F410(a0: *const i8, a1: *mut u32, a2: *mut core::ffi::c_void, a3: u32, a4: i32) { let v = vv(); v.call_begin("lbMthp_8001F410"); v.arg_s(a0 as *const u8); v.arg_p(a1 as usize); v.arg_p(a2 as usize); v.arg_u(a3 as u64); v.arg_i(a4 as i64); v.call_end();   }
+unsafe extern "C" fn s_fn_801AA0E8() { let v = vv(); v.call_begin("fn_801AA0E8");  v.call_end();   }
+unsafe extern "C" fn s_lbMthp_8001F578() { let v = vv(); v.call_begin("lbMthp_8001F578");  v.call_end();   }
+unsafe extern "C" fn s_lbMthp_8001F5C4() -> i32 { let v = vv(); v.call_begin("lbMthp_8001F5C4");  v.call_end();  v.ret_int("lbMthp_8001F5C4", 32, 1) as _ }
+unsafe extern "C" fn s_lbMthp_8001F604() -> i32 { let v = vv(); v.call_begin("lbMthp_8001F604");  v.call_end();  v.ret_int("lbMthp_8001F604", 32, 1) as _ }
+unsafe extern "C" fn s_gm_GetButtonsTriggered(a0: u8) -> u64 { let v = vv(); v.call_begin("gm_GetButtonsTriggered"); v.arg_u(a0 as u64); v.call_end();  v.ret_int("gm_GetButtonsTriggered", 64, 0) as _ }
+unsafe extern "C" fn s_lbAudioAx_800236DC() -> i32 { let v = vv(); v.call_begin("lbAudioAx_800236DC");  v.call_end();  v.ret_int("lbAudioAx_800236DC", 32, 1) as _ }
+unsafe extern "C" fn s_gm_801A4B74() { let v = vv(); v.call_begin("gm_801A4B74");  v.call_end();   }
+unsafe extern "C" fn s_gm_801A4B60() { let v = vv(); v.call_begin("gm_801A4B60");  v.call_end();   }
+unsafe extern "C" fn s_gmMainLib_8015DB0C(a0: u8) { let v = vv(); v.call_begin("gmMainLib_8015DB0C"); v.arg_u(a0 as u64); v.call_end();   }
+unsafe extern "C" fn s_gm_SetPendingGameMode(a0: u8) { let v = vv(); v.call_begin("gm_SetPendingGameMode"); v.arg_u(a0 as u64); v.call_end();   }
+unsafe extern "C" fn s_gm_SetNewGameModePending() { let v = vv(); v.call_begin("gm_SetNewGameModePending");  v.call_end();   }
+unsafe extern "C" fn s_lbAudioAx_80024030(a0: i32) { let v = vv(); v.call_begin("lbAudioAx_80024030"); v.arg_i(a0 as i64); v.call_end();   }
 pub fn glue() -> Glue {
     Glue {
         types: vec![
-            TypeInfo { name: "struct gmMainLib_8046B0F0_t", size: core::mem::size_of::<melee_types::gmMainLib_8046B0F0_t>(), align: core::mem::align_of::<melee_types::gmMainLib_8046B0F0_t>(), vis: vis_struct_gmMainLib_8046B0F0_t },
+            TypeInfo { name: "struct~gmMainLib_8046B0F0_t", size: core::mem::size_of::<melee_types::gmMainLib_8046B0F0_t>(), align: core::mem::align_of::<melee_types::gmMainLib_8046B0F0_t>(), vis: vis_struct_gmMainLib_8046B0F0_t },
             TypeInfo { name: "HSD_GObj", size: core::mem::size_of::<melee_types::HSD_GObj>(), align: core::mem::align_of::<melee_types::HSD_GObj>(), vis: vis_HSD_GObj },
             TypeInfo { name: "HSD_SObj", size: core::mem::size_of::<melee_types::HSD_SObj>(), align: core::mem::align_of::<melee_types::HSD_SObj>(), vis: vis_HSD_SObj },
             TypeInfo { name: "GXTexObj", size: core::mem::size_of::<melee_types::GXTexObj>(), align: core::mem::align_of::<melee_types::GXTexObj>(), vis: vis_GXTexObj },
             TypeInfo { name: "GXTlutObj", size: core::mem::size_of::<melee_types::GXTlutObj>(), align: core::mem::align_of::<melee_types::GXTlutObj>(), vis: vis_GXTlutObj },
         ],
         globals: vec![
+    Global { name: "gm_804D6858", p: unsafe { &raw mut melee_modes::tu::gmomake15::gm_804D6858 as *mut u8 }, size: unsafe { core::mem::size_of_val(&*(&raw const melee_modes::tu::gmomake15::gm_804D6858)) }, vis: Some(gv_gm_804D6858), fill: true },
     Global { name: "HSD_SObjLib_804D7960", p: unsafe { &raw mut melee_modes::tu::gmomake15::ext::HSD_SObjLib_804D7960 as *mut u8 }, size: unsafe { core::mem::size_of_val(&*(&raw const melee_modes::tu::gmomake15::ext::HSD_SObjLib_804D7960)) }, vis: Some(gv_HSD_SObjLib_804D7960), fill: true },
     Global { name: "gm_804D6724", p: unsafe { &raw mut melee_modes::tu::gmomake15::ext::gm_804D6724 as *mut u8 }, size: unsafe { core::mem::size_of_val(&*(&raw const melee_modes::tu::gmomake15::ext::gm_804D6724)) }, vis: Some(gv_gm_804D6724), fill: true },
     Global { name: "gmMainLib_8046B0F0", p: unsafe { &raw mut melee_modes::tu::gmomake15::ext::gmMainLib_8046B0F0 as *mut u8 }, size: unsafe { core::mem::size_of_val(&*(&raw const melee_modes::tu::gmomake15::ext::gmMainLib_8046B0F0)) }, vis: Some(gv_gmMainLib_8046B0F0), fill: true },
         ],
         fns: vec![
-            ("gm_Scene_Omake15_OnEnter", tu::gm_Scene_Omake15_OnEnter as usize),
-            ("gm_Scene_Omake15_OnFrame", tu::gm_Scene_Omake15_OnFrame as usize),
-            ("GObj_Create", tu::ext::GObj_Create as usize),
-            ("gm_801A9DD0", tu::ext::gm_801A9DD0 as usize),
-            ("HSD_GObjObject_80390A70", tu::ext::HSD_GObjObject_80390A70 as usize),
-            ("GObj_SetupGXLink", tu::ext::GObj_SetupGXLink as usize),
-            ("lbMthp_8001F67C", tu::ext::lbMthp_8001F67C as usize),
-            ("lbMthp_8001F624", tu::ext::lbMthp_8001F624 as usize),
-            ("lbAudioAx_80023F28", tu::ext::lbAudioAx_80023F28 as usize),
-            ("lbAudioAx_80024E50", tu::ext::lbAudioAx_80024E50 as usize),
-            ("lbMthp_8001F410", tu::ext::lbMthp_8001F410 as usize),
-            ("fn_801AA0E8", tu::ext::fn_801AA0E8 as usize),
-            ("lbMthp_8001F578", tu::ext::lbMthp_8001F578 as usize),
-            ("lbMthp_8001F5C4", tu::ext::lbMthp_8001F5C4 as usize),
-            ("lbMthp_8001F604", tu::ext::lbMthp_8001F604 as usize),
-            ("gm_GetButtonsTriggered", tu::ext::gm_GetButtonsTriggered as usize),
-            ("lbAudioAx_800236DC", tu::ext::lbAudioAx_800236DC as usize),
-            ("gm_801A4B74", tu::ext::gm_801A4B74 as usize),
-            ("gm_801A4B60", tu::ext::gm_801A4B60 as usize),
-            ("gmMainLib_8015DB0C", tu::ext::gmMainLib_8015DB0C as usize),
-            ("gm_SetPendingGameMode", tu::ext::gm_SetPendingGameMode as usize),
-            ("gm_SetNewGameModePending", tu::ext::gm_SetNewGameModePending as usize),
-            ("lbAudioAx_80024030", tu::ext::lbAudioAx_80024030 as usize),
+            ("gm_Scene_Omake15_OnEnter", tu::gm_Scene_Omake15_OnEnter as *const () as usize),
+            ("gm_Scene_Omake15_OnFrame", tu::gm_Scene_Omake15_OnFrame as *const () as usize),
+            ("GObj_Create", tu::ext::GObj_Create as *const () as usize),
+            ("gm_801A9DD0", tu::ext::gm_801A9DD0 as *const () as usize),
+            ("HSD_GObjObject_80390A70", tu::ext::HSD_GObjObject_80390A70 as *const () as usize),
+            ("GObj_SetupGXLink", tu::ext::GObj_SetupGXLink as *const () as usize),
+            ("lbMthp_8001F67C", tu::ext::lbMthp_8001F67C as *const () as usize),
+            ("lbMthp_8001F624", tu::ext::lbMthp_8001F624 as *const () as usize),
+            ("lbAudioAx_80023F28", tu::ext::lbAudioAx_80023F28 as *const () as usize),
+            ("lbAudioAx_80024E50", tu::ext::lbAudioAx_80024E50 as *const () as usize),
+            ("lbMthp_8001F410", tu::ext::lbMthp_8001F410 as *const () as usize),
+            ("fn_801AA0E8", tu::ext::fn_801AA0E8 as *const () as usize),
+            ("lbMthp_8001F578", tu::ext::lbMthp_8001F578 as *const () as usize),
+            ("lbMthp_8001F5C4", tu::ext::lbMthp_8001F5C4 as *const () as usize),
+            ("lbMthp_8001F604", tu::ext::lbMthp_8001F604 as *const () as usize),
+            ("gm_GetButtonsTriggered", tu::ext::gm_GetButtonsTriggered as *const () as usize),
+            ("lbAudioAx_800236DC", tu::ext::lbAudioAx_800236DC as *const () as usize),
+            ("gm_801A4B74", tu::ext::gm_801A4B74 as *const () as usize),
+            ("gm_801A4B60", tu::ext::gm_801A4B60 as *const () as usize),
+            ("gmMainLib_8015DB0C", tu::ext::gmMainLib_8015DB0C as *const () as usize),
+            ("gm_SetPendingGameMode", tu::ext::gm_SetPendingGameMode as *const () as usize),
+            ("gm_SetNewGameModePending", tu::ext::gm_SetNewGameModePending as *const () as usize),
+            ("lbAudioAx_80024030", tu::ext::lbAudioAx_80024030 as *const () as usize),
         ],
+        size_ok: &[],
         install: || unsafe {
         tu::ext::H_GObj_Create = Some(s_GObj_Create);
         tu::ext::H_gm_801A9DD0 = Some(s_gm_801A9DD0);

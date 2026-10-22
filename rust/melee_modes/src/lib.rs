@@ -11,6 +11,9 @@
 pub use melee_core;
 
 pub mod gm;
+pub mod oracle;
+/// Whole-TU ports (one file per game TU), verified by the state oracle (`oracle`, gen/tu).
+pub mod tu;
 pub mod hud;
 pub mod lb;
 pub mod mn;

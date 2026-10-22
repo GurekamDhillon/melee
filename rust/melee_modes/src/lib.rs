@@ -11,6 +11,8 @@
 pub use melee_core;
 
 pub mod gm;
+/// Per-TU ports (src/melee/gm/gmtit*.c, gmtou*.c, gmtoycollection.c).
+pub mod tu;
 pub mod hud;
 pub mod lb;
 pub mod mn;

@@ -800,3 +800,4 @@
 #include <melee/vi/vi1201v2.h>
 #include <melee/vi/vi1202.h>
 #include <melee/lb/lbanim.h>
+#include <melee/gm/gmtoulib.static.h>

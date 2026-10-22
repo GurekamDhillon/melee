@@ -90433,6 +90433,180 @@ impl GcLayout for FigaTree {
 }
 const _: () = assert!(core::mem::size_of::<FigaTree>() == 32);
 
+/// C `BracketSrcEntry` (src/melee/gm/gmtoulib.static.h:7); GameCube size 0x28, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct BracketSrcEntry {
+    pub x0: u8,
+    pub x1: u8,
+    pub x2: u8,
+    pub x3: u8,
+    pub x4: u8,
+    pub x5: u8,
+    pub x6: u8,
+    pub pad7: u8,
+    pub x8: i32,
+    pub xC: i32,
+    pub x10: i32,
+    pub x14: i32,
+    pub x18: u8,
+    pub x19: u8,
+    pub x1A: u8,
+    pub x1B: u8,
+    pub x1C: u8,
+    pub x1D: u8,
+    pub x1E: u8,
+    pub x1F: u8,
+    pub x20: u8,
+    pub x21: u8,
+    pub x22: u8,
+    pub x23: u8,
+    pub x24: u8,
+    pub pad25: [u8; 3],
+}
+impl BracketSrcEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for BracketSrcEntry {
+    const GC_BYTES: u32 = 0x28;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x0 = <u8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.x1 = <u8 as GcDecode>::gc_decode(d, at + 0x1);
+        v.x2 = <u8 as GcDecode>::gc_decode(d, at + 0x2);
+        v.x3 = <u8 as GcDecode>::gc_decode(d, at + 0x3);
+        v.x4 = <u8 as GcDecode>::gc_decode(d, at + 0x4);
+        v.x5 = <u8 as GcDecode>::gc_decode(d, at + 0x5);
+        v.x6 = <u8 as GcDecode>::gc_decode(d, at + 0x6);
+        v.pad7 = <u8 as GcDecode>::gc_decode(d, at + 0x7);
+        v.x8 = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.xC = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.x10 = <i32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.x14 = <i32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.x18 = <u8 as GcDecode>::gc_decode(d, at + 0x18);
+        v.x19 = <u8 as GcDecode>::gc_decode(d, at + 0x19);
+        v.x1A = <u8 as GcDecode>::gc_decode(d, at + 0x1A);
+        v.x1B = <u8 as GcDecode>::gc_decode(d, at + 0x1B);
+        v.x1C = <u8 as GcDecode>::gc_decode(d, at + 0x1C);
+        v.x1D = <u8 as GcDecode>::gc_decode(d, at + 0x1D);
+        v.x1E = <u8 as GcDecode>::gc_decode(d, at + 0x1E);
+        v.x1F = <u8 as GcDecode>::gc_decode(d, at + 0x1F);
+        v.x20 = <u8 as GcDecode>::gc_decode(d, at + 0x20);
+        v.x21 = <u8 as GcDecode>::gc_decode(d, at + 0x21);
+        v.x22 = <u8 as GcDecode>::gc_decode(d, at + 0x22);
+        v.x23 = <u8 as GcDecode>::gc_decode(d, at + 0x23);
+        v.x24 = <u8 as GcDecode>::gc_decode(d, at + 0x24);
+        v.pad25 = <[u8; 3] as GcDecode>::gc_decode(d, at + 0x25);
+        v
+    }
+}
+impl GcPointee for BracketSrcEntry { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<BracketSrcEntry>(t) } }
+impl GcLayout for BracketSrcEntry {
+    const GC_NAME: &'static str = "BracketSrcEntry";
+    const GC_SIZE: u32 = 0x28;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 1, "u8"),
+        GcField::new("x1", 0x1, 1, "u8"),
+        GcField::new("x2", 0x2, 1, "u8"),
+        GcField::new("x3", 0x3, 1, "u8"),
+        GcField::new("x4", 0x4, 1, "u8"),
+        GcField::new("x5", 0x5, 1, "u8"),
+        GcField::new("x6", 0x6, 1, "u8"),
+        GcField::new("pad7", 0x7, 1, "u8"),
+        GcField::new("x8", 0x8, 4, "s32"),
+        GcField::new("xC", 0xC, 4, "s32"),
+        GcField::new("x10", 0x10, 4, "s32"),
+        GcField::new("x14", 0x14, 4, "s32"),
+        GcField::new("x18", 0x18, 1, "u8"),
+        GcField::new("x19", 0x19, 1, "u8"),
+        GcField::new("x1A", 0x1A, 1, "u8"),
+        GcField::new("x1B", 0x1B, 1, "u8"),
+        GcField::new("x1C", 0x1C, 1, "u8"),
+        GcField::new("x1D", 0x1D, 1, "u8"),
+        GcField::new("x1E", 0x1E, 1, "u8"),
+        GcField::new("x1F", 0x1F, 1, "u8"),
+        GcField::new("x20", 0x20, 1, "u8"),
+        GcField::new("x21", 0x21, 1, "u8"),
+        GcField::new("x22", 0x22, 1, "u8"),
+        GcField::new("x23", 0x23, 1, "u8"),
+        GcField::new("x24", 0x24, 1, "u8"),
+        GcField::new("pad25", 0x25, 3, "u8[3]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<BracketSrcEntry>() == 40);
+
+/// C `lbl_803D9DAC_t` (src/melee/gm/gmtoulib.static.h:56); GameCube size 0x24, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct lbl_803D9DAC_t {
+    pub current: Vec,
+    pub target: Vec,
+    pub step: Vec,
+}
+impl lbl_803D9DAC_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for lbl_803D9DAC_t {
+    const GC_BYTES: u32 = 0x24;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.current = <Vec as GcDecode>::gc_decode(d, at + 0x0);
+        v.target = <Vec as GcDecode>::gc_decode(d, at + 0xC);
+        v.step = <Vec as GcDecode>::gc_decode(d, at + 0x18);
+        v
+    }
+}
+impl GcPointee for lbl_803D9DAC_t { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<lbl_803D9DAC_t>(t) } }
+impl GcLayout for lbl_803D9DAC_t {
+    const GC_NAME: &'static str = "lbl_803D9DAC_t";
+    const GC_SIZE: u32 = 0x24;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("current", 0x0, 12, "Vec3"),
+        GcField::new("target", 0xC, 12, "Vec3"),
+        GcField::new("step", 0x18, 12, "Vec3"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<lbl_803D9DAC_t>() == 36);
+
+/// C `lbl_803D9DD0_t` (src/melee/gm/gmtoulib.static.h:66); GameCube size 0x24, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct lbl_803D9DD0_t {
+    pub cobj: *mut HSD_CObj,
+    pub pad_B4: [i8; 28],
+    pub xD0: f32,
+}
+impl lbl_803D9DD0_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for lbl_803D9DD0_t {
+    const GC_BYTES: u32 = 0x24;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.cobj = <*mut HSD_CObj as GcDecode>::gc_decode(d, at + 0x0);
+        v.pad_B4 = <[i8; 28] as GcDecode>::gc_decode(d, at + 0x4);
+        v.xD0 = <f32 as GcDecode>::gc_decode(d, at + 0x20);
+        v
+    }
+}
+impl GcPointee for lbl_803D9DD0_t { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<lbl_803D9DD0_t>(t) } }
+impl GcLayout for lbl_803D9DD0_t {
+    const GC_NAME: &'static str = "lbl_803D9DD0_t";
+    const GC_SIZE: u32 = 0x24;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("cobj", 0x0, 4, "HSD_CObj *"),
+        GcField::new("pad_B4", 0x4, 28, "char[28]"),
+        GcField::new("xD0", 0x20, 4, "float"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<lbl_803D9DD0_t>() == 40);
+
 /// Every generated GameCube record layout, for the DAT loader, serialisers and the m-ex map.
 pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<__file_modes as GcLayout>::GC_NAME, <__file_modes as GcLayout>::GC_SIZE, <__file_modes as GcLayout>::GC_ALIGN, <__file_modes as GcLayout>::GC_FIELDS),
@@ -92055,6 +92229,9 @@ pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<itSeakNeedleThrownAttributes as GcLayout>::GC_NAME, <itSeakNeedleThrownAttributes as GcLayout>::GC_SIZE, <itSeakNeedleThrownAttributes as GcLayout>::GC_ALIGN, <itSeakNeedleThrownAttributes as GcLayout>::GC_FIELDS),
     (<FigaTrack as GcLayout>::GC_NAME, <FigaTrack as GcLayout>::GC_SIZE, <FigaTrack as GcLayout>::GC_ALIGN, <FigaTrack as GcLayout>::GC_FIELDS),
     (<FigaTree as GcLayout>::GC_NAME, <FigaTree as GcLayout>::GC_SIZE, <FigaTree as GcLayout>::GC_ALIGN, <FigaTree as GcLayout>::GC_FIELDS),
+    (<BracketSrcEntry as GcLayout>::GC_NAME, <BracketSrcEntry as GcLayout>::GC_SIZE, <BracketSrcEntry as GcLayout>::GC_ALIGN, <BracketSrcEntry as GcLayout>::GC_FIELDS),
+    (<lbl_803D9DAC_t as GcLayout>::GC_NAME, <lbl_803D9DAC_t as GcLayout>::GC_SIZE, <lbl_803D9DAC_t as GcLayout>::GC_ALIGN, <lbl_803D9DAC_t as GcLayout>::GC_FIELDS),
+    (<lbl_803D9DD0_t as GcLayout>::GC_NAME, <lbl_803D9DD0_t as GcLayout>::GC_SIZE, <lbl_803D9DD0_t as GcLayout>::GC_ALIGN, <lbl_803D9DD0_t as GcLayout>::GC_FIELDS),
 ];
 
 /// Read `w` bits of a GameCube big-endian bitfield byte run, `shift` bits up from its LSB.

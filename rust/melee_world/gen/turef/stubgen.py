@@ -198,7 +198,7 @@ def gen(stem, cfg, ana):
         names.append(n)
         # ---- C
         sig = ", ".join(f"{t.spelling} {a}" for t, a in args) or "void"
-        body = [f'printf("{n}");'] + [trace_c(t, a) for t, a in args] + ['printf("\\n");']
+        body = [f'dbgflush(); printf("{n}");'] + [trace_c(t, a) for t, a in args] + ['printf("\\n");']
         if n in effect:
             body.append(effect[n][0])
         re_ = ret_expr(rt, ret.get(n), "c")

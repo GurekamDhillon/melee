@@ -32,6 +32,26 @@ static Ground* mkground(void)
     GPS[NGP++] = g;
     return g;
 }
+/* zero-and-restore of arbitrary bitfield bytes (the TU driver prints the fields by value first) */
+static struct { unsigned char* p; int n; unsigned char sv[8]; } CBY[64];
+static int NCBY;
+static void canon_add(void* p, int n)
+{
+    int k;
+    CBY[NCBY].p = (unsigned char*) p;
+    CBY[NCBY].n = n;
+    for (k = 0; k < n; k++) {
+        CBY[NCBY].sv[k] = CBY[NCBY].p[k];
+        CBY[NCBY].p[k] = 0;
+    }
+    NCBY++;
+}
+static void canon_restore(void)
+{
+    int i, k;
+    for (i = 0; i < NCBY; i++) for (k = 0; k < CBY[i].n; k++) CBY[i].p[k] = CBY[i].sv[k];
+    NCBY = 0;
+}
 static unsigned char GSV[16][2];
 static void gnd_canon_begin(void)
 {

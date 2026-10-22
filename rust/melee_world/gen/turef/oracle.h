@@ -14,6 +14,11 @@
 #include <string.h>
 extern char* getenv(const char*);
 extern void exit(int);
+extern int _flushall(void);
+static void dbgflush(void)
+{
+    if (getenv("ORACLE_UNBUF")) _flushall();
+}
 
 typedef unsigned long long ou64;
 typedef long long oi64;
@@ -87,6 +92,7 @@ static void fnreg(const char* name, const void* f)
 /* " a<off>" / " name+off" / " f:name" / " null" / " x" */
 static void trp(const void* p)
 {
+    dbgflush();
     ou64 v = (ou64) (unsigned long long) p;
     int i;
     if (v == 0) { printf(" null"); return; }
@@ -194,7 +200,7 @@ static void state_end(void)
 }
 #define DUMP(tag, obj) dump(tag, &(obj), sizeof(obj))
 #define SIZE(T) printf("sizeof " #T " %llu\n", (ou64) sizeof(T))
-#define CASE(i) printf("case %d\n", (int) (i))
+#define CASE(i) (printf("case %d\n", (int) (i)), dbgflush())
 
 /* fill n bytes with the shared byte stream */
 static void rfill(void* p, ou64 n);

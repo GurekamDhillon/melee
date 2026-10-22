@@ -30,6 +30,24 @@ pub unsafe fn mkground() -> *mut Ground {
     GPS.push(g);
     g
 }
+static mut CBY: std::vec::Vec<(*mut u8, [u8; 8], usize)> = std::vec::Vec::new();
+/// Zero `n` bitfield bytes (up to 8) for hashing; `canon_restore` puts them back.
+pub unsafe fn canon_add(p: *mut u8, n: usize) {
+    let mut sv = [0u8; 8];
+    for k in 0..n {
+        sv[k] = *p.add(k);
+        *p.add(k) = 0;
+    }
+    CBY.push((p, sv, n));
+}
+pub unsafe fn canon_restore() {
+    for &(p, sv, n) in CBY.iter() {
+        for k in 0..n {
+            *p.add(k) = sv[k];
+        }
+    }
+    CBY.clear();
+}
 static mut GSV: std::vec::Vec<[u8; 2]> = std::vec::Vec::new();
 pub unsafe fn gnd_canon_begin() {
     GSV.clear();

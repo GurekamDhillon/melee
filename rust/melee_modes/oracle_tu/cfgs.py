@@ -280,3 +280,81 @@ def _gm_1798():
 
 
 CFGS["gm_1798"] = _gm_1798()
+
+
+def _gm_17c0():
+    """1P-mode controller TU. Wiring: Player_GetEntity -> a gobj whose user_data is a Fighter (boss hook);
+    the opponent-id table lbl_803D79F0 holds the game's ids (ends with ChKind_None)."""
+    S = dict
+    tab = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21, 22, 24, 25, 33]
+    fixups = [
+        ("tuo_mo_gobE.user_data = &tuo_mo_fgt;", "MO_gobE.user_data = core::ptr::addr_of_mut!(MO_fgt) as *mut core::ffi::c_void;"),
+        ("{ static const unsigned char t[24] = {" + ", ".join(map(str, tab)) + "}; int q; for (q = 0; q < 24; q++) lbl_803D79F0[q] = t[q]; }",
+         "{ let t: [u8; 24] = [" + ", ".join(map(str, tab)) + "]; m::ext::lbl_803D79F0 = t; }"),
+        ("DbLevel = (DbLKind) tuo_draw_range(&tuo_st, 0, 4);", "m::ext::DbLevel = rt::draw_range(&mut rt::ST, 0, 4) as _;"),
+    ]
+    u1 = "buf"
+    funcs = {
+        "BossHook_Kind": S(args=["26..29"]), "BossHook_AllSleeping": S(cases=200), "BossHook_DriveDeaths": S(cases=300),
+        "BossHook_Poll": S(cases=300), "BossHook_Hold": S(args=["0..9"]), "BossHook_Release": S(),
+        "fn_8017C0C8": S(cases=100),
+        "fn_8017C1A4": S(args=["obj:gobArg"], cases=800),
+        "fn_8017C71C": S(cases=100), "fn_8017C7A0": S(), "fn_8017C7EC": S(force={"gm_GetCurrentGameMode": "3|4|5"}),
+        "gm_8017C838": S(cases=300),
+        "gm_8017C984": S(args=["obj:gmClassic_80470708"]),
+        "gm_8017C9A8": S(args=["buf", "buf", "0..2"]),
+        "gm_8017CA38": S(args=["buf", "buf", "buf", "0..30"], cases=300),
+        "gm_8017CBAC": S(args=["buf", "buf", "20..24"], cases=300),
+        "gm_8017CD94": S(args=["buf", "0..30", "0..30", "0..3"], cases=100),
+        "gm_8017CE34_CountEnemies": S(args=["list:3:4|13|27|28|33|1|2|26"]),
+        "gm_8017CE34_SetupColors": S(args=["buf", "0..30", "list:3:4|13|27|28|33|1|2|26", "buf:16"]),
+        "gm_8017CE34_GetCpuLevel": S(args=["buf"]),
+        "gm_8017CE34": S(args=["buf", "buf", "list:3:4|13|27|28|33|1|2|26|33", "0..3", "0..3", "0..3", "0|0|600|3600",
+                               "0x40..0x4F", "0..30", "0..3"], cases=1200),
+        "gm_8017D7AC": S(args=["buf", "buf", "0..30"], cases=400),
+        "fn_8017D9C0": S(args=["list:4:0|1|2|3|5|33", "list:3:0|1|2|4|5|33"], cases=200),
+        "pick_random_ckind": S(test=False),
+        "gm_8017DB58": S(args=["buf:3"]),
+        "gm_8017DB6C": S(args=["buf:3", "0..2"]), "gm_8017DB78": S(args=["buf:3", "0..2"]),
+        "gm_8017DB88": S(args=["buf", "0..255", "0..30", "0..30", "list:3:0|1|2|4|5|33", "0..30"], cases=300),
+        "fn_8017DD7C": S(args=["buf:6", "buf:3", "0..3"], cases=200),
+        "fn_8017DE54": S(args=["0..255", "list:3:4|13|27|28|33|1|2|26"], cases=200),
+        "fn_8017DEC8": S(args=["0..3"]), "fn_8017DF28": S(), "fn_8017DF90": S(), "gm_8017DFF4": S(args=["0..3"]),
+        "gm_8017E068": S(), "fn_8017E0E4": S(), "fn_8017E160": S(cases=200),
+        "fn_8017E21C": S(), "gm_8017E280": S(args=["0..5", "0..300"], cases=300), "fn_8017E318": S(), "fn_8017E3C8": S(),
+    }
+    return dict(
+        src="src/melee/gm/gm_17C0.c", module="gm_17c0", cases=100, cstr_nocls=True,
+        local_types=["lbl_804706D8_t", "lbl_804706C0_t", "RegClearCharEntry", "boss_hook_t"],
+        anon_vars={"boss_hook": "boss_hook_t"},
+        extsize={"lbl_803D79F0": 24},
+        extra_objs={"fgt": "Fighter", "gobArg": "HSD_GObj"},
+        mockobj={"Player_GetEntity": "gobE", "GObj_Create": "gobC"},
+        fixups=fixups,
+        # the mocks must not scribble over the wired gobjs they are handed
+        noout={"ftCo_800C8C84": True, "ft_80087C58": True, "ft_80087C64": True, "HSD_GObj_SetupProc": True},
+        fnptr_nonnull=["Unk1PData.x48", "Unk1PData.x64", "Unk1PData.x68"],
+        funcs=funcs,
+        mock={"gm_GetCurrentGameMode": "3|4|5|1", "Script_OnePScripted": "0|1", "Script_OnePComplete": "0|1",
+              "Script_BossHookEnabled": "0|1", "Player_GetRemainingHP": "-1|0|1|50|100|150|200|300",
+              "ftBossLib_8015C74C": "10|20|30", "ftBossLib_8015C7EC": "5|10", "ftBossLib_8015C88C": "5|10|15",
+              "ftBossLib_8015C9CC": "10|20", "ftBossLib_IsMasterHandEntry": "0|1", "ftBossLib_8015C2A8": "0|1",
+              "fn_8017EDDC": "0|1", "ftBossLib_8015C530": "100|300", "gm_80173224": "0|5|33|33", "gm_80173754": "0|1",
+              "gm_80164430": "0|1", "gmMainLib_8015D1AC": "0|1|2|3", "gmMainLib_8015D2D4": "0|1|2|3",
+              "gmMainLib_8015D3FC": "0|1|2|3", "gm_CKindToSelKind": "0..24", "gm_IsCKindUnlocked": "0|1",
+              "gm_GetNumCostumesForCKind": "0..4", "HSD_Randi": "0..22", "Ground_801C1DAC": "0|1",
+              "fn_8016B510": "0|1", "fn_8016B4BC": "0|1", "gm_GetCurrentSceneIndex": "0..60"},
+        fieldrange={"Fighter.kind": "26..29", "Fighter.motion_id": "9..13",
+                    "lbl_804706C0_t.x0": "0..9", "lbl_804706C0_t.x4": "0..3", "lbl_804706C0_t.x8": "0..40",
+                    "lbl_804706C0_t.xC": "0..300", "lbl_804706C0_t.x10": "0..5", "lbl_804706C0_t.x14": "0..5",
+                    "boss_hook_t.sent_mask": "0..63", "boss_hook_t.pending": "0..1", "boss_hook_t.held": "0..1",
+                    "boss_hook_t.restored": "0..1", "boss_hook_t.limit": "0..5", "boss_hook_t.elapsed": "0..5",
+                    "boss_hook_t.sleep_wait": "295..302", "boss_hook_t.driven_mask": "0..7",
+                    "lbl_804706D8_t.x0": "-1..4", "StartMeleeRules.stkind": "0x3B..0x4F",
+                    "gmPlayerData.ckind": "2..20", "gmPlayerData.color": "0..2", "gmPlayerData.cpu_level": "0..4",
+                    "Unk1PData.x9": "0..3", "Unk1PData_x24.ckind": "30..34", "DebugGameOverData.xC": "0..1",
+                    "MatchEnd.outcome": "0..9", "MatchPlayerData.ftkind": "5..8", "MatchPlayerData.stocks": "0..3",
+                    "MatchEnd.frame_count": "0..7200"})
+
+
+CFGS["gm_17c0"] = _gm_17c0()

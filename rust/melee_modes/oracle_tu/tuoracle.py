@@ -267,6 +267,11 @@ class Gen2:
                 else:
                     rng = self.fieldrange(d, f)
                     fk = classify(f.type)
+                    if fk[0] == "fnptr" and f"{self.n.rec_name.get(loc(d)) or d.spelling}.{f.spelling}" in self.cfg.get("fnptr_nonnull", ()):
+                        cbi = self.cb(fk[1])
+                        cl.append(f"{{ tuo_u64 d{dep} = tuo_next(&{stream}); (void) d{dep}; {fc} = (__typeof__({fc})) tuo_cb{cbi}; }}")
+                        rl.append(f"{{ let _d = rt::next(&mut {rstream}); {fr} = Some(cb{cbi}); }}")
+                        continue
                     if rng and fk[0] in ("int", "bool"):
                         lo, hi = map(lambda x: int(x, 0), rng.split(".."))
                         cl.append(f"{fc} = (__typeof__({fc})) tuo_draw_range(&{stream}, {lo}, {hi});")
@@ -520,6 +525,12 @@ class TuGen:
             self.objs.append(dict(name=f"mo_{alias}", t=pt, c=f"tuo_mo_{alias}", r=f"(*core::ptr::addr_of_mut!(MO_{alias}))",
                                   r_ptr=f"core::ptr::addr_of_mut!(MO_{alias})", fill=True, own=False, mock=True, pt=pt))
 
+    def forced_names(self):
+        out = set()
+        for fc in self.fcfg.values():
+            out |= set(fc.get("force", {}))
+        return sorted(out)
+
     def find_type(self, name):
         for c in self.tu.cursor.get_children():
             if c.kind == K.TYPEDEF_DECL and c.spelling == name:
@@ -613,6 +624,8 @@ class TuGen:
         rng = self.cfg.get("mock", {}).get(n)
         if rk[0] == "void":
             return lines
+        if rk[0] in ("int", "bool") and n in self.forced_names():
+            lines.append(f"    if (tuo_frc_{n} >= 0) return ({fn.result_type.spelling}) tuo_frc_{n};")
         if rk[0] in ("int", "bool"):
             if rng and "|" in rng:
                 vals = rng.split("|")
@@ -673,6 +686,8 @@ class TuGen:
         if rk[0] == "void":
             lines.append("    0")
         elif rk[0] in ("int", "bool"):
+            if n in self.forced_names():
+                lines.append(f"    if FRC_{n} >= 0 {{ return FRC_{n} as u64; }}")
             if rng and "|" in rng:
                 vals = rng.split("|")
                 lines.append(f"    [{', '.join(v + 'i64' for v in vals)}][(rt::next(&mut rt::MST) % {len(vals)}) as usize] as u64")
@@ -974,7 +989,7 @@ class TuGen:
         ini.append("@@CBS@@")
         ini.append("}")
         # mocks
-        mocks = []
+        mocks = [f"static tuo_i64 tuo_frc_{nm} = -1;" for nm in self.forced_names()]
         for s in self.ext:
             mocks += self.mock_c(s)
         # runners
@@ -1035,7 +1050,8 @@ class TuGen:
             return ([f"double {name} = tuo_draw_f64(&tuo_st);"], name, [])
         if k[0] == "fnptr":
             cb = self.g2.cb(k[1])
-            return ([f"{t.spelling} {name} = (tuo_draw_int(&tuo_st) & 1) ? (({t.spelling}) tuo_cb{cb}) : 0;"], name, [])
+            decl = t.spelling.replace("(*)", f"(*{name})") if "(*)" in t.spelling else f"{t.spelling} {name}"
+            return ([f"{decl} = (tuo_draw_int(&tuo_st) & 1) ? (({t.spelling}) tuo_cb{cb}) : 0;"], name, [])
         if k[0] == "ptr":
             pt = k[1]
             if s == "null":
@@ -1051,9 +1067,13 @@ class TuGen:
                          f"{{ int j; for (j = 0; j < 15; j++) tuo_ab_{{F}}_{i}[j] = (char)('a' + tuo_draw_range(&tuo_st, 0, 25)); tuo_ab_{{F}}_{i}[15] = 0; }}",
                          f"{t.spelling} {name} = ({t.spelling}) tuo_ab_{{F}}_{i};"], name, [])
             cnt = 1
+            lst = None
             if s and s.startswith("buf"):
                 m = re.fullmatch(r"buf(?::(\d+))?", s)
                 cnt = int(m.group(1)) if m and m.group(1) else 1
+            if s and s.startswith("list:"):
+                _, cn, vs = s.split(":")
+                cnt, lst = int(cn), vs.split("|")
             ptc = pt.get_canonical()
             if ptc.kind == T.VOID:
                 return ([f"static unsigned char tuo_ab_{{F}}_{i}[64];",
@@ -1063,6 +1083,8 @@ class TuGen:
                         [f"tuo_h = TUO_FNV0; tuo_h_bytes(tuo_ab_{{F}}_{i}, 64); tuo_dyn(tuo_h);"])
             pk = classify(pt)
             cl, _ = self.g2.fill(pt, f"tuo_ab_{{F}}_{i}[e]", "", 2)
+            if lst:
+                cl = [f"tuo_ab_{{F}}_{i}[e] = (__typeof__(tuo_ab_{{F}}_{i}[e])) ((const tuo_i64[]){{{', '.join(lst)}}})[tuo_next(&tuo_st) % {len(lst)}];"]
             hl, _ = self.g2.hash(pt, f"tuo_ab_{{F}}_{i}[e]", "", 2)
             decl = [f"static {pt.get_canonical().spelling if pt.get_canonical().kind != T.RECORD else pt.spelling.replace('const ', '')} tuo_ab_{{F}}_{i}[{cnt}];" if False else
                     f"static {self.base_spell(pt)} tuo_ab_{{F}}_{i}[{cnt}];",
@@ -1083,6 +1105,12 @@ class TuGen:
         L = [f"static void tuo_run_{n}(tuo_u64 seed, tuo_u64* out) {{"]
         L += ["    tuo_st = seed; tuo_mst = seed ^ 0x5DEECE66DULL; tuo_trace = TUO_FNV0; tuo_nreg = tuo_nstatic; tuo_ndyn = 0;",
               "    tuo_fill_all();"]
+        for nm, v in sorted(self.fcfg.get(n, {}).get("force", {}).items()):
+            if "|" in str(v):
+                vs = str(v).split("|")
+                L.append(f"    tuo_frc_{nm} = ((const tuo_i64[]){{{', '.join(vs)}}})[tuo_next(&tuo_st) % {len(vs)}];")
+            else:
+                L.append(f"    tuo_frc_{nm} = {v};")
         call_args, posts = [], []
         for i, (a, s) in enumerate(self.arg_specs(fn)):
             decl, expr, post = self.arg_decl_c(i, a, s)
@@ -1107,6 +1135,8 @@ class TuGen:
             L.append(f"    out[0] = tuo_ptr_class((const void*){call});")
         else:
             raise ValueError(f"ret {fn.result_type.spelling}")
+        for nm in sorted(self.fcfg.get(n, {}).get("force", {})):
+            L.append(f"    tuo_frc_{nm} = -1;")
         L.append("    out[1] = tuo_trace;")
         L.append("    tuo_hash_objs();")
         L.append("    { tuo_u64 tot = tuo_h; int k;")
@@ -1132,6 +1162,8 @@ class TuGen:
         L.append("use melee_modes::tu::ext_hook::EXT_HOOK;")
         L.append("use melee_types as Q;")
         L.append("use core::ffi::c_void;")
+        L.append("#[repr(C, align(16))]")
+        L.append("struct A16([u8; 64]);")
         L.append("")
         # mock object statics
         for o in self.objs:
@@ -1152,15 +1184,17 @@ class TuGen:
                     if is_cstr_ptr(pt) or s == "str":
                         argbufs.append(f"static mut AB_{n}_{i}: [u8; 16] = [0; 16];")
                     elif pt.get_canonical().kind == T.VOID:
-                        argbufs.append(f"static mut AB_{n}_{i}: [u8; 64] = [0; 64];")
+                        argbufs.append(f"static mut AB_{n}_{i}: A16 = A16([0; 64]);")
                     else:
                         cnt = 1
-                        if s and s.startswith("buf:"):
+                        if s and (s.startswith("buf:") or s.startswith("list:")):
                             cnt = int(s.split(":")[1])
                         argbufs.append(f"static mut AB_{n}_{i}: [{self.mt(self.g2.rty(pt))}; {cnt}] = unsafe {{ core::mem::zeroed() }};")
         L += argbufs
         L.append("")
         # mocks
+        for nm in self.forced_names():
+            L.append(f"static mut FRC_{nm}: i64 = -1;")
         for s in self.ext:
             L += self.mock_rust(s)
         L.append("")
@@ -1273,7 +1307,7 @@ class TuGen:
             return ([f"let {name} = rt::draw_f64(&mut rt::ST);"], name, [])
         if k[0] == "fnptr":
             cb = self.g2.cb(k[1])
-            return ([f"let {name} = if rt::draw_int(&mut rt::ST) & 1 != 0 {{ Some(cb{cb}) }} else {{ None }};"], name, [])
+            return ([f"let {name} = if rt::draw_int(&mut rt::ST) & 1 != 0 {{ Some(cb{cb} as _) }} else {{ None }};"], name, [])
         if k[0] == "ptr":
             pt = k[1]
             if s == "null":
@@ -1290,14 +1324,20 @@ class TuGen:
                 return ([f"for j in 0..15 {{ AB_{n}_{i}[j] = b'a' + rt::draw_range(&mut rt::ST, 0, 25) as u8; }} AB_{n}_{i}[15] = 0;",
                          f"let {name} = AB_{n}_{i}.as_mut_ptr();"], f"{name} as _", [])
             if pt.get_canonical().kind == T.VOID:
-                return ([f"for j in 0..64 {{ AB_{n}_{i}[j] = rt::draw_int(&mut rt::ST) as u8; }}",
-                         f"rt::reg_add(AB_{n}_{i}.as_ptr(), 64, \"arg{i}\");",
-                         f"let {name} = AB_{n}_{i}.as_mut_ptr();"], f"{name} as _",
-                        [f"rt::H = rt::FNV0; rt::h_bytes(AB_{n}_{i}.as_ptr(), 64); rt::DYN.push(rt::H);"])
+                return ([f"for j in 0..64 {{ AB_{n}_{i}.0[j] = rt::draw_int(&mut rt::ST) as u8; }}",
+                         f"rt::reg_add(AB_{n}_{i}.0.as_ptr(), 64, \"arg{i}\");",
+                         f"let {name} = AB_{n}_{i}.0.as_mut_ptr();"], f"{name} as _",
+                        [f"rt::H = rt::FNV0; rt::h_bytes(AB_{n}_{i}.0.as_ptr(), 64); rt::DYN.push(rt::H);"])
             cnt = 1
+            lst = None
             if s and s.startswith("buf:"):
                 cnt = int(s.split(":")[1])
+            if s and s.startswith("list:"):
+                _, cn, vs = s.split(":")
+                cnt, lst = int(cn), vs.split("|")
             _, cl = self.g2.fill(pt, "", f"AB_{n}_{i}[e]", 2)
+            if lst:
+                cl = [f"AB_{n}_{i}[e] = [{', '.join(v + 'i64' for v in lst)}][(rt::next(&mut rt::ST) % {len(lst)}) as usize] as _;"]
             _, hl = self.g2.hash(pt, "", f"AB_{n}_{i}[e]", 2)
             decl = [f"for e in 0..{cnt} {{"] + ["    " + x for x in cl] + ["}",
                     f"rt::reg_add(core::ptr::addr_of!(AB_{n}_{i}), core::mem::size_of_val(&AB_{n}_{i}), \"arg{i}\");",
@@ -1311,6 +1351,12 @@ class TuGen:
         L = [f"unsafe fn run_{n}(seed: u64) -> [u64; 3] {{",
              "    rt::ST = seed; rt::MST = seed ^ 0x5DEECE66D; rt::TRACE = rt::FNV0; rt::REGS.truncate(rt::NSTATIC); rt::DYN.clear();",
              "    fill_all();"]
+        for nm, v in sorted(self.fcfg.get(n, {}).get("force", {}).items()):
+            if "|" in str(v):
+                vs = str(v).split("|")
+                L.append(f"    FRC_{nm} = [{', '.join(x + 'i64' for x in vs)}][(rt::next(&mut rt::ST) % {len(vs)}) as usize];")
+            else:
+                L.append(f"    FRC_{nm} = {v};")
         args, posts = [], []
         for i, (a, s) in enumerate(self.arg_specs(fn)):
             decl, expr, post = self.arg_rust(i, a, s, n)
@@ -1333,6 +1379,8 @@ class TuGen:
             L.append(f"    let p = {call} as *const u8; rt::H = rt::FNV0; rt::h_cstr(p); let ret = rt::mix(rt::ptr_class(p), rt::H);")
         elif rk[0] == "ptr":
             L.append(f"    let ret = rt::ptr_class({call} as *const u8);")
+        for nm in sorted(self.fcfg.get(n, {}).get("force", {})):
+            L.append(f"    FRC_{nm} = -1;")
         L.append("    let trace = rt::TRACE;")
         L.append("    hash_objs();")
         L.append("    let mut tot = rt::H;")

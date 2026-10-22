@@ -7,6 +7,7 @@
 //! Round 1 (night 2): the leaf functions of gm, mn, if, ty and the lb TUs group 1 left, i.e.
 //! those with no calls and no globals, each verified bit for bit against the C (`tests/oracle.rs`).
 #![allow(dead_code)]
+#![recursion_limit = "512"]
 
 pub use melee_core;
 

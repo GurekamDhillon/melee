@@ -56,6 +56,17 @@ SIS_PRINT = dict(
     ext="fn HSD_SisLib_803A6B98(a0: *mut HSD_Text, a1: f32, a2: f32, a3: *const u8) -> i32;",
     hook="|a0, a1, a2, a3| { t(@ID@); t(pi(a0)); t(a1.to_bits()); t(a2.to_bits()); t(sh(a3)); fv() as i32 }")
 
+# A minimal sprintf (%d with optional 0 flag and width, literals) for the C oracle: the UCRT's is an inline.
+SPRINTF_C = (
+    "int sprintf(char* s, const char* f, ...) { __builtin_va_list ap; char* o = s; __builtin_va_start(ap, f); "
+    "while (*f) { if (*f != 37) { *o++ = *f++; continue; } f++; { int zero = 0, w = 0, v, neg, n = 0; char t[16]; "
+    "if (*f == 48) { zero = 1; f++; } while (*f >= 48 && *f <= 57) { w = w * 10 + (*f - 48); f++; } f++; "
+    "v = __builtin_va_arg(ap, int); neg = v < 0; { unsigned u = neg ? 0u - (unsigned) v : (unsigned) v; "
+    "do { t[n++] = (char) (48 + u % 10); u /= 10; } while (u); } "
+    "if (neg && zero) { *o++ = 45; w--; } while (w > n + (neg && !zero ? 1 : 0)) { *o++ = zero ? 48 : 32; w--; } "
+    "if (neg && !zero) *o++ = 45; while (n) *o++ = t[--n]; } } *o = 0; __builtin_va_end(ap); return (int) (o - s); }"
+    + chr(10))
+
 EVT = ("raw", "(Event) cbsel()", "core::mem::transmute::<usize, Event>(cbsel())")
 
 SPECS["ifhazard"] = dict(
@@ -262,6 +273,70 @@ SPECS["ifnametag"] = dict(
          dict(name="un_802FD468", pre_c="{ int q; for (q = 0; q < 6; q++) if (rnd() & 1) un_804A1EE0[q] = 0; }",
               pre_rs="for q in 0..6usize { if rnd() & 1 != 0 { m::un_804A1EE0[q] = null_mut(); } }"),
          dict(name="un_802FD4C8_inline", args=["v"]), "un_802FD4C8"],
+)
+
+SPECS["ifprize"] = dict(
+    src="src/melee/if/ifprize.c",
+    pools={"HSD_GObj": 6, "HSD_JObj": 6, "HSD_DObj": 3, "HSD_Text": 3, "SceneDesc": 1, "SceneCameraDesc": 2,
+           "DynamicModelDesc": 2, "HSD_Archive": 1, "HSD_CObj": 1, "un_802FEBE0_OnEnter_arg0": 4},
+    rules={"HSD_GObj.hsd_obj": ("ptr", "HSD_JObj", False),
+           "HSD_JObj.u": ("uptr", "dobj", "HSD_DObj", False),
+           "HSD_JObj.child": ("ptr", "HSD_JObj", False),
+           "un_803F9D48.x3": ("range", 0, 2), "un_803F9D48.x1": ("range", 0, 5), "un_803F9D48.x2": ("range", -2, 20),
+           "un_803F9D48.x10": ("ptr", "HSD_JObj", False),
+           "un_803F9D48.x14": ("ptr", "HSD_GObj", False), "un_803F9D48.x18": ("ptr", "HSD_GObj", False),
+           "un_803F9D48.x1C": ("ptr", "HSD_GObj", False),
+           "un_803F9D48.x20": ("ptr", "HSD_Text", False), "un_803F9D48.x24": ("ptr", "HSD_Text", False),
+           "un_803F9D48.x28": ("ptr", "un_802FEBE0_OnEnter_arg0", False),
+           "un_803F9D48.x2C": ("ptr", "un_802FEBE0_OnEnter_arg0", True),
+           "un_802FEBE0_OnEnter_arg0.x8": ("ptr", "un_802FEBE0_OnEnter_arg0", True),
+           "SceneDesc.models": ("expr", "PRZM", "&raw mut super::PRZM"),
+           "SceneDesc.lights": ("expr", "PRZM", "&raw mut super::PRZM"),
+           "SceneDesc.cameras": ("ptr", "SceneCameraDesc", False)},
+    statics=[dict(c="un_803F9D48", ty="un_803F9D48", init=True),
+             dict(c="un_803F9A00", n=76, kind="int", keep=True, init=True),
+             dict(c="un_803F9B30", ty="un_803F9B30", n=67, keep=True, init=True),
+             dict(c="un_804D6D98", kind="ptr", fill="p:HSD_Archive"),
+             dict(c="un_804D6D9C", kind="ptr", fill="p:SceneDesc"),
+             dict(c="PRZM", rs="super::PRZM", n=2, kind="ptr", fill="p:DynamicModelDesc", region=True),
+             dict(c="S16A", rs="super::S16A", n=4, kind="int", region=True),
+             dict(c="U8A", rs="super::U8A", n=4, kind="int", fill="r:0:3", region=True),
+             dict(c="S32A", rs="super::S32A", n=4, kind="int", fill="r:0:3", region=True),
+             dict(c="HSD_GObj_JObjKind", ext=True, kind="int", fill="k:20"),
+             dict(c="HSD_GObj_CameraKind", ext=True, kind="int", fill="k:21"),
+             dict(c="HSD_GObj_LightKind", ext=True, kind="int", fill="k:22")],
+    skip_data=["result"],
+    c_decl=SPRINTF_C + "static DynamicModelDesc* PRZM[2];\nstatic s16 S16A[4];\nstatic u8 U8A[4];\nstatic int S32A[4];\n",
+    rs_decl="pub static mut PRZM: [*mut DynamicModelDesc; 2] = [null_mut(); 2];\npub static mut S16A: [i16; 4] = [0; 4];\npub static mut U8A: [u8; 4] = [0; 4];\npub static mut S32A: [i32; 4] = [0; 4];\n",
+    ret={"GObj_Create": ("pick_HSD_GObj(0)", "pick_HSD_GObj(0)"),
+         "HSD_JObjLoadJoint": ("pick_HSD_JObj(0)", "pick_HSD_JObj(0)"),
+         "HSD_CObjLoadDesc": ("&P_HSD_CObj[0]", "&raw mut P_HSD_CObj[0]"),
+         "HSD_SisLib_803A5ACC": ("&P_HSD_Text[1]", "&raw mut P_HSD_Text[1]"),
+         "HSD_SisLib_803A6754": ("&P_HSD_Text[2]", "&raw mut P_HSD_Text[2]"),
+         "gm_GetButtonsTriggered": ("((fv() & 1) ? 0x1100ULL : (unsigned long long) fv())",
+                                    "if fv() & 1 != 0 { 0x1100 } else { fv() as u64 }"),
+         "lbLang_IsSavedLanguageUS": ("(fv() & 1)", "(fv() & 1) as _"),
+         "lbArchive_80016DBC": ("&P_HSD_Archive[0]", "&raw mut P_HSD_Archive[0]")},
+    effects={"gm_801692E8": ("a1->year = (u16) fv(); a1->month = (u8) (fv() % 14); a1->day = (u8) (fv() % 33); "
+                             "a1->hour = (u8) (fv() % 25); a1->minute = (u8) (fv() % 61); a1->second = (u8) (fv() % 61);",
+                             "(*a1).year = fv() as u16; (*a1).month = (fv() % 14) as u8; (*a1).day = (fv() % 33) as u8; "
+                             "(*a1).hour = (fv() % 25) as u8; (*a1).minute = (fv() % 61) as u8; (*a1).second = (fv() % 61) as u8;")},
+    null_ret_ok=["HSD_GObj_SetupProc", "lb_80011AC4", "HSD_SisLib_803A6B98", "HSD_SisLib_803A6530"],
+    custom_stubs={"lbArchive_80016DBC": sections_stub(
+        "lbArchive_80016DBC", ("const char*", "T(SH(a0));", "*const u8", "t(sh(a0));"),
+        {"ScInfPrize_scene_data": ("&P_SceneDesc[0]", "&raw mut P_SceneDesc[0]")},
+        ret=("HSD_Archive*", "&P_HSD_Archive[0]", "*mut HSD_Archive", "&raw mut P_HSD_Archive[0]"), a1ty="void*"),
+        "HSD_SisLib_803A6B98": SIS_PRINT, "lb_80011E24": jobjs_stub()},
+    ops=[dict(name="un_802FE3F8", args=["r:0:70", "r:0:30", ("raw", "((rnd() & 1) ? &S16A[0] : 0)", "if rnd() & 1 != 0 { &raw mut S16A[0] } else { null_mut() }"),
+                                         ("raw", "((rnd() & 1) ? &S16A[2] : 0)", "if rnd() & 1 != 0 { &raw mut S16A[2] } else { null_mut() }")]),
+         dict(name="un_802FE3F8_inner", args=["r:0:70", "r:0:30", ("raw", "((rnd() & 1) ? &S16A[0] : 0)", "if rnd() & 1 != 0 { &raw mut S16A[0] } else { null_mut() }"),
+                                               ("raw", "((rnd() & 1) ? &S16A[2] : 0)", "if rnd() & 1 != 0 { &raw mut S16A[2] } else { null_mut() }")]),
+         dict(name="un_802FE3F8_noinline", args=["r:0:70", "r:0:30", ("raw", "((rnd() & 1) ? &S16A[0] : 0)", "if rnd() & 1 != 0 { &raw mut S16A[0] } else { null_mut() }"),
+                                                  ("raw", "((rnd() & 1) ? &S16A[2] : 0)", "if rnd() & 1 != 0 { &raw mut S16A[2] } else { null_mut() }")]),
+         "ifPrize_RenderGuarded", "fn_802FE470", "un_802FE6A8", "un_802FE8CC", "setArchive",
+         dict(name="un_802FE918_update_x3", args=[("raw", "&U8A[0]", "&raw mut U8A[0]"), ("raw", "&S32A[0]", "&raw mut S32A[0]")]),
+         dict(name="un_802FE918", args=["r:0:70", "r:0:30", "v"]),
+         dict(name="ifPrize_Scene_OnEnter", args=["p:un_802FEBE0_OnEnter_arg0"]), "ifPrize_Scene_OnExit"],
 )
 
 for _s in SPECS.values():

@@ -1,0 +1,121 @@
+//! src/melee/ft/kinds/ftMewtwo/ftmewtwospeciallw.c: Disable (down B). One fused site
+//! (tools/rust-port/fma_sites.py): `ftMt_SpecialLw_CreateDisable`'s `sp18.x += offset_x *
+//! facing_dir` = fmadds(offset_x, facing_dir, sp18.x). Smoke-tested through recording hooks by
+//! tests/tu_ftmewtwospeciallw.rs, which checks the position bit for bit against an independent
+//! double-precision fused multiply-add (not against compiled C).
+#![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
+
+use crate::stubs as st;
+use melee_core::fp::fmadds;
+use melee_types::*;
+
+/// Already ported (rounds 2/4/5/6/7/12): re-exported under this TU.
+pub use crate::chars::r12::ftMewtwo::ftmewtwospeciallw::{ftMt_SpecialAirLw_IASA, ftMt_SpecialLw_IASA};
+pub use crate::chars::r2::ftMewtwo::ftmewtwospeciallw::ftMt_SpecialLw_Phys;
+pub use crate::chars::r4::ftMewtwo::ftmewtwospeciallw::{
+    ftMewtwo_SpecialLw_SetCall, ftMt_SpecialAirLw_AirToGround,
+};
+pub use crate::chars::r5::ftMewtwo::ftmewtwospeciallw::{ftMt_SpecialAirLw_Coll, ftMt_SpecialLw_Coll};
+pub use crate::chars::r6::ftMewtwo::ftmewtwospeciallw::ftMt_SpecialLw_GroundToAir;
+pub use crate::chars::r7::ftMewtwo::ftmewtwospeciallw::{ftMt_SpecialAirLw_Enter, ftMt_SpecialLw_Enter};
+
+/// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
+pub mod ext {
+    use melee_types::*;
+    macro_rules! hook {
+        ($hook:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
+            pub static mut $hook: Option<fn($($t),*) $(-> $r)?> = None;
+            #[allow(non_snake_case)]
+            pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { $hook } {
+                    Some(f) => f($($a),*),
+                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            }
+        };
+    }
+    hook!(ITMEWTWODISABLE_LOGIC67_DESTROY, itMewtwoDisable_Logic67_Destroy, (item: *mut HSD_GObj));
+    hook!(ITMEWTWODISABLE_LOGIC67_SPAWNMEWTWODISABLE, itMewtwoDisable_Logic67_SpawnMewtwoDisable,
+          (owner: *mut HSD_GObj, pos: *const Vec3, facing_dir: f32) -> *mut HSD_GObj);
+    hook!(LB_8000B1CC, lb_8000B1CC, (joint: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3));
+}
+
+#[inline(always)]
+unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
+    (*gobj).user_data as *mut Fighter
+}
+
+pub fn ftMt_SpecialLw_ClearDisableGObj(gobj: *mut HSD_GObj) {
+    unsafe { (*fpp(gobj)).u.mt.x222C_disableGObj = core::ptr::null_mut() }
+}
+
+pub fn ftMt_SpecialLw_RemoveDisable(gobj: *mut HSD_GObj) {
+    unsafe {
+        if !(*fpp(gobj)).u.mt.x222C_disableGObj.is_null() {
+            ext::itMewtwoDisable_Logic67_Destroy((*fpp(gobj)).u.mt.x222C_disableGObj);
+            (*fpp(gobj)).u.mt.x222C_disableGObj = core::ptr::null_mut();
+        }
+    }
+}
+
+pub fn ftMt_SpecialLw_Anim(gobj: *mut HSD_GObj) {
+    unsafe {
+        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+            if !(*fpp(gobj)).u.mt.x222C_disableGObj.is_null() {
+                ext::itMewtwoDisable_Logic67_Destroy((*fpp(gobj)).u.mt.x222C_disableGObj);
+                (*fpp(gobj)).u.mt.x222C_disableGObj = core::ptr::null_mut();
+            }
+            st::ft_8008A2BC(gobj);
+        }
+    }
+}
+
+pub fn ftMt_SpecialAirLw_Anim(gobj: *mut HSD_GObj) {
+    unsafe {
+        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+            if !(*fpp(gobj)).u.mt.x222C_disableGObj.is_null() {
+                ext::itMewtwoDisable_Logic67_Destroy((*fpp(gobj)).u.mt.x222C_disableGObj);
+                (*fpp(gobj)).u.mt.x222C_disableGObj = core::ptr::null_mut();
+            }
+            st::ftCo_Fall_Enter(gobj);
+        }
+    }
+}
+
+pub fn ftMt_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
+    unsafe {
+        let fp = fpp(gobj);
+        let da = (*fp).dat_attrs as *const ftMewtwoAttributes;
+        st::ftCommon_Fall(
+            &mut *fp,
+            (*da).x78_MEWTWO_DISABLE_GRAVITY,
+            (*da).x7C_MEWTWO_DISABLE_TERMINAL_VELOCITY,
+        );
+        melee_fighter::ftcommon::calc_self_accel_deaccel(&mut *fp, (*fp).co_attrs.aerial_friction);
+    }
+}
+
+/// `ftMt_SpecialLw_CreateDisable` (the `accessory4_cb`): spawn the Disable projectile on the
+/// frame the script sets cmd_vars[0].
+pub fn ftMt_SpecialLw_CreateDisable(gobj: *mut HSD_GObj) {
+    unsafe {
+        let fp = fpp(gobj);
+        let mut sp18 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+
+        if (*fp).cmd_vars[0] != 0 {
+            let da = (*fp).dat_attrs as *const ftMewtwoAttributes;
+
+            ext::lb_8000B1CC((*(*fp).parts.add(FtPart_L3rdNb as usize)).joint, core::ptr::null(), &mut sp18);
+
+            sp18.x = fmadds((*da).x80_MEWTWO_DISABLE_OFFSET_X, (*fp).facing_dir, sp18.x);
+            sp18.y += (*da).x84_MEWTWO_DISABLE_OFFSET_Y;
+
+            (*fp).u.mt.x222C_disableGObj =
+                ext::itMewtwoDisable_Logic67_SpawnMewtwoDisable(gobj, &sp18, (*fp).facing_dir);
+
+            ftMewtwo_SpecialLw_SetCall(gobj);
+
+            (*fp).cmd_vars[0] = 0;
+        }
+    }
+}

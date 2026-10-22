@@ -98,7 +98,10 @@ def ret(kind):
     if kind in ("u8", "u16", "u32"):
         return "ret = (u32) r_;", "r as u32"
     if kind == "bool":
-        return "ret = (u32) (r_ != 0);", "r as u32"
+        # `bool` is `int` in the C: the raw value, not 0/1
+        return "ret = (u32) r_;", "r as u32"
+    if kind == "u64":
+        return "ret = (u32) r_ ^ ((u32) (r_ >> 32) * 31u);", "(r as u32) ^ (((r >> 32) as u32).wrapping_mul(31))"
     if kind == "f32":
         return "ret = B(r_);", "r.to_bits()"
     if kind == "str":
@@ -107,11 +110,11 @@ def ret(kind):
         return "ret = (u32) (r_ != 0);", "!(r as *const u8).is_null() as u32"
     if kind == "gx":
         return "ret = ((u32) r_.r << 24) | ((u32) r_.g << 16) | ((u32) r_.b << 8) | (u32) r_.a;", "((r.r as u32) << 24) | ((r.g as u32) << 16) | ((r.b as u32) << 8) | r.a as u32"
-    m = re.fullmatch(r"selfptr:(\w+)", kind)
+    m = re.fullmatch(r"selfptr:([A-Za-z_0-9.]+)", kind)
     if m:
         nm = m.group(1)
         return f"ret = (u32) (r_ == (s32) (size_t) &{nm});", f"(r == addr_of_mut!({nm}) as usize as i32) as u32"
-    m = re.fullmatch(r"ptreq:(\w+)", kind)
+    m = re.fullmatch(r"ptreq:([A-Za-z_0-9.]+)", kind)
     if m:
         nm = m.group(1)
         return (f"ret = ((void*) r_ == (void*) &{nm}) ? 1 : (r_ ? 2 : 0);",

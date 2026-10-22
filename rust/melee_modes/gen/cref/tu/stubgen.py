@@ -72,6 +72,8 @@ def rust_type(t):
     if n == 0:
         if base in SCAL:
             return SCAL[base][0]
+        if base == "UNK_T":
+            return "*mut c_void"
         return base
     if base in ("void",):
         inner = "c_void"

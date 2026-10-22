@@ -22,3 +22,12 @@ pub static mut stage_info: StageInfo = unsafe { core::mem::zeroed() };
 pub static mut HSD_VIData: HSD_VIInfo = unsafe { core::mem::zeroed() };
 /// ftdata.c `/* 3C0EC0 */ struct UnkCostumeList CostumeListsForeachCharacter[Ft_Kind_Max]`.
 pub static mut CostumeListsForeachCharacter: [UnkCostumeList; Ft_Kind_Max as usize] = unsafe { core::mem::zeroed() };
+
+/// controller.c `HSD_PadStatus HSD_PadCopyStatus[4]` (the pads as the frame's logic reads them).
+pub static mut HSD_PadCopyStatus: [HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
+/// db.c `/* 4D4A08 */ DbLKind DbLevel`.
+pub static mut DbLevel: DbLKind = 0;
+/// random.c `u32* HSD_RandSeedPtr`.
+pub static mut HSD_RandSeedPtr: *mut u32 = null_mut();
+/// os `u32 __OSBusClock` (the bus clock in Hz; `OS_TIMER_CLOCK` is a quarter of it).
+pub static mut __OSBusClock: u32 = 0;

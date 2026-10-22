@@ -284,6 +284,7 @@ unsafe fn install_hooks() {
         melee_chara::tu::ftinl::ext::FTCLIFFCOMMON_80081370 = Some(|a0: *mut HSD_GObj| { lg_s("ftCliffCommon_80081370("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_chara::stubs::FTCO_FALL_ENTER = Some(|a0: *mut HSD_GObj| { lg_s("ftCo_Fall_Enter("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_chara::tu::ftinl::ext::FTCO_FALL_ENTER = Some(|a0: *mut HSD_GObj| { lg_s("ftCo_Fall_Enter("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
+        melee_chara::stubs::FTCOMMON_8007D5D4 = Some(|a0: &mut Fighter| { lg_s("ftCommon_8007D5D4("); lg_ptr(a0 as *const _ as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_chara::tu::ftinl::ext::FTCOMMON_8007D5D4 = Some(|a0: *mut Fighter| { lg_s("ftCommon_8007D5D4("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_chara::stubs::FTCOMMON_8007D7FC = Some(|a0: &mut Fighter| { lg_s("ftCommon_8007D7FC("); lg_ptr(a0 as *const _ as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_chara::tu::ftinl::ext::FTCOMMON_8007D7FC = Some(|a0: *mut Fighter| { lg_s("ftCommon_8007D7FC("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });

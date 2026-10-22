@@ -84,17 +84,10 @@ stub_or!(/// `ftCommon_8007D7FC(fp)`: group 3's verified port (night 3) when the
 stub!(/// TODO(group3): `ftCo_80096900(gobj, a, b, allow_interrupt, mobility, landing_lag)` (FallSpecial enter).
     FTCO_80096900, ftCo_80096900, (g: G, a: i32, b: i32, allow_interrupt: i32, mobility: f32, landing_lag: f32));
 
-/// `ftCommon_8007D5D4(fp)`: group 3's port.
-#[inline]
-pub fn ftCommon_8007D5D4(fp: &mut Fighter) {
-    melee_fighter::ftcommon2::ftcommon_8007d5d4(fp)
-}
-
-/// `ftCommon_8007D60C(fp)`: group 3's port.
-#[inline]
-pub fn ftCommon_8007D60C(fp: &mut Fighter) {
-    melee_fighter::ftcommon2::ftcommon_8007d60c(fp)
-}
+stub_or!(/// `ftCommon_8007D5D4(fp)`: group 3's port when the hook is unset (the oracle installs recorders).
+    FTCOMMON_8007D5D4, ftCommon_8007D5D4, melee_fighter::ftcommon2::ftcommon_8007d5d4, (fp: &mut Fighter));
+stub_or!(/// `ftCommon_8007D60C(fp)`: group 3's port when the hook is unset.
+    FTCOMMON_8007D60C, ftCommon_8007D60C, melee_fighter::ftcommon2::ftcommon_8007d60c, (fp: &mut Fighter));
 
 /// `ftCommon_GroundToAirStateChange` (ftCommon/inlines.h, static inline).
 #[inline]
@@ -209,17 +202,10 @@ fn it_is_heavy_port(item: *mut melee_types::Item_GObj) -> i32 {
 stub_or!(/// `itIsHeavy(item_gobj)` (it/it_26B1.c; returns bool): group 5's verified port when the hook is unset.
     ITISHEAVY, itIsHeavy, it_is_heavy_port, (item: *mut melee_types::Item_GObj) -> i32);
 
-/// `ftCommon_Fall(fp, gravity, terminal_vel)`: group 3's port.
-#[inline]
-pub fn ftCommon_Fall(fp: &mut Fighter, gravity: f32, terminal_vel: f32) {
-    melee_fighter::ftcommon::fall(fp, gravity, terminal_vel)
-}
-
-/// `ftCommon_ClampAirDrift(fp)`: group 3's port.
-#[inline]
-pub fn ftCommon_ClampAirDrift(fp: &mut Fighter) {
-    melee_fighter::ftcommon::clamp_air_drift(fp)
-}
+stub_or!(/// `ftCommon_Fall(fp, gravity, terminal_vel)`: group 3's port when the hook is unset.
+    FTCOMMON_FALL, ftCommon_Fall, melee_fighter::ftcommon::fall, (fp: &mut Fighter, gravity: f32, terminal_vel: f32));
+stub_or!(/// `ftCommon_ClampAirDrift(fp)`: group 3's port when the hook is unset.
+    FTCOMMON_CLAMPAIRDRIFT, ftCommon_ClampAirDrift, melee_fighter::ftcommon::clamp_air_drift, (fp: &mut Fighter));
 
 /// `Fighter_OnItemVisible(gobj, flag)` (ft/inlines.h, static inline).
 #[inline]

@@ -357,6 +357,23 @@ static void onorm(unsigned char* img, const ODesc* d, int n)
     }
 }
 
+/* a pointer to a small argument struct: id + FNV of its bytes (pointers named, NaNs canonical) */
+static void lg_ps(const void* p, u32 n, const ODesc* d, int nd)
+{
+    lg_c('@');
+    lg_hmin(normptr(p));
+    if (p) {
+        static unsigned char tmp[256];
+        u32 i;
+        for (i = 0; i < n; i++) tmp[i] = ((const unsigned char*) p)[i];
+        onorm(tmp, d, nd);
+        lg_c('{');
+        lg_hx(fnv(FNV0, tmp, n), 16);
+        lg_c('}');
+    }
+    lg_c(',');
+}
+
 /* ---------------------------------------------------------------- efSync_Spawn (variadic) */
 /* the pointee shapes of the trailing arguments, by effect id (tests/oracle_common repeats it):
  * 'V' = Vec3*, 'f' = float*, 'p' = anything else (name only) */

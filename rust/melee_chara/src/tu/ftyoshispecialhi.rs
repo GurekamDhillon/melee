@@ -36,10 +36,8 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
     (*gobj).user_data as *mut Fighter
 }
 
-/// `fn_8012E110` as a Fighter callback entry (accessory4_cb).
-pub unsafe extern "C" fn cb_fn_8012E110(g: *mut HSD_GObj) {
-    fn_8012E110(g);
-}
+/// `fn_8012E110` as a Fighter callback entry (accessory4_cb): the shared `chars::cb` entry, which calls it.
+pub use crate::chars::cb::ftyoshispecialhi__fn_8012E110 as cb_fn_8012E110;
 /// `fn_8012E3B4` as a callback entry.
 pub unsafe extern "C" fn cb_fn_8012E3B4(g: *mut HSD_GObj) {
     fn_8012E3B4(g);

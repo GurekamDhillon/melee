@@ -354,6 +354,20 @@ pub unsafe fn onorm(img: &mut [u8], d: &[ODesc]) {
     }
 }
 
+/// A pointer to a small argument struct: id + FNV of its bytes (oracle.h `lg_ps`).
+pub fn lg_ps(p: *const u8, n: usize, d: &[ODesc]) {
+    lg_c('@');
+    lg_hmin(normptr(p as usize));
+    if !p.is_null() {
+        let mut tmp = unsafe { core::slice::from_raw_parts(p, n) }.to_vec();
+        unsafe { onorm(&mut tmp, d) };
+        lg_c('{');
+        lg_hx(fnv(FNV0, &tmp), 16);
+        lg_c('}');
+    }
+    lg_c(',');
+}
+
 // ------------------------------------------------------------- efSync_Spawn shapes
 pub fn efsync_shape(gfx: i32) -> &'static str {
     match gfx {

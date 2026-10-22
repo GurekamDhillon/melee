@@ -676,22 +676,22 @@ pub unsafe extern "C" fn ftyoshi__ftYs_Init_8012BA8C(g: *mut HSD_GObj) {
 
 /// `fn_8012E110` (defined in src/melee/ft/kinds/ftYoshi/ftyoshispecialhi.c).
 pub unsafe extern "C" fn ftyoshispecialhi__fn_8012E110(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_8012E110 (src/melee/ft/kinds/ftYoshi/ftyoshispecialhi.c) is not ported");
+    crate::tu::ftyoshispecialhi::fn_8012E110(g);
 }
 
 /// `fn_8012E644` (defined in src/melee/ft/kinds/ftYoshi/ftyoshispeciallw.c).
 pub unsafe extern "C" fn ftyoshispeciallw__fn_8012E644(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_8012E644 (src/melee/ft/kinds/ftYoshi/ftyoshispeciallw.c) is not ported");
+    crate::tu::ftyoshispeciallw::fn_8012E644(g);
 }
 
 /// `fn_8012D128` (defined in src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).
 pub unsafe extern "C" fn ftyoshispecialn__fn_8012D128(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_8012D128 (src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c) is not ported");
+    crate::tu::ftyoshispecialn::fn_8012D128(g);
 }
 
 /// `fn_8012D1AC` (defined in src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).
 pub unsafe extern "C" fn ftyoshispecialn__fn_8012D1AC(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_8012D1AC (src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c) is not ported");
+    crate::tu::ftyoshispecialn::fn_8012D1AC(g);
 }
 
 /// `fn_8012D230` (defined in src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).

@@ -182,6 +182,12 @@ class Probe:
             out.append((b, 1, "b"))
 
 
+# records passed by pointer that are shared game objects, not small argument structs: the pointer only
+PS_SKIP = {"HSD_JObj", "HSD_DObj", "HSD_Joint", "Item", "ftData", "CollData", "StaticPlayer", "HSD_GObj",
+           "Fighter", "HSD_RObj", "HSD_CObj", "HSD_LObj", "HSD_Archive", "HSD_AObj", "HSD_FObj"}
+PS_TAGS = set()
+
+
 def kind_of(t):
     """('i'|'q'|'f'|'d'|'v'|'G'|'FP'|'v3'|'v2'|'pf'|'pi'|'fn'|'p', bool-like) for a C type."""
     c = t.get_canonical()
@@ -194,7 +200,13 @@ def kind_of(t):
             return "fn"
         if p.kind == T.RECORD:
             n = p.get_declaration().spelling
-            return {"HSD_GObj": "G", "Fighter": "FP", "Vec3": "v3", "Vec": "v3", "Vec2": "v2"}.get(n, "p")
+            k0 = {"HSD_GObj": "G", "Fighter": "FP", "Vec3": "v3", "Vec": "v3", "Vec2": "v2"}.get(n)
+            if k0:
+                return k0
+            sz = p.get_size()
+            if n and 0 < sz <= 160 and n not in PS_SKIP:
+                return f"ps:{n}:{sz}"
+            return "p"
         if p.kind == T.FLOAT:
             return "pf"
         if p.kind in (T.INT, T.UINT, T.LONG, T.ULONG):
@@ -372,6 +384,10 @@ def stub_c(name, fn):
             L.append(f"    lg_pf((const float*) {a});")
         elif k == "pi":
             L.append(f"    lg_pi((const int*) {a});")
+        elif k.startswith("ps:"):
+            _, tag, sz = k.split(":")
+            PS_TAGS.add(tag)
+            L.append(f"    lg_ps((const void*) {a}, {sz}, D_{tag}, (int) ND_{tag});")
         else:  # G, FP, fn, p
             L.append(f"    lg_ptr((const void*) {a});")
     L.append('    lg_s(")");')
@@ -416,6 +432,10 @@ def rs_arg_log(rtype, ck, a):
         fn = {"v3": "lg_v3", "v2": "lg_v2", "pf": "lg_pf", "pi": "lg_pi"}[ck]
         ty = {"v3": "Vec3", "v2": "Vec2", "pf": "f32", "pi": "i32"}[ck]
         return f"{fn}({a} as *const _ as *const {ty});"
+    if ck.startswith("ps:"):
+        tag = ck.split(":")[1]
+        m = re.search(r"(?:\*\s*(?:mut|const)|&\s*mut|&)\s*([\w:]+)", rtype)
+        return f"lg_ps({a} as *const u8, core::mem::size_of::<{m.group(1)}>(), D_{tag});"
     # G, FP, p, fn
     if ck == "fn" or "fn(" in t or t == "HSD_GObjEvent" or t.startswith("Option<"):
         return f"lg_ptr(fnaddr({a}));"
@@ -495,6 +515,7 @@ def extract_include(stem, entries):
 def build(stem, verbose_fn=None):
     spec = load_spec(stem)
     OUTS.clear()
+    PS_TAGS.clear()
     OUTS.update(spec.get("outs", {}))
     src = spec["src"]
     srcpath = (ROOT / src).as_posix()
@@ -594,15 +615,17 @@ def build(stem, verbose_fn=None):
     if ext_inc:
         S.append(f'#include "{ext_inc}"')
     S.append(spec.get("data_c", ""))
+    for tag in sorted(PS_TAGS):
+        D[tag] = pr.descs(tag)
+    S.append("/* ---- descriptor tables ---- */")
+    for k, v in D.items():
+        S.append(cdesc(k, v))
+        S.append(f"#define ND_{k} (sizeof D_{k} / sizeof D_{k}[0])")
     S.append("/* ---- generated stubs ---- */")
     for n in sorted(stub_info):
         if n == "efSync_Spawn":
             continue
         S.append(next(t for t in stubs if re.search(r"\b" + n + r"\(", t.split("\n")[0])))
-    S.append("/* ---- descriptor tables ---- */")
-    for k, v in D.items():
-        S.append(cdesc(k, v))
-        S.append(f"#define ND_{k} (sizeof D_{k} / sizeof D_{k}[0])")
     S.append(C_WORLD)
     # fn table
     fnv_names = list(spec.get("fnvals", {}).keys())

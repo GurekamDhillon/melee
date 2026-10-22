@@ -174,6 +174,56 @@ unsafe fn world_fill_types(w: &mut World, fi: usize) {
             ofill(w.backup.as_mut_ptr(), D_ftYs_DatAttrs);
             ofill(w.ext.as_mut_ptr(), D_ftYs_DatAttrs);
         }
+        6 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYs_DatAttrs);
+            ofill(w.backup.as_mut_ptr(), D_ftYs_DatAttrs);
+            ofill(w.ext.as_mut_ptr(), D_ftYs_DatAttrs);
+        }
+        7 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYs_DatAttrs);
+            ofill(w.backup.as_mut_ptr(), D_ftYs_DatAttrs);
+            ofill(w.ext.as_mut_ptr(), D_ftYs_DatAttrs);
+        }
+        8 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYs_DatAttrs);
+            ofill(w.backup.as_mut_ptr(), D_ftYs_DatAttrs);
+            ofill(w.ext.as_mut_ptr(), D_ftYs_DatAttrs);
+        }
+        9 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYs_DatAttrs);
+            ofill(w.backup.as_mut_ptr(), D_ftYs_DatAttrs);
+            ofill(w.ext.as_mut_ptr(), D_ftYs_DatAttrs);
+        }
+        10 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYs_DatAttrs);
+            ofill(w.backup.as_mut_ptr(), D_ftYs_DatAttrs);
+            ofill(w.ext.as_mut_ptr(), D_ftYs_DatAttrs);
+        }
+        11 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYs_DatAttrs);
+            ofill(w.backup.as_mut_ptr(), D_ftYs_DatAttrs);
+            ofill(w.ext.as_mut_ptr(), D_ftYs_DatAttrs);
+        }
+        12 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYs_DatAttrs);
+            ofill(w.backup.as_mut_ptr(), D_ftYs_DatAttrs);
+            ofill(w.ext.as_mut_ptr(), D_ftYs_DatAttrs);
+        }
+        13 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYs_DatAttrs);
+            ofill(w.backup.as_mut_ptr(), D_ftYs_DatAttrs);
+            ofill(w.ext.as_mut_ptr(), D_ftYs_DatAttrs);
+        }
+        14 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYs_DatAttrs);
+            ofill(w.backup.as_mut_ptr(), D_ftYs_DatAttrs);
+            ofill(w.ext.as_mut_ptr(), D_ftYs_DatAttrs);
+        }
+        15 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYs_DatAttrs);
+            ofill(w.backup.as_mut_ptr(), D_ftYs_DatAttrs);
+            ofill(w.ext.as_mut_ptr(), D_ftYs_DatAttrs);
+        }
         _ => {}
     }
 }
@@ -205,6 +255,16 @@ const FNS: &[Fn_] = &[
     Fn_ { name: "ftYs_SpecialS_8012E270", n: 400, bfmask: 0x0 },
     Fn_ { name: "ftYs_SpecialHi_Coll", n: 400, bfmask: 0x0 },
     Fn_ { name: "ftYs_SpecialAirHi_Coll", n: 400, bfmask: 0x0 },
+    Fn_ { name: "setDamageCallbacks", n: 400, bfmask: 0x0 },
+    Fn_ { name: "setAccessory4Callback", n: 400, bfmask: 0x0 },
+    Fn_ { name: "ftYs_SpecialHi_Enter", n: 400, bfmask: 0x0 },
+    Fn_ { name: "ftYs_SpecialAirHi_Enter", n: 400, bfmask: 0x0 },
+    Fn_ { name: "fn_8012E3B4", n: 400, bfmask: 0x0 },
+    Fn_ { name: "fn_8012E44C", n: 400, bfmask: 0x0 },
+    Fn_ { name: "ftYs_SpecialHi_Anim", n: 400, bfmask: 0x0 },
+    Fn_ { name: "ftYs_SpecialAirHi_Anim", n: 400, bfmask: 0x0 },
+    Fn_ { name: "ftYs_SpecialHi_Phys", n: 400, bfmask: 0x0 },
+    Fn_ { name: "ftYs_SpecialAirHi_Phys", n: 400, bfmask: 0x0 },
 ];
 unsafe fn call_fn(fi: usize, w: &mut World, a: &mut Args) -> (u64, u32) {
     let g = w.g;
@@ -215,16 +275,45 @@ unsafe fn call_fn(fi: usize, w: &mut World, a: &mut Args) -> (u64, u32) {
         3 => { t::ftYs_SpecialS_8012E270(g); (0, 0) }
         4 => { t::ftYs_SpecialHi_Coll(g); (0, 0) }
         5 => { t::ftYs_SpecialAirHi_Coll(g); (0, 0) }
+        6 => { t::setDamageCallbacks(g); (0, 0) }
+        7 => { t::setAccessory4Callback(g); (0, 0) }
+        8 => { t::ftYs_SpecialHi_Enter(g); (0, 0) }
+        9 => { t::ftYs_SpecialAirHi_Enter(g); (0, 0) }
+        10 => { t::fn_8012E3B4(g); (0, 0) }
+        11 => { t::fn_8012E44C(g); (0, 0) }
+        12 => { t::ftYs_SpecialHi_Anim(g); (0, 0) }
+        13 => { t::ftYs_SpecialAirHi_Anim(g); (0, 0) }
+        14 => { t::ftYs_SpecialHi_Phys(g); (0, 0) }
+        15 => { t::ftYs_SpecialAirHi_Phys(g); (0, 0) }
         _ => unreachable!(),
     }
 }
 unsafe fn install_hooks() {
+        melee_chara::stubs::FIGHTER_CHANGEMOTIONSTATE = Some(|a0: *mut HSD_GObj, a1: i32, a2: u32, a3: f32, a4: f32, a5: f32, a6: *mut HSD_GObj| { lg_s("Fighter_ChangeMotionState("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_int(a2 as u32); lg_f(a3); lg_f(a4); lg_f(a5); lg_ptr(a6 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_chara::tu::ftinl::ext::FIGHTER_CHANGEMOTIONSTATE = Some(|a0: *mut HSD_GObj, a1: i32, a2: u32, a3: f32, a4: f32, a5: f32, a6: *mut HSD_GObj| { lg_s("Fighter_ChangeMotionState("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_int(a2 as u32); lg_f(a3); lg_f(a4); lg_f(a5); lg_ptr(a6 as *const u8 as usize); lg_s(")"); lg_c(';'); });
+        melee_chara::stubs::FTANIM_8006EBA4 = Some(|a0: *mut HSD_GObj| { lg_s("ftAnim_8006EBA4("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
+        melee_chara::tu::ftinl::ext::FTANIM_8006EBA4 = Some(|a0: *mut HSD_GObj| { lg_s("ftAnim_8006EBA4("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
+        melee_chara::stubs::FTANIM_ISFRAMESREMAINING = Some(|a0: *mut HSD_GObj| -> i32 { lg_s("ftAnim_IsFramesRemaining("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); { let r = gen_b() as i32; lg_retu(r as u32); lg_c(';'); r } });
+        melee_chara::tu::ftinl::ext::FTANIM_ISFRAMESREMAINING = Some(|a0: *mut HSD_GObj| -> bool { lg_s("ftAnim_IsFramesRemaining("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); { let r = (gen_b() != 0); lg_retu(r as u32); lg_c(';'); r } });
+        melee_chara::stubs::FTCO_FALL_ENTER = Some(|a0: *mut HSD_GObj| { lg_s("ftCo_Fall_Enter("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
+        melee_chara::tu::ftinl::ext::FTCO_FALL_ENTER = Some(|a0: *mut HSD_GObj| { lg_s("ftCo_Fall_Enter("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
+        melee_chara::stubs::FTCOMMON_8007D5D4 = Some(|a0: &mut Fighter| { lg_s("ftCommon_8007D5D4("); lg_ptr(a0 as *const _ as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_chara::tu::ftinl::ext::FTCOMMON_8007D5D4 = Some(|a0: *mut Fighter| { lg_s("ftCommon_8007D5D4("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
+        melee_chara::stubs::FTCOMMON_8007D7FC = Some(|a0: &mut Fighter| { lg_s("ftCommon_8007D7FC("); lg_ptr(a0 as *const _ as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_chara::tu::ftinl::ext::FTCOMMON_8007D7FC = Some(|a0: *mut Fighter| { lg_s("ftCommon_8007D7FC("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
-        melee_chara::tu::ftyoshispecialhi::ext::FT_80082C74 = Some(|a0: *mut HSD_GObj, a1: HSD_GObjEvent| { lg_s("ft_80082C74("); lg_ptr(a0 as *const u8 as usize); lg_ptr(fnaddr(a1)); lg_s(")"); lg_c(';'); });
-        melee_chara::tu::ftyoshispecialhi::ext::FT_80083A48 = Some(|a0: *mut HSD_GObj, a1: HSD_GObjEvent| { lg_s("ft_80083A48("); lg_ptr(a0 as *const u8 as usize); lg_ptr(fnaddr(a1)); lg_s(")"); lg_c(';'); });
-        melee_chara::tu::ftyoshispecialhi::ext::FT_8008403C = Some(|a0: *mut HSD_GObj, a1: HSD_GObjEvent| { lg_s("ft_8008403C("); lg_ptr(a0 as *const u8 as usize); lg_ptr(fnaddr(a1)); lg_s(")"); lg_c(';'); });
+        melee_chara::stubs::FTCOMMON_CLAMPAIRDRIFT = Some(|a0: &mut Fighter| { lg_s("ftCommon_ClampAirDrift("); lg_ptr(a0 as *const _ as *const u8 as usize); lg_s(")"); lg_c(';'); });
+        melee_chara::tu::ftinl::ext::FTCOMMON_CLAMPAIRDRIFT = Some(|a0: *mut Fighter| { lg_s("ftCommon_ClampAirDrift("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
+        melee_chara::stubs::FT_80082C74 = Some(|a0: *mut HSD_GObj, a1: HSD_GObjEvent| { lg_s("ft_80082C74("); lg_ptr(a0 as *const u8 as usize); lg_ptr(fnaddr(a1)); lg_s(")"); lg_c(';'); });
+        melee_chara::tu::ftinl::ext::FT_80082C74 = Some(|a0: *mut HSD_GObj, a1: HSD_GObjEvent| { lg_s("ft_80082C74("); lg_ptr(a0 as *const u8 as usize); lg_ptr(fnaddr(a1)); lg_s(")"); lg_c(';'); });
+        melee_chara::tu::ftinl::ext::FT_80083A48 = Some(|a0: *mut HSD_GObj, a1: HSD_GObjEvent| { lg_s("ft_80083A48("); lg_ptr(a0 as *const u8 as usize); lg_ptr(fnaddr(a1)); lg_s(")"); lg_c(';'); });
+        melee_chara::stubs::FT_8008403C = Some(|a0: *mut HSD_GObj, a1: HSD_GObjEvent| { lg_s("ft_8008403C("); lg_ptr(a0 as *const u8 as usize); lg_ptr(fnaddr(a1)); lg_s(")"); lg_c(';'); });
+        melee_chara::tu::ftinl::ext::FT_8008403C = Some(|a0: *mut HSD_GObj, a1: HSD_GObjEvent| { lg_s("ft_8008403C("); lg_ptr(a0 as *const u8 as usize); lg_ptr(fnaddr(a1)); lg_s(")"); lg_c(';'); });
+        melee_chara::stubs::FT_80084EEC = Some(|a0: *mut HSD_GObj| { lg_s("ft_80084EEC("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
+        melee_chara::tu::ftinl::ext::FT_80084EEC = Some(|a0: *mut HSD_GObj| { lg_s("ft_80084EEC("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
+        melee_chara::stubs::FT_80084F3C = Some(|a0: *mut HSD_GObj| { lg_s("ft_80084F3C("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
+        melee_chara::tu::ftinl::ext::FT_80084F3C = Some(|a0: *mut HSD_GObj| { lg_s("ft_80084F3C("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
+        melee_chara::stubs::FT_8008A2BC = Some(|a0: *mut HSD_GObj| { lg_s("ft_8008A2BC("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
+        melee_chara::tu::ftinl::ext::FT_8008A2BC = Some(|a0: *mut HSD_GObj| { lg_s("ft_8008A2BC("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_chara::tu::ftyoshispecialhi::ext::IT_802B2890 = Some(|a0: *mut Item_GObj| { lg_s("it_802B2890("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_chara::tu::ftyoshispecialhi::ext::IT_802B28C8 = Some(|a0: *mut Item_GObj, a1: *mut Vec3, a2: *mut Vec3, a3: f32, a4: f32| { lg_s("it_802B28C8("); lg_ptr(a0 as *const u8 as usize); lg_v3(a1 as *const _ as *const Vec3); lg_v3(a2 as *const _ as *const Vec3); lg_f(a3); lg_f(a4); lg_s(")"); lg_c(';'); });
         melee_chara::tu::ftyoshispecialhi::ext::IT_802B2A10 = Some(|a0: *mut HSD_GObj, a1: *mut Vec3, a2: i32, a3: f32| -> *mut Item_GObj { lg_s("it_802B2A10("); lg_ptr(a0 as *const u8 as usize); lg_v3(a1 as *const _ as *const Vec3); lg_int(a2 as u32); lg_f(a3); lg_s(")"); { let r = gen_p() as *mut Item_GObj; lg_retp(r as usize); lg_c(';'); r } });
@@ -232,7 +321,7 @@ unsafe fn install_hooks() {
         melee_chara::tu::ftyoshispecialhi::ext::LB_8000B1CC = Some(|a0: *mut HSD_JObj, a1: *mut Vec3, a2: *mut Vec3| { lg_s("lb_8000B1CC("); lg_ptr(a0 as *const u8 as usize); lg_v3(a1 as *const _ as *const Vec3); lg_v3(a2 as *const _ as *const Vec3); lg_s(")"); lg_ov3(a2 as *mut _); lg_c(';'); });
 
 }
-const PRE: &[&str] = &["ftYs_SpecialS_8012DF18", "ftYs_SpecialS_8012DF8C", "fn_8012E110", "ftYs_SpecialS_8012E270", "ftYs_SpecialHi_Coll", "ftYs_SpecialAirHi_Coll"];
+const PRE: &[&str] = &["ftYs_SpecialS_8012DF18", "ftYs_SpecialS_8012DF8C", "fn_8012E110", "ftYs_SpecialS_8012E270", "ftYs_SpecialHi_Coll", "ftYs_SpecialAirHi_Coll", "setDamageCallbacks", "setAccessory4Callback", "ftYs_SpecialHi_Enter", "ftYs_SpecialAirHi_Enter", "fn_8012E3B4", "fn_8012E44C", "ftYs_SpecialHi_Anim", "ftYs_SpecialAirHi_Anim", "ftYs_SpecialHi_Phys", "ftYs_SpecialAirHi_Phys"];
 unsafe fn case_pre(fi: usize, w: &mut World, a: &mut Args) {
     match fi {
         _ => {}

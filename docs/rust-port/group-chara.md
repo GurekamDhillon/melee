@@ -737,3 +737,56 @@ callers (Fox SpecialN, Koopa SpecialHi) also call efSync_Spawn / items / Fighter
   (scan of first skip reasons): local declarations (`Vec3` 116, scalar locals ~170), efSync_Spawn (30),
   Kirby hat / HSD_JObj helpers, `ftCommon_8007E2D0` with HSD_GObjInteraction callbacks (11),
   `ftCheckThrowB0` conditions (6), group-3 `ftCommon_CalcSelfAccel_Deaccel` / `ft_800824A0` (not ported).
+
+
+## Shard 449-456 (ftYoshi special TUs, ftZakoBoy, ftZakoGirl, ftZelda, ftZeldaSpecialHi): state oracle
+
+Branch `port/shard-449-456`. Eight C files, 222 functions (static inlines included); 135 were not
+ported before and are now native in `src/tu/<stem>.rs`, the rest are re-exported from the earlier rounds.
+`ftboy`, `ftgirl`, `ftzelda`, `ftyoshispecialhi`, `ftyoshispeciallw`, `ftyoshispecialn`, `ftyoshispecials`,
+`ftzeldaspecialhi` (+ `tu/ftinl.rs`: the ft/inlines.h and ftCommon/inlines.h static inlines the TUs use,
+and the hook macros `tu/hookmac.rs`).
+
+### The state oracle (`gen/oracle/`, `tests/oracle_*.rs`, `tests/oracle_common`)
+`python rust/melee_chara/gen/oracle/oracle.py <stem> [--cov] [-v FUNC]` (spec: `gen/oracle/spec_<stem>.py`).
+It builds the game's own `.c` natively with the shipping float contraction (clang `-ffp-contract=on`,
+`-O2 -Xclang -disable-llvm-passes`, gwtool's lowering redone by `melee_runtime/oracle/lower.py`;
+`gekko_fp.c` goes through the same lowering), with a **generated stub for every callee outside the TU**
+(libclang prototypes). A stub appends `name(args)=ret;` to a log and answers from the seeded generator;
+pointers are logged as region id + offset (or a function-table id), `Vec3`/`Vec2`/small-struct pointees as
+their contents, `efSync_Spawn`'s variadic tail by a per-effect shape. Each function then runs on 400+
+synthetic game states: `Fighter`, the attribute blocks, `ftCommonData` and `HSD_JObj` are filled **by field
+kind** (libclang offsets: floats from a mixed distribution incl. boundary values, ints small, pointers
+fixed up to the world's objects, bitfields set by value because C packs LSB-first and `melee_types` keeps
+GC order). After the call the call log, the return value, the whole `Fighter` (pointers normalised, NaNs
+canonicalised, bitfield bytes masked and compared by value), the victim, attrs, the out-params are hashed
+(FNV-1a) into `tests/data/oracle_<stem>.txt`, **computed from C source only**. The generated Rust test
+repeats the fill and installs recording closures into every `ext` hook (and the legacy `crate::stubs`
+hooks for the earlier rounds' ports), so a port is equal when it makes the same calls with the same
+arguments, in the same order, and leaves the same state.
+* Floats: every fused site of `tools/rust-port/fma_sites.py` is written out (`fmadds`, `f64::mul_add`);
+  mutating an f32 fusion is caught (verified by hand-mutating), mutating an f64 fusion or a x1.0/x0.5
+  product is not (no input distinguishes them after the f32 rounding).
+* `--cov` rebuilds the driver with clang source coverage: region coverage is 100% for seven of the eight
+  TUs, 98.9% for `ftyoshispecials` (the missing 8 regions are infeasible `ABS()` arms inside branches
+  that fix the sign).
+* Guards for inputs the game never produces: `x % xA4` and an endless `while (angle > 2*pi)` in
+  `ftYs_SpecialAirSLoop_1_Anim` / `UpdateLoop1Rotation2` get a non-zero `xA4` / `total` in a per-function
+  `pre` hook; `ftParts_GetBoneIndex` answers 0..39.
+
+### Findings
+* Fusing makes a difference in this code: `0.7F * |x10| + |x10|` (`Loop_1_Anim`), the slope terms and the
+  `sin`/`cos` speed products of `ftZd_SpecialHi_8013A244`; an unfused port is caught by the oracle.
+* The earlier rounds' ports that call group 3 directly (`ftCommon_8007D5D4/D60C`, `ftCommon_Fall`,
+  `ftCommon_ClampAirDrift` in `stubs.rs`) could not be intercepted: they are now `stub_or!` hooks (same
+  default). Ports that used `melee_fighter::ftcommon::*` directly (Yoshi `ftYs_SpecialAir*S*_Phys`,
+  Zelda `AirHiStart_0_Phys` / `HiStart_1_Phys` / `AirHi_Phys`) were re-written over `ext` hooks in the
+  new TU modules.
+* `ftYoshiAttributes` and `ftYs_DatAttrs` are two C views of one attribute block; natively they have
+  different layouts (pointer members), so the native fill/port keeps each function on the type the C uses.
+  The DAT decode has to produce both views (or the C types be unified) before a real match runs.
+* Not ported: `ftZd_Init_MotionStateTable` (callback rows into unported TUs), the `UnkCostumeStruct`
+  BSS lists, `order_sdata2_0` (MUST_MATCH only); `stack_pad_hack` is a no-op (the C dereferences NULL
+  to pad the stack; not run by the oracle).
+* Stubbed callees (`ext` hooks, TODO until their TU is ported): 43, e.g. `Fighter_ChangeMotionState`,
+  `ftAnim_*`, `it_802B*`/`it_802F*` (Yoshi items), `ft_80082888/80082978/800824A0`, `efSync_Spawn`.

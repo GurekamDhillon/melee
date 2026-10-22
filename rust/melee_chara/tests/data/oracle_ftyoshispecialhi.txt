@@ -1,0 +1,18 @@
+hdr 11560 2072 10908 148 11384 2136 1928 10924
+ftYs_SpecialS_8012DF18 72e28e80416dbf84
+ftYs_SpecialS_8012DF8C 47c20ab63cbfa9ad
+ftYs_SpecialS_8012DF8C_outline 1e67bb3304122b39
+fn_8012E110 5459135359514ba3
+ftYs_SpecialS_8012E270 dab8c745a8920aef
+ftYs_SpecialHi_Coll 10d05e79f7fe6552
+ftYs_SpecialAirHi_Coll 107d5ee22b2ab9d9
+setDamageCallbacks 2c3045945ee5bd4a
+setAccessory4Callback ebba7572cc37eb74
+ftYs_SpecialHi_Enter 323791637712b1b9
+ftYs_SpecialAirHi_Enter 4b12d909bcdeb1eb
+fn_8012E3B4 92e010aa52e127df
+fn_8012E44C 2dbf8e97ded98b3e
+ftYs_SpecialHi_Anim c80ddc61bdd41530
+ftYs_SpecialAirHi_Anim 9ba31b9c5fa9dc32
+ftYs_SpecialHi_Phys 86c7f14e08f68561
+ftYs_SpecialAirHi_Phys d1e13454237ecd3b

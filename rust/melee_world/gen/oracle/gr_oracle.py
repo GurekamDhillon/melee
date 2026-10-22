@@ -32,6 +32,11 @@ sys.path.insert(0, str(ROOT / "rust/melee_chara/gen/oracle"))
 import oracle as O  # noqa: E402
 
 O.ROOT = ROOT
+# The shipping game TUs are compiled `clang --target=ppc32-none-eabi`: left-to-right evaluation of call arguments.
+# The MS C++ ABI of the x86_64-pc-windows-msvc target evaluates them right to left, so the oracle's C front end uses
+# the MinGW (Itanium) ABI of the same LLP64 data model; the object code is still produced for the MSVC target.
+assert O.COMMON[0] == "--target=x86_64-pc-windows-msvc"
+O.COMMON[0] = "--target=x86_64-pc-windows-gnu"
 K, T = O.K, O.T
 NGO = 6
 NJO = 3 * NGO + 6
@@ -214,6 +219,36 @@ def load_spec(stem):
     return m.SPEC
 
 
+def _find_field(t, name):
+    c = t.get_canonical()
+    decl = c.get_declaration()
+    decl = decl.get_definition() or decl
+    for ch in decl.get_children():
+        if ch.kind == K.FIELD_DECL and ch.spelling == name:
+            return ch.type.get_canonical()
+        if ch.kind in (K.STRUCT_DECL, K.UNION_DECL) and ch.is_anonymous_record_decl():
+            r = _find_field(ch.type, name)
+            if r is not None:
+                return r
+    return None
+
+
+def field_offset(pr, tname, path):
+    """Byte offset of a (dotted) member path inside a record, from libclang."""
+    t = pr.type(tname).get_canonical()
+    total = 0
+    for comp in path.split("."):
+        off = t.get_offset(comp)
+        if off < 0:
+            raise SystemExit(f"gro: no member {comp} in {t.spelling} ({off})")
+        total += off // 8
+        ft = _find_field(t, comp)
+        if ft is None:
+            raise SystemExit(f"gro: cannot find the type of {comp} in {t.spelling}")
+        t = ft
+    return total
+
+
 def kd_desc(kind, n, esz):
     return [(i * esz, esz, kind) for i in range(n)]
 
@@ -269,8 +304,17 @@ def build(stem, verbose_fn=None):
             raise SystemExit(f"gro: {f['name']} is not defined in {src}")
         fspecs.append(f)
 
+    drv_src = srcpath
+    if spec.get("c_patches"):
+        txt = (ROOT / src).read_text(encoding="utf-8", errors="ignore")
+        for old, new in spec["c_patches"]:
+            assert txt.count(old) == 1, f"gro: c_patch not found exactly once: {old[:60]}"
+            txt = txt.replace(old, new)
+        pc = O.BUILD / f"gro_{stem}_src.c"
+        pc.write_text(txt, encoding="utf-8", newline="\n")
+        drv_src = pc.as_posix()
     # ---- pass 1: undefined callees
-    head = [f'#include "{i}"' for i in includes] + ['#include "oracle.h"', f'#include "{srcpath}"']
+    head = [f'#include "{i}"' for i in includes] + ['#include "oracle.h"', f'#include "{drv_src}"']
     p1 = O.BUILD / f"gro_{stem}_p1.c"
     p1.write_text("\n".join(head) + "\nint main(void) { return 0; }\n", encoding="utf-8")
     obj1 = O.ship_obj(p1, f"gro_{stem}_p1")
@@ -346,20 +390,32 @@ def build(stem, verbose_fn=None):
     reg("HSD_JObj")
     # Ground variants by the Ground.u members they use
     def uset(f):
-        return tuple(sorted(f.get("u", spec.get("u", []))))
+        return (tuple(sorted(f.get("u", spec.get("u", [])))), tuple(f.get("ov", spec.get("ov", []))))
     usets = []
     for f in fspecs:
         u = uset(f)
         if u not in usets:
             usets.append(u)
     if not usets:
-        usets.append(())
-    for k, u in enumerate(usets):
+        usets.append(((), ()))
+    overlays_spec = spec.get("overlays", {})
+    for k, (u, ov) in enumerate(usets):
         def keep(p, u=u):
             if p == "u" or not p.startswith("u."):
                 return True
             return p.split(".")[1] in u
         reg(f"Ground_{k}", "Ground", "Ground", keep=keep)
+        TYPES[f"Ground_{k}"]["ov"] = []
+        for oid in ov:
+            o = overlays_spec[oid]
+            off = field_offset(pr, "Ground", o["path"])
+            size = pr.type(o["ty"]).get_size()
+            if o["ty"] not in TYPES:
+                reg(o["ty"])
+            d = [(a, b, c) for (a, b, c) in TYPES[f"Ground_{k}"]["desc"] if not (a < off + size and off < a + b)]
+            d.append((off, size, "b"))
+            TYPES[f"Ground_{k}"]["desc"] = d
+            TYPES[f"Ground_{k}"]["ov"].append((off, o["ty"]))
     gv_of = [usets.index(uset(f)) for f in fspecs]
     for g in spec.get("globals", []):
         reg(g["ty"])
@@ -393,7 +449,8 @@ def build(stem, verbose_fn=None):
             desc = kd_desc(st["kind"], n, KSIZE[st["kind"]])
         st = dict(st)
         st["desc"] = desc
-        st["fill"] = st["fill"] if "fill" in st else not st.get("ty")
+        st["const"] = st["const"] if "const" in st else (bool(st.get("ty")) and not st.get("fill", False))
+        st["fill"] = not st["const"]
         statics.append(st)
 
     # ---- emitters shared by C and Rust
@@ -433,20 +490,32 @@ def build(stem, verbose_fn=None):
         return "\n".join(L)
 
     def c_fill(expr, tag):
-        return f"ofill(&{expr}, F_{tag}, (int) NF_{tag}); " + (f"bf_fill_{tag}((void*) &{expr});" if TYPES[tag]["bf"] else "")
+        s_ = f"ofill(&{expr}, F_{tag}, (int) NF_{tag}); " + (f"bf_fill_{tag}((void*) &{expr});" if TYPES[tag]["bf"] else "")
+        for off, oty in TYPES[tag].get("ov", []):
+            s_ += f" bf_fill_{oty}((void*) ((unsigned char*) &{expr} + {off}));"
+        return s_
 
     def c_hash(expr, tag):
-        return f"h = img_hash(h, &{expr}, sizeof {expr}, D_{tag}, (int) ND_{tag}); " + (f"h = bf_hash_{tag}(h, (const void*) &{expr});" if TYPES[tag]["bf"] else "")
+        s_ = f"h = img_hash(h, &{expr}, sizeof {expr}, D_{tag}, (int) ND_{tag}); " + (f"h = bf_hash_{tag}(h, (const void*) &{expr});" if TYPES[tag]["bf"] else "")
+        for off, oty in TYPES[tag].get("ov", []):
+            s_ += f" h = bf_hash_{oty}(h, (const void*) ((const unsigned char*) &{expr} + {off}));"
+        return s_
 
     def rs_fill(expr, tag):
-        return f"ofill(addr_of_mut!({expr}) as *mut u8, F_{tag}); " + (f"bf_fill_{tag}(addr_of_mut!({expr}) as *mut {TYPES[tag]['c']});" if TYPES[tag]["bf"] else "")
+        s_ = f"ofill(addr_of_mut!({expr}) as *mut u8, F_{tag}); " + (f"bf_fill_{tag}(addr_of_mut!({expr}) as *mut {TYPES[tag]['c']});" if TYPES[tag]["bf"] else "")
+        for off, oty in TYPES[tag].get("ov", []):
+            s_ += f" bf_fill_{oty}((addr_of_mut!({expr}) as *mut u8).add({off}) as *mut {oty});"
+        return s_
 
     def rs_hash(expr, tag, size=None):
         base = f"core::slice::from_raw_parts(addr_of!({expr}) as *const u8, {size or f'core::mem::size_of_val(&*addr_of!({expr}))'})"
-        return f"h = img_hash(h, {base}, D_{tag}); " + (f"h = bf_hash_{tag}(h, addr_of!({expr}) as *const {TYPES[tag]['c']});" if TYPES[tag]["bf"] else "")
+        s_ = f"h = img_hash(h, {base}, D_{tag}); " + (f"h = bf_hash_{tag}(h, addr_of!({expr}) as *const {TYPES[tag]['c']});" if TYPES[tag]["bf"] else "")
+        for off, oty in TYPES[tag].get("ov", []):
+            s_ += f" h = bf_hash_{oty}(h, (addr_of!({expr}) as *const u8).add({off}) as *const {oty});"
+        return s_
 
     # ------------------------------------------------------------- the C driver
-    S = [f'#include "{i}"' for i in includes] + ['#include "oracle.h"', LG_STR_C, f'#include "{srcpath}"']
+    S = [f'#include "{i}"' for i in includes] + ['#include "oracle.h"', LG_STR_C, f'#include "{drv_src}"']
     S.append(spec.get("data_c", ""))
     if "__assert" in undef and "__assert" not in own:
         S.append('void __assert(const char* f, u32 l, const char* c) { printf("ASSERT %s:%u %s\\n", f, (unsigned) l, c); _flushall(); for (;;) { *(volatile int*) 0 = 1; } }')
@@ -499,7 +568,7 @@ static void* gen_ground(void) { u32 k = rnd() % (NGO + 1); return k ? (void*) &O
     for t in pools:
         S.append(f"    zero_bytes(OP_{t}, sizeof OP_{t});")
     for st in statics:
-        if st["fill"] or not st.get("ty"):
+        if not st["const"]:
             S.append(f"    zero_bytes(&{st['c']}, sizeof {st['c']});")
     S.append("    zero_bytes(OSCR, sizeof OSCR);")
     S.append("    for (i = 0; i < NGO; i++) { " + c_fill("OGO[i]", "HSD_GObj") + " }")
@@ -613,22 +682,23 @@ static u64_ word_hash(u64_ h, const void* p, unsigned n)
     return h;
 }
 """)
-    hw = ["static u64_ world_hash(int fi)\n{\n    u64_ h = FNV0;\n    int i;\n    (void) fi;",
-          "    for (i = 0; i < NGO; i++) { " + c_hash("OGO[i]", "HSD_GObj") + " }",
+    hw = ["static u64_ WH[64];\nstatic int NWH;\nstatic u64_ world_hash(int fi)\n{\n    u64_ h = FNV0;\n    int i;\n    (void) fi;\n    NWH = 0;",
+          "    for (i = 0; i < NGO; i++) { " + c_hash("OGO[i]", "HSD_GObj") + " }\n    WH[NWH++] = h;",
           "    for (i = 0; i < NGO; i++) {\n        switch (GVAR[fi]) {"]
     for k in range(len(usets)):
         hw.append(f"        case {k}: " + c_hash("OGP[i]", f"Ground_{k}") + " break;")
-    hw.append("        }\n    }")
-    hw.append("    for (i = 0; i < NJO; i++) { " + c_hash("OJO[i]", "HSD_JObj") + " }")
+    hw.append("        }\n    }\n    WH[NWH++] = h;")
+    hw.append("    for (i = 0; i < NJO; i++) { " + c_hash("OJO[i]", "HSD_JObj") + " }\n    WH[NWH++] = h;")
     for g in spec.get("globals", []):
-        hw.append("    " + c_hash(g["c"], g["ty"]))
+        hw.append("    " + c_hash(g["c"], g["ty"]) + " WH[NWH++] = h;")
     for t in pools:
-        hw.append("    " + c_hash(f"OP_{t}[0]", t) + " " + c_hash(f"OP_{t}[1]", t))
+        hw.append("    " + c_hash(f"OP_{t}[0]", t) + " " + c_hash(f"OP_{t}[1]", t) + " WH[NWH++] = h;")
     for i, st in enumerate(statics):
         hw.append(f"    h = img_hash(h, &{st['c']}, sizeof {st['c']}, D_st{i}, (int) ND_st{i});")
         if st.get("ty") and TYPES[st["ty"]]["bf"]:
             hw.append(f"    for (i = 0; i < {st.get('n', 1)}; i++) h = bf_hash_{st['ty']}(h, (const void*) ((const unsigned char*) &{st['c']} + i * sizeof({TYPES[st['ty']]['cs']})));")
-    hw.append("    h = word_hash(h, OSCR, sizeof OSCR);\n    return h;\n}")
+        hw.append("    WH[NWH++] = h;")
+    hw.append("    h = word_hash(h, OSCR, sizeof OSCR);\n    WH[NWH++] = h;\n    return h;\n}")
     S.append("\n".join(hw))
     hdr_items = ["(unsigned) sizeof(Ground)", "(unsigned) sizeof(HSD_GObj)", "(unsigned) sizeof(HSD_JObj)"]
     for g in spec.get("globals", []):
@@ -668,7 +738,7 @@ static u64_ word_hash(u64_ h, const void* p, unsigned n)
             h = hfl(h, (const float*) AV3, 6); h = hfl(h, (const float*) AV2, 4); h = hfl(h, APF, 2);
             h = fnv(h, API, sizeof API);
             if (vb)
-                printf("%d %016llx ret=%llx W=%016llx L=%016llx\\n  %s\\n", k, h, rv, hW, hO, LG);
+                { int q; printf("%d %016llx ret=%llx W=%016llx L=%016llx H=", k, h, rv, hW, hO); for (q = 0; q < NWH; q++) printf("%llx,", WH[q] & 0xFFFFFFull); printf("\\n  %s\\n", LG); }
             agg = fnv(agg, &h, 8);
         }
         if (!verbose) printf("%s %016llx\\n", fn->name, agg);
@@ -740,7 +810,7 @@ unsafe fn gen_ground() -> *mut c_void { let k = rnd() % (NGO as u32 + 1); if k !
     for t in pools:
         R.append(f"    OP_{t} = [[0; {(pools[t] + 7) // 8}]; 2];")
     for st in statics:
-        if st["fill"] or not st.get("ty"):
+        if not st["const"]:
             R.append(f"    core::ptr::write_bytes(addr_of_mut!({st['rs']}) as *mut u8, 0, core::mem::size_of_val(&*addr_of!({st['rs']})));")
     R.append("    OSCR = [[0; 64]; 4];")
     R.append("    for i in 0..NGO { " + rs_fill("OGO[i]", "HSD_GObj") + " }")
@@ -837,22 +907,24 @@ unsafe fn gen_ground() -> *mut c_void { let k = rnd() % (NGO as u32 + 1); if k !
     }
     h
 }""")
-    R.append("unsafe fn world_hash(fi: usize) -> u64 {\n    let mut h = FNV0;")
-    R.append("    for i in 0..NGO { " + rs_hash("OGO[i]", "HSD_GObj") + " }")
+    R.append("static mut WH: std::vec::Vec<u64> = std::vec::Vec::new();")
+    R.append("unsafe fn world_hash(fi: usize) -> u64 {\n    let mut h = FNV0;\n    WH.clear();")
+    R.append("    for i in 0..NGO { " + rs_hash("OGO[i]", "HSD_GObj") + " }\n    WH.push(h);")
     R.append("    for i in 0..NGO {\n        match GVAR[fi] {")
     for k in range(len(usets)):
         R.append(f"            {k} => {{ " + rs_hash("OGP[i]", f"Ground_{k}") + " }")
-    R.append("            _ => unreachable!(),\n        }\n    }")
-    R.append("    for i in 0..NJO { " + rs_hash("OJO[i]", "HSD_JObj") + " }")
+    R.append("            _ => unreachable!(),\n        }\n    }\n    WH.push(h);")
+    R.append("    for i in 0..NJO { " + rs_hash("OJO[i]", "HSD_JObj") + " }\n    WH.push(h);")
     for g in spec.get("globals", []):
-        R.append("    " + rs_hash(f"G_{g['c']}", g["ty"], pr.type(g["ty"]).get_size()))
+        R.append("    " + rs_hash(f"G_{g['c']}", g["ty"], pr.type(g["ty"]).get_size()) + " WH.push(h);")
     for t in pools:
-        R.append("    " + rs_hash(f"OP_{t}[0]", t) + " " + rs_hash(f"OP_{t}[1]", t))
+        R.append("    " + rs_hash(f"OP_{t}[0]", t) + " " + rs_hash(f"OP_{t}[1]", t) + " WH.push(h);")
     for i, st in enumerate(statics):
         R.append(f"    h = img_hash(h, core::slice::from_raw_parts(addr_of!({st['rs']}) as *const u8, core::mem::size_of_val(&*addr_of!({st['rs']}))), D_st{i});")
         if st.get("ty") and TYPES[st["ty"]]["bf"]:
             R.append(f"    for i in 0..{st.get('n', 1)} {{ h = bf_hash_{st['ty']}(h, (addr_of!({st['rs']}) as *const u8).add(i * core::mem::size_of::<{st['ty']}>()) as *const {st['ty']}); }}")
-    R.append("    h = word_hash(h, core::slice::from_raw_parts(addr_of!(OSCR) as *const u8, core::mem::size_of_val(&*addr_of!(OSCR))));\n    h\n}")
+        R.append("    WH.push(h);")
+    R.append("    h = word_hash(h, core::slice::from_raw_parts(addr_of!(OSCR) as *const u8, core::mem::size_of_val(&*addr_of!(OSCR))));\n    WH.push(h);\n    h\n}")
     sizes = ["core::mem::size_of::<Ground>()", "core::mem::size_of::<HSD_GObj>()", "core::mem::size_of::<HSD_JObj>()"]
     for g in spec.get("globals", []):
         sizes.append(f"core::mem::size_of::<{g['ty']}>()")
@@ -901,7 +973,8 @@ fn state_matches_c() {
                 h = fnv(h, &canon_f32_bytes(&a.pf));
                 h = fnv(h, bytes(&a.pi));
                 if vb {
-                    println!("{} {:016x} ret={:x} W={:016x} L={:016x}\\n  {}", k, h, rv, hw, ho, LG);
+                    let hs: std::vec::Vec<std::string::String> = WH.iter().map(|x| format!("{:x},", x & 0xFF_FFFF)).collect();
+                    println!("{} {:016x} ret={:x} W={:016x} L={:016x} H={}\n  {}", k, h, rv, hw, ho, hs.concat(), LG);
                 }
                 agg = fnv(agg, &h.to_le_bytes());
             }
@@ -956,6 +1029,36 @@ def rs_hook_install(name, rh, kinds, rk, ret_t, modpath, pool, va=None):
     return f"        melee_world::tu::{modpath}::ext::{rh['hook']} = Some(|{sig}|{rets} {{ {' '.join(body)} }});"
 
 
+def coverage(stem, src):
+    """llvm-cov report of the game .c under the generated driver (the driver built directly, without the shipping
+    lowering: float semantics are irrelevant to which lines run)."""
+    import os
+    drv = O.BUILD / f"gro_{stem}.c"
+    obj = O.BUILD / f"gro_{stem}_cov.obj"
+    exe = O.BUILD / f"gro_{stem}_cov.exe"
+    prof = O.BUILD / f"gro_{stem}.profraw"
+    pd = O.BUILD / f"gro_{stem}.profdata"
+    O.COMMON.extend(["-I", (ROOT / src).parent.as_posix()])
+    patched = O.BUILD / f"gro_{stem}_src.c"
+    cov_src = str(patched) if patched.exists() and load_spec(stem).get("c_patches") else str(ROOT / src)
+    flags = [a for a in O.COMMON if a != "-Wno-everything"]
+    ll = O.BUILD / f"gro_{stem}_cov.ll"
+    O.run([O.CLANG, *flags, "-w", "-O0", "-fprofile-instr-generate", "-fcoverage-mapping", "-S", "-emit-llvm", str(drv), "-o", str(ll)], "coverage ir")
+    O.run([O.CLANG, "--target=x86_64-pc-windows-msvc", "-O0", "-c", "-w", str(ll), "-o", str(obj)], "coverage compile")
+    O.run([O.CLANG, "--target=x86_64-pc-windows-msvc", "-fprofile-instr-generate", str(obj), str(O.gekko_obj()), "-o", str(exe),
+           "-fuse-ld=lld", "-Wl,/FORCE:UNRESOLVED", "-Wl,/IGNORE:4006", "-Wl,/IGNORE:4088"], "coverage link")
+    env = dict(os.environ, LLVM_PROFILE_FILE=str(prof))
+    subprocess.run([str(exe)], capture_output=True, text=True, check=True, env=env, timeout=900)
+    O.run([str(Path(O.CLANG).with_name("llvm-profdata.exe")), "merge", "-sparse", str(prof), "-o", str(pd)], "profdata")
+    r = O.run([str(Path(O.CLANG).with_name("llvm-cov.exe")), "report", str(exe), f"-instr-profile={pd}", "--show-functions", "--show-branch-summary",
+               cov_src], "llvm-cov")
+    print(r.stdout)
+    sh = O.run([str(Path(O.CLANG).with_name("llvm-cov.exe")), "show", str(exe), f"-instr-profile={pd}", "--show-branches=count",
+                "--show-line-counts-or-regions", cov_src], "llvm-cov show")
+    (O.BUILD / f"gro_{stem}_cov.txt").write_text(sh.stdout, encoding="utf-8")
+    print(f"gro: annotated source -> {O.BUILD / ('gro_' + stem + '_cov.txt')}")
+
+
 def main():
     args = sys.argv[1:]
     verbose_fn = None
@@ -969,10 +1072,7 @@ def main():
     args = [x for x in args if x != "--cov"]
     for stem in args:
         if cov:
-            import shutil
-            O.COMMON.extend(["-I", (ROOT / load_spec(stem)["src"]).parent.as_posix()])
-            shutil.copy(O.BUILD / f"gro_{stem}.c", O.BUILD / f"{stem}_oracle.c")
-            O.coverage(stem, load_spec(stem)["src"])
+            coverage(stem, load_spec(stem)["src"])
             continue
         build(stem, verbose_fn)
 

@@ -35,3 +35,19 @@ CONFIGS["gm_186E"] = dict(
     custom=["lbArchive_80016DBC", "lb_80011E24"],
     ginit={"HSD_GObj_JObjKind": "0x2A", "HSD_GObj_CameraKind": "0x2B", "HSD_GObj_LightKind": "0x2C", "HSD_GObj_FogKind": "0x2D"},
 )
+
+_VEC_GET = ("a1->x = rf(); a1->y = rf(); a1->z = rf();", "(*a1).x = rf(); (*a1).y = rf(); (*a1).z = rf();")
+_VEC_SET = ('TRF(a1->x); TRF(a1->y); TRF(a1->z); printf("\\n");', 'trf((*a1).x); trf((*a1).y); trf((*a1).z); out("\\n");')
+CONFIGS["gm_1879"] = dict(
+    src="src/melee/gm/gm_1879.c",
+    ret={"gm_GetButtonsTriggered": ("expr", "btn()", "btn()"),
+         "lb_8000B09C": ("ri", 2),
+         "lb_80011AC4": ("allocn", 64),
+         "lbAudioAx_80026E84": ("expr", "(ou64) (rnd() % 7) << 40", "((rnd() % 7) as u64) << 40"),
+         "gm_GetCurrentGameMode": ("expr", "(rnd() % 2) ? 28 : 5", "if rnd() % 2 != 0 { 28 } else { 5 }")},
+    effect={"HSD_GObjObject_80390A70": SETOBJ,
+            "HSD_CObjGetInterest": _VEC_GET, "HSD_CObjGetEyePosition": _VEC_GET,
+            "HSD_CObjSetInterest": _VEC_SET, "HSD_CObjSetEyePosition": _VEC_SET},
+    custom=["lbArchive_80016DBC"],
+    ginit={"HSD_GObj_JObjKind": "0x2A", "HSD_GObj_CameraKind": "0x2B", "HSD_GObj_LightKind": "0x2C", "HSD_GObj_FogKind": "0x2D"},
+)

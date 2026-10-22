@@ -45,6 +45,17 @@ pub struct gm_804736B0_t {
     pub xC: *mut HSD_JObj,
 }
 
+melee_core::gc_layout!(enterdata, "enterdata", size 0x8, align 4, [
+    x0 @ 0x0: 4 "int",
+    x4 @ 0x4: 4 "int",
+]);
+melee_core::gc_layout!(gm_804736B0_t, "gm_804736B0_t", size 0x10, align 4, [
+    x0 @ 0x0: 4 "int",
+    x4 @ 0x4: 4 "int",
+    x8 @ 0x8: 4 "HSD_JObj*",
+    xC @ 0xC: 4 "HSD_JObj*",
+]);
+
 pub static mut lbl_804D6610: *mut HSD_Archive = null_mut();
 pub static mut lbl_804D6614: *mut SceneDesc = null_mut();
 pub static mut lbl_804D6618: enterdata = enterdata { x0: 0, x4: 0 };
@@ -74,6 +85,14 @@ pub struct gm_80186F6C_Entry {
     pub x10: f32,
     pub x14: f32,
 }
+melee_core::gc_layout!(gm_80186F6C_Entry, "gm_80186F6C_Entry", size 0x18, align 4, [
+    x0 @ 0x0: 4 "f32",
+    x4 @ 0x4: 4 "f32",
+    x8 @ 0x8: 4 "f32",
+    xC @ 0xC: 4 "f32",
+    x10 @ 0x10: 4 "f32",
+    x14 @ 0x14: 4 "f32",
+]);
 const fn e(x0: f32, x4: f32, x8: f32, s: f32) -> gm_80186F6C_Entry {
     gm_80186F6C_Entry { x0, x4, x8, xC: s, x10: s, x14: s }
 }

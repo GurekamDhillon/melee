@@ -84,3 +84,23 @@ CONFIGS["gm_19EF"] = dict(
            ("lbl_80479A98.jobj_slots[i] = node;", "lbl_80479A98.x28.typed.jobjs[i - 10] = node;"),
            ("ptr = &((HSD_JObj**) &lbl_80479A98)[j = 10];\n        ptr += 10;", "ptr = &lbl_80479A98.x28.typed.jobjs[(j = 10) - 1];")],
 )
+
+CONFIGS["gm_181A"] = dict(
+    src="src/melee/gm/gm_181A.c",
+    ret={"Player_GetFalls": ("ri", 2), "Player_GetPlayerSlotType": ("ri", 4), "Player_GetTeam": ("ri", 3),
+         "gm_GetCurrentGameMode": ("expr", "0x21 + rnd() % 7", "0x21 + (rnd() % 7) as u8"),
+         "gm_8016AEEC": ("ri", 2), "gm_8016AEFC": ("expr", "(rnd() % 2) ? 0x3B : 0", "if rnd() % 2 != 0 { 0x3B } else { 0 }"),
+         "gm_GetFrameCount": ("ri", 5000), "gm_801A4BA8": ("expr", "gv()", "gv()"),
+         "gm_801BF6D8": ("ri", 4), "gm_801BF6F8": ("ri", 4), "Player_800368F8": ("ri", 2), "HSD_Randi": ("ri", 100),
+         "gmMainLib_8015D6BC": ("ri", 2), "gmMainLib_8015D710": ("ri", 2), "gmMainLib_8015DB00": ("ri", 4),
+         "gm_CKindToSelKind": ("ri", 27), "gm_MexVanillaKind": ("ri", 27), "Mex_Enabled": ("ri", 2),
+         "gm_GetCurrentSceneIndex": ("expr", "2 + rnd() % 3", "2 + (rnd() % 3) as i32"),
+         "Player_GetPlayerId": ("ri", 4), "Player_GetNametagSlotID": ("ri", 100),
+         "gm_GetButtonsTriggered": ("expr", "bt()", "bt()")},
+    effect={"gm_SetupPlayerDefaults": ("pid_randomize(a0);", "pid_randomize(a0);"),
+            "gm_8016EDDC": ("pid_print(a1);", "pid_print(a1);")},
+    custom=["lbArchive_80016DBC"],
+    ginit={},
+    patch=[("regclear_record_state* s = (regclear_record_state*) &lbl_80472ED8;",
+            "regclear_record_state* s = (regclear_record_state*) ((u8*) &lbl_80473594 - 0x6BC);")],
+)

@@ -32,20 +32,31 @@ pub fn rf() -> f32 {
 }
 
 pub const ARENA_SZ: usize = 1 << 22;
-#[repr(C, align(64))]
-pub struct Arena(pub [u8; ARENA_SZ]);
-pub static mut ARENA: Arena = Arena([0; ARENA_SZ]);
+extern "system" {
+    fn VirtualAlloc(addr: *mut u8, size: usize, ty: u32, prot: u32) -> *mut u8;
+}
+pub struct Arena(pub *mut u8);
+/// The arena lives below 4 GB at a fixed address: the game casts pointers through int/u32.
+pub static mut ARENA: Arena = Arena(core::ptr::null_mut());
+pub fn arena_init() {
+    unsafe {
+        if ARENA.0.is_null() {
+            ARENA.0 = VirtualAlloc(0x2000_0000usize as *mut u8, ARENA_SZ, 0x3000, 4);
+            assert!(!ARENA.0.is_null(), "arena_init failed");
+        }
+    }
+}
 pub static mut ARENA_USED: u64 = 64;
 pub fn arena_reset() {
     unsafe {
         let n = ARENA_USED as usize;
-        ARENA.0[..n].fill(0);
+        core::ptr::write_bytes(ARENA.0, 0, n);
         ARENA_USED = 64;
     }
 }
 pub fn az(n: usize) -> *mut u8 {
     unsafe {
-        let p = ARENA.0.as_mut_ptr().add(ARENA_USED as usize);
+        let p = ARENA.0.add(ARENA_USED as usize);
         ARENA_USED += (n as u64 + 15) & !15u64;
         p
     }
@@ -56,13 +67,13 @@ pub fn azr(n: usize) -> *mut u8 {
     p
 }
 pub fn dump_arena() {
-    unsafe { dump("arena", ARENA.0.as_ptr().add(64), ARENA_USED as usize - 64) }
+    unsafe { dump("arena", ARENA.0.add(64), ARENA_USED as usize - 64) }
 }
 pub fn az_t<T>() -> *mut T {
     az(core::mem::size_of::<T>()) as *mut T
 }
 pub fn arena_base() -> u64 {
-    unsafe { ARENA.0.as_ptr() as u64 }
+    unsafe { ARENA.0 as u64 }
 }
 
 static mut REGS: Vec<(&'static str, u64, u64)> = Vec::new();
@@ -76,6 +87,7 @@ pub fn reset_all() {
         OUT.clear();
         ORS = 1;
     }
+    arena_init();
     arena_reset();
 }
 pub fn reg<T>(name: &'static str, p: *const T, n: usize) {

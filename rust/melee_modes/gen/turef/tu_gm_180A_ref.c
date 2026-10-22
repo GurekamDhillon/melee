@@ -84,6 +84,7 @@ static void seed_e48(int smallx)
 int main(void)
 {
     int c, i;
+    arena_init();
     SIZE(struct lbl_80472E48_t);
     SIZE(HSD_GObj);
     SIZE(HSD_JObj);

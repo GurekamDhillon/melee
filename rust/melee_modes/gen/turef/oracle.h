@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 extern char* getenv(const char*);
+extern void exit(int);
 
 typedef unsigned long long ou64;
 typedef long long oi64;
@@ -40,22 +41,29 @@ static unsigned int fbits(float f) { union { float f; unsigned int u; } c; c.f =
 static ou64 dbits(double f) { union { double f; ou64 u; } c; c.f = f; return c.u; }
 
 #define ARENA_SZ (1u << 22)
-static unsigned char ARENA[ARENA_SZ] __attribute__((aligned(64)));
+extern void* VirtualAlloc(void*, unsigned long long, unsigned long, unsigned long);
+static unsigned char* ARENA_P;
+/* the arena lives below 4 GB at a fixed address: the game casts pointers through int/u32 */
+static void arena_init(void)
+{
+    if (!ARENA_P) ARENA_P = (unsigned char*) VirtualAlloc((void*) 0x20000000ull, ARENA_SZ, 0x3000, 4);
+    if (!ARENA_P) { printf("arena_init failed"); exit(9); }
+}
 static ou64 ARENA_USED = 64;
 static void arena_reset(void)
 {
-    memset(ARENA, 0, (unsigned long) ARENA_USED);
+    memset(ARENA_P, 0, (unsigned long) ARENA_USED);
     ARENA_USED = 64;
 }
 static void* AZ(ou64 n)
 {
-    void* p = ARENA + ARENA_USED;
+    void* p = ARENA_P + ARENA_USED;
     ARENA_USED += (n + 15) & ~15ull;
     return p;
 }
 
 static void* AZR(ou64 n);
-#define DUMPARENA() dump("arena", ARENA + 64, ARENA_USED - 64)
+#define DUMPARENA() dump("arena", ARENA_P + 64, ARENA_USED - 64)
 typedef struct { const char* name; const unsigned char* p; ou64 n; } OReg;
 static OReg OREGS[64];
 static int NOREG;
@@ -82,8 +90,8 @@ static void trp(const void* p)
     ou64 v = (ou64) (unsigned long long) p;
     int i;
     if (v == 0) { printf(" null"); return; }
-    if (v >= (ou64) (unsigned long long) ARENA && v < (ou64) (unsigned long long) ARENA + ARENA_SZ) {
-        printf(" a%llu", v - (ou64) (unsigned long long) ARENA);
+    if (v >= (ou64) (unsigned long long) ARENA_P && v < (ou64) (unsigned long long) ARENA_P + ARENA_SZ) {
+        printf(" a%llu", v - (ou64) (unsigned long long) ARENA_P);
         return;
     }
     for (i = 0; i < NOREG; i++) {
@@ -106,7 +114,7 @@ static void trs(const char* s)
     if (s == 0) { printf(" null"); return; }
     {
         ou64 v = (ou64) (unsigned long long) s;
-        if (v >= (ou64) (unsigned long long) ARENA && v < (ou64) (unsigned long long) ARENA + ARENA_SZ) { trp(s); return; }
+        if (v >= (ou64) (unsigned long long) ARENA_P && v < (ou64) (unsigned long long) ARENA_P + ARENA_SZ) { trp(s); return; }
     }
     printf(" \"%s\"", s);
 }
@@ -125,8 +133,8 @@ static void dump(const char* tag, const void* p, ou64 n)
             ou64 w = 0;
             int k;
             for (j = 0; j < 8; j++) w |= (ou64) b[i + j] << (8 * j);
-            if (w >= (ou64) (unsigned long long) ARENA && w < (ou64) (unsigned long long) ARENA + ARENA_SZ) {
-                w = 0xA0A0000000000000ull | (w - (ou64) (unsigned long long) ARENA);
+            if (w >= (ou64) (unsigned long long) ARENA_P && w < (ou64) (unsigned long long) ARENA_P + ARENA_SZ) {
+                w = 0xA0A0000000000000ull | (w - (ou64) (unsigned long long) ARENA_P);
             } else {
                 for (k = 0; k < NOREG; k++) {
                     ou64 base = (ou64) (unsigned long long) OREGS[k].p;

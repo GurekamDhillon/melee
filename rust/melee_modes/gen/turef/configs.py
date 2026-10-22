@@ -16,3 +16,12 @@ CONFIGS = {
 
 for _s in ("gm_181A", "gm_1832", "gm_186E", "gm_1879", "gm_1884", "gm_18A1", "gm_19EF"):
     CONFIGS.setdefault(_s, dict(src=f"src/melee/gm/{_s}.c"))
+
+CONFIGS["gm_18A1"] = dict(
+    src="src/melee/gm/gm_18A1.c",
+    ret={"Player_GetDamage": ("ri", 4),
+         "fn_8017E318": ("expr", "(int) (rnd() % 3) - 1", "(rnd() % 3) as i32 - 1"),
+         "gmMainLib_8015CDE0": ("allocr", 8),
+         "gm_GetFrameCount": ("expr", "rnd() % 0xA000", "rnd() % 0xA000"),
+         "gm_GetStartMeleeRules": ("expr", "&g_rules", "core::ptr::addr_of_mut!(G_RULES)")},
+)

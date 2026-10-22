@@ -51,3 +51,18 @@ CONFIGS["gm_1879"] = dict(
     custom=["lbArchive_80016DBC"],
     ginit={"HSD_GObj_JObjKind": "0x2A", "HSD_GObj_CameraKind": "0x2B", "HSD_GObj_LightKind": "0x2C", "HSD_GObj_FogKind": "0x2D"},
 )
+
+_MEMZERO = ("memset(a0, 0, (size_t) a1);", "core::ptr::write_bytes(a0 as *mut u8, 0, a1 as usize);")
+_ITEM_POS = ('TRF(a0->x); TRF(a0->y); TRF(a0->z); printf("\\n");', 'trf((*a0).x); trf((*a0).y); trf((*a0).z); out("\\n");')
+CONFIGS["gm_1884"] = dict(
+    src="src/melee/gm/gm_1884.c",
+    ret={"pl_8004134C": ("ri", 1200), "pl_80041300": ("ri", 1200), "pl_800412D0": ("ri", 1200),
+         "Player_GetPlayerCharacter": ("ri", 25),
+         "gm_GetDbPauseFlag": ("ri", 2), "lbLang_IsSettingUS": ("ri", 2), "lbLang_IsSavedLanguageUS": ("ri", 2),
+         "gm_801A36C0": ("expr", "btn()", "btn()"),
+         "Player_GetEntity": ("expr", "mkgobj()", "mkgobj()")},
+    effect={"HSD_GObjObject_80390A70": SETOBJ, "Stage_80224E64": _VEC_GET, "Player_800328D4": _VEC_SET,
+            "it_8026D258": _ITEM_POS, "memzero": _MEMZERO},
+    custom=["lbArchive_80016DBC", "lb_80011E24"],
+    ginit={"HSD_GObj_JObjKind": "0x2A", "HSD_GObj_CameraKind": "0x2B", "HSD_GObj_LightKind": "0x2C", "HSD_GObj_FogKind": "0x2D"},
+)

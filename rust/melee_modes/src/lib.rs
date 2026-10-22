@@ -76,3 +76,7 @@ impl GXColor {
     }
 }
 
+/// Settable hooks for callees outside the ported TUs (generated; see `gen/turef`).
+pub mod tu_ext;
+/// Helpers the per-TU ports share (JObj dirty hook, PPC bitfield accessors, dolphin pad consts).
+pub mod tu_util;

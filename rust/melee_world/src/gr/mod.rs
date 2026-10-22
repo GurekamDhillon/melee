@@ -7,3 +7,4 @@ pub mod trivial;
 pub mod forward;
 pub mod grlast;
 pub mod bgm;
+pub mod inlines;

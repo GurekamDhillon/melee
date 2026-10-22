@@ -560,3 +560,13 @@ generated from the C by `gen/cref/gen_tu.py` (libclang, the native flags of `ora
   character into the bitfield byte `EventData+0xB` (never in the real level data; the oracle avoids
   it); `gm_8016A404((s32) fnptr)` passes a function address as a 32-bit int (PPC-ism: a native
   callee cannot turn it back into a function; the trace names the function by its low 32 bits).
+
+## melee_world::tu: gr/grt*.c set C (shard 609-616)
+`grtpeach grtpichu grtpikachu grtpurin grtsamus grtseak grtyoshi grtzelda`, by the set-A/B generator
+(`GRT_SET=c bash rust/melee_world/cref/gen_grt_stages_ref.sh`; test `tests/tu_grt_stages_c.rs`, 60
+seeded cases per function, all 20 functions of each TU incl. the re-exported constant ones). New:
+`grtseak.c`'s TARGET_PC creator (`Mex_GrCallbacks` / `Mex_GrTrace`, fixture = a fake m-ex
+`StageCallbacks[4]` whose entries record their call; the "grtrace" OSReports carry `%p` args and are
+the separate ext `OSReport_grtrace`, traced by format only), `grtpurin.c`'s loop over the
+joint table (`lb_8000B1CC` recorder now returns x in 37.5..162.5 so both sides of `x < 130` run) and
+its `yakumono_param` reader; the TU-local `YakumonoParam` carries a `gc_layout!` GameCube table.

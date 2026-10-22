@@ -6,3 +6,5 @@ pub mod gm_1A36;
 pub mod gm_1B03;
 pub mod gm_1ADD;
 pub mod gmscmemcard;
+pub mod gm_1A33;
+pub mod gm_1A9B;

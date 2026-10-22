@@ -186,22 +186,22 @@ pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6528(g: *mut HSD_GObj) {
 
 /// `fn_800F6588` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6588(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_800F6588 (src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c) is not ported");
+    crate::tu::ftkirbyspecialn::fn_800F6588(g);
 }
 
 /// `fn_800F6638` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6638(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_800F6638 (src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c) is not ported");
+    crate::tu::ftkirbyspecialn::fn_800F6638(g);
 }
 
 /// `fn_800F66E8` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F66E8(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_800F66E8 (src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c) is not ported");
+    crate::tu::ftkirbyspecialn::fn_800F66E8(g);
 }
 
 /// `fn_800F6798` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
 pub unsafe extern "C" fn ftkirbyspecialn__fn_800F6798(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_800F6798 (src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c) is not ported");
+    crate::tu::ftkirbyspecialn::fn_800F6798(g);
 }
 
 /// `fn_800F6848` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).
@@ -301,17 +301,17 @@ pub unsafe extern "C" fn ftkirbyspecialn__ftKb_SpecialS_800F6BB0(g: *mut HSD_GOb
 
 /// `fn_8010C44C` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialpeach.c).
 pub unsafe extern "C" fn ftkirbyspecialpeach__fn_8010C44C(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_8010C44C (src/melee/ft/kinds/ftKirby/ftkirbyspecialpeach.c) is not ported");
+    crate::tu::ftkirbyspecialpeach::fn_8010C44C(g);
 }
 
 /// `ftKb_SpecialNPe_8010C47C` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialpeach.c).
 pub unsafe extern "C" fn ftkirbyspecialpeach__ftKb_SpecialNPe_8010C47C(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftKb_SpecialNPe_8010C47C (src/melee/ft/kinds/ftKirby/ftkirbyspecialpeach.c) is not ported");
+    crate::tu::ftkirbyspecialpeach::ftKb_SpecialNPe_8010C47C(g);
 }
 
 /// `fn_800F53AC` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecials.c).
 pub unsafe extern "C" fn ftkirbyspecials__fn_800F53AC(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_800F53AC (src/melee/ft/kinds/ftKirby/ftkirbyspecials.c) is not ported");
+    crate::tu::ftkirbyspecials::fn_800F53AC(g);
 }
 
 /// `fn_80106DB0` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c).

@@ -59,6 +59,7 @@ static u64 norm(u64 w) {
     if (w < 0x10000) return w;
     for (i = 0; i < f_n; i++) if (f_tab[i].addr == w) return f_tab[i].tag;
     for (i = 0; i < g_n; i++) if (w >= g_tab[i].addr && w < g_tab[i].addr + g_tab[i].size) return g_tab[i].tagbase | (w - g_tab[i].addr);
+    for (i = 0; i < g_n; i++) if (w == g_tab[i].addr + g_tab[i].size) return g_tab[i].tagbase | (w - g_tab[i].addr); /* one past the end */
     return w;
 }
 static u64 norm_ptr(u64 w) {
@@ -81,7 +82,7 @@ static u64 denorm(u64 w) {
 }
 
 /* ---- specs and the recorder -------------------------------------------------------------- */
-typedef struct { char name[96]; int kind; /*0 int 1 ptr 2 pool 3 seq 4 flt 5 dbl*/ s64 lo, hi; u64 val; u64 seq[16]; int nseq; } RetS;
+typedef struct { char name[96]; int kind; /*0 int 1 ptr 2 pool 3 seq 4 flt 5 dbl*/ s64 lo, hi; u64 val; u64 seq[256]; int nseq; } RetS;
 typedef struct { char name[96]; int idx; int nb; } ArgS;
 static RetS rets[64]; static int nrets;
 static ArgS outs[32]; static int nouts;

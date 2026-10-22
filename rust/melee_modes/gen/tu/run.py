@@ -26,9 +26,8 @@ CLANG = cref.CLANG
 
 # libc / compiler-support callees that keep their real implementation
 REAL = set("""sprintf snprintf vsprintf vsnprintf memcpy memset memmove memcmp strlen strcpy strncpy strcmp strncmp
-strcat strncat strchr strrchr strstr atoi atof abs labs fabs fabsf sqrt sqrtf floor floorf ceil ceilf fmod fmodf
-sin sinf cos cosf tan tanf atan atanf atan2 atan2f acos acosf asin asinf exp expf log logf pow powf
-sscanf toupper tolower isdigit isalpha isspace isupper islower strtol strtoul strtod qsort bsearch""".split())
+strcat strncat strchr strrchr strstr atoi sscanf toupper tolower isdigit isalpha isspace isupper islower
+strtol strtoul qsort bsearch abs labs""".split())
 
 # The shipping build is clang for powerpc (Itanium-style ABI): call arguments are evaluated left to
 # right. clang's msvc triple evaluates them right to left, so the front end runs with the gnu triple
@@ -217,8 +216,11 @@ def main():
     d.append("extern float rt_f32(rt_u64); extern double rt_f64(rt_u64); extern rt_u64 rt_f32bits(float); extern rt_u64 rt_f64bits(double); extern rt_u64 rt_normptr(rt_u64);")
     for i, name, argk, retk in funcs:
         a = []
+        pre = ""
         for k, c in enumerate(argk):
-            a.append({"i": f"a[{k}]", "p": f"(void*)(__UINTPTR_TYPE__)a[{k}]", "f": f"rt_f32(a[{k}])", "d": f"rt_f64(a[{k}])"}[c])
+            if c == "o":  # pointer to a local void* (zeroed): a cursor out-parameter
+                pre += f"void* o{k} = 0; "
+            a.append({"i": f"a[{k}]", "p": f"(void*)(__UINTPTR_TYPE__)a[{k}]", "f": f"rt_f32(a[{k}])", "d": f"rt_f64(a[{k}])", "o": f"&o{k}"}[c])
         call = f"{name}({', '.join(a)})"
         body = {
             "v": f"{call}; return 0;",
@@ -231,7 +233,7 @@ def main():
             "f": f"return rt_f32bits({call});",
             "d": f"return rt_f64bits({call});",
         }[retk]
-        d.append(f"static rt_u64 th_{i}(const rt_u64* a) {{ (void)a; {body} }}")
+        d.append(f"static rt_u64 th_{i}(const rt_u64* a) {{ (void)a; {pre}{body} }}")
     d.append("int main(int argc, char** argv) {")
     d.append("  static const RtGlobal gs[] = {")
     for n, size, mode in globals_:

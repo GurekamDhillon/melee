@@ -46,7 +46,7 @@ UNKNOWN = set()
 def rs_type(t, ctx_const=False):
     # typedef name known to melee_types (but not the plain integer typedefs, mapped structurally)
     spell = t.spelling.replace("const ", "").replace("struct ", "").replace("enum ", "").replace("union ", "").strip()
-    if spell in KNOWN:
+    if spell in KNOWN and not re.fullmatch(r"[su](8|16|32|64)|f(32|64)", spell):
         return spell
     c = t.get_canonical()
     if c.kind in PRIM:
@@ -159,15 +159,27 @@ def main():
             print(f"// {st}{n}({args}) -> {r}  [{c.location.line}]{hint}")
     if "--ext" in want:
         print("// ---- callees not defined in this TU ----")
+        inl = []
         for n, d in sorted(called.items()):
             if n in defined_names or n.startswith("__builtin"):
                 continue
-            args = ", ".join(f"a{i}: {rs_type(a.type)}" for i, a in enumerate(d.get_arguments()))
+            df = d.get_definition()
+            if df is not None and df.location.file and Path(df.location.file.name).resolve() != here and df.storage_class == ci.StorageClass.STATIC:
+                inl.append((n, df.location.file.name.replace(str(ROOT) + os.sep, ""), df.location.line))
+                continue
+            RESERVED = {"type", "ref", "in", "fn", "mod", "use", "as", "box", "loop", "move", "match", "impl", "self", "where", "unsafe", "static", "const", "let", "mut", "pub", "struct", "enum", "trait", "yield", "dyn"}
+            def pname(i, a):
+                nm = a.spelling or f"a{i}"
+                return "_" + nm if nm in RESERVED else nm
+            args = ", ".join(f"{pname(i, a)}: {rs_type(a.type)}" for i, a in enumerate(d.get_arguments()))
             if d.type.kind == K.FUNCTIONPROTO and d.type.is_function_variadic():
                 args += (", " if args else "") + "/* ... */"
             r = rs_type(d.result_type)
             hint = f"  // ported: {', '.join(ported[n][:2])}" if n in ported else ""
             print(f"        fn {n}({args}) -> {r};{hint}")
+        print("// ---- header inlines used (port them, they are not callees) ----")
+        for n, f, l in inl:
+            print(f"//   {n}  {f}:{l}")
     if "--globals" in want:
         print("// ---- globals ----")
         for n, (d, users) in sorted(gvars.items()):

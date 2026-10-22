@@ -336,6 +336,23 @@ macro_rules! globals {
     (@mode ro) => { $crate::oracle::GMode::Ro };
 }
 
+/// Registers globals that another file of `tu/` owns (declared `extern` in this TU's C):
+/// `globals_ext! { rw gm_804D679C = super::gmregtyfall::gm_804D679C: *mut HSD_Archive; }`.
+#[macro_export]
+macro_rules! globals_ext {
+    ($( $mode:ident $name:ident = $path:path : $t:ty; )*) => {
+        /// The externally-owned globals this file reads or writes, for the state oracle.
+        pub fn oracle_globals_ext() -> Vec<$crate::oracle::GlobalDesc> {
+            vec![ $( $crate::oracle::GlobalDesc {
+                name: stringify!($name),
+                addr: core::ptr::addr_of!($path) as *mut u8,
+                size: core::mem::size_of::<$t>(),
+                mode: $crate::globals!(@mode $mode),
+            } ),* ]
+        }
+    };
+}
+
 // ------------------------------------------------------------------------------------------
 // the recorder (mirrors gen/tu/rt.c)
 // ------------------------------------------------------------------------------------------
@@ -396,7 +413,8 @@ impl Rec {
         let i = self.globs.partition_point(|e| e.0 <= w);
         if i > 0 {
             let (a, s, t) = self.globs[i - 1];
-            if w < a + s {
+            // one-past-the-end pointers (loop cursors) belong to the global they end
+            if w <= a + s {
                 return t | (w - a);
             }
         }
@@ -619,6 +637,9 @@ impl Case {
     pub fn ret_seq<T>(&mut self, callee: &str, ps: &[*mut T]) {
         self.specs.ret.push((callee.into(), RetSpec::Seq(ps.iter().map(|&p| p as usize as u64).collect())));
     }
+    pub fn ret_seq_u64(&mut self, callee: &str, vals: &[u64]) {
+        self.specs.ret.push((callee.into(), RetSpec::Seq(vals.to_vec())));
+    }
     pub fn ret_flt(&mut self, callee: &str, lo: f32, hi: f32) {
         self.specs.ret.push((callee.into(), RetSpec::Flt(lo.to_bits(), hi.to_bits())));
     }
@@ -639,7 +660,8 @@ impl Case {
 /// One function under test.
 pub struct FuncDef {
     pub name: &'static str,
-    /// argument kinds, one char each: i = integer, p = pointer, f = f32, d = f64
+    /// argument kinds, one char each: i = integer, p = pointer, f = f32, d = f64, o = pointer to a
+    /// local zeroed pointer (the case carries a dummy 0 for it)
     pub argk: &'static str,
     /// return kind: v, i8/i16/i32/i64/b (bool), p, f, d
     pub retk: &'static str,
@@ -1021,6 +1043,111 @@ impl Case {
             core::ptr::null_mut()
         } else {
             self.buf(n)
+        }
+    }
+}
+
+/// Builders for the HSD object graphs the gm TUs walk (random scalars, valid links).
+pub mod build {
+    use super::Case;
+    use core::ffi::c_void;
+    use core::ptr::null_mut;
+    use melee_types::*;
+
+    impl Case {
+        /// A GObj whose `hsd_obj` is `obj` (all links null, other scalars random).
+        pub fn gobj(&mut self, obj: *mut c_void) -> *mut HSD_GObj {
+            let g = self.obj::<HSD_GObj>();
+            unsafe {
+                (*g).next = null_mut();
+                (*g).prev = null_mut();
+                (*g).next_gx = null_mut();
+                (*g).prev_gx = null_mut();
+                (*g).proc = null_mut();
+                (*g).user_data = null_mut();
+                (*g).x34_unk = null_mut();
+                (*g).hsd_obj = obj;
+            }
+            g
+        }
+        /// A GObj with a random 0x40-byte HSD object behind it.
+        pub fn gobj_any(&mut self) -> *mut HSD_GObj {
+            let o = self.buf(0x40).cast();
+            self.gobj(o)
+        }
+        /// A JObj with null links and no quaternion flag (the setters assert on it).
+        pub fn jobj(&mut self) -> *mut HSD_JObj {
+            let j = self.obj::<HSD_JObj>();
+            unsafe {
+                (*j).next = null_mut();
+                (*j).parent = null_mut();
+                (*j).child = null_mut();
+                (*j).aobj = null_mut();
+                (*j).robj = null_mut();
+                (*j).scl = null_mut();
+                (*j).flags &= !(JOBJ_USE_QUATERNION as u32);
+            }
+            j
+        }
+        /// `depth` nested children below a root (depth 0 = just the root); each child has a `next`
+        /// sibling.
+        pub fn jobj_chain(&mut self, depth: usize) -> *mut HSD_JObj {
+            let root = self.jobj();
+            let mut cur = root;
+            for _ in 0..depth {
+                let ch = self.jobj();
+                let sib = self.jobj();
+                unsafe {
+                    (*cur).child = ch;
+                    (*ch).parent = cur;
+                    (*ch).next = sib;
+                    (*sib).parent = cur;
+                }
+                cur = ch;
+            }
+            root
+        }
+        /// A SceneDesc with one camera (desc + one anim), a light list, one model, one fog.
+        pub fn scene_desc(&mut self) -> *mut SceneDesc {
+            let sd = self.zobj::<SceneDesc>();
+            let cams = self.zobj::<SceneCameraDesc>();
+            let anims = self.zbuf(16) as *mut *mut HSD_CameraAnim;
+            unsafe {
+                (*cams).desc = self.buf(0x40).cast();
+                *anims = self.buf(0x20).cast();
+                (*cams).anims = anims;
+                (*sd).cameras = cams;
+                let ll = self.zobj::<LightList>();
+                (*ll).desc = self.buf(0x20).cast();
+                let la = self.zbuf(16) as *mut *mut HSD_LightAnim;
+                *la = self.buf(0x20).cast();
+                (*ll).anims = la;
+                let lls = self.zbuf(16) as *mut *mut LightList;
+                *lls = ll;
+                (*sd).lights = lls;
+                (*sd).models = self.zbuf(16).cast();
+                let m = self.zobj::<DynamicModelDesc>();
+                (*m).joint = self.buf(0x40).cast();
+                *(*sd).models = m;
+                let fogs = self.zobj::<SceneFogDesc>();
+                (*fogs).desc = self.buf(0x20).cast();
+                let fa = self.zbuf(16) as *mut *mut HSD_CameraAnim;
+                *fa = self.buf(0x30).cast();
+                (*fogs).anims = fa;
+                (*sd).fogs = fogs;
+            }
+            sd
+        }
+        /// An AObj with `curr_frame` and `end_frame` small whole numbers.
+        pub fn aobj(&mut self) -> *mut HSD_AObj {
+            let a = self.obj::<HSD_AObj>();
+            unsafe {
+                (*a).curr_frame = self.rng.range(0, 40) as f32;
+                (*a).end_frame = self.rng.range(0, 40) as f32;
+                (*a).fobj = null_mut();
+                (*a).hsd_obj = null_mut();
+            }
+            a
         }
     }
 }

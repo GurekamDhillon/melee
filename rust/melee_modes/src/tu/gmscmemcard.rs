@@ -12,16 +12,16 @@
 use core::ffi::c_void;
 use melee_types::*;
 
-/// `exitData` (gmscmemcard.c), GameCube size 2.
+/// `exitData` (gmscmemcard.c), GameCube size 8 (`bool` is `int` in this codebase, MSL/stdbool.h).
 #[repr(C)]
 #[derive(Clone, Copy, Default, PartialEq, Debug)]
 pub struct exitData {
-    pub unk0: u8,
+    pub unk0: i32,
     pub mode_id: u8,
 }
-melee_core::gc_layout!(exitData, "exitData", size 2, align 1, [
-    unk0 @ 0x0: 1 "bool",
-    mode_id @ 0x1: 1 "u8",
+melee_core::gc_layout!(exitData, "exitData", size 8, align 4, [
+    unk0 @ 0x0: 4 "bool",
+    mode_id @ 0x4: 1 "u8",
 ]);
 
 /// `struct enterData_x0_t` (gmscmemcard.c), GameCube size 8.
@@ -40,7 +40,7 @@ melee_core::gc_layout!(enterData_x0_t, "enterData_x0_t", size 8, align 4, [
     mode_id @ 0x5: 1 "u8",
 ]);
 
-/// `enterData` (gmscmemcard.c), GameCube size 0x18.
+/// `enterData` (gmscmemcard.c), GameCube size 0x20.
 #[repr(C)]
 #[derive(Clone, Copy, Default, PartialEq, Debug)]
 pub struct enterData {
@@ -49,16 +49,16 @@ pub struct enterData {
     pub unk10: i32,
     /// `tickDecision`: the prompt (0..=20).
     pub decision: i32,
-    pub unk18: u8,
+    pub unk18: i32,
     pub unk1C: u8,
 }
-melee_core::gc_layout!(enterData, "enterData", size 0x18, align 4, [
+melee_core::gc_layout!(enterData, "enterData", size 0x20, align 4, [
     unk0 @ 0x0: 8 "struct enterData_x0_t",
-    unk8 @ 0x8: 2 "exitData",
-    unk10 @ 0xC: 4 "int",
-    decision @ 0x10: 4 "tickDecision",
-    unk18 @ 0x14: 1 "bool",
-    unk1C @ 0x15: 1 "u8",
+    unk8 @ 0x8: 8 "exitData",
+    unk10 @ 0x10: 4 "int",
+    decision @ 0x14: 4 "tickDecision",
+    unk18 @ 0x18: 4 "bool",
+    unk1C @ 0x1C: 1 "u8",
 ]);
 
 pub const tickDecision_1: i32 = 1;

@@ -137,10 +137,10 @@ fn matches_c() {
                 t::enter_data.unk0.unk0 = (r.rnd() % 3) as i32;
                 t::enter_data.unk0.chan = (r.rnd() % 2) as u8;
                 t::enter_data.unk0.mode_id = r.rnd() as u8;
-                t::enter_data.unk8.unk0 = (r.rnd() % 2) as u8;
+                t::enter_data.unk8.unk0 = (r.rnd() % 2) as i32;
                 t::enter_data.unk8.mode_id = r.rnd() as u8;
                 t::enter_data.unk10 = (r.rnd() % 2) as i32;
-                t::enter_data.unk18 = (r.rnd() % 2) as u8;
+                t::enter_data.unk18 = (r.rnd() % 2) as i32;
                 t::enter_data.unk1C = (r.rnd() % 2) as u8;
                 t::gm_804D6870 = (r.rnd() % 2) as u8;
                 t::gm_804D6872 = (6 + r.rnd() % 19) as u16;

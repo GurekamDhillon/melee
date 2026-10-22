@@ -44,6 +44,16 @@ pub struct gm_controller_map {
     pub x2C: i32,
 }
 
+melee_core::gc_layout!(gm_controller_map, "gm_controller_map", size 0x30, align 8, [
+    button @ 0x0: 8 "u64",
+    trigger @ 0x8: 8 "u64",
+    repeat @ 0x10: 8 "u64",
+    release @ 0x18: 8 "u64",
+    repeat2 @ 0x20: 8 "u64",
+    repeat_timer @ 0x28: 4 "s32",
+    x2C @ 0x2C: 4 "s32",
+]);
+
 /// `static struct controller_map` (gm_1A36.static.h), GameCube size 0x100.
 #[repr(C)]
 #[derive(Clone, Copy)]
@@ -57,6 +67,17 @@ pub struct controller_map_t {
     pub xFC: u16,
     pub xFE: u8,
 }
+
+melee_core::gc_layout!(controller_map_t, "controller_map", size 0x100, align 8, [
+    x0 @ 0x0: 0xF0 "struct gm_controller_map[5]",
+    xF0 @ 0xF0: 4 "void (*)(int)",
+    xF4 @ 0xF4: 2 "u16",
+    xF6 @ 0xF6: 1 "u8",
+    xF8 @ 0xF8: 2 "u16",
+    xFA @ 0xFA: 1 "u8",
+    xFC @ 0xFC: 2 "u16",
+    xFE @ 0xFE: 1 "u8",
+]);
 
 /// `static struct controller_map controller_map;` (zeroed at boot).
 pub static mut controller_map: controller_map_t = controller_map_t {

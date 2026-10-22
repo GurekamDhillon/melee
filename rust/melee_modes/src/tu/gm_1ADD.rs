@@ -1,6 +1,6 @@
 //! src/melee/gm/gm_1ADD.c: the notice window ("NtMsgWin") used by the memory-card scene: a linked list of
 //! message boxes (`gm_803DD4D0`), each with a list of buttons, built from the archive's joints and SIS text.
-//! All 14 functions are checked against the C by a state oracle (tests/tu_gm_1ADD.rs over
+//! All 12 functions (and the `get_master_status` / `get_copy_status` inlines) are checked against the C by a state oracle (tests/tu_gm_1ADD.rs over
 //! gen/turef/tu_gm_1ADD_ref.c): the game's gm_1ADD.c compiled natively (shipping contraction) with the engine
 //! calls stubbed and logged; the list, the objects the functions touch and the callee log are compared.
 //! The four `fmuladd` sites of `gm_801AE050` (`2.2F * x - 1.0F`, `2.232143F * -y - 1.3F`) are fused as

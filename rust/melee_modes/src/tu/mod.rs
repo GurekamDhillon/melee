@@ -8,3 +8,5 @@ pub mod gm_1ADD;
 pub mod gmscmemcard;
 pub mod gm_1A33;
 pub mod gm_1A9B;
+pub mod gm_1A7A;
+pub mod gm_1A3F;

@@ -92,3 +92,6 @@ pub mod ftmarsspeciallw;
 pub mod ftmarsspecialn;
 pub mod ftmarsspecials;
 pub mod ftmasterhand;
+pub mod ftzeldaspecialn;
+pub mod ftzeldaspeciallw;
+pub mod ftzeldaspecials;

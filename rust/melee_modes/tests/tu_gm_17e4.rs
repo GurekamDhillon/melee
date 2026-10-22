@@ -8,6 +8,8 @@ use melee_modes::tu::gm_17e4 as m;
 use melee_modes::tu::ext_hook::EXT_HOOK;
 use melee_types as Q;
 use core::ffi::c_void;
+#[repr(C, align(16))]
+struct A16([u8; 64]);
 
 static mut MO_gmMainLib_8015CDD4: Q::gmm_x0_528_t = unsafe { core::mem::zeroed() };
 static mut MO_gmVs_GetSceneController: Q::VsSceneController = unsafe { core::mem::zeroed() };
@@ -1474,6 +1476,7 @@ fn tu_gm_17e4_matches_c() {
         if got[..] != want[..] {
             e.1 += 1;
             if e.1 <= 2 { bad.push(format!("{name} seed {seed:x}: C {want:x?} Rust {got:x?}")); }
+            if e.1 == 1 && std::env::var("TU_OBJS").is_ok() { unsafe { eprintln!("MISMATCH {name} {seed:x}"); for (k, h) in rt::OBJ_HASH.iter().enumerate() { eprintln!("  rust obj {} {:x} size {}", rt::REGS[k].name, h, rt::REGS[k].size); } } }
         }
     }
     for (n, (t, b)) in &by_fn { if *b != 0 { eprintln!("FAIL {n}: {b}/{t} cases differ"); } }

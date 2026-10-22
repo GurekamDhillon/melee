@@ -131,10 +131,10 @@ pub mod ext {
         fn fn_80160710(a0: i32) -> u8;
         fn fn_801607A8(a0: i32) -> u8;
         fn fn_801607F4(a0: i32) -> u8;
-        fn fn_8017DEC8(a0: i32) -> *mut Unk1PData;
-        fn fn_8017DF28() -> *mut Unk1PData;
-        fn fn_8017E0E4() -> i32;
-        fn fn_8017E160() -> i32;
+        fn fn_8017DEC8(a0: i32) -> *mut Unk1PData = crate::tu::gm_17c0::fn_8017DEC8;
+        fn fn_8017DF28() -> *mut Unk1PData = crate::tu::gm_17c0::fn_8017DF28;
+        fn fn_8017E0E4() -> i32 = crate::tu::gm_17c0::fn_8017E0E4;
+        fn fn_8017E160() -> i32 = crate::tu::gm_17c0::fn_8017E160;
         fn gmMainLib_8015CCE4() -> *mut gmm_x0_44_t;
         fn gmMainLib_8015CEFC(a0: i32) -> i32;
         fn gmMainLib_8015CF94() -> i32;
@@ -183,7 +183,7 @@ pub mod ext {
         fn gm_8016B774() -> *mut MatchEnd;
         fn gm_801BEBC0(a0: u8) -> u8;
         fn gm_CKindToUnlockIndex(a0: CharacterKind) -> i8;
-        fn gm_GetAdventureData() -> *mut UnkAdventureData;
+        fn gm_GetAdventureData() -> *mut UnkAdventureData = crate::tu::gm_17e4::gm_GetAdventureData;
         fn gm_GetCKindByUnlockIndex(a0: i32) -> u8;
         fn gm_GetStartMeleeRules() -> *mut StartMeleeRules;
         fn gm_GetVsPlayMatchTotal() -> u32;

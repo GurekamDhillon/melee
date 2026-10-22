@@ -8,6 +8,8 @@ use melee_modes::tu::gm_16f1 as m;
 use melee_modes::tu::ext_hook::EXT_HOOK;
 use melee_types as Q;
 use core::ffi::c_void;
+#[repr(C, align(16))]
+struct A16([u8; 64]);
 
 static mut MO_fn_8017DEC8: Q::Unk1PData = unsafe { core::mem::zeroed() };
 static mut MO_fn_8017DF28: Q::Unk1PData = unsafe { core::mem::zeroed() };
@@ -36,7 +38,7 @@ static mut AB_fn_8016FFD4_0: [Q::MatchEnd; 1] = unsafe { core::mem::zeroed() };
 static mut AB_fn_80170110_ptr_0: [Q::MatchEnd; 1] = unsafe { core::mem::zeroed() };
 static mut AB_fn_801701C0_0: [Q::MatchEnd; 1] = unsafe { core::mem::zeroed() };
 static mut AB_fn_80171B64_0: [m::lbl_804D65A8_t; 1] = unsafe { core::mem::zeroed() };
-static mut AB_fn_80171BA4_0: [u8; 64] = [0; 64];
+static mut AB_fn_80171BA4_0: A16 = A16([0; 64]);
 
 unsafe fn h_HSD_SisLib_803A6368(a: &[u64]) -> u64 {
     rt::t_begin(0);
@@ -4139,15 +4141,15 @@ unsafe fn run_fn_80171B64(seed: u64) -> [u64; 3] {
 unsafe fn run_fn_80171BA4(seed: u64) -> [u64; 3] {
     rt::ST = seed; rt::MST = seed ^ 0x5DEECE66D; rt::TRACE = rt::FNV0; rt::REGS.truncate(rt::NSTATIC); rt::DYN.clear();
     fill_all();
-    for j in 0..64 { AB_fn_80171BA4_0[j] = rt::draw_int(&mut rt::ST) as u8; }
-    rt::reg_add(AB_fn_80171BA4_0.as_ptr(), 64, "arg0");
-    let a0 = AB_fn_80171BA4_0.as_mut_ptr();
+    for j in 0..64 { AB_fn_80171BA4_0.0[j] = rt::draw_int(&mut rt::ST) as u8; }
+    rt::reg_add(AB_fn_80171BA4_0.0.as_ptr(), 64, "arg0");
+    let a0 = AB_fn_80171BA4_0.0.as_mut_ptr();
     let r = m::fn_80171BA4(a0 as _);
     let ret = r as i64 as u64;
     let trace = rt::TRACE;
     hash_objs();
     let mut tot = rt::H;
-    rt::H = rt::FNV0; rt::h_bytes(AB_fn_80171BA4_0.as_ptr(), 64); rt::DYN.push(rt::H);
+    rt::H = rt::FNV0; rt::h_bytes(AB_fn_80171BA4_0.0.as_ptr(), 64); rt::DYN.push(rt::H);
     for h in rt::DYN.iter() { tot = rt::mix(tot, *h); }
     [ret, trace, tot]
 }
@@ -5076,6 +5078,7 @@ fn tu_gm_16f1_matches_c() {
         if got[..] != want[..] {
             e.1 += 1;
             if e.1 <= 2 { bad.push(format!("{name} seed {seed:x}: C {want:x?} Rust {got:x?}")); }
+            if e.1 == 1 && std::env::var("TU_OBJS").is_ok() { unsafe { eprintln!("MISMATCH {name} {seed:x}"); for (k, h) in rt::OBJ_HASH.iter().enumerate() { eprintln!("  rust obj {} {:x} size {}", rt::REGS[k].name, h, rt::REGS[k].size); } } }
         }
     }
     for (n, (t, b)) in &by_fn { if *b != 0 { eprintln!("FAIL {n}: {b}/{t} cases differ"); } }

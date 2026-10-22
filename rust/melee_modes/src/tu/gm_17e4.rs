@@ -35,7 +35,7 @@ pub mod ext {
         fn Player_GetPlayerCharacter(a0: i32) -> CharacterKind;
         fn Player_GetPlayerSlotType(a0: i32) -> Gm_PKind;
         fn Player_LoseStock(a0: i32);
-        fn fn_8017E318() -> i32;
+        fn fn_8017E318() -> i32 = crate::tu::gm_17c0::fn_8017E318;
         fn gmMainLib_8015CDD4() -> *mut gmm_x0_528_t;
         fn gmVs_GetSceneController() -> *mut VsSceneController;
         fn gm_GetCurrentGameMode() -> u8;

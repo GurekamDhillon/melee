@@ -34,7 +34,7 @@ pub mod ext {
     ext_fns! {
         fn Player_GetPlayerCharacter(a0: i32) -> CharacterKind;
         fn Player_GetPlayerSlotType(a0: i32) -> Gm_PKind;
-        fn fn_8017E318() -> i32;
+        fn fn_8017E318() -> i32 = crate::tu::gm_17c0::fn_8017E318;
         fn gmMainLib_8015CDC8() -> *mut gmm_x0_528_t;
         fn gm_GetCurrentGameMode() -> u8;
         fn gm_GetFrameCount() -> u32;

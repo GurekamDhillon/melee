@@ -38,8 +38,8 @@ pub mod ext {
         fn Toy_80305918(a0: i8, a1: i32, a2: i32);
         fn fn_80162CCC() -> i32;
         fn fn_80164B48() -> i32;
-        fn fn_80172C78(a0: i32) -> i32;
-        fn fn_8017DEC8(a0: i32) -> *mut Unk1PData;
+        fn fn_80172C78(a0: i32) -> i32 = crate::tu::gm_16f1::fn_80172C78;
+        fn fn_8017DEC8(a0: i32) -> *mut Unk1PData = crate::tu::gm_17c0::fn_8017DEC8;
         fn gmMainLib_8015D084(a0: u8) -> *mut i32;
         fn gmMainLib_8015D450(a0: u8) -> *mut i32;
         fn gmMainLib_8015D640() -> i32;
@@ -52,10 +52,10 @@ pub mod ext {
         fn gm_80160474(a0: CharacterKind, a1: GameModeKind) -> i32;
         fn gm_80162EC8() -> i32;
         fn gm_80164ABC() -> i32;
-        fn gm_801721EC() -> i32;
+        fn gm_801721EC() -> i32 = crate::tu::gm_16f1::gm_801721EC;
         fn gm_801BEBC0(a0: u8) -> u8;
         fn gm_CKindToSelKind(a0: u8) -> u8;
-        fn gm_GetAdventureData() -> *mut UnkAdventureData;
+        fn gm_GetAdventureData() -> *mut UnkAdventureData = crate::tu::gm_17e4::gm_GetAdventureData;
         fn gm_GetCurrentGameMode() -> u8;
         fn gm_GetPreviousGameMode() -> u8;
         fn gm_GetVsPlayMatchTotal() -> u32;

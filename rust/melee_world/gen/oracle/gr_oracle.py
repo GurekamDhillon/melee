@@ -249,6 +249,37 @@ def field_offset(pr, tname, path):
     return total
 
 
+def graph_code(graph):
+    """The `graph` DSL of a spec: random acyclic pointer structure over the typed static arrays, emitted for the
+    C driver and the Rust test with the same rnd() consumption order. Entries:
+      list    arr n field [z]          arr[i].field -> arr[i+1] (NULL 1 in z; the last is NULL)
+      pickfwd arr n field [z]          arr[i].field -> arr[j], j > i (NULL 1 in z)
+      pick    arr n field src m [z]    arr[i].field -> src[rnd % m] (NULL 1 in z; z = 0: never NULL)
+      set     arr n field c rs         arr[i].field = <c> / <rs> (i is the index)"""
+    C, R = [], []
+    for g in graph:
+        k, arr, n, fld = g["kind"], g["arr"], g["n"], g["field"]
+        z = g.get("z", 4)
+        nz_c = f"(rnd() % {z})" if z else "1"
+        nz_r = f"(rnd() % {z} != 0)" if z else "true"
+        if k == "list":
+            C.append(f"    for (i = 0; i < {n - 1}; i++) {arr}[i].{fld} = {nz_c} ? &{arr}[i + 1] : 0; {arr}[{n - 1}].{fld} = 0;")
+            R.append(f"    for i in 0..{n - 1} {{ {arr}[i].{fld} = if {nz_r} {{ addr_of_mut!({arr}[i + 1]) }} else {{ core::ptr::null_mut() }}; }} {arr}[{n - 1}].{fld} = core::ptr::null_mut();")
+        elif k == "pickfwd":
+            C.append(f"    for (i = 0; i < {n}; i++) {arr}[i].{fld} = (i < {n - 1} && {nz_c}) ? &{arr}[i + 1 + rnd() % ({n - 1} - i)] : 0;")
+            R.append(f"    for i in 0..{n} {{ {arr}[i].{fld} = if i < {n - 1} && {nz_r} {{ addr_of_mut!({arr}[i + 1 + (rnd() % ({n - 1} - i) as u32) as usize]) }} else {{ core::ptr::null_mut() }}; }}")
+        elif k == "pick":
+            src, m = g["src"], g["m"]
+            C.append(f"    for (i = 0; i < {n}; i++) {arr}[i].{fld} = {nz_c} ? (void*) &{src}[rnd() % {m}] : (void*) 0;")
+            R.append(f"    for i in 0..{n} {{ {arr}[i].{fld} = if {nz_r} {{ addr_of_mut!({src}[(rnd() % {m}) as usize]) as *mut _ }} else {{ core::ptr::null_mut() }}; }}")
+        elif k == "set":
+            C.append(f"    for (i = 0; i < {n}; i++) {arr}[i].{fld} = {g['c']};")
+            R.append(f"    for i in 0..{n} {{ {arr}[i].{fld} = {g['rs']}; }}")
+        else:
+            raise SystemExit(f"gro: unknown graph kind {k}")
+    return "\n".join(C), "\n".join(R)
+
+
 def kd_desc(kind, n, esz):
     return [(i * esz, esz, kind) for i in range(n)]
 
@@ -281,21 +312,26 @@ def build(stem, verbose_fn=None):
     variadic = {}
     csrc = (ROOT / src).read_text(encoding="utf-8", errors="ignore")
     for n, d in pr.funcs.items():
-        if d.type.kind == T.FUNCTIONPROTO and d.type.is_function_variadic() and not d.is_definition() and re.search(r"(?<!\w)" + n + r"(?!\w)", csrc):
+        if n not in spec.get("provides", []) and d.type.kind == T.FUNCTIONPROTO and d.type.is_function_variadic() and not d.is_definition() and re.search(r"(?<!\w)" + n + r"(?!\w)", csrc):
             variadic[n] = dict(nfixed=len(list(d.get_arguments())), va=spec.get("variadic", {}).get(n, "i"))
-    pre_lines = ["#include <stdarg.h>"] + own_inc
-    pre_lines.append("#define GNARG_(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,N,...) N")
-    pre_lines.append("#define GNARG(...) GNARG_(__VA_ARGS__, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)")
-    for n, v in variadic.items():
-        d = pr.funcs[n]
-        ps = ", ".join(O.c_param(a.type, i) if "(*)" in a.type.spelling else a.type.spelling for i, a in enumerate(d.get_arguments()))
-        pre_lines.append(f"static {d.result_type.spelling} {n}__va(int{', ' + ps if ps else ''}, ...);")
-        pre_lines.append(f"#define {n}(...) {n}__va(GNARG(__VA_ARGS__) - {v['nfixed']}, __VA_ARGS__)")
-    pre_lines.append(spec.get("pre_c", ""))
     pre_h = O.BUILD / f"gro_{stem}_pre.h"
     O.BUILD.mkdir(parents=True, exist_ok=True)
-    pre_h.write_text("\n".join(pre_lines) + "\n", encoding="utf-8")
-    includes = list(includes) + [pre_h.as_posix()]
+    base_includes = list(includes)
+
+    def make_pre():
+        pre_lines = ["#include <stdarg.h>"] + own_inc
+        pre_lines.append("#define GNARG_(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,N,...) N")
+        pre_lines.append("#define GNARG(...) GNARG_(__VA_ARGS__, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)")
+        for n, v in variadic.items():
+            d = pr.funcs[n]
+            ps = ", ".join(O.c_param(a.type, i) if "(*)" in a.type.spelling else a.type.spelling for i, a in enumerate(d.get_arguments()))
+            pre_lines.append(f"static {d.result_type.spelling} {n}__va(int{', ' + ps if ps else ''}, ...);")
+            pre_lines.append(f"#define {n}(...) {n}__va(GNARG(__VA_ARGS__) - {v['nfixed']}, __VA_ARGS__)")
+        pre_lines.append(spec.get("pre_c", ""))
+        pre_h.write_text("\n".join(pre_lines) + "\n", encoding="utf-8")
+
+    make_pre()
+    includes = base_includes + [pre_h.as_posix()]
     pr = GProbe(srcpath, includes)
     fspecs = []
     for f in spec["funcs"]:
@@ -307,18 +343,29 @@ def build(stem, verbose_fn=None):
     drv_src = srcpath
     if spec.get("c_patches"):
         txt = (ROOT / src).read_text(encoding="utf-8", errors="ignore")
-        for old, new in spec["c_patches"]:
-            assert txt.count(old) == 1, f"gro: c_patch not found exactly once: {old[:60]}"
+        for pat in spec["c_patches"]:
+            old, new = pat[0], pat[1]
+            cnt = pat[2] if len(pat) > 2 else 1
+            assert txt.count(old) == cnt, f"gro: c_patch found {txt.count(old)} times, expected {cnt}: {old[:60]}"
             txt = txt.replace(old, new)
         pc = O.BUILD / f"gro_{stem}_src.c"
         pc.write_text(txt, encoding="utf-8", newline="\n")
         drv_src = pc.as_posix()
-    # ---- pass 1: undefined callees
-    head = [f'#include "{i}"' for i in includes] + ['#include "oracle.h"', f'#include "{drv_src}"']
-    p1 = O.BUILD / f"gro_{stem}_p1.c"
-    p1.write_text("\n".join(head) + "\nint main(void) { return 0; }\n", encoding="utf-8")
-    obj1 = O.ship_obj(p1, f"gro_{stem}_p1")
-    nm = [l.split()[-1] for l in O.run([O.NM, "--undefined-only", str(obj1)], "nm").stdout.splitlines() if " U " in " " + l.strip() + " "]
+    # ---- pass 1: undefined callees (a variadic callee reached only through a macro, e.g. OSReport in
+    # HSD_ASSERTREPORT, is found here and the pass is repeated with its stub macro)
+    for _round in range(3):
+        head = [f'#include "{i}"' for i in includes] + ['#include "oracle.h"', f'#include "{drv_src}"']
+        p1 = O.BUILD / f"gro_{stem}_p1.c"
+        p1.write_text("\n".join(head) + "\nint main(void) { return 0; }\n", encoding="utf-8")
+        obj1 = O.ship_obj(p1, f"gro_{stem}_p1")
+        nm = [l.split()[-1] for l in O.run([O.NM, "--undefined-only", str(obj1)], "nm").stdout.splitlines() if " U " in " " + l.strip() + " "]
+        extra = [n for n in nm if n in pr.funcs and n not in variadic and n not in spec.get("provides", []) and pr.funcs[n].type.kind == T.FUNCTIONPROTO
+                 and pr.funcs[n].type.is_function_variadic() and not pr.funcs[n].is_definition()]
+        if not extra:
+            break
+        for n in extra:
+            variadic[n] = dict(nfixed=len(list(pr.funcs[n].get_arguments())), va=spec.get("variadic", {}).get(n, "i"))
+        make_pre()
     undef = sorted({(n[:-4] if n.endswith("__va") and n[:-4] in variadic else n) for n in nm if not n.startswith("__imp_")})
     gk = O.gekko_obj()
     gk_defs = {l.split()[-1] for l in O.run([O.NM, "--defined-only", str(gk)], "nm").stdout.splitlines() if l.strip()}
@@ -595,6 +642,8 @@ static void* gen_ground(void) { u32 k = rnd() % (NGO + 1); return k ? (void*) &O
         OJO[NGO + i].parent = &OJO[i];
         OJO[2 * NGO + i].parent = &OJO[i];
     }""")
+    gc_, gr_ = graph_code(spec.get("graph", []))
+    S.append(gc_)
     S.append(spec.get("links_c", ""))
     S.append("}")
     S.append("typedef struct { const char* name; int n; } OFn;\nstatic const OFn OFNS_[] = {")
@@ -837,6 +886,7 @@ unsafe fn gen_ground() -> *mut c_void { let k = rnd() % (NGO as u32 + 1); if k !
         OJO[NGO + i].parent = addr_of_mut!(OJO[i]);
         OJO[2 * NGO + i].parent = addr_of_mut!(OJO[i]);
     }""")
+    R.append(gr_)
     R.append(spec.get("links_rs", ""))
     R.append("}")
     R.append("struct Fn_ { name: &'static str, n: u32 }\nconst FNS: &[Fn_] = &[")

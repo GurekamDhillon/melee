@@ -1,4 +1,4 @@
-//! Group 6 per-TU ports (gmapproach, gmboot, gmcamera; tests/tu_<stem>.rs) plus the shard-465-472 ports below.
+// Group 6 per-TU ports (gmapproach, gmboot, gmcamera; tests/tu_<stem>.rs) plus the shard-465-472 ports below.
 pub mod gmapproach;
 pub mod gmboot;
 pub mod gmcamera;
@@ -49,3 +49,16 @@ pub mod gm_17eb;
 pub mod gm_16f1;
 pub mod gm_1798;
 pub mod gm_17c0;
+// One file per game translation unit (port rounds "shard"): src/melee/gm/<stem>.c -> tu/<stem>.rs.
+// Callees of unported TUs are `ext` stubs in each file; every file's functions are checked by the
+// state oracle (`crate::oracle`, `gen/tu/run.py`) against the C compiled natively.
+pub mod gmfrontend;
+pub mod gmprogressivemode;
+pub mod gmregcommon;
+pub mod gmregtyfall;
+
+pub mod gmregclear;
+pub mod gmregenddisp;
+pub mod gmresult;
+pub mod gmresultplayer;
+pub mod hsd;

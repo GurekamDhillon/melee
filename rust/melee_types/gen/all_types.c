@@ -800,3 +800,5 @@
 #include <melee/vi/vi1201v2.h>
 #include <melee/vi/vi1202.h>
 #include <melee/lb/lbanim.h>
+#include <melee/gm/gmresultplayer.static.h>
+#include <melee/gm/gmfrontend_items.h>

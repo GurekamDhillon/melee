@@ -12,7 +12,9 @@
 pub use melee_core;
 
 pub mod gm;
+pub mod oracle;
 /// Per-TU ports (game_tus.txt 457-464: gm/gmboot, gm/gmapproach, gm/gmcamera, gm/gmallstar, gm/gmadventure).
+/// Whole-TU ports (one file per game TU), verified by the state oracle (`oracle`, gen/tu).
 pub mod tu;
 pub mod hud;
 pub mod lb;

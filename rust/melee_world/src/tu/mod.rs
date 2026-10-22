@@ -1,3 +1,4 @@
+mod inl;
 pub mod cmsnap;
 pub mod camera;
 pub mod efdata;
@@ -5,3 +6,4 @@ pub mod eflib;
 pub mod efsync;
 pub mod efasync;
 pub mod efalt;
+pub mod ifcoget;

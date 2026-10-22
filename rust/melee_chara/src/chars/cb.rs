@@ -91,57 +91,57 @@ pub unsafe extern "C" fn ftfoxspeciallw__ftFx_SpecialLwHit_Enter(g: *mut HSD_GOb
 
 /// `ftGw_Init_OnDamage` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatch.c).
 pub unsafe extern "C" fn ftgamewatch__ftGw_Init_OnDamage(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftGw_Init_OnDamage (src/melee/ft/kinds/ftGameWatch/ftgamewatch.c) is not ported");
+    crate::tu::ftgamewatch::ftGw_Init_OnDamage(g);
 }
 
 /// `ftGw_Attack11_DecideAction` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatchattack11.c).
 pub unsafe extern "C" fn ftgamewatchattack11__ftGw_Attack11_DecideAction(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftGw_Attack11_DecideAction (src/melee/ft/kinds/ftGameWatch/ftgamewatchattack11.c) is not ported");
+    crate::tu::ftgamewatchattack11::ftGw_Attack11_DecideAction(g);
 }
 
 /// `ftGw_LandingAirB_Enter` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c).
 pub unsafe extern "C" fn ftgamewatchattackair__ftGw_LandingAirB_Enter(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftGw_LandingAirB_Enter (src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c) is not ported");
+    crate::tu::ftgamewatchattackair::ftGw_LandingAirB_Enter(g);
 }
 
 /// `ftGw_LandingAirHi_Enter` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c).
 pub unsafe extern "C" fn ftgamewatchattackair__ftGw_LandingAirHi_Enter(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftGw_LandingAirHi_Enter (src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c) is not ported");
+    crate::tu::ftgamewatchattackair::ftGw_LandingAirHi_Enter(g);
 }
 
 /// `ftGw_LandingAirN_Enter` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c).
 pub unsafe extern "C" fn ftgamewatchattackair__ftGw_LandingAirN_Enter(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftGw_LandingAirN_Enter (src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c) is not ported");
+    crate::tu::ftgamewatchattackair::ftGw_LandingAirN_Enter(g);
 }
 
 /// `ftGw_ItemTorchSetup` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatchattacks4.c).
 pub unsafe extern "C" fn ftgamewatchattacks4__ftGw_ItemTorchSetup(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftGw_ItemTorchSetup (src/melee/ft/kinds/ftGameWatch/ftgamewatchattacks4.c) is not ported");
+    crate::tu::ftgamewatchattacks4::ftGw_ItemTorchSetup(g);
 }
 
 /// `ftGw_SpecialHi_ItemRescueSetup` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatchspecialhi.c).
 pub unsafe extern "C" fn ftgamewatchspecialhi__ftGw_SpecialHi_ItemRescueSetup(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftGw_SpecialHi_ItemRescueSetup (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecialhi.c) is not ported");
+    crate::tu::ftgamewatchspecialhi::ftGw_SpecialHi_ItemRescueSetup(g);
 }
 
 /// `ftGw_SpecialN_CreateSausage` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatchspecialn.c).
 pub unsafe extern "C" fn ftgamewatchspecialn__ftGw_SpecialN_CreateSausage(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftGw_SpecialN_CreateSausage (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecialn.c) is not ported");
+    crate::tu::ftgamewatchspecialn::ftGw_SpecialN_CreateSausage(g);
 }
 
 /// `ftGw_SpecialS_ItemJudgementEnterHitlag` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatchspecials.c).
 pub unsafe extern "C" fn ftgamewatchspecials__ftGw_SpecialS_ItemJudgementEnterHitlag(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftGw_SpecialS_ItemJudgementEnterHitlag (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecials.c) is not ported");
+    crate::tu::ftgamewatchspecials::ftGw_SpecialS_ItemJudgementEnterHitlag(g);
 }
 
 /// `ftGw_SpecialS_ItemJudgementExitHitlag` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatchspecials.c).
 pub unsafe extern "C" fn ftgamewatchspecials__ftGw_SpecialS_ItemJudgementExitHitlag(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftGw_SpecialS_ItemJudgementExitHitlag (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecials.c) is not ported");
+    crate::tu::ftgamewatchspecials::ftGw_SpecialS_ItemJudgementExitHitlag(g);
 }
 
 /// `ftGw_SpecialS_ItemJudgementSetup` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatchspecials.c).
 pub unsafe extern "C" fn ftgamewatchspecials__ftGw_SpecialS_ItemJudgementSetup(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftGw_SpecialS_ItemJudgementSetup (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecials.c) is not ported");
+    crate::tu::ftgamewatchspecials::ftGw_SpecialS_ItemJudgementSetup(g);
 }
 
 /// `ftKb_Init_800EE74C` (defined in src/melee/ft/kinds/ftKirby/ftkirby.c).

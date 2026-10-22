@@ -75,3 +75,45 @@ CONFIGS["grpushon"]["effect"] = {
     "HSD_LObjGetPosition": _VEC_RAND_A1, "HSD_LObjGetInterest": _VEC_RAND_A1, "HSD_LObjGetColor": _COLOR_RAND,
     "lbVector_Sub": _VEC_SUB, "lbVector_Add": _VEC_ADD, "lbVector_Normalize": _VEC_NORM,
 }
+
+# ---- grrcruise ----------------------------------------------------------------------------------
+_VEC_DIFF = ("a2->x = a0->x - a1->x; a2->y = a0->y - a1->y; a2->z = a0->z - a1->z;",
+             "(*a2).x = (*a0).x - (*a1).x; (*a2).y = (*a0).y - (*a1).y; (*a2).z = (*a0).z - (*a1).z;")
+# nonzero positions: the cruise camera maths divides by their differences (0/0 NaN signs are the
+# hardware's business, not the port's)
+_OUT_A1A2_NZ = ("if (a1) { a1->x = rnz(); a1->y = rnz(); a1->z = rnz(); } if (a2) { a2->x = rnz(); a2->y = rnz(); a2->z = rnz(); }",
+                "if !a1.is_null() { (*a1).x = rnz(); (*a1).y = rnz(); (*a1).z = rnz(); } if !a2.is_null() { (*a2).x = rnz(); (*a2).y = rnz(); (*a2).z = rnz(); }")
+CONFIGS["grrcruise"]["patch"] = [
+    # the native Map_VanishEntry / grRCruise_Entry are wider than the 8-byte / 0x198-byte GC sizes
+    # the C allocates by: allocate by the native element sizes
+    ("gp->u.map.vanish = HSD_MemAlloc(sizeof(lbl_803E5014));",
+     "gp->u.map.vanish = HSD_MemAlloc(ARRAY_SIZE(lbl_803E5014) * sizeof(struct Map_VanishEntry));"),
+    ("gp->u.map.chikuwa = HSD_MemAlloc(sizeof(*gp->u.map.chikuwa));",
+     "gp->u.map.chikuwa = HSD_MemAlloc(17 * sizeof(struct grRCruise_Entry));\n"
+     "    gp->u.rcruise.entries = (struct grRCruise_Entry*) gp->u.map.chikuwa;"),
+    # the console overlays that native layouts break (see tu/grrcruise.rs): the same words
+    ("gp2->u.rcruise2.xEC = jgobj;", "gp2->u.rcruise2.xEC = jgobj;\n    gp2->u.scroll.anim_gobj = jgobj;"),
+]
+CONFIGS["grrcruise"]["ret"].update({
+    "Ground_GetStageGObj": ("expr", "a0 == 3 ? (G3 ? G3 : (G3 = mkgobj())) : ((GNULL && rnd() % 4 == 0) ? 0 : mkgobj())",
+                            "if a0 == 3 { if G3.is_null() { G3 = mkgobj(); } G3 } else if GNULL && rnd() % 4 == 0 { core::ptr::null_mut() } else { mkgobj() }"),
+    "Ground_GetMapGObj": ("expr", "(rnd() % 3 == 0) ? 0 : mkgobj()", "if rnd() % 3 == 0 { core::ptr::null_mut() } else { mkgobj() }"),
+    "Ground_GetYakumonoParam": ("expr", "mkyp()", "mkyp()"),
+    "Ground_801C3FA4": ("expr", "(JNULL && rnd() % 5 == 0) ? 0 : mkjtree(0)",
+                        "if JNULL && rnd() % 5 == 0 { core::ptr::null_mut() } else { mkjtree(0) }"),
+    "Ground_801C32D4": ("ri", 50),
+    "HSD_MemAlloc": ("expr", "AZ(a0)", "az(a0 as usize)"),
+    "HSD_Randi": _RANDI,
+    "HSD_Randf": ("expr", "(float) (rnd() % 1000) / 1000.0f", "(rnd() % 1000) as f32 / 1000.0"),
+    "HSD_JObjGetDObj": ("expr", "mkdobjs()", "mkdobjs()"),
+    "HSD_ArchiveGetPublicAddress": ("expr", "(rnd() % 3 == 0) ? 0 : AZ(16)", "if rnd() % 3 == 0 { core::ptr::null_mut() } else { az(16) as *mut _ }"),
+    "grDatFiles_GetArchive": ("expr", "(rnd() % 3 == 0) ? 0 : AZ(64)", "if rnd() % 3 == 0 { core::ptr::null_mut() } else { az(64) as *mut _ }"),
+    "grAnime_801C83D0": ("ri", 2), "Camera_8003118C": ("ri", 2),
+    "mpJointFromLine": ("expr", "(rnd() % 3 == 0) ? (int) (0x1B + rnd() % 20) : (int) (rnd() % 60)",
+                        "if rnd() % 3 == 0 { (0x1B + rnd() % 20) as i32 } else { (rnd() % 60) as i32 }"),
+    "lbVector_Sub": ("expr", "a0", "a0"), "lbVector_Add": ("expr", "a0", "a0"),
+})
+CONFIGS["grrcruise"]["effect"] = {
+    "lb_8000B1CC": _OUT_A1A2_NZ, "Stage_UnkSetVec3TCam_Offset": _VEC_RAND_A0,
+    "lbVector_Sub": _VEC_SUB, "lbVector_Add": _VEC_ADD, "lbVector_Diff": _VEC_DIFF,
+}

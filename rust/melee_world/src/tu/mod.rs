@@ -12,3 +12,4 @@ pub mod grtclink;
 pub mod grtdonkey;
 pub mod grstory;
 pub mod grpushon;
+pub mod grrcruise;

@@ -18,7 +18,7 @@ static HSD_JObj* mkjobj(void)
 /* Every Ground made since gr_reset(). The bitfield bytes of Ground (x10_flags, x11_flags) hold the
  * C compiler's bit order (LSB first natively, MSB first in melee_types), so the state hash sees
  * them only through gnd_canon_begin/end: the fields by value, the byte zeroed while hashing. */
-static Ground* GPS[16];
+static Ground* GPS[256];
 static int NGP;
 static void gr_reset(void)
 {
@@ -33,7 +33,7 @@ static Ground* mkground(void)
     return g;
 }
 /* zero-and-restore of arbitrary bitfield bytes (the TU driver prints the fields by value first) */
-static struct { unsigned char* p; int n; unsigned char sv[8]; } CBY[64];
+static struct { unsigned char* p; int n; unsigned char sv[8]; } CBY[2048];
 static int NCBY;
 static void canon_add(void* p, int n)
 {
@@ -52,7 +52,7 @@ static void canon_restore(void)
     for (i = 0; i < NCBY; i++) for (k = 0; k < CBY[i].n; k++) CBY[i].p[k] = CBY[i].sv[k];
     NCBY = 0;
 }
-static unsigned char GSV[16][2];
+static unsigned char GSV[256][2];
 static void gnd_canon_begin(void)
 {
     int i;
@@ -92,8 +92,12 @@ static void trfile(const char* s)
     const char* b = s;
     const char* p;
     if (s == 0) { printf(" null"); return; }
+    int n;
     for (p = s; *p; p++) if (*p == 47 || *p == 92) b = p + 1;
-    printf(" \"%s\"", b);
+    n = (int) strlen(b);
+    /* a patched TU is built as <stem>_tu.c (tu_shard585 config "patch"): print the game's name */
+    if (n > 5 && strcmp(b + n - 5, "_tu.c") == 0) printf(" \"%.*s.c\"", n - 5, b);
+    else printf(" \"%s\"", b);
 }
 /* variadic OSReport: the gr TUs pass %s (a __FILE__), %d values */
 void OSReport(char* fmt, ...)

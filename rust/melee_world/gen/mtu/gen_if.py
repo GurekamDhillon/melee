@@ -546,6 +546,9 @@ def build(stem, spec, want_ext):
         rret = "" if rcls == "void" else f" -> {rust_ty(rt)}"
         body_r = [f"t({sid[n]});"] + [(f"t(fi32(a{i} as u32));" if i in f32a else r_trace(arg_class(p), f"a{i}"))
                                       for i, p in enumerate(ptys)]
+        for di in spec.get("deref", {}).get(n, ()):
+            body_c.append(f"T(RH((const void*) a{di}, sizeof *a{di}));")
+            body_r.append(f"t(rh(unsafe {{ &*a{di} }}));")
         if n in eff:
             body_c.append(eff[n][0])
             body_r.append(eff[n][1])
@@ -559,7 +562,7 @@ def build(stem, spec, want_ext):
                 if rcls == "rec":
                     raise SystemExit(f"{n}: returns a struct by value; give a ret override")
             body_c.append(f"return ({ret_t}) ({rc});")
-            body_r.append(rr)
+            body_r.append(f"({rr}) as _" if n in ov and not rr.rstrip().endswith("as _") else rr)
         c_out.append(f"{ret_t} {n}({params}) {{ " + " ".join(body_c) + " }")
         argnames = ", ".join(f"a{i}" for i in range(len(ptys)))
         argl = ", ".join(f"a{i}" for i in range(len(ptys)))

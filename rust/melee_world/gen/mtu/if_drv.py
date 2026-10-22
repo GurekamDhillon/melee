@@ -48,6 +48,13 @@ def _static_paths(st, data):
 
 
 def helpers(tu, spec, c_out, r_tail, data):
+    """reset_state / hash_state / hash_init_state / preg_state (C and Rust).
+
+    statics entries: c (C name), rs (Rust path; default m::<c>, m::ext::<c> when ext), ty (record type: filled and
+    hashed field by field) or kind (ptr | int | f32 scalar, hashed by value / region id), n (array length), flat
+    (C element type, Rust element type: a multi-dimensional array walked as n flat elements), fill (arg token),
+    keep (constant table: never zeroed or filled), init (hashed once before the first case: checks the
+    initializer), region (registered for pointer ids)."""
     pools = spec.get("pools", {})
     sts = spec.get("statics", [])
     c = ["static void reset_state(void)", "{", "    int i;", "    (void) i;"]
@@ -63,19 +70,25 @@ def helpers(tu, spec, c_out, r_tail, data):
         r.append(f"    P_{tn} = core::mem::zeroed();")
         pc.append(f"    preg(P_{tn}, sizeof P_{tn});")
         pr.append(f"    preg(&raw const P_{tn}, core::mem::size_of_val(&*(&raw const P_{tn})));")
+
+    def elem(st, cn, rs, i):
+        """-> (C lvalue, Rust lvalue) of element i (or the whole object when not an array)."""
+        n = st.get("n")
+        flat = st.get("flat")
+        if flat:
+            return f"(({flat[0]}*) {cn})[{i}]", f"(*(&raw mut {rs} as *mut {flat[1]}).add({i}))"
+        if n:
+            return f"{cn}[{i}]", f"{rs}[{i}]"
+        return cn, rs
+
     for st in sts:
         cn, rs = _static_paths(st, data)
         n = st.get("n")
-        if st.get("ty") or st.get("zero") or st.get("kind"):
-            if n:
-                c.append(f"    zero({cn}, sizeof {cn});")
-                r.append(f"    {rs} = core::mem::zeroed();")
-            else:
-                c.append(f"    zero(&{cn}, sizeof {cn});")
-                r.append(f"    {rs} = core::mem::zeroed();")
+        if (st.get("ty") or st.get("zero") or st.get("kind")) and not st.get("keep"):
+            c.append(f"    zero({'' if n else '&'}{cn}, sizeof {cn});")
+            r.append(f"    {rs} = core::mem::zeroed();")
         if st.get("ty") or st.get("region"):
-            amp = "" if n else "&"
-            pc.append(f"    preg({amp}{cn}, sizeof {cn});")
+            pc.append(f"    preg({'' if n else '&'}{cn}, sizeof {cn});")
             pr.append(f"    preg(&raw const {rs}, core::mem::size_of_val(&*(&raw const {rs})));")
     for tn, n in pools.items():
         c.append(f"    for (i = 0; i < {n}; i++) fill_{tn}(&P_{tn}[i]);")
@@ -87,42 +100,46 @@ def helpers(tu, spec, c_out, r_tail, data):
         n = st.get("n")
         ty = st.get("ty")
         kind = st.get("kind")
-        if st.get("fill"):
+        keep = st.get("keep")
+        if st.get("fill") and not keep:
             ce, re_ = _tok_expr(st["fill"], "i4", "i32", 0)
             re_ = re_.replace("g::pick_", "pick_")
             if n:
-                c.append(f"    for (i = 0; i < {n}; i++) {cn}[i] = ({ce});")
-                r.append(f"    for i in 0..{n}usize {{ {rs}[i] = ({re_}) as _; }}")
+                lc, lr = elem(st, cn, rs, "i")
+                c.append(f"    for (i = 0; i < {n}; i++) {lc} = ({ce});")
+                r.append(f"    for i in 0..{n}usize {{ {lr} = ({re_}) as _; }}")
             else:
                 c.append(f"    {cn} = ({ce});")
                 r.append(f"    {rs} = ({re_}) as _;")
         if ty:
             if n:
-                c.append(f"    for (i = 0; i < {n}; i++) fill_{ty}(&{cn}[i]);")
-                r.append(f"    for i in 0..{n}usize {{ fill_{ty}(&mut {rs}[i]); }}")
-                h.append(f"    for (i = 0; i < {n}; i++) hash_{ty}(&{cn}[i]);")
-                rh.append(f"    for i in 0..{n}usize {{ hash_{ty}(&{rs}[i]); }}")
+                if not keep:
+                    c.append(f"    for (i = 0; i < {n}; i++) fill_{ty}(&{cn}[i]);")
+                    r.append(f"    for i in 0..{n}usize {{ fill_{ty}(&mut {rs}[i]); }}")
+                hl = (f"    for (i = 0; i < {n}; i++) hash_{ty}(&{cn}[i]);", f"    for i in 0..{n}usize {{ hash_{ty}(&{rs}[i]); }}")
             else:
-                c.append(f"    fill_{ty}(&{cn});")
-                r.append(f"    fill_{ty}(&mut {rs});")
-                h.append(f"    hash_{ty}(&{cn});")
-                rh.append(f"    hash_{ty}(&{rs});")
+                if not keep:
+                    c.append(f"    fill_{ty}(&{cn});")
+                    r.append(f"    fill_{ty}(&mut {rs});")
+                hl = (f"    hash_{ty}(&{cn});", f"    hash_{ty}(&{rs});")
+            h.append(hl[0])
+            rh.append(hl[1])
             if st.get("init"):
-                if n:
-                    hi.append(f"    for (i = 0; i < {n}; i++) hash_{ty}(&{cn}[i]);")
-                    rhi.append(f"    for i in 0..{n}usize {{ hash_{ty}(&{rs}[i]); }}")
-                else:
-                    hi.append(f"    hash_{ty}(&{cn});")
-                    rhi.append(f"    hash_{ty}(&{rs});")
+                hi.append(hl[0])
+                rhi.append(hl[1])
         elif kind:
             hc = {"ptr": "HM(PI((const void*) {x}));", "int": "HM((u32) {x});", "f32": "HM(B({x}));"}[kind]
             hr = {"ptr": "hm(pi({x}));", "int": "hm({x} as u32);", "f32": "hm({x}.to_bits());"}[kind]
             if n:
-                h.append(f"    for (i = 0; i < {n}; i++) " + hc.format(x=f"{cn}[i]"))
-                rh.append(f"    for i in 0..{n}usize {{ " + hr.format(x=f"{rs}[i]") + " }")
+                lc, lr = elem(st, cn, rs, "i")
+                hl = (f"    for (i = 0; i < {n}; i++) " + hc.format(x=lc), f"    for i in 0..{n}usize {{ " + hr.format(x=lr) + " }")
             else:
-                h.append("    " + hc.format(x=cn))
-                rh.append("    " + hr.format(x=rs))
+                hl = ("    " + hc.format(x=cn), "    " + hr.format(x=rs))
+            h.append(hl[0])
+            rh.append(hl[1])
+            if st.get("init"):
+                hi.append(hl[0])
+                rhi.append(hl[1])
     hi.append("}")
     rhi.append("}")
     c.append("}")

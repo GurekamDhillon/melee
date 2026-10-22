@@ -16,3 +16,4 @@ pub mod grfourside;
 pub mod ifhazard;
 pub mod if_2F6E;
 pub mod iftime;
+pub mod ifnametag;

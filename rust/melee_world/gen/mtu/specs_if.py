@@ -50,6 +50,12 @@ def jobjs_stub(fname="lb_80011E24"):
     return dict(c=c, ext=ext, hook=hook)
 
 
+SIS_PRINT = dict(
+    c="int HSD_SisLib_803A6B98(HSD_Text* a0, float a1, float a2, const char* a3, ...) { T(@ID@); T(PI(a0)); T(B(a1)); "
+      "T(B(a2)); T(SH(a3)); return (int) fv(); }",
+    ext="fn HSD_SisLib_803A6B98(a0: *mut HSD_Text, a1: f32, a2: f32, a3: *const u8) -> i32;",
+    hook="|a0, a1, a2, a3| { t(@ID@); t(pi(a0)); t(a1.to_bits()); t(a2.to_bits()); t(sh(a3)); fv() as i32 }")
+
 EVT = ("raw", "(Event) cbsel()", "core::mem::transmute::<usize, Event>(cbsel())")
 
 SPECS["ifhazard"] = dict(
@@ -164,6 +170,98 @@ SPECS["iftime"] = dict(
          "ifTime_HideTimers", "ifTime_ShowTimers", "ifTime_GetCountdownSeconds",
          "ifTime_GetCountdownSeconds_dontinline", "ifTime_RenderGuarded", "ifTime_UpdateCountdown", "ifTime_FreeCountdown",
          "ifTime_UpdateTimers", "ifTime_CreateTimers", "ifTime_Reset", "ifTime_FreeTimers", "ifTime_IsTimerHidden"],
+)
+
+G0 = ("raw", "&P_HSD_GObj[0]", "&raw mut g::P_HSD_GObj[0]")
+
+SPECS["ifnametag"] = dict(
+    src="src/melee/if/ifnametag.c",
+    pools={"HSD_GObj": 6, "HSD_JObj": 6, "HSD_Text": 1, "Fighter": 2, "DynamicModelDesc": 2, "HSD_Joint": 3,
+           "HSD_AnimJoint": 6, "HSD_CObj": 1, "VsSceneController": 1,
+           "HSD_Archive": 1},
+    rules={"HSD_GObj.hsd_obj": ("ptr", "HSD_JObj", False),
+           "HSD_JObj.child": ("ptr", "HSD_JObj", True), "HSD_JObj.next": ("ptr", "HSD_JObj", True),
+           "DynamicModelDesc.joint": ("ptr", "HSD_Joint", False),
+           "DynamicModelDesc.anims": ("ptr", "HSD_AnimJoint", True),
+           "DynamicModelDesc.matanims": ("ptr", "HSD_AnimJoint", True),
+           "DynamicModelDesc.shapeanims": ("ptr", "HSD_AnimJoint", True),
+           "HSD_AnimJoint.child": ("ptr", "HSD_AnimJoint", True),
+           "StaticModelDesc.joint": ("ptr", "HSD_Joint", True),
+           "StaticModelDesc.animjoint": ("ptr", "HSD_AnimJoint", True),
+           "StaticModelDesc.matanim_joint": ("ptr", "HSD_AnimJoint", True),
+           "StaticModelDesc.shapeanim_joint": ("ptr", "HSD_AnimJoint", True)},
+    statics=[dict(c="un_803F98B8", flat=("float", "f32"), n=25, kind="f32", keep=True, init=True),
+             dict(c="un_803F991C", n=4, kind="f32", keep=True, init=True),
+             dict(c="nametag_eyepos", ty="HSD_WObjDesc", keep=True, init=True),
+             dict(c="nametag_interest", ty="HSD_WObjDesc", keep=True, init=True),
+             dict(c="nametag_CObjDesc", ty="HSD_CameraDescFrustum", keep=True, init=True),
+             dict(c="un_804A1ED0", ty="StaticModelDesc"),
+             dict(c="un_804A1EE0", n=6, kind="ptr", fill="p:HSD_GObj"),
+             dict(c="un_804A1EF8", n=6, kind="int", fill="v"),
+             dict(c="un_804D6D68", kind="ptr", fill="pn:HSD_GObj"),
+             dict(c="un_804D6D6C", kind="int", fill="r:0:1"),
+             dict(c="un_804D6D70", n=6, kind="int", fill="r:0:1"),
+             dict(c="un_804D6D78", kind="ptr", fill="p:HSD_Text"),
+             dict(c="un_804D6D7C", kind="int", fill="v"),
+             dict(c="SLOTB", rs="super::SLOTB", kind="int", fill="r:0:5", region=True),
+             dict(c="HEAPB", rs="super::HEAPB", n=16, kind="int", region=True),
+             dict(c="NMODELS", rs="super::NMODELS", n=2, kind="ptr", fill="p:DynamicModelDesc", region=True),
+             dict(c="ARCP", rs="super::ARCP", kind="ptr", fill="k:0", region=True),
+             dict(c="HSD_GObj_JObjKind", ext=True, kind="int", fill="k:20"),
+             dict(c="HSD_GObj_CameraKind", ext=True, kind="int", fill="k:21")],
+    skip_data=["result"],
+    c_decl="static u8 SLOTB;\nstatic u8 HEAPB[16];\nstatic DynamicModelDesc* NMODELS[2];\nstatic HSD_Archive* ARCP;\n",
+    rs_decl="pub static mut SLOTB: u8 = 0;\npub static mut HEAPB: [u8; 16] = [0; 16];\n"
+            "pub static mut NMODELS: [*mut DynamicModelDesc; 2] = [null_mut(); 2];\n"
+            "pub static mut ARCP: *mut HSD_Archive = null_mut();\n",
+    setup_c="int k;\n    P_HSD_GObj[0].user_data = &SLOTB;\n"
+            "    for (k = 1; k < 4; k++) P_HSD_GObj[k].user_data = &P_Fighter[k & 1];\n"
+            "    for (k = 0; k < 2; k++) { P_Fighter[k].kind = (rnd() & 1) ? Ft_Kind_Mewtwo : (int) fv();"
+            " P_Fighter[k].motion_id = (rnd() & 1) ? 0xEC : (int) fv(); }",
+    setup_rs="g::P_HSD_GObj[0].user_data = &raw mut SLOTB as *mut _;\n"
+             "    for k in 1..4usize { g::P_HSD_GObj[k].user_data = &raw mut g::P_Fighter[k & 1] as *mut _; }\n"
+             "    for k in 0..2usize { g::P_Fighter[k].kind = if rnd() & 1 != 0 { Ft_Kind_Mewtwo as _ } else { fv() as _ };"
+             " g::P_Fighter[k].motion_id = if rnd() & 1 != 0 { 0xEC } else { fv() as _ }; }",
+    ret={"GObj_Create": ("pick_HSD_GObj(0)", "pick_HSD_GObj(0)"),
+         "HSD_JObjLoadJoint": ("pick_HSD_JObj(0)", "pick_HSD_JObj(0)"),
+         "gmVs_GetSceneController": ("&P_VsSceneController[0]", "&raw mut P_VsSceneController[0]"),
+         "ifAll_GetArchive": ("&ARCP", "&raw mut super::ARCP"),
+         "Camera_80030A50": ("&P_HSD_GObj[0]", "&raw mut P_HSD_GObj[0]"),
+         "HSD_MemAlloc": ("HEAPB", "&raw mut super::HEAPB"),
+         "HSD_SisLib_803A6754": ("&P_HSD_Text[0]", "&raw mut P_HSD_Text[0]"),
+         "lb_80013B14": ("&P_HSD_CObj[0]", "&raw mut P_HSD_CObj[0]"),
+         "Player_GetEntity": ("&P_HSD_GObj[1 + fv() % 3]", "&raw mut P_HSD_GObj[(1 + fv() % 3) as usize]"),
+         "Player_GetPlayerId": ("(fv() % 4)", "(fv() % 4) as _"),
+         "Player_GetTeam": ("(fv() % 5)", "(fv() % 5) as _"),
+         "Player_GetPlayerSlotType": ("(fv() % 4)", "fv() % 4"),
+         "Player_GetNametagSlotID": ("((fv() & 1) ? 120 : (int) (fv() % 100))",
+                                     "if fv() & 1 != 0 { 120 } else { (fv() % 100) as _ }"),
+         "Player_GetStocks": ("(int) (fv() % 4)", "(fv() % 4) as _"),
+         "gm_8016B168": ("(fv() & 1)", "(fv() & 1) as _"), "gm_8016B258": ("(fv() & 1)", "(fv() & 1) as _"),
+         "gm_8016B0E8": ("(fv() & 1)", "(fv() & 1) as _"), "Player_GetPlayerState": ("(fv() & 1)", "(fv() & 1) as _"),
+         "Player_80036058": ("(fv() & 1)", "(fv() & 1) as _"),
+         "lbVector_WorldToScreen": ("a2", "a2")},
+    defaults={"memzero": "super::memzero_default"},
+    effects={**MEMZERO, "Player_LoadPlayerCoords": ("a1->x = rw(); a1->y = rw(); a1->z = rw();",
+                                         "(*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw();"),
+             "lbVector_WorldToScreen": ("a2->x = rw(); a2->y = rw(); a2->z = rw();",
+                                        "(*a2).x = rw(); (*a2).y = rw(); (*a2).z = rw();")},
+    null_ret_ok=["HSD_GObj_SetupProc", "GetNameText"],
+    deref={"lbVector_WorldToScreen": [1]},
+    custom_stubs={"lbArchive_LoadSections": sections_stub(
+        "lbArchive_LoadSections", ("HSD_Archive*", "T(PI(a0));", "*mut HSD_Archive", "t(pi(a0));"),
+        {"ScInfPnm_scene_models": ("NMODELS", "&raw mut super::NMODELS")}),
+        "HSD_SisLib_803A6B98": SIS_PRINT},
+    ops=[dict(name="un_802FC9B4", args=["i:6", "r:0:4", "v", "v"]),
+         dict(name="NameTag_RenderCallback", args=["pn:HSD_GObj", "v"]),
+         dict(name="fn_802FCAC4", args=["p:HSD_GObj", "v"]),
+         "un_802FCBA0", dict(name="has_nametag", args=["i:6"]),
+         dict(name="fn_802FCC44", args=[G0]), dict(name="inlineA1", args=["w"]),
+         dict(name="NameTag_Create", args=["i:6"]), dict(name="un_802FD28C", args=["i:6"]),
+         "un_802FD404", "un_802FD428", "un_802FD450", "un_802FD45C",
+         dict(name="un_802FD468", pre_c="{ int q; for (q = 0; q < 6; q++) if (rnd() & 1) un_804A1EE0[q] = 0; }",
+              pre_rs="for q in 0..6usize { if rnd() & 1 != 0 { m::un_804A1EE0[q] = null_mut(); } }"),
+         dict(name="un_802FD4C8_inline", args=["v"]), "un_802FD4C8"],
 )
 
 for _s in SPECS.values():

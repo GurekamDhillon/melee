@@ -515,8 +515,14 @@ def main():
         raise SystemExit("clang errors:\n" + "\n".join(str(x) for x in errs[:10]))
     tu_abs = Path(tu_path).resolve().as_posix().lower()
 
+    inc_dir = incdir.resolve().as_posix().lower()
+
     def in_tu(c):
-        return c.location.file is not None and Path(c.location.file.name).resolve().as_posix().lower() == tu_abs
+        # the TU file itself, or a `.inc` it includes from its own directory
+        if c.location.file is None:
+            return False
+        f_ = Path(c.location.file.name).resolve().as_posix().lower()
+        return f_ == tu_abs or (f_.endswith(".inc") and f_.rsplit("/", 1)[0] == inc_dir)
 
     fdecls, fdefs, vdecls = {}, {}, {}
     inl = set()

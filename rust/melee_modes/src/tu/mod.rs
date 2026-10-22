@@ -2,3 +2,4 @@
 pub mod gmapproach;
 pub mod gmboot;
 pub mod gmcamera;
+pub mod gm_1BFA;

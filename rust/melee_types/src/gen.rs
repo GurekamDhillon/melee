@@ -90433,6 +90433,498 @@ impl GcLayout for FigaTree {
 }
 const _: () = assert!(core::mem::size_of::<FigaTree>() == 32);
 
+/// C `CharScaleEntry` (src/melee/gm/gmresultplayer.static.h:10); GameCube size 0x30, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct CharScaleEntry {
+    pub x0: [f32; 8],
+    pub x20: [f32; 4],
+}
+impl CharScaleEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for CharScaleEntry {
+    const GC_BYTES: u32 = 0x30;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x0 = <[f32; 8] as GcDecode>::gc_decode(d, at + 0x0);
+        v.x20 = <[f32; 4] as GcDecode>::gc_decode(d, at + 0x20);
+        v
+    }
+}
+impl GcPointee for CharScaleEntry { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<CharScaleEntry>(t) } }
+impl GcLayout for CharScaleEntry {
+    const GC_NAME: &'static str = "CharScaleEntry";
+    const GC_SIZE: u32 = 0x30;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 32, "f32[8]"),
+        GcField::new("x20", 0x20, 16, "f32[4]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<CharScaleEntry>() == 48);
+
+/// C `ResultsRenderFuncs` (src/melee/gm/gmresultplayer.static.h:15); GameCube size 0x10, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct ResultsRenderFuncs {
+    pub funcs: [GObj_RenderFunc; 4],
+}
+impl ResultsRenderFuncs { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for ResultsRenderFuncs {
+    const GC_BYTES: u32 = 0x10;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.funcs = <[GObj_RenderFunc; 4] as GcDecode>::gc_decode(d, at + 0x0);
+        v
+    }
+}
+impl GcPointee for ResultsRenderFuncs { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<ResultsRenderFuncs>(t) } }
+impl GcLayout for ResultsRenderFuncs {
+    const GC_NAME: &'static str = "ResultsRenderFuncs";
+    const GC_SIZE: u32 = 0x10;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("funcs", 0x0, 16, "GObj_RenderFunc[4]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<ResultsRenderFuncs>() == 32);
+
+/// C `ResultsPlayerConfig` (src/melee/gm/gmresultplayer.static.h:19); GameCube size 0xA0, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct ResultsPlayerConfig {
+    pub x00: [f32; 9],
+    pub x24: Vec,
+    pub x30: Vec,
+    pub x3C: ResultsRenderFuncs,
+    pub x4C: Vec,
+    pub x58: Vec,
+    pub x64: ResultsRenderFuncs,
+    pub x74: f32,
+    pub x78: f32,
+    pub x7C: f32,
+    pub x80: f32,
+    pub x84: f32,
+    pub x88: f32,
+    pub x8C: f32,
+    pub x90: f32,
+    pub x94: f32,
+    pub x98: f32,
+    pub x9C: f32,
+}
+impl ResultsPlayerConfig { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for ResultsPlayerConfig {
+    const GC_BYTES: u32 = 0xA0;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x00 = <[f32; 9] as GcDecode>::gc_decode(d, at + 0x0);
+        v.x24 = <Vec as GcDecode>::gc_decode(d, at + 0x24);
+        v.x30 = <Vec as GcDecode>::gc_decode(d, at + 0x30);
+        v.x3C = <ResultsRenderFuncs as GcDecode>::gc_decode(d, at + 0x3C);
+        v.x4C = <Vec as GcDecode>::gc_decode(d, at + 0x4C);
+        v.x58 = <Vec as GcDecode>::gc_decode(d, at + 0x58);
+        v.x64 = <ResultsRenderFuncs as GcDecode>::gc_decode(d, at + 0x64);
+        v.x74 = <f32 as GcDecode>::gc_decode(d, at + 0x74);
+        v.x78 = <f32 as GcDecode>::gc_decode(d, at + 0x78);
+        v.x7C = <f32 as GcDecode>::gc_decode(d, at + 0x7C);
+        v.x80 = <f32 as GcDecode>::gc_decode(d, at + 0x80);
+        v.x84 = <f32 as GcDecode>::gc_decode(d, at + 0x84);
+        v.x88 = <f32 as GcDecode>::gc_decode(d, at + 0x88);
+        v.x8C = <f32 as GcDecode>::gc_decode(d, at + 0x8C);
+        v.x90 = <f32 as GcDecode>::gc_decode(d, at + 0x90);
+        v.x94 = <f32 as GcDecode>::gc_decode(d, at + 0x94);
+        v.x98 = <f32 as GcDecode>::gc_decode(d, at + 0x98);
+        v.x9C = <f32 as GcDecode>::gc_decode(d, at + 0x9C);
+        v
+    }
+}
+impl GcPointee for ResultsPlayerConfig { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<ResultsPlayerConfig>(t) } }
+impl GcLayout for ResultsPlayerConfig {
+    const GC_NAME: &'static str = "ResultsPlayerConfig";
+    const GC_SIZE: u32 = 0xA0;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x00", 0x0, 36, "f32[9]"),
+        GcField::new("x24", 0x24, 12, "Vec3"),
+        GcField::new("x30", 0x30, 12, "Vec3"),
+        GcField::new("x3C", 0x3C, 16, "ResultsRenderFuncs"),
+        GcField::new("x4C", 0x4C, 12, "Vec3"),
+        GcField::new("x58", 0x58, 12, "Vec3"),
+        GcField::new("x64", 0x64, 16, "ResultsRenderFuncs"),
+        GcField::new("x74", 0x74, 4, "f32"),
+        GcField::new("x78", 0x78, 4, "f32"),
+        GcField::new("x7C", 0x7C, 4, "f32"),
+        GcField::new("x80", 0x80, 4, "f32"),
+        GcField::new("x84", 0x84, 4, "f32"),
+        GcField::new("x88", 0x88, 4, "f32"),
+        GcField::new("x8C", 0x8C, 4, "f32"),
+        GcField::new("x90", 0x90, 4, "f32"),
+        GcField::new("x94", 0x94, 4, "f32"),
+        GcField::new("x98", 0x98, 4, "f32"),
+        GcField::new("x9C", 0x9C, 4, "f32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<ResultsPlayerConfig>() == 200);
+
+/// C `CameraKindParams` (src/melee/gm/gmresultplayer.static.h:40); GameCube size 0x30, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct CameraKindParams {
+    pub x_off: [f32; 4],
+    pub y_off: [f32; 4],
+    pub z_scale: [f32; 4],
+}
+impl CameraKindParams { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for CameraKindParams {
+    const GC_BYTES: u32 = 0x30;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x_off = <[f32; 4] as GcDecode>::gc_decode(d, at + 0x0);
+        v.y_off = <[f32; 4] as GcDecode>::gc_decode(d, at + 0x10);
+        v.z_scale = <[f32; 4] as GcDecode>::gc_decode(d, at + 0x20);
+        v
+    }
+}
+impl GcPointee for CameraKindParams { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<CameraKindParams>(t) } }
+impl GcLayout for CameraKindParams {
+    const GC_NAME: &'static str = "CameraKindParams";
+    const GC_SIZE: u32 = 0x30;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x_off", 0x0, 16, "f32[4]"),
+        GcField::new("y_off", 0x10, 16, "f32[4]"),
+        GcField::new("z_scale", 0x20, 16, "f32[4]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<CameraKindParams>() == 48);
+
+/// C `CameraKindData` (src/melee/gm/gmresultplayer.static.h:46); GameCube size 0xF48, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct CameraKindData {
+    pub pad: [u8; 16],
+    pub kind: [CameraKindParams; 36],
+    pub slot_off: [[[f32; 4]; 3]; 43],
+    pub pad_EE0: [u8; 40],
+    pub cobj_desc: HSD_CObjDesc,
+}
+impl CameraKindData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for CameraKindData {
+    const GC_BYTES: u32 = 0xF48;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.pad = <[u8; 16] as GcDecode>::gc_decode(d, at + 0x0);
+        v.kind = <[CameraKindParams; 36] as GcDecode>::gc_decode(d, at + 0x10);
+        v.slot_off = <[[[f32; 4]; 3]; 43] as GcDecode>::gc_decode(d, at + 0x6D0);
+        v.pad_EE0 = <[u8; 40] as GcDecode>::gc_decode(d, at + 0xEE0);
+        v.cobj_desc = <HSD_CObjDesc as GcDecode>::gc_decode(d, at + 0xF08);
+        v
+    }
+}
+impl GcPointee for CameraKindData { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<CameraKindData>(t) } }
+impl GcLayout for CameraKindData {
+    const GC_NAME: &'static str = "CameraKindData";
+    const GC_SIZE: u32 = 0xF48;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("pad", 0x0, 16, "u8[16]"),
+        GcField::new("kind", 0x10, 1728, "CameraKindParams[36]"),
+        GcField::new("slot_off", 0x6D0, 2064, "f32[43][3][4]"),
+        GcField::new("pad_EE0", 0xEE0, 40, "u8[40]"),
+        GcField::new("cobj_desc", 0xF08, 64, "HSD_CObjDesc"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<CameraKindData>() == 3936);
+
+/// C `PackedS16x4` (src/melee/gm/gmresultplayer.static.h:54); GameCube size 0x8, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub union PackedS16x4 {
+    pub h: [i16; 4],
+    pub w: [u32; 2],
+}
+impl PackedS16x4 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for PackedS16x4 {
+    const GC_BYTES: u32 = 0x8;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.h = <[i16; 4] as GcDecode>::gc_decode(d, at + 0x0);
+        v
+    }
+}
+impl GcPointee for PackedS16x4 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<PackedS16x4>(t) } }
+impl GcLayout for PackedS16x4 {
+    const GC_NAME: &'static str = "PackedS16x4";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("h", 0x0, 8, "s16[4]"),
+        GcField::new("w", 0x0, 8, "u32[2]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<PackedS16x4>() == 8);
+
+/// C `U32Pair` (src/melee/gm/gmresultplayer.static.h:59); GameCube size 0x8, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct U32Pair {
+    pub lo: u32,
+    pub hi: u32,
+}
+impl U32Pair { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for U32Pair {
+    const GC_BYTES: u32 = 0x8;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.lo = <u32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.hi = <u32 as GcDecode>::gc_decode(d, at + 0x4);
+        v
+    }
+}
+impl GcPointee for U32Pair { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<U32Pair>(t) } }
+impl GcLayout for U32Pair {
+    const GC_NAME: &'static str = "U32Pair";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("lo", 0x0, 4, "u32"),
+        GcField::new("hi", 0x4, 4, "u32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<U32Pair>() == 8);
+
+/// C `lbl_8046E3AC_t` (src/melee/gm/gmresultplayer.static.h:64); GameCube size 0x2314, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct lbl_8046E3AC_t {
+    /// bitfield bytes GC +0x0..+0x1, GameCube byte order
+    pub bf_0: [u8; 1],
+    pub player_flags: [u8; 4],
+    pub pad_x5: u8,
+    pub x6: [u16; 4],
+    pub variant: [u8; 4],
+    pub pad_12: [u8; 2],
+    pub char_kind: [i32; 4],
+    pub costume_override: [u8; 4],
+    pub match_end: MatchEnd,
+    pub scissor_x: [u16; 4],
+    pub scissor_y: [u16; 4],
+    pub dim_w1: [u16; 4],
+    pub dim_w2: [u16; 4],
+    pub dim_h1: [u16; 4],
+    pub dim_h2: [u16; 4],
+    pub score_tbl: [PackedS16x4; 4],
+    pub x22F4: [PackedS16x4; 4],
+}
+impl lbl_8046E3AC_t {
+    /// C bitfield `x0_0:4` at GC +0x0 bit 0 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn x0_0(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 4, 4) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_x0_0(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 4, 4, (v as u64) & 0xF) } }
+    /// C bitfield `x0_4:2` at GC +0x0 bit 4 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn x0_4(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 2, 2) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_x0_4(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 2, 2, (v as u64) & 0x3) } }
+    /// C bitfield `x0_6:2` at GC +0x0 bit 6 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn x0_6(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_0, 0, 2) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_x0_6(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_0, 0, 2, (v as u64) & 0x3) } }
+}
+impl lbl_8046E3AC_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for lbl_8046E3AC_t {
+    const GC_BYTES: u32 = 0x2314;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.bf_0 = <[u8; 1] as GcDecode>::gc_decode(d, at + 0x0);
+        v.player_flags = <[u8; 4] as GcDecode>::gc_decode(d, at + 0x1);
+        v.pad_x5 = <u8 as GcDecode>::gc_decode(d, at + 0x5);
+        v.x6 = <[u16; 4] as GcDecode>::gc_decode(d, at + 0x6);
+        v.variant = <[u8; 4] as GcDecode>::gc_decode(d, at + 0xE);
+        v.pad_12 = <[u8; 2] as GcDecode>::gc_decode(d, at + 0x12);
+        v.char_kind = <[i32; 4] as GcDecode>::gc_decode(d, at + 0x14);
+        v.costume_override = <[u8; 4] as GcDecode>::gc_decode(d, at + 0x24);
+        v.match_end = <MatchEnd as GcDecode>::gc_decode(d, at + 0x28);
+        v.scissor_x = <[u16; 4] as GcDecode>::gc_decode(d, at + 0x22A4);
+        v.scissor_y = <[u16; 4] as GcDecode>::gc_decode(d, at + 0x22AC);
+        v.dim_w1 = <[u16; 4] as GcDecode>::gc_decode(d, at + 0x22B4);
+        v.dim_w2 = <[u16; 4] as GcDecode>::gc_decode(d, at + 0x22BC);
+        v.dim_h1 = <[u16; 4] as GcDecode>::gc_decode(d, at + 0x22C4);
+        v.dim_h2 = <[u16; 4] as GcDecode>::gc_decode(d, at + 0x22CC);
+        v.score_tbl = <[PackedS16x4; 4] as GcDecode>::gc_decode(d, at + 0x22D4);
+        v.x22F4 = <[PackedS16x4; 4] as GcDecode>::gc_decode(d, at + 0x22F4);
+        v
+    }
+}
+impl GcPointee for lbl_8046E3AC_t { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<lbl_8046E3AC_t>(t) } }
+impl GcLayout for lbl_8046E3AC_t {
+    const GC_NAME: &'static str = "lbl_8046E3AC_t";
+    const GC_SIZE: u32 = 0x2314;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::bitfield("x0_0", 0x0, 1, 0, 4, "u8"),
+        GcField::bitfield("x0_4", 0x0, 1, 4, 2, "u8"),
+        GcField::bitfield("x0_6", 0x0, 1, 6, 2, "u8"),
+        GcField::new("player_flags", 0x1, 4, "u8[4]"),
+        GcField::new("pad_x5", 0x5, 1, "u8"),
+        GcField::new("x6", 0x6, 8, "u16[4]"),
+        GcField::new("variant", 0xE, 4, "u8[4]"),
+        GcField::new("pad_12", 0x12, 2, "u8[2]"),
+        GcField::new("char_kind", 0x14, 16, "s32[4]"),
+        GcField::new("costume_override", 0x24, 4, "u8[4]"),
+        GcField::new("match_end", 0x28, 8828, "MatchEnd"),
+        GcField::new("scissor_x", 0x22A4, 8, "u16[4]"),
+        GcField::new("scissor_y", 0x22AC, 8, "u16[4]"),
+        GcField::new("dim_w1", 0x22B4, 8, "u16[4]"),
+        GcField::new("dim_w2", 0x22BC, 8, "u16[4]"),
+        GcField::new("dim_h1", 0x22C4, 8, "u16[4]"),
+        GcField::new("dim_h2", 0x22CC, 8, "u16[4]"),
+        GcField::new("score_tbl", 0x22D4, 32, "PackedS16x4[4]"),
+        GcField::new("x22F4", 0x22F4, 32, "PackedS16x4[4]"),
+    ];
+}
+
+/// C `ResultsDisplayData` (src/melee/gm/gmresultplayer.static.h:88); GameCube size 0x1DC, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct ResultsDisplayData {
+    pub pad_000: [u8; 260],
+    pub player_img1: [HSD_ImageDesc; 4],
+    pub player_img2: [HSD_ImageDesc; 4],
+    pub shared_img: HSD_ImageDesc,
+}
+impl ResultsDisplayData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for ResultsDisplayData {
+    const GC_BYTES: u32 = 0x1DC;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.pad_000 = <[u8; 260] as GcDecode>::gc_decode(d, at + 0x0);
+        v.player_img1 = <[HSD_ImageDesc; 4] as GcDecode>::gc_decode(d, at + 0x104);
+        v.player_img2 = <[HSD_ImageDesc; 4] as GcDecode>::gc_decode(d, at + 0x164);
+        v.shared_img = <HSD_ImageDesc as GcDecode>::gc_decode(d, at + 0x1C4);
+        v
+    }
+}
+impl GcPointee for ResultsDisplayData { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<ResultsDisplayData>(t) } }
+impl GcLayout for ResultsDisplayData {
+    const GC_NAME: &'static str = "ResultsDisplayData";
+    const GC_SIZE: u32 = 0x1DC;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("pad_000", 0x0, 260, "u8[260]"),
+        GcField::new("player_img1", 0x104, 96, "HSD_ImageDesc[4]"),
+        GcField::new("player_img2", 0x164, 96, "HSD_ImageDesc[4]"),
+        GcField::new("shared_img", 0x1C4, 24, "HSD_ImageDesc"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<ResultsDisplayData>() == 552);
+
+/// C `ResultsDisplayLayout` (src/melee/gm/gmresultplayer.static.h:95); GameCube size 0x2510, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct ResultsDisplayLayout {
+    pub pad_000: [u8; 260],
+    pub player_img1: [HSD_ImageDesc; 4],
+    pub player_img2: [HSD_ImageDesc; 4],
+    pub shared_img: HSD_ImageDesc,
+    pub gobjs: [*mut HSD_GObj; 4],
+    pub jobjs: [*mut HSD_JObj; 4],
+    pub state: lbl_8046E3AC_t,
+}
+impl ResultsDisplayLayout { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for ResultsDisplayLayout {
+    const GC_BYTES: u32 = 0x2510;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.pad_000 = <[u8; 260] as GcDecode>::gc_decode(d, at + 0x0);
+        v.player_img1 = <[HSD_ImageDesc; 4] as GcDecode>::gc_decode(d, at + 0x104);
+        v.player_img2 = <[HSD_ImageDesc; 4] as GcDecode>::gc_decode(d, at + 0x164);
+        v.shared_img = <HSD_ImageDesc as GcDecode>::gc_decode(d, at + 0x1C4);
+        v.gobjs = <[*mut HSD_GObj; 4] as GcDecode>::gc_decode(d, at + 0x1DC);
+        v.jobjs = <[*mut HSD_JObj; 4] as GcDecode>::gc_decode(d, at + 0x1EC);
+        v.state = <lbl_8046E3AC_t as GcDecode>::gc_decode(d, at + 0x1FC);
+        v
+    }
+}
+impl GcPointee for ResultsDisplayLayout { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<ResultsDisplayLayout>(t) } }
+impl GcLayout for ResultsDisplayLayout {
+    const GC_NAME: &'static str = "ResultsDisplayLayout";
+    const GC_SIZE: u32 = 0x2510;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("pad_000", 0x0, 260, "u8[260]"),
+        GcField::new("player_img1", 0x104, 96, "HSD_ImageDesc[4]"),
+        GcField::new("player_img2", 0x164, 96, "HSD_ImageDesc[4]"),
+        GcField::new("shared_img", 0x1C4, 24, "HSD_ImageDesc"),
+        GcField::new("gobjs", 0x1DC, 16, "HSD_GObj *[4]"),
+        GcField::new("jobjs", 0x1EC, 16, "HSD_JObj *[4]"),
+        GcField::new("state", 0x1FC, 8980, "lbl_8046E3AC_t"),
+    ];
+}
+
+/// C `ResultsCharacterData` (src/melee/gm/gmresultplayer.static.h:105); GameCube size 0x890, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct ResultsCharacterData {
+    pub scale: [f32; 32],
+    pub slot_off: [[[f32; 4]; 3]; 32],
+    pub x680: [[u8; 16]; 27],
+    pub pad_830: [u8; 96],
+}
+impl ResultsCharacterData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for ResultsCharacterData {
+    const GC_BYTES: u32 = 0x890;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.scale = <[f32; 32] as GcDecode>::gc_decode(d, at + 0x0);
+        v.slot_off = <[[[f32; 4]; 3]; 32] as GcDecode>::gc_decode(d, at + 0x80);
+        v.x680 = <[[u8; 16]; 27] as GcDecode>::gc_decode(d, at + 0x680);
+        v.pad_830 = <[u8; 96] as GcDecode>::gc_decode(d, at + 0x830);
+        v
+    }
+}
+impl GcPointee for ResultsCharacterData { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<ResultsCharacterData>(t) } }
+impl GcLayout for ResultsCharacterData {
+    const GC_NAME: &'static str = "ResultsCharacterData";
+    const GC_SIZE: u32 = 0x890;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("scale", 0x0, 128, "f32[32]"),
+        GcField::new("slot_off", 0x80, 1536, "f32[32][3][4]"),
+        GcField::new("x680", 0x680, 432, "u8[27][16]"),
+        GcField::new("pad_830", 0x830, 96, "u8[96]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<ResultsCharacterData>() == 2192);
+
 /// Every generated GameCube record layout, for the DAT loader, serialisers and the m-ex map.
 pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<__file_modes as GcLayout>::GC_NAME, <__file_modes as GcLayout>::GC_SIZE, <__file_modes as GcLayout>::GC_ALIGN, <__file_modes as GcLayout>::GC_FIELDS),
@@ -92055,6 +92547,17 @@ pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<itSeakNeedleThrownAttributes as GcLayout>::GC_NAME, <itSeakNeedleThrownAttributes as GcLayout>::GC_SIZE, <itSeakNeedleThrownAttributes as GcLayout>::GC_ALIGN, <itSeakNeedleThrownAttributes as GcLayout>::GC_FIELDS),
     (<FigaTrack as GcLayout>::GC_NAME, <FigaTrack as GcLayout>::GC_SIZE, <FigaTrack as GcLayout>::GC_ALIGN, <FigaTrack as GcLayout>::GC_FIELDS),
     (<FigaTree as GcLayout>::GC_NAME, <FigaTree as GcLayout>::GC_SIZE, <FigaTree as GcLayout>::GC_ALIGN, <FigaTree as GcLayout>::GC_FIELDS),
+    (<CharScaleEntry as GcLayout>::GC_NAME, <CharScaleEntry as GcLayout>::GC_SIZE, <CharScaleEntry as GcLayout>::GC_ALIGN, <CharScaleEntry as GcLayout>::GC_FIELDS),
+    (<ResultsRenderFuncs as GcLayout>::GC_NAME, <ResultsRenderFuncs as GcLayout>::GC_SIZE, <ResultsRenderFuncs as GcLayout>::GC_ALIGN, <ResultsRenderFuncs as GcLayout>::GC_FIELDS),
+    (<ResultsPlayerConfig as GcLayout>::GC_NAME, <ResultsPlayerConfig as GcLayout>::GC_SIZE, <ResultsPlayerConfig as GcLayout>::GC_ALIGN, <ResultsPlayerConfig as GcLayout>::GC_FIELDS),
+    (<CameraKindParams as GcLayout>::GC_NAME, <CameraKindParams as GcLayout>::GC_SIZE, <CameraKindParams as GcLayout>::GC_ALIGN, <CameraKindParams as GcLayout>::GC_FIELDS),
+    (<CameraKindData as GcLayout>::GC_NAME, <CameraKindData as GcLayout>::GC_SIZE, <CameraKindData as GcLayout>::GC_ALIGN, <CameraKindData as GcLayout>::GC_FIELDS),
+    (<PackedS16x4 as GcLayout>::GC_NAME, <PackedS16x4 as GcLayout>::GC_SIZE, <PackedS16x4 as GcLayout>::GC_ALIGN, <PackedS16x4 as GcLayout>::GC_FIELDS),
+    (<U32Pair as GcLayout>::GC_NAME, <U32Pair as GcLayout>::GC_SIZE, <U32Pair as GcLayout>::GC_ALIGN, <U32Pair as GcLayout>::GC_FIELDS),
+    (<lbl_8046E3AC_t as GcLayout>::GC_NAME, <lbl_8046E3AC_t as GcLayout>::GC_SIZE, <lbl_8046E3AC_t as GcLayout>::GC_ALIGN, <lbl_8046E3AC_t as GcLayout>::GC_FIELDS),
+    (<ResultsDisplayData as GcLayout>::GC_NAME, <ResultsDisplayData as GcLayout>::GC_SIZE, <ResultsDisplayData as GcLayout>::GC_ALIGN, <ResultsDisplayData as GcLayout>::GC_FIELDS),
+    (<ResultsDisplayLayout as GcLayout>::GC_NAME, <ResultsDisplayLayout as GcLayout>::GC_SIZE, <ResultsDisplayLayout as GcLayout>::GC_ALIGN, <ResultsDisplayLayout as GcLayout>::GC_FIELDS),
+    (<ResultsCharacterData as GcLayout>::GC_NAME, <ResultsCharacterData as GcLayout>::GC_SIZE, <ResultsCharacterData as GcLayout>::GC_ALIGN, <ResultsCharacterData as GcLayout>::GC_FIELDS),
 ];
 
 /// Read `w` bits of a GameCube big-endian bitfield byte run, `shift` bits up from its LSB.

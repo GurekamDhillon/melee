@@ -73,8 +73,8 @@ pub mod ext {
         fn fn_8016F280(a0: i32) -> i32;
         fn fn_801701AC() -> ();
         fn fn_801701B8() -> i32;
-        fn fn_801785B0(a0: *mut HSD_GObj) -> ();
-        fn fn_80179350(a0: *mut HSD_GObj) -> ();
+        fn fn_801785B0(a0: *mut HSD_GObj) -> () = super::super::gmresultplayer::fn_801785B0;
+        fn fn_80179350(a0: *mut HSD_GObj) -> () = super::super::gmresultplayer::fn_80179350;
         fn fn_80179F6C(idx: i32, value: *mut HSD_GObj) -> ();
         fn fn_80179F84(a0: *mut HSD_JObj) -> ();
         fn fn_8017A004() -> ();
@@ -121,8 +121,8 @@ pub mod ext {
         fn fn_8017BC50(a0: i32) -> *const i8;
         fn fn_8017BD0C(a0: i32) -> *const i8;
         fn fn_8017BDC8(a0: i32) -> *const i8;
-        fn gmRst_GenoArtClose() -> ();
-        fn gmRst_GenoArtReset() -> ();
+        fn gmRst_GenoArtClose() -> () = super::super::gmresultplayer::gmRst_GenoArtClose;
+        fn gmRst_GenoArtReset() -> () = super::super::gmresultplayer::gmRst_GenoArtReset;
         fn gm_80160854(a0: u8, a1: u8, a2: u8, a3: u8) -> u32;
         fn gm_80160968(a0: u32) -> GXColor;
         fn gm_8016895C(a0: *mut HSD_JObj, a1: *mut DynamicModelDesc, idx: i32) -> ();

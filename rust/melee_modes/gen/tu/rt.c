@@ -194,6 +194,17 @@ void rt_va(va_list* ap, int fmtidx) {
     }
 }
 
+/* varargs of fixed kinds: 'i' int (32 bits), 'q' 64-bit int, 'd' double, 'p' pointer, 's' string */
+void rt_va_kinds(va_list* ap, const char* kinds) {
+    for (; *kinds; kinds++) {
+        u64 w = va_arg(*ap, u64);
+        if (*kinds == 'i') logw(w & 0xFFFFFFFFULL);
+        else if (*kinds == 'p') logw(norm_ptr(w));
+        else if (*kinds == 's') { logw(norm_ptr(w)); logw(strhash_at(w)); }
+        else logw(w);
+    }
+}
+
 void rt_args_end(void) {
     int i;
     for (i = 0; i < noutvs; i++) if (!strcmp(outvs[i].name, cur_name) && outvs[i].idx < cur_nargs && cur_args[outvs[i].idx] != 0) {
@@ -396,7 +407,8 @@ int rt_main(int argc, char** argv, const RtGlobal* gs, int ng, const RtFn* fs, i
                 if (end > maxused) maxused = end;
                 h = FNV_OFF;
                 {
-                    FILE* df = want_f && getenv("ORACLE_DUMP") ? fopen(getenv("ORACLE_DUMP"), "wb") : 0;
+                    char dumpname[160]; snprintf(dumpname, sizeof dumpname, "%s:%d", fn[func].name, idx);
+                    FILE* df = getenv("ORACLE_DUMP") && (want_f || (getenv("ORACLE_DUMPCASE") && !strcmp(getenv("ORACLE_DUMPCASE"), dumpname))) ? fopen(getenv("ORACLE_DUMP"), "wb") : 0;
                     for (o = GLOBALS_BASE & ~7ULL; o < end; o += 8) {
                         u64 nw = norm(*(u64*)(arena + o));
                         h = mixw(h, nw);

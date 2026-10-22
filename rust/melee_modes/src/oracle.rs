@@ -417,6 +417,8 @@ fn is_noreturn(name: &str) -> bool {
 static DIVERGE_TX: Mutex<Option<std::sync::mpsc::Sender<Option<u64>>>> = Mutex::new(None);
 pub const DIVERGED: u64 = 0xDEAD_DEAD_DEAD_DEAD;
 
+/// With `ORACLE_DUMPCASE=func:idx` set, `ORACLE_DUMP` only writes that case's state words.
+static DUMP_THIS: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
 static MAXUSED: core::sync::atomic::AtomicUsize = core::sync::atomic::AtomicUsize::new(0);
 static REC: Mutex<Option<Rec>> = Mutex::new(None);
 static RUN_LOCK: Mutex<()> = Mutex::new(());
@@ -571,6 +573,18 @@ pub fn ext_call_va(name: &'static str, args: &[Arg], fmt_idx: usize, va: &[Va], 
     }
     let fmt = args[fmt_idx].v as usize as *const u8;
     let convs = fmt_convs(fmt);
+    ext_call_convs(name, args, convs, va, ret)
+}
+
+/// As [`ext_call_va`] for callees whose varargs have fixed kinds (`"d"` = one double, ...).
+pub fn ext_call_vk(name: &'static str, args: &[Arg], kinds: &str, va: &[Va], ret: K) -> Option<u64> {
+    if REC.lock().unwrap_or_else(|e| e.into_inner()).is_none() {
+        return None;
+    }
+    ext_call_convs(name, args, kinds.chars().collect(), va, ret)
+}
+
+fn ext_call_convs(name: &'static str, args: &[Arg], convs: std::vec::Vec<char>, va: &[Va], ret: K) -> Option<u64> {
     assert_eq!(convs.len(), va.len(), "{name}: format string wants {} varargs, got {}", convs.len(), va.len());
     let mut extra = vec![];
     let g = REC.lock().unwrap_or_else(|e| e.into_inner());
@@ -777,6 +791,25 @@ macro_rules! ext_fns {
     (@body $name:ident ( $($a:ident),* )) => { panic!(concat!("TODO(ext) ", stringify!($name), ": its TU is not ported")) };
 }
 
+/// Declares variadic callees whose varargs have fixed kinds:
+/// `fn name(fixed args) vk "d" -> Ret;` (one double) becomes `pub unsafe fn name(fixed args, va: &[Va]) -> Ret`.
+#[macro_export]
+macro_rules! ext_vk {
+    ($( $(#[$m:meta])* fn $name:ident ( $($a:ident : $t:ty),* $(,)? ) vk $kinds:literal -> $r:ty ; )*) => {
+        $(
+            $(#[$m])*
+            #[allow(non_snake_case, unused_variables)]
+            pub unsafe fn $name($($a: $t,)* va: &[$crate::oracle::Va]) -> $r {
+                if let Some(v) = $crate::oracle::ext_call_vk(stringify!($name),
+                        &[$($crate::oracle::arg($a)),*], $kinds, va, <$r as $crate::oracle::OVal>::K) {
+                    return <$r as $crate::oracle::OVal>::from_bits(v);
+                }
+                panic!(concat!("TODO(ext) ", stringify!($name), ": its TU is not ported"))
+            }
+        )*
+    };
+}
+
 /// Declares printf-style variadic callees: `fn name(fixed args) va FMT_IDX -> Ret;` becomes
 /// `pub unsafe fn name(fixed args, va: &[Va]) -> Ret` (no TODO forwarding: always a stub).
 #[macro_export]
@@ -974,7 +1007,7 @@ impl<'a> TuOracle<'a> {
         let end = rec.hwm.max(arena.hwm).max(heap_start);
         MAXUSED.fetch_max(end, core::sync::atomic::Ordering::Relaxed);
         let mut i = GLOBALS_BASE & !7;
-        let dump = std::env::var("ORACLE_DUMP").ok();
+        let dump = std::env::var("ORACLE_DUMP").ok().filter(|_| std::env::var("ORACLE_DUMPCASE").is_err() || DUMP_THIS.load(core::sync::atomic::Ordering::Relaxed));
         let mut dump_buf: Vec<u8> = vec![];
         while i < end {
             let w = unsafe { (arena.base.add(i) as *const u64).read() };
@@ -1217,6 +1250,9 @@ impl<'a> TuOracle<'a> {
                         continue;
                     }
                 };
+                if let Ok(dc) = std::env::var("ORACLE_DUMPCASE") {
+                    DUMP_THIS.store(dc == format!("{}:{}", f.name, idx), core::sync::atomic::Ordering::Relaxed);
+                }
                 let (got, _, _, _) = self.run_case(f, idx, &init, &mut arena, false);
                 if got != want {
                     bad.push((f.name.to_string(), idx, format!("got {got:x?} want {want:x?}")));

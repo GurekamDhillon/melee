@@ -37,6 +37,8 @@ GNU_FLAGS = [("--target=x86_64-w64-windows-gnu" if f.startswith("--target=") els
 # printf-style variadic callees: the fixed-argument index of the format string. Their varargs are
 # logged by rt_va (count and kinds from the format); other variadics log the fixed arguments only.
 VA_FMT = {"OSReport": 0, "HSD_SisLib_803A6B98": 3, "HSD_SisLib_803A70A0": 2, "OSPanic": 2}
+# variadic callees whose varargs have fixed kinds (see rt_va_kinds)
+VA_KINDS = {"HSD_ForeachAnim": "d", "lb_80011E24": "ii"}
 
 SIZES = {"i1": 1, "i8": 1, "i16": 2, "i32": 4, "i64": 8, "ptr": 8, "float": 4, "double": 8}
 
@@ -92,6 +94,7 @@ def make_stubs(ll_text, defined, extra_skip, ext_globals):
     out = []
     strs = []
     manual = []
+    kc = []
     for line in ll_text.splitlines():
         if not line.startswith("declare "):
             continue
@@ -146,6 +149,11 @@ def make_stubs(ll_text, defined, extra_skip, ext_globals):
             if name in VA_FMT:
                 body += ["  %ap = alloca ptr, align 8", "  call void @llvm.va_start.p0(ptr %ap)",
                          f"  call void @rt_va(ptr %ap, i32 {VA_FMT[name]})", "  call void @llvm.va_end.p0(ptr %ap)"]
+            elif name in VA_KINDS:
+                kb = VA_KINDS[name].encode() + b"\0"
+                kc.append(f'@.vk.{len(kc)} = private unnamed_addr constant [{len(kb)} x i8] c"{VA_KINDS[name]}\\00"')
+                body += ["  %ap = alloca ptr, align 8", "  call void @llvm.va_start.p0(ptr %ap)",
+                         f"  call void @rt_va_kinds(ptr %ap, ptr @.vk.{len(kc) - 1})", "  call void @llvm.va_end.p0(ptr %ap)"]
         idx = len(strs)
         strs.append(name)
         head = [f"define dso_local {ret} @{name}({', '.join(ps)}) {{",
@@ -171,6 +179,7 @@ def make_stubs(ll_text, defined, extra_skip, ext_globals):
     for i, n in enumerate(strs):
         b = n.encode() + b"\0"
         consts.append(f'@.stub.{i} = private unnamed_addr constant [{len(b)} x i8] c"{n}\\00"')
+    consts += kc
     data = []
     for name, size in ext_globals:
         data.append(f"@{name} = dso_local global [{size} x i8] zeroinitializer, align 16")
@@ -186,6 +195,7 @@ declare float @rt_ret_f()
 declare double @rt_ret_d()
 declare void @rt_ret_v()
 declare void @rt_va(ptr, i32)
+declare void @rt_va_kinds(ptr, ptr)
 declare void @llvm.va_start.p0(ptr)
 declare void @llvm.va_end.p0(ptr)
 """

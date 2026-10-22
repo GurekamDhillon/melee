@@ -8,4 +8,5 @@ pub mod gmregtyfall;
 pub mod gmregclear;
 pub mod gmregenddisp;
 pub mod gmresult;
+pub mod gmresultplayer;
 pub mod hsd;

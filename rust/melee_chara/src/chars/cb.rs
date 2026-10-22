@@ -171,7 +171,7 @@ pub unsafe extern "C" fn ftkirbyspecialgamewatch__fn_8010CE5C(g: *mut HSD_GObj) 
 
 /// `fn_800F98F4` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialluigi.c).
 pub unsafe extern "C" fn ftkirbyspecialluigi__fn_800F98F4(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_800F98F4 (src/melee/ft/kinds/ftKirby/ftkirbyspecialluigi.c) is not ported");
+    crate::tu::ftkirbyspecialluigi::fn_800F98F4(g);
 }
 
 /// `fn_800F6450` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialn.c).

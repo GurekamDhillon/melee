@@ -52,6 +52,7 @@ class Tu:
             raise SystemExit("clang errors:\n" + "\n".join(str(e) for e in errs[:20]))
         self._src = {}
         self.main = (ROOT / src).resolve()
+        self.tagged, self.typedefd = set(), set()
         self.defs = {}      # name -> cursor, defined in the TU's own file
         self.types = {}     # spelling -> type
         for c in self.tu.cursor.get_children():
@@ -59,6 +60,11 @@ class Tu:
                 self.defs[c.spelling] = c
             if c.kind in (K.TYPEDEF_DECL, K.STRUCT_DECL, K.UNION_DECL) and c.spelling:
                 self.types.setdefault(c.spelling, c.type)
+                if c.kind == K.TYPEDEF_DECL:
+                    self.tagged.discard(c.spelling)
+                    self.typedefd.add(c.spelling)
+                elif c.spelling not in self.typedefd:
+                    self.tagged.add(c.spelling)
 
     def in_main(self, c):
         f = c.location.file
@@ -92,7 +98,9 @@ class Tu:
                         else:
                             e[2] = True
                     elif not self.in_main(d):
-                        inlines[name] = d
+                        if name not in inlines:
+                            inlines[name] = d
+                            self.scan(d, stubs, inlines, data)
                 elif r is not None and r.kind == K.VAR_DECL:
                     d = r.get_definition()
                     if d is None and r.linkage == ci.LinkageKind.EXTERNAL or \
@@ -236,7 +244,23 @@ def rust_field(n):
     return g.ident(n)
 
 
+def leaves(rec, base_bits):
+    for ch in rec.get_children():
+        if ch.kind == K.FIELD_DECL and ch.spelling:
+            yield ch, base_bits + rec.type.get_offset(ch.spelling)
+        elif ch.kind in (K.STRUCT_DECL, K.UNION_DECL) and ch.is_anonymous_record_decl():
+            yield from leaves(ch, base_bits + anon_offset_(rec, ch) * 8)
+
+
+def anon_offset_(parent, anon):
+    for lf, lo in leaves(anon, 0):
+        return (parent.type.get_offset(lf.spelling) - lo) // 8
+    return 0
+
+
 class Walk:
+    anon_offset = staticmethod(anon_offset_)
+
     """Field-by-field fill/hash of one C record type (bitfields by value, pointers by id)."""
 
     def __init__(self, tu):
@@ -253,8 +277,9 @@ class Walk:
         decl = self.rec_of(name)
         cf, ch, rf, rh = [], [], [], []
         self.fields(decl, "p->", "p.", 0, cf, ch, rf, rh, "p", 0)
-        cdef = f"static void fill_{name}({name}* p)\n{{\n    int i0, i1, i2;\n" + "\n".join("    " + x for x in cf) + \
-            f"\n}}\nstatic void hash_{name}(const {name}* p)\n{{\n    int i0, i1, i2;\n" + "\n".join("    " + x for x in ch) + "\n}\n"
+        cn = ("struct " + name) if name in self.tu.tagged else name
+        cdef = f"static void fill_{name}({cn}* p)\n{{\n    int i0, i1, i2, j0, j1, j2, j3;\n" + "\n".join("    " + x for x in cf) + \
+            f"\n}}\nstatic void hash_{name}(const {cn}* p)\n{{\n    int i0, i1, i2, j0, j1, j2, j3;\n" + "\n".join("    " + x for x in ch) + "\n}\n"
         rdef = f"pub fn fill_{name}(p: &mut {name}) {{\n" + "\n".join("    " + x for x in rf) + \
             f"\n}}\npub fn hash_{name}(p: &{name}) {{\n" + "\n".join("    " + x for x in rh) + "\n}\n"
         return cdef, rdef
@@ -263,7 +288,18 @@ class Walk:
         for f in decl.get_children():
             if f.kind != K.FIELD_DECL:
                 if f.kind in (K.STRUCT_DECL, K.UNION_DECL) and f.is_anonymous_record_decl():
-                    raise SystemExit(f"anonymous member in {decl.spelling}: not supported by the state walker")
+                    # C11 anonymous member: raw bytes at its offset in the parent. (A bitfield
+                    # overlay in it is not compared by value: melee_types keeps bitfields in GC bit
+                    # order; a function that reads such a member needs its own check.)
+                    off = self.anon_offset(decl, f)
+                    sz = f.type.get_size()
+                    cpar = "(*p)" if cp == "p->" else ("(*" + cp[:-2] + ")" if cp.endswith("->") else cp[:-1])
+                    rpar = rp[:-1]
+                    j = f"j{depth}"
+                    cf.append(f"for ({j} = 0; {j} < {sz}; {j}++) ((unsigned char*) &{cpar})[{off} + {j}] = (unsigned char) rnd();")
+                    ch.append(f"for ({j} = 0; {j} < {sz}; {j}++) HM(((const unsigned char*) &{cpar})[{off} + {j}]);")
+                    rf.append(f"for {j} in 0..{sz} {{ unsafe {{ *(base(&{rpar}) as *mut u8).add({off} + {j}) = rnd() as u8; }} }}")
+                    rh.append(f"for {j} in 0..{sz} {{ unsafe {{ hm(*base(&{rpar}).add({off} + {j}) as u32); }} }}")
                 continue
             n = f.spelling
             if not n:
@@ -354,6 +390,8 @@ class Walk:
 def build(stem, spec, want_ext):
     tu = Tu(spec["src"], spec.get("args", ()))
     stubs, inlines, data = tu.uses()
+    for n in ("__assert", "OSReport", "printf"):
+        stubs.pop(n, None)
     for n in spec.get("skip_stubs", ()):
         stubs.pop(n, None)
     for n in list(data):
@@ -363,7 +401,7 @@ def build(stem, spec, want_ext):
     c_out = [f'/* generated by gen/cref/gen_tu.py for {spec["src"]}: do not edit */']
     r_out = [f"// generated by rust/melee_modes/gen/cref/gen_tu.py for {spec['src']}: do not edit",
              "#![allow(unused_variables, unused_parens, non_snake_case, unused_unsafe, static_mut_refs, clippy::all)]",
-             "use crate::mtu_harness::*;", "use super::m;", "use melee_types::*;", "use core::ffi::c_void;", ""]
+             "use crate::mtu_harness::*;", "use super::m;", "use melee_types::*;", "use super::m::*;", "use core::ffi::c_void;", ""]
     names = sorted(stubs)
     sid = {n: 1000 + i for i, n in enumerate(names)}
     ext_fns, ext_cb, ext_data = [], [], []
@@ -379,6 +417,9 @@ def build(stem, spec, want_ext):
             cs = csize or 1
             c_out.append(f"{canon(c.element_type).spelling if False else c.element_type.spelling} {n}[{cs}];")
             ext_data.append(f"    pub static mut {n}: [{rust_ty(c.element_type)}; {cs}] = unsafe {{ core::mem::zeroed() }};")
+        elif c.kind == T.CONSTANTARRAY:
+            c_out.append(f"{c.element_type.spelling} {n}[{c.element_count}];")
+            ext_data.append(f"    pub static mut {n}: {rust_ty(t)} = unsafe {{ core::mem::zeroed() }};")
         else:
             c_out.append(f"{t.spelling} {n};")
             ext_data.append(f"    pub static mut {n}: {rust_ty(t)} = unsafe {{ core::mem::zeroed() }};")

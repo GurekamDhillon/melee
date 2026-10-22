@@ -23,3 +23,28 @@ pub const fn end() -> GameModeState {
 }
 
 pub const NULL: *mut c_void = core::ptr::null_mut();
+
+/// Read `w` bits of a GameCube big-endian bitfield byte run, `shift` bits up from its LSB
+/// (the same helper melee_types' generated accessors use).
+#[inline]
+pub fn bits_get(b: &[u8], shift: u32, w: u32) -> u64 {
+    let mut v: u128 = 0;
+    for &x in b {
+        v = (v << 8) | x as u128;
+    }
+    ((v >> shift) as u64) & (((1u128 << w) - 1) as u64)
+}
+
+#[inline]
+pub fn bits_set(b: &mut [u8], shift: u32, w: u32, val: u64) {
+    let mut v: u128 = 0;
+    for &x in b.iter() {
+        v = (v << 8) | x as u128;
+    }
+    let m = ((1u128 << w) - 1) << shift;
+    v = (v & !m) | (((val as u128) << shift) & m);
+    for x in b.iter_mut().rev() {
+        *x = v as u8;
+        v >>= 8;
+    }
+}

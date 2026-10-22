@@ -69,20 +69,6 @@ static mut RB: Vec<(usize, usize)> = Vec::new();
 pub fn preg<T>(p: *const T, n: usize) {
     unsafe { RB.push((p as usize, n)) }
 }
-pub fn pi<T>(p: *const T) -> u32 {
-    let a = p as usize;
-    if a == 0 {
-        return 0;
-    }
-    unsafe {
-        for (i, &(b, z)) in RB.iter().enumerate() {
-            if a >= b && a < b + z {
-                return (((i + 1) as u32) << 16) | (a - b) as u32;
-            }
-        }
-    }
-    0xFFFF_FFFF
-}
 static mut FP: Vec<usize> = Vec::new();
 pub fn freg(f: usize) {
     unsafe { FP.push(f) }
@@ -103,6 +89,26 @@ pub fn fi<F: Copy>(f: Option<F>) -> u32 {
             0xFFFF_FFFE
         }
     }
+}
+/// A data pointer that is really a function address (UNK_T slots) gets the function's id.
+pub fn pi<T>(p: *const T) -> u32 {
+    let a = p as usize;
+    if a == 0 {
+        return 0;
+    }
+    unsafe {
+        for (i, &(b, z)) in RB.iter().enumerate() {
+            if a >= b && a < b + z {
+                return (((i + 1) as u32) << 16) | (a - b) as u32;
+            }
+        }
+        for (i, &x) in FP.iter().enumerate() {
+            if x == a {
+                return 0xF000_0000 | (i + 1) as u32;
+            }
+        }
+    }
+    0xFFFF_FFFF
 }
 pub fn sh(s: *const u8) -> u32 {
     if s.is_null() {
@@ -125,6 +131,10 @@ pub fn rh<T>(v: &T) -> u32 {
         h = (h ^ x as u32).wrapping_mul(0x0100_0193);
     }
     h
+}
+/// Address of a record as bytes (the anonymous-member walkers of the generated fill / hash).
+pub fn base<T>(r: &T) -> *const u8 {
+    r as *const T as *const u8
 }
 pub fn case(op: u32, k: u32) {
     unsafe {

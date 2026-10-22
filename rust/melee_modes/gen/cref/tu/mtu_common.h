@@ -62,16 +62,6 @@ static const unsigned char* RB[MAXR];
 static unsigned RZ[MAXR];
 static int NR;
 static void preg(const void* p, unsigned n) { RB[NR] = (const unsigned char*) p; RZ[NR] = n; NR++; }
-static u32 PI(const void* p)
-{
-    int i;
-    unsigned long long a = (unsigned long long) p;
-    if (p == 0) return 0;
-    for (i = 0; i < NR; i++)
-        if (a >= (unsigned long long) RB[i] && a < (unsigned long long) RB[i] + RZ[i])
-            return ((u32) (i + 1) << 16) | (u32) (a - (unsigned long long) RB[i]);
-    return 0xFFFFFFFFu;
-}
 #define MAXF 512
 static const void* FP[MAXF];
 static int NF;
@@ -82,6 +72,18 @@ static u32 FI(const void* f)
     if (f == 0) return 0;
     for (i = 0; i < NF; i++) if (FP[i] == f) return (u32) (i + 1);
     return 0xFFFFFFFEu;
+}
+/* a data pointer that is really a function address (UNK_T slots) gets the function's id */
+static u32 PI(const void* p)
+{
+    int i;
+    unsigned long long a = (unsigned long long) p;
+    if (p == 0) return 0;
+    for (i = 0; i < NR; i++)
+        if (a >= (unsigned long long) RB[i] && a < (unsigned long long) RB[i] + RZ[i])
+            return ((u32) (i + 1) << 16) | (u32) (a - (unsigned long long) RB[i]);
+    for (i = 0; i < NF; i++) if (FP[i] == p) return 0xF0000000u | (u32) (i + 1);
+    return 0xFFFFFFFFu;
 }
 static u32 SH(const char* s)
 {

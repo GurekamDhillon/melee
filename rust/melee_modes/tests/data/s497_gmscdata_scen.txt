@@ -1,0 +1,16 @@
+begin gm_GetAllGameScenes 100
+call 
+end
+begin gm_GetAllGameModes 100
+call 
+end
+begin gm_GetNumGameModes 100
+call 
+end
+begin gm_GetNumGameScenes 100
+call 
+end
+begin __tables 1
+dump g:scenes GameScene 2e
+dump g:modes GameMode 30
+end

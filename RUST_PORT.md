@@ -560,3 +560,31 @@ generated from the C by `gen/cref/gen_tu.py` (libclang, the native flags of `ora
   character into the bitfield byte `EventData+0xB` (never in the real level data; the oracle avoids
   it); `gm_8016A404((s32) fnptr)` passes a function address as a 32-bit int (PPC-ism: a native
   callee cannot turn it back into a function; the trace names the function by its low 32 bits).
+
+## melee_world::tu: whole-TU gr ports with a stateful C oracle (shard 553-560)
+`rust/melee_world/src/tu/{grdisplay,grdynamicattr,grfigure1,grfigure2,grfigure3,grfigureget,grflatzone,grfourside}.rs`
+port every function of those `src/melee/gr` files (187 incl. the static-inline helpers; 44 constant-return
+callbacks are re-exports of `gr::trivial`). Callees of unported TUs are `ext` hooks (unset: panics "TODO"), the
+block is generated from the C by `gen/mtu/gen_tu.py` (a copy of melee_modes' `gen/cref` oracle, retargeted).
+- Oracle: `bash rust/melee_world/gen/mtu/regen_gr.sh` (or `python gen/mtu/run_tu.py <stem>`) compiles the game's
+  `.c` verbatim (shipping contraction + gwtool lowering), with a recording stub per callee, runs every function on
+  500-2500 seeded synthetic states per op and writes `tests/data/mtu_<stem>.txt` (return, field-by-field state hash,
+  call-trace hash); `tests/tu_<stem>.rs` makes the same draws. The stage drivers are written from one description by
+  `gen/mtu/mk_stage_driver.py` + `mk_stage_cfgs.py` (C and Rust halves cannot drift); grdisplay / grdynamicattr
+  have hand-written drivers (`gen/mtu/tu/<stem>.c`, `tests/tu_<stem>.rs`).
+- Traps found: (1) melee_types keeps `uintptr_t`/`HSD_IDKey` at 4 bytes (GC) but native C has 8: the state walker
+  compares such fields as 32 bits; (2) a top-level anonymous union member must be addressed as the record, not as a
+  reference to it (generator bug fixed); (3) `x = (u64) fv() << 32 | fv()` has no defined evaluation order: use
+  `fv64()`; (4) unions that hold pointers must be hashed by region id (`PIB`), never as raw bytes (addresses differ
+  between the two executables), and a pointer slot another view overwrites byte-wise only counts at an exact base;
+  (5) bitfield bytes differ between native (LSB-first) and GC order (MSB-first): compared by value (`foursideCrane.x1`);
+  (6) div/rem by zero is not rewritten by `lower.py` (the native C traps), so fixtures keep divisors non-zero; the
+  port uses `cabi::srem` for the gwtool result (`x % 0 = x`), which the oracle therefore does not exercise.
+- GC union aliasing: `grflatzone.c` names one union word through `flatzone.xD0`/`unk.xD0`/`flatzone2.xD0` and
+  `flatzone.xD4`/`flatzone2.timer`; with 8-byte native pointers (`flatzone2.xCC`) these stop aliasing. The port keeps
+  the GameCube aliasing (uses `flatzone2.xD0` / `.timer` everywhere) and the oracle compiles a copy of the TU with
+  the same substitution (`patch` in `gen/mtu/specs.py`). Mutation checks: flipping a fused multiply-add site, a
+  boundary constant or a state-machine constant in grdisplay / grflatzone / grfourside fails the test.
+- Not compared: `OSReport` diagnostics; `atan2f` (lbtrigf.c) is an `ext` hook in grfourside (ported and checked in
+  melee_runtime); the crane/stage init chains of `OnInit` / `setup_gobj` ops compare the callback trace, not the
+  union bytes the chain overwrites (each init function has its own exact op).

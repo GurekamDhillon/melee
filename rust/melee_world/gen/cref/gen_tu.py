@@ -501,11 +501,12 @@ def build(stem, spec, want_ext):
         params = ", ".join(f"__typeof__({p.spelling}) a{i}" for i, p in enumerate(ptys)) or "void"
         ret_t = "void" if rcls == "void" else f"__typeof__({rt.spelling})"
         f32a = spec.get("fn32_args", {}).get(n, [])
-        body_c = [f"T({sid[n]});"] + [(f"T(FI32((u32) a{i}));" if i in f32a else c_trace(arg_class(p), f"a{i}"))
+        tro = spec.get("trace", {}).get(n, {})   # {arg index: (c_word, rust_word)}: the traced word of an argument
+        body_c = [f"T({sid[n]});"] + [(f"T({tro[i][0]});" if i in tro else f"T(FI32((u32) a{i}));" if i in f32a else c_trace(arg_class(p), f"a{i}"))
                                       for i, p in enumerate(ptys)]
         rparams = ", ".join(f"a{i}: {rust_ty(p)}" for i, p in enumerate(ptys))
         rret = "" if rcls == "void" else f" -> {rust_ty(rt)}"
-        body_r = [f"t({sid[n]});"] + [(f"t(fi32(a{i} as u32));" if i in f32a else r_trace(arg_class(p), f"a{i}"))
+        body_r = [f"t({sid[n]});"] + [(f"t({tro[i][1]});" if i in tro else f"t(fi32(a{i} as u32));" if i in f32a else r_trace(arg_class(p), f"a{i}"))
                                       for i, p in enumerate(ptys)]
         if n in eff:
             body_c.append(eff[n][0])

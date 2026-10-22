@@ -123,4 +123,27 @@ callee("grAnime_801C7FF8", "tu", "g: *mut HSD_GObj, a: i32, b: i32, c: i32, d: f
        'void grAnime_801C7FF8(HSD_GObj* g, int a, int b, int c, float d, float e) { emit(" anim7FF8(%s,%d,%d,%d,%08x,%08x)", sym(g), a, b, c, fb(d), fb(e)); }',
        'rec(&format!(" anim7FF8({},{},{},{},{:08x},{:08x})", sym(g as usize), a, b, c, d.to_bits(), e.to_bits()));')
 
+# ---- grtmario.c -------------------------------------------------------------------------
+callee("ftCo_800C07F8", "tu", "g: *mut HSD_GObj, k: u32, f: *const c_void", "", "group3: ft/ftdevice.c",
+       'void ftCo_800C07F8(Ground_GObj* g, u32 k, void* f) { emit(" ftdev(%s,%u,%s)", sym(g), k, fname(f)); }',
+       'rec(&format!(" ftdev({},{},{})", sym(g as usize), k, fname(f as usize)));')
+callee("Ground_801C10B8", "tu", "g: *mut HSD_GObj, f: HSD_GObjEvent", "", "group2: gr/ground.c",
+       'void Ground_801C10B8(HSD_GObj* g, HSD_GObjEvent f) { emit(" g10B8(%s,%s)", sym(g), fname((void*) f)); }',
+       'rec(&format!(" g10B8({},{})", sym(g as usize), fname(f.map_or(0, |f| f as usize))));')
+callee("Ground_801C0498", "tu", "", "-> f32", "group2: gr/ground.c",
+       'float Ground_801C0498(void) { static const float t[] = { 1.0f, 0.5f, 2.0f, 0.75f }; last498 = t[rnd() % 4]; emit(" g0498=%08x", fb(last498)); return last498; }',
+       'const T: [f32; 4] = [1.0, 0.5, 2.0, 0.75]; let v = T[(rnd() % 4) as usize]; LAST498 = v; rec(&format!(" g0498={:08x}", v.to_bits())); v')
+callee("ftLib_80086644", "tu", "g: *mut HSD_GObj, out: *mut Vec3", "", "group3: ft/ftlib.c",
+       'void ftLib_80086644(HSD_GObj* g, Vec3* out) { out->x = rf(); out->y = ypick(0); out->z = rf(); emit(" lib6644(%s,%08x,%08x,%08x)", sym(g), fb(out->x), fb(out->y), fb(out->z)); }',
+       '(*out).x = rf(); (*out).y = ypick(false); (*out).z = rf(); rec(&format!(" lib6644({},{:08x},{:08x},{:08x})", sym(g as usize), (*out).x.to_bits(), (*out).y.to_bits(), (*out).z.to_bits()));')
+callee("ftLib_80086684", "tu", "g: *mut HSD_GObj, out: *mut Vec3", "", "group3: ft/ftlib.c",
+       'void ftLib_80086684(HSD_GObj* g, Vec3* out) { out->x = rf(); out->y = ypick(1); out->z = rf(); emit(" lib6684(%s,%08x,%08x,%08x)", sym(g), fb(out->x), fb(out->y), fb(out->z)); }',
+       '(*out).x = rf(); (*out).y = ypick(true); (*out).z = rf(); rec(&format!(" lib6684({},{:08x},{:08x},{:08x})", sym(g as usize), (*out).x.to_bits(), (*out).y.to_bits(), (*out).z.to_bits()));')
+callee("ftLib_80086B80", "tu", "g: *mut HSD_GObj", "-> f32", "group3: ft/ftlib.c",
+       'float ftLib_80086B80(HSD_GObj* g) { float v = rf(); emit(" lib6B80(%s)=%08x", sym(g), fb(v)); return v; }',
+       'let v = rf(); rec(&format!(" lib6B80({})={:08x}", sym(g as usize), v.to_bits())); v')
+callee("grLib_801C96F8", "tu", "a: i32, b: i32, p: *mut Vec3", "-> *mut HSD_Generator", "group2: gr/grlib.c",
+       'HSD_Generator* grLib_801C96F8(s32 a, s32 b, Vec3* p) { unsigned r = rnd(); HSD_Generator* gp = r % 3 == 0 ? NULL : &fx_GN[(r >> 2) % 2]; emit(" lib96F8(%d,%d,%s", a, b, p ? "V" : "0"); if (p) emit(",%08x,%08x,%08x", fb(p->x), fb(p->y), fb(p->z)); emit(")=%s", sym(gp)); return gp; }',
+       'let r = rnd(); let gp = if r % 3 == 0 { null_mut() } else { W().gn.add(((r >> 2) % 2) as usize) }; rec(&format!(" lib96F8({},{},{}", a, b, if p.is_null() { "0" } else { "V" })); if !p.is_null() { rec(&format!(",{:08x},{:08x},{:08x}", (*p).x.to_bits(), (*p).y.to_bits(), (*p).z.to_bits())); } rec(&format!(")={}", sym(gp as usize))); gp')
+
 BY_NAME = {c["name"]: c for c in CALLEES}

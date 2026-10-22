@@ -588,3 +588,10 @@ block is generated from the C by `gen/mtu/gen_tu.py` (a copy of melee_modes' `ge
 - Not compared: `OSReport` diagnostics; `atan2f` (lbtrigf.c) is an `ext` hook in grfourside (ported and checked in
   melee_runtime); the crane/stage init chains of `OnInit` / `setup_gobj` ops compare the callback trace, not the
   union bytes the chain overwrites (each init function has its own exact op).
+
+## melee_world::tu: gr/grt*.c set B (shard 601-608)
+`grtkirby grtkoopa grtlink grtluigi grtmario grtmars grtmewtwo grtness` ported by the same
+generator as set A (`GRT_SET=b bash rust/melee_world/cref/gen_grt_stages_ref.sh`; test
+`tests/tu_grt_stages_b.rs`, 60 seeded cases per function). New fixtures: Generator/AppSRT pair
+(mario particle scale), 8-slot yakumono struct (mewtwo), `ypick` biased ftLib positions so the
+mario floor-crossing branch is exercised.

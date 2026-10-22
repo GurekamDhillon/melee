@@ -22,13 +22,19 @@ from grt_db import CALLEES, BY_NAME  # noqa: E402
 
 ROOT = os.path.abspath(sys.argv[1])
 OUT = os.path.abspath(sys.argv[2])
-STEMS = ["grtdrmario", "grtemblem", "grtest", "grtfalco", "grtfox", "grtgamewatch", "grtganon", "grticeclimber"]
+SET = os.environ.get("GRT_SET", "a")
+STEMS_A = ["grtdrmario", "grtemblem", "grtest", "grtfalco", "grtfox", "grtgamewatch", "grtganon", "grticeclimber"]
+STEMS_B = ["grtkirby", "grtkoopa", "grtlink", "grtluigi", "grtmario", "grtmars", "grtmewtwo", "grtness"]
+STEMS = STEMS_A if SET == "a" else STEMS_B
+TEST_FILE = "tu_grt_stages.rs" if SET == "a" else "tu_grt_stages_%s.rs" % SET
 KIND = {"grtdrmario": "Gr_Kind_TDrmario", "grtemblem": "Gr_Kind_TEmblem", "grtest": "Gr_Kind_Test",
         "grtfalco": "Gr_Kind_TFalco", "grtfox": "Gr_Kind_TFox", "grtgamewatch": "Gr_Kind_TGamewatch",
-        "grtganon": "Gr_Kind_TGanon", "grticeclimber": "Gr_Kind_TIceclimber"}
+        "grtganon": "Gr_Kind_TGanon", "grticeclimber": "Gr_Kind_TIceclimber",
+        "grtkirby": "Gr_Kind_TKirby", "grtkoopa": "Gr_Kind_TKoopa", "grtlink": "Gr_Kind_TLink", "grtluigi": "Gr_Kind_TLuigi",
+        "grtmario": "Gr_Kind_TMario", "grtmars": "Gr_Kind_TMars", "grtmewtwo": "Gr_Kind_TMewtwo", "grtness": "Gr_Kind_TNess"}
 KINDNUM = {"Gr_Kind_TDrmario": 44, "Gr_Kind_TEmblem": 64, "Gr_Kind_Test": 1, "Gr_Kind_TFalco": 45,
            "Gr_Kind_TFox": 46, "Gr_Kind_TGamewatch": 63, "Gr_Kind_TGanon": 65, "Gr_Kind_TIceclimber": 47}
-K = 20  # cases per function
+K = 20 if SET == "a" else 60  # cases per function
 
 
 def read(p):
@@ -130,7 +136,7 @@ def derive_body(stem, f, text_info):
     pure = False
     if b in ("", "return;"):
         return "", True
-    if b == "return false;":
+    if b in ("return false;", "return 0;"):
         return "0", True
     if b == "return true;":
         return "1", True
@@ -259,6 +265,60 @@ CUSTOM[("grticeclimber", "grTIceClimber_80221288")] = """\
     }"""
 
 # stageGObj2_OnInit of the ice climbers is the only one with extra calls
+CUSTOM[("grtmario", "lbl_8021FA08")] = """\
+    ext::ftCo_800C07F8(gobj, 6, lbl_8021FB50 as *const c_void);"""
+
+CUSTOM[("grtmario", "grTMario_8021FA34")] = """\
+    inlines::Ground_InitMapCollAndAnim(gobj);
+    ext::Ground_801C10B8(gobj, Some(lbl_8021FA08));"""
+
+CUSTOM[("grtmario", "lbl_8021FB50")] = """\
+    let mut current: Vec3 = core::mem::zeroed();
+    let mut previous: Vec3 = core::mem::zeroed();
+    let unused: f32 = -120.0f32;
+    let temp_f31: f32 = unused * ext::Ground_801C0498();
+    ext::ftLib_80086644(gobj, &mut current);
+    ext::ftLib_80086684(gobj, &mut previous);
+    if current.y < temp_f31 && previous.y > temp_f31 {
+        let temp_f1: f32 = ext::ftLib_80086B80(gobj) / 10.0f32;
+        current.y = temp_f31;
+        grTMario_8021FBE8(&mut current, temp_f1);
+        ext::Ground_801C53EC(0x77A10);
+    }
+    0"""
+
+CUSTOM[("grtmario", "grTMario_8021FBE8")] = """\
+    let temp_r3 = ext::grLib_801C96F8(0x7530, 0x1E, vec);
+    if !temp_r3.is_null() {
+        let temp_r3_2 = (*temp_r3).appsrt;
+        (*temp_r3_2).scale.x *= arg8;
+        (*temp_r3_2).scale.y *= arg8;
+        (*temp_r3_2).scale.z *= arg8;
+    }"""
+
+
+def _yak_arm(fields):
+    out = ""
+    for kk, fld in zip(("Floor", "Ceiling", "RightWall", "LeftWall"), fields):
+        out += "                if t == CollLine_%s as i32 {\n                    return (*YAKUMONO_PARAM.load(Ordering::Relaxed)).%s;\n                }\n" % (kk, fld)
+    return out
+
+
+CUSTOM[("grtmewtwo", "grTMewtwo_802224B4")] = """\
+    if arg0 != -1 {
+        let temp = ext::mpJointFromLine(arg0);
+        if temp != -1 {
+            if temp == 0 {
+                let t = ext::mpLineGetKind(arg0);
+%s                return null_mut();
+            } else if temp == 1 {
+                let t = ext::mpLineGetKind(arg0);
+%s                return null_mut();
+            }
+        }
+    }
+    null_mut()""" % (_yak_arm(("x0", "x4", "x8", "xC")).replace("\\n", "\n"), _yak_arm(("x10", "x14", "x18", "x1C")).replace("\\n", "\n"))
+
 CUSTOM[("grticeclimber", "stageGObj2_OnInit")] = """\
     inlines::Ground_InitMapCollAndAnim(gobj);
     ext::grAnime_801C7FF8(gobj, 69, 2, 1, 0.0, 1.0);
@@ -309,7 +369,7 @@ def evalc(e):
 def parse_tables(stem, text):
     t = strip_comments(text)
     r = {}
-    m = re.search(r"(?m)^(?:static\s+)?StageCallbacks\s+(\w+)\[(\w*)\]\s*=\s*", t)
+    m = re.search(r"(?m)^[ 	]*(?:static\s+)?StageCallbacks\s+(\w+)\[(\w*)\]\s*=\s*", t)
     r["cb_name"] = m.group(1)
     r["cb_len"] = int(m.group(2)) if m.group(2) else None
     i = t.index("{", m.end() - 1)
@@ -322,6 +382,8 @@ def parse_tables(stem, text):
         if len(inner) == 1 or all(x in ("0", "NULL") for x in inner[:4]) and len(inner) < 4:
             ents.append(None)
         else:
+            if len(inner) == 4:
+                inner.append("0")
             assert len(inner) == 5, (stem, inner)
             ents.append(inner)
     r["cb_ents"] = ents
@@ -335,11 +397,13 @@ def parse_tables(stem, text):
     # yakumono struct
     m = re.search(r"(?:typedef )?struct (\w+) \{([^}]*)\}", t)
     r["yak_fields"] = None
+    ym = re.search(r"(?m)^[ 	]*(?:static\s+)?(\w+)\*\s+yakumono_param;", t)
     for mm in re.finditer(r"struct (\w+) \{([^}]*)\}", t):
-        if "Yakumono" in mm.group(1):
+        if "Yakumono" in mm.group(1) or (ym and mm.group(1) == ym.group(1)):
             flds = re.findall(r"(?:UNK_T|DynamicsDesc\*)\s+(\w+);", mm.group(2))
             r["yak_fields"] = flds
             r["yak_type"] = "UNK_T" if "UNK_T" in mm.group(2) else "dd"
+            r["yak_dd"] = "DynamicsDesc" in mm.group(2)
     # joints table
     m = re.search(r"(?m)^GrJoint\s+(\w+)\[\]\s*=\s*", t)
     r["joints"] = None
@@ -564,7 +628,7 @@ def gen_tu(stem, trivial_names):
     s += "#![allow(non_snake_case, non_upper_case_globals, unused_imports, unused_unsafe, static_mut_refs, clippy::missing_safety_doc, clippy::all)]\n\n"
     s += "use core::ffi::{c_void, CStr};\nuse core::mem::MaybeUninit;\nuse core::ptr::{null, null_mut};\n"
     s += "use std::sync::atomic::{AtomicPtr, Ordering};\nuse std::sync::{Once, RwLock};\n\n"
-    s += "use melee_types::{\n    DynamicsDesc, GrJoint, Ground, HSD_GObj, HSD_JObj, HSD_PadStatus, Item, StageCallbacks, StageCallbacks_anon_135,\n"
+    s += "use melee_types::{\n    DynamicsDesc, GrJoint, Ground, HSD_GObj, HSD_GObjEvent, HSD_Generator, HSD_JObj, HSD_PadStatus, HSD_psAppSRT, Item, StageCallbacks, StageCallbacks_anon_135,\n"
     s += "    StageData, StageInfo, Vec3, CollLine_Ceiling, CollLine_Floor, CollLine_LeftWall, CollLine_RightWall, HSD_PAD_A,\n"
     s += "    JOBJ_HIDDEN, JOBJ_MTX_DIRTY, JOBJ_MTX_INDEP_SRT, JOBJ_USER_DEF_MTX, QuakeKind_Small, %s,\n};\n" % KIND[stem]
     s += "use crate::gr::inlines;\n\n"
@@ -576,7 +640,7 @@ def gen_tu(stem, trivial_names):
         flds = tabs["yak_fields"]
         s += "/// `struct %s_YakumonoParam` (UNK_T = void* fields).\n#[repr(C)]\npub struct YakumonoParam {\n" % ("grT")
         for fl in flds:
-            s += "    pub %s: *mut c_void,\n" % fl
+            s += "    pub %s: *mut %s,\n" % (fl, "DynamicsDesc" if tabs.get("yak_dd") else "c_void")
         s += "}\n\n"
         s += "static YAKUMONO_PARAM: AtomicPtr<YakumonoParam> = AtomicPtr::new(null_mut());\n\n"
         s += "/// The TU-static `yakumono_param` (set by this stage's `OnInit`).\npub fn yakumono_param() -> *mut YakumonoParam {\n    YAKUMONO_PARAM.load(Ordering::Relaxed)\n}\n\n"
@@ -776,6 +840,14 @@ void __assert(const char* f, u32 l, const char* c) { printf("ASSERT %s %u %s\n",
 #define Gr_Kind_TGamewatch 63
 #define Gr_Kind_TGanon 65
 #define Gr_Kind_TIceclimber 47
+#define Gr_Kind_TKirby 48
+#define Gr_Kind_TKoopa 49
+#define Gr_Kind_TLink 50
+#define Gr_Kind_TLuigi 51
+#define Gr_Kind_TMars 52
+#define Gr_Kind_TMewtwo 53
+#define Gr_Kind_TNess 54
+#define Gr_Kind_TMario 40
 
 typedef struct HSD_GObj { void* hsd_obj; void* user_data; } HSD_GObj;
 typedef HSD_GObj Ground_GObj;
@@ -795,6 +867,8 @@ typedef struct StageData {
     void (*on_load)(void); void (*on_start)(void); bool (*callback4)(void); DynamicsDesc* (*on_touch_line)(enum_t);
     bool (*on_check_shadow_render)(Vec3*, int, HSD_JObj*); u32 flags2; GrJoint* joints; int joint_count;
 } StageData;
+typedef struct HSD_psAppSRT { Vec3 scale; } HSD_psAppSRT;
+typedef struct HSD_Generator { HSD_psAppSRT* appsrt; } HSD_Generator;
 typedef struct HSD_PadStatus { u32 button, last_button, trigger; } HSD_PadStatus;
 typedef struct StageInfo { struct { unsigned b0 : 1, b1 : 1, b2 : 1, b3 : 1, b4 : 1, b5 : 1, b6 : 1, b7 : 1; } unk8C; } StageInfo;
 
@@ -809,7 +883,8 @@ static int nonull;
 static HSD_GObj fx_G[3]; static Ground fx_R[3]; static HSD_JObj fx_J[3];
 static HSD_GObj fx_IG[2]; static Item fx_IT[2];
 static Vec3 fx_P;
-static void* fx_yak[4]; static DynamicsDesc fx_D[4];
+static HSD_Generator fx_GN[2]; static HSD_psAppSRT fx_AP[2];
+static void* fx_yak[8]; static DynamicsDesc fx_D[8];
 StageInfo stage_info;
 HSD_PadStatus HSD_PadMasterStatus[4];
 static void sentinel_fn(HSD_GObj* g) { (void) g; }
@@ -829,6 +904,8 @@ static uint32_t st = 1;
 static uint32_t rnd(void) { st ^= st << 13; st ^= st >> 17; st ^= st << 5; return st; }
 static uint32_t fb(float f) { uint32_t u; memcpy(&u, &f, 4); return u; }
 static float rf(void) { return (float) ((int) (rnd() % 2000) - 1000) / 16.0f; }
+static float last498;
+static float ypick(int above) { uint32_t r = rnd(); float base = -120.0f * last498; float d = (float) ((r >> 2) % 7 + 1) * 0.5f; return (((r & 3) == 0) == above) ? base - d : base + d; }
 typedef struct { const void* p; const char* n; } Reg;
 static Reg reg[256]; static int nreg;
 static void reg_add(const void* p, const char* n) { reg[nreg].p = p; reg[nreg].n = n; nreg++; }
@@ -861,6 +938,9 @@ def make_stub_includes(stem, src, inc_dir, inline_fns, jfns, mtxmacro):
             write(pth, "")
 
 
+GEN_STEMS = ("grtmario",)
+
+
 def driver(stem, fns, tabs, used):
     """C driver for one TU"""
     has_yak = tabs["yak_fields"] is not None
@@ -881,7 +961,8 @@ def driver(stem, fns, tabs, used):
     d += '    int i;\n    char* nm;\n'
     d += '    for (i = 0; i < 3; i++) { nm = malloc(4); sprintf(nm, "G%d", i); reg_add(&fx_G[i], nm); nm = malloc(4); sprintf(nm, "R%d", i); reg_add(&fx_R[i], nm); nm = malloc(4); sprintf(nm, "J%d", i); reg_add(&fx_J[i], nm); }\n'
     d += '    for (i = 0; i < 2; i++) { nm = malloc(4); sprintf(nm, "I%d", i); reg_add(&fx_IG[i], nm); }\n'
-    d += '    for (i = 0; i < 4; i++) { nm = malloc(4); sprintf(nm, "D%d", i); reg_add(&fx_D[i], nm); }\n'
+    d += '    for (i = 0; i < 8; i++) { nm = malloc(4); sprintf(nm, "D%d", i); reg_add(&fx_D[i], nm); }\n'
+    d += '    for (i = 0; i < 2; i++) { nm = malloc(4); sprintf(nm, "N%d", i); reg_add(&fx_GN[i], nm); nm = malloc(4); sprintf(nm, "A%d", i); reg_add(&fx_AP[i], nm); }\n'
     d += '    reg_add(&fx_P, "P"); reg_add(fx_yak, "Y"); reg_add(sentinel_fn, "S"); reg_add(grDisplay_801C5DB0, "grDisplay_801C5DB0");\n'
     d += '    reg_add(&stage_info, "SI");\n'
     for f in fns:
@@ -901,11 +982,13 @@ def driver(stem, fns, tabs, used):
     d += "    for (i = 0; i < 2; i++) {\n        memset(&fx_IT[i], 0, sizeof fx_IT[i]);\n        fx_IG[i].hsd_obj = &fx_J[i]; fx_IG[i].user_data = &fx_IT[i];\n"
     d += "        fx_IT[i].xDD4_itemVar.mato.x0 = &fx_J[(i + 1) % 3]; fx_IT[i].xDD4_itemVar.mato.x4 = &fx_J[i];\n    }\n"
     d += "    fx_P.x = rf(); fx_P.y = rf(); fx_P.z = rf();\n"
-    d += "    for (i = 0; i < 4; i++) fx_yak[i] = &fx_D[i];\n"
+    d += "    for (i = 0; i < 8; i++) fx_yak[i] = &fx_D[i];\n"
     d += "    stage_info.unk8C.b4 = (int) (rnd() & 1); stage_info.unk8C.b5 = (int) (rnd() & 1);\n"
     d += "    for (i = 0; i < 4; i++) { HSD_PadMasterStatus[i].button = rnd() & 0xFFFF; HSD_PadMasterStatus[i].last_button = 0; HSD_PadMasterStatus[i].trigger = rnd() & 0xFFFF; }\n"
     if tabs["float_global"]:
         d += "    { static const float ft[] = { 1.2217305f, -1.2217305f, 1.1344640f, -1.1344640f, 0.0f }; unsigned r = rnd(); grTe_804D6A48 = (r & 1) ? ft[(r >> 1) % 5] : (float) ((int) ((r >> 4) % 2600) - 1300) / 1000.0f; }\n"
+    if stem in GEN_STEMS:
+        d += "    for (i = 0; i < 2; i++) { fx_AP[i].scale.x = rf(); fx_AP[i].scale.y = rf(); fx_AP[i].scale.z = rf(); fx_GN[i].appsrt = &fx_AP[i]; }\n"
     d += "}\n\n"
     # snapshot
     d += "static void snapshot(void)\n{\n    int i;\n"
@@ -919,6 +1002,8 @@ def driver(stem, fns, tabs, used):
         d += '    emit(" gt=%08x", fb(grTe_804D6A48));\n'
     if has_yak:
         d += '    emit(" yak=%s", sym(yakumono_param));\n'
+    if stem in GEN_STEMS:
+        d += '    for (i = 0; i < 2; i++) emit(" A%d s=%08x,%08x,%08x", i, fb(fx_AP[i].scale.x), fb(fx_AP[i].scale.y), fb(fx_AP[i].scale.z));\n'
     d += "}\n\n"
     # tables
     d += "static void dump_tables(void)\n{\n    int i;\n    begin_case(\"tables\", 0, 1);\n"
@@ -936,7 +1021,7 @@ def driver(stem, fns, tabs, used):
     # main
     d += "int main(int argc, char** argv)\n{\n    int c;\n    verbose = argc > 1;\n    build_registry();\n    dump_tables();\n"
     for f in fns:
-        d += case_loop_c(f, prime if (has_yak and "yakumono_param" in f["body"] and "yakumono_param =" not in f["body"]) else None)
+        d += case_loop_c(f, prime if (has_yak and ("yakumono_param" in f["body"] or "mpJointFromLine" in f["body"]) and "yakumono_param =" not in f["body"]) else None)
     d += "    return 0;\n}\n"
     return d
 
@@ -1008,7 +1093,7 @@ def ctype(ty):
 def arg_int_c(f, i):
     n = f["name"]
     pn = f["params"][i][1]
-    if "gobj_id" in pn or pn in ("id", "arg0") and f["ret"].startswith(("HSD_GObj", "Ground_GObj")):
+    if "gobj_id" in pn or pn in ("id", "arg0", "index") and f["ret"].startswith(("HSD_GObj", "Ground_GObj")):
         return "(int) (rnd() % 4)"
     if f["ret"].startswith("DynamicsDesc") or f["ret"].startswith("struct"):
         return "((rnd() % 6) == 0 ? -1 : (int) (rnd() % 1000))"
@@ -1066,7 +1151,7 @@ def rust_case(stem, f, prime, tabs):
 
 def arg_int_r(f, i):
     pn = f["params"][i][1]
-    if "gobj_id" in pn or pn in ("id", "arg0") and f["ret"].startswith(("HSD_GObj", "Ground_GObj")):
+    if "gobj_id" in pn or pn in ("id", "arg0", "index") and f["ret"].startswith(("HSD_GObj", "Ground_GObj")):
         return "(rnd() % 4) as i32"
     if f["ret"].startswith("DynamicsDesc") or f["ret"].startswith("struct"):
         return "if rnd() % 6 == 0 { -1 } else { (rnd() % 1000) as i32 }"
@@ -1094,6 +1179,15 @@ use melee_types::*;
 use melee_world::gr::inlines;
 
 static LOCK: Mutex<()> = Mutex::new(());
+/// `last498`: the last value `Ground_801C0498` returned (the C recorder keeps the same static).
+static mut LAST498: f32 = 0.0;
+/// `ypick` of the C prelude: a y near `-120 * last498`, above (or below) it with probability 3/4.
+fn ypick(above: bool) -> f32 {
+    let base = -120.0f32 * unsafe { LAST498 };
+    let r = rnd();
+    let d = ((r >> 2) % 7 + 1) as f32 * 0.5f32;
+    if ((r & 3) == 0) == above { base - d } else { base + d }
+}
 static NONULL: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 pub struct World {
@@ -1103,10 +1197,12 @@ pub struct World {
     pub ig: *mut HSD_GObj,
     pub it: *mut Item,
     pub p: Vec3,
-    pub yak: *mut [*mut DynamicsDesc; 4],
+    pub yak: *mut [*mut DynamicsDesc; 8],
     pub d: *mut DynamicsDesc,
     pub stage_info: *mut StageInfo,
     pub pad: *mut HSD_PadStatus,
+    pub gn: *mut HSD_Generator,
+    pub ap: *mut HSD_psAppSRT,
 }
 
 thread_local! {
@@ -1114,6 +1210,7 @@ thread_local! {
     static TR: RefCell<String> = const { RefCell::new(String::new()) };
     static SEED: Cell<u32> = const { Cell::new(1) };
     static MUTED: Cell<bool> = const { Cell::new(false) };
+    static GENS: Cell<bool> = const { Cell::new(false) };
     static REG: RefCell<std::vec::Vec<(usize, String)>> = const { RefCell::new(std::vec::Vec::new()) };
 }
 
@@ -1129,10 +1226,12 @@ fn w() -> &'static mut World {
                     ig: z(2 * core::mem::size_of::<HSD_GObj>() / 8 + 8).cast(),
                     it: z(2 * core::mem::size_of::<Item>() / 8 + 8).cast(),
                     p: core::mem::zeroed(),
-                    yak: z(4).cast(),
-                    d: z(4 * core::mem::size_of::<DynamicsDesc>() / 8 + 8).cast(),
+                    yak: z(8).cast(),
+                    d: z(8 * core::mem::size_of::<DynamicsDesc>() / 8 + 8).cast(),
                     stage_info: z(core::mem::size_of::<StageInfo>() / 8 + 8).cast(),
                     pad: z(4 * core::mem::size_of::<HSD_PadStatus>() / 8 + 8).cast(),
+                    gn: z(2 * core::mem::size_of::<HSD_Generator>() / 8 + 8).cast(),
+                    ap: z(2 * core::mem::size_of::<HSD_psAppSRT>() / 8 + 8).cast(),
                 };
                 p.set(Box::leak(Box::new(wd)));
             }
@@ -1229,7 +1328,7 @@ unsafe fn reset_world(float_global: bool, gt_setter: Option<&dyn Fn(f32)>) {
     w.p.x = rf();
     w.p.y = rf();
     w.p.z = rf();
-    for i in 0..4 {
+    for i in 0..8 {
         (*w.yak)[i] = w.d.add(i);
     }
     (*w.stage_info).unk8C.set_b4((rnd() & 1) as u8);
@@ -1245,6 +1344,15 @@ unsafe fn reset_world(float_global: bool, gt_setter: Option<&dyn Fn(f32)>) {
         let r = rnd();
         let v = if r & 1 != 0 { FT[((r >> 1) % 5) as usize] } else { (((r >> 4) % 2600) as i32 - 1300) as f32 / 1000.0f32 };
         (gt_setter.unwrap())(v);
+    }
+    if GENS.with(|g| g.get()) {
+        for i in 0..2 {
+            let a = w.ap.add(i);
+            (*a).scale.x = rf();
+            (*a).scale.y = rf();
+            (*a).scale.z = rf();
+            (*w.gn.add(i)).appsrt = a;
+        }
     }
 }
 
@@ -1268,6 +1376,12 @@ unsafe fn snapshot_with(gt: Option<f32>, yak: Option<usize>) {
     }
     if let Some(y) = yak {
         rec(&format!(" yak={}", sym(y)));
+    }
+    if GENS.with(|g| g.get()) {
+        for i in 0..2 {
+            let a = w.ap.add(i);
+            rec(&format!(" A{} s={:08x},{:08x},{:08x}", i, (*a).scale.x.to_bits(), (*a).scale.y.to_bits(), (*a).scale.z.to_bits()));
+        }
     }
 }
 
@@ -1316,13 +1430,13 @@ mod hooks {
         for f in fns:
             if "yakumono_param =" in f["body"]:
                 prime = f["name"]
-        s += "fn run_%s() -> String {\n    let _g = LOCK.lock().unwrap_or_else(|e| e.into_inner());\n    install_inlines();\n    install_%s();\n    let mut out = String::new();\n" % (stem, stem)
+        s += "fn run_%s() -> String {\n    let _g = LOCK.lock().unwrap_or_else(|e| e.into_inner());\n    install_inlines();\n    install_%s();\n    GENS.with(|g| g.set(%s));\n    let mut out = String::new();\n" % (stem, stem, "true" if stem in GEN_STEMS else "false")
         s += "    REG.with(|r| r.borrow_mut().clear());\n    unsafe {\n"
         s += "    let wd = w();\n"
         s += "    let mut reg: std::vec::Vec<(usize, String)> = std::vec::Vec::new();\n"
         s += "    for i in 0..3 {\n        reg.push((wd.g.add(i) as usize, format!(\"G{}\", i)));\n        reg.push((wd.r.add(i) as usize, format!(\"R{}\", i)));\n        reg.push((wd.j.add(i) as usize, format!(\"J{}\", i)));\n    }\n"
-        s += "    for i in 0..2 {\n        reg.push((wd.ig.add(i) as usize, format!(\"I{}\", i)));\n    }\n"
-        s += "    for i in 0..4 {\n        reg.push((wd.d.add(i) as usize, format!(\"D{}\", i)));\n    }\n"
+        s += "    for i in 0..2 {\n        reg.push((wd.ig.add(i) as usize, format!(\"I{}\", i)));\n        reg.push((wd.gn.add(i) as usize, format!(\"N{}\", i)));\n        reg.push((wd.ap.add(i) as usize, format!(\"A{}\", i)));\n    }\n"
+        s += "    for i in 0..8 {\n        reg.push((wd.d.add(i) as usize, format!(\"D{}\", i)));\n    }\n"
         s += "    reg.push((addr_of_mut!(wd.p) as usize, \"P\".to_string()));\n    reg.push((wd.yak as usize, \"Y\".to_string()));\n"
         s += "    reg.push((sentinel_fn as usize, \"S\".to_string()));\n"
         s += "    reg.push((inlines::ext::grDisplay_801C5DB0 as usize, \"grDisplay_801C5DB0\".to_string()));\n"
@@ -1334,7 +1448,7 @@ mod hooks {
         s += gen_rust_tables(stem, tabs)
         gts = "Some(&|v: f32| { melee_world::tu::%s::grTe_804D6A48 = v; })" % stem if tabs["float_global"] else "None"
         for f in fns:
-            body = rust_case(stem, f, prime if (has_yak and "yakumono_param" in f["body"] and "yakumono_param =" not in f["body"]) else None, tabs)
+            body = rust_case(stem, f, prime if (has_yak and ("yakumono_param" in f["body"] or "mpJointFromLine" in f["body"]) and "yakumono_param =" not in f["body"]) else None, tabs)
             body = body.replace("reset_world(%s);" % ("true" if tabs["float_global"] else "false"), "reset_world(%s, %s);" % ("true" if tabs["float_global"] else "false", gts))
             gt_read = ("Some(melee_world::tu::%s::grTe_804D6A48)" % stem) if tabs["float_global"] else "None"
             body = body.replace("snapshot(%s, " % ("true" if tabs["float_global"] else "false"), "snapshot_with(%s, " % gt_read)
@@ -1386,7 +1500,7 @@ def main():
         info[stem] = (s, fns, tabs, used)
         write(os.path.join(ROOT, "rust/melee_world/src/tu/%s.rs" % stem), s)
     write(os.path.join(ROOT, "rust/melee_world/src/gr/inlines.rs"), gen_inlines_final())
-    write(os.path.join(ROOT, "rust/melee_world/tests/tu_grt_stages.rs"), gen_rust_test(info))
+    write(os.path.join(ROOT, "rust/melee_world/tests/%s" % TEST_FILE), gen_rust_test(info))
     # C side
     prelude, inline_fns, jfns, mtxmacro = c_prelude()
     write(os.path.join(OUT, "prelude.h"), prelude)

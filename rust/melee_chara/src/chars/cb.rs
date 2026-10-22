@@ -456,7 +456,7 @@ pub unsafe extern "C" fn ftmariospecialn__ftMr_SpecialN_ItemFireSpawn(g: *mut HS
 
 /// `ftMh_MS_362_80152E28` (defined in src/melee/ft/kinds/ftMasterHand/ftmasterhandfingerbeam.c).
 pub unsafe extern "C" fn ftmasterhandfingerbeam__ftMh_MS_362_80152E28(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftMh_MS_362_80152E28 (src/melee/ft/kinds/ftMasterHand/ftmasterhandfingerbeam.c) is not ported");
+    crate::tu::ftmasterhandfingerbeam::ftMh_MS_362_80152E28(g);
 }
 
 /// `ftMt_Init_OnDeath2` (defined in src/melee/ft/kinds/ftMewtwo/ftmewtwo.c).

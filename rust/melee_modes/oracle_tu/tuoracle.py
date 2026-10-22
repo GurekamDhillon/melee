@@ -38,8 +38,10 @@ OUT_ROOT = ROOT / "rust/target/tu-oracle"
 class Names(g.Gen):
     """gen_types.Gen over the all_types.c parse (the melee_types names), plus the TU-local records."""
 
-    def local(self, tu):
+    def local(self, tu, anon_vars=None):
         for c in tu.cursor.get_children():
+            if anon_vars and c.kind == K.VAR_DECL and c.spelling in anon_vars:
+                self._anon_var(c, anon_vars[c.spelling])
             if c.kind == K.TYPEDEF_DECL:
                 u = c.underlying_typedef_type
                 while u.kind == T.ELABORATED:
@@ -56,11 +58,31 @@ class Names(g.Gen):
 loc = g.loc
 
 
-def load_names(tu):
+def _anon_var(self, c, spec):
+    """cfg anon_vars: {var: "RustName"} or {var: ("RustName", {field: "FieldRecName"})}: name the anonymous
+    record type of a variable (and of its anonymous-record fields) after the port's own record."""
+    name, fields = (spec, {}) if isinstance(spec, str) else spec
+    t = c.type.get_canonical()
+    while t.kind == T.CONSTANTARRAY:
+        t = t.element_type.get_canonical()
+    d = t.get_declaration()
+    self.rec_name[loc(d)] = name
+    for f in d.get_children():
+        if f.kind == K.FIELD_DECL and f.spelling in fields:
+            ft = f.type.get_canonical()
+            while ft.kind == T.CONSTANTARRAY:
+                ft = ft.element_type.get_canonical()
+            self.rec_name[loc(ft.get_declaration())] = fields[f.spelling]
+
+
+Names._anon_var = _anon_var
+
+
+def load_names(tu, anon_vars=None):
     ppc = g.parse(g.PPC)
     n = Names(ppc, {})
     n.collect()
-    n.local(tu)
+    n.local(tu, anon_vars)
     return n
 
 
@@ -323,7 +345,7 @@ class TuGen:
         txt = pre + txt
         self.patched.write_text(txt, encoding="utf-8", newline=chr(10))
         self.tu = parse_tu(self.patched, ["-I" + str((ROOT / self.src).parent)])
-        self.names = load_names(self.tu)
+        self.names = load_names(self.tu, cfg.get("anon_vars"))
         self.g2 = Gen2(self.names, cfg, self.tu)
         self.main = self.patched.resolve()
         self.scan()
@@ -497,6 +519,9 @@ class TuGen:
             if k[0] == "ptr":
                 out = [f"tuo_t_p({v});"]
                 pt = k[1]
+                if is_cstr_ptr(pt) and self.cfg.get("cstr_nocls"):
+                    # string literals may sit right after a registered const table in the C image
+                    out = [f"tuo_t_i((tuo_i64)({v} != 0));"]
                 if is_cstr_ptr(pt):
                     out.append(f"tuo_t_s((const char*){v});")
                 else:
@@ -656,6 +681,8 @@ class TuGen:
         if k[0] == "ptr":
             out = [f"rt::t_p(a[{i}] as usize as *const u8);"]
             pt = k[1]
+            if is_cstr_ptr(pt) and self.cfg.get("cstr_nocls"):
+                out = [f"rt::t_i((a[{i}] != 0) as i64);"]
             if is_cstr_ptr(pt):
                 out.append(f"rt::t_s(a[{i}] as usize as *const u8);")
             else:

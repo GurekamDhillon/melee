@@ -142,6 +142,12 @@ pub static mut grHeal_804D6AF0: [*mut grHeal_UnkData; 2] = [null_mut(); 2];
 // `_94[next_count + 2]` in stageGObj1_OnInit reads on into `x96`
 const _: () = assert!(core::mem::offset_of!(UnkAllstarData, x96) == core::mem::offset_of!(UnkAllstarData, _94) + 2);
 
+/// `%` as the shipping build computes it (gwtool's makeArithmeticSafe: x % 0 == x, INT_MIN % -1 == 0)
+#[inline(always)]
+fn srem(a: i32, b: i32) -> i32 {
+    if b == 0 { a } else if a == i32::MIN && b == -1 { 0 } else { a % b }
+}
+
 #[inline(always)]
 unsafe fn GET_GROUND(gobj: *mut HSD_GObj) -> *mut Ground {
     (*gobj).user_data as *mut Ground
@@ -229,7 +235,7 @@ pub unsafe extern "C" fn stageGObj1_OnInit(gobj: *mut Ground_GObj) {
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
 
-    if ext::gm_80473A18._94[0] as i32 % (*grHeal_804D6AF0[0]).x4 == 0 {
+    if srem(ext::gm_80473A18._94[0] as i32, (*grHeal_804D6AF0[0]).x4) == 0 {
         coin_pos = grHeal_803B84A8;
         ext::Ground_801C2D24(0xDC, &mut coin_pos);
         let line_id = ext::Ground_801C5840();

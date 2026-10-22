@@ -233,6 +233,17 @@ unsafe fn GET_GROUND(gobj: *mut HSD_GObj) -> *mut Ground {
     (*gobj).user_data as *mut Ground
 }
 
+/// `/` and `%` as the shipping build computes them (gwtool's makeArithmeticSafe: x / 0 == (x < 0 ? -1 : 0),
+/// x % 0 == x, INT_MIN / -1 == -1, INT_MIN % -1 == 0)
+#[inline(always)]
+fn sdiv(a: i32, b: i32) -> i32 {
+    if b == 0 || (a == i32::MIN && b == -1) { if a < 0 { -1 } else { 0 } } else { a / b }
+}
+#[inline(always)]
+fn srem(a: i32, b: i32) -> i32 {
+    if b == 0 { a } else if a == i32::MIN && b == -1 { 0 } else { a % b }
+}
+
 /// `INIT_ADD_PARTS_RANGE`: calls the stage scale every time it is evaluated
 #[inline(always)]
 unsafe fn init_add_parts_range() -> f32 {
@@ -704,16 +715,16 @@ pub unsafe extern "C" fn grHomeRun_8021E4FC(_arg: *mut Ground_GObj) {}
 pub unsafe extern "C" fn grHomeRun_8021E500(arg0: i32) -> *mut HSD_GObj {
     let gobj_id: i32;
 
-    let quot = arg0 / grHr_804D6ADC;
+    let quot = sdiv(arg0, grHr_804D6ADC);
     let idx = quot % 4;
     if idx == 0 {
-        gobj_id = if grHr_804D6ADC - 1 != arg0 % grHr_804D6ADC { 4 } else { 5 };
+        gobj_id = if grHr_804D6ADC - 1 != srem(arg0, grHr_804D6ADC) { 4 } else { 5 };
     } else if idx == 1 {
-        gobj_id = if grHr_804D6ADC - 1 != arg0 % grHr_804D6ADC { 1 } else { 2 };
+        gobj_id = if grHr_804D6ADC - 1 != srem(arg0, grHr_804D6ADC) { 1 } else { 2 };
     } else if idx == 2 {
-        gobj_id = if grHr_804D6ADC - 1 != arg0 % grHr_804D6ADC { 6 } else { 7 };
+        gobj_id = if grHr_804D6ADC - 1 != srem(arg0, grHr_804D6ADC) { 6 } else { 7 };
     } else if idx == 3 {
-        gobj_id = if grHr_804D6ADC - 1 != arg0 % grHr_804D6ADC { 8 } else { 9 };
+        gobj_id = if grHr_804D6ADC - 1 != srem(arg0, grHr_804D6ADC) { 8 } else { 9 };
     } else {
         panic!("grhomerun.c:0x3D2: assertion failed (0)");
     }
@@ -734,7 +745,7 @@ pub unsafe extern "C" fn grHomeRun_8021E500(arg0: i32) -> *mut HSD_GObj {
     (*gp).u.homerun2.xD0 = fmadds(160.0, grHr_804D6AE4 * ext::Ground_801C0498(), offset);
     HSD_JObjSetTranslateX(&mut *jobj, (*gp).u.homerun2.xD0, &mut Dirty);
 
-    (*gp).u.homerun2.xC6 = ((grHr_804D6AE0 as i32).wrapping_mul((arg0 + 1) / grHr_804D6ADC)) as u16;
+    (*gp).u.homerun2.xC6 = ((grHr_804D6AE0 as i32).wrapping_mul(sdiv(arg0 + 1, grHr_804D6ADC))) as u16;
     (*gp).u.homerun2.xC4 = arg0 as u16;
     gobj
 }

@@ -1,0 +1,146 @@
+//! src/melee/ft/kinds/ftKoopa/ftkoopaspeciallw.c: Whirling Fortress (down B).
+//! No fused sites (tools/rust-port/fma_sites.py: 0 fmuladd in every function). Smoke-tested
+//! through recording hooks by tests/tu_ftkoopaspeciallw.rs.
+#![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
+
+use crate::stubs as st;
+use melee_fighter::ftcommon as fc;
+use melee_types::*;
+
+/// Already ported (rounds 2/3/4/10 and hand-written): re-exported under this TU.
+pub use crate::chars::ftKoopa::ftkoopaspeciallw::ftKp_SpecialLw_Enter_inline;
+pub use crate::chars::r10::ftKoopa::ftkoopaspeciallw::ftKp_SpecialLw_Enter;
+pub use crate::chars::r2::ftKoopa::ftkoopaspeciallw::{
+    ftKp_SpecialLw_80134988, ftKp_SpecialLwLanding_Anim, ftKp_SpecialLwLanding_Coll,
+    ftKp_SpecialLwLanding_Phys,
+};
+pub use crate::chars::r3::ftKoopa::ftkoopaspeciallw::{ftKp_SpecialLw_80134A5C, ftKp_SpecialLw_Anim};
+pub use crate::chars::r4::ftKoopa::ftkoopaspeciallw::{ftKp_SpecialAirLw_Anim, ftKp_SpecialLw_Phys};
+
+/// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
+pub mod ext {
+    use melee_types::*;
+    use std::ffi::c_void;
+    macro_rules! hook {
+        ($hook:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
+            pub static mut $hook: Option<fn($($t),*) $(-> $r)?> = None;
+            #[allow(non_snake_case)]
+            pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { $hook } {
+                    Some(f) => f($($a),*),
+                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            }
+        };
+    }
+    // `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): the trailing pointers as a slice.
+    hook!(EFSYNC_SPAWN, efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
+    /// Recording hook; unset, the native `melee_fighter::tu::ftcliffcommon` port runs.
+    pub static mut FTCLIFFCOMMON_80081370: Option<fn(*mut HSD_GObj)> = None;
+    #[allow(non_snake_case)]
+    pub fn ftCliffCommon_80081370(gobj: *mut HSD_GObj) {
+        match unsafe { FTCLIFFCOMMON_80081370 } {
+            Some(f) => f(gobj),
+            None => melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370(gobj),
+        }
+    }
+}
+
+#[inline(always)]
+unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
+    (*gobj).user_data as *mut Fighter
+}
+
+/// `Fighter_SetEffectHitlagCallbacks` (ft/inlines.h).
+#[inline(always)]
+unsafe fn set_effect_hitlag_callbacks(fp: *mut Fighter) {
+    (*fp).pre_hitlag_cb = Some(crate::chars::cb::ext__efLib_PauseAll);
+    (*fp).post_hitlag_cb = Some(crate::chars::cb::ext__efLib_ResumeAll);
+}
+
+/// `fn_80134518` (static): the landing-quake effect at the feet, spawned once.
+pub fn fn_80134518(gobj: *mut HSD_GObj) {
+    unsafe {
+        let fp = fpp(gobj);
+        if (*fp).x2219_b0() == 0 {
+            ext::efSync_Spawn(0x4D8, gobj, &[&mut (*fp).cur_pos as *mut Vec3 as *mut _]);
+            (*fp).set_x2219_b0(1);
+        }
+        set_effect_hitlag_callbacks(fp);
+        (*fp).accessory4_cb = None;
+    }
+}
+
+/// `fn_80134590` (static): the spin effect on the root bone, spawned once.
+pub fn fn_80134590(gobj: *mut HSD_GObj) {
+    unsafe {
+        let fp = fpp(gobj);
+        if (*fp).x2219_b0() == 0 {
+            ext::efSync_Spawn(0x4DF, gobj, &[(*(*fp).parts).joint as *mut _]);
+            (*fp).set_x2219_b0(1);
+        }
+        set_effect_hitlag_callbacks(fp);
+        (*fp).accessory4_cb = None;
+    }
+}
+
+/// `fn_80134590` as a Fighter callback entry (`accessory4_cb`).
+pub unsafe extern "C" fn cb_fn_80134590(g: *mut HSD_GObj) {
+    fn_80134590(g);
+}
+
+/// `fn_80134518` as a Fighter callback entry (`accessory4_cb`).
+pub unsafe extern "C" fn cb_fn_80134518(g: *mut HSD_GObj) {
+    fn_80134518(g);
+}
+
+pub fn ftKp_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
+    unsafe {
+        let fp = fpp(gobj);
+        let da = (*fp).dat_attrs as *const ftKoopaAttributes;
+        (*fp).self_vel.x *= (*da).x80;
+        (*fp).self_vel.y *= (*da).x84;
+        st::Fighter_ChangeMotionState(gobj, 0x16A, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        ftKp_SpecialLw_Enter_inline(&mut *fp);
+    }
+}
+
+pub fn ftKp_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
+    unsafe {
+        let fp = fpp(gobj);
+        let da = (*fp).dat_attrs as *const ftKoopaAttributes;
+        st::ftCommon_Fall(&mut *fp, (*da).x8C, (*da).x90);
+        fc::calc_self_accel_deaccel(&mut *fp, (*da).x88);
+        if (*fp).self_vel.y < (*da).x94 || (*fp).cmd_vars[1] != 0 {
+            (*fp).self_vel.y = (*da).x94;
+        }
+        if (*fp).cmd_vars[1] != 0 {
+            (*fp).self_vel.x = 0.0;
+            if (*fp).x2219_b0() == 0 {
+                (*fp).accessory4_cb = Some(cb_fn_80134590);
+            }
+        }
+    }
+}
+
+pub fn ftKp_SpecialLw_Coll(gobj: *mut HSD_GObj) {
+    ftKp_SpecialAirLw_Coll(gobj);
+}
+
+pub fn ftKp_SpecialAirLw_Coll(gobj: *mut HSD_GObj) {
+    unsafe {
+        let fp = fpp(gobj);
+        let dir = if (*fp).facing_dir < 0.0 { -1 } else { 1 };
+        if st::ft_CheckGroundAndLedge(gobj, dir) != 0 {
+            if (*fp).cmd_vars[0] != 0 && (*fp).self_vel.y <= 0.0 {
+                ftKp_SpecialLw_80134A5C(gobj);
+            } else {
+                st::ftCommon_8007D5D4(&mut *fp);
+                melee_fighter::ftcommon2::unlock_ecb(&mut *fp);
+            }
+        } else if (*fp).cmd_vars[0] != 0 && st::ftCliffCommon_80081298(gobj) != 0 {
+            ext::ftCliffCommon_80081370(gobj);
+        }
+    }
+}

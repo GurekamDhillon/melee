@@ -316,22 +316,22 @@ pub unsafe extern "C" fn ftkirbyspecials__fn_800F53AC(g: *mut HSD_GObj) {
 
 /// `fn_80106DB0` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c).
 pub unsafe extern "C" fn ftkirbyspecialseak__fn_80106DB0(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_80106DB0 (src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c) is not ported");
+    crate::tu::ftkirbyspecialseak::fn_80106DB0(g);
 }
 
 /// `fn_8010984C` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
 pub unsafe extern "C" fn ftkirbyspecialyoshi__fn_8010984C(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_8010984C (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c) is not ported");
+    crate::tu::ftkirbyspecialyoshi::fn_8010984C(g);
 }
 
 /// `fn_801098EC` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
 pub unsafe extern "C" fn ftkirbyspecialyoshi__fn_801098EC(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_801098EC (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c) is not ported");
+    crate::tu::ftkirbyspecialyoshi::fn_801098EC(g);
 }
 
 /// `fn_8010998C` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
 pub unsafe extern "C" fn ftkirbyspecialyoshi__fn_8010998C(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_8010998C (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c) is not ported");
+    crate::tu::ftkirbyspecialyoshi::fn_8010998C(g);
 }
 
 /// `fn_80109A08` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
@@ -341,7 +341,7 @@ pub unsafe extern "C" fn ftkirbyspecialyoshi__fn_80109A08(g: *mut HSD_GObj) {
 
 /// `fn_80109A84` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
 pub unsafe extern "C" fn ftkirbyspecialyoshi__fn_80109A84(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_80109A84 (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c) is not ported");
+    crate::tu::ftkirbyspecialyoshi::fn_80109A84(g);
 }
 
 /// `fn_80109B00` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
@@ -351,12 +351,12 @@ pub unsafe extern "C" fn ftkirbyspecialyoshi__fn_80109B00(g: *mut HSD_GObj) {
 
 /// `fn_80109B7C` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
 pub unsafe extern "C" fn ftkirbyspecialyoshi__fn_80109B7C(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_80109B7C (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c) is not ported");
+    crate::tu::ftkirbyspecialyoshi::fn_80109B7C(g);
 }
 
 /// `fn_80109BF8` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
 pub unsafe extern "C" fn ftkirbyspecialyoshi__fn_80109BF8(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_80109BF8 (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c) is not ported");
+    crate::tu::ftkirbyspecialyoshi::fn_80109BF8(g);
 }
 
 /// `fn_80109C74` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
@@ -366,12 +366,12 @@ pub unsafe extern "C" fn ftkirbyspecialyoshi__fn_80109C74(g: *mut HSD_GObj) {
 
 /// `fn_80109CF0` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
 pub unsafe extern "C" fn ftkirbyspecialyoshi__fn_80109CF0(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_80109CF0 (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c) is not ported");
+    crate::tu::ftkirbyspecialyoshi::fn_80109CF0(g);
 }
 
 /// `fn_80134518` (defined in src/melee/ft/kinds/ftKoopa/ftkoopaspeciallw.c).
 pub unsafe extern "C" fn ftkoopaspeciallw__fn_80134518(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_80134518 (src/melee/ft/kinds/ftKoopa/ftkoopaspeciallw.c) is not ported");
+    crate::tu::ftkoopaspeciallw::fn_80134518(g);
 }
 
 /// `ftKp_SpecialS_8013319C` (defined in src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).

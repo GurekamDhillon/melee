@@ -8,3 +8,4 @@ pub mod efalt;
 pub mod groldyoshi;
 pub mod groldkongo;
 pub mod groldpupupu;
+pub mod gronett;

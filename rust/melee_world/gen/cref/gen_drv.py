@@ -45,12 +45,14 @@ POOLS = {
 VIEW_POOLS = {k: (v[0], v[1].replace("&raw mut ", "&raw mut super::")) for k, v in POOLS.items()
               if k in ("HSD_GObj", "_HSD_GObj", "HSD_JObj", "_HSD_JObj", "Ground", "Vec")}
 DEF_CASES = 300
+ARG_POOLS = {}
 
 
 class PtrWalk(gen_tu.Walk):
     """gen_tu.Walk plus: pointer fields inside a union view are linked to the pools."""
     inview = 0
     nulls = {}
+    vpools = VIEW_POOLS
 
     def one(self, t, f, cexpr, rexpr, cf, ch, rf, rh, depth):
         c = canon(t)
@@ -69,8 +71,8 @@ class PtrWalk(gen_tu.Walk):
             pt = canon(c.get_pointee())
             if pt.kind == T.RECORD:
                 nm = pt.get_declaration().spelling
-                if nm in VIEW_POOLS:
-                    ce, re_ = VIEW_POOLS[nm]
+                if nm in PtrWalk.vpools:
+                    ce, re_ = PtrWalk.vpools[nm]
                     mod = PtrWalk.nulls.get(f.spelling) if f is not None else None
                     if mod:
                         cf.append(f"{cexpr} = (fv() % {mod} == 0) ? 0 : {ce};")
@@ -144,6 +146,8 @@ def default_arg(ptype, fname, idx):
         pt = canon(c.get_pointee())
         if pt.kind == T.RECORD:
             nm = pt.get_declaration().spelling
+            if nm in ARG_POOLS:
+                return ARG_POOLS[nm]
             if nm in POOLS:
                 return POOLS[nm]
         raise SystemExit(f"{fname}: no default for arg {idx} of type {ptype.spelling}: give spec args")
@@ -193,7 +197,7 @@ def prep(stem, spec):
                 used.append(v)
         elif v == "-":
             fview[n] = "-"
-        if h:
+        if h and h != "-":
             if h not in used:
                 used.append(h)
     for v in spec.get("views", ()):
@@ -209,6 +213,12 @@ def prep(stem, spec):
         spec["unions"] = {"GroundVars": used}
     spec["_used"] = used
     PtrWalk.nulls = spec.get("view_null", {})
+    PtrWalk.vpools = dict(VIEW_POOLS)
+    for k, (ce, re_) in spec.get("pools", {}).items():
+        PtrWalk.vpools[k] = (ce, re_.replace("&raw mut ", "&raw mut super::"))
+    ARG_POOLS.clear()
+    for k, (ce, re_) in spec.get("pools", {}).items():
+        ARG_POOLS[k] = (ce, re_)
     return spec, fview, order
 
 
@@ -231,7 +241,7 @@ def build_driver(stem, spec):
         draws_c, draws_r, names = [], [], []
         for i, p in enumerate(ptys):
             ce, re_ = ov[i] if ov else default_arg(p, n, i)
-            draws_c.append(f"{p.spelling} a{i} = {ce};")
+            draws_c.append(f"__auto_type a{i} = {ce};")
             draws_r.append(f"let a{i}: {rust_ty(p)} = {re_};")
             names.append(f"a{i}")
         callc = f"{n}({', '.join(names)})"
@@ -239,7 +249,8 @@ def build_driver(stem, spec):
         sc, sr = ret_stmt(rt, callc, callr)
         pc, pr = spec.get("pre", {}).get(n, ("", ""))
         uf = -1 if fview.get(n) == "-" else (used.index(fview[n]) if n in fview else 0)
-        uh = used.index(spec["hview"][n]) if n in spec.get("hview", {}) else uf
+        hv = spec.get("hview", {}).get(n)
+        uh = (-1 if hv == "-" else used.index(hv)) if hv else uf
         ops.append((n, (uf, uh), pc, pr,
                     "\n".join(draws_c + [sc]), "\n".join(draws_r + [sr]), spec.get("cases", {}).get(n, DEF_CASES)))
     for (n, bc, br) in spec.get("ops", ()):

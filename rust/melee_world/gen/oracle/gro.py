@@ -8,6 +8,8 @@ end, so the call log lacked the returned pointer and the Rust hook, which logs i
 import sys
 from pathlib import Path
 
+import os
+os.environ.setdefault("GW_NARROW_FPTOUI_AS_SI", "1")  # lower.py: (u8) float is gwtool's signed saturate + truncate
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import gr_oracle as G  # noqa: E402
@@ -28,12 +30,13 @@ def stub_c(name, fn):
 O.stub_c = stub_c
 
 # An `Mtx` parameter (float[3][4], decays to float(*)[4]) is an ordinary pointer to the stubs.
+# A by-value record parameter (GXColor) is "p": the spec passes it through c_args / rs_args.
 _kind_of = O.kind_of
 
 
 def kind_of(t):
-    if t.get_canonical().kind == O.T.CONSTANTARRAY:
-        return "p"
+    if t.get_canonical().kind in (O.T.CONSTANTARRAY, O.T.RECORD):
+        return "p"  # a record by value (spec c_args/rs_args build it) is only ever an argument of a TU function
     return _kind_of(t)
 
 

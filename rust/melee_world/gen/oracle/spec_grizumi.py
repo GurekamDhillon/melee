@@ -130,7 +130,7 @@ SPEC = dict(
         fn("grIzumi_StageSlotParamSwap", c_args=["(void*) OP_%s[1]" % YP], rs_args=["addr_of_mut!(OP_%s[1]) as *mut c_void" % YP]),
         fn("grIzumi_801CBB84", c_args=["AI[0] % 2"], rs_args=["(a.i[0] % 2) as _"]),
         fn("grIzumi_801CBB88", pre=(WALK_C, WALK_R)), fn("grIzumi_OnLoad"), fn("grIzumi_OnStart"), fn("grIzumi_801CBCE0"),
-        fn("grIzumi_801CBCE8", pre=("NN = (AI[0] % 11) == 3; " + WALK_C, "NN = ((a.i[0] % 11) == 3) as i32; " + WALK_R),
+        fn("grIzumi_801CBCE8", pre=("AI[0] = rnd() % 11; NN = AI[0] == 3; " + WALK_C, "a.i[0] = rnd() % 11; NN = (a.i[0] == 3) as i32; " + WALK_R),
            c_args=["(int) (AI[0] % 11)"], rs_args=["(a.i[0] % 11) as i32"]),
         fn("grIzumi_801CBDD4"), fn("grIzumi_801CBE00"), fn("grIzumi_801CBE08"), fn("grIzumi_801CBE0C"),
         fn("grIzumi_801CBE10"), fn("grIzumi_801CBE54"), fn("grIzumi_801CBE5C"), fn("grIzumi_801CBE60"),

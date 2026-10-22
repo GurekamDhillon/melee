@@ -547,6 +547,7 @@ unsafe fn install_hooks() {
 }
 unsafe fn case_pre(fi: usize, a: &mut Args) {
     match fi {
+        5 => { a.i[0] = rnd() % 12; }
         9 => { OGP[0].u.kongo3.xCC = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]); OGP[0].u.kongo3.xD0 = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]); OGP[0].u.kongo.xDC = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]); OGP[0].u.kongo.xE0 = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]); }
         13 => { OGP[0].u.kongo3.xC4 = (a.i[0] % 4) as i16; OGP[0].u.kongo3.xC8 = (a.i[1] % 4) as i16; OGP[0].u.kongo3.xC6 = (a.i[2] % 4) as i16; OGP[0].u.kongo3.xCA = (rnd() % 6) as i16 - 2; if !(OGP[0].u.kongo3.xE0 > 0.0 || OGP[0].u.kongo3.xE0 < 0.0) { OGP[0].u.kongo3.xE0 = if rnd() % 2 != 0 { -0.002 } else { 0.001 }; } OGP[0].u.kongo.u.taru.keep = addr_of_mut!(OGO[1 + (a.i[3] % 4) as usize]) as *mut c_void; }
         29 => { OGP[0].u.kongo3.xC4 = (a.i[0] % 4) as i16; OGP[0].u.kongo3.xC6 = (rnd() % 8) as i16 - 2; OGP[0].u.kongo3.xC8 = (rnd() % 8) as i16 - 2; OGP[0].u.kongo3.xCA = (rnd() % 8) as i16 - 2; }

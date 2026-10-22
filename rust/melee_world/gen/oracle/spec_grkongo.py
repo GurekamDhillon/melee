@@ -173,7 +173,7 @@ SPEC = dict(
     funcs=[
         fn("grKongo_801D5238", c_args=["AI[0] % 2"], rs_args=["(a.i[0] % 2) as _"]),
         fn("grKongo_801D523C"), fn("grKongo_801D52F8"), fn("grKongo_801D52FC"), fn("grKongo_801D5338"),
-        fn("grKongo_801D5340", c_args=["(int) (AI[0] % 12)"], rs_args=["(a.i[0] % 12) as i32"]),
+        fn("grKongo_801D5340", pre=("AI[0] = rnd() % 12;", "a.i[0] = rnd() % 12;"), c_args=["(int) (AI[0] % 12)"], rs_args=["(a.i[0] % 12) as i32"]),
         fn("fn_801D542C", n=4000),
         fn("grKongo_801D5490"), fn("grKongo_801D5574"), fn("grKongo_801D557C", n=4000, pre=(JP_C, JP_R)), fn("grKongo_801D55D4"),
         fn("grKongo_801D55D8"), fn("grKongo_801D5774"),

@@ -47,7 +47,7 @@ static u64 splitmix(u64 x) {
 static unsigned char* arena;
 
 /* ---- tables ------------------------------------------------------------------------------ */
-typedef struct { const char* name; u64 addr; u64 size; u64 off; int rw; int rp; u64 tagbase; } G;
+typedef struct { const char* name; u64 addr; u64 size; u64 off; int rw; int rp; int rs; u64 tagbase; } G;
 typedef struct { const char* name; u64 addr; u64 tag; } F;
 static G g_tab[4096]; static int g_n;
 static F f_tab[4096]; static int f_n;
@@ -172,6 +172,7 @@ static u64 strhash_at(u64 w) {
     for (j = 0; j < 256; j++) { unsigned char c = p[j]; if (!c) break; h = (h ^ c) * FNV_PRIME; }
     return h;
 }
+u64 rt_cstrhash(u64 w) { return strhash_at(w); }
 void rt_va(va_list* ap, int fmtidx) {
     const unsigned char* fmt = (const unsigned char*)(uintptr_t)cur_args[fmtidx];
     int i = 0; unsigned char c;
@@ -316,7 +317,7 @@ int rt_main(int argc, char** argv, const RtGlobal* gs, int ng, const RtFn* fs, i
                     for (k = 0; k < ng; k++) if (!strcmp(gs[k].name, name)) break;
                     if (k == ng) { fprintf(stderr, "driver lacks global %s\n", name); return 2; }
                     g_tab[g_n].name = gs[k].name; g_tab[g_n].addr = (u64)(uintptr_t)gs[k].addr; g_tab[g_n].size = b;
-                    g_tab[g_n].off = a; g_tab[g_n].rw = !strcmp(mode, "rw"); g_tab[g_n].rp = !strcmp(mode, "rp"); g_tab[g_n].tagbase = glob_tag(gs[k].name);
+                    g_tab[g_n].off = a; g_tab[g_n].rs = !strcmp(mode, "rs"); g_tab[g_n].rw = !strcmp(mode, "rw") || g_tab[g_n].rs; g_tab[g_n].rp = !strcmp(mode, "rp"); g_tab[g_n].tagbase = glob_tag(gs[k].name);
                     if (gs[k].size != b) { fprintf(stderr, "global %s: C size %llu, Rust size %llu\n", name, (u64)gs[k].size, b); return 2; }
                     g_n++;
                 }
@@ -403,6 +404,14 @@ int rt_main(int argc, char** argv, const RtGlobal* gs, int ng, const RtFn* fs, i
                 if (getenv("ORACLE_VERBOSE")) { fprintf(stderr, "run %s %d\n", fn[func].name, idx); fflush(stderr); }
                 if (setjmp(case_jb) == 0) ret = fn[func].thunk(args); else ret = 0xDEADDEADDEADDEADULL;
                 for (k = 0; k < g_n; k++) if (g_tab[k].rw) memcpy(arena + g_tab[k].off, (void*)(uintptr_t)g_tab[k].addr, g_tab[k].size);
+                /* rs globals: a foreign pointer (a string literal stored into the object) is one constant tag, as the port's side does */
+                for (k = 0; k < g_n; k++) if (g_tab[k].rs) {
+                    u64 j;
+                    for (j = 0; j + 8 <= g_tab[k].size; j += 8) {
+                        u64* wp = (u64*)(arena + g_tab[k].off + j);
+                        if (is_foreign(*wp) && norm(*wp) == *wp) *wp = 0xF400000000000000ULL;
+                    }
+                }
                 end = rec_hwm > hwm ? rec_hwm : hwm; if (end < heap_start) end = heap_start;
                 if (end > maxused) maxused = end;
                 h = FNV_OFF;

@@ -5265,6 +5265,19 @@ pub const FLIPPER_MS_AIRBORNE: itFlipper_MotionState = 4;
 pub const FLIPPER_MS_ACTIVE: itFlipper_MotionState = 5;
 pub const FLIPPER_MS_SPINNING: itFlipper_MotionState = 6;
 
+/// C enum `FrontendItemKind` (src/melee/gm/gmfrontend_items.h:7)
+pub type FrontendItemKind = u32;
+pub const FE_ACTION: FrontendItemKind = 0;
+pub const FE_CHOICE: FrontendItemKind = 1;
+pub const FE_SLIDER: FrontendItemKind = 2;
+pub const FE_TOGGLE: FrontendItemKind = 3;
+
+/// C enum `FrontendAction` (src/melee/gm/gmfrontend_items.h:14)
+pub type FrontendAction = u32;
+pub const FE_DO_CONTINUE: FrontendAction = 0;
+pub const FE_DO_BACK: FrontendAction = 1;
+pub const FE_DO_CALL: FrontendAction = 2;
+
 // ---- #define / static const constants (group-0 headers) ----
 pub const HSD_A_S_W0: i32 = 2;  // src/sysdolphin/baselib/forward.h:120
 pub const HSD_DEFAULT_MAX_SHAPE_VERTICES: i32 = 2000;  // src/sysdolphin/baselib/forward.h:121
@@ -90925,6 +90938,115 @@ impl GcLayout for ResultsCharacterData {
 }
 const _: () = assert!(core::mem::size_of::<ResultsCharacterData>() == 2192);
 
+/// C `FrontendItem` (src/melee/gm/gmfrontend_items.h:20); GameCube size 0x3C, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct FrontendItem {
+    pub kind: u8,
+    pub action: u8,
+    pub label: *const i8,
+    pub help: *const i8,
+    pub get: Option<unsafe extern "C" fn() -> i32>,
+    pub set: Option<unsafe extern "C" fn(i32)>,
+    pub min: i32,
+    pub max: i32,
+    pub step: i32,
+    pub options: *const *const i8,
+    pub format: Option<unsafe extern "C" fn(i32, *mut i8)>,
+    pub visible: Option<unsafe extern "C" fn() -> i32>,
+    pub call: Option<unsafe extern "C" fn()>,
+    pub enabled: Option<unsafe extern "C" fn() -> i32>,
+    pub off_reason: *const i8,
+    pub group: *const i8,
+}
+impl FrontendItem { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for FrontendItem {
+    const GC_BYTES: u32 = 0x3C;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.kind = <u8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.action = <u8 as GcDecode>::gc_decode(d, at + 0x1);
+        v.label = <*const i8 as GcDecode>::gc_decode(d, at + 0x4);
+        v.help = <*const i8 as GcDecode>::gc_decode(d, at + 0x8);
+        v.min = <i32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.max = <i32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.step = <i32 as GcDecode>::gc_decode(d, at + 0x1C);
+        v.options = <*const *const i8 as GcDecode>::gc_decode(d, at + 0x20);
+        v.off_reason = <*const i8 as GcDecode>::gc_decode(d, at + 0x34);
+        v.group = <*const i8 as GcDecode>::gc_decode(d, at + 0x38);
+        v
+    }
+}
+impl GcPointee for FrontendItem { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<FrontendItem>(t) } }
+impl GcLayout for FrontendItem {
+    const GC_NAME: &'static str = "FrontendItem";
+    const GC_SIZE: u32 = 0x3C;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("kind", 0x0, 1, "unsigned char"),
+        GcField::new("action", 0x1, 1, "unsigned char"),
+        GcField::new("label", 0x4, 4, "const char *"),
+        GcField::new("help", 0x8, 4, "const char *"),
+        GcField::new("get", 0xC, 4, "int (*)(void)"),
+        GcField::new("set", 0x10, 4, "void (*)(int)"),
+        GcField::new("min", 0x14, 4, "int"),
+        GcField::new("max", 0x18, 4, "int"),
+        GcField::new("step", 0x1C, 4, "int"),
+        GcField::new("options", 0x20, 4, "const char *const *"),
+        GcField::new("format", 0x24, 4, "void (*)(int, char *)"),
+        GcField::new("visible", 0x28, 4, "int (*)(void)"),
+        GcField::new("call", 0x2C, 4, "void (*)(void)"),
+        GcField::new("enabled", 0x30, 4, "int (*)(void)"),
+        GcField::new("off_reason", 0x34, 4, "const char *"),
+        GcField::new("group", 0x38, 4, "const char *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<FrontendItem>() == 112);
+
+/// C `FrontendScreen` (src/melee/gm/gmfrontend_items.h:37); GameCube size 0x14, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct FrontendScreen {
+    pub title: *const i8,
+    pub subtitle: *const i8,
+    pub items: *const FrontendItem,
+    pub n_items: i32,
+    pub art: i32,
+}
+impl FrontendScreen { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for FrontendScreen {
+    const GC_BYTES: u32 = 0x14;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.title = <*const i8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.subtitle = <*const i8 as GcDecode>::gc_decode(d, at + 0x4);
+        v.items = <*const FrontendItem as GcDecode>::gc_decode(d, at + 0x8);
+        v.n_items = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.art = <i32 as GcDecode>::gc_decode(d, at + 0x10);
+        v
+    }
+}
+impl GcPointee for FrontendScreen { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<FrontendScreen>(t) } }
+impl GcLayout for FrontendScreen {
+    const GC_NAME: &'static str = "FrontendScreen";
+    const GC_SIZE: u32 = 0x14;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("title", 0x0, 4, "const char *"),
+        GcField::new("subtitle", 0x4, 4, "const char *"),
+        GcField::new("items", 0x8, 4, "const FrontendItem *"),
+        GcField::new("n_items", 0xC, 4, "int"),
+        GcField::new("art", 0x10, 4, "int"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<FrontendScreen>() == 32);
+
 /// Every generated GameCube record layout, for the DAT loader, serialisers and the m-ex map.
 pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<__file_modes as GcLayout>::GC_NAME, <__file_modes as GcLayout>::GC_SIZE, <__file_modes as GcLayout>::GC_ALIGN, <__file_modes as GcLayout>::GC_FIELDS),
@@ -92558,6 +92680,8 @@ pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<ResultsDisplayData as GcLayout>::GC_NAME, <ResultsDisplayData as GcLayout>::GC_SIZE, <ResultsDisplayData as GcLayout>::GC_ALIGN, <ResultsDisplayData as GcLayout>::GC_FIELDS),
     (<ResultsDisplayLayout as GcLayout>::GC_NAME, <ResultsDisplayLayout as GcLayout>::GC_SIZE, <ResultsDisplayLayout as GcLayout>::GC_ALIGN, <ResultsDisplayLayout as GcLayout>::GC_FIELDS),
     (<ResultsCharacterData as GcLayout>::GC_NAME, <ResultsCharacterData as GcLayout>::GC_SIZE, <ResultsCharacterData as GcLayout>::GC_ALIGN, <ResultsCharacterData as GcLayout>::GC_FIELDS),
+    (<FrontendItem as GcLayout>::GC_NAME, <FrontendItem as GcLayout>::GC_SIZE, <FrontendItem as GcLayout>::GC_ALIGN, <FrontendItem as GcLayout>::GC_FIELDS),
+    (<FrontendScreen as GcLayout>::GC_NAME, <FrontendScreen as GcLayout>::GC_SIZE, <FrontendScreen as GcLayout>::GC_ALIGN, <FrontendScreen as GcLayout>::GC_FIELDS),
 ];
 
 /// Read `w` bits of a GameCube big-endian bitfield byte run, `shift` bits up from its LSB.

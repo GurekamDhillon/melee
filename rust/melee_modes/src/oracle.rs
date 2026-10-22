@@ -38,6 +38,22 @@ pub fn fnv_bytes(b: &[u8]) -> u64 {
 }
 
 #[inline]
+/// The hash the C side takes of a returned `const char*` (`retk` "s"): FNV-1a over at most 256 bytes.
+pub unsafe fn cstr_hash(p: *const i8) -> u64 {
+    let mut h = FNV_OFF;
+    if p.is_null() {
+        return h;
+    }
+    for j in 0..256usize {
+        let c = *p.add(j) as u8;
+        if c == 0 {
+            break;
+        }
+        h = (h ^ c as u64).wrapping_mul(FNV_PRIME);
+    }
+    h
+}
+
 pub fn mix(h: u64, w: u64) -> u64 {
     (h ^ w).wrapping_mul(FNV_PRIME)
 }
@@ -310,6 +326,9 @@ pub enum GMode {
     Ro,
     /// like `Ro`, but pointer words that point at foreign memory (string literals) are not compared
     Rp,
+    /// like `Rw`, but pointer words that point at foreign memory (a string literal stored into the
+    /// object) are replaced by one constant tag before hashing, on both sides
+    Rs,
 }
 
 pub struct GlobalDesc {
@@ -347,9 +366,13 @@ macro_rules! globals {
     (@decl rp, [$(#[$m:meta])*] $vis:vis $name:ident : $t:ty = $init:expr) => {
         $(#[$m])* #[allow(non_upper_case_globals, non_snake_case)] $vis static mut $name: $t = $init;
     };
+    (@decl rs, [$(#[$m:meta])*] $vis:vis $name:ident : $t:ty = $init:expr) => {
+        $(#[$m])* #[allow(non_upper_case_globals, non_snake_case)] $vis static mut $name: $t = $init;
+    };
     (@mode rw) => { $crate::oracle::GMode::Rw };
     (@mode ro) => { $crate::oracle::GMode::Ro };
     (@mode rp) => { $crate::oracle::GMode::Rp };
+    (@mode rs) => { $crate::oracle::GMode::Rs };
 }
 
 /// Registers globals that another file of `tu/` owns (declared `extern` in this TU's C):
@@ -967,6 +990,8 @@ fn ret_k(r: &str) -> K {
         "i32" | "g4" => K::I(32),
         "i64" => K::I(64),
         "p" => K::P,
+        // a C string result, returned as the hash of its text (`cstr_hash`)
+        "s" => K::I(64),
         "f" => K::F,
         "d" => K::D,
         _ => panic!("bad ret kind {r}"),
@@ -1027,7 +1052,7 @@ impl<'a> TuOracle<'a> {
     /// every foreign pointer word in their arena copy by one constant tag.
     fn scrub_rp(&self, rec: &Rec, arena: &Arena, offs: &[usize]) {
         for (g, &o) in self.globals.iter().zip(offs) {
-            if g.mode != GMode::Rp {
+            if g.mode != GMode::Rp && g.mode != GMode::Rs {
                 continue;
             }
             let mut i = 0;
@@ -1067,7 +1092,7 @@ impl<'a> TuOracle<'a> {
         arena.reset(heap_start);
         // statics back to their initial bytes, then the builder
         for (g, b) in self.globals.iter().zip(init) {
-            if g.mode == GMode::Rw {
+            if g.mode == GMode::Rw || g.mode == GMode::Rs {
                 unsafe { core::ptr::copy_nonoverlapping(b.as_ptr(), g.addr, g.size) };
             }
         }
@@ -1136,7 +1161,7 @@ impl<'a> TuOracle<'a> {
         let _ = writeln!(out, "TU {}", self.tu);
         let _ = writeln!(out, "ARENA {:x} {:x}", ARENA_BASE, ARENA_SIZE);
         for (g, &o) in self.globals.iter().zip(&offs) {
-            let _ = writeln!(out, "GLOBAL {} {:x} {:x} {}", g.name, o, g.size, match g.mode { GMode::Rw => "rw", GMode::Ro => "ro", GMode::Rp => "rp" });
+            let _ = writeln!(out, "GLOBAL {} {:x} {:x} {}", g.name, o, g.size, match g.mode { GMode::Rw => "rw", GMode::Ro => "ro", GMode::Rp => "rp", GMode::Rs => "rs" });
         }
         let _ = writeln!(out, "HEAP {heap_start:x}");
         for (n, a) in &self.fn_table {
@@ -1151,7 +1176,7 @@ impl<'a> TuOracle<'a> {
                 // build only (do not run): the C side runs the case
                 arena.reset(heap_start);
                 for (g, b) in self.globals.iter().zip(&init) {
-                    if g.mode == GMode::Rw {
+                    if g.mode == GMode::Rw || g.mode == GMode::Rs {
                         unsafe { core::ptr::copy_nonoverlapping(b.as_ptr(), g.addr, g.size) };
                     }
                 }
@@ -1261,7 +1286,7 @@ impl<'a> TuOracle<'a> {
         }
         // leave the statics as found
         for (g, b) in self.globals.iter().zip(&init) {
-            if g.mode == GMode::Rw {
+            if g.mode == GMode::Rw || g.mode == GMode::Rs {
                 unsafe { core::ptr::copy_nonoverlapping(b.as_ptr(), g.addr, g.size) };
             }
         }

@@ -65,7 +65,7 @@ def write_probe():
     ft = g("src/melee/ft/*.h") + g("src/melee/ft/kinds/**/*.h") + g("src/melee/pl/*.h")
     it = g("src/melee/it/**/*.h") + g("src/melee/ty/**/*.h") + g("src/melee/vi/**/*.h")
     # Single headers whose records other groups' TU ports need (appended, never removed).
-    extra = ["melee/lb/lbanim.h", "melee/gm/gmresultplayer.static.h"]
+    extra = ["melee/lb/lbanim.h", "melee/gm/gmresultplayer.static.h", "melee/gm/gmfrontend_items.h"]
     seen, lines = set(), []
     for h in base + fwd + tys + ft + it + extra:
         if h not in seen:

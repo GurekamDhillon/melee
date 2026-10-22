@@ -246,14 +246,16 @@ def main():
     d.append("typedef struct { const char* name; void* addr; } RtFn;")
     d.append("typedef struct { const char* name; rt_u64 (*thunk)(const rt_u64*); } RtFunc;")
     d.append("extern int rt_main(int, char**, const RtGlobal*, int, const RtFn*, int, const RtFunc*, int);")
-    d.append("extern float rt_f32(rt_u64); extern double rt_f64(rt_u64); extern rt_u64 rt_f32bits(float); extern rt_u64 rt_f64bits(double); extern rt_u64 rt_normptr(rt_u64);")
+    # c = a 4-byte GXColor passed by value (its bytes r, g, b, a in the low 32 bits)
+    d.append("static GXColor rt_gxcolor(rt_u64 v) { GXColor c_; unsigned int w_ = (unsigned int) v; __builtin_memcpy(&c_, &w_, 4); return c_; }")
+    d.append("extern float rt_f32(rt_u64); extern double rt_f64(rt_u64); extern rt_u64 rt_f32bits(float); extern rt_u64 rt_f64bits(double); extern rt_u64 rt_normptr(rt_u64); extern rt_u64 rt_cstrhash(rt_u64);")
     for i, name, argk, retk in funcs:
         a = []
         pre = ""
         for k, c in enumerate(argk):
             if c == "o":  # pointer to a local void* (zeroed): a cursor out-parameter
                 pre += f"void* o{k} = 0; "
-            a.append({"i": f"a[{k}]", "p": f"(void*)(__UINTPTR_TYPE__)a[{k}]", "f": f"rt_f32(a[{k}])", "d": f"rt_f64(a[{k}])", "o": f"&o{k}"}[c])
+            a.append({"i": f"a[{k}]", "p": f"(void*)(__UINTPTR_TYPE__)a[{k}]", "f": f"rt_f32(a[{k}])", "d": f"rt_f64(a[{k}])", "o": f"&o{k}", "c": f"rt_gxcolor(a[{k}])"}[c])
         call = f"{name}({', '.join(a)})"
         body = {
             "v": f"{call}; return 0;",
@@ -265,6 +267,8 @@ def main():
             "p": f"return rt_normptr((rt_u64)(__UINTPTR_TYPE__)({call}));",
             "f": f"return rt_f32bits({call});",
             "d": f"return rt_f64bits({call});",
+            # a const char* result: the hash of the string it points at (the pointer itself is the C side's own)
+            "s": f"return rt_cstrhash((rt_u64)(__UINTPTR_TYPE__)({call}));",
             # a 4-byte struct returned by value: its raw bytes
             "g4": f"{{ __typeof__({call}) t_ = {call}; unsigned int v_; __builtin_memcpy(&v_, &t_, 4); return v_; }}",
         }[retk]

@@ -1,39 +1,7 @@
-"""Driver descriptions for mk_tu.py (see there). Helpers build the common op shapes."""
-
-
-def vg(name, usel=0):
-    """void f(Ground_GObj*)"""
-    return dict(name=name, c=f"{name}(&G);", r=f"m::{name}(&raw mut G);", usel=usel)
-
-
-def pg(name, usel=0):
-    """bool f(Ground_GObj*)"""
-    return dict(name=name, c=f"ret = (u32) {name}(&G);", r=f"ret = m::{name}(&raw mut G) as u32;", usel=usel)
-
-
-def v0(name):
-    return dict(name=name, c=f"{name}();", r=f"m::{name}();")
-
-
-def p0(name):
-    return dict(name=name, c=f"ret = (u32) {name}();", r=f"ret = m::{name}() as u32;")
-
-
-def f0(name):
-    return dict(name=name, c=f"ret = B({name}());", r=f"ret = m::{name}().to_bits();")
-
+"""Driver descriptions for mk_tu.py (see there). Per-TU ones live in tus/<stem>.py (DRV)."""
+from drvlib import *
 
 DRV = {}
-
-# the common Ground fixture: G (the stage GObj) -> GP (its Ground) and JO[0] (its joint)
-GROUND_SETUP_C = """
-            G.user_data = &GP; G.hsd_obj = &JO[0]; GP.gobj = &G;
-            for (i = 0; i < 8; i++) { GS[i].user_data = &GP; GS[i].hsd_obj = &JO[i]; }
-"""
-GROUND_SETUP_R = """
-                G.user_data = &raw mut GP as *mut c_void; G.hsd_obj = &raw mut JO[0] as *mut c_void; GP.gobj = &raw mut G;
-                for i in 0..8 { GS[i].user_data = &raw mut GP as *mut c_void; GS[i].hsd_obj = &raw mut JO[i] as *mut c_void; }
-"""
 
 DRV["grgarden"] = dict(
     state=[("G", "HSD_GObj", 1), ("GP", "Ground", 1), ("JO", "HSD_JObj", 8), ("GS", "HSD_GObj", 8),
@@ -79,3 +47,11 @@ DRV["grgarden"] = dict(
              r="for j in 0..7 { g::hash_StageCallbacks(&m::grGd_StageCallbacks[j]); } g::hash_StageData(&m::grGd_StageData); hm(sh(m::grGd_StageData.data1 as *const u8)); hm(pi(m::grGd_StageData.callbacks));"),
     ],
 )
+
+
+import importlib, pkgutil, sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "tus"))
+for _m in sorted(pkgutil.iter_modules([os.path.join(os.path.dirname(os.path.abspath(__file__)), "tus")])):
+    _mod = importlib.import_module(_m.name)
+    if hasattr(_mod, "DRV"):
+        DRV[_m.name] = _mod.DRV

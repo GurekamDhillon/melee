@@ -48,5 +48,9 @@ SPECS["grgarden"] = dict(
         "ftLib_80086684": ("a1->x = rw(); a1->y = rw(); a1->z = rw();", "(*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw();"),
         "lb_8000B1CC": ("a2->x = rw(); a2->y = rw(); a2->z = rw();", "(*a2).x = rw(); (*a2).y = rw(); (*a2).z = rw();"),
     })
+import importlib, pkgutil, sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "tus"))
+for _m in sorted(pkgutil.iter_modules([os.path.join(os.path.dirname(os.path.abspath(__file__)), "tus")])):
+    SPECS[_m.name] = importlib.import_module(_m.name).SPEC
 for _s in SPECS.values():
     _s.setdefault("common_ret", COMMON_RET)

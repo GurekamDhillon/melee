@@ -64,7 +64,11 @@ def main():
             run([sys.executable, str(LOWER), str(ll), str(lo)], n)
             lls.append(str(lo))
         run([CLANG, "-O0", "-w", *lls, "-o", str(exe), "-Wl,/OPT:NOICF", "-Wl,/BASE:0x10000000", "-Wl,/LARGEADDRESSAWARE:NO", "-fuse-ld=lld"], n)
-        out = subprocess.run([str(exe)], capture_output=True, text=True, check=True).stdout
+        pr = subprocess.run([str(exe)], capture_output=True, text=True)
+        out = pr.stdout
+        if pr.returncode:
+            sys.stderr.write(chr(10).join(out.splitlines()[-4:]) + chr(10))
+            raise SystemExit(f"mtu: {n}: driver exited {pr.returncode} (an ASSERT or a crash: see the last case above)")
         if dbg:
             tr = [l for l in out.splitlines() if l.startswith(("T ", "H ", "N "))]
             (BUILD / f"dbg_{n}.txt").write_text(chr(10).join(tr) + chr(10), encoding="utf-8")

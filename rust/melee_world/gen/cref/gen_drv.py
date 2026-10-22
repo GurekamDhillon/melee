@@ -253,8 +253,9 @@ def build_driver(stem, spec):
         uh = (-1 if hv == "-" else used.index(hv)) if hv else uf
         ops.append((n, (uf, uh), pc, pr,
                     "\n".join(draws_c + [sc]), "\n".join(draws_r + [sr]), spec.get("cases", {}).get(n, DEF_CASES)))
-    for (n, bc, br) in spec.get("ops", ()):
-        ops.append((n, (0, 0), "", "", bc, br, spec.get("cases", {}).get(n, DEF_CASES)))
+    for (n, bc, br, *rest) in spec.get("ops", ()):
+        # an op may name its (fill, hash) Ground::u views by index into `used` (-1: none)
+        ops.append((n, rest[0] if rest else (0, 0), "", "", bc, br, spec.get("cases", {}).get(n, DEF_CASES)))
     data = spec.get("data", [])
     if data:
         dc, dr = [], []

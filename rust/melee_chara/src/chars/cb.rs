@@ -536,12 +536,12 @@ pub unsafe extern "C" fn ftpeachspeciallw__spawnVeg(g: *mut HSD_GObj) {
 
 /// `onEnterHitlag` (defined in src/melee/ft/kinds/ftPeach/ftpeachspecialn.c).
 pub unsafe extern "C" fn ftpeachspecialn__onEnterHitlag(g: *mut HSD_GObj) {
-    panic!("TODO(group4): onEnterHitlag (src/melee/ft/kinds/ftPeach/ftpeachspecialn.c) is not ported");
+    crate::tu::ftpeachspecialn::onEnterHitlag(g);
 }
 
 /// `onExitHitlag` (defined in src/melee/ft/kinds/ftPeach/ftpeachspecialn.c).
 pub unsafe extern "C" fn ftpeachspecialn__onExitHitlag(g: *mut HSD_GObj) {
-    panic!("TODO(group4): onExitHitlag (src/melee/ft/kinds/ftPeach/ftpeachspecialn.c) is not ported");
+    crate::tu::ftpeachspecialn::onExitHitlag(g);
 }
 
 /// `ftPk_SpecialLw_ChangeMotion_Unk00` (defined in src/melee/ft/kinds/ftPikachu/ftpikachuspeciallw.c).
@@ -591,7 +591,7 @@ pub unsafe extern "C" fn ftpikachuspeciallw__ftPk_SpecialLw_SetState_Unk1(g: *mu
 
 /// `ftPk_SpecialLw_SpawnEffect` (defined in src/melee/ft/kinds/ftPikachu/ftpikachuspeciallw.c).
 pub unsafe extern "C" fn ftpikachuspeciallw__ftPk_SpecialLw_SpawnEffect(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftPk_SpecialLw_SpawnEffect (src/melee/ft/kinds/ftPikachu/ftpikachuspeciallw.c) is not ported");
+    crate::tu::ftpikachuspeciallw::ftPk_SpecialLw_SpawnEffect(g);
 }
 
 /// `ftPp_Init_8011F060` (defined in src/melee/ft/kinds/ftPopo/ftpopo.c).

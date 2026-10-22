@@ -186,3 +186,97 @@ CFGS = {
             "gm_8017335C": dict(cases=200), "gm_801733D8": dict(cases=200),
         }),
 }
+
+
+def _gm_1798():
+    """Results-screen display TU: the pointer graphs the C walks (gobj -> jobj -> dobj -> mobj -> tobj)
+    are wired from typed state objects in `fixups` (C text, Rust text), so every write through them is
+    hashed."""
+    N = 4
+    extra = {"gobArg": "HSD_GObj", "cobArg": "HSD_CObj", "scn": "SceneDesc", "fgt": "Fighter",
+             "jrR": "HSD_JObj"}
+    for i in range(5):
+        extra[f"jr{i}"] = "HSD_JObj"
+    for i in range(N):
+        for a, t in (("gob", "HSD_GObj"), ("job", "HSD_JObj"), ("jch", "HSD_JObj"), ("dA", "HSD_DObj"),
+                     ("mA", "HSD_MObj"), ("tA", "HSD_TObj"), ("jbb", "HSD_JObj"), ("dB", "HSD_DObj"),
+                     ("dC", "HSD_DObj"), ("mC", "HSD_MObj"), ("tC", "HSD_TObj")):
+            extra[f"{a}{i}"] = t
+    fx = []
+
+    def link(cexpr, rexpr, ctarget, rtarget, rcast=""):
+        fx.append((f"{cexpr} = {ctarget};", f"{rexpr} = {rtarget}{rcast};"))
+    O = lambda n: (f"&tuo_mo_{n}", f"core::ptr::addr_of_mut!(MO_{n})")
+    V = " as *mut core::ffi::c_void"
+    for i in range(N):
+        c, r = O(f"gob{i}"); link(f"lbl_8046E38C[{i}]", f"m::lbl_8046E38C[{i}]", c, r)
+        c, r = O(f"job{i}"); link(f"tuo_mo_gob{i}.hsd_obj", f"MO_gob{i}.hsd_obj", c, r, V)
+        c, r = O(f"jch{i}"); link(f"tuo_mo_job{i}.child", f"MO_job{i}.child", c, r)
+        c, r = O(f"dA{i}"); link(f"tuo_mo_jch{i}.u.dobj", f"MO_jch{i}.u.dobj", c, r)
+        c, r = O(f"mA{i}"); link(f"tuo_mo_dA{i}.mobj", f"MO_dA{i}.mobj", c, r)
+        c, r = O(f"tA{i}"); link(f"tuo_mo_mA{i}.tobj", f"MO_mA{i}.tobj", c, r)
+        c, r = O(f"jbb{i}"); link(f"lbl_8046E39C[{i}]", f"m::lbl_8046E39C[{i}]", c, r)
+        c, r = O(f"dB{i}"); link(f"tuo_mo_jbb{i}.u.dobj", f"MO_jbb{i}.u.dobj", c, r)
+        c, r = O(f"dC{i}"); link(f"tuo_mo_dB{i}.next", f"MO_dB{i}.next", c, r)
+        c, r = O(f"mC{i}"); link(f"tuo_mo_dC{i}.mobj", f"MO_dC{i}.mobj", c, r)
+        c, r = O(f"tC{i}"); link(f"tuo_mo_mC{i}.tobj", f"MO_mC{i}.tobj", c, r)
+    c, r = O("cobArg"); link("tuo_mo_gobArg.hsd_obj", "MO_gobArg.hsd_obj", c, r, V)
+    c, r = O("fgt"); link("tuo_mo_gobE.user_data", "MO_gobE.user_data", c, r, V)
+    c, r = O("scn"); link("lbl_8046DBE8.pnlsce", "m::ext::lbl_8046DBE8.pnlsce", c, r)
+    c, r = O("jr0"); link("tuo_mo_jrR.child", "MO_jrR.child", c, r)
+    for i in range(4):
+        c, r = O(f"jr{i + 1}"); link(f"tuo_mo_jr{i}.next", f"MO_jr{i}.next", c, r)
+
+    S = dict
+    funcs = {
+        "fn_80179990": S(args=["obj:gobArg", "0..3", "0..3"], cases=300),
+        "fn_80179D3C": S(args=["obj:gobArg", "0..3"], cases=100), "fn_80179D60": S(args=["obj:gobArg", "0..3"], cases=100),
+        "fn_80179D84": S(args=["obj:gobArg", "0..3"], cases=100), "fn_80179DA8": S(args=["obj:gobArg", "0..3"], cases=100),
+        "fn_80179DCC": S(args=["obj:gobArg", "0..3"], cases=100), "fn_80179E34": S(args=["obj:gobArg", "0..3"], cases=100),
+        "fn_80179E9C": S(args=["obj:gobArg", "0..3"], cases=100), "fn_80179F04": S(args=["obj:gobArg", "0..3"], cases=100),
+        "fn_80179F6C": S(args=["0..3", "obj:gobArg"]),
+        "fn_80179F84": S(args=["obj:jrR"]),
+        "fn_80179854": S(cases=200),
+        "fn_8017A078": S(args=["0..3"], cases=200),
+        "fn_8017A318": S(args=["0..3"], cases=300),
+        "fn_8017A67C": S(args=["0..40", "0..9", "0..3"], cases=400),
+        "fn_8017A9B4": S(args=["0..3"], cases=100),
+        "fn_8017AA78": S(args=["buf:4"], cases=200),
+        "gm_1798_MexSetResultModels": S(args=["-1..5"], cases=100),
+        "gmResult_TableKind": S(args=["0..40"]),
+        "get_big_loser": S(args=["0..3", "buf"]),
+        "fn_80179990_img_at": S(args=["buf:4", "0..3"]),
+        "fn_80179990_set_erase_color": S(args=["buf", "0..3"], cases=100),
+        "fn_80179990_copy_efb": S(args=["buf:4", "0..3", "buf", "buf"]),
+        "fn_80179990_copy_efb_at": S(args=["buf:4", "0..3", "buf", "buf", "buf", "buf"]),
+        "inline1": S(args=["buf:4", "0..3", "buf", "buf"]),
+    }
+    return dict(
+        src="src/melee/gm/gm_1798.c", module="gm_1798", cases=60, cstr_nocls=True,
+        local_types=["CharScaleEntry", "ResultsRenderFuncs", "ResultsPlayerConfig", "PackedS16x4", "U32Pair",
+                     "lbl_8046E3AC_t", "ResultsDisplayData", "ResultsCharacterData"],
+        extsize={"gmResultCharacterScaleData": 32},
+        # the const config table is filled too: the C sees it through a non-const alias
+        patch=[# fn_8017A318 falls off its end in the C (UB; the value is stored by gmresult.c): the port returns `gobj`
+               ("        fn_8017A078(arg0);\n    }\n}\n\nFighter_GObj* fn_8017A67C",
+                "        fn_8017A078(arg0);\n    }\n    return gobj;\n}\n\nFighter_GObj* fn_8017A67C"),
+               ("#include <melee/ft/inlines.h>\n#endif\n",
+                "#include <melee/ft/inlines.h>\n#endif\n#define lbl_803B7B68 (*(ResultsPlayerConfig*) &lbl_803B7B68_nc)\n"
+                "extern ResultsPlayerConfig lbl_803B7B68_nc;\n")],
+        rust_vars={"lbl_803B7B68_nc": "lbl_803B7B68"},
+        mockobj={"Player_GetEntity": "gobE", "GObj_Create": "gobC"},
+        extra_objs=extra,
+        fixups=fx,
+        funcs=funcs,
+        nullable={"gm_80160438": 3, "fn_80174274": 0},
+        # HSD_CObjLoadDesc takes a descriptor (a union bigger than the extern the C passes): neither filled
+        # nor traced by content
+        noout={"HSD_CObjLoadDesc": True}, no_arg_content=["HSD_CObjLoadDesc"],
+        mock={"Mex_Enabled": "0|1", "fn_801795D4": "0..3", "fn_801796F0": "0..3", "HSD_CObjSetCurrent": "0|1",
+              "ftLib_800876B4": "0|1", "gm_MexVanillaKind": "0..40", "HSD_Randi": "0..2"},
+        fieldrange={"MatchPlayerData.pkind": "0..3", "MatchPlayerData.is_big_loser": "0..3",
+                    "MatchPlayerData.team": "0..4", "MatchTeamData.is_big_loser": "0..3", "MatchEnd.is_teams": "0..1",
+                    "MatchPlayerData.ftkind": "5..8", "MatchEnd.outcome": "5..8"})
+
+
+CFGS["gm_1798"] = _gm_1798()

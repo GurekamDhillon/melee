@@ -108,6 +108,19 @@ macro_rules! ext_default {
 #[macro_export]
 macro_rules! ext_fns {
     () => {};
+    // a callee whose address is taken as a C callback (`extern "C" fn` pointer)
+    ($(#[$m:meta])* extern "C" fn $name:ident($($a:ident : $t:ty),* $(,)?) $(-> $r:ty)? ; $($rest:tt)*) => {
+        $(#[$m])*
+        #[allow(non_snake_case, unused_variables, clippy::missing_safety_doc)]
+        pub unsafe extern "C" fn $name($($a: $t),*) -> $crate::ext_rty!($($r)?) {
+            match $crate::tu::ext_hook::EXT_HOOK {
+                Some(h) => <$crate::ext_rty!($($r)?) as $crate::tu::ext_hook::Val>::from_u64(
+                    h(stringify!($name), &[$($crate::tu::ext_hook::Val::to_u64($a)),*])),
+                None => { $crate::ext_default!([] ($($a),*) $name) }
+            }
+        }
+        $crate::ext_fns! { $($rest)* }
+    };
     ($(#[$m:meta])* fn $name:ident($($a:ident : $t:ty),* $(,)?) $(-> $r:ty)? $(= $def:path)? ; $($rest:tt)*) => {
         $(#[$m])*
         #[allow(non_snake_case, unused_variables, clippy::missing_safety_doc)]
@@ -120,4 +133,10 @@ macro_rules! ext_fns {
         }
         $crate::ext_fns! { $($rest)* }
     };
+}
+
+/// Small records returned by value cross the hook as their bytes.
+impl Val for melee_types::_GXColor {
+    #[inline] fn to_u64(self) -> u64 { u32::from_le_bytes([self.r, self.g, self.b, self.a]) as u64 }
+    #[inline] fn from_u64(v: u64) -> Self { let b = (v as u32).to_le_bytes(); melee_types::_GXColor { r: b[0], g: b[1], b: b[2], a: b[3] } }
 }

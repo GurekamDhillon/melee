@@ -94,6 +94,13 @@ def strip(t):
 
 
 def classify(t):
+    # uintptr_t/intptr_t are 4 bytes in the melee_types (GameCube) layout, 8 on the native C side:
+    # draw and hash them as 32-bit on both
+    tt = t
+    while tt.kind in (T.ELABORATED, T.TYPEDEF):
+        if tt.kind == T.TYPEDEF and tt.spelling in ("uintptr_t", "intptr_t"):
+            return ("int", 4, tt.spelling == "intptr_t", True)
+        tt = tt.get_named_type() if tt.kind == T.ELABORATED else tt.get_declaration().underlying_typedef_type
     c = t.get_canonical()
     k = c.kind
     if k in (T.CHAR_S, T.SCHAR, T.SHORT, T.INT, T.LONG, T.LONGLONG):
@@ -146,6 +153,16 @@ class Gen2:
     def rty(self, t):
         return self.n.rty(t)
 
+    def bit_union(self, d):
+        """A union of one scalar byte and an anonymous struct of bitfields (UnkFlagStruct): the bit order
+        differs between PPC (MSB first) and the native C, so it is walked bit by bit, by name."""
+        kids = list(d.get_children())
+        anon = [c for c in kids if c.kind == K.STRUCT_DECL and c.is_anonymous_record_decl()]
+        if len(anon) != 1:
+            return False
+        fl = [c for c in anon[0].get_children() if c.kind == K.FIELD_DECL]
+        return bool(fl) and all(c.is_bitfield() for c in fl)
+
     # ---- field iteration
     def members(self, d, cp, rp):
         """Yield (field cursor, C path, Rust path) for every named field of record d, flattening
@@ -192,6 +209,9 @@ class Gen2:
         k = classify(t)
         pad = "    " * dep
         if k[0] == "int":
+            if len(k) > 3:
+                return ([f"{cp} = (__typeof__({cp})) (unsigned) tuo_draw_int(&{stream});"],
+                        [f"{rp} = rt::draw_int(&mut {rstream}) as _;"])
             return ([f"{cp} = (__typeof__({cp})) tuo_draw_int(&{stream});"],
                     [f"{rp} = rt::draw_int(&mut {rstream}) as _;"])
         if k[0] == "bool":
@@ -213,7 +233,9 @@ class Gen2:
                     [f"for {i} in 0..{k[2]} {{"] + ["    " + x for x in rl] + ["}"])
         if k[0] == "rec":
             d = k[1]
-            if k[2]:  # union: raw bytes
+            if k[2] and self.bit_union(d):
+                pass  # a byte of flag bits: filled bit by bit, by name
+            elif k[2]:  # union: raw bytes
                 sz = t.get_canonical().get_size()
                 i = f"i{dep}"
                 return ([f"{{ int {i}; for ({i} = 0; {i} < {sz}; {i}++) ((unsigned char*)&{cp})[{i}] = (unsigned char) tuo_draw_int(&{stream}); }}"],
@@ -222,6 +244,8 @@ class Gen2:
             for f, fc, fr in self.members(d, cp, rp):
                 if not f.spelling:
                     continue  # unnamed bitfield padding
+                if k[2] and not f.is_bitfield():
+                    continue
                 if f.is_bitfield():
                     w = f.get_bitfield_width()
                     mask = (1 << w) - 1
@@ -258,6 +282,8 @@ class Gen2:
     def hash(self, t, cp, rp, dep, ptr_is_cstr=False):
         k = classify(t)
         if k[0] == "int":
+            if len(k) > 3:
+                return ([f"tuo_h_u((tuo_u64)(unsigned){cp});"], [f"rt::h_u({rp} as u64);"])
             if k[2]:
                 return ([f"tuo_h_i((tuo_i64){cp});"], [f"rt::h_i({rp} as i64);"])
             return ([f"tuo_h_u((tuo_u64){cp});"], [f"rt::h_u({rp} as u64);"])
@@ -281,13 +307,20 @@ class Gen2:
                     [f"for {i} in 0..{k[2]} {{"] + ["    " + x for x in rl] + ["}"])
         if k[0] == "rec":
             d = k[1]
-            if k[2]:
+            if k[2] and not self.bit_union(d):
                 sz = t.get_canonical().get_size()
+                flds = [f for f in d.get_children() if f.kind == K.FIELD_DECL]
+                if sz == 8 and flds and all(classify(f.type)[0] == "ptr" for f in flds):
+                    # a union of pointers: hash the pointer's class (a wired pointer is an address)
+                    return ([f"tuo_h_p(*(void* const*)&{cp});"],
+                            [f"rt::h_p(*(&{rp} as *const _ as *const *const u8));"])
                 return ([f"tuo_h_bytes(&{cp}, {sz});"],
                         [f"rt::h_bytes(&{rp} as *const _ as *const u8, {sz});"])
             cl, rl = [], []
             for f, fc, fr in self.members(d, cp, rp):
                 if not f.spelling:
+                    continue
+                if k[2] and not f.is_bitfield():
                     continue
                 if f.is_bitfield():
                     fk = classify(f.type)
@@ -393,7 +426,8 @@ class TuGen:
         for v in self.vars.values():
             walk(v)
         self.ext_funcs = {n: r for n, r in self.refs_f.items() if n not in self.fdefs and not n.startswith("__builtin")}
-        self.ext_vars = {n: r for n, r in self.refs_v.items() if n not in self.vars and not self.in_tu_data(r)
+        self.ext_vars = {n: r for n, r in self.refs_v.items() if n not in self.vars
+                         and (not self.in_tu_data(r) or r.storage_class == ci.StorageClass.EXTERN)
                          and r.location.file and "forward.h" not in r.location.file.name}
         # drop header-level constants (static const in headers) that are not data objects
         self.ext_vars = {n: r for n, r in self.ext_vars.items() if r.storage_class != ci.StorageClass.STATIC}
@@ -437,8 +471,9 @@ class TuGen:
                 if size is None:
                     raise SystemExit(f"extern array {n} has no size: add cfg['extsize']['{n}']")
             const = t.is_const_qualified()
-            self.objs.append(dict(name=n, t=t, c=n, r=f"(*core::ptr::addr_of_mut!(m::ext::{g.ident(n)}))",
-                                  r_ptr=f"core::ptr::addr_of_mut!(m::ext::{g.ident(n)})",
+            rn = cfg.get("rust_vars", {}).get(n, n)
+            self.objs.append(dict(name=n, t=t, c=n, r=f"(*core::ptr::addr_of_mut!(m::ext::{g.ident(rn)}))",
+                                  r_ptr=f"core::ptr::addr_of_mut!(m::ext::{g.ident(rn)})",
                                   raw=cfg.get("raw", {}).get(n),
                                   fill=not const, own=False, ext=True, size=size, const=const))
         # 3. mock-return objects (filled in build_ext)
@@ -476,7 +511,28 @@ class TuGen:
                                       own=False, mock=True, bytes=size))
             else:
                 self.objs.append(dict(name=f"mo_{alias}", t=pt, c=f"tuo_mo_{alias}", r=f"(*core::ptr::addr_of_mut!(MO_{alias}))",
-                                      fill=True, own=False, mock=True, pt=pt))
+                                      r_ptr=f"core::ptr::addr_of_mut!(MO_{alias})", fill=True, own=False, mock=True, pt=pt))
+        # cfg extra_objs {alias: "TypeName"}: further typed state objects (wired together by cfg fixups)
+        for alias, tname in sorted(self.cfg.get("extra_objs", {}).items()):
+            if alias in mobj:
+                continue
+            pt = self.find_type(tname)
+            self.objs.append(dict(name=f"mo_{alias}", t=pt, c=f"tuo_mo_{alias}", r=f"(*core::ptr::addr_of_mut!(MO_{alias}))",
+                                  r_ptr=f"core::ptr::addr_of_mut!(MO_{alias})", fill=True, own=False, mock=True, pt=pt))
+
+    def find_type(self, name):
+        for c in self.tu.cursor.get_children():
+            if c.kind == K.TYPEDEF_DECL and c.spelling == name:
+                return c.type
+            if c.kind == K.STRUCT_DECL and c.spelling == name and c.is_definition():
+                return c.type
+        raise SystemExit(f"extra_objs: type {name} not found in the TU")
+
+    def obj_named(self, nm):
+        for o in self.objs:
+            if o["name"] == nm or o["name"] == "mo_" + nm:
+                return o
+        raise SystemExit(f"arg spec obj:{nm}: no such state object")
 
     # ---- args
     def arg_specs(self, fn):
@@ -498,6 +554,7 @@ class TuGen:
     def mock_c(self, spec):
         fn = spec["fn"]
         n = spec["name"]
+        self._cur_ext = n
         lines = [self.cdecl_fn(fn, n) + " {", f"    tuo_t_begin({spec['id']});"]
         for i, a in enumerate(fn.get_arguments()):
             lines += ["    " + x for x in self.trace_arg(a.type, f"a{i}", "c")]
@@ -526,7 +583,7 @@ class TuGen:
                     out.append(f"tuo_t_s((const char*){v});")
                 else:
                     pk = classify(pt) if pt.get_canonical().kind not in (T.VOID,) else ("void",)
-                    if pk[0] == "rec" and pk[1].is_definition():
+                    if pk[0] == "rec" and pk[1].is_definition() and getattr(self, "_cur_ext", None) not in self.cfg.get("no_arg_content", ()):
                         cl, _ = self.g2.hash(pt, f"(*{v})", "", 0)
                         out.append(f"if ({v}) {{ tuo_u64 sv = tuo_h; tuo_h = TUO_FNV0;")
                         out += ["  " + x for x in cl]
@@ -581,6 +638,12 @@ class TuGen:
                 lines.append(f"    return ({fn.result_type.spelling}) &tuo_mo_{alias};")
         elif rk[0] == "fnptr":
             lines.append("    return 0;")
+        elif rk[0] == "rec" and not rk[2] and fn.result_type.get_canonical().get_size() <= 8:
+            # small record by value: every field drawn from the mock stream
+            cl, _ = self.g2.fill(fn.result_type, "r", "", 1, "tuo_mst", "rt::MST")
+            lines.append(f"    {{ {fn.result_type.spelling} r; memset(&r, 0, sizeof r);")
+            lines += ["      " + x for x in cl]
+            lines.append("      return r; }")
         else:
             raise ValueError(f"mock ret {fn.result_type.spelling}")
         return lines
@@ -588,6 +651,7 @@ class TuGen:
     def mock_rust(self, spec):
         fn = spec["fn"]
         n = spec["name"]
+        self._cur_ext = n
         lines = [f"unsafe fn h_{n}(a: &[u64]) -> u64 {{", f"    rt::t_begin({spec['id']});"]
         for i, a in enumerate(fn.get_arguments()):
             lines += ["    " + x for x in self.trace_arg_rust(a.type, i)]
@@ -632,6 +696,14 @@ class TuGen:
                 lines.append(f"    core::ptr::addr_of_mut!(MO_{alias}) as usize as u64")
         elif rk[0] == "fnptr":
             lines.append("    0")
+        elif rk[0] == "rec" and not rk[2] and fn.result_type.get_canonical().get_size() <= 8:
+            rt_ty = self.mt(self.g2.rty(fn.result_type))
+            _, rl = self.g2.fill(fn.result_type, "", "r", 1, "tuo_mst", "rt::MST")
+            lines.append(f"    let mut r: {rt_ty} = core::mem::zeroed();")
+            lines += ["    " + x for x in rl]
+            lines.append("    let mut v = 0u64;")
+            lines.append("    core::ptr::copy_nonoverlapping(&r as *const _ as *const u8, &mut v as *mut u64 as *mut u8, core::mem::size_of_val(&r));")
+            lines.append("    v")
         lines.append("}")
         return lines
 
@@ -687,7 +759,7 @@ class TuGen:
                 out.append(f"rt::t_s(a[{i}] as usize as *const u8);")
             else:
                 pk = classify(pt) if pt.get_canonical().kind != T.VOID else ("void",)
-                if pk[0] == "rec" and pk[1].is_definition():
+                if pk[0] == "rec" and pk[1].is_definition() and getattr(self, "_cur_ext", None) not in self.cfg.get("no_arg_content", ()):
                     _, rl = self.g2.hash(pt, "", f"(*p)", 0)
                     rty = self.mt(self.g2.rty(pt))
                     out.append(f"if a[{i}] != 0 {{ let p = a[{i}] as usize as *const {rty}; let sv = rt::H; rt::H = rt::FNV0;")
@@ -938,6 +1010,7 @@ class TuGen:
         L += ["int tuo_nobjs(void) { return tuo_nstatic; }",
               "const char* tuo_objname(int i) { return tuo_reg_name[i]; }",
               "tuo_u64 tuo_objhash(int i) { return tuo_obj_hash[i]; }",
+              "tuo_u64 tuo_objsize(int i) { return tuo_reg_size[i]; }",
               "void tuo_setup(void) { tuo_init(); }"]
         return "\n".join(L) + "\n"
 
@@ -968,7 +1041,7 @@ class TuGen:
             if s == "null":
                 return ([f"{t.spelling} {name} = 0;"], name, [])
             if s and s.startswith("obj:"):
-                return ([f"{t.spelling} {name} = ({t.spelling}) &{s[4:]};"], name, [])
+                return ([f"{t.spelling} {name} = ({t.spelling}) &{self.obj_named(s[4:])['c']};"], name, [])
             if s and s.startswith("idx:"):
                 _, on, rg = s.split(":")
                 lo, hi = map(lambda x: int(x, 0), rg.split(".."))
@@ -1172,6 +1245,7 @@ class TuGen:
         L.append("        if got[..] != want[..] {")
         L.append("            e.1 += 1;")
         L.append("            if e.1 <= 2 { bad.push(format!(\"{name} seed {seed:x}: C {want:x?} Rust {got:x?}\")); }")
+        L.append("            if e.1 == 1 && std::env::var(\"TU_OBJS\").is_ok() { unsafe { eprintln!(\"MISMATCH {name} {seed:x}\"); for (k, h) in rt::OBJ_HASH.iter().enumerate() { eprintln!(\"  rust obj {} {:x} size {}\", rt::REGS[k].name, h, rt::REGS[k].size); } } }")
         L.append("        }")
         L.append("    }")
         L.append("    for (n, (t, b)) in &by_fn { if *b != 0 { eprintln!(\"FAIL {n}: {b}/{t} cases differ\"); } }")
@@ -1205,7 +1279,7 @@ class TuGen:
             if s == "null":
                 return ([f"let {name} = 0usize;"], f"{name} as _", [])
             if s and s.startswith("obj:"):
-                o = next(o for o in self.objs if o["name"] == s[4:])
+                o = self.obj_named(s[4:])
                 return ([f"let {name} = {o['r_ptr']};"], f"{name} as _", [])
             if s and s.startswith("idx:"):
                 _, on, rg = s.split(":")
@@ -1346,6 +1420,7 @@ extern void tuo_setup(void);
 extern int tuo_nobjs(void);
 extern const char* tuo_objname(int);
 extern u64 tuo_objhash(int);
+extern u64 tuo_objsize(int);
 int main(int argc, char** argv) {
     char name[256]; unsigned long long seed; u64 out[3];
     tuo_setup();
@@ -1369,7 +1444,7 @@ int main(int argc, char** argv) {
             seed = strtoull(argv[3], 0, 16);
             tuo_runners[i](seed, out);
             printf("%s %llx = %llx %llx %llx\n", argv[2], seed, out[0], out[1], out[2]);
-            for (int k = 0; k < tuo_nobjs(); k++) printf("  obj %s %llx\n", tuo_objname(k), tuo_objhash(k));
+            for (int k = 0; k < tuo_nobjs(); k++) printf("  obj %s %llx size %llu\n", tuo_objname(k), tuo_objhash(k), tuo_objsize(k));
             return 0;
         }
         return 2;

@@ -90,3 +90,4 @@ pub mod ftboy;
 pub mod ftgirl;
 pub mod ftzelda;
 pub mod ftyoshispecialhi;
+pub mod ftyoshispeciallw;

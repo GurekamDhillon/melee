@@ -21,6 +21,34 @@ pub mod ext {
     hook_or!(FTCOMMON_8007D7FC, ftCommon_8007D7FC, (fp: *mut Fighter),
         |fp: *mut Fighter| unsafe { melee_fighter::ftcommon3::ftcommon_8007d7fc(&mut *fp) });
     hook!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, (jobj: *mut HSD_JObj));
+    // The ft/ callees shared by the ftYoshi / ftZelda TUs; each TU's `ext` re-exports the ones it calls.
+    hook!(FTANIM_8006EBA4, ftAnim_8006EBA4, (gobj: *mut HSD_GObj));
+    hook!(FTANIM_ISFRAMESREMAINING, ftAnim_IsFramesRemaining, (gobj: *mut HSD_GObj) -> bool);
+    hook!(FT_8008A2BC, ft_8008A2BC, (gobj: *mut HSD_GObj));
+    hook!(FTCO_FALL_ENTER, ftCo_Fall_Enter, (gobj: *mut HSD_GObj));
+    hook_or!(FT_80084F3C, ft_80084F3C, (gobj: *mut HSD_GObj), melee_fighter::ft084e::ft_80084f3c);
+    hook_or!(FT_80084EEC, ft_80084EEC, (gobj: *mut HSD_GObj), melee_fighter::ft084e::ft_80084eec);
+    hook_or!(FT_80085134, ft_80085134, (gobj: *mut HSD_GObj), melee_fighter::ft084e::ft_80085134);
+    hook_or!(FT_80082708, ft_80082708, (gobj: *mut HSD_GObj) -> i32,
+        |g: *mut HSD_GObj| melee_fighter::tu::ft_081b::ft_80082708(g) as i32);
+    hook_or!(FT_80081D0C, ft_80081D0C, (gobj: *mut HSD_GObj) -> i32,
+        |g: *mut HSD_GObj| melee_fighter::tu::ft_081b::ft_80081d0c(g) as i32);
+    hook_or!(FT_800827A0, ft_800827A0, (gobj: *mut HSD_GObj) -> bool, melee_fighter::tu::ft_081b::ft_800827a0);
+    hook!(FT_8008403C, ft_8008403C, (gobj: *mut HSD_GObj, cb: HSD_GObjEvent));
+    hook!(FT_80082C74, ft_80082C74, (gobj: *mut HSD_GObj, cb: HSD_GObjEvent));
+    hook!(FT_80083A48, ft_80083A48, (gobj: *mut HSD_GObj, cb: HSD_GObjEvent));
+    hook_or!(FT_CHECKGROUNDANDLEDGE, ft_CheckGroundAndLedge, (gobj: *mut HSD_GObj, dir: i32) -> bool,
+        melee_fighter::tu::ft_081b::ft_check_ground_and_ledge);
+    hook_or!(FTCLIFFCOMMON_80081298, ftCliffCommon_80081298, (gobj: *mut HSD_GObj) -> bool,
+        melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081298);
+    hook_or!(FTCLIFFCOMMON_80081370, ftCliffCommon_80081370, (gobj: *mut HSD_GObj),
+        melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370);
+    hook_or!(FTCOMMON_CLAMPAIRDRIFT, ftCommon_ClampAirDrift, (fp: *mut Fighter),
+        |fp: *mut Fighter| unsafe { melee_fighter::ftcommon::clamp_air_drift(&mut *fp) });
+    hook_or!(FTCOMMON_FALL, ftCommon_Fall, (fp: *mut Fighter, gravity: f32, terminal_vel: f32),
+        |fp: *mut Fighter, g: f32, t: f32| unsafe { melee_fighter::ftcommon::fall(&mut *fp, g, t) });
+    hook_or!(FTCOMMON_SETSELFMOVEMENTFROMGROUNDEDMOVEMENT, ftCommon_SetSelfMovementFromGroundedMovement, (gobj: *mut HSD_GObj),
+        |g: *mut HSD_GObj| unsafe { melee_fighter::ftcommon::set_self_movement_from_grounded_movement(&mut *((*g).user_data as *mut Fighter)) });
     hook!(FIGHTER_CHANGEMOTIONSTATE, Fighter_ChangeMotionState,
         (gobj: *mut HSD_GObj, msid: i32, flags: u32, anim_start: f32, anim_speed: f32, anim_blend: f32, arg3: *mut HSD_GObj));
 }

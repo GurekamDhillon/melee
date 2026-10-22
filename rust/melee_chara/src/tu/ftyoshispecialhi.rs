@@ -28,9 +28,7 @@ pub mod ext {
     hook!(IT_802B2A10, it_802B2A10, (gobj: *mut HSD_GObj, pos: *mut Vec3, arg: i32, dir: f32) -> *mut Item_GObj);
     hook!(IT_802B28C8, it_802B28C8, (item: *mut Item_GObj, pos: *mut Vec3, offset: *mut Vec3, facing_dir: f32, unused: f32));
     hook!(IT_802B2890, it_802B2890, (item: *mut Item_GObj));
-    hook!(FT_8008403C, ft_8008403C, (gobj: *mut HSD_GObj, cb: HSD_GObjEvent));
-    hook!(FT_80083A48, ft_80083A48, (gobj: *mut HSD_GObj, cb: HSD_GObjEvent));
-    hook!(FT_80082C74, ft_80082C74, (gobj: *mut HSD_GObj, cb: HSD_GObjEvent));
+    pub use crate::tu::ftinl::ext::{ft_80082C74, ft_80083A48, ft_8008403C};
 }
 
 #[inline(always)]

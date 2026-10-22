@@ -271,6 +271,35 @@ def parse_hooks(rs_text):
     return out
 
 
+def parse_stubs(rs_text):
+    """The legacy `stub!(/// doc  HOOK, name, (a: T, ..) -> R)` / `stub_or!(.., port, (..))` entries of
+    src/stubs.rs (hooks of the earlier rounds' ports); `G` is `*mut HSD_GObj`."""
+    out = {}
+    for m in re.finditer(r"stub(_or)?!\(\s*(?:///[^\n]*\n\s*)*(\w+),\s*(\w+),\s*(?:([\w:]+),\s*)?\(", rs_text):
+        hook, name = m.group(2), m.group(3)
+        i = m.end()
+        params_src = scan_balanced(rs_text, i)
+        j = i + len(params_src) + 1
+        rest = rs_text[j:j + 300]
+        rm = re.match(r"\s*->\s*", rest)
+        ret = None
+        if rm:
+            k = rm.end()
+            e = k
+            while e < len(rest) and rest[e] not in ",)":
+                e += 1
+            ret = rest[k:e].strip()
+        params = []
+        for p_ in split_top(params_src):
+            p_ = p_.strip()
+            if p_:
+                n, t = p_.split(":", 1)
+                t = t.strip()
+                params.append((n.strip(), "*mut HSD_GObj" if t == "G" else t))
+        out[name] = dict(hook=hook, params=params, ret="*mut HSD_GObj" if ret == "G" else ret)
+    return out
+
+
 def scan_balanced(s, i):
     d = 1
     j = i
@@ -433,7 +462,8 @@ def rs_hook_install(name, rh, kinds, rk, ret_t, modpath):
         boolish = ret_is_bool(ret_t)
         body.append(rs_ret(rt, rk if rk in ("i", "q", "f", "d") else "p", ret_t, boolish))
         rets = f" -> {rt}"
-    return f"        melee_chara::tu::{modpath}::ext::{rh['hook']} = Some(|{sig}|{rets} {{ {' '.join(body)} }});"
+    target = "melee_chara::stubs" if modpath == "@stubs" else f"melee_chara::tu::{modpath}::ext"
+    return f"        {target}::{rh['hook']} = Some(|{sig}|{rets} {{ {' '.join(body)} }});"
 
 
 # ------------------------------------------------------------------ the generator proper
@@ -471,6 +501,9 @@ def build(stem, verbose_fn=None):
     includes = spec.get("includes", DEFAULT_INCLUDES)
     rs_file = CRATE / f"src/tu/{spec['rust_mod']}.rs"
     hooks = {}  # C name -> [(module, info)]
+    if spec.get("legacy_stubs"):
+        for n, info in parse_stubs((CRATE / "src/stubs.rs").read_text(encoding="utf-8")).items():
+            hooks.setdefault(n, []).append(("@stubs", info))
     for m in [spec["rust_mod"]] + list(spec.get("ext_mods", [])):
         for n, info in parse_hooks((CRATE / f"src/tu/{m}.rs").read_text(encoding="utf-8")).items():
             hooks.setdefault(n, []).append((m, info))
@@ -808,6 +841,30 @@ def ship_obj(c, stem):
     obj = BUILD / f"{stem}.obj"
     run([CLANG, "--target=x86_64-pc-windows-msvc", "-O2", "-c", "-w", str(lo), "-o", str(obj)], f"obj {stem}")
     return obj
+
+
+def coverage(stem, src):
+    """Source-based coverage of the C functions under test (float semantics are irrelevant here, so the
+    driver is built directly, without the shipping lowering): prints per-function region / branch
+    coverage of the game .c, to see which paths the generated states reach."""
+    drv = BUILD / f"{stem}_oracle.c"
+    exe = BUILD / f"{stem}_cov.exe"
+    prof = BUILD / f"{stem}.profraw"
+    pd = BUILD / f"{stem}.profdata"
+    flags = [a for a in COMMON if a != "-Wno-everything"]
+    run([CLANG, *flags, "-w", "-O0", "-fprofile-instr-generate", "-fcoverage-mapping", "-fcoverage-mcdc",
+         str(drv), str(ROOT / "pc/gameworld/gekko_fp.c"), "-o", str(exe), "-fuse-ld=lld",
+         "-Wl,/FORCE:UNRESOLVED", "-Wl,/IGNORE:4006", "-Wl,/IGNORE:4088"], "coverage build")
+    env = dict(os.environ, LLVM_PROFILE_FILE=str(prof))
+    subprocess.run([str(exe)], capture_output=True, text=True, check=True, env=env)
+    run([str(Path(CLANG).with_name("llvm-profdata.exe")), "merge", "-sparse", str(prof), "-o", str(pd)], "profdata")
+    r = run([str(Path(CLANG).with_name("llvm-cov.exe")), "report", str(exe), f"-instr-profile={pd}",
+             "--show-functions", "--show-branch-summary", str(ROOT / src)], "llvm-cov")
+    print(r.stdout)
+    sh = run([str(Path(CLANG).with_name("llvm-cov.exe")), "show", str(exe), f"-instr-profile={pd}",
+              "--show-branches=count", "--show-line-counts-or-regions", str(ROOT / src)], "llvm-cov show")
+    (BUILD / f"{stem}_cov.txt").write_text(sh.stdout, encoding="utf-8")
+    print(f"oracle: annotated source -> {BUILD / (stem + '_cov.txt')}")
 
 
 def gekko_obj():
@@ -1286,7 +1343,12 @@ def main():
         del args[i:i + 2]
     BUILD.mkdir(parents=True, exist_ok=True)
     (CRATE / "tests/data").mkdir(parents=True, exist_ok=True)
+    cov = "--cov" in args
+    args = [x for x in args if x != "--cov"]
     for stem in args:
+        if cov:
+            coverage(stem, load_spec(stem)["src"])
+            continue
         build(stem, verbose_fn)
 
 

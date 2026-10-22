@@ -1,0 +1,15 @@
+hdr 11560 2072 10908 148 11384 2136 1928 10924 10943
+fn_8012E644 d3ad8a73c42bf4b1
+ftYs_SpecialLw_Enter 81a63deda95c9020
+ftYs_SpecialAirLw_Enter 251b7fe646448825
+ftYs_SpecialLw_Anim 4f182665eb8db884
+ftYs_SpecialAirLw_Anim d04339f59d58d751
+ftYs_SpecialLw_Phys 6bc2a33c596ffc2d
+ftYs_SpecialAirLw_Phys 682c05f333c88707
+ftYs_SpecialLw_Coll 35d62d23660973bf
+ftYs_SpecialAirLw_Coll 614441a233450153
+ftYs_SpecialS_8012EA04 0156fabb1d9c5d2f
+ftYs_SpecialLwLanding_Anim 7bde7051cb72308d
+ftYs_SpecialLwLanding_Phys e5e7a7c0aec6180c
+ftYs_SpecialLwLanding_Coll 33187f612f13ca72
+ftYs_SpecialS_8012EAD8 0e8851f4e74cca0a

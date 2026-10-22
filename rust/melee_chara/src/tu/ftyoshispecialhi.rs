@@ -103,6 +103,11 @@ pub fn ftYs_SpecialS_8012DF8C(gobj: *mut HSD_GObj, arg1: *mut Vec3) {
     }
 }
 
+/// `ftYs_SpecialS_8012DF8C_outline(gobj, vec)` (static inline).
+pub fn ftYs_SpecialS_8012DF8C_outline(gobj: *mut HSD_GObj, vec: *mut Vec3) {
+    ftYs_SpecialS_8012DF8C(gobj, vec);
+}
+
 pub fn fn_8012E110(gobj: *mut HSD_GObj) {
     unsafe {
         let fp = fpp(gobj);
@@ -124,7 +129,7 @@ pub fn fn_8012E110(gobj: *mut HSD_GObj) {
             sp24.x = da.x104 * (*fp).facing_dir;
             sp24.y = da.x108;
             sp24.z = 0.0;
-            ftYs_SpecialS_8012DF8C(gobj, &mut sp18);
+            ftYs_SpecialS_8012DF8C_outline(gobj, &mut sp18);
             {
                 let x4 = (*fp).mv.ys.specialhi.x4 as f32;
                 ext::it_802B28C8((*fp).u.ys.x2238, &mut sp18, &mut sp24, fmadds(x4, da.x110, da.x10C), x4);

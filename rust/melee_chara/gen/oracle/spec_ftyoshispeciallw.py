@@ -15,6 +15,8 @@ void __assert(const char* f, u32 l, const char* c) { (void) f; (void) l; (void) 
     },
     funcs=[
         dict(name="fn_8012E644", attrs=["ftYs_DatAttrs"]),
+        dict(name="ftYoshi_SpecialLw_SetVars", bf=["throw_flags_b0", "x2223_b4"]),
+        dict(name="reset", bf=["throw_flags_b0", "x2223_b4"]),
         dict(name="ftYs_SpecialLw_Enter", bf=["throw_flags_b0", "x2223_b4"]),
         dict(name="ftYs_SpecialAirLw_Enter", bf=["throw_flags_b0", "x2223_b4"]),
         "ftYs_SpecialLw_Anim",

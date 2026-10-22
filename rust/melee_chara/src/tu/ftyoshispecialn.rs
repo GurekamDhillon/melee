@@ -148,7 +148,7 @@ pub fn ftYs_SpecialN_8012CDD4(gobj: *mut HSD_GObj) -> *mut HSD_Joint {
     }
 }
 
-fn setup_callbacks(gobj: *mut HSD_GObj, grab_cb: HSD_GObjEvent, arg1: HSD_GObjEvent, grabbed_cb: HSD_GObjInteraction) {
+pub fn setupCallbacks(gobj: *mut HSD_GObj, grab_cb: HSD_GObjEvent, arg1: HSD_GObjEvent, grabbed_cb: HSD_GObjInteraction) {
     unsafe {
         let fp = fpp(gobj);
         ext::ftCommon_8007E2D0(fp, 4, grab_cb, arg1, grabbed_cb);
@@ -161,7 +161,7 @@ pub fn ftYs_SpecialN_Enter(gobj: *mut HSD_GObj) {
         (*fp).cmd_vars[0] = 0;
         ext::Fighter_ChangeMotionState(gobj, ftYs_MS_SpecialN1 as i32, Ft_MF_None, 0.0, 1.0, 0.0, core::ptr::null_mut());
         ext::ftAnim_8006EBA4(gobj);
-        setup_callbacks(gobj, Some(cb_fn_8012CF7C), Some(cb_fn_8012CEE0), Some(cb_ftCo_800BBB8C));
+        setupCallbacks(gobj, Some(cb_fn_8012CF7C), Some(cb_fn_8012CEE0), Some(cb_ftCo_800BBB8C));
     }
 }
 
@@ -171,7 +171,7 @@ pub fn ftYs_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
         (*fp).cmd_vars[0] = 0;
         ext::Fighter_ChangeMotionState(gobj, ftYs_MS_SpecialAirN1_0 as i32, Ft_MF_None, 0.0, 1.0, 0.0, core::ptr::null_mut());
         ext::ftAnim_8006EBA4(gobj);
-        setup_callbacks(gobj, Some(cb_fn_8012D0A0), Some(cb_fn_8012D004), Some(cb_ftCo_800BBB8C));
+        setupCallbacks(gobj, Some(cb_fn_8012D0A0), Some(cb_fn_8012D004), Some(cb_ftCo_800BBB8C));
     }
 }
 
@@ -227,7 +227,7 @@ pub fn fn_8012D128(gobj: *mut HSD_GObj) {
     unsafe {
         let fp = fpp(gobj);
         ftinl::ftCommon_GroundToAirStateChange(gobj, fp, ftYs_MS_SpecialAirN1_0 as i32, ftYs_MF_SpecialN_CollHit);
-        setup_callbacks(gobj, Some(cb_fn_8012D0A0), Some(cb_fn_8012D004), Some(cb_ftCo_800BBB8C));
+        setupCallbacks(gobj, Some(cb_fn_8012D0A0), Some(cb_fn_8012D004), Some(cb_ftCo_800BBB8C));
     }
 }
 
@@ -235,34 +235,34 @@ pub fn fn_8012D1AC(gobj: *mut HSD_GObj) {
     unsafe {
         let fp = fpp(gobj);
         ftinl::ftCommon_AirToGroundStateChange(gobj, fp, ftYs_MS_SpecialN1 as i32, ftYs_MF_SpecialN_CollHit);
-        setup_callbacks(gobj, Some(cb_fn_8012CF7C), Some(cb_fn_8012CEE0), Some(cb_ftCo_800BBB8C));
+        setupCallbacks(gobj, Some(cb_fn_8012CF7C), Some(cb_fn_8012CEE0), Some(cb_ftCo_800BBB8C));
     }
 }
 
-/// `checkAnimEnd(gobj, cb)` with `cb` called through the `ext` hook of that name.
-fn check_anim_end(gobj: *mut HSD_GObj, cb: fn(*mut HSD_GObj)) {
+/// `checkAnimEnd(gobj, cb)` (static).
+pub fn checkAnimEnd(gobj: *mut HSD_GObj, cb: fn(*mut HSD_GObj)) {
     if !ext::ftAnim_IsFramesRemaining(gobj) {
         cb(gobj);
     }
 }
 
 pub fn ftYs_SpecialN1_Anim(gobj: *mut HSD_GObj) {
-    check_anim_end(gobj, ext::ft_8008A2BC);
+    checkAnimEnd(gobj, ext::ft_8008A2BC);
 }
 
 pub fn ftYs_SpecialAirN1_0_Anim(gobj: *mut HSD_GObj) {
-    check_anim_end(gobj, ext::ftCo_Fall_Enter);
+    checkAnimEnd(gobj, ext::ftCo_Fall_Enter);
 }
 
 /// `getFtTargetItem` / `getFtVictim` (ft/inlines.h).
-fn get_ft_target_item(fp: *mut Fighter) -> *mut HSD_GObj {
+pub fn getFtTargetItem(fp: *mut Fighter) -> *mut HSD_GObj {
     unsafe { (*fp).target_item_gobj }
 }
-fn get_ft_victim(fp: *mut Fighter) -> *mut HSD_GObj {
+pub fn getFtVictim(fp: *mut Fighter) -> *mut HSD_GObj {
     unsafe { (*fp).victim_gobj }
 }
 
-fn change_motion_state(gobj: *mut HSD_GObj, msid: i32, target_getter: fn(*mut Fighter) -> *mut HSD_GObj, arg3: bool) {
+pub fn changeMotionState(gobj: *mut HSD_GObj, msid: i32, target_getter: fn(*mut Fighter) -> *mut HSD_GObj, arg3: bool) {
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cmd_vars[0] != 0 && !target_getter(fp).is_null() {
@@ -278,23 +278,23 @@ fn change_motion_state(gobj: *mut HSD_GObj, msid: i32, target_getter: fn(*mut Fi
 }
 
 pub fn ftYs_SpecialN1_1_Anim(gobj: *mut HSD_GObj) {
-    change_motion_state(gobj, ftYs_MS_SpecialN2_1 as i32, get_ft_target_item, true);
+    changeMotionState(gobj, ftYs_MS_SpecialN2_1 as i32, getFtTargetItem, true);
 }
 
 pub fn ftYs_SpecialN1_0_Anim(gobj: *mut HSD_GObj) {
-    change_motion_state(gobj, ftYs_MS_SpecialN2_0 as i32, get_ft_victim, false);
+    changeMotionState(gobj, ftYs_MS_SpecialN2_0 as i32, getFtVictim, false);
 }
 
 pub fn ftYs_SpecialAirN1_2_Anim(gobj: *mut HSD_GObj) {
-    change_motion_state(gobj, ftYs_MS_SpecialAirN2_1 as i32, get_ft_target_item, true);
+    changeMotionState(gobj, ftYs_MS_SpecialAirN2_1 as i32, getFtTargetItem, true);
 }
 
 pub fn ftYs_SpecialAirN1_1_Anim(gobj: *mut HSD_GObj) {
-    change_motion_state(gobj, ftYs_MS_SpecialAirN2_0 as i32, get_ft_victim, false);
+    changeMotionState(gobj, ftYs_MS_SpecialAirN2_0 as i32, getFtVictim, false);
 }
 
 /// `inlineB0(gobj, on_anim_end)` (static inline): lays the egg.
-fn inline_b0(gobj: *mut HSD_GObj, on_anim_end: fn(*mut HSD_GObj)) {
+pub fn inlineB0(gobj: *mut HSD_GObj, on_anim_end: fn(*mut HSD_GObj)) {
     unsafe {
         let fp = fpp(gobj);
         let mut item_attrs: itYoshiEggLay_DatAttrs = core::mem::zeroed();
@@ -331,13 +331,13 @@ fn inline_b0(gobj: *mut HSD_GObj, on_anim_end: fn(*mut HSD_GObj)) {
 }
 
 pub fn ftYs_SpecialN2_1_Anim(gobj: *mut HSD_GObj) {
-    inline_b0(gobj, ext::ft_8008A2BC);
+    inlineB0(gobj, ext::ft_8008A2BC);
 }
 
 /// `inlineA0(fp)` (static): release the grabbed victim.
-fn inline_a0(fp: *mut Fighter) {
+pub fn inlineA0(fp: *mut Fighter) {
     unsafe {
-        let victim_gobj = get_ft_victim(fp);
+        let victim_gobj = getFtVictim(fp);
         if !victim_gobj.is_null() {
             ext::ftCo_800BBC88(victim_gobj);
             (*fp).cmd_vars[1] = 0;
@@ -346,11 +346,11 @@ fn inline_a0(fp: *mut Fighter) {
 }
 
 /// `inlineA1(gobj, anim_end_cb)` (static): the tongue's victim handling.
-fn inline_a1(gobj: *mut HSD_GObj, anim_end_cb: fn(*mut HSD_GObj)) {
+pub fn inlineA1(gobj: *mut HSD_GObj, anim_end_cb: fn(*mut HSD_GObj)) {
     unsafe {
         let fp = fpp(gobj);
         if (*fp).cmd_vars[1] != 0 {
-            inline_a0(fp);
+            inlineA0(fp);
         }
         if (*fp).cmd_vars[0] != 0 {
             let victim_gobj = (*fp).victim_gobj;
@@ -368,13 +368,13 @@ fn inline_a1(gobj: *mut HSD_GObj, anim_end_cb: fn(*mut HSD_GObj)) {
 }
 
 pub fn ftYs_SpecialN2_0_Anim(gobj: *mut HSD_GObj) {
-    inline_a1(gobj, ext::ft_8008A2BC);
+    inlineA1(gobj, ext::ft_8008A2BC);
 }
 
 pub fn ftYs_SpecialAirN2_1_Anim(gobj: *mut HSD_GObj) {
-    inline_b0(gobj, ext::ftCo_Fall_Enter);
+    inlineB0(gobj, ext::ftCo_Fall_Enter);
 }
 
 pub fn ftYs_SpecialAirN2_0_Anim(gobj: *mut HSD_GObj) {
-    inline_a1(gobj, ext::ftCo_Fall_Enter);
+    inlineA1(gobj, ext::ftCo_Fall_Enter);
 }

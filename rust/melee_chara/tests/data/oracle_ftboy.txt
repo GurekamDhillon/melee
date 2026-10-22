@@ -1,5 +1,8 @@
 hdr 11560 2072 10908 148 11384 2136 1928
-ftBo_Init_OnItemPickup 2b7dc323b6a29d29
-ftBo_Init_OnItemDrop 6c60bb1953a31435
-ftBo_Init_OnLoad 3d49c0f065eca7bc
-ftBo_Init_LoadSpecialAttrs cec2bd7298bea90f
+ftBo_Init_OnDeath 539e542cc5d940ca
+ftBo_Init_OnItemInvisible 071ac82b49608e0b
+ftBo_Init_OnItemVisible 48df163acd35a1df
+ftBo_Init_OnItemPickup 8535abc75b0770e1
+ftBo_Init_OnItemDrop ac0cddad0ad10646
+ftBo_Init_OnLoad 5f26d7ee793753cf
+ftBo_Init_LoadSpecialAttrs e301924a63970a0c

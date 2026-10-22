@@ -26,6 +26,7 @@ void __assert(const char* f, u32 l, const char* c) { (void) f; (void) l; (void) 
     funcs=[
         "ftYs_SpecialS_8012DF18",
         "ftYs_SpecialS_8012DF8C",
+        "ftYs_SpecialS_8012DF8C_outline",
         dict(name="fn_8012E110", bf=["throw_flags_b0"]),
         "ftYs_SpecialS_8012E270",
         "ftYs_SpecialHi_Coll",

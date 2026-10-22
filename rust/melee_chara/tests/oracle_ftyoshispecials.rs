@@ -356,6 +356,71 @@ unsafe fn world_fill_types(w: &mut World, fi: usize) {
             ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
             ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
         }
+        42 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
+        }
+        43 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
+        }
+        44 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
+        }
+        45 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
+        }
+        46 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
+        }
+        47 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
+        }
+        48 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
+        }
+        49 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
+        }
+        50 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
+        }
+        51 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
+        }
+        52 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
+        }
+        53 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
+        }
+        54 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
+        }
         _ => {}
     }
 }
@@ -421,6 +486,19 @@ const FNS: &[Fn_] = &[
     Fn_ { name: "ftYs_SpecialAirSLoop_3_Coll", n: 400, bfmask: 0x1 },
     Fn_ { name: "ftYs_SpecialAirSLanding_Coll", n: 400, bfmask: 0x1 },
     Fn_ { name: "fn_8013295C", n: 400, bfmask: 0x1 },
+    Fn_ { name: "ftYoshi_SpecialS_SetCall", n: 400, bfmask: 0x1 },
+    Fn_ { name: "fn_8012EC7C_inline", n: 400, bfmask: 0x1 },
+    Fn_ { name: "ftYs_SpecialS_UpdateScale", n: 400, bfmask: 0x1 },
+    Fn_ { name: "ftYs_SpecialS_UpdateScale2", n: 400, bfmask: 0x1 },
+    Fn_ { name: "ftYs_SpecialS_WrapAndSetRotX", n: 400, bfmask: 0x1 },
+    Fn_ { name: "ftYs_SpecialS_CheckButtonPressure", n: 400, bfmask: 0x1 },
+    Fn_ { name: "ftYs_SpecialS_SpawnWallBounceEffect", n: 400, bfmask: 0x1 },
+    Fn_ { name: "ftYs_SpecialS_UpdateLoop1Rotation", n: 400, bfmask: 0x1 },
+    Fn_ { name: "ftYs_SpecialS_UpdateLoop1Rotation2", n: 400, bfmask: 0x1 },
+    Fn_ { name: "perm_vel_inline", n: 400, bfmask: 0x1 },
+    Fn_ { name: "perm_neg_inline", n: 400, bfmask: 0x1 },
+    Fn_ { name: "perm_mul_inline", n: 400, bfmask: 0x1 },
+    Fn_ { name: "perm_vel_x_inline", n: 400, bfmask: 0x1 },
 ];
 unsafe fn call_fn(fi: usize, w: &mut World, a: &mut Args) -> (u64, u32) {
     let g = w.g;
@@ -467,6 +545,19 @@ unsafe fn call_fn(fi: usize, w: &mut World, a: &mut Args) -> (u64, u32) {
         39 => { t::ftYs_SpecialAirSLoop_3_Coll(g); (0, 0) }
         40 => { t::ftYs_SpecialAirSLanding_Coll(g); (0, 0) }
         41 => { t::fn_8013295C(g); (0, 0) }
+        42 => { t::ftYoshi_SpecialS_SetCall(g); (0, 0) }
+        43 => { t::fn_8012EC7C_inline(g); (0, 0) }
+        44 => { t::ftYs_SpecialS_UpdateScale(g, &mut a.v3[0]); (0, 0) }
+        45 => { t::ftYs_SpecialS_UpdateScale2(g); (0, 0) }
+        46 => { t::ftYs_SpecialS_WrapAndSetRotX(g); (0, 0) }
+        47 => { let r = t::ftYs_SpecialS_CheckButtonPressure(g) as u32; (r as u64, r) }
+        48 => { t::ftYs_SpecialS_SpawnWallBounceEffect(g, &mut (*w.f_ptr()).coll_data, a.i[0] != 0); (0, 0) }
+        49 => { t::ftYs_SpecialS_UpdateLoop1Rotation(w.f_ptr(), &*(w.attr.as_ptr() as *const ftYoshiAttributes)); (0, 0) }
+        50 => { t::ftYs_SpecialS_UpdateLoop1Rotation2(w.f_ptr(), &mut a.pf[0], a.f[0]); (0, 0) }
+        51 => { let r = t::perm_vel_inline(w.f_ptr()); (bc(r) as u64, bc(r)) }
+        52 => { let r = t::perm_neg_inline(a.f[0] as _); (bc(r) as u64, bc(r)) }
+        53 => { let r = t::perm_mul_inline(a.f[0] as _, a.f[1] as _); (bc(r) as u64, bc(r)) }
+        54 => { let r = t::perm_vel_x_inline(w.f_ptr()); (bc(r) as u64, bc(r)) }
         _ => unreachable!(),
     }
 }
@@ -522,10 +613,12 @@ unsafe fn install_hooks() {
         melee_chara::tu::ftyoshispecials::ext::MPLIB_800569EC = Some(|a0: u32| -> f32 { lg_s("mpLib_800569EC("); lg_int(a0 as u32); lg_s(")"); { let r = rf(); lg_retf(r); lg_c(';'); r } });
 
 }
-const PRE: &[&str] = &["ftYs_SpecialS_8012EB48", "fn_8012EC7C", "fn_8012EDE8", "fn_8012EFC0", "fn_8012EFF4", "ftYs_SpecialS_8012F0DC", "ftYs_SpecialS_8012F35C", "ftYs_SpecialS_Enter", "ftYs_SpecialAirS_Enter", "ftYs_SpecialAirSStart_0_Anim", "ftYs_SpecialAirSLoop_0_Anim", "ftYs_SpecialAirSLoop_1_Anim", "ftYs_SpecialAirSEnd_Anim", "ftYs_SpecialAirSStart_1_Anim", "ftYs_SpecialAirSLoop_2_Anim", "ftYs_SpecialAirSLoop_3_Anim", "ftYs_SpecialAirSLanding_Anim", "ftYs_SpecialAirSStart_0_IASA", "ftYs_SpecialAirSLoop_0_IASA", "ftYs_SpecialAirSLoop_1_IASA", "ftYs_SpecialAirSEnd_IASA", "ftYs_SpecialAirSStart_1_IASA", "ftYs_SpecialAirSLoop_2_IASA", "ftYs_SpecialAirSLoop_3_IASA", "ftYs_SpecialAirSLanding_IASA", "ftYs_SpecialAirSStart_0_Phys", "ftYs_SpecialAirSLoop_0_Phys", "ftYs_SpecialAirSLoop_1_Phys", "ftYs_SpecialAirSEnd_Phys", "ftYs_SpecialAirSStart_1_Phys", "ftYs_SpecialAirSLoop_2_Phys", "ftYs_SpecialAirSLoop_3_Phys", "ftYs_SpecialAirSLanding_Phys", "ftYs_SpecialAirSStart_0_Coll", "ftYs_SpecialAirSLoop_0_Coll", "ftYs_SpecialAirSLoop_1_Coll", "ftYs_SpecialAirSEnd_Coll", "ftYs_SpecialAirSStart_1_Coll", "ftYs_SpecialAirSLoop_2_Coll", "ftYs_SpecialAirSLoop_3_Coll", "ftYs_SpecialAirSLanding_Coll", "fn_8013295C"];
+const PRE: &[&str] = &["ftYs_SpecialS_8012EB48", "fn_8012EC7C", "fn_8012EDE8", "fn_8012EFC0", "fn_8012EFF4", "ftYs_SpecialS_8012F0DC", "ftYs_SpecialS_8012F35C", "ftYs_SpecialS_Enter", "ftYs_SpecialAirS_Enter", "ftYs_SpecialAirSStart_0_Anim", "ftYs_SpecialAirSLoop_0_Anim", "ftYs_SpecialAirSLoop_1_Anim", "ftYs_SpecialAirSEnd_Anim", "ftYs_SpecialAirSStart_1_Anim", "ftYs_SpecialAirSLoop_2_Anim", "ftYs_SpecialAirSLoop_3_Anim", "ftYs_SpecialAirSLanding_Anim", "ftYs_SpecialAirSStart_0_IASA", "ftYs_SpecialAirSLoop_0_IASA", "ftYs_SpecialAirSLoop_1_IASA", "ftYs_SpecialAirSEnd_IASA", "ftYs_SpecialAirSStart_1_IASA", "ftYs_SpecialAirSLoop_2_IASA", "ftYs_SpecialAirSLoop_3_IASA", "ftYs_SpecialAirSLanding_IASA", "ftYs_SpecialAirSStart_0_Phys", "ftYs_SpecialAirSLoop_0_Phys", "ftYs_SpecialAirSLoop_1_Phys", "ftYs_SpecialAirSEnd_Phys", "ftYs_SpecialAirSStart_1_Phys", "ftYs_SpecialAirSLoop_2_Phys", "ftYs_SpecialAirSLoop_3_Phys", "ftYs_SpecialAirSLanding_Phys", "ftYs_SpecialAirSStart_0_Coll", "ftYs_SpecialAirSLoop_0_Coll", "ftYs_SpecialAirSLoop_1_Coll", "ftYs_SpecialAirSEnd_Coll", "ftYs_SpecialAirSStart_1_Coll", "ftYs_SpecialAirSLoop_2_Coll", "ftYs_SpecialAirSLoop_3_Coll", "ftYs_SpecialAirSLanding_Coll", "fn_8013295C", "ftYoshi_SpecialS_SetCall", "fn_8012EC7C_inline", "ftYs_SpecialS_UpdateScale", "ftYs_SpecialS_UpdateScale2", "ftYs_SpecialS_WrapAndSetRotX", "ftYs_SpecialS_CheckButtonPressure", "ftYs_SpecialS_SpawnWallBounceEffect", "ftYs_SpecialS_UpdateLoop1Rotation", "ftYs_SpecialS_UpdateLoop1Rotation2", "perm_vel_inline", "perm_neg_inline", "perm_mul_inline", "perm_vel_x_inline"];
 unsafe fn case_pre(fi: usize, w: &mut World, a: &mut Args) {
     match fi {
         11 => { let a = &mut *(w.attr.as_mut_ptr() as *mut ftYoshiAttributes); if a.xA4 == 0 { a.xA4 = 3; } let x10 = &mut w.f.mv.ys.specials.x10; if *x10 > -0.01 && *x10 < 0.01 { *x10 = 2.5; } }
+        27 => { w.f.mv.ys.specials.x14 = ((rnd() % 2000) as f32 - 1000.0) / 50.0; }
+        50 => { a.f[0] = 0.05 + (rnd() % 100) as f32 / 20.0; }
         _ => {}
     }
 }

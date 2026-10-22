@@ -709,7 +709,7 @@ def build(stem, verbose_fn=None):
                 argsx.append(f"AI[{ix}]"); ix += 1
             elif k in ("f", "d"):
                 argsx.append(f"AF[{fx}]"); fx += 1
-            else:
+            elif fixed is None:
                 raise SystemExit(f"oracle: {f['name']}: unsupported arg kind {k}; give c_args/rs_args")
         if fixed is not None:
             argsx = fixed

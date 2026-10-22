@@ -160,6 +160,21 @@ unsafe fn world_fill_types(w: &mut World, fi: usize) {
             ofill(w.backup.as_mut_ptr(), D_s32);
             ofill(w.ext.as_mut_ptr(), D_s32);
         }
+        4 => {
+            ofill(w.attr.as_mut_ptr(), D_s32);
+            ofill(w.backup.as_mut_ptr(), D_s32);
+            ofill(w.ext.as_mut_ptr(), D_s32);
+        }
+        5 => {
+            ofill(w.attr.as_mut_ptr(), D_s32);
+            ofill(w.backup.as_mut_ptr(), D_s32);
+            ofill(w.ext.as_mut_ptr(), D_s32);
+        }
+        6 => {
+            ofill(w.attr.as_mut_ptr(), D_s32);
+            ofill(w.backup.as_mut_ptr(), D_s32);
+            ofill(w.ext.as_mut_ptr(), D_s32);
+        }
         _ => {}
     }
 }
@@ -181,6 +196,9 @@ const NBF: usize = 0;
 const MOTIONS: &[i32] = &[0];
 struct Fn_ { name: &'static str, n: u32, bfmask: u32 }
 const FNS: &[Fn_] = &[
+    Fn_ { name: "ftGl_Init_OnDeath", n: 400, bfmask: 0x0 },
+    Fn_ { name: "ftGl_Init_OnItemInvisible", n: 400, bfmask: 0x0 },
+    Fn_ { name: "ftGl_Init_OnItemVisible", n: 400, bfmask: 0x0 },
     Fn_ { name: "ftGl_Init_OnLoad", n: 400, bfmask: 0x0 },
     Fn_ { name: "ftGl_Init_OnItemPickup", n: 400, bfmask: 0x0 },
     Fn_ { name: "ftGl_Init_OnItemDrop", n: 400, bfmask: 0x0 },
@@ -189,22 +207,29 @@ const FNS: &[Fn_] = &[
 unsafe fn call_fn(fi: usize, w: &mut World, a: &mut Args) -> (u64, u32) {
     let g = w.g;
     match fi {
-        0 => { t::ftGl_Init_OnLoad(g); (0, 0) }
-        1 => { t::ftGl_Init_OnItemPickup(g, a.i[0] as _); (0, 0) }
-        2 => { t::ftGl_Init_OnItemDrop(g, a.i[0] as _); (0, 0) }
-        3 => { t::ftGl_Init_LoadSpecialAttrs(g); (0, 0) }
+        0 => { t::ftGl_Init_OnDeath(g); (0, 0) }
+        1 => { t::ftGl_Init_OnItemInvisible(g); (0, 0) }
+        2 => { t::ftGl_Init_OnItemVisible(g); (0, 0) }
+        3 => { t::ftGl_Init_OnLoad(g); (0, 0) }
+        4 => { t::ftGl_Init_OnItemPickup(g, a.i[0] as _); (0, 0) }
+        5 => { t::ftGl_Init_OnItemDrop(g, a.i[0] as _); (0, 0) }
+        6 => { t::ftGl_Init_LoadSpecialAttrs(g); (0, 0) }
         _ => unreachable!(),
     }
 }
 unsafe fn install_hooks() {
+        melee_chara::stubs::FTANIM_80070C48 = Some(|a0: *mut HSD_GObj, a1: i32| { lg_s("ftAnim_80070C48("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
         melee_chara::tu::ftinl::ext::FTANIM_80070C48 = Some(|a0: *mut HSD_GObj, a1: i32| { lg_s("ftAnim_80070C48("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
+        melee_chara::stubs::FTANIM_80070CC4 = Some(|a0: *mut HSD_GObj, a1: i32| { lg_s("ftAnim_80070CC4("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
         melee_chara::tu::ftinl::ext::FTANIM_80070CC4 = Some(|a0: *mut HSD_GObj, a1: i32| { lg_s("ftAnim_80070CC4("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
         melee_chara::tu::ftinl::ext::FTANIM_80070FB4 = Some(|a0: *mut HSD_GObj, a1: i32, a2: i32| { lg_s("ftAnim_80070FB4("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_int(a2 as u32); lg_s(")"); lg_c(';'); });
+        melee_chara::stubs::FTPARTS_80074A4C = Some(|a0: *mut HSD_GObj, a1: i32, a2: i32| { lg_s("ftParts_80074A4C("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_int(a2 as u32); lg_s(")"); lg_c(';'); });
         melee_chara::tu::ftinl::ext::ITGETHOLDKIND = Some(|a0: *mut Item_GObj| -> i32 { lg_s("itGetHoldKind("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); { let r = gen_i() as i32; lg_retu(r as u32); lg_c(';'); r } });
+        melee_chara::stubs::ITISHEAVY = Some(|a0: *mut melee_types::Item_GObj| -> i32 { lg_s("itIsHeavy("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); { let r = gen_b() as i32; lg_retu(r as u32); lg_c(';'); r } });
         melee_chara::tu::ftinl::ext::ITISHEAVY = Some(|a0: *mut Item_GObj| -> bool { lg_s("itIsHeavy("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); { let r = (gen_b() != 0); lg_retu(r as u32); lg_c(';'); r } });
 
 }
-const PRE: &[&str] = &["ftGl_Init_OnLoad", "ftGl_Init_OnItemPickup", "ftGl_Init_OnItemDrop", "ftGl_Init_LoadSpecialAttrs"];
+const PRE: &[&str] = &["ftGl_Init_OnDeath", "ftGl_Init_OnItemInvisible", "ftGl_Init_OnItemVisible", "ftGl_Init_OnLoad", "ftGl_Init_OnItemPickup", "ftGl_Init_OnItemDrop", "ftGl_Init_LoadSpecialAttrs"];
 unsafe fn case_pre(fi: usize, w: &mut World, a: &mut Args) {
     match fi {
         _ => {}

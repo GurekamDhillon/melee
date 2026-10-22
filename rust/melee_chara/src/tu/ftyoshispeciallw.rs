@@ -56,7 +56,16 @@ pub fn fn_8012E644(gobj: *mut HSD_GObj) {
     }
 }
 
-/// `ftYoshi_SpecialLw_SetVars` / `reset` (static inlines).
+/// `ftYoshi_SpecialLw_SetVars(gobj)` (static inline).
+pub fn ftYoshi_SpecialLw_SetVars(gobj: *mut HSD_GObj) {
+    unsafe { set_vars(gobj) }
+}
+
+/// `reset(gobj)` (static inline): the same stores as `ftYoshi_SpecialLw_SetVars`, in another order.
+pub fn reset(gobj: *mut HSD_GObj) {
+    unsafe { set_vars(gobj) }
+}
+
 unsafe fn set_vars(gobj: *mut HSD_GObj) {
     let fp = fpp(gobj);
     (*fp).cmd_vars[1] = 0;
@@ -74,7 +83,7 @@ pub fn ftYs_SpecialLw_Enter(gobj: *mut HSD_GObj) {
         ext::ftCommon_8007D5D4(fp);
         ext::Fighter_ChangeMotionState(gobj, ftYs_MS_SpecialLw as i32, Ft_MF_None, 0.0, 1.0, 0.0, core::ptr::null_mut());
         ext::ftAnim_8006EBA4(gobj);
-        set_vars(gobj);
+        ftYoshi_SpecialLw_SetVars(gobj);
     }
 }
 
@@ -82,7 +91,7 @@ pub fn ftYs_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
     unsafe {
         ext::Fighter_ChangeMotionState(gobj, ftYs_MS_SpecialAirLw as i32, Ft_MF_None, 0.0, 1.0, 0.0, core::ptr::null_mut());
         ext::ftAnim_8006EBA4(gobj);
-        set_vars(gobj);
+        reset(gobj);
     }
 }
 

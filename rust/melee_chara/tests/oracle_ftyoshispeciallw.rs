@@ -212,6 +212,16 @@ unsafe fn world_fill_types(w: &mut World, fi: usize) {
             ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
             ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
         }
+        14 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
+        }
+        15 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
+        }
         _ => {}
     }
 }
@@ -238,6 +248,8 @@ const MOTIONS: &[i32] = &[0];
 struct Fn_ { name: &'static str, n: u32, bfmask: u32 }
 const FNS: &[Fn_] = &[
     Fn_ { name: "fn_8012E644", n: 400, bfmask: 0x0 },
+    Fn_ { name: "ftYoshi_SpecialLw_SetVars", n: 400, bfmask: 0x3 },
+    Fn_ { name: "reset", n: 400, bfmask: 0x3 },
     Fn_ { name: "ftYs_SpecialLw_Enter", n: 400, bfmask: 0x3 },
     Fn_ { name: "ftYs_SpecialAirLw_Enter", n: 400, bfmask: 0x3 },
     Fn_ { name: "ftYs_SpecialLw_Anim", n: 400, bfmask: 0x0 },
@@ -256,19 +268,21 @@ unsafe fn call_fn(fi: usize, w: &mut World, a: &mut Args) -> (u64, u32) {
     let g = w.g;
     match fi {
         0 => { t::fn_8012E644(g); (0, 0) }
-        1 => { t::ftYs_SpecialLw_Enter(g); (0, 0) }
-        2 => { t::ftYs_SpecialAirLw_Enter(g); (0, 0) }
-        3 => { t::ftYs_SpecialLw_Anim(g); (0, 0) }
-        4 => { t::ftYs_SpecialAirLw_Anim(g); (0, 0) }
-        5 => { t::ftYs_SpecialLw_Phys(g); (0, 0) }
-        6 => { t::ftYs_SpecialAirLw_Phys(g); (0, 0) }
-        7 => { t::ftYs_SpecialLw_Coll(g); (0, 0) }
-        8 => { t::ftYs_SpecialAirLw_Coll(g); (0, 0) }
-        9 => { t::ftYs_SpecialS_8012EA04(g); (0, 0) }
-        10 => { t::ftYs_SpecialLwLanding_Anim(g); (0, 0) }
-        11 => { t::ftYs_SpecialLwLanding_Phys(g); (0, 0) }
-        12 => { t::ftYs_SpecialLwLanding_Coll(g); (0, 0) }
-        13 => { t::ftYs_SpecialS_8012EAD8(g); (0, 0) }
+        1 => { t::ftYoshi_SpecialLw_SetVars(g); (0, 0) }
+        2 => { t::reset(g); (0, 0) }
+        3 => { t::ftYs_SpecialLw_Enter(g); (0, 0) }
+        4 => { t::ftYs_SpecialAirLw_Enter(g); (0, 0) }
+        5 => { t::ftYs_SpecialLw_Anim(g); (0, 0) }
+        6 => { t::ftYs_SpecialAirLw_Anim(g); (0, 0) }
+        7 => { t::ftYs_SpecialLw_Phys(g); (0, 0) }
+        8 => { t::ftYs_SpecialAirLw_Phys(g); (0, 0) }
+        9 => { t::ftYs_SpecialLw_Coll(g); (0, 0) }
+        10 => { t::ftYs_SpecialAirLw_Coll(g); (0, 0) }
+        11 => { t::ftYs_SpecialS_8012EA04(g); (0, 0) }
+        12 => { t::ftYs_SpecialLwLanding_Anim(g); (0, 0) }
+        13 => { t::ftYs_SpecialLwLanding_Phys(g); (0, 0) }
+        14 => { t::ftYs_SpecialLwLanding_Coll(g); (0, 0) }
+        15 => { t::ftYs_SpecialS_8012EAD8(g); (0, 0) }
         _ => unreachable!(),
     }
 }
@@ -302,7 +316,7 @@ unsafe fn install_hooks() {
         melee_chara::tu::ftyoshispeciallw::ext::LB_8000B1CC = Some(|a0: *mut HSD_JObj, a1: *mut Vec3, a2: *mut Vec3| { lg_s("lb_8000B1CC("); lg_ptr(a0 as *const u8 as usize); lg_v3(a1 as *const _ as *const Vec3); lg_v3(a2 as *const _ as *const Vec3); lg_s(")"); lg_ov3(a2 as *mut _); lg_c(';'); });
 
 }
-const PRE: &[&str] = &["fn_8012E644", "ftYs_SpecialLw_Enter", "ftYs_SpecialAirLw_Enter", "ftYs_SpecialLw_Anim", "ftYs_SpecialAirLw_Anim", "ftYs_SpecialLw_Phys", "ftYs_SpecialAirLw_Phys", "ftYs_SpecialLw_Coll", "ftYs_SpecialAirLw_Coll", "ftYs_SpecialS_8012EA04", "ftYs_SpecialLwLanding_Anim", "ftYs_SpecialLwLanding_Phys", "ftYs_SpecialLwLanding_Coll", "ftYs_SpecialS_8012EAD8"];
+const PRE: &[&str] = &["fn_8012E644", "ftYoshi_SpecialLw_SetVars", "reset", "ftYs_SpecialLw_Enter", "ftYs_SpecialAirLw_Enter", "ftYs_SpecialLw_Anim", "ftYs_SpecialAirLw_Anim", "ftYs_SpecialLw_Phys", "ftYs_SpecialAirLw_Phys", "ftYs_SpecialLw_Coll", "ftYs_SpecialAirLw_Coll", "ftYs_SpecialS_8012EA04", "ftYs_SpecialLwLanding_Anim", "ftYs_SpecialLwLanding_Phys", "ftYs_SpecialLwLanding_Coll", "ftYs_SpecialS_8012EAD8"];
 unsafe fn case_pre(fi: usize, w: &mut World, a: &mut Args) {
     match fi {
         _ => {}

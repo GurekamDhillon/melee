@@ -122,7 +122,7 @@ pub fn fn_8012EFF4(gobj: *mut HSD_GObj) {
 }
 
 /// `ftYoshi_SpecialS_SetCall(gobj)` (static inline).
-unsafe fn set_call(gobj: *mut HSD_GObj) {
+pub unsafe fn ftYoshi_SpecialS_SetCall(gobj: *mut HSD_GObj) {
     let fp = fpp(gobj);
     (*fp).death2_cb = Some(cb_fn_8012EC7C);
     (*fp).take_dmg_cb = Some(cb_fn_8012EDE8);
@@ -131,7 +131,7 @@ unsafe fn set_call(gobj: *mut HSD_GObj) {
 }
 
 /// `ftYs_SpecialS_SpawnWallBounceEffect(gobj, cd, facing_right)` (static inline).
-unsafe fn spawn_wall_bounce_effect(gobj: *mut HSD_GObj, cd: *mut CollData, facing_right: bool) {
+pub unsafe fn ftYs_SpecialS_SpawnWallBounceEffect(gobj: *mut HSD_GObj, cd: *mut CollData, facing_right: bool) {
     let fp = fpp(gobj);
     let mut angle: f32;
     let mut pos: Vec3 = (*fp).cur_pos;
@@ -189,7 +189,7 @@ pub fn ftYs_SpecialS_8012EB48(gobj: *mut HSD_GObj) {
 }
 
 /// `fn_8012EC7C_inline(gobj)` (static inline); `fn_8012EC7C` is the same body.
-unsafe fn fn_8012ec7c_inline(gobj: *mut HSD_GObj) {
+pub unsafe fn fn_8012EC7C_inline(gobj: *mut HSD_GObj) {
     let fp = fpp(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let motion = (*fp).motion_id as i32;
@@ -208,7 +208,7 @@ unsafe fn fn_8012ec7c_inline(gobj: *mut HSD_GObj) {
 }
 
 /// `ftYs_SpecialS_UpdateScale(gobj, scale)` (static inline).
-unsafe fn update_scale(gobj: *mut HSD_GObj, scale: *mut Vec3) {
+pub unsafe fn ftYs_SpecialS_UpdateScale(gobj: *mut HSD_GObj, scale: *mut Vec3) {
     let fp = fpp(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let x8 = (*fp).mv.ys.specials.x8;
@@ -224,13 +224,13 @@ unsafe fn update_scale(gobj: *mut HSD_GObj, scale: *mut Vec3) {
 }
 
 /// `ftYs_SpecialS_UpdateScale2(gobj)` (static inline): the same with a local scale.
-unsafe fn update_scale2(gobj: *mut HSD_GObj) {
+pub unsafe fn ftYs_SpecialS_UpdateScale2(gobj: *mut HSD_GObj) {
     let mut scale = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
-    update_scale(gobj, &mut scale);
+    ftYs_SpecialS_UpdateScale(gobj, &mut scale);
 }
 
 /// `ftYs_SpecialS_WrapAndSetRotX(gobj)` (static inline).
-unsafe fn wrap_and_set_rot_x(gobj: *mut HSD_GObj) {
+pub unsafe fn ftYs_SpecialS_WrapAndSetRotX(gobj: *mut HSD_GObj) {
     let fp = fpp(gobj);
     while (*fp).mv.ys.specials.x14 < 0.0 {
         (*fp).mv.ys.specials.x14 = ((*fp).mv.ys.specials.x14 as f64 + 2.0 * M_PI) as f32;
@@ -242,7 +242,7 @@ unsafe fn wrap_and_set_rot_x(gobj: *mut HSD_GObj) {
 }
 
 /// `ftYs_SpecialS_CheckButtonPressure(gobj)` (static inline).
-unsafe fn check_button_pressure(gobj: *mut HSD_GObj) -> i32 {
+pub unsafe fn ftYs_SpecialS_CheckButtonPressure(gobj: *mut HSD_GObj) -> i32 {
     let fp = fpp(gobj);
     let attrs = &*((*fp).dat_attrs as *const ftYoshiAttributes);
     let mut result = 0;
@@ -253,8 +253,24 @@ unsafe fn check_button_pressure(gobj: *mut HSD_GObj) -> i32 {
     result
 }
 
+/// `perm_vel_inline(fp)` / `perm_neg_inline` / `perm_mul_inline` / `perm_vel_x_inline` (static inlines the
+/// decompilation's permuter left in the file) and `stack_pad_hack` (stack-layout padding: no state).
+pub unsafe fn perm_vel_inline(fp: *mut Fighter) -> f32 {
+    (*fp).gr_vel
+}
+pub fn perm_neg_inline(x: f32) -> f32 {
+    -x
+}
+pub fn perm_mul_inline(a: f32, b: f32) -> f32 {
+    a * b
+}
+pub unsafe fn perm_vel_x_inline(fp: *mut Fighter) -> f32 {
+    (*fp).self_vel.x
+}
+pub fn stack_pad_hack() {}
+
 pub fn fn_8012EC7C(gobj: *mut HSD_GObj) {
-    unsafe { fn_8012ec7c_inline(gobj) }
+    unsafe { fn_8012EC7C_inline(gobj) }
 }
 
 pub fn fn_8012EDE8(gobj: *mut HSD_GObj) {
@@ -267,7 +283,7 @@ pub fn fn_8012EDE8(gobj: *mut HSD_GObj) {
             ext::efSync_Spawn(0x4CF, gobj, &[&mut v as *mut Vec3 as *mut c_void, &mut (*fp).co_attrs.xBC as *mut _ as *mut c_void]);
             ext::ft_PlaySFX(fp, 0x44618, 0x7F, 0x40);
         }
-        fn_8012ec7c_inline(gobj);
+        fn_8012EC7C_inline(gobj);
     }
 }
 
@@ -293,8 +309,8 @@ pub fn ftYs_SpecialS_8012F0DC(gobj: *mut HSD_GObj, arg1: i32, arg2: i32, arg3: f
             (*fp).xE4_ground_accel_1 = 0.0;
             (*fp).gr_vel = 0.0;
         }
-        set_call(gobj);
-        fn_8012ec7c_inline(gobj);
+        ftYoshi_SpecialS_SetCall(gobj);
+        fn_8012EC7C_inline(gobj);
         (*fp).mv.ys.specials.x24 = 0.0;
         ext::ftPartSetRotY(fp, 0, pi_2_facing(fp));
         ext::ftPartSetRotZ(fp, 2, 0.0);
@@ -382,7 +398,7 @@ pub fn ftYs_SpecialAirSStart_0_Anim(gobj: *mut HSD_GObj) {
         if !ext::ftAnim_IsFramesRemaining(gobj) {
             ext::ftCommon_8007D5D4(fp);
             ext::Fighter_ChangeMotionState(gobj, 0x169, 0x440012, 0.0, 0.0, 0.0, core::ptr::null_mut());
-            set_call(gobj);
+            ftYoshi_SpecialS_SetCall(gobj);
             (*fp).cur_anim_frame = 0.0;
             ext::ftAnim_SetAnimRate(gobj, 0.0);
             let temp_f0 = (*fp).mv.ys.specials.x1C * (*fp).facing_dir;
@@ -403,7 +419,7 @@ pub fn ftYs_SpecialAirSLoop_0_Anim(gobj: *mut HSD_GObj) {
         let mut scale = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
         (*fp).mv.ys.specials.x24 = 0.0;
         ftYs_SpecialS_8012EB48(gobj);
-        update_scale(gobj, &mut scale);
+        ftYs_SpecialS_UpdateScale(gobj, &mut scale);
         {
             let fp = fpp(gobj);
             let attrs = &*((*fp).dat_attrs as *const ftYoshiAttributes);
@@ -433,7 +449,7 @@ pub fn ftYs_SpecialAirSLoop_0_Anim(gobj: *mut HSD_GObj) {
             let inner = attributes.xD8 * abs_c((*fp).mv.ys.specials.x1C);
             (*fp).mv.ys.specials.x14 = (M_TAU / 25.0).mul_add(inner as f64, (*fp).mv.ys.specials.x14 as f64) as f32;
         }
-        wrap_and_set_rot_x(gobj);
+        ftYs_SpecialS_WrapAndSetRotX(gobj);
         (*fp).mv.ys.specials.x0 = (*fp).mv.ys.specials.x0.wrapping_sub(1);
         if (*fp).mv.ys.specials.x0 <= 0 {
             (*fp).mv.ys.specials.x0 = 0;
@@ -443,19 +459,19 @@ pub fn ftYs_SpecialAirSLoop_0_Anim(gobj: *mut HSD_GObj) {
 }
 
 /// `ftYs_SpecialS_UpdateLoop1Rotation(fp, attrs)` (static inline).
-unsafe fn update_loop1_rotation(fp: *mut Fighter, attrs: &ftYoshiAttributes) {
+pub unsafe fn ftYs_SpecialS_UpdateLoop1Rotation(fp: *mut Fighter, attrs: &ftYoshiAttributes) {
     let abs_x10 = abs_c((*fp).mv.ys.specials.x10);
     let abs_vel = abs_c((*fp).gr_vel);
     let abs_xe4 = abs_c(attrs.xE4);
     if (*fp).mv.ys.specials.x10 > 0.0 {
-        if (*fp).gr_vel > 0.0 {
+        if perm_vel_inline(fp) > 0.0 {
             (*fp).mv.ys.specials.x18 = fmadds(abs_xe4, abs_vel / abs_x10, -attrs.xE4);
         } else {
             let mut scaled_abs_x10 = abs_x10;
             scaled_abs_x10 *= 0.7;
             (*fp).mv.ys.specials.x18 = fmadds(abs_xe4, abs_vel / scaled_abs_x10, -attrs.xE4);
         }
-    } else if (*fp).gr_vel < 0.0 {
+    } else if perm_vel_inline(fp) < 0.0 {
         (*fp).mv.ys.specials.x18 = fmadds(abs_xe4, abs_vel / abs_x10, -attrs.xE4);
     } else {
         let mut scaled_abs_x10 = abs_x10;
@@ -466,7 +482,7 @@ unsafe fn update_loop1_rotation(fp: *mut Fighter, attrs: &ftYoshiAttributes) {
 }
 
 /// `ftYs_SpecialS_UpdateLoop1Rotation2(fp, angle, total)` (static inline).
-unsafe fn update_loop1_rotation2(fp: *mut Fighter, angle: *mut f32, total: f32) {
+pub unsafe fn ftYs_SpecialS_UpdateLoop1Rotation2(fp: *mut Fighter, angle: *mut f32, total: f32) {
     if (*fp).mv.ys.specials.x10 > 0.0 {
         let delta: f32;
         if (*fp).gr_vel > 0.0 {
@@ -499,14 +515,14 @@ pub fn ftYs_SpecialAirSLoop_1_Anim(gobj: *mut HSD_GObj) {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftYoshiAttributes);
         ftYs_SpecialS_8012EB48(gobj);
-        update_scale2(gobj);
+        ftYs_SpecialS_UpdateScale2(gobj);
         (*fp).mv.ys.specials.x14 =
             (2.0 * M_PI / 25.0).mul_add(attributes.xA0 as f64, (*fp).mv.ys.specials.x14 as f64) as f32;
-        wrap_and_set_rot_x(gobj);
-        update_loop1_rotation(fp, attributes);
+        ftYs_SpecialS_WrapAndSetRotX(gobj);
+        ftYs_SpecialS_UpdateLoop1Rotation(fp, attributes);
         {
             let total = fmadds(0.7, abs_c((*fp).mv.ys.specials.x10), abs_c((*fp).mv.ys.specials.x10));
-            update_loop1_rotation2(fp, &mut angle, total);
+            ftYs_SpecialS_UpdateLoop1Rotation2(fp, &mut angle, total);
         }
         (*fp).mv.ys.specials.x0 = (*fp).mv.ys.specials.x0.wrapping_sub(1);
         if (*fp).mv.ys.specials.x0 <= 0 {
@@ -540,9 +556,9 @@ pub fn ftYs_SpecialAirSEnd_Anim(gobj: *mut HSD_GObj) {
             ext::efSync_Spawn(0x4CF, gobj, &[&mut sp2c as *mut Vec3 as *mut c_void, &mut (*fp).co_attrs.xBC as *mut _ as *mut c_void]);
         }
         ftYs_SpecialS_8012EB48(gobj);
-        update_scale(gobj, &mut scale);
+        ftYs_SpecialS_UpdateScale(gobj, &mut scale);
         if !ext::ftAnim_IsFramesRemaining(gobj) {
-            fn_8012ec7c_inline(gobj);
+            fn_8012EC7C_inline(gobj);
             ext::ft_8008A2BC(gobj);
         }
     }
@@ -556,7 +572,7 @@ pub fn ftYs_SpecialAirSStart_1_Anim(gobj: *mut HSD_GObj) {
         ftYs_SpecialS_8012EB48(gobj);
         if !ext::ftAnim_IsFramesRemaining(gobj) {
             ext::Fighter_ChangeMotionState(gobj, 0x169, 0x440012, 0.0, 0.0, 0.0, core::ptr::null_mut());
-            set_call(gobj);
+            ftYoshi_SpecialS_SetCall(gobj);
             (*fp).cur_anim_frame = 0.0;
             ext::ftAnim_SetAnimRate(gobj, 0.0);
         }
@@ -571,10 +587,10 @@ pub fn ftYs_SpecialAirSLoop_2_Anim(gobj: *mut HSD_GObj) {
         (*fp).mv.ys.specials.x24 = 0.0;
         (*fp).mv.ys.specials.x30 = 0;
         ftYs_SpecialS_8012EB48(gobj);
-        update_scale(gobj, &mut scale);
+        ftYs_SpecialS_UpdateScale(gobj, &mut scale);
         (*fp).mv.ys.specials.x14 =
             (M_PI / 30.0).mul_add(attributes.x60 as f64, (*fp).mv.ys.specials.x14 as f64) as f32;
-        wrap_and_set_rot_x(gobj);
+        ftYs_SpecialS_WrapAndSetRotX(gobj);
         (*fp).mv.ys.specials.x0 = (*fp).mv.ys.specials.x0.wrapping_sub(1);
         if (*fp).mv.ys.specials.x0 <= 0 {
             (*fp).mv.ys.specials.x0 = 0;
@@ -591,7 +607,7 @@ pub fn ftYs_SpecialAirSLoop_3_Anim(gobj: *mut HSD_GObj) {
         (*fp).mv.ys.specials.x24 = 0.0;
         (*fp).mv.ys.specials.x30 = 0;
         ftYs_SpecialS_8012EB48(gobj);
-        update_scale(gobj, &mut scale);
+        ftYs_SpecialS_UpdateScale(gobj, &mut scale);
         {
             let fp4 = fpp(gobj);
             let attrs4 = &*((*fp4).dat_attrs as *const ftYoshiAttributes);
@@ -633,7 +649,7 @@ pub fn ftYs_SpecialAirSLoop_3_Anim(gobj: *mut HSD_GObj) {
             let inner = attributes.xD8 * abs_speed;
             (*fp).mv.ys.specials.x14 = (2.0 * M_PI / 25.0).mul_add(inner as f64, (*fp).mv.ys.specials.x14 as f64) as f32;
         }
-        wrap_and_set_rot_x(gobj);
+        ftYs_SpecialS_WrapAndSetRotX(gobj);
         (*fp).mv.ys.specials.x0 = (*fp).mv.ys.specials.x0.wrapping_sub(1);
         if (*fp).mv.ys.specials.x0 <= 0 {
             (*fp).mv.ys.specials.x0 = 0;
@@ -656,9 +672,9 @@ pub fn ftYs_SpecialAirSLanding_Anim(gobj: *mut HSD_GObj) {
             ext::efSync_Spawn(0x4CF, gobj, &[&mut sp30 as *mut Vec3 as *mut c_void, &mut (*fp).co_attrs.xBC as *mut _ as *mut c_void]);
         }
         ftYs_SpecialS_8012EB48(gobj);
-        update_scale(gobj, &mut scale);
+        ftYs_SpecialS_UpdateScale(gobj, &mut scale);
         if !ext::ftAnim_IsFramesRemaining(gobj) {
-            fn_8012ec7c_inline(gobj);
+            fn_8012EC7C_inline(gobj);
             if attributes.xE8 == 0.0 {
                 ext::ftCo_Fall_Enter(gobj);
             } else {
@@ -892,7 +908,7 @@ pub fn ftYs_SpecialAirSLoop_1_Phys(gobj: *mut HSD_GObj) {
             (*fp).x21EC = Some(cb_fn_8012EFC0);
             ext::Fighter_ChangeMotionState(gobj, 0x165, 0x02440812, (*fp).cur_anim_frame, 0.0, 0.0, core::ptr::null_mut());
             ext::ft_PlaySFX(fpp(gobj), 0x44621, 0x7F, 0x40);
-            set_call(gobj);
+            ftYoshi_SpecialS_SetCall(gobj);
             if (*fp).mv.ys.specials.x24 != 0.0 {
                 (*fp).facing_dir = (*fp).mv.ys.specials.x24;
             }
@@ -900,7 +916,7 @@ pub fn ftYs_SpecialAirSLoop_1_Phys(gobj: *mut HSD_GObj) {
             (*fp).mv.ys.specials.xC = 0;
             ext::ftPartSetRotY(fp, 0, pi_2_facing(fp));
             ext::ftPartSetRotZ(fp, 2, 0.0);
-            wrap_and_set_rot_x(gobj);
+            ftYs_SpecialS_WrapAndSetRotX(gobj);
         }
     }
 }
@@ -910,7 +926,7 @@ pub fn ftYs_SpecialAirSStart_0_Coll(gobj: *mut HSD_GObj) {
         let fp = fpp(gobj);
         if ext::ft_80082708(gobj) == 0 {
             ftinl::ftCommon_GroundToAirStateChange(gobj, fp, 360, ftYs_MF_SpecialS_Coll);
-            set_call(gobj);
+            ftYoshi_SpecialS_SetCall(gobj);
         }
     }
 }
@@ -924,24 +940,24 @@ pub fn ftYs_SpecialAirSLoop_0_Coll(gobj: *mut HSD_GObj) {
         if (*fp).facing_dir == 1.0 {
             wall_hit = ((*fp).coll_data.env_flags & 0x3F) != 0;
             if wall_hit {
-                spawn_wall_bounce_effect(gobj, &mut (*fp).coll_data, true);
+                ftYs_SpecialS_SpawnWallBounceEffect(gobj, &mut (*fp).coll_data, true);
             }
         } else {
             wall_hit = ((*fp).coll_data.env_flags & 0xFC0) != 0;
             if wall_hit {
-                spawn_wall_bounce_effect(gobj, &mut (*fp).coll_data, false);
+                ftYs_SpecialS_SpawnWallBounceEffect(gobj, &mut (*fp).coll_data, false);
             }
         }
         if wall_hit {
             ext::ftCommon_8007D5D4(fp);
             ftYs_SpecialS_8012F0DC(gobj, 1, 0x4C4092, 0.0);
-            (*fp).self_vel.x *= -attributes.xAC;
+            (*fp).self_vel.x *= perm_neg_inline(attributes.xAC);
             (*fp).self_vel.y = attributes.xB0;
         } else if !coll_result {
             ext::ftCommon_8007D5D4(fp);
             ext::Fighter_ChangeMotionState(gobj, 0x16A, 0x0C4C509A, (*fp).cur_anim_frame, 0.0, 0.0, core::ptr::null_mut());
-            set_call(gobj);
-            wrap_and_set_rot_x(gobj);
+            ftYoshi_SpecialS_SetCall(gobj);
+            ftYs_SpecialS_WrapAndSetRotX(gobj);
         }
         (*fp).mv.ys.specials.x30 = (*fp).mv.ys.specials.x30.wrapping_add(1);
     }
@@ -958,15 +974,15 @@ pub fn ftYs_SpecialAirSLoop_1_Coll(gobj: *mut HSD_GObj) {
             coll_result = ext::ft_80082978(gobj, &mut ftYs_Unk3_803CEDA4);
         }
         let wall_hit: bool;
-        if (*fp).self_vel.x > 0.0 {
+        if perm_vel_x_inline(fp) > 0.0 {
             wall_hit = ((*fp).coll_data.env_flags & 0x3F) != 0;
             if wall_hit {
-                spawn_wall_bounce_effect(gobj, &mut (*fp).coll_data, true);
+                ftYs_SpecialS_SpawnWallBounceEffect(gobj, &mut (*fp).coll_data, true);
             }
         } else {
             wall_hit = ((*fp).coll_data.env_flags & 0xFC0) != 0;
             if wall_hit {
-                spawn_wall_bounce_effect(gobj, &mut (*fp).coll_data, false);
+                ftYs_SpecialS_SpawnWallBounceEffect(gobj, &mut (*fp).coll_data, false);
             }
         }
         if wall_hit {
@@ -977,10 +993,10 @@ pub fn ftYs_SpecialAirSLoop_1_Coll(gobj: *mut HSD_GObj) {
         } else if !coll_result {
             ext::ftCommon_8007D5D4(fp);
             ext::Fighter_ChangeMotionState(gobj, 0x16A, 0x0C4C5892, (*fp).cur_anim_frame, 0.0, 0.0, core::ptr::null_mut());
-            set_call(gobj);
+            ftYoshi_SpecialS_SetCall(gobj);
             if (*fp).mv.ys.specials.x24 != 0.0 {
                 (*fp).facing_dir = (*fp).mv.ys.specials.x24;
-                (*fp).mv.ys.specials.x1C = if (*fp).self_vel.x < 0.0 { -(*fp).self_vel.x } else { (*fp).self_vel.x };
+                (*fp).mv.ys.specials.x1C = if perm_vel_x_inline(fp) < 0.0 { -perm_vel_x_inline(fp) } else { (*fp).self_vel.x };
             }
             (*fp).mv.ys.specials.x24 = 0.0;
             ext::ftPartSetRotY(fp, 0, pi_2_facing(fp));
@@ -1005,7 +1021,7 @@ pub fn ftYs_SpecialAirSStart_1_Coll(gobj: *mut HSD_GObj) {
         (*fp).mv.ys.specials.x30 = 0;
         if ext::ft_80081D0C(gobj) != GA_Ground as i32 {
             ftinl::ftCommon_AirToGroundStateChange(gobj, fp, 356, ftYs_MF_SpecialS_Coll);
-            set_call(gobj);
+            ftYoshi_SpecialS_SetCall(gobj);
         }
     }
 }
@@ -1014,18 +1030,19 @@ pub fn ftYs_SpecialAirSLoop_2_Coll(gobj: *mut HSD_GObj) {
     unsafe {
         let fp = fpp(gobj);
         let attributes = &*((*fp).dat_attrs as *const ftYoshiAttributes);
+        stack_pad_hack();
         (*fp).mv.ys.specials.x30 = 0;
         let coll_result = ext::ft_800824A0(gobj, &mut ftYs_Unk3_803CEDA4);
         let wall_hit: bool;
         if (*fp).facing_dir == 1.0 {
             wall_hit = ((*fp).coll_data.env_flags & 0x3F) != 0;
             if wall_hit {
-                spawn_wall_bounce_effect(gobj, &mut (*fp).coll_data, true);
+                ftYs_SpecialS_SpawnWallBounceEffect(gobj, &mut (*fp).coll_data, true);
             }
         } else {
             wall_hit = ((*fp).coll_data.env_flags & 0xFC0) != 0;
             if wall_hit {
-                spawn_wall_bounce_effect(gobj, &mut (*fp).coll_data, false);
+                ftYs_SpecialS_SpawnWallBounceEffect(gobj, &mut (*fp).coll_data, false);
             }
         }
         if wall_hit {
@@ -1041,7 +1058,7 @@ pub fn ftYs_SpecialAirSLoop_2_Coll(gobj: *mut HSD_GObj) {
                 ext::ftCommon_8007D7FC(fp);
                 ext::Fighter_ChangeMotionState(gobj, 0x165, 0x440012, (*fp).cur_anim_frame, 0.0, 0.0, core::ptr::null_mut());
                 ext::ft_PlaySFX(fpp(gobj), 0x44621, 0x7F, 0x40);
-                set_call(gobj);
+                ftYoshi_SpecialS_SetCall(gobj);
                 (*fp).self_vel.z = 0.0;
                 (*fp).self_vel.y = 0.0;
                 if abs_c((*fp).self_vel.x) < 0.01 {
@@ -1059,11 +1076,11 @@ pub fn ftYs_SpecialAirSLoop_2_Coll(gobj: *mut HSD_GObj) {
                 ext::ftCommon_8007EBAC(fp, 1, 0);
             } else {
                 ext::Fighter_ChangeMotionState(gobj, 0x16A, 0x440012, (*fp).cur_anim_frame, 0.0, 0.0, core::ptr::null_mut());
-                set_call(gobj);
-                wrap_and_set_rot_x(gobj);
+                ftYoshi_SpecialS_SetCall(gobj);
+                ftYs_SpecialS_WrapAndSetRotX(gobj);
             }
             (*fp).mv.ys.specials.x1C = attributes.x64;
-            if check_button_pressure(gobj) == 1 {
+            if ftYs_SpecialS_CheckButtonPressure(gobj) == 1 {
                 (*fp).mv.ys.specials.x1C *= attributes.x68;
             }
             (*fp).self_vel.x = (*fp).mv.ys.specials.x1C * (*fp).facing_dir;
@@ -1082,12 +1099,12 @@ pub fn ftYs_SpecialAirSLoop_3_Coll(gobj: *mut HSD_GObj) {
         if (*fp).facing_dir == 1.0 {
             wall_hit = ((*fp).coll_data.env_flags & 0x3F) as i32;
             if wall_hit != 0 {
-                spawn_wall_bounce_effect(gobj, &mut (*fp).coll_data, true);
+                ftYs_SpecialS_SpawnWallBounceEffect(gobj, &mut (*fp).coll_data, true);
             }
         } else {
             wall_hit = ((*fp).coll_data.env_flags & 0xFC0) as i32;
             if wall_hit != 0 {
-                spawn_wall_bounce_effect(gobj, &mut (*fp).coll_data, false);
+                ftYs_SpecialS_SpawnWallBounceEffect(gobj, &mut (*fp).coll_data, false);
             }
         }
         if wall_hit != 0 {
@@ -1103,7 +1120,7 @@ pub fn ftYs_SpecialAirSLoop_3_Coll(gobj: *mut HSD_GObj) {
                 ext::ftCommon_8007D7FC(fp);
                 ext::Fighter_ChangeMotionState(gobj, 0x165, 0x0C4C509A, (*fp).cur_anim_frame, 0.0, 0.0, core::ptr::null_mut());
                 ext::ft_PlaySFX(fpp(gobj), 0x44621, 0x7F, 0x40);
-                set_call(gobj);
+                ftYoshi_SpecialS_SetCall(gobj);
                 if abs_c((*fp).mv.ys.specials.x1C) < 0.01 {
                     (*fp).mv.ys.specials.x1C = 0.01;
                 }
@@ -1112,10 +1129,10 @@ pub fn ftYs_SpecialAirSLoop_3_Coll(gobj: *mut HSD_GObj) {
                 (*fp).self_vel.x = v;
                 (*fp).self_vel.z = 0.0;
                 (*fp).self_vel.y = 0.0;
-                let inner = attributes.xD8 * abs_c((*fp).mv.ys.specials.x1C);
+                let inner = perm_mul_inline(attributes.xD8, abs_c((*fp).mv.ys.specials.x1C));
                 (*fp).mv.ys.specials.x14 =
                     (2.0 * M_PI / 25.0).mul_add(inner as f64, (*fp).mv.ys.specials.x14 as f64) as f32;
-                wrap_and_set_rot_x(gobj);
+                ftYs_SpecialS_WrapAndSetRotX(gobj);
                 ext::ftCommon_8007EBAC(fp, 1, 0);
             } else {
                 if abs_c((*fp).input.lstick[0].x) > attributes.x9C {
@@ -1126,7 +1143,7 @@ pub fn ftYs_SpecialAirSLoop_3_Coll(gobj: *mut HSD_GObj) {
                     (*fp).self_vel.x = v;
                     ext::ftPartSetRotY(fp, 0, pi_2_facing(fp));
                 }
-                wrap_and_set_rot_x(gobj);
+                ftYs_SpecialS_WrapAndSetRotX(gobj);
             }
             (*fp).mv.ys.specials.x8 = 0;
         }

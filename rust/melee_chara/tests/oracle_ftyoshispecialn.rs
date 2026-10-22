@@ -250,7 +250,9 @@ unsafe fn world_fill_types(w: &mut World, fi: usize) {
         }
         18 => {
             ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.attr.as_mut_ptr(), D_ftYs_DatAttrs);
             ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYs_DatAttrs);
             ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
         }
         19 => {
@@ -345,9 +347,7 @@ unsafe fn world_fill_types(w: &mut World, fi: usize) {
         }
         37 => {
             ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
-            ofill(w.attr.as_mut_ptr(), D_ftYs_DatAttrs);
             ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
-            ofill(w.backup.as_mut_ptr(), D_ftYs_DatAttrs);
             ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
         }
         38 => {
@@ -357,9 +357,7 @@ unsafe fn world_fill_types(w: &mut World, fi: usize) {
         }
         39 => {
             ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
-            ofill(w.attr.as_mut_ptr(), D_ftYs_DatAttrs);
             ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
-            ofill(w.backup.as_mut_ptr(), D_ftYs_DatAttrs);
             ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
         }
         40 => {
@@ -379,7 +377,9 @@ unsafe fn world_fill_types(w: &mut World, fi: usize) {
         }
         43 => {
             ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.attr.as_mut_ptr(), D_ftYs_DatAttrs);
             ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYs_DatAttrs);
             ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
         }
         44 => {
@@ -389,7 +389,9 @@ unsafe fn world_fill_types(w: &mut World, fi: usize) {
         }
         45 => {
             ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.attr.as_mut_ptr(), D_ftYs_DatAttrs);
             ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYs_DatAttrs);
             ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
         }
         46 => {
@@ -472,6 +474,36 @@ unsafe fn world_fill_types(w: &mut World, fi: usize) {
             ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
             ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
         }
+        62 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
+        }
+        63 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
+        }
+        64 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
+        }
+        65 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
+        }
+        66 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
+        }
+        67 => {
+            ofill(w.attr.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.backup.as_mut_ptr(), D_ftYoshiAttributes);
+            ofill(w.ext.as_mut_ptr(), D_ftYoshiAttributes);
+        }
         _ => {}
     }
 }
@@ -515,6 +547,12 @@ const FNS: &[Fn_] = &[
     Fn_ { name: "ftYs_SpecialN_8012CD88", n: 400, bfmask: 0x0 },
     Fn_ { name: "ftYs_SpecialN_8012CDB4", n: 400, bfmask: 0x0 },
     Fn_ { name: "ftYs_SpecialN_8012CDD4", n: 400, bfmask: 0x0 },
+    Fn_ { name: "setupCallbacks", n: 400, bfmask: 0x0 },
+    Fn_ { name: "checkAnimEnd", n: 400, bfmask: 0x0 },
+    Fn_ { name: "changeMotionState", n: 400, bfmask: 0x0 },
+    Fn_ { name: "inlineB0", n: 400, bfmask: 0x2 },
+    Fn_ { name: "inlineA0", n: 400, bfmask: 0x0 },
+    Fn_ { name: "inlineA1", n: 400, bfmask: 0x0 },
     Fn_ { name: "ftYs_SpecialN_Enter", n: 400, bfmask: 0x0 },
     Fn_ { name: "ftYs_SpecialAirN_Enter", n: 400, bfmask: 0x0 },
     Fn_ { name: "fn_8012CEE0", n: 400, bfmask: 0x3 },
@@ -581,53 +619,59 @@ unsafe fn call_fn(fi: usize, w: &mut World, a: &mut Args) -> (u64, u32) {
         12 => { t::ftYs_SpecialN_8012CD88(&mut a.v3[0]); (0, 0) }
         13 => { let r = t::ftYs_SpecialN_8012CDB4(); (bc(r) as u64, bc(r)) }
         14 => { let r = normptr(t::ftYs_SpecialN_8012CDD4(g) as *const u8 as usize); (r, r as u32) }
-        15 => { t::ftYs_SpecialN_Enter(g); (0, 0) }
-        16 => { t::ftYs_SpecialAirN_Enter(g); (0, 0) }
-        17 => { t::fn_8012CEE0(g); (0, 0) }
-        18 => { t::fn_8012CF7C(g); (0, 0) }
-        19 => { t::fn_8012D004(g); (0, 0) }
-        20 => { t::fn_8012D0A0(g); (0, 0) }
-        21 => { t::fn_8012D128(g); (0, 0) }
-        22 => { t::fn_8012D1AC(g); (0, 0) }
-        23 => { t::fn_8012D230(g); (0, 0) }
-        24 => { t::fn_8012D298(g); (0, 0) }
-        25 => { t::fn_8012D2F8(g); (0, 0) }
-        26 => { t::fn_8012D360(g); (0, 0) }
-        27 => { t::fn_8012D3C0(g); (0, 0) }
-        28 => { t::fn_8012D428(g); (0, 0) }
-        29 => { t::fn_8012D488(g); (0, 0) }
-        30 => { t::fn_8012D4F0(g); (0, 0) }
-        31 => { t::ftYs_SpecialN1_Anim(g); (0, 0) }
-        32 => { t::ftYs_SpecialAirN1_0_Anim(g); (0, 0) }
-        33 => { t::ftYs_SpecialN1_1_Anim(g); (0, 0) }
-        34 => { t::ftYs_SpecialN1_0_Anim(g); (0, 0) }
-        35 => { t::ftYs_SpecialAirN1_2_Anim(g); (0, 0) }
-        36 => { t::ftYs_SpecialAirN1_1_Anim(g); (0, 0) }
-        37 => { t::ftYs_SpecialN2_1_Anim(g); (0, 0) }
-        38 => { t::ftYs_SpecialN2_0_Anim(g); (0, 0) }
-        39 => { t::ftYs_SpecialAirN2_1_Anim(g); (0, 0) }
-        40 => { t::ftYs_SpecialAirN2_0_Anim(g); (0, 0) }
-        41 => { t::ftYs_SpecialN1_Phys(g); (0, 0) }
-        42 => { t::ftYs_SpecialAirN1_0_Phys(g); (0, 0) }
-        43 => { t::ftYs_SpecialN1_1_Phys(g); (0, 0) }
-        44 => { t::ftYs_SpecialN1_0_Phys(g); (0, 0) }
-        45 => { t::ftYs_SpecialAirN1_2_Phys(g); (0, 0) }
-        46 => { t::ftYs_SpecialAirN1_1_Phys(g); (0, 0) }
-        47 => { t::ftYs_SpecialN2_1_Phys(g); (0, 0) }
-        48 => { t::ftYs_SpecialN2_0_Phys(g); (0, 0) }
-        49 => { t::ftYs_SpecialAirN2_1_Phys(g); (0, 0) }
-        50 => { t::ftYs_SpecialAirN2_0_Phys(g); (0, 0) }
-        51 => { t::ftYs_SpecialN1_Coll(g); (0, 0) }
-        52 => { t::ftYs_SpecialAirN1_0_Coll(g); (0, 0) }
-        53 => { t::ftYs_SpecialN1_1_Coll(g); (0, 0) }
-        54 => { t::ftYs_SpecialN1_0_Coll(g); (0, 0) }
-        55 => { t::ftYs_SpecialAirN1_2_Coll(g); (0, 0) }
-        56 => { t::ftYs_SpecialAirN1_1_Coll(g); (0, 0) }
-        57 => { t::ftYs_SpecialN2_1_Coll(g); (0, 0) }
-        58 => { t::ftYs_SpecialN2_0_Coll(g); (0, 0) }
-        59 => { t::ftYs_SpecialAirN2_1_Coll(g); (0, 0) }
-        60 => { t::ftYs_SpecialAirN2_0_Coll(g); (0, 0) }
-        61 => { t::ftYs_SpecialS_8012DF00(g); (0, 0) }
+        15 => { t::setupCallbacks(g, Some(t::cb_fn_8012CF7C), Some(t::cb_fn_8012CEE0), Some(t::cb_ftCo_800BBB8C)); (0, 0) }
+        16 => { t::checkAnimEnd(g, t::ext::ft_8008A2BC); (0, 0) }
+        17 => { t::changeMotionState(g, a.i[0] as i32, t::getFtVictim, a.i[1] != 0); (0, 0) }
+        18 => { t::inlineB0(g, t::ext::ft_8008A2BC); (0, 0) }
+        19 => { t::inlineA0(w.f_ptr()); (0, 0) }
+        20 => { t::inlineA1(g, t::ext::ft_8008A2BC); (0, 0) }
+        21 => { t::ftYs_SpecialN_Enter(g); (0, 0) }
+        22 => { t::ftYs_SpecialAirN_Enter(g); (0, 0) }
+        23 => { t::fn_8012CEE0(g); (0, 0) }
+        24 => { t::fn_8012CF7C(g); (0, 0) }
+        25 => { t::fn_8012D004(g); (0, 0) }
+        26 => { t::fn_8012D0A0(g); (0, 0) }
+        27 => { t::fn_8012D128(g); (0, 0) }
+        28 => { t::fn_8012D1AC(g); (0, 0) }
+        29 => { t::fn_8012D230(g); (0, 0) }
+        30 => { t::fn_8012D298(g); (0, 0) }
+        31 => { t::fn_8012D2F8(g); (0, 0) }
+        32 => { t::fn_8012D360(g); (0, 0) }
+        33 => { t::fn_8012D3C0(g); (0, 0) }
+        34 => { t::fn_8012D428(g); (0, 0) }
+        35 => { t::fn_8012D488(g); (0, 0) }
+        36 => { t::fn_8012D4F0(g); (0, 0) }
+        37 => { t::ftYs_SpecialN1_Anim(g); (0, 0) }
+        38 => { t::ftYs_SpecialAirN1_0_Anim(g); (0, 0) }
+        39 => { t::ftYs_SpecialN1_1_Anim(g); (0, 0) }
+        40 => { t::ftYs_SpecialN1_0_Anim(g); (0, 0) }
+        41 => { t::ftYs_SpecialAirN1_2_Anim(g); (0, 0) }
+        42 => { t::ftYs_SpecialAirN1_1_Anim(g); (0, 0) }
+        43 => { t::ftYs_SpecialN2_1_Anim(g); (0, 0) }
+        44 => { t::ftYs_SpecialN2_0_Anim(g); (0, 0) }
+        45 => { t::ftYs_SpecialAirN2_1_Anim(g); (0, 0) }
+        46 => { t::ftYs_SpecialAirN2_0_Anim(g); (0, 0) }
+        47 => { t::ftYs_SpecialN1_Phys(g); (0, 0) }
+        48 => { t::ftYs_SpecialAirN1_0_Phys(g); (0, 0) }
+        49 => { t::ftYs_SpecialN1_1_Phys(g); (0, 0) }
+        50 => { t::ftYs_SpecialN1_0_Phys(g); (0, 0) }
+        51 => { t::ftYs_SpecialAirN1_2_Phys(g); (0, 0) }
+        52 => { t::ftYs_SpecialAirN1_1_Phys(g); (0, 0) }
+        53 => { t::ftYs_SpecialN2_1_Phys(g); (0, 0) }
+        54 => { t::ftYs_SpecialN2_0_Phys(g); (0, 0) }
+        55 => { t::ftYs_SpecialAirN2_1_Phys(g); (0, 0) }
+        56 => { t::ftYs_SpecialAirN2_0_Phys(g); (0, 0) }
+        57 => { t::ftYs_SpecialN1_Coll(g); (0, 0) }
+        58 => { t::ftYs_SpecialAirN1_0_Coll(g); (0, 0) }
+        59 => { t::ftYs_SpecialN1_1_Coll(g); (0, 0) }
+        60 => { t::ftYs_SpecialN1_0_Coll(g); (0, 0) }
+        61 => { t::ftYs_SpecialAirN1_2_Coll(g); (0, 0) }
+        62 => { t::ftYs_SpecialAirN1_1_Coll(g); (0, 0) }
+        63 => { t::ftYs_SpecialN2_1_Coll(g); (0, 0) }
+        64 => { t::ftYs_SpecialN2_0_Coll(g); (0, 0) }
+        65 => { t::ftYs_SpecialAirN2_1_Coll(g); (0, 0) }
+        66 => { t::ftYs_SpecialAirN2_0_Coll(g); (0, 0) }
+        67 => { t::ftYs_SpecialS_8012DF00(g); (0, 0) }
         _ => unreachable!(),
     }
 }
@@ -668,7 +712,7 @@ unsafe fn install_hooks() {
         melee_chara::tu::ftyoshispecialn::ext::LB_8000B1CC = Some(|a0: *mut HSD_JObj, a1: *mut Vec3, a2: *mut Vec3| { lg_s("lb_8000B1CC("); lg_ptr(a0 as *const u8 as usize); lg_v3(a1 as *const _ as *const Vec3); lg_v3(a2 as *const _ as *const Vec3); lg_s(")"); lg_ov3(a2 as *mut _); lg_c(';'); });
 
 }
-const PRE: &[&str] = &["ftYs_SpecialN_GetBoneIndex", "ftYs_SpecialN_SetupItemVel", "ftYs_SpecialN_GetFacingDir", "ftYs_SpecialN_GetDatAttr18", "ftYs_SpecialN_GetDatAttr1C", "ftYs_SpecialN_GetDatAttr20", "ftYs_SpecialN_GetDatAttr24", "ftYs_SpecialN_GetExtAttr28", "ftYs_SpecialN_GetExtAttr2C", "ftYs_SpecialN_8012CD40", "ftYs_SpecialN_GetExtAttr34", "ftYs_SpecialN_GetExtAttr38", "ftYs_SpecialN_8012CD88", "ftYs_SpecialN_8012CDB4", "ftYs_SpecialN_8012CDD4", "ftYs_SpecialN_Enter", "ftYs_SpecialAirN_Enter", "fn_8012CEE0", "fn_8012CF7C", "fn_8012D004", "fn_8012D0A0", "fn_8012D128", "fn_8012D1AC", "fn_8012D230", "fn_8012D298", "fn_8012D2F8", "fn_8012D360", "fn_8012D3C0", "fn_8012D428", "fn_8012D488", "fn_8012D4F0", "ftYs_SpecialN1_Anim", "ftYs_SpecialAirN1_0_Anim", "ftYs_SpecialN1_1_Anim", "ftYs_SpecialN1_0_Anim", "ftYs_SpecialAirN1_2_Anim", "ftYs_SpecialAirN1_1_Anim", "ftYs_SpecialN2_1_Anim", "ftYs_SpecialN2_0_Anim", "ftYs_SpecialAirN2_1_Anim", "ftYs_SpecialAirN2_0_Anim", "ftYs_SpecialN1_Phys", "ftYs_SpecialAirN1_0_Phys", "ftYs_SpecialN1_1_Phys", "ftYs_SpecialN1_0_Phys", "ftYs_SpecialAirN1_2_Phys", "ftYs_SpecialAirN1_1_Phys", "ftYs_SpecialN2_1_Phys", "ftYs_SpecialN2_0_Phys", "ftYs_SpecialAirN2_1_Phys", "ftYs_SpecialAirN2_0_Phys", "ftYs_SpecialN1_Coll", "ftYs_SpecialAirN1_0_Coll", "ftYs_SpecialN1_1_Coll", "ftYs_SpecialN1_0_Coll", "ftYs_SpecialAirN1_2_Coll", "ftYs_SpecialAirN1_1_Coll", "ftYs_SpecialN2_1_Coll", "ftYs_SpecialN2_0_Coll", "ftYs_SpecialAirN2_1_Coll", "ftYs_SpecialAirN2_0_Coll", "ftYs_SpecialS_8012DF00"];
+const PRE: &[&str] = &["ftYs_SpecialN_GetBoneIndex", "ftYs_SpecialN_SetupItemVel", "ftYs_SpecialN_GetFacingDir", "ftYs_SpecialN_GetDatAttr18", "ftYs_SpecialN_GetDatAttr1C", "ftYs_SpecialN_GetDatAttr20", "ftYs_SpecialN_GetDatAttr24", "ftYs_SpecialN_GetExtAttr28", "ftYs_SpecialN_GetExtAttr2C", "ftYs_SpecialN_8012CD40", "ftYs_SpecialN_GetExtAttr34", "ftYs_SpecialN_GetExtAttr38", "ftYs_SpecialN_8012CD88", "ftYs_SpecialN_8012CDB4", "ftYs_SpecialN_8012CDD4", "setupCallbacks", "checkAnimEnd", "changeMotionState", "inlineB0", "inlineA0", "inlineA1", "ftYs_SpecialN_Enter", "ftYs_SpecialAirN_Enter", "fn_8012CEE0", "fn_8012CF7C", "fn_8012D004", "fn_8012D0A0", "fn_8012D128", "fn_8012D1AC", "fn_8012D230", "fn_8012D298", "fn_8012D2F8", "fn_8012D360", "fn_8012D3C0", "fn_8012D428", "fn_8012D488", "fn_8012D4F0", "ftYs_SpecialN1_Anim", "ftYs_SpecialAirN1_0_Anim", "ftYs_SpecialN1_1_Anim", "ftYs_SpecialN1_0_Anim", "ftYs_SpecialAirN1_2_Anim", "ftYs_SpecialAirN1_1_Anim", "ftYs_SpecialN2_1_Anim", "ftYs_SpecialN2_0_Anim", "ftYs_SpecialAirN2_1_Anim", "ftYs_SpecialAirN2_0_Anim", "ftYs_SpecialN1_Phys", "ftYs_SpecialAirN1_0_Phys", "ftYs_SpecialN1_1_Phys", "ftYs_SpecialN1_0_Phys", "ftYs_SpecialAirN1_2_Phys", "ftYs_SpecialAirN1_1_Phys", "ftYs_SpecialN2_1_Phys", "ftYs_SpecialN2_0_Phys", "ftYs_SpecialAirN2_1_Phys", "ftYs_SpecialAirN2_0_Phys", "ftYs_SpecialN1_Coll", "ftYs_SpecialAirN1_0_Coll", "ftYs_SpecialN1_1_Coll", "ftYs_SpecialN1_0_Coll", "ftYs_SpecialAirN1_2_Coll", "ftYs_SpecialAirN1_1_Coll", "ftYs_SpecialN2_1_Coll", "ftYs_SpecialN2_0_Coll", "ftYs_SpecialAirN2_1_Coll", "ftYs_SpecialAirN2_0_Coll", "ftYs_SpecialS_8012DF00"];
 unsafe fn case_pre(fi: usize, w: &mut World, a: &mut Args) {
     match fi {
         _ => {}

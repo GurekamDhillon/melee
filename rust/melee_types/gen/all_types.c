@@ -802,3 +802,4 @@
 #include <melee/lb/lbanim.h>
 #include <melee/gm/gmresultplayer.static.h>
 #include <melee/gm/gmfrontend_items.h>
+#include <melee/gm/gmtoulib.static.h>

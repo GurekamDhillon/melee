@@ -15,6 +15,7 @@ pub mod gm;
 pub mod oracle;
 /// Per-TU ports (game_tus.txt 457-464: gm/gmboot, gm/gmapproach, gm/gmcamera, gm/gmallstar, gm/gmadventure).
 /// Whole-TU ports (one file per game TU), verified by the state oracle (`oracle`, gen/tu).
+/// Per-TU ports (src/melee/gm/gmtit*.c, gmtou*.c, gmtoycollection.c).
 pub mod tu;
 pub mod hud;
 pub mod lb;

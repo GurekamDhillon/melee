@@ -701,7 +701,8 @@ def main():
                'extern void tuo_arg_f64(unsigned long long); extern void tuo_arg_p(const void*); extern void tuo_arg_s(const char*); extern void tuo_arg_bytes(const void*, unsigned long long);',
                'extern unsigned long long tuo_ret_int(const char*, int, int); extern unsigned tuo_ret_f32(const char*);',
                'extern unsigned long long tuo_ret_f64(const char*); extern void* tuo_ret_ptr(const char*);',
-               'extern void tuo_regfn(const char*, void*); extern void* tuo_leaf_ptr(const char*); extern unsigned long long tuo_leaf_int(const char*, int, int);', '']
+               'extern void tuo_regfn(const char*, void*); extern void* tuo_leaf_ptr(const char*); extern unsigned long long tuo_leaf_int(const char*, int, int);',
+               'extern unsigned tuo_leaf_f32(const char*); extern int sprintf(char*, const char*, ...);', '']
     stubs_reg = []
     rs_stub = []
     rs_install = []
@@ -710,18 +711,23 @@ def main():
     OUTS = spec.get("OUTS", {})
 
     OUT_INTS = spec.get("OUT_INTS", {})
+    OUT_F32S = spec.get("OUT_F32S", {})
 
     def outs_c(nm, n):
         a = " ".join(f'if (a{i}) *(void**) a{i} = tuo_leaf_ptr("out:{nm}#{i}");' for i in OUTS.get(nm, []))
         b = " ".join(f'if (a{i}) {{ unsigned long long _v = tuo_leaf_int("out:{nm}#{i}", {bits}, 0); __builtin_memcpy(a{i}, &_v, {bits // 8}); }}'
                      for i, bits in OUT_INTS.get(nm, {}).items())
-        return a + " " + b
+        c3 = " ".join(f'if (a{i}) {{ int _k; for (_k = 0; _k < {cnt}; _k++) {{ char _pn[96]; unsigned _b; sprintf(_pn, "out:{nm}#{i}[%d]", _k); _b = tuo_leaf_f32(_pn); __builtin_memcpy((char*) a{i} + 4 * _k, &_b, 4); }} }}'
+                      for i, cnt in OUT_F32S.get(nm, {}).items())
+        return a + " " + b + " " + c3
 
     def outs_r(nm, n):
         a = " ".join(f'if !a{i}.is_null() {{ *(a{i} as *mut usize) = v.leaf_ptr("out:{nm}#{i}"); }}' for i in OUTS.get(nm, []))
         b = " ".join(f'if !a{i}.is_null() {{ let x: u64 = v.leaf_int("out:{nm}#{i}", {bits}, 0); core::ptr::copy_nonoverlapping(&x as *const u64 as *const u8, a{i} as *mut u8, {bits // 8}); }}'
                      for i, bits in OUT_INTS.get(nm, {}).items())
-        return a + " " + b
+        r3 = " ".join(f'if !a{i}.is_null() {{ for k in 0..{cnt}usize {{ *(a{i} as *mut u32).add(k) = v.leaf_f32(&format!("out:{nm}#{i}[{{}}]", k)); }} }}'
+                      for i, cnt in OUT_F32S.get(nm, {}).items())
+        return a + " " + b + " " + r3
 
     custom = spec.get("CUSTOM_STUBS", {})
     for name in declared:
@@ -730,6 +736,9 @@ def main():
         d = fdecls.get(name)
         if d is None:
             raise SystemExit(f"tuo: no prototype for callee {name}")
+        if name in spec.get("FMT_VARIADIC", []):
+            custom = dict(custom)
+            custom[name] = fmt_variadic(name)
         if name in custom:
             stubs_c.append(custom[name]["c"])
             stubs_reg.append(f'  tuo_regfn("{name}", (void*){name});')
@@ -810,6 +819,14 @@ def main():
                         rlogs.append(f"v.arg_p(unsafe {{ core::mem::transmute_copy::<_, usize>(&a{i}) }});")
                     else:
                         rlogs.append(f"v.arg_p(a{i} as usize);")
+            elif p.kind == T.RECORD and p.get_size() in (1, 2, 4, 8):
+                # small struct by value (win64 passes it in an integer register): logged as one integer
+                sz = p.get_size()
+                cty = {1: "unsigned char", 2: "unsigned short", 4: "unsigned", 8: "unsigned long long"}[sz]
+                cargs.append(f"{cty} a{i}")
+                logs.append(f"tuo_arg_u(a{i});")
+                rparams.append(f"a{i}: {rust_type(G, a.type)}")
+                rlogs.append(f"v.arg_u(unsafe {{ core::mem::transmute_copy::<_, u{sz * 8}>(&a{i}) }} as u64);")
             else:
                 raise SystemExit(f"tuo: callee {name} param {i}: {a.type.spelling}")
         if ret.kind == T.VOID:
@@ -1039,6 +1056,31 @@ def main():
     ex.append("}")
     (out / "ext.rs.txt").write_text("\n".join(ex) + "\n")
     print(f"unit.c {len(uc)} lines, {len(declared) - len(set(declared) & defined)} callees, {len(glob)} globals, {len(G.order)} types")
+
+
+def fmt_variadic(name):
+    """printf-style variadic callee: the stub walks the format string, logging each argument by its
+    conversion (d/i int, u/x/X/c unsigned, s/p pointer id, f double). The port calls
+    `ext::NAME(fmt, &[args as u64])` (ints sign-extended, floats as f64 bits, pointers as usize)."""
+    c = r"""void NAME(const char* f, ...) { __builtin_va_list ap; const char* c; __builtin_va_start(ap, f);
+ tuo_call_begin("NAME"); tuo_arg_s(f);
+ for (c = f; *c; c++) if (*c == '%') { c++; while (*c && !strchr("diuxXcspf%", *c)) c++; if (!*c) break;
+  switch (*c) { case 'd': case 'i': tuo_arg_i(__builtin_va_arg(ap, int)); break;
+   case 'u': case 'x': case 'X': case 'c': tuo_arg_u(__builtin_va_arg(ap, unsigned)); break;
+   case 's': case 'p': tuo_arg_p(__builtin_va_arg(ap, void*)); break;
+   case 'f': { double d = __builtin_va_arg(ap, double); unsigned long long b; memcpy(&b, &d, 8); tuo_arg_f64(b); } break;
+   default: break; } }
+ tuo_call_end(); __builtin_va_end(ap); }""".replace("NAME", name).replace("\n", " ")
+    r = r"""unsafe fn s_NAME(f: *const i8, a: &[u64]) { let v = vv(); v.call_begin("NAME"); v.arg_s(f as *const u8);
+ let fs = core::ffi::CStr::from_ptr(f).to_bytes(); let mut k = 0usize; let mut i = 0usize;
+ while i < fs.len() { if fs[i] == b'%' { i += 1; while i < fs.len() && !b"diuxXcspf%".contains(&fs[i]) { i += 1; } if i >= fs.len() { break; }
+  match fs[i] { b'd' | b'i' => { v.arg_i(a[k] as i32 as i64); k += 1; }
+   b'u' | b'x' | b'X' | b'c' => { v.arg_u(a[k] as u32 as u64); k += 1; }
+   b's' | b'p' => { v.arg_p(a[k] as usize); k += 1; }
+   b'f' => { v.arg_f64(a[k]); k += 1; } _ => {} } } i += 1; } v.call_end(); }""".replace("NAME", name).replace("\n", " ")
+    ext = ("    pub static mut H_NAME: Option<unsafe fn(*const i8, &[u64])> = None;\n"
+           "    pub unsafe fn NAME(f: *const i8, a: &[u64]) { match H_NAME { Some(h) => h(f, a), None => panic!(\"TODO: NAME is not ported\") } }").replace("NAME", name)
+    return {"c": c, "rust": r, "ext": ext}
 
 
 def extern_decl_clean(lst):

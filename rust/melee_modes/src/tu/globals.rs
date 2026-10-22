@@ -8,3 +8,8 @@ use melee_types::*;
 pub static mut gmMainLib_804D3EE0: *mut gmm_x0 = null_mut();
 /// gm_1884.c `/* 473814 */ CssSubStruct gm_80473814`.
 pub static mut gm_80473814: CssSubStruct = unsafe { core::mem::zeroed() };
+
+/// gmapproach.c `UNK_T gmVsMelee_ApproachData[2]` (scene data of the approach screen).
+pub static mut gmVsMelee_ApproachData: [*mut core::ffi::c_void; 2] = [null_mut(); 2];
+/// if_2FD9.c `/* 4A1F48 */ struct un_804A1F48_t if_Scene_Prize_EnterData`.
+pub static mut if_Scene_Prize_EnterData: un_804A1F48_t = unsafe { core::mem::zeroed() };

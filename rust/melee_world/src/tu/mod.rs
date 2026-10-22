@@ -14,3 +14,4 @@ pub mod grkraid;
 pub mod grkinokoroute;
 pub mod grinishie2;
 pub mod grizumi;
+pub mod grkongo;

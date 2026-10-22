@@ -596,22 +596,22 @@ pub unsafe extern "C" fn ftpikachuspeciallw__ftPk_SpecialLw_SpawnEffect(g: *mut 
 
 /// `ftPp_Init_8011F060` (defined in src/melee/ft/kinds/ftPopo/ftpopo.c).
 pub unsafe extern "C" fn ftpopo__ftPp_Init_8011F060(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftPp_Init_8011F060 (src/melee/ft/kinds/ftPopo/ftpopo.c) is not ported");
+    crate::tu::ftpopo::ftPp_Init_8011F060(g);
 }
 
 /// `fn_80122B54` (defined in src/melee/ft/kinds/ftPopo/ftpopospeciallw.c).
 pub unsafe extern "C" fn ftpopospeciallw__fn_80122B54(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_80122B54 (src/melee/ft/kinds/ftPopo/ftpopospeciallw.c) is not ported");
+    crate::tu::ftpopospeciallw::fn_80122B54(g);
 }
 
 /// `fn_80122D2C` (defined in src/melee/ft/kinds/ftPopo/ftpopospeciallw.c).
 pub unsafe extern "C" fn ftpopospeciallw__fn_80122D2C(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_80122D2C (src/melee/ft/kinds/ftPopo/ftpopospeciallw.c) is not ported");
+    crate::tu::ftpopospeciallw::fn_80122D2C(g);
 }
 
 /// `ftPp_SpecialN_8011F500` (defined in src/melee/ft/kinds/ftPopo/ftpopospecialn.c).
 pub unsafe extern "C" fn ftpopospecialn__ftPp_SpecialN_8011F500(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftPp_SpecialN_8011F500 (src/melee/ft/kinds/ftPopo/ftpopospecialn.c) is not ported");
+    crate::tu::ftpopospecialn::ftPp_SpecialN_8011F500(g);
 }
 
 /// `ftSs_Init_80128428` (defined in src/melee/ft/kinds/ftSamus/ftsamus.c).
@@ -752,6 +752,16 @@ pub unsafe extern "C" fn ftzeldaspeciallw__ftZd_SpecialLw_8013AE30(g: *mut HSD_G
 /// `ftZd_SpecialLw_8013AEAC` (defined in src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
 pub unsafe extern "C" fn ftzeldaspeciallw__ftZd_SpecialLw_8013AEAC(g: *mut HSD_GObj) {
     panic!("TODO(group4): ftZd_SpecialLw_8013AEAC (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c) is not ported");
+}
+
+/// `ftPr_Init_8013C94C` (defined in src/melee/ft/kinds/ftPurin/ftpurin.c).
+pub unsafe extern "C" fn ftpurin__ftPr_Init_8013C94C(g: *mut HSD_GObj) {
+    crate::tu::ftpurin::ftPr_Init_8013C94C(g);
+}
+
+/// `ftPr_SpecialHi_8013CE7C` (defined in src/melee/ft/kinds/ftPurin/ftpurinspecialhi.c).
+pub unsafe extern "C" fn ftpurinspecialhi__ftPr_SpecialHi_8013CE7C(g: *mut HSD_GObj) {
+    crate::tu::ftpurinspecialhi::ftPr_SpecialHi_8013CE7C(g);
 }
 
 /// Every entry with its `<setter tu>:<C name>` key (tests/chars_ref.rs maps stored pointers back).
@@ -906,4 +916,6 @@ pub const CALLBACKS: &[(unsafe extern "C" fn(*mut HSD_GObj), &str)] = &[
     (ftzeldaspeciallw__ftZd_SpecialLw_8013ADB4, "src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c:ftZd_SpecialLw_8013ADB4"),
     (ftzeldaspeciallw__ftZd_SpecialLw_8013AE30, "src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c:ftZd_SpecialLw_8013AE30"),
     (ftzeldaspeciallw__ftZd_SpecialLw_8013AEAC, "src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c:ftZd_SpecialLw_8013AEAC"),
+    (ftpurin__ftPr_Init_8013C94C, "src/melee/ft/kinds/ftPurin/ftpurin.c:ftPr_Init_8013C94C"),
+    (ftpurinspecialhi__ftPr_SpecialHi_8013CE7C, "src/melee/ft/kinds/ftPurin/ftpurinspecialhi.c:ftPr_SpecialHi_8013CE7C"),
 ];

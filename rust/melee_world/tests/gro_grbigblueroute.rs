@@ -13,6 +13,21 @@ static mut OJC: [HSD_JObj; 40] = unsafe { core::mem::zeroed() };
 static mut OJA: [*mut HSD_JObj; 10] = [core::ptr::null_mut(); 10];
 static mut OX8: [UnkStageDat_x8_t; 4] = unsafe { core::mem::zeroed() };
 
+pub fn gr_lg_ps(p: *const u8, n: usize, d: &[ODesc]) {
+    lg_c('@');
+    lg_hmin(normptr(p as usize));
+    if !p.is_null() {
+        let mut tmp = unsafe { core::slice::from_raw_parts(p, n) }.to_vec();
+        unsafe { onorm(&mut tmp, d) };
+        for &(off, size, kind) in d {
+            if kind == b'b' { for j in 0..size as usize { tmp[off as usize + j] = 0; } }
+        }
+        lg_c('{');
+        lg_hx(fnv(FNV0, &tmp), 16);
+        lg_c('}');
+    }
+    lg_c(',');
+}
 pub fn lg_str(s: *const i8) {
     lg_c('"');
     if !s.is_null() {
@@ -68,28 +83,30 @@ unsafe fn bf_fill_Ground_0(p: *mut Ground) {
 }
 unsafe fn bf_hash_Ground_0(mut h: u64, p: *const Ground) -> u64 {
     let _ = p;
-    h = fnv(h, &(((*p).x10_flags.b0()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b1()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b2()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b3()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b4()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b5()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b6()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b7()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b012()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b3()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b4()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b5()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b6()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b7()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_color_enable()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag2()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_light_enable()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag4()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag5()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag6()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag7()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag8()) as u32).to_le_bytes());
+    if DUMP_N != 0 { print!("
+  BFV:"); }
+    h = fnv(h, &(((*p).x10_flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b0()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b1()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b2()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b3()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b4()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b5()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b6()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b7()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b012()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b012()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b3()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b4()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b5()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b6()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b7()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_color_enable()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_color_enable()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag2()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_light_enable()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_light_enable()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag4()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag5()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag6()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag7()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag8()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag8()) as u32); }
     h
 }
 static D_Ground_1: &[ODesc] = &[(0, 4, b'i'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 1, b'b'), (33, 1, b'b'), (36, 4, b'u'), (40, 8, b'p'), (48, 8, b'p'), (56, 4, b'i'), (60, 4, b'i'), (64, 4, b'i'), (68, 4, b'i'), (72, 4, b'i'), (76, 4, b'i'), (80, 4, b'i'), (84, 4, b'i'), (88, 4, b'i'), (92, 4, b'i'), (96, 8, b'p'), (104, 4, b'i'), (112, 8, b'p'), (120, 4, b'i'), (128, 8, b'p'), (136, 4, b'i'), (140, 4, b'i'), (144, 4, b'i'), (152, 4, b'i'), (152, 8, b'p'), (160, 1, b'C'), (161, 1, b'C'), (162, 1, b'C'), (163, 1, b'C'), (164, 4, b'f'), (168, 4, b'f'), (172, 4, b'f'), (176, 4, b'f'), (180, 4, b'f'), (184, 4, b'f'), (188, 4, b'f'), (192, 4, b'f'), (196, 1, b'C'), (197, 1, b'C'), (198, 1, b'C'), (199, 1, b'C'), (200, 4, b'f'), (204, 4, b'f'), (208, 4, b'f'), (212, 4, b'f'), (216, 4, b'f'), (220, 4, b'f'), (224, 4, b'f'), (228, 4, b'f'), (232, 4, b'f'), (236, 4, b'f'), (240, 1, b'b'), (248, 4, b'f'), (257, 1, b'C'), (258, 1, b'C'), (259, 1, b'C'), (260, 2, b's'), (262, 1, b'C'), (263, 1, b'C'), (264, 4, b'f'), (268, 4, b'f'), (272, 4, b'f'), (280, 4, b'f'), (284, 4, b'f'), (288, 4, b'f'), (296, 8, b'p'), (304, 4, b'f'), (308, 4, b'f'), (312, 4, b'f'), (320, 8, b'p'), (328, 4, b'f'), (332, 4, b'f'), (336, 4, b'f'), (344, 8, b'p'), (352, 4, b'f'), (356, 4, b'f'), (360, 4, b'f'), (368, 8, b'p'), (264, 8, b'p'), (272, 8, b'p'), (280, 8, b'p'), (288, 8, b'p'), (296, 4, b'f'), (300, 4, b'f'), (304, 4, b'f'), (308, 4, b'f'), (312, 4, b'f'), (316, 4, b'f'), (320, 4, b'f'), (324, 4, b'f'), (328, 4, b'f'), (332, 4, b'f'), (336, 4, b'f'), (340, 4, b'f'), (344, 2, b's'), (346, 2, b's'), (256, 1, b'b')];
@@ -121,28 +138,30 @@ unsafe fn bf_fill_Ground_1(p: *mut Ground) {
 }
 unsafe fn bf_hash_Ground_1(mut h: u64, p: *const Ground) -> u64 {
     let _ = p;
-    h = fnv(h, &(((*p).x10_flags.b0()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b1()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b2()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b3()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b4()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b5()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b6()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b7()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b012()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b3()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b4()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b5()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b6()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b7()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_color_enable()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag2()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_light_enable()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag4()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag5()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag6()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag7()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag8()) as u32).to_le_bytes());
+    if DUMP_N != 0 { print!("
+  BFV:"); }
+    h = fnv(h, &(((*p).x10_flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b0()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b1()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b2()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b3()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b4()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b5()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b6()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b7()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b012()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b012()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b3()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b4()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b5()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b6()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b7()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_color_enable()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_color_enable()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag2()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_light_enable()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_light_enable()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag4()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag5()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag6()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag7()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag8()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag8()) as u32); }
     h
 }
 static D_UnkFlagStruct: &[ODesc] = &[(0, 1, b'C'), (0, 1, b'b')];
@@ -160,14 +179,16 @@ unsafe fn bf_fill_UnkFlagStruct(p: *mut UnkFlagStruct) {
 }
 unsafe fn bf_hash_UnkFlagStruct(mut h: u64, p: *const UnkFlagStruct) -> u64 {
     let _ = p;
-    h = fnv(h, &(((*p).anon_0.b0()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).anon_0.b1()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).anon_0.b2()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).anon_0.b3()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).anon_0.b4()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).anon_0.b5()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).anon_0.b6()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).anon_0.b7()) as u32).to_le_bytes());
+    if DUMP_N != 0 { print!("
+  BFV:"); }
+    h = fnv(h, &(((*p).anon_0.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).anon_0.b0()) as u32); }
+    h = fnv(h, &(((*p).anon_0.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).anon_0.b1()) as u32); }
+    h = fnv(h, &(((*p).anon_0.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).anon_0.b2()) as u32); }
+    h = fnv(h, &(((*p).anon_0.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).anon_0.b3()) as u32); }
+    h = fnv(h, &(((*p).anon_0.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).anon_0.b4()) as u32); }
+    h = fnv(h, &(((*p).anon_0.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).anon_0.b5()) as u32); }
+    h = fnv(h, &(((*p).anon_0.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).anon_0.b6()) as u32); }
+    h = fnv(h, &(((*p).anon_0.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).anon_0.b7()) as u32); }
     h
 }
 static D_Ground_2: &[ODesc] = &[(0, 4, b'i'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 1, b'b'), (33, 1, b'b'), (36, 4, b'u'), (40, 8, b'p'), (48, 8, b'p'), (56, 4, b'i'), (60, 4, b'i'), (64, 4, b'i'), (68, 4, b'i'), (72, 4, b'i'), (76, 4, b'i'), (80, 4, b'i'), (84, 4, b'i'), (88, 4, b'i'), (92, 4, b'i'), (96, 8, b'p'), (104, 4, b'i'), (112, 8, b'p'), (120, 4, b'i'), (128, 8, b'p'), (136, 4, b'i'), (140, 4, b'i'), (144, 4, b'i'), (152, 4, b'i'), (152, 8, b'p'), (160, 1, b'C'), (161, 1, b'C'), (162, 1, b'C'), (163, 1, b'C'), (164, 4, b'f'), (168, 4, b'f'), (172, 4, b'f'), (176, 4, b'f'), (180, 4, b'f'), (184, 4, b'f'), (188, 4, b'f'), (192, 4, b'f'), (196, 1, b'C'), (197, 1, b'C'), (198, 1, b'C'), (199, 1, b'C'), (200, 4, b'f'), (204, 4, b'f'), (208, 4, b'f'), (212, 4, b'f'), (216, 4, b'f'), (220, 4, b'f'), (224, 4, b'f'), (228, 4, b'f'), (232, 4, b'f'), (236, 4, b'f'), (240, 1, b'b'), (248, 4, b'f'), (256, 8, b'p'), (264, 8, b'p'), (272, 8, b'p'), (280, 8, b'p'), (288, 8, b'p'), (296, 4, b'f'), (300, 4, b'f'), (304, 4, b'f'), (308, 4, b'f'), (312, 4, b'f'), (316, 4, b'f'), (320, 4, b'f'), (324, 4, b'f'), (328, 4, b'f'), (332, 4, b'f'), (336, 4, b'f'), (340, 4, b'f'), (344, 2, b's'), (346, 2, b's')];
@@ -199,28 +220,30 @@ unsafe fn bf_fill_Ground_2(p: *mut Ground) {
 }
 unsafe fn bf_hash_Ground_2(mut h: u64, p: *const Ground) -> u64 {
     let _ = p;
-    h = fnv(h, &(((*p).x10_flags.b0()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b1()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b2()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b3()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b4()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b5()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b6()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b7()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b012()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b3()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b4()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b5()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b6()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b7()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_color_enable()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag2()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_light_enable()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag4()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag5()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag6()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag7()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag8()) as u32).to_le_bytes());
+    if DUMP_N != 0 { print!("
+  BFV:"); }
+    h = fnv(h, &(((*p).x10_flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b0()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b1()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b2()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b3()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b4()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b5()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b6()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b7()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b012()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b012()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b3()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b4()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b5()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b6()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b7()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_color_enable()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_color_enable()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag2()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_light_enable()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_light_enable()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag4()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag5()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag6()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag7()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag8()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag8()) as u32); }
     h
 }
 static D_Ground_3: &[ODesc] = &[(0, 4, b'i'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 1, b'b'), (33, 1, b'b'), (36, 4, b'u'), (40, 8, b'p'), (48, 8, b'p'), (56, 4, b'i'), (60, 4, b'i'), (64, 4, b'i'), (68, 4, b'i'), (72, 4, b'i'), (76, 4, b'i'), (80, 4, b'i'), (84, 4, b'i'), (88, 4, b'i'), (92, 4, b'i'), (96, 8, b'p'), (104, 4, b'i'), (112, 8, b'p'), (120, 4, b'i'), (128, 8, b'p'), (136, 4, b'i'), (140, 4, b'i'), (144, 4, b'i'), (152, 4, b'i'), (152, 8, b'p'), (160, 1, b'C'), (161, 1, b'C'), (162, 1, b'C'), (163, 1, b'C'), (164, 4, b'f'), (168, 4, b'f'), (172, 4, b'f'), (176, 4, b'f'), (180, 4, b'f'), (184, 4, b'f'), (188, 4, b'f'), (192, 4, b'f'), (196, 1, b'C'), (197, 1, b'C'), (198, 1, b'C'), (199, 1, b'C'), (200, 4, b'f'), (204, 4, b'f'), (208, 4, b'f'), (212, 4, b'f'), (216, 4, b'f'), (220, 4, b'f'), (224, 4, b'f'), (228, 4, b'f'), (232, 4, b'f'), (236, 4, b'f'), (240, 1, b'b'), (248, 4, b'f'), (256, 1, b'C'), (257, 1, b'C'), (258, 1, b'C'), (259, 1, b'C'), (260, 2, b's'), (262, 1, b'C'), (263, 1, b'C'), (264, 4, b'f'), (268, 4, b'f'), (272, 4, b'f'), (280, 4, b'f'), (284, 4, b'f'), (288, 4, b'f'), (296, 8, b'p'), (304, 4, b'f'), (308, 4, b'f'), (312, 4, b'f'), (320, 8, b'p'), (328, 4, b'f'), (332, 4, b'f'), (336, 4, b'f'), (344, 8, b'p'), (352, 4, b'f'), (356, 4, b'f'), (360, 4, b'f'), (368, 8, b'p')];
@@ -252,28 +275,30 @@ unsafe fn bf_fill_Ground_3(p: *mut Ground) {
 }
 unsafe fn bf_hash_Ground_3(mut h: u64, p: *const Ground) -> u64 {
     let _ = p;
-    h = fnv(h, &(((*p).x10_flags.b0()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b1()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b2()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b3()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b4()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b5()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b6()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b7()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b012()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b3()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b4()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b5()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b6()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b7()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_color_enable()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag2()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_light_enable()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag4()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag5()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag6()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag7()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag8()) as u32).to_le_bytes());
+    if DUMP_N != 0 { print!("
+  BFV:"); }
+    h = fnv(h, &(((*p).x10_flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b0()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b1()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b2()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b3()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b4()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b5()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b6()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b7()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b012()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b012()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b3()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b4()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b5()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b6()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b7()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_color_enable()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_color_enable()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag2()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_light_enable()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_light_enable()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag4()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag5()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag6()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag7()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag8()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag8()) as u32); }
     h
 }
 static D_Ground_4: &[ODesc] = &[(0, 4, b'i'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 1, b'b'), (33, 1, b'b'), (36, 4, b'u'), (40, 8, b'p'), (48, 8, b'p'), (56, 4, b'i'), (60, 4, b'i'), (64, 4, b'i'), (68, 4, b'i'), (72, 4, b'i'), (76, 4, b'i'), (80, 4, b'i'), (84, 4, b'i'), (88, 4, b'i'), (92, 4, b'i'), (96, 8, b'p'), (104, 4, b'i'), (112, 8, b'p'), (120, 4, b'i'), (128, 8, b'p'), (136, 4, b'i'), (140, 4, b'i'), (144, 4, b'i'), (152, 4, b'i'), (152, 8, b'p'), (160, 1, b'C'), (161, 1, b'C'), (162, 1, b'C'), (163, 1, b'C'), (164, 4, b'f'), (168, 4, b'f'), (172, 4, b'f'), (176, 4, b'f'), (180, 4, b'f'), (184, 4, b'f'), (188, 4, b'f'), (192, 4, b'f'), (196, 1, b'C'), (197, 1, b'C'), (198, 1, b'C'), (199, 1, b'C'), (200, 4, b'f'), (204, 4, b'f'), (208, 4, b'f'), (212, 4, b'f'), (216, 4, b'f'), (220, 4, b'f'), (224, 4, b'f'), (228, 4, b'f'), (232, 4, b'f'), (236, 4, b'f'), (240, 1, b'b'), (248, 4, b'f'), (264, 8, b'p'), (272, 8, b'p'), (280, 8, b'p'), (288, 8, b'p'), (296, 4, b'f'), (300, 4, b'f'), (304, 4, b'f'), (308, 4, b'f'), (312, 4, b'f'), (316, 4, b'f'), (320, 4, b'f'), (324, 4, b'f'), (328, 4, b'f'), (332, 4, b'f'), (336, 4, b'f'), (340, 4, b'f'), (344, 2, b's'), (346, 2, b's'), (256, 1, b'b')];
@@ -305,28 +330,30 @@ unsafe fn bf_fill_Ground_4(p: *mut Ground) {
 }
 unsafe fn bf_hash_Ground_4(mut h: u64, p: *const Ground) -> u64 {
     let _ = p;
-    h = fnv(h, &(((*p).x10_flags.b0()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b1()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b2()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b3()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b4()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b5()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b6()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b7()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b012()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b3()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b4()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b5()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b6()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b7()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_color_enable()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag2()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_light_enable()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag4()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag5()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag6()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag7()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag8()) as u32).to_le_bytes());
+    if DUMP_N != 0 { print!("
+  BFV:"); }
+    h = fnv(h, &(((*p).x10_flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b0()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b1()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b2()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b3()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b4()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b5()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b6()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b7()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b012()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b012()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b3()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b4()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b5()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b6()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b7()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_color_enable()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_color_enable()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag2()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_light_enable()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_light_enable()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag4()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag5()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag6()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag7()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag8()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag8()) as u32); }
     h
 }
 static D_StageInfo: &[ODesc] = &[(0, 4, b'f'), (4, 4, b'f'), (8, 4, b'f'), (12, 4, b'f'), (16, 4, b'f'), (20, 4, b'f'), (24, 4, b'f'), (28, 4, b'f'), (32, 4, b'f'), (36, 4, b'f'), (40, 4, b'f'), (44, 4, b'f'), (48, 4, b'f'), (52, 4, b'f'), (56, 4, b'f'), (60, 4, b'f'), (64, 4, b'f'), (68, 4, b'f'), (72, 4, b'f'), (76, 4, b'f'), (80, 4, b'f'), (84, 4, b'f'), (88, 4, b'f'), (92, 4, b'f'), (96, 4, b'f'), (100, 4, b'f'), (104, 4, b'f'), (108, 4, b'f'), (112, 4, b'f'), (116, 4, b'f'), (120, 4, b'f'), (124, 4, b'f'), (128, 4, b'f'), (132, 4, b'u'), (136, 4, b'u'), (140, 1, b'b'), (144, 8, b'p'), (152, 8, b'p'), (160, 4, b'i'), (164, 4, b'u'), (168, 4, b'i'), (172, 1, b'C'), (173, 1, b'C'), (174, 1, b'C'), (175, 1, b'C'), (176, 1, b'C'), (177, 1, b'C'), (178, 1, b'C'), (179, 1, b'C'), (180, 1, b'C'), (181, 1, b'C'), (182, 1, b'C'), (183, 1, b'C'), (184, 1, b'C'), (185, 1, b'C'), (186, 1, b'C'), (187, 1, b'C'), (188, 1, b'C'), (189, 1, b'C'), (190, 1, b'C'), (191, 1, b'C'), (192, 1, b'C'), (193, 1, b'C'), (194, 1, b'C'), (195, 1, b'C'), (196, 1, b'C'), (197, 1, b'C'), (198, 1, b'C'), (199, 1, b'C'), (200, 1, b'C'), (201, 1, b'C'), (202, 1, b'C'), (203, 1, b'C'), (204, 1, b'C'), (205, 1, b'C'), (206, 1, b'C'), (207, 1, b'C'), (208, 1, b'C'), (209, 1, b'C'), (210, 1, b'C'), (211, 1, b'C'), (212, 1, b'C'), (213, 1, b'C'), (214, 1, b'C'), (215, 1, b'C'), (216, 1, b'C'), (217, 1, b'C'), (218, 1, b'C'), (219, 1, b'C'), (220, 1, b'C'), (221, 1, b'C'), (222, 1, b'C'), (223, 1, b'C'), (224, 1, b'C'), (225, 1, b'C'), (226, 1, b'C'), (227, 1, b'C'), (228, 1, b'C'), (229, 1, b'C'), (230, 1, b'C'), (231, 1, b'C'), (232, 1, b'C'), (233, 1, b'C'), (234, 1, b'C'), (235, 1, b'C'), (236, 1, b'C'), (237, 1, b'C'), (238, 1, b'C'), (239, 1, b'C'), (240, 1, b'C'), (241, 1, b'C'), (242, 1, b'C'), (243, 1, b'C'), (244, 1, b'C'), (245, 1, b'C'), (246, 1, b'C'), (247, 1, b'C'), (248, 1, b'C'), (249, 1, b'C'), (250, 1, b'C'), (251, 1, b'C'), (252, 1, b'C'), (253, 1, b'C'), (254, 1, b'C'), (255, 1, b'C'), (256, 1, b'C'), (257, 1, b'C'), (258, 1, b'C'), (259, 1, b'C'), (260, 1, b'C'), (261, 1, b'C'), (262, 1, b'C'), (263, 1, b'C'), (264, 1, b'C'), (265, 1, b'C'), (266, 1, b'C'), (267, 1, b'C'), (268, 1, b'C'), (269, 1, b'C'), (270, 1, b'C'), (271, 1, b'C'), (272, 1, b'C'), (273, 1, b'C'), (274, 1, b'C'), (275, 1, b'C'), (276, 1, b'C'), (277, 1, b'C'), (278, 1, b'C'), (279, 1, b'C'), (280, 1, b'C'), (281, 1, b'C'), (282, 1, b'C'), (283, 1, b'C'), (284, 1, b'C'), (285, 1, b'C'), (286, 1, b'C'), (287, 1, b'C'), (288, 1, b'C'), (289, 1, b'C'), (290, 1, b'C'), (291, 1, b'C'), (292, 1, b'C'), (293, 1, b'C'), (294, 1, b'C'), (295, 1, b'C'), (296, 1, b'C'), (297, 1, b'C'), (298, 1, b'C'), (299, 1, b'C'), (300, 1, b'C'), (301, 1, b'C'), (302, 1, b'C'), (303, 1, b'C'), (304, 1, b'C'), (305, 1, b'C'), (306, 1, b'C'), (307, 1, b'C'), (312, 8, b'p'), (320, 4, b'f'), (324, 4, b'f'), (328, 4, b'f'), (332, 4, b'f'), (336, 4, b'f'), (340, 4, b'f'), (344, 4, b'f'), (348, 4, b'f'), (352, 4, b'f'), (356, 4, b'f'), (360, 4, b'f'), (364, 4, b'f'), (368, 4, b'f'), (372, 4, b'f'), (376, 4, b'f'), (380, 4, b'f'), (384, 4, b'f'), (388, 4, b'f'), (392, 8, b'p'), (400, 8, b'p'), (408, 8, b'p'), (416, 8, b'p'), (424, 8, b'p'), (432, 8, b'p'), (440, 8, b'p'), (448, 8, b'p'), (456, 8, b'p'), (464, 8, b'p'), (472, 8, b'p'), (480, 8, b'p'), (488, 8, b'p'), (496, 8, b'p'), (504, 8, b'p'), (512, 8, b'p'), (520, 8, b'p'), (528, 8, b'p'), (536, 8, b'p'), (544, 8, b'p'), (552, 8, b'p'), (560, 8, b'p'), (568, 8, b'p'), (576, 8, b'p'), (584, 8, b'p'), (592, 8, b'p'), (600, 8, b'p'), (608, 8, b'p'), (616, 8, b'p'), (624, 8, b'p'), (632, 8, b'p'), (640, 8, b'p'), (648, 8, b'p'), (656, 8, b'p'), (664, 8, b'p'), (672, 8, b'p'), (680, 8, b'p'), (688, 8, b'p'), (696, 8, b'p'), (704, 8, b'p'), (712, 8, b'p'), (720, 8, b'p'), (728, 8, b'p'), (736, 8, b'p'), (744, 8, b'p'), (752, 8, b'p'), (760, 8, b'p'), (768, 8, b'p'), (776, 8, b'p'), (784, 8, b'p'), (792, 8, b'p'), (800, 8, b'p'), (808, 8, b'p'), (816, 8, b'p'), (824, 8, b'p'), (832, 8, b'p'), (840, 8, b'p'), (848, 8, b'p'), (856, 8, b'p'), (864, 8, b'p'), (872, 8, b'p'), (880, 8, b'p'), (888, 8, b'p'), (896, 8, b'p'), (904, 8, b'p'), (912, 8, b'p'), (920, 8, b'p'), (928, 8, b'p'), (936, 8, b'p'), (944, 8, b'p'), (952, 8, b'p'), (960, 8, b'p'), (968, 8, b'p'), (976, 8, b'p'), (984, 8, b'p'), (992, 8, b'p'), (1000, 8, b'p'), (1008, 8, b'p'), (1016, 8, b'p'), (1024, 8, b'p'), (1032, 8, b'p'), (1040, 8, b'p'), (1048, 8, b'p'), (1056, 8, b'p'), (1064, 8, b'p'), (1072, 8, b'p'), (1080, 8, b'p'), (1088, 8, b'p'), (1096, 8, b'p'), (1104, 8, b'p'), (1112, 8, b'p'), (1120, 8, b'p'), (1128, 8, b'p'), (1136, 8, b'p'), (1144, 8, b'p'), (1152, 8, b'p'), (1160, 8, b'p'), (1168, 8, b'p'), (1176, 8, b'p'), (1184, 8, b'p'), (1192, 8, b'p'), (1200, 8, b'p'), (1208, 8, b'p'), (1216, 8, b'p'), (1224, 8, b'p'), (1232, 8, b'p'), (1240, 8, b'p'), (1248, 8, b'p'), (1256, 8, b'p'), (1264, 8, b'p'), (1272, 8, b'p'), (1280, 8, b'p'), (1288, 8, b'p'), (1296, 8, b'p'), (1304, 8, b'p'), (1312, 8, b'p'), (1320, 8, b'p'), (1328, 8, b'p'), (1336, 8, b'p'), (1344, 8, b'p'), (1352, 8, b'p'), (1360, 8, b'p'), (1368, 8, b'p'), (1376, 8, b'p'), (1384, 8, b'p'), (1392, 8, b'p'), (1400, 8, b'p'), (1408, 8, b'p'), (1416, 8, b'p'), (1424, 8, b'p'), (1432, 8, b'p'), (1440, 8, b'p'), (1448, 8, b'p'), (1456, 8, b'p'), (1464, 8, b'p'), (1472, 8, b'p'), (1480, 8, b'p'), (1488, 8, b'p'), (1496, 8, b'p'), (1504, 8, b'p'), (1512, 8, b'p'), (1520, 8, b'p'), (1528, 8, b'p'), (1536, 8, b'p'), (1544, 8, b'p'), (1552, 8, b'p'), (1560, 8, b'p'), (1568, 8, b'p'), (1576, 8, b'p'), (1584, 8, b'p'), (1592, 8, b'p'), (1600, 8, b'p'), (1608, 8, b'p'), (1616, 8, b'p'), (1624, 8, b'p'), (1632, 8, b'p'), (1640, 8, b'p'), (1648, 8, b'p'), (1656, 8, b'p'), (1664, 8, b'p'), (1672, 8, b'p'), (1680, 8, b'p'), (1688, 8, b'p'), (1696, 8, b'p'), (1704, 8, b'p'), (1712, 8, b'p'), (1720, 8, b'p'), (1728, 8, b'p'), (1736, 8, b'p'), (1744, 8, b'p'), (1752, 8, b'p'), (1760, 8, b'p'), (1768, 8, b'p'), (1776, 8, b'p'), (1784, 8, b'p'), (1792, 8, b'p'), (1800, 8, b'p'), (1808, 8, b'p'), (1816, 8, b'p'), (1824, 8, b'p'), (1832, 8, b'p'), (1840, 8, b'p'), (1848, 8, b'p'), (1856, 8, b'p'), (1864, 8, b'p'), (1872, 8, b'p'), (1880, 8, b'p'), (1888, 8, b'p'), (1896, 8, b'p'), (1904, 8, b'p'), (1912, 8, b'p'), (1920, 8, b'p'), (1928, 8, b'p'), (1936, 8, b'p'), (1944, 8, b'p'), (1952, 8, b'p'), (1960, 8, b'p'), (1968, 8, b'p'), (1976, 8, b'p'), (1984, 8, b'p'), (1992, 8, b'p'), (2000, 8, b'p'), (2008, 8, b'p'), (2016, 8, b'p'), (2024, 8, b'p'), (2032, 8, b'p'), (2040, 8, b'p'), (2048, 8, b'p'), (2056, 8, b'p'), (2064, 8, b'p'), (2072, 8, b'p'), (2080, 8, b'p'), (2088, 8, b'p'), (2096, 8, b'p'), (2104, 8, b'p'), (2112, 8, b'p'), (2120, 8, b'p'), (2128, 8, b'p'), (2136, 8, b'p'), (2144, 8, b'p'), (2152, 8, b'p'), (2160, 8, b'p'), (2168, 8, b'p'), (2176, 8, b'p'), (2184, 8, b'p'), (2192, 8, b'p'), (2200, 8, b'p'), (2208, 8, b'p'), (2216, 8, b'p'), (2224, 8, b'p'), (2232, 8, b'p'), (2240, 8, b'p'), (2248, 8, b'p'), (2256, 8, b'p'), (2264, 8, b'p'), (2272, 8, b'p'), (2280, 8, b'p'), (2288, 8, b'p'), (2296, 8, b'p'), (2304, 8, b'p'), (2312, 8, b'p'), (2320, 8, b'p'), (2328, 8, b'p'), (2336, 8, b'p'), (2344, 8, b'p'), (2352, 8, b'p'), (2360, 8, b'p'), (2368, 8, b'p'), (2376, 8, b'p'), (2384, 8, b'p'), (2392, 8, b'p'), (2400, 8, b'p'), (2408, 8, b'p'), (2416, 8, b'p'), (2424, 8, b'p'), (2432, 8, b'p'), (2440, 8, b'p'), (2448, 8, b'p'), (2456, 8, b'p'), (2464, 8, b'p'), (2472, 8, b'p'), (2480, 8, b'p'), (2488, 8, b'p'), (2496, 8, b'p'), (2504, 8, b'p'), (2512, 8, b'p'), (2520, 8, b'p'), (2528, 8, b'p'), (2536, 8, b'p'), (2544, 8, b'p'), (2552, 8, b'p'), (2560, 8, b'p'), (2568, 8, b'p'), (2576, 8, b'p'), (2584, 8, b'p'), (2592, 8, b'p'), (2600, 8, b'p'), (2608, 8, b'p'), (2616, 8, b'p'), (2624, 8, b'p'), (2632, 8, b'p'), (2640, 8, b'p'), (2648, 8, b'p'), (2656, 8, b'p'), (2664, 8, b'p'), (2672, 8, b'p'), (2680, 8, b'p'), (2688, 8, b'p'), (2696, 8, b'p'), (2704, 8, b'p'), (2712, 8, b'p'), (2720, 8, b'p'), (2728, 8, b'p'), (2736, 8, b'p'), (2744, 8, b'p'), (2752, 8, b'p'), (2760, 8, b'p'), (2768, 8, b'p'), (2776, 8, b'p'), (2784, 8, b'p'), (2792, 8, b'p'), (2800, 8, b'p'), (2808, 8, b'p'), (2816, 8, b'p'), (2824, 8, b'p'), (2832, 8, b'p'), (2840, 8, b'p'), (2848, 8, b'p'), (2856, 8, b'p'), (2864, 8, b'p'), (2872, 8, b'p'), (2880, 8, b'p'), (2888, 8, b'p'), (2896, 8, b'p'), (2904, 8, b'p'), (2912, 8, b'p'), (2920, 8, b'p'), (2928, 8, b'p'), (2936, 8, b'p'), (2944, 8, b'p'), (2952, 8, b'p'), (2960, 8, b'p'), (2968, 8, b'p'), (2976, 8, b'p'), (2984, 8, b'p'), (2992, 8, b'p'), (3000, 8, b'p'), (3008, 8, b'p'), (3016, 8, b'p'), (3024, 8, b'p'), (3032, 8, b'p'), (3040, 8, b'p'), (3048, 8, b'p'), (3056, 8, b'p'), (3064, 8, b'p'), (3072, 8, b'p'), (3080, 8, b'p'), (3088, 8, b'p'), (3096, 8, b'p'), (3104, 8, b'p'), (3112, 8, b'p'), (3120, 8, b'p'), (3128, 2, b's'), (3130, 2, b's'), (3132, 2, b's'), (3134, 2, b's'), (3136, 4, b'i'), (3140, 2, b's'), (3142, 2, b's'), (3144, 4, b'f'), (3148, 4, b'i'), (3152, 4, b'i'), (3156, 1, b'C'), (3157, 1, b'C'), (3158, 1, b'C'), (3159, 1, b'C'), (3160, 1, b'C'), (3161, 1, b'C'), (3162, 1, b'C'), (3163, 1, b'C'), (3164, 1, b'C'), (3165, 1, b'C'), (3166, 1, b'C'), (3167, 1, b'C'), (3168, 1, b'C'), (3169, 1, b'C'), (3170, 1, b'C'), (3171, 1, b'C'), (3172, 1, b'C'), (3173, 1, b'C'), (3174, 1, b'C'), (3175, 1, b'C'), (3176, 1, b'C'), (3177, 1, b'C'), (3178, 1, b'C'), (3179, 1, b'C'), (3180, 1, b'C'), (3181, 1, b'C'), (3182, 1, b'C'), (3183, 1, b'C'), (3184, 2, b's'), (3188, 4, b'f'), (3192, 4, b'f'), (3196, 4, b'i'), (3200, 4, b'f'), (3204, 4, b'f'), (3208, 4, b'i'), (3212, 4, b'f'), (3216, 4, b'f'), (3224, 8, b'p'), (3232, 4, b'f'), (3236, 4, b'f'), (3240, 4, b'f'), (3244, 4, b'f'), (3248, 4, b'i'), (3252, 1, b'C'), (3253, 1, b'C'), (3254, 1, b'C'), (3255, 1, b'C')];
@@ -344,14 +371,16 @@ unsafe fn bf_fill_StageInfo(p: *mut StageInfo) {
 }
 unsafe fn bf_hash_StageInfo(mut h: u64, p: *const StageInfo) -> u64 {
     let _ = p;
-    h = fnv(h, &(((*p).unk8C.b0()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).unk8C.b1()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).unk8C.b2()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).unk8C.b3()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).unk8C.b4()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).unk8C.b5()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).unk8C.b6()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).unk8C.b7()) as u32).to_le_bytes());
+    if DUMP_N != 0 { print!("
+  BFV:"); }
+    h = fnv(h, &(((*p).unk8C.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).unk8C.b0()) as u32); }
+    h = fnv(h, &(((*p).unk8C.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).unk8C.b1()) as u32); }
+    h = fnv(h, &(((*p).unk8C.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).unk8C.b2()) as u32); }
+    h = fnv(h, &(((*p).unk8C.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).unk8C.b3()) as u32); }
+    h = fnv(h, &(((*p).unk8C.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).unk8C.b4()) as u32); }
+    h = fnv(h, &(((*p).unk8C.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).unk8C.b5()) as u32); }
+    h = fnv(h, &(((*p).unk8C.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).unk8C.b6()) as u32); }
+    h = fnv(h, &(((*p).unk8C.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).unk8C.b7()) as u32); }
     h
 }
 static D_StageCallbacks: &[ODesc] = &[(0, 8, b'p'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 4, b'u'), (32, 1, b'b')];
@@ -372,11 +401,13 @@ unsafe fn bf_fill_RouteEntry(p: *mut RouteEntry) {
 }
 unsafe fn bf_hash_RouteEntry(mut h: u64, p: *const RouteEntry) -> u64 {
     let _ = p;
-    h = fnv(h, &(((*p).flags.b0()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).flags.b1()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).flags.b2_5()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).flags.b6()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).flags.b7()) as u32).to_le_bytes());
+    if DUMP_N != 0 { print!("
+  BFV:"); }
+    h = fnv(h, &(((*p).flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).flags.b0()) as u32); }
+    h = fnv(h, &(((*p).flags.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).flags.b1()) as u32); }
+    h = fnv(h, &(((*p).flags.b2_5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).flags.b2_5()) as u32); }
+    h = fnv(h, &(((*p).flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).flags.b6()) as u32); }
+    h = fnv(h, &(((*p).flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).flags.b7()) as u32); }
     h
 }
 static D_UnkStageDat_x8_t: &[ODesc] = &[(0, 8, b'p'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 8, b'p'), (40, 8, b'p'), (48, 8, b'p'), (56, 8, b'p'), (64, 8, b'p'), (72, 4, b'i'), (80, 8, b'p'), (88, 8, b'p'), (96, 4, b'i')];
@@ -394,10 +425,12 @@ unsafe fn bf_fill_HSD_GObjProc(p: *mut HSD_GObjProc) {
 }
 unsafe fn bf_hash_HSD_GObjProc(mut h: u64, p: *const HSD_GObjProc) -> u64 {
     let _ = p;
-    h = fnv(h, &(((*p).flags_1()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).flags_2()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).flags_3()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).flags_4()) as u32).to_le_bytes());
+    if DUMP_N != 0 { print!("
+  BFV:"); }
+    h = fnv(h, &(((*p).flags_1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).flags_1()) as u32); }
+    h = fnv(h, &(((*p).flags_2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).flags_2()) as u32); }
+    h = fnv(h, &(((*p).flags_3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).flags_3()) as u32); }
+    h = fnv(h, &(((*p).flags_4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).flags_4()) as u32); }
     h
 }
 static D_grBigBlueRoute_YakumonoParam: &[ODesc] = &[(0, 4, b'i'), (4, 4, b'f'), (8, 1, b'C'), (9, 1, b'C'), (10, 1, b'C'), (11, 1, b'C'), (12, 1, b'C'), (13, 1, b'C'), (14, 1, b'C'), (15, 1, b'C'), (16, 1, b'C'), (17, 1, b'C'), (18, 1, b'C'), (19, 1, b'C'), (20, 1, b'C'), (21, 1, b'C'), (22, 1, b'C'), (23, 1, b'C'), (24, 1, b'C'), (25, 1, b'C'), (26, 1, b'C'), (27, 1, b'C'), (28, 1, b'C'), (29, 1, b'C'), (30, 1, b'C'), (31, 1, b'C'), (32, 4, b'f'), (36, 1, b'C'), (37, 1, b'C'), (38, 1, b'C'), (39, 1, b'C'), (40, 1, b'C'), (41, 1, b'C'), (42, 1, b'C'), (43, 1, b'C'), (44, 1, b'C'), (45, 1, b'C'), (46, 1, b'C'), (47, 1, b'C'), (48, 1, b'C'), (49, 1, b'C'), (50, 1, b'C'), (51, 1, b'C'), (52, 1, b'C'), (53, 1, b'C'), (54, 1, b'C'), (55, 1, b'C'), (56, 1, b'C'), (57, 1, b'C'), (58, 1, b'C'), (59, 1, b'C'), (60, 4, b'f'), (64, 4, b'f'), (68, 4, b'f'), (72, 4, b'f'), (76, 4, b'f')];
@@ -564,6 +597,7 @@ unsafe fn world_fill(fi: usize) {
         OJO[NGO + i].parent = addr_of_mut!(OJO[i]);
         OJO[2 * NGO + i].parent = addr_of_mut!(OJO[i]);
     }
+
     NN = 0; t::yakumono_param = addr_of_mut!(OP_grBigBlueRoute_YakumonoParam[0]) as *mut _;
 }
 struct Fn_ { name: &'static str, n: u32 }
@@ -702,9 +736,9 @@ unsafe fn install_hooks() {
         melee_world::tu::grbigblueroute::ext::GRFZEROCAR_801CAFBC = Some(|a0: *mut HSD_GObj, a1: *mut c_void, a2: s32, a3: s32| { lg_s("grFZeroCar_801CAFBC("); lg_ptr(a0 as *const u8 as usize); lg_ptr(a1 as *const u8 as usize); lg_int(a2 as u32); lg_int(a3 as u32); lg_s(")"); lg_c(';'); });
         melee_world::tu::grbigblueroute::ext::GRMATERIAL_801C8CFC = Some(|a0: i32, a1: i32, a2: *mut Ground, a3: *mut HSD_JObj, a4: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground)>, a5: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut Vec, *mut HSD_GObj, f32)>, a6: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut HSD_GObj)>| -> *mut HSD_GObj { lg_s("grMaterial_801C8CFC("); lg_int(a0 as u32); lg_int(a1 as u32); lg_ptr(a2 as *const u8 as usize); lg_ptr(a3 as *const u8 as usize); lg_ptr(fnaddr(a4)); lg_ptr(fnaddr(a5)); lg_ptr(fnaddr(a6)); lg_s(")"); { let r = gen_gobj() as *mut HSD_GObj; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grbigblueroute::ext::GRMATERIAL_801C8E28 = Some(|a0: *mut HSD_GObj| { lg_s("grMaterial_801C8E28("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
-        melee_world::tu::grbigblueroute::ext::GRZAKOGENERATOR_801CAE04 = Some(|a0: *mut grZakoGenerator_SpawnDesc| -> *mut HSD_GObj { lg_s("grZakoGenerator_801CAE04("); lg_ps(a0 as *const u8, core::mem::size_of::<grZakoGenerator_SpawnDesc>(), D_grZakoGenerator_SpawnDesc); lg_s(")"); { let r = gen_gobj() as *mut HSD_GObj; lg_retp(r as usize); lg_c(';'); r } });
+        melee_world::tu::grbigblueroute::ext::GRZAKOGENERATOR_801CAE04 = Some(|a0: *mut grZakoGenerator_SpawnDesc| -> *mut HSD_GObj { lg_s("grZakoGenerator_801CAE04("); gr_lg_ps(a0 as *const u8, core::mem::size_of::<grZakoGenerator_SpawnDesc>(), D_grZakoGenerator_SpawnDesc); lg_s(")"); { let r = gen_gobj() as *mut HSD_GObj; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grbigblueroute::ext::GRZAKOGENERATOR_801CAEB0 = Some(|a0: i32, a1: i32| { lg_s("grZakoGenerator_801CAEB0("); lg_int(a0 as u32); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
-        melee_world::tu::grbigblueroute::ext::LBSHADOW_8000E9F0 = Some(|a0: *mut Vec, a1: *mut HSD_Spline, a2: f32| { lg_s("lbShadow_8000E9F0("); lg_v3(a0 as *const _ as *const Vec3); lg_ps(a1 as *const u8, core::mem::size_of::<HSD_Spline>(), D_HSD_Spline); lg_f(a2); lg_s(")"); lg_ov3(a0 as *mut _); lg_c(';'); });
+        melee_world::tu::grbigblueroute::ext::LBSHADOW_8000E9F0 = Some(|a0: *mut Vec, a1: *mut HSD_Spline, a2: f32| { lg_s("lbShadow_8000E9F0("); lg_v3(a0 as *const _ as *const Vec3); gr_lg_ps(a1 as *const u8, core::mem::size_of::<HSD_Spline>(), D_HSD_Spline); lg_f(a2); lg_s(")"); lg_ov3(a0 as *mut _); lg_c(';'); });
         melee_world::tu::grbigblueroute::ext::LBVECTOR_ADD = Some(|a0: *mut Vec, a1: *mut Vec| -> *mut Vec { lg_s("lbVector_Add("); lg_v3(a0 as *const _ as *const Vec3); lg_v3(a1 as *const _ as *const Vec3); lg_s(")"); { let r = gen_p() as *mut Vec; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grbigblueroute::ext::LBVECTOR_DIFF = Some(|a0: *mut Vec, a1: *mut Vec, a2: *mut Vec| -> *mut Vec { lg_s("lbVector_Diff("); lg_v3(a0 as *const _ as *const Vec3); lg_v3(a1 as *const _ as *const Vec3); lg_v3(a2 as *const _ as *const Vec3); lg_s(")"); lg_ov3(a2 as *mut _); { let r = gen_p() as *mut Vec; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grbigblueroute::ext::LBVECTOR_NORMALIZE = Some(|a0: *mut Vec| -> f32 { lg_s("lbVector_Normalize("); lg_v3(a0 as *const _ as *const Vec3); lg_s(")"); { let r = rf(); lg_retf(r); lg_c(';'); r } });
@@ -713,7 +747,7 @@ unsafe fn install_hooks() {
         melee_world::tu::grbigblueroute::ext::LB_8000B1CC = Some(|a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec| { lg_s("lb_8000B1CC("); lg_ptr(a0 as *const u8 as usize); lg_v3(a1 as *const _ as *const Vec3); lg_v3(a2 as *const _ as *const Vec3); lg_s(")"); lg_ov3(a2 as *mut _); lg_c(';'); });
         melee_world::tu::grbigblueroute::ext::LB_800115F4 = Some(|| { lg_s("lb_800115F4("); lg_s(")"); lg_c(';'); });
         melee_world::tu::grbigblueroute::ext::MEMZERO = Some(|a0: *mut c_void, a1: ssize_t| { lg_s("memzero("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
-        melee_world::tu::grbigblueroute::ext::SPLGETSPLINEPOINT = Some(|a0: *mut Vec, a1: *mut HSD_Spline, a2: f32| { lg_s("splGetSplinePoint("); lg_v3(a0 as *const _ as *const Vec3); lg_ps(a1 as *const u8, core::mem::size_of::<HSD_Spline>(), D_HSD_Spline); lg_f(a2); lg_s(")"); lg_ov3(a0 as *mut _); lg_c(';'); });
+        melee_world::tu::grbigblueroute::ext::SPLGETSPLINEPOINT = Some(|a0: *mut Vec, a1: *mut HSD_Spline, a2: f32| { lg_s("splGetSplinePoint("); lg_v3(a0 as *const _ as *const Vec3); gr_lg_ps(a1 as *const u8, core::mem::size_of::<HSD_Spline>(), D_HSD_Spline); lg_f(a2); lg_s(")"); lg_ov3(a0 as *mut _); lg_c(';'); });
         melee_world::tu::grbigblueroute::ext::UN_802FD604 = Some(|a0: i32| { lg_s("un_802FD604("); lg_int(a0 as u32); lg_s(")"); lg_c(';'); });
         melee_world::tu::grbigblueroute::ext::UN_802FD65C = Some(|| { lg_s("un_802FD65C("); lg_s(")"); lg_c(';'); });
         melee_world::tu::grbigblueroute::ext::UN_802FD8E8 = Some(|a0: *mut DynamicModelDesc| { lg_s("un_802FD8E8("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
@@ -745,10 +779,22 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
         _ => {}
     }
 }
+static mut DUMP_N: usize = 0;
 unsafe fn img_hash(h: u64, img: &[u8], d: &[ODesc]) -> u64 {
     let mut tmp: std::vec::Vec<u8> = img.to_vec();
+    if DUMP_N != 0 && tmp.len() == DUMP_N { let mut line = std::string::String::from("  RAWG:"); for c in tmp.chunks_exact(4) { line.push_str(&format!(" {:08x}", u32::from_le_bytes(c.try_into().unwrap()))); } println!("{}", line); }
     onorm(&mut tmp, d);
-    for &(off, size, kind) in d { if kind == b'b' { for j in 0..size as usize { tmp[off as usize + j] = 0; } } }
+    for &(off, size, kind) in d {
+        if kind == b'b' { for j in 0..size as usize { tmp[off as usize + j] = 0; } }
+        else if kind == b'P' {
+            let o = off as usize;
+            let mut v = u32::from_le_bytes(tmp[o..o + 4].try_into().unwrap());
+            if v != 0 { let r = normptr(v as usize); v = ((r >> 32) as u32).wrapping_mul(0x10000).wrapping_add(r as u32); }
+            tmp[o..o + 4].copy_from_slice(&v.to_le_bytes());
+        }
+    }
+    if DUMP_N != 0 && tmp.len() == core::mem::size_of::<HSD_JObj>() { let mut line = std::string::String::from("  IMGJ:"); for c in tmp.chunks_exact(4) { line.push_str(&format!(" {:08x}", u32::from_le_bytes(c.try_into().unwrap()))); } println!("{}", line); }
+    if DUMP_N != 0 && tmp.len() == DUMP_N { let mut line = std::string::String::from("  IMGG:"); for c in tmp.chunks_exact(4) { line.push_str(&format!(" {:08x}", u32::from_le_bytes(c.try_into().unwrap()))); } println!("{}", line); }
     fnv(h, &tmp)
 }
 unsafe fn word_hash(mut h: u64, img: &[u8]) -> u64 {
@@ -820,7 +866,7 @@ fn state_matches_c() {
     unsafe {
         let want = include_str!("data/gro_grbigblueroute.txt");
         let mut lines = want.lines();
-        let verbose = std::env::var("ORACLE_VERBOSE").ok();
+        let verbose = std::env::var("ORACLE_VERBOSE").ok(); if verbose.is_some() { DUMP_N = core::mem::size_of::<Ground>(); }
         let hdr: std::vec::Vec<usize> = lines.next().unwrap().split_whitespace().skip(1).map(|s| s.parse().unwrap()).collect();
         let sizes: std::vec::Vec<usize> = std::vec![core::mem::size_of::<Ground>(), core::mem::size_of::<HSD_GObj>(), core::mem::size_of::<HSD_JObj>(), core::mem::size_of::<StageInfo>(), core::mem::size_of_val(&*addr_of!(t::yakumono_param)), core::mem::size_of_val(&*addr_of!(t::grBb_Route_StageCallbacks)), core::mem::size_of_val(&*addr_of!(t::grBb_Route_StageData)), core::mem::size_of_val(&*addr_of!(t::grBb_Route_carJObjIds)), core::mem::size_of_val(&*addr_of!(t::grBb_Route_803B83E0)), core::mem::size_of_val(&*addr_of!(OCAR)), core::mem::size_of_val(&*addr_of!(OJC)), core::mem::size_of_val(&*addr_of!(OJA)), core::mem::size_of_val(&*addr_of!(OX8))];
         assert_eq!(hdr, sizes, "struct sizes (C native layout vs the Rust port)");
@@ -831,9 +877,9 @@ fn state_matches_c() {
         for (fi, fnn) in FNS.iter().enumerate() {
             let mut agg = FNV0;
             let vb = verbose.as_deref() == Some(fnn.name);
-            if verbose.is_some() && !vb {
-                continue;
-            }
+            DUMP_N = if vb { core::mem::size_of::<Ground>() } else { 0 };
+
+
             for k in 0..fnn.n {
                 let mut h = FNV0;
                 RS = 0x9E37_79B9u32 ^ ((fi as u32).wrapping_mul(7919).wrapping_add(k.wrapping_mul(104729)).wrapping_add(1));
@@ -845,7 +891,7 @@ fn state_matches_c() {
                 for i in 0..2 { a.v2[i].x = rf(); a.v2[i].y = rf(); }
                 for i in 0..2 { a.pf[i] = rf(); }
                 for i in 0..2 { a.pi[i] = (rnd() % 8) as i32; }
-                case_pre(fi, &mut a);
+                case_pre(fi, &mut a); if vb { println!("PRE"); world_hash(fi); println!("ENDPRE"); }
                 LG.clear();
                 let (rv, _rb) = call_fn(fi, &mut a);
                 let ho = fnv(FNV0, LG.as_bytes());
@@ -861,6 +907,7 @@ fn state_matches_c() {
                     let hs: std::vec::Vec<std::string::String> = WH.iter().map(|x| format!("{:x},", x & 0xFF_FFFF)).collect();
                     println!("{} {:016x} ret={:x} W={:016x} L={:016x} H={}
   {}", k, h, rv, hw, ho, hs.concat(), LG);
+                    for q in 0..NGO { let mut line = format!("  OGP{}:", q); let base = addr_of!(OGP[q]) as *const u8; for w in (0..core::mem::size_of::<Ground>()).step_by(4) { line.push_str(&format!(" {:08x}", core::ptr::read_unaligned(base.add(w) as *const u32))); } println!("{}", line); }
                 }
                 agg = fnv(agg, &h.to_le_bytes());
             }

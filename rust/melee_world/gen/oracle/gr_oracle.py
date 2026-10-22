@@ -37,6 +37,9 @@ O.ROOT = ROOT
 # the MinGW (Itanium) ABI of the same LLP64 data model; the object code is still produced for the MSVC target.
 assert O.COMMON[0] == "--target=x86_64-pc-windows-msvc"
 O.COMMON[0] = "--target=x86_64-pc-windows-gnu"
+import os as _os
+if _os.environ.get("GRO_DEBUG"):
+    O.SHIP_IR = O.SHIP_IR + ["-g", "-gcodeview"]
 K, T = O.K, O.T
 NGO = 6
 NJO = 3 * NGO + 6
@@ -171,6 +174,24 @@ def ret_pool(ret):
 
 
 LG_STR_C = r"""
+static void gr_lg_ps(const void* p, u32 n, const ODesc* d, int nd)
+{
+    lg_c('@');
+    lg_hmin(normptr(p));
+    if (p) {
+        static unsigned char tmp[1024];
+        u32 i;
+        int k;
+        for (i = 0; i < n; i++) tmp[i] = ((const unsigned char*) p)[i];
+        onorm(tmp, d, nd);
+        for (k = 0; k < nd; k++)
+            if (d[k].kind == 'b') for (i = 0; i < d[k].size; i++) tmp[d[k].off + i] = 0;
+        lg_c('{');
+        lg_hx(fnv(FNV0, tmp, n), 16);
+        lg_c('}');
+    }
+    lg_c(',');
+}
 static void lg_str(const char* s)
 {
     lg_c('"');
@@ -187,6 +208,21 @@ static void lg_vaw(u64_ w, char c)
 """
 
 RS_LG_STR = r"""
+pub fn gr_lg_ps(p: *const u8, n: usize, d: &[ODesc]) {
+    lg_c('@');
+    lg_hmin(normptr(p as usize));
+    if !p.is_null() {
+        let mut tmp = unsafe { core::slice::from_raw_parts(p, n) }.to_vec();
+        unsafe { onorm(&mut tmp, d) };
+        for &(off, size, kind) in d {
+            if kind == b'b' { for j in 0..size as usize { tmp[off as usize + j] = 0; } }
+        }
+        lg_c('{');
+        lg_hx(fnv(FNV0, &tmp), 16);
+        lg_c('}');
+    }
+    lg_c(',');
+}
 pub fn lg_str(s: *const i8) {
     lg_c('"');
     if !s.is_null() {
@@ -209,6 +245,17 @@ pub fn lg_vaw(w: u64, c: u8) {
     else { lg_ptr(w as usize); }
 }
 """
+
+
+def link_low(objs, stem):
+    """O.link, but the image is not large-address-aware and is based low: every pointer fits a u32, like the
+    game's u32 fields that hold pointers (`(u32) gobj`)."""
+    gk = O.gekko_obj()
+    exe = O.BUILD / f"{stem}_oracle.exe"
+    O.run([O.CLANG, "--target=x86_64-pc-windows-msvc", *map(str, objs), str(gk), "-o", str(exe),
+           "-fuse-ld=lld", "-Wl,/FORCE:UNRESOLVED", "-Wl,/IGNORE:4006", "-Wl,/IGNORE:4088", "-Wl,/LARGEADDRESSAWARE:NO",
+           "-Wl,/DYNAMICBASE:NO", "-Wl,/BASE:0x10000000", "-Wl,/HIGHENTROPYVA:NO"] + (["-Wl,/DEBUG"] if _os.environ.get("GRO_DEBUG") else []), "link")
+    return exe
 
 
 def load_spec(stem):
@@ -238,6 +285,10 @@ def field_offset(pr, tname, path):
     t = pr.type(tname).get_canonical()
     total = 0
     for comp in path.split("."):
+        idx = None
+        if comp.endswith("]"):
+            comp, ix = comp[:-1].split("[")
+            idx = int(ix)
         off = t.get_offset(comp)
         if off < 0:
             raise SystemExit(f"gro: no member {comp} in {t.spelling} ({off})")
@@ -245,6 +296,9 @@ def field_offset(pr, tname, path):
         ft = _find_field(t, comp)
         if ft is None:
             raise SystemExit(f"gro: cannot find the type of {comp} in {t.spelling}")
+        if idx is not None:
+            total += idx * ft.element_type.get_size()
+            ft = ft.element_type.get_canonical()
         t = ft
     return total
 
@@ -359,7 +413,7 @@ def build(stem, verbose_fn=None):
         p1.write_text("\n".join(head) + "\nint main(void) { return 0; }\n", encoding="utf-8")
         obj1 = O.ship_obj(p1, f"gro_{stem}_p1")
         nm = [l.split()[-1] for l in O.run([O.NM, "--undefined-only", str(obj1)], "nm").stdout.splitlines() if " U " in " " + l.strip() + " "]
-        extra = [n for n in nm if n in pr.funcs and n not in variadic and n not in spec.get("provides", []) and pr.funcs[n].type.kind == T.FUNCTIONPROTO
+        extra = [n for n in nm if n in pr.funcs and not n.endswith('__va') and n not in variadic and n not in spec.get("provides", []) and pr.funcs[n].type.kind == T.FUNCTIONPROTO
                  and pr.funcs[n].type.is_function_variadic() and not pr.funcs[n].is_definition()]
         if not extra:
             break
@@ -378,6 +432,12 @@ def build(stem, verbose_fn=None):
             continue
         if n in pr.funcs:
             txt, kinds, rk, ret = O.stub_c(n, pr.funcs[n])
+            txt = txt.replace("lg_ps(", "gr_lg_ps(")
+            # a function-like macro of the same name (HSD_JObjSetMtxDirty) must not expand in the definition
+            first_, rest_ = txt.split("\n", 1)
+            mm = re.match(r"^(.*?) " + re.escape(n) + r"\((.*)\)$", first_)
+            if mm:
+                txt = f"{mm.group(1)} ({n})({mm.group(2)})\n" + rest_
             if rk.startswith("ps:"):
                 txt = txt[:txt.rindex("}")] + f"    {{ {ret.spelling} r = ({ret.spelling}) gen_p(); lg_retp((const void*) r); lg_c(';'); return r; }}\n}}"
                 rk = "p"
@@ -390,7 +450,7 @@ def build(stem, verbose_fn=None):
             if n in variadic:
                 nf = variadic[n]["nfixed"]
                 first, rest = txt.split("\n", 1)
-                m = re.match(r"^(.*?) " + n + r"\((.*)\)$", first)
+                m = re.match(r"^(.*?) \(?" + n + r"\)?\((.*)\)$", first)
                 params = m.group(2)
                 params = "" if params == "void" else params
                 first = f"static {m.group(1)} {n}__va(int nva{', ' + params if params else ''}, ...)"
@@ -437,21 +497,28 @@ def build(stem, verbose_fn=None):
     reg("HSD_JObj")
     # Ground variants by the Ground.u members they use
     def uset(f):
-        return (tuple(sorted(f.get("u", spec.get("u", [])))), tuple(f.get("ov", spec.get("ov", []))))
+        return (tuple(sorted(f.get("u", spec.get("u", [])))), tuple(f.get("ov", spec.get("ov", []))), tuple(f.get("bfs", spec.get("bfs", []))))
     usets = []
     for f in fspecs:
         u = uset(f)
         if u not in usets:
             usets.append(u)
     if not usets:
-        usets.append(((), ()))
+        usets.append(((), (), ()))
     overlays_spec = spec.get("overlays", {})
-    for k, (u, ov) in enumerate(usets):
+    for k, (u, ov, bfs) in enumerate(usets):
         def keep(p, u=u):
             if p == "u" or not p.startswith("u."):
                 return True
             return p.split(".")[1] in u
         reg(f"Ground_{k}", "Ground", "Ground", keep=keep)
+        if bfs:
+            # bitfield paths whose storage the function writes through an integer member of another union member
+            # (the C packs bitfields LSB-first, the Rust records MSB-first: the bytes alias differently by design)
+            TYPES[f"Ground_{k}"]["bf"] = [b for b in TYPES[f"Ground_{k}"]["bf"] if not any(b[0].startswith(x) for x in bfs)]
+            for x in bfs:
+                boff = field_offset(pr, "Ground", x)
+                TYPES[f"Ground_{k}"]["desc"] = [e for e in TYPES[f"Ground_{k}"]["desc"] if not (e[0] == boff and e[2] == "b")]
         TYPES[f"Ground_{k}"]["ov"] = []
         for oid in ov:
             o = overlays_spec[oid]
@@ -463,6 +530,11 @@ def build(stem, verbose_fn=None):
             d.append((off, size, "b"))
             TYPES[f"Ground_{k}"]["desc"] = d
             TYPES[f"Ground_{k}"]["ov"].append((off, o["ty"]))
+        for path in spec.get("u32ptr", []):
+            if path.startswith("u.") and path.split(".")[1] not in u:
+                continue
+            off = field_offset(pr, "Ground", path)
+            TYPES[f"Ground_{k}"]["desc"] = [(a, b, ("P" if (a == off and b == 4) else c)) for (a, b, c) in TYPES[f"Ground_{k}"]["desc"]]
     gv_of = [usets.index(uset(f)) for f in fspecs]
     for g in spec.get("globals", []):
         reg(g["ty"])
@@ -505,7 +577,7 @@ def build(stem, verbose_fn=None):
         return f"static const ODesc D_{name}[] = {{\n" + ",\n".join(f"    {{ {o}, {s}, '{k}' }}" for o, s, k in lst) + ("," if lst else "") + "\n    { 0, 0, 0 }\n};\n#define ND_" + name + " (sizeof D_" + name + " / sizeof D_" + name + "[0] - 1)\n"
 
     def cfill(name, lst):
-        l2 = [x for x in lst if x[2] != 'b']
+        l2 = [x for x in lst if x[2] not in ('b', 'P')]
         return f"static const ODesc F_{name}[] = {{\n" + ",\n".join(f"    {{ {o}, {s}, '{k}' }}" for o, s, k in l2) + ("," if l2 else "") + "\n    { 0, 0, 0 }\n};\n#define NF_" + name + " (sizeof F_" + name + " / sizeof F_" + name + "[0] - 1)\n"
 
     def c_bf_funcs(tag):
@@ -516,9 +588,9 @@ def build(stem, verbose_fn=None):
             m = (1 << (w - 1 if sg else w)) - 1
             L.append(f"    p->{cp} = (rnd() & {m}u);")
         L.append("}")
-        L.append(f"static u64_ bf_hash_{tag}(u64_ h, const {t['cs']}* p)\n{{\n    u32 v;\n    (void) p; (void) v;")
+        L.append(f"static unsigned DUMP_N;\nstatic u64_ bf_hash_{tag}(u64_ h, const {t['cs']}* p)\n{{\n    u32 v;\n    (void) p; (void) v;\n    if (DUMP_N) printf(\"%c  BFV:\", 10);")
         for cp, rp, nm_, w, sg in b:
-            L.append(f"    v = (u32) p->{cp}; h = fnv(h, &v, 4);")
+            L.append(f"    v = (u32) p->{cp}; h = fnv(h, &v, 4); if (DUMP_N) printf(\" %x\", v);")
         L.append("    return h;\n}")
         return "\n".join(L)
 
@@ -530,9 +602,9 @@ def build(stem, verbose_fn=None):
             m = (1 << (w - 1 if sg else w)) - 1
             L.append(f"    (*p).{rp + '.' if rp else ''}set_{nm_}((rnd() & {m}) as _);")
         L.append("}")
-        L.append(f"unsafe fn bf_hash_{tag}(mut h: u64, p: *const {t['c']}) -> u64 {{\n    let _ = p;")
+        L.append(f"unsafe fn bf_hash_{tag}(mut h: u64, p: *const {t['c']}) -> u64 {{\n    let _ = p;\n    if DUMP_N != 0 {{ print!(\"\n  BFV:\"); }}")
         for cp, rp, nm_, w, sg in b:
-            L.append(f"    h = fnv(h, &(((*p).{rp + '.' if rp else ''}{nm_}()) as u32).to_le_bytes());")
+            L.append(f"    h = fnv(h, &(((*p).{rp + '.' if rp else ''}{nm_}()) as u32).to_le_bytes()); if DUMP_N != 0 {{ print!(\" {{:x}}\", ((*p).{rp + '.' if rp else ''}{nm_}()) as u32); }}")
         L.append("    h\n}")
         return "\n".join(L)
 
@@ -704,14 +776,24 @@ static u64_ hfl(u64_ h, const float* p, int n)
     for (i = 0; i < n; i++) { u32 b = BC_(p[i]); h = fnv(h, &b, 4); }
     return h;
 }
+
 static u64_ img_hash(u64_ h, const void* p, unsigned n, const ODesc* d, int nd)
 {
     static unsigned char tmp[65536];
     unsigned i, j;
     for (i = 0; i < n; i++) tmp[i] = ((const unsigned char*) p)[i];
+    if (DUMP_N && n == DUMP_N) { printf("  RAWG:"); for (i = 0; i + 4 <= n; i += 4) printf(" %08x", *(u32*) (tmp + i)); printf("%c", 10); }
     onorm(tmp, d, nd);
-    for (i = 0; i < (unsigned) nd; i++)
+    for (i = 0; i < (unsigned) nd; i++) {
         if (d[i].kind == 'b') for (j = 0; j < d[i].size; j++) tmp[d[i].off + j] = 0;
+        else if (d[i].kind == 'P') {
+            u32 v = (u32) tmp[d[i].off] | (u32) tmp[d[i].off + 1] << 8 | (u32) tmp[d[i].off + 2] << 16 | (u32) tmp[d[i].off + 3] << 24;
+            if (v) { u64_ r = normptr((const void*) (unsigned long long) v); v = (u32) (r >> 32) * 0x10000u + (u32) r; }
+            for (j = 0; j < 4; j++) tmp[d[i].off + j] = (unsigned char) (v >> (8 * j));
+        }
+    }
+    if (DUMP_N && n == sizeof(HSD_JObj)) { printf("  IMGJ:"); for (i = 0; i + 4 <= n; i += 4) printf(" %08x", *(u32*) (tmp + i)); printf("%c", 10); }
+    if (DUMP_N && n == DUMP_N) { printf("  IMGG:"); for (i = 0; i + 4 <= n; i += 4) printf(" %08x", *(u32*) (tmp + i)); printf("%c", 10); }
     return fnv(h, tmp, n);
 }
 /* a pointer-sized word that names a registered region is replaced by its name; other words stay */
@@ -754,8 +836,10 @@ static u64_ word_hash(u64_ h, const void* p, unsigned n)
         hdr_items.append(f"(unsigned) sizeof({g['c']})")
     for st in statics:
         hdr_items.append(f"(unsigned) sizeof({st['c']})")
+    S.append("static const char* CUR_FN; static int CUR_K; static const char* CUR_PH;\n__declspec(dllimport) void* __stdcall SetUnhandledExceptionFilter(long (__stdcall *)(void*));\nstatic long __stdcall gro_filter(void* ep) { (void) ep; printf(\"CRASH in %s case %d phase %s, log tail: %s\\n\", CUR_FN, CUR_K, CUR_PH, LGN > 1200 ? LG + LGN - 1200 : LG); _flushall(); return 1; }")
     S.append("int main(int argc, char** argv)\n{")
-    S.append("    int fi;\n    int verbose = argc > 2 && !strcmp(argv[1], \"-v\");\n    unsigned nf = sizeof OFNS_ / sizeof OFNS_[0];")
+    S.append("    SetUnhandledExceptionFilter(gro_filter);")
+    S.append("    int fi;\n    int verbose = argc > 2 && !strcmp(argv[1], \"-v\"); if (verbose) DUMP_N = (unsigned) sizeof(Ground);\n    unsigned nf = sizeof OFNS_ / sizeof OFNS_[0];")
     S.append('    printf("hdr' + " %u" * len(hdr_items) + '\\n", ' + ", ".join(hdr_items) + ");")
     S.append("""    world_reg();
     world_reg_fns();
@@ -764,13 +848,16 @@ static u64_ word_hash(u64_ h, const void* p, unsigned n)
         int k;
         const OFn* fn = &OFNS_[fi];
         int vb = verbose && !strcmp(argv[2], fn->name);
-        if (verbose && !vb) continue;
+        DUMP_N = vb ? (unsigned) sizeof(Ground) : 0;
         for (k = 0; k < fn->n; k++) {
             u64_ h = FNV0, rv, hW, hO;
             u32 retbits = 0;
             int i;
             rs = 0x9E3779B9u ^ ((u32) fi * 7919u + (u32) k * 104729u + 1u);
+            CUR_FN = fn->name; CUR_K = k;
+            CUR_PH = "fill";
             world_fill(fi);
+            CUR_PH = "pre";
             for (i = 0; i < 4; i++) AI[i] = rnd() % 4;
             for (i = 0; i < 2; i++) AF[i] = rf();
             for (i = 0; i < 2; i++) { AV3[i].x = rf(); AV3[i].y = rf(); AV3[i].z = rf(); }
@@ -778,8 +865,11 @@ static u64_ word_hash(u64_ h, const void* p, unsigned n)
             for (i = 0; i < 2; i++) APF[i] = rf();
             for (i = 0; i < 2; i++) API[i] = (int) (rnd() % 8);
             case_pre(fi);
+            if (vb) { printf("PRE%c", 10); world_hash(fi); printf("ENDPRE%c", 10); }
             LGN = 0;
+            CUR_PH = "call";
             rv = call_fn(fi, &retbits);
+            CUR_PH = "hash";
             LG[LGN] = 0;
             hO = fnv(FNV0, LG, LGN);
             hW = world_hash(fi);
@@ -787,7 +877,7 @@ static u64_ word_hash(u64_ h, const void* p, unsigned n)
             h = hfl(h, (const float*) AV3, 6); h = hfl(h, (const float*) AV2, 4); h = hfl(h, APF, 2);
             h = fnv(h, API, sizeof API);
             if (vb)
-                { int q; printf("%d %016llx ret=%llx W=%016llx L=%016llx H=", k, h, rv, hW, hO); for (q = 0; q < NWH; q++) printf("%llx,", WH[q] & 0xFFFFFFull); printf("\\n  %s\\n", LG); }
+                { int q; printf("%d %016llx ret=%llx W=%016llx L=%016llx H=", k, h, rv, hW, hO); for (q = 0; q < NWH; q++) printf("%llx,", WH[q] & 0xFFFFFFull); printf("\\n  %s\\n", LG); for (q = 0; q < NGO; q++) { int w; printf("  OGP%d:", q); for (w = 0; w < (int) sizeof(Ground); w += 4) printf(" %08x", *(u32*) ((char*) &OGP[q] + w)); printf("\\n"); } }
             agg = fnv(agg, &h, 8);
         }
         if (!verbose) printf("%s %016llx\\n", fn->name, agg);
@@ -797,7 +887,7 @@ static u64_ word_hash(u64_ h, const void* p, unsigned n)
     drv = "\n".join(S) + "\n"
     dp = O.BUILD / f"gro_{stem}.c"
     dp.write_text(drv, encoding="utf-8")
-    exe = O.link([O.ship_obj(dp, f"gro_{stem}")], f"gro_{stem}")
+    exe = link_low([O.ship_obj(dp, f"gro_{stem}")], f"gro_{stem}")
     res = subprocess.run([str(exe)] + (["-v", verbose_fn] if verbose_fn else []), capture_output=True, text=True, timeout=900)
     if res.returncode != 0 or "ASSERT" in res.stdout:
         sys.stderr.write(res.stdout[-3000:] + res.stderr[-3000:])
@@ -819,12 +909,12 @@ static u64_ word_hash(u64_ h, const void* p, unsigned n)
          f"use melee_world::tu::{rs_main} as t;", "use melee_types::*;", "use oracle_common::*;", spec.get("use_rs", ""), RS_LG_STR]
     for tag, t in TYPES.items():
         R.append(f"static D_{tag}: &[ODesc] = &[" + ", ".join(f"({o}, {s}, b'{kd}')" for o, s, kd in t["desc"]) + "];")
-        R.append(f"static F_{tag}: &[ODesc] = &[" + ", ".join(f"({o}, {s}, b'{kd}')" for o, s, kd in t["desc"] if kd != 'b') + "];")
+        R.append(f"static F_{tag}: &[ODesc] = &[" + ", ".join(f"({o}, {s}, b'{kd}')" for o, s, kd in t["desc"] if kd not in ('b', 'P')) + "];")
         if t["bf"]:
             R.append(rs_bf_funcs(tag))
     for i, st in enumerate(statics):
         R.append(f"static D_st{i}: &[ODesc] = &[" + ", ".join(f"({o}, {s}, b'{kd}')" for o, s, kd in st["desc"]) + "];")
-        R.append(f"static F_st{i}: &[ODesc] = &[" + ", ".join(f"({o}, {s}, b'{kd}')" for o, s, kd in st["desc"] if kd != 'b') + "];")
+        R.append(f"static F_st{i}: &[ODesc] = &[" + ", ".join(f"({o}, {s}, b'{kd}')" for o, s, kd in st["desc"] if kd not in ('b', 'P')) + "];")
     R.append(f"const NGO: usize = {NGO};\nconst NJO: usize = {NJO};")
     R.append("static GVAR: &[usize] = &[" + ", ".join(str(x) for x in gv_of) + "];")
     R.append("static mut OGO: [HSD_GObj; NGO] = unsafe { core::mem::zeroed() };\nstatic mut OGP: [Ground; NGO] = unsafe { core::mem::zeroed() };\nstatic mut OJO: [HSD_JObj; NJO] = unsafe { core::mem::zeroed() };")
@@ -941,7 +1031,8 @@ unsafe fn gen_ground() -> *mut c_void { let k = rnd() % (NGO as u32 + 1); if k !
         if f.get("pre_rs"):
             R.append(f"        {fi} => {{ {f['pre_rs']} }}")
     R.append("        _ => {}\n    }\n}")
-    R.append("unsafe fn img_hash(h: u64, img: &[u8], d: &[ODesc]) -> u64 {\n    let mut tmp: std::vec::Vec<u8> = img.to_vec();\n    onorm(&mut tmp, d);\n    for &(off, size, kind) in d { if kind == b'b' { for j in 0..size as usize { tmp[off as usize + j] = 0; } } }\n    fnv(h, &tmp)\n}")
+    R.append("static mut DUMP_N: usize = 0;")
+    R.append("unsafe fn img_hash(h: u64, img: &[u8], d: &[ODesc]) -> u64 {\n    let mut tmp: std::vec::Vec<u8> = img.to_vec();\n    if DUMP_N != 0 && tmp.len() == DUMP_N { let mut line = std::string::String::from(\"  RAWG:\"); for c in tmp.chunks_exact(4) { line.push_str(&format!(\" {:08x}\", u32::from_le_bytes(c.try_into().unwrap()))); } println!(\"{}\", line); }\n    onorm(&mut tmp, d);\n    for &(off, size, kind) in d {\n        if kind == b'b' { for j in 0..size as usize { tmp[off as usize + j] = 0; } }\n        else if kind == b'P' {\n            let o = off as usize;\n            let mut v = u32::from_le_bytes(tmp[o..o + 4].try_into().unwrap());\n            if v != 0 { let r = normptr(v as usize); v = ((r >> 32) as u32).wrapping_mul(0x10000).wrapping_add(r as u32); }\n            tmp[o..o + 4].copy_from_slice(&v.to_le_bytes());\n        }\n    }\n    if DUMP_N != 0 && tmp.len() == core::mem::size_of::<HSD_JObj>() { let mut line = std::string::String::from(\"  IMGJ:\"); for c in tmp.chunks_exact(4) { line.push_str(&format!(\" {:08x}\", u32::from_le_bytes(c.try_into().unwrap()))); } println!(\"{}\", line); }\n    if DUMP_N != 0 && tmp.len() == DUMP_N { let mut line = std::string::String::from(\"  IMGG:\"); for c in tmp.chunks_exact(4) { line.push_str(&format!(\" {:08x}\", u32::from_le_bytes(c.try_into().unwrap()))); } println!(\"{}\", line); }\n    fnv(h, &tmp)\n}")
     R.append("""unsafe fn word_hash(mut h: u64, img: &[u8]) -> u64 {
     let mut i = 0;
     while i + 8 <= img.len() {
@@ -985,7 +1076,7 @@ fn state_matches_c() {
     unsafe {
         let want = include_str!("data/gro_@STEM@.txt");
         let mut lines = want.lines();
-        let verbose = std::env::var("ORACLE_VERBOSE").ok();
+        let verbose = std::env::var("ORACLE_VERBOSE").ok(); if verbose.is_some() { DUMP_N = core::mem::size_of::<Ground>(); }
         let hdr: std::vec::Vec<usize> = lines.next().unwrap().split_whitespace().skip(1).map(|s| s.parse().unwrap()).collect();
         let sizes: std::vec::Vec<usize> = std::vec![@SIZES@];
         assert_eq!(hdr, sizes, "struct sizes (C native layout vs the Rust port)");
@@ -996,9 +1087,9 @@ fn state_matches_c() {
         for (fi, fnn) in FNS.iter().enumerate() {
             let mut agg = FNV0;
             let vb = verbose.as_deref() == Some(fnn.name);
-            if verbose.is_some() && !vb {
-                continue;
-            }
+            DUMP_N = if vb { core::mem::size_of::<Ground>() } else { 0 };
+
+
             for k in 0..fnn.n {
                 let mut h = FNV0;
                 RS = 0x9E37_79B9u32 ^ ((fi as u32).wrapping_mul(7919).wrapping_add(k.wrapping_mul(104729)).wrapping_add(1));
@@ -1010,7 +1101,7 @@ fn state_matches_c() {
                 for i in 0..2 { a.v2[i].x = rf(); a.v2[i].y = rf(); }
                 for i in 0..2 { a.pf[i] = rf(); }
                 for i in 0..2 { a.pi[i] = (rnd() % 8) as i32; }
-                case_pre(fi, &mut a);
+                case_pre(fi, &mut a); if vb { println!("PRE"); world_hash(fi); println!("ENDPRE"); }
                 LG.clear();
                 let (rv, _rb) = call_fn(fi, &mut a);
                 let ho = fnv(FNV0, LG.as_bytes());
@@ -1025,6 +1116,7 @@ fn state_matches_c() {
                 if vb {
                     let hs: std::vec::Vec<std::string::String> = WH.iter().map(|x| format!("{:x},", x & 0xFF_FFFF)).collect();
                     println!("{} {:016x} ret={:x} W={:016x} L={:016x} H={}\n  {}", k, h, rv, hw, ho, hs.concat(), LG);
+                    for q in 0..NGO { let mut line = format!("  OGP{}:", q); let base = addr_of!(OGP[q]) as *const u8; for w in (0..core::mem::size_of::<Ground>()).step_by(4) { line.push_str(&format!(" {:08x}", core::ptr::read_unaligned(base.add(w) as *const u32))); } println!("{}", line); }
                 }
                 agg = fnv(agg, &h.to_le_bytes());
             }
@@ -1053,7 +1145,7 @@ def rs_hook_install(name, rh, kinds, rk, ret_t, modpath, pool, va=None):
     sig = ", ".join(f"a{i}: {t}" for i, (_, t) in enumerate(params))
     body = [f'lg_s("{name}(");']
     for i, ((_, t), ck) in enumerate(zip(params[:nfix], kinds)):
-        body.append(f"lg_str(a{i});" if ck == "str" else O.rs_arg_log(t, ck, f"a{i}"))
+        body.append(f"lg_str(a{i});" if ck == "str" else O.rs_arg_log(t, ck, f"a{i}").replace("lg_ps(", "gr_lg_ps("))
     if va:
         pat = va["va"]
         body.append(f'for (k, &w) in a{nfix}.iter().enumerate() {{ lg_vaw(w as u64, b"{pat}"[k.min({len(pat) - 1})]); }}')

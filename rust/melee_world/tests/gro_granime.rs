@@ -47,6 +47,21 @@ unsafe extern "C" fn tc4(a: *mut HSD_AObj, o: *mut c_void, f: u32, p: u32) { lg_
 unsafe fn call_82e8(a: *mut HSD_AObj, p: *mut *mut HSD_AObj) { let _ = catch_unwind(AssertUnwindSafe(|| t::fn_801C82E8(a, p))); }
 
 
+pub fn gr_lg_ps(p: *const u8, n: usize, d: &[ODesc]) {
+    lg_c('@');
+    lg_hmin(normptr(p as usize));
+    if !p.is_null() {
+        let mut tmp = unsafe { core::slice::from_raw_parts(p, n) }.to_vec();
+        unsafe { onorm(&mut tmp, d) };
+        for &(off, size, kind) in d {
+            if kind == b'b' { for j in 0..size as usize { tmp[off as usize + j] = 0; } }
+        }
+        lg_c('{');
+        lg_hx(fnv(FNV0, &tmp), 16);
+        lg_c('}');
+    }
+    lg_c(',');
+}
 pub fn lg_str(s: *const i8) {
     lg_c('"');
     if !s.is_null() {
@@ -102,28 +117,30 @@ unsafe fn bf_fill_Ground_0(p: *mut Ground) {
 }
 unsafe fn bf_hash_Ground_0(mut h: u64, p: *const Ground) -> u64 {
     let _ = p;
-    h = fnv(h, &(((*p).x10_flags.b0()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b1()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b2()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b3()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b4()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b5()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b6()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x10_flags.b7()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b012()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b3()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b4()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b5()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b6()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).x11_flags.b7()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_color_enable()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag2()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_light_enable()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag4()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag5()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag6()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag7()) as u32).to_le_bytes());
-    h = fnv(h, &(((*p).color_overlay.x7C_flag8()) as u32).to_le_bytes());
+    if DUMP_N != 0 { print!("
+  BFV:"); }
+    h = fnv(h, &(((*p).x10_flags.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b0()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b1()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b2()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b3()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b4()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b5()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b6()) as u32); }
+    h = fnv(h, &(((*p).x10_flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x10_flags.b7()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b012()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b012()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b3()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b4()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b5()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b6()) as u32); }
+    h = fnv(h, &(((*p).x11_flags.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x11_flags.b7()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_color_enable()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_color_enable()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag2()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_light_enable()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_light_enable()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag4()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag5()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag6()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag7()) as u32); }
+    h = fnv(h, &(((*p).color_overlay.x7C_flag8()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag8()) as u32); }
     h
 }
 static D_HSD_PObj: &[ODesc] = &[(0, 8, b'p'), (8, 8, b'p'), (16, 8, b'p'), (24, 2, b'S'), (26, 2, b'S'), (32, 8, b'p'), (40, 8, b'p'), (40, 8, b'p'), (40, 8, b'p')];
@@ -625,12 +642,12 @@ unsafe fn install_hooks() {
         melee_world::tu::granime::ext::GROUND_801C498C = Some(|| -> *mut HSD_GObj { lg_s("Ground_801C498C("); lg_s(")"); { let r = gen_gobj() as *mut HSD_GObj; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::granime::ext::HSD_AOBJCLEARFLAGS = Some(|a0: *mut HSD_AObj, a1: u32| { lg_s("HSD_AObjClearFlags("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
         melee_world::tu::granime::ext::HSD_AOBJGETFLAGS = Some(|a0: *mut HSD_AObj| -> u32 { lg_s("HSD_AObjGetFlags("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); { let r = (rnd()) as u32; lg_retu(r as u32); lg_c(';'); r } });
-        melee_world::tu::granime::ext::HSD_AOBJLOADDESC = Some(|a0: *mut HSD_AObjDesc| -> *mut HSD_AObj { lg_s("HSD_AObjLoadDesc("); lg_ps(a0 as *const u8, core::mem::size_of::<HSD_AObjDesc>(), D_HSD_AObjDesc); lg_s(")"); { let r = gen_rec_HSD_AObj() as *mut HSD_AObj; lg_retp(r as usize); lg_c(';'); r } });
+        melee_world::tu::granime::ext::HSD_AOBJLOADDESC = Some(|a0: *mut HSD_AObjDesc| -> *mut HSD_AObj { lg_s("HSD_AObjLoadDesc("); gr_lg_ps(a0 as *const u8, core::mem::size_of::<HSD_AObjDesc>(), D_HSD_AObjDesc); lg_s(")"); { let r = gen_rec_HSD_AObj() as *mut HSD_AObj; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::granime::ext::HSD_AOBJREMOVE = Some(|a0: *mut HSD_AObj| { lg_s("HSD_AObjRemove("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_world::tu::granime::ext::HSD_AOBJSETENDFRAME = Some(|a0: *mut HSD_AObj, a1: f32| { lg_s("HSD_AObjSetEndFrame("); lg_ptr(a0 as *const u8 as usize); lg_f(a1); lg_s(")"); lg_c(';'); });
         melee_world::tu::granime::ext::HSD_AOBJSETFLAGS = Some(|a0: *mut HSD_AObj, a1: u32| { lg_s("HSD_AObjSetFlags("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
         melee_world::tu::granime::ext::HSD_AOBJSETREWINDFRAME = Some(|a0: *mut HSD_AObj, a1: f32| { lg_s("HSD_AObjSetRewindFrame("); lg_ptr(a0 as *const u8 as usize); lg_f(a1); lg_s(")"); lg_c(';'); });
-        melee_world::tu::granime::ext::HSD_JOBJADDANIMALL = Some(|a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint| { lg_s("HSD_JObjAddAnimAll("); lg_ptr(a0 as *const u8 as usize); lg_ps(a1 as *const u8, core::mem::size_of::<HSD_AnimJoint>(), D_HSD_AnimJoint); lg_ps(a2 as *const u8, core::mem::size_of::<HSD_MatAnimJoint>(), D_HSD_MatAnimJoint); lg_ps(a3 as *const u8, core::mem::size_of::<HSD_ShapeAnimJoint>(), D_HSD_ShapeAnimJoint); lg_s(")"); lg_c(';'); });
+        melee_world::tu::granime::ext::HSD_JOBJADDANIMALL = Some(|a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint| { lg_s("HSD_JObjAddAnimAll("); lg_ptr(a0 as *const u8 as usize); gr_lg_ps(a1 as *const u8, core::mem::size_of::<HSD_AnimJoint>(), D_HSD_AnimJoint); gr_lg_ps(a2 as *const u8, core::mem::size_of::<HSD_MatAnimJoint>(), D_HSD_MatAnimJoint); gr_lg_ps(a3 as *const u8, core::mem::size_of::<HSD_ShapeAnimJoint>(), D_HSD_ShapeAnimJoint); lg_s(")"); lg_c(';'); });
         melee_world::tu::granime::ext::HSD_JOBJANIMALL = Some(|a0: *mut HSD_JObj| { lg_s("HSD_JObjAnimAll("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_world::tu::granime::ext::HSD_JOBJREMOVEANIMALL = Some(|a0: *mut HSD_JObj| { lg_s("HSD_JObjRemoveAnimAll("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_world::tu::granime::ext::HSD_JOBJREQANIMALL = Some(|a0: *mut HSD_JObj, a1: f32| { lg_s("HSD_JObjReqAnimAll("); lg_ptr(a0 as *const u8 as usize); lg_f(a1); lg_s(")"); lg_c(';'); });
@@ -698,10 +715,22 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
         _ => {}
     }
 }
+static mut DUMP_N: usize = 0;
 unsafe fn img_hash(h: u64, img: &[u8], d: &[ODesc]) -> u64 {
     let mut tmp: std::vec::Vec<u8> = img.to_vec();
+    if DUMP_N != 0 && tmp.len() == DUMP_N { let mut line = std::string::String::from("  RAWG:"); for c in tmp.chunks_exact(4) { line.push_str(&format!(" {:08x}", u32::from_le_bytes(c.try_into().unwrap()))); } println!("{}", line); }
     onorm(&mut tmp, d);
-    for &(off, size, kind) in d { if kind == b'b' { for j in 0..size as usize { tmp[off as usize + j] = 0; } } }
+    for &(off, size, kind) in d {
+        if kind == b'b' { for j in 0..size as usize { tmp[off as usize + j] = 0; } }
+        else if kind == b'P' {
+            let o = off as usize;
+            let mut v = u32::from_le_bytes(tmp[o..o + 4].try_into().unwrap());
+            if v != 0 { let r = normptr(v as usize); v = ((r >> 32) as u32).wrapping_mul(0x10000).wrapping_add(r as u32); }
+            tmp[o..o + 4].copy_from_slice(&v.to_le_bytes());
+        }
+    }
+    if DUMP_N != 0 && tmp.len() == core::mem::size_of::<HSD_JObj>() { let mut line = std::string::String::from("  IMGJ:"); for c in tmp.chunks_exact(4) { line.push_str(&format!(" {:08x}", u32::from_le_bytes(c.try_into().unwrap()))); } println!("{}", line); }
+    if DUMP_N != 0 && tmp.len() == DUMP_N { let mut line = std::string::String::from("  IMGG:"); for c in tmp.chunks_exact(4) { line.push_str(&format!(" {:08x}", u32::from_le_bytes(c.try_into().unwrap()))); } println!("{}", line); }
     fnv(h, &tmp)
 }
 unsafe fn word_hash(mut h: u64, img: &[u8]) -> u64 {
@@ -804,7 +833,7 @@ fn state_matches_c() {
     unsafe {
         let want = include_str!("data/gro_granime.txt");
         let mut lines = want.lines();
-        let verbose = std::env::var("ORACLE_VERBOSE").ok();
+        let verbose = std::env::var("ORACLE_VERBOSE").ok(); if verbose.is_some() { DUMP_N = core::mem::size_of::<Ground>(); }
         let hdr: std::vec::Vec<usize> = lines.next().unwrap().split_whitespace().skip(1).map(|s| s.parse().unwrap()).collect();
         let sizes: std::vec::Vec<usize> = std::vec![core::mem::size_of::<Ground>(), core::mem::size_of::<HSD_GObj>(), core::mem::size_of::<HSD_JObj>(), core::mem::size_of_val(&*addr_of!(OPO)), core::mem::size_of_val(&*addr_of!(OSS)), core::mem::size_of_val(&*addr_of!(OSA)), core::mem::size_of_val(&*addr_of!(OTO)), core::mem::size_of_val(&*addr_of!(OTA)), core::mem::size_of_val(&*addr_of!(OMO)), core::mem::size_of_val(&*addr_of!(OMA)), core::mem::size_of_val(&*addr_of!(ODO)), core::mem::size_of_val(&*addr_of!(OSDO)), core::mem::size_of_val(&*addr_of!(ORO)), core::mem::size_of_val(&*addr_of!(ORA)), core::mem::size_of_val(&*addr_of!(OAD)), core::mem::size_of_val(&*addr_of!(OAO)), core::mem::size_of_val(&*addr_of!(OFO)), core::mem::size_of_val(&*addr_of!(OAJ)), core::mem::size_of_val(&*addr_of!(OMJ)), core::mem::size_of_val(&*addr_of!(OSJ)), core::mem::size_of_val(&*addr_of!(OJT)), core::mem::size_of_val(&*addr_of!(OJNT)), core::mem::size_of_val(&*addr_of!(OX8T)), core::mem::size_of_val(&*addr_of!(OUSD)), core::mem::size_of_val(&*addr_of!(OAR)), core::mem::size_of_val(&*addr_of!(OIT)), core::mem::size_of_val(&*addr_of!(OAJP)), core::mem::size_of_val(&*addr_of!(OMJP)), core::mem::size_of_val(&*addr_of!(OSJP)), core::mem::size_of_val(&*addr_of!(OSLOT)), core::mem::size_of_val(&*addr_of!(OEF)), core::mem::size_of_val(&*addr_of!(t::grAnime_804D6958)), core::mem::size_of_val(&*addr_of!(t::grAnime_804D695C))];
         assert_eq!(hdr, sizes, "struct sizes (C native layout vs the Rust port)");
@@ -815,9 +844,9 @@ fn state_matches_c() {
         for (fi, fnn) in FNS.iter().enumerate() {
             let mut agg = FNV0;
             let vb = verbose.as_deref() == Some(fnn.name);
-            if verbose.is_some() && !vb {
-                continue;
-            }
+            DUMP_N = if vb { core::mem::size_of::<Ground>() } else { 0 };
+
+
             for k in 0..fnn.n {
                 let mut h = FNV0;
                 RS = 0x9E37_79B9u32 ^ ((fi as u32).wrapping_mul(7919).wrapping_add(k.wrapping_mul(104729)).wrapping_add(1));
@@ -829,7 +858,7 @@ fn state_matches_c() {
                 for i in 0..2 { a.v2[i].x = rf(); a.v2[i].y = rf(); }
                 for i in 0..2 { a.pf[i] = rf(); }
                 for i in 0..2 { a.pi[i] = (rnd() % 8) as i32; }
-                case_pre(fi, &mut a);
+                case_pre(fi, &mut a); if vb { println!("PRE"); world_hash(fi); println!("ENDPRE"); }
                 LG.clear();
                 let (rv, _rb) = call_fn(fi, &mut a);
                 let ho = fnv(FNV0, LG.as_bytes());
@@ -845,6 +874,7 @@ fn state_matches_c() {
                     let hs: std::vec::Vec<std::string::String> = WH.iter().map(|x| format!("{:x},", x & 0xFF_FFFF)).collect();
                     println!("{} {:016x} ret={:x} W={:016x} L={:016x} H={}
   {}", k, h, rv, hw, ho, hs.concat(), LG);
+                    for q in 0..NGO { let mut line = format!("  OGP{}:", q); let base = addr_of!(OGP[q]) as *const u8; for w in (0..core::mem::size_of::<Ground>()).step_by(4) { line.push_str(&format!(" {:08x}", core::ptr::read_unaligned(base.add(w) as *const u32))); } println!("{}", line); }
                 }
                 agg = fnv(agg, &h.to_le_bytes());
             }

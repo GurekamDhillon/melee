@@ -11,3 +11,4 @@ pub mod grbattle;
 pub mod grdatfiles;
 pub mod grbigblueroute;
 pub mod granime;
+pub mod grcastle;

@@ -8,3 +8,4 @@ pub mod efalt;
 pub(crate) mod hookmac;
 pub mod grinl;
 pub mod grlib;
+pub mod grmaterial;

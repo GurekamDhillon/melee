@@ -164,7 +164,7 @@ pub unsafe fn gm_801A8114(arg0: *mut HSD_JObj, arg1: i32) {
     let a = ext::Toy_803060BC(arg1, 3);
     let b = ext::Toy_803060BC(arg1, 4);
     let scale = a * (1.0f32 / b);
-    hsd_assert(!transJobj.is_null(), 363, c"transJobj");
+    hsd_assert(!transJobj.is_null(), 92, c"transJobj");
 
     hsd::HSD_JObjSetScaleX(transJobj, scale);
     hsd::HSD_JObjSetScaleY(transJobj, scale);
@@ -317,9 +317,9 @@ pub unsafe fn gm_801A9094() {
             hsd::HSD_JObjSetScaleX(root, 1.8f32);
             hsd::HSD_JObjSetScaleY(root, 1.8f32);
             hsd::HSD_JObjSetScaleZ(root, 1.8f32);
-            hsd_assert(!joint.is_null(), 0x2F5, c"joint");
+            hsd_assert(!joint.is_null(), 311, c"joint");
             let jobj = ext::HSD_JObjLoadJoint(joint);
-            hsd_assert(!jobj.is_null(), 0x2F7, c"jobj");
+            hsd_assert(!jobj.is_null(), 313, c"jobj");
             ext::HSD_JObjAddChild(root, jobj);
             ext::HSD_JObjAddAnimAll(jobj, null_mut(), matanim, null_mut());
             ext::HSD_JObjReqAnimAll(jobj, (*dsp).x05 as f32);

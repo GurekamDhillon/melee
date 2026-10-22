@@ -255,6 +255,8 @@ def main():
             "p": f"return rt_normptr((rt_u64)(__UINTPTR_TYPE__)({call}));",
             "f": f"return rt_f32bits({call});",
             "d": f"return rt_f64bits({call});",
+            # a 4-byte struct returned by value: its raw bytes
+            "g4": f"{{ __typeof__({call}) t_ = {call}; unsigned int v_; __builtin_memcpy(&v_, &t_, 4); return v_; }}",
         }[retk]
         d.append(f"static rt_u64 th_{i}(const rt_u64* a) {{ (void)a; {pre}{body} }}")
     d.append("int main(int argc, char** argv) {")

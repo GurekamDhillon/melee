@@ -95,7 +95,7 @@ pub unsafe fn jobj_parent(j: *mut HSD_JObj) -> *mut HSD_JObj {
 
 /// `HSD_JObjMtxIsDirty`.
 pub unsafe fn HSD_JObjMtxIsDirty(jobj: *mut HSD_JObj) -> bool {
-    hsd_assert(!jobj.is_null(), 564, c"jobj");
+    hsd_assert(!jobj.is_null(), 228, c"jobj");
     let mut result = false;
     if (*jobj).flags & JOBJ_USER_DEF_MTX as u32 == 0 && (*jobj).flags & JOBJ_MTX_DIRTY as u32 != 0 {
         result = true;
@@ -123,7 +123,7 @@ unsafe fn dirty(jobj: *mut HSD_JObj, with_fn: bool) {
 }
 
 macro_rules! scalar_setter {
-    ($($name:ident, $name_w:ident, $field:ident . $axis:ident, $line:literal, $quat:literal;)*) => {$(
+    ($($name:ident, $name_w:ident, $field:ident . $axis:ident, $line:literal, $line_w:literal, $quat:literal;)*) => {$(
         pub unsafe fn $name(jobj: *mut HSD_JObj, v: f32) {
             hsd_assert(!jobj.is_null(), $line, c"jobj");
             if $quat { hsd_assert((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, $line + 1, c"!(jobj->flags & JOBJ_USE_QUATERNION)"); }
@@ -131,61 +131,63 @@ macro_rules! scalar_setter {
             dirty(jobj, false);
         }
         pub unsafe fn $name_w(jobj: *mut HSD_JObj, v: f32) {
-            hsd_assert(!jobj.is_null(), $line, c"jobj");
-            if $quat { hsd_assert((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, $line + 1, c"!(jobj->flags & JOBJ_USE_QUATERNION)"); }
+            hsd_assert(!jobj.is_null(), $line_w, c"jobj");
+            if $quat { hsd_assert((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, $line_w + 1, c"!(jobj->flags & JOBJ_USE_QUATERNION)"); }
             (*jobj).$field.$axis = v;
             dirty(jobj, true);
         }
     )*};
 }
+// (line numbers: the physical lines of the asserts in src/sysdolphin/baselib/jobj.h, which is what
+// `__LINE__` gives in the non-MUST_MATCH build)
 scalar_setter! {
-    HSD_JObjSetRotationX, HSD_JObjSetRotationXWithMtxDirty, rotate.x, 639, true;
-    HSD_JObjSetRotationY, HSD_JObjSetRotationYWithMtxDirty, rotate.y, 660, true;
-    HSD_JObjSetRotationZ, HSD_JObjSetRotationZWithMtxDirty, rotate.z, 681, true;
-    HSD_JObjSetScaleX, HSD_JObjSetScaleXWithMtxDirty, scale.x, 776, false;
-    HSD_JObjSetScaleY, HSD_JObjSetScaleYWithMtxDirty, scale.y, 791, false;
-    HSD_JObjSetScaleZ, HSD_JObjSetScaleZWithMtxDirty, scale.z, 806, false;
-    HSD_JObjSetTranslateX, HSD_JObjSetTranslateXWithMtxDirty, translate.x, 932, false;
-    HSD_JObjSetTranslateY, HSD_JObjSetTranslateYWithMtxDirty, translate.y, 947, false;
-    HSD_JObjSetTranslateZ, HSD_JObjSetTranslateZWithMtxDirty, translate.z, 962, false;
+    HSD_JObjSetRotationX, HSD_JObjSetRotationXWithMtxDirty, rotate.x, 297, 307, true;
+    HSD_JObjSetRotationY, HSD_JObjSetRotationYWithMtxDirty, rotate.y, 317, 327, true;
+    HSD_JObjSetRotationZ, HSD_JObjSetRotationZWithMtxDirty, rotate.z, 337, 347, true;
+    HSD_JObjSetScaleX, HSD_JObjSetScaleXWithMtxDirty, scale.x, 402, 411, false;
+    HSD_JObjSetScaleY, HSD_JObjSetScaleYWithMtxDirty, scale.y, 420, 429, false;
+    HSD_JObjSetScaleZ, HSD_JObjSetScaleZWithMtxDirty, scale.z, 438, 447, false;
+    HSD_JObjSetTranslateX, HSD_JObjSetTranslateXWithMtxDirty, translate.x, 513, 522, false;
+    HSD_JObjSetTranslateY, HSD_JObjSetTranslateYWithMtxDirty, translate.y, 531, 540, false;
+    HSD_JObjSetTranslateZ, HSD_JObjSetTranslateZWithMtxDirty, translate.z, 549, 558, false;
 }
 
 /// `HSD_JObjSetRotation` / `...WithMtxDirty`.
 pub unsafe fn HSD_JObjSetRotation(jobj: *mut HSD_JObj, rotate: *const Quaternion) {
-    hsd_assert(!jobj.is_null(), 618, c"jobj");
-    hsd_assert(!rotate.is_null(), 619, c"rotate");
+    hsd_assert(!jobj.is_null(), 276, c"jobj");
+    hsd_assert(!rotate.is_null(), 277, c"rotate");
     (*jobj).rotate = *rotate;
     dirty(jobj, false);
 }
 pub unsafe fn HSD_JObjSetRotationWithMtxDirty(jobj: *mut HSD_JObj, rotate: *const Quaternion) {
-    hsd_assert(!jobj.is_null(), 618, c"jobj");
-    hsd_assert(!rotate.is_null(), 619, c"rotate");
+    hsd_assert(!jobj.is_null(), 287, c"jobj");
+    hsd_assert(!rotate.is_null(), 288, c"rotate");
     (*jobj).rotate = *rotate;
     dirty(jobj, true);
 }
 /// `HSD_JObjSetScale` / `...WithMtxDirty`.
 pub unsafe fn HSD_JObjSetScale(jobj: *mut HSD_JObj, scale: *const Vec3) {
-    hsd_assert(!jobj.is_null(), 760, c"jobj");
-    hsd_assert(!scale.is_null(), 761, c"scale");
+    hsd_assert(!jobj.is_null(), 382, c"jobj");
+    hsd_assert(!scale.is_null(), 383, c"scale");
     (*jobj).scale = *scale;
     dirty(jobj, false);
 }
 pub unsafe fn HSD_JObjSetScaleWithMtxDirty(jobj: *mut HSD_JObj, scale: *const Vec3) {
-    hsd_assert(!jobj.is_null(), 760, c"jobj");
-    hsd_assert(!scale.is_null(), 761, c"scale");
+    hsd_assert(!jobj.is_null(), 392, c"jobj");
+    hsd_assert(!scale.is_null(), 393, c"scale");
     (*jobj).scale = *scale;
     dirty(jobj, true);
 }
 /// `HSD_JObjSetTranslate` / `...WithMtxDirty`.
 pub unsafe fn HSD_JObjSetTranslate(jobj: *mut HSD_JObj, translate: *const Vec3) {
-    hsd_assert(!jobj.is_null(), 916, c"jobj");
-    hsd_assert(!translate.is_null(), 917, c"translate");
+    hsd_assert(!jobj.is_null(), 481, c"jobj");
+    hsd_assert(!translate.is_null(), 482, c"translate");
     (*jobj).translate = *translate;
     dirty(jobj, false);
 }
 pub unsafe fn HSD_JObjSetTranslateWithMtxDirty(jobj: *mut HSD_JObj, translate: *const Vec3) {
-    hsd_assert(!jobj.is_null(), 916, c"jobj");
-    hsd_assert(!translate.is_null(), 917, c"translate");
+    hsd_assert(!jobj.is_null(), 492, c"jobj");
+    hsd_assert(!translate.is_null(), 493, c"translate");
     (*jobj).translate = *translate;
     dirty(jobj, true);
 }
@@ -200,10 +202,17 @@ macro_rules! scalar_getter {
     )*};
 }
 scalar_getter! {
-    HSD_JObjGetRotationX, rotate.x, 715;
-    HSD_JObjGetRotationY, rotate.y, 730;
-    HSD_JObjGetRotationZ, rotate.z, 745;
-    HSD_JObjGetScaleX, scale.x, 875;
-    HSD_JObjGetScaleY, scale.y, 888;
-    HSD_JObjGetScaleZ, scale.z, 901;
+    HSD_JObjGetRotationX, rotate.x, 364;
+    HSD_JObjGetRotationY, rotate.y, 370;
+    HSD_JObjGetRotationZ, rotate.z, 376;
+    HSD_JObjGetScaleX, scale.x, 463;
+    HSD_JObjGetScaleY, scale.y, 469;
+    HSD_JObjGetScaleZ, scale.z, 475;
+}
+
+/// `HSD_JObjGetTranslation`.
+pub unsafe fn HSD_JObjGetTranslation(jobj: *mut HSD_JObj, translate: *mut Vec3) {
+    hsd_assert(!jobj.is_null(), 567, c"jobj");
+    hsd_assert(!translate.is_null(), 568, c"translate");
+    *translate = (*jobj).translate;
 }

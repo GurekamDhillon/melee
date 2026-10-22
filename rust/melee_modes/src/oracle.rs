@@ -230,6 +230,16 @@ impl OVal for f64 {
         f64::from_bits(v)
     }
 }
+impl OVal for crate::GXColor {
+    const K: K = K::I(32);
+    fn to_bits(self) -> u64 {
+        u32::from_le_bytes([self.r, self.g, self.b, self.a]) as u64
+    }
+    fn from_bits(v: u64) -> Self {
+        let [r, g, b, a] = (v as u32).to_le_bytes();
+        crate::GXColor { r, g, b, a }
+    }
+}
 impl OVal for () {
     const K: K = K::V;
     fn to_bits(self) -> u64 {
@@ -298,6 +308,8 @@ pub enum GMode {
     Rw,
     /// never written by the port; the C side checks its own copy is byte-equal to ours
     Ro,
+    /// like `Ro`, but pointer words that point at foreign memory (string literals) are not compared
+    Rp,
 }
 
 pub struct GlobalDesc {
@@ -332,8 +344,12 @@ macro_rules! globals {
     (@decl ro, [$(#[$m:meta])*] $vis:vis $name:ident : $t:ty = $init:expr) => {
         $(#[$m])* #[allow(non_upper_case_globals, non_snake_case)] $vis static $name: $t = $init;
     };
+    (@decl rp, [$(#[$m:meta])*] $vis:vis $name:ident : $t:ty = $init:expr) => {
+        $(#[$m])* #[allow(non_upper_case_globals, non_snake_case)] $vis static mut $name: $t = $init;
+    };
     (@mode rw) => { $crate::oracle::GMode::Rw };
     (@mode ro) => { $crate::oracle::GMode::Ro };
+    (@mode rp) => { $crate::oracle::GMode::Rp };
 }
 
 /// Registers globals that another file of `tu/` owns (declared `extern` in this TU's C):
@@ -373,6 +389,9 @@ pub struct Specs {
     /// (callee, arg index, nbytes)
     pub out: Vec<(String, usize, usize)>,
     pub str_: Vec<(String, usize)>,
+    /// (callee, arg index, values): write the call-count-th value as a pointer-sized word through
+    /// the pointer argument (cycling through `values`)
+    pub outv: Vec<(String, usize, Vec<u64>)>,
     pub mem: Vec<(String, usize, usize)>,
     /// callees whose return value is the fixed constant (any kind), for tests
     pub trace: bool,
@@ -389,6 +408,14 @@ pub struct Rec {
     pub hwm: usize,
     pub text: String,
 }
+
+/// Callees that never return in the C (`__assert`, `OSPanic`, `HSD_Panic`): the case ends there.
+/// The port runs on a worker thread; reaching one reports "diverged" and parks the thread.
+fn is_noreturn(name: &str) -> bool {
+    matches!(name, "__assert" | "OSPanic" | "HSD_Panic")
+}
+static DIVERGE_TX: Mutex<Option<std::sync::mpsc::Sender<Option<u64>>>> = Mutex::new(None);
+pub const DIVERGED: u64 = 0xDEAD_DEAD_DEAD_DEAD;
 
 static MAXUSED: core::sync::atomic::AtomicUsize = core::sync::atomic::AtomicUsize::new(0);
 static REC: Mutex<Option<Rec>> = Mutex::new(None);
@@ -567,10 +594,18 @@ pub fn ext_call_va(name: &'static str, args: &[Arg], fmt_idx: usize, va: &[Va], 
     ext_core(name, args, &extra, ret)
 }
 
+fn verbose() -> bool {
+    static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *V.get_or_init(|| std::env::var("ORACLE_VERBOSE").is_ok())
+}
+
 fn ext_core(name: &'static str, args: &[Arg], extra: &[u64], ret: K) -> Option<u64> {
     let mut g = REC.lock().unwrap_or_else(|e| e.into_inner());
     let r = g.as_mut()?;
     let nh = fnv_bytes(name.as_bytes());
+    if verbose() {
+        eprintln!("  call {name}");
+    }
     r.ncalls += 1;
     r.log = mix(r.log, nh);
     let mut tr = String::new();
@@ -631,6 +666,14 @@ fn ext_core(name: &'static str, args: &[Arg], extra: &[u64], ret: K) -> Option<u
         r.log = mix(r.log, *w);
         if r.specs.trace {
             let _ = write!(tr, " {w:x}");
+        }
+    }
+    for (cn, ci, vals) in r.specs.outv.clone() {
+        if cn == name && ci < args.len() && args[ci].v != 0 {
+            let c = r.counts.entry(nh ^ 0x7777).or_insert(0);
+            let k = *c as usize;
+            *c += 1;
+            unsafe { (args[ci].v as usize as *mut u64).write(vals[k % vals.len()]) };
         }
     }
     // out parameters: pseudo-random bytes from the callee's own stream
@@ -700,6 +743,15 @@ fn ext_core(name: &'static str, args: &[Arg], extra: &[u64], ret: K) -> Option<u
         let _ = write!(tr, " -> {v:x}");
         r.text.push_str(&tr);
         r.text.push('\n');
+    }
+    if is_noreturn(name) {
+        drop(g);
+        if let Some(tx) = DIVERGE_TX.lock().unwrap_or_else(|e| e.into_inner()).take() {
+            let _ = tx.send(None);
+        }
+        loop {
+            std::thread::park();
+        }
     }
     Some(v)
 }
@@ -830,6 +882,9 @@ impl Case {
     pub fn out(&mut self, callee: &str, arg_idx: usize, nbytes: usize) {
         self.specs.out.push((callee.into(), arg_idx, nbytes));
     }
+    pub fn out_ptrs<T>(&mut self, callee: &str, arg_idx: usize, ps: &[*mut T]) {
+        self.specs.outv.push((callee.into(), arg_idx, ps.iter().map(|&p| p as usize as u64).collect()));
+    }
     pub fn str_arg(&mut self, callee: &str, arg_idx: usize) {
         self.specs.str_.push((callee.into(), arg_idx));
     }
@@ -876,7 +931,7 @@ fn ret_k(r: &str) -> K {
         "b" => K::I(1),
         "i8" => K::I(8),
         "i16" => K::I(16),
-        "i32" => K::I(32),
+        "i32" | "g4" => K::I(32),
         "i64" => K::I(64),
         "p" => K::P,
         "f" => K::F,
@@ -913,17 +968,46 @@ impl<'a> TuOracle<'a> {
         for (g, &o) in self.globals.iter().zip(offs) {
             unsafe { core::ptr::copy_nonoverlapping(g.addr, arena.base.add(o), g.size) };
         }
+        self.scrub_rp(rec, arena, offs);
         self.bf_to_x86(arena, offs, bf);
         let mut h = FNV_OFF;
         let end = rec.hwm.max(arena.hwm).max(heap_start);
         MAXUSED.fetch_max(end, core::sync::atomic::Ordering::Relaxed);
         let mut i = GLOBALS_BASE & !7;
+        let dump = std::env::var("ORACLE_DUMP").ok();
+        let mut dump_buf: Vec<u8> = vec![];
         while i < end {
             let w = unsafe { (arena.base.add(i) as *const u64).read() };
             h = mix(h, rec.norm(w));
+            if dump.is_some() {
+                dump_buf.extend_from_slice(&rec.norm(w).to_le_bytes());
+            }
             i += 8;
         }
+        if let Some(path) = dump {
+            let _ = std::fs::write(path, dump_buf);
+        }
         h
+    }
+
+    /// `Rp` globals hold pointers to string literals, whose addresses differ per process: replace
+    /// every foreign pointer word in their arena copy by one constant tag.
+    fn scrub_rp(&self, rec: &Rec, arena: &Arena, offs: &[usize]) {
+        for (g, &o) in self.globals.iter().zip(offs) {
+            if g.mode != GMode::Rp {
+                continue;
+            }
+            let mut i = 0;
+            while i + 8 <= g.size {
+                let wp = unsafe { arena.base.add(o + i) } as *mut u64;
+                let w = unsafe { wp.read() };
+                let foreign = w >= 0x10000 && w < 0x0000_8000_0000_0000 && !arena.contains(w) && rec.norm(w) == w;
+                if foreign {
+                    unsafe { wp.write(0xF400_0000_0000_0000) };
+                }
+                i += 8;
+            }
+        }
     }
 
     /// Rewrite the registered bitfield units (in the arena, or in a global's arena copy) to x86 form.
@@ -944,6 +1028,9 @@ impl<'a> TuOracle<'a> {
     /// Everything one case does on the Rust side, from a clean state to its outcome.
     pub fn run_case(&self, f: &FuncDef, idx: u32, init: &[Vec<u8>], arena: &mut Arena, trace: bool) -> (Outcome, String, Specs, Vec<u64>) {
         let (offs, heap_start) = self.layout();
+        if verbose() {
+            eprintln!("run {} {}", f.name, idx);
+        }
         arena.reset(heap_start);
         // statics back to their initial bytes, then the builder
         for (g, b) in self.globals.iter().zip(init) {
@@ -962,14 +1049,40 @@ impl<'a> TuOracle<'a> {
         let hwm = arena.hwm;
         let rec = self.make_rec(seed, specs.clone(), hwm);
         *REC.lock().unwrap_or_else(|e| e.into_inner()) = Some(rec);
-        let ret = unsafe { (f.call)(&c.args) };
+        let (tx, rx) = std::sync::mpsc::channel::<Option<u64>>();
+        *DIVERGE_TX.lock().unwrap_or_else(|e| e.into_inner()) = Some(tx.clone());
+        let callf = f.call;
+        let cargs = c.args.clone();
+        let handle = std::thread::Builder::new()
+            .stack_size(16 << 20)
+            .spawn(move || {
+                let r = unsafe { callf(&cargs) };
+                let _ = tx.send(Some(r));
+            })
+            .unwrap();
+        let got = loop {
+            match rx.recv_timeout(std::time::Duration::from_millis(50)) {
+                Ok(v) => break v,
+                Err(_) => {
+                    if handle.is_finished() {
+                        // the worker ended without reporting: a panic in the port
+                        let e = handle.join().err();
+                        panic!("oracle: {} case {}: the port panicked ({:?})", f.name, idx, e.and_then(|e| e.downcast_ref::<String>().cloned()));
+                    }
+                }
+            }
+        };
+        *DIVERGE_TX.lock().unwrap_or_else(|e| e.into_inner()) = None;
         let rec = REC.lock().unwrap_or_else(|e| e.into_inner()).take().unwrap();
         let rk = ret_k(f.retk);
-        let ret = match rk {
-            K::V => 0,
-            K::I(b) if b < 64 => ret & ((1u64 << b) - 1),
-            K::P => rec.norm_ptr(ret),
-            _ => ret,
+        let ret = match got {
+            None => DIVERGED,
+            Some(ret) => match rk {
+                K::V => 0,
+                K::I(b) if b < 64 => ret & ((1u64 << b) - 1),
+                K::P => rec.norm_ptr(ret),
+                _ => ret,
+            },
         };
         let sh = self.state_hash(&rec, arena, &offs, heap_start, &c.bf);
         let o = Outcome { ret, state: sh, log: rec.log, ncalls: rec.ncalls };
@@ -990,11 +1103,12 @@ impl<'a> TuOracle<'a> {
         let _ = writeln!(out, "TU {}", self.tu);
         let _ = writeln!(out, "ARENA {:x} {:x}", ARENA_BASE, ARENA_SIZE);
         for (g, &o) in self.globals.iter().zip(&offs) {
-            let _ = writeln!(out, "GLOBAL {} {:x} {:x} {}", g.name, o, g.size, if g.mode == GMode::Rw { "rw" } else { "ro" });
+            let _ = writeln!(out, "GLOBAL {} {:x} {:x} {}", g.name, o, g.size, match g.mode { GMode::Rw => "rw", GMode::Ro => "ro", GMode::Rp => "rp" });
         }
         let _ = writeln!(out, "HEAP {heap_start:x}");
-        for (n, _) in &self.fn_table {
+        for (n, a) in &self.fn_table {
             let _ = writeln!(out, "FNTAB {n}");
+            let _ = writeln!(out, "# FNADDR {n} {a:x}");
         }
         for (fi, f) in self.funcs.iter().enumerate() {
             let _ = writeln!(out, "FUNC {fi} {} {} {}", f.name, if f.argk.is_empty() { "-" } else { f.argk }, f.retk);
@@ -1016,9 +1130,10 @@ impl<'a> TuOracle<'a> {
                 for (g, &o) in self.globals.iter().zip(&offs) {
                     unsafe { core::ptr::copy_nonoverlapping(g.addr, arena.base.add(o), g.size) };
                 }
+                let nrec = self.make_rec(0, Specs::default(), arena.hwm);
+                self.scrub_rp(&nrec, &arena, &offs);
                 self.bf_to_x86(&arena, &offs, &c.bf);
                 MAXUSED.fetch_max(arena.hwm, core::sync::atomic::Ordering::Relaxed);
-                let nrec = self.make_rec(0, Specs::default(), arena.hwm);
                 let _ = write!(out, "CASE {fi} {idx} {seed:x} {:x} {}", arena.hwm, c.args.len());
                 for a in &c.args {
                     // pointers to statics / functions travel as tags (the C side has its own addresses)
@@ -1041,13 +1156,25 @@ impl<'a> TuOracle<'a> {
                 }
                 for (n, i, nb) in &c.specs.out { let _ = writeln!(out, "OUT {n} {i} {nb}"); }
                 for (n, i) in &c.specs.str_ { let _ = writeln!(out, "STR {n} {i}"); }
+                for (n, i, v) in &c.specs.outv {
+                    let _ = write!(out, "OUTV {n} {i} {}", v.len());
+                    for a in v { let _ = write!(out, " {:x}", nrec.norm(*a)); }
+                    out.push('\n');
+                }
                 for (n, i, nb) in &c.specs.mem { let _ = writeln!(out, "MEM {n} {i} {nb}"); }
                 // sparse image of [GLOBALS_BASE, hwm) in 64-byte blocks
                 let end = (arena.hwm + 63) & !63;
                 let mut o = GLOBALS_BASE & !63;
                 while o < end {
-                    let blk = unsafe { core::slice::from_raw_parts(arena.base.add(o), 64) };
+                    let mut blk = [0u8; 64];
+                    blk.copy_from_slice(unsafe { core::slice::from_raw_parts(arena.base.add(o), 64) });
                     if blk.iter().any(|&b| b != 0) {
+                        // function / global addresses travel as tags (the C side has its own)
+                        for k in 0..8 {
+                            let w = u64::from_le_bytes(blk[k * 8..k * 8 + 8].try_into().unwrap());
+                            let n = nrec.norm(w);
+                            blk[k * 8..k * 8 + 8].copy_from_slice(&n.to_le_bytes());
+                        }
                         let _ = write!(out, "IMG {o:x} ");
                         for b in blk { let _ = write!(out, "{b:02x}"); }
                         out.push('\n');
@@ -1232,7 +1359,11 @@ impl Case {
             }
         }
         for (u, (size, fields)) in units {
-            self.bf.push(BfUnit { addr: s as usize + bf_off + (u - gc_start) as usize, size, fields });
+            let addr = s as usize + bf_off + (u - gc_start) as usize;
+            // a unit registered twice would be converted twice
+            if !self.bf.iter().any(|b| b.addr == addr) {
+                self.bf.push(BfUnit { addr, size, fields });
+            }
         }
     }
     /// A zeroed buffer.
@@ -1343,10 +1474,13 @@ pub mod build {
                 let lls = self.zbuf(16) as *mut *mut LightList;
                 *lls = ll;
                 (*sd).lights = lls;
-                (*sd).models = self.zbuf(16).cast();
-                let m = self.zobj::<DynamicModelDesc>();
-                (*m).joint = self.buf(0x40).cast();
-                *(*sd).models = m;
+                let models = self.zbuf(8 * 4) as *mut *mut DynamicModelDesc;
+                for k in 0..4 {
+                    let m = self.zobj::<DynamicModelDesc>();
+                    (*m).joint = self.buf(0x40).cast();
+                    *models.add(k) = m;
+                }
+                (*sd).models = models;
                 let fogs = self.zobj::<SceneFogDesc>();
                 (*fogs).desc = self.buf(0x20).cast();
                 let fa = self.zbuf(16) as *mut *mut HSD_CameraAnim;

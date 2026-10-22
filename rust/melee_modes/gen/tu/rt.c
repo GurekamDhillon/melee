@@ -13,6 +13,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include <setjmp.h>
 #include <windows.h>
 
 typedef unsigned long long u64;
@@ -46,7 +47,7 @@ static u64 splitmix(u64 x) {
 static unsigned char* arena;
 
 /* ---- tables ------------------------------------------------------------------------------ */
-typedef struct { const char* name; u64 addr; u64 size; u64 off; int rw; u64 tagbase; } G;
+typedef struct { const char* name; u64 addr; u64 size; u64 off; int rw; int rp; u64 tagbase; } G;
 typedef struct { const char* name; u64 addr; u64 tag; } F;
 static G g_tab[4096]; static int g_n;
 static F f_tab[4096]; static int f_n;
@@ -70,6 +71,9 @@ static u64 norm_ptr(u64 w) {
     if (n != w) return n;
     return 0xF400000000000000ULL;
 }
+static int is_foreign(u64 w) {
+    return w >= 0x10000ULL && w < 0x0000800000000000ULL && !(w >= ARENA_BASE && w < ARENA_BASE + ARENA_SIZE);
+}
 /* tag -> this process's address (image decoding) */
 static u64 denorm(u64 w) {
     int i;
@@ -88,6 +92,8 @@ static RetS rets[64]; static int nrets;
 static ArgS outs[32]; static int nouts;
 static ArgS strs[32]; static int nstrs;
 static ArgS mems[32]; static int nmems;
+typedef struct { char name[96]; int idx; int n; u64 v[64]; } OutV;
+static OutV outvs[16]; static int noutvs;
 
 static u64 rec_seed, rec_log, rec_calls, rec_hwm;
 static struct { u64 nh; u64 n; } counts[1024]; static int ncounts;
@@ -190,6 +196,13 @@ void rt_va(va_list* ap, int fmtidx) {
 
 void rt_args_end(void) {
     int i;
+    for (i = 0; i < noutvs; i++) if (!strcmp(outvs[i].name, cur_name) && outvs[i].idx < cur_nargs && cur_args[outvs[i].idx] != 0) {
+        u64 key = cur_nh ^ 0x7777ULL; int c2, k;
+        for (c2 = 0; c2 < ncounts; c2++) if (counts[c2].nh == key) break;
+        if (c2 == ncounts) { counts[c2].nh = key; counts[c2].n = 0; ncounts++; }
+        k = (int)(counts[c2].n++ % (u64)outvs[i].n);
+        *(u64*)(uintptr_t)cur_args[outvs[i].idx] = outvs[i].v[k];
+    }
     for (i = 0; i < nouts; i++) if (!strcmp(outs[i].name, cur_name) && outs[i].idx < cur_nargs && cur_args[outs[i].idx] != 0) {
         unsigned char* p = (unsigned char*)(uintptr_t)cur_args[outs[i].idx];
         u64 x = stream(cur_nh ^ 0x5555ULL); int j = 0;
@@ -252,7 +265,9 @@ double rt_ret_d(void) {
     trace_ret(b);
     return f;
 }
-void rt_ret_v(void) { trace_ret(0); }
+static jmp_buf case_jb;
+static int is_noreturn_name(const char* n) { return !strcmp(n, "__assert") || !strcmp(n, "OSPanic") || !strcmp(n, "HSD_Panic"); }
+void rt_ret_v(void) { trace_ret(0); if (is_noreturn_name(cur_name)) longjmp(case_jb, 1); }
 
 /* thunk helpers */
 float rt_f32(u64 b) { u32 x = (u32)b; float f; memcpy(&f, &x, 4); return f; }
@@ -290,7 +305,7 @@ int rt_main(int argc, char** argv, const RtGlobal* gs, int ng, const RtFn* fs, i
                     for (k = 0; k < ng; k++) if (!strcmp(gs[k].name, name)) break;
                     if (k == ng) { fprintf(stderr, "driver lacks global %s\n", name); return 2; }
                     g_tab[g_n].name = gs[k].name; g_tab[g_n].addr = (u64)(uintptr_t)gs[k].addr; g_tab[g_n].size = b;
-                    g_tab[g_n].off = a; g_tab[g_n].rw = !strcmp(mode, "rw"); g_tab[g_n].tagbase = glob_tag(gs[k].name);
+                    g_tab[g_n].off = a; g_tab[g_n].rw = !strcmp(mode, "rw"); g_tab[g_n].rp = !strcmp(mode, "rp"); g_tab[g_n].tagbase = glob_tag(gs[k].name);
                     if (gs[k].size != b) { fprintf(stderr, "global %s: C size %llu, Rust size %llu\n", name, (u64)gs[k].size, b); return 2; }
                     g_n++;
                 }
@@ -319,7 +334,7 @@ int rt_main(int argc, char** argv, const RtGlobal* gs, int ng, const RtFn* fs, i
                 seed = strtoull(q, &q, 16); hwm = strtoull(q, &q, 16); nargs = (int)strtol(q, &q, 10);
                 for (k = 0; k < nargs; k++) args[k] = denorm(strtoull(q, &q, 16));
                 memset(arena, 0, maxused);
-                nrets = nouts = nstrs = nmems = 0;
+                nrets = nouts = nstrs = nmems = noutvs = 0;
                 in_case = 1;
                 continue;
             }
@@ -336,6 +351,13 @@ int rt_main(int argc, char** argv, const RtGlobal* gs, int ng, const RtFn* fs, i
                 else if (!strcmp(kind, "flt")) { r->kind = 4; r->lo = (s64)strtoull(q, &q, 16); r->hi = (s64)strtoull(q, &q, 16); }
                 else if (!strcmp(kind, "dbl")) { r->kind = 5; r->lo = (s64)strtoull(q, &q, 16); r->hi = (s64)strtoull(q, &q, 16); }
             } else if (!strncmp(l, "OUT ", 4)) { ArgS* a = &outs[nouts++]; sscanf(l + 4, "%95s %d %d", a->name, &a->idx, &a->nb); }
+            else if (!strncmp(l, "OUTV ", 5)) {
+                OutV* o = &outvs[noutvs++]; char* q; int k;
+                sscanf(l + 5, "%95s %d %d", o->name, &o->idx, &o->n);
+                q = l + 5 + strlen(o->name) + 1;
+                q = strchr(q, ' ') + 1; q = strchr(q, ' ') + 1; /* skip idx, n */
+                for (k = 0; k < o->n; k++) o->v[k] = denorm(strtoull(q, &q, 16));
+            }
             else if (!strncmp(l, "STR ", 4)) { ArgS* a = &strs[nstrs++]; sscanf(l + 4, "%95s %d", a->name, &a->idx); }
             else if (!strncmp(l, "MEM ", 4)) { ArgS* a = &mems[nmems++]; sscanf(l + 4, "%95s %d %d", a->name, &a->idx, &a->nb); }
             else if (!strncmp(l, "IMG ", 4)) {
@@ -356,19 +378,32 @@ int rt_main(int argc, char** argv, const RtGlobal* gs, int ng, const RtFn* fs, i
                     if (g_tab[k].rw) memcpy((void*)(uintptr_t)g_tab[k].addr, arena + g_tab[k].off, g_tab[k].size);
                     else if (!const_reported[k]) {
                         u64 n8 = g_tab[k].size / 8, j; int bad = 0;
-                        for (j = 0; j < n8; j++) if (norm(((u64*)(uintptr_t)g_tab[k].addr)[j]) != ((u64*)(arena + g_tab[k].off))[j]) { bad = 1; break; }
+                        for (j = 0; j < n8; j++) {
+                            u64 cw = ((u64*)(uintptr_t)g_tab[k].addr)[j], rw_ = ((u64*)(arena + g_tab[k].off))[j];
+                            if (norm(cw) == rw_) continue;
+                            if (g_tab[k].rp && is_foreign(norm(cw)) && rw_ == 0xF400000000000000ULL) continue;
+                            bad = 1; break;
+                        }
                         if (!bad && memcmp((char*)(uintptr_t)g_tab[k].addr + n8 * 8, arena + g_tab[k].off + n8 * 8, g_tab[k].size - n8 * 8)) bad = 1;
                         if (bad) { printf("CONSTMISMATCH %s\n", g_tab[k].name); const_reported[k] = 1; }
                     }
                 }
                 rec_seed = seed; rec_log = FNV_OFF; rec_calls = 0; rec_hwm = hwm; ncounts = 0;
                 if (getenv("ORACLE_VERBOSE")) { fprintf(stderr, "run %s %d\n", fn[func].name, idx); fflush(stderr); }
-                ret = fn[func].thunk(args);
+                if (setjmp(case_jb) == 0) ret = fn[func].thunk(args); else ret = 0xDEADDEADDEADDEADULL;
                 for (k = 0; k < g_n; k++) if (g_tab[k].rw) memcpy(arena + g_tab[k].off, (void*)(uintptr_t)g_tab[k].addr, g_tab[k].size);
                 end = rec_hwm > hwm ? rec_hwm : hwm; if (end < heap_start) end = heap_start;
                 if (end > maxused) maxused = end;
                 h = FNV_OFF;
-                for (o = GLOBALS_BASE & ~7ULL; o < end; o += 8) h = mixw(h, norm(*(u64*)(arena + o)));
+                {
+                    FILE* df = want_f && getenv("ORACLE_DUMP") ? fopen(getenv("ORACLE_DUMP"), "wb") : 0;
+                    for (o = GLOBALS_BASE & ~7ULL; o < end; o += 8) {
+                        u64 nw = norm(*(u64*)(arena + o));
+                        h = mixw(h, nw);
+                        if (df) fwrite(&nw, 8, 1, df);
+                    }
+                    if (df) fclose(df);
+                }
                 printf("R %s %d %llx %llx %llx %llx\n", fn[func].name, idx, ret, h, rec_log, rec_calls);
                 fflush(stdout);
                 if (want_f) printf("state %llx\n", h);

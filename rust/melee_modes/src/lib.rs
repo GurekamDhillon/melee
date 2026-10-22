@@ -73,3 +73,6 @@ impl GXColor {
         GXColor { r, g, b, a }
     }
 }
+
+/// Per-TU ports of src/melee/gm/*.c (shard 473-480).
+pub mod tu;

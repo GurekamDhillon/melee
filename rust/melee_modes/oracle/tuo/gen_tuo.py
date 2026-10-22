@@ -87,7 +87,7 @@ def is_char_ptr(t):
     if c.kind != T.POINTER:
         return False
     p = canon(c.get_pointee())
-    return p.kind in (T.CHAR_S, T.SCHAR, T.CHAR_U, T.UCHAR)
+    return p.kind == T.CHAR_S  # plain `char*` only (u8*/s8* are buffers, not strings)
 
 
 class Ctx:
@@ -464,19 +464,25 @@ def main():
             init = any(tk.spelling == "=" for tk in cur.get_tokens())
         fill = (not init) and name not in nofill
         cname = f"gv_{name}"
-        if name in raw_g:
+        is_raw = name in raw_g
+        fallback_ty = None
+        if not is_raw:
+            try:
+                e = Emit()
+                G.w.leaf(e, t, f"(*p)", f"(*p)", "path", "path", spec.get("RUST_GLOBAL_TYPES", {}).get(name))
+                rt = spec.get("RUST_GLOBAL_TYPES", {}).get(name) or rtype(t)
+            except SystemExit as ex:
+                if "no Rust name" not in str(ex):
+                    raise
+                print(f"tuo: global {name} compared as bytes ({ex})")
+                is_raw = True
+                fallback_ty = f"[u8; {t.get_size()}]"
+        if is_raw:
             gl_c.append(f'  tuo_regglobal("{name}", (void*)&{name}, sizeof({name}), 0, {int(fill)});')
         else:
-            e = Emit()
-            if name in gsizes:
-                raise SystemExit("GLOBAL_TYPES not implemented")
-            G.w.leaf(e, t, f"(*p)", f"(*p)", "path", "path", spec.get("RUST_GLOBAL_TYPES", {}).get(name))
-            C.append(f"static void {cname}(const char* path, void* vp) {{ {t.spelling.split('[')[0] if False else ''} char _pb[600]; (void) _pb;")
-            # declare p with the right C type via __typeof__(name)
-            C[-1] = f"static void {cname}(const char* path, void* vp) {{ __typeof__({name})* p = (__typeof__({name})*) vp; char _pb[600]; (void) _pb;"
+            C.append(f"static void {cname}(const char* path, void* vp) {{ __typeof__({name})* p = (__typeof__({name})*) vp; char _pb[600]; (void) _pb;")
             C.extend(e.c)
             C.append("}")
-            rt = spec.get("RUST_GLOBAL_TYPES", {}).get(name) or rtype(t)
             R.append("#[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]")
             R.append(f"fn {cname}(v: &mut V, path: &str, vp: *mut u8) {{ let p = vp as *mut {rt}; unsafe {{")
             R.extend(e.r)
@@ -486,12 +492,12 @@ def main():
         over = spec.get("RUST_GLOBAL_PATH", {}).get(name)
         if over:
             path = over
-        if name in raw_g:
+        if is_raw:
             gl_r.append(f'    Global {{ name: "{name}", p: unsafe {{ &raw mut {path} as *mut u8 }}, size: unsafe {{ core::mem::size_of_val(&*(&raw const {path})) }}, vis: None, fill: {str(fill).lower()} }},')
         else:
             gl_r.append(f'    Global {{ name: "{name}", p: unsafe {{ &raw mut {path} as *mut u8 }}, size: unsafe {{ core::mem::size_of_val(&*(&raw const {path})) }}, vis: Some({cname}), fill: {str(fill).lower()} }},')
         if is_ext:
-            ext_globals_rs.append((name, cur))
+            ext_globals_rs.append((name, fallback_ty or cur))
             if ct.kind == T.INCOMPLETEARRAY:
                 n = spec.get("EXTERN_ARRAY_LEN", {}).get(name)
                 if n is None:
@@ -632,7 +638,7 @@ def main():
                'extern void tuo_arg_f64(unsigned long long); extern void tuo_arg_p(const void*); extern void tuo_arg_s(const char*); extern void tuo_arg_bytes(const void*, unsigned long long);',
                'extern unsigned long long tuo_ret_int(const char*, int, int); extern unsigned tuo_ret_f32(const char*);',
                'extern unsigned long long tuo_ret_f64(const char*); extern void* tuo_ret_ptr(const char*);',
-               'extern void tuo_regfn(const char*, void*); extern void* tuo_leaf_ptr(const char*);', '']
+               'extern void tuo_regfn(const char*, void*); extern void* tuo_leaf_ptr(const char*); extern unsigned long long tuo_leaf_int(const char*, int, int);', '']
     stubs_reg = []
     rs_stub = []
     rs_install = []
@@ -640,11 +646,19 @@ def main():
     skip_stub = set(spec.get("SKIP_STUBS", []))
     OUTS = spec.get("OUTS", {})
 
+    OUT_INTS = spec.get("OUT_INTS", {})
+
     def outs_c(nm, n):
-        return " ".join(f'if (a{i}) *(void**) a{i} = tuo_leaf_ptr("out:{nm}#{i}");' for i in OUTS.get(nm, []))
+        a = " ".join(f'if (a{i}) *(void**) a{i} = tuo_leaf_ptr("out:{nm}#{i}");' for i in OUTS.get(nm, []))
+        b = " ".join(f'if (a{i}) {{ unsigned long long _v = tuo_leaf_int("out:{nm}#{i}", {bits}, 0); __builtin_memcpy(a{i}, &_v, {bits // 8}); }}'
+                     for i, bits in OUT_INTS.get(nm, {}).items())
+        return a + " " + b
 
     def outs_r(nm, n):
-        return " ".join(f'if !a{i}.is_null() {{ *(a{i} as *mut usize) = v.leaf_ptr("out:{nm}#{i}"); }}' for i in OUTS.get(nm, []))
+        a = " ".join(f'if !a{i}.is_null() {{ *(a{i} as *mut usize) = v.leaf_ptr("out:{nm}#{i}"); }}' for i in OUTS.get(nm, []))
+        b = " ".join(f'if !a{i}.is_null() {{ let x: u64 = v.leaf_int("out:{nm}#{i}", {bits}, 0); core::ptr::copy_nonoverlapping(&x as *const u64 as *const u8, a{i} as *mut u8, {bits // 8}); }}'
+                     for i, bits in OUT_INTS.get(nm, {}).items())
+        return a + " " + b
 
     custom = spec.get("CUSTOM_STUBS", {})
     for name in declared:
@@ -982,7 +996,12 @@ def rust_type(G, t):
         if pc.kind in (T.FUNCTIONPROTO, T.FUNCTIONNOPROTO):
             return rust_fn(G, pc)
         q = "*const" if pc.is_const_qualified() else "*mut"
-        return f"{q} {rust_type(G, pt)}"
+        try:
+            return f"{q} {rust_type(G, pt)}"
+        except SystemExit as ex:
+            if "no Rust name" not in str(ex):
+                raise
+            return f"{q} core::ffi::c_void"  # TODO(group0): record not generated by melee_types
     if k == T.CONSTANTARRAY:
         return f"[{rust_type(G, c.element_type)}; {c.get_array_size()}]"
     if k == T.INCOMPLETEARRAY:

@@ -343,7 +343,11 @@ impl V {
         self.emit(&l);
     }
     pub fn ret_int(&mut self, name: &str, bits: u32, sgn: u32) -> u64 {
-        self.leaf_int(&format!("ret:{name}"), bits, sgn)
+        let r = self.leaf_int(&format!("ret:{name}"), bits, sgn);
+        if std::env::var("TUO_TRACE").is_ok() {
+            eprintln!("ret {name} = {}", r as i64);
+        }
+        r
     }
     pub fn ret_f32(&mut self, name: &str) -> u32 {
         self.leaf_f32(&format!("ret:{name}"))
@@ -470,9 +474,15 @@ pub fn run(cfg: &str, expected: &str, glue: Glue) {
     }
     unsafe { VV = Some(v) };
     let full_sel = std::env::var("TUO_FULL").ok();
+    let only = std::env::var("TUO_ONLY").ok(); // "<fn>:<idx>": run just that case (debugging)
     let mut got = vec![];
     for f in &fns {
         for idx in 0..f.n {
+            if let Some(o) = &only {
+                if *o != format!("{}:{}", f.name, idx) {
+                    continue;
+                }
+            }
             let v = vv();
             v.full = false;
             if let Some(sel) = &full_sel {
@@ -583,6 +593,9 @@ pub fn run(cfg: &str, expected: &str, glue: Glue) {
             }
             got.push(format!("{} {} {:016x}", f.name, idx, v.lh));
         }
+    }
+    if only.is_some() {
+        return;
     }
     let exp: Vec<&str> = expected.lines().collect();
     let mut bad = vec![];

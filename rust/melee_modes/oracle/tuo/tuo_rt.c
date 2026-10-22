@@ -81,8 +81,8 @@ static void load_cfg(const char* path)
     if (!f) { fprintf(stderr, "no cfg %s\n", path); exit(2); }
     static char b[262144];
     while (fgets(b, sizeof b, f)) {
-        char* tok[64]; int nt = 0;
-        for (char* p = strtok(b, " \t\r\n"); p && nt < 64; p = strtok(0, " \t\r\n"))
+        char* tok[1024]; int nt = 0;
+        for (char* p = strtok(b, " \t\r\n"); p && nt < 1024; p = strtok(0, " \t\r\n"))
             tok[nt++] = p;
         if (!nt) continue;
         if (!strcmp(tok[0], "dom")) {
@@ -377,7 +377,9 @@ void tuo_call_end(void) { cl[cln++] = ')'; cl[cln] = 0; tuo_emit("%s", cl); }
 u64 tuo_ret_int(const char* name, int bits, int sgn)
 {
     char k[128]; sprintf(k, "ret:%s", name);
-    return tuo_leaf_int(k, bits, sgn);
+    u64 r = tuo_leaf_int(k, bits, sgn);
+    if (getenv("TUO_TRACE")) fprintf(stderr, "ret %s = %lld\n", name, (long long) r);
+    return r;
 }
 unsigned tuo_ret_f32(const char* name) { char k[128]; sprintf(k, "ret:%s", name); return tuo_leaf_f32(k); }
 u64 tuo_ret_f64(const char* name) { char k[128]; sprintf(k, "ret:%s", name); return tuo_leaf_f64(k); }

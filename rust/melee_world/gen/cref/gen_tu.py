@@ -381,6 +381,17 @@ class Walk:
                 rf.append("_ => {} }")
                 rh.append("_ => {} }")
                 return
+            pu = getattr(self, "ptr_unions", {}).get(f.spelling if f is not None else None)
+            if pu and not any(x.spelling == pu for x in d.get_children()):
+                pu = None
+            if d.kind == K.UNION_DECL and pu:
+                # a union the spec says is read through one pointer member: left NULL by fill (the spec's
+                # setup links it into a pool), hashed by pool id
+                cf.append(f"{cexpr}.{pu} = 0;")
+                ch.append(f"HM(PI((const void*) {cexpr}.{pu}));")
+                rf.append(f"unsafe {{ {rexpr}.{pu} = core::ptr::null_mut(); }}")
+                rh.append(f"unsafe {{ hm(pi({rexpr}.{pu})); }}")
+                return
             if d.kind == K.UNION_DECL:
                 sz = c.get_size()
                 cf.append(f"for (i{depth} = 0; i{depth} < {sz}; i{depth}++) ((unsigned char*) &{cexpr})[i{depth}] = (unsigned char) rnd();")
@@ -520,6 +531,7 @@ def build(stem, spec, want_ext):
             ext_cb.append((n, rparams, rret, argnames))
     # fill / hash
     walker = Walk(tu, spec.get("unions"))
+    walker.ptr_unions = spec.get("ptr_unions", {})
     local_types = []
     fwd = []
     for tn in spec.get("types", ()):

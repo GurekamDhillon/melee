@@ -9,3 +9,4 @@ pub mod groldyoshi;
 pub mod groldkongo;
 pub mod groldpupupu;
 pub mod gronett;
+pub mod grpura;

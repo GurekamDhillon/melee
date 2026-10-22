@@ -22,7 +22,7 @@ from configs import CONFIGS  # noqa: E402
 
 run.HERE = HERE
 run.DATA = ROOT / "rust/melee_modes/tests/data"
-run.FLAGS += ["-I", str(HERE)]
+run.FLAGS += ["-I", str(HERE), "-I", str(ROOT / "src/melee/gm")]
 run.EXTRACTS.update({f"tu_{k}": [] for k in CONFIGS})
 
 
@@ -61,6 +61,14 @@ def main():
     for stem in names:
         cfg = CONFIGS[stem]
         ana = anas[stem]
+        if cfg.get("patch"):
+            # the TU with its 32-bit-layout pointer arithmetic spelled for the native layout
+            # (see the config); the driver includes <stem>_tu.c instead of the game file
+            text = (ROOT / cfg["src"]).read_text(encoding="utf-8")
+            for old, new in cfg["patch"]:
+                assert text.count(old) >= 1, (stem, old)
+                text = text.replace(old, new)
+            (run.BUILD / f"{stem}_tu.c").write_text(text, encoding="utf-8", newline="\n")
         ctext, used, rstubs = stubgen.gen(stem, cfg, ana)
         (run.BUILD / f"tu_{stem}_stubs.inc").write_text(ctext, encoding="utf-8", newline="\n")
         inst = [f"        ext::HOOK_{n} = Some(t_{n});" for n in used]

@@ -66,3 +66,21 @@ CONFIGS["gm_1884"] = dict(
     custom=["lbArchive_80016DBC", "lb_80011E24"],
     ginit={"HSD_GObj_JObjKind": "0x2A", "HSD_GObj_CameraKind": "0x2B", "HSD_GObj_LightKind": "0x2C", "HSD_GObj_FogKind": "0x2D"},
 )
+
+
+CONFIGS["gm_19EF"] = dict(
+    src="src/melee/gm/gm_19EF.c",
+    ret={"gm_GetCurrentGameMode": ("expr", "(rnd() % 3) + 3", "(rnd() % 3) as u8 + 3"),
+         "gm_80160474": ("expr", "(int) (rnd() % 8) - 1", "(rnd() % 8) as i32 - 1"),
+         "gm_801604DC": ("s", "Scn"), "gm_80160564": ("s", "Mdl"),
+         "Toy_803060BC": ("expr", "(float) (rnd() % 100 + 1) / 8.0f", "((rnd() % 100 + 1) as f32) / 8.0"),
+         "HSD_JObjLoadJoint": ("expr", "mktree()", "mktree()"),
+         "lb_80011AC4": ("allocn", 64),
+         "gm_GetButtonsTriggered": ("expr", "btn()", "btn()")},
+    effect={"HSD_GObjObject_80390A70": SETOBJ},
+    custom=["lbArchive_80016DBC", "lbArchive_LoadSymbols", "HSD_SisLib_803A6B98", "lb_80011E24"],
+    ginit={"HSD_GObj_JObjKind": "0x2A", "HSD_GObj_CameraKind": "0x2B", "HSD_GObj_LightKind": "0x2C", "HSD_GObj_FogKind": "0x2D"},
+    patch=[("((HSD_JObj**) ((u8*) &lbl_80479A98 + 0x28))[i]", "lbl_80479A98.x28.typed.jobjs[i - 1]"),
+           ("lbl_80479A98.jobj_slots[i] = node;", "lbl_80479A98.x28.typed.jobjs[i - 10] = node;"),
+           ("ptr = &((HSD_JObj**) &lbl_80479A98)[j = 10];\n        ptr += 10;", "ptr = &lbl_80479A98.x28.typed.jobjs[(j = 10) - 1];")],
+)

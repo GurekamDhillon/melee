@@ -116,6 +116,7 @@ pub fn fill_Ground(p: &mut Ground) {
     for i0 in 0..400 { unsafe { *(&mut p.u as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
 }
 pub fn hash_Ground(p: &Ground) {
+    unsafe { if HDBG { println!("B Ground"); } }
     hm(p.x0 as u32);
     hm(pi(p.gobj));
     hm(fi(p.x8_callback));
@@ -200,6 +201,7 @@ pub fn fill_HSD_GObj(p: &mut HSD_GObj) {
     p.gxlink_prios = fv64() as _;
 }
 pub fn hash_HSD_GObj(p: &HSD_GObj) {
+    unsafe { if HDBG { println!("B HSD_GObj"); } }
     hm(p.classifier as u32);
     hm(p.p_link as u32);
     hm(p.gx_link as u32);
@@ -231,6 +233,7 @@ pub fn fill_LbShadow(p: &mut LbShadow) {
     p.set_x0_b7(fv() as _);
 }
 pub fn hash_LbShadow(p: &LbShadow) {
+    unsafe { if HDBG { println!("B LbShadow"); } }
     hm(p.x0_b0() as u32);
     hm(p.x0_b1() as u32);
     hm(p.x0_b2() as u32);
@@ -265,6 +268,7 @@ pub fn fill_HSD_JObj(p: &mut HSD_JObj) {
     p.id = fv() as _;
 }
 pub fn hash_HSD_JObj(p: &HSD_JObj) {
+    unsafe { if HDBG { println!("B HSD_JObj"); } }
     hm(pi(p.object.parent.class_info));
     hm(p.object.ref_count as u32);
     hm(p.object.ref_count_individual as u32);

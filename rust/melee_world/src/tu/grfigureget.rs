@@ -51,6 +51,7 @@ pub mod ext {
     fn ftLib_80086984(a0: *mut HSD_GObj) -> *mut CollData;
     fn gm_8017E280(a0: u16, a1: u32) -> i8;
     fn grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32);
+    fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32);
     fn grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj;
     fn it_802F2014(a0: *mut HSD_GObj, a1: i32);
     fn it_802F2020(a0: *mut HSD_GObj) -> i32;

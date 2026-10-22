@@ -141,6 +141,15 @@ pub fn pi<T>(p: *const T) -> u32 {
     }
     0xFFFF_FFFF
 }
+/// A pointer slot inside a union that other views overwrite byte-wise: only an exact region base counts.
+pub fn pib<T>(p: *const T) -> u32 {
+    let v = pi(p);
+    if v == 0 || v == 0xFFFF_FFFF || (v & 0xFFFF) == 0 {
+        v
+    } else {
+        0xFFFF_FFFE
+    }
+}
 pub fn sh(s: *const u8) -> u32 {
     if s.is_null() {
         return 0;

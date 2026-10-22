@@ -20,6 +20,7 @@ pub fn install() {
         HSD_GObj_SetupProc = Some(|a0, a1, a2| { t(1007); t(pi(a0)); t(fi(a1)); t(a2 as u32); core::ptr::null_mut() });
         Mex_GrBind = Some(|a0| { t(1008); t(pi(a0)); a0 });
         grAnime_801C8138 = Some(|a0, a1, a2| { t(1009); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
+        grDisplay_801C5DB0 = Some(|a0, a1| { t(1010); t(pi(a0)); t(a1 as u32); });
         grZakoGenerator_801CAE04 = Some(|a0| { t(1011); t(pi(a0)); core::ptr::null_mut() });
         lb_800115F4 = Some(|| { t(1012); });
     }

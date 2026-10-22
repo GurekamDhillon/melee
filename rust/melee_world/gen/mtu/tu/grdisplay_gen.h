@@ -110,6 +110,7 @@ static void fill_Ground(Ground* p)
 static void hash_Ground(const Ground* p)
 {
     int i0, i1, i2, j0, j1, j2, j3;
+    if (HDBG) printf("B Ground%c", 10);
     HM((u32) p->x0);
     HM(PI((const void*) p->gobj));
     HM(FI((const void*) p->x8_callback));
@@ -198,6 +199,7 @@ static void fill_HSD_GObj(HSD_GObj* p)
 static void hash_HSD_GObj(const HSD_GObj* p)
 {
     int i0, i1, i2, j0, j1, j2, j3;
+    if (HDBG) printf("B HSD_GObj%c", 10);
     HM((u32) p->classifier);
     HM((u32) p->p_link);
     HM((u32) p->gx_link);
@@ -233,6 +235,7 @@ static void fill_LbShadow(LbShadow* p)
 static void hash_LbShadow(const LbShadow* p)
 {
     int i0, i1, i2, j0, j1, j2, j3;
+    if (HDBG) printf("B LbShadow%c", 10);
     HM((u32) p->x0_b0);
     HM((u32) p->x0_b1);
     HM((u32) p->x0_b2);
@@ -271,6 +274,7 @@ static void fill_HSD_JObj(HSD_JObj* p)
 static void hash_HSD_JObj(const HSD_JObj* p)
 {
     int i0, i1, i2, j0, j1, j2, j3;
+    if (HDBG) printf("B HSD_JObj%c", 10);
     HM(PI((const void*) p->object.parent.class_info));
     HM((u32) p->object.ref_count);
     HM((u32) p->object.ref_count_individual);

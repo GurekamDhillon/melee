@@ -85,8 +85,8 @@ unsafe fn setup() {
 
 unsafe fn hash_all() {
     for i in 0..3 {
-        hm(pi(SGP.u.figureget.x28[i])); SGP.u.figureget.x28[i] = null_mut();
-        hm(pi(SGP.u.figureget.x34[i])); SGP.u.figureget.x34[i] = null_mut();
+        hm(pib(SGP.u.figureget.x28[i])); SGP.u.figureget.x28[i] = null_mut();
+        hm(pib(SGP.u.figureget.x34[i])); SGP.u.figureget.x34[i] = null_mut();
     }
     g::hash_HSD_GObj(&SGO);
     g::hash_Ground(&SGP);
@@ -124,7 +124,7 @@ fn grfigureget_matches_c() {
         preg(&raw const CD, core::mem::size_of::<CollData>());
         preg(&raw const IG, core::mem::size_of_val(&IG));
         preg(&raw const CGO, core::mem::size_of::<HSD_GObj>());
-        preg(&raw const ITD, core::mem::size_of::<Item>());
+        preg(&raw const ITD, 16);
         preg(&raw const m::grFigureGet_StageCallbacks, core::mem::size_of_val(&m::grFigureGet_StageCallbacks));
         preg(&raw const m::grFigureGet_StageData, core::mem::size_of_val(&m::grFigureGet_StageData));
         g::freg_all();

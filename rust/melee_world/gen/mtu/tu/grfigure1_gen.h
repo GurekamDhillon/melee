@@ -20,7 +20,7 @@ __typeof__(int) Ground_UpdateMapColl(__typeof__(struct HSD_GObj *) a0) { T(1006)
 __typeof__(struct HSD_GObjProc *) HSD_GObj_SetupProc(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *)) a1, __typeof__(unsigned char) a2) { T(1007); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); return (__typeof__(struct HSD_GObjProc *)) (0); }
 __typeof__(void *) Mex_GrBind(__typeof__(void *) a0) { T(1008); T(PI((const void*) a0)); return (__typeof__(void *)) (a0); }
 void grAnime_801C8138(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1009); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
-void grDisplay_801C5DB0(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1010); }
+void grDisplay_801C5DB0(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1010); T(PI((const void*) a0)); T((u32) a1); }
 __typeof__(struct HSD_GObj *) grZakoGenerator_801CAE04(__typeof__(struct grZakoGenerator_SpawnDesc *) a0) { T(1011); T(PI((const void*) a0)); return (__typeof__(struct HSD_GObj *)) (0); }
 void lb_800115F4(void) { T(1012); }
 static void fill_HSD_GObj(HSD_GObj* p)

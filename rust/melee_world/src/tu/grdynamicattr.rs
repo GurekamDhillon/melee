@@ -4,7 +4,6 @@
 //! the C (whole TU, shipping contraction) by tests/tu_grdynamicattr.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
-use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
 

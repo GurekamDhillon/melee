@@ -102,6 +102,8 @@ static u32 PI(const void* p)
     for (i = 0; i < NF; i++) if (FP[i] == p) return 0xF0000000u | (u32) (i + 1);
     return 0xFFFFFFFFu;
 }
+/* a pointer slot inside a union that other views overwrite byte-wise: only an exact region base counts */
+static u32 PIB(const void* p) { u32 v = PI(p); return (v == 0 || v == 0xFFFFFFFFu || (v & 0xFFFFu) == 0) ? v : 0xFFFFFFFEu; }
 static u32 SH(const char* s)
 {
     u32 h = 0x811C9DC5u;

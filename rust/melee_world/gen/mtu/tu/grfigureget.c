@@ -64,8 +64,8 @@ static void hash_all(void)
     int i;
     (void) i;
     for (i = 0; i < 3; i++) {
-        HM(PI(SGP.u.figureget.x28[i])); SGP.u.figureget.x28[i] = 0;
-        HM(PI(SGP.u.figureget.x34[i])); SGP.u.figureget.x34[i] = 0;
+        HM(PIB(SGP.u.figureget.x28[i])); SGP.u.figureget.x28[i] = 0;
+        HM(PIB(SGP.u.figureget.x34[i])); SGP.u.figureget.x34[i] = 0;
     }
     hash_HSD_GObj(&SGO); hash_Ground(&SGP); hash_StageInfo(&stage_info);
     HM(B(SV.x)); HM(B(SV.y)); HM(B(SV.z));
@@ -91,7 +91,7 @@ int main(void)
     preg(&CD, sizeof CD);
     preg(IG, sizeof IG);
     preg(&CGO, sizeof CGO);
-    preg(&ITD, sizeof ITD);
+    preg(&ITD, 16);
     preg(grFigureGet_StageCallbacks, sizeof grFigureGet_StageCallbacks);
     preg(&grFigureGet_StageData, sizeof grFigureGet_StageData);
     freg_all();

@@ -45,6 +45,7 @@ pub mod ext {
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
     fn Mex_GrBind(a0: *mut c_void) -> *mut c_void;
     fn grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32);
+    fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32);
     fn grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj;
     fn lb_800115F4();
     }

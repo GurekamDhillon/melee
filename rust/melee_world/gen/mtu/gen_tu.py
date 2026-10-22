@@ -468,13 +468,7 @@ def build(stem, spec, want_ext):
         rt = ft.get_result()
         rcls = arg_class(rt)
         va = ft.is_function_variadic()
-        realcb = spec.get("real_cb", {})
-        if n in realcb:  # defined in a Rust TU of this crate: the C side stubs it, the Rust side passes the port
-            ps = ", ".join(f"__typeof__({p.spelling}) a{i}" for i, p in enumerate(ptys)) or "void"
-            rt_ = "void" if rcls == "void" else f"__typeof__({rt.spelling})"
-            c_out.append(f"{rt_} {n}({ps}) {{ T({sid[n]}); }}" if rcls == "void" else
-                         f"{rt_} {n}({ps}) {{ T({sid[n]}); return ({rt_}) 0; }}")
-            continue
+        realcb = spec.get("real_cb", {})  # address-taken stubs whose address the port takes from a real Rust port
         if va:
             cs = spec.get("custom_stubs", {}).get(n)
             if cs:  # a variadic callee the spec models by hand (fixed-arity on the Rust side)
@@ -511,7 +505,7 @@ def build(stem, spec, want_ext):
         r_out_hook = f"        m::ext::hook::{n} = Some(|{argl}| {{ " + " ".join(body_r) + " });"
         r_out.append(("@@HOOK@@", r_out_hook))
         ext_fns.append(f"    fn {n}({rparams}){rret};")
-        if addr:
+        if addr and n not in realcb:
             ext_cb.append((n, rparams, rret, argnames))
     # fill / hash
     walker = Walk(tu)

@@ -36,6 +36,7 @@ pub fn fill_grDynamicAttr_UnkStruct(p: &mut grDynamicAttr_UnkStruct) {
     }
 }
 pub fn hash_grDynamicAttr_UnkStruct(p: &grDynamicAttr_UnkStruct) {
+    unsafe { if HDBG { println!("B grDynamicAttr_UnkStruct"); } }
     hm(pi(p.next));
     hm(p.unk4 as u32);
     hm(p.unk8.x.to_bits());

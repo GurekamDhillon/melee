@@ -29,7 +29,7 @@ __typeof__(int) Toy_80305058(__typeof__(int) a0, __typeof__(int) a1, __typeof__(
 __typeof__(struct CollData *) ftLib_80086984(__typeof__(struct HSD_GObj *) a0) { T(1011); T(PI((const void*) a0)); return (__typeof__(struct CollData *)) (&FCD); }
 __typeof__(signed char) gm_8017E280(__typeof__(unsigned short) a0, __typeof__(unsigned int) a1) { T(1012); T((u32) a0); T((u32) a1); return (__typeof__(signed char)) (fv()); }
 void grAnime_801C8138(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1013); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
-void grDisplay_801C5DB0(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1014); }
+void grDisplay_801C5DB0(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1014); T(PI((const void*) a0)); T((u32) a1); }
 __typeof__(struct HSD_GObj *) grZakoGenerator_801CAE04(__typeof__(struct grZakoGenerator_SpawnDesc *) a0) { T(1015); T(PI((const void*) a0)); return (__typeof__(struct HSD_GObj *)) (0); }
 void it_802F2014(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1016); T(PI((const void*) a0)); T((u32) a1); }
 __typeof__(int) it_802F2020(__typeof__(struct HSD_GObj *) a0) { T(1017); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }

@@ -11,3 +11,5 @@ pub mod grfigure1;
 pub mod grfigure2;
 pub mod grfigure3;
 pub mod grfigureget;
+pub mod grflatzone;
+pub mod grfourside;

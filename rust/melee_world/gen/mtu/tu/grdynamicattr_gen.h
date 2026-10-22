@@ -19,6 +19,7 @@ static void fill_grDynamicAttr_UnkStruct(grDynamicAttr_UnkStruct* p)
 static void hash_grDynamicAttr_UnkStruct(const grDynamicAttr_UnkStruct* p)
 {
     int i0, i1, i2, j0, j1, j2, j3;
+    if (HDBG) printf("B grDynamicAttr_UnkStruct%c", 10);
     HM(PI((const void*) p->next));
     HM((u32) p->unk4);
     HM(B(p->unk8.x));

@@ -25,6 +25,7 @@ pub fn install() {
         ftLib_80086984 = Some(|a0| { t(1011); t(pi(a0)); &raw mut super::FCD });
         gm_8017E280 = Some(|a0, a1| { t(1012); t(a0 as u32); t(a1 as u32); fv() as _ });
         grAnime_801C8138 = Some(|a0, a1, a2| { t(1013); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
+        grDisplay_801C5DB0 = Some(|a0, a1| { t(1014); t(pi(a0)); t(a1 as u32); });
         grZakoGenerator_801CAE04 = Some(|a0| { t(1015); t(pi(a0)); core::ptr::null_mut() });
         it_802F2014 = Some(|a0, a1| { t(1016); t(pi(a0)); t(a1 as u32); });
         it_802F2020 = Some(|a0| { t(1017); t(pi(a0)); fv() as _ });

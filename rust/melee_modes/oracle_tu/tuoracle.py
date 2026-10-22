@@ -518,6 +518,8 @@ class TuGen:
         rk = classify(fn.result_type)
         # out-parameters: non-const pointer to record is filled by the mock
         lines = []
+        if n == "memzero":  # the real function: zero the block
+            lines.append("    { int i; for (i = 0; i < (int)a1; i++) ((unsigned char*)a0)[i] = 0; }")
         for i, a in enumerate(fn.get_arguments()):
             ak = classify(a.type)
             if ak[0] == "ptr" and not ak[1].is_const_qualified() and ak[1].get_canonical().kind == T.RECORD \
@@ -577,6 +579,8 @@ class TuGen:
                 lines.append("    }")
         rk = classify(fn.result_type)
         rng = self.cfg.get("mock", {}).get(n)
+        if n == "memzero":
+            lines.append("    core::ptr::write_bytes(a[0] as usize as *mut u8, 0, a[1] as i64 as usize);")
         if rk[0] == "void":
             lines.append("    0")
         elif rk[0] in ("int", "bool"):

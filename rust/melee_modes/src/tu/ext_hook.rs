@@ -72,6 +72,14 @@ val_fnptr!((), (A0), (A0, A1), (A0, A1, A2), (A0, A1, A2, A3), (A0, A1, A2, A3, 
 /// ```
 /// Under a test hook ([`EXT_HOOK`]) every stub goes to the hook, ported or not, so the state
 /// oracles can mock the callee exactly as the C oracle does.
+/// MSL `memzero(void*, ssize_t)`: the real behaviour, used by ext stubs when no hook is installed.
+///
+/// # Safety
+/// `p` is valid for `n` bytes.
+pub unsafe fn memzero(p: *mut core::ffi::c_void, n: i32) {
+    core::ptr::write_bytes(p as *mut u8, 0, n as usize);
+}
+
 impl Val for () {
     #[inline] fn to_u64(self) -> u64 { 0 }
     #[inline] fn from_u64(_v: u64) -> Self {}

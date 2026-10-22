@@ -97,4 +97,25 @@ CFGS = {
         fieldrange={"Unk1PData_xC.xD": "0..1", "Unk1PData_xC.xE": "0..1", "Unk1PData_xC.xF": "0..1",
                     "Unk1PData_xC.x1C": "0..2", "gmPlayerData.cpu_level": "0..4", "VsSceneState.unk_C": "0..7",
                     "MatchPlayerData.x44": "0..2", "MatchPlayerData.stocks": "0..4", "gmm_x0_528_t.stocks": "0..4"}),
+
+    "gm_1736": dict(
+        src="src/melee/gm/gm_1736.c", module="gm_1736", cases=120,
+        local_types=["lbl_803D6450_t", "lbl_803D646C_t"],
+        funcs={
+            "fn_80173834": dict(args=["0..30", "3..5", "0..1"]),
+            "gm_8017390C": dict(args=["0..3", "0..1"]),
+            "gm_80173BC4": dict(args=["0..30"]),
+            "gm_80173B30": dict(cases=200),
+            "gm_80173EEC": dict(cases=300),
+            "gm_80173EEC_inline": dict(args=["0..30", "3..5"]),
+        },
+        mock={"Mex_Enabled": "0|0|0|0|0|0|0|1", "gm_801721EC": "0..1", "fn_80164B48": "0..1",
+              "gmMainLib_8015EE90": "0..1", "un_803045A0": "0..1", "un_80304690": "0..1", "un_80304780": "0..1",
+              "fn_80162CCC": "0..1", "gm_80162EC8": "0..1", "gm_80164ABC": "0..1", "gmMainLib_8015D640": "0..1",
+              "gmMainLib_8015D94C": "0..1", "gm_80160474": "0..1",
+              "gmMainLib_8015DADC": "|".join(["1"] * 60 + ["0"]),
+              "gm_CKindToSelKind": "0..24", "gm_SelKindToCKind": "18|19|0|5|7|18|19",
+              "gm_801BEBC0": "2|13|25|44|46|50|7", "lbLang_GetLanguageSetting": "0..1",
+              "gm_GetCurrentGameMode": "34|36|37|38|3|4", "gm_GetPreviousGameMode": "0..40"},
+        fieldrange={"MatchPlayerData.pkind": "0..3", "Unk1PData_xC.xD": "0..1", "gmPlayerData.cpu_level": "0..4"}),
 }

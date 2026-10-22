@@ -165,6 +165,47 @@ def ret_pool(ret):
     return None
 
 
+LG_STR_C = r"""
+static void lg_str(const char* s)
+{
+    lg_c('"');
+    if (s) { int i; for (i = 0; i < 80 && s[i]; i++) lg_c(s[i]); } else lg_s("null");
+    lg_c('"');
+    lg_c(',');
+}
+static void lg_vaw(u64_ w, char c)
+{
+    if (c == 'i') lg_int((u32) w);
+    else if (c == 's') lg_str((const char*) w);
+    else lg_ptr((const void*) w);
+}
+"""
+
+RS_LG_STR = r"""
+pub fn lg_str(s: *const i8) {
+    lg_c('"');
+    if !s.is_null() {
+        let mut i = 0;
+        loop {
+            let c = unsafe { *s.add(i) };
+            if i >= 80 || c == 0 { break; }
+            lg_c(c as u8 as char);
+            i += 1;
+        }
+    } else {
+        lg_s("null");
+    }
+    lg_c('"');
+    lg_c(',');
+}
+pub fn lg_vaw(w: u64, c: u8) {
+    if c == b'i' { lg_int(w as u32); }
+    else if c == b's' { lg_str(w as usize as *const i8); }
+    else { lg_ptr(w as usize); }
+}
+"""
+
+
 def load_spec(stem):
     p = HERE / f"spec_{stem}.py"
     s = importlib.util.spec_from_file_location(f"gspec_{stem}", p)
@@ -190,6 +231,36 @@ def build(stem, verbose_fn=None):
     for m in [rs_main] + list(spec.get("ext_mods", [])):
         for n, info in O.parse_hooks((CRATE / f"src/tu/{m}.rs").read_text(encoding="utf-8")).items():
             hooks.setdefault(n, []).append((m, info))
+    # the .c's own #include lines (so that its headers are in before any macro below is defined)
+    own_inc = []
+    for line in (ROOT / src).read_text(encoding="utf-8", errors="ignore").splitlines():
+        t = line.strip()
+        if t.startswith("#include"):
+            own_inc.append(t)
+        elif t and not t.startswith(("#", "//", "/*", "*")) and not t.endswith("*/"):
+            break
+    srcdir = (ROOT / src).parent.as_posix()
+    if ("-I", srcdir) not in list(zip(O.COMMON, O.COMMON[1:])):
+        O.COMMON.extend(["-I", srcdir])
+    pr = GProbe(srcpath, includes)
+    variadic = {}
+    csrc = (ROOT / src).read_text(encoding="utf-8", errors="ignore")
+    for n, d in pr.funcs.items():
+        if d.type.kind == T.FUNCTIONPROTO and d.type.is_function_variadic() and not d.is_definition() and re.search(r"(?<!\w)" + n + r"(?!\w)", csrc):
+            variadic[n] = dict(nfixed=len(list(d.get_arguments())), va=spec.get("variadic", {}).get(n, "i"))
+    pre_lines = ["#include <stdarg.h>"] + own_inc
+    pre_lines.append("#define GNARG_(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,N,...) N")
+    pre_lines.append("#define GNARG(...) GNARG_(__VA_ARGS__, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)")
+    for n, v in variadic.items():
+        d = pr.funcs[n]
+        ps = ", ".join(O.c_param(a.type, i) if "(*)" in a.type.spelling else a.type.spelling for i, a in enumerate(d.get_arguments()))
+        pre_lines.append(f"static {d.result_type.spelling} {n}__va(int{', ' + ps if ps else ''}, ...);")
+        pre_lines.append(f"#define {n}(...) {n}__va(GNARG(__VA_ARGS__) - {v['nfixed']}, __VA_ARGS__)")
+    pre_lines.append(spec.get("pre_c", ""))
+    pre_h = O.BUILD / f"gro_{stem}_pre.h"
+    O.BUILD.mkdir(parents=True, exist_ok=True)
+    pre_h.write_text("\n".join(pre_lines) + "\n", encoding="utf-8")
+    includes = list(includes) + [pre_h.as_posix()]
     pr = GProbe(srcpath, includes)
     fspecs = []
     for f in spec["funcs"]:
@@ -199,12 +270,12 @@ def build(stem, verbose_fn=None):
         fspecs.append(f)
 
     # ---- pass 1: undefined callees
-    head = [f'#include "{i}"' for i in includes] + ['#include "oracle.h"', spec.get("pre_c", ""), f'#include "{srcpath}"']
+    head = [f'#include "{i}"' for i in includes] + ['#include "oracle.h"', f'#include "{srcpath}"']
     p1 = O.BUILD / f"gro_{stem}_p1.c"
     p1.write_text("\n".join(head) + "\nint main(void) { return 0; }\n", encoding="utf-8")
     obj1 = O.ship_obj(p1, f"gro_{stem}_p1")
     nm = [l.split()[-1] for l in O.run([O.NM, "--undefined-only", str(obj1)], "nm").stdout.splitlines() if " U " in " " + l.strip() + " "]
-    undef = sorted({n for n in nm if not n.startswith("__imp_")})
+    undef = sorted({(n[:-4] if n.endswith("__va") and n[:-4] in variadic else n) for n in nm if not n.startswith("__imp_")})
     gk = O.gekko_obj()
     gk_defs = {l.split()[-1] for l in O.run([O.NM, "--defined-only", str(gk)], "nm").stdout.splitlines() if l.strip()}
     own = set(spec.get("provides", []))
@@ -216,9 +287,28 @@ def build(stem, verbose_fn=None):
             continue
         if n in pr.funcs:
             txt, kinds, rk, ret = O.stub_c(n, pr.funcs[n])
-            if pr.funcs[n].type.is_function_variadic():
+            if rk.startswith("ps:"):
+                txt = txt[:txt.rindex("}")] + f"    {{ {ret.spelling} r = ({ret.spelling}) gen_p(); lg_retp((const void*) r); lg_c(';'); return r; }}\n}}"
+                rk = "p"
+            # const char* parameters are logged by content
+            for i, a in enumerate(pr.funcs[n].get_arguments()):
+                ct = a.type.get_canonical()
+                if ct.kind == T.POINTER and "const" in a.type.spelling and ct.get_pointee().get_canonical().kind in (T.CHAR_S, T.SCHAR, T.CHAR_U, T.UCHAR):
+                    txt = txt.replace(f"lg_ptr((const void*) a{i});", f"lg_str((const char*) a{i});")
+                    kinds[i] = "str"
+            if n in variadic:
+                nf = variadic[n]["nfixed"]
                 first, rest = txt.split("\n", 1)
-                first = first.rstrip(")") + ", ...)" if "(void)" not in first else first.replace("(void)", "(...)")
+                m = re.match(r"^(.*?) " + n + r"\((.*)\)$", first)
+                params = m.group(2)
+                params = "" if params == "void" else params
+                first = f"static {m.group(1)} {n}__va(int nva{', ' + params if params else ''}, ...)"
+                last = f"a{nf - 1}" if nf else "nva"
+                pat = variadic[n]["va"]
+                extra = (f'    {{ va_list ap; int k; static const char PAT[] = "{pat}"; va_start(ap, {last});\n'
+                         f'      for (k = 0; k < nva; k++) {{ u64_ w = va_arg(ap, u64_); lg_vaw(w, PAT[k < {len(pat)} ? k : {len(pat) - 1}]); }}\n'
+                         f'      va_end(ap); }}\n')
+                rest = rest.replace('    lg_s(")");', extra + '    lg_s(")");', 1)
                 txt = first + "\n" + rest
             pool = ret_pool(ret)
             if rk not in ("i", "q", "f", "d", "v") and n in O.RETS:
@@ -249,7 +339,8 @@ def build(stem, verbose_fn=None):
         d = desc if desc is not None else pr.descs(ctype)
         pr.keep = None
         bf = [] if tag in bf_skip or ctype in bf_skip else bf_paths(pr, ctype, rs or ctype, keep)
-        TYPES[tag] = dict(c=ctype, desc=d, bf=bf)
+        sp = pr.type(ctype).spelling
+        TYPES[tag] = dict(c=ctype, cs=(ctype if '(unnamed' in sp or '(anonymous' in sp else sp), desc=d, bf=bf)
 
     reg("HSD_GObj")
     reg("HSD_JObj")
@@ -285,7 +376,7 @@ def build(stem, verbose_fn=None):
         try:
             reg(t)
         except SystemExit:
-            TYPES[t] = dict(c=t, desc=[], bf=[])
+            TYPES[t] = dict(c=t, cs=t, desc=[], bf=[])
     for tag in sorted(O.PS_TAGS):
         if tag not in TYPES:
             reg(tag)
@@ -316,12 +407,12 @@ def build(stem, verbose_fn=None):
     def c_bf_funcs(tag):
         t = TYPES[tag]
         b = t["bf"]
-        L = [f"static void bf_fill_{tag}({t['c']}* p)\n{{\n    (void) p;"]
+        L = [f"static void bf_fill_{tag}({t['cs']}* p)\n{{\n    (void) p;"]
         for cp, rp, nm_, w, sg in b:
             m = (1 << (w - 1 if sg else w)) - 1
             L.append(f"    p->{cp} = (rnd() & {m}u);")
         L.append("}")
-        L.append(f"static u64_ bf_hash_{tag}(u64_ h, const {t['c']}* p)\n{{\n    u32 v;\n    (void) p; (void) v;")
+        L.append(f"static u64_ bf_hash_{tag}(u64_ h, const {t['cs']}* p)\n{{\n    u32 v;\n    (void) p; (void) v;")
         for cp, rp, nm_, w, sg in b:
             L.append(f"    v = (u32) p->{cp}; h = fnv(h, &v, 4);")
         L.append("    return h;\n}")
@@ -355,7 +446,7 @@ def build(stem, verbose_fn=None):
         return f"h = img_hash(h, {base}, D_{tag}); " + (f"h = bf_hash_{tag}(h, addr_of!({expr}) as *const {TYPES[tag]['c']});" if TYPES[tag]["bf"] else "")
 
     # ------------------------------------------------------------- the C driver
-    S = [f'#include "{i}"' for i in includes] + ['#include "oracle.h"', spec.get("pre_c", ""), f'#include "{srcpath}"']
+    S = [f'#include "{i}"' for i in includes] + ['#include "oracle.h"', LG_STR_C, f'#include "{srcpath}"']
     S.append(spec.get("data_c", ""))
     if "__assert" in undef and "__assert" not in own:
         S.append('void __assert(const char* f, u32 l, const char* c) { printf("ASSERT %s:%u %s\\n", f, (unsigned) l, c); _flushall(); for (;;) { *(volatile int*) 0 = 1; } }')
@@ -424,7 +515,7 @@ static void* gen_ground(void) { u32 k = rnd() % (NGO + 1); return k ? (void*) &O
         if st["fill"]:
             S.append(f"    ofill(&{st['c']}, F_st{i}, (int) NF_st{i});")
         if st.get("ty") and TYPES[st["ty"]]["bf"] and st["fill"]:
-            S.append(f"    for (i = 0; i < {st.get('n', 1)}; i++) bf_fill_{st['ty']}((void*) ((unsigned char*) &{st['c']} + i * sizeof({st['ty']})));")
+            S.append(f"    for (i = 0; i < {st.get('n', 1)}; i++) bf_fill_{st['ty']}((void*) ((unsigned char*) &{st['c']} + i * sizeof({TYPES[st['ty']]['cs']})));")
     S.append("""    for (i = 0; i < NGO; i++) {
         OGO[i].user_data = &OGP[i];
         OGO[i].hsd_obj = &OJO[i];
@@ -442,6 +533,7 @@ static void* gen_ground(void) { u32 k = rnd() % (NGO + 1); return k ? (void*) &O
         c = pr.funcs[f["name"]]
         kinds = [O.kind_of(a.type) for a in c.get_arguments()]
         rk = O.kind_of(c.result_type)
+        rk = "p" if rk.startswith("ps:") else rk
         n = f.get("n", spec.get("n", N_CASES))
         S.append(f'    {{ "{f["name"]}", {n} }},')
         plans.append((f, c, kinds, rk, n))
@@ -534,7 +626,7 @@ static u64_ word_hash(u64_ h, const void* p, unsigned n)
     for i, st in enumerate(statics):
         hw.append(f"    h = img_hash(h, &{st['c']}, sizeof {st['c']}, D_st{i}, (int) ND_st{i});")
         if st.get("ty") and TYPES[st["ty"]]["bf"]:
-            hw.append(f"    for (i = 0; i < {st.get('n', 1)}; i++) h = bf_hash_{st['ty']}(h, (const void*) ((const unsigned char*) &{st['c']} + i * sizeof({st['ty']})));")
+            hw.append(f"    for (i = 0; i < {st.get('n', 1)}; i++) h = bf_hash_{st['ty']}(h, (const void*) ((const unsigned char*) &{st['c']} + i * sizeof({TYPES[st['ty']]['cs']})));")
     hw.append("    h = word_hash(h, OSCR, sizeof OSCR);\n    return h;\n}")
     S.append("\n".join(hw))
     hdr_items = ["(unsigned) sizeof(Ground)", "(unsigned) sizeof(HSD_GObj)", "(unsigned) sizeof(HSD_JObj)"]
@@ -604,7 +696,7 @@ static u64_ word_hash(u64_ h, const void* p, unsigned n)
          f"//! State oracle of src/tu/{rs_main}.rs against {src} (tests/data/gro_{stem}.txt).",
          "#![allow(unused_variables, unused_imports, unused_mut, unused_unsafe, static_mut_refs, non_snake_case, non_upper_case_globals, non_camel_case_types, clippy::all)]",
          "mod oracle_common;", "use core::ffi::c_void;", "use core::ptr::{addr_of, addr_of_mut};",
-         f"use melee_world::tu::{rs_main} as t;", "use melee_types::*;", "use oracle_common::*;", spec.get("use_rs", "")]
+         f"use melee_world::tu::{rs_main} as t;", "use melee_types::*;", "use oracle_common::*;", spec.get("use_rs", ""), RS_LG_STR]
     for tag, t in TYPES.items():
         R.append(f"static D_{tag}: &[ODesc] = &[" + ", ".join(f"({o}, {s}, b'{kd}')" for o, s, kd in t["desc"]) + "];")
         R.append(f"static F_{tag}: &[ODesc] = &[" + ", ".join(f"({o}, {s}, b'{kd}')" for o, s, kd in t["desc"] if kd != 'b') + "];")
@@ -719,7 +811,7 @@ unsafe fn gen_ground() -> *mut c_void { let k = rnd() % (NGO as u32 + 1); if k !
             continue
         kinds, rk, ret, pool = stub_info[n]
         for m, info in hooks[n]:
-            R.append(rs_hook_install(n, info, kinds, rk, ret, m, pool))
+            R.append(rs_hook_install(n, info, kinds, rk, ret, m, pool, variadic.get(n)))
     R.append(spec.get("hooks_rs", ""))
     R.append("}")
     R.append("unsafe fn case_pre(fi: usize, a: &mut Args) {\n    match fi {")
@@ -828,14 +920,18 @@ fn state_matches_c() {
     print(f"gro: {stem}: wrote tests/gro_{stem}.rs")
 
 
-def rs_hook_install(name, rh, kinds, rk, ret_t, modpath, pool):
+def rs_hook_install(name, rh, kinds, rk, ret_t, modpath, pool, va=None):
     params = rh["params"]
-    if len(params) != len(kinds):
-        raise SystemExit(f"gro: hook {name}: Rust has {len(params)} params, C has {len(kinds)}")
+    nfix = len(params) - (1 if va else 0)
+    if nfix != len(kinds):
+        raise SystemExit(f"gro: hook {name}: Rust has {nfix} fixed params, C has {len(kinds)}")
     sig = ", ".join(f"a{i}: {t}" for i, (_, t) in enumerate(params))
     body = [f'lg_s("{name}(");']
-    for i, ((_, t), ck) in enumerate(zip(params, kinds)):
-        body.append(O.rs_arg_log(t, ck, f"a{i}"))
+    for i, ((_, t), ck) in enumerate(zip(params[:nfix], kinds)):
+        body.append(f"lg_str(a{i});" if ck == "str" else O.rs_arg_log(t, ck, f"a{i}"))
+    if va:
+        pat = va["va"]
+        body.append(f'for (k, &w) in a{nfix}.iter().enumerate() {{ lg_vaw(w as u64, b"{pat}"[k.min({len(pat) - 1})]); }}')
     body.append('lg_s(")");')
     for i in O.OUTS.get(name, []):
         k = kinds[i]

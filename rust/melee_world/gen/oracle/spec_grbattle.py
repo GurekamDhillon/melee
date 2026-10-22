@@ -11,6 +11,7 @@ SPEC = dict(
     rust_mod="grbattle",
     bf_skip=["StageCallbacks"],
     u=["battle_bg"],
+    variadic={"OSReport": "pii"},
     ext_mods=["grinl"],
     globals=[dict(c="stage_info", ty="StageInfo")],
     statics=[

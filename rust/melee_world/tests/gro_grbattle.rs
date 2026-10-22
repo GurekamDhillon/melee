@@ -8,6 +8,29 @@ use melee_world::tu::grbattle as t;
 use melee_types::*;
 use oracle_common::*;
 static mut NN: i32 = 0;
+
+pub fn lg_str(s: *const i8) {
+    lg_c('"');
+    if !s.is_null() {
+        let mut i = 0;
+        loop {
+            let c = unsafe { *s.add(i) };
+            if i >= 80 || c == 0 { break; }
+            lg_c(c as u8 as char);
+            i += 1;
+        }
+    } else {
+        lg_s("null");
+    }
+    lg_c('"');
+    lg_c(',');
+}
+pub fn lg_vaw(w: u64, c: u8) {
+    if c == b'i' { lg_int(w as u32); }
+    else if c == b's' { lg_str(w as usize as *const i8); }
+    else { lg_ptr(w as usize); }
+}
+
 static D_HSD_GObj: &[ODesc] = &[(0, 2, b'S'), (2, 1, b'C'), (3, 1, b'C'), (4, 1, b'C'), (5, 1, b'C'), (6, 1, b'C'), (7, 1, b'C'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 8, b'p'), (40, 8, b'p'), (48, 8, b'p'), (56, 8, b'q'), (64, 8, b'p'), (72, 8, b'p'), (80, 8, b'p'), (88, 8, b'p')];
 static F_HSD_GObj: &[ODesc] = &[(0, 2, b'S'), (2, 1, b'C'), (3, 1, b'C'), (4, 1, b'C'), (5, 1, b'C'), (6, 1, b'C'), (7, 1, b'C'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 8, b'p'), (40, 8, b'p'), (48, 8, b'p'), (56, 8, b'q'), (64, 8, b'p'), (72, 8, b'p'), (80, 8, b'p'), (88, 8, b'p')];
 static D_HSD_JObj: &[ODesc] = &[(0, 8, b'p'), (8, 2, b'S'), (10, 2, b'S'), (16, 8, b'p'), (24, 8, b'p'), (32, 8, b'p'), (40, 4, b'u'), (48, 8, b'p'), (48, 8, b'p'), (48, 8, b'p'), (56, 4, b'f'), (60, 4, b'f'), (64, 4, b'f'), (68, 4, b'f'), (72, 4, b'f'), (76, 4, b'f'), (80, 4, b'f'), (84, 4, b'f'), (88, 4, b'f'), (92, 4, b'f'), (96, 4, b'f'), (100, 4, b'f'), (104, 4, b'f'), (108, 4, b'f'), (112, 4, b'f'), (116, 4, b'f'), (120, 4, b'f'), (124, 4, b'f'), (128, 4, b'f'), (132, 4, b'f'), (136, 4, b'f'), (140, 4, b'f'), (144, 8, b'p'), (152, 8, b'p'), (160, 8, b'p'), (168, 8, b'p'), (176, 8, b'q')];
@@ -333,7 +356,7 @@ unsafe fn install_hooks() {
         melee_world::tu::grbattle::ext::HSD_JOBJSETFLAGSALL = Some(|a0: *mut HSD_JObj, a1: u32| { lg_s("HSD_JObjSetFlagsAll("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
         melee_world::tu::grinl::ext::HSD_JOBJSETMTXDIRTYSUB = Some(|a0: *mut HSD_JObj| { lg_s("HSD_JObjSetMtxDirtySub("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_world::tu::grbattle::ext::HSD_RANDI = Some(|a0: s32| -> s32 { lg_s("HSD_Randi("); lg_int(a0 as u32); lg_s(")"); { let r = ((if a0 > 0 { rnd() % (a0 as u32) } else { 0 })) as s32; lg_retu(r as u32); lg_c(';'); r } });
-        melee_world::tu::grbattle::ext::OSREPORT = Some(|a0: *mut i8| { lg_s("OSReport("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
+        melee_world::tu::grbattle::ext::OSREPORT = Some(|a0: *const i8, a1: &[usize]| { lg_s("OSReport("); lg_ptr(a0 as *const u8 as usize); for (k, &w) in a1.iter().enumerate() { lg_vaw(w as u64, b"pii"[k.min(2)]); } lg_s(")"); lg_c(';'); });
         melee_world::tu::grbattle::ext::STAGE_80225194 = Some(|| -> StKind { lg_s("Stage_80225194("); lg_s(")"); { let r = ((if rnd() % 3 == 0 { 273 } else if rnd() % 2 != 0 { 245 } else { 7 })) as StKind; lg_retu(r as u32); lg_c(';'); r } });
         melee_world::tu::grbattle::ext::GM_8016B3D8 = Some(|| -> i32 { lg_s("gm_8016B3D8("); lg_s(")"); { let r = gen_b() as i32; lg_retu(r as u32); lg_c(';'); r } });
         melee_world::tu::grbattle::ext::GRANIME_801C8138 = Some(|a0: *mut HSD_GObj, a1: enum_t, a2: i32| { lg_s("grAnime_801C8138("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_int(a2 as u32); lg_s(")"); lg_c(';'); });

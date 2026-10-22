@@ -253,6 +253,9 @@ class Walker:
                 uv = self.cx.spec.get("UNION_VIEW", {})
                 _d, cname_ = self.cx.rec_names(t)
                 key_ = (cname_ or "").split(" ")[-1]
+                if key_ not in uv:
+                    # anonymous union: keyed by "<enclosing record>.<field>"
+                    key_ = f"{getattr(self, 'rec', '')}.{self.trail.split('.')[-1].split('[')[0]}"
                 if key_ in uv:
                     # compare the union through one member (its fields get domains/links like any record)
                     m = uv[key_]
@@ -291,6 +294,15 @@ class Walker:
 
     def record_fields(self, e, decl, cx_, rx_, path_c, path_r, rname):
         """Fields of record `decl` (inline). cx_/rx_ are the C / Rust places of the record."""
+        prev_rec = getattr(self, "rec", "")
+        if decl.spelling and not decl.spelling.startswith("(unnamed"):
+            self.rec = decl.spelling
+        try:
+            return self._record_fields(e, decl, cx_, rx_, path_c, path_r, rname)
+        finally:
+            self.rec = prev_rec
+
+    def _record_fields(self, e, decl, cx_, rx_, path_c, path_r, rname):
         fields = [f for f in decl.get_children() if f.kind == K.FIELD_DECL or
                   (f.kind in (K.STRUCT_DECL, K.UNION_DECL) and f.is_anonymous_record_decl())]
         rkey = rname.split("::")[-1] if rname else None
@@ -465,6 +477,19 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     tu_path = spec.get("TU")
     tuname = Path(tu_path).stem
+    # PATCH = [(old, new)]: textual fixes to the TU source for the NATIVE oracle only (PPC-isms such as
+    # `(Ground*) ((s32) gp + 0)`, which truncates a 64-bit pointer); the patched copy is what is compiled
+    incdir = (ROOT / tu_path).parent
+    if spec.get("PATCH"):
+        src = (ROOT / tu_path).read_text(encoding="utf-8", errors="replace")
+        for o_, n_ in spec.get("PATCH"):
+            if o_ not in src:
+                raise SystemExit(f"tuo: PATCH text not found: {o_}")
+            src = src.replace(o_, n_)
+        pp = out / (tuname + "_patched.c")
+        pp.write_bytes(src.replace(chr(13)+chr(10), chr(10)).encode("utf-8"))
+        tu_path = pp.as_posix()
+    (out / "incdir.txt").write_text(incdir.as_posix())
     G = Gen(spec)
     GALE = g.GALE
     flags = [f"--target=x86_64-pc-windows-gnu", "-mno-ms-bitfields", "-std=c99", "-nostdinc", "-fno-builtin",
@@ -476,6 +501,7 @@ def main():
              "src/MSL/math_ppc.h", "-D_Static_assert(a,b)=", "-Dsize_t=gc_size_t"]
     # 1. IR of the bare TU: which functions/globals are external
     ll = out / "tu_only.ll"
+    flags = flags + ["-I", incdir.as_posix()]
     run([CL] + flags + [tu_path, "-o", str(ll)])
     irt = ll.read_text()
     defined = set(re.findall(r"^define [^@]*@([\w.$]+)\(", irt, re.M))
@@ -483,7 +509,7 @@ def main():
     extvars = re.findall(r"^@([\w.$]+) = (?:external|common|extern_weak)[^\n]*", irt, re.M)
     # 2. libclang parse
     idx = ci.Index.create()
-    tu = idx.parse(tu_path, args=NAT, options=ci.TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD)
+    tu = idx.parse(tu_path, args=NAT + ["-I", incdir.as_posix()], options=ci.TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD)
     errs = [d for d in tu.diagnostics if d.severity >= ci.Diagnostic.Error]
     if errs:
         raise SystemExit("clang errors:\n" + "\n".join(str(x) for x in errs[:10]))

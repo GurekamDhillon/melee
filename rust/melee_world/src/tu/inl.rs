@@ -1,7 +1,7 @@
 //! `static inline` helpers of baselib/jobj.h, expanded into the TU that uses them (the C compiler
 //! inlines them there; their `HSD_ASSERT`s go to the TU's `ext::__assert`, and the
 //! `HSD_JObjSetMtxDirtySub` call to `ext::HSD_JObjSetMtxDirtySub`).
-macro_rules! hsd_jobj_inl {
+macro_rules! hsd_jobj_get {
     () => {
         #[inline(always)]
         unsafe fn hsd_assert(line: u32, cond: bool, msg: &core::ffi::CStr) {
@@ -9,6 +9,75 @@ macro_rules! hsd_jobj_inl {
                 ext::__assert(c"jobj.h".as_ptr(), line, msg.as_ptr());
             }
         }
+        #[allow(dead_code)]
+        unsafe fn HSD_JObjGetRotation(jobj: *mut HSD_JObj, v: *mut Quaternion) {
+            hsd_assert(699, !jobj.is_null(), c"jobj");
+            hsd_assert(700, !v.is_null(), c"rotate");
+            *v = (*jobj).rotate;
+        }
+        #[allow(dead_code)]
+        unsafe fn HSD_JObjGetRotationX(jobj: *mut HSD_JObj) -> f32 {
+            hsd_assert(715, !jobj.is_null(), c"jobj");
+            (*jobj).rotate.x
+        }
+        #[allow(dead_code)]
+        unsafe fn HSD_JObjGetRotationY(jobj: *mut HSD_JObj) -> f32 {
+            hsd_assert(730, !jobj.is_null(), c"jobj");
+            (*jobj).rotate.y
+        }
+        #[allow(dead_code)]
+        unsafe fn HSD_JObjGetRotationZ(jobj: *mut HSD_JObj) -> f32 {
+            hsd_assert(745, !jobj.is_null(), c"jobj");
+            (*jobj).rotate.z
+        }
+        #[allow(dead_code)]
+        unsafe fn HSD_JObjGetScale(jobj: *mut HSD_JObj, v: *mut Vec3) {
+            hsd_assert(823, !jobj.is_null(), c"jobj");
+            hsd_assert(824, !v.is_null(), c"scale");
+            *v = (*jobj).scale;
+        }
+        #[allow(dead_code)]
+        unsafe fn HSD_JObjGetScaleX(jobj: *mut HSD_JObj) -> f32 {
+            hsd_assert(875, !jobj.is_null(), c"jobj");
+            (*jobj).scale.x
+        }
+        #[allow(dead_code)]
+        unsafe fn HSD_JObjGetScaleY(jobj: *mut HSD_JObj) -> f32 {
+            hsd_assert(888, !jobj.is_null(), c"jobj");
+            (*jobj).scale.y
+        }
+        #[allow(dead_code)]
+        unsafe fn HSD_JObjGetScaleZ(jobj: *mut HSD_JObj) -> f32 {
+            hsd_assert(901, !jobj.is_null(), c"jobj");
+            (*jobj).scale.z
+        }
+        #[allow(dead_code)]
+        unsafe fn HSD_JObjGetTranslation(jobj: *mut HSD_JObj, v: *mut Vec3) {
+            hsd_assert(979, !jobj.is_null(), c"jobj");
+            hsd_assert(980, !v.is_null(), c"translate");
+            *v = (*jobj).translate;
+        }
+        #[allow(dead_code)]
+        unsafe fn HSD_JObjGetTranslationX(jobj: *mut HSD_JObj) -> f32 {
+            hsd_assert(993, !jobj.is_null(), c"jobj");
+            (*jobj).translate.x
+        }
+        #[allow(dead_code)]
+        unsafe fn HSD_JObjGetTranslationY(jobj: *mut HSD_JObj) -> f32 {
+            hsd_assert(1006, !jobj.is_null(), c"jobj");
+            (*jobj).translate.y
+        }
+        #[allow(dead_code)]
+        unsafe fn HSD_JObjGetTranslationZ(jobj: *mut HSD_JObj) -> f32 {
+            hsd_assert(1019, !jobj.is_null(), c"jobj");
+            (*jobj).translate.z
+        }
+    };
+}
+
+/// The setters (and the `HSD_JObjSetMtxDirty` macro) also call `ext::HSD_JObjSetMtxDirtySub`; needs `hsd_jobj_get!` too.
+macro_rules! hsd_jobj_set {
+    () => {
         /// `HSD_JObjMtxIsDirty`.
         #[allow(dead_code)]
         unsafe fn HSD_JObjMtxIsDirty(jobj: *mut HSD_JObj) -> bool {
@@ -129,69 +198,14 @@ macro_rules! hsd_jobj_inl {
                 HSD_JObjSetMtxDirty(jobj);
             }
         }
-        #[allow(dead_code)]
-        unsafe fn HSD_JObjGetRotation(jobj: *mut HSD_JObj, v: *mut Quaternion) {
-            hsd_assert(699, !jobj.is_null(), c"jobj");
-            hsd_assert(700, !v.is_null(), c"rotate");
-            *v = (*jobj).rotate;
-        }
-        #[allow(dead_code)]
-        unsafe fn HSD_JObjGetRotationX(jobj: *mut HSD_JObj) -> f32 {
-            hsd_assert(715, !jobj.is_null(), c"jobj");
-            (*jobj).rotate.x
-        }
-        #[allow(dead_code)]
-        unsafe fn HSD_JObjGetRotationY(jobj: *mut HSD_JObj) -> f32 {
-            hsd_assert(730, !jobj.is_null(), c"jobj");
-            (*jobj).rotate.y
-        }
-        #[allow(dead_code)]
-        unsafe fn HSD_JObjGetRotationZ(jobj: *mut HSD_JObj) -> f32 {
-            hsd_assert(745, !jobj.is_null(), c"jobj");
-            (*jobj).rotate.z
-        }
-        #[allow(dead_code)]
-        unsafe fn HSD_JObjGetScale(jobj: *mut HSD_JObj, v: *mut Vec3) {
-            hsd_assert(823, !jobj.is_null(), c"jobj");
-            hsd_assert(824, !v.is_null(), c"scale");
-            *v = (*jobj).scale;
-        }
-        #[allow(dead_code)]
-        unsafe fn HSD_JObjGetScaleX(jobj: *mut HSD_JObj) -> f32 {
-            hsd_assert(875, !jobj.is_null(), c"jobj");
-            (*jobj).scale.x
-        }
-        #[allow(dead_code)]
-        unsafe fn HSD_JObjGetScaleY(jobj: *mut HSD_JObj) -> f32 {
-            hsd_assert(888, !jobj.is_null(), c"jobj");
-            (*jobj).scale.y
-        }
-        #[allow(dead_code)]
-        unsafe fn HSD_JObjGetScaleZ(jobj: *mut HSD_JObj) -> f32 {
-            hsd_assert(901, !jobj.is_null(), c"jobj");
-            (*jobj).scale.z
-        }
-        #[allow(dead_code)]
-        unsafe fn HSD_JObjGetTranslation(jobj: *mut HSD_JObj, v: *mut Vec3) {
-            hsd_assert(979, !jobj.is_null(), c"jobj");
-            hsd_assert(980, !v.is_null(), c"translate");
-            *v = (*jobj).translate;
-        }
-        #[allow(dead_code)]
-        unsafe fn HSD_JObjGetTranslationX(jobj: *mut HSD_JObj) -> f32 {
-            hsd_assert(993, !jobj.is_null(), c"jobj");
-            (*jobj).translate.x
-        }
-        #[allow(dead_code)]
-        unsafe fn HSD_JObjGetTranslationY(jobj: *mut HSD_JObj) -> f32 {
-            hsd_assert(1006, !jobj.is_null(), c"jobj");
-            (*jobj).translate.y
-        }
-        #[allow(dead_code)]
-        unsafe fn HSD_JObjGetTranslationZ(jobj: *mut HSD_JObj) -> f32 {
-            hsd_assert(1019, !jobj.is_null(), c"jobj");
-            (*jobj).translate.z
-        }
     };
 }
-pub(crate) use hsd_jobj_inl;
+
+/// Everything (a TU that uses both kinds).
+macro_rules! hsd_jobj_inl {
+    () => {
+        $crate::tu::inl::hsd_jobj_get!();
+        $crate::tu::inl::hsd_jobj_set!();
+    };
+}
+pub(crate) use {hsd_jobj_get, hsd_jobj_inl, hsd_jobj_set};

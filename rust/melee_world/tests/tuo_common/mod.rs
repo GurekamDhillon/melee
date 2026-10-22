@@ -82,6 +82,7 @@ pub struct V {
     curfn: String,
     args: [u64; 12],
     argptr: [bool; 12],
+    pending_arg: Option<usize>,
 }
 
 static mut VV: Option<V> = None;
@@ -198,6 +199,9 @@ impl V {
             let n: usize = n.parse().unwrap();
             if self.argptr[n] {
                 return if self.draw() & 1 != 0 { self.args[n] as usize } else { 0 };
+            }
+            if ty == "null" {
+                return 0;
             }
             return if self.draw() & 1 != 0 { 0 } else { self.mk_target(path, &format!("new:{ty}")) };
         }
@@ -410,6 +414,10 @@ impl V {
             }
         };
         self.reg(&nm, p as usize, sz);
+        if let Some(i) = self.pending_arg.take() {
+            self.args[i] = p as usize as u64;
+            self.argptr[i] = true;
+        }
         self.pool.push(PoolObj { name: nm.clone(), p, ty: Some(ti), size: sz, cnt: count, ptrs: 0, layout });
         let m = self.mode;
         self.mode = 1;
@@ -500,6 +508,7 @@ pub fn run(cfg: &str, expected: &str, glue: Glue) {
         curfn: String::new(),
         args: [0; 12],
         argptr: [false; 12],
+        pending_arg: None,
     };
     let mut fns: Vec<FnCfg> = vec![];
     let mut tysizes: Vec<(String, usize)> = vec![];
@@ -586,6 +595,7 @@ pub fn run(cfg: &str, expected: &str, glue: Glue) {
                 for (i, t) in f.args.iter().enumerate() {
                     if let Some(ty) = t.strip_prefix("p:") {
                         let lab = format!("a{i}");
+                        v.pending_arg = Some(i);
                         a[i] = v.new_typed(Some(&lab), ty, 0) as usize as u64;
                         v.args[i] = a[i];
                         v.argptr[i] = true;

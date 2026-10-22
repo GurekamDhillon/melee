@@ -194,6 +194,7 @@ void tuo_regglobal(const char* name, void* p, size_t size, VisFn vis, int fill)
     nperm = nreg;
 }
 
+static u64 curargs[12]; static int curptr[12]; static int pending_arg = -1; /* the case's argument values, for links to "the argument object" */
 /* mode: 1 = SET (fill), 2 = DUMP */
 int tuo_mode;
 static int npool;
@@ -213,6 +214,7 @@ void* tuo_new(const char* label, const char* ty, int count)
     char nm[96];
     if (label) strcpy(nm, label); else sprintf(nm, "p%d", npool++);
     reg(nm, p, sz);
+    if (pending_arg >= 0) { curargs[pending_arg] = (u64) (uintptr_t) p; curptr[pending_arg] = 1; pending_arg = -1; }
     int pi = npl++;
     strcpy(pool[pi].name, nm); pool[pi].p = p; pool[pi].t = t; pool[pi].size = sz; pool[pi].cnt = count; pool[pi].ptrs = 0;
     int m = tuo_mode; tuo_mode = 1;
@@ -296,7 +298,7 @@ u64 tuo_leaf_f64(const char* path)
     }
 }
 static void* tuo_leaf_ptr_tgt(const char* path, const char* tgt);
-static u64 curargs[12]; static int curptr[12]; /* the case's argument values, for links to "the argument object" */
+
 static void* mk_target(const char* path, const char* tgt)
 {
     if (!strcmp(tgt, "null")) return 0;
@@ -310,6 +312,7 @@ static void* mk_target(const char* path, const char* tgt)
         int n = atoi(tgt + 7);
         if (curptr[n]) return (tuo_draw() & 1) ? (void*) (uintptr_t) curargs[n] : 0;
         char t2[128]; sprintf(t2, "maybe:%s", strchr(tgt + 7, ':') + 1);
+        if (!strcmp(strchr(tgt + 7, ':') + 1, "null")) return 0;
         return tuo_leaf_ptr_tgt(path, t2);
     }
     if (tgt[0] == '&') {
@@ -484,7 +487,7 @@ static void run_case(struct Fn* f, int idx)
     for (int i = 0; i < nlink; i++) if (!strncmp(links[i].tgt, "mayarg:", 7)) argfirst = 1;
     if (argfirst) /* pointer arguments exist before the globals are filled, so links can name them */
         for (int i = 0; i < f->nargs; i++)
-            if (!strncmp(f->args[i], "p:", 2)) { char lab[16]; sprintf(lab, "a%d", i); a[i] = (u64) (uintptr_t) tuo_new(lab, f->args[i] + 2, 0); curptr[i] = 1; }
+            if (!strncmp(f->args[i], "p:", 2)) { char lab[16]; sprintf(lab, "a%d", i); pending_arg = i; a[i] = (u64) (uintptr_t) tuo_new(lab, f->args[i] + 2, 0); curptr[i] = 1; }
     for (int i = 0; i < ngl; i++) {
         if (!gls[i].fill) continue;
         sprintf(path, "g:%s", gls[i].name);

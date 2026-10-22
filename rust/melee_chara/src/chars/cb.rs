@@ -741,17 +741,17 @@ pub unsafe extern "C" fn ftzeldaspecialhi__ftZd_SpecialHi_801396AC(g: *mut HSD_G
 
 /// `ftZd_SpecialLw_8013ADB4` (defined in src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
 pub unsafe extern "C" fn ftzeldaspeciallw__ftZd_SpecialLw_8013ADB4(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftZd_SpecialLw_8013ADB4 (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c) is not ported");
+    crate::tu::ftzeldaspeciallw::ftZd_SpecialLw_8013ADB4(g)
 }
 
 /// `ftZd_SpecialLw_8013AE30` (defined in src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
 pub unsafe extern "C" fn ftzeldaspeciallw__ftZd_SpecialLw_8013AE30(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftZd_SpecialLw_8013AE30 (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c) is not ported");
+    crate::tu::ftzeldaspeciallw::ftZd_SpecialLw_8013AE30(g)
 }
 
 /// `ftZd_SpecialLw_8013AEAC` (defined in src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
 pub unsafe extern "C" fn ftzeldaspeciallw__ftZd_SpecialLw_8013AEAC(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftZd_SpecialLw_8013AEAC (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c) is not ported");
+    crate::tu::ftzeldaspeciallw::ftZd_SpecialLw_8013AEAC(g)
 }
 
 /// Every entry with its `<setter tu>:<C name>` key (tests/chars_ref.rs maps stored pointers back).

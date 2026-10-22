@@ -533,3 +533,30 @@ leaves/callers; gm/mn/if/ty/lb total not counted). Totals are estimates from eac
 6. **User checks** (cannot be done unattended): visuals of a real scene, audio by ear, the
    adapter's stick rest offset / trigger 255 reading vs the C build, HID adapter, a gamepad,
    online play against another machine.
+
+## melee_modes::tu: whole-TU ports with a stateful C oracle (shard 465-472)
+`rust/melee_modes/src/tu/<stem>.rs` ports every function of one gm `.c` file (gmcameramode,
+gmclassic, gmdebugmode, gmevent, gmfixedcamera, gmgiant, gmgover, gmhanyucss: 147 functions,
+all checked). Callees of unported TUs are `ext` hooks (`ext::NAME`, settable, unset panics
+"TODO") named like the C; data owned by other TUs is a `pub static mut` in `ext`; the block is
+generated from the C by `gen/cref/gen_tu.py` (libclang, the native flags of `oracle/build_r10.sh`).
+- Oracle: `python rust/melee_modes/gen/cref/run_tu.py <stem>` compiles `gen/cref/tu/<stem>.c`,
+  which `#include`s the game's `.c` verbatim (shipping contraction + gwtool lowering), defines a
+  recording stub for every callee (generated: trace hash of call order, arguments, and return
+  values from a shared xorshift), fills the synthetic game state (generated `fill_<T>` per record,
+  bitfields by value, pointers linked by the driver), runs each function on 300-1000 seeded
+  states, and writes one line per case (return, state hash, trace hash) to `tests/data/mtu_<stem>.txt`.
+  `tests/tu_<stem>.rs` makes the same draws, installs the same recording hooks and compares.
+  State hashes cover every field of the records (generated `hash_<T>`: scalars, bitfields by
+  value, pointers as region ids, function pointers as table ids), so a wrong store anywhere shows.
+- Debugging a mismatch: `rust/melee_modes/gen/cref/dbg.sh <stem> <test> <op:case>` prints the
+  first differing trace / state words of one case; `ct.sh <test>` runs one test.
+- Caveats found: records the `.c` defines are hand-written with `gc_layout!` (melee_types does not
+  generate them); an anonymous union / struct member is compared as raw bytes (bitfield overlays
+  such as `MatchPlayerData.x3` are not compared by value: melee_types keeps bitfields in GameCube
+  bit order, native C does not); `gmclassic.c` reaches `gm_804908A0` through
+  `gmClassicIntroDataBuffer` (adjacent on the console), so the oracle patches the two declarations
+  into one object (`specs.py`); `onEnterVs` with `player_init[4]->c_kind == ChKind_None` writes the
+  character into the bitfield byte `EventData+0xB` (never in the real level data; the oracle avoids
+  it); `gm_8016A404((s32) fnptr)` passes a function address as a 32-bit int (PPC-ism: a native
+  callee cannot turn it back into a function; the trace names the function by its low 32 bits).

@@ -13,3 +13,4 @@ pub mod grfigure3;
 pub mod grfigureget;
 pub mod grflatzone;
 pub mod grfourside;
+pub mod ifhazard;

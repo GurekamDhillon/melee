@@ -75,14 +75,14 @@ pub mod ext {
 
 /// `lbl_804799B8`: 0x20 bytes of menu state (cursor rows, flash timers, anim counters).
 pub static mut lbl_804799B8: Lbl804799B8_t = unsafe { core::mem::zeroed() };
-static mut lbl_804D6640: *mut HSD_Archive = null_mut();
-static mut lbl_804D6644: *mut HSD_Archive = null_mut();
-static mut lbl_804D6648: *mut HSD_Archive = null_mut();
-static mut lbl_804D664C: *mut SceneDesc = null_mut();
-static mut lbl_804D6650: *mut SceneDesc = null_mut();
-static mut lbl_804D6654: u32 = 0;
-static mut lbl_804D6658: i32 = 0;
-static mut lbl_804D665C: i32 = 0;
+pub static mut lbl_804D6640: *mut HSD_Archive = null_mut();
+pub static mut lbl_804D6644: *mut HSD_Archive = null_mut();
+pub static mut lbl_804D6648: *mut HSD_Archive = null_mut();
+pub static mut lbl_804D664C: *mut SceneDesc = null_mut();
+pub static mut lbl_804D6650: *mut SceneDesc = null_mut();
+pub static mut lbl_804D6654: u32 = 0;
+pub static mut lbl_804D6658: i32 = 0;
+pub static mut lbl_804D665C: i32 = 0;
 
 pub const lbl_804DA78C: GXColor = GXColor { r: 0x46, g: 0xDC, b: 0x46, a: 0xFF };
 

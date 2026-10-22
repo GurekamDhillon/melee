@@ -102,19 +102,19 @@ impl melee_types::inline::JObjDirty for Dirty {
 // data
 // ---------------------------------------------------------------------------------------------
 
-static mut model_desc_0: StaticModelDesc = unsafe { core::mem::zeroed() };
-static mut model_desc_1: StaticModelDesc = unsafe { core::mem::zeroed() };
-static mut debug_text_buffer: [u8; 0x80] = [0; 0x80];
-static mut loop_settings_0: AnimLoopSettings = AnimLoopSettings { start_frame: 0.0, end_frame: 1600.0, loop_frame: 400.0 };
-static mut loop_settings_1: AnimLoopSettings = AnimLoopSettings { start_frame: 0.0, end_frame: 1330.0, loop_frame: 130.0 };
-static mut jobj_translate: Vec3 = Vec3 { x: 0.0, y: -3.0, z: 0.0 };
+pub static mut model_desc_0: StaticModelDesc = unsafe { core::mem::zeroed() };
+pub static mut model_desc_1: StaticModelDesc = unsafe { core::mem::zeroed() };
+pub static mut debug_text_buffer: [u8; 0x80] = [0; 0x80];
+pub static mut loop_settings_0: AnimLoopSettings = AnimLoopSettings { start_frame: 0.0, end_frame: 1600.0, loop_frame: 400.0 };
+pub static mut loop_settings_1: AnimLoopSettings = AnimLoopSettings { start_frame: 0.0, end_frame: 1330.0, loop_frame: 130.0 };
+pub static mut jobj_translate: Vec3 = Vec3 { x: 0.0, y: -3.0, z: 0.0 };
 
-static mut cobj_desc: *mut HSD_CObjDesc = null_mut();
-static mut list_list: *mut *mut LightList = null_mut();
-static mut fog_desc: *mut HSD_FogDesc = null_mut();
-static mut countdown_timer: i32 = 0;
-static mut frame_count: u32 = 0;
-static mut bg_initialized: GXBool = 0;
+pub static mut cobj_desc: *mut HSD_CObjDesc = null_mut();
+pub static mut list_list: *mut *mut LightList = null_mut();
+pub static mut fog_desc: *mut HSD_FogDesc = null_mut();
+pub static mut countdown_timer: i32 = 0;
+pub static mut frame_count: u32 = 0;
+pub static mut bg_initialized: GXBool = 0;
 
 const GX_FALSE: GXBool = 0;
 const GX_TRUE: GXBool = 1;
@@ -192,7 +192,7 @@ pub unsafe extern "C" fn fn_801A1498(gobj: *mut HSD_GObj) {
     if ext::gm_804D67EC > 5400 {
         ext::mn_8022ED6C(jobj, addr_of_mut!(loop_settings_0));
     } else {
-        ext::HSD_JObjReqAnimAll(jobj, (ext::gm_804D67EC as i32 - 5130) as f32);
+        ext::HSD_JObjReqAnimAll(jobj, ext::gm_804D67EC.wrapping_sub(5130) as f32);
         ext::HSD_JObjAnimAll(jobj);
     }
     if bg_initialized == GX_FALSE {

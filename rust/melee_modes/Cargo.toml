@@ -1,4 +1,5 @@
 [package]
+build = "build.rs"
 name = "melee_modes"
 version.workspace = true
 edition.workspace = true
@@ -13,3 +14,7 @@ melee_world.workspace = true
 melee_fighter.workspace = true
 melee_chara.workspace = true
 melee_items.workspace = true
+
+[features]
+# links the C state oracle (oracle/tou/gen.py -> target/tou-oracle/tou_oracle.lib) into tests/tou
+c_oracle = []

@@ -52,19 +52,19 @@ pub mod ext {
 // data
 // ---------------------------------------------------------------------------------------------
 
-static mut lbl_804D6660: *mut HSD_Archive = null_mut();
-static mut lbl_804D6664: *mut HSD_Archive = null_mut();
-static mut lbl_804D6668: *mut HSD_Archive = null_mut();
-static mut lbl_804D666C: *mut SceneDesc = null_mut();
-static mut lbl_804D6670: *mut SceneDesc = null_mut();
-static mut lbl_804D6674: *mut SceneDesc = null_mut();
-static mut lbl_804D6678: i32 = 0;
-static mut lbl_804D667C: i32 = 0;
-static mut lbl_804D6680: [u8; 3] = [0; 3];
+pub static mut lbl_804D6660: *mut HSD_Archive = null_mut();
+pub static mut lbl_804D6664: *mut HSD_Archive = null_mut();
+pub static mut lbl_804D6668: *mut HSD_Archive = null_mut();
+pub static mut lbl_804D666C: *mut SceneDesc = null_mut();
+pub static mut lbl_804D6670: *mut SceneDesc = null_mut();
+pub static mut lbl_804D6674: *mut SceneDesc = null_mut();
+pub static mut lbl_804D6678: i32 = 0;
+pub static mut lbl_804D667C: i32 = 0;
+pub static mut lbl_804D6680: [u8; 3] = [0; 3];
 /// `lbl_804799D8`: bracket-scene state (counters, per-player anim records, text buffer).
 pub static mut lbl_804799D8: Lbl804799D8_t = unsafe { core::mem::zeroed() };
-static mut lbl_804D4190: i32 = -1;
-static mut lbl_804D4194: i32 = -1;
+pub static mut lbl_804D4190: i32 = -1;
+pub static mut lbl_804D4194: i32 = -1;
 
 /// `lbl_803DA0D0`: icon -> model map and rank thresholds (the flat C initializer: 24 + 6 + 192
 /// bytes); `bounce_y` is filled by `fn_80198EBC`.

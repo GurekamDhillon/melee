@@ -43,12 +43,12 @@ pub mod ext {
 // data
 // ---------------------------------------------------------------------------------------------
 
-static mut lbl_804D6688: *mut HSD_Archive = null_mut();
+pub static mut lbl_804D6688: *mut HSD_Archive = null_mut();
 /// `lbl_80479A58`: per-scene timers (anim counters, per-player state records).
 pub static mut lbl_80479A58: TmAnimTimers = unsafe { core::mem::zeroed() };
-static mut lbl_804D668C: *mut HSD_Archive = null_mut();
-static mut lbl_804D6690: *mut SceneDesc = null_mut();
-static mut lbl_804D6694: *mut SceneDesc = null_mut();
+pub static mut lbl_804D668C: *mut HSD_Archive = null_mut();
+pub static mut lbl_804D6690: *mut SceneDesc = null_mut();
+pub static mut lbl_804D6694: *mut SceneDesc = null_mut();
 
 /// `lbl_803DA2E0`: icon -> model map (x0, 25 initialised bytes) and the bounce curve (x20,
 /// filled by `fn_8019D1BC`).

@@ -227,8 +227,8 @@ pub mod ext {
 
 pub static mut lbl_804D663C: i32 = 0;
 pub static mut lbl_804D6638: *mut HSD_Archive = null_mut();
-static mut lbl_804D6630: i32 = 0;
-static mut lbl_804D6634: i32 = 0;
+pub static mut lbl_804D6630: i32 = 0;
+pub static mut lbl_804D6634: i32 = 0;
 
 /// `lbl_803B7C80`: slide wobble table.
 pub const lbl_803B7C80: [i32; 10] = [30, -20, 15, -12, 10, -8, 6, -4, 2, 1];
@@ -1363,8 +1363,9 @@ pub unsafe extern "C" fn fn_8018E618(arg0: i32, farg0: f32, arg1: i32) {
         ext::HSD_GObjObject_80390A70(gobj, *kind_ptr, *cobj_ptr as *mut c_void);
     }
     ext::GObj_SetupGXLinkMax(gobj, Some(ext::HSD_GObj_803910D8), 1);
-    // ((u32*) &gobj->gxlink_prios)[1] = 0x10; [0] = 0 (GC big-endian word order: low word = [1])
-    (*gobj).gxlink_prios = 0x10;
+    // ((u32*) &gobj->gxlink_prios)[1] = 0x10; [0] = 0. On the GC (big-endian) [1] is the low word;
+    // the native little-endian C build stores it in the HIGH word, and the port matches the C build.
+    (*gobj).gxlink_prios = 0x10u64 << 32;
 
     gmTournament_InitBracket(arg0, farg0, arg1 != 0);
 }
@@ -1465,7 +1466,7 @@ pub unsafe extern "C" fn fn_8018ECA8(char_id: i32, name_type: i32, jobj_idx1: i3
     cpu_texts[1] = lbl_804DA6C0;
 
     if name_type == 0xFF {
-        ext::HSD_SisLib_803A6B98((*tm).x518[jobj_idx1 as usize], pos_x, pos_y, ext::GetNameText(char_id as u8 as i32));
+        ext::HSD_SisLib_803A6B98(*(*tm).x518.as_ptr().add(jobj_idx1 as usize), pos_x, pos_y, ext::GetNameText(char_id as u8 as i32));
         return;
     }
 
@@ -1480,7 +1481,7 @@ pub unsafe extern "C" fn fn_8018ECA8(char_id: i32, name_type: i32, jobj_idx1: i3
                 *hmn_texts[us()].add(7) = (char_id - 0x2F0) as i8 as u8;
                 *hmn_texts[us()].add(8) = 0;
             }
-            ext::HSD_SisLib_803A6B98((*tm).x518[jobj_idx1 as usize], pos_x, pos_y, hmn_texts[us()] as *const c_char);
+            ext::HSD_SisLib_803A6B98(*(*tm).x518.as_ptr().add(jobj_idx1 as usize), pos_x, pos_y, hmn_texts[us()] as *const c_char);
             return;
         }
         if char_id >= 0x3E7 {
@@ -1495,14 +1496,14 @@ pub unsafe extern "C" fn fn_8018ECA8(char_id: i32, name_type: i32, jobj_idx1: i3
             *cpu_texts[us()].add(7) = (char_id - 0x354) as i8 as u8;
             *cpu_texts[us()].add(8) = 0;
         }
-        ext::HSD_SisLib_803A6B98((*tm).x518[jobj_idx2 as usize], pos_x, pos_y, cpu_texts[us()] as *const c_char);
+        ext::HSD_SisLib_803A6B98(*(*tm).x518.as_ptr().add(jobj_idx2 as usize), pos_x, pos_y, cpu_texts[us()] as *const c_char);
         return;
     }
 
     if name_type == 0 {
-        ext::HSD_SisLib_803A6B98((*tm).x518[jobj_idx1 as usize], pos_x, pos_y, ext::GetNameText(char_id as u8 as i32));
+        ext::HSD_SisLib_803A6B98(*(*tm).x518.as_ptr().add(jobj_idx1 as usize), pos_x, pos_y, ext::GetNameText(char_id as u8 as i32));
     } else if name_type == 1 {
-        ext::HSD_SisLib_803A6B98((*tm).x518[jobj_idx2 as usize], pos_x, pos_y, ext::GetNameText(char_id as u8 as i32));
+        ext::HSD_SisLib_803A6B98(*(*tm).x518.as_ptr().add(jobj_idx2 as usize), pos_x, pos_y, ext::GetNameText(char_id as u8 as i32));
     }
 }
 

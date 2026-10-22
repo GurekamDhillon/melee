@@ -146,12 +146,12 @@ pub unsafe extern "C" fn ftgamewatchspecials__ftGw_SpecialS_ItemJudgementSetup(g
 
 /// `ftKb_Init_800EE74C` (defined in src/melee/ft/kinds/ftKirby/ftkirby.c).
 pub unsafe extern "C" fn ftkirby__ftKb_Init_800EE74C(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftKb_Init_800EE74C (src/melee/ft/kinds/ftKirby/ftkirby.c) is not ported");
+    crate::tu::ftkirby::ftKb_Init_800EE74C(g);
 }
 
 /// `ftKb_Init_800EE7B8` (defined in src/melee/ft/kinds/ftKirby/ftkirby.c).
 pub unsafe extern "C" fn ftkirby__ftKb_Init_800EE7B8(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftKb_Init_800EE7B8 (src/melee/ft/kinds/ftKirby/ftkirby.c) is not ported");
+    crate::tu::ftkirby::ftKb_Init_800EE7B8(g);
 }
 
 /// `fn_800F1FDC` (defined in src/melee/ft/kinds/ftKirby/ftkirbyattackdash.c).
@@ -166,7 +166,7 @@ pub unsafe extern "C" fn ftkirbyattackdash__fn_800F20C4(g: *mut HSD_GObj) {
 
 /// `fn_8010CE5C` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialgamewatch.c).
 pub unsafe extern "C" fn ftkirbyspecialgamewatch__fn_8010CE5C(g: *mut HSD_GObj) {
-    panic!("TODO(group4): fn_8010CE5C (src/melee/ft/kinds/ftKirby/ftkirbyspecialgamewatch.c) is not ported");
+    crate::tu::ftkirbyspecialgamewatch::fn_8010CE5C(g);
 }
 
 /// `fn_800F98F4` (defined in src/melee/ft/kinds/ftKirby/ftkirbyspecialluigi.c).

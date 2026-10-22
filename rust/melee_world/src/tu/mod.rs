@@ -11,3 +11,4 @@ pub mod grlib;
 pub mod grmaterial;
 pub mod grinl2;
 pub mod grkraid;
+pub mod grkinokoroute;

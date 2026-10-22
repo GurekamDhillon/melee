@@ -5,5 +5,6 @@ pub mod gmprogressivemode;
 pub mod gmregcommon;
 pub mod gmregtyfall;
 
+pub mod gmregclear;
 pub mod gmregenddisp;
 pub mod hsd;

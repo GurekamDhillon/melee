@@ -413,8 +413,8 @@ impl Rec {
         let i = self.globs.partition_point(|e| e.0 <= w);
         if i > 0 {
             let (a, s, t) = self.globs[i - 1];
-            // one-past-the-end pointers (loop cursors) belong to the global they end
-            if w <= a + s {
+            // (a one-past-the-end pointer is NOT tagged: string literals sit right behind const data)
+            if w < a + s {
                 return t | (w - a);
             }
         }
@@ -456,6 +456,118 @@ fn flt_pick(lo: f32, hi: f32, x: u64) -> f32 {
 
 /// Called by every `ext` stub. Returns the stub's return value bits when a recorder is active.
 pub fn ext_call(name: &'static str, args: &[Arg], ret: K) -> Option<u64> {
+    ext_core(name, args, &[], ret)
+}
+
+/// One C vararg of a printf-style callee.
+#[derive(Clone, Copy, Debug)]
+pub enum Va {
+    I32(i32),
+    I64(i64),
+    P(*const core::ffi::c_void),
+    D(f64),
+}
+
+fn c_str_hash(p: *const u8) -> u64 {
+    let mut h = FNV_OFF;
+    if p.is_null() {
+        return h;
+    }
+    for j in 0..256 {
+        let c = unsafe { *p.add(j) };
+        if c == 0 {
+            break;
+        }
+        h = (h ^ c as u64).wrapping_mul(FNV_PRIME);
+    }
+    h
+}
+
+/// The conversions of a printf format that consume a vararg: 'i' (int), 'q' (64-bit int),
+/// 's' (string), 'p' (pointer), 'd' (double). `*` widths consume an int each.
+fn fmt_convs(fmt: *const u8) -> std::vec::Vec<char> {
+    let mut out = vec![];
+    let mut i = 0;
+    loop {
+        let c = unsafe { *fmt.add(i) };
+        if c == 0 {
+            break;
+        }
+        i += 1;
+        if c != b'%' {
+            continue;
+        }
+        if unsafe { *fmt.add(i) } == b'%' {
+            i += 1;
+            continue;
+        }
+        let mut long = false;
+        loop {
+            let c = unsafe { *fmt.add(i) };
+            if c == 0 {
+                break;
+            }
+            i += 1;
+            match c {
+                b'*' => out.push('i'),
+                b'l' | b'j' | b'z' | b't' | b'q' | b'L' => long = true,
+                b'I' => long = true, // I64 / I32 size prefix (MSVC); the digits that follow are skipped below
+                b'd' | b'i' | b'u' | b'o' | b'x' | b'X' | b'c' => {
+                    out.push(if long { 'q' } else { 'i' });
+                    break;
+                }
+                b's' => {
+                    out.push('s');
+                    break;
+                }
+                b'p' => {
+                    out.push('p');
+                    break;
+                }
+                b'f' | b'F' | b'e' | b'E' | b'g' | b'G' | b'a' | b'A' => {
+                    out.push('d');
+                    break;
+                }
+                b'n' => break,
+                _ => {}
+            }
+        }
+    }
+    out
+}
+
+/// Called by the variadic `ext` stubs (printf-style: the vararg count and kinds come from the
+/// format string at `args[fmt_idx]`, exactly as `rt_va` in gen/tu/rt.c reads them).
+pub fn ext_call_va(name: &'static str, args: &[Arg], fmt_idx: usize, va: &[Va], ret: K) -> Option<u64> {
+    if REC.lock().unwrap_or_else(|e| e.into_inner()).is_none() {
+        return None;
+    }
+    let fmt = args[fmt_idx].v as usize as *const u8;
+    let convs = fmt_convs(fmt);
+    assert_eq!(convs.len(), va.len(), "{name}: format string wants {} varargs, got {}", convs.len(), va.len());
+    let mut extra = vec![];
+    let g = REC.lock().unwrap_or_else(|e| e.into_inner());
+    let r = g.as_ref().unwrap();
+    for (cv, v) in convs.iter().zip(va) {
+        match (cv, v) {
+            ('i', Va::I32(x)) => extra.push(*x as u32 as u64),
+            ('i', Va::I64(x)) => extra.push(*x as u32 as u64),
+            ('q', Va::I64(x)) => extra.push(*x as u64),
+            ('q', Va::I32(x)) => extra.push(*x as i64 as u64),
+            ('d', Va::D(x)) => extra.push(x.to_bits()),
+            ('s', Va::P(p)) => {
+                extra.push(r.norm_ptr(*p as usize as u64));
+                extra.push(c_str_hash(*p as *const u8));
+            }
+            ('p', Va::P(p)) => extra.push(r.norm_ptr(*p as usize as u64)),
+            (c, v) => panic!("{name}: vararg {v:?} does not fit conversion {c}"),
+        }
+    }
+    drop(g);
+    ext_core(name, args, &extra, ret)
+}
+
+fn ext_core(name: &'static str, args: &[Arg], extra: &[u64], ret: K) -> Option<u64> {
     let mut g = REC.lock().unwrap_or_else(|e| e.into_inner());
     let r = g.as_mut()?;
     let nh = fnv_bytes(name.as_bytes());
@@ -513,6 +625,12 @@ pub fn ext_call(name: &'static str, args: &[Arg], ret: K) -> Option<u64> {
                     }
                 }
             }
+        }
+    }
+    for w in extra {
+        r.log = mix(r.log, *w);
+        if r.specs.trace {
+            let _ = write!(tr, " {w:x}");
         }
     }
     // out parameters: pseudo-random bytes from the callee's own stream
@@ -607,6 +725,25 @@ macro_rules! ext_fns {
     (@body $name:ident ( $($a:ident),* )) => { panic!(concat!("TODO(ext) ", stringify!($name), ": its TU is not ported")) };
 }
 
+/// Declares printf-style variadic callees: `fn name(fixed args) va FMT_IDX -> Ret;` becomes
+/// `pub unsafe fn name(fixed args, va: &[Va]) -> Ret` (no TODO forwarding: always a stub).
+#[macro_export]
+macro_rules! ext_va {
+    ($( $(#[$m:meta])* fn $name:ident ( $($a:ident : $t:ty),* $(,)? ) va $fmt:literal -> $r:ty ; )*) => {
+        $(
+            $(#[$m])*
+            #[allow(non_snake_case, unused_variables)]
+            pub unsafe fn $name($($a: $t,)* va: &[$crate::oracle::Va]) -> $r {
+                if let Some(v) = $crate::oracle::ext_call_va(stringify!($name),
+                        &[$($crate::oracle::arg($a)),*], $fmt, va, <$r as $crate::oracle::OVal>::K) {
+                    return <$r as $crate::oracle::OVal>::from_bits(v);
+                }
+                panic!(concat!("TODO(ext) ", stringify!($name), ": its TU is not ported"))
+            }
+        )*
+    };
+}
+
 // ------------------------------------------------------------------------------------------
 // cases
 // ------------------------------------------------------------------------------------------
@@ -619,6 +756,50 @@ pub struct Case {
     pub args: Vec<u64>,
     /// the case index within the function
     pub idx: u32,
+    /// bitfield storage units the builder created (see [`Case::bitfields`])
+    pub bf: Vec<BfUnit>,
+}
+
+/// One bitfield storage unit: `size` bytes at `addr` holding `(first bit from the MSB, width)`
+/// fields in GameCube order (MSB-first, big-endian bytes). The C side runs on x86 (LSB-first,
+/// little-endian), so for the comparison the unit is rewritten to x86 form: field values placed
+/// from bit 0 upward in declaration order, unused bits cleared. Done on the image sent to C and
+/// on the Rust state before hashing.
+#[derive(Clone, Debug)]
+pub struct BfUnit {
+    pub addr: usize,
+    pub size: u8,
+    pub fields: Vec<(u8, u8)>,
+}
+
+impl BfUnit {
+    fn to_x86(&self) {
+        let n = self.size as usize;
+        let p = self.addr as *mut u8;
+        let mut be: u64 = 0;
+        for i in 0..n {
+            be = (be << 8) | unsafe { *p.add(i) } as u64;
+        }
+        let mut le: u64 = 0;
+        for &(b, w) in &self.fields {
+            let mask = (1u64 << w) - 1;
+            let v = (be >> (8 * n as u32 - b as u32 - w as u32)) & mask;
+            le |= v << b;
+        }
+        for i in 0..n {
+            unsafe { *p.add(i) = (le >> (8 * i)) as u8 };
+        }
+    }
+}
+
+/// Convert registered units to x86 form. A unit inside a registered global is converted in that
+/// global's arena copy (`g` maps static address -> arena address).
+fn bf_convert(units: &[BfUnit], map: &dyn Fn(usize) -> usize) {
+    for u in units {
+        let mut x = u.clone();
+        x.addr = map(u.addr);
+        x.to_x86();
+    }
 }
 
 impl Case {
@@ -728,10 +909,11 @@ impl<'a> TuOracle<'a> {
     }
 
     /// Hash of the whole state: used arena words (globals region refreshed from the statics first).
-    fn state_hash(&self, rec: &Rec, arena: &Arena, offs: &[usize], heap_start: usize) -> u64 {
+    fn state_hash(&self, rec: &Rec, arena: &Arena, offs: &[usize], heap_start: usize, bf: &[BfUnit]) -> u64 {
         for (g, &o) in self.globals.iter().zip(offs) {
             unsafe { core::ptr::copy_nonoverlapping(g.addr, arena.base.add(o), g.size) };
         }
+        self.bf_to_x86(arena, offs, bf);
         let mut h = FNV_OFF;
         let end = rec.hwm.max(arena.hwm).max(heap_start);
         MAXUSED.fetch_max(end, core::sync::atomic::Ordering::Relaxed);
@@ -742,6 +924,21 @@ impl<'a> TuOracle<'a> {
             i += 8;
         }
         h
+    }
+
+    /// Rewrite the registered bitfield units (in the arena, or in a global's arena copy) to x86 form.
+    fn bf_to_x86(&self, arena: &Arena, offs: &[usize], bf: &[BfUnit]) {
+        let globals = &self.globals;
+        let base = arena.base as usize;
+        bf_convert(bf, &|a| {
+            for (g, &o) in globals.iter().zip(offs) {
+                let ga = g.addr as usize;
+                if a >= ga && a < ga + g.size {
+                    return base + o + (a - ga);
+                }
+            }
+            a
+        });
     }
 
     /// Everything one case does on the Rust side, from a clean state to its outcome.
@@ -756,7 +953,7 @@ impl<'a> TuOracle<'a> {
         }
         let seed = splitmix(fnv_bytes(f.name.as_bytes()) ^ (idx as u64).wrapping_mul(0x1000_0000_01B3));
         let a2 = Arena { base: arena.base, hwm: arena.hwm };
-        let mut c = Case { arena: a2, rng: Rng(seed ^ 0xA5A5), specs: Specs::default(), args: vec![], idx };
+        let mut c = Case { arena: a2, rng: Rng(seed ^ 0xA5A5), specs: Specs::default(), args: vec![], idx, bf: vec![] };
         c.specs.trace = trace;
         (f.build)(&mut c);
         arena.hwm = c.arena.hwm;
@@ -774,7 +971,7 @@ impl<'a> TuOracle<'a> {
             K::P => rec.norm_ptr(ret),
             _ => ret,
         };
-        let sh = self.state_hash(&rec, arena, &offs, heap_start);
+        let sh = self.state_hash(&rec, arena, &offs, heap_start, &c.bf);
         let o = Outcome { ret, state: sh, log: rec.log, ncalls: rec.ncalls };
         (o, rec.text.clone(), specs, args)
     }
@@ -813,17 +1010,19 @@ impl<'a> TuOracle<'a> {
                 }
                 let seed = splitmix(fnv_bytes(f.name.as_bytes()) ^ (idx as u64).wrapping_mul(0x1000_0000_01B3));
                 let a2 = Arena { base: arena.base, hwm: arena.hwm };
-                let mut c = Case { arena: a2, rng: Rng(seed ^ 0xA5A5), specs: Specs::default(), args: vec![], idx };
+                let mut c = Case { arena: a2, rng: Rng(seed ^ 0xA5A5), specs: Specs::default(), args: vec![], idx, bf: vec![] };
                 (f.build)(&mut c);
                 arena.hwm = c.arena.hwm;
                 for (g, &o) in self.globals.iter().zip(&offs) {
                     unsafe { core::ptr::copy_nonoverlapping(g.addr, arena.base.add(o), g.size) };
                 }
+                self.bf_to_x86(&arena, &offs, &c.bf);
                 MAXUSED.fetch_max(arena.hwm, core::sync::atomic::Ordering::Relaxed);
                 let nrec = self.make_rec(0, Specs::default(), arena.hwm);
                 let _ = write!(out, "CASE {fi} {idx} {seed:x} {:x} {}", arena.hwm, c.args.len());
                 for a in &c.args {
-                    let _ = write!(out, " {a:x}");
+                    // pointers to statics / functions travel as tags (the C side has its own addresses)
+                    let _ = write!(out, " {:x}", nrec.norm(*a));
                 }
                 out.push('\n');
                 for (n, s) in &c.specs.ret {
@@ -1017,6 +1216,25 @@ macro_rules! fd {
 }
 
 impl Case {
+    /// Register the bitfield bytes of a `melee_types` record for the x86 comparison. `s` points at
+    /// the record, `bf_off` is the native offset of its `bf_<gc>` byte-array field
+    /// (`core::mem::offset_of!(S, bf_0)`), `gc_start` the GC offset where that array starts and
+    /// `len` its byte length.
+    pub fn bitfields<S: melee_core::gc::GcLayout>(&mut self, s: *mut S, bf_off: usize, gc_start: u32, len: u32) {
+        use std::collections::BTreeMap;
+        let mut units: BTreeMap<u32, (u8, std::vec::Vec<(u8, u8)>)> = BTreeMap::new();
+        for f in S::GC_FIELDS {
+            if let Some((b, w)) = f.bits {
+                if f.offset >= gc_start && f.offset < gc_start + len {
+                    let e = units.entry(f.offset).or_insert((f.size as u8, vec![]));
+                    e.1.push((b, w));
+                }
+            }
+        }
+        for (u, (size, fields)) in units {
+            self.bf.push(BfUnit { addr: s as usize + bf_off + (u - gc_start) as usize, size, fields });
+        }
+    }
     /// A zeroed buffer.
     pub fn zbuf(&mut self, n: usize) -> *mut u8 {
         self.arena.alloc_bytes(n)

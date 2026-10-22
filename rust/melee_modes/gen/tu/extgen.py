@@ -46,6 +46,8 @@ UNKNOWN = set()
 def rs_type(t, ctx_const=False):
     # typedef name known to melee_types (but not the plain integer typedefs, mapped structurally)
     spell = t.spelling.replace("const ", "").replace("struct ", "").replace("enum ", "").replace("union ", "").strip()
+    if spell == "bool":
+        return "i32"  # typedef int bool (MSL stdbool.h)
     if spell in KNOWN and not re.fullmatch(r"[su](8|16|32|64)|f(32|64)", spell):
         return spell
     c = t.get_canonical()
@@ -104,7 +106,10 @@ def parse(src):
 
 def main():
     src = sys.argv[1]
-    want = set(a for a in sys.argv[2:] if a.startswith("--"))
+    rust_ext = "--rust-ext" in sys.argv
+    want = set(a for a in sys.argv[2:] if a.startswith("--") and a != "--rust-ext")
+    if rust_ext:
+        want = {"--ext"}
     if not want:
         want = {"--defs", "--ext", "--globals"}
     tu = parse(src)
@@ -158,7 +163,8 @@ def main():
             hint = f"   // ported: {ported[n][0]}" if n in ported else ""
             print(f"// {st}{n}({args}) -> {r}  [{c.location.line}]{hint}")
     if "--ext" in want:
-        print("// ---- callees not defined in this TU ----")
+        if not rust_ext:
+            print("// ---- callees not defined in this TU ----")
         inl = []
         for n, d in sorted(called.items()):
             if n in defined_names or n.startswith("__builtin"):
@@ -176,9 +182,16 @@ def main():
                 args += (", " if args else "") + "/* ... */"
             r = rs_type(d.result_type)
             hint = f"  // ported: {', '.join(ported[n][:2])}" if n in ported else ""
+            if rust_ext:
+                if "/* ... */" in args:
+                    print(f"        // VARIADIC: {n}({args}) -> {r}")
+                else:
+                    print(f"        fn {n}({args}) -> {r};")
+                continue
             print(f"        fn {n}({args}) -> {r};{hint}")
-        print("// ---- header inlines used (port them, they are not callees) ----")
-        for n, f, l in inl:
+        if not rust_ext:
+            print("// ---- header inlines used (port them, they are not callees) ----")
+        for n, f, l in (inl if not rust_ext else []):
             print(f"//   {n}  {f}:{l}")
     if "--globals" in want:
         print("// ---- globals ----")

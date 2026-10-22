@@ -34,6 +34,10 @@ strtol strtoul qsort bsearch abs labs""".split())
 # (same LLP64 data model); the IR is retargeted to msvc for linking.
 GNU_FLAGS = [("--target=x86_64-w64-windows-gnu" if f.startswith("--target=") else f) for f in cref.FLAGS]
 
+# printf-style variadic callees: the fixed-argument index of the format string. Their varargs are
+# logged by rt_va (count and kinds from the format); other variadics log the fixed arguments only.
+VA_FMT = {"OSReport": 0, "HSD_SisLib_803A6B98": 3, "HSD_SisLib_803A70A0": 2, "OSPanic": 2}
+
 SIZES = {"i1": 1, "i8": 1, "i16": 2, "i32": 4, "i64": 8, "ptr": 8, "float": 4, "double": 8}
 
 
@@ -139,6 +143,9 @@ def make_stubs(ll_text, defined, extra_skip, ext_globals):
             continue
         if va:
             ps.append("...")
+            if name in VA_FMT:
+                body += ["  %ap = alloca ptr, align 8", "  call void @llvm.va_start.p0(ptr %ap)",
+                         f"  call void @rt_va(ptr %ap, i32 {VA_FMT[name]})", "  call void @llvm.va_end.p0(ptr %ap)"]
         idx = len(strs)
         strs.append(name)
         head = [f"define dso_local {ret} @{name}({', '.join(ps)}) {{",
@@ -178,6 +185,9 @@ declare ptr @rt_ret_p()
 declare float @rt_ret_f()
 declare double @rt_ret_d()
 declare void @rt_ret_v()
+declare void @rt_va(ptr, i32)
+declare void @llvm.va_start.p0(ptr)
+declare void @llvm.va_end.p0(ptr)
 """
     return decls + "\n".join(consts) + "\n" + "\n".join(data) + "\n" + "\n\n".join(out) + "\n", manual
 
@@ -207,7 +217,20 @@ def main():
 
     # ---- driver
     d = []
-    d.append(f'#include "{(ROOT / src).as_posix()}"')
+    # Some TUs rely on PPC layout (4-byte pointers) to alias two struct views of one object; native
+    # 64-bit C would not alias them, so the oracle compiles a mechanically patched copy
+    # (gen/tu/patches/<stem>.py: patch(text) -> text). The Rust port implements the PPC semantics.
+    srcpath = ROOT / src
+    pp = HERE / "patches" / f"{stem}.py"
+    if pp.exists():
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(f"patch_{stem}", pp)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        patched = BUILD / f"{stem}_patched.c"
+        patched.write_text(mod.patch((ROOT / src).read_text(encoding="utf-8")), encoding="utf-8", newline="\n")
+        srcpath = patched
+    d.append(f'#include "{srcpath.as_posix()}"')
     d.append("typedef unsigned long long rt_u64;")
     d.append("typedef struct { const char* name; void* addr; rt_u64 size; } RtGlobal;")
     d.append("typedef struct { const char* name; void* addr; } RtFn;")

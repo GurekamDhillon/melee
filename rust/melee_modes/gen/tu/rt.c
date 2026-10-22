@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include <windows.h>
 
 typedef unsigned long long u64;
@@ -59,7 +60,6 @@ static u64 norm(u64 w) {
     if (w < 0x10000) return w;
     for (i = 0; i < f_n; i++) if (f_tab[i].addr == w) return f_tab[i].tag;
     for (i = 0; i < g_n; i++) if (w >= g_tab[i].addr && w < g_tab[i].addr + g_tab[i].size) return g_tab[i].tagbase | (w - g_tab[i].addr);
-    for (i = 0; i < g_n; i++) if (w == g_tab[i].addr + g_tab[i].size) return g_tab[i].tagbase | (w - g_tab[i].addr); /* one past the end */
     return w;
 }
 static u64 norm_ptr(u64 w) {
@@ -152,6 +152,41 @@ void rt_arg_p(const void* p) {
 }
 void rt_arg_f(float f) { u32 b; memcpy(&b, &f, 4); arg_common((u64)b, 2, (u64)b); }
 void rt_arg_d(double d) { u64 b; memcpy(&b, &d, 8); arg_common(b, 3, b); }
+
+
+/* printf-style varargs: count and kinds come from the format string at argument `fmtidx`
+ * (oracle.rs `fmt_convs` / `ext_call_va` mirror this). */
+static void logw(u64 n) {
+    rec_log = mixw(rec_log, n);
+    if (trace) trlen += sprintf(trbuf + trlen, " %llx", n);
+}
+static u64 strhash_at(u64 w) {
+    u64 h = FNV_OFF; int j; const unsigned char* p = (const unsigned char*)(uintptr_t)w;
+    if (!w) return h;
+    for (j = 0; j < 256; j++) { unsigned char c = p[j]; if (!c) break; h = (h ^ c) * FNV_PRIME; }
+    return h;
+}
+void rt_va(va_list* ap, int fmtidx) {
+    const unsigned char* fmt = (const unsigned char*)(uintptr_t)cur_args[fmtidx];
+    int i = 0; unsigned char c;
+    for (;;) {
+        int lng = 0;
+        c = fmt[i]; if (!c) break; i++;
+        if (c != '%') continue;
+        if (fmt[i] == '%') { i++; continue; }
+        for (;;) {
+            u64 w;
+            c = fmt[i]; if (!c) break; i++;
+            if (c == '*') { w = va_arg(*ap, u64); logw(w & 0xFFFFFFFFULL); continue; }
+            if (c == 'l' || c == 'j' || c == 'z' || c == 't' || c == 'q' || c == 'L' || c == 'I') { lng = 1; continue; }
+            if (c == 'd' || c == 'i' || c == 'u' || c == 'o' || c == 'x' || c == 'X' || c == 'c') { w = va_arg(*ap, u64); logw(lng ? w : (w & 0xFFFFFFFFULL)); break; }
+            if (c == 's') { w = va_arg(*ap, u64); logw(norm_ptr(w)); logw(strhash_at(w)); break; }
+            if (c == 'p') { w = va_arg(*ap, u64); logw(norm_ptr(w)); break; }
+            if (c == 'f' || c == 'F' || c == 'e' || c == 'E' || c == 'g' || c == 'G' || c == 'a' || c == 'A') { w = va_arg(*ap, u64); logw(w); break; }
+            if (c == 'n') break;
+        }
+    }
+}
 
 void rt_args_end(void) {
     int i;
@@ -282,7 +317,7 @@ int rt_main(int argc, char** argv, const RtGlobal* gs, int ng, const RtFn* fs, i
                 char* q = l + 5; int k;
                 func = (int)strtol(q, &q, 10); idx = (int)strtol(q, &q, 10);
                 seed = strtoull(q, &q, 16); hwm = strtoull(q, &q, 16); nargs = (int)strtol(q, &q, 10);
-                for (k = 0; k < nargs; k++) args[k] = strtoull(q, &q, 16);
+                for (k = 0; k < nargs; k++) args[k] = denorm(strtoull(q, &q, 16));
                 memset(arena, 0, maxused);
                 nrets = nouts = nstrs = nmems = 0;
                 in_case = 1;

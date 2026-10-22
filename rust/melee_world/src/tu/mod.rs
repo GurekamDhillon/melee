@@ -13,3 +13,7 @@ pub mod grfigure3;
 pub mod grfigureget;
 pub mod grflatzone;
 pub mod grfourside;
+pub mod textdraw;
+
+pub mod textlib;
+pub mod textlib_1;

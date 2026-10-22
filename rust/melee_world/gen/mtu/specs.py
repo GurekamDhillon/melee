@@ -85,5 +85,44 @@ SPECS["grfourside"] = dict(
     effects={"lb_8000B1CC": ("a2->x = rw(); a2->y = rw(); a2->z = rw();", "(*a2).x = rw(); (*a2).y = rw(); (*a2).z = rw();"),
              "HSD_CObjGetEyeVector": ("a1->x = rw(); a1->y = rg(); a1->z = rw();", "(*a1).x = rw(); (*a1).y = rg(); (*a1).z = rw();")},
     null_ret_ok=["HSD_GObj_SetupProc", "grZakoGenerator_801CAE04"], real_cb=_STAGE_REAL, skip_data=_STAGE_SKIP + ["result"])
+
+_RH1 = ("T(RH(a1, sizeof *a1));", "t(rh(&*a1));")
+SPECS["textdraw"] = dict(
+    src="src/melee/if/textdraw.c",
+    types=["DevText", "HSD_GObj"],
+    ret={
+        "GObj_Create": ("(((fv() & 3) == 0) ? 0 : &GO[fv() % 4])",
+                        "if fv() & 3 == 0 { core::ptr::null_mut() } else { &raw mut super::GO[(fv() % 4) as usize] }"),
+        "HSD_CObjAlloc": ("&COBJA", "&raw mut super::COBJA"),
+        "HSD_CObjLoadDesc": ("((fv() & 1) ? &COBJB : 0)", "if fv() & 1 != 0 { &raw mut super::COBJB } else { core::ptr::null_mut() }"),
+        "Wb_RenderActive": ("(int) ((fv() & 7) == 0)", "((fv() & 7) == 0) as i32"),
+    },
+    effects={"DrawRectangle": ("T(RH(a4, 4));", "t(rh(&*a4));"), "DrawASCII": ("T(RH(a3, 4));", "t(rh(&*a3));"),
+             "HSD_CObjSetViewport": _RH1, "HSD_CObjSetScissor": _RH1, "HSD_CObjSetEyePosition": _RH1,
+             "HSD_CObjSetInterest": _RH1})
+SPECS["textlib"] = dict(
+    src="src/melee/if/textlib.c", types=["DevText", "un_80304138_objalloc_t"],
+    skip_data=["devtext_drawlist", "devtext_poolhead", "un_804D6E44"],
+    skip_stubs=["memcpy", "memzero", "vsnprintf", "__builtin_va_end"],
+    effects={"DevText_NumToStr": ("a1[0] = (char) (33 + fv() % 90); a1[1] = (fv() & 1) ? '\\n' : 'q'; a1[2] = 0;",
+                                  "*a1 = (33 + fv() % 90) as i8; *a1.add(1) = if fv() & 1 != 0 { 10 } else { b'q' as i8 }; *a1.add(2) = 0;")})
+_GXC = ("((GXColor) { (u8) fv(), (u8) fv(), (u8) fv(), (u8) fv() })", "_GXColor { r: fv() as u8, g: fv() as u8, b: fv() as u8, a: fv() as u8 }")
+SPECS["textlib_1"] = dict(
+    src="src/melee/if/textlib_1.c",
+    types=["DevText", "un_80304138_objalloc_t", "un_80304138_objalloc_t_x8", "HSD_GObj"],
+        ret={"DevText_SetTextColor": _GXC, "DevText_SetBGColor": _GXC,
+         "DevText_StoreColorIndex": ("(u8) fv()", "fv() as u8"),
+         "DevText_Create": ("((fv() & 3) == 0 ? 0 : &DT[fv() % 4])", "if fv() & 3 == 0 { core::ptr::null_mut() } else { &raw mut super::DT[(fv() % 4) as usize] }"),
+         "DevText_GetGObj": ("&GOBJ0", "&raw mut super::GOBJ0"),
+         "GObj_Create": ("((fv() & 3) == 0 ? 0 : &GOBJ1)", "if fv() & 3 == 0 { core::ptr::null_mut() } else { &raw mut super::GOBJ1 }"),
+         "HSD_MemAlloc": ("((fv() & 3) == 0 ? 0 : (void*) MEM)", "if fv() & 3 == 0 { core::ptr::null_mut() } else { &raw mut super::MEM as *mut c_void }"),
+         "HSD_ObjAlloc": ("((NULLOK && (fv() & 3) == 0) ? 0 : (void*) &OBJS[fv() % 4])", "if super::NULLOK != 0 && fv() & 3 == 0 { core::ptr::null_mut() } else { &raw mut super::OBJS[(fv() % 4) as usize] as *mut c_void }"),
+         "HSD_GObj_SetupProc": ("&PROC0", "&raw mut super::PROC0")},
+    custom_stubs={"DevText_Printf": dict(
+        c="void DevText_Printf(DevText* a0, char* a1, ...) { __builtin_va_list ap; const char* f = a1; T(@ID@); T(PI(a0)); T(SH(a1)); "
+          "__builtin_va_start(ap, a1); while (*f) { if (*f++ != '%') continue; while (*f == '-' || *f == '+' || *f == ' ' || *f == '#' || (*f >= '0' && *f <= '9') || *f == '.') f++; "
+          "if (*f == 'f') { T64(__builtin_va_arg(ap, double)); } else { T((u32) __builtin_va_arg(ap, int)); } f++; } __builtin_va_end(ap); }",
+        ext="fn DevText_Printf(a0: *mut DevText, a1: *const i8, a2: &[crate::tu::textlib::PrintfArg]);",
+        hook="|a0, a1, a2| { t(@ID@); t(pi(a0)); t(sh(a1 as *const u8)); for a in a2 { match a { melee_world::tu::textlib::PrintfArg::Int(v) => t(*v as u32), melee_world::tu::textlib::PrintfArg::Dbl(d) => t64(*d), _ => {} } } }")})
 for _s in SPECS.values():
     _s["common_ret"] = COMMON_RET

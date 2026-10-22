@@ -45,6 +45,8 @@ pub mod ext {
         melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370);
     hook_or!(FTCOMMON_CLAMPAIRDRIFT, ftCommon_ClampAirDrift, (fp: *mut Fighter),
         |fp: *mut Fighter| unsafe { melee_fighter::ftcommon::clamp_air_drift(&mut *fp) });
+    hook_or!(FTCOMMON_CALCGROUNDACCEL_DEACCEL, ftCommon_CalcGroundAccel_Deaccel, (fp: *mut Fighter, friction: f32),
+        |fp: *mut Fighter, f: f32| unsafe { melee_fighter::ftcommon::calc_ground_accel_deaccel(&mut *fp, f) });
     hook_or!(FTCOMMON_FALL, ftCommon_Fall, (fp: *mut Fighter, gravity: f32, terminal_vel: f32),
         |fp: *mut Fighter, g: f32, t: f32| unsafe { melee_fighter::ftcommon::fall(&mut *fp, g, t) });
     hook_or!(FTCOMMON_SETSELFMOVEMENTFROMGROUNDEDMOVEMENT, ftCommon_SetSelfMovementFromGroundedMovement, (gobj: *mut HSD_GObj),

@@ -92,3 +92,4 @@ pub mod ftzelda;
 pub mod ftyoshispecialhi;
 pub mod ftyoshispeciallw;
 pub mod ftyoshispecialn;
+pub mod ftyoshispecials;

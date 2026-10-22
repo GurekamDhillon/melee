@@ -609,6 +609,7 @@ def build(stem, verbose_fn=None):
     S += [f'#include "{i}"' for i in includes]
     S.append('#include "oracle.h"')
     if "efSync_Spawn" in pr.funcs:
+        S.append('#include "ef/efsync.h"')
         S.append("#define efSync_Spawn(g, o, ...) oracle_efsync(OPP_NARG(__VA_ARGS__), g, o, __VA_ARGS__)")
     S.append(spec.get("pre_c", ""))
     S.append(f'#include "{srcpath}"')
@@ -728,7 +729,7 @@ def build(stem, verbose_fn=None):
     dp = BUILD / f"{stem}_oracle.c"
     dp.write_text(drv, encoding="utf-8")
     exe = link([ship_obj(dp, f"{stem}_oracle")], stem)
-    out = subprocess.run([str(exe)] + (["-v", verbose_fn] if verbose_fn else []), capture_output=True, text=True, check=True).stdout
+    out = subprocess.run([str(exe)] + (["-v", verbose_fn] if verbose_fn else []), capture_output=True, text=True, check=True, timeout=900).stdout
     dst = CRATE / f"tests/data/oracle_{stem}.txt"
     if verbose_fn:
         (BUILD / f"{stem}_verbose.txt").write_text(out, encoding="utf-8", newline="\n")
@@ -875,11 +876,11 @@ def coverage(stem, src):
     prof = BUILD / f"{stem}.profraw"
     pd = BUILD / f"{stem}.profdata"
     flags = [a for a in COMMON if a != "-Wno-everything"]
-    run([CLANG, *flags, "-w", "-O0", "-fprofile-instr-generate", "-fcoverage-mapping", "-fcoverage-mcdc",
+    run([CLANG, *flags, "-w", "-O1", "-fprofile-instr-generate", "-fcoverage-mapping",
          str(drv), str(ROOT / "pc/gameworld/gekko_fp.c"), "-o", str(exe), "-fuse-ld=lld",
          "-Wl,/FORCE:UNRESOLVED", "-Wl,/IGNORE:4006", "-Wl,/IGNORE:4088"], "coverage build")
     env = dict(os.environ, LLVM_PROFILE_FILE=str(prof))
-    subprocess.run([str(exe)], capture_output=True, text=True, check=True, env=env)
+    subprocess.run([str(exe)], capture_output=True, text=True, check=True, env=env, timeout=900)
     run([str(Path(CLANG).with_name("llvm-profdata.exe")), "merge", "-sparse", str(prof), "-o", str(pd)], "profdata")
     r = run([str(Path(CLANG).with_name("llvm-cov.exe")), "report", str(exe), f"-instr-profile={pd}",
              "--show-functions", "--show-branch-summary", str(ROOT / src)], "llvm-cov")

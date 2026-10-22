@@ -25,3 +25,13 @@ CONFIGS["gm_18A1"] = dict(
          "gm_GetFrameCount": ("expr", "rnd() % 0xA000", "rnd() % 0xA000"),
          "gm_GetStartMeleeRules": ("expr", "&g_rules", "core::ptr::addr_of_mut!(G_RULES)")},
 )
+
+CONFIGS["gm_186E"] = dict(
+    src="src/melee/gm/gm_186E.c",
+    ret={"HSD_CObjSetCurrent": ("ri", 2), "lb_80011AC4": ("allocn", 64),
+         "Player_GetEntityAtIndex": ("expr", "(rnd() % 4 == 0) ? 0 : mkgobj()", "if rnd() % 4 == 0 { core::ptr::null_mut() } else { mkgobj() }"),
+         "HSD_JObjLoadJoint": ("expr", "mkjobj()", "mkjobj()")},
+    effect={"HSD_GObjObject_80390A70": SETOBJ},
+    custom=["lbArchive_80016DBC", "lb_80011E24"],
+    ginit={"HSD_GObj_JObjKind": "0x2A", "HSD_GObj_CameraKind": "0x2B", "HSD_GObj_LightKind": "0x2C", "HSD_GObj_FogKind": "0x2D"},
+)

@@ -433,10 +433,10 @@ def build(stem, verbose_fn=None):
         return "\n".join(L)
 
     def c_fill(expr, tag):
-        return f"ofill(&{expr}, F_{tag}, (int) NF_{tag}); " + (f"bf_fill_{tag}(&{expr});" if TYPES[tag]["bf"] else "")
+        return f"ofill(&{expr}, F_{tag}, (int) NF_{tag}); " + (f"bf_fill_{tag}((void*) &{expr});" if TYPES[tag]["bf"] else "")
 
     def c_hash(expr, tag):
-        return f"h = img_hash(h, &{expr}, sizeof {expr}, D_{tag}, (int) ND_{tag}); " + (f"h = bf_hash_{tag}(h, &{expr});" if TYPES[tag]["bf"] else "")
+        return f"h = img_hash(h, &{expr}, sizeof {expr}, D_{tag}, (int) ND_{tag}); " + (f"h = bf_hash_{tag}(h, (const void*) &{expr});" if TYPES[tag]["bf"] else "")
 
     def rs_fill(expr, tag):
         return f"ofill(addr_of_mut!({expr}) as *mut u8, F_{tag}); " + (f"bf_fill_{tag}(addr_of_mut!({expr}) as *mut {TYPES[tag]['c']});" if TYPES[tag]["bf"] else "")
@@ -499,7 +499,8 @@ static void* gen_ground(void) { u32 k = rnd() % (NGO + 1); return k ? (void*) &O
     for t in pools:
         S.append(f"    zero_bytes(OP_{t}, sizeof OP_{t});")
     for st in statics:
-        S.append(f"    zero_bytes(&{st['c']}, sizeof {st['c']});")
+        if st["fill"] or not st.get("ty"):
+            S.append(f"    zero_bytes(&{st['c']}, sizeof {st['c']});")
     S.append("    zero_bytes(OSCR, sizeof OSCR);")
     S.append("    for (i = 0; i < NGO; i++) { " + c_fill("OGO[i]", "HSD_GObj") + " }")
     S.append("    for (i = 0; i < NGO; i++) {\n        switch (GVAR[fi]) {")
@@ -739,7 +740,8 @@ unsafe fn gen_ground() -> *mut c_void { let k = rnd() % (NGO as u32 + 1); if k !
     for t in pools:
         R.append(f"    OP_{t} = [[0; {(pools[t] + 7) // 8}]; 2];")
     for st in statics:
-        R.append(f"    core::ptr::write_bytes(addr_of_mut!({st['rs']}) as *mut u8, 0, core::mem::size_of_val(&*addr_of!({st['rs']})));")
+        if st["fill"] or not st.get("ty"):
+            R.append(f"    core::ptr::write_bytes(addr_of_mut!({st['rs']}) as *mut u8, 0, core::mem::size_of_val(&*addr_of!({st['rs']})));")
     R.append("    OSCR = [[0; 64]; 4];")
     R.append("    for i in 0..NGO { " + rs_fill("OGO[i]", "HSD_GObj") + " }")
     R.append("    for i in 0..NGO {\n        match GVAR[fi] {")
@@ -963,7 +965,15 @@ def main():
         del args[i:i + 2]
     O.BUILD.mkdir(parents=True, exist_ok=True)
     (CRATE / "tests/data").mkdir(parents=True, exist_ok=True)
+    cov = "--cov" in args
+    args = [x for x in args if x != "--cov"]
     for stem in args:
+        if cov:
+            import shutil
+            O.COMMON.extend(["-I", (ROOT / load_spec(stem)["src"]).parent.as_posix()])
+            shutil.copy(O.BUILD / f"gro_{stem}.c", O.BUILD / f"{stem}_oracle.c")
+            O.coverage(stem, load_spec(stem)["src"])
+            continue
         build(stem, verbose_fn)
 
 

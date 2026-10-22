@@ -226,8 +226,6 @@ unsafe fn world_fill(fi: usize) {
     OP_grBattle_YakumonoParam = [[0; 2]; 2];
     core::ptr::write_bytes(addr_of_mut!(t::isDemoFight) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::isDemoFight)));
     core::ptr::write_bytes(addr_of_mut!(t::yakumono_param) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::yakumono_param)));
-    core::ptr::write_bytes(addr_of_mut!(t::grNBa_StageCallbacks) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grNBa_StageCallbacks)));
-    core::ptr::write_bytes(addr_of_mut!(t::grNBa_StageData) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grNBa_StageData)));
     OSCR = [[0; 64]; 4];
     for i in 0..NGO { ofill(addr_of_mut!(OGO[i]) as *mut u8, F_HSD_GObj);  }
     for i in 0..NGO {
@@ -373,7 +371,7 @@ unsafe fn install_hooks() {
 unsafe fn case_pre(fi: usize, a: &mut Args) {
     match fi {
         33 => { a.i[0] = rnd() % 7; }
-        34 => { NN = 1; }
+        34 => { NN = 1; OGP[0].u.battle_bg.state = (rnd() % 3) as i32; OGP[0].u.battle_bg.curr = if rnd() % 2 != 0 { -1 } else { (rnd() % 5) as i32 }; OGP[0].u.battle_bg.timer = (rnd() % 7) as i32 - 3; }
         _ => {}
     }
 }

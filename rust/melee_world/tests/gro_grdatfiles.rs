@@ -194,9 +194,6 @@ unsafe fn world_fill(fi: usize) {
     OP_UnkArchiveStruct = [[0; 3]; 2];
     OP_HSD_Archive = [[0; 13]; 2];
     core::ptr::write_bytes(addr_of_mut!(t::grDatFiles_8049EE10) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grDatFiles_8049EE10)));
-    core::ptr::write_bytes(addr_of_mut!(t::grDatFiles_803E07E4) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grDatFiles_803E07E4)));
-    core::ptr::write_bytes(addr_of_mut!(t::grDatFiles_803E0848) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grDatFiles_803E0848)));
-    core::ptr::write_bytes(addr_of_mut!(t::grDatFiles_803E0924) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grDatFiles_803E0924)));
     core::ptr::write_bytes(addr_of_mut!(OSD) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(OSD)));
     core::ptr::write_bytes(addr_of_mut!(OX8) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(OX8)));
     core::ptr::write_bytes(addr_of_mut!(OSI) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(OSI)));

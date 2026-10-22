@@ -46,7 +46,9 @@ SPEC = dict(
             "grDisplay_801C5DB0": "t::ext::grDisplay_801C5DB0"},
     funcs=FN + [
         dict(name="grBattle_80219D84", pre_c="AI[0] = rnd() % 7;", pre_rs="a.i[0] = rnd() % 7;"),
-        dict(name="grBattle_BG_Callback2", pre_c="NN = 1;", pre_rs="NN = 1;"),
+        dict(name="grBattle_BG_Callback2",
+             pre_c="NN = 1; OGP[0].u.battle_bg.state = rnd() % 3; OGP[0].u.battle_bg.curr = (rnd() % 2) ? -1 : (int) (rnd() % 5); OGP[0].u.battle_bg.timer = (int) (rnd() % 7) - 3;",
+             pre_rs="NN = 1; OGP[0].u.battle_bg.state = (rnd() % 3) as i32; OGP[0].u.battle_bg.curr = if rnd() % 2 != 0 { -1 } else { (rnd() % 5) as i32 }; OGP[0].u.battle_bg.timer = (rnd() % 7) as i32 - 3;"),
         dict(name="setup_unk_gobj", rs_path="t::setup_unk_gobj"),
         dict(name="reset_bg_timer", c_args=["&OGP[0]"], rs_args=["addr_of_mut!(OGP[0])"], rs_path="t::reset_bg_timer"),
         dict(name="grBattle_OnCheckShadowRender", c_args=["&AV3[0]", "AI[0]", "&OJO[0]"],

@@ -17,6 +17,7 @@ ftData* gFtDataList[Ft_Kind_Max];
     links_c="    gFtDataList[Ft_Kind_Yoshi] = &OFTD;",
     links_rs="    melee_fighter::tu::ftdata::gFtDataList[Ft_Kind_Yoshi as usize] = &mut *w.ftd;",
     outs={"lb_8000B1CC": [2]},
+    rets={"ftParts_GetBoneIndex": ("(int) (rnd() % 40)", "(rnd() % 40)")},
     bitfields=[("x2222_b2", "x2222_b2"), ("mv.ys.specialn.x0_b0", "mv.ys.specialn.x0_b0")],
     motions=[348, 350, 353, 355],
     opt_links=[("target_item_gobj", "OIG[0]"), ("victim_gobj", "OVG"), ("x1A64", "OIG[2]")],

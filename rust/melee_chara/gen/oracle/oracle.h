@@ -33,6 +33,13 @@ static float rf(void)
     if (k == 1) return -0.0f;
     if (k == 2) return 1.0f;
     if (k == 3) return -1.0f;
+    if (k == 4) {
+        /* boundary values: the small constants game thresholds are made of */
+        static const float BV[12] = { 0.0005f, 0.001f, 0.0015f, 0.002f, 0.01f, 0.05f, 0.1f, 0.2f, 0.25f, 0.5f, 0.75f, 0.9f };
+        u32 bi = rnd() % 12;
+        u32 sg = rnd() & 1;
+        return sg ? -BV[bi] : BV[bi];
+    }
     v = (int) (rnd() % 2001) - 1000;
     if (k < 10) return (float) v / 1000.0f;
     return (float) v / 7.0f;

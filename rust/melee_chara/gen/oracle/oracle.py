@@ -399,7 +399,7 @@ def stub_c(name, fn):
     if rk == "v":
         L.append("    lg_c(';');")
     elif rk == "i":
-        gen = "gen_b()" if ret_is_bool(ret) else "gen_i()"
+        gen = RETS[name][0] if name in RETS else ("gen_b()" if ret_is_bool(ret) else "gen_i()")
         L.append(f"    {{ {ret.spelling} r = ({ret.spelling}) {gen}; lg_retu((u32) r); lg_c(';'); return r; }}")
     elif rk == "q":
         L.append(f"    {{ {ret.spelling} r = ({ret.spelling}) iv(0); lg_retu((u32) r); lg_c(';'); return r; }}")
@@ -415,6 +415,8 @@ def stub_c(name, fn):
 
 # stubs that write through a pointer argument: name -> [arg indices]
 OUTS = {}
+# stubs whose integer answer is not the generic gen_i()/gen_b(): name -> (C expression, Rust expression)
+RETS = {}
 
 
 # ------------------------------------------------------------------ Rust hook closures
@@ -444,8 +446,10 @@ def rs_arg_log(rtype, ck, a):
     return f"lg_ptr({a} as *const u8 as usize);"
 
 
-def rs_ret(rtype, ck, ret_t, boolish):
+def rs_ret(rtype, ck, ret_t, boolish, name=None):
     r = rtype.replace(" ", "")
+    if ck == "i" and name in RETS:
+        return f"{{ let r = ({RETS[name][1]}) as {r}; lg_retu(r as u32); lg_c(';'); r }}"
     if ck == "i":
         if r == "bool":
             return "{ let r = (gen_b() != 0); lg_retu(r as u32); lg_c(';'); r }" if boolish else \
@@ -480,7 +484,7 @@ def rs_hook_install(name, rh, kinds, rk, ret_t, modpath):
         rets = ""
     else:
         boolish = ret_is_bool(ret_t)
-        body.append(rs_ret(rt, rk if rk in ("i", "q", "f", "d") else "p", ret_t, boolish))
+        body.append(rs_ret(rt, rk if rk in ("i", "q", "f", "d") else "p", ret_t, boolish, name))
         rets = f" -> {rt}"
     target = "melee_chara::stubs" if modpath == "@stubs" else f"melee_chara::tu::{modpath}::ext"
     return f"        {target}::{rh['hook']} = Some(|{sig}|{rets} {{ {' '.join(body)} }});"
@@ -516,6 +520,8 @@ def build(stem, verbose_fn=None):
     spec = load_spec(stem)
     OUTS.clear()
     PS_TAGS.clear()
+    RETS.clear()
+    RETS.update(spec.get("rets", {}))
     OUTS.update(spec.get("outs", {}))
     src = spec["src"]
     srcpath = (ROOT / src).as_posix()

@@ -47,6 +47,14 @@ pub mod ext {
         |fp: *mut Fighter| unsafe { melee_fighter::ftcommon::clamp_air_drift(&mut *fp) });
     hook_or!(FTCOMMON_CALCGROUNDACCEL_DEACCEL, ftCommon_CalcGroundAccel_Deaccel, (fp: *mut Fighter, friction: f32),
         |fp: *mut Fighter, f: f32| unsafe { melee_fighter::ftcommon::calc_ground_accel_deaccel(&mut *fp, f) });
+    hook_or!(FTCOMMON_8007D60C, ftCommon_8007D60C, (fp: *mut Fighter),
+        |fp: *mut Fighter| unsafe { melee_fighter::ftcommon2::ftcommon_8007d60c(&mut *fp) });
+    hook_or!(FTCOMMON_CALCSELFACCEL_DEACCELAIR, ftCommon_CalcSelfAccel_DeaccelAir, (fp: *mut Fighter),
+        |fp: *mut Fighter| unsafe { melee_fighter::ftcommon::calc_self_accel_deaccel_air(&mut *fp) });
+    hook_or!(FTCOMMON_CLAMPSELFVELX, ftCommon_ClampSelfVelX, (fp: *mut Fighter, max: f32),
+        |fp: *mut Fighter, m: f32| unsafe { melee_fighter::ftcommon::clamp_self_vel_x(&mut *fp, m) });
+    hook_or!(FTCOMMON_FALLBASIC, ftCommon_FallBasic, (fp: *mut Fighter),
+        |fp: *mut Fighter| unsafe { melee_fighter::ftcommon::fall_basic(&mut *fp) });
     hook_or!(FTCOMMON_FALL, ftCommon_Fall, (fp: *mut Fighter, gravity: f32, terminal_vel: f32),
         |fp: *mut Fighter, g: f32, t: f32| unsafe { melee_fighter::ftcommon::fall(&mut *fp, g, t) });
     hook_or!(FTCOMMON_SETSELFMOVEMENTFROMGROUNDEDMOVEMENT, ftCommon_SetSelfMovementFromGroundedMovement, (gobj: *mut HSD_GObj),

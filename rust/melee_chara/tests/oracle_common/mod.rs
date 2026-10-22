@@ -30,6 +30,12 @@ pub fn rf() -> f32 {
     if k == 3 {
         return -1.0;
     }
+    if k == 4 {
+        const BV: [f32; 12] = [0.0005, 0.001, 0.0015, 0.002, 0.01, 0.05, 0.1, 0.2, 0.25, 0.5, 0.75, 0.9];
+        let bi = (rnd() % 12) as usize;
+        let sg = rnd() & 1;
+        return if sg != 0 { -BV[bi] } else { BV[bi] };
+    }
     let v = (rnd() % 2001) as i32 - 1000;
     if k < 10 {
         return v as f32 / 1000.0;

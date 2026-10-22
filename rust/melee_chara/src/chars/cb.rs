@@ -736,7 +736,7 @@ pub unsafe extern "C" fn ftyoshispecialn__fn_8012D4F0(g: *mut HSD_GObj) {
 
 /// `ftZd_SpecialHi_801396AC` (defined in src/melee/ft/kinds/ftZelda/ftzeldaspecialhi.c).
 pub unsafe extern "C" fn ftzeldaspecialhi__ftZd_SpecialHi_801396AC(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftZd_SpecialHi_801396AC (src/melee/ft/kinds/ftZelda/ftzeldaspecialhi.c) is not ported");
+    crate::tu::ftzeldaspecialhi::ftZd_SpecialHi_801396AC(g);
 }
 
 /// `ftZd_SpecialLw_8013ADB4` (defined in src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).

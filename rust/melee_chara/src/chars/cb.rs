@@ -376,17 +376,17 @@ pub unsafe extern "C" fn ftkoopaspeciallw__fn_80134518(g: *mut HSD_GObj) {
 
 /// `ftKp_SpecialS_8013319C` (defined in src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
 pub unsafe extern "C" fn ftkoopaspecials__ftKp_SpecialS_8013319C(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftKp_SpecialS_8013319C (src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c) is not ported");
+    crate::tu::ftkoopaspecials::ftKp_SpecialS_8013319C(g);
 }
 
 /// `ftKp_SpecialS_8013322C` (defined in src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
 pub unsafe extern "C" fn ftkoopaspecials__ftKp_SpecialS_8013322C(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftKp_SpecialS_8013322C (src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c) is not ported");
+    crate::tu::ftkoopaspecials::ftKp_SpecialS_8013322C(g);
 }
 
 /// `ftKp_SpecialS_801332C4` (defined in src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
 pub unsafe extern "C" fn ftkoopaspecials__ftKp_SpecialS_801332C4(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftKp_SpecialS_801332C4 (src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c) is not ported");
+    crate::tu::ftkoopaspecials::ftKp_SpecialS_801332C4(g);
 }
 
 /// `ftKp_SpecialS_80133324` (defined in src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
@@ -396,47 +396,47 @@ pub unsafe extern "C" fn ftkoopaspecials__ftKp_SpecialS_80133324(g: *mut HSD_GOb
 
 /// `ftKp_SpecialS_80133398` (defined in src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
 pub unsafe extern "C" fn ftkoopaspecials__ftKp_SpecialS_80133398(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftKp_SpecialS_80133398 (src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c) is not ported");
+    crate::tu::ftkoopaspecials::ftKp_SpecialS_80133398(g);
 }
 
 /// `ftKp_SpecialS_801333F8` (defined in src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
 pub unsafe extern "C" fn ftkoopaspecials__ftKp_SpecialS_801333F8(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftKp_SpecialS_801333F8 (src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c) is not ported");
+    crate::tu::ftkoopaspecials::ftKp_SpecialS_801333F8(g);
 }
 
 /// `ftKp_SpecialS_80133484` (defined in src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
 pub unsafe extern "C" fn ftkoopaspecials__ftKp_SpecialS_80133484(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftKp_SpecialS_80133484 (src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c) is not ported");
+    crate::tu::ftkoopaspecials::ftKp_SpecialS_80133484(g);
 }
 
 /// `ftKp_SpecialS_801334E4` (defined in src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
 pub unsafe extern "C" fn ftkoopaspecials__ftKp_SpecialS_801334E4(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftKp_SpecialS_801334E4 (src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c) is not ported");
+    crate::tu::ftkoopaspecials::ftKp_SpecialS_801334E4(g);
 }
 
 /// `ftKp_SpecialS_8013359C` (defined in src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
 pub unsafe extern "C" fn ftkoopaspecials__ftKp_SpecialS_8013359C(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftKp_SpecialS_8013359C (src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c) is not ported");
+    crate::tu::ftkoopaspecials::ftKp_SpecialS_8013359C(g);
 }
 
 /// `ftLk_800EAF58` (defined in src/melee/ft/kinds/ftLink/ftlink.c).
 pub unsafe extern "C" fn ftlink__ftLk_800EAF58(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftLk_800EAF58 (src/melee/ft/kinds/ftLink/ftlink.c) is not ported");
+    crate::tu::ftlink::ftLk_800EAF58(g);
 }
 
 /// `onAccessory4` (defined in src/melee/ft/kinds/ftLink/ftlinkspecialhi.c).
 pub unsafe extern "C" fn ftlinkspecialhi__onAccessory4(g: *mut HSD_GObj) {
-    panic!("TODO(group4): onAccessory4 (src/melee/ft/kinds/ftLink/ftlinkspecialhi.c) is not ported");
+    crate::tu::ftlinkspecialhi::onAccessory4(g);
 }
 
 /// `spawnBomb` (defined in src/melee/ft/kinds/ftLink/ftlinkspeciallw.c).
 pub unsafe extern "C" fn ftlinkspeciallw__spawnBomb(g: *mut HSD_GObj) {
-    panic!("TODO(group4): spawnBomb (src/melee/ft/kinds/ftLink/ftlinkspeciallw.c) is not ported");
+    crate::tu::ftlinkspeciallw::spawnBomb(g);
 }
 
 /// `onAccessory4` (defined in src/melee/ft/kinds/ftLink/ftlinkspecials.c).
 pub unsafe extern "C" fn ftlinkspecials__onAccessory4(g: *mut HSD_GObj) {
-    panic!("TODO(group4): onAccessory4 (src/melee/ft/kinds/ftLink/ftlinkspecials.c) is not ported");
+    crate::tu::ftlinkspecials::onAccessory4(g);
 }
 
 /// `ftLg_SpecialN_FireSpawn` (defined in src/melee/ft/kinds/ftLuigi/ftluigispecialn.c).

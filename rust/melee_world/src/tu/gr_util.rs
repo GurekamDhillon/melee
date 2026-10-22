@@ -81,3 +81,12 @@ pub unsafe fn report_no_gobj(file: *const c_char, line: i64, id: i32) {
         &[ext::OsArg::S(file), ext::OsArg::I(line), ext::OsArg::I(id as i64)],
     );
 }
+
+/// `randi` (sysdolphin/baselib/random.h): `HSD_Randi` that accepts an empty range.
+#[inline]
+pub unsafe fn randi(max_val: i32) -> i32 {
+    if max_val != 0 {
+        return ext::HSD_Randi(max_val);
+    }
+    0
+}

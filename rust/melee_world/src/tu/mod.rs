@@ -10,3 +10,4 @@ pub mod grtcaptain;
 pub mod grshrine;
 pub mod grtclink;
 pub mod grtdonkey;
+pub mod grstory;

@@ -1,0 +1,66 @@
+//! src/melee/ft/kinds/ftMasterHand/ftmasterhandsqueezing.c: Master Hand squeezing / throw states.
+//! No fused sites. Smoke-tested by tests/tu_ftmasterhandsqueezing.rs.
+#![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
+
+use crate::chars::r9::ftMasterHand::ftmasterhandbackdisappear::ftMh_MS_374_801546D8;
+use crate::stubs as st;
+use crate::tu::ftmasterhandslap::ext::ftMh_MS_389_80151018;
+use crate::tu::ftmasterhandsqueeze::{ftMh_MS_378_80154A78, ftMh_UpdateBossMotion};
+use melee_types::*;
+
+/// Already ported (rounds 4/8): re-exported under this TU.
+pub use crate::chars::r4::ftMasterHand::ftmasterhandsqueezing::ftMh_MS_376_80154E78;
+pub use crate::chars::r8::ftMasterHand::ftmasterhandsqueezing::ftMh_Squeezing_IASA;
+
+/// Calls into TUs that are not ported yet (settable hooks; unset they panic).
+pub mod ext {
+    use melee_types::*;
+    crate::ch_hook!(FTMH_CAPTUREWAITMASTERHAND_80155D6C, ftMh_CaptureWaitMasterHand_80155D6C, (gobj: *mut HSD_GObj, msid: i32));
+}
+/// ftCo_Throw / ftCo_Thrown calls (hooks with the native melee_fighter port as default for DE7C0).
+pub use crate::tu::ftcrazyhandbackairplane2::ext::{ftCo_800DE2A8, ftCo_800DE7C0};
+
+pub fn ftMh_Squeezing_Anim(gobj: *mut HSD_GObj) {
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        unsafe {
+            let fp = (*gobj).user_data as *mut Fighter;
+            if (*fp).mv.mh.unk0.x20 == 1 {
+                ftMh_MS_378_80154A78(gobj);
+            } else {
+                ftMh_MS_374_801546D8(gobj);
+            }
+        }
+    }
+}
+
+pub fn ftMh_Squeezing_Phys(gobj: *mut HSD_GObj) {
+    unsafe {
+        let fp = (*gobj).user_data as *mut Fighter;
+        let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
+        ftMh_UpdateBossMotion(gobj, fp, da);
+    }
+}
+
+pub fn ftMh_Squeezing_Coll(_gobj: *mut HSD_GObj) {}
+
+pub fn ftMh_Throw_Anim(gobj: *mut HSD_GObj) {
+    unsafe {
+        let fp = (*gobj).user_data as *mut Fighter;
+        if (*fp).cmd_vars[0] != 0 {
+            (*fp).cmd_vars[0] = 0;
+            ext::ftMh_CaptureWaitMasterHand_80155D6C((*fp).victim_gobj as *mut HSD_GObj, ftCo_MS_ThrownMasterHand as i32);
+            if !(*fp).victim_gobj.is_null() {
+                let victim = (*fp).victim_gobj as *mut HSD_GObj;
+                let victim_fp = (*victim).user_data as *mut Fighter;
+                st::ftCommon_8007E2F4(&mut *fp, 0);
+                ftCo_800DE2A8(gobj, victim);
+                (*victim_fp).dmg.facing_dir_1 *= -1.0;
+                ftCo_800DE7C0(victim, core::ptr::null_mut(), false);
+            }
+            (*fp).mv.mh.unk0.x20 = 0;
+        }
+    }
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        ftMh_MS_389_80151018(gobj);
+    }
+}

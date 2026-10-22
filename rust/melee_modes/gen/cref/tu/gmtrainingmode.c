@@ -3,6 +3,18 @@
 /* C oracle for src/tu/gmtrainingmode.rs: the whole TU included verbatim; every callee out of it is a
  * recording stub (SceneLaunch_SeedVs, a TARGET_PC header inline, is one too). One line per case:
  * op case ret state-hash trace. */
+/* what gmscenelaunch.h pulls in for the TU */
+#include <dolphin/os.h>
+#include <melee/gm/forward.h>
+#include <melee/lb/lbdvd.h>
+#include <melee/lb/types.h>
+#include <melee/mn/types.h>
+#include <melee/pl/forward.h>
+#include <melee/gr/forward.h>
+#include "gm_1601.h"
+#include "gm_1884.h"
+#include "gm_1A3F.h"
+#include "gmmain_lib.h"
 #define MELEE_GM_GMSCENELAUNCH_H /* keep the header inline out; stubbed below */
 struct VsModeData;
 static int SeedVs_stub(struct VsModeData* vs, int dummy);

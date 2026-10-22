@@ -19,3 +19,4 @@ pub mod gmtoygallery;
 pub mod gmtoylottery;
 pub mod globals;
 pub mod gmtrainingmode;
+pub mod gmvsmelee;

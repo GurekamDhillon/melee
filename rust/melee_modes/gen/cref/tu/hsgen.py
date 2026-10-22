@@ -206,6 +206,8 @@ def main(stem):
         for f in d.get_children():
             if f.kind in (K.STRUCT_DECL, K.UNION_DECL) and f.is_anonymous_record_decl():
                 # C11 anonymous member: raw bytes at its native offset (never filled)
+                if GEN_.has_bf_deep(f):
+                    continue  # bitfield bytes differ (GC MSB-first vs native): the test sets/reads leaves by accessor
                 off = g.Gen.anon_offset(GEN_, d, f)
                 sz = f.type.get_size()
                 hc.append(f"h = hmb_(h, (const unsigned char*) p + {off}, {sz});")
@@ -238,6 +240,8 @@ def main(stem):
                     fr.append(f"p.set_{name}(rnd() as _);")
                 continue
             k = classify(f.type)
+            if k[0] == "r" and k[1] is not None and k[1].kind == K.UNION_DECL and GEN_.has_bf_deep(k[1]):
+                continue
             if k[0] == "r" and (k[1] is None or k[1].kind == K.UNION_DECL or ctx.name(k[1]) is None):
                 off = f.get_field_offsetof() // 8
                 sz = f.type.get_size()

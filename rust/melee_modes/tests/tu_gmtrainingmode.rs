@@ -315,7 +315,7 @@ fn gmtrainingmode_matches_c() {
         t(p(tb[1].info.exit_data, core::ptr::addr_of_mut!(m::sss_data) as *mut _));
         t(p(tb[2].info.enter_data, core::ptr::addr_of_mut!(m::training_enter_data) as *mut _));
         t(p(tb[2].info.exit_data, core::ptr::addr_of_mut!(m::training_exit_data) as *mut _));
-        t(core::mem::size_of_val(&m::training_exit_data) as u32);
+        t((core::mem::size_of_val(&m::training_exit_data) / core::mem::size_of::<*mut core::ffi::c_void>()) as u32);
         c.line_tag("T", 0, 0);
     }
     unsafe {

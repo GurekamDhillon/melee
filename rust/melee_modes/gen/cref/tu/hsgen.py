@@ -40,8 +40,8 @@ GEN_ = object.__new__(g.Gen)
 
 
 class Ctx:
-    def __init__(self):
-        args = [a.replace("x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu") for a in g.NAT] + ["-mno-ms-bitfields"]
+    def __init__(self, triple):
+        args = [a.replace("x86_64-pc-windows-msvc", triple) for a in g.NAT] + ["-mno-ms-bitfields"]
         self.tu = g.parse(args)
         self.recs = {}      # (file,line,col) -> definition cursor
         self.byname = {}    # tag or typedef name -> definition cursor
@@ -82,6 +82,29 @@ class Ctx:
         return ("union " if d.kind == K.UNION_DECL else "struct ") + n if not self.is_anon(d) else n
 
 
+def has_ptr_deep(d, seen=None):
+    """Does record d (or a record nested in it) hold a pointer? Its byte image then differs by layout."""
+    seen = seen or set()
+    if g.loc(d) in seen:
+        return False
+    seen.add(g.loc(d))
+    for f in d.get_children():
+        if f.kind in (K.STRUCT_DECL, K.UNION_DECL) and f.is_anonymous_record_decl():
+            if has_ptr_deep(f, seen):
+                return True
+        if f.kind == K.FIELD_DECL:
+            t = f.type.get_canonical()
+            while t.kind in (T.CONSTANTARRAY, T.INCOMPLETEARRAY):
+                t = t.element_type.get_canonical()
+            if t.kind == T.POINTER:
+                return True
+            if t.kind == T.RECORD:
+                dd = t.get_declaration().get_definition()
+                if dd is not None and has_ptr_deep(dd, seen):
+                    return True
+    return False
+
+
 def classify(t):
     """('i', size, signed) | ('f', size) | ('p',) | ('a', count, elem) | ('r', decl) | ('x',)"""
     c = t.get_canonical()
@@ -111,7 +134,8 @@ def main(stem):
         roots += m.group(1).split()
     if not roots:
         return
-    ctx = Ctx()
+    ctx = Ctx("i686-pc-windows-gnu")    # the C oracle's layout (4-byte pointers, as on the GC)
+    ctx64 = Ctx("x86_64-pc-windows-gnu")  # melee_types' native layout (the Rust side)
     order, seen = [], set()
 
     def need(d):
@@ -205,13 +229,18 @@ def main(stem):
         hc, hr, fc, fr = [], [], [], []
         for f in d.get_children():
             if f.kind in (K.STRUCT_DECL, K.UNION_DECL) and f.is_anonymous_record_decl():
-                # C11 anonymous member: raw bytes at its native offset (never filled)
-                if GEN_.has_bf_deep(f):
-                    continue  # bitfield bytes differ (GC MSB-first vs native): the test sets/reads leaves by accessor
+                # C11 anonymous member: raw bytes at its native offset (never filled); skipped when its
+                # byte image differs by layout (bitfields: GC vs native bit order; pointers: width)
+                if GEN_.has_bf_deep(f) or has_ptr_deep(f):
+                    continue
                 off = g.Gen.anon_offset(GEN_, d, f)
                 sz = f.type.get_size()
+                d64 = ctx64.byname.get(ctx.name(d))
+                anon64 = [c for c in d64.get_children() if c.kind in (K.STRUCT_DECL, K.UNION_DECL) and c.is_anonymous_record_decl()]
+                anon32 = [c for c in d.get_children() if c.kind in (K.STRUCT_DECL, K.UNION_DECL) and c.is_anonymous_record_decl()]
+                off64 = g.Gen.anon_offset(GEN_, d64, anon64[anon32.index(f)])
                 hc.append(f"h = hmb_(h, (const unsigned char*) p + {off}, {sz});")
-                hr.append(f"h = hmb(h, unsafe {{ (p as *const _ as *const u8).add({off}) }}, {sz});")
+                hr.append(f"h = hmb(h, unsafe {{ (p as *const _ as *const u8).add({off64}) }}, {sz});")
                 continue
             if f.kind != K.FIELD_DECL:
                 continue
@@ -219,10 +248,6 @@ def main(stem):
             if not name:
                 if f.is_bitfield():
                     continue
-                off = f.get_field_offsetof() // 8
-                sz = f.type.get_size()
-                hc.append(f"h = hmb_(h, (const unsigned char*) p + {off}, {sz});")
-                hr.append(f"h = hmb(h, unsafe {{ (p as *const _ as *const u8).add({off}) }}, {sz});")
                 continue
             rn = g.ident(name)
             if f.is_bitfield():
@@ -240,13 +265,18 @@ def main(stem):
                     fr.append(f"p.set_{name}(rnd() as _);")
                 continue
             k = classify(f.type)
-            if k[0] == "r" and k[1] is not None and k[1].kind == K.UNION_DECL and GEN_.has_bf_deep(k[1]):
+            if k[0] == "r" and k[1] is not None and k[1].kind == K.UNION_DECL and (GEN_.has_bf_deep(k[1]) or has_ptr_deep(k[1])):
                 continue
             if k[0] == "r" and (k[1] is None or k[1].kind == K.UNION_DECL or ctx.name(k[1]) is None):
+                if k[1] is not None and (GEN_.has_bf_deep(k[1]) or has_ptr_deep(k[1])):
+                    continue
                 off = f.get_field_offsetof() // 8
                 sz = f.type.get_size()
+                d64 = ctx64.byname.get(ctx.name(d))
+                f64 = next(c for c in d64.get_children() if c.kind == K.FIELD_DECL and c.spelling == name)
+                off64 = f64.get_field_offsetof() // 8
                 hc.append(f"h = hmb_(h, (const unsigned char*) p + {off}, {sz});")
-                hr.append(f"h = hmb(h, unsafe {{ (p as *const _ as *const u8).add({off}) }}, {sz});")
+                hr.append(f"h = hmb(h, unsafe {{ (p as *const _ as *const u8).add({off64}) }}, {sz});")
                 continue
             emit_val(k, f"p->{name}", f"p.{rn}", None, None, 0, hc, hr, fc, fr, 0, 0, 0)
         ch.append(f"static u32 hs_{n}(const {cn}* p, u32 h) {{ " + " ".join(hc) + " return h; }")

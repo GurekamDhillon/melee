@@ -22,7 +22,10 @@ import run as R  # noqa: E402
 R.DATA = ROOT / "rust/melee_modes/tests/data"
 # Same LLP64 layout as the msvc target but Itanium bitfield packing, which puts the fields after a
 # bitfield run at the GameCube offsets melee_types uses (as rust/melee_modes/oracle/build_ptr.sh).
-R.FLAGS = [a.replace("x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu") for a in R.FLAGS] + ["-mno-ms-bitfields"]
+# 32-bit as well: pointers are 4 bytes like the PPC's, so a record's field offsets match the GameCube
+# layout, and C that indexes records by byte offset (gm_16A2's lbl_8046B488_t) means what it means on the
+# game. melee_types' own records are native 64-bit; the oracle compares by value (hsgen.py), not by bytes.
+R.FLAGS = [a.replace("x86_64-pc-windows-msvc", "i686-pc-windows-gnu") for a in R.FLAGS] + ["-mno-ms-bitfields"]
 
 
 def main():
@@ -33,6 +36,9 @@ def main():
         if "/* HS:" in drv.read_text(encoding="utf-8"):
             import hsgen
             hsgen.main(n)
+        if "/* STUBS:" in drv.read_text(encoding="utf-8"):
+            import stubgen
+            stubgen.main(n)
         first = drv.read_text(encoding="utf-8").splitlines()[0]
         src = first.split("TU:")[1].split("*/")[0].strip()
         exe = R.BUILD / f"tugm_{n}.exe"
@@ -44,7 +50,7 @@ def main():
                    "-DTU_SRC=\"" + str(R.ROOT / src).replace("\\", "/") + "\"", str(s), "-o", str(ll)], n)
             R.run([sys.executable, str(R.LOWER), str(ll), str(lo)], n)
             lls.append(str(lo))
-        R.run([R.CLANG, "-O0", "-w", *lls, "-o", str(exe)], n)
+        R.run([R.CLANG, "--target=i686-pc-windows-msvc", "-O0", "-w", *lls, "-llegacy_stdio_definitions", "-o", str(exe)], n)
         out = subprocess.run([str(exe)], capture_output=True, text=True, check=True).stdout
         (R.DATA / f"tu_{n}.txt").write_text(out, encoding="utf-8", newline="\n")
         print(f"cref tu: {n}: {len(out.splitlines())} lines")

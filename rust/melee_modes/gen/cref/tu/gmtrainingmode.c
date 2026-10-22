@@ -157,7 +157,7 @@ int main(void)
         T(gm_Mode_Training_States[1].info.exit_data == (void*) &sss_data);
         T(gm_Mode_Training_States[2].info.enter_data == (void*) &training_enter_data);
         T(gm_Mode_Training_States[2].info.exit_data == (void*) &training_exit_data);
-        T(sizeof training_exit_data);
+        T(sizeof training_exit_data / sizeof(void*));
         printf("T 0 %08X %08X %08X\n", 0u, 0u, TR);
     }
     for (op = 1; op <= 9; op++) {

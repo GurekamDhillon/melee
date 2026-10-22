@@ -78,8 +78,8 @@ class Ctx:
         return self.anon_td.get(g.loc(d))
 
     def cname(self, d):
-        n = self.name(d)
-        return ("union " if d.kind == K.UNION_DECL else "struct ") + n if not self.is_anon(d) else n
+        """The C spelling that names the record's type: `struct Tag`, or the typedef name of an anonymous one."""
+        return d.type.spelling
 
 
 def has_ptr_deep(d, seen=None):

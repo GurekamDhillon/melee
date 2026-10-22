@@ -38,7 +38,8 @@ SCAL = {"s8": ("i8", 1, True), "u8": ("u8", 1, False), "s16": ("i16", 2, True), 
         "unsigned char": ("u8", 1, False), "long": ("i32", 4, True), "unsigned long": ("u32", 4, False),
         "ssize_t": ("isize", 8, True), "size_t": ("usize", 8, False), "enum_t": ("i32", 4, True),
         "CharacterKind": ("CharacterKind", 4, False), "StKind": ("StKind", 4, False),
-        "bool": ("bool", 4, True), "BOOL": ("bool", 4, True)}
+        "bool": ("bool", 4, True), "BOOL": ("bool", 4, True), "float": ("f32", 4, True), "f32": ("f32", 4, True),
+        "double": ("f64", 8, True), "f64": ("f64", 8, True)}
 
 
 def parse_proto(ret, args):
@@ -149,7 +150,7 @@ def main(stem, hs_known=None):
         for p, a in zip(pnames, args):
             base, n = split_type(a)
             if n == 0:
-                if base in SCAL:
+                if base in SCAL and base not in ("f32", "float", "f64", "double"):
                     rt, sz, sg = SCAL[base]
                     if sz <= 4:
                         ctr.append(f"T((u32){'(s32)' if sg else ''}{p});")

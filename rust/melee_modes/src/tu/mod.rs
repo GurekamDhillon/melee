@@ -21,3 +21,4 @@ pub mod globals;
 pub mod gmtrainingmode;
 pub mod gmvsmelee;
 pub mod gmvsmode;
+pub mod gm_16A2;

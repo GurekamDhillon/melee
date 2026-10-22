@@ -21,7 +21,6 @@ use melee_core::fp::fmadds;
 use melee_runtime::gekko::{cosf, sinf, sqrtf};
 use melee_runtime::lbtrigf::atan2f;
 use melee_types::inline as mi;
-use melee_types::inline::JObjDirty;
 use melee_types::*;
 
 pub use crate::gr::forward::grrcruise::grRCruise_801FF29C;
@@ -349,19 +348,6 @@ unsafe fn grRCruise_801FFADC_inline(gobj: *mut HSD_GObj, sp64: *mut Vec3) {
     (*sp64).z = 0.0;
     ext::lbVector_Sub(sp64, &mut cam_offset2);
     (*sp64).y += 10.0;
-}
-
-/// The JObj dirty hooks (`HSD_JObjSetMtxDirty` macro / `HSD_JObjSetMtxDirtySub`).
-struct Dirty;
-impl JObjDirty for Dirty {
-    fn set_mtx_dirty(&mut self, j: &mut HSD_JObj) {
-        if !mi::HSD_JObjMtxIsDirty(j) {
-            unsafe { ext::HSD_JObjSetMtxDirtySub(j) };
-        }
-    }
-    fn set_mtx_dirty_sub(&mut self, j: &mut HSD_JObj) {
-        unsafe { ext::HSD_JObjSetMtxDirtySub(j) };
-    }
 }
 
 /// Dirty-flag helper of the JObj inline setters (the macro form calls `HSD_JObjSetMtxDirtySub`).

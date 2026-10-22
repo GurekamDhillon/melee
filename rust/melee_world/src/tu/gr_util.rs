@@ -5,6 +5,7 @@
 
 use crate::tu_ext as ext;
 use core::ffi::{c_char, c_void};
+use melee_types::inline::JObjDirty;
 use melee_types::*;
 
 /// `GET_GROUND(gobj)` = `HSD_GObjGetUserData`.
@@ -90,3 +91,17 @@ pub unsafe fn randi(max_val: i32) -> i32 {
     }
     0
 }
+
+/// The JObj dirty hooks (`HSD_JObjSetMtxDirty` macro / `HSD_JObjSetMtxDirtySub`).
+pub struct Dirty;
+impl JObjDirty for Dirty {
+    fn set_mtx_dirty(&mut self, j: &mut HSD_JObj) {
+        if !melee_types::inline::HSD_JObjMtxIsDirty(j) {
+            unsafe { ext::HSD_JObjSetMtxDirtySub(j) };
+        }
+    }
+    fn set_mtx_dirty_sub(&mut self, j: &mut HSD_JObj) {
+        unsafe { ext::HSD_JObjSetMtxDirtySub(j) };
+    }
+}
+

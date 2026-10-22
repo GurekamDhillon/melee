@@ -5,62 +5,61 @@ mod gen_stubs {
     use melee_world::tu_ext as ext;
     fn t_Camera_80030AE0(a0: i32) { unsafe { out("Camera_80030AE0"); tri(a0 as i64); out("\n");  } }
     fn t_GObj_SetupGXLink(a0: *mut HSD_GObj, a1: GObj_RenderFunc, a2: u8, a3: u32) { unsafe { out("GObj_SetupGXLink"); trp(a0 as *const u8); trp(match a1 { Some(f) => f as usize as *const u8, None => core::ptr::null() }); tri(a2 as i64); tru(a3 as u64); out("\n");  } }
-    fn t_Ground_801C0498() -> f32 { unsafe { out("Ground_801C0498"); out("\n"); rf() as f32 } }
+    fn t_Ground_801C0498() -> f32 { unsafe { out("Ground_801C0498"); out("\n"); (if SCALE != 0.0 { SCALE } else { ((rnd() % 100 + 1) as f32) / 8.0 }) as f32 } }
     fn t_Ground_801C10B8(a0: *mut HSD_GObj, a1: HSD_GObjEvent) { unsafe { out("Ground_801C10B8"); trp(a0 as *const u8); trp(match a1 { Some(f) => f as usize as *const u8, None => core::ptr::null() }); out("\n");  } }
-    fn t_Ground_801C2CF4(a0: i32) -> *mut HSD_JObj { unsafe { out("Ground_801C2CF4"); tri(a0 as i64); out("\n"); az(core::mem::size_of::<HSD_JObj>()) as *mut HSD_JObj } }
-    fn t_Ground_801C2D24(a0: i32, a1: *mut Vec3) -> i32 { unsafe { out("Ground_801C2D24"); tri(a0 as i64); trp(a1 as *const u8); out("\n"); (rnd() % 3) as i32 } }
+    fn t_Ground_801C2CF4(a0: i32) -> *mut HSD_JObj { unsafe { out("Ground_801C2CF4"); tri(a0 as i64); out("\n"); (if rnd() % 6 == 0 { core::ptr::null_mut() } else { mkjobj2() }) as *mut HSD_JObj } }
+    fn t_Ground_801C2D24(a0: i32, a1: *mut Vec3) -> i32 { unsafe { out("Ground_801C2D24"); tri(a0 as i64); trp(a1 as *const u8); out("\n"); if !a1.is_null() { (*a1).x = rf(); (*a1).y = rf(); (*a1).z = rf(); } (rnd() % 3) as i32 } }
     fn t_Ground_801C38BC(a0: f32, a1: f32) { unsafe { out("Ground_801C38BC"); trf(a0); trf(a1); out("\n");  } }
     fn t_Ground_801C39C0() { unsafe { out("Ground_801C39C0"); out("\n");  } }
     fn t_Ground_801C3BB4() { unsafe { out("Ground_801C3BB4"); out("\n");  } }
-    fn t_Ground_801C3DB4(a0: *mut core::ffi::c_void, a1: f32, a2: f32) -> i32 { unsafe { out("Ground_801C3DB4"); trp(a0 as *const u8); trf(a1); trf(a2); out("\n"); (rnd() % 3) as i32 } }
-    fn t_Ground_801C3FA4(a0: *mut HSD_GObj, a1: i32) -> *mut HSD_JObj { unsafe { out("Ground_801C3FA4"); trp(a0 as *const u8); tri(a1 as i64); out("\n"); az(core::mem::size_of::<HSD_JObj>()) as *mut HSD_JObj } }
+    fn t_Ground_801C3DB4(a0: *mut core::ffi::c_void, a1: f32, a2: f32) -> i32 { unsafe { out("Ground_801C3DB4"); trp(a0 as *const u8); trf(a1); trf(a2); out("\n"); (if rnd() % 4 == 0 { -1 } else { (0xBD + rnd() % 6) as i32 }) as i32 } }
+    fn t_Ground_801C3FA4(a0: *mut HSD_GObj, a1: i32) -> *mut HSD_JObj { unsafe { out("Ground_801C3FA4"); trp(a0 as *const u8); tri(a1 as i64); out("\n"); (if JNULL && rnd() % 5 == 0 { core::ptr::null_mut() } else { mkjobj2() }) as *mut HSD_JObj } }
     fn t_Ground_801C4A08(a0: *mut HSD_GObj) { unsafe { out("Ground_801C4A08"); trp(a0 as *const u8); out("\n");  } }
     fn t_Ground_801C5740(a0: i32) { unsafe { out("Ground_801C5740"); tri(a0 as i64); out("\n");  } }
     fn t_Ground_801C5750() { unsafe { out("Ground_801C5750"); out("\n");  } }
-    fn t_Ground_801C5764() -> i32 { unsafe { out("Ground_801C5764"); out("\n"); (rnd() % 3) as i32 } }
-    fn t_Ground_801C5840() -> i32 { unsafe { out("Ground_801C5840"); out("\n"); (rnd() % 3) as i32 } }
-    fn t_Ground_801C5940() -> i32 { unsafe { out("Ground_801C5940"); out("\n"); (rnd() % 3) as i32 } }
-    fn t_Ground_GetMapGObj(a0: i32) -> *mut Ground_GObj { unsafe { out("Ground_GetMapGObj"); tri(a0 as i64); out("\n"); az(core::mem::size_of::<HSD_GObj>()) as *mut Ground_GObj } }
-    fn t_Ground_GetP1Fighter() -> *mut Fighter_GObj { unsafe { out("Ground_GetP1Fighter"); out("\n"); az(core::mem::size_of::<HSD_GObj>()) as *mut Fighter_GObj } }
-    fn t_Ground_GetStageGObj(a0: i32) -> *mut Ground_GObj { unsafe { out("Ground_GetStageGObj"); tri(a0 as i64); out("\n"); az(core::mem::size_of::<HSD_GObj>()) as *mut Ground_GObj } }
-    fn t_Ground_GetYakumonoParam() -> *mut core::ffi::c_void { unsafe { out("Ground_GetYakumonoParam"); out("\n"); az(64) as *mut core::ffi::c_void } }
+    fn t_Ground_801C5764() -> i32 { unsafe { out("Ground_801C5764"); out("\n"); (rnd() % 2) as i32 } }
+    fn t_Ground_801C5840() -> i32 { unsafe { out("Ground_801C5840"); out("\n"); (rnd() % 7) as i32 } }
+    fn t_Ground_801C5940() -> i32 { unsafe { out("Ground_801C5940"); out("\n"); (rnd() % 7) as i32 } }
+    fn t_Ground_GetMapGObj(a0: i32) -> *mut Ground_GObj { unsafe { out("Ground_GetMapGObj"); tri(a0 as i64); out("\n"); (if rnd() % 3 == 0 { core::ptr::null_mut() } else { mkgobj() }) as *mut Ground_GObj } }
+    fn t_Ground_GetP1Fighter() -> *mut Fighter_GObj { unsafe { out("Ground_GetP1Fighter"); out("\n"); (if rnd() % 4 == 0 { core::ptr::null_mut() } else { PGOBJ }) as *mut Fighter_GObj } }
+    fn t_Ground_GetStageGObj(a0: i32) -> *mut Ground_GObj { unsafe { out("Ground_GetStageGObj"); tri(a0 as i64); out("\n"); (if GNULL && rnd() % 4 == 0 { core::ptr::null_mut() } else { mkgobj() }) as *mut Ground_GObj } }
+    fn t_Ground_GetYakumonoParam() -> *mut core::ffi::c_void { unsafe { out("Ground_GetYakumonoParam"); out("\n"); (mkyp()) as *mut core::ffi::c_void } }
     fn t_HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc { unsafe { out("HSD_GObj_SetupProc"); trp(a0 as *const u8); trp(match a1 { Some(f) => f as usize as *const u8, None => core::ptr::null() }); tri(a2 as i64); out("\n"); az(core::mem::size_of::<HSD_GObjProc>()) as *mut HSD_GObjProc } }
     fn t_HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32) { unsafe { out("HSD_JObjClearFlagsAll"); trp(a0 as *const u8); tru(a1 as u64); out("\n");  } }
-    fn t_HSD_JObjGetFlags(a0: *mut HSD_JObj) -> u32 { unsafe { out("HSD_JObjGetFlags"); trp(a0 as *const u8); out("\n"); (rnd() % 3) as u32 } }
+    fn t_HSD_JObjGetFlags(a0: *mut HSD_JObj) -> u32 { unsafe { out("HSD_JObjGetFlags"); trp(a0 as *const u8); out("\n"); (rnd()) as u32 } }
     fn t_HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32) { unsafe { out("HSD_JObjSetFlagsAll"); trp(a0 as *const u8); tru(a1 as u64); out("\n");  } }
     fn t_HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { unsafe { out("HSD_JObjSetMtxDirtySub"); trp(a0 as *const u8); out("\n");  } }
     fn t_HSD_LObjClearFlags(a0: *mut HSD_LObj, a1: u32) { unsafe { out("HSD_LObjClearFlags"); trp(a0 as *const u8); tru(a1 as u64); out("\n");  } }
-    fn t_HSD_LObjGetColor(a0: *mut HSD_LObj, a1: *mut GXColor) { unsafe { out("HSD_LObjGetColor"); trp(a0 as *const u8); trp(a1 as *const u8); out("\n");  } }
-    fn t_HSD_LObjGetFlags(a0: *mut HSD_LObj) -> u32 { unsafe { out("HSD_LObjGetFlags"); trp(a0 as *const u8); out("\n"); (rnd() % 3) as u32 } }
-    fn t_HSD_LObjGetInterest(a0: *mut HSD_LObj, a1: *mut Vec3) -> i32 { unsafe { out("HSD_LObjGetInterest"); trp(a0 as *const u8); trp(a1 as *const u8); out("\n"); (rnd() % 3) as i32 } }
-    fn t_HSD_LObjGetPosition(a0: *mut HSD_LObj, a1: *mut Vec3) -> i32 { unsafe { out("HSD_LObjGetPosition"); trp(a0 as *const u8); trp(a1 as *const u8); out("\n"); (rnd() % 3) as i32 } }
-    fn t_HSD_LObjLoadDesc(a0: *mut HSD_LightDesc) -> *mut HSD_LObj { unsafe { out("HSD_LObjLoadDesc"); trp(a0 as *const u8); out("\n"); az(core::mem::size_of::<HSD_LObj>()) as *mut HSD_LObj } }
+    fn t_HSD_LObjGetColor(a0: *mut HSD_LObj, a1: *mut GXColor) { unsafe { out("HSD_LObjGetColor"); trp(a0 as *const u8); trp(a1 as *const u8); out("\n"); (*a1).r = rnd() as u8; (*a1).g = rnd() as u8; (*a1).b = rnd() as u8; (*a1).a = rnd() as u8;  } }
+    fn t_HSD_LObjGetFlags(a0: *mut HSD_LObj) -> u32 { unsafe { out("HSD_LObjGetFlags"); trp(a0 as *const u8); out("\n"); (rnd()) as u32 } }
+    fn t_HSD_LObjGetInterest(a0: *mut HSD_LObj, a1: *mut Vec3) -> i32 { unsafe { out("HSD_LObjGetInterest"); trp(a0 as *const u8); trp(a1 as *const u8); out("\n"); if !a1.is_null() { (*a1).x = rf(); (*a1).y = rf(); (*a1).z = rf(); } ((rnd() % 8 != 0) as i32) as i32 } }
+    fn t_HSD_LObjGetPosition(a0: *mut HSD_LObj, a1: *mut Vec3) -> i32 { unsafe { out("HSD_LObjGetPosition"); trp(a0 as *const u8); trp(a1 as *const u8); out("\n"); if !a1.is_null() { (*a1).x = rf(); (*a1).y = rf(); (*a1).z = rf(); } ((rnd() % 8 != 0) as i32) as i32 } }
+    fn t_HSD_LObjLoadDesc(a0: *mut HSD_LightDesc) -> *mut HSD_LObj { unsafe { out("HSD_LObjLoadDesc"); trp(a0 as *const u8); out("\n"); (if LDNULL && rnd() % 3 == 0 { core::ptr::null_mut() } else { mklobj() }) as *mut HSD_LObj } }
     fn t_HSD_LObjSetColor(a0: *mut HSD_LObj, a1: GXColor) { unsafe { out("HSD_LObjSetColor"); trp(a0 as *const u8); trrec(&a1 as *const _ as *const u8, core::mem::size_of_val(&a1)); out("\n");  } }
     fn t_HSD_LObjSetDistAttn(a0: *mut HSD_LObj, a1: f32, a2: f32, a3: i32) { unsafe { out("HSD_LObjSetDistAttn"); trp(a0 as *const u8); trf(a1); trf(a2); tri(a3 as i64); out("\n");  } }
     fn t_HSD_LObjSetFlags(a0: *mut HSD_LObj, a1: u32) { unsafe { out("HSD_LObjSetFlags"); trp(a0 as *const u8); tru(a1 as u64); out("\n");  } }
     fn t_HSD_LObjSetInterest(a0: *mut HSD_LObj, a1: *mut Vec3) { unsafe { out("HSD_LObjSetInterest"); trp(a0 as *const u8); trp(a1 as *const u8); out("\n");  } }
     fn t_HSD_LObjSetPosition(a0: *mut HSD_LObj, a1: *mut Vec3) { unsafe { out("HSD_LObjSetPosition"); trp(a0 as *const u8); trp(a1 as *const u8); out("\n");  } }
     fn t_HSD_LObjSetSpot(a0: *mut HSD_LObj, a1: f32, a2: i32) { unsafe { out("HSD_LObjSetSpot"); trp(a0 as *const u8); trf(a1); tri(a2 as i64); out("\n");  } }
-    fn t_HSD_Randf() -> f32 { unsafe { out("HSD_Randf"); out("\n"); rf() as f32 } }
-    fn t_HSD_Randi(a0: i32) -> i32 { unsafe { out("HSD_Randi"); tri(a0 as i64); out("\n"); (rnd() % 3) as i32 } }
+    fn t_HSD_Randf() -> f32 { unsafe { out("HSD_Randf"); out("\n"); ((rnd() % 1000) as f32 / 1000.0) as f32 } }
+    fn t_HSD_Randi(a0: i32) -> i32 { unsafe { out("HSD_Randi"); tri(a0 as i64); out("\n"); (if a0 > 0 { (rnd() % a0 as u32) as i32 } else { 0 }) as i32 } }
     fn t_Player_80031790(a0: i32) { unsafe { out("Player_80031790"); tri(a0 as i64); out("\n");  } }
     fn t_Player_80031900() { unsafe { out("Player_80031900"); out("\n");  } }
-    fn t_Player_GetEntity(a0: i32) -> *mut HSD_GObj { unsafe { out("Player_GetEntity"); tri(a0 as i64); out("\n"); az(core::mem::size_of::<HSD_GObj>()) as *mut HSD_GObj } }
-    fn t_Player_GetEntityAtIndex(a0: i32, a1: i32) -> *mut HSD_GObj { unsafe { out("Player_GetEntityAtIndex"); tri(a0 as i64); tri(a1 as i64); out("\n"); az(core::mem::size_of::<HSD_GObj>()) as *mut HSD_GObj } }
-    fn t_Stage_UnkSetVec3TCam_Offset(a0: *mut Vec3) { unsafe { out("Stage_UnkSetVec3TCam_Offset"); trp(a0 as *const u8); out("\n");  } }
-    fn t_cosf(a0: f32) -> f32 { unsafe { out("cosf"); trf(a0); out("\n"); rf() as f32 } }
+    fn t_Player_GetEntity(a0: i32) -> *mut HSD_GObj { unsafe { out("Player_GetEntity"); tri(a0 as i64); out("\n"); (if rnd() % 3 == 0 { mkfgobj() } else { PGOBJ }) as *mut HSD_GObj } }
+    fn t_Player_GetEntityAtIndex(a0: i32, a1: i32) -> *mut HSD_GObj { unsafe { out("Player_GetEntityAtIndex"); tri(a0 as i64); tri(a1 as i64); out("\n"); (if rnd() % 2 != 0 { core::ptr::null_mut() } else { mkfgobj() }) as *mut HSD_GObj } }
+    fn t_Stage_UnkSetVec3TCam_Offset(a0: *mut Vec3) { unsafe { out("Stage_UnkSetVec3TCam_Offset"); trp(a0 as *const u8); out("\n"); if !a0.is_null() { (*a0).x = rf(); (*a0).y = rf(); (*a0).z = rf(); }  } }
     fn t_ftCo_800C07F8(a0: *mut Ground_GObj, a1: u32, a2: *mut core::ffi::c_void) { unsafe { out("ftCo_800C07F8"); trp(a0 as *const u8); tru(a1 as u64); trp(a2 as *const u8); out("\n");  } }
-    fn t_ftLib_80086644(a0: *mut Fighter_GObj, a1: *mut Vec3) { unsafe { out("ftLib_80086644"); trp(a0 as *const u8); trp(a1 as *const u8); out("\n");  } }
-    fn t_ftLib_80086BE0(a0: *mut HSD_GObj) -> u8 { unsafe { out("ftLib_80086BE0"); trp(a0 as *const u8); out("\n"); (rnd() % 3) as u8 } }
+    fn t_ftLib_80086644(a0: *mut Fighter_GObj, a1: *mut Vec3) { unsafe { out("ftLib_80086644"); trp(a0 as *const u8); trp(a1 as *const u8); out("\n"); if !a1.is_null() { if FPOS { (*a1).x = -250.0 + ((rnd() % 100) as f32); (*a1).y = -300.0 + ((rnd() % 100) as f32); (*a1).z = rf(); } else { (*a1).x = rf(); (*a1).y = rf(); (*a1).z = rf(); } }  } }
+    fn t_ftLib_80086BE0(a0: *mut HSD_GObj) -> u8 { unsafe { out("ftLib_80086BE0"); trp(a0 as *const u8); out("\n"); (rnd() % 4) as u8 } }
     fn t_ftLib_80086C18(a0: *mut HSD_GObj, a1: i32, a2: i32) { unsafe { out("ftLib_80086C18"); trp(a0 as *const u8); tri(a1 as i64); tri(a2 as i64); out("\n");  } }
-    fn t_ftLib_80086EC0(a0: *mut HSD_GObj) -> i32 { unsafe { out("ftLib_80086EC0"); trp(a0 as *const u8); out("\n"); (rnd() % 3) as i32 } }
-    fn t_ftLib_8008731C(a0: *mut HSD_GObj) -> i32 { unsafe { out("ftLib_8008731C"); trp(a0 as *const u8); out("\n"); (rnd() % 3) as i32 } }
-    fn t_ftLib_8008732C(a0: *mut HSD_GObj) -> i32 { unsafe { out("ftLib_8008732C"); trp(a0 as *const u8); out("\n"); (rnd() % 3) as i32 } }
+    fn t_ftLib_80086EC0(a0: *mut HSD_GObj) -> i32 { unsafe { out("ftLib_80086EC0"); trp(a0 as *const u8); out("\n"); (rnd() % 2) as i32 } }
+    fn t_ftLib_8008731C(a0: *mut HSD_GObj) -> i32 { unsafe { out("ftLib_8008731C"); trp(a0 as *const u8); out("\n"); (rnd() % 2) as i32 } }
+    fn t_ftLib_8008732C(a0: *mut HSD_GObj) -> i32 { unsafe { out("ftLib_8008732C"); trp(a0 as *const u8); out("\n"); (rnd() % 2) as i32 } }
     fn t_gm_801674C4(a0: i8, a1: u8, a2: i8, a3: i8, a4: GmRouteCallback) { unsafe { out("gm_801674C4"); tri(a0 as i64); tri(a1 as i64); tri(a2 as i64); tri(a3 as i64); trp(match a4 { Some(f) => f as usize as *const u8, None => core::ptr::null() }); out("\n");  } }
     fn t_grAnime_801C7A04(a0: *mut HSD_GObj, a1: i32, a2: u32, a3: f32) { unsafe { out("grAnime_801C7A04"); trp(a0 as *const u8); tri(a1 as i64); tru(a2 as u64); trf(a3); out("\n");  } }
     fn t_grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32) { unsafe { out("grAnime_801C8138"); trp(a0 as *const u8); tri(a1 as i64); tri(a2 as i64); out("\n");  } }
     fn t_grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) { unsafe { out("grDisplay_801C5DB0"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
-    fn t_grLib_801C96E8(a0: *mut HSD_GObj) -> i32 { unsafe { out("grLib_801C96E8"); trp(a0 as *const u8); out("\n"); (rnd() % 3) as i32 } }
+    fn t_grLib_801C96E8(a0: *mut HSD_GObj) -> i32 { unsafe { out("grLib_801C96E8"); trp(a0 as *const u8); out("\n"); (rnd() % 2) as i32 } }
     fn t_grLib_801C9908(a0: *mut HSD_JObj) { unsafe { out("grLib_801C9908"); trp(a0 as *const u8); out("\n");  } }
     fn t_grMaterial_801C94D8(a0: *mut core::ffi::c_void) { unsafe { out("grMaterial_801C94D8"); trp(a0 as *const u8); out("\n");  } }
     fn t_grMaterial_801C9604(a0: *mut HSD_GObj, a1: *mut core::ffi::c_void, a2: i32) { unsafe { out("grMaterial_801C9604"); trp(a0 as *const u8); trp(a1 as *const u8); tri(a2 as i64); out("\n");  } }
@@ -68,18 +67,17 @@ mod gen_stubs {
     fn t_grZakoGenerator_801CAEB0(a0: i32, a1: i32) { unsafe { out("grZakoGenerator_801CAEB0"); tri(a0 as i64); tri(a1 as i64); out("\n");  } }
     fn t_grZakoGenerator_801CAEF0(a0: i32) { unsafe { out("grZakoGenerator_801CAEF0"); tri(a0 as i64); out("\n");  } }
     fn t_grZakoGenerator_801CAF08() { unsafe { out("grZakoGenerator_801CAF08"); out("\n");  } }
-    fn t_lbVector_Add(a0: *mut Vec3, a1: *mut Vec3) -> *mut Vec3 { unsafe { out("lbVector_Add"); trp(a0 as *const u8); trp(a1 as *const u8); out("\n"); az(core::mem::size_of::<Vec>()) as *mut Vec3 } }
-    fn t_lbVector_Normalize(a0: *mut Vec3) -> f32 { unsafe { out("lbVector_Normalize"); trp(a0 as *const u8); out("\n"); rf() as f32 } }
-    fn t_lbVector_Sub(a0: *mut Vec3, a1: *mut Vec3) -> *mut Vec3 { unsafe { out("lbVector_Sub"); trp(a0 as *const u8); trp(a1 as *const u8); out("\n"); az(core::mem::size_of::<Vec>()) as *mut Vec3 } }
-    fn t_lb_8000B134(a0: *mut HSD_JObj) -> i32 { unsafe { out("lb_8000B134"); trp(a0 as *const u8); out("\n"); (rnd() % 3) as i32 } }
-    fn t_lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec3, a2: *mut Vec3) { unsafe { out("lb_8000B1CC"); trp(a0 as *const u8); trp(a1 as *const u8); trp(a2 as *const u8); out("\n");  } }
+    fn t_lbVector_Add(a0: *mut Vec3, a1: *mut Vec3) -> *mut Vec3 { unsafe { out("lbVector_Add"); trp(a0 as *const u8); trp(a1 as *const u8); out("\n"); (*a0).x = (*a0).x + (*a1).x; (*a0).y = (*a0).y + (*a1).y; (*a0).z = (*a0).z + (*a1).z; (a0) as *mut Vec3 } }
+    fn t_lbVector_Normalize(a0: *mut Vec3) -> f32 { unsafe { out("lbVector_Normalize"); trp(a0 as *const u8); out("\n"); (*a0).x = (*a0).x * 0.5; (*a0).y = (*a0).y * 0.25; (*a0).z = (*a0).z * 2.0; rf() as f32 } }
+    fn t_lbVector_Sub(a0: *mut Vec3, a1: *mut Vec3) -> *mut Vec3 { unsafe { out("lbVector_Sub"); trp(a0 as *const u8); trp(a1 as *const u8); out("\n"); (*a0).x = (*a0).x - (*a1).x; (*a0).y = (*a0).y - (*a1).y; (*a0).z = (*a0).z - (*a1).z; (a0) as *mut Vec3 } }
+    fn t_lb_8000B134(a0: *mut HSD_JObj) -> i32 { unsafe { out("lb_8000B134"); trp(a0 as *const u8); out("\n"); (rnd() % 2) as i32 } }
+    fn t_lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec3, a2: *mut Vec3) { unsafe { out("lb_8000B1CC"); trp(a0 as *const u8); trp(a1 as *const u8); trp(a2 as *const u8); out("\n"); if !a1.is_null() { (*a1).x = rf(); (*a1).y = rf(); (*a1).z = rf(); } if !a2.is_null() { (*a2).x = rf(); (*a2).y = rf(); (*a2).z = rf(); }  } }
     fn t_lb_800115F4() { unsafe { out("lb_800115F4"); out("\n");  } }
     fn t_mpJointListAdd(a0: i32) { unsafe { out("mpJointListAdd"); tri(a0 as i64); out("\n");  } }
     fn t_mpJointSetCb1(a0: i32, a1: *mut core::ffi::c_void, a2: mpLib_JointCollisionCallback) { unsafe { out("mpJointSetCb1"); tri(a0 as i64); trp(a1 as *const u8); trp(match a2 { Some(f) => f as usize as *const u8, None => core::ptr::null() }); out("\n");  } }
     fn t_mpLib_800575B0(a0: i32) { unsafe { out("mpLib_800575B0"); tri(a0 as i64); out("\n");  } }
     fn t_mpLib_80057BC0(a0: i32) { unsafe { out("mpLib_80057BC0"); tri(a0 as i64); out("\n");  } }
     fn t_mpLib_80058560() { unsafe { out("mpLib_80058560"); out("\n");  } }
-    fn t_sinf(a0: f32) -> f32 { unsafe { out("sinf"); trf(a0); out("\n"); rf() as f32 } }
     pub fn install() {
         unsafe {
         ext::HOOK_Camera_80030AE0 = Some(t_Camera_80030AE0);
@@ -127,7 +125,6 @@ mod gen_stubs {
         ext::HOOK_Player_GetEntity = Some(t_Player_GetEntity);
         ext::HOOK_Player_GetEntityAtIndex = Some(t_Player_GetEntityAtIndex);
         ext::HOOK_Stage_UnkSetVec3TCam_Offset = Some(t_Stage_UnkSetVec3TCam_Offset);
-        ext::HOOK_cosf = Some(t_cosf);
         ext::HOOK_ftCo_800C07F8 = Some(t_ftCo_800C07F8);
         ext::HOOK_ftLib_80086644 = Some(t_ftLib_80086644);
         ext::HOOK_ftLib_80086BE0 = Some(t_ftLib_80086BE0);
@@ -158,7 +155,6 @@ mod gen_stubs {
         ext::HOOK_mpLib_800575B0 = Some(t_mpLib_800575B0);
         ext::HOOK_mpLib_80057BC0 = Some(t_mpLib_80057BC0);
         ext::HOOK_mpLib_80058560 = Some(t_mpLib_80058560);
-        ext::HOOK_sinf = Some(t_sinf);
         }
     }
 }

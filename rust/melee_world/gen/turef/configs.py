@@ -117,3 +117,50 @@ CONFIGS["grrcruise"]["effect"] = {
     "lb_8000B1CC": _OUT_A1A2_NZ, "Stage_UnkSetVec3TCam_Offset": _VEC_RAND_A0,
     "lbVector_Sub": _VEC_SUB, "lbVector_Add": _VEC_ADD, "lbVector_Diff": _VEC_DIFF,
 }
+
+# ---- grshrineroute ------------------------------------------------------------------------------
+CONFIGS["grshrineroute"]["patch"] = [
+    # two dead decomp-matching expression statements that load through a NULL gobj (see grpushon)
+    ("    GET_GROUND(0);\n    GET_GROUND(0);\n", ""),
+    ("grZakoGenerator_801CAEB0(Ground_801C5840(), Ground_801C5940());",
+     "{ int t840_ = Ground_801C5840(); int t940_ = Ground_801C5940(); grZakoGenerator_801CAEB0(t840_, t940_); }"),
+]
+CONFIGS["grshrineroute"]["custom"] = CUSTOM + ["efSync_Spawn"]
+CONFIGS["grshrineroute"]["ret"].update({
+    "Ground_GetYakumonoParam": ("expr", "mkyp()", "mkyp()"),
+    "Ground_GetStageGObj": ("expr", "(GNULL && rnd() % 4 == 0) ? 0 : mkgobj()",
+                            "if GNULL && rnd() % 4 == 0 { core::ptr::null_mut() } else { mkgobj() }"),
+    "Ground_GetMapGObj": ("expr", "(rnd() % 3 == 0) ? 0 : mkgobj()", "if rnd() % 3 == 0 { core::ptr::null_mut() } else { mkgobj() }"),
+    "Ground_GetP1Fighter": ("expr", "(rnd() % 4 == 0) ? 0 : PGOBJ", "if rnd() % 4 == 0 { core::ptr::null_mut() } else { PGOBJ }"),
+    "Ground_801C2CF4": ("expr", "(rnd() % 6 == 0) ? 0 : mkjobj2()", "if rnd() % 6 == 0 { core::ptr::null_mut() } else { mkjobj2() }"),
+    "Ground_801C3FA4": ("expr", "(JNULL && rnd() % 5 == 0) ? 0 : mkjobj2()",
+                        "if JNULL && rnd() % 5 == 0 { core::ptr::null_mut() } else { mkjobj2() }"),
+    "Ground_801C2D24": ("ri", 3),
+    "Ground_801C3DB4": ("expr", "(rnd() % 4 == 0) ? -1 : (int) (0xBD + rnd() % 6)",
+                        "if rnd() % 4 == 0 { -1 } else { (0xBD + rnd() % 6) as i32 }"),
+    "Ground_801C5764": ("ri", 2), "Ground_801C5840": ("ri", 7), "Ground_801C5940": ("ri", 7),
+    "Ground_801C0498": ("expr", "SCALE != 0.0f ? SCALE : (float) (rnd() % 100 + 1) / 8.0f",
+                        "if SCALE != 0.0 { SCALE } else { ((rnd() % 100 + 1) as f32) / 8.0 }"),
+    "HSD_Randi": _RANDI,
+    "HSD_Randf": ("expr", "(float) (rnd() % 1000) / 1000.0f", "(rnd() % 1000) as f32 / 1000.0"),
+    "HSD_JObjGetFlags": ("expr", "rnd()", "rnd()"),
+    "HSD_LObjGetFlags": ("expr", "rnd()", "rnd()"),
+    "HSD_LObjGetPosition": ("expr", "(rnd() % 8 != 0)", "(rnd() % 8 != 0) as i32"),
+    "HSD_LObjGetInterest": ("expr", "(rnd() % 8 != 0)", "(rnd() % 8 != 0) as i32"),
+    "HSD_LObjLoadDesc": ("expr", "(LDNULL && rnd() % 3 == 0) ? 0 : mklobj()",
+                         "if LDNULL && rnd() % 3 == 0 { core::ptr::null_mut() } else { mklobj() }"),
+    "Player_GetEntity": ("expr", "(rnd() % 3 == 0) ? mkfgobj() : PGOBJ", "if rnd() % 3 == 0 { mkfgobj() } else { PGOBJ }"),
+    "Player_GetEntityAtIndex": ("expr", "(rnd() % 2) ? 0 : mkfgobj()", "if rnd() % 2 != 0 { core::ptr::null_mut() } else { mkfgobj() }"),
+    "ftLib_80086BE0": ("ri", 4), "ftLib_8008731C": ("ri", 2), "ftLib_80086EC0": ("ri", 2), "ftLib_8008732C": ("ri", 2),
+    "lb_8000B134": ("ri", 2), "grLib_801C96E8": ("ri", 2),
+    "lbVector_Sub": ("expr", "a0", "a0"), "lbVector_Add": ("expr", "a0", "a0"),
+    "Mex_GrBind": ("expr", "a0", "a0"),
+})
+_FT_POS = ("if (a1) { if (FPOS) { a1->x = -250.0f + (float) (rnd() % 100); a1->y = -300.0f + (float) (rnd() % 100); a1->z = rf(); } else { a1->x = rf(); a1->y = rf(); a1->z = rf(); } }",
+           "if !a1.is_null() { if FPOS { (*a1).x = -250.0 + ((rnd() % 100) as f32); (*a1).y = -300.0 + ((rnd() % 100) as f32); (*a1).z = rf(); } else { (*a1).x = rf(); (*a1).y = rf(); (*a1).z = rf(); } }")
+CONFIGS["grshrineroute"]["effect"] = {
+    "Ground_801C2D24": _VEC_RAND_A1, "ftLib_80086644": _FT_POS, "lb_8000B1CC": _OUT_A1A2,
+    "Stage_UnkSetVec3TCam_Offset": _VEC_RAND_A0,
+    "HSD_LObjGetPosition": _VEC_RAND_A1, "HSD_LObjGetInterest": _VEC_RAND_A1, "HSD_LObjGetColor": _COLOR_RAND,
+    "lbVector_Sub": _VEC_SUB, "lbVector_Add": _VEC_ADD, "lbVector_Normalize": _VEC_NORM,
+}

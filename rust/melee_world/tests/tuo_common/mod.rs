@@ -40,6 +40,7 @@ struct Link {
     key: String,
     tgt: String,
     gate: Vec<String>,
+    force: Vec<String>,
 }
 struct FnCfg {
     name: String,
@@ -79,6 +80,8 @@ pub struct V {
     npool: usize,
     cl: String,
     curfn: String,
+    args: [u64; 12],
+    argptr: [bool; 12],
 }
 
 static mut VV: Option<V> = None;
@@ -183,6 +186,21 @@ impl V {
         if tgt == "null" {
             return 0;
         }
+        if let Some(n) = tgt.strip_prefix("fn:") {
+            return self.fps.iter().find(|f| f.0 == n).unwrap_or_else(|| panic!("no function {n}")).1;
+        }
+        if let Some(n) = tgt.strip_prefix("maybebuf:") {
+            return if self.draw() & 1 != 0 { 0 } else { self.new_buf(None, n.parse().unwrap()) as usize };
+        }
+        if let Some(n) = tgt.strip_prefix("mayarg:") {
+            // mayarg:N:Type = the case's pointer argument N, else (N is not a pointer argument) a new Type
+            let (n, ty) = n.split_once(':').unwrap();
+            let n: usize = n.parse().unwrap();
+            if self.argptr[n] {
+                return if self.draw() & 1 != 0 { self.args[n] as usize } else { 0 };
+            }
+            return if self.draw() & 1 != 0 { 0 } else { self.mk_target(path, &format!("new:{ty}")) };
+        }
         if let Some(g) = tgt.strip_prefix('&') {
             for gl in &self.globals {
                 if gl.0 == g {
@@ -235,7 +253,8 @@ impl V {
             return 0;
         }
         if let Some(t) = tgt.strip_prefix("maybe:") {
-            if self.draw() & 1 != 0 {
+            let forced = self.links[i].force.iter().any(|g| *g == self.curfn);
+            if !forced && self.draw() & 1 != 0 {
                 return 0;
             }
             return self.mk_target(path, &format!("new:{t}"));
@@ -420,6 +439,38 @@ impl V {
         }
         p
     }
+    fn dump_all(&mut self) {
+        let v = self;
+    for i in 0..v.globals.len() {
+        let path = format!("g:{}", v.globals[i].0);
+        let (p, size, vis) = (v.globals[i].1, v.globals[i].2, v.globals[i].3);
+        match vis {
+            Some(vis) => vis(v, &path, p),
+            None => v.dump_bytes(&path, p, size),
+        }
+    }
+    for i in 0..v.pool.len() {
+        let (name, p, ty, size, cnt) = (v.pool[i].name.clone(), v.pool[i].p, v.pool[i].ty, v.pool[i].size, v.pool[i].cnt);
+        match ty {
+            Some(ti) => {
+                let (tsz, vis) = (v.types[ti].1, v.types[ti].3);
+                for k in 0..cnt.max(1) {
+                    let path = if cnt != 0 { format!("{name}[{k}]") } else { name.clone() };
+                    vis(v, &path, unsafe { p.add(k * tsz) });
+                }
+            }
+            None if v.pool[i].ptrs != 0 => {
+                for k in 0..v.pool[i].ptrs {
+                    let e = unsafe { *(p as *const usize).add(k) };
+                    let s = v.pstr(e);
+                    v.emit(&format!("{name}[{k}]=@{s}"));
+                }
+            }
+            None => v.dump_bytes(&name, p, size),
+        }
+    }
+
+    }
     fn pool_reset(&mut self) {
         for o in self.pool.drain(..) {
             unsafe { dealloc(o.p, o.layout) };
@@ -447,6 +498,8 @@ pub fn run(cfg: &str, expected: &str, glue: Glue) {
         npool: 0,
         cl: String::new(),
         curfn: String::new(),
+        args: [0; 12],
+        argptr: [false; 12],
     };
     let mut fns: Vec<FnCfg> = vec![];
     let mut tysizes: Vec<(String, usize)> = vec![];
@@ -457,7 +510,7 @@ pub fn run(cfg: &str, expected: &str, glue: Glue) {
         }
         match t[0] {
             "dom" => v.doms.push(Dom { key: t[1].to_string(), v: t[2..].iter().map(|x| parse_u(x)).collect() }),
-            "link" => v.links.push(Link { key: t[1].to_string(), tgt: t[2].to_string(), gate: vec![] }),
+            "link" => v.links.push(Link { key: t[1].to_string(), tgt: t[2].to_string(), gate: vec![], force: vec![] }),
             "gate" => {
                 for l in v.links.iter_mut().filter(|l| l.key == t[1]) {
                     l.gate.extend(t[2..].iter().map(|s| s.to_string()));
@@ -469,6 +522,11 @@ pub fn run(cfg: &str, expected: &str, glue: Glue) {
                 ret: t[3].to_string(),
                 args: t[4..].iter().map(|s| s.to_string()).collect(),
             }),
+            "force" => {
+                for l in v.links.iter_mut().filter(|l| l.key == t[1]) {
+                    l.force.extend(t[2..].iter().map(|s| s.to_string()));
+                }
+            }
             "tysize" => tysizes.push((t[1].to_string(), t[2].parse().unwrap())),
             _ => panic!("bad cfg line {line}"),
         }
@@ -519,6 +577,21 @@ pub fn run(cfg: &str, expected: &str, glue: Glue) {
                 unsafe { std::ptr::copy_nonoverlapping(img.as_ptr(), p, size) };
             }
             v.mode = 1;
+            v.args = [0; 12];
+            v.argptr = [false; 12];
+            let argfirst = v.links.iter().any(|l| l.tgt.starts_with("mayarg:"));
+            let mut a = [0u64; 12];
+            if argfirst {
+                // pointer arguments exist before the globals are filled, so links can name them
+                for (i, t) in f.args.iter().enumerate() {
+                    if let Some(ty) = t.strip_prefix("p:") {
+                        let lab = format!("a{i}");
+                        a[i] = v.new_typed(Some(&lab), ty, 0) as usize as u64;
+                        v.args[i] = a[i];
+                        v.argptr[i] = true;
+                    }
+                }
+            }
             for i in 0..v.globals.len() {
                 if !v.globals[i].4 {
                     continue;
@@ -530,10 +603,12 @@ pub fn run(cfg: &str, expected: &str, glue: Glue) {
                     None => v.bytes(&path, p, size),
                 }
             }
-            let mut a = [0u64; 12];
             for (i, t) in f.args.iter().enumerate() {
                 let key = format!("arg:{}#{}", f.name, i);
                 let lab = format!("a{i}");
+                if argfirst && t.starts_with("p:") {
+                    continue;
+                }
                 a[i] = if t.starts_with('i') {
                     let bits: u32 = t[1..t.len() - 1].parse().unwrap();
                     v.leaf_int(&key, bits, (t.ends_with('s')) as u32)
@@ -545,6 +620,8 @@ pub fn run(cfg: &str, expected: &str, glue: Glue) {
                     0
                 } else if let Some(n) = t.strip_prefix("e:") {
                     (glue.expr)(n)
+                } else if t.starts_with("fn:") {
+                    v.mk_target(&key, t) as u64
                 } else if let Some(ty) = t.strip_prefix("pn:") {
                     if v.draw() & 3 == 0 {
                         0
@@ -566,6 +643,11 @@ pub fn run(cfg: &str, expected: &str, glue: Glue) {
                 };
             }
             v.emit(&format!("case {} {}", f.name, idx));
+            if std::env::var("TUO_PRE").is_ok() {
+                v.mode = 2;
+                v.dump_all();
+                v.mode = 1;
+            }
             let r = (glue.call)(&f.name, &a);
             let v = vv();
             v.mode = 2;
@@ -580,34 +662,7 @@ pub fn run(cfg: &str, expected: &str, glue: Glue) {
                     v.emit(&format!("ret=@{s}"))
                 }
             }
-            for i in 0..v.globals.len() {
-                let path = format!("g:{}", v.globals[i].0);
-                let (p, size, vis) = (v.globals[i].1, v.globals[i].2, v.globals[i].3);
-                match vis {
-                    Some(vis) => vis(v, &path, p),
-                    None => v.dump_bytes(&path, p, size),
-                }
-            }
-            for i in 0..v.pool.len() {
-                let (name, p, ty, size, cnt) = (v.pool[i].name.clone(), v.pool[i].p, v.pool[i].ty, v.pool[i].size, v.pool[i].cnt);
-                match ty {
-                    Some(ti) => {
-                        let (tsz, vis) = (v.types[ti].1, v.types[ti].3);
-                        for k in 0..cnt.max(1) {
-                            let path = if cnt != 0 { format!("{name}[{k}]") } else { name.clone() };
-                            vis(v, &path, unsafe { p.add(k * tsz) });
-                        }
-                    }
-                    None if v.pool[i].ptrs != 0 => {
-                        for k in 0..v.pool[i].ptrs {
-                            let e = unsafe { *(p as *const usize).add(k) };
-                            let s = v.pstr(e);
-                            v.emit(&format!("{name}[{k}]=@{s}"));
-                        }
-                    }
-                    None => v.dump_bytes(&name, p, size),
-                }
-            }
+            v.dump_all();
             if v.full {
                 for l in &v.out {
                     println!("{l}");

@@ -250,6 +250,18 @@ class Walker:
         if k == T.RECORD:
             decl = c.get_declaration()
             if decl.kind == K.UNION_DECL:
+                uv = self.cx.spec.get("UNION_VIEW", {})
+                _d, cname_ = self.cx.rec_names(t)
+                key_ = (cname_ or "").split(" ")[-1]
+                if key_ in uv:
+                    # compare the union through one member (its fields get domains/links like any record)
+                    m = uv[key_]
+                    fld = next(f for f in (decl.get_definition() or decl).get_children()
+                               if f.kind == K.FIELD_DECL and f.spelling == m)
+                    p_c = f'tuo_cat(_pb, {path_c}, ".{m}")'
+                    p_r = f'&format!("{{}}.{m}", {self.strip_amp(path_r)})'
+                    self.leaf_field(e, fld.type, f"{cx_}.{m}", f"{rx_}.{rid(m)}", p_c, p_r, None)
+                    return
                 e.c.append(f"tuo_bytes({path_c}, &{cx_}, sizeof({cx_}));")
                 e.r.append(f"v.bytes({path_r}, &mut {rx_} as *mut _ as *mut u8, core::mem::size_of_val(&{rx_}));")
                 return
@@ -497,7 +509,7 @@ def main():
     glob = []  # (name, cursor, extern?)
     skipg = set(spec.get("SKIP_GLOBALS", []))
     for name, cs in vdecls.items():
-        defs = [c for c in cs if in_tu(c) and c.storage_class != ci.StorageClass.EXTERN]
+        defs = [c for c in cs if (in_tu(c) or name in spec.get("EXTRA_GLOBALS", [])) and c.storage_class != ci.StorageClass.EXTERN]
         if defs and not defs[0].type.is_const_qualified() and name not in skipg:
             glob.append((name, defs[0], False))
     for name in extvars:
@@ -673,6 +685,8 @@ def main():
                 rargs.append(f"f32::from_bits(a[{i}] as u32)")
             elif ac.kind == T.DOUBLE:
                 rargs.append(f"f64::from_bits(a[{i}])")
+            elif ac.kind == T.POINTER and canon(ac.get_pointee()).kind in (T.FUNCTIONPROTO, T.FUNCTIONNOPROTO):
+                rargs.append(f"unsafe {{ core::mem::transmute::<usize, _>(a[{i}] as usize) }}")
             elif ac.kind == T.POINTER:
                 rargs.append(f"a[{i}] as usize as _")
             elif ac.kind == T.BOOL:
@@ -897,6 +911,10 @@ def main():
         rs_install.append(f"        tu::ext::H_{name} = Some(s_{name});")
         ext_hooks.append((name, [f"a{i}" for i in range(len(params))], [rust_type(G, a.type) for a in d.get_arguments()],
                           rust_type(G, d.result_type) if ret.kind != T.VOID else None))
+    for xn, xd in spec.get("EXTRA_FNS", {}).items():
+        stubs_c.append(xd["c"])
+        stubs_reg.append(f'  tuo_regfn("{xn}", (void*){xn});')
+        rs_stub.append(xd["rust"])
     stubs_c.append("void tuo_stubs_init(void) {")
     stubs_c.extend(stubs_reg)
     stubs_c.append("}")
@@ -905,6 +923,8 @@ def main():
         cfg.append(f"link {k} {v}")
         if k in spec.get("LINK_GATE", {}):
             cfg.append(f"gate {k} " + " ".join(spec.get("LINK_GATE", {})[k]))
+        if k in spec.get("LINK_FORCE", {}):
+            cfg.append(f"force {k} " + " ".join(spec.get("LINK_FORCE", {})[k]))
         m = re.match(r"(?:new|maybe):(\w[\w ]*)", v)
         # types named by links
     # types named by LINKS targets / args
@@ -1017,6 +1037,8 @@ def main():
         if name in defined or name in LIBC or name in skip_stub:
             continue
         rs.append(f'            ("{name}", tu::ext::{name} as *const () as usize),')
+    for xn in spec.get("EXTRA_FNS", {}):
+        rs.append(f'            ("{xn}", s_{xn} as *const () as usize),')
     rs.append("        ],")
     rs.append("        size_ok: &[" + ", ".join(f'"{x}"' for x in spec.get("SIZE_OK", [])) + "],")
     rs.append("        install: || unsafe {")

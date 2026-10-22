@@ -62,7 +62,7 @@ void tuo_emit(const char* fmt, ...)
 /* ---- config ---- */
 #define MAXV 512
 struct Dom { char key[128]; int n; u64 v[MAXV]; };
-struct Link { char key[128]; char tgt[96]; int ngate; char gate[16][96]; };
+struct Link { char key[128]; char tgt[96]; int ngate; char gate[16][96]; int nforce; char force[16][96]; };
 static const char* curfn;
 static struct Dom doms[512]; static int ndom;
 static struct Link links[512]; static int nlink;
@@ -99,6 +99,10 @@ static void load_cfg(const char* path)
             for (int li = 0; li < nlink; li++)
                 if (!strcmp(links[li].key, tok[1]))
                     for (int k = 2; k < nt; k++) strcpy(links[li].gate[links[li].ngate++], tok[k]);
+        } else if (!strcmp(tok[0], "force")) {
+            for (int li = 0; li < nlink; li++)
+                if (!strcmp(links[li].key, tok[1]))
+                    for (int k = 2; k < nt; k++) strcpy(links[li].force[links[li].nforce++], tok[k]);
         } else if (!strcmp(tok[0], "fn")) {
             struct Fn* g = &fns[nfn++];
             strcpy(g->name, tok[1]);
@@ -291,9 +295,23 @@ u64 tuo_leaf_f64(const char* path)
     default: return f64bits(((r >> 8) % 2000001) / 1000.0 - 1000.0);
     }
 }
+static void* tuo_leaf_ptr_tgt(const char* path, const char* tgt);
+static u64 curargs[12]; static int curptr[12]; /* the case's argument values, for links to "the argument object" */
 static void* mk_target(const char* path, const char* tgt)
 {
     if (!strcmp(tgt, "null")) return 0;
+    if (!strncmp(tgt, "fn:", 3)) {
+        for (int i = 0; i < nfp; i++) if (!strcmp(fps[i].name, tgt + 3)) return (void*) fps[i].a;
+        fprintf(stderr, "no function %s\n", tgt + 3); exit(4);
+    }
+    if (!strncmp(tgt, "maybebuf:", 9)) return (tuo_draw() & 1) ? 0 : tuo_newbuf(0, (size_t) atoi(tgt + 9));
+    if (!strncmp(tgt, "mayarg:", 7)) {
+        /* mayarg:N:Type = the case's pointer argument N, else (N is not a pointer argument) a new Type */
+        int n = atoi(tgt + 7);
+        if (curptr[n]) return (tuo_draw() & 1) ? (void*) (uintptr_t) curargs[n] : 0;
+        char t2[128]; sprintf(t2, "maybe:%s", strchr(tgt + 7, ':') + 1);
+        return tuo_leaf_ptr_tgt(path, t2);
+    }
     if (tgt[0] == '&') {
         char nm[128]; sprintf(nm, "g:%s", tgt + 1);
         for (int i = 0; i < ngl; i++) if (!strcmp(gls[i].name, tgt + 1)) return gls[i].p;
@@ -329,6 +347,15 @@ static void* mk_target(const char* path, const char* tgt)
     }
     fprintf(stderr, "bad link target %s\n", tgt); exit(5);
 }
+static void* tuo_leaf_ptr_tgt(const char* path, const char* tgt)
+{
+    if (!strncmp(tgt, "maybe:", 6)) {
+        if (tuo_draw() & 1) return 0;
+        char t[128]; sprintf(t, "new:%s", tgt + 6);
+        return mk_target(path, t);
+    }
+    return mk_target(path, tgt);
+}
 void* tuo_leaf_ptr(const char* path)
 {
     struct Link* l = findlink(path);
@@ -339,7 +366,9 @@ void* tuo_leaf_ptr(const char* path)
         if (!ok) return 0;
     }
     if (!strncmp(l->tgt, "maybe:", 6)) {
-        if (tuo_draw() & 1) return 0;
+        int forced = 0;
+        for (int k = 0; k < l->nforce; k++) if (curfn && !strcmp(curfn, l->force[k])) forced = 1;
+        if (!forced && (tuo_draw() & 1)) return 0;
         char t[128]; sprintf(t, "new:%s", l->tgt + 6);
         return mk_target(path, t);
     }
@@ -416,54 +445,9 @@ static u64 fnv(const char* s)
     return h;
 }
 
-static void run_case(struct Fn* f, int idx)
+static void dump_all(void)
 {
-    curfn = f->name;
-    rs = fnv(f->name) ^ ((u64) (idx + 1) * 0x9E3779B97F4A7C15ULL);
-    tuo_draw();
-    lh = 0xcbf29ce484222325ULL;
-    pool_reset();
-    for (int i = 0; i < ngl; i++) memcpy(gls[i].p, gls[i].img, gls[i].size);
-    tuo_mode = 1;
     char path[160];
-    for (int i = 0; i < ngl; i++) {
-        if (!gls[i].fill) continue;
-        sprintf(path, "g:%s", gls[i].name);
-        if (gls[i].vis) gls[i].vis(path, gls[i].p); else fillbytes(gls[i].p, gls[i].size);
-    }
-    u64 a[12];
-    for (int i = 0; i < f->nargs; i++) {
-        const char* t = f->args[i];
-        char key[160]; sprintf(key, "arg:%s#%d", f->name, i);
-        char lab[16]; sprintf(lab, "a%d", i);
-        if (t[0] == 'i') {
-            int bits = atoi(t + 1); a[i] = tuo_leaf_int(key, bits, t[strlen(t) - 1] == 's');
-        } else if (!strcmp(t, "f32")) a[i] = tuo_leaf_f32(key);
-        else if (!strcmp(t, "f64")) a[i] = tuo_leaf_f64(key);
-        else if (!strcmp(t, "null")) a[i] = 0;
-        else if (!strncmp(t, "e:", 2)) a[i] = tuo_unit_expr(t + 2);
-        else if (!strncmp(t, "pn:", 3)) a[i] = (tuo_draw() & 3) == 0 ? 0 : (u64) (uintptr_t) tuo_new(lab, t + 3, 0);
-        else if (!strncmp(t, "p:", 2)) a[i] = (u64) (uintptr_t) tuo_new(lab, t + 2, 0);
-        else if (!strncmp(t, "cell:", 5)) {
-            int bits = atoi(t + 5);
-            void* cp = tuo_newbuf(lab, 8);
-            u64 cv = tuo_leaf_int(key, bits, 1);
-            memcpy(cp, &cv, bits / 8);
-            a[i] = (u64) (uintptr_t) cp;
-        }
-        else if (!strncmp(t, "buf:", 4)) a[i] = (u64) (uintptr_t) tuo_newbuf(lab, (size_t) atoi(t + 4));
-        else { fprintf(stderr, "bad arg %s\n", t); exit(6); }
-    }
-    tuo_emit("case %s %d", f->name, idx);
-    u64 r = tuo_unit_call(f->name, a);
-    tuo_mode = 2;
-    char b[160];
-    if (!strcmp(f->ret, "v")) tuo_emit("ret=void");
-    else if (!strcmp(f->ret, "i")) tuo_emit("ret=%lld", (long long) r);
-    else if (!strcmp(f->ret, "u")) tuo_emit("ret=%llu", r);
-    else if (!strcmp(f->ret, "f32")) tuo_emit("ret=f%08x", (unsigned) r);
-    else if (!strcmp(f->ret, "f64")) tuo_emit("ret=f%016llx", r);
-    else tuo_emit("ret=@%s", pstr((void*) (uintptr_t) r, b));
     for (int i = 0; i < ngl; i++) {
         sprintf(path, "g:%s", gls[i].name);
         if (gls[i].vis) gls[i].vis(path, gls[i].p); else dump_bytes(path, gls[i].p, gls[i].size);
@@ -482,6 +466,66 @@ static void run_case(struct Fn* f, int idx)
             }
         } else dump_bytes(pool[i].name, (unsigned char*) pool[i].p, pool[i].size);
     }
+}
+
+static void run_case(struct Fn* f, int idx)
+{
+    curfn = f->name;
+    rs = fnv(f->name) ^ ((u64) (idx + 1) * 0x9E3779B97F4A7C15ULL);
+    tuo_draw();
+    lh = 0xcbf29ce484222325ULL;
+    pool_reset();
+    for (int i = 0; i < ngl; i++) memcpy(gls[i].p, gls[i].img, gls[i].size);
+    tuo_mode = 1;
+    char path[160];
+    u64* a = curargs;
+    memset(curargs, 0, sizeof curargs); memset(curptr, 0, sizeof curptr);
+    int argfirst = 0;
+    for (int i = 0; i < nlink; i++) if (!strncmp(links[i].tgt, "mayarg:", 7)) argfirst = 1;
+    if (argfirst) /* pointer arguments exist before the globals are filled, so links can name them */
+        for (int i = 0; i < f->nargs; i++)
+            if (!strncmp(f->args[i], "p:", 2)) { char lab[16]; sprintf(lab, "a%d", i); a[i] = (u64) (uintptr_t) tuo_new(lab, f->args[i] + 2, 0); curptr[i] = 1; }
+    for (int i = 0; i < ngl; i++) {
+        if (!gls[i].fill) continue;
+        sprintf(path, "g:%s", gls[i].name);
+        if (gls[i].vis) gls[i].vis(path, gls[i].p); else fillbytes(gls[i].p, gls[i].size);
+    }
+    for (int i = 0; i < f->nargs; i++) {
+        const char* t = f->args[i];
+        char key[160]; sprintf(key, "arg:%s#%d", f->name, i);
+        char lab[16]; sprintf(lab, "a%d", i);
+        if (argfirst && !strncmp(t, "p:", 2)) continue;
+        if (t[0] == 'i') {
+            int bits = atoi(t + 1); a[i] = tuo_leaf_int(key, bits, t[strlen(t) - 1] == 's');
+        } else if (!strcmp(t, "f32")) a[i] = tuo_leaf_f32(key);
+        else if (!strcmp(t, "f64")) a[i] = tuo_leaf_f64(key);
+        else if (!strcmp(t, "null")) a[i] = 0;
+        else if (!strncmp(t, "e:", 2)) a[i] = tuo_unit_expr(t + 2);
+        else if (!strncmp(t, "fn:", 3)) a[i] = (u64) (uintptr_t) mk_target(key, t);
+        else if (!strncmp(t, "pn:", 3)) a[i] = (tuo_draw() & 3) == 0 ? 0 : (u64) (uintptr_t) tuo_new(lab, t + 3, 0);
+        else if (!strncmp(t, "p:", 2)) a[i] = (u64) (uintptr_t) tuo_new(lab, t + 2, 0);
+        else if (!strncmp(t, "cell:", 5)) {
+            int bits = atoi(t + 5);
+            void* cp = tuo_newbuf(lab, 8);
+            u64 cv = tuo_leaf_int(key, bits, 1);
+            memcpy(cp, &cv, bits / 8);
+            a[i] = (u64) (uintptr_t) cp;
+        }
+        else if (!strncmp(t, "buf:", 4)) a[i] = (u64) (uintptr_t) tuo_newbuf(lab, (size_t) atoi(t + 4));
+        else { fprintf(stderr, "bad arg %s\n", t); exit(6); }
+    }
+    tuo_emit("case %s %d", f->name, idx);
+    if (getenv("TUO_PRE")) { tuo_mode = 2; dump_all(); tuo_mode = 1; } /* debug: the state before the call */
+    u64 r = tuo_unit_call(f->name, a);
+    tuo_mode = 2;
+    char b[160];
+    if (!strcmp(f->ret, "v")) tuo_emit("ret=void");
+    else if (!strcmp(f->ret, "i")) tuo_emit("ret=%lld", (long long) r);
+    else if (!strcmp(f->ret, "u")) tuo_emit("ret=%llu", r);
+    else if (!strcmp(f->ret, "f32")) tuo_emit("ret=f%08x", (unsigned) r);
+    else if (!strcmp(f->ret, "f64")) tuo_emit("ret=f%016llx", r);
+    else tuo_emit("ret=@%s", pstr((void*) (uintptr_t) r, b));
+    dump_all();
     printf("%s %d %016llx\n", f->name, idx, lh);
 }
 

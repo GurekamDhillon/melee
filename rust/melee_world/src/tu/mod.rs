@@ -9,3 +9,4 @@ pub mod efalt;
 pub mod ifcoget;
 pub mod grzebesroute;
 pub mod ifall;
+pub mod grzakogenerator;

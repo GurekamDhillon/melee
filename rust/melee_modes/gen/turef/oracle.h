@@ -116,7 +116,15 @@ static void trs(const char* s)
         ou64 v = (ou64) (unsigned long long) s;
         if (v >= (ou64) (unsigned long long) ARENA_P && v < (ou64) (unsigned long long) ARENA_P + ARENA_SZ) { trp(s); return; }
     }
-    printf(" \"%s\"", s);
+    {
+        const unsigned char* q = (const unsigned char*) s;
+        printf(" \"");
+        for (; *q; q++) {
+            if (*q < 0x20 || *q >= 0x7f) printf("\\x%02x", (unsigned) *q);
+            else printf("%c", (int) *q);
+        }
+        printf("\"");
+    }
 }
 #define TRS(x) trs((const char*) (x))
 

@@ -144,7 +144,14 @@ pub fn trs(s: *const c_char) {
     if v >= base && v < base + ARENA_SZ as u64 {
         return trp(s as *const u8);
     }
-    let st = unsafe { CStr::from_ptr(s) }.to_string_lossy();
+    let mut st = String::new();
+    for &b in unsafe { CStr::from_ptr(s) }.to_bytes() {
+        if b < 0x20 || b >= 0x7f {
+            st.push_str(&format!("\\x{:02x}", b));
+        } else {
+            st.push(b as char);
+        }
+    }
     out(&format!(" \"{}\"", st))
 }
 

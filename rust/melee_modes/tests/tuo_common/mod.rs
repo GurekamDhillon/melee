@@ -38,6 +38,7 @@ struct Dom {
 struct Link {
     key: String,
     tgt: String,
+    gate: Vec<String>,
 }
 struct FnCfg {
     name: String,
@@ -76,6 +77,7 @@ pub struct V {
     pool: Vec<PoolObj>,
     npool: usize,
     cl: String,
+    curfn: String,
 }
 
 static mut VV: Option<V> = None;
@@ -221,6 +223,9 @@ impl V {
             None => return 0,
         };
         let tgt = self.links[i].tgt.clone();
+        if !self.links[i].gate.is_empty() && !self.links[i].gate.iter().any(|g| *g == self.curfn) {
+            return 0;
+        }
         if let Some(t) = tgt.strip_prefix("maybe:") {
             if self.draw() & 1 != 0 {
                 return 0;
@@ -433,6 +438,7 @@ pub fn run(cfg: &str, expected: &str, glue: Glue) {
         pool: vec![],
         npool: 0,
         cl: String::new(),
+        curfn: String::new(),
     };
     let mut fns: Vec<FnCfg> = vec![];
     let mut tysizes: Vec<(String, usize)> = vec![];
@@ -443,7 +449,12 @@ pub fn run(cfg: &str, expected: &str, glue: Glue) {
         }
         match t[0] {
             "dom" => v.doms.push(Dom { key: t[1].to_string(), v: t[2..].iter().map(|x| parse_u(x)).collect() }),
-            "link" => v.links.push(Link { key: t[1].to_string(), tgt: t[2].to_string() }),
+            "link" => v.links.push(Link { key: t[1].to_string(), tgt: t[2].to_string(), gate: vec![] }),
+            "gate" => {
+                for l in v.links.iter_mut().filter(|l| l.key == t[1]) {
+                    l.gate.extend(t[2..].iter().map(|s| s.to_string()));
+                }
+            }
             "fn" => fns.push(FnCfg {
                 name: t[1].to_string(),
                 n: t[2].parse().unwrap(),
@@ -489,6 +500,7 @@ pub fn run(cfg: &str, expected: &str, glue: Glue) {
                 v.full = sel == &f.name || *sel == format!("{}:{}", f.name, idx);
             }
             v.out.clear();
+            v.curfn = f.name.clone();
             v.rs = fnv(&f.name) ^ ((idx as u64 + 1).wrapping_mul(0x9E3779B97F4A7C15));
             v.draw();
             v.lh = 0xcbf29ce484222325;

@@ -62,7 +62,8 @@ void tuo_emit(const char* fmt, ...)
 /* ---- config ---- */
 #define MAXV 512
 struct Dom { char key[128]; int n; u64 v[MAXV]; };
-struct Link { char key[128]; char tgt[96]; };
+struct Link { char key[128]; char tgt[96]; int ngate; char gate[16][96]; };
+static const char* curfn;
 static struct Dom doms[512]; static int ndom;
 static struct Link links[512]; static int nlink;
 struct Fn { char name[96]; int n; char ret[16]; int nargs; char args[12][64]; };
@@ -94,6 +95,10 @@ static void load_cfg(const char* path)
             strcpy(links[nlink].key, tok[1]);
             strcpy(links[nlink].tgt, tok[2]);
             nlink++;
+        } else if (!strcmp(tok[0], "gate")) {
+            for (int li = 0; li < nlink; li++)
+                if (!strcmp(links[li].key, tok[1]))
+                    for (int k = 2; k < nt; k++) strcpy(links[li].gate[links[li].ngate++], tok[k]);
         } else if (!strcmp(tok[0], "fn")) {
             struct Fn* g = &fns[nfn++];
             strcpy(g->name, tok[1]);
@@ -321,6 +326,11 @@ void* tuo_leaf_ptr(const char* path)
 {
     struct Link* l = findlink(path);
     if (!l) return 0;
+    if (l->ngate) {
+        int ok = 0;
+        for (int k = 0; k < l->ngate; k++) if (curfn && !strcmp(curfn, l->gate[k])) ok = 1;
+        if (!ok) return 0;
+    }
     if (!strncmp(l->tgt, "maybe:", 6)) {
         if (tuo_draw() & 1) return 0;
         char t[128]; sprintf(t, "new:%s", l->tgt + 6);
@@ -400,6 +410,7 @@ static u64 fnv(const char* s)
 
 static void run_case(struct Fn* f, int idx)
 {
+    curfn = f->name;
     rs = fnv(f->name) ^ ((u64) (idx + 1) * 0x9E3779B97F4A7C15ULL);
     tuo_draw();
     lh = 0xcbf29ce484222325ULL;

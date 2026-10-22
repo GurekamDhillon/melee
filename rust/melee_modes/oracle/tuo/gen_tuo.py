@@ -420,11 +420,15 @@ def main():
         return c.location.file is not None and Path(c.location.file.name).resolve().as_posix().lower() == tu_abs
 
     fdecls, fdefs, vdecls = {}, {}, {}
+    inl = set()
     for c in tu.cursor.walk_preorder():
         if c.kind == K.FUNCTION_DECL:
             fdecls.setdefault(c.spelling, c)
             if c.is_definition() and in_tu(c):
                 fdefs[c.spelling] = c
+                # `static inline` helpers are compiled into their callers: not ported as functions
+                if "inline" in [tk.spelling for tk in list(c.get_tokens())[:8]]:
+                    inl.add(c.spelling)
         elif c.kind == K.VAR_DECL and c.semantic_parent.kind == K.TRANSLATION_UNIT:
             vdecls.setdefault(c.spelling, []).append(c)
 
@@ -809,6 +813,8 @@ def main():
 
     for k, v in links.items():
         cfg.append(f"link {k} {v}")
+        if k in spec.get("LINK_GATE", {}):
+            cfg.append(f"gate {k} " + " ".join(spec.get("LINK_GATE", {})[k]))
         m = re.match(r"(?:new|maybe):(\w[\w ]*)", v)
         # types named by links
     # types named by LINKS targets / args
@@ -879,7 +885,8 @@ def main():
         uc.append(f'  tuo_regtype("{cfgn(cn)}", sizeof({cn}), _Alignof({cn}), vis_{mg});')
     uc.extend(gl_c)
     for fnm in fdefs:
-        uc.append(f'  tuo_regfn("{fnm}", (void*){fnm});')
+        if fnm not in inl:
+            uc.append(f'  tuo_regfn("{fnm}", (void*){fnm});')
     uc.append("}")
     uc.append("unsigned long long tuo_unit_call(const char* fn, unsigned long long* a) {")
     uc.extend(glue)
@@ -908,7 +915,7 @@ def main():
     rs.append("        ],")
     rs.append("        fns: vec![")
     for fnm in fdefs:
-        if fnm in spec.get("RUST_FN_SKIP", []):
+        if fnm in spec.get("RUST_FN_SKIP", []) or fnm in inl:
             continue
         rs.append(f'            ("{fnm}", tu::{fnm} as *const () as usize),')
     for name in declared:

@@ -11,6 +11,7 @@
 pub use melee_core;
 
 pub mod gm;
+pub mod tu;
 pub mod hud;
 pub mod lb;
 pub mod mn;

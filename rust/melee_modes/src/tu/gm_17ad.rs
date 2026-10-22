@@ -1,0 +1,152 @@
+//! Native port of src/melee/gm/gm_17AD.c: the result-screen stat readers (clamped copies of
+//! fields of `fn_80174274()`'s MatchEnd). Verified against the C by tests/tu_gm_17ad.rs.
+#![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::missing_safety_doc)]
+
+use crate::ext_fns;
+use melee_types::*;
+
+// Already ported (gm.rs); the C name is the same.
+pub use crate::gm::{fn_8017AD04, fn_8017AD28, fn_8017AD48, fn_8017AD78};
+
+/// Callees in TUs that are not ported yet.
+pub mod ext {
+    use super::*;
+    ext_fns! {
+        fn fn_80174274() -> *mut MatchEnd;
+        fn lbLang_IsSavedLanguageUS() -> i32;
+    }
+}
+
+const Gm_PKind_NA: u8 = 3;
+
+/// inlines.h `gmClampResultStat`.
+#[inline]
+pub fn gmClampResultStat(value: i32) -> i32 {
+    if value > 999999 {
+        999999
+    } else if value < -999999 {
+        -999999
+    } else {
+        value
+    }
+}
+
+#[inline]
+unsafe fn standings(slot: i32) -> *mut MatchPlayerData {
+    let me = ext::fn_80174274();
+    core::ptr::addr_of_mut!((*me).player_standings[slot as usize])
+}
+
+/// `gmClampResultStat(me->player_standings[slot].<field>)` readers.
+macro_rules! clamped_stat {
+    ($($name:ident => $field:ident),* $(,)?) => {$(
+        pub unsafe fn $name(slot: i32) -> i32 {
+            let me = ext::fn_80174274();
+            gmClampResultStat((*me).player_standings[slot as usize].$field as i32)
+        }
+    )*};
+}
+
+clamped_stat! {
+    fn_8017ADA8 => x1C,
+    fn_8017AE0C => x20,
+    fn_8017B21C => self_destructs,
+    fn_8017B280 => x40,
+    fn_8017B2E4 => x44,
+    fn_8017B348 => x48,
+    fn_8017B3AC => x4C,
+    fn_8017B4D0 => x6C,
+    fn_8017B534 => x70,
+    fn_8017B598 => x34,
+    fn_8017B5FC => x74,
+    fn_8017B660 => x78,
+    fn_8017B6C4 => x7C,
+    fn_8017B728 => x84,
+    fn_8017B78C => x88,
+    fn_8017B7F0 => x8C,
+    fn_8017B854 => x80,
+    fn_8017B8B8 => x90,
+}
+
+/// Kills the player `slot` scored on player `$t`: -1 for the player itself or an absent target.
+macro_rules! kills_on {
+    ($($name:ident => $t:literal),* $(,)?) => {$(
+        pub unsafe fn $name(arg0: i32) -> i32 {
+            let me = ext::fn_80174274();
+            if arg0 == $t {
+                return -1;
+            }
+            if (*me).player_standings[$t].pkind != Gm_PKind_NA {
+                return fn_8017AD04((*me).player_standings[arg0 as usize].kills[$t] as i32, 999999);
+            }
+            -1
+        }
+    )*};
+}
+
+kills_on! {
+    fn_8017AE70 => 0,
+    fn_8017AED8 => 1,
+    fn_8017AF40 => 2,
+    fn_8017AFA8 => 3,
+}
+
+/// Kills player `$t` scored on `arg0`.
+macro_rules! kills_by {
+    ($($name:ident => $t:literal),* $(,)?) => {$(
+        pub unsafe fn $name(arg0: i32) -> i32 {
+            let me = ext::fn_80174274();
+            if arg0 == $t {
+                return -1;
+            }
+            if (*me).player_standings[$t].pkind != Gm_PKind_NA {
+                return fn_8017AD04((*me).player_standings[$t].kills[arg0 as usize] as i32, 999999);
+            }
+            -1
+        }
+    )*};
+}
+
+kills_by! {
+    fn_8017B07C => 0,
+    fn_8017B0E4 => 1,
+    fn_8017B14C => 2,
+    fn_8017B1B4 => 3,
+}
+
+pub unsafe fn fn_8017B010(arg0: i32) -> i32 {
+    let p = standings(arg0);
+    gmClampResultStat((*p).x24.wrapping_sub((*p).self_destructs as i32))
+}
+
+pub unsafe fn fn_8017B410(arg0: i32) -> i32 {
+    let p = standings(arg0);
+    let var_r3: i32 = if ext::lbLang_IsSavedLanguageUS() != 0 {
+        // (u32)(f32)(x5C / 30.4788f)
+        ((*p).x5C as f32 / 30.4788f32) as u32 as i32
+    } else {
+        ((*p).x5C / 100) as i32
+    };
+    gmClampResultStat(var_r3)
+}
+
+pub unsafe fn fn_8017B91C(arg0: i32) -> i32 {
+    let p = standings(arg0);
+    let var_r3: u32 = if ext::lbLang_IsSavedLanguageUS() != 0 {
+        // (u32)(f32)((f32)x94 / 30.4788): the divisor is a double literal
+        (((*p).x94 as f32 as f64 / 30.4788f64) as f32) as u32
+    } else {
+        ((*p).x94 as f32 / 100.0f32) as u32
+    };
+    gmClampResultStat(var_r3 as i32)
+}
+
+pub unsafe fn fn_8017B9F4(arg0: i32) -> i32 {
+    let p = standings(arg0);
+    let var_r3: u32 = if ext::lbLang_IsSavedLanguageUS() != 0 {
+        (((*p).x98 as f32 as f64 / 30.4788f64) as f32) as u32
+    } else {
+        ((*p).x98 as f32 / 100.0f32) as u32
+    };
+    gmClampResultStat(var_r3 as i32)
+}

@@ -560,3 +560,10 @@ generated from the C by `gen/cref/gen_tu.py` (libclang, the native flags of `ora
   character into the bitfield byte `EventData+0xB` (never in the real level data; the oracle avoids
   it); `gm_8016A404((s32) fnptr)` passes a function address as a 32-bit int (PPC-ism: a native
   callee cannot turn it back into a function; the trace names the function by its low 32 bits).
+
+## melee_world::tu: gr/grt*.c set B (shard 601-608)
+`grtkirby grtkoopa grtlink grtluigi grtmario grtmars grtmewtwo grtness` ported by the same
+generator as set A (`GRT_SET=b bash rust/melee_world/cref/gen_grt_stages_ref.sh`; test
+`tests/tu_grt_stages_b.rs`, 60 seeded cases per function). New fixtures: Generator/AppSRT pair
+(mario particle scale), 8-slot yakumono struct (mewtwo), `ypick` biased ftLib positions so the
+mario floor-crossing branch is exercised.

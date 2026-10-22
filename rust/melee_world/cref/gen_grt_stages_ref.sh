@@ -15,7 +15,8 @@ F=(--target=x86_64-pc-windows-msvc -std=gnu99 -fno-builtin -DLINT -DTARGET_PC -f
    -fsigned-char -mlong-double-64 -fno-strict-aliasing -fwrapv -fcommon -fgnu89-inline -ftrivial-auto-var-init=zero -O2
    -Xclang -disable-llvm-passes -S -emit-llvm -w -I"$out" -I"$out/inc")
 cd "$out"
-for stem in grtdrmario grtemblem grtest grtfalco grtfox grtgamewatch grtganon grticeclimber; do
+if [ "${GRT_SET:-a}" = a ]; then STEMS="grtdrmario grtemblem grtest grtfalco grtfox grtgamewatch grtganon grticeclimber"; else STEMS="grtkirby grtkoopa grtlink grtluigi grtmario grtmars grtmewtwo grtness"; fi
+for stem in $STEMS; do
   "$CL" "${F[@]}" "${stem}_drv.c" -o "$stem.ll"
   python "$root/rust/melee_runtime/oracle/lower.py" "$stem.ll" "$stem.lo.ll" >/dev/null
   "$CL" -O2 -fno-builtin -ffp-contract=off -w "$stem.lo.ll" -o "$stem.exe"

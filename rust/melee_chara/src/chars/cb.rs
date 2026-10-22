@@ -76,17 +76,17 @@ pub unsafe extern "C" fn ftdonkeyspecialn__ftDk_SpecialN_DestroyAllEffects(g: *m
 
 /// `ftFx_SpecialHi_CreateChargeGFX` (defined in src/melee/ft/kinds/ftFox/ftfoxspecialhi.c).
 pub unsafe extern "C" fn ftfoxspecialhi__ftFx_SpecialHi_CreateChargeGFX(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftFx_SpecialHi_CreateChargeGFX (src/melee/ft/kinds/ftFox/ftfoxspecialhi.c) is not ported");
+    crate::tu::ftfoxspecialhi::ftFx_SpecialHi_CreateChargeGFX(g);
 }
 
 /// `ftFx_SpecialHi_CreateLaunchGFX` (defined in src/melee/ft/kinds/ftFox/ftfoxspecialhi.c).
 pub unsafe extern "C" fn ftfoxspecialhi__ftFx_SpecialHi_CreateLaunchGFX(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftFx_SpecialHi_CreateLaunchGFX (src/melee/ft/kinds/ftFox/ftfoxspecialhi.c) is not ported");
+    crate::tu::ftfoxspecialhi::ftFx_SpecialHi_CreateLaunchGFX(g);
 }
 
 /// `ftFx_SpecialLwHit_Enter` (defined in src/melee/ft/kinds/ftFox/ftfoxspeciallw.c).
 pub unsafe extern "C" fn ftfoxspeciallw__ftFx_SpecialLwHit_Enter(g: *mut HSD_GObj) {
-    panic!("TODO(group4): ftFx_SpecialLwHit_Enter (src/melee/ft/kinds/ftFox/ftfoxspeciallw.c) is not ported");
+    crate::tu::ftfoxspeciallw::ftFx_SpecialLwHit_Enter(g);
 }
 
 /// `ftGw_Init_OnDamage` (defined in src/melee/ft/kinds/ftGameWatch/ftgamewatch.c).

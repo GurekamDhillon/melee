@@ -72,3 +72,7 @@ pub mod ftgamewatchspecialn;
 pub mod ftgamewatchspecials;
 pub mod ftganon;
 pub mod ftgkoopa;
+pub mod ftfoxspecialhi;
+pub mod ftfoxspeciallw;
+pub mod ftfoxspecialn;
+pub mod ftfoxspecials;

@@ -5,6 +5,7 @@
 //! (`gen/cref/tu/<stem>.c`, the whole TU, shipping contraction).
 pub mod support;
 pub mod gmcameramode;
+pub mod gmclassic;
 pub mod gmdebugmode;
 pub mod gmfixedcamera;
 pub mod gmgiant;

@@ -3,8 +3,14 @@
 #![allow(dead_code, static_mut_refs)]
 
 pub static mut TR: u32 = 0;
+pub static mut TRACEON: bool = false;
 pub fn t(v: u32) {
-    unsafe { TR = TR.wrapping_mul(31).wrapping_add(v) }
+    unsafe {
+        TR = TR.wrapping_mul(31).wrapping_add(v);
+        if TRACEON {
+            println!("T {:08X}", v);
+        }
+    }
 }
 pub fn t64(d: f64) {
     let u = d.to_bits();
@@ -139,6 +145,9 @@ pub fn base<T>(r: &T) -> *const u8 {
 pub fn case(op: u32, k: u32) {
     unsafe {
         TR = 0;
+        // MTU_DBG=<op>:<case> prints every trace word of that case (compare with the C driver
+        // built with -DDBG_OP=<op> -DDBG_K=<case>)
+        TRACEON = std::env::var("MTU_DBG").map(|v| v == format!("{op}:{k}")).unwrap_or(false);
         H = 0x811C_9DC5;
         RS = 0x9059u32.wrapping_add(op.wrapping_mul(7919)).wrapping_add(k.wrapping_mul(104729));
         for i in 0..16 {

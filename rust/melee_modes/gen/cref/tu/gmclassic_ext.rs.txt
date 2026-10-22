@@ -1,0 +1,116 @@
+// BEGIN GENERATED EXT (rust/melee_modes/gen/cref/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn Ground_801C1DE4(a0: *mut i32, a1: *mut i32);
+    fn Ground_801C5A28();
+    fn HSD_Randi(a0: i32) -> i32;
+    fn SceneLaunch_OnePDirect(a0: i32) -> i32;
+    fn SceneLaunch_OnePLevel() -> i32;
+    fn SceneLaunch_OnePStep() -> i32;
+    fn SceneLaunch_PlayerCKind(a0: i32) -> i32;
+    fn SceneLaunch_PlayerColor(a0: i32) -> i32;
+    fn SceneLaunch_PlayerStocks(a0: i32) -> i32;
+    fn Script_OnePScripted() -> i32;
+    fn Stage_8022519C(a0: u32) -> u32;
+    fn gmFrontend_AtlasSelect(a0: *mut GameModeState, a1: i32, a2: *const i8);
+    fn gmMainLib_8015CDC8() -> *mut gmm_x0_528_t;
+    fn gmMainLib_8015D438(a0: u8) -> *mut u32;
+    fn gmMainLib_8015D450(a0: u8) -> *mut i32;
+    fn gmMainLib_8015D48C(a0: u8) -> i32;
+    fn gmMainLib_8015D4E8(a0: u8, a1: i32);
+    fn gmMainLib_8015ED98() -> *mut gmm_retval_ED98;
+    fn gmMainLib_8015EDB0() -> *mut gmm_retval_EDB0;
+    fn gmMainLib_8015EDBC() -> *mut gmm_retval_EDBC;
+    fn gmRegSetupEnemyColorTable(a0: i8, a1: u8, a2: *const i8, a3: *mut u8);
+    fn gm_80164430(a0: u16) -> i32;
+    fn gm_801647F8(a0: u8) -> i32;
+    fn gm_801677F0() -> u8;
+    fn gm_80168F88();
+    fn gm_80172174();
+    fn gm_8017BE84(a0: u32) -> i32;
+    fn gm_8017C984(a0: *mut c_void);
+    fn gm_8017C9A8(a0: *mut DebugGameOverData, a1: *mut Unk1PData, a2: u8);
+    fn gm_8017CA38(a0: *mut DebugGameOverData, a1: *mut Unk1PData, a2: *mut gmm_x0_528_t, a3: u8);
+    fn gm_8017CBAC(a0: *mut UnkAdventureData, a1: *mut gmm_x0_528_t, a2: u8);
+    fn gm_8017CD94(a0: *mut UnkAdventureData, a1: i32, a2: i32, a3: i32) -> u8;
+    fn gm_8017CE34(a0: *mut StartMeleeData, a1: *mut Unk1PData, a2: *mut i8, a3: u8, a4: u8, a5: u8, a6: i32, a7: u32, a8: i32, a9: i32);
+    fn gm_8017D7AC(a0: *mut MatchExitInfo, a1: *mut Unk1PData, a2: u8) -> i32;
+    fn gm_8017DB58(a0: *mut Unk1PData_x24);
+    fn gm_8017DB6C(a0: *mut gm_8017DB6C_arg0_t, a1: i32) -> u8;
+    fn gm_8017DB78(a0: *mut gm_8017DB6C_arg0_t, a1: i32) -> u8;
+    fn gm_8017DB88(a0: *mut c_void, a1: u8, a2: i32, a3: i32, a4: *mut u8, a5: u8, a6: Option<unsafe extern "C" fn(i32, i32, u8) -> u8>, a7: Option<unsafe extern "C" fn(i32, i32, u8) -> u8>, a8: Option<unsafe extern "C" fn(i32, i32, u8) -> u8>, a9: Option<unsafe extern "C" fn(i32, i32) -> f32>, a10: Option<unsafe extern "C" fn(i32, i32) -> f32>) -> i32;
+    fn gm_8017EB3C(a0: u8, a1: u8) -> u8;
+    fn gm_8017EB64(a0: u8, a1: u8, a2: u8) -> u8;
+    fn gm_8017EB98(a0: u8, a1: u8, a2: u8) -> u8;
+    fn gm_8017EBCC(a0: u8, a1: u8, a2: u8) -> u8;
+    fn gm_8017EC00(a0: u8, a1: u8) -> f32;
+    fn gm_8017EC50(a0: u8, a1: u8) -> f32;
+    fn gm_8017ECA0(a0: u8, a1: u8, a2: u8) -> u8;
+    fn gm_8017ECD4(a0: u8, a1: u8, a2: u8) -> u8;
+    fn gm_8017ED08(a0: u8, a1: u8, a2: u8) -> u8;
+    fn gm_8017ED3C(a0: u8, a1: u8) -> f32;
+    fn gm_8017ED8C(a0: u8, a1: u8) -> f32;
+    fn gm_801B06B0(a0: *mut CSSData, a1: u8, a2: i8, a3: i8, a4: i8, a5: u8, a6: u8, a7: u8);
+    fn gm_801B0730(a0: *mut CSSData, a1: *mut i8, a2: *mut u8, a3: *mut u8, a4: *mut u8, a5: *mut u8);
+    fn gm_CKindToSelKind(a0: u8) -> u8;
+    fn gm_ChangeGameModeAfterCurrentScene(a0: i32);
+    fn gm_GetAllStarData() -> *mut UnkAllstarData;
+    fn gm_GetGameModeStateEnterData(a0: *mut GameModeState) -> *mut c_void;
+    fn gm_GetGameModeStateExitData(a0: *mut GameModeState) -> *mut c_void;
+    fn gm_IsCKindUnlocked(a0: u8) -> i32;
+    fn gm_LoadRumbleEnabled(a0: *mut StartMeleeData);
+    fn gm_SetGameModeStateId(a0: u8);
+    fn gm_SetNewGameModePending();
+    fn gm_SetNextGameModeStateId(a0: u8);
+    fn gm_SetPendingGameMode(a0: u8);
+    fn lbAudioAx_80026E84(a0: u32) -> u64;
+    fn lbAudioAx_80026EBC(a0: u32) -> u64;
+    fn lbAudioAx_80026F2C(a0: u32);
+    fn lbAudioAx_8002702C(a0: u32, a1: u64);
+    fn lbAudioAx_80027168();
+    fn lbDvd_80017700(a0: i32);
+    fn lbDvd_80018254();
+    fn lbDvd_80018C2C(a0: u8);
+    fn lbDvd_80018C6C();
+    fn lbDvd_GetPreloadCacheScene() -> *mut PreloadedGameModeState;
+    fn lbDvd_SetupVsPreloadCache();
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn gm_8017EB3C(a0: u8, a1: u8) -> u8 { super::gm_8017EB3C(a0, a1) }
+        pub unsafe extern "C" fn gm_8017EB64(a0: u8, a1: u8, a2: u8) -> u8 { super::gm_8017EB64(a0, a1, a2) }
+        pub unsafe extern "C" fn gm_8017EB98(a0: u8, a1: u8, a2: u8) -> u8 { super::gm_8017EB98(a0, a1, a2) }
+        pub unsafe extern "C" fn gm_8017EBCC(a0: u8, a1: u8, a2: u8) -> u8 { super::gm_8017EBCC(a0, a1, a2) }
+        pub unsafe extern "C" fn gm_8017EC00(a0: u8, a1: u8) -> f32 { super::gm_8017EC00(a0, a1) }
+        pub unsafe extern "C" fn gm_8017EC50(a0: u8, a1: u8) -> f32 { super::gm_8017EC50(a0, a1) }
+        pub unsafe extern "C" fn gm_8017ECA0(a0: u8, a1: u8, a2: u8) -> u8 { super::gm_8017ECA0(a0, a1, a2) }
+        pub unsafe extern "C" fn gm_8017ECD4(a0: u8, a1: u8, a2: u8) -> u8 { super::gm_8017ECD4(a0, a1, a2) }
+        pub unsafe extern "C" fn gm_8017ED08(a0: u8, a1: u8, a2: u8) -> u8 { super::gm_8017ED08(a0, a1, a2) }
+        pub unsafe extern "C" fn gm_8017ED3C(a0: u8, a1: u8) -> f32 { super::gm_8017ED3C(a0, a1) }
+        pub unsafe extern "C" fn gm_8017ED8C(a0: u8, a1: u8) -> f32 { super::gm_8017ED8C(a0, a1) }
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut gmClassic_80470708: [*mut c_void; 1] = unsafe { core::mem::zeroed() };
+    pub static mut gmClassic_80470850: DebugGameOverData = unsafe { core::mem::zeroed() };
+    pub static mut gmClassic_8047086C: *mut c_void = unsafe { core::mem::zeroed() };
+    pub static mut gmClassic_80472AF8: *mut c_void = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

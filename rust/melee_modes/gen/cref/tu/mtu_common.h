@@ -7,7 +7,12 @@ void OSReport(char* f, ...) { (void) f; }
 
 typedef unsigned long long u64_t_;
 static u32 TR;
-static void T(u32 v) { TR = TR * 31u + v; }
+#ifndef DBG_OP
+#define DBG_OP -1
+#define DBG_K -1
+#endif
+static int TRACEON;
+static void T(u32 v) { TR = TR * 31u + v; if (TRACEON) printf("T %08X%c", v, 10); }
 static u32 B(float f) { union { float f; u32 u; } c; c.f = f; return c.u; }
 static void T64(double d) { union { double d; u64_t_ u; } c; c.d = d; T((u32) c.u); T((u32) (c.u >> 32)); }
 static u32 H;
@@ -104,6 +109,7 @@ static void tu_case(int op, int k)
 {
     int i;
     TR = 0;
+    TRACEON = (op == DBG_OP && k == DBG_K);
     H = 0x811C9DC5u;
     rs = 0x9059u + (u32) op * 7919u + (u32) k * 104729u;
     for (i = 0; i < 16; i++) SRV[i] = rnd();

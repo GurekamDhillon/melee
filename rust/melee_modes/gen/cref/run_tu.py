@@ -47,18 +47,28 @@ def main():
         spec = SPECS[n]
         gen_tu.build(n, spec, False)
         drv = HERE / "tu" / f"{n}.c"
-        src = spec["src"]
+        src = gen_tu.patched_source(n, spec)
         exe = BUILD / f"mtu_{n}.exe"
+        # MTU_DBG=<op>:<case> builds the driver to print that case's trace words (Rust: same env var)
+        dbg = []
+        if os.environ.get("MTU_DBG"):
+            dop, dk = os.environ["MTU_DBG"].split(":")
+            dbg = [f"-DDBG_OP={dop}", f"-DDBG_K={dk}"]
         lls = []
         for s in (drv, ROOT / "pc/gameworld/gekko_fp.c"):
             ll = BUILD / f"mtu_{n}__{s.stem}.ll"
             lo = BUILD / f"mtu_{n}__{s.stem}.lo.ll"
-            run([CLANG, *FLAGS, "-I", str((ROOT / src).parent), "-I", str(HERE / "tu"),
-                 '-DTU_SRC="' + str(ROOT / src).replace("\\", "/") + '"', str(s), "-o", str(ll)], n)
+            run([CLANG, *FLAGS, "-I", str((ROOT / spec["src"]).parent), "-I", str(HERE / "tu"),
+                 '-DTU_SRC="' + str(ROOT / src).replace("\\", "/") + '"', *dbg, str(s), "-o", str(ll)], n)
             run([sys.executable, str(LOWER), str(ll), str(lo)], n)
             lls.append(str(lo))
         run([CLANG, "-O0", "-w", *lls, "-o", str(exe), "-Wl,/OPT:NOICF", "-fuse-ld=lld"], n)
         out = subprocess.run([str(exe)], capture_output=True, text=True, check=True).stdout
+        if dbg:
+            tr = [l for l in out.splitlines() if l.startswith("T ")]
+            (BUILD / f"dbg_{n}.txt").write_text(chr(10).join(tr) + chr(10), encoding="utf-8")
+            print(f"mtu: {n}: {len(tr)} trace words")
+            continue
         (DATA / f"mtu_{n}.txt").write_text(out, encoding="utf-8", newline="\n")
         print(f"mtu: {n}: {len(out.splitlines())} lines")
 

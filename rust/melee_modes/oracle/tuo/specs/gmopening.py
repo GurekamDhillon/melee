@@ -53,3 +53,5 @@ PTR_BYTES = {
     "HSD_CObjSetInterest": {1: 12},
 }
 GUEST_VARS = {0x800000F8: ("__OSBusClock", "unsigned int", "u32")}
+
+PORTED = {"gm_PreloadTitleDemo": "crate::tu::gmopeningmode::gm_PreloadTitleDemo"}

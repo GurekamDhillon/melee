@@ -47,3 +47,5 @@ LINKS = {
 }
 # the save data (68 KB) is only needed by these two functions
 LINK_GATE = {"g:gmMainLib_804D3EE0": ["gm_SetupTitleDemo", "onEnterVs"]}
+# the TU touches only the start of the save data (the usage history bytes) and the Opening VS row
+PRUNE = {"struct gmm_x0": ["unk_2", "pad_3", "x39", "modes.table[14]"]}

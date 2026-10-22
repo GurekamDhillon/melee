@@ -44,6 +44,7 @@ pub mod ext {
         };
     }
     /// Like `hook!`, but an unset hook calls an existing verified port.
+    #[allow(unused_macros)]
     macro_rules! hook_or {
         ($h:ident, $name:ident, $port:path, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
             pub static mut $h: Option<unsafe extern "C" fn($($t),*) $(-> $r)?> = None;

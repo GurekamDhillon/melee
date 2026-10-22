@@ -300,6 +300,13 @@ static void* mk_target(const char* path, const char* tgt)
         fprintf(stderr, "no global %s\n", tgt + 1); exit(4);
     }
     if (!strncmp(tgt, "buf:", 4)) return tuo_newbuf(0, (size_t) atoi(tgt + 4));
+    if (!strncmp(tgt, "cell:", 5)) {
+        int bits = atoi(tgt + 5);
+        void* cp = tuo_newbuf(0, 8);
+        u64 cv = tuo_leaf_int(path, bits, 1);
+        memcpy(cp, &cv, bits / 8);
+        return cp;
+    }
     if (!strncmp(tgt, "ptrs:", 5)) {
         char ty[96]; strcpy(ty, tgt + 5);
         char* c = strchr(ty, ':'); *c = 0;
@@ -400,6 +407,7 @@ int tuo_streq(const char* a, const char* b) { return !strcmp(a, b); }
 /* ---- driver ---- */
 extern void tuo_unit_init(void);
 extern u64 tuo_unit_call(const char* fn, u64* a);
+extern u64 tuo_unit_expr(const char* n);
 
 static u64 fnv(const char* s)
 {
@@ -433,6 +441,7 @@ static void run_case(struct Fn* f, int idx)
         } else if (!strcmp(t, "f32")) a[i] = tuo_leaf_f32(key);
         else if (!strcmp(t, "f64")) a[i] = tuo_leaf_f64(key);
         else if (!strcmp(t, "null")) a[i] = 0;
+        else if (!strncmp(t, "e:", 2)) a[i] = tuo_unit_expr(t + 2);
         else if (!strncmp(t, "pn:", 3)) a[i] = (tuo_draw() & 3) == 0 ? 0 : (u64) (uintptr_t) tuo_new(lab, t + 3, 0);
         else if (!strncmp(t, "p:", 2)) a[i] = (u64) (uintptr_t) tuo_new(lab, t + 2, 0);
         else if (!strncmp(t, "cell:", 5)) {

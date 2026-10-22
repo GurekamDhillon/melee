@@ -299,6 +299,9 @@ pub fn glue() -> Glue {
         tu::ext::H_gm_SetPendingGameMode = Some(s_gm_SetPendingGameMode);
         tu::ext::H_gm_SetNewGameModePending = Some(s_gm_SetNewGameModePending);
         },
+        expr: |n| match n {
+            _ => panic!("no such expr {n}"),
+        },
         call: |name, a| match name {
         "onEnterDebug" => unsafe { melee_modes::tu::gmmenumode::onEnterDebug(a[0] as usize as _); 0 },
         "onEnter" => unsafe { melee_modes::tu::gmmenumode::onEnter(a[0] as usize as _); 0 },

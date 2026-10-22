@@ -7,3 +7,4 @@ pub mod gmmovieend;
 pub mod gmopening;
 pub mod gmmenumode;
 pub mod gmopeningmode;
+pub mod gmmultiman;

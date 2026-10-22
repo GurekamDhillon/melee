@@ -29,6 +29,7 @@ pub mod ext {
         };
     }
     /// Like `hook!`, but an unset hook calls an existing verified port.
+    #[allow(unused_macros)]
     macro_rules! hook_or {
         ($h:ident, $name:ident, $port:path, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
             pub static mut $h: Option<unsafe extern "C" fn($($t),*) $(-> $r)?> = None;
@@ -90,7 +91,7 @@ pub mod ext {
     hook!(H_gmTitle_801A12C4, gmTitle_801A12C4, () -> *mut melee_types::HSD_GObj);
     hook!(H_gmTitle_801A165C, gmTitle_801A165C, () -> *mut melee_types::HSD_GObj);
     hook!(H_lbMthp_8001F604, lbMthp_8001F604, () -> i32);
-    hook!(H_gm_PreloadTitleDemo, gm_PreloadTitleDemo, ());
+    hook_or!(H_gm_PreloadTitleDemo, gm_PreloadTitleDemo, crate::tu::gmopeningmode::gm_PreloadTitleDemo, ());
     hook!(H_lbAudioAx_800236DC, lbAudioAx_800236DC, () -> i32);
     hook!(H_lbAudioAx_80023694, lbAudioAx_80023694, () -> i32);
     hook!(H_gm_801A4B74, gm_801A4B74, ());

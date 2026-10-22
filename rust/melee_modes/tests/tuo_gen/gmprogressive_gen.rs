@@ -375,15 +375,48 @@ if v.set() { (*p).ref_count_individual = v.leaf_int(&format!("{}.ref_count_indiv
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn vis_HSD_RectF32(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::HSD_RectF32; unsafe {
-v.bytes(path, vp, core::mem::size_of_val(&*p));
+{
+if v.set() { (*p).xmin = f32::from_bits(v.leaf_f32(&format!("{}.xmin", path))); } else { v.dump_f32(&format!("{}.xmin", path), ((*p).xmin).to_bits()); }
+}
+{
+if v.set() { (*p).xmax = f32::from_bits(v.leaf_f32(&format!("{}.xmax", path))); } else { v.dump_f32(&format!("{}.xmax", path), ((*p).xmax).to_bits()); }
+}
+{
+if v.set() { (*p).ymin = f32::from_bits(v.leaf_f32(&format!("{}.ymin", path))); } else { v.dump_f32(&format!("{}.ymin", path), ((*p).ymin).to_bits()); }
+}
+{
+if v.set() { (*p).ymax = f32::from_bits(v.leaf_f32(&format!("{}.ymax", path))); } else { v.dump_f32(&format!("{}.ymax", path), ((*p).ymax).to_bits()); }
+}
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn vis_Scissor(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::Scissor; unsafe {
-v.bytes(path, vp, core::mem::size_of_val(&*p));
+{
+if v.set() { (*p).left = v.leaf_int(&format!("{}.left", path), 16, 0) as _; } else { v.dump_u(&format!("{}.left", path), (((*p).left) as u16) as u64); }
+}
+{
+if v.set() { (*p).right = v.leaf_int(&format!("{}.right", path), 16, 0) as _; } else { v.dump_u(&format!("{}.right", path), (((*p).right) as u16) as u64); }
+}
+{
+if v.set() { (*p).top = v.leaf_int(&format!("{}.top", path), 16, 0) as _; } else { v.dump_u(&format!("{}.top", path), (((*p).top) as u16) as u64); }
+}
+{
+if v.set() { (*p).bottom = v.leaf_int(&format!("{}.bottom", path), 16, 0) as _; } else { v.dump_u(&format!("{}.bottom", path), (((*p).bottom) as u16) as u64); }
+}
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn vis_Vec4(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::Vec4; unsafe {
-v.bytes(path, vp, core::mem::size_of_val(&*p));
+{
+if v.set() { (*p).x = f32::from_bits(v.leaf_f32(&format!("{}.x", path))); } else { v.dump_f32(&format!("{}.x", path), ((*p).x).to_bits()); }
+}
+{
+if v.set() { (*p).y = f32::from_bits(v.leaf_f32(&format!("{}.y", path))); } else { v.dump_f32(&format!("{}.y", path), ((*p).y).to_bits()); }
+}
+{
+if v.set() { (*p).z = f32::from_bits(v.leaf_f32(&format!("{}.z", path))); } else { v.dump_f32(&format!("{}.z", path), ((*p).z).to_bits()); }
+}
+{
+if v.set() { (*p).w = f32::from_bits(v.leaf_f32(&format!("{}.w", path))); } else { v.dump_f32(&format!("{}.w", path), ((*p).w).to_bits()); }
+}
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn vis_Vec2(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::Vec2; unsafe {
@@ -396,7 +429,18 @@ if v.set() { (*p).y = f32::from_bits(v.leaf_f32(&format!("{}.y", path))); } else
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn vis_GXColor(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::GXColor; unsafe {
-v.bytes(path, vp, core::mem::size_of_val(&*p));
+{
+if v.set() { (*p).r = v.leaf_int(&format!("{}.r", path), 8, 0) as _; } else { v.dump_u(&format!("{}.r", path), (((*p).r) as u8) as u64); }
+}
+{
+if v.set() { (*p).g = v.leaf_int(&format!("{}.g", path), 8, 0) as _; } else { v.dump_u(&format!("{}.g", path), (((*p).g) as u8) as u64); }
+}
+{
+if v.set() { (*p).b = v.leaf_int(&format!("{}.b", path), 8, 0) as _; } else { v.dump_u(&format!("{}.b", path), (((*p).b) as u8) as u64); }
+}
+{
+if v.set() { (*p).a = v.leaf_int(&format!("{}.a", path), 8, 0) as _; } else { v.dump_u(&format!("{}.a", path), (((*p).a) as u8) as u64); }
+}
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn vis_Quaternion(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::Quaternion; unsafe {
@@ -415,7 +459,15 @@ if v.set() { (*p).w = f32::from_bits(v.leaf_f32(&format!("{}.w", path))); } else
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn vis_Vec3(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::Vec3; unsafe {
-v.bytes(path, vp, core::mem::size_of_val(&*p));
+{
+if v.set() { (*p).x = f32::from_bits(v.leaf_f32(&format!("{}.x", path))); } else { v.dump_f32(&format!("{}.x", path), ((*p).x).to_bits()); }
+}
+{
+if v.set() { (*p).y = f32::from_bits(v.leaf_f32(&format!("{}.y", path))); } else { v.dump_f32(&format!("{}.y", path), ((*p).y).to_bits()); }
+}
+{
+if v.set() { (*p).z = f32::from_bits(v.leaf_f32(&format!("{}.z", path))); } else { v.dump_f32(&format!("{}.z", path), ((*p).z).to_bits()); }
+}
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn vis_struct__HSD_Class(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::_HSD_Class; unsafe {
@@ -465,33 +517,33 @@ if v.set() { (*p) = v.leaf_int(path, 8, 0) as _; } else { v.dump_u(path, (((*p))
 fn gv_HSD_GObj_JObjKind(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut u8; unsafe {
 if v.set() { (*p) = v.leaf_int(path, 8, 0) as _; } else { v.dump_u(path, (((*p)) as u8) as u64); }
 } }
-unsafe extern "C" fn s_gmMainLib_8015F500() { let v = vv(); v.call_begin("gmMainLib_8015F500");  v.call_end();   }
-unsafe extern "C" fn s_OSSetProgressiveMode(a0: u32) { let v = vv(); v.call_begin("OSSetProgressiveMode"); v.arg_u(a0 as u64); v.call_end();   }
-unsafe extern "C" fn s_gm_GetButtonsTriggered(a0: u8) -> u64 { let v = vv(); v.call_begin("gm_GetButtonsTriggered"); v.arg_u(a0 as u64); v.call_end();  v.ret_int("gm_GetButtonsTriggered", 64, 0) as _ }
-unsafe extern "C" fn s_HSD_JObjSetFlagsAll(a0: *mut melee_types::HSD_JObj, a1: u32) { let v = vv(); v.call_begin("HSD_JObjSetFlagsAll"); v.arg_p(a0 as usize); v.arg_u(a1 as u64); v.call_end();   }
-unsafe extern "C" fn s_gm_801A4B60() { let v = vv(); v.call_begin("gm_801A4B60");  v.call_end();   }
-unsafe extern "C" fn s_lbArchive_80016EFC(a0: *mut melee_types::HSD_Archive) { let v = vv(); v.call_begin("lbArchive_80016EFC"); v.arg_p(a0 as usize); v.call_end();   }
-unsafe extern "C" fn s_HSD_JObjClearFlagsAll(a0: *mut melee_types::HSD_JObj, a1: u32) { let v = vv(); v.call_begin("HSD_JObjClearFlagsAll"); v.arg_p(a0 as usize); v.arg_u(a1 as u64); v.call_end();   }
-unsafe extern "C" fn s_HSD_SisLib_803A6368(a0: *mut melee_types::HSD_Text, a1: i32) { let v = vv(); v.call_begin("HSD_SisLib_803A6368"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.call_end();   }
-unsafe extern "C" fn s_HSD_JObjReqAnimAll(a0: *mut melee_types::HSD_JObj, a1: f32) { let v = vv(); v.call_begin("HSD_JObjReqAnimAll"); v.arg_p(a0 as usize); v.arg_f32(a1.to_bits()); v.call_end();   }
-unsafe extern "C" fn s_HSD_JObjAnimAll(a0: *mut melee_types::HSD_JObj) { let v = vv(); v.call_begin("HSD_JObjAnimAll"); v.arg_p(a0 as usize); v.call_end();   }
-unsafe extern "C" fn s___assert(a0: *const i8, a1: u32, a2: *const i8) { let v = vv(); v.call_begin("__assert"); v.arg_s(a0 as *const u8); v.arg_u(a1 as u64); v.arg_s(a2 as *const u8); v.call_end();   }
-unsafe extern "C" fn s_HSD_JObjSetMtxDirtySub(a0: *mut melee_types::HSD_JObj) { let v = vv(); v.call_begin("HSD_JObjSetMtxDirtySub"); v.arg_p(a0 as usize); v.call_end();   }
-unsafe extern "C" fn s_lbAudioAx_80024030(a0: i32) { let v = vv(); v.call_begin("lbAudioAx_80024030"); v.arg_i(a0 as i64); v.call_end();   }
-unsafe extern "C" fn s_lbArchive_80016DBC(a0: *const i8, a1: *mut core::ffi::c_void, a2: *const i8, a3: i32) -> *mut melee_types::HSD_Archive { let v = vv(); v.call_begin("lbArchive_80016DBC"); v.arg_s(a0 as *const u8); v.arg_p(a1 as usize); v.arg_s(a2 as *const u8); v.arg_i(a3 as i64); v.call_end(); if !a1.is_null() { *(a1 as *mut usize) = v.leaf_ptr("out:lbArchive_80016DBC#1"); } v.ret_ptr("lbArchive_80016DBC") as _ }
-unsafe extern "C" fn s_GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut melee_types::HSD_GObj { let v = vv(); v.call_begin("GObj_Create"); v.arg_u(a0 as u64); v.arg_u(a1 as u64); v.arg_u(a2 as u64); v.call_end();  v.ret_ptr("GObj_Create") as _ }
-unsafe extern "C" fn s_HSD_CObjLoadDesc(a0: *mut melee_types::HSD_CObjDesc) -> *mut melee_types::HSD_CObj { let v = vv(); v.call_begin("HSD_CObjLoadDesc"); v.arg_p(a0 as usize); v.call_end();  v.ret_ptr("HSD_CObjLoadDesc") as _ }
-unsafe extern "C" fn s_HSD_GObjObject_80390A70(a0: *mut melee_types::HSD_GObj, a1: u8, a2: *mut core::ffi::c_void) { let v = vv(); v.call_begin("HSD_GObjObject_80390A70"); v.arg_p(a0 as usize); v.arg_u(a1 as u64); v.arg_p(a2 as usize); v.call_end();   }
-unsafe extern "C" fn s_GObj_SetupGXLinkMax(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u32) { let v = vv(); v.call_begin("GObj_SetupGXLinkMax"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.call_end();   }
-unsafe extern "C" fn s_HSD_GObj_803910D8(a0: *mut melee_types::HSD_GObj, a1: i32) { let v = vv(); v.call_begin("HSD_GObj_803910D8"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.call_end();   }
-unsafe extern "C" fn s_HSD_SisLib_803A611C(a0: i32, a1: *mut melee_types::HSD_GObj, a2: u16, a3: u8, a4: u8, a5: u8, a6: u8, a7: u32) -> i32 { let v = vv(); v.call_begin("HSD_SisLib_803A611C"); v.arg_i(a0 as i64); v.arg_p(a1 as usize); v.arg_u(a2 as u64); v.arg_u(a3 as u64); v.arg_u(a4 as u64); v.arg_u(a5 as u64); v.arg_u(a6 as u64); v.arg_u(a7 as u64); v.call_end();  v.ret_int("HSD_SisLib_803A611C", 32, 1) as _ }
-unsafe extern "C" fn s_lbLang_IsSavedLanguageUS() -> i32 { let v = vv(); v.call_begin("lbLang_IsSavedLanguageUS");  v.call_end();  v.ret_int("lbLang_IsSavedLanguageUS", 32, 1) as _ }
-unsafe extern "C" fn s_HSD_SisLib_803A62A0(a0: i32, a1: *mut i8, a2: *mut i8) { let v = vv(); v.call_begin("HSD_SisLib_803A62A0"); v.arg_i(a0 as i64); v.arg_s(a1 as *const u8); v.arg_s(a2 as *const u8); v.call_end();   }
-unsafe extern "C" fn s_HSD_SisLib_803A5ACC(a0: i32, a1: i32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) -> *mut melee_types::HSD_Text { let v = vv(); v.call_begin("HSD_SisLib_803A5ACC"); v.arg_i(a0 as i64); v.arg_i(a1 as i64); v.arg_f32(a2.to_bits()); v.arg_f32(a3.to_bits()); v.arg_f32(a4.to_bits()); v.arg_f32(a5.to_bits()); v.arg_f32(a6.to_bits()); v.call_end();  v.ret_ptr("HSD_SisLib_803A5ACC") as _ }
-unsafe extern "C" fn s_HSD_JObjLoadJoint(a0: *mut melee_types::HSD_Joint) -> *mut melee_types::HSD_JObj { let v = vv(); v.call_begin("HSD_JObjLoadJoint"); v.arg_p(a0 as usize); v.call_end();  v.ret_ptr("HSD_JObjLoadJoint") as _ }
-unsafe extern "C" fn s_GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32) { let v = vv(); v.call_begin("GObj_SetupGXLink"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.arg_u(a3 as u64); v.call_end();   }
-unsafe extern "C" fn s_HSD_GObj_JObjCallback(a0: *mut melee_types::HSD_GObj, a1: i32) { let v = vv(); v.call_begin("HSD_GObj_JObjCallback"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.call_end();   }
-unsafe extern "C" fn s_gm_8016895C(a0: *mut melee_types::HSD_JObj, a1: *mut melee_types::DynamicModelDesc, a2: i32) { let v = vv(); v.call_begin("gm_8016895C"); v.arg_p(a0 as usize); v.arg_p(a1 as usize); v.arg_i(a2 as i64); v.call_end();   }
+unsafe extern "C" fn s_gmMainLib_8015F500() { let v = vv(); v.call_begin("gmMainLib_8015F500");  v.call_end();    }
+unsafe extern "C" fn s_OSSetProgressiveMode(a0: u32) { let v = vv(); v.call_begin("OSSetProgressiveMode"); v.arg_u(a0 as u64); v.call_end();    }
+unsafe extern "C" fn s_gm_GetButtonsTriggered(a0: u8) -> u64 { let v = vv(); v.call_begin("gm_GetButtonsTriggered"); v.arg_u(a0 as u64); v.call_end();   v.ret_int("gm_GetButtonsTriggered", 64, 0) as _ }
+unsafe extern "C" fn s_HSD_JObjSetFlagsAll(a0: *mut melee_types::HSD_JObj, a1: u32) { let v = vv(); v.call_begin("HSD_JObjSetFlagsAll"); v.arg_p(a0 as usize); v.arg_u(a1 as u64); v.call_end();    }
+unsafe extern "C" fn s_gm_801A4B60() { let v = vv(); v.call_begin("gm_801A4B60");  v.call_end();    }
+unsafe extern "C" fn s_lbArchive_80016EFC(a0: *mut melee_types::HSD_Archive) { let v = vv(); v.call_begin("lbArchive_80016EFC"); v.arg_p(a0 as usize); v.call_end();    }
+unsafe extern "C" fn s_HSD_JObjClearFlagsAll(a0: *mut melee_types::HSD_JObj, a1: u32) { let v = vv(); v.call_begin("HSD_JObjClearFlagsAll"); v.arg_p(a0 as usize); v.arg_u(a1 as u64); v.call_end();    }
+unsafe extern "C" fn s_HSD_SisLib_803A6368(a0: *mut melee_types::HSD_Text, a1: i32) { let v = vv(); v.call_begin("HSD_SisLib_803A6368"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.call_end();    }
+unsafe extern "C" fn s_HSD_JObjReqAnimAll(a0: *mut melee_types::HSD_JObj, a1: f32) { let v = vv(); v.call_begin("HSD_JObjReqAnimAll"); v.arg_p(a0 as usize); v.arg_f32(a1.to_bits()); v.call_end();    }
+unsafe extern "C" fn s_HSD_JObjAnimAll(a0: *mut melee_types::HSD_JObj) { let v = vv(); v.call_begin("HSD_JObjAnimAll"); v.arg_p(a0 as usize); v.call_end();    }
+unsafe extern "C" fn s___assert(a0: *const i8, a1: u32, a2: *const i8) { let v = vv(); v.call_begin("__assert"); v.arg_s(a0 as *const u8); v.arg_u(a1 as u64); v.arg_s(a2 as *const u8); v.call_end();    }
+unsafe extern "C" fn s_HSD_JObjSetMtxDirtySub(a0: *mut melee_types::HSD_JObj) { let v = vv(); v.call_begin("HSD_JObjSetMtxDirtySub"); v.arg_p(a0 as usize); v.call_end();    }
+unsafe extern "C" fn s_lbAudioAx_80024030(a0: i32) { let v = vv(); v.call_begin("lbAudioAx_80024030"); v.arg_i(a0 as i64); v.call_end();    }
+unsafe extern "C" fn s_lbArchive_80016DBC(a0: *const i8, a1: *mut core::ffi::c_void, a2: *const i8, a3: i32) -> *mut melee_types::HSD_Archive { let v = vv(); v.call_begin("lbArchive_80016DBC"); v.arg_s(a0 as *const u8); v.arg_p(a1 as usize); v.arg_s(a2 as *const u8); v.arg_i(a3 as i64); v.call_end(); if !a1.is_null() { *(a1 as *mut usize) = v.leaf_ptr("out:lbArchive_80016DBC#1"); }  v.ret_ptr("lbArchive_80016DBC") as _ }
+unsafe extern "C" fn s_GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut melee_types::HSD_GObj { let v = vv(); v.call_begin("GObj_Create"); v.arg_u(a0 as u64); v.arg_u(a1 as u64); v.arg_u(a2 as u64); v.call_end();   v.ret_ptr("GObj_Create") as _ }
+unsafe extern "C" fn s_HSD_CObjLoadDesc(a0: *mut melee_types::HSD_CObjDesc) -> *mut melee_types::HSD_CObj { let v = vv(); v.call_begin("HSD_CObjLoadDesc"); v.arg_p(a0 as usize); v.call_end();   v.ret_ptr("HSD_CObjLoadDesc") as _ }
+unsafe extern "C" fn s_HSD_GObjObject_80390A70(a0: *mut melee_types::HSD_GObj, a1: u8, a2: *mut core::ffi::c_void) { let v = vv(); v.call_begin("HSD_GObjObject_80390A70"); v.arg_p(a0 as usize); v.arg_u(a1 as u64); v.arg_p(a2 as usize); v.call_end();    }
+unsafe extern "C" fn s_GObj_SetupGXLinkMax(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u32) { let v = vv(); v.call_begin("GObj_SetupGXLinkMax"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.call_end();    }
+unsafe extern "C" fn s_HSD_GObj_803910D8(a0: *mut melee_types::HSD_GObj, a1: i32) { let v = vv(); v.call_begin("HSD_GObj_803910D8"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.call_end();    }
+unsafe extern "C" fn s_HSD_SisLib_803A611C(a0: i32, a1: *mut melee_types::HSD_GObj, a2: u16, a3: u8, a4: u8, a5: u8, a6: u8, a7: u32) -> i32 { let v = vv(); v.call_begin("HSD_SisLib_803A611C"); v.arg_i(a0 as i64); v.arg_p(a1 as usize); v.arg_u(a2 as u64); v.arg_u(a3 as u64); v.arg_u(a4 as u64); v.arg_u(a5 as u64); v.arg_u(a6 as u64); v.arg_u(a7 as u64); v.call_end();   v.ret_int("HSD_SisLib_803A611C", 32, 1) as _ }
+unsafe extern "C" fn s_lbLang_IsSavedLanguageUS() -> i32 { let v = vv(); v.call_begin("lbLang_IsSavedLanguageUS");  v.call_end();   v.ret_int("lbLang_IsSavedLanguageUS", 32, 1) as _ }
+unsafe extern "C" fn s_HSD_SisLib_803A62A0(a0: i32, a1: *mut i8, a2: *mut i8) { let v = vv(); v.call_begin("HSD_SisLib_803A62A0"); v.arg_i(a0 as i64); v.arg_s(a1 as *const u8); v.arg_s(a2 as *const u8); v.call_end();    }
+unsafe extern "C" fn s_HSD_SisLib_803A5ACC(a0: i32, a1: i32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) -> *mut melee_types::HSD_Text { let v = vv(); v.call_begin("HSD_SisLib_803A5ACC"); v.arg_i(a0 as i64); v.arg_i(a1 as i64); v.arg_f32(a2.to_bits()); v.arg_f32(a3.to_bits()); v.arg_f32(a4.to_bits()); v.arg_f32(a5.to_bits()); v.arg_f32(a6.to_bits()); v.call_end();   v.ret_ptr("HSD_SisLib_803A5ACC") as _ }
+unsafe extern "C" fn s_HSD_JObjLoadJoint(a0: *mut melee_types::HSD_Joint) -> *mut melee_types::HSD_JObj { let v = vv(); v.call_begin("HSD_JObjLoadJoint"); v.arg_p(a0 as usize); v.call_end();   v.ret_ptr("HSD_JObjLoadJoint") as _ }
+unsafe extern "C" fn s_GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32) { let v = vv(); v.call_begin("GObj_SetupGXLink"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.arg_u(a3 as u64); v.call_end();    }
+unsafe extern "C" fn s_HSD_GObj_JObjCallback(a0: *mut melee_types::HSD_GObj, a1: i32) { let v = vv(); v.call_begin("HSD_GObj_JObjCallback"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.call_end();    }
+unsafe extern "C" fn s_gm_8016895C(a0: *mut melee_types::HSD_JObj, a1: *mut melee_types::DynamicModelDesc, a2: i32) { let v = vv(); v.call_begin("gm_8016895C"); v.arg_p(a0 as usize); v.arg_p(a1 as usize); v.arg_i(a2 as i64); v.call_end();    }
 pub fn glue() -> Glue {
     Glue {
         types: vec![
@@ -582,6 +634,9 @@ pub fn glue() -> Glue {
         tu::ext::H_GObj_SetupGXLink = Some(s_GObj_SetupGXLink);
         tu::ext::H_HSD_GObj_JObjCallback = Some(s_HSD_GObj_JObjCallback);
         tu::ext::H_gm_8016895C = Some(s_gm_8016895C);
+        },
+        expr: |n| match n {
+            _ => panic!("no such expr {n}"),
         },
         call: |name, a| match name {
         "gm_801AD088" => unsafe { melee_modes::tu::gmprogressive::gm_801AD088(); 0 },

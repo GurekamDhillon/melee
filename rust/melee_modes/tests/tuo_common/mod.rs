@@ -29,6 +29,7 @@ pub struct Glue {
     pub size_ok: &'static [&'static str],
     pub install: fn(),
     pub call: fn(&str, &[u64]) -> u64,
+    pub expr: fn(&str) -> u64,
 }
 
 struct Dom {
@@ -178,7 +179,7 @@ impl V {
             _ => (((r >> 8) % 2000001) as f64 / 1000.0 - 1000.0).to_bits(),
         }
     }
-    fn mk_target(&mut self, tgt: &str) -> usize {
+    fn mk_target(&mut self, path: &str, tgt: &str) -> usize {
         if tgt == "null" {
             return 0;
         }
@@ -192,6 +193,13 @@ impl V {
         }
         if let Some(n) = tgt.strip_prefix("buf:") {
             return self.new_buf(None, n.parse().unwrap()) as usize;
+        }
+        if let Some(n) = tgt.strip_prefix("cell:") {
+            let bits: usize = n.parse().unwrap();
+            let cp = self.new_buf(None, 8);
+            let cv = self.leaf_int(path, bits as u32, 1);
+            unsafe { std::ptr::copy_nonoverlapping(cv.to_le_bytes().as_ptr(), cp, bits / 8) };
+            return cp as usize;
         }
         if let Some(t) = tgt.strip_prefix("ptrs:") {
             let (ty, n) = t.split_once(':').unwrap();
@@ -230,9 +238,9 @@ impl V {
             if self.draw() & 1 != 0 {
                 return 0;
             }
-            return self.mk_target(&format!("new:{t}"));
+            return self.mk_target(path, &format!("new:{t}"));
         }
-        self.mk_target(&tgt)
+        self.mk_target(path, &tgt)
     }
     pub fn dump_i(&mut self, path: &str, v: i64) {
         self.emit(&format!("{path}={v}"));
@@ -535,6 +543,8 @@ pub fn run(cfg: &str, expected: &str, glue: Glue) {
                     v.leaf_f64(&key)
                 } else if t == "null" {
                     0
+                } else if let Some(n) = t.strip_prefix("e:") {
+                    (glue.expr)(n)
                 } else if let Some(ty) = t.strip_prefix("pn:") {
                     if v.draw() & 3 == 0 {
                         0

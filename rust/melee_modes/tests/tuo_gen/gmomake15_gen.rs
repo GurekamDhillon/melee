@@ -184,27 +184,27 @@ if v.set() { (*p) = unsafe { core::mem::transmute::<usize, _>(v.leaf_ptr(path)) 
 fn gv_gmMainLib_8046B0F0(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::gmMainLib_8046B0F0_t; unsafe {
 vis_struct_gmMainLib_8046B0F0_t(v, path, &mut (*p) as *mut _ as *mut u8);
 } }
-unsafe extern "C" fn s_GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut melee_types::HSD_GObj { let v = vv(); v.call_begin("GObj_Create"); v.arg_u(a0 as u64); v.arg_u(a1 as u64); v.arg_u(a2 as u64); v.call_end();  v.ret_ptr("GObj_Create") as _ }
-unsafe extern "C" fn s_gm_801A9DD0(a0: *mut melee_types::HSD_GObj, a1: u16, a2: u16, a3: i32, a4: i32) { let v = vv(); v.call_begin("gm_801A9DD0"); v.arg_p(a0 as usize); v.arg_u(a1 as u64); v.arg_u(a2 as u64); v.arg_i(a3 as i64); v.arg_i(a4 as i64); v.call_end();   }
-unsafe extern "C" fn s_HSD_GObjObject_80390A70(a0: *mut melee_types::HSD_GObj, a1: u8, a2: *mut core::ffi::c_void) { let v = vv(); v.call_begin("HSD_GObjObject_80390A70"); v.arg_p(a0 as usize); v.arg_u(a1 as u64); v.arg_p(a2 as usize); v.call_end();   }
-unsafe extern "C" fn s_GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32) { let v = vv(); v.call_begin("GObj_SetupGXLink"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.arg_u(a3 as u64); v.call_end();   }
-unsafe extern "C" fn s_lbMthp_8001F67C(a0: *mut melee_types::HSD_GObj, a1: i32) { let v = vv(); v.call_begin("lbMthp_8001F67C"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.call_end();   }
-unsafe extern "C" fn s_lbMthp_8001F624(a0: *mut melee_types::HSD_GObj, a1: i32, a2: i32) -> *mut melee_types::HSD_SObj { let v = vv(); v.call_begin("lbMthp_8001F624"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.arg_i(a2 as i64); v.call_end();  v.ret_ptr("lbMthp_8001F624") as _ }
-unsafe extern "C" fn s_lbAudioAx_80023F28(a0: i32) -> i32 { let v = vv(); v.call_begin("lbAudioAx_80023F28"); v.arg_i(a0 as i64); v.call_end();  v.ret_int("lbAudioAx_80023F28", 32, 1) as _ }
-unsafe extern "C" fn s_lbAudioAx_80024E50(a0: i32) { let v = vv(); v.call_begin("lbAudioAx_80024E50"); v.arg_i(a0 as i64); v.call_end();   }
-unsafe extern "C" fn s_lbMthp_8001F410(a0: *const i8, a1: *mut u32, a2: *mut core::ffi::c_void, a3: u32, a4: i32) { let v = vv(); v.call_begin("lbMthp_8001F410"); v.arg_s(a0 as *const u8); v.arg_p(a1 as usize); v.arg_p(a2 as usize); v.arg_u(a3 as u64); v.arg_i(a4 as i64); v.call_end();   }
-unsafe extern "C" fn s_fn_801AA0E8() { let v = vv(); v.call_begin("fn_801AA0E8");  v.call_end();   }
-unsafe extern "C" fn s_lbMthp_8001F578() { let v = vv(); v.call_begin("lbMthp_8001F578");  v.call_end();   }
-unsafe extern "C" fn s_lbMthp_8001F5C4() -> i32 { let v = vv(); v.call_begin("lbMthp_8001F5C4");  v.call_end();  v.ret_int("lbMthp_8001F5C4", 32, 1) as _ }
-unsafe extern "C" fn s_lbMthp_8001F604() -> i32 { let v = vv(); v.call_begin("lbMthp_8001F604");  v.call_end();  v.ret_int("lbMthp_8001F604", 32, 1) as _ }
-unsafe extern "C" fn s_gm_GetButtonsTriggered(a0: u8) -> u64 { let v = vv(); v.call_begin("gm_GetButtonsTriggered"); v.arg_u(a0 as u64); v.call_end();  v.ret_int("gm_GetButtonsTriggered", 64, 0) as _ }
-unsafe extern "C" fn s_lbAudioAx_800236DC() -> i32 { let v = vv(); v.call_begin("lbAudioAx_800236DC");  v.call_end();  v.ret_int("lbAudioAx_800236DC", 32, 1) as _ }
-unsafe extern "C" fn s_gm_801A4B74() { let v = vv(); v.call_begin("gm_801A4B74");  v.call_end();   }
-unsafe extern "C" fn s_gm_801A4B60() { let v = vv(); v.call_begin("gm_801A4B60");  v.call_end();   }
-unsafe extern "C" fn s_gmMainLib_8015DB0C(a0: u8) { let v = vv(); v.call_begin("gmMainLib_8015DB0C"); v.arg_u(a0 as u64); v.call_end();   }
-unsafe extern "C" fn s_gm_SetPendingGameMode(a0: u8) { let v = vv(); v.call_begin("gm_SetPendingGameMode"); v.arg_u(a0 as u64); v.call_end();   }
-unsafe extern "C" fn s_gm_SetNewGameModePending() { let v = vv(); v.call_begin("gm_SetNewGameModePending");  v.call_end();   }
-unsafe extern "C" fn s_lbAudioAx_80024030(a0: i32) { let v = vv(); v.call_begin("lbAudioAx_80024030"); v.arg_i(a0 as i64); v.call_end();   }
+unsafe extern "C" fn s_GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut melee_types::HSD_GObj { let v = vv(); v.call_begin("GObj_Create"); v.arg_u(a0 as u64); v.arg_u(a1 as u64); v.arg_u(a2 as u64); v.call_end();   v.ret_ptr("GObj_Create") as _ }
+unsafe extern "C" fn s_gm_801A9DD0(a0: *mut melee_types::HSD_GObj, a1: u16, a2: u16, a3: i32, a4: i32) { let v = vv(); v.call_begin("gm_801A9DD0"); v.arg_p(a0 as usize); v.arg_u(a1 as u64); v.arg_u(a2 as u64); v.arg_i(a3 as i64); v.arg_i(a4 as i64); v.call_end();    }
+unsafe extern "C" fn s_HSD_GObjObject_80390A70(a0: *mut melee_types::HSD_GObj, a1: u8, a2: *mut core::ffi::c_void) { let v = vv(); v.call_begin("HSD_GObjObject_80390A70"); v.arg_p(a0 as usize); v.arg_u(a1 as u64); v.arg_p(a2 as usize); v.call_end();    }
+unsafe extern "C" fn s_GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32) { let v = vv(); v.call_begin("GObj_SetupGXLink"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.arg_u(a3 as u64); v.call_end();    }
+unsafe extern "C" fn s_lbMthp_8001F67C(a0: *mut melee_types::HSD_GObj, a1: i32) { let v = vv(); v.call_begin("lbMthp_8001F67C"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.call_end();    }
+unsafe extern "C" fn s_lbMthp_8001F624(a0: *mut melee_types::HSD_GObj, a1: i32, a2: i32) -> *mut melee_types::HSD_SObj { let v = vv(); v.call_begin("lbMthp_8001F624"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.arg_i(a2 as i64); v.call_end();   v.ret_ptr("lbMthp_8001F624") as _ }
+unsafe extern "C" fn s_lbAudioAx_80023F28(a0: i32) -> i32 { let v = vv(); v.call_begin("lbAudioAx_80023F28"); v.arg_i(a0 as i64); v.call_end();   v.ret_int("lbAudioAx_80023F28", 32, 1) as _ }
+unsafe extern "C" fn s_lbAudioAx_80024E50(a0: i32) { let v = vv(); v.call_begin("lbAudioAx_80024E50"); v.arg_i(a0 as i64); v.call_end();    }
+unsafe extern "C" fn s_lbMthp_8001F410(a0: *const i8, a1: *mut u32, a2: *mut core::ffi::c_void, a3: u32, a4: i32) { let v = vv(); v.call_begin("lbMthp_8001F410"); v.arg_s(a0 as *const u8); v.arg_p(a1 as usize); v.arg_p(a2 as usize); v.arg_u(a3 as u64); v.arg_i(a4 as i64); v.call_end();    }
+unsafe extern "C" fn s_fn_801AA0E8() { let v = vv(); v.call_begin("fn_801AA0E8");  v.call_end();    }
+unsafe extern "C" fn s_lbMthp_8001F578() { let v = vv(); v.call_begin("lbMthp_8001F578");  v.call_end();    }
+unsafe extern "C" fn s_lbMthp_8001F5C4() -> i32 { let v = vv(); v.call_begin("lbMthp_8001F5C4");  v.call_end();   v.ret_int("lbMthp_8001F5C4", 32, 1) as _ }
+unsafe extern "C" fn s_lbMthp_8001F604() -> i32 { let v = vv(); v.call_begin("lbMthp_8001F604");  v.call_end();   v.ret_int("lbMthp_8001F604", 32, 1) as _ }
+unsafe extern "C" fn s_gm_GetButtonsTriggered(a0: u8) -> u64 { let v = vv(); v.call_begin("gm_GetButtonsTriggered"); v.arg_u(a0 as u64); v.call_end();   v.ret_int("gm_GetButtonsTriggered", 64, 0) as _ }
+unsafe extern "C" fn s_lbAudioAx_800236DC() -> i32 { let v = vv(); v.call_begin("lbAudioAx_800236DC");  v.call_end();   v.ret_int("lbAudioAx_800236DC", 32, 1) as _ }
+unsafe extern "C" fn s_gm_801A4B74() { let v = vv(); v.call_begin("gm_801A4B74");  v.call_end();    }
+unsafe extern "C" fn s_gm_801A4B60() { let v = vv(); v.call_begin("gm_801A4B60");  v.call_end();    }
+unsafe extern "C" fn s_gmMainLib_8015DB0C(a0: u8) { let v = vv(); v.call_begin("gmMainLib_8015DB0C"); v.arg_u(a0 as u64); v.call_end();    }
+unsafe extern "C" fn s_gm_SetPendingGameMode(a0: u8) { let v = vv(); v.call_begin("gm_SetPendingGameMode"); v.arg_u(a0 as u64); v.call_end();    }
+unsafe extern "C" fn s_gm_SetNewGameModePending() { let v = vv(); v.call_begin("gm_SetNewGameModePending");  v.call_end();    }
+unsafe extern "C" fn s_lbAudioAx_80024030(a0: i32) { let v = vv(); v.call_begin("lbAudioAx_80024030"); v.arg_i(a0 as i64); v.call_end();    }
 pub fn glue() -> Glue {
     Glue {
         types: vec![
@@ -268,6 +268,9 @@ pub fn glue() -> Glue {
         tu::ext::H_gm_SetPendingGameMode = Some(s_gm_SetPendingGameMode);
         tu::ext::H_gm_SetNewGameModePending = Some(s_gm_SetNewGameModePending);
         tu::ext::H_lbAudioAx_80024030 = Some(s_lbAudioAx_80024030);
+        },
+        expr: |n| match n {
+            _ => panic!("no such expr {n}"),
         },
         call: |name, a| match name {
         "gm_Scene_Omake15_OnEnter" => unsafe { melee_modes::tu::gmomake15::gm_Scene_Omake15_OnEnter(a[0] as usize as _); 0 },

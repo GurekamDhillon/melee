@@ -141,6 +141,28 @@ class Walker:
     def __init__(self, cx):
         self.cx = cx
         self.nbuf = 0
+        self.prune = None   # list of allowed trails ("a.b[3].c") while expanding a pruned root type
+        self.trail = ""
+
+    def allowed(self, tr):
+        if self.prune is None:
+            return True
+        for a in self.prune:
+            if a == tr or a.startswith(tr + ".") or a.startswith(tr + "[") or tr.startswith(a + ".") or tr.startswith(a + "["):
+                return True
+        return False
+
+    def fixed_indices(self):
+        """Array indices named by the prune list for the array at the current trail (or None)."""
+        if self.prune is None:
+            return None
+        idx = set()
+        for a in self.prune:
+            if a.startswith(self.trail + "[") and self.trail:
+                idx.add(int(a[len(self.trail) + 1:].split("]")[0]))
+            elif a == self.trail or a.startswith(self.trail + "."):
+                return None
+        return sorted(idx) if idx else None
 
     def leaf(self, e, t, cx_, rx_, path_c, path_r, rtype_hint=None):
         """Append the C and Rust statements for the value of canonical type t."""
@@ -188,12 +210,34 @@ class Walker:
                 e.c.append(f"tuo_bytes({path_c}, &{cx_}, sizeof({cx_}));")
                 e.r.append(f"v.bytes({path_r}, &mut {rx_} as *mut _ as *mut u8, core::mem::size_of_val(&{rx_}));")
                 return
+            fixed = self.fixed_indices()
+            if fixed is not None:
+                for ix in fixed:
+                    self.nbuf += 1
+                    nb = self.nbuf
+                    i = f"_i{nb}"
+                    sub = Emit()
+                    base = self.trail
+                    self.trail = f"{base}[{ix}]"
+                    self.leaf(sub, c.element_type, f"{cx_}[{ix}]", f"{rx_}[{ix}]",
+                              f"tuo_cati(_pb{nb}, {path_c}, \"\", {ix})", f"&format!(\"{{}}[{{}}]\", {self.strip_amp(path_r)}, {ix})", rtype_hint)
+                    self.trail = base
+                    e.c.append(f"{{ char _pb{nb}[600];")
+                    e.c.extend(sub.c)
+                    e.c.append("}")
+                    e.r.append("{")
+                    e.r.extend(sub.r)
+                    e.r.append("}")
+                return
             self.nbuf += 1
             nb = self.nbuf
             i = f"_i{nb}"
             sub = Emit()
+            base = self.trail
+            self.trail = base + "[]" if self.prune is not None else base
             self.leaf(sub, c.element_type, f"{cx_}[{i}]", f"{rx_}[{i}]",
                       f"tuo_cati(_pb{nb}, {path_c}, \"\", {i})", f"&format!(\"{{}}[{{}}]\", {self.strip_amp(path_r)}, {i})", rtype_hint)
+            self.trail = base
             e.c.append(f"{{ char _pb{nb}[600]; int {i}; for({i}=0;{i}<{n};{i}++) {{")
             e.c.extend(sub.c)
             e.c.append("} }")
@@ -209,6 +253,9 @@ class Walker:
                 return
             d, cname = self.cx.rec_names(t)
             rname = self.cx.rust_rec(d, cname) if cname else None
+            if cname and rname and self.prune is not None:
+                self.record_fields(e, d.get_definition() or d, cx_, rx_, path_c, path_r, rname)
+                return
             if cname and rname:
                 self.cx.need(cname, d, rname)
                 e.c.append(f"vis_{self.mangle(cname)}({path_c}, &{cx_});")
@@ -259,6 +306,8 @@ class Walker:
                     self.record_fields(e, f, cx_, f"{rx_}.{an}", path_c, path_r, "melee_types::" + sub_r if sub_r else None)
                 continue
             nm = f.spelling
+            if nm and not self.allowed((self.trail + "." if self.trail else "") + nm):
+                continue
             if f.is_bitfield():
                 if not nm:
                     continue
@@ -293,7 +342,10 @@ class Walker:
                 sub_rname = "melee_types::" + rs_elem(rtys[rn])
             else:
                 sub_rname = None
+            base = self.trail
+            self.trail = (base + "." if base else "") + nm
             self.leaf_field(e, ft, f"{cx_}.{nm}", f"{rx_}.{rid(rn)}", p_c, p_r, sub_rname)
+            self.trail = base
 
     def leaf_field(self, e, ft, cx_, rx_, p_c, p_r, rname):
         # a path buffer per use: the C helpers return into _pb, which is reused sequentially, but
@@ -332,10 +384,14 @@ class Gen:
         decl, rname = self.vis[cname]
         e = Emit()
         mg = Walker.mangle(cname)
+        self.w.prune = self.spec.get("PRUNE", {}).get(cname)
+        self.w.trail = ""
         try:
             self.w.record_fields(e, decl, "(*p)", "(*p)", "path", "path", rname)
         except Opaque as ex:
             print(f"tuo: {cname} compared as bytes ({ex})")
+            self.w.prune = None
+            self.w.trail = ""
             e = Emit()
             e.c.append("tuo_bytes(path, p, sizeof(*p));")
             e.r.append("v.bytes(path, vp, core::mem::size_of_val(&*p));")
@@ -346,6 +402,8 @@ class Gen:
              f"fn vis_{mg}(v: &mut V, path: &str, vp: *mut u8) {{ let p = vp as *mut {rname}; unsafe {{"]
         r += e.r
         r.append("} }")
+        self.w.prune = None
+        self.w.trail = ""
         return c, r
 
 
@@ -361,6 +419,7 @@ HOOK_MACRO = '''    macro_rules! hook {
         };
     }
     /// Like `hook!`, but an unset hook calls an existing verified port.
+    #[allow(unused_macros)]
     macro_rules! hook_or {
         ($h:ident, $name:ident, $port:path, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
             pub static mut $h: Option<unsafe extern "C" fn($($t),*) $(-> $r)?> = None;
@@ -778,6 +837,18 @@ def main():
             cbody = f"{{ unsigned long long b = tuo_ret_f64(\"{name}\"); double r; memcpy(&r, &b, 8); return r; }}"
             rret = " -> f64"
             rbody = f"f64::from_bits(v.ret_f64(\"{name}\"))"
+        elif ret.kind == T.POINTER and name in spec.get("RET_FIELD", {}):
+            # the real function returns a field of its first argument: do the same
+            tyname, path_ = spec.get("RET_FIELD", {})[name]
+            rdecl, _nm = find_record(tu, tyname)
+            off, curt = 0, rdecl.type
+            for fld in path_:
+                off += curt.get_offset(fld) // 8
+                curt = canon(next(f for f in (curt.get_declaration().get_definition() or curt.get_declaration()).get_children() if f.spelling == fld).type)
+            cret = "void*"
+            cbody = f"return *(void**)((char*)a0 + {off});"
+            rret = f" -> {rust_type(G, d.result_type)}"
+            rbody = f"(*a0).{'.'.join(path_)}"
         elif ret.kind == T.POINTER:
             cret = "void*"
             cbody = f"return tuo_ret_ptr(\"{name}\");"
@@ -888,6 +959,11 @@ def main():
         if fnm not in inl:
             uc.append(f'  tuo_regfn("{fnm}", (void*){fnm});')
     uc.append("}")
+    uc.append("unsigned long long tuo_unit_expr(const char* n) {")
+    for en, (cexpr, _rexpr) in spec.get("ARG_EXPRS", {}).items():
+        uc.append(f'  if(tuo_streq(n, "{en}")) return (unsigned long long)(__SIZE_TYPE__)({cexpr});')
+    uc.append("  return 0;")
+    uc.append("}")
     uc.append("unsigned long long tuo_unit_call(const char* fn, unsigned long long* a) {")
     uc.extend(glue)
     uc.append("  return 0;")
@@ -926,6 +1002,11 @@ def main():
     rs.append("        size_ok: &[" + ", ".join(f'"{x}"' for x in spec.get("SIZE_OK", [])) + "],")
     rs.append("        install: || unsafe {")
     rs.extend(rs_install)
+    rs.append("        },")
+    rs.append("        expr: |n| match n {")
+    for en, (_cexpr, rexpr) in spec.get("ARG_EXPRS", {}).items():
+        rs.append(f'            "{en}" => unsafe {{ ({rexpr}) as usize as u64 }},')
+    rs.append('            _ => panic!("no such expr {n}"),')
     rs.append("        },")
     rs.append("        call: |name, a| match name {")
     rs.extend(rglue)

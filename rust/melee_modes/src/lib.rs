@@ -43,6 +43,7 @@ pub mod gm_r9;
 pub mod lb_r9;
 pub mod mn_r9;
 pub mod gm_r10;
+pub mod tu;
 pub mod lb_r10;
 
 /// `GXColor` (libs/dolphin/include/dolphin/gx/GXStruct.h). TODO(group0): melee_types does not

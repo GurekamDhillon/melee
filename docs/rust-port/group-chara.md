@@ -767,7 +767,7 @@ arguments, in the same order, and leaves the same state.
 * Floats: every fused site of `tools/rust-port/fma_sites.py` is written out (`fmadds`, `f64::mul_add`);
   mutating an f32 fusion is caught (verified by hand-mutating), mutating an f64 fusion or a x1.0/x0.5
   product is not (no input distinguishes them after the f32 rounding).
-* `--cov` rebuilds the driver with clang source coverage: region coverage is 100% for six of the eight
+* `--cov` rebuilds the driver with clang source coverage: region coverage is 100% for seven of the eight
   TUs, 98.9% for `ftyoshispecials` (the missing 8 regions are infeasible `ABS()` arms inside branches
   that fix the sign).
 * Guards for inputs the game never produces: `x % xA4` and an endless `while (angle > 2*pi)` in

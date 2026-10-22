@@ -1,0 +1,5 @@
+hdr 11560 2072 10908 148 11384 2136 1928
+ftBo_Init_OnItemPickup 6ca81c0ee9e4c7d0
+ftBo_Init_OnItemDrop 58724de36da76346
+ftBo_Init_OnLoad 79d6d961b565cc36
+ftBo_Init_LoadSpecialAttrs 2fedbb6fa38acd99

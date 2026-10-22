@@ -84,3 +84,8 @@ pub mod ftkirbyspecialcaptain;
 pub mod ftkirbyspecialdonkey;
 pub mod ftkirbyspecialfox;
 pub mod ftkirbyspecialgamewatch;
+pub(crate) mod hookmac;
+pub mod ftinl;
+pub mod ftboy;
+pub mod ftgirl;
+pub mod ftzelda;

@@ -1,0 +1,7 @@
+hdr 11560 2072 10908 148 11384 2136 1928
+ftZd_Init_OnLoad fa14f0d63b4e49b9
+ftZd_Init_801393AC d578ccc2973cb0d6
+ftZd_Init_OnItemPickup de07d763453724fa
+ftZd_Init_OnItemDrop 10b313f5c212b24b
+ftZd_Init_LoadSpecialAttrs 92e099d108481fdb
+ftZd_Init_801395C8 0e2bcbc52a1c41c5

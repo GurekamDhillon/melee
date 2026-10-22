@@ -29,6 +29,7 @@ pub mod itkinds13;
 pub mod itkinds14;
 /// The native types (with GC offset tables) are the single generated set in `melee_types`;
 /// `layout` keeps group 5's path to them.
+pub mod tu;
 pub mod layout {
     pub use melee_types::*;
     /// Any C function pointer (untyped until the callee crates exist).

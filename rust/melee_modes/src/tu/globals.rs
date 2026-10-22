@@ -13,3 +13,12 @@ pub static mut gm_80473814: CssSubStruct = unsafe { core::mem::zeroed() };
 pub static mut gmVsMelee_ApproachData: [*mut core::ffi::c_void; 2] = [null_mut(); 2];
 /// if_2FD9.c `/* 4A1F48 */ struct un_804A1F48_t if_Scene_Prize_EnterData`.
 pub static mut if_Scene_Prize_EnterData: un_804A1F48_t = unsafe { core::mem::zeroed() };
+
+/// controller.c `HSD_PadStatus HSD_PadMasterStatus[4]`.
+pub static mut HSD_PadMasterStatus: [HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
+/// ground.c `/* 49E6C8 */ StageInfo stage_info`.
+pub static mut stage_info: StageInfo = unsafe { core::mem::zeroed() };
+/// video.c `HSD_VIInfo HSD_VIData`.
+pub static mut HSD_VIData: HSD_VIInfo = unsafe { core::mem::zeroed() };
+/// ftdata.c `/* 3C0EC0 */ struct UnkCostumeList CostumeListsForeachCharacter[Ft_Kind_Max]`.
+pub static mut CostumeListsForeachCharacter: [UnkCostumeList; Ft_Kind_Max as usize] = unsafe { core::mem::zeroed() };

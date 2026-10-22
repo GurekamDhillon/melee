@@ -279,6 +279,10 @@ def main(stem):
                 hr.append(f"h = hmb(h, unsafe {{ (p as *const _ as *const u8).add({off64}) }}, {sz});")
                 continue
             emit_val(k, f"p->{name}", f"p.{rn}", None, None, 0, hc, hr, fc, fr, 0, 0, 0)
+        for fx in re.finditer(r"/\*\s*HSFIX:\s*(\w+)\.(\w+)\s*=\s*(.*?)\*/", src):
+            # the C hash of one field uses another expression (the oracle's compiler lays a local bitfield out the other way round)
+            if fx.group(1) == n:
+                hc = [x.replace(f"h = hm_(h, (u32)p->{fx.group(2)});", f"h = hm_(h, {fx.group(3).strip()});") for x in hc]
         ch.append(f"static u32 hs_{n}(const {cn}* p, u32 h) {{ " + " ".join(hc) + " return h; }")
         ch.append(f"static void fl_{n}({cn}* p) {{ " + " ".join(fc) + " }")
         rs.append(f"pub fn hs_{n}(p: &{n}, mut h: u32) -> u32 {{ " + " ".join(hr) + " h }")

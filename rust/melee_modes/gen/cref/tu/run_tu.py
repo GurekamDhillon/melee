@@ -36,6 +36,9 @@ def main():
         if "/* HS:" in drv.read_text(encoding="utf-8"):
             import hsgen
             hsgen.main(n)
+        if "/* OPS:" in drv.read_text(encoding="utf-8"):
+            import opsgen
+            opsgen.main(n)
         if "/* STUBS:" in drv.read_text(encoding="utf-8"):
             import stubgen
             stubgen.main(n)

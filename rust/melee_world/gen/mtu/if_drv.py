@@ -54,6 +54,8 @@ def helpers(tu, spec, c_out, r_tail, data):
     r = ["pub unsafe fn reset_state() {"]
     h = ["static void hash_state(void)", "{", "    int i;", "    (void) i;"]
     rh = ["pub unsafe fn hash_state() {"]
+    hi = ["static void hash_init_state(void)", "{", "    int i;", "    (void) i;"]
+    rhi = ["pub unsafe fn hash_init_state() {"]
     pc = ["static void preg_state(void)", "{"]
     pr = ["pub unsafe fn preg_state() {"]
     for tn, n in pools.items():
@@ -105,6 +107,13 @@ def helpers(tu, spec, c_out, r_tail, data):
                 r.append(f"    fill_{ty}(&mut {rs});")
                 h.append(f"    hash_{ty}(&{cn});")
                 rh.append(f"    hash_{ty}(&{rs});")
+            if st.get("init"):
+                if n:
+                    hi.append(f"    for (i = 0; i < {n}; i++) hash_{ty}(&{cn}[i]);")
+                    rhi.append(f"    for i in 0..{n}usize {{ hash_{ty}(&{rs}[i]); }}")
+                else:
+                    hi.append(f"    hash_{ty}(&{cn});")
+                    rhi.append(f"    hash_{ty}(&{rs});")
         elif kind:
             hc = {"ptr": "HM(PI((const void*) {x}));", "int": "HM((u32) {x});", "f32": "HM(B({x}));"}[kind]
             hr = {"ptr": "hm(pi({x}));", "int": "hm({x} as u32);", "f32": "hm({x}.to_bits());"}[kind]
@@ -114,14 +123,16 @@ def helpers(tu, spec, c_out, r_tail, data):
             else:
                 h.append("    " + hc.format(x=cn))
                 rh.append("    " + hr.format(x=rs))
+    hi.append("}")
+    rhi.append("}")
     c.append("}")
     r.append("}")
     h.append("}")
     rh.append("}")
     pc.append("}")
     pr.append("}")
-    c_out.extend(c + h + pc)
-    r_tail.extend(r + rh + pr)
+    c_out.extend(c + h + hi + pc)
+    r_tail.extend(r + rh + rhi + pr)
 
 
 # ---------------------------------------------------------------------------- operations
@@ -226,6 +237,9 @@ def emit_driver(stem, spec, tu):
          "int main(void)", "{", "    int op, k;", "    preg_state();", "    freg_all();"]
     for ce, _ in spec.get("extra_freg", []):
         c.append(f"    freg((const void*) {ce});")
+    has_init = any(st.get("init") for st in spec.get("statics", []))
+    if has_init:
+        c += ['    tu_case(99, 0); hash_init_state(); printf("%d %d %08X %08X %08X\\n", 99, 0, 0u, H, TR);']
     c += ["    for (op = 0; op < %d; op++) {" % nops,
           "        static const int NC[] = {" + ", ".join(str(ncases.get(o[0], default_n)) for o in ops) + "};",
           "        for (k = 0; k < NC[op]; k++) {", "            u32 ret = 0;",
@@ -240,7 +254,7 @@ def emit_driver(stem, spec, tu):
          f"//! src/tu/{stem}.rs vs the C (the whole TU, shipping contraction; regenerate the expected file",
          f"//! with `python rust/melee_world/gen/mtu/run_if.py {stem}`).",
          "#![allow(static_mut_refs, non_snake_case, non_upper_case_globals, unused_imports, unused_mut, unused_assignments, unused_variables, unused_unsafe)]",
-         "mod mtu_harness;", "use core::ptr::null_mut;", "use melee_types::*;", f"use melee_world::tu::{stem} as m;",
+         "mod mtu_harness;", "use core::ffi::c_void;", "use core::ptr::null_mut;", "use melee_types::*;", f"use melee_world::tu::{stem} as m;",
          "use mtu_harness::*;", f'#[path = "mtu/{stem}_gen.rs"]', "mod g;", "", spec.get("rs_decl", ""), "",
          spec.get("rs_extra", ""), "",
          "unsafe fn setup_extra() {", "    let mut n: u32;", "    let mut i: usize;", spec.get("setup_rs", ""), "}", "",
@@ -250,6 +264,7 @@ def emit_driver(stem, spec, tu):
         r.append(f"        freg({re_} as *const () as usize);")
     r += [f'        let mut c = Check::new(include_str!("data/mtu_{stem}.txt"));',
           "        let nc: [u32; %d] = [" % nops + ", ".join(str(ncases.get(o[0], default_n)) for o in ops) + "];",
+          ("        case(99, 0); g::hash_init_state(); c.line(99, 0, 0);" if has_init else ""),
           f"        for op in 0..{nops}u32 {{", "            for k in 0..nc[op as usize] {", "                case(op, k);",
           "                g::reset_state();", "                setup_extra();",
           "                let mut ret = 0u32;", "                match op {"]
@@ -257,6 +272,6 @@ def emit_driver(stem, spec, tu):
         r.append(f"                    {i} => {{ {rs} }}")
     r += ["                    _ => unreachable!(),", "                }", "                g::hash_state();",
           "                c.line(op, k, ret);", "            }", "        }",
-          f"        assert_eq!(c.done(), {sum(ncases.get(o[0], default_n) for o in ops)});", "    }", "}", ""]
+          f"        assert_eq!(c.done(), {sum(ncases.get(o[0], default_n) for o in ops) + (1 if has_init else 0)});", "    }", "}", ""]
     (ROOT / "rust/melee_world/tests" / f"tu_{stem}.rs").write_text("\n".join(r), encoding="utf-8", newline="\n")
     print(f"if_drv: {stem}: {nops} ops")

@@ -14,3 +14,5 @@ pub mod grfigureget;
 pub mod grflatzone;
 pub mod grfourside;
 pub mod ifhazard;
+pub mod if_2F6E;
+pub mod iftime;

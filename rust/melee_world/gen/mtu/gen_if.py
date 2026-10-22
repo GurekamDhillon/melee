@@ -356,6 +356,26 @@ class Walk:
                 ch.append(f"HM(PI((const void*) {cexpr}.{mem}));")
                 rh.append(f"hm(pi(unsafe {{ {rexpr}.{mem} }}));")
                 return
+            if kind == "expr" and k == T.POINTER:
+                _, ce, re_ = rule
+                cf.append(f"{cexpr} = (void*) ({ce});")
+                rf.append(f"{rexpr} = ({re_}) as _;")
+                ch.append(f"HM(PI((const void*) {cexpr}));")
+                rh.append(f"hm(pi({rexpr}));")
+                return
+            if kind == "fn" and k == T.POINTER:
+                _, fns, nul = rule
+                n_ = len(fns)
+                cs = " : ".join(f"q % {n_}u == {i} ? (void*) {c}" for i, (c, _) in enumerate(fns[:-1])) + \
+                    (" : " if n_ > 1 else "") + f"(void*) {fns[-1][0]}"
+                cf.append(f"{{ u32 r = rnd(); u32 q = rnd(); {cexpr} = (__typeof__({cexpr})) "
+                          f"({'(r & 3) == 0 ? (void*) 0 : ' if nul else ''}({cs})); (void) r; }}")
+                arms = " ".join(f"{i} => core::mem::transmute::<usize, _>({r_} as usize)," for i, (_, r_) in enumerate(fns))
+                rf.append(f"{{ let r = rnd(); let q = rnd() % {n_}; {rexpr} = {'if r & 3 == 0 { unsafe { core::mem::zeroed() } } else ' if nul else ''}"
+                          f"{{ unsafe {{ match q {{ {arms} _ => core::mem::zeroed() }} }} }}; let _ = r; }}")
+                ch.append(f"HM(FI((const void*) {cexpr}));")
+                rh.append(f"hm(fi({rexpr}));")
+                return
             if kind == "ptr" and k == T.POINTER:
                 _, tn, nul = rule
                 cf.append(f"{cexpr} = (void*) pick_{tn}({1 if nul else 0});")

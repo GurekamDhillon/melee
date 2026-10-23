@@ -124,3 +124,24 @@ SPECS["ithammer"] = dict(
          "itHammer_UnkMotion5_Anim", "itHammer_UnkMotion5_Phys", "itHammer_UnkMotion5_Coll",
          "itHammer_Logic28_EvtUnk"],
 )
+
+SPECS["itharisen"] = dict(
+    crate="melee_items", src="src/melee/it/kinds/itharisen.c", walk2=True,
+    pools={"HSD_GObj": 4, "HSD_JObj": 6, "Item": 2, "Article": 1, "ItemAttr": 1, "itHarisen_DatAttrs": 1,
+           "ItemCommonData": 1},
+    rules={**ITEM_RULES,
+           "Article.x4_specialAttributes": ("ptr", "itHarisen_DatAttrs", False)},
+    uv=FLAG_UV, uv_only={"Item_xDD4_itemVar": []},
+    statics=[ICD_STATIC],
+    skip_data=["result"],
+    setup_c=JOBJ_SETUP_C, setup_rs=JOBJ_SETUP_RS,
+    ops=["it_802927E8", "it_8029282C", "itHarisen_Logic24_Spawned", "it_8029287C", "itHarisen_UnkMotion0_Anim",
+         "itHarisen_UnkMotion0_Phys", "itHarisen_UnkMotion0_Coll", "it_8029290C", "itHarisen_UnkMotion8_Anim",
+         "itHarisen_UnkMotion1_Phys", "itHarisen_UnkMotion1_Coll", "it_80292998", "it_802929C8", "it_802929F8",
+         "it_80292A28", "itHarisen_Logic24_PickedUp", "itHarisen_UnkMotion6_Anim", "itHarisen_UnkMotion6_Phys",
+         "itHarisen_Logic24_Dropped", "itHarisen_UnkMotion8_Coll", "itHarisen_Logic24_Thrown",
+         "itHarisen_UnkMotion8_Phys", "itHarisen_UnkMotion7_Coll", "itHarisen_Logic24_DmgDealt",
+         "itHarisen_Logic24_EnteredAir", "itHarisen_UnkMotion9_Anim", "itHarisen_UnkMotion9_Phys",
+         "itHarisen_UnkMotion9_Coll", "itHarisen_Logic24_Clanked", "itHarisen_Logic24_Reflected",
+         "itHarisen_Logic24_HitShield", "itHarisen_Logic24_ShieldBounced", "itHarisen_Logic24_EvtUnk"],
+)

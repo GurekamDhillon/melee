@@ -1,0 +1,48 @@
+"""Driver descriptions for mk_it_driver.py (one per TU)."""
+from mk_it_driver import hot
+
+CFG = {}
+def _hots(stem, items, **kw):
+    cfg = dict(kw)
+    cfg["setup_c"] = ""
+    cfg["setup_rs"] = ""
+    for p, v in items:
+        c, r = hot(p, v)
+        cfg["setup_c"] += c
+        cfg["setup_rs"] += r
+    CFG[stem] = cfg
+
+
+def _hots3(stem, items, **kw):
+    """_hots with (path, vals, kind) triples (kind "f": float literals)."""
+    cfg = dict(kw)
+    cfg["setup_c"] = cfg.get("setup_c", "")
+    cfg["setup_rs"] = cfg.get("setup_rs", "")
+    for p, v, k in items:
+        c, r = hot(p, v, k)
+        cfg["setup_c"] += c
+        cfg["setup_rs"] += r
+    CFG[stem] = cfg
+
+
+
+_NORMPTR_C = lambda f: """    { u32 id = PI(%s); unsigned char* b = (unsigned char*) &%s; int i2; for (i2 = 0; i2 < 8; i2++) b[i2] = 0; *(u32*) b = id; }
+""" % (f, f)
+_NORMPTR_RS = lambda f: """    { let id = pi(%s); let b = &raw mut %s as *mut u8; for i2 in 0..8 { *b.add(i2) = 0; } *(b as *mut u32) = id; }
+""" % (f, f)
+_hots3("itlinkbow", [("IT.kind", ["It_Kind_Link_Bow", "It_Kind_CLink_Bow", "It_Kind_Kirby_CLinkBow", "It_Kind_Kirby_LinkBow", "0"], "i"),
+                     ("IT.msid", ["0", "1", "2", "3", "4", "5", "6"], "i"),
+                     ("IT.x5CC_currentAnimFrame", ["0.0", "24.0", "30.0", "5.0"], "f")],
+       icd=False, tables=[("it_803F6E98", 7)])
+CFG["itlinkbow"]["setup_c"] += "    { int q = rnd() % 4; IT.xDD4_itemVar.linkbow.x4 = q == 0 ? 0 : q == 1 ? IT.owner : q == 2 ? &OWN : &G2; if (rnd() & 1) IT.owner = IT.xDD4_itemVar.linkbow.x4; }\n"
+CFG["itlinkbow"]["setup_rs"] += "    { let q = rnd() % 4; IT.xDD4_itemVar.linkbow.x4 = if q == 0 { null_mut() } else if q == 1 { IT.owner } else if q == 2 { &raw mut OWN } else { &raw mut G2 }; if rnd() & 1 != 0 { IT.owner = IT.xDD4_itemVar.linkbow.x4; } }\n"
+CFG["itlinkbow"]["pre_hash_c"] = _NORMPTR_C("IT.xDD4_itemVar.linkbow.x4") + _NORMPTR_C("IT2.xDD4_itemVar.linkbow.x4")
+CFG["itlinkbow"]["pre_hash_rs"] = _NORMPTR_RS("IT.xDD4_itemVar.linkbow.x4") + _NORMPTR_RS("IT2.xDD4_itemVar.linkbow.x4")
+
+_hots3("itlipstick", [("IT.msid", ["0", "1", "2", "3", "4", "5"], "i"), ("IT.xD4C", ["0", "1", "2", "5"], "i"), ("IT.xDAC_itcmd_var0", ["0", "1"], "i")],
+       icd=True, tables=[("it_803F6310", 6)])
+
+_hots3("itlipstickspore", [("IT.xDD4_itemVar.lipstickspore.xDD4", ["0", "1", "2", "3"], "i"),
+                           ("IT.xDD4_itemVar.lipstickspore.xDD8", ["0.0", "0.5", "2.0", "-1.0"], "f"),
+                           ("IT.x40_vel.x", ["0.0", "0.25", "-0.25", "3.0", "-3.0"], "f")],
+       icd=False, tables=[("it_803F6680", 2)])

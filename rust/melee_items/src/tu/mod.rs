@@ -11,3 +11,7 @@ pub mod itgroundcoll;
 pub mod itmaplib;
 pub mod item;
 pub mod itanimlist;
+pub mod inl_it;
+pub mod itlinkbow;
+pub mod itlipstick;
+pub mod itlipstickspore;

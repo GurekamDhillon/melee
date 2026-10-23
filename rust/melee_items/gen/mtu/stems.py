@@ -117,7 +117,7 @@ STEMS["itmaplib"] = dict(
     setup=("for (i = 0; i < 8; i++) JO[i].flags &= ~JOBJ_USE_QUATERNION;", "for i in 0..8 { JO[i].flags &= !(JOBJ_USE_QUATERNION as u32); }"),
 )
 
-for _s in ("it_26B1", "it_2725", "it_279C"):
+for _s in ("it_2725", "it_279C"):
     STEMS.setdefault(_s, dict())
 
 _TB = ("&TB[rnd() & 1]", "&raw mut TB[(rnd() & 1) as usize]")
@@ -231,3 +231,40 @@ STEMS["itzako"]["post"] = {"it_8027B5B0": (
     "for q in 0..4usize { let pp = (&raw mut IT[q].xDD4_itemVar) as *mut *mut c_void; hm(pi(*pp)); *pp = null_mut(); }")}
 STEMS["itzako"]["post"]["it_8027CE64"] = STEMS["itzako"]["post"]["it_8027B5B0"]
 STEMS["itzako"]["n"] = {"it_8027C8D0": 6000, "it_8027BB1C": 1500}
+
+_K = ["Heart", "Tomato", "Foods", "Coin", "Lucky_Egg", "WhispyHealApple", "L_Gun", "S_Scope", "StarRod", "LipStick", "F_Flower", "Harisen", "Freeze", "MSBomb",
+      "Flipper", "BombHei", "Link_Bomb", "CLink_Bomb", "Kyasarin_Egg", "WhispyApple", "Kuriboh", "Octarock_Stone", "Old_Kuri", "Arwing_Laser", "Box", "Kusudama", "Nokonoko"]
+_KC = ", ".join("It_Kind_" + k for k in _K) + ", It_PKind_Marumine"
+_KR = ", ".join("It_Kind_" + k + " as i32" for k in _K) + ", It_PKind_Marumine as i32"
+_NK = str(len(_K) + 1)
+_BORL = "1, 20, 8, 9, 4, 12, 21, 25, 31, 11, 6"
+_SET_C = (
+    "{ int q, k; setup_xpools(); for (q = 0; q < 256; q++) { ARR[q] = &ART[q & 1]; ARR2[q] = (rnd() & 3) ? 0 : &ART[q & 1]; }"
+    " it_804D6D24 = ARR; it_804D6D38 = ARR2;"
+    " for (q = 0; q < 2; q++) { for (k = 0; k < 8; k++) SPA[q][k] = (k & 1) ? fv() : B(rw()); ART[q].x4_specialAttributes = (void*) SPA[q]; ART[q].xC_itemStates = &STA[q]; }"
+    " for (q = 0; q < 2; q++) { static const int BL[11] = { @BORL@ }; BOR[q].x14 = (rnd() % 4 == 0) ? (int) fv() : BL[rnd() % 11]; }"
+    " for (q = 0; q < 4; q++) { if (rnd() % 4) IT[q].kind = KINDS[rnd() % @NK@]; if (rnd() % 3) IT[q].hold_kind = 4 + rnd() % 4; IT[q].anim_id = (rnd() % 4 == 0) ? -1 : (int) (rnd() % 8); }"
+    " for (q = 0; q < 8; q++) JO[q].flags &= ~JOBJ_USE_QUATERNION; }").replace("@NK@", _NK).replace("@BORL@", _BORL)
+_SET_R = (
+    "{ g::setup_xpools(); for q in 0..256usize { ARR[q] = &raw mut ART[q & 1]; ARR2[q] = if rnd() & 3 != 0 { null_mut() } else { &raw mut ART[q & 1] }; }"
+    " m::ext::it_804D6D24 = (&raw mut ARR) as *mut *mut Article; m::ext::it_804D6D38 = (&raw mut ARR2) as *mut *mut Article;"
+    " for q in 0..2usize { for k in 0..8usize { SPA[q][k] = if k & 1 != 0 { fv() } else { rw().to_bits() }; } ART[q].x4_specialAttributes = (&raw mut SPA[q]) as *mut _; ART[q].xC_itemStates = &raw mut g::STA[q]; }"
+    " for q in 0..2usize { const BL: [i32; 11] = [@BORL@]; g::BOR[q].x14 = if rnd() % 4 == 0 { fv() as i32 } else { BL[(rnd() % 11) as usize] }; }"
+    " for q in 0..4usize { if rnd() % 4 != 0 { IT[q].kind = KINDS[(rnd() % @NK@) as usize] as _; } if rnd() % 3 != 0 { IT[q].hold_kind = (4 + rnd() % 4) as _; } IT[q].anim_id = if rnd() % 4 == 0 { -1 } else { (rnd() % 8) as _ }; }"
+    " for q in 0..8usize { JO[q].flags &= !(JOBJ_USE_QUATERNION as u32); } }").replace("@NK@", _NK).replace("@BORL@", _BORL)
+STEMS["it_26B1"] = dict(
+    skip_static=["RunCallbackUnk"],
+    c_extra="static Article* ARR[256]; static Article* ARR2[256]; static u32 SPA[2][8]; static const int KINDS[" + _NK + "] = { " + _KC + " };",
+    rs_extra="static mut ARR: [*mut Article; 256] = [null_mut(); 256]; static mut ARR2: [*mut Article; 256] = [null_mut(); 256]; static mut SPA: [[u32; 8]; 2] = [[0; 8]; 2];"
+             " static KINDS: [i32; " + _NK + "] = [" + _KR + "];",
+    pregs=("preg_xpools(); preg(ARR, sizeof ARR); preg(ARR2, sizeof ARR2); preg(SPA, sizeof SPA);",
+           "g::preg_xpools(); preg(&raw const ARR, core::mem::size_of_val(&ARR)); preg(&raw const ARR2, core::mem::size_of_val(&ARR2)); preg(&raw const SPA, core::mem::size_of_val(&SPA));"),
+    setup=(_SET_C, _SET_R),
+    hash=("hash_xpools(); { int q; for (q = 0; q < 256; q++) { HM(PI(ARR2[q])); } HM(RH(SPA, sizeof SPA)); }",
+          "g::hash_xpools(); for q in 0..256usize { hm(pi(ARR2[q])); } hm(rh(&SPA));"),
+    ov={"it_8026B3F8": {0: ("&ART[rnd() % 2]", "&raw mut ART[(rnd() % 2) as usize]"), 1: ("(s32) (It_Kind_Kuriboh + fv() % 200)", "(It_Kind_Kuriboh as u32 + fv() % 200) as i32")},
+        "it_Mex_RegisterIfEmpty": {0: ("&ART[rnd() % 2]", "&raw mut ART[(rnd() % 2) as usize]"), 1: ("(s32) (It_Kind_Kuriboh + fv() % 200)", "(It_Kind_Kuriboh as u32 + fv() % 200) as i32")},
+        "it_8026B40C": {0: ("&ART[rnd() % 2]", "&raw mut ART[(rnd() % 2) as usize]"), 1: ("(s32) ((rnd() % 6 == 0) ? 5000 + fv() % 10 : It_Kind_Old_Kuri + fv() % 30)", "(if rnd() % 6 == 0 { 5000 + fv() % 10 } else { It_Kind_Old_Kuri as u32 + fv() % 30 }) as i32")},
+        "it_8026B3C0": {0: ("(ItemKind) KINDS[rnd() % @NK@]".replace("@NK@", _NK), "KINDS[(rnd() % @NK@) as usize] as _".replace("@NK@", _NK))},
+        "it_8026BE84": {0: ("&BOR[rnd() & 1]", "&raw mut g::BOR[(rnd() & 1) as usize]")}},
+)

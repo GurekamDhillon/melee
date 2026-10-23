@@ -11,10 +11,8 @@ use core::ptr::null_mut;
 use melee_core::fp::fmadds;
 use melee_types::*;
 
-use crate::tu::itmaterial::it_80278574;
-use crate::tu::itspawn::it_8026D324;
 
-// BEGIN GENERATED EXT (the callees of the C TU that are not ported in this crate)
+// BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
@@ -34,68 +32,71 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut c_void, a2: *mut c_void, a3: *mut c_void);
+    fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint);
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
-    fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
     fn HSD_JObjRemoveAnimAll(a0: *mut HSD_JObj);
+    fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
     fn Item_80267978(a0: *mut HSD_GObj);
-    fn Item_8026A8EC(a0: *mut HSD_GObj);
     fn Item_80268E40(a0: *mut Item, a1: *mut ItemStateDesc);
-    fn GetItemData(a0: *mut HSD_GObj) -> *mut Item;
-    fn ftLib_80086368(a0: *mut Vec3, a1: *mut HSD_GObj, a2: f32) -> *mut HSD_GObj;
-    fn ftLib_800864A8(a0: *mut Vec3, a1: *mut HSD_GObj) -> f32;
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec3);
-    fn ftLib_800866DC(a0: *mut HSD_GObj, a1: *mut Vec3);
-    fn ftLib_8008627C(a0: *mut Vec3, a1: *mut HSD_GObj) -> *mut HSD_GObj;
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> bool;
+    fn Item_8026A8EC(a0: *mut HSD_GObj);
+    fn Mex_IndexStageItem(a0: *mut c_void, a1: i32);
+    fn Mex_ItRecord(a0: *mut Article, a1: i32) -> i32;
+    fn ftLib_8008627C(a0: *mut Vec, a1: *mut HSD_GObj) -> *mut HSD_GObj;
+    fn ftLib_80086368(a0: *mut Vec, a1: *mut HSD_GObj, a2: f32) -> *mut HSD_GObj;
+    fn ftLib_800864A8(a0: *mut Vec, a1: *mut HSD_GObj) -> f32;
+    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_800866DC(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
     fn ftLib_80086984(a0: *mut HSD_GObj) -> *mut CollData;
-    fn ftLib_80086990(a0: *mut HSD_GObj, a1: *mut Vec3);
+    fn ftLib_80086990(a0: *mut HSD_GObj, a1: *mut Vec);
     fn ftLib_80086A4C(a0: *mut HSD_GObj, a1: f32);
     fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8;
-    fn gm_8016B238() -> bool;
-    fn it_80272D40(a0: *mut HSD_GObj) -> i32;
+    fn gm_8016B238() -> i32;
+    fn itFlipper_Spawn(a0: *mut HSD_JObj) -> *mut HSD_GObj;
+    fn itSword_Spawn(a0: *mut Vec) -> *mut HSD_GObj;
+    fn it_8026D324(a0: i32) -> i32;
     fn it_802725D4(a0: *mut HSD_GObj);
     fn it_80272784(a0: *mut HSD_GObj);
     fn it_80272A18(a0: *mut HSD_JObj);
     fn it_80272A3C(a0: *mut HSD_JObj);
+    fn it_80272D40(a0: *mut HSD_GObj) -> i32;
     fn it_80272F7C(a0: *mut HSD_JObj, a1: f32);
-    fn it_8027429C(a0: *mut HSD_GObj, a1: *mut Vec3);
-    fn it_802742F4(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: Fighter_Part);
+    fn it_8027429C(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn it_802742F4(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: u32);
     fn it_80274F10(a0: *mut HSD_GObj);
-    fn it_80275870(a0: *mut HSD_GObj) -> bool;
-    fn it_80279BE0(a0: *mut HSD_GObj);
+    fn it_80275870(a0: *mut HSD_GObj) -> i32;
     fn it_802799E4(a0: *mut HSD_GObj);
-    fn it_802D09D0(a0: *mut HSD_GObj);
-    fn it_8027D670(a0: *mut Vec3) -> *mut HSD_GObj;
+    fn it_80279BE0(a0: *mut HSD_GObj);
+    fn it_8027D670(a0: *mut Vec) -> *mut HSD_GObj;
     fn it_8027D730(a0: *mut HSD_GObj);
-    fn it_80283AE4(a0: *mut HSD_GObj, a1: *mut Vec3, a2: i32) -> *mut HSD_GObj;
+    fn it_80283AE4(a0: *mut HSD_GObj, a1: *mut Vec, a2: i32) -> *mut HSD_GObj;
     fn it_80283BD4(a0: *mut HSD_GObj);
-    fn it_80284854(a0: *mut Vec3) -> *mut HSD_GObj;
+    fn it_802841B4(a0: *mut HSD_GObj, a1: *mut Vec, a2: i32) -> *mut HSD_GObj;
     fn it_8028428C(a0: *mut HSD_GObj);
-    fn it_802841B4(a0: *mut HSD_GObj, a1: *mut Vec3, a2: i32) -> *mut HSD_GObj;
-    fn it_802896CC(a0: *mut Vec3) -> *mut HSD_GObj;
+    fn it_80284854(a0: *mut Vec) -> *mut HSD_GObj;
     fn it_80286088(a0: *mut HSD_GObj) -> *mut HSD_GObj;
-    fn it_80291BE0(a0: *mut Vec3) -> *mut HSD_GObj;
-    fn it_80292D48(a0: *mut Vec3) -> *mut HSD_GObj;
-    fn it_80294DC0(a0: *mut Vec3) -> *mut HSD_GObj;
+    fn it_802896CC(a0: *mut Vec) -> *mut HSD_GObj;
     fn it_8028FE90(a0: *mut HSD_GObj);
+    fn it_80291BE0(a0: *mut Vec) -> *mut HSD_GObj;
+    fn it_80292D48(a0: *mut Vec) -> *mut HSD_GObj;
+    fn it_80294DC0(a0: *mut Vec) -> *mut HSD_GObj;
     fn it_8029D968(a0: *mut HSD_GObj);
-    fn itFlipper_Spawn(a0: *mut HSD_JObj) -> *mut HSD_GObj;
-    fn itSword_Spawn(a0: *mut Vec3) -> *mut HSD_GObj;
+    fn it_802D09D0(a0: *mut HSD_GObj);
     fn lb_8000B804(a0: *mut HSD_JObj, a1: *mut HSD_Joint);
     fn lb_8000BA0C(a0: *mut HSD_JObj, a1: f32);
-    fn sqrtf(a0: f32) -> f32;
-    fn Mex_IndexStageItem(a0: *mut c_void, a1: i32);
     }
-    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = core::ptr::null_mut();
-    pub static mut it_804A0F60: [*mut Article; 30] = [core::ptr::null_mut(); 30];
-    pub static mut it_804D6D24: *mut *mut Article = core::ptr::null_mut();
-    pub static mut it_804D6D28: *mut ItemCommonData = core::ptr::null_mut();
-    pub static mut it_804D6D30: *mut *mut Article = core::ptr::null_mut();
-    pub static mut it_804D6D38: *mut *mut Article = core::ptr::null_mut();
-    pub static mut it_804D6D08: i32 = 0;
-    pub static mut it_804D6D0C: i32 = 0;
-    pub static mut it_804D6D40: *mut it_804D6D40_t = core::ptr::null_mut();
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
+    pub static mut it_804A0F60: [*mut Article; 30] = unsafe { core::mem::zeroed() };
+    pub static mut it_804D6D08: i32 = unsafe { core::mem::zeroed() };
+    pub static mut it_804D6D0C: i32 = unsafe { core::mem::zeroed() };
+    pub static mut it_804D6D24: *mut *mut Article = unsafe { core::mem::zeroed() };
+    pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
+    pub static mut it_804D6D38: *mut *mut Article = unsafe { core::mem::zeroed() };
 }
 // END GENERATED EXT
 
@@ -126,7 +127,7 @@ pub unsafe extern "C" fn it_8026B1D4(gobj: *mut HSD_GObj, itemHitboxUnk: *mut Hi
 
 /// The MSL `sqrtf` (math_ppc.h): the Newton-Raphson form the game uses; delegated to the native port.
 fn sqrtf_native(x: f32) -> f32 {
-    unsafe { ext::sqrtf(x) }
+    melee_runtime::gekko::sqrtf(x)
 }
 
 /// `it_8026B294`: copies the item's position.
@@ -150,7 +151,7 @@ pub unsafe extern "C" fn itGetDamageMultiplier(gobj: *mut HSD_GObj) -> f32 {
 /// `it_8026B344`: the item's position offset by its `xBCC` vector (x flipped with facing).
 pub unsafe extern "C" fn it_8026B344(gobj: *mut HSD_GObj, pos: *mut Vec3) {
     let ip = item_of(gobj);
-    (*pos).x = (*ip).facing_dir * (*ip).xBCC_unk.x + (*ip).pos.x;
+    (*pos).x = fmadds((*ip).facing_dir, (*ip).xBCC_unk.x, (*ip).pos.x);
     (*pos).y = (*ip).pos.y + (*ip).xBCC_unk.y;
     (*pos).z = (*ip).pos.z;
 }
@@ -177,8 +178,11 @@ pub unsafe extern "C" fn it_8026B3A8(gobj: *mut HSD_GObj) {
 
 /// `it_8026B3F8`: stores a fighter article in the article table (m-ex clones record instead).
 pub unsafe extern "C" fn it_8026B3F8(article: *mut Article, kind: i32) {
-    // Mex_ItRecord (the m-ex record-only mode) is not part of the native build: it never returns true here.
-    ext::it_804D6D38.add((kind - It_Kind_Kuriboh) as usize).write(article);
+    // TARGET_PC: while an m-ex clone's base onLoad runs in record-only mode the registration is captured.
+    if ext::Mex_ItRecord(article, kind) != 0 {
+        return;
+    }
+    *ext::it_804D6D38.offset((kind - It_Kind_Kuriboh) as isize) = article;
 }
 
 /// `it_Mex_RegisterIfEmpty`: registers a fighter article only where no loaded fighter already has one.
@@ -366,7 +370,7 @@ pub unsafe extern "C" fn it_8026B73C(gobj: *mut HSD_GObj) {
 /// `it_8026B774`: true when bit `arg1` of the `0xF` field is set.
 pub unsafe extern "C" fn it_8026B774(gobj: *mut HSD_GObj, arg1: u8) -> bool {
     let ip = item_of(gobj);
-    ((*ip).xDC8_word.flags.xF() as i32) & (1i32 << arg1) != 0
+    ((*ip).xDC8_word.flags.xF() as i32) & (melee_runtime::cabi::shl(1, arg1 as u32) as i32) != 0
 }
 
 /// `itGetMotionId`.
@@ -499,9 +503,9 @@ pub unsafe extern "C" fn it_8026B9A8(gobj: *mut HSD_GObj, arg1: *mut HSD_GObj, a
             let temp_stateDesc = (*ip).xD0_itemStateDesc;
             ext::HSD_JObjAddAnimAll(
                 jobj0,
-                (*temp_stateDesc).x0_anim_joint as *mut c_void,
-                (*temp_stateDesc).x4_matanim_joint as *mut c_void,
-                (*temp_stateDesc).x8_parameters as *mut c_void,
+                (*temp_stateDesc).x0_anim_joint,
+                (*temp_stateDesc).x4_matanim_joint,
+                (*temp_stateDesc).x8_parameters,
             );
             ext::lb_8000BA0C(jobj0, (*ip).x5D0_animFrameSpeed);
             ext::HSD_JObjReqAnimAll(jobj0, 0.0);
@@ -566,7 +570,7 @@ pub unsafe extern "C" fn it_8026BBCC(gobj: *mut HSD_GObj, pos: *mut Vec3) {
 /// `it_8026BC14`: decrements the owner's hitlag while the item is held.
 pub unsafe extern "C" fn it_8026BC14(gobj: *mut HSD_GObj) {
     let ip = item_of(gobj);
-    if !(*ip).owner.is_null() && ext::ftLib_80086960((*ip).owner) {
+    if !(*ip).owner.is_null() && ext::ftLib_80086960((*ip).owner) != 0 {
         ext::ftLib_80086A4C((*ip).owner, (*ip).xCBC_hitlagFrames - 1.0);
     }
 }
@@ -586,7 +590,7 @@ pub unsafe extern "C" fn it_8026BC90(gobj: *mut HSD_GObj, pos: *mut Vec3) {
     (*pos).z = 0.0;
     (*pos).y = 0.0;
     (*pos).x = 0.0;
-    if !gobj.is_null() && ext::ftLib_80086960(gobj) {
+    if !gobj.is_null() && ext::ftLib_80086960(gobj) != 0 {
         ext::ftLib_80086644(gobj, pos);
     }
 }
@@ -659,13 +663,13 @@ pub unsafe extern "C" fn it_8026BE28(gobj: *mut HSD_GObj) {
 /// `it_8026BE84`: spawns the bomb-rain item for `bobOmbRain`'s kind and applies its flags.
 pub unsafe extern "C" fn it_8026BE84(bobOmbRain: *mut BobOmbRain) -> *mut HSD_GObj {
     let mut gobj: *mut HSD_GObj = null_mut();
-    if ext::gm_8016B238() && (*bobOmbRain).x14 != 6 {
+    if ext::gm_8016B238() != 0 && (*bobOmbRain).x14 != 6 {
         return null_mut();
     }
     let bobomb_id = (*bobOmbRain).x14;
     match bobomb_id {
         1 => {
-            if it_8026D324(It_Kind_Box) {
+            if ext::it_8026D324(It_Kind_Box) != 0 {
                 gobj = ext::it_80286088((*bobOmbRain).x0);
             }
         }
@@ -695,7 +699,7 @@ pub unsafe extern "C" fn it_8026BE84(bobOmbRain: *mut BobOmbRain) -> *mut HSD_GO
             }
         }
         4 => {
-            if it_8026D324(It_Kind_Kusudama) {
+            if ext::it_8026D324(It_Kind_Kusudama) != 0 {
                 gobj = ext::it_802896CC(&raw mut (*bobOmbRain).x8_vec);
                 if !gobj.is_null() {
                     ext::it_80274F10(gobj);
@@ -770,11 +774,11 @@ pub unsafe extern "C" fn it_8026C100(gobj: *mut HSD_GObj) -> *mut CollData {
 }
 
 /// `it_8026C16C`: a hammer's head breaks off when it is headless or out of durability.
-pub unsafe extern "C" fn it_8026C16C(gobj: *mut HSD_GObj, is_headless: bool) {
+pub unsafe extern "C" fn it_8026C16C(gobj: *mut HSD_GObj, is_headless: i32) {
     let ip = item_of(gobj);
     if (*ip).xD4C <= 0 {
         ext::it_802725D4(gobj);
-    } else if is_headless {
+    } else if is_headless != 0 {
         ext::it_80272784(gobj);
     } else {
         ext::it_802725D4(gobj);
@@ -782,7 +786,7 @@ pub unsafe extern "C" fn it_8026C16C(gobj: *mut HSD_GObj, is_headless: bool) {
 }
 
 /// `it_8026C1B4`: true when the item has a hitbox.
-pub unsafe extern "C" fn it_8026C1B4(gobj: *mut HSD_GObj) -> bool {
+pub unsafe extern "C" fn it_8026C1B4(gobj: *mut HSD_GObj) -> i32 {
     ext::it_80275870(gobj)
 }
 
@@ -870,5 +874,104 @@ pub unsafe extern "C" fn it_8026C368(gobj: *mut HSD_GObj) {
                 ext::Item_8026A8EC(gobj);
             }
         }
+    }
+}
+
+// ---- functions of the C file that the first pass left to itlib (their C signatures, ported here) ----
+
+/// `itIsHeavy`: the attribute's `x0_is_heavy` bit.
+pub unsafe extern "C" fn itIsHeavy(gobj: *mut HSD_GObj) -> bool {
+    let temp_item = (*gobj).user_data as *mut Item;
+    (*(*temp_item).xCC_item_attr).x0_is_heavy() != 0
+}
+
+/// `itGetKind`.
+pub unsafe extern "C" fn itGetKind(gobj: *mut HSD_GObj) -> ItemKind {
+    (*item_of(gobj)).kind
+}
+
+/// `it_8026B30C`: the attribute's `x0_78` field.
+pub unsafe extern "C" fn it_8026B30C(gobj: *mut HSD_GObj) -> enum_t {
+    (*(*item_of(gobj)).xCC_item_attr).x0_78() as enum_t
+}
+
+/// `itGetHoldKind`: the attribute's `x0_hold_kind` field.
+pub unsafe extern "C" fn itGetHoldKind(gobj: *mut HSD_GObj) -> Item_HoldKinds {
+    (*(*item_of(gobj)).xCC_item_attr).x0_hold_kind() as Item_HoldKinds
+}
+
+/// `it_8026B3C0`: counts the item gobjs of `kind`.
+pub unsafe extern "C" fn it_8026B3C0(kind: ItemKind) -> i32 {
+    let mut i = 0;
+    let mut unk = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_ITEM as usize);
+    while !unk.is_null() {
+        let temp_item = (*unk).user_data as *mut Item;
+        if (*temp_item).kind == kind {
+            i += 1;
+        }
+        unk = (*unk).next;
+    }
+    i
+}
+
+/// `it_8026B588`: `it_804D6D28->xDC`.
+pub unsafe extern "C" fn it_8026B588() -> i32 {
+    (*ext::it_804D6D28).xDC
+}
+
+/// `it_8026B594`: true for a projectile item with no ammo left.
+pub unsafe extern "C" fn it_8026B594(gobj: *mut HSD_GObj) -> bool {
+    let ip = item_of(gobj);
+    let kind = (*ip).kind;
+    if kind == It_Kind_L_Gun || kind == It_Kind_S_Scope || kind == It_Kind_StarRod || kind == It_Kind_LipStick || kind == It_Kind_F_Flower {
+        if (*ip).xD4C <= 0 {
+            return true;
+        }
+    }
+    false
+}
+
+/// `it_8026B7F8`: runs each item's `evt_unk` callback for `fighter_gobj` and releases the items it owned.
+pub unsafe extern "C" fn it_8026B7F8(fighter_gobj: *mut HSD_GObj) {
+    let mut cur = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_ITEM as usize);
+    while !cur.is_null() {
+        let ip = item_of(cur);
+        let owner = (*ip).owner;
+        if let Some(proc_) = (*(*ip).xB8_itemLogicTable).evt_unk {
+            proc_(cur, fighter_gobj);
+        }
+        if (*ip).xDC8_word.flags.x13() != 0 && owner == fighter_gobj {
+            ext::Item_8026A8EC(cur);
+        }
+        cur = (*cur).next;
+    }
+}
+
+/// `it_8026BC68`: `xDD0_flag.b0`.
+pub unsafe extern "C" fn it_8026BC68(gobj: *mut HSD_GObj) -> bool {
+    (*item_of(gobj)).xDD0_flag.anon_0.b0() != 0
+}
+
+/// `it_8026C3FC`: sets bit 3 of the `0xDC8` word of every item gobj.
+pub unsafe extern "C" fn it_8026C3FC() {
+    let mut cur = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_ITEM as usize);
+    while !cur.is_null() {
+        it_8026B724(cur);
+        cur = (*cur).next;
+    }
+}
+
+/// `it_8026C42C`: the `it_8026B73C` flag toggle for every item gobj.
+pub unsafe extern "C" fn it_8026C42C() {
+    let mut cur = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_ITEM as usize);
+    while !cur.is_null() {
+        let ip = item_of(cur);
+        if (*ip).xDC8_word.flags.x7() != 0 {
+            (*ip).xDC8_word.flags.set_x5(1);
+        }
+        if (*ip).xDC8_word.flags.x3() != 0 {
+            (*ip).xDC8_word.flags.set_x3(0);
+        }
+        cur = (*cur).next;
     }
 }

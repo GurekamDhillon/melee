@@ -127,6 +127,16 @@ add("itzako", "src/melee/it/itzako.c", custom_stubs={}, skip_freg=["it_8027B798_
                              "t(*(a1 as *const u8) as u32); t(*(a1 as *const u8).add(1) as u32); t(*(a1 as *const u8).add(2) as u32); t(*(a1 as *const u8).add(3) as u32);"),
              "ftLib_8008770C": ("*(u32*) a1 = fv();", "*(a1 as *mut u32) = fv();"),
              "ftLib_80087744": ("*(u32*) a1 = fv();", "*(a1 as *mut u32) = fv();")})
-add("it_26B1", "src/melee/it/it_26B1.c")
+add("it_26B1", "src/melee/it/it_26B1.c", skip_freg=["RunCallbackUnk"], skip_stubs=["__frsqrte"], skip_data=["guess", "y", "item_data"],
+    xpools=[("BobOmbRain", "BOR", 2), ("ItemStateArray", "STA", 2), ("HSD_Joint", "JT", 2)],
+    manual_data=["it_804D6D24", "it_804D6D38"],
+    null_ret_ok=["ftLib_8008627C"],
+    ret={"ftLib_8008627C": ("pick_fgo()", "pick_fgo()"), "ftLib_80086368": ("pick_fgo()", "pick_fgo()"),
+         "ftLib_80086984": ("pick_CollData()", "pick_CollData()"),
+         "it_80272D40": ("(int) (fv() & 1)", "(fv() & 1) as i32"),
+         "itFlipper_Spawn": ("pick_igo()", "pick_igo()"), "itSword_Spawn": ("pick_igo()", "pick_igo()"),
+         "it_8027D670": ("pick_igo()", "pick_igo()"), "it_80283AE4": ("pick_igo()", "pick_igo()"), "it_802841B4": ("pick_igo()", "pick_igo()"),
+         "it_80284854": ("pick_igo()", "pick_igo()"), "it_80286088": ("pick_igo()", "pick_igo()"), "it_802896CC": ("pick_igo()", "pick_igo()"),
+         "it_80291BE0": ("pick_igo()", "pick_igo()"), "it_80292D48": ("pick_igo()", "pick_igo()"), "it_80294DC0": ("pick_igo()", "pick_igo()")})
 add("it_2725", "src/melee/it/it_2725.c")
 add("it_279C", "src/melee/it/it_279C.c")

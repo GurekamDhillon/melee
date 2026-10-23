@@ -7,7 +7,7 @@ root="$(cd "$here/../../../.." && pwd)"
 cd "$root"
 stems=("$@")
 if [ ${#stems[@]} -eq 0 ]; then
-  stems=(itarwinglaser itbat itbombhei itbox itcapsule itcerebi itchicorita itclimbersblizzard)
+  stems=(itarwinglaser itbat itbombhei itbox itcapsule itcerebi itchicorita itclimbersblizzard itnokonoko itoctarock itoctarockstone itoldkuri itoldottosea itparasol itpatapata itpeachexplode)
 fi
 for s in "${stems[@]}"; do
   python rust/melee_items/gen/kinds/mk_driver.py "$s"

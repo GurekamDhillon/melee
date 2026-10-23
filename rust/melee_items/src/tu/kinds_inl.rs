@@ -137,6 +137,23 @@ macro_rules! kinds_jobj_inl {
             (*jobj).rotate.x
         }
 
+        /// `HSD_JObjGetRotationY`
+        #[inline]
+        unsafe fn HSD_JObjGetRotationY(jobj: *mut HSD_JObj) -> f32 {
+            $crate::tu::kinds_inl::hsd_assert(!jobj.is_null(), "(jobj)");
+            (*jobj).rotate.y
+        }
+
+        /// `HSD_JObjAddTranslationZ`
+        #[inline]
+        unsafe fn HSD_JObjAddTranslationZ(jobj: *mut HSD_JObj, z: f32) {
+            $crate::tu::kinds_inl::hsd_assert(!jobj.is_null(), "(jobj)");
+            (*jobj).translate.z += z;
+            if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+                HSD_JObjSetMtxDirty(jobj);
+            }
+        }
+
         /// `HSD_JObjSetScale`
         #[inline]
         unsafe fn HSD_JObjSetScale(jobj: *mut HSD_JObj, scale: *mut Vec3) {

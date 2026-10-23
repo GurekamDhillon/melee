@@ -634,3 +634,20 @@ unported TUs are `ext` hooks (unset: panics "TODO"). The old snake_case forwarde
 - `it_802E7654` has no `return` in the C; the port returns the spawned gobj (what PPC leaves in r3), the oracle does
   not compare that return value. Ints that the C wraps (`-= 1`, sums of weights) use `wrapping_*` ops. Mutation checks
   (flipping fused sites, constants, comparison boundaries, state ids) fail the tests.
+
+## melee_items::tu: it/kinds nokonoko ... peachexplode (shard 761-768)
+`rust/melee_items/src/tu/{itnokonoko,itoctarock,itoctarockstone,itoldkuri,itoldottosea,itparasol,itpatapata,itpeachexplode}.rs`
+port every function of those `src/melee/it/kinds` files (257, statics and the two `*_inline` helpers of itnokonoko included),
+checked with the same whole-TU C state oracle as shard 657-664 (`bash rust/melee_items/gen/kinds/regen.sh [stem...]`,
+400 seeded cases per function, tests `kinds_<stem>`). New specs live in `specs.py` (`MY_RET` / `MY_EFF`: pass-through `bool`
+callees return 0/1, `it_80276308` returns 0/4/8, `ftLib_8008627C` returns an owner gobj or NULL, `Vec3` out-parameters are
+written) and `specs_cfg.py` (typed `x4_specialAttributes` with a pointee block at +64, the `it_804D6D40` data, the
+ptr slot of `oldottosea.x20` cleared after hashing, bones 14..18 of the dynamic bone table for patapata).
+- Fused sites (checked in the IR): parasol `deg_to_rad * fm + ry`, octarockstone `Randf * ((pos.y - y) / 10) + vel.y`,
+  oldottosea `pos.x += x14 * facing` and `vel.x += -facing * xC`; octarock / oldkuri / patapata / nokonoko / peachexplode have none.
+  Mutations of each fused site, constants and state ids fail the tests.
+- `x40_vel.y <= 0.2` (oldkuri, nokonoko) is a double comparison in the C (`0.2` unsuffixed); the port compares as f64.
+- `itParasol it_8028B08C(item, statenum)` indexes a 8-entry table by `anim_id`, which is -1 for states 0 and 3 (C reads out
+  of bounds); the oracle only draws the states 1, 2, 4..10 that the game uses. `bool` parameters of the C are `int`: ports take `i32`.
+- Not in these files (itwhitebea.c): `itOldottosea_UnkMotion8..11`, `it_802E3400/3528/35CC/37A4`; the state table names the former
+  through `ext::cb`.

@@ -25,3 +25,13 @@ pub mod itchicorita;
 pub mod itclimbersblizzard;
 pub mod itbombhei;
 pub mod itbox;
+
+// Shard 801-808.
+pub mod itthunder;
+pub mod ittogepy;
+pub mod ittomato;
+pub mod ittosakinto;
+pub mod ittools;
+pub mod itunknown;
+pub mod itwhispyapple;
+pub mod ittincle;

@@ -209,3 +209,6 @@ CFG["itclimbersblizzard"] = dict(
         core::ptr::write_bytes(cb as *mut _ as *mut u8, 0, core::mem::size_of::<itClimbersBlizzard_ItemVars>());
     }"""),
 )
+
+
+from specs_cfg_801 import *  # noqa: E402,F401,F403  (shard 801-808 entries)

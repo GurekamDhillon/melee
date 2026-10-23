@@ -1,6 +1,7 @@
 //! Port of src/melee/it/itmaterial.c: the item material (`it_mobj`) class, its setup callback (TEV color
 //! overlay and shadow/toon texture chaining) and the per-material diffuse color walk over a jobj tree.
 //! Callees of other TUs go through `ext` (unset hooks panic "TODO").
+//! Checked against the C by the state oracle `tests/tu_itmaterial.rs` (gen/mtu).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_mut, unused_assignments, clippy::missing_safety_doc)]
 
 use core::ffi::c_void;

@@ -2,6 +2,7 @@
 //! the weighted pick tables it_804A0E50 / it_804A0E60 / it_804A0E30.x4 and the item-spawn helpers that
 //! place an item at a position. The MUST_MATCH-only layout hack (`sdata2_order`) is not compiled on PC and
 //! is not ported. Callees of other TUs go through `ext` (unset hooks panic "TODO").
+//! Checked against the C by the state oracle `tests/tu_itspawn.rs` (gen/mtu).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_mut, unused_assignments, unused_variables, clippy::missing_safety_doc)]
 
 use core::ffi::c_void;

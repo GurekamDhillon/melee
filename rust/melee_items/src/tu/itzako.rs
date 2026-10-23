@@ -1,7 +1,7 @@
 //! Port of src/melee/it/itzako.c: the "zako" (enemy-item) spawn and motion helpers: the spawn with a
 //! jobj-relative position, the knockback velocity, the orientation that follows the ground normal, the
 //! Game&Watch and the Destroyed/Defeated hooks. Callees of other TUs go through `ext` (unset hooks panic
-//! "TODO"); callees ported in this crate are called directly.
+//! "TODO"). Checked against the C by the state oracle `tests/tu_itzako.rs` (gen/mtu).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_mut, unused_assignments, unused_variables, clippy::missing_safety_doc)]
 
 use core::ffi::c_void;

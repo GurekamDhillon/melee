@@ -1,9 +1,7 @@
 //! Port of src/melee/it/it_26B1.c: the item accessor layer (kind, attributes, hold kind, owner, flags in the
 //! `0xDC8`/`0xDCC`/`0xDCD`/`0xDD0` words, ECB and position probes), the article table (`it_804A0F60`,
-//! `it_804D6D38`) and the bomb-rain spawn dispatch. Functions already ported in another crate (itIsHeavy,
-//! itGetKind, it_8026B30C, itGetHoldKind, it_8026B588, it_8026B594, it_8026B7F8, it_8026BC68, it_8026C3FC,
-//! it_8026C42C, it_8026B3C0) are not repeated here. Callees of other TUs go through `ext` (unset hooks panic
-//! "TODO").
+//! `it_804D6D38`) and the bomb-rain spawn dispatch. Every function of the C file is here. Callees of other TUs go through `ext` (unset hooks panic
+//! "TODO"). Checked against the C by the state oracle `tests/tu_it_26B1.rs` (gen/mtu).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_mut, unused_assignments, unused_variables, clippy::missing_safety_doc)]
 
 use core::ffi::c_void;

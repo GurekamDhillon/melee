@@ -1,9 +1,8 @@
 //! Port of src/melee/it/it_2725.c: the item bone and hitbox helpers (hitbox enable/disable, the bone walk
 //! `get_bone_by_id`, the scale/rotation/spin of a model), the throw/landing/hold transitions, the lifetime and
-//! flag setters, and the sound/bounce callbacks. Functions already ported in `itlib`/`itlib3` (it_80272818,
-//! it_80272860, it_80273030, it_80273130, it_80273484, it_80273500, it_80274658, it_80274990, it_80275158,
-//! it_80275174, it_80275210, it_80275228, it_80275240, it_80275258, it_80275270, it_80275328, it_80275390,
-//! it_80275870) are not repeated here. Callees of other TUs go through `ext` (unset hooks panic "TODO").
+//! flag setters, and the sound/bounce callbacks. Every function of the C file is here (also those `itlib`/`itlib3` port with other
+//! signatures). Callees of other TUs go through `ext` (unset hooks panic "TODO"). Checked against the C by the state
+//! oracle `tests/tu_it_2725.rs` (gen/mtu).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_mut, unused_assignments, unused_variables, clippy::missing_safety_doc)]
 
 use core::ffi::c_void;

@@ -2,8 +2,8 @@
 //! or the stage's list, the spawn scale animation, the attack-id/attack-instance copies from the owner, the
 //! facing/rotation helpers and the spawn driver `it_8027AB64`). The item logic tables at the top of the C file
 //! (`it_803F23CC` and friends) are data, not functions, and are not part of this port.
-//! `it_8027B4A4` is ported in melee_fighter and is not repeated. Callees of other TUs go through `ext` (unset
-//! hooks panic "TODO"); callees ported in this crate are called directly.
+//! Callees of other TUs go through `ext` (unset hooks panic "TODO"). Checked against the C by the state oracle
+//! `tests/tu_it_279C.rs` (gen/mtu).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_mut, unused_assignments, unused_variables, clippy::missing_safety_doc)]
 
 use core::ffi::c_void;

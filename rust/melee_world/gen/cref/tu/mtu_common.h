@@ -105,6 +105,17 @@ static u32 PI(const void* p)
     for (i = 0; i < NF; i++) if (FP[i] == p) return 0xF0000000u | (u32) (i + 1);
     return 0xFFFFFFFFu;
 }
+/* a data pointer truncated to 32 bits ((int) ptr): named by the region it points into (low 32 bits compared) */
+static u32 PI32(u32 v)
+{
+    int i;
+    if (v == 0) return 0;
+    for (i = 0; i < NR; i++) {
+        u32 b = (u32) (unsigned long long) RB[i];
+        if (v >= b && v < b + RZ[i]) return ((u32) (i + 1) << 16) | (v - b);
+    }
+    return 0xFFFFFFFFu;
+}
 static u32 SH(const char* s)
 {
     u32 h = 0x811C9DC5u;

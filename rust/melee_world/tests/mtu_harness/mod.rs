@@ -3,6 +3,8 @@
 #![allow(dead_code, static_mut_refs)]
 
 pub static mut TR: u32 = 0;
+/// Active view of the unions the spec names (mirrors `USEL` of mtu_common.h).
+pub static mut USEL: i32 = 0;
 pub static mut TRACEON: bool = false;
 pub fn t(v: u32) {
     unsafe {
@@ -22,8 +24,15 @@ pub static mut HDBG: bool = false;
 pub fn hm(v: u32) {
     unsafe {
         H = H.wrapping_mul(0x0100_0193) ^ v;
-        if HDBG {
-            println!("H {:08X}", v);
+        if TRACEON {
+            println!("H {:08X} {:08X}", v, H);
+        }
+    }
+}
+pub fn hn(s: &str) {
+    unsafe {
+        if TRACEON {
+            println!("N {}", s);
         }
     }
 }
@@ -72,9 +81,16 @@ pub fn fv() -> u32 {
         _ => r >> 5,
     }
 }
+/// 64-bit draw: high word first (the generated C fill expands `(u64) fv() << 32 | fv()`).
 pub fn fv64() -> u64 {
     let hi = fv() as u64;
     let lo = fv() as u64;
+    (hi << 32) | lo
+}
+/// 64-bit draw, low word first (the ground/gr shard generators: mtu_common.h `fv64`).
+pub fn fv64_lo() -> u64 {
+    let lo = fv() as u64;
+    let hi = fv() as u64;
     (hi << 32) | lo
 }
 pub static mut SRV: [u32; 16] = [0; 16];
@@ -149,6 +165,21 @@ pub fn pib<T>(p: *const T) -> u32 {
     } else {
         0xFFFF_FFFE
     }
+}
+/// A data pointer truncated to 32 bits (`(int) ptr`): named by the region it points into (low 32 bits compared).
+pub fn pi32(v: u32) -> u32 {
+    if v == 0 {
+        return 0;
+    }
+    unsafe {
+        for (i, &(b, z)) in RB.iter().enumerate() {
+            let b32 = b as u32;
+            if v >= b32 && (v as u64) < b32 as u64 + z as u64 {
+                return (((i + 1) as u32) << 16) | (v - b32);
+            }
+        }
+    }
+    0xFFFF_FFFF
 }
 pub fn sh(s: *const u8) -> u32 {
     if s.is_null() {

@@ -58,6 +58,14 @@ def patched_source(stem, spec):
     return str(out.relative_to(ROOT)).replace("\\", "/")
 
 
+EXTRA_MAIN = set()   # spec `extra_main`: files #included by the TU whose functions are part of it (.inc files)
+
+
+def set_extra_main(paths):
+    EXTRA_MAIN.clear()
+    EXTRA_MAIN.update((ROOT / p).resolve() for p in paths)
+
+
 class Tu:
     def __init__(self, src, extra_args=(), incdir=None):
         self.src = src
@@ -88,7 +96,10 @@ class Tu:
 
     def in_main(self, c):
         f = c.location.file
-        return f is not None and Path(f.name).resolve() == self.main
+        if f is None:
+            return False
+        r = Path(f.name).resolve()
+        return r == self.main or r in EXTRA_MAIN
 
     def uses(self):
         """-> (stubs{name: [cursor, called, addr_taken]}, inlines{name}, data{name: cursor})"""
@@ -385,6 +396,17 @@ class Walk:
                 rf.append("_ => {} }")
                 rh.append("_ => {} }")
                 return
+            pu = getattr(self, "ptr_unions", {}).get(f.spelling if f is not None else None)
+            if pu and not any(x.spelling == pu for x in d.get_children()):
+                pu = None
+            if d.kind == K.UNION_DECL and pu:
+                # a union the spec says is read through one pointer member: left NULL by fill (the spec's
+                # setup links it into a pool), hashed by pool id
+                cf.append(f"{cexpr}.{pu} = 0;")
+                ch.append(f"HM(PI((const void*) {cexpr}.{pu}));")
+                rf.append(f"unsafe {{ {rexpr}.{pu} = core::ptr::null_mut(); }}")
+                rh.append(f"unsafe {{ hm(pi({rexpr}.{pu})); }}")
+                return
             if d.kind == K.UNION_DECL:
                 sz = c.get_size()
                 cf.append(f"for (i{depth} = 0; i{depth} < {sz}; i{depth}++) ((unsigned char*) &{cexpr})[i{depth}] = (unsigned char) rnd();")
@@ -438,6 +460,7 @@ class Walk:
 # ---------------------------------------------------------------------------- output
 
 def build(stem, spec, want_ext):
+    set_extra_main(spec.get("extra_main", ()))
     tu = Tu(patched_source(stem, spec), spec.get("args", ()), (ROOT / spec["src"]).parent)
     stubs, inlines, data = tu.uses()
     for n in ("__assert", "OSReport", "printf"):
@@ -494,11 +517,12 @@ def build(stem, spec, want_ext):
         params = ", ".join(f"__typeof__({p.spelling}) a{i}" for i, p in enumerate(ptys)) or "void"
         ret_t = "void" if rcls == "void" else f"__typeof__({rt.spelling})"
         f32a = spec.get("fn32_args", {}).get(n, [])
-        body_c = [f"T({sid[n]});"] + [(f"T(FI32((u32) a{i}));" if i in f32a else c_trace(arg_class(p), f"a{i}"))
+        tro = spec.get("trace", {}).get(n, {})   # {arg index: (c_word, rust_word)}: the traced word of an argument
+        body_c = [f"T({sid[n]});"] + [(f"T({tro[i][0]});" if i in tro else f"T(FI32((u32) a{i}));" if i in f32a else c_trace(arg_class(p), f"a{i}"))
                                       for i, p in enumerate(ptys)]
         rparams = ", ".join(f"a{i}: {rust_ty(p)}" for i, p in enumerate(ptys))
         rret = "" if rcls == "void" else f" -> {rust_ty(rt)}"
-        body_r = [f"t({sid[n]});"] + [(f"t(fi32(a{i} as u32));" if i in f32a else r_trace(arg_class(p), f"a{i}"))
+        body_r = [f"t({sid[n]});"] + [(f"t({tro[i][1]});" if i in tro else f"t(fi32(a{i} as u32));" if i in f32a else r_trace(arg_class(p), f"a{i}"))
                                       for i, p in enumerate(ptys)]
         if n in eff:
             body_c.append(eff[n][0])
@@ -524,6 +548,7 @@ def build(stem, spec, want_ext):
             ext_cb.append((n, rparams, rret, argnames))
     # fill / hash
     walker = Walk(tu, spec.get("unions"), spec.get("skip", ()))
+    walker.ptr_unions = spec.get("ptr_unions", {})
     local_types = []
     fwd = []
     for tn in spec.get("types", ()):

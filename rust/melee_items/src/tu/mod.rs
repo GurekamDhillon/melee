@@ -16,3 +16,6 @@ pub mod itkirbyyoshispecialn;
 pub mod itkirby_2F23;
 pub mod itkireihana;
 pub mod itklap;
+pub mod itkoopaflame;
+pub mod itkyasarin;
+pub mod itkusudama;

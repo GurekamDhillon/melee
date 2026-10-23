@@ -119,3 +119,22 @@ spec("itklap", [], skip_stubs=["sinf", "cosf"], skip_data=IT_SKIP + ["pos"], ret
               "Ground_801C4DA0": ("if (a0) { a0->x = rw(); a0->y = rw(); a0->z = rw(); } if (a1) *a1 = rw();",
                                   "if !a0.is_null() { (*a0).x = rw(); (*a0).y = rw(); (*a0).z = rw(); } if !a1.is_null() { *a1 = rw(); }"),
               "lbColl_80008D30": ("((struct SmallerHitCapsule*) a0)->damage = rw();", "(*(a0 as *mut SmallerHitCapsule)).damage = rw();")})
+
+_p, _s = efsync("ItemStateTable ItemStateTable_KoopaFlame[] = {")
+spec("itkoopaflame", [], patch=_p, custom_stubs=_s, skip_stubs=["sinf", "cosf"],
+     effects={"Item_80268B18": spawn_effect(), "it_8026BB68": BB68, "lbVector_Normalize": _WR3("a0"), "lbVector_Mirror": _WR3("a0")})
+
+# HSD_JObjSetMtxDirty is a function-like macro in jobj.h (used by the header inlines, expanded before this point);
+# the out-of-line function of the same name is a callee here, so drop the macro before the stub is defined.
+_KP = [("ItemStateTable it_803F90D0[] = {", "#undef HSD_JObjSetMtxDirty" + chr(10) + "ItemStateTable it_803F90D0[] = {")]
+spec("itkyasarin", ["itKyasarinAttributes"], patch=_KP, skip_data=IT_SKIP + ["pos"], ret={"it_8027B5B0": COMMON_RET["Item_80268B18"]})
+
+_p, _s = efsync("ItemStateTable it_803F59F8[] = {")
+# it_80289BE8_spawn_random falls off its end when it_8026F3AC() == -1 (UB in C; on the PPC build r3 still holds -1):
+# the oracle returns the same value.
+_p = _p + [("            return -1;\n        }\n    }\n}\n", "            return -1;\n        }\n    }\n    return rand_kind;\n}\n")]
+_PTR2 = COMMON_RET["Item_80268B18"]
+spec("itkusudama", ["itKusudamaAttributes"], patch=_p, custom_stubs=_s, skip_data=IT_SKIP + ["pos", "vel", "spawned"],
+     ret={"Item_80268B5C": _PTR2, "it_8026F5C8": _PTR2,
+          "it_8026F3AC": ("((fv() & 3) == 0 ? -1 : (int) (fv() % 50))", "if fv() & 3 == 0 { -1 } else { (fv() % 50) as i32 }")},
+     null_ret_ok=["it_8026F6BC"], effects={"Item_80268B5C": spawn_effect()})

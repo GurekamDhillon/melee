@@ -1,1 +1,9 @@
 pub mod itanimlist;
+pub mod itgamewatchfire;
+pub mod itgamewatchgreenhouse;
+pub mod itgamewatchjudge;
+pub mod itgamewatchmanhole;
+pub mod itgamewatchpanic;
+pub mod itgamewatchparachute;
+pub mod itgamewatchrescue;
+pub mod itgamewatchturtle;

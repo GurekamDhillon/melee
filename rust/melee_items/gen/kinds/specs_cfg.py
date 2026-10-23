@@ -443,3 +443,49 @@ CFG["itlinkarrow"] = dict(
         "let r = m::itLinkArrow_802A850C(&raw mut GO[0], &raw mut VA[0], &raw mut VA[1], v2, v3, v4) as u32; if cond { ret = r; }")},
     deep_ecb=False,
 )
+
+# ---------------------------------------------------------------------------------------- itlinkbomb
+_lb = "IT[k].xDD4_itemVar.linkbomb"
+CFG["itlinkbomb"] = dict(
+    c_decl="static ItemStateArray ISA[3];",
+    rs_decl="static mut ISA: [ItemStateArray; 3] = unsafe { core::mem::zeroed() };",
+    c_preg=["preg(ISA, sizeof ISA);"],
+    rs_preg=["preg(&raw const ISA, core::mem::size_of_val(&ISA));"],
+    spec=[all3("""        itLinkBombAttributes* a = (itLinkBombAttributes*) SPEC[0];
+        a->lifetime = rnd() % 100; a->x4 = rw(); a->x8 = rw(); a->xC = rnd() % 60; a->x10 = (int) (rnd() % 10);
+        a->x14 = rw(); a->x18 = rw(); a->x1C = rw(); a->x20 = rw(); a->x24 = rw(); a->x28 = rw(); a->x2C = rw(); a->x30 = rw();""",
+           """            let a = SPECB.0[0].as_mut_ptr() as *mut itLinkBombAttributes;
+            (*a).lifetime = rnd() % 100; (*a).x4 = rw(); (*a).x8 = rw(); (*a).xC = rnd() % 60; (*a).x10 = (rnd() % 10) as i32;
+            (*a).x14 = rw(); (*a).x18 = rw(); (*a).x1C = rw(); (*a).x20 = rw(); (*a).x24 = rw(); (*a).x28 = rw(); (*a).x2C = rw(); (*a).x30 = rw();""")],
+    tweak=per_item(
+        f"""        ART[k].xC_itemStates = &ISA[k]; IT[k].xD0_itemStateDesc = 0;
+        zero(&{_lb}.x0, sizeof {_lb}.x0); {_lb}.x0.b0 = rnd() & 1; {_lb}.x0.b1 = rnd() & 1; {_lb}.x0.b2 = rnd() & 1;
+        {_lb}.x4 = rw(); {_lb}.x8 = rw(); {_lb}.xC = rw();
+        {_lb}.x10 = (rnd() & 1) ? &GO[(k + 1) % 3] : 0;
+        IT[k].xD44_lifeTimer = ((rnd() % 3) == 0) ? 0.0f : (float) (rnd() % 80) - 5.0f;
+        IT[k].xCA0 = (int) (rnd() % 12);
+        IT[k].xCCC_incDamageDirection = (rnd() & 1) ? 1.0f : -1.0f;
+        IT[k].owner = (rnd() & 1) ? {_lb}.x10 : (((rnd() & 1) ? &GO[(k + 2) % 3] : 0));""",
+        """        ART[k].xC_itemStates = &raw mut ISA[k]; IT[k].xD0_itemStateDesc = null_mut();
+        core::ptr::write_bytes(&raw mut IT[k].xDD4_itemVar.linkbomb.x0 as *mut u8, 0, core::mem::size_of_val(&IT[k].xDD4_itemVar.linkbomb.x0)); IT[k].xDD4_itemVar.linkbomb.x0.anon_0.set_b0((rnd() & 1) as u8); IT[k].xDD4_itemVar.linkbomb.x0.anon_0.set_b1((rnd() & 1) as u8); IT[k].xDD4_itemVar.linkbomb.x0.anon_0.set_b2((rnd() & 1) as u8);
+        IT[k].xDD4_itemVar.linkbomb.x4 = rw(); IT[k].xDD4_itemVar.linkbomb.x8 = rw(); IT[k].xDD4_itemVar.linkbomb.xC = rw();
+        IT[k].xDD4_itemVar.linkbomb.x10 = if rnd() & 1 != 0 { &raw mut GO[(k + 1) % 3] } else { null_mut() };
+        IT[k].xD44_lifeTimer = if rnd() % 3 == 0 { 0.0 } else { (rnd() % 80) as f32 - 5.0 };
+        IT[k].xCA0 = (rnd() % 12) as i32;
+        IT[k].xCCC_incDamageDirection = if rnd() & 1 != 0 { 1.0 } else { -1.0 };
+        IT[k].owner = if rnd() & 1 != 0 { IT[k].xDD4_itemVar.linkbomb.x10 } else if rnd() & 1 != 0 { &raw mut GO[(k + 2) % 3] } else { null_mut() };"""),
+    ptrs=(f"""    for (k = 0; k < 3; k++) {{
+        HM(PI({_lb}.x10));
+        HM({_lb}.x0.b0); HM({_lb}.x0.b1); HM({_lb}.x0.b2); HM({_lb}.x0.b3); HM({_lb}.x0.b4); HM({_lb}.x0.b5); HM({_lb}.x0.b6); HM({_lb}.x0.b7);
+        {_lb}.x10 = 0; zero(&{_lb}.x0, sizeof {_lb}.x0);
+    }}""", """    for k in 0..3 {
+        let lb = &mut IT[k].xDD4_itemVar.linkbomb;
+        hm(pi(lb.x10));
+        hm(lb.x0.anon_0.b0() as u32); hm(lb.x0.anon_0.b1() as u32); hm(lb.x0.anon_0.b2() as u32); hm(lb.x0.anon_0.b3() as u32);
+        hm(lb.x0.anon_0.b4() as u32); hm(lb.x0.anon_0.b5() as u32); hm(lb.x0.anon_0.b6() as u32); hm(lb.x0.anon_0.b7() as u32);
+        lb.x10 = null_mut(); core::ptr::write_bytes(&raw mut lb.x0 as *mut u8, 0, core::mem::size_of_val(&lb.x0));
+    }"""),
+    hints={"msid": ("(int) (rnd() % 8)", "(rnd() % 8) as i32"), "arg2": ("rnd() % 32", "rnd() % 32"),
+           "arg3": ("(int) (rnd() % 400)", "(rnd() % 400) as i32")},
+    deep_ecb=True,
+)

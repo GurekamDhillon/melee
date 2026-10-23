@@ -133,3 +133,7 @@ _A["effects"].update({
     "ftCo_80094098": ("if (a1) { *a1 = rw(); }", "if !a1.is_null() { *a1 = rw(); }"),
 })
 _A["null_ret_ok"] += ["mpLineGetNormal"]
+
+_B = SPECS["itlinkbomb"]
+_B["deep_ecb"] = True
+_B["effects"].update({})

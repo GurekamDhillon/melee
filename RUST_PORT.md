@@ -605,3 +605,32 @@ seeded cases per function, all 20 functions of each TU incl. the re-exported con
 the separate ext `OSReport_grtrace`, traced by format only), `grtpurin.c`'s loop over the
 joint table (`lb_8000B1CC` recorder now returns x in 37.5..162.5 so both sides of `x < 130` run) and
 its `yakumono_param` reader; the TU-local `YakumonoParam` carries a `gc_layout!` GameCube table.
+
+## melee_items::tu: it/kinds item-kind ports with a C state oracle (shard 657-664)
+`rust/melee_items/src/tu/{itarwinglaser,itbat,itbombhei,itbox,itcapsule,itcerebi,itchicorita,itclimbersblizzard}.rs` port
+every function of those `src/melee/it/kinds` files (234, plus the static-inline helpers from `itbombhei.static.h`,
+`it/inlines.h` and `jobj.h`, which live in the file or in `tu/kinds_inl.rs`) with the C names and signatures; callees of
+unported TUs are `ext` hooks (unset: panics "TODO"). The old snake_case forwarders in `itfwd*.rs` / `itkinds*.rs` take
+`&mut Item` and are not re-exported here (different signatures).
+- Oracle: `bash rust/melee_items/gen/kinds/regen.sh [stem...]` (a copy of melee_world's `gen/mtu`, retargeted; own file
+  names so it does not collide with the other melee_items TU oracles): `mk_driver.py` writes `gen/kinds/tu/<stem>.c` and
+  `tests/kinds_<stem>.rs` from one description (`specs_cfg.py`: typed `x4_specialAttributes` buffer, fixture tweaks,
+  argument hints, extra ops), `run_tu.py` compiles the game's `.c` verbatim (shipping contraction + gwtool lowering)
+  and writes `tests/data/kinds_<stem>.txt`. The world is 3 gobjs / items / articles / attributes, 48 jobjs (14-bone
+  dynamic bone tables), the common item data and 4 Vec3, redrawn field by field every case (400 per function);
+  every callee is a recording stub (call order, arguments, `Vec3*` / `SpawnItem*` pointees by value, random returns,
+  `lb_8000B1CC`-style out-parameters written from the shared stream). After each call the whole world, the return
+  value, the trace and (once) the `ItemStateTable` arrays are hashed.
+- Walker changes vs melee_world: a union whose views all cover the same storage and one of which holds bitfields
+  (`UnkFlagStruct`, `flag32`) is compared by bitfield value (native C is LSB-first, melee_types MSB-first); a union
+  of differently sized variants (`Item_ItemVars`) stays raw bytes, so a TU's pointer slots / bitfield bytes are hashed
+  by value and cleared in the per-TU `ptrs` snippet; stubs are defined as `(name)(...)` so macro-named callees
+  (`HSD_JObjSetMtxDirty`) work; only file-scope variables count as extern data; fill / hash bodies are `unsafe`.
+- Fused sites (checked in the IR): `itChicorita` leaf `prev_pos.x += x8 * facing_dir` and Blizzard
+  `(x10 - xC) * rand + xC` are `fmadds`; `itBox_UnkMotion8_Phys` has two f64 sites (`mul_add`, indistinguishable after the f32
+  store except in rare double-rounding cases, so a mutation of them is not caught). `sinf` / `cosf` are the real
+  `melee_runtime::gekko` ports (gekko_fp.c is linked into the oracle); `atan2f` and the variadic `efSync_Spawn` are
+  `ext` hooks (fixed-arity typed hook per call shape).
+- `it_802E7654` has no `return` in the C; the port returns the spawned gobj (what PPC leaves in r3), the oracle does
+  not compare that return value. Ints that the C wraps (`-= 1`, sums of weights) use `wrapping_*` ops. Mutation checks
+  (flipping fused sites, constants, comparison boundaries, state ids) fail the tests.

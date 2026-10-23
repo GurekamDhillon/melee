@@ -257,13 +257,32 @@ class Walker:
                     # anonymous union: keyed by "<enclosing record>.<field>"
                     key_ = f"{getattr(self, 'rec', '')}.{self.trail.split('.')[-1].split('[')[0]}"
                 if key_ in uv:
-                    # compare the union through one member (its fields get domains/links like any record)
-                    m = uv[key_]
-                    fld = next(f for f in (decl.get_definition() or decl).get_children()
-                               if f.kind == K.FIELD_DECL and f.spelling == m)
-                    p_c = f'tuo_cat(_pb, {path_c}, ".{m}")'
-                    p_r = f'&format!("{{}}.{m}", {self.strip_amp(path_r)})'
-                    self.leaf_field(e, fld.type, f"{cx_}.{m}", f"{rx_}.{rid(m)}", p_c, p_r, None)
+                    # compare the union through one or more members (each gets domains/links like any record);
+                    # UNION_VIEW[key] = "member" | {"member": [functions it is active for ([] = all)]}
+                    spec_ = uv[key_]
+                    if isinstance(spec_, str):
+                        spec_ = {spec_: []}
+                    for m, _fns in spec_.items():
+                        p_c = f'tuo_cat(_pb, {path_c}, ".{m}")'
+                        p_r = f'&format!("{{}}.{m}", {self.strip_amp(path_r)})'
+                        sub = Emit()
+                        if m.startswith("anon:"):
+                            # the union's anonymous struct member: its members are members of the union in C;
+                            # the Rust side reaches it as the field named after the colon
+                            an_ = m[5:]
+                            afld = next(f for f in (decl.get_definition() or decl).get_children()
+                                        if f.kind == K.STRUCT_DECL and f.is_anonymous_record_decl())
+                            self.record_fields(sub, afld, cx_, f"{rx_}.{an_}", p_c, p_r, None)
+                        else:
+                            fld = next(f for f in (decl.get_definition() or decl).get_children()
+                                       if f.kind == K.FIELD_DECL and f.spelling == m)
+                            self.leaf_field(sub, fld.type, f"{cx_}.{m}", f"{rx_}.{rid(m)}", p_c, p_r, None)
+                        e.c.append(f'if (tuo_viewon("{key_}", "{m}")) {{')
+                        e.c.extend(sub.c)
+                        e.c.append("}")
+                        e.r.append(f'if v.view_on("{key_}", "{m}") {{')
+                        e.r.extend(sub.r)
+                        e.r.append("}")
                     return
                 e.c.append(f"tuo_bytes({path_c}, &{cx_}, sizeof({cx_}));")
                 e.r.append(f"v.bytes({path_r}, &mut {rx_} as *mut _ as *mut u8, core::mem::size_of_val(&{rx_}));")
@@ -312,11 +331,31 @@ class Walker:
         anon_i = 0
         ranon = [n for (n, ty) in (rfields or []) if n.startswith("anon_")]
         rtys = dict(rfields or [])
+        skip_bits = [b for k, bs in self.cx.spec.get("SKIP_BITS", {}).items() if k in getattr(self, "rec", "") for b in bs]  # key = substring of the record name
         for f in fields:
+            if f.kind == K.FIELD_DECL and f.spelling in skip_bits:
+                continue  # SKIP_BITS {record: [bitfield names]}: not generated/compared (aliased native bit order)
             if f.kind != K.FIELD_DECL:  # C11 anonymous member
                 an = ranon[anon_i] if rfields is not None else None
                 anon_i += 1
-                if f.kind == K.UNION_DECL:
+                if f.kind == K.UNION_DECL and f"{decl.spelling}.anon{anon_i - 1}" in self.cx.spec.get("UNION_VIEW", {}):
+                    key_ = f"{decl.spelling}.anon{anon_i - 1}"
+                    spec_ = self.cx.spec.get("UNION_VIEW", {})[key_]
+                    if isinstance(spec_, str):
+                        spec_ = {spec_: []}
+                    for m, _fns in spec_.items():
+                        fld = next(c for c in f.get_children() if c.kind == K.FIELD_DECL and c.spelling == m)
+                        p_c = f'tuo_cat(_pb, {path_c}, ".{an}.{m}")'
+                        p_r = f'&format!("{{}}.{an}.{m}", {self.strip_amp(path_r)})'
+                        sub = Emit()
+                        self.leaf_field(sub, fld.type, f"{cx_}.{m}", f"{rx_}.{an}.{rid(m)}", p_c, p_r, None)
+                        e.c.append(f'if (tuo_viewon("{key_}", "{m}")) {{')
+                        e.c.extend(sub.c)
+                        e.c.append("}")
+                        e.r.append(f'if v.view_on("{key_}", "{m}") {{')
+                        e.r.extend(sub.r)
+                        e.r.append("}")
+                elif f.kind == K.UNION_DECL:
                     # bytes of the union: address from the Rust side; the C side takes the
                     # first named member (a bitfield first member cannot be addressed)
                     first = next((c for c in f.get_children() if c.kind == K.FIELD_DECL and c.spelling and not c.is_bitfield()), None)
@@ -370,7 +409,20 @@ class Walker:
                 sub_rname = None
             base = self.trail
             self.trail = (base + "." if base else "") + nm
-            self.leaf_field(e, ft, f"{cx_}.{nm}", f"{rx_}.{rid(rn)}", p_c, p_r, sub_rname)
+            ff_ = [fn for k, fns in self.cx.spec.get("FIELD_FNS", {}).items() if k == f"{getattr(self, 'rec', '')}.{nm}" for fn in fns]
+            if ff_:
+                # FIELD_FNS {"<record>.<field>": [fns]}: the field is visited only while those functions run
+                sub_ = Emit()
+                self.leaf_field(sub_, ft, f"{cx_}.{nm}", f"{rx_}.{rid(rn)}", p_c, p_r, sub_rname)
+                cond_ = "|".join(ff_)
+                e.c.append(f'if (tuo_fnin("{cond_}")) {{')
+                e.c.extend(sub_.c)
+                e.c.append("}")
+                e.r.append(f'if v.fn_in("{cond_}") {{')
+                e.r.extend(sub_.r)
+                e.r.append("}")
+            else:
+                self.leaf_field(e, ft, f"{cx_}.{nm}", f"{rx_}.{rid(rn)}", p_c, p_r, sub_rname)
             self.trail = base
 
     def leaf_field(self, e, ft, cx_, rx_, p_c, p_r, rname):
@@ -741,6 +793,10 @@ def main():
         rglue.append(f'        "{fname}" => unsafe {rb},')
     for k, v in spec.get("DOM", {}).items():
         cfg.append("dom " + k + " " + " ".join(str(x) for x in v))
+    for k, v in spec.get("UNION_VIEW", {}).items():
+        if isinstance(v, dict):
+            for m, fns in v.items():
+                cfg.append(f"view {k} {m} " + " ".join(fns))
     links = dict(spec.get("LINKS", {}))
 
     # ---- stubs ----
@@ -1005,7 +1061,7 @@ def main():
     uc.append("extern void* tuo_leaf_ptr(const char*); extern void tuo_dump_i(const char*, long long);")
     uc.append("extern void tuo_dump_u(const char*, unsigned long long); extern void tuo_dump_f32(const char*, unsigned);")
     uc.append("extern void tuo_dump_f64(const char*, unsigned long long); extern void tuo_dump_p(const char*, const void*);")
-    uc.append("extern void tuo_bytes(const char*, void*, unsigned long long);")
+    uc.append("extern void tuo_bytes(const char*, void*, unsigned long long); extern int tuo_viewon(const char*, const char*); extern int tuo_fnin(const char*);")
     uc.append("extern char* tuo_cat(char*, const char*, const char*); extern char* tuo_cati(char*, const char*, const char*, int);")
     uc.append("extern void tuo_regtype(const char*, unsigned long long, unsigned long long, void(*)(const char*, void*));")
     uc.append("extern void tuo_regglobal(const char*, void*, unsigned long long, void(*)(const char*, void*), int);")

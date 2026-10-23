@@ -36,6 +36,11 @@ struct Dom {
     key: String,
     v: Vec<u64>,
 }
+struct View {
+    key: String,
+    member: String,
+    fns: Vec<String>,
+}
 struct Link {
     key: String,
     tgt: String,
@@ -83,6 +88,8 @@ pub struct V {
     args: [u64; 12],
     argptr: [bool; 12],
     pending_arg: Option<usize>,
+    views: Vec<View>,
+    shallow: u32,
 }
 
 static mut VV: Option<V> = None;
@@ -115,6 +122,24 @@ fn parse_u(s: &str) -> u64 {
 impl V {
     pub fn set(&self) -> bool {
         self.mode == 1
+    }
+    /// Is the running function one of "a|b|c" (FIELD_FNS).
+    pub fn fn_in(&self, list: &str) -> bool {
+        list.split('|').any(|f| f == self.curfn)
+    }
+    /// A union is visited through a member only for the functions its `view` line names (none named = all).
+    pub fn view_on(&self, key: &str, member: &str) -> bool {
+        match self.views.iter().find(|w| w.key == key && w.member == member) {
+            None => true,
+            Some(w) => {
+                // "~fn": fill the member for fn but do not dump it (its bytes are rewritten through an aliasing view)
+                w.fns.is_empty()
+                    || w.fns.iter().any(|f| match f.strip_prefix('~') {
+                        Some(g) => g == self.curfn && self.mode != 2,
+                        None => *f == self.curfn,
+                    })
+            }
+        }
     }
     pub fn draw(&mut self) -> u64 {
         self.rs = self.rs.wrapping_add(0x9E3779B97F4A7C15);
@@ -238,6 +263,12 @@ impl V {
             }
             return arr as usize;
         }
+        if let Some(t) = tgt.strip_prefix("shallow:") {
+            self.shallow += 1;
+            let r = self.new_typed(None, t, 0) as usize;
+            self.shallow -= 1;
+            return r;
+        }
         if let Some(t) = tgt.strip_prefix("new:") {
             let (ty, cnt) = match t.split_once(':') {
                 Some((a, b)) => (a, b.parse::<usize>().unwrap()),
@@ -248,6 +279,9 @@ impl V {
         panic!("bad link target {tgt}");
     }
     pub fn leaf_ptr(&mut self, path: &str) -> usize {
+        if self.shallow > 0 && path.ends_with(".user_data") {
+            return 0;
+        }
         let i = match self.links.iter().position(|l| path.ends_with(&l.key)) {
             Some(i) => i,
             None => return 0,
@@ -509,6 +543,8 @@ pub fn run(cfg: &str, expected: &str, glue: Glue) {
         args: [0; 12],
         argptr: [false; 12],
         pending_arg: None,
+        views: vec![],
+        shallow: 0,
     };
     let mut fns: Vec<FnCfg> = vec![];
     let mut tysizes: Vec<(String, usize)> = vec![];
@@ -531,6 +567,7 @@ pub fn run(cfg: &str, expected: &str, glue: Glue) {
                 ret: t[3].to_string(),
                 args: t[4..].iter().map(|s| s.to_string()).collect(),
             }),
+            "view" => v.views.push(View { key: t[1].to_string(), member: t[2].to_string(), fns: t[3..].iter().map(|s| s.to_string()).collect() }),
             "force" => {
                 for l in v.links.iter_mut().filter(|l| l.key == t[1]) {
                     l.force.extend(t[2..].iter().map(|s| s.to_string()));

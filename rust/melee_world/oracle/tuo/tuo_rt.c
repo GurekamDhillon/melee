@@ -61,9 +61,12 @@ void tuo_emit(const char* fmt, ...)
 
 /* ---- config ---- */
 #define MAXV 512
+struct View { char key[96]; char member[96]; int nfn; char fn[32][96]; };
+static struct View views[64]; static int nview;
 struct Dom { char key[128]; int n; u64 v[MAXV]; };
 struct Link { char key[128]; char tgt[96]; int ngate; char gate[16][96]; int nforce; char force[16][96]; };
 static const char* curfn;
+
 static struct Dom doms[512]; static int ndom;
 static struct Link links[512]; static int nlink;
 struct Fn { char name[96]; int n; char ret[16]; int nargs; char args[12][64]; };
@@ -99,6 +102,10 @@ static void load_cfg(const char* path)
             for (int li = 0; li < nlink; li++)
                 if (!strcmp(links[li].key, tok[1]))
                     for (int k = 2; k < nt; k++) strcpy(links[li].gate[links[li].ngate++], tok[k]);
+        } else if (!strcmp(tok[0], "view")) {
+            struct View* vw = &views[nview++];
+            strcpy(vw->key, tok[1]); strcpy(vw->member, tok[2]);
+            for (int k = 3; k < nt; k++) strcpy(vw->fn[vw->nfn++], tok[k]);
         } else if (!strcmp(tok[0], "force")) {
             for (int li = 0; li < nlink; li++)
                 if (!strcmp(links[li].key, tok[1]))
@@ -244,6 +251,36 @@ static void pool_reset(void)
     npl = 0; npool = 0; nreg = nperm;
 }
 
+/* is the running function one of "a|b|c" */
+int tuo_fnin(const char* list)
+{
+    if (!curfn) return 0;
+    size_t n = strlen(curfn);
+    for (const char* p = list; *p;) {
+        const char* q = strchr(p, '|'); size_t l = q ? (size_t) (q - p) : strlen(p);
+        if (l == n && !strncmp(p, curfn, n)) return 1;
+        p += l; if (*p == '|') p++;
+    }
+    return 0;
+}
+
+/* a union is visited through a member only for the functions its `view` line names (none named = all) */
+int tuo_viewon(const char* key, const char* member)
+{
+    for (int i = 0; i < nview; i++) {
+        if (strcmp(views[i].key, key) || strcmp(views[i].member, member)) continue;
+        if (!views[i].nfn) return 1;
+        /* a function named "~fn" fills the member but does not dump it (its bytes are rewritten through an aliasing view) */
+        for (int k = 0; k < views[i].nfn; k++) {
+            const char* f = views[i].fn[k];
+            if (f[0] == '~') { if (curfn && !strcmp(curfn, f + 1)) return tuo_mode != 2; }
+            else if (curfn && !strcmp(curfn, f)) return 1;
+        }
+        return 0;
+    }
+    return 1;
+}
+
 /* ---- leaf API used by the generated visitors ---- */
 char* tuo_cat(char* b, const char* a, const char* s)
 {
@@ -297,6 +334,7 @@ u64 tuo_leaf_f64(const char* path)
     default: return f64bits(((r >> 8) % 2000001) / 1000.0 - 1000.0);
     }
 }
+static int shallow_depth;
 static void* tuo_leaf_ptr_tgt(const char* path, const char* tgt);
 
 static void* mk_target(const char* path, const char* tgt)
@@ -341,6 +379,10 @@ static void* mk_target(const char* path, const char* tgt)
         for (int i = 0; i < n; i++) arr[i] = tuo_new(0, ty, 0);
         return arr;
     }
+    if (!strncmp(tgt, "shallow:", 8)) {
+        /* a new object whose own pointer links are all null (cuts cyclic link chains) */
+        shallow_depth++; void* r = tuo_new(0, tgt + 8, 0); shallow_depth--; return r;
+    }
     if (!strncmp(tgt, "new:", 4)) {
         char ty[96]; strcpy(ty, tgt + 4);
         int cnt = 0;
@@ -361,6 +403,7 @@ static void* tuo_leaf_ptr_tgt(const char* path, const char* tgt)
 }
 void* tuo_leaf_ptr(const char* path)
 {
+    if (shallow_depth && (strlen(path) >= 10 && !strcmp(path + strlen(path) - 10, ".user_data"))) return 0;
     struct Link* l = findlink(path);
     if (!l) return 0;
     if (l->ngate) {

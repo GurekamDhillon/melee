@@ -182,3 +182,54 @@ SPECS["itgshell"] = dict(
     setup_c=JOBJ_SETUP_C, setup_rs=JOBJ_SETUP_RS,
     ops=GSHELL_FNS, ncases={"it_8028BAD8": 3000, "it_8028BC2C": 3000, "itGShell_Logic14_DmgReceived": 3000},
 )
+
+FG_SETUP_C = ("    for (n = 0; n < 3; n++) { FG[n].next = (n < 2) ? &FG[n + 1] : 0; FG[n].user_data = &FT[n]; "
+              "FT[n].x221F_b3 = rnd() & 1; FT[n].team = rnd() % 3u; }\n"
+              "    PLH[HSD_GOBJ_PLINK_FIGHTER] = &FG[0]; HSD_GObjPLinkHead = PLH;")
+FG_SETUP_RS = ("    for n in 0..3usize { FG[n].next = if n < 2 { &raw mut FG[n + 1] } else { null_mut() }; "
+               "FG[n].user_data = &raw mut FT[n] as *mut c_void; FT[n].set_x221F_b3((rnd() & 1) as _); FT[n].team = (rnd() % 3) as _; }\n"
+               "    PLH[HSD_GOBJ_PLINK_FIGHTER as usize] = &raw mut FG[0]; m::ext::HSD_GObjPLinkHead = &raw mut PLH as *mut *mut HSD_GObj;")
+
+SPECS["ithassam"] = dict(
+    crate="melee_items", src="src/melee/it/kinds/ithassam.c", walk2=True,
+    pools={"HSD_GObj": 4, "HSD_JObj": 6, "Item": 2, "Article": 1, "ItemAttr": 1, "itHassam_ItemVars": 1,
+           "DynamicBoneTable": 1, "Vec3": 2},
+    rules={**ITEM_RULES,
+           "Article.x4_specialAttributes": ("ptr", "itHassam_ItemVars", False),
+           "Item.xBBC_dynamicBoneTable": ("ptr", "DynamicBoneTable", False),
+           "Item.owner": ("expr", "&FG[rnd() % 3u]", "&raw mut super::FG[(rnd() % 3) as usize]"),
+           "itHassam_ItemVars.x20": ("range", 1, 9)},
+    uv={**FLAG_UV, "Item_xDD4_itemVar": "hassam"}, uv_only={"Item_xDD4_itemVar": ["hassam"]},
+    statics=[dict(c="FG", rs="super::FG", n=3, region=True), dict(c="FT", rs="super::FT", n=3, region=True),
+             dict(c="PLH", rs="super::PLH", n=32, region=True)],
+    skip_data=["result", "item"],
+    c_decl="static HSD_GObj FG[3];\nstatic Fighter FT[3];\nstatic HSD_GObj* PLH[32];\n",
+    rs_decl="pub static mut FG: [HSD_GObj; 3] = unsafe { core::mem::zeroed() };\n"
+            "pub static mut FT: [Fighter; 3] = unsafe { core::mem::zeroed() };\n"
+            "pub static mut PLH: [*mut HSD_GObj; 32] = [null_mut(); 32];\n",
+    ret={"ftLib_80086FD4": ("(int) (fv() & 1)", "(fv() & 1) as i32"),
+         "gm_8016B168": ("(int) (fv() & 1)", "(fv() & 1) as i32"),
+         "ftLib_8008627C": ("((fv() & 1) ? (HSD_GObj*) 0 : &FG[rnd() % 3u])",
+                            "if fv() & 1 != 0 { null_mut() } else { &raw mut super::FG[(rnd() % 3) as usize] }")},
+    effects={"lbVector_Diff": ("{ T(B(a0->x)); T(B(a0->y)); T(B(a0->z)); T(B(a1->x)); T(B(a1->y)); T(B(a1->z)); "
+                               "a2->x = rg(); a2->y = rg(); a2->z = rg(); }",
+                               "{ t((*a0).x.to_bits()); t((*a0).y.to_bits()); t((*a0).z.to_bits()); t((*a1).x.to_bits()); "
+                               "t((*a1).y.to_bits()); t((*a1).z.to_bits()); (*a2).x = rg(); (*a2).y = rg(); (*a2).z = rg(); }"),
+             "lbVector_Rotate": ("{ T(B(a0->x)); T(B(a0->y)); T(B(a0->z)); a0->x = rg(); a0->y = rg(); a0->z = rg(); }",
+                                 "{ t((*a0).x.to_bits()); t((*a0).y.to_bits()); t((*a0).z.to_bits()); (*a0).x = rg(); (*a0).y = rg(); (*a0).z = rg(); }"),
+             "lbVector_Normalize": VEC_INOUT,
+             "ftLib_800866DC": ("{ a1->x = rg(); a1->y = rg(); a1->z = rg(); }",
+                                "{ (*a1).x = rg(); (*a1).y = rg(); (*a1).z = rg(); }"),
+             "Camera_GetTransformPosition": ("{ a0->x = rg(); a0->y = rg(); a0->z = rg(); }",
+                                             "{ (*a0).x = rg(); (*a0).y = rg(); (*a0).z = rg(); }")},
+    defaults={"atan2f": "melee_runtime::lbtrigf::atan2f"},
+    setup_c=JOBJ_SETUP_C + "\n" + BONES_C + "\n" + FG_SETUP_C, setup_rs=JOBJ_SETUP_RS + "\n" + BONES_RS + "\n" + FG_SETUP_RS,
+    ops=["itHassam_802CDBE0", "itHassam_802CDC5C", "itHassam_802CDC60", "itHassam_802CDC80", "itHassam_802CDCB4",
+         "itHassam_UnkMotion0_Anim", "itHassam_UnkMotion0_Phys", "itHassam_UnkMotion0_Coll",
+         dict(name="itHassam_802CDE1C", args=["p:Vec3", ("raw", "((rnd() & 3) == 0 ? (HSD_GObj*) 0 : &FG[rnd() % 3u])",
+                                                 "if rnd() & 3 == 0 { null_mut() } else { &raw mut FG[(rnd() % 3) as usize] }")]),
+         "itHassam_802CDF28", "itHassam_802CE008", "itHassam_UnkMotion1_Anim", "itHassam_UnkMotion1_Phys",
+         "itHassam_UnkMotion1_Coll", "itHassam_802CE400_sub", "itHassam_802CE400", "itHassam_UnkMotion2_Anim",
+         "itHassam_UnkMotion2_Phys", "itHassam_UnkMotion2_Coll", "it_802CE640", "itHassam_UnkMotion3_Anim",
+         "itHassam_UnkMotion3_Phys", "itHassam_UnkMotion3_Coll"],
+)

@@ -6,3 +6,4 @@ pub mod ithammerhead;
 pub mod ithammer;
 pub mod itharisen;
 pub mod itgshell;
+pub mod ithassam;

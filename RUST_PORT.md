@@ -605,3 +605,22 @@ seeded cases per function, all 20 functions of each TU incl. the re-exported con
 the separate ext `OSReport_grtrace`, traced by format only), `grtpurin.c`'s loop over the
 joint table (`lb_8000B1CC` recorder now returns x in 37.5..162.5 so both sides of `x < 130` run) and
 its `yakumono_param` reader; the TU-local `YakumonoParam` carries a `gc_layout!` GameCube table.
+
+## melee_items::tu: it/kinds set (shard 673-680)
+`rust/melee_items/src/tu/{itegg,itentei,itevyoshiegg,itfflower,itfflowerflame,itfire,itflipper,itfoods}.rs`
+port every function of those `src/melee/it/kinds` files (220 incl. the static-inline helpers) plus their
+`ItemStateTable` data. Callees of other TUs are `ext` hooks (unset: panics "TODO").
+- Oracle: `bash rust/melee_items/gen/mtu/go.sh <stem>` (`gen_it.py` = melee_world's `gen_tu.py` retargeted, plus
+  `UnkFlagStruct` filled / hashed bit by bit by value; `mk_it_driver.py` + `cfg_it.py` write the C driver and the
+  Rust test from one description; `run_it.py` compiles the game's `.c` verbatim with shipping contraction + gwtool
+  lowering). One fixture item (gobj, Item, Article + 1 KiB attribute buffer, ItemAttr, 4 joints, bone table, second
+  item for spawns, owner, ICD `it_804D6D28`), 150 seeded states per function, state hashed field by field, every
+  call traced. Spawn records are hashed inside the `Item_80268B18` stub. Mutation checks: fma sites (foods
+  `fmadds`, flipper `sqrtf(vx*vx+vy*vy)`), a boundary compare and a swapped spawn parent each fail the test.
+- Variadic `efSync_Spawn`: the compiled copy of the TU counts the arguments (`patch` in specs_it.py), the port
+  calls `ext::efSync_Spawn_N(gfx, gobj, &[args])`; pointees of the stack args (`&val`, `&v`) are not compared.
+- Traps: (1) `UnkFlagStruct` raw bytes differ between native (LSB-first) and GC bit order; compare by value.
+  (2) the flipper's `xDEC_stageAnchor` pointer lives in the item-var union: normalised to its region id before the
+  hash. (3) `itFoodsAttributes[]` is indexed with the native 24-byte stride (GC: 16); the port mirrors the native
+  struct like the rest of melee_types. (4) `ABS(x)` is `x < 0 ? -x : x`; `-1.0f * y + c` is a (non-discriminating)
+  fma site, kept as `fmadds`.

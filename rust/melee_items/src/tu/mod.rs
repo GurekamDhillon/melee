@@ -5,4 +5,5 @@ pub mod itevyoshiegg;
 pub mod itfflower;
 pub mod itfflowerflame;
 pub mod itfoods;
+pub mod itflipper;
 pub mod itfire;

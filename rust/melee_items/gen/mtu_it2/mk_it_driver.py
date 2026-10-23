@@ -13,6 +13,7 @@ bitfields and flags by value) and hashed field by field afterwards (generated ha
 with the joints, the vectors and the special-attribute words; each op returns a value that is
 printed / compared too. Callees out of the TU are the recording stubs of gen_tu.py.
 """
+import os
 import sys
 from pathlib import Path
 
@@ -147,6 +148,13 @@ HASH_RS = """    g::hash_HSD_GObj(&G); g::hash_HSD_GObj(&G2); g::hash_HSD_GObj(&
 """
 
 
+SA_ALIGN_DECL = """#[repr(C, align(16))]
+struct SaBuf([u32; 256]);
+impl core::ops::Deref for SaBuf { type Target = [u32; 256]; fn deref(&self) -> &[u32; 256] { &self.0 } }
+impl core::ops::DerefMut for SaBuf { fn deref_mut(&mut self) -> &mut [u32; 256] { &mut self.0 } }
+static mut SA: SaBuf = SaBuf([0; 256]);"""
+
+
 def hot(path, vals, kind="i"):
     """(C, Rust) setup statements: with probability 3/4 force `path` (a field expression valid in
     both languages) to one of `vals` (literals valid in both; kind "f" appends the C `f` suffix)."""
@@ -180,7 +188,16 @@ def param_expr(i, ptype, name, cfg, seen):
             return ("&JO[1]", "&raw mut JO[1]")
         if pn == "Item":
             return ("&IT", "&raw mut IT")
+        pp = cfg.get("ptr_params", {})
+        if pn in pp:
+            opts = pp[pn]
+            n = seen.get("pp:" + pn, 0)
+            seen["pp:" + pn] = n + 1
+            return opts[min(n, len(opts) - 1)]
         raise SystemExit(f"param {name} of type {sp}: give an override")
+    pp = cfg.get("ptr_params", {})
+    if sp in pp:
+        return pp[sp][0]
     if k == T.FLOAT:
         return ("rw()", "rw()")
     if k in gen_tu.INTS or k == T.ENUM:
@@ -236,7 +253,12 @@ def emit(stem, cfg):
     nops = len(ops)
     n = cfg.get("n_cases", N_CASES)
     setup_c = SETUP_C + cfg.get("setup_c", "")
-    setup_rs = SETUP_RS + ("    m::ext::it_804D6D28 = &raw mut ICD;\n" if cfg.get("icd") else "") + cfg.get("setup_rs", "")
+    rs_decl_base = RS_DECL
+    setup_rs_base = SETUP_RS
+    if cfg.get("sa_align"):
+        rs_decl_base = RS_DECL.replace("static mut SA: [u32; 256] = [0; 256];", SA_ALIGN_DECL)
+        setup_rs_base = SETUP_RS.replace("SA = [0; 256];", "SA = SaBuf([0; 256]);")
+    setup_rs = setup_rs_base + ("    m::ext::it_804D6D28 = &raw mut ICD;\n" if cfg.get("icd") else "") + cfg.get("setup_rs", "")
     hash_c = HASH_C + cfg.get("hash_c", "")
     hash_rs = HASH_RS + cfg.get("hash_rs", "")
     c = [f"/* TU: {spec['src']} */",
@@ -255,7 +277,7 @@ def emit(stem, cfg):
             continue
         c.append(f"    freg((const void*) {fname});")
     c += [f"    for (op = 0; op < {nops}; op++) {{", f"        for (k = 0; k < {n}; k++) {{", "            u32 ret = 0;",
-          "            tu_case(op, k);", "            setup();", "            switch (op) {"]
+          "            tu_case(op, k);", ("            printf(\"<%d %d>\", op, k); fflush(0);" if os.environ.get("MTU_TRACE_OPS") else ""), "            setup();", "            switch (op) {"]
     for i, (_, cs, _) in enumerate(ops):
         c.append(f"            case {i}: {{ {cs} }} break;")
     c += ["            }", "            pre_hash();", "            hash_all();", '            printf("%d %d %08X %08X %08X\\n", op, k, ret, H, TR);',
@@ -267,7 +289,7 @@ def emit(stem, cfg):
          f"//! with `python rust/melee_items/gen/mtu_it2/run_it.py {stem}`).",
          "#![allow(static_mut_refs, non_snake_case, non_upper_case_globals, unused_imports, unused_mut, unused_assignments, unused_variables, unused_unsafe)]",
          "#[path = \"mtu_harness_it/mod.rs\"]", "mod mtu_harness;", "use core::ffi::c_void;", "use core::ptr::null_mut;", "use melee_types::*;", f"use melee_items::tu::{stem} as m;",
-         "use mtu_harness::*;", f'#[path = "mtu/{stem}_gen.rs"]', "mod g;", "", RS_DECL, cfg.get("rs_decl", ""), RS_HELP,
+         "use mtu_harness::*;", f'#[path = "mtu/{stem}_gen.rs"]', "mod g;", "", rs_decl_base, cfg.get("rs_decl", ""), RS_HELP,
          cfg.get("rs_extra", ""), "",
          "unsafe fn setup() {", setup_rs, "}", "", "unsafe fn pre_hash() {", cfg.get("pre_hash_rs", ""), "}", "",
          "unsafe fn hash_all() {", hash_rs, "}", "",

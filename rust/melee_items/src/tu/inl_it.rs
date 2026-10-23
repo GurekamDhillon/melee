@@ -243,3 +243,23 @@ macro_rules! inl_it_jobj_acc {
         }
     };
 }
+
+/// jobj.h `HSD_JObjSetupMatrix` / `HSD_JObjCopyMtx` (call `ext::HSD_JObjSetupMatrixSub` / `ext::PSMTXCopy`).
+#[macro_export]
+macro_rules! inl_it_jobj_mtx {
+    () => {
+        #[inline]
+        pub unsafe fn HSD_JObjSetupMatrix(jobj: *mut HSD_JObj) {
+            if jobj.is_null() || !HSD_JObjMtxIsDirty(jobj) {
+                return;
+            }
+            ext::HSD_JObjSetupMatrixSub(jobj);
+        }
+        #[inline]
+        pub unsafe fn HSD_JObjCopyMtx(jobj: *mut HSD_JObj, mtx: *mut c_void) {
+            hsd_assert(!jobj.is_null(), "(jobj)");
+            hsd_assert(!mtx.is_null(), "(mtx)");
+            ext::PSMTXCopy(mtx, (*jobj).mtx.as_mut_ptr() as *mut c_void);
+        }
+    };
+}

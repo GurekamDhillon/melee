@@ -19,3 +19,4 @@ pub mod itlizardon;
 pub mod itlucky;
 pub mod itlugia;
 pub mod itlinkboomerang;
+pub mod itlinkhookshot;

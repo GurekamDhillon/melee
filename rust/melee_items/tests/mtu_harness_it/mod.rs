@@ -194,18 +194,28 @@ pub fn case(op: u32, k: u32) {
 pub struct Check {
     lines: std::str::Lines<'static>,
     pub n: u32,
+    failed: Vec<u32>,
 }
 impl Check {
     pub fn new(s: &'static str) -> Self {
-        Check { lines: s.lines(), n: 0 }
+        Check { lines: s.lines(), n: 0, failed: Vec::new() }
     }
     pub fn line(&mut self, op: u32, k: u32, ret: u32) {
         let got = format!("{} {} {:08X} {:08X} {:08X}", op, k, ret, unsafe { H }, unsafe { TR });
         let want = self.lines.next().expect("expected file too short");
-        assert_eq!(got, want, "op {op} case {k}");
+        if std::env::var("MTU_ALL").is_ok() {
+            // report the first failing case of EVERY op instead of stopping at the first
+            if got != want && !self.failed.contains(&op) {
+                eprintln!("FAIL op {op} case {k}: got {got} want {want}");
+                self.failed.push(op);
+            }
+        } else {
+            assert_eq!(got, want, "op {op} case {k}");
+        }
         self.n += 1;
     }
     pub fn done(mut self) -> u32 {
+        assert!(self.failed.is_empty(), "failing ops: {:?}", self.failed);
         assert!(self.lines.next().is_none(), "expected file has extra lines");
         self.n
     }

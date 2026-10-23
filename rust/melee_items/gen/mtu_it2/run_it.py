@@ -63,7 +63,7 @@ def main():
                  '-DTU_SRC="' + str(ROOT / src).replace("\\", "/") + '"', *dbg, str(s), "-o", str(ll)], n)
             run([sys.executable, str(LOWER), str(ll), str(lo)], n)
             lls.append(str(lo))
-        run([CLANG, "-O0", "-w", *lls, "-o", str(exe), "-Wl,/OPT:NOICF", "-fuse-ld=lld"], n)
+        run([CLANG, "-O0", "-w", *lls, "-o", str(exe), "-Wl,/OPT:NOICF", "-fuse-ld=lld"] + (["-g", "-Wl,/DEBUG:SYMTAB"] if os.environ.get("MTU_G") else []), n)
         out = subprocess.run([str(exe)], capture_output=True, text=True, check=True).stdout
         if dbg:
             tr = [l for l in out.splitlines() if l.startswith(("T ", "H ", "B "))]

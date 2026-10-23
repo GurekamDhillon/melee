@@ -106,3 +106,27 @@ spec("itlinkboomerang", ["itLinkBoomerangAttributes"], skip_stubs=["sinf", "cosf
           "ftLib_80086630": ("&JO[fv() % 4]", "&raw mut super::JO[(fv() % 4) as usize]"),
           "lbVector_CosAngle": ("((float) ((int) (rnd() % 2001) - 1000) / 1000.0f)", "((rnd() % 2001) as i32 - 1000) as f32 / 1000.0"),
           "ftLib_GetKind": ("((fv() & 1) ? 6 : 1)", "(if fv() & 1 != 0 { 6 } else { 1 })")})
+
+_p, _s = efsync("ItemStateTable it_803F6998[] = {")
+_MIDENT = ("if (a0) { int r_, c_; for (r_ = 0; r_ < 3; r_++) for (c_ = 0; c_ < 4; c_++) a0[r_][c_] = (r_ == c_) ? 1.0f : 0.0f; }",
+           "if !a0.is_null() { let m_ = a0 as *mut f32; for r_ in 0..3usize { for c_ in 0..4usize { *m_.add(r_ * 4 + c_) = if r_ == c_ { 1.0 } else { 0.0 }; } } }")
+_MCONCAT = ("if (a2) { int i_; for (i_ = 0; i_ < 12; i_++) ((float*) a2)[i_] = rw(); }",
+            "if !a2.is_null() { for i_ in 0..12usize { *(a2 as *mut f32).add(i_) = rw(); } }")
+_MCOPY = ("if (a0 && a1) { int i_; for (i_ = 0; i_ < 12; i_++) ((float*) a1)[i_] = ((float*) a0)[i_]; }",
+          "if !a0.is_null() && !a1.is_null() { for i_ in 0..12usize { *(a1 as *mut f32).add(i_) = *(a0 as *const f32).add(i_); } }")
+_NORM = ("if (a0) { a0->x = rw(); { u32 q_ = rnd() % 4; a0->y = q_ == 0 ? 1.0f : q_ == 1 ? -1.0f : rw(); } a0->z = rw(); }",
+         "if !a0.is_null() { (*a0).x = rw(); { let q_ = rnd() % 4; (*a0).y = if q_ == 0 { 1.0 } else if q_ == 1 { -1.0 } else { rw() }; } (*a0).z = rw(); }")
+_MPCOLL = ("if (a0) { static const int E_[5] = { 0, 0x8000, 0x3F, 0xFC0, 0x2000 }; a0->env_flags = E_[rnd() % 5]; a0->cur_pos.x = rw(); a0->cur_pos.y = rw(); }",
+           "if !a0.is_null() { const E_: [i32; 5] = [0, 0x8000, 0x3F, 0xFC0, 0x2000]; (*a0).env_flags = E_[(rnd() % 5) as usize]; (*a0).cur_pos.x = rw(); (*a0).cur_pos.y = rw(); }")
+_p, _s = efsync("ItemStateTable it_803F6998[] = {")
+spec("itlinkhookshot", ["ItemLink"], patch=_p, custom_stubs=_s, skip_stubs=["sinf", "cosf", "__frsqrt", "sqrtf", "__frsqrte"],
+     skip_data=IT_SKIP + ["result", "guess", "y", "attr", "m", "pos", "vec", "link", "coll", "fp", "lk_attr", "head", "anchor", "cur", "dir", "speed", "saved_pos", "vec2", "item_link", "mp_island"],
+     effects={"Item_80268B18": spawn_effect(), "PSMTXIdentity": _MIDENT, "PSMTXConcat": _MCONCAT, "PSMTXCopy": _MCOPY,
+              "PSVECCrossProduct": _WR3_2, "lbVector_Normalize": _NORM, "mpColl_800471F8": _MPCOLL, "mpColl_8004B108": _MPCOLL,
+              "mpGetSpeed": _WR3_2},
+     ret={"GObj_Create": ("(((fv() & 15) == 0) ? 0 : &LG[GCNT++ % 16])", "(if fv() & 15 == 0 { core::ptr::null_mut() } else { let r_ = &raw mut super::LG[super::GCNT % 16]; super::GCNT += 1; r_ })"),
+          "HSD_ObjAlloc": ("&LK[ACNT++ % 16]", "{ let r_ = &raw mut super::LK[super::ACNT % 16]; super::ACNT += 1; r_ as *mut c_void }"),
+          "HSD_JObjLoadJoint": ("&JO[fv() % 4]", "&raw mut super::JO[(fv() % 4) as usize]"),
+          "ft_80082E3C": ("((fv() & 1) ? &G2 : 0)", "(if fv() & 1 != 0 { &raw mut super::G2 } else { core::ptr::null_mut() })"),
+          "mpIsland_8005AB54": ("((fv() & 1) ? &MPU : 0)", "(if fv() & 1 != 0 { &raw mut super::MPU } else { core::ptr::null_mut() })"),
+          "ftParts_GetBoneIndex": ("(fv() % 150)", "((fv() % 150) as _)")})

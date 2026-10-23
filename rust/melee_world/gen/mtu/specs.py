@@ -207,5 +207,30 @@ SPECS["if_2FF2"] = dict(
               "__builtin_va_start(ap, a3); while (*f) { if (*f++ == '%') { f++; T((u32) __builtin_va_arg(ap, int)); } } __builtin_va_end(ap); return (int) fv(); }",
             ext="fn HSD_SisLib_803A6B98(a0: *mut HSD_Text, a1: f32, a2: f32, a3: *const i8, a4: &[i32]) -> i32;",
             hook="|a0, a1, a2, a3, a4| { t(@ID@); t(pi(a0)); t(a1.to_bits()); t(a2.to_bits()); t(sh(a3 as *const u8)); for v in a4 { t(*v as u32); } fv() as i32 }")})
+SPECS["itanimlist"] = dict(
+    crate="melee_items", src="src/melee/it/itanimlist.c", types=[],
+    # on the console `ptr + 1` (an itAnimlistCmdUnk is 4 bytes) is the next command word; natively a
+    # CmdUnion is 8 bytes, so the port (and the compiled copy of the TU) step one CmdUnion instead
+    patch=[("cmd->u = (union CmdUnion*) (ptr + 1);", "cmd->u = cmd->u + 1;")],
+    ret={"Command_Execute": ("CE_RET", "super::CE_RET"), "lb_80014258": ("(int) (fv() % 3)", "(fv() % 3) as i32")},
+    effects={
+        "it_80278800": (
+            "{ T(B(a3->x)); T(B(a3->y)); T(B(a3->z)); T(B(a4->x)); T(B(a4->y)); T(B(a4->z)); }",
+            "{ t((*a3).x.to_bits()); t((*a3).y.to_bits()); t((*a3).z.to_bits()); t((*a4).x.to_bits()); t((*a4).y.to_bits()); t((*a4).z.to_bits()); }"),
+        "Command_Execute": (
+            "{ int ok = (a1 >= 10 && a1 <= 25) && (a0->u < &W[6]) && ((fv() & 3) != 0); CE_RET = ok ? 0 : 1; "
+            "if (CE_RET) { u32 q = fv() & 3; if (q == 0) a0->u = 0; else if (q == 1) a0->timer = 1.0f + (float) (fv() % 3); "
+            "else if (a0->u < &W[10]) a0->u = &W[6 + (fv() % 4)]; else a0->u = 0; } }",
+            "{ let ok = (a1 >= 10 && a1 <= 25) && ((*a0).anon_8.u < &raw mut super::W[6]) && (fv() & 3) != 0; "
+            "super::CE_RET = if ok { 0 } else { 1 }; "
+            "if super::CE_RET != 0 { let q = fv() & 3; if q == 0 { (*a0).anon_8.u = core::ptr::null_mut(); } "
+            "else if q == 1 { (*a0).timer = 1.0 + (fv() % 3) as f32; } "
+            "else if (*a0).anon_8.u < &raw mut super::W[10] { (*a0).anon_8.u = &raw mut super::W[6 + (fv() % 4) as usize]; } "
+            "else { (*a0).anon_8.u = core::ptr::null_mut(); } } }"),
+        "lb_80014258": (
+            "if (a2 && (GKIND == 0 || GKIND == 6) && CMDX.u == &W[0] && (fv() & 1)) a2(a0, &CMDX, GKIND == 0 ? 21 : 22);",
+            "if let Some(f) = a2 { if (super::GKIND == 0 || super::GKIND == 6) && (*(&raw mut super::CMDX)).anon_8.u == &raw mut super::W[0] && fv() & 1 != 0 "
+            "{ f(a0, &raw mut super::CMDX, if super::GKIND == 0 { 21 } else { 22 }); } }")},
+)
 for _s in SPECS.values():
     _s["common_ret"] = COMMON_RET

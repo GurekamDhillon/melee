@@ -552,7 +552,8 @@ def build(stem, spec, want_ext):
     for n in own:
         rtxt += f"    freg(m::{n} as *const () as usize);\n"
     rtxt += "}\n\n" + "\n".join(raws)
-    rfile = ROOT / "rust/melee_world/tests/mtu" / f"{stem}_gen.rs"
+    crate = spec.get("crate", "melee_world")
+    rfile = ROOT / "rust" / crate / "tests/mtu" / f"{stem}_gen.rs"
     rfile.parent.mkdir(parents=True, exist_ok=True)
     rfile.write_text(rtxt, encoding="utf-8", newline="\n")
 
@@ -585,7 +586,7 @@ def build(stem, spec, want_ext):
     ext_txt = "\n".join(ext) + "\n"
     (ROOT / "rust/target").mkdir(exist_ok=True)
     (HERE / "tu" / f"{stem}_ext.rs.txt").write_text(ext_txt, encoding="utf-8", newline="\n")
-    port = ROOT / "rust/melee_world/src/tu" / f"{stem}.rs"
+    port = ROOT / "rust" / crate / "src/tu" / f"{stem}.rs"
     if port.exists():
         txt = port.read_text(encoding="utf-8")
         if "@@EXT@@" in txt:

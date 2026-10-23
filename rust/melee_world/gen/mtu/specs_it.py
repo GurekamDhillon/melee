@@ -40,3 +40,33 @@ SPECS["itheart"] = dict(
                     "itHeart_Logic8_Dropped", "itHeart_Logic8_EnteredAir", "itHeart_UnkMotion4_Anim",
                     "itHeart_UnkMotion4_Phys", "itHeart_UnkMotion4_Coll", "itHeart_Logic8_EvtUnk")],
 )
+
+# lb_8000B1CC(jobj, in, out): reads *in (when given), writes *out
+LB_B1CC = ("{ if (a1) { T(B(a1->x)); T(B(a1->y)); T(B(a1->z)); } a2->x = rg(); a2->y = rg(); a2->z = rg(); }",
+           "{ if !a1.is_null() { t((*a1).x.to_bits()); t((*a1).y.to_bits()); t((*a1).z.to_bits()); } (*a2).x = rg(); (*a2).y = rg(); (*a2).z = rg(); }")
+BONES_C = "    for (n = 0; n < 8; n++) P_DynamicBoneTable[0].bones[n] = &P_HSD_JObj[rnd() % 6u];"
+BONES_RS = "    for n in 0..8usize { g::P_DynamicBoneTable[0].bones[n] = &raw mut g::P_HSD_JObj[(rnd() % 6) as usize]; }"
+SPAWN_HASH = {"Item_80268B18": ("hash_SpawnItem(a0);", "hash_SpawnItem(&*a0);")}
+
+SPECS["itgreatfoxlaser"] = dict(
+    crate="melee_items", src="src/melee/it/kinds/itgreatfoxlaser.c", walk2=True,
+    pools={"HSD_GObj": 4, "HSD_JObj": 6, "Item": 2, "Article": 1, "ItemAttr": 1, "itGreatFoxLaser_Attrs": 1,
+           "DynamicBoneTable": 1, "Vec3": 2},
+    types=["SpawnItem"],
+    rules={**ITEM_RULES,
+           "Article.x4_specialAttributes": ("ptr", "itGreatFoxLaser_Attrs", False),
+           "Item.xBBC_dynamicBoneTable": ("ptr", "DynamicBoneTable", False),
+           "itGreatFoxLaser_ItemVars.x20": ("ptr", "HSD_GObj", False)},
+    uv={**FLAG_UV, "Item_xDD4_itemVar": "greatfoxlaser"},
+    uv_only={"Item_xDD4_itemVar": ["greatfoxlaser", "likelike"]},
+    skip_data=["result"],
+    ret={"Item_80268B18": ("pick_HSD_GObj(1)", "pick_HSD_GObj(1)")},
+    effects={**SPAWN_HASH, "lb_8000B1CC": LB_B1CC,
+             "ftLib_80086644": ("{ a1->x = rg(); a1->y = rg(); a1->z = rg(); }", "{ (*a1).x = rg(); (*a1).y = rg(); (*a1).z = rg(); }")},
+    setup_c=JOBJ_SETUP_C + "\n" + BONES_C, setup_rs=JOBJ_SETUP_RS + "\n" + BONES_RS,
+    ops=[dict(name="it_802EAF28", uv={"Item_xDD4_itemVar": "likelike"}),
+         dict(name="it_802EAF34", args=["p:HSD_GObj", "p:Vec3", "r:0:1"]),
+         "it_802EB1EC", "it_802EB268", "itGreatfoxlaser_UnkMotion1_Anim", "itGreatfoxlaser_UnkMotion1_Phys",
+         "itGreatFoxLaser_Logic27_DmgDealt", "itGreatFoxLaser_Logic27_Clanked", "itGreatFoxLaser_Logic27_Absorbed",
+         "it_2725_Logic27_Reflected", "it_802EB5A8"],
+)

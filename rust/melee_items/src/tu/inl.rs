@@ -255,3 +255,15 @@ macro_rules! inl_Item_UpdateRollingShellRotation {
     };
 }
 
+/// `HSD_JObjGetRotation`.
+#[macro_export]
+macro_rules! inl_HSD_JObjGetRotation {
+    () => {
+        #[inline]
+        unsafe fn HSD_JObjGetRotation(jobj: *mut HSD_JObj, rotate: *mut Quaternion) {
+            hsd_assert(!jobj.is_null(), "(jobj)");
+            hsd_assert(!rotate.is_null(), "(rotate)");
+            *rotate = (*jobj).rotate;
+        }
+    };
+}

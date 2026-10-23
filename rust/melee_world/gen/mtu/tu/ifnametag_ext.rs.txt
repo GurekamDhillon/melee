@@ -1,0 +1,88 @@
+// BEGIN GENERATED EXT (rust/melee_world/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_none {
+        ($name:ident, ($($a:ident),*)) => { panic!(concat!("TODO: ", stringify!($name), " is not ported")) };
+        ($name:ident, ($($a:ident),*), $def:path) => { $def($($a),*) };
+    }
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:path)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => ext_none!($name, ($($a),*) $(, $def)?),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn Camera_80030A50() -> *mut HSD_GObj;
+    fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
+    fn GObj_InitUserData(a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void);
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
+    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32);
+    fn GetNameText(a0: i32) -> *mut i8;
+    fn HSD_CObjEndCurrent();
+    fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32;
+    fn HSD_GObjFree(a0: *mut HSD_GObj);
+    fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
+    fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u32);
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32);
+    fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
+    fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint);
+    fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
+    fn HSD_JObjClearFlags(a0: *mut HSD_JObj, a1: u32);
+    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj;
+    fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
+    fn HSD_JObjSetFlags(a0: *mut HSD_JObj, a1: u32);
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void;
+    fn HSD_SisLib_803A611C(a0: i32, a1: *mut HSD_GObj, a2: u16, a3: u8, a4: u8, a5: u8, a6: u8, a7: u32) -> i32;
+    fn HSD_SisLib_803A62A0(a0: i32, a1: *mut i8, a2: *mut i8);
+    fn HSD_SisLib_803A6754(a0: i32, a1: i32) -> *mut HSD_Text;
+    fn HSD_SisLib_803A6B98(a0: *mut HSD_Text, a1: f32, a2: f32, a3: *const u8) -> i32;
+    fn HSD_SisLib_803A746C(a0: *mut HSD_Text, a1: i32, a2: f32, a3: f32);
+    fn HSD_SisLib_803A7548(a0: *mut HSD_Text, a1: i32, a2: f32, a3: f32);
+    fn HSD_SisLib_803A75E0(a0: *mut HSD_Text, a1: i32);
+    fn Mex_Enabled(a0: *const i8) -> i32;
+    fn Player_80036058(a0: i32) -> i32;
+    fn Player_800360D8(a0: i32) -> f32;
+    fn Player_GetEntity(a0: i32) -> *mut HSD_GObj;
+    fn Player_GetNametagSlotID(a0: i32) -> u8;
+    fn Player_GetPlayerId(a0: i32) -> i32;
+    fn Player_GetPlayerSlotType(a0: i32) -> Gm_PKind;
+    fn Player_GetPlayerState(a0: i32) -> i32;
+    fn Player_GetStocks(a0: i32) -> i32;
+    fn Player_GetTeam(a0: i32) -> i32;
+    fn Player_LoadPlayerCoords(a0: i32, a1: *mut Vec);
+    fn Ui_RetailHidden(a0: i32) -> i32;
+    fn Wb_RenderActive() -> i32;
+    fn gmVs_GetSceneController() -> *mut VsSceneController;
+    fn gm_8016B0E8() -> i32;
+    fn gm_8016B168() -> i32;
+    fn gm_8016B258(a0: i32) -> i32;
+    fn ifAll_GetArchive() -> *mut *mut HSD_Archive;
+    fn ifAll_IsHUDHidden() -> i32;
+    fn lbArchive_LoadSections(a0: *mut HSD_Archive, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]);
+    fn lbVector_WorldToScreen(a0: *mut HSD_CObj, a1: *const Vec, a2: *mut Vec, a3: i32) -> *mut Vec;
+    fn lb_80013B14(a0: *mut HSD_CameraDescPerspective) -> *mut HSD_CObj;
+    fn memzero(a0: *mut c_void, a1: i32) = super::memzero_default;
+    fn mn_8022EB04(a0: *mut c_void);
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        pub unsafe extern "C" fn mn_8022EB04(a0: *mut c_void) { super::mn_8022EB04(a0) }
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut HSD_GObj_CameraKind: u8 = unsafe { core::mem::zeroed() };
+    pub static mut HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

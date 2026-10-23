@@ -208,7 +208,7 @@ static void fill_Item(Item* p)
     p->x21 = fv();
     p->x22 = fv();
     p->x23 = fv();
-    p->msid = fv();
+    p->msid = (0 + (int) (fv() % 10));
     p->anim_id = fv();
     p->facing_dir = rg();
     p->init_facing_dir = rg();

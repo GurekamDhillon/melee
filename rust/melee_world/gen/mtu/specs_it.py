@@ -165,7 +165,8 @@ SPECS["itgshell"] = dict(
     pools={"HSD_GObj": 4, "HSD_JObj": 6, "Item": 2, "Article": 1, "ItemAttr": 1, "itGShell_Attrs": 1,
            "ItemCommonData": 1},
     rules={**ITEM_RULES,
-           "Article.x4_specialAttributes": ("ptr", "itGShell_Attrs", False)},
+           "Article.x4_specialAttributes": ("ptr", "itGShell_Attrs", False),
+           "Item.msid": ("range", 0, 9)},
     uv={**FLAG_UV, "Item_xDD4_itemVar": "gshell"}, uv_only={"Item_xDD4_itemVar": ["gshell"]},
     statics=[ICD_STATIC],
     skip_data=["result"],
@@ -179,5 +180,5 @@ SPECS["itgshell"] = dict(
         hook="|a0, a1, a2, a3, a4, a5| { t(@ID@); t(pi(a0)); t(pi(a1)); t(a2); t(a3); t(pi(a4)); "
              "unsafe { t((*a5).x.to_bits()); t((*a5).y.to_bits()); t((*a5).z.to_bits()); } }")},
     setup_c=JOBJ_SETUP_C, setup_rs=JOBJ_SETUP_RS,
-    ops=GSHELL_FNS,
+    ops=GSHELL_FNS, ncases={"it_8028BAD8": 3000, "it_8028BC2C": 3000, "itGShell_Logic14_DmgReceived": 3000},
 )

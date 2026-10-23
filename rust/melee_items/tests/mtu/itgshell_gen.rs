@@ -219,7 +219,7 @@ pub fn fill_Item(p: &mut Item) { unsafe {
     p.x21 = fv() as _;
     p.x22 = fv() as _;
     p.x23 = fv() as _;
-    p.msid = fv() as _;
+    p.msid = (0 + (fv() % 10) as i32) as _;
     p.anim_id = fv() as _;
     p.facing_dir = rg();
     p.init_facing_dir = rg();

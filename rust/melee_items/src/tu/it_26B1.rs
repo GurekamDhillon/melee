@@ -317,6 +317,11 @@ pub unsafe extern "C" fn it_8026B634(arg0: *mut Vec3, arg1: *mut Vec3, arg2: *mu
     gobj
 }
 
+/// `it_8026B684`: the facing direction at `pos` (no fighter).
+pub unsafe extern "C" fn it_8026B684(pos: *mut Vec3) -> f32 {
+    ext::ftLib_800864A8(pos, null_mut())
+}
+
 /// `it_8026B6A8`: facing direction for `pos` with the fighter `arg1`.
 pub unsafe extern "C" fn it_8026B6A8(pos: *mut Vec3, arg1: *mut HSD_GObj) -> f32 {
     ext::ftLib_800864A8(pos, arg1)

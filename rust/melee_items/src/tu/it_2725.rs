@@ -1102,3 +1102,20 @@ pub unsafe extern "C" fn it_80272CC0(item_gobj: *mut HSD_GObj, mut idx: i32) -> 
     }
     jobj
 }
+
+/// `it_8027518C`: sets the life timer to the common `xF8` value, flags the item (`xDCF` bit 2, `xDD1` bit 0) and
+/// clears its `0x1A` flag.
+pub unsafe extern "C" fn it_8027518C(item_gobj: *mut HSD_GObj) {
+    let item = item_of(item_gobj);
+    (*item).xD44_lifeTimer = (*ext::it_804D6D28).xF8 as f32;
+    (*item).xDCF_flag.anon_0.set_b2(1);
+    (*item).xDD1_flag.anon_0.set_b0(1);
+    it_8026BDB4(item_gobj);
+}
+
+/// `it_802751D8`: counts the life timer down; true when it has run out.
+pub unsafe extern "C" fn it_802751D8(item_gobj: *mut HSD_GObj) -> bool {
+    let item = item_of(item_gobj);
+    (*item).xD44_lifeTimer -= 1.0;
+    (*item).xD44_lifeTimer <= 0.0
+}

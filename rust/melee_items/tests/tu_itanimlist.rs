@@ -9,8 +9,43 @@ use core::ptr::null_mut;
 use melee_items::tu::itanimlist as m;
 use melee_types::*;
 use mtu_harness::*;
+// The shared harness world (mtu_harness/world.rs) calls g::fill_*/hash_* that the newer generator emits;
+// this older hand-driven TU does not use the world, so give it inert stand-ins.
+mod g {
+    use super::*;
+    pub use super::g_inner::*;
+    pub fn fill_HSD_GObj(_p: &mut HSD_GObj) {}
+    pub fn hash_HSD_GObj(_p: &HSD_GObj) {}
+    pub fn fill_Item(_p: &mut Item) {}
+    pub fn hash_Item(_p: &Item) {}
+    pub fn fill_Fighter(_p: &mut Fighter) {}
+    pub fn hash_Fighter(_p: &Fighter) {}
+    pub fn fill_HSD_JObj(_p: &mut HSD_JObj) {}
+    pub fn hash_HSD_JObj(_p: &HSD_JObj) {}
+    pub fn fill_ItemAttr(_p: &mut ItemAttr) {}
+    pub fn hash_ItemAttr(_p: &ItemAttr) {}
+    pub fn fill_Article(_p: &mut Article) {}
+    pub fn hash_Article(_p: &Article) {}
+    pub fn fill_ItemLogicTable(_p: &mut ItemLogicTable) {}
+    pub fn hash_ItemLogicTable(_p: &ItemLogicTable) {}
+    pub fn fill_DynamicBoneTable(_p: &mut DynamicBoneTable) {}
+    pub fn hash_DynamicBoneTable(_p: &DynamicBoneTable) {}
+    pub fn fill_CmSubject(_p: &mut CmSubject) {}
+    pub fn hash_CmSubject(_p: &CmSubject) {}
+    pub fn fill_ItemStateTable(_p: &mut ItemStateTable) {}
+    pub fn hash_ItemStateTable(_p: &ItemStateTable) {}
+    pub fn fill_ItemStateDesc(_p: &mut ItemStateDesc) {}
+    pub fn hash_ItemStateDesc(_p: &ItemStateDesc) {}
+    pub fn fill_ItemCommonData(_p: &mut ItemCommonData) {}
+    pub fn hash_ItemCommonData(_p: &ItemCommonData) {}
+    pub fn fill_CollData(_p: &mut CollData) {}
+    pub fn hash_CollData(_p: &CollData) {}
+    pub fn fill_SpawnItem(_p: &mut SpawnItem) {}
+    pub fn hash_SpawnItem(_p: &SpawnItem) {}
+    pub fn fillg_all() {}
+}
 #[path = "mtu/itanimlist_gen.rs"]
-mod g;
+mod g_inner;
 
 static mut G: HSD_GObj = unsafe { core::mem::zeroed() };
 static mut ITEM: Item = unsafe { core::mem::zeroed() };

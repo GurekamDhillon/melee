@@ -1,0 +1,47 @@
+// BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn HSD_Randf() -> f32;
+    fn atan2f(a0: f32, a1: f32) -> f32;
+    fn efAsync_MexSpawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: i32, a3: *mut HSD_JObj, a4: *mut Vec, a5: f32, a6: f32);
+    fn efAsync_Spawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: u32, a3: u32, a4: *mut HSD_JObj, a5: &[EfArg]);
+    fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: &[EfArg]) -> *mut c_void;
+    fn it_80272CC0(a0: *mut HSD_GObj, a1: i32) -> *mut HSD_JObj;
+    fn lbArchive_80017040(a0: *mut *mut HSD_Archive, a1: *const i8, a2: *mut c_void, a3: *const i8, a4: i32) -> i32;
+    fn lbLang_IsSettingUS() -> i32;
+    fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec);
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut it_803F1ED8: [i8; 16] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F1EE4: [i8; 16] = unsafe { core::mem::zeroed() };
+    pub static mut it_803F1EF0: [i8; 16] = unsafe { core::mem::zeroed() };
+    pub static mut it_804D6D04: *mut Fighter_804D653C_t = unsafe { core::mem::zeroed() };
+    pub static mut it_804D6D20: *mut it_804D6D20_t = unsafe { core::mem::zeroed() };
+    pub static mut it_804D6D24: *mut *mut Article = unsafe { core::mem::zeroed() };
+    pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
+    pub static mut it_804D6D30: *mut *mut Article = unsafe { core::mem::zeroed() };
+    pub static mut it_804D6D38: *mut *mut Article = unsafe { core::mem::zeroed() };
+    pub static mut it_804D6D40: *mut it_804D6D40_t = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

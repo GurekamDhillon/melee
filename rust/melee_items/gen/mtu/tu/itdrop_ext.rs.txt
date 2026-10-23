@@ -1,0 +1,47 @@
+// BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn HSD_Randf() -> f32;
+    fn HSD_Randi(a0: i32) -> i32;
+    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj;
+    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_800874CC(a0: *mut HSD_GObj, a1: *mut c_void, a2: i32);
+    fn gm_8016B0B4() -> i32;
+    fn gm_8016B238() -> i32;
+    fn it_8026B684(a0: *mut Vec) -> f32;
+    fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn it_8026C65C(a0: *mut ItemPickTable) -> i32;
+    fn it_8026C704() -> i32;
+    fn it_8026C75C(a0: *mut ItemPickTable) -> i32;
+    fn it_80274658(a0: *mut HSD_GObj, a1: f32) -> i32;
+    fn it_80274ED8();
+    fn it_802E5F00(a0: *mut HSD_GObj, a1: *mut Vec, a2: *mut Vec, a3: i32);
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut Item_804A0C64: HSD_ObjAllocUnk = unsafe { core::mem::zeroed() };
+    pub static mut it_804A0E50: ItemPickTable = unsafe { core::mem::zeroed() };
+    pub static mut it_804A0E60: ItemPickTable = unsafe { core::mem::zeroed() };
+    pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

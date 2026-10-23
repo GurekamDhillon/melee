@@ -148,6 +148,30 @@ macro_rules! kinds_jobj_inl {
             }
         }
 
+        /// `HSD_JObjSetScaleZ`
+        #[inline]
+        unsafe fn HSD_JObjSetScaleZ(jobj: *mut HSD_JObj, z: f32) {
+            $crate::tu::kinds_inl::hsd_assert(!jobj.is_null(), "(jobj)");
+            (*jobj).scale.z = z;
+            if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+                HSD_JObjSetMtxDirty(jobj);
+            }
+        }
+
+        /// `HSD_JObjGetScaleY`
+        #[inline]
+        unsafe fn HSD_JObjGetScaleY(jobj: *mut HSD_JObj) -> f32 {
+            $crate::tu::kinds_inl::hsd_assert(!jobj.is_null(), "(jobj)");
+            (*jobj).scale.y
+        }
+
+        /// `HSD_JObjGetRotationZ`
+        #[inline]
+        unsafe fn HSD_JObjGetRotationZ(jobj: *mut HSD_JObj) -> f32 {
+            $crate::tu::kinds_inl::hsd_assert(!jobj.is_null(), "(jobj)");
+            (*jobj).rotate.z
+        }
+
         /// `HSD_JObjGetScale`
         #[inline]
         unsafe fn HSD_JObjGetScale(jobj: *mut HSD_JObj, scale: *mut Vec3) {
@@ -299,3 +323,56 @@ macro_rules! kinds_jobj_inl_dirty {
     };
 }
 pub use kinds_jobj_inl_dirty;
+
+/// `ABS(x)` (`x < 0 ? -x : x`; `ABS(-0.0)` is -0.0).
+#[inline]
+pub fn ABS(x: f32) -> f32 {
+    if x < 0.0 { -x } else { x }
+}
+
+/// `M_TAU` (Runtime/platform.h, a double).
+pub const M_TAU: f64 = 6.283185307179586;
+
+/// `Item_ClearCmdVars` (it/inlines.h, static inline).
+#[inline]
+pub unsafe fn Item_ClearCmdVars(ip: *mut Item) {
+    (*ip).xDB8_itcmd_var3 = 0;
+    (*ip).xDB4_itcmd_var2 = 0;
+    (*ip).xDB0_itcmd_var1 = 0;
+    (*ip).xDAC_itcmd_var0 = 0;
+}
+
+/// `Item_InitSpawnPosition` (it/kinds/inlines.h, static inline).
+#[inline]
+pub unsafe fn Item_InitSpawnPosition(spawn: *mut SpawnItem, pos: *mut Vec3, on_plane: bool) {
+    (*spawn).prev_pos = *pos;
+    if on_plane {
+        (*spawn).prev_pos.z = 0.0;
+    }
+    (*spawn).pos = (*spawn).prev_pos;
+}
+
+/// `Item_InitSpawnCommonFields` (it/kinds/inlines.h, static inline).
+#[inline]
+pub unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GObj, facing_dir: f32, initial_collision: bool) {
+    (*spawn).facing_dir = facing_dir;
+    (*spawn).x3C_damage = 0;
+    (*spawn).vel.z = 0.0;
+    (*spawn).vel.y = 0.0;
+    (*spawn).vel.x = 0.0;
+    (*spawn).x0_parent_gobj = parent;
+    (*spawn).x4_parent_gobj2 = (*spawn).x0_parent_gobj;
+    (*spawn).x44_flag.anon_0.set_b0(initial_collision as u8);
+    (*spawn).x40 = 0;
+}
+
+/// `Item_NormalizeAngle` (it/kinds/inlines.h, static inline): `*angle += M_TAU` is a double add.
+#[inline]
+pub unsafe fn Item_NormalizeAngle(angle: *mut f32) {
+    while (*angle as f64) < 0.0 {
+        *angle = (*angle as f64 + M_TAU) as f32;
+    }
+    while (*angle as f64) > M_TAU {
+        *angle = (*angle as f64 - M_TAU) as f32;
+    }
+}

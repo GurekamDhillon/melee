@@ -20,13 +20,31 @@ COMMON_RET = {
 }
 for _n in ("it_80272C6C", "it_8026F8B4", "it_8026DA08", "it_802763E0", "it_80276308", "it_8026D8A4", "it_8027A09C",
            "it_8027A118", "it_80273030", "it_802751D8", "itColl_BounceOffShield", "it_80274658", "it_80273130",
-           "it_8026B894", "it_8026EA20", "it_8026EA9C", "mpGetSpeed", "it_8026F3D4", "it_8026DFB0"):
+           "it_8026B894", "it_8026EA20", "it_8026EA9C", "mpGetSpeed", "it_8026F3D4", "it_8026DFB0",
+           "ftNs_AttackS4_CheckNessBatRemove", "ftCo_800BF228", "ftNs_SpecialN_CheckSpecialNHold",
+           "ftKb_SpecialNNs_800FEC78", "ftNs_SpecialHi_CheckSpecialHiHold", "it_8026E058", "mpColl_800471F8"):
     COMMON_RET[_n] = _P
 
 _V = lambda a: (f"if ({a}) {{ {a}->x = rw(); {a}->y = rw(); {a}->z = rw(); }}",
                 f"if !{a}.is_null() {{ (*{a}).x = rw(); (*{a}).y = rw(); (*{a}).z = rw(); }}")
+COMMON_RET["it_802AF940"] = _GO2
+COMMON_RET["it_802AC43C"] = _GO2
+COMMON_RET["lbVector_CrossprodNormalized"] = ("a2", "a2")
+COMMON_RET["lbVector_Angle"] = ("(float) (rnd() % 400) / 100.0f", "(rnd() % 400) as f32 / 100.0")
+COMMON_RET["Stage_80225194"] = ("((fv() % 3) == 0 ? 0x54 : (int) (fv() % 20))", "if fv() % 3 == 0 { 0x54 } else { (fv() % 20) as _ }")
+COMMON_RET["ftLib_80086A0C"] = ("(float) (rnd() % 5) / 2.0f", "(rnd() % 5) as f32 / 2.0")
+COMMON_RET["ftLib_GetMotionId"] = ("(int) (0x150 + rnd() % 16)", "(0x150 + rnd() % 16) as i32")
+COMMON_RET["it_802A3C98"] = ("(float) (rnd() % 60) / 10.0f", "(rnd() % 60) as f32 / 10.0")
 COMMON_EFF = {
     "lb_8000B1CC": _V("a2"),
+    "ftLib_80086644": _V("a1"),
+    "it_8026BB68": _V("a1"),
+    "it_802AB3F0": _V("a1"),
+    "lbVector_CrossprodNormalized": _V("a2"),
+    "it_802A3C98": _V("a2"),
+    "it_802AB468": ("if (a1) { *a1 = rw(); }", "if !a1.is_null() { *a1 = rw(); }"),
+    "ftLib_800865D8": ("if (a1) { *a1 = rg(); } if (a2) { *a2 = rg(); }",
+                       "if !a1.is_null() { *a1 = rg(); } if !a2.is_null() { *a2 = rg(); }"),
     "lbVector_Diff": _V("a2"),
     "lbVector_Normalize": _V("a0"),
     "lbVector_Mirror": _V("a0"),
@@ -46,7 +64,9 @@ COMMON_EFF = {
 }
 
 SPECS = {}
-for _n in ("itarwinglaser", "itbat", "itbombhei", "itbox", "itcapsule", "itcerebi", "itchicorita", "itclimbersblizzard"):
+for _n in ("itarwinglaser", "itbat", "itbombhei", "itbox", "itcapsule", "itcerebi", "itchicorita", "itclimbersblizzard",
+           "itnessbat", "itnesspkfire", "itnesspkfirepillar", "itnesspkflash", "itnesspkflashexplode",
+           "itnesspkthunderball", "itnesspkthundertrail", "itnessyoyo"):
     SPECS[_n] = dict(src=f"{K}{_n}.c", types=_T, ret=dict(COMMON_RET), effects=dict(COMMON_EFF),
                      null_ret_ok=["Item_80268B18", "Item_80268B5C", "it_8026F6BC", "HSD_Randi"])
 
@@ -66,3 +86,10 @@ _EFS4 = dict(
 SPECS["itarwinglaser"]["custom_stubs"] = {"efSync_Spawn": _EFS3}
 SPECS["itbox"]["custom_stubs"] = {"efSync_Spawn": _EFS3}
 SPECS["itcerebi"]["custom_stubs"] = {"efSync_Spawn": _EFS4}
+
+for _n in ("itnesspkflash", "itnesspkthunderball"):
+    SPECS[_n]["skip_stubs"] = ["sinf", "cosf"]
+SPECS["itnessyoyo"]["skip_stubs"] = ["__frsqrte"]
+for _n in ("itnessbat", "itnesspkfire", "itnesspkfirepillar", "itnesspkflash", "itnesspkflashexplode",
+           "itnesspkthunderball", "itnesspkthundertrail", "itnessyoyo"):
+    SPECS[_n]["null_ret_ok"] += ["it_802AF940", "it_802AC43C", "lbVector_CrossprodNormalized"]

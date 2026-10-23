@@ -1,1 +1,9 @@
 pub mod itanimlist;
+pub mod itclimbersice;
+pub mod itclinkmilk;
+pub mod itcrazyhandbomb;
+pub mod itdkinoko;
+pub mod itcoin;
+pub mod itclimbersstring;
+pub mod itdrmariopill;
+pub mod itdosei;

@@ -209,3 +209,177 @@ CFG["itclimbersblizzard"] = dict(
         core::ptr::write_bytes(cb as *mut _ as *mut u8, 0, core::mem::size_of::<itClimbersBlizzard_ItemVars>());
     }"""),
 )
+
+# ------------------------------------------------------------------------------------------- itmato
+_mt = "IT[k].xDD4_itemVar.mato"
+CFG["itmato"] = dict(
+    spec=[("        (void) 0;", "            ();".replace("();", ""))],
+    tweak=per_item(
+        f"""        i = (int) (rnd() % 3);
+        {_mt}.x0 = (rnd() & 1) ? &JO[3 + i] : 0;
+        i = (int) (rnd() % 3);
+        {_mt}.x4 = (rnd() & 1) ? &JO[3 + i] : 0;""",
+        """        let i = (rnd() % 3) as usize;
+        IT[k].xDD4_itemVar.mato.x0 = if rnd() & 1 != 0 { &raw mut JO[3 + i] } else { null_mut() };
+        let i = (rnd() % 3) as usize;
+        IT[k].xDD4_itemVar.mato.x4 = if rnd() & 1 != 0 { &raw mut JO[3 + i] } else { null_mut() };"""),
+    ptrs=("""    for (k = 0; k < 3; k++) {
+        HM(PI(%s.x0)); HM(PI(%s.x4)); %s.x0 = 0; %s.x4 = 0;
+    }""" % ((_mt,) * 4),
+          """    for k in 0..3 {
+        let mt = &mut IT[k].xDD4_itemVar.mato;
+        hm(pi(mt.x0)); hm(pi(mt.x4)); mt.x0 = null_mut(); mt.x4 = null_mut();
+    }"""),
+)
+
+# ----------------------------------------------------------------------------------------- itmetalb
+CFG["itmetalb"] = dict(
+    spec=[("        (void) 0;", "")],
+    tweak=("        GO[2].classifier = (rnd() & 1) ? 4 : (u16) (rnd() % 8);",
+           "        GO[2].classifier = if rnd() & 1 != 0 { 4 } else { (rnd() % 8) as u16 };"),
+    ptrs=("", ""),
+)
+
+# ---------------------------------------------------------------------------------------- itmetamon
+CFG["itmetamon"] = dict(
+    spec=[("""        float* a = (float*) SPEC[0];
+        a[0] = rw();""",
+           """            let a = SPECB.0[0].as_mut_ptr() as *mut f32;
+            *a = rw();""")],
+    tweak=("", ""),
+    ptrs=("    HM(PI(it_804D6D50)); it_804D6D50 = 0;",
+          "    hm(pi(m::it_804D6D50)); m::it_804D6D50 = null_mut();"),
+)
+
+# -------------------------------------------------------------------------------------------- itmew
+CFG["itmew"] = dict(
+    spec=[("""        MewVars* a = (MewVars*) SPEC[0];
+        a->x0 = rw(); a->x4 = rw(); a->x8 = rw(); a->xC = rw();""",
+           """            let a = SPECB.0[0].as_mut_ptr() as *mut MewVars;
+            (*a).x0 = rw(); (*a).x4 = rw(); (*a).x8 = rw(); (*a).xC = rw();""")],
+    tweak=("", ""),
+    ptrs=("", ""),
+)
+
+# ------------------------------------------------------------------------------------ itmewtwodisable
+_md = "IT[k].xDD4_itemVar.mdisable"
+CFG["itmewtwodisable"] = dict(
+    spec=[("""        itMDisableAttributes* a = (itMDisableAttributes*) SPEC[0];
+        a->lifetime = rw(); a->x_vel = rw();""",
+           """            let a = SPECB.0[0].as_mut_ptr() as *mut itMDisableAttributes;
+            (*a).lifetime = rw(); (*a).x_vel = rw();""")],
+    tweak=per_item(
+        f"""        i = (int) (rnd() % 3);
+        {_md}.owner = (rnd() & 1) ? &GO[i] : 0;""",
+        """        let i = (rnd() % 3) as usize;
+        IT[k].xDD4_itemVar.mdisable.owner = if rnd() & 1 != 0 { &raw mut GO[i] } else { null_mut() };"""),
+    ptrs=("""    for (k = 0; k < 3; k++) { HM(PI(%s.owner)); %s.owner = 0; }""" % (_md, _md),
+          """    for k in 0..3 { hm(pi(IT[k].xDD4_itemVar.mdisable.owner)); IT[k].xDD4_itemVar.mdisable.owner = null_mut(); }"""),
+)
+
+# ---------------------------------------------------------------------------------------- itmball
+CFG["itmball"] = dict(
+    spec=[("""        itMBallAttributes* a = (itMBallAttributes*) SPEC[0];
+        a->x0 = (float) (rnd() % 20); a->x4 = (float) (rnd() % 20);""",
+           """            let a = SPECB.0[0].as_mut_ptr() as *mut itMBallAttributes;
+            (*a).x0 = (rnd() % 20) as f32; (*a).x4 = (rnd() % 20) as f32;""")],
+    tweak=("""        for (k = 0; k < 3; k++) { IT[k].xDD4_itemVar.mball.b0 = rnd() & 1; IT[k].xDD4_itemVar.mball.b1 = rnd() & 1; }
+        Item_804A0C64.x1C = (int) (rnd() % 20);
+        if (rnd() & 1) IT[0].xD44_lifeTimer = ((itMBallAttributes*) SPEC[0])->x4;
+        else IT[0].xD44_lifeTimer = (float) (rnd() % 4) - 1.0f;""",
+           """        for k in 0..3 { IT[k].xDD4_itemVar.mball.set_b0((rnd() & 1) as u8); IT[k].xDD4_itemVar.mball.set_b1((rnd() & 1) as u8); }
+        m::ext::Item_804A0C64.x1C = (rnd() % 20) as i32;
+        if rnd() & 1 != 0 {
+            IT[0].xD44_lifeTimer = (*(SPECB.0[0].as_mut_ptr() as *mut itMBallAttributes)).x4;
+        } else {
+            IT[0].xD44_lifeTimer = (rnd() % 4) as f32 - 1.0;
+        }"""),
+    ptrs=("""    HM((u32) Item_804A0C64.x1C);
+    for (k = 0; k < 3; k++) { HM(IT[k].xDD4_itemVar.mball.b0); HM(IT[k].xDD4_itemVar.mball.b1); zero(&IT[k].xDD4_itemVar.mball, sizeof IT[k].xDD4_itemVar.mball); }""",
+          """    hm(m::ext::Item_804A0C64.x1C as u32);
+    for k in 0..3 { let mb = &mut IT[k].xDD4_itemVar.mball; hm(mb.b0() as u32); hm(mb.b1() as u32); core::ptr::write_bytes(mb as *mut _ as *mut u8, 0, core::mem::size_of::<itMBall_ItemVars>()); }"""),
+)
+
+# ---------------------------------------------------------------------------------------- itmsbomb
+CFG["itmsbomb"] = dict(
+    spec=[("""        itMsBomb_Attrs* a = (itMsBomb_Attrs*) SPEC[0];
+        a->x0 = rw(); a->x4 = rw(); a->x8.top = rw(); a->x8.bottom = rw(); a->x8.right = rw(); a->x8.left = rw();""",
+           """            let a = SPECB.0[0].as_mut_ptr() as *mut m::itMsBomb_Attrs;
+            (*a).x0 = rw(); (*a).x4 = rw(); (*a).x8.top = rw(); (*a).x8.bottom = rw(); (*a).x8.right = rw(); (*a).x8.left = rw();""")],
+    tweak=("""        for (k = 0; k < 3; k++) { IT[k].xDD4_itemVar.msbomb.xDD4_b0 = rnd() & 1; }
+        IT[0].msid = (int) (rnd() % 8);""",
+           """        for k in 0..3 { IT[k].xDD4_itemVar.msbomb.set_xDD4_b0((rnd() & 1) as u8); }
+        IT[0].msid = (rnd() % 8) as i32;"""),
+    ptrs=("""    for (k = 0; k < 3; k++) { HM(IT[k].xDD4_itemVar.msbomb.xDD4_b0); zero(&IT[k].xDD4_itemVar.msbomb, sizeof IT[k].xDD4_itemVar.msbomb); }""",
+          """    for k in 0..3 { let mb = &mut IT[k].xDD4_itemVar.msbomb; hm(mb.xDD4_b0() as u32); core::ptr::write_bytes(mb as *mut _ as *mut u8, 0, core::mem::size_of::<itMsBomb_ItemVars>()); }"""),
+)
+
+# ---------------------------------------------------------------------------------- itmewtwoshadowball
+_sb = "IT[k].xDD4_itemVar.mewtwoshadowball"
+CFG["itmewtwoshadowball"] = dict(
+    spec=[("""        itMewtwoShadowball_DatAttrs* a = (itMewtwoShadowball_DatAttrs*) SPEC[0];
+        a->x0 = rw(); a->x4 = rw(); a->x8 = rw(); a->xC = rw(); a->x10 = rw(); a->x14 = rw(); a->x18 = rw(); a->x1C = rw();
+        a->x20 = (int) (rnd() % 6); a->x24 = rw(); a->x28 = rw(); a->x2C = rw(); a->x30 = rw(); a->x34 = rw(); a->x38 = rw(); a->x3C = rw();""",
+           """            let a = SPECB.0[0].as_mut_ptr() as *mut itMewtwoShadowball_DatAttrs;
+            (*a).x0 = rw(); (*a).x4 = rw(); (*a).x8 = rw(); (*a).xC = rw(); (*a).x10 = rw(); (*a).x14 = rw(); (*a).x18 = rw(); (*a).x1C = rw();
+            (*a).x20 = (rnd() % 6) as i32; (*a).x24 = rw(); (*a).x28 = rw(); (*a).x2C = rw(); (*a).x30 = rw(); (*a).x34 = rw(); (*a).x38 = rw(); (*a).x3C = rw();""")],
+    tweak=per_item(
+        f"""        JO[3 + k].child = &JO[9 + k];
+        {_sb}.x0 = rw();
+        i = (int) (rnd() % 2000) - 1000;
+        {_sb}.x4.x = (float) i / 37.0f; {_sb}.x4.y = rw(); {_sb}.x4.z = rw();
+        {_sb}.x10 = rw();
+        {_sb}.x14 = (int) (rnd() % 2);
+        {_sb}.x18 = (int) (rnd() % 6) - 1;
+        {_sb}.x1C = (int) (rnd() % 5) + 1;
+        {_sb}.x20 = (int) (rnd() % 5);
+        {_sb}.x24 = rnd() % 9;
+        {_sb}.x28 = (int) (rnd() % 2);
+        {_sb}.x2C = (rnd() & 3) ? &GO[1] : 0;
+        {_sb}.x30.x = rw(); {_sb}.x30.y = rw(); {_sb}.x30.z = rw();
+        {_sb}.x3C = rw(); {_sb}.x40 = rw(); {_sb}.x44 = rw();
+        {_sb}.x48 = (int) (rnd() % 6);
+        {_sb}.x4C = (int) (rnd() % 4) - 1;
+        {_sb}.x50 = rw(); {_sb}.x54 = rw();
+        if (rnd() % 3 == 0) {{ {_sb}.x58.x = 0.0f; {_sb}.x58.y = 0.0f; {_sb}.x58.z = 0.0f; }}
+        else {{ {_sb}.x58.x = rw(); {_sb}.x58.y = rw(); {_sb}.x58.z = rw(); }}
+        {_sb}.x64 = rw();
+        if (k == 0) {{
+            i = (int) (rnd() % 3);
+            if (i == 0) IT[0].kind = It_Kind_Mewtwo_ShadowBall;
+            else if (i == 1) IT[0].kind = It_Kind_Kirby_MewtwoShadowBall;
+        }}""",
+        """        JO[3 + k].child = &raw mut JO[9 + k];
+        let sb = &mut IT[k].xDD4_itemVar.mewtwoshadowball;
+        sb.x0 = rw();
+        let i = (rnd() % 2000) as i32 - 1000;
+        sb.x4.x = i as f32 / 37.0; sb.x4.y = rw(); sb.x4.z = rw();
+        sb.x10 = rw();
+        sb.x14 = (rnd() % 2) as i32;
+        sb.x18 = (rnd() % 6) as i32 - 1;
+        sb.x1C = (rnd() % 5) as i32 + 1;
+        sb.x20 = (rnd() % 5) as i32;
+        sb.x24 = rnd() % 9;
+        sb.x28 = (rnd() % 2) as i32;
+        sb.x2C = if rnd() & 3 != 0 { &raw mut GO[1] } else { null_mut() };
+        sb.x30.x = rw(); sb.x30.y = rw(); sb.x30.z = rw();
+        sb.x3C = rw(); sb.x40 = rw(); sb.x44 = rw();
+        sb.x48 = (rnd() % 6) as i32;
+        sb.x4C = (rnd() % 4) as i32 - 1;
+        sb.x50 = rw(); sb.x54 = rw();
+        if rnd() % 3 == 0 { sb.x58.x = 0.0; sb.x58.y = 0.0; sb.x58.z = 0.0; }
+        else { sb.x58.x = rw(); sb.x58.y = rw(); sb.x58.z = rw(); }
+        sb.x64 = rw();
+        if k == 0 {
+            let i = rnd() % 3;
+            if i == 0 { IT[0].kind = It_Kind_Mewtwo_ShadowBall; }
+            else if i == 1 { IT[0].kind = It_Kind_Kirby_MewtwoShadowBall; }
+        }"""),
+    ptrs=("""    for (k = 0; k < 3; k++) { HM(PI(%s.x2C)); %s.x2C = 0; }""" % (_sb, _sb),
+          """    for k in 0..3 { hm(pi(IT[k].xDD4_itemVar.mewtwoshadowball.x2C)); IT[k].xDD4_itemVar.mewtwoshadowball.x2C = null_mut(); }"""),
+    hints={"max_charge": ("(int) (rnd() % 5) + 1", "((rnd() % 5) as i32 + 1)"),
+           "charge": ("(float) (rnd() % 9) * 0.5f - 1.0f", "((rnd() % 9) as f32 * 0.5 - 1.0)")},
+    noret=["it_802C4D10"],
+    over={"it_802C4F50": ("ret = (u32) it_802C4F50(&GO[0], &IT[0].x378_itemColl);",
+                          "ret = m::it_802C4F50(&raw mut GO[0], &raw mut IT[0].x378_itemColl) as u32;")},
+)

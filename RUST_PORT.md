@@ -634,3 +634,15 @@ unported TUs are `ext` hooks (unset: panics "TODO"). The old snake_case forwarde
 - `it_802E7654` has no `return` in the C; the port returns the spawned gobj (what PPC leaves in r3), the oracle does
   not compare that return value. Ints that the C wraps (`-= 1`, sums of weights) use `wrapping_*` ops. Mutation checks
   (flipping fused sites, constants, comparison boundaries, state ids) fail the tests.
+
+### Shard 745-752: it/kinds itmato, itmball, itmetalb, itmetamon, itmew, itmewtwodisable, itmewtwoshadowball, itmsbomb
+`rust/melee_items/src/tu/{itmato,itmball,itmetalb,itmetamon,itmew,itmewtwodisable,itmewtwoshadowball,itmsbomb}.rs` port every
+function of those `src/melee/it/kinds` files (171, incl. the static inlines) with the same `gen/kinds` state oracle (168 ops x
+400 cases, hashed world + return + trace; the state tables too). The TARGET_PC `ScriptGame_*` branches of itmato are ported
+(`ext` hooks). Notes: `Item_ItemVars` bitfield slots (mball b0/b1, msbomb xDD4_b0) are native-LSB-first in C vs MSB-first in
+melee_types, so the cfg tweaks draw them by value and the hash clears the slot; variadic `efAsync_Spawn` / `efSync_Spawn` are
+fixed-arity custom stubs; `it_802C4D10` has no `return` in the C (port returns 0, oracle skips it). Fused sites (checked with
+`fma_sites.py`): msbomb `pos.y += scl*(top-bottom)`; shadowball `x30.y/z += (x40*x50)*sin/cos`, the five `charge*((hi-lo)/max)+lo`
+lerps and `0.5*(x18/x1C)+0.5` (`fmadds`), and `x3C += (M_PI/4)*(2*(rand-0.5))` (f64 `fma`). Mutation checks (unfusing the
+msbomb and sinf sites, a constant, a comparison boundary) fail the tests; the f64 `x3C` fma and the exact `0.5*q+0.5` lerp are
+indistinguishable after the f32 store, as with itbox's f64 sites. Regenerate: `bash rust/melee_items/gen/kinds/regen.sh itmato ...`.

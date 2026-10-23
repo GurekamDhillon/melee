@@ -25,3 +25,12 @@ pub mod itchicorita;
 pub mod itclimbersblizzard;
 pub mod itbombhei;
 pub mod itbox;
+// Shard 745-752:
+pub mod itmato;
+pub mod itmetalb;
+pub mod itmetamon;
+pub mod itmew;
+pub mod itmewtwodisable;
+pub mod itmball;
+pub mod itmsbomb;
+pub mod itmewtwoshadowball;

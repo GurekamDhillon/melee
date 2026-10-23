@@ -96,3 +96,31 @@ SPECS["ithammerhead"] = dict(
                     "itHammerHead_Logic40_Clanked", "itHammerHead_Logic40_HitShield", "itHammerHead_Logic40_Reflected",
                     "itHammerHead_Logic40_DmgReceived", "itHammerHead_Logic40_EvtUnk")],
 )
+
+RAND_RET = {
+    "HSD_Randi": ("(a0 > 0 ? (int) (rnd() % (u32) a0) : 0)", "if a0 > 0 { (rnd() % a0 as u32) as i32 } else { 0 }"),
+    "HSD_Randf": ("(float) (rnd() % 1000) / 1000.0f", "(rnd() % 1000) as f32 / 1000.0"),
+}
+# in/out Vec3 argument of lbVector_Normalize: traced, then replaced
+VEC_INOUT = ("{ T(B(a0->x)); T(B(a0->y)); T(B(a0->z)); a0->x = rg(); a0->y = rg(); a0->z = rg(); }",
+             "{ t((*a0).x.to_bits()); t((*a0).y.to_bits()); t((*a0).z.to_bits()); (*a0).x = rg(); (*a0).y = rg(); (*a0).z = rg(); }")
+
+SPECS["ithammer"] = dict(
+    crate="melee_items", src="src/melee/it/kinds/ithammer.c", walk2=True,
+    pools={"HSD_GObj": 4, "HSD_JObj": 6, "Item": 2, "Article": 1, "ItemAttr": 1, "itHammerData": 1, "Vec3": 2},
+    rules={**ITEM_RULES,
+           "Article.x4_specialAttributes": ("ptr", "itHammerData", False)},
+    uv=FLAG_UV, uv_only={"Item_xDD4_itemVar": []},
+    skip_data=["result"],
+    ret={**RAND_RET, "it_80272CC0": ("pick_HSD_JObj(0)", "pick_HSD_JObj(0)")},
+    effects={"lb_8000B1CC": LB_B1CC, "lbVector_Normalize": VEC_INOUT},
+    deref={"it_80299C48": [1, 2]},
+    setup_c=JOBJ_SETUP_C, setup_rs=JOBJ_SETUP_RS,
+    ops=["it_80293D94", "it_80293DCC", "it_80293E34", "itHammer_Logic28_Spawned", "it_80293F84",
+         "itHammer_UnkMotion0_Anim", "itHammer_UnkMotion0_Phys", "itHammer_UnkMotion0_Coll", "it_8029402C",
+         "itHammer_UnkMotion4_Anim", "itHammer_UnkMotion1_Phys", "itHammer_UnkMotion1_Coll",
+         "itHammer_Logic28_PickedUp", "itHammer_UnkMotion3_Anim", "it_802941A4", "itHammer_Logic28_Dropped",
+         "itHammer_UnkMotion4_Phys", "itHammer_UnkMotion4_Coll", "itHammer_Logic28_EnteredAir",
+         "itHammer_UnkMotion5_Anim", "itHammer_UnkMotion5_Phys", "itHammer_UnkMotion5_Coll",
+         "itHammer_Logic28_EvtUnk"],
+)

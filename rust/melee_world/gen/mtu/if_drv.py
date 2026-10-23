@@ -257,6 +257,8 @@ def uv_setters(spec):
             continue
         a, b = [], []
         for k, m in uv.items():
+            if k not in keys:
+                continue
             idx = keys[k].index(m)
             a.append(f"UV_{k} = {idx};")
             b.append(f"g::UV_{k} = {idx};")

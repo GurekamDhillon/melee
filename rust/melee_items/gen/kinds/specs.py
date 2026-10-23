@@ -115,3 +115,21 @@ _K["ret"].update({
 _K["null_ret_ok"] += ["ftLib_8008627C", "it_8027B5B0"]
 _K["effects"].update({"ftLib_80086644": _V("a1")})
 _K["deep_ecb"] = True
+
+_EFS_JV = dict(
+    c="void* efSync_Spawn(s32 a0, HSD_GObj* a1, ...) { __builtin_va_list ap; void* a2; Vec3* a3; __builtin_va_start(ap, a1); "
+      "a2 = __builtin_va_arg(ap, void*); a3 = __builtin_va_arg(ap, Vec3*); __builtin_va_end(ap); "
+      "T(@ID@); T((u32) a0); T(PI(a1)); T(PI(a2)); T(PI(a3)); TVEC(a3); return 0; }",
+    ext="fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut HSD_JObj, a3: *mut Vec) -> *mut c_void;",
+    hook="|a0, a1, a2, a3| { t(@ID@); t(a0 as u32); t(pi(a1)); t(pi(a2)); t(pi(a3)); tvec(a3); core::ptr::null_mut() }")
+_A = SPECS["itlinkarrow"]
+_A["custom_stubs"] = {"efSync_Spawn": _EFS_JV}
+_A["ret"].update({
+    "ftLib_80086630": ("&JO[3 + fv() % 3]", "&raw mut crate::JO[3 + (fv() % 3) as usize]"),
+    "HSD_JObjLoadJoint": ("&JO[6 + fv() % 14]", "&raw mut crate::JO[6 + (fv() % 14) as usize]"),
+})
+_A["effects"].update({
+    "mpLineGetNormal": _V("a1"),
+    "ftCo_80094098": ("if (a1) { *a1 = rw(); }", "if !a1.is_null() { *a1 = rw(); }"),
+})
+_A["null_ret_ok"] += ["mpLineGetNormal"]

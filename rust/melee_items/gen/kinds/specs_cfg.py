@@ -356,3 +356,90 @@ CFG["itlikelike"] = dict(
            "arg2": ("(int) (rnd() % 3)", "(rnd() % 3) as i32")},
     deep_ecb=True,
 )
+
+# ---------------------------------------------------------------------------------------- itlinkarrow
+_la = "IT[k].xDD4_itemVar.linkarrow"
+CFG["itlinkarrow"] = dict(
+    spec=[all3("""        itLinkArrowAttributes* a = (itLinkArrowAttributes*) SPEC[0];
+        a->x0 = (float) (rnd() % 100); a->x4 = rw(); a->x8 = rw(); a->xC = rw(); a->x10 = rw(); a->x14 = rw();
+        a->x18 = (float) (rnd() % 100); a->x1C = rw(); a->x20 = rw();
+        a->x24 = (rnd() & 1) ? (HSD_Joint*) &JO[3 + q] : 0; a->x28 = (rnd() & 1) ? (HSD_Joint*) &JO[3 + q] : 0; a->x2C = rw();""",
+           """            let a = SPECB.0[0].as_mut_ptr() as *mut itLinkArrowAttributes;
+            (*a).x0 = (rnd() % 100) as f32; (*a).x4 = rw(); (*a).x8 = rw(); (*a).xC = rw(); (*a).x10 = rw(); (*a).x14 = rw();
+            (*a).x18 = (rnd() % 100) as f32; (*a).x1C = rw(); (*a).x20 = rw();
+            (*a).x24 = if rnd() & 1 != 0 { &raw mut JO[3 + q] as *mut HSD_Joint } else { null_mut() };
+            (*a).x28 = if rnd() & 1 != 0 { &raw mut JO[3 + q] as *mut HSD_Joint } else { null_mut() };
+            (*a).x2C = rw();""")],
+    tweak=per_item(
+        f"""        {_la}.x18.x = rw(); {_la}.x18.y = rw(); {_la}.x18.z = rw();
+        {_la}.x24.x = rw(); {_la}.x24.y = rw(); {_la}.x24.z = rw();
+        {_la}.x30.x = rw(); {_la}.x30.y = rw(); {_la}.x30.z = rw();
+        {_la}.x3C.x = rw(); {_la}.x3C.y = rw(); {_la}.x3C.z = rw();
+        {_la}.x48.x = rw(); {_la}.x48.y = rw(); {_la}.x48.z = rw();
+        {_la}.x54.x = rw(); {_la}.x54.y = rw(); {_la}.x54.z = rw(); {_la}.x54.w = rw();
+        {_la}.x64.x = rw(); {_la}.x64.y = rw(); {_la}.x64.z = rw(); {_la}.x64.w = rw();
+        {_la}.x74.x = rw(); {_la}.x74.y = rw(); {_la}.x74.z = rw(); {_la}.x74.w = rw();
+        {_la}.x84.x = rw(); {_la}.x84.y = rw(); {_la}.x84.z = rw(); {_la}.x84.w = rw();
+        {_la}.x94 = rw(); {_la}.x98 = rw();
+        {_la}.x9C = (rnd() & 7) == 0 ? (u32) (rnd() % 12) : (u32) (rnd() % 9);
+        {_la}.xA0 = (int) (rnd() % 2); {_la}.xA4 = rnd() % 10; {_la}.xA8 = rw(); {_la}.xAC = rw();
+        {_la}.xB0 = (int) (rnd() % 4);
+        {_la}.xB4[0] = (rnd() & 1) ? &JO[6 + 14 * k + 0] : 0; {_la}.xB4[1] = (rnd() & 1) ? &JO[6 + 14 * k + 1] : 0; {_la}.xB4[2] = 0;
+        {_la}.xC0 = rw();
+        {_la}.xC4 = (rnd() & 1) ? &GO[(k + 1) % 3] : 0;
+        {_la}.xC8 = rw(); {_la}.xCC = rw(); {_la}.xD0 = 0; {_la}.xD4 = rw(); {_la}.xD8 = rw(); {_la}.xDC = rw();
+        {_la}.xE0 = (rnd() & 1) ? &GO[(k + 1) % 3] : 0;
+        IT[k].owner = (rnd() & 3) ? {_la}.xE0 : (((rnd() & 1) ? &GO[(k + 2) % 3] : 0));
+        {_la}.xE4 = (rnd() & 3) ? (int) (rnd() % 20) : -1;
+        {_la}.xE8 = rw(); {_la}.xEC = rw(); {_la}.xF0 = ((rnd() & 3) == 0) ? 0x12B + (int) (rnd() % 3) : (int) (rnd() % 0x130) - 1;
+        IT[k].kind = (rnd() & 1) ? (rnd() % 4 == 0 ? It_Kind_Kirby_LinkArrow : It_Kind_Link_Arrow) : (rnd() % 4 == 0 ? It_Kind_Kirby_CLinkArrow : It_Kind_CLink_Arrow);
+        if ((rnd() & 7) == 0) IT[k].kind = (rnd() % 400);
+        IT[k].xCF4_fighterGObjUnk = (rnd() & 1) ? &GO[(k + 1) % 3] : 0;
+        IT[k].xDAC_itcmd_var0 = (rnd() & 3) ? (int) (rnd() % 3) : 1; IT[k].xDB0_itcmd_var1 = (int) (rnd() % 3); IT[k].xDB4_itcmd_var2 = (int) (rnd() % 2);""",
+        f"""        let la = &mut IT[k].xDD4_itemVar.linkarrow;
+        la.x18.x = rw(); la.x18.y = rw(); la.x18.z = rw();
+        la.x24.x = rw(); la.x24.y = rw(); la.x24.z = rw();
+        la.x30.x = rw(); la.x30.y = rw(); la.x30.z = rw();
+        la.x3C.x = rw(); la.x3C.y = rw(); la.x3C.z = rw();
+        la.x48.x = rw(); la.x48.y = rw(); la.x48.z = rw();
+        la.x54.x = rw(); la.x54.y = rw(); la.x54.z = rw(); la.x54.w = rw();
+        la.x64.x = rw(); la.x64.y = rw(); la.x64.z = rw(); la.x64.w = rw();
+        la.x74.x = rw(); la.x74.y = rw(); la.x74.z = rw(); la.x74.w = rw();
+        la.x84.x = rw(); la.x84.y = rw(); la.x84.z = rw(); la.x84.w = rw();
+        la.x94 = rw(); la.x98 = rw();
+        la.x9C = if rnd() & 7 == 0 {{ rnd() % 12 }} else {{ rnd() % 9 }};
+        la.xA0 = (rnd() % 2) as i32; la.xA4 = rnd() % 10; la.xA8 = rw(); la.xAC = rw();
+        la.xB0 = (rnd() % 4) as i32;
+        la.xB4[0] = if rnd() & 1 != 0 {{ &raw mut JO[6 + 14 * k + 0] }} else {{ null_mut() }};
+        la.xB4[1] = if rnd() & 1 != 0 {{ &raw mut JO[6 + 14 * k + 1] }} else {{ null_mut() }};
+        la.xB4[2] = null_mut();
+        la.xC0 = rw();
+        la.xC4 = if rnd() & 1 != 0 {{ &raw mut GO[(k + 1) % 3] }} else {{ null_mut() }};
+        la.xC8 = rw(); la.xCC = rw(); la.xD0 = null_mut(); la.xD4 = rw(); la.xD8 = rw(); la.xDC = rw();
+        la.xE0 = if rnd() & 1 != 0 {{ &raw mut GO[(k + 1) % 3] }} else {{ null_mut() }};
+        IT[k].owner = if rnd() & 3 != 0 {{ la.xE0 }} else if rnd() & 1 != 0 {{ &raw mut GO[(k + 2) % 3] }} else {{ null_mut() }};
+        la.xE4 = if rnd() & 3 != 0 {{ (rnd() % 20) as i32 }} else {{ -1 }};
+        la.xE8 = rw(); la.xEC = rw(); la.xF0 = if rnd() & 3 == 0 {{ 0x12B + (rnd() % 3) as i32 }} else {{ (rnd() % 0x130) as i32 - 1 }};
+        IT[k].kind = if rnd() & 1 != 0 {{ if rnd() % 4 == 0 {{ It_Kind_Kirby_LinkArrow }} else {{ It_Kind_Link_Arrow }} }} else {{ if rnd() % 4 == 0 {{ It_Kind_Kirby_CLinkArrow }} else {{ It_Kind_CLink_Arrow }} }};
+        if rnd() & 7 == 0 {{ IT[k].kind = (rnd() % 400) as i32; }}
+        IT[k].xCF4_fighterGObjUnk = if rnd() & 1 != 0 {{ &raw mut GO[(k + 1) % 3] }} else {{ null_mut() }};
+        IT[k].xDAC_itcmd_var0 = if rnd() & 3 != 0 {{ rnd() % 3 }} else {{ 1 }}; IT[k].xDB0_itcmd_var1 = rnd() % 3; IT[k].xDB4_itcmd_var2 = rnd() % 2;"""),
+    ptrs=(f"""    for (k = 0; k < 3; k++) {{
+        HM(PI({_la}.xB4[0])); HM(PI({_la}.xB4[1])); HM(PI({_la}.xB4[2])); HM(PI({_la}.xC4)); HM(PI({_la}.xD0)); HM(PI({_la}.xE0));
+        {_la}.xB4[0] = 0; {_la}.xB4[1] = 0; {_la}.xB4[2] = 0; {_la}.xC4 = 0; {_la}.xD0 = 0; {_la}.xE0 = 0;
+    }}""", """    for k in 0..3 {
+        let la = &mut IT[k].xDD4_itemVar.linkarrow;
+        hm(pi(la.xB4[0])); hm(pi(la.xB4[1])); hm(pi(la.xB4[2])); hm(pi(la.xC4)); hm(pi(la.xD0)); hm(pi(la.xE0));
+        la.xB4[0] = null_mut(); la.xB4[1] = null_mut(); la.xB4[2] = null_mut(); la.xC4 = null_mut(); la.xD0 = null_mut(); la.xE0 = null_mut();
+    }"""),
+    hints={"arg1": ("(int) (rnd() % 3)", "(rnd() % 3) as i32"), "arg4": ("(int) (rnd() % 3)", "(rnd() % 3) as i32")},
+    noret=["itLinkArrow_802A81C4"],
+    over={"itLinkArrow_802A850C": (
+        "float v2 = rw(); float v3 = rw(); float v4 = rw(); "
+        "int cond = (IT[0].xDD4_itemVar.linkarrow.xE0 != 0 && IT[0].owner == IT[0].xDD4_itemVar.linkarrow.xE0); "
+        "u32 r = (u32) itLinkArrow_802A850C(&GO[0], &VA[0], &VA[1], v2, v3, v4); if (cond) ret = r;",
+        "let v2 = rw(); let v3 = rw(); let v4 = rw(); "
+        "let cond = !IT[0].xDD4_itemVar.linkarrow.xE0.is_null() && IT[0].owner == IT[0].xDD4_itemVar.linkarrow.xE0; "
+        "let r = m::itLinkArrow_802A850C(&raw mut GO[0], &raw mut VA[0], &raw mut VA[1], v2, v3, v4) as u32; if cond { ret = r; }")},
+    deep_ecb=False,
+)

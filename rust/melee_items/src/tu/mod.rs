@@ -33,3 +33,4 @@ pub mod itlgunray;
 pub mod itlgunbeam;
 pub mod itleadead;
 pub mod itlikelike;
+pub mod itlinkarrow;

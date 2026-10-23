@@ -59,7 +59,8 @@ def patched_source(stem, spec):
 
 
 class Tu:
-    def __init__(self, src, extra_args=(), incdir=None):
+    def __init__(self, src, extra_args=(), incdir=None, extra_main=()):
+        self.extra_main = {(ROOT / x).resolve() for x in extra_main}
         self.src = src
         idx = ci.Index.create()
         inc = ["-I", str(incdir)] if incdir else []
@@ -88,7 +89,10 @@ class Tu:
 
     def in_main(self, c):
         f = c.location.file
-        return f is not None and Path(f.name).resolve() == self.main
+        if f is None:
+            return False
+        p = Path(f.name).resolve()
+        return p == self.main or p in self.extra_main
 
     def uses(self):
         """-> (stubs{name: [cursor, called, addr_taken]}, inlines{name}, data{name: cursor})"""
@@ -345,7 +349,7 @@ class Walk:
         c = canon(t)
         k = c.kind
         rule = self.rules.get(self.cur_key)
-        if rule is not None and k not in (T.CONSTANTARRAY,):
+        if rule is not None and (k not in (T.CONSTANTARRAY,) or rule[0] == "skip"):
             kind = rule[0]
             if kind == "skip":
                 return
@@ -483,7 +487,7 @@ def build(stem, spec, want_ext):
     import if_drv
     global pool_decls, helpers
     pool_decls, helpers = if_drv.pool_decls, if_drv.helpers
-    tu = Tu(patched_source(stem, spec), spec.get("args", ()), (ROOT / spec["src"]).parent)
+    tu = Tu(patched_source(stem, spec), spec.get("args", ()), (ROOT / spec["src"]).parent, spec.get("extra_main", ()))
     stubs, inlines, data = tu.uses()
     for n in ("__assert", "OSReport", "printf"):
         stubs.pop(n, None)
@@ -563,7 +567,7 @@ def build(stem, spec, want_ext):
                     raise SystemExit(f"{n}: returns a struct by value; give a ret override")
             body_c.append(f"return ({ret_t}) ({rc});")
             body_r.append(f"({rr}) as _" if n in ov and not rr.rstrip().endswith("as _") else rr)
-        c_out.append(f"{ret_t} {n}({params}) {{ " + " ".join(body_c) + " }")
+        c_out.append(f"{ret_t} ({n})({params}) {{ " + " ".join(body_c) + " }")  # parenthesised: a function-like macro of the TU must not expand here
         argnames = ", ".join(f"a{i}" for i in range(len(ptys)))
         argl = ", ".join(f"a{i}" for i in range(len(ptys)))
         r_out_hook = f"        m::ext::hook::{n} = Some(|{argl}| {{ " + " ".join(body_r) + " });"

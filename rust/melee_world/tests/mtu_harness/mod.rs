@@ -179,6 +179,9 @@ pub fn base<T>(r: &T) -> *const u8 {
 pub fn case(op: u32, k: u32) {
     unsafe {
         TR = 0;
+        if std::env::var_os("MTU_PROGRESS").is_some() {
+            eprintln!("case {op} {k}");
+        }
         // MTU_DBG=<op>:<case> prints every trace word of that case (compare with the C driver
         // built with -DDBG_OP=<op> -DDBG_K=<case>)
         TRACEON = std::env::var("MTU_DBG").map(|v| v == format!("{op}:{k}")).unwrap_or(false);

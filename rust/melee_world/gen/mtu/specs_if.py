@@ -603,5 +603,416 @@ SPECS["ifstatus"] = dict(
          dict(name="ifStatus_802F6E3C", args=["i:6"])],
 )
 
+_COINS = ("raw", "((rnd() & 3) == 0 ? (int) (rnd() % 12u) : (int) (rnd() % 120000u))",
+          "if rnd() & 3 == 0 { (rnd() % 12) as i32 } else { (rnd() % 120000) as i32 }")
+_FPTR = ("raw", "&FPTR", "&raw mut super::FPTR")
+_FPTR_C = "FBUF[63] = 0; FPTR = &FBUF[rnd() % 8u];"
+_FPTR_R = "super::FBUF[63] = 0; super::FPTR = &raw mut super::FBUF[(rnd() % 8) as usize];"
+_MATCHFLAGS_C = (" { int q; for (q = 0; q < 6; q++) { u32 m = rnd(); u32 bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*((u8*) &P_VsSceneController[0].state.fighters[q] + 4) = (u8) (bb | ((bb & 1) << 7) | ((bb & 2) << 5)); } }")
+_MATCHFLAGS_R = (" for q in 0..6usize { let m = rnd(); let bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*(&raw mut g::P_VsSceneController[0].state.fighters[q] as *mut u8).add(4) = (bb | ((bb & 1) << 7) | ((bb & 2) << 5)) as u8; }")
+_COINS = ("raw", "((rnd() & 3) == 0 ? (int) (rnd() % 12u) : (int) (rnd() % 120000u))",
+          "if rnd() & 3 == 0 { (rnd() % 12) as i32 } else { (rnd() % 120000) as i32 }")
+_FPTR = ("raw", "&FPTR", "&raw mut super::FPTR")
+_FPTR_C = "FBUF[63] = 0; FPTR = &FBUF[rnd() % 8u];"
+_FPTR_R = "super::FBUF[63] = 0; super::FPTR = &raw mut super::FBUF[(rnd() % 8) as usize];"
+_MATCHFLAGS_C = (" { int q; for (q = 0; q < 6; q++) { u32 m = rnd(); u32 bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*((u8*) &P_VsSceneController[0].state.fighters[q] + 4) = (u8) (bb | ((bb & 1) << 7) | ((bb & 2) << 5)); } }")
+_MATCHFLAGS_R = (" for q in 0..6usize { let m = rnd(); let bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*(&raw mut g::P_VsSceneController[0].state.fighters[q] as *mut u8).add(4) = (bb | ((bb & 1) << 7) | ((bb & 2) << 5)) as u8; }")
+_COINS = ("raw", "((rnd() & 3) == 0 ? (int) (rnd() % 12u) : (int) (rnd() % 120000u))",
+          "if rnd() & 3 == 0 { (rnd() % 12) as i32 } else { (rnd() % 120000) as i32 }")
+_FPTR = ("raw", "&FPTR", "&raw mut super::FPTR")
+_FPTR_C = "FBUF[63] = 0; FPTR = &FBUF[rnd() % 8u];"
+_FPTR_R = "super::FBUF[63] = 0; super::FPTR = &raw mut super::FBUF[(rnd() % 8) as usize];"
+_MATCHFLAGS_C = (" { int q; for (q = 0; q < 6; q++) { u32 m = rnd(); u32 bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*((u8*) &P_VsSceneController[0].state.fighters[q] + 4) = (u8) (bb | ((bb & 1) << 7) | ((bb & 2) << 5)); } }")
+_MATCHFLAGS_R = (" for q in 0..6usize { let m = rnd(); let bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*(&raw mut g::P_VsSceneController[0].state.fighters[q] as *mut u8).add(4) = (bb | ((bb & 1) << 7) | ((bb & 2) << 5)) as u8; }")
+_COINS = ("raw", "((rnd() & 3) == 0 ? (int) (rnd() % 12u) : (int) (rnd() % 120000u))",
+          "if rnd() & 3 == 0 { (rnd() % 12) as i32 } else { (rnd() % 120000) as i32 }")
+_FPTR = ("raw", "&FPTR", "&raw mut super::FPTR")
+_FPTR_C = "FBUF[63] = 0; FPTR = &FBUF[rnd() % 8u];"
+_FPTR_R = "super::FBUF[63] = 0; super::FPTR = &raw mut super::FBUF[(rnd() % 8) as usize];"
+_MATCHFLAGS_C = (" { int q; for (q = 0; q < 6; q++) { u32 m = rnd(); u32 bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*((u8*) &P_VsSceneController[0].state.fighters[q] + 4) = (u8) (bb | ((bb & 1) << 7) | ((bb & 2) << 5)); } }")
+_MATCHFLAGS_R = (" for q in 0..6usize { let m = rnd(); let bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*(&raw mut g::P_VsSceneController[0].state.fighters[q] as *mut u8).add(4) = (bb | ((bb & 1) << 7) | ((bb & 2) << 5)) as u8; }")
+_COINS = ("raw", "((rnd() & 3) == 0 ? (int) (rnd() % 12u) : (int) (rnd() % 120000u))",
+          "if rnd() & 3 == 0 { (rnd() % 12) as i32 } else { (rnd() % 120000) as i32 }")
+_FPTR = ("raw", "&FPTR", "&raw mut super::FPTR")
+_FPTR_C = "FBUF[63] = 0; FPTR = &FBUF[rnd() % 8u];"
+_FPTR_R = "super::FBUF[63] = 0; super::FPTR = &raw mut super::FBUF[(rnd() % 8) as usize];"
+_MATCHFLAGS_C = (" { int q; for (q = 0; q < 6; q++) { u32 m = rnd(); u32 bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*((u8*) &P_VsSceneController[0].state.fighters[q] + 4) = (u8) (bb | ((bb & 1) << 7) | ((bb & 2) << 5)); } }")
+_MATCHFLAGS_R = (" for q in 0..6usize { let m = rnd(); let bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*(&raw mut g::P_VsSceneController[0].state.fighters[q] as *mut u8).add(4) = (bb | ((bb & 1) << 7) | ((bb & 2) << 5)) as u8; }")
+_COINS = ("raw", "((rnd() & 3) == 0 ? (int) (rnd() % 12u) : (int) (rnd() % 120000u))",
+          "if rnd() & 3 == 0 { (rnd() % 12) as i32 } else { (rnd() % 120000) as i32 }")
+_FPTR = ("raw", "&FPTR", "&raw mut super::FPTR")
+_FPTR_C = "FBUF[63] = 0; FPTR = &FBUF[rnd() % 8u];"
+_FPTR_R = "super::FBUF[63] = 0; super::FPTR = &raw mut super::FBUF[(rnd() % 8) as usize];"
+_MATCHFLAGS_C = (" { int q; for (q = 0; q < 6; q++) { u32 m = rnd(); u32 bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*((u8*) &P_VsSceneController[0].state.fighters[q] + 4) = (u8) (bb | ((bb & 1) << 7) | ((bb & 2) << 5)); } }")
+_MATCHFLAGS_R = (" for q in 0..6usize { let m = rnd(); let bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*(&raw mut g::P_VsSceneController[0].state.fighters[q] as *mut u8).add(4) = (bb | ((bb & 1) << 7) | ((bb & 2) << 5)) as u8; }")
+_COINS = ("raw", "((rnd() & 3) == 0 ? (int) (rnd() % 12u) : (int) (rnd() % 120000u))",
+          "if rnd() & 3 == 0 { (rnd() % 12) as i32 } else { (rnd() % 120000) as i32 }")
+_FPTR = ("raw", "&FPTR", "&raw mut super::FPTR")
+_FPTR_C = "FBUF[63] = 0; FPTR = &FBUF[rnd() % 8u];"
+_FPTR_R = "super::FBUF[63] = 0; super::FPTR = &raw mut super::FBUF[(rnd() % 8) as usize];"
+_MATCHFLAGS_C = (" { int q; for (q = 0; q < 6; q++) { u32 m = rnd(); u32 bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*((u8*) &P_VsSceneController[0].state.fighters[q] + 4) = (u8) (bb | ((bb & 1) << 7) | ((bb & 2) << 5)); } }")
+_MATCHFLAGS_R = (" for q in 0..6usize { let m = rnd(); let bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*(&raw mut g::P_VsSceneController[0].state.fighters[q] as *mut u8).add(4) = (bb | ((bb & 1) << 7) | ((bb & 2) << 5)) as u8; }")
+_COINS = ("raw", "((rnd() & 3) == 0 ? (int) (rnd() % 12u) : (int) (rnd() % 120000u))",
+          "if rnd() & 3 == 0 { (rnd() % 12) as i32 } else { (rnd() % 120000) as i32 }")
+_FPTR = ("raw", "&FPTR", "&raw mut FPTR")
+_FPTR_C = "FBUF[63] = 0; FPTR = &FBUF[rnd() % 8u];"
+_FPTR_R = "FBUF[63] = 0; FPTR = &raw mut FBUF[(rnd() % 8) as usize];"
+_MATCHFLAGS_C = (" { int q; for (q = 0; q < 6; q++) { u32 m = rnd(); u32 bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*((u8*) &P_VsSceneController[0].state.fighters[q] + 4) = (u8) (bb | ((bb & 1) << 7) | ((bb & 2) << 5)); } }")
+_MATCHFLAGS_R = (" for q in 0..6usize { let m = rnd(); let bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*(&raw mut g::P_VsSceneController[0].state.fighters[q] as *mut u8).add(4) = (bb | ((bb & 1) << 7) | ((bb & 2) << 5)) as u8; }")
+_COINS = ("raw", "((rnd() & 3) == 0 ? (int) (rnd() % 12u) : (int) (rnd() % 120000u))",
+          "if rnd() & 3 == 0 { (rnd() % 12) as i32 } else { (rnd() % 120000) as i32 }")
+_FPTR = ("raw", "&FPTR", "&raw mut FPTR")
+_FPTR_C = "FBUF[63] = 0; FPTR = &FBUF[rnd() % 8u];"
+_FPTR_R = "FBUF[63] = 0; FPTR = &raw mut FBUF[(rnd() % 8) as usize];"
+_MATCHFLAGS_C = (" { int q; for (q = 0; q < 6; q++) { u32 m = rnd(); u32 bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*((u8*) &P_VsSceneController[0].state.fighters[q] + 4) = (u8) (bb | ((bb & 1) << 7) | ((bb & 2) << 5)); } }")
+_MATCHFLAGS_R = (" for q in 0..6usize { let m = rnd(); let bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*(&raw mut g::P_VsSceneController[0].state.fighters[q] as *mut u8).add(4) = (bb | ((bb & 1) << 7) | ((bb & 2) << 5)) as u8; }")
+_COINS = ("raw", "((rnd() & 3) == 0 ? (int) (rnd() % 12u) : (int) (rnd() % 120000u))",
+          "if rnd() & 3 == 0 { (rnd() % 12) as i32 } else { (rnd() % 120000) as i32 }")
+_FPTR = ("raw", "&FPTR", "&raw mut FPTR")
+_FPTR_C = "FBUF[63] = 0; FPTR = &FBUF[rnd() % 8u];"
+_FPTR_R = "FBUF[63] = 0; FPTR = &raw mut FBUF[(rnd() % 8) as usize];"
+_MATCHFLAGS_C = (" { int q; for (q = 0; q < 6; q++) { u32 m = rnd(); u32 bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*((u8*) &P_VsSceneController[0].state.fighters[q] + 4) = (u8) (bb | ((bb & 1) << 7) | ((bb & 2) << 5)); } }")
+_MATCHFLAGS_R = (" for q in 0..6usize { let m = rnd(); let bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*(&raw mut g::P_VsSceneController[0].state.fighters[q] as *mut u8).add(4) = (bb | ((bb & 1) << 7) | ((bb & 2) << 5)) as u8; }")
+_COINS = ("raw", "((rnd() & 3) == 0 ? (int) (rnd() % 12u) : (int) (rnd() % 120000u))",
+          "if rnd() & 3 == 0 { (rnd() % 12) as i32 } else { (rnd() % 120000) as i32 }")
+_FPTR = ("raw", "&FPTR", "&raw mut FPTR")
+_FPTR_C = "FBUF[63] = 0; FPTR = &FBUF[rnd() % 8u];"
+_FPTR_R = "FBUF[63] = 0; FPTR = &raw mut FBUF[(rnd() % 8) as usize];"
+_MATCHFLAGS_C = (" { int q; for (q = 0; q < 6; q++) { u32 m = rnd(); u32 bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*((u8*) &P_VsSceneController[0].state.fighters[q] + 4) = (u8) (bb | ((bb & 1) << 7) | ((bb & 2) << 5)); } }")
+_MATCHFLAGS_R = (" for q in 0..6usize { let m = rnd(); let bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*(&raw mut g::P_VsSceneController[0].state.fighters[q] as *mut u8).add(4) = (bb | ((bb & 1) << 7) | ((bb & 2) << 5)) as u8; }")
+_COINS = ("raw", "((rnd() & 3) == 0 ? (int) (rnd() % 12u) : (int) (rnd() % 120000u))",
+          "if rnd() & 3 == 0 { (rnd() % 12) as i32 } else { (rnd() % 120000) as i32 }")
+_FPTR = ("raw", "&FPTR", "&raw mut FPTR")
+_FPTR_C = "FBUF[63] = 0; FPTR = &FBUF[rnd() % 8u];"
+_FPTR_R = "FBUF[63] = 0; FPTR = &raw mut FBUF[(rnd() % 8) as usize];"
+_MATCHFLAGS_C = (" { int q; for (q = 0; q < 6; q++) { u32 m = rnd(); u32 bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*((u8*) &P_VsSceneController[0].state.fighters[q] + 4) = (u8) (bb | ((bb & 1) << 7) | ((bb & 2) << 5)); } }")
+_MATCHFLAGS_R = (" for q in 0..6usize { let m = rnd(); let bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*(&raw mut g::P_VsSceneController[0].state.fighters[q] as *mut u8).add(4) = (bb | ((bb & 1) << 7) | ((bb & 2) << 5)) as u8; }")
+_COINS = ("raw", "((rnd() & 3) == 0 ? (int) (rnd() % 12u) : (int) (rnd() % 120000u))",
+          "if rnd() & 3 == 0 { (rnd() % 12) as i32 } else { (rnd() % 120000) as i32 }")
+_FPTR = ("raw", "&FPTR", "&raw mut FPTR")
+_FPTR_C = "FBUF[63] = 0; FPTR = &FBUF[rnd() % 8u];"
+_FPTR_R = "FBUF[63] = 0; FPTR = &raw mut FBUF[(rnd() % 8) as usize];"
+_MATCHFLAGS_C = (" { int q; for (q = 0; q < 6; q++) { u32 m = rnd(); u32 bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*((u8*) &P_VsSceneController[0].state.fighters[q] + 4) = (u8) (bb | ((bb & 1) << 7) | ((bb & 2) << 5)); } }")
+_MATCHFLAGS_R = (" for q in 0..6usize { let m = rnd(); let bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*(&raw mut g::P_VsSceneController[0].state.fighters[q] as *mut u8).add(4) = (bb | ((bb & 1) << 7) | ((bb & 2) << 5)) as u8; }")
+_COINS = ("raw", "((rnd() & 3) == 0 ? (int) (rnd() % 12u) : (int) (rnd() % 120000u))",
+          "if rnd() & 3 == 0 { (rnd() % 12) as i32 } else { (rnd() % 120000) as i32 }")
+_FPTR = ("raw", "&FPTR", "&raw mut FPTR")
+_FPTR_C = "FBUF[63] = 0; FPTR = &FBUF[rnd() % 8u];"
+_FPTR_R = "FBUF[63] = 0; FPTR = &raw mut FBUF[(rnd() % 8) as usize];"
+_MATCHFLAGS_C = (" { int q; for (q = 0; q < 6; q++) { u32 m = rnd(); u32 bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*((u8*) &P_VsSceneController[0].state.fighters[q] + 4) = (u8) (bb | ((bb & 1) << 7) | ((bb & 2) << 5)); } }")
+_MATCHFLAGS_R = (" for q in 0..6usize { let m = rnd(); let bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*(&raw mut g::P_VsSceneController[0].state.fighters[q] as *mut u8).add(4) = (bb | ((bb & 1) << 7) | ((bb & 2) << 5)) as u8; }")
+_COINS = ("raw", "((rnd() & 3) == 0 ? (int) (rnd() % 12u) : (int) (rnd() % 120000u))",
+          "if rnd() & 3 == 0 { (rnd() % 12) as i32 } else { (rnd() % 120000) as i32 }")
+_FPTR = ("raw", "&FPTR", "&raw mut FPTR")
+_FPTR_C = "FBUF[63] = 0; FPTR = &FBUF[rnd() % 8u];"
+_FPTR_R = "FBUF[63] = 0; FPTR = &raw mut FBUF[(rnd() % 8) as usize];"
+_MATCHFLAGS_C = (" { int q; for (q = 0; q < 6; q++) { u32 m = rnd(); u32 bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*((u8*) &P_VsSceneController[0].state.fighters[q] + 4) = (u8) (bb | ((bb & 1) << 7) | ((bb & 2) << 5)); } }")
+_MATCHFLAGS_R = (" for q in 0..6usize { let m = rnd(); let bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*(&raw mut g::P_VsSceneController[0].state.fighters[q] as *mut u8).add(4) = (bb | ((bb & 1) << 7) | ((bb & 2) << 5)) as u8; }")
+_COINS = ("raw", "((rnd() & 3) == 0 ? (int) (rnd() % 12u) : (int) (rnd() % 120000u))",
+          "if rnd() & 3 == 0 { (rnd() % 12) as i32 } else { (rnd() % 120000) as i32 }")
+_FPTR = ("raw", "&FPTR", "&raw mut FPTR")
+_FPTR_C = "FBUF[63] = 0; FPTR = &FBUF[rnd() % 8u];"
+_FPTR_R = "FBUF[63] = 0; FPTR = &raw mut FBUF[(rnd() % 8) as usize];"
+_MATCHFLAGS_C = (" { int q; for (q = 0; q < 6; q++) { u32 m = rnd(); u32 bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*((u8*) &P_VsSceneController[0].state.fighters[q] + 4) = (u8) (bb | ((bb & 1) << 7) | ((bb & 2) << 5)); } }")
+_MATCHFLAGS_R = (" for q in 0..6usize { let m = rnd(); let bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*(&raw mut g::P_VsSceneController[0].state.fighters[q] as *mut u8).add(4) = (bb | ((bb & 1) << 7) | ((bb & 2) << 5)) as u8; }")
+_COINS = ("raw", "((rnd() & 3) == 0 ? (int) (rnd() % 12u) : (int) (rnd() % 120000u))",
+          "if rnd() & 3 == 0 { (rnd() % 12) as i32 } else { (rnd() % 120000) as i32 }")
+_FPTR = ("raw", "&FPTR", "&raw mut FPTR")
+_FPTR_C = "FBUF[63] = 0; FPTR = &FBUF[rnd() % 8u];"
+_FPTR_R = "FBUF[63] = 0; FPTR = &raw mut FBUF[(rnd() % 8) as usize];"
+_MATCHFLAGS_C = (" { int q; for (q = 0; q < 6; q++) { u32 m = rnd(); u32 bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*((u8*) &P_VsSceneController[0].state.fighters[q] + 4) = (u8) (bb | ((bb & 1) << 7) | ((bb & 2) << 5)); } }")
+_MATCHFLAGS_R = (" for q in 0..6usize { let m = rnd(); let bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*(&raw mut g::P_VsSceneController[0].state.fighters[q] as *mut u8).add(4) = (bb | ((bb & 1) << 7) | ((bb & 2) << 5)) as u8; }")
+_COINS = ("raw", "((rnd() & 3) == 0 ? (int) (rnd() % 12u) : (int) (rnd() % 120000u))",
+          "if rnd() & 3 == 0 { (rnd() % 12) as i32 } else { (rnd() % 120000) as i32 }")
+_FPTR = ("raw", "&FPTR", "&raw mut FPTR")
+_FPTR_C = "FBUF[63] = 0; FPTR = &FBUF[rnd() % 8u];"
+_FPTR_R = "FBUF[63] = 0; FPTR = &raw mut FBUF[(rnd() % 8) as usize];"
+_MATCHFLAGS_C = (" { int q; for (q = 0; q < 6; q++) { u32 m = rnd(); u32 bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*((u8*) &P_VsSceneController[0].state.fighters[q] + 4) = (u8) (bb | ((bb & 1) << 7) | ((bb & 2) << 5)); } }")
+_MATCHFLAGS_R = (" for q in 0..6usize { let m = rnd(); let bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*(&raw mut g::P_VsSceneController[0].state.fighters[q] as *mut u8).add(4) = (bb | ((bb & 1) << 7) | ((bb & 2) << 5)) as u8; }")
+_COINS = ("raw", "((rnd() & 3) == 0 ? (int) (rnd() % 12u) : (int) (rnd() % 120000u))",
+          "if rnd() & 3 == 0 { (rnd() % 12) as i32 } else { (rnd() % 120000) as i32 }")
+_FPTR = ("raw", "&FPTR", "&raw mut FPTR")
+_FPTR_C = "FBUF[63] = 0; FPTR = &FBUF[rnd() % 8u];"
+_FPTR_R = "FBUF[63] = 0; FPTR = &raw mut FBUF[(rnd() % 8) as usize];"
+_MATCHFLAGS_C = (" { int q; for (q = 0; q < 6; q++) { u32 m = rnd(); u32 bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*((u8*) &P_VsSceneController[0].state.fighters[q] + 4) = (u8) (bb | ((bb & 1) << 7) | ((bb & 2) << 5)); } }")
+_MATCHFLAGS_R = (" for q in 0..6usize { let m = rnd(); let bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*(&raw mut g::P_VsSceneController[0].state.fighters[q] as *mut u8).add(4) = (bb | ((bb & 1) << 7) | ((bb & 2) << 5)) as u8; }")
+_COINS = ("raw", "((rnd() & 3) == 0 ? (int) (rnd() % 12u) : (int) (rnd() % 120000u))",
+          "if rnd() & 3 == 0 { (rnd() % 12) as i32 } else { (rnd() % 120000) as i32 }")
+_FPTR = ("raw", "&FPTR", "&raw mut FPTR")
+_FPTR_C = "FBUF[63] = 0; FPTR = &FBUF[rnd() % 8u];"
+_FPTR_R = "FBUF[63] = 0; FPTR = &raw mut FBUF[(rnd() % 8) as usize];"
+_MATCHFLAGS_C = (" { int q; for (q = 0; q < 6; q++) { u32 m = rnd(); u32 bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*((u8*) &P_VsSceneController[0].state.fighters[q] + 4) = (u8) (bb | ((bb & 1) << 7) | ((bb & 2) << 5)); } }")
+_MATCHFLAGS_R = (" for q in 0..6usize { let m = rnd(); let bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*(&raw mut g::P_VsSceneController[0].state.fighters[q] as *mut u8).add(4) = (bb | ((bb & 1) << 7) | ((bb & 2) << 5)) as u8; }")
+_COINS = ("raw", "((rnd() & 3) == 0 ? (int) (rnd() % 12u) : (int) (rnd() % 120000u))",
+          "if rnd() & 3 == 0 { (rnd() % 12) as i32 } else { (rnd() % 120000) as i32 }")
+_FPTR = ("raw", "&FPTR", "&raw mut FPTR")
+_FPTR_C = "FBUF[63] = 0; FPTR = &FBUF[rnd() % 8u];"
+_FPTR_R = "FBUF[63] = 0; FPTR = &raw mut FBUF[(rnd() % 8) as usize];"
+_MATCHFLAGS_C = (" { int q; for (q = 0; q < 6; q++) { u32 m = rnd(); u32 bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*((u8*) &P_VsSceneController[0].state.fighters[q] + 4) = (u8) (bb | ((bb & 1) << 7) | ((bb & 2) << 5)); } }")
+_MATCHFLAGS_R = (" for q in 0..6usize { let m = rnd(); let bb = (m & 1) | (((m >> 1) & 1) << 1); "
+                 "*(&raw mut g::P_VsSceneController[0].state.fighters[q] as *mut u8).add(4) = (bb | ((bb & 1) << 7) | ((bb & 2) << 5)) as u8; }")
+_SC_FILL = ("raw", "(rnd() % 4u == 0 ? (int) (rnd() % 64u) - 3 : (int) (rnd() % 64u) - 1)",
+            "if rnd() % 4 == 0 { (rnd() % 64) as i32 - 3 } else { (rnd() % 64) as i32 - 1 }")
+_STOCK_US = ("raw", "(struct IfStockUserData*) &ifStock_804A1378.x204[rnd() % 6u]",
+             "(&raw mut m::ifStock_804A1378.x204[(rnd() % 6) as usize]) as *mut IfStockUserData")
+_STOCK_SLOTS = ("raw", "ifStock_804A1A8C", "(&raw mut m::ifStock_804A1A8C) as *mut *mut HSD_GObj")
+_GCOL0 = ("raw", "&GCOL[0]", "&raw mut GCOL[0]")
+_FRAME = ("raw", "((rnd() % 3u) == 0 ? 1000000.0f + (float) ((rnd() % 6u) * 256u + rnd() % 4u) : rg())",
+          "if rnd() % 3 == 0 { 1000000.0f32 + ((rnd() % 6) * 256 + rnd() % 4) as f32 } else { rg() }")
+_PLAYER_X4 = ["ifStock_804A1378_per_player.x4"] + ["ifStock_804A1378_per_player." + n for n in
+              ("x24", "x28", "x2C", "x30", "x34", "x38", "x3C", "x40", "x44")]
+_PIDT = ("expr", "&PIDT[rnd() % 8u]", "unsafe { &raw mut super::PIDT[(rnd() % 8) as usize] }")
+
+SPECS["ifstock"] = dict(
+    src="src/melee/if/ifstock.c",
+    extra_main=["src/melee/if/ifstock_geno_art.inc", "pc/geno/geno_art_anim.inc", "pc/geno/geno_art_text.h"],
+    # The C reaches ifStock_804A1378.x204 through GameCube-layout address arithmetic ((IfStockData*) stock + n, then
+    # ++ of an IfStockDataOffset: +0x204 bytes); natively the x204 member sits elsewhere (8-byte pointers), so the
+    # compiled copy spells the same element as &stock->x204[n]. The port does exactly that.
+    patch=[("    arg0_base =\n        (struct IfStockDataOffset*) ((struct IfStockData*) stock + arg0);\n"
+            "    arg1_base =\n        (struct IfStockDataOffset*) ((struct IfStockData*) stock + arg1);\n"
+            "    arg0_data = (struct IfStockData*) ++arg0_base;\n    arg1_data = (struct IfStockData*) ++arg1_base;\n",
+            "    arg0_base = (struct IfStockDataOffset*) &stock->x204[arg0];\n"
+            "    arg1_base = (struct IfStockDataOffset*) &stock->x204[arg1];\n"
+            "    arg0_data = (struct IfStockData*) arg0_base;\n    arg1_data = (struct IfStockData*) arg1_base;\n"),
+           ("((struct IfStockDataOffset*) ((struct ifStock_804A1378_x204*) stock + (p)))",
+            "((struct IfStockDataOffset*) &stock->x204[p])"),
+           ("(((e) = ifStock_802F8298_elem(p)) + 1))", "((e) = ifStock_802F8298_elem(p)))"),
+           ("(struct ifStock_804A1378_x204*) ++elem)", "(struct ifStock_804A1378_x204*) elem)")],
+    pools={"HSD_GObj": 6, "HSD_JObj": 10, "HSD_DObj": 4, "HSD_MObj": 4, "HSD_TObj": 4, "HSD_Material": 3,
+           "HSD_AObj": 3, "HSD_FObj": 4, "HSD_ImageDesc": 4, "DynamicModelDesc": 2, "HSD_Joint": 2,
+           "VsSceneController": 1, "HSD_Archive": 1, "HudIndex": 1, "HSD_MatAnimJoint": 1},
+    rules={**CHAIN_RULES,
+           "HSD_TObj.imagedesc": ("ptr", "HSD_ImageDesc", True), "HSD_TObj.imagetbl": _PIDT,
+           "HSD_AObj.fobj": ("ptr", "HSD_FObj", True),
+           "HSD_FObj.next": ("expr", "(p < &P_HSD_FObj[3] && (rnd() & 1)) ? (void*) (p + 1) : (void*) 0",
+                             "unsafe { if (p as *mut HSD_FObj) < (&raw mut P_HSD_FObj[3]) && rnd() & 1 != 0 { (p as *mut HSD_FObj).add(1) } else { null_mut() } }"),
+           "HSD_FObj.ad_head": ("expr", "&FDAT[rnd() % 512u]", "unsafe { &raw mut super::FDAT[(rnd() % 512) as usize] }"),
+           "HSD_FObj.length": ("range", 0, 40), "HSD_FObj.obj_type": ("range", 0, 2),
+           "DynamicModelDesc.joint": ("ptr", "HSD_Joint", False),
+           "ifStock_804A1378.x0": ("expr", "(void*) PMDL",
+                                   "&raw mut super::PMDL as *mut _"),
+           "ifStock_804A1378.x4": ("ptr", "DynamicModelDesc", False),
+           # pad1F0 is the pointer slot between jobj and jobj_a: lb_80011E24(..., 0, 1, ..., 5) stores a pointer there
+           "ifStock_804A1378.pad1F0": ("skip",),
+           "ifStock_804A1378.gobj": ("ptr", "HSD_GObj", True), "ifStock_804A1378.jobj": ("ptr", "HSD_JObj", False),
+           "ifStock_804A1378.jobj_a": ("ptr", "HSD_JObj", False), "ifStock_804A1378.jobj_b": ("ptr", "HSD_JObj", False),
+           "ifStock_804A1378.jobj_c": ("ptr", "HSD_JObj", False), "ifStock_804A1378.jobj_d": ("ptr", "HSD_JObj", False),
+           "ifStock_804A1378_per_player.x0": ("ptr", "HSD_GObj", True),
+           **{k: ("ptr", "HSD_JObj", False) for k in _PLAYER_X4},
+           "ifStock_804A1378_x204.player": ("range", 0, 5), "ifStock_804A1378_x204.mode": ("range", 0, 3),
+           "ifStock_804A1378_x204.flag": ("range", 0, 2), "ifStock_804A1378_x204.x3": ("range", 0, 5),
+           "ifStock_804A1378_x204.anim": ("range", 0, 12),
+           "ifStock_804A1774.x0": ("range", 0, 1), "ifStock_804A1774.x10C": ("ptr", "HSD_GObj", True),
+           "ifStock_804A1ACC.x0": ("range", 0, 1), "ifStock_804A1ACC.x10C": ("ptr", "HSD_GObj", True),
+           "ifStock_804A1ACC.x108": ("ptr", "HSD_GObj", True),
+           "IfStockGenoArt.ck": ("range", 0, 3), "IfStockGenoArt.costume": ("range", 0, 3),
+           "IfStockGenoArt.tried": ("range", 0, 1), "IfStockGenoArt.desc": ("ptr", "HSD_ImageDesc", True),
+           "IfStockGenoBinding.tobj": ("ptr", "HSD_TObj", True), "IfStockGenoBinding.original_image": ("ptr", "HSD_ImageDesc", True),
+           "IfStockGenoBinding.original": _PIDT, "IfStockGenoBinding.table": _PIDT,
+           "IfStockGenoBinding.count": ("range", 0, 7)},
+    statics=[dict(c="ifStock_804A1378", ty="ifStock_804A1378"),
+             dict(c="ifStock_804A1774", ty="ifStock_804A1774"),
+             dict(c="ifStock_804A1A8C", n=16, kind="ptr", fill="pn:HSD_GObj"),
+             dict(c="ifStock_804A1ACC", ty="ifStock_804A1ACC"),
+             dict(c="ifStock_GenoArt", ty="IfStockGenoArt", n=12),
+             dict(c="ifStock_GenoBindings", ty="IfStockGenoBinding", n=256),
+             dict(c="PMDL", rs="super::PMDL", n=2, kind="ptr", fill="p:DynamicModelDesc", region=True),
+             dict(c="SCA", rs="super::SCA", n=140, kind="int", fill=_SC_FILL, region=True),
+             dict(c="SCB", rs="super::SCB", n=140, kind="int", fill=_SC_FILL, region=True),
+             dict(c="SCC", rs="super::SCC", n=140, kind="int", fill=_SC_FILL, region=True),
+             dict(c="SCD", rs="super::SCD", n=140, kind="int", fill=_SC_FILL, region=True),
+             dict(c="HEAP", rs="super::HEAP.0", n=4096, zero=True, region=True),
+             dict(c="HOFF", rs="super::HOFF", kind="int", fill="k:0"),
+             dict(c="NULLJ", rs="super::NULLJ", kind="int", fill="k:0"),
+             dict(c="GCOL", rs="super::GCOL", ty="GXColor", n=2, region=True),
+             dict(c="V3A", rs="super::V3A", ty="Vec3", region=True),
+             dict(c="ARCP", rs="super::ARCP", kind="ptr", fill="k:0", region=True),
+             dict(c="PIDT", rs="super::PIDT", n=16, kind="ptr", fill="pn:HSD_ImageDesc", region=True),
+             dict(c="FDAT", rs="super::FDAT", n=1024, kind="int", fill=("raw", "(int) (rnd() & 0x7F)", "(rnd() & 0x7F) as i32"), region=True),
+             dict(c="FBUF", rs="super::FBUF", n=64, kind="int", fill="v", region=True),
+             dict(c="FPTR", rs="super::FPTR", kind="ptr", fill="k:0", region=True),
+             dict(c="MAXI", rs="super::MAXI", kind="int", fill="v", region=True),
+             dict(c="OUTB", rs="super::OUTB", n=4, kind="int", fill="v", region=True),
+             dict(c="STK", rs="super::STK", n=8, kind="int", fill=("raw", "((rnd() & 3) == 0 ? (int) fv() : (int) (rnd() % 12u) - 1)",
+                                                                  "if rnd() & 3 == 0 { fv() as i32 } else { (rnd() % 12) as i32 - 1 }")),
+             dict(c="COIN", rs="super::COIN", n=8, kind="int", fill=("raw", "((rnd() & 3) == 0 ? (int) fv() : (int) (rnd() % 120000u))",
+                                                                    "if rnd() & 3 == 0 { fv() as i32 } else { (rnd() % 120000) as i32 }")),
+             dict(c="HSD_GObj_JObjKind", ext=True, kind="int", fill="k:20")],
+    skip_data=["result"],
+    c_decl="void* memset(void* d, int c, unsigned long n) { unsigned char* p = (unsigned char*) d; while (n--) *p++ = (unsigned char) c; return d; }\nstatic GXColor GCOL[2];\nstatic Vec3 V3A;\nstatic HSD_Archive* ARCP;\nstatic DynamicModelDesc* PMDL[2];\n"
+           "static signed char SCA[140], SCB[140], SCC[140], SCD[140];\n"
+           "static u8 HEAP[4096] __attribute__((aligned(64)));\nstatic int HOFF;\nstatic int NULLJ;\nstatic int STK[8], COIN[8];\n"
+           "static HSD_ImageDesc* PIDT[16];\nstatic u8 FDAT[1024];\nstatic u8 FBUF[64];\nstatic u8* FPTR;\nstatic int MAXI;\nstatic char OUTB[4];\n"
+           "static void* halloc(int n) { int sz; void* r; if (n < 0) return 0; sz = (n + 7) & ~7; if (HOFF + sz > 4096) return 0; "
+           "r = &HEAP[HOFF]; HOFF += sz; return r; }\n"
+           "static const char* const NM[8] = { \"Captain Falcon\", \"mr game & watch\", \"Ness\", \"  --  \", \"7up\", \"a\", \"\", \"Dr. Mario 64\" };\n",
+    rs_decl="pub static mut GCOL: [_GXColor; 2] = unsafe { core::mem::zeroed() };\npub static mut V3A: Vec3 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };\n"
+            "pub static mut ARCP: *mut HSD_Archive = null_mut();\npub static mut PMDL: [*mut DynamicModelDesc; 2] = [null_mut(); 2];\n"
+            "pub static mut SCA: [i8; 140] = [0; 140];\npub static mut SCB: [i8; 140] = [0; 140];\n"
+            "pub static mut SCC: [i8; 140] = [0; 140];\npub static mut SCD: [i8; 140] = [0; 140];\n"
+            "#[repr(C, align(64))]\npub struct Heap(pub [u8; 4096]);\npub static mut HEAP: Heap = Heap([0; 4096]);\n"
+            "pub static mut HOFF: i32 = 0;\npub static mut NULLJ: i32 = 0;\npub static mut STK: [i32; 8] = [0; 8];\npub static mut COIN: [i32; 8] = [0; 8];\n"
+            "pub static mut PIDT: [*mut HSD_ImageDesc; 16] = [null_mut(); 16];\npub static mut FDAT: [u8; 1024] = [0; 1024];\n"
+            "pub static mut FBUF: [u8; 64] = [0; 64];\npub static mut FPTR: *mut u8 = null_mut();\npub static mut MAXI: i32 = 0;\n"
+            "pub static mut OUTB: [i8; 4] = [0; 4];\n"
+            "fn halloc(n: i32) -> *mut c_void { unsafe { if n < 0 { return null_mut(); } let sz = n.wrapping_add(7) & !7; "
+            "if HOFF.wrapping_add(sz) > 4096 { return null_mut(); } let r = &raw mut HEAP.0[HOFF as usize]; HOFF += sz; r as *mut c_void } }\n"
+            "pub static NM: [&[u8]; 8] = [b\"Captain Falcon\\0\", b\"mr game & watch\\0\", b\"Ness\\0\", b\"  --  \\0\", b\"7up\\0\", b\"a\\0\", b\"\\0\", b\"Dr. Mario 64\\0\"];\n",
+    hash_extra=(
+        "{ int q, z; for (q = 0; q < 12; q++) { HSD_ImageDesc* d = ifStock_GenoArt[q].desc; if (d) { HM(PI(d->image_ptr)); HM(d->width); HM(d->height); "
+        "HM((u32) d->format); HM(d->mipmap); HM(B(d->minLOD)); HM(B(d->maxLOD)); } } "
+        "for (q = 0; q < 256; q++) { struct IfStockGenoBinding* b = &ifStock_GenoBindings[q]; if (b->table && b->count > 0 && b->count < 8) "
+        "for (z = 0; z <= b->count; z++) HM(PI(b->table[z])); } }",
+        "unsafe { for q in 0..12usize { let d = m::ifStock_GenoArt[q].desc; if !d.is_null() { hm(pi((*d).image_ptr)); hm((*d).width as u32); hm((*d).height as u32); "
+        "hm((*d).format as u32); hm((*d).mipmap); hm((*d).minLOD.to_bits()); hm((*d).maxLOD.to_bits()); } } "
+        "for q in 0..256usize { let b = &m::ifStock_GenoBindings[q]; if !b.table.is_null() && b.count > 0 && b.count < 8 { "
+        "for z in 0..=(b.count as usize) { hm(pi(*b.table.add(z))); } } } }"),
+    skip_stubs=["memset"],
+    setup_c="int k;\n    for (k = 0; k < 6; k++) P_HSD_GObj[k].user_data = &ifStock_804A1378.x204[rnd() % 6u];",
+    setup_rs="for k in 0..6usize { g::P_HSD_GObj[k].user_data = &raw mut m::ifStock_804A1378.x204[(rnd() % 6) as usize] as *mut _; }",
+    setup_c="int k;\n    if (HDBG) printf(\"PAD %02X %02X %02X %02X rs=%08X\\n\", (u8)ifStock_804A1378.pad1F0[0], (u8)ifStock_804A1378.pad1F0[1], (u8)ifStock_804A1378.pad1F0[2], (u8)ifStock_804A1378.pad1F0[3], rs);\n    for (k = 0; k < 6; k++) P_HSD_GObj[k].user_data = &ifStock_804A1378.x204[rnd() % 6u];",
+    setup_rs="if HDBG { let pd = m::ifStock_804A1378.pad1F0; println!(\"PAD {:02X} {:02X} {:02X} {:02X} rs={:08X}\", pd[0] as u8, pd[1] as u8, pd[2] as u8, pd[3] as u8, RS); } for k in 0..6usize { g::P_HSD_GObj[k].user_data = &raw mut m::ifStock_804A1378.x204[(rnd() % 6) as usize] as *mut _; }",
+    ret={"GObj_Create": ("pick_HSD_GObj(0)", "pick_HSD_GObj(0)"),
+         "HSD_JObjLoadJoint": ("((NULLJ && (fv() & 1)) ? 0 : pick_HSD_JObj(0))",
+                               "if super::NULLJ != 0 && fv() & 1 != 0 { null_mut() } else { pick_HSD_JObj(0) }"),
+         "HSD_MemAlloc": ("halloc(a0)", "super::halloc(a0)"),
+         "gmVs_GetSceneState": ("&P_VsSceneController[0].state", "&raw mut P_VsSceneController[0].state"),
+         "gm_80169520": ("SCA", "&raw mut super::SCA"), "gm_80169530": ("SCB", "&raw mut super::SCB"),
+         "gm_8016A97C": ("SCC", "&raw mut super::SCC"),
+         "gm_8016A98C": ("(void*) SCD", "&raw mut super::SCD as *mut lbl_8046B668_t"),
+         "gm_MexStockMatAnim": ("((fv() & 1) ? &P_HSD_MatAnimJoint[0] : 0)",
+                                "if fv() & 1 != 0 { &raw mut P_HSD_MatAnimJoint[0] } else { null_mut() }"),
+         "ifAll_GetArchive": ("&ARCP", "&raw mut super::ARCP"), "ifAll_GetPlayerHUDPosition": ("&V3A", "&raw mut super::V3A"),
+         "ifStatus_GetHUDInfo": ("&P_HudIndex[0]", "&raw mut P_HudIndex[0]"),
+         "lbVector_8000DE38": ("a1", "a1"),
+         "Player_GetCoins": ("COIN[a0 & 7]", "super::COIN[(a0 & 7) as usize]"),
+         "Player_GetStocks": ("STK[a0 & 7]", "super::STK[(a0 & 7) as usize]"),
+         "gm_801694A0": ("((fv() & 1) ? (int) (fv() % 11000u) - 500 : (int) fv())",
+                         "if fv() & 1 != 0 { (fv() % 11000) as i32 - 500 } else { fv() as i32 }"),
+         "gm_8016B184": ("(fv() & 1)", "(fv() & 1) as _"), "gm_8016A1F8": ("(fv() & 1)", "(fv() & 1) as _"),
+         "gm_8016A944": ("(fv() & 1)", "(fv() & 1) as _"), "gm_8016B1A8": ("(fv() & 1)", "(fv() & 1) as _"),
+         "gm_IsMultimanSmashMode": ("(fv() & 1)", "(fv() & 1) as _"), "gm_80169394": ("(fv() & 1)", "(fv() & 1) as _"),
+         "Script_StatusHUDVisible": ("((fv() & 3) != 0)", "((fv() & 3) != 0) as i32"),
+         "Ui_RetailHidden": ("((fv() & 3) == 0)", "((fv() & 3) == 0) as i32"),
+         "gm_GenoStockFrame": ("((fv() % 3u) == 0 ? 1000000.0f + (float) (fv() % 1536u) : rg())",
+                               "if fv() % 3 == 0 { 1000000.0f32 + (fv() % 1536) as f32 } else { rg() }"),
+         "Geno_DefineBaseCK": ("((int) (fv() % 5u) - 1)", "(fv() % 5) as i32 - 1"),
+         "Geno_DefineArtBaseCK": ("((int) (fv() % 5u) - 1)", "(fv() % 5) as i32 - 1"),
+         "Geno_DefineArtOpen": ("((fv() & 3) == 0 ? -1 : (int) (fv() % 3u))", "if fv() & 3 == 0 { -1 } else { (fv() % 3) as i32 }"),
+         "Geno_DefineName": ("((fv() & 3) != 0)", "((fv() & 3) != 0) as i32"),
+         "GxTex_Width": ("((fv() & 7) == 0 ? (int) (fv() % 2100u) - 20 : (int) (fv() % 24u) + 1)",
+                         "if fv() & 7 == 0 { (fv() % 2100) as i32 - 20 } else { (fv() % 24) as i32 + 1 }"),
+         "GxTex_Height": ("((fv() & 7) == 0 ? (int) (fv() % 2100u) - 20 : (int) (fv() % 24u) + 1)",
+                          "if fv() & 7 == 0 { (fv() % 2100) as i32 - 20 } else { (fv() % 24) as i32 + 1 }"),
+         "GxTex_Format": ("((fv() & 7) == 0 ? (int) (fv() % 12u) - 2 : (int) (fv() % 8u))",
+                          "if fv() & 7 == 0 { (fv() % 12) as i32 - 2 } else { (fv() % 8) as i32 }"),
+         "GxTex_ImageSize": ("((fv() & 7) == 0 ? (int) fv() - 100 : (int) (fv() % 1500u) + 1)",
+                             "if fv() & 7 == 0 { (fv() as i32).wrapping_sub(100) } else { (fv() % 1500) as i32 + 1 }")},
+    effects={**MEMZERO,
+             "Ground_801C1DE4": ("*a0 = (int) (fv() % 20u); *a1 = (int) (fv() % 20u);",
+                                 "*a0 = (fv() % 20) as i32; *a1 = (fv() % 20) as i32;"),
+             "lbVector_8000DE38": ("a1->x = rw(); a1->y = rw(); a1->z = rw();", "(*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw();"),
+             "Geno_DefineName": ("{ const char* s = NM[fv() % 8u]; int k; for (k = 0; s[k] && k < a2 - 1; k++) a1[k] = s[k]; a1[k] = 0; }",
+                                 "{ let s = super::NM[(fv() % 8) as usize]; let mut k = 0usize; while s[k] != 0 && (k as i32) < a2 - 1 { *a1.add(k) = s[k] as i8; k += 1; } *a1.add(k) = 0; }")},
+    deref={"lbVector_8000DE38": [1]},
+    null_ret_ok=["HSD_GObj_SetupProc", "HSD_JObjAddAnimAll"],
+    custom_stubs={"lbArchive_LoadSections": sections_stub(
+        "lbArchive_LoadSections", ("HSD_Archive*", "T(PI(a0));", "*mut HSD_Archive", "t(pi(a0));"),
+        {"Stc_scemdls": ("PMDL", "&raw mut super::PMDL")}), "lb_80011E24": jobjs_stub(),
+        "efSync_Spawn": dict(
+            c="void* efSync_Spawn(s32 a0, HSD_GObj* a1, ...) { __builtin_va_list ap; Vec3* v; __builtin_va_start(ap, a1); "
+              "v = __builtin_va_arg(ap, Vec3*); __builtin_va_end(ap); T(@ID@); T((u32) a0); T(PI(a1)); T(RH(v, sizeof *v)); return 0; }",
+            ext="fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut Vec3) -> *mut c_void;",
+            hook="|a0, a1, a2| { t(@ID@); t(a0 as u32); t(pi(a1)); t(rh(unsafe { &*a2 })); core::ptr::null_mut() }")},
+    ncases={"ifStock_ReqAnim": 1500, "ifStock_GenoFind": 800, "genoArt_ImageKeyAt": 800, "ifStock_GenoBinding": 600,
+            "ifStock_802F98E8": 800, "fn_802FA6C4": 300, "fn_802FAC34": 300},
+    ops=[dict(name="ifStock_802F7EFC", args=["i:6", "i:6"]),
+         dict(name="ifStock_802F8298_tobj_frame", args=["i:6"]),
+         dict(name="ifStock_802F8298_update_stocks", args=[_STOCK_US]),
+         dict(name="ifStock_802F8298_step_anim", args=[("raw", "&ifStock_804A1378.x204[rnd() % 6u].anim[rnd() % 7u]",
+                                                        "&raw mut m::ifStock_804A1378.x204[(rnd() % 6) as usize].anim[(rnd() % 7) as usize]")]),
+         "ifStock_802F8298",
+         "ifStock_802F89F8_get_data",
+         dict(name="ifStock_802F89F8_count", args=[_COINS]),
+         dict(name="ifStock_802F89F8_divisor", args=["r:-2:12"]),
+         dict(name="ifStock_802F89F8_digit", args=[_COINS, "r:-1:7"]),
+         "ifStock_802F89F8", "fn_802F8DB0", "fn_802F8E08",
+         dict(name="fn_802F916C", pre_c="{ int q; for (q = 0; q < 16; q++) if (!ifStock_804A1A8C[q]) ifStock_804A1A8C[q] = &P_HSD_GObj[0]; }",
+              pre_rs="for q in 0..16usize { if m::ifStock_804A1A8C[q].is_null() { m::ifStock_804A1A8C[q] = &raw mut g::P_HSD_GObj[0]; } }"),
+         dict(name="fn_802F9410_inline", args=["p:HSD_GObj", _STOCK_US]),
+         "fn_802F9410", "fn_802F94E0", "fn_802F9548", "fn_802F9598", "fn_802F95E8", "fn_802F9680",
+         dict(name="ifStock_MexAttach", args=["pn:HSD_JObj"]),
+         dict(name="ifStock_MexFrame", args=["v", "v"]),
+         dict(name="ifStock_802F96D0", args=["v", "v", "f", "f"]),
+         dict(name="ifStock_802F98E8_get_match_info",
+              args=[("raw", "&P_VsSceneController[0].state", "&raw mut g::P_VsSceneController[0].state"), "i:6"]),
+         dict(name="ifStock_802F98E8", args=["i:6", "r:0:3"], pre_c="NULLJ = 1; if ((rnd() & 7) == 0) ifStock_804A1378.x0 = 0;" + _MATCHFLAGS_C, pre_rs="NULLJ = 1; if rnd() & 7 == 0 { m::ifStock_804A1378.x0 = null_mut(); }" + _MATCHFLAGS_R),
+         dict(name="ifStock_802F9F48_inline", args=["r:0:129"]),
+         dict(name="ifStock_802F9F48", args=["r:0:129"]),
+         dict(name="ifStock_802FA118", args=["r:0:3"]),
+         dict(name="ifStock_802FA2D0", args=["r:-500:11500"]),
+         dict(name="ifStock_802FA5BC", args=["r:0:1"]),
+         "fn_802FA6C4", "fn_802FA8C0", "fn_802FAC34",
+         dict(name="ifStock_802FA5BC_noinline", args=["r:0:1"]),
+         dict(name="ifStock_ClearGObjSlots", args=[_STOCK_SLOTS, "r:0:16"]),
+         dict(name="ifStock_CreateStockGObjs", args=[_STOCK_SLOTS]),
+         "ifStock_802FAEC4", "ifStock_802FB390", "ifStock_802FB41C", "ifStock_802FB484",
+         dict(name="copyColor", args=["p:HSD_MObj", _GCOL0]),
+         dict(name="ifStock_802FB4EC", args=["i:6", _GCOL0]),
+         dict(name="ifStock_802FB650", args=["i:6"]), dict(name="ifStock_802FB6AC", args=["i:6"]),
+         "ifStock_GenoReset",
+         dict(name="ifStock_GenoFind", args=["r:0:3", "r:0:3", "pn:HSD_ImageDesc"]),
+         dict(name="ifStock_GenoBinding", args=["p:HSD_TObj", "i:2"]),
+         dict(name="ifStock_ReqAnim", args=["pn:HSD_TObj", _FRAME]),
+         dict(name="genoArt_FObjValue", args=[_FPTR, "v"], pre_c=_FPTR_C, pre_rs=_FPTR_R),
+         dict(name="genoArt_FObjPacked", args=[_FPTR], pre_c=_FPTR_C, pre_rs=_FPTR_R),
+         dict(name="genoArt_ImageKeyAt", args=["pn:HSD_TObj", "r:-1:6", ("raw", "&MAXI", "&raw mut MAXI")]),
+         dict(name="genoArt_Initials", c="{ const char* a0 = NM[rnd() % 8u]; genoArt_Initials(a0, OUTB); }",
+              rs="let a0 = NM[(rnd() % 8) as usize].as_ptr() as *const i8; m::genoArt_Initials(a0, (&raw mut OUTB) as *mut i8);")],
+)
+
+
 for _s in SPECS.values():
     _s["common_ret"] = COMMON_RET

@@ -14,6 +14,7 @@ z = null / 0; p:T / pn:T = pool pick (nullable); k:VAL = literal; ("raw", c_expr
 Everything else (setup that links the pools into the shapes a function expects) is `setup_c` /
 `setup_rs` of the spec, run after the fills and before the operation.
 """
+import os
 from pathlib import Path
 
 import gen_if as G
@@ -142,6 +143,10 @@ def helpers(tu, spec, c_out, r_tail, data):
             if st.get("init"):
                 hi.append(hl[0])
                 rhi.append(hl[1])
+    he = spec.get("hash_extra")
+    if he:
+        h.append(he[0])
+        rh.append(he[1])
     hi.append("}")
     rhi.append("}")
     c.append("}")
@@ -265,7 +270,7 @@ def emit_driver(stem, spec, tu):
           "            tu_case(op, k);", "            reset_state();", "            setup_extra();", "            switch (op) {"]
     for i, (_, cs, _) in enumerate(ops):
         c.append(f"            case {i}: {{ {cs} }} break;")
-    c += ["            }", "            hash_state();", '            printf("%d %d %08X %08X %08X\\n", op, k, ret, H, TR);',
+    c += ["            }", "            hash_state();", '            printf("%d %d %08X %08X %08X\\n", op, k, ret, H, TR);' + (" fflush((void*) 0);" if os.environ.get("MTU_FLUSH") else ""),
           "        }", "    }", "    return 0;", "}", ""]
     (HERE / "tu" / f"{stem}.c").write_text("\n".join(c), encoding="utf-8", newline="\n")
 

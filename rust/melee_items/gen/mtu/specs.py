@@ -28,3 +28,16 @@ add("itdrop", "src/melee/it/itdrop.c",
              "ftLib_800874CC": ("{ int ii; for (ii = 0; ii < a2 && ii < 8; ii++) T(((int*) a1)[ii]); }",
                                 "for ii in 0..(a2.min(8).max(0)) { t(*(a1 as *const i32).add(ii as usize) as u32); }")},
 )
+
+
+from specs_ef import EF_CUSTOM, EF_PRE, EFARG_RS  # noqa: E402
+
+add("iteffect", "src/melee/it/iteffect.c", types=["it_804D6D40_t"],
+    data_size={n: 16 for n in ("it_803F1ED8", "it_803F1EE4", "it_803F1EF0")}, manual_data=["it_803F1ED8", "it_803F1EE4", "it_803F1EF0"], custom_stubs={**EF_CUSTOM, "lbArchive_80017040": dict(
+        c="bool lbArchive_80017040(HSD_Archive** a0, const char* a1, void* a2, ...) { __builtin_va_list ap; const char* sym; int z; "
+          "__builtin_va_start(ap, a2); sym = __builtin_va_arg(ap, const char*); z = __builtin_va_arg(ap, int); __builtin_va_end(ap); "
+          "T(@ID@); T(PI(a0)); T(SH(a1)); T(PI(a2)); T(SH(sym)); T((u32) z); *(void**) a2 = ARCP; return (int) (fv() & 1); }",
+        ext="fn lbArchive_80017040(a0: *mut *mut HSD_Archive, a1: *const i8, a2: *mut c_void, a3: *const i8, a4: i32) -> i32;",
+        hook="|a0, a1, a2, a3, a4| { t(@ID@); t(pi(a0)); t(sh(a1 as *const u8)); t(pi(a2)); t(sh(a3 as *const u8)); t(a4 as u32); "
+             "*(a2 as *mut *mut it_804D6D20_t) = &raw mut crate::ARC; (fv() & 1) as i32 }")},
+    ret={"it_80272CC0": ("pick_HSD_JObj()", "pick_HSD_JObj()"), "lbLang_IsSettingUS": ("(int) (fv() & 1)", "(fv() & 1) as i32")})

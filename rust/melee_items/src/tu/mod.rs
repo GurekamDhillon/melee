@@ -4,3 +4,4 @@
 //! the C (gen/mtu).
 pub mod ithitbox;
 pub mod itdrop;
+pub mod iteffect;

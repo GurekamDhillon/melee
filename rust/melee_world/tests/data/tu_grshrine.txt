@@ -1,0 +1,2157 @@
+sizeof Ground 656
+sizeof StageCallbacks 40
+sizeof StageData 104
+state fdb0c82c24927042
+case 0
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 50 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a64 f:grShrine_80201E3C 4
+ a64
+rs 4192311470
+g0 x10 00000000 x11 0 0 0 0 0 0
+state 419059e0e9d05f58
+case 1
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a64 11 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a64 f:grShrine_80201E90 4
+ a64
+rs 847426151
+g0 x10 00000000 x11 2 0 0 0 0 0
+state 19662fef0fdd1877
+case 2
+rGround_GetStageGObj 2
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 2
+ null
+rs 26528864
+state bae57309101eba97
+case 3
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 51 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a64 f:grShrine_80201E3C 4
+ a64
+rs 2455986591
+g0 x10 00000000 x11 0 0 0 0 0 0
+state f698d93fe3d5eba9
+case 4
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a64 12 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a64 f:grShrine_80201E90 4
+ a64
+rs 331229832
+g0 x10 00000000 x11 2 0 0 0 0 0
+state 63372eb0993b10bf
+case 5
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a160 34
+grAnime_801C8138 a64 34 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a64 f:grShrine_80201F1C 4
+ a64
+rs 3047028332
+g0 x10 00000100 x11 0 0 0 0 0 0
+state 9d1ecaae386b263c
+case 6
+rGround_GetStageGObj 0
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 0
+ null
+rs 27610604
+state bae57309101eba97
+case 7
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a64 50 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a64 f:grShrine_80201E90 4
+ a64
+rs 2876087810
+g0 x10 00000000 x11 2 0 0 0 0 0
+state e91f958e0397c1d7
+case 8
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a160 41
+grAnime_801C8138 a64 41 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a64 f:grShrine_80201F1C 4
+ a64
+rs 1845473937
+g0 x10 00000100 x11 0 0 0 0 0 0
+state d6699c3722845768
+case 9
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 44 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a64 f:grShrine_80201E3C 4
+ a64
+rs 1758010724
+g0 x10 00000000 x11 0 0 0 0 0 0
+state 060255de7e994081
+case 10
+rGround_GetStageGObj 1
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 1
+ null
+rs 28691816
+state bae57309101eba97
+case 11
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a160 10
+grAnime_801C8138 a64 10 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a64 f:grShrine_80201F1C 4
+ a64
+rs 4004348833
+g0 x10 00000100 x11 0 0 0 0 0 0
+state d08f41dce556acd0
+case 12
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 31 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a64 f:grShrine_80201E3C 4
+ a64
+rs 2757279151
+g0 x10 00000000 x11 0 0 0 0 0 0
+state fae10fe4c3f6c6e1
+case 13
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a64 10 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a64 f:grShrine_80201E90 4
+ a64
+rs 2497898050
+g0 x10 00000000 x11 2 0 0 0 0 0
+state c162d69e5bcea076
+case 14
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a160 14
+grAnime_801C8138 a64 14 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a64 f:grShrine_80201F1C 4
+ a64
+rs 3746864031
+g0 x10 00000100 x11 0 0 0 0 0 0
+state a766ee61fb0f62e3
+case 15
+rGround_GetStageGObj 0
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 0
+ null
+rs 29519604
+state bae57309101eba97
+case 16
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a64 20 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a64 f:grShrine_80201E90 4
+ a64
+rs 1614983300
+g0 x10 00000000 x11 2 0 0 0 0 0
+state 47309b71a000c6bd
+case 17
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a160 15
+grAnime_801C8138 a64 15 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a64 f:grShrine_80201F1C 4
+ a64
+rs 1703316082
+g0 x10 00000100 x11 0 0 0 0 0 0
+state 1c783e56afcf7776
+case 18
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 8 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a64 f:grShrine_80201E3C 4
+ a64
+rs 3995992088
+g0 x10 00000000 x11 0 0 0 0 0 0
+state f113808612f60574
+case 19
+rGround_GetStageGObj 1
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 1
+ null
+rs 30600816
+state bae57309101eba97
+case 20
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a160 43
+grAnime_801C8138 a64 43 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a64 f:grShrine_80201F1C 4
+ a64
+rs 1920774253
+g0 x10 00000100 x11 0 0 0 0 0 0
+state 4b04c63e546d1399
+case 21
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 17 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a64 f:grShrine_80201E3C 4
+ a64
+rs 3283419617
+g0 x10 00000000 x11 0 0 0 0 0 0
+state 43d179b0c5dc9aef
+case 22
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a64 55 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a64 f:grShrine_80201E90 4
+ a64
+rs 1901787475
+g0 x10 00000000 x11 2 0 0 0 0 0
+state e5596f80520ea827
+case 23
+rGround_GetStageGObj 2
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 2
+ null
+rs 31682556
+state bae57309101eba97
+case 24
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 52 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a64 f:grShrine_80201E3C 4
+ a64
+rs 3004647232
+g0 x10 00000000 x11 0 0 0 0 0 0
+state d3a13fa0a4063ff8
+case 25
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a64 38 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a64 f:grShrine_80201E90 4
+ a64
+rs 296932118
+g0 x10 00000000 x11 2 0 0 0 0 0
+state ca2b52e06cb21444
+case 26
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a160 9
+grAnime_801C8138 a64 9 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a64 f:grShrine_80201F1C 4
+ a64
+rs 2832043313
+g0 x10 00000100 x11 0 0 0 0 0 0
+state f1d7a087d228b961
+case 27
+rGround_GetStageGObj 0
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 0
+ null
+rs 32763768
+state bae57309101eba97
+case 28
+rGround_GetStageGObj 1
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 1
+ null
+rs 34607496
+state bae57309101eba97
+case 29
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a160 31
+grAnime_801C8138 a64 31 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a64 f:grShrine_80201F1C 4
+ a64
+rs 1112308981
+g0 x10 00000100 x11 0 0 0 0 0 0
+state 6b37eae00e607f3d
+case 30
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 6 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a64 f:grShrine_80201E3C 4
+ a64
+rs 3623743326
+g0 x10 00000000 x11 0 0 0 0 0 0
+state 6f4d924645cb7d1d
+case 31
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a64 41 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a64 f:grShrine_80201E90 4
+ a64
+rs 3733662821
+g0 x10 00000000 x11 2 0 0 0 0 0
+state 7995c326a9583204
+case 32
+rGround_GetStageGObj 2
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 2
+ null
+rs 33591564
+state bae57309101eba97
+case 33
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 18 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a64 f:grShrine_80201E3C 4
+ a64
+rs 3127245558
+g0 x10 00000000 x11 0 0 0 0 0 0
+state c061dc02d1ab9ffe
+case 34
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a64 22 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a64 f:grShrine_80201E90 4
+ a64
+rs 3175436062
+g0 x10 00000000 x11 2 0 0 0 0 0
+state fd26b683c71a3725
+case 35
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a160 23
+grAnime_801C8138 a64 23 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a64 f:grShrine_80201F1C 4
+ a64
+rs 3451909136
+g0 x10 00000100 x11 0 0 0 0 0 0
+state fb4bd81428e10b09
+case 36
+rGround_GetStageGObj 0
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 0
+ null
+rs 36769920
+state bae57309101eba97
+case 37
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a64 45 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a64 f:grShrine_80201E90 4
+ a64
+rs 1208190765
+g0 x10 00000000 x11 2 0 0 0 0 0
+state afa9131e584e7fb2
+case 38
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a160 5
+grAnime_801C8138 a64 5 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a64 f:grShrine_80201F1C 4
+ a64
+rs 2399632310
+g0 x10 00000100 x11 0 0 0 0 0 0
+state 9d09cdc2da4d110d
+case 39
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 57 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a64 f:grShrine_80201E3C 4
+ a64
+rs 4097035017
+g0 x10 00000000 x11 0 0 0 0 0 0
+state 915e0481ebd0eccd
+case 40
+rGround_GetStageGObj 1
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 1
+ null
+rs 35753988
+state bae57309101eba97
+case 41
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a160 20
+grAnime_801C8138 a64 20 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a64 f:grShrine_80201F1C 4
+ a64
+rs 903178843
+g0 x10 00000100 x11 0 0 0 0 0 0
+state cda9c591fdbef234
+case 42
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 19 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a64 f:grShrine_80201E3C 4
+ a64
+rs 3263881939
+g0 x10 00000000 x11 0 0 0 0 0 0
+state b0ee2f9d88324f1a
+case 43
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a64 54 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a64 f:grShrine_80201E90 4
+ a64
+rs 1107285294
+g0 x10 00000000 x11 2 0 0 0 0 0
+state e100df53fa6f19e7
+case 44
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a160 24
+grAnime_801C8138 a64 24 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a64 f:grShrine_80201F1C 4
+ a64
+rs 70021733
+g0 x10 00000100 x11 0 0 0 0 0 0
+state 392942f41cbe0b17
+case 45
+rGround_GetStageGObj 0
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 0
+ null
+rs 39203736
+state bae57309101eba97
+case 46
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a64 18 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a64 f:grShrine_80201E90 4
+ a64
+rs 2730905058
+g0 x10 00000000 x11 2 0 0 0 0 0
+state 411b93d8840bb219
+case 47
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a160 11
+grAnime_801C8138 a64 11 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a64 f:grShrine_80201F1C 4
+ a64
+rs 3728427218
+g0 x10 00000100 x11 0 0 0 0 0 0
+state 8710a304f7c59acd
+case 48
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 58 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a64 f:grShrine_80201E3C 4
+ a64
+rs 2739473158
+g0 x10 00000000 x11 0 0 0 0 0 0
+state 4479ae1b98810565
+case 49
+rGround_GetStageGObj 1
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 1
+ null
+rs 38187804
+state bae57309101eba97
+case 50
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a160 0
+grAnime_801C8138 a64 0 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a64 f:grShrine_80201F1C 4
+ a64
+rs 2346711680
+g0 x10 00000100 x11 0 0 0 0 0 0
+state e3a98329e282bb5f
+case 51
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 32 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a64 f:grShrine_80201E3C 4
+ a64
+rs 463126412
+g0 x10 00000000 x11 0 0 0 0 0 0
+state fb0bdaab3d884665
+case 52
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a64 12 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a64 f:grShrine_80201E90 4
+ a64
+rs 1226225952
+g0 x10 00000000 x11 2 0 0 0 0 0
+state 78f0d9e55bd4ca90
+case 53
+rGround_GetStageGObj 2
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 2
+ null
+rs 41366160
+state bae57309101eba97
+case 54
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 39 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a64 f:grShrine_80201E3C 4
+ a64
+rs 1531607079
+g0 x10 00000000 x11 0 0 0 0 0 0
+state 80a66ee6e2ea4efd
+case 55
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a64 6 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a64 f:grShrine_80201E90 4
+ a64
+rs 4056223146
+g0 x10 00000000 x11 2 0 0 0 0 0
+state 688164d8bf4b0e15
+case 56
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a160 38
+grAnime_801C8138 a64 38 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a64 f:grShrine_80201F1C 4
+ a64
+rs 2068605012
+g0 x10 00000100 x11 0 0 0 0 0 0
+state 847ac43d91bb7710
+case 57
+rGround_GetStageGObj 0
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 0
+ null
+rs 40350228
+state bae57309101eba97
+case 58
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a64 33 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a64 f:grShrine_80201E90 4
+ a64
+rs 1035121833
+g0 x10 00000000 x11 2 0 0 0 0 0
+state 794dd7ad5416b60b
+case 59
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a160 50
+grAnime_801C8138 a64 50 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a64 f:grShrine_80201F1C 4
+ a64
+rs 948181852
+g0 x10 00000100 x11 0 0 0 0 0 0
+state b36472bbdbfbf6c2
+case 1000
+Ground_GetYakumonoParam
+Ground_GetStageGObj 0
+GObj_SetupGXLink a128 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a128 58 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a128 f:grShrine_80201E3C 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1120 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a1120 59 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a1120 f:grShrine_80201E90 4
+Ground_GetStageGObj 2
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 2
+Ground_801C39C0
+Ground_801C3BB4
+lb_80011A50 x -1 3f000000 00000000 3f860a92 c61c4000 461c4000 461c4000 c61c4000
+v 3f000000 00000000 00000000
+rs 1753785676
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+state e6f9440112e7e39a
+grZakoGenerator_801CAE04 null
+rs 4160909532
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+state c7d663607649fa7a
+case 1001
+Ground_GetYakumonoParam
+Ground_GetStageGObj 0
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 0
+Ground_GetStageGObj 1
+GObj_SetupGXLink a128 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a128 36 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a128 f:grShrine_80201E90 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a1120 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a1216 21
+grAnime_801C8138 a1120 21 0
+Ground_801C10B8 a1120 f:grShrine_80201E98
+Ground_UpdateMapColl a1120
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a1120 f:grShrine_80201F1C 4
+Ground_801C39C0
+Ground_801C3BB4
+lb_80011A50 x -1 3f000000 00000000 3f860a92 c61c4000 461c4000 461c4000 c61c4000
+v 3f000000 00000000 00000000
+rs 862607560
+g0 x10 00000000 x11 2 0 0 0 0 0
+g1 x10 00000100 x11 0 0 0 0 0 0
+state 6955914dfcd0e009
+grZakoGenerator_801CAE04 null
+rs 1981807313
+g0 x10 00000000 x11 2 0 0 0 0 0
+g1 x10 00000100 x11 0 0 0 0 0 0
+state 9e2108b5feb7b169
+case 1002
+Ground_GetYakumonoParam
+Ground_GetStageGObj 0
+GObj_SetupGXLink a128 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a128 44 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a128 f:grShrine_80201E3C 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1120 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a1120 18 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a1120 f:grShrine_80201E90 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a2112 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a2208 21
+grAnime_801C8138 a2112 21 0
+Ground_801C10B8 a2112 f:grShrine_80201E98
+Ground_UpdateMapColl a2112
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a2112 f:grShrine_80201F1C 4
+Ground_801C39C0
+Ground_801C3BB4
+lb_80011A50 x -1 3f000000 00000000 3f860a92 c61c4000 461c4000 461c4000 c61c4000
+v 3f000000 00000000 00000000
+rs 2832485414
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+g2 x10 00000100 x11 0 0 0 0 0 0
+state 7636835b1e56d349
+grZakoGenerator_801CAE04 null
+rs 188943694
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+g2 x10 00000100 x11 0 0 0 0 0 0
+state 9a355fafe3162c69
+case 1003
+Ground_GetYakumonoParam
+Ground_GetStageGObj 0
+GObj_SetupGXLink a128 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a128 49 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a128 f:grShrine_80201E3C 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1120 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a1120 9 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a1120 f:grShrine_80201E90 4
+Ground_GetStageGObj 2
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 2
+Ground_801C39C0
+Ground_801C3BB4
+lb_80011A50 x -1 3f000000 00000000 3f860a92 c61c4000 461c4000 461c4000 c61c4000
+v 3f000000 00000000 00000000
+rs 2457470876
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+state 25b29bf137903465
+grZakoGenerator_801CAE04 null
+rs 2209625560
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+state f1bc7a00e47ee305
+case 1004
+Ground_GetYakumonoParam
+Ground_GetStageGObj 0
+GObj_SetupGXLink a128 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a128 1 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a128 f:grShrine_80201E3C 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1120 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a1120 59 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a1120 f:grShrine_80201E90 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a2112 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a2208 54
+grAnime_801C8138 a2112 54 0
+Ground_801C10B8 a2112 f:grShrine_80201E98
+Ground_UpdateMapColl a2112
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a2112 f:grShrine_80201F1C 4
+Ground_801C39C0
+Ground_801C3BB4
+lb_80011A50 x -1 3f000000 00000000 3f860a92 c61c4000 461c4000 461c4000 c61c4000
+v 3f000000 00000000 00000000
+rs 835034734
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+g2 x10 00000100 x11 0 0 0 0 0 0
+state 3ee72db859047865
+grZakoGenerator_801CAE04 null
+rs 3272340010
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+g2 x10 00000100 x11 0 0 0 0 0 0
+state 56eda073e8d99f45
+case 1005
+Ground_GetYakumonoParam
+Ground_GetStageGObj 0
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 0
+Ground_GetStageGObj 1
+GObj_SetupGXLink a128 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a128 50 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a128 f:grShrine_80201E90 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a1120 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a1216 10
+grAnime_801C8138 a1120 10 0
+Ground_801C10B8 a1120 f:grShrine_80201E98
+Ground_UpdateMapColl a1120
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a1120 f:grShrine_80201F1C 4
+Ground_801C39C0
+Ground_801C3BB4
+lb_80011A50 x -1 3f000000 00000000 3f860a92 c61c4000 461c4000 461c4000 c61c4000
+v 3f000000 00000000 00000000
+rs 3189770923
+g0 x10 00000000 x11 2 0 0 0 0 0
+g1 x10 00000100 x11 0 0 0 0 0 0
+state 0d86ba352b797976
+grZakoGenerator_801CAE04 null
+rs 1372821297
+g0 x10 00000000 x11 2 0 0 0 0 0
+g1 x10 00000100 x11 0 0 0 0 0 0
+state 97981af7d1a9c296
+case 1006
+Ground_GetYakumonoParam
+Ground_GetStageGObj 0
+GObj_SetupGXLink a128 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a128 53 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a128 f:grShrine_80201E3C 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1120 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a1120 52 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a1120 f:grShrine_80201E90 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a2112 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a2208 13
+grAnime_801C8138 a2112 13 0
+Ground_801C10B8 a2112 f:grShrine_80201E98
+Ground_UpdateMapColl a2112
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a2112 f:grShrine_80201F1C 4
+Ground_801C39C0
+Ground_801C3BB4
+lb_80011A50 x -1 3f000000 00000000 3f860a92 c61c4000 461c4000 461c4000 c61c4000
+v 3f000000 00000000 00000000
+rs 2367566708
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+g2 x10 00000100 x11 0 0 0 0 0 0
+state d7aab4c5bcefd4cf
+grZakoGenerator_801CAE04 null
+rs 627199820
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+g2 x10 00000100 x11 0 0 0 0 0 0
+state de4383d2b6dfbfef
+case 1007
+Ground_GetYakumonoParam
+Ground_GetStageGObj 0
+GObj_SetupGXLink a128 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a128 15 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a128 f:grShrine_80201E3C 4
+Ground_GetStageGObj 1
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 1
+Ground_GetStageGObj 2
+GObj_SetupGXLink a1120 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a1216 22
+grAnime_801C8138 a1120 22 0
+Ground_801C10B8 a1120 f:grShrine_80201E98
+Ground_UpdateMapColl a1120
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a1120 f:grShrine_80201F1C 4
+Ground_801C39C0
+Ground_801C3BB4
+lb_80011A50 x -1 3f000000 00000000 3f860a92 c61c4000 461c4000 461c4000 c61c4000
+v 3f000000 00000000 00000000
+rs 1714034251
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000100 x11 0 0 0 0 0 0
+state 116ff8086a1176ed
+grZakoGenerator_801CAE04 null
+rs 3096437626
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000100 x11 0 0 0 0 0 0
+state ec0a8be811664a8d
+case 1008
+Ground_GetYakumonoParam
+Ground_GetStageGObj 0
+GObj_SetupGXLink a128 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a128 46 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a128 f:grShrine_80201E3C 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1120 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a1120 12 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a1120 f:grShrine_80201E90 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a2112 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a2208 24
+grAnime_801C8138 a2112 24 0
+Ground_801C10B8 a2112 f:grShrine_80201E98
+Ground_UpdateMapColl a2112
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a2112 f:grShrine_80201F1C 4
+Ground_801C39C0
+Ground_801C3BB4
+lb_80011A50 x -1 3f000000 00000000 3f860a92 c61c4000 461c4000 461c4000 c61c4000
+v 3f000000 00000000 00000000
+rs 3452530827
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+g2 x10 00000100 x11 0 0 0 0 0 0
+state a73c4ee4cbb2f5c1
+grZakoGenerator_801CAE04 null
+rs 2564050311
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+g2 x10 00000100 x11 0 0 0 0 0 0
+state d9f8d417002b5be1
+case 1009
+Ground_GetYakumonoParam
+Ground_GetStageGObj 0
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 0
+Ground_GetStageGObj 1
+GObj_SetupGXLink a128 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a128 17 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a128 f:grShrine_80201E90 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a1120 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a1216 58
+grAnime_801C8138 a1120 58 0
+Ground_801C10B8 a1120 f:grShrine_80201E98
+Ground_UpdateMapColl a1120
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a1120 f:grShrine_80201F1C 4
+Ground_801C39C0
+Ground_801C3BB4
+lb_80011A50 x -1 3f000000 00000000 3f860a92 c61c4000 461c4000 461c4000 c61c4000
+v 3f000000 00000000 00000000
+rs 3592729294
+g0 x10 00000000 x11 2 0 0 0 0 0
+g1 x10 00000100 x11 0 0 0 0 0 0
+state 3e7e6dddd8166cb9
+grZakoGenerator_801CAE04 null
+rs 1339493616
+g0 x10 00000000 x11 2 0 0 0 0 0
+g1 x10 00000100 x11 0 0 0 0 0 0
+state 6d876ac479cd46d9
+case 1010
+Ground_GetYakumonoParam
+Ground_GetStageGObj 0
+GObj_SetupGXLink a128 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a128 27 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a128 f:grShrine_80201E3C 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1120 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a1120 8 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a1120 f:grShrine_80201E90 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a2112 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a2208 43
+grAnime_801C8138 a2112 43 0
+Ground_801C10B8 a2112 f:grShrine_80201E98
+Ground_UpdateMapColl a2112
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a2112 f:grShrine_80201F1C 4
+Ground_801C39C0
+Ground_801C3BB4
+lb_80011A50 x -1 3f000000 00000000 3f860a92 c61c4000 461c4000 461c4000 c61c4000
+v 3f000000 00000000 00000000
+rs 872751168
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+g2 x10 00000100 x11 0 0 0 0 0 0
+state aa0de61c693b1b20
+grZakoGenerator_801CAE04 null
+rs 2443206790
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+g2 x10 00000100 x11 0 0 0 0 0 0
+state cd74478bf17e0780
+case 1011
+Ground_GetYakumonoParam
+Ground_GetStageGObj 0
+GObj_SetupGXLink a128 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a128 36 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a128 f:grShrine_80201E3C 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1120 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a1120 5 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a1120 f:grShrine_80201E90 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a2112 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a2208 2
+grAnime_801C8138 a2112 2 0
+Ground_801C10B8 a2112 f:grShrine_80201E98
+Ground_UpdateMapColl a2112
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a2112 f:grShrine_80201F1C 4
+Ground_801C39C0
+Ground_801C3BB4
+lb_80011A50 x -1 3f000000 00000000 3f860a92 c61c4000 461c4000 461c4000 c61c4000
+v 3f000000 00000000 00000000
+rs 175081278
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+g2 x10 00000100 x11 0 0 0 0 0 0
+state c717d4d2697e4cbe
+grZakoGenerator_801CAE04 null
+rs 2878305594
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+g2 x10 00000100 x11 0 0 0 0 0 0
+state ec5ac01b29c2351e
+case 1012
+Ground_GetYakumonoParam
+Ground_GetStageGObj 0
+GObj_SetupGXLink a128 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a128 3 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a128 f:grShrine_80201E3C 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1120 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a1120 30 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a1120 f:grShrine_80201E90 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a2112 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a2208 59
+grAnime_801C8138 a2112 59 0
+Ground_801C10B8 a2112 f:grShrine_80201E98
+Ground_UpdateMapColl a2112
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a2112 f:grShrine_80201F1C 4
+Ground_801C39C0
+Ground_801C3BB4
+lb_80011A50 x -1 3f000000 00000000 3f860a92 c61c4000 461c4000 461c4000 c61c4000
+v 3f000000 00000000 00000000
+rs 3261425553
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+g2 x10 00000100 x11 0 0 0 0 0 0
+state 605a0ccc8cb91ab9
+grZakoGenerator_801CAE04 null
+rs 3162074010
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+g2 x10 00000100 x11 0 0 0 0 0 0
+state c69a955599da7c99
+case 1013
+Ground_GetYakumonoParam
+Ground_GetStageGObj 0
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 0
+Ground_GetStageGObj 1
+GObj_SetupGXLink a128 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a128 5 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a128 f:grShrine_80201E90 4
+Ground_GetStageGObj 2
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 2
+Ground_801C39C0
+Ground_801C3BB4
+lb_80011A50 x -1 3f000000 00000000 3f860a92 c61c4000 461c4000 461c4000 c61c4000
+v 3f000000 00000000 00000000
+rs 1396771676
+g0 x10 00000000 x11 2 0 0 0 0 0
+state 84e7aff8ae79b59d
+grZakoGenerator_801CAE04 null
+rs 930937705
+g0 x10 00000000 x11 2 0 0 0 0 0
+state 33e4268194985dbd
+case 1014
+Ground_GetYakumonoParam
+Ground_GetStageGObj 0
+GObj_SetupGXLink a128 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a128 19 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a128 f:grShrine_80201E3C 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1120 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a1120 26 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a1120 f:grShrine_80201E90 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a2112 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a2208 39
+grAnime_801C8138 a2112 39 0
+Ground_801C10B8 a2112 f:grShrine_80201E98
+Ground_UpdateMapColl a2112
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a2112 f:grShrine_80201F1C 4
+Ground_801C39C0
+Ground_801C3BB4
+lb_80011A50 x -1 3f000000 00000000 3f860a92 c61c4000 461c4000 461c4000 c61c4000
+v 3f000000 00000000 00000000
+rs 604058244
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+g2 x10 00000100 x11 0 0 0 0 0 0
+state f482e0c7c855282e
+grZakoGenerator_801CAE04 null
+rs 1214760492
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+g2 x10 00000100 x11 0 0 0 0 0 0
+state 337ec369053a0d8e
+case 1015
+Ground_GetYakumonoParam
+Ground_GetStageGObj 0
+GObj_SetupGXLink a128 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a128 2 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a128 f:grShrine_80201E3C 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1120 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a1120 3 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a1120 f:grShrine_80201E90 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a2112 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a2208 34
+grAnime_801C8138 a2112 34 0
+Ground_801C10B8 a2112 f:grShrine_80201E98
+Ground_UpdateMapColl a2112
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a2112 f:grShrine_80201F1C 4
+Ground_801C39C0
+Ground_801C3BB4
+lb_80011A50 x -1 3f000000 00000000 3f860a92 c61c4000 461c4000 461c4000 c61c4000
+v 3f000000 00000000 00000000
+rs 619850512
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+g2 x10 00000100 x11 0 0 0 0 0 0
+state fd18a070e72c3303
+grZakoGenerator_801CAE04 null
+rs 1402167512
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+g2 x10 00000100 x11 0 0 0 0 0 0
+state 52fb34b780fa6f23
+case 1016
+Ground_GetYakumonoParam
+Ground_GetStageGObj 0
+GObj_SetupGXLink a128 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a128 58 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a128 f:grShrine_80201E3C 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1120 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a1120 40 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a1120 f:grShrine_80201E90 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a2112 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a2208 10
+grAnime_801C8138 a2112 10 0
+Ground_801C10B8 a2112 f:grShrine_80201E98
+Ground_UpdateMapColl a2112
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a2112 f:grShrine_80201F1C 4
+Ground_801C39C0
+Ground_801C3BB4
+lb_80011A50 x -1 3f000000 00000000 3f860a92 c61c4000 461c4000 461c4000 c61c4000
+v 3f000000 00000000 00000000
+rs 470229417
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+g2 x10 00000100 x11 0 0 0 0 0 0
+state cf5efe679e9514f9
+grZakoGenerator_801CAE04 null
+rs 4269657008
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+g2 x10 00000100 x11 0 0 0 0 0 0
+state ef2e8d51d8365ed9
+case 1017
+Ground_GetYakumonoParam
+Ground_GetStageGObj 0
+GObj_SetupGXLink a128 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a128 19 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a128 f:grShrine_80201E3C 4
+Ground_GetStageGObj 1
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 1
+Ground_GetStageGObj 2
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 2
+Ground_801C39C0
+Ground_801C3BB4
+lb_80011A50 x -1 3f000000 00000000 3f860a92 c61c4000 461c4000 461c4000 c61c4000
+v 3f000000 00000000 00000000
+rs 1992352492
+g0 x10 00000000 x11 0 0 0 0 0 0
+state cb85c215154421f2
+grZakoGenerator_801CAE04 null
+rs 959947746
+g0 x10 00000000 x11 0 0 0 0 0 0
+state e1546f916ebcbc52
+case 1018
+Ground_GetYakumonoParam
+Ground_GetStageGObj 0
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grshrine.c" 205 0
+Ground_GetStageGObj 1
+GObj_SetupGXLink a128 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a128 4 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a128 f:grShrine_80201E90 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a1120 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a1216 57
+grAnime_801C8138 a1120 57 0
+Ground_801C10B8 a1120 f:grShrine_80201E98
+Ground_UpdateMapColl a1120
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a1120 f:grShrine_80201F1C 4
+Ground_801C39C0
+Ground_801C3BB4
+lb_80011A50 x -1 3f000000 00000000 3f860a92 c61c4000 461c4000 461c4000 c61c4000
+v 3f000000 00000000 00000000
+rs 3398989306
+g0 x10 00000000 x11 2 0 0 0 0 0
+g1 x10 00000100 x11 0 0 0 0 0 0
+state 37eda9f403e30094
+grZakoGenerator_801CAE04 null
+rs 1087220425
+g0 x10 00000000 x11 2 0 0 0 0 0
+g1 x10 00000100 x11 0 0 0 0 0 0
+state d76e470b04519674
+case 1019
+Ground_GetYakumonoParam
+Ground_GetStageGObj 0
+GObj_SetupGXLink a128 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E40
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a128 38 0
+Mex_GrBind f:grShrine_80201E3C
+HSD_GObj_SetupProc a128 f:grShrine_80201E3C 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1120 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201E94
+Mex_GrBind f:grShrine_80201E44
+grAnime_801C8138 a1120 35 0
+Mex_GrBind f:grShrine_80201E90
+HSD_GObj_SetupProc a1120 f:grShrine_80201E90 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a2112 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grShrine_80201F40
+Mex_GrBind f:grShrine_80201E9C
+Ground_InitMapColl a2208 1
+grAnime_801C8138 a2112 1 0
+Ground_801C10B8 a2112 f:grShrine_80201E98
+Ground_UpdateMapColl a2112
+Mex_GrBind f:grShrine_80201F1C
+HSD_GObj_SetupProc a2112 f:grShrine_80201F1C 4
+Ground_801C39C0
+Ground_801C3BB4
+lb_80011A50 x -1 3f000000 00000000 3f860a92 c61c4000 461c4000 461c4000 c61c4000
+v 3f000000 00000000 00000000
+rs 4032905731
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+g2 x10 00000100 x11 0 0 0 0 0 0
+state eb3b88eff15902a2
+grZakoGenerator_801CAE04 null
+rs 3691547763
+g0 x10 00000000 x11 0 0 0 0 0 0
+g1 x10 00000000 x11 2 0 0 0 0 0
+g2 x10 00000100 x11 0 0 0 0 0 0
+state 17fd561c258eb902
+case 2000
+grAnime_801C8138 a64 19 0
+rs 734666649
+g0 x10 00010000 x11 4 0 0 0 0 1
+state 8b424c42f271c5eb
+r 0
+grAnime_801C8138 a64 19 0
+rs 734666649
+g0 x10 00010000 x11 2 0 0 0 0 1
+state 8b424c42f271c5eb
+r 0
+Ground_InitMapColl a160 19
+grAnime_801C8138 a64 19 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 1877051515
+g0 x10 00010100 x11 2 0 0 0 0 1
+state 8b424c42f271c5eb
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 2201364108
+g0 x10 00010100 x11 2 0 0 0 0 1
+state 8b424c42f271c5eb
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 0
+rs 485559101
+g0 x10 00010100 x11 2 0 0 0 0 1
+state de49555243fcad81
+case 2001
+grAnime_801C8138 a64 5 0
+rs 3567059328
+g0 x10 10000000 x11 4 0 1 0 0 0
+state cfc3396b976ff177
+r 0
+grAnime_801C8138 a64 5 0
+rs 3567059328
+g0 x10 10000000 x11 2 0 1 0 0 0
+state cfc3396b976ff177
+r 0
+Ground_InitMapColl a160 5
+grAnime_801C8138 a64 5 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 2352113090
+g0 x10 10000100 x11 2 0 1 0 0 0
+state cfc3396b976ff177
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 3519214951
+g0 x10 10000100 x11 2 0 1 0 0 0
+state cfc3396b976ff177
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 0
+rs 2212294584
+g0 x10 10000100 x11 2 0 1 0 0 0
+state fd608dfdf543e792
+case 2002
+grAnime_801C8138 a64 59 0
+rs 467635714
+g0 x10 00010100 x11 3 0 1 0 0 0
+state a488254c1b35e0d9
+r 0
+grAnime_801C8138 a64 59 0
+rs 467635714
+g0 x10 00010100 x11 2 0 1 0 0 0
+state a488254c1b35e0d9
+r 0
+Ground_InitMapColl a160 59
+grAnime_801C8138 a64 59 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 3843644819
+g0 x10 00010100 x11 2 0 1 0 0 0
+state a488254c1b35e0d9
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 465568262
+g0 x10 00010100 x11 2 0 1 0 0 0
+state a488254c1b35e0d9
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 1
+rs 3132529268
+g0 x10 00010100 x11 2 0 1 0 0 0
+state a6774fff66aa9e99
+case 2003
+grAnime_801C8138 a64 33 0
+rs 688786248
+g0 x10 10010000 x11 7 0 1 0 0 0
+state 61b04b488296a471
+r 0
+grAnime_801C8138 a64 33 0
+rs 688786248
+g0 x10 10010000 x11 2 0 1 0 0 0
+state 61b04b488296a471
+r 0
+Ground_InitMapColl a160 33
+grAnime_801C8138 a64 33 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 670752926
+g0 x10 10010100 x11 2 0 1 0 0 0
+state 61b04b488296a471
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 113946666
+g0 x10 10010100 x11 2 0 1 0 0 0
+state 61b04b488296a471
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 0
+rs 938472736
+g0 x10 10010100 x11 2 0 1 0 0 0
+state d224b2ca31856d48
+case 2004
+grAnime_801C8138 a64 7 0
+rs 2174449968
+g0 x10 00010000 x11 1 0 0 0 0 0
+state 64368fcd66d8751b
+r 0
+grAnime_801C8138 a64 7 0
+rs 2174449968
+g0 x10 00010000 x11 2 0 0 0 0 0
+state 64368fcd66d8751b
+r 0
+Ground_InitMapColl a160 7
+grAnime_801C8138 a64 7 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 2353213530
+g0 x10 00010100 x11 2 0 0 0 0 0
+state 64368fcd66d8751b
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 2739448510
+g0 x10 00010100 x11 2 0 0 0 0 0
+state 64368fcd66d8751b
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 1
+rs 618256886
+g0 x10 00010100 x11 2 0 0 0 0 0
+state eaef054d4872fe88
+case 2005
+grAnime_801C8138 a64 33 0
+rs 2127324969
+g0 x10 10000000 x11 1 0 1 0 0 1
+state 7238527f7ac4e8ab
+r 0
+grAnime_801C8138 a64 33 0
+rs 2127324969
+g0 x10 10000000 x11 2 0 1 0 0 1
+state 7238527f7ac4e8ab
+r 0
+Ground_InitMapColl a160 33
+grAnime_801C8138 a64 33 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 1871764963
+g0 x10 10000100 x11 2 0 1 0 0 1
+state 7238527f7ac4e8ab
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 4055660885
+g0 x10 10000100 x11 2 0 1 0 0 1
+state 7238527f7ac4e8ab
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 1
+rs 1438746632
+g0 x10 10000100 x11 2 0 1 0 0 1
+state 28dc67af461b10df
+case 2006
+grAnime_801C8138 a64 9 0
+rs 3270494606
+g0 x10 00010000 x11 3 0 1 0 0 0
+state f8e43efd60d3136b
+r 0
+grAnime_801C8138 a64 9 0
+rs 3270494606
+g0 x10 00010000 x11 2 0 1 0 0 0
+state f8e43efd60d3136b
+r 0
+Ground_InitMapColl a160 9
+grAnime_801C8138 a64 9 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 2978932907
+g0 x10 00010100 x11 2 0 1 0 0 0
+state f8e43efd60d3136b
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 4293681702
+g0 x10 00010100 x11 2 0 1 0 0 0
+state f8e43efd60d3136b
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 1
+rs 1154654437
+g0 x10 00010100 x11 2 0 1 0 0 0
+state 76973467af193458
+case 2007
+grAnime_801C8138 a64 45 0
+rs 1322907314
+g0 x10 10000100 x11 6 0 0 0 0 0
+state 237aa9e815c20458
+r 0
+grAnime_801C8138 a64 45 0
+rs 1322907314
+g0 x10 10000100 x11 2 0 0 0 0 0
+state 237aa9e815c20458
+r 0
+Ground_InitMapColl a160 45
+grAnime_801C8138 a64 45 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 3848800267
+g0 x10 10000100 x11 2 0 0 0 0 0
+state 237aa9e815c20458
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 1766481375
+g0 x10 10000100 x11 2 0 0 0 0 0
+state 237aa9e815c20458
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 0
+rs 506907204
+g0 x10 10000100 x11 2 0 0 0 0 0
+state 49c528d40e1ac0ea
+case 2008
+grAnime_801C8138 a64 40 0
+rs 1773730479
+g0 x10 10000000 x11 2 0 0 0 0 1
+state b63fd22b625106e5
+r 0
+grAnime_801C8138 a64 40 0
+rs 1773730479
+g0 x10 10000000 x11 2 0 0 0 0 1
+state b63fd22b625106e5
+r 0
+Ground_InitMapColl a160 40
+grAnime_801C8138 a64 40 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 2329518258
+g0 x10 10000100 x11 2 0 0 0 0 1
+state b63fd22b625106e5
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 1731741045
+g0 x10 10000100 x11 2 0 0 0 0 1
+state b63fd22b625106e5
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 1
+rs 1478444559
+g0 x10 10000100 x11 2 0 0 0 0 1
+state 263d5738f7c807ab
+case 2009
+grAnime_801C8138 a64 14 0
+rs 820216706
+g0 x10 10000000 x11 3 0 0 0 0 0
+state 9c0481c6da54d899
+r 0
+grAnime_801C8138 a64 14 0
+rs 820216706
+g0 x10 10000000 x11 2 0 0 0 0 0
+state 9c0481c6da54d899
+r 0
+Ground_InitMapColl a160 14
+grAnime_801C8138 a64 14 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 2532304054
+g0 x10 10000100 x11 2 0 0 0 0 0
+state 9c0481c6da54d899
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 626729162
+g0 x10 10000100 x11 2 0 0 0 0 0
+state 9c0481c6da54d899
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 0
+rs 255584996
+g0 x10 10000100 x11 2 0 0 0 0 0
+state d1abfc6a59b7d923
+case 2010
+grAnime_801C8138 a64 0 0
+rs 1504537396
+g0 x10 10000100 x11 5 0 1 0 0 0
+state 99c60c37465b47e0
+r 0
+grAnime_801C8138 a64 0 0
+rs 1504537396
+g0 x10 10000100 x11 2 0 1 0 0 0
+state 99c60c37465b47e0
+r 0
+Ground_InitMapColl a160 0
+grAnime_801C8138 a64 0 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 2192730
+g0 x10 10000100 x11 2 0 1 0 0 0
+state 99c60c37465b47e0
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 4291715583
+g0 x10 10000100 x11 2 0 1 0 0 0
+state 99c60c37465b47e0
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 1
+rs 3538197729
+g0 x10 10000100 x11 2 0 1 0 0 0
+state 64ab72c42d5320b5
+case 2011
+grAnime_801C8138 a64 30 0
+rs 2801431853
+g0 x10 00010100 x11 5 0 0 0 0 1
+state 9094f800a4654867
+r 0
+grAnime_801C8138 a64 30 0
+rs 2801431853
+g0 x10 00010100 x11 2 0 0 0 0 1
+state 9094f800a4654867
+r 0
+Ground_InitMapColl a160 30
+grAnime_801C8138 a64 30 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 3824326883
+g0 x10 00010100 x11 2 0 0 0 0 1
+state 9094f800a4654867
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 2906305044
+g0 x10 00010100 x11 2 0 0 0 0 1
+state 9094f800a4654867
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 0
+rs 2771147502
+g0 x10 00010100 x11 2 0 0 0 0 1
+state af11e4883b5fc635
+case 2012
+grAnime_801C8138 a64 4 0
+rs 3286866950
+g0 x10 10000000 x11 7 0 0 0 0 0
+state e14241bc38cda846
+r 0
+grAnime_801C8138 a64 4 0
+rs 3286866950
+g0 x10 10000000 x11 2 0 0 0 0 0
+state e14241bc38cda846
+r 0
+Ground_InitMapColl a160 4
+grAnime_801C8138 a64 4 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 1769674899
+g0 x10 10000100 x11 2 0 0 0 0 0
+state e14241bc38cda846
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 1195821383
+g0 x10 10000100 x11 2 0 0 0 0 0
+state e14241bc38cda846
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 0
+rs 7193813
+g0 x10 10000100 x11 2 0 0 0 0 0
+state d1cb3383faf306e9
+case 2013
+grAnime_801C8138 a64 58 0
+rs 1019118111
+g0 x10 00010000 x11 7 0 1 0 0 1
+state 30924abece14f268
+r 0
+grAnime_801C8138 a64 58 0
+rs 1019118111
+g0 x10 00010000 x11 2 0 1 0 0 1
+state 30924abece14f268
+r 0
+Ground_InitMapColl a160 58
+grAnime_801C8138 a64 58 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 2326328618
+g0 x10 00010100 x11 2 0 1 0 0 1
+state 30924abece14f268
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 363993772
+g0 x10 00010100 x11 2 0 1 0 0 1
+state 30924abece14f268
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 1
+rs 1260899893
+g0 x10 00010100 x11 2 0 1 0 0 1
+state 074d4b7c42143c0f
+case 2014
+grAnime_801C8138 a64 28 0
+rs 4093382045
+g0 x10 10000100 x11 0 0 1 0 0 1
+state 55306c3524c05a8e
+r 0
+grAnime_801C8138 a64 28 0
+rs 4093382045
+g0 x10 10000100 x11 2 0 1 0 0 1
+state 55306c3524c05a8e
+r 0
+Ground_InitMapColl a160 28
+grAnime_801C8138 a64 28 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 3817065851
+g0 x10 10000100 x11 2 0 1 0 0 1
+state 55306c3524c05a8e
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 3752914381
+g0 x10 10000100 x11 2 0 1 0 0 1
+state 55306c3524c05a8e
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 1
+rs 3776334295
+g0 x10 10000100 x11 2 0 1 0 0 1
+state 12337d533062ca2a
+case 2015
+grAnime_801C8138 a64 45 0
+rs 849736966
+g0 x10 00000100 x11 1 0 0 0 0 0
+state e8f5e9181a2329cc
+r 0
+grAnime_801C8138 a64 45 0
+rs 849736966
+g0 x10 00000100 x11 2 0 0 0 0 0
+state e8f5e9181a2329cc
+r 0
+Ground_InitMapColl a160 45
+grAnime_801C8138 a64 45 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 3048159689
+g0 x10 00000100 x11 2 0 0 0 0 0
+state e8f5e9181a2329cc
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 5251266
+g0 x10 00000100 x11 2 0 0 0 0 0
+state e8f5e9181a2329cc
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 1
+rs 2699193013
+g0 x10 00000100 x11 2 0 0 0 0 0
+state 8cf68eed58c08cd5
+case 2016
+grAnime_801C8138 a64 10 0
+rs 2254040676
+g0 x10 00010000 x11 7 0 1 0 0 0
+state 0df60e95ca83f33b
+r 0
+grAnime_801C8138 a64 10 0
+rs 2254040676
+g0 x10 00010000 x11 2 0 1 0 0 0
+state 0df60e95ca83f33b
+r 0
+Ground_InitMapColl a160 10
+grAnime_801C8138 a64 10 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 2653160625
+g0 x10 00010100 x11 2 0 1 0 0 0
+state 0df60e95ca83f33b
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 3371652840
+g0 x10 00010100 x11 2 0 1 0 0 0
+state 0df60e95ca83f33b
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 0
+rs 1275931926
+g0 x10 00010100 x11 2 0 1 0 0 0
+state 657db8dcad2f2adc
+case 2017
+grAnime_801C8138 a64 32 0
+rs 2031022205
+g0 x10 10000000 x11 7 0 0 0 0 1
+state 734661667217c728
+r 0
+grAnime_801C8138 a64 32 0
+rs 2031022205
+g0 x10 10000000 x11 2 0 0 0 0 1
+state 734661667217c728
+r 0
+Ground_InitMapColl a160 32
+grAnime_801C8138 a64 32 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 2113399048
+g0 x10 10000100 x11 2 0 0 0 0 1
+state 734661667217c728
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 2583921923
+g0 x10 10000100 x11 2 0 0 0 0 1
+state 734661667217c728
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 0
+rs 4207506363
+g0 x10 10000100 x11 2 0 0 0 0 1
+state 897e74eb20419327
+case 2018
+grAnime_801C8138 a64 38 0
+rs 3058466815
+g0 x10 00010100 x11 0 0 0 0 0 1
+state 217213b645275369
+r 0
+grAnime_801C8138 a64 38 0
+rs 3058466815
+g0 x10 00010100 x11 2 0 0 0 0 1
+state 217213b645275369
+r 0
+Ground_InitMapColl a160 38
+grAnime_801C8138 a64 38 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 350015833
+g0 x10 00010100 x11 2 0 0 0 0 1
+state 217213b645275369
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 1342272098
+g0 x10 00010100 x11 2 0 0 0 0 1
+state 217213b645275369
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 1
+rs 133853018
+g0 x10 00010100 x11 2 0 0 0 0 1
+state 63f01d72315cec6c
+case 2019
+grAnime_801C8138 a64 54 0
+rs 3482408855
+g0 x10 00010000 x11 7 0 0 0 0 1
+state ca1bb6123450d3d1
+r 0
+grAnime_801C8138 a64 54 0
+rs 3482408855
+g0 x10 00010000 x11 2 0 0 0 0 1
+state ca1bb6123450d3d1
+r 0
+Ground_InitMapColl a160 54
+grAnime_801C8138 a64 54 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 2178014677
+g0 x10 00010100 x11 2 0 0 0 0 1
+state ca1bb6123450d3d1
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 4144970976
+g0 x10 00010100 x11 2 0 0 0 0 1
+state ca1bb6123450d3d1
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 1
+rs 3553105553
+g0 x10 00010100 x11 2 0 0 0 0 1
+state 31405dfdb8ad4374
+case 2020
+grAnime_801C8138 a64 6 0
+rs 738756813
+g0 x10 00010000 x11 2 0 1 0 0 1
+state e80d85455596e0a6
+r 0
+grAnime_801C8138 a64 6 0
+rs 738756813
+g0 x10 00010000 x11 2 0 1 0 0 1
+state e80d85455596e0a6
+r 0
+Ground_InitMapColl a160 6
+grAnime_801C8138 a64 6 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 2105982096
+g0 x10 00010100 x11 2 0 1 0 0 1
+state e80d85455596e0a6
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 3901348570
+g0 x10 00010100 x11 2 0 1 0 0 1
+state e80d85455596e0a6
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 1
+rs 477904559
+g0 x10 00010100 x11 2 0 1 0 0 1
+state 5dd3d5a8d8fd0176
+case 2021
+grAnime_801C8138 a64 12 0
+rs 3546257108
+g0 x10 10000000 x11 2 0 0 0 0 0
+state 7519a4d3360a0b9c
+r 0
+grAnime_801C8138 a64 12 0
+rs 3546257108
+g0 x10 10000000 x11 2 0 0 0 0 0
+state 7519a4d3360a0b9c
+r 0
+Ground_InitMapColl a160 12
+grAnime_801C8138 a64 12 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 2656391465
+g0 x10 10000100 x11 2 0 0 0 0 0
+state 7519a4d3360a0b9c
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 3128756529
+g0 x10 10000100 x11 2 0 0 0 0 0
+state 7519a4d3360a0b9c
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 0
+rs 3514245098
+g0 x10 10000100 x11 2 0 0 0 0 0
+state cb789a164aea28e7
+case 2022
+grAnime_801C8138 a64 49 0
+rs 1498003581
+g0 x10 10000000 x11 1 0 1 0 0 1
+state 1fad825993c398c7
+r 0
+grAnime_801C8138 a64 49 0
+rs 1498003581
+g0 x10 10000000 x11 2 0 1 0 0 1
+state 1fad825993c398c7
+r 0
+Ground_InitMapColl a160 49
+grAnime_801C8138 a64 49 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 471669078
+g0 x10 10000100 x11 2 0 1 0 0 1
+state 1fad825993c398c7
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 1506238317
+g0 x10 10000100 x11 2 0 1 0 0 1
+state 1fad825993c398c7
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 1
+rs 1596978696
+g0 x10 10000100 x11 2 0 1 0 0 1
+state e8966b69b59e4950
+case 2023
+grAnime_801C8138 a64 41 0
+rs 3047290639
+g0 x10 00010000 x11 5 0 1 0 0 1
+state abcb1b21d4f34435
+r 0
+grAnime_801C8138 a64 41 0
+rs 3047290639
+g0 x10 00010000 x11 2 0 1 0 0 1
+state abcb1b21d4f34435
+r 0
+Ground_InitMapColl a160 41
+grAnime_801C8138 a64 41 0
+Ground_801C10B8 a64 f:grShrine_80201E98
+Ground_UpdateMapColl a64
+rs 3621086558
+g0 x10 00010100 x11 2 0 1 0 0 1
+state abcb1b21d4f34435
+r 0
+Ground_UpdateMapColl a64
+lb_800115F4
+rs 346916033
+g0 x10 00010100 x11 2 0 1 0 0 1
+state abcb1b21d4f34435
+r 0
+r null
+lb_8000B1CC a1008 null x
+r 0
+rs 1328634518
+g0 x10 00010100 x11 2 0 1 0 0 1
+state 245a2212eb4606ac

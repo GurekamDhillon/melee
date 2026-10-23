@@ -1,0 +1,1747 @@
+sizeof Ground 656
+sizeof HSD_GObj 96
+sizeof HSD_JObj 184
+sizeof StageCallbacks 40
+sizeof StageData 104
+state 58aeaf8b1830cb30
+case 0
+rGround_GetStageGObj 0
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 0
+ null
+rs 4119103220
+si 0 0
+state 0000000000000000
+case 1
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a160 25
+grAnime_801C8138 a64 25 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj1_GObjProc 4
+ a64
+rs 3195225001
+si 1 1
+state 246ed08fa151d7da
+case 2
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a160 46
+grAnime_801C8138 a64 46 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj2_GObjProc 4
+ a64
+rs 3436193629
+si 0 0
+state 64e89a6062e77103
+case 3
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 45 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+ a64
+rs 4193369685
+si 1 1
+state f926ed5e2b100258
+case 4
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a160 53
+grAnime_801C8138 a64 53 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj1_GObjProc 4
+ a64
+rs 1417646668
+si 0 0
+state 6f81b114b169caad
+case 5
+rGround_GetStageGObj 2
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 2
+ null
+rs 2635791644
+si 1 1
+state 0000000000000000
+case 6
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 15 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+ a64
+rs 4133816355
+si 0 0
+state 43dd5518d9940e27
+case 7
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a160 2
+grAnime_801C8138 a64 2 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj1_GObjProc 4
+ a64
+rs 2389223675
+si 1 1
+state 90c715c81d191f18
+case 8
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a160 57
+grAnime_801C8138 a64 57 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj2_GObjProc 4
+ a64
+rs 3994433447
+si 0 0
+state 8cc6a7da7eb602b7
+case 9
+rGround_GetStageGObj 0
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 0
+ null
+rs 3458944024
+si 1 1
+state 0000000000000000
+case 10
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a160 53
+grAnime_801C8138 a64 53 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj1_GObjProc 4
+ a64
+rs 3683392169
+si 0 0
+state 274ded4922dc4a67
+case 11
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a160 13
+grAnime_801C8138 a64 13 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj2_GObjProc 4
+ a64
+rs 2246579565
+si 1 1
+state 874e09fcc7595427
+case 12
+rGround_GetStageGObj 0
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 0
+ null
+rs 1869839652
+si 1 1
+state 0000000000000000
+case 13
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a160 25
+grAnime_801C8138 a64 25 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj1_GObjProc 4
+ a64
+rs 976772347
+si 0 0
+state dcf65a9286fe7080
+case 14
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a160 51
+grAnime_801C8138 a64 51 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj2_GObjProc 4
+ a64
+rs 3368872972
+si 1 1
+state 6b2bd81220609341
+case 15
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 39 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+ a64
+rs 3933536919
+si 0 0
+state 0ee3633f7f76764a
+case 16
+rGround_GetStageGObj 1
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 1
+ null
+rs 1011010592
+si 1 1
+state 0000000000000000
+case 17
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a160 22
+grAnime_801C8138 a64 22 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj2_GObjProc 4
+ a64
+rs 769299158
+si 0 0
+state 0124f61524ba94a2
+case 18
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 49 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+ a64
+rs 3213996229
+si 1 1
+state 43ae94e144c1464a
+case 19
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a160 5
+grAnime_801C8138 a64 5 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj1_GObjProc 4
+ a64
+rs 2125467433
+si 0 0
+state f83214dccbeb6912
+case 20
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a160 13
+grAnime_801C8138 a64 13 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj2_GObjProc 4
+ a64
+rs 1784490229
+si 1 1
+state 604f94c1c3627f1f
+case 21
+rGround_GetStageGObj 0
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 0
+ null
+rs 1423751112
+si 0 0
+state 0000000000000000
+case 22
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a160 31
+grAnime_801C8138 a64 31 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj1_GObjProc 4
+ a64
+rs 1148234025
+si 1 1
+state b278d2941d4449f7
+case 23
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a160 51
+grAnime_801C8138 a64 51 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj2_GObjProc 4
+ a64
+rs 2187555361
+si 0 0
+state aae19849cd861ba9
+case 24
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 15 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+ a64
+rs 605175135
+si 1 1
+state 239ba82f2aa6ea10
+case 25
+rGround_GetStageGObj 1
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 1
+ null
+rs 132974284
+si 0 0
+state 0000000000000000
+case 26
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a160 53
+grAnime_801C8138 a64 53 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj2_GObjProc 4
+ a64
+rs 874483972
+si 1 1
+state 83d7a8552f8e3b77
+case 27
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 8 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+ a64
+rs 3152708288
+si 0 0
+state 09e9c3a5d5489faf
+case 28
+rGround_GetStageGObj 1
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 1
+ null
+rs 1783776432
+si 0 0
+state 0000000000000000
+case 29
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a160 1
+grAnime_801C8138 a64 1 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj2_GObjProc 4
+ a64
+rs 2005268892
+si 1 1
+state 915dacee2386b5d8
+case 30
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 8 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+ a64
+rs 3686630288
+si 0 0
+state 7a32ea5040ef7003
+case 31
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a160 22
+grAnime_801C8138 a64 22 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj1_GObjProc 4
+ a64
+rs 619668579
+si 1 1
+state 02b9b7d47e8ac086
+case 32
+rGround_GetStageGObj 2
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 2
+ null
+rs 962852276
+si 0 0
+state 0000000000000000
+case 33
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 43 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+ a64
+rs 579426223
+si 1 1
+state 505abab7b5acaf7a
+case 34
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a160 44
+grAnime_801C8138 a64 44 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj1_GObjProc 4
+ a64
+rs 2459141958
+si 0 0
+state ec4236d4c0e1d1b4
+case 35
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a160 56
+grAnime_801C8138 a64 56 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj2_GObjProc 4
+ a64
+rs 1417698382
+si 1 1
+state 19bbcbe54d4811e2
+case 36
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 3 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+ a64
+rs 1289781123
+si 0 0
+state caef4571eb5b33d5
+case 37
+rGround_GetStageGObj 1
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 1
+ null
+rs 1375571548
+si 1 1
+state 0000000000000000
+case 38
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a160 50
+grAnime_801C8138 a64 50 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj2_GObjProc 4
+ a64
+rs 1849752142
+si 0 0
+state b062332e22361437
+case 39
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 53 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+ a64
+rs 1113328793
+si 1 1
+state bcb47b2cc2cad76b
+case 40
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a160 0
+grAnime_801C8138 a64 0 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj1_GObjProc 4
+ a64
+rs 16053075
+si 0 0
+state 9ceac32d9fd5927d
+case 41
+rGround_GetStageGObj 2
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 2
+ null
+rs 46939992
+si 1 1
+state 0000000000000000
+case 42
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 2 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+ a64
+rs 433573202
+si 0 0
+state bcce8879b26f0a4b
+case 43
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a160 4
+grAnime_801C8138 a64 4 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj1_GObjProc 4
+ a64
+rs 3627817323
+si 1 1
+state ddde0e04e9c9f851
+case 44
+rGround_GetStageGObj 2
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 2
+ null
+rs 2744389220
+si 1 1
+state 0000000000000000
+case 45
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 1 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+ a64
+rs 822995821
+si 0 0
+state ae5c85196266bd48
+case 46
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a160 58
+grAnime_801C8138 a64 58 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj1_GObjProc 4
+ a64
+rs 2501435402
+si 1 1
+state c6ef1babf0d52af6
+case 47
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a160 38
+grAnime_801C8138 a64 38 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj2_GObjProc 4
+ a64
+rs 1393244930
+si 0 0
+state 03ff3b43f6de8e8d
+case 48
+rGround_GetStageGObj 0
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 0
+ null
+rs 4037394272
+si 1 1
+state 0000000000000000
+case 49
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a160 3
+grAnime_801C8138 a64 3 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj1_GObjProc 4
+ a64
+rs 1880006352
+si 0 0
+state 3f986c303b1ae6b9
+case 50
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a160 20
+grAnime_801C8138 a64 20 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj2_GObjProc 4
+ a64
+rs 3849836583
+si 1 1
+state b337a341930e6304
+case 51
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 20 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+ a64
+rs 1605825140
+si 0 0
+state 114b7c23864d7837
+case 52
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a160 45
+grAnime_801C8138 a64 45 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj1_GObjProc 4
+ a64
+rs 396409342
+si 1 1
+state e13bd969315e4238
+case 53
+rGround_GetStageGObj 2
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 2
+ null
+rs 2554053768
+si 0 0
+state 0000000000000000
+case 54
+rGround_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 34 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+ a64
+rs 4232506414
+si 1 1
+state 5ca890d360f9f750
+case 55
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a160 45
+grAnime_801C8138 a64 45 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj1_GObjProc 4
+ a64
+rs 3379000614
+si 0 0
+state b577cccb35827982
+case 56
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a160 12
+grAnime_801C8138 a64 12 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj2_GObjProc 4
+ a64
+rs 1049951639
+si 1 1
+state bfae588039f1d793
+case 57
+rGround_GetStageGObj 0
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 0
+ null
+rs 3406460300
+si 0 0
+state 0000000000000000
+case 58
+rGround_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a160 32
+grAnime_801C8138 a64 32 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj1_GObjProc 4
+ a64
+rs 1774951682
+si 1 1
+state 58449fb90ffe9e55
+case 59
+rGround_GetStageGObj 2
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a160 52
+grAnime_801C8138 a64 52 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj2_GObjProc 4
+ a64
+rs 3323401163
+si 0 0
+state e8c0d54147e22efc
+case 1000
+Ground_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 58 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1056 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a1152 59
+grAnime_801C8138 a1056 59 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a1056 f:stageGObj1_GObjProc 4
+Ground_GetStageGObj 2
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 2
+Ground_801C39C0
+Ground_801C3BB4
+Ground_801C4210
+Ground_801C42AC
+rs 1965871568
+si 0 1
+state 683e18f6c46e1a55
+grZakoGenerator_801CAE04 null
+rs 230845755
+si 0 1
+state d5a8cf00b84894b5
+case 1001
+Ground_GetStageGObj 0
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 0
+Ground_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a160 36
+grAnime_801C8138 a64 36 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj1_GObjProc 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a1056 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a1152 40
+grAnime_801C8138 a1056 40 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a1056 f:stageGObj2_GObjProc 4
+Ground_801C39C0
+Ground_801C3BB4
+Ground_801C4210
+Ground_801C42AC
+rs 2717274131
+si 0 1
+state 70b84f88c0c6fe9e
+grZakoGenerator_801CAE04 null
+rs 359971017
+si 0 1
+state e38a5243522a60fe
+case 1002
+Ground_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 44 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1056 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a1152 18
+grAnime_801C8138 a1056 18 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a1056 f:stageGObj1_GObjProc 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a2048 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a2144 14
+grAnime_801C8138 a2048 14 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a2048 f:stageGObj2_GObjProc 4
+Ground_801C39C0
+Ground_801C3BB4
+Ground_801C4210
+Ground_801C42AC
+rs 934674267
+si 0 1
+state ab41e548843b38c5
+grZakoGenerator_801CAE04 null
+rs 2206578164
+si 0 1
+state e435bcd4b9750e65
+case 1003
+Ground_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 49 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1056 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a1152 9
+grAnime_801C8138 a1056 9 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a1056 f:stageGObj1_GObjProc 4
+Ground_GetStageGObj 2
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 2
+Ground_801C39C0
+Ground_801C3BB4
+Ground_801C4210
+Ground_801C42AC
+rs 2766789823
+si 0 1
+state ce2b0d4aee558e9e
+grZakoGenerator_801CAE04 null
+rs 1890587392
+si 0 1
+state c5d290b0fd4430fe
+case 1004
+Ground_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 1 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1056 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a1152 59
+grAnime_801C8138 a1056 59 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a1056 f:stageGObj1_GObjProc 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a2048 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a2144 54
+grAnime_801C8138 a2048 54 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a2048 f:stageGObj2_GObjProc 4
+Ground_801C39C0
+Ground_801C3BB4
+Ground_801C4210
+Ground_801C42AC
+rs 835034734
+si 0 1
+state e522105d3cfeee63
+grZakoGenerator_801CAE04 null
+rs 3272340010
+si 0 1
+state 18266b47d78f5fc3
+case 1005
+Ground_GetStageGObj 0
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 0
+Ground_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a160 50
+grAnime_801C8138 a64 50 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj1_GObjProc 4
+Ground_GetStageGObj 2
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 2
+Ground_801C39C0
+Ground_801C3BB4
+Ground_801C4210
+Ground_801C42AC
+rs 830733605
+si 0 1
+state 98c48b837e3a3746
+grZakoGenerator_801CAE04 null
+rs 2328378614
+si 0 1
+state 0204c8c5ed002666
+case 1006
+Ground_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 53 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1056 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a1152 52
+grAnime_801C8138 a1056 52 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a1056 f:stageGObj1_GObjProc 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a2048 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a2144 13
+grAnime_801C8138 a2048 13 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a2048 f:stageGObj2_GObjProc 4
+Ground_801C39C0
+Ground_801C3BB4
+Ground_801C4210
+Ground_801C42AC
+rs 2367566708
+si 0 1
+state 0ecd78a4a9480a8b
+grZakoGenerator_801CAE04 null
+rs 627199820
+si 0 1
+state 7ef009bb4053472b
+case 1007
+Ground_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 15 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+Ground_GetStageGObj 1
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 1
+Ground_GetStageGObj 2
+GObj_SetupGXLink a1056 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a1152 22
+grAnime_801C8138 a1056 22 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a1056 f:stageGObj2_GObjProc 4
+Ground_801C39C0
+Ground_801C3BB4
+Ground_801C4210
+Ground_801C42AC
+rs 1714034251
+si 0 1
+state 0137d19dab4aae13
+grZakoGenerator_801CAE04 null
+rs 3096437626
+si 0 1
+state cef69013090067f3
+case 1008
+Ground_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 46 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1056 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a1152 12
+grAnime_801C8138 a1056 12 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a1056 f:stageGObj1_GObjProc 4
+Ground_GetStageGObj 2
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 2
+Ground_801C39C0
+Ground_801C3BB4
+Ground_801C4210
+Ground_801C42AC
+rs 1513269647
+si 0 1
+state 7471644e99e7a80e
+grZakoGenerator_801CAE04 null
+rs 4016738254
+si 0 1
+state 1fa19e6a7040b16e
+case 1009
+Ground_GetStageGObj 0
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 0
+Ground_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a160 17
+grAnime_801C8138 a64 17 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj1_GObjProc 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a1056 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a1152 34
+grAnime_801C8138 a1056 34 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a1056 f:stageGObj2_GObjProc 4
+Ground_801C39C0
+Ground_801C3BB4
+Ground_801C4210
+Ground_801C42AC
+rs 1734484308
+si 0 1
+state 26462b7ce176eae3
+grZakoGenerator_801CAE04 null
+rs 1247719152
+si 0 1
+state 3d3ceef9af3f4303
+case 1010
+Ground_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 27 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1056 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a1152 8
+grAnime_801C8138 a1056 8 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a1056 f:stageGObj1_GObjProc 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a2048 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a2144 48
+grAnime_801C8138 a2048 48 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a2048 f:stageGObj2_GObjProc 4
+Ground_801C39C0
+Ground_801C3BB4
+Ground_801C4210
+Ground_801C42AC
+rs 732767646
+si 0 1
+state 49fe203f67e249bd
+grZakoGenerator_801CAE04 null
+rs 1825234993
+si 0 1
+state 5b1cb7e8f420491d
+case 1011
+Ground_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 36 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1056 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a1152 5
+grAnime_801C8138 a1056 5 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a1056 f:stageGObj1_GObjProc 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a2048 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a2144 18
+grAnime_801C8138 a2048 18 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a2048 f:stageGObj2_GObjProc 4
+Ground_801C39C0
+Ground_801C3BB4
+Ground_801C4210
+Ground_801C42AC
+rs 3760906862
+si 0 1
+state 5b7c9eb5df76d3ff
+grZakoGenerator_801CAE04 null
+rs 814282749
+si 0 1
+state 000e3963e846945f
+case 1012
+Ground_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 3 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1056 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a1152 30
+grAnime_801C8138 a1056 30 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a1056 f:stageGObj1_GObjProc 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a2048 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a2144 33
+grAnime_801C8138 a2048 33 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a2048 f:stageGObj2_GObjProc 4
+Ground_801C39C0
+Ground_801C3BB4
+Ground_801C4210
+Ground_801C42AC
+rs 2957377791
+si 0 1
+state 661f119a28ee36b3
+grZakoGenerator_801CAE04 null
+rs 2070069939
+si 0 1
+state 59db6c3aa94daf13
+case 1013
+Ground_GetStageGObj 0
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 0
+Ground_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a160 5
+grAnime_801C8138 a64 5 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj1_GObjProc 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a1056 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a1152 5
+grAnime_801C8138 a1056 5 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a1056 f:stageGObj2_GObjProc 4
+Ground_801C39C0
+Ground_801C3BB4
+Ground_801C4210
+Ground_801C42AC
+rs 3083057297
+si 0 1
+state 042d9c3e16b048c7
+grZakoGenerator_801CAE04 null
+rs 3673090009
+si 0 1
+state edfafc91cfaee327
+case 1014
+Ground_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 19 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1056 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a1152 26
+grAnime_801C8138 a1056 26 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a1056 f:stageGObj1_GObjProc 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a2048 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a2144 24
+grAnime_801C8138 a2048 24 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a2048 f:stageGObj2_GObjProc 4
+Ground_801C39C0
+Ground_801C3BB4
+Ground_801C4210
+Ground_801C42AC
+rs 2766262749
+si 0 1
+state b431a481c0541a5a
+grZakoGenerator_801CAE04 null
+rs 1167976624
+si 0 1
+state 38930cad1518ff7a
+case 1015
+Ground_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 2 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1056 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a1152 3
+grAnime_801C8138 a1056 3 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a1056 f:stageGObj1_GObjProc 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a2048 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a2144 9
+grAnime_801C8138 a2048 9 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a2048 f:stageGObj2_GObjProc 4
+Ground_801C39C0
+Ground_801C3BB4
+Ground_801C4210
+Ground_801C42AC
+rs 1402167512
+si 0 1
+state 2bf1899c1ad97c73
+grZakoGenerator_801CAE04 null
+rs 3464993948
+si 0 1
+state 07de06ac8c03d9d3
+case 1016
+Ground_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 58 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1056 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a1152 40
+grAnime_801C8138 a1056 40 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a1056 f:stageGObj1_GObjProc 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a2048 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a2144 45
+grAnime_801C8138 a2048 45 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a2048 f:stageGObj2_GObjProc 4
+Ground_801C39C0
+Ground_801C3BB4
+Ground_801C4210
+Ground_801C42AC
+rs 4269657008
+si 0 1
+state 7e709f71a5fedefb
+grZakoGenerator_801CAE04 null
+rs 2792812181
+si 0 1
+state d4b5712dfd4a335b
+case 1017
+Ground_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 19 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+Ground_GetStageGObj 1
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 1
+Ground_GetStageGObj 2
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 2
+Ground_801C39C0
+Ground_801C3BB4
+Ground_801C4210
+Ground_801C42AC
+rs 959947746
+si 0 1
+state 237ac401aba272cb
+grZakoGenerator_801CAE04 null
+rs 1681599911
+si 0 1
+state 1614dad28208ff6b
+case 1018
+Ground_GetStageGObj 0
+OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grtdonkey.c" 195 0
+Ground_GetStageGObj 1
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a160 4
+grAnime_801C8138 a64 4 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a64 f:stageGObj1_GObjProc 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a1056 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a1152 48
+grAnime_801C8138 a1056 48 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a1056 f:stageGObj2_GObjProc 4
+Ground_801C39C0
+Ground_801C3BB4
+Ground_801C4210
+Ground_801C42AC
+rs 1087220425
+si 0 1
+state 0d133396b68cee6f
+grZakoGenerator_801CAE04 null
+rs 1191899235
+si 0 1
+state a754a0891d17c98f
+case 1019
+Ground_GetStageGObj 0
+GObj_SetupGXLink a64 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802203EC
+Mex_GrBind f:stageGObj0_OnInit
+grAnime_801C8138 a64 38 0
+Mex_GrBind f:grTDonkey_802203E8
+HSD_GObj_SetupProc a64 f:grTDonkey_802203E8 4
+Ground_GetStageGObj 1
+GObj_SetupGXLink a1056 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_802204F8
+Mex_GrBind f:stageGObj1_OnInit
+Ground_InitMapColl a1152 35
+grAnime_801C8138 a1056 35 0
+Mex_GrBind f:stageGObj1_GObjProc
+HSD_GObj_SetupProc a1056 f:stageGObj1_GObjProc 4
+Ground_GetStageGObj 2
+GObj_SetupGXLink a2048 f:grDisplay_801C5DB0 3 0
+Mex_GrBind f:grTDonkey_8022047C
+Mex_GrBind f:stageGObj2_OnInit
+Ground_InitMapColl a2144 1
+grAnime_801C8138 a2048 1 0
+Mex_GrBind f:stageGObj2_GObjProc
+HSD_GObj_SetupProc a2048 f:stageGObj2_GObjProc 4
+Ground_801C39C0
+Ground_801C3BB4
+Ground_801C4210
+Ground_801C42AC
+rs 4032905731
+si 0 1
+state 0cf96555605f0d8d
+grZakoGenerator_801CAE04 null
+rs 3691547763
+si 0 1
+state ee037328d94a4d2d
+case 2000
+grAnime_801C8138 a64 19 0
+rs 661698619
+si 0 1
+state a7dc877bd96f5b6c
+r 0
+rs 661698619
+si 0 1
+state a7dc877bd96f5b6c
+Ground_InitMapColl a160 19
+grAnime_801C8138 a64 19 0
+rs 1049608192
+si 0 1
+state a7dc877bd96f5b6c
+r 0
+Ground_UpdateMapColl a64
+rs 393989031
+si 0 1
+state a7dc877bd96f5b6c
+Ground_InitMapColl a160 19
+grAnime_801C8138 a64 19 0
+rs 2951514272
+si 0 1
+state a7dc877bd96f5b6c
+r 0
+lb_800115F4
+Ground_UpdateMapColl a64
+rs 3790236764
+si 0 1
+state a7dc877bd96f5b6c
+r 0
+r null
+r 1
+rs 2239554842
+si 0 1
+state 9b7e60de0ad8cd78
+case 2001
+grAnime_801C8138 a64 5 0
+rs 596852885
+si 0 1
+state 8f93daf54b4f2400
+r 0
+rs 596852885
+si 0 1
+state 8f93daf54b4f2400
+Ground_InitMapColl a160 5
+grAnime_801C8138 a64 5 0
+rs 1002008565
+si 0 1
+state 8f93daf54b4f2400
+r 0
+Ground_UpdateMapColl a64
+rs 3737083414
+si 0 1
+state 8f93daf54b4f2400
+Ground_InitMapColl a160 5
+grAnime_801C8138 a64 5 0
+rs 2597130664
+si 0 1
+state 8f93daf54b4f2400
+r 0
+lb_800115F4
+Ground_UpdateMapColl a64
+rs 670676820
+si 0 1
+state 8f93daf54b4f2400
+r 0
+r null
+r 1
+rs 4092778644
+si 0 1
+state 6c9c4400e9460642
+case 2002
+grAnime_801C8138 a64 59 0
+rs 2604725279
+si 0 1
+state 86fbd3606bc6d2aa
+r 0
+rs 2604725279
+si 0 1
+state 86fbd3606bc6d2aa
+Ground_InitMapColl a160 59
+grAnime_801C8138 a64 59 0
+rs 1034520894
+si 0 1
+state 86fbd3606bc6d2aa
+r 0
+Ground_UpdateMapColl a64
+rs 2638717017
+si 0 1
+state 86fbd3606bc6d2aa
+Ground_InitMapColl a160 59
+grAnime_801C8138 a64 59 0
+rs 1088039711
+si 0 1
+state 86fbd3606bc6d2aa
+r 0
+lb_800115F4
+Ground_UpdateMapColl a64
+rs 2994794915
+si 0 1
+state 86fbd3606bc6d2aa
+r 0
+r null
+r 1
+rs 4108737489
+si 0 1
+state 8e72b594e02fcb69
+case 2003
+grAnime_801C8138 a64 33 0
+rs 2950773453
+si 0 1
+state b519ce1e96f949f2
+r 0
+rs 2950773453
+si 0 1
+state b519ce1e96f949f2
+Ground_InitMapColl a160 33
+grAnime_801C8138 a64 33 0
+rs 2678262961
+si 0 1
+state b519ce1e96f949f2
+r 0
+Ground_UpdateMapColl a64
+rs 949954251
+si 0 1
+state b519ce1e96f949f2
+Ground_InitMapColl a160 33
+grAnime_801C8138 a64 33 0
+rs 1417885160
+si 0 1
+state b519ce1e96f949f2
+r 0
+lb_800115F4
+Ground_UpdateMapColl a64
+rs 1979429399
+si 0 1
+state b519ce1e96f949f2
+r 0
+r null
+r 1
+rs 2959297075
+si 0 1
+state 40dd71284d772811
+case 2004
+grAnime_801C8138 a64 7 0
+rs 355101007
+si 0 1
+state 6e18207cb2ddf09c
+r 0
+rs 355101007
+si 0 1
+state 6e18207cb2ddf09c
+Ground_InitMapColl a160 7
+grAnime_801C8138 a64 7 0
+rs 1484197006
+si 0 1
+state 6e18207cb2ddf09c
+r 0
+Ground_UpdateMapColl a64
+rs 2234818525
+si 0 1
+state 6e18207cb2ddf09c
+Ground_InitMapColl a160 7
+grAnime_801C8138 a64 7 0
+rs 3475612666
+si 0 1
+state 6e18207cb2ddf09c
+r 0
+lb_800115F4
+Ground_UpdateMapColl a64
+rs 2441434225
+si 0 1
+state 6e18207cb2ddf09c
+r 0
+r null
+r 1
+rs 521655104
+si 0 1
+state a55c16586f387b19
+case 2005
+grAnime_801C8138 a64 33 0
+rs 298422753
+si 0 1
+state 3b7a0af9ca610e2c
+r 0
+rs 298422753
+si 0 1
+state 3b7a0af9ca610e2c
+Ground_InitMapColl a160 33
+grAnime_801C8138 a64 33 0
+rs 1564582779
+si 0 1
+state 3b7a0af9ca610e2c
+r 0
+Ground_UpdateMapColl a64
+rs 1290799724
+si 0 1
+state 3b7a0af9ca610e2c
+Ground_InitMapColl a160 33
+grAnime_801C8138 a64 33 0
+rs 4194843378
+si 0 1
+state 3b7a0af9ca610e2c
+r 0
+lb_800115F4
+Ground_UpdateMapColl a64
+rs 1469484921
+si 0 1
+state 3b7a0af9ca610e2c
+r 0
+r null
+r 1
+rs 2242212581
+si 0 1
+state 8788aa09c435bc4c
+case 2006
+grAnime_801C8138 a64 9 0
+rs 531901689
+si 0 1
+state cf58ffe346c0c0ec
+r 0
+rs 531901689
+si 0 1
+state cf58ffe346c0c0ec
+Ground_InitMapColl a160 9
+grAnime_801C8138 a64 9 0
+rs 3745741932
+si 0 1
+state cf58ffe346c0c0ec
+r 0
+Ground_UpdateMapColl a64
+rs 2837063019
+si 0 1
+state cf58ffe346c0c0ec
+Ground_InitMapColl a160 9
+grAnime_801C8138 a64 9 0
+rs 1532052912
+si 0 1
+state cf58ffe346c0c0ec
+r 0
+lb_800115F4
+Ground_UpdateMapColl a64
+rs 252245027
+si 0 1
+state cf58ffe346c0c0ec
+r 0
+r null
+r 1
+rs 2191853885
+si 0 1
+state 7c6b4653eabd3d9c
+case 2007
+grAnime_801C8138 a64 45 0
+rs 2918833605
+si 0 1
+state fe249b142ed63e7f
+r 0
+rs 2918833605
+si 0 1
+state fe249b142ed63e7f
+Ground_InitMapColl a160 45
+grAnime_801C8138 a64 45 0
+rs 1583868485
+si 0 1
+state fe249b142ed63e7f
+r 0
+Ground_UpdateMapColl a64
+rs 3335283090
+si 0 1
+state fe249b142ed63e7f
+Ground_InitMapColl a160 45
+grAnime_801C8138 a64 45 0
+rs 356424013
+si 0 1
+state fe249b142ed63e7f
+r 0
+lb_800115F4
+Ground_UpdateMapColl a64
+rs 83628678
+si 0 1
+state fe249b142ed63e7f
+r 0
+r null
+r 1
+rs 837664191
+si 0 1
+state 71b91d698960f297
+case 2008
+grAnime_801C8138 a64 40 0
+rs 825775120
+si 0 1
+state 7ee5ace217acf6de
+r 0
+rs 825775120
+si 0 1
+state 7ee5ace217acf6de
+Ground_InitMapColl a160 40
+grAnime_801C8138 a64 40 0
+rs 1291022445
+si 0 1
+state 7ee5ace217acf6de
+r 0
+Ground_UpdateMapColl a64
+rs 2099700562
+si 0 1
+state 7ee5ace217acf6de
+Ground_InitMapColl a160 40
+grAnime_801C8138 a64 40 0
+rs 2295500148
+si 0 1
+state 7ee5ace217acf6de
+r 0
+lb_800115F4
+Ground_UpdateMapColl a64
+rs 4142946442
+si 0 1
+state 7ee5ace217acf6de
+r 0
+r null
+r 1
+rs 3376888666
+si 0 1
+state 2afaeb0f92da7f77
+case 2009
+grAnime_801C8138 a64 14 0
+rs 3201917714
+si 0 1
+state 3d05b3e0f540b16a
+r 0
+rs 3201917714
+si 0 1
+state 3d05b3e0f540b16a
+Ground_InitMapColl a160 14
+grAnime_801C8138 a64 14 0
+rs 3319145391
+si 0 1
+state 3d05b3e0f540b16a
+r 0
+Ground_UpdateMapColl a64
+rs 903589054
+si 0 1
+state 3d05b3e0f540b16a
+Ground_InitMapColl a160 14
+grAnime_801C8138 a64 14 0
+rs 1237704600
+si 0 1
+state 3d05b3e0f540b16a
+r 0
+lb_800115F4
+Ground_UpdateMapColl a64
+rs 3034740451
+si 0 1
+state 3d05b3e0f540b16a
+r 0
+r null
+r 1
+rs 1626526681
+si 0 1
+state 059527daa68bf1fd
+case 2010
+grAnime_801C8138 a64 0 0
+rs 2366117940
+si 0 1
+state 20338b82f68c36d7
+r 0
+rs 2366117940
+si 0 1
+state 20338b82f68c36d7
+Ground_InitMapColl a160 0
+grAnime_801C8138 a64 0 0
+rs 1339373907
+si 0 1
+state 20338b82f68c36d7
+r 0
+Ground_UpdateMapColl a64
+rs 4145711276
+si 0 1
+state 20338b82f68c36d7
+Ground_InitMapColl a160 0
+grAnime_801C8138 a64 0 0
+rs 1743007435
+si 0 1
+state 20338b82f68c36d7
+r 0
+lb_800115F4
+Ground_UpdateMapColl a64
+rs 2778383733
+si 0 1
+state 20338b82f68c36d7
+r 0
+r null
+r 1
+rs 1768879724
+si 0 1
+state 1524d50017cda31c
+case 2011
+grAnime_801C8138 a64 30 0
+rs 2313937050
+si 0 1
+state 77ec25518e4f8970
+r 0
+rs 2313937050
+si 0 1
+state 77ec25518e4f8970
+Ground_InitMapColl a160 30
+grAnime_801C8138 a64 30 0
+rs 1256429222
+si 0 1
+state 77ec25518e4f8970
+r 0
+Ground_UpdateMapColl a64
+rs 1054743837
+si 0 1
+state 77ec25518e4f8970
+Ground_InitMapColl a160 30
+grAnime_801C8138 a64 30 0
+rs 1388689347
+si 0 1
+state 77ec25518e4f8970
+r 0
+lb_800115F4
+Ground_UpdateMapColl a64
+rs 1669930621
+si 0 1
+state 77ec25518e4f8970
+r 0
+r null
+r 1
+rs 2981514433
+si 0 1
+state 8520a9cd06abd10b

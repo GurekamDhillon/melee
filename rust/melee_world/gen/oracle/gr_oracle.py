@@ -395,13 +395,38 @@ def build(stem, verbose_fn=None):
         fspecs.append(f)
 
     drv_src = srcpath
-    if spec.get("c_patches"):
+    if spec.get("c_patches") or spec.get("c_fn_regex") or spec.get("c_regex"):
         txt = (ROOT / src).read_text(encoding="utf-8", errors="ignore")
-        for pat in spec["c_patches"]:
+        for pat in spec.get("c_patches", []):
             old, new = pat[0], pat[1]
             cnt = pat[2] if len(pat) > 2 else 1
             assert txt.count(old) == cnt, f"gro: c_patch found {txt.count(old)} times, expected {cnt}: {old[:60]}"
             txt = txt.replace(old, new)
+        # c_regex: (regex, replacement, expected count) over the whole file
+        for rx, rep, cnt in spec.get("c_regex", []):
+            txt, n_ = re.subn(rx, rep, txt)
+            assert n_ == cnt, f"gro: c_regex {n_} matches (expected {cnt}) for {rx[:60]}"
+        # c_fn_regex: (function name, regex, replacement[, expected count]) applied inside that function's body only
+        for pat in spec.get("c_fn_regex", []):
+            fn, rx, rep = pat[0], pat[1], pat[2]
+            cnt = pat[3] if len(pat) > 3 else None
+            mfn = re.search(r"(?m)^[A-Za-z_][^;{}\n]*?\b" + re.escape(fn) + r"\([^;{]*?\)\s*\{", txt)
+            assert mfn, f"gro: c_fn_regex: no definition of {fn}"
+            i0 = mfn.end() - 1
+            depth, i1 = 0, i0
+            while True:
+                ch = txt[i1]
+                if ch == "{":
+                    depth += 1
+                elif ch == "}":
+                    depth -= 1
+                    if depth == 0:
+                        break
+                i1 += 1
+            body = txt[i0:i1 + 1]
+            body2, n_ = re.subn(rx, rep, body)
+            assert n_ > 0 and (cnt is None or n_ == cnt), f"gro: c_fn_regex {fn}: {n_} matches (expected {cnt}) for {rx[:60]}"
+            txt = txt[:i0] + body2 + txt[i1 + 1:]
         pc = O.BUILD / f"gro_{stem}_src.c"
         pc.write_text(txt, encoding="utf-8", newline="\n")
         drv_src = pc.as_posix()
@@ -737,6 +762,7 @@ static void* gen_ground(void) { u32 k = rnd() % (NGO + 1); return k ? (void*) &O
         S.append(f'    {{ "{f["name"]}", {n} }},')
         plans.append((f, c, kinds, rk, n))
     S.append("};")
+    S.append("#define STDUMP() do { int q_; " + " ".join(f'printf("  ST{i}:"); for (q_ = 0; q_ < (int) sizeof({st["c"]}); q_ += 4) printf(" %08x", *(u32*) ((char*) &{st["c"]} + q_)); printf("\\n");' for i, st in enumerate(statics)) + " for (q_ = 0; q_ < NOFNS; q_++) printf(\"  FN%d: %llx\\n\", q_, (u64_) OFNS[q_]); } while (0)")
     S.append("static u64_ call_fn(int fi, u32* retbits)\n{\n    u64_ r = 0;\n    (void) r;\n    switch (fi) {")
     for fi, (f, c, kinds, rk, n) in enumerate(plans):
         argsx, ix, fx, v3x, v2x, pfx, pix = [], 0, 0, 0, 0, 0, 0
@@ -885,7 +911,7 @@ static u64_ word_hash(u64_ h, const void* p, unsigned n)
             h = hfl(h, (const float*) AV3, 6); h = hfl(h, (const float*) AV2, 4); h = hfl(h, APF, 2);
             h = fnv(h, API, sizeof API);
             if (vb)
-                { int q; printf("%d %016llx ret=%llx W=%016llx L=%016llx H=", k, h, rv, hW, hO); for (q = 0; q < NWH; q++) printf("%llx,", WH[q] & 0xFFFFFFull); printf("\\n  %s\\n", LG); printf("  ARGS:"); for (q = 0; q < 6; q++) printf(" %08x", ((const u32*) AV3)[q]); for (q = 0; q < 4; q++) printf(" %08x", ((const u32*) AV2)[q]); for (q = 0; q < 2; q++) printf(" %08x", ((const u32*) APF)[q]); printf("\\n"); for (q = 0; q < NGO; q++) { int w; printf("  OGP%d:", q); for (w = 0; w < (int) sizeof(Ground); w += 4) printf(" %08x", *(u32*) ((char*) &OGP[q] + w)); printf("\\n"); } }
+                { int q; printf("%d %016llx ret=%llx W=%016llx L=%016llx H=", k, h, rv, hW, hO); for (q = 0; q < NWH; q++) printf("%llx,", WH[q] & 0xFFFFFFull); printf("\\n  %s\\n", LG); printf("  ARGS:"); for (q = 0; q < 6; q++) printf(" %08x", ((const u32*) AV3)[q]); for (q = 0; q < 4; q++) printf(" %08x", ((const u32*) AV2)[q]); for (q = 0; q < 2; q++) printf(" %08x", ((const u32*) APF)[q]); printf("\\n"); for (q = 0; q < NGO; q++) { int w; printf("  OGP%d:", q); for (w = 0; w < (int) sizeof(Ground); w += 4) printf(" %08x", *(u32*) ((char*) &OGP[q] + w)); printf("\\n"); } STDUMP(); }
             agg = fnv(agg, &h, 8);
         }
         if (!verbose) printf("%s %016llx\\n", fn->name, agg);
@@ -1057,6 +1083,7 @@ unsafe fn gen_ground() -> *mut c_void { let k = rnd() % (NGO as u32 + 1); if k !
     h
 }""")
     R.append("static mut WH: std::vec::Vec<u64> = std::vec::Vec::new();")
+    R.append("unsafe fn stdump() {\n" + "\n".join(f'    {{ let mut line = String::from("  ST{i}:"); let base = addr_of!({st["rs"]}) as *const u8; for w in (0..core::mem::size_of_val(&*addr_of!({st["rs"]}))).step_by(4) {{ line.push_str(&format!(" {{:08x}}", core::ptr::read_unaligned(base.add(w) as *const u32))); }} println!("{{}}", line); }}' for i, st in enumerate(statics)) + "\n    for (i, f) in OFNS.iter().enumerate() { println!(\"  FN{}: {:x}\", i, f); }\n}")
     R.append("unsafe fn world_hash(fi: usize) -> u64 {\n    let mut h = FNV0;\n    WH.clear();")
     R.append("    for i in 0..NGO { " + rs_hash("OGO[i]", "HSD_GObj") + " }\n    WH.push(h);")
     R.append("    for i in 0..NGO {\n        match GVAR[fi] {")
@@ -1124,7 +1151,7 @@ fn state_matches_c() {
                 if vb {
                     let hs: std::vec::Vec<std::string::String> = WH.iter().map(|x| format!("{:x},", x & 0xFF_FFFF)).collect();
                     println!("{} {:016x} ret={:x} W={:016x} L={:016x} H={}\n  {}", k, h, rv, hw, ho, hs.concat(), LG); println!("  ARGS: {}", a.v3.iter().flat_map(|v| [v.x, v.y, v.z]).chain(a.v2.iter().flat_map(|v| [v.x, v.y])).chain(a.pf.iter().copied()).map(|f| format!("{:08x}", f.to_bits())).collect::<std::vec::Vec<_>>().join(" "));
-                    for q in 0..NGO { let mut line = format!("  OGP{}:", q); let base = addr_of!(OGP[q]) as *const u8; for w in (0..core::mem::size_of::<Ground>()).step_by(4) { line.push_str(&format!(" {:08x}", core::ptr::read_unaligned(base.add(w) as *const u32))); } println!("{}", line); }
+                    for q in 0..NGO { let mut line = format!("  OGP{}:", q); let base = addr_of!(OGP[q]) as *const u8; for w in (0..core::mem::size_of::<Ground>()).step_by(4) { line.push_str(&format!(" {:08x}", core::ptr::read_unaligned(base.add(w) as *const u32))); } println!("{}", line); } stdump();
                 }
                 agg = fnv(agg, &h.to_le_bytes());
             }

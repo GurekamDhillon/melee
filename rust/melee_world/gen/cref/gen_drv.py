@@ -175,6 +175,8 @@ def ret_stmt(rt, expr_c, expr_r):
         return (f"HM64({expr_c});", f"hm64({expr_r});")
     if cls == "ptr":
         return (f"ret = PI((const void*) {expr_c});", f"ret = pi({expr_r});")
+    if cls == "str":
+        return (f"ret = SH((const char*) {expr_c});", f"ret = sh(({expr_r}) as *const u8);")
     if cls == "fp":
         return (f"ret = FI((const void*) {expr_c});", f"ret = fi({expr_r});")
     raise SystemExit("return type not supported: " + rt.spelling)
@@ -183,6 +185,7 @@ def ret_stmt(rt, expr_c, expr_r):
 def prep(stem, spec):
     """spec + the walker types and the Ground::u views the TU's functions use -> (spec, fview, order)"""
     srcp = spec["src"]
+    gen_tu.set_extra_main(spec.get("extra_main", ()))
     tu0 = gen_tu.Tu(gen_tu.patched_source(stem, spec), spec.get("args_clang", ()), (ROOT / srcp).parent)
     members = view_members(tu0)
     order = sorted(tu0.defs.items(), key=lambda kv: kv[1].extent.start.line)

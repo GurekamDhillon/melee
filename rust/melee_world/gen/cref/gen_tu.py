@@ -58,6 +58,14 @@ def patched_source(stem, spec):
     return str(out.relative_to(ROOT)).replace("\\", "/")
 
 
+EXTRA_MAIN = set()   # spec `extra_main`: files #included by the TU whose functions are part of it (.inc files)
+
+
+def set_extra_main(paths):
+    EXTRA_MAIN.clear()
+    EXTRA_MAIN.update((ROOT / p).resolve() for p in paths)
+
+
 class Tu:
     def __init__(self, src, extra_args=(), incdir=None):
         self.src = src
@@ -88,7 +96,10 @@ class Tu:
 
     def in_main(self, c):
         f = c.location.file
-        return f is not None and Path(f.name).resolve() == self.main
+        if f is None:
+            return False
+        r = Path(f.name).resolve()
+        return r == self.main or r in EXTRA_MAIN
 
     def uses(self):
         """-> (stubs{name: [cursor, called, addr_taken]}, inlines{name}, data{name: cursor})"""
@@ -445,6 +456,7 @@ class Walk:
 # ---------------------------------------------------------------------------- output
 
 def build(stem, spec, want_ext):
+    set_extra_main(spec.get("extra_main", ()))
     tu = Tu(patched_source(stem, spec), spec.get("args", ()), (ROOT / spec["src"]).parent)
     stubs, inlines, data = tu.uses()
     for n in ("__assert", "OSReport", "printf"):

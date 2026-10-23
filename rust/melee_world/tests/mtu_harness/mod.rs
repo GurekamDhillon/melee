@@ -150,6 +150,21 @@ pub fn pi<T>(p: *const T) -> u32 {
     }
     0xFFFF_FFFF
 }
+/// A data pointer truncated to 32 bits (`(int) ptr`): named by the region it points into (low 32 bits compared).
+pub fn pi32(v: u32) -> u32 {
+    if v == 0 {
+        return 0;
+    }
+    unsafe {
+        for (i, &(b, z)) in RB.iter().enumerate() {
+            let b32 = b as u32;
+            if v >= b32 && (v as u64) < b32 as u64 + z as u64 {
+                return (((i + 1) as u32) << 16) | (v - b32);
+            }
+        }
+    }
+    0xFFFF_FFFF
+}
 pub fn sh(s: *const u8) -> u32 {
     if s.is_null() {
         return 0;

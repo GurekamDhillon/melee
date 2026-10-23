@@ -138,5 +138,11 @@ add("it_26B1", "src/melee/it/it_26B1.c", skip_freg=["RunCallbackUnk"], skip_stub
          "it_8027D670": ("pick_igo()", "pick_igo()"), "it_80283AE4": ("pick_igo()", "pick_igo()"), "it_802841B4": ("pick_igo()", "pick_igo()"),
          "it_80284854": ("pick_igo()", "pick_igo()"), "it_80286088": ("pick_igo()", "pick_igo()"), "it_802896CC": ("pick_igo()", "pick_igo()"),
          "it_80291BE0": ("pick_igo()", "pick_igo()"), "it_80292D48": ("pick_igo()", "pick_igo()"), "it_80294DC0": ("pick_igo()", "pick_igo()")})
-add("it_2725", "src/melee/it/it_2725.c")
+add("it_2725", "src/melee/it/it_2725.c", custom_stubs=EF_CUSTOM_, paren_stubs=["HSD_JObjSetMtxDirty"],
+    skip_freg=["it_8027129C_by_4", "it_80272784_inline", "HSD_JObjSetScale_2", "get_bone_by_id", "getOwnerJointPosition"],
+    xpools=[("ItemModelDesc", "MD", 2), ("ItemStateArray", "STA", 2), ("HSD_Joint", "JT", 2), ("ItemLink", "LK", 1), ("lb_80014638_arg1_t", "LBA", 1)],
+    null_ret_ok=["lbVector_Add"],
+    ret={"ftLib_80086630": ("pick_HSD_JObj()", "pick_HSD_JObj()")},
+    effects={"lbVector_Add": VEFF(inputs=["a0", "a1"], outputs=["a0"]), "lbVector_Mirror": VEFF(inputs=["a0", "a1"], outputs=["a0"]),
+             "lb_8000B1CC": VEFF(inputs=["a1"], outputs=["a2"]), "it_8026BB88": VEFF(outputs=["a1"]), "it_8026BBCC": VEFF(outputs=["a1"])})
 add("it_279C", "src/melee/it/it_279C.c")

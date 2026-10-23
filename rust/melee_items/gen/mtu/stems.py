@@ -117,7 +117,7 @@ STEMS["itmaplib"] = dict(
     setup=("for (i = 0; i < 8; i++) JO[i].flags &= ~JOBJ_USE_QUATERNION;", "for i in 0..8 { JO[i].flags &= !(JOBJ_USE_QUATERNION as u32); }"),
 )
 
-for _s in ("it_2725", "it_279C"):
+for _s in ("it_279C",):
     STEMS.setdefault(_s, dict())
 
 _TB = ("&TB[rnd() & 1]", "&raw mut TB[(rnd() & 1) as usize]")
@@ -267,4 +267,28 @@ STEMS["it_26B1"] = dict(
         "it_8026B40C": {0: ("&ART[rnd() % 2]", "&raw mut ART[(rnd() % 2) as usize]"), 1: ("(s32) ((rnd() % 6 == 0) ? 5000 + fv() % 10 : It_Kind_Old_Kuri + fv() % 30)", "(if rnd() % 6 == 0 { 5000 + fv() % 10 } else { It_Kind_Old_Kuri as u32 + fv() % 30 }) as i32")},
         "it_8026B3C0": {0: ("(ItemKind) KINDS[rnd() % @NK@]".replace("@NK@", _NK), "KINDS[(rnd() % @NK@) as usize] as _".replace("@NK@", _NK))},
         "it_8026BE84": {0: ("&BOR[rnd() & 1]", "&raw mut g::BOR[(rnd() & 1) as usize]")}},
+)
+
+_JP = ("&JT[rnd() % 2]", "&raw mut g::JT[(rnd() % 2) as usize]")
+_I4 = ("(s32) (fv() % 4)", "(fv() % 4) as i32")
+STEMS["it_2725"] = dict(
+    c_pre=_EF_PRE,
+    skip_static=["it_8027129C_by_4", "it_80272784_inline", "HSD_JObjSetScale_2", "get_bone_by_id", "getOwnerJointPosition"],
+    c_extra="static void* DAT[2][2];",
+    rs_extra="static mut DAT: [[*mut c_void; 2]; 2] = [[null_mut(); 2]; 2];",
+    pregs=("preg_xpools(); preg(DAT, sizeof DAT);", "g::preg_xpools(); preg(&raw const DAT, core::mem::size_of_val(&DAT));"),
+    setup=("{ int q; setup_xpools(); for (q = 0; q < 2; q++) { DAT[q][0] = &FT[rnd() % 3]; DAT[q][1] = 0; ART[q].x4_specialAttributes = (void*) DAT[q];"
+           " ART[q].xC_itemStates = &STA[q]; ART[q].x10_modelDesc = &MD[q]; MD[q].x4_bone_count = (rnd() % 3 == 0) ? 1 : 0;"
+           " MD[q].x8_bone_attach_id = MD[q].x4_bone_count ? (s32) (rnd() % 4) : (s32) (rnd() % 2); MD[q].xC_bit_field = (u8) (((rnd() % 3 == 0) ? 1 : 0) << 6 | (rnd() & 0x3F)); }"
+           " it_804D6D28->x44_float = (s32) (1 + fv() % 7); for (q = 0; q < 8; q++) JO[q].flags &= ~JOBJ_USE_QUATERNION; }",
+           "{ g::setup_xpools(); for q in 0..2usize { DAT[q][0] = &raw mut FT[(rnd() % 3) as usize] as *mut c_void; DAT[q][1] = null_mut(); ART[q].x4_specialAttributes = (&raw mut DAT[q]) as *mut _;"
+           " ART[q].xC_itemStates = &raw mut g::STA[q]; ART[q].x10_modelDesc = &raw mut g::MD[q]; g::MD[q].x4_bone_count = if rnd() % 3 == 0 { 1 } else { 0 };"
+           " g::MD[q].x8_bone_attach_id = if g::MD[q].x4_bone_count != 0 { (rnd() % 4) as i32 } else { (rnd() % 2) as i32 }; g::MD[q].xC_bit_field = ((if rnd() % 3 == 0 { 1u32 } else { 0 }) << 6 | (rnd() & 0x3F)) as u8; }"
+           " (*m::ext::it_804D6D28).x44_float = (1 + fv() % 7) as _; for q in 0..8usize { JO[q].flags &= !(JOBJ_USE_QUATERNION as u32); } }"),
+    hash=("hash_xpools();", "g::hash_xpools();"),
+    ov={"it_80272CC0": {1: ("(enum_t) (fv() % 3)", "(fv() % 3) as _")}, "it_80272560": {1: _I4}, "it_80272674": {1: _I4}, "it_80273318": {1: _JP}, "it_80273670": {1: ("(int) (fv() % 8)", "(fv() % 8) as i32")},
+        "it_80274D04": {1: ("&LBA[0]", "&raw mut g::LBA[0]")}, "it_80275328": {1: ("&LK[0]", "&raw mut g::LK[0]")},
+        "it_80274F48": {1: _I4}, "it_80274FDC": {1: _I4}, "it_80275070": {1: _I4},
+        "it_80274F28": {1: ("(s8) fv()", "fv() as i8")},
+        "it_802753BC": {1: ("(s16) fv()", "fv() as i16")}},
 )

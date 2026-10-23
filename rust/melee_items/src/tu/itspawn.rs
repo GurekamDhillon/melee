@@ -119,7 +119,7 @@ pub unsafe extern "C" fn it_8026C47C(arg_struct: *mut it_8026C47C_arg0_t) {
 }
 
 /// Bisection search in the item table for a given value (`bisectValue`).
-unsafe fn bisect_value(val: i32, table: *mut ItemPickTable, lo: i32, hi: i32) -> i32 {
+unsafe fn bisectValue(val: i32, table: *mut ItemPickTable, lo: i32, hi: i32) -> i32 {
     // base case, done bisecting
     if lo == hi - 1 {
         return lo;
@@ -127,19 +127,19 @@ unsafe fn bisect_value(val: i32, table: *mut ItemPickTable, lo: i32, hi: i32) ->
     let mid = (lo + hi) / 2;
     if (*(*table).xC.add(mid as usize)) as i32 > val {
         // recurse into lower half
-        bisect_value(val, table, lo, mid)
+        bisectValue(val, table, lo, mid)
     } else if (*(*table).xC.add(mid as usize + 1)) as i32 > val {
         mid
     } else {
         // recurse into upper half
-        bisect_value(val, table, mid, hi)
+        bisectValue(val, table, mid, hi)
     }
 }
 
 /// `it_8026C65C`: a random kind from a weighted pick table.
 pub unsafe extern "C" fn it_8026C65C(table: *mut ItemPickTable) -> ItemKind {
     let temp_r6 = (*table).x8 as i32;
-    let idx = bisect_value(ext::HSD_Randi(temp_r6), table, 0, (*table).size as i32);
+    let idx = bisectValue(ext::HSD_Randi(temp_r6), table, 0, (*table).size as i32);
     *(*table).x4.add(idx as usize) as ItemKind
 }
 

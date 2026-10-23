@@ -280,6 +280,8 @@ PTR = {  # pointee record -> (C expr, Rust expr)
     "_itECB": ("&EC[rnd() % 3]", "&raw mut EC[(rnd() % 3) as usize]"),
     "CollData": ("&IT[rnd() % 4].x378_itemColl", "&raw mut IT[(rnd() % 4) as usize].x378_itemColl"),
     "SpawnItem": ("&SP", "&raw mut SP"),
+    "HSD_JObj": ("&JO[rnd() % 8]", "&raw mut JO[(rnd() % 8) as usize]"),
+    "Article": ("&ART[rnd() % 2]", "&raw mut ART[(rnd() % 2) as usize]"),
 }
 FNK = {"void (struct HSD_GObj *)": 1, "int (struct HSD_GObj *)": 2, "void (struct HSD_GObj *, struct HSD_GObj *)": 3}
 

@@ -11,9 +11,19 @@ use core::ptr::null_mut;
 use melee_core::fp::fmadds;
 use melee_types::*;
 
-use crate::tu::it_26B1::{it_8026B390, it_8026B3A8, it_8026BB88, it_8026BBCC, it_8026BDB4, it_8026B6C8};
 
-// BEGIN GENERATED EXT (the callees of the C TU that are not ported in this crate)
+
+/// One argument of a variadic effect spawn (`efSync_Spawn` / `efAsync_Spawn` are C varargs; the port keeps the
+/// C type of each extra argument so the eventual implementation can read it back).
+#[derive(Clone, Copy)]
+pub enum EfArg {
+    Int(i32),
+    Ptr(*mut c_void),
+    F32P(*const f32),
+    Vec3P(*const Vec3),
+}
+
+// BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
@@ -34,29 +44,14 @@ pub mod ext {
     }
     ext_fns! {
     fn HSD_GObjObject_80390B0C(a0: *mut HSD_GObj);
-    fn HSD_JObjAddRotationX(a0: *mut HSD_JObj, a1: f32);
-    fn HSD_JObjAddRotationY(a0: *mut HSD_JObj, a1: f32);
-    fn HSD_JObjAddRotationZ(a0: *mut HSD_JObj, a1: f32);
-    fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: i32);
-    fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: i32);
-    fn HSD_JObjAddScaleX(a0: *mut HSD_JObj, a1: f32);
-    fn HSD_JObjAddScaleY(a0: *mut HSD_JObj, a1: f32);
-    fn HSD_JObjAddScaleZ(a0: *mut HSD_JObj, a1: f32);
-    fn HSD_JObjSetMtxDirty(a0: *mut HSD_JObj);
-    fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut Vec3) -> *mut c_void;
-    fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut c_void, a2: *mut c_void, a3: *mut c_void);
+    fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint);
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
-    fn HSD_JObjGetRotationX(a0: *mut HSD_JObj) -> f32;
-    fn HSD_JObjGetRotationY(a0: *mut HSD_JObj) -> f32;
-    fn HSD_JObjGetRotationZ(a0: *mut HSD_JObj) -> f32;
-    fn HSD_JObjGetTranslation(a0: *mut HSD_JObj, a1: *mut Vec3);
-    fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
+    fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32);
     fn HSD_JObjRemoveAnimAll(a0: *mut HSD_JObj);
-    fn HSD_JObjSetRotationX(a0: *mut HSD_JObj, a1: f32);
-    fn HSD_JObjSetRotationY(a0: *mut HSD_JObj, a1: f32);
-    fn HSD_JObjSetRotationZ(a0: *mut HSD_JObj, a1: f32);
-    fn HSD_JObjSetScale(a0: *mut HSD_JObj, a1: *mut Vec3);
-    fn HSD_JObjSetTranslate(a0: *mut HSD_JObj, a1: *mut Vec3);
+    fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
+    fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32);
+    fn HSD_JObjSetMtxDirty(a0: *mut HSD_JObj);
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn HSD_Randi(a0: i32) -> i32;
     fn Item_802680CC(a0: *mut HSD_GObj);
     fn Item_8026849C(a0: *mut HSD_GObj);
@@ -68,55 +63,217 @@ pub mod ext {
     fn Item_8026B074(a0: *mut Item);
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
     fn db_ShowEnemyStompRange() -> u32;
-    fn ftLib_80086630(a0: *mut HSD_GObj, a1: Fighter_Part) -> *mut HSD_JObj;
+    fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: &[EfArg]) -> *mut c_void;
+    fn ftLib_80086630(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj;
+    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
     fn ftLib_80086A0C(a0: *mut HSD_GObj) -> f32;
+    fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8;
     fn ftLib_80086D40(a0: *mut HSD_GObj, a1: i32, a2: i32);
     fn ftLib_80086DC4(a0: i32, a1: i32);
     fn ftLib_80086E68(a0: *mut HSD_GObj);
     fn ftLib_80086EB4(a0: *mut HSD_GObj) -> i32;
+    fn itIsHeavy(a0: *mut HSD_GObj) -> i32;
+    fn it_8026B390(a0: *mut HSD_GObj);
+    fn it_8026B3A8(a0: *mut HSD_GObj);
+    fn it_8026B6C8(a0: *mut HSD_GObj) -> i32;
+    fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn it_8026BBCC(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn it_8026BDB4(a0: *mut HSD_GObj);
     fn it_8027129C(a0: *mut HSD_GObj, a1: i32);
+    fn it_80275534(a0: *mut HSD_GObj, a1: f32);
     fn it_802756D0(a0: *mut HSD_GObj);
     fn it_802756E0(a0: *mut HSD_GObj);
     fn it_802758D4(a0: *mut HSD_GObj) -> f32;
-    fn it_802762BC(a0: *mut Item);
     fn it_80275BC8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_802762BC(a0: *mut Item);
     fn it_802787B4(a0: *mut HSD_GObj, a1: i32);
     fn it_80279BBC(a0: *mut Item);
-    fn it_80274DFC(a0: *mut HSD_GObj);
     fn it_8027B070(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
     fn it_8027B378(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: f32);
     fn it_8027B4A4(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
-    fn it_80274594(a0: *mut HSD_GObj);
-    fn it_80275534(a0: *mut HSD_GObj, a1: f32);
-    fn it_80274C60(a0: *mut HSD_GObj);
-    fn it_80274F10(a0: *mut HSD_GObj);
-    fn it_80275070(a0: *mut HSD_GObj, a1: i32);
-    fn it_80274990(a0: *mut HSD_GObj) -> f32;
-    fn it_80274658(a0: *mut HSD_GObj, a1: f32) -> i32;
-    fn itIsHeavy(a0: *mut HSD_GObj) -> bool;
     fn lbAudioAx_80023870(a0: i32, a1: i32, a2: i32, a3: i32) -> i32;
     fn lbAudioAx_80024DC4(a0: i32);
     fn lbColl_80008428(a0: *mut HitCapsule);
     fn lbColl_80008434(a0: *mut HitCapsule);
-    fn lbVector_Add(a0: *mut Vec3, a1: *mut Vec3) -> *mut Vec3;
-    fn lbVector_Mirror(a0: *mut Vec3, a1: *mut Vec3);
-    fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec3, a2: *mut Vec3);
-    fn lb_8000B09C(a0: *mut HSD_JObj) -> bool;
+    fn lbVector_Add(a0: *mut Vec, a1: *mut Vec) -> *mut Vec;
+    fn lbVector_Mirror(a0: *mut Vec, a1: *mut Vec);
+    fn lb_8000B09C(a0: *mut HSD_JObj) -> i32;
+    fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec);
     fn lb_8000B804(a0: *mut HSD_JObj, a1: *mut HSD_Joint);
     fn lb_8000BA0C(a0: *mut HSD_JObj, a1: f32);
     fn lb_8000C1C0(a0: *mut HSD_JObj, a1: *mut HSD_JObj);
     fn lb_8000C2F8(a0: *mut HSD_JObj, a1: *mut HSD_JObj);
     fn lb_8000C390(a0: *mut HSD_JObj);
     fn mpCollSetFacingDir(a0: *mut CollData, a1: i32);
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> bool;
-    fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8;
     }
-    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = core::ptr::null_mut();
-    pub static mut it_804D6D28: *mut ItemCommonData = core::ptr::null_mut();
-    pub static mut it_804D6D0C: i32 = 0;
-    pub static mut it_804D6D08: i32 = 0;
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirty(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirty(a0) }
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
+    pub static mut it_804D6D08: i32 = unsafe { core::mem::zeroed() };
+    pub static mut it_804D6D0C: i32 = unsafe { core::mem::zeroed() };
+    pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
+    pub static mut result: i32 = unsafe { core::mem::zeroed() };
 }
 // END GENERATED EXT
+
+// ---- header inlines of sysdolphin/baselib/jobj.h used by this TU (HSD_ASSERT = assert!) ----
+
+#[inline(always)]
+unsafe fn HSD_JObjMtxIsDirty(jobj: *mut HSD_JObj) -> bool {
+    assert!(!jobj.is_null(), "HSD_ASSERT(564, jobj)");
+    let mut result = false;
+    if (*jobj).flags & JOBJ_USER_DEF_MTX as u32 == 0 && (*jobj).flags & JOBJ_MTX_DIRTY as u32 != 0 {
+        result = true;
+    }
+    result
+}
+
+/// `HSD_JObjSetMtxDirty` as the macro of jobj.h (the parenthesised call is the `ext` function).
+#[inline(always)]
+unsafe fn HSD_JObjSetMtxDirty_macro(jobj: *mut HSD_JObj) {
+    if !jobj.is_null() && !HSD_JObjMtxIsDirty(jobj) {
+        ext::HSD_JObjSetMtxDirtySub(jobj);
+    }
+}
+
+#[inline(always)]
+unsafe fn HSD_JObjGetChild(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+    if jobj.is_null() { null_mut() } else { (*jobj).child }
+}
+
+#[inline(always)]
+unsafe fn HSD_JObjSetScale(jobj: *mut HSD_JObj, scale: *mut Vec3) {
+    assert!(!jobj.is_null(), "HSD_ASSERT(760, jobj)");
+    assert!(!scale.is_null(), "HSD_ASSERT(761, scale)");
+    (*jobj).scale = *scale;
+    if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+        HSD_JObjSetMtxDirty_macro(jobj);
+    }
+}
+
+#[inline(always)]
+unsafe fn HSD_JObjSetTranslate(jobj: *mut HSD_JObj, translate: *mut Vec3) {
+    assert!(!jobj.is_null(), "HSD_ASSERT(916, jobj)");
+    assert!(!translate.is_null(), "HSD_ASSERT(917, translate)");
+    (*jobj).translate = *translate;
+    if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+        HSD_JObjSetMtxDirty_macro(jobj);
+    }
+}
+
+#[inline(always)]
+unsafe fn HSD_JObjGetTranslation(jobj: *mut HSD_JObj, translate: *mut Vec3) {
+    assert!(!jobj.is_null(), "HSD_ASSERT(979, jobj)");
+    assert!(!translate.is_null(), "HSD_ASSERT(980, translate)");
+    *translate = (*jobj).translate;
+}
+
+#[inline(always)]
+unsafe fn HSD_JObjSetRotationX(jobj: *mut HSD_JObj, v: f32) {
+    assert!(!jobj.is_null(), "HSD_ASSERT(649, jobj)");
+    assert!((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, "HSD_ASSERT(650, !(jobj->flags & JOBJ_USE_QUATERNION))");
+    (*jobj).rotate.x = v;
+    if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+        HSD_JObjSetMtxDirty_macro(jobj);
+    }
+}
+
+#[inline(always)]
+unsafe fn HSD_JObjSetRotationY(jobj: *mut HSD_JObj, v: f32) {
+    assert!(!jobj.is_null(), "HSD_ASSERT(665, jobj)");
+    assert!((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, "HSD_ASSERT(666, !(jobj->flags & JOBJ_USE_QUATERNION))");
+    (*jobj).rotate.y = v;
+    if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+        HSD_JObjSetMtxDirty_macro(jobj);
+    }
+}
+
+#[inline(always)]
+unsafe fn HSD_JObjSetRotationZ(jobj: *mut HSD_JObj, v: f32) {
+    assert!(!jobj.is_null(), "HSD_ASSERT(681, jobj)");
+    assert!((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, "HSD_ASSERT(682, !(jobj->flags & JOBJ_USE_QUATERNION))");
+    (*jobj).rotate.z = v;
+    if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+        HSD_JObjSetMtxDirty_macro(jobj);
+    }
+}
+
+#[inline(always)]
+unsafe fn HSD_JObjGetRotationX(jobj: *mut HSD_JObj) -> f32 {
+    assert!(!jobj.is_null(), "HSD_ASSERT(715, jobj)");
+    (*jobj).rotate.x
+}
+
+#[inline(always)]
+unsafe fn HSD_JObjGetRotationY(jobj: *mut HSD_JObj) -> f32 {
+    assert!(!jobj.is_null(), "HSD_ASSERT(730, jobj)");
+    (*jobj).rotate.y
+}
+
+#[inline(always)]
+unsafe fn HSD_JObjGetRotationZ(jobj: *mut HSD_JObj) -> f32 {
+    assert!(!jobj.is_null(), "HSD_ASSERT(745, jobj)");
+    (*jobj).rotate.z
+}
+
+#[inline(always)]
+unsafe fn HSD_JObjAddRotationX(jobj: *mut HSD_JObj, v: f32) {
+    assert!(!jobj.is_null(), "HSD_ASSERT(1029, jobj)");
+    (*jobj).rotate.x += v;
+    if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+        HSD_JObjSetMtxDirty_macro(jobj);
+    }
+}
+
+#[inline(always)]
+unsafe fn HSD_JObjAddRotationY(jobj: *mut HSD_JObj, v: f32) {
+    assert!(!jobj.is_null(), "HSD_ASSERT(1041, jobj)");
+    (*jobj).rotate.y += v;
+    if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+        HSD_JObjSetMtxDirty_macro(jobj);
+    }
+}
+
+#[inline(always)]
+unsafe fn HSD_JObjAddRotationZ(jobj: *mut HSD_JObj, v: f32) {
+    assert!(!jobj.is_null(), "HSD_ASSERT(1053, jobj)");
+    (*jobj).rotate.z += v;
+    if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+        HSD_JObjSetMtxDirty_macro(jobj);
+    }
+}
+
+#[inline(always)]
+unsafe fn HSD_JObjAddScaleX(jobj: *mut HSD_JObj, v: f32) {
+    assert!(!jobj.is_null(), "HSD_ASSERT(1065, jobj)");
+    (*jobj).scale.x += v;
+    if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+        HSD_JObjSetMtxDirty_macro(jobj);
+    }
+}
+
+#[inline(always)]
+unsafe fn HSD_JObjAddScaleY(jobj: *mut HSD_JObj, v: f32) {
+    assert!(!jobj.is_null(), "HSD_ASSERT(1077, jobj)");
+    (*jobj).scale.y += v;
+    if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+        HSD_JObjSetMtxDirty_macro(jobj);
+    }
+}
+
+#[inline(always)]
+unsafe fn HSD_JObjAddScaleZ(jobj: *mut HSD_JObj, v: f32) {
+    assert!(!jobj.is_null(), "HSD_ASSERT(1089, jobj)");
+    (*jobj).scale.z += v;
+    if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+        HSD_JObjSetMtxDirty_macro(jobj);
+    }
+}
 
 const M_PI_2: f64 = 1.5707963267948966;
 
@@ -210,14 +367,6 @@ pub unsafe extern "C" fn it_80272818(item: *mut Item) -> *mut Fighter {
     (*attrs).fighter
 }
 
-/// `it_80275158` (itlib/helpers.rs has the same port; repeated here because it is a 2-line setter the
-/// TU calls directly): both life timers are set, the half one scaled by `x4C_float`.
-unsafe fn it_80275158_local(item_gobj: *mut HSD_GObj, lifetime: f32) {
-    let item = item_of(item_gobj);
-    (*item).xD44_lifeTimer = lifetime;
-    (*item).xD48_halfLifeTimer = lifetime * (*ext::it_804D6D28).x4C_float;
-}
-
 /// `it_80272D1C`: true for a live item gobj of the item class.
 pub unsafe extern "C" fn it_80272D1C(item_gobj: *mut HSD_GObj) -> bool {
     !item_gobj.is_null() && (*item_gobj).classifier == HSD_GOBJ_CLASS_ITEM as u16
@@ -225,7 +374,7 @@ pub unsafe extern "C" fn it_80272D1C(item_gobj: *mut HSD_GObj) -> bool {
 
 /// `it_80272D40`: 0 for a fighter-owned item, 1 for an item with its own collision, 2 otherwise.
 pub unsafe extern "C" fn it_80272D40(item_gobj: *mut HSD_GObj) -> i32 {
-    if ext::ftLib_80086960(item_gobj) {
+    if ext::ftLib_80086960(item_gobj) != 0 {
         return 0;
     }
     let chk = !item_gobj.is_null() && (*item_gobj).classifier == HSD_GOBJ_CLASS_ITEM as u16;
@@ -245,15 +394,15 @@ pub unsafe extern "C" fn itColl_BounceOffVictim(gobj: *mut HSD_GObj) {
 
 /// `it_80272DE4`: scales the jobj on all three axes by adding `scale` to each.
 pub unsafe extern "C" fn it_80272DE4(jobj: *mut HSD_JObj, scale: f32) {
-    ext::HSD_JObjAddScaleX(jobj, scale);
-    ext::HSD_JObjAddScaleY(jobj, scale);
-    ext::HSD_JObjAddScaleZ(jobj, scale);
+    HSD_JObjAddScaleX(jobj, scale);
+    HSD_JObjAddScaleY(jobj, scale);
+    HSD_JObjAddScaleZ(jobj, scale);
 }
 
 /// `it_80272F7C`: sets the jobj's scale to `scale` on all axes.
 pub unsafe extern "C" fn it_80272F7C(jobj: *mut HSD_JObj, scale: f32) {
     let mut temp = Vec3 { x: scale, y: scale, z: scale };
-    ext::HSD_JObjSetScale(jobj, &raw mut temp);
+    HSD_JObjSetScale(jobj, &raw mut temp);
 }
 
 /// `itColl_BounceOffShield`: mirrors the velocity off the shield and updates the facing direction.
@@ -341,7 +490,7 @@ pub unsafe extern "C" fn it_80273318(item_gobj: *mut HSD_GObj, joint: *mut HSD_J
     ext::HSD_GObjObject_80390B0C(item_gobj);
     ext::Item_802680CC(item_gobj);
     ext::Item_8026849C(item_gobj);
-    ext::HSD_JObjSetTranslate((*item_gobj).hsd_obj as *mut HSD_JObj, &raw mut (*item).pos);
+    HSD_JObjSetTranslate((*item_gobj).hsd_obj as *mut HSD_JObj, &raw mut (*item).pos);
 }
 
 /// `it_80273408`: clears the item's velocity, accumulators and nudges.
@@ -400,7 +549,7 @@ pub unsafe extern "C" fn it_802734B4(item_gobj: *mut HSD_GObj) {
 /// `it_80273598`: the owner's `ftLib_80086D40` with the two arguments, when the owner is a fighter.
 pub unsafe extern "C" fn it_80273598(item_gobj: *mut HSD_GObj, arg1: i32, arg2: i32) {
     let item = item_of(item_gobj);
-    if !(*item).owner.is_null() && ext::ftLib_80086960((*item).owner) {
+    if !(*item).owner.is_null() && ext::ftLib_80086960((*item).owner) != 0 {
         ext::ftLib_80086D40((*item).owner, arg1, arg2);
     }
 }
@@ -408,7 +557,7 @@ pub unsafe extern "C" fn it_80273598(item_gobj: *mut HSD_GObj, arg1: i32, arg2: 
 /// `it_80273600`: `ftLib_80086E68` on the owner, when it is a fighter.
 pub unsafe extern "C" fn it_80273600(item_gobj: *mut HSD_GObj) {
     let item = item_of(item_gobj);
-    if !(*item).owner.is_null() && ext::ftLib_80086960((*item).owner) {
+    if !(*item).owner.is_null() && ext::ftLib_80086960((*item).owner) != 0 {
         ext::ftLib_80086E68((*item).owner);
     }
 }
@@ -432,7 +581,7 @@ pub unsafe extern "C" fn it_80273670(item_gobj: *mut HSD_GObj, arg1: i32, arg8: 
             ext::lb_8000B804(item_jobj2, (*joint).child);
         }
         let desc = (*item).xD0_itemStateDesc;
-        ext::HSD_JObjAddAnimAll(item_jobj1, (*desc).x0_anim_joint as *mut c_void, (*desc).x4_matanim_joint as *mut c_void, (*desc).x8_parameters as *mut c_void);
+        ext::HSD_JObjAddAnimAll(item_jobj1, (*desc).x0_anim_joint, (*desc).x4_matanim_joint, (*desc).x8_parameters);
         ext::lb_8000BA0C(item_jobj1, (*item).x5D0_animFrameSpeed);
         ext::HSD_JObjReqAnimAll(item_jobj1, arg8);
     }
@@ -451,16 +600,16 @@ pub unsafe extern "C" fn it_80273748(item_gobj: *mut HSD_GObj, pos: *mut Vec3, v
     let jobj = jobj_of(item_gobj);
     let mut owner = (*item).owner;
     it_80275070(item_gobj, (*(*(*item).xC4_article_data).x10_modelDesc).x8_bone_attach_id);
-    if !it_8026B6C8(item_gobj) {
-        it_8026B390(item_gobj);
+    if ext::it_8026B6C8(item_gobj) == 0 {
+        ext::it_8026B390(item_gobj);
     }
     ext::it_802756E0(item_gobj);
     let item_2 = item_of(item_gobj);
     let jobj_2 = jobj_of(item_gobj);
-    let rotation = ext::it_80274990(item_gobj);
+    let rotation = it_80274990(item_gobj);
     ext::lb_8000B804(jobj_2, (*item_2).xC8_joint);
     ext::Item_8026849C(item_gobj);
-    ext::it_80274658(item_gobj, rotation);
+    it_80274658(item_gobj, rotation);
     if (*item).xDC8_word.flags.x0() != 0 {
         owner = (*item).x51C;
     }
@@ -479,13 +628,13 @@ pub unsafe extern "C" fn it_80273748(item_gobj: *mut HSD_GObj, pos: *mut Vec3, v
         ext::mpCollSetFacingDir(&raw mut (*item).x378_itemColl, int_dir);
     }
     if (*item).xDC8_word.flags.x19() == 1 {
-        let dir_radians = M_PI_2 as f32 * (*item).facing_dir;
-        ext::HSD_JObjSetRotationY(jobj, dir_radians);
+        let dir_radians = (M_PI_2 * (*item).facing_dir as f64) as f32;
+        HSD_JObjSetRotationY(jobj, dir_radians);
     }
     let hold_kind = (*item).hold_kind;
-    if (ext::itIsHeavy(item_gobj) && hold_kind != 4 && hold_kind != 6) || (*item).hold_kind == 8 {
+    if (ext::itIsHeavy(item_gobj) == 1 && hold_kind != 4 && hold_kind != 6) || (*item).hold_kind == 8 {
         let jobj2 = it_80272C90(item_gobj);
-        ext::HSD_JObjGetTranslation(jobj2, &raw mut sp3c);
+        HSD_JObjGetTranslation(jobj2, &raw mut sp3c);
         sp3c.x = -sp3c.x;
         sp3c.y = -sp3c.y;
         sp3c.z = -sp3c.z;
@@ -502,7 +651,7 @@ pub unsafe extern "C" fn it_80273748(item_gobj: *mut HSD_GObj, pos: *mut Vec3, v
     (*item).pos.x = (*pos).x + sp3c.x;
     (*item).pos.y = (*pos).y + sp3c.y;
     (*item).pos.z = 0.0;
-    ext::HSD_JObjSetTranslate(jobj, &raw mut (*item).pos);
+    HSD_JObjSetTranslate(jobj, &raw mut (*item).pos);
 }
 
 /// `getOwnerJointPosition` (static inline): the owner's part position, through `offset` when given.
@@ -522,19 +671,19 @@ pub unsafe extern "C" fn it_80273B50(item_gobj: *mut HSD_GObj, vel: *mut Vec3) {
     let item_jobj1 = jobj_of(item_gobj);
     let mut owner_gobj = (*item).owner;
     it_80275070(item_gobj, (*(*(*item).xC4_article_data).x10_modelDesc).x8_bone_attach_id);
-    if !it_8026B6C8(item_gobj) {
-        it_8026B390(item_gobj);
+    if ext::it_8026B6C8(item_gobj) == 0 {
+        ext::it_8026B390(item_gobj);
     }
     ext::it_802756E0(item_gobj);
     let rotation;
     {
         let item = item_of(item_gobj);
         let item_jobj2 = jobj_of(item_gobj);
-        rotation = ext::it_80274990(item_gobj);
+        rotation = it_80274990(item_gobj);
         ext::lb_8000B804(item_jobj2, (*item).xC8_joint);
         ext::Item_8026849C(item_gobj);
     }
-    ext::it_80274658(item_gobj, rotation);
+    it_80274658(item_gobj, rotation);
     if (*item).xDC8_word.flags.x0() != 0 {
         owner_gobj = (*item).x51C;
     }
@@ -553,13 +702,13 @@ pub unsafe extern "C" fn it_80273B50(item_gobj: *mut HSD_GObj, vel: *mut Vec3) {
         ext::mpCollSetFacingDir(&raw mut (*item2).x378_itemColl, int_dir);
     }
     if (*item).xDC8_word.flags.x19() == 1 {
-        let dir_radians = M_PI_2 as f32 * (*item).facing_dir;
-        ext::HSD_JObjSetRotationY(item_jobj1, dir_radians);
+        let dir_radians = (M_PI_2 * (*item).facing_dir as f64) as f32;
+        HSD_JObjSetRotationY(item_jobj1, dir_radians);
     }
     let hold_kind = (*item).hold_kind;
-    if (ext::itIsHeavy(item_gobj) && hold_kind != 4 && hold_kind != 6) || (*item).hold_kind == 8 {
+    if (ext::itIsHeavy(item_gobj) == 1 && hold_kind != 4 && hold_kind != 6) || (*item).hold_kind == 8 {
         let jobj = it_80272C90(item_gobj);
-        ext::HSD_JObjGetTranslation(jobj, &raw mut sp40);
+        HSD_JObjGetTranslation(jobj, &raw mut sp40);
         sp40.x = -sp40.x;
         sp40.y = -sp40.y;
         sp40.z = -sp40.z;
@@ -576,7 +725,7 @@ pub unsafe extern "C" fn it_80273B50(item_gobj: *mut HSD_GObj, vel: *mut Vec3) {
         (*item3).pos.x = sp34.x;
         (*item3).pos.y = sp34.y;
         (*item3).pos.z = 0.0;
-        ext::HSD_JObjSetTranslate(item_jobj3, pos);
+        HSD_JObjSetTranslate(item_jobj3, pos);
     }
 }
 
@@ -594,11 +743,11 @@ pub unsafe extern "C" fn it_80273F34(item_gobj: *mut HSD_GObj, arg_gobj2: *mut H
     it_80274DAC(item_gobj);
 
     if (*item).xDC8_word.flags.x19() == 1 {
-        let rotate = M_PI_2 as f32 * (*item).facing_dir;
-        ext::HSD_JObjSetRotationY(item_jobj, rotate);
+        let rotate = (M_PI_2 * (*item).facing_dir as f64) as f32;
+        HSD_JObjSetRotationY(item_jobj, rotate);
     }
 
-    if ext::ftLib_80086960(arg_gobj2) {
+    if ext::ftLib_80086960(arg_gobj2) != 0 {
         ext::Item_8026A848(item_gobj, arg_gobj2);
         ext::it_8027B070(item_gobj, arg_gobj2);
     }
@@ -607,18 +756,18 @@ pub unsafe extern "C" fn it_80273F34(item_gobj: *mut HSD_GObj, arg_gobj2: *mut H
     ext::mpCollSetFacingDir(&raw mut (*item).x378_itemColl, int_dir);
     ext::Item_8026B074(item);
     ext::it_802762BC(item);
-    ext::HSD_JObjSetTranslate(item_jobj, &raw mut (*item).pos);
+    HSD_JObjSetTranslate(item_jobj, &raw mut (*item).pos);
 
     ext::it_8027B4A4(arg_gobj2, item_gobj);
     ext::it_8027B378(arg_gobj2, item_gobj, ext::it_802758D4(item_gobj));
 }
 
 /// `it_80274198`: `it_80273F34` on the owner, or on the secondary owner when the item is flagged `x0`.
-pub unsafe extern "C" fn it_80274198(item_gobj: *mut HSD_GObj, chk: bool) {
+pub unsafe extern "C" fn it_80274198(item_gobj: *mut HSD_GObj, chk: i32) {
     let item = item_of(item_gobj);
     let mut owner_gobj = (*item).owner;
     if (*item).xDC8_word.flags.x0() != 0 {
-        if chk {
+        if chk == 1 {
             let x51c_gobj = (*item).x51C;
             (*item).owner = x51c_gobj;
             owner_gobj = x51c_gobj;
@@ -631,11 +780,11 @@ pub unsafe extern "C" fn it_80274198(item_gobj: *mut HSD_GObj, chk: bool) {
 }
 
 /// `it_802741F4`: same as `it_80274198`.
-pub unsafe extern "C" fn it_802741F4(item_gobj: *mut HSD_GObj, chk: bool) {
+pub unsafe extern "C" fn it_802741F4(item_gobj: *mut HSD_GObj, chk: i32) {
     let item = item_of(item_gobj);
     let mut owner_gobj = (*item).owner;
     if (*item).xDC8_word.flags.x0() != 0 {
-        if chk {
+        if chk == 1 {
             let x51c_gobj = (*item).x51C;
             (*item).owner = x51c_gobj;
             owner_gobj = x51c_gobj;
@@ -677,10 +826,10 @@ pub unsafe extern "C" fn it_802742F4(item_gobj: *mut HSD_GObj, gobj: *mut HSD_GO
     let item = item_of(item_gobj);
     ext::lb_8000B804(jobj_of(item_gobj), (*item).xC8_joint);
     ext::Item_8026849C(item_gobj);
-    if ext::ftLib_80086960(gobj) {
+    if ext::ftLib_80086960(gobj) != 0 {
         let bit_idx = ext::ftLib_80086BE0(gobj) as u32;
         let cur = (*item).xDC8_word.flags.xF();
-        (*item).xDC8_word.flags.set_xF((cur as u32 | 1u32.wrapping_shl(bit_idx)) as _);
+        (*item).xDC8_word.flags.set_xF((cur as u32 | melee_runtime::cabi::shl(1, bit_idx)) as _);
         if (*item).xDC8_word.flags.x0() == 0 {
             (*item).owner = gobj;
         } else {
@@ -690,9 +839,9 @@ pub unsafe extern "C" fn it_802742F4(item_gobj: *mut HSD_GObj, gobj: *mut HSD_GO
         (*item).x20_team_id = ext::ftLib_80086EB4(gobj) as u8;
         (*item).xD50_landNum = 0;
         (*item).xDC8_word.flags.set_x13(1);
-        ext::HSD_JObjClearFlagsAll((*jobj_of(item_gobj)).child, JOBJ_HIDDEN);
+        ext::HSD_JObjClearFlagsAll((*jobj_of(item_gobj)).child, JOBJ_HIDDEN as u32);
         ext::it_802756D0(item_gobj);
-        it_8026B3A8(item_gobj);
+        ext::it_8026B3A8(item_gobj);
         ext::db_80225DD8(item_gobj, gobj);
     }
     if (*item).xDD0_flag.anon_0.b6() != 0 {
@@ -702,7 +851,7 @@ pub unsafe extern "C" fn it_802742F4(item_gobj: *mut HSD_GObj, gobj: *mut HSD_GO
     }
     if (*item).kind < It_Kind_L_Gun_Ray {
         // A common item.
-        it_80275158_local(item_gobj, (*ext::it_804D6D28).x30_lifetime as f32);
+        it_80275158(item_gobj, (*ext::it_804D6D28).x30_lifetime as f32);
     }
     it_80274F48(item_gobj, (*(*(*item).xC4_article_data).x10_modelDesc).x8_bone_attach_id, gobj, ftpart);
     it_80274C88(item_gobj);
@@ -713,7 +862,7 @@ pub unsafe extern "C" fn it_80274484(item_gobj: *mut HSD_GObj, jobj: *mut HSD_JO
     let item = item_of(item_gobj);
     (*item).scl = scale;
     let mut sp1c = Vec3 { x: (*item).scl, y: (*item).scl, z: (*item).scl };
-    ext::HSD_JObjSetScale(jobj, &raw mut sp1c);
+    HSD_JObjSetScale(jobj, &raw mut sp1c);
     ext::it_80275534(item_gobj, (*item).x3C);
     it_80274DFC(item_gobj);
     it_80274E44(item_gobj);
@@ -775,9 +924,9 @@ pub unsafe extern "C" fn it_80274740(item_gobj: *mut HSD_GObj) {
     }
     (*item).xD3C_spinSpeed = 0.0;
     match (*item).xDC8_word.flags.x17() {
-        0 => ext::HSD_JObjSetRotationZ(item_jobj, (*item).xD3C_spinSpeed),
-        1 => ext::HSD_JObjSetRotationX(item_jobj, (*item).xD3C_spinSpeed),
-        _ => ext::HSD_JObjSetRotationY(item_jobj, (*item).xD3C_spinSpeed),
+        0 => HSD_JObjSetRotationZ(item_jobj, (*item).xD3C_spinSpeed),
+        1 => HSD_JObjSetRotationX(item_jobj, (*item).xD3C_spinSpeed),
+        _ => HSD_JObjSetRotationY(item_jobj, (*item).xD3C_spinSpeed),
     }
 }
 
@@ -793,9 +942,9 @@ pub unsafe extern "C" fn it_80274A64(item_gobj: *mut HSD_GObj) {
         }
     }
     match (*item).xDC8_word.flags.x17() {
-        0 => ext::HSD_JObjAddRotationZ(item_jobj, (*item).xD3C_spinSpeed),
-        1 => ext::HSD_JObjAddRotationX(item_jobj, (*item).xD3C_spinSpeed),
-        _ => ext::HSD_JObjAddRotationY(item_jobj, (*item).xD3C_spinSpeed),
+        0 => HSD_JObjAddRotationZ(item_jobj, (*item).xD3C_spinSpeed),
+        1 => HSD_JObjAddRotationX(item_jobj, (*item).xD3C_spinSpeed),
+        _ => HSD_JObjAddRotationY(item_jobj, (*item).xD3C_spinSpeed),
     }
 }
 
@@ -805,8 +954,8 @@ pub unsafe extern "C" fn it_80274C60(item_gobj: *mut HSD_GObj) {
 }
 
 /// `it_80274C78`: `xDC8` bit 0xC.
-pub unsafe extern "C" fn it_80274C78(item_gobj: *mut HSD_GObj) -> bool {
-    (*item_of(item_gobj)).xDC8_word.flags.xC() != 0
+pub unsafe extern "C" fn it_80274C78(item_gobj: *mut HSD_GObj) -> i32 {
+    (*item_of(item_gobj)).xDC8_word.flags.xC() as i32
 }
 
 /// `it_80274C88`: clears `xDD0` bit 0 and `xDAA` bit 3.
@@ -829,8 +978,8 @@ pub unsafe extern "C" fn it_80274CAC(item_gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn it_80274D04(item_gobj: *mut HSD_GObj, arg1: *mut lb_80014638_arg1_t) {
     let mut sp20: Vec3 = core::mem::zeroed();
     let mut sp14: Vec3 = core::mem::zeroed();
-    it_8026BB88(item_gobj, &raw mut sp20);
-    it_8026BBCC(item_gobj, &raw mut sp14);
+    ext::it_8026BB88(item_gobj, &raw mut sp20);
+    ext::it_8026BBCC(item_gobj, &raw mut sp14);
     (*arg1).unk_x = sp20.x - sp14.x;
     (*arg1).unk_y = sp20.y - sp14.y;
 }
@@ -886,8 +1035,8 @@ pub unsafe extern "C" fn it_80274E44(item_gobj: *mut HSD_GObj) {
 }
 
 /// `it_80274ECC`: sets the item's `xD09` flag.
-pub unsafe extern "C" fn it_80274ECC(item_gobj: *mut HSD_GObj, arg1: bool) {
-    (*item_of(item_gobj)).xD09 = arg1 as _;
+pub unsafe extern "C" fn it_80274ECC(item_gobj: *mut HSD_GObj, arg1: i32) {
+    (*item_of(item_gobj)).xD09 = arg1 as u8;
 }
 
 /// `it_80274ED8`: counts one item spawn.
@@ -953,8 +1102,8 @@ pub unsafe extern "C" fn it_80275070(item_gobj: *mut HSD_GObj, bone_id: i32) {
 }
 
 /// `it_802750E8`: true when any bit of `mask` is set in `xDC0`.
-pub unsafe extern "C" fn it_802750E8(item_gobj: *mut HSD_GObj, mask: i32) -> bool {
-    ((*item_of(item_gobj)).xDC0 as i32) & mask != 0
+pub unsafe extern "C" fn it_802750E8(item_gobj: *mut HSD_GObj, mask: i32) -> i32 {
+    (((*item_of(item_gobj)).xDC0 as u32) & (mask as u32)) as i32
 }
 
 /// `it_802750F8`: re-derives the item's model and state with the `xDCC` bit 3 held clear.
@@ -997,17 +1146,17 @@ pub unsafe extern "C" fn it_802728C8(item_gobj: *mut HSD_GObj) {
     let life = (*item_of(item_gobj)).xD44_lifeTimer as i32 as u32;
     let rem = if d == 0 { 0 } else { life % d };
     if rem != 0 {
-        ext::HSD_JObjClearFlagsAll(item_jobj2, JOBJ_HIDDEN);
+        ext::HSD_JObjClearFlagsAll(item_jobj2, JOBJ_HIDDEN as u32);
         return;
     }
-    ext::HSD_JObjSetFlagsAll(item_jobj2, JOBJ_HIDDEN);
+    ext::HSD_JObjSetFlagsAll(item_jobj2, JOBJ_HIDDEN as u32);
 }
 
 /// `it_80272940`: shows the item's child jobj.
 pub unsafe extern "C" fn it_80272940(item_gobj: *mut HSD_GObj) {
     let item_jobj1 = jobj_of(item_gobj);
     let item_jobj2 = if item_jobj1.is_null() { null_mut() } else { (*item_jobj1).child };
-    ext::HSD_JObjClearFlagsAll(item_jobj2, JOBJ_HIDDEN);
+    ext::HSD_JObjClearFlagsAll(item_jobj2, JOBJ_HIDDEN as u32);
 }
 
 /// `it_80272980`: sets the facing direction from the x velocity and passes it to the collision.
@@ -1027,18 +1176,18 @@ pub unsafe extern "C" fn it_80272980(item_gobj: *mut HSD_GObj) {
 
 /// `it_80272A18`: shows the jobj (clears its hidden flag).
 pub unsafe extern "C" fn it_80272A18(item_jobj: *mut HSD_JObj) {
-    ext::HSD_JObjClearFlagsAll(item_jobj, JOBJ_HIDDEN);
+    ext::HSD_JObjClearFlagsAll(item_jobj, JOBJ_HIDDEN as u32);
 }
 
 /// `it_80272A3C`: hides the jobj.
 pub unsafe extern "C" fn it_80272A3C(item_jobj: *mut HSD_JObj) {
-    ext::HSD_JObjSetFlagsAll(item_jobj, JOBJ_HIDDEN);
+    ext::HSD_JObjSetFlagsAll(item_jobj, JOBJ_HIDDEN as u32);
 }
 
 /// `it_80272A60`: the item's effect 0x40E and sound 0x74, then the flag reset.
 pub unsafe extern "C" fn it_80272A60(item_gobj: *mut HSD_GObj) {
     let item = item_of(item_gobj);
-    ext::efSync_Spawn(0x40E, item_gobj, &raw mut (*item).pos);
+    ext::efSync_Spawn(0x40E, item_gobj, &[EfArg::Vec3P(&raw mut (*item).pos)]);
     ext::Item_8026AE84(item, 0x74, 0x7F, 0x40);
     it_80274C60(item_gobj);
 }
@@ -1047,7 +1196,7 @@ pub unsafe extern "C" fn it_80272A60(item_gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn it_80272AC4(item_gobj: *mut HSD_GObj, arg1: *mut Vec3) {
     let item = item_of(item_gobj);
     ext::lbVector_Add(arg1, &raw mut (*item).pos);
-    ext::efSync_Spawn(0x40C, item_gobj, arg1);
+    ext::efSync_Spawn(0x40C, item_gobj, &[EfArg::Vec3P(arg1)]);
     ext::Item_8026AE84(item, 0x74, 0x7F, 0x40);
     it_80274C60(item_gobj);
 }
@@ -1055,7 +1204,7 @@ pub unsafe extern "C" fn it_80272AC4(item_gobj: *mut HSD_GObj, arg1: *mut Vec3) 
 /// `it_80272B40`: effect 0x40C at the item's position, then the sound and the flag reset.
 pub unsafe extern "C" fn it_80272B40(item_gobj: *mut HSD_GObj) {
     let item = item_of(item_gobj);
-    ext::efSync_Spawn(0x40C, item_gobj, &raw mut (*item).pos);
+    ext::efSync_Spawn(0x40C, item_gobj, &[EfArg::Vec3P(&raw mut (*item).pos)]);
     ext::Item_8026AE84(item, 0x74, 0x7F, 0x40);
     it_80274C60(item_gobj);
 }
@@ -1063,7 +1212,7 @@ pub unsafe extern "C" fn it_80272B40(item_gobj: *mut HSD_GObj) {
 /// `it_80272BA4`: effect 0x411 at the item's position, sound 0x73.
 pub unsafe extern "C" fn it_80272BA4(item_gobj: *mut HSD_GObj) {
     let item = item_of(item_gobj);
-    ext::efSync_Spawn(0x411, item_gobj, &raw mut (*item).pos);
+    ext::efSync_Spawn(0x411, item_gobj, &[EfArg::Vec3P(&raw mut (*item).pos)]);
     ext::Item_8026AE84(item, 0x73, 0x7F, 0x40);
     it_80274C60(item_gobj);
 }
@@ -1071,13 +1220,13 @@ pub unsafe extern "C" fn it_80272BA4(item_gobj: *mut HSD_GObj) {
 /// `it_80272C08`: effect 0x410 at the item's position, sound 0x74.
 pub unsafe extern "C" fn it_80272C08(item_gobj: *mut HSD_GObj) {
     let item = item_of(item_gobj);
-    ext::efSync_Spawn(0x410, item_gobj, &raw mut (*item).pos);
+    ext::efSync_Spawn(0x410, item_gobj, &[EfArg::Vec3P(&raw mut (*item).pos)]);
     ext::Item_8026AE84(item, 0x74, 0x7F, 0x40);
     it_80274C60(item_gobj);
 }
 
 /// `it_80272C6C`: whether the item's jobj has the `lb_8000B09C` property.
-pub unsafe extern "C" fn it_80272C6C(item_gobj: *mut HSD_GObj) -> bool {
+pub unsafe extern "C" fn it_80272C6C(item_gobj: *mut HSD_GObj) -> i32 {
     ext::lb_8000B09C(jobj_of(item_gobj))
 }
 
@@ -1110,7 +1259,7 @@ pub unsafe extern "C" fn it_8027518C(item_gobj: *mut HSD_GObj) {
     (*item).xD44_lifeTimer = (*ext::it_804D6D28).xF8 as f32;
     (*item).xDCF_flag.anon_0.set_b2(1);
     (*item).xDD1_flag.anon_0.set_b0(1);
-    it_8026BDB4(item_gobj);
+    ext::it_8026BDB4(item_gobj);
 }
 
 /// `it_802751D8`: counts the life timer down; true when it has run out.
@@ -1118,4 +1267,166 @@ pub unsafe extern "C" fn it_802751D8(item_gobj: *mut HSD_GObj) -> bool {
     let item = item_of(item_gobj);
     (*item).xD44_lifeTimer -= 1.0;
     (*item).xD44_lifeTimer <= 0.0
+}
+
+// ---- functions of the C file that the first pass left to itlib (their C signatures, ported here) ----
+
+/// `it_80272828`: the last item gobj of `kind` in the item PLink list (NULL if none).
+pub unsafe extern "C" fn it_80272828(kind: ItemKind) -> *mut HSD_GObj {
+    let mut item_gobj_return: *mut HSD_GObj = null_mut();
+    let mut item_gobj_check = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_ITEM as usize);
+    while !item_gobj_check.is_null() {
+        let new_var2 = (*item_gobj_check).user_data as *mut Item;
+        if (*new_var2).kind == kind {
+            item_gobj_return = item_gobj_check;
+        }
+        item_gobj_check = (*item_gobj_check).next;
+    }
+    item_gobj_return
+}
+
+/// `it_80272860`: accelerates `vel.y` by `-arg1` unless it already opposes `arg1` beyond `arg2`.
+pub unsafe extern "C" fn it_80272860(item_gobj: *mut HSD_GObj, arg1: f32, arg2: f32) {
+    let item = item_of(item_gobj);
+    let var_r0: i32 = if arg1 < 0.0 { -1 } else { 1 };
+    let mut var_f3 = (*item).x40_vel.y;
+    let var_r3: i32 = if var_f3 < 0.0 { -1 } else { 1 };
+    if var_r3 != var_r0 {
+        if var_f3 < 0.0 {
+            var_f3 = -var_f3;
+        }
+        if var_f3 < arg2 {
+            (*item).x40_vel.y -= arg1;
+            return;
+        }
+        return;
+    }
+    (*item).x40_vel.y -= arg1;
+}
+
+/// `it_80273030`: bounces the item back (velocity scaled by `xC70`); always false.
+pub unsafe extern "C" fn it_80273030(item_gobj: *mut HSD_GObj) -> bool {
+    let item = item_of(item_gobj);
+    (*item).x40_vel.x = -(*item).x40_vel.x * (*item).xC70;
+    (*item).x40_vel.y = -(*item).x40_vel.y * (*item).xC70;
+    (*item).facing_dir = -(*item).facing_dir;
+    (*item).xD44_lifeTimer = (*item).xD48_halfLifeTimer;
+    false
+}
+
+/// `it_80273500`: sets the velocity from `arg1` and clears the other motion vectors.
+pub unsafe extern "C" fn it_80273500(item_gobj: *mut HSD_GObj, arg1: *mut Vec3) {
+    let item = item_of(item_gobj);
+    (*item).x40_vel.x = (*arg1).x;
+    (*item).x40_vel.y = (*arg1).y;
+    (*item).x40_vel.z = (*arg1).z;
+    it_8027346C(item_gobj);
+    it_80273484(item_gobj);
+    it_8027349C(item_gobj);
+    it_802734B4(item_gobj);
+}
+
+/// `it_80274658`: sets the spin speed from `arg1` (degrees) and the facing; returns the velocity direction.
+pub unsafe extern "C" fn it_80274658(item_gobj: *mut HSD_GObj, arg1: f32) -> i32 {
+    let item = item_of(item_gobj);
+    let mut spin_speed2: f32 = 0.0;
+    let spin_speed1 = (*item).spin_spd;
+    if spin_speed1 != spin_speed2 {
+        spin_speed2 = 0.01f32 * spin_speed1 * (0.017453292f32 * arg1);
+    }
+    (*item).xD3C_spinSpeed = spin_speed2;
+    let dir1: i32 = if (*item).facing_dir < 0.0 { -1 } else { 1 };
+    let dir2: i32 = if (*item).x40_vel.x < 0.0 { -1 } else { 1 };
+    if dir2 != dir1 {
+        (*item).xD3C_spinSpeed = -(*item).xD3C_spinSpeed;
+    }
+    if (*item).xDC8_word.flags.x19() != 1 {
+        (*item).xD3C_spinSpeed *= -(*item).facing_dir;
+    }
+    dir2
+}
+
+/// `it_80274990`: the item's rotation about the spin axis (`x17` selects Z, X or Y).
+pub unsafe extern "C" fn it_80274990(item_gobj: *mut HSD_GObj) -> f32 {
+    let item = item_of(item_gobj);
+    let mut item_jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
+    let bit_chk = (((*(*(*item).xC4_article_data).x10_modelDesc).xC_bit_field as u32) >> 6) & 3;
+    if bit_chk != 0 {
+        let mut var_ctr = bit_chk as i32;
+        while var_ctr > 0 {
+            item_jobj = if item_jobj.is_null() { null_mut() } else { (*item_jobj).child };
+            var_ctr -= 1;
+        }
+    }
+    if (*item).xDC8_word.flags.x17() == 0 {
+        return HSD_JObjGetRotationZ(item_jobj);
+    }
+    if (*item).xDC8_word.flags.x17() == 1 {
+        return HSD_JObjGetRotationX(item_jobj);
+    }
+    HSD_JObjGetRotationY(item_jobj)
+}
+
+/// `it_80275158`: sets both life timers.
+pub unsafe extern "C" fn it_80275158(item_gobj: *mut HSD_GObj, lifetime: f32) {
+    let item = item_of(item_gobj);
+    (*item).xD44_lifeTimer = lifetime;
+    (*item).xD48_halfLifeTimer = lifetime * (*ext::it_804D6D28).x4C_float;
+}
+
+/// `it_80275174`: sets the half life timer.
+pub unsafe extern "C" fn it_80275174(item_gobj: *mut HSD_GObj, lifetime: f32) {
+    (*item_of(item_gobj)).xD48_halfLifeTimer = lifetime * (*ext::it_804D6D28).x4C_float;
+}
+
+/// `it_80275210`: `xDC8.x1C = 1`.
+pub unsafe extern "C" fn it_80275210(item_gobj: *mut HSD_GObj) {
+    (*item_of(item_gobj)).xDC8_word.flags.set_x1C(1);
+}
+
+/// `it_80275228`: `xDC8.x1C = 0`.
+pub unsafe extern "C" fn it_80275228(item_gobj: *mut HSD_GObj) {
+    (*item_of(item_gobj)).xDC8_word.flags.set_x1C(0);
+}
+
+/// `it_80275240`: `xDC8.x1E = 0`.
+pub unsafe extern "C" fn it_80275240(item_gobj: *mut HSD_GObj) {
+    (*item_of(item_gobj)).xDC8_word.flags.set_x1E(0);
+}
+
+/// `it_80275258`: `xDD0.b4 = 0`.
+pub unsafe extern "C" fn it_80275258(item_gobj: *mut HSD_GObj) {
+    (*item_of(item_gobj)).xDD0_flag.anon_0.set_b4(0);
+}
+
+/// `it_80275270`: `xDD0.b4 = 1`.
+pub unsafe extern "C" fn it_80275270(item_gobj: *mut HSD_GObj) {
+    (*item_of(item_gobj)).xDD0_flag.anon_0.set_b4(1);
+}
+
+/// `it_80275328`: initialises an item link record for `gobj`.
+pub unsafe extern "C" fn it_80275328(gobj: *mut HSD_GObj, arg1: *mut ItemLink) {
+    (*arg1).prev = null_mut();
+    (*arg1).next = null_mut();
+    (*arg1).vel.z = 0.0;
+    (*arg1).vel.y = 0.0;
+    (*arg1).vel.x = 0.0;
+    (*arg1).pos.z = 0.0;
+    (*arg1).pos.y = 0.0;
+    (*arg1).pos.x = 0.0;
+    (*arg1).x20.z = 0.0;
+    (*arg1).x20.y = 0.0;
+    (*arg1).x20.x = 0.0;
+    (*arg1).set_x2C_b0(0);
+    (*arg1).set_x2C_b1(0);
+    (*arg1).set_x2C_b2(0);
+    (*arg1).x1CC = 0;
+    (*arg1).gobj = gobj;
+    (*arg1).jobj = null_mut();
+}
+
+/// `it_80275390`: clears the owner and flag 0x15.
+pub unsafe extern "C" fn it_80275390(item_gobj: *mut HSD_GObj) {
+    (*item_of(item_gobj)).owner = null_mut();
+    ext::it_8026B3A8(item_gobj);
 }

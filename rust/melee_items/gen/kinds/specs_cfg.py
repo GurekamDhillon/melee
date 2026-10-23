@@ -305,3 +305,54 @@ CFG["itleadead"] = dict(
     hints={"arg1": ("(int) (rnd() % 5)", "(rnd() % 5) as i32"), "arg2": ("(int) (rnd() % 6)", "(rnd() % 6) as i32"),
            "part": ("(int) (rnd() % 8)", "(rnd() % 8) as i32"), "facing_dir": ("(rnd() & 1) ? 1 : -1", "if rnd() & 1 != 0 { 1 } else { -1 }")},
 )
+
+# ---------------------------------------------------------------------------------------- itlikelike
+_ll = "IT[k].xDD4_itemVar.likelike"
+CFG["itlikelike"] = dict(
+    c_decl="static Vec3 LLX[3]; static it_804D6D40_t D40;",
+    rs_decl="static mut LLX: [Vec3; 3] = unsafe { core::mem::zeroed() }; static mut D40: it_804D6D40_t = unsafe { core::mem::zeroed() };",
+    spec=[all3("""        itLikelikeAttributes* a = (itLikelikeAttributes*) SPEC[0];
+        *(int*) &LLX[q].x = (int) (rnd() % 40); LLX[q].y = rw(); LLX[q].z = rw();
+        a->x0.x0_f32 = &LLX[q]; a->x4 = (int) (rnd() % 20); a->x8 = (int) (rnd() % 10); a->xC = (int) (rnd() % 14) + 1;
+        a->x18 = (int) (rnd() % 4); a->x1C = (float) (rnd() % 30); a->x20 = (float) (rnd() % 30); a->x24 = (float) (rnd() % 30);
+        a->x28 = (float) (rnd() % 30); a->x2C = (float) (rnd() % 30); a->x30 = rw(); a->x34 = rw(); a->x38 = (float) (rnd() % 45);
+        a->x3C = (s8) (rnd() % 3); a->x3D = (s8) (rnd() % 4); a->x3E = (s8) (rnd() % 4);""",
+           """            let a = SPECB.0[0].as_mut_ptr() as *mut itLikelikeAttributes;
+            *(&raw mut LLX[q].x as *mut i32) = (rnd() % 40) as i32; LLX[q].y = rw(); LLX[q].z = rw();
+            (*a).x0.x0_f32 = &raw mut LLX[q]; (*a).x4 = (rnd() % 20) as i32; (*a).x8 = (rnd() % 10) as i32; (*a).xC = (rnd() % 14) as i32 + 1;
+            (*a).x18 = (rnd() % 4) as i32; (*a).x1C = (rnd() % 30) as f32; (*a).x20 = (rnd() % 30) as f32; (*a).x24 = (rnd() % 30) as f32;
+            (*a).x28 = (rnd() % 30) as f32; (*a).x2C = (rnd() % 30) as f32; (*a).x30 = rw(); (*a).x34 = rw(); (*a).x38 = (rnd() % 45) as f32;
+            (*a).x3C = (rnd() % 3) as i8; (*a).x3D = (rnd() % 4) as i8; (*a).x3E = (rnd() % 4) as i8;""")],
+    tweak=tw_cat(
+        ("        it_804D6D40 = &D40; D40.x8 = (float) (rnd() % 1000) / 1000.0f;", "        m::ext::it_804D6D40 = &raw mut D40; D40.x8 = (rnd() % 1000) as f32 / 1000.0;"),
+        per_item(
+        f"""        {_ll}.x18 = (int) (rnd() % 4);
+        {_ll}.x20.x = rw(); {_ll}.x20.y = rw(); {_ll}.x20.z = rw();
+        {_ll}.x38 = (int) (rnd() % 3);
+        {_ll}.x3C = (rnd() & 1) ? 1 : ((rnd() & 1) ? -1 : 0);
+        {_ll}.x44 = (int) (rnd() % 0x40) - 2;
+        {_ll}.x48 = (int) (rnd() % 7);
+        {_ll}.x4C = (int) (rnd() % 8) - 2;
+        {_ll}.x50 = (rnd() & 1) ? &GO[(k + 1) % 3] : 0;
+        IT[k].grab_victim = ((rnd() & 3) == 0) ? {_ll}.x50 : (((rnd() & 1) ? &GO[(k + 2) % 3] : 0));
+        IT[k].atk_victim = (rnd() & 1) ? &GO[(k + 1) % 3] : 0;
+        IT[k].xC9C = (int) (rnd() % 60);
+        IT[k].x378_itemColl.ecb.top.y = rw(); IT[k].x378_itemColl.ecb.bottom.y = rw();""",
+        """        IT[k].xDD4_itemVar.likelike.x18 = (rnd() % 4) as i32;
+        IT[k].xDD4_itemVar.likelike.x20.x = rw(); IT[k].xDD4_itemVar.likelike.x20.y = rw(); IT[k].xDD4_itemVar.likelike.x20.z = rw();
+        IT[k].xDD4_itemVar.likelike.x38 = (rnd() % 3) as i32;
+        IT[k].xDD4_itemVar.likelike.x3C = if rnd() & 1 != 0 { 1 } else if rnd() & 1 != 0 { -1 } else { 0 };
+        IT[k].xDD4_itemVar.likelike.x44 = (rnd() % 0x40) as i32 - 2;
+        IT[k].xDD4_itemVar.likelike.x48 = (rnd() % 7) as i32;
+        IT[k].xDD4_itemVar.likelike.x4C = (rnd() % 8) as i32 - 2;
+        IT[k].xDD4_itemVar.likelike.x50 = if rnd() & 1 != 0 { &raw mut GO[(k + 1) % 3] } else { null_mut() };
+        IT[k].grab_victim = if rnd() & 3 == 0 { IT[k].xDD4_itemVar.likelike.x50 } else if rnd() & 1 != 0 { &raw mut GO[(k + 2) % 3] } else { null_mut() };
+        IT[k].atk_victim = if rnd() & 1 != 0 { &raw mut GO[(k + 1) % 3] } else { null_mut() };
+        IT[k].xC9C = (rnd() % 60) as i32;
+        IT[k].x378_itemColl.ecb.top.y = rw(); IT[k].x378_itemColl.ecb.bottom.y = rw();""")),
+    ptrs=("""    for (k = 0; k < 3; k++) { HM(PI(IT[k].xDD4_itemVar.likelike.x50)); IT[k].xDD4_itemVar.likelike.x50 = 0; }""",
+          """    for k in 0..3 { hm(pi(IT[k].xDD4_itemVar.likelike.x50)); IT[k].xDD4_itemVar.likelike.x50 = null_mut(); }"""),
+    hints={"arg0": ("(int) (rnd() % 3)", "(rnd() % 3) as i32"), "arg1": ("(int) (rnd() % 3) - 1", "(rnd() % 3) as i32 - 1"),
+           "arg2": ("(int) (rnd() % 3)", "(rnd() % 3) as i32")},
+    deep_ecb=True,
+)

@@ -103,3 +103,15 @@ _L["effects"].update({
 })
 
 _L["deep_ecb"] = True
+
+_K = SPECS["itlikelike"]
+_K["ret"].update({
+    "ftLib_8008627C": ("((fv() & 3) ? &GO[1] : 0)", "if fv() & 3 != 0 { &raw mut crate::GO[1] } else { core::ptr::null_mut() }"),
+    "it_80272CC0": ("&JO[3 + fv() % 3]", "&raw mut crate::JO[3 + (fv() % 3) as usize]"),
+    "it_8027B5B0": _GO2,
+    "it_8027CBFC": ("(float) (rnd() % 20)", "(rnd() % 20) as f32"),
+    "mpColl_8004C750": ("(int) (fv() & 1)", "(fv() & 1) as i32"),
+})
+_K["null_ret_ok"] += ["ftLib_8008627C", "it_8027B5B0"]
+_K["effects"].update({"ftLib_80086644": _V("a1")})
+_K["deep_ecb"] = True

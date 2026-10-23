@@ -9,7 +9,17 @@ use core::ptr::null_mut;
 use melee_core::fp::fmadds;
 use melee_types::*;
 
-// BEGIN GENERATED EXT (the callees of the C TU that are not ported in this crate)
+/// One argument of a variadic effect spawn (`efSync_Spawn` / `efAsync_Spawn` are C varargs; the port keeps the
+/// C type of each extra argument so the eventual implementation can read it back).
+#[derive(Clone, Copy)]
+pub enum EfArg {
+    Int(i32),
+    Ptr(*mut c_void),
+    F32P(*const f32),
+    Vec3P(*const Vec3),
+}
+
+// BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
@@ -31,29 +41,33 @@ pub mod ext {
     ext_fns! {
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
     fn Ground_801C2AD8() -> *mut i32;
-    fn Ground_801C2AE8(a0: StKind) -> f32;
-    fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: i32);
-    fn HSD_MemAlloc(a0: usize) -> *mut c_void;
+    fn Ground_801C2AE8(a0: u32) -> f32;
+    fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void;
     fn HSD_Randf() -> f32;
     fn HSD_Randi(a0: i32) -> i32;
     fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj;
     fn Item_80268B9C(a0: *mut SpawnItem);
-    fn Stage_80224FDC(a0: *mut Vec3) -> bool;
-    fn Stage_80225194() -> StKind;
+    fn Stage_80224FDC(a0: *mut Vec) -> i32;
+    fn Stage_80225194() -> u32;
     fn db_AreItemSpawnsEnabled() -> i32;
-    fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut Vec3) -> *mut c_void;
-    fn gm_8016AE80() -> bool;
+    fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: &[EfArg]) -> *mut c_void;
+    fn gm_8016AE80() -> i32;
     fn gm_8016AE94() -> f32;
     fn gm_8016AEA4() -> u64;
-    fn gm_8016B238() -> bool;
-    fn it_80272828(a0: ItemKind) -> *mut HSD_GObj;
+    fn gm_8016B238() -> i32;
+    fn it_8026B684(a0: *mut Vec) -> f32;
+    fn it_80272828(a0: i32) -> *mut HSD_GObj;
     fn it_80274ED8();
-    fn it_8026B684(a0: *mut Vec3) -> f32;
-    fn mpColl_8004D024(a0: *mut Vec3) -> bool;
+    fn mpColl_8004D024(a0: *mut Vec) -> i32;
     }
-    // Data defined in other TUs (set by the crate's init / the tests).
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
     pub static mut Item_804A0C64: HSD_ObjAllocUnk = unsafe { core::mem::zeroed() };
-    pub static mut it_804D6D28: *mut ItemCommonData = core::ptr::null_mut();
+    pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
 }
 // END GENERATED EXT
 
@@ -220,7 +234,7 @@ unsafe fn it_8026C88C_inline(alloc: *mut RandomItemSpawner) {
                 if chk {
                     spawn_gobj = ext::Item_80268B18(&raw mut spawn);
                     if !spawn_gobj.is_null() {
-                        ext::efSync_Spawn(0x420, spawn_gobj, pos);
+                        ext::efSync_Spawn(0x420, spawn_gobj, &[EfArg::Vec3P(pos)]);
                         ext::it_80274ED8();
                     }
                 }
@@ -265,11 +279,11 @@ pub unsafe extern "C" fn it_8026CA4C(alloc: *mut ItemPickTable, arg1: *mut i32, 
 
 /// `it_8026CB3C`: true when `vec` is over a stage floor that is not blocked by a map collision.
 pub unsafe extern "C" fn it_8026CB3C(vec: *mut Vec3) -> bool {
-    if !ext::Stage_80224FDC(vec) {
+    if ext::Stage_80224FDC(vec) == 0 {
         return false;
     }
     (*vec).z = 0.0;
-    if ext::mpColl_8004D024(vec) {
+    if ext::mpColl_8004D024(vec) != 0 {
         return false;
     }
     true
@@ -302,9 +316,9 @@ pub unsafe extern "C" fn it_8026CB9C(counts: *mut i32, mask: u64, weight: f32) {
     }
     (*spawner).x4.size = cnt as u8;
     let item_kinds: *mut *mut u8 = &raw mut (*spawner).x4.x4;
-    *item_kinds = ext::HSD_MemAlloc((cnt * 4) as usize) as *mut u8;
+    *item_kinds = ext::HSD_MemAlloc((cnt * 4) as i32) as *mut u8;
     let weights: *mut *mut u16 = &raw mut (*spawner).x4.xC;
-    *weights = ext::HSD_MemAlloc((cnt * 4) as usize) as *mut u16;
+    *weights = ext::HSD_MemAlloc((cnt * 4) as i32) as *mut u16;
 
     idx = 0;
     cnt2 = 0;
@@ -354,9 +368,9 @@ pub unsafe extern "C" fn it_8026CD50(counts: *mut i32, mask: u64, weight: f32) {
     let tbl = &raw mut it_804A0E50;
     (*tbl).size = cnt as u8;
     let item_kinds: *mut *mut u8 = &raw mut (*tbl).x4;
-    *item_kinds = ext::HSD_MemAlloc((cnt * 4) as usize) as *mut u8;
+    *item_kinds = ext::HSD_MemAlloc((cnt * 4) as i32) as *mut u8;
     let weights: *mut *mut u16 = &raw mut (*tbl).xC;
-    *weights = ext::HSD_MemAlloc((cnt * 4) as usize) as *mut u16;
+    *weights = ext::HSD_MemAlloc((cnt * 4) as i32) as *mut u16;
 
     idx = 0;
     cnt2 = 0;
@@ -394,8 +408,8 @@ pub unsafe extern "C" fn it_8026CF04() {
         let tbl = &raw mut it_804A0E60;
         (*tbl).x8 = sum as u16;
         (*tbl).size = 4;
-        (*tbl).x4 = ext::HSD_MemAlloc(((*tbl).size as usize) * 4) as *mut u8;
-        (*tbl).xC = ext::HSD_MemAlloc(((*tbl).size as usize) * 4) as *mut u16;
+        (*tbl).x4 = ext::HSD_MemAlloc((((*tbl).size as usize) * 4) as i32) as *mut u8;
+        (*tbl).xC = ext::HSD_MemAlloc((((*tbl).size as usize) * 4) as i32) as *mut u16;
         idx = 0;
         i = 0;
         cumulative = 0;
@@ -453,14 +467,16 @@ unsafe fn it_8026D018_inline3(randf: f32, range: *const i32) {
 
 /// `it_8026D018`: sets up the item spawner for the match (called at match start).
 pub unsafe extern "C" fn it_8026D018() {
-    if !ext::gm_8016B238() && (ext::gm_8016AE80() as i32) != -1 {
+    if ext::gm_8016B238() == 0 && (ext::gm_8016AE80() as i32) != -1 {
         it_804A0E30.x18 = ext::gm_8016AEA4();
         if it_8026D018_inline() {
             it_8026D018_inline2();
             it_8026CF04();
             ext::HSD_GObj_SetupProc(ext::GObj_Create(5, 7, 0), Some(fn_8026C88C), 0);
+            // argument order: HSD_Randf() is evaluated before gm_8016AE80() (left to right)
+            let randf = ext::HSD_Randf();
             let idx = (ext::gm_8016AE80() as i32) * 2;
-            it_8026D018_inline3(ext::HSD_Randf(), (*ext::it_804D6D28).xFC.as_ptr().add(idx as usize));
+            it_8026D018_inline3(randf, (*ext::it_804D6D28).xFC.as_ptr().offset(idx as isize));
         }
     }
 }

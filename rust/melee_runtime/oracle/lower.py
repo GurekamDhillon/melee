@@ -4,6 +4,7 @@
 #   makeArithmeticSafe (float->int only): fptosi/fptoui to i32 -> llvm.fpto[su]i.sat.i32
 #   makeArithmeticSafe (variable shifts): i32/i64 shift by >= width -> 0 (ashr: sign fill)
 # Integer div/rem safety is not applied (no such operand reaches the oracle's inputs).
+import os
 import re
 import sys
 
@@ -45,6 +46,10 @@ fpn = re.compile(r'^(\s*)(%[\w.]+) = fpto([su])i (float|double) ([^ ]+) to (i8|i
 
 def nrep(m):
     ind, r, su, t, v, w = m.groups()
+    if os.environ.get('GW_NARROW_FPTOUI_AS_SI'):
+        # gwtool.cpp (FPToSI / FPToUI, W < 32): fctiwz = a SIGNED 32-bit saturate, then truncate, for
+        # unsigned targets too (so (u8) -1.0f is 255, not 0). Opt-in: older oracles were built without it.
+        su = 's'
     name = f'@llvm.fpto{su}i.sat.i32.{"f32" if t == "float" else "f64"}'
     used.add((name, t))
     return f'{ind}%gwn{r.lstrip("%")} = call i32 {name}({t} {v})\n{ind}{r} = trunc i32 %gwn{r.lstrip("%")} to {w}'

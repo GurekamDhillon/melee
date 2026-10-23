@@ -116,3 +116,207 @@ STEMS["itgroundcoll"] = dict()
 STEMS["itmaplib"] = dict(
     setup=("for (i = 0; i < 8; i++) JO[i].flags &= ~JOBJ_USE_QUATERNION;", "for i in 0..8 { JO[i].flags &= !(JOBJ_USE_QUATERNION as u32); }"),
 )
+
+_ITEM_C = r"""
+struct it_MObjInfo { char pad[64]; };
+struct it_MObjInfo it_mobj;
+static HSD_AnimJoint AJ[4]; static HSD_MatAnimJoint MJ[4]; static HSD_ShapeAnimJoint SJ[4];
+static ItemModelDesc MD[2]; static ItemDynamics DY[2]; static BoneDynamicsDesc BDD[4];
+static ItemStateArray STA; static HSD_Joint JNT[2];
+static Article* A24[43]; static Article* A38[118]; static Article* A30[47];
+static Fighter_804D653C_t CA04[4];
+static s32 pick_kind(int spawn)
+{
+    u32 r = rnd();
+    switch (r & 7) {
+    case 0: return 0x1000 + (r >> 8) % 0x200;
+    case 1: return 0x1200 + (r >> 8) % 0x50;
+    case 2: return spawn ? 5000 + (r >> 8) % 40 : (s32) ((r >> 8) % 300);
+    case 3: return 0x20000 + (r >> 8) % 20;
+    default: return (r >> 8) % 300;
+    }
+}
+"""
+_ITEM_R = r"""
+const _: () = assert!(core::mem::size_of::<HSD_DObj>() <= 64);
+static mut AJ: [HSD_AnimJoint; 4] = unsafe { core::mem::zeroed() };
+static mut MJ: [HSD_MatAnimJoint; 4] = unsafe { core::mem::zeroed() };
+static mut SJ: [HSD_ShapeAnimJoint; 4] = unsafe { core::mem::zeroed() };
+static mut MD: [ItemModelDesc; 2] = unsafe { core::mem::zeroed() };
+static mut DY: [ItemDynamics; 2] = unsafe { core::mem::zeroed() };
+static mut BDD: [BoneDynamicsDesc; 4] = unsafe { core::mem::zeroed() };
+static mut STA: ItemStateArray = unsafe { core::mem::zeroed() };
+static mut JNT: [HSD_Joint; 2] = unsafe { core::mem::zeroed() };
+static mut A24: [*mut Article; 43] = [null_mut(); 43];
+static mut A38: [*mut Article; 118] = [null_mut(); 118];
+static mut A30: [*mut Article; 47] = [null_mut(); 47];
+static mut CA04: [Fighter_804D653C_t; 4] = unsafe { core::mem::zeroed() };
+fn pick_kind(spawn: bool) -> i32 {
+    let r = rnd();
+    match r & 7 {
+        0 => 0x1000 + ((r >> 8) % 0x200) as i32,
+        1 => 0x1200 + ((r >> 8) % 0x50) as i32,
+        2 => if spawn { 5000 + ((r >> 8) % 40) as i32 } else { ((r >> 8) % 300) as i32 },
+        3 => 0x20000 + ((r >> 8) % 20) as i32,
+        _ => ((r >> 8) % 300) as i32,
+    }
+}
+"""
+_ITEM_SETUP_C = r"""
+{
+    int k;
+    zero(AJ, sizeof AJ); zero(MJ, sizeof MJ); zero(SJ, sizeof SJ); zero(MD, sizeof MD); zero(DY, sizeof DY); zero(BDD, sizeof BDD);
+    zero(&STA, sizeof STA); zero(JNT, sizeof JNT); zero(DOBBUF, sizeof DOBBUF); zero(CA04, sizeof CA04);
+    for (i = 0; i < 4; i++) {
+        AJ[i].child = (i < 3 && (rnd() & 1)) ? &AJ[i + 1 + rnd() % (3 - i)] : 0;
+        AJ[i].next = (i < 3 && (rnd() & 1)) ? &AJ[i + 1 + rnd() % (3 - i)] : 0;
+        MJ[i].child = (i < 3 && (rnd() & 1)) ? &MJ[i + 1 + rnd() % (3 - i)] : 0;
+        MJ[i].next = (i < 3 && (rnd() & 1)) ? &MJ[i + 1 + rnd() % (3 - i)] : 0;
+        SJ[i].child = (i < 3 && (rnd() & 1)) ? &SJ[i + 1 + rnd() % (3 - i)] : 0;
+        SJ[i].next = (i < 3 && (rnd() & 1)) ? &SJ[i + 1 + rnd() % (3 - i)] : 0;
+        ((HSD_DObj*) DOBBUF[i])->next = i < 3 ? (HSD_DObj*) DOBBUF[i + 1] : 0;
+        ((HSD_DObj*) DOBBUF[i])->mobj = (rnd() & 1) ? (HSD_MObj*) &U8A[0] : 0;
+        BDD[i].bone_id = rnd() % 4;
+        CA04[i].unk5 = (u8) (rnd() & 1);
+        STT[i].anim_id = (int) (rnd() % 9) - 1;
+    }
+    for (k = 0; k < 8; k++) {
+        STA.x0_itemStateDesc[k].x0_anim_joint = (rnd() & 3) ? &AJ[rnd() % 4] : 0;
+        STA.x0_itemStateDesc[k].x4_matanim_joint = (rnd() & 3) ? &MJ[rnd() % 4] : 0;
+        STA.x0_itemStateDesc[k].x8_parameters = (rnd() & 3) ? &SJ[rnd() % 4] : 0;
+    }
+    for (i = 0; i < 3; i++) {
+        SDS[i].x0_anim_joint = (rnd() & 3) ? &AJ[rnd() % 4] : 0;
+        SDS[i].x4_matanim_joint = (rnd() & 3) ? &MJ[rnd() % 4] : 0;
+        SDS[i].x8_parameters = (rnd() & 3) ? &SJ[rnd() % 4] : 0;
+    }
+    for (i = 0; i < 2; i++) {
+        int bc = (rnd() % 3 == 0) ? 0 : (int) (rnd() % 4) + 1;
+        ART[i].x0_common_attr = &ATTR[i];
+        ART[i].xC_itemStates = &STA;
+        ART[i].x10_modelDesc = &MD[i];
+        MD[i].x0_joint = (rnd() & 1) ? (HSD_Joint*) &JNT[rnd() & 1] : 0;
+        MD[i].x4_bone_count = bc;
+        DY[i].count = rnd() % 4;
+        DY[i].dyn_descs = BDD;
+        ART[i].x14_dynamics = (bc && (rnd() & 1)) ? &DY[i] : 0;
+    }
+    for (k = 0; k < 43; k++) A24[k] = (CUR_OP == OP_Item_8026862C && k % 17 == 5) ? 0 : &ART[rnd() % 2];
+    for (k = 0; k < 118; k++) A38[k] = (CUR_OP == OP_Item_8026862C && k % 17 == 5) ? 0 : &ART[rnd() % 2];
+    for (k = 0; k < 47; k++) A30[k] = (CUR_OP == OP_Item_8026862C && k % 17 == 5) ? 0 : &ART[rnd() % 2];
+    for (k = 0; k < 30; k++) it_804A0F60[k] = &ART[rnd() % 2];
+    it_804D6D24 = A24; it_804D6D38 = A38; it_804D6D30 = A30; it_804D6D04 = CA04;
+    for (i = 0; i < 4; i++) {
+        IT[i].kind = pick_kind(0);
+        IT[i].x374_dynamicBonesNum = rnd() % 5;
+        IT[i].atk_victim = pick_igo();
+        IT[i].grab_victim = pick_igo();
+        IT[i].grab_dealt = (__typeof__(IT[0].grab_dealt)) pick_cb(1);
+        IT[i].grabbed_for_victim = (__typeof__(IT[0].grabbed_for_victim)) pick_cb(3);
+        IT[i].xC8_joint = (rnd() & 1) ? &JNT[rnd() & 1] : 0;
+        IT[i].x548_colorOverlay.x28_colanim.i = rnd() % 4;
+        IT[i].xC6C = (float) (rnd() % 5) * 0.5f;
+        /* xD90.x2070_int <- xC74 is a whole-word write over a bitfield overlay (x86 LSB-first vs GC MSB-first views): only bytes 0 and 3 vary */
+        IT[i].xC74 = (s32) ((rnd() & 0xFF) | ((rnd() & 0xFF) << 24));
+    }
+    for (i = 0; i < 8; i++) JO[i].flags &= ~JOBJ_USE_QUATERNION;
+    SP.kind = pick_kind(1);
+    for (i = 0; i < 26; i++) ((s32*) &Item_804A0C64)[i] = (s32) (fv() & 7);
+    Item_804A0CCC.count = rnd(); Item_804A0CCC.x154.b0 = rnd() & 1; Item_804A0CCC.x154.b1 = rnd() & 1; Item_804A0CCC.x154.b2 = rnd() & 1; Item_804A0CCC.x154.b3 = rnd() & 1; Item_804A0CCC.x154.b4 = rnd() & 1; Item_804A0CCC.x154.b5 = rnd() & 1; Item_804A0CCC.x154.b6 = rnd() & 1; Item_804A0CCC.x154.b7 = rnd() & 1; for (i = 0; i < 0xB0; i++) ((u8*) &Item_804A0CCC)[i] = (u8) rnd();
+    Item_804A0E24.last_kind = (s32) rnd(); Item_804A0E24.previous_kind = (s32) rnd(); Item_804A0E24.rare_spawned = rnd() & 1;
+}
+"""
+
+_ITEM_SETUP_R = r"""
+{
+    AJ = core::mem::zeroed(); MJ = core::mem::zeroed(); SJ = core::mem::zeroed(); MD = core::mem::zeroed(); DY = core::mem::zeroed();
+    BDD = core::mem::zeroed(); STA = core::mem::zeroed(); JNT = core::mem::zeroed(); DOBBUF = [[0; 8]; 4]; CA04 = core::mem::zeroed();
+    for i in 0..4usize {
+        AJ[i].child = if i < 3 && (rnd() & 1) != 0 { &raw mut AJ[i + 1 + (rnd() % (3 - i) as u32) as usize] } else { null_mut() };
+        AJ[i].next = if i < 3 && (rnd() & 1) != 0 { &raw mut AJ[i + 1 + (rnd() % (3 - i) as u32) as usize] } else { null_mut() };
+        MJ[i].child = if i < 3 && (rnd() & 1) != 0 { &raw mut MJ[i + 1 + (rnd() % (3 - i) as u32) as usize] } else { null_mut() };
+        MJ[i].next = if i < 3 && (rnd() & 1) != 0 { &raw mut MJ[i + 1 + (rnd() % (3 - i) as u32) as usize] } else { null_mut() };
+        SJ[i].child = if i < 3 && (rnd() & 1) != 0 { &raw mut SJ[i + 1 + (rnd() % (3 - i) as u32) as usize] } else { null_mut() };
+        SJ[i].next = if i < 3 && (rnd() & 1) != 0 { &raw mut SJ[i + 1 + (rnd() % (3 - i) as u32) as usize] } else { null_mut() };
+        (*((&raw mut DOBBUF[i]) as *mut HSD_DObj)).next = if i < 3 { (&raw mut DOBBUF[i + 1]) as *mut HSD_DObj } else { null_mut() };
+        (*((&raw mut DOBBUF[i]) as *mut HSD_DObj)).mobj = if rnd() & 1 != 0 { (&raw mut U8A[0]) as *mut HSD_MObj } else { null_mut() };
+        BDD[i].bone_id = (rnd() % 4) as _;
+        CA04[i].unk5 = (rnd() & 1) as u8;
+        STT[i].anim_id = (rnd() % 9) as i32 - 1;
+    }
+    for k in 0..8usize {
+        STA.x0_itemStateDesc[k].x0_anim_joint = if rnd() & 3 != 0 { &raw mut AJ[(rnd() % 4) as usize] } else { null_mut() };
+        STA.x0_itemStateDesc[k].x4_matanim_joint = if rnd() & 3 != 0 { &raw mut MJ[(rnd() % 4) as usize] } else { null_mut() };
+        STA.x0_itemStateDesc[k].x8_parameters = if rnd() & 3 != 0 { &raw mut SJ[(rnd() % 4) as usize] } else { null_mut() };
+    }
+    for i in 0..3usize {
+        SDS[i].x0_anim_joint = if rnd() & 3 != 0 { &raw mut AJ[(rnd() % 4) as usize] } else { null_mut() };
+        SDS[i].x4_matanim_joint = if rnd() & 3 != 0 { &raw mut MJ[(rnd() % 4) as usize] } else { null_mut() };
+        SDS[i].x8_parameters = if rnd() & 3 != 0 { &raw mut SJ[(rnd() % 4) as usize] } else { null_mut() };
+    }
+    for i in 0..2usize {
+        let bc: i32 = if rnd() % 3 == 0 { 0 } else { (rnd() % 4) as i32 + 1 };
+        ART[i].x0_common_attr = &raw mut ATTR[i];
+        ART[i].xC_itemStates = &raw mut STA;
+        ART[i].x10_modelDesc = &raw mut MD[i];
+        MD[i].x0_joint = if rnd() & 1 != 0 { (&raw mut JNT[(rnd() & 1) as usize]) as *mut _ } else { null_mut() };
+        MD[i].x4_bone_count = bc as _;
+        DY[i].count = (rnd() % 4) as i32;
+        DY[i].dyn_descs = (&raw mut BDD) as *mut BoneDynamicsDesc;
+        ART[i].x14_dynamics = if bc != 0 && (rnd() & 1) != 0 { &raw mut DY[i] } else { null_mut() };
+    }
+    for k in 0..43usize { A24[k] = if CUR_OP == OP_Item_8026862C && k % 17 == 5 { null_mut() } else { &raw mut ART[(rnd() % 2) as usize] }; }
+    for k in 0..118usize { A38[k] = if CUR_OP == OP_Item_8026862C && k % 17 == 5 { null_mut() } else { &raw mut ART[(rnd() % 2) as usize] }; }
+    for k in 0..47usize { A30[k] = if CUR_OP == OP_Item_8026862C && k % 17 == 5 { null_mut() } else { &raw mut ART[(rnd() % 2) as usize] }; }
+    for k in 0..30usize { m::ext::it_804A0F60[k] = &raw mut ART[(rnd() % 2) as usize]; }
+    m::ext::it_804D6D24 = (&raw mut A24) as *mut *mut Article;
+    m::ext::it_804D6D38 = (&raw mut A38) as *mut *mut Article;
+    m::ext::it_804D6D30 = (&raw mut A30) as *mut *mut Article;
+    m::ext::it_804D6D04 = (&raw mut CA04) as *mut Fighter_804D653C_t;
+    for i in 0..4usize {
+        IT[i].kind = pick_kind(false) as _;
+        IT[i].x374_dynamicBonesNum = (rnd() % 5) as i32;
+        IT[i].atk_victim = pick_igo();
+        IT[i].grab_victim = pick_igo();
+        IT[i].grab_dealt = core::mem::transmute::<usize, _>(pick_cb(1));
+        IT[i].grabbed_for_victim = core::mem::transmute::<usize, _>(pick_cb(3));
+        IT[i].xC8_joint = if rnd() & 1 != 0 { &raw mut JNT[(rnd() & 1) as usize] } else { null_mut() };
+        IT[i].x548_colorOverlay.x28_colanim.i = (rnd() % 4) as _;
+        IT[i].xC6C = (rnd() % 5) as f32 * 0.5;
+        IT[i].xC74 = ((rnd() & 0xFF) | ((rnd() & 0xFF) << 24)) as i32;
+    }
+    for i in 0..8usize { JO[i].flags &= !(JOBJ_USE_QUATERNION as u32); }
+    SP.kind = pick_kind(true) as _;
+    for i in 0..26usize { *((&raw mut m::Item_804A0C64) as *mut i32).add(i) = (fv() & 7) as i32; }
+    m::Item_804A0CCC.count = rnd() as _; m::Item_804A0CCC.x154.anon_0.set_b0((rnd() & 1) as u8); m::Item_804A0CCC.x154.anon_0.set_b1((rnd() & 1) as u8); m::Item_804A0CCC.x154.anon_0.set_b2((rnd() & 1) as u8); m::Item_804A0CCC.x154.anon_0.set_b3((rnd() & 1) as u8); m::Item_804A0CCC.x154.anon_0.set_b4((rnd() & 1) as u8); m::Item_804A0CCC.x154.anon_0.set_b5((rnd() & 1) as u8); m::Item_804A0CCC.x154.anon_0.set_b6((rnd() & 1) as u8); m::Item_804A0CCC.x154.anon_0.set_b7((rnd() & 1) as u8); for i in 0..0xB0usize { *((&raw mut m::Item_804A0CCC) as *mut u8).add(i) = rnd() as u8; }
+    m::Item_804A0E24.last_kind = rnd() as i32; m::Item_804A0E24.previous_kind = rnd() as i32; m::Item_804A0E24.rare_spawned = (rnd() & 1) as _;
+}
+"""
+
+_ITEM_PREG_C = ("preg(AJ, sizeof AJ); preg(MJ, sizeof MJ); preg(SJ, sizeof SJ); preg(MD, sizeof MD); preg(DY, sizeof DY); preg(BDD, sizeof BDD); "
+                "preg(&STA, sizeof STA); preg(JNT, sizeof JNT); preg(DOBBUF, sizeof DOBBUF); preg(A24, sizeof A24); preg(A38, sizeof A38); preg(A30, sizeof A30); "
+                "preg(CA04, sizeof CA04); preg(&item_alloc_data, sizeof item_alloc_data); preg(&item_dynamic_bones_alloc_data, sizeof item_dynamic_bones_alloc_data); "
+                "preg(&item_link_alloc_data, sizeof item_link_alloc_data); preg(&Item_804A0C64, sizeof Item_804A0C64);")
+_ITEM_PREG_R = ("preg(&raw const AJ, core::mem::size_of_val(&AJ)); preg(&raw const MJ, core::mem::size_of_val(&MJ)); preg(&raw const SJ, core::mem::size_of_val(&SJ)); "
+                "preg(&raw const MD, core::mem::size_of_val(&MD)); preg(&raw const DY, core::mem::size_of_val(&DY)); preg(&raw const BDD, core::mem::size_of_val(&BDD)); "
+                "preg(&raw const STA, core::mem::size_of_val(&STA)); preg(&raw const JNT, core::mem::size_of_val(&JNT)); preg(&raw const DOBBUF, core::mem::size_of_val(&DOBBUF)); "
+                "preg(&raw const A24, core::mem::size_of_val(&A24)); preg(&raw const A38, core::mem::size_of_val(&A38)); preg(&raw const A30, core::mem::size_of_val(&A30)); "
+                "preg(&raw const CA04, core::mem::size_of_val(&CA04)); preg(&raw const m::item_alloc_data, core::mem::size_of_val(&m::item_alloc_data)); "
+                "preg(&raw const m::item_dynamic_bones_alloc_data, core::mem::size_of_val(&m::item_dynamic_bones_alloc_data)); "
+                "preg(&raw const m::item_link_alloc_data, core::mem::size_of_val(&m::item_link_alloc_data)); preg(&raw const m::Item_804A0C64, core::mem::size_of_val(&m::Item_804A0C64));")
+_SFX = ("((rnd() % 4) == 0 ? 540000 + (int) (rnd() & 1) : (rnd() % 3) == 0 ? 5000 + (int) (rnd() % 5000) : (int) fv())",
+        "(if rnd() % 4 == 0 { 540000 + (rnd() & 1) as i32 } else if rnd() % 3 == 0 { 5000 + (rnd() % 5000) as i32 } else { fv() as i32 }) as _")
+STEMS["item"] = dict(
+    c_pre="static unsigned char DOBBUF[4][64] __attribute__((aligned(16)));",
+    c_extra=_ITEM_C,
+    rs_extra=_ITEM_R + "pub static mut DOBBUF: [[u64; 8]; 4] = [[0; 8]; 4];",
+    pregs=(_ITEM_PREG_C, _ITEM_PREG_R),
+    setup=(_ITEM_SETUP_C, _ITEM_SETUP_R),
+    hash=("HM(RH(&Item_804A0C64, sizeof Item_804A0C64)); HM((u32) Item_804A0CCC.count); HM((u32) Item_804A0CCC.x154.b0); HM((u32) Item_804A0CCC.x154.b1); HM((u32) Item_804A0CCC.x154.b2); HM((u32) Item_804A0CCC.x154.b3); HM((u32) Item_804A0CCC.x154.b4); HM((u32) Item_804A0CCC.x154.b5); HM((u32) Item_804A0CCC.x154.b6); HM((u32) Item_804A0CCC.x154.b7); HM(RH(Item_804A0CCC.ecb_offset_arr, sizeof Item_804A0CCC.ecb_offset_arr)); HM((u32) Item_804A0E24.last_kind); HM((u32) Item_804A0E24.previous_kind); HM((u32) Item_804A0E24.rare_spawned);",
+          "hm(rh(&m::Item_804A0C64)); hm(m::Item_804A0CCC.count as u32); hm(m::Item_804A0CCC.x154.anon_0.b0() as u32); hm(m::Item_804A0CCC.x154.anon_0.b1() as u32); hm(m::Item_804A0CCC.x154.anon_0.b2() as u32); hm(m::Item_804A0CCC.x154.anon_0.b3() as u32); hm(m::Item_804A0CCC.x154.anon_0.b4() as u32); hm(m::Item_804A0CCC.x154.anon_0.b5() as u32); hm(m::Item_804A0CCC.x154.anon_0.b6() as u32); hm(m::Item_804A0CCC.x154.anon_0.b7() as u32); hm(rh(&m::Item_804A0CCC.ecb_offset_arr)); hm(m::Item_804A0E24.last_kind as u32); hm(m::Item_804A0E24.previous_kind as u32); hm(m::Item_804A0E24.rare_spawned as u32);"),
+    ov={"Item_80268E5C": {1: ("fv() & 3", "(fv() & 3) as _")},
+        "Item_80268BE0": {1: ("((rnd() & 3) ? &AJ[rnd() % 4] : 0)", "if rnd() & 3 != 0 { &raw mut AJ[(rnd() % 4) as usize] } else { null_mut() }"),
+                          2: ("((rnd() & 3) ? &MJ[rnd() % 4] : 0)", "if rnd() & 3 != 0 { &raw mut MJ[(rnd() % 4) as usize] } else { null_mut() }"),
+                          3: ("((rnd() & 3) ? &SJ[rnd() % 4] : 0)", "if rnd() & 3 != 0 { &raw mut SJ[(rnd() % 4) as usize] } else { null_mut() }")},
+        "Item_8026AE84": {1: _SFX}, "Item_8026AF0C": {1: _SFX}, "Item_8026AFA0": {1: _SFX}},
+)

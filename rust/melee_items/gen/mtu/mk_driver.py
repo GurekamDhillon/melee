@@ -280,6 +280,8 @@ PTR = {  # pointee record -> (C expr, Rust expr)
     "_itECB": ("&EC[rnd() % 3]", "&raw mut EC[(rnd() % 3) as usize]"),
     "CollData": ("&IT[rnd() % 4].x378_itemColl", "&raw mut IT[(rnd() % 4) as usize].x378_itemColl"),
     "SpawnItem": ("&SP", "&raw mut SP"),
+    "HSD_JObj": ("&JO[rnd() % 8]", "&raw mut JO[(rnd() % 8) as usize]"),
+    "ItemStateDesc": ("&SDS[rnd() % 3]", "&raw mut SDS[(rnd() % 3) as usize]"),
 }
 FNK = {"void (struct HSD_GObj *)": 1, "int (struct HSD_GObj *)": 2, "void (struct HSD_GObj *, struct HSD_GObj *)": 3}
 
@@ -311,6 +313,8 @@ def bind(ptype):
         if pt.kind == T.UINT:
             return ("UA", "(&raw mut UA) as *mut u32")
         raise SystemExit(f"no binding for pointer to {pt.spelling}")
+    if k == T.BOOL or ptype.spelling == "bool":
+        return "fv()", "fv() != 0"
     if k in gen_tu.INTS or k == T.ENUM:
         return "fv()", "fv() as _"
     raise SystemExit(f"no binding for {ptype.spelling}")
@@ -388,7 +392,7 @@ def emit(stem):
          "/* C oracle for the Rust port of this TU: the whole TU included verbatim; every callee out of it is a",
          " * recording stub. Written by gen/mtu/mk_driver.py. Each line: op case ret state-hash trace-hash. */",
          cfg.get("c_pre", ""), "#include TU_SRC", '#include "mtu_common.h"', '#include "world.h"', f'#include "{stem}_gen.h"', "",
-         setup_hdr[0], setup_hdr[1], cfg.get("c_extra", ""), "",
+         setup_hdr[0], setup_hdr[1], "static int CUR_OP = -1;", "enum { " + ", ".join(f"OP_{o['name']} = {i}" for i, o in enumerate(ops)) + " };", cfg.get("c_extra", ""), "",
          "static void setup_stem(void)", "{", "    int i;", "    (void) i;", gsetup_c, cfg.get("setup", ("", ""))[0], "}", "",
          "static void hash_stem(void)", "{", "    int i;", "    (void) i;", "    hashg_all();", ghash_c, cfg.get("hash", ("", ""))[0], "}", "",
          "int main(int argc, char** argv)", "{", "    int op, k, only = -1;",
@@ -401,7 +405,7 @@ def emit(stem):
     for i, o in enumerate(ops):
         c.append(f"        case {i}: n = {o['n']}; ft = {1 if o['ft'] else 0}; break;  /* {o['name']} */")
     c += ["        }", "        for (k = 0; k < n; k++) {", "            u32 ret = 0;", "            tu_case(op, k);", "            setup_world();",
-          "            setup_stem();", '            if (getenv("MTU_PROG")) { printf("P %d %d%c", op, k, 10); fflush(0); }', "            switch (op) {"]
+          "            CUR_OP = op;", "            setup_stem();", '            if (getenv("MTU_PROG")) { printf("P %d %d%c", op, k, 10); fflush(0); }', "            switch (op) {"]
     for i, o in enumerate(ops):
         c.append(f"            case {i}: {{ {o['c']} }} break;")
     c += ["            }", "            hash_world(ft);", "            hash_stem();",
@@ -415,7 +419,7 @@ def emit(stem):
          f"//! with `python rust/melee_items/gen/mtu/run_tu.py {stem}`).",
          "#![allow(static_mut_refs, non_snake_case, non_upper_case_globals, unused_imports, unused_mut, unused_assignments, unused_variables, unused_unsafe)]",
          "mod mtu_harness;", "use core::ffi::c_void;", "use core::ptr::null_mut;", "use melee_types::*;", f"use melee_items::tu::{stem} as m;",
-         "use mtu_harness::*;", f'#[path = "mtu/{stem}_gen.rs"]', "mod g;", "", cfg.get("rs_extra", ""), "",
+         "use mtu_harness::*;", f'#[path = "mtu/{stem}_gen.rs"]', "mod g;", "", "static mut CUR_OP: i32 = -1;", *[f"const OP_{o['name']}: i32 = {i};" for i, o in enumerate(ops)], cfg.get("rs_extra", ""), "",
          "unsafe fn setup_stem() {", gsetup_r, cfg.get("setup", ("", ""))[1], "}", "",
          "unsafe fn hash_stem() {", "    g::hashg_all();", ghash_r, cfg.get("hash", ("", ""))[1], "}", "",
          "#[test]", f"fn {stem}_matches_c() {{", "    unsafe {", "        g::install();", "        preg_world();", "        g::freg_all();",
@@ -425,7 +429,7 @@ def emit(stem):
     for i, o in enumerate(ops):
         r.append(f"                {i} => ({o['n']}u32, {'true' if o['ft'] else 'false'}),")
     r += ["                _ => unreachable!(),", "            };", "            for k in 0..n {", "                case(op, k);",
-          "                setup_world();", "                setup_stem();", "                let mut ret = 0u32;", "                match op {"]
+          "                setup_world();", "                CUR_OP = op as i32;", "                setup_stem();", "                let mut ret = 0u32;", "                match op {"]
     for i, o in enumerate(ops):
         r.append(f"                    {i} => {{ {o['r']} }}")
     r += ["                    _ => unreachable!(),", "                }", "                hash_world(ft);", "                hash_stem();",

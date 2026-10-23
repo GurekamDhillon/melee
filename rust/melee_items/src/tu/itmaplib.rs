@@ -104,8 +104,8 @@ unsafe fn HSD_JObjSetMtxDirty(jobj: *mut HSD_JObj) {
 
 #[inline(always)]
 unsafe fn HSD_JObjSetRotationX(jobj: *mut HSD_JObj, x: f32) {
-    assert!(!jobj.is_null(), "HSD_ASSERT(649, jobj)");
-    assert!((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, "HSD_ASSERT(650, !(jobj->flags & JOBJ_USE_QUATERNION))");
+    assert!(!jobj.is_null(), "HSD_ASSERT(639, jobj)");
+    assert!((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, "HSD_ASSERT(640, !(jobj->flags & JOBJ_USE_QUATERNION))");
     (*jobj).rotate.x = x;
     if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
         HSD_JObjSetMtxDirty(jobj);
@@ -113,8 +113,8 @@ unsafe fn HSD_JObjSetRotationX(jobj: *mut HSD_JObj, x: f32) {
 }
 #[inline(always)]
 unsafe fn HSD_JObjSetRotationY(jobj: *mut HSD_JObj, y: f32) {
-    assert!(!jobj.is_null(), "HSD_ASSERT(665, jobj)");
-    assert!((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, "HSD_ASSERT(666, !(jobj->flags & JOBJ_USE_QUATERNION))");
+    assert!(!jobj.is_null(), "HSD_ASSERT(660, jobj)");
+    assert!((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, "HSD_ASSERT(661, !(jobj->flags & JOBJ_USE_QUATERNION))");
     (*jobj).rotate.y = y;
     if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
         HSD_JObjSetMtxDirty(jobj);

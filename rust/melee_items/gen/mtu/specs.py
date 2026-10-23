@@ -70,3 +70,22 @@ add("itgroundcoll", "src/melee/it/itgroundcoll.c",
 
 add("itmaplib", "src/melee/it/itmaplib.c", skip_stubs=["__frsqrte"],
     ret={"it_80272CC0": ("&JO[rnd() % 8]", "&raw mut JO[(rnd() % 8) as usize]"), "it_80272D40": ("(int) (fv() & 1)", "(fv() & 1) as i32")})
+
+_ART = ("&ART[rnd() % 2]", "&raw mut ART[(rnd() % 2) as usize] as *mut _")
+_LT = ("&LT[rnd() % 2]", "&raw mut LT[(rnd() % 2) as usize] as *mut _")
+add("item", "src/melee/it/item.c", skip_data=["it_mobj"],
+    # bit-order note: the C oracle is x86 (first-declared bitfield = LSB), the port keeps the GameCube order
+    # (b0 = MSB). `xDAA_byte = 1` therefore means "b7 set" on the console: spell that in bits so both sides agree.
+    patch=[("item_data->xDAA_byte = 1;", "item_data->xDAA_byte = 0; item_data->xDAA_flag.b7 = 1;")],
+    ret={"HSD_ObjAlloc": ("((rnd() % 5) == 0 ? 0 : (void*) &DBT[rnd() % 4])", "if rnd() % 5 == 0 { core::ptr::null_mut() } else { (&raw mut DBT[(rnd() % 4) as usize]) as *mut _ }"),
+         "GObj_Create": ("((rnd() & 3) == 0 ? 0 : &GO[rnd() % 4])", "if rnd() & 3 == 0 { core::ptr::null_mut() } else { &raw mut GO[(rnd() % 4) as usize] }"),
+         "HSD_JObjAlloc": ("&JO[rnd() % 8]", "&raw mut JO[(rnd() % 8) as usize]"),
+         "HSD_JObjGetDObj": ("((rnd() & 1) ? (HSD_DObj*) DOBBUF[rnd() % 4] : 0)", "if rnd() & 1 != 0 { (&raw mut super::DOBBUF[(rnd() % 4) as usize]) as *mut _ } else { core::ptr::null_mut() }"),
+         "Camera_80029044": ("((rnd() & 1) ? &CM[rnd() % 2] : 0)", "if rnd() & 1 != 0 { &raw mut CM[(rnd() % 2) as usize] } else { core::ptr::null_mut() }"),
+         "Geno_ArticleDesc": _ART, "Geno_ItemDesc": _ART, "Mex_ItemCustomDesc": _ART,
+         "Geno_ArticleLogic": _LT, "Geno_ItemLogic": _LT, "Mex_ItemCustomLogic": _LT,
+         "Mex_SpawnArticleKind": ("(int) (rnd() % 300)", "(rnd() % 300) as i32"),
+         "Mex_SsmForPortKind": ("(int) (rnd() % 20) - 3", "(rnd() % 20) as i32 - 3"),
+         "gm_8017E068": ("(int) (rnd() % 14) - 1", "(rnd() % 14) as i32 - 1"),
+         "it_80272D1C": ("1", "1"),
+         "ScriptGame_HitRuleBaseDamage": ("(float) (rnd() % 60)", "(rnd() % 60) as f32")})

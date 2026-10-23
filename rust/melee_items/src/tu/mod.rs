@@ -9,3 +9,4 @@ pub mod itdraw;
 pub mod itcoll;
 pub mod itgroundcoll;
 pub mod itmaplib;
+pub mod item;

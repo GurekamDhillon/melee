@@ -112,3 +112,4 @@ STEMS["itcoll"] = dict(
     pregs_unused=0,
     hash_ft={"it_802703E8"},
 )
+STEMS["itgroundcoll"] = dict()

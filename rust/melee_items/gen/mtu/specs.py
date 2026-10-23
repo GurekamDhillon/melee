@@ -60,3 +60,10 @@ add("itcoll", "src/melee/it/itcoll.c", custom_stubs=EF_CUSTOM, manual_data=["Fig
          "ftLib_80086960": ("((fv() & 1) && a0 >= &GO[4] && a0 <= &GO[6])", "{ let v = fv() & 1; (v != 0 && a0 >= &raw mut GO[4] && a0 <= &raw mut GO[6]) as i32 }")},
     effects={"lbVector_RotateAboutUnitAxis": ("if (a0) { a0->x = rw(); a0->y = rw(); a0->z = rw(); }",
                                               "if !a0.is_null() { (*a0).x = rw(); (*a0).y = rw(); (*a0).z = rw(); }")})
+
+_MP = ("a0->cur_pos.x = rw(); a0->cur_pos.y = rw(); a0->floor.index = (s32) fv();", "(*a0).cur_pos.x = rw(); (*a0).cur_pos.y = rw(); (*a0).floor.index = fv() as i32;")
+add("itgroundcoll", "src/melee/it/itgroundcoll.c",
+    ret={"mpCheckAllRemap": ("(int) (fv() & 1)", "(fv() & 1) as i32")},
+    effects={"mpColl_800471F8": _MP, "mpColl_800477E0": _MP, "mpColl_8004B108": _MP, "mpColl_8004B2DC": _MP,
+             "mpCheckAllRemap": ("if (a0) { a0->x = rw(); a0->y = rw(); a0->z = rw(); }",
+                                 "if !a0.is_null() { (*a0).x = rw(); (*a0).y = rw(); (*a0).z = rw(); }")})

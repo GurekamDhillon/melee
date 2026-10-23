@@ -12,3 +12,5 @@ pub mod itmaplib;
 pub mod item;
 pub mod itanimlist;
 pub mod itkirbyhammer;
+pub mod itkirbyyoshispecialn;
+pub mod itkirby_2F23;

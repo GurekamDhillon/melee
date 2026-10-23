@@ -114,9 +114,43 @@ CFG["itflipper"]["setup_rs"] += """    IT.xDD4_itemVar.flipper.xDEC_stageAnchor 
 CFG["itflipper"]["pre_hash_c"] = _NORM_C
 CFG["itflipper"]["pre_hash_rs"] = _NORM_RS
 
+def _hots3(stem, items, **kw):
+    """_hots with (path, vals, kind) triples (kind "f": float literals)."""
+    cfg = dict(kw)
+    cfg["setup_c"] = cfg.get("setup_c", "")
+    cfg["setup_rs"] = cfg.get("setup_rs", "")
+    for p, v, k in items:
+        c, r = hot(p, v, k)
+        cfg["setup_c"] += c
+        cfg["setup_rs"] += r
+    CFG[stem] = cfg
+
+
 # ---- shard 713-720
 CFG["itkirbyhammer"] = dict(
     icd=False, tables=[("it_803F6C98", 1)],
     ops={"setupHammerParticles": ("setupHammerParticles(&G, &G2, fv(), rnd() % 3);", "m::setupHammerParticles(&raw mut G, &raw mut G2, fv(), rnd() % 3);"),
          "it_802ADC54": ("ret = PI(it_802ADC54(&G, &V1, fv(), rnd() % 3, rw()));", "ret = pi(m::it_802ADC54(&raw mut G, &raw mut V1, fv(), rnd() % 3, rw()));")},
 )
+
+# a model descriptor behind ART.x10_modelDesc (the bone id the TU hands to it_80274F48 / it_80275070)
+MD_C = "static ItemModelDesc MD;\n"
+MD_RS = "static mut MD: ItemModelDesc = unsafe { core::mem::zeroed() };\n"
+MD_PREG = [("&MD", "sizeof MD", "&raw const MD", "core::mem::size_of::<ItemModelDesc>()")]
+MD_SETUP_C = "    zero(&MD, sizeof MD); MD.x8_bone_attach_id = (s32) (rnd() % 12) - 2; ART.x10_modelDesc = &MD;\n"
+MD_SETUP_RS = "    MD = core::mem::zeroed(); MD.x8_bone_attach_id = (rnd() % 12) as i32 - 2; ART.x10_modelDesc = &raw mut MD;\n"
+CFG["itkirbyyoshispecialn"] = dict(
+    icd=False, tables=[("it_803F9490", 1)], c_decl=MD_C, rs_decl=MD_RS, pregs=MD_PREG, setup_c=MD_SETUP_C, setup_rs=MD_SETUP_RS,
+    ops={"it_802F2D98": ("it_802F2D98(&G, &OWN);", "m::it_802F2D98(&raw mut G, &raw mut OWN);"),
+         "it_802F2E7C": ("it_802F2E7C(&G, (int) (fv() & 1));", "m::it_802F2E7C(&raw mut G, (fv() & 1) as i32);")},
+)
+
+_hots3("itkirby_2F23", [("IT.xDD4_itemVar.kirby2f23.x1D0", ["0.5", "5.0", "20.0"], "f"), ("IT.xDD4_itemVar.kirby2f23.x1D8", ["0.5", "5.0", "100.0"], "f"),
+                       ("IT.xDD4_itemVar.kirby2f23.x1DC", ["0.5", "5.0", "100.0"], "f"), ("IT.xDD4_itemVar.kirby2f23.x1C8", ["0.0", "3.0", "-3.0", "12.0", "-12.0"], "f"),
+                       ("IT.xDD4_itemVar.kirby2f23.x1CC", ["0.0", "3.0", "-3.0", "12.0", "-12.0"], "f")],
+      icd=False, tables=[("it_803F9450", 2)],
+      ops={"it_802F23AC": ("{ double d = it_802F23AC(&G, &V1); HM64(d); }", "{ let d = m::it_802F23AC(&raw mut G, &raw mut V1); hm64(d); }"),
+           "it_802F23EC": ("it_802F23EC(&G, &OWN, rw());", "m::it_802F23EC(&raw mut G, &raw mut OWN, rw());"),
+           "it_802F23EC_inline": ("it_802F23EC_inline(&G);", "m::it_802F23EC_inline(&raw mut G);"),
+           "it_802F258C_scale": ("it_802F258C_scale(&G, &V1);", "m::it_802F258C_scale(&raw mut G, &raw mut V1);"),
+           "it_802F258C_update": ("it_802F258C_update(&G, &V1);", "m::it_802F258C_update(&raw mut G, &raw mut V1);")})

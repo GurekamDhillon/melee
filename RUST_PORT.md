@@ -634,3 +634,13 @@ unported TUs are `ext` hooks (unset: panics "TODO"). The old snake_case forwarde
 - `it_802E7654` has no `return` in the C; the port returns the spawned gobj (what PPC leaves in r3), the oracle does
   not compare that return value. Ints that the C wraps (`-= 1`, sums of weights) use `wrapping_*` ops. Mutation checks
   (flipping fused sites, constants, comparison boundaries, state ids) fail the tests.
+
+## melee_items::tu: it/kinds itluigifireball, itmaril, itmariocape, itmariofireball, itmarumine, itmasterhandbullet, itmasterhandlaser, itmatadogas (shard 737-744)
+Same layout and oracle (`bash rust/melee_items/gen/kinds/regen.sh <stem>...`) as the 657-664 shard: every function of the
+eight files (150 incl. statics, e.g. `calc_dist_2d_accurate`, `sqrtf_store`) in `rust/melee_items/src/tu/<stem>.rs`, 400 seeded cases each.
+- Driver additions: `double` returns are hashed (`mk_driver.py`); variadic `efAsync_Spawn` / `efSync_Spawn` are fixed-arity custom stubs;
+  `itmasterhandlaser` adds a fake `Fighter` (`parts` -> `FighterBone[8]`) as GO[1]'s user data, a 2-entry `HSD_Joint` chain for `xC8_joint`,
+  and `mpCheckMultiple` writes its `Vec3` out-parameter; bool-returning stubs of the bullet return 0/1.
+- Fused sites (IR-checked): f32 `fmadds` in `calc_dist_2d_accurate` (luigi / mario fireball) and 4 in `it_802F063C`; f64 Newton steps of
+  `sqrtf_accurate` / `sqrtf_store` (`3.0 - g*g*x` as fma; un-fusing them is not caught, the f32 rounding hides it). Mutations of the f32 sites,
+  the `M_PI` negation in `itmaril` and the `MTXDegToRad` constant in `itmatadogas` fail the tests.

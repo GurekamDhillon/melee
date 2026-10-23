@@ -46,7 +46,9 @@ COMMON_EFF = {
 }
 
 SPECS = {}
-for _n in ("itarwinglaser", "itbat", "itbombhei", "itbox", "itcapsule", "itcerebi", "itchicorita", "itclimbersblizzard"):
+for _n in ("itarwinglaser", "itbat", "itbombhei", "itbox", "itcapsule", "itcerebi", "itchicorita", "itclimbersblizzard",
+           "itluigifireball", "itmaril", "itmariocape", "itmariofireball", "itmarumine", "itmasterhandbullet",
+           "itmasterhandlaser", "itmatadogas"):
     SPECS[_n] = dict(src=f"{K}{_n}.c", types=_T, ret=dict(COMMON_RET), effects=dict(COMMON_EFF),
                      null_ret_ok=["Item_80268B18", "Item_80268B5C", "it_8026F6BC", "HSD_Randi"])
 
@@ -66,3 +68,43 @@ _EFS4 = dict(
 SPECS["itarwinglaser"]["custom_stubs"] = {"efSync_Spawn": _EFS3}
 SPECS["itbox"]["custom_stubs"] = {"efSync_Spawn": _EFS3}
 SPECS["itcerebi"]["custom_stubs"] = {"efSync_Spawn": _EFS4}
+
+# ------------------------------------------------------------------------ shard 737-744
+_EFA = dict(
+    c="void efAsync_Spawn(HSD_GObj* a0, void* a1, u32 a2, u32 a3, HSD_JObj* a4, ...) { T(@ID@); T(PI(a0)); T(PI(a1)); T(a2); T(a3); T(PI(a4)); }",
+    ext="fn efAsync_Spawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: u32, a3: u32, a4: *mut HSD_JObj);",
+    hook="|a0, a1, a2, a3, a4| { t(@ID@); t(pi(a0)); t(pi(a1)); t(a2); t(a3); t(pi(a4)); }")
+_EFS2 = dict(
+    c="void* efSync_Spawn(s32 a0, HSD_GObj* a1, ...) { __builtin_va_list ap; void* a2; __builtin_va_start(ap, a1); "
+      "a2 = __builtin_va_arg(ap, void*); __builtin_va_end(ap); T(@ID@); T((u32) a0); T(PI(a1)); T(PI(a2)); TVEC((Vec3*) a2); return 0; }",
+    ext="fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut Vec) -> *mut c_void;",
+    hook="|a0, a1, a2| { t(@ID@); t(a0 as u32); t(pi(a1)); t(pi(a2)); tvec(a2); core::ptr::null_mut() }")
+_GO2F = ("&GO[2]", "&raw mut crate::GO[2]")
+_MP = ("(int) (fv() & 1)", "(fv() & 1) as i32")
+_NEW = ("itluigifireball", "itmaril", "itmariocape", "itmariofireball", "itmarumine", "itmasterhandbullet",
+        "itmasterhandlaser", "itmatadogas")
+for _n in _NEW:
+    SPECS[_n]["skip_stubs"] = ["sinf", "cosf", "__frsqrte"]
+    SPECS[_n]["ret"]["it_8027781C"] = _P
+    SPECS[_n]["ret"]["ftMr_SpecialS_CheckItemCapeRemove"] = _P
+for _n in ("itluigifireball", "itmariofireball"):
+    SPECS[_n]["custom_stubs"] = {"efAsync_Spawn": _EFA}
+SPECS["itmariocape"]["custom_stubs"] = {"efAsync_Spawn": _EFA}
+SPECS["itmasterhandbullet"]["custom_stubs"] = {"efSync_Spawn": dict(
+    c="void* efSync_Spawn(s32 a0, HSD_GObj* a1, ...) { __builtin_va_list ap; void* a2; __builtin_va_start(ap, a1); "
+      "a2 = __builtin_va_arg(ap, void*); __builtin_va_end(ap); T(@ID@); T((u32) a0); T(PI(a1)); T(PI(a2)); TVEC((Vec3*) a2); return 0; }",
+    ext="fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut Vec) -> *mut c_void;",
+    hook="|a0, a1, a2| { t(@ID@); t(a0 as u32); t(pi(a1)); t(pi(a2)); tvec(a2); core::ptr::null_mut() }")}
+SPECS["itmasterhandlaser"]["custom_stubs"] = {"efSync_Spawn": SPECS["itmasterhandbullet"]["custom_stubs"]["efSync_Spawn"]}
+SPECS["itmarumine"]["custom_stubs"] = {"efSync_Spawn": _EFS4}
+SPECS["itmatadogas"]["custom_stubs"] = {"efSync_Spawn": _EFS4}
+# the spawned item must exist where the C does not test for it
+for _n in ("itmariofireball", "itmasterhandbullet", "itmasterhandlaser"):
+    SPECS[_n]["ret"]["Item_80268B18"] = _GO2F
+SPECS["itmaril"]["ret"]["it_8026DB40"] = ("(int) (fv() & 15)", "(fv() & 15) as i32")
+SPECS["itmasterhandlaser"]["ret"]["mpCheckMultiple"] = _MP
+SPECS["itmasterhandlaser"]["effects"]["mpCheckMultiple"] = (
+    "if (a4) { a4->x = rw(); a4->y = rw(); a4->z = rw(); }",
+    "if !a4.is_null() { (*a4).x = rw(); (*a4).y = rw(); (*a4).z = rw(); }")
+for _f in ("it_8027AE34", "it_8027AF50"):
+    SPECS["itmasterhandbullet"]["ret"][_f] = _P

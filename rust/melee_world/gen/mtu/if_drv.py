@@ -246,8 +246,32 @@ def op_code(tu, spec, op):
     return op.get("label", name), c, r
 
 
+def uv_setters(spec):
+    """walk2: per-operation union-variant selection -> (C function text, Rust function text)."""
+    keys = spec.get("_uv_keys", {})
+    base = spec.get("uv", {})
+    cs, rs = [], []
+    for i, o in enumerate(spec["ops"]):
+        uv = {**base, **(o.get("uv", {}) if isinstance(o, dict) else {})}
+        if not uv:
+            continue
+        a, b = [], []
+        for k, m in uv.items():
+            idx = keys[k].index(m)
+            a.append(f"UV_{k} = {idx};")
+            b.append(f"g::UV_{k} = {idx};")
+        cs.append(f"    case {i}: " + " ".join(a) + " break;")
+        rs.append(f"        {i} => {{ " + " ".join(b) + " }")
+    resets = " ".join(f"UV_{k} = 0;" for k in keys)
+    rresets = " ".join(f"g::UV_{k} = 0;" for k in keys)
+    c = f"static void set_uv(int op)\n{{\n    {resets}\n    switch (op) {{\n" + "\n".join(cs) + "\n    default: break;\n    }\n}\n"
+    r = f"unsafe fn set_uv(op: u32) {{\n    {rresets}\n    match op {{\n" + "\n".join(rs) + "\n        _ => {}\n    }\n}\n"
+    return c, r
+
+
 def emit_driver(stem, spec, tu):
     ops = [op_code(tu, spec, o) for o in spec["ops"]]
+    uvc, uvr = uv_setters(spec) if spec.get("_uv_keys") else ("", "")
     nops = len(ops)
     ncases = spec.get("ncases", {})
     default_n = spec.get("n_cases", N_CASES)
@@ -256,7 +280,7 @@ def emit_driver(stem, spec, tu):
          "/* C oracle for the Rust port of this TU: the whole TU included verbatim; every callee out of it is a",
          " * recording stub. Written by gen/mtu/if_drv.py. Each line: op case ret state-hash trace-hash. */",
          "#include TU_SRC", '#include "mtu_common.h"', spec.get("c_decl", ""), f'#include "{stem}_gen.h"', "",
-         spec.get("c_extra", ""), "",
+         spec.get("c_extra", ""), "", uvc,
          "static void setup_extra(void)", "{", "    int i, n;", "    (void) i; (void) n;", spec.get("setup_c", ""), "}", "",
          "int main(void)", "{", "    int op, k;", "    preg_state();", "    freg_all();"]
     for ce, _ in spec.get("extra_freg", []):
@@ -267,7 +291,7 @@ def emit_driver(stem, spec, tu):
     c += ["    for (op = 0; op < %d; op++) {" % nops,
           "        static const int NC[] = {" + ", ".join(str(ncases.get(o[0], default_n)) for o in ops) + "};",
           "        for (k = 0; k < NC[op]; k++) {", "            u32 ret = 0;",
-          "            tu_case(op, k);", "            reset_state();", "            setup_extra();", "            switch (op) {"]
+          "            tu_case(op, k);", "            set_uv(op);" if uvc else "", "            reset_state();", "            setup_extra();", "            switch (op) {"]
     for i, (_, cs, _) in enumerate(ops):
         c.append(f"            case {i}: {{ {cs} }} break;")
     c += ["            }", "            hash_state();", '            printf("%d %d %08X %08X %08X\\n", op, k, ret, H, TR);' + (" fflush((void*) 0);" if os.environ.get("MTU_FLUSH") else ""),
@@ -278,9 +302,9 @@ def emit_driver(stem, spec, tu):
          f"//! src/tu/{stem}.rs vs the C (the whole TU, shipping contraction; regenerate the expected file",
          f"//! with `python rust/melee_world/gen/mtu/run_if.py {stem}`).",
          "#![allow(static_mut_refs, non_snake_case, non_upper_case_globals, unused_imports, unused_mut, unused_assignments, unused_variables, unused_unsafe)]",
-         "mod mtu_harness;", "use core::ffi::c_void;", "use core::ptr::null_mut;", "use melee_types::*;", f"use melee_world::tu::{stem} as m;",
+         "mod mtu_harness;", "use core::ffi::c_void;", "use core::ptr::null_mut;", "use melee_types::*;", f"use {spec.get('crate', 'melee_world')}::tu::{stem} as m;",
          "use mtu_harness::*;", f'#[path = "mtu/{stem}_gen.rs"]', "mod g;", "", spec.get("rs_decl", ""), "",
-         spec.get("rs_extra", ""), "",
+         spec.get("rs_extra", ""), "", uvr,
          "unsafe fn setup_extra() {", "    let mut n: u32;", "    let mut i: usize;", spec.get("setup_rs", ""), "}", "",
          "#[test]", f"fn {stem}_matches_c() {{", "    unsafe {", "        g::install();", "        g::preg_state();",
          "        g::freg_all();"]
@@ -290,12 +314,12 @@ def emit_driver(stem, spec, tu):
           "        let nc: [u32; %d] = [" % nops + ", ".join(str(ncases.get(o[0], default_n)) for o in ops) + "];",
           ("        case(99, 0); g::hash_init_state(); c.line(99, 0, 0);" if has_init else ""),
           f"        for op in 0..{nops}u32 {{", "            for k in 0..nc[op as usize] {", "                case(op, k);",
-          "                g::reset_state();", "                setup_extra();",
+          "                set_uv(op);" if uvr else "", "                g::reset_state();", "                setup_extra();",
           "                let mut ret = 0u32;", "                match op {"]
     for i, (_, _, rs) in enumerate(ops):
         r.append(f"                    {i} => {{ {rs} }}")
     r += ["                    _ => unreachable!(),", "                }", "                g::hash_state();",
           "                c.line(op, k, ret);", "            }", "        }",
           f"        assert_eq!(c.done(), {sum(ncases.get(o[0], default_n) for o in ops) + (1 if has_init else 0)});", "    }", "}", ""]
-    (ROOT / "rust/melee_world/tests" / f"tu_{stem}.rs").write_text("\n".join(r), encoding="utf-8", newline="\n")
+    (ROOT / "rust" / spec.get("crate", "melee_world") / "tests" / f"tu_{stem}.rs").write_text("\n".join(r), encoding="utf-8", newline="\n")
     print(f"if_drv: {stem}: {nops} ops")

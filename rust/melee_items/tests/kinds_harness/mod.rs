@@ -212,7 +212,7 @@ impl Check {
 }
 
 // ---- melee_items kinds oracle additions (mirror of gen/kinds/tu/kinds_common.h) ----
-use melee_types::{SpawnItem, Vec as MVec};
+use melee_types::{SpawnItem, Vec as MVec, _itECB};
 /// Trace of a `Vec3*` argument's value (NULL: nothing).
 pub fn tvec(v: *const MVec) {
     if !v.is_null() {
@@ -220,6 +220,17 @@ pub fn tvec(v: *const MVec) {
             t((*v).x.to_bits());
             t((*v).y.to_bits());
             t((*v).z.to_bits());
+        }
+    }
+}
+/// Trace of an `itECB*` argument's value (NULL: nothing).
+pub fn tecb(e: *const _itECB) {
+    if !e.is_null() {
+        unsafe {
+            t((*e).top.to_bits());
+            t((*e).bottom.to_bits());
+            t((*e).right.to_bits());
+            t((*e).left.to_bits());
         }
     }
 }

@@ -211,6 +211,11 @@ CFG["itclimbersblizzard"] = dict(
 )
 
 # ================================================================================ shard 721-728
+def tw_cat(a, b):
+    return (a[0] + chr(10) + b[0], a[1] + chr(10) + b[1])
+
+
+
 def all3(c_body, r_body):
     """A special-attribute fill applied to the buffers of all three items (spawned items read ART[2])."""
     nl = chr(10)
@@ -262,4 +267,41 @@ CFG["itlgunbeam"] = dict(
     tweak=per_item("        IT[k].xDD4_itemVar.lgunbeam.angle0 = rw(); IT[k].xDD4_itemVar.lgunbeam.angle1 = rw();",
                    "        IT[k].xDD4_itemVar.lgunbeam.angle0 = rw(); IT[k].xDD4_itemVar.lgunbeam.angle1 = rw();"),
     ptrs=("", ""),
+)
+
+# ---------------------------------------------------------------------------------------- itleadead
+CFG["itleadead"] = dict(
+    c_decl="static itLeadeadAttr_x0 LDX[3]; static it_804D6D40_t D40;",
+    rs_decl="static mut LDX: [itLeadeadAttr_x0; 3] = unsafe { core::mem::zeroed() }; static mut D40: it_804D6D40_t = unsafe { core::mem::zeroed() };",
+    spec=[all3("""        itLeadeadAttributes* a = (itLeadeadAttributes*) SPEC[0];
+        LDX[q].x0 = (int) (rnd() % 60); LDX[q].x4 = rw();
+        a->x0 = &LDX[q]; a->x4 = (int) (rnd() % 30); a->x8 = (float) (rnd() % 4); a->xC = rw(); a->x10 = rw(); a->x14 = rw();
+        a->x18 = (s16) (rnd() % 5); a->x1A = (s16) (rnd() % 4); a->x1C = (s16) (rnd() % 4); a->x1E = (s8) (rnd() % 4);""",
+           """            let a = SPECB.0[0].as_mut_ptr() as *mut itLeadeadAttributes;
+            LDX[q].x0 = (rnd() % 60) as i32; LDX[q].x4 = rw();
+            (*a).x0 = &raw mut LDX[q]; (*a).x4 = (rnd() % 30) as i32; (*a).x8 = (rnd() % 4) as f32; (*a).xC = rw(); (*a).x10 = rw(); (*a).x14 = rw();
+            (*a).x18 = (rnd() % 5) as i16; (*a).x1A = (rnd() % 4) as i16; (*a).x1C = (rnd() % 4) as i16; (*a).x1E = (rnd() % 4) as i8;""")],
+    tweak=tw_cat(
+        ("        it_804D6D40 = &D40; D40.x8 = (float) (rnd() % 1000) / 1000.0f;", "        m::ext::it_804D6D40 = &raw mut D40; D40.x8 = (rnd() % 1000) as f32 / 1000.0;"),
+        per_item(
+        """        IT[k].xDD4_itemVar.leadead.x38 = (rnd() & 1) ? &GO[(k + 1) % 3] : 0;
+        IT[k].xDD4_itemVar.leadead.x3C = rw();
+        IT[k].xDD4_itemVar.leadead.x44 = (int) (rnd() % 0x120);
+        IT[k].xDD4_itemVar.leadead.x48 = (int) (rnd() % 0x20) - 3;
+        IT[k].xDD4_itemVar.leadead.x4C = (int) (rnd() % 4) - 1;
+        IT[k].xDD4_itemVar.leadead.x50 = (int) (rnd() % 4);
+        IT[k].xDD4_itemVar.leadead.xE14 = (int) (rnd() % 8);
+        IT[k].xC9C = (int) (rnd() % 80);""",
+        """        IT[k].xDD4_itemVar.leadead.x38 = if rnd() & 1 != 0 { &raw mut GO[(k + 1) % 3] } else { null_mut() };
+        IT[k].xDD4_itemVar.leadead.x3C = rw();
+        IT[k].xDD4_itemVar.leadead.x44 = (rnd() % 0x120) as i32;
+        IT[k].xDD4_itemVar.leadead.x48 = (rnd() % 0x20) as i32 - 3;
+        IT[k].xDD4_itemVar.leadead.x4C = (rnd() % 4) as i32 - 1;
+        IT[k].xDD4_itemVar.leadead.x50 = (rnd() % 4) as i32;
+        IT[k].xDD4_itemVar.leadead.xE14 = (rnd() % 8) as i32;
+        IT[k].xC9C = (rnd() % 80) as i32;""")),
+    ptrs=("""    for (k = 0; k < 3; k++) { HM(PI(IT[k].xDD4_itemVar.leadead.x38)); IT[k].xDD4_itemVar.leadead.x38 = 0; }""",
+          """    for k in 0..3 { hm(pi(IT[k].xDD4_itemVar.leadead.x38)); IT[k].xDD4_itemVar.leadead.x38 = null_mut(); }"""),
+    hints={"arg1": ("(int) (rnd() % 5)", "(rnd() % 5) as i32"), "arg2": ("(int) (rnd() % 6)", "(rnd() % 6) as i32"),
+           "part": ("(int) (rnd() % 8)", "(rnd() % 8) as i32"), "facing_dir": ("(rnd() & 1) ? 1 : -1", "if rnd() & 1 != 0 { 1 } else { -1 }")},
 )

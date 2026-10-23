@@ -263,6 +263,9 @@ def r_trace(cls, a):
             "str": f"t(sh({a} as *const u8));", "ptr": f"t(pi({a}));", "rec": f"t(rh(&{a}));"}[cls]
 
 
+DEEP = {"ecb": False}  # spec["deep_ecb"]: also trace the pointee of itECB* arguments (set by build())
+
+
 def deep_kind(t):
     """'vec' / 'spawn' for a pointer to Vec3 / SpawnItem: the stub traces the pointee's value too."""
     c = canon(t)
@@ -273,17 +276,19 @@ def deep_kind(t):
         return "vec"
     if nm == "SpawnItem":
         return "spawn"
+    if nm in ("itECB", "_itECB") and DEEP["ecb"]:
+        return "ecb"
     return None
 
 
 def deep_c(t, a):
     k = deep_kind(t)
-    return {"vec": f" TVEC((const Vec3*) {a});", "spawn": f" TSPAWN((const SpawnItem*) {a});"}.get(k, "")
+    return {"vec": f" TVEC((const Vec3*) {a});", "spawn": f" TSPAWN((const SpawnItem*) {a});", "ecb": f" TECB((const itECB*) {a});"}.get(k, "")
 
 
 def deep_r(t, a):
     k = deep_kind(t)
-    return {"vec": f" tvec({a});", "spawn": f" tspawn({a});"}.get(k, "")
+    return {"vec": f" tvec({a});", "spawn": f" tspawn({a});", "ecb": f" tecb({a});"}.get(k, "")
 
 
 def c_ret(cls):
@@ -511,6 +516,7 @@ class Walk:
 # ---------------------------------------------------------------------------- output
 
 def build(stem, spec, want_ext):
+    DEEP["ecb"] = bool(spec.get("deep_ecb"))
     tu = Tu(patched_source(stem, spec), spec.get("args", ()), (ROOT / spec["src"]).parent)
     stubs, inlines, data = tu.uses()
     for n in ("__assert", "OSReport", "printf"):

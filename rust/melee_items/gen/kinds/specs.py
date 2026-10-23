@@ -84,3 +84,22 @@ _EFS5 = dict(
     ext="fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut HSD_JObj, a3: *mut f32, a4: *mut f32) -> *mut c_void;",
     hook="|a0, a1, a2, a3, a4| { t(@ID@); t(a0 as u32); t(pi(a1)); t(pi(a2)); t(pi(a3)); t((*a3).to_bits()); t(pi(a4)); t((*a4).to_bits()); core::ptr::null_mut() }")
 SPECS["itlgunbeam"]["custom_stubs"] = {"efSync_Spawn": _EFS5}
+
+_L = SPECS["itleadead"]
+_L["ret"].update({
+    "ftLib_8008627C": ("((fv() & 3) ? &GO[1] : 0)", "if fv() & 3 != 0 { &raw mut crate::GO[1] } else { core::ptr::null_mut() }"),
+    "it_80272CC0": ("&JO[3 + fv() % 3]", "&raw mut crate::JO[3 + (fv() % 3) as usize]"),
+    "it_8027B5B0": _GO2,
+    "it_8027CBFC": ("(float) (rnd() % 20)", "(rnd() % 20) as f32"),
+})
+_L["null_ret_ok"] += ["ftLib_8008627C", "it_8027B5B0", "ftLib_80086630"]
+_L["effects"].update({
+    "ftLib_80086644": _V("a1"),
+    "mpLib_80056C54": (
+        "if (a2) { *a2 = (int) (fv() % 4); } if (a3) { a3->x = rw(); a3->y = rw(); a3->z = rw(); } if (a4) { *a4 = fv(); } "
+        "if (a5) { a5->x = rw(); a5->y = rw(); a5->z = rw(); }",
+        "if !a2.is_null() { *a2 = (fv() % 4) as i32; } if !a3.is_null() { (*a3).x = rw(); (*a3).y = rw(); (*a3).z = rw(); } "
+        "if !a4.is_null() { *a4 = fv(); } if !a5.is_null() { (*a5).x = rw(); (*a5).y = rw(); (*a5).z = rw(); }"),
+})
+
+_L["deep_ecb"] = True

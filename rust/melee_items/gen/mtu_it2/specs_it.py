@@ -83,3 +83,7 @@ spec("itlipstick", ["itLipstickAttributes"], skip_data=IT_SKIP + ["result"])
 _p, _s = efsync("ItemStateTable it_803F6680[] = {")
 spec("itlipstickspore", ["itLipstickSporeAttributes"], patch=_p, custom_stubs=_s, skip_data=IT_SKIP + ["attr", "hit", "abs_vel"],
      effects={"Item_80268B18": spawn_effect(), "it_8026BB68": BB68})
+
+_p, _s = efsync("ItemStateTable it_803F7BC0[] = {")
+spec("itlizardon", ["itLizardonAttributes"], skip_stubs=["sinf", "cosf"], patch=_p, custom_stubs=_s, skip_data=IT_SKIP + ["attr", "bone_pos", "spawn"],
+     effects={"Item_80268B18": spawn_effect(), "it_8026BB88": BB68})

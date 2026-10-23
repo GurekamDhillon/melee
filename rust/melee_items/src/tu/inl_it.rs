@@ -118,3 +118,46 @@ macro_rules! inl_it_fall {
         }
     };
 }
+
+/// `Item_SetEffectHitlagCallbacks` (the addresses of `efLib_PauseAll` / `efLib_ResumeAll`: `ext::cb`).
+#[macro_export]
+macro_rules! inl_it_hitlag_cb {
+    () => {
+        #[inline]
+        unsafe fn Item_SetEffectHitlagCallbacks(ip: *mut Item) {
+            (*ip).entered_hitlag = Some(ext::cb::efLib_PauseAll);
+            (*ip).exited_hitlag = Some(ext::cb::efLib_ResumeAll);
+        }
+    };
+}
+
+/// `Item_EnterAirStateWithHitlagAndStateDesc` (calls `ext::it_802762BC`, `ext::Item_80268E5C`, `ext::it_80273670`).
+#[macro_export]
+macro_rules! inl_it_enter_air_hitlag_desc {
+    () => {
+        #[inline]
+        unsafe fn Item_EnterAirStateWithHitlagAndStateDesc(gobj: *mut Item_GObj) {
+            let item = GET_ITEM(gobj);
+            ext::it_802762BC(item);
+            ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE as u32);
+            (*item).entered_hitlag = Some(ext::cb::efLib_PauseAll);
+            (*item).exited_hitlag = Some(ext::cb::efLib_ResumeAll);
+            ext::it_80273670(gobj, 0, 0.0);
+        }
+    };
+}
+
+/// `Item_TickLifetime`.
+#[macro_export]
+macro_rules! inl_it_tick {
+    () => {
+        #[inline]
+        unsafe fn Item_TickLifetime(ip: *mut Item) -> bool {
+            if (*ip).xD44_lifeTimer <= 0.0 {
+                return true;
+            }
+            (*ip).xD44_lifeTimer -= 1.0;
+            false
+        }
+    };
+}

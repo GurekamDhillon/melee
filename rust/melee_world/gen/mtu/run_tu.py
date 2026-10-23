@@ -40,7 +40,6 @@ def run(cmd, n):
 
 def main():
     BUILD.mkdir(parents=True, exist_ok=True)
-    DATA.mkdir(parents=True, exist_ok=True)
     from specs import SPECS
     import gen_tu
     for n in sys.argv[1:]:
@@ -69,7 +68,9 @@ def main():
             (BUILD / f"dbg_{n}.txt").write_text(chr(10).join(tr) + chr(10), encoding="utf-8")
             print(f"mtu: {n}: {len(tr)} trace words")
             continue
-        (DATA / f"mtu_{n}.txt").write_text(out, encoding="utf-8", newline="\n")
+        dd = ROOT / "rust" / spec.get("crate", "melee_world") / "tests/data"
+        dd.mkdir(parents=True, exist_ok=True)
+        (dd / f"mtu_{n}.txt").write_text(out, encoding="utf-8", newline="\n")
         print(f"mtu: {n}: {len(out.splitlines())} lines")
 
 

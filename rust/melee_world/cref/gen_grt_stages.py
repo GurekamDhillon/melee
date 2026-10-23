@@ -25,16 +25,19 @@ OUT = os.path.abspath(sys.argv[2])
 SET = os.environ.get("GRT_SET", "a")
 STEMS_A = ["grtdrmario", "grtemblem", "grtest", "grtfalco", "grtfox", "grtgamewatch", "grtganon", "grticeclimber"]
 STEMS_B = ["grtkirby", "grtkoopa", "grtlink", "grtluigi", "grtmario", "grtmars", "grtmewtwo", "grtness"]
-STEMS = STEMS_A if SET == "a" else STEMS_B
+STEMS_C = ["grtpeach", "grtpichu", "grtpikachu", "grtpurin", "grtsamus", "grtseak", "grtyoshi", "grtzelda"]
+STEMS = {"a": STEMS_A, "b": STEMS_B, "c": STEMS_C}[SET]
 TEST_FILE = "tu_grt_stages.rs" if SET == "a" else "tu_grt_stages_%s.rs" % SET
 KIND = {"grtdrmario": "Gr_Kind_TDrmario", "grtemblem": "Gr_Kind_TEmblem", "grtest": "Gr_Kind_Test",
         "grtfalco": "Gr_Kind_TFalco", "grtfox": "Gr_Kind_TFox", "grtgamewatch": "Gr_Kind_TGamewatch",
         "grtganon": "Gr_Kind_TGanon", "grticeclimber": "Gr_Kind_TIceclimber",
         "grtkirby": "Gr_Kind_TKirby", "grtkoopa": "Gr_Kind_TKoopa", "grtlink": "Gr_Kind_TLink", "grtluigi": "Gr_Kind_TLuigi",
-        "grtmario": "Gr_Kind_TMario", "grtmars": "Gr_Kind_TMars", "grtmewtwo": "Gr_Kind_TMewtwo", "grtness": "Gr_Kind_TNess"}
+        "grtmario": "Gr_Kind_TMario", "grtmars": "Gr_Kind_TMars", "grtmewtwo": "Gr_Kind_TMewtwo", "grtness": "Gr_Kind_TNess",
+        "grtpeach": "Gr_Kind_TPeach", "grtpichu": "Gr_Kind_TPichu", "grtpikachu": "Gr_Kind_TPikachu", "grtpurin": "Gr_Kind_TPurin",
+        "grtsamus": "Gr_Kind_TSamus", "grtseak": "Gr_Kind_TSeak", "grtyoshi": "Gr_Kind_TYoshi", "grtzelda": "Gr_Kind_TZelda"}
 KINDNUM = {"Gr_Kind_TDrmario": 44, "Gr_Kind_TEmblem": 64, "Gr_Kind_Test": 1, "Gr_Kind_TFalco": 45,
            "Gr_Kind_TFox": 46, "Gr_Kind_TGamewatch": 63, "Gr_Kind_TGanon": 65, "Gr_Kind_TIceclimber": 47}
-K = 20 if SET == "a" else 60  # cases per function
+K = 20 if SET == "a" else 60  # cases per function (set c: 60)
 
 
 def read(p):
@@ -325,6 +328,83 @@ CUSTOM[("grticeclimber", "stageGObj2_OnInit")] = """\
     grTIceClimber_80221288(gobj);"""
 
 
+# ---- shard 609-616 -------------------------------------------------------------------------
+for _stem, _fn in (("grtpeach", "grTPeach_80222A40"),):
+    CUSTOM[(_stem, _fn)] = """    ext::grAnime_801C8138(gobj, (*inlines::GET_GROUND(gobj)).map_id as i32, 0);"""
+
+CUSTOM[("grtpurin", "grTPurin_80223388")] = """    let values: [i16; 8] = [0x0037, 0x0039, 0x003B, 0x003D, 0x003F, 0x0041, 0x0043, 0xFFFFu16 as i16];
+    let mut vec: Vec3 = core::mem::zeroed();
+    let mut pos = 0usize;
+    loop {
+        let value = values[pos] as i32;
+        if value == -1 {
+            break;
+        }
+        let res = ext::Ground_801C32D4(2, value);
+        if res != -1 {
+            let jobj = ext::Ground_801C3FA4(gobj, value);
+            if !jobj.is_null() && {
+                ext::lb_8000B1CC(jobj, null(), &mut vec);
+                vec.x < 130.0f32
+            } {
+                ext::mpJointListAdd(res);
+            } else {
+                ext::mpLib_80057BC0(res);
+            }
+        }
+        pos += 1;
+    }
+    inlines::Ground_UpdateWindAndMapColl(gobj);"""
+
+CUSTOM[("grtpurin", "grTPurin_802234F8")] = """    if arg0 != -1 {
+        let i = ext::mpJointFromLine(arg0);
+        if i != -1 {
+            ext::mpLineGetKind(arg0);
+            if i == 0 {
+                return (*YAKUMONO_PARAM.load(Ordering::Relaxed)).x0;
+            }
+            if i == 1 {
+                return (*YAKUMONO_PARAM.load(Ordering::Relaxed)).x0;
+            }
+        }
+    }
+    null_mut()"""
+
+# grtseak.c: the TARGET_PC creator that every m-ex custom stage's onInit calls. `Mex_GrCallbacks`
+# is NULL for a vanilla stage; the "grtrace" OSReports (pointer arguments) are separate ext calls.
+CUSTOM[("grtseak", "grTSeak_80223908")] = """    let mut callbacks = stage_callbacks().add(arg0 as usize);
+    {
+        let mex_cbs = ext::Mex_GrCallbacks() as *mut StageCallbacks;
+        if !mex_cbs.is_null() {
+            callbacks = mex_cbs.add(arg0 as usize);
+        }
+        if ext::Mex_GrTrace() != 0 {
+            ext::OSReport_grtrace(
+                c"grtrace: create_map_gobj(%d): mex_cbs=%p callbacks=%p on_init=%p proc=%p cb3=%p flags=0x%08X\\n",
+                &[
+                    arg0 as usize,
+                    mex_cbs as usize,
+                    callbacks as usize,
+                    (*callbacks).on_init.map_or(0, |f| f as usize),
+                    (*callbacks).gobj_proc.map_or(0, |f| f as usize),
+                    (*callbacks).callback3.map_or(0, |f| f as usize),
+                    (*callbacks).anon_10.flags as usize,
+                ],
+            );
+        }
+    }
+    let gobj = ext::Ground_GetStageGObj(arg0);
+    if ext::Mex_GrTrace() != 0 {
+        ext::OSReport_grtrace(c"grtrace: create_map_gobj(%d): gobj=%p\\n", &[arg0 as usize, gobj as usize]);
+    }
+    if !gobj.is_null() {
+        inlines::Ground_SetupStageCallbacks(gobj, callbacks);
+    } else {
+        ext::OSReport(c"%s:%d: couldn t get gobj(id=%d)\\n", c"src/melee/gr/grtseak.c", 0xC3, arg0);
+    }
+    gobj"""
+
+
 def first_param_fix(stem, f, body):
     """Parameter names are used by the body text; some C files name them arg0 etc."""
     return body
@@ -402,6 +482,7 @@ def parse_tables(stem, text):
         if "Yakumono" in mm.group(1) or (ym and mm.group(1) == ym.group(1)):
             flds = re.findall(r"(?:UNK_T|DynamicsDesc\*)\s+(\w+);", mm.group(2))
             r["yak_fields"] = flds
+            r["yak_name"] = mm.group(1)
             r["yak_type"] = "UNK_T" if "UNK_T" in mm.group(2) else "dd"
             r["yak_dd"] = "DynamicsDesc" in mm.group(2)
     # joints table
@@ -594,6 +675,8 @@ def used_callees(stem, text):
     if stem == "grtest":
         for x in ("HSD_JObjSetMtxDirtySub",):
             used.append(x)
+    if stem == "grtseak":
+        used.append("OSReport_grtrace")
     return used
 
 
@@ -623,7 +706,7 @@ def gen_tu(stem, trivial_names):
     s += "//!\n"
     s += "//! Generated by cref/gen_grt_stages.py from the C text; every body is matched by pattern, so the\n"
     s += "//! Rust is derived from the C and verified against the unmodified C source compiled natively\n"
-    s += "//! (state oracle: tests/tu_grt_stages.rs). Callees in unported TUs are TODO stubs in [`ext`]\n"
+    s += "//! (state oracle: tests/%s)" % TEST_FILE + ". Callees in unported TUs are TODO stubs in [`ext`]\n"
     s += "//! (replaceable through `ext::HOOKS`); the gr/inlines.h inlines live in [`crate::gr::inlines`].\n"
     s += "#![allow(non_snake_case, non_upper_case_globals, unused_imports, unused_unsafe, static_mut_refs, clippy::missing_safety_doc, clippy::all)]\n\n"
     s += "use core::ffi::{c_void, CStr};\nuse core::mem::MaybeUninit;\nuse core::ptr::{null, null_mut};\n"
@@ -641,7 +724,12 @@ def gen_tu(stem, trivial_names):
         s += "/// `struct %s_YakumonoParam` (UNK_T = void* fields).\n#[repr(C)]\npub struct YakumonoParam {\n" % ("grT")
         for fl in flds:
             s += "    pub %s: *mut %s,\n" % (fl, "DynamicsDesc" if tabs.get("yak_dd") else "c_void")
-        s += "}\n\n"
+        s += "}\n"
+        # GameCube offset metadata for the TU-local record (32-bit pointers on the console)
+        s += "melee_core::gc_layout!(YakumonoParam, \"%s\", size %d, align 4, [\n" % (tabs["yak_name"], 4 * len(flds))
+        for k, fl in enumerate(flds):
+            s += "    %s @ 0x%X: 4 \"%s\",\n" % (fl, 4 * k, "DynamicsDesc *" if tabs.get("yak_dd") else "void *")
+        s += "]);\nconst _: () = assert!(core::mem::size_of::<YakumonoParam>() == core::mem::size_of::<usize>() * %d);\n\n" % len(flds)
         s += "static YAKUMONO_PARAM: AtomicPtr<YakumonoParam> = AtomicPtr::new(null_mut());\n\n"
         s += "/// The TU-static `yakumono_param` (set by this stage's `OnInit`).\npub fn yakumono_param() -> *mut YakumonoParam {\n    YAKUMONO_PARAM.load(Ordering::Relaxed)\n}\n\n"
         s += "#[cfg(test)]\npub fn set_yakumono_param(p: *mut YakumonoParam) {\n    YAKUMONO_PARAM.store(p, Ordering::Relaxed);\n}\n\n"
@@ -675,7 +763,7 @@ def gen_tu(stem, trivial_names):
             continue
         # unsafe extern "C": table entries need that ABI
         # C bool return -> i32 literal
-        bodies.append("pub unsafe extern \"C\" fn %s(%s)%s {\n    %s\n}\n" % (f["name"], ps, rr, body.replace("\n    ", "\n    ") if body else ""))
+        bodies.append("pub unsafe extern \"C\" fn %s(%s)%s {\n    %s\n}\n" % (f["name"], ps, rr, body.lstrip(" ") if body else ""))
     if reexp:
         s += "// Pure constant/empty callbacks already ported in gr::trivial (night 3 r3): re-exported.\n"
         s += "pub use crate::gr::trivial::%s::{%s};\n\n" % (stem, ", ".join(reexp))
@@ -848,6 +936,14 @@ void __assert(const char* f, u32 l, const char* c) { printf("ASSERT %s %u %s\n",
 #define Gr_Kind_TMewtwo 53
 #define Gr_Kind_TNess 54
 #define Gr_Kind_TMario 40
+#define Gr_Kind_TPeach 55
+#define Gr_Kind_TPichu 56
+#define Gr_Kind_TPikachu 57
+#define Gr_Kind_TPurin 58
+#define Gr_Kind_TSamus 59
+#define Gr_Kind_TSeak 60
+#define Gr_Kind_TYoshi 61
+#define Gr_Kind_TZelda 62
 
 typedef struct HSD_GObj { void* hsd_obj; void* user_data; } HSD_GObj;
 typedef HSD_GObj Ground_GObj;
@@ -885,6 +981,7 @@ static HSD_GObj fx_IG[2]; static Item fx_IT[2];
 static Vec3 fx_P;
 static HSD_Generator fx_GN[2]; static HSD_psAppSRT fx_AP[2];
 static void* fx_yak[8]; static DynamicsDesc fx_D[8];
+static StageCallbacks fx_MX[4]; /* an m-ex stage's StageCallbacks[] (Mex_GrCallbacks) */
 StageInfo stage_info;
 HSD_PadStatus HSD_PadMasterStatus[4];
 static void sentinel_fn(HSD_GObj* g) { (void) g; }
@@ -917,6 +1014,19 @@ static const char* sym(const void* p)
     return "?";
 }
 static const char* fname(const void* p) { return sym(p); }
+
+/* m-ex table entries: four distinct callbacks that record their call */
+#define MXF(n) static void mxf##n(HSD_GObj* g) { emit(" mxf" #n "(%s)", sym(g)); }
+MXF(0) MXF(1) MXF(2) MXF(3)
+static void mx_init(void)
+{
+    static void (*const f[4])(HSD_GObj*) = { mxf0, mxf1, mxf2, mxf3 };
+    int i;
+    for (i = 0; i < 4; i++) {
+        fx_MX[i].on_init = f[i]; fx_MX[i].callback1 = NULL; fx_MX[i].gobj_proc = f[(i + 1) % 4];
+        fx_MX[i].callback3 = f[(i + 2) % 4]; fx_MX[i].flags = 0;
+    }
+}
 
 /* ---- game inlines (verbatim) ---- */
 ''' + stubs + "\n\n" + "void grDisplay_801C5DB0(HSD_GObj* g, int pass) { (void) g; (void) pass; }\n"
@@ -965,11 +1075,12 @@ def driver(stem, fns, tabs, used):
     d += '    for (i = 0; i < 2; i++) { nm = malloc(4); sprintf(nm, "N%d", i); reg_add(&fx_GN[i], nm); nm = malloc(4); sprintf(nm, "A%d", i); reg_add(&fx_AP[i], nm); }\n'
     d += '    reg_add(&fx_P, "P"); reg_add(fx_yak, "Y"); reg_add(sentinel_fn, "S"); reg_add(grDisplay_801C5DB0, "grDisplay_801C5DB0");\n'
     d += '    reg_add(&stage_info, "SI");\n'
+    d += '    reg_add(fx_MX, "MX"); reg_add(mxf0, "X0"); reg_add(mxf1, "X1"); reg_add(mxf2, "X2"); reg_add(mxf3, "X3");\n'
     for f in fns:
         d += '    reg_add((const void*) %s, "%s");\n' % (f["name"], f["name"])
     d += "}\n\n"
     # reset world
-    d += "static void reset_world(void)\n{\n    int i;\n"
+    d += "static void reset_world(void)\n{\n    int i;\n    mx_init();\n"
     d += "    for (i = 0; i < 3; i++) {\n"
     d += "        fx_G[i].hsd_obj = &fx_J[i]; fx_G[i].user_data = &fx_R[i];\n"
     d += "        memset(&fx_R[i], 0, sizeof fx_R[i]); fx_R[i].map_id = (int) (rnd() % 64);\n"
@@ -1203,6 +1314,7 @@ pub struct World {
     pub pad: *mut HSD_PadStatus,
     pub gn: *mut HSD_Generator,
     pub ap: *mut HSD_psAppSRT,
+    pub mx: *mut StageCallbacks,
 }
 
 thread_local! {
@@ -1232,6 +1344,7 @@ fn w() -> &'static mut World {
                     pad: z(4 * core::mem::size_of::<HSD_PadStatus>() / 8 + 8).cast(),
                     gn: z(2 * core::mem::size_of::<HSD_Generator>() / 8 + 8).cast(),
                     ap: z(2 * core::mem::size_of::<HSD_psAppSRT>() / 8 + 8).cast(),
+                    mx: z(4 * core::mem::size_of::<StageCallbacks>() / 8 + 8).cast(),
                 };
                 p.set(Box::leak(Box::new(wd)));
             }
@@ -1292,9 +1405,26 @@ fn end_case(out: &mut String) {
     }
 }
 unsafe extern "C" fn sentinel_fn(_g: *mut HSD_GObj) {}
+unsafe extern "C" fn mxf0(g: *mut HSD_GObj) { rec(&format!(" mxf0({})", sym(g as usize))); }
+unsafe extern "C" fn mxf1(g: *mut HSD_GObj) { rec(&format!(" mxf1({})", sym(g as usize))); }
+unsafe extern "C" fn mxf2(g: *mut HSD_GObj) { rec(&format!(" mxf2({})", sym(g as usize))); }
+unsafe extern "C" fn mxf3(g: *mut HSD_GObj) { rec(&format!(" mxf3({})", sym(g as usize))); }
+/// `mx_init` of the C prelude: the four entries of the fake m-ex `StageCallbacks[]`.
+unsafe fn mx_init() {
+    let f: [unsafe extern "C" fn(*mut HSD_GObj); 4] = [mxf0, mxf1, mxf2, mxf3];
+    for i in 0..4 {
+        let e = &mut *w().mx.add(i);
+        e.on_init = Some(f[i]);
+        e.callback1 = None;
+        e.gobj_proc = Some(f[(i + 1) % 4]);
+        e.callback3 = Some(f[(i + 2) % 4]);
+        e.anon_10.flags = 0;
+    }
+}
 
 unsafe fn reset_world(float_global: bool, gt_setter: Option<&dyn Fn(f32)>) {
     let w = w();
+    mx_init();
     for i in 0..3 {
         let g = w.g.add(i);
         let r = w.r.add(i);
@@ -1439,6 +1569,9 @@ mod hooks {
         s += "    for i in 0..8 {\n        reg.push((wd.d.add(i) as usize, format!(\"D{}\", i)));\n    }\n"
         s += "    reg.push((addr_of_mut!(wd.p) as usize, \"P\".to_string()));\n    reg.push((wd.yak as usize, \"Y\".to_string()));\n"
         s += "    reg.push((sentinel_fn as usize, \"S\".to_string()));\n"
+        s += "    reg.push((wd.mx as usize, \"MX\".to_string()));\n"
+        for k in range(4):
+            s += "    reg.push((mxf%d as usize, \"X%d\".to_string()));\n" % (k, k)
         s += "    reg.push((inlines::ext::grDisplay_801C5DB0 as usize, \"grDisplay_801C5DB0\".to_string()));\n"
         s += "    reg.push((wd.stage_info as usize, \"SI\".to_string()));\n"
         for f in fns:

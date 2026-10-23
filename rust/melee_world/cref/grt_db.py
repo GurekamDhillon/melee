@@ -53,7 +53,7 @@ callee("Ground_801C42AC", "inl", "", "", "group2: gr/ground.c",
 
 # ---- TU-specific callees -----------------------------------------------------------------
 callee("OSReport", "tu", "fmt: &CStr, file: &CStr, line: i32, id: i32", "", "os: OSReport (varargs: fmt, __FILE__, line, id)",
-       'void OSReport(const char* fmt, ...) { va_list ap; const char* f; int l; int id; va_start(ap, fmt); f = va_arg(ap, const char*); l = va_arg(ap, int); id = va_arg(ap, int); va_end(ap); emit(" OSReport(%s,%s,%d,%d)", fmt, f, l, id); }',
+       'void OSReport(const char* fmt, ...) { va_list ap; const char* f; int l; int id; if (strncmp(fmt, "grtrace", 7) == 0) { emit(" OSReport(%s)", fmt); return; } va_start(ap, fmt); f = va_arg(ap, const char*); l = va_arg(ap, int); id = va_arg(ap, int); va_end(ap); emit(" OSReport(%s,%s,%d,%d)", fmt, f, l, id); }',
        'rec(&format!(" OSReport({},{},{},{})", fmt.to_str().unwrap(), file.to_str().unwrap(), line, id));')
 callee("Ground_GetStageGObj", "tu", "id: i32", "-> *mut HSD_GObj", "group2: gr/ground.c",
        'Ground_GObj* Ground_GetStageGObj(int id) { unsigned r = rnd(); HSD_GObj* g = ((r & 3) == 0 && !nonull) ? NULL : &fx_G[(r >> 2) % 3]; emit(" GetStageGObj(%d)=%s", id, sym(g)); return g; }',
@@ -116,9 +116,13 @@ callee("Camera_RequestQuake", "tu", "kind: i32, pos: *mut Vec3", "", "group2: cm
 callee("efSync_Spawn", "tu", "id: i32, g: *mut HSD_GObj, pos: *mut Vec3", "", "group2: ef/efsync.c (varargs: Vec3*)",
        'void* efSync_Spawn(s32 id, HSD_GObj* g, ...) { va_list ap; Vec3* p; va_start(ap, g); p = va_arg(ap, Vec3*); va_end(ap); emit(" efSync(%d,%s,%08x,%08x,%08x)", id, sym(g), fb(p->x), fb(p->y), fb(p->z)); return NULL; }',
        'rec(&format!(" efSync({},{},{:08x},{:08x},{:08x})", id, sym(g as usize), (*pos).x.to_bits(), (*pos).y.to_bits(), (*pos).z.to_bits()));')
+import os as _os
+_C = _os.environ.get("GRT_SET", "a") == "c"  # set c's purin loop needs x on both sides of 130
+_OFFC = 'rf() + 100.0f;' if _C else 'rf();'
+_OFFR = 'rf() + 100.0f32;' if _C else 'rf();'
 callee("lb_8000B1CC", "tu", "j: *mut HSD_JObj, a: *const Vec3, out: *mut Vec3", "", "group1: lb/lb_00B0.c",
-       'void lb_8000B1CC(HSD_JObj* j, Vec3* a, Vec3* out) { out->x = rf(); out->y = rf(); out->z = rf(); emit(" lb1CC(%s,%s)", sym(j), sym(a)); }',
-       '(*out).x = rf(); (*out).y = rf(); (*out).z = rf(); rec(&format!(" lb1CC({},{})", sym(j as usize), sym(a as usize)));')
+       'void lb_8000B1CC(HSD_JObj* j, Vec3* a, Vec3* out) { out->x = ' + _OFFC + ' out->y = rf(); out->z = rf(); emit(" lb1CC(%s,%s)", sym(j), sym(a)); }',
+       '(*out).x = ' + _OFFR + ' (*out).y = rf(); (*out).z = rf(); rec(&format!(" lb1CC({},{})", sym(j as usize), sym(a as usize)));')
 callee("grAnime_801C7FF8", "tu", "g: *mut HSD_GObj, a: i32, b: i32, c: i32, d: f32, e: f32", "", "group2: gr/granime.c",
        'void grAnime_801C7FF8(HSD_GObj* g, int a, int b, int c, float d, float e) { emit(" anim7FF8(%s,%d,%d,%d,%08x,%08x)", sym(g), a, b, c, fb(d), fb(e)); }',
        'rec(&format!(" anim7FF8({},{},{},{},{:08x},{:08x})", sym(g as usize), a, b, c, d.to_bits(), e.to_bits()));')
@@ -145,5 +149,27 @@ callee("ftLib_80086B80", "tu", "g: *mut HSD_GObj", "-> f32", "group3: ft/ftlib.c
 callee("grLib_801C96F8", "tu", "a: i32, b: i32, p: *mut Vec3", "-> *mut HSD_Generator", "group2: gr/grlib.c",
        'HSD_Generator* grLib_801C96F8(s32 a, s32 b, Vec3* p) { unsigned r = rnd(); HSD_Generator* gp = r % 3 == 0 ? NULL : &fx_GN[(r >> 2) % 2]; emit(" lib96F8(%d,%d,%s", a, b, p ? "V" : "0"); if (p) emit(",%08x,%08x,%08x", fb(p->x), fb(p->y), fb(p->z)); emit(")=%s", sym(gp)); return gp; }',
        'let r = rnd(); let gp = if r % 3 == 0 { null_mut() } else { W().gn.add(((r >> 2) % 2) as usize) }; rec(&format!(" lib96F8({},{},{}", a, b, if p.is_null() { "0" } else { "V" })); if !p.is_null() { rec(&format!(",{:08x},{:08x},{:08x}", (*p).x.to_bits(), (*p).y.to_bits(), (*p).z.to_bits())); } rec(&format!(")={}", sym(gp as usize))); gp')
+
+# ---- shard 609-616 (grtpeach .. grtzelda) ------------------------------------------------
+callee("Ground_801C32D4", "tu", "a: i32, b: i32", "-> i32", "group2: gr/ground.c",
+       's32 Ground_801C32D4(s32 a, s32 b) { static const int t[] = { -1, 0, 5, 9, 2 }; int r = t[rnd() % 5]; emit(" g32D4(%d,%d)=%d", a, b, r); return r; }',
+       'const T: [i32; 5] = [-1, 0, 5, 9, 2]; let r = T[(rnd() % 5) as usize]; rec(&format!(" g32D4({},{})={}", a, b, r)); r')
+callee("mpJointListAdd", "tu", "joint: i32", "", "group2: mp/mplib.c",
+       'void mpJointListAdd(int joint) { emit(" jlAdd(%d)", joint); }',
+       'rec(&format!(" jlAdd({})", joint));')
+callee("mpLib_80057BC0", "tu", "joint: i32", "", "group2: mp/mplib.c",
+       'void mpLib_80057BC0(int joint) { emit(" lib7BC0(%d)", joint); }',
+       'rec(&format!(" lib7BC0({})", joint));')
+callee("Mex_GrCallbacks", "tu", "", "-> *mut c_void", "pc: m-ex (Mex_GrCallbacks, NULL for a vanilla stage)",
+       'void* Mex_GrCallbacks(void) { void* p = (rnd() & 1) ? (void*) fx_MX : NULL; emit(" mexcbs=%s", sym(p)); return p; }',
+       'let p: *mut c_void = if rnd() & 1 != 0 { w().mx.cast() } else { null_mut() }; rec(&format!(" mexcbs={}", sym(p as usize))); p')
+callee("Mex_GrTrace", "tu", "", "-> i32", "pc: m-ex (Mex_GrTrace, the grtrace debug switch)",
+       'int Mex_GrTrace(void) { int r = (rnd() & 3) == 0; emit(" mextrace=%d", r); return r; }',
+       'let r = (rnd() & 3 == 0) as i32; rec(&format!(" mextrace={}", r)); r')
+# grtseak.c's "grtrace" OSReport calls take %p arguments (pointer values are not comparable), so
+# the Rust twin is a separate ext entry; the C recorder is the same OSReport stub (above), which
+# prints the format only for "grtrace" messages.
+callee("OSReport_grtrace", "tu", "fmt: &CStr, args: &[usize]", "", "os: OSReport (varargs, %p arguments)",
+       '', 'rec(&format!(" OSReport({})", fmt.to_str().unwrap()));')
 
 BY_NAME = {c["name"]: c for c in CALLEES}

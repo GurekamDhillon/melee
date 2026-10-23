@@ -462,6 +462,8 @@ def build(stem, verbose_fn=None):
                 rest = rest.replace('    lg_s(")");', extra + '    lg_s(")");', 1)
                 txt = first + "\n" + rest
             pool = ret_pool(ret)
+            if rk == "f" and n in O.RETS:
+                txt = txt.replace("float r = rf();", f"float r = {O.RETS[n][0]};")
             if rk not in ("i", "q", "f", "d", "v") and n in O.RETS:
                 txt = txt.replace("gen_p()", O.RETS[n][0])
             elif pool and rk != "v" and n not in O.RETS:
@@ -497,21 +499,25 @@ def build(stem, verbose_fn=None):
     reg("HSD_JObj")
     # Ground variants by the Ground.u members they use
     def uset(f):
-        return (tuple(sorted(f.get("u", spec.get("u", [])))), tuple(f.get("ov", spec.get("ov", []))), tuple(f.get("bfs", spec.get("bfs", []))))
+        return (tuple(sorted(f.get("u", spec.get("u", [])))), tuple(f.get("ov", spec.get("ov", []))), tuple(f.get("bfs", spec.get("bfs", []))), tuple(f.get("bfx", spec.get("bfx", []))))
     usets = []
     for f in fspecs:
         u = uset(f)
         if u not in usets:
             usets.append(u)
     if not usets:
-        usets.append(((), (), ()))
+        usets.append(((), (), (), ()))
     overlays_spec = spec.get("overlays", {})
-    for k, (u, ov, bfs) in enumerate(usets):
+    for k, (u, ov, bfs, bfx) in enumerate(usets):
         def keep(p, u=u):
             if p == "u" or not p.startswith("u."):
                 return True
             return p.split(".")[1] in u
         reg(f"Ground_{k}", "Ground", "Ground", keep=keep)
+        if bfx:
+            # bitfield paths whose flags the function writes as a whole byte (`.value = n`): the C packs LSB-first and the Rust
+            # MSB-first, so neither the byte nor the flag views are comparable; dropped from the by-value list, byte stays masked
+            TYPES[f"Ground_{k}"]["bf"] = [b for b in TYPES[f"Ground_{k}"]["bf"] if not any(b[0].startswith(x) for x in bfx)]
         if bfs:
             # bitfield paths whose storage the function writes through an integer member of another union member
             # (the C packs bitfields LSB-first, the Rust records MSB-first: the bytes alias differently by design)
@@ -725,6 +731,8 @@ static void* gen_ground(void) { u32 k = rnd() % (NGO + 1); return k ? (void*) &O
         kinds = [O.kind_of(a.type) for a in c.get_arguments()]
         rk = O.kind_of(c.result_type)
         rk = "p" if rk.startswith("ps:") else rk
+        if f.get("voidret"):
+            rk = "v"  # the C returns garbage (a fake return type); the port returns nothing
         n = f.get("n", spec.get("n", N_CASES))
         S.append(f'    {{ "{f["name"]}", {n} }},')
         plans.append((f, c, kinds, rk, n))
@@ -877,7 +885,7 @@ static u64_ word_hash(u64_ h, const void* p, unsigned n)
             h = hfl(h, (const float*) AV3, 6); h = hfl(h, (const float*) AV2, 4); h = hfl(h, APF, 2);
             h = fnv(h, API, sizeof API);
             if (vb)
-                { int q; printf("%d %016llx ret=%llx W=%016llx L=%016llx H=", k, h, rv, hW, hO); for (q = 0; q < NWH; q++) printf("%llx,", WH[q] & 0xFFFFFFull); printf("\\n  %s\\n", LG); for (q = 0; q < NGO; q++) { int w; printf("  OGP%d:", q); for (w = 0; w < (int) sizeof(Ground); w += 4) printf(" %08x", *(u32*) ((char*) &OGP[q] + w)); printf("\\n"); } }
+                { int q; printf("%d %016llx ret=%llx W=%016llx L=%016llx H=", k, h, rv, hW, hO); for (q = 0; q < NWH; q++) printf("%llx,", WH[q] & 0xFFFFFFull); printf("\\n  %s\\n", LG); printf("  ARGS:"); for (q = 0; q < 6; q++) printf(" %08x", ((const u32*) AV3)[q]); for (q = 0; q < 4; q++) printf(" %08x", ((const u32*) AV2)[q]); for (q = 0; q < 2; q++) printf(" %08x", ((const u32*) APF)[q]); printf("\\n"); for (q = 0; q < NGO; q++) { int w; printf("  OGP%d:", q); for (w = 0; w < (int) sizeof(Ground); w += 4) printf(" %08x", *(u32*) ((char*) &OGP[q] + w)); printf("\\n"); } }
             agg = fnv(agg, &h, 8);
         }
         if (!verbose) printf("%s %016llx\\n", fn->name, agg);
@@ -1115,7 +1123,7 @@ fn state_matches_c() {
                 h = fnv(h, bytes(&a.pi));
                 if vb {
                     let hs: std::vec::Vec<std::string::String> = WH.iter().map(|x| format!("{:x},", x & 0xFF_FFFF)).collect();
-                    println!("{} {:016x} ret={:x} W={:016x} L={:016x} H={}\n  {}", k, h, rv, hw, ho, hs.concat(), LG);
+                    println!("{} {:016x} ret={:x} W={:016x} L={:016x} H={}\n  {}", k, h, rv, hw, ho, hs.concat(), LG); println!("  ARGS: {}", a.v3.iter().flat_map(|v| [v.x, v.y, v.z]).chain(a.v2.iter().flat_map(|v| [v.x, v.y])).chain(a.pf.iter().copied()).map(|f| format!("{:08x}", f.to_bits())).collect::<std::vec::Vec<_>>().join(" "));
                     for q in 0..NGO { let mut line = format!("  OGP{}:", q); let base = addr_of!(OGP[q]) as *const u8; for w in (0..core::mem::size_of::<Ground>()).step_by(4) { line.push_str(&format!(" {:08x}", core::ptr::read_unaligned(base.add(w) as *const u32))); } println!("{}", line); }
                 }
                 agg = fnv(agg, &h.to_le_bytes());
@@ -1161,6 +1169,8 @@ def rs_hook_install(name, rh, kinds, rk, ret_t, modpath, pool, va=None):
     else:
         boolish = O.ret_is_bool(ret_t)
         txt = O.rs_ret(rt, rk if rk in ("i", "q", "f", "d") else "p", ret_t, boolish, name)
+        if rk == "f" and name in O.RETS:
+            txt = txt.replace("let r = rf();", f"let r = {O.RETS[name][1]};")
         if rk not in ("i", "q", "f", "d", "v") and name in O.RETS:
             txt = txt.replace("gen_p()", O.RETS[name][1])
         elif pool and name not in O.RETS:

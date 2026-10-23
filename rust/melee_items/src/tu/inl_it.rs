@@ -161,3 +161,18 @@ macro_rules! inl_it_tick {
         }
     };
 }
+
+/// `Item_EnterStateWithEffectHitlag` (calls `ext::it_802762BC`, `ext::Item_80268E5C`; uses the `ext::cb` shims).
+#[macro_export]
+macro_rules! inl_it_enter_state_hitlag {
+    () => {
+        #[inline]
+        unsafe fn Item_EnterStateWithEffectHitlag(gobj: *mut Item_GObj, msid: i32) {
+            let ip = GET_ITEM(gobj);
+            ext::it_802762BC(ip);
+            ext::Item_80268E5C(gobj, msid, ITEM_ANIM_UPDATE as u32);
+            (*ip).entered_hitlag = Some(ext::cb::efLib_PauseAll);
+            (*ip).exited_hitlag = Some(ext::cb::efLib_ResumeAll);
+        }
+    };
+}

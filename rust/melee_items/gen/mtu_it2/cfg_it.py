@@ -57,3 +57,9 @@ _hots3("itlizardon", [("IT.msid", ["0", "1", "2", "3"], "i"), ("IT.xDD4_itemVar.
                       ("IT.xD44_lifeTimer", ["0.0", "1.0", "-1.0", "30.0"], "f"),
                       ("IT.ground_or_air", ["GA_Ground", "GA_Air"], "i")],
        icd=False, tables=[("it_803F7BC0", 4), ("it_803F7C00", 1)])
+
+_hots3("itlucky", [("IT.xDD4_itemVar.lucky.x60", ["0", "1", "2", "3", "4"], "i"), ("IT.xDD4_itemVar.lucky.x64", ["0", "1", "2", "5"], "i"),
+                   ("IT.xDD4_itemVar.lucky.x68", ["0", "1"], "i"), ("IT.xDAC_itcmd_var0", ["0", "1"], "i"),
+                   ("IT.xD44_lifeTimer", ["0.0", "1.0", "-1.0", "30.0", "1.5"], "f"),
+                   ("IT.xC9C", ["0", "1", "100"], "i")],
+       icd=False, tables=[("it_803F8190", 7), ("it_803F8200", 5)])

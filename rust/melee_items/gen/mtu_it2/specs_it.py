@@ -87,3 +87,7 @@ spec("itlipstickspore", ["itLipstickSporeAttributes"], patch=_p, custom_stubs=_s
 _p, _s = efsync("ItemStateTable it_803F7BC0[] = {")
 spec("itlizardon", ["itLizardonAttributes"], skip_stubs=["sinf", "cosf"], patch=_p, custom_stubs=_s, skip_data=IT_SKIP + ["attr", "bone_pos", "spawn"],
      effects={"Item_80268B18": spawn_effect(), "it_8026BB88": BB68})
+
+spec("itlucky", ["itLuckyAttributes", "itLuckyEggAttributes"], skip_data=IT_SKIP + ["attr", "spawn", "vel", "pos"],
+     effects={"Item_80268B18": spawn_effect()},
+     ret={"it_80288C88": ("((fv() & 3) == 0 ? 0 : &G2)", PTR("G2"))})

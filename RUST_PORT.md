@@ -605,3 +605,15 @@ seeded cases per function, all 20 functions of each TU incl. the re-exported con
 the separate ext `OSReport_grtrace`, traced by format only), `grtpurin.c`'s loop over the
 joint table (`lb_8000B1CC` recorder now returns x in 37.5..162.5 so both sides of `x < 130` run) and
 its `yakumono_param` reader; the TU-local `YakumonoParam` carries a `gc_layout!` GameCube table.
+
+## melee_items::tu: it/kinds set (shard 705-712)
+`ithinoarashi ithitodeman ithouou itkabigon itkamex itkinoko itkirbycutterbeam itkirbygamewatchchefpan`
+(`rust/melee_items/src/tu/`, 133 functions incl. the static-inline helpers and the 8 state tables; the older leaf-style
+ports in itkinds*.rs / itfwd*.rs keep their own signatures). State oracle: `python rust/melee_world/gen/mtu/mk_itk.py all <stem>`
+generates the C driver (the game `.c` included verbatim, shipping contraction + gwtool lowering, `gekko_fp.c`, `lb/lbtrigf.c`,
+`lb/lbvector.c` linked for sinf/cosf/atan2f/lbVector_*), the recording stubs for every other callee, and the Rust test
+`tests/tu_<stem>.rs`; 400 seeded cases per function, each hashing every field of Item + the spawned Item + JObjs + attribute
+records. Bitfield unions (UnkFlagStruct, flag32) are hashed by value; the item-var union is walked as the TU's variant;
+hinoarashi's Vec3-over-flags pun (`it_802D61C8` / `it_802D6310`) is compared as raw bytes. `efSync_Spawn` (variadic) is an
+ext taking `&[*const c_void]`, its extras traced by gfx id. Mutation checks (flipping fused sites, boundaries, constants) fail
+the tests; `-1.0 * x + z` fused vs unfused is bit-equal, so that site is not distinguishable.

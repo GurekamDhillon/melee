@@ -1,0 +1,4 @@
+HSD_GObj_804D7814
+hsdMObj
+tobj_shadows
+tobj_toon

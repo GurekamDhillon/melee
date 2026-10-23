@@ -17,3 +17,4 @@ pub mod itlipstick;
 pub mod itlipstickspore;
 pub mod itlizardon;
 pub mod itlucky;
+pub mod itlugia;

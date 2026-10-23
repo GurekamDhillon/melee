@@ -91,3 +91,9 @@ spec("itlizardon", ["itLizardonAttributes"], skip_stubs=["sinf", "cosf"], patch=
 spec("itlucky", ["itLuckyAttributes", "itLuckyEggAttributes"], skip_data=IT_SKIP + ["attr", "spawn", "vel", "pos"],
      effects={"Item_80268B18": spawn_effect()},
      ret={"it_80288C88": ("((fv() & 3) == 0 ? 0 : &G2)", PTR("G2"))})
+
+_WR3_2 = ("if (a2) { a2->x = rw(); a2->y = rw(); a2->z = rw(); }",
+          "if !a2.is_null() { (*a2).x = rw(); (*a2).y = rw(); (*a2).z = rw(); }")
+_p, _s = efsync("ItemStateTable it_803F7EE8[] = {")
+spec("itlugia", ["itLugiaAttributes"], skip_stubs=["sinf", "cosf", "__frsqrte"], skip_data=IT_SKIP + ["attr", "spawn", "pos", "target", "diff"],
+     effects={"Item_80268B18": spawn_effect(), "it_8026BB88": BB68, "lbVector_Diff": _WR3_2})

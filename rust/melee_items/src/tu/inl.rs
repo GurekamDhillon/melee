@@ -35,6 +35,22 @@ macro_rules! jobj_inlines_it {
         unsafe fn GET_JOBJ(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
             HSD_GObjGetHSDObj(gobj) as *mut HSD_JObj
         }
+        #[inline]
+        unsafe fn HSD_JObjGetChild(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+            if jobj.is_null() { core::ptr::null_mut() } else { (*jobj).child }
+        }
+        #[inline]
+        unsafe fn HSD_JObjGetRotationY(jobj: *mut HSD_JObj) -> f32 {
+            hsd_assert(!jobj.is_null(), "(jobj)");
+            (*jobj).rotate.y
+        }
+    };
+}
+
+/// The jobj.h setters (they call `ext::HSD_JObjSetMtxDirtySub`).
+#[macro_export]
+macro_rules! inl_jobj_set {
+    () => {
         /// `HSD_JObjMtxIsDirty`.
         #[inline]
         unsafe fn HSD_JObjMtxIsDirty(jobj: *mut HSD_JObj) -> bool {
@@ -49,10 +65,6 @@ macro_rules! jobj_inlines_it {
             }
         }
         #[inline]
-        unsafe fn HSD_JObjGetChild(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
-            if jobj.is_null() { core::ptr::null_mut() } else { (*jobj).child }
-        }
-        #[inline]
         unsafe fn HSD_JObjSetRotationY(jobj: *mut HSD_JObj, y: f32) {
             hsd_assert(!jobj.is_null(), "(jobj)");
             hsd_assert((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, "!(jobj->flags & JOBJ_USE_QUATERNION)");
@@ -60,11 +72,6 @@ macro_rules! jobj_inlines_it {
             if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
                 HSD_JObjSetMtxDirty(jobj);
             }
-        }
-        #[inline]
-        unsafe fn HSD_JObjGetRotationY(jobj: *mut HSD_JObj) -> f32 {
-            hsd_assert(!jobj.is_null(), "(jobj)");
-            (*jobj).rotate.y
         }
         #[inline]
         unsafe fn HSD_JObjAddRotationY(jobj: *mut HSD_JObj, y: f32) {

@@ -57,6 +57,7 @@ pub mod ext {
 // END GENERATED EXT
 
 crate::jobj_inlines_it!();
+crate::inl_jobj_set!();
 crate::inl_HSD_JObjGetRotation!();
 
 /// `ItemStateTable it_803F8FD0[2]`

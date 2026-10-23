@@ -70,3 +70,29 @@ SPECS["itgreatfoxlaser"] = dict(
          "itGreatFoxLaser_Logic27_DmgDealt", "itGreatFoxLaser_Logic27_Clanked", "itGreatFoxLaser_Logic27_Absorbed",
          "it_2725_Logic27_Reflected", "it_802EB5A8"],
 )
+
+ICD_STATIC = dict(c="it_804D6D28", ext=True, kind="ptr", fill="p:ItemCommonData")
+VEC_OUT = ("{ a1->x = rg(); a1->y = rg(); a1->z = rg(); }", "{ (*a1).x = rg(); (*a1).y = rg(); (*a1).z = rg(); }")
+
+SPECS["ithammerhead"] = dict(
+    crate="melee_items", src="src/melee/it/kinds/ithammerhead.c", walk2=True,
+    pools={"HSD_GObj": 4, "HSD_JObj": 6, "Item": 2, "Article": 1, "ItemAttr": 1, "itHammerheadAttributes": 1,
+           "ItemCommonData": 1, "Vec3": 2},
+    types=["SpawnItem"],
+    rules={**ITEM_RULES,
+           "Article.x4_specialAttributes": ("ptr", "itHammerheadAttributes", False)},
+    uv=FLAG_UV, uv_only={"Item_xDD4_itemVar": []},
+    statics=[ICD_STATIC],
+    skip_data=["result"],
+    ret={"Item_80268B18": ("pick_HSD_GObj(1)", "pick_HSD_GObj(1)")},
+    effects={**SPAWN_HASH, "it_8026BB68": VEC_OUT},
+    setup_c=JOBJ_SETUP_C, setup_rs=JOBJ_SETUP_RS,
+    ops=[dict(name="it_80299C48", args=["pn:HSD_GObj", "p:Vec3", "p:Vec3", "f"])] + [
+        n for n in ("itHammerHead_Logic40_Spawned", "it_80299D7C", "itHammerHead_Logic40_PickedUp",
+                    "itHammerhead_UnkMotion1_Anim", "itHammerhead_UnkMotion1_Phys", "itHammerHead_Logic40_Dropped",
+                    "itHammerHead_Logic40_Thrown", "itHammerhead_UnkMotion2_Anim", "itHammerhead_UnkMotion2_Phys",
+                    "itHammerhead_UnkMotion2_Coll", "it_80299F94", "it_80299FB4", "itHammerhead_UnkMotion3_Anim",
+                    "itHammerhead_UnkMotion3_Phys", "itHammerhead_UnkMotion3_Coll", "itHammerHead_Logic40_DmgDealt",
+                    "itHammerHead_Logic40_Clanked", "itHammerHead_Logic40_HitShield", "itHammerHead_Logic40_Reflected",
+                    "itHammerHead_Logic40_DmgReceived", "itHammerHead_Logic40_EvtUnk")],
+)

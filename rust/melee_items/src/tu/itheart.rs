@@ -56,6 +56,7 @@ pub mod ext {
 // END GENERATED EXT
 
 crate::jobj_inlines_it!();
+crate::inl_jobj_set!();
 crate::inl_itResetVelocity!();
 crate::inl_Item_InitSpawnPosition!();
 crate::inl_Item_InitSpawnCommonFields!();

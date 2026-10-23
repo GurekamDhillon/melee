@@ -223,6 +223,8 @@ def build_ops(tu, cfg):
                 a_c, a_r = f"&JO[{3 + n}]", f"&raw mut JO[{3 + n}]"
             elif kind == "vec":
                 a_c, a_r = f"&VA[{n}]", f"&raw mut VA[{n}]"
+            elif kind.startswith("ptr:") and kind[4:] in cfg.get("ptrargs", {}):
+                a_c, a_r = [x.replace("{n}", str(n)) for x in cfg["ptrargs"][kind[4:]]]
             else:
                 ct = p.type.spelling
                 if pn in hints:

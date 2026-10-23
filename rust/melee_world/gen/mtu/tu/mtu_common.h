@@ -66,7 +66,7 @@ static u32 SRV[16];
 static u32 chk(int id) { return (SRV[id & 15] >> (id & 7)) & 1; }
 
 /* pointer ids: region index + 1 in the high half, byte offset in the low half */
-#define MAXR 160
+#define MAXR 1024
 static const unsigned char* RB[MAXR];
 static unsigned RZ[MAXR];
 static int NR;

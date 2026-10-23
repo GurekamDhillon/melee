@@ -65,3 +65,11 @@ pub mod grtsamus;
 pub mod grtseak;
 pub mod grtyoshi;
 pub mod grtzelda;
+pub mod textdraw;
+
+pub mod textlib;
+pub mod textlib_1;
+pub mod if_2F72;
+pub mod if_2FD9;
+pub mod if_2FF2;
+pub mod soundtest;

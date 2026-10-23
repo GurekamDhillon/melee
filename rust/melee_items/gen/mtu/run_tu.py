@@ -71,7 +71,7 @@ def main():
             raise SystemExit(f"mtu: {n}: C driver exited {r.returncode:#x}; last case: {last}")
         out = r.stdout
         if dbg:
-            tr = [l for l in out.splitlines() if l.startswith(("T ", "H ", "B "))]
+            tr = [l for l in out.splitlines() if l.startswith(("T ", "H ", "B ", "S "))]
             (BUILD / f"dbg_{n}.txt").write_text(chr(10).join(tr) + chr(10), encoding="utf-8")
             print(f"mtu: {n}: {len(tr)} trace words")
             continue

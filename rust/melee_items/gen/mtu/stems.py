@@ -117,7 +117,7 @@ STEMS["itmaplib"] = dict(
     setup=("for (i = 0; i < 8; i++) JO[i].flags &= ~JOBJ_USE_QUATERNION;", "for i in 0..8 { JO[i].flags &= !(JOBJ_USE_QUATERNION as u32); }"),
 )
 
-for _s in ("itmaterial", "itzako", "it_26B1", "it_2725", "it_279C"):
+for _s in ("itzako", "it_26B1", "it_2725", "it_279C"):
     STEMS.setdefault(_s, dict())
 
 _TB = ("&TB[rnd() & 1]", "&raw mut TB[(rnd() & 1) as usize]")
@@ -158,4 +158,49 @@ STEMS["itspawn"] = dict(
         "it_8026CB9C": {0: _CNT, 1: ("fv64()", "fv64()")},
         "it_8026CD50": {0: _CNT, 1: ("fv64()", "fv64()")},
         "fn_8026C88C": {0: ("(GMV = (s32) (rnd() % 5), &GO[rnd() % 4])", "{ GMV = (rnd() % 5) as i32; &raw mut GO[(rnd() % 4) as usize] }")}},
+)
+
+STEMS["itmaterial"] = dict(
+    c_extra="static unsigned char TBOG[16]; static GXColor GCOL[2]; static HSD_TExp TX[3];\n"
+            "static void cb_stev(HSD_MObj* m, HSD_TObj* t, u32 r) { T(7010); T(PI(m)); T(PI(t)); T(r); }\n"
+            "static void* IT0P;",
+    rs_extra="static mut TBOG: [u8; 16] = [0; 16]; static mut GCOL: [GXColor; 2] = unsafe { core::mem::zeroed() }; static mut TX: [HSD_TExp; 3] = unsafe { core::mem::zeroed() };\n"
+             "unsafe extern \"C\" fn cb_stev(m: *mut HSD_MObj, t: *mut HSD_TObj, r: u32) { t_(7010); t_pi(m); t_pi(t); t_(r); }\n"
+             "fn t_(v: u32) { t(v) } fn t_pi<T>(p: *mut T) { t(pi(p)) }",
+    pregs=("preg_xpools(); preg(TBOG, sizeof TBOG); preg(GCOL, sizeof GCOL); preg(TX, sizeof TX); freg((const void*) cb_stev);",
+           "g::preg_xpools(); preg(&raw const TBOG, 16); preg(&raw const GCOL, 8); preg(&raw const TX, core::mem::size_of_val(&TX)); freg(cb_stev as usize);"),
+    setup=("{ static int init; static struct it_MObjInfo p0; int q; if (!init) { p0 = it_mobj; init = 1; } it_mobj = p0; setup_xpools();"
+           " zero(TX, sizeof TX); for (q = 0; q < 3; q++) fill_HSD_TECnst(&TX[q].cnst); for (q = 0; q < 16; q++) TBOG[q] = (u8) rnd(); for (q = 0; q < 2; q++) { GCOL[q].r = rnd(); GCOL[q].g = rnd(); GCOL[q].b = rnd(); GCOL[q].a = rnd(); }"
+           " for (q = 0; q < 2; q++) MO[q].parent.class_info = (HSD_ClassInfo*) &MI[0];"
+           " MI[0].setup_tev = cb_stev;"
+           " hsdMObj.parent.release = (void*) cbev1; hsdMObj.parent.amnesia = (void*) cbev2; hsdMObj.load = (void*) cbp1; hsdMObj.make_texp = (void*) cbev3;"
+           " for (q = 0; q < 5; q++) TO[q].next = (q < 2 && (rnd() & 1)) ? &TO[q + 1] : 0;"
+           " TO[4].imagedesc = (rnd() & 1) ? (void*) TBOG : 0;"
+           " for (q = 0; q < 2; q++) MO[q].tobj = (rnd() & 3) ? &TO[rnd() % 3] : 0;"
+           " tobj_shadows = (rnd() & 1) ? &TO[3] : 0; tobj_toon = (rnd() & 1) ? &TO[4] : 0;"
+           " for (q = 0; q < 2; q++) MO[q].mat = (rnd() % 5) ? &MA[rnd() & 1] : &MA[0];"
+           " for (q = 0; q < 2; q++) MO[q].pe = (rnd() & 1) ? &PE[rnd() & 1] : 0;"
+           " for (q = 0; q < 3; q++) DO[q].next = (q < 2 && (rnd() & 1)) ? &DO[q + 1] : 0;"
+           " for (q = 0; q < 3; q++) DO[q].mobj = (rnd() % 4) ? &MO[rnd() & 1] : 0;"
+           " HSD_GObj_804D7814 = &GO[rnd() % 4]; if (HDBG) printf(\"S %08X %08X %08X %08X%c\", PI(MO[0].tobj), PI(MO[1].tobj), PI(tobj_shadows), PI(tobj_toon), 10); }",
+           "{ let q: usize; m::it_mobj_static_init(); g::setup_xpools();"
+           " TX = core::mem::zeroed(); for q in 0..3usize { g::fill_HSD_TECnst(&mut TX[q].cnst); } for q in 0..16usize { TBOG[q] = rnd() as u8; } for q in 0..2usize { GCOL[q].r = rnd() as u8; GCOL[q].g = rnd() as u8; GCOL[q].b = rnd() as u8; GCOL[q].a = rnd() as u8; }"
+           " for q in 0..2usize { g::MO[q].parent.class_info = (&raw mut g::MI[0]) as *mut HSD_ClassInfo; }"
+           " g::MI[0].setup_tev = Some(cb_stev);"
+           " m::ext::hsdMObj.parent.release = core::mem::transmute::<usize, _>(cbev1 as usize); m::ext::hsdMObj.parent.amnesia = core::mem::transmute::<usize, _>(cbev2 as usize);"
+           " m::ext::hsdMObj.load = core::mem::transmute::<usize, _>(cbp1 as usize); m::ext::hsdMObj.make_texp = core::mem::transmute::<usize, _>(cbev3 as usize);"
+           " for q in 0..5usize { g::TO[q].next = if q < 2 && (rnd() & 1) != 0 { &raw mut g::TO[q + 1] } else { null_mut() }; }"
+           " g::TO[4].imagedesc = if rnd() & 1 != 0 { (&raw mut TBOG) as *mut _ } else { null_mut() };"
+           " for q in 0..2usize { g::MO[q].tobj = if rnd() & 3 != 0 { &raw mut g::TO[(rnd() % 3) as usize] } else { null_mut() }; }"
+           " m::ext::tobj_shadows = if rnd() & 1 != 0 { &raw mut g::TO[3] } else { null_mut() }; m::ext::tobj_toon = if rnd() & 1 != 0 { &raw mut g::TO[4] } else { null_mut() };"
+           " for q in 0..2usize { g::MO[q].mat = if rnd() % 5 != 0 { &raw mut g::MA[(rnd() & 1) as usize] } else { &raw mut g::MA[0] }; }"
+           " for q in 0..2usize { g::MO[q].pe = if rnd() & 1 != 0 { &raw mut g::PE[(rnd() & 1) as usize] } else { null_mut() }; }"
+           " for q in 0..3usize { g::DO[q].next = if q < 2 && (rnd() & 1) != 0 { &raw mut g::DO[q + 1] } else { null_mut() }; }"
+           " for q in 0..3usize { g::DO[q].mobj = if rnd() % 4 != 0 { &raw mut g::MO[(rnd() & 1) as usize] } else { null_mut() }; }"
+           " m::ext::HSD_GObj_804D7814 = &raw mut GO[(rnd() % 4) as usize]; if HDBG { println!(\"S {:08X} {:08X} {:08X} {:08X}\", pi(g::MO[0].tobj), pi(g::MO[1].tobj), pi(m::ext::tobj_shadows), pi(m::ext::tobj_toon)); } }"),
+    hash=("hash_xpools(); hash_it_MObjInfo(&it_mobj); hash_GXColor(&GCOL[0]); hash_GXColor(&GCOL[1]); for (int q = 0; q < 3; q++) hash_HSD_TECnst(&TX[q].cnst);", "g::hash_xpools(); g::hash_it_MObjInfo(&m::it_mobj); g::hash_GXColor(&GCOL[0]); g::hash_GXColor(&GCOL[1]); for q in 0..3usize { g::hash_HSD_TECnst(&TX[q].cnst); }"),
+    ov={"fn_80277D8C": {0: ("&MO[rnd() & 1]", "&raw mut g::MO[(rnd() & 1) as usize]"), 1: ("fv()", "fv()"), 2: ("fv()", "fv()")},
+        "it_80277F90": {1: ("&MO[rnd() & 1]", "&raw mut g::MO[(rnd() & 1) as usize]"), 2: ("&TX[rnd() % 3]", "&raw mut TX[(rnd() % 3) as usize]")},
+        "it_80278108": {1: ("&MO[rnd() & 1]", "&raw mut g::MO[(rnd() & 1) as usize]"), 2: ("(rnd() & 1) ? &TX[rnd() % 3] : 0", "if rnd() & 1 != 0 { &raw mut TX[(rnd() % 3) as usize] } else { null_mut() }")},
+        "it_80278574": {1: ("&GCOL[rnd() & 1]", "&raw mut GCOL[(rnd() & 1) as usize]")}},
 )

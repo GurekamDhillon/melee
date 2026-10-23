@@ -7,7 +7,7 @@ use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
 
-// BEGIN GENERATED EXT (the callees of the C TU that are not ported in this crate)
+// BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
@@ -28,35 +28,39 @@ pub mod ext {
     }
     ext_fns! {
     fn HSD_JObjGetDObj(a0: *mut HSD_JObj) -> *mut HSD_DObj;
-    fn HSD_SetMaterialColor(a0: GXColor, a1: GXColor, a2: GXColor, a3: f32);
+    fn HSD_SetMaterialColor(a0: _GXColor, a1: _GXColor, a2: _GXColor, a3: f32);
     fn HSD_SetMaterialShininess(a0: f32);
     fn HSD_SetupRenderModeWithCustomPE(a0: u32, a1: *mut HSD_PEDesc);
-    fn HSD_SetupTevStage(a0: *mut HSD_TevDesc);
+    fn HSD_SetupTevStage(a0: *mut _HSD_TevDesc);
     fn HSD_StateAssignTev() -> i32;
     fn HSD_StateInitTev();
     fn HSD_TExpSetReg(a0: *mut HSD_TExp);
     fn HSD_TObjSetup(a0: *mut HSD_TObj);
     fn HSD_TObjSetupTextureCoordGen(a0: *mut HSD_TObj);
     fn ftCo_800C0674(a0: *mut HSD_GObj) -> *mut ColorOverlay;
-    fn hsdInitClassInfo(a0: *mut HSD_ClassInfo, a1: *mut HSD_ClassInfo, a2: *mut i8, a3: *mut i8, a4: i32, a5: i32);
+    fn hsdInitClassInfo(a0: *mut _HSD_ClassInfo, a1: *mut _HSD_ClassInfo, a2: *mut i8, a3: *mut i8, a4: i32, a5: i32);
     fn lbGetFreeColorRegister(a0: i32, a1: *mut HSD_MObj, a2: *mut HSD_TExp) -> i32;
     fn lb_8000CC8C(a0: i32) -> i32;
     fn lb_8000CCA4(a0: i32) -> i32;
     fn lb_8000CD90(a0: i32) -> i32;
     fn lb_8000CDA8(a0: i32) -> i32;
     }
-    // Data defined in other TUs (set by the crate's init / the tests).
-    pub static mut HSD_GObj_804D7814: *mut HSD_GObj = core::ptr::null_mut();
-    pub static mut tobj_shadows: *mut HSD_TObj = core::ptr::null_mut();
-    pub static mut tobj_toon: *mut HSD_TObj = core::ptr::null_mut();
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut HSD_GObj_804D7814: *mut HSD_GObj = unsafe { core::mem::zeroed() };
     pub static mut hsdMObj: HSD_MObjInfo = unsafe { core::mem::zeroed() };
+    pub static mut tobj_shadows: *mut HSD_TObj = unsafe { core::mem::zeroed() };
+    pub static mut tobj_toon: *mut HSD_TObj = unsafe { core::mem::zeroed() };
 }
 // END GENERATED EXT
 
-const RENDER_SHADOW: u32 = 0x0000_0001;
-const RENDER_TOON: u32 = 0x0000_0002;
-const RENDER_BLENDING: u32 = 0x0000_0004;
-const RENDER_NO_ZUPDATE: u32 = 0x0000_0010;
+const RENDER_SHADOW: u32 = melee_types::RENDER_SHADOW as u32; // 1 << 26
+const RENDER_TOON: u32 = melee_types::RENDER_TOON as u32; // 1 << 12
+const RENDER_NO_ZUPDATE: u32 = 1 << 29;
+const RENDER_BLENDING: u32 = (1 << 30) | RENDER_NO_ZUPDATE; // RENDER_XLU | RENDER_NO_ZUPDATE
 
 /// `struct it_MObjInfo` (itmaterial.c). Not a melee_types record: the first five members mirror
 /// `HSD_MObjInfo`, then the item-specific template data. GC offsets: setup +3C, load +40, make_texp +44,

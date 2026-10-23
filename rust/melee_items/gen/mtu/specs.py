@@ -71,7 +71,19 @@ add("itgroundcoll", "src/melee/it/itgroundcoll.c",
 add("itmaplib", "src/melee/it/itmaplib.c", skip_stubs=["__frsqrte"],
     ret={"it_80272CC0": ("&JO[rnd() % 8]", "&raw mut JO[(rnd() % 8) as usize]"), "it_80272D40": ("(int) (fv() & 1)", "(fv() & 1) as i32")})
 
-add("itmaterial", "src/melee/it/itmaterial.c")
+_XP_MAT = [("HSD_MObj", "MO", 2), ("HSD_Material", "MA", 2), ("HSD_TObj", "TO", 5), ("HSD_DObj", "DO", 3),
+           ("HSD_PEDesc", "PE", 2), ("ColorOverlay", "CO", 2), ("HSD_MObjInfo", "MI", 1)]
+add("itmaterial", "src/melee/it/itmaterial.c", types=["it_MObjInfo", "HSD_TevDesc", "HSD_TECnst", "GXColor"], xpools=_XP_MAT,
+    manual_data=["HSD_GObj_804D7814", "tobj_shadows", "tobj_toon", "hsdMObj"],
+    skip_freg=[],
+    ret={"lbGetFreeColorRegister": ("(int) (rnd() % 8)", "(rnd() % 8) as i32"),
+         "HSD_StateAssignTev": ("(int) (rnd() % 8)", "(rnd() % 8) as i32"),
+         "ftCo_800C0674": ("&CO[rnd() % 2]", "&raw mut crate::g::CO[(rnd() % 2) as usize]"),
+         "HSD_JObjGetDObj": ("pick_HSD_DObj()", "pick_HSD_DObj()")},
+    effects={"HSD_SetupTevStage": ("hash_HSD_TevDesc(a0);", "hash_HSD_TevDesc(&*a0);"),
+             "HSD_TExpSetReg": ("hash_HSD_TECnst(&a0->cnst); { const unsigned char* v = a0->cnst.val; if (v) { T(v[0]); if ((int) a0->cnst.comp != 5) { T(v[1]); T(v[2]); T(v[3]); } } }", "hash_HSD_TECnst(&(*a0).cnst); { let v = (*a0).cnst.val as *const u8; if !v.is_null() { t(*v as u32); if (*a0).cnst.comp as i32 != 5 { t(*v.add(1) as u32); t(*v.add(2) as u32); t(*v.add(3) as u32); } } }"),
+             "HSD_SetupRenderModeWithCustomPE": ("if (a1) hash_HSD_PEDesc(a1);", "if !a1.is_null() { hash_HSD_PEDesc(&*a1); }"),
+             "HSD_SetMaterialColor": ("hash_GXColor(&a0); hash_GXColor(&a1); hash_GXColor(&a2);", "hash_GXColor(&a0); hash_GXColor(&a1); hash_GXColor(&a2);")})
 from specs_ef import EF_CUSTOM as EF_CUSTOM_  # noqa: E402
 add("itspawn", "src/melee/it/itspawn.c", custom_stubs=EF_CUSTOM_, skip_freg=["bisectValue", "it_8026C88C_inline", "it_8026D018_inline", "it_8026D018_inline2", "it_8026D018_inline3"], types=["ItemPickTable", "RandomItemSpawner"],
     ret={"Item_80268B18": ("pick_igo()", "pick_igo()"),

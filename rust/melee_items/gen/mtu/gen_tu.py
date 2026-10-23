@@ -506,6 +506,10 @@ class Walk:
 
 # ---------------------------------------------------------------------------- output
 
+def ctype_(tu, name):
+    return ("struct " + name) if name in tu.tagged else name
+
+
 def build(stem, spec, want_ext):
     tu = Tu(patched_source(stem, spec), spec.get("args", ()), (ROOT / spec["src"]).parent)
     stubs, inlines, data = tu.uses()
@@ -593,15 +597,16 @@ def build(stem, spec, want_ext):
         if addr and n not in realcb:
             ext_cb.append((n, rparams, rret, argnames))
     # fill / hash
-    walker = Walk(tu, spec.get('pools', ()))
+    xp = list(spec.get("xpools", ()))  # (type, array, count): stem-private pools, filled and hashed by setup_xpools / hash_xpools
+    walker = Walk(tu, list(spec.get('pools', ())) + [x[0] for x in xp])
     local_types = []
     fwd = []
-    for tn in spec.get("types", ()):
+    for tn in list(spec.get("types", ())) + [x[0] for x in xp if x[0] not in spec.get("types", ())]:
         cn_ = ("struct " + tn) if tn in tu.tagged else tn
         fwd.append(f"static void fill_{tn}({cn_}* p);")
         fwd.append(f"static void hash_{tn}(const {cn_}* p);")
     c_out[1:1] = fwd
-    for tn in spec.get("types", ()):
+    for tn in list(spec.get("types", ())) + [x[0] for x in xp if x[0] not in spec.get("types", ())]:
         cdef, rdef = walker.gen(tn)
         c_out.append(cdef)
         r_out.append(("@@RAW@@", rdef))
@@ -610,6 +615,27 @@ def build(stem, spec, want_ext):
     if local_types:
         # records the .c defines shadow a same-named opaque melee_types record
         r_out.insert(5, "use super::m::{" + ", ".join(local_types) + "};")
+
+    if xp:
+        NLX = chr(10)
+        xa = []
+        for t, a, n in xp:
+            xa.append(f"static {ctype_(tu, t)} {a}[{n}];")
+            xa.append(f"static {ctype_(tu, t)}* pick_{t}(void) {{ u32 r = rnd(); return (r % 6) == 0 ? 0 : &{a}[(r >> 8) % {n}]; }}")
+        c_out[1 + len(fwd):1 + len(fwd)] = xa
+        c_out.append(NLX.join(["static void setup_xpools(void)", "{", "    int i;"]
+                              + [f"    zero({a}, sizeof {a});{NLX}    for (i = 0; i < {n}; i++) fill_{t}(&{a}[i]);" for t, a, n in xp] + ["}"]))
+        c_out.append(NLX.join(["static void hash_xpools(void)", "{", "    int i;"]
+                              + [f"    for (i = 0; i < {n}; i++) hash_{t}(&{a}[i]);" for t, a, n in xp] + ["}"]))
+        c_out.append(NLX.join(["static void preg_xpools(void)", "{"] + [f"    preg({a}, sizeof {a});" for t, a, n in xp] + ["}"]))
+        rx = []
+        for t, a, n in xp:
+            rx.append(f"pub static mut {a}: [{t}; {n}] = unsafe {{ core::mem::zeroed() }};")
+            rx.append(f"pub fn pick_{t}() -> *mut {t} {{ let r = rnd(); unsafe {{ if r % 6 == 0 {{ core::ptr::null_mut() }} else {{ &raw mut {a}[((r >> 8) % {n}) as usize] }} }} }}")
+        rx.append(NLX.join(["pub fn setup_xpools() { unsafe {"] + [f"    {a} = core::mem::zeroed();{NLX}    for i in 0..{n} {{ fill_{t}(&mut {a}[i]); }}" for t, a, n in xp] + ["} }"]))
+        rx.append(NLX.join(["pub fn hash_xpools() { unsafe {"] + [f"    for i in 0..{n} {{ hash_{t}(&{a}[i]); }}" for t, a, n in xp] + ["} }"]))
+        rx.append(NLX.join(["pub fn preg_xpools() { unsafe {"] + [f"    preg(&raw const {a}, core::mem::size_of_val(&{a}));" for t, a, n in xp] + ["} }"]))
+        r_out.append(("@@RAW@@", NLX.join(rx) + NLX))
 
     # data globals of other TUs: fill / hash every one the spec does not handle by hand
     gc_f, gc_h, gr_f, gr_h = [], [], [], []

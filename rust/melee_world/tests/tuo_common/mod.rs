@@ -5,6 +5,12 @@
 #![allow(dead_code, static_mut_refs)]
 
 use std::alloc::{alloc_zeroed, dealloc, Layout};
+
+#[cfg(windows)]
+#[link(name = "kernel32")]
+extern "system" {
+    fn VirtualAlloc(addr: *mut u8, size: usize, alloc_type: u32, protect: u32) -> *mut u8;
+}
 use std::fmt::Write as _;
 
 pub type VisFn = fn(&mut V, &str, *mut u8);
@@ -90,6 +96,10 @@ pub struct V {
     pending_arg: Option<usize>,
     views: Vec<View>,
     shallow: u32,
+    nofill: bool,
+    lowmem: bool,
+    lowbase: *mut u8,
+    lowpos: usize,
 }
 
 static mut VV: Option<V> = None;
@@ -164,6 +174,13 @@ impl V {
     }
     pub fn leaf_int(&mut self, path: &str, bits: u32, sgn: u32) -> u64 {
         let r = self.draw();
+        if let Some(i) = self.links.iter().position(|l| l.tgt.starts_with("int:") && path.ends_with(&l.key) && (l.gate.is_empty() || l.gate.iter().any(|g| *g == self.curfn))) {
+            if !self.links[i].gate.is_empty() && !self.links[i].gate.iter().any(|g| *g == self.curfn) {
+                return 0;
+            }
+            let tg = self.links[i].tgt[4..].to_string();
+            return self.link_resolve(path, i, &tg) as u64;
+        }
         if let Some(i) = self.dom(path) {
             let d = &self.doms[i];
             return d.v[(r % d.v.len() as u64) as usize];
@@ -252,7 +269,7 @@ impl V {
             let (ty, n) = t.split_once(':').unwrap();
             let n: usize = n.parse().unwrap();
             let layout = Layout::from_size_align(n * 8 + 16, 16).unwrap();
-            let arr = unsafe { alloc_zeroed(layout) } as *mut usize;
+            let arr = self.palloc(layout) as *mut usize;
             let nm = format!("p{}", self.npool);
             self.npool += 1;
             self.reg(&nm, arr as usize, n * 8);
@@ -262,6 +279,35 @@ impl V {
                 unsafe { *arr.add(i) = e };
             }
             return arr as usize;
+        }
+        if let Some(spec) = tgt.strip_prefix("datblk:") {
+            // datblk:SIZE:OFF...: a raw block with u32 pointer slots at the offsets: slot -> u32 cell -> u32 pointer to a 16-byte block
+            let mut it = spec.split(':');
+            let size: usize = it.next().unwrap().parse().unwrap();
+            let b = self.new_buf(None, size);
+            for off in it {
+                let off: usize = off.parse().unwrap();
+                let d = self.draw();
+                if d & 3 == 0 {
+                    unsafe { *(b.add(off) as *mut u32) = 0 };
+                    continue;
+                }
+                let cell = self.new_buf(None, 8);
+                let d2 = self.draw();
+                let joint = if d2 & 1 != 0 { std::ptr::null_mut() } else { self.new_buf(None, 16) };
+                unsafe {
+                    *(cell as *mut u32) = joint as usize as u32;
+                    *(b.add(off) as *mut u32) = cell as usize as u32;
+                }
+            }
+            return b as usize;
+        }
+        if let Some(t) = tgt.strip_prefix("zero:") {
+            // a new, zeroed object (not filled)
+            self.nofill = true;
+            let r = self.new_typed(None, t, 0) as usize;
+            self.nofill = false;
+            return r;
         }
         if let Some(t) = tgt.strip_prefix("shallow:") {
             self.shallow += 1;
@@ -282,7 +328,7 @@ impl V {
         if self.shallow > 0 && path.ends_with(".user_data") {
             return 0;
         }
-        let i = match self.links.iter().position(|l| path.ends_with(&l.key)) {
+        let i = match self.links.iter().position(|l| !l.tgt.starts_with("int:") && path.ends_with(&l.key) && (l.gate.is_empty() || l.gate.iter().any(|g| *g == self.curfn))) {
             Some(i) => i,
             None => return 0,
         };
@@ -290,6 +336,9 @@ impl V {
         if !self.links[i].gate.is_empty() && !self.links[i].gate.iter().any(|g| *g == self.curfn) {
             return 0;
         }
+        self.link_resolve(path, i, &tgt)
+    }
+    fn link_resolve(&mut self, path: &str, i: usize, tgt: &str) -> usize {
         if let Some(t) = tgt.strip_prefix("maybe:") {
             let forced = self.links[i].force.iter().any(|g| *g == self.curfn);
             if !forced && self.draw() & 1 != 0 {
@@ -297,7 +346,7 @@ impl V {
             }
             return self.mk_target(path, &format!("new:{t}"));
         }
-        self.mk_target(path, &tgt)
+        self.mk_target(path, tgt)
     }
     pub fn dump_i(&mut self, path: &str, v: i64) {
         self.emit(&format!("{path}={v}"));
@@ -438,7 +487,7 @@ impl V {
         let (size, align, vis) = (self.types[ti].1, self.types[ti].2, self.types[ti].3);
         let sz = size * count.max(1);
         let layout = Layout::from_size_align(sz + 16, align.max(16)).unwrap();
-        let p = unsafe { alloc_zeroed(layout) };
+        let p = self.palloc(layout);
         let nm = match label {
             Some(l) => l.to_string(),
             None => {
@@ -456,15 +505,43 @@ impl V {
         let m = self.mode;
         self.mode = 1;
         for i in 0..count.max(1) {
+            if self.nofill {
+                break;
+            }
             let path = if count != 0 { format!("{nm}[{i}]") } else { nm.clone() };
             vis(self, &path, unsafe { p.add(i * size) });
         }
         self.mode = m;
         p
     }
+    /// Zeroed pool memory; with `lowmem` from a bump arena below 4 GB (the C side uses the same addresses).
+    fn palloc(&mut self, layout: Layout) -> *mut u8 {
+        if !self.lowmem {
+            return unsafe { alloc_zeroed(layout) };
+        }
+        #[cfg(windows)]
+        unsafe {
+            if self.lowbase.is_null() {
+                let mut a: usize = 0x20000000;
+                while a < 0x70000000 && self.lowbase.is_null() {
+                    self.lowbase = VirtualAlloc(a as *mut u8, 0x04000000, 0x3000, 4);
+                    a += 0x08000000;
+                }
+                assert!(!self.lowbase.is_null(), "lowmem: no arena");
+            }
+            let al = layout.align();
+            self.lowpos = (self.lowpos + al - 1) & !(al - 1);
+            let p = self.lowbase.add(self.lowpos);
+            self.lowpos += layout.size();
+            std::ptr::write_bytes(p, 0, layout.size());
+            p
+        }
+        #[cfg(not(windows))]
+        panic!("lowmem needs Windows")
+    }
     pub fn new_buf(&mut self, label: Option<&str>, n: usize) -> *mut u8 {
         let layout = Layout::from_size_align(n + 16, 16).unwrap();
-        let p = unsafe { alloc_zeroed(layout) };
+        let p = self.palloc(layout);
         let nm = match label {
             Some(l) => l.to_string(),
             None => {
@@ -514,9 +591,13 @@ impl V {
 
     }
     fn pool_reset(&mut self) {
+        let low = self.lowmem;
         for o in self.pool.drain(..) {
-            unsafe { dealloc(o.p, o.layout) };
+            if !low {
+                unsafe { dealloc(o.p, o.layout) };
+            }
         }
+        self.lowpos = 0;
         self.npool = 0;
         self.regs.truncate(self.nperm);
     }
@@ -545,6 +626,10 @@ pub fn run(cfg: &str, expected: &str, glue: Glue) {
         pending_arg: None,
         views: vec![],
         shallow: 0,
+        nofill: false,
+        lowmem: false,
+        lowbase: std::ptr::null_mut(),
+        lowpos: 0,
     };
     let mut fns: Vec<FnCfg> = vec![];
     let mut tysizes: Vec<(String, usize)> = vec![];
@@ -554,6 +639,7 @@ pub fn run(cfg: &str, expected: &str, glue: Glue) {
             continue;
         }
         match t[0] {
+            "lowmem" => v.lowmem = true,
             "dom" => v.doms.push(Dom { key: t[1].to_string(), v: t[2..].iter().map(|x| parse_u(x)).collect() }),
             "link" => v.links.push(Link { key: t[1].to_string(), tgt: t[2].to_string(), gate: vec![], force: vec![] }),
             "gate" => {

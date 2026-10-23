@@ -19,7 +19,7 @@ F=(--target=x86_64-pc-windows-gnu -mno-ms-bitfields -std=c99 -nostdinc -fno-buil
 "$CL" "${F[@]}" -I "$(cat "$OUT/incdir.txt")" "$OUT/unit.c" -o "$OUT/unit.ll"
 python "$HERE/guest_patch.py" "$OUT"
 python "$WT/rust/melee_runtime/oracle/lower.py" "$OUT/unit.ll" "$OUT/unit.lo.ll"
-"$CL" -O1 -w "$OUT/unit.lo.ll" "$OUT/stubs.c" "$HERE/tuo_rt.c" -o "$OUT/oracle.exe"
+"$CL" -O1 -w "$OUT/unit.lo.ll" "$OUT/stubs.c" "$HERE/tuo_rt.c" $(cat "$OUT/extra_c.txt") -o "$OUT/oracle.exe"
 mkdir -p "$HERE/../../tests/data" "$HERE/../../tests/tuo_gen"
 cp "$OUT/tuo.cfg" "$HERE/../../tests/data/tuo_$STEM.cfg"
 cp "$OUT/${STEM}_gen.rs" "$HERE/../../tests/tuo_gen/${STEM}_gen.rs"

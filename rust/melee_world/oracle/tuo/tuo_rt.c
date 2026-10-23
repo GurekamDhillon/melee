@@ -63,6 +63,7 @@ void tuo_emit(const char* fmt, ...)
 #define MAXV 512
 struct View { char key[96]; char member[96]; int nfn; char fn[32][96]; };
 static struct View views[64]; static int nview;
+static int lowmem;
 struct Dom { char key[128]; int n; u64 v[MAXV]; };
 struct Link { char key[128]; char tgt[96]; int ngate; char gate[16][96]; int nforce; char force[16][96]; };
 static const char* curfn;
@@ -102,6 +103,8 @@ static void load_cfg(const char* path)
             for (int li = 0; li < nlink; li++)
                 if (!strcmp(links[li].key, tok[1]))
                     for (int k = 2; k < nt; k++) strcpy(links[li].gate[links[li].ngate++], tok[k]);
+        } else if (!strcmp(tok[0], "lowmem")) {
+            lowmem = 1;
         } else if (!strcmp(tok[0], "view")) {
             struct View* vw = &views[nview++];
             strcpy(vw->key, tok[1]); strcpy(vw->member, tok[2]);
@@ -133,10 +136,24 @@ static struct Dom* finddom(const char* path)
         if (endswith(path, doms[i].key)) return &doms[i];
     return 0;
 }
+static const char* curfn;
+static int gate_ok(struct Link* l)
+{
+    if (!l->ngate) return 1;
+    for (int k = 0; k < l->ngate; k++) if (curfn && !strcmp(curfn, l->gate[k])) return 1;
+    return 0;
+}
 static struct Link* findlink(const char* path)
 {
     for (int i = 0; i < nlink; i++)
-        if (endswith(path, links[i].key)) return &links[i];
+        if (strncmp(links[i].tgt, "int:", 4) && endswith(path, links[i].key) && gate_ok(&links[i])) return &links[i];
+    return 0;
+}
+/* a link whose target is "int:<target>" fills an integer leaf (a u32 slot that holds a pointer) with the target's address */
+static struct Link* findlink_int(const char* path)
+{
+    for (int i = 0; i < nlink; i++)
+        if (!strncmp(links[i].tgt, "int:", 4) && endswith(path, links[i].key) && gate_ok(&links[i])) return &links[i];
     return 0;
 }
 
@@ -212,12 +229,13 @@ static void fillbytes(void* p, size_t n)
 {
     for (size_t i = 0; i < n; i++) ((unsigned char*) p)[i] = (unsigned char) tuo_draw();
 }
+static void* tuo_alloc(size_t n, size_t align);
+static int nofill;
 void* tuo_new(const char* label, const char* ty, int count)
 {
     struct Ty* t = findty(ty);
     size_t sz = t->size * (count ? count : 1);
-    void* p = _aligned_malloc(sz + 16, t->align > 16 ? t->align : 16);
-    memset(p, 0, sz + 16);
+    void* p = tuo_alloc(sz + 16, t->align > 16 ? t->align : 16);
     char nm[96];
     if (label) strcpy(nm, label); else sprintf(nm, "p%d", npool++);
     reg(nm, p, sz);
@@ -226,7 +244,7 @@ void* tuo_new(const char* label, const char* ty, int count)
     strcpy(pool[pi].name, nm); pool[pi].p = p; pool[pi].t = t; pool[pi].size = sz; pool[pi].cnt = count; pool[pi].ptrs = 0;
     int m = tuo_mode; tuo_mode = 1;
     char path[128];
-    for (int i = 0; i < (count ? count : 1); i++) {
+    for (int i = 0; i < (count ? count : 1) && !nofill; i++) {
         if (count) sprintf(path, "%s[%d]", nm, i); else strcpy(path, nm);
         if (t->vis) t->vis(path, (char*) p + i * t->size);
     }
@@ -235,8 +253,7 @@ void* tuo_new(const char* label, const char* ty, int count)
 }
 void* tuo_newbuf(const char* label, size_t n)
 {
-    void* p = _aligned_malloc(n + 16, 16);
-    memset(p, 0, n + 16);
+    void* p = tuo_alloc(n + 16, 16);
     char nm[96];
     if (label) strcpy(nm, label); else sprintf(nm, "p%d", npool++);
     reg(nm, p, n);
@@ -245,9 +262,28 @@ void* tuo_newbuf(const char* label, size_t n)
     fillbytes(p, n);
     return p;
 }
+/* LOWMEM: pool objects live below 4 GB (the game keeps pointers in u32 slots); a bump arena at a fixed address */
+static char* lowbase; static size_t lowpos;
+extern __declspec(dllimport) void* __stdcall VirtualAlloc(void*, size_t, unsigned long, unsigned long);
+static void* tuo_alloc(size_t n, size_t align)
+{
+    void* p;
+    if (!lowmem) { p = _aligned_malloc(n, align); memset(p, 0, n); return p; }
+    if (!lowbase) {
+        for (uintptr_t a = 0x20000000; a < 0x70000000 && !lowbase; a += 0x08000000)
+            lowbase = (char*) VirtualAlloc((void*) a, 0x04000000, 0x3000, 4);
+        if (!lowbase) { fprintf(stderr, "lowmem: no arena\n"); exit(6); }
+    }
+    lowpos = (lowpos + align - 1) & ~(align - 1);
+    p = lowbase + lowpos; lowpos += n;
+    memset(p, 0, n);
+    return p;
+}
+static void tuo_release(void* p) { if (!lowmem) _aligned_free(p); }
 static void pool_reset(void)
 {
-    for (int i = 0; i < npl; i++) _aligned_free(pool[i].p);
+    for (int i = 0; i < npl; i++) tuo_release(pool[i].p);
+    lowpos = 0;
     npl = 0; npool = 0; nreg = nperm;
 }
 
@@ -292,9 +328,17 @@ char* tuo_cati(char* b, const char* a, const char* s, int i)
     sprintf(b, "%s%s[%d]", a, s, i);
     return b;
 }
+static void* link_resolve(const char* path, struct Link* l, const char* tg);
 u64 tuo_leaf_int(const char* path, int bits, int sgn)
 {
     u64 r = tuo_draw();
+    struct Link* li = findlink_int(path);
+    if (li) {
+        int ok = 1;
+        if (li->ngate) { ok = 0; for (int k = 0; k < li->ngate; k++) if (curfn && !strcmp(curfn, li->gate[k])) ok = 1; }
+        if (ok) return (u64) (uintptr_t) link_resolve(path, li, li->tgt + 4);
+        return 0;
+    }
     struct Dom* d = finddom(path);
     if (d) return d->v[r % d->n];
     if (bits < 64) {
@@ -370,14 +414,35 @@ static void* mk_target(const char* path, const char* tgt)
         char ty[96]; strcpy(ty, tgt + 5);
         char* c = strchr(ty, ':'); *c = 0;
         int n = atoi(c + 1);
-        void** arr = (void**) _aligned_malloc(n * 8 + 16, 16);
-        memset(arr, 0, n * 8 + 16);
+        void** arr = (void**) tuo_alloc(n * 8 + 16, 16);
         char nm[96]; sprintf(nm, "p%d", npool++);
         reg(nm, arr, n * 8);
         int pi = npl++;
         strcpy(pool[pi].name, nm); pool[pi].p = arr; pool[pi].t = 0; pool[pi].size = n * 8; pool[pi].cnt = 0; pool[pi].ptrs = n;
         for (int i = 0; i < n; i++) arr[i] = tuo_new(0, ty, 0);
         return arr;
+    }
+    if (!strncmp(tgt, "datblk:", 7)) {
+        /* datblk:SIZE:OFF...: a raw block with u32 pointer slots at the offsets: slot -> u32 cell -> u32 pointer to a 16-byte block */
+        char sp[200]; strcpy(sp, tgt + 7);
+        char* tk = strtok(sp, ":");
+        size_t size = (size_t) atoi(tk);
+        char* b = (char*) tuo_newbuf(0, size);
+        while ((tk = strtok(0, ":"))) {
+            int off = atoi(tk);
+            u64 d = tuo_draw();
+            if ((d & 3) == 0) { *(unsigned*) (b + off) = 0; continue; }
+            char* cell = (char*) tuo_newbuf(0, 8);
+            u64 d2 = tuo_draw();
+            void* joint = (d2 & 1) ? 0 : tuo_newbuf(0, 16);
+            *(unsigned*) cell = (unsigned) (uintptr_t) joint;
+            *(unsigned*) (b + off) = (unsigned) (uintptr_t) cell;
+        }
+        return b;
+    }
+    if (!strncmp(tgt, "zero:", 5)) {
+        /* a new, zeroed object (not filled) */
+        nofill = 1; void* r = tuo_new(0, tgt + 5, 0); nofill = 0; return r;
     }
     if (!strncmp(tgt, "shallow:", 8)) {
         /* a new object whose own pointer links are all null (cuts cyclic link chains) */
@@ -411,14 +476,18 @@ void* tuo_leaf_ptr(const char* path)
         for (int k = 0; k < l->ngate; k++) if (curfn && !strcmp(curfn, l->gate[k])) ok = 1;
         if (!ok) return 0;
     }
-    if (!strncmp(l->tgt, "maybe:", 6)) {
+    return link_resolve(path, l, l->tgt);
+}
+static void* link_resolve(const char* path, struct Link* l, const char* tg)
+{
+    if (!strncmp(tg, "maybe:", 6)) {
         int forced = 0;
         for (int k = 0; k < l->nforce; k++) if (curfn && !strcmp(curfn, l->force[k])) forced = 1;
         if (!forced && (tuo_draw() & 1)) return 0;
-        char t[128]; sprintf(t, "new:%s", l->tgt + 6);
+        char t[128]; sprintf(t, "new:%s", tg + 6);
         return mk_target(path, t);
     }
-    return mk_target(path, l->tgt);
+    return mk_target(path, tg);
 }
 void tuo_dump_i(const char* path, long long v) { tuo_emit("%s=%lld", path, v); }
 void tuo_dump_u(const char* path, u64 v) { tuo_emit("%s=%llu", path, v); }
@@ -579,6 +648,7 @@ int main(int argc, char** argv)
 {
     if (argc < 2) { fprintf(stderr, "usage: oracle cfg [--full] [fn [idx]]\n"); return 1; }
     load_cfg(argv[1]);
+    if (getenv("TUO_UNBUF")) setvbuf(stdout, NULL, _IONBF, 0);
     const char* only = 0; int oidx = -1;
     for (int i = 2; i < argc; i++) {
         if (!strcmp(argv[i], "--full")) full = 1;

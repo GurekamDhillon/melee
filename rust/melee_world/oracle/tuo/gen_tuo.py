@@ -385,12 +385,20 @@ class Walker:
                 p_r = f'&format!("{{}}.{nm}", {self.strip_amp(path_r)})'
                 cv = "i64" if sg else "u64"
                 isbool = bt.kind == T.BOOL
+                n0c, n0r = len(e.c), len(e.r)
                 e.c.append(f"if(tuo_mode==1) {cx_}.{nm} = tuo_leaf_int({p_c}, {bits}, {sg}); else tuo_dump_{'i' if sg else 'u'}({p_c}, {cx_}.{nm});")
                 getter = f"{rx_}.{rid(nm)}()"
                 if isbool:
                     e.r.append(f"if v.set() {{ {rx_}.set_{nm}(v.leaf_int({p_r}, {bits}, {sg}) != 0); }} else {{ v.dump_u({p_r}, ({getter}) as u64); }}")
                 else:
                     e.r.append(f"if v.set() {{ {rx_}.set_{nm}(v.leaf_int({p_r}, {bits}, {sg}) as _); }} else {{ v.dump_{'i' if sg else 'u'}({p_r}, ({getter}) as {cv}); }}")
+                ffb_ = [fn for k, fns in self.cx.spec.get("FIELD_FNS", {}).items() if k == f"{getattr(self, 'rec', '')}.{nm}" for fn in fns]
+                if ffb_:
+                    cond_ = "|".join(ffb_)
+                    e.c.insert(n0c, f'if (tuo_fnin("{cond_}")) {{')
+                    e.c.append("}")
+                    e.r.insert(n0r, f'if v.fn_in("{cond_}") {{')
+                    e.r.append("}")
                 continue
             if not nm:
                 continue
@@ -542,6 +550,7 @@ def main():
         pp.write_bytes(src.replace(chr(13)+chr(10), chr(10)).encode("utf-8"))
         tu_path = pp.as_posix()
     (out / "incdir.txt").write_text(incdir.as_posix())
+    (out / "extra_c.txt").write_text(" ".join(spec.get("EXTRA_C", [])))  # extra C sources linked into the oracle (real callees)
     G = Gen(spec)
     GALE = g.GALE
     flags = [f"--target=x86_64-pc-windows-gnu", "-mno-ms-bitfields", "-std=c99", "-nostdinc", "-fno-builtin",
@@ -791,6 +800,8 @@ def main():
         else:
             rb = f"{{ let r = {rcall}; r as u64 }}"
         rglue.append(f'        "{fname}" => unsafe {rb},')
+    if spec.get("LOWMEM"):
+        cfg.append("lowmem 1")  # pool objects below 4 GB (u32 pointer slots)
     for k, v in spec.get("DOM", {}).items():
         cfg.append("dom " + k + " " + " ".join(str(x) for x in v))
     for k, v in spec.get("UNION_VIEW", {}).items():

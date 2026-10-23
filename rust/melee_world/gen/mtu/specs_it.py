@@ -145,3 +145,39 @@ SPECS["itharisen"] = dict(
          "itHarisen_UnkMotion9_Coll", "itHarisen_Logic24_Clanked", "itHarisen_Logic24_Reflected",
          "itHarisen_Logic24_HitShield", "itHarisen_Logic24_ShieldBounced", "itHarisen_Logic24_EvtUnk"],
 )
+
+GSHELL_FNS = ["it_8028B8D8", "it_8028B988", "it_8028BA2C", "it_8028BAD8", "it_8028BC2C", "itGShell_Logic14_Spawned",
+              "it_8028BE54", "itGshell_UnkMotion0_Anim", "itGshell_UnkMotion0_Phys", "itGshell_UnkMotion0_Coll",
+              "it_8028C018", "itGshell_UnkMotion1_Anim", "itGshell_UnkMotion1_Phys", "itGshell_UnkMotion1_Coll",
+              "itGShell_Logic14_PickedUp", "itGshell_UnkMotion2_Anim", "itGshell_UnkMotion2_Phys",
+              "itGShell_Logic14_Thrown", "itGshell_UnkMotion3_Anim", "itGshell_UnkMotion3_Phys",
+              "itGshell_UnkMotion3_Coll", "itGShell_Logic14_Dropped", "itGshell_UnkMotion4_Anim",
+              "itGshell_UnkMotion4_Phys", "itGshell_UnkMotion4_Coll", "it_8028C3A8", "itGshell_UnkMotion6_Anim",
+              "itGshell_UnkMotion6_Phys", "itGshell_UnkMotion6_Coll", "it_8028C898", "itGshell_UnkMotion8_Anim",
+              "itGshell_UnkMotion8_Phys", "itGshell_UnkMotion8_Coll", "itGShell_Logic14_EnteredAir",
+              "itGshell_UnkMotion9_Anim", "itGshell_UnkMotion9_Phys", "itGshell_UnkMotion9_Coll",
+              "itGShell_Logic14_DmgDealt", "itGShell_Logic14_DmgReceived", "itGShell_Logic14_Reflected",
+              "shellHit", "itGShell_Logic14_Clanked", "itGShell_Logic14_HitShield", "itGShell_Logic14_ShieldBounced",
+              "it_8028CF68", "itGShell_Logic14_EvtUnk"]
+
+SPECS["itgshell"] = dict(
+    crate="melee_items", src="src/melee/it/kinds/itgshell.c", walk2=True,
+    pools={"HSD_GObj": 4, "HSD_JObj": 6, "Item": 2, "Article": 1, "ItemAttr": 1, "itGShell_Attrs": 1,
+           "ItemCommonData": 1},
+    rules={**ITEM_RULES,
+           "Article.x4_specialAttributes": ("ptr", "itGShell_Attrs", False)},
+    uv={**FLAG_UV, "Item_xDD4_itemVar": "gshell"}, uv_only={"Item_xDD4_itemVar": ["gshell"]},
+    statics=[ICD_STATIC],
+    skip_data=["result"],
+    ret=RAND_RET,
+    null_ret_ok=["it_8027236C", "it_802723FC"],
+    custom_stubs={"efAsync_Spawn": dict(
+        c="void efAsync_Spawn(HSD_GObj* a0, void* a1, u32 a2, u32 a3, HSD_JObj* a4, ...) { __builtin_va_list ap; "
+          "Vec3* v; __builtin_va_start(ap, a4); T(@ID@); T(PI(a0)); T(PI(a1)); T(a2); T(a3); T(PI(a4)); "
+          "v = __builtin_va_arg(ap, Vec3*); T(B(v->x)); T(B(v->y)); T(B(v->z)); __builtin_va_end(ap); }",
+        ext="fn efAsync_Spawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: u32, a3: u32, a4: *mut HSD_JObj, a5: *mut Vec);",
+        hook="|a0, a1, a2, a3, a4, a5| { t(@ID@); t(pi(a0)); t(pi(a1)); t(a2); t(a3); t(pi(a4)); "
+             "unsafe { t((*a5).x.to_bits()); t((*a5).y.to_bits()); t((*a5).z.to_bits()); } }")},
+    setup_c=JOBJ_SETUP_C, setup_rs=JOBJ_SETUP_RS,
+    ops=GSHELL_FNS,
+)

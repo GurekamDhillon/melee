@@ -1,0 +1,43 @@
+// BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn HSD_JObjClearFlags(a0: *mut HSD_JObj, a1: u32);
+    fn HSD_JObjSetFlags(a0: *mut HSD_JObj, a1: u32);
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
+    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj;
+    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
+    fn Item_802694CC(a0: *mut HSD_GObj);
+    fn Item_8026A8EC(a0: *mut HSD_GObj);
+    fn Item_8026AB54(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: u32);
+    fn ftCl_Init_8014920C(a0: *mut HSD_GObj) -> i32;
+    fn ftCl_Init_801492C4(a0: *mut HSD_GObj);
+    fn ftCl_Init_801492F4(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_800869D4(a0: *mut HSD_GObj) -> f32;
+    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut result: i32 = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

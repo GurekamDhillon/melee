@@ -9,15 +9,11 @@ use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
 
-use crate::itlib::{it_8026b390, it_8026b894, it_802756d0, it_8026b3a8};
-use crate::itlib3::{it_80272860, it_802756e0, it_8027cbfc};
-use crate::item::it_802762bc;
-use crate::itkinds10::it_8027b798;
 
 /// `ITEM_ANIM_UPDATE` (src/melee/it/forward.h): `1 << 1`.
 pub const ITEM_ANIM_UPDATE: u32 = 1 << 1;
 
-// BEGIN GENERATED EXT (callees of the C TU that are not ported in this crate yet)
+// BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
@@ -37,48 +33,57 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn Item_80268B18(spawn: *mut SpawnItem) -> *mut HSD_GObj;
-    fn Item_InitSpawnPosition(spawn: *mut SpawnItem, pos: *mut Vec3, flag: bool);
-    fn Item_80267454(gobj: *mut HSD_GObj);
-    fn Item_80268E5C(gobj: *mut HSD_GObj, msid: i32, flags: u32);
-    fn it_2725_Logic9_Destroyed(gobj: *mut HSD_GObj);
-    fn it_8027CE44(gobj: *mut HSD_GObj);
-    fn it_8026EECC(gobj: *mut HSD_GObj, arg1: i32);
-    fn it_8026E414(gobj: *mut HSD_GObj, cb: HSD_GObjEvent);
-    fn it_8026D62C(gobj: *mut HSD_GObj, cb: HSD_GObjEvent);
-    fn it_8026E15C(gobj: *mut HSD_GObj, cb: HSD_GObjEvent);
-    fn it_8026E8C4(gobj: *mut HSD_GObj, a: HSD_GObjEvent, b: HSD_GObjEvent);
-    fn it_8027163C(gobj: *mut HSD_GObj);
-    fn grFigureGet_80219C34(gobj: *mut HSD_GObj);
-    fn grFigureGet_80219C50(gobj: *mut HSD_GObj) -> i32;
-    fn gm_GetDbPauseFlag(i: i32) -> bool;
-    fn gm_8017E280(a0: u16, a1: u32) -> i8;
     fn Camera_80031144() -> f32;
-    fn Ground_801C1D84() -> u32;
     fn Ground_801C0498() -> f32;
-    fn tyDisplay_8031C5E4(kind: i32) -> *mut c_void;
-    fn mpCollSetFacingDir(coll: *mut CollData, dir: i32);
-    fn lbVector_Normalize(v: *mut Vec3) -> f32;
-    fn lbAudioAx_800237A8(sfx_id: i32, vol: i32, pan: i32) -> i32;
-    fn HSD_JObjSetFlagsAll(jobj: *mut HSD_JObj, flags: u32);
-    fn HSD_JObjClearFlagsAll(jobj: *mut HSD_JObj, flags: u32);
-    fn HSD_JObjSetRotationX(jobj: *mut HSD_JObj, v: f32);
-    fn HSD_JObjSetRotationY(jobj: *mut HSD_JObj, v: f32);
-    fn HSD_JObjSetRotationZ(jobj: *mut HSD_JObj, v: f32);
-    fn HSD_JObjSetScaleX(jobj: *mut HSD_JObj, v: f32);
-    fn HSD_JObjSetScaleY(jobj: *mut HSD_JObj, v: f32);
-    fn HSD_JObjSetScaleZ(jobj: *mut HSD_JObj, v: f32);
-    fn HSD_GObjObject_80390B0C(gobj: *mut HSD_GObj);
-    fn HSD_GObjObject_80390A70(gobj: *mut HSD_GObj, kind: u8, o: *mut c_void);
+    fn Ground_801C1D84() -> u32;
+    fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
+    fn HSD_GObjObject_80390B0C(a0: *mut HSD_GObj);
+    fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32);
+    fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32);
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
+    fn Item_80267454(a0: *mut HSD_GObj);
+    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj;
+    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
+    fn gm_8017E280(a0: u16, a1: u32) -> i8;
+    fn gm_GetDbPauseFlag(a0: i32) -> i32;
+    fn grFigureGet_80219C34(a0: *mut HSD_GObj);
+    fn grFigureGet_80219C50(a0: *mut HSD_GObj) -> i32;
+    fn it_2725_Logic9_Destroyed(a0: *mut HSD_GObj);
+    fn it_8026B390(a0: *mut HSD_GObj);
+    fn it_8026B3A8(a0: *mut HSD_GObj);
+    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
+    fn it_8026D62C(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>);
+    fn it_8026E15C(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>);
+    fn it_8026E414(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>);
+    fn it_8026E8C4(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: Option<unsafe extern "C" fn(*mut HSD_GObj)>);
+    fn it_8026EECC(a0: *mut HSD_GObj, a1: i32);
+    fn it_8027163C(a0: *mut HSD_GObj);
+    fn it_80272860(a0: *mut HSD_GObj, a1: f32, a2: f32);
+    fn it_802756D0(a0: *mut HSD_GObj);
+    fn it_802756E0(a0: *mut HSD_GObj);
+    fn it_802762BC(a0: *mut Item);
+    fn it_8027B798(a0: *mut HSD_GObj, a1: *mut Vec) -> i32;
+    fn it_8027CBFC(a0: *mut HSD_GObj) -> f32;
+    fn it_8027CE44(a0: *mut HSD_GObj);
+    fn lbAudioAx_800237A8(a0: i32, a1: i32, a2: i32) -> i32;
+    fn lbVector_Normalize(a0: *mut Vec) -> f32;
+    fn mpCollSetFacingDir(a0: *mut CollData, a1: i32);
+    fn tyDisplay_8031C5E4(a0: i32) -> *mut HSD_JObj;
     }
-    // Data defined in other TUs.
-    pub static mut it_804D6D40: *const melee_types::it_804D6D40_t = core::ptr::null();
-    pub static mut p_ftCommonData: *const ftCommonData = core::ptr::null();
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
+    pub static mut result: i32 = unsafe { core::mem::zeroed() };
 }
 // END GENERATED EXT
 
-/// `HSD_GObj_JObjKind` (sysdolphin/baselib/gobj.h).
-pub const HSD_GObj_JObjKind: u8 = 4;
+jobj_inl!();
+spawn_inl!();
+
 /// `JOBJ_HIDDEN` (sysdolphin/baselib/jobj.h).
 pub const JOBJ_HIDDEN: u32 = 1 << 4;
 
@@ -111,7 +116,7 @@ pub unsafe extern "C" fn it_802F13B4(gobj: *mut HSD_GObj, arg1: i32) {
     let x14 = (*ip).xDD4_itemVar.coin.x14 as *mut HSD_GObj;
 
     if (*ip).xDD4_itemVar.coin.x4 != 0 {
-        if (ext::gm_GetDbPauseFlag(1) != false && ext::grFigureGet_80219C50(x14) == 0)
+        if (ext::gm_GetDbPauseFlag(1) != 0 && ext::grFigureGet_80219C50(x14) == 0)
             || (ext::Camera_80031144() < attr.x48 && ext::grFigureGet_80219C50(x14) == 0)
         {
             ext::HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN);
@@ -120,7 +125,7 @@ pub unsafe extern "C" fn it_802F13B4(gobj: *mut HSD_GObj, arg1: i32) {
             ext::HSD_JObjSetFlagsAll((*jobj).next, JOBJ_HIDDEN);
             ext::HSD_JObjClearFlagsAll(jobj, JOBJ_HIDDEN);
         }
-    } else if (ext::gm_GetDbPauseFlag(1) != false && ext::Ground_801C1D84() == 0)
+    } else if (ext::gm_GetDbPauseFlag(1) != 0 && ext::Ground_801C1D84() == 0)
         || ext::Camera_80031144() < attr.x48
     {
         ext::HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN);
@@ -168,11 +173,11 @@ pub unsafe extern "C" fn itCoin_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
     let ip = item_of(gobj);
     if (*ip).xDD4_itemVar.coin.x4 == 0 {
         let attr = &*(*ip).xCC_item_attr;
-        it_80272860(&mut *ip, attr.x10_fall_speed, attr.x14_fall_speed_max);
+        ext::it_80272860(gobj, attr.x10_fall_speed, attr.x14_fall_speed_max);
         return;
     }
     let (x8, xc) = ((*ip).xDD4_itemVar.coin.x8, (*ip).xDD4_itemVar.coin.xC);
-    it_80272860(&mut *ip, x8, xc);
+    ext::it_80272860(gobj, x8, xc);
 }
 
 /// `itCoin_UnkMotion0_Coll`: detect the landing into `it_802F1630`.
@@ -182,11 +187,11 @@ pub unsafe extern "C" fn itCoin_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itCoin_ResetRotation` (static inline): zero the three rotations.
-unsafe fn itCoin_ResetRotation(gobj: *mut HSD_GObj) {
+pub unsafe fn itCoin_ResetRotation(gobj: *mut HSD_GObj) {
     let jobj = jobj_of(gobj);
-    ext::HSD_JObjSetRotationX(jobj, 0.0);
-    ext::HSD_JObjSetRotationY(jobj, 0.0);
-    ext::HSD_JObjSetRotationZ(jobj, 0.0);
+    HSD_JObjSetRotationX(jobj, 0.0);
+    HSD_JObjSetRotationY(jobj, 0.0);
+    HSD_JObjSetRotationZ(jobj, 0.0);
 }
 
 /// `it_802F1630`: come to rest on the floor (motion 1).
@@ -197,7 +202,7 @@ pub unsafe extern "C" fn it_802F1630(gobj: *mut HSD_GObj) {
     (*ip).x40_vel.z = 0.0;
     itCoin_ResetRotation(gobj);
     ext::Item_80268E5C(gobj, 1, ITEM_UNK_0x1 as u32);
-    it_802756d0(&mut *ip);
+    ext::it_802756D0(gobj);
 }
 
 /// `itCoin_UnkMotion1_Anim` (returns false).
@@ -232,7 +237,7 @@ pub unsafe extern "C" fn itCoin_UnkMotion2_Phys(_gobj: *mut HSD_GObj) {}
 
 /// `itCoin_Logic116_EvtUnk`: `it_8026B894`.
 pub unsafe extern "C" fn itCoin_Logic116_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
-    it_8026b894(&mut *item_of(gobj), ref_gobj);
+    ext::it_8026B894(gobj, ref_gobj);
 }
 
 /// `itCoin_Logic116_DmgReceived`: launch the coin from the hit, scaled by the damage and the
@@ -242,9 +247,9 @@ pub unsafe extern "C" fn itCoin_Logic116_DmgReceived(gobj: *mut HSD_GObj) -> boo
     let attr = sa::<itCoinAttributes>(ip);
     let zero: f32 = 0.0;
 
-    it_802762bc(&mut *ip);
-    (*ip).xC9C = ((*ip).xC9C as f32 + it_8027cbfc(&*ip, &*ext::it_804D6D40)) as i32;
-    it_8027b798(&mut *ip, &mut (*ip).x40_vel, &*ext::p_ftCommonData);
+    ext::it_802762BC(ip);
+    (*ip).xC9C = ((*ip).xC9C as f32 + ext::it_8027CBFC(gobj)) as i32;
+    ext::it_8027B798(gobj, &mut (*ip).x40_vel);
     if (*ip).x40_vel.x == zero && (*ip).x40_vel.y == zero {
         (*ip).x40_vel.x = 0.1 * -(*ip).xCCC_incDamageDirection;
         (*ip).x40_vel.y = 0.1;
@@ -302,7 +307,7 @@ pub unsafe extern "C" fn itCoin_UnkMotion3_Phys(gobj: *mut HSD_GObj) {
     let attr = sa::<itCoinAttributes>(ip);
     (*ip).x40_vel.x *= attr.x34;
     let (x8, xc) = ((*ip).xDD4_itemVar.coin.x8, (*ip).xDD4_itemVar.coin.xC);
-    it_80272860(&mut *ip, x8, xc);
+    ext::it_80272860(gobj, x8, xc);
 }
 
 /// `itCoin_UnkMotion3_Coll`: land into `it_802F1630`.
@@ -326,7 +331,7 @@ pub unsafe extern "C" fn itCoin_UnkMotion4_Anim(_gobj: *mut HSD_GObj) -> bool {
 pub unsafe extern "C" fn itCoin_UnkMotion4_Phys(gobj: *mut HSD_GObj) {
     let ip = item_of(gobj);
     let attr = &*(*ip).xCC_item_attr;
-    it_80272860(&mut *ip, attr.x10_fall_speed, attr.x14_fall_speed_max);
+    ext::it_80272860(gobj, attr.x10_fall_speed, attr.x14_fall_speed_max);
 }
 
 /// `itCoin_UnkMotion4_Coll`: land into `it_802F1630`.
@@ -379,7 +384,7 @@ pub unsafe extern "C" fn it_802F202C(gobj: *mut HSD_GObj) {
     if (*ip).x40_vel.y < -1.5 {
         (*ip).x40_vel.y = -1.5;
     }
-    it_802756d0(&mut *ip);
+    ext::it_802756D0(gobj);
 }
 
 /// `it_802F2094` (itcoin.c): spawn a coin (`arg3` is the coin kind; 0 is a stack, else a launched
@@ -387,7 +392,7 @@ pub unsafe extern "C" fn it_802F202C(gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn it_802F2094(arg0: *mut HSD_GObj, pos: *mut Vec3, arg2: i32, arg3: i32) -> *mut HSD_GObj {
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_Coin;
-    ext::Item_InitSpawnPosition(&mut spawn, pos, false);
+    Item_InitSpawnPosition(&mut spawn, pos, false);
     spawn.facing_dir = 0.0;
     spawn.vel.z = 0.0;
     spawn.vel.y = 0.0;
@@ -407,8 +412,8 @@ pub unsafe extern "C" fn it_802F2094(arg0: *mut HSD_GObj, pos: *mut Vec3, arg2: 
         (*ip).xDD4_itemVar.coin.x14 = arg0 as *mut Item_GObj;
         let var_r29: *mut c_void;
         if (*ip).xDD4_itemVar.coin.x4 != 0 {
-            it_802756e0(&mut *ip);
-            it_8026b3a8(&mut *ip);
+            ext::it_802756E0(gobj);
+            ext::it_8026B3A8(gobj);
             match arg3 {
                 2 => {
                     (*ip).xDD4_itemVar.coin.x8 = attr.xC;
@@ -423,24 +428,24 @@ pub unsafe extern "C" fn it_802F2094(arg0: *mut HSD_GObj, pos: *mut Vec3, arg2: 
                     (*ip).xDD4_itemVar.coin.xC = attr.x4;
                 }
             }
-            var_r29 = ext::tyDisplay_8031C5E4(arg2);
+            var_r29 = ext::tyDisplay_8031C5E4(arg2) as *mut c_void;
         } else {
             ext::Item_80267454(gobj);
-            it_802756d0(&mut *ip);
-            it_8026b390(&mut *ip);
+            ext::it_802756D0(gobj);
+            ext::it_8026B390(gobj);
             (*ip).xD5C = 0;
-            var_r29 = ext::tyDisplay_8031C5E4(arg2);
+            var_r29 = ext::tyDisplay_8031C5E4(arg2) as *mut c_void;
         }
         ext::HSD_GObjObject_80390B0C(gobj);
-        ext::HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, var_r29);
+        ext::HSD_GObjObject_80390A70(gobj, ext::HSD_GObj_JObjKind, var_r29);
         ext::it_8027163C(gobj);
         (*ip).scl = ext::Ground_801C0498();
         (*ip).scl *= attr.x44;
 
         let j = (*gobj).hsd_obj as *mut HSD_JObj;
-        ext::HSD_JObjSetScaleX(j, (*ip).scl);
-        ext::HSD_JObjSetScaleY(j, (*ip).scl);
-        ext::HSD_JObjSetScaleZ(j, (*ip).scl);
+        HSD_JObjSetScaleX(j, (*ip).scl);
+        HSD_JObjSetScaleY(j, (*ip).scl);
+        HSD_JObjSetScaleZ(j, (*ip).scl);
     }
     gobj
 }

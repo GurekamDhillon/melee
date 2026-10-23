@@ -13,19 +13,10 @@ use core::ptr::null_mut;
 use melee_types::*;
 use melee_core::fp::fmadds;
 
-use crate::itlib::it_8026b894;
-use crate::itkinds6::it_802a4420;
-use crate::itkinds7::it_802a3c98;
-use crate::itkinds14::{it_802c248c_joint24, it_802c248c_joint28};
-use crate::itkinds6::it_2725_logic70_evt_unk;
-use crate::itlib3::it_80275328;
-
 /// `ITEM_ANIM_UPDATE` (src/melee/it/forward.h): `1 << 1`.
 pub const ITEM_ANIM_UPDATE: u32 = 1 << 1;
-/// `HSD_GObj_JObjKind` (sysdolphin/baselib/gobj.h).
-pub const HSD_GObj_JObjKind: u8 = 4;
 
-// BEGIN GENERATED EXT (callees of the C TU that are not ported in this crate yet)
+// BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
@@ -45,48 +36,76 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn GObj_Create(class: u16, p_link: u8, prio: u8) -> *mut HSD_GObj;
-    fn HSD_GObjFree(gobj: *mut HSD_GObj);
-    fn HSD_ObjAlloc(d: *mut HSD_ObjAllocData) -> *mut c_void;
-    fn GObj_InitUserData(gobj: *mut HSD_GObj, kind: u8, free: unsafe extern "C" fn(*mut c_void), ud: *mut c_void);
-    fn GObj_SetupGXLink(gobj: *mut HSD_GObj, cb: unsafe extern "C" fn(*mut HSD_GObj), gx_link: u8, priority: u32);
-    fn HSD_GObjObject_80390A70(gobj: *mut HSD_GObj, kind: u8, o: *mut HSD_JObj);
-    fn HSD_JObjLoadJoint(joint: *mut HSD_Joint) -> *mut HSD_JObj;
-    fn HSD_JObjSetupMatrix(jobj: *mut HSD_JObj);
-    fn HSD_JObjCopyMtx(jobj: *mut HSD_JObj, m: *const Mtx);
-    fn HSD_JObjSetMtxDirty(jobj: *mut HSD_JObj);
-    fn HSD_JObjSetTranslate(jobj: *mut HSD_JObj, translate: *const Vec3);
-    fn PSMTXIdentity(m: *mut Mtx);
-    fn PSMTXConcat(a: *const Mtx, b: *const Mtx, ab: *mut Mtx);
-    fn PSMTXCopy(src: *const Mtx, dst: *mut Mtx);
-    fn lbVector_Normalize(v: *mut Vec3) -> f32;
-    fn it_802A6DC8(jobj: *mut HSD_JObj, pos: *mut Vec3, dir: *mut Vec3);
-    fn it_8026BB20(gobj: *mut HSD_GObj);
-    fn it_8026BB44(gobj: *mut HSD_GObj);
-    fn Item_80268E5C(gobj: *mut HSD_GObj, msid: i32, flags: u32);
-    fn Item_8026A8EC(gobj: *mut HSD_GObj);
-    fn Item_80268B18(spawn: *mut SpawnItem) -> *mut HSD_GObj;
-    fn Item_InitSpawnPosition(spawn: *mut SpawnItem, pos: *mut Vec3, flag: bool);
-    fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GObj, facing: f32, flag: bool);
-    fn Item_8026AB54(gobj: *mut HSD_GObj, parent: *mut HSD_GObj, bone: u32);
-    fn ftPp_SpecialS_8012114C(gobj: *mut HSD_GObj);
-    fn ftLib_GetMotionId(gobj: *mut HSD_GObj) -> enum_t;
+    fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
+    fn GObj_InitUserData(a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void);
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
+    fn HSD_GObjFree(a0: *mut HSD_GObj);
+    fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32);
+    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj;
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
+    fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);
+    fn HSD_ObjAlloc(a0: *mut _HSD_ObjAllocData) -> *mut c_void;
+    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj;
+    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
+    fn Item_8026A8EC(a0: *mut HSD_GObj);
+    fn Item_8026AB54(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: u32);
+    fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void);
+    fn PSMTXCopy(a0: *mut c_void, a1: *mut c_void);
+    fn PSMTXIdentity(a0: *mut c_void);
+    fn ftLib_GetMotionId(a0: *mut HSD_GObj) -> i32;
+    fn ftPp_SpecialS_8012114C(a0: *mut HSD_GObj);
+    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
+    fn it_8026BB20(a0: *mut HSD_GObj);
+    fn it_8026BB44(a0: *mut HSD_GObj);
+    fn it_80275328(a0: *mut HSD_GObj, a1: *mut ItemLink);
+    fn it_802A2474(a0: *mut c_void);
+    fn it_802A24A0(a0: *mut HSD_GObj, a1: i32);
+    fn it_802A3C98(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> f32;
+    fn it_802A4420(a0: *mut ItemLink);
+    fn it_802A6DC8(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec);
+    fn lbVector_Normalize(a0: *mut Vec) -> f32;
     }
-    // Data defined in other TUs.
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_JObjCallback(a0, a1) }
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+        pub unsafe extern "C" fn it_802A2474(a0: *mut c_void) { super::it_802A2474(a0) }
+        pub unsafe extern "C" fn it_802A24A0(a0: *mut HSD_GObj, a1: i32) { super::it_802A24A0(a0, a1) }
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
+    pub static mut cur: *mut ItemLink = unsafe { core::mem::zeroed() };
+    pub static mut dir: Vec3 = unsafe { core::mem::zeroed() };
+    pub static mut distance: f32 = unsafe { core::mem::zeroed() };
     pub static mut item_link_alloc_data: HSD_ObjAllocData = unsafe { core::mem::zeroed() };
-
-    // Callbacks of other TUs whose address this TU stores.
-    pub unsafe extern "C" fn it_802A2474(_p: *mut c_void) {
-        panic!("TODO: it_802A2474 is not ported")
-    }
-    pub unsafe extern "C" fn it_802A24A0(_g: *mut HSD_GObj) {
-        panic!("TODO: it_802A24A0 is not ported")
-    }
-    pub unsafe extern "C" fn HSD_GObj_JObjCallback(_g: *mut HSD_GObj) {
-        panic!("TODO: HSD_GObj_JObjCallback is not ported")
-    }
+    pub static mut limit: f32 = unsafe { core::mem::zeroed() };
+    pub static mut next: *mut ItemLink = unsafe { core::mem::zeroed() };
+    pub static mut remaining: f32 = unsafe { core::mem::zeroed() };
+    pub static mut result: i32 = unsafe { core::mem::zeroed() };
 }
 // END GENERATED EXT
+
+jobj_inl!();
+spawn_inl!();
+
+/// `HSD_JObjSetupMatrix` (jobj.h, static inline).
+#[inline]
+unsafe fn HSD_JObjSetupMatrix(jobj: *mut HSD_JObj) {
+    if jobj.is_null() || !HSD_JObjMtxIsDirty(jobj) {
+        return;
+    }
+    ext::HSD_JObjSetupMatrixSub(jobj);
+}
+
+/// `HSD_JObjCopyMtx` (jobj.h, static inline).
+#[inline]
+unsafe fn HSD_JObjCopyMtx(jobj: *mut HSD_JObj, mtx: *mut Mtx) {
+    assert!(!jobj.is_null(), "HSD_ASSERT(1170, jobj)");
+    assert!(!mtx.is_null(), "HSD_ASSERT(1171, mtx)");
+    ext::PSMTXCopy(mtx as *mut c_void, &mut (*jobj).mtx as *mut Mtx as *mut c_void);
+}
 
 #[inline]
 unsafe fn item_of(g: *mut HSD_GObj) -> *mut Item {
@@ -107,8 +126,8 @@ unsafe fn fighter_of(owner: *mut HSD_GObj) -> *mut Fighter {
 
 /// `Item_InitLinkMtx(m, z)` (src/melee/it/kinds/inlines.h, static inline).
 #[inline]
-unsafe fn Item_InitLinkMtx(m: *mut Mtx, z: f32) {
-    ext::PSMTXIdentity(m);
+pub unsafe fn Item_InitLinkMtx(m: *mut Mtx, z: f32) {
+    ext::PSMTXIdentity(m as *mut c_void);
     (*m)[0][3] = 0.0;
     (*m)[1][3] = 0.0;
     (*m)[2][3] = z;
@@ -117,7 +136,7 @@ unsafe fn Item_InitLinkMtx(m: *mut Mtx, z: f32) {
 /// `Item_RetractChain` (src/melee/it/kinds/inlines.h, static inline): walk back from `link` until
 /// the chain reaches `target_dist`, clearing the bend flags on the way; the remainder is capped
 /// by `*max_dist`.
-unsafe fn Item_RetractChain(link: *mut ItemLink, pos: *mut Vec3, target_dist: f32, max_dist: *const f32,
+pub unsafe fn Item_RetractChain(link: *mut ItemLink, pos: *mut Vec3, target_dist: f32, max_dist: *const f32,
     next_out: *mut *mut ItemLink, cur_out: *mut *mut ItemLink, remaining_out: *mut f32)
 {
     let mut cur = link;
@@ -129,11 +148,11 @@ unsafe fn Item_RetractChain(link: *mut ItemLink, pos: *mut Vec3, target_dist: f3
         next = (*next).prev;
     }
 
-    let mut distance = it_802a3c98(&(*cur).pos, &*pos, &mut dir);
+    let mut distance = ext::it_802A3C98(&mut (*cur).pos, pos, &mut dir);
 
     while !next.is_null() && target_dist > distance {
         (*cur).set_x2C_b0(0);
-        distance = it_802a3c98(&(*next).pos, &*pos, &mut dir);
+        distance = ext::it_802A3C98(&mut (*next).pos, pos, &mut dir);
         cur = next;
         next = (*next).prev;
     }
@@ -149,14 +168,24 @@ unsafe fn Item_RetractChain(link: *mut ItemLink, pos: *mut Vec3, target_dist: f3
 }
 
 /// `it_802C248C_setupGObj` (static inline): give a link gobj its joint and GX callback.
-unsafe fn it_802C248C_setupGObj(link_gobj: *mut HSD_GObj, loaded_jobj: *mut HSD_JObj, callback: unsafe extern "C" fn(*mut HSD_GObj)) {
-    ext::HSD_GObjObject_80390A70(link_gobj, HSD_GObj_JObjKind, loaded_jobj);
+pub unsafe fn it_802C248C_setupGObj(link_gobj: *mut HSD_GObj, loaded_jobj: *mut HSD_JObj, callback: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>) {
+    ext::HSD_GObjObject_80390A70(link_gobj, ext::HSD_GObj_JObjKind, loaded_jobj as *mut c_void);
     ext::GObj_SetupGXLink(link_gobj, callback, 6, 0);
+}
+
+/// `it_802C248C_joint24` (static inline).
+pub unsafe fn it_802C248C_joint24(ip: *mut Item) -> *mut HSD_Joint {
+    (*sa::<itClimbersStringAttributes>(ip)).x24_joint
+}
+
+/// `it_802C248C_joint28` (static inline).
+pub unsafe fn it_802C248C_joint28(ip: *mut Item) -> *mut HSD_Joint {
+    (*sa::<itClimbersStringAttributes>(ip)).x28_joint
 }
 
 /// `it_802C248C` (itclimbersstring.c, static): build the `x0_count` links of the gum string
 /// from the owner's hand joint `jobj`. Returns the tail link's gobj's hsd_obj, or NULL.
-unsafe fn it_802C248C(ip: *mut Item, jobj: *mut HSD_JObj) -> *mut HSD_GObj {
+pub unsafe fn it_802C248C(ip: *mut Item, jobj: *mut HSD_JObj) -> *mut HSD_GObj {
     let attrs = sa::<itClimbersStringAttributes>(ip);
     let mut prev_link: *mut ItemLink = null_mut();
     let mut head_link: *mut ItemLink = null_mut();
@@ -177,8 +206,8 @@ unsafe fn it_802C248C(ip: *mut Item, jobj: *mut HSD_JObj) -> *mut HSD_GObj {
         }
 
         let link = ext::HSD_ObjAlloc(&mut ext::item_link_alloc_data) as *mut ItemLink;
-        it_80275328(link_gobj, &mut *link);
-        ext::GObj_InitUserData(link_gobj, 6, ext::it_802A2474, link as *mut c_void);
+        ext::it_80275328(link_gobj, link);
+        ext::GObj_InitUserData(link_gobj, 6, Some(ext::cb::it_802A2474), link as *mut c_void);
 
         if i == 0 {
             (*link).next = null_mut();
@@ -188,7 +217,7 @@ unsafe fn it_802C248C(ip: *mut Item, jobj: *mut HSD_JObj) -> *mut HSD_GObj {
             (*link).vel = zero_vel;
             (*link).pos = (*ip).pos;
             (*link).set_x2C_b0(0);
-            it_802C248C_setupGObj(link_gobj, ext::HSD_JObjLoadJoint(it_802c248c_joint24(&*ip)), ext::it_802A24A0);
+            it_802C248C_setupGObj(link_gobj, ext::HSD_JObjLoadJoint(it_802C248C_joint24(ip)), Some(ext::cb::it_802A24A0));
         } else if i == attrs.x0_count - 1 {
             (*prev_link).prev = link;
             (*link).prev = null_mut();
@@ -200,9 +229,9 @@ unsafe fn it_802C248C(ip: *mut Item, jobj: *mut HSD_JObj) -> *mut HSD_GObj {
             (*link).pos = (*ip).pos;
             (*link).set_x2C_b0(1);
 
-            let joint = ext::HSD_JObjLoadJoint(it_802c248c_joint28(&*ip));
-            ext::HSD_GObjObject_80390A70(link_gobj, HSD_GObj_JObjKind, joint);
-            ext::GObj_SetupGXLink(link_gobj, ext::HSD_GObj_JObjCallback, 6, 0);
+            let joint = ext::HSD_JObjLoadJoint(it_802C248C_joint28(ip));
+            ext::HSD_GObjObject_80390A70(link_gobj, ext::HSD_GObj_JObjKind, joint as *mut c_void);
+            ext::GObj_SetupGXLink(link_gobj, Some(ext::cb::HSD_GObj_JObjCallback), 6, 0);
             (*ip).xDD4_itemVar.climbersstring.x14 = joint;
             result = (*link_gobj).hsd_obj as *mut HSD_GObj;
         } else {
@@ -213,7 +242,7 @@ unsafe fn it_802C248C(ip: *mut Item, jobj: *mut HSD_JObj) -> *mut HSD_GObj {
             (*link).vel = zero_vel;
             (*link).pos = (*ip).pos;
             (*link).set_x2C_b0(0);
-            it_802C248C_setupGObj(link_gobj, ext::HSD_JObjLoadJoint(it_802c248c_joint24(&*ip)), ext::it_802A24A0);
+            it_802C248C_setupGObj(link_gobj, ext::HSD_JObjLoadJoint(it_802C248C_joint24(ip)), Some(ext::cb::it_802A24A0));
         }
         prev_link = link;
         i += 1;
@@ -224,7 +253,7 @@ unsafe fn it_802C248C(ip: *mut Item, jobj: *mut HSD_JObj) -> *mut HSD_GObj {
 }
 
 /// `itClimbersstring_Cleanup` (static inline): drop the owner's grip and free the links.
-unsafe fn itClimbersstring_Cleanup(gobj: *mut HSD_GObj) {
+pub unsafe fn itClimbersstring_Cleanup(gobj: *mut HSD_GObj) {
     if !gobj.is_null() {
         let ip = item_of(gobj);
         if !(*ip).owner.is_null() {
@@ -267,8 +296,8 @@ pub unsafe extern "C" fn it_802C27D4(owner: *mut HSD_GObj, pos: *mut Vec3, _msid
     let fp = fighter_of(owner);
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_IceClimber_GumStrings;
-    ext::Item_InitSpawnPosition(&mut spawn, pos, false);
-    ext::Item_InitSpawnCommonFields(&mut spawn, owner, dir, false);
+    Item_InitSpawnPosition(&mut spawn, pos, false);
+    Item_InitSpawnCommonFields(&mut spawn, owner, dir, false);
     let item_gobj = ext::Item_80268B18(&mut spawn);
     if !item_gobj.is_null() {
         let ip = item_of(item_gobj);
@@ -287,15 +316,15 @@ pub unsafe extern "C" fn fn_802C28B8(gobj: *mut HSD_GObj) {
 /// `fn_802C28DC` (static): the first chain solver (`it_802C2EC4`) for the tail link.
 pub unsafe extern "C" fn fn_802C28DC(gobj: *mut HSD_GObj) {
     let ip = item_of(gobj);
-    let attrs = sa::<itClimbersStringAttributes>(ip);
+    let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itClimbersStringAttributes;
     let link = (*ip).xDD4_itemVar.climbersstring.x4;
     let mut m: Mtx = [[0.0; 4]; 3];
     let mut pos: Vec3;
 
     (*link).set_x2C_b0(1);
     Item_InitLinkMtx(&mut m, 0.0);
-    ext::HSD_JObjSetupMatrix((*link).jobj);
-    ext::PSMTXConcat(&(*(*link).jobj).mtx, &m, &mut m);
+    HSD_JObjSetupMatrix((*link).jobj);
+    ext::PSMTXConcat(&mut (*(*link).jobj).mtx as *mut Mtx as *mut c_void, &mut m as *mut Mtx as *mut c_void, &mut m as *mut Mtx as *mut c_void);
     pos = Vec3 { x: m[0][3], y: m[1][3], z: m[2][3] };
     it_802C2EC4(link, &mut pos, attrs, ip);
     it_802C3520(ip, &mut pos);
@@ -304,15 +333,15 @@ pub unsafe extern "C" fn fn_802C28DC(gobj: *mut HSD_GObj) {
 /// `fn_802C29E8` (static): the second chain solver (`it_802C30E8`) for the tail link.
 pub unsafe extern "C" fn fn_802C29E8(gobj: *mut HSD_GObj) {
     let ip = item_of(gobj);
-    let attrs = sa::<itClimbersStringAttributes>(ip);
+    let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itClimbersStringAttributes;
     let link = (*ip).xDD4_itemVar.climbersstring.x4;
     let mut m: Mtx = [[0.0; 4]; 3];
     let mut pos: Vec3;
 
     (*link).set_x2C_b0(1);
     Item_InitLinkMtx(&mut m, 0.0);
-    ext::HSD_JObjSetupMatrix((*link).jobj);
-    ext::PSMTXConcat(&(*(*link).jobj).mtx, &m, &mut m);
+    HSD_JObjSetupMatrix((*link).jobj);
+    ext::PSMTXConcat(&mut (*(*link).jobj).mtx as *mut Mtx as *mut c_void, &mut m as *mut Mtx as *mut c_void, &mut m as *mut Mtx as *mut c_void);
     pos = Vec3 { x: m[0][3], y: m[1][3], z: m[2][3] };
     it_802C30E8(link, &mut pos, attrs, ip);
     it_802C3520(ip, &mut pos);
@@ -322,14 +351,14 @@ pub unsafe extern "C" fn fn_802C29E8(gobj: *mut HSD_GObj) {
 /// the chain is fully retracted.
 pub unsafe extern "C" fn fn_802C2AF4(gobj: *mut HSD_GObj) {
     let ip = item_of(gobj);
-    let attrs = sa::<itClimbersStringAttributes>(ip);
+    let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itClimbersStringAttributes;
     let link = (*ip).xDD4_itemVar.climbersstring.x8;
     let mut m: Mtx = [[0.0; 4]; 3];
     let mut pos: Vec3;
 
     Item_InitLinkMtx(&mut m, 0.0);
-    ext::HSD_JObjSetupMatrix((*link).jobj);
-    ext::PSMTXConcat(&(*(*link).jobj).mtx, &m, &mut m);
+    HSD_JObjSetupMatrix((*link).jobj);
+    ext::PSMTXConcat(&mut (*(*link).jobj).mtx as *mut Mtx as *mut c_void, &mut m as *mut Mtx as *mut c_void, &mut m as *mut Mtx as *mut c_void);
     pos = Vec3 { x: m[0][3], y: m[1][3], z: m[2][3] };
     if it_802C32D4(link, &mut pos, attrs, ip, (*ip).xDD4_itemVar.climbersstring.x0) {
         it_2725_Logic70_PickedUp(gobj);
@@ -356,18 +385,19 @@ pub unsafe extern "C" fn itClimbersstring_UnkMotion3_Anim(gobj: *mut HSD_GObj) -
 
 /// `it_802C2CA8`: pull the chain toward `target`, keeping each bent link `attrs->x8` from the
 /// next one.
-pub unsafe fn it_802C2CA8(link: *mut ItemLink, target: *mut Vec3, attrs: &itClimbersStringAttributes, length: f32) {
+pub unsafe fn it_802C2CA8(link: *mut ItemLink, target: *mut Vec3, attrs: *mut itClimbersStringAttributes, length: f32) {
+    let attrs = &*attrs;
     let mut link = link;
     let mut dir: Vec3 = core::mem::zeroed();
     let mut prev = (*link).prev;
 
-    it_802a3c98(&(*link).pos, &*target, &mut dir);
+    ext::it_802A3C98(&mut (*link).pos, target, &mut dir);
     (*link).pos.x = fmadds(dir.x, length, (*target).x);
     (*link).pos.y = fmadds(dir.y, length, (*target).y);
     (*link).pos.z = fmadds(dir.z, length, (*target).z);
     while !prev.is_null() {
         if (*prev).x2C_b0() != 0 {
-            if it_802a3c98(&(*prev).pos, &(*link).pos, &mut dir) > attrs.x8 {
+            if ext::it_802A3C98(&mut (*prev).pos, &mut (*link).pos, &mut dir) > attrs.x8 {
                 (*prev).pos.x = fmadds(dir.x, attrs.x8, (*link).pos.x);
                 (*prev).pos.y = fmadds(dir.y, attrs.x8, (*link).pos.y);
                 (*prev).pos.z = fmadds(dir.z, attrs.x8, (*link).pos.z);
@@ -380,19 +410,20 @@ pub unsafe fn it_802C2CA8(link: *mut ItemLink, target: *mut Vec3, attrs: &itClim
 
 /// `it_802C2DB0`: the falling version of the chain pull, applying gravity `attrs->x14` to each
 /// link before solving.
-pub unsafe fn it_802C2DB0(cur: *mut ItemLink, target: *mut Vec3, attrs: &itClimbersStringAttributes, length: f32) {
+pub unsafe fn it_802C2DB0(cur: *mut ItemLink, target: *mut Vec3, attrs: *mut itClimbersStringAttributes, length: f32) {
+    let attrs = &*attrs;
     let mut cur = cur;
     let mut dir: Vec3 = core::mem::zeroed();
     let mut prev = (*cur).prev;
 
-    it_802a3c98(&(*cur).pos, &*target, &mut dir);
+    ext::it_802A3C98(&mut (*cur).pos, target, &mut dir);
     (*cur).pos.x = fmadds(dir.x, length, (*target).x);
     (*cur).pos.y = fmadds(dir.y, length, (*target).y);
     (*cur).pos.z = fmadds(dir.z, length, (*target).z);
     while !prev.is_null() {
         (*prev).vel.y -= attrs.x14;
-        it_802_a4420_call(prev);
-        if it_802a3c98(&(*prev).pos, &(*cur).pos, &mut dir) > attrs.x8 {
+        ext::it_802A4420(prev);
+        if ext::it_802A3C98(&mut (*prev).pos, &mut (*cur).pos, &mut dir) > attrs.x8 {
             (*prev).pos.x = fmadds(dir.x, attrs.x8, (*cur).pos.x);
             (*prev).pos.y = fmadds(dir.y, attrs.x8, (*cur).pos.y);
             (*prev).pos.z = fmadds(dir.z, attrs.x8, (*cur).pos.z);
@@ -402,14 +433,10 @@ pub unsafe fn it_802C2DB0(cur: *mut ItemLink, target: *mut Vec3, attrs: &itClimb
     }
 }
 
-#[inline]
-unsafe fn it_802_a4420_call(l: *mut ItemLink) {
-    it_802a4420(&mut *l);
-}
-
 /// `it_802C2EC4`: solve the chain against the owner's hand position while the owner holds it.
 /// Returns 2 when the chain is settled, 0 when it stopped short.
-pub unsafe fn it_802C2EC4(link: *mut ItemLink, target: *mut Vec3, attrs: &itClimbersStringAttributes, ip: *mut Item) -> i32 {
+pub unsafe fn it_802C2EC4(link: *mut ItemLink, target: *mut Vec3, attrs: *mut itClimbersStringAttributes, ip: *mut Item) -> i32 {
+    let attrs = &*attrs;
     let mut cur = link;
     let mut iter = (*link).next;
     let fp = fighter_of((*ip).xDD4_itemVar.climbersstring.xC);
@@ -426,13 +453,13 @@ pub unsafe fn it_802C2EC4(link: *mut ItemLink, target: *mut Vec3, attrs: &itClim
     while !iter.is_null() {
         if (*iter).x2C_b0() != 0 {
             (*iter).pos = *target;
-            let dist = it_802a3c98(&(*iter).pos, &(*cur).pos, &mut dir);
+            let dist = ext::it_802A3C98(&mut (*iter).pos, &mut (*cur).pos, &mut dir);
             if dist > attrs.x8 {
                 (*iter).pos.x = fmadds(dir.x, attrs.x8, (*cur).pos.x);
                 (*iter).pos.y = fmadds(dir.y, attrs.x8, (*cur).pos.y);
                 (*iter).pos.z = fmadds(dir.z, attrs.x8, (*cur).pos.z);
             } else if dist < attrs.xC {
-                if it_802a3c98(&(*iter).pos, &*target, &mut dir2) <= 0.1 {
+                if ext::it_802A3C98(&mut (*iter).pos, target, &mut dir2) <= 0.1 {
                     (*iter).set_x2C_b0(0);
                 } else {
                     (*iter).pos.x = fmadds(dir.x, attrs.xC, (*cur).pos.x);
@@ -441,7 +468,7 @@ pub unsafe fn it_802C2EC4(link: *mut ItemLink, target: *mut Vec3, attrs: &itClim
                 }
             }
         } else {
-            if it_802a3c98(&*target, &(*cur).pos, &mut dir) > attrs.x8 {
+            if ext::it_802A3C98(target, &mut (*cur).pos, &mut dir) > attrs.x8 {
                 (*iter).pos.x = fmadds(dir.x, attrs.x8, (*cur).pos.x);
                 (*iter).pos.y = fmadds(dir.y, attrs.x8, (*cur).pos.y);
                 (*iter).pos.z = fmadds(dir.z, attrs.x8, (*cur).pos.z);
@@ -457,13 +484,14 @@ pub unsafe fn it_802C2EC4(link: *mut ItemLink, target: *mut Vec3, attrs: &itClim
 }
 
 /// `it_802C2CA8_outline` (static inline): forwards to `it_802C2CA8`.
-unsafe fn it_802C2CA8_outline(link: *mut ItemLink, target: *mut Vec3, attrs: &itClimbersStringAttributes, length: f32) {
+pub unsafe fn it_802C2CA8_outline(link: *mut ItemLink, target: *mut Vec3, attrs: *mut itClimbersStringAttributes, length: f32) {
     it_802C2CA8(link, target, attrs, length);
 }
 
 /// `it_802C30E8`: the swinging solver: gravity on each link, then the chain pull; 2 when settled,
 /// 0 when a link is still too close to be moved.
-pub unsafe fn it_802C30E8(link: *mut ItemLink, target: *mut Vec3, attrs: &itClimbersStringAttributes, ip: *mut Item) -> i32 {
+pub unsafe fn it_802C30E8(link: *mut ItemLink, target: *mut Vec3, attrs: *mut itClimbersStringAttributes, ip: *mut Item) -> i32 {
+    let attrs = &*attrs;
     let mut cur = link;
     let mut iter = (*link).next;
     let mut dir: Vec3 = core::mem::zeroed();
@@ -474,7 +502,7 @@ pub unsafe fn it_802C30E8(link: *mut ItemLink, target: *mut Vec3, attrs: &itClim
     if (*fp).u.pp.x2240.x != 0.0 || (*fp).u.pp.x2240.y != 0.0 {
         (*link).pos = (*fp).u.pp.x2240;
     } else {
-        it_802_a4420_call(cur);
+        ext::it_802A4420(cur);
     }
 
     let mut counter: i32 = 0;
@@ -482,8 +510,8 @@ pub unsafe fn it_802C30E8(link: *mut ItemLink, target: *mut Vec3, attrs: &itClim
         counter += 1;
         if (*iter).x2C_b0() != 0 {
             (*iter).vel.y -= attrs.x14;
-            it_802_a4420_call(iter);
-            if it_802a3c98(&(*iter).pos, &(*cur).pos, &mut dir) > attrs.x8 {
+            ext::it_802A4420(iter);
+            if ext::it_802A3C98(&mut (*iter).pos, &mut (*cur).pos, &mut dir) > attrs.x8 {
                 (*iter).pos.x = fmadds(dir.x, attrs.x8, (*cur).pos.x);
                 (*iter).pos.y = fmadds(dir.y, attrs.x8, (*cur).pos.y);
                 (*iter).pos.z = fmadds(dir.z, attrs.x8, (*cur).pos.z);
@@ -492,7 +520,7 @@ pub unsafe fn it_802C30E8(link: *mut ItemLink, target: *mut Vec3, attrs: &itClim
             if counter > attrs.x4 {
                 (*iter).pos = *target;
             } else {
-                if it_802a3c98(&*target, &(*cur).pos, &mut dir) > attrs.x8 {
+                if ext::it_802A3C98(target, &mut (*cur).pos, &mut dir) > attrs.x8 {
                     (*iter).pos.x = fmadds(dir.x, attrs.x8, (*cur).pos.x);
                     (*iter).pos.y = fmadds(dir.y, attrs.x8, (*cur).pos.y);
                     (*iter).pos.z = fmadds(dir.z, attrs.x8, (*cur).pos.z);
@@ -506,19 +534,20 @@ pub unsafe fn it_802C30E8(link: *mut ItemLink, target: *mut Vec3, attrs: &itClim
         iter = (*iter).next;
     }
 
-    it_802C2CA8_outline(cur, target, attrs, attrs.x8);
+    it_802C2CA8(cur, target, attrs as *const _ as *mut _, attrs.x8);
     (*link).vel.x *= 0.9;
     2
 }
 
 /// `it_802C32D4`: retract the chain to `dist` from `pos`; true once the head is reached.
-pub unsafe fn it_802C32D4(link: *mut ItemLink, pos: *mut Vec3, attrs: &itClimbersStringAttributes, _ip: *mut Item, dist: f32) -> bool {
+pub unsafe fn it_802C32D4(link: *mut ItemLink, pos: *mut Vec3, attrs: *mut itClimbersStringAttributes, _ip: *mut Item, dist: f32) -> bool {
+    let attrs = &*attrs;
     let mut prev: *mut ItemLink = null_mut();
     let mut cur: *mut ItemLink = null_mut();
     let mut step: f32 = 0.0;
 
     Item_RetractChain(link, pos, dist, &attrs.x8, &mut prev, &mut cur, &mut step);
-    it_802C2DB0(cur, pos, attrs, step);
+    it_802C2DB0(cur, pos, attrs as *const _ as *mut _, step);
 
     if !prev.is_null() {
         return false;
@@ -534,17 +563,17 @@ pub unsafe fn it_802C33B8(ip: *mut Item) {
     let zero = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
     (*link).set_x2C_b0(0);
-    ext::HSD_JObjSetupMatrix((*link).jobj);
+    HSD_JObjSetupMatrix((*link).jobj);
 
-    ext::PSMTXIdentity(&mut m);
+    ext::PSMTXIdentity(&mut m as *mut Mtx as *mut c_void);
     m[0][3] = zero.x;
     m[1][3] = zero.y;
     m[2][3] = zero.z;
-    ext::PSMTXConcat(&(*(*link).jobj).mtx, &m, &mut m);
+    ext::PSMTXConcat(&mut (*(*link).jobj).mtx as *mut Mtx as *mut c_void, &mut m as *mut Mtx as *mut c_void, &mut m as *mut Mtx as *mut c_void);
 
-    ext::HSD_JObjCopyMtx(jobj, &m);
+    HSD_JObjCopyMtx(jobj, &mut m);
     (*jobj).flags |= 0x03800000;
-    ext::HSD_JObjSetMtxDirty(jobj);
+    HSD_JObjSetMtxDirty(jobj);
 }
 
 /// `it_802C3520`: place every link of the chain from the tail's bend point to the head, setting
@@ -577,7 +606,7 @@ pub unsafe fn it_802C3520(ip: *mut Item, target: *mut Vec3) {
 
         let jobj = (*(*link).gobj).hsd_obj as *mut HSD_JObj;
         let mut link_pos: Vec3 = (*link).pos;
-        ext::HSD_JObjSetTranslate(jobj, &link_pos);
+        HSD_JObjSetTranslate(jobj, &mut link_pos);
 
         let mut dir = Vec3 {
             x: prev_pos.x - next_pos.x,
@@ -588,7 +617,7 @@ pub unsafe fn it_802C3520(ip: *mut Item, target: *mut Vec3) {
 
         ext::it_802A6DC8(jobj, &mut link_pos, &mut dir);
 
-        ext::PSMTXCopy(&(*jobj).mtx, &mut m);
+        ext::PSMTXCopy(&mut (*jobj).mtx as *mut Mtx as *mut c_void, &mut m as *mut Mtx as *mut c_void);
         m[0][0] *= attrs.x8;
         m[1][0] *= attrs.x8;
         m[2][0] *= attrs.x8;
@@ -598,7 +627,7 @@ pub unsafe fn it_802C3520(ip: *mut Item, target: *mut Vec3) {
         m[0][2] *= attrs.x8;
         m[1][2] *= attrs.x8;
         m[2][2] *= attrs.x8;
-        ext::PSMTXCopy(&m, &mut (*jobj).mtx);
+        ext::PSMTXCopy(&mut m as *mut Mtx as *mut c_void, &mut (*jobj).mtx as *mut Mtx as *mut c_void);
 
         link = (*link).prev;
     }
@@ -628,8 +657,8 @@ pub unsafe extern "C" fn it_802C3864(gobj: *mut HSD_GObj) {
     let mut mtx: Mtx = [[0.0; 4]; 3];
 
     Item_InitLinkMtx(&mut mtx, 0.0);
-    ext::HSD_JObjSetupMatrix((*link).jobj);
-    ext::PSMTXConcat(&(*(*link).jobj).mtx, &mtx, &mut mtx);
+    HSD_JObjSetupMatrix((*link).jobj);
+    ext::PSMTXConcat(&mut (*(*link).jobj).mtx as *mut Mtx as *mut c_void, &mut mtx as *mut Mtx as *mut c_void, &mut mtx as *mut Mtx as *mut c_void);
     (*ip).xDD4_itemVar.climbersstring.x0 = 2.25;
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE);
     ext::it_8026BB20(gobj);
@@ -644,8 +673,8 @@ pub unsafe extern "C" fn it_802C3950(gobj: *mut HSD_GObj) {
     let mut mtx: Mtx = [[0.0; 4]; 3];
 
     Item_InitLinkMtx(&mut mtx, 0.0);
-    ext::HSD_JObjSetupMatrix((*link).jobj);
-    ext::PSMTXConcat(&(*(*link).jobj).mtx, &mtx, &mut mtx);
+    HSD_JObjSetupMatrix((*link).jobj);
+    ext::PSMTXConcat(&mut (*(*link).jobj).mtx as *mut Mtx as *mut c_void, &mut mtx as *mut Mtx as *mut c_void, &mut mtx as *mut Mtx as *mut c_void);
     let result = Vec3 { x: mtx[0][3], y: mtx[1][3], z: mtx[2][3] };
     (*link).pos = result;
     (*link).coll_data.cur_pos = (*link).pos;
@@ -659,7 +688,7 @@ pub unsafe extern "C" fn it_802C3950(gobj: *mut HSD_GObj) {
 /// `it_2725_Logic70_EvtUnk`: `it_8026B894`, then forget the owner if it is the reference.
 pub unsafe extern "C" fn it_2725_Logic70_EvtUnk(arg0: *mut HSD_GObj, arg1: *mut HSD_GObj) {
     let ip = item_of(arg0);
-    it_8026b894(&mut *ip, arg1);
+    ext::it_8026B894(arg0, arg1);
     if (*ip).xDD4_itemVar.climbersstring.xC == arg1 {
         (*ip).xDD4_itemVar.climbersstring.xC = null_mut();
     }

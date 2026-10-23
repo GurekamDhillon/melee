@@ -1,0 +1,9 @@
+HSD_GObj_JObjKind
+cur
+dir
+distance
+item_link_alloc_data
+limit
+next
+remaining
+result

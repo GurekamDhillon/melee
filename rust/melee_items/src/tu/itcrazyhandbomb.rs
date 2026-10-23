@@ -12,14 +12,11 @@ use core::ptr::null_mut;
 use melee_types::*;
 use melee_core::fp::fmadds;
 
-use crate::itlib::{it_8026b894, it_80273030, it_8026bd24, it_802751d8, it_802756d0};
-use crate::itlib3::it_80272860;
-use crate::item::it_802762bc;
 
 /// `ITEM_ANIM_UPDATE` (src/melee/it/forward.h): `1 << 1`.
 pub const ITEM_ANIM_UPDATE: u32 = 1 << 1;
 
-// BEGIN GENERATED EXT (callees of the C TU that are not ported in this crate yet)
+// BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
@@ -39,21 +36,37 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn Item_80268B18(spawn: *mut SpawnItem) -> *mut HSD_GObj;
-    fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GObj, facing: f32, flag: bool);
-    fn Item_80268E5C(gobj: *mut HSD_GObj, msid: i32, flags: u32);
-    fn db_80225DD8(item: *mut HSD_GObj, owner: *mut HSD_GObj);
-    fn it_802750F8(gobj: *mut HSD_GObj);
-    fn it_8027518C(gobj: *mut HSD_GObj);
-    fn it_80273454(gobj: *mut HSD_GObj);
-    fn it_80272C08(gobj: *mut HSD_GObj);
-    fn it_8026E71C(gobj: *mut HSD_GObj, cb: HSD_GObjEvent);
-    fn HSD_JObjSetFlagsAll(jobj: *mut HSD_JObj, flags: u32);
-    fn HSD_JObjSetRotation(jobj: *mut HSD_JObj, rot: *const Quaternion);
-    fn HSD_Randi(max: i32) -> i32;
+    fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32);
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
+    fn HSD_Randi(a0: i32) -> i32;
+    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj;
+    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
+    fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
+    fn it_8026BD24(a0: *mut HSD_GObj);
+    fn it_8026E71C(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>);
+    fn it_80272860(a0: *mut HSD_GObj, a1: f32, a2: f32);
+    fn it_80272C08(a0: *mut HSD_GObj);
+    fn it_80273030(a0: *mut HSD_GObj) -> i32;
+    fn it_80273454(a0: *mut HSD_GObj);
+    fn it_802750F8(a0: *mut HSD_GObj);
+    fn it_8027518C(a0: *mut HSD_GObj);
+    fn it_802751D8(a0: *mut HSD_GObj) -> i32;
+    fn it_802756D0(a0: *mut HSD_GObj);
+    fn it_802762BC(a0: *mut Item);
     }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut result: i32 = unsafe { core::mem::zeroed() };
 }
 // END GENERATED EXT
+
+jobj_inl!();
+spawn_inl!();
 
 /// `JOBJ_HIDDEN` (sysdolphin/baselib/jobj.h).
 pub const JOBJ_HIDDEN: u32 = 1 << 4;
@@ -85,7 +98,7 @@ pub unsafe extern "C" fn it_802F0F6C(owner: *mut HSD_GObj, prev_pos: *mut Vec3, 
     spawnitem.kind = kind;
     spawnitem.prev_pos = *prev_pos;
     spawnitem.pos = *pos;
-    ext::Item_InitSpawnCommonFields(&mut spawnitem, owner, facing_dir, true);
+    Item_InitSpawnCommonFields(&mut spawnitem, owner, facing_dir, true);
     let gobj = ext::Item_80268B18(&mut spawnitem);
     it_802F10F8(gobj);
     ext::db_80225DD8(gobj, owner);
@@ -95,17 +108,17 @@ pub unsafe extern "C" fn it_802F0F6C(owner: *mut HSD_GObj, prev_pos: *mut Vec3, 
 /// `it_802F1030` (itcrazyhandbomb.c): hide and detonate the bomb.
 pub unsafe extern "C" fn it_802F1030(gobj: *mut HSD_GObj) {
     ext::HSD_JObjSetFlagsAll((*gobj).hsd_obj as *mut HSD_JObj, JOBJ_HIDDEN);
-    it_8026bd24(&mut *item_of(gobj));
+    ext::it_8026BD24(gobj);
     ext::it_8027518C(gobj);
     ext::it_80273454(gobj);
     ext::it_80272C08(gobj);
-    it_802756d0(&mut *item_of(gobj));
+    ext::it_802756D0(gobj);
     it_802F1344(gobj);
 }
 
 /// `itCrazyHandBomb_Logic86_EvtUnk`: `it_8026B894`.
 pub unsafe extern "C" fn itCrazyHandBomb_Logic86_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
-    it_8026b894(&mut *item_of(gobj), ref_gobj);
+    ext::it_8026B894(gobj, ref_gobj);
 }
 
 /// `itCrazyHandBomb_Logic86_DmgDealt`: detonate, true.
@@ -115,17 +128,17 @@ pub unsafe extern "C" fn itCrazyHandBomb_Logic86_DmgDealt(gobj: *mut HSD_GObj) -
 }
 
 /// `itCrazyHandBomb_Logic86_Reflected`: `it_80273030`.
-pub unsafe extern "C" fn itCrazyHandBomb_Logic86_Reflected(gobj: *mut HSD_GObj) -> bool {
-    it_80273030(&mut *item_of(gobj))
+pub unsafe extern "C" fn itCrazyHandBomb_Logic86_Reflected(gobj: *mut HSD_GObj) -> i32 {
+    ext::it_80273030(gobj)
 }
 
 /// `it_802F10F8` (itcrazyhandbomb.c): launch the bomb upwards at `x0` velocity and arm it.
 pub unsafe extern "C" fn it_802F10F8(gobj: *mut HSD_GObj) {
     let ip = item_of(gobj);
     let attrs = sa::<itCrazyHandBombAttributes>(ip);
-    it_802762bc(&mut *ip);
+    ext::it_802762BC(ip);
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
-    (*ip).on_accessory = Some(it_802F1340);
+    (*ip).on_accessory = Some(core::mem::transmute::<unsafe extern "C" fn(), unsafe extern "C" fn(*mut HSD_GObj)>(it_802F1340));
     (*ip).x40_vel.y = attrs.x0;
 }
 
@@ -139,8 +152,9 @@ pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
     let ip = item_of(gobj);
     let attrs = sa::<itCrazyHandBombAttributes>(ip);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
-    it_80272860(&mut *ip, attrs.x4, attrs.x8);
-    let mut rot: Quaternion = (*jobj).rotate;
+    ext::it_80272860(gobj, attrs.x4, attrs.x8);
+    let mut rot: Quaternion = core::mem::zeroed();
+    HSD_JObjGetRotation(jobj, &mut rot);
 
     let vy = (*ip).x40_vel.y;
     match ext::HSD_Randi(3) {
@@ -150,7 +164,7 @@ pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion0_Phys(gobj: *mut HSD_GObj) {
         _ => {}
     }
 
-    ext::HSD_JObjSetRotation(jobj, &rot);
+    HSD_JObjSetRotation(jobj, &mut rot);
 }
 
 /// `itCrazyhandbomb_UnkMotion0_Coll`: detonate when airborne.
@@ -163,8 +177,8 @@ pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion0_Coll(gobj: *mut HSD_GObj) ->
 }
 
 /// `it_802F1340`: the on-accessory callback once the bomb is armed (empty). The C declares it
-/// with no parameters; it is stored as an `HSD_GObjEvent`, so it takes the gobj.
-pub unsafe extern "C" fn it_802F1340(_gobj: *mut HSD_GObj) {}
+/// with no parameters and stores it as an `HSD_GObjEvent` through a cast (same address either way).
+pub unsafe extern "C" fn it_802F1340() {}
 
 /// `it_802F1344`: switch to motion 1 and arm the explosion callback.
 pub unsafe extern "C" fn it_802F1344(gobj: *mut HSD_GObj) {
@@ -174,8 +188,8 @@ pub unsafe extern "C" fn it_802F1344(gobj: *mut HSD_GObj) {
 }
 
 /// `itCrazyhandbomb_UnkMotion1_Anim`: `it_802751D8`.
-pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> bool {
-    it_802751d8(&mut *item_of(gobj))
+pub unsafe extern "C" fn itCrazyhandbomb_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> i32 {
+    ext::it_802751D8(gobj)
 }
 
 /// `itCrazyhandbomb_UnkMotion1_Phys` (empty).

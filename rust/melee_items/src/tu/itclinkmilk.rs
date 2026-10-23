@@ -9,12 +9,11 @@ use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
 
-use crate::itlib::it_8026b894;
 
 /// `ITEM_ANIM_UPDATE` (src/melee/it/forward.h): `1 << 1`.
 pub const ITEM_ANIM_UPDATE: u32 = 1 << 1;
 
-// BEGIN GENERATED EXT (callees of the C TU that are not ported in this crate yet)
+// BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
@@ -34,23 +33,32 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn Item_80268B18(spawn: *mut SpawnItem) -> *mut HSD_GObj;
-    fn Item_InitSpawnPosition(spawn: *mut SpawnItem, pos: *mut Vec3, flag: bool);
-    fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GObj, facing: f32, flag: bool);
-    fn Item_8026AB54(gobj: *mut HSD_GObj, parent: *mut HSD_GObj, bone: u32);
-    fn Item_8026A8EC(gobj: *mut HSD_GObj);
-    fn Item_80268E5C(gobj: *mut HSD_GObj, msid: i32, flags: u32);
-    fn Item_802694CC(gobj: *mut HSD_GObj);
-    fn ftCl_Init_801492C4(gobj: *mut HSD_GObj);
-    fn ftCl_Init_8014920C(gobj: *mut HSD_GObj) -> bool;
-    fn ftCl_Init_801492F4(gobj: *mut HSD_GObj) -> i32;
-    fn ftLib_800869D4(gobj: *mut HSD_GObj) -> f32;
-    fn HSD_JObjClearFlags(jobj: *mut HSD_JObj, flags: u32);
-    fn HSD_JObjSetFlags(jobj: *mut HSD_JObj, flags: u32);
-    fn HSD_JObjSetScale(jobj: *mut HSD_JObj, scale: *const Vec3);
+    fn HSD_JObjClearFlags(a0: *mut HSD_JObj, a1: u32);
+    fn HSD_JObjSetFlags(a0: *mut HSD_JObj, a1: u32);
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
+    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj;
+    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
+    fn Item_802694CC(a0: *mut HSD_GObj);
+    fn Item_8026A8EC(a0: *mut HSD_GObj);
+    fn Item_8026AB54(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: u32);
+    fn ftCl_Init_8014920C(a0: *mut HSD_GObj) -> i32;
+    fn ftCl_Init_801492C4(a0: *mut HSD_GObj);
+    fn ftCl_Init_801492F4(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_800869D4(a0: *mut HSD_GObj) -> f32;
+    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
     }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut result: i32 = unsafe { core::mem::zeroed() };
 }
 // END GENERATED EXT
+
+jobj_inl!();
+spawn_inl!();
 
 /// `JOBJ_HIDDEN` (sysdolphin/baselib/jobj.h).
 pub const JOBJ_HIDDEN: u32 = 1 << 4;
@@ -74,16 +82,6 @@ unsafe fn Item_ClearCmdVars(ip: *mut Item) {
     (*ip).xDAC_itcmd_var0 = 0;
 }
 
-/// `HSD_JObjGetChild(jobj)` (NULL-safe).
-#[inline]
-unsafe fn jobj_child(j: *mut HSD_JObj) -> *mut HSD_JObj {
-    if j.is_null() {
-        null_mut()
-    } else {
-        (*j).child
-    }
-}
-
 /// `it_802C8B28` (itclinkmilk.c): spawn the milk bottle for `parent`, bound to `bone`.
 pub unsafe extern "C" fn it_802C8B28(parent: *mut HSD_GObj, pos: *mut Vec3, bone: u32, facing_dir: f32) -> *mut HSD_GObj {
     if parent.is_null() {
@@ -91,8 +89,8 @@ pub unsafe extern "C" fn it_802C8B28(parent: *mut HSD_GObj, pos: *mut Vec3, bone
     }
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = It_Kind_CLink_Milk;
-    ext::Item_InitSpawnPosition(&mut spawn, pos, true);
-    ext::Item_InitSpawnCommonFields(&mut spawn, parent, facing_dir, false);
+    Item_InitSpawnPosition(&mut spawn, pos, true);
+    Item_InitSpawnCommonFields(&mut spawn, parent, facing_dir, false);
     let item_gobj = ext::Item_80268B18(&mut spawn);
     if !item_gobj.is_null() {
         let ip = item_of(item_gobj);
@@ -128,7 +126,7 @@ pub unsafe extern "C" fn it_2725_Logic80_PickedUp(gobj: *mut HSD_GObj) {
 }
 
 /// `itCLinkMilk_NotifyParent` (static inline): release the owner's milk reference.
-unsafe fn itCLinkMilk_NotifyParent(gobj: *mut HSD_GObj) {
+pub unsafe fn itCLinkMilk_NotifyParent(gobj: *mut HSD_GObj) {
     if !gobj.is_null() {
         let ip = item_of(gobj);
         if !ip.is_null() {
@@ -143,7 +141,7 @@ unsafe fn itCLinkMilk_NotifyParent(gobj: *mut HSD_GObj) {
 }
 
 /// `itCLinkMilk_Destroy` (static inline): clear the references; true if there was an item.
-unsafe fn itCLinkMilk_Destroy(gobj: *mut HSD_GObj) -> bool {
+pub unsafe fn itCLinkMilk_Destroy(gobj: *mut HSD_GObj) -> bool {
     if !gobj.is_null() {
         let ip = item_of(gobj);
         if !ip.is_null() {
@@ -159,8 +157,8 @@ unsafe fn itCLinkMilk_Destroy(gobj: *mut HSD_GObj) -> bool {
 /// state; destroy when the owner is gone.
 pub unsafe extern "C" fn itClinkmilk_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> bool {
     let ip = item_of(gobj);
-    let child = jobj_child((*gobj).hsd_obj as *mut HSD_JObj);
-    let grandchild = jobj_child((*gobj).hsd_obj as *mut HSD_JObj);
+    let child = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
+    let grandchild = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
 
     if (*ip).xDAC_itcmd_var0 == 1 {
         ext::HSD_JObjClearFlags(grandchild, JOBJ_HIDDEN);
@@ -170,7 +168,7 @@ pub unsafe extern "C" fn itClinkmilk_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> boo
 
     let parent = (*ip).xDD4_itemVar.clinkmilk.x0 as *mut HSD_GObj;
     if !parent.is_null() {
-        if ext::ftCl_Init_8014920C(parent) {
+        if ext::ftCl_Init_8014920C(parent) == 1 {
             itCLinkMilk_NotifyParent(gobj);
             if itCLinkMilk_Destroy(gobj) {
                 return true;
@@ -179,7 +177,8 @@ pub unsafe extern "C" fn itClinkmilk_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> boo
             (*ip).xDAC_itcmd_var0 = ext::ftCl_Init_801492F4(parent) as u32;
             let s = ext::ftLib_800869D4(parent);
             let sv = Vec3 { x: s, y: s, z: s };
-            ext::HSD_JObjSetScale(child, &sv);
+            let mut sv = sv;
+            HSD_JObjSetScale(child, &mut sv);
         }
     } else {
         itCLinkMilk_NotifyParent(gobj);
@@ -200,7 +199,7 @@ pub unsafe extern "C" fn itClinkmilk_UnkMotion1_Coll(_gobj: *mut HSD_GObj) -> bo
 
 /// `itCLinkMilk_Logic80_EvtUnk`: `it_8026B894`.
 pub unsafe extern "C" fn itCLinkMilk_Logic80_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
-    it_8026b894(&mut *item_of(gobj), ref_gobj);
+    ext::it_8026B894(gobj, ref_gobj);
 }
 
 pred_i32! {

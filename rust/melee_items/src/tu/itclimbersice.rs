@@ -10,17 +10,20 @@ use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
 
-use crate::itlib::{it_8026b3a8, it_8026b894, it_80273030, it_8026bd6c, it_8026bd84, it_802756d0};
-use crate::itlib3::it_80272860;
-use crate::item::it_802762bc;
-use crate::itlib::it_80276308;
-use crate::itlib3::it_80274658;
-use crate::helpers::it_80275158;
-
 /// `ITEM_ANIM_UPDATE` (src/melee/it/forward.h): `1 << 1`.
 pub const ITEM_ANIM_UPDATE: u32 = 1 << 1;
 
-// BEGIN GENERATED EXT (callees of the C TU that are not ported in this crate yet)
+/// One argument of a variadic effect spawn (`efSync_Spawn` / `efAsync_Spawn` are C varargs; the port keeps the
+/// C type of each extra argument so the eventual implementation can read it back).
+#[derive(Clone, Copy)]
+pub enum EfArg {
+    Int(i32),
+    Ptr(*mut c_void),
+    F32P(*const f32),
+    Vec3P(*const Vec3),
+}
+
+// BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
@@ -40,32 +43,48 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn Item_80268B18(spawn: *mut SpawnItem) -> *mut HSD_GObj;
-    fn Item_InitSpawnPositionFromParent(spawn: *mut SpawnItem, parent: *mut HSD_GObj, pos: *mut Vec3);
-    fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GObj, facing: f32, flag: bool);
-    fn Item_80268E5C(gobj: *mut HSD_GObj, msid: i32, flags: u32);
-    fn Item_8026A8EC(gobj: *mut HSD_GObj);
-    fn it_802750F8(gobj: *mut HSD_GObj);
-    fn db_80225DD8(item: *mut HSD_GObj, owner: *mut HSD_GObj);
-    fn it_80272980(gobj: *mut HSD_GObj);
-    fn it_80272F7C(jobj: *mut HSD_JObj, f: f32);
-    fn it_80272460(hit: *mut HitCapsule, dmg: u32, owner: *mut HSD_GObj);
-    fn it_8026D62C(gobj: *mut HSD_GObj, cb: HSD_GObjEvent);
-    fn it_8026E15C(gobj: *mut HSD_GObj, cb: HSD_GObjEvent);
-    fn it_8026DAA8(gobj: *mut HSD_GObj) -> i32;
-    fn it_80276CB8(gobj: *mut HSD_GObj);
-    fn it_8027770C(gobj: *mut HSD_GObj) -> bool;
-    fn itColl_BounceOffVictim(gobj: *mut HSD_GObj);
-    fn itColl_BounceOffShield(gobj: *mut HSD_GObj) -> bool;
-    fn efLib_DestroyAll(gobj: *mut HSD_GObj);
-    fn efAsync_Spawn(gobj: *mut HSD_GObj, queue_head: *mut *mut c_void, spawn_kind: u32, gfx_id: u32, jobj: *mut HSD_JObj, facing: *mut f32);
-    fn ftPp_Init_8011F16C(gobj: *mut HSD_GObj, item_gobj: *mut HSD_GObj);
-    fn ftKb_SpecialNIc_80108CE8(gobj: *mut HSD_GObj, item_gobj: *mut HSD_GObj);
+    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj;
+    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
+    fn Item_8026A8EC(a0: *mut HSD_GObj);
+    fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn efAsync_Spawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: u32, a3: u32, a4: *mut HSD_JObj, a5: &[EfArg]);
+    fn efLib_DestroyAll(a0: *mut HSD_GObj);
+    fn ftKb_SpecialNIc_80108CE8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn ftPp_Init_8011F16C(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn itColl_BounceOffShield(a0: *mut HSD_GObj) -> i32;
+    fn itColl_BounceOffVictim(a0: *mut HSD_GObj);
+    fn it_8026B3A8(a0: *mut HSD_GObj);
+    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
+    fn it_8026BB68(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn it_8026BD6C(a0: *mut HSD_GObj);
+    fn it_8026BD84(a0: *mut HSD_GObj);
+    fn it_8026D62C(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>);
+    fn it_8026DAA8(a0: *mut HSD_GObj) -> i32;
+    fn it_8026E15C(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>);
+    fn it_80272460(a0: *mut HitCapsule, a1: u32, a2: *mut HSD_GObj);
+    fn it_80272860(a0: *mut HSD_GObj, a1: f32, a2: f32);
+    fn it_80272980(a0: *mut HSD_GObj);
+    fn it_80272F7C(a0: *mut HSD_JObj, a1: f32);
+    fn it_80273030(a0: *mut HSD_GObj) -> i32;
+    fn it_80274658(a0: *mut HSD_GObj, a1: f32) -> i32;
+    fn it_802750F8(a0: *mut HSD_GObj);
+    fn it_80275158(a0: *mut HSD_GObj, a1: f32);
+    fn it_80276308(a0: *mut HSD_GObj) -> i32;
+    fn it_80276CB8(a0: *mut HSD_GObj);
+    fn it_8027770C(a0: *mut HSD_GObj) -> i32;
     }
-    // Data defined in other TUs.
-    pub static mut it_804D6D28: *mut ItemCommonData = core::ptr::null_mut();
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut attrs: *mut ItemAttr = unsafe { core::mem::zeroed() };
+    pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
 }
 // END GENERATED EXT
+
+spawn_inl!();
+spawn_parent_inl!();
 
 /// `it_803F7668`'s predicate form: the C callbacks return `bool`, the table stores `int`.
 macro_rules! pred_i32 {
@@ -85,7 +104,7 @@ unsafe fn sa<'a, T>(ip: *mut Item) -> &'a T {
 
 /// `HSD_JObjGetChild(jobj)` (NULL-safe).
 #[inline]
-unsafe fn jobj_child(j: *mut HSD_JObj) -> *mut HSD_JObj {
+unsafe fn HSD_JObjGetChild(j: *mut HSD_JObj) -> *mut HSD_JObj {
     if j.is_null() {
         null_mut()
     } else {
@@ -114,10 +133,10 @@ unsafe fn itResetVelocity(ip: *mut Item) {
 /// `Item_ApplyFallingPhysics` (src/melee/it/inlines.h, static inline).
 #[inline]
 unsafe fn Item_ApplyFallingPhysics(gobj: *mut HSD_GObj) {
-    let ip = &mut *item_of(gobj);
-    let attrs = &*ip.xCC_item_attr;
-    it_80272860(ip, attrs.x10_fall_speed, attrs.x14_fall_speed_max);
-    it_80274658(ip, (*ext::it_804D6D28).x68_float);
+    let ip = item_of(gobj);
+    let attrs = &*(*ip).xCC_item_attr;
+    ext::it_80272860(gobj, attrs.x10_fall_speed, attrs.x14_fall_speed_max);
+    ext::it_80274658(gobj, (*ext::it_804D6D28).x68_float);
 }
 
 /// C `ABS(x)`: `(x) < 0 ? -(x) : (x)`.
@@ -133,31 +152,31 @@ fn c_abs(x: f32) -> f32 {
 // ---- spawn helpers (static inline in the C) ----------------------------------------------------
 
 /// `itClimbersIce_sub_x4` (static inline): `lifeTimer -= attr->x4`.
-unsafe fn itClimbersIce_sub_x4(gobj: *mut HSD_GObj) {
+pub unsafe fn itClimbersIce_sub_x4(gobj: *mut HSD_GObj) {
     let ip = item_of(gobj);
     let attr = sa::<itClimbersIceAttributes>(ip);
     (*ip).xD44_lifeTimer -= attr.x4;
 }
 
 /// `itClimbersice_Spawn` (static inline): the ice's effect, picked by kind.
-unsafe fn itClimbersice_Spawn(gobj: *mut HSD_GObj, spawn1: u32, spawn2: u32) {
-    let child = jobj_child((*gobj).hsd_obj as *mut HSD_JObj);
+pub unsafe fn itClimbersice_Spawn(gobj: *mut HSD_GObj, spawn1: u32, spawn2: u32) {
+    let child = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
     let ip = item_of(gobj);
     if (*ip).kind == It_Kind_IceClimber_Ice {
-        ext::efAsync_Spawn(gobj, &mut (*ip).xBC0, 3, spawn1, child, &mut (*ip).facing_dir);
+        ext::efAsync_Spawn(gobj, &mut (*ip).xBC0 as *mut _ as *mut c_void, 3, spawn1, child, &[EfArg::F32P(&(*ip).facing_dir)]);
     } else {
-        ext::efAsync_Spawn(gobj, &mut (*ip).xBC0, 3, spawn2, child, &mut (*ip).facing_dir);
+        ext::efAsync_Spawn(gobj, &mut (*ip).xBC0 as *mut _ as *mut c_void, 3, spawn2, child, &[EfArg::F32P(&(*ip).facing_dir)]);
     }
 }
 
 /// `itClimbersice_Spawn2` (static inline): the ice's child effect (no facing argument).
-unsafe fn itClimbersice_Spawn2(gobj: *mut HSD_GObj) {
-    let child = jobj_child((*gobj).hsd_obj as *mut HSD_JObj);
+pub unsafe fn itClimbersice_Spawn2(gobj: *mut HSD_GObj) {
+    let child = HSD_JObjGetChild((*gobj).hsd_obj as *mut HSD_JObj);
     let ip = item_of(gobj);
     if (*ip).kind == It_Kind_IceClimber_Ice {
-        ext::efAsync_Spawn(gobj, &mut (*ip).xBC0, 0, 0x4E9, child, null_mut());
+        ext::efAsync_Spawn(gobj, &mut (*ip).xBC0 as *mut _ as *mut c_void, 0, 0x4E9, child, &[]);
     } else {
-        ext::efAsync_Spawn(gobj, &mut (*ip).xBC0, 0, 0x4AE, child, null_mut());
+        ext::efAsync_Spawn(gobj, &mut (*ip).xBC0 as *mut _ as *mut c_void, 0, 0x4AE, child, &[]);
     }
 }
 
@@ -167,8 +186,8 @@ unsafe fn itClimbersice_Spawn2(gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn it_802C1590(parent_gobj: *mut HSD_GObj, pos: *mut Vec3, kind: enum_t, facing_dir: f32) -> *mut HSD_GObj {
     let mut spawn: SpawnItem = core::mem::zeroed();
     spawn.kind = kind;
-    ext::Item_InitSpawnPositionFromParent(&mut spawn, parent_gobj, pos);
-    ext::Item_InitSpawnCommonFields(&mut spawn, parent_gobj, facing_dir, true);
+    Item_InitSpawnPositionFromParent(&mut spawn, parent_gobj, pos);
+    Item_InitSpawnCommonFields(&mut spawn, parent_gobj, facing_dir, true);
     let item_gobj = ext::Item_80268B18(&mut spawn);
     if !item_gobj.is_null() {
         let ip = item_of(item_gobj);
@@ -178,7 +197,7 @@ pub unsafe extern "C" fn it_802C1590(parent_gobj: *mut HSD_GObj, pos: *mut Vec3,
         itClimbersice_Spawn2(item_gobj);
         it_802C1A58(item_gobj);
         ext::db_80225DD8(item_gobj, parent_gobj);
-        it_8026b3a8(&mut *ip);
+        ext::it_8026B3A8(item_gobj);
         ext::it_802750F8(item_gobj);
     }
     item_gobj
@@ -191,7 +210,7 @@ pub unsafe extern "C" fn it_802C16F8(gobj: *mut HSD_GObj) {
     (*ip).x40_vel.x = sa.x10 * (*ip).facing_dir;
     (*ip).x40_vel.z = 0.0;
     (*ip).x40_vel.y = 0.0;
-    it_80275158(&mut *ip, sa.x0, &*ext::it_804D6D28);
+    ext::it_80275158(gobj, sa.x0);
     (*ip).xDD4_itemVar.climbersice.set_x8_b0(1);
     ext::it_80272980(gobj);
     itClimbersice_Spawn(gobj, 0x4ea, 0x4af);
@@ -237,8 +256,8 @@ pub unsafe extern "C" fn it_802C1854(gobj: *mut HSD_GObj) -> bool {
         (*ip).x40_vel.x += delta;
 
         if c_abs((*ip).x40_vel.x) < sa.x24 {
-            it_8026bd84(&mut *ip);
-            it_8026bd6c(&mut *ip);
+            ext::it_8026BD84(gobj);
+            ext::it_8026BD6C(gobj);
             it_802C1950(gobj);
             ext::efLib_DestroyAll(gobj);
             result = true;
@@ -297,9 +316,9 @@ pub unsafe extern "C" fn itClimbersice_UnkMotion1_Anim(_gobj: *mut HSD_GObj) -> 
 
 /// `itClimbersice_UnkMotion1_Phys`: fall.
 pub unsafe extern "C" fn itClimbersice_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
-    let ip = &mut *item_of(gobj);
-    let attrs = &*ip.xCC_item_attr;
-    it_80272860(ip, attrs.x10_fall_speed, attrs.x14_fall_speed_max);
+    let ip = item_of(gobj);
+    let attrs = &*(*ip).xCC_item_attr;
+    ext::it_80272860(gobj, attrs.x10_fall_speed, attrs.x14_fall_speed_max);
 }
 
 /// `itClimbersice_UnkMotion1_Coll`.
@@ -322,7 +341,7 @@ pub unsafe extern "C" fn itClimbersice_UnkMotion2_Anim(gobj: *mut HSD_GObj) -> b
 }
 
 /// `itClimbersice_Phys_inline` (static inline): the sliding hitbox, `dmg = |vx * x30| + x2C`.
-unsafe fn itClimbersice_Phys_inline(gobj: *mut HSD_GObj) {
+pub unsafe fn itClimbersice_Phys_inline(gobj: *mut HSD_GObj) {
     let ip = item_of(gobj);
     let sa = sa::<itClimbersIceAttributes>(ip);
     let dmg = (c_abs((*ip).x40_vel.x * (sa.x30 as f32)) as u32).wrapping_add(sa.x2C as u32);
@@ -337,10 +356,10 @@ pub unsafe extern "C" fn itClimbersice_UnkMotion2_Phys(gobj: *mut HSD_GObj) {
 }
 
 /// `itClimbersice_Coll` (static inline): true when the ice should be destroyed.
-unsafe fn itClimbersice_Coll(gobj: *mut HSD_GObj) -> bool {
+pub unsafe fn itClimbersice_Coll(gobj: *mut HSD_GObj) -> bool {
     let ip = item_of(gobj);
     let sa = sa::<itClimbersIceAttributes>(ip);
-    if it_80276308(&mut *ip) != 0 {
+    if ext::it_80276308(gobj) != 0 {
         if c_abs((*ip).x40_vel.x) <= sa.xC {
             ext::it_8027770C(gobj);
             ext::it_80272980(gobj);
@@ -395,8 +414,8 @@ pub unsafe extern "C" fn itClimbersIce_Logic90_DmgDealt(_arg0: *mut HSD_GObj) ->
 }
 
 /// `itClimbersIce_Logic90_Reflected`: `it_80273030`.
-pub unsafe extern "C" fn itClimbersIce_Logic90_Reflected(gobj: *mut HSD_GObj) -> bool {
-    it_80273030(&mut *item_of(gobj))
+pub unsafe extern "C" fn itClimbersIce_Logic90_Reflected(gobj: *mut HSD_GObj) -> i32 {
+    ext::it_80273030(gobj)
 }
 
 /// `itClimbersIce_Logic90_Clanked`: always true.
@@ -433,7 +452,7 @@ pub unsafe extern "C" fn itClimbersIce_Logic90_Absorbed(_arg0: *mut HSD_GObj) ->
 }
 
 /// `itClimbersIce_Logic90_ShieldBounced`: `itColl_BounceOffShield`.
-pub unsafe extern "C" fn itClimbersIce_Logic90_ShieldBounced(gobj: *mut HSD_GObj) -> bool {
+pub unsafe extern "C" fn itClimbersIce_Logic90_ShieldBounced(gobj: *mut HSD_GObj) -> i32 {
     ext::itColl_BounceOffShield(gobj)
 }
 
@@ -443,7 +462,7 @@ pub unsafe extern "C" fn itClimbersIce_Logic90_EvtUnk(gobj: *mut HSD_GObj, ref_g
     if (*ip).xDD4_itemVar.climbersice.x0 as *mut HSD_GObj == ref_gobj {
         (*ip).xDD4_itemVar.climbersice.x0 = null_mut();
     }
-    it_8026b894(&mut *ip, ref_gobj);
+    ext::it_8026B894(gobj, ref_gobj);
 }
 
 // ---- state table -----------------------------------------------------------------------------

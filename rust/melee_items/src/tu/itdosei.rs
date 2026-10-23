@@ -13,9 +13,6 @@ use core::ptr::null_mut;
 use melee_types::*;
 use melee_core::fp::fmadds;
 
-use crate::itlib::{it_8026b390, it_8026b894, it_80273030, it_80273130, it_80276308};
-use crate::item::{it_802762b0, it_802762bc};
-use crate::itlib3::it_80272860;
 use crate::helpers::it_dosei_facing_angle;
 
 /// `ITEM_ANIM_UPDATE` (src/melee/it/forward.h): `1 << 1`.
@@ -27,7 +24,7 @@ pub const M_PI_2: f64 = 1.5707963267948966;
 /// `M_PI` (src/MSL/math.h): a double literal.
 pub const M_PI: f64 = 3.14159265358979323846;
 
-// BEGIN GENERATED EXT (callees of the C TU that are not ported in this crate yet)
+// BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
@@ -47,33 +44,76 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn Item_80268E5C(gobj: *mut HSD_GObj, msid: i32, flags: u32);
-    fn Item_80268DD4(gobj: *mut HSD_GObj, frame: f32);
-    fn Item_8026AF0C(ip: *mut Item, a1: i32, a2: u8, a3: u8);
-    fn it_80272C6C(gobj: *mut HSD_GObj) -> i32;
-    fn it_8026D62C(gobj: *mut HSD_GObj, cb: HSD_GObjEvent);
-    fn it_8026D8A4(gobj: *mut HSD_GObj, cb: HSD_GObjEvent) -> i32;
-    fn it_8026E15C(gobj: *mut HSD_GObj, cb: HSD_GObjEvent);
-    fn it_8026E8C4(gobj: *mut HSD_GObj, a: HSD_GObjEvent, b: HSD_GObjEvent);
-    fn it_80276CB8(gobj: *mut HSD_GObj);
-    fn it_802725D4(gobj: *mut HSD_GObj);
-    fn it_80274484(gobj: *mut HSD_GObj, jobj: *mut HSD_JObj, speed: f32);
-    fn itColl_BounceOffVictim(gobj: *mut HSD_GObj);
-    fn itColl_BounceOffShield(gobj: *mut HSD_GObj) -> bool;
-    fn lb_8000BA0C(jobj: *mut HSD_JObj, speed: f32);
-    fn HSD_JObjSetRotationX(jobj: *mut HSD_JObj, v: f32);
-    fn HSD_JObjSetRotationY(jobj: *mut HSD_JObj, v: f32);
-    fn HSD_JObjSetRotationZ(jobj: *mut HSD_JObj, v: f32);
-    fn HSD_JObjSetRotationXWithMtxDirty(jobj: *mut HSD_JObj, v: f32);
-    fn HSD_JObjSetRotationYWithMtxDirty(jobj: *mut HSD_JObj, v: f32);
-    fn HSD_JObjSetRotationZWithMtxDirty(jobj: *mut HSD_JObj, v: f32);
-    fn HSD_JObjClearFlagsAll(jobj: *mut HSD_JObj, flags: u32);
-    fn HSD_Randi(max: i32) -> i32;
+    fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32);
+    fn HSD_JObjSetMtxDirty(a0: *mut HSD_JObj);
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
+    fn HSD_Randi(a0: i32) -> i32;
+    fn Item_80268DD4(a0: *mut HSD_GObj, a1: f32);
+    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
+    fn Item_8026AF0C(a0: *mut Item, a1: i32, a2: u8, a3: u8);
+    fn itColl_BounceOffShield(a0: *mut HSD_GObj) -> i32;
+    fn itColl_BounceOffVictim(a0: *mut HSD_GObj);
+    fn it_8026B390(a0: *mut HSD_GObj);
+    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
+    fn it_8026D62C(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>);
+    fn it_8026D8A4(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) -> i32;
+    fn it_8026E15C(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>);
+    fn it_8026E8C4(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: Option<unsafe extern "C" fn(*mut HSD_GObj)>);
+    fn it_802725D4(a0: *mut HSD_GObj);
+    fn it_80272860(a0: *mut HSD_GObj, a1: f32, a2: f32);
+    fn it_80272C6C(a0: *mut HSD_GObj) -> i32;
+    fn it_80273030(a0: *mut HSD_GObj) -> i32;
+    fn it_80273130(a0: *mut HSD_GObj) -> i32;
+    fn it_80274484(a0: *mut HSD_GObj, a1: *mut HSD_JObj, a2: f32);
+    fn it_80274658(a0: *mut HSD_GObj, a1: f32) -> i32;
+    fn it_802762B0(a0: *mut Item);
+    fn it_802762BC(a0: *mut Item);
+    fn it_80276308(a0: *mut HSD_GObj) -> i32;
+    fn it_80276CB8(a0: *mut HSD_GObj);
+    fn lb_8000BA0C(a0: *mut HSD_JObj, a1: f32);
     }
-    // Data defined in other TUs.
-    pub static mut it_804D6D28: *const ItemCommonData = core::ptr::null();
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirty(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirty(a0) }
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut attrs: *mut ItemAttr = unsafe { core::mem::zeroed() };
+    pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
+    pub static mut result: i32 = unsafe { core::mem::zeroed() };
 }
 // END GENERATED EXT
+
+jobj_inl!();
+
+#[allow(dead_code)]
+unsafe fn HSD_JObjSetRotationXWithMtxDirty(jobj: *mut HSD_JObj, x: f32) {
+    assert!(!jobj.is_null(), "HSD_ASSERT(639, jobj)");
+    assert!((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, "HSD_ASSERT(640, !(jobj->flags & JOBJ_USE_QUATERNION))");
+    (*jobj).rotate.x = x;
+    if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+        ext::HSD_JObjSetMtxDirty(jobj);
+    }
+}
+#[allow(dead_code)]
+unsafe fn HSD_JObjSetRotationYWithMtxDirty(jobj: *mut HSD_JObj, y: f32) {
+    assert!(!jobj.is_null(), "HSD_ASSERT(660, jobj)");
+    assert!((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, "HSD_ASSERT(661, !(jobj->flags & JOBJ_USE_QUATERNION))");
+    (*jobj).rotate.y = y;
+    if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+        ext::HSD_JObjSetMtxDirty(jobj);
+    }
+}
+#[allow(dead_code)]
+unsafe fn HSD_JObjSetRotationZWithMtxDirty(jobj: *mut HSD_JObj, z: f32) {
+    assert!(!jobj.is_null(), "HSD_ASSERT(681, jobj)");
+    assert!((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, "HSD_ASSERT(682, !(jobj->flags & JOBJ_USE_QUATERNION))");
+    (*jobj).rotate.z = z;
+    if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+        ext::HSD_JObjSetMtxDirty(jobj);
+    }
+}
 
 macro_rules! pred_i32 {
     ($($name:ident => $f:ident;)*) => { $( pub unsafe extern "C" fn $name(g: *mut HSD_GObj) -> i32 { $f(g) as i32 } )* };
@@ -88,16 +128,6 @@ unsafe fn item_of(g: *mut HSD_GObj) -> *mut Item {
 #[inline]
 unsafe fn attrs_of<'a>(ip: *mut Item) -> &'a itDoseiAttributes {
     &*((*(*ip).xC4_article_data).x4_specialAttributes as *const itDoseiAttributes)
-}
-
-/// `HSD_JObjGetChild(jobj)` (NULL-safe).
-#[inline]
-unsafe fn jobj_child(j: *mut HSD_JObj) -> *mut HSD_JObj {
-    if j.is_null() {
-        null_mut()
-    } else {
-        (*j).child
-    }
 }
 
 /// `GET_JOBJ(gobj)` / `gobj->hsd_obj`.
@@ -117,41 +147,37 @@ unsafe fn itResetVelocity(ip: *mut Item) {
 /// `Item_ApplyFallingPhysics` (src/melee/it/inlines.h, static inline).
 #[inline]
 unsafe fn Item_ApplyFallingPhysics(gobj: *mut HSD_GObj) {
-    let ip = &mut *item_of(gobj);
-    let attrs = &*ip.xCC_item_attr;
-    it_80272860(ip, attrs.x10_fall_speed, attrs.x14_fall_speed_max);
-    crate::itlib3::it_80274658(ip, (*ext::it_804D6D28).x68_float);
+    let ip = item_of(gobj);
+    let attrs = &*(*ip).xCC_item_attr;
+    ext::it_80272860(gobj, attrs.x10_fall_speed, attrs.x14_fall_speed_max);
+    ext::it_80274658(gobj, (*ext::it_804D6D28).x68_float);
 }
 
 /// `itDosei_SetSpeed` (static inline): the animation frame speed and the joint's speed.
-#[inline]
-unsafe fn itDosei_SetSpeed(gobj: *mut HSD_GObj, ip: *mut Item, speed: f32) {
+pub unsafe fn itDosei_SetSpeed(gobj: *mut HSD_GObj, ip: *mut Item, speed: f32) {
     let jobj = jobj_of(gobj);
     (*ip).x5D0_animFrameSpeed = speed;
     ext::lb_8000BA0C(jobj, speed);
 }
 
 /// `HSD_JObjSetRotationZero` (static inline).
-#[inline]
-unsafe fn HSD_JObjSetRotationZero(gobj: *mut HSD_GObj) {
+pub unsafe fn HSD_JObjSetRotationZero(gobj: *mut HSD_GObj) {
     let jobj = jobj_of(gobj);
-    ext::HSD_JObjSetRotationX(jobj, 0.0);
-    ext::HSD_JObjSetRotationY(jobj, 0.0);
-    ext::HSD_JObjSetRotationZ(jobj, 0.0);
+    HSD_JObjSetRotationX(jobj, 0.0);
+    HSD_JObjSetRotationY(jobj, 0.0);
+    HSD_JObjSetRotationZ(jobj, 0.0);
 }
 
 /// `HSD_JObjSetRotationZeroWithMtxDirty` (static inline).
-#[inline]
-unsafe fn HSD_JObjSetRotationZeroWithMtxDirty(gobj: *mut HSD_GObj) {
+pub unsafe fn HSD_JObjSetRotationZeroWithMtxDirty(gobj: *mut HSD_GObj) {
     let jobj = jobj_of(gobj);
-    ext::HSD_JObjSetRotationXWithMtxDirty(jobj, 0.0);
-    ext::HSD_JObjSetRotationYWithMtxDirty(jobj, 0.0);
-    ext::HSD_JObjSetRotationZWithMtxDirty(jobj, 0.0);
+    HSD_JObjSetRotationXWithMtxDirty(jobj, 0.0);
+    HSD_JObjSetRotationYWithMtxDirty(jobj, 0.0);
+    HSD_JObjSetRotationZWithMtxDirty(jobj, 0.0);
 }
 
 /// `itDosei_FacingAngle` (static inline): `it_dosei_facing_angle`.
-#[inline]
-unsafe fn itDosei_FacingAngle(gobj: *mut HSD_GObj, m: f32) -> f32 {
+pub unsafe fn itDosei_FacingAngle(gobj: *mut HSD_GObj, m: f32) -> f32 {
     it_dosei_facing_angle(&*item_of(gobj), m)
 }
 
@@ -168,7 +194,7 @@ pub unsafe extern "C" fn itDosei_Logic7_Spawned(gobj: *mut HSD_GObj) {
     (*ip).xDD4_itemVar.dosei.xDD4 = attr.unk4;
     (*ip).xDD4_itemVar.dosei.xDF0 = 0;
     (*ip).xDD4_itemVar.dosei.xDE0 = 1.0;
-    it_8026b390(&mut *ip);
+    ext::it_8026B390(gobj);
     itDosei_80282BFC(gobj);
     HSD_JObjSetRotationZero(gobj);
 }
@@ -189,7 +215,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion0_Anim(gobj: *mut HSD_GObj) -> bool {
     (*ip).xDD4_itemVar.dosei.xDE4 = (*ip).pos;
     HSD_JObjSetRotationZero(gobj);
 
-    ext::HSD_JObjSetRotationY((*gobj).hsd_obj as *mut HSD_JObj, itDosei_FacingAngle(gobj, 0.0));
+    HSD_JObjSetRotationY((*gobj).hsd_obj as *mut HSD_JObj, itDosei_FacingAngle(gobj, 0.0));
     (*ip).xDD4_itemVar.dosei.xDF0 -= 1;
     if (*ip).xDD4_itemVar.dosei.xDF0 <= 0 {
         (*ip).xDD4_itemVar.dosei.xDF0 = 0;
@@ -236,13 +262,13 @@ pub unsafe extern "C" fn itDosei_802817A0(gobj: *mut HSD_GObj) {
     (*ip).xDC8_word.flags.set_x17(1);
     (*ip).xDC8_word.flags.set_x19(1);
     (*ip).owner = null_mut();
-    it_802762b0(&mut *ip);
+    ext::it_802762B0(ip);
     ext::Item_80268E5C(gobj, 1, 0xB);
     (*ip).x5D0_animFrameSpeed = 1.0;
     ext::lb_8000BA0C(jobj, 1.0);
     HSD_JObjSetRotationZero(gobj);
 
-    ext::HSD_JObjSetRotationY((*gobj).hsd_obj as *mut HSD_JObj, itDosei_FacingAngle(gobj, 0.0));
+    HSD_JObjSetRotationY((*gobj).hsd_obj as *mut HSD_JObj, itDosei_FacingAngle(gobj, 0.0));
     (*ip).x40_vel.x = (*ip).facing_dir * attr.unk8;
     (*ip).x40_vel.z = 0.0;
     (*ip).x40_vel.y = 0.0;
@@ -277,7 +303,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> bool {
     let ip = item_of(gobj);
 
     if ext::it_8026D8A4(gobj, Some(itDosei_80281C6C)) != 0 {
-        if it_80276308(&mut *ip) != 0 {
+        if ext::it_80276308(gobj) != 0 {
             itDosei_80281C6C(gobj);
             return false;
         }
@@ -314,7 +340,7 @@ pub unsafe extern "C" fn itDosei_80281C6C(gobj: *mut HSD_GObj) {
     (*ip).pos = (*ip).xDD4_itemVar.dosei.xDE4;
     (*ip).xDD4_itemVar.dosei.xDDC = 0.0;
     (*ip).x40_vel.x = 0.0;
-    it_802762b0(&mut *ip);
+    ext::it_802762B0(ip);
     ext::Item_80268E5C(gobj, 2, 3);
     itDosei_SetSpeed(gobj, ip, 1.0);
     (*ip).owner = null_mut();
@@ -328,7 +354,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion2_Anim(gobj: *mut HSD_GObj) -> bool {
         ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
         (*ip).facing_dir = -(*ip).facing_dir;
 
-        ext::HSD_JObjSetRotationY((*gobj).hsd_obj as *mut HSD_JObj, itDosei_FacingAngle(gobj, 0.0));
+        HSD_JObjSetRotationY((*gobj).hsd_obj as *mut HSD_JObj, itDosei_FacingAngle(gobj, 0.0));
     }
     false
 }
@@ -337,7 +363,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion2_Anim(gobj: *mut HSD_GObj) -> bool {
 pub unsafe extern "C" fn itDosei_UnkMotion2_Phys(_gobj: *mut HSD_GObj) {}
 
 /// `itDosei_SetupWalk_FC` (static inline): walk again after the turn.
-unsafe fn itDosei_SetupWalk_FC(gobj: *mut HSD_GObj) {
+pub unsafe fn itDosei_SetupWalk_FC(gobj: *mut HSD_GObj) {
     let ip = item_of(gobj);
     let jobj = jobj_of(gobj);
     let attr = attrs_of(ip);
@@ -346,13 +372,13 @@ unsafe fn itDosei_SetupWalk_FC(gobj: *mut HSD_GObj) {
     (*ip).xDC8_word.flags.set_x17(1);
     (*ip).xDC8_word.flags.set_x19(1);
     (*ip).owner = null_mut();
-    it_802762b0(&mut *ip);
+    ext::it_802762B0(ip);
     ext::Item_80268E5C(gobj, 1, 0xB);
     (*ip).x5D0_animFrameSpeed = 1.0;
     ext::lb_8000BA0C(jobj, 1.0);
 
     HSD_JObjSetRotationZeroWithMtxDirty(gobj);
-    ext::HSD_JObjSetRotationYWithMtxDirty((*gobj).hsd_obj as *mut HSD_JObj, itDosei_FacingAngle(gobj, 0.0));
+    HSD_JObjSetRotationYWithMtxDirty((*gobj).hsd_obj as *mut HSD_JObj, itDosei_FacingAngle(gobj, 0.0));
 
     (*ip).x40_vel.x = (*ip).facing_dir * attr.unk8;
     (*ip).x40_vel.z = 0.0;
@@ -392,7 +418,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion3_Anim(gobj: *mut HSD_GObj) -> bool {
 pub unsafe extern "C" fn itDosei_UnkMotion3_Phys(gobj: *mut HSD_GObj) {
     let ip = item_of(gobj);
     let attrs = &*(*ip).xCC_item_attr;
-    it_80272860(&mut *ip, attrs.x10_fall_speed, attrs.x14_fall_speed_max);
+    ext::it_80272860(gobj, attrs.x10_fall_speed, attrs.x14_fall_speed_max);
 }
 
 /// `itDosei_UnkMotion5_Coll`: land into `itDosei_802817A0`.
@@ -409,7 +435,7 @@ pub unsafe extern "C" fn itDosei_Logic7_PickedUp(gobj: *mut HSD_GObj) {
 
     if (*ip).msid != 4 {
         ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE);
-        ext::HSD_JObjClearFlagsAll(jobj_child(jobj), JOBJ_HIDDEN);
+        ext::HSD_JObjClearFlagsAll(HSD_JObjGetChild(jobj), JOBJ_HIDDEN);
         (*ip).x5D0_animFrameSpeed = attr.unk0;
         ext::lb_8000BA0C(jobj, (*ip).x5D0_animFrameSpeed);
         (*ip).xDC8_word.flags.set_x17(1);
@@ -420,30 +446,28 @@ pub unsafe extern "C" fn itDosei_Logic7_PickedUp(gobj: *mut HSD_GObj) {
     if (*ip).msid != 4 {
         HSD_JObjSetRotationZero(gobj);
 
-        ext::HSD_JObjSetRotationY(jobj_of(gobj), itDosei_FacingAngle(gobj, 0.0));
+        HSD_JObjSetRotationY(jobj_of(gobj), itDosei_FacingAngle(gobj, 0.0));
     }
 }
 
 /// `itDosei_UnkMotion4_Anim_inline` (static inline): reset the rotation and face the item.
-unsafe fn itDosei_UnkMotion4_Anim_inline(gobj: *mut HSD_GObj, jobj: *mut HSD_JObj) {
-    ext::HSD_JObjSetRotationXWithMtxDirty(jobj, 0.0);
-    ext::HSD_JObjSetRotationYWithMtxDirty(jobj, 0.0);
-    ext::HSD_JObjSetRotationZWithMtxDirty(jobj, 0.0);
+pub unsafe fn itDosei_UnkMotion4_Anim_inline(gobj: *mut HSD_GObj, jobj: *mut HSD_JObj) {
+    HSD_JObjSetRotationXWithMtxDirty(jobj, 0.0);
+    HSD_JObjSetRotationYWithMtxDirty(jobj, 0.0);
+    HSD_JObjSetRotationZWithMtxDirty(jobj, 0.0);
     let angle = itDosei_FacingAngle(gobj, 0.0);
 
-    ext::HSD_JObjSetRotationYWithMtxDirty(jobj_of(gobj), angle);
+    HSD_JObjSetRotationYWithMtxDirty(jobj_of(gobj), angle);
 }
 
 /// `itDosei_UnkMotion4_GetAnimSpeed` (static inline): `attr->unk0`.
-#[inline]
-fn itDosei_UnkMotion4_GetAnimSpeed(attr: &itDoseiAttributes) -> f32 {
-    attr.unk0
+pub unsafe fn itDosei_UnkMotion4_GetAnimSpeed(attr: *mut itDoseiAttributes) -> f32 {
+    (*attr).unk0
 }
 
 /// `itDosei_UnkMotion4_GetAttrs` (static inline): the special attributes.
-#[inline]
-unsafe fn itDosei_UnkMotion4_GetAttrs<'a>(ip: *mut Item) -> &'a itDoseiAttributes {
-    attrs_of(ip)
+pub unsafe fn itDosei_UnkMotion4_GetAttrs(ip: *mut Item) -> *mut itDoseiAttributes {
+    (*(*ip).xC4_article_data).x4_specialAttributes as *mut itDoseiAttributes
 }
 
 /// `itDosei_UnkMotion4_Anim`: when not yet picked up, show the body and set the animation speed.
@@ -455,7 +479,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion4_Anim(gobj: *mut HSD_GObj) -> bool {
 
         if (*ip).msid != 4 {
             ext::Item_80268E5C(gobj, 4, ITEM_ANIM_UPDATE);
-            ext::HSD_JObjClearFlagsAll(jobj_child(jobj), JOBJ_HIDDEN);
+            ext::HSD_JObjClearFlagsAll(HSD_JObjGetChild(jobj), JOBJ_HIDDEN);
             (*ip).x5D0_animFrameSpeed = itDosei_UnkMotion4_GetAnimSpeed(attr);
             ext::lb_8000BA0C(jobj, (*ip).x5D0_animFrameSpeed);
             (*ip).xDC8_word.flags.set_x17(1);
@@ -474,8 +498,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion4_Anim(gobj: *mut HSD_GObj) -> bool {
 pub unsafe extern "C" fn itDosei_UnkMotion4_Phys(_gobj: *mut HSD_GObj) {}
 
 /// `itDosei_GetJObj` (static inline): `gobj->hsd_obj`.
-#[inline]
-unsafe fn itDosei_GetJObj(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
+pub unsafe fn itDosei_GetJObj(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
     (*gobj).hsd_obj as *mut HSD_JObj
 }
 
@@ -485,8 +508,8 @@ pub unsafe extern "C" fn itDosei_Logic7_Dropped(gobj: *mut HSD_GObj) {
     let jobj = itDosei_GetJObj(gobj);
     let attr = attrs_of(ip);
 
-    it_8026b390(&mut *ip);
-    ext::HSD_JObjClearFlagsAll(jobj_child(jobj), JOBJ_HIDDEN);
+    ext::it_8026B390(gobj);
+    ext::HSD_JObjClearFlagsAll(HSD_JObjGetChild(jobj), JOBJ_HIDDEN);
     (*ip).xDC8_word.flags.set_x17(1);
     (*ip).xDC8_word.flags.set_x19(1);
     ext::Item_80268E5C(gobj, 5, 6);
@@ -494,7 +517,7 @@ pub unsafe extern "C" fn itDosei_Logic7_Dropped(gobj: *mut HSD_GObj) {
     ext::lb_8000BA0C(jobj, (*ip).x5D0_animFrameSpeed);
     HSD_JObjSetRotationZero(gobj);
 
-    ext::HSD_JObjSetRotationY((*gobj).hsd_obj as *mut HSD_JObj, itDosei_FacingAngle(gobj, 0.0));
+    HSD_JObjSetRotationY((*gobj).hsd_obj as *mut HSD_JObj, itDosei_FacingAngle(gobj, 0.0));
 }
 
 /// `itDosei_Logic7_Thrown`: launch (motion 5) with the thrown speed `xDE0`.
@@ -504,8 +527,8 @@ pub unsafe extern "C" fn itDosei_Logic7_Thrown(gobj: *mut HSD_GObj) {
     let attr = attrs_of(ip);
 
     if (*ip).msid != 5 {
-        it_8026b390(&mut *ip);
-        ext::HSD_JObjClearFlagsAll(jobj_child(jobj), JOBJ_HIDDEN);
+        ext::it_8026B390(gobj);
+        ext::HSD_JObjClearFlagsAll(HSD_JObjGetChild(jobj), JOBJ_HIDDEN);
         ext::Item_80268E5C(gobj, 5, 6);
         (*ip).x5D0_animFrameSpeed = attr.unk0;
         ext::lb_8000BA0C(jobj, (*ip).x5D0_animFrameSpeed);
@@ -575,7 +598,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion8_Anim(gobj: *mut HSD_GObj) -> bool {
 pub unsafe extern "C" fn itDosei_UnkMotion8_Phys(gobj: *mut HSD_GObj) {
     let ip = item_of(gobj);
     let attrs = &*(*ip).xCC_item_attr;
-    it_80272860(&mut *ip, attrs.x10_fall_speed, attrs.x14_fall_speed_max);
+    ext::it_80272860(gobj, attrs.x10_fall_speed, attrs.x14_fall_speed_max);
 }
 
 /// `itDosei_UnkMotion8_Coll`: land into `itDosei_80282CD4`.
@@ -588,7 +611,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion8_Coll(gobj: *mut HSD_GObj) -> bool {
 pub unsafe extern "C" fn itDosei_80282CD4(gobj: *mut HSD_GObj) {
     let ip = item_of(gobj);
     itResetVelocity(ip);
-    it_802762b0(&mut *ip);
+    ext::it_802762B0(ip);
     ext::Item_80268E5C(gobj, 7, 3);
     let jobj = jobj_of(gobj);
     (*ip).x5D0_animFrameSpeed = 1.0;
@@ -621,7 +644,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion7_Coll(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_80282DE4` (static): start the half-turn of the roll (motion 9).
-unsafe fn itDosei_80282DE4(gobj: *mut HSD_GObj) {
+pub unsafe fn itDosei_80282DE4(gobj: *mut HSD_GObj) {
     let ip = item_of(gobj);
     let jobj = jobj_of(gobj);
 
@@ -637,7 +660,7 @@ unsafe fn itDosei_80282DE4(gobj: *mut HSD_GObj) {
 
     HSD_JObjSetRotationZero(gobj);
 
-    ext::HSD_JObjSetRotationY(
+    HSD_JObjSetRotationY(
         (*gobj).hsd_obj as *mut HSD_JObj,
         itDosei_FacingAngle(gobj, -(*ip).xDD4_itemVar.dosei.xDDC),
     );
@@ -653,7 +676,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion9_Anim(gobj: *mut HSD_GObj) -> bool {
     (*ip).xDD4_itemVar.dosei.xDDC =
         ((*ip).xDD4_itemVar.dosei.xDDC as f64 - (M_PI / attr.unkC as f64)) as f32;
     if (*ip).xDD4_itemVar.dosei.xDD8 == 1 {
-        ext::HSD_JObjSetRotationY(
+        HSD_JObjSetRotationY(
             (*gobj).hsd_obj as *mut HSD_JObj,
             itDosei_FacingAngle(gobj, -(*ip).xDD4_itemVar.dosei.xDDC),
         );
@@ -704,14 +727,14 @@ pub unsafe extern "C" fn itDosei_UnkMotion10_Coll(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_Logic7_DmgReceived`: launch from the hit (motion 0xB), scaled by the attributes.
-pub unsafe extern "C" fn itDosei_Logic7_DmgReceived(gobj: *mut HSD_GObj) -> bool {
+pub unsafe extern "C" fn itDosei_Logic7_DmgReceived(gobj: *mut HSD_GObj) -> i32 {
     let ip = item_of(gobj);
     let attr = attrs_of(ip);
 
     {
         let jobj = itDosei_GetJObj(gobj);
         ext::Item_80268E5C(gobj, 0xB, 3);
-        it_802762bc(&mut *ip);
+        ext::it_802762BC(ip);
         (*ip).x5D0_animFrameSpeed = 1.0;
         ext::lb_8000BA0C(jobj, 1.0);
     }
@@ -725,10 +748,10 @@ pub unsafe extern "C" fn itDosei_Logic7_DmgReceived(gobj: *mut HSD_GObj) -> bool
     (*ip).xDD4_itemVar.dosei.xDF0 = 20;
     HSD_JObjSetRotationZero(gobj);
 
-    ext::HSD_JObjSetRotationY((*gobj).hsd_obj as *mut HSD_JObj, itDosei_FacingAngle(gobj, 0.0));
+    HSD_JObjSetRotationY((*gobj).hsd_obj as *mut HSD_JObj, itDosei_FacingAngle(gobj, 0.0));
     (*ip).owner = null_mut();
     (*ip).xD44_lifeTimer -= 60.0;
-    it_80273130(&mut *ip)
+    ext::it_80273130(gobj)
 }
 
 /// `itDosei_UnkMotion11_Anim`: track the position; hold motion 11.
@@ -745,7 +768,7 @@ pub unsafe extern "C" fn itDosei_UnkMotion11_Anim(gobj: *mut HSD_GObj) -> bool {
 pub unsafe extern "C" fn itDosei_UnkMotion11_Phys(gobj: *mut HSD_GObj) {
     let ip = item_of(gobj);
     let attrs = &*(*ip).xCC_item_attr;
-    it_80272860(&mut *ip, attrs.x10_fall_speed, attrs.x14_fall_speed_max);
+    ext::it_80272860(gobj, attrs.x10_fall_speed, attrs.x14_fall_speed_max);
 }
 
 /// `itDosei_UnkMotion11_Coll`: land into `itDosei_80281390`.
@@ -766,8 +789,8 @@ pub unsafe extern "C" fn itDosei_Logic7_DmgDealt(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_Logic7_Reflected`: `it_80273030`.
-pub unsafe extern "C" fn itDosei_Logic7_Reflected(gobj: *mut HSD_GObj) -> bool {
-    it_80273030(&mut *item_of(gobj))
+pub unsafe extern "C" fn itDosei_Logic7_Reflected(gobj: *mut HSD_GObj) -> i32 {
+    ext::it_80273030(gobj)
 }
 
 /// `itDosei_Logic7_Clanked`: bounce off the victim; false.
@@ -783,13 +806,13 @@ pub unsafe extern "C" fn itDosei_Logic7_HitShield(gobj: *mut HSD_GObj) -> bool {
 }
 
 /// `itDosei_Logic7_ShieldBounced`: `itColl_BounceOffShield`.
-pub unsafe extern "C" fn itDosei_Logic7_ShieldBounced(gobj: *mut HSD_GObj) -> bool {
+pub unsafe extern "C" fn itDosei_Logic7_ShieldBounced(gobj: *mut HSD_GObj) -> i32 {
     ext::itColl_BounceOffShield(gobj)
 }
 
 /// `itDosei_Logic7_EvtUnk`: `it_8026B894`.
 pub unsafe extern "C" fn itDosei_Logic7_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
-    it_8026b894(&mut *item_of(gobj), ref_gobj);
+    ext::it_8026B894(gobj, ref_gobj);
 }
 
 pred_i32! {

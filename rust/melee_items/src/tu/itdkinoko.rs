@@ -8,13 +8,12 @@ use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
 
-use crate::itlib::{it_8026b390, it_8026b894, it_8026bd24, COLLIDE_FLOOR_MASK as Collide_FloorMask};
-use crate::itlib3::it_80272860;
+use crate::itlib::COLLIDE_FLOOR_MASK as Collide_FloorMask;
 
 /// `ITEM_ANIM_UPDATE` (src/melee/it/forward.h): `1 << 1`.
 pub const ITEM_ANIM_UPDATE: u32 = 1 << 1;
 
-// BEGIN GENERATED EXT (callees of the C TU that are not ported in this crate yet)
+// BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
@@ -34,11 +33,20 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn Item_80268E5C(gobj: *mut HSD_GObj, msid: i32, flags: u32);
-    fn Item_8026AE84(ip: *mut Item, a1: i32, a2: u8, a3: u8);
-    fn it_8026D78C(gobj: *mut HSD_GObj, cb: HSD_GObjEvent);
-    fn it_8026E414(gobj: *mut HSD_GObj, cb: HSD_GObjEvent);
+    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
+    fn Item_8026AE84(a0: *mut Item, a1: i32, a2: u8, a3: u8);
+    fn it_8026B390(a0: *mut HSD_GObj);
+    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
+    fn it_8026D78C(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>);
+    fn it_8026E414(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>);
+    fn it_80272860(a0: *mut HSD_GObj, a1: f32, a2: f32);
+    fn it_80276408(a0: *mut HSD_GObj, a1: *mut CollData, a2: *mut Vec);
     }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
 }
 // END GENERATED EXT
 
@@ -80,7 +88,7 @@ pub unsafe extern "C" fn it_80293A70(gobj: *mut HSD_GObj) {
     (*it).x40_vel.y = 0.0;
     (*it).x40_vel.z = 0.0;
 
-    it_8026b390(&mut *it);
+    ext::it_8026B390(gobj);
     ext::Item_8026AE84(it, 0x107, 0x7F, 0x40);
     ext::Item_80268E5C(gobj, 0, (ITEM_UNK_0x1 as u32) | (ITEM_HIT_PRESERVE as u32));
 }
@@ -108,7 +116,7 @@ pub unsafe extern "C" fn itDkinoko_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> bool 
     ext::it_8026D78C(gobj, Some(it_80293C10));
     if (*it).ground_or_air != GA_Air {
         if (*cd).env_flags & Collide_FloorMask != 0 {
-            crate::itlib::it_80276408(&*cd, &mut (*it).xDD4_itemVar.kinoko.x4);
+            ext::it_80276408(gobj, cd, &mut (*it).xDD4_itemVar.kinoko.x4);
         } else {
             (*it).xDD4_itemVar.kinoko.x4.x = 0.0;
         }
@@ -142,7 +150,7 @@ pub unsafe extern "C" fn itDkinoko_UnkMotion1_Phys(gobj: *mut HSD_GObj) {
     let attr = &*(*it).xCC_item_attr;
     let sa = sa::<KinokoAttrs>(it);
 
-    crate::itlib3::it_80272860(&mut *it, attr.x10_fall_speed, attr.x14_fall_speed_max);
+    ext::it_80272860(gobj, attr.x10_fall_speed, attr.x14_fall_speed_max);
 
     let vel: f32 = if (*it).x40_vel.x < 0.0 { -(*it).x40_vel.x } else { (*it).x40_vel.x };
 
@@ -164,7 +172,7 @@ pub unsafe extern "C" fn itDkinoko_UnkMotion1_Coll(gobj: *mut HSD_GObj) -> bool 
 
     ext::it_8026E414(gobj, Some(it_80293A70));
     if (*it).ground_or_air != GA_Air && (*cd).env_flags & Collide_FloorMask != 0 {
-        crate::itlib::it_80276408(&*cd, &mut (*it).xDD4_itemVar.kinoko.x4);
+        ext::it_80276408(gobj, cd, &mut (*it).xDD4_itemVar.kinoko.x4);
     }
     false
 }
@@ -176,7 +184,7 @@ pub unsafe extern "C" fn itDKinoko_Logic27_DmgDealt(_gobj: *mut HSD_GObj) -> boo
 
 /// `itDKinoko_Logic27_EvtUnk`: `it_8026B894`.
 pub unsafe extern "C" fn itDKinoko_Logic27_EvtUnk(gobj: *mut HSD_GObj, gobj_2: *mut HSD_GObj) {
-    it_8026b894(&mut *item_of(gobj), gobj_2);
+    ext::it_8026B894(gobj, gobj_2);
 }
 
 pred_i32! {

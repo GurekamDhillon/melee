@@ -14,6 +14,8 @@ pub mod ext {
     use crate::tu::hookmac::hook;
     use melee_types::*;
     hook!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, (jobj: *mut HSD_JObj));
+    hook!(HSD_JOBJSETMTXDIRTY, HSD_JObjSetMtxDirty, (jobj: *mut HSD_JObj));
+    hook!(HSD_JOBJSETUPMATRIXSUB, HSD_JObjSetupMatrixSub, (jobj: *mut HSD_JObj));
     // The C global `stage_info` (gr/ground.c, 49E6C8): its address.
     hook!(STAGE_INFO, stage_info, () -> *mut StageInfo);
 }
@@ -200,6 +202,11 @@ pub unsafe fn HSD_JObjGetTranslationZ(j: *mut HSD_JObj) -> f32 {
     (*j).translate.z
 }
 
+pub unsafe fn HSD_JObjGetTranslation2(j: *mut HSD_JObj, t: *mut Vec3) {
+    assert_(!j.is_null(), 979, "jobj");
+    *t = (*j).translate;
+}
+
 // ---------------------------------------------------------------- Add*
 pub unsafe fn HSD_JObjAddRotationX(j: *mut HSD_JObj, x: f32) {
     assert_(!j.is_null(), 1029, "jobj");
@@ -245,6 +252,37 @@ pub unsafe fn HSD_JObjAddTranslationZ(j: *mut HSD_JObj, z: f32) {
     assert_(!j.is_null(), 1126, "jobj");
     (*j).translate.z += z;
     dirty_unless_indep(j);
+}
+
+/// A pointer stored in a `u32` field (`gp->u.castle11.xD8 = (u32) gobj`). Lossless only while the process lives below
+/// 4 GiB, which the stage oracle tests arrange (build.rs); the game needs a handle table before it can run natively.
+#[inline(always)]
+pub fn ptr_u32<T>(p: *mut T) -> u32 {
+    debug_assert!((p as usize) <= u32::MAX as usize, "pointer does not fit a u32 field");
+    p as usize as u32
+}
+/// The inverse of [`ptr_u32`] (`(HSD_GObj*) gp->u.castle11.xD8`).
+#[inline(always)]
+pub fn u32_ptr<T>(v: u32) -> *mut T {
+    v as usize as *mut T
+}
+
+/// `HSD_JObjSetTranslateWithMtxDirty`: like `HSD_JObjSetTranslate` but calls the out-of-line `HSD_JObjSetMtxDirty`.
+pub unsafe fn HSD_JObjSetTranslateWithMtxDirty(j: *mut HSD_JObj, t: *const Vec3) {
+    assert_(!j.is_null(), 916, "jobj");
+    assert_(!t.is_null(), 917, "translate");
+    (*j).translate = *t;
+    if (*j).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+        ext::HSD_JObjSetMtxDirty(j);
+    }
+}
+
+/// `HSD_JObjSetupMatrix`.
+pub unsafe fn HSD_JObjSetupMatrix(j: *mut HSD_JObj) {
+    if j.is_null() || !HSD_JObjMtxIsDirty(j) {
+        return;
+    }
+    ext::HSD_JObjSetupMatrixSub(j);
 }
 
 /// `ABS(x)` of Runtime/platform.h: `(x) < 0 ? -(x) : (x)`.

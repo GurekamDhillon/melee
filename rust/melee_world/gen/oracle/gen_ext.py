@@ -93,6 +93,8 @@ def main():
         params = []
         for i, a in enumerate(fn.get_arguments()):
             params.append(f"{a.spelling or 'a' + str(i)}: {rs_type(a.type)}")
+        if fn.type.kind == T.FUNCTIONPROTO and fn.type.is_function_variadic():
+            params.append("va: &[usize]")
         ret = fn.result_type
         r = "" if ret.get_canonical().kind == T.VOID else f" -> {rs_type(ret)}"
         # the hook name: upper-case C name

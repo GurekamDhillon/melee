@@ -138,7 +138,7 @@ static void* gen_p(void)
 }
 
 /* ---------------------------------------------------------------- the call log */
-static char LG[32768];
+static char LG[1 << 22];
 static u32 LGN;
 static void lg_c(char c)
 {

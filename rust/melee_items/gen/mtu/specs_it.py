@@ -73,3 +73,9 @@ spec("itfire", ["itFireAttributes"])
 
 _p, _s = efsync("ItemStateTable it_803F5988[] = {")
 spec("itegg", ["itEgg_ItemVars"], patch=_p, custom_stubs=_s, effects={"Item_80268B18": spawn_effect()})
+
+_p, _s = efsync("ItemStateTable it_803F7DC8[] = {")
+spec("itentei", ["itPokemonAttributes"], patch=_p, custom_stubs=_s)
+
+_p, _s = efsync("ItemStateTable it_803F6728[] = {")
+spec("itevyoshiegg", ["itEvYoshiEgg_DatAttrs"], patch=_p, custom_stubs=_s, effects={"Item_80268B18": spawn_effect()})

@@ -302,6 +302,8 @@ def bind(ptype):
                 return PTR[n]
         if pt.kind == T.VOID:
             return ("(void*) &IT[rnd() % 4]", "(&raw mut IT[(rnd() % 4) as usize]) as *mut c_void")
+        if pt.kind == T.FLOAT:
+            return ("&VA[rnd() % 4].x", "&raw mut VA[(rnd() % 4) as usize].x")
         if pt.kind == T.UCHAR:
             return ("U8A", "(&raw mut U8A) as *mut u8")
         if pt.kind == T.INT:

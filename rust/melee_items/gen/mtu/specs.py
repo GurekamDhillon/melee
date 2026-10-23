@@ -67,3 +67,6 @@ add("itgroundcoll", "src/melee/it/itgroundcoll.c",
     effects={"mpColl_800471F8": _MP, "mpColl_800477E0": _MP, "mpColl_8004B108": _MP, "mpColl_8004B2DC": _MP,
              "mpCheckAllRemap": ("if (a0) { a0->x = rw(); a0->y = rw(); a0->z = rw(); }",
                                  "if !a0.is_null() { (*a0).x = rw(); (*a0).y = rw(); (*a0).z = rw(); }")})
+
+add("itmaplib", "src/melee/it/itmaplib.c", skip_stubs=["__frsqrte"],
+    ret={"it_80272CC0": ("&JO[rnd() % 8]", "&raw mut JO[(rnd() % 8) as usize]"), "it_80272D40": ("(int) (fv() & 1)", "(fv() & 1) as i32")})

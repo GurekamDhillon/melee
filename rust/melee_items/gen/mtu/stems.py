@@ -113,3 +113,6 @@ STEMS["itcoll"] = dict(
     hash_ft={"it_802703E8"},
 )
 STEMS["itgroundcoll"] = dict()
+STEMS["itmaplib"] = dict(
+    setup=("for (i = 0; i < 8; i++) JO[i].flags &= ~JOBJ_USE_QUATERNION;", "for i in 0..8 { JO[i].flags &= !(JOBJ_USE_QUATERNION as u32); }"),
+)

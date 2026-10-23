@@ -282,9 +282,6 @@ PTR = {  # pointee record -> (C expr, Rust expr)
     "SpawnItem": ("&SP", "&raw mut SP"),
     "HSD_JObj": ("&JO[rnd() % 8]", "&raw mut JO[(rnd() % 8) as usize]"),
     "ItemStateDesc": ("&SDS[rnd() % 3]", "&raw mut SDS[(rnd() % 3) as usize]"),
-    "Article": ("&ART[rnd() % 2]", "&raw mut ART[(rnd() % 2) as usize]"),
-    "ItemAttr": ("&ATTR[rnd() % 2]", "&raw mut ATTR[(rnd() % 2) as usize]"),
-    "ItemLogicTable": ("&LT[rnd() % 2]", "&raw mut LT[(rnd() % 2) as usize]"),
 }
 FNK = {"void (struct HSD_GObj *)": 1, "int (struct HSD_GObj *)": 2, "void (struct HSD_GObj *, struct HSD_GObj *)": 3}
 

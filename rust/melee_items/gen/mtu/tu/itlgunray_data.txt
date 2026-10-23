@@ -1,4 +1,0 @@
-dir
-ip
-result
-vel_x

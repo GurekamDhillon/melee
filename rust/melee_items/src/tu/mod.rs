@@ -27,4 +27,7 @@ pub mod itbombhei;
 pub mod itbox;
 
 // Shard 721-728
+pub mod itkyasarinegg;
+pub mod itlgun;
 pub mod itlgunray;
+pub mod itlgunbeam;

@@ -209,3 +209,57 @@ CFG["itclimbersblizzard"] = dict(
         core::ptr::write_bytes(cb as *mut _ as *mut u8, 0, core::mem::size_of::<itClimbersBlizzard_ItemVars>());
     }"""),
 )
+
+# ================================================================================ shard 721-728
+def all3(c_body, r_body):
+    """A special-attribute fill applied to the buffers of all three items (spawned items read ART[2])."""
+    nl = chr(10)
+    return ("        { int q; for (q = 0; q < 3; q++) {" + nl + c_body.replace("SPEC[0]", "SPEC[q]") + nl + "        } }",
+            "            for q in 0..3usize {" + nl + r_body.replace("SPECB.0[0]", "SPECB.0[q]") + nl + "            }")
+
+
+# ------------------------------------------------------------------------------ itkyasarinegg
+CFG["itkyasarinegg"] = dict(
+    spec=[all3("""        itKyasarinEggAttributes* a = (itKyasarinEggAttributes*) SPEC[0];
+        a->x0 = 0; a->x4 = rw(); a->x8 = rw(); a->xC = (int) (rnd() % 4); a->x10 = (int) (rnd() % 3);""",
+           """            let a = SPECB.0[0].as_mut_ptr() as *mut itKyasarinEggAttributes;
+            (*a).x0 = null_mut(); (*a).x4 = rw(); (*a).x8 = rw(); (*a).xC = (rnd() % 4) as i32; (*a).x10 = (rnd() % 3) as i32;""")],
+    tweak=per_item("        IT[k].xDD4_itemVar.kyasarinEgg.x20 = (int) (rnd() % 3);\n        IT[k].xDD4_itemVar.kyasarinEgg.x24 = rw();",
+                   "        IT[k].xDD4_itemVar.kyasarinEgg.x20 = (rnd() % 3) as i32;\n        IT[k].xDD4_itemVar.kyasarinEgg.x24 = rw();"),
+    ptrs=("", ""),
+    noret=["itKyasarinegg_UnkMotion4_Anim"],
+)
+
+# ------------------------------------------------------------------------------------------ itlgun
+CFG["itlgun"] = dict(
+    spec=[("""        ItLGunAttr* a = (ItLGunAttr*) SPEC[0];
+        a->max_ammo = (int) (rnd() % 20); a->pos.x = rw(); a->pos.y = rw(); a->pos.z = rw();""",
+           """            let a = SPECB.0[0].as_mut_ptr() as *mut ItLGunAttr;
+            (*a).max_ammo = (rnd() % 20) as i32; (*a).pos.x = rw(); (*a).pos.y = rw(); (*a).pos.z = rw();""")],
+    tweak=per_item("        IT[k].xDD4_itemVar.lgun.timer = (int) (rnd() % 60) - 10;\n        IT[k].xD4C = (int) (rnd() % 4) - 1;",
+                   "        IT[k].xDD4_itemVar.lgun.timer = (rnd() % 60) as i32 - 10;\n        IT[k].xD4C = (rnd() % 4) as i32 - 1;"),
+    ptrs=("", ""),
+)
+
+# --------------------------------------------------------------------------------------- itlgunray
+CFG["itlgunray"] = dict(
+    hints={"article": ("&ART[1]", "&raw mut ART[1]")},
+    spec=[all3("""        ItLGunRayAttr* a = (ItLGunRayAttr*) SPEC[0];
+        a->speed = rw(); a->lifetime = rw(); a->max_scale = rw();""",
+           """            let a = SPECB.0[0].as_mut_ptr() as *mut ItLGunRayAttr;
+            (*a).speed = rw(); (*a).lifetime = rw(); (*a).max_scale = rw();""")],
+    tweak=per_item("        IT[k].xDD4_itemVar.lgunray.angle = rw(); IT[k].xDD4_itemVar.lgunray.scale = rw(); IT[k].xDD4_itemVar.lgunray.speed = rw();",
+                   "        IT[k].xDD4_itemVar.lgunray.angle = rw(); IT[k].xDD4_itemVar.lgunray.scale = rw(); IT[k].xDD4_itemVar.lgunray.speed = rw();"),
+    ptrs=("", ""),
+)
+
+# -------------------------------------------------------------------------------------- itlgunbeam
+CFG["itlgunbeam"] = dict(
+    spec=[all3("""        ItLGunBeamAttr* a = (ItLGunBeamAttr*) SPEC[0];
+        a->lifetime = rw(); a->x4 = rw(); a->x8 = rw(); a->xC = rw(); a->x10 = rw();""",
+           """            let a = SPECB.0[0].as_mut_ptr() as *mut ItLGunBeamAttr;
+            (*a).lifetime = rw(); (*a).x4 = rw(); (*a).x8 = rw(); (*a).xC = rw(); (*a).x10 = rw();""")],
+    tweak=per_item("        IT[k].xDD4_itemVar.lgunbeam.angle0 = rw(); IT[k].xDD4_itemVar.lgunbeam.angle1 = rw();",
+                   "        IT[k].xDD4_itemVar.lgunbeam.angle0 = rw(); IT[k].xDD4_itemVar.lgunbeam.angle1 = rw();"),
+    ptrs=("", ""),
+)

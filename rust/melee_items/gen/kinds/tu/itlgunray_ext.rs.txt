@@ -1,4 +1,4 @@
-// BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
+// BEGIN GENERATED EXT (rust/melee_items/gen/kinds/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
@@ -37,9 +37,5 @@ pub mod ext {
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut dir: f32 = unsafe { core::mem::zeroed() };
-    pub static mut ip: *mut Item = unsafe { core::mem::zeroed() };
-    pub static mut result: i32 = unsafe { core::mem::zeroed() };
-    pub static mut vel_x: f32 = unsafe { core::mem::zeroed() };
 }
 // END GENERATED EXT

@@ -11,3 +11,4 @@ pub mod itgroundcoll;
 pub mod itmaplib;
 pub mod item;
 pub mod itanimlist;
+pub mod itkirbyhammer;

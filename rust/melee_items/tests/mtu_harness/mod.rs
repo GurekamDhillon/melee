@@ -210,6 +210,3 @@ impl Check {
         self.n
     }
 }
-
-pub mod world;
-pub use world::*;

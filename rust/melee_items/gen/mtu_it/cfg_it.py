@@ -159,3 +159,36 @@ _hots3("itkireihana", [("IT.xDD4_itemVar.kireihana.timer_unk0", ["-1", "0", "1",
                        ("IT.xDD4_itemVar.kireihana.timer_unk2", ["0", "1", "2"], "i"), ("IT.xDD4_itemVar.kireihana.x8", ["-1.0", "0.0", "1.0"], "f"),
                        ("IT.xDD4_itemVar.kireihana.x70", ["-1.0", "0.0", "1.0"], "f"), ("IA.x10_fall_speed", ["0.1", "0.5"], "f"), ("IA.x14_fall_speed_max", ["0.3", "2.0"], "f")],
        icd=False, tables=[("it_803F7E28", 5)])
+
+_KLAP_NORM_C = """    {
+        Item* its[2]; int k2, i2;
+        its[0] = &IT; its[1] = &IT2;
+        for (k2 = 0; k2 < 2; k2++) {
+            u32 id = PI(its[k2]->xDD4_itemVar.klap.x20);
+            unsigned char* b = (unsigned char*) &its[k2]->xDD4_itemVar.klap.x20;
+            for (i2 = 0; i2 < 8; i2++) b[i2] = 0;
+            *(u32*) b = id;
+        }
+    }
+"""
+_KLAP_NORM_RS = """    {
+        let its: [*mut Item; 2] = [&raw mut IT, &raw mut IT2];
+        for k2 in 0..2 {
+            let id = pi((*its[k2]).xDD4_itemVar.klap.x20);
+            let b = &raw mut (*its[k2]).xDD4_itemVar.klap.x20 as *mut u8;
+            for i2 in 0..8 { *b.add(i2) = 0; }
+            *(b as *mut u32) = id;
+        }
+    }
+"""
+_hots3("itklap", [("IT.msid", ["0", "1"], "i"), ("IA.x10_fall_speed", ["0.1", "0.5"], "f"),
+                  ("IT.xDD4_itemVar.klap.x24", ["0.0", "0.5", "-0.5", "7.0", "-7.0"], "f"),
+                  ("IT.xDD4_itemVar.klap.x28", ["0.0", "0.5", "-0.5", "7.0", "-7.0"], "f"),
+                  ("JO[0].rotate.x", ["0.0", "1.5", "1.6", "1.55", "3.0"], "f"),
+                  ("JO[0].rotate.y", ["0.0", "6.0", "-6.0", "6.3", "-6.3"], "f"),
+                  ("JO[0].rotate.z", ["0.0", "6.0", "-6.0", "6.3", "-6.3"], "f")],
+       icd=False, tables=[("it_803F8940", 5)],
+       pre_hash_c=_KLAP_NORM_C, pre_hash_rs=_KLAP_NORM_RS,
+       ops={"it_802E2330": ("it_802E2330(&G, &V1, (lbColl_80008D30_arg1*) &V2, rw());", "m::it_802E2330(&raw mut G, &raw mut V1, &raw mut V2 as *mut lbColl_80008D30_arg1, rw());")})
+CFG["itklap"]["setup_c"] += "    IT.xDD4_itemVar.klap.x20 = (rnd() & 1) ? &G2 : 0; IT2.xDD4_itemVar.klap.x20 = 0;\n"
+CFG["itklap"]["setup_rs"] += "    IT.xDD4_itemVar.klap.x20 = if rnd() & 1 != 0 { &raw mut G2 } else { null_mut() }; IT2.xDD4_itemVar.klap.x20 = null_mut();\n"

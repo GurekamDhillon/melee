@@ -113,3 +113,9 @@ _WR2 = lambda a: ("if (%s) { %s->x = rw(); %s->y = rw(); }" % (a, a, a),
 spec("itkirby_2F23", [], skip_stubs=["__frsqrte"], skip_data=IT_SKIP + ["guess", "y", "result"], effects={"ftKb_SpecialN_800F5B5C": _WR3("a1"), "ftKb_SpecialN_800F5B20": _WR2("a1")})
 
 spec("itkireihana", ["itkireihanaAttributes"])
+
+spec("itklap", [], skip_stubs=["sinf", "cosf"], skip_data=IT_SKIP + ["pos"], ret={"it_8027B5B0": COMMON_RET["Item_80268B18"]},
+     effects={"lb_8000B1CC": _WR3("a2"),
+              "Ground_801C4DA0": ("if (a0) { a0->x = rw(); a0->y = rw(); a0->z = rw(); } if (a1) *a1 = rw();",
+                                  "if !a0.is_null() { (*a0).x = rw(); (*a0).y = rw(); (*a0).z = rw(); } if !a1.is_null() { *a1 = rw(); }"),
+              "lbColl_80008D30": ("((struct SmallerHitCapsule*) a0)->damage = rw();", "(*(a0 as *mut SmallerHitCapsule)).damage = rw();")})

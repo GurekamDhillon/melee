@@ -192,6 +192,40 @@ macro_rules! kinds_jobj_inl {
             (*jobj).translate.y
         }
 
+        /// `HSD_JObjGetRotationZ`
+        #[inline]
+        unsafe fn HSD_JObjGetRotationZ(jobj: *mut HSD_JObj) -> f32 {
+            $crate::tu::kinds_inl::hsd_assert(!jobj.is_null(), "(jobj)");
+            (*jobj).rotate.z
+        }
+
+        /// `HSD_JObjAddRotationZ`
+        #[inline]
+        unsafe fn HSD_JObjAddRotationZ(jobj: *mut HSD_JObj, z: f32) {
+            $crate::tu::kinds_inl::hsd_assert(!jobj.is_null(), "(jobj)");
+            (*jobj).rotate.z += z;
+            if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+                HSD_JObjSetMtxDirty(jobj);
+            }
+        }
+
+        /// `HSD_JObjSetScaleY`
+        #[inline]
+        unsafe fn HSD_JObjSetScaleY(jobj: *mut HSD_JObj, y: f32) {
+            $crate::tu::kinds_inl::hsd_assert(!jobj.is_null(), "(jobj)");
+            (*jobj).scale.y = y;
+            if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+                HSD_JObjSetMtxDirty(jobj);
+            }
+        }
+
+        /// `HSD_JObjGetScaleY`
+        #[inline]
+        unsafe fn HSD_JObjGetScaleY(jobj: *mut HSD_JObj) -> f32 {
+            $crate::tu::kinds_inl::hsd_assert(!jobj.is_null(), "(jobj)");
+            (*jobj).scale.y
+        }
+
         /// `HSD_JObjAddRotationX`
         #[inline]
         unsafe fn HSD_JObjAddRotationX(jobj: *mut HSD_JObj, x: f32) {

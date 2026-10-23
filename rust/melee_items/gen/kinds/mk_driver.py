@@ -248,7 +248,11 @@ def build_ops(tu, cfg):
         if name in cfg.get("noret", ()) or rk == "void":
             sc, sr = f"{call_c};", f"{call_r};"
         elif rk in ("int", "uint", "bool"):
-            sc, sr = f"ret = (u32) {call_c};", f"ret = {call_r} as u32;"
+            if fn.type.get_result().spelling == "bool":
+                # MSL `bool` is `int`: the C returns the callee's raw value, the port a Rust bool (nonzero == true)
+                sc, sr = f"ret = (u32) (({call_c}) != 0);", f"ret = {call_r} as u32;"
+            else:
+                sc, sr = f"ret = (u32) {call_c};", f"ret = {call_r} as u32;"
         elif rk == "f32":
             sc, sr = f"ret = B({call_c});", f"ret = ({call_r}).to_bits();"
         elif rk.startswith("ptr") or rk in ("gobj", "item", "jobj", "vec"):

@@ -176,3 +176,70 @@ macro_rules! inl_it_enter_state_hitlag {
         }
     };
 }
+
+/// jobj.h accessors the item kinds use (need `inl_it_core` and `inl_it_jobj`).
+#[macro_export]
+macro_rules! inl_it_jobj_acc {
+    () => {
+        #[inline]
+        pub unsafe fn HSD_JObjGetChild(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+            if jobj.is_null() { core::ptr::null_mut() } else { (*jobj).child }
+        }
+        #[inline]
+        pub unsafe fn HSD_JObjSetRotation(jobj: *mut HSD_JObj, rotate: *mut Quaternion) {
+            hsd_assert(!jobj.is_null(), "(jobj)");
+            hsd_assert(!rotate.is_null(), "(rotate)");
+            (*jobj).rotate = *rotate;
+            if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+                HSD_JObjSetMtxDirty(jobj);
+            }
+        }
+        #[inline]
+        pub unsafe fn HSD_JObjSetRotationX(jobj: *mut HSD_JObj, x: f32) {
+            hsd_assert(!jobj.is_null(), "(jobj)");
+            hsd_assert((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, "!(jobj->flags & JOBJ_USE_QUATERNION)");
+            (*jobj).rotate.x = x;
+            if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+                HSD_JObjSetMtxDirty(jobj);
+            }
+        }
+        #[inline]
+        pub unsafe fn HSD_JObjSetRotationY(jobj: *mut HSD_JObj, y: f32) {
+            hsd_assert(!jobj.is_null(), "(jobj)");
+            hsd_assert((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, "!(jobj->flags & JOBJ_USE_QUATERNION)");
+            (*jobj).rotate.y = y;
+            if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+                HSD_JObjSetMtxDirty(jobj);
+            }
+        }
+        #[inline]
+        pub unsafe fn HSD_JObjSetRotationZ(jobj: *mut HSD_JObj, z: f32) {
+            hsd_assert(!jobj.is_null(), "(jobj)");
+            hsd_assert((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, "!(jobj->flags & JOBJ_USE_QUATERNION)");
+            (*jobj).rotate.z = z;
+            if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+                HSD_JObjSetMtxDirty(jobj);
+            }
+        }
+        #[inline]
+        pub unsafe fn HSD_JObjGetRotation(jobj: *mut HSD_JObj, rotate: *mut Quaternion) {
+            hsd_assert(!jobj.is_null(), "(jobj)");
+            hsd_assert(!rotate.is_null(), "(rotate)");
+            *rotate = (*jobj).rotate;
+        }
+        #[inline]
+        pub unsafe fn HSD_JObjGetRotationZ(jobj: *mut HSD_JObj) -> f32 {
+            hsd_assert(!jobj.is_null(), "(jobj)");
+            (*jobj).rotate.z
+        }
+        #[inline]
+        pub unsafe fn HSD_JObjSetTranslate(jobj: *mut HSD_JObj, translate: *mut Vec3) {
+            hsd_assert(!jobj.is_null(), "(jobj)");
+            hsd_assert(!translate.is_null(), "(translate)");
+            (*jobj).translate = *translate;
+            if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+                HSD_JObjSetMtxDirty(jobj);
+            }
+        }
+    };
+}

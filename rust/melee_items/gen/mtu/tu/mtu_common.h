@@ -18,7 +18,12 @@ static u32 B(float f) { union { float f; u32 u; } c; c.f = f; return c.u; }
 static void T64(double d) { union { double d; u64_t_ u; } c; c.d = d; T((u32) c.u); T((u32) (c.u >> 32)); }
 static u32 H;
 static int HDBG;
-static void HM(u32 v) { H = H * 0x01000193u ^ v; if (HDBG) printf("H %08X%c", v, 10); }
+static void HM_(u32 v) { H = H * 0x01000193u ^ v; if (HDBG) printf("H %08X%c", v, 10); }
+#ifdef HM_LINE
+#define HM(v) do { if (HDBG) printf("L %d%c", __LINE__, 10); HM_(v); } while (0)
+#else
+#define HM(v) HM_(v)
+#endif
 static void HM64(double d) { union { double d; u64_t_ u; } c; c.d = d; HM((u32) c.u); HM((u32) (c.u >> 32)); }
 
 static u32 rs;

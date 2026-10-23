@@ -616,6 +616,9 @@ def build(stem, spec, want_ext):
         # records the .c defines shadow a same-named opaque melee_types record
         r_out.insert(5, "use super::m::{" + ", ".join(local_types) + "};")
 
+    if spec.get("gen_extra"):
+        c_out[1 + len(fwd):1 + len(fwd)] = [spec["gen_extra"][0]]
+        r_out.append(("@@RAW@@", spec["gen_extra"][1] + chr(10)))
     if xp:
         NLX = chr(10)
         xa = []

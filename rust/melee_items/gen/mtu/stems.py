@@ -117,8 +117,6 @@ STEMS["itmaplib"] = dict(
     setup=("for (i = 0; i < 8; i++) JO[i].flags &= ~JOBJ_USE_QUATERNION;", "for i in 0..8 { JO[i].flags &= !(JOBJ_USE_QUATERNION as u32); }"),
 )
 
-for _s in ("it_279C",):
-    STEMS.setdefault(_s, dict())
 
 _TB = ("&TB[rnd() & 1]", "&raw mut TB[(rnd() & 1) as usize]")
 _TB0 = ("&TB[0]", "&raw mut TB[0]")
@@ -292,3 +290,26 @@ STEMS["it_2725"] = dict(
         "it_80274F28": {1: ("(s8) fv()", "fv() as i8")},
         "it_802753BC": {1: ("(s16) fv()", "fv() as i16")}},
 )
+
+STEMS["it_279C"] = dict(
+    c_pre=_EF_PRE,
+    skip_static=["it_80279E24_inline", "selectPokemonForOpening", "selectPokemonFromList"],
+    pregs=("preg_xpools(); preg(KL, sizeof KL); preg(S70, sizeof S70); preg(S74, sizeof S74);",
+           "g::preg_xpools(); preg(&raw const g::KL, core::mem::size_of_val(&g::KL)); preg(&raw const g::S70, core::mem::size_of_val(&g::S70)); preg(&raw const g::S74, core::mem::size_of_val(&g::S74));"),
+    setup=("{ int q, k, n; setup_xpools(); zero(S70, sizeof S70); zero(S74, sizeof S74); for (q = 0; q < 2; q++) { S70[q].x2070_int = fv(); S74[q].x207C.x = fv(); S74[q].x207C.y = fv(); }"
+           " n = rnd() % 28; for (k = 0; k < 32; k++) KL[k] = (k >= n) ? It_PKind_Terminate : It_PKind_Start + rnd() % (It_PKind_Terminate - It_PKind_Start);"
+           " for (q = 0; q < 3; q++) { zero(&FT[q].x2070, sizeof FT[q].x2070); FT[q].x2070.x2070_int = fv(); zero(&FT[q].x2074, sizeof FT[q].x2074); FT[q].x2074.x2074_vec.x = rw(); FT[q].x2074.x2074_vec.y = rw(); FT[q].x2074.x207C.x = fv(); FT[q].x2074.x207C.y = fv(); FT[q].x2074.x2084 = fv(); FT[q].x2074.x2088 = fv(); } for (q = 0; q < 2; q++) { PDA[q].x38 = rnd() % 7; ART[q].x4_specialAttributes = (void*) &PDA[q]; }"
+           " for (q = 0; q < 4; q++) { itPokemonSpawn_ItemVars* ps = &IT[q].xDD4_itemVar.pokemon_spawn; int k; zero(&IT[q].xDD4_itemVar, sizeof IT[q].xDD4_itemVar); ps->x0 = fv(); ps->x4.x = rw(); ps->x4.y = rw(); ps->x4.z = rw(); ps->x10.x = rw(); ps->x10.y = rw(); ps->x10.z = rw(); ps->x1C = rw(); ps->x20 = rw(); ps->x24 = rw(); ps->x28 = rw(); for (k = 0; k < 6; k++) ps->x2C[k] = rw(); ps->x44 = rw(); ps->x48 = rw(); ps->x4C = rw(); ps->x50 = rw(); ps->x58 = rnd() % 6; ps->x54 = rnd() % 8; ps->x5C = rnd() % 3; zero(&IT[q].xD90, sizeof IT[q].xD90); IT[q].xD90.x2070_int = fv(); }"
+           " for (q = 0; q < 8; q++) JO[q].flags &= ~JOBJ_USE_QUATERNION; }",
+           "{ g::setup_xpools(); g::S70 = core::mem::zeroed(); g::S74 = core::mem::zeroed(); for q in 0..2usize { g::S70[q].x2070_int = fv() as _; g::S74[q].x207C.x = fv() as i32; g::S74[q].x207C.y = fv() as i32; }"
+           " let n = rnd() % 28; for k in 0..32usize { g::KL[k] = if k as u32 >= n { It_PKind_Terminate as i32 } else { (It_PKind_Start as u32 + rnd() % (It_PKind_Terminate - It_PKind_Start) as u32) as i32 }; }"
+           " for q in 0..3usize { core::ptr::write_bytes((&raw mut FT[q].x2070) as *mut u8, 0, core::mem::size_of_val(&FT[q].x2070)); FT[q].x2070.x2070_int = fv() as i32; core::ptr::write_bytes((&raw mut FT[q].x2074) as *mut u8, 0, core::mem::size_of_val(&FT[q].x2074)); FT[q].x2074.x2074_vec.x = rw(); FT[q].x2074.x2074_vec.y = rw(); FT[q].x2074.x207C.x = fv() as i32; FT[q].x2074.x207C.y = fv() as i32; FT[q].x2074.anon_10.x2084 = fv(); FT[q].x2074.x2088 = fv() as u16; } for q in 0..2usize { g::PDA[q].x38 = (rnd() % 7) as i32; ART[q].x4_specialAttributes = (&raw mut g::PDA[q]) as *mut _; }"
+           " for q in 0..4usize { let ps = &raw mut IT[q].xDD4_itemVar.pokemon_spawn; core::ptr::write_bytes((&raw mut IT[q].xDD4_itemVar) as *mut u8, 0, core::mem::size_of_val(&IT[q].xDD4_itemVar)); (*ps).x0 = fv() as i32; (*ps).x4.x = rw(); (*ps).x4.y = rw(); (*ps).x4.z = rw(); (*ps).x10.x = rw(); (*ps).x10.y = rw(); (*ps).x10.z = rw(); (*ps).x1C = rw(); (*ps).x20 = rw(); (*ps).x24 = rw(); (*ps).x28 = rw(); for k in 0..6usize { (*ps).x2C[k] = rw(); } (*ps).x44 = rw(); (*ps).x48 = rw(); (*ps).x4C = rw(); (*ps).x50 = rw(); (*ps).x58 = (rnd() % 6) as i32; (*ps).x54 = (rnd() % 8) as i32; (*ps).x5C = (rnd() % 3) as i32; core::ptr::write_bytes((&raw mut IT[q].xD90) as *mut u8, 0, core::mem::size_of_val(&IT[q].xD90)); IT[q].xD90.x2070_int = fv() as i32; }"
+           " for q in 0..8usize { JO[q].flags &= !(JOBJ_USE_QUATERNION as u32); } }"),
+    hash=("hash_xpools(); HM(RH(KL, sizeof KL)); HM(RH(S70, sizeof S70)); HM(RH(S74, sizeof S74));", "g::hash_xpools(); hm(rh(&g::KL)); hm(rh(&g::S70)); hm(rh(&g::S74));"),
+    ov={"it_8027A780": {1: ("(void*) KL", "(&raw mut g::KL) as *mut c_void")},
+        "it_8027AAA0": {2: ("(s32) ((rnd() % 3 == 0) ? It_PKind_Marumine : fv())", "(if rnd() % 3 == 0 { It_PKind_Marumine as u32 } else { fv() }) as i32")},
+        "it_8027B070": {1: ("&GO[4 + rnd() % 3]", "&raw mut GO[4 + (rnd() % 3) as usize]")},
+        "it_8027B0C4": {1: ("(SP.x0_parent_gobj = &GO[rnd() % 7], SP.x4_parent_gobj2 = &GO[rnd() % 7], &SP)", "{ SP.x0_parent_gobj = &raw mut GO[(rnd() % 7) as usize]; SP.x4_parent_gobj2 = &raw mut GO[(rnd() % 7) as usize]; &raw mut SP }")}},
+)
+STEMS["it_279C"]["post_all"] = ('{ int q; for (q = 0; q < 4; q++) { itPokemonSpawn_ItemVars* ps = &IT[q].xDD4_itemVar.pokemon_spawn; int k; HM((u32) ps->x0); HM(B(ps->x4.x)); HM(B(ps->x4.y)); HM(B(ps->x4.z)); HM(B(ps->x10.x)); HM(B(ps->x10.y)); HM(B(ps->x10.z)); HM(B(ps->x1C)); HM(B(ps->x20)); HM(B(ps->x24)); HM(B(ps->x28)); for (k = 0; k < 6; k++) HM(B(ps->x2C[k])); HM(B(ps->x44)); HM(B(ps->x48)); HM(B(ps->x4C)); HM(B(ps->x50)); HM((u32) ps->x54); HM((u32) ps->x58); HM((u32) ps->x5C); zero(&IT[q].xDD4_itemVar, sizeof IT[q].xDD4_itemVar); HM((u32) IT[q].xD90.x2070_int); zero(&IT[q].xD90, sizeof IT[q].xD90); } }', 'for q in 0..4usize { let ps = &raw mut IT[q].xDD4_itemVar.pokemon_spawn; hm((*ps).x0 as u32); hm((*ps).x4.x.to_bits()); hm((*ps).x4.y.to_bits()); hm((*ps).x4.z.to_bits()); hm((*ps).x10.x.to_bits()); hm((*ps).x10.y.to_bits()); hm((*ps).x10.z.to_bits()); hm((*ps).x1C.to_bits()); hm((*ps).x20.to_bits()); hm((*ps).x24.to_bits()); hm((*ps).x28.to_bits()); for k in 0..6usize { hm((*ps).x2C[k].to_bits()); } hm((*ps).x44.to_bits()); hm((*ps).x48.to_bits()); hm((*ps).x4C.to_bits()); hm((*ps).x50.to_bits()); hm((*ps).x54 as u32); hm((*ps).x58 as u32); hm((*ps).x5C as u32); core::ptr::write_bytes((&raw mut IT[q].xDD4_itemVar) as *mut u8, 0, core::mem::size_of_val(&IT[q].xDD4_itemVar)); hm(IT[q].xD90.x2070_int as u32); core::ptr::write_bytes((&raw mut IT[q].xD90) as *mut u8, 0, core::mem::size_of_val(&IT[q].xD90)); }')

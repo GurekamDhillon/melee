@@ -53,7 +53,7 @@ def main():
         dbg = []
         if os.environ.get("MTU_DBG"):
             dop, dk = os.environ["MTU_DBG"].split(":")
-            dbg = [f"-DDBG_OP={dop}", f"-DDBG_K={dk}"]
+            dbg = [f"-DDBG_OP={dop}", f"-DDBG_K={dk}", "-DHM_LINE"]
         lls = []
         for s in (drv, ROOT / "pc/gameworld/gekko_fp.c"):
             ll = BUILD / f"mtu_{n}__{s.stem}.ll"
@@ -71,7 +71,7 @@ def main():
             raise SystemExit(f"mtu: {n}: C driver exited {r.returncode:#x}; last case: {last}")
         out = r.stdout
         if dbg:
-            tr = [l for l in out.splitlines() if l.startswith(("T ", "H ", "B ", "S "))]
+            tr = [l for l in out.splitlines() if l.startswith(("T ", "H ", "B ", "S ", "L ", "E "))]
             (BUILD / f"dbg_{n}.txt").write_text(chr(10).join(tr) + chr(10), encoding="utf-8")
             print(f"mtu: {n}: {len(tr)} trace words")
             continue

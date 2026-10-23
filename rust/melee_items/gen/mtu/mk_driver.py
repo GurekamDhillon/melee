@@ -359,7 +359,7 @@ def ops_of(tu, stem, cfg):
             sc, sr = f"ret = PI({call_c});", f"ret = pi({call_r});"
         else:
             sc, sr = f"ret = (u32) {call_c};", f"ret = {call_r} as u32;"
-        post_c, post_r = cfg.get("post", {}).get(name, ("", ""))
+        post_c, post_r = cfg.get("post", {}).get(name, cfg.get("post_all", ("", "")))
         ops.append(dict(name=name, c=" ".join(pre_c) + " " + sc + " " + post_c, r="\n".join(pre_r) + "\n" + sr + "\n" + post_r,
                         n=cfg.get("n", {}).get(name, cfg.get("ncases", 300)),
                         ft=name in cfg.get("hash_ft", ()) or cfg.get("hash_ft_all", False)))

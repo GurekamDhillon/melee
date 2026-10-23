@@ -154,3 +154,8 @@ _hots3("itkirby_2F23", [("IT.xDD4_itemVar.kirby2f23.x1D0", ["0.5", "5.0", "20.0"
            "it_802F23EC_inline": ("it_802F23EC_inline(&G);", "m::it_802F23EC_inline(&raw mut G);"),
            "it_802F258C_scale": ("it_802F258C_scale(&G, &V1);", "m::it_802F258C_scale(&raw mut G, &raw mut V1);"),
            "it_802F258C_update": ("it_802F258C_update(&G, &V1);", "m::it_802F258C_update(&raw mut G, &raw mut V1);")})
+
+_hots3("itkireihana", [("IT.xDD4_itemVar.kireihana.timer_unk0", ["-1", "0", "1", "2", "5"], "i"), ("IT.xDD4_itemVar.kireihana.timer_unk1", ["0", "1", "2", "3"], "i"),
+                       ("IT.xDD4_itemVar.kireihana.timer_unk2", ["0", "1", "2"], "i"), ("IT.xDD4_itemVar.kireihana.x8", ["-1.0", "0.0", "1.0"], "f"),
+                       ("IT.xDD4_itemVar.kireihana.x70", ["-1.0", "0.0", "1.0"], "f"), ("IA.x10_fall_speed", ["0.1", "0.5"], "f"), ("IA.x14_fall_speed_max", ["0.3", "2.0"], "f")],
+       icd=False, tables=[("it_803F7E28", 5)])

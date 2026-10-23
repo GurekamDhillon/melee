@@ -14,3 +14,4 @@ pub mod itanimlist;
 pub mod itkirbyhammer;
 pub mod itkirbyyoshispecialn;
 pub mod itkirby_2F23;
+pub mod itkireihana;

@@ -111,3 +111,5 @@ spec("itkirbyyoshispecialn", [], null_ret_ok=["ftLib_80086630"], effects={"lb_80
 _WR2 = lambda a: ("if (%s) { %s->x = rw(); %s->y = rw(); }" % (a, a, a),
                   "if !%s.is_null() { (*%s).x = rw(); (*%s).y = rw(); }" % (a, a, a))
 spec("itkirby_2F23", [], skip_stubs=["__frsqrte"], skip_data=IT_SKIP + ["guess", "y", "result"], effects={"ftKb_SpecialN_800F5B5C": _WR3("a1"), "ftKb_SpecialN_800F5B20": _WR2("a1")})
+
+spec("itkireihana", ["itkireihanaAttributes"])

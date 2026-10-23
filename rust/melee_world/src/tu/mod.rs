@@ -19,3 +19,4 @@ pub mod iftime;
 pub mod ifnametag;
 pub mod ifprize;
 pub mod ifmagnify;
+pub mod ifstatus;

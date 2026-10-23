@@ -464,5 +464,144 @@ SPECS["ifmagnify"] = dict(
          "ifMagnify_UpdateLogicOffscreen", dict(name="ifMagnify_802FC998", args=["i:6"])],
 )
 
+# the player record the op acts on, drawn once (the C text and the Rust text draw identically)
+HPK = ("raw", "&ifStatus_HudInfo.players[rnd() % 6u]", "&raw mut m::ifStatus_HudInfo.players[(rnd() % 6) as usize]")
+UNKX = ("raw", "(UnkX*) &ifStatus_HudInfo.players[rnd() % 6u]", "&raw mut m::ifStatus_HudInfo.players[(rnd() % 6) as usize]")
+
+_UNKX_BLOCK = ("typedef struct UnkX {\n    u8 filler1[0x10];\n    FlagsX x10_flags;\n    u8 filler2[0x34 - 0x14];\n"
+               "    Vec4 x34_vec; // or float[4] instead of Vec4\n    Vec4 x44_vec;\n    HSD_JObj* x54_jobj[4];\n"
+               "} UnkX; // HudIndex\n")
+
+_PARENT_C = "ifStatus_HudInfo.players[rnd() % 6u].HUD_parent_entity = &P_HSD_GObj[0];"
+_PARENT_R = "m::ifStatus_HudInfo.players[(rnd() % 6) as usize].HUD_parent_entity = &raw mut g::P_HSD_GObj[0];"
+_NEXT_C = "ifStatus_HudInfo.players[rnd() % 6u].next = &P_HSD_GObj[0];"
+_NEXT_R = "m::ifStatus_HudInfo.players[(rnd() % 6) as usize].next = &raw mut g::P_HSD_GObj[0];"
+# VsSceneFighter's anonymous flag byte is raw random bytes; the native C reads x4_b5 at LSB bit 5, the
+# GameCube-order accessor at bit 2: bytes with both set (0x24) or neither read the same on both sides.
+_FIGHTERS_C = " { int q; for (q = 0; q < 6; q++) *((u8*) &P_VsSceneController[0].state.fighters[q] + 4) = (rnd() & 1) ? 0x24 : 0; }"
+_FIGHTERS_R = " for q in 0..6usize { *(&raw mut g::P_VsSceneController[0].state.fighters[q] as *mut u8).add(4) = if rnd() & 1 != 0 { 0x24 } else { 0 }; }"
+
+_UNK9_C = "{ int q; for (q = 0; q < 6; q++) ifStatus_HudInfo.players[q].unk9 = 0; }"
+_UNK9_R = "for q in 0..6usize { m::ifStatus_HudInfo.players[q].unk9 = 0; }"
+
+SPECS["ifstatus"] = dict(
+    src="src/melee/if/ifstatus.c",
+    # UnkX is a GameCube-layout view of IfDamageState (fixed 0x10 / 0x34 / 0x54 offsets); natively the
+    # records have 8-byte pointers, so the compiled copy spells the same members through IfDamageState.
+    patch=[(_UNKX_BLOCK, "typedef IfDamageState UnkX;\n"),
+           ("    if (value->x10_flags.b40) {", "    if (value->flags.randomize_velocity) {"),
+           ("        value->x10_flags.b40 = 0;", "        value->flags.randomize_velocity = 0;"),
+           ("            (&value->x34_vec.x)[i] =\n                foo(0.6083f * HSD_Randf(), 0.3041f); // var_f0;\n"
+            "            (&value->x44_vec.x)[i] = 0.811f * HSD_Randf() + 1.2165f;",
+            "            value->velocity_x[i] =\n                foo(0.6083f * HSD_Randf(), 0.3041f); // var_f0;\n"
+            "            value->velocity_y[i] = 0.811f * HSD_Randf() + 1.2165f;"),
+           ("            float f = (&value->x34_vec.x)[i];", "            float f = value->velocity_x[i];"),
+           ("            float f = (&value->x44_vec.x)[i];", "            float f = value->velocity_y[i];"),
+           ("            (&value->x44_vec.x)[i] -= 0.2028f;", "            value->velocity_y[i] -= 0.2028f;"),
+           ("    return value->x54_jobj[i];", "    return value->jobjs[i];"),
+           ("        HSD_JObj* jobj_r30 = value->x54_jobj[i];", "        HSD_JObj* jobj_r30 = value->jobjs[i];")],
+    pools={"HSD_GObj": 6, "HSD_JObj": 10, "HSD_DObj": 4, "HSD_MObj": 4, "HSD_TObj": 4, "HSD_Material": 4, "HSD_AObj": 3,
+           "HSD_MatAnimJoint": 6, "HSD_MatAnim": 2, "DynamicModelDesc": 2, "VsSceneController": 1, "HSD_Archive": 1},
+    rules={**CHAIN_RULES,
+           "HSD_JObj.child": ("ptr", "HSD_JObj", False), "HSD_JObj.next": ("ptr", "HSD_JObj", False),
+           "HSD_MatAnimJoint.child": ("ptr", "HSD_MatAnimJoint", False), "HSD_MatAnimJoint.next": ("ptr", "HSD_MatAnimJoint", False),
+           "HSD_MatAnimJoint.matanim": ("ptr", "HSD_MatAnim", False),
+           "IfDamageState.HUD_parent_entity": ("ptr", "HSD_GObj", True), "IfDamageState.next": ("ptr", "HSD_GObj", True),
+           "IfDamageState.jobjs": ("ptr", "HSD_JObj", False),
+           "IfDamageState.player_slot": ("range", 0, 5),
+           "HudIndex.damage_num_matanims": ("expr", "MAJP", "&raw mut super::MAJP"),
+           "HudIndex.damage_mark_matanims": ("expr", "MAJP", "&raw mut super::MAJP"),
+           "VsSceneState.unk_D": ("range", 0, 5)},
+    statics=[dict(c="ifStatus_HudInfo", ty="HudIndex"),
+             dict(c="ifStatus_804D57A8", n=4, kind="int", keep=True, init=True),
+             dict(c="ifStatus_804D57AC", n=4, kind="int", keep=True, init=True),
+             dict(c="ifStatus_804D6D60", kind="int", fill="r:0:7"),
+             dict(c="ifStatus_804D6D61", kind="int", fill="r:0:1"),
+             dict(c="MAJP", rs="super::MAJP", n=2, kind="ptr", fill="p:HSD_MatAnimJoint", region=True),
+             dict(c="NMOD", rs="super::NMOD", n=2, kind="ptr", fill="p:DynamicModelDesc", region=True),
+             dict(c="ARCP", rs="super::ARCP", kind="ptr", fill="p:HSD_Archive", region=True),
+             dict(c="V3A", rs="super::V3A", ty="Vec3", region=True),
+             dict(c="GCOL", rs="super::GCOL", ty="GXColor", n=3, region=True),
+             dict(c="GOP", rs="super::GOP", n=1, kind="ptr", fill="k:0", region=True),
+             dict(c="CHR", rs="super::CHR", n=1, kind="int", fill="v", region=True),
+             dict(c="HSD_GObj_JObjKind", ext=True, kind="int", fill="k:20")],
+    skip_data=["result", "num_models_name", "mrk_models_name"],
+    c_decl="static GXColor GCOL[3];\nstatic HSD_GObj* GOP[1];\nstatic u32 CHR[1];\nstatic void cbA(s32 a) { T(7001); T((u32) a); }\nstatic void cbB(s32 a) { T(7002); T((u32) a); }\n"
+           "static void* cbsel(void) { u32 q = rnd() % 3; return q == 0 ? (void*) 0 : q == 1 ? (void*) cbA : (void*) cbB; }\n"
+           "static HSD_MatAnimJoint* MAJP[2];\nstatic DynamicModelDesc* NMOD[2];\nstatic HSD_Archive* ARCP;\nstatic Vec3 V3A;\n"
+           "static GXColor rcol(void) { GXColor c; c.r = (u8) fv(); c.g = (u8) fv(); c.b = (u8) fv(); c.a = (u8) fv(); return c; }\n",
+    rs_decl="use melee_world::tu::ifstatus::UnkX;\npub static mut GCOL: [_GXColor; 3] = unsafe { core::mem::zeroed() };\npub static mut GOP: [*mut HSD_GObj; 1] = [null_mut(); 1];\npub static mut CHR: [u32; 1] = [0; 1];\n"
+            "unsafe extern \"C\" fn cbA(a: i32) { t(7001); t(a as u32); }\nunsafe extern \"C\" fn cbB(a: i32) { t(7002); t(a as u32); }\n"
+            "fn cbsel() -> usize { let q = rnd() % 3; if q == 0 { 0 } else if q == 1 { cbA as usize } else { cbB as usize } }\n"
+            "pub static mut MAJP: [*mut HSD_MatAnimJoint; 2] = [null_mut(); 2];\n"
+            "pub static mut NMOD: [*mut DynamicModelDesc; 2] = [null_mut(); 2];\npub static mut ARCP: *mut HSD_Archive = null_mut();\n"
+            "pub static mut V3A: Vec3 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };\n"
+            "fn rcol() -> _GXColor { let r = fv() as u8; let g = fv() as u8; let b = fv() as u8; let a = fv() as u8; _GXColor { r, g, b, a } }\n",
+    defaults={"memzero": "super::memzero_default"},
+    ret={"GObj_Create": ("pick_HSD_GObj(0)", "pick_HSD_GObj(0)"),
+         "HSD_JObjLoadJoint": ("pick_HSD_JObj(0)", "pick_HSD_JObj(0)"),
+         "gmVs_GetSceneController": ("&P_VsSceneController[0]", "&raw mut P_VsSceneController[0]"),
+         "gmVs_GetSceneState": ("&P_VsSceneController[0].state", "&raw mut P_VsSceneController[0].state"),
+         "gm_GetStartMeleeRules": ("&P_VsSceneController[0].start", "&raw mut P_VsSceneController[0].start"),
+         "ifAll_GetArchive": ("&ARCP", "&raw mut super::ARCP"),
+         "ifAll_GetPlayerHUDPosition": ("&V3A", "&raw mut super::V3A"),
+         "lbDvd_8001819C": ("((fv() & 1) ? &P_HSD_Archive[0] : 0)", "if fv() & 1 != 0 { &raw mut P_HSD_Archive[0] } else { null_mut() }"),
+         "HSD_ArchiveGetPublicAddress": ("((fv() & 1) ? (void*) &P_HSD_MatAnimJoint[1] : 0)",
+                                         "if fv() & 1 != 0 { &raw mut P_HSD_MatAnimJoint[1] as *mut c_void } else { null_mut() }"),
+         "Mex_InsigniaForExt": ("((fv() & 1) ? -1 : (int) (fv() % 20))", "if fv() & 1 != 0 { -1 } else { (fv() % 20) as i32 }"),
+         "Player_GetEntity": ("((fv() & 3) == 0 ? 0 : &P_HSD_GObj[1 + fv() % 5])",
+                              "if fv() & 3 == 0 { null_mut() } else { &raw mut P_HSD_GObj[(1 + fv() % 5) as usize] }"),
+         "Player_GetMoreFlagsBit2": ("(fv() & 1)", "(fv() & 1) as _"), "lb_8000B09C": ("(fv() & 1)", "(fv() & 1) as _"),
+         "Player_GetPlayerSlotType": ("(fv() % 4)", "fv() % 4"), "Player_GetTeam": ("(fv() % 5)", "(fv() % 5) as _"),
+         "gm_8016B168": ("(fv() & 1)", "(fv() & 1) as _"), "gm_8016B238": ("(fv() & 1)", "(fv() & 1) as _"),
+         "gm_80160854": ("fv()", "fv()"), "gm_80160968": ("rcol()", "super::rcol()"),
+         "Player_GetRemainingHP": ("((fv() & 1) ? (int) (fv() % 1200) - 100 : (int) fv())", "if fv() & 1 != 0 { (fv() % 1200) as i32 - 100 } else { fv() as i32 }"),
+         "Player_GetDamage": ("((fv() & 1) ? (int) (fv() % 1200) - 100 : (int) fv())", "if fv() & 1 != 0 { (fv() % 1200) as i32 - 100 } else { fv() as i32 }"),
+         "Player_GetStocks": ("(fv() % 3)", "(fv() % 3) as _"),
+         "Script_StatusHUDVisible": ("((fv() & 3) != 0)", "((fv() & 3) != 0) as i32"),
+         "Ui_RetailHidden": ("((fv() & 3) == 0)", "((fv() & 3) == 0) as i32")},
+    effects=MEMZERO,
+    extra_freg=[("cbA", "cbA"), ("cbB", "cbB")],
+    null_ret_ok=["HSD_GObj_SetupProc", "HSD_JObjAddAnimAll"],
+    custom_stubs={"lbArchive_LoadSections": sections_stub(
+        "lbArchive_LoadSections", ("HSD_Archive*", "T(PI(a0));", "*mut HSD_Archive", "t(pi(a0));"),
+        {"DmgNum_scene_models": ("NMOD", "&raw mut super::NMOD"), "DmgMrk_scene_models": ("&NMOD[1]", "&raw mut super::NMOD[1]")})},
+    setup_c="int k;\n    for (k = 0; k < 6; k++) P_HSD_GObj[k].hsd_obj = &P_HSD_JObj[k];",
+    setup_rs="for k in 0..6usize { g::P_HSD_GObj[k].hsd_obj = &raw mut g::P_HSD_JObj[k] as *mut _; }",
+    ops=[dict(name="ifStatus_GetHUDInfo"),
+         dict(name="ifStatus_PercentOnDeathAnimationThink", args=[UNKX, "v", "v"]),
+         dict(name="foo", args=["f", "f"]),
+         "offset_rand",
+         dict(name="jobj_flagCheckSetMtxDirtySub", args=["p:HSD_JObj"]),
+         dict(name="ifStatus_802F4B84", args=[HPK, "v"]),
+         dict(name="ifStatus_InitDamageDigits", args=[HPK, ("raw", "(HSD_MatAnimJoint***) &ifStatus_HudInfo.damage_num_matanims", "&raw mut m::ifStatus_HudInfo.damage_num_matanims")]),
+         dict(name="ifStatus_GetStoredTranslationX", args=[HPK, "i:4"]),
+         dict(name="ifStatus_CreateMarkGObj", args=[("raw", "&GOP[0]", "&raw mut GOP[0]")]),
+         dict(name="ifStatus_GetPlayerCharacter", args=["v", ("raw", "(CharacterKind*) &CHR[0]", "&raw mut CHR[0]")]),
+         dict(name="ifStatus_UpdateDamageDisplay", args=[HPK, "p:HSD_JObj", ("raw", "&GCOL[0]", "&raw mut GCOL[0]"),
+                                                         ("raw", "&GCOL[1]", "&raw mut GCOL[1]"), ("raw", "&GCOL[2]", "&raw mut GCOL[2]")]),
+         dict(name="ifStatus_802F4EDC", args=[G0], pre_c=_PARENT_C, pre_rs=_PARENT_R),
+         dict(name="ifStatus_802F5B48", args=[G0], pre_c=_PARENT_C + _FIGHTERS_C, pre_rs=_PARENT_R + _FIGHTERS_R),
+         dict(name="ifStatus_802F5DE0", args=[G0, "v"], pre_c=_PARENT_C, pre_rs=_PARENT_R),
+         dict(name="ifStatus_802F5E50", args=[G0, "v"], pre_c=_NEXT_C, pre_rs=_NEXT_R),
+         dict(name="ifStatus_802F5EC0", args=[HPK, "i:6"],
+              pre_c="{ int q; for (q = 0; q < 6; q++) ifStatus_HudInfo.players[q].unk9 = 0; }" + _FIGHTERS_C,
+              pre_rs="for q in 0..6usize { m::ifStatus_HudInfo.players[q].unk9 = 0; }" + _FIGHTERS_R),
+         dict(name="ifStatus_802F6194", args=["pn:HSD_JObj", "r:-2:5"],
+              pre_c="if (rnd() & 1) P_HSD_JObj[rnd() % 10u].next = 0;", pre_rs="if rnd() & 1 != 0 { g::P_HSD_JObj[(rnd() % 10) as usize].next = null_mut(); }"),
+         dict(name="ifStatus_802F61FC", args=[HPK, "i:6"]),
+         dict(name="ifStatus_802F6508", args=["i:6"], pre_c=_UNK9_C + _FIGHTERS_C, pre_rs=_UNK9_R + _FIGHTERS_R),
+         dict(name="ifStatus_802F665C", args=["r:0:7"], pre_c=_UNK9_C + _FIGHTERS_C, pre_rs=_UNK9_R + _FIGHTERS_R),
+         "ifStatus_802F66A4",
+         dict(name="ifStatus_802F6788", args=["i:6"]),
+         "ifStatus_802F6804", "ifStatus_802F6898", "ifStatus_802F68F0",
+         dict(name="ifStatus_802F6948", args=["i:6"]),
+         dict(name="ifStatus_TriggerStockLoss", args=["i:6", ("raw", "(void (*)(s32)) cbsel()", "core::mem::transmute::<usize, Option<unsafe extern \"C\" fn(i32)>>(cbsel())")]),
+         dict(name="ifStatus_802F69C0", args=["i:6", "v"]),
+         dict(name="ifStatus_802F6AF8", args=["i:6"]), dict(name="ifStatus_802F6C04", args=["i:6"]),
+         dict(name="ifStatus_802F6D10", args=["i:6"]), dict(name="ifStatus_802F6E1C", args=["i:6"], pre_c=_UNK9_C + _FIGHTERS_C, pre_rs=_UNK9_R + _FIGHTERS_R),
+         dict(name="ifStatus_802F6E3C", args=["i:6"])],
+)
+
 for _s in SPECS.values():
     _s["common_ret"] = COMMON_RET

@@ -208,7 +208,7 @@ def op_code(tu, spec, op):
             if pn in spec.get("pools", {}):
                 toks[i] = "p:" + pn
         ce, re_ = _tok_expr(toks[i], cls, rty, i)
-        decl_c.append(f"{p.type.spelling} a{i};")
+        decl_c.append(f"__typeof__({p.type.spelling}) a{i};")
         asg_c.append(f"a{i} = ({p.type.spelling}) ({ce});")
         if toks[i] == "z" or (toks[i] is None and cls in ("ptr", "fp", "str")):
             asg_r.append(f"let a{i}: {rty} = core::mem::zeroed();")

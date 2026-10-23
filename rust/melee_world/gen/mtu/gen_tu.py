@@ -294,8 +294,17 @@ class Walk:
 
     """Field-by-field fill/hash of one C record type (bitfields by value, pointers by id)."""
 
-    def __init__(self, tu):
+    def __init__(self, tu, skip_fields=None):
         self.tu = tu
+        self.skip_fields = skip_fields or {}
+
+    @staticmethod
+    def bf_only(rec):
+        """True when every member of record decl `rec` is a (named) bitfield: such an anonymous
+        struct / union view is filled and hashed by value (native C packs bitfields LSB first,
+        melee_types MSB first, so raw bytes would not compare)."""
+        ch = [c for c in rec.get_children() if c.kind == K.FIELD_DECL]
+        return bool(ch) and all(c.is_bitfield() and c.spelling for c in ch) and             all(c.kind == K.FIELD_DECL for c in rec.get_children())
 
     def rec_of(self, name):
         t = self.tu.types.get(name)
@@ -311,13 +320,19 @@ class Walk:
         cn = ("struct " + name) if name in self.tu.tagged else name
         cdef = f"static void fill_{name}({cn}* p)\n{{\n    int i0, i1, i2, j0, j1, j2, j3;\n" + "\n".join("    " + x for x in cf) + \
             f"\n}}\nstatic void hash_{name}(const {cn}* p)\n{{\n    int i0, i1, i2, j0, j1, j2, j3;\n    if (HDBG) printf(\"B {name}%c\", 10);\n" + "\n".join("    " + x for x in ch) + "\n}\n"
-        rdef = f"pub fn fill_{name}(p: &mut {name}) {{\n" + "\n".join("    " + x for x in rf) + \
-            f"\n}}\npub fn hash_{name}(p: &{name}) {{\n    unsafe {{ if HDBG {{ println!(\"B {name}\"); }} }}\n" + "\n".join("    " + x for x in rh) + "\n}\n"
+        rdef = f"pub fn fill_{name}(p: &mut {name}) {{\n    unsafe {{\n" + "\n".join("    " + x for x in rf) + \
+            f"\n    }}\n}}\npub fn hash_{name}(p: &{name}) {{\n    unsafe {{\n    if HDBG {{ println!(\"B {name}\"); }}\n" + "\n".join("    " + x for x in rh) + "\n    }\n}\n"
         return cdef, rdef
 
     def fields(self, decl, cp, rp, base_off, cf, ch, rf, rh, rootc, depth):
         for f in decl.get_children():
+            if f.kind == K.FIELD_DECL and f.spelling in self.skip_fields.get(decl.spelling, ()):
+                continue
             if f.kind != K.FIELD_DECL:
+                if f.kind == K.STRUCT_DECL and f.is_anonymous_record_decl() and self.bf_only(f):
+                    off = self.anon_offset(decl, f)
+                    self.fields(f, cp, rp + f"anon_{off:x}.", 0, cf, ch, rf, rh, None, depth)
+                    continue
                 if f.kind in (K.STRUCT_DECL, K.UNION_DECL) and f.is_anonymous_record_decl():
                     # C11 anonymous member: raw bytes at its offset in the parent. (A bitfield
                     # overlay in it is not compared by value: melee_types keeps bitfields in GC bit
@@ -368,6 +383,11 @@ class Walk:
             d = c.get_declaration()
             d = d.get_definition() or d
             if d.kind == K.UNION_DECL:
+                views = [m for m in d.get_children() if m.kind == K.STRUCT_DECL and m.is_anonymous_record_decl() and self.bf_only(m)]
+                if views:
+                    off = self.anon_offset(d, views[0])
+                    self.fields(views[0], cexpr + ".", rexpr + f".anon_{off:x}.", 0, cf, ch, rf, rh, None, depth)
+                    return
                 sz = c.get_size()
                 cf.append(f"for (i{depth} = 0; i{depth} < {sz}; i{depth}++) ((unsigned char*) &{cexpr})[i{depth}] = (unsigned char) rnd();")
                 ch.append(f"for (i{depth} = 0; i{depth} < {sz}; i{depth}++) HM(((const unsigned char*) &{cexpr})[i{depth}]);")
@@ -508,7 +528,7 @@ def build(stem, spec, want_ext):
         if addr and n not in realcb:
             ext_cb.append((n, rparams, rret, argnames))
     # fill / hash
-    walker = Walk(tu)
+    walker = Walk(tu, spec.get('skip_fields'))
     local_types = []
     fwd = []
     for tn in spec.get("types", ()):

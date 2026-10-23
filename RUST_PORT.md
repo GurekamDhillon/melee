@@ -605,3 +605,26 @@ seeded cases per function, all 20 functions of each TU incl. the re-exported con
 the separate ext `OSReport_grtrace`, traced by format only), `grtpurin.c`'s loop over the
 joint table (`lb_8000B1CC` recorder now returns x in 37.5..162.5 so both sides of `x < 130` run) and
 its `yakumono_param` reader; the TU-local `YakumonoParam` carries a `gc_layout!` GameCube table.
+
+## melee_items::tu: it/kinds set (shard 681-688)
+`itfoxblaster itfoxillusion itfoxlaser itfreeze itfreezer itfushigibana itgamewatchbreath itgamewatchchef`
+(`rust/melee_items/src/tu/`, 163 functions incl. the static-inline helpers and the TU's `ItemStateTable` /
+float / int data tables; header inlines the TUs use are copied into each file). Callees of unported TUs are
+`ext` hooks (unset: panic "TODO"); `cosf` / `sinf` are `melee_runtime::gekko` (the oracle links the real
+`gekko_fp.c`), `atan2f` is an ext hook.
+- Oracle: `python rust/melee_world/gen/mtu/mk_itkinds.py` writes, from the one description in
+  `gen/mtu/specs_it.py` (`CFG`), the C driver `gen/mtu/tu/<stem>.c` and the Rust test
+  `rust/melee_items/tests/tu_<stem>.rs`; `python rust/melee_world/gen/mtu/run_tu.py <stem>` builds the C
+  (shipping contraction + gwtool lowering) and writes `tests/data/mtu_<stem>.txt`. Each case (300 per
+  function, seeded) builds a synthetic world (item gobj + Item, owner / reference / parent / spawn-result
+  gobjs and Items, a JObj chain, article / attribute / dynamic-bone records, the kind's item-var union
+  member) and hashes every field of every record after the call (generated `fill_` / `hash_` walkers,
+  `skip_fields` + by-value bitfield views added to `gen_tu.py`), the return value, and the call trace of
+  every stub (the `SpawnItem` a spawn stub receives is hashed at the call).
+- Traps found: (1) `-1.0f * x` is folded to a negation by LLVM, which flips a NaN's sign; the console
+  `fmuls` keeps it (`itfreeze.rs` `mul_m1`); (2) `attrs->entries[i]` on a one-element array type: index
+  through a raw pointer; (3) a float local read before init (`it_8028EB88` `ip`) is 0 in the game build;
+  (4) `HSD_ASSERT(jobj)` in the jobj.h setters hangs on NULL: the oracle never passes NULL, the port asserts;
+  (5) `it_8029CD78` loops forever when the ghost jobj exists (kept as `loop {}`).
+- Mutation checks (flip a fused site, a table value, a state constant, a flag, an index) are caught in all
+  eight TUs; equivalent mutants only at float-equality boundaries.

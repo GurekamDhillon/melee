@@ -1,1 +1,9 @@
 pub mod itanimlist;
+pub mod itfoxblaster;
+pub mod itfoxillusion;
+pub mod itfoxlaser;
+pub mod itfreeze;
+pub mod itfreezer;
+pub mod itfushigibana;
+pub mod itgamewatchbreath;
+pub mod itgamewatchchef;

@@ -595,3 +595,13 @@ generator as set A (`GRT_SET=b bash rust/melee_world/cref/gen_grt_stages_ref.sh`
 `tests/tu_grt_stages_b.rs`, 60 seeded cases per function). New fixtures: Generator/AppSRT pair
 (mario particle scale), 8-slot yakumono struct (mewtwo), `ypick` biased ftLib positions so the
 mario floor-crossing branch is exercised.
+
+## melee_world::tu: gr/grt*.c set C (shard 609-616)
+`grtpeach grtpichu grtpikachu grtpurin grtsamus grtseak grtyoshi grtzelda`, by the set-A/B generator
+(`GRT_SET=c bash rust/melee_world/cref/gen_grt_stages_ref.sh`; test `tests/tu_grt_stages_c.rs`, 60
+seeded cases per function, all 20 functions of each TU incl. the re-exported constant ones). New:
+`grtseak.c`'s TARGET_PC creator (`Mex_GrCallbacks` / `Mex_GrTrace`, fixture = a fake m-ex
+`StageCallbacks[4]` whose entries record their call; the "grtrace" OSReports carry `%p` args and are
+the separate ext `OSReport_grtrace`, traced by format only), `grtpurin.c`'s loop over the
+joint table (`lb_8000B1CC` recorder now returns x in 37.5..162.5 so both sides of `x < 130` run) and
+its `yakumono_param` reader; the TU-local `YakumonoParam` carries a `gc_layout!` GameCube table.

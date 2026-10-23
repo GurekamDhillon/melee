@@ -277,6 +277,7 @@ PTR = {  # pointee record -> (C expr, Rust expr)
     "HurtCapsule": ("pick_hurt()", "pick_hurt()"),
     "Vec": ("&VA[rnd() % 4]", "&raw mut VA[(rnd() % 4) as usize]"),
     "itECB": ("&EC[rnd() % 3]", "&raw mut EC[(rnd() % 3) as usize]"),
+    "_itECB": ("&EC[rnd() % 3]", "&raw mut EC[(rnd() % 3) as usize]"),
     "CollData": ("&IT[rnd() % 4].x378_itemColl", "&raw mut IT[(rnd() % 4) as usize].x378_itemColl"),
     "SpawnItem": ("&SP", "&raw mut SP"),
 }
@@ -299,6 +300,8 @@ def bind(ptype):
             n = pt.get_declaration().spelling
             if n in PTR:
                 return PTR[n]
+        if pt.kind == T.VOID:
+            return ("(void*) &IT[rnd() % 4]", "(&raw mut IT[(rnd() % 4) as usize]) as *mut c_void")
         if pt.kind == T.UCHAR:
             return ("U8A", "(&raw mut U8A) as *mut u8")
         if pt.kind == T.INT:

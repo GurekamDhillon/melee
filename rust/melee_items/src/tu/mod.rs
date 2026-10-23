@@ -6,3 +6,4 @@ pub mod ithitbox;
 pub mod itdrop;
 pub mod iteffect;
 pub mod itdraw;
+pub mod itcoll;

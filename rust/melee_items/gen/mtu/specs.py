@@ -54,3 +54,9 @@ add("itdraw", "src/melee/it/itdraw.c",
         "ftLib_80087074": ("if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); }",
                            "if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); }"),
     })
+
+add("itcoll", "src/melee/it/itcoll.c", custom_stubs=EF_CUSTOM, manual_data=["Fighter_804D6524"], null_ret_ok=["ftCommon_8007F804"],
+    ret={"it_802746F8": ("&JO[rnd() % 8]", "&raw mut JO[(rnd() % 8) as usize]"),
+         "ftLib_80086960": ("((fv() & 1) && a0 >= &GO[4] && a0 <= &GO[6])", "{ let v = fv() & 1; (v != 0 && a0 >= &raw mut GO[4] && a0 <= &raw mut GO[6]) as i32 }")},
+    effects={"lbVector_RotateAboutUnitAxis": ("if (a0) { a0->x = rw(); a0->y = rw(); a0->z = rw(); }",
+                                              "if !a0.is_null() { (*a0).x = rw(); (*a0).y = rw(); (*a0).z = rw(); }")})

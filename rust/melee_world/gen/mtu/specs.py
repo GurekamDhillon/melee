@@ -232,5 +232,41 @@ SPECS["itanimlist"] = dict(
             "if let Some(f) = a2 { if (super::GKIND == 0 || super::GKIND == 6) && (*(&raw mut super::CMDX)).anon_8.u == &raw mut super::W[0] && fv() & 1 != 0 "
             "{ f(a0, &raw mut super::CMDX, if super::GKIND == 0 { 21 } else { 22 }); } }")},
 )
+SPECS["soundtest"] = dict(
+    src="src/melee/if/soundtest.c",
+    types=["un_80304138_objalloc_t", "un_80304138_objalloc_t_x8", "HSD_GObj", "StartMeleeData"],
+    data_size={"gmMainLib_8045A6C0": 0x12000},
+    ret={
+        "GObj_Create": ("&GO[fv() % 4]", "&raw mut super::GO[(fv() % 4) as usize]"),
+        "HSD_MemAlloc": ("((fv() & 3) == 0 ? 0 : (void*) MEM)", "if fv() & 3 == 0 { core::ptr::null_mut() } else { &raw mut super::MEM as *mut c_void }"),
+        "HSD_SObjLib_803A477C": ("&SOB", "&raw mut super::SOB"),
+        "gmMainLib_8015CCF0": ("&U32S[4]", "&raw mut super::U32S[4]"),
+        "gmMainLib_GetTimeMatchTotal": ("&U32S[0]", "&raw mut super::U32S[0]"),
+        "gmMainLib_GetStockMatchTotal": ("&U32S[1]", "&raw mut super::U32S[1]"),
+        "gmMainLib_GetCoinMatchTotal": ("&U32S[2]", "&raw mut super::U32S[2]"),
+        "gmMainLib_GetBonusMatchTotal": ("&U32S[3]", "&raw mut super::U32S[3]"),
+        "gmMainLib_8015D06C": ("&I32S[0]", "&raw mut super::I32S[0]"),
+        "gmMainLib_GetKOTotal": ("&I32S[1]", "&raw mut super::I32S[1]"),
+        "gmMainLib_8015CDC8": ("&GMM[0]", "&raw mut super::GMM[0]"),
+        "gmMainLib_8015CDD4": ("&GMM[1]", "&raw mut super::GMM[1]"),
+        "gmMainLib_8015CDE0": ("&GMM[2]", "&raw mut super::GMM[2]"),
+        "gm_GetAllStarData": ("&ALLS", "&raw mut super::ALLS"),
+        "un_80302DF0": ("&OA", "&raw mut super::OA"),
+        "un_80304210": ("&OA", "&raw mut super::OA"),
+        "lbSnap_8001E058": ("((fv() & 1) ? 0xB : (int) fv())", "if fv() & 1 != 0 { 0xB } else { fv() as i32 }"),
+        "lbSnap_8001D5FC": ("((fv() & 1) ? 0xB : (int) fv())", "if fv() & 1 != 0 { 0xB } else { fv() as i32 }"),
+        "lbSnap_8001D7B0": ("((fv() & 1) ? 0xB : (int) fv())", "if fv() & 1 != 0 { 0xB } else { fv() as i32 }"),
+        "lbCardNew_CompleteNextTask": ("((fv() % 4) == 0 ? 0xB : (fv() & 1) ? 0 : (int) fv())",
+                                       "if fv() % 4 == 0 { 0xB } else if fv() & 1 != 0 { 0 } else { fv() as i32 }"),
+        "lbSnap_8001DE8C": ("(int) (fv() & 1)", "(fv() & 1) as i32"),
+        "lb_8001CBBC": ("(fv() % 4)", "fv() % 4"),
+        "lb_8001C8BC": ("(int) (fv() % 3)", "(fv() % 3) as i32"),
+    },
+    custom_stubs={"lbArchive_LoadSymbols": dict(
+        c="HSD_Archive* lbArchive_LoadSymbols(const char* a0, void* a1, ...) { __builtin_va_list ap; const char* s; T(@ID@); T(SH(a0)); T(PI(a1)); "
+          "__builtin_va_start(ap, a1); s = __builtin_va_arg(ap, const char*); __builtin_va_end(ap); T(SH(s)); *(void**) a1 = SYMBUF; return 0; }",
+        ext="fn lbArchive_LoadSymbols(a0: *const i8, a1: *mut c_void, a2: *const i8);",
+        hook="|a0, a1, a2| { t(@ID@); t(sh(a0 as *const u8)); t(pi(a1)); t(sh(a2 as *const u8)); *(a1 as *mut *mut c_void) = &raw mut super::SYMBUF as *mut c_void; }")},
+)
 for _s in SPECS.values():
     _s["common_ret"] = COMMON_RET

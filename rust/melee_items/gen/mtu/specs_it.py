@@ -79,3 +79,14 @@ spec("itentei", ["itPokemonAttributes"], patch=_p, custom_stubs=_s)
 
 _p, _s = efsync("ItemStateTable it_803F6728[] = {")
 spec("itevyoshiegg", ["itEvYoshiEgg_DatAttrs"], patch=_p, custom_stubs=_s, effects={"Item_80268B18": spawn_effect()})
+
+_p, _s = efsync("ItemStateTable it_803F6090[] = {")
+spec("itfflower", ["FFlowerAttr"], patch=_p, custom_stubs=_s, effects={"Item_80268B18": spawn_effect()},
+     null_ret_ok=["it_802996D0"])
+
+# it_8026BB68(gobj, &pos) writes the parent's position
+BB68 = ("if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); }",
+        "if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); }")
+spec("itfflowerflame", [], effects={"Item_80268B18": spawn_effect(), "it_8026BB68": BB68})
+
+spec("itfoods", [], effects={"Item_80268B18": spawn_effect(), "it_8026BB68": BB68})

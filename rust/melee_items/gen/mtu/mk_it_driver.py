@@ -171,7 +171,7 @@ def param_expr(i, ptype, name, cfg, seen):
     sp = ptype.spelling
     k = c.kind
     if k == T.POINTER:
-        pn = c.get_pointee().spelling
+        pn = c.get_pointee().spelling.replace("struct ", "").replace("const ", "").strip()
         if "HSD_GObj" in pn or "Item_GObj" in pn:
             return ("&G", "&raw mut G") if not seen["gobj"] else ("&G2", "&raw mut G2")
         if pn in ("Vec3", "Vec"):

@@ -2,4 +2,7 @@ pub mod itanimlist;
 pub mod itegg;
 pub mod itentei;
 pub mod itevyoshiegg;
+pub mod itfflower;
+pub mod itfflowerflame;
+pub mod itfoods;
 pub mod itfire;

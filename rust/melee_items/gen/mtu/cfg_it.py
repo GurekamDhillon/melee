@@ -36,3 +36,19 @@ def _hots(stem, items, **kw):
 _hots("itevyoshiegg", [("IT.xDD4_itemVar.evyoshiegg.xDD8", ["0", "1", "40", "41", "60"]), ("IT.xDD4_itemVar.evyoshiegg.xDD4", ["0", "1"]),
                        ("IT.xC9C", ["-1", "0", "1", "5"]), ("SA[0]", ["0", "1", "5"])],
       icd=True, tables=[("it_803F6728", 6)])
+
+_hots("itfflower", [("IT.msid", ["0", "1", "2", "3", "4", "5", "6", "7"]), ("IT.xD4C", ["-1", "0", "1", "5"]),
+                    ("IT.xDD4_itemVar.fflower.x0", ["0", "1", "2", "5"]), ("IT.xDD4_itemVar.fflower.x4", ["0", "1"])],
+      icd=False, tables=[("it_803F6090", 8)])
+
+_hots("itfflowerflame", [], icd=False, tables=[("it_803F66C8", 5)], extra_ops=[
+    ("it_8029A89C_null", "it_8029A89C(0, rw());", "m::it_8029A89C(null_mut(), rw());"),
+    ("it_8029A8F4_null", "it_8029A8F4(0, &V1);", "m::it_8029A8F4(null_mut(), &raw mut V1);"),
+    ("it_8029A89C_noitem", "G.user_data = 0; it_8029A89C(&G, rw());", "G.user_data = null_mut(); m::it_8029A89C(&raw mut G, rw());"),
+    ("it_8029A8F4_noitem", "G.user_data = 0; it_8029A8F4(&G, &V1);", "G.user_data = null_mut(); m::it_8029A8F4(&raw mut G, &raw mut V1);")])
+
+_hots("itfoods", [], icd=False, tables=[("it_803F5DB0", 4)], skip=["getRandMax"],
+      extra_ops=[("it_8028FAF4_null", "ret = PI(it_8028FAF4(0, &V1));", "ret = pi(m::it_8028FAF4(null_mut(), &raw mut V1));")])
+# the attribute table is indexed by values the TU reads out of state: keep them in range
+CFG["itfoods"]["setup_c"] += "    IT.xDD4_itemVar.foods.x0 = rnd() % 4; SA[0] = 1 + rnd() % 8;\n"
+CFG["itfoods"]["setup_rs"] += "    IT.xDD4_itemVar.foods.x0 = rnd() % 4; SA[0] = 1 + rnd() % 8;\n"

@@ -339,5 +339,130 @@ SPECS["ifprize"] = dict(
          dict(name="ifPrize_Scene_OnEnter", args=["p:un_802FEBE0_OnEnter_arg0"]), "ifPrize_Scene_OnExit"],
 )
 
+def _pl(k):
+    return ("raw", f"&ifMagnify_804A1DE0.player[{k}]", f"&raw mut m::ifMagnify_804A1DE0.player[{k}]")
+
+
+def _gcol_ret(k):
+    return (f"((NULLRET && (fv() & 1)) ? 0 : &GCOL[{k}])",
+            f"if super::NULLRET != 0 && fv() & 1 != 0 {{ null_mut() }} else {{ &raw mut super::GCOL[{k}] }}")
+
+
+SPECS["ifmagnify"] = dict(
+    src="src/melee/if/ifmagnify.c",
+    # The C reaches ifMagnifyPlayer / ifMagnify members through GameCube-layout address arithmetic
+    # ((u32) base + i * sizeof(ifMagnifyPlayer) + offsetof(...), (HSD_ImageDesc*) base + n, memzero 0x74);
+    # native pointers are 8 bytes, so the compiled copy spells the same members and the same head
+    # length the native layout has. The port does exactly that.
+    patch=[("            HSD_GObjFree(*(HSD_GObj**) ((u32) base +\n"
+            "                                        i * (s32) sizeof(ifMagnifyPlayer) +\n"
+            "                                        (s32) offsetof(ifMagnify, player)));\n"
+            "            *(HSD_GObj**) ((u32) base + i * (s32) sizeof(ifMagnifyPlayer) +\n"
+            "                           (s32) offsetof(ifMagnify, player)) = NULL;\n",
+            "            HSD_GObjFree(base->player[i].gobj);\n"
+            "            base->player[i].gobj = NULL;\n"),
+           ("            (base = (ifMagnify*) ((HSD_ImageDesc*) &ifMagnify_804A1DE0 +\n"
+            "                                  (slot - 1)))\n"
+            "                ->image_descs;\n",
+            "            &base->image_descs[slot - 1];\n"),
+           ("memzero(&ifMagnify_804A1DE0, 0x74);", "memzero(&ifMagnify_804A1DE0, offsetof(ifMagnify, image_descs));")],
+    pools={"HSD_GObj": 6, "HSD_JObj": 8, "HSD_DObj": 4, "HSD_MObj": 3, "HSD_TObj": 3, "HSD_Material": 3,
+           "HSD_ImageDesc": 3, "HSD_AObj": 2, "HSD_CObj": 2, "DynamicModelDesc": 2, "HSD_Joint": 2, "VsSceneController": 1,
+           "HSD_Archive": 1},
+    rules={**CHAIN_RULES,
+           "HSD_DObj.next": ("ptr", "HSD_DObj", False),
+           "HSD_TObj.imagedesc": ("ptr", "HSD_ImageDesc", False),
+           "DynamicModelDesc.joint": ("ptr", "HSD_Joint", False),
+           "ifMagnifyPlayer.gobj": ("ptr", "HSD_GObj", False), "ifMagnifyPlayer.jobj": ("ptr", "HSD_JObj", False),
+           "ifMagnifyPlayer.idesc": ("ptr", "HSD_ImageDesc", False),
+           "ifMagnify.model_desc": ("expr", "PMDL", "&raw mut super::PMDL")},
+    statics=[dict(c="ifMagnify_804A1DE0", ty="ifMagnify"),
+             dict(c="ifMagnify_LogicArmed", kind="int", fill="r:0:1"),
+             dict(c="ifMagnify_LogicOffscreen", n=6, kind="int", fill="r:0:1"),
+             dict(c="ifMagnify_803F97C0", ty="HSD_WObjDesc", keep=True, init=True),
+             dict(c="ifMagnify_803F97D4", ty="HSD_WObjDesc", keep=True, init=True),
+             dict(c="ifMagnify_803F97E8", ty="HSD_CameraDescFrustum", keep=True, init=True),
+             dict(c="ifMagnify_804D57E8", n=5, kind="int", keep=True, init=True),
+             dict(c="ifMagnify_803F9828", n=9, kind="fnp", keep=True, init=True),
+             dict(c="ifMagnify_803F984C", flat=("unsigned char", "u8"), n=64, kind="int", keep=True, init=True),
+             dict(c="GCOL", rs="super::GCOL", ty="GXColor", n=9, region=True),
+             dict(c="STG", rs="super::STG", n=4, kind="f32", fill="f", region=True),
+             dict(c="VEC2A", rs="super::VEC2A", ty="Vec2", n=2, region=True),
+             dict(c="V3A", rs="super::V3A", ty="Vec3", region=True),
+             dict(c="NULLRET", rs="super::NULLRET", kind="int", fill="k:0"),
+             dict(c="PMDL", rs="super::PMDL", n=2, kind="ptr", fill="p:DynamicModelDesc", region=True),
+             dict(c="HEAPB", rs="super::HEAPB", n=16, kind="int", region=True),
+             dict(c="ARCP", rs="super::ARCP", kind="ptr", fill="k:0", region=True),
+             dict(c="HSD_GObj_804D7814", ext=True, kind="ptr", fill="pn:HSD_GObj"),
+             dict(c="HSD_GObj_JObjKind", ext=True, kind="int", fill="k:20"),
+             dict(c="HSD_GObj_CameraKind", ext=True, kind="int", fill="k:21")],
+    skip_data=["result"],
+    c_decl="static GXColor GCOL[9];\nstatic float STG[4];\nstatic Vec2 VEC2A[2];\nstatic Vec3 V3A;\nstatic int NULLRET;\n"
+           "static DynamicModelDesc* PMDL[2];\nstatic u8 HEAPB[16];\nstatic HSD_Archive* ARCP;\n"
+           "static GXColor rcol(void) { GXColor c; c.r = (u8) fv(); c.g = (u8) fv(); c.b = (u8) fv(); c.a = (u8) fv(); return c; }\n"
+           "static int view_bits(void) { static const u32 k[3] = { 0x3FAAAAABu, 0x3FE38E39u, 0x40000000u }; u32 q = fv() & 3; "
+           "return (int) (q < 3 ? k[q] : fv()); }\n",
+    rs_decl="pub static mut GCOL: [_GXColor; 9] = unsafe { core::mem::zeroed() };\npub static mut STG: [f32; 4] = [0.0; 4];\n"
+            "pub static mut VEC2A: [Vec2; 2] = unsafe { core::mem::zeroed() };\npub static mut V3A: Vec3 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };\npub static mut NULLRET: i32 = 0;\n"
+            "pub static mut PMDL: [*mut DynamicModelDesc; 2] = [null_mut(); 2];\npub static mut HEAPB: [u8; 16] = [0; 16];\n"
+            "pub static mut ARCP: *mut HSD_Archive = null_mut();\n"
+            "fn rcol() -> _GXColor { let r = fv() as u8; let g = fv() as u8; let b = fv() as u8; let a = fv() as u8; _GXColor { r, g, b, a } }\n"
+            "fn view_bits() -> i32 { const K: [u32; 3] = [0x3FAAAAAB, 0x3FE38E39, 0x40000000]; let q = fv() & 3; (if q < 3 { K[q as usize] } else { fv() }) as i32 }\n",
+    defaults={"memzero": "super::memzero_default"},
+    ret={"GObj_Create": ("pick_HSD_GObj(0)", "pick_HSD_GObj(0)"),
+         "HSD_JObjLoadJoint": ("pick_HSD_JObj(0)", "pick_HSD_JObj(0)"),
+         "lb_80013B14": ("&P_HSD_CObj[0]", "&raw mut P_HSD_CObj[0]"),
+         "gmVs_GetSceneController": ("&P_VsSceneController[0]", "&raw mut P_VsSceneController[0]"),
+         "ifAll_GetArchive": ("&ARCP", "&raw mut super::ARCP"),
+         "HSD_MemAlloc": ("HEAPB", "&raw mut super::HEAPB"),
+         "Stage_GetCamBoundsTopOffset": ("STG[0]", "super::STG[0]"), "Stage_GetCamBoundsBottomOffset": ("STG[1]", "super::STG[1]"),
+         "Stage_GetCamBoundsLeftOffset": ("STG[2]", "super::STG[2]"), "Stage_GetCamBoundsRightOffset": ("STG[3]", "super::STG[3]"),
+         "Ground_801C0604": _gcol_ret(0), "Ground_801C0618": _gcol_ret(2), "Ground_801C062C": _gcol_ret(6),
+         "Ground_801C0640": _gcol_ret(8), "Ground_801C0654": _gcol_ret(3), "Ground_801C0668": _gcol_ret(5),
+         "Ground_801C067C": _gcol_ret(7), "Ground_801C0690": _gcol_ret(1), "Ground_801C06A4": _gcol_ret(4),
+         "View_AspectBits": ("view_bits()", "super::view_bits()"),
+         "Camera_80030A50": ("((fv() & 1) ? &P_HSD_GObj[0] : 0)", "if fv() & 1 != 0 { &raw mut P_HSD_GObj[0] } else { null_mut() }"),
+         "gm_80160968": ("rcol()", "super::rcol()"),
+         "Player_GetEntity": ("((fv() & 3) == 0 ? 0 : &P_HSD_GObj[1 + fv() % 5])",
+                              "if fv() & 3 == 0 { null_mut() } else { &raw mut P_HSD_GObj[(1 + fv() % 5) as usize] }"),
+         "Player_GetTeam": ("(fv() % 5)", "(fv() % 5) as _"), "Player_GetPlayerSlotType": ("(fv() % 4)", "fv() % 4"),
+         "gm_8016B168": ("(fv() & 1)", "(fv() & 1) as _"), "gm_80160854": ("fv()", "fv()"),
+         "GXGetTexBufferSize": ("(fv() % 100000)", "fv() % 100000"),
+         "Camera_80030BBC": ("(fv() & 1)", "(fv() & 1) as _"),
+         "Camera_80030130": ("(fv() & 1)", "(fv() & 1) as _"), "ifAll_IsHUDHidden": ("(fv() & 1)", "(fv() & 1) as _"),
+         "ftLib_80086B64": ("(fv() & 1)", "(fv() & 1) as _"), "ftLib_80086ED0": ("(fv() & 1)", "(fv() & 1) as _"),
+         "HSD_CObjSetCurrent": ("(fv() & 1)", "(fv() & 1) as _"),
+         "Wb_RenderActive": ("(fv() & 1)", "(fv() & 1) as _")},
+    effects={**MEMZERO,
+             "ftLib_80086B90": ("a1->x = rw(); a1->y = rw(); a1->z = rw();", "(*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw();"),
+             "Player_80036978": ("a1->x = rw(); a1->y = rw(); a1->z = rw();", "(*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw();"),
+             "Camera_80030BBC": ("if (a1) { a1->x = (int) (fv() % 800) - 80; a1->y = (int) (fv() % 600) - 60; }",
+                                 "if !a1.is_null() { (*a1).x = (fv() % 800) as i32 - 80; (*a1).y = (fv() % 600) as i32 - 60; }"),
+             "HSD_CObjGetOrtho": ("*a1 = rw(); *a2 = rw(); *a3 = rw(); *a4 = rw();",
+                                  "*a1 = rw(); *a2 = rw(); *a3 = rw(); *a4 = rw();")},
+    deref={"Camera_80030BBC": [0], "HSD_CObjSetViewport": [1], "un_802FD928": [2]},
+    null_ret_ok=["HSD_GObj_SetupProc"],
+    custom_stubs={"lbArchive_LoadSections": sections_stub(
+        "lbArchive_LoadSections", ("HSD_Archive*", "T(PI(a0));", "*mut HSD_Archive", "t(pi(a0));"),
+        {"lupe": ("PMDL", "&raw mut super::PMDL")}), "lb_80011E24": jobjs_stub()},
+    ops=[dict(name="ifMagnify_ViewAspect"),
+         dict(name="ifMagnify_VisualOffscreen", args=["p:HSD_GObj"]),
+         "ifMagnify_IsHUDVisible",
+         dict(name="ifMagnify_GetPlayerColor", args=[("raw", "&GCOL[0]", "&raw mut GCOL[0]"), "i:6"]),
+         dict(name="ifMagnify_802FB6E8", args=["i:6"]),
+         dict(name="ifMagnify_802FB73C", args=[_pl(0), ("raw", "&VEC2A[0]", "&raw mut VEC2A[0]"),
+                                               ("raw", "&VEC2A[1]", "&raw mut VEC2A[1]")]),
+         dict(name="ifMagnify_802FB8C0", args=[G0, "r:0:2"],
+              pre_c="P_HSD_GObj[0].user_data = &ifMagnify_804A1DE0.player[rnd() % 6u];",
+              pre_rs="g::P_HSD_GObj[0].user_data = &raw mut m::ifMagnify_804A1DE0.player[(rnd() % 6) as usize] as *mut _;"),
+         dict(name="ifMagnify_GetCornerColors", args=[("raw", "&GCOL[0]", "&raw mut GCOL[0]"), ("raw", "&V3A", "&raw mut V3A")]),
+         "ifMagnify_802FBBDC", "ifMagnify_802FC3BC", dict(name="ifMagnify_802FC3C0", args=["i:6"]),
+         "ifMagnify_802FC618", "ifMagnify_802FC750",
+         dict(name="ifMagnify_802FC7C0", args=[("raw", "&ifMagnify_804A1DE0", "&raw mut m::ifMagnify_804A1DE0")],
+              pre_c="NULLRET = 1;", pre_rs="NULLRET = 1;"),
+         "ifMagnify_802FC870", "ifMagnify_802FC8E8", "ifMagnify_802FC940", "ifMagnify_LogicDisarm",
+         "ifMagnify_UpdateLogicOffscreen", dict(name="ifMagnify_802FC998", args=["i:6"])],
+)
+
 for _s in SPECS.values():
     _s["common_ret"] = COMMON_RET

@@ -128,8 +128,10 @@ def helpers(tu, spec, c_out, r_tail, data):
                 hi.append(hl[0])
                 rhi.append(hl[1])
         elif kind:
-            hc = {"ptr": "HM(PI((const void*) {x}));", "int": "HM((u32) {x});", "f32": "HM(B({x}));"}[kind]
-            hr = {"ptr": "hm(pi({x}));", "int": "hm({x} as u32);", "f32": "hm({x}.to_bits());"}[kind]
+            hc = {"ptr": "HM(PI((const void*) {x}));", "int": "HM((u32) {x});", "f32": "HM(B({x}));",
+                  "fnp": "HM(FI((const void*) {x}));"}[kind]
+            hr = {"ptr": "hm(pi({x}));", "int": "hm({x} as u32);", "f32": "hm({x}.to_bits());",
+                  "fnp": "hm(fi({x}));"}[kind]
             if n:
                 lc, lr = elem(st, cn, rs, "i")
                 hl = (f"    for (i = 0; i < {n}; i++) " + hc.format(x=lc), f"    for i in 0..{n}usize {{ " + hr.format(x=lr) + " }")

@@ -9,9 +9,11 @@ static void fill_ItemAttr(ItemAttr* p);
 static void hash_ItemAttr(const ItemAttr* p);
 static void fill_ItemCommonData(ItemCommonData* p);
 static void hash_ItemCommonData(const ItemCommonData* p);
+static void fill_ItemLink(ItemLink* p);
+static void hash_ItemLink(const ItemLink* p);
 u8 HSD_GObj_JObjKind;
 HSD_ObjAllocData item_link_alloc_data;
-__typeof__(struct HSD_GObj *) (GObj_Create)(__typeof__(unsigned short) a0, __typeof__(unsigned char) a1, __typeof__(unsigned char) a2) { T(1000); T((u32) a0); T((u32) a1); T((u32) a2); return (__typeof__(struct HSD_GObj *)) (0); }
+__typeof__(struct HSD_GObj *) (GObj_Create)(__typeof__(unsigned short) a0, __typeof__(unsigned char) a1, __typeof__(unsigned char) a2) { T(1000); T((u32) a0); T((u32) a1); T((u32) a2); return (__typeof__(struct HSD_GObj *)) (((fv() % 5) == 0 ? 0 : &LG[CNT[0]++ % 6])); }
 void (GObj_InitUserData)(__typeof__(struct HSD_GObj *) a0, __typeof__(unsigned char) a1, __typeof__(void (*)(void *)) a2, __typeof__(void *) a3) { T(1001); T(PI((const void*) a0)); T((u32) a1); T(FI((const void*) a2)); T(PI((const void*) a3)); }
 void (GObj_SetupGXLink)(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, int)) a1, __typeof__(unsigned char) a2, __typeof__(unsigned int) a3) { T(1002); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); T((u32) a3); }
 void (HSD_GObjFree)(__typeof__(struct HSD_GObj *) a0) { T(1003); T(PI((const void*) a0)); }
@@ -19,40 +21,39 @@ void (HSD_GObjObject_80390A70)(__typeof__(struct HSD_GObj *) a0, __typeof__(unsi
 void (HSD_GObj_JObjCallback)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1005); T(PI((const void*) a0)); T((u32) a1); }
 void (HSD_JObjAddAnimAll)(__typeof__(struct HSD_JObj *) a0, __typeof__(struct HSD_AnimJoint *) a1, __typeof__(struct HSD_MatAnimJoint *) a2, __typeof__(struct HSD_ShapeAnimJoint *) a3) { T(1006); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); T(PI((const void*) a3)); }
 void (HSD_JObjAnimAll)(__typeof__(struct HSD_JObj *) a0) { T(1007); T(PI((const void*) a0)); }
-__typeof__(struct HSD_JObj *) (HSD_JObjLoadJoint)(__typeof__(struct HSD_Joint *) a0) { T(1008); T(PI((const void*) a0)); return (__typeof__(struct HSD_JObj *)) (0); }
+__typeof__(struct HSD_JObj *) (HSD_JObjLoadJoint)(__typeof__(struct HSD_Joint *) a0) { T(1008); T(PI((const void*) a0)); return (__typeof__(struct HSD_JObj *)) (&LJ[CNT[2]++ % 6]); }
 void (HSD_JObjRemoveAnimAll)(__typeof__(struct HSD_JObj *) a0) { T(1009); T(PI((const void*) a0)); }
 void (HSD_JObjReqAnimAll)(__typeof__(struct HSD_JObj *) a0, __typeof__(float) a1) { T(1010); T(PI((const void*) a0)); T(B(a1)); }
 void (HSD_JObjSetMtxDirtySub)(__typeof__(struct HSD_JObj *) a0) { T(1011); T(PI((const void*) a0)); }
 void (HSD_JObjSetupMatrixSub)(__typeof__(struct HSD_JObj *) a0) { T(1012); T(PI((const void*) a0)); }
-__typeof__(void *) (HSD_ObjAlloc)(__typeof__(struct _HSD_ObjAllocData *) a0) { T(1013); T(PI((const void*) a0)); return (__typeof__(void *)) (0); }
+__typeof__(void *) (HSD_ObjAlloc)(__typeof__(struct _HSD_ObjAllocData *) a0) { T(1013); T(PI((const void*) a0)); return (__typeof__(void *)) (&LK[CNT[1]++ % 6]); }
 __typeof__(struct HSD_GObj *) (Item_80268B18)(__typeof__(struct SpawnItem *) a0) { T(1014); T(PI((const void*) a0)); TSPAWN((const SpawnItem*) a0); return (__typeof__(struct HSD_GObj *)) (((fv() & 1) ? &GO[2] : 0)); }
 void (Item_80268E5C)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(enum Item_StateChangeFlags) a2) { T(1015); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
 void (Item_8026A8EC)(__typeof__(struct HSD_GObj *) a0) { T(1016); T(PI((const void*) a0)); }
 void (Item_8026AB54)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1, __typeof__(enum Fighter_Part) a2) { T(1017); T(PI((const void*) a0)); T(PI((const void*) a1)); T((u32) a2); }
-void (PSMTXConcat)(__typeof__(float (*)[4]) a0, __typeof__(float (*)[4]) a1, __typeof__(float (*)[4]) a2) { T(1018); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); }
-void (PSMTXCopy)(__typeof__(float (*)[4]) a0, __typeof__(float (*)[4]) a1) { T(1019); T(PI((const void*) a0)); T(PI((const void*) a1)); }
-void (PSMTXIdentity)(__typeof__(float (*)[4]) a0) { T(1020); T(PI((const void*) a0)); }
-__typeof__(double) (__frsqrte)(__typeof__(double) a0) { T(1021); T64(a0); return (__typeof__(double)) ((double) rg()); }
-__typeof__(float) (ftLib_80086A0C)(__typeof__(struct HSD_GObj *) a0) { T(1022); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
-__typeof__(int) (ftLib_GetMotionId)(__typeof__(struct HSD_GObj *) a0) { T(1023); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-void (ftNs_AttackHi4_YoyoItemSetFlag)(__typeof__(struct HSD_GObj *) a0) { T(1024); T(PI((const void*) a0)); }
-void (it_8026B724)(__typeof__(struct HSD_GObj *) a0) { T(1025); T(PI((const void*) a0)); }
-void (it_8026B73C)(__typeof__(struct HSD_GObj *) a0) { T(1026); T(PI((const void*) a0)); }
-__typeof__(int) (it_8026B894)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1027); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) ((int) (fv() & 1)); }
-void (it_80275328)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct ItemLink *) a1) { T(1028); T(PI((const void*) a0)); T(PI((const void*) a1)); }
-void (it_802A2474)(__typeof__(void *) a0) { T(1029); T(PI((const void*) a0)); }
-void (it_802A24A0)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1030); T(PI((const void*) a0)); T((u32) a1); }
-void (it_802A24D0)(__typeof__(struct ItemLink *) a0, __typeof__(float) a1) { T(1031); T(PI((const void*) a0)); T(B(a1)); }
-__typeof__(float) (it_802A3C98)(__typeof__(Vec *) a0, __typeof__(Vec *) a1, __typeof__(Vec *) a2) { T(1032); T(PI((const void*) a0)); TVEC((const Vec3*) a0); T(PI((const void*) a1)); TVEC((const Vec3*) a1); T(PI((const void*) a2)); TVEC((const Vec3*) a2); return (__typeof__(float)) (rg()); }
-__typeof__(int) (it_802A3D90)(__typeof__(struct ItemLink *) a0) { T(1033); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-__typeof__(int) (it_802A42F4)(__typeof__(struct ItemLink *) a0, __typeof__(float) a1) { T(1034); T(PI((const void*) a0)); T(B(a1)); return (__typeof__(int)) (fv()); }
-void (it_802A43B8)(__typeof__(struct ItemLink *) a0) { T(1035); T(PI((const void*) a0)); }
-void (it_802A43EC)(__typeof__(struct ItemLink *) a0) { T(1036); T(PI((const void*) a0)); }
-void (it_802A4420)(__typeof__(struct ItemLink *) a0) { T(1037); T(PI((const void*) a0)); }
-void (it_802A6DC8)(__typeof__(struct HSD_JObj *) a0, __typeof__(Vec *) a1, __typeof__(Vec *) a2) { T(1038); T(PI((const void*) a0)); T(PI((const void*) a1)); TVEC((const Vec3*) a1); T(PI((const void*) a2)); TVEC((const Vec3*) a2); }
-__typeof__(float) (lbVector_Normalize)(__typeof__(Vec *) a0) { T(1039); T(PI((const void*) a0)); TVEC((const Vec3*) a0); if (a0) { a0->x = rw(); a0->y = rw(); a0->z = rw(); } return (__typeof__(float)) (rg()); }
-void (lb_8000BA0C)(__typeof__(struct HSD_JObj *) a0, __typeof__(float) a1) { T(1040); T(PI((const void*) a0)); T(B(a1)); }
-__typeof__(int) (mpColl_800471F8)(__typeof__(struct CollData *) a0) { T(1041); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+void (PSMTXConcat)(__typeof__(float (*)[4]) a0, __typeof__(float (*)[4]) a1, __typeof__(float (*)[4]) a2) { T(1018); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); if (a2) { int q; for (q = 0; q < 12; q++) ((float*) a2)[q] = rw(); } }
+void (PSMTXCopy)(__typeof__(float (*)[4]) a0, __typeof__(float (*)[4]) a1) { T(1019); T(PI((const void*) a0)); T(PI((const void*) a1)); if (a0 && a1) { int q; for (q = 0; q < 12; q++) ((float*) a1)[q] = ((float*) a0)[q]; } }
+void (PSMTXIdentity)(__typeof__(float (*)[4]) a0) { T(1020); T(PI((const void*) a0)); if (a0) { int q; for (q = 0; q < 12; q++) ((float*) a0)[q] = (q % 5 == 0) ? 1.0f : 0.0f; } }
+__typeof__(float) (ftLib_80086A0C)(__typeof__(struct HSD_GObj *) a0) { T(1021); T(PI((const void*) a0)); return (__typeof__(float)) ((float) (rnd() % 5) / 2.0f); }
+__typeof__(int) (ftLib_GetMotionId)(__typeof__(struct HSD_GObj *) a0) { T(1022); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (0x150 + rnd() % 16)); }
+void (ftNs_AttackHi4_YoyoItemSetFlag)(__typeof__(struct HSD_GObj *) a0) { T(1023); T(PI((const void*) a0)); }
+void (it_8026B724)(__typeof__(struct HSD_GObj *) a0) { T(1024); T(PI((const void*) a0)); }
+void (it_8026B73C)(__typeof__(struct HSD_GObj *) a0) { T(1025); T(PI((const void*) a0)); }
+__typeof__(int) (it_8026B894)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1026); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) ((int) (fv() & 1)); }
+void (it_80275328)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct ItemLink *) a1) { T(1027); T(PI((const void*) a0)); T(PI((const void*) a1)); }
+void (it_802A2474)(__typeof__(void *) a0) { T(1028); T(PI((const void*) a0)); }
+void (it_802A24A0)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1029); T(PI((const void*) a0)); T((u32) a1); }
+void (it_802A24D0)(__typeof__(struct ItemLink *) a0, __typeof__(float) a1) { T(1030); T(PI((const void*) a0)); T(B(a1)); }
+__typeof__(float) (it_802A3C98)(__typeof__(Vec *) a0, __typeof__(Vec *) a1, __typeof__(Vec *) a2) { T(1031); T(PI((const void*) a0)); TVEC((const Vec3*) a0); T(PI((const void*) a1)); TVEC((const Vec3*) a1); T(PI((const void*) a2)); TVEC((const Vec3*) a2); if (a2) { a2->x = rw(); a2->y = rw(); a2->z = rw(); } return (__typeof__(float)) ((float) (rnd() % 60) / 10.0f); }
+__typeof__(int) (it_802A3D90)(__typeof__(struct ItemLink *) a0) { T(1032); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+__typeof__(int) (it_802A42F4)(__typeof__(struct ItemLink *) a0, __typeof__(float) a1) { T(1033); T(PI((const void*) a0)); T(B(a1)); return (__typeof__(int)) (fv()); }
+void (it_802A43B8)(__typeof__(struct ItemLink *) a0) { T(1034); T(PI((const void*) a0)); }
+void (it_802A43EC)(__typeof__(struct ItemLink *) a0) { T(1035); T(PI((const void*) a0)); }
+void (it_802A4420)(__typeof__(struct ItemLink *) a0) { T(1036); T(PI((const void*) a0)); }
+void (it_802A6DC8)(__typeof__(struct HSD_JObj *) a0, __typeof__(Vec *) a1, __typeof__(Vec *) a2) { T(1037); T(PI((const void*) a0)); T(PI((const void*) a1)); TVEC((const Vec3*) a1); T(PI((const void*) a2)); TVEC((const Vec3*) a2); }
+__typeof__(float) (lbVector_Normalize)(__typeof__(Vec *) a0) { T(1038); T(PI((const void*) a0)); TVEC((const Vec3*) a0); if (a0) { a0->x = rw(); a0->y = rw(); a0->z = rw(); } return (__typeof__(float)) (rg()); }
+void (lb_8000BA0C)(__typeof__(struct HSD_JObj *) a0, __typeof__(float) a1) { T(1039); T(PI((const void*) a0)); T(B(a1)); }
+__typeof__(int) (mpColl_800471F8)(__typeof__(struct CollData *) a0) { T(1040); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() & 1)); }
 static void fill_HSD_GObj(HSD_GObj* p)
 {
     int i0, i1, i2, j0, j1, j2, j3;
@@ -1630,6 +1631,269 @@ static void hash_ItemCommonData(const ItemCommonData* p)
     HM(B(p->x15C));
 }
 
+static void fill_ItemLink(ItemLink* p)
+{
+    int i0, i1, i2, j0, j1, j2, j3;
+    p->vel.x = rg();
+    p->vel.y = rg();
+    p->vel.z = rg();
+    p->pos.x = rg();
+    p->pos.y = rg();
+    p->pos.z = rg();
+    p->x20.x = rg();
+    p->x20.y = rg();
+    p->x20.z = rg();
+    p->x2C_b0 = fv();
+    p->x2C_b1 = fv();
+    p->x2C_b2 = fv();
+    p->x2C_b3 = fv();
+    p->x2C_b4 = fv();
+    p->x2C_b5 = fv();
+    p->x2C_b6 = fv();
+    p->x2C_b7 = fv();
+    p->coll_data.cur_pos.x = rg();
+    p->coll_data.cur_pos.y = rg();
+    p->coll_data.cur_pos.z = rg();
+    p->coll_data.prev_pos.x = rg();
+    p->coll_data.prev_pos.y = rg();
+    p->coll_data.prev_pos.z = rg();
+    p->coll_data.last_pos.x = rg();
+    p->coll_data.last_pos.y = rg();
+    p->coll_data.last_pos.z = rg();
+    p->coll_data.x28_vec.x = rg();
+    p->coll_data.x28_vec.y = rg();
+    p->coll_data.x28_vec.z = rg();
+    p->coll_data.x34_flags.b0 = fv();
+    p->coll_data.x34_flags.b1234 = fv();
+    p->coll_data.x34_flags.b5 = fv();
+    p->coll_data.x34_flags.b6 = fv();
+    p->coll_data.x34_flags.b7 = fv();
+    p->coll_data.x35_flags.b0 = fv();
+    p->coll_data.x35_flags.b1234 = fv();
+    p->coll_data.x35_flags.b5 = fv();
+    p->coll_data.x35_flags.b6 = fv();
+    p->coll_data.x35_flags.b7 = fv();
+    p->coll_data.facing_dir = fv();
+    p->coll_data.x38 = fv();
+    p->coll_data.floor_skip = fv();
+    p->coll_data.ledge_id_right = fv();
+    p->coll_data.ledge_id_left = fv();
+    p->coll_data.joint_id_skip = fv();
+    p->coll_data.joint_id_only = fv();
+    p->coll_data.x50 = rg();
+    p->coll_data.ledge_snap_x = rg();
+    p->coll_data.ledge_snap_y = rg();
+    p->coll_data.ledge_snap_height = rg();
+    p->coll_data.lstick_x = rg();
+    p->coll_data.x64_ecb.top.x = rg();
+    p->coll_data.x64_ecb.top.y = rg();
+    p->coll_data.x64_ecb.bottom.x = rg();
+    p->coll_data.x64_ecb.bottom.y = rg();
+    p->coll_data.x64_ecb.right.x = rg();
+    p->coll_data.x64_ecb.right.y = rg();
+    p->coll_data.x64_ecb.left.x = rg();
+    p->coll_data.x64_ecb.left.y = rg();
+    p->coll_data.desired_ecb.top.x = rg();
+    p->coll_data.desired_ecb.top.y = rg();
+    p->coll_data.desired_ecb.bottom.x = rg();
+    p->coll_data.desired_ecb.bottom.y = rg();
+    p->coll_data.desired_ecb.right.x = rg();
+    p->coll_data.desired_ecb.right.y = rg();
+    p->coll_data.desired_ecb.left.x = rg();
+    p->coll_data.desired_ecb.left.y = rg();
+    p->coll_data.ecb.top.x = rg();
+    p->coll_data.ecb.top.y = rg();
+    p->coll_data.ecb.bottom.x = rg();
+    p->coll_data.ecb.bottom.y = rg();
+    p->coll_data.ecb.right.x = rg();
+    p->coll_data.ecb.right.y = rg();
+    p->coll_data.ecb.left.x = rg();
+    p->coll_data.ecb.left.y = rg();
+    p->coll_data.prev_ecb.top.x = rg();
+    p->coll_data.prev_ecb.top.y = rg();
+    p->coll_data.prev_ecb.bottom.x = rg();
+    p->coll_data.prev_ecb.bottom.y = rg();
+    p->coll_data.prev_ecb.right.x = rg();
+    p->coll_data.prev_ecb.right.y = rg();
+    p->coll_data.prev_ecb.left.x = rg();
+    p->coll_data.prev_ecb.left.y = rg();
+    p->coll_data.xE4_ecb.top.x = rg();
+    p->coll_data.xE4_ecb.top.y = rg();
+    p->coll_data.xE4_ecb.bottom.x = rg();
+    p->coll_data.xE4_ecb.bottom.y = rg();
+    p->coll_data.xE4_ecb.right.x = rg();
+    p->coll_data.xE4_ecb.right.y = rg();
+    p->coll_data.xE4_ecb.left.x = rg();
+    p->coll_data.xE4_ecb.left.y = rg();
+    p->coll_data.ecb_source.kind = fv();
+    for (j0 = 0; j0 < 56; j0++) ((unsigned char*) &p->coll_data.ecb_source)[8 + j0] = (unsigned char) rnd();
+    p->coll_data.ecb_source.x124 = rg();
+    p->coll_data.ecb_source.x128 = rg();
+    p->coll_data.ecb_source.x12C = rg();
+    p->coll_data.x130_flags = fv();
+    p->coll_data.env_flags = fv();
+    p->coll_data.prev_env_flags = fv();
+    p->coll_data.x13C = fv();
+    p->coll_data.contact.x = rg();
+    p->coll_data.contact.y = rg();
+    p->coll_data.contact.z = rg();
+    p->coll_data.floor.index = fv();
+    p->coll_data.floor.flags = fv();
+    p->coll_data.floor.normal.x = rg();
+    p->coll_data.floor.normal.y = rg();
+    p->coll_data.floor.normal.z = rg();
+    p->coll_data.left_facing_wall.index = fv();
+    p->coll_data.left_facing_wall.flags = fv();
+    p->coll_data.left_facing_wall.normal.x = rg();
+    p->coll_data.left_facing_wall.normal.y = rg();
+    p->coll_data.left_facing_wall.normal.z = rg();
+    p->coll_data.right_facing_wall.index = fv();
+    p->coll_data.right_facing_wall.flags = fv();
+    p->coll_data.right_facing_wall.normal.x = rg();
+    p->coll_data.right_facing_wall.normal.y = rg();
+    p->coll_data.right_facing_wall.normal.z = rg();
+    p->coll_data.ceiling.index = fv();
+    p->coll_data.ceiling.flags = fv();
+    p->coll_data.ceiling.normal.x = rg();
+    p->coll_data.ceiling.normal.y = rg();
+    p->coll_data.ceiling.normal.z = rg();
+    p->x1CC = fv();
+}
+static void hash_ItemLink(const ItemLink* p)
+{
+    int i0, i1, i2, j0, j1, j2, j3;
+    if (HDBG) printf("B ItemLink%c", 10);
+    HM(PI((const void*) p->prev));
+    HM(PI((const void*) p->next));
+    HM(B(p->vel.x));
+    HM(B(p->vel.y));
+    HM(B(p->vel.z));
+    HM(B(p->pos.x));
+    HM(B(p->pos.y));
+    HM(B(p->pos.z));
+    HM(B(p->x20.x));
+    HM(B(p->x20.y));
+    HM(B(p->x20.z));
+    HM((u32) p->x2C_b0);
+    HM((u32) p->x2C_b1);
+    HM((u32) p->x2C_b2);
+    HM((u32) p->x2C_b3);
+    HM((u32) p->x2C_b4);
+    HM((u32) p->x2C_b5);
+    HM((u32) p->x2C_b6);
+    HM((u32) p->x2C_b7);
+    HM(PI((const void*) p->coll_data.x0_gobj));
+    HM(B(p->coll_data.cur_pos.x));
+    HM(B(p->coll_data.cur_pos.y));
+    HM(B(p->coll_data.cur_pos.z));
+    HM(B(p->coll_data.prev_pos.x));
+    HM(B(p->coll_data.prev_pos.y));
+    HM(B(p->coll_data.prev_pos.z));
+    HM(B(p->coll_data.last_pos.x));
+    HM(B(p->coll_data.last_pos.y));
+    HM(B(p->coll_data.last_pos.z));
+    HM(B(p->coll_data.x28_vec.x));
+    HM(B(p->coll_data.x28_vec.y));
+    HM(B(p->coll_data.x28_vec.z));
+    HM((u32) p->coll_data.x34_flags.b0);
+    HM((u32) p->coll_data.x34_flags.b1234);
+    HM((u32) p->coll_data.x34_flags.b5);
+    HM((u32) p->coll_data.x34_flags.b6);
+    HM((u32) p->coll_data.x34_flags.b7);
+    HM((u32) p->coll_data.x35_flags.b0);
+    HM((u32) p->coll_data.x35_flags.b1234);
+    HM((u32) p->coll_data.x35_flags.b5);
+    HM((u32) p->coll_data.x35_flags.b6);
+    HM((u32) p->coll_data.x35_flags.b7);
+    HM((u32) p->coll_data.facing_dir);
+    HM((u32) p->coll_data.x38);
+    HM((u32) p->coll_data.floor_skip);
+    HM((u32) p->coll_data.ledge_id_right);
+    HM((u32) p->coll_data.ledge_id_left);
+    HM((u32) p->coll_data.joint_id_skip);
+    HM((u32) p->coll_data.joint_id_only);
+    HM(B(p->coll_data.x50));
+    HM(B(p->coll_data.ledge_snap_x));
+    HM(B(p->coll_data.ledge_snap_y));
+    HM(B(p->coll_data.ledge_snap_height));
+    HM(B(p->coll_data.lstick_x));
+    HM(B(p->coll_data.x64_ecb.top.x));
+    HM(B(p->coll_data.x64_ecb.top.y));
+    HM(B(p->coll_data.x64_ecb.bottom.x));
+    HM(B(p->coll_data.x64_ecb.bottom.y));
+    HM(B(p->coll_data.x64_ecb.right.x));
+    HM(B(p->coll_data.x64_ecb.right.y));
+    HM(B(p->coll_data.x64_ecb.left.x));
+    HM(B(p->coll_data.x64_ecb.left.y));
+    HM(B(p->coll_data.desired_ecb.top.x));
+    HM(B(p->coll_data.desired_ecb.top.y));
+    HM(B(p->coll_data.desired_ecb.bottom.x));
+    HM(B(p->coll_data.desired_ecb.bottom.y));
+    HM(B(p->coll_data.desired_ecb.right.x));
+    HM(B(p->coll_data.desired_ecb.right.y));
+    HM(B(p->coll_data.desired_ecb.left.x));
+    HM(B(p->coll_data.desired_ecb.left.y));
+    HM(B(p->coll_data.ecb.top.x));
+    HM(B(p->coll_data.ecb.top.y));
+    HM(B(p->coll_data.ecb.bottom.x));
+    HM(B(p->coll_data.ecb.bottom.y));
+    HM(B(p->coll_data.ecb.right.x));
+    HM(B(p->coll_data.ecb.right.y));
+    HM(B(p->coll_data.ecb.left.x));
+    HM(B(p->coll_data.ecb.left.y));
+    HM(B(p->coll_data.prev_ecb.top.x));
+    HM(B(p->coll_data.prev_ecb.top.y));
+    HM(B(p->coll_data.prev_ecb.bottom.x));
+    HM(B(p->coll_data.prev_ecb.bottom.y));
+    HM(B(p->coll_data.prev_ecb.right.x));
+    HM(B(p->coll_data.prev_ecb.right.y));
+    HM(B(p->coll_data.prev_ecb.left.x));
+    HM(B(p->coll_data.prev_ecb.left.y));
+    HM(B(p->coll_data.xE4_ecb.top.x));
+    HM(B(p->coll_data.xE4_ecb.top.y));
+    HM(B(p->coll_data.xE4_ecb.bottom.x));
+    HM(B(p->coll_data.xE4_ecb.bottom.y));
+    HM(B(p->coll_data.xE4_ecb.right.x));
+    HM(B(p->coll_data.xE4_ecb.right.y));
+    HM(B(p->coll_data.xE4_ecb.left.x));
+    HM(B(p->coll_data.xE4_ecb.left.y));
+    HM((u32) p->coll_data.ecb_source.kind);
+    for (j0 = 0; j0 < 56; j0++) HM(((const unsigned char*) &p->coll_data.ecb_source)[8 + j0]);
+    HM(B(p->coll_data.ecb_source.x124));
+    HM(B(p->coll_data.ecb_source.x128));
+    HM(B(p->coll_data.ecb_source.x12C));
+    HM((u32) p->coll_data.x130_flags);
+    HM((u32) p->coll_data.env_flags);
+    HM((u32) p->coll_data.prev_env_flags);
+    HM((u32) p->coll_data.x13C);
+    HM(B(p->coll_data.contact.x));
+    HM(B(p->coll_data.contact.y));
+    HM(B(p->coll_data.contact.z));
+    HM((u32) p->coll_data.floor.index);
+    HM((u32) p->coll_data.floor.flags);
+    HM(B(p->coll_data.floor.normal.x));
+    HM(B(p->coll_data.floor.normal.y));
+    HM(B(p->coll_data.floor.normal.z));
+    HM((u32) p->coll_data.left_facing_wall.index);
+    HM((u32) p->coll_data.left_facing_wall.flags);
+    HM(B(p->coll_data.left_facing_wall.normal.x));
+    HM(B(p->coll_data.left_facing_wall.normal.y));
+    HM(B(p->coll_data.left_facing_wall.normal.z));
+    HM((u32) p->coll_data.right_facing_wall.index);
+    HM((u32) p->coll_data.right_facing_wall.flags);
+    HM(B(p->coll_data.right_facing_wall.normal.x));
+    HM(B(p->coll_data.right_facing_wall.normal.y));
+    HM(B(p->coll_data.right_facing_wall.normal.z));
+    HM((u32) p->coll_data.ceiling.index);
+    HM((u32) p->coll_data.ceiling.flags);
+    HM(B(p->coll_data.ceiling.normal.x));
+    HM(B(p->coll_data.ceiling.normal.y));
+    HM(B(p->coll_data.ceiling.normal.z));
+    HM((u32) p->x1CC);
+    HM(PI((const void*) p->gobj));
+    HM(PI((const void*) p->jobj));
+}
+
 static void freg_all(void)
 {
     freg((const void*) HSD_GObj_JObjCallback);
@@ -1682,24 +1946,23 @@ static void freg_all(void)
 // stub PSMTXConcat = 1018
 // stub PSMTXCopy = 1019
 // stub PSMTXIdentity = 1020
-// stub __frsqrte = 1021
-// stub ftLib_80086A0C = 1022
-// stub ftLib_GetMotionId = 1023
-// stub ftNs_AttackHi4_YoyoItemSetFlag = 1024
-// stub it_8026B724 = 1025
-// stub it_8026B73C = 1026
-// stub it_8026B894 = 1027
-// stub it_80275328 = 1028
-// stub it_802A2474 = 1029
-// stub it_802A24A0 = 1030
-// stub it_802A24D0 = 1031
-// stub it_802A3C98 = 1032
-// stub it_802A3D90 = 1033
-// stub it_802A42F4 = 1034
-// stub it_802A43B8 = 1035
-// stub it_802A43EC = 1036
-// stub it_802A4420 = 1037
-// stub it_802A6DC8 = 1038
-// stub lbVector_Normalize = 1039
-// stub lb_8000BA0C = 1040
-// stub mpColl_800471F8 = 1041
+// stub ftLib_80086A0C = 1021
+// stub ftLib_GetMotionId = 1022
+// stub ftNs_AttackHi4_YoyoItemSetFlag = 1023
+// stub it_8026B724 = 1024
+// stub it_8026B73C = 1025
+// stub it_8026B894 = 1026
+// stub it_80275328 = 1027
+// stub it_802A2474 = 1028
+// stub it_802A24A0 = 1029
+// stub it_802A24D0 = 1030
+// stub it_802A3C98 = 1031
+// stub it_802A3D90 = 1032
+// stub it_802A42F4 = 1033
+// stub it_802A43B8 = 1034
+// stub it_802A43EC = 1035
+// stub it_802A4420 = 1036
+// stub it_802A6DC8 = 1037
+// stub lbVector_Normalize = 1038
+// stub lb_8000BA0C = 1039
+// stub mpColl_800471F8 = 1040

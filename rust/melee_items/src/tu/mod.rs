@@ -32,3 +32,4 @@ pub mod itnesspkflash;
 pub mod itnesspkflashexplode;
 pub mod itnesspkthunderball;
 pub mod itnesspkthundertrail;
+pub mod itnessyoyo;

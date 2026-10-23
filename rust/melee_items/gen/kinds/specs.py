@@ -93,3 +93,23 @@ SPECS["itnessyoyo"]["skip_stubs"] = ["__frsqrte"]
 for _n in ("itnessbat", "itnesspkfire", "itnesspkfirepillar", "itnesspkflash", "itnesspkflashexplode",
            "itnesspkthunderball", "itnesspkthundertrail", "itnessyoyo"):
     SPECS[_n]["null_ret_ok"] += ["it_802AF940", "it_802AC43C", "lbVector_CrossprodNormalized"]
+
+# ---- itnessyoyo: string links, matrices ------------------------------------------------------------
+_Y = SPECS["itnessyoyo"]
+_Y["types"] = _T + ["ItemLink"]
+_Y["null_ret_ok"] += ["GObj_Create", "HSD_JObjLoadJoint", "HSD_ObjAlloc"]
+_Y["ret"]["GObj_Create"] = ("((fv() % 5) == 0 ? 0 : &LG[CNT[0]++ % 6])",
+                            "if fv() % 5 == 0 { core::ptr::null_mut() } else { let n = crate::CNT[0]; crate::CNT[0] += 1; &raw mut crate::LG[n % 6] }")
+_Y["ret"]["HSD_ObjAlloc"] = ("&LK[CNT[1]++ % 6]",
+                             "{ let n = crate::CNT[1]; crate::CNT[1] += 1; &raw mut crate::LK[n % 6] as *mut c_void }")
+_Y["ret"]["HSD_JObjLoadJoint"] = ("&LJ[CNT[2]++ % 6]",
+                                  "{ let n = crate::CNT[2]; crate::CNT[2] += 1; &raw mut crate::LJ[n % 6] }")
+_Y["effects"]["PSMTXIdentity"] = (
+    "if (a0) { int q; for (q = 0; q < 12; q++) ((float*) a0)[q] = (q % 5 == 0) ? 1.0f : 0.0f; }",
+    "if !a0.is_null() { let mm = a0 as *mut f32; for q in 0..12usize { *mm.add(q) = if q % 5 == 0 { 1.0 } else { 0.0 }; } }")
+_Y["effects"]["PSMTXConcat"] = (
+    "if (a2) { int q; for (q = 0; q < 12; q++) ((float*) a2)[q] = rw(); }",
+    "if !a2.is_null() { let mm = a2 as *mut f32; for q in 0..12usize { *mm.add(q) = rw(); } }")
+_Y["effects"]["PSMTXCopy"] = (
+    "if (a0 && a1) { int q; for (q = 0; q < 12; q++) ((float*) a1)[q] = ((float*) a0)[q]; }",
+    "if !a0.is_null() && !a1.is_null() { let s = a0 as *const f32; let d = a1 as *mut f32; for q in 0..12usize { *d.add(q) = *s.add(q); } }")

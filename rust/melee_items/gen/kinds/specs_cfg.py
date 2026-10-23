@@ -366,3 +366,6 @@ CFG["itrshell"] = dict(
     ptrs=("""    for (k = 0; k < 3; k++) { HM(%s.xDF4_b0); zero(&%s, sizeof %s); HM(IT[k].xDCD_flag.b5); *(unsigned char*) &IT[k].xDCD_flag = 0; }""" % (_rs, _rs, _rs),
           """    for k in 0..3 { let rs = &mut IT[k].xDD4_itemVar.rshell; hm(rs.xDF4_b0() as u32); core::ptr::write_bytes(rs as *mut _ as *mut u8, 0, core::mem::size_of::<itRShell_ItemVars>()); hm(IT[k].xDCD_flag.anon_0.b5() as u32); *(&raw mut IT[k].xDCD_flag as *mut u8) = 0; }"""),
 )
+
+import specs_cfg_grapple
+specs_cfg_grapple.register(CFG)

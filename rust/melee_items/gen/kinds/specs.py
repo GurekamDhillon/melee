@@ -123,3 +123,42 @@ _R["ret"]["it_8026B5E4"] = _GOR
 for _n in ("it_8026DF34", "it_80276348"):
     _R["ret"][_n] = _P
 _R["effects"]["it_8026B5E4"] = _V("a1")
+
+
+# ------------------------------------------------------------------------------------------ itsamusgrapple
+SPECS["itsamusgrapple"] = dict(
+    src=f"{K}itsamusgrapple.c",
+    types=_T + ["Fighter", "ItemLink", "FighterBone", "ftSs_DatAttrs", "itSamusGrappleAttributes", "itSamusGrapple_HitboxData"],
+    ret=dict(COMMON_RET), effects=dict(COMMON_EFF),
+    null_ret_ok=["Item_80268B18", "Item_80268B5C", "it_8026F6BC", "HSD_Randi", "ft_80082E3C", "ftCo_800A4A40", "GObj_Create",
+                 "HSD_ObjAlloc", "HSD_JObjLoadJoint", "ftLib_80086630"],
+    # the game reads two packed bitfields of the hitbox command by byte offset (PPC, MSB-first): the native copy reads
+    # the same two fields by name (see the header of src/tu/itsamusgrapple.rs)
+    patch=[("    damage_arg = *damage;\n    damage_arg &= 0x3FF;",
+            "    (void) damage; damage_arg = data->create_hitbox.create_hitbox_0.damage;"),
+           ("hitbox->x40_b3 = hitbox_flags->hit_grounded;",
+            "hitbox->x40_b3 = data->create_hitbox.create_hitbox_4.hit_grounded;")],
+    custom_stubs={"efSync_Spawn": dict(
+        c="void* efSync_Spawn(s32 a0, HSD_GObj* a1, ...) { __builtin_va_list ap; void* a2; void* a3; __builtin_va_start(ap, a1); "
+          "a2 = __builtin_va_arg(ap, void*); a3 = __builtin_va_arg(ap, void*); __builtin_va_end(ap); "
+          "T(@ID@); T((u32) a0); T(PI(a1)); T(PI(a2)); T(PI(a3)); TVEC((Vec3*) a2); return 0; }",
+        ext="fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut Vec, a3: *mut c_void) -> *mut c_void;",
+        hook="|a0, a1, a2, a3| { t(@ID@); t(a0 as u32); t(pi(a1)); t(pi(a2)); t(pi(a3)); tvec(a2); core::ptr::null_mut() }")},
+)
+_G = SPECS["itsamusgrapple"]
+_G["ret"]["GObj_Create"] = ("((fv() % 8) == 0 ? 0 : &LGO[LGN++ % 24])",
+                            "if fv() % 8 == 0 { core::ptr::null_mut() } else { let i = unsafe { crate::LGN }; unsafe { crate::LGN += 1; } &raw mut crate::LGO[i % 24] }")
+_G["ret"]["HSD_ObjAlloc"] = ("&LK[LKN++ % 24]",
+                             "{ let i = unsafe { crate::LKN }; unsafe { crate::LKN += 1; } &raw mut crate::LK[i % 24] as *mut _ }")
+_G["ret"]["HSD_JObjLoadJoint"] = ("&JO[16 + (fv() % 8)]", "&raw mut crate::JO[16 + (fv() % 8) as usize]")
+_G["ret"]["ftLib_80086630"] = ("(&JO[3 + (fv() % 3)])", "&raw mut crate::JO[3 + (fv() % 3) as usize]")
+_G["ret"]["ftCo_800A4A40"] = ("((fv() & 1) ? &FT[1] : 0)", "if fv() & 1 != 0 { &raw mut crate::FT[1] } else { core::ptr::null_mut() }")
+_G["ret"]["ft_80082E3C"] = _GOR
+_G["ret"]["ftCo_800C3A14"] = _P
+_G["ret"]["mpCheckAllRemap"] = _P
+_G["ret"]["ftParts_GetBoneIndex"] = ("(int) (fv() % 200)", "(fv() % 200) as _")
+_G["ret"]["it_802A3C98"] = ("(float) (rnd() % 40) / 4.0f", "(rnd() % 40) as f32 / 4.0")
+_G["ret"]["it_802A3D90"] = ("((fv() % 3) == 0 ? 0 : (int) (fv() & 0x1FFF))", "if fv() % 3 == 0 { 0 } else { (fv() & 0x1FFF) as i32 }")
+_G["effects"]["it_802A3C98"] = _V("a2")
+_G["effects"]["GObj_InitUserData"] = ("if (a0) { a0->user_data = a3; }", "if !a0.is_null() { (*a0).user_data = a3; }")
+_G["effects"]["HSD_GObjObject_80390A70"] = ("if (a0) { a0->hsd_obj = a2; }", "if !a0.is_null() { (*a0).hsd_obj = a2; }")

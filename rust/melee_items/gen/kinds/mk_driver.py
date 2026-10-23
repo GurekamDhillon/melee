@@ -223,6 +223,12 @@ def build_ops(tu, cfg):
                 a_c, a_r = f"&JO[{3 + n}]", f"&raw mut JO[{3 + n}]"
             elif kind == "vec":
                 a_c, a_r = f"&VA[{n}]", f"&raw mut VA[{n}]"
+            elif kind in cfg.get("ptr_args", {}):
+                total = sum(1 for q in params if classify(q.type) == kind)
+                dc, dr, a_c, a_r = cfg["ptr_args"][kind](n, total, i)
+                if dc:
+                    decl_c.append(dc)
+                    decl_r.append(dr)
             else:
                 ct = p.type.spelling
                 if pn in hints:

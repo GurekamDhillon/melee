@@ -32,3 +32,4 @@ pub mod itsamusmissile;
 pub mod itsamusbomb;
 pub mod itsamuschargeshot;
 pub mod itrshell;
+pub mod itsamusgrapple;

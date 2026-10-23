@@ -117,7 +117,7 @@ STEMS["itmaplib"] = dict(
     setup=("for (i = 0; i < 8; i++) JO[i].flags &= ~JOBJ_USE_QUATERNION;", "for i in 0..8 { JO[i].flags &= !(JOBJ_USE_QUATERNION as u32); }"),
 )
 
-for _s in ("itzako", "it_26B1", "it_2725", "it_279C"):
+for _s in ("it_26B1", "it_2725", "it_279C"):
     STEMS.setdefault(_s, dict())
 
 _TB = ("&TB[rnd() & 1]", "&raw mut TB[(rnd() & 1) as usize]")
@@ -204,3 +204,30 @@ STEMS["itmaterial"] = dict(
         "it_80278108": {1: ("&MO[rnd() & 1]", "&raw mut g::MO[(rnd() & 1) as usize]"), 2: ("(rnd() & 1) ? &TX[rnd() % 3] : 0", "if rnd() & 1 != 0 { &raw mut TX[(rnd() % 3) as usize] } else { null_mut() }")},
         "it_80278574": {1: ("&GCOL[rnd() & 1]", "&raw mut GCOL[(rnd() & 1) as usize]")}},
 )
+
+_VP = ("&VA[rnd() % 4]", "&raw mut VA[(rnd() % 4) as usize]")
+_VPN = ("((rnd() & 3) ? &VA[rnd() % 4] : 0)", "if rnd() & 3 != 0 { &raw mut VA[(rnd() % 4) as usize] } else { null_mut() }")
+_F64 = ("(double) rw()", "rw() as f64")
+STEMS["itzako"] = dict(
+    skip_static=["it_8027B798_CalcAngle", "product_xyz", "itzako_sqrtf", "return_sqrt_value3"],
+    c_extra="static it_804D6D40_t D40; static ftCommonData FCD;",
+    rs_extra="static mut D40: it_804D6D40_t = unsafe { core::mem::zeroed() }; static mut FCD: ftCommonData = unsafe { core::mem::zeroed() };",
+    pregs=("preg(&D40, sizeof D40); preg(&FCD, sizeof FCD);", "preg(&raw const D40, core::mem::size_of_val(&D40)); preg(&raw const FCD, core::mem::size_of_val(&FCD));"),
+    setup=("{ int q; zero(&D40, sizeof D40); zero(&FCD, sizeof FCD); fill_it_804D6D40_t(&D40); fill_ftCommonData(&FCD); it_804D6D40 = &D40; p_ftCommonData = &FCD;"
+           " D40.x0 = (s32) (fv() % 8); D40.x14 = (float) (fv() % 6); D40.x18 = (float) (fv() % 8);"
+           " for (q = 0; q < 8; q++) JO[q].flags &= ~JOBJ_USE_QUATERNION; }",
+           "{ D40 = core::mem::zeroed(); FCD = core::mem::zeroed(); g::fill_it_804D6D40_t(&mut D40); g::fill_ftCommonData(&mut FCD); m::ext::it_804D6D40 = &raw mut D40; m::ext::p_ftCommonData = &raw mut FCD;"
+           " D40.x0 = (fv() % 8) as i32; D40.x14 = (fv() % 6) as f32; D40.x18 = (fv() % 8) as f32;"
+           " for q in 0..8usize { JO[q].flags &= !(JOBJ_USE_QUATERNION as u32); } }"),
+    hash=("hash_it_804D6D40_t(&D40);", "g::hash_it_804D6D40_t(&D40);"),
+    noret=["it_8027BA54"],
+    ov={"it_8027B5B0": {1: _VPN, 2: ("&JO[rnd() % 8]", "&raw mut JO[(rnd() % 8) as usize]"), 3: _VPN, 4: ("(int) (fv() % 3)", "(fv() % 3) as i32")},
+        "it_8027BBF4": {2: _F64}, "it_8027C0F0": {1: _VPN, 2: _F64},
+        "it_8027C824": {1: ("(s32 (*)(Item_GObj*)) pick_fn(2)", "unsafe { core::mem::transmute::<usize, _>(pick_fn(2)) }")}},
+)
+
+STEMS["itzako"]["post"] = {"it_8027B5B0": (
+    "{ int q; for (q = 0; q < 4; q++) { HM(PI(*(void**) &IT[q].xDD4_itemVar)); *(void**) &IT[q].xDD4_itemVar = 0; } }",
+    "for q in 0..4usize { let pp = (&raw mut IT[q].xDD4_itemVar) as *mut *mut c_void; hm(pi(*pp)); *pp = null_mut(); }")}
+STEMS["itzako"]["post"]["it_8027CE64"] = STEMS["itzako"]["post"]["it_8027B5B0"]
+STEMS["itzako"]["n"] = {"it_8027C8D0": 6000, "it_8027BB1C": 1500}

@@ -94,7 +94,39 @@ add("itspawn", "src/melee/it/itspawn.c", custom_stubs=EF_CUSTOM_, skip_freg=["bi
          "gm_8016AE80": ("GMV", "crate::GMV"),
          "gm_8016AEA4": ("(u64) FM64", "crate::FM64")},
     effects={"Item_80268B18": (_SPAWN_C, _SPAWN_R), "Item_80268B9C": (_SPAWN_C, _SPAWN_R)})
-add("itzako", "src/melee/it/itzako.c")
+def TVc(a): return f"T(B({a}->x)); T(B({a}->y)); T(B({a}->z));"
+def TVr(a): return f"t((*{a}).x.to_bits()); t((*{a}).y.to_bits()); t((*{a}).z.to_bits());"
+def WVc(a): return f"if ({a}) {{ {a}->x = rw(); {a}->y = rw(); {a}->z = rw(); }}"
+def WVr(a): return f"if !{a}.is_null() {{ (*{a}).x = rw(); (*{a}).y = rw(); (*{a}).z = rw(); }}"
+def VEFF(inputs=(), outputs=()):
+    c = " ".join(f"if ({a}) {{ {TVc(a)} }}" for a in inputs) + " " + " ".join(WVc(a) for a in outputs)
+    r = " ".join(f"if !{a}.is_null() {{ {TVr(a)} }}" for a in inputs) + " " + " ".join(WVr(a) for a in outputs)
+    return (c, r)
+
+
+add("itzako", "src/melee/it/itzako.c", custom_stubs={}, skip_freg=["it_8027B798_CalcAngle", "product_xyz", "itzako_sqrtf", "return_sqrt_value3"], skip_stubs=["__frsqrte", "cosf", "sinf"],
+    types=["it_804D6D40_t", "ftCommonData"], manual_data=["p_ftCommonData", "it_804D6D40"], null_ret_ok=["lbVector_CrossprodNormalized", "lbVector_Diff", "lbVector_EulerAnglesFromONB"],
+    ret={"Item_80268B18": ("pick_igo()", "pick_igo()"), "Item_80268B5C": ("pick_igo()", "pick_igo()"), "it_802F2094": ("pick_igo()", "pick_igo()"),
+         "ftLib_GetMotionId": ("(int) ((rnd() % 5 == 0) ? 0x14E : (rnd() % 5 == 0) ? 0x14D : (int) fv())", "if rnd() % 5 == 0 { 0x14E } else if rnd() % 5 == 0 { 0x14D } else { fv() as i32 }"),
+         "Ground_801C5840": ("((rnd() % 4 == 0) ? -1 : (int) (fv() % 8))", "if rnd() % 4 == 0 { -1 } else { (fv() % 8) as i32 }"),
+         "tyDisplay_8031C354": ("({ int n_ = (int) (fv() % 4); int ii_; for (ii_ = 0; ii_ < n_; ii_++) a1[ii_] = (int) fv(); n_; })",
+                                "{ let n_ = (fv() % 4) as i32; for ii_ in 0..n_ { *a1.add(ii_ as usize) = fv() as i32; } n_ }"),
+         "ftLib_800870BC": ("({ *(u32*) a1 = fv(); (int) (fv() & 1); })", "{ *(a1 as *mut u32) = fv(); (fv() & 1) as i32 }")},
+    effects={"Item_80268B18": (_SPAWN_C, _SPAWN_R), "Item_80268B5C": (_SPAWN_C, _SPAWN_R),
+             "Camera_GetTransformPosition": VEFF(outputs=["a0"]),
+             "it_8026B684": VEFF(inputs=["a0"]),
+             "it_8026BB88": VEFF(outputs=["a1"]),
+             "lb_8000B1CC": VEFF(outputs=["a2"]),
+             "lbVector_Angle": VEFF(inputs=["a0", "a1"]), "lbVector_AngleXY": VEFF(inputs=["a0", "a1"]),
+             "lbVector_Diff": VEFF(inputs=["a0", "a1"], outputs=["a2"]),
+             "lbVector_Normalize": VEFF(inputs=["a0"], outputs=["a0"]),
+             "lbVector_Rotate": VEFF(inputs=["a0"], outputs=["a0"]),
+             "lbVector_CrossprodNormalized": VEFF(inputs=["a1", "a2"], outputs=["a0"]),
+             "lbVector_EulerAnglesFromONB": VEFF(inputs=["a1", "a2", "a3"], outputs=["a0"]),
+             "it_80278574": ("T(((u8*) a1)[0]); T(((u8*) a1)[1]); T(((u8*) a1)[2]); T(((u8*) a1)[3]);",
+                             "t(*(a1 as *const u8) as u32); t(*(a1 as *const u8).add(1) as u32); t(*(a1 as *const u8).add(2) as u32); t(*(a1 as *const u8).add(3) as u32);"),
+             "ftLib_8008770C": ("*(u32*) a1 = fv();", "*(a1 as *mut u32) = fv();"),
+             "ftLib_80087744": ("*(u32*) a1 = fv();", "*(a1 as *mut u32) = fv();")})
 add("it_26B1", "src/melee/it/it_26B1.c")
 add("it_2725", "src/melee/it/it_2725.c")
 add("it_279C", "src/melee/it/it_279C.c")

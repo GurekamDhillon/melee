@@ -343,10 +343,10 @@ def ops_of(tu, stem, cfg):
             else:
                 ce, re_ = bind(p.type)
             ct = p.type.spelling
-            pre_c.append(f"{ct} a{i} = {ce};")
+            pre_c.append((f"__typeof__({ct}) a{i} = {ce};") if "(*)" in ct else f"{ct} a{i} = {ce};")
             pre_r.append(f"let a{i} = {re_};")
             args.append(f"a{i}")
-        rc = retcls(cur.result_type)
+        rc = "void" if name in cfg.get("noret", ()) else retcls(cur.result_type)
         call_c = f"{name}({', '.join(args)})"
         call_r = f"m::{name}({', '.join(args)})"
         if rc == "void":

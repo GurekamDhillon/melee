@@ -129,7 +129,7 @@ pub unsafe extern "C" fn it_80279CDC(item_gobj: *mut HSD_GObj, scale: f32) {
 
 /// `it_80279D38`: the knockback path (`it_8027B964` with `chk` false).
 pub unsafe extern "C" fn it_80279D38(item_gobj: *mut HSD_GObj) {
-    it_8027B964(item_gobj, false);
+    it_8027B964(item_gobj, 0);
 }
 
 /// `it_80279D5C`: sets the Pokemon's scale on all three axes and resets its spawn counter.

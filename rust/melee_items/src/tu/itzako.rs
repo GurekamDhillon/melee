@@ -10,10 +10,8 @@ use melee_core::fp::{fmadds, frsqrte};
 use melee_runtime::gekko::{cosf, sinf};
 use melee_types::*;
 
-use crate::itlib as itl;
-use crate::tu::itmaterial::it_80278574;
 
-// BEGIN GENERATED EXT (the callees of the C TU that are not ported in this crate)
+// BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
@@ -33,63 +31,131 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn Camera_GetTransformPosition(a0: *mut Vec3);
+    fn Camera_GetTransformPosition(a0: *mut Vec);
     fn Ground_801C5840() -> i32;
-    fn HSD_JObjGetRotationX(a0: *mut HSD_JObj) -> f32;
-    fn HSD_JObjGetRotationY(a0: *mut HSD_JObj) -> f32;
-    fn HSD_JObjGetRotationZ(a0: *mut HSD_JObj) -> f32;
-    fn HSD_JObjSetRotationX(a0: *mut HSD_JObj, a1: f32);
-    fn HSD_JObjSetRotationY(a0: *mut HSD_JObj, a1: f32);
-    fn HSD_JObjSetRotationZ(a0: *mut HSD_JObj, a1: f32);
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn HSD_Randf() -> f32;
     fn HSD_Randi(a0: i32) -> i32;
     fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj;
     fn Item_80268B5C(a0: *mut SpawnItem) -> *mut HSD_GObj;
     fn Item_8026AE84(a0: *mut Item, a1: i32, a2: u8, a3: u8);
-    fn OSReport(a0: *const i8);
     fn ScriptGame_EnemyDefeated(a0: *mut HSD_GObj) -> i32;
     fn ScriptGame_EnemyDestroyed(a0: *mut HSD_GObj) -> i32;
     fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32;
-    fn ftLib_800870BC(a0: *mut HSD_GObj, a1: *mut i32) -> bool;
+    fn ftLib_800870BC(a0: *mut HSD_GObj, a1: *mut i32) -> i32;
     fn ftLib_8008770C(a0: *mut HSD_GObj, a1: *mut c_void);
     fn ftLib_80087744(a0: *mut HSD_GObj, a1: *mut c_void);
     fn ftLib_GetMotionId(a0: *mut HSD_GObj) -> i32;
-    fn gm_IsCurrently1PMode() -> bool;
+    fn gm_IsCurrently1PMode() -> i32;
     fn grLib_801C9E40() -> i32;
     fn grLib_801C9E50(a0: i16);
     fn grZakoGenerator_801CAC14(a0: *mut HSD_GObj);
     fn grZakoGenerator_801CACB8(a0: *mut HSD_GObj);
     fn it_8026B3A8(a0: *mut HSD_GObj);
-    fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec3);
+    fn it_8026B684(a0: *mut Vec) -> f32;
+    fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec);
     fn it_8026C220(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
     fn it_8026DAA8(a0: *mut HSD_GObj) -> i32;
-    fn it_8026B684(a0: *mut Vec3) -> f32;
     fn it_80274594(a0: *mut HSD_GObj);
     fn it_80274740(a0: *mut HSD_GObj);
+    fn it_80275228(a0: *mut HSD_GObj);
+    fn it_80275240(a0: *mut HSD_GObj);
+    fn it_80275270(a0: *mut HSD_GObj);
+    fn it_80275414(a0: *mut HSD_GObj);
     fn it_8027542C(a0: *mut HSD_GObj);
     fn it_80275444(a0: *mut HSD_GObj);
-    fn it_80275270(a0: *mut HSD_GObj);
+    fn it_80275474(a0: *mut HSD_GObj);
     fn it_802754D4(a0: *mut HSD_GObj);
     fn it_802762BC(a0: *mut Item);
-    fn it_8027781C(a0: *mut HSD_GObj) -> bool;
-    fn it_802F2094(a0: *mut HSD_GObj, a1: *mut Vec3, a2: i32, a3: i32) -> *mut HSD_GObj;
-    fn lbVector_Angle(a0: *mut Vec3, a1: *mut Vec3) -> f32;
-    fn lbVector_AngleXY(a0: *mut Vec3, a1: *mut Vec3) -> f32;
-    fn lbVector_CrossprodNormalized(a0: *mut Vec3, a1: *mut Vec3, a2: *mut Vec3) -> *mut Vec3;
-    fn lbVector_Diff(a0: *mut Vec3, a1: *mut Vec3, a2: *mut Vec3) -> *mut Vec3;
-    fn lbVector_EulerAnglesFromONB(a0: *mut Vec3, a1: *mut Vec3, a2: *mut Vec3, a3: *mut Vec3) -> *mut Vec3;
-    fn lbVector_Normalize(a0: *mut Vec3) -> f32;
-    fn lbVector_Rotate(a0: *mut Vec3, a1: i32, a2: f32);
-    fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec3, a2: *mut Vec3);
-    fn pl_8004049C(a0: i32, a1: ItemKind);
+    fn it_8027781C(a0: *mut HSD_GObj) -> i32;
+    fn it_80278574(a0: *mut HSD_GObj, a1: *mut _GXColor);
+    fn it_802F2094(a0: *mut HSD_GObj, a1: *mut Vec, a2: i32, a3: i32) -> *mut HSD_GObj;
+    fn lbVector_Angle(a0: *mut Vec, a1: *mut Vec) -> f32;
+    fn lbVector_AngleXY(a0: *mut Vec, a1: *mut Vec) -> f32;
+    fn lbVector_CrossprodNormalized(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec;
+    fn lbVector_Diff(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec;
+    fn lbVector_EulerAnglesFromONB(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec, a3: *mut Vec) -> *mut Vec;
+    fn lbVector_Normalize(a0: *mut Vec) -> f32;
+    fn lbVector_Rotate(a0: *mut Vec, a1: i32, a2: f32);
+    fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec);
+    fn pl_8004049C(a0: i32, a1: i32);
     fn tyDisplay_8031C354(a0: i32, a1: *mut i32, a2: i32, a3: i32) -> i32;
     }
-    pub static mut p_ftCommonData: *mut ftCommonData = core::ptr::null_mut();
-    pub static mut it_804D6D28: *mut ItemCommonData = core::ptr::null_mut();
-    pub static mut it_804D6D40: *mut it_804D6D40_t = core::ptr::null_mut();
-    pub static mut it_804D6D40_data: it_804D6D40_t = unsafe { core::mem::zeroed() };
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
+    pub static mut it_804D6D40: *mut it_804D6D40_t = unsafe { core::mem::zeroed() };
+    pub static mut p_ftCommonData: *mut ftCommonData = unsafe { core::mem::zeroed() };
+    pub static mut result: i32 = unsafe { core::mem::zeroed() };
 }
 // END GENERATED EXT
+
+/// `HSD_JObjMtxIsDirty` (header inline).
+#[inline(always)]
+unsafe fn HSD_JObjMtxIsDirty(jobj: *mut HSD_JObj) -> bool {
+    assert!(!jobj.is_null(), "HSD_ASSERT(564, jobj)");
+    (*jobj).flags & JOBJ_USER_DEF_MTX as u32 == 0 && (*jobj).flags & JOBJ_MTX_DIRTY as u32 != 0
+}
+
+/// `HSD_JObjSetMtxDirty` (macro).
+#[inline(always)]
+unsafe fn HSD_JObjSetMtxDirty(jobj: *mut HSD_JObj) {
+    if !jobj.is_null() && !HSD_JObjMtxIsDirty(jobj) {
+        ext::HSD_JObjSetMtxDirtySub(jobj);
+    }
+}
+
+#[inline(always)]
+unsafe fn HSD_JObjSetRotationX(jobj: *mut HSD_JObj, v: f32) {
+    assert!(!jobj.is_null(), "HSD_ASSERT(649, jobj)");
+    assert!((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, "HSD_ASSERT(650, !(jobj->flags & JOBJ_USE_QUATERNION))");
+    (*jobj).rotate.x = v;
+    if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+        HSD_JObjSetMtxDirty(jobj);
+    }
+}
+
+#[inline(always)]
+unsafe fn HSD_JObjSetRotationY(jobj: *mut HSD_JObj, v: f32) {
+    assert!(!jobj.is_null(), "HSD_ASSERT(665, jobj)");
+    assert!((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, "HSD_ASSERT(666, !(jobj->flags & JOBJ_USE_QUATERNION))");
+    (*jobj).rotate.y = v;
+    if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+        HSD_JObjSetMtxDirty(jobj);
+    }
+}
+
+#[inline(always)]
+unsafe fn HSD_JObjSetRotationZ(jobj: *mut HSD_JObj, v: f32) {
+    assert!(!jobj.is_null(), "HSD_ASSERT(681, jobj)");
+    assert!((*jobj).flags & JOBJ_USE_QUATERNION as u32 == 0, "HSD_ASSERT(682, !(jobj->flags & JOBJ_USE_QUATERNION))");
+    (*jobj).rotate.z = v;
+    if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
+        HSD_JObjSetMtxDirty(jobj);
+    }
+}
+
+#[inline(always)]
+unsafe fn HSD_JObjGetRotationX(jobj: *mut HSD_JObj) -> f32 {
+    assert!(!jobj.is_null(), "HSD_ASSERT(715, jobj)");
+    (*jobj).rotate.x
+}
+
+#[inline(always)]
+unsafe fn HSD_JObjGetRotationY(jobj: *mut HSD_JObj) -> f32 {
+    assert!(!jobj.is_null(), "HSD_ASSERT(730, jobj)");
+    (*jobj).rotate.y
+}
+
+#[inline(always)]
+unsafe fn HSD_JObjGetRotationZ(jobj: *mut HSD_JObj) -> f32 {
+    assert!(!jobj.is_null(), "HSD_ASSERT(745, jobj)");
+    (*jobj).rotate.z
+}
 
 /// `it_803B85A8`: the six reference unit vectors (rest directions) used by the orientation code.
 pub static it_803B85A8: [Vec3; 6] = [
@@ -119,7 +185,7 @@ unsafe fn jobj_of(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
 }
 
 /// `it_8027B5B0`: spawns a zako item at `pos` (or the jobj's origin when `pos` is NULL).
-pub unsafe extern "C" fn it_8027B5B0(kind: ItemKind, pos: *mut Vec3, jobj: *mut HSD_JObj, vel: *mut Vec3, use_init: bool) -> *mut HSD_GObj {
+pub unsafe extern "C" fn it_8027B5B0(kind: ItemKind, pos: *mut Vec3, jobj: *mut HSD_JObj, vel: *mut Vec3, use_init: i32) -> *mut HSD_GObj {
     let mut spawn: SpawnItem = core::mem::zeroed();
     let mut sp20: Vec3 = core::mem::zeroed();
     let gobj: *mut HSD_GObj;
@@ -132,7 +198,6 @@ pub unsafe extern "C" fn it_8027B5B0(kind: ItemKind, pos: *mut Vec3, jobj: *mut 
         ext::lb_8000B1CC(jobj, null_mut(), &raw mut sp20);
         spawn.prev_pos = sp20;
     } else {
-        ext::OSReport(c"can t init zako pos\n".as_ptr());
         // The C spins here forever.
         loop {
             core::hint::spin_loop();
@@ -152,7 +217,7 @@ pub unsafe extern "C" fn it_8027B5B0(kind: ItemKind, pos: *mut Vec3, jobj: *mut 
     spawn.x0_parent_gobj = null_mut();
     spawn.x4_parent_gobj2 = spawn.x0_parent_gobj;
     spawn.x40 = 0;
-    if use_init {
+    if use_init == 1 {
         gobj = ext::Item_80268B18(&raw mut spawn);
     } else {
         gobj = ext::Item_80268B5C(&raw mut spawn);
@@ -178,8 +243,8 @@ pub unsafe extern "C" fn it_8027B730(item_gobj: *mut HSD_GObj) {
     (*item).xDD4_itemVar.zako.x14.x = 0;
     (*item).xDD4_itemVar.zako.x14.y = 0;
     (*item).xDD4_itemVar.zako.x14.z = 0;
-    itl::it_80275228(&mut *item);
-    itl::it_80275240(&mut *item);
+    ext::it_80275228(item_gobj);
+    ext::it_80275240(item_gobj);
 }
 
 /// `it_8027B798_CalcAngle` (static inline): the knockback launch angle, in radians.
@@ -234,10 +299,10 @@ pub unsafe extern "C" fn it_8027B798(gobj: *mut HSD_GObj, out_vel: *mut Vec3) ->
 }
 
 /// `it_8027B964`: sets the zako item's velocity (a knockback launch, or the reset-on-hit path when `chk`).
-pub unsafe extern "C" fn it_8027B964(item_gobj: *mut HSD_GObj, chk: bool) {
+pub unsafe extern "C" fn it_8027B964(item_gobj: *mut HSD_GObj, chk: i32) {
     let mut sp14: Vec3;
     let item = item_of(item_gobj);
-    if chk {
+    if chk != 0 {
         ext::it_8027781C(item_gobj);
     } else {
         it_8027B798(item_gobj, &raw mut (*item).x40_vel);
@@ -311,7 +376,7 @@ pub unsafe extern "C" fn it_8027BB1C(arg0: *mut Vec3, arg1: *mut Vec3) {
 
 /// `it_8027BBF4`: turns the item's jobj so its local up follows the floor (`arg_chk` false) or the
 /// ceiling (`arg_chk` true) normal, easing toward it over `arg9` frames.
-pub unsafe extern "C" fn it_8027BBF4(item_gobj: *mut HSD_GObj, arg_chk: bool, arg8: f64, arg9: f32) {
+pub unsafe extern "C" fn it_8027BBF4(item_gobj: *mut HSD_GObj, arg_chk: i32, arg8: f64, arg9: f32) {
     let mut temp_f1: f32;
     let mut temp_f30: f32;
     let mut var_f29: f32;
@@ -330,7 +395,7 @@ pub unsafe extern "C" fn it_8027BBF4(item_gobj: *mut HSD_GObj, arg_chk: bool, ar
     sp68 = vecs[2];
     sp5C = vecs[3];
 
-    if !arg_chk {
+    if arg_chk == 0 {
         if (*coll).env_flags & Collide_FloorMask != 0 {
             sp68 = (*coll).floor.normal;
         } else {
@@ -342,9 +407,9 @@ pub unsafe extern "C" fn it_8027BBF4(item_gobj: *mut HSD_GObj, arg_chk: bool, ar
         return;
     }
 
-    sp74.x = ext::HSD_JObjGetRotationX(item_jobj);
-    sp74.y = ext::HSD_JObjGetRotationY(item_jobj);
-    sp74.z = ext::HSD_JObjGetRotationZ(item_jobj);
+    sp74.x = HSD_JObjGetRotationX(item_jobj);
+    sp74.y = HSD_JObjGetRotationY(item_jobj);
+    sp74.z = HSD_JObjGetRotationZ(item_jobj);
 
     it_8027BB1C(&raw mut sp5C, &raw mut sp74);
     if ext::lbVector_AngleXY(&raw mut (*item).xDD4_itemVar.zako.x8, &raw mut sp68) > 0.00017453292f32 {
@@ -379,19 +444,19 @@ pub unsafe extern "C" fn it_8027BBF4(item_gobj: *mut HSD_GObj, arg_chk: bool, ar
     ext::lbVector_CrossprodNormalized(&raw mut sp44, &raw mut sp38, &raw mut sp50);
     ext::lbVector_EulerAnglesFromONB(&raw mut sp74, &raw mut sp50, &raw mut sp44, &raw mut sp38);
 
-    ext::HSD_JObjSetRotationX(item_jobj, sp74.x);
-    ext::HSD_JObjSetRotationY(item_jobj, sp74.y);
-    ext::HSD_JObjSetRotationZ(item_jobj, sp74.z);
+    HSD_JObjSetRotationX(item_jobj, sp74.x);
+    HSD_JObjSetRotationY(item_jobj, sp74.y);
+    HSD_JObjSetRotationZ(item_jobj, sp74.z);
 }
 
 /// `it_8027C0A8`: `it_8027BBF4` on the floor normal.
 pub unsafe extern "C" fn it_8027C0A8(item_gobj: *mut HSD_GObj, arg4: f32, arg5: f32) {
-    it_8027BBF4(item_gobj, false, arg4 as f64, arg5);
+    it_8027BBF4(item_gobj, 0, arg4 as f64, arg5);
 }
 
 /// `it_8027C0CC`: `it_8027BBF4` on the ceiling normal.
 pub unsafe extern "C" fn it_8027C0CC(item_gobj: *mut HSD_GObj, arg4: f32, arg5: f32) {
-    it_8027BBF4(item_gobj, true, arg4 as f64, arg5);
+    it_8027BBF4(item_gobj, 1, arg4 as f64, arg5);
 }
 
 /// `it_8027C0F0`: orients the item to `arg1` (or the reference floor direction) while on the floor.
@@ -417,9 +482,9 @@ pub unsafe extern "C" fn it_8027C0F0(item_gobj: *mut HSD_GObj, arg1: *mut Vec3, 
         if !arg1.is_null() {
             sp68 = *arg1;
         }
-        sp74.x = ext::HSD_JObjGetRotationX(item_jobj);
-        sp74.y = ext::HSD_JObjGetRotationY(item_jobj);
-        sp74.z = ext::HSD_JObjGetRotationZ(item_jobj);
+        sp74.x = HSD_JObjGetRotationX(item_jobj);
+        sp74.y = HSD_JObjGetRotationY(item_jobj);
+        sp74.z = HSD_JObjGetRotationZ(item_jobj);
         it_8027BB1C(&raw mut sp5C, &raw mut sp74);
 
         if ext::lbVector_AngleXY(&raw mut (*item).xDD4_itemVar.zako.x8, &raw mut sp68) > 0.00017453292f32 {
@@ -453,9 +518,9 @@ pub unsafe extern "C" fn it_8027C0F0(item_gobj: *mut HSD_GObj, arg1: *mut Vec3, 
         ext::lbVector_CrossprodNormalized(&raw mut sp44, &raw mut sp3C, &raw mut sp50);
         ext::lbVector_EulerAnglesFromONB(&raw mut sp74, &raw mut sp50, &raw mut sp44, &raw mut sp3C);
 
-        ext::HSD_JObjSetRotationX(item_jobj, sp74.x);
-        ext::HSD_JObjSetRotationY(item_jobj, sp74.y);
-        ext::HSD_JObjSetRotationZ(item_jobj, sp74.z);
+        HSD_JObjSetRotationX(item_jobj, sp74.x);
+        HSD_JObjSetRotationY(item_jobj, sp74.y);
+        HSD_JObjSetRotationZ(item_jobj, sp74.z);
     }
 }
 
@@ -463,9 +528,9 @@ pub unsafe extern "C" fn it_8027C0F0(item_gobj: *mut HSD_GObj, arg1: *mut Vec3, 
 pub unsafe extern "C" fn it_8027C56C(item_gobj: *mut HSD_GObj, y_rot: f32) {
     let item_jobj = jobj_of(item_gobj);
     let item = item_of(item_gobj);
-    ext::HSD_JObjSetRotationX(item_jobj, 0.0);
-    ext::HSD_JObjSetRotationY(item_jobj, (M_PI_2 * y_rot as f64) as f32);
-    ext::HSD_JObjSetRotationZ(item_jobj, 0.0);
+    HSD_JObjSetRotationX(item_jobj, 0.0);
+    HSD_JObjSetRotationY(item_jobj, (M_PI_2 * y_rot as f64) as f32);
+    HSD_JObjSetRotationZ(item_jobj, 0.0);
 
     (*item).xDD4_itemVar.zako.x8.z = 0.0;
     (*item).xDD4_itemVar.zako.x8.x = 0.0;
@@ -485,7 +550,7 @@ pub unsafe extern "C" fn it_8027C79C(item_gobj: *mut HSD_GObj) -> bool {
     if ext::it_8026DAA8(item_gobj) & 0xF != 0 {
         let item = item_of(item_gobj);
         it_8027C9D8(item);
-        it_8027B964(item_gobj, true);
+        it_8027B964(item_gobj, 1);
         (*item).xDD4_itemVar.zako.x14.y += 1;
         if (*item).xDD4_itemVar.zako.x14.y > (*ext::it_804D6D40).x0 {
             it_8027CC88(item_gobj);
@@ -497,7 +562,7 @@ pub unsafe extern "C" fn it_8027C79C(item_gobj: *mut HSD_GObj) -> bool {
 
 /// `it_8027C824`: runs `arg_func` (when given) once the zako's state is 0xF-masked active; the defeat
 /// path runs otherwise.
-pub unsafe extern "C" fn it_8027C824(item_gobj: *mut HSD_GObj, arg_func: Option<unsafe extern "C" fn(*mut HSD_GObj) -> i32>) -> bool {
+pub unsafe extern "C" fn it_8027C824(item_gobj: *mut HSD_GObj, arg_func: Option<unsafe extern "C" fn(*mut HSD_GObj) -> i32>) -> i32 {
     if ext::it_8026DAA8(item_gobj) & 0xF != 0 {
         it_8027CC88(item_gobj);
         if let Some(f) = arg_func {
@@ -505,12 +570,12 @@ pub unsafe extern "C" fn it_8027C824(item_gobj: *mut HSD_GObj, arg_func: Option<
             if arg_func_ret_val != 0 {
                 it_8027CE44(item_gobj);
             }
-            return arg_func_ret_val != 0;
+            return arg_func_ret_val;
         }
         it_8027CE44(item_gobj);
-        return true;
+        return 1;
     }
-    false
+    0
 }
 
 /// `it_2725_Logic9_Destroyed`: the enemy's Destroyed hook (scripted enemies have no generator slot).
@@ -524,7 +589,8 @@ pub unsafe extern "C" fn it_2725_Logic9_Destroyed(item_gobj: *mut HSD_GObj) {
 /// `product_xyz` (static inline): a.x*b.x + a.y*b.y + a.z*b.z, with the fused products of the C build.
 #[inline(always)]
 fn product_xyz(a: &Vec3, b: &Vec3) -> f32 {
-    fmadds(a.y, b.y, fmadds(a.x, b.x, a.z * b.z))
+    // ((x*x + y*y) + z*z): the inner add fuses its left multiply, the outer add fuses z*z
+    fmadds(a.z, b.z, fmadds(a.x, b.x, a.y * b.y))
 }
 
 /// `itzako_sqrtf` (static inline): three Newton steps on `__frsqrte`, as in the C build.
@@ -532,9 +598,9 @@ fn product_xyz(a: &Vec3, b: &Vec3) -> f32 {
 fn itzako_sqrtf(x: f32) -> f32 {
     if x > 0.0 {
         let mut guess = frsqrte(x as f64);
-        guess = 0.5 * guess * (3.0 - guess * guess * (x as f64));
-        guess = 0.5 * guess * (3.0 - guess * guess * (x as f64));
-        guess = 0.5 * guess * (3.0 - guess * guess * (x as f64));
+        guess = 0.5 * guess * ((-(guess * guess)).mul_add(x as f64, 3.0));
+        guess = 0.5 * guess * ((-(guess * guess)).mul_add(x as f64, 3.0));
+        guess = 0.5 * guess * ((-(guess * guess)).mul_add(x as f64, 3.0));
         let y = (x as f64 * guess) as f32;
         return y;
     }
@@ -610,8 +676,8 @@ pub unsafe extern "C" fn it_8027CB3C(item_gobj: *mut HSD_GObj) {
     let item = item_of(item_gobj);
     ext::it_8026C220(item_gobj, (*item).owner);
     (*item).facing_dir = ext::ftLib_800865C0((*item).owner);
-    itl::it_80275414(&mut *item);
-    itl::it_80275474(&mut *item);
+    ext::it_80275414(item_gobj);
+    ext::it_80275474(item_gobj);
     ext::it_802762BC(item);
     ext::it_8026B3A8(item_gobj);
 }
@@ -678,7 +744,7 @@ pub unsafe extern "C" fn it_8027CC88(item_gobj_arg: *mut HSD_GObj) -> *mut HSD_G
 /// `gm_IsCurrently1PMode` returns bool in the C header.
 #[inline(always)]
 unsafe fn gm_IsCurrently1PMode() -> bool {
-    ext::gm_IsCurrently1PMode()
+    ext::gm_IsCurrently1PMode() != 0
 }
 
 /// `it_8027CE18`: plays the defeat sound of the item's source player.
@@ -707,7 +773,7 @@ pub unsafe extern "C" fn it_8027CE64(item_gobj: *mut HSD_GObj, fighter_gobj: *mu
     let mut sp18: GXColor = core::mem::zeroed();
     (*item).xDCF_flag.anon_0.set_b3(1);
     ext::ftLib_8008770C(fighter_gobj, &raw mut sp18 as *mut c_void);
-    it_80278574(item_gobj, &raw mut sp18);
+    ext::it_80278574(item_gobj, &raw mut sp18);
     ext::ftLib_80087744(fighter_gobj, &raw mut (*item).xBC8 as *mut c_void);
     (*item).x5C8 = ext::ftLib_800870BC((*item).owner, &raw mut (*item).xBC4 as *mut i32) as u8;
     ext::it_80274594(item_gobj);

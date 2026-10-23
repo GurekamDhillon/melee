@@ -320,3 +320,27 @@ STEMS["item"] = dict(
                           3: ("((rnd() & 3) ? &SJ[rnd() % 4] : 0)", "if rnd() & 3 != 0 { &raw mut SJ[(rnd() % 4) as usize] } else { null_mut() }")},
         "Item_8026AE84": {1: _SFX}, "Item_8026AF0C": {1: _SFX}, "Item_8026AFA0": {1: _SFX}},
 )
+
+STEMS["itkyasarinegg"] = dict()
+STEMS["itleadead"] = dict()
+STEMS["itlgun"] = dict()
+STEMS["itlgunbeam"] = dict()
+STEMS["itlikelike"] = dict()
+STEMS["itlinkarrow"] = dict()
+STEMS["itlinkbomb"] = dict()
+
+
+def kinds_stem(extra_c="", extra_r="", setup=("", ""), hash=("", ""), pregs=("", ""), **kw):
+    """Item-kind TUs: ART[i].x4_specialAttributes -> a block of random attribute words (floats, 1 in 4 a small int)."""
+    c_extra = "static u32 SPA[2][96];" + chr(10) + extra_c
+    r_extra = "static mut SPA: [[u32; 96]; 2] = [[0; 96]; 2];" + chr(10) + extra_r
+    s_c = ("{ int j, q; for (j = 0; j < 2; j++) { for (q = 0; q < 96; q++) { SPA[j][q] = (rnd() & 3) == 0 ? rnd() % 8 : B(rw()); } ART[j].x4_specialAttributes = SPA[j]; } for (j = 0; j < 8; j++) JO[j].flags &= ~JOBJ_USE_QUATERNION; } " + setup[0])
+    s_r = ("for j in 0..2usize { for q in 0..96usize { SPA[j][q] = if rnd() & 3 == 0 { rnd() % 8 } else { rw().to_bits() }; } ART[j].x4_specialAttributes = (&raw mut SPA[j]) as *mut c_void; } for j in 0..8usize { JO[j].flags &= !(JOBJ_USE_QUATERNION as u32); } " + setup[1])
+    h_c = "{ int j, q; for (j = 0; j < 2; j++) for (q = 0; q < 96; q++) HM(SPA[j][q]); } " + hash[0]
+    h_r = "for j in 0..2usize { for q in 0..96usize { hm(SPA[j][q]); } } " + hash[1]
+    p_c = "preg(SPA, sizeof SPA); " + pregs[0]
+    p_r = "preg(&raw const SPA, core::mem::size_of_val(&SPA)); " + pregs[1]
+    return dict(c_extra=c_extra, rs_extra=r_extra, setup=(s_c, s_r), hash=(h_c, h_r), pregs=(p_c, p_r), **kw)
+
+
+STEMS["itlgunray"] = kinds_stem()

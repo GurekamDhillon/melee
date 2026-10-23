@@ -89,3 +89,15 @@ add("item", "src/melee/it/item.c", skip_data=["it_mobj"],
          "gm_8017E068": ("(int) (rnd() % 14) - 1", "(rnd() % 14) as i32 - 1"),
          "it_80272D1C": ("1", "1"),
          "ScriptGame_HitRuleBaseDamage": ("(float) (rnd() % 60)", "(rnd() % 60) as f32")})
+
+SKM = ["sinf", "cosf", "tanf"]
+
+add("itlgunray", "src/melee/it/kinds/itlgunray.c", skip_stubs=SKM,
+    ret={"Item_80268B18": ("pick_igo()", "pick_igo()")})
+add("itkyasarinegg", "src/melee/it/kinds/itkyasarinegg.c", skip_stubs=SKM)
+add("itleadead", "src/melee/it/kinds/itleadead.c", skip_stubs=SKM)
+add("itlgun", "src/melee/it/kinds/itlgun.c", skip_stubs=SKM)
+add("itlgunbeam", "src/melee/it/kinds/itlgunbeam.c", skip_stubs=SKM)
+add("itlikelike", "src/melee/it/kinds/itlikelike.c", skip_stubs=SKM)
+add("itlinkarrow", "src/melee/it/kinds/itlinkarrow.c", skip_stubs=SKM)
+add("itlinkbomb", "src/melee/it/kinds/itlinkbomb.c", skip_stubs=SKM)

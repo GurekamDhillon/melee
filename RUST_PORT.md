@@ -634,3 +634,13 @@ unported TUs are `ext` hooks (unset: panics "TODO"). The old snake_case forwarde
 - `it_802E7654` has no `return` in the C; the port returns the spawned gobj (what PPC leaves in r3), the oracle does
   not compare that return value. Ints that the C wraps (`-= 1`, sums of weights) use `wrapping_*` ops. Mutation checks
   (flipping fused sites, constants, comparison boundaries, state ids) fail the tests.
+
+## melee_items::tu: it/kinds set 2 (shard 809-816)
+`itwhitebea itwstar ityaku ityoshiegglay ityoshieggthrow ityoshistar ityoshitongue itzeldadinfire` (165 fns, all with a
+state-oracle op each) ported with the shard 657-664 generator (`gen/kinds`; descriptions in `cfg_809.py`, specs in `specs.py`).
+New in the oracle: `efAsync_Spawn` modelled as a 6-argument hook (the variadic scale is read only for spawn kind 4);
+`__frsqrte`/`sinf`/`cosf` are the real linked ports; callback fixtures (ityaku) are registered functions.
+Fused sites (IR): yoshistar `vel.x += accel*dir`, yoshiegglay timer `-= xCA0*x0`, zeldadinfire scale and steering,
+whitebea distance. The test catches the yoshistar mutation; the whitebea distance (only compared against thresholds)
+and zelda steering (rarely reached) are not discriminated by the current inputs.
+`x28_entries` (itwstar) and the yaku `while (true)` hang are handled as noted in the file headers.

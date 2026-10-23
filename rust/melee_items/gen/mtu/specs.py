@@ -41,3 +41,16 @@ add("iteffect", "src/melee/it/iteffect.c", types=["it_804D6D40_t"],
         hook="|a0, a1, a2, a3, a4| { t(@ID@); t(pi(a0)); t(sh(a1 as *const u8)); t(pi(a2)); t(sh(a3 as *const u8)); t(a4 as u32); "
              "*(a2 as *mut *mut it_804D6D20_t) = &raw mut crate::ARC; (fv() & 1) as i32 }")},
     ret={"it_80272CC0": ("pick_HSD_JObj()", "pick_HSD_JObj()"), "lbLang_IsSettingUS": ("(int) (fv() & 1)", "(fv() & 1) as i32")})
+
+add("itdraw", "src/melee/it/itdraw.c",
+    ret={"HSD_CObjGetCurrent": ("COBP", "&raw mut crate::COB"), "Camera_80031060": ("(int) (fv() % 3)", "(fv() % 3) as i32")},
+    effects={
+        "PSMTXIdentity": ("{ int q; for (q = 0; q < 12; q++) ((float*) a0)[q] = (q % 5 == 0) ? 1.0f : 0.0f; }",
+                          "for q in 0..12usize { *(a0 as *mut f32).add(q) = if q % 5 == 0 { 1.0 } else { 0.0 }; }"),
+        "PSMTXConcat": ("{ int q; for (q = 0; q < 12; q++) { T(B(((float*) a0)[q])); T(B(((float*) a1)[q])); ((float*) a2)[q] = rw(); } }",
+                        "for q in 0..12usize { t((*(a0 as *const f32).add(q)).to_bits()); t((*(a1 as *const f32).add(q)).to_bits()); *(a2 as *mut f32).add(q) = rw(); }"),
+        "HSD_JObjDispAll": ("if (a1) { int q; for (q = 0; q < 12; q++) T(B(((float*) a1)[q])); }",
+                            "if !a1.is_null() { for q in 0..12usize { t((*(a1 as *const f32).add(q)).to_bits()); } }"),
+        "ftLib_80087074": ("if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); }",
+                           "if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); }"),
+    })

@@ -227,6 +227,7 @@ pub fn netplay(args: &[String]) -> std::process::ExitCode {
     let mut done_at: Option<Instant> = None;
     let mut ticks = 0u64;
     let mut stop_logged = false;
+    let shift = num("--script-shift", 0) as i32;
     let trace = args.iter().any(|a| a == "--trace");
     loop {
         if let Some(l) = tick_len {
@@ -263,7 +264,7 @@ pub fn netplay(args: &[String]) -> std::process::ExitCode {
         let f = s.current_frame();
         let d = s.cfg.delay;
         for ff in f..=f + d {
-            let i = script_input(local_port, ff - FIRST);
+            let i = script_input(local_port, ff - FIRST - shift);
             s.submit_local_input(local_port * 2, ff, &i);
         }
         let n_run = run_tick(&mut s, &mut game, None);
@@ -325,6 +326,13 @@ pub fn netplay(args: &[String]) -> std::process::ExitCode {
         let mut t = String::from("frame,hash\n");
         for &(f, h) in &finals {
             t += &format!("{},{:08X}\n", f - 1 - FIRST, h);
+        }
+        let _ = std::fs::write(p, t);
+    }
+    if let Some(p) = arg(args, "--raw-out") {
+        let mut t = String::from("frame,hash,seed,items,itemsum,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11\n");
+        for (f, h) in &game.raw_log {
+            t += &format!("{},{}\n", f, h);
         }
         let _ = std::fs::write(p, t);
     }

@@ -225,6 +225,16 @@ impl VsMatch {
         nh_game(w.seed, &w.slots, w.items, w.itemsum)
     }
 
+    /// One MELEE_NEUTRAL_HASHLOG row (without the frame): hash,seed,items,itemsum,s0..s11.
+    pub fn rb_row(&self) -> String {
+        let w = self.words();
+        let mut r = format!("{:08X},{:08X},{},{:08X}", nh_game(w.seed, &w.slots, w.items, w.itemsum), w.seed, w.items, w.itemsum);
+        for s in w.slots.iter() {
+            r += &format!(",{:08X}", s.unwrap_or(0));
+        }
+        r
+    }
+
     /// The neutral hash with the seed word replaced (the C's online checksum seed rule).
     pub fn rb_game_hash_seeded(&self, seed: u32) -> u32 {
         let w = self.words();

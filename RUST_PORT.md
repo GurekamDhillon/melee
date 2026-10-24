@@ -1040,3 +1040,24 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   `ck:N` / `ext:N`; the Rust sim plays Falcon, Fox on Final Destination, Battlefield is only a lobby stage),
   controls words other than 0, Turbo rules, rematch/rejoin after a match, CPUs/items in the scene.
 - C interop: see the section below for what was measured.
+
+### Rust vs C build over the wire (2026-10-24)
+- The wire protocol allows it. The C build (this tree, `GW_BUILD_ROOT=_build/agents/plat-net`) plays scripted
+  netplay (`MELEE_NETPLAY=host|join:`, `tools/rust-port/golden/pad_np.lua`); the Rust peer takes the C's
+  handshake words (`--exe-hash` = the C `build id`, `MELEE_NP_GLOBAL_HASH` = `mods=` of the new "handshake
+  words" log line) and the C's content identities (`MELEE_NP_IDS`, run time only). HELLO/ACCEPT, the
+  `J c0 c1 scene` blob (tokens `ck:N`/`ext:N` are accepted by the C scene parser), hold/START, inputs and
+  checksums all interoperate in both directions.
+- C change needed: the C's netplay checksum is RB_GameHash (a wider word set), not the neutral hash. With
+  `MELEE_RB_NEUTRAL_HASH=1` (gw_rollback.c + `RB_NeutralHashForFrame` in fighter.c, same online seed rule) both
+  sides compute NHV1. The Rust peer also needs `--live-rng` (the C live-mode per-frame seed rule).
+- C vs C (neutral checksum, scripted pads): 3224 frames, both neutral CSVs identical, no desync.
+- Rust guest vs C host, full match (1893 frames, 2 rollbacks C side / 1 Rust side): 0 desyncs reported by either
+  side; the Rust per-frame words (fighters, items) equal the C's MELEE_NEUTRAL_HASHLOG on all 1893 frames.
+  Only the post-frame seed column differs on 548 frames (more or fewer logic RNG draws per frame in effect /
+  particle code; the seed is re-forced every frame online, so it cannot reach the next frame's state).
+- Rust host vs C guest: identical for 205 frames, then a checksum DESYNC reported at session frame 89 (golden
+  index ~212): at index 205 the C draws 38 logic RNG values and the Rust 7 (an effect / particle spawn the
+  Rust effect code does not make on that path), and at index 211 Falcon's landing word differs (5715B485 vs
+  5615B536). This is a sim gap found by netplay (different input timing from the offline golden), not a
+  transport problem; fixing it belongs to the fighter / effect ports.

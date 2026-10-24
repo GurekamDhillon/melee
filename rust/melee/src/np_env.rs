@@ -30,8 +30,21 @@ impl LobbyEnv for NativeEnv {
         format!("ext:{ext}")
     }
     fn ext_for_token(&self, t: &str) -> i32 {
+        if let Some(h) = t.strip_prefix("id:") {
+            if let Some(v) = id_map(h).and_then(|v| v.strip_prefix("ext:").and_then(|n| n.parse().ok())) {
+                return v;
+            }
+        }
         t.strip_prefix("ext:").and_then(|n| n.parse().ok()).unwrap_or(-1)
     }
+}
+
+/// Content identities ("id:<hex>") of this install's fighters and stages, as `hex=ck:N` / `hex=ext:N`
+/// pairs separated by `;` in `MELEE_NP_IDS` (the identities are hashes of disc files, so they are
+/// supplied at run time, never stored in the tree).
+fn id_map(hex: &str) -> Option<String> {
+    let v = std::env::var("MELEE_NP_IDS").ok()?;
+    v.split(';').find_map(|kv| kv.split_once('=').filter(|(k, _)| k.eq_ignore_ascii_case(hex)).map(|(_, v)| v.to_string()))
 }
 
 impl RoomEnv for NativeEnv {
@@ -39,6 +52,9 @@ impl RoomEnv for NativeEnv {
         format!("ck:{ck}")
     }
     fn ck_for_token(&self, tok: &str) -> i32 {
+        if let Some(h) = tok.strip_prefix("id:") {
+            return id_map(h).and_then(|v| v.strip_prefix("ck:").and_then(|n| n.parse().ok())).unwrap_or(-1);
+        }
         tok.strip_prefix("ck:").and_then(|n| n.parse().ok()).unwrap_or(-1)
     }
     fn global_hash(&self) -> u64 {
@@ -53,7 +69,7 @@ impl RoomEnv for NativeEnv {
                 return Err(format!("fighter {t} is not playable in the Rust sim yet"));
             }
         }
-        if p.stage_tok != "ext:32" {
+        if self.ext_for_token(&p.stage_tok) != 32 {
             return Err(format!("stage {} is not playable in the Rust sim yet", p.stage_tok));
         }
         Ok(())

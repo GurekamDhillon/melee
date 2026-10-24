@@ -20,11 +20,14 @@ pub struct NetMatch {
     /// `seed + ((frame + 123) << 16)`, so a draw only one peer makes cannot carry over. None = the
     /// offline free-running seed (the golden CSVs).
     pub live_seed: Option<u32>,
+    /// The after-frame neutral hash with the sim's own seed (what MELEE_NEUTRAL_HASHLOG writes),
+    /// by golden frame; resimulation overwrites, so the final values are the played timeline.
+    pub raw_log: std::collections::BTreeMap<i32, String>,
 }
 
 impl NetMatch {
     pub fn new(vs: VsMatch) -> Self {
-        NetMatch { vs, humans: [true, true, false, false], live: false, live_seed: None }
+        NetMatch { vs, humans: [true, true, false, false], live: false, live_seed: None, raw_log: Default::default() }
     }
 }
 
@@ -90,6 +93,7 @@ impl RbGame for NetMatch {
             self.vs.rb_force_seed(live_frame_seed(sd, self.vs.frame + 1 + FIRST));
         }
         self.vs.step();
+        self.raw_log.insert(self.vs.frame, self.vs.rb_row());
     }
 }
 

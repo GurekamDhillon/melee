@@ -958,3 +958,30 @@ Stub names in `docs/rust-port/missing.md` for melee_fighter: NO_PORT 276 -> ~71,
   lives in melee_modes), ftMh/ftCh/ftSs/ftKb chara functions that need chara internals.
 - Oracle drivers: `__assert` no longer hangs (`asrt_hit`), `-Wl,/force:unresolved` link; clang evaluates call arguments right to left in some cases
   (see tests/tu_ftcoll.rs), mirror it in test fills.
+
+## Golden round 1: pad_falcon_fox_fd matches in full (2026-10-24)
+- `melee golden --scenario pad_falcon_fox_fd` is identical to `docs/rust-port/golden/pad_falcon_fox_fd.csv` on all
+  1801 frames (0..1800; `compare_golden.py ... --allow-short` exit 0). The sim then stops on the first unported
+  state the script reaches past the golden (`ftCo_RunBrake_Enter`, frame 1802). Start of the round: 216 frames.
+- Ported in `rust/melee/src/vs_match.rs` and `vs_match/{rebirth,fox,attackair,dashrun}.rs`: blast-zone KO and DeadDown;
+  respawn (Rebirth / RebirthWait, the platform path of `Fighter_UnkProcessDeath`, `fn_8016758C` spot countdown, the
+  spawn probe); shield (GuardOn / Guard / GuardOff, power shield, upkeep); jumps (KneeBend, Jump, JumpAerial,
+  FallAerial); Fox neutral-B in the air (gun and laser items, muzzle flash); aerial attacks (stick / C-stick
+  selection, Anim / IASA / Phys / Coll, landing through `landing_enter_basic`); Dash and Run; the player nudge
+  (`ftCommon_8007E0E4`, radii `*ftData->x50` into `fp->x2C4`).
+- Traps found (each cost a bisect):
+  - 1-ulp position differences are almost always a collision substep in the C (ECB Clear / locked ECB, or an
+    item spawn moving > 6 units: `it_80276100` -> `mpColl_800471F8` adds `vel / steps` per substep). Compare the
+    value rounded to the coarser exponent grid before suspecting velocity.
+  - `ftCo_800CC988` runs after `ftCo_Fall_Anim_Inner` every frame the fall blend is nonzero; poses feed the ECB
+    (and the Rebirth spawn probe's locked ECB bottom), so a wrong pose shows up only at a landing or a respawn.
+  - `Fighter_ChangeMotionState` clears `x221D_b5` (the "no nudge" flag Rebirth sets).
+  - Debugging the C: temporary `OSReport` in a game TU, `tools/port/build.sh` (about 1 min incremental), `crun.sh`
+    with `dump.lua` (Lua `n` = golden frame + 1 but `gd.player` x reads mid-frame; trust the hash columns).
+    OSReport lines of per-frame call sites can be dropped by the log rate limit: print only a rare condition
+    (an item kind) instead. Revert the TU afterwards (`git checkout src`).
+- Not ported (the next stops): RunBrake / TurnRun / smash turn, Z grab and every hit (`hit_guard` stops the run),
+  Fox ground neutral-B, Falcon's other specials, platforms and ledges, shield break, `x2135 != -1` respawn stages.
+- Next: the other three goldens are not wired (`VsMatch::new` supports `GrNLa.dat` only; `golden()` has no Marth,
+  Sheik, Battlefield `grbattle.c`, or CPU input). Order of attack: Battlefield stage init and its materials ->
+  Marth / Sheik file and effect-bank loaders -> the states `pad_fixed.lua` reaches first.

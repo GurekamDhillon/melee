@@ -41,7 +41,7 @@ pub enum ItemCmd {
     /// `it_802AE8A8`: the blaster gun, at the fighter's position.
     SpawnGun { owner: usize, kind: i32, pos: Vec3 },
     /// `it_8029C6A4(angle, vel, owner, &muzzle, kind)`: a laser shot.
-    Laser { owner: usize, kind: i32, angle: f32, speed: f32, pos: Vec3 },
+    Laser { owner: usize, kind: i32, angle: f32, speed: f32, pos: Vec3, parent: Vec3 },
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -102,8 +102,34 @@ fn fire_shot(p: &mut Player) -> Result<(), String> {
     pos.z = 0.0;
     let ang = da.x10_FOX_BLASTER_ANGLE;
     let launch: f64 = if p.fp.facing_dir == 1.0 { ang as f64 } else { core::f64::consts::PI - ang as f64 };
-    p.item_cmds.push(ItemCmd::Laser { owner: p.slot as usize, kind: da.x1C_FOX_BLASTER_SHOT_ITKIND as i32, angle: launch as f32, speed: da.x14_FOX_BLASTER_VEL, pos });
+    // Item_InitSpawnPositionFromParent: ftLib_80086990 = the fighter's position + (0, mid ECB height, 0).
+    let fp = &p.fp;
+    let mid = 0.5f32 * (fp.coll_data.ecb.top.y + fp.coll_data.ecb.bottom.y);
+    let parent = Vec3 { x: fp.cur_pos.x + 0.0, y: fp.cur_pos.y + mid, z: fp.cur_pos.z + 0.0 };
+    p.item_cmds.push(ItemCmd::Laser { owner: p.slot as usize, kind: da.x1C_FOX_BLASTER_SHOT_ITKIND as i32, angle: launch as f32, speed: da.x14_FOX_BLASTER_VEL, pos, parent });
     Ok(())
+}
+
+/// `mpColl_80043754`'s position stepping from `last` to `cur` (no stage contact).
+fn spawn_step(last: Vec3, cur: Vec3) -> Vec3 {
+    let mut vel = Vec3 { x: cur.x - last.x, y: cur.y - last.y, z: cur.z - last.z };
+    let x = if vel.x.abs() > vel.y.abs() { vel.x.abs() } else { vel.y.abs() };
+    let steps = if x > 6.0 {
+        let s = melee_runtime::cabi::f2i32((x / 6.0) as f64) + 1;
+        vel.x /= s as f32;
+        vel.y /= s as f32;
+        vel.z /= s as f32;
+        s
+    } else {
+        1
+    };
+    let mut p = last;
+    for _ in 0..steps {
+        p.x += vel.x;
+        p.y += vel.y;
+        p.z += vel.z;
+    }
+    p
 }
 
 /// `FtPart_RThumbNb`.
@@ -204,7 +230,7 @@ impl VsMatch {
                     ItemCmd::SpawnGun { owner, kind, pos } => {
                         self.items.push(SimItem { kind, msid: 0, pos, vel: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, class: ItemClass::FoxGun { owner, flash: false } });
                     }
-                    ItemCmd::Laser { owner: lo, kind, angle, speed, pos } => {
+                    ItemCmd::Laser { owner: lo, kind, angle, speed, pos, parent } => {
                         // it_802AE1D0(fp->u.fx.x222C_blasterGObj): arm the gun's muzzle flash.
                         for g in &mut self.items {
                             if let ItemClass::FoxGun { owner, flash } = &mut g.class {
@@ -221,6 +247,10 @@ impl VsMatch {
                         while a > core::f32::consts::TAU {
                             a -= core::f32::consts::TAU;
                         }
+                        // it_80276100: the item's collision step from the parent to the muzzle
+                        // (mpColl_800471F8 over more than 6 units substeps; each substep adds
+                        // vel / steps, which rounds). The item's ECB and the stage are not consulted.
+                        let pos = spawn_step(parent, pos);
                         self.items.push(SimItem { kind, msid: 0, pos, vel: Vec3 { x: 0.0, y: 0.0, z: 0.0 }, class: ItemClass::FoxLaser { angle: a, speed, life: FOX_LASER_LIFETIME } });
                     }
                 }

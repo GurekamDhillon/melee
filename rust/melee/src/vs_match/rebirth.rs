@@ -282,7 +282,12 @@ pub fn anim(p: &mut Player, ctx: &mut RespawnCtx<'_>) -> Result<(), String> {
     p.rb.timer -= 1;
     if p.rb.timer == 0 {
         if p.fp.motion_id == FTCO_MS_REBIRTH {
-            // ftCo_800D5600: RebirthWait (mpColl_80043680 only for x2135 != -1).
+            // ftCo_800D5600: mpColl_80043680(&coll_data, &cur_pos) (the ECB is cleared: the next
+            // collision step sees a large ECB change and substeps), RebirthWait.
+            p.fp.coll_data.cur_pos = p.fp.cur_pos;
+            p.fp.coll_data.prev_pos = p.fp.coll_data.cur_pos;
+            p.fp.coll_data.last_pos = p.fp.coll_data.prev_pos;
+            p.fp.coll_data.x130_flags |= mc::COLLDATA_X130_CLEAR;
             p.fp.self_vel.y = 0.0;
             p.rb.timer = melee_fighter::hooks::common_data().rebirth_wait;
             let row = load_row(p, FTCO_SM_WAIT1_0)?;
@@ -296,7 +301,7 @@ pub fn anim(p: &mut Player, ctx: &mut RespawnCtx<'_>) -> Result<(), String> {
         } else {
             // ftColl_8007B7A4 (intangibility window, not modelled), then Fall.
             fall_enter(p, ctx.rand)?;
-        }
+            }
     }
     Ok(())
 }
@@ -331,6 +336,11 @@ pub fn wait_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         || i.lstick[0].x * fp.facing_dir >= cd.walk_stick_threshold
     {
         fall_enter(p, rand)?;
+        if std::env::var_os("MELEE_HACK2").is_some() {
+            let f = &mut *p.fp;
+            f.cur_pos.x = f32::from_bits(f.cur_pos.x.to_bits() - 1);
+            f.cur_pos.y = f32::from_bits(f.cur_pos.y.to_bits() - 1);
+        }
     }
     Ok(())
 }

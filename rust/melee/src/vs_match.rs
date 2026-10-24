@@ -944,6 +944,7 @@ impl VsMatch {
                     self.frame, s, f.motion_id, f.cur_pos.x.to_bits(), f.cur_pos.y.to_bits(), f.cur_pos.z.to_bits(),
                     f.self_vel.x.to_bits(), f.self_vel.y.to_bits(), f.ground_or_air, f.x3E4_fighterCmdScript.frame_count.to_bits(),
                     f.x1968_jumpsUsed, f.x67F, f.x680, f.shield_health.to_bits());
+                eprintln!("NHE f{} s{} fac {} pct {:08X} hl {:08X} b5 {} kb {:08X} {:08X} gr {:08X}", self.frame, s, f.facing_dir, f.dmg.x1830_percent.to_bits(), f.dmg.x195c_hitlag_frames.to_bits(), f.x2219_b5(), f.x8c_kb_vel.x.to_bits(), f.x8c_kb_vel.y.to_bits(), f.gr_vel.to_bits());
             }
         }
         w

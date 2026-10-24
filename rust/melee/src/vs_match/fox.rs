@@ -61,7 +61,7 @@ pub struct SimItem {
 }
 
 /// The laser's lifetime: `FoxLaserAttr.lifetime` (the article's special attributes).
-const FOX_LASER_LIFETIME: f32 = 0.0;
+const FOX_LASER_LIFETIME: f32 = 35.0;
 
 /// `ftFx_SpecialN_GetBlasterAction` for the SpecialN states (9 otherwise).
 fn blaster_action(fp: &Fighter) -> i32 {
@@ -153,9 +153,9 @@ pub fn anim(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         }
         2 => {
             // End: UpdateEndAnimation, then the item is released and Fall / landing lag.
-            if p.fp.cmd_vars[1] == 2 {
-                return Err("ftpickupitem_80094818 (SpecialN end) not ported".into());
-            }
+            // cmd_vars[1] == 2: ftpickupitem_80094818(gobj, 0), a no-op without a held item
+            // (fp->item_gobj and x1978 are NULL: the gun is not a held item of the fighter).
+
             if p.fp.cmd_vars[3] == 2 && p.fx.blaster {
                 p.fp.cmd_vars[3] = 0;
             }
@@ -262,13 +262,18 @@ impl VsMatch {
                     }
                 }
                 ItemClass::FoxLaser { angle, speed, life } => {
-                    let _ = life;
                     // itFoxlaser_UnkMotion1_Anim -> Item_UpdateRayAnimation: velocity from the angle.
                     it.vel.x = *speed * melee_runtime::gekko::cosf(*angle);
                     it.vel.y = *speed * melee_runtime::gekko::sinf(*angle);
                     it.vel.z = 0.0;
-                    it.pos.x += it.vel.x;
-                    it.pos.y += it.vel.y;
+                    // it_80273130: the life timer; the item proc stops there when it runs out.
+                    *life -= 1.0;
+                    if *life <= 0.0 {
+                        dead = true;
+                    } else {
+                        it.pos.x += it.vel.x;
+                        it.pos.y += it.vel.y;
+                    }
                 }
             }
             if dead {

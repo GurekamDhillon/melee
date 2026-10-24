@@ -124,12 +124,20 @@ pub struct mpLib_803BF248_t_x4 {
     pub x4C: [i32; 3],
 }
 
+melee_core::gc_layout!(mpLib_803BF248_t_x4, "mpLib_803BF248_t_x4", size 0x58, align 4, [
+    x0 @ 0x0: 4 "float", x4 @ 0x4: 16 "int[4]", x14 @ 0x14: 12 "int[3]", x20 @ 0x20: 16 "int[4]", x30 @ 0x30: 12 "int[3]", x3C @ 0x3c: 16 "int[4]", x4C @ 0x4c: 12 "int[3]",
+]);
+
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct mpLib_803BF248_t {
     pub id: GrKind,
     pub x4: *mut [*mut mpLib_803BF248_t_x4; 20],
 }
+
+melee_core::gc_layout!(mpLib_803BF248_t, "mpLib_803BF248_t", size 0x8, align 4, [
+    id @ 0x0: 4 "GrKind", x4 @ 0x4: 4 "struct mpLib_803BF248_t_x4 *(*)[20]",
+]);
 
 pub static mut mpLib_80458868: [mpCollisionBox; 2] = unsafe { core::mem::zeroed() };
 static mut didCheckBounding: i32 = 0;

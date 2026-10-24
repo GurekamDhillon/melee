@@ -90,6 +90,10 @@ pub struct mpColl_80458810_t {
     pub x54_pad: [u8; 4],
 }
 
+melee_core::gc_layout!(mpColl_80458810_t, "mpColl_80458810_t", size 0x58, align 4, [
+    right @ 0x0: 36 "int[9]", left @ 0x24: 36 "int[9]", normal @ 0x48: 12 "Vec3", x54_pad @ 0x54: 4 "u8[4]",
+]);
+
 static mut mpColl_80458810: mpColl_80458810_t = unsafe { core::mem::zeroed() };
 static mut mpColl_804D6488: i32 = 0;
 static mut mpColl_804D648C: i32 = 0;

@@ -1620,6 +1620,21 @@ class Tr:
         return f"{doc}{decl} {txt}\n"
 
 
+def ppc_layout(src, name):
+    """GameCube (ppc32) size / align / field offsets of the record `name` defined in `src`"""
+    idx = ci.Index.create()
+    tu = idx.parse(src, args=G.g.PPC, options=ci.TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD)
+    for c in tu.cursor.get_children():
+        if c.kind in (K.STRUCT_DECL, K.UNION_DECL) and c.spelling == name and c.is_definition():
+            t = c.type
+            fl = []
+            for f in c.get_children():
+                if f.kind == K.FIELD_DECL and not f.is_bitfield():
+                    fl.append((f.spelling, f.get_field_offsetof() // 8, f.type.get_size(), f.type.spelling))
+            return t.get_size(), t.get_align(), fl
+    return None
+
+
 def main():
     import argparse
     ap = argparse.ArgumentParser()
@@ -1682,6 +1697,11 @@ def main():
             fl = [f"    pub {ident(f.spelling)}: {rty(f.type)}," for f in c.get_children() if f.kind == K.FIELD_DECL]
             kw = "struct" if c.kind == K.STRUCT_DECL else "union"
             pre.append("#[repr(C)]" + NL + "#[derive(Clone, Copy)]" + NL + f"pub {kw} {c.spelling} {{" + NL + NL.join(fl) + NL + "}" + NL)
+            lay = ppc_layout(a.src, c.spelling)
+            if lay:
+                size, align, flds = lay
+                body = ", ".join(f'{fn} @ {off:#x}: {sz} "{cty}"' for fn, off, sz, cty in flds)
+                pre.append(f'melee_core::gc_layout!({c.spelling}, "{c.spelling}", size {size:#x}, align {align}, [{NL}    {body},{NL}]);{NL}')
     tr.cur = "<data>"
     for n, v in tr.main_vars.items():
         vis = "pub " if v.storage_class != ci.StorageClass.STATIC else ""

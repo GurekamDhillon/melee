@@ -13,7 +13,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:path)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -21,7 +21,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $crate::ext_dflt!([$($def)?] ($($a),*) $name) }
                 }
             } )*
         };
@@ -31,16 +31,16 @@ pub mod ext {
     fn GObj_InitUserData(a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void);
     fn HSD_GObjFree(a0: *mut HSD_GObj);
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
-    fn HSD_ObjAlloc(a0: *mut _HSD_ObjAllocData) -> *mut c_void;
-    fn HSD_ObjAllocInit(a0: *mut _HSD_ObjAllocData, a1: u32, a2: u32);
-    fn HSD_ObjFree(a0: *mut _HSD_ObjAllocData, a1: *mut c_void);
-    fn fn_800208B0(a0: u8);
+    fn HSD_ObjAlloc(a0: *mut _HSD_ObjAllocData) -> *mut c_void = crate::tu::adapt::HSD_ObjAlloc__394117;
+    fn HSD_ObjAllocInit(a0: *mut _HSD_ObjAllocData, a1: u32, a2: u32) = crate::tu::adapt::HSD_ObjAllocInit__d50812;
+    fn HSD_ObjFree(a0: *mut _HSD_ObjAllocData, a1: *mut c_void) = crate::tu::adapt::HSD_ObjFree__102255;
+    fn fn_800208B0(a0: u8) = crate::tu::adapt::fn_800208B0__5b119b;
     fn lbArchive_LoadSymbols(a0: *const u8, a1: *mut c_void, a2: *const u8, a3: i32) -> *mut c_void;
-    fn lbBgFlash_800208EC(a0: i32);
-    fn lbBgFlash_InitState(a0: *mut _GXColor);
+    fn lbBgFlash_800208EC(a0: i32) = crate::tu::adapt::lbBgFlash_800208EC__c1a64f;
+    fn lbBgFlash_InitState(a0: *mut _GXColor) = crate::tu::adapt::lbBgFlash_InitState__bb0850;
     fn lb_80014258(a0: *mut HSD_GObj, a1: *mut c_void, a2: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut CommandInfo, i32)>) -> i32;
-    fn lb_80014498(a0: *mut ColorOverlay);
-    fn lb_800144C8(a0: *mut ColorOverlay, a1: *mut Fighter_804D653C_t, a2: i32, a3: i32) -> i32;
+    fn lb_80014498(a0: *mut ColorOverlay) = crate::tu::adapt::lb_80014498__63b487;
+    fn lb_800144C8(a0: *mut ColorOverlay, a1: *mut Fighter_804D653C_t, a2: i32, a3: i32) -> i32 = crate::tu::adapt::lb_800144C8__0c3a12;
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

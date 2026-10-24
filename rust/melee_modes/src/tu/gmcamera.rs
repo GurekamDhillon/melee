@@ -102,6 +102,16 @@ const PAD_STICK_RIGHT: u32 = 1 << 19;
 pub mod ext {
     use super::*;
     macro_rules! hook {
+        ($hook:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?, $port:path) => {
+            pub static mut $hook: Option<fn($($t),*) $(-> $r)?> = None;
+            #[allow(non_snake_case)]
+            pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { $hook } {
+                    Some(f) => f($($a),*),
+                    None => $port($($a),*),
+                }
+            }
+        };
         ($hook:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
             pub static mut $hook: Option<fn($($t),*) $(-> $r)?> = None;
             #[allow(non_snake_case)]
@@ -149,7 +159,7 @@ pub mod ext {
                 }
             }
     hook!(HSD_SISLIB_803A62A0, HSD_SisLib_803A62A0, (a: i32, b: &str, c: &str));
-    hook!(HSD_SISLIB_803A611C, HSD_SisLib_803A611C, (a: i32, g: *mut HSD_GObj, b: u16, c: u8, d: u8, e: u8, f: u8, h: u32) -> i32);
+    hook!(HSD_SISLIB_803A611C, HSD_SisLib_803A611C, (a: i32, g: *mut HSD_GObj, b: u16, c: u8, d: u8, e: u8, f: u8, h: u32) -> i32, crate::tu::adapt::HSD_SisLib_803A611C__de78e8);
     pub static mut HSD_SISLIB_803A5CC4: Option<fn(*mut HSD_Text)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_SisLib_803A5CC4(text: *mut HSD_Text) {

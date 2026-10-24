@@ -23,6 +23,16 @@ pub static mut gm_8049E558: [u8; 0x170] = [0; 0x170];
 pub mod ext {
     use super::*;
     macro_rules! hook {
+        ($hook:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?, $port:path) => {
+            pub static mut $hook: Option<fn($($t),*) $(-> $r)?> = None;
+            #[allow(non_snake_case)]
+            pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { $hook } {
+                    Some(f) => f($($a),*),
+                    None => $port($($a),*),
+                }
+            }
+        };
         ($hook:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
             pub static mut $hook: Option<fn($($t),*) $(-> $r)?> = None;
             #[allow(non_snake_case)]

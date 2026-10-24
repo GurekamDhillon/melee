@@ -21,17 +21,17 @@ pub mod ext {
         /// jobj.c
         fn HSD_JObjSetMtxDirtySub(jobj: *mut HSD_JObj) -> ();
         /// jobj.c (the real function behind the parenthesised macro name)
-        fn HSD_JObjSetMtxDirty(jobj: *mut HSD_JObj) -> ();
+        fn HSD_JObjSetMtxDirty(jobj: *mut HSD_JObj) -> () = crate::tu::adapt::HSD_JObjSetMtxDirty__955390;
         /// debug.c
         fn __assert(file: *const i8, line: u32, msg: *const i8) -> ();
         // ---- gr/inlines.h: Ground_InitScene's callees
         fn Camera_Init(a0: i32) -> ();
-        fn lb_8000FCDC() -> ();
-        fn mpColl_80041C78() -> ();
-        fn Ground_801C0378(a0: i32) -> ();
-        fn Stage_802251E8(stkind: u32, a1: *mut i32) -> ();
+        fn lb_8000FCDC() -> () = crate::tu::adapt::lb_8000FCDC__a0c24e;
+        fn mpColl_80041C78() -> () = crate::tu::adapt::mpColl_80041C78__63449b;
+        fn Ground_801C0378(a0: i32) -> () = crate::tu::adapt::Ground_801C0378__874334;
+        fn Stage_802251E8(stkind: u32, a1: *mut i32) -> () = crate::tu::adapt::Stage_802251E8__211944;
         // ---- mn/inlines.h: the menu sounds
-        fn lbAudioAx_80024030(a0: i32) -> ();
+        fn lbAudioAx_80024030(a0: i32) -> () = crate::tu::adapt::lbAudioAx_80024030__36458a;
     }
 }
 

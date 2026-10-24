@@ -16,7 +16,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:path)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -24,7 +24,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $crate::ext_dflt!([$($def)?] ($($a),*) $name) }
                 }
             } )*
         };
@@ -36,20 +36,20 @@ pub mod ext {
     fn HSD_MtxInverseConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void);
     fn HSD_MtxQuat(a0: *mut c_void, a1: *mut Quaternion);
     fn HSD_QuatLib_8037EB28(a0: *mut c_void, a1: *mut Vec) -> i32;
-    fn MTXRotRad(a0: *mut c_void, a1: i8, a2: f32);
+    fn MTXRotRad(a0: *mut c_void, a1: i8, a2: f32) = crate::tu::adapt::MTXRotRad__bc3d39;
     fn MatToQuat(a0: *mut c_void, a1: *mut Quaternion) -> i32;
-    fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void);
+    fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void) = crate::tu::adapt::PSMTXConcat__e4df5b;
     fn PSMTXCopy(a0: *mut c_void, a1: *mut c_void);
-    fn PSMTXMultVec(a0: *mut c_void, a1: *mut Vec, a2: *mut Vec);
-    fn PSMTXQuat(a0: *mut c_void, a1: *mut Quaternion);
-    fn PSMTXRotAxisRad(a0: *mut c_void, a1: *mut Vec, a2: f32);
-    fn PSMTXTranspose(a0: *mut c_void, a1: *mut c_void);
-    fn PSVECMag(a0: *mut Vec) -> f32;
-    fn acosf(a0: f32) -> f32;
-    fn atan2f(a0: f32, a1: f32) -> f32;
-    fn lbVector_Angle(a0: *mut Vec, a1: *mut Vec) -> f32;
-    fn lbVector_Diff(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec;
-    fn lbVector_Normalize(a0: *mut Vec) -> f32;
+    fn PSMTXMultVec(a0: *mut c_void, a1: *mut Vec, a2: *mut Vec) = crate::tu::adapt::PSMTXMultVec__aeae10;
+    fn PSMTXQuat(a0: *mut c_void, a1: *mut Quaternion) = crate::tu::adapt::PSMTXQuat__fb47a1;
+    fn PSMTXRotAxisRad(a0: *mut c_void, a1: *mut Vec, a2: f32) = crate::tu::adapt::PSMTXRotAxisRad__437995;
+    fn PSMTXTranspose(a0: *mut c_void, a1: *mut c_void) = crate::tu::adapt::PSMTXTranspose__cc6675;
+    fn PSVECMag(a0: *mut Vec) -> f32 = crate::tu::adapt::PSVECMag__307672;
+    fn acosf(a0: f32) -> f32 = crate::tu::adapt::acosf__e9b06e;
+    fn atan2f(a0: f32, a1: f32) -> f32 = crate::tu::adapt::atan2f__2f62eb;
+    fn lbVector_Angle(a0: *mut Vec, a1: *mut Vec) -> f32 = crate::tu::adapt::lbVector_Angle__a15630;
+    fn lbVector_Diff(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec = crate::tu::adapt::lbVector_Diff__3f20f8;
+    fn lbVector_Normalize(a0: *mut Vec) -> f32 = crate::tu::adapt::lbVector_Normalize__748fa0;
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

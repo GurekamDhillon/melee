@@ -13,7 +13,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:path)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -21,49 +21,49 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $crate::ext_dflt!([$($def)?] ($($a),*) $name) }
                 }
             } )*
         };
     }
     ext_fns! {
     fn GXGetTexBufferSize(a0: u16, a1: u16, a2: u32, a3: u8, a4: u8) -> u32;
-    fn gmCamera_801A3098();
-    fn gmCamera_801A30E4();
-    fn gmCamera_801A31FC();
-    fn gmFrontend_AtlasSelect(a0: *mut GameModeState, a1: i32, a2: *const i8);
-    fn gmVsMelee_GetKOCounts() -> *mut u8;
+    fn gmCamera_801A3098() = crate::tu::adapt::gmCamera_801A3098__ec0ef3;
+    fn gmCamera_801A30E4() = crate::tu::adapt::gmCamera_801A30E4__21b227;
+    fn gmCamera_801A31FC() = crate::tu::adapt::gmCamera_801A31FC__fb65a6;
+    fn gmFrontend_AtlasSelect(a0: *mut GameModeState, a1: i32, a2: *const i8) = crate::tu::adapt::gmFrontend_AtlasSelect__26b7fc;
+    fn gmVsMelee_GetKOCounts() -> *mut u8 = crate::tu::adapt::gmVsMelee_GetKOCounts__f55015;
     fn gmVsMelee_UpdateKOCounts(a0: *mut u8, a1: *mut MatchEnd);
-    fn gm_8016247C(a0: i32) -> i32;
-    fn gm_80165268(a0: i32);
-    fn gm_80167BC8(a0: *mut VsModeData);
-    fn gm_80167FC4(a0: *mut SSSData);
-    fn gm_80168638(a0: *mut MatchEnd);
-    fn gm_80168710(a0: *mut MatchEnd, a1: *mut VsModeData);
-    fn gm_801688AC(a0: *mut MatchEnd) -> i32;
-    fn gm_CameraModeVSGetPauser() -> i32;
-    fn gm_ChangeGameModeAfterCurrentScene(a0: i32);
-    fn gm_GetGameModeStateEnterData(a0: *mut GameModeState) -> *mut c_void;
-    fn gm_GetGameModeStateExitData(a0: *mut GameModeState) -> *mut c_void;
-    fn gm_InitVsMode(a0: *mut VsModeData);
-    fn gm_LoadAnnouncer();
-    fn gm_LoadRumbleEnabled(a0: *mut StartMeleeData);
-    fn gm_SetNextGameModeStateId(a0: u8);
-    fn gm_SetupSubColors(a0: *mut StartMeleeData);
-    fn lbAudioAx_80026E84(a0: u32) -> u64;
-    fn lbAudioAx_80026EBC(a0: u32) -> u64;
-    fn lbAudioAx_80026F2C(a0: u32);
-    fn lbAudioAx_8002702C(a0: u32, a1: u64);
-    fn lbAudioAx_80027168();
-    fn lbCardNew_AllocWorkArea();
-    fn lbDvd_80017740(a0: i32, a1: i32, a2: i32, a3: i32, a4: u32, a5: i32, a6: i32, a7: u8, a8: i32) -> *mut c_void;
-    fn lbDvd_80018254();
-    fn lbDvd_GetPreloadCacheScene() -> *mut PreloadedGameModeState;
-    fn lbDvd_GetPreloadedArchive(a0: i32) -> *mut c_void;
-    fn lbDvd_SetupVsPreloadCache();
-    fn lbSnap_8001E204() -> i32;
-    fn lbSnap_8001E210() -> i32;
-    fn lbSnap_8001E218(a0: *mut c_void, a1: *mut c_void /* Unk80433380_48 */);
+    fn gm_8016247C(a0: i32) -> i32 = crate::tu::adapt::gm_8016247C__6fb2cc;
+    fn gm_80165268(a0: i32) = crate::tu::adapt::gm_80165268__fb784b;
+    fn gm_80167BC8(a0: *mut VsModeData) = crate::tu::adapt::gm_80167BC8__ea74bf;
+    fn gm_80167FC4(a0: *mut SSSData) = crate::tu::adapt::gm_80167FC4__c413c9;
+    fn gm_80168638(a0: *mut MatchEnd) = crate::tu::adapt::gm_80168638__516aa9;
+    fn gm_80168710(a0: *mut MatchEnd, a1: *mut VsModeData) = crate::tu::adapt::gm_80168710__2df7b9;
+    fn gm_801688AC(a0: *mut MatchEnd) -> i32 = crate::tu::adapt::gm_801688AC__8d2545;
+    fn gm_CameraModeVSGetPauser() -> i32 = crate::tu::adapt::gm_CameraModeVSGetPauser__ac5b00;
+    fn gm_ChangeGameModeAfterCurrentScene(a0: i32) = crate::tu::adapt::gm_ChangeGameModeAfterCurrentScene__2292c1;
+    fn gm_GetGameModeStateEnterData(a0: *mut GameModeState) -> *mut c_void = crate::tu::adapt::gm_GetGameModeStateEnterData__d31bdf;
+    fn gm_GetGameModeStateExitData(a0: *mut GameModeState) -> *mut c_void = crate::tu::adapt::gm_GetGameModeStateExitData__c3c609;
+    fn gm_InitVsMode(a0: *mut VsModeData) = crate::tu::adapt::gm_InitVsMode__c4ead2;
+    fn gm_LoadAnnouncer() = crate::tu::adapt::gm_LoadAnnouncer__907f2e;
+    fn gm_LoadRumbleEnabled(a0: *mut StartMeleeData) = crate::tu::adapt::gm_LoadRumbleEnabled__62a06a;
+    fn gm_SetNextGameModeStateId(a0: u8) = crate::tu::adapt::gm_SetNextGameModeStateId__031e98;
+    fn gm_SetupSubColors(a0: *mut StartMeleeData) = crate::tu::adapt::gm_SetupSubColors__761278;
+    fn lbAudioAx_80026E84(a0: u32) -> u64 = crate::tu::adapt::lbAudioAx_80026E84__5dcc27;
+    fn lbAudioAx_80026EBC(a0: u32) -> u64 = crate::tu::adapt::lbAudioAx_80026EBC__431bc0;
+    fn lbAudioAx_80026F2C(a0: u32) = crate::tu::adapt::lbAudioAx_80026F2C__c80d0b;
+    fn lbAudioAx_8002702C(a0: u32, a1: u64) = crate::tu::adapt::lbAudioAx_8002702C__208dc3;
+    fn lbAudioAx_80027168() = crate::tu::adapt::lbAudioAx_80027168__342616;
+    fn lbCardNew_AllocWorkArea() = crate::tu::adapt::lbCardNew_AllocWorkArea__a2c203;
+    fn lbDvd_80017740(a0: i32, a1: i32, a2: i32, a3: i32, a4: u32, a5: i32, a6: i32, a7: u8, a8: i32) -> *mut c_void = crate::tu::adapt::lbDvd_80017740__447a8d;
+    fn lbDvd_80018254() = crate::tu::adapt::lbDvd_80018254__6be579;
+    fn lbDvd_GetPreloadCacheScene() -> *mut PreloadedGameModeState = crate::tu::adapt::lbDvd_GetPreloadCacheScene__1ed990;
+    fn lbDvd_GetPreloadedArchive(a0: i32) -> *mut c_void = crate::tu::adapt::lbDvd_GetPreloadedArchive__a74d59;
+    fn lbDvd_SetupVsPreloadCache() = crate::tu::adapt::lbDvd_SetupVsPreloadCache__d38cf3;
+    fn lbSnap_8001E204() -> i32 = crate::tu::adapt::lbSnap_8001E204__c45919;
+    fn lbSnap_8001E210() -> i32 = crate::tu::adapt::lbSnap_8001E210__8a0d85;
+    fn lbSnap_8001E218(a0: *mut c_void, a1: *mut c_void /* Unk80433380_48 */) = crate::tu::adapt::lbSnap_8001E218__ac2c91;
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

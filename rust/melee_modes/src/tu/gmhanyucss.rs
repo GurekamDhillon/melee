@@ -13,7 +13,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:path)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -21,16 +21,16 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $crate::ext_dflt!([$($def)?] ($($a),*) $name) }
                 }
             } )*
         };
     }
     ext_fns! {
-    fn gmVsMelee_GetVsData() -> *mut VsModeData;
-    fn gm_80164A0C(a0: u8);
-    fn gm_80164F18();
-    fn gm_GetGameModeStateEnterData(a0: *mut GameModeState) -> *mut c_void;
+    fn gmVsMelee_GetVsData() -> *mut VsModeData = crate::tu::adapt::gmVsMelee_GetVsData__4d044b;
+    fn gm_80164A0C(a0: u8) = crate::tu::adapt::gm_80164A0C__5bef0b;
+    fn gm_80164F18() = crate::tu::adapt::gm_80164F18__ff202e;
+    fn gm_GetGameModeStateEnterData(a0: *mut GameModeState) -> *mut c_void = crate::tu::adapt::gm_GetGameModeStateEnterData__d31bdf;
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

@@ -164,6 +164,16 @@ pub unsafe fn gm_Mode_Homerun_OnLoad() {
 pub mod ext {
     use melee_types::*;
     macro_rules! hook {
+        ($hook:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?, $port:path) => {
+            pub static mut $hook: Option<fn($($t),*) $(-> $r)?> = None;
+            #[allow(non_snake_case)]
+            pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { $hook } {
+                    Some(f) => unsafe { f($($a),*) },
+                    None => $port($($a),*),
+                }
+            }
+        };
         ($hook:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
             pub static mut $hook: Option<fn($($t),*) $(-> $r)?> = None;
             #[allow(non_snake_case)]
@@ -215,7 +225,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_SaveChanges(); } return; },
                 }
             }
-    hook!(GM_801B06B0, gm_801B06B0, (css: *mut CSSData, a: i32, b: i32, c: i32, d: i32, e: i32, f: i32, g: i32));
+    hook!(GM_801B06B0, gm_801B06B0, (css: *mut CSSData, a: i32, b: i32, c: i32, d: i32, e: i32, f: i32, g: i32), crate::tu::adapt::gm_801B06B0__7adbb8);
 
     pub static mut LBDVD_GETPRELOADCACHESCENE: Option<fn() -> *mut PreloadedGameModeState> = None;
     #[allow(non_snake_case)]

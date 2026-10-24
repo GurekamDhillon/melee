@@ -11,11 +11,11 @@ pub mod ext {
     use super::*;
     crate::oext_fns! {
         /// gm_1A3F.c
-        fn gm_GetGameModeStateEnterData(scene: *mut GameModeState) -> *mut c_void;
+        fn gm_GetGameModeStateEnterData(scene: *mut GameModeState) -> *mut c_void = crate::tu::adapt::gm_GetGameModeStateEnterData__d31bdf;
         /// gm_1A3F.c
-        fn gm_GetGameModeStateExitData(state: *mut GameModeState) -> *mut c_void;
+        fn gm_GetGameModeStateExitData(state: *mut GameModeState) -> *mut c_void = crate::tu::adapt::gm_GetGameModeStateExitData__c3c609;
         /// gm_1A3F.c
-        fn gm_ChangeGameModeAfterCurrentScene(pending_mode: i32) -> ();
+        fn gm_ChangeGameModeAfterCurrentScene(pending_mode: i32) -> () = crate::tu::adapt::gm_ChangeGameModeAfterCurrentScene__2292c1;
     }
 }
 

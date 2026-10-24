@@ -32,13 +32,13 @@ pub static mut lbl_80472CB0: UnkAllstarData = unsafe { core::mem::zeroed() };
 pub mod ext {
     use super::*;
     ext_fns! {
-        fn Player_GetPlayerCharacter(a0: i32) -> CharacterKind;
-        fn Player_GetPlayerSlotType(a0: i32) -> Gm_PKind;
+        fn Player_GetPlayerCharacter(a0: i32) -> CharacterKind = crate::tu::adapt::Player_GetPlayerCharacter__96861a;
+        fn Player_GetPlayerSlotType(a0: i32) -> Gm_PKind = crate::tu::adapt::Player_GetPlayerSlotType__2d05e5;
         fn fn_8017E318() -> i32 = crate::tu::gm_17c0::fn_8017E318;
-        fn gmMainLib_8015CDC8() -> *mut gmm_x0_528_t;
-        fn gm_GetCurrentGameMode() -> u8;
-        fn gm_GetFrameCount() -> u32;
-        fn gm_GetStartMeleeRules() -> *mut StartMeleeRules;
+        fn gmMainLib_8015CDC8() -> *mut gmm_x0_528_t = crate::tu::adapt::gmMainLib_8015CDC8__ddba5a;
+        fn gm_GetCurrentGameMode() -> u8 = crate::tu::adapt::gm_GetCurrentGameMode__f56b36;
+        fn gm_GetFrameCount() -> u32 = crate::tu::adapt::gm_GetFrameCount__aa8e1a;
+        fn gm_GetStartMeleeRules() -> *mut StartMeleeRules = crate::tu::adapt::gm_GetStartMeleeRules__b73473;
     }
 }
 

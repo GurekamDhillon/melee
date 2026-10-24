@@ -32,20 +32,20 @@ pub mod ext {
     /// gm_unsplit data: per-scene records, terminated by `x0 == 0xFF` (46 entries).
     pub static mut gm_803DE650: [gm_803DE650_t; 46] = unsafe { core::mem::zeroed() };
     ext_fns! {
-        fn Player_GetPlayerCharacter(a0: i32) -> CharacterKind;
-        fn Player_GetPlayerSlotType(a0: i32) -> Gm_PKind;
-        fn Player_LoseStock(a0: i32);
+        fn Player_GetPlayerCharacter(a0: i32) -> CharacterKind = crate::tu::adapt::Player_GetPlayerCharacter__96861a;
+        fn Player_GetPlayerSlotType(a0: i32) -> Gm_PKind = crate::tu::adapt::Player_GetPlayerSlotType__2d05e5;
+        fn Player_LoseStock(a0: i32) = crate::tu::adapt::Player_LoseStock__6785b0;
         fn fn_8017E318() -> i32 = crate::tu::gm_17c0::fn_8017E318;
-        fn gmMainLib_8015CDD4() -> *mut gmm_x0_528_t;
-        fn gmVs_GetSceneController() -> *mut VsSceneController;
-        fn gm_GetCurrentGameMode() -> u8;
-        fn gm_GetCurrentSceneIndex() -> u8;
-        fn gm_GetFrameCount() -> u32;
-        fn gm_GetStartMeleeRules() -> *mut StartMeleeRules;
-        fn gm_RumbleEnabledForPlayer(a0: i32, a1: i32) -> i32;
-        fn gm_SetNextGameModeStateId(a0: u8);
-        fn ifStatus_802F6948(a0: i32);
-        fn ifStatus_802F6E3C(a0: i32);
+        fn gmMainLib_8015CDD4() -> *mut gmm_x0_528_t = crate::tu::adapt::gmMainLib_8015CDD4__51396a;
+        fn gmVs_GetSceneController() -> *mut VsSceneController = crate::tu::adapt::gmVs_GetSceneController__400cec;
+        fn gm_GetCurrentGameMode() -> u8 = crate::tu::adapt::gm_GetCurrentGameMode__f56b36;
+        fn gm_GetCurrentSceneIndex() -> u8 = crate::tu::adapt::gm_GetCurrentSceneIndex__5f49a4;
+        fn gm_GetFrameCount() -> u32 = crate::tu::adapt::gm_GetFrameCount__aa8e1a;
+        fn gm_GetStartMeleeRules() -> *mut StartMeleeRules = crate::tu::adapt::gm_GetStartMeleeRules__b73473;
+        fn gm_RumbleEnabledForPlayer(a0: i32, a1: i32) -> i32 = crate::tu::adapt::gm_RumbleEnabledForPlayer__aa5085;
+        fn gm_SetNextGameModeStateId(a0: u8) = crate::tu::adapt::gm_SetNextGameModeStateId__031e98;
+        fn ifStatus_802F6948(a0: i32) = crate::tu::adapt::ifStatus_802F6948__0cc861;
+        fn ifStatus_802F6E3C(a0: i32) = crate::tu::adapt::ifStatus_802F6E3C__cdcf00;
     }
 }
 

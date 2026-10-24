@@ -4879,6 +4879,15 @@ pub mod ext {
     use melee_types::*;
     use super::*;
     macro_rules! hook {
+        ($h:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?, $port:path) => {
+            pub static mut $h: Option<unsafe extern "C" fn($($t),*) $(-> $r)?> = None;
+            pub unsafe extern "C" fn $name($($a: $t),*) $(-> $r)? {
+                match $h {
+                    Some(f) => f($($a),*),
+                    None => $port($($a),*),
+                }
+            }
+        };
         ($h:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
             pub static mut $h: Option<unsafe extern "C" fn($($t),*) $(-> $r)?> = None;
             pub unsafe extern "C" fn $name($($a: $t),*) $(-> $r)? {
@@ -4891,10 +4900,10 @@ pub mod ext {
     }
     hook!(H_PSMTXRotAxisRad, PSMTXRotAxisRad, (a0: *mut [f32_0; 4], a1: *mut Vec3, a2: f32_0));
     hook!(H_PSMTXMultVec, PSMTXMultVec, (a0: *mut [f32_0; 4], a1: *mut Vec3, a2: *mut Vec3));
-    hook!(H_PSVECSubtract, PSVECSubtract, (a0: *mut Vec3, a1: *mut Vec3, a2: *mut Vec3));
+    hook!(H_PSVECSubtract, PSVECSubtract, (a0: *mut Vec3, a1: *mut Vec3, a2: *mut Vec3), crate::tu::adapt::PSVECSubtract__594d9f);
     hook!(H_PSVECScale, PSVECScale, (a0: *mut Vec3, a1: *mut Vec3, a2: f32_0));
-    hook!(H_PSVECNormalize, PSVECNormalize, (a0: *mut Vec3, a1: *mut Vec3));
-    hook!(H_PSVECCrossProduct, PSVECCrossProduct, (a0: *mut Vec3, a1: *mut Vec3, a2: *mut Vec3));
+    hook!(H_PSVECNormalize, PSVECNormalize, (a0: *mut Vec3, a1: *mut Vec3), crate::tu::adapt::PSVECNormalize__01cbbc);
+    hook!(H_PSVECCrossProduct, PSVECCrossProduct, (a0: *mut Vec3, a1: *mut Vec3, a2: *mut Vec3), crate::tu::adapt::PSVECCrossProduct__0fba16);
     hook!(H_OSReport, OSReport, (a0: *mut ::core::ffi::c_char, va: &[usize]));
     hook!(H___assert, __assert, (a0: *const ::core::ffi::c_char, a1: u32_0, a2: *const ::core::ffi::c_char) -> !);
     pub static mut H_mn_8022ED6C: Option<unsafe extern "C" fn(*mut HSD_JObj, *mut AnimLoopSettings) -> ::core::ffi::c_float> = None;

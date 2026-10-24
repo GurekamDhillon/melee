@@ -59,6 +59,16 @@ pub unsafe fn gm_Mode_Opening_OnLoad() {
 pub mod ext {
     use melee_types::*;
     macro_rules! hook {
+        ($hook:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?, $port:path) => {
+            pub static mut $hook: Option<fn($($t),*) $(-> $r)?> = None;
+            #[allow(non_snake_case)]
+            pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { $hook } {
+                    Some(f) => unsafe { f($($a),*) },
+                    None => $port($($a),*),
+                }
+            }
+        };
         ($hook:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
             pub static mut $hook: Option<fn($($t),*) $(-> $r)?> = None;
             #[allow(non_snake_case)]

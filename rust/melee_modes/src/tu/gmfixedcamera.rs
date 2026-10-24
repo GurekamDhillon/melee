@@ -13,7 +13,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:path)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -21,31 +21,31 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $crate::ext_dflt!([$($def)?] ($($a),*) $name) }
                 }
             } )*
         };
     }
     ext_fns! {
-    fn gmFrontend_AtlasSelect(a0: *mut GameModeState, a1: i32, a2: *const i8);
-    fn gmVsMelee_EnterCss(a0: *mut GameModeState, a1: *mut VsModeData, a2: u32);
-    fn gmVsMelee_EnterResults(a0: *mut GameModeState);
-    fn gmVsMelee_EnterSss(a0: *mut GameModeState, a1: *mut VsModeData);
-    fn gmVsMelee_EnterSuddenDeath(a0: *mut GameModeState, a1: *mut VsModeData, a2: Option<unsafe extern "C" fn(*mut StartMeleeData, *mut StartMeleeData)>, a3: Option<unsafe extern "C" fn(*mut PlayerInitData, *mut PlayerInitData)>);
-    fn gmVsMelee_EnterVs(a0: *mut GameModeState, a1: *mut VsModeData, a2: Option<unsafe extern "C" fn(*mut StartMeleeData, *mut StartMeleeData)>, a3: Option<unsafe extern "C" fn(*mut PlayerInitData, *mut PlayerInitData)>);
-    fn gmVsMelee_ExitCss(a0: *mut GameModeState, a1: *mut VsModeData);
-    fn gmVsMelee_ExitResults(a0: *mut GameModeState, a1: *mut VsModeData, a2: u8);
-    fn gmVsMelee_ExitSss(a0: *mut GameModeState, a1: *mut VsModeData, a2: u8);
-    fn gmVsMelee_ExitSuddenDeath(a0: *mut GameModeState);
-    fn gmVsMelee_ExitVs(a0: *mut GameModeState, a1: u8, a2: u8);
-    fn gmVsMelee_ResetKOCounts();
-    fn gm_80165290(a0: i32);
-    fn gm_InitVsMode(a0: *mut VsModeData);
-    fn gm_ModeState_ApproachVs_OnEnter(a0: *mut GameModeState);
-    fn gm_ModeState_ApproachVs_OnExit(a0: *mut GameModeState);
-    fn gm_ModeState_Approach_OnEnter(a0: *mut GameModeState);
-    fn gm_ModeState_Prize_OnEnter(a0: *mut GameModeState);
-    fn gm_ModeState_Prize_OnExit(a0: *mut GameModeState);
+    fn gmFrontend_AtlasSelect(a0: *mut GameModeState, a1: i32, a2: *const i8) = crate::tu::adapt::gmFrontend_AtlasSelect__26b7fc;
+    fn gmVsMelee_EnterCss(a0: *mut GameModeState, a1: *mut VsModeData, a2: u32) = crate::tu::adapt::gmVsMelee_EnterCss__44afc7;
+    fn gmVsMelee_EnterResults(a0: *mut GameModeState) = crate::tu::adapt::gmVsMelee_EnterResults__e8d931;
+    fn gmVsMelee_EnterSss(a0: *mut GameModeState, a1: *mut VsModeData) = crate::tu::adapt::gmVsMelee_EnterSss__1e7fb2;
+    fn gmVsMelee_EnterSuddenDeath(a0: *mut GameModeState, a1: *mut VsModeData, a2: Option<unsafe extern "C" fn(*mut StartMeleeData, *mut StartMeleeData)>, a3: Option<unsafe extern "C" fn(*mut PlayerInitData, *mut PlayerInitData)>) = crate::tu::adapt::gmVsMelee_EnterSuddenDeath__883e46;
+    fn gmVsMelee_EnterVs(a0: *mut GameModeState, a1: *mut VsModeData, a2: Option<unsafe extern "C" fn(*mut StartMeleeData, *mut StartMeleeData)>, a3: Option<unsafe extern "C" fn(*mut PlayerInitData, *mut PlayerInitData)>) = crate::tu::adapt::gmVsMelee_EnterVs__41232b;
+    fn gmVsMelee_ExitCss(a0: *mut GameModeState, a1: *mut VsModeData) = crate::tu::adapt::gmVsMelee_ExitCss__4d2768;
+    fn gmVsMelee_ExitResults(a0: *mut GameModeState, a1: *mut VsModeData, a2: u8) = crate::tu::adapt::gmVsMelee_ExitResults__c5c250;
+    fn gmVsMelee_ExitSss(a0: *mut GameModeState, a1: *mut VsModeData, a2: u8) = crate::tu::adapt::gmVsMelee_ExitSss__2855c9;
+    fn gmVsMelee_ExitSuddenDeath(a0: *mut GameModeState) = crate::tu::adapt::gmVsMelee_ExitSuddenDeath__a6d8ba;
+    fn gmVsMelee_ExitVs(a0: *mut GameModeState, a1: u8, a2: u8) = crate::tu::adapt::gmVsMelee_ExitVs__083a0e;
+    fn gmVsMelee_ResetKOCounts() = crate::tu::adapt::gmVsMelee_ResetKOCounts__75dda2;
+    fn gm_80165290(a0: i32) = crate::tu::adapt::gm_80165290__e2462d;
+    fn gm_InitVsMode(a0: *mut VsModeData) = crate::tu::adapt::gm_InitVsMode__c4ead2;
+    fn gm_ModeState_ApproachVs_OnEnter(a0: *mut GameModeState) = crate::tu::adapt::gm_ModeState_ApproachVs_OnEnter__73c56c;
+    fn gm_ModeState_ApproachVs_OnExit(a0: *mut GameModeState) = crate::tu::adapt::gm_ModeState_ApproachVs_OnExit__ca1d07;
+    fn gm_ModeState_Approach_OnEnter(a0: *mut GameModeState) = crate::tu::adapt::gm_ModeState_Approach_OnEnter__044765;
+    fn gm_ModeState_Prize_OnEnter(a0: *mut GameModeState) = crate::tu::adapt::gm_ModeState_Prize_OnEnter__8623b9;
+    fn gm_ModeState_Prize_OnExit(a0: *mut GameModeState) = crate::tu::adapt::gm_ModeState_Prize_OnExit__253ddf;
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

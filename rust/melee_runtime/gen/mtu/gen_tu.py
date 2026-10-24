@@ -510,7 +510,7 @@ class Walk:
 def build(stem, spec, want_ext):
     tu = Tu(patched_source(stem, spec), spec.get("args", ()), (ROOT / spec["src"]).parent)
     stubs, inlines, data = tu.uses()
-    for n in ("__assert", "OSReport", "printf"):
+    for n in ("__assert", "OSReport", "printf", "HSD_Panic", "OSPanic"):
         stubs.pop(n, None)
     for n in spec.get("skip_stubs", ()):
         stubs.pop(n, None)
@@ -666,6 +666,10 @@ def build(stem, spec, want_ext):
     # the function table: stubs address-taken + the TU's own functions, sorted by name
     fpn = [n for n in names if stubs[n][2] and not stubs[n][0].type.is_function_variadic()]
     own = sorted(n for n in tu.defs if not tu.defs[n].storage_class == ci.StorageClass.NONE or True)
+    if spec.get("pub_only"):
+        # only the port's public functions can be named from the test (statics of the C file stay private)
+        pubs = set(re.findall(r"(?m)^\s*pub (?:unsafe )?(?:extern \"C\" )?fn (\w+)", (ROOT / "rust/melee_runtime/src/tu" / f"{stem}.rs").read_text(encoding="utf-8")))
+        own = [n for n in own if n in pubs]
     c_out.append("static void freg_all(void)\n{")
     for n in fpn:
         c_out.append(f"    freg((const void*) {n});")

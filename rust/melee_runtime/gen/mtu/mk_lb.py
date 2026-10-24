@@ -209,10 +209,22 @@ def retcls(rt):
     return "i4"
 
 
+def pub_fns(stem):
+    """Names of the `pub fn`s of src/tu/<stem>.rs: statics of the C file the port keeps private are not ops (their
+    callers cover them)."""
+    import re
+    txt = (ROOT / "rust/melee_runtime/src/tu" / f"{stem}.rs").read_text(encoding="utf-8")
+    return set(re.findall(r"(?m)^\s*pub (?:unsafe )?(?:extern \"C\" )?fn (\w+)", txt))
+
+
 def ops_of(tu, stem, cfg, pools):
     ops = []
+    pub = pub_fns(stem) if cfg.get("pub_only") else None
     for name, cur in tu.defs.items():
         if name in cfg.get("skip", ()):
+            continue
+        if pub is not None and name not in pub:
+            print(f"mk_lb: {stem}: skipping private {name}")
             continue
         params = list(cur.get_arguments())
         ov = cfg.get("ov", {}).get(name, {})
@@ -243,6 +255,9 @@ def ops_of(tu, stem, cfg, pools):
             sc, sr = f"{{ u64_t_ rr = (u64_t_) {call_c}; HM((u32) rr); ret = (u32) (rr >> 32); }}", f"{{ let rr = {call_r} as u64; hm(rr as u32); ret = (rr >> 32) as u32; }}"
         else:
             sc, sr = f"ret = (u32) {call_c};", f"ret = {call_r} as u32;"
+        if name in cfg.get("stmt", {}):
+            # the whole call statement, with {call} standing for the call expression (pointer results named by index)
+            sc, sr = (x.replace("{call}", cc) for x, cc in zip(cfg["stmt"][name], (call_c, call_r)))
         post_c, post_r = cfg.get("post", {}).get(name, ("", ""))
         pre2_c, pre2_r = cfg.get("pre", {}).get(name, ("", ""))
         ops.append(dict(name=name, c=pre2_c + " " + " ".join(pre_c) + " " + sc + " " + post_c,
@@ -273,10 +288,11 @@ def emit(stem):
         c.append(f"        case {i}: n = {o['n']}; break;  /* {o['name']} */")
     c += ["        }", "        for (k = 0; k < n; k++) {", "            u32 ret = 0;", "            tu_case(op, k);", "            setup_world();",
           cfg.get("setup", ("", ""))[0],
-          '            if (getenv("MTU_PROG")) { printf("P %d %d%c", op, k, 10); fflush(0); }', "            switch (op) {"]
+          '            if (getenv("MTU_PROG")) { printf("P %d %d%c", op, k, 10); fflush(0); }',
+          "            ARMED = 1;", "            if (MTU_SETJMP()) { ARMED = 0; printf(\"%d %d ABORT\\n\", op, k); continue; }", "            switch (op) {"]
     for i, o in enumerate(ops):
         c.append(f"            case {i}: {{ {o['c']} }} break;")
-    c += ["            }", "            hash_world();", cfg.get("hash", ("", ""))[0],
+    c += ["            }", "            ARMED = 0;", "            hash_world();", cfg.get("hash", ("", ""))[0],
           '            printf("%d %d %08X %08X %08X\\n", op, k, ret, H, TR);', "        }", "    }", "    return 0;", "}", ""]
     c_txt = "\n".join(c)
     wd, wf = world_c(tu, pools).split("@@SPLIT@@")
@@ -291,17 +307,22 @@ def emit(stem):
          *[f"const OP_{o['name']}: u32 = {i};" for i, o in enumerate(ops)], "mod mtu_harness;", "use core::ffi::c_void;", "use core::ptr::null_mut;", "use melee_types::*;", f"use melee_runtime::tu::{stem} as m;",
          "use mtu_harness::*;", f'#[path = "mtu/{stem}_gen.rs"]', "mod g;", "", cfg.get("rs_extra", ""), "",
          world_rs(pools),
-         "#[test]", f"fn {stem}_matches_c() {{", "    unsafe {", "        g::install();", "        preg_world();", "        g::preg_own();", "        g::freg_all();",
+         "// harness = false (Cargo.toml): a case that ends in a panic is cut off inside the hook (see mtu_harness::run_case),",
+         "// which a libtest main thread cannot survive at exit.",
+         f"fn main() {{ {stem}_matches_c(); println!(\"tu_{stem}: ok\"); }}", "", f"fn {stem}_matches_c() {{", "    unsafe {", "        g::install();", "        preg_world();", "        g::preg_own();", "        g::freg_all();",
          "        freg_world();", cfg.get("pregs", ("", ""))[1],
+         "        install_abort_hook();",
          f'        let mut c = Check::new(include_str!("data/mtu_{stem}.txt"));', "        let mut total = 0u32;",
          f"        for op in 0..{nops}u32 {{", "            let n = match op {"]
     for i, o in enumerate(ops):
         r.append(f"                {i} => {o['n']}u32,")
     r += ["                _ => unreachable!(),", "            };", "            for k in 0..n {", "                case(op, k);",
-          "                setup_world();", cfg.get("setup", ("", ""))[1], "                let mut ret = 0u32;", "                match op {"]
+          "                setup_world();", cfg.get("setup", ("", ""))[1], "                let mut ret = 0u32;",
+          "                let aborted = run_case(|| unsafe { match op {"]
     for i, o in enumerate(ops):
         r.append(f"                    {i} => {{ {o['r']} }}")
-    r += ["                    _ => unreachable!(),", "                }", "                hash_world();", cfg.get("hash", ("", ""))[1],
+    r += ["                    _ => unreachable!(),", "                } });",
+          "                if aborted { c.abort(op, k); total += 1; continue; }", "                hash_world();", cfg.get("hash", ("", ""))[1],
           "                c.line(op, k, ret);", "                total += 1;", "            }", "        }", "        assert_eq!(c.done(), total);", "    }", "}", ""]
     (ROOT / "rust/melee_runtime/tests" / f"tu_{stem}.rs").write_text("\n".join(r), encoding="utf-8", newline="\n")
     print(f"mk_lb: {stem}: {nops} ops")

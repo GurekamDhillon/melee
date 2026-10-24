@@ -8,3 +8,8 @@ publish.workspace = true
 [dependencies]
 melee_core.workspace = true
 melee_types.workspace = true
+
+# Per-TU state oracles whose cases may end in a failed assertion: run without libtest (tests/mtu_harness).
+[[test]]
+name = "tu_lbdvd"
+harness = false

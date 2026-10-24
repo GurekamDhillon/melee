@@ -1006,3 +1006,14 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   below 4 GB because those files route pointers through `int`. Trap: a group named `LeftWall` has normal -x (hit while
   moving right), i.e. it is the stage's right-hand wall.
 - Write C driver edits with the Edit tool, not a Python string: `\n` inside a Python literal puts a real newline in the C.
+
+## Platform track: `melee play` (2026-10-24, port/plat-play)
+- `melee play [--iso] [--time-secs N] [--shot-dir D] [--quit-at-results] [--skip-intro] [--golden-pads]` (rust/melee/src/play.rs, ui.rs):
+  winit window at 60 Hz, pads via `PadSystem::read` (keyboard, GC adapter, gamepads, `MELEE_PAD_SCRIPT`), scene flow
+  opening -> title -> main menu -> VS menu -> CSS -> SSS -> loading -> live VS match (pause by START, quit by L+R+A+START) -> results -> CSS.
+- Verified by scripted runs (tools/rust-port/play/*.txt): `vs_to_ko.txt` (with `--golden-pads --time-secs 25`) reaches a match and finishes it
+  to results; `pause_quit_rematch.txt` pauses, resumes, quits to CSS and plays a second match to results on live pads. Shots: docs/rust-port/shots/play_*.png.
+- Stand-ins, not ports: every non-match screen is drawn by ui.rs (rects + bitmap font), not the retail MnTitle/MnMain/MnCharSel scenes or the
+  gmfrontend kit; opening movie is a card; roster = 7 fighters, 4 stages; rules fixed (time match). The sim (vs_match.rs) halts with a reported
+  reason on unported fighter code (~107 sites: most button presses in IASAs, attacks, shield variants), so free live play ends early on such input.
+  START is masked from the fighters (pause layer owns it).

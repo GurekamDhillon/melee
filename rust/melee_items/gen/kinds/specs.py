@@ -68,7 +68,8 @@ for _n in ("itarwinglaser", "itbat", "itbombhei", "itbox", "itcapsule", "itcereb
            "itluigifireball", "itmaril", "itmariocape", "itmariofireball", "itmarumine", "itmasterhandbullet",
            "itmasterhandlaser", "itmatadogas",
            "itnessbat", "itnesspkfire", "itnesspkfirepillar", "itnesspkflash", "itnesspkflashexplode",
-           "itnesspkthunderball", "itnesspkthundertrail", "itnessyoyo"):
+           "itnesspkthunderball", "itnesspkthundertrail", "itnessyoyo",
+           "itmato", "itmball", "itmetalb", "itmetamon", "itmew", "itmewtwodisable", "itmewtwoshadowball", "itmsbomb"):
     SPECS[_n] = dict(src=f"{K}{_n}.c", types=_T, ret=dict(COMMON_RET), effects=dict(COMMON_EFF),
                      null_ret_ok=["Item_80268B18", "Item_80268B5C", "it_8026F6BC", "HSD_Randi"])
 
@@ -246,3 +247,32 @@ for _n in ("itnokonoko", "itoctarock", "itoctarockstone", "itoldkuri", "itoldott
     SPECS[_n] = dict(src=f"{K}{_n}.c", types=_T, ret={**COMMON_RET, **MY_RET}, effects={**COMMON_EFF, **MY_EFF},
                      null_ret_ok=["Item_80268B18", "Item_80268B5C", "it_8026F6BC", "HSD_Randi", "it_8028EB88", "it_8027B5B0",
                                   "it_802E0100", "it_802E0488", "ftLib_8008627C"])
+SPECS["itmetalb"]["ret"]["it_8027236C"] = ("((fv() & 3) ? &GO[2] : 0)", "if fv() & 3 != 0 { &raw mut crate::GO[2] } else { core::ptr::null_mut() }")
+SPECS["itmetalb"]["null_ret_ok"].append("it_8027236C")
+
+SPECS["itmball"]["custom_stubs"] = {"efAsync_Spawn": dict(
+    c="void efAsync_Spawn(HSD_GObj* a0, void* a1, u32 a2, u32 a3, HSD_JObj* a4, ...) { T(@ID@); T(PI(a0)); T(PI(a1)); T(a2); T(a3); T(PI(a4)); }",
+    ext="fn efAsync_Spawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: u32, a3: u32, a4: *mut HSD_JObj);",
+    hook="|a0, a1, a2, a3, a4| { t(@ID@); t(pi(a0)); t(pi(a1)); t(a2); t(a3); t(pi(a4)); }")}
+
+SPECS["itmsbomb"]["ret"]["it_80276308"] = ("(int) ((fv() % 4) * 4)", "((fv() % 4) * 4) as i32")
+SPECS["itmsbomb"]["ret"]["it_802763B8"] = ("(int) (fv() % 3)", "(fv() % 3) as i32")
+SPECS["itmsbomb"]["ret"]["it_802763E0"] = ("(int) (fv() % 3)", "(fv() % 3) as i32")
+SPECS["itmsbomb"]["ret"]["it_8026D604"] = _P
+SPECS["itmato"]["ret"]["ScriptGame_TargetDestroyed"] = _P
+
+_SB = SPECS["itmewtwoshadowball"]
+_SB["skip_stubs"] = ["sinf", "cosf"]
+_SB["custom_stubs"] = {"efSync_Spawn": _EFS3}
+_SB["ret"]["ftLib_80086630"] = ("&JO[5]", "&raw mut crate::JO[5]")
+_SB["null_ret_ok"].append("ftLib_80086630")
+_RARE = ("(int) ((fv() % 5) == 0)", "((fv() % 5) == 0) as i32")
+for _n in ("ftMt_SpecialN_CheckShadowBallRemove", "ftMt_SpecialN_CheckShadowBallCancel", "ftKb_SpecialNMt_80106F9C", "ftKb_SpecialNMt_80106FEC"):
+    _SB["ret"][_n] = _RARE
+for _n in ("ftMt_SpecialN_GetChargeLevel", "ftKb_SpecialNMt_80106F44"):
+    _SB["ret"][_n] = ("(int) (fv() % 4) - 1", "(fv() % 4) as i32 - 1")
+    _SB["effects"][_n] = (
+        "if (a1) { *a1 = (int) (fv() % 6); } if (a2) { *a2 = (int) (fv() % 5) + 1; }",
+        "if !a1.is_null() { *a1 = (fv() % 6) as i32; } if !a2.is_null() { *a2 = (fv() % 5) as i32 + 1; }")
+_SB["effects"]["HSD_MtxGetRotation"] = _V("a1")
+_SB["ret"]["atan2f"] = ("(float) ((int) (fv() % 629) - 314) / 100.0f", "((fv() % 629) as i32 - 314) as f32 / 100.0")

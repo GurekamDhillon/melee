@@ -69,6 +69,7 @@ pub mod gm_17c0;
 // Callees of unported TUs are `ext` stubs in each file; every file's functions are checked by the
 // state oracle (`crate::oracle`, `gen/tu/run.py`) against the C compiled natively.
 pub mod gmfrontend;
+pub mod gmfrontend_atlas_toy;
 pub mod gmprogressivemode;
 pub mod gmregcommon;
 pub mod gmregtyfall;

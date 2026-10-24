@@ -73,24 +73,21 @@ pub fn rules_write(event: &mut [u8], rules: u32) {
     event[p + 4..p + 8].copy_from_slice(&rules.to_be_bytes());
 }
 
-/// `gw_rp_rules_read` (`event` = command byte + payload, `size` = payload bytes). `None` = refuse.
-pub fn rules_read(event: &[u8], size: usize) -> Option<u32> {
+/// `gw_rp_rules_read` (`event` = command byte + payload, `size` = payload bytes): the word the C
+/// leaves in `*rules` and whether playback is allowed (false = refuse).
+pub fn rules_read(event: &[u8], size: usize) -> (u32, bool) {
     if size < STANDARD_START + 4 {
-        return Some(0);
+        return (0, true);
     }
     let p = &event[1 + STANDARD_START..];
     if p[0] != b'G' || p[1] != b'D' || p[2] != b'T' {
-        return Some(0);
+        return (0, true);
     }
     if p[3] != b'1' || size < RULES_START {
-        return None;
+        return (0, false);
     }
     let r = be32(&p[4..]);
-    if turbo_valid(r) {
-        Some(r)
-    } else {
-        None
-    }
+    (r, turbo_valid(r))
 }
 
 pub fn controls_word_valid(w: u32) -> bool {
@@ -196,13 +193,53 @@ pub struct Replay {
 pub enum ParseError {
     NoRawBlock,
     BadSizeTable,
+    /// A malformed size table length (the C returns -1 without a log line).
+    BadSizeTableLen,
     /// An unsupported Turbo match rule word.
     UnsupportedRules(u32),
     BadControls,
     BadRange,
 }
 
+impl ParseError {
+    /// The line gw_replay.c logs for it.
+    pub fn message(&self) -> String {
+        match self {
+            ParseError::NoRawBlock => "replay: no raw event block".into(),
+            ParseError::BadSizeTable => "replay: raw block does not start with the event-size table".into(),
+            ParseError::UnsupportedRules(w) => format!("replay: unsupported Turbo match rule 0x{w:08x}; refusing playback"),
+            ParseError::BadControls => "replay: unsupported or malformed fighter controls; refusing playback".into(),
+            ParseError::BadRange | ParseError::BadSizeTableLen => String::new(),
+        }
+    }
+}
+
 impl Replay {
+    /// The zeroed `rp` of a process that has not loaded anything.
+    pub fn empty() -> Replay {
+        Replay {
+            version: [0; 4],
+            game_info: [0; GAME_INFO],
+            seed: 0,
+            turbo: 0,
+            controls: [0; 4],
+            game_start_seen: false,
+            truncated: false,
+            first: 0,
+            last: 0,
+            inputs: Vec::new(),
+            fs_seed: Vec::new(),
+            fs_has: Vec::new(),
+            ucf_dashback: [0; 4],
+            ucf_shield: [0; 4],
+            frozen_ps: false,
+            online: false,
+            post: None,
+            parity_expected: 0,
+            scene: String::new(),
+        }
+    }
+
     pub fn input(&self, frame: i32, port: usize, follower: bool) -> Option<&Input> {
         if frame < self.first || frame > self.last || port >= 4 {
             return None;
@@ -213,28 +250,15 @@ impl Replay {
 
 /// `rp_parse` + `rp_load`'s scene string. `want_post` = `MELEE_SLP_PARITY=1`.
 pub fn parse(d: &[u8], want_post: bool) -> Result<Replay, ParseError> {
+    let mut rp = Replay::empty();
+    parse_into(&mut rp, d, want_post).map(|_| rp)
+}
+
+/// [`parse`] into an existing `rp`. On failure `rp` keeps what the C's globals would hold after the
+/// failed parse (Game Start fields, frame range, truncation); a live match armed afterwards reads
+/// them (`frozen_ps`, `turbo`, `game_info`...).
+pub fn parse_into(rp: &mut Replay, d: &[u8], want_post: bool) -> Result<(), ParseError> {
     let n = d.len();
-    let mut rp = Replay {
-        version: [0; 4],
-        game_info: [0; GAME_INFO],
-        seed: 0,
-        turbo: 0,
-        controls: [0; 4],
-        game_start_seen: false,
-        truncated: false,
-        first: 0,
-        last: 0,
-        inputs: Vec::new(),
-        fs_seed: Vec::new(),
-        fs_has: Vec::new(),
-        ucf_dashback: [0; 4],
-        ucf_shield: [0; 4],
-        frozen_ps: false,
-        online: false,
-        post: None,
-        parity_expected: 0,
-        scene: String::new(),
-    };
     let mut sizes = [0u16; 256];
     let mut i = 0;
     while i + 12 < n {
@@ -259,7 +283,7 @@ pub fn parse(d: &[u8], want_post: bool) -> Result<Replay, ParseError> {
         return Err(ParseError::BadSizeTable);
     }
     if pos + 2 > end || d[pos + 1] < 1 || pos + 1 + d[pos + 1] as usize > end || (d[pos + 1] - 1) % 3 != 0 {
-        return Err(ParseError::BadSizeTable);
+        return Err(ParseError::BadSizeTableLen);
     }
     let tl = d[pos + 1] as usize;
     let mut k = 0;
@@ -288,12 +312,10 @@ pub fn parse(d: &[u8], want_post: bool) -> Result<Replay, ParseError> {
                         c += 1 + sz;
                         continue;
                     }
-                    match rules_read(b, sz) {
-                        Some(r) => rp.turbo = r,
-                        None => {
-                            // the C leaves rp.turbo = 0 or the word it read; only the refusal matters
-                            return Err(ParseError::UnsupportedRules(be32(&b[1 + STANDARD_START + 4..])));
-                        }
+                    let (word, ok) = rules_read(b, sz);
+                    rp.turbo = word;
+                    if !ok {
+                        return Err(ParseError::UnsupportedRules(word));
                     }
                     match controls_read(b, sz) {
                         Some(w) => rp.controls = w,
@@ -439,7 +461,7 @@ pub fn parse(d: &[u8], want_post: bool) -> Result<Replay, ParseError> {
         }
     }
     rp.scene = s;
-    Ok(rp)
+    Ok(())
 }
 
 /// FNV-1a 64 helpers for summary lines.

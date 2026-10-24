@@ -803,3 +803,10 @@
 #include <melee/gm/gmresultplayer.static.h>
 #include <melee/gm/gmfrontend_items.h>
 #include <melee/gm/gmtoulib.static.h>
+#line 1514 "src/sysdolphin/baselib/pobj.c"
+typedef struct GenoPalPObj {
+    HSD_PObj base;
+    u8 n;      /* envelopes (palette slots) */
+    u8 broken; /* failed the load checks, or needs something v1 does not do: not drawn */
+    u8 pad[2];
+} GenoPalPObj;

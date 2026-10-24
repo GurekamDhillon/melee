@@ -6017,7 +6017,7 @@ pub type Fighter_GObj = HSD_GObj;
 pub type Fighter_MotionFileStringGetter = Option<unsafe extern "C" fn(enum_t) -> *mut i8>;
 pub type Fighter_ItemEvent = Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>;
 pub type Fighter_ModelEvent = Option<unsafe extern "C" fn(*mut Fighter, i32, i32)>;
-pub type Fighter_UnkMtxEvent = Option<unsafe extern "C" fn(*mut HSD_GObj, i32, Mtx)>;
+pub type Fighter_UnkMtxEvent = Option<unsafe extern "C" fn(*mut HSD_GObj, i32, *mut [f32; 4])>;
 pub type Fighter_UnkPtrEvent = Option<unsafe extern "C" fn(i32, *mut i32, *mut i32)>;
 pub type FighterEvent = Option<unsafe extern "C" fn(*mut Fighter)>;
 pub type FtCmd = Option<unsafe extern "C" fn(*mut Fighter_GObj, *mut CommandInfo)>;
@@ -8260,8 +8260,8 @@ const _: () = assert!(core::mem::size_of::<MTXStack>() == 24);
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct _objheap {
-    pub top: u32,
-    pub curr: u32,
+    pub top: usize,
+    pub curr: usize,
     pub size: u32,
     pub remain: u32,
 }
@@ -8273,8 +8273,8 @@ impl GcDecode for _objheap {
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
-        v.top = <u32 as GcDecode>::gc_decode(d, at + 0x0);
-        v.curr = <u32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.top = <usize as GcDecode>::gc_decode(d, at + 0x0);
+        v.curr = <usize as GcDecode>::gc_decode(d, at + 0x4);
         v.size = <u32 as GcDecode>::gc_decode(d, at + 0x8);
         v.remain = <u32 as GcDecode>::gc_decode(d, at + 0xC);
         v
@@ -8292,7 +8292,6 @@ impl GcLayout for _objheap {
         GcField::new("remain", 0xC, 4, "u32"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<_objheap>() == 16);
 
 /// C `_HSD_ObjAllocLink` (src/sysdolphin/baselib/objalloc.h:15); GameCube size 0x4, align 4.
 #[repr(C, align(8))]
@@ -12972,8 +12971,8 @@ const _: () = assert!(core::mem::size_of::<HSD_ShapeAnimJoint>() == 24);
 #[derive(Clone, Copy)]
 pub struct HSD_PObjInfo {
     pub parent: HSD_ClassInfo,
-    pub disp: Option<unsafe extern "C" fn(*mut HSD_PObj, Mtx, Mtx, u32)>,
-    pub setup_mtx: Option<unsafe extern "C" fn(*mut HSD_PObj, Mtx, Mtx, u32)>,
+    pub disp: Option<unsafe extern "C" fn(*mut HSD_PObj, *mut [f32; 4], *mut [f32; 4], u32)>,
+    pub setup_mtx: Option<unsafe extern "C" fn(*mut HSD_PObj, *mut [f32; 4], *mut [f32; 4], u32)>,
     pub load: Option<unsafe extern "C" fn(*mut HSD_PObj, *mut HSD_PObjDesc) -> i32>,
 }
 impl HSD_PObjInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
@@ -13247,8 +13246,8 @@ pub struct HSD_JObjInfo {
     pub parent: _HSD_ObjInfo,
     pub load: Option<unsafe extern "C" fn(*mut HSD_JObj, *mut HSD_Joint, *mut HSD_JObj) -> i32>,
     pub make_mtx: Option<unsafe extern "C" fn(*mut HSD_JObj)>,
-    pub make_pmtx: Option<unsafe extern "C" fn(*mut HSD_JObj, Mtx, Mtx)>,
-    pub disp: Option<unsafe extern "C" fn(*mut HSD_JObj, Mtx, Mtx, HSD_TrspMask, u32)>,
+    pub make_pmtx: Option<unsafe extern "C" fn(*mut HSD_JObj, *mut [f32; 4], *mut [f32; 4])>,
+    pub disp: Option<unsafe extern "C" fn(*mut HSD_JObj, *mut [f32; 4], *mut [f32; 4], HSD_TrspMask, u32)>,
     pub release_child: Option<unsafe extern "C" fn(*mut HSD_JObj)>,
 }
 impl HSD_JObjInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
@@ -15401,7 +15400,7 @@ const _: () = assert!(core::mem::size_of::<HSD_DObjDesc>() == 32);
 #[derive(Clone, Copy)]
 pub struct HSD_DObjInfo {
     pub parent: HSD_ClassInfo,
-    pub disp: Option<unsafe extern "C" fn(*mut HSD_DObj, Mtx, Mtx, u32)>,
+    pub disp: Option<unsafe extern "C" fn(*mut HSD_DObj, *mut [f32; 4], *mut [f32; 4], u32)>,
     pub load: Option<unsafe extern "C" fn(*mut HSD_DObj, *mut HSD_DObjDesc) -> i32>,
 }
 impl HSD_DObjInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
@@ -91221,6 +91220,44 @@ impl GcLayout for lbl_803D9DD0_t {
 }
 const _: () = assert!(core::mem::size_of::<lbl_803D9DD0_t>() == 40);
 
+/// C `GenoPalPObj` (rust/melee_types/gen/all_types.c:807); GameCube size 0x1C, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct GenoPalPObj {
+    pub base: HSD_PObj,
+    pub n: u8,
+    pub broken: u8,
+    pub pad: [u8; 2],
+}
+impl GenoPalPObj { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for GenoPalPObj {
+    const GC_BYTES: u32 = 0x1C;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.base = <HSD_PObj as GcDecode>::gc_decode(d, at + 0x0);
+        v.n = <u8 as GcDecode>::gc_decode(d, at + 0x18);
+        v.broken = <u8 as GcDecode>::gc_decode(d, at + 0x19);
+        v.pad = <[u8; 2] as GcDecode>::gc_decode(d, at + 0x1A);
+        v
+    }
+}
+impl GcPointee for GenoPalPObj { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<GenoPalPObj>(t) } }
+impl GcLayout for GenoPalPObj {
+    const GC_NAME: &'static str = "GenoPalPObj";
+    const GC_SIZE: u32 = 0x1C;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("base", 0x0, 24, "HSD_PObj"),
+        GcField::new("n", 0x18, 1, "u8"),
+        GcField::new("broken", 0x19, 1, "u8"),
+        GcField::new("pad", 0x1A, 2, "u8[2]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<GenoPalPObj>() == 56);
+
 /// Every generated GameCube record layout, for the DAT loader, serialisers and the m-ex map.
 pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<__file_modes as GcLayout>::GC_NAME, <__file_modes as GcLayout>::GC_SIZE, <__file_modes as GcLayout>::GC_ALIGN, <__file_modes as GcLayout>::GC_FIELDS),
@@ -92859,6 +92896,7 @@ pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<BracketSrcEntry as GcLayout>::GC_NAME, <BracketSrcEntry as GcLayout>::GC_SIZE, <BracketSrcEntry as GcLayout>::GC_ALIGN, <BracketSrcEntry as GcLayout>::GC_FIELDS),
     (<lbl_803D9DAC_t as GcLayout>::GC_NAME, <lbl_803D9DAC_t as GcLayout>::GC_SIZE, <lbl_803D9DAC_t as GcLayout>::GC_ALIGN, <lbl_803D9DAC_t as GcLayout>::GC_FIELDS),
     (<lbl_803D9DD0_t as GcLayout>::GC_NAME, <lbl_803D9DD0_t as GcLayout>::GC_SIZE, <lbl_803D9DD0_t as GcLayout>::GC_ALIGN, <lbl_803D9DD0_t as GcLayout>::GC_FIELDS),
+    (<GenoPalPObj as GcLayout>::GC_NAME, <GenoPalPObj as GcLayout>::GC_SIZE, <GenoPalPObj as GcLayout>::GC_ALIGN, <GenoPalPObj as GcLayout>::GC_FIELDS),
 ];
 
 /// Read `w` bits of a GameCube big-endian bitfield byte run, `shift` bits up from its LSB.

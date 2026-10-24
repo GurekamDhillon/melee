@@ -29,8 +29,19 @@ ext_fns! {
     // C varargs, fixed here to the arity every mn caller uses.
     fn lb_80011E24(jobj: *mut HSD_JObj, out: *mut *mut HSD_JObj, idx: i32, end: i32) -> i32;
     fn OSReport(fmt: *const c_char);
-    /// `HSD_SisLib_803A6B98(text, x, y, fmt, ...)`: `arg` is the one printf argument (int or pointer bits).
-    fn HSD_SisLib_803A6B98(text: *mut HSD_Text, x: f32, y: f32, fmt: *const c_char, arg: usize) -> i32;
+}
+
+/// `HSD_SisLib_803A6B98(text, x, y, fmt, ...)` (sislib, not ported): the printf arguments are
+/// passed as integer / pointer bits.
+pub unsafe fn HSD_SisLib_803A6B98(text: *mut HSD_Text, x: f32, y: f32, fmt: *const c_char, args: &[usize]) -> i32 {
+    match crate::tu::ext_hook::EXT_HOOK {
+        Some(h) => {
+            let mut a: std::vec::Vec<u64> = std::vec![text as usize as u64, x.to_bits() as u64, y.to_bits() as u64, fmt as usize as u64];
+            a.extend(args.iter().map(|v| *v as u64));
+            h("HSD_SisLib_803A6B98", &a) as i32
+        }
+        None => panic!("TODO ext: HSD_SisLib_803A6B98 is in a TU that is not ported yet"),
+    }
 }
 
 /// `lbArchive_LoadSections(archive, &sym0, "name0", &sym1, "name1", ..., 0)` (lb/lbarchive.c, not

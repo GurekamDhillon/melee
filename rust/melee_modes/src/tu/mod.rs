@@ -116,3 +116,4 @@ pub mod gm_1BFA;
 pub mod mnsound;
 pub mod mnstagesw;
 pub mod mnruleplus;
+pub mod mnsoundtest;

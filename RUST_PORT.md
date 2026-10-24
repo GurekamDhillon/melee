@@ -985,3 +985,9 @@ Stub names in `docs/rust-port/missing.md` for melee_fighter: NO_PORT 276 -> ~71,
 - Next: the other three goldens are not wired (`VsMatch::new` supports `GrNLa.dat` only; `golden()` has no Marth,
   Sheik, Battlefield `grbattle.c`, or CPU input). Order of attack: Battlefield stage init and its materials ->
   Marth / Sheik file and effect-bank loaders -> the states `pad_fixed.lua` reaches first.
+
+## State snapshots (resume the golden sim mid-match)
+`MELEE_SNAP_DUMP=<frame>[,..]:<file>` makes the C build dump its gameplay state after a match frame;
+`melee golden --from-snapshot FILE --start N` resumes the native sim from it and compares the hash from N
+on. Dump/resume/proof commands, what is loaded from where, and the model differences found:
+`tools/rust-port/snap/README.md`. Proven on `pad_falcon_fox_fd` at frames 0 and 300.

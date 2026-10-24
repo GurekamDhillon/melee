@@ -4078,3 +4078,146 @@ out:
     free(g);
     return rc;
 }
+
+/* ==============================================================================================
+ * GAMEPLAY STATE DUMP for the Rust port (MELEE_SNAP_DUMP=<match frame>:<file>, tools/rust-port/snap/).
+ * The Rust golden simulation (rust/melee, `melee golden --from-snapshot`) resumes from the C build's
+ * exact state at a frame: this is the same state a rollback snapshot holds (all of MEM1 + the
+ * game's section-3 globals), written as a SYMBOLIC file so the reader needs no map:
+ *   "MELSNAP1" | u32 version(1) | s32 match frame | u32 mem1 base | u32 mem1 size | u32 npages
+ *   | u32 nsyms | u32 globals_len
+ *   | nsyms x { u32 va, u32 len, u32 blob_off, u16 name_len, name bytes }    (game globals, by name)
+ *   | page bitmap (npages/8 bytes, bit p of byte p/8 = page p is stored) | the stored 4 KB pages
+ *   | the globals blob (sn_gather order; the symbol blob_off indexes it)
+ * Header integers are little-endian. EVERYTHING after the header (MEM1, the globals) is the game's
+ * own big-endian guest memory, pointers are guest addresses: the Rust reader decodes it with the
+ * GameCube offset tables (melee_types) and relocates the pointers itself.
+ * The dump is written after the frame's logic and the neutral-hash row, the same point
+ * MELEE_NEUTRAL_HASHLOG hashes. Snapshots are disc-derived: keep them under the build root.
+ * ============================================================================================== */
+int gw_snap_state_dump(const char *path, int frame) {
+    const uint8_t *live = (const uint8_t *) (uintptr_t) 0x80000000u;
+    static const uint8_t zero[SN_PAGE];
+    uint32_t pg, npages, bml, nsyms = 0, base = 0x80000000u, version = 1, off = 0;
+    uint8_t *bm, *g;
+    int i;
+    FILE *f;
+    char tmp[MAX_PATH + 8];
+    if (!sn.enabled && gw_snap_open(0) != 0) {
+        return -1;
+    }
+    npages = gw_mem1_size / SN_PAGE;
+    bml = (npages + 7) / 8;
+    bm = (uint8_t *) calloc(bml, 1);
+    g = (uint8_t *) malloc(sn.globals_len);
+    if (bm == NULL || g == NULL) {
+        free(bm);
+        free(g);
+        return -1;
+    }
+    for (pg = 0; pg < npages; ++pg) {
+        if (memcmp(live + (size_t) pg * SN_PAGE, zero, SN_PAGE) != 0) {
+            bm[pg >> 3] |= (uint8_t) (1u << (pg & 7));
+        }
+    }
+    sn_gather(g);
+    /* the symbols inside the gathered ranges, in blob order */
+    for (i = 0; i < sn.nsyms; ++i) {
+        const GwSnapSym *s = &sn.syms[i];
+        if (s->len != 0 && s->len <= 0x400000 && sn_game_object(s->obj, s->name)) {
+            ++nsyms;
+        }
+    }
+    snprintf(tmp, sizeof tmp, "%s.tmp", path);
+    f = fopen(tmp, "wb");
+    if (f == NULL) {
+        free(bm);
+        free(g);
+        return -1;
+    }
+    fwrite("MELSNAP1", 1, 8, f);
+    fwrite(&version, 4, 1, f);
+    fwrite(&frame, 4, 1, f);
+    fwrite(&base, 4, 1, f);
+    fwrite(&gw_mem1_size, 4, 1, f);
+    fwrite(&npages, 4, 1, f);
+    fwrite(&nsyms, 4, 1, f);
+    fwrite(&sn.globals_len, 4, 1, f);
+    for (i = 0; i < sn.nsyms; ++i) {
+        const GwSnapSym *s = &sn.syms[i];
+        if (s->len != 0 && s->len <= 0x400000 && sn_game_object(s->obj, s->name)) {
+            uint16_t nl = (uint16_t) strlen(s->name);
+            fwrite(&s->va, 4, 1, f);
+            fwrite(&s->len, 4, 1, f);
+            fwrite(&off, 4, 1, f);
+            fwrite(&nl, 2, 1, f);
+            fwrite(s->name, 1, nl, f);
+            off += s->len; /* the same walk as the range merge in sn_load_map */
+        }
+    }
+    fwrite(bm, 1, bml, f);
+    for (pg = 0; pg < npages; ++pg) {
+        if (bm[pg >> 3] & (1u << (pg & 7))) {
+            fwrite(live + (size_t) pg * SN_PAGE, 1, SN_PAGE, f);
+        }
+    }
+    fwrite(g, 1, sn.globals_len, f);
+    free(bm);
+    free(g);
+    if (fclose(f) != 0) {
+        DeleteFileA(tmp);
+        return -1;
+    }
+    if (!MoveFileExA(tmp, path, MOVEFILE_REPLACE_EXISTING)) {
+        DeleteFileA(tmp);
+        return -1;
+    }
+    gw_log("snap: state dump of match frame %d (%u symbols, %u bytes of globals) -> %s", frame, nsyms, sn.globals_len, path);
+    return 0;
+}
+
+/* MELEE_SNAP_DUMP=<match frame>[,<match frame>...]:<file>   e.g. "0,300:C:/x/snap_%d.bin" (%d = the frame).
+ * Called once per live match frame from the neutral-hash hook (gw_script.c). */
+void gw_snap_dump_hook(int frame) {
+    static int parsed;
+    static int frames[16], nframes;
+    static char path[MAX_PATH];
+    int i;
+    if (!parsed) {
+        const char *v = getenv("MELEE_SNAP_DUMP");
+        parsed = 1;
+        if (v != NULL && v[0] != '\0') {
+            const char *c = strchr(v, ':');
+            /* a drive letter's colon ("C:/...") is not the separator: take the first colon after a digit run */
+            const char *p = v;
+            while (*p != '\0' && (*p == ',' || (*p >= '0' && *p <= '9') || *p == '-')) {
+                ++p;
+            }
+            if (*p == ':' && p > v) {
+                const char *q = v;
+                c = p;
+                while (q < c && nframes < 16) {
+                    frames[nframes++] = atoi(q);
+                    while (q < c && *q != ',') ++q;
+                    if (q < c) ++q;
+                }
+                snprintf(path, sizeof path, "%s", c + 1);
+            } else {
+                gw_log("snap: MELEE_SNAP_DUMP wants <frame>[,<frame>]:<file>");
+            }
+        }
+    }
+    for (i = 0; i < nframes; ++i) {
+        if (frames[i] == frame) {
+            char out[MAX_PATH];
+            if (strstr(path, "%d") != NULL) {
+                snprintf(out, sizeof out, path, frame);
+            } else {
+                snprintf(out, sizeof out, "%s", path);
+            }
+            if (gw_snap_state_dump(out, frame) != 0) {
+                gw_log("snap: state dump of frame %d FAILED (%s)", frame, out);
+            }
+        }
+    }
+}

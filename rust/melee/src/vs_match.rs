@@ -37,6 +37,9 @@ mod attackair;
 mod dashrun;
 mod fox;
 mod rebirth;
+mod snapshot;
+mod snapshot_ps;
+mod snapshot_fx;
 use fox::{ItemCmd, FoxVars, SimItem};
 use rebirth::{PlayerRespawn, RespawnCtx};
 
@@ -377,6 +380,8 @@ struct EffectRoot {
 
 /// A stage particle track and its AObj (see `stage::dptcl_tracks`).
 struct DptclAnim {
+    /// The map gobj (stage `map_head` entry) whose animation this track belongs to.
+    map_gobj: u32,
     joint: JObjRef,
     aobj: HsdAObj<()>,
 }
@@ -422,6 +427,11 @@ pub struct VsMatch {
     respawn_points: Vec<Vec3>,
     respawn_busy: [i32; 6],
     start_shield: f32,
+    /// The stage file's data block (joint descriptor trees; snapshot loading walks them).
+    stage_data: Arc<Vec<u8>>,
+    stage_map_head: u32,
+    /// Debug (snapshot loading): reference Fighter bytes per player.
+    keep_ref: Vec<Vec<u8>>,
 }
 
 /// `Stage_GetBlastZone*Offset()`: `stage_info.blast_zone.* + cam_info.cam_{x,y}_offset`
@@ -686,7 +696,7 @@ impl VsMatch {
                 a.req_anim(0.0);
                 a.set_rate(1.0);
                 joint_mtx.insert(t.joint, crate::stage::bind_pose_matrix(&stage.data, &t.chain));
-                dptcl.push(DptclAnim { joint: t.joint, aobj: a });
+                dptcl.push(DptclAnim { map_gobj: g, joint: t.joint, aobj: a });
             }
         }
 
@@ -1018,7 +1028,7 @@ impl VsMatch {
                 }
             });
         }
-        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: Vec::new(), respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield })
+        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: Vec::new(), respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, stage_data: Arc::new(stage.data.clone()), stage_map_head: stage.public_offset("map_head").unwrap_or(0), keep_ref: Vec::new() })
     }
 
     /// The m-ex fighters' code-run report (crate::mex), one block per such fighter.
@@ -4460,6 +4470,11 @@ impl Sim for VsMatch {
             }
         }
         self.frame += 1;
+        if let Ok(v) = std::env::var("MELEE_GOLDEN_SUMMARY") {
+            if v.split(',').any(|x| x.trim().parse::<i32>().ok() == Some(self.frame)) {
+                eprint!("{}", self.state_summary());
+            }
+        }
         true
     }
     fn frame_words(&self) -> FrameWords {

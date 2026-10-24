@@ -199,3 +199,5 @@ pub mod ftCo_FlyReflect;
 pub mod fighter;
 pub mod player;
 pub mod plattack;
+pub mod plbonus;
+pub mod plbonuslib;

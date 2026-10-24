@@ -1030,23 +1030,23 @@ pub fn Player_SetStructFunc(slot: i32, arg_func: *mut c_void) {
 }
 
 pub fn Player_GetActionStats(slot: i32) -> *mut plActionStats {
-    let player = sp(slot);
-    &mut player.stale_moves.total_attack_count_struct as *mut plActionStats
+    Player_CheckSlot(slot);
+    unsafe { core::ptr::addr_of_mut!(player_slots[slot as usize].stale_moves.total_attack_count_struct) }
 }
 
 pub fn Player_GetStaleMoveTableIndexPtr(slot: i32) -> *mut StaleMoveTable {
-    let player = sp(slot);
-    &mut player.stale_moves as *mut StaleMoveTable
+    Player_CheckSlot(slot);
+    unsafe { core::ptr::addr_of_mut!(player_slots[slot as usize].stale_moves) }
 }
 
 pub fn Player_GetUnk6A8Ptr(slot: i32) -> *mut pl_x5EC_t {
-    let player = sp(slot);
-    &mut player.stale_moves.x5EC as *mut pl_x5EC_t
+    Player_CheckSlot(slot);
+    unsafe { core::ptr::addr_of_mut!(player_slots[slot as usize].stale_moves.x5EC) }
 }
 
 pub fn Player_GetStaleMoveTableIndexPtr2(slot: i32) -> *mut pl_StaleMoveTableExt_t {
-    let player = sp(slot);
-    (&mut player.stale_moves as *mut StaleMoveTable) as *mut pl_StaleMoveTableExt_t
+    Player_CheckSlot(slot);
+    unsafe { core::ptr::addr_of_mut!(player_slots[slot as usize].stale_moves) as *mut pl_StaleMoveTableExt_t }
 }
 
 pub fn Player_80036394(slot: i32) -> FighterKind {

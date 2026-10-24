@@ -1150,6 +1150,13 @@ impl VsMatch {
             // part-anim slots: none started here), ftCo_800DB500 (no item).
             ftaction_80073240(p, &mut self.rand)?;
             p.skel.part_anim_update(&p.part_anim)?;
+            // ftCo_800D71D8: the item-grab attempt window (no grabbable item exists here).
+            if p.fp.x209C != 0 {
+                p.fp.x209C -= 1;
+                if p.fp.x209C == 0 {
+                    p.fp.set_x2224_b1(1);
+                }
+            }
             let kind = p.fp.kind;
             let fp = &mut p.fp;
             match fp.motion_id {
@@ -2499,28 +2506,22 @@ fn landing_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     if fp.cur_anim_frame < lag || !p.landing_allow_interrupt {
         return Ok(());
     }
+    if special_checks(p, rand)? {
+        return Ok(());
+    }
+    if catch_check(p)? {
+        return catch_enter(p, rand);
+    }
+    if attack_checks(p, rand)? {
+        return Ok(());
+    }
+    // 80091A4C (shield), jump, dash, and the squat check (first frame past the lag only).
+    if ground_stick_gate(p, rand, "ftCo_Landing_IASA")? {
+        return Ok(());
+    }
     let cd = melee_fighter::hooks::common_data();
+    let fp = &*p.fp;
     let i = &fp.input;
-    // SpecialS / Attack100 (up-B) / 800D6824 / 800D68C0 (down-B) / Catch / smash and tilt
-    // attacks / jab / 80091A4C (guard) / 800DE9D8: each needs a press, the C-stick or the
-    // trigger; none is wired.
-    if i.pressed_buttons & !PAD_STICK_DIRS != 0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 || i.triggers[0] != 0.0 || i.held_buttons[0] & (input::HSD_PAD_A | input::HSD_PAD_B | input::HSD_PAD_Z) != 0 {
-        return Err(format!("player {}: ftCo_Landing_IASA with a button / C-stick / trigger: not ported (pressed {:#x} held {:#x} c ({}, {}) l ({}, {}) trig {})", p.slot + 1, i.pressed_buttons, i.held_buttons[0], i.cstick[0].x, i.cstick[0].y, i.lstick[0].x, i.lstick[0].y, i.triggers[0]));
-    }
-    // ftCo_Jump_CheckInput (tap jump).
-    if jump_get_input(fp) {
-        jump_check_input(p, rand)?;
-        return Ok(());
-    }
-    // ftCo_Dash_CheckInput.
-    if fc::abs_c(i.lstick[0].x) >= cd.dash_smash_stick_threshold && (fp.active_timer.lstick.x as i32) < cd.dash_smash_window as i32 {
-        dashrun::dash_check_input(p, rand)?;
-        return Ok(());
-    }
-    // ftCo_SquatWait_CheckInput (only in the first frame past the lag).
-    if fp.cur_anim_frame < fp.frame_speed_mul + lag && i.lstick[0].y < -cd.x90 {
-        return Err(format!("player {}: ftCo_SquatWait_CheckInput not ported", p.slot + 1));
-    }
     // ftCo_Turn_CheckInput -> ftCo_800C97A8.
     if i.lstick[0].x * fp.facing_dir <= cd.x34 {
         return turn_enter_basic(p, rand);
@@ -2554,7 +2555,8 @@ fn ground_stick_gate(p: &mut Player, rand: &mut HsdRand, what: &str) -> Result<b
         dashrun::dash_check_input(p, rand)?;
         return Ok(true);
     }
-    if i.lstick[0].y < -cd.x90 {
+    let landing_late = what == "ftCo_Landing_IASA" && fp.cur_anim_frame >= fp.frame_speed_mul + fp.co_attrs.normal_landing_lag;
+    if i.lstick[0].y < -cd.x90 && !landing_late {
         return Err(format!("player {}: ftCo_800D5FB0 (Squat) not ported", p.slot + 1));
     }
     Ok(false)
@@ -4392,6 +4394,10 @@ fn change_motion_state_ext(p: &mut Player, msid: i32, row: Option<&(AnimRow, Fig
     fp.set_x221C_b4(0);
     fp.set_x2218_b6(0);
     fp.set_x221D_b5(0);
+    fp.x209C = 0;
+    if fp.ground_or_air == melee_types::GA_Ground {
+        fp.set_x2224_b1(0);
+    }
     let root = p.skel.root;
     p.skel.set_translate(root, melee_runtime::mtx::Vec3 { x: fp.cur_pos.x, y: fp.cur_pos.y, z: fp.cur_pos.z });
     // ftAnim_80070F28 (end the hand poses), ftAnim_80070E74 (restart the slots with a default

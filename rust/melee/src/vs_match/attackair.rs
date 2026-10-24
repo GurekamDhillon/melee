@@ -98,12 +98,18 @@ pub fn iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     {
         let fp = &*p.fp;
         let i = &fp.input;
-        if i.pressed_buttons & !(PAD_STICK_DIRS | input::HSD_PAD_XY | input::HSD_PAD_A) != 0 || i.triggers[0] != 0.0 {
-            return Err(format!("player {}: ftCo_AttackAir_IASA with a press / trigger: not ported", p.slot + 1));
-        }
     }
     if check_input(p, rand)? {
         return Ok(());
+    }
+    // ftCo_800D705C (after checkItemThrowInput: a Z press, A pressed, was taken above).
+    {
+        let fp = &*p.fp;
+        let i = &fp.input;
+        if fp.item_gobj.is_null() && i.held_buttons[0] & input::HSD_PAD_LR != 0 && i.pressed_buttons & input::HSD_PAD_A != 0 && fp.x2224_b1() == 0 && (fp.x683 as i32) >= melee_fighter::hooks::common_data().x1C {
+            p.fp.x209C = melee_fighter::hooks::common_data().x414 as u16;
+            return Ok(());
+        }
     }
     ftco_800cb870(p, rand).map(|_| ())
 }

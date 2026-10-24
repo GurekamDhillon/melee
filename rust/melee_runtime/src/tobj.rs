@@ -120,6 +120,9 @@ pub struct HsdTObj<I> {
     pub lod: Option<HsdTexLodDesc>,
     pub imagetbl: Option<Vec<Option<I>>>,
     pub has_tluttbl: bool,
+    /// Render-side only (the viewer's animated TLUTs): the `HSD_Tlut` descriptor offsets of the
+    /// animation's `tluttbl`, selected by `tlut_no`.
+    pub tluttbl_ptrs: Vec<u32>,
     pub tlut_no: i32,
     pub mtx: Mtx,
     pub tev: Option<HsdTObjTev>,

@@ -94,6 +94,7 @@ fn tobj_matches_c() {
                         imagetbl: Some(tbl),
                         imagedesc: (iw[6] != 0).then_some(0),
                         has_tluttbl: iw[7] != 0,
+                        tluttbl_ptrs: Vec::new(),
                         tlut_no: iw[8] as i32,
                         flags: iw[9],
                         lod: Some(HsdTexLodDesc::default()),

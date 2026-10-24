@@ -313,6 +313,9 @@ pub struct StageAnim {
     pub groups: Vec<GroupAnim>,
     /// `map_head` group table (0x34 bytes per group).
     table: u32,
+    /// Scene models (`{joint, anims, matanims, shapeanims}` records, e.g. IfAll's HUD): the entry of
+    /// each group id, in place of the `map_head` table. Empty for a stage.
+    entries: Vec<u32>,
 }
 
 fn load_tree(d: &[u8], at: u32, tree: &mut Tree, parent: Option<JObjId>, descs: &mut Vec<u32>, depth: u32) -> Option<JObjId> {
@@ -353,13 +356,23 @@ fn load_tree(d: &[u8], at: u32, tree: &mut Tree, parent: Option<JObjId>, descs: 
 
 impl StageAnim {
     pub fn new(dat: Arc<Vec<u8>>, map_head: u32, ids: &[u32]) -> Self {
+        let table = be32(&dat, map_head + 8);
+        Self::build(dat, table, Vec::new(), ids)
+    }
+
+    /// A scene-model animation host: group `i` is the `DynamicModelDesc` at `entries[i]`.
+    pub fn new_scene(dat: Arc<Vec<u8>>, entries: Vec<u32>) -> Self {
+        let ids: Vec<u32> = (0..entries.len() as u32).collect();
+        Self::build(dat, 0, entries, &ids)
+    }
+
+    fn build(dat: Arc<Vec<u8>>, table: u32, entries: Vec<u32>, ids: &[u32]) -> Self {
         let d: &[u8] = &dat;
-        let table = be32(d, map_head + 8);
         let mut groups = Vec::new();
         let mut mobjs = HashMap::new();
         let mut base_pe = HashMap::new();
         for &g in ids {
-            let root_desc = be32(d, table + g * 0x34);
+            let root_desc = be32(d, if entries.is_empty() { table + g * 0x34 } else { entries[g as usize] });
             if root_desc == 0 {
                 continue;
             }
@@ -377,7 +390,7 @@ impl StageAnim {
             groups.push(GroupAnim { map_id: g, tree, descs, root });
         }
         let rt = JObjRt::new(MatExt { dat: dat.clone(), mobjs, base_pe });
-        StageAnim { dat, rt, groups, table }
+        StageAnim { dat, rt, groups, table, entries }
     }
 
     fn gi(&self, map_id: u32) -> usize {
@@ -390,7 +403,7 @@ impl StageAnim {
     }
 
     fn entry(&self, map_id: u32) -> u32 {
-        self.table + map_id * 0x34
+        if self.entries.is_empty() { self.table + map_id * 0x34 } else { self.entries[map_id as usize] }
     }
 
     // --- adding animation ---------------------------------------------------------------------
@@ -425,6 +438,9 @@ impl StageAnim {
             t.aobj = load_aobj_desc(d, aobjdesc).map(|x| HsdAObj::load_desc(&x, |_| None));
             let (tbl, n) = (be32(d, ta + 12), d[ta as usize + 0x14] as u32 * 256 + d[ta as usize + 0x15] as u32);
             t.obj.imagetbl = (tbl != 0).then(|| (0..n).map(|i| (be32(d, be32(d, tbl + 4 * i)) != 0 || true).then(|| be32(d, tbl + 4 * i)).filter(|&p| p != 0)).collect());
+            let (ttbl, tn) = (be32(d, ta + 0x10), d[ta as usize + 0x16] as u32 * 256 + d[ta as usize + 0x17] as u32);
+            t.obj.has_tluttbl = ttbl != 0 && tn != 0;
+            t.obj.tluttbl_ptrs = if t.obj.has_tluttbl { (0..tn).map(|i| be32(d, ttbl + 4 * i)).collect() } else { Vec::new() };
             if hsd {
                 t.obj.tlut_no = -1;
             }
@@ -563,7 +579,7 @@ impl StageAnim {
         self.req(gi, j, req_flags, frame, all);
         self.for_aobjs(gi, j, af, all, AOp::SetRate(rate));
         // eflags: the per-set "loop" byte (`x28`).
-        let ef = be32(d, e + 0x28);
+        let ef = if self.entries.is_empty() { be32(d, e + 0x28) } else { 0 };
         if ef != 0 && d[ef as usize + set as usize] != 0 {
             self.for_aobjs(gi, j, af, all, AOp::SetFlags(AOBJ_LOOP));
         }
@@ -579,6 +595,11 @@ impl StageAnim {
 
     /// `grAnime_801C8138(gobj, map_id, set)`: reset to the base pose and start animation set `set`.
     pub fn start_map_anim(&mut self, map_id: u32, set: i32) {
+        self.start_anim_set(map_id, set, true);
+    }
+
+    /// `start_map_anim` with `req == false`: only attach the set (`lb_8000C07C` without the request).
+    pub fn start_anim_set(&mut self, map_id: u32, set: i32, req: bool) {
         if set < 0 {
             return;
         }
@@ -623,8 +644,11 @@ impl StageAnim {
             }
         }
         self.add_anim_rec(gi, root, aj.as_deref(), mj.as_deref(), true);
+        if !req {
+            return;
+        }
         self.req(gi, root, 0x7FF, 0.0, true);
-        let ef = be32(d, e + 0x28);
+        let ef = if self.entries.is_empty() { be32(d, e + 0x28) } else { 0 };
         if ef != 0 && d[ef as usize + set as usize] != 0 {
             self.for_aobjs(gi, root, 0x77A4, true, AOp::SetFlags(AOBJ_LOOP));
         }
@@ -721,6 +745,11 @@ impl StageAnim {
                     })
                 })
                 .collect();
+            if let Some(a) = n.aobj.as_ref() {
+                for f in &a.fobj {
+                    eprintln!("      fobj ty {} op {} intrp {} len {} time {:.1} p0 {:.3} p1 {:.3} d0 {:.3} d1 {:.3} start {} nb {}", f.obj_type, f.op, f.op_intrp, f.length, f.time, f.p0, f.p1, f.d0, f.d1, f.startframe, f.nb_pack);
+                }
+            }
             eprintln!("  g{map_id} j{i} flags {:#x} T {:.1},{:.1},{:.1} S {:.2},{:.2},{:.2} aobj {} dobj {:?}", n.flags, n.translate.x, n.translate.y, n.translate.z, n.scale.x, n.scale.y, n.scale.z, n.aobj.as_ref().map_or("-".into(), |a| format!("f{:.0}/{:.0}{} {:?}", a.curr_frame, a.end_frame, if a.flags & AOBJ_LOOP != 0 { "L" } else { "" }, a.fobj.iter().map(|f| f.obj_type).collect::<Vec<_>>())), mats);
         }
     }
@@ -738,5 +767,168 @@ impl StageAnim {
     pub fn hide(&mut self, map_id: u32, j: u32) {
         let gi = self.gi(map_id);
         self.groups[gi].tree.get_mut(JObjId(j)).flags |= melee_runtime::jobj::JOBJ_HIDDEN;
+    }
+}
+
+/// Scene-model (HUD) helpers: the parts of `ifstatus.c` / `ifall.c` that poke single JObjs.
+impl StageAnim {
+    pub fn jobj_count(&self, map_id: u32) -> usize {
+        self.groups[self.gi(map_id)].tree.nodes.len()
+    }
+
+    /// `lb_8000B1CC(jobj, NULL, &out)`: the world position of the idx'th JObj.
+    pub fn joint_world_pos(&mut self, map_id: u32, idx: u32) -> Vec3 {
+        let gi = self.gi(map_id);
+        let g = &mut self.groups[gi];
+        let j = JObjId(idx);
+        g.tree.setup_matrix(&mut self.rt, Some(j));
+        let m = g.tree.get(j).mtx;
+        Vec3 { x: m[0][3], y: m[1][3], z: m[2][3] }
+    }
+
+    pub fn translate_of(&self, map_id: u32, idx: u32) -> Vec3 {
+        self.groups[self.gi(map_id)].tree.get(JObjId(idx)).translate
+    }
+
+    /// `HSD_JObjSetTranslate` (+ matrix dirty).
+    pub fn set_translate(&mut self, map_id: u32, idx: u32, t: Vec3) {
+        let gi = self.gi(map_id);
+        let n = self.groups[gi].tree.get_mut(JObjId(idx));
+        n.translate = t;
+        n.flags |= melee_runtime::jobj::JOBJ_MTX_DIRTY;
+    }
+
+    pub fn set_scale(&mut self, map_id: u32, idx: u32, s: Vec3) {
+        let gi = self.gi(map_id);
+        let n = self.groups[gi].tree.get_mut(JObjId(idx));
+        n.scale = s;
+        n.flags |= melee_runtime::jobj::JOBJ_MTX_DIRTY;
+    }
+
+    /// `HSD_JObjSetFlagsAll` / `ClearFlagsAll` of JOBJ_HIDDEN on the idx'th JObj and its subtree.
+    pub fn set_hidden_all(&mut self, map_id: u32, idx: u32, hidden: bool) {
+        let gi = self.gi(map_id);
+        let mut stack = vec![JObjId(idx)];
+        let mut first = true;
+        while let Some(j) = stack.pop() {
+            let n = self.groups[gi].tree.get_mut(j);
+            if hidden {
+                n.flags |= melee_runtime::jobj::JOBJ_HIDDEN;
+            } else {
+                n.flags &= !melee_runtime::jobj::JOBJ_HIDDEN;
+            }
+            if n.flags & JOBJ_INSTANCE == 0 {
+                if let Some(c) = n.child {
+                    stack.push(c);
+                }
+            }
+            if !first {
+                if let Some(x) = n.next {
+                    stack.push(x);
+                }
+            }
+            first = false;
+        }
+    }
+
+    pub fn dobj_of(&self, map_id: u32, idx: u32) -> Option<u32> {
+        self.groups[self.gi(map_id)].tree.get(JObjId(idx)).dobj.first().copied()
+    }
+
+    /// `mobj->mat->diffuse.rgb = rgb` on the idx'th JObj's first DObj.
+    pub fn set_diffuse(&mut self, map_id: u32, idx: u32, rgb: [u8; 3]) {
+        let Some(d) = self.dobj_of(map_id, idx) else { return };
+        let ext = self.rt.ext.clone();
+        let mut ext = ext.borrow_mut();
+        if let Some(m) = ext.mobjs.get_mut(&d) {
+            if let Some(mat) = m.mobj.mat.as_mut() {
+                mat.diffuse.r = rgb[0];
+                mat.diffuse.g = rgb[1];
+                mat.diffuse.b = rgb[2];
+            }
+        }
+    }
+
+    /// The `HSD_MatAnim` at `path` (child = 0 / next = 1 steps from the root of animation set `set`'s
+    /// `HSD_MatAnimJoint` tree) -- C's `(*matanims)[set]->child->next->matanim`. 0 if the path ends.
+    pub fn matanim_at(&self, map_id: u32, set: u32, path: &[u32]) -> u32 {
+        let d: &[u8] = &self.dat;
+        let e = self.entry(map_id);
+        let mjp = be32(d, e + 8);
+        if mjp == 0 {
+            return 0;
+        }
+        let mut j = be32(d, mjp + 4 * set);
+        for &step in path {
+            if j == 0 {
+                return 0;
+            }
+            j = be32(d, j + 4 * step);
+        }
+        if j == 0 { 0 } else { be32(d, j + 8) }
+    }
+
+    /// `HSD_TObjAddAnimAll(tobj, matanim->texanim)` + `HSD_TObjReqAnimAll(tobj, frame)` +
+    /// `HSD_AObjSetRate(tobj->aobj, rate)` + `HSD_TObjAnim(tobj)` on the idx'th JObj's first DObj's
+    /// MObj. The TObj chain pairs with the texanim chain positionally.
+    pub fn tex_anim(&mut self, map_id: u32, idx: u32, matanim: u32, frame: f32, rate: f32) {
+        let Some(dobj) = self.dobj_of(map_id, idx) else { return };
+        if matanim == 0 {
+            return;
+        }
+        let dat = self.dat.clone();
+        let d: &[u8] = &dat;
+        let ext = self.rt.ext.clone();
+        let mut ext = ext.borrow_mut();
+        let Some(m) = ext.mobjs.get_mut(&dobj) else { return };
+        let mut ta = be32(d, matanim + 8);
+        for t in &mut m.tobjs {
+            if ta == 0 {
+                break;
+            }
+            t.aobj = load_aobj_desc(d, be32(d, ta + 8)).map(|x| HsdAObj::load_desc(&x, |_| None));
+            let (tbl, n) = (be32(d, ta + 12), d[ta as usize + 0x14] as u32 * 256 + d[ta as usize + 0x15] as u32);
+            t.obj.imagetbl = (tbl != 0).then(|| (0..n).map(|i| Some(be32(d, tbl + 4 * i)).filter(|&p| p != 0)).collect());
+            t.obj.tlut_no = -1;
+            let (ttbl, tn) = (be32(d, ta + 0x10), d[ta as usize + 0x16] as u32 * 256 + d[ta as usize + 0x17] as u32);
+            t.obj.has_tluttbl = ttbl != 0 && tn != 0;
+            t.obj.tluttbl_ptrs = if t.obj.has_tluttbl { (0..tn).map(|i| be32(d, ttbl + 4 * i)).collect() } else { Vec::new() };
+            if let Some(a) = t.aobj.as_mut() {
+                a.req_anim(frame);
+                a.set_rate(rate);
+            }
+            ta = be32(d, ta);
+        }
+        ext.dobj_anim_all(&[dobj]);
+    }
+}
+
+impl StageAnim {
+    /// `lb_8000B09C(root)`: some JObj still has a running joint AObj.
+    pub fn joint_anim_running(&self, map_id: u32) -> bool {
+        self.groups[self.gi(map_id)].tree.nodes.iter().any(|n| n.aobj.as_ref().is_some_and(|a| a.flags & melee_runtime::aobj::AOBJ_NO_ANIM == 0))
+    }
+
+    /// `HSD_JObjReqAnimAll(jobj, frame)` on the idx'th JObj.
+    pub fn req_joint(&mut self, map_id: u32, idx: u32, frame: f32) {
+        let gi = self.gi(map_id);
+        self.req(gi, JObjId(idx), 0x7FF, frame, true);
+    }
+
+    /// `HSD_TObjReqAnimAll(tobj, frame)` + `HSD_AObjSetRate(tobj->aobj, rate)` on the idx'th JObj's
+    /// first DObj, then `HSD_TObjAnim` (the animation must already be attached).
+    pub fn tobj_req(&mut self, map_id: u32, idx: u32, frame: f32, rate: f32) {
+        let Some(dobj) = self.dobj_of(map_id, idx) else { return };
+        let ext = self.rt.ext.clone();
+        let mut ext = ext.borrow_mut();
+        if let Some(m) = ext.mobjs.get_mut(&dobj) {
+            for t in &mut m.tobjs {
+                if let Some(a) = t.aobj.as_mut() {
+                    a.req_anim(frame);
+                    a.set_rate(rate);
+                }
+            }
+        }
+        ext.dobj_anim_all(&[dobj]);
     }
 }

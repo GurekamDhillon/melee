@@ -35,6 +35,7 @@ mod stage;
 mod vs_match;
 mod gx_backend;
 mod view;
+mod hud_view;
 mod ui;
 mod play;
 mod cm_drive;

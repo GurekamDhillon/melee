@@ -87,6 +87,10 @@ fn load_tree(d: &[u8], at: u32, tree: &mut Tree, parent: Option<JObjId>, descs: 
 
 /// The descriptors of an already-loaded tree (skeleton.rs's costume tree), by walking the
 /// descriptors in the same allocation order.
+fn be16(b: &[u8], at: u32) -> u16 {
+    u16::from_be_bytes([b[at as usize], b[at as usize + 1]])
+}
+
 fn descs_of(d: &[u8], at: u32, depth: u32, out: &mut Vec<u32>) {
     if at == 0 || depth > 200 {
         return;
@@ -207,6 +211,35 @@ fn load_stage(file: &[u8]) -> Result<Stage, String> {
             }
         }
     }
+    if let Ok(v) = std::env::var("MELEE_VIEW_TEXDUMP") {
+        // Dev aid: per joint of the named groups, each DObj's MObj render flags and TObj images.
+        for g in v.split(',').filter_map(|x| x.trim().parse::<u32>().ok()) {
+            let e = be32(d, table + g * 0x34);
+            let mut descs = Vec::new();
+            descs_of(d, e, 0, &mut descs);
+            for (ji, &jd) in descs.iter().enumerate() {
+                let mut dob = be32(d, jd + 0x10);
+                while dob != 0 {
+                    let mob = be32(d, dob + 8);
+                    let mut line = format!("g{g} j{ji} dobj {dob:#x} mobj {mob:#x}");
+                    if mob != 0 {
+                        line += &format!(" rflags {:#x}", be32(d, mob + 4));
+                        let mut t = be32(d, mob + 8);
+                        while t != 0 {
+                            let img = be32(d, t + 0x4C);
+                            line += &format!(" | tobj {t:#x} flags {:#x} blend {:.2}", be32(d, t + 0x40), f32::from_bits(be32(d, t + 0x44)));
+                            if img != 0 {
+                                line += &format!(" img {}x{} fmt {}", be16(d, img + 4), be16(d, img + 6), be32(d, img + 8));
+                            }
+                            t = be32(d, t + 4);
+                        }
+                    }
+                    eprintln!("{line}");
+                    dob = be32(d, dob + 4);
+                }
+            }
+        }
+    }
     Ok(Stage { dat, anim, map_head: head, groups, lights })
 }
 
@@ -220,6 +253,7 @@ pub struct MatchRender {
     cm: crate::cm_drive::CmDrive,
     pose: crate::cm_drive::CamPose,
     stage: Stage,
+    hud: crate::hud_view::Hud,
     fighters: Vec<FighterModel>,
     cache: DataCache,
     render: HsdRender,
@@ -302,8 +336,9 @@ impl MatchRender {
             descs_of(&a.data, at, 0, &mut descs);
             fighters.push(FighterModel { dat: Arc::new(a.data), descs });
         }
+        let hud = crate::hud_view::Hud::new(crate::hud_view::HudFile::load(&disc.read("IfAll.usd")?)?, names)?;
         let pose = cm.pose();
-        Ok(Self { cm, pose, stage, fighters, cache: DataCache::default(), render: HsdRender::new() })
+        Ok(Self { cm, pose, stage, hud, fighters, cache: DataCache::default(), render: HsdRender::new() })
     }
 }
 
@@ -360,6 +395,9 @@ impl MatchRender {
             r.clear_vtx_desc(&mut g);
             r.jobj_disp_all(&mut g, m, &vmtx, mask_of(2), 0);
         }
+        if std::env::var_os("MELEE_VIEW_NOHUD").is_none() {
+            self.hud.draw(r, &mut g, camera);
+        }
     }
 }
 
@@ -391,6 +429,8 @@ impl MatchRender {
         let ins: Vec<_> = sim.players.iter_mut().filter_map(|p| p.camera_subject_in()).collect();
         let snaps: Vec<_> = sim.players.iter_mut().filter(|p| !p.follower).map(|p| p.cam_snap.take()).collect();
         self.cm.step(&ins, &snaps);
+        let dmg: Vec<i32> = sim.players.iter().map(|p| p.fp.dmg.x1830_percent as i32).collect();
+        self.hud.step(&dmg);
         self.pose = self.cm.pose();
         if std::env::var("MELEE_VIEW_CAMLOG").is_ok() {
             let p = &self.pose;
@@ -419,6 +459,14 @@ impl Game for View {
             if !self.sim_alive {
                 eprintln!("view-golden: simulation stopped after frame {}: {:?}", self.sim.frame, self.sim.stopped);
             }
+        }
+        // MELEE_VIEW_SKIP: only frames named in --shots are drawn (the sim still steps every frame).
+        if std::env::var("MELEE_VIEW_SKIP").is_ok() && !self.shots.contains(&self.frame) {
+            self.frame += 1;
+            if self.frames.is_some_and(|n| self.frame >= n) {
+                self.quit = true;
+            }
+            return;
         }
         self.draw_frame();
         let frame = self.shim.take_frame();

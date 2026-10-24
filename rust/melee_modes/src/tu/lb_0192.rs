@@ -12,7 +12,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:path)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -20,7 +20,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $crate::ext_dflt!([$($def)?] ($($a),*) $name) }
                 }
             } )*
         };
@@ -29,18 +29,18 @@ pub mod ext {
     fn DVDGetDriveStatus() -> i32;
     fn GXInvalidateTexAll();
     fn GXInvalidateVtxCache();
-    fn HSD_Init_803755A8();
-    fn HSD_Rumble_80378524(a0: i32);
-    fn HSD_SisLib_803A5CC4(a0: *mut HSD_Text);
-    fn HSD_SisLib_803A6754(a0: i32, a1: i32) -> *mut HSD_Text;
+    fn HSD_Init_803755A8() = crate::tu::adapt::HSD_Init_803755A8__49528d;
+    fn HSD_Rumble_80378524(a0: i32) = crate::tu::adapt::HSD_Rumble_80378524__8fd3f6;
+    fn HSD_SisLib_803A5CC4(a0: *mut HSD_Text) = crate::tu::adapt::HSD_SisLib_803A5CC4__6c7e38;
+    fn HSD_SisLib_803A6754(a0: i32, a1: i32) -> *mut HSD_Text = crate::tu::adapt::HSD_SisLib_803A6754__02fb41;
     fn HSD_SisLib_803A6B98(a0: *mut HSD_Text, a1: f32, a2: f32, a3: *const i8, a4: *const i8) -> i32;
     fn HSD_SisLib_803A70A0(a0: *mut HSD_Text, a1: i32, a2: *const i8, a3: *const i8) -> i32;
-    fn HSD_SisLib_803A84BC(a0: *mut HSD_GObj, a1: *mut HSD_Text);
+    fn HSD_SisLib_803A84BC(a0: *mut HSD_GObj, a1: *mut HSD_Text) = crate::tu::adapt::HSD_SisLib_803A84BC__b2aa0b;
     fn HSD_StartRender(a0: u32);
     fn HSD_VICopyXFBAsync(a0: u32);
-    fn lbAudioAx_80024F08();
-    fn lbAudioAx_80024F6C();
-    fn lbLang_IsSavedLanguageJP() -> i32;
+    fn lbAudioAx_80024F08() = crate::tu::adapt::lbAudioAx_80024F08__08bb8a;
+    fn lbAudioAx_80024F6C() = crate::tu::adapt::lbAudioAx_80024F6C__7ce9bf;
+    fn lbLang_IsSavedLanguageJP() -> i32 = crate::tu::adapt::lbLang_IsSavedLanguageJP__e2b095;
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

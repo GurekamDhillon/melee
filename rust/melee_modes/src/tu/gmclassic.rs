@@ -23,7 +23,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:path)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -31,14 +31,14 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $crate::ext_dflt!([$($def)?] ($($a),*) $name) }
                 }
             } )*
         };
     }
     ext_fns! {
-    fn Ground_801C1DE4(a0: *mut i32, a1: *mut i32);
-    fn Ground_801C5A28();
+    fn Ground_801C1DE4(a0: *mut i32, a1: *mut i32) = crate::tu::adapt::Ground_801C1DE4__3e6526;
+    fn Ground_801C5A28() = crate::tu::adapt::Ground_801C5A28__62c4d3;
     fn HSD_Randi(a0: i32) -> i32;
     fn SceneLaunch_OnePDirect(a0: i32) -> i32;
     fn SceneLaunch_OnePLevel() -> i32;
@@ -48,68 +48,68 @@ pub mod ext {
     fn SceneLaunch_PlayerStocks(a0: i32) -> i32;
     fn Script_OnePScripted() -> i32;
     fn Stage_8022519C(a0: u32) -> u32;
-    fn gmFrontend_AtlasSelect(a0: *mut GameModeState, a1: i32, a2: *const i8);
-    fn gmMainLib_8015CDC8() -> *mut gmm_x0_528_t;
-    fn gmMainLib_8015D438(a0: u8) -> *mut u32;
-    fn gmMainLib_8015D450(a0: u8) -> *mut i32;
-    fn gmMainLib_8015D48C(a0: u8) -> i32;
-    fn gmMainLib_8015D4E8(a0: u8, a1: i32);
-    fn gmMainLib_8015ED98() -> *mut gmm_retval_ED98;
-    fn gmMainLib_8015EDB0() -> *mut gmm_retval_EDB0;
-    fn gmMainLib_8015EDBC() -> *mut gmm_retval_EDBC;
-    fn gmRegSetupEnemyColorTable(a0: i8, a1: u8, a2: *const i8, a3: *mut u8);
-    fn gm_80164430(a0: u16) -> i32;
-    fn gm_801647F8(a0: u8) -> i32;
-    fn gm_801677F0() -> u8;
-    fn gm_80168F88();
-    fn gm_80172174();
-    fn gm_8017BE84(a0: u32) -> i32;
+    fn gmFrontend_AtlasSelect(a0: *mut GameModeState, a1: i32, a2: *const i8) = crate::tu::adapt::gmFrontend_AtlasSelect__26b7fc;
+    fn gmMainLib_8015CDC8() -> *mut gmm_x0_528_t = crate::tu::adapt::gmMainLib_8015CDC8__ddba5a;
+    fn gmMainLib_8015D438(a0: u8) -> *mut u32 = crate::tu::adapt::gmMainLib_8015D438__7caf41;
+    fn gmMainLib_8015D450(a0: u8) -> *mut i32 = crate::tu::adapt::gmMainLib_8015D450__dabb77;
+    fn gmMainLib_8015D48C(a0: u8) -> i32 = crate::tu::adapt::gmMainLib_8015D48C__ede167;
+    fn gmMainLib_8015D4E8(a0: u8, a1: i32) = crate::tu::adapt::gmMainLib_8015D4E8__f34d9f;
+    fn gmMainLib_8015ED98() -> *mut gmm_retval_ED98 = crate::tu::adapt::gmMainLib_8015ED98__51617a;
+    fn gmMainLib_8015EDB0() -> *mut gmm_retval_EDB0 = crate::tu::adapt::gmMainLib_8015EDB0__52d907;
+    fn gmMainLib_8015EDBC() -> *mut gmm_retval_EDBC = crate::tu::adapt::gmMainLib_8015EDBC__bd0e2b;
+    fn gmRegSetupEnemyColorTable(a0: i8, a1: u8, a2: *const i8, a3: *mut u8) = crate::tu::adapt::gmRegSetupEnemyColorTable__a8a833;
+    fn gm_80164430(a0: u16) -> i32 = crate::tu::adapt::gm_80164430__8808be;
+    fn gm_801647F8(a0: u8) -> i32 = crate::tu::adapt::gm_801647F8__46ed88;
+    fn gm_801677F0() -> u8 = crate::tu::adapt::gm_801677F0__be41b7;
+    fn gm_80168F88() = crate::tu::adapt::gm_80168F88__9d899a;
+    fn gm_80172174() = crate::tu::adapt::gm_80172174__0e08c4;
+    fn gm_8017BE84(a0: u32) -> i32 = crate::tu::adapt::gm_8017BE84__49c20d;
     fn gm_8017C984(a0: *mut c_void);
-    fn gm_8017C9A8(a0: *mut DebugGameOverData, a1: *mut Unk1PData, a2: u8);
-    fn gm_8017CA38(a0: *mut DebugGameOverData, a1: *mut Unk1PData, a2: *mut gmm_x0_528_t, a3: u8);
-    fn gm_8017CBAC(a0: *mut UnkAdventureData, a1: *mut gmm_x0_528_t, a2: u8);
-    fn gm_8017CD94(a0: *mut UnkAdventureData, a1: i32, a2: i32, a3: i32) -> u8;
+    fn gm_8017C9A8(a0: *mut DebugGameOverData, a1: *mut Unk1PData, a2: u8) = crate::tu::adapt::gm_8017C9A8__94d55d;
+    fn gm_8017CA38(a0: *mut DebugGameOverData, a1: *mut Unk1PData, a2: *mut gmm_x0_528_t, a3: u8) = crate::tu::adapt::gm_8017CA38__442d2c;
+    fn gm_8017CBAC(a0: *mut UnkAdventureData, a1: *mut gmm_x0_528_t, a2: u8) = crate::tu::adapt::gm_8017CBAC__33592d;
+    fn gm_8017CD94(a0: *mut UnkAdventureData, a1: i32, a2: i32, a3: i32) -> u8 = crate::tu::adapt::gm_8017CD94__09d838;
     fn gm_8017CE34(a0: *mut StartMeleeData, a1: *mut Unk1PData, a2: *mut i8, a3: u8, a4: u8, a5: u8, a6: i32, a7: u32, a8: i32, a9: i32);
-    fn gm_8017D7AC(a0: *mut MatchExitInfo, a1: *mut Unk1PData, a2: u8) -> i32;
+    fn gm_8017D7AC(a0: *mut MatchExitInfo, a1: *mut Unk1PData, a2: u8) -> i32 = crate::tu::adapt::gm_8017D7AC__84cd0d;
     fn gm_8017DB58(a0: *mut Unk1PData_x24);
     fn gm_8017DB6C(a0: *mut gm_8017DB6C_arg0_t, a1: i32) -> u8;
     fn gm_8017DB78(a0: *mut gm_8017DB6C_arg0_t, a1: i32) -> u8;
-    fn gm_8017DB88(a0: *mut c_void, a1: u8, a2: i32, a3: i32, a4: *mut u8, a5: u8, a6: Option<unsafe extern "C" fn(i32, i32, u8) -> u8>, a7: Option<unsafe extern "C" fn(i32, i32, u8) -> u8>, a8: Option<unsafe extern "C" fn(i32, i32, u8) -> u8>, a9: Option<unsafe extern "C" fn(i32, i32) -> f32>, a10: Option<unsafe extern "C" fn(i32, i32) -> f32>) -> i32;
-    fn gm_8017EB3C(a0: u8, a1: u8) -> u8;
-    fn gm_8017EB64(a0: u8, a1: u8, a2: u8) -> u8;
-    fn gm_8017EB98(a0: u8, a1: u8, a2: u8) -> u8;
-    fn gm_8017EBCC(a0: u8, a1: u8, a2: u8) -> u8;
-    fn gm_8017EC00(a0: u8, a1: u8) -> f32;
-    fn gm_8017EC50(a0: u8, a1: u8) -> f32;
-    fn gm_8017ECA0(a0: u8, a1: u8, a2: u8) -> u8;
-    fn gm_8017ECD4(a0: u8, a1: u8, a2: u8) -> u8;
-    fn gm_8017ED08(a0: u8, a1: u8, a2: u8) -> u8;
-    fn gm_8017ED3C(a0: u8, a1: u8) -> f32;
-    fn gm_8017ED8C(a0: u8, a1: u8) -> f32;
-    fn gm_801B06B0(a0: *mut CSSData, a1: u8, a2: i8, a3: i8, a4: i8, a5: u8, a6: u8, a7: u8);
+    fn gm_8017DB88(a0: *mut c_void, a1: u8, a2: i32, a3: i32, a4: *mut u8, a5: u8, a6: Option<unsafe extern "C" fn(i32, i32, u8) -> u8>, a7: Option<unsafe extern "C" fn(i32, i32, u8) -> u8>, a8: Option<unsafe extern "C" fn(i32, i32, u8) -> u8>, a9: Option<unsafe extern "C" fn(i32, i32) -> f32>, a10: Option<unsafe extern "C" fn(i32, i32) -> f32>) -> i32 = crate::tu::adapt::gm_8017DB88__2129f0;
+    fn gm_8017EB3C(a0: u8, a1: u8) -> u8 = crate::tu::adapt::gm_8017EB3C__28a3ff;
+    fn gm_8017EB64(a0: u8, a1: u8, a2: u8) -> u8 = crate::tu::adapt::gm_8017EB64__39144b;
+    fn gm_8017EB98(a0: u8, a1: u8, a2: u8) -> u8 = crate::tu::adapt::gm_8017EB98__c0f6a1;
+    fn gm_8017EBCC(a0: u8, a1: u8, a2: u8) -> u8 = crate::tu::adapt::gm_8017EBCC__415a10;
+    fn gm_8017EC00(a0: u8, a1: u8) -> f32 = crate::tu::adapt::gm_8017EC00__0d00a7;
+    fn gm_8017EC50(a0: u8, a1: u8) -> f32 = crate::tu::adapt::gm_8017EC50__df88ed;
+    fn gm_8017ECA0(a0: u8, a1: u8, a2: u8) -> u8 = crate::tu::adapt::gm_8017ECA0__c89fbd;
+    fn gm_8017ECD4(a0: u8, a1: u8, a2: u8) -> u8 = crate::tu::adapt::gm_8017ECD4__e2693d;
+    fn gm_8017ED08(a0: u8, a1: u8, a2: u8) -> u8 = crate::tu::adapt::gm_8017ED08__4f54e0;
+    fn gm_8017ED3C(a0: u8, a1: u8) -> f32 = crate::tu::adapt::gm_8017ED3C__2915b5;
+    fn gm_8017ED8C(a0: u8, a1: u8) -> f32 = crate::tu::adapt::gm_8017ED8C__49f083;
+    fn gm_801B06B0(a0: *mut CSSData, a1: u8, a2: i8, a3: i8, a4: i8, a5: u8, a6: u8, a7: u8) = crate::tu::adapt::gm_801B06B0__3a08bf;
     fn gm_801B0730(a0: *mut CSSData, a1: *mut i8, a2: *mut u8, a3: *mut u8, a4: *mut u8, a5: *mut u8);
-    fn gm_CKindToSelKind(a0: u8) -> u8;
-    fn gm_ChangeGameModeAfterCurrentScene(a0: i32);
-    fn gm_GetAllStarData() -> *mut UnkAllstarData;
-    fn gm_GetGameModeStateEnterData(a0: *mut GameModeState) -> *mut c_void;
-    fn gm_GetGameModeStateExitData(a0: *mut GameModeState) -> *mut c_void;
-    fn gm_IsCKindUnlocked(a0: u8) -> i32;
-    fn gm_LoadRumbleEnabled(a0: *mut StartMeleeData);
-    fn gm_SetGameModeStateId(a0: u8);
-    fn gm_SetNewGameModePending();
-    fn gm_SetNextGameModeStateId(a0: u8);
-    fn gm_SetPendingGameMode(a0: u8);
-    fn lbAudioAx_80026E84(a0: u32) -> u64;
-    fn lbAudioAx_80026EBC(a0: u32) -> u64;
-    fn lbAudioAx_80026F2C(a0: u32);
-    fn lbAudioAx_8002702C(a0: u32, a1: u64);
-    fn lbAudioAx_80027168();
-    fn lbDvd_80017700(a0: i32);
-    fn lbDvd_80018254();
-    fn lbDvd_80018C2C(a0: u8);
-    fn lbDvd_80018C6C();
-    fn lbDvd_GetPreloadCacheScene() -> *mut PreloadedGameModeState;
-    fn lbDvd_SetupVsPreloadCache();
+    fn gm_CKindToSelKind(a0: u8) -> u8 = crate::tu::adapt::gm_CKindToSelKind__a9d153;
+    fn gm_ChangeGameModeAfterCurrentScene(a0: i32) = crate::tu::adapt::gm_ChangeGameModeAfterCurrentScene__2292c1;
+    fn gm_GetAllStarData() -> *mut UnkAllstarData = crate::tu::adapt::gm_GetAllStarData__0c7e4e;
+    fn gm_GetGameModeStateEnterData(a0: *mut GameModeState) -> *mut c_void = crate::tu::adapt::gm_GetGameModeStateEnterData__d31bdf;
+    fn gm_GetGameModeStateExitData(a0: *mut GameModeState) -> *mut c_void = crate::tu::adapt::gm_GetGameModeStateExitData__c3c609;
+    fn gm_IsCKindUnlocked(a0: u8) -> i32 = crate::tu::adapt::gm_IsCKindUnlocked__b6c64b;
+    fn gm_LoadRumbleEnabled(a0: *mut StartMeleeData) = crate::tu::adapt::gm_LoadRumbleEnabled__62a06a;
+    fn gm_SetGameModeStateId(a0: u8) = crate::tu::adapt::gm_SetGameModeStateId__147996;
+    fn gm_SetNewGameModePending() = crate::tu::adapt::gm_SetNewGameModePending__1e5e48;
+    fn gm_SetNextGameModeStateId(a0: u8) = crate::tu::adapt::gm_SetNextGameModeStateId__031e98;
+    fn gm_SetPendingGameMode(a0: u8) = crate::tu::adapt::gm_SetPendingGameMode__90d26d;
+    fn lbAudioAx_80026E84(a0: u32) -> u64 = crate::tu::adapt::lbAudioAx_80026E84__5dcc27;
+    fn lbAudioAx_80026EBC(a0: u32) -> u64 = crate::tu::adapt::lbAudioAx_80026EBC__431bc0;
+    fn lbAudioAx_80026F2C(a0: u32) = crate::tu::adapt::lbAudioAx_80026F2C__c80d0b;
+    fn lbAudioAx_8002702C(a0: u32, a1: u64) = crate::tu::adapt::lbAudioAx_8002702C__208dc3;
+    fn lbAudioAx_80027168() = crate::tu::adapt::lbAudioAx_80027168__342616;
+    fn lbDvd_80017700(a0: i32) = crate::tu::adapt::lbDvd_80017700__5067b6;
+    fn lbDvd_80018254() = crate::tu::adapt::lbDvd_80018254__6be579;
+    fn lbDvd_80018C2C(a0: u8) = crate::tu::adapt::lbDvd_80018C2C__30bf87;
+    fn lbDvd_80018C6C() = crate::tu::adapt::lbDvd_80018C6C__4e040c;
+    fn lbDvd_GetPreloadCacheScene() -> *mut PreloadedGameModeState = crate::tu::adapt::lbDvd_GetPreloadCacheScene__1ed990;
+    fn lbDvd_SetupVsPreloadCache() = crate::tu::adapt::lbDvd_SetupVsPreloadCache__d38cf3;
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

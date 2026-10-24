@@ -47,14 +47,14 @@ pub mod ext {
     use crate::ext_fns;
     ext_fns! {
         fn GObj_Create(classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj;
-        extern "C" fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32);
+        extern "C" fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32) = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
         fn HSD_GObj_80390CD4(gobj: *mut HSD_GObj);
-        fn mn_80229860(a0: i8);
-        fn mn_8022ED6C(a0: *mut HSD_JObj, a1: *mut AnimLoopSettings) -> f32;
-        fn mn_8022F298(a0: *mut HSD_JObj) -> f32;
-        fn mn_8022F4CC();
+        fn mn_80229860(a0: i8) = crate::tu::adapt::mn_80229860__033db5;
+        fn mn_8022ED6C(a0: *mut HSD_JObj, a1: *mut AnimLoopSettings) -> f32 = crate::tu::adapt::mn_8022ED6C__f73cae;
+        fn mn_8022F298(a0: *mut HSD_JObj) -> f32 = crate::tu::adapt::mn_8022F298__0e9b78;
+        fn mn_8022F4CC() = crate::tu::adapt::mn_8022F4CC__d43938;
         fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
-        fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj;
+        fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj = crate::tu::adapt::HSD_JObjLoadJoint__3efee1;
         fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint);
         fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
         fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, flags: u32);
@@ -62,21 +62,21 @@ pub mod ext {
         fn HSD_JObjAddChild(jobj: *mut HSD_JObj, child: *mut HSD_JObj);
         fn HSD_JObjReqAnim(jobj: *mut HSD_JObj, frame: f32);
         fn HSD_JObjAnim(jobj: *mut HSD_JObj);
-        fn HSD_SisLib_803A5CC4(a0: *mut HSD_Text);
+        fn HSD_SisLib_803A5CC4(a0: *mut HSD_Text) = crate::tu::adapt::HSD_SisLib_803A5CC4__6c7e38;
         fn mn_802339FC() = crate::tu::mnruleplus::mn_802339FC;
         fn gm_801641CC(a0: u8) -> u16 = crate::gm::gm_801641CC;
         fn gm_801641E4(stage: u8, enable: u8) = crate::tu::gm_1601::gm_801641E4;
         fn gm_IsStageUnlocked(stkind: u16) -> i32 = crate::mn_inl::gm_IsStageUnlocked_i32;
         fn gm_80164430(a0: u16) -> i32 = crate::mn_inl::gm_80164430_i32;
-        fn gm_GetCurrentGameMode() -> u8;
-        fn lbCardGame_SaveChanges();
+        fn gm_GetCurrentGameMode() -> u8 = crate::tu::adapt::gm_GetCurrentGameMode__f56b36;
+        fn lbCardGame_SaveChanges() = crate::tu::adapt::lbCardGame_SaveChanges__0fc9e6;
         fn GObj_SetupGXLink(gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, gx_link: u8, priority: u32);
         fn HSD_GObjObject_80390A70(gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void);
         fn HSD_GObjFree(a0: *mut HSD_GObj);
         fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc;
         fn GObj_InitUserData(gobj: *mut HSD_GObj, kind: u8, remove_func: Option<unsafe extern "C" fn(*mut c_void) -> ()>, data: *mut c_void, );
-        extern "C" fn HSD_Free(ptr: *mut c_void);
-        fn HSD_MemAlloc(size: isize) -> *mut c_void;
+        extern "C" fn HSD_Free(ptr: *mut c_void) = crate::tu::adapt::HSD_Free__3ee311;
+        fn HSD_MemAlloc(size: isize) -> *mut c_void = crate::tu::adapt::HSD_MemAlloc__849f1b;
     }
     pub static mut HSD_GObj_804D783C: i32 = unsafe { core::mem::zeroed() };
     pub static mut HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };

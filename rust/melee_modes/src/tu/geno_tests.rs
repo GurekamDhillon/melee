@@ -17,16 +17,16 @@ unsafe fn __assert(file:*const i8,line:u32,condition:*const i8)->! {
 pub mod ext {
     use super::*;
     macro_rules! hooks {
-        ($(fn $n:ident($($a:ident:$t:ty),* $(,)?) $(->$r:ty)?;)*) => {
+        ($(fn $n:ident($($a:ident:$t:ty),* $(,)?) $(->$r:ty)? $(= $def:path)?;)*) => {
             pub mod hook { use super::*; $(pub static mut $n: Option<fn($($t),*) $(->$r)?> = None;)* }
             $(pub unsafe extern "C" fn $n($($a:$t),*) $(->$r)? {
-                match hook::$n { Some(f)=>f($($a),*), None=>panic!(concat!("TODO: ",stringify!($n)," is not ported")) }
+                match hook::$n { Some(f)=>f($($a),*), None=>{ $crate::ext_dflt!([$($def)?] ($($a),*) $n) } }
             })*
             pub mod cb { pub use super::*; }
         }
     }
     hooks! {
-fn GenoFly_CursorTest() -> i32;
+fn GenoFly_CursorTest() -> i32 = crate::tu::adapt::GenoFly_CursorTest__be3291;
 fn GenoGame_AimStick(
             sx: f32,
             sy: f32,
@@ -39,144 +39,144 @@ fn GenoGame_AimStick(
             fwd: *mut f32,
             up_0: *mut f32,
             face_0: *mut f32,
-        ) -> i32;
-fn Geno_NoHitlag(fp: *mut Fighter) -> i32;
-fn Geno_HitReact(fp: *mut Fighter) -> i32;
+        ) -> i32 = crate::tu::adapt::GenoGame_AimStick__f25e58;
+fn Geno_NoHitlag(fp: *mut Fighter) -> i32 = crate::tu::adapt::Geno_NoHitlag__37cfca;
+fn Geno_HitReact(fp: *mut Fighter) -> i32 = crate::tu::adapt::Geno_HitReact__0135dc;
 fn Geno_HitFlags(
             atk: *mut Fighter,
             idx: i32,
             vic: *mut Fighter,
-        ) -> i32;
-fn Geno_TakeStunBonus(vic: *mut Fighter) -> i32;
+        ) -> i32 = crate::tu::adapt::Geno_HitFlags__0264ec;
+fn Geno_TakeStunBonus(vic: *mut Fighter) -> i32 = crate::tu::adapt::Geno_TakeStunBonus__1e312f;
 fn Geno_HitStunBonus(
             atk: *mut Fighter,
             idx: i32,
             vic: *mut Fighter,
-        );
-fn ft_did_jump(fp: *mut Fighter, arg1: i32) -> i32;
+        ) = crate::tu::adapt::Geno_HitStunBonus__ff0e91;
+fn ft_did_jump(fp: *mut Fighter, arg1: i32) -> i32 = crate::tu::adapt::ft_did_jump__3fe6b7;
 fn strcmp(a0: *const i8, a1: *const i8) -> i32;
 fn memcmp(a0: *const c_void, a1: *const c_void, a2: usize) -> i32;
 fn memset(a0: *mut c_void, a1: i32, a2: usize) -> *mut c_void;
 fn memcpy(a0: *mut c_void, a1: *const c_void, a2: usize) -> *mut c_void;
-fn atan2f(a0: f32, a1: f32) -> f32;
+fn atan2f(a0: f32, a1: f32) -> f32 = crate::tu::adapt::atan2f__2f62eb;
 fn fabsf(a0: f32) -> f32;
-fn sinf(a0: f32) -> f32;
+fn sinf(a0: f32) -> f32 = crate::tu::adapt::sinf__245589;
 fn OSInitAlloc(a0: *mut c_void, a1: *mut c_void, a2: i32) -> *mut c_void;
 fn OSCreateHeap(a0: *mut c_void, a1: *mut c_void) -> i32;
-fn ftAnim_8006FA58(a0: *mut Fighter, a1: Fighter_Part, a2: *mut HSD_Joint);
+fn ftAnim_8006FA58(a0: *mut Fighter, a1: Fighter_Part, a2: *mut HSD_Joint) = crate::tu::adapt::ftAnim_8006FA58__8be30e;
 fn ftAction_80073240(a0: *mut Fighter_GObj);
 fn ftAction_80073354(a0: *mut Fighter_GObj);
 fn ftAction_8007349C(a0: *mut Fighter_GObj);
-fn HSD_FObjInitAllocData();
-fn HSD_AObjInitAllocData();
+fn HSD_FObjInitAllocData() = crate::tu::adapt::HSD_FObjInitAllocData__fad4fb;
+fn HSD_AObjInitAllocData() = crate::tu::adapt::HSD_AObjInitAllocData__a8b9a9;
 fn HSD_JObjRemoveAll(a0: *mut HSD_JObj);
-fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj;
+fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj = crate::tu::adapt::HSD_JObjLoadJoint__3efee1;
 fn TestRegister(a0: *const i8, a1: Option<unsafe extern "C" fn() -> i32>);
 fn TestFail(a0: *const i8);
-fn GenoGame_AttrFind(a0: *const i8) -> i32;
-fn GenoGame_AttrOffset(a0: i32) -> i32;
-fn GenoGame_HookFind(a0: *const i8) -> i32;
-fn GenoGame_StateOf(a0: *mut Fighter) -> *mut c_void;
-fn Geno_FighterReset(a0: *mut Fighter);
-fn Geno_OnActionChange(a0: *mut Fighter_GObj);
-fn Geno_ApplyAttrs(a0: *mut Fighter);
-fn Geno_MultiJump(a0: *mut Fighter, a1: i32, a2: *mut i32, a3: *mut f32);
+fn GenoGame_AttrFind(a0: *const i8) -> i32 = crate::tu::adapt::GenoGame_AttrFind__5b64ad;
+fn GenoGame_AttrOffset(a0: i32) -> i32 = crate::tu::adapt::GenoGame_AttrOffset__be1e14;
+fn GenoGame_HookFind(a0: *const i8) -> i32 = crate::tu::adapt::GenoGame_HookFind__5430c1;
+fn GenoGame_StateOf(a0: *mut Fighter) -> *mut c_void = crate::tu::adapt::GenoGame_StateOf__61c016;
+fn Geno_FighterReset(a0: *mut Fighter) = crate::tu::adapt::Geno_FighterReset__ca0a88;
+fn Geno_OnActionChange(a0: *mut Fighter_GObj) = crate::tu::adapt::Geno_OnActionChange__e5d2dc;
+fn Geno_ApplyAttrs(a0: *mut Fighter) = crate::tu::adapt::Geno_ApplyAttrs__5e5d4e;
+fn Geno_MultiJump(a0: *mut Fighter, a1: i32, a2: *mut i32, a3: *mut f32) = crate::tu::adapt::Geno_MultiJump__def9ad;
 fn Geno_TestReloadLayout(a0: *const i8) -> i32;
-fn GenoGame_ScriptRange(a0: u32, a1: u32) -> i32;
-fn GenoGame_ScriptHasIasa(a0: *const c_void) -> i32;
+fn GenoGame_ScriptRange(a0: u32, a1: u32) -> i32 = crate::tu::adapt::GenoGame_ScriptRange__051719;
+fn GenoGame_ScriptHasIasa(a0: *const c_void) -> i32 = crate::tu::adapt::GenoGame_ScriptHasIasa__c15a1a;
 fn Geno_TestInstall(a0: *const i8) -> i32;
 fn Geno_TestRestore();
 fn snap_open(a0: i32) -> i32;
 fn snap_save(a0: i32);
 fn snap_load(a0: i32) -> i32;
-fn GenoGame_AttrIsInt(a0: i32) -> i32;
-fn GenoGame_TestCapture(a0: i32, a1: i32);
-fn GenoGame_TestChanges() -> i32;
-fn GenoGame_TestLastTarget() -> u32;
-fn Geno_PreAnim(a0: *mut Fighter_GObj) -> i32;
-fn Geno_CollBegin(a0: *mut Fighter_GObj);
-fn Geno_CollEnd(a0: *mut Fighter_GObj);
-fn Geno_GroundEdge(a0: *mut Fighter, a1: i32);
-fn Geno_Autolink(a0: *mut Fighter, a1: *mut HitCapsule, a2: *mut f32, a3: *mut f32, a4: *mut f32) -> i32;
-fn Geno_MotionRow(a0: *mut Fighter, a1: i32) -> *mut MotionState;
-fn Geno_SpecialEnter(a0: *mut Fighter_GObj, a1: i32) -> i32;
-fn GenoGame_TestLedgeMode(a0: *mut Fighter) -> i32;
-fn GenoGame_TestStartFrame(a0: *mut Fighter, a1: i32) -> f32;
-fn GenoGame_TestPairSwap(a0: *mut Fighter, a1: i32) -> i32;
-fn GenoGame_TestModelRotX() -> f32;
-fn GenoGame_TestJointRate() -> f32;
-fn GenoGame_TestPoseReset(a0: f32);
-fn ScriptGame_FighterI(a0: i32, a1: i32) -> i32;
-fn ScriptGame_FighterF(a0: i32, a1: i32) -> f32;
-fn gmFrontend_ModeSelect(a0: *mut GameModeState, a1: i32, a2: *const i8);
-fn gm_GetAllGameModes() -> *mut GameMode;
-fn gm_GetStartMeleeRules() -> *mut StartMeleeRules;
-fn gm_8016AE80() -> i32;
+fn GenoGame_AttrIsInt(a0: i32) -> i32 = crate::tu::adapt::GenoGame_AttrIsInt__1d3880;
+fn GenoGame_TestCapture(a0: i32, a1: i32) = crate::tu::adapt::GenoGame_TestCapture__2dadd3;
+fn GenoGame_TestChanges() -> i32 = crate::tu::adapt::GenoGame_TestChanges__755eb6;
+fn GenoGame_TestLastTarget() -> u32 = crate::tu::adapt::GenoGame_TestLastTarget__2835dc;
+fn Geno_PreAnim(a0: *mut Fighter_GObj) -> i32 = crate::tu::adapt::Geno_PreAnim__3c70fb;
+fn Geno_CollBegin(a0: *mut Fighter_GObj) = crate::tu::adapt::Geno_CollBegin__155603;
+fn Geno_CollEnd(a0: *mut Fighter_GObj) = crate::tu::adapt::Geno_CollEnd__6ea115;
+fn Geno_GroundEdge(a0: *mut Fighter, a1: i32) = crate::tu::adapt::Geno_GroundEdge__246052;
+fn Geno_Autolink(a0: *mut Fighter, a1: *mut HitCapsule, a2: *mut f32, a3: *mut f32, a4: *mut f32) -> i32 = crate::tu::adapt::Geno_Autolink__bd7888;
+fn Geno_MotionRow(a0: *mut Fighter, a1: i32) -> *mut MotionState = crate::tu::adapt::Geno_MotionRow__2d0cf2;
+fn Geno_SpecialEnter(a0: *mut Fighter_GObj, a1: i32) -> i32 = crate::tu::adapt::Geno_SpecialEnter__354edd;
+fn GenoGame_TestLedgeMode(a0: *mut Fighter) -> i32 = crate::tu::adapt::GenoGame_TestLedgeMode__20e1e5;
+fn GenoGame_TestStartFrame(a0: *mut Fighter, a1: i32) -> f32 = crate::tu::adapt::GenoGame_TestStartFrame__314818;
+fn GenoGame_TestPairSwap(a0: *mut Fighter, a1: i32) -> i32 = crate::tu::adapt::GenoGame_TestPairSwap__f2efa3;
+fn GenoGame_TestModelRotX() -> f32 = crate::tu::adapt::GenoGame_TestModelRotX__9f9136;
+fn GenoGame_TestJointRate() -> f32 = crate::tu::adapt::GenoGame_TestJointRate__51ea58;
+fn GenoGame_TestPoseReset(a0: f32) = crate::tu::adapt::GenoGame_TestPoseReset__cef785;
+fn ScriptGame_FighterI(a0: i32, a1: i32) -> i32 = crate::tu::adapt::ScriptGame_FighterI__fafc3a;
+fn ScriptGame_FighterF(a0: i32, a1: i32) -> f32 = crate::tu::adapt::ScriptGame_FighterF__01b474;
+fn gmFrontend_ModeSelect(a0: *mut GameModeState, a1: i32, a2: *const i8) = crate::tu::adapt::gmFrontend_ModeSelect__ce9fbe;
+fn gm_GetAllGameModes() -> *mut GameMode = crate::tu::adapt::gm_GetAllGameModes__34c35a;
+fn gm_GetStartMeleeRules() -> *mut StartMeleeRules = crate::tu::adapt::gm_GetStartMeleeRules__b73473;
+fn gm_8016AE80() -> i32 = crate::tu::adapt::gm_8016AE80__c0d7dc;
 fn SceneLaunch_BootGameMode() -> i32;
 fn SceneLaunch_EntryStateId() -> i32;
 fn SceneLaunch_StageExternal() -> i32;
 fn SceneLaunch_ItemFreq() -> i32;
 fn SceneLaunch_PlayerCKind(a0: i32) -> i32;
 fn SceneLaunch_PlayerSlotType(a0: i32) -> i32;
-fn it_8026D018();
-fn it_8026D324(a0: ItemKind) -> i32;
-fn gm_Mode_Lab_OnLoad();
-fn GenoLab_ModeActive() -> i32;
-fn GenoLab_Leave(a0: i32) -> i32;
-fn GenoLab_ApplyRules(a0: *mut StartMeleeData);
-fn GenoLab_NextAfterMatch() -> i32;
-fn GenoFly_SetSpeed(a0: i32);
-fn GenoFly_Speed() -> f32;
-fn GenoFly_SetSolid(a0: i32);
+fn it_8026D018() = crate::tu::adapt::it_8026D018__64d115;
+fn it_8026D324(a0: ItemKind) -> i32 = crate::tu::adapt::it_8026D324__f6da35;
+fn gm_Mode_Lab_OnLoad() = crate::tu::adapt::gm_Mode_Lab_OnLoad__64dc69;
+fn GenoLab_ModeActive() -> i32 = crate::tu::adapt::GenoLab_ModeActive__8cb96b;
+fn GenoLab_Leave(a0: i32) -> i32 = crate::tu::adapt::GenoLab_Leave__a89637;
+fn GenoLab_ApplyRules(a0: *mut StartMeleeData) = crate::tu::adapt::GenoLab_ApplyRules__92fa88;
+fn GenoLab_NextAfterMatch() -> i32 = crate::tu::adapt::GenoLab_NextAfterMatch__3887c8;
+fn GenoFly_SetSpeed(a0: i32) = crate::tu::adapt::GenoFly_SetSpeed__aabcc6;
+fn GenoFly_Speed() -> f32 = crate::tu::adapt::GenoFly_Speed__366efc;
+fn GenoFly_SetSolid(a0: i32) = crate::tu::adapt::GenoFly_SetSolid__b04d6c;
 fn SceneLaunch_LoadForTest(a0: *const i8);
-fn GenoGame_StateSize() -> i32;
-fn GenoGame_StateFieldName(a0: i32) -> *const i8;
-fn GenoGame_StateFieldBase(a0: i32) -> i32;
-fn ScriptGame_LabFighterFieldName(a0: i32) -> *const i8;
-fn ScriptGame_LabFighterFieldBase(a0: i32) -> i32;
+fn GenoGame_StateSize() -> i32 = crate::tu::adapt::GenoGame_StateSize__92165c;
+fn GenoGame_StateFieldName(a0: i32) -> *const i8 = crate::tu::adapt::GenoGame_StateFieldName__96915a;
+fn GenoGame_StateFieldBase(a0: i32) -> i32 = crate::tu::adapt::GenoGame_StateFieldBase__6bd4a2;
+fn ScriptGame_LabFighterFieldName(a0: i32) -> *const i8 = crate::tu::adapt::ScriptGame_LabFighterFieldName__9ca0ff;
+fn ScriptGame_LabFighterFieldBase(a0: i32) -> i32 = crate::tu::adapt::ScriptGame_LabFighterFieldBase__37c01f;
 fn Geno_ArticleCount(a0: i32) -> i32;
 fn Geno_ArticleParam(a0: i32, a1: i32, a2: i32) -> i32;
 fn Geno_ArticleHitCount(a0: i32, a1: i32) -> i32;
 fn Geno_ArticleHitParam(a0: i32, a1: i32, a2: i32, a3: i32) -> i32;
 fn Geno_StateCounter(a0: i32, a1: i32, a2: i32) -> i32;
 fn Geno_HookCount(a0: i32, a1: i32) -> i32;
-fn Geno_ArticleDesc(a0: i32) -> *mut c_void;
-fn Geno_ArticleLogic(a0: i32) -> *mut c_void;
-fn Geno_OnHit(a0: *mut Fighter_GObj) -> i32;
-fn GenoGame_ArticleStep(a0: i32, a1: i32, a2: i32, a3: *mut f32, a4: *mut f32, a5: f32, a6: f32, a7: i32, a8: f32, a9: f32);
+fn Geno_ArticleDesc(a0: i32) -> *mut c_void = crate::tu::adapt::Geno_ArticleDesc__533f86;
+fn Geno_ArticleLogic(a0: i32) -> *mut c_void = crate::tu::adapt::Geno_ArticleLogic__7424dd;
+fn Geno_OnHit(a0: *mut Fighter_GObj) -> i32 = crate::tu::adapt::Geno_OnHit__5cbd6a;
+fn GenoGame_ArticleStep(a0: i32, a1: i32, a2: i32, a3: *mut f32, a4: *mut f32, a5: f32, a6: f32, a7: i32, a8: f32, a9: f32) = crate::tu::adapt::GenoGame_ArticleStep__051bee;
 fn Geno_SpecialSelect(a0: i32, a1: i32, a2: i32) -> i32;
-fn GenoGame_DashStick(a0: f32, a1: f32, a2: f32, a3: *mut f32, a4: *mut f32) -> i32;
-fn GenoGame_DashAim(a0: i32, a1: f32, a2: f32, a3: i32, a4: f32, a5: f32, a6: f32, a7: f32, a8: f32, a9: f32, a10: *mut f32, a11: *mut f32, a12: *mut f32, a13: *mut i32);
-fn GenoGame_Brake(a0: *mut f32, a1: *mut f32, a2: f32, a3: f32);
-fn GenoGame_LockonAim(a0: i32, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: i32, a7: f32, a8: f32, a9: *mut f32, a10: *mut f32, a11: *mut f32);
-fn GenoFly_TestArm(a0: *mut Fighter);
-fn GenoFly_Fighter(a0: *mut Fighter) -> i32;
+fn GenoGame_DashStick(a0: f32, a1: f32, a2: f32, a3: *mut f32, a4: *mut f32) -> i32 = crate::tu::adapt::GenoGame_DashStick__2b0e6e;
+fn GenoGame_DashAim(a0: i32, a1: f32, a2: f32, a3: i32, a4: f32, a5: f32, a6: f32, a7: f32, a8: f32, a9: f32, a10: *mut f32, a11: *mut f32, a12: *mut f32, a13: *mut i32) = crate::tu::adapt::GenoGame_DashAim__eaca5a;
+fn GenoGame_Brake(a0: *mut f32, a1: *mut f32, a2: f32, a3: f32) = crate::tu::adapt::GenoGame_Brake__13e65e;
+fn GenoGame_LockonAim(a0: i32, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: i32, a7: f32, a8: f32, a9: *mut f32, a10: *mut f32, a11: *mut f32) = crate::tu::adapt::GenoGame_LockonAim__57d893;
+fn GenoFly_TestArm(a0: *mut Fighter) = crate::tu::adapt::GenoFly_TestArm__11059c;
+fn GenoFly_Fighter(a0: *mut Fighter) -> i32 = crate::tu::adapt::GenoFly_Fighter__f7b536;
 fn ftCo_800D3158(a0: *mut Fighter_GObj) -> i32;
 fn GenoGame_DefinePPCViolation(a0: i32);
-fn ScriptGame_HitFamilyMove(a0: *mut Fighter) -> i32;
+fn ScriptGame_HitFamilyMove(a0: *mut Fighter) -> i32 = crate::tu::adapt::ScriptGame_HitFamilyMove__553e52;
 fn Geno_DefineCount() -> i32;
 fn Geno_DefineCKAt(a0: i32) -> i32;
-fn GenoDefine_StateDigest(a0: *mut Fighter) -> u32;
-fn RB_GameHash() -> u32;
-fn RB_FighterHash(a0: u32, a1: *mut Fighter, a2: i32) -> u32;
-fn RB_HashSetLegacy(a0: i32);
+fn GenoDefine_StateDigest(a0: *mut Fighter) -> u32 = crate::tu::adapt::GenoDefine_StateDigest__f6fea2;
+fn RB_GameHash() -> u32 = crate::tu::adapt::RB_GameHash__00ac4f;
+fn RB_FighterHash(a0: u32, a1: *mut Fighter, a2: i32) -> u32 = crate::tu::adapt::RB_FighterHash__1628df;
+fn RB_HashSetLegacy(a0: i32) = crate::tu::adapt::RB_HashSetLegacy__8bf080;
 fn RB_ItemHash(a0: *mut u32) -> u32;
-fn GenoGame_LuaBlockOf(a0: *mut Fighter) -> *mut c_void;
-fn GenoGame_ComboBlockOf(a0: *mut Fighter) -> *mut c_void;
-fn Geno_ComboInput(a0: *mut Fighter_GObj);
-fn Geno_ComboTick(a0: *mut Fighter_GObj) -> i32;
-fn Geno_ComboContact(a0: *mut Fighter, a1: i32);
+fn GenoGame_LuaBlockOf(a0: *mut Fighter) -> *mut c_void = crate::tu::adapt::GenoGame_LuaBlockOf__b52deb;
+fn GenoGame_ComboBlockOf(a0: *mut Fighter) -> *mut c_void = crate::tu::adapt::GenoGame_ComboBlockOf__3da5c9;
+fn Geno_ComboInput(a0: *mut Fighter_GObj) = crate::tu::adapt::Geno_ComboInput__b10783;
+fn Geno_ComboTick(a0: *mut Fighter_GObj) -> i32 = crate::tu::adapt::Geno_ComboTick__d39f28;
+fn Geno_ComboContact(a0: *mut Fighter, a1: i32) = crate::tu::adapt::Geno_ComboContact__369dfe;
 fn Geno_ComboParam(a0: i32, a1: i32) -> i32;
 fn Geno_MeterParam(a0: i32, a1: i32) -> i32;
 fn Geno_ComboWord(a0: i32, a1: i32, a2: i32) -> i32;
-fn lbColl_80007BCC(a0: *mut HitCapsule, a1: *mut HitResult, a2: *mut c_void, a3: i32, a4: f32, a5: f32, a6: f32) -> i32;
-fn HSD_GetHeap() -> OSHeapHandle;
-fn HSD_SetHeap(a0: OSHeapHandle);
-fn HSD_IDInitAllocData();
-fn HSD_IDSetup();
+fn lbColl_80007BCC(a0: *mut HitCapsule, a1: *mut HitResult, a2: *mut c_void, a3: i32, a4: f32, a5: f32, a6: f32) -> i32 = crate::tu::adapt::lbColl_80007BCC__611461;
+fn HSD_GetHeap() -> OSHeapHandle = crate::tu::adapt::HSD_GetHeap__32acf8;
+fn HSD_SetHeap(a0: OSHeapHandle) = crate::tu::adapt::HSD_SetHeap__744bee;
+fn HSD_IDInitAllocData() = crate::tu::adapt::HSD_IDInitAllocData__7a483c;
+fn HSD_IDSetup() = crate::tu::adapt::HSD_IDSetup__f19db5;
 fn ftCo_80091E78(a0: *mut Fighter_GObj, a1: f32);
-fn HSD_VecInitAllocData();
-fn HSD_MtxInitAllocData();
+fn HSD_VecInitAllocData() = crate::tu::adapt::HSD_VecInitAllocData__8c88b8;
+fn HSD_MtxInitAllocData() = crate::tu::adapt::HSD_MtxInitAllocData__245d52;
 fn HSD_RObjInitAllocData();
 fn GenoDefine_FtDataSharedMask(a0: *const ftData, a1: *const ftData) -> u32;
 fn GenoDefine_FtDataFieldName(a0: i32) -> *const i8;

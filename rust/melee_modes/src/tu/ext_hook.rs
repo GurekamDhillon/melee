@@ -105,18 +105,30 @@ macro_rules! ext_default {
     };
 }
 
+/// Default arm of a local `ext_fns!`: the verified port (`= path`), or the TODO panic.
+#[doc(hidden)]
+#[macro_export]
+macro_rules! ext_dflt {
+    ([] ($($a:ident),*) $name:ident) => {
+        panic!(concat!("TODO: ", stringify!($name), " is not ported"))
+    };
+    ([$def:path] ($($a:ident),*) $name:ident) => {
+        return $def($($a),*)
+    };
+}
+
 #[macro_export]
 macro_rules! ext_fns {
     () => {};
     // a callee whose address is taken as a C callback (`extern "C" fn` pointer)
-    ($(#[$m:meta])* extern "C" fn $name:ident($($a:ident : $t:ty),* $(,)?) $(-> $r:ty)? ; $($rest:tt)*) => {
+    ($(#[$m:meta])* extern "C" fn $name:ident($($a:ident : $t:ty),* $(,)?) $(-> $r:ty)? $(= $def:path)? ; $($rest:tt)*) => {
         $(#[$m])*
         #[allow(non_snake_case, unused_variables, clippy::missing_safety_doc)]
         pub unsafe extern "C" fn $name($($a: $t),*) -> $crate::ext_rty!($($r)?) {
             match $crate::tu::ext_hook::EXT_HOOK {
                 Some(h) => <$crate::ext_rty!($($r)?) as $crate::tu::ext_hook::Val>::from_u64(
                     h(stringify!($name), &[$($crate::tu::ext_hook::Val::to_u64($a)),*])),
-                None => { $crate::ext_default!([] ($($a),*) $name) }
+                None => { $crate::ext_default!([$($def)?] ($($a),*) $name) }
             }
         }
         $crate::ext_fns! { $($rest)* }

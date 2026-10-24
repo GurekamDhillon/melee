@@ -28,30 +28,30 @@ pub mod ext {
         fn GObj_Create(classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj;
         fn GObj_InitUserData(gobj: *mut HSD_GObj, kind: u8, remove_func: Option<unsafe extern "C" fn(*mut c_void)>, data: *mut c_void) -> ();
         fn GObj_SetupGXLink(gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, gx_link: u8, priority: u32) -> ();
-        fn HSD_Free(ptr: *mut c_void) -> ();
+        fn HSD_Free(ptr: *mut c_void) -> () = crate::tu::adapt::HSD_Free__3ee311;
         fn HSD_GObjFree(a0: *mut HSD_GObj) -> ();
         fn HSD_GObjObject_80390A70(gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void) -> ();
         fn HSD_GObjProc_RemoveProc(gproc: *mut HSD_GObjProc) -> ();
-        fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32) -> ();
+        fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
         fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc;
         fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint) -> ();
         fn HSD_JObjAnimAll(a0: *mut HSD_JObj) -> ();
-        fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj;
+        fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj = crate::tu::adapt::HSD_JObjLoadJoint__3efee1;
         fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32) -> ();
-        fn HSD_MemAlloc(size: i32) -> *mut c_void;
-        fn HSD_SisLib_803A5CC4(a0: *mut HSD_Text) -> ();
-        fn HSD_SisLib_803A5ACC(a0: i32, a1: i32, x: f32, y: f32, z: f32, w: f32, h: f32) -> *mut HSD_Text;
-        fn HSD_SisLib_803A6368(text: *mut HSD_Text, idx: i32) -> ();
+        fn HSD_MemAlloc(size: i32) -> *mut c_void = crate::tu::adapt::HSD_MemAlloc__c2b3bc;
+        fn HSD_SisLib_803A5CC4(a0: *mut HSD_Text) -> () = crate::tu::adapt::HSD_SisLib_803A5CC4__6c7e38;
+        fn HSD_SisLib_803A5ACC(a0: i32, a1: i32, x: f32, y: f32, z: f32, w: f32, h: f32) -> *mut HSD_Text = crate::tu::adapt::HSD_SisLib_803A5ACC__27fcb1;
+        fn HSD_SisLib_803A6368(text: *mut HSD_Text, idx: i32) -> () = crate::tu::adapt::HSD_SisLib_803A6368__2e8f0d;
         fn __assert(a0: *const i8, a1: u32, a2: *const i8) -> ();
-        fn gmMainLib_8015F4E8() -> u32;
-        fn gmMainLib_8015F4F4(arg0: u8) -> ();
-        fn gmMainLib_8015F588(a0: i32) -> ();
-        fn lbCardGame_SaveChanges() -> ();
+        fn gmMainLib_8015F4E8() -> u32 = crate::tu::adapt::gmMainLib_8015F4E8__7f030c;
+        fn gmMainLib_8015F4F4(arg0: u8) -> () = crate::tu::adapt::gmMainLib_8015F4F4__9eed36;
+        fn gmMainLib_8015F588(a0: i32) -> () = crate::tu::adapt::gmMainLib_8015F588__d30fee;
+        fn lbCardGame_SaveChanges() -> () = crate::tu::adapt::lbCardGame_SaveChanges__0fc9e6;
         fn mn_80229624(a0: u32) -> u32;
         fn mn_80229894(a0: i32, a1: u16, a2: i32) -> ();
-        fn mn_8022EC18(a0: *mut HSD_JObj, a1: *mut AnimLoopSettings, a2: HSD_TypeMask) -> f32;
-        fn mn_8022ED6C(a0: *mut HSD_JObj, a1: *mut AnimLoopSettings) -> f32;
-        fn mn_8022F3D8(a0: *mut HSD_JObj, a1: u8, a2: HSD_TypeMask) -> ();
+        fn mn_8022EC18(a0: *mut HSD_JObj, a1: *mut AnimLoopSettings, a2: HSD_TypeMask) -> f32 = crate::tu::adapt::mn_8022EC18__bee2c1;
+        fn mn_8022ED6C(a0: *mut HSD_JObj, a1: *mut AnimLoopSettings) -> f32 = crate::tu::adapt::mn_8022ED6C__f73cae;
+        fn mn_8022F3D8(a0: *mut HSD_JObj, a1: u8, a2: HSD_TypeMask) -> () = crate::tu::adapt::mn_8022F3D8__9f7fac;
     }
     crate::ext_va! {
         /// os: `(fmt, ...)`

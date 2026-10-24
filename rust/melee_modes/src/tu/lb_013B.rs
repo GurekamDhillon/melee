@@ -13,7 +13,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:path)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -21,16 +21,16 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $crate::ext_dflt!([$($def)?] ($($a),*) $name) }
                 }
             } )*
         };
     }
     ext_fns! {
-    fn Command_Execute(a0: *mut CommandInfo, a1: u32) -> i32;
-    fn HSD_PadRumbleAdd(a0: u8, a1: i32, a2: i32, a3: i32, a4: *mut c_void) -> i32;
-    fn HSD_PadRumbleOn(a0: u8);
-    fn HSD_PadRumbleRemove(a0: u8);
+    fn Command_Execute(a0: *mut CommandInfo, a1: u32) -> i32 = crate::tu::adapt::Command_Execute__d5bf79;
+    fn HSD_PadRumbleAdd(a0: u8, a1: i32, a2: i32, a3: i32, a4: *mut c_void) -> i32 = crate::tu::adapt::HSD_PadRumbleAdd__f8a1ce;
+    fn HSD_PadRumbleOn(a0: u8) = crate::tu::adapt::HSD_PadRumbleOn__3bcc58;
+    fn HSD_PadRumbleRemove(a0: u8) = crate::tu::adapt::HSD_PadRumbleRemove__adbf79;
     fn lbArchive_80017040(a0: *mut *mut HSD_Archive, a1: *const i8, a2: *mut c_void, a3: *const i8, a4: i32) -> i32;
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.

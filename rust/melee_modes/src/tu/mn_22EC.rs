@@ -13,7 +13,7 @@ pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:path)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -21,7 +21,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $crate::ext_dflt!([$($def)?] ($($a),*) $name) }
                 }
             } )*
         };
@@ -35,14 +35,14 @@ pub mod ext {
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
     fn HSD_JObjReqAnim(a0: *mut HSD_JObj, a1: f32);
     fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
-    fn HSD_SisLib_803A5E70();
-    fn gmMainLib_GetGameRules() -> *mut GameRules;
-    fn gm_80190EA4();
-    fn gm_GetButtonsTriggered(a0: u8) -> u64;
-    fn gm_GetCurrentGameMode() -> u8;
-    fn mnCharSel_802640A0() -> i32;
+    fn HSD_SisLib_803A5E70() = crate::tu::adapt::HSD_SisLib_803A5E70__5f9c7d;
+    fn gmMainLib_GetGameRules() -> *mut GameRules = crate::tu::adapt::gmMainLib_GetGameRules__34f6cb;
+    fn gm_80190EA4() = crate::tu::adapt::gm_80190EA4__7bb941;
+    fn gm_GetButtonsTriggered(a0: u8) -> u64 = crate::tu::adapt::gm_GetButtonsTriggered__dca604;
+    fn gm_GetCurrentGameMode() -> u8 = crate::tu::adapt::gm_GetCurrentGameMode__f56b36;
+    fn mnCharSel_802640A0() -> i32 = crate::tu::adapt::mnCharSel_802640A0__c8d517;
     fn mn_80229894(a0: i32, a1: u16, a2: i32);
-    fn mn_8022EBDC();
+    fn mn_8022EBDC() = crate::tu::adapt::mn_8022EBDC__a19b61;
     }
     /// `HSD_GObjPLinkHead` (baselib/gobjplink.c data): the per-link GObj list heads.
     pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = null_mut();

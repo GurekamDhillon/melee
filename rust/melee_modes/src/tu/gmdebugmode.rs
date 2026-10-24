@@ -13,7 +13,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:path)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -21,34 +21,34 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $crate::ext_dflt!([$($def)?] ($($a),*) $name) }
                 }
             } )*
         };
     }
     ext_fns! {
     fn HSD_Randi(a0: i32) -> i32;
-    fn gm_80166A98(a0: *mut MatchEnd, a1: u8, a2: i8, a3: u8, a4: i8, a5: u8, a6: i8, a7: u8, a8: u8, a9: u8) -> i32;
-    fn gm_80168F88();
-    fn gm_801701A0();
-    fn gm_80177724(a0: *mut ResultsMatchInfo);
-    fn gm_801A4B60();
-    fn gm_ChangeGameModeAfterCurrentScene(a0: i32);
-    fn gm_GetGameModeStateEnterData(a0: *mut GameModeState) -> *mut c_void;
-    fn gm_GetGameModeStateExitData(a0: *mut GameModeState) -> *mut c_void;
-    fn gm_LoadAnnouncer();
-    fn gm_SetNextGameModeStateId(a0: u8);
-    fn lbAudioAx_800236DC() -> i32;
-    fn lbAudioAx_80024030(a0: i32);
-    fn lbAudioAx_80026E84(a0: u32) -> u64;
-    fn lbAudioAx_80026F2C(a0: u32);
-    fn lbAudioAx_8002702C(a0: u32, a1: u64);
-    fn lbAudioAx_80027168();
-    fn lbAudioAx_80027648();
-    fn un_802FFEE0(a0: *mut c_void /* UnkSoundTestData0 */);
-    fn un_802FFF2C(a0: *mut StartMeleeData);
-    fn un_80301BA8(a0: *mut c_void /* UnkSoundTestData1 */);
-    fn un_80301C64(a0: *mut un_80301C64_t);
+    fn gm_80166A98(a0: *mut MatchEnd, a1: u8, a2: i8, a3: u8, a4: i8, a5: u8, a6: i8, a7: u8, a8: u8, a9: u8) -> i32 = crate::tu::adapt::gm_80166A98__8c24a8;
+    fn gm_80168F88() = crate::tu::adapt::gm_80168F88__9d899a;
+    fn gm_801701A0() = crate::tu::adapt::gm_801701A0__12d021;
+    fn gm_80177724(a0: *mut ResultsMatchInfo) = crate::tu::adapt::gm_80177724__c19fac;
+    fn gm_801A4B60() = crate::tu::adapt::gm_801A4B60__d469d9;
+    fn gm_ChangeGameModeAfterCurrentScene(a0: i32) = crate::tu::adapt::gm_ChangeGameModeAfterCurrentScene__2292c1;
+    fn gm_GetGameModeStateEnterData(a0: *mut GameModeState) -> *mut c_void = crate::tu::adapt::gm_GetGameModeStateEnterData__d31bdf;
+    fn gm_GetGameModeStateExitData(a0: *mut GameModeState) -> *mut c_void = crate::tu::adapt::gm_GetGameModeStateExitData__c3c609;
+    fn gm_LoadAnnouncer() = crate::tu::adapt::gm_LoadAnnouncer__907f2e;
+    fn gm_SetNextGameModeStateId(a0: u8) = crate::tu::adapt::gm_SetNextGameModeStateId__031e98;
+    fn lbAudioAx_800236DC() -> i32 = crate::tu::adapt::lbAudioAx_800236DC__5d9f3e;
+    fn lbAudioAx_80024030(a0: i32) = crate::tu::adapt::lbAudioAx_80024030__36458a;
+    fn lbAudioAx_80026E84(a0: u32) -> u64 = crate::tu::adapt::lbAudioAx_80026E84__5dcc27;
+    fn lbAudioAx_80026F2C(a0: u32) = crate::tu::adapt::lbAudioAx_80026F2C__c80d0b;
+    fn lbAudioAx_8002702C(a0: u32, a1: u64) = crate::tu::adapt::lbAudioAx_8002702C__208dc3;
+    fn lbAudioAx_80027168() = crate::tu::adapt::lbAudioAx_80027168__342616;
+    fn lbAudioAx_80027648() = crate::tu::adapt::lbAudioAx_80027648__4f40c8;
+    fn un_802FFEE0(a0: *mut c_void /* UnkSoundTestData0 */) = crate::tu::adapt::un_802FFEE0__17ec63;
+    fn un_802FFF2C(a0: *mut StartMeleeData) = crate::tu::adapt::un_802FFF2C__73c528;
+    fn un_80301BA8(a0: *mut c_void /* UnkSoundTestData1 */) = crate::tu::adapt::un_80301BA8__89da53;
+    fn un_80301C64(a0: *mut un_80301C64_t) = crate::tu::adapt::un_80301C64__b851f6;
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

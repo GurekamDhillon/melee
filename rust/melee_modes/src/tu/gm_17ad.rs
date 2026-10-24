@@ -12,8 +12,8 @@ pub use crate::gm::{fn_8017AD04, fn_8017AD28, fn_8017AD48, fn_8017AD78};
 pub mod ext {
     use super::*;
     ext_fns! {
-        fn fn_80174274() -> *mut MatchEnd;
-        fn lbLang_IsSavedLanguageUS() -> i32;
+        fn fn_80174274() -> *mut MatchEnd = crate::tu::adapt::fn_80174274__726c5b;
+        fn lbLang_IsSavedLanguageUS() -> i32 = crate::tu::adapt::lbLang_IsSavedLanguageUS__90e41e;
     }
 }
 

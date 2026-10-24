@@ -23,6 +23,7 @@ pub mod gmcamera;
 // `tests/tu_<stem>.rs` install recording hooks and compare against the C
 // (`gen/cref/tu/<stem>.c`, the whole TU, shipping contraction).
 pub mod support;
+pub mod adapt;
 pub mod gmcameramode;
 pub mod gmclassic;
 pub mod gmdebugmode;

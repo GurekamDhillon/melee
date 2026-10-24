@@ -338,12 +338,12 @@ pub mod ext {
         fn GxTex_TlutSize(h: i32) -> i32;
         fn GxTex_Width(h: i32) -> i32;
         fn HSD_JObjGetDObj(jobj: *mut HSD_JObj) -> *mut HSD_DObj;
-        fn HSD_MemAlloc(size: i32) -> *mut c_void;
-        fn HSD_SisLib_803A5CC4(a0: *mut HSD_Text) -> ();
-        fn HSD_SisLib_803A611C(a0: i32, a1: *mut HSD_GObj, a2: u16, a3: u8, a4: u8, a5: u8, a6: u8, a7: u32) -> i32;
-        fn HSD_SisLib_803A6754(arg0: i32, arg1: i32) -> *mut HSD_Text;
+        fn HSD_MemAlloc(size: i32) -> *mut c_void = crate::tu::adapt::HSD_MemAlloc__c2b3bc;
+        fn HSD_SisLib_803A5CC4(a0: *mut HSD_Text) -> () = crate::tu::adapt::HSD_SisLib_803A5CC4__6c7e38;
+        fn HSD_SisLib_803A611C(a0: i32, a1: *mut HSD_GObj, a2: u16, a3: u8, a4: u8, a5: u8, a6: u8, a7: u32) -> i32 = crate::tu::adapt::HSD_SisLib_803A611C__de78e8;
+        fn HSD_SisLib_803A6754(arg0: i32, arg1: i32) -> *mut HSD_Text = crate::tu::adapt::HSD_SisLib_803A6754__02fb41;
         fn HSD_SisLib_803A74F0(a0: *mut HSD_Text, arg1: i32, arg2: *mut GXColor) -> ();
-        fn HSD_SisLib_SetWideCanvas(font_idx: i32, canvas: i32) -> ();
+        fn HSD_SisLib_SetWideCanvas(font_idx: i32, canvas: i32) -> () = crate::tu::adapt::HSD_SisLib_SetWideCanvas__9bb4fb;
         fn HSD_StateInvalidate(mask: i32) -> ();
         fn Netplay_EnvoyAvailable() -> i32;
         fn Netplay_EnvoyPref() -> i32;
@@ -417,18 +417,18 @@ pub mod ext {
         fn fss_intercepts(s: *const FrontendScreen) -> i32;
         fn fss_switch(s: *const FrontendScreen) -> ();
         fn fte_frame() -> i32;
-        fn gmMainLib_GetGamePrefs() -> *mut GamePrefs;
-        fn gmMainLib_GetGameRules() -> *mut GameRules;
-        fn gm_801A4B60() -> ();
-        fn gm_ChangeGameModeAfterCurrentScene(pending_mode: i32) -> ();
-        fn gm_GetGameModeStateEnterData(a0: *mut GameModeState) -> *mut c_void;
+        fn gmMainLib_GetGamePrefs() -> *mut GamePrefs = crate::tu::adapt::gmMainLib_GetGamePrefs__12f16c;
+        fn gmMainLib_GetGameRules() -> *mut GameRules = crate::tu::adapt::gmMainLib_GetGameRules__34f6cb;
+        fn gm_801A4B60() -> () = crate::tu::adapt::gm_801A4B60__d469d9;
+        fn gm_ChangeGameModeAfterCurrentScene(pending_mode: i32) -> () = crate::tu::adapt::gm_ChangeGameModeAfterCurrentScene__2292c1;
+        fn gm_GetGameModeStateEnterData(a0: *mut GameModeState) -> *mut c_void = crate::tu::adapt::gm_GetGameModeStateEnterData__d31bdf;
         fn hsd_80391A04(scale_x: f32, scale_y: f32, line_width: i32) -> ();
         fn kit_load() -> ();
-        fn lbCardGame_LoadArchive(a0: i32) -> ();
-        fn lbCardNew_AllocWorkArea() -> ();
-        fn lbDvd_8001823C() -> ();
-        fn lbDvd_80018254() -> ();
-        fn lbDvd_80018C6C() -> ();
+        fn lbCardGame_LoadArchive(a0: i32) -> () = crate::tu::adapt::lbCardGame_LoadArchive__e9acb0;
+        fn lbCardNew_AllocWorkArea() -> () = crate::tu::adapt::lbCardNew_AllocWorkArea__a2c203;
+        fn lbDvd_8001823C() -> () = crate::tu::adapt::lbDvd_8001823C__d87971;
+        fn lbDvd_80018254() -> () = crate::tu::adapt::lbDvd_80018254__6be579;
+        fn lbDvd_80018C6C() -> () = crate::tu::adapt::lbDvd_80018C6C__4e040c;
         fn mn_80229624(a0: u32) -> u32;
     }
     crate::ext_va! {

@@ -12,7 +12,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:path)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -20,7 +20,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $crate::ext_dflt!([$($def)?] ($($a),*) $name) }
                 }
             } )*
         };
@@ -30,17 +30,17 @@ pub mod ext {
     fn GXInitTexObj(a0: *mut _GXTexObj, a1: *mut c_void, a2: u16, a3: u16, a4: u32, a5: u32, a6: u32, a7: u8);
     fn GXInitTexObjLOD(a0: *mut _GXTexObj, a1: u32, a2: u32, a3: f32, a4: f32, a5: f32, a6: u8, a7: u8, a8: u32);
     fn GXLoadTexObj(a0: *mut _GXTexObj, a1: u32);
-    fn HSD_Free(a0: *mut c_void);
-    fn HSD_MemAlloc(a0: i32) -> *mut c_void;
+    fn HSD_Free(a0: *mut c_void) = crate::tu::adapt::HSD_Free__3ee311;
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void = crate::tu::adapt::HSD_MemAlloc__c2b3bc;
     fn HSD_SObjLib_803A477C(a0: *mut HSD_GObj, a1: *mut HSD_SObjDesc, a2: u32, a3: u32, a4: u8, a5: u8) -> *mut HSD_SObj;
-    fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: i32);
-    fn THPDec_8032F8D4(a0: *mut u8, a1: *mut c_void /* THPDec_8032FD40_Data */) -> i32;
-    fn THPDec_8032FD40(a0: *mut c_void /* THPDec_8032FD40_Data */, a1: u16) -> i32;
-    fn THPDec_80331340(a0: *mut c_void /* _THPFileInfo */, a1: *mut c_void, a2: *mut c_void, a3: *mut c_void);
-    fn THPDec_803313D0(a0: *mut c_void /* _THPFileInfo */, a1: *mut c_void, a2: *mut c_void, a3: *mut c_void, a4: u32);
-    fn THPInit();
-    fn THPVideoDecode(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void /* _THPFileInfo */, a3: *mut c_void, a4: *mut c_void /* THPDec_8032FD40_Data */) -> *mut c_void /* _THPFileInfo */;
-    fn lbFile_80016760(a0: *const i8, a1: *mut *mut c_void, a2: *mut u32);
+    fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: i32) = crate::tu::adapt::HSD_SObjLib_803A49E0__00f645;
+    fn THPDec_8032F8D4(a0: *mut u8, a1: *mut c_void /* THPDec_8032FD40_Data */) -> i32 = crate::tu::adapt::THPDec_8032F8D4__2fd84b;
+    fn THPDec_8032FD40(a0: *mut c_void /* THPDec_8032FD40_Data */, a1: u16) -> i32 = crate::tu::adapt::THPDec_8032FD40__cc10c1;
+    fn THPDec_80331340(a0: *mut c_void /* _THPFileInfo */, a1: *mut c_void, a2: *mut c_void, a3: *mut c_void) = crate::tu::adapt::THPDec_80331340__4665bc;
+    fn THPDec_803313D0(a0: *mut c_void /* _THPFileInfo */, a1: *mut c_void, a2: *mut c_void, a3: *mut c_void, a4: u32) = crate::tu::adapt::THPDec_803313D0__1b8e06;
+    fn THPInit() = crate::tu::adapt::THPInit__5a9e11;
+    fn THPVideoDecode(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void /* _THPFileInfo */, a3: *mut c_void, a4: *mut c_void /* THPDec_8032FD40_Data */) -> *mut c_void /* _THPFileInfo */ = crate::tu::adapt::THPVideoDecode__873937;
+    fn lbFile_80016760(a0: *const i8, a1: *mut *mut c_void, a2: *mut u32) = crate::tu::adapt::lbFile_80016760__a18afc;
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

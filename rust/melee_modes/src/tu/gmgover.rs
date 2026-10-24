@@ -14,7 +14,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:path)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -22,23 +22,23 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $crate::ext_dflt!([$($def)?] ($($a),*) $name) }
                 }
             } )*
         };
     }
     ext_fns! {
-    fn gm_80164430(a0: u16) -> i32;
-    fn gm_80164504(a0: u16);
-    fn gm_80172898(a0: u16) -> i32;
-    fn gm_80173224(a0: i32, a1: i32) -> u8;
-    fn gm_80173754(a0: u8, a1: u8) -> i32;
-    fn gm_8017390C(a0: i32, a1: i32);
-    fn gm_80173EEC();
-    fn gm_InitChallengerData(a0: u8, a1: u8, a2: u8, a3: u8, a4: u8, a5: u8);
-    fn gm_SetNewGameModePending();
-    fn gm_SetPendingGameMode(a0: u8);
-    fn lbMthp_8001F800();
+    fn gm_80164430(a0: u16) -> i32 = crate::tu::adapt::gm_80164430__8808be;
+    fn gm_80164504(a0: u16) = crate::tu::adapt::gm_80164504__95f551;
+    fn gm_80172898(a0: u16) -> i32 = crate::tu::adapt::gm_80172898__ee73a3;
+    fn gm_80173224(a0: i32, a1: i32) -> u8 = crate::tu::adapt::gm_80173224__600622;
+    fn gm_80173754(a0: u8, a1: u8) -> i32 = crate::tu::adapt::gm_80173754__f83272;
+    fn gm_8017390C(a0: i32, a1: i32) = crate::tu::adapt::gm_8017390C__4e0f3c;
+    fn gm_80173EEC() = crate::tu::adapt::gm_80173EEC__58a22d;
+    fn gm_InitChallengerData(a0: u8, a1: u8, a2: u8, a3: u8, a4: u8, a5: u8) = crate::tu::adapt::gm_InitChallengerData__c5db86;
+    fn gm_SetNewGameModePending() = crate::tu::adapt::gm_SetNewGameModePending__1e5e48;
+    fn gm_SetPendingGameMode(a0: u8) = crate::tu::adapt::gm_SetPendingGameMode__90d26d;
+    fn lbMthp_8001F800() = crate::tu::adapt::lbMthp_8001F800__fe22a6;
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

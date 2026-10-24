@@ -20,12 +20,12 @@ pub static mut mn_804D6BB4: u8 = 0;
 pub static mut mn_804D6BB5: u8 = 0;
 
 ext_fns! {
-    fn lbAudioAx_80024030(sfx: i32);
+    fn lbAudioAx_80024030(sfx: i32) = crate::tu::adapt::lbAudioAx_80024030__36458a;
     fn mn_80229624(port: u32) -> u32;
     fn HSD_JObjSetMtxDirtySub(jobj: *mut HSD_JObj);
-    fn HSD_JObjSetMtxDirty(jobj: *mut HSD_JObj);
-    fn HSD_SisLib_803A5ACC(a: i32, b: i32, x: f32, y: f32, z: f32, w: f32, h: f32) -> *mut HSD_Text;
-    fn HSD_SisLib_803A6368(text: *mut HSD_Text, id: i32);
+    fn HSD_JObjSetMtxDirty(jobj: *mut HSD_JObj) = crate::tu::adapt::HSD_JObjSetMtxDirty__955390;
+    fn HSD_SisLib_803A5ACC(a: i32, b: i32, x: f32, y: f32, z: f32, w: f32, h: f32) -> *mut HSD_Text = crate::tu::adapt::HSD_SisLib_803A5ACC__27fcb1;
+    fn HSD_SisLib_803A6368(text: *mut HSD_Text, id: i32) = crate::tu::adapt::HSD_SisLib_803A6368__2e8f0d;
     // C varargs, fixed here to the arity every mn caller uses.
     fn OSReport(fmt: *const c_char);
 }

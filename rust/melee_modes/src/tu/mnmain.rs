@@ -4879,6 +4879,15 @@ pub mod ext {
     use melee_types::*;
     use super::*;
     macro_rules! hook {
+        ($h:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?, $port:path) => {
+            pub static mut $h: Option<unsafe extern "C" fn($($t),*) $(-> $r)?> = None;
+            pub unsafe extern "C" fn $name($($a: $t),*) $(-> $r)? {
+                match $h {
+                    Some(f) => f($($a),*),
+                    None => $port($($a),*),
+                }
+            }
+        };
         ($h:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
             pub static mut $h: Option<unsafe extern "C" fn($($t),*) $(-> $r)?> = None;
             pub unsafe extern "C" fn $name($($a: $t),*) $(-> $r)? {

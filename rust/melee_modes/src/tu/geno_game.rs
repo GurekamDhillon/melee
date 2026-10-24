@@ -17,10 +17,10 @@ unsafe fn __assert(file:*const i8,line:u32,condition:*const i8)->! {
 pub mod ext {
     use super::*;
     macro_rules! hooks {
-        ($(fn $n:ident($($a:ident:$t:ty),* $(,)?) $(->$r:ty)?;)*) => {
+        ($(fn $n:ident($($a:ident:$t:ty),* $(,)?) $(->$r:ty)? $(= $def:path)?;)*) => {
             pub mod hook { use super::*; $(pub static mut $n: Option<fn($($t),*) $(->$r)?> = None;)* }
             $(pub unsafe extern "C" fn $n($($a:$t),*) $(->$r)? {
-                match hook::$n { Some(f)=>f($($a),*), None=>panic!(concat!("TODO: ",stringify!($n)," is not ported")) }
+                match hook::$n { Some(f)=>f($($a),*), None=>{ $crate::ext_dflt!([$($def)?] ($($a),*) $n) } }
             })*
             pub mod cb { pub use super::*; }
         }
@@ -31,7 +31,7 @@ fn Geno_SpecialSelect(
             which_0: i32,
             i: i32,
         ) -> i32;
-fn ScriptGame_NoteSpecialInput(fp_0: *mut Fighter);
+fn ScriptGame_NoteSpecialInput(fp_0: *mut Fighter) = crate::tu::adapt::ScriptGame_NoteSpecialInput__c7d07e;
 fn diag_geno_stun(
             port: i32,
             base: i32,
@@ -39,36 +39,36 @@ fn diag_geno_stun(
         );
 fn Geno_ScriptAddressValid(address: u32, bytes: u32) -> i32;
 fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
-fn ScriptGame_HitRuleItemCreate(a0: *mut Item, a1: *mut HitCapsule);
-fn ScriptGame_HitRuleDamageOnly(a0: *mut HitCapsule);
-fn ScriptGame_HitRuleForget(a0: *mut HitCapsule);
+fn ScriptGame_HitRuleItemCreate(a0: *mut Item, a1: *mut HitCapsule) = crate::tu::adapt::ScriptGame_HitRuleItemCreate__a6017c;
+fn ScriptGame_HitRuleDamageOnly(a0: *mut HitCapsule) = crate::tu::adapt::ScriptGame_HitRuleDamageOnly__c1c74e;
+fn ScriptGame_HitRuleForget(a0: *mut HitCapsule) = crate::tu::adapt::ScriptGame_HitRuleForget__c0be11;
 fn ProfBegin(a0: i32, a1: i32);
 fn ProfEnd();
 fn ProfActive() -> i32;
-fn atan2f(a0: f32, a1: f32) -> f32;
-fn cosf(a0: f32) -> f32;
-fn sinf(a0: f32) -> f32;
+fn atan2f(a0: f32, a1: f32) -> f32 = crate::tu::adapt::atan2f__2f62eb;
+fn cosf(a0: f32) -> f32 = crate::tu::adapt::cosf__b177e0;
+fn sinf(a0: f32) -> f32 = crate::tu::adapt::sinf__245589;
 fn ftAnim_8006F0FC(a0: *mut Fighter_GObj, a1: f32);
 fn ftAnim_SetAnimRate(a0: *mut Fighter_GObj, a1: f32);
 fn ftAnim_IsFramesRemaining(a0: *mut Fighter_GObj) -> i32;
-fn it_ResetStageArticleTable();
-fn it_8026B40C(a0: *mut Article, a1: i32);
+fn it_ResetStageArticleTable() = crate::tu::adapt::it_ResetStageArticleTable__fad078;
+fn it_8026B40C(a0: *mut Article, a1: i32) = crate::tu::adapt::it_8026B40C__05f465;
 fn it_8026B894(a0: *mut Item_GObj, a1: *mut HSD_GObj) -> i32;
-fn it_8026BB68(a0: *mut Item_GObj, a1: *mut Vec);
+fn it_8026BB68(a0: *mut Item_GObj, a1: *mut Vec) = crate::tu::adapt::it_8026BB68__233026;
 fn HSD_DObjSetFlags(a0: *mut HSD_DObj, a1: u32);
 fn Geno_DefineBaseKind(a0: i32) -> i32;
 fn Fighter_ChangeMotionState(a0: *mut Fighter_GObj, a1: FtMotionId, a2: MotionFlags, a3: f32, a4: f32, a5: f32, a6: *mut Fighter_GObj);
 fn ft_8008A2BC(a0: *mut Fighter_GObj);
-fn ftCo_800D105C(a0: *mut Fighter_GObj);
+fn ftCo_800D105C(a0: *mut Fighter_GObj) = crate::tu::adapt::ftCo_800D105C__471042;
 fn ftCommon_SetSelfMovementFromGroundedMovement(a0: *mut Fighter_GObj);
 fn ftCommon_CalcSelfAccel_DeaccelAir(a0: *mut Fighter);
 fn ftCommon_CalcSelfAccel_Drift(a0: *mut Fighter);
 fn ftCommon_Fall(a0: *mut Fighter, a1: f32, a2: f32);
-fn ftCommon_8007D5D4(a0: *mut Fighter);
+fn ftCommon_8007D5D4(a0: *mut Fighter) = crate::tu::adapt::ftCommon_8007D5D4__8cebce;
 fn ftCommon_UseAllJumps(a0: *mut Fighter);
-fn ftCommon_8007D7FC(a0: *mut Fighter);
-fn ftPartSetRotX(a0: *mut Fighter, a1: i32, a2: f32);
-fn ftPartSetRotY(a0: *mut Fighter, a1: i32, a2: f32);
+fn ftCommon_8007D7FC(a0: *mut Fighter) = crate::tu::adapt::ftCommon_8007D7FC__490b7b;
+fn ftPartSetRotX(a0: *mut Fighter, a1: i32, a2: f32) = crate::tu::adapt::ftPartSetRotX__0c58b0;
+fn ftPartSetRotY(a0: *mut Fighter, a1: i32, a2: f32) = crate::tu::adapt::ftPartSetRotY__9ef908;
 fn ftCo_8009917C(a0: *mut Fighter_GObj) -> i32;
 fn ftCo_Fall_Enter(a0: *mut Fighter_GObj);
 fn ftCo_Fall_IASA(a0: *mut Fighter_GObj);
@@ -79,13 +79,13 @@ fn ftCo_Landing_Enter_Basic(a0: *mut Fighter_GObj);
 fn ftCo_LandingFallSpecial_Enter_Basic(a0: *mut Fighter_GObj);
 fn ftCo_LandingFallSpecial_Enter(a0: *mut Fighter_GObj, a1: i32, a2: f32);
 fn ftCo_Wait_IASA(a0: *mut Fighter_GObj);
-fn HSD_AObjSetFlags(a0: *mut HSD_AObj, a1: u32);
-fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32);
-fn HSD_AObjSetEndFrame(a0: *mut HSD_AObj, a1: f32);
+fn HSD_AObjSetFlags(a0: *mut HSD_AObj, a1: u32) = crate::tu::adapt::HSD_AObjSetFlags__2e5e0e;
+fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32) = crate::tu::adapt::HSD_AObjSetRate__1c2c90;
+fn HSD_AObjSetEndFrame(a0: *mut HSD_AObj, a1: f32) = crate::tu::adapt::HSD_AObjSetEndFrame__29ad4f;
 fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);
 fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
 fn HSD_JObjGetDObj(a0: *mut HSD_JObj) -> *mut HSD_DObj;
-fn lbColl_80008440(a0: *mut HitCapsule);
+fn lbColl_80008440(a0: *mut HitCapsule) = crate::tu::adapt::lbColl_80008440__c0a79c;
 fn HSD_Randf() -> f32;
 fn HSD_Randi(a0: i32) -> i32;
 fn Geno_ProfileForKind(a0: i32) -> i32;
@@ -144,8 +144,8 @@ fn ft_80084104(a0: *mut Fighter_GObj);
 fn ft_80084280(a0: *mut Fighter_GObj);
 fn ft_80084DB0(a0: *mut Fighter_GObj);
 fn ft_80084F3C(a0: *mut Fighter_GObj);
-fn ftCo_800D72A0(a0: *mut Fighter) -> i32;
-fn mpCollSetFacingDir(a0: *mut CollData, a1: i32);
+fn ftCo_800D72A0(a0: *mut Fighter) -> i32 = crate::tu::adapt::ftCo_800D72A0__eb6456;
+fn mpCollSetFacingDir(a0: *mut CollData, a1: i32) = crate::tu::adapt::mpCollSetFacingDir__b3708c;
 fn mpColl_80047AC8(a0: *mut CollData, a1: Option<unsafe extern "C" fn(*mut Fighter_GObj, enum_t) -> i32>, a2: *mut Fighter_GObj) -> i32;
 fn mpColl_80047E14(a0: *mut CollData, a1: Option<unsafe extern "C" fn(*mut Fighter_GObj, enum_t) -> i32>, a2: *mut Fighter_GObj) -> i32;
 fn ft_80081A00(a0: *mut Fighter_GObj) -> i32;
@@ -160,28 +160,28 @@ fn Geno_DefineOverrideField(a0: i32, a1: i32, a2: i32) -> i32;
 fn db_80225DD8(a0: *mut Item_GObj, a1: *mut Fighter_GObj);
 fn efAsync_QueueFlush(a0: *mut HSD_GObj, a1: *mut c_void);
 fn efAsync_MexSpawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: i32, a3: *mut HSD_JObj, a4: *mut Vec, a5: f32, a6: f32);
-fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec);
+fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec) = crate::tu::adapt::lb_8000B1CC__23547e;
 fn hsd_8039D5DC(a0: *mut HSD_JObj);
 fn HSD_CObjGetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec);
 fn HSD_CObjGetViewingMtxPtr(a0: *mut HSD_CObj) -> MtxPtr;
-fn HSD_CObjGetCurrent() -> *mut HSD_CObj;
+fn HSD_CObjGetCurrent() -> *mut HSD_CObj = crate::tu::adapt::HSD_CObjGetCurrent__6f08dd;
 fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: GObj_RenderFunc, a2: u8, a3: u32);
 fn ft_PlaySFX(a0: *mut Fighter, a1: enum_t, a2: u8, a3: u8);
-fn it_8026FCF8(a0: *mut Item, a1: *mut HitCapsule);
-fn it_8027129C(a0: *mut Item_GObj, a1: i32);
-fn it_80272460(a0: *mut HitCapsule, a1: u32, a2: *mut Item_GObj);
-fn it_8026E9A4(a0: *mut HSD_GObj, a1: *mut Vec, a2: *mut Vec, a3: *mut Vec) -> i32;
+fn it_8026FCF8(a0: *mut Item, a1: *mut HitCapsule) = crate::tu::adapt::it_8026FCF8__a44c9f;
+fn it_8027129C(a0: *mut Item_GObj, a1: i32) = crate::tu::adapt::it_8027129C__0e4566;
+fn it_80272460(a0: *mut HitCapsule, a1: u32, a2: *mut Item_GObj) = crate::tu::adapt::it_80272460__3b2b2c;
+fn it_8026E9A4(a0: *mut HSD_GObj, a1: *mut Vec, a2: *mut Vec, a3: *mut Vec) -> i32 = crate::tu::adapt::it_8026E9A4__61791d;
 fn it_80275594(a0: *mut Item_GObj, a1: i32, a2: f32);
-fn Item_80267978(a0: *mut HSD_GObj);
-fn Item_80268B18(a0: *mut SpawnItem) -> *mut Item_GObj;
-fn Item_80268E5C(a0: *mut HSD_GObj, a1: enum_t, a2: Item_StateChangeFlags);
-fn Item_8026A8EC(a0: *mut Item_GObj);
+fn Item_80267978(a0: *mut HSD_GObj) = crate::tu::adapt::Item_80267978__71f703;
+fn Item_80268B18(a0: *mut SpawnItem) -> *mut Item_GObj = crate::tu::adapt::Item_80268B18__f9c679;
+fn Item_80268E5C(a0: *mut HSD_GObj, a1: enum_t, a2: Item_StateChangeFlags) = crate::tu::adapt::Item_80268E5C__0d30a0;
+fn Item_8026A8EC(a0: *mut Item_GObj) = crate::tu::adapt::Item_8026A8EC__e93779;
 fn Camera_800310B8() -> *mut HSD_CObj;
 fn mpCheckFloor(a0: f32, a1: f32, a2: f32, a3: f32, a4: f32, a5: *mut Vec, a6: *mut i32, a7: *mut u32, a8: *mut Vec, a9: i32, a10: i32, a11: i32, a12: Option<unsafe extern "C" fn(*mut Fighter_GObj, i32) -> i32>, a13: *mut Fighter_GObj) -> i32;
-fn mpCheckCeiling(a0: f32, a1: f32, a2: f32, a3: f32, a4: *mut Vec, a5: *mut i32, a6: *mut u32, a7: *mut Vec, a8: i32, a9: i32) -> i32;
-fn mpCheckLeftWall(a0: f32, a1: f32, a2: f32, a3: f32, a4: *mut Vec, a5: *mut i32, a6: *mut u32, a7: *mut Vec, a8: i32, a9: i32) -> i32;
-fn mpCheckRightWall(a0: f32, a1: f32, a2: f32, a3: f32, a4: *mut Vec, a5: *mut i32, a6: *mut u32, a7: *mut Vec, a8: i32, a9: i32) -> i32;
-fn mpGetSpeed(a0: i32, a1: *mut Vec, a2: *mut Vec) -> i32;
+fn mpCheckCeiling(a0: f32, a1: f32, a2: f32, a3: f32, a4: *mut Vec, a5: *mut i32, a6: *mut u32, a7: *mut Vec, a8: i32, a9: i32) -> i32 = crate::tu::adapt::mpCheckCeiling__94c9dc;
+fn mpCheckLeftWall(a0: f32, a1: f32, a2: f32, a3: f32, a4: *mut Vec, a5: *mut i32, a6: *mut u32, a7: *mut Vec, a8: i32, a9: i32) -> i32 = crate::tu::adapt::mpCheckLeftWall__d5d908;
+fn mpCheckRightWall(a0: f32, a1: f32, a2: f32, a3: f32, a4: *mut Vec, a5: *mut i32, a6: *mut u32, a7: *mut Vec, a8: i32, a9: i32) -> i32 = crate::tu::adapt::mpCheckRightWall__f24271;
+fn mpGetSpeed(a0: i32, a1: *mut Vec, a2: *mut Vec) -> i32 = crate::tu::adapt::mpGetSpeed__f20f7d;
 fn Geno_ArticleParam(a0: i32, a1: i32, a2: i32) -> i32;
 fn Geno_ArticleHitCount(a0: i32, a1: i32) -> i32;
 fn Geno_ArticleHitParam(a0: i32, a1: i32, a2: i32, a3: i32) -> i32;
@@ -198,11 +198,11 @@ fn Fx_SetOwner(a0: i32, a1: i32, a2: i32);
 fn diag_fx_cam(a0: i32, a1: i32, a2: i32, a3: f32, a4: f32, a5: f32, a6: f32, a7: f32, a8: f32);
 fn Geno_FxBindings(a0: i32) -> i32;
 fn Fx_Drive(a0: i32, a1: i32, a2: i32, a3: i32, a4: f32, a5: i32, a6: i32, a7: i32, a8: i32, a9: i32, a10: i32, a11: i32, a12: i32, a13: i32, a14: i32);
-fn Player_GetEntity(a0: i32) -> *mut HSD_GObj;
+fn Player_GetEntity(a0: i32) -> *mut HSD_GObj = crate::tu::adapt::Player_GetEntity__090538;
 fn Fx_Owner(a0: i32) -> i32;
 fn Geno_ProfileIdWord(a0: i32) -> u32;
-fn Item_ScriptSpawnAtCap(a0: *mut SpawnItem) -> i32;
-fn Item_ScriptSpawnCapTest() -> i32;
+fn Item_ScriptSpawnAtCap(a0: *mut SpawnItem) -> i32 = crate::tu::adapt::Item_ScriptSpawnAtCap__e6349b;
+fn Item_ScriptSpawnCapTest() -> i32 = crate::tu::adapt::Item_ScriptSpawnCapTest__c9b323;
 fn HSD_StateInvalidate(a0: i32);
 fn Geno_ItemParam(a0: i32, a1: i32) -> i32;
 fn Mex_ItemRangeAvailable(a0: i32, a1: i32) -> i32;

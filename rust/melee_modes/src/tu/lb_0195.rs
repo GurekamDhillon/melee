@@ -12,7 +12,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:path)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -20,18 +20,18 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $crate::ext_dflt!([$($def)?] ($($a),*) $name) }
                 }
             } )*
         };
     }
     ext_fns! {
-    fn HSD_PadGetRawQueueCount() -> u8;
-    fn HSD_PadGetResetSwitch() -> i32;
-    fn HSD_PadRenewCopyStatus();
-    fn HSD_PadRenewGameStatus();
-    fn HSD_PadRenewMasterStatus();
-    fn HSD_PadRenewRawStatus(a0: i32);
+    fn HSD_PadGetRawQueueCount() -> u8 = crate::tu::adapt::HSD_PadGetRawQueueCount__b9c435;
+    fn HSD_PadGetResetSwitch() -> i32 = crate::tu::adapt::HSD_PadGetResetSwitch__f7c5ee;
+    fn HSD_PadRenewCopyStatus() = crate::tu::adapt::HSD_PadRenewCopyStatus__300d10;
+    fn HSD_PadRenewGameStatus() = crate::tu::adapt::HSD_PadRenewGameStatus__5366e1;
+    fn HSD_PadRenewMasterStatus() = crate::tu::adapt::HSD_PadRenewMasterStatus__03a172;
+    fn HSD_PadRenewRawStatus(a0: i32) = crate::tu::adapt::HSD_PadRenewRawStatus__ba4cff;
     fn OSCancelAlarm(a0: *mut OSAlarm);
     fn OSCreateAlarm(a0: *mut OSAlarm);
     fn OSDisableInterrupts() -> i32;
@@ -44,12 +44,12 @@ pub mod ext {
     fn VISetPostRetraceCallback(a0: Option<unsafe extern "C" fn(u32)>) -> Option<unsafe extern "C" fn(u32)>;
     fn VISetPreRetraceCallback(a0: Option<unsafe extern "C" fn(u32)>) -> Option<unsafe extern "C" fn(u32)>;
     fn VIWaitForRetrace();
-    fn lbAudioAx_80027DBC();
-    fn lbCardNew_CompleteNextTask() -> i32;
-    fn lbSnap_8001D2BC();
-    fn lb_800192A8(a0: Option<unsafe extern "C" fn()>);
-    fn lb_8001C600();
-    fn lb_8001CC84();
+    fn lbAudioAx_80027DBC() = crate::tu::adapt::lbAudioAx_80027DBC__2be6f4;
+    fn lbCardNew_CompleteNextTask() -> i32 = crate::tu::adapt::lbCardNew_CompleteNextTask__92582d;
+    fn lbSnap_8001D2BC() = crate::tu::adapt::lbSnap_8001D2BC__4abedd;
+    fn lb_800192A8(a0: Option<unsafe extern "C" fn()>) = crate::tu::adapt::lb_800192A8__02b4e0;
+    fn lb_8001C600() = crate::tu::adapt::lb_8001C600__203725;
+    fn lb_8001CC84() = crate::tu::adapt::lb_8001CC84__76fb76;
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

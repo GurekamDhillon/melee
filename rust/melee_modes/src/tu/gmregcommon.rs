@@ -10,7 +10,7 @@ pub use crate::gm::gm_8017BE84;
 pub mod ext {
     crate::oext_fns! {
         /// gm_1601.c
-        fn gm_GetNumCostumesForCKind(ckind: u8) -> u8;
+        fn gm_GetNumCostumesForCKind(ckind: u8) -> u8 = crate::tu::adapt::gm_GetNumCostumesForCKind__a594a2;
         /// debug.c
         fn __assert(file: *const i8, line: u32, msg: *const i8) -> ();
         /// os (pc/platform): variadic in C; the only call here has no arguments after the format.

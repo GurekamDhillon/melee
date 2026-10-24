@@ -11,10 +11,10 @@ use melee_types::*;
 pub mod ext {
     use super::*;
     ext_fns! {
-        fn GetPersistentNameData(a0: i32) -> *mut NameTagData;
-        fn fn_80174274() -> *mut MatchEnd;
+        fn GetPersistentNameData(a0: i32) -> *mut NameTagData = crate::tu::adapt::GetPersistentNameData__529241;
+        fn fn_80174274() -> *mut MatchEnd = crate::tu::adapt::fn_80174274__726c5b;
         fn fn_8017AD04(a0: i32, a1: i32) -> i32 = crate::gm::fn_8017AD04;
-        fn lbLang_IsSavedLanguageUS() -> i32;
+        fn lbLang_IsSavedLanguageUS() -> i32 = crate::tu::adapt::lbLang_IsSavedLanguageUS__90e41e;
     }
 }
 

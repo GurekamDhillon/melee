@@ -12,7 +12,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:path)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -20,7 +20,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $crate::ext_dflt!([$($def)?] ($($a),*) $name) }
                 }
             } )*
         };
@@ -49,7 +49,7 @@ pub mod ext {
     fn GXSetVtxDesc(a0: u32, a1: u32);
     fn GXSetZCompLoc(a0: u8);
     fn GXSetZMode(a0: u8, a1: u32, a2: u8);
-    fn HSD_CObjGetCurrent() -> *mut HSD_CObj;
+    fn HSD_CObjGetCurrent() -> *mut HSD_CObj = crate::tu::adapt::HSD_CObjGetCurrent__6f08dd;
     fn HSD_StateInitDirect(a0: i32, a1: u32);
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.

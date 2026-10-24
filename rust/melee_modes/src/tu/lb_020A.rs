@@ -16,7 +16,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:path)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -24,7 +24,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $crate::ext_dflt!([$($def)?] ($($a),*) $name) }
                 }
             } )*
         };
@@ -45,11 +45,11 @@ pub mod ext {
     fn PSMTXRotAxisRad(a0: *mut c_void, a1: *mut Vec, a2: f32);
     fn PSMTXTranspose(a0: *mut c_void, a1: *mut c_void);
     fn PSVECMag(a0: *mut Vec) -> f32;
-    fn acosf(a0: f32) -> f32;
-    fn atan2f(a0: f32, a1: f32) -> f32;
-    fn lbVector_Angle(a0: *mut Vec, a1: *mut Vec) -> f32;
-    fn lbVector_Diff(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec;
-    fn lbVector_Normalize(a0: *mut Vec) -> f32;
+    fn acosf(a0: f32) -> f32 = crate::tu::adapt::acosf__e9b06e;
+    fn atan2f(a0: f32, a1: f32) -> f32 = crate::tu::adapt::atan2f__2f62eb;
+    fn lbVector_Angle(a0: *mut Vec, a1: *mut Vec) -> f32 = crate::tu::adapt::lbVector_Angle__a15630;
+    fn lbVector_Diff(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec = crate::tu::adapt::lbVector_Diff__3f20f8;
+    fn lbVector_Normalize(a0: *mut Vec) -> f32 = crate::tu::adapt::lbVector_Normalize__748fa0;
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

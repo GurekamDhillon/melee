@@ -101,6 +101,59 @@ SPECS["lb_0219"] = dict(
                  "unsafe { *(a1 as *mut *mut c_void) = if rnd() & 1 != 0 { (&raw mut super::LBF) as *mut c_void } else { core::ptr::null_mut() }; } core::ptr::null_mut() }"),
     },
 )
+def _fillf(arg, n, rarg=None):
+    """effect: n random floats through the pointer `arg` (same draws on both sides)"""
+    return (f"{{ int i_; for (i_ = 0; i_ < {n}; i_++) ((float*) {arg})[i_] = rg(); }}",
+            f"for i_ in 0..{n} {{ *({rarg or arg} as *mut f32).add(i_) = rg(); }}")
+
+
+def _eff(*parts):
+    return (" ".join(p[0] for p in parts), " ".join(p[1] for p in parts))
+
+
+SPECS["lb_020A"] = dict(
+    src="src/melee/lb/lb_020A.c",
+    types=["HSD_JObj", "IKState", "Vec3"],
+    skip_stubs=["__frsqrte", "fabs"],
+    skip_data=["result"],
+    # fn_8002113C reads and writes `rot` (a Vec3) through a Quaternion*: the .w lands in whatever
+    # the compiler puts after it (UB). The port keeps the .w with the rotation; make the oracle's
+    # slot 16 bytes so it does too.
+    patch=[("    Vec3 rot;" + chr(10) + "    Quaternion rot2;", "    Quaternion rot;" + chr(10) + "    Quaternion rot2;"),
+           ("HSD_MkRotationMtx(tmpMtx, &rot);", "HSD_MkRotationMtx(tmpMtx, (Vec3*) &rot);"),
+           ("HSD_QuatLib_8037EB28(result, &rot);", "HSD_QuatLib_8037EB28(result, (Vec3*) &rot);")],
+    ret={
+        "PSVECMag": ("rg()", "rg()"),
+        "lbVector_Angle": ("rg()", "rg()"),
+        "lbVector_Normalize": ("rg()", "rg()"),
+        "lbVector_Diff": ("a2", "a2"),
+        "acosf": ("a0 + 0.25f", "a0 + 0.25"),
+        "atan2f": ("a0 - a1", "a0 - a1"),
+        "MatToQuat": ("(int) (fv() & 1)", "(fv() & 1) as i32"),
+        "HSD_QuatLib_8037EB28": ("(int) (fv() & 1)", "(fv() & 1) as i32"),
+    },
+    effects={
+        "HSD_JObjSetupMatrixSub": _eff(_fillf("&a0->mtx", 12, "&raw mut (*a0).mtx"),
+                                       ("a0->flags &= ~JOBJ_MTX_DIRTY;", "(*a0).flags &= !(JOBJ_MTX_DIRTY as u32);")),
+        "HSD_JObjSetMtxDirtySub": ("a0->flags |= JOBJ_MTX_DIRTY;", "(*a0).flags |= JOBJ_MTX_DIRTY as u32;"),
+        "HSD_MtxInverseConcat": _fillf("a2", 12),
+        "PSMTXConcat": _fillf("a2", 12),
+        "PSMTXCopy": ("{ int i_; for (i_ = 0; i_ < 12; i_++) ((float*) a1)[i_] = ((float*) a0)[i_]; }",
+                      "for i_ in 0..12 { *(a1 as *mut f32).add(i_) = *(a0 as *const f32).add(i_); }"),
+        "PSMTXTranspose": _fillf("a1", 12),
+        "PSMTXMultVec": _fillf("a2", 3),
+        "PSMTXRotAxisRad": _fillf("a0", 12),
+        "HSD_MkRotationMtx": _fillf("a0", 12),
+        "HSD_MtxQuat": _fillf("a0", 12),
+        "PSMTXQuat": _fillf("a0", 12),
+        "MTXRotRad": _fillf("a0", 12),
+        "MatToQuat": _fillf("a1", 4),
+        "HSD_QuatLib_8037EB28": _fillf("a1", 3),
+        "lbVector_Normalize": _fillf("a0", 3),
+        "lbVector_Diff": ("a2->x = a0->x - a1->x; a2->y = a0->y - a1->y; a2->z = a0->z - a1->z;",
+                          "(*a2).x = (*a0).x - (*a1).x; (*a2).y = (*a0).y - (*a1).y; (*a2).z = (*a0).z - (*a1).z;"),
+    },
+)
 for _s in SPECS.values():
     _s.setdefault("narrow_si", True)
     _s.setdefault("common_ret", {})

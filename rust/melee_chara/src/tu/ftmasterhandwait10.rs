@@ -50,7 +50,7 @@ pub mod ext {
         }
     }
     // `HSD_PadMasterStatus[port].button` (baselib/controller.c).
-    hook!(HSD_PADMASTERSTATUS_BUTTON, HSD_PadMasterStatus_button, (port: i32) -> u32);
+    crate::port_hook!(HSD_PADMASTERSTATUS_BUTTON, HSD_PadMasterStatus_button, crate::adapt::HSD_PadMasterStatus_button, (port: i32) -> u32);
     crate::port_hook!(HSD_RANDI, HSD_Randi, crate::adapt::HSD_Randi, (max: i32) -> i32);
     crate::port_hook!(HSD_RANDF, HSD_Randf, crate::adapt::HSD_Randf, () -> f32);
     // ftmasterhandentry.c

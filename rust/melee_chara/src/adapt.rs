@@ -520,3 +520,12 @@ pub fn ftAnim_GetNextMatAnimJointInTree(joint: *mut *mut HSD_MatAnimJoint, idx: 
 pub fn fighter_x2040_alloc_data() -> *mut c_void {
     (&raw mut melee_fighter::tu::fighter::fighter_x2040_alloc_data) as *mut c_void
 }
+
+/// `HSD_PadMasterStatus[port].button` (baselib/controller.c; the game's raw master pad table).
+pub unsafe fn HSD_PadMasterStatus_button(port: i32) -> u32 {
+    (*(&raw const melee_runtime::tu::controller::HSD_PadMasterStatus))[port as usize].button as u32
+}
+/// `HSD_AObjGetEndFrame(aobj)` (aobj.h inline).
+pub unsafe fn HSD_AObjGetEndFrame(aobj: *mut HSD_AObj) -> f32 {
+    melee_runtime::tu::aobj::HSD_AObjGetEndFrame(aobj)
+}

@@ -15,7 +15,7 @@ pub use crate::chars::r8::ftCrazyHand::ftcrazyhandslam::{ftCh_Fail_IASA, ftCh_Sl
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
     use melee_types::*;
-    crate::ch_hook!(FTCH_GRABUNK1_8015B800, ftCh_GrabUnk1_8015B800, (gobj: *mut HSD_GObj));
+    crate::port_hook!(FTCH_GRABUNK1_8015B800, ftCh_GrabUnk1_8015B800, crate::tu::ftcrazyhandcapturewaitcrazyhand::ftCh_GrabUnk1_8015B800, (gobj: *mut HSD_GObj));
 }
 
 pub fn ftCh_Slam_Anim(gobj: *mut HSD_GObj) {

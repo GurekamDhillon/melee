@@ -39,7 +39,7 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetRate(aobj as _, rate as _); } return; },
                 }
             }
-    hook!(HSD_AOBJGETENDFRAME, HSD_AObjGetEndFrame, (aobj: *mut HSD_AObj) -> f32);
+    crate::port_hook!(HSD_AOBJGETENDFRAME, HSD_AObjGetEndFrame, crate::adapt::HSD_AObjGetEndFrame, (aobj: *mut HSD_AObj) -> f32);
     // rp3 HSD_MObjReqAnim
     pub static mut HSD_MOBJREQANIM: Option<fn(*mut HSD_MObj, f32)> = None;
     #[allow(non_snake_case, unused_unsafe)]

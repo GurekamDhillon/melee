@@ -11,7 +11,7 @@ pub use crate::chars::r8::ftCrazyHand::ftcrazyhandgrab::ftCh_Grab_IASA;
 
 pub mod ext {
     use melee_types::*;
-    crate::ch_hook!(FTCH_INIT_8015A030, ftCh_Init_8015A030, (gobj: *mut HSD_GObj));
+    crate::port_hook!(FTCH_INIT_8015A030, ftCh_Init_8015A030, crate::tu::ftcrazyhandcancel::ftCh_Init_8015A030, (gobj: *mut HSD_GObj));
 }
 
 pub fn ftCh_Grab_Anim(gobj: *mut HSD_GObj) {

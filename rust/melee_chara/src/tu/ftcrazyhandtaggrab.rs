@@ -48,7 +48,7 @@ pub mod ext {
                 }
             }
     // ftcrazyhandcapturewaitcrazyhand.c
-    hook!(FTCH_GRABUNK1_8015B800, ftCh_GrabUnk1_8015B800, (gobj: *mut HSD_GObj));
+    crate::port_hook!(FTCH_GRABUNK1_8015B800, ftCh_GrabUnk1_8015B800, crate::tu::ftcrazyhandcapturewaitcrazyhand::ftCh_GrabUnk1_8015B800, (gobj: *mut HSD_GObj));
 }
 
 /// `static inline func_8015ADD0_inline(gobj)`.

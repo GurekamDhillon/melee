@@ -23,9 +23,14 @@ def main():
     cd, rd, frames = a[0], a[1], a[2:]
     if not frames:
         frames = sorted(int(f[7:11]) + OFFSET for f in os.listdir(rd) if f.startswith("native_"))
+    # A frame may be given as LABEL=SIMFRAME: the C screenshot is captured asynchronously, some
+    # 13-22 logic frames after the script requests it; the real frame is found from the CAM log.
     for f in frames:
-        f = int(f)
-        cp, rp = f"{cd}/c_{f:04d}.png", f"{rd}/native_{f - OFFSET:04d}.png"
+        if "=" in str(f):
+            f, sim = str(f).split("="); f = int(f); rp = f"{rd}/native_{int(sim) - 1:04d}.png"
+        else:
+            f = int(f); rp = f"{rd}/native_{f - OFFSET:04d}.png"
+        cp = f"{cd}/c_{f:04d}.png"
         if not (os.path.exists(cp) and os.path.exists(rp)):
             continue
         r = load(rp); c = load(cp, (r.shape[1], r.shape[0]))

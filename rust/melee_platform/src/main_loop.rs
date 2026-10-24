@@ -131,9 +131,19 @@ impl<G: Game> ApplicationHandler for App<G> {
         if self.window.is_some() {
             return;
         }
-        let attrs = Window::default_attributes()
+        let mut attrs = Window::default_attributes()
             .with_title(self.cfg.title.clone())
             .with_inner_size(winit::dpi::LogicalSize::new(self.cfg.width, self.cfg.height));
+        // MELEE_WINDOW_UNFOCUSED=1 (test harnesses): never take the user's keyboard focus.
+        // MELEE_WINDOW_UNFOCUSED=hidden also leaves the window invisible (EFB shots still work).
+        if let Ok(v) = std::env::var("MELEE_WINDOW_UNFOCUSED") {
+            attrs = attrs.with_active(false);
+            if v == "hidden" {
+                attrs = attrs.with_visible(false);
+            } else {
+                attrs = attrs.with_window_level(winit::window::WindowLevel::AlwaysOnBottom);
+            }
+        }
         match el.create_window(attrs) {
             Ok(w) => self.window = Some(Arc::new(w)),
             Err(e) => {

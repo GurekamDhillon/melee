@@ -479,6 +479,12 @@ impl<G: RbGame> RbSession<G> {
         }
     }
 
+    /// The local port is known only once the room's roles are (a random match decides them late).
+    pub fn set_local_port(&mut self, port: usize) {
+        self.cfg.local_port = port;
+        self.cfg.remote_mask = 1 << (1 - port.min(1)) as u32;
+    }
+
     /// gw_RB_SetDelay (netplay: the guest adopts the host's delay before frame -123).
     pub fn set_delay(&mut self, d: i32) {
         self.cfg.delay = d.clamp(0, 8);

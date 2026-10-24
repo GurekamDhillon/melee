@@ -8,6 +8,7 @@
 //! cannot touch the `Net` they run inside, so replies go to an outbox drained after each poll.
 
 use super::lobby::*;
+use super::rdv::*;
 use super::scene::*;
 use crate::net::{Callbacks, Config, Event, Net, State};
 use crate::transport::{Addr, Transport};
@@ -301,12 +302,21 @@ impl Callbacks for RoomCb {
 pub struct Room {
     pub sh: Rc<RefCell<Shared>>,
     pub net: Option<Net>,
+    pub rdv: Option<RdvRef>,
+    cfg: Config,
+    cb: Option<Box<dyn Callbacks>>,
+    tp: Option<Box<dyn Transport>>,
+    host_port: u16,
+    direct_peer: Option<Addr>,
+    random: bool,
 }
 
 impl Room {
-    /// `np_begin` for a direct connection: the transport is already open (and wrapped by the
-    /// caller for a server / network simulation). `inner` is the rollback session's callbacks.
-    pub fn begin(s: RoomSettings, env: Box<dyn RoomEnv>, inner: Box<dyn Callbacks>, tp: Box<dyn Transport>) -> Result<Room, String> {
+    /// `np_begin` / `gw_Netplay_RandomBegin`: the transport is already open (wrapped by the caller
+    /// for the server and for a network simulation). `inner` is the rollback session's callbacks.
+    /// With `rdv` a guest joins `room_code` through the server; with `random` the server pairs us.
+    #[allow(clippy::too_many_arguments)]
+    pub fn begin(s: RoomSettings, env: Box<dyn RoomEnv>, inner: Box<dyn Callbacks>, tp: Box<dyn Transport>, rdv: Option<RdvRef>, room_code: Option<String>, random: bool, host_port: u16) -> Result<Room, String> {
         let t0 = std::time::Instant::now();
         let seed = s.seed.unwrap_or_else(|| {
             let n = (t0.elapsed().as_nanos() as u32 ^ std::process::id()).wrapping_mul(2654435761);
@@ -335,7 +345,7 @@ impl Room {
             xtras: String::new(),
             t0,
         }));
-        let cb = Box::new(RoomCb { sh: sh.clone(), inner });
+        let cb: Box<dyn Callbacks> = Box::new(RoomCb { sh: sh.clone(), inner });
         let mut cfg = Config::default();
         {
             let b = sh.borrow();
@@ -343,31 +353,69 @@ impl Room {
             cfg.iso_hash = 0;
             cfg.mods_hash = b.env.global_hash();
             cfg.mods_desc = Some(b.env.global_describe());
-            cfg.mods_soft = s.host && s.use_lobby;
             cfg.first_frame = NP_FIRST_FRAME;
             cfg.payload_bytes = crate::NP_PAYLOAD as u8;
             cfg.hold_start = true;
             cfg.handshake_timeout_ms = 180_000;
             cfg.frame_us = 16667;
         }
+        if let Some(r) = &rdv {
+            let mut r = r.borrow_mut();
+            r.host = s.host;
+            if let Some(c) = room_code {
+                r.peer_code = c;
+            }
+            if random {
+                r.begin_random(sh.borrow().env.global_hash());
+            }
+        }
+        let direct_peer = s.peer;
+        let mut room = Room { sh, net: None, rdv, cfg, cb: Some(cb), tp: Some(tp), host_port, direct_peer, random };
+        if !random {
+            if s.host {
+                room.start_session(None)?;
+            } else if room.rdv.is_none() {
+                let peer = room.direct_peer.ok_or("no host address")?;
+                room.start_session(Some(peer))?;
+            }
+        }
+        Ok(room)
+    }
+
+    /// np_start_session: the netcode's config by role, then host now or join now.
+    fn start_session(&mut self, peer: Option<Addr>) -> Result<(), String> {
+        let s = self.sh.borrow().s.clone();
+        let cb = self.cb.take().ok_or("session already started")?;
+        let tp = self.tp.take().ok_or("session already started")?;
+        let mut cfg = self.cfg.clone();
+        cfg.mods_soft = s.host && s.use_lobby && !self.random;
         let net = if s.host {
+            let seed = self.sh.borrow().seed;
             cfg.seed = seed;
             cfg.input_delay = s.delay as u8;
             cfg.host_slots = 0x01;
             cfg.guest_slots = 0x04;
-            let scene = sh.borrow().build_scene_for(s.ck, s.color, 9, 0); // until the guest says
+            let scene = self.sh.borrow().build_scene_for(s.ck, s.color, 9, 0); // until the guest says
             cfg.match_blob = scene.clone().into_bytes();
             cfg.match_blob.push(0);
-            sh.borrow_mut().scene = scene;
+            self.sh.borrow_mut().scene = scene;
             Net::host(&cfg, cb, tp)
         } else {
-            let info = format!("{}/c{}/j{}", sh.borrow().env.token_for_ck(s.ck), s.color, s.controls);
+            let info = format!("{}/c{}/j{}", self.sh.borrow().env.token_for_ck(s.ck), s.color, s.controls);
             cfg.guest_info = info.into_bytes();
-            let Some(peer) = s.peer else { return Err("no host address".into()) };
+            let peer = peer.ok_or("no host address")?;
             Net::join(&cfg, cb, tp, peer)
         };
-        let Some(net) = net else { return Err("could not start the session".into()) };
-        Ok(Room { sh, net: Some(net) })
+        self.net = Some(net.ok_or("could not start the session")?);
+        if let Some(r) = &self.rdv {
+            r.borrow_mut().net_open = true;
+        }
+        Ok(())
+    }
+
+    /// The room code the host shows / the guest typed.
+    pub fn code(&self) -> String {
+        self.rdv.as_ref().map(|r| { let r = r.borrow(); if r.host { r.code.clone() } else { r.peer_code.clone() } }).unwrap_or_default()
     }
 
     pub fn phase(&self) -> Phase {
@@ -400,6 +448,65 @@ impl Room {
         let ph = self.sh.borrow().phase;
         if ph != Phase::Working {
             return ph;
+        }
+        if let Some(r) = self.rdv.clone() {
+            // random matchmaking: queued, then the pair continues as that room's host or guest
+            if self.random && self.net.is_none() {
+                let st = r.borrow().rnd.state;
+                match st {
+                    RandState::Waiting => {
+                        if !r.borrow_mut().rand_poll(self.host_port) {
+                            let e = r.borrow().err.clone();
+                            self.fail(&format!("Server: {e}"));
+                            return Phase::Failed;
+                        }
+                        let stt = r.borrow().status.clone();
+                        self.sh.borrow_mut().status = stt;
+                        if r.borrow().rnd.state != RandState::Matched {
+                            if r.borrow().rnd.state == RandState::Timeout {
+                                self.fail("No opponent found - try again in a moment");
+                                return Phase::Failed;
+                            }
+                            return Phase::Working;
+                        }
+                    }
+                    RandState::Matched => {}
+                    _ => {
+                        self.fail("random matchmaking failed");
+                        return Phase::Failed;
+                    }
+                }
+                r.borrow_mut().adopt_match();
+                let host = r.borrow().host;
+                {
+                    let mut sh = self.sh.borrow_mut();
+                    sh.s.host = host;
+                    sh.s.use_lobby = true;
+                }
+                if host {
+                    if let Err(e) = self.start_session(None) {
+                        self.fail(&e);
+                        return Phase::Failed;
+                    }
+                }
+            }
+            r.borrow_mut().service(self.host_port, self.net.is_some());
+            let err = r.borrow().err.clone();
+            if !err.is_empty() {
+                self.fail(&err);
+                return Phase::Failed;
+            }
+            if self.net.is_none() {
+                // a guest waiting for the server's introduction
+                if !r.borrow().have_peer {
+                    return Phase::Working;
+                }
+                let peer = r.borrow().peer;
+                if let Err(e) = self.start_session(Some(peer)) {
+                    self.fail(&e);
+                    return Phase::Failed;
+                }
+            }
         }
         let Some(net) = self.net.as_mut() else { return Phase::Failed };
         net.poll(NP_FIRST_FRAME);
@@ -518,6 +625,9 @@ impl Room {
     pub fn lobby_tick(&mut self) {
         if self.sh.borrow().phase != Phase::Lobby {
             return;
+        }
+        if let Some(r) = &self.rdv {
+            r.borrow_mut().service(self.host_port, true);
         }
         let Some(net) = self.net.as_mut() else { return };
         net.poll(NP_FIRST_FRAME);

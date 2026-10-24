@@ -32,7 +32,7 @@ fn arg(args: &[String], k: &str) -> Option<String> {
 
 /// Inbound lag / loss on a real socket.
 struct Degraded {
-    inner: UdpTransport,
+    inner: Box<dyn Transport>,
     lag: Duration,
     loss_pct: u32,
     rng: u32,
@@ -77,9 +77,11 @@ type Sess = RbSession<NetMatch>;
 
 pub fn netplay(args: &[String]) -> std::process::ExitCode {
     use std::process::ExitCode;
+    let random = args.iter().any(|a| a == "--random");
+    let room_code = arg(args, "--room");
     let host = args.iter().any(|a| a == "--host");
     let join = arg(args, "--join");
-    if host == join.is_some() {
+    if !random && (host == (join.is_some() || room_code.is_some())) {
         eprintln!("usage: melee netplay (--host --port P | --join IP:PORT) [--delay D] [--lag-ms N] [--loss-pct P] [--fps 60] [--out CSV] [--golden CSV] [--frames N] [--max-seconds S]");
         return ExitCode::from(2);
     }
@@ -108,10 +110,30 @@ pub fn netplay(args: &[String]) -> std::process::ExitCode {
     sess.borrow_mut().scene_begin(2);
     let log = Rc::new(RefCell::new(NetLog::default()));
     let inner = Box::new(NetAdapter::new(sess.clone(), log.clone(), None));
-    let mk = |bind_port: u16| -> std::io::Result<Box<dyn Transport>> {
-        let inner = UdpTransport::open(0x7F000001, bind_port)?;
-        Ok(Box::new(Degraded { inner, lag, loss_pct: loss, rng: 0x1234_5678 ^ local_port as u32, q: VecDeque::new() }))
+    let server = arg(args, "--server");
+    let bind_port = if host || random { num("--port", if random { 0 } else { 51500 }) as u16 } else { 0 };
+    let udp = match UdpTransport::open(0x7F000001, bind_port) {
+        Ok(u) => u,
+        Err(e) => {
+            eprintln!("melee: bind: {e}");
+            return ExitCode::FAILURE;
+        }
     };
+    let host_port = udp.local_port();
+    let (rdv, base): (Option<melee_net::app::rdv::RdvRef>, Box<dyn Transport>) = match &server {
+        Some(sv) => match melee_net::app::rdv::Rdv::new(sv, Box::new(udp)) {
+            Ok(r) => {
+                r.borrow_mut().lan_override = Some(0x7F000001);
+                (Some(r.clone()), Box::new(melee_net::app::rdv::RdvTransport(r)))
+            }
+            Err(e) => {
+                eprintln!("melee: {e}");
+                return ExitCode::FAILURE;
+            }
+        },
+        None => (None, Box::new(udp)),
+    };
+    let tp: Box<dyn Transport> = Box::new(Degraded { inner: base, lag, loss_pct: loss, rng: 0x1234_5678 ^ local_port as u32, q: VecDeque::new() });
     let settings = RoomSettings {
         host,
         ck,
@@ -119,21 +141,14 @@ pub fn netplay(args: &[String]) -> std::process::ExitCode {
         minutes,
         delay,
         stage_ext: num("--stage", 32) as i32,
-        use_lobby,
+        use_lobby: use_lobby || random || room_code.is_some() || (host && server.is_some()),
         peer: join.as_deref().and_then(|j| addr_parse(j, 51500)),
         name: arg(args, "--name").unwrap_or_default(),
         exe_hash: u64::from_str_radix(arg(args, "--exe-hash").as_deref().unwrap_or("0"), 16).unwrap_or(0),
         seed: arg(args, "--seed").and_then(|s| s.parse().ok()),
         ..RoomSettings::default()
     };
-    let tp = match mk(if host { num("--port", 51500) as u16 } else { 0 }) {
-        Ok(t) => t,
-        Err(e) => {
-            eprintln!("melee: bind: {e}");
-            return ExitCode::FAILURE;
-        }
-    };
-    let mut room = match Room::begin(settings, Box::new(NativeEnv), inner, tp) {
+    let mut room = match Room::begin(settings, Box::new(NativeEnv), inner, tp, rdv, room_code, random, host_port) {
         Ok(r) => r,
         Err(e) => {
             eprintln!("melee: {e}");
@@ -142,8 +157,9 @@ pub fn netplay(args: &[String]) -> std::process::ExitCode {
     };
     let t0 = Instant::now();
     if host {
-        eprintln!("melee: {tag} listening on 127.0.0.1:{}", num("--port", 51500));
+        eprintln!("melee: {tag} listening on 127.0.0.1:{host_port}");
     }
+    let mut shown_code = String::new();
     // connect (and, with --lobby, play the pick/ban lobby with a bot) until the match is agreed
     loop {
         if t0.elapsed().as_secs() > max_s {
@@ -153,10 +169,16 @@ pub fn netplay(args: &[String]) -> std::process::ExitCode {
         match room.phase() {
             Phase::Working => {
                 room.poll();
+                let c = room.code();
+                if !c.is_empty() && c != shown_code {
+                    eprintln!("melee: {tag}: room code {c}");
+                    shown_code = c;
+                }
             }
             Phase::Lobby => {
                 room.lobby_tick();
-                lobby_bot(&mut room, ck, host);
+                let h = room.sh.borrow().s.host;
+                lobby_bot(&mut room, if random { if h { 0 } else { 2 } } else { ck }, h);
             }
             Phase::Connected => break,
             _ => {
@@ -184,6 +206,10 @@ pub fn netplay(args: &[String]) -> std::process::ExitCode {
         }
     };
     game.live = true;
+    let host = room.sh.borrow().s.host;
+    let tag = if host { "host" } else { "guest" };
+    let local_port = if host { 0 } else { 1 };
+    sess.borrow_mut().set_local_port(local_port);
     sess.borrow_mut().set_delay(agreed_delay);
     room.release(); // gw_Netplay_Handshake: loaded, ready to start
     let mut net = room.net.take().expect("room has a connection");

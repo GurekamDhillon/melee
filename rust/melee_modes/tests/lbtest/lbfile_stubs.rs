@@ -6,13 +6,13 @@
     fn h_lbLang_IsSettingUS() -> bool { lg(&format!("lbLang_IsSettingUS();")); (rnd() & 1) != 0 }
     fn h_lbLang_IsSavedLanguageUS() -> bool { lg(&format!("lbLang_IsSavedLanguageUS();")); (rnd() & 1) != 0 }
     pub fn install_generated() {
-        use melee_modes::tu::lbfile::ext::*;
-        unsafe {
-            H_DVDClose = Some(h_DVDClose);
-            H_OSDisableInterrupts = Some(h_OSDisableInterrupts);
-            H_OSRestoreInterrupts = Some(h_OSRestoreInterrupts);
-            H_DVDConvertPathToEntrynum = Some(h_DVDConvertPathToEntrynum);
-            H_lbLang_IsSettingUS = Some(h_lbLang_IsSettingUS);
-            H_lbLang_IsSavedLanguageUS = Some(h_lbLang_IsSavedLanguageUS);
+        {
+            use melee_modes::tu::lbfile::ext as e;
+            unsafe { e::H_DVDClose = Some(h_DVDClose); }
+            unsafe { e::H_OSDisableInterrupts = Some(h_OSDisableInterrupts); }
+            unsafe { e::H_OSRestoreInterrupts = Some(h_OSRestoreInterrupts); }
+            unsafe { e::H_DVDConvertPathToEntrynum = Some(h_DVDConvertPathToEntrynum); }
+            unsafe { e::H_lbLang_IsSettingUS = Some(h_lbLang_IsSettingUS); }
+            unsafe { e::H_lbLang_IsSavedLanguageUS = Some(h_lbLang_IsSavedLanguageUS); }
         }
     }

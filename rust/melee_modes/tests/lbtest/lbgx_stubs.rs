@@ -22,29 +22,29 @@
     fn h_GXPosition3f32(a0: f32, a1: f32, a2: f32) { lg(&format!("GXPosition3f32({:x},{:x},{:x});", a0.to_bits(), a1.to_bits(), a2.to_bits())); }
     fn h_GXPosition2u8(a0: u8, a1: u8) { lg(&format!("GXPosition2u8({},{});", a0 as u32, a1 as u32)); }
     pub fn install_generated() {
-        use melee_modes::tu::lbgx::ext::*;
-        unsafe {
-            H_GXSetColorUpdate = Some(h_GXSetColorUpdate);
-            H_GXSetAlphaUpdate = Some(h_GXSetAlphaUpdate);
-            H_GXSetBlendMode = Some(h_GXSetBlendMode);
-            H_GXSetAlphaCompare = Some(h_GXSetAlphaCompare);
-            H_GXSetZMode = Some(h_GXSetZMode);
-            H_GXSetZCompLoc = Some(h_GXSetZCompLoc);
-            H_GXSetNumTexGens = Some(h_GXSetNumTexGens);
-            H_GXSetTevClampMode = Some(h_GXSetTevClampMode);
-            H_GXSetNumTevStages = Some(h_GXSetNumTevStages);
-            H_GXSetTevOrder = Some(h_GXSetTevOrder);
-            H_GXSetTevOp = Some(h_GXSetTevOp);
-            H_GXSetNumChans = Some(h_GXSetNumChans);
-            H_GXSetChanCtrl = Some(h_GXSetChanCtrl);
-            H_GXSetCullMode = Some(h_GXSetCullMode);
-            H_GXClearVtxDesc = Some(h_GXClearVtxDesc);
-            H_GXSetVtxAttrFmt = Some(h_GXSetVtxAttrFmt);
-            H_GXSetVtxDesc = Some(h_GXSetVtxDesc);
-            H_GXLoadPosMtxImm = Some(h_GXLoadPosMtxImm);
-            H_GXSetCurrentMtx = Some(h_GXSetCurrentMtx);
-            H_GXBegin = Some(h_GXBegin);
-            H_GXPosition3f32 = Some(h_GXPosition3f32);
-            H_GXPosition2u8 = Some(h_GXPosition2u8);
+        {
+            use melee_modes::tu::lbgx::ext as e;
+            unsafe { e::H_GXSetColorUpdate = Some(h_GXSetColorUpdate); }
+            unsafe { e::H_GXSetAlphaUpdate = Some(h_GXSetAlphaUpdate); }
+            unsafe { e::H_GXSetBlendMode = Some(h_GXSetBlendMode); }
+            unsafe { e::H_GXSetAlphaCompare = Some(h_GXSetAlphaCompare); }
+            unsafe { e::H_GXSetZMode = Some(h_GXSetZMode); }
+            unsafe { e::H_GXSetZCompLoc = Some(h_GXSetZCompLoc); }
+            unsafe { e::H_GXSetNumTexGens = Some(h_GXSetNumTexGens); }
+            unsafe { e::H_GXSetTevClampMode = Some(h_GXSetTevClampMode); }
+            unsafe { e::H_GXSetNumTevStages = Some(h_GXSetNumTevStages); }
+            unsafe { e::H_GXSetTevOrder = Some(h_GXSetTevOrder); }
+            unsafe { e::H_GXSetTevOp = Some(h_GXSetTevOp); }
+            unsafe { e::H_GXSetNumChans = Some(h_GXSetNumChans); }
+            unsafe { e::H_GXSetChanCtrl = Some(h_GXSetChanCtrl); }
+            unsafe { e::H_GXSetCullMode = Some(h_GXSetCullMode); }
+            unsafe { e::H_GXClearVtxDesc = Some(h_GXClearVtxDesc); }
+            unsafe { e::H_GXSetVtxAttrFmt = Some(h_GXSetVtxAttrFmt); }
+            unsafe { e::H_GXSetVtxDesc = Some(h_GXSetVtxDesc); }
+            unsafe { e::H_GXLoadPosMtxImm = Some(h_GXLoadPosMtxImm); }
+            unsafe { e::H_GXSetCurrentMtx = Some(h_GXSetCurrentMtx); }
+            unsafe { e::H_GXBegin = Some(h_GXBegin); }
+            unsafe { e::H_GXPosition3f32 = Some(h_GXPosition3f32); }
+            unsafe { e::H_GXPosition2u8 = Some(h_GXPosition2u8); }
         }
     }

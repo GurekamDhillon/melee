@@ -163,6 +163,8 @@ pub fn fmt_report(fmt: &str, args: &[OsArg]) -> String {
             (b'u', OsArg::I(v)) => o.push_str(&pad(format!("{}", v as u32), width, zp)),
             (b'x', OsArg::U(v)) => o.push_str(&pad(format!("{:x}", v), width, zp)),
             (b'x', OsArg::I(v)) => o.push_str(&pad(format!("{:x}", v as u32), width, zp)),
+            (b'X', OsArg::U(v)) => o.push_str(&pad(format!("{:X}", v), width, zp)),
+            (b'X', OsArg::I(v)) => o.push_str(&pad(format!("{:X}", v as u32), width, zp)),
             (b's', OsArg::S(p)) => o.push_str(unsafe { CStr::from_ptr(p) }.to_str().unwrap()),
             _ => panic!("fmt_report {fmt}"),
         }

@@ -17,7 +17,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(ROOT / "rust/melee_fighter/gen/cref"))
 import run  # noqa: E402
 import lbgen  # noqa: E402
-from lb_specs import SPECS, DRIVERS  # noqa: E402
+from lb_specs import SPECS, DRIVERS, GROUPS  # noqa: E402
 
 run.HERE = HERE
 run.DATA = ROOT / "rust/melee_modes/tests/data"
@@ -31,8 +31,8 @@ def main():
     names = [a[3:] if a.startswith("tu_") else a for a in args if not a.startswith("--")] or sorted(DRIVERS)
     run.BUILD.mkdir(parents=True, exist_ok=True)
     for stem in names:
-        if stem in SPECS:
-            lbgen.build(SPECS[stem], stem, ROOT)
+        if any(SPECS.get(s) for s in GROUPS.get(stem, [stem])):
+            lbgen.build(SPECS, stem, GROUPS.get(stem, [stem]), ROOT)
     if gen_only:
         return
     sys.argv = [sys.argv[0], *[f"tu_{n}" for n in names]]

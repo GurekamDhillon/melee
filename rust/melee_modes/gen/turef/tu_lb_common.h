@@ -107,11 +107,12 @@ static const char* pids(const char* s)
 static char g_rep[512];
 static int g_repn;
 static void rep_c(char c) { if (g_repn < 510) { g_rep[g_repn++] = c; g_rep[g_repn] = 0; } }
+static int g_upper;
 static void rep_u(unsigned long v, unsigned base, int width, int zp)
 {
     char t[40];
     int n = 0;
-    do { t[n++] = "0123456789abcdef"[v % base]; v /= base; } while (v);
+    do { t[n++] = (g_upper ? "0123456789ABCDEF" : "0123456789abcdef")[v % base]; v /= base; } while (v);
     while (n < width) t[n++] = zp ? '0' : ' ';
     while (n) rep_c(t[--n]);
 }
@@ -133,6 +134,7 @@ static void os_report_va(const char* fmt, va_list ap)
         }
         case 'u': rep_u((unsigned long) va_arg(ap, unsigned), 10, width, zp); break;
         case 'x': rep_u((unsigned long) va_arg(ap, unsigned), 16, width, zp); break;
+        case 'X': g_upper = 1; rep_u((unsigned long) va_arg(ap, unsigned), 16, width, zp); g_upper = 0; break;
         case 's': { const char* p = va_arg(ap, const char*); while (*p) rep_c(*p++); break; }
         }
     }

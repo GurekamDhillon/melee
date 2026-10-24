@@ -1,5 +1,6 @@
 """Callee specs of the lb* TU drivers (see lbgen.py for the grammar)."""
 DRIVERS = ["lblanguage", "lbgx", "lbfile"]
+GROUPS = {}  # driver -> the TU ports it covers (default: itself)
 SPECS = {
     "lbfile": [
         "void !lb_800195D0()",

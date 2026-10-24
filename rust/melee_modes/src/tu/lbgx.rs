@@ -10,42 +10,31 @@ use melee_types::*;
 /// panics "TODO: <name> is not ported".
 pub mod ext {
     use super::*;
-    macro_rules! hook {
-        ($h:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
-            pub static mut $h: Option<fn($($t),*) $(-> $r)?> = None;
-            #[allow(non_snake_case)]
-            pub fn $name($($a: $t),*) $(-> $r)? {
-                match unsafe { $h } {
-                    Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
-                }
-            }
-        };
-    }
+    use crate::tu::lbext::lb_hook;
     // BEGIN GENERATED ext
-    hook!(H_GXSetColorUpdate, GXSetColorUpdate, (a: u8));
-    hook!(H_GXSetAlphaUpdate, GXSetAlphaUpdate, (a: u8));
-    hook!(H_GXSetBlendMode, GXSetBlendMode, (a: i32, b: i32, c: i32, d: i32));
-    hook!(H_GXSetAlphaCompare, GXSetAlphaCompare, (a: i32, b: u8, c: i32, d: i32, e: u8));
-    hook!(H_GXSetZMode, GXSetZMode, (a: u8, b: i32, c: u8));
-    hook!(H_GXSetZCompLoc, GXSetZCompLoc, (a: u8));
-    hook!(H_GXSetNumTexGens, GXSetNumTexGens, (a: u8));
-    hook!(H_GXSetTevClampMode, GXSetTevClampMode, (a: i32, b: i32));
-    hook!(H_GXSetNumTevStages, GXSetNumTevStages, (a: u8));
-    hook!(H_GXSetTevOrder, GXSetTevOrder, (a: i32, b: i32, c: i32, d: i32));
-    hook!(H_GXSetTevOp, GXSetTevOp, (a: i32, b: i32));
-    hook!(H_GXSetNumChans, GXSetNumChans, (a: u8));
-    hook!(H_GXSetChanCtrl, GXSetChanCtrl, (a: i32, b: u8, c: i32, d: i32, e: u32, f: i32, g: i32));
-    hook!(H_GXSetCullMode, GXSetCullMode, (a: i32));
-    hook!(H_GXClearVtxDesc, GXClearVtxDesc, ());
-    hook!(H_GXSetVtxAttrFmt, GXSetVtxAttrFmt, (a: i32, b: i32, c: i32, d: i32, e: u8));
-    hook!(H_GXSetVtxDesc, GXSetVtxDesc, (a: i32, b: i32));
-    hook!(H_GXLoadPosMtxImm, GXLoadPosMtxImm, (a: *const [f32; 4], b: u32));
-    hook!(H_GXSetCurrentMtx, GXSetCurrentMtx, (a: u32));
-    hook!(H_GXBegin, GXBegin, (a: i32, b: i32, c: u16));
-    hook!(H_GXPosition3f32, GXPosition3f32, (a: f32, b: f32, c: f32));
-    hook!(H_GXPosition2u8, GXPosition2u8, (a: u8, b: u8));
-    hook!(H_HSD_CObjGetCurrent, HSD_CObjGetCurrent, () -> *mut HSD_CObj);
+    lb_hook!(H_GXSetColorUpdate, GXSetColorUpdate, (a: u8));
+    lb_hook!(H_GXSetAlphaUpdate, GXSetAlphaUpdate, (a: u8));
+    lb_hook!(H_GXSetBlendMode, GXSetBlendMode, (a: i32, b: i32, c: i32, d: i32));
+    lb_hook!(H_GXSetAlphaCompare, GXSetAlphaCompare, (a: i32, b: u8, c: i32, d: i32, e: u8));
+    lb_hook!(H_GXSetZMode, GXSetZMode, (a: u8, b: i32, c: u8));
+    lb_hook!(H_GXSetZCompLoc, GXSetZCompLoc, (a: u8));
+    lb_hook!(H_GXSetNumTexGens, GXSetNumTexGens, (a: u8));
+    lb_hook!(H_GXSetTevClampMode, GXSetTevClampMode, (a: i32, b: i32));
+    lb_hook!(H_GXSetNumTevStages, GXSetNumTevStages, (a: u8));
+    lb_hook!(H_GXSetTevOrder, GXSetTevOrder, (a: i32, b: i32, c: i32, d: i32));
+    lb_hook!(H_GXSetTevOp, GXSetTevOp, (a: i32, b: i32));
+    lb_hook!(H_GXSetNumChans, GXSetNumChans, (a: u8));
+    lb_hook!(H_GXSetChanCtrl, GXSetChanCtrl, (a: i32, b: u8, c: i32, d: i32, e: u32, f: i32, g: i32));
+    lb_hook!(H_GXSetCullMode, GXSetCullMode, (a: i32));
+    lb_hook!(H_GXClearVtxDesc, GXClearVtxDesc, ());
+    lb_hook!(H_GXSetVtxAttrFmt, GXSetVtxAttrFmt, (a: i32, b: i32, c: i32, d: i32, e: u8));
+    lb_hook!(H_GXSetVtxDesc, GXSetVtxDesc, (a: i32, b: i32));
+    lb_hook!(H_GXLoadPosMtxImm, GXLoadPosMtxImm, (a: *const [f32; 4], b: u32));
+    lb_hook!(H_GXSetCurrentMtx, GXSetCurrentMtx, (a: u32));
+    lb_hook!(H_GXBegin, GXBegin, (a: i32, b: i32, c: u16));
+    lb_hook!(H_GXPosition3f32, GXPosition3f32, (a: f32, b: f32, c: f32));
+    lb_hook!(H_GXPosition2u8, GXPosition2u8, (a: u8, b: u8));
+    lb_hook!(H_HSD_CObjGetCurrent, HSD_CObjGetCurrent, () -> *mut HSD_CObj);
     // END GENERATED ext
 }
 

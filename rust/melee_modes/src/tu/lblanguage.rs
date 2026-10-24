@@ -13,24 +13,13 @@ pub const LANG_COUNT: enum_t = 2;
 /// Callees and globals of other TUs (gm/gmmain_lib.c). Each is a settable hook; unset it panics.
 pub mod ext {
     use super::*;
-    macro_rules! hook {
-        ($h:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
-            pub static mut $h: Option<fn($($t),*) $(-> $r)?> = None;
-            #[allow(non_snake_case)]
-            pub fn $name($($a: $t),*) $(-> $r)? {
-                match unsafe { $h } {
-                    Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
-                }
-            }
-        };
-    }
+    use crate::tu::lbext::lb_hook;
     // BEGIN GENERATED ext
 
     // END GENERATED ext
     /// The global `struct gmm_x0* gmMainLib_804D3EE0` (gm/gmmain_lib.c), read through a hook.
-    hook!(H_gmMainLib_804D3EE0, gmMainLib_804D3EE0, () -> *mut gmm_x0);
-    hook!(H_gmMainLib_GetGamePrefs, gmMainLib_GetGamePrefs, () -> *mut GamePrefs);
+    lb_hook!(H_gmMainLib_804D3EE0, gmMainLib_804D3EE0, () -> *mut gmm_x0);
+    lb_hook!(H_gmMainLib_GetGamePrefs, gmMainLib_GetGamePrefs, () -> *mut GamePrefs);
 }
 
 /// `lbLang_GetLanguageSetting`.

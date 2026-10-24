@@ -91221,6 +91221,138 @@ impl GcLayout for lbl_803D9DD0_t {
 }
 const _: () = assert!(core::mem::size_of::<lbl_803D9DD0_t>() == 40);
 
+/// C `SfxLoadStreamNode` (rust/melee_types/gen/all_types.c:807); GameCube size 0x18, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct SfxLoadStreamNode {
+    pub x0: *mut SfxLoadStreamNode,
+    pub x4: i32,
+    pub x8: i32,
+    pub xC: i32,
+    pub x10: i32,
+    pub x14: i32,
+}
+impl SfxLoadStreamNode { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for SfxLoadStreamNode {
+    const GC_BYTES: u32 = 0x18;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x0 = <*mut SfxLoadStreamNode as GcDecode>::gc_decode(d, at + 0x0);
+        v.x4 = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.x8 = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.xC = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.x10 = <i32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.x14 = <i32 as GcDecode>::gc_decode(d, at + 0x14);
+        v
+    }
+}
+impl GcPointee for SfxLoadStreamNode { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<SfxLoadStreamNode>(t) } }
+impl GcLayout for SfxLoadStreamNode {
+    const GC_NAME: &'static str = "SfxLoadStreamNode";
+    const GC_SIZE: u32 = 0x18;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "struct SfxLoadStreamNode *"),
+        GcField::new("x4", 0x4, 4, "s32"),
+        GcField::new("x8", 0x8, 4, "s32"),
+        GcField::new("xC", 0xC, 4, "s32"),
+        GcField::new("x10", 0x10, 4, "s32"),
+        GcField::new("x14", 0x14, 4, "s32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<SfxLoadStreamNode>() == 32);
+
+/// C `HSD_SynthVoiceEntry` (rust/melee_types/gen/all_types.c:816); GameCube size 0x50, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct HSD_SynthVoiceEntry {
+    pub next: *mut c_void,
+    pub unk4: i32,
+    pub unk8: i32,
+    pub unkC: i32,
+    pub x10: _AXPBADDR,
+    pub x20: _AXPBADPCM,
+    pub x48: _AXPBADPCMLOOP,
+}
+impl HSD_SynthVoiceEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for HSD_SynthVoiceEntry {
+    const GC_BYTES: u32 = 0x50;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.next = <*mut c_void as GcDecode>::gc_decode(d, at + 0x0);
+        v.unk4 = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.unk8 = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.unkC = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.x10 = <_AXPBADDR as GcDecode>::gc_decode(d, at + 0x10);
+        v.x20 = <_AXPBADPCM as GcDecode>::gc_decode(d, at + 0x20);
+        v.x48 = <_AXPBADPCMLOOP as GcDecode>::gc_decode(d, at + 0x48);
+        v
+    }
+}
+impl GcPointee for HSD_SynthVoiceEntry { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<HSD_SynthVoiceEntry>(t) } }
+impl GcLayout for HSD_SynthVoiceEntry {
+    const GC_NAME: &'static str = "HSD_SynthVoiceEntry";
+    const GC_SIZE: u32 = 0x50;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("next", 0x0, 4, "void *"),
+        GcField::new("unk4", 0x4, 4, "int"),
+        GcField::new("unk8", 0x8, 4, "int"),
+        GcField::new("unkC", 0xC, 4, "int"),
+        GcField::new("x10", 0x10, 16, "AXPBADDR"),
+        GcField::new("x20", 0x20, 40, "AXPBADPCM"),
+        GcField::new("x48", 0x48, 6, "AXPBADPCMLOOP"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<HSD_SynthVoiceEntry>() == 88);
+
+/// C `HSD_MaterialState` (rust/melee_types/gen/all_types.c:825); GameCube size 0x14, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct HSD_MaterialState {
+    pub ambient: _GXColor,
+    pub diffuse: _GXColor,
+    pub specular: _GXColor,
+    pub alpha: u8,
+    pub shininess: f32,
+}
+impl HSD_MaterialState { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for HSD_MaterialState {
+    const GC_BYTES: u32 = 0x14;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.ambient = <_GXColor as GcDecode>::gc_decode(d, at + 0x0);
+        v.diffuse = <_GXColor as GcDecode>::gc_decode(d, at + 0x4);
+        v.specular = <_GXColor as GcDecode>::gc_decode(d, at + 0x8);
+        v.alpha = <u8 as GcDecode>::gc_decode(d, at + 0xC);
+        v.shininess = <f32 as GcDecode>::gc_decode(d, at + 0x10);
+        v
+    }
+}
+impl GcPointee for HSD_MaterialState { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<HSD_MaterialState>(t) } }
+impl GcLayout for HSD_MaterialState {
+    const GC_NAME: &'static str = "HSD_MaterialState";
+    const GC_SIZE: u32 = 0x14;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("ambient", 0x0, 4, "GXColor"),
+        GcField::new("diffuse", 0x4, 4, "GXColor"),
+        GcField::new("specular", 0x8, 4, "GXColor"),
+        GcField::new("alpha", 0xC, 1, "u8"),
+        GcField::new("shininess", 0x10, 4, "f32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<HSD_MaterialState>() == 20);
+
 /// Every generated GameCube record layout, for the DAT loader, serialisers and the m-ex map.
 pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<__file_modes as GcLayout>::GC_NAME, <__file_modes as GcLayout>::GC_SIZE, <__file_modes as GcLayout>::GC_ALIGN, <__file_modes as GcLayout>::GC_FIELDS),
@@ -92859,6 +92991,9 @@ pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<BracketSrcEntry as GcLayout>::GC_NAME, <BracketSrcEntry as GcLayout>::GC_SIZE, <BracketSrcEntry as GcLayout>::GC_ALIGN, <BracketSrcEntry as GcLayout>::GC_FIELDS),
     (<lbl_803D9DAC_t as GcLayout>::GC_NAME, <lbl_803D9DAC_t as GcLayout>::GC_SIZE, <lbl_803D9DAC_t as GcLayout>::GC_ALIGN, <lbl_803D9DAC_t as GcLayout>::GC_FIELDS),
     (<lbl_803D9DD0_t as GcLayout>::GC_NAME, <lbl_803D9DD0_t as GcLayout>::GC_SIZE, <lbl_803D9DD0_t as GcLayout>::GC_ALIGN, <lbl_803D9DD0_t as GcLayout>::GC_FIELDS),
+    (<SfxLoadStreamNode as GcLayout>::GC_NAME, <SfxLoadStreamNode as GcLayout>::GC_SIZE, <SfxLoadStreamNode as GcLayout>::GC_ALIGN, <SfxLoadStreamNode as GcLayout>::GC_FIELDS),
+    (<HSD_SynthVoiceEntry as GcLayout>::GC_NAME, <HSD_SynthVoiceEntry as GcLayout>::GC_SIZE, <HSD_SynthVoiceEntry as GcLayout>::GC_ALIGN, <HSD_SynthVoiceEntry as GcLayout>::GC_FIELDS),
+    (<HSD_MaterialState as GcLayout>::GC_NAME, <HSD_MaterialState as GcLayout>::GC_SIZE, <HSD_MaterialState as GcLayout>::GC_ALIGN, <HSD_MaterialState as GcLayout>::GC_FIELDS),
 ];
 
 /// Read `w` bits of a GameCube big-endian bitfield byte run, `shift` bits up from its LSB.

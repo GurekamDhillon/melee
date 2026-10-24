@@ -803,3 +803,29 @@
 #include <melee/gm/gmresultplayer.static.h>
 #include <melee/gm/gmfrontend_items.h>
 #include <melee/gm/gmtoulib.static.h>
+/* Extracted from src/sysdolphin/baselib/synth.c:35. */
+struct SfxLoadStreamNode {
+    /* 0x00 */ struct SfxLoadStreamNode* x0;
+    /* 0x04 */ s32 x4;
+    /* 0x08 */ s32 x8;
+    /* 0x0C */ s32 xC;
+    /* 0x10 */ s32 x10;
+    /* 0x14 */ s32 x14;
+};
+/* Extracted from src/sysdolphin/baselib/synth.c:560. */
+struct HSD_SynthVoiceEntry {
+    void* next;
+    int unk4; // sound ID
+    int unk8; // voice count
+    int unkC; // audio parameter
+    AXPBADDR x10;
+    AXPBADPCM x20;
+    AXPBADPCMLOOP x48;
+};
+struct HSD_MaterialState {
+    GXColor ambient;
+    GXColor diffuse;
+    GXColor specular;
+    u8 alpha;
+    f32 shininess;
+};

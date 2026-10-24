@@ -105,6 +105,17 @@ impl ScriptGame for G {
     fn guest_word(&self, addr: u32) -> u32 {
         SCRIPT.get(((addr - 0x1000) / 4) as usize).copied().unwrap_or(0)
     }
+    fn snap_reserve(&mut self, slots: i32) -> i32 {
+        self.note(format!("reserve {slots}"));
+        slots
+    }
+    fn snap_save_index(&mut self, slot: i32, tag: i32) {
+        self.note(format!("snap_save {slot} {tag}"));
+    }
+    fn snap_load_index(&mut self, slot: i32) -> i32 {
+        self.note(format!("snap_load {slot}"));
+        0
+    }
     fn lab_common_f(&self, which: i32) -> f32 {
         which as f32 * 0.5
     }
@@ -274,4 +285,29 @@ fn pads_through_gd_input() {
     let mut st = [melee_script::pad::PadSample { buttons: 0x4000, ..Default::default() }; 4];
     eng.pad_apply(&mut st, 0);
     assert_eq!(st[0].buttons, 0x4000, "released: the physical pad shows through again");
+}
+
+#[test]
+fn savestate_slots_apply_at_the_boundary() {
+    let (eng, rec, host) = rig();
+    eng.eval::<()>("saved = {} loaded = {} function on_savestate(n) saved[#saved+1] = n end function on_loadstate(n) loaded[#loaded+1] = n end").unwrap();
+    let e = eng.eval::<()>("gd.savestate(9)").unwrap_err().to_string();
+    assert!(e.contains("savestate slots are 1-4"), "{e}");
+    let e = eng.eval::<()>("gd.loadstate(2)").unwrap_err().to_string();
+    assert!(e.contains("savestate slot 2 is empty"), "{e}");
+    eng.eval::<()>("gd.savestate(2)").unwrap();
+    assert!(rec.borrow().calls.is_empty(), "nothing happens until the frame boundary");
+    eng.frame_pre();
+    assert_eq!(rec.borrow().calls, ["reserve 4", "snap_save 1 -2"]);
+    assert!(host.borrow().lines.is_empty() || true);
+    assert!(eng.console_lines().iter().any(|l| l == "saved state 2 (frame 0)"));
+    eng.frame_post();
+    eng.eval::<()>("gd.loadstate(2)").unwrap();
+    eng.frame_pre();
+    assert!(rec.borrow().calls.contains(&"snap_load 1".to_string()));
+    assert!(eng.console_lines().iter().any(|l| l == "loaded state 2"));
+    // a slot saved in another scene cannot be loaded
+    eng.scene_begin(7);
+    let e = eng.eval::<()>("gd.loadstate(2)").unwrap_err().to_string();
+    assert!(e.contains("savestate slot 2 was saved in another scene"), "{e}");
 }

@@ -128,6 +128,10 @@ pub struct State {
     /// `gs.stage_zones`: LAB_STAGE_ZONES has no getter, so the last write is remembered
     pub stage_zones: bool,
     pub pads: crate::pad::ScriptPads,
+    pub pending_save: i32,
+    pub pending_load: i32,
+    pub snap_ready: bool,
+    pub slot: [crate::gd::savestate::SaveSlot; crate::gd::savestate::GS_SAVE_SLOTS],
     /// `gd.set_motion` / `gd.anim_preview` requests: motion + 1 to enter at the next frame boundary, per slot
     pub set_motion: [i32; 6],
     pub set_rate: [f32; 6],
@@ -420,6 +424,10 @@ impl Engine {
             step: 0,
             stage_zones: false,
             pads: Default::default(),
+            pending_save: 0,
+            pending_load: 0,
+            snap_ready: false,
+            slot: Default::default(),
             set_motion: [0; 6],
             set_rate: [0.0; 6],
             set_lift: [0.0; 6],
@@ -1146,6 +1154,15 @@ impl Engine {
             s.draw[b].clear();
         }
         self.hook_all("on_tick", &[]);
+        // paused: no logic frame will run this tick, so there is no frame boundary for a pending savestate to wait for
+        let apply = {
+            let s = self.st.borrow();
+            s.paused && s.step == 0 && !s.host.borrow().session()
+        };
+        if apply {
+            self.apply_pending(true);
+            self.st.borrow_mut().apply_set_motion();
+        }
     }
 
     fn finish_draw(&self) {
@@ -1202,6 +1219,7 @@ impl Engine {
 
     /// `gw_Script_FramePre`
     pub fn frame_pre(&self) {
+        self.apply_pending(false);
         self.st.borrow_mut().apply_set_motion();
         self.hook_all("on_frame_pre", &[]);
     }

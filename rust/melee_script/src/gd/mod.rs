@@ -13,6 +13,7 @@ pub mod labstate;
 pub mod mods;
 pub mod pad;
 pub mod players;
+pub mod savestate;
 
 /// `gs_buttons` (only these twelve appear in `gd.buttons`).
 pub const BUTTONS: &[(&str, u32)] = &[
@@ -43,6 +44,7 @@ pub fn register_all(e: &Engine, gd: &Table) -> LuaResult<()> {
     lab::register(e, gd)?;
     labmisc::register(e, gd)?;
     labstate::register(e, gd)?;
+    savestate::register(e, gd)?;
     Ok(())
 }
 

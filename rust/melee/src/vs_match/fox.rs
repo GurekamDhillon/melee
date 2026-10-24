@@ -55,7 +55,7 @@ pub enum ItemClass {
     SeakHeld { owner: usize },
     /// `It_Kind_Seak_NeedleThrow` in its flying state (msid 0): `fresh` = created this frame
     /// (its anim / phys / coll procs ran before the fighter's accessory proc made it).
-    SeakThrown { owner: usize, life: f32, fresh: bool },
+    SeakThrown { owner: usize, life: f32, fresh: bool, state: u8, line: i32, bx: f32, bmin: f32, bgrav: f32 },
 }
 
 #[derive(Clone, Copy, Debug)]

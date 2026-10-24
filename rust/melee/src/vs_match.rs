@@ -1698,14 +1698,14 @@ impl VsMatch {
                             .map_err(|e| format!("{} not ported", e.0))?;
                         fp.cur_pos = fp.coll_data.cur_pos;
                         if r {
-                            return Err("Sheik SpecialAirN landing (ftCommon_AirToGroundStateChange) not ported".into());
+                            sheik::on_landed(&mut self.ground, p, c_common, &mut self.rand)?;
                         }
                     } else {
                         let r = mc::mp_coll_8004b108(&mut self.ground, &mut self.cg, &mut fp.coll_data, &joints)
                             .map_err(|e| format!("{} not ported", e.0))?;
                         fp.cur_pos = fp.coll_data.cur_pos;
                         if !r {
-                            return Err("Sheik SpecialN off the floor (ftCommon_GroundToAirStateChange) not ported".into());
+                            sheik::on_walked_off(p, &mut self.rand)?;
                         }
                     }
                 }
@@ -1793,7 +1793,32 @@ impl VsMatch {
                     let mut ctx = RespawnCtx { ground: &mut self.ground, cg: &mut self.cg, rand: &mut self.rand, respawn_points: &self.respawn_points, cam_top: self.blast.cam_top, busy: &mut self.respawn_busy, start_shield: self.start_shield, per_slot_spawn: self.per_slot_spawn };
                     rebirth::coll(p, &mut ctx)?;
                 }
-                rebirth::FTCO_MS_REBIRTH_WAIT => return Err("ftCo_RebirthWait_Coll (ft_80083844) not ported".into()),
+                rebirth::FTCO_MS_REBIRTH_WAIT => {
+                    // ftCo_RebirthWait_Coll: ft_80083844 (mpColl_80048654), a floor -> fn_800D5A30.
+                    let joints = {
+                        let d = p.ecb_desc;
+                        ecb_joints(&mut p.skel, &d)
+                    };
+                    let fp = &mut *p.fp;
+                    fp.coll_data.last_pos = fp.coll_data.cur_pos;
+                    fp.coll_data.cur_pos = fp.cur_pos;
+                    let r = mc::mp_coll_80048654(&mut self.ground, &mut self.cg, &mut fp.coll_data, &joints)
+                        .map_err(|e| format!("{} not ported", e.0))?;
+                    fp.cur_pos = fp.coll_data.cur_pos;
+                    if !ft_80081a00(fp) && r {
+                        // fn_800D5A30: ftColl_8007B7A4(gobj, x5D8) (the landing invincibility; the
+                        // colour overlay is render only), then ft_8008A2BC from the air.
+                        let x5d8 = melee_fighter::hooks::common_data().x5D8;
+                        if x5d8 > fp.x1994 {
+                            fp.x1994 = x5d8;
+                        }
+                        fp.x198C = if fp.x1990 != 0 { 2 } else { 1 };
+                        if fp.ground_or_air == melee_types::GA_Air {
+                            ftcommon_8007d7fc(&mut self.ground, p, c_common)?;
+                        }
+                        ft_8008a2bc(p, &mut self.rand)?;
+                    }
+                }
                 m => return Err(format!("player {}: coll_cb of motion {m} not ported", p.slot + 1)),
             }
             let c = p.fp.cur_pos;

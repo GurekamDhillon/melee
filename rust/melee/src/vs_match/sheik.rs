@@ -29,6 +29,8 @@ const SK_SM_SPECIAL_N_START: u32 = 295;
 pub struct NeedleAttrs {
     pub destroy_gfx: i32,
     pub life: f32,
+    /// `x4`: the lifetime once it sticks in the ground or bounces.
+    pub hit_life: f32,
     pub speed: f32,
 }
 
@@ -38,7 +40,7 @@ impl NeedleAttrs {
         let be = |at: u32| u32::from_be_bytes(data[at as usize..][..4].try_into().unwrap());
         let art = be(be(ft_data + 0x48));
         let (common, special) = (be(art), be(art + 4));
-        NeedleAttrs { destroy_gfx: be(common + 0x64) as i32, life: f32::from_bits(be(special)), speed: f32::from_bits(be(special + 8)) }
+        NeedleAttrs { destroy_gfx: be(common + 0x64) as i32, life: f32::from_bits(be(special)), hit_life: f32::from_bits(be(special + 4)), speed: f32::from_bits(be(special + 8)) }
     }
 }
 
@@ -245,7 +247,7 @@ impl VsMatch {
             msid: 0,
             pos: at,
             vel,
-            class: ItemClass::SeakThrown { owner: i, life: na.life, fresh: true },
+            class: ItemClass::SeakThrown { owner: i, life: na.life, fresh: true, state: 0, line: -1, bx: 0.0, bmin: 0.0, bgrav: 0.0 },
         });
         self.players[i].sk.count -= 1;
         // efSync_Spawn(1283, gobj, &pos) = efLib_CreateGenerator(0x6A, &pos).
@@ -264,38 +266,92 @@ pub(super) fn item_proc(m: &mut VsMatch, it: &mut SimItem) -> Result<Option<bool
             // itSeakneedleheld_UnkMotion0_Anim: gone once the owner's u.sk.x4 is clear.
             Ok(Some(!m.players[*owner].sk.held))
         }
-        ItemClass::SeakThrown { owner, life, fresh } => {
+        ItemClass::SeakThrown { owner, life, fresh, state, line, bx, bmin, bgrav } => {
             if *fresh {
                 *fresh = false;
                 return Ok(Some(false));
             }
-            // itSeakneedlethrown_UnkMotion0_Anim: xDE4 = pos, then it_80273130's life timer.
+            let owner = *owner;
+            let na = m.players[owner].sk_needle.ok_or("no Sheik needle article")?;
+            // Anim: xDE4 = pos; the flying / stuck states count the life down (it_80273130).
             let prev = it.pos;
-            *life -= 1.0;
-            if *life <= 0.0 {
-                // Item_8026A8EC -> ItemSwitch -> it_8027327C(destroy_gfx = 0x421) -> it_80278800:
-                // three HSD_Randf for the (zero-sized) random offset, then efSync_Spawn(0x421)
-                // -> efLib_CreateGenerator(0x3F, item position).
-                for _ in 0..3 {
-                    m.rand.randf();
+            if *state != 4 {
+                *life -= 1.0;
+                if *life <= 0.0 {
+                    // Item_8026A8EC -> ItemSwitch -> it_8027327C(destroy_gfx = 0x421) -> it_80278800:
+                    // three HSD_Randf for the (zero-sized) random offset, then efSync_Spawn(0x421)
+                    // -> efLib_CreateGenerator(0x3F, item position).
+                    for _ in 0..3 {
+                        m.rand.randf();
+                    }
+                    let mut host = Host { rand: &mut m.rand, joint_mtx: &m.joint_mtx, appsrt_hook_lists: &m.appsrt_hook_lists };
+                    if let Some(gen) = m.ps.gen_create(&mut host, 0, 0, 0x3F) {
+                        m.ps.gen_mut(gen).pos = Vec3 { x: it.pos.x, y: it.pos.y, z: it.pos.z };
+                    }
+                    return Ok(Some(true));
                 }
-                let mut host = Host { rand: &mut m.rand, joint_mtx: &m.joint_mtx, appsrt_hook_lists: &m.appsrt_hook_lists };
-                if let Some(gen) = m.ps.gen_create(&mut host, 0, 0, 0x3F) {
-                    m.ps.gen_mut(gen).pos = Vec3 { x: it.pos.x, y: it.pos.y, z: it.pos.z };
+            }
+            // Phys: state 4 falls (UnkMotion4_Phys).
+            if *state == 4 {
+                it.vel.x = *bx;
+                it.vel.y += *bgrav;
+                if it.vel.y < *bmin {
+                    it.vel.y = *bmin;
                 }
-                return Ok(Some(true));
             }
             // Item_802697D4: pos += vel (the nudge and the floor speed are zero in the air).
             it.pos.x += it.vel.x;
             it.pos.y += it.vel.y;
             it.pos.z += it.vel.z;
-            // itSeakneedlethrown_UnkMotion0_Coll: it_8026EA20(prev -> pos) against the stage lines.
-            if m.ground.mp_check_all_remap(-1, -1, prev.x, prev.y, it.pos.x, it.pos.y).is_some() {
-                return Err("a thrown Needle Storm needle hits the stage (UnkMotion0_Coll) not ported".into());
+            match *state {
+                0 | 4 => {
+                    // CheckGroundHit: it_8026EA20(prev -> pos) against the stage lines, then
+                    // mpGetSpeed(line) as the velocity.
+                    let hit = m.ground.mp_check_all_remap(-1, -1, prev.x, prev.y, it.pos.x, it.pos.y);
+                    if let Some(h) = hit.filter(|h| m.ground.mp_lib_80054ed8(h.line_id)) {
+                        it.pos = Vec3 { x: h.pos.x, y: h.pos.y, z: h.pos.z };
+                        *line = h.line_id;
+                        let d = m.ground.mp_get_speed(h.line_id, melee_world::vec::Vec3 { x: it.pos.x, y: it.pos.y, z: it.pos.z });
+                        it.vel = d.map_or(Vec3 { x: 0.0, y: 0.0, z: 0.0 }, |d| Vec3 { x: d.x, y: d.y, z: d.z });
+                        if *state == 4 {
+                            *life = na.hit_life;
+                            *state = 2;
+                            it.msid = 2;
+                            it.vel = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+                        } else {
+                            match m.rand.randi(5) {
+                                0..=2 => {
+                                    *life = na.hit_life;
+                                    it.vel = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+                                    *state = 2;
+                                    it.msid = 2;
+                                }
+                                _ => {
+                                    *life = na.hit_life;
+                                    it.vel.y = NEEDLE_FALL[m.rand.randi(8) as usize].abs();
+                                    setup_bounce(&mut m.rand, bx, bmin, bgrav);
+                                    *state = 4;
+                                    it.msid = 4;
+                                }
+                            }
+                        }
+                    }
+                }
+                _ => {
+                    // UnkMotion2_Coll: stuck; the velocity is the line's own motion (zero for a
+                    // static stage line).
+                    it.vel = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+                    if *line != -1 && m.ground.mp_lib_80054ed8(*line) {
+                        let d = m.ground.mp_get_speed(*line, melee_world::vec::Vec3 { x: it.pos.x, y: it.pos.y, z: it.pos.z });
+                        if let Some(d) = d {
+                            it.vel = Vec3 { x: d.x, y: d.y, z: d.z };
+                        }
+                    }
+                }
             }
             // Hit detection of an item is not ported: stop when it comes near a fighter.
             for (b, q) in m.players.iter().enumerate() {
-                if b == *owner || q.follower {
+                if b == owner || q.follower {
                     continue;
                 }
                 let c = q.fp.cur_pos;
@@ -308,4 +364,64 @@ pub(super) fn item_proc(m: &mut VsMatch, it: &mut SimItem) -> Result<Option<bool
         }
         _ => Ok(None),
     }
+}
+
+/// The Coll callbacks' state changes once the floor under (air) / the floor end (ground) says so.
+/// `ftCommon_AirToGroundStateChange` / `GroundToAirStateChange` keep the animation frame
+/// (`anim_start = cur_anim_frame`); Cancel / End leave for Fall or Landing.
+pub fn on_landed(g: &mut GroundColl, p: &mut Player, c: EntryCommon, rand: &mut HsdRand) -> Result<(), String> {
+    let m = p.fp.motion_id;
+    match m {
+        SK_MS_SPECIAL_AIR_N_START | SK_MS_SPECIAL_AIR_N_LOOP => {
+            ftcommon_8007d7fc(g, p, c)?;
+            let msid = m - 4;
+            let row = load_row(p, SK_SM_SPECIAL_N_START + (msid - SK_MS_SPECIAL_N_START) as u32)?;
+            let frame = p.fp.cur_anim_frame;
+            change_motion_state_at(p, msid, row.as_ref(), frame, rand)
+        }
+        SK_MS_SPECIAL_AIR_N_CANCEL => landing_enter_basic(g, p, c, rand),
+        _ => {
+            // SpecialAirNEnd_Coll.
+            p.sk.count = 0;
+            p.sk.n4 = false;
+            landing_enter_basic(g, p, c, rand)
+        }
+    }
+}
+
+pub fn on_walked_off(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    let m = p.fp.motion_id;
+    match m {
+        SK_MS_SPECIAL_N_START | SK_MS_SPECIAL_N_LOOP => {
+            melee_fighter::ftcommon2::ftcommon_8007d5d4(&mut p.fp);
+            let msid = m + 4;
+            let row = load_row(p, SK_SM_SPECIAL_N_START + (msid - SK_MS_SPECIAL_N_START) as u32)?;
+            let frame = p.fp.cur_anim_frame;
+            change_motion_state_at(p, msid, row.as_ref(), frame, rand)
+        }
+        SK_MS_SPECIAL_N_CANCEL => end_to_fall(p, rand),
+        _ => {
+            // SpecialNEnd_Coll.
+            p.sk.count = 0;
+            p.sk.n4 = false;
+            end_to_fall(p, rand)
+        }
+    }
+}
+
+/// `it_803F7020` / `it_803F6FA0` (the minimum fall speeds / bounce heights), `it_803F7040`
+/// (gravity), `it_803F7060` (spin) and `it_803F7000` (drift).
+const NEEDLE_FALL: [f32; 8] = [-2.0, -2.1, -2.2, -2.3, -2.4, -2.5, -2.6, -2.7];
+const NEEDLE_GRAV: [f32; 8] = [-0.1, -0.12, -0.14, -0.18, -0.2, -0.22, -0.24, -0.26];
+const NEEDLE_DRIFT: [f32; 8] = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4];
+
+/// `itSeakNeedleThrown_SetupBounce` (the spin `xDD4` is render only but still draws).
+fn setup_bounce(rand: &mut HsdRand, bx: &mut f32, bmin: &mut f32, bgrav: &mut f32) {
+    let _spin_sign = rand.randi(2);
+    let _spin = rand.randi(8);
+    let sign = if rand.randi(2) == 0 { 1.0f32 } else { -1.0f32 };
+    let v = NEEDLE_DRIFT[rand.randi(8) as usize];
+    *bx = v * sign;
+    *bmin = NEEDLE_FALL[rand.randi(8) as usize];
+    *bgrav = NEEDLE_GRAV[rand.randi(8) as usize];
 }

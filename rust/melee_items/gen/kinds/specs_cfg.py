@@ -595,4 +595,135 @@ CFG["itmasterhandlaser"] = dict(
         "u32 v1 = fv() % 8; int v2 = (int) fv(); float v3 = rw(); ret = PI(it_802F0340(&GO[1], &VA[0], &VA[1], v1, v2, v3));",
         "let v1: u32 = fv() % 8; let v2: i32 = fv() as i32; let v3: f32 = rw(); "
         "ret = pi(m::it_802F0340(&raw mut GO[1], &raw mut VA[0], &raw mut VA[1], v1, v2, v3));")},
+
+)
+
+# ------------------------------------------------------------------------------ shard 761-768
+CFG["itpeachexplode"] = dict(spec=[("", "")], tweak=("", ""), ptrs=("", ""))
+
+CFG["itparasol"] = dict(
+    spec=[("""        float* a = (float*) SPEC[0];
+        a[0] = rw(); a[1] = rw(); a[2] = rw(); a[3] = rw();""",
+           """            let a = SPECB.0[0].as_mut_ptr() as *mut f32;
+            *a = rw(); *a.add(1) = rw(); *a.add(2) = rw(); *a.add(3) = rw();""")],
+    tweak=("", ""),
+    ptrs=("", ""),
+    hints={"statenum": ("((const int[]){1, 2, 4, 5, 6, 7, 8, 9, 10})[rnd() % 9]", "[1, 2, 4, 5, 6, 7, 8, 9, 10][(rnd() % 9) as usize]")},
+)
+
+_D40C = ("    it_804D6D40 = &D40; D40.x8 = (float) (rnd() % 1000) / 1000.0f;",
+         "    m::ext::it_804D6D40 = &raw mut D40; D40.x8 = (rnd() % 1000) as f32 / 1000.0;")
+_D40D = ("static it_804D6D40_t D40;", "static mut D40: it_804D6D40_t = unsafe { core::mem::zeroed() };")
+
+CFG["itoctarockstone"] = dict(spec=[("", "")], tweak=("", ""), ptrs=("", ""),
+                              hints={"dir": ("(rnd() & 1) ? 1 : -1", "if rnd() & 1 != 0 { 1 } else { -1 }")})
+
+_oc = "IT[k].xDD4_itemVar.octarock"
+CFG["itoctarock"] = dict(
+    spec=[("""        itOctarockAttributes* a = (itOctarockAttributes*) SPEC[0];
+        a->x0 = (s32*) (SPEC[0] + 64); *a->x0 = (int) (rnd() % 30);
+        a->x4 = rw(); a->x8 = (float) (rnd() % 40); a->xC = (float) (rnd() % 40); a->x10 = rw(); a->x14 = rw(); a->x18 = rw();
+        a->x1C = (s16) (rnd() % 30);""",
+           """            let a = SPECB.0[0].as_mut_ptr() as *mut itOctarockAttributes;
+            (*a).x0 = SPECB.0[0].as_mut_ptr().add(64) as *mut i32; *(*a).x0 = (rnd() % 30) as i32;
+            (*a).x4 = rw(); (*a).x8 = (rnd() % 40) as f32; (*a).xC = (rnd() % 40) as f32; (*a).x10 = rw(); (*a).x14 = rw(); (*a).x18 = rw();
+            (*a).x1C = (rnd() % 30) as i16;""")],
+    tweak=(_D40C[0] + "\n" + per_item(f"        {_oc}.x32 = (s16) (rnd() % 4);\n        {_oc}.x2C = (int) (rnd() & 1);", "")[0],
+           _D40C[1] + "\n" + per_item("", "        IT[k].xDD4_itemVar.octarock.x32 = (rnd() % 4) as i16;\n        IT[k].xDD4_itemVar.octarock.x2C = (rnd() & 1) as i32;")[1]),
+    ptrs=("", ""),
+    c_decl=_D40D[0], rs_decl=_D40D[1],
+    hints={"dir": ("(rnd() & 1) ? 1 : -1", "if rnd() & 1 != 0 { 1 } else { -1 }")},
+)
+
+_ok = "IT[k].xDD4_itemVar.oldkuri"
+CFG["itoldkuri"] = dict(
+    spec=[("""        itOldkuriAttributes* a = (itOldkuriAttributes*) SPEC[0];
+        a->x0 = (s32*) (SPEC[0] + 64); *a->x0 = (int) (rnd() % 30); ((float*) a->x0)[1] = rw();
+        a->x4 = rw(); a->x8 = rw(); a->xC = (float) (rnd() % 10);""",
+           """            let a = SPECB.0[0].as_mut_ptr() as *mut m::itOldkuriAttributes;
+            (*a).x0 = SPECB.0[0].as_mut_ptr().add(64) as *mut i32; *(*a).x0 = (rnd() % 30) as i32; *((*a).x0 as *mut f32).add(1) = rw();
+            (*a).x4 = rw(); (*a).x8 = rw(); (*a).xC = (rnd() % 10) as f32;""")],
+    tweak=(_D40C[0] + "\n" + per_item(f"        {_ok}.xDF8 = (int) (rnd() % 3);\n        {_ok}.xDFC = (int) (rnd() & 1);", "")[0],
+           _D40C[1] + "\n" + per_item("", "        IT[k].xDD4_itemVar.oldkuri.xDF8 = (rnd() % 3) as i32;\n        IT[k].xDD4_itemVar.oldkuri.xDFC = (rnd() & 1) as i32;")[1]),
+    ptrs=("", ""),
+    c_decl=_D40D[0], rs_decl=_D40D[1],
+)
+
+_oo = "IT[k].xDD4_itemVar.oldottosea"
+CFG["itoldottosea"] = dict(
+    spec=[("""        itOldottoseaAttributes* a = (itOldottoseaAttributes*) SPEC[0];
+        a->x0 = (void*) (SPEC[0] + 64); ((int*) (SPEC[0] + 64))[0] = (int) (rnd() % 30); ((float*) (SPEC[0] + 64))[1] = rw();
+        a->x4 = rw(); a->x8 = rw(); a->xC = rw(); a->x10 = (s8) (rnd() % 4);
+        a->x14 = rw(); a->x18 = rw(); a->x1C = rw(); a->x20 = rw(); a->x24 = rw(); a->x28 = (s8) (rnd() % 3);""",
+           """            let a = SPECB.0[0].as_mut_ptr() as *mut itOldottoseaAttributes;
+            (*a).x0 = SPECB.0[0].as_mut_ptr().add(64) as *mut _; *(SPECB.0[0].as_mut_ptr().add(64) as *mut i32) = (rnd() % 30) as i32; *(SPECB.0[0].as_mut_ptr().add(68) as *mut f32) = rw();
+            (*a).x4 = rw(); (*a).x8 = rw(); (*a).xC = rw(); (*a).x10 = (rnd() % 4) as i8;
+            (*a).x14 = rw(); (*a).x18 = rw(); (*a).x1C = rw(); (*a).x20 = rw(); (*a).x24 = rw(); (*a).x28 = (rnd() % 3) as i8;""")],
+    tweak=(_D40C[0] + "\n" + per_item(f"        {_oo}.x20 = (rnd() & 1) ? &GO[(k + 1) % 3] : 0;\n        {_oo}.x24 = ((const int[]){{0, 10, 25, 42, 80, 81}})[rnd() % 6];\n        {_oo}.x28 = (int) (rnd() % 3);\n        {_oo}.x2C = (s16) (rnd() & 1);", "")[0],
+           _D40C[1] + "\n" + per_item("", "        IT[k].xDD4_itemVar.oldottosea.x20 = if rnd() & 1 != 0 { &raw mut GO[(k + 1) % 3] } else { null_mut() };\n        IT[k].xDD4_itemVar.oldottosea.x24 = [0, 10, 25, 42, 80, 81][(rnd() % 6) as usize];\n        IT[k].xDD4_itemVar.oldottosea.x28 = (rnd() % 3) as i32;\n        IT[k].xDD4_itemVar.oldottosea.x2C = (rnd() & 1) as i16;")[1]),
+    ptrs=("    for (k = 0; k < 3; k++) { HM(PI(%s.x20)); %s.x20 = 0; }" % (_oo, _oo),
+          "    for k in 0..3 { hm(pi(IT[k].xDD4_itemVar.oldottosea.x20)); IT[k].xDD4_itemVar.oldottosea.x20 = null_mut(); }"),
+    c_decl=_D40D[0], rs_decl=_D40D[1],
+)
+
+_pp = "IT[k].xDD4_itemVar.patapata"
+CFG["itpatapata"] = dict(
+    spec=[("""        itPatapataAttributes* a = (itPatapataAttributes*) SPEC[0];
+        a->x0 = (void*) (SPEC[0] + 64); ((float*) (SPEC[0] + 64))[1] = rw();
+        a->x4 = rw(); a->x8 = rw(); a->xC = rw(); a->x10 = (int) (rnd() % 6); a->x14 = rw(); a->x18 = rw();
+        a->x1C = (int) (rnd() % 20); a->x20 = rw(); a->x24 = (int) (rnd() % 20); a->x28 = (float) (rnd() % 30);
+        a->x2C = (int) (rnd() % 6); a->x30 = (float) (rnd() % 5); a->x34 = (float) (rnd() % 5); a->x38 = rw(); a->x3C = rw();""",
+           """            let a = SPECB.0[0].as_mut_ptr() as *mut itPatapataAttributes;
+            (*a).x0 = SPECB.0[0].as_mut_ptr().add(64) as *mut _; *(SPECB.0[0].as_mut_ptr().add(68) as *mut f32) = rw();
+            (*a).x4 = rw(); (*a).x8 = rw(); (*a).xC = rw(); (*a).x10 = (rnd() % 6) as i32; (*a).x14 = rw(); (*a).x18 = rw();
+            (*a).x1C = (rnd() % 20) as i32; (*a).x20 = rw(); (*a).x24 = (rnd() % 20) as i32; (*a).x28 = (rnd() % 30) as f32;
+            (*a).x2C = (rnd() % 6) as i32; (*a).x30 = (rnd() % 5) as f32; (*a).x34 = (rnd() % 5) as f32; (*a).x38 = rw(); (*a).x3C = rw();""")],
+    tweak=per_item(f"""        for (i = 14; i < 19; i++) DBT[k].bones[i] = &JO[6 + 14 * k + (i - 14)];
+        {_pp}.x40 = (int) (rnd() % 3);
+        {_pp}.x20 = (int) (rnd() % 5) - 1;
+        {_pp}.x24 = (int) (rnd() % 5) - 1;
+        {_pp}.x28 = (int) (rnd() % 5) - 1;
+        {_pp}.x2C = rw();
+        {_pp}.x30 = rw();
+        {_pp}.x44 = (int) (rnd() & 1);
+        {_pp}.x4 = (int) (rnd() % 4);""",
+        """        for i in 14..19 { DBT[k].bones[i] = &raw mut JO[6 + 14 * k + (i - 14)]; }
+        let pp = &mut IT[k].xDD4_itemVar.patapata;
+        pp.x40 = (rnd() % 3) as i32;
+        pp.x20 = (rnd() % 5) as i32 - 1;
+        pp.x24 = (rnd() % 5) as i32 - 1;
+        pp.x28 = (rnd() % 5) as i32 - 1;
+        pp.x2C = rw();
+        pp.x30 = rw();
+        pp.x44 = (rnd() & 1) as i32;
+        pp.x4 = (rnd() % 4) as i32;"""),
+    ptrs=("", ""),
+    hints={"arg0": ("(int) (rnd() % 3)", "(rnd() % 3) as i32"), "facing": ("(rnd() & 1) ? 1 : -1", "if rnd() & 1 != 0 { 1 } else { -1 }")},
+)
+
+_nk = "IT[k].xDD4_itemVar.nokonoko"
+CFG["itnokonoko"] = dict(
+    spec=[("""        itNokoNoko_DatAttrs* a = (itNokoNoko_DatAttrs*) SPEC[0];
+        a->x0 = (void*) (SPEC[0] + 64); ((int*) (SPEC[0] + 64))[0] = (int) (rnd() % 30); ((float*) (SPEC[0] + 64))[1] = rw();
+        a->x4 = rw(); a->x8 = rw();""",
+           """            let a = SPECB.0[0].as_mut_ptr() as *mut itNokoNoko_DatAttrs;
+            (*a).x0 = SPECB.0[0].as_mut_ptr().add(64) as *mut _; *(SPECB.0[0].as_mut_ptr().add(64) as *mut i32) = (rnd() % 30) as i32; *(SPECB.0[0].as_mut_ptr().add(68) as *mut f32) = rw();
+            (*a).x4 = rw(); (*a).x8 = rw();""")],
+    tweak=per_item(f"""        {_nk}.x20 = (int) (rnd() % 4) - 1;
+        {_nk}.x28 = (int) (rnd() % 4) - 1;
+        {_nk}.x34 = rw();
+        {_nk}.x38 = (rnd() & 1) ? 1.0f : -1.0f;
+        {_nk}.x3C = (int) (rnd() % 8);
+        {_nk}.x40 = (int) (rnd() % 4);
+        {_nk}.x4 = (int) (rnd() % 4);""",
+        """        let nk = &mut IT[k].xDD4_itemVar.nokonoko;
+        nk.x20 = (rnd() % 4) as i32 - 1;
+        nk.x28 = (rnd() % 4) as i32 - 1;
+        nk.x34 = rw();
+        nk.x38 = if rnd() & 1 != 0 { 1.0 } else { -1.0 };
+        nk.x3C = (rnd() % 8) as i32;
+        nk.x40 = (rnd() % 4) as i32;
+        nk.x4 = (rnd() % 4) as i32;"""),
+    ptrs=("", ""),
+    hints={"arg0": ("(int) (rnd() % 4)", "(rnd() % 4) as i32"), "arg3": ("(rnd() & 1) ? 1 : -1", "if rnd() & 1 != 0 { 1 } else { -1 }")},
 )

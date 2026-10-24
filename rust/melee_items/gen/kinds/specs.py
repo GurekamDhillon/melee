@@ -224,3 +224,25 @@ _Y["effects"]["PSMTXConcat"] = (
 _Y["effects"]["PSMTXCopy"] = (
     "if (a0 && a1) { int q; for (q = 0; q < 12; q++) ((float*) a1)[q] = ((float*) a0)[q]; }",
     "if !a0.is_null() && !a1.is_null() { let s = a0 as *const f32; let d = a1 as *mut f32; for q in 0..12usize { *d.add(q) = *s.add(q); } }")
+# shard 761-768
+_GO2A = ("(&GO[2])", "&raw mut crate::GO[2]")
+MY_RET = {n: _P for n in ("it_8027C794", "it_8027C824", "it_8027C79C", "it_8026D5CC", "it_8026DA70", "it_8027B798", "it_8026D324",
+                          "lbLang_IsSettingUS", "lbLang_IsSettingJP", "it_802750E8", "it_802751D8", "itColl_BounceOffShield", "it_802E35CC")}
+MY_RET.update({
+    "it_80276308": ("(int) ((fv() % 3) * 4)", "((fv() % 3) * 4) as i32"),
+    "it_8026DAA8": ("(int) (fv() & 15)", "(fv() & 15) as i32"),
+    "it_8026DB40": ("(int) (fv() & 15)", "(fv() & 15) as i32"),
+    "ftLib_8008627C": _GO1,
+    "gm_8016AE80": ("((fv() % 3) == 0 ? -1 : (int) (fv() & 1))", "if fv() % 3 == 0 { -1 } else { (fv() & 1) as i32 }"),
+    "it_8028EB88": _GO2,
+    "it_8027B5B0": _GO2,
+    "it_802E0100": _GO2,
+    "it_802E0488": _GO2,
+    "it_802DD7F0": _GO2A,
+})
+MY_EFF = {n: _V("a1") for n in ("ftLib_800866DC", "ftLib_80086644", "it_8026BB88", "it_8027B798", "it_8027BA54")}
+MY_EFF["it_8027C8D0"] = _V("a0")
+for _n in ("itnokonoko", "itoctarock", "itoctarockstone", "itoldkuri", "itoldottosea", "itparasol", "itpatapata", "itpeachexplode"):
+    SPECS[_n] = dict(src=f"{K}{_n}.c", types=_T, ret={**COMMON_RET, **MY_RET}, effects={**COMMON_EFF, **MY_EFF},
+                     null_ret_ok=["Item_80268B18", "Item_80268B5C", "it_8026F6BC", "HSD_Randi", "it_8028EB88", "it_8027B5B0",
+                                  "it_802E0100", "it_802E0488", "ftLib_8008627C"])

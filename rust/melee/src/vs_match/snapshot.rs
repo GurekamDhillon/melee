@@ -50,7 +50,7 @@ fn strip_addrs(s: &str) -> String {
     out + rest
 }
 
-fn fnv(s: &str) -> u64 {
+pub(super) fn fnv(s: &str) -> u64 {
     let mut h = 0xcbf29ce484222325u64;
     for b in s.bytes() {
         h = (h ^ b as u64).wrapping_mul(0x100000001b3);

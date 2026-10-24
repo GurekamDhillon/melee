@@ -8,6 +8,7 @@ pub mod host;
 pub mod manifest;
 pub mod motion_names;
 pub mod pad;
+pub mod rewind;
 
 pub use engine::{Config, Engine};
 pub use game::{NoGame, ScriptGame};

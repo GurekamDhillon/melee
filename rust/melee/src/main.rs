@@ -42,6 +42,9 @@ mod cm_drive;
 mod stage_anim;
 mod snap;
 mod fighter_fields;
+mod netmatch;
+mod netplay;
+mod np_env;
 
 /// What the frame driver needs from a simulation, per frame.
 pub(crate) trait Sim {
@@ -178,6 +181,8 @@ fn main() -> ExitCode {
             }
         }
         Some("golden") => golden(&args),
+        Some("synctest") => netmatch::synctest(&args),
+        Some("netplay") => netplay::netplay(&args),
         Some("view-golden") => view::view_golden(&args),
         Some("play") => play::play(&args),
         Some(x) => {

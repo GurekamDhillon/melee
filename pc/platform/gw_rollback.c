@@ -55,6 +55,16 @@ extern int gw_Snap_HasFrame(int frame);
 extern uint32_t gw_Snap_Checksum(int frame);
 extern int gw_Snap_SfxFrameEnd(int frame);
 extern uint32_t gw_RB_GameHashForFrame(int frame); /* fighter.c: effective online seed + curated words */
+extern uint32_t gw_RB_NeutralHashForFrame(int frame); /* fighter.c: the NHV1 hash with the same seed rule */
+static int rb_neutral_checksum(void) { /* MELEE_RB_NEUTRAL_HASH=1: the netplay checksum is the neutral hash (docs/rust-port/neutral-hash.md) */
+    static int v = -1;
+    if (v < 0) {
+        const char *e = getenv("MELEE_RB_NEUTRAL_HASH");
+        v = e != NULL && e[0] != '\0' && e[0] != '0';
+        if (v) gw_log("rb: the netplay checksum is the neutral hash (MELEE_RB_NEUTRAL_HASH)");
+    }
+    return v;
+}
 extern void gw_Replay_TraceBeginIter(int iter);
 extern void gw_Replay_TraceFlushUpTo(int iter);
 
@@ -1413,7 +1423,7 @@ void gw_RB_IterStart(void) {
     {
         double th = rb_ms();
         rb_hash_detail_begin(next);
-        rb.hring[(unsigned) next % RB_RING].h = gw_RB_GameHashForFrame(next) | 1u;
+        rb.hring[(unsigned) next % RB_RING].h = (rb_neutral_checksum() ? gw_RB_NeutralHashForFrame(next) : gw_RB_GameHashForFrame(next)) | 1u;
         rb_hash_detail_end(rb.hring[(unsigned) next % RB_RING].h);
         rb.ms_hash += rb_ms() - th;
         rb.n_hash++;

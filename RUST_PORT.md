@@ -1023,6 +1023,14 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   captures the pause (10 ticks in) and a live frame (tick 420). Match/pause shots hold disc art and are not committed; play_sss.png is.
   Not tried: keyboard and gamepad input by hand (the GC adapter did open in the run, but the script drove the pads).
 
+- Round 3 (hands-off input): a scripted run (`MELEE_PAD_SCRIPT` set) never touches the user's keyboard or focus. The window is created
+  with `with_active(false)` (`WindowConfig.active`, also view-golden and gx_viewer), the GC adapter is not opened (`MELEE_PAD_IGNORE_ADAPTER=1`),
+  gamepads are a fixed empty set and port 1 gets no keyboard preset, so alt-tabbing cannot change the result. No tool in the repo sends
+  OS-level input (grep for SendKeys/SendInput/keybd_event/AppActivate/pyautogui: none). Interactive `melee play` binds port 1 to the keyboard
+  preset (WASD/IJKL/Space/Shift/Enter; `MELEE_KEYBOARD=0` off). `view` renders any stage's map groups, not just FD.
+  Re-run: full_loop.txt (1360 ticks to results), vs_to_ko.txt --golden-pads (1875 ticks, winner port 2 by falls), pause_quit_rematch.txt (two matches, 1563 ticks), all with the window in the background.
+  Still stand-ins: ui.rs menus (gmfrontend.c's .inc units and the retail mn* scenes are not driven), opening card, 7 fighters, 4 stages.
+
 ## Platform track, audio proof (plat-audio, 2026-10-24)
 - C side: `MELEE_AUDIO_TRACE=<path>` (shim_ax.c `gw_ax_trace`) logs every game-facing axdriver.c / synth.c call
   (`<sub-frame> OP args`; START with its returned handle, KO*, PAN/VOL/PITCH/MIX, MIXGRP, PAUSE/RESUME, PSTART,
@@ -1057,7 +1065,8 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   hitboxes/hurtboxes/joints/dobjs/project/attrs/motion_name/debug_draw/debug_stage, camera_* (9), set_percent/set_damage/set_stocks/hit/
   impulse/cpu_mode(s)/fly/teleport/fly_speed/fly_solid/hold_hitbox/play_sound, timeline/motion_list/set_motion/anim_rows/anim_preview,
   lab_request/lab_mode/lab_leave/lab_now/lab_common/lab_env/floor_below/set_shield/set_scale/rollbacks(_clear).
-- **Not ported yet** (next rounds, in order): history/step_back/rewind_* (savestate/loadstate slots are done), state_* library, rec_* (gw_script_rec.inc),
+- Round 2: `rewind.rs` + `gd/history.rs` port the long rewind (gd.history/step_back/rewind_to/rewind_live/rewind_test(_result), input log with pad/sfx/audio replay, keyframe cadence, `iterations`, FramePre/Post kinds 0/1/2), hot_reload(_status), the `gd.state_*` library (own 384-byte header, index.txt) and gd.kb_preview. Keyframes/snapshot files are `ScriptGame::rw_*`/`snap_file_*` (the game half does not exist in Rust yet; tests/history.rs uses an in-memory mock, 9 tests). Found+fixed: gd.set_percent lacked rw_branch.
+- **Not ported yet** (next rounds, in order): rec_* (gw_script_rec.inc),
   hot_reload, kb_preview, combo, perf/prof, `gd.kit` / `gd.ui` (tables are empty), entity refs (`entity_ref` is nil), items/fx/echo/
   afterimage/tracer, stage_*/model_*/shader/area/warm/launch/1P/netplay/modsync/sim/hit_rules/enemy*, the Geno registry (geno_registry.c,
   geno_lua_core.h, fighter Lua), `lab.lua`'s remaining calls. `gdscript pc/geno/mods/geno-lab` lists what lab.lua still lacks at load.
@@ -1067,3 +1076,59 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   own 9 pre-existing data-dependent failures), 0 different, 58 need the engine (`gd` global) and are not run.
 - Traps: write files with the Write/Edit tools (a bash heredoc dropped a backslash and wrote NUL bytes); target dir is `build/cargo` at
   the repo root, not `rust/target`.
+
+## Platform track: netplay on the real game loop (port/plat-net, 2026-10-24)
+- `melee netplay` (`rust/melee/src/netplay.rs`, `netmatch.rs`, `np_env.rs`) drives the native VS match
+  (`VsMatch`) through `melee_net::session::RbSession` over `melee_net::Net` on real UDP. `NetMatch` is the
+  `RbGame`: `save`/`load` = `VsMatch::rb_save/rb_load` (the `state_dump` component set, fighters restored in
+  place), the desync checksum = the neutral hash (`game_hash`), pads from the session replace the script
+  (`pad_feed`). `RbGame::halted` (new): a frame that died half-stepped in code that is not ported yet
+  (typically a mispredicted input) is neither snapshotted nor hashed; the next tick reloads the clean
+  snapshot of that frame (`iter_start`), so the confirmed inputs roll it back like any misprediction.
+- App layer, `melee_net::app` (gw_netplay.c, direct and server paths): `scene` (np_build_scene and its
+  parse), `lobby` (lb_apply_, S/L/A/J/N/C/G messages, strike 1-2-2, ban/pick, counterpick characters,
+  3 s countdown; 5 unit tests), `rdv` (the matchmaking client: REG/JOIN/PEER/CODE, hole punch `GDPH`,
+  relay `GDMD`, RAND/MATCH/QUEUED/TIMEOUT, STUN, LAN pick; unit test), `room` (np_start_session, np_poll,
+  guest hello, ACCEPT "J c0 c1 scene" blob, lobby enter/tick, lb_go, deferred session start for room codes
+  and random matches).
+- Proofs (all on this machine, UDP loopback, `GW_ISO_VANILLA`, pad_falcon_fox_fd, 1801 golden frames):
+  - `melee synctest --depth 12 --golden docs/rust-port/golden/pad_falcon_fox_fd.csv` (12 = the max rollback
+    depth, `maxb` clamp): 1802 frames, 21504 hash checks, 0 mismatches, 1801/1801 frames golden-equal
+    (the run stops at frame 1802: `ftCo_RunBrake_Enter` is not ported).
+  - two Rust instances, `melee netplay --host` / `--join`, 60 fps pacing: 0 rollbacks, 1801/1801 equal to the
+    golden on both, identical CSVs. With `--lag-ms 70 --loss-pct 5` (inbound, both sides): 78 rollbacks,
+    depth 6-7, 0 session or transport desyncs, still 1801/1801 golden-equal and identical CSVs
+    (`--lag-ms 90 --loss-pct 10` too).
+  - the same through the lobby (`--lobby`: blind character pick, strike, ready, countdown, `G`), through
+    `tools/netplay/server/gdmelee_server.py` room codes (`--host --server S` then `--room CODE --server S`) and
+    through random matchmaking (`--random --server S` on both): all golden-equal, identical CSVs, rollbacks
+    included when lag/loss are on.
+- Golden comparison needs `--seed 12345` on the host (the match seed is random otherwise, so the hashes differ from the golden CSV from frame 0 while both peers still agree). Re-verified 2026-10-24 on the merged tree (no window, no OS input): synctest depth 12 0 mismatches / 1801 golden-equal; host+guest `--seed 12345 --lag-ms 70 --loss-pct 5`: 78 rollbacks, 0 desyncs, 1801/1801 golden-equal, identical CSVs.
+- `--live-rng`: the online per-frame RNG rule (`gw_Replay_ChecksumSeed`: a frame starts from
+  `seed + ((frame + 123) << 16)`), needed to match a C netplay match; the checksum uses it too. Off by default
+  (the golden CSVs are offline).
+- Not ported: UPnP, Envoy/stage-run/saved-run lobby messages, mod sync and the identity exchange (tokens are
+  `ck:N` / `ext:N`; the Rust sim plays Falcon, Fox on Final Destination, Battlefield is only a lobby stage),
+  controls words other than 0, Turbo rules, rematch/rejoin after a match, CPUs/items in the scene.
+- C interop: see the section below for what was measured.
+
+### Rust vs C build over the wire (2026-10-24)
+- The wire protocol allows it. The C build (this tree, `GW_BUILD_ROOT=_build/agents/plat-net`) plays scripted
+  netplay (`MELEE_NETPLAY=host|join:`, `tools/rust-port/golden/pad_np.lua`); the Rust peer takes the C's
+  handshake words (`--exe-hash` = the C `build id`, `MELEE_NP_GLOBAL_HASH` = `mods=` of the new "handshake
+  words" log line) and the C's content identities (`MELEE_NP_IDS`, run time only). HELLO/ACCEPT, the
+  `J c0 c1 scene` blob (tokens `ck:N`/`ext:N` are accepted by the C scene parser), hold/START, inputs and
+  checksums all interoperate in both directions.
+- C change needed: the C's netplay checksum is RB_GameHash (a wider word set), not the neutral hash. With
+  `MELEE_RB_NEUTRAL_HASH=1` (gw_rollback.c + `RB_NeutralHashForFrame` in fighter.c, same online seed rule) both
+  sides compute NHV1. The Rust peer also needs `--live-rng` (the C live-mode per-frame seed rule).
+- C vs C (neutral checksum, scripted pads): 3224 frames, both neutral CSVs identical, no desync.
+- Rust guest vs C host, full match (1893 frames, 2 rollbacks C side / 1 Rust side): 0 desyncs reported by either
+  side; the Rust per-frame words (fighters, items) equal the C's MELEE_NEUTRAL_HASHLOG on all 1893 frames.
+  Only the post-frame seed column differs on 548 frames (more or fewer logic RNG draws per frame in effect /
+  particle code; the seed is re-forced every frame online, so it cannot reach the next frame's state).
+- Rust host vs C guest: identical for 205 frames, then a checksum DESYNC reported at session frame 89 (golden
+  index ~212): at index 205 the C draws 38 logic RNG values and the Rust 7 (an effect / particle spawn the
+  Rust effect code does not make on that path), and at index 211 Falcon's landing word differs (5715B485 vs
+  5615B536). This is a sim gap found by netplay (different input timing from the offline golden), not a
+  transport problem; fixing it belongs to the fighter / effect ports.

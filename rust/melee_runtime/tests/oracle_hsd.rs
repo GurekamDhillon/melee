@@ -3,7 +3,7 @@
 //! shipping build's contraction + gwtool lowering; generated inputs, no disc data).
 use melee_runtime::hsd_mtx as hm;
 use melee_runtime::mtx::{Mtx, Quaternion, Vec3};
-use melee_runtime::{quatlib, spline};
+use melee_runtime::{tu::quatlib, spline};
 
 const DATA: &str = include_str!("data/oracle_hsd.txt");
 
@@ -102,20 +102,20 @@ fn hsd_math_matches_c_build() {
                 fl.m("MtxSRTQuat", ln, &hm::srt_quat(&s, &q, &t, None), &mut r);
                 fl.m("MtxSRTQuat ps", ln, &hm::srt_quat(&s, &q, &t, Some(&ps)), &mut r);
                 fl.m("MtxScaledAdd", ln, &hm::scaled_add(&a, &b, f), &mut r);
-                fl.q("MatToQuat", ln, quatlib::mat_to_quat(&a), &mut r);
-                fl.v("QuatLib_8037EB28", ln, quatlib::mtx_to_euler(&a), &mut r);
-                fl.q("QuatLib_8037EC4C", ln, quatlib::mul(&p, &q), &mut r);
+                fl.q("MatToQuat", ln, quatlib::MatToQuat(&a), &mut r);
+                fl.v("QuatLib_8037EB28", ln, quatlib::HSD_QuatLib_8037EB28(&a), &mut r);
+                fl.q("QuatLib_8037EC4C", ln, quatlib::HSD_QuatLib_8037EC4C(&p, &q), &mut r);
                 let mut axis = s;
                 if (n_hm - 1) % 11 == 0 {
                     axis = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
                 }
                 let rc = r.i();
-                let res = quatlib::from_axis_angle(&axis, rot.x);
+                let res = quatlib::HSD_QuatLib_8037ECE0(&axis, rot.x);
                 fl.eq("QuatLib_8037ECE0 rc", ln, vec![res.is_none() as u32], vec![(rc == -1) as u32]);
                 let seven = Quaternion { x: 7.0, y: 7.0, z: 7.0, w: 7.0 };
                 fl.q("QuatLib_8037ECE0", ln, res.unwrap_or(seven), &mut r);
-                fl.q("EulerToQuat", ln, quatlib::euler_to_quat(&rot), &mut r);
-                fl.q("QuatLib_8037EF28", ln, quatlib::slerp(&p, &q, f * 0.5 + 0.5), &mut r);
+                fl.q("EulerToQuat", ln, quatlib::EulerToQuat(&rot), &mut r);
+                fl.q("QuatLib_8037EF28", ln, quatlib::HSD_QuatLib_8037EF28(&p, &q, f * 0.5 + 0.5), &mut r);
             }
             "spl" => {
                 n_spl += 1;

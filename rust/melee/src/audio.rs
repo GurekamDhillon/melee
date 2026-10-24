@@ -15,8 +15,12 @@ use melee_audio::sim;
 const MENU_BGM: i32 = 0x34;
 
 pub struct Audio {
-    out: sim::Output,
+    /// The device / wall-clock frame driver; None when headless.
+    out: Option<sim::Output>,
     pub dev_open: bool,
+    /// Headless: the DSP runs on the virtual 10-per-3-frames clock and the mix is kept here
+    /// (s16 stereo, 160 frames per 5 ms sub-frame) for `--audio-wav`.
+    pub capture: Option<Vec<i16>>,
 }
 
 /// CharacterKind of the roster's fighter files.
@@ -85,18 +89,31 @@ fn request_banks(flags: u32, mask: u64) {
 
 impl Audio {
     /// Boot the sound from the disc and open the output. `Err` leaves the game silent.
-    pub fn boot(iso: &str) -> Result<Audio, String> {
+    pub fn boot(iso: &str, headless: bool) -> Result<Audio, String> {
         crate::install_audio(iso)?;
+        if headless {
+            return Ok(Audio { out: None, dev_open: false, capture: Some(Vec::new()) });
+        }
         let out = sim::Output::new(melee_audio::output::DriverConfig::from_env(false));
-        Ok(Audio { out, dev_open: false })
+        Ok(Audio { out: Some(out), dev_open: false, capture: None })
     }
 
     /// Once per video frame: the game's own per-frame audio (`lbAudioAx_80027DF8`), then the 5 ms
     /// frames the device is owed.
     pub fn tick(&mut self) {
         sim::game_frame();
-        self.out.tick();
-        self.dev_open = self.out.driver.device_open();
+        match (&mut self.out, &mut self.capture) {
+            (Some(o), _) => {
+                o.tick();
+                self.dev_open = o.driver.device_open();
+            }
+            (None, Some(c)) => {
+                sim::virtual_frame_into(c);
+            }
+            (None, None) => {
+                sim::virtual_frame();
+            }
+        }
     }
 
     fn menu(&self, n: i32) {

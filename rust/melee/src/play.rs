@@ -29,7 +29,7 @@ use melee_gx::api::GxColor;
 use melee_gx::shim::GxShim;
 use melee_platform::gfx::{write_png, Presenter, EFB_HEIGHT, EFB_WIDTH};
 use melee_platform::pad::*;
-use melee_platform::{run_windowed, Game, PadSystem, WindowConfig};
+use melee_platform::{run_headless, run_windowed, Game, PadSystem, WindowConfig};
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
@@ -902,8 +902,11 @@ pub fn play(args: &[String]) -> ExitCode {
         audio: None,
     };
     let mut game = game;
+    // --headless: no window, no device, no gamepads; the pad script (MELEE_PAD_SCRIPT) drives
+    // the ports and --max-frames / --quit-at-results end the run. --audio-wav keeps the mix.
+    let headless = has("--headless");
     if !has("--no-audio") && std::env::var("MELEE_AUDIO").map_or(true, |v| v != "0") {
-        match crate::audio::Audio::boot(&game.iso) {
+        match crate::audio::Audio::boot(&game.iso, headless) {
             Ok(a) => game.audio = Some(a),
             Err(e) => log(&format!("audio off: {e}")),
         }
@@ -911,6 +914,20 @@ pub fn play(args: &[String]) -> ExitCode {
     if let Some(a) = &game.audio {
         a.scene_start();
         a.stop_music();
+    }
+    if headless {
+        let mut pads = PadSystem::headless();
+        let limit = game.max_frames.unwrap_or(60 * 600);
+        let ticks = run_headless(&mut game, &mut pads, limit);
+        log(&format!("headless: {ticks} ticks, {}", game.scene.name()));
+        if let (Some(path), Some(cap)) = (get("--audio-wav"), game.audio.as_ref().and_then(|a| a.capture.as_ref())) {
+            if let Err(e) = crate::write_wav(&path, cap) {
+                eprintln!("play: {path}: {e}");
+                return ExitCode::FAILURE;
+            }
+            log(&format!("audio mix of {} sub-frames written to {path}", cap.len() / 320));
+        }
+        return if game.failed.is_some() { ExitCode::FAILURE } else { ExitCode::SUCCESS };
     }
     let cfg = WindowConfig { title: "GD's Melee (native)".into(), width: 1280, height: 960 };
     match run_windowed(game, PadSystem::interactive(), cfg) {

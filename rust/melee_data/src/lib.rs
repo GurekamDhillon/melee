@@ -5,6 +5,7 @@
 //! Everything here is checked against the C build's own code or files; see tests/.
 
 pub mod card;
+pub mod crashlog;
 pub mod cfmt;
 pub mod gdlp;
 pub mod modreg;

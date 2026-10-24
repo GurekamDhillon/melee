@@ -217,6 +217,10 @@ def bind(ptype, pools):
             return ("IA", "(&raw mut IA) as *mut i32")
         if pt.kind == T.UINT:
             return ("UA", "(&raw mut UA) as *mut u32")
+        if pt.kind == T.RECORD:
+            # a record no pool describes: scratch memory (the callee reads or writes it as plain data)
+            print(f"mk_lb: note: pointer to {pt.spelling} bound to BUF")
+            return (f"({ptype.spelling}) BUF", "(&raw mut BUF) as *mut _")
         raise SystemExit(f"no binding for pointer to {pt.spelling}")
     if k == T.BOOL:
         return "fv()", "fv() != 0"

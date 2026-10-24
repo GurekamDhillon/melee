@@ -2787,7 +2787,7 @@ pub mod ext {
             }
     pub static mut HSD_GObj_804D783C: s32 = unsafe { core::mem::zeroed() };
     pub static mut HSD_GObj_JObjKind: u8_0 = unsafe { core::mem::zeroed() };
-    pub static mut mnNameNew_803EE720: [*mut ::core::ffi::c_char; 0] = unsafe { core::mem::zeroed() };
-    pub static mut mnNameNew_803EE724: [*mut ::core::ffi::c_char; 0] = unsafe { core::mem::zeroed() };
+    // the real tables (mnnamenew.c): a zero-length stand-in here would be read past its end
+    pub use crate::tu::mnnamenew::{mnNameNew_803EE720, mnNameNew_803EE724};
     pub static mut mnNameNew_NullCharacter: ::core::ffi::c_char = unsafe { core::mem::zeroed() };
 }

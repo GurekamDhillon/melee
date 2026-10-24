@@ -1,0 +1,10 @@
+[package]
+name = "melee_script"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Lua 5.4 scripting host: the gd.* API sandbox (gw_script.c), Geno registry and the LAB mod loader"
+
+[dependencies]
+mlua = { version = "0.12", features = ["lua54", "vendored"] }

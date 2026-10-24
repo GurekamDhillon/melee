@@ -22,3 +22,4 @@ pub mod class;
 pub mod bytecode;
 pub mod controller;
 pub mod devcom;
+pub mod cobj;

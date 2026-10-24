@@ -1068,6 +1068,264 @@ fn mp_coll_wall_check_ex(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut Coll
     hit_wall
 }
 
+/// A candidate wall contact of the push-out searches (`mpColl_804D6490/94/98` + `.normal`).
+#[derive(Clone, Copy)]
+struct WallBest {
+    max_x: f32,
+    line_id: i32,
+    flags: u32,
+    normal: Vec3,
+}
+
+fn wall_take(b: &mut WallBest, max_x: f32, h: &crate::mp::geom::LineHit) {
+    b.max_x = max_x;
+    b.line_id = h.line_id;
+    b.flags = h.flags;
+    b.normal = h.normal;
+}
+
+/// `mpColl_80046224_LeftWall`: push the ECB out of the left-facing walls collected by the check
+/// (`mpColl_80045B74_LeftWall`). True = `cur_pos.x` moved.
+fn mp_coll_80046224_left_wall(g: &mut GroundColl, st: &CollGlobals, cd: &mut CollData) -> bool {
+    let mut b = WallBest { max_x: F32_MAX, line_id: -1, flags: 0, normal: Vec3 { x: 0.0, y: 0.0, z: 0.0 } };
+    for i in 0..st.n_left {
+        let mut wall_id = st.left[i];
+        let mut pos = g.mp_left_wall_get_top(wall_id);
+        if pos.y < cd.cur_pos.y + cd.ecb.bottom.y {
+            if b.max_x > pos.x {
+                if let Some(h) = g.mp_lib_8004e398_left_wall(wall_id, pos) {
+                    if h.line_id != -1 {
+                        wall_take(&mut b, pos.x, &h);
+                    }
+                }
+            }
+            continue;
+        }
+        pos = g.mp_left_wall_get_bottom(wall_id);
+        if pos.y > cd.cur_pos.y + cd.ecb.top.y {
+            if b.max_x > pos.x {
+                if let Some(h) = g.mp_lib_8004e398_left_wall(wall_id, pos) {
+                    if h.line_id != -1 {
+                        wall_take(&mut b, pos.x, &h);
+                    }
+                }
+            }
+            continue;
+        }
+        for pt in [cd.ecb.bottom, cd.ecb.right, cd.ecb.top] {
+            pos.x = cd.cur_pos.x + pt.x;
+            pos.y = cd.cur_pos.y + pt.y;
+            if let Some(h) = g.mp_lib_8004e398_left_wall(wall_id, pos) {
+                if h.line_id != -1 && b.max_x > cd.cur_pos.x + h.dist {
+                    wall_take(&mut b, cd.cur_pos.x + h.dist, &h);
+                }
+            }
+        }
+        let line_id = g.mp_line_next_non_left_wall(wall_id);
+        if line_id != -1 && g.mp_lib_80054ed8(line_id) && g.mp_line_get_kind(line_id) & COLL_LINE_CEILING != 0 {
+            let vec = g.mp_left_wall_get_top(wall_id);
+            if pos.y > vec.y {
+                let line_id2 = g.mp_line_prev_non_ceiling(line_id);
+                // (the C tests line_id, not line_id2, in the second half.)
+                if line_id2 != -1 && g.mp_lib_80054ed8(line_id) && g.mp_line_get_kind(line_id) & COLL_LINE_LEFT_WALL != 0 {
+                    let nrm = g.mp_line_get_normal(line_id2);
+                    // `(pos.y - vec.y) / -nrm.x * nrm.y + vec.x - pos.x - 0.5F`: one fused site.
+                    let x = fmadds((pos.y - vec.y) / -nrm.x, nrm.y, vec.x) - pos.x - 0.5;
+                    if b.max_x > cd.cur_pos.x + x {
+                        b.max_x = cd.cur_pos.x + x;
+                        b.line_id = line_id2;
+                        b.flags = g.mp_line_get_flags(line_id2);
+                        b.normal = nrm;
+                    }
+                }
+            }
+        }
+        let f7 = cd.ecb.top.y;
+        let f6 = cd.ecb.right.y;
+        let f5 = cd.ecb.bottom.y;
+        let f4 = cd.ecb.right.x;
+        let f27 = (f4 - cd.ecb.bottom.x) / (f6 - f5);
+        let f26 = (f4 - cd.ecb.top.x) / (f6 - f7);
+        let f30 = cd.cur_pos.y + f7;
+        let f29 = cd.cur_pos.y + f6;
+        let f28 = cd.cur_pos.y + f5;
+        // The walls below (prev) then above (next) the first one.
+        let mut j = wall_id;
+        while j != -1 && g.mp_line_get_kind(j) == COLL_LINE_LEFT_WALL {
+            let pos = g.mp_line_get_v0_pos(j);
+            let x;
+            if f28 <= pos.y && pos.y <= f29 {
+                x = fmadds(f27, pos.y - f28, cd.ecb.bottom.x);
+            } else if f29 <= pos.y && pos.y <= f30 {
+                x = fmadds(f26, pos.y - f30, cd.ecb.top.x);
+            } else if pos.y < f28 {
+                break;
+            } else {
+                j = g.mp_line_get_prev(j);
+                continue;
+            }
+            let x = pos.x - x;
+            if b.max_x > x {
+                b.max_x = x;
+                b.line_id = j;
+                b.flags = g.mp_line_get_flags(j);
+                b.normal = g.mp_line_get_normal(j);
+            }
+            j = g.mp_line_get_prev(j);
+        }
+        while wall_id != -1 && g.mp_line_get_kind(wall_id) == COLL_LINE_LEFT_WALL {
+            let pos = g.mp_line_get_v1_pos(wall_id);
+            let x;
+            if f28 <= pos.y && pos.y <= f29 {
+                x = fmadds(f27, pos.y - f28, cd.ecb.bottom.x);
+            } else if f29 <= pos.y && pos.y <= f30 {
+                x = fmadds(f26, pos.y - f30, cd.ecb.top.x);
+            } else if pos.y > f30 {
+                break;
+            } else {
+                wall_id = g.mp_line_get_next(wall_id);
+                continue;
+            }
+            let x = pos.x - x;
+            if b.max_x > x {
+                b.max_x = x;
+                b.line_id = wall_id;
+                b.flags = g.mp_line_get_flags(wall_id);
+                b.normal = g.mp_line_get_normal(wall_id);
+            }
+            wall_id = g.mp_line_get_next(wall_id);
+        }
+    }
+    if cd.cur_pos.x > b.max_x {
+        cd.cur_pos.x = b.max_x;
+        cd.left_facing_wall.index = b.line_id;
+        cd.left_facing_wall.flags = b.flags;
+        cd.left_facing_wall.normal = tv(b.normal);
+        return true;
+    }
+    false
+}
+
+/// `mpColl_800454A4_RightWall`: the mirror of [`mp_coll_80046224_left_wall`].
+fn mp_coll_800454a4_right_wall(g: &mut GroundColl, st: &CollGlobals, cd: &mut CollData) -> bool {
+    let mut b = WallBest { max_x: -F32_MAX, line_id: -1, flags: 0, normal: Vec3 { x: 0.0, y: 0.0, z: 0.0 } };
+    for i in 0..st.n_right {
+        let mut wall_id = st.right[i];
+        let mut pos = g.mp_right_wall_get_top(wall_id);
+        if pos.y < cd.cur_pos.y + cd.ecb.bottom.y {
+            if b.max_x < pos.x {
+                if let Some(h) = g.mp_lib_8004e684_right_wall(wall_id, pos) {
+                    if h.line_id != -1 {
+                        wall_take(&mut b, pos.x, &h);
+                    }
+                }
+            }
+            continue;
+        }
+        pos = g.mp_right_wall_get_bottom(wall_id);
+        if pos.y > cd.cur_pos.y + cd.ecb.top.y {
+            if b.max_x < pos.x {
+                if let Some(h) = g.mp_lib_8004e684_right_wall(wall_id, pos) {
+                    if h.line_id != -1 {
+                        wall_take(&mut b, pos.x, &h);
+                    }
+                }
+            }
+            continue;
+        }
+        for pt in [cd.ecb.bottom, cd.ecb.left, cd.ecb.top] {
+            pos.x = cd.cur_pos.x + pt.x;
+            pos.y = cd.cur_pos.y + pt.y;
+            if let Some(h) = g.mp_lib_8004e684_right_wall(wall_id, pos) {
+                if h.line_id != -1 && b.max_x < cd.cur_pos.x + h.dist {
+                    wall_take(&mut b, cd.cur_pos.x + h.dist, &h);
+                }
+            }
+        }
+        let line_id = g.mp_line_prev_non_right_wall(wall_id);
+        if line_id != -1 && g.mp_lib_80054ed8(line_id) && g.mp_line_get_kind(line_id) & COLL_LINE_CEILING != 0 {
+            let top = g.mp_right_wall_get_top(wall_id);
+            if pos.y > top.y {
+                let line_id = g.mp_line_next_non_ceiling(line_id);
+                if line_id != -1 && g.mp_lib_80054ed8(line_id) && g.mp_line_get_kind(line_id) & COLL_LINE_RIGHT_WALL != 0 {
+                    let nrm = g.mp_line_get_normal(line_id);
+                    // `(pos.y - top.y) / nrm.x * -nrm.y + top.x - pos.x + 0.5F`: one fused site.
+                    let x = fmadds((pos.y - top.y) / nrm.x, -nrm.y, top.x) - pos.x + 0.5;
+                    if b.max_x < cd.cur_pos.x + x {
+                        b.max_x = cd.cur_pos.x + x;
+                        b.line_id = line_id;
+                        b.flags = g.mp_line_get_flags(line_id);
+                        b.normal = nrm;
+                    }
+                }
+            }
+        }
+        let f6 = cd.ecb.left.x;
+        let f5 = cd.ecb.top.y;
+        let f4 = cd.ecb.left.y;
+        let f3 = cd.ecb.bottom.y;
+        let f2 = cd.cur_pos.y;
+        let top = f2 + f5;
+        let mid = f2 + f4;
+        let bot = f2 + f3;
+        let f27 = f6 / (f4 - f3);
+        let f26 = f6 / (f4 - f5);
+        let mut j = wall_id;
+        while j != -1 && g.mp_line_get_kind(j) == COLL_LINE_RIGHT_WALL {
+            let pos = g.mp_line_get_v1_pos(j);
+            let x;
+            if bot <= pos.y && pos.y <= mid {
+                x = fmadds(f27, pos.y - bot, cd.ecb.bottom.x);
+            } else if mid <= pos.y && pos.y <= top {
+                x = fmadds(f26, pos.y - top, cd.ecb.top.x);
+            } else if pos.y < bot {
+                break;
+            } else {
+                j = g.mp_line_get_next(j);
+                continue;
+            }
+            let x = pos.x - x;
+            if b.max_x < x {
+                b.max_x = x;
+                b.line_id = j;
+                b.flags = g.mp_line_get_flags(j);
+                b.normal = g.mp_line_get_normal(j);
+            }
+            j = g.mp_line_get_next(j);
+        }
+        while wall_id != -1 && g.mp_line_get_kind(wall_id) == COLL_LINE_RIGHT_WALL {
+            let pos = g.mp_line_get_v0_pos(wall_id);
+            let x;
+            if bot <= pos.y && pos.y <= mid {
+                x = fmadds(f27, pos.y - bot, cd.ecb.bottom.x);
+            } else if mid <= pos.y && pos.y <= top {
+                x = fmadds(f26, pos.y - top, cd.ecb.top.x);
+            } else if pos.y > top {
+                break;
+            } else {
+                wall_id = g.mp_line_get_prev(wall_id);
+                continue;
+            }
+            let x = pos.x - x;
+            if b.max_x < x {
+                b.max_x = x;
+                b.line_id = wall_id;
+                b.flags = g.mp_line_get_flags(wall_id);
+                b.normal = g.mp_line_get_normal(wall_id);
+            }
+            wall_id = g.mp_line_get_prev(wall_id);
+        }
+    }
+    if cd.cur_pos.x < b.max_x {
+        cd.cur_pos.x = b.max_x;
+        cd.right_facing_wall.index = b.line_id;
+        cd.right_facing_wall.flags = b.flags;
+        cd.right_facing_wall.normal = tv(b.normal);
+        return true;
+    }
+    false
+}
+
 /// `mpColl_80046904`: one substep of air (and ground-check) collision.
 pub fn mp_coll_80046904(
     g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollData, flags: u32, floor_cb: &mut LineFilter,
@@ -1082,10 +1340,25 @@ pub fn mp_coll_80046904(
         let old_squeeze_flags = squeeze_flags;
         let prev_b6 = cd.x34_flags.b6();
         squeeze_flags = 0;
+        let mut x_after_left = 0.0f32;
+        let mut x_after_right = 0.0f32;
         for left in [true, false, true, false] {
             if mp_coll_wall_check(g, st, cd, left) {
-                return Err(NotPorted(if left { "mpColl_80046224_LeftWall (wall push-out)" } else { "mpColl_800454A4_RightWall (wall push-out)" }));
+                let moved = if left { mp_coll_80046224_left_wall(g, st, cd) } else { mp_coll_800454a4_right_wall(g, st, cd) };
+                if moved {
+                    left_right_flags |= if left { 1 } else { 2 };
+                    squeeze_flags |= if left { 8 } else { 4 };
+                }
+                if left {
+                    x_after_left = cd.cur_pos.x;
+                } else {
+                    x_after_right = cd.cur_pos.x;
+                }
             }
+        }
+        if squeeze_flags & 0xC == 0xC {
+            let _ = (x_after_left, x_after_right);
+            return Err(NotPorted("mpCollSqueezeHorizontal (air)"));
         }
         if mp_coll_80044ad8_ceiling(g, st, cd, left_right_flags) {
             return Err(NotPorted("mpColl_80044C74_Ceiling + mpCollCeilingInline (ceiling hit)"));

@@ -1112,6 +1112,9 @@ impl VsMatch {
     /// proc, then every fighter's s_link 3 proc, ...). Err: the frame needs an unported state.
     fn fighters(&mut self) -> Result<(), String> {
         let c = self.common;
+        // Ground_801C1CD0 (every map gobj's s_link 1 proc): `mpColl_804D64AC += 1`, so each
+        // CollData's first substep of the frame (x38 != the counter) takes the Remap variants.
+        self.cg.x804d64ac = self.cg.x804d64ac.wrapping_add(1);
         // The frame's HSD_PadRenewStatus (the pad script's sample for this frame).
         let g = self.frame + 1;
         for port in 0..4 {

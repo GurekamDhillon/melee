@@ -33,6 +33,10 @@ fn col(c: Rgba) -> GxColor {
 }
 
 impl GxBackend for ShimBackend<'_> {
+    // HSD_LObjSetup (lobj.c) loads each light's colour and its specular light object. The ported
+    // lobj.c keeps its own light arena, which this backend does not share, and the view's light
+    // list (`ActiveLight`) carries no direction: so specular highlights are not drawn here.
+    fn setup_lobj(&mut self, _light: &melee_runtime::tu::state::ActiveLight, _color: Rgba, _shininess: f32) {}
     fn set_cull_mode(&mut self, mode: u32) {
         self.shim.set_cull_mode(mode)
     }

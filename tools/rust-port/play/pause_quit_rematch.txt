@@ -1,0 +1,45 @@
+# melee play: pause, resume, quit-combo and a second match, with live pads (port 1 only).
+# title -> menus -> CSS -> SSS -> match #1
+40 0000 0 0
+3 1000 0 0
+12 0000 0 0
+3 0100 0 0
+12 0000 0 0
+3 0100 0 0
+12 0000 0 0
+3 0100 0 0
+12 0000 0 0
+3 0100 0 0
+12 0000 0 0
+3 0100 0 0
+12 0000 0 0
+3 0100 0 0
+12 0000 0 0
+3 0100 0 0
+12 0000 0 0
+# loading + READY/GO
+160 0000 0 0
+# START: pause; START: resume
+3 1000 0 0
+30 0000 0 0
+3 1000 0 0
+60 0000 0 0
+# a little live play: walk right
+20 0000 -30 0
+40 0000 40 0
+20 0000 0 0
+# hold L+R+A+START: quit to the character select
+45 1160 0 0
+12 0000 0 0
+3 0100 0 0
+12 0000 0 0
+3 0100 0 0
+12 0000 0 0
+3 0100 0 0
+12 0000 0 0
+3 0100 0 0
+12 0000 0 0
+# loading + match #2
+200 0000 0 0
+40 0000 50 0
+300 0000 0 0

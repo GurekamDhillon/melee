@@ -53,6 +53,9 @@ impl RbGame for NetMatch {
     fn load(&mut self, s: &RbSnapshot) {
         self.vs.rb_load(s)
     }
+    fn halted(&self) -> bool {
+        self.vs.stopped.is_some()
+    }
     fn state_hash(&self) -> u32 {
         self.vs.rb_state_hash()
     }

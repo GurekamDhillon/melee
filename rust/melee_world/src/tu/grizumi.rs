@@ -42,9 +42,9 @@ pub mod ext {
     hook!(CAMERA_80030A50, Camera_80030A50, () -> *mut HSD_GObj);
     hook_or!(CAMERA_80031074, Camera_80031074, (a0: u8), |a0: u8| crate::cm::camera::world().camera_80031074(a0));
     hook_or!(CAMERA_800310A0, Camera_800310A0, (a0: u8), |a0: u8| crate::cm::camera::world().camera_800310a0(a0));
-    hook!(GOBJ_CREATE, GObj_Create, (classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj);
-    hook!(GOBJ_INITUSERDATA, GObj_InitUserData, (gobj: *mut HSD_GObj, kind: u8, remove_func: Option<unsafe extern "C" fn(*mut c_void)>, data: *mut c_void));
-    hook!(GOBJ_SETUPGXLINKMAXSORTED, GObj_SetupGXLinkMaxSorted, (gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, priority: u32));
+    hook_or!(GOBJ_CREATE, GObj_Create, (classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj, |classifier: u16, p_link: u8, priority: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(classifier as _, p_link as _, priority as _) as _ });
+    hook_or!(GOBJ_INITUSERDATA, GObj_InitUserData, (gobj: *mut HSD_GObj, kind: u8, remove_func: Option<unsafe extern "C" fn(*mut c_void)>, data: *mut c_void), |gobj: *mut HSD_GObj, kind: u8, remove_func: Option<unsafe extern "C" fn(*mut c_void)>, data: *mut c_void| { unsafe { let _ = melee_runtime::tu::gobj_native::GObj_InitUserData(gobj as _, kind as _, remove_func as _, data as _); } });
+    hook_or!(GOBJ_SETUPGXLINKMAXSORTED, GObj_SetupGXLinkMaxSorted, (gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, priority: u32), |gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, priority: u32| { unsafe { let _ = melee_runtime::tu::gobj_native::GObj_SetupGXLinkMaxSorted(gobj as _, render_cb as _, priority as _); } });
     hook!(GXGETTEXBUFFERSIZE, GXGetTexBufferSize, (width: u16, height: u16, format: u32, mipmap: u8, max_lod: u8) -> u32);
     pub static mut GROUND_801C0498: Option<fn() -> f32> = None;
     #[allow(non_snake_case)]
@@ -137,9 +137,9 @@ pub mod ext {
     }
     hook!(HSD_FOGSET, HSD_FogSet, (a0: *mut HSD_Fog));
     hook!(HSD_FOREACHANIM, HSD_ForeachAnim, (obj: *mut c_void, ty: HSD_Type, mask: HSD_TypeMask, func: *mut c_void, arg_type: AObj_Arg_Type));
-    hook!(HSD_GOBJGXLINK_8039084C, HSD_GObjGXLink_8039084C, (a0: *mut HSD_GObj));
-    hook!(HSD_GOBJOBJECT_80390A70, HSD_GObjObject_80390A70, (gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void));
-    hook!(HSD_GOBJ_80390ED0, HSD_GObj_80390ED0, (gobj: *mut HSD_GObj, mask: u32));
+    hook_or!(HSD_GOBJGXLINK_8039084C, HSD_GObjGXLink_8039084C, (a0: *mut HSD_GObj), |a0: *mut HSD_GObj| { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObjGXLink_8039084C(a0 as _); } });
+    hook_or!(HSD_GOBJOBJECT_80390A70, HSD_GObjObject_80390A70, (gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void), |gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void| { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(gobj as _, kind as _, obj as _); } });
+    hook_or!(HSD_GOBJ_80390ED0, HSD_GObj_80390ED0, (gobj: *mut HSD_GObj, mask: u32), |gobj: *mut HSD_GObj, mask: u32| { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObj_80390ED0(gobj as _, mask as _); } });
     hook_or!(HSD_JOBJCLEARFLAGSALL, HSD_JObjClearFlagsAll, (a0: *mut HSD_JObj, flags: u32), |a0: *mut HSD_JObj, flags: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjClearFlagsAll(a0 as _, flags as _); } });
     hook_or!(HSD_JOBJGETFLAGS, HSD_JObjGetFlags, (jobj: *mut HSD_JObj) -> u32, |jobj: *mut HSD_JObj| unsafe { melee_runtime::tu::jobj_world::HSD_JObjGetFlags(jobj as _) as _ });
     hook!(HSD_JOBJREMOVEANIMALL, HSD_JObjRemoveAnimAll, (jobj: *mut HSD_JObj));

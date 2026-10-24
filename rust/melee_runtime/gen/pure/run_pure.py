@@ -28,6 +28,10 @@ FLAGS = ["--target=x86_64-pc-windows-gnu", "-mno-ms-bitfields", "-std=c99", "-no
          "-isystem", "libs/dolphin/src", "-isystem", GALE, "-include", "src/MSL/math_ppc.h"]
 
 
+if os.environ.get("PURE_DEBUG"):
+    FLAGS += ["-g", "-gcodeview"]
+
+
 def run(cmd):
     r = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
     if r.returncode:
@@ -55,7 +59,7 @@ def main():
             run([sys.executable, str(LOWER), str(ll), str(lo)])
             lls.append(str(lo))
         exe = BUILD / f"pure_{n}.exe"
-        run([CLANG, "-O0", "-w", *lls, *[str(ROOT / x) for x in plain], "-o", str(exe), "-Wl,/OPT:NOICF", "-fuse-ld=lld"])
+        run([CLANG, "-O0", "-w", *lls, *[str(ROOT / x) for x in plain], "-o", str(exe), "-Wl,/OPT:NOICF", "-fuse-ld=lld"] + (["-g", "-Wl,/DEBUG"] if os.environ.get("PURE_DEBUG") else []))
         pr = subprocess.run([str(exe)], capture_output=True, text=True)
         if pr.returncode:
             raise SystemExit(f"pure: {n}: driver exited {pr.returncode}")

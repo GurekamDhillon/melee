@@ -144,7 +144,7 @@ pub mod ext {
     pub fn Ground_GetYakumonoParam() -> *mut c_void {
         match unsafe { GROUND_GETYAKUMONOPARAM } { Some(f) => f(), None => { return unsafe { crate::tu::ground::Ground_GetYakumonoParam() as _ }; } }
     }
-    hook!(HSD_GOBJGXLINK_803909D8, HSD_GObjGXLink_803909D8, (a0: *mut HSD_GObj, a1: *mut HSD_GObj));
+    hook_or!(HSD_GOBJGXLINK_803909D8, HSD_GObjGXLink_803909D8, (a0: *mut HSD_GObj, a1: *mut HSD_GObj), |a0: *mut HSD_GObj, a1: *mut HSD_GObj| { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObjGXLink_803909D8(a0 as _, a1 as _); } });
     hook!(HSD_RANDF, HSD_Randf, () -> f32);
     hook!(OSREPORT, OSReport, (a0: *mut i8));
     /// `extern int Slippi_Codes(void)` (TARGET_PC): no Slippi online in the native build, so 0.

@@ -57,7 +57,7 @@ pub mod ext {
     fn Camera_8002928C(a0: *mut CmSubject) -> i32;
     fn Camera_80030B50() -> i32 = || crate::cm::camera::world().camera_80030b50() as i32;
     fn Camera_80030B7C() -> i32 = || crate::cm::camera::world().camera_80030b7c() as i32;
-    fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
+    fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj = |a0: u16, a1: u8, a2: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ };
     fn GXBegin(a0: GXPrimitive, a1: GXVtxFmt, a2: u16);
     fn GXClearVtxDesc();
     fn GXEnd() = || { unsafe { let _ = melee_runtime::tu::sobjlib::GXEnd(); } };
@@ -73,7 +73,7 @@ pub mod ext {
     fn Ground_801C2D24(a0: i32, a1: *mut Vec) -> i32 = |a0: i32, a1: *mut Vec| unsafe { crate::tu::ground::Ground_801C2D24(a0 as _, a1 as _) as _ };
     fn HSD_CObjGetCurrent() -> *mut HSD_CObj = || unsafe { melee_runtime::tu::cobj::HSD_CObjGetCurrent() as _ };
     fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut [f32; 4]);
-    fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
+    fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8| unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(a0 as _, a1 as _, a2 as _) as _ };
     fn HSD_JObjGetFlags(a0: *mut HSD_JObj) -> u32 = |a0: *mut HSD_JObj| unsafe { melee_runtime::tu::jobj_world::HSD_JObjGetFlags(a0 as _) as _ };
     fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);
     fn HSD_LObjSetupInit(a0: *mut HSD_CObj) = |a0: *mut HSD_CObj| { unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjSetupInit(a0 as _); } };

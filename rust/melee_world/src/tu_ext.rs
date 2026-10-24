@@ -24,8 +24,7 @@ pub fn Camera_8003118C(a0: *mut Vec3, a1: f32) -> i32 { match unsafe { HOOK_Came
 }
 pub static mut HOOK_GObj_SetupGXLink: Option<fn(*mut HSD_GObj, GObj_RenderFunc, u8, u32)> = None;
 /// C `GObj_SetupGXLink` (sysdolphin/baselib/gobjgxlink.h).
-pub fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: GObj_RenderFunc, a2: u8, a3: u32) {
-    match unsafe { HOOK_GObj_SetupGXLink } { Some(f) => f(a0, a1, a2, a3), None => panic!("TODO: GObj_SetupGXLink is not ported") }
+pub fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: GObj_RenderFunc, a2: u8, a3: u32) { match unsafe { HOOK_GObj_SetupGXLink } { Some(f) => f(a0, a1, a2, a3), None => unsafe { let _ = melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } }
 }
 pub static mut HOOK_Ground_801C0498: Option<fn() -> f32> = None;
 /// C `Ground_801C0498` (melee/gr/ground.h).
@@ -204,8 +203,7 @@ pub unsafe extern "C" fn HSD_DObjSetFlags(a0: *mut HSD_DObj, a1: u32) {
 }
 pub static mut HOOK_HSD_GObj_SetupProc: Option<fn(*mut HSD_GObj, HSD_GObjEvent, u8) -> *mut HSD_GObjProc> = None;
 /// C `HSD_GObj_SetupProc` (sysdolphin/baselib/gobjproc.h).
-pub fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc {
-    match unsafe { HOOK_HSD_GObj_SetupProc } { Some(f) => f(a0, a1, a2), None => panic!("TODO: HSD_GObj_SetupProc is not ported") }
+pub fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc { match unsafe { HOOK_HSD_GObj_SetupProc } { Some(f) => f(a0, a1, a2), None => unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(a0 as _, a1 as _, a2 as _) as _ } }
 }
 pub static mut HOOK_HSD_JObjClearFlagsAll: Option<fn(*mut HSD_JObj, u32)> = None;
 /// C `HSD_JObjClearFlagsAll` (sysdolphin/baselib/jobj.h).

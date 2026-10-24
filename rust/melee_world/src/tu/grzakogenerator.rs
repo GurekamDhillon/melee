@@ -154,10 +154,12 @@ pub mod ext {
     hook!(H_it_802DC4BC, it_802DC4BC, (a0: i32, a1: *mut melee_types::Vec, a2: i32) -> *mut melee_types::HSD_GObj);
     hook!(H_itGetKind, itGetKind, (a0: *mut melee_types::HSD_GObj) -> i32);
     hook!(H_it_8027CE18, it_8027CE18, (a0: *mut melee_types::HSD_GObj));
-    hook!(H_GObj_Create, GObj_Create, (a0: u16, a1: u8, a2: u8) -> *mut melee_types::HSD_GObj);
+    pub static mut H_GObj_Create: Option<unsafe extern "C" fn(u16, u8, u8) -> *mut melee_types::HSD_GObj> = None;
+    pub unsafe extern "C" fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut melee_types::HSD_GObj { match H_GObj_Create { Some(f) => f(a0, a1, a2), None => unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ } } }
     pub static mut H_OSReport: Option<unsafe fn(*const i8, &[u64])> = None;
     pub unsafe fn OSReport(f: *const i8, a: &[u64]) { match H_OSReport { Some(h) => h(f, a), None => panic!("TODO: OSReport is not ported") } }
-    hook!(H_HSD_GObj_SetupProc, HSD_GObj_SetupProc, (a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj)>, a2: u8) -> *mut melee_types::HSD_GObjProc);
+    pub static mut H_HSD_GObj_SetupProc: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj)>, u8) -> *mut melee_types::HSD_GObjProc> = None;
+    pub unsafe extern "C" fn HSD_GObj_SetupProc(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj)>, a2: u8) -> *mut melee_types::HSD_GObjProc { match H_HSD_GObj_SetupProc { Some(f) => f(a0, a1, a2), None => unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(a0 as _, a1 as _, a2 as _) as _ } } }
     hook!(H_it_8026C1E8, it_8026C1E8, (a0: *mut melee_types::HSD_GObj) -> i32);
     hook!(H_Item_8026A8EC, Item_8026A8EC, (a0: *mut melee_types::HSD_GObj));
     // ---- extern globals ----

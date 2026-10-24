@@ -111,6 +111,7 @@ pub mod mtx44;
 pub mod mtx_pc;
 pub mod cobj_world;
 pub mod jobj_world;
+pub mod gobj_native;
 pub mod util;
 pub mod video;
 pub mod wobj;

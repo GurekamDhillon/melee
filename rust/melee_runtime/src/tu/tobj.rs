@@ -715,7 +715,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -723,7 +723,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
                 }
             } )*
         };
@@ -743,17 +743,17 @@ pub mod ext {
     fn GXSetTexCopyDst(a0: u16, a1: u16, a2: u32, a3: u8);
     fn GXSetTexCopySrc(a0: u16, a1: u16, a2: u16, a3: u16);
     fn HSD_AObjInterpretAnim(a0: *mut HSD_AObj, a1: *mut c_void, a2: Option<unsafe extern "C" fn(*mut c_void, i32, *mut HSD_ObjData)>);
-    fn HSD_AObjLoadDesc(a0: *mut HSD_AObjDesc) -> *mut HSD_AObj;
-    fn HSD_AObjRemove(a0: *mut HSD_AObj);
-    fn HSD_AObjReqAnim(a0: *mut HSD_AObj, a1: f32);
-    fn HSD_CObjGetCurrent() -> *mut HSD_CObj;
+    fn HSD_AObjLoadDesc(a0: *mut HSD_AObjDesc) -> *mut HSD_AObj = crate::tu::aobj::HSD_AObjLoadDesc(a0);
+    fn HSD_AObjRemove(a0: *mut HSD_AObj) = crate::tu::aobj::HSD_AObjRemove(a0);
+    fn HSD_AObjReqAnim(a0: *mut HSD_AObj, a1: f32) = crate::tu::aobj::HSD_AObjReqAnim(a0, a1);
+    fn HSD_CObjGetCurrent() -> *mut HSD_CObj = crate::tu::cobj::HSD_CObjGetCurrent();
     fn HSD_CObjGetInvViewingMtxPtrDirect(a0: *mut HSD_CObj) -> *mut c_void;
-    fn HSD_Free(a0: *mut c_void);
+    fn HSD_Free(a0: *mut c_void) = crate::tu::memory::HSD_Free(a0);
     fn HSD_LObjGetCurrentByType(a0: u16) -> *mut HSD_LObj;
     fn HSD_LObjGetLightMaskDiffuse() -> u32;
     fn HSD_LObjGetLightVector(a0: *mut HSD_LObj, a1: *mut Vec);
-    fn HSD_MemAlloc(a0: i32) -> *mut c_void;
-    fn HSD_Panic(a0: *const i8, a1: u32, a2: *const i8);
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void = crate::tu::memory::HSD_MemAlloc(a0);
+    fn HSD_Panic(a0: *const i8, a1: u32, a2: *const i8) = crate::tu::debug::HSD_Panic(a0 as _, a1, a2 as _);
     fn HSD_SetupTevStage(a0: *mut _HSD_TevDesc);
     fn HSD_StateAssignTev() -> i32;
     fn HSD_StateRegisterTexGen(a0: i32);
@@ -764,13 +764,13 @@ pub mod ext {
     fn HSD_TExpColorIn(a0: *mut HSD_TExp, a1: u32, a2: *mut HSD_TExp, a3: u32, a4: *mut HSD_TExp, a5: u32, a6: *mut HSD_TExp, a7: u32, a8: *mut HSD_TExp);
     fn HSD_TExpColorOp(a0: *mut HSD_TExp, a1: u32, a2: u32, a3: u32, a4: u8);
     fn HSD_TExpOrder(a0: *mut HSD_TExp, a1: *mut HSD_TObj, a2: u32);
-    fn HSD_TExpTev(a0: *mut *mut HSD_TExp) -> *mut HSD_TExp;
-    fn hsdAllocMemPiece(a0: i32) -> *mut c_void;
-    fn hsdFreeMemPiece(a0: *mut c_void, a1: i32);
-    fn hsdInitClassInfo(a0: *mut _HSD_ClassInfo, a1: *mut _HSD_ClassInfo, a2: *mut i8, a3: *mut i8, a4: i32, a5: i32);
-    fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32;
-    fn hsdNew(a0: *mut _HSD_ClassInfo) -> *mut c_void;
-    fn hsdSearchClassInfo(a0: *const i8) -> *mut _HSD_ClassInfo;
+    fn HSD_TExpTev(a0: *mut *mut HSD_TExp) -> *mut HSD_TExp = crate::tu::texp::HSD_TExpTev(a0);
+    fn hsdAllocMemPiece(a0: i32) -> *mut c_void = crate::tu::class::hsdAllocMemPiece(a0);
+    fn hsdFreeMemPiece(a0: *mut c_void, a1: i32) = crate::tu::class::hsdFreeMemPiece(a0, a1);
+    fn hsdInitClassInfo(a0: *mut _HSD_ClassInfo, a1: *mut _HSD_ClassInfo, a2: *mut i8, a3: *mut i8, a4: i32, a5: i32) = crate::tu::class::hsdInitClassInfo(a0 as _, a1 as _, a2 as _, a3 as _, a4, a5);
+    fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32 = crate::tu::class::hsdIsDescendantOf(a0, a1) as _;
+    fn hsdNew(a0: *mut _HSD_ClassInfo) -> *mut c_void = crate::tu::class::hsdNew(a0 as _);
+    fn hsdSearchClassInfo(a0: *const i8) -> *mut _HSD_ClassInfo = crate::tu::class::hsdSearchClassInfo(a0 as _) as _;
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

@@ -33,10 +33,10 @@ pub mod ext {
     /// A GameCube pointer stored in a SIS stream (host memory model).
     pub fn gc_ptr_to_u32(p: *const u8) -> u32 { todo!("gc_ptr_to_u32 (guest address of a SIS stream position)") }
     pub fn gc_u32_to_ptr(a: u32) -> *mut u8 { todo!("gc_u32_to_ptr (SIS stream position of a guest address)") }
-    pub fn HSD_GObjGetUserData(gobj: *mut HSD_GObj) -> *mut c_void { todo!("HSD_GObjGetUserData (baselib/gobjuserdata.c)") }
+    pub fn HSD_GObjGetUserData(gobj: *mut HSD_GObj) -> *mut c_void { unsafe { melee_types::inline::HSD_GObjGetUserData(&*(gobj as *const _)) as _ } }
     pub fn Mex_Enabled(name: &str) -> bool { todo!("Mex_Enabled (pc/platform mex)") }
     pub fn HSD_StateSetZMode(enable: u32, func: u32, update: u32) { todo!("HSD_StateSetZMode (baselib/state.c)") }
-    pub fn HSD_CObjGetCurrent() -> *mut HSD_CObj { todo!("HSD_CObjGetCurrent (baselib/cobj.c)") }
+    pub fn HSD_CObjGetCurrent() -> *mut HSD_CObj { unsafe { crate::tu::cobj::HSD_CObjGetCurrent() } }
     pub fn HSD_CObjGetViewingMtx(cobj: *mut HSD_CObj, mtx: *mut [f32; 4]) { todo!("HSD_CObjGetViewingMtx (baselib/cobj.c)") }
     pub fn GXSetZMode(a: u32, b: u32, c: u32) { todo!("GXSetZMode (dolphin/gx)") }
     pub fn GXSetViewport(l: f32, t: f32, w: f32, h: f32, n: f32, f: f32) { todo!("GXSetViewport (dolphin/gx)") }
@@ -69,12 +69,12 @@ pub mod ext {
     pub fn GXBegin(prim: u32, fmt: u32, n: u16) { todo!("GXBegin (dolphin/gx)") }
     pub fn GXPosition3f32(x: f32, y: f32, z: f32) { todo!("GXPosition3f32 (dolphin/gx)") }
     pub fn GXTexCoord2f32(s: f32, t: f32) { todo!("GXTexCoord2f32 (dolphin/gx)") }
-    pub fn GXEnd() { todo!("GXEnd (dolphin/gx)") }
+    pub fn GXEnd() { unsafe { crate::tu::sobjlib::GXEnd() } }
     pub fn GXInitTexObj(obj: *mut GXTexObj, data: *mut u8, w: u16, h: u16, fmt: u32, wrap_s: u32, wrap_t: u32, mipmap: u8) { todo!("GXInitTexObj (dolphin/gx)") }
     pub fn GXLoadTexObj(obj: *mut GXTexObj, map: u32) { todo!("GXLoadTexObj (dolphin/gx)") }
     pub fn HSD_StateInvalidate(mask: i32) { todo!("HSD_StateInvalidate (baselib/state.c)") }
-    pub fn lbArchive_LoadArchive(path: *mut i8) -> *mut HSD_Archive { todo!("lbArchive_LoadArchive (lb/lbarchive.c)") }
-    pub fn lbArchive_80016EFC(archive: *mut HSD_Archive) { todo!("lbArchive_80016EFC (lb/lbarchive.c)") }
+    pub fn lbArchive_LoadArchive(path: *mut i8) -> *mut HSD_Archive { unsafe { crate::tu::lbarchive::lbArchive_LoadArchive(path as _) } }
+    pub fn lbArchive_80016EFC(archive: *mut HSD_Archive) { unsafe { crate::tu::lbarchive::lbArchive_80016EFC(archive) } }
 }
 
 /// `ARRAY_SIZE(HSD_SisLib_FontAtlas)` (sislib_font.h).

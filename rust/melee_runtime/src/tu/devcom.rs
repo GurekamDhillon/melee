@@ -21,7 +21,7 @@ pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -29,7 +29,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
                 }
             } )*
         };
@@ -43,7 +43,7 @@ pub mod ext {
     fn ARQPostRequest(req: *mut ARQRequest, owner: u32, type_: u32, priority: u32, source: u32, dest: u32, length: u32, callback: ARQCallback);
     fn DVDFastOpen(entrynum: i32, file_info: *mut DVDFileInfo) -> i32;
     fn DVDReadAsyncPrio(file_info: *mut DVDFileInfo, addr: *mut c_void, length: i32, offset: i32, callback: DVDCallback, prio: i32) -> i32;
-    fn HSD_AudioMalloc(size: u32) -> *mut c_void;
+    fn HSD_AudioMalloc(size: u32) -> *mut c_void = crate::tu::synth::HSD_AudioMalloc(size as _);
     }
 }
 

@@ -25,7 +25,7 @@ pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -33,7 +33,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
                 }
             } )*
         };
@@ -46,10 +46,10 @@ pub mod ext {
     fn PADReset(mask: u32) -> i32;
     fn PADRecalibrate(mask: u32) -> i32;
     fn PADInit() -> i32;
-    fn HSD_PadRumbleInterpret();
-    fn HSD_PadRumbleRemoveAll();
-    fn HSD_PadRumbleOffN(chan: i32);
-    fn HSD_PadRumbleInit(nb_list: u16, listdatap: *mut HSD_PadRumbleListData);
+    fn HSD_PadRumbleInterpret() = crate::tu::rumble::HSD_PadRumbleInterpret();
+    fn HSD_PadRumbleRemoveAll() = crate::tu::rumble::HSD_PadRumbleRemoveAll();
+    fn HSD_PadRumbleOffN(chan: i32) = crate::tu::rumble::HSD_PadRumbleOffN(chan as _);
+    fn HSD_PadRumbleInit(nb_list: u16, listdatap: *mut HSD_PadRumbleListData) = crate::tu::rumble::HSD_PadRumbleInit(nb_list, listdatap as _);
     fn RB_PadLatch(port: i32, button: i32, sx: i32, sy: i32, cx: i32, cy: i32, l: i32, r: i32, a: i32, b: i32, err: i32);
     fn Ucf_PadLatch(port: i32, sx: i32, sy: i32, cx: i32, cy: i32);
     fn RB_PadGoverned() -> i32;

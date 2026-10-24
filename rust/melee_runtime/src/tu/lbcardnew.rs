@@ -15,7 +15,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -23,7 +23,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
                 }
             } )*
         };
@@ -41,22 +41,22 @@ pub mod ext {
     fn CARDRenameAsync(a0: i32, a1: *const i8, a2: *const i8, a3: Option<unsafe extern "C" fn(i32, i32)>) -> i32;
     fn CARDUnmount(a0: i32) -> i32;
     fn DVDGetCurrentDiskID() -> *mut DVDDiskID;
-    fn HSD_Free(a0: *mut c_void);
-    fn HSD_MemAlloc(a0: i32) -> *mut c_void;
+    fn HSD_Free(a0: *mut c_void) = crate::tu::memory::HSD_Free(a0);
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void = crate::tu::memory::HSD_MemAlloc(a0);
     fn OSDisableInterrupts() -> i32;
     fn OSRestoreInterrupts(a0: i32) -> i32;
-    fn hsd_803AAA48();
-    fn hsd_803AC3E0(a0: *mut CardState, a1: i32, a2: i32, a3: i32, a4: *mut u8);
-    fn hsd_803B2374();
-    fn hsd_803B24E4(a0: *mut CardState, a1: i32, a2: i32, a3: *mut c_void);
+    fn hsd_803AAA48() = crate::tu::card::hsd_803AAA48();
+    fn hsd_803AC3E0(a0: *mut CardState, a1: i32, a2: i32, a3: i32, a4: *mut u8) = crate::tu::card::hsd_803AC3E0(a0, a1, a2, a3, a4);
+    fn hsd_803B2374() = crate::tu::card::hsd_803B2374();
+    fn hsd_803B24E4(a0: *mut CardState, a1: i32, a2: i32, a3: *mut c_void) = crate::tu::card::hsd_803B24E4(a0, a1, a2, a3);
     fn hsd_803B2550(a0: *mut CardState, a1: *const i8, a2: Option<unsafe extern "C" fn(i32, i32)>) -> i32;
-    fn hsd_803B2674(a0: *mut CardState) -> i32;
+    fn hsd_803B2674(a0: *mut CardState) -> i32 = crate::tu::card::hsd_803B2674(a0);
     fn hsd_803B27F4(a0: *mut CardState, a1: *mut c_void, a2: *mut c_void, a3: *mut c_void, a4: Option<unsafe extern "C" fn(i32, i32)>) -> i32;
     fn hsd_803B286C(a0: *mut CardState, a1: *const i8, a2: *const i8, a3: *mut c_void, a4: *mut c_void, a5: Option<unsafe extern "C" fn(i32, i32)>) -> i32;
     fn hsd_803B2928(a0: *mut CardState, a1: *const i8, a2: *mut c_void, a3: *mut c_void, a4: Option<unsafe extern "C" fn(i32, i32)>) -> i32;
     fn hsd_803B29D8(a0: *mut CardState, a1: i32, a2: *mut u8, a3: Option<unsafe extern "C" fn(i32, i32)>) -> i32;
     fn hsd_803B2A4C(a0: *mut CardState, a1: i32, a2: *mut u8, a3: Option<unsafe extern "C" fn(i32, i32)>) -> i32;
-    fn hsd_SetCardIconInfo(a0: *mut CardState, a1: *mut CardIconInfo) -> i32;
+    fn hsd_SetCardIconInfo(a0: *mut CardState, a1: *mut CardIconInfo) -> i32 = crate::tu::card::hsd_SetCardIconInfo(a0, a1);
     fn wait_idle();
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.

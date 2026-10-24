@@ -16,7 +16,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -24,7 +24,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
                 }
             } )*
         };
@@ -40,20 +40,20 @@ pub mod ext {
     fn efAsync_OnLoad(archive: *mut HSD_Archive, data: *mut u8, length: u32, effect_index: i32);
     fn gm_801B23F0();
     fn grDatFiles_801C5FC0(archive: *mut HSD_Archive, data: *mut c_void, length: usize);
-    fn lbArchive_InitializeDAT(archive: *mut HSD_Archive, data: *mut c_void, length: usize);
-    fn lbFileGetFullName(basename: *const i8) -> *mut i8;
-    fn lbFile_800161C4(file: i32, src: usize, dest: usize, size: usize, ty: i32, pri: i32);
-    fn lbFile_8001634C(fileno: i32) -> usize;
+    fn lbArchive_InitializeDAT(archive: *mut HSD_Archive, data: *mut c_void, length: usize) = crate::tu::lbarchive::lbArchive_InitializeDAT(archive, data, length);
+    fn lbFileGetFullName(basename: *const i8) -> *mut i8 = crate::tu::lbfile::lbFileGetFullName(basename as _) as _;
+    fn lbFile_800161C4(file: i32, src: usize, dest: usize, size: usize, ty: i32, pri: i32) = crate::tu::lbfile::lbFile_800161C4(file, src, dest, size, ty, pri);
+    fn lbFile_8001634C(fileno: i32) -> usize = crate::tu::lbfile::lbFile_8001634C(fileno);
     fn lbFile_800164A4(file: i32, dest: usize, size: *mut usize, pri: i32, callback: Option<unsafe extern "C" fn(i32, usize, *mut c_void, bool)>, args: usize);
-    fn lbHeap_800158D0(a0: i32, a1: i32);
-    fn lbHeap_800158E8(a0: i32) -> i32;
-    fn lbHeap_80015900();
+    fn lbHeap_800158D0(a0: i32, a1: i32) = crate::tu::lbheap::lbHeap_800158D0(a0, a1);
+    fn lbHeap_800158E8(a0: i32) -> i32 = crate::tu::lbheap::lbHeap_800158E8(a0);
+    fn lbHeap_80015900() = crate::tu::lbheap::lbHeap_80015900();
     fn lbHeap_80015BB8(heap: i32) -> u32;
-    fn lbHeap_80015BD0(heap_id: i32, size: usize) -> *mut HSD_AllocEntry;
-    fn lbHeap_80015CA8(heap: i32, ptr: *mut c_void);
-    fn lbHeap_80015D6C(heap0: u32, cb: Option<unsafe extern "C" fn(u32)>, heap1: u32) -> i32;
-    fn lbHeap_Capacity(heap: i32) -> u32;
-    fn lbHeap_Free(heap: i32) -> u32;
+    fn lbHeap_80015BD0(heap_id: i32, size: usize) -> *mut HSD_AllocEntry = crate::tu::lbheap::lbHeap_80015BD0(heap_id, size) as _;
+    fn lbHeap_80015CA8(heap: i32, ptr: *mut c_void) = crate::tu::lbheap::lbHeap_80015CA8(heap, ptr);
+    fn lbHeap_80015D6C(heap0: u32, cb: Option<unsafe extern "C" fn(u32)>, heap1: u32) -> i32 = crate::tu::lbheap::lbHeap_80015D6C(heap0, cb, heap1);
+    fn lbHeap_Capacity(heap: i32) -> u32 = crate::tu::lbheap::lbHeap_Capacity(heap);
+    fn lbHeap_Free(heap: i32) -> u32 = crate::tu::lbheap::lbHeap_Free(heap);
     fn lb_800195D0();
     }
     // Data defined in other TUs (the tests set them).

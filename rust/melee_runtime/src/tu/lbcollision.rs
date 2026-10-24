@@ -22,7 +22,7 @@ pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -30,19 +30,19 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
                 }
             } )*
         };
     }
     ext_fns! {
-    fn lb_8000B1CC(jobj: *mut HSD_JObj, offset: *const Vec3, out: *mut Vec3);
+    fn lb_8000B1CC(jobj: *mut HSD_JObj, offset: *const Vec3, out: *mut Vec3) = crate::tu::lb_00B0::lb_8000B1CC(jobj, offset as _, out as _);
     fn HSD_JObjSetupMatrix(jobj: *mut HSD_JObj);
     fn HSD_StateInvalidate(a0: i32);
-    fn HSD_StateInitTev();
-    fn HSD_CObjGetCurrent() -> *mut HSD_CObj;
+    fn HSD_StateInitTev() = crate::tu::tev::HSD_StateInitTev(crate::tu::globals::render());
+    fn HSD_CObjGetCurrent() -> *mut HSD_CObj = crate::tu::cobj::HSD_CObjGetCurrent();
     fn HSD_CObjGetViewingMtx(cobj: *mut HSD_CObj, mtx: *mut Mtx);
-    fn HSD_ClearVtxDesc();
+    fn HSD_ClearVtxDesc() = crate::tu::pobj::HSD_ClearVtxDesc();
     fn GXSetColorUpdate(a0: u8);
     fn GXSetAlphaUpdate(a0: u8);
     fn GXSetFog(ty: u32, startz: f32, endz: f32, nearz: f32, farz: f32, color: GXColor);

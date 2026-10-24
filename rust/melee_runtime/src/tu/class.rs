@@ -29,7 +29,7 @@ pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -37,14 +37,14 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
                 }
             } )*
         };
     }
     ext_fns! {
-    fn HSD_MemAlloc(size: u32) -> *mut c_void;
-    fn HSD_HashSearch(hash: *mut HSD_Hash, key: *mut c_void, a2: u32) -> *mut c_void;
+    fn HSD_MemAlloc(size: u32) -> *mut c_void = crate::tu::memory::HSD_MemAlloc(size as _);
+    fn HSD_HashSearch(hash: *mut HSD_Hash, key: *mut c_void, a2: u32) -> *mut c_void = crate::tu::hash::HSD_HashSearch(hash, key, a2 as _);
     fn OSReport(s: &str);
     }
 }

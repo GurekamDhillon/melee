@@ -1,0 +1,84 @@
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn GXBegin(a0: u32, a1: u32, a2: u16);
+    fn GXLoadPosMtxImm(a0: *mut c_void, a1: u32);
+    fn GXPosition3f32(a0: f32, a1: f32, a2: f32);
+    fn GXSetCurrentMtx(a0: u32);
+    fn GXSetScissor(a0: u32, a1: u32, a2: u32, a3: u32);
+    fn GXSetVtxAttrFmt(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8);
+    fn GXSetVtxDesc(a0: u32, a1: u32);
+    fn Ground_801C0508() -> i32;
+    fn HSD_CObjGetBottom(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjGetLeft(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjGetNear(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjGetRight(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjGetTop(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjSetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec);
+    fn HSD_CObjSetFar(a0: *mut HSD_CObj, a1: f32);
+    fn HSD_CObjSetFlags(a0: *mut HSD_CObj, a1: u32);
+    fn HSD_CObjSetInterest(a0: *mut HSD_CObj, a1: *mut Vec);
+    fn HSD_CObjSetNear(a0: *mut HSD_CObj, a1: f32);
+    fn HSD_CObjSetOrtho(a0: *mut HSD_CObj, a1: f32, a2: f32, a3: f32, a4: f32);
+    fn HSD_CObjSetProjectionType(a0: *mut HSD_CObj, a1: u32);
+    fn HSD_CObjSetUpVector(a0: *mut HSD_CObj, a1: *mut Vec);
+    fn HSD_ClearVtxDesc();
+    fn HSD_Init_803755A8();
+    fn HSD_LObjGetFlags(a0: *mut HSD_LObj) -> u32;
+    fn HSD_LObjGetInterest(a0: *mut HSD_LObj, a1: *mut Vec) -> i32;
+    fn HSD_LObjGetPosition(a0: *mut HSD_LObj, a1: *mut Vec) -> i32;
+    fn HSD_SetupChannelAll(a0: *mut HSD_Chan);
+    fn HSD_ShadowAddObject(a0: *mut HSD_Shadow, a1: *mut HSD_JObj);
+    fn HSD_ShadowAlloc() -> *mut HSD_Shadow;
+    fn HSD_ShadowDeleteObject(a0: *mut HSD_Shadow, a1: *mut HSD_JObj);
+    fn HSD_ShadowEndRender(a0: *mut HSD_Shadow);
+    fn HSD_ShadowInit(a0: *mut HSD_Shadow);
+    fn HSD_ShadowRemove(a0: *mut HSD_Shadow);
+    fn HSD_ShadowSetActive(a0: *mut HSD_Shadow, a1: i32);
+    fn HSD_ShadowSetSize(a0: *mut HSD_Shadow, a1: u16, a2: u16);
+    fn HSD_ShadowSetViewingRect(a0: *mut HSD_Shadow, a1: f32, a2: f32, a3: f32, a4: f32);
+    fn HSD_ShadowStartRender(a0: *mut HSD_Shadow);
+    fn HSD_StartRender(a0: u32);
+    fn HSD_StateSetCullMode(a0: i32);
+    fn HSD_ViewingRectAddRect(a0: *mut HSD_ViewingRect, a1: *mut Vec, a2: f32, a3: f32, a4: f32, a5: f32);
+    fn HSD_ViewingRectCheck(a0: *mut HSD_ViewingRect) -> i32;
+    fn HSD_ViewingRectInit(a0: *mut HSD_ViewingRect, a1: *mut Vec, a2: *mut Vec, a3: *mut Vec, a4: i32);
+    fn PSVECAdd(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec);
+    fn ftDrawCommon_80081168();
+    fn ftDrawCommon_80081200();
+    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_800872B0(a0: *mut HSD_GObj) -> *mut LbShadow;
+    fn ftLib_800872BC(a0: *mut HSD_GObj) -> i32;
+    fn lbVector_CrossprodNormalized(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec;
+    fn lbVector_Diff(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec;
+    fn lbVector_Normalize(a0: *mut Vec) -> f32;
+    fn lbVector_Sub(a0: *mut Vec, a1: *mut Vec) -> *mut Vec;
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut HSD_GObjGXLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
+    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
+    pub static mut HSD_GObj_804D7814: *mut HSD_GObj = unsafe { core::mem::zeroed() };
+    pub static mut HSD_PerfCurrentStat: HSD_PerfStat = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

@@ -21,3 +21,7 @@ harness = false
 [[test]]
 name = "tu_rumble"
 harness = false
+
+[[test]]
+name = "tu_lbshadow"
+harness = false

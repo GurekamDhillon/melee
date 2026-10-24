@@ -4,64 +4,91 @@
 
 use core::ptr::{addr_of_mut, null_mut};
 use melee_core::fp::{fmadds, fmsubs};
-use crate::lbvector;
-use melee_core::vec::Vec3 as CVec3;
 use melee_types::*;
 use super::lbext::__assert;
 
-/// Native bindings for game globals and callees whose raw-record entrypoints are not linked.
+/// Native bindings for game globals and callees whose raw-record entrypoints are not linked. Hook
+/// signatures are the C prototypes (what gen/mtu/gen_tu.py generates for the state oracle); an unset
+/// hook runs the native port where one exists, else panics.
 pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
-    use crate::tu::lbext::lb_hook;
-    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = null_mut();
+    use core::ffi::c_void;
+    pub use crate::tu::lbext::OSReport;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn GXBegin(a0: u32, a1: u32, a2: u16) = crate::tu::lbgx::ext::GXBegin(a0 as i32, a1 as i32, a2);
+    fn GXLoadPosMtxImm(a0: *mut c_void, a1: u32) = crate::tu::lbgx::ext::GXLoadPosMtxImm(a0 as *const [f32; 4], a1);
+    fn GXPosition3f32(a0: f32, a1: f32, a2: f32) = crate::tu::lbgx::ext::GXPosition3f32(a0, a1, a2);
+    fn GXSetCurrentMtx(a0: u32) = crate::tu::lbgx::ext::GXSetCurrentMtx(a0);
+    fn GXSetScissor(a0: u32, a1: u32, a2: u32, a3: u32);
+    fn GXSetVtxAttrFmt(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8) = crate::tu::lbgx::ext::GXSetVtxAttrFmt(a0 as i32, a1 as i32, a2 as i32, a3 as i32, a4);
+    fn GXSetVtxDesc(a0: u32, a1: u32) = crate::tu::lbgx::ext::GXSetVtxDesc(a0 as i32, a1 as i32);
+    fn Ground_801C0508() -> i32;
+    fn HSD_CObjGetBottom(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjGetLeft(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjGetNear(a0: *mut HSD_CObj) -> f32 = unsafe { crate::tu::cobj::HSD_CObjGetNear(a0) };
+    fn HSD_CObjGetRight(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjGetTop(a0: *mut HSD_CObj) -> f32;
+    fn HSD_CObjSetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec);
+    fn HSD_CObjSetFar(a0: *mut HSD_CObj, a1: f32) = unsafe { crate::tu::cobj::HSD_CObjSetFar(a0, a1) };
+    fn HSD_CObjSetFlags(a0: *mut HSD_CObj, a1: u32) = unsafe { crate::tu::cobj::HSD_CObjSetFlags(a0, a1) };
+    fn HSD_CObjSetInterest(a0: *mut HSD_CObj, a1: *mut Vec);
+    fn HSD_CObjSetNear(a0: *mut HSD_CObj, a1: f32) = unsafe { crate::tu::cobj::HSD_CObjSetNear(a0, a1) };
+    fn HSD_CObjSetOrtho(a0: *mut HSD_CObj, a1: f32, a2: f32, a3: f32, a4: f32) = unsafe { crate::tu::cobj::HSD_CObjSetOrtho(a0, a1, a2, a3, a4) };
+    fn HSD_CObjSetProjectionType(a0: *mut HSD_CObj, a1: u32);
+    fn HSD_CObjSetUpVector(a0: *mut HSD_CObj, a1: *mut Vec);
+    fn HSD_ClearVtxDesc() = unsafe { crate::tu::pobj::HSD_ClearVtxDesc() };
+    fn HSD_Init_803755A8() = unsafe { crate::tu::initialize::HSD_Init_803755A8() };
+    fn HSD_LObjGetFlags(a0: *mut HSD_LObj) -> u32;
+    fn HSD_LObjGetInterest(a0: *mut HSD_LObj, a1: *mut Vec) -> i32;
+    fn HSD_LObjGetPosition(a0: *mut HSD_LObj, a1: *mut Vec) -> i32;
+    fn HSD_SetupChannelAll(a0: *mut HSD_Chan);
+    fn HSD_ShadowAddObject(a0: *mut HSD_Shadow, a1: *mut HSD_JObj) = unsafe { crate::tu::shadow::HSD_ShadowAddObject(a0, a1) };
+    fn HSD_ShadowAlloc() -> *mut HSD_Shadow = unsafe { crate::tu::shadow::HSD_ShadowAlloc() };
+    fn HSD_ShadowDeleteObject(a0: *mut HSD_Shadow, a1: *mut HSD_JObj) = unsafe { crate::tu::shadow::HSD_ShadowDeleteObject(a0, a1) };
+    fn HSD_ShadowEndRender(a0: *mut HSD_Shadow) = unsafe { crate::tu::shadow::HSD_ShadowEndRender(a0) };
+    fn HSD_ShadowInit(a0: *mut HSD_Shadow) = unsafe { crate::tu::shadow::HSD_ShadowInit(a0) };
+    fn HSD_ShadowRemove(a0: *mut HSD_Shadow) = unsafe { crate::tu::shadow::HSD_ShadowRemove(a0) };
+    fn HSD_ShadowSetActive(a0: *mut HSD_Shadow, a1: i32) = unsafe { crate::tu::shadow::HSD_ShadowSetActive(a0, a1) };
+    fn HSD_ShadowSetSize(a0: *mut HSD_Shadow, a1: u16, a2: u16) = unsafe { crate::tu::shadow::HSD_ShadowSetSize(a0, a1, a2) };
+    fn HSD_ShadowSetViewingRect(a0: *mut HSD_Shadow, a1: f32, a2: f32, a3: f32, a4: f32);
+    fn HSD_ShadowStartRender(a0: *mut HSD_Shadow) = unsafe { crate::tu::shadow::HSD_ShadowStartRender(a0) };
+    fn HSD_StartRender(a0: u32);
+    fn HSD_StateSetCullMode(a0: i32);
+    fn HSD_ViewingRectAddRect(a0: *mut HSD_ViewingRect, a1: *mut Vec, a2: f32, a3: f32, a4: f32, a5: f32) = unsafe { crate::tu::shadow::HSD_ViewingRectAddRect(a0, a1, a2, a3, a4, a5) };
+    fn HSD_ViewingRectCheck(a0: *mut HSD_ViewingRect) -> i32 = unsafe { crate::tu::shadow::HSD_ViewingRectCheck(a0) };
+    fn HSD_ViewingRectInit(a0: *mut HSD_ViewingRect, a1: *mut Vec, a2: *mut Vec, a3: *mut Vec, a4: i32) = unsafe { crate::tu::shadow::HSD_ViewingRectInit(a0, a1, a2, a3, a4) };
+    fn PSVECAdd(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) = unsafe { crate::tu::mtx_pc::raw::PSVECAdd(a0, a1, a2) };
+    fn lbVector_CrossprodNormalized(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec = unsafe { crate::tu::lbvector::lbVector_CrossprodNormalized(a0, a1, a2) };
+    fn lbVector_Diff(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec = unsafe { crate::tu::lbvector::lbVector_Diff(a0, a1, a2) };
+    fn lbVector_Normalize(a0: *mut Vec) -> f32 = unsafe { crate::tu::lbvector::lbVector_Normalize(a0) };
+    fn lbVector_Sub(a0: *mut Vec, a1: *mut Vec) -> *mut Vec = unsafe { crate::tu::lbvector::lbVector_Sub(a0, a1) };
+    fn ftDrawCommon_80081168();
+    fn ftDrawCommon_80081200();
+    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_800872B0(a0: *mut HSD_GObj) -> *mut LbShadow;
+    fn ftLib_800872BC(a0: *mut HSD_GObj) -> i32;
+    }
+    // Data defined in other TUs (the tests set them).
     pub static mut HSD_GObjGXLinkHead: *mut *mut HSD_GObj = null_mut();
+    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = null_mut();
     pub static mut HSD_GObj_804D7814: *mut HSD_GObj = null_mut();
     pub static mut HSD_PerfCurrentStat: HSD_PerfStat = unsafe { core::mem::zeroed() };
     pub static mut HSD_identityMtx: [[f32; 4]; 3] = [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]];
-    pub use crate::tu::lbext::OSReport;
-    pub use crate::tu::lbgx::ext::{GXBegin, GXLoadPosMtxImm, GXPosition3f32, GXSetCurrentMtx, GXSetVtxAttrFmt, GXSetVtxDesc};
-    lb_hook!(H_GXEnd, GXEnd, () = || unsafe { crate::tu::sobjlib::GXEnd() });
-    lb_hook!(H_GXSetScissor, GXSetScissor, (a: u32, b: u32, c: u32, d: u32));
-    lb_hook!(H_HSD_SetupChannelAll, HSD_SetupChannelAll, (chan: *mut HSD_Chan));
-    lb_hook!(H_HSD_ClearVtxDesc, HSD_ClearVtxDesc, () = || unsafe { crate::tu::pobj::HSD_ClearVtxDesc() });
-    lb_hook!(H_HSD_StateSetCullMode, HSD_StateSetCullMode, (mode: i32));
-    lb_hook!(H_HSD_CObjGetTop, HSD_CObjGetTop, (c: *mut HSD_CObj) -> f32);
-    lb_hook!(H_HSD_CObjGetBottom, HSD_CObjGetBottom, (c: *mut HSD_CObj) -> f32);
-    lb_hook!(H_HSD_CObjGetLeft, HSD_CObjGetLeft, (c: *mut HSD_CObj) -> f32);
-    lb_hook!(H_HSD_CObjGetRight, HSD_CObjGetRight, (c: *mut HSD_CObj) -> f32);
-    lb_hook!(H_HSD_CObjGetNear, HSD_CObjGetNear, (c: *mut HSD_CObj) -> f32 = |c| unsafe { crate::tu::cobj::HSD_CObjGetNear(c) });
-    lb_hook!(H_HSD_CObjSetNear, HSD_CObjSetNear, (c: *mut HSD_CObj, v: f32) = |c, v| unsafe { crate::tu::cobj::HSD_CObjSetNear(c, v) });
-    lb_hook!(H_HSD_CObjSetFar, HSD_CObjSetFar, (c: *mut HSD_CObj, v: f32) = |c, v| unsafe { crate::tu::cobj::HSD_CObjSetFar(c, v) });
-    lb_hook!(H_HSD_CObjSetProjectionType, HSD_CObjSetProjectionType, (c: *mut HSD_CObj, t: u32));
-    lb_hook!(H_HSD_CObjSetFlags, HSD_CObjSetFlags, (c: *mut HSD_CObj, f: u32) = |c, f| unsafe { crate::tu::cobj::HSD_CObjSetFlags(c, f) });
-    lb_hook!(H_HSD_CObjSetEyePosition, HSD_CObjSetEyePosition, (c: *mut HSD_CObj, v: *mut Vec3));
-    lb_hook!(H_HSD_CObjSetInterest, HSD_CObjSetInterest, (c: *mut HSD_CObj, v: *mut Vec3));
-    lb_hook!(H_HSD_CObjSetUpVector, HSD_CObjSetUpVector, (c: *mut HSD_CObj, v: *mut Vec3));
-    lb_hook!(H_HSD_CObjSetOrtho, HSD_CObjSetOrtho, (c: *mut HSD_CObj, top: f32, bottom: f32, left: f32, right: f32) = |c, top, bottom, left, right| unsafe { crate::tu::cobj::HSD_CObjSetOrtho(c, top, bottom, left, right) });
-    lb_hook!(H_HSD_ShadowAlloc, HSD_ShadowAlloc, () -> *mut HSD_Shadow = || unsafe { crate::tu::shadow::HSD_ShadowAlloc() });
-    lb_hook!(H_HSD_ShadowSetSize, HSD_ShadowSetSize, (s: *mut HSD_Shadow, w: u16, h: u16) = |s, w, h| unsafe { crate::tu::shadow::HSD_ShadowSetSize(s, w, h) });
-    lb_hook!(H_HSD_ShadowAddObject, HSD_ShadowAddObject, (s: *mut HSD_Shadow, j: *mut HSD_JObj) = |s, j| unsafe { crate::tu::shadow::HSD_ShadowAddObject(s, j) });
-    lb_hook!(H_HSD_ShadowDeleteObject, HSD_ShadowDeleteObject, (s: *mut HSD_Shadow, j: *mut HSD_JObj) = |s, j| unsafe { crate::tu::shadow::HSD_ShadowDeleteObject(s, j) });
-    lb_hook!(H_HSD_ShadowSetActive, HSD_ShadowSetActive, (s: *mut HSD_Shadow, active: i32) = |s, active| unsafe { crate::tu::shadow::HSD_ShadowSetActive(s, active) });
-    lb_hook!(H_HSD_ShadowRemove, HSD_ShadowRemove, (s: *mut HSD_Shadow) = |s| unsafe { crate::tu::shadow::HSD_ShadowRemove(s) });
-    lb_hook!(H_HSD_ShadowInit, HSD_ShadowInit, (s: *mut HSD_Shadow) = |s| unsafe { crate::tu::shadow::HSD_ShadowInit(s) });
-    lb_hook!(H_HSD_ShadowStartRender, HSD_ShadowStartRender, (s: *mut HSD_Shadow) = |s| unsafe { crate::tu::shadow::HSD_ShadowStartRender(s) });
-    lb_hook!(H_HSD_ShadowEndRender, HSD_ShadowEndRender, (s: *mut HSD_Shadow) = |s| unsafe { crate::tu::shadow::HSD_ShadowEndRender(s) });
-    lb_hook!(H_HSD_ShadowSetViewingRect, HSD_ShadowSetViewingRect, (s: *mut HSD_Shadow, top: f32, bottom: f32, left: f32, right: f32));
-    lb_hook!(H_HSD_ViewingRectInit, HSD_ViewingRectInit, (r: *mut HSD_ViewingRect, pos: *mut Vec3, interest: *mut Vec3, up: *mut Vec3, perspective: i32) = |r, pos, interest, up, perspective| unsafe { crate::tu::shadow::HSD_ViewingRectInit(r, pos, interest, up, perspective) });
-    lb_hook!(H_HSD_ViewingRectAddRect, HSD_ViewingRectAddRect, (r: *mut HSD_ViewingRect, pos: *mut Vec3, top: f32, bottom: f32, left: f32, right: f32) = |r, pos, top, bottom, left, right| unsafe { crate::tu::shadow::HSD_ViewingRectAddRect(r, pos, top, bottom, left, right) });
-    lb_hook!(H_HSD_ViewingRectCheck, HSD_ViewingRectCheck, (r: *mut HSD_ViewingRect) -> i32 = |r| unsafe { crate::tu::shadow::HSD_ViewingRectCheck(r) });
-    lb_hook!(H_HSD_StartRender, HSD_StartRender, (pass: i32));
-    lb_hook!(H_HSD_Init_803755A8, HSD_Init_803755A8, () = || unsafe { crate::tu::initialize::HSD_Init_803755A8() });
-    lb_hook!(H_HSD_LObjGetFlags, HSD_LObjGetFlags, (l: *mut HSD_LObj) -> u32);
-    lb_hook!(H_HSD_LObjGetPosition, HSD_LObjGetPosition, (l: *mut HSD_LObj, v: *mut Vec3) -> i32);
-    lb_hook!(H_HSD_LObjGetInterest, HSD_LObjGetInterest, (l: *mut HSD_LObj, v: *mut Vec3) -> i32);
-    lb_hook!(H_ftLib_80086960, ftLib_80086960, (g: *mut HSD_GObj) -> bool);
-    lb_hook!(H_ftLib_800872B0, ftLib_800872B0, (g: *mut HSD_GObj) -> *mut LbShadow);
-    lb_hook!(H_ftLib_800872BC, ftLib_800872BC, (g: *mut HSD_GObj) -> bool);
-    lb_hook!(H_ftDrawCommon_80081168, ftDrawCommon_80081168, ());
-    lb_hook!(H_ftDrawCommon_80081200, ftDrawCommon_80081200, ());
-    lb_hook!(H_Ground_801C0508, Ground_801C0508, () -> i32);
 }
 
 const FILE: &str = "src/melee/lb/lbshadow.c";
@@ -189,13 +216,6 @@ pub unsafe fn lbShadow_8000EE8C(lbshadow: *mut LbShadow) {
     }
 }
 
-fn cv(v: &Vec3) -> CVec3 {
-    CVec3 { x: v.x, y: v.y, z: v.z }
-}
-fn tv(v: CVec3) -> Vec3 {
-    Vec3 { x: v.x, y: v.y, z: v.z }
-}
-
 /// True when any of the six suppression bits of `lbs` is set.
 unsafe fn any_flag(lbs: *mut LbShadow) -> bool {
     (*lbs).x0_b0() != 0 || (*lbs).x0_b1() != 0 || (*lbs).x0_b2() != 0 || (*lbs).x0_b3() != 0 || (*lbs).x0_b4() != 0 || (*lbs).x0_b5() != 0
@@ -207,10 +227,10 @@ unsafe fn any_flag(lbs: *mut LbShadow) -> bool {
 /// # Safety
 /// `gobj` must be a valid fighter GObj.
 pub unsafe fn lbShadow_8000EEE0(gobj: *mut HSD_GObj) {
-    if ext::ftLib_80086960(gobj) {
+    if (ext::ftLib_80086960(gobj) != 0) {
         let lbs = ext::ftLib_800872B0(gobj);
         if !lbs.is_null() {
-            if !any_flag(lbs) && ext::ftLib_800872BC(gobj) {
+            if !any_flag(lbs) && (ext::ftLib_800872BC(gobj) != 0) {
                 ext::HSD_ShadowSetActive((*lbs).shadow, 1);
             } else {
                 ext::HSD_ShadowSetActive((*lbs).shadow, 0);
@@ -276,12 +296,12 @@ pub unsafe fn lbShadow_8000F214(shadow: *mut HSD_Shadow) {
     ext::HSD_SetupChannelAll(&mut chan);
     let imagedesc = (*(*shadow).texture).imagedesc;
     ext::GXSetScissor(0, 0, (*imagedesc).width as u32, (*imagedesc).height as u32);
-    ext::GXLoadPosMtxImm(addr_of_mut!(ext::HSD_identityMtx) as *const [f32; 4], GX_PNMTX0 as u32);
+    ext::GXLoadPosMtxImm(addr_of_mut!(ext::HSD_identityMtx) as *mut core::ffi::c_void, GX_PNMTX0 as u32);
     ext::HSD_PerfCurrentStat.nb_mtx_load = ext::HSD_PerfCurrentStat.nb_mtx_load.wrapping_add(1);
     ext::GXSetCurrentMtx(GX_PNMTX0 as u32);
     ext::HSD_ClearVtxDesc();
-    ext::GXSetVtxDesc(GX_VA_POS as i32, GX_DIRECT as i32);
-    ext::GXSetVtxAttrFmt(GX_VTXFMT0 as i32, GX_VA_POS as i32, GX_TEX_ST as i32, GX_RGBA6 as i32, 0);
+    ext::GXSetVtxDesc(GX_VA_POS as u32, GX_DIRECT as u32);
+    ext::GXSetVtxAttrFmt(GX_VTXFMT0 as u32, GX_VA_POS as u32, GX_TEX_ST as u32, GX_RGBA6 as u32, 0);
     ext::HSD_StateSetCullMode(GX_CULL_BACK as i32);
 
     let mut y0 = ext::HSD_CObjGetTop(cobj);
@@ -295,12 +315,11 @@ pub unsafe fn lbShadow_8000F214(shadow: *mut HSD_Shadow) {
     x1 *= 1.2;
     z *= -1.1;
 
-    ext::GXBegin(GX_QUADS as i32, GX_VTXFMT0 as i32, 4);
+    ext::GXBegin(GX_QUADS as u32, GX_VTXFMT0 as u32, 4);
     ext::GXPosition3f32(x0, y0, z);
     ext::GXPosition3f32(x1, y0, z);
     ext::GXPosition3f32(x1, y1, z);
     ext::GXPosition3f32(x0, y1, z);
-    ext::GXEnd();
 }
 
 /// lbshadow.c `lbShadow_8000F38C(arg0)`: finds the stage key light, derives the shadow camera
@@ -359,13 +378,12 @@ pub unsafe fn lbShadow_8000F38C(arg0: i32) {
     }
 
     if ext::HSD_LObjGetInterest(lobj, &mut light_dir) != 0 {
-        let mut lp = cv(&light_pos);
-        lbvector::sub(&mut lp, &cv(&light_dir));
-        light_pos = tv(lp);
+        ext::lbVector_Sub(&mut light_pos, &mut light_dir);
     }
     light_dir = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
-    let light_vec = tv(lbvector::diff(&cv(&light_pos), &cv(&light_dir)));
+    let mut light_vec = Vec3::zeroed();
+    ext::lbVector_Diff(&mut light_pos, &mut light_dir, &mut light_vec);
     let mut dist = fmadds(light_vec.z, light_vec.z, fmadds(light_vec.x, light_vec.x, light_vec.y * light_vec.y));
     dist = crate::gekko::sqrtf(dist);
 
@@ -386,17 +404,16 @@ pub unsafe fn lbShadow_8000F38C(arg0: i32) {
             up_vec.z = 0.0;
             up_vec.x = 0.0;
             up_vec.y = 1.0;
-            let mut norm_dir = tv(lbvector::diff(&cv(&light_dir), &cv(&light_pos)));
-            let mut nd = cv(&norm_dir);
-            let nlen = lbvector::normalize(&mut nd);
-            norm_dir = tv(nd);
-            if nlen < 100.0 {
+            let mut norm_dir = Vec3::zeroed();
+            ext::lbVector_Diff(&mut light_dir, &mut light_pos, &mut norm_dir);
+            if ext::lbVector_Normalize(&mut norm_dir) < 100.0 {
                 light_pos.x = -fmsubs(100.0, norm_dir.x, light_dir.x);
                 light_pos.y = -fmsubs(100.0, norm_dir.y, light_dir.y);
                 light_pos.z = -fmsubs(100.0, norm_dir.z, light_dir.z);
             }
-            let right_vec = lbvector::crossprod_normalized(&cv(&up_vec), &cv(&norm_dir));
-            up_vec = tv(lbvector::crossprod_normalized(&cv(&norm_dir), &right_vec));
+            let mut right_vec = Vec3::zeroed();
+            ext::lbVector_CrossprodNormalized(&mut up_vec, &mut norm_dir, &mut right_vec);
+            ext::lbVector_CrossprodNormalized(&mut norm_dir, &mut right_vec, &mut up_vec);
         } else {
             up_vec.y = 0.0;
             up_vec.x = 0.0;
@@ -432,10 +449,10 @@ pub unsafe fn lbShadow_8000F38C(arg0: i32) {
             (*fp).x20A4.set_x0_b3(if added { 0 } else { 1 });
         }
 
-        if ext::ftLib_80086960(gobj) {
+        if (ext::ftLib_80086960(gobj) != 0) {
             let lbs = ext::ftLib_800872B0(gobj);
             if !lbs.is_null() {
-                if !any_flag(lbs) && ext::ftLib_800872BC(gobj) {
+                if !any_flag(lbs) && (ext::ftLib_800872BC(gobj) != 0) {
                     ext::HSD_ShadowSetActive((*lbs).shadow, 1);
                 } else {
                     ext::HSD_ShadowSetActive((*lbs).shadow, 0);
@@ -448,8 +465,8 @@ pub unsafe fn lbShadow_8000F38C(arg0: i32) {
             let shadow2 = (*fp).x20A4.shadow;
             (*shadow2).intensity = intensity;
 
-            eye_pos = Vec3 { x: (*cm).bone_pos.x + light_pos.x, y: (*cm).bone_pos.y + light_pos.y, z: (*cm).bone_pos.z + light_pos.z };
-            interest_pos = Vec3 { x: (*cm).bone_pos.x + light_dir.x, y: (*cm).bone_pos.y + light_dir.y, z: (*cm).bone_pos.z + light_dir.z };
+            ext::PSVECAdd(&mut (*cm).bone_pos, &mut light_pos, &mut eye_pos);
+            ext::PSVECAdd(&mut (*cm).bone_pos, &mut light_dir, &mut interest_pos);
             ext::HSD_CObjSetEyePosition((*shadow2).camera, &mut eye_pos);
             ext::HSD_CObjSetInterest((*shadow2).camera, &mut interest_pos);
             ext::HSD_CObjSetUpVector((*shadow2).camera, &mut up_vec);
@@ -474,7 +491,7 @@ pub unsafe fn lbShadow_8000F38C(arg0: i32) {
             }
 
             ext::HSD_ShadowInit(shadow2);
-            ext::HSD_StartRender(HSD_RP_OFFSCREEN as i32);
+            ext::HSD_StartRender(HSD_RP_OFFSCREEN as u32);
             ext::HSD_GObj_804D7814 = gobj;
             ext::HSD_ShadowStartRender(shadow2);
             if arg0 != 0 {

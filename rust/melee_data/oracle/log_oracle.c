@@ -127,6 +127,9 @@ int main(int argc, char **argv) {
       for (v = blk; *v; v += strlen(v) + 1) if (strncmp(v, "MELEE_", 6) == 0 && k < 64) { strncpy(names[k], v, 63); names[k][63] = 0; *strchr(names[k] + 1, '=') = 0; ++k; }
       for (i = 0; i < k; ++i) _putenv_s(names[i], ""); FreeEnvironmentStringsA(blk); }
     { char dir[MAX_PATH]; unsigned long st; (void)st; gl_exe_dir(dir, sizeof dir); snprintf(g_stamp, sizeof g_stamp, "%08lx", (unsigned long)gl_link_stamp()); }
+    { char dir[MAX_PATH], path[MAX_PATH]; gl_exe_dir(dir, sizeof dir);
+      snprintf(path, sizeof path, "%sversion.txt", dir); remove(path);
+      snprintf(path, sizeof path, "%smelee-pc.map", dir); remove(path); remove("disc.bin"); }
     f = fopen(argv[1], "r");
     while (fgets(line, sizeof line, f)) {
         char *t[4] = {0}; int nt = 0; char *p = line, buf[8192], buf2[8192];

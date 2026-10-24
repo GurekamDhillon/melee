@@ -69,12 +69,24 @@ while len(out) < 9000:
             stamp = r.choice(["@STAMP@", "@STAMP@", "00000000"])
             hdr = f" melee-pc\n\n Timestamp is {stamp} (Mon)\n\n" if r.random() < 0.9 else " no timestamp here\n"
             out.append("MAP " + (H(hdr + fn) if r.random() < 0.9 else "~"))
-        elif k < 0.7: out.append("DISCFILE " + (H("A" * 0x20 + "GALE01 title " * 4 + "\0" * 5 + "T" * 40) if r.random() < 0.7 else r.choice(["~", H("short")])))
+        elif k < 0.7: out.append("DISCFILE " + (H("A" * 0x20 + ("GALE01 title " * 6)[:0x40] + "tail") if r.random() < 0.7 else r.choice(["~", H("short")])))
         else:
             for _ in range(r.randint(1, 5)):
                 a = r.choice([0, 0x10001000, 0x10001234, 0x1000ffff, 0x10020000, 0x1004fff0, 0x10200000, r.randint(0x10001000, 0x10090000)])
                 out.append("LOG " + H(f"gw:     melee-pc.map rva 0x{a:08X}" + r.choice(["", " @USER@", " X"])))
             out.append("LOG " + H(r.choice(["gw: fault at @PROFILE@/game/x.c", "gw: c:/users/testy/save/@USER@.dat", "crash for @USER@ in @PROFILE@", "gw: disc image disc.bin, disk id GALE01"])))
+    elif c < 0.985:
+        fn = "".join(f" 0001:{a:08x}       _fn{a:x}      {0x10000000 + a:08x} f   x.obj\n" for a in sorted(r.sample(range(0x1000, 0x90000, 0x10), r.randint(1, 60))))
+        out.append("MAP " + H(" melee-pc\n\n Timestamp is @STAMP@ (Mon)\n\n" + fn))
+        out.append("LOG " + H("gw: disc image disc.bin, disk id GALE01"))
+        for _ in range(r.randint(1, 60)):
+            a = r.choice([0x10001000, 0x10001234, 0x1000ffff, 0x10020000, 0x10200000, r.randint(0x10001000, 0x10090000), r.randint(0x10001000, 0x10090000)])
+            out.append("LOG " + H(f"gw:   frame rva 0x{a:08X} and rva 0x{r.randint(0x10001000, 0x10090000):08x}"))
+        out.append("CRASH")
+        for _ in range(r.randint(0, 80)):
+            a = r.randint(0x10001000, 0x10090000)
+            out.append("LOG " + H(f"gw:     melee-pc.map rva 0x{a:08X}"))
+        out.append("REPORT " + H("panic") + " " + H("sym test") + " 2026/10/24/12/0/0")
     else:
         if r.random() < 0.7: out.append("CRASH")
         out.append("REPORT " + H(r.choice(["panic", "unhandled exception", "crash", "CRT invalid parameter"])) + " " + (H(r.choice(["why", "assert @USER@", "x" * 300, "C:/Users/Testy/a"])) if r.random() < 0.8 else "~") + f" {r.randint(2020, 2030)}/{r.randint(1, 12)}/{r.randint(1, 28)}/{r.randint(0, 23)}/{r.randint(0, 59)}/{r.randint(0, 59)}")

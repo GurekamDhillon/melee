@@ -444,7 +444,7 @@ fn check(real: bool) {
         return;
     }
     let realroot = if real { std::fs::canonicalize(&realroot).unwrap() } else { realroot };
-    let want_all = include_str!("data/player_oracle.txt");
+    let want_all = include_str!("data/player_oracle.txt").replace("\r\n", "\n");
     let mut want: std::collections::HashMap<&str, &str> = std::collections::HashMap::new();
     for block in want_all.split("== ").skip(1) {
         let (head, body) = block.split_once('\n').unwrap();

@@ -220,8 +220,8 @@ fn run_script(script: &str, root: &str) -> String {
 
 #[test]
 fn mods_scenarios_match_the_c() {
-    let scen = include_str!("data/mods_scenarios.txt");
-    let want_all = include_str!("data/mods_oracle.txt");
+    let scen = include_str!("data/mods_scenarios.txt").replace("\r\n", "\n");
+    let want_all = include_str!("data/mods_oracle.txt").replace("\r\n", "\n");
     let mut want = std::collections::HashMap::new();
     for b in want_all.split("== ").skip(1) {
         let (h, body) = b.split_once('\n').unwrap();

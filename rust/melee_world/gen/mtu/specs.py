@@ -268,6 +268,8 @@ SPECS["soundtest"] = dict(
         ext="fn lbArchive_LoadSymbols(a0: *const i8, a1: *mut c_void, a2: *const i8);",
         hook="|a0, a1, a2| { t(@ID@); t(sh(a0 as *const u8)); t(pi(a1)); t(sh(a2 as *const u8)); *(a1 as *mut *mut c_void) = &raw mut super::SYMBUF as *mut c_void; }")},
 )
+from specs_it import add as _add_it  # noqa: E402
+_add_it(SPECS)
 for _s in SPECS.values():
     _s["common_ret"] = COMMON_RET
 

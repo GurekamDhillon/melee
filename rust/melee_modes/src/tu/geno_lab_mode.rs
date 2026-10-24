@@ -31,8 +31,8 @@ pub mod ext {
         Replay_Active() -> i32 = || todo!("TODO(port): Replay_Active");
         SceneLaunch_BootGameMode() -> i32 = || todo!("TODO(port): SceneLaunch_BootGameMode");
         SceneLaunch_ItemFreq() -> i32 = || todo!("TODO(port): SceneLaunch_ItemFreq");
-        SceneLaunch_SeedPlayers(a0: *mut VsModeData, a1: i32) -> i32 = |a0, a1| todo!("TODO(port): SceneLaunch_SeedPlayers");
-        SceneLaunch_SeedVs(a0: *mut VsModeData, a1: i32) = |a0, a1| todo!("TODO(port): SceneLaunch_SeedVs");
+        SceneLaunch_SeedPlayers(a0: *mut VsModeData, a1: i32) -> i32 = |a0, a1| unsafe { crate::tu::gmscenelaunch::SceneLaunch_SeedPlayers(a0, a1) };
+        SceneLaunch_SeedVs(a0: *mut VsModeData, a1: i32) = |a0, a1| unsafe { let _ = crate::tu::gmscenelaunch::SceneLaunch_SeedVs(a0, a1); };
         ScriptGame_HitRuleCreate(a0: *mut Fighter, a1: *mut HitCapsule, a2: i32) = |a0: *mut Fighter, a1: *mut HitCapsule, a2: i32| { unsafe { let _ = crate::tu::script_game::ScriptGame_HitRuleCreate(a0 as _, a1 as _, a2 as _); } };
         Script_LabRequest() = || todo!("TODO(port): Script_LabRequest");
         ftAnim_IsFramesRemaining(a0: *mut HSD_GObj) -> i32 = |a0| unsafe { melee_fighter::tu::ftanim::ftAnim_IsFramesRemaining(a0) as i32 };

@@ -121,7 +121,8 @@ class Tu:
                         if name not in inlines:
                             inlines[name] = d
                             self.scan(d, stubs, inlines, data)
-                elif r is not None and r.kind == K.VAR_DECL:
+                elif r is not None and r.kind == K.VAR_DECL and not (r.semantic_parent is not None and r.semantic_parent.kind in (K.FUNCTION_DECL, K.PARM_DECL)):
+                    # (a local or parameter of a header inline is not a global)
                     d = r.get_definition()
                     if d is None and r.linkage == ci.LinkageKind.EXTERNAL or \
                        (d is not None and not self.in_main(d) and not r.type.is_const_qualified()):

@@ -128,6 +128,50 @@ SPECS["gmevent"] = dict(
 )
 for _s in SPECS.values():
     _s["common_ret"] = COMMON_RET
+
+SPECS["gmscenelaunch"] = dict(
+    src="rust/melee_modes/gen/cref/tu/gmscenelaunch_src.c",
+    types=["VsModeData", "PreloadedGameModeState", "GameRules", "GamePrefs", "CssSubStruct", "PlayerInitData",
+           "StartMeleeRules"],
+    ret={
+        "lbDvd_GetPreloadCacheScene": ("&PCS", "&raw mut super::PCS"),
+        "gmMainLib_GetGameRules": ("&GR", "&raw mut super::GR"),
+        "gmMainLib_GetGamePrefs": ("&GP", "&raw mut super::GP"),
+        "SceneLaunch_Active": ("(fv() % 5 != 0)", "(fv() % 5 != 0) as i32"),
+        "SceneLaunch_VsModeIndex": ("(fv() % 5 == 0 ? -1 : (int) (fv() % 3))", "if fv() % 5 == 0 { -1 } else { (fv() % 3) as i32 }"),
+        "SceneLaunch_Teams": ("((int) (fv() % 4) - 1)", "(fv() % 4) as i32 - 1"),
+        "SceneLaunch_EnemyTeamColors": ("(fv() & 1)", "(fv() & 1) as i32"),
+        "SceneLaunch_TimeLimit": ("((fv() & 1) ? -1 : (int) (fv() % 500))", "if fv() & 1 != 0 { -1 } else { (fv() % 500) as i32 }"),
+        "SceneLaunch_ItemFreq": ("((int) (fv() % 7) - 2)", "(fv() % 7) as i32 - 2"),
+        "SceneLaunch_RuleMatch": ("((int) (fv() % 3) - 1)", "(fv() % 3) as i32 - 1"),
+        "SceneLaunch_RuleStocks": ("((int) (fv() % 6) - 1)", "(fv() % 6) as i32 - 1"),
+        "SceneLaunch_RuleMinutes": ("((int) (fv() % 9) - 1)", "(fv() % 9) as i32 - 1"),
+        "SceneLaunch_RulePause": ("((int) (fv() % 3) - 1)", "(fv() % 3) as i32 - 1"),
+        "SceneLaunch_StageExternal": ("((fv() & 1) ? -1 : (int) (fv() % 30))", "if fv() & 1 != 0 { -1 } else { (fv() % 30) as i32 }"),
+        "SceneLaunch_EntryStateId": ("((int) (fv() % 5) - 1)", "(fv() % 5) as i32 - 1"),
+        "SceneLaunch_PreloadCKind": ("((fv() % 3 == 0) ? (int) (fv() % 33) : -1)", "if fv() % 3 == 0 { (fv() % 33) as i32 } else { -1 }"),
+        "SceneLaunch_PlayerCKind": ("((fv() % 4 == 0) ? -1 : (int) (fv() % 34))", "if fv() % 4 == 0 { -1 } else { (fv() % 34) as i32 }"),
+        "SceneLaunch_PlayerSlotType": ("((fv() & 1) ? -1 : (int) (fv() % 4))", "if fv() & 1 != 0 { -1 } else { (fv() % 4) as i32 }"),
+        "SceneLaunch_PlayerColor": ("((fv() & 1) ? -1 : (int) (fv() % 12))", "if fv() & 1 != 0 { -1 } else { (fv() % 12) as i32 }"),
+        "SceneLaunch_PlayerCpuKind": ("((fv() & 1) ? -1 : (int) (fv() % 6))", "if fv() & 1 != 0 { -1 } else { (fv() % 6) as i32 }"),
+        "SceneLaunch_PlayerCpuLevel": ("((fv() & 1) ? -1 : (int) (fv() % 10))", "if fv() & 1 != 0 { -1 } else { (fv() % 10) as i32 }"),
+        "SceneLaunch_PlayerHandicap": ("((fv() & 1) ? -1 : (int) (fv() % 100))", "if fv() & 1 != 0 { -1 } else { (fv() % 100) as i32 }"),
+        "SceneLaunch_PlayerTeam": ("((fv() & 1) ? -1 : (int) (fv() % 3))", "if fv() & 1 != 0 { -1 } else { (fv() % 3) as i32 }"),
+        "SceneLaunch_PlayerStocks": ("((fv() & 1) ? -1 : (int) (fv() % 6))", "if fv() & 1 != 0 { -1 } else { (fv() % 6) as i32 }"),
+        "SceneLaunch_PlayerNametag": ("((fv() & 1) ? -1 : (int) (fv() % 200))", "if fv() & 1 != 0 { -1 } else { (fv() % 200) as i32 }"),
+        "gm_GetNumCostumesForCKind": ("(fv() % 7)", "(fv() % 7) as u8"),
+        "lbDvd_TrySetupSixSlotCache": ("(fv() & 1)", "(fv() & 1) as _"),
+    },
+    effects={
+        # the real defaults reset the whole record; the stand-in scribbles known values over a zeroed one
+        "gm_SetupPlayerDefaults": ("hash_PlayerInitData(a0); zero(a0, sizeof *a0); a0->stocks = (s8) (fv() % 5); a0->team = (u8) (fv() % 3);",
+                                   "hash_PlayerInitData(&*a0); *a0 = core::mem::zeroed(); (*a0).stocks = (fv() % 5) as i8; (*a0).team = (fv() % 3) as u8;"),
+        "gm_SetupAllPlayerDefaults": ("{ int q; for (q = 0; q < 6; q++) { zero(&a0[q], sizeof a0[q]); a0[q].ckind = (s8) 33; a0[q].stocks = (s8) (fv() % 5); } }",
+                                      "{ for q in 0..6 { *a0.add(q) = core::mem::zeroed(); (*a0.add(q)).ckind = 33; (*a0.add(q)).stocks = (fv() % 5) as i8; } }"),
+    },
+)
+for _s in SPECS.values():
+    _s["common_ret"] = COMMON_RET
 # shard 849-856 (lb_013B ... mncharsel): kept in their own file
 try:
     from specs_s849 import SPECS as _S849

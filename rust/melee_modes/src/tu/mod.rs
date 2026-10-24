@@ -71,6 +71,7 @@ pub mod gm_17c0;
 pub mod gmfrontend;
 pub mod gmfrontend_atlas_toy;
 pub mod gmmode_init;
+pub mod gmscenelaunch;
 pub mod gmprogressivemode;
 pub mod gmregcommon;
 pub mod gmregtyfall;

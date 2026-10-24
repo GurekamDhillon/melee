@@ -367,7 +367,7 @@ pub mod ext {
     pub fn mpLib_80057BC0(joint_id: i32) {
         match unsafe { MPLIB_80057BC0 } { Some(f) => f(joint_id), None => { unsafe { let _ = crate::tu::mplib::mpLib_80057BC0(joint_id as _); } return; } }
     }
-    hook!(OSREPORT, OSReport, (a0: *const i8, va: &[usize]));
+    hook_or!(OSREPORT, OSReport, (a0: *const i8, va: &[usize]), |a0: *const i8, va: &[usize]| unsafe { melee_runtime::tu::os_error::OSReport(a0, va) });
     hook_or!(PLAYER_GETPLAYERSLOTTYPE, Player_GetPlayerSlotType, (slot: s32) -> Gm_PKind, |slot: s32| unsafe { crate::pl::Player_GetPlayerSlotType(slot as _) as _ });
     hook_or!(PLAYER_LOADPLAYERCOORDS, Player_LoadPlayerCoords, (slot: s32, out_vec: *mut Vec), |slot: s32, out_vec: *mut Vec| { unsafe { let _ = crate::pl::Player_LoadPlayerCoords(slot as _, out_vec as _); } });
     pub static mut STAGE_80225194: Option<fn() -> StKind> = None;

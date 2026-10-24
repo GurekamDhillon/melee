@@ -39,7 +39,7 @@ pub mod ext {
         pub ftLib_80086B80: unsafe fn(g: *mut HSD_GObj) -> f32,
         pub grLib_801C96F8: unsafe fn(a: i32, b: i32, p: *mut Vec3) -> *mut HSD_Generator,
     }
-    unsafe fn todo_OSReport(_fmt: &CStr, _file: &CStr, _line: i32, _id: i32) { panic!("TODO(os: OSReport (varargs: fmt, __FILE__, line, id)) OSReport") }
+    unsafe fn todo_OSReport(_fmt: &CStr, _file: &CStr, _line: i32, _id: i32) { melee_runtime::tu::os_error::OSReport(_fmt.as_ptr(), &[_file.as_ptr() as usize, _line as usize, _id as usize]) }
     unsafe fn todo_Ground_GetStageGObj(_id: i32) -> *mut HSD_GObj { { return unsafe { crate::tu::ground::Ground_GetStageGObj(_id as _) as _ }; } }
     unsafe fn todo_grZakoGenerator_801CAE04(_d: *mut c_void) { { unsafe { let _ = crate::tu::grzakogenerator::grZakoGenerator_801CAE04(_d as _); } return; } }
     unsafe fn todo_Ground_801C53EC(_a: u32) { { unsafe { let _ = crate::tu::ground::Ground_801C53EC(_a as _); } return; } }

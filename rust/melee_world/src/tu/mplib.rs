@@ -107,7 +107,7 @@ pub mod ext {
     fn grDynamicAttr_801CA0B4() = || { unsafe { let _ = crate::tu::grdynamicattr::grDynamicAttr_801CA0B4(); } };
     fn grDynamicAttr_801CA224() = || { unsafe { let _ = crate::tu::grdynamicattr::grDynamicAttr_801CA224(); } };
     fn itGetKind(a0: *mut HSD_GObj) -> ItemKind;
-    fn OSReport(a0: &str);
+    fn OSReport(a0: &str) = |a0: &str| melee_runtime::tu::os_error::OSReport_str(a0);
     }
     pub static mut DbLevel: DbLKind = unsafe { core::mem::zeroed() };
     pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };

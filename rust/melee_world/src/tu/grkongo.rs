@@ -119,7 +119,7 @@ pub mod ext {
         match unsafe { GROUND_GETYAKUMONOPARAM } { Some(f) => f(), None => { return unsafe { crate::tu::ground::Ground_GetYakumonoParam() as _ }; } }
     }
     hook!(HSD_RANDF, HSD_Randf, () -> f32);
-    hook!(OSREPORT, OSReport, (a0: *mut i8));
+    hook_or!(OSREPORT, OSReport, (a0: *mut i8), |a0: *mut i8| unsafe { melee_runtime::tu::os_error::OSReport(a0 as _, &[]) });
     pub static mut STAGE_80225194: Option<fn() -> StKind> = None;
     #[allow(non_snake_case)]
     pub fn Stage_80225194() -> StKind {

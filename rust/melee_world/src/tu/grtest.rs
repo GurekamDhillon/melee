@@ -37,7 +37,7 @@ pub mod ext {
         pub HSD_JObjClearFlags: unsafe fn(j: *mut HSD_JObj, f: u32),
         pub HSD_JObjSetMtxDirtySub: unsafe fn(j: *mut HSD_JObj),
     }
-    unsafe fn todo_OSReport(_fmt: &CStr, _file: &CStr, _line: i32, _id: i32) { panic!("TODO(os: OSReport (varargs: fmt, __FILE__, line, id)) OSReport") }
+    unsafe fn todo_OSReport(_fmt: &CStr, _file: &CStr, _line: i32, _id: i32) { melee_runtime::tu::os_error::OSReport(_fmt.as_ptr(), &[_file.as_ptr() as usize, _line as usize, _id as usize]) }
     unsafe fn todo_Ground_GetStageGObj(_id: i32) -> *mut HSD_GObj { { return unsafe { crate::tu::ground::Ground_GetStageGObj(_id as _) as _ }; } }
     unsafe fn todo_grZakoGenerator_801CAE04(_d: *mut c_void) { { unsafe { let _ = crate::tu::grzakogenerator::grZakoGenerator_801CAE04(_d as _); } return; } }
     unsafe fn todo_HSD_PadMasterStatus() -> *mut HSD_PadStatus { panic!("TODO(group1: baselib/controller.c global HSD_PadMasterStatus[4]) HSD_PadMasterStatus") }

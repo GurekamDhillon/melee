@@ -80,7 +80,7 @@ pub mod ext {
     fn grDynamicAttr_801CA284(a0: *mut Vec, a1: i32) -> i32 = |a0: *mut Vec, a1: i32| unsafe { crate::tu::grdynamicattr::grDynamicAttr_801CA284(a0 as _, a1 as _) as _ };
     fn itGetKind(a0: *mut HSD_GObj) -> ItemKind;
     fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec) = |a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(a0 as _, a1 as _, a2 as _); } };
-    fn OSReport(a0: &str);
+    fn OSReport(a0: &str) = |a0: &str| melee_runtime::tu::os_error::OSReport_str(a0);
     }
     pub static mut DbLevel: DbLKind = unsafe { core::mem::zeroed() };
 }

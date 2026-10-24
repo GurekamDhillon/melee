@@ -504,3 +504,9 @@ gm_8016B1A8 = crate::gm::gm_8016B1A8
 gm_8016B110 = crate::gm::gm_8016B110
 gm_GetCurrentGameMode = crate::gm::gm_GetCurrentGameMode
 gm_GetPreviousGameMode = crate::gm::gm_GetPreviousGameMode
+# --- OSReport (dolphin OSError.c; melee_runtime::tu::os_error), by the stub's shape
+OSReport/2:*consti8:&[u64] = - | expr:unsafe { melee_runtime::tu::os_error::OSReport({0}, &{1}.iter().map(|x| *x as usize).collect::<std::vec::Vec<usize>>()) }
+OSReport/2:*const:&[OsArg] = - | expr:unsafe { melee_runtime::tu::os_error::OSReport({0}, &{1}.iter().map(|x| match x { crate::tu_ext::OsArg::I(v) => *v as usize, crate::tu_ext::OsArg::S(p) => *p as usize }).collect::<std::vec::Vec<usize>>()) }
+OSReport/2 = - | expr:unsafe { melee_runtime::tu::os_error::OSReport({0}, {1}) }
+OSReport/1:*muti8 = - | expr:unsafe { melee_runtime::tu::os_error::OSReport({0} as _, &[]) }
+OSReport/1:&str = - | expr:melee_runtime::tu::os_error::OSReport_str({0})

@@ -72,7 +72,7 @@ pub mod ext {
     pub fn Ground_GetYakumonoParam() -> *mut core::ffi::c_void {
         match unsafe { GROUND_GETYAKUMONOPARAM } { Some(f) => f(), None => { return unsafe { crate::tu::ground::Ground_GetYakumonoParam() as _ }; } }
     }
-    hook!(OSREPORT, OSReport, (a0: *mut i8));
+    hook_or!(OSREPORT, OSReport, (a0: *mut i8), |a0: *mut i8| unsafe { melee_runtime::tu::os_error::OSReport(a0 as _, &[]) });
     pub static mut STAGE_GETBLASTZONELEFTOFFSET: Option<fn() -> f32> = None;
     #[allow(non_snake_case)]
     pub fn Stage_GetBlastZoneLeftOffset() -> f32 {

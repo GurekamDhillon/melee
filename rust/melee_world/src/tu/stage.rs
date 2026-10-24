@@ -106,7 +106,7 @@ pub mod ext {
             }
     hook!(H_Mex_GrExternalCount, Mex_GrExternalCount, () -> i32);
     pub static mut H_OSReport: Option<unsafe fn(*const i8, &[u64])> = None;
-    pub unsafe fn OSReport(f: *const i8, a: &[u64]) { match H_OSReport { Some(h) => h(f, a), None => panic!("TODO: OSReport is not ported") } }
+    pub unsafe fn OSReport(f: *const i8, a: &[u64]) { match H_OSReport { Some(h) => h(f, a), None => unsafe { melee_runtime::tu::os_error::OSReport(f, &a.iter().map(|x| *x as usize).collect::<std::vec::Vec<usize>>()) } } }
     hook!(H_Mex_GrKindForExt, Mex_GrKindForExt, (a0: i32) -> i32);
     pub static mut H_Ground_801C06B8: Option<unsafe extern "C" fn(u32) > = None;
             pub unsafe extern "C" fn Ground_801C06B8(a0: u32)  {

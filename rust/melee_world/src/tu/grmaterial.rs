@@ -65,7 +65,7 @@ pub mod ext {
     }
     hook!(ITEM_80268E5C, Item_80268E5C, (gobj: *mut HSD_GObj, msid: enum_t, flags: Item_StateChangeFlags));
     hook!(ITEM_8026A8EC, Item_8026A8EC, (gobj: *mut HSD_GObj));
-    hook!(OSREPORT, OSReport, (a0: *mut i8));
+    hook_or!(OSREPORT, OSReport, (a0: *mut i8), |a0: *mut i8| unsafe { melee_runtime::tu::os_error::OSReport(a0 as _, &[]) });
     pub static mut HSDCHANGECLASS: Option<fn(*mut c_void, *mut c_void) -> i32> = None;
     #[allow(non_snake_case)]
     pub fn hsdChangeClass(object: *mut c_void, class_info: *mut c_void) -> i32 {

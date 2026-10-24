@@ -99,7 +99,27 @@ def params_of(plist):
     return ps
 
 
+class NoVariant(Exception):
+    pass
+
+
+def pick(spec, params):
+    """A spec is one (path, mode) or a list of (arity, first-type-prefix, (path, mode)) variants."""
+    if isinstance(spec, list):
+        for ar, ft, sp in spec:
+            fts = ft if isinstance(ft, list) else [ft]
+            ok = ar is None or ar == len(params)
+            for i, x in enumerate(fts):
+                if x and not (len(params) > i and params[i][1].replace(" ", "").startswith(x)):
+                    ok = False
+            if ok:
+                return sp
+        raise NoVariant()
+    return spec
+
+
 def body_for(spec, params, has_ret):
+    spec = pick(spec, params)
     path, mode = spec
     names = [n for n, _ in params]
     if mode.startswith("expr:"):
@@ -116,6 +136,7 @@ def body_for(spec, params, has_ret):
 
 
 def closure(spec, params, ret):
+    spec = pick(spec, params)
     b = body_for(spec, params, bool(ret))
     return "|" + ", ".join(f"{n}: {t}" for n, t in params) + "| " + ("{ " + b + " }" if ";" in b else b)
 
@@ -130,7 +151,14 @@ def load_specs(p):
             continue
         name, _, rhs = line.partition("=")
         path, _, mode = rhs.strip().partition("|")
-        specs[name.strip()] = (path.strip(), mode.strip() or "cast")
+        sp = (path.strip(), mode.strip() or "cast")
+        name = name.strip()
+        if "/" in name:
+            name, _, var = name.partition("/")
+            ar, _, ft = var.partition(":")
+            specs.setdefault(name, []).append((int(ar) if ar else None, [x.replace(" ", "") or None for x in ft.split(":")], sp))
+        else:
+            specs[name] = sp
     return specs
 
 
@@ -202,6 +230,18 @@ def rewire_line(line, name, spec, in_ext_fns, counter, local_extern=False):
         ret = rm.group(1) if rm else None
         counter[0] += 1
         return ind + st.replace("None => panic!(\"TODO: " + name + " is not ported\")", "None => " + body_for(spec, params_of(plist), bool(ret)))
+    # F4: a one-line function whose whole body is panic!/unimplemented!/todo!
+    m = re.search(r"fn " + re.escape(name) + r"\(", st)
+    if m:
+        op = m.end() - 1
+        cp = match_paren(st, op)
+        rm = re.match(r"\s*(?:->\s*([^{]+?))?\s*\{\s*(?:panic|unimplemented|todo)!\(.*\)\s*;?\s*\}\s*$", st[cp + 1:])
+        if cp > 0 and rm:
+            plist = st[op + 1:cp]
+            ret = rm.group(1)
+            head = st[: cp + 1] + (f" -> {ret}" if ret else "")
+            counter[0] += 1
+            return f"{ind}{head} {{ {body_for(spec, params_of(plist), bool(ret))} }}"
     return None
 
 
@@ -228,20 +268,26 @@ def main():
             if in_ext and s == "}":
                 in_ext = False
                 continue
-            if not (s.startswith("fn ") or s.startswith("hook!(") or "is not ported" in s):
+            if not (s.startswith("fn ") or s.startswith("hook!(") or "is not ported" in s or ("fn " in s and ("panic!(" in s or "unimplemented!(" in s or "todo!(" in s))):
                 continue
             for name, spec in specs.items():
                 if name not in s:
                     continue
                 if "is not ported" in s and "fn " not in s and i > 0 and ("fn " + name + "(") in lines[i - 1] and lines[i - 1].rstrip().endswith("{"):
                     joined = lines[i - 1].rstrip() + " " + s
-                    r = rewire_line(joined, name, spec, in_ext, total[name], local_extern)
+                    try:
+                        r = rewire_line(joined, name, spec, in_ext, total[name], local_extern)
+                    except NoVariant:
+                        r = None
                     if r is not None:
                         lines[i - 1] = r
                         lines[i] = None
                         break
                     continue
-                r = rewire_line(line, name, spec, in_ext, total[name], local_extern)
+                try:
+                    r = rewire_line(line, name, spec, in_ext, total[name], local_extern)
+                except NoVariant:
+                    r = None
                 if r is not None:
                     lines[i] = r
                     break

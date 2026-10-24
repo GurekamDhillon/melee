@@ -163,7 +163,7 @@ pub mod ext {
     /// `ftData_UnkBytePerCharacter[kind]` (ft/ftdata.c).
     pub unsafe fn ftData_UnkBytePerCharacter(_kind: i32) -> u8 { panic!("TODO(group3 ftdata) ftData_UnkBytePerCharacter") }
     pub unsafe fn ftKb_MexKirbyLike(_kind: i32) -> i32 { panic!("TODO(group4 ftkirby) ftKb_MexKirbyLike") }
-    pub unsafe fn OSReport(_msg: &str) { panic!("TODO(pc/platform os) OSReport") }
+    pub unsafe fn OSReport(msg: &str) { melee_runtime::tu::os_error::OSReport_str(msg) }
 }
 
 /// Calls out of efasync.c / efalt.c, plus the globals they reach. Every default forwards to the

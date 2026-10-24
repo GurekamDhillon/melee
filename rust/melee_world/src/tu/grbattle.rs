@@ -74,7 +74,7 @@ pub mod ext {
     hook_or!(HSD_JOBJGETFLAGS, HSD_JObjGetFlags, (jobj: *mut HSD_JObj) -> u32, |jobj: *mut HSD_JObj| unsafe { melee_runtime::tu::jobj_world::HSD_JObjGetFlags(jobj as _) as _ });
     hook_or!(HSD_JOBJSETFLAGSALL, HSD_JObjSetFlagsAll, (a0: *mut HSD_JObj, flags: u32), |a0: *mut HSD_JObj, flags: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetFlagsAll(a0 as _, flags as _); } });
     hook!(HSD_RANDI, HSD_Randi, (max_val: s32) -> s32);
-    hook!(OSREPORT, OSReport, (a0: *const i8, va: &[usize]));
+    hook_or!(OSREPORT, OSReport, (a0: *const i8, va: &[usize]), |a0: *const i8, va: &[usize]| unsafe { melee_runtime::tu::os_error::OSReport(a0, va) });
     pub static mut STAGE_80225194: Option<fn() -> StKind> = None;
     #[allow(non_snake_case)]
     pub fn Stage_80225194() -> StKind {

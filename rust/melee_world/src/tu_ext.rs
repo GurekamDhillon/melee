@@ -298,8 +298,7 @@ pub fn Mex_GrBind(a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
 pub enum OsArg { I(i64), S(*const core::ffi::c_char) }
 pub static mut HOOK_OSReport: Option<fn(*const core::ffi::c_char, &[OsArg])> = None;
 /// C `OSReport(fmt, ...)` (dolphin/os): variadic; `args` are the values after the format string.
-pub fn OSReport(fmt: *const core::ffi::c_char, args: &[OsArg]) {
-    match unsafe { HOOK_OSReport } { Some(f) => f(fmt, args), None => panic!("TODO: OSReport is not ported") }
+pub fn OSReport(fmt: *const core::ffi::c_char, args: &[OsArg]) { match unsafe { HOOK_OSReport } { Some(f) => f(fmt, args), None => unsafe { melee_runtime::tu::os_error::OSReport(fmt, &args.iter().map(|x| match x { crate::tu_ext::OsArg::I(v) => *v as usize, crate::tu_ext::OsArg::S(p) => *p as usize }).collect::<std::vec::Vec<usize>>()) } }
 }
 pub static mut HOOK_Player_80031790: Option<fn(i32)> = None;
 /// C `Player_80031790` (melee/pl/player.h).

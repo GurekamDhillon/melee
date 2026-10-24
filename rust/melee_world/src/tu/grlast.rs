@@ -146,7 +146,7 @@ pub mod ext {
     }
     hook_or!(HSD_GOBJGXLINK_803909D8, HSD_GObjGXLink_803909D8, (a0: *mut HSD_GObj, a1: *mut HSD_GObj), |a0: *mut HSD_GObj, a1: *mut HSD_GObj| { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObjGXLink_803909D8(a0 as _, a1 as _); } });
     hook!(HSD_RANDF, HSD_Randf, () -> f32);
-    hook!(OSREPORT, OSReport, (a0: *mut i8));
+    hook_or!(OSREPORT, OSReport, (a0: *mut i8), |a0: *mut i8| unsafe { melee_runtime::tu::os_error::OSReport(a0 as _, &[]) });
     /// `extern int Slippi_Codes(void)` (TARGET_PC): no Slippi online in the native build, so 0.
     hook_or!(SLIPPI_CODES, Slippi_Codes, () -> i32, || 0);
     pub static mut STAGE_80225194: Option<fn() -> StKind> = None;

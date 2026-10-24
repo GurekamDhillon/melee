@@ -96,7 +96,7 @@ pub mod ext {
     pub static mut gm_80473A18: UnkAllstarData = unsafe { core::mem::zeroed() };
     ext_fns! {
         fn Camera_RequestQuake(a0: CmQuakeKind, a1: *mut Vec);
-        fn Camera_SetQuakeScale(a0: f32);
+        fn Camera_SetQuakeScale(a0: f32) = crate::tu::adapt::Camera_SetQuakeScale__cmc;
         fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
         fn Ground_801C1DAC() -> u32 = crate::tu::adapt::Ground_801C1DAC__5d253e;
         fn Ground_801C5A60() = crate::tu::adapt::Ground_801C5A60__d6325d;

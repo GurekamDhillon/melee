@@ -36,7 +36,7 @@ pub mod ext {
         lb_800115F4,
     };
     pub use crate::tu::grinl2::ext::Ground_InitMapColl;
-    hook!(CAMERA_8002F3AC, Camera_8002F3AC, ());
+    hook_or!(CAMERA_8002F3AC, Camera_8002F3AC, (), || { unsafe { let _ = crate::tu::cmcamera::Camera_8002F3AC(); } });
     hook_or!(CAMERA_80030AE0, Camera_80030AE0, (a0: i32), |a0: i32| crate::cm::camera::world().camera_80030ae0(a0));
     hook_or!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (a0: CmQuakeKind, a1: *mut Vec3), |a0: CmQuakeKind, a1: *mut Vec3| unsafe { crate::cm::camera::Camera_RequestQuake(a0 as _, a1 as _) });
     pub static mut GROUND_801C0498: Option<fn() -> f32> = None;

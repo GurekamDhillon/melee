@@ -371,7 +371,7 @@ crate::oext_fns! {fn Script_StageSlotVisual(a0 : :: core :: ffi :: c_int) -> :: 
 crate::oext_fns! {fn Script_StageSlotMissionInput(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
 crate::oext_fns! {fn Ground_StageSlotFDBackdrop() -> () = crate::tu::adapt::Ground_StageSlotFDBackdrop__c64489;}
 crate::oext_fns! {fn HeapCheckFull() -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn Camera_PCMainCObj() -> * mut HSD_CObj;}
+crate::oext_fns! {fn Camera_PCMainCObj() -> * mut HSD_CObj = melee_world::tu::cmcamera::Camera_PCMainCObj;}
  }
 use ext::*;
 // Moved below this crate so the fighter/character code can call them (CYCLE); same items.

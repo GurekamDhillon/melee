@@ -613,3 +613,14 @@ lbVector_RotateAboutUnitAxis = melee_runtime::tu::lbvector::lbVector_RotateAbout
 lbVector_8000E838 = melee_runtime::tu::lbvector::lbVector_8000E838
 atanf = melee_runtime::lbtrigf::atanf
 tanf = melee_runtime::gekko::tanf
+# --- camera.c (tu::cmcamera, state oracle tests/tu_cm.rs)
+Camera_8002A4AC = crate::tu::cmcamera::Camera_8002A4AC
+Camera_8002F3AC = crate::tu::cmcamera::Camera_8002F3AC
+Camera_Init = crate::tu::cmcamera::Camera_Init
+Camera_Create = crate::tu::cmcamera::Camera_Create
+Camera_ForgetGameCamera = crate::tu::cmcamera::Camera_ForgetGameCamera
+Camera_RefreshViewingMtx = crate::tu::cmcamera::Camera_RefreshViewingMtx
+Camera_PCMainCObj = crate::tu::cmcamera::Camera_PCMainCObj
+Camera_SetQuakeScale = crate::tu::cmcamera::Camera_SetQuakeScale
+Camera_LogicToScreen = crate::tu::cmcamera::Camera_LogicToScreen
+Camera_ProjectToScreen = crate::tu::cmcamera::Camera_ProjectToScreen

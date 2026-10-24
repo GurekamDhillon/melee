@@ -214,7 +214,7 @@ pub mod ext {
     pub static mut gmResultX22F4Init: [u32; 8] = [0; 8];
     ext_fns! {
         fn Camera_800313E0(a0: *mut HSD_GObj, a1: u64);
-        fn Camera_Init(a0: i32);
+        fn Camera_Init(a0: i32) = crate::tu::adapt::Camera_Init__cmc;
         fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
         fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: GObj_RenderFunc, a2: u8, a3: u32);
         fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: GObj_RenderFunc, a2: u32);

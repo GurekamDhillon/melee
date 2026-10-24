@@ -1,0 +1,44 @@
+// BEGIN GENERATED EXT (rust/melee_items/gen/kinds/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj;
+    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
+    fn Item_8026AE84(a0: *mut Item, a1: i32, a2: u8, a3: u8);
+    fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn efAsync_Spawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: u32, a3: u32, a4: *mut HSD_JObj);
+    fn itColl_BounceOffShield(a0: *mut HSD_GObj) -> i32;
+    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
+    fn it_8026BB68(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn it_8026D9A0(a0: *mut HSD_GObj) -> i32;
+    fn it_80272860(a0: *mut HSD_GObj, a1: f32, a2: f32);
+    fn it_80273030(a0: *mut HSD_GObj) -> i32;
+    fn it_80274658(a0: *mut HSD_GObj, a1: f32) -> i32;
+    fn it_802750F8(a0: *mut HSD_GObj);
+    fn it_80275158(a0: *mut HSD_GObj, a1: f32);
+    fn it_8027781C(a0: *mut HSD_GObj) -> i32;
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

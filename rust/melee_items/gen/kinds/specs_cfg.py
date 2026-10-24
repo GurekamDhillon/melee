@@ -489,3 +489,110 @@ CFG["itlinkbomb"] = dict(
            "arg3": ("(int) (rnd() % 400)", "(rnd() % 400) as i32")},
     deep_ecb=True,
 )
+
+# ============================================================================ shard 737-744
+def _farr(n, extra=None):
+    """A `float[]` attribute block of n rw() values (extra: {index: (C expr, Rust expr)})."""
+    extra = extra or {}
+    c = ["        float* a = (float*) SPEC[0];"]
+    r = ["            let a = SPECB.0[0].as_mut_ptr() as *mut f32;"]
+    for i in range(n):
+        ce, re_ = extra.get(i, ("rw()", "rw()"))
+        c.append(f"        a[{i}] = {ce};")
+        r.append(f"            *a.add({i}) = {re_};")
+    return ("\n".join(c), "\n".join(r))
+
+
+CFG["itluigifireball"] = dict(spec=[_farr(5)], tweak=("", ""), ptrs=("", ""))
+CFG["itmariofireball"] = dict(spec=[_farr(5)], tweak=("", ""), ptrs=("", ""))
+CFG["itmariocape"] = dict(spec=[("", "")], tweak=("", ""), ptrs=("", ""))
+
+_ml = "IT[k].xDD4_itemVar.maril"
+CFG["itmaril"] = dict(
+    spec=[_farr(6, {5: ("(float) (rnd() % 50)", "(rnd() % 50) as f32")})],
+    tweak=per_item(
+        f"""        {_ml}.x60.flags = 0;
+        {_ml}.x60.x0 = rnd() & 1;
+        IT[k].xC9C = (int) (rnd() % 60);""",
+        """        let ml = &mut IT[k].xDD4_itemVar.maril;
+        ml.x60.flags = 0;
+        ml.x60.anon_0.set_x0((rnd() & 1) as u8);
+        IT[k].xC9C = (rnd() % 60) as i32;"""),
+    ptrs=(f"""    for (k = 0; k < 3; k++) {{ HM({_ml}.x60.x0); {_ml}.x60.flags = 0; }}""",
+          """    for k in 0..3 { let ml = &mut IT[k].xDD4_itemVar.maril; hm(ml.x60.anon_0.x0() as u32); ml.x60.flags = 0; }"""),
+)
+
+_pk = "IT[k].xDD4_itemVar.pokemon"
+CFG["itmarumine"] = dict(
+    spec=[("""        itPokemonAttributes* a = (itPokemonAttributes*) SPEC[0];
+        a->x0 = rw(); a->timer = (int) (rnd() % 3); a->max = (int) (rnd() % 200); a->xC = (int) (rnd() % 4);""",
+           """            let a = SPECB.0[0].as_mut_ptr() as *mut itPokemonAttributes;
+            (*a).x0 = rw(); (*a).timer = (rnd() % 3) as i32; (*a).max = (rnd() % 200) as i32; (*a).xC = (rnd() % 4) as i32;""")],
+    tweak=per_item(
+        f"""        {_pk}.timer = (int) (rnd() % 5) - 2;
+        {_pk}.x64 = (int) (rnd() % 3);""",
+        """        IT[k].xDD4_itemVar.pokemon.timer = (rnd() % 5) as i32 - 2;
+        IT[k].xDD4_itemVar.pokemon.x64 = (rnd() % 3) as i32;"""),
+    ptrs=("", ""),
+)
+
+_mg = "IT[k].xDD4_itemVar.matadogas"
+CFG["itmatadogas"] = dict(
+    spec=[("""        itMatadogasAttributes* a = (itMatadogasAttributes*) SPEC[0];
+        a->x0 = rw(); a->x4 = (float) (rnd() % 6); a->x8 = rw(); a->xC = rw();""",
+           """            let a = SPECB.0[0].as_mut_ptr() as *mut itMatadogasAttributes;
+            (*a).x0 = rw(); (*a).x4 = (rnd() % 6) as f32; (*a).x8 = rw(); (*a).xC = rw();""")],
+    tweak=per_item(
+        f"""        {_mg}.x60 = (int) (rnd() % 4);
+        {_mg}.x64 = (int) (rnd() & 1);""",
+        """        IT[k].xDD4_itemVar.matadogas.x60 = (rnd() % 4) as i32;
+        IT[k].xDD4_itemVar.matadogas.x64 = (rnd() & 1) as i32;"""),
+    ptrs=("", ""),
+)
+
+CFG["itmasterhandbullet"] = dict(
+    spec=[_farr(1)],
+    tweak=per_item("        IT[k].xDD4_itemVar.masterhandbullet.x0 = rw();",
+                   "        IT[k].xDD4_itemVar.masterhandbullet.x0 = rw();"),
+    ptrs=("", ""),
+    hints={"msid": ("(int) (rnd() % 2)", "(rnd() % 2) as i32")},
+)
+
+_lz = "IT[k].xDD4_itemVar.masterhandlaser"
+CFG["itmasterhandlaser"] = dict(
+    spec=[_farr(2, {1: ("(float) (rnd() % 6)", "(rnd() % 6) as f32")})],
+    c_decl="static Fighter FT;\nstatic FighterBone FTB[8];\nstatic HSD_Joint JT[2];\n",
+    rs_decl="static mut FT: Fighter = unsafe { core::mem::zeroed() };\nstatic mut FTB: [FighterBone; 8] = unsafe { core::mem::zeroed() };\n"
+            "static mut JT: [HSD_Joint; 2] = unsafe { core::mem::zeroed() };\n",
+    c_preg=["preg(&FT, sizeof FT); preg(FTB, sizeof FTB); preg(JT, sizeof JT);"],
+    rs_preg=["preg(&raw const FT, core::mem::size_of_val(&FT)); preg(&raw const FTB, core::mem::size_of_val(&FTB)); "
+             "preg(&raw const JT, core::mem::size_of_val(&JT));"],
+    tweak=("""    for (i = 0; i < 8; i++) FTB[i].joint = &JO[20 + 3 * i];
+    FT.parts = FTB;
+    GO[1].user_data = &FT;
+    IT[0].owner = &GO[1];
+    IT[0].xC8_joint = &JT[0];
+    JT[0].child = &JT[1];
+    IT[0].xDD4_itemVar.masterhandlaser.x4 = (int) (rnd() % 8);
+    IT[0].xDD4_itemVar.masterhandlaser.x8 = (int) (rnd() % 5) - 1;
+    IT[0].xDD4_itemVar.masterhandlaser.x0 = (int) (rnd() & 1);
+    IT[0].xDD4_itemVar.masterhandlaser.x10 = &JO[30];""",
+           """    for i in 0..8 {
+        FTB[i].joint = &raw mut JO[20 + 3 * i];
+    }
+    FT.parts = &raw mut FTB as *mut FighterBone;
+    GO[1].user_data = &raw mut FT as *mut _;
+    IT[0].owner = &raw mut GO[1];
+    IT[0].xC8_joint = &raw mut JT[0];
+    JT[0].child = &raw mut JT[1];
+    IT[0].xDD4_itemVar.masterhandlaser.x4 = (rnd() % 8) as i32;
+    IT[0].xDD4_itemVar.masterhandlaser.x8 = (rnd() % 5) as i32 - 1;
+    IT[0].xDD4_itemVar.masterhandlaser.x0 = (rnd() & 1) as i32;
+    IT[0].xDD4_itemVar.masterhandlaser.x10 = &raw mut JO[30];"""),
+    ptrs=(f"""    for (k = 0; k < 3; k++) {{ HM(PI({_lz}.x10)); {_lz}.x10 = 0; }}""",
+          f"""    for k in 0..3 {{ hm(pi(IT[k].xDD4_itemVar.masterhandlaser.x10)); IT[k].xDD4_itemVar.masterhandlaser.x10 = null_mut(); }}"""),
+    over={"it_802F0340": (
+        "u32 v1 = fv() % 8; int v2 = (int) fv(); float v3 = rw(); ret = PI(it_802F0340(&GO[1], &VA[0], &VA[1], v1, v2, v3));",
+        "let v1: u32 = fv() % 8; let v2: i32 = fv() as i32; let v3: f32 = rw(); "
+        "ret = pi(m::it_802F0340(&raw mut GO[1], &raw mut VA[0], &raw mut VA[1], v1, v2, v3));")},
+)

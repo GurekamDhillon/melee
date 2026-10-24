@@ -723,3 +723,12 @@ local `#[inline]` copies) with the C names and signatures, checked by the shard 
   and the defined path of 802A850C are compared). Boundary constants that random stub returns never straddle (for example `dx <= x10`,
   `ad > 3.0` in leadead, `var_f1 < 15.0` in likelike) are matched by reading, not by mutation.
 - 274 callee hooks across the eight files are `ext` TODO stubs (unset: panic "TODO: name is not ported").
+## melee_items::tu: it/kinds itluigifireball, itmaril, itmariocape, itmariofireball, itmarumine, itmasterhandbullet, itmasterhandlaser, itmatadogas (shard 737-744)
+Same layout and oracle (`bash rust/melee_items/gen/kinds/regen.sh <stem>...`) as the 657-664 shard: every function of the
+eight files (150 incl. statics, e.g. `calc_dist_2d_accurate`, `sqrtf_store`) in `rust/melee_items/src/tu/<stem>.rs`, 400 seeded cases each.
+- Driver additions: `double` returns are hashed (`mk_driver.py`); variadic `efAsync_Spawn` / `efSync_Spawn` are fixed-arity custom stubs;
+  `itmasterhandlaser` adds a fake `Fighter` (`parts` -> `FighterBone[8]`) as GO[1]'s user data, a 2-entry `HSD_Joint` chain for `xC8_joint`,
+  and `mpCheckMultiple` writes its `Vec3` out-parameter; bool-returning stubs of the bullet return 0/1.
+- Fused sites (IR-checked): f32 `fmadds` in `calc_dist_2d_accurate` (luigi / mario fireball) and 4 in `it_802F063C`; f64 Newton steps of
+  `sqrtf_accurate` / `sqrtf_store` (`3.0 - g*g*x` as fma; un-fusing them is not caught, the f32 rounding hides it). Mutations of the f32 sites,
+  the `M_PI` negation in `itmaril` and the `MTXDegToRad` constant in `itmatadogas` fail the tests.

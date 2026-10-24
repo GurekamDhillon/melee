@@ -154,7 +154,6 @@ SPECS["lb_020A"] = dict(
                           "(*a2).x = (*a0).x - (*a1).x; (*a2).y = (*a0).y - (*a1).y; (*a2).z = (*a0).z - (*a1).z;"),
     },
 )
-SPECS["mncharsel"] = dict(src="src/melee/mn/mncharsel.c", types=["CSSData"])
 for _s in SPECS.values():
     _s.setdefault("narrow_si", True)
     _s.setdefault("common_ret", {})

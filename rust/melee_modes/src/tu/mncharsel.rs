@@ -685,9 +685,9 @@ macro_rules! jget {
         }
     };
 }
-jget!(HSD_JObjGetTranslationX, translate.x, 580);
-jget!(HSD_JObjGetTranslationY, translate.y, 586);
-jget!(HSD_JObjGetTranslationZ, translate.z, 592);
+jget!(HSD_JObjGetTranslationX, translate.x, 582);
+jget!(HSD_JObjGetTranslationY, translate.y, 588);
+jget!(HSD_JObjGetTranslationZ, translate.z, 594);
 
 /// `animateJoint`, `animateJointPadded` and `animateJointLeadingPad` (the three differ only in the
 /// stack padding the original build matched): find joint `joint` below `root`, freeze its animation
@@ -5394,5 +5394,598 @@ pub unsafe fn mnCharSel_802640A0() -> i32 {
 
     mnCharSel_8025EE8C((*mnCharSel_804D6CB0).match_type);
     ext::lbAudioAx_80023F28(ext::gmMainLib_8015ECB0())
+}
+
+
+// ------------------------------------------------------------------------------------------
+// the scene
+// ------------------------------------------------------------------------------------------
+
+/// Scene entry: loads the MnSlChr / MnExtAll archives and the SIS text file, then builds the screen.
+pub unsafe extern "C" fn mnCharSel_Scene_OnEnter(arg0: *mut c_void) {
+    ext::lbCardNew_AllocWorkArea();
+    ext::lbCardGame_LoadArchive(0);
+    mnCharSel_804D6CB0 = arg0 as *mut CSSData;
+
+    mnCharSel_804D6CF0 = ((*mnCharSel_804D6CB0).unk_0x0 as i32 - 1) as i8;
+
+    mnCharSel_804D6CF8 = 0;
+    while (mnCharSel_804D6CF8 as i32) < 0x78 {
+        if ext::GetNameText(mnCharSel_804D6CF8 as i32).is_null() {
+            break;
+        }
+        mnCharSel_804D6CF8 = mnCharSel_804D6CF8.wrapping_add(1);
+    }
+    mnCharSel_804D6CF9 = -1;
+    mnCharSel_804D6CF8 = mnCharSel_804D6CF8.wrapping_add(1);
+
+    (*door(0)).selected_since_load = 0;
+    (*door(1)).selected_since_load = 0;
+    (*door(2)).selected_since_load = 0;
+    (*door(3)).selected_since_load = 0;
+
+    ext::lbAudioAx_80026F2C(0x12);
+
+    ext::lbAudioAx_8002702C(2, 8);
+    ext::lbAudioAx_80027168();
+    ext::lbAudioAx_80027648();
+    if ext::lbLang_IsSavedLanguageJP() != 0 {
+        mnCharSel_804D6CD0 = ext::lbArchive_LoadArchive(c"MnSlChr.dat".as_ptr());
+        mnCharSel_804D6CD4 = ext::lbArchive_LoadArchive(c"MnExtAll.dat".as_ptr());
+    } else {
+        mnCharSel_804D6CD0 = ext::lbArchive_LoadArchive(c"MnSlChr.usd".as_ptr());
+        mnCharSel_804D6CD4 = ext::lbArchive_LoadArchive(c"MnExtAll.usd".as_ptr());
+    }
+    css_data_table = ext::HSD_ArchiveGetPublicAddress(mnCharSel_804D6CD0, c"MnSelectChrDataTable".as_ptr()) as *mut MnSelectChrDataTable;
+    css_models = addr_of_mut!((*css_data_table).models);
+    if ext::lbLang_IsSavedLanguageJP() != 0 {
+        ext::HSD_SisLib_803A62A0(0, c"SdSlChr.dat".as_ptr() as *mut i8, c"SIS_SelCharData".as_ptr() as *mut i8);
+    } else {
+        ext::HSD_SisLib_803A62A0(0, c"SdSlChr.usd".as_ptr() as *mut i8, c"SIS_SelCharData".as_ptr() as *mut i8);
+    }
+    mnCharSel_804D6CF4 = 0;
+    mnCharSel_802640A0();
+}
+
+/// Scene frame: keeps the preload cache current, handles leaving the scene (back / start / name
+/// entry) and the per-state transitions.
+pub unsafe extern "C" fn mnCharSel_Scene_OnFrame() {
+    let num_slots: i32;
+    let mut slot_type: u8;
+    let cache: *mut GameCache;
+    let mut i: i32;
+
+    mnCharSel_804D6CEC = mnCharSel_804D6CEC.wrapping_add(1);
+    if mnCharSel_804D6CF6 <= 1 {
+        cache = addr_of_mut!((*ext::lbDvd_GetPreloadCacheScene()).game_cache);
+        let entries = addr_of_mut!((*cache).entries) as *mut PreloadCacheSceneEntry;
+        if mnCharSel_804D6CF5 == 1 {
+            slot_type = (*player_at(mnCharSel_804D6CB0, mnCharSel_804D6CF0 as usize)).slot_type;
+            if !(slot_type != 0 && slot_type != 1) && (*mnCharSel_804A0BD0[0]).x5 == 0 {
+                (*entries).char_id = (*player_at(mnCharSel_804D6CB0, mnCharSel_804D6CF0 as usize)).ckind as i32;
+                (*entries).color = (*player_at(mnCharSel_804D6CB0, mnCharSel_804D6CF0 as usize)).color;
+            } else {
+                (*entries).char_id = ChKind_None as i32;
+            }
+            slot_type = (*player_at(mnCharSel_804D6CB0, mnCharSel_804D6CF1 as usize)).slot_type;
+            if !(slot_type != 0 && slot_type != 1) {
+                if (*mnCharSel_804A0BD0[1]).x5 == 0 {
+                    (*entries.add(1)).char_id = (*player_at(mnCharSel_804D6CB0, mnCharSel_804D6CF1 as usize)).ckind as i32;
+                    (*entries.add(1)).color = (*player_at(mnCharSel_804D6CB0, mnCharSel_804D6CF1 as usize)).color;
+                } else {
+                    (*entries.add(1)).char_id = ChKind_None as i32;
+                }
+            }
+        } else {
+            if (*mnCharSel_804D6CB0).match_type as u32 == VS_CAMERA {
+                num_slots = 3;
+            } else {
+                num_slots = 4;
+            }
+
+            i = 0;
+            while i < num_slots {
+                slot_type = (*player_at(mnCharSel_804D6CB0, i as usize)).slot_type;
+                if !(slot_type != 0 && slot_type != 1) && (*mnCharSel_804A0BD0[i as usize]).x5 == 0 {
+                    (*entries.add(i as usize)).char_id = (*player_at(mnCharSel_804D6CB0, i as usize)).ckind as i32;
+                    (*entries.add(i as usize)).color = (*player_at(mnCharSel_804D6CB0, i as usize)).color;
+                } else {
+                    (*entries.add(i as usize)).char_id = ChKind_None as i32;
+                }
+                i += 1;
+            }
+        }
+        ext::lbDvd_80018254();
+    }
+    if ext::mn_8022F218() != 0 {
+        sfxBack();
+        ext::lb_800145F4();
+        ext::mn_8022F138(1, 8);
+        ext::HSD_SisLib_803A5E70();
+        ext::mn_8022F268();
+        ext::gm_ChangeGameModeAfterCurrentScene(GM_MENU as i32);
+        ext::gm_801A4B60();
+        return;
+    }
+    if mnCharSel_804D6CF2 != 0 {
+        mnCharSel_804D6CF2 -= 1;
+    }
+    match mnCharSel_804D6CF6 {
+        1 => {
+            i = 0;
+            while i < 4 {
+                if (*door(i as usize)).p_kind != 3 && (*mnCharSel_804A0BD0[0]).x5 != 0 {
+                    mnCharSel_804D6CF6 = 0;
+                }
+                i += 1;
+            }
+            if mnCharSel_804D6CF6 != 0 {
+                // ONLINE PLAY is picking: keep the chosen fighter's icon for its row
+                {
+                    // every fighter's icon, on every confirm: the loading screen and the online lobby
+                    // show them after the CSS art is freed
+                    let mut k: i32 = 0;
+                    while k < MNCS_NUM() {
+                        let mut aj: *mut HSD_JObj = null_mut();
+                        lb_find(MNCS_ICON_ROOT(mnCharSel_804D6CC0), &mut aj, (*icon_at(k as usize)).joint_id_vs as i32);
+                        ext::Frontend_CaptureCharIcon((*icon_at(k as usize)).char_kind as i32, aj);
+                        k += 1;
+                    }
+                }
+                if ext::Frontend_OnlinePick() == 1 {
+                    let mut p: i32 = 0;
+                    while p < 4 {
+                        let pl = player_at(mnCharSel_804D6CB0, p as usize);
+                        if (*pl).slot_type as u32 != Gm_PKind_Human || (*pl).ckind as i32 == ChKind_None as i32 {
+                            p += 1;
+                            continue;
+                        }
+                        let mut k: i32 = 0;
+                        while k < MNCS_NUM() {
+                            if (*icon_at(k as usize)).char_kind as i32 == (*pl).ckind as i32 {
+                                let mut ij: *mut HSD_JObj = null_mut();
+                                lb_find(MNCS_ICON_ROOT(mnCharSel_804D6CC0), &mut ij, (*icon_at(k as usize)).joint_id_vs as i32);
+                                ext::Frontend_CaptureIcon(0, ij);
+                                break;
+                            }
+                            k += 1;
+                        }
+                        break;
+                    }
+                }
+                ext::gm_801A4B60();
+                if mnCharSel_804D6CF5 == 4 {
+                    ext::lbAudioAx_8002411C(0x147);
+                }
+                // Ported from m-ex (https://github.com/akaneia/m-ex): asm/gameplay/Disable FoD in
+                // Doubles.asm, @ 0x80266CE0. On the CSS->SSS transition, when the random stage select
+                // mask is the default all-legal set (0xE70000B0) or that set with only Fountain of
+                // Dreams toggled off (bit 0x20), force FoD off in teams and on in singles. Opt-in:
+                // MELEE_MEX=disable_fod_in_doubles.
+                if ext::Mex_Enabled(c"disable_fod_in_doubles".as_ptr()) != 0 {
+                    let prefs = ext::gmMainLib_GetGamePrefs();
+                    let mut mask: u32 = (*prefs).stage_mask;
+                    let diff: u32 = mask ^ 0xE70000B0;
+                    if diff == 0 || diff == 0x20 {
+                        if (*mnCharSel_804D6CB0).vs.start.rules.is_teams == 1 {
+                            mask &= !0x20u32;
+                        } else {
+                            mask |= 0x20u32;
+                        }
+                        (*prefs).stage_mask = mask;
+                    }
+                }
+                sfxForward();
+            }
+        }
+        2 => {
+            ext::gm_801A4B60();
+            sfxBack();
+        }
+        3 => {
+            ext::mn_8022F138(1, 8);
+            ext::HSD_SisLib_803A5E70();
+            ext::mn_80231804(mnCharSel_804D6CD4, 1);
+            mnCharSel_804D6CF6 = 5;
+            sfxForward();
+        }
+        4 => {
+            ext::mn_8022F138(1, 8);
+            ext::HSD_SisLib_803A5E70();
+            ext::mnNameNew_EnterFromMnCharSel(mnCharSel_804D6CD4, mnCharSel_804D6CF9 as i32);
+            mnCharSel_804D6CF6 = 5;
+            sfxForward();
+        }
+        _ => {}
+    }
+}
+
+/// Scene exit: frees the archives and, when leaving for a match, preloads the chosen fighters'
+/// sound banks.
+pub unsafe extern "C" fn mnCharSel_Scene_OnExit(unused: *mut c_void) {
+    let num_slots: i32;
+    let mut tmp: u64;
+    let mut i: i32;
+    let mut type_: u8;
+
+    ext::HSD_SisLib_803A5FBC();
+    if !mnCharSel_804D6CD0.is_null() {
+        ext::lbArchive_80016EFC(mnCharSel_804D6CD0);
+        mnCharSel_804D6CD0 = null_mut();
+    }
+    if !mnCharSel_804D6CD4.is_null() {
+        ext::lbArchive_80016EFC(mnCharSel_804D6CD4);
+        mnCharSel_804D6CD4 = null_mut();
+    }
+    (*mnCharSel_804D6CB0).pending_scene_change = mnCharSel_804D6CF6;
+    if mnCharSel_804D6CF6 != 0 {
+        return;
+    }
+
+    tmp = 0;
+    if mnCharSel_804D6CF5 == 1 {
+        type_ = (*player_at(mnCharSel_804D6CB0, mnCharSel_804D6CF0 as usize)).slot_type;
+        if (type_ as u32 == Gm_PKind_Human || type_ as u32 == Gm_PKind_Cpu) && (*mnCharSel_804A0BD0[0]).x5 == 0 {
+            tmp |= ext::lbAudioAx_80026E84((*player_at(mnCharSel_804D6CB0, mnCharSel_804D6CF0 as usize)).ckind as i32 as u32);
+        }
+        type_ = (*player_at(mnCharSel_804D6CB0, mnCharSel_804D6CF1 as usize)).slot_type;
+        if (type_ as u32 == Gm_PKind_Human || type_ as u32 == Gm_PKind_Cpu) && (*mnCharSel_804A0BD0[1]).x5 == 0 {
+            tmp |= ext::lbAudioAx_80026E84((*player_at(mnCharSel_804D6CB0, mnCharSel_804D6CF1 as usize)).ckind as i32 as u32);
+        }
+    } else {
+        num_slots = if (*mnCharSel_804D6CB0).match_type as u32 == VS_CAMERA { 3 } else { 4 };
+        i = 0;
+        while i < num_slots {
+            type_ = (*player_at(mnCharSel_804D6CB0, i as usize)).slot_type;
+            if (type_ as u32 == Gm_PKind_Human || type_ as u32 == Gm_PKind_Cpu) && (*mnCharSel_804A0BD0[i as usize]).x5 == 0 {
+                tmp |= ext::lbAudioAx_80026E84((*player_at(mnCharSel_804D6CB0, i as usize)).ckind as i32 as u32);
+            }
+            i += 1;
+        }
+    }
+
+    ext::lbAudioAx_80026F2C(0x14);
+    ext::lbAudioAx_8002702C(4, tmp);
+    ext::lbAudioAx_80027168();
+}
+
+// ------------------------------------------------------------------------------------------
+// the port's own character select (gmfrontend_select.inc)
+//
+// The frontend draws its CSS itself, with the disc's own art: this loads the icon model and the
+// portrait joint out of the MnSlChr archive the frontend opened, the same models this screen uses
+// (retail's menu model, or m-ex's mexSelectChr icon model + CSP animation), animates them with no
+// GObj - nothing is drawn - and hands back the texture objects the animation selected. The frontend
+// only borrows their image and palette pointers, which live in the archive.
+// ------------------------------------------------------------------------------------------
+
+/// The menu model: retail icons, the portrait joint.
+static mut mnCharSel_PcMenu: *mut HSD_JObj = null_mut();
+/// Where icon joints resolve (m-ex's icon model or the menu).
+static mut mnCharSel_PcIcons: *mut HSD_JObj = null_mut();
+static mut mnCharSel_PcMex: *mut MexSelectChr = null_mut();
+static mut mnCharSel_PcTable: *mut CSSIcon = null_mut();
+/// Retail's cursor hand and its coin (token), animated by frame only, never drawn.
+static mut mnCharSel_PcHand: *mut HSD_JObj = null_mut();
+static mut mnCharSel_PcToken: *mut HSD_JObj = null_mut();
+static mut mnCharSel_PcCount: i32 = 0;
+
+/// Release the models before the caller releases their backing archive.
+pub unsafe fn mnCharSel_PcArtClose() {
+    if !mnCharSel_PcIcons.is_null() && mnCharSel_PcIcons != mnCharSel_PcMenu {
+        ext::HSD_JObjRemoveAll(mnCharSel_PcIcons);
+    }
+    if !mnCharSel_PcMenu.is_null() {
+        ext::HSD_JObjRemoveAll(mnCharSel_PcMenu);
+    }
+    if !mnCharSel_PcHand.is_null() {
+        ext::HSD_JObjRemoveAll(mnCharSel_PcHand);
+    }
+    if !mnCharSel_PcToken.is_null() {
+        ext::HSD_JObjRemoveAll(mnCharSel_PcToken);
+    }
+    mnCharSel_PcHand = null_mut();
+    mnCharSel_PcToken = null_mut();
+    mnCharSel_PcMenu = null_mut();
+    mnCharSel_PcIcons = null_mut();
+    mnCharSel_PcMex = null_mut();
+    mnCharSel_PcTable = null_mut();
+    mnCharSel_PcCount = 0;
+}
+
+/// The biggest colour texture under `j` (its own subtree) - an icon's art, not its I4 plate.
+unsafe fn mnCharSel_PcBestTex(mut j: *mut HSD_JObj, best: *mut *mut HSD_TObj, area: *mut i32, depth: i32) {
+    while !j.is_null() && depth < 12 {
+        let mut d = ext::HSD_JObjGetDObj(j);
+        while !d.is_null() {
+            let mut t: *mut HSD_TObj = if !(*d).mobj.is_null() { (*(*d).mobj).tobj } else { null_mut() };
+            while !t.is_null() {
+                if !(*t).imagedesc.is_null() && !(*(*t).imagedesc).image_ptr.is_null() {
+                    let fmt = (*(*t).imagedesc).format as i32;
+                    let a = (*(*t).imagedesc).width as i32 * (*(*t).imagedesc).height as i32 * (if fmt >= 4 { 4 } else { 1 });
+                    if a > *area {
+                        *area = a;
+                        *best = t;
+                    }
+                }
+                t = (*t).next;
+            }
+            d = (*d).next;
+        }
+        mnCharSel_PcBestTex(jobj_child(j), best, area, depth + 1);
+        j = if depth == 0 { null_mut() } else { jobj_next(j) };
+    }
+}
+
+/// The first texture of joint `part`'s own meshes (not its children).
+unsafe fn mnCharSel_PcOwnTex(j: *mut HSD_JObj) -> *mut HSD_TObj {
+    let mut d = if !j.is_null() { ext::HSD_JObjGetDObj(j) } else { null_mut() };
+    while !d.is_null() {
+        let mut t: *mut HSD_TObj = if !(*d).mobj.is_null() { (*(*d).mobj).tobj } else { null_mut() };
+        while !t.is_null() {
+            if !(*t).imagedesc.is_null() && !(*(*t).imagedesc).image_ptr.is_null() {
+                return t;
+            }
+            t = (*t).next;
+        }
+        d = (*d).next;
+    }
+    null_mut()
+}
+
+/// The last part's TEV colour 0 (retail's hand: the navy its shading blends from).
+static mut mnCharSel_PcCursorLo: u32 = 0;
+pub unsafe fn mnCharSel_PcArtCursorLo() -> u32 {
+    mnCharSel_PcCursorLo
+}
+
+/// Retail's cursor art. `which` 0: the hand (part 2 its pose, frame = retail's x5 state; part 3 its
+/// port tag, frame = colour + port * 4), 1: the coin (part 4, frame = port * 4, 16 CPU). The image
+/// and palette at that frame, and the joint's translation and scale (retail units) so the caller
+/// can place the parts as retail does. 0 when the disc has no such art.
+pub unsafe fn mnCharSel_PcArtCursor(
+    which: i32,
+    part: i32,
+    frame: f32,
+    img: *mut *mut HSD_ImageDesc,
+    tlut: *mut *mut HSD_Tlut,
+    geo: *mut f32,
+    rgba: *mut u32,
+) -> i32 {
+    let root = if which == 0 { mnCharSel_PcHand } else { mnCharSel_PcToken };
+    let j: *mut HSD_JObj;
+    let t: *mut HSD_TObj;
+    *img = null_mut();
+    *tlut = null_mut();
+    if root.is_null() {
+        return 0;
+    }
+    j = animateJoint(root, part as u8, TOBJ_MASK | MOBJ_MASK, frame);
+    t = mnCharSel_PcOwnTex(j);
+    if !rgba.is_null() {
+        // retail's colour at that frame: the texture's TEV constant (the port tags, the coin), else
+        // the material's diffuse
+        let d = if !j.is_null() { ext::HSD_JObjGetDObj(j) } else { null_mut() };
+        *rgba = 0xFFFFFFFFu32;
+        let mut body = d;
+        while !body.is_null() && !(*body).mobj.is_null() && !(*(*body).mobj).tobj.is_null() {
+            body = (*body).next;
+        }
+        if which == 1 && part == 3 && !body.is_null() && !(*body).mobj.is_null() && !(*(*body).mobj).mat.is_null() {
+            // the coin's untextured body: its animated colour
+            let c = (*(*(*body).mobj).mat).diffuse;
+            *rgba = ((c.r as u32) << 24) | ((c.g as u32) << 16) | ((c.b as u32) << 8) | 0xFFu32;
+        } else if !t.is_null() && !(*t).tev.is_null() {
+            let k = (*(*t).tev).konst;
+            let l = (*(*t).tev).tev0;
+            mnCharSel_PcCursorLo = ((l.r as u32) << 24) | ((l.g as u32) << 16) | ((l.b as u32) << 8) | 0xFFu32;
+            *rgba = ((k.r as u32) << 24) | ((k.g as u32) << 16) | ((k.b as u32) << 8) | 0xFFu32;
+        } else if !d.is_null() && !(*d).mobj.is_null() && !(*(*d).mobj).mat.is_null() {
+            let c = (*(*(*d).mobj).mat).diffuse;
+            let a: f32 = (*(*(*d).mobj).mat).alpha;
+            *rgba = ((c.r as u32) << 24)
+                | ((c.g as u32) << 16)
+                | ((c.b as u32) << 8)
+                | (if a <= 0.0f32 {
+                    0
+                } else if a >= 1.0f32 {
+                    255
+                } else {
+                    f2i32((a * 255.0f32) as f64)
+                }) as u32;
+        }
+    }
+    mnCharSel_PcImage(t, img, tlut);
+    if !geo.is_null() && !j.is_null() {
+        *geo.add(0) = HSD_JObjGetTranslationX(j);
+        *geo.add(1) = HSD_JObjGetTranslationY(j);
+        *geo.add(2) = super::hsd::HSD_JObjGetScaleX(j);
+        *geo.add(3) = super::hsd::HSD_JObjGetScaleY(j);
+    }
+    (!t.is_null()) as i32
+}
+
+/// Once per open: what the hand and coin models hold (the log line is the map for
+/// `mnCharSel_PcArtCursor`).
+unsafe fn mnCharSel_PcCursorProbe() {
+    let mut w: i32 = 0;
+    while w < 2 {
+        let root = if w == 0 { mnCharSel_PcHand } else { mnCharSel_PcToken };
+        let mut k: i32 = 0;
+        while !root.is_null() && k < 8 {
+            let mut j: *mut HSD_JObj = null_mut();
+            lb_find(root, &mut j, k);
+            if j.is_null() {
+                break;
+            }
+            let t = mnCharSel_PcOwnTex(j);
+            ext::OSReport(
+                c"frontend: css cursor art %s part %d: t (%.2f %.2f %.2f) s (%.2f %.2f) tex %dx%d fmt %d\n".as_ptr(),
+                &[
+                    Va::P(if w == 0 { c"hand".as_ptr() } else { c"coin".as_ptr() }.cast()),
+                    Va::I32(k),
+                    Va::D(HSD_JObjGetTranslationX(j) as f64),
+                    Va::D(HSD_JObjGetTranslationY(j) as f64),
+                    Va::D(HSD_JObjGetTranslationZ(j) as f64),
+                    Va::D(super::hsd::HSD_JObjGetScaleX(j) as f64),
+                    Va::D(super::hsd::HSD_JObjGetScaleY(j) as f64),
+                    Va::I32(if !t.is_null() { (*(*t).imagedesc).width as i32 } else { 0 }),
+                    Va::I32(if !t.is_null() { (*(*t).imagedesc).height as i32 } else { 0 }),
+                    Va::I32(if !t.is_null() { (*(*t).imagedesc).format as i32 } else { -1 }),
+                ],
+            );
+            k += 1;
+        }
+        w += 1;
+    }
+}
+
+/// Open the art: `archive` is MnSlChr, loaded by the caller for the scene. Returns how many icons
+/// the roster has (retail 25, m-ex mexData's count), 0 on failure.
+pub unsafe fn mnCharSel_PcArtOpen(archive: *mut HSD_Archive) -> i32 {
+    let tbl: *mut MnSelectChrDataTable;
+    let m: *mut MnSelectChrModels;
+    let n: i32;
+    mnCharSel_PcMenu = null_mut();
+    mnCharSel_PcIcons = null_mut();
+    mnCharSel_PcMex = null_mut();
+    mnCharSel_PcTable = icon_at(0);
+    mnCharSel_PcCount = 0;
+    if archive.is_null() {
+        return 0;
+    }
+    tbl = ext::HSD_ArchiveGetPublicAddress(archive, c"MnSelectChrDataTable".as_ptr()) as *mut MnSelectChrDataTable;
+    if tbl.is_null() {
+        return 0;
+    }
+    m = addr_of_mut!((*tbl).models);
+    mnCharSel_PcMenu = ext::HSD_JObjLoadJoint((*m).menu.joint);
+    add_model_anims(mnCharSel_PcMenu, addr_of!((*m).menu));
+    ext::HSD_JObjReqAnimAll(mnCharSel_PcMenu, 0.0f32);
+    ext::HSD_JObjAnimAll(mnCharSel_PcMenu);
+    mnCharSel_PcIcons = mnCharSel_PcMenu;
+    mnCharSel_PcHand = if !(*m).hand.joint.is_null() { ext::HSD_JObjLoadJoint((*m).hand.joint) } else { null_mut() };
+    if !mnCharSel_PcHand.is_null() {
+        add_model_anims(mnCharSel_PcHand, addr_of!((*m).hand));
+        ext::HSD_JObjReqAnimAll(mnCharSel_PcHand, 0.0f32);
+        ext::HSD_JObjAnimAll(mnCharSel_PcHand);
+    }
+    mnCharSel_PcToken = if !(*m).token.joint.is_null() { ext::HSD_JObjLoadJoint((*m).token.joint) } else { null_mut() };
+    if !mnCharSel_PcToken.is_null() {
+        add_model_anims(mnCharSel_PcToken, addr_of!((*m).token));
+        ext::HSD_JObjReqAnimAll(mnCharSel_PcToken, 0.0f32);
+        ext::HSD_JObjAnimAll(mnCharSel_PcToken);
+    }
+    mnCharSel_PcCursorProbe();
+    mnCharSel_PcCount = SELKIND_COUNT as i32; // retail: icons[] as authored (never rewritten there)
+
+    mnCharSel_PcMex = ext::HSD_ArchiveGetPublicAddress(archive, c"mexSelectChr".as_ptr()) as *mut MexSelectChr;
+    n = if !mnCharSel_PcMex.is_null() { ext::Mex_CssIconCount() } else { 0 };
+    if n > 0 && n <= CSS_ICON_MAX as i32 && !ext::Mex_CssIconTable().is_null() {
+        mnCharSel_PcTable = ext::Mex_CssIconTable() as *mut CSSIcon; // char_kind is the EXTERNAL id here
+        mnCharSel_PcCount = n;
+        mnCharSel_PcIcons = ext::HSD_JObjLoadJoint((*mnCharSel_PcMex).icon_joint);
+        ext::HSD_JObjAddAnimAll(mnCharSel_PcIcons, (*mnCharSel_PcMex).icon_animjoint, (*mnCharSel_PcMex).icon_matanim, null_mut());
+        ext::HSD_JObjReqAnimAll(mnCharSel_PcIcons, 0.0f32);
+        ext::HSD_JObjAnimAll(mnCharSel_PcIcons);
+        {
+            let mut j: *mut HSD_JObj = null_mut();
+            lb_find(mnCharSel_PcMenu, &mut j, (*door(0)).costume_joint as i32);
+            if !j.is_null() && !(*j).u.dobj.is_null() && !(*mnCharSel_PcMex).csp_matanim.is_null() {
+                ext::HSD_DObjAddAnimAll((*j).u.dobj, (*mnCharSel_PcMex).csp_matanim, null_mut());
+            }
+        }
+    } else {
+        mnCharSel_PcMex = null_mut();
+    }
+    mnCharSel_PcCount
+}
+
+/// A texture object's current image and palette (an animated palette is tluttbl[tlut_no]).
+unsafe fn mnCharSel_PcImage(t: *mut HSD_TObj, img: *mut *mut HSD_ImageDesc, tlut: *mut *mut HSD_Tlut) {
+    *img = if !t.is_null() { (*t).imagedesc } else { null_mut() };
+    *tlut = if t.is_null() {
+        null_mut()
+    } else if (*t).tlut_no != TOBJ_TLUT_NONE && !(*t).tluttbl.is_null() {
+        *(*t).tluttbl.add((*t).tlut_no as usize)
+    } else {
+        (*t).tlut
+    };
+}
+
+/// Icon `i` of the roster: its CharacterKind (-1 = the port has no such fighter), its m-ex external
+/// id (-1 retail), and the texture showing it. Returns 0 past the end.
+pub unsafe fn mnCharSel_PcArtIcon(i: i32, ck: *mut i32, ext_id: *mut i32, img: *mut *mut HSD_ImageDesc, tlut: *mut *mut HSD_Tlut) -> i32 {
+    let row: *mut CSSIcon;
+    let mut j: *mut HSD_JObj = null_mut();
+    let mut t: *mut HSD_TObj = null_mut();
+    let mut area: i32 = 0;
+    if i < 0 || i >= mnCharSel_PcCount || mnCharSel_PcIcons.is_null() {
+        return 0;
+    }
+    row = mnCharSel_PcTable.add(i as usize);
+    if !mnCharSel_PcMex.is_null() {
+        *ext_id = (*row).char_kind as i32;
+        *ck = ext::Mex_ExtToPortCKind((*row).char_kind as i32);
+    } else {
+        *ext_id = -1;
+        *ck = (*row).char_kind as i32;
+    }
+    lb_find(mnCharSel_PcIcons, &mut j, (*row).joint_id_vs as i32);
+    if !j.is_null() {
+        mnCharSel_PcBestTex(j, &mut t, &mut area, 0);
+    }
+    mnCharSel_PcImage(t, img, tlut);
+    1
+}
+
+/// The portrait (CSP) of fighter `ck` in `costume`: the portrait joint animated to its frame.
+pub unsafe fn mnCharSel_PcArtPortrait(mut ck: i32, mut costume: i32, img: *mut *mut HSD_ImageDesc, tlut: *mut *mut HSD_Tlut) -> i32 {
+    if ext::Geno_DefineBaseCK(ck) >= 0 {
+        ck = ext::Geno_DefineArtBaseCK(ck);
+    }
+    let j: *mut HSD_JObj;
+    let mut t: *mut HSD_TObj = null_mut();
+    let mut frame: i32 = -1;
+    let mut area: i32 = 0;
+    *img = null_mut();
+    *tlut = null_mut();
+    if mnCharSel_PcMenu.is_null() || ck < 0 {
+        return 0;
+    }
+    if costume < 0 {
+        costume = 0;
+    }
+    if !mnCharSel_PcMex.is_null() {
+        let saved = mnCharSel_Mex;
+        let ext_kind = ext::Mex_PortCKindToExt(ck);
+        if ext_kind < 0 {
+            return 0;
+        }
+        mnCharSel_Mex = mnCharSel_PcMex; // the frame rule reads the CSS's descriptor
+        frame = mnCharSel_MexCspFrame(ext_kind, costume);
+        mnCharSel_Mex = saved;
+    } else {
+        // retail's CSS has no Sheik: she shares Zelda's slot, so her card shows Zelda's
+        let want: i32 = if ck == CKind_Seak as i32 { CKind_Zelda as i32 } else { ck };
+        let mut i: i32 = 0;
+        while i < SELKIND_COUNT as i32 {
+            if (*icon_at(i as usize)).char_kind as i32 == want {
+                // The retail CSP atlas has six rows; extra skins use its default.
+                frame = (*icon_at(i as usize)).ft_hudindex as i32 + (if costume < 6 { costume } else { 0 }) * 0x1E;
+                break;
+            }
+            i += 1;
+        }
+        if frame < 0 {
+            return 0;
+        }
+    }
+    j = animateJoint(mnCharSel_PcMenu, (*door(0)).costume_joint, TOBJ_MASK, frame as f32);
+    if !j.is_null() {
+        mnCharSel_PcBestTex(j, &mut t, &mut area, 0);
+    }
+    mnCharSel_PcImage(t, img, tlut);
+    (!t.is_null()) as i32
 }
 

@@ -31,9 +31,9 @@ pub mod ext {
         fn HSD_ObjAlloc(a0: *mut HSD_ObjAllocData) -> *mut c_void = crate::tu::objalloc::HSD_ObjAlloc(a0);
         fn HSD_ObjFree(a0: *mut HSD_ObjAllocData, a1: *mut c_void) = crate::tu::objalloc::HSD_ObjFree(a0, a1);
         fn HSD_FObjRemoveAll(a0: *mut HSD_FObj) = crate::tu::fobj::HSD_FObjRemoveAll(a0);
-        fn HSD_FObjReqAnimAll(a0: *mut HSD_FObj, a1: f32);
-        fn HSD_FObjStopAnimAll(a0: *mut HSD_FObj, a1: *mut c_void, a2: HSD_ObjUpdateFunc, a3: f32);
-        fn HSD_FObjInterpretAnimAll(a0: *mut HSD_FObj, a1: *mut c_void, a2: HSD_ObjUpdateFunc, a3: f32);
+        fn HSD_FObjReqAnimAll(a0: *mut HSD_FObj, a1: f32) = crate::tu::fobj::HSD_FObjReqAnimAll(a0, a1);
+        fn HSD_FObjStopAnimAll(a0: *mut HSD_FObj, a1: *mut c_void, a2: HSD_ObjUpdateFunc, a3: f32) = crate::tu::fobj::HSD_FObjStopAnimAll(a0, a1, a2, a3);
+        fn HSD_FObjInterpretAnimAll(a0: *mut HSD_FObj, a1: *mut c_void, a2: HSD_ObjUpdateFunc, a3: f32) = crate::tu::fobj::HSD_FObjInterpretAnimAll(a0 as _, a1, a2, a3);
         fn HSD_FObjLoadDesc(a0: *mut _HSD_FObjDesc) -> *mut HSD_FObj = crate::tu::fobj::HSD_FObjLoadDesc(a0 as _);
         fn HSD_IDGetDataFromTable(a0: u32, a1: HSD_IDKey, a2: *mut i32) -> *mut c_void = crate::tu::id::HSD_IDGetDataFromTable(a0 as _, a1, a2);
         fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj = crate::tu::jobj::HSD_JObjLoadJoint(a0);

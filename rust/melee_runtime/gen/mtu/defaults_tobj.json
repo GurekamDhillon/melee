@@ -1,0 +1,21 @@
+{
+ "HSD_AObjLoadDesc": "{ let (a0,) = (a0,); crate::tu::aobj::HSD_AObjLoadDesc(a0) }",
+ "HSD_AObjRemove": "{ let (a0,) = (a0,); crate::tu::aobj::HSD_AObjRemove(a0) }",
+ "HSD_AObjReqAnim": "{ let (a0, a1) = (a0, a1); crate::tu::aobj::HSD_AObjReqAnim(a0, a1) }",
+ "HSD_CObjGetCurrent": "crate::tu::cobj::HSD_CObjGetCurrent()",
+ "HSD_Free": "{ let (a0,) = (a0,); crate::tu::memory::HSD_Free(a0) }",
+ "HSD_MemAlloc": "{ let (a0,) = (a0,); crate::tu::memory::HSD_MemAlloc(a0) }",
+ "HSD_Panic": "{ let (a0, a1, a2) = (a0, a1, a2); crate::tu::debug::HSD_Panic(a0 as _, a1, a2 as _) }",
+ "HSD_TExpTev": "{ let (a0,) = (a0,); crate::tu::texp::HSD_TExpTev(a0) }",
+ "hsdAllocMemPiece": "{ let (a0,) = (a0,); crate::tu::class::hsdAllocMemPiece(a0) }",
+ "hsdFreeMemPiece": "{ let (a0, a1) = (a0, a1); crate::tu::class::hsdFreeMemPiece(a0, a1) }",
+ "hsdInitClassInfo": "{ let (a0, a1, a2, a3, a4, a5) = (a0, a1, a2, a3, a4, a5); crate::tu::class::hsdInitClassInfo(a0 as _, a1 as _, a2 as _, a3 as _, a4, a5) }",
+ "hsdIsDescendantOf": "{ let (a0, a1) = (a0, a1); crate::tu::class::hsdIsDescendantOf(a0, a1) as _ }",
+ "hsdNew": "{ let (a0,) = (a0,); crate::tu::class::hsdNew(a0 as _) }",
+ "hsdSearchClassInfo": "{ let (a0,) = (a0,); crate::tu::class::hsdSearchClassInfo(a0 as _) as _ }",
+ "PSMTXConcat": "crate::tu::mtx_pc::raw::PSMTXConcat(a0 as _, a1 as _, a2 as _)",
+ "PSMTXTrans": "crate::tu::mtx_pc::raw::PSMTXTrans(a0 as _, a1, a2, a3)",
+ "PSMTXScale": "crate::tu::mtx_pc::raw::PSMTXScale(a0 as _, a1, a2, a3)",
+ "PSMTXMultVecSR": "crate::tu::mtx_pc::raw::PSMTXMultVecSR(a0 as _, a1, a2)",
+ "PSVECNormalize": "crate::tu::mtx_pc::raw::PSVECNormalize(a0, a1)"
+}

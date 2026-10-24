@@ -69,3 +69,7 @@ harness = false
 [[test]]
 name = "tu_mobj"
 harness = false
+
+[[test]]
+name = "tu_tobj"
+harness = false

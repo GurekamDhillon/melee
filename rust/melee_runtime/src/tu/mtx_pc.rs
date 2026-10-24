@@ -73,6 +73,15 @@ pub mod raw {
     pub unsafe fn PSMTXTrans(m: *mut [f32; 4], x: f32, y: f32, z: f32) {
         m.cast::<Mtx>().write(mtx::trans(x, y, z));
     }
+    /// `PSMTXScale(m, x, y, z)`.
+    pub unsafe fn PSMTXScale(m: *mut [f32; 4], x: f32, y: f32, z: f32) {
+        m.cast::<Mtx>().write(mtx::scale(x, y, z));
+    }
+    /// `PSMTXMultVecSR(m, src, dst)`: the rotation / scale part of `m` only.
+    pub unsafe fn PSMTXMultVecSR(m: *mut [f32; 4], src: *mut Vec, dst: *mut Vec) {
+        let r = mtx::mult_vec_sr(core::slice::from_raw_parts(m, 3), &v3(src));
+        put(dst, r);
+    }
     /// `PSMTXTranspose(src, xPose)` (the 3x3 part; the translation column is cleared).
     pub unsafe fn PSMTXTranspose(src: *mut [f32; 4], x_pose: *mut [f32; 4]) {
         let r = mtx::transpose(&rd(src));

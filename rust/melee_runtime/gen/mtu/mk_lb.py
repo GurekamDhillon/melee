@@ -32,7 +32,7 @@ def world_c(tu, pools):
     for t, a, n in pools:
         c.append(f"static {ctype(tu, t)} {a}[{n}];")
     c += ["static " + ("Vec3" if "Vec3" in tu.types else "struct { float x, y, z; }") + " VA[4];", "static u8 U8A[16];", "static int IA[4];", "static u32 UA[4];", "static float FA[4];",
-          "static unsigned char BUF[256];", "static char STRS[4][64] = { \"a.dat\", \"sym\", \"LbAd.dat\", \"x\" };", ""]
+          "static unsigned char BUF[256];", "static void* PPA[4];", "static char STRS[4][64] = { \"a.dat\", \"sym\", \"LbAd.dat\", \"x\" };", ""]
     for t, a, n in pools:
         c.append(f"static {ctype(tu, t)}* pick_{t}(void) {{ u32 r = rnd(); return &{a}[(r >> 8) % {n}]; }}")
         c.append(f"static {ctype(tu, t)}* picko_{t}(void) {{ u32 r = rnd(); return (r % 6) == 0 ? 0 : &{a}[(r >> 8) % {n}]; }}")
@@ -66,13 +66,13 @@ def world_c(tu, pools):
     ]
     for t, a, n in pools:
         c.append(f"    preg({a}, sizeof {a});")
-    c += ["    preg(VA, sizeof VA); preg(U8A, sizeof U8A); preg(IA, sizeof IA); preg(UA, sizeof UA); preg(FA, sizeof FA); preg(BUF, sizeof BUF); preg(STRS, sizeof STRS);", "}", ""]
+    c += ["    preg(VA, sizeof VA); preg(U8A, sizeof U8A); preg(IA, sizeof IA); preg(UA, sizeof UA); preg(FA, sizeof FA); preg(BUF, sizeof BUF); preg(STRS, sizeof STRS); preg(PPA, sizeof PPA);", "}", ""]
     c += ["static void setup_world(void)", "{", "    int i;", "    (void) i;"]
     for t, a, n in pools:
         c.append(f"    zero({a}, sizeof {a});")
     c += ["    for (i = 0; i < 16; i++) { U8A[i] = (u8) rnd(); }",
           "    for (i = 0; i < 4; i++) { IA[i] = (int) fv(); UA[i] = fv(); FA[i] = rw(); VA[i].x = rw(); VA[i].y = rw(); VA[i].z = rw(); }",
-          "    for (i = 0; i < 256; i++) BUF[i] = (unsigned char) rnd();", "    BUF[255] = 0;"]
+          "    for (i = 0; i < 256; i++) BUF[i] = (unsigned char) rnd();", "    BUF[255] = 0;", "    for (i = 0; i < 4; i++) PPA[i] = 0;"]
     for t, a, n in pools:
         c.append(f"    for (i = 0; i < {n}; i++) fill_{t}(&{a}[i]);")
     c += ["    fillg_all();", "    fillo_all();", "}", ""]
@@ -81,7 +81,7 @@ def world_c(tu, pools):
         c.append(f"    for (i = 0; i < {n}; i++) hash_{t}(&{a}[i]);")
     c += ["    for (i = 0; i < 4; i++) { HM(B(VA[i].x)); HM(B(VA[i].y)); HM(B(VA[i].z)); HM(B(FA[i])); HM((u32) IA[i]); HM(UA[i]); }",
           "    for (i = 0; i < 16; i++) HM(U8A[i]);",
-          "    for (i = 0; i < 256; i++) HM(BUF[i]);",
+          "    for (i = 0; i < 256; i++) HM(BUF[i]);", "    for (i = 0; i < 4; i++) HM(PI(PPA[i]));",
           "    hashg_all();", "    hasho_all();", "}", ""]
     return "\n".join(c)
 
@@ -90,7 +90,7 @@ def world_rs(pools):
     r = ["pub static mut VA: [Vec3; 4] = unsafe { core::mem::zeroed() };",
          "pub static mut U8A: [u8; 16] = [0; 16];", "pub static mut IA: [i32; 4] = [0; 4];", "pub static mut UA: [u32; 4] = [0; 4];",
          "pub static mut FA: [f32; 4] = [0.0; 4];",
-         "pub static mut BUF: [u8; 256] = [0; 256];",
+         "pub static mut BUF: [u8; 256] = [0; 256];", "pub static mut PPA: [*mut c_void; 4] = [core::ptr::null_mut(); 4];",
          "pub static mut STRS: [[u8; 64]; 4] = [[0; 64]; 4];"]
     for t, a, n in pools:
         r.append(f"pub static mut {a}: [{t}; {n}] = unsafe {{ core::mem::zeroed() }};")
@@ -125,14 +125,14 @@ def world_rs(pools):
     for t, a, n in pools:
         r.append(f"        preg(&raw const {a}, core::mem::size_of_val(&{a}));")
     r += ["        preg(&raw const VA, core::mem::size_of_val(&VA)); preg(&raw const U8A, 16); preg(&raw const IA, 16); preg(&raw const UA, 16); preg(&raw const FA, 16);",
-          "        preg(&raw const BUF, 256); preg(&raw const STRS, core::mem::size_of_val(&STRS));", "    }", "}", ""]
+          "        preg(&raw const BUF, 256); preg(&raw const STRS, core::mem::size_of_val(&STRS)); preg(&raw const PPA, core::mem::size_of_val(&PPA));", "    }", "}", ""]
     r += ["pub unsafe fn setup_world() {"]
     for t, a, n in pools:
         r.append(f"    {a} = core::mem::zeroed();")
     r += ["    for (k, st) in [&b\"a.dat\"[..], &b\"sym\"[..], &b\"LbAd.dat\"[..], &b\"x\"[..]].iter().enumerate() { STRS[k] = [0; 64]; STRS[k][..st.len()].copy_from_slice(st); }",
           "    for i in 0..16 { U8A[i] = rnd() as u8; }",
           "    for i in 0..4 { IA[i] = fv() as i32; UA[i] = fv(); FA[i] = rw(); VA[i].x = rw(); VA[i].y = rw(); VA[i].z = rw(); }",
-          "    for i in 0..256 { BUF[i] = rnd() as u8; }", "    BUF[255] = 0;"]
+          "    for i in 0..256 { BUF[i] = rnd() as u8; }", "    BUF[255] = 0;", "    for i in 0..4 { PPA[i] = core::ptr::null_mut(); }"]
     for t, a, n in pools:
         r.append(f"    for i in 0..{n} {{ g::fill_{t}(&mut {a}[i]); }}")
     r += ["    g::fillg_all();", "    g::fillo_all();", "}", ""]
@@ -141,7 +141,7 @@ def world_rs(pools):
         r.append(f"    for i in 0..{n} {{ g::hash_{t}(&{a}[i]); }}")
     r += ["    for i in 0..4 { hm(VA[i].x.to_bits()); hm(VA[i].y.to_bits()); hm(VA[i].z.to_bits()); hm(FA[i].to_bits()); hm(IA[i] as u32); hm(UA[i]); }",
           "    for i in 0..16 { hm(U8A[i] as u32); }",
-          "    for i in 0..256 { hm(BUF[i] as u32); }",
+          "    for i in 0..256 { hm(BUF[i] as u32); }", "    for i in 0..4 { hm(pi(PPA[i])); }",
           "    g::hashg_all();", "    g::hasho_all();", "}", ""]
     return "\n".join(r)
 
@@ -205,6 +205,8 @@ def bind(ptype, pools):
                 return pn[n[1:]]
             if n == "Vec3":
                 return ("&VA[rnd() % 4]", "&raw mut VA[(rnd() % 4) as usize]")
+        if pt.kind == T.POINTER:
+            return ("(void*) &PPA[fv() % 4]", "(&raw mut PPA[(fv() % 4) as usize]) as *mut _")
         if pt.kind == T.VOID:
             return ("(void*) BUF", "(&raw mut BUF) as *mut c_void")
         if pt.kind == T.FLOAT:

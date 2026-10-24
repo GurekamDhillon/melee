@@ -61,7 +61,7 @@ pub mod ext {
     fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32;
     fn ftLib_800865CC(a0: *mut HSD_GObj) -> i32;
     fn ftLib_800867D8(a0: *mut HSD_GObj) -> bool;
-    fn ftLib_80086794(a0: *mut HSD_GObj) -> *mut HSD_GObj;
+    fn ftLib_GetItem(a0: *mut HSD_GObj) -> *mut HSD_GObj;
     fn ftLib_80086960(a0: *mut HSD_GObj) -> bool;
     fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8;
     fn ftLib_80087120(a0: *mut HSD_GObj) -> i32;
@@ -840,7 +840,7 @@ pub fn fn_8003EE2C(arg0: i32, arg1: i32) {
         }
 
         {
-            let item_gobj = ext::ftLib_80086794(temp_r30);
+            let item_gobj = ext::ftLib_GetItem(temp_r30);
             if !item_gobj.is_null() {
                 if match_item_kind(ext::itGetKind(item_gobj)) != -1 && ext::it_8026B30C(item_gobj) != 5 {
                     (*temp_r31).xD44 = (*temp_r31).xD44.wrapping_add(1);

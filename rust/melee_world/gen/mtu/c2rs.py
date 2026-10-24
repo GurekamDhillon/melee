@@ -578,6 +578,38 @@ class Tr:
         dn = c.get_declaration().spelling
         return dn if dn in RECS else None
 
+    def expr_rec(self, c):
+        """Rust record name of the (struct / pointer to struct) value of expression c"""
+        t = c.type
+        n = norm(t)
+        if n.kind == T.POINTER:
+            t = n.get_pointee()
+        r = self.rec_name(t)
+        if r:
+            return r
+        c = strip(c)
+        while c.kind == K.UNEXPOSED_EXPR and len(expr_children(c)) == 1:
+            c = strip(expr_children(c)[0])
+        if c.kind == K.MEMBER_REF_EXPR:
+            ch = expr_children(c)
+            pr = self.expr_rec(ch[0])
+            if pr:
+                path = self.find_path(pr, c.spelling)
+                if path:
+                    cur = pr
+                    for hop in path:
+                        ft = RECS.get(cur, {}).get(hop)
+                        if ft is None:
+                            return None
+                        ft = ft.strip()
+                        if ft.startswith("[") and ft.endswith("]") and ";" in ft:
+                            ft = ft[1:ft.rindex(";")]
+                        if ft.startswith("*mut "):
+                            ft = ft[5:]
+                        cur = ft.strip()
+                    return cur if cur in RECS else None
+        return None
+
     def find_path(self, rec, field, seen=0):
         """path of Rust field names from record `rec` to member `field` (through anonymous members)"""
         flds = RECS.get(rec, {})
@@ -613,7 +645,7 @@ class Tr:
         rt = bt.get_pointee() if arrow else ch[0].type
         fld = c.referenced
         name = c.spelling
-        rec = self.rec_name(rt)
+        rec = self.rec_name(rt) or self.expr_rec(ch[0])
         if rec is None and ctype(rt).kind == T.RECORD and ctype(rt).get_declaration().location.file is not None and \
                 self.is_main(ctype(rt).get_declaration()) and not ctype(rt).get_declaration().is_anonymous():
             pre = f"(*{base.p()})" if arrow else base.p()
@@ -1187,11 +1219,13 @@ class Tr:
             return s
         if k in (K.FOR_STMT, K.WHILE_STMT, K.DO_STMT):
             return self.loop(c, ind)
+        if k == K.SWITCH_STMT:
+            return self.switch(c, ind)
         if k == K.BREAK_STMT:
             lp = self.loops[-1]
             return f"break {lp[0]};"
         if k == K.CONTINUE_STMT:
-            lp = self.loops[-1]
+            lp = [x for x in self.loops if x[2] == "loop"][-1]
             return f"break {lp[1]};"
         if k == K.GOTO_STMT:
             lab = [y.spelling for y in c.get_children() if y.kind == K.LABEL_REF][0]
@@ -1247,7 +1281,7 @@ class Tr:
         self.tmp += 1
         lab = f"'l{self.tmp}"
         cont = f"'c{self.tmp}" if uc else None
-        self.loops.append((lab, cont))
+        self.loops.append((lab, cont, "loop"))
         try:
             init = inc = None
             if k == K.WHILE_STMT:
@@ -1276,6 +1310,73 @@ class Tr:
                 return "{" + NL + q + self.stmt(init, i2) + NL + q + text + NL + p + "}"
             incs = ("    " * (ind + 1) + self.stmt(inc, ind + 1) + NL) if inc is not None else ""
             return f"{lp}while {cond} {{" + NL + inner(ind + 1) + incs + p + "}"
+        finally:
+            self.loops.pop()
+
+    def switch(self, c, ind):
+        p = "    " * ind
+        ch = children(c)
+        cond = self.E(ch[0])
+        if cond.isbool:
+            cond = self.conv(cond, self.int_t())
+        body = ch[1]
+        stmts = children(body) if body.kind == K.COMPOUND_STMT else [body]
+        groups = []  # [labels, [stmts]]
+        cur = [None]
+
+        def case_pat(x):
+            if x.kind == K.DEFAULT_STMT:
+                return "_"
+            ce = strip(expr_children(x)[0])
+            v = evaluate(ce)
+            if v is None:
+                raise NotImplementedError("case value")
+            return str(v[1]) if int(v[1]) >= 0 else "(" + str(v[1]) + ")"
+
+        def add(x):
+            if x.kind in (K.CASE_STMT, K.DEFAULT_STMT):
+                if cur[0] is None or cur[0][1]:
+                    cur[0] = [[], []]
+                    groups.append(cur[0])
+                cur[0][0].append(case_pat(x))
+                kids = children(x)
+                inner = kids[-1] if x.kind == K.CASE_STMT else (kids[0] if kids else None)
+                if inner is not None and inner.kind in (K.CASE_STMT, K.DEFAULT_STMT):
+                    add(inner)
+                elif inner is not None:
+                    cur[0][1].append(inner)
+            else:
+                if cur[0] is None:
+                    raise NotImplementedError("statement before first case")
+                cur[0][1].append(x)
+        for x in stmts:
+            add(x)
+        self.tmp += 1
+        lab = "'s" + str(self.tmp)
+        self.loops.append((lab, None, "switch"))
+        try:
+            arms = []
+            for gi, (pats, sts) in enumerate(groups):
+                last = sts[-1] if sts else None
+                term = (K.BREAK_STMT, K.RETURN_STMT, K.CONTINUE_STMT, K.GOTO_STMT)
+                ends = last is not None and last.kind in term
+                if last is not None and last.kind == K.COMPOUND_STMT and children(last):
+                    ends = ends or children(last)[-1].kind in term
+                if not ends and gi != len(groups) - 1:
+                    raise NotImplementedError("switch fallthrough")
+                body_st = sts[:-1] if (last is not None and last.kind == K.BREAK_STMT) else sts
+                arms.append((pats, body_st))
+            has_default = any("_" in a[0] for a in arms)
+            txt = lab + ": {" + NL + p + "    match " + cond.code + " {" + NL
+            for pats, body_st in arms:
+                pat = "_" if "_" in pats else " | ".join(pats)
+                txt += p + "        " + pat + " => {" + NL
+                txt += self.seq(body_st, ind + 3)
+                txt += p + "        }" + NL
+            if not has_default:
+                txt += p + "        _ => {}" + NL
+            txt += p + "    }" + NL + p + "}"
+            return txt
         finally:
             self.loops.pop()
 

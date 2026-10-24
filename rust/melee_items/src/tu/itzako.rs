@@ -46,7 +46,7 @@ pub mod ext {
     fn ftLib_8008770C(a0: *mut HSD_GObj, a1: *mut c_void);
     fn ftLib_80087744(a0: *mut HSD_GObj, a1: *mut c_void);
     fn ftLib_GetMotionId(a0: *mut HSD_GObj) -> i32;
-    fn gm_IsCurrently1PMode() -> i32 => unsafe { crate::tu::itzako::gm_IsCurrently1PMode() as _ };
+    fn gm_IsCurrently1PMode() -> i32;
     fn grLib_801C9E40() -> i32 => unsafe { melee_world::tu::grlib::grLib_801C9E40() };
     fn grLib_801C9E50(a0: i16) => unsafe { melee_world::tu::grlib::grLib_801C9E50(a0) };
     fn grZakoGenerator_801CAC14(a0: *mut HSD_GObj) => unsafe { melee_world::tu::grzakogenerator::grZakoGenerator_801CAC14(a0) };

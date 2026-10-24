@@ -8,6 +8,20 @@ use crate::types::*;
 
 pub type G = *mut HSD_GObj;
 
+/// Callees that a test replaces; unset they are the ports.
+pub mod ext {
+    use crate::types::*;
+    /// Override for `ftCo_800BFFD0(fp, colanim, arg)`; unset = `tu::ftcolanim::ftco_800bffd0`.
+    pub static mut FTCO_800BFFD0: Option<fn(&mut Fighter, i32, i32) -> bool> = None;
+    #[allow(non_snake_case, static_mut_refs)]
+    pub fn ftCo_800BFFD0(fp: &mut Fighter, a: i32, b: i32) -> bool {
+        match unsafe { FTCO_800BFFD0 } {
+            Some(f) => f(fp, a, b),
+            None => crate::tu::ftcolanim::ftco_800bffd0(fp, a, b),
+        }
+    }
+}
+
 #[inline(always)]
 fn fpg<'a>(g: G) -> &'a mut Fighter {
     unsafe { &mut *((*g).user_data as *mut Fighter) }
@@ -108,13 +122,13 @@ pub fn ftColl_8007B62C(gobj: G, arg1: i32) {
     fp.x1988 = arg1;
     match arg1 {
         0 => {
-            crate::tu::ftcolanim::ftco_800bffd0(fp, 1, 0);
+            ext::ftCo_800BFFD0(fp, 1, 0);
         }
         1 => {
-            crate::tu::ftcolanim::ftco_800bffd0(fp, 3, 0);
+            ext::ftCo_800BFFD0(fp, 3, 0);
         }
         2 => {
-            crate::tu::ftcolanim::ftco_800bffd0(fp, 2, 0);
+            ext::ftCo_800BFFD0(fp, 2, 0);
         }
         _ => {}
     }
@@ -127,7 +141,7 @@ pub fn ftColl_8007B760(gobj: G, arg1: i32) {
         fp.x1990 = arg1;
     }
     fp.x198C = 2;
-    crate::tu::ftcolanim::ftco_800bffd0(fp, 9, 0);
+    ext::ftCo_800BFFD0(fp, 9, 0);
 }
 
 /// `ftColl_CreateAbsorbHit(gobj, absorb)`.

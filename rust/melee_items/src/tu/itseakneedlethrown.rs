@@ -17,11 +17,11 @@ use super::kinds_inl::*;
 
 // // BEGIN GENERATED EXT (rust/melee_items/gen/kinds/gen_tu.py; the callees of the C TU)
 pub mod ext {
-    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    #![allow(unreachable_code, non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -29,7 +29,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $( return $fb; )? panic!(concat!("TODO: ", stringify!($name), " is not ported")) }
                 }
             } )*
         };
@@ -37,26 +37,26 @@ pub mod ext {
     ext_fns! {
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn HSD_Randi(a0: i32) -> i32;
-    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj;
-    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
-    fn Item_8026AE84(a0: *mut Item, a1: i32, a2: u8, a3: u8);
-    fn atan2f(a0: f32, a1: f32) -> f32;
+    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
+    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
+    fn Item_8026AE84(a0: *mut Item, a1: i32, a2: u8, a3: u8) => unsafe { crate::tu::item::Item_8026AE84(a0, a1, a2, a3) };
+    fn atan2f(a0: f32, a1: f32) -> f32 => unsafe { melee_runtime::lbtrigf::atan2f(a0, a1) };
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
     fn ftLib_800865CC(a0: *mut HSD_GObj) -> i32;
-    fn it_8026B3A8(a0: *mut HSD_GObj);
-    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
-    fn it_8026BB68(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn it_8026BD6C(a0: *mut HSD_GObj);
-    fn it_8026EA20(a0: *mut HSD_GObj, a1: *mut Vec, a2: *mut Vec, a3: *mut Vec, a4: *mut i32, a5: *mut u32) -> i32;
-    fn it_80272560(a0: *mut HSD_GObj, a1: i32);
-    fn it_80272940(a0: *mut HSD_GObj);
-    fn it_80273130(a0: *mut HSD_GObj) -> i32;
+    fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b3a8(&mut *((*a0).user_data as *mut Item)) };
+    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
+    fn it_8026BB68(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_26B1::it_8026BB68(a0, a1 as _) };
+    fn it_8026BD6C(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026bd6c(&mut *((*a0).user_data as *mut Item)) };
+    fn it_8026EA20(a0: *mut HSD_GObj, a1: *mut Vec, a2: *mut Vec, a3: *mut Vec, a4: *mut i32, a5: *mut u32) -> i32 => unsafe { crate::tu::itgroundcoll::it_8026EA20(a0, a1 as _, a2 as _, a3 as _, a4, a5) };
+    fn it_80272560(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::it_2725::it_80272560(a0, a1) };
+    fn it_80272940(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_80272940(a0) };
+    fn it_80273130(a0: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_80273130(&mut *((*a0).user_data as *mut Item)) as _ };
     fn it_80275158(a0: *mut HSD_GObj, a1: f32);
-    fn it_802762BC(a0: *mut Item);
-    fn lbVector_Mirror(a0: *mut Vec, a1: *mut Vec);
-    fn mpColl_80043558(a0: *mut CollData, a1: i32);
+    fn it_802762BC(a0: *mut Item) => unsafe { crate::item::it_802762bc(&mut *a0) };
+    fn lbVector_Mirror(a0: *mut Vec, a1: *mut Vec) => unsafe { melee_runtime::tu::lbvector::lbVector_Mirror(a0, a1) };
+    fn mpColl_80043558(a0: *mut CollData, a1: i32) => unsafe { melee_world::tu::mpcoll::mpColl_80043558(a0, a1) };
     fn mpGetSpeed(a0: i32, a1: *mut Vec, a2: *mut Vec) -> i32;
-    fn mpLib_80054ED8(a0: i32) -> i32;
+    fn mpLib_80054ED8(a0: i32) -> i32 => unsafe { melee_world::tu::mplib::mpLib_80054ED8(a0) };
     fn mpLineGetNormal(a0: i32, a1: *mut Vec) -> *mut Vec;
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.

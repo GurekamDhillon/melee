@@ -23,11 +23,11 @@ use melee_types::*;
 
 // BEGIN GENERATED EXT (rust/melee_world/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
-    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    #![allow(unreachable_code, non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -35,7 +35,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $( return $fb; )? panic!(concat!("TODO: ", stringify!($name), " is not ported")) }
                 }
             } )*
         };
@@ -46,16 +46,16 @@ pub mod ext {
     fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
     fn HSD_GObjFree(a0: *mut HSD_GObj);
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32);
-    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj;
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) };
+    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj => unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0) };
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);
-    fn HSD_ObjAlloc(a0: *mut _HSD_ObjAllocData) -> *mut c_void;
-    fn HSD_ObjFree(a0: *mut _HSD_ObjAllocData, a1: *mut c_void);
-    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj;
-    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
+    fn HSD_ObjAlloc(a0: *mut _HSD_ObjAllocData) -> *mut c_void => unsafe { melee_runtime::tu::objalloc::HSD_ObjAlloc(a0 as _) };
+    fn HSD_ObjFree(a0: *mut _HSD_ObjAllocData, a1: *mut c_void) => unsafe { melee_runtime::tu::objalloc::HSD_ObjFree(a0 as _, a1) };
+    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
+    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
     fn Item_8026A8EC(a0: *mut HSD_GObj);
-    fn Item_8026AB54(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: u32);
+    fn Item_8026AB54(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: u32) => unsafe { crate::tu::item::Item_8026AB54(a0, a1, a2) };
     fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void);
     fn PSMTXCopy(a0: *mut c_void, a1: *mut c_void);
     fn PSMTXIdentity(a0: *mut c_void);
@@ -70,18 +70,18 @@ pub mod ext {
     fn ftCommon_8007E2F4(a0: *mut Fighter, a1: i16);
     fn ftParts_GetBoneIndex(a0: *mut Fighter, a1: u32) -> u32;
     fn ft_80082E3C(a0: *mut HSD_GObj) -> *mut HSD_GObj;
-    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
-    fn it_80272F7C(a0: *mut HSD_JObj, a1: f32);
-    fn lbAudioAx_800237A8(a0: i32, a1: i32, a2: i32) -> i32;
-    fn lbVector_Normalize(a0: *mut Vec) -> f32;
-    fn mpCheckAllRemap(a0: *mut Vec, a1: *mut i32, a2: *mut u32, a3: *mut Vec, a4: i32, a5: i32, a6: f32, a7: f32, a8: f32, a9: f32) -> i32;
-    fn mpColl_80041EE4(a0: *mut CollData);
-    fn mpColl_800471F8(a0: *mut CollData) -> i32;
-    fn mpColl_8004B108(a0: *mut CollData) -> i32;
-    fn mpColl_SetECBSource_Fixed(a0: *mut CollData, a1: *mut HSD_GObj, a2: f32, a3: f32, a4: f32, a5: f32);
+    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
+    fn it_80272F7C(a0: *mut HSD_JObj, a1: f32) => unsafe { crate::tu::it_2725::it_80272F7C(a0, a1) };
+    fn lbAudioAx_800237A8(a0: i32, a1: i32, a2: i32) -> i32 => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800237A8(a0, a1, a2) };
+    fn lbVector_Normalize(a0: *mut Vec) -> f32 => unsafe { melee_runtime::tu::lbvector::lbVector_Normalize(a0) };
+    fn mpCheckAllRemap(a0: *mut Vec, a1: *mut i32, a2: *mut u32, a3: *mut Vec, a4: i32, a5: i32, a6: f32, a7: f32, a8: f32, a9: f32) -> i32 => unsafe { melee_world::tu::mplib::mpCheckAllRemap(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9) };
+    fn mpColl_80041EE4(a0: *mut CollData) => unsafe { melee_world::tu::mpcoll::mpColl_80041EE4(a0) };
+    fn mpColl_800471F8(a0: *mut CollData) -> i32 => unsafe { melee_world::tu::mpcoll::mpColl_800471F8(a0) };
+    fn mpColl_8004B108(a0: *mut CollData) -> i32 => unsafe { melee_world::tu::mpcoll::mpColl_8004B108(a0) };
+    fn mpColl_SetECBSource_Fixed(a0: *mut CollData, a1: *mut HSD_GObj, a2: f32, a3: f32, a4: f32, a5: f32) => unsafe { melee_world::tu::mpcoll::mpColl_SetECBSource_Fixed(a0, a1, a2, a3, a4, a5) };
     fn mpGetSpeed(a0: i32, a1: *mut Vec, a2: *mut Vec) -> i32;
-    fn mpIsland_8005AB54(a0: i32) -> *mut mp_UnkStruct0;
-    fn mpLib_80054ED8(a0: i32) -> i32;
+    fn mpIsland_8005AB54(a0: i32) -> *mut mp_UnkStruct0 => unsafe { melee_world::tu::mpisland::mpIsland_8005AB54(a0) };
+    fn mpLib_80054ED8(a0: i32) -> i32 => unsafe { melee_world::tu::mplib::mpLib_80054ED8(a0) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

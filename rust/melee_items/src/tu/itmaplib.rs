@@ -8,11 +8,11 @@ use melee_types::*;
 
 // BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
-    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    #![allow(unreachable_code, non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -20,7 +20,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $( return $fb; )? panic!(concat!("TODO: ", stringify!($name), " is not ported")) }
                 }
             } )*
         };
@@ -28,38 +28,38 @@ pub mod ext {
     ext_fns! {
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn PSVECAdd(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec);
-    fn it_8026BB68(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn it_8026BB68(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_26B1::it_8026BB68(a0, a1 as _) };
     fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn it_8026BC90(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn it_8026C100(a0: *mut HSD_GObj) -> *mut CollData;
-    fn it_80272CC0(a0: *mut HSD_GObj, a1: i32) -> *mut HSD_JObj;
-    fn it_80272D40(a0: *mut HSD_GObj) -> i32;
-    fn it_8027321C(a0: *mut HSD_GObj);
-    fn it_80274990(a0: *mut HSD_GObj) -> f32;
-    fn it_80274A64(a0: *mut HSD_GObj);
-    fn it_80275640(a0: *mut HSD_GObj, a1: f32);
-    fn it_80278800(a0: *mut HSD_GObj, a1: i32, a2: i32, a3: *mut Vec, a4: *mut Vec, a5: i32, a6: f32);
-    fn lbVector_Add_xy(a0: *mut Vec, a1: *mut Vec) -> *mut Vec;
-    fn lbVector_Angle(a0: *mut Vec, a1: *mut Vec) -> f32;
-    fn lbVector_AngleXY(a0: *mut Vec, a1: *mut Vec) -> f32;
-    fn lbVector_CrossprodNormalized(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec;
-    fn lbVector_Mirror(a0: *mut Vec, a1: *mut Vec);
-    fn lbVector_NormalizeXY(a0: *mut Vec) -> f32;
-    fn mpCheckMultiple(a0: f32, a1: f32, a2: f32, a3: f32, a4: *mut Vec, a5: *mut i32, a6: *mut u32, a7: *mut Vec, a8: u32, a9: i32, a10: i32) -> i32;
-    fn mpCollGetSpeedCeiling(a0: *mut CollData, a1: *mut Vec) -> i32;
-    fn mpCollGetSpeedFloor(a0: *mut CollData, a1: *mut Vec) -> i32;
-    fn mpCollGetSpeedLeftWall(a0: *mut CollData, a1: *mut Vec) -> i32;
-    fn mpCollGetSpeedRightWall(a0: *mut CollData, a1: *mut Vec) -> i32;
-    fn mpCollSetFacingDir(a0: *mut CollData, a1: i32);
-    fn mpColl_80041EE4(a0: *mut CollData);
-    fn mpColl_80043670(a0: *mut CollData);
-    fn mpColl_80043680(a0: *mut CollData, a1: *mut Vec);
-    fn mpColl_800436E4(a0: *mut CollData, a1: f32);
-    fn mpColl_800471F8(a0: *mut CollData) -> i32;
-    fn mpColl_SetECBSource_Fixed(a0: *mut CollData, a1: *mut HSD_GObj, a2: f32, a3: f32, a4: f32, a5: f32);
+    fn it_8026BC90(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_26B1::it_8026BC90(a0, a1 as _) };
+    fn it_8026C100(a0: *mut HSD_GObj) -> *mut CollData => unsafe { crate::tu::it_26B1::it_8026C100(a0) };
+    fn it_80272CC0(a0: *mut HSD_GObj, a1: i32) -> *mut HSD_JObj => unsafe { crate::itkinds11::it_80272cc0(a0, a1) };
+    fn it_80272D40(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_2725::it_80272D40(a0) };
+    fn it_8027321C(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_8027321C(a0) };
+    fn it_80274990(a0: *mut HSD_GObj) -> f32 => unsafe { crate::itkinds11::it_80274990(a0) };
+    fn it_80274A64(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_80274A64(a0) };
+    fn it_80275640(a0: *mut HSD_GObj, a1: f32) => unsafe { crate::tu::ithitbox::it_80275640(a0, a1) };
+    fn it_80278800(a0: *mut HSD_GObj, a1: i32, a2: i32, a3: *mut Vec, a4: *mut Vec, a5: i32, a6: f32) => unsafe { crate::tu::iteffect::it_80278800(a0, a1, a2, a3 as _, a4 as _, a5, a6) };
+    fn lbVector_Add_xy(a0: *mut Vec, a1: *mut Vec) -> *mut Vec => unsafe { melee_runtime::tu::lbvector::lbVector_Add_xy(a0, a1) };
+    fn lbVector_Angle(a0: *mut Vec, a1: *mut Vec) -> f32 => unsafe { melee_runtime::tu::lbvector::lbVector_Angle(a0, a1) };
+    fn lbVector_AngleXY(a0: *mut Vec, a1: *mut Vec) -> f32 => unsafe { melee_runtime::tu::lbvector::lbVector_AngleXY(a0, a1) };
+    fn lbVector_CrossprodNormalized(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec => unsafe { melee_runtime::tu::lbvector::lbVector_CrossprodNormalized(a0, a1, a2) };
+    fn lbVector_Mirror(a0: *mut Vec, a1: *mut Vec) => unsafe { melee_runtime::tu::lbvector::lbVector_Mirror(a0, a1) };
+    fn lbVector_NormalizeXY(a0: *mut Vec) -> f32 => unsafe { melee_runtime::tu::lbvector::lbVector_NormalizeXY(a0) };
+    fn mpCheckMultiple(a0: f32, a1: f32, a2: f32, a3: f32, a4: *mut Vec, a5: *mut i32, a6: *mut u32, a7: *mut Vec, a8: u32, a9: i32, a10: i32) -> i32 => unsafe { melee_world::tu::mplib::mpCheckMultiple(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) };
+    fn mpCollGetSpeedCeiling(a0: *mut CollData, a1: *mut Vec) -> i32 => unsafe { melee_world::tu::mpcoll::mpCollGetSpeedCeiling(a0, a1) };
+    fn mpCollGetSpeedFloor(a0: *mut CollData, a1: *mut Vec) -> i32 => unsafe { melee_world::tu::mpcoll::mpCollGetSpeedFloor(a0, a1) };
+    fn mpCollGetSpeedLeftWall(a0: *mut CollData, a1: *mut Vec) -> i32 => unsafe { melee_world::tu::mpcoll::mpCollGetSpeedLeftWall(a0, a1) };
+    fn mpCollGetSpeedRightWall(a0: *mut CollData, a1: *mut Vec) -> i32 => unsafe { melee_world::tu::mpcoll::mpCollGetSpeedRightWall(a0, a1) };
+    fn mpCollSetFacingDir(a0: *mut CollData, a1: i32) => unsafe { melee_world::tu::mpcoll::mpCollSetFacingDir(a0, a1) };
+    fn mpColl_80041EE4(a0: *mut CollData) => unsafe { melee_world::tu::mpcoll::mpColl_80041EE4(a0) };
+    fn mpColl_80043670(a0: *mut CollData) => unsafe { melee_world::tu::mpcoll::mpColl_80043670(a0) };
+    fn mpColl_80043680(a0: *mut CollData, a1: *mut Vec) => unsafe { melee_world::tu::mpcoll::mpColl_80043680(a0, a1) };
+    fn mpColl_800436E4(a0: *mut CollData, a1: f32) => unsafe { melee_world::tu::mpcoll::mpColl_800436E4(a0, a1) };
+    fn mpColl_800471F8(a0: *mut CollData) -> i32 => unsafe { melee_world::tu::mpcoll::mpColl_800471F8(a0) };
+    fn mpColl_SetECBSource_Fixed(a0: *mut CollData, a1: *mut HSD_GObj, a2: f32, a3: f32, a4: f32, a5: f32) => unsafe { melee_world::tu::mpcoll::mpColl_SetECBSource_Fixed(a0, a1, a2, a3, a4, a5) };
     fn mpLib_8004DD90_Floor(a0: i32, a1: *mut Vec, a2: *mut f32, a3: *mut u32, a4: *mut Vec) -> i32;
-    fn mpLib_8005199C_Floor(a0: *mut Vec, a1: i32, a2: i32) -> i32;
-    fn mpLib_80054ED8(a0: i32) -> i32;
+    fn mpLib_8005199C_Floor(a0: *mut Vec, a1: i32, a2: i32) -> i32 => unsafe { melee_world::tu::mplib::mpLib_8005199C_Floor(a0, a1, a2) };
+    fn mpLib_80054ED8(a0: i32) -> i32 => unsafe { melee_world::tu::mplib::mpLib_80054ED8(a0) };
     fn mpLineGetNormal(a0: i32, a1: *mut Vec) -> *mut Vec;
     fn mpLinesConnected(a0: i32, a1: i32) -> i32;
     }

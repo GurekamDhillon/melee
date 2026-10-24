@@ -7,11 +7,11 @@ use melee_types::*;
 
 // BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
-    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    #![allow(unreachable_code, non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -19,7 +19,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $( return $fb; )? panic!(concat!("TODO: ", stringify!($name), " is not ported")) }
                 }
             } )*
         };
@@ -33,8 +33,8 @@ pub mod ext {
     fn gm_8017E440() -> u8;
     fn gm_801A4B60();
     fn gm_GetButtonsTriggered(a0: u8) -> u64;
-    fn lbAudioAx_80023694() -> i32;
-    fn lbAudioAx_800236DC() -> i32;
+    fn lbAudioAx_80023694() -> i32 => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023694() };
+    fn lbAudioAx_800236DC() -> i32 => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800236DC() };
     fn lb_800145F4();
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.

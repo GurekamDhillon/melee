@@ -23,44 +23,44 @@ macro_rules! cstr {
 }
 
 pub mod ext {
-    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code, unused_variables)]
+    #![allow(unreachable_code, non_upper_case_globals, non_snake_case, unused_imports, dead_code, unused_variables)]
     use super::*;
     macro_rules! todo_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
             $( pub unsafe extern "C" fn $name($($a: $t),*) $(-> $r)? {
-                panic!(concat!("TODO: ", stringify!($name), " is not ported"))
+                $( return $fb; )? panic!(concat!("TODO: ", stringify!($name), " is not ported"))
             } )*
         };
     }
     todo_fns! {
         fn efAsync_LoadSync(a0: i32) -> i32;
-        fn efLib_Init();
+        fn efLib_Init() => unsafe { melee_world::tu::eflib::efLib_Init() };
         fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut Vec, a3: *mut f32, a4: *mut f32, a5: u32, a6: u32) -> *mut c_void;
         fn ftDemo_ObjAllocInit();
         fn gm_801A4B60();
         fn gm_8016895C(a0: *mut HSD_JObj, a1: *mut DynamicModelDesc, a2: i32);
         fn gm_80160438(a0: i32) -> *mut i8;
         fn Ground_InitScene();
-        fn Item_80266FA8();
-        fn Item_80266FCC();
+        fn Item_80266FA8() => unsafe { crate::tu::item::Item_80266FA8() };
+        fn Item_80266FCC() => unsafe { crate::tu::item::Item_80266FCC() };
         fn Stage_802251E8(a0: StKind, a1: i32);
         fn Stage_8022524C();
         fn Stage_8022532C(a0: StKind, a1: i32);
-        fn lb_8000C1C0(a0: *mut HSD_JObj, a1: *mut HSD_JObj);
-        fn lb_8000C290(a0: *mut HSD_JObj, a1: *mut HSD_JObj);
-        fn lb_80011AC4(a0: *mut *mut LightList) -> *mut HSD_LObj;
+        fn lb_8000C1C0(a0: *mut HSD_JObj, a1: *mut HSD_JObj) => unsafe { melee_runtime::tu::lb_00B0::lb_8000C1C0(a0, a1) };
+        fn lb_8000C290(a0: *mut HSD_JObj, a1: *mut HSD_JObj) => unsafe { melee_runtime::tu::lb_00B0::lb_8000C290(a0, a1) };
+        fn lb_80011AC4(a0: *mut *mut LightList) -> *mut HSD_LObj => unsafe { melee_runtime::tu::lbspdisplay::lb_80011AC4(a0) };
         fn lb_80011E24(a0: *mut HSD_JObj, a1: *mut *mut HSD_JObj, a2: i32, a3: i32) -> i32;
-        fn lb_80013B14(a0: *mut HSD_CameraDescPerspective) -> *mut HSD_CObj;
+        fn lb_80013B14(a0: *mut HSD_CameraDescPerspective) -> *mut HSD_CObj => unsafe { melee_runtime::tu::lbspdisplay::lb_80013B14(a0) };
         fn lb_800145F4();
         fn lbAudioAx_800236DC();
-        fn lbAudioAx_800237A8(a0: i32, a1: i32, a2: i32) -> i32;
+        fn lbAudioAx_800237A8(a0: i32, a1: i32, a2: i32) -> i32 => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800237A8(a0, a1, a2) };
         fn lbAudioAx_80023F28(a0: i32);
-        fn lbAudioAx_80024E50(a0: i32);
-        fn lbAudioAx_80026F2C(a0: i32);
-        fn lbAudioAx_8002702C(a0: u32, a1: u64);
+        fn lbAudioAx_80024E50(a0: i32) => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024E50(a0 != 0) };
+        fn lbAudioAx_80026F2C(a0: i32) => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80026F2C(a0 as _) };
+        fn lbAudioAx_8002702C(a0: u32, a1: u64) => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_8002702C(a0, a1) };
         fn lbAudioAx_80027168();
-        fn lbAudioAx_80027648();
-        fn lbShadow_8000F38C(a0: i32);
+        fn lbAudioAx_80027648() => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80027648() };
+        fn lbShadow_8000F38C(a0: i32) => unsafe { melee_runtime::tu::lbshadow::lbShadow_8000F38C(a0) };
         fn mn_8022F298(a0: *mut HSD_JObj) -> f32;
         fn Player_80032768(a0: i32, a1: *mut Vec);
         fn Player_80036E20(a0: CharacterKind, a1: *mut HSD_Archive, a2: i32);
@@ -72,31 +72,31 @@ pub mod ext {
         fn Player_SetPlayerCharacter(a0: i32, a1: CharacterKind);
         fn Player_SetPlayerId(a0: i32, a1: i32);
         fn Player_SetSlottype(a0: i32, a1: Gm_PKind);
-        fn Toy_803060BC(a0: i32, a1: i32) -> f32;
-        fn Toy_803124BC();
-        fn vi_8031C9B4(a0: i32, a1: i32);
-        fn vi_8031CA04(a0: *mut HSD_GObj);
-        fn vi_8031CAAC();
+        fn Toy_803060BC(a0: i32, a1: i32) -> f32 => unsafe { crate::tu::toy::Toy_803060BC(a0, a1) };
+        fn Toy_803124BC() => unsafe { crate::tu::toy::Toy_803124BC() };
+        fn vi_8031C9B4(a0: i32, a1: i32) => unsafe { crate::tu::vi::vi_8031C9B4(a0, a1) };
+        fn vi_8031CA04(a0: *mut HSD_GObj) => unsafe { crate::tu::vi::vi_8031CA04(a0) };
+        fn vi_8031CAAC() => unsafe { crate::tu::vi::vi_8031CAAC() };
         fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
         fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: GObj_RenderFunc, a2: u8, a3: u32);
         fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: GObj_RenderFunc, a2: u32);
-        fn HSD_CObjAddAnim(a0: *mut HSD_CObj, a1: *mut HSD_CameraAnim);
-        fn HSD_CObjAnim(a0: *mut HSD_CObj);
-        fn HSD_CObjEndCurrent();
-        fn HSD_CObjEraseScreen(a0: *mut HSD_CObj, a1: i32, a2: i32, a3: i32);
-        fn HSD_CObjReqAnim(a0: *mut HSD_CObj, a1: f32);
-        fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32;
+        fn HSD_CObjAddAnim(a0: *mut HSD_CObj, a1: *mut HSD_CameraAnim) => unsafe { melee_runtime::tu::cobj::HSD_CObjAddAnim(a0, a1) };
+        fn HSD_CObjAnim(a0: *mut HSD_CObj) => unsafe { melee_runtime::tu::cobj::HSD_CObjAnim(a0) };
+        fn HSD_CObjEndCurrent() => unsafe { melee_runtime::tu::cobj::HSD_CObjEndCurrent() };
+        fn HSD_CObjEraseScreen(a0: *mut HSD_CObj, a1: i32, a2: i32, a3: i32) => unsafe { melee_runtime::tu::cobj::HSD_CObjEraseScreen(a0, a1, a2, a3) };
+        fn HSD_CObjReqAnim(a0: *mut HSD_CObj, a1: f32) => unsafe { melee_runtime::tu::cobj::HSD_CObjReqAnim(a0, a1) };
+        fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32 => unsafe { melee_runtime::tu::cobj::HSD_CObjSetCurrent(a0) as _ };
         fn HSD_FogLoadDesc(a0: *mut HSD_FogDesc) -> *mut HSD_Fog;
         fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u8);
-        fn HSD_GObj_FogCallback(a0: *mut HSD_GObj, a1: i32);
-        fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32);
-        fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32);
+        fn HSD_GObj_FogCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_FogCallback(a0, a1) };
+        fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) };
+        fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0, a1) };
         fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc;
         fn HSD_GObjFree(a0: *mut HSD_GObj);
         fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
         fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
         fn HSD_JObjGetTranslation2(a0: *mut HSD_JObj, a1: *mut Vec);
-        fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj;
+        fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj => unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0) };
         fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
         fn HSD_JObjSetRotationYWithMtxDirty(a0: *mut HSD_JObj, a1: f32);
         fn HSD_JObjSetScaleX(a0: *mut HSD_JObj, a1: f32);

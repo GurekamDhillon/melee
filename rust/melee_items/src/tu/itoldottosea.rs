@@ -11,11 +11,11 @@ use super::kinds_inl::*;
 
 // BEGIN GENERATED EXT (rust/melee_items/gen/kinds/gen_tu.py; the callees of the C TU)
 pub mod ext {
-    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    #![allow(unreachable_code, non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -23,7 +23,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $( return $fb; )? panic!(concat!("TODO: ", stringify!($name), " is not ported")) }
                 }
             } )*
         };
@@ -32,57 +32,57 @@ pub mod ext {
     fn Camera_RequestQuake(a0: u32, a1: *mut Vec);
     fn HSD_Randf() -> f32;
     fn HSD_Randi(a0: i32) -> i32;
-    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
+    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
     fn gm_8016AE80() -> i32;
-    fn itOldottosea_UnkMotion10_Anim(a0: *mut HSD_GObj) -> i32;
-    fn itOldottosea_UnkMotion10_Coll(a0: *mut HSD_GObj) -> i32;
-    fn itOldottosea_UnkMotion10_Phys(a0: *mut HSD_GObj);
-    fn itOldottosea_UnkMotion11_Anim(a0: *mut HSD_GObj) -> i32;
-    fn itOldottosea_UnkMotion11_Coll(a0: *mut HSD_GObj) -> i32;
-    fn itOldottosea_UnkMotion11_Phys(a0: *mut HSD_GObj);
-    fn itOldottosea_UnkMotion8_Anim(a0: *mut HSD_GObj) -> i32;
-    fn itOldottosea_UnkMotion8_Phys(a0: *mut HSD_GObj);
-    fn itOldottosea_UnkMotion9_Anim(a0: *mut HSD_GObj) -> i32;
-    fn itOldottosea_UnkMotion9_Coll(a0: *mut HSD_GObj) -> i32;
-    fn itOldottosea_UnkMotion9_Phys(a0: *mut HSD_GObj);
-    fn it_8026B684(a0: *mut Vec) -> f32;
-    fn it_8026BD9C(a0: *mut HSD_GObj);
-    fn it_8026BDB4(a0: *mut HSD_GObj);
-    fn it_8026D324(a0: i32) -> i32;
-    fn it_8026D62C(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>);
-    fn it_8026D8A4(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) -> i32;
-    fn it_8026E414(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>);
-    fn it_8026E664(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>);
-    fn it_80272860(a0: *mut HSD_GObj, a1: f32, a2: f32);
-    fn it_80272C6C(a0: *mut HSD_GObj) -> i32;
-    fn it_802750E8(a0: *mut HSD_GObj, a1: i32) -> i32;
-    fn it_80275270(a0: *mut HSD_GObj);
-    fn it_8027542C(a0: *mut HSD_GObj);
-    fn it_80275474(a0: *mut HSD_GObj);
-    fn it_802756D0(a0: *mut HSD_GObj);
-    fn it_802756E0(a0: *mut HSD_GObj);
-    fn it_802762B0(a0: *mut Item);
-    fn it_802762BC(a0: *mut Item);
-    fn it_80276308(a0: *mut HSD_GObj) -> i32;
-    fn it_8027B730(a0: *mut HSD_GObj);
+    fn itOldottosea_UnkMotion10_Anim(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itwhitebea::itOldottosea_UnkMotion10_Anim(a0 as _) as _ };
+    fn itOldottosea_UnkMotion10_Coll(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itwhitebea::itOldottosea_UnkMotion10_Coll(a0 as _) as _ };
+    fn itOldottosea_UnkMotion10_Phys(a0: *mut HSD_GObj) => unsafe { crate::tu::itwhitebea::itOldottosea_UnkMotion10_Phys(a0 as _) };
+    fn itOldottosea_UnkMotion11_Anim(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itwhitebea::itOldottosea_UnkMotion11_Anim(a0 as _) as _ };
+    fn itOldottosea_UnkMotion11_Coll(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itwhitebea::itOldottosea_UnkMotion11_Coll(a0 as _) as _ };
+    fn itOldottosea_UnkMotion11_Phys(a0: *mut HSD_GObj) => unsafe { crate::tu::itwhitebea::itOldottosea_UnkMotion11_Phys(a0 as _) };
+    fn itOldottosea_UnkMotion8_Anim(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itwhitebea::itOldottosea_UnkMotion8_Anim(a0 as _) as _ };
+    fn itOldottosea_UnkMotion8_Phys(a0: *mut HSD_GObj) => unsafe { crate::tu::itwhitebea::itOldottosea_UnkMotion8_Phys(a0 as _) };
+    fn itOldottosea_UnkMotion9_Anim(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itwhitebea::itOldottosea_UnkMotion9_Anim(a0 as _) as _ };
+    fn itOldottosea_UnkMotion9_Coll(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itwhitebea::itOldottosea_UnkMotion9_Coll(a0 as _) as _ };
+    fn itOldottosea_UnkMotion9_Phys(a0: *mut HSD_GObj) => unsafe { crate::tu::itwhitebea::itOldottosea_UnkMotion9_Phys(a0 as _) };
+    fn it_8026B684(a0: *mut Vec) -> f32 => unsafe { crate::tu::it_26B1::it_8026B684(a0 as _) };
+    fn it_8026BD9C(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026bd9c(&mut *((*a0).user_data as *mut Item)) };
+    fn it_8026BDB4(a0: *mut HSD_GObj) => unsafe { crate::tu::it_26B1::it_8026BDB4(a0) };
+    fn it_8026D324(a0: i32) -> i32 => unsafe { crate::tu::itspawn::it_8026D324(a0) as _ };
+    fn it_8026D62C(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) => unsafe { crate::tu::itgroundcoll::it_8026D62C(a0, a1) };
+    fn it_8026D8A4(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) -> i32 => unsafe { crate::tu::itgroundcoll::it_8026D8A4(a0, a1) };
+    fn it_8026E414(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) => unsafe { crate::tu::itgroundcoll::it_8026E414(a0, a1) };
+    fn it_8026E664(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) => unsafe { crate::tu::itgroundcoll::it_8026E664(a0, a1) };
+    fn it_80272860(a0: *mut HSD_GObj, a1: f32, a2: f32) => unsafe { crate::itlib3::it_80272860(&mut *((*a0).user_data as *mut Item), a1, a2) };
+    fn it_80272C6C(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_2725::it_80272C6C(a0) };
+    fn it_802750E8(a0: *mut HSD_GObj, a1: i32) -> i32 => unsafe { crate::itlib::it_802750e8(&*((*a0).user_data as *mut Item), a1) };
+    fn it_80275270(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_80275270(&mut *((*a0).user_data as *mut Item)) };
+    fn it_8027542C(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8027542c(&mut *((*a0).user_data as *mut Item)) };
+    fn it_80275474(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_80275474(&mut *((*a0).user_data as *mut Item)) };
+    fn it_802756D0(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_802756d0(&mut *((*a0).user_data as *mut Item)) };
+    fn it_802756E0(a0: *mut HSD_GObj) => unsafe { crate::itlib3::it_802756e0(&mut *((*a0).user_data as *mut Item)) };
+    fn it_802762B0(a0: *mut Item) => unsafe { crate::item::it_802762b0(&mut *a0) };
+    fn it_802762BC(a0: *mut Item) => unsafe { crate::item::it_802762bc(&mut *a0) };
+    fn it_80276308(a0: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_80276308(&mut *((*a0).user_data as *mut Item)) };
+    fn it_8027B730(a0: *mut HSD_GObj) => unsafe { crate::itlib3::it_8027b730(&mut *((*a0).user_data as *mut Item)) };
     fn it_8027B798(a0: *mut HSD_GObj, a1: *mut Vec) -> i32;
-    fn it_8027C0A8(a0: *mut HSD_GObj, a1: f32, a2: f32);
-    fn it_8027C56C(a0: *mut HSD_GObj, a1: f32);
-    fn it_8027C8D0(a0: *mut Vec, a1: *mut Vec, a2: f32);
-    fn it_8027C9D8(a0: *mut Item);
-    fn it_8027CAD8(a0: *mut HSD_GObj);
+    fn it_8027C0A8(a0: *mut HSD_GObj, a1: f32, a2: f32) => unsafe { crate::tu::itzako::it_8027C0A8(a0, a1, a2) };
+    fn it_8027C56C(a0: *mut HSD_GObj, a1: f32) => unsafe { crate::tu::itzako::it_8027C56C(a0, a1) };
+    fn it_8027C8D0(a0: *mut Vec, a1: *mut Vec, a2: f32) => unsafe { crate::tu::itzako::it_8027C8D0(a0 as _, a1 as _, a2) };
+    fn it_8027C9D8(a0: *mut Item) => unsafe { crate::tu::itzako::it_8027C9D8(a0) };
+    fn it_8027CAD8(a0: *mut HSD_GObj) => unsafe { crate::tu::itzako::it_8027CAD8(a0) };
     fn it_8027CBFC(a0: *mut HSD_GObj) -> f32;
-    fn it_8027CE44(a0: *mut HSD_GObj);
-    fn it_8028EB88(a0: *mut HSD_GObj, a1: *mut Vec, a2: f32, a3: f32) -> *mut HSD_GObj;
+    fn it_8027CE44(a0: *mut HSD_GObj) => unsafe { crate::tu::itzako::it_8027CE44(a0) };
+    fn it_8028EB88(a0: *mut HSD_GObj, a1: *mut Vec, a2: f32, a3: f32) -> *mut HSD_GObj => unsafe { crate::tu::itfreeze::it_8028EB88(a0 as _, a1, a2, a3) as _ };
     fn it_8028EC98(a0: *mut HSD_GObj, a1: f32);
-    fn it_8028ECE0(a0: *mut HSD_GObj);
-    fn it_802E3400(a0: *mut HSD_GObj);
-    fn it_802E3528(a0: *mut HSD_GObj);
-    fn it_802E35CC(a0: *mut HSD_GObj) -> i32;
+    fn it_8028ECE0(a0: *mut HSD_GObj) => unsafe { crate::itkinds5::it_8028ece0(&mut *((*a0).user_data as *mut Item)) };
+    fn it_802E3400(a0: *mut HSD_GObj) => unsafe { crate::tu::itwhitebea::it_802E3400(a0 as _) };
+    fn it_802E3528(a0: *mut HSD_GObj) => unsafe { crate::tu::itwhitebea::it_802E3528(a0 as _) };
+    fn it_802E35CC(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itwhitebea::it_802E35CC(a0 as _) as _ };
     fn it_802E37A4(a0: *mut HSD_GObj);
-    fn lbLang_IsSettingJP() -> i32;
-    fn lbLang_IsSettingUS() -> i32;
-    fn mpCollSetFacingDir(a0: *mut CollData, a1: i32);
+    fn lbLang_IsSettingJP() -> i32 => unsafe { melee_runtime::tu::lblanguage::lbLang_IsSettingJP() as _ };
+    fn lbLang_IsSettingUS() -> i32 => unsafe { melee_runtime::tu::lblanguage::lbLang_IsSettingUS() as _ };
+    fn mpCollSetFacingDir(a0: *mut CollData, a1: i32) => unsafe { melee_world::tu::mpcoll::mpCollSetFacingDir(a0, a1) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

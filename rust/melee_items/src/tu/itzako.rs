@@ -13,11 +13,11 @@ use melee_types::*;
 
 // BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
-    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    #![allow(unreachable_code, non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -25,7 +25,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $( return $fb; )? panic!(concat!("TODO: ", stringify!($name), " is not ported")) }
                 }
             } )*
         };
@@ -36,9 +36,9 @@ pub mod ext {
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn HSD_Randf() -> f32;
     fn HSD_Randi(a0: i32) -> i32;
-    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj;
-    fn Item_80268B5C(a0: *mut SpawnItem) -> *mut HSD_GObj;
-    fn Item_8026AE84(a0: *mut Item, a1: i32, a2: u8, a3: u8);
+    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
+    fn Item_80268B5C(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B5C(a0) };
+    fn Item_8026AE84(a0: *mut Item, a1: i32, a2: u8, a3: u8) => unsafe { crate::tu::item::Item_8026AE84(a0, a1, a2, a3) };
     fn ScriptGame_EnemyDefeated(a0: *mut HSD_GObj) -> i32;
     fn ScriptGame_EnemyDestroyed(a0: *mut HSD_GObj) -> i32;
     fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32;
@@ -49,37 +49,37 @@ pub mod ext {
     fn gm_IsCurrently1PMode() -> i32;
     fn grLib_801C9E40() -> i32;
     fn grLib_801C9E50(a0: i16);
-    fn grZakoGenerator_801CAC14(a0: *mut HSD_GObj);
-    fn grZakoGenerator_801CACB8(a0: *mut HSD_GObj);
-    fn it_8026B3A8(a0: *mut HSD_GObj);
-    fn it_8026B684(a0: *mut Vec) -> f32;
+    fn grZakoGenerator_801CAC14(a0: *mut HSD_GObj) => unsafe { melee_world::tu::grzakogenerator::grZakoGenerator_801CAC14(a0) };
+    fn grZakoGenerator_801CACB8(a0: *mut HSD_GObj) => unsafe { melee_world::tu::grzakogenerator::grZakoGenerator_801CACB8(a0) };
+    fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b3a8(&mut *((*a0).user_data as *mut Item)) };
+    fn it_8026B684(a0: *mut Vec) -> f32 => unsafe { crate::tu::it_26B1::it_8026B684(a0 as _) };
     fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn it_8026C220(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
-    fn it_8026DAA8(a0: *mut HSD_GObj) -> i32;
-    fn it_80274594(a0: *mut HSD_GObj);
-    fn it_80274740(a0: *mut HSD_GObj);
-    fn it_80275228(a0: *mut HSD_GObj);
-    fn it_80275240(a0: *mut HSD_GObj);
-    fn it_80275270(a0: *mut HSD_GObj);
-    fn it_80275414(a0: *mut HSD_GObj);
-    fn it_8027542C(a0: *mut HSD_GObj);
-    fn it_80275444(a0: *mut HSD_GObj);
-    fn it_80275474(a0: *mut HSD_GObj);
-    fn it_802754D4(a0: *mut HSD_GObj);
-    fn it_802762BC(a0: *mut Item);
-    fn it_8027781C(a0: *mut HSD_GObj) -> i32;
-    fn it_80278574(a0: *mut HSD_GObj, a1: *mut _GXColor);
-    fn it_802F2094(a0: *mut HSD_GObj, a1: *mut Vec, a2: i32, a3: i32) -> *mut HSD_GObj;
-    fn lbVector_Angle(a0: *mut Vec, a1: *mut Vec) -> f32;
-    fn lbVector_AngleXY(a0: *mut Vec, a1: *mut Vec) -> f32;
-    fn lbVector_CrossprodNormalized(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec;
-    fn lbVector_Diff(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec;
-    fn lbVector_EulerAnglesFromONB(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec, a3: *mut Vec) -> *mut Vec;
-    fn lbVector_Normalize(a0: *mut Vec) -> f32;
-    fn lbVector_Rotate(a0: *mut Vec, a1: i32, a2: f32);
-    fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec);
+    fn it_8026C220(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::it_26B1::it_8026C220(a0, a1) };
+    fn it_8026DAA8(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itgroundcoll::it_8026DAA8(a0) };
+    fn it_80274594(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_80274594(a0) };
+    fn it_80274740(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_80274740(a0) };
+    fn it_80275228(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_80275228(&mut *((*a0).user_data as *mut Item)) };
+    fn it_80275240(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_80275240(&mut *((*a0).user_data as *mut Item)) };
+    fn it_80275270(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_80275270(&mut *((*a0).user_data as *mut Item)) };
+    fn it_80275414(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_80275414(&mut *((*a0).user_data as *mut Item)) };
+    fn it_8027542C(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8027542c(&mut *((*a0).user_data as *mut Item)) };
+    fn it_80275444(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_80275444(&mut *((*a0).user_data as *mut Item)) };
+    fn it_80275474(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_80275474(&mut *((*a0).user_data as *mut Item)) };
+    fn it_802754D4(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_802754d4(&mut *((*a0).user_data as *mut Item)) };
+    fn it_802762BC(a0: *mut Item) => unsafe { crate::item::it_802762bc(&mut *a0) };
+    fn it_8027781C(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itmaplib::it_8027781C(a0) as _ };
+    fn it_80278574(a0: *mut HSD_GObj, a1: *mut _GXColor) => unsafe { crate::tu::itmaterial::it_80278574(a0, a1) };
+    fn it_802F2094(a0: *mut HSD_GObj, a1: *mut Vec, a2: i32, a3: i32) -> *mut HSD_GObj => unsafe { crate::tu::itcoin::it_802F2094(a0, a1 as _, a2, a3) };
+    fn lbVector_Angle(a0: *mut Vec, a1: *mut Vec) -> f32 => unsafe { melee_runtime::tu::lbvector::lbVector_Angle(a0, a1) };
+    fn lbVector_AngleXY(a0: *mut Vec, a1: *mut Vec) -> f32 => unsafe { melee_runtime::tu::lbvector::lbVector_AngleXY(a0, a1) };
+    fn lbVector_CrossprodNormalized(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec => unsafe { melee_runtime::tu::lbvector::lbVector_CrossprodNormalized(a0, a1, a2) };
+    fn lbVector_Diff(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec => unsafe { melee_runtime::tu::lbvector::lbVector_Diff(a0, a1, a2) };
+    fn lbVector_EulerAnglesFromONB(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec, a3: *mut Vec) -> *mut Vec => unsafe { melee_runtime::tu::lbvector::lbVector_EulerAnglesFromONB(a0, a1, a2, a3) };
+    fn lbVector_Normalize(a0: *mut Vec) -> f32 => unsafe { melee_runtime::tu::lbvector::lbVector_Normalize(a0) };
+    fn lbVector_Rotate(a0: *mut Vec, a1: i32, a2: f32) => unsafe { melee_runtime::tu::lbvector::lbVector_Rotate(a0, a1, a2) };
+    fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec) => unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(a0, a1, a2) };
     fn pl_8004049C(a0: i32, a1: i32);
-    fn tyDisplay_8031C354(a0: i32, a1: *mut i32, a2: i32, a3: i32) -> i32;
+    fn tyDisplay_8031C354(a0: i32, a1: *mut i32, a2: i32, a3: i32) -> i32 => unsafe { crate::tu::tydisplay::tyDisplay_8031C354(a0, a1, a2, a3) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

@@ -14,11 +14,11 @@ use super::kinds_inl::*;
 
 // BEGIN GENERATED EXT (rust/melee_items/gen/kinds/gen_tu.py; the callees of the C TU)
 pub mod ext {
-    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    #![allow(unreachable_code, non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -26,64 +26,64 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $( return $fb; )? panic!(concat!("TODO: ", stringify!($name), " is not ported")) }
                 }
             } )*
         };
     }
     ext_fns! {
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
-    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
-    fn grZakoGenerator_801CACB8(a0: *mut HSD_GObj);
-    fn itZGShell_Logic11_DmgDealt(a0: *mut HSD_GObj) -> i32;
-    fn itZGShell_Logic11_DmgReceived(a0: *mut HSD_GObj) -> i32;
-    fn itZGShell_Logic11_Dropped(a0: *mut HSD_GObj);
-    fn itZGShell_Logic11_Reflected(a0: *mut HSD_GObj) -> i32;
-    fn itZGShell_Logic11_ShieldBounced(a0: *mut HSD_GObj) -> i32;
-    fn itZGShell_Logic11_Thrown(a0: *mut HSD_GObj);
-    fn itZrshell_UnkMotion0_Anim(a0: *mut HSD_GObj) -> i32;
-    fn itZrshell_UnkMotion0_Coll(a0: *mut HSD_GObj) -> i32;
-    fn itZrshell_UnkMotion0_Phys(a0: *mut HSD_GObj);
-    fn itZrshell_UnkMotion10_Anim(a0: *mut HSD_GObj) -> i32;
-    fn itZrshell_UnkMotion10_Coll(a0: *mut HSD_GObj) -> i32;
-    fn itZrshell_UnkMotion10_Phys(a0: *mut HSD_GObj);
-    fn itZrshell_UnkMotion11_Anim(a0: *mut HSD_GObj) -> i32;
-    fn itZrshell_UnkMotion11_Coll(a0: *mut HSD_GObj) -> i32;
-    fn itZrshell_UnkMotion11_Phys(a0: *mut HSD_GObj);
-    fn itZrshell_UnkMotion1_Anim(a0: *mut HSD_GObj) -> i32;
-    fn itZrshell_UnkMotion1_Coll(a0: *mut HSD_GObj) -> i32;
-    fn itZrshell_UnkMotion1_Phys(a0: *mut HSD_GObj);
-    fn itZrshell_UnkMotion2_Anim(a0: *mut HSD_GObj) -> i32;
-    fn itZrshell_UnkMotion2_Phys(a0: *mut HSD_GObj);
-    fn itZrshell_UnkMotion3_Anim(a0: *mut HSD_GObj) -> i32;
-    fn itZrshell_UnkMotion3_Coll(a0: *mut HSD_GObj) -> i32;
-    fn itZrshell_UnkMotion3_Phys(a0: *mut HSD_GObj);
-    fn itZrshell_UnkMotion4_Anim(a0: *mut HSD_GObj) -> i32;
-    fn itZrshell_UnkMotion4_Coll(a0: *mut HSD_GObj) -> i32;
-    fn itZrshell_UnkMotion4_Phys(a0: *mut HSD_GObj);
-    fn itZrshell_UnkMotion6_Anim(a0: *mut HSD_GObj) -> i32;
-    fn itZrshell_UnkMotion6_Coll(a0: *mut HSD_GObj) -> i32;
-    fn itZrshell_UnkMotion6_Phys(a0: *mut HSD_GObj);
-    fn itZrshell_UnkMotion8_Anim(a0: *mut HSD_GObj) -> i32;
-    fn itZrshell_UnkMotion8_Coll(a0: *mut HSD_GObj) -> i32;
-    fn itZrshell_UnkMotion8_Phys(a0: *mut HSD_GObj);
-    fn itZrshell_UnkMotion9_Anim(a0: *mut HSD_GObj) -> i32;
-    fn itZrshell_UnkMotion9_Coll(a0: *mut HSD_GObj) -> i32;
-    fn itZrshell_UnkMotion9_Phys(a0: *mut HSD_GObj);
-    fn it_2725_Logic11_Clanked(a0: *mut HSD_GObj) -> i32;
-    fn it_2725_Logic11_EnteredAir(a0: *mut HSD_GObj);
-    fn it_2725_Logic11_HitShield(a0: *mut HSD_GObj) -> i32;
-    fn it_2725_Logic11_PickedUp(a0: *mut HSD_GObj);
-    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
-    fn it_802762B0(a0: *mut Item);
-    fn it_802762BC(a0: *mut Item);
+    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
+    fn grZakoGenerator_801CACB8(a0: *mut HSD_GObj) => unsafe { melee_world::tu::grzakogenerator::grZakoGenerator_801CACB8(a0) };
+    fn itZGShell_Logic11_DmgDealt(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZGShell_Logic11_DmgDealt(a0 as _) as _ };
+    fn itZGShell_Logic11_DmgReceived(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZGShell_Logic11_DmgReceived(a0 as _) as _ };
+    fn itZGShell_Logic11_Dropped(a0: *mut HSD_GObj) => unsafe { crate::tu::itzgshell::itZGShell_Logic11_Dropped(a0 as _) };
+    fn itZGShell_Logic11_Reflected(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZGShell_Logic11_Reflected(a0 as _) as _ };
+    fn itZGShell_Logic11_ShieldBounced(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZGShell_Logic11_ShieldBounced(a0 as _) as _ };
+    fn itZGShell_Logic11_Thrown(a0: *mut HSD_GObj) => unsafe { crate::tu::itzgshell::itZGShell_Logic11_Thrown(a0 as _) };
+    fn itZrshell_UnkMotion0_Anim(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion0_Anim(a0 as _) as _ };
+    fn itZrshell_UnkMotion0_Coll(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion0_Coll(a0 as _) as _ };
+    fn itZrshell_UnkMotion0_Phys(a0: *mut HSD_GObj) => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion0_Phys(a0 as _) };
+    fn itZrshell_UnkMotion10_Anim(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion10_Anim(a0 as _) as _ };
+    fn itZrshell_UnkMotion10_Coll(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion10_Coll(a0 as _) as _ };
+    fn itZrshell_UnkMotion10_Phys(a0: *mut HSD_GObj) => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion10_Phys(a0 as _) };
+    fn itZrshell_UnkMotion11_Anim(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion11_Anim(a0 as _) as _ };
+    fn itZrshell_UnkMotion11_Coll(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion11_Coll(a0 as _) as _ };
+    fn itZrshell_UnkMotion11_Phys(a0: *mut HSD_GObj) => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion11_Phys(a0 as _) };
+    fn itZrshell_UnkMotion1_Anim(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion1_Anim(a0 as _) as _ };
+    fn itZrshell_UnkMotion1_Coll(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion1_Coll(a0 as _) as _ };
+    fn itZrshell_UnkMotion1_Phys(a0: *mut HSD_GObj) => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion1_Phys(a0 as _) };
+    fn itZrshell_UnkMotion2_Anim(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion2_Anim(a0 as _) as _ };
+    fn itZrshell_UnkMotion2_Phys(a0: *mut HSD_GObj) => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion2_Phys(a0 as _) };
+    fn itZrshell_UnkMotion3_Anim(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion3_Anim(a0 as _) as _ };
+    fn itZrshell_UnkMotion3_Coll(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion3_Coll(a0 as _) as _ };
+    fn itZrshell_UnkMotion3_Phys(a0: *mut HSD_GObj) => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion3_Phys(a0 as _) };
+    fn itZrshell_UnkMotion4_Anim(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion4_Anim(a0 as _) as _ };
+    fn itZrshell_UnkMotion4_Coll(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion4_Coll(a0 as _) as _ };
+    fn itZrshell_UnkMotion4_Phys(a0: *mut HSD_GObj) => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion4_Phys(a0 as _) };
+    fn itZrshell_UnkMotion6_Anim(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion6_Anim(a0 as _) as _ };
+    fn itZrshell_UnkMotion6_Coll(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion6_Coll(a0 as _) as _ };
+    fn itZrshell_UnkMotion6_Phys(a0: *mut HSD_GObj) => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion6_Phys(a0 as _) };
+    fn itZrshell_UnkMotion8_Anim(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion8_Anim(a0 as _) as _ };
+    fn itZrshell_UnkMotion8_Coll(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion8_Coll(a0 as _) as _ };
+    fn itZrshell_UnkMotion8_Phys(a0: *mut HSD_GObj) => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion8_Phys(a0 as _) };
+    fn itZrshell_UnkMotion9_Anim(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion9_Anim(a0 as _) as _ };
+    fn itZrshell_UnkMotion9_Coll(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion9_Coll(a0 as _) as _ };
+    fn itZrshell_UnkMotion9_Phys(a0: *mut HSD_GObj) => unsafe { crate::tu::itzgshell::itZrshell_UnkMotion9_Phys(a0 as _) };
+    fn it_2725_Logic11_Clanked(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::it_2725_Logic11_Clanked(a0 as _) as _ };
+    fn it_2725_Logic11_EnteredAir(a0: *mut HSD_GObj) => unsafe { crate::tu::itzgshell::it_2725_Logic11_EnteredAir(a0 as _) };
+    fn it_2725_Logic11_HitShield(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itzgshell::it_2725_Logic11_HitShield(a0 as _) as _ };
+    fn it_2725_Logic11_PickedUp(a0: *mut HSD_GObj) => unsafe { crate::tu::itzgshell::it_2725_Logic11_PickedUp(a0 as _) };
+    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
+    fn it_802762B0(a0: *mut Item) => unsafe { crate::item::it_802762b0(&mut *a0) };
+    fn it_802762BC(a0: *mut Item) => unsafe { crate::item::it_802762bc(&mut *a0) };
     fn it_80277040(a0: *mut HSD_GObj) -> i32;
-    fn it_8027B5B0(a0: i32, a1: *mut Vec, a2: *mut HSD_JObj, a3: *mut Vec, a4: i32) -> *mut HSD_GObj;
-    fn it_8027C56C(a0: *mut HSD_GObj, a1: f32);
-    fn it_802DDA84(a0: *mut HSD_GObj) -> i32;
-    fn it_802DE040(a0: *mut HSD_GObj);
-    fn it_802DE0F0(a0: *mut HSD_GObj);
-    fn it_802DE320(a0: *mut HSD_GObj);
+    fn it_8027B5B0(a0: i32, a1: *mut Vec, a2: *mut HSD_JObj, a3: *mut Vec, a4: i32) -> *mut HSD_GObj => unsafe { crate::tu::itzako::it_8027B5B0(a0, a1 as _, a2, a3 as _, a4) };
+    fn it_8027C56C(a0: *mut HSD_GObj, a1: f32) => unsafe { crate::tu::itzako::it_8027C56C(a0, a1) };
+    fn it_802DDA84(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itnokonoko::it_802DDA84(a0 as _) as _ };
+    fn it_802DE040(a0: *mut HSD_GObj) => unsafe { crate::tu::itzgshell::it_802DE040(a0 as _) };
+    fn it_802DE0F0(a0: *mut HSD_GObj) => unsafe { crate::tu::itzgshell::it_802DE0F0(a0 as _) };
+    fn it_802DE320(a0: *mut HSD_GObj) => unsafe { crate::tu::itzgshell::it_802DE320(a0 as _) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

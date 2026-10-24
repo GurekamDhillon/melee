@@ -13,11 +13,11 @@ pub use super::iteffect::EfArg;
 
 // BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
-    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    #![allow(unreachable_code, non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -25,7 +25,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $( return $fb; )? panic!(concat!("TODO: ", stringify!($name), " is not ported")) }
                 }
             } )*
         };
@@ -46,27 +46,27 @@ pub mod ext {
     fn ft_80089228(a0: *mut Fighter, a1: i32, a2: i32, a3: f32) -> f32;
     fn gm_8016B0D4() -> i32;
     fn gm_8016B168() -> i32;
-    fn itIsHeavy(a0: *mut HSD_GObj) -> i32;
-    fn it_802746F8(a0: *mut HSD_GObj) -> *mut HSD_JObj;
-    fn it_8027B1F4(a0: *mut HSD_GObj);
-    fn it_8027B378(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: f32);
-    fn it_8027B408(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: f32);
-    fn it_8027B4A4(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
-    fn it_8027B508(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
-    fn lbAudioAx_800237A8(a0: i32, a1: i32, a2: i32) -> i32;
-    fn lbColl_80005BB0(a0: *mut HitCapsule, a1: i32) -> i32;
-    fn lbColl_80007AFC(a0: *mut HitCapsule, a1: *mut HitCapsule, a2: f32, a3: f32) -> i32;
-    fn lbColl_80007ECC(a0: *mut HitCapsule, a1: *mut HurtCapsule, a2: *mut c_void, a3: f32, a4: f32, a5: f32) -> i32;
-    fn lbColl_8000805C(a0: *mut HitCapsule, a1: *mut HurtCapsule, a2: *mut c_void, a3: i32, a4: f32, a5: f32, a6: f32) -> i32;
-    fn lbColl_80008248(a0: *mut HitCapsule, a1: *mut HurtCapsule, a2: *mut c_void, a3: f32, a4: f32, a5: f32) -> i32;
-    fn lbColl_80008440(a0: *mut HitCapsule);
-    fn lbColl_80008688(a0: *mut HitCapsule, a1: i32, a2: *mut c_void) -> i32;
-    fn lbColl_80008820(a0: *mut HitCapsule, a1: i32, a2: *mut c_void) -> i32;
-    fn lbColl_80008A5C(a0: *mut HitCapsule);
-    fn lbColl_8000ACFC(a0: *mut c_void, a1: *mut HitCapsule) -> i32;
-    fn lbColl_CopyHitCapsule(a0: *mut HitCapsule, a1: *mut HitCapsule);
-    fn lbVector_RotateAboutUnitAxis(a0: *mut Vec, a1: *mut Vec, a2: f32);
-    fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec);
+    fn itIsHeavy(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_26B1::itIsHeavy(a0) as _ };
+    fn it_802746F8(a0: *mut HSD_GObj) -> *mut HSD_JObj => unsafe { crate::itkinds12::it_802746f8(a0) };
+    fn it_8027B1F4(a0: *mut HSD_GObj) => unsafe { crate::tu::it_279C::it_8027B1F4(a0) };
+    fn it_8027B378(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: f32) => unsafe { crate::tu::it_279C::it_8027B378(a0, a1, a2) };
+    fn it_8027B408(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: f32) => unsafe { crate::tu::it_279C::it_8027B408(a0, a1, a2) };
+    fn it_8027B4A4(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::it_279C::it_8027B4A4(a0, a1) };
+    fn it_8027B508(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::it_279C::it_8027B508(a0, a1) };
+    fn lbAudioAx_800237A8(a0: i32, a1: i32, a2: i32) -> i32 => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800237A8(a0, a1, a2) };
+    fn lbColl_80005BB0(a0: *mut HitCapsule, a1: i32) -> i32 => unsafe { melee_runtime::tu::lbcollision::lbColl_80005BB0(a0, a1) };
+    fn lbColl_80007AFC(a0: *mut HitCapsule, a1: *mut HitCapsule, a2: f32, a3: f32) -> i32 => unsafe { melee_runtime::tu::lbcollision::lbColl_80007AFC(a0, a1, a2, a3) as _ };
+    fn lbColl_80007ECC(a0: *mut HitCapsule, a1: *mut HurtCapsule, a2: *mut c_void, a3: f32, a4: f32, a5: f32) -> i32 => unsafe { melee_runtime::tu::lbcollision::lbColl_80007ECC(a0, a1, a2 as _, a3, a4, a5) as _ };
+    fn lbColl_8000805C(a0: *mut HitCapsule, a1: *mut HurtCapsule, a2: *mut c_void, a3: i32, a4: f32, a5: f32, a6: f32) -> i32 => unsafe { melee_runtime::tu::lbcollision::lbColl_8000805C(a0, a1, a2 as _, a3, a4, a5, a6) as _ };
+    fn lbColl_80008248(a0: *mut HitCapsule, a1: *mut HurtCapsule, a2: *mut c_void, a3: f32, a4: f32, a5: f32) -> i32 => unsafe { melee_runtime::tu::lbcollision::lbColl_80008248(a0, a1, a2 as _, a3, a4, a5) as _ };
+    fn lbColl_80008440(a0: *mut HitCapsule) => unsafe { melee_runtime::tu::lbcollision::lbColl_80008440(a0) };
+    fn lbColl_80008688(a0: *mut HitCapsule, a1: i32, a2: *mut c_void) -> i32 => unsafe { melee_runtime::tu::lbcollision::lbColl_80008688(a0, a1, a2) as _ };
+    fn lbColl_80008820(a0: *mut HitCapsule, a1: i32, a2: *mut c_void) -> i32 => unsafe { melee_runtime::tu::lbcollision::lbColl_80008820(a0, a1, a2) as _ };
+    fn lbColl_80008A5C(a0: *mut HitCapsule) => unsafe { melee_runtime::tu::lbcollision::lbColl_80008A5C(a0) };
+    fn lbColl_8000ACFC(a0: *mut c_void, a1: *mut HitCapsule) -> i32 => unsafe { melee_runtime::tu::lbcollision::lbColl_8000ACFC(a0, a1 as _) as _ };
+    fn lbColl_CopyHitCapsule(a0: *mut HitCapsule, a1: *mut HitCapsule) => unsafe { melee_runtime::tu::lbcollision::lbColl_CopyHitCapsule(a0 as _, a1) };
+    fn lbVector_RotateAboutUnitAxis(a0: *mut Vec, a1: *mut Vec, a2: f32) => unsafe { melee_runtime::tu::lbvector::lbVector_RotateAboutUnitAxis(a0, a1, a2) };
+    fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec) => unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(a0, a1, a2) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

@@ -9,11 +9,11 @@ use melee_types::*;
 
 // BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
-    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    #![allow(unreachable_code, non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -21,7 +21,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $( return $fb; )? panic!(concat!("TODO: ", stringify!($name), " is not ported")) }
                 }
             } )*
         };
@@ -29,9 +29,9 @@ pub mod ext {
     ext_fns! {
     fn Camera_80031060() -> i32;
     fn GXSetPipelineWaitAURORA(a0: u8);
-    fn HSD_CObjGetCurrent() -> *mut HSD_CObj;
-    fn HSD_ClearVtxDesc();
-    fn HSD_GObj_80390EB8(a0: i32) -> u32;
+    fn HSD_CObjGetCurrent() -> *mut HSD_CObj => unsafe { melee_runtime::tu::cobj::HSD_CObjGetCurrent() };
+    fn HSD_ClearVtxDesc() => unsafe { melee_runtime::tu::pobj::HSD_ClearVtxDesc() };
+    fn HSD_GObj_80390EB8(a0: i32) -> u32 => unsafe { melee_runtime::gobj::hsd_gobj_80390eb8(a0) };
     fn HSD_JObjDispAll(a0: *mut HSD_JObj, a1: *mut c_void, a2: u32, a3: u32);
     fn HSD_JObjGetFlags(a0: *mut HSD_JObj) -> u32;
     fn HSD_StateInitTev();
@@ -41,13 +41,13 @@ pub mod ext {
     fn ftLib_800868D4(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
     fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
     fn ftLib_80087074(a0: *mut HSD_GObj, a1: *mut Vec) -> i32;
-    fn it_80272A18(a0: *mut HSD_JObj);
-    fn it_80272A3C(a0: *mut HSD_JObj);
-    fn lbColl_80009F54(a0: *mut HitCapsule, a1: u32, a2: f32) -> i32;
-    fn lbColl_8000A10C(a0: *mut lbColl_8000A10C_arg0_t, a1: u32, a2: f32) -> i32;
-    fn lbColl_8000A244(a0: *mut HurtCapsule, a1: u32, a2: *mut c_void, a3: f32) -> i32;
-    fn lbColl_8000A584(a0: *mut HurtCapsule, a1: u32, a2: u32, a3: *mut c_void, a4: f32) -> i32;
-    fn lbGx_8001E2F8(a0: *mut Quaternion, a1: *mut Vec, a2: *mut U8Vec4, a3: u32, a4: f32) -> i32;
+    fn it_80272A18(a0: *mut HSD_JObj) => unsafe { crate::tu::it_2725::it_80272A18(a0) };
+    fn it_80272A3C(a0: *mut HSD_JObj) => unsafe { crate::tu::it_2725::it_80272A3C(a0) };
+    fn lbColl_80009F54(a0: *mut HitCapsule, a1: u32, a2: f32) -> i32 => unsafe { melee_runtime::tu::lbcollision::lbColl_80009F54(a0, a1, a2) as _ };
+    fn lbColl_8000A10C(a0: *mut lbColl_8000A10C_arg0_t, a1: u32, a2: f32) -> i32 => unsafe { melee_runtime::tu::lbcollision::lbColl_8000A10C(a0, a1, a2) as _ };
+    fn lbColl_8000A244(a0: *mut HurtCapsule, a1: u32, a2: *mut c_void, a3: f32) -> i32 => unsafe { melee_runtime::tu::lbcollision::lbColl_8000A244(a0, a1, a2 as _, a3) as _ };
+    fn lbColl_8000A584(a0: *mut HurtCapsule, a1: u32, a2: u32, a3: *mut c_void, a4: f32) -> i32 => unsafe { melee_runtime::tu::lbcollision::lbColl_8000A584(a0, a1, a2, a3 as _, a4) as _ };
+    fn lbGx_8001E2F8(a0: *mut Quaternion, a1: *mut Vec, a2: *mut U8Vec4, a3: u32, a4: f32) -> i32 => unsafe { melee_runtime::tu::lbgx::lbGx_8001E2F8(a0 as _, a1 as _, a2 as _, a3, a4) as _ };
     fn lb_800149E0(a0: *mut c_void, a1: u32) -> i32;
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.

@@ -17,11 +17,11 @@ use super::kinds_inl::*;
 
 // // BEGIN GENERATED EXT (rust/melee_items/gen/kinds/gen_tu.py; the callees of the C TU)
 pub mod ext {
-    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    #![allow(unreachable_code, non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -29,7 +29,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $( return $fb; )? panic!(concat!("TODO: ", stringify!($name), " is not ported")) }
                 }
             } )*
         };
@@ -40,15 +40,15 @@ pub mod ext {
     fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
     fn HSD_GObjFree(a0: *mut HSD_GObj);
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32);
-    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj;
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) };
+    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj => unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0) };
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);
-    fn HSD_ObjAlloc(a0: *mut _HSD_ObjAllocData) -> *mut c_void;
-    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj;
-    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
+    fn HSD_ObjAlloc(a0: *mut _HSD_ObjAllocData) -> *mut c_void => unsafe { melee_runtime::tu::objalloc::HSD_ObjAlloc(a0 as _) };
+    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
+    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
     fn Item_8026A8EC(a0: *mut HSD_GObj);
-    fn Item_8026AB54(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: u32);
+    fn Item_8026AB54(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: u32) => unsafe { crate::tu::item::Item_8026AB54(a0, a1, a2) };
     fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void);
     fn PSMTXCopy(a0: *mut c_void, a1: *mut c_void);
     fn PSMTXIdentity(a0: *mut c_void);
@@ -58,23 +58,23 @@ pub mod ext {
     fn ftSk_SpecialS_80110F58(a0: *mut HSD_GObj) -> f32;
     fn ftSk_SpecialS_80110F64(a0: *mut HSD_GObj) -> f32;
     fn ftSk_SpecialS_UpdateHitboxes(a0: *mut HSD_GObj, a1: *mut Vec, a2: i32);
-    fn it_8026B724(a0: *mut HSD_GObj);
-    fn it_8026B73C(a0: *mut HSD_GObj);
-    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
-    fn it_8026BB68(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn it_80272A3C(a0: *mut HSD_JObj);
-    fn it_80275328(a0: *mut HSD_GObj, a1: *mut ItemLink);
-    fn it_802A2474(a0: *mut c_void);
-    fn it_802A24A0(a0: *mut HSD_GObj, a1: i32);
-    fn it_802A24D0(a0: *mut ItemLink, a1: f32);
+    fn it_8026B724(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b724(&mut *((*a0).user_data as *mut Item)) };
+    fn it_8026B73C(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b73c(&mut *((*a0).user_data as *mut Item)) };
+    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
+    fn it_8026BB68(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_26B1::it_8026BB68(a0, a1 as _) };
+    fn it_80272A3C(a0: *mut HSD_JObj) => unsafe { crate::tu::it_2725::it_80272A3C(a0) };
+    fn it_80275328(a0: *mut HSD_GObj, a1: *mut ItemLink) => unsafe { crate::itlib3::it_80275328(a0, &mut *a1) };
+    fn it_802A2474(a0: *mut c_void) => unsafe { crate::tu::itlinkhookshot::it_802A2474(a0) };
+    fn it_802A24A0(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::itlinkhookshot::it_802A24A0(a0, a1) };
+    fn it_802A24D0(a0: *mut ItemLink, a1: f32) => unsafe { crate::tu::itlinkhookshot::it_802A24D0(a0, a1) };
     fn it_802A3C98(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> f32;
-    fn it_802A43B8(a0: *mut ItemLink);
-    fn it_802A43EC(a0: *mut ItemLink);
-    fn it_802A4420(a0: *mut ItemLink);
-    fn it_802A6DC8(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec);
-    fn lbAudioAx_800237A8(a0: i32, a1: i32, a2: i32) -> i32;
-    fn lbVector_Normalize(a0: *mut Vec) -> f32;
-    fn mpColl_80048844(a0: *mut CollData) -> i32;
+    fn it_802A43B8(a0: *mut ItemLink) => unsafe { crate::itkinds6::it_802a43b8(&mut *a0) };
+    fn it_802A43EC(a0: *mut ItemLink) => unsafe { crate::itkinds6::it_802a43ec(&mut *a0) };
+    fn it_802A4420(a0: *mut ItemLink) => unsafe { crate::itkinds6::it_802a4420(&mut *a0) };
+    fn it_802A6DC8(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec) => unsafe { crate::tu::itlinkhookshot::it_802A6DC8(a0, a1 as _, a2 as _) };
+    fn lbAudioAx_800237A8(a0: i32, a1: i32, a2: i32) -> i32 => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800237A8(a0, a1, a2) };
+    fn lbVector_Normalize(a0: *mut Vec) -> f32 => unsafe { melee_runtime::tu::lbvector::lbVector_Normalize(a0) };
+    fn mpColl_80048844(a0: *mut CollData) -> i32 => unsafe { melee_world::tu::mpcoll::mpColl_80048844(a0) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

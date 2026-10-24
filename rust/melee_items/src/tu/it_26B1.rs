@@ -12,11 +12,11 @@ use melee_types::*;
 
 // BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
-    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    #![allow(unreachable_code, non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -24,7 +24,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $( return $fb; )? panic!(concat!("TODO: ", stringify!($name), " is not ported")) }
                 }
             } )*
         };
@@ -35,7 +35,7 @@ pub mod ext {
     fn HSD_JObjRemoveAnimAll(a0: *mut HSD_JObj);
     fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
     fn Item_80267978(a0: *mut HSD_GObj);
-    fn Item_80268E40(a0: *mut Item, a1: *mut ItemStateDesc);
+    fn Item_80268E40(a0: *mut Item, a1: *mut ItemStateDesc) => unsafe { crate::itlib3::item_80268e40(&mut *a0, &*a1) };
     fn Item_8026A8EC(a0: *mut HSD_GObj);
     fn Mex_IndexStageItem(a0: *mut c_void, a1: i32);
     fn Mex_ItRecord(a0: *mut Article, a1: i32) -> i32;
@@ -50,38 +50,38 @@ pub mod ext {
     fn ftLib_80086A4C(a0: *mut HSD_GObj, a1: f32);
     fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8;
     fn gm_8016B238() -> i32;
-    fn itFlipper_Spawn(a0: *mut HSD_JObj) -> *mut HSD_GObj;
-    fn itSword_Spawn(a0: *mut Vec) -> *mut HSD_GObj;
-    fn it_8026D324(a0: i32) -> i32;
-    fn it_802725D4(a0: *mut HSD_GObj);
-    fn it_80272784(a0: *mut HSD_GObj);
-    fn it_80272A18(a0: *mut HSD_JObj);
-    fn it_80272A3C(a0: *mut HSD_JObj);
-    fn it_80272D40(a0: *mut HSD_GObj) -> i32;
-    fn it_80272F7C(a0: *mut HSD_JObj, a1: f32);
-    fn it_8027429C(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn it_802742F4(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: u32);
-    fn it_80274F10(a0: *mut HSD_GObj);
-    fn it_80275870(a0: *mut HSD_GObj) -> i32;
-    fn it_802799E4(a0: *mut HSD_GObj);
-    fn it_80279BE0(a0: *mut HSD_GObj);
-    fn it_8027D670(a0: *mut Vec) -> *mut HSD_GObj;
-    fn it_8027D730(a0: *mut HSD_GObj);
-    fn it_80283AE4(a0: *mut HSD_GObj, a1: *mut Vec, a2: i32) -> *mut HSD_GObj;
-    fn it_80283BD4(a0: *mut HSD_GObj);
-    fn it_802841B4(a0: *mut HSD_GObj, a1: *mut Vec, a2: i32) -> *mut HSD_GObj;
-    fn it_8028428C(a0: *mut HSD_GObj);
-    fn it_80284854(a0: *mut Vec) -> *mut HSD_GObj;
-    fn it_80286088(a0: *mut HSD_GObj) -> *mut HSD_GObj;
-    fn it_802896CC(a0: *mut Vec) -> *mut HSD_GObj;
-    fn it_8028FE90(a0: *mut HSD_GObj);
-    fn it_80291BE0(a0: *mut Vec) -> *mut HSD_GObj;
-    fn it_80292D48(a0: *mut Vec) -> *mut HSD_GObj;
-    fn it_80294DC0(a0: *mut Vec) -> *mut HSD_GObj;
-    fn it_8029D968(a0: *mut HSD_GObj);
-    fn it_802D09D0(a0: *mut HSD_GObj);
-    fn lb_8000B804(a0: *mut HSD_JObj, a1: *mut HSD_Joint);
-    fn lb_8000BA0C(a0: *mut HSD_JObj, a1: f32);
+    fn itFlipper_Spawn(a0: *mut HSD_JObj) -> *mut HSD_GObj => unsafe { crate::tu::itflipper::itFlipper_Spawn(a0) };
+    fn itSword_Spawn(a0: *mut Vec) -> *mut HSD_GObj => unsafe { crate::tu::itsword::itSword_Spawn(a0 as _) as _ };
+    fn it_8026D324(a0: i32) -> i32 => unsafe { crate::tu::itspawn::it_8026D324(a0) as _ };
+    fn it_802725D4(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_802725D4(a0) };
+    fn it_80272784(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_80272784(a0) };
+    fn it_80272A18(a0: *mut HSD_JObj) => unsafe { crate::tu::it_2725::it_80272A18(a0) };
+    fn it_80272A3C(a0: *mut HSD_JObj) => unsafe { crate::tu::it_2725::it_80272A3C(a0) };
+    fn it_80272D40(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_2725::it_80272D40(a0) };
+    fn it_80272F7C(a0: *mut HSD_JObj, a1: f32) => unsafe { crate::tu::it_2725::it_80272F7C(a0, a1) };
+    fn it_8027429C(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_2725::it_8027429C(a0, a1 as _) };
+    fn it_802742F4(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: u32) => unsafe { crate::tu::it_2725::it_802742F4(a0, a1, a2) };
+    fn it_80274F10(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_80274f10(&mut *((*a0).user_data as *mut Item)) };
+    fn it_80275870(a0: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_80275870(&*((*a0).user_data as *mut Item)) as _ };
+    fn it_802799E4(a0: *mut HSD_GObj) => unsafe { crate::tu::itanimlist::it_802799E4(a0 as _) };
+    fn it_80279BE0(a0: *mut HSD_GObj) => unsafe { crate::tu::itanimlist::it_80279BE0(a0 as _) };
+    fn it_8027D670(a0: *mut Vec) -> *mut HSD_GObj => unsafe { crate::tu::itbombhei::it_8027D670(a0 as _) as _ };
+    fn it_8027D730(a0: *mut HSD_GObj) => unsafe { crate::tu::itbombhei::it_8027D730(a0 as _) };
+    fn it_80283AE4(a0: *mut HSD_GObj, a1: *mut Vec, a2: i32) -> *mut HSD_GObj => unsafe { crate::tu::itheart::it_80283AE4(a0, a1 as _, a2) };
+    fn it_80283BD4(a0: *mut HSD_GObj) => unsafe { crate::itkinds::it_80283bd4(&mut *((*a0).user_data as *mut Item)) };
+    fn it_802841B4(a0: *mut HSD_GObj, a1: *mut Vec, a2: i32) -> *mut HSD_GObj => unsafe { crate::tu::ittomato::it_802841B4(a0 as _, a1 as _, a2) as _ };
+    fn it_8028428C(a0: *mut HSD_GObj) => unsafe { crate::itkinds5::it_8028428c(&mut *((*a0).user_data as *mut Item)) };
+    fn it_80284854(a0: *mut Vec) -> *mut HSD_GObj => unsafe { crate::tu::itbat::it_80284854(a0 as _) as _ };
+    fn it_80286088(a0: *mut HSD_GObj) -> *mut HSD_GObj => unsafe { crate::tu::itbox::it_80286088(a0 as _) as _ };
+    fn it_802896CC(a0: *mut Vec) -> *mut HSD_GObj => unsafe { crate::tu::itkusudama::it_802896CC(a0 as _) };
+    fn it_8028FE90(a0: *mut HSD_GObj) => unsafe { crate::tu::itmsbomb::it_8028FE90(a0 as _) };
+    fn it_80291BE0(a0: *mut Vec) -> *mut HSD_GObj => unsafe { crate::tu::itsscope::it_80291BE0(a0 as _) };
+    fn it_80292D48(a0: *mut Vec) -> *mut HSD_GObj => unsafe { crate::tu::itfflower::it_80292D48(a0) as _ };
+    fn it_80294DC0(a0: *mut Vec) -> *mut HSD_GObj => unsafe { crate::tu::itrabbitc::it_80294DC0(a0 as _) };
+    fn it_8029D968(a0: *mut HSD_GObj) => unsafe { crate::tu::itlinkbomb::it_8029D968(a0 as _) };
+    fn it_802D09D0(a0: *mut HSD_GObj) => unsafe { crate::tu::itmarumine::it_802D09D0(a0 as _) };
+    fn lb_8000B804(a0: *mut HSD_JObj, a1: *mut HSD_Joint) => unsafe { melee_runtime::tu::lb_00B0::lb_8000B804(a0, a1) };
+    fn lb_8000BA0C(a0: *mut HSD_JObj, a1: f32) => unsafe { melee_runtime::tu::lb_00B0::lb_8000BA0C(a0, a1) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

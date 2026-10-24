@@ -9,11 +9,11 @@ use melee_types::*;
 
 // BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
-    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    #![allow(unreachable_code, non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -21,17 +21,17 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $( return $fb; )? panic!(concat!("TODO: ", stringify!($name), " is not ported")) }
                 }
             } )*
         };
     }
     ext_fns! {
     fn ScriptGame_HitRuleBaseDamage(a0: *mut HitCapsule) -> f32;
-    fn it_802714C0(a0: *mut HSD_GObj);
-    fn it_80272460(a0: *mut HitCapsule, a1: u32, a2: *mut HSD_GObj);
-    fn it_80274D04(a0: *mut HSD_GObj, a1: *mut lb_80014638_arg1_t);
-    fn it_80274D6C(a0: *mut HSD_GObj);
+    fn it_802714C0(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_802714c0(&mut *((*a0).user_data as *mut Item)) };
+    fn it_80272460(a0: *mut HitCapsule, a1: u32, a2: *mut HSD_GObj) => unsafe { crate::tu::itcoll::it_80272460(a0, a1, a2) };
+    fn it_80274D04(a0: *mut HSD_GObj, a1: *mut lb_80014638_arg1_t) => unsafe { crate::itlib3::it_80274d04(&*((*a0).user_data as *mut Item), &mut *a1) };
+    fn it_80274D6C(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_80274d6c(&mut *((*a0).user_data as *mut Item)) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

@@ -9,11 +9,11 @@ use melee_types::*;
 
 // BEGIN GENERATED EXT (rust/melee_items/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
-    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    #![allow(unreachable_code, non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -21,7 +21,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $( return $fb; )? panic!(concat!("TODO: ", stringify!($name), " is not ported")) }
                 }
             } )*
         };
@@ -29,19 +29,19 @@ pub mod ext {
     ext_fns! {
     fn HSD_Randf() -> f32;
     fn HSD_Randi(a0: i32) -> i32;
-    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj;
+    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
     fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
     fn ftLib_800874CC(a0: *mut HSD_GObj, a1: *mut c_void, a2: i32);
     fn gm_8016B0B4() -> i32;
     fn gm_8016B238() -> i32;
-    fn it_8026B684(a0: *mut Vec) -> f32;
+    fn it_8026B684(a0: *mut Vec) -> f32 => unsafe { crate::tu::it_26B1::it_8026B684(a0 as _) };
     fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec);
     fn it_8026C65C(a0: *mut ItemPickTable) -> i32;
-    fn it_8026C704() -> i32;
-    fn it_8026C75C(a0: *mut ItemPickTable) -> i32;
-    fn it_80274658(a0: *mut HSD_GObj, a1: f32) -> i32;
+    fn it_8026C704() -> i32 => unsafe { crate::tu::itspawn::it_8026C704() as _ };
+    fn it_8026C75C(a0: *mut ItemPickTable) -> i32 => unsafe { crate::tu::itspawn::it_8026C75C(a0) };
+    fn it_80274658(a0: *mut HSD_GObj, a1: f32) -> i32 => unsafe { crate::itlib3::it_80274658(&mut *((*a0).user_data as *mut Item), a1) };
     fn it_80274ED8();
-    fn it_802E5F00(a0: *mut HSD_GObj, a1: *mut Vec, a2: *mut Vec, a3: i32);
+    fn it_802E5F00(a0: *mut HSD_GObj, a1: *mut Vec, a2: *mut Vec, a3: i32) => unsafe { crate::tu::it_2E5A::it_802E5F00(a0 as _, a1 as _, a2 as _, a3) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

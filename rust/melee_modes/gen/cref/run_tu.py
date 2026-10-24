@@ -67,7 +67,7 @@ def main():
         run([CLANG, "-O0", "-w", *lls, "-o", str(exe), "-Wl,/OPT:NOICF", "-fuse-ld=lld"], n)
         out = subprocess.run([str(exe)], capture_output=True, text=True, check=True).stdout
         if dbg:
-            tr = [l for l in out.splitlines() if l.startswith(("T ", "H ", "D "))]
+            tr = [l for l in out.splitlines() if l.startswith(("T ", "H ", "D ", "S "))]
             (BUILD / f"dbg_{n}.txt").write_text(chr(10).join(tr) + chr(10), encoding="utf-8")
             print(f"mtu: {n}: {len(tr)} trace words")
             continue

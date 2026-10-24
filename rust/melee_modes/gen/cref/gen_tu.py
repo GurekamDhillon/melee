@@ -318,8 +318,10 @@ class Walk:
                     j = f"j{depth}"
                     cf.append(f"for ({j} = 0; {j} < {sz}; {j}++) ((unsigned char*) &{cpar})[{off} + {j}] = (unsigned char) rnd();")
                     ch.append(f"for ({j} = 0; {j} < {sz}; {j}++) HM(((const unsigned char*) &{cpar})[{off} + {j}]);")
-                    rf.append(f"for {j} in 0..{sz} {{ unsafe {{ *(base(&{rpar}) as *mut u8).add({off} + {j}) = rnd() as u8; }} }}")
-                    rh.append(f"for {j} in 0..{sz} {{ unsafe {{ hm(*base(&{rpar}).add({off} + {j}) as u32); }} }}")
+                    # the root `p` is already a reference: `&p` would be the address of the reference itself
+                    rb = rpar if rpar == "p" else "&" + rpar
+                    rf.append(f"for {j} in 0..{sz} {{ unsafe {{ *(base({rb}) as *mut u8).add({off} + {j}) = rnd() as u8; }} }}")
+                    rh.append(f"for {j} in 0..{sz} {{ unsafe {{ hm(*base({rb}).add({off} + {j}) as u32); }} }}")
                 continue
             n = f.spelling
             if not n:

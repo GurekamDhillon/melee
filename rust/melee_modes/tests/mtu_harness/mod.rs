@@ -19,7 +19,7 @@ pub fn t64(d: f64) {
 }
 pub static mut H: u32 = 0;
 pub fn hm(v: u32) {
-    unsafe { H = H.wrapping_mul(0x0100_0193) ^ v }
+    unsafe { H = H.wrapping_mul(0x0100_0193) ^ v; if TRACEON { println!("H {:08X}", v); } }
 }
 pub fn hm64(d: f64) {
     let u = d.to_bits();

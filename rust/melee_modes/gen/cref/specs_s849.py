@@ -57,6 +57,23 @@ SPECS["lb_0195"] = dict(
     types=["UnkArrElem", "lb_804329F0_t"],
     ret={"lbCardNew_CompleteNextTask": ("(int) (fv() % 14)", "(fv() % 14) as i32")},
 )
+SPECS["lb_01F8"] = dict(
+    src="src/melee/lb/lb_01F8.c",
+    types=["lbl_804335B8_t", "HSD_SObj"],
+    skip_stubs=["memset"],
+    ret={
+        "HSD_MemAlloc": ("(void*) (MB + 64 * (MBN++ & 7))",
+                         "{ let r = (&raw mut super::MB as *mut u8).add(64 * ((super::MBN as usize) & 7)) as *mut c_void; super::MBN += 1; r }"),
+        "HSD_SObjLib_803A477C": ("&SOB", "&raw mut super::SOB"),
+        "THPVideoDecode": ("&DEC", "&raw mut super::DEC as *mut c_void"),
+    },
+    effects={
+        "lbFile_80016760": ("*a1 = (void*) (MB + 528); *a2 = fv();",
+                            "*a1 = (&raw mut super::MB as *mut u8).add(528) as *mut c_void; *a2 = fv();"),
+        "THPVideoDecode": ("T(RH(a0, 0x1C)); *(int*) a1 = (int) fv();",
+                           "t(rh(&*(a0 as *const [u8; 0x1C]))); *(a1 as *mut i32) = fv() as i32;"),
+    },
+)
 for _s in SPECS.values():
     _s.setdefault("narrow_si", True)
     _s.setdefault("common_ret", {})

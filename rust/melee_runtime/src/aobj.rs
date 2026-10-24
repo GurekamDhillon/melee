@@ -58,7 +58,7 @@ impl melee_core::gc::GcLayout for HsdAObjDesc {
 }
 
 /// aobj.c's file statics.
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct AObjGlobals {
     /// `HSD_AObj_804D762C`: InterpretAnim calls that ended with the AObj stopped.
     pub n_stopped: i32,

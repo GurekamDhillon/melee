@@ -32,7 +32,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn Ground_801C0498() -> f32;
+    fn Ground_801C0498() -> f32 = || unsafe { crate::tu::ground::Ground_801C0498() as _ };
     fn Ground_801C13D0(a0: i32, a1: i32) -> *mut HSD_JObj = |a0: i32, a1: i32| unsafe { crate::tu::ground::Ground_801C13D0(a0 as _, a1 as _) as _ };
     fn Ground_801C4100(a0: *mut HSD_JObj) -> *mut HSD_JObj = |a0: *mut HSD_JObj| unsafe { crate::tu::ground::Ground_801C4100(a0 as _) as _ };
     fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32) = |a0: *mut HSD_AObj, a1: f32| { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetRate(a0 as _, a1 as _); } };

@@ -51,14 +51,14 @@ pub mod ext {
     }
     ext_fns! {
     fn Camera_80030A50() -> *mut HSD_GObj;
-    fn Camera_GetTransformInterest(a0: *mut Vec);
+    fn Camera_GetTransformInterest(a0: *mut Vec) = |a0: *mut Vec| { unsafe { *a0 = crate::cm::camera::world().camera_get_transform_interest(); } };
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
     fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
     fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32);
-    fn Ground_801C0498() -> f32;
-    fn Ground_801C2CF4(a0: i32) -> *mut HSD_JObj;
-    fn Ground_801C38AC(a0: f32);
-    fn Ground_801C39B0(a0: f32);
+    fn Ground_801C0498() -> f32 = || unsafe { crate::tu::ground::Ground_801C0498() as _ };
+    fn Ground_801C2CF4(a0: i32) -> *mut HSD_JObj = |a0: i32| unsafe { crate::tu::ground::Ground_801C2CF4(a0 as _) as _ };
+    fn Ground_801C38AC(a0: f32) = |a0: f32| { unsafe { let _ = crate::tu::ground::Ground_801C38AC(a0 as _); } };
+    fn Ground_801C39B0(a0: f32) = |a0: f32| { unsafe { let _ = crate::tu::ground::Ground_801C39B0(a0 as _); } };
     fn Ground_801C39C0() = || { unsafe { let _ = crate::tu::ground::Ground_801C39C0(); } };
     fn Ground_801C3BB4() = || { unsafe { let _ = crate::tu::ground::Ground_801C3BB4(); } };
     fn Ground_801C3FA4(a0: *mut HSD_GObj, a1: i32) -> *mut HSD_JObj = |a0: *mut HSD_GObj, a1: i32| unsafe { crate::tu::ground::Ground_801C3FA4(a0 as _, a1 as _) as _ };
@@ -105,10 +105,10 @@ pub mod ext {
     fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec);
     fn ftLib_80086B74(a0: *mut HSD_GObj) -> *mut CmSubject;
     fn gm_80180AF4() -> *mut HSD_GObj;
-    fn grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32);
+    fn grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32) = |a0: *mut HSD_GObj, a1: i32, a2: i32| { unsafe { let _ = crate::tu::granime::grAnime_801C8138(a0 as _, a1 as _, a2 as _); } };
     fn grDatFiles_GetArchive() -> *mut UnkArchiveStruct = || unsafe { crate::tu::grdatfiles::grDatFiles_GetArchive() as _ };
     fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { let _ = crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } };
-    fn grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj;
+    fn grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj = |a0: *mut grZakoGenerator_SpawnDesc| unsafe { crate::tu::grzakogenerator::grZakoGenerator_801CAE04(a0 as _) as _ };
     fn it_8026BE84(a0: *mut BobOmbRain) -> *mut HSD_GObj;
     fn lbLang_IsSavedLanguageJP() -> i32 = || unsafe { melee_runtime::tu::lblanguage::lbLang_IsSavedLanguageJP() as _ };
     fn lbLang_IsSavedLanguageUS() -> i32 = || unsafe { melee_runtime::tu::lblanguage::lbLang_IsSavedLanguageUS() as _ };

@@ -40,8 +40,8 @@ pub mod ext {
     };
     hook!(CAMERA_8002A4AC, Camera_8002A4AC, (a0: *mut HSD_GObj));
     hook!(CAMERA_80030A50, Camera_80030A50, () -> *mut HSD_GObj);
-    hook!(CAMERA_80031074, Camera_80031074, (a0: u8));
-    hook!(CAMERA_800310A0, Camera_800310A0, (a0: u8));
+    hook_or!(CAMERA_80031074, Camera_80031074, (a0: u8), |a0: u8| crate::cm::camera::world().camera_80031074(a0));
+    hook_or!(CAMERA_800310A0, Camera_800310A0, (a0: u8), |a0: u8| crate::cm::camera::world().camera_800310a0(a0));
     hook!(GOBJ_CREATE, GObj_Create, (classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj);
     hook!(GOBJ_INITUSERDATA, GObj_InitUserData, (gobj: *mut HSD_GObj, kind: u8, remove_func: Option<unsafe extern "C" fn(*mut c_void)>, data: *mut c_void));
     hook!(GOBJ_SETUPGXLINKMAXSORTED, GObj_SetupGXLinkMaxSorted, (gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, priority: u32));

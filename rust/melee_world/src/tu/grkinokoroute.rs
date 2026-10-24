@@ -37,7 +37,7 @@ pub mod ext {
     };
     pub use crate::tu::grinl2::ext::Ground_InitMapColl;
     hook!(CAMERA_8002F3AC, Camera_8002F3AC, ());
-    hook!(CAMERA_80030AE0, Camera_80030AE0, (a0: i32));
+    hook_or!(CAMERA_80030AE0, Camera_80030AE0, (a0: i32), |a0: i32| crate::cm::camera::world().camera_80030ae0(a0));
     hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (a0: CmQuakeKind, a1: *mut Vec3));
     pub static mut GROUND_801C0498: Option<fn() -> f32> = None;
     #[allow(non_snake_case)]

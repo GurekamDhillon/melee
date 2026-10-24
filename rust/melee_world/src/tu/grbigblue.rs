@@ -37,7 +37,7 @@ pub mod ext {
     use core::ffi::c_void;
     use melee_types::*;
     pub use crate::tu::grinl::ext::stage_info;
-    hook!(CAMERA_8003010C, Camera_8003010C, () -> i32);
+    hook_or!(CAMERA_8003010C, Camera_8003010C, () -> i32, || crate::cm::camera::world().camera_8003010c() as i32);
     hook!(GOBJ_SETUPGXLINK, GObj_SetupGXLink, (gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, gx_link: u8, priority: u32));
     pub static mut GROUND_801C0498: Option<fn() -> f32> = None;
     #[allow(non_snake_case)]

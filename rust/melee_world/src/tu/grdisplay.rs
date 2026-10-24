@@ -34,14 +34,14 @@ pub mod ext {
     }
     ext_fns! {
     fn Camera_80030A50() -> *mut HSD_GObj;
-    fn Camera_80030A78() -> i32;
-    fn Camera_80030AC4() -> i32;
-    fn Camera_80030B24() -> i32;
-    fn Camera_8003108C() -> i32;
-    fn Camera_800310A0(a0: u8);
-    fn Ground_801C1E18() -> i32;
-    fn Ground_801C1E84() -> *mut HSD_GObj;
-    fn Ground_801C2C8C(a0: *mut c_void) -> i32;
+    fn Camera_80030A78() -> i32 = || crate::cm::camera::world().camera_80030a78() as i32;
+    fn Camera_80030AC4() -> i32 = || crate::cm::camera::world().camera_80030ac4() as i32;
+    fn Camera_80030B24() -> i32 = || crate::cm::camera::world().camera_80030b24() as i32;
+    fn Camera_8003108C() -> i32 = || crate::cm::camera::world().camera_8003108c();
+    fn Camera_800310A0(a0: u8) = |a0: u8| crate::cm::camera::world().camera_800310a0(a0);
+    fn Ground_801C1E18() -> i32 = || unsafe { crate::tu::ground::Ground_801C1E18() as _ };
+    fn Ground_801C1E84() -> *mut HSD_GObj = || unsafe { crate::tu::ground::Ground_801C1E84() as _ };
+    fn Ground_801C2C8C(a0: *mut c_void) -> i32 = |a0: *mut c_void| unsafe { crate::tu::ground::Ground_801C2C8C(a0 as _) as _ };
     fn HSD_CObjEndCurrent() = || { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjEndCurrent(); } };
     fn HSD_CObjGetCurrent() -> *mut HSD_CObj = || unsafe { melee_runtime::tu::cobj::HSD_CObjGetCurrent() as _ };
     fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32 = |a0: *mut HSD_CObj| unsafe { melee_runtime::tu::cobj::HSD_CObjSetCurrent(a0 as _) as _ };

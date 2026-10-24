@@ -22,15 +22,15 @@ pub use crate::gr::trivial::grinishie2::{
 
 /// Callees in TUs that are not ported yet. An unset hook panics.
 pub mod ext {
-    use crate::tu::hookmac::hook;
+    use crate::tu::hookmac::{hook, hook_or};
     use melee_types::*;
     pub use crate::tu::grinl::ext::{stage_info, HSD_JObjSetMtxDirtySub};
     pub use crate::tu::grinl2::ext::{
         grAnime_801C8138, grDisplay_801C5DB0, GObj_SetupGXLink, Ground_InitMapColl, Ground_UpdateMapColl,
         HSD_GObj_SetupProc, HSD_Randi, lb_800115F4,
     };
-    hook!(CAMERA_800311CC, Camera_800311CC, (a0: f32));
-    hook!(CAMERA_800311DC, Camera_800311DC, (a0: f32));
+    hook_or!(CAMERA_800311CC, Camera_800311CC, (a0: f32), |a0: f32| crate::cm::camera::world().camera_800311cc(a0));
+    hook_or!(CAMERA_800311DC, Camera_800311DC, (a0: f32), |a0: f32| crate::cm::camera::world().camera_800311dc(a0));
     hook!(GETMATCHTIMER, GetMatchTimer, (a0: *mut i32) -> i32);
     pub static mut GROUND_801C39C0: Option<fn()> = None;
     #[allow(non_snake_case)]

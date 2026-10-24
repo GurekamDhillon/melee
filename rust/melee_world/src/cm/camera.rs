@@ -134,6 +134,16 @@ impl Default for CameraWorld {
     }
 }
 
+static mut WORLD: Option<CameraWorld> = None;
+
+/// The one camera world of the process: the C globals of camera.c (`game_camera`, `cm_803BCCA0`,
+/// the stage camera info, ...) behind the C-named entry points the TU ports call
+/// (`Camera_SetModeToFixed`, `Camera_8003010C`, ...). Single-threaded game state.
+#[allow(static_mut_refs)]
+pub fn world() -> &'static mut CameraWorld {
+    unsafe { WORLD.get_or_insert_with(CameraWorld::default) }
+}
+
 impl CameraWorld {
     #[inline]
     fn lifted(&self) -> bool {

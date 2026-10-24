@@ -44,8 +44,8 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn Camera_800311CC(a0: f32);
-    fn Camera_800311DC(a0: f32);
+    fn Camera_800311CC(a0: f32) = |a0: f32| crate::cm::camera::world().camera_800311cc(a0);
+    fn Camera_800311DC(a0: f32) = |a0: f32| crate::cm::camera::world().camera_800311dc(a0);
     fn Camera_RequestQuake(a0: u32, a1: *mut Vec);
     fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
     fn GetMatchTimer(a0: *mut i32) -> i32;
@@ -53,8 +53,8 @@ pub mod ext {
     fn Ground_801C3BB4() = || { unsafe { let _ = crate::tu::ground::Ground_801C3BB4(); } };
     fn Ground_801C3FA4(a0: *mut HSD_GObj, a1: i32) -> *mut HSD_JObj = |a0: *mut HSD_GObj, a1: i32| unsafe { crate::tu::ground::Ground_801C3FA4(a0 as _, a1 as _) as _ };
     fn Ground_801C4A08(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { let _ = crate::tu::ground::Ground_801C4A08(a0 as _); } };
-    fn Ground_801C5414(a0: i32, a1: i32);
-    fn Ground_801C5A94() -> i32;
+    fn Ground_801C5414(a0: i32, a1: i32) = |a0: i32, a1: i32| { unsafe { let _ = crate::tu::ground::Ground_801C5414(a0 as _, a1 as _); } };
+    fn Ground_801C5A94() -> i32 = || unsafe { crate::tu::ground::Ground_801C5A94() as _ };
     fn Ground_GetMapGObj(a0: i32) -> *mut HSD_GObj = |a0: i32| unsafe { crate::tu::ground::Ground_GetMapGObj(a0 as _) as _ };
     fn Ground_GetStageGObj(a0: i32) -> *mut HSD_GObj = |a0: i32| unsafe { crate::tu::ground::Ground_GetStageGObj(a0 as _) as _ };
     fn Ground_GetYakumonoParam() -> *mut c_void = || unsafe { crate::tu::ground::Ground_GetYakumonoParam() as _ };
@@ -74,23 +74,23 @@ pub mod ext {
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut Vec) -> *mut c_void;
     fn gm_8016AE80() -> i32;
     fn gm_8016B238() -> i32;
-    fn grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32);
+    fn grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32) = |a0: *mut HSD_GObj, a1: i32, a2: i32| { unsafe { let _ = crate::tu::granime::grAnime_801C8138(a0 as _, a1 as _, a2 as _); } };
     fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { let _ = crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } };
-    fn grLib_801C9EE8(a0: *mut Vec, a1: f32) -> i32;
+    fn grLib_801C9EE8(a0: *mut Vec, a1: f32) -> i32 = |a0: *mut Vec, a1: f32| unsafe { crate::tu::grlib::grLib_801C9EE8(a0 as _, a1 as _) as _ };
     fn grMaterial_801C8858(a0: *mut HSD_JObj, a1: u32) = |a0: *mut HSD_JObj, a1: u32| { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C8858(a0 as _, a1 as _); } };
     fn grMaterial_801C8CFC(a0: i32, a1: i32, a2: *mut Ground, a3: *mut HSD_JObj, a4: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground)>, a5: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut Vec, *mut HSD_GObj, f32)>, a6: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut HSD_GObj)>) -> *mut HSD_GObj = |a0: i32, a1: i32, a2: *mut Ground, a3: *mut HSD_JObj, a4: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground)>, a5: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut Vec, *mut HSD_GObj, f32)>, a6: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut HSD_GObj)>| unsafe { crate::tu::grmaterial::grMaterial_801C8CFC(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _) as _ };
     fn grMaterial_801C8DE0(a0: *mut HSD_GObj, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32, a7: f32) = |a0: *mut HSD_GObj, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32, a7: f32| { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C8DE0(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _, a7 as _); } };
     fn grMaterial_801C8E08(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C8E08(a0 as _); } };
     fn grMaterial_801C8E28(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C8E28(a0 as _); } };
     fn grMaterial_801C8E68(a0: *mut HSD_GObj, a1: u32) = |a0: *mut HSD_GObj, a1: u32| { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C8E68(a0 as _, a1 as _); } };
-    fn grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj;
+    fn grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj = |a0: *mut grZakoGenerator_SpawnDesc| unsafe { crate::tu::grzakogenerator::grZakoGenerator_801CAE04(a0 as _) as _ };
     fn it_8026B294(a0: *mut HSD_GObj, a1: *mut Vec);
     fn it_8026D324(a0: i32) -> i32;
     fn it_8026F7C8(a0: *mut Vec, a1: *mut Vec, a2: i32) -> *mut HSD_GObj;
     fn lbAudioAx_80023F28(a0: i32) -> i32 = |a0: i32| unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023F28(a0 as _) as _ };
     fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec) = |a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(a0 as _, a1 as _, a2 as _); } };
     fn lb_800115F4() = || { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800115F4(); } };
-    fn mpJointFromLine(a0: i32) -> i32;
+    fn mpJointFromLine(a0: i32) -> i32 = |a0: i32| unsafe { crate::tu::mplib::mpJointFromLine(a0 as _) as _ };
     fn mpJointSetCb1(a0: i32, a1: *mut c_void, a2: Option<unsafe extern "C" fn(*mut c_void, i32, *mut CollData, i32, u32, f32)>) = |a0: i32, a1: *mut c_void, a2: Option<unsafe extern "C" fn(*mut c_void, i32, *mut CollData, i32, u32, f32)>| { unsafe { let _ = crate::tu::mplib::mpJointSetCb1(a0 as _, a1 as _, a2 as _); } };
     fn mpJointSetCb2(a0: i32, a1: *mut c_void, a2: Option<unsafe extern "C" fn(*mut c_void, i32, *mut CollData, i32, u32, f32)>) = |a0: i32, a1: *mut c_void, a2: Option<unsafe extern "C" fn(*mut c_void, i32, *mut CollData, i32, u32, f32)>| { unsafe { let _ = crate::tu::mplib::mpJointSetCb2(a0 as _, a1 as _, a2 as _); } };
     fn mpLib_80055E9C(a0: i32) = |a0: i32| { unsafe { let _ = crate::tu::mplib::mpLib_80055E9C(a0 as _); } };

@@ -44,10 +44,10 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn Camera_80030A78() -> i32;
-    fn Camera_SetBackgroundColor(a0: u8, a1: u8, a2: u8);
-    fn Camera_SetModeToFixed();
-    fn Camera_SetModeToStandard();
+    fn Camera_80030A78() -> i32 = || crate::cm::camera::world().camera_80030a78() as i32;
+    fn Camera_SetBackgroundColor(a0: u8, a1: u8, a2: u8) = |a0: u8, a1: u8, a2: u8| crate::cm::camera::world().camera_set_background_color(a0, a1, a2);
+    fn Camera_SetModeToFixed() = || crate::cm::camera::world().camera_set_mode_to_fixed();
+    fn Camera_SetModeToStandard() = || crate::cm::camera::world().camera_set_mode_to_standard();
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
     fn GObj_InitUserData(a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void);
     fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
@@ -71,18 +71,18 @@ pub mod ext {
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
     fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj = |a0: *mut HSD_Joint| unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0 as _) as _ };
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
-    fn HSD_LObjAnim(a0: *mut HSD_LObj);
-    fn HSD_LObjAnimAll(a0: *mut HSD_LObj);
-    fn HSD_LObjDeleteCurrentAll(a0: *mut HSD_LObj);
-    fn HSD_LObjGetInterest(a0: *mut HSD_LObj, a1: *mut Vec) -> i32;
-    fn HSD_LObjGetInterestWObj(a0: *mut HSD_LObj) -> *mut HSD_WObj;
-    fn HSD_LObjGetPosition(a0: *mut HSD_LObj, a1: *mut Vec) -> i32;
-    fn HSD_LObjGetPositionWObj(a0: *mut HSD_LObj) -> *mut HSD_WObj;
-    fn HSD_LObjReqAnimAll(a0: *mut HSD_LObj, a1: f32);
-    fn HSD_LObjSetInterest(a0: *mut HSD_LObj, a1: *mut Vec);
-    fn HSD_LObjSetPosition(a0: *mut HSD_LObj, a1: *mut Vec);
-    fn HSD_LObjSetupInit(a0: *mut HSD_CObj);
-    fn HSD_LObj_803668EC(a0: *mut HSD_LObj);
+    fn HSD_LObjAnim(a0: *mut HSD_LObj) = |a0: *mut HSD_LObj| { unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjAnim(a0 as _); } };
+    fn HSD_LObjAnimAll(a0: *mut HSD_LObj) = |a0: *mut HSD_LObj| { unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjAnimAll(a0 as _); } };
+    fn HSD_LObjDeleteCurrentAll(a0: *mut HSD_LObj) = |a0: *mut HSD_LObj| { unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjDeleteCurrentAll(a0 as _); } };
+    fn HSD_LObjGetInterest(a0: *mut HSD_LObj, a1: *mut Vec) -> i32 = |a0: *mut HSD_LObj, a1: *mut Vec| unsafe { melee_runtime::tu::lobj::HSD_LObjGetInterest(a0 as _, a1 as _) as _ };
+    fn HSD_LObjGetInterestWObj(a0: *mut HSD_LObj) -> *mut HSD_WObj = |a0: *mut HSD_LObj| unsafe { melee_runtime::tu::lobj::HSD_LObjGetInterestWObj(a0 as _) as _ };
+    fn HSD_LObjGetPosition(a0: *mut HSD_LObj, a1: *mut Vec) -> i32 = |a0: *mut HSD_LObj, a1: *mut Vec| unsafe { melee_runtime::tu::lobj::HSD_LObjGetPosition(a0 as _, a1 as _) as _ };
+    fn HSD_LObjGetPositionWObj(a0: *mut HSD_LObj) -> *mut HSD_WObj = |a0: *mut HSD_LObj| unsafe { melee_runtime::tu::lobj::HSD_LObjGetPositionWObj(a0 as _) as _ };
+    fn HSD_LObjReqAnimAll(a0: *mut HSD_LObj, a1: f32) = |a0: *mut HSD_LObj, a1: f32| { unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjReqAnimAll(a0 as _, a1 as _); } };
+    fn HSD_LObjSetInterest(a0: *mut HSD_LObj, a1: *mut Vec) = |a0: *mut HSD_LObj, a1: *mut Vec| { unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjSetInterest(a0 as _, a1 as _); } };
+    fn HSD_LObjSetPosition(a0: *mut HSD_LObj, a1: *mut Vec) = |a0: *mut HSD_LObj, a1: *mut Vec| { unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjSetPosition(a0 as _, a1 as _); } };
+    fn HSD_LObjSetupInit(a0: *mut HSD_CObj) = |a0: *mut HSD_CObj| { unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjSetupInit(a0 as _); } };
+    fn HSD_LObj_803668EC(a0: *mut HSD_LObj) = |a0: *mut HSD_LObj| { unsafe { let _ = melee_runtime::tu::lobj::HSD_LObj_803668EC(a0 as _); } };
     fn HSD_MemAlloc(a0: i32) -> *mut c_void = |a0: i32| unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ };
     fn HSD_Randi(a0: i32) -> i32;
     fn HSD_StateInvalidate(a0: i32);
@@ -126,7 +126,7 @@ pub mod ext {
     fn ScriptGame_StageSlotRetailCollision();
     fn ScriptGame_StageSlotRetailLoading() -> i32;
     fn StageSkin_ApplyForLoad(a0: i32, a1: *const i8, a2: i32);
-    fn Stage_80224FDC(a0: *mut Vec) -> i32;
+    fn Stage_80224FDC(a0: *mut Vec) -> i32 = |a0: *mut Vec| unsafe { crate::tu::stage::Stage_80224FDC(a0 as _) as _ };
     fn Stage_GetBlastZoneTopOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetBlastZoneTopOffset() as _ };
     fn Stage_UnkSetVec3TCam_Offset(a0: *mut Vec) = |a0: *mut Vec| { unsafe { let _ = crate::tu::stage::Stage_UnkSetVec3TCam_Offset(a0 as _); } };
     fn TTMod_ForCharacter(a0: i32) -> i32;
@@ -159,11 +159,11 @@ pub mod ext {
     fn grDatFiles_StageSlotInstall(a0: *mut HSD_Archive) = |a0: *mut HSD_Archive| { unsafe { let _ = crate::tu::grdatfiles::grDatFiles_StageSlotInstall(a0 as _); } };
     fn grDisplay_801C5F60(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { let _ = crate::tu::grdisplay::grDisplay_801C5F60(a0 as _, a1 as _); } };
     fn grIzumi_801CD2D4() = || { unsafe { let _ = crate::tu::grizumi::grIzumi_801CD2D4(); } };
-    fn grKongo_801D8270(a0: *mut HSD_GObj);
+    fn grKongo_801D8270(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { let _ = crate::tu::grkongo::grKongo_801D8270(a0 as _); } };
     fn grKongo_801D828C(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { let _ = crate::tu::grkongo::grKongo_801D828C(a0 as _); } };
     fn grMaterial_801C95C4(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C95C4(a0 as _); } };
     fn grMaterial_801C9698(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C9698(a0 as _); } };
-    fn grOldKongo_802105AC(a0: *mut HSD_GObj);
+    fn grOldKongo_802105AC(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { let _ = crate::tu::groldkongo::grOldKongo_802105AC(a0 as _); } };
     fn grOldKongo_802105C8(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { let _ = crate::tu::groldkongo::grOldKongo_802105C8(a0 as _); } };
     fn grStadium_801D39A0(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { let _ = crate::tu::grpstadium::grStadium_801D39A0(a0 as _); } };
     fn grStadium_801D511C() = || { unsafe { let _ = crate::tu::grpstadium::grStadium_801D511C(); } };
@@ -199,7 +199,7 @@ pub mod ext {
     fn mpLib_80057424(a0: i32) = |a0: i32| { unsafe { let _ = crate::tu::mplib::mpLib_80057424(a0 as _); } };
     fn mpLib_80057BC0(a0: i32) = |a0: i32| { unsafe { let _ = crate::tu::mplib::mpLib_80057BC0(a0 as _); } };
     fn mpLib_80058820() = || { unsafe { let _ = crate::tu::mplib::mpLib_80058820(); } };
-    fn psInitDataBankLoad(a0: i32, a1: *const i32, a2: *const i32, a3: *const u32, a4: *const i32);
+    fn psInitDataBankLoad(a0: i32, a1: *const i32, a2: *const i32, a3: *const u32, a4: *const i32) = |a0: i32, a1: *const i32, a2: *const i32, a3: *const u32, a4: *const i32| { unsafe { let _ = melee_runtime::tu::particle::psInitDataBankLoad(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } };
     fn splGetSplinePoint(a0: *mut Vec, a1: *mut HSD_Spline, a2: f32);
     fn tyDisplay_8031C2CC();
     fn tyDisplay_8031C2EC() -> i32;

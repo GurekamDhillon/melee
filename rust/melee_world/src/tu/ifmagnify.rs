@@ -32,7 +32,7 @@ pub mod ext {
     }
     ext_fns! {
     fn Camera_8002A4AC(a0: *mut HSD_GObj);
-    fn Camera_80030130() -> i32;
+    fn Camera_80030130() -> i32 = || crate::cm::camera::world().camera_80030130() as i32;
     fn Camera_80030A50() -> *mut HSD_GObj;
     fn Camera_80030BBC(a0: *mut Vec, a1: *mut S32Vec2) -> i32;
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;

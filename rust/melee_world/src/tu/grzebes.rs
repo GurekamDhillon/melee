@@ -372,7 +372,8 @@ pub mod ext {
                     None => { unsafe { let _ = crate::tu::ground::Ground_801C205C(a0 as _); } return; },
                 }
             }
-    hook!(H_HSD_LObjSetColor, HSD_LObjSetColor, (a0: *mut melee_types::HSD_LObj, a1: melee_types::GXColor));
+    pub static mut H_HSD_LObjSetColor: Option<unsafe extern "C" fn(*mut melee_types::HSD_LObj, melee_types::GXColor)> = None;
+    pub unsafe extern "C" fn HSD_LObjSetColor(a0: *mut melee_types::HSD_LObj, a1: melee_types::GXColor) { match H_HSD_LObjSetColor { Some(f) => f(a0, a1), None => unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjSetColor(a0 as _, a1 as _); } } }
     hook!(H_ftLib_80086C9C, ftLib_80086C9C, (a0: i32, a1: i32));
     pub static mut H_grAnime_801C7B24: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32, u32, f32) > = None;
             pub unsafe extern "C" fn grAnime_801C7B24(a0: *mut melee_types::HSD_GObj, a1: i32, a2: u32, a3: f32)  {

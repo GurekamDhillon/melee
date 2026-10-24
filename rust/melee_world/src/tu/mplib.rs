@@ -55,8 +55,8 @@ pub mod ext {
     }
     ext_fns! {
     fn Camera_8002928C(a0: *mut CmSubject) -> i32;
-    fn Camera_80030B50() -> i32;
-    fn Camera_80030B7C() -> i32;
+    fn Camera_80030B50() -> i32 = || crate::cm::camera::world().camera_80030b50() as i32;
+    fn Camera_80030B7C() -> i32 = || crate::cm::camera::world().camera_80030b7c() as i32;
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
     fn GXBegin(a0: GXPrimitive, a1: GXVtxFmt, a2: u16);
     fn GXClearVtxDesc();
@@ -69,14 +69,14 @@ pub mod ext {
     fn GXSetVtxAttrFmt(a0: GXVtxFmt, a1: GXAttr, a2: GXCompCnt, a3: GXCompType, a4: u8);
     fn GXSetVtxDesc(a0: GXAttr, a1: GXAttrType);
     fn GXSetZMode(a0: u8, a1: GXCompare, a2: u8);
-    fn Ground_801C0498() -> f32;
-    fn Ground_801C2D24(a0: i32, a1: *mut Vec) -> i32;
+    fn Ground_801C0498() -> f32 = || unsafe { crate::tu::ground::Ground_801C0498() as _ };
+    fn Ground_801C2D24(a0: i32, a1: *mut Vec) -> i32 = |a0: i32, a1: *mut Vec| unsafe { crate::tu::ground::Ground_801C2D24(a0 as _, a1 as _) as _ };
     fn HSD_CObjGetCurrent() -> *mut HSD_CObj = || unsafe { melee_runtime::tu::cobj::HSD_CObjGetCurrent() as _ };
     fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut [f32; 4]);
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
     fn HSD_JObjGetFlags(a0: *mut HSD_JObj) -> u32;
     fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);
-    fn HSD_LObjSetupInit(a0: *mut HSD_CObj);
+    fn HSD_LObjSetupInit(a0: *mut HSD_CObj) = |a0: *mut HSD_CObj| { unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjSetupInit(a0 as _); } };
     fn HSD_MemAlloc(a0: i32) -> *mut c_void = |a0: i32| unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ };
     fn HSD_SetTevRegAll();
     fn HSD_SetupChannel(a0: *mut HSD_Chan);

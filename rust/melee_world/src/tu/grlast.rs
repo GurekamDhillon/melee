@@ -40,10 +40,10 @@ pub mod ext {
         grAnime_801C8138, grDisplay_801C5DB0, GObj_SetupGXLink, Ground_InitMapColl, Ground_UpdateMapColl,
         HSD_GObj_SetupProc, HSD_Randi, lb_800115F4,
     };
-    hook!(CAMERA_800311CC, Camera_800311CC, (a0: f32));
-    hook!(CAMERA_800311DC, Camera_800311DC, (a0: f32));
+    hook_or!(CAMERA_800311CC, Camera_800311CC, (a0: f32), |a0: f32| crate::cm::camera::world().camera_800311cc(a0));
+    hook_or!(CAMERA_800311DC, Camera_800311DC, (a0: f32), |a0: f32| crate::cm::camera::world().camera_800311dc(a0));
     hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (a0: CmQuakeKind, a1: *mut Vec3));
-    hook!(CAMERA_SETBACKGROUNDCOLOR, Camera_SetBackgroundColor, (r: u8, g: u8, b: u8));
+    hook_or!(CAMERA_SETBACKGROUNDCOLOR, Camera_SetBackgroundColor, (r: u8, g: u8, b: u8), |r: u8, g: u8, b: u8| crate::cm::camera::world().camera_set_background_color(r, g, b));
     pub static mut GROUND_801C052C: Option<fn(*mut GXColor)> = None;
     #[allow(non_snake_case)]
     pub fn Ground_801C052C(a0: *mut GXColor) {

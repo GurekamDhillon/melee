@@ -152,7 +152,7 @@ def match_paren(s, i):
     return -1
 
 
-def rewire_line(line, name, spec, in_ext_fns, counter):
+def rewire_line(line, name, spec, in_ext_fns, counter, local_extern=False):
     """Return the rewritten line or None."""
     st = line.lstrip()
     ind = line[: len(line) - len(st)]
@@ -168,6 +168,15 @@ def rewire_line(line, name, spec, in_ext_fns, counter):
             ret = rm.group(1)
             r = f" -> {ret}" if ret else ""
             counter[0] += 1
+            if local_extern:
+                ps = params_of(plist)
+                types = ", ".join(t for _, t in ps)
+                sig = ", ".join(f"{n}: {t}" for n, t in ps)
+                args = ", ".join(n for n, _ in ps)
+                h = m.group(1)
+                b1 = f"{ind}pub static mut {h}: Option<unsafe extern \"C\" fn({types}){r}> = None;"
+                b2 = f"{ind}pub unsafe extern \"C\" fn {name}({sig}){r} {{ match {h} {{ Some(f) => f({args}), None => {body_for(spec, ps, bool(ret))} }} }}"
+                return b1 + LF + b2
             return f"{ind}hook_or!({m.group(1)}, {name}, ({plist}){r}, {closure(spec, params_of(plist), ret)});"
     # F2: fn name(params) -> R;   inside ext_fns!
     if in_ext_fns:
@@ -209,6 +218,7 @@ def main():
         crlf = CRLF in raw
         lines = raw.replace(CRLF, LF).split(LF)
         o = list(lines)
+        local_extern = bool(re.search(r"macro_rules! hook \{[^}]*?unsafe extern \"C\" fn \$name", LF.join(lines)))
         in_ext = False
         for i, line in enumerate(lines):
             s = line.strip()
@@ -223,12 +233,19 @@ def main():
             for name, spec in specs.items():
                 if name not in s:
                     continue
-                r = rewire_line(line, name, spec, in_ext, total[name])
+                r = rewire_line(line, name, spec, in_ext, total[name], local_extern)
                 if r is not None:
                     lines[i] = r
                     break
-        if lines != o:
+        if True:
             t = LF.join(lines)
+            if "hook_or!(" in t and "macro_rules! hook_or" not in t and not re.search(r"hookmac::(\{[^}]*\bhook_or\b[^}]*\}|hook_or\b)", t):
+                t2 = re.sub(r"use crate::tu::hookmac::hook;", "use crate::tu::hookmac::{hook, hook_or};", t, count=1)
+                if t2 == t:
+                    t2 = re.sub(r"use crate::tu::hookmac::\{([^}]*)\};", lambda mm: "use crate::tu::hookmac::{" + mm.group(1).rstrip() + ", hook_or};", t, count=1)
+                if t2 == t:
+                    print("WARNING: hook_or not importable in", f)
+                t = t2
             if "macro_rules! ext_fns" in t and "$def:expr" not in t:
                 if "$(= $def:path)?" in t:
                     t = t.replace("$(= $def:path)?", "$(= $def:expr)?").replace(IF_ARM_OLD, IF_ARM_NEW)
@@ -238,9 +255,10 @@ def main():
                     print("WARNING: ext_fns macro not upgradable in", f)
             elif "$(= $def:path)?" in t:
                 t = t.replace("$(= $def:path)?", "$(= $def:expr)?").replace(IF_ARM_OLD, IF_ARM_NEW)
-            if not dry:
-                f.write_bytes((t.replace(LF, CRLF) if crlf else t).encode("utf8"))
-            print("rewrote", f.relative_to(ROOT).as_posix())
+            if t != raw.replace(CRLF, LF):
+                if not dry:
+                    f.write_bytes((t.replace(LF, CRLF) if crlf else t).encode("utf8"))
+                print("rewrote", f.relative_to(ROOT).as_posix())
     for n, c in total.items():
         print(f"{n}: {c[0]} sites")
 

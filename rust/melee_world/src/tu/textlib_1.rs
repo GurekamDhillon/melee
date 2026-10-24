@@ -40,13 +40,13 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn DevText_Create(a0: i8, a1: i32, a2: i32, a3: i32, a4: i32, a5: *mut i8) -> *mut DevText;
-    fn DevText_Erase(a0: *mut DevText);
+    fn DevText_Create(a0: i8, a1: i32, a2: i32, a3: i32, a4: i32, a5: *mut i8) -> *mut DevText = |a0: i8, a1: i32, a2: i32, a3: i32, a4: i32, a5: *mut i8| unsafe { crate::tu::textlib::DevText_Create(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _) as _ };
+    fn DevText_Erase(a0: *mut DevText) = |a0: *mut DevText| { unsafe { let _ = crate::tu::textlib::DevText_Erase(a0 as _); } };
     fn DevText_GetGObj() -> *mut HSD_GObj = || unsafe { crate::tu::textdraw::DevText_GetGObj() as _ };
     fn DevText_HideBackground(a0: *mut DevText) = |a0: *mut DevText| { unsafe { let _ = crate::tu::textlib::DevText_HideBackground(a0 as _); } };
     fn DevText_HideCursor(a0: *mut DevText) = |a0: *mut DevText| { unsafe { let _ = crate::tu::textlib::DevText_HideCursor(a0 as _); } };
     fn DevText_HideText(a0: *mut DevText) = |a0: *mut DevText| { unsafe { let _ = crate::tu::textlib::DevText_HideText(a0 as _); } };
-    fn DevText_Print(a0: *mut DevText, a1: *mut i8);
+    fn DevText_Print(a0: *mut DevText, a1: *mut i8) = |a0: *mut DevText, a1: *mut i8| { unsafe { let _ = crate::tu::textlib::DevText_Print(a0 as _, a1 as _); } };
     fn DevText_PrintInt(a0: *mut DevText, a1: i32) = |a0: *mut DevText, a1: i32| { unsafe { let _ = crate::tu::textlib::DevText_PrintInt(a0 as _, a1 as _); } };
     fn DevText_Printf(a0: *mut DevText, a1: *const i8, a2: &[crate::tu::textlib::PrintfArg]);
     fn DevText_Remove(a0: *mut *mut DevText) = |a0: *mut *mut DevText| { unsafe { let _ = crate::tu::textdraw::DevText_Remove(a0 as _); } };

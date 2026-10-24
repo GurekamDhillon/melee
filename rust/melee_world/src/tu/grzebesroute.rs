@@ -150,7 +150,8 @@ pub mod ext {
     }
     // rp3-end
 
-    hook!(H_HSD_LObjSetColor, HSD_LObjSetColor, (a0: *mut melee_types::HSD_LObj, a1: melee_types::GXColor));
+    pub static mut H_HSD_LObjSetColor: Option<unsafe extern "C" fn(*mut melee_types::HSD_LObj, melee_types::GXColor)> = None;
+    pub unsafe extern "C" fn HSD_LObjSetColor(a0: *mut melee_types::HSD_LObj, a1: melee_types::GXColor) { match H_HSD_LObjSetColor { Some(f) => f(a0, a1), None => unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjSetColor(a0 as _, a1 as _); } } }
     // rp3 HSD_LObjSetPosition
     pub static mut H_HSD_LObjSetPosition: Option<unsafe extern "C" fn(*mut melee_types::HSD_LObj, *mut melee_types::Vec)> = None;
     #[allow(non_snake_case, unused_unsafe)]

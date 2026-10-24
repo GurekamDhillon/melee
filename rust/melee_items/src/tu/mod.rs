@@ -191,3 +191,10 @@ pub mod ityoshiegglay;
 pub mod ityoshieggthrow;
 pub mod ityoshistar;
 pub mod itzeldadinfire;
+// Shard 817-824: whole-TU ports of itzeldadinfireexplode, itzgshell, itzrshell, it_2ADA, it_2E5A, it_2F28.
+pub mod itzeldadinfireexplode;
+pub mod itzgshell;
+pub mod itzrshell;
+pub mod it_2ADA;
+pub mod it_2E5A;
+pub mod it_2F28;

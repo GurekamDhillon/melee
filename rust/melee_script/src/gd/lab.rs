@@ -280,6 +280,7 @@ pub fn register(e: &Engine, gd: &Table) -> LuaResult<()> {
         let p = a.check_number(2)? as i32;
         let mut s = st.borrow_mut();
         s.require_gameplay("set_percent")?;
+        s.rw_branch();
         s.game.set_percent(slot as i32, super::core::clampi(p, 0, 999));
         Ok(())
     })?;

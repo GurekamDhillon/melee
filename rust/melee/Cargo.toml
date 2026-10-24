@@ -22,3 +22,4 @@ melee_platform = { path = "../melee_platform" }
 # m-ex fighters: the PPC interpreter + GC->native field rewrite for gdmod ftFunction code.
 mex_import = { path = "../../tools/mex-import" }
 winit = "0.30"
+font8x8 = "0.3.1"

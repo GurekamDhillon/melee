@@ -167,14 +167,20 @@ struct FighterModel {
     descs: Vec<u32>,
 }
 
+/// What it takes to draw a `VsMatch`: the stage and costume models plus the HSD render state.
+pub struct MatchRender {
+    stage: Stage,
+    fighters: Vec<FighterModel>,
+    cache: DataCache,
+    render: HsdRender,
+    logged: bool,
+}
+
 pub struct View {
     sim: VsMatch,
     sim_alive: bool,
-    stage: Stage,
-    fighters: Vec<FighterModel>,
+    mr: MatchRender,
     shim: GxShim,
-    cache: DataCache,
-    render: HsdRender,
     presenter: Option<Presenter>,
     frame: u64,
     frames: Option<u64>,
@@ -186,8 +192,13 @@ pub struct View {
 
 /// The fixed camera (see the module note): the FD match-start framing, looking down -z.
 fn camera() -> (Mtx, [[f32; 4]; 4]) {
-    let eye = Vec3 { x: 0.0, y: 25.0, z: 230.0 };
-    let at = Vec3 { x: 0.0, y: 15.0, z: 0.0 };
+    camera_at(0.0, 15.0, 230.0)
+}
+
+/// A look-at camera on (cx, cy) from `dist` in front (an approximation of the match camera).
+pub fn camera_at(cx: f32, cy: f32, dist: f32) -> (Mtx, [[f32; 4]; 4]) {
+    let eye = Vec3 { x: cx, y: cy + 10.0, z: dist };
+    let at = Vec3 { x: cx, y: cy, z: 0.0 };
     // look-at (MTXLookAt)
     let f = mtx::vec_normalize(&mtx::vec_sub(&eye, &at));
     let up = Vec3 { x: 0.0, y: 1.0, z: 0.0 };
@@ -213,27 +224,52 @@ fn camera() -> (Mtx, [[f32; 4]; 4]) {
     (view, proj)
 }
 
-impl View {
-    pub fn draw_frame(&mut self) {
-        let (vmtx, proj) = camera();
-        let shim = &mut self.shim;
+impl MatchRender {
+    pub fn new(disc: &mut crate::disc::Disc, stage_file: &str, names: &[&str]) -> Result<Self, String> {
+        let stage = load_stage(&disc.read(stage_file)?)?;
+        let mut fighters = Vec::new();
+        for n in names {
+            let (nr, sym) = crate::fighter_data::costume_for(n).ok_or("no costume")?;
+            let a = DatArchive::parse(&disc.read(nr)?).map_err(|e| format!("{nr}: {e}"))?;
+            let at = a.public_offset(sym).ok_or(format!("{nr}: no {sym}"))?;
+            let mut descs = Vec::new();
+            descs_of(&a.data, at, 0, &mut descs);
+            fighters.push(FighterModel { dat: Arc::new(a.data), descs });
+        }
+        Ok(Self { stage, fighters, cache: DataCache::default(), render: HsdRender::new(), logged: false })
+    }
+
+    /// Draw the stage and fighters into the shim's EFB (no copy-out: the caller adds UI, then ends the frame).
+    /// `follow`: a camera that frames the players instead of the fixed FD framing.
+    pub fn draw(&mut self, shim: &mut GxShim, sim: &VsMatch, follow: bool) {
+        let (vmtx, proj) = if follow {
+            let ps: Vec<(f32, f32)> = sim.players.iter().filter(|p| !p.follower).map(|p| (p.fp.cur_pos.x, p.fp.cur_pos.y)).collect();
+            let n = ps.len().max(1) as f32;
+            let cx = ps.iter().map(|p| p.0).sum::<f32>() / n;
+            let cy = ps.iter().map(|p| p.1).sum::<f32>() / n;
+            let spread = ps.iter().map(|p| ((p.0 - cx).powi(2) + (p.1 - cy).powi(2)).sqrt()).fold(0.0, f32::max);
+            camera_at(cx.clamp(-120.0, 120.0), (cy + 8.0).clamp(0.0, 90.0), (spread * 1.3 + 150.0).clamp(230.0, 480.0))
+        } else {
+            camera()
+        };
         shim.set_copy_clear(GxColor::new(0, 0, 0, 255), 0xFF_FFFF);
         shim.set_viewport(0.0, 0.0, EFB_WIDTH as f32, EFB_HEIGHT as f32, 0.0, 1.0);
         shim.set_scissor(0, 0, EFB_WIDTH, EFB_HEIGHT);
         shim.set_projection(&proj, GX_PERSPECTIVE);
         let r = &mut self.render;
         r.invalidate_all();
-        let mut g = ShimBackend { shim: &mut self.shim, cache: &mut self.cache };
+        let mut g = ShimBackend { shim, cache: &mut self.cache };
         let sd = self.stage.draw.dat.clone();
         r.lobj_setup_init(&mut g, &Dat(&sd), &stage_light_descs(&Dat(&sd), self.stage.map_head), &vmtx);
-        if self.frame == 0 {
-            eprintln!("view-golden: lights {:?} diffuse mask {:#x}", r.lights, r.lightmask_diffuse);
+        if !self.logged {
+            self.logged = true;
+            eprintln!("view: lights {:?} diffuse mask {:#x}", r.lights, r.lightmask_diffuse);
         }
         // Models: the stage, then each fighter's costume (sim joint SRTs on a copy of the tree).
         let mut models: Vec<(Arc<Vec<u8>>, Vec<DispJoint>)> = Vec::new();
         let mut st = self.stage.tree.clone();
         models.push((sd.clone(), self.stage.draw.disp_joints(&mut st)));
-        for (p, f) in self.sim.players.iter().zip(&self.fighters) {
+        for (p, f) in sim.players.iter().zip(&self.fighters) {
             let mut t = p.skel.tree.clone();
             let d = Drawable { dat: f.dat.clone(), roots: vec![p.skel.root], descs: f.descs.clone() };
             models.push((f.dat.clone(), d.disp_joints(&mut t)));
@@ -246,6 +282,12 @@ impl View {
                 r.jobj_disp_all(&mut g, m, &vmtx, mask, 0);
             }
         }
+    }
+}
+
+impl View {
+    pub fn draw_frame(&mut self) {
+        self.mr.draw(&mut self.shim, &self.sim, false);
         self.shim.copy_disp(true);
     }
 }
@@ -276,7 +318,7 @@ impl Game for View {
         p.present(&self.shim.gx.state, frame.as_deref());
         self.shim.log.clear();
         if self.frame == 0 {
-            let s = self.render.stats;
+            let s = self.mr.render.stats;
             eprintln!(
                 "view-golden: first frame {} draws, {} pobjs ({} envelope, {} shape-anim skipped), {} shader errors",
                 frame.as_ref().map_or(0, |f| f.len()),
@@ -329,26 +371,14 @@ pub fn view_golden(args: &[String]) -> ExitCode {
     let built = (|| -> Result<View, String> {
         let mut disc = crate::disc::Disc::open(&iso)?;
         let sim = VsMatch::new(&mut disc, stage_file, names, 12345, 3)?;
-        let stage = load_stage(&disc.read(stage_file)?)?;
-        let mut fighters = Vec::new();
-        for n in names {
-            let (nr, sym) = crate::fighter_data::costume_for(n).ok_or("no costume")?;
-            let a = DatArchive::parse(&disc.read(nr)?).map_err(|e| format!("{nr}: {e}"))?;
-            let at = a.public_offset(sym).ok_or(format!("{nr}: no {sym}"))?;
-            let mut descs = Vec::new();
-            descs_of(&a.data, at, 0, &mut descs);
-            fighters.push(FighterModel { dat: Arc::new(a.data), descs });
-        }
+        let mr = MatchRender::new(&mut disc, stage_file, names)?;
         let shot_dir = PathBuf::from(get("--shot-dir").unwrap_or_else(|| "target/shots".into()));
         std::fs::create_dir_all(&shot_dir).map_err(|e| format!("{}: {e}", shot_dir.display()))?;
         Ok(View {
             sim,
             sim_alive: true,
-            stage,
-            fighters,
+            mr,
             shim: GxShim::new(),
-            cache: DataCache::default(),
-            render: HsdRender::new(),
             presenter: None,
             frame: 0,
             frames: get("--frames").and_then(|v| v.parse().ok()),

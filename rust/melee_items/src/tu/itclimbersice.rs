@@ -48,7 +48,7 @@ pub mod ext {
     fn Item_8026A8EC(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_8026A8EC(a0) };
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::dbitem::db_80225DD8(a0, a1) };
     fn efAsync_Spawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: u32, a3: u32, a4: *mut HSD_JObj, a5: &[EfArg]);
-    fn efLib_DestroyAll(a0: *mut HSD_GObj);
+    fn efLib_DestroyAll(a0: *mut HSD_GObj) => unsafe { melee_world::tu::eflib::efLib_DestroyAll(a0) };
     fn ftKb_SpecialNIc_80108CE8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
     fn ftPp_Init_8011F16C(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
     fn itColl_BounceOffShield(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_2725::itColl_BounceOffShield(a0) as _ };

@@ -38,7 +38,7 @@ pub mod ext {
     fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::dbitem::db_80225DD8(a0, a1) };
-    fn efLib_DestroyAll(a0: *mut HSD_GObj);
+    fn efLib_DestroyAll(a0: *mut HSD_GObj) => unsafe { melee_world::tu::eflib::efLib_DestroyAll(a0) };
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut HSD_JObj) -> *mut c_void;
     fn ftLib_800865D8(a0: *mut HSD_GObj, a1: *mut f32, a2: *mut f32) => unsafe { crate::tu::ftlib::ftLib_800865D8(a0, a1, a2) };
     fn ftZd_SpecialLw_8013B540(a0: *mut HSD_GObj) -> i32;

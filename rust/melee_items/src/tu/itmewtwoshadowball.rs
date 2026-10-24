@@ -55,7 +55,7 @@ pub mod ext {
     fn Item_8026AE84(a0: *mut Item, a1: i32, a2: u8, a3: u8) => unsafe { crate::tu::item::Item_8026AE84(a0, a1, a2, a3) };
     fn Item_8026AF0C(a0: *mut Item, a1: i32, a2: u8, a3: u8) => unsafe { crate::tu::item::Item_8026AF0C(a0, a1, a2, a3) };
     fn atan2f(a0: f32, a1: f32) -> f32 => unsafe { melee_runtime::lbtrigf::atan2f(a0, a1) };
-    fn efLib_DestroyAll(a0: *mut HSD_GObj);
+    fn efLib_DestroyAll(a0: *mut HSD_GObj) => unsafe { melee_world::tu::eflib::efLib_DestroyAll(a0) };
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut Vec) -> *mut c_void;
     fn ftKb_SpecialNMt_80106F44(a0: *mut HSD_GObj, a1: *mut i32, a2: *mut i32) -> i32;
     fn ftKb_SpecialNMt_80106F9C(a0: *mut HSD_GObj) -> i32;

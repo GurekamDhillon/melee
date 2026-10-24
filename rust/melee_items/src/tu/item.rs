@@ -73,7 +73,7 @@ pub mod ext {
     fn db_ShowItemPickupRange() -> u32;
     fn efAsync_QueueClear(a0: *mut c_void);
     fn efAsync_QueueFlush(a0: *mut HSD_GObj, a1: *mut c_void);
-    fn efLib_DestroyAll(a0: *mut HSD_GObj);
+    fn efLib_DestroyAll(a0: *mut HSD_GObj) => unsafe { melee_world::tu::eflib::efLib_DestroyAll(a0) };
     fn ftLib_80086724(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
     fn ftLib_80086764(a0: *mut HSD_GObj);
     fn ftLib_800867A0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_800867A0(a0, a1) as _ };

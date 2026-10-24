@@ -1065,3 +1065,34 @@ Stub names in `docs/rust-port/missing.md` for melee_fighter: NO_PORT 276 -> ~71,
 - Next: dynamics bones for the sim skeleton, then behaviour 3 (800B9020), the rest of the CPU decision code
   (A9904, A96B8, ABBA8, ...), Fox/Falco ground neutral-B and shine, hits, Green Greens' per-frame stage procs
   (blocks, wind, apples), then cpu_peach_samus_ys_items.
+
+## Status after the stub-fill merges and golden rounds 1-4 (2026-10-24)
+
+All six `port/fill-melee_*` branches and `port/shard-665-672` are merged into `rust-port` (nothing pushed). `cargo build --workspace` passes (in `rust/`).
+
+Fixed this session: nine failing oracle targets (shadow native headers, `fv64` draw order, null stale pointers, `LOWMEM` pools, `PTR_MASK`, `tu_sobjlib` `origin_x` /2.0); stub audit found no recursion; 7 duplicate ports now forward to the TU ports; `missing.md` written.
+
+Stub fill (counts are distinct names / sites from `docs/rust-port/missing.md`; the doc was not regenerated, per-crate figures come from each fill report):
+
+| crate | before (sites: NO_PORT / SIGNATURE / CYCLE) | now |
+|---|---|---|
+| melee_runtime | 534 / 466 / 177 | SIGNATURE ~216 left, NO_PORT 534, CYCLE 177 (250 SIGNATURE sites forwarded; unverified vs C) |
+| melee_world | 171 / 460 / 182 names | 273 of 813 names left (87 / 69 / 117), plus 41 names the doc missed; ~115 new ports verified vs C |
+| melee_fighter | 276 / 302 / 188 names | ~277 of 766 names left (~71 / ~55 / ~151) |
+| melee_chara | 164 / 149 / 6 sites | 0 |
+| melee_items, melee_modes | 311 / 4321 / 471 and 912 / 2428 / 0 sites | many wired (adapters, native db ports, PS/MTX bridge); no recount recorded, regenerate `missing.md` to get numbers |
+
+Not in `missing.md`: ports that still panic from `.expect("TODO ...")` hooks (e.g. `tev.rs` `OBJ_ALLOC_INIT`). `tu/globals.rs` exists in both melee_runtime and melee_world (identical); runtime and world may duplicate raw GObj/JObj/CObj work. There is one `controller` static (melee_world re-exports melee_runtime's).
+
+Golden frames matching (`melee golden`, `compare_golden.py --allow-short`):
+
+| scenario | matching frames | stop |
+|---|---|---|
+| pad_falcon_fox_fd | 0..1800 (all 1801) | frame 1802, `ftCo_RunBrake_Enter` not ported |
+| pad_marth_sheik_bf | 0..1800 (all 1801) | none in range |
+| cpu_fox_falco_dl | 0..63 | diverges at 64 (Falco); sim stops at 91, `ftCo_800B2790` behaviour 3 |
+| cpu_peach_samus_ys_items | not wired | needs CPU input, Peach, Samus, Yoshi's Story, items |
+
+Blockers: (1) Fox tail dynamics bones (`ftCo_8009DD94` -> `lb_8001044C`) not run on the sim `Skeleton`, which breaks hurtbox extents and `cpu.x38`/`xEC`; (2) remaining stubs need a global GX/GObj/JObj host layer (SIGNATURE), SDK/hardware and platform-glue ports (NO_PORT), and moving DevText/Camera/Mushroom/ftDrawCommon down a crate (CYCLE).
+
+Next plan: regenerate `missing.md`; dynamics bones for the sim skeleton; CPU behaviour 3 (800B9020) and the rest of the CPU decision code; RunBrake / smash turn / hits (`hit_guard`) for the fd golden's tail; Green Greens stage procs; wire cpu_peach_samus_ys_items; host layer for the SIGNATURE stubs.

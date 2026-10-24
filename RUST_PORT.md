@@ -916,3 +916,20 @@ spawn helpers) are local ports via the `jobj_inl!`/`spawn_inl!` macros in `tu/mo
 holding pointers or aliasing bitfield members are hashed by field and cleared after each op, `HSD_ASSERT` is an infinite
 loop in the C driver so fixtures clear JOBJ_USE_QUATERNION. The double-precision Newton steps of `my_sqrtf` cannot be
 told apart from unfused ones through the f32 result.
+
+## Merge of port/shard-665-672, failing-target fixes, stub audit (2026-10-24)
+
+- `port/shard-665-672` merged (conflicts in `melee_items/gen/mtu/{mk_driver,specs,stems}.py` and `src/tu/mod.rs` resolved by keeping both sides).
+- The nine failing targets pass. Causes: (1) oracles compiled the game C with 4-byte slots where melee_types widens
+  trophy slots to native pointers; `melee_types/gen/native_hdr.py` now writes shadow headers with the same widened slots
+  (`-include`d by the `oracle_ptr` / `oracle_r5` builds); (2) `tu_mngallery` expected data lacked `float_order_helper` rows (regenerated);
+  (3) `tu_lb_020A`: the C driver still masked `HSD_IDKey` to u32 (now pointer-width) and `(u64) fv() << 32 | fv()` was
+  evaluated right to left (`fv64`); (4) `tu_gm_1798`: tuoracle drew pointer-width ints as 32 bits in C but 64 in Rust;
+  (5) `tu_grfourside`: a stale half pointer (low half overwritten by a 32-bit view) depends on the image base, now null on both sides;
+  (6) `tuo_grvenom` / `tuo_grzakogenerator`: pool objects now `LOWMEM` (same addresses on both sides; the result changed from run to run),
+  and `PTR_MASK` ignores bits 0/7 of a pointer's low byte aliased by a bitfield (b0 is bit 7 on the GameCube, bit 0 native);
+  (7) `tu_sobjlib` found a real port bug: `origin_x` divided by 3.0 instead of 2.0.
+- Stub audit: no infinite recursion among the 2,552 `None => port` fallbacks (cycle search over wrapper edges and over the call graph;
+  recursive targets are genuine tree walks). 149 rewired names also have another port; the clear pure duplicates (7 legacy melee_modes
+  ports, 1 melee_fighter port) now forward to the TU port; the rest differ in signature (`efSync_Spawn`, `efAsync_Spawn`, ...) and stay.
+- `docs/rust-port/missing.md` lists every remaining panicking stub with its NO_PORT / SIGNATURE / CYCLE tag.

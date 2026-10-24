@@ -1,0 +1,5812 @@
+# Remaining panicking stubs
+
+Generated 2026-10-24 from the sources of `rust/*/src` (excluding `raw/` and `c2r/`) at the commit that added this file. A *stub* is a callee declared by `hook!` / `lb_hook!` / `ch_hook!` / `stub!` / `ext_fns!` / `oext_fns!` / `hooks!` / `todo_fns!` / `todo_ext!` / `todo_cb!` in a TU's `mod ext` (unset hook: `panic!("TODO: <name> is not ported")`), an explicit `Some(f) => f(..), None => panic!` function (`tu_ext.rs`), or a function whose whole body is `todo!` / `panic!` / `unimplemented!`. Stubs whose unset hook falls back to a port (`hook_or!`, `None => crate::tu::..`, `stub_or!`, the three resolve passes) are not listed.
+
+A *site* is one (file, name) declaration; the same C function is stubbed once per TU that calls it, so the number of distinct names is much smaller than the number of sites.
+
+## Tags
+
+| tag | meaning |
+|---|---|
+| `NO_PORT` | no Rust function of that name (case-insensitive) with a real body exists in any crate. |
+| `SIGNATURE` | a port exists in the stub's own crate or in a crate it depends on, but the stub was not rewired (different parameter/return types, arity, or the port takes references / `&mut self`). Candidates for a typed adapter. |
+| `CYCLE` | a port exists only in a crate that cannot be depended on from the stub's crate (the stub's crate is below it in the dependency order, or the two are siblings). Needs a trait / hook layer or moving the port down. |
+
+Crate order (a crate may depend on the ones to its left): `melee_core`, `melee_types`, `melee_runtime`, `melee_world`, `melee_items`, `melee_fighter`, `melee_chara`, `melee_modes`; `melee_audio` and `melee_net` sit beside them (`melee_audio` -> runtime, `melee_net` -> fighter), `melee` is the binary.
+
+Method: `scratchpad` scripts (rsmod/stubs/classify, not committed) index every `fn` with a body, blank comments and strings, and resolve macros per file (a macro counts as panicking if its definition in that file, else in that crate, contains `panic!` / `todo!` / `unimplemented!`).
+
+## Counts per crate and tag
+
+Sites (distinct C names in parentheses).
+
+| crate | NO_PORT | SIGNATURE | CYCLE | total |
+|---|---:|---:|---:|---:|
+| `melee_runtime` | 534 (356) | 466 (344) | 177 (84) | 1177 (784) |
+| `melee_world` | 318 (171) | 1242 (460) | 282 (182) | 1842 (813) |
+| `melee_items` | 311 (106) | 4321 (882) | 471 (280) | 5103 (1268) |
+| `melee_fighter` | 395 (276) | 376 (302) | 244 (188) | 1015 (766) |
+| `melee_chara` | 164 (92) | 149 (91) | 6 (5) | 319 (188) |
+| `melee_modes` | 912 (608) | 2428 (1249) | 0 (0) | 3340 (1856) |
+| `melee` | 1 (1) | 3 (3) | 0 (0) | 4 (4) |
+| **total** | 2635 | 8985 | 1180 | 12800 (4572 distinct names overall) |
+
+Per-crate figures count a name once per crate and tag; a name can be stubbed in several crates (the last cell counts distinct names overall).
+
+## Counts per crate and stub form
+
+| crate | `ch_hook!` | `ext_fns!` | `fn+panic` | `fn-body` | `hook!` | `hooks!` | `lb_hook!` | `oext_fns!` | `stub!` | `todo_cb!` | `todo_ext!` | `todo_fns!` |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `melee_runtime` | 0 | 488 | 0 | 389 | 23 | 13 | 147 | 0 | 0 | 0 | 0 | 117 |
+| `melee_world` | 0 | 1313 | 46 | 172 | 311 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `melee_items` | 0 | 4796 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 302 |
+| `melee_fighter` | 0 | 595 | 23 | 397 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `melee_chara` | 25 | 0 | 10 | 31 | 220 | 0 | 0 | 0 | 5 | 28 | 0 | 0 |
+| `melee_modes` | 0 | 1142 | 60 | 8 | 341 | 323 | 0 | 1448 | 0 | 0 | 18 | 0 |
+| `melee` | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+
+## melee_runtime
+
+NO_PORT: 534 sites / 356 names, SIGNATURE: 466 sites / 344 names, CYCLE: 177 sites / 84 names
+
+### melee_runtime - NO_PORT (534 sites, 356 names)
+
+- `__OSCurrHeap` [todo_fns!] x1: tu/initialize.rs:356
+- `_HSD_DispForgetMemory` [todo_fns!] x1: tu/initialize.rs:374
+- `_HSD_ZListClear` [ext_fns!] x1: tu/cobj.rs:85
+- `_HSD_ZListDisp` [ext_fns!] x1: tu/cobj.rs:87
+- `_HSD_ZListSort` [ext_fns!] x1: tu/cobj.rs:86
+- `AIInit` [ext_fns!] x1: tu/lbaudio_ax.rs:47
+- `appsrt_free` [fn-body] x1: particle.rs:489
+- `ARAlloc` [lb_hook!] x1: tu/lbmemory.rs:23
+- `ARFree` [lb_hook!] x1: tu/lbmemory.rs:24
+- `ARGetSize` [lb_hook!] x1: tu/lbmemory.rs:25
+- `ARInit` [ext_fns!] x1: tu/lbaudio_ax.rs:45
+- `ARQInit` [ext_fns!] x1: tu/lbaudio_ax.rs:46
+- `ARQPostRequest` [ext_fns!] x2: tu/devcom.rs:42, tu/lbarq.rs:36
+- `AXFXChorusCallback` [todo_fns!] x1: tu/axdriver.rs:50
+- `AXFXChorusInit` [todo_fns!] x1: tu/axdriver.rs:48
+- `AXFXChorusShutdown` [todo_fns!] x1: tu/axdriver.rs:49
+- `AXFXDelayCallback` [todo_fns!] x1: tu/axdriver.rs:53
+- `AXFXDelayInit` [todo_fns!] x1: tu/axdriver.rs:51
+- `AXFXDelayShutdown` [todo_fns!] x1: tu/axdriver.rs:52
+- `AXFXReverbHiCallback` [todo_fns!] x1: tu/axdriver.rs:44
+- `AXFXReverbHiInit` [todo_fns!] x1: tu/axdriver.rs:42
+- `AXFXReverbHiShutdown` [todo_fns!] x1: tu/axdriver.rs:43
+- `AXFXReverbStdCallback` [todo_fns!] x1: tu/axdriver.rs:47
+- `AXFXReverbStdInit` [todo_fns!] x1: tu/axdriver.rs:45
+- `AXFXReverbStdShutdown` [todo_fns!] x1: tu/axdriver.rs:46
+- `AXFXSetHooks` [todo_fns!] x1: tu/axdriver.rs:41
+- `AXRegisterAuxACallback` [todo_fns!] x1: tu/axdriver.rs:39
+- `AXRegisterAuxBCallback` [todo_fns!] x1: tu/axdriver.rs:40
+- `billboard_camera` [fn-body] x1: particle.rs:501
+- `Camera_8002FEEC` [fn-body] x1: tu/dbcamera.rs:104
+- `Camera_8003006C` [fn-body] x1: tu/dbcamera.rs:103
+- `Camera_8003019C` [fn-body] x1: tu/dbcamera.rs:106
+- `Camera_800307D0` [ext_fns!] x1: tu/lbaudio_ax.rs:87
+- `Camera_80030A50` [fn-body] x1: tu/dbcamera.rs:107
+- `Camera_SetBackgroundColor` [fn-body] x1: tu/dbcamera.rs:100
+- `Camera_SetStageVisible` [fn-body] x1: tu/dbcamera.rs:99
+- `CARDCheckAsync` [ext_fns!] x1: tu/lbcardnew.rs:31
+- `CARDClose` [ext_fns!] x1: tu/lbcardnew.rs:32
+- `CARDClose_hook` [hook!] x1: tu/card.rs:74
+- `CARDCreateAsync_hook` [hook!] x1: tu/card.rs:71
+- `CARDDeleteAsync` [ext_fns!] x1: tu/lbcardnew.rs:33
+- `CARDFastOpen_hook` [hook!] x1: tu/card.rs:72
+- `CARDFormatAsync` [ext_fns!] x1: tu/lbcardnew.rs:34
+- `CARDFreeBlocks` [ext_fns!] x1: tu/lbcardnew.rs:35
+- `CARDGetStatus` [ext_fns!] x1: tu/lbcardnew.rs:36
+- `CARDGetStatus_hook` [hook!] x1: tu/card.rs:78
+- `CARDGetXferredBytes_hook` [hook!] x1: tu/card.rs:75
+- `CARDMountAsync` [ext_fns!] x1: tu/lbcardnew.rs:37
+- `CARDOpen` [ext_fns!] x1: tu/lbcardnew.rs:38
+- `CARDOpen_hook` [hook!] x1: tu/card.rs:73
+- `CARDProbe` [ext_fns!] x1: tu/lbcardgame.rs:29
+- `CARDProbeEx` [ext_fns!/fn-body] x2: tu/dbinit.rs:96, tu/lbcardnew.rs:39
+- `CARDRead_hook` [hook!] x1: tu/card.rs:77
+- `CARDReadAsync_hook` [hook!] x1: tu/card.rs:76
+- `CARDRenameAsync` [ext_fns!] x1: tu/lbcardnew.rs:40
+- `CARDSetStatusAsync_hook` [hook!] x1: tu/card.rs:79
+- `CARDUnmount` [ext_fns!] x1: tu/lbcardnew.rs:41
+- `CARDWrite_hook` [hook!] x1: tu/card.rs:81
+- `CARDWriteAsync_hook` [hook!] x1: tu/card.rs:80
+- `cm_80453004` [fn-body] x1: tu/dbcamera.rs:108
+- `db_bonus_names` [fn-body] x1: tu/dbbonus.rs:39
+- `db_MiscVisualEffectsStatus` [fn-body] x1: tu/dbcamera.rs:92
+- `db_motionstate_names` [fn-body] x1: tu/dbanim.rs:60
+- `db_submotion_names` [fn-body] x1: tu/dbanim.rs:61
+- `DBIsDebuggerPresent` [fn-body] x1: tu/dberror.rs:63
+- `DbLevel` [fn-body] x3: tu/dballoc.rs:39, tu/dberror.rs:62, tu/dbitem.rs:67
+- `DCFlushRange` [lb_hook!] x1: tu/lbrefract.rs:42
+- `DCInvalidateRange` [ext_fns!/lb_hook!] x3: tu/devcom.rs:41, tu/lbarq.rs:37, tu/lbmthp.rs:31
+- `DCStoreRange` [ext_fns!/lb_hook!] x2: tu/devcom.rs:40, tu/lbmthp.rs:32
+- `DevText_Create` [fn-body] x6: tu/dbanim.rs:79, tu/dbbonus.rs:44, tu/dbcamera.rs:119, tu/dbcpu.rs:62, tu/dbitem.rs:78, tu/dbsound.rs:48
+- `DVDClose` [lb_hook!/todo_fns!] x2: tu/axdriver.rs:38, tu/lbfile.rs:22
+- `DVDConvertPathToEntrynum` [ext_fns!/lb_hook!/todo_fns!] x3: tu/axdriver.rs:35, tu/lbdvd.rs:32, tu/lbfile.rs:25
+- `DVDFastOpen` [ext_fns!/lb_hook!/todo_fns!] x3: tu/axdriver.rs:36, tu/devcom.rs:43, tu/lbfile.rs:21
+- `DVDGetCurrentDiskID` [ext_fns!] x1: tu/lbcardnew.rs:42
+- `DVDReadAsyncPrio` [ext_fns!/todo_fns!] x2: tu/axdriver.rs:37, tu/devcom.rs:44
+- `Env1` [lb_hook!] x1: tu/lbheap.rs:34
+- `fighter_gobjs` [fn-body] x1: tu/dbanim.rs:56
+- `FighterControls_Apply` [ext_fns!] x1: tu/controller.rs:59
+- `fighters_set_shadow_hidden` [fn-body] x1: tu/dbcamera.rs:114
+- `FIOExit` [fn-body] x1: tu/hsd_392C.rs:61
+- `FIOFclose` [fn-body] x1: tu/hsd_3933.rs:69
+- `FIOFopen` [fn-body] x1: tu/hsd_3933.rs:67
+- `FIOFwrite` [fn-body] x1: tu/hsd_3933.rs:68
+- `FIOInit` [fn-body] x1: tu/hsd_392C.rs:64
+- `FIOQuery` [fn-body] x1: tu/hsd_3933.rs:66
+- `fn_CheckAnimationInfo` [fn-body] x1: tu/dbinit.rs:122
+- `fn_CheckBonusInfo` [fn-body] x1: tu/dbinit.rs:125
+- `fn_CheckCameraInfo` [fn-body] x1: tu/dbinit.rs:116
+- `fn_CheckCpuHandicapInfo` [fn-body] x1: tu/dbinit.rs:120
+- `fn_CheckMiscStageEffects` [fn-body] x1: tu/dbinit.rs:124
+- `fn_CheckMiscVisualEffects` [fn-body] x1: tu/dbinit.rs:115
+- `fn_SetupAnimationInfo` [fn-body] x1: tu/dbinit.rs:107
+- `fn_SetupBonusInfo` [fn-body] x1: tu/dbinit.rs:112
+- `fn_SetupCameraInfo` [fn-body] x1: tu/dbinit.rs:111
+- `fn_SetupCpuHandicapInfo` [fn-body] x1: tu/dbinit.rs:106
+- `fn_SetupMiscStageVisuals` [fn-body] x1: tu/dbinit.rs:110
+- `fn_SetupObjAllocLimiter` [fn-body] x1: tu/dbinit.rs:113
+- `fn_UpdateAnimationInfo` [fn-body] x1: tu/dbinit.rs:123
+- `fn_UpdateCpuHandicapInfo` [fn-body] x1: tu/dbinit.rs:121
+- `fn_UpdateObjAllocLimiter` [fn-body] x1: tu/dbinit.rs:118
+- `ft_anim_view` [fn-body] x1: tu/dbanim.rs:59
+- `ft_set_x21FC` [fn-body] x1: tu/dbanim.rs:58
+- `ft_x21FC` [fn-body] x1: tu/dbanim.rs:57
+- `ftLib_IsCrazyHandPresent` [fn-body] x1: tu/dbinit.rs:102
+- `ftLib_IsMasterHandPresent` [fn-body] x1: tu/dbinit.rs:101
+- `gc_ptr_to_u32` [fn-body] x1: tu/hsd_3A76.rs:34
+- `gc_read_u32` [ext_fns!] x1: tu/debugconsole_main.rs:53
+- `gc_read_u8` [ext_fns!] x1: tu/debugconsole_main.rs:54
+- `gc_u32_to_ptr` [fn-body] x1: tu/hsd_3A76.rs:35
+- `gc_write_u8` [ext_fns!] x1: tu/debugconsole_main.rs:55
+- `Geno_DefineBaseCK` [ext_fns!] x1: tu/lbaudio_ax.rs:97
+- `gmMainLib_804D3EE0` [lb_hook!] x1: tu/lblanguage.rs:21
+- `GObj_InitUserData` [ext_fns!] x2: tu/lbaudio_ax.rs:83, tu/sislib.rs:727
+- `grounds_set_flag_b7` [fn-body] x1: tu/dbcamera.rs:115
+- `GXBegin` [ext_fns!/fn-body/lb_hook!] x6: tu/hsd_3915.rs:47, tu/hsd_3A76.rs:69, tu/lbbgflash.rs:32, tu/lbcollision.rs:74, tu/lbgx.rs:34, tu/sobjlib.rs:913
+- `GXCallDisplayList` [ext_fns!] x1: tu/lbcollision.rs:72
+- `GXClearVtxDesc` [ext_fns!/fn-body/lb_hook!] x4: tu/hsd_3A76.rs:51, tu/lbcollision.rs:66, tu/lbgx.rs:29, tu/sobjlib.rs:914
+- `GXColor4u8` [ext_fns!/fn-body] x3: tu/hsd_3915.rs:49, tu/lbbgflash.rs:33, tu/lbcollision.rs:76
+- `GXCopyTex` [ext_fns!/lb_hook!] x2: tu/lbrefract.rs:33, tu/tobj.rs:731
+- `GXGetTexBufferSize` [lb_hook!] x1: tu/lbrefract.rs:27
+- `GXGetTexObjFmt` [ext_fns!] x1: tu/sobjlib.rs:915
+- `GXGetTexObjHeight` [ext_fns!] x1: tu/sobjlib.rs:916
+- `GXGetTexObjWidth` [ext_fns!] x1: tu/sobjlib.rs:917
+- `GXInitLightAttn` [todo_fns!] x1: tu/initialize.rs:360
+- `GXInitLightColor` [todo_fns!] x1: tu/initialize.rs:361
+- `GXInitLightDir` [todo_fns!] x1: tu/initialize.rs:359
+- `GXInitLightPos` [todo_fns!] x1: tu/initialize.rs:358
+- `GXInitTexObj` [ext_fns!/fn-body/lb_hook!] x4: tu/hsd_3A76.rs:73, tu/lbmthp.rs:33, tu/sobjlib.rs:918, tu/tobj.rs:732
+- `GXInitTexObjCI` [ext_fns!] x2: tu/sobjlib.rs:919, tu/tobj.rs:733
+- `GXInitTexObjLOD` [ext_fns!/lb_hook!] x2: tu/lbmthp.rs:34, tu/tobj.rs:734
+- `GXInitTlutObj` [ext_fns!] x2: tu/sobjlib.rs:920, tu/tobj.rs:735
+- `GXInvalidateTexAll` [ext_fns!/lb_hook!] x2: tu/lbrefract.rs:35, tu/tobj.rs:736
+- `GXLoadLightObjImm` [todo_fns!] x1: tu/initialize.rs:362
+- `GXLoadNrmMtxImm` [ext_fns!] x1: tu/lbcollision.rs:71
+- `GXLoadPosMtxImm` [ext_fns!/fn-body/lb_hook!] x4: tu/hsd_3915.rs:54, tu/lbcollision.rs:70, tu/lbgx.rs:32, tu/sobjlib.rs:921
+- `GXLoadTexMtxImm` [ext_fns!/lb_hook!] x2: tu/lbrefract.rs:44, tu/tobj.rs:737
+- `GXLoadTexObj` [ext_fns!/fn-body/lb_hook!] x4: tu/hsd_3A76.rs:74, tu/lbmthp.rs:35, tu/sobjlib.rs:922, tu/tobj.rs:738
+- `GXLoadTlut` [ext_fns!] x2: tu/sobjlib.rs:923, tu/tobj.rs:739
+- `GXNtsc480IntDf` [todo_fns!] x1: tu/initialize.rs:348
+- `GXPixModeSync` [ext_fns!/hooks!/lb_hook!] x3: tu/lbrefract.rs:34, tu/texp.rs:51, tu/tobj.rs:740
+- `GXPosition2f32` [ext_fns!/fn-body] x3: tu/hsd_3915.rs:48, tu/lbbgflash.rs:34, tu/sobjlib.rs:924
+- `GXPosition2u8` [lb_hook!] x1: tu/lbgx.rs:36
+- `GXPosition3f32` [ext_fns!/fn-body/lb_hook!] x3: tu/hsd_3A76.rs:70, tu/lbcollision.rs:75, tu/lbgx.rs:35
+- `GXSetAlphaCompare` [ext_fns!/fn-body/lb_hook!] x4: tu/hsd_3A76.rs:59, tu/lbcollision.rs:49, tu/lbgx.rs:18, tu/sobjlib.rs:925
+- `GXSetAlphaUpdate` [ext_fns!/fn-body/lb_hook!] x4: tu/hsd_3A76.rs:61, tu/lbcollision.rs:46, tu/lbgx.rs:16, tu/sobjlib.rs:926
+- `GXSetArray` [ext_fns!] x1: tu/lbcollision.rs:67
+- `GXSetBlendMode` [ext_fns!/fn-body/lb_hook!] x4: tu/hsd_3A76.rs:58, tu/lbcollision.rs:48, tu/lbgx.rs:17, tu/sobjlib.rs:927
+- `GXSetChanAmbColor` [ext_fns!] x1: tu/lbcollision.rs:62
+- `GXSetChanCtrl` [ext_fns!/lb_hook!] x2: tu/lbcollision.rs:64, tu/lbgx.rs:27
+- `GXSetChanMatColor` [ext_fns!] x1: tu/lbcollision.rs:63
+- `GXSetColorUpdate` [ext_fns!/fn-body/lb_hook!] x4: tu/hsd_3A76.rs:60, tu/lbcollision.rs:45, tu/lbgx.rs:15, tu/sobjlib.rs:928
+- `GXSetCullMode` [ext_fns!/fn-body/lb_hook!] x4: tu/hsd_3A76.rs:52, tu/lbcollision.rs:65, tu/lbgx.rs:28, tu/sobjlib.rs:929
+- `GXSetCurrentMtx` [ext_fns!/fn-body/lb_hook!] x5: tu/hsd_3915.rs:51, tu/hsd_3A76.rs:46, tu/lbcollision.rs:73, tu/lbgx.rs:33, tu/sobjlib.rs:930
+- `GXSetDither` [lb_hook!] x1: tu/lbrefract.rs:53
+- `GXSetFieldMode` [todo_fns!] x1: tu/initialize.rs:380
+- `GXSetFog` [ext_fns!] x1: tu/lbcollision.rs:47
+- `GXSetIndTexCoordScale` [lb_hook!] x1: tu/lbrefract.rs:50
+- `GXSetIndTexMtx` [lb_hook!] x1: tu/lbrefract.rs:51
+- `GXSetIndTexOrder` [lb_hook!] x1: tu/lbrefract.rs:49
+- `GXSetNumChans` [ext_fns!/fn-body/lb_hook!] x3: tu/hsd_3A76.rs:50, tu/lbcollision.rs:61, tu/lbgx.rs:26
+- `GXSetNumIndStages` [lb_hook!] x1: tu/lbrefract.rs:37
+- `GXSetNumTevStages` [ext_fns!/fn-body/lb_hook!] x4: tu/hsd_3A76.rs:54, tu/lbcollision.rs:54, tu/lbgx.rs:23, tu/sobjlib.rs:931
+- `GXSetNumTexGens` [ext_fns!/fn-body/lb_hook!] x4: tu/hsd_3A76.rs:53, tu/lbcollision.rs:52, tu/lbgx.rs:21, tu/sobjlib.rs:932
+- `GXSetPixelFmt` [todo_fns!] x1: tu/initialize.rs:379
+- `GXSetProjection` [ext_fns!] x1: tu/cobj.rs:96
+- `GXSetScissor` [ext_fns!/fn-body/lb_hook!] x3: tu/cobj.rs:95, tu/hsd_3A76.rs:43, tu/lbshadow.rs:24
+- `GXSetTevAlphaIn` [ext_fns!/fn-body/lb_hook!] x4: tu/hsd_3A76.rs:65, tu/lbcollision.rs:58, tu/lbrefract.rs:46, tu/sobjlib.rs:933
+- `GXSetTevAlphaOp` [ext_fns!/fn-body/lb_hook!] x4: tu/hsd_3A76.rs:64, tu/lbcollision.rs:60, tu/lbrefract.rs:48, tu/sobjlib.rs:934
+- `GXSetTevClampMode` [ext_fns!/lb_hook!] x2: tu/lbcollision.rs:53, tu/lbgx.rs:22
+- `GXSetTevColor` [ext_fns!/fn-body/hooks!] x4: tu/hsd_3A76.rs:66, tu/lbcollision.rs:56, tu/sobjlib.rs:935, tu/texp.rs:52
+- `GXSetTevColorIn` [ext_fns!/fn-body/lb_hook!] x4: tu/hsd_3A76.rs:62, tu/lbcollision.rs:57, tu/lbrefract.rs:45, tu/sobjlib.rs:936
+- `GXSetTevColorOp` [ext_fns!/fn-body/lb_hook!] x4: tu/hsd_3A76.rs:63, tu/lbcollision.rs:59, tu/lbrefract.rs:47, tu/sobjlib.rs:937
+- `GXSetTevColorS10` [ext_fns!] x1: tu/sobjlib.rs:938
+- `GXSetTevDirect` [lb_hook!] x1: tu/lbrefract.rs:36
+- `GXSetTevIndirect` [lb_hook!] x1: tu/lbrefract.rs:52
+- `GXSetTevKAlphaSel` [ext_fns!/fn-body] x2: tu/hsd_3A76.rs:67, tu/sobjlib.rs:939
+- `GXSetTevKColor` [ext_fns!/fn-body/hooks!] x3: tu/hsd_3A76.rs:68, tu/sobjlib.rs:940, tu/texp.rs:53
+- `GXSetTevKColorSel` [ext_fns!] x1: tu/sobjlib.rs:941
+- `GXSetTevOp` [lb_hook!] x1: tu/lbgx.rs:25
+- `GXSetTevOrder` [ext_fns!/fn-body/lb_hook!] x4: tu/hsd_3A76.rs:57, tu/lbcollision.rs:55, tu/lbgx.rs:24, tu/sobjlib.rs:942
+- `GXSetTevSwapMode` [ext_fns!] x1: tu/sobjlib.rs:943
+- `GXSetTevSwapModeTable` [ext_fns!] x1: tu/sobjlib.rs:944
+- `GXSetTexCoordGen2` [ext_fns!/fn-body/lb_hook!] x4: tu/hsd_3A76.rs:48, tu/lbrefract.rs:43, tu/sobjlib.rs:945, tu/tobj.rs:741
+- `GXSetTexCopyDst` [ext_fns!/lb_hook!] x2: tu/lbrefract.rs:32, tu/tobj.rs:742
+- `GXSetTexCopySrc` [ext_fns!/lb_hook!] x2: tu/lbrefract.rs:31, tu/tobj.rs:743
+- `GXSetViewport` [ext_fns!/fn-body] x2: tu/cobj.rs:92, tu/hsd_3A76.rs:42
+- `GXSetViewportJitter` [ext_fns!] x1: tu/cobj.rs:94
+- `GXSetVtxAttrFmt` [ext_fns!/fn-body/lb_hook!] x5: tu/hsd_3915.rs:58, tu/hsd_3A76.rs:55, tu/lbcollision.rs:69, tu/lbgx.rs:30, tu/sobjlib.rs:946
+- `GXSetVtxDesc` [ext_fns!/fn-body/lb_hook!] x5: tu/hsd_3915.rs:59, tu/hsd_3A76.rs:56, tu/lbcollision.rs:68, tu/lbgx.rs:31, tu/sobjlib.rs:947
+- `GXSetZCompLoc` [ext_fns!/lb_hook!] x2: tu/lbcollision.rs:51, tu/lbgx.rs:20
+- `GXSetZMode` [ext_fns!/fn-body/lb_hook!] x3: tu/hsd_3A76.rs:41, tu/lbcollision.rs:50, tu/lbgx.rs:19
+- `GXSetZTexture` [ext_fns!] x1: tu/sobjlib.rs:948
+- `GXTexCoord2f32` [ext_fns!/fn-body] x2: tu/hsd_3A76.rs:71, tu/sobjlib.rs:949
+- `hsd_3933` [fn-body] x1: tu/hsd_392C.rs:75
+- `hsd_803941E8` [ext_fns!] x1: tu/debugconsole_main.rs:56
+- `hsd_804D78A0` [fn-body] x1: tu/hsd_3933.rs:65
+- `HSD_ASSERTREPORT` [fn-body] x1: tu/dbscreenshot.rs:48
+- `HSD_AudioSFXCheck` [ext_fns!] x1: tu/lbaudio_ax.rs:51
+- `HSD_AudioSFXSetPan` [ext_fns!] x1: tu/lbaudio_ax.rs:53
+- `HSD_AudioSFXSetPitchFid` [ext_fns!] x1: tu/lbaudio_ax.rs:55
+- `HSD_AudioSFXSetVolumeEx` [ext_fns!] x1: tu/lbaudio_ax.rs:54
+- `HSD_CObjGetAspect` [ext_fns!] x1: tu/lbbgflash.rs:35
+- `HSD_CObjGetBottom` [lb_hook!] x1: tu/lbshadow.rs:29
+- `HSD_CObjGetEyePosition` [ext_fns!] x1: tu/cobj.rs:74
+- `HSD_CObjGetInterest` [ext_fns!] x1: tu/cobj.rs:77
+- `HSD_CObjGetInvViewingMtxPtrDirect` [ext_fns!] x1: tu/tobj.rs:749
+- `HSD_CObjGetLeft` [lb_hook!] x1: tu/lbshadow.rs:30
+- `HSD_CObjGetRight` [lb_hook!] x1: tu/lbshadow.rs:31
+- `HSD_CObjGetTop` [lb_hook!] x1: tu/lbshadow.rs:28
+- `HSD_CObjGetUpVector` [ext_fns!] x1: tu/cobj.rs:79
+- `HSD_CObjGetViewingMtx` [ext_fns!/fn-body] x3: tu/hsd_3915.rs:53, tu/lbcollision.rs:43, tu/sobjlib.rs:953
+- `HSD_CObjSetEyePosition` [ext_fns!/lb_hook!] x3: tu/cobj.rs:76, tu/lbshadow.rs:37, tu/sobjlib.rs:955
+- `HSD_CObjSetFov` [ext_fns!] x1: tu/cobj.rs:82
+- `HSD_CObjSetInterest` [ext_fns!/lb_hook!] x3: tu/cobj.rs:78, tu/lbshadow.rs:38, tu/sobjlib.rs:957
+- `HSD_CObjSetProjectionType` [ext_fns!/lb_hook!] x2: tu/lbshadow.rs:35, tu/sobjlib.rs:960
+- `HSD_CObjSetRoll` [ext_fns!] x2: tu/cobj.rs:81, tu/sobjlib.rs:961
+- `HSD_CObjSetUpVector` [ext_fns!/lb_hook!] x2: tu/cobj.rs:80, tu/lbshadow.rs:39
+- `HSD_DebugFontAtlas_addr` [ext_fns!] x1: tu/debugconsole_main.rs:65
+- `HSD_FObjInterpretAnimAll` [todo_fns!] x1: tu/aobj.rs:35
+- `HSD_FObjReqAnimAll` [todo_fns!] x1: tu/aobj.rs:33
+- `HSD_FObjStopAnimAll` [todo_fns!] x1: tu/aobj.rs:34
+- `HSD_FogSet` [hook!] x1: tu/gobj.rs:50
+- `HSD_GObj_SetupProc` [ext_fns!] x3: tu/lbaudio_ax.rs:84, tu/lbbgflash.rs:40, tu/lbcardgame.rs:37
+- `HSD_GObjFree` [ext_fns!] x2: tu/lbaudio_ax.rs:81, tu/sislib.rs:734
+- `HSD_GObjPLinkHead` [fn-body] x2: tu/dbinit.rs:99, tu/dbitem.rs:71
+- `HSD_MtxGetScale` [ext_fns!] x1: tu/particle.rs:1687
+- `HSD_MtxSRT` [ext_fns!] x1: tu/particle.rs:1688
+- `HSD_PadMasterStatus` [fn-body] x2: tu/dbcamera.rs:113, tu/dbinit.rs:100
+- `HSD_PadMasterStatus_button` [fn-body] x1: tu/dbscreenshot.rs:41
+- `HSD_PadMasterStatus_trigger` [fn-body] x1: tu/dbscreenshot.rs:42
+- `HSD_ShadowSetViewingRect` [lb_hook!] x1: tu/lbshadow.rs:50
+- `HSD_SisLib_Alloc` [fn-body] x1: tu/hsd_3A64.rs:22
+- `HSD_SObjLib_803A477C` [lb_hook!] x1: tu/lbmthp.rs:36
+- `HSD_StateInvalidate_All` [hook!] x1: tu/dobj.rs:154
+- `HSD_TObjSetup` [ext_fns!/lb_hook!] x2: tu/lbrefract.rs:29, tu/mobj.rs:672
+- `HSD_VIData_addr` [ext_fns!] x1: tu/debugconsole_main.rs:64
+- `HSD_VIData_fb_width` [fn-body] x1: tu/dbscreenshot.rs:46
+- `HSD_VIData_nb_xfb` [fn-body] x1: tu/hsd_393C.rs:35
+- `HSD_VIData_u16` [ext_fns!] x1: tu/debugconsole_main.rs:62
+- `HSD_VIData_xfb_buffer` [fn-body] x2: tu/dbscreenshot.rs:45, tu/hsd_393C.rs:34
+- `HSD_VIData_xfb_height` [fn-body] x1: tu/dbscreenshot.rs:47
+- `hsdClass` [hook!] x1: tu/dobj.rs:152
+- `hsdDelete` [hook!] x2: tu/dobj.rs:141, tu/gobj.rs:51
+- `hsdDObj_disp` [lb_hook!] x1: tu/lbrefract.rs:39
+- `hsdObj` [ext_fns!/hook!] x2: tu/cobj.rs:99, tu/fog.rs:29
+- `hsdPObj_load` [lb_hook!] x1: tu/lbrefract.rs:40
+- `it_804A0F60` [fn-body] x1: tu/dbitem.rs:74
+- `it_804D6D28` [fn-body] x1: tu/dbitem.rs:73
+- `Item_804A0C64` [fn-body] x1: tu/dbitem.rs:72
+- `jobj_add_translation` [fn-body] x1: particle.rs:509
+- `jobj_alloc` [fn-body] x1: particle.rs:506
+- `LabAudio_Real` [todo_fns!] x1: tu/axdriver.rs:83
+- `LabAudio_Record` [todo_fns!] x1: tu/axdriver.rs:84
+- `LabAudio_Replay` [todo_fns!] x1: tu/axdriver.rs:81
+- `LabAudio_Value` [todo_fns!] x1: tu/axdriver.rs:82
+- `LabPad_Record` [ext_fns!] x1: tu/controller.rs:57
+- `LabPad_Replay` [ext_fns!] x1: tu/controller.rs:56
+- `LabSfx_Handle` [todo_fns!] x1: tu/axdriver.rs:78
+- `LabSfx_Map` [todo_fns!] x1: tu/axdriver.rs:80
+- `LabSfx_Record` [todo_fns!] x1: tu/axdriver.rs:79
+- `LabSfx_Replay` [todo_fns!] x1: tu/axdriver.rs:77
+- `lbDvd_8001819C` [lb_hook!] x1: tu/lbfile.rs:26
+- `MCCClose` [fn-body] x1: tu/hsd_3933.rs:58
+- `MCCEnumDevices` [fn-body] x1: tu/hsd_392C.rs:71
+- `MCCExit` [fn-body] x1: tu/hsd_392C.rs:62
+- `MCCGetConnectionStatus` [fn-body] x1: tu/hsd_392C.rs:66
+- `MCCGetFreeBlocks` [fn-body] x1: tu/hsd_3933.rs:55
+- `MCCGetLastError` [fn-body] x2: tu/hsd_392C.rs:59, tu/hsd_3933.rs:51
+- `MCCInit` [fn-body] x1: tu/hsd_392C.rs:63
+- `MCCNotify` [fn-body] x1: tu/hsd_3933.rs:50
+- `MCCOpen` [fn-body] x2: tu/hsd_392C.rs:65, tu/hsd_3933.rs:57
+- `MCCRead` [fn-body] x1: tu/hsd_3933.rs:54
+- `MCCStreamOpen` [fn-body] x1: tu/hsd_3933.rs:56
+- `MCCWrite` [fn-body] x1: tu/hsd_3933.rs:53
+- `Mex_BgmCount` [ext_fns!] x1: tu/lbaudio_ax.rs:104
+- `Mex_BgmFile` [ext_fns!] x1: tu/lbaudio_ax.rs:105
+- `Mex_Enabled` [ext_fns!/fn-body] x4: tu/controller.rs:58, tu/dbcamera.rs:112, tu/hsd_3A76.rs:37, tu/lbcardgame.rs:42
+- `Mex_FighterBgmForPortCKind` [ext_fns!] x1: tu/lbaudio_ax.rs:95
+- `Mex_GrAudioByte` [ext_fns!] x1: tu/lbaudio_ax.rs:107
+- `Mex_GrAudioCount` [ext_fns!] x1: tu/lbaudio_ax.rs:106
+- `Mex_GrAudioFirst` [ext_fns!] x1: tu/lbaudio_ax.rs:108
+- `Mex_SsmCount` [ext_fns!] x1: tu/lbaudio_ax.rs:100
+- `Mex_SsmFile` [ext_fns!] x1: tu/lbaudio_ax.rs:101
+- `Mex_SsmForPortCKind` [ext_fns!] x1: tu/lbaudio_ax.rs:98
+- `Mex_SsmLookup` [ext_fns!] x1: tu/lbaudio_ax.rs:103
+- `Mex_SsmSize` [ext_fns!] x1: tu/lbaudio_ax.rs:102
+- `missing` [fn-body] x2: tu/psappsrt.rs:15, tu/robj.rs:46
+- `native_spline_point` [fn-body] x1: tu/wobj.rs:56
+- `OSAllocFromArenaLo` [fn-body] x1: tu/dberror.rs:64
+- `OSAllocFromHeap` [lb_hook!/todo_fns!] x2: tu/initialize.rs:355, tu/lbheap.rs:30
+- `OSAllocTrack` [lb_hook!] x1: tu/lbheap.rs:33
+- `OSCancelAlarm` [lb_hook!] x1: tu/lbmthp.rs:41
+- `OSCheckHeap` [lb_hook!] x1: tu/lbheap.rs:28
+- `OSClearContext` [ext_fns!] x1: tu/debugconsole_main.rs:49
+- `OSCreateAlarm` [lb_hook!] x1: tu/lbmemory.rs:26
+- `OSCreateAndResumeDebugThread` [ext_fns!] x1: tu/debugconsole_main.rs:51
+- `OSCreateHeap` [lb_hook!/todo_fns!] x2: tu/initialize.rs:367, tu/lbheap.rs:22
+- `OSDestroyHeap` [lb_hook!/todo_fns!] x2: tu/initialize.rs:369, tu/lbheap.rs:21
+- `OSDisableInterrupts` [ext_fns!/fn-body/lb_hook!/todo_fns!] x12: tu/axdriver.rs:33, tu/controller.rs:41, tu/debugconsole_main.rs:45, tu/devcom.rs:37, tu/hsd_392C.rs:69, tu/hsd_3933.rs:61, tu/lbarq.rs:38, tu/lbcardnew.rs:45, tu/lbdvd.rs:33, tu/lbfile.rs:23, tu/lbheap.rs:35, tu/lbmemory.rs:29
+- `OSDisableInterrupts_hook` [hook!] x1: tu/card.rs:69
+- `OSDumpHeap` [lb_hook!] x1: tu/lbheap.rs:31
+- `OSGetArenaHi` [todo_fns!] x1: tu/initialize.rs:353
+- `OSGetArenaLo` [todo_fns!] x1: tu/initialize.rs:352
+- `OSGetCurrentContext` [ext_fns!/fn-body] x2: tu/dberror.rs:50, tu/debugconsole_main.rs:47
+- `OSGetPhysicalMemSize` [ext_fns!/todo_fns!] x2: tu/debugconsole_main.rs:50, tu/initialize.rs:365
+- `OSGetResetSwitchState` [ext_fns!] x1: tu/controller.rs:43
+- `OSGetTick` [fn-body/lb_hook!] x3: tu/hsd_392C.rs:67, tu/hsd_3933.rs:59, tu/lbmthp.rs:39
+- `OSGetTime` [ext_fns!] x1: tu/lbcardgame.rs:43
+- `OSInitAlloc` [todo_fns!] x1: tu/initialize.rs:366
+- `OSLoadFPUContext` [fn-body] x1: tu/dberror.rs:52
+- `OSPanic` [ext_fns!/fn-body] x2: tu/debug.rs:29, tu/particle.rs:1661
+- `OSRestoreInterrupts` [ext_fns!/fn-body/lb_hook!/todo_fns!] x12: tu/axdriver.rs:34, tu/controller.rs:42, tu/debugconsole_main.rs:46, tu/devcom.rs:38, tu/hsd_392C.rs:70, tu/hsd_3933.rs:62, tu/lbarq.rs:39, tu/lbcardnew.rs:46, tu/lbdvd.rs:34, tu/lbfile.rs:24, tu/lbheap.rs:36, tu/lbmemory.rs:30
+- `OSRestoreInterrupts_hook` [hook!] x1: tu/card.rs:70
+- `OSSaveContext` [ext_fns!] x1: tu/debug.rs:28
+- `OSSaveFPUContext` [fn-body] x1: tu/dberror.rs:51
+- `OSSetAlarm` [lb_hook!] x1: tu/lbmemory.rs:27
+- `OSSetArenaLo` [todo_fns!] x1: tu/initialize.rs:354
+- `OSSetCurrentContext` [ext_fns!] x1: tu/debugconsole_main.rs:48
+- `OSSetCurrentHeap` [todo_fns!] x1: tu/initialize.rs:368
+- `OSSetErrorHandler` [fn-body] x1: tu/dberror.rs:67
+- `OSSetPeriodicAlarm` [lb_hook!] x1: tu/lbmthp.rs:40
+- `OSTicksToCalendarTime` [ext_fns!] x1: tu/lbcardgame.rs:44
+- `OSTicksToSeconds` [fn-body] x1: tu/hsd_392C.rs:68
+- `PADInit` [ext_fns!] x1: tu/controller.rs:47
+- `PADRead` [ext_fns!] x1: tu/controller.rs:44
+- `PADRecalibrate` [ext_fns!] x1: tu/controller.rs:46
+- `PADReset` [ext_fns!] x1: tu/controller.rs:45
+- `particle_callback` [fn-body] x1: particle.rs:485
+- `particle_userdata_write` [fn-body] x1: particle.rs:481
+- `PPCMfmsr` [fn-body] x1: tu/dberror.rs:48
+- `PPCMtmsr` [fn-body] x1: tu/dberror.rs:49
+- `psAttachGeneratorAppSRT` [ext_fns!] x1: tu/particle.rs:1697
+- `RB_PadField` [ext_fns!] x1: tu/controller.rs:55
+- `RB_PadGoverned` [ext_fns!] x1: tu/controller.rs:54
+- `RB_PadLatch` [ext_fns!] x1: tu/controller.rs:52
+- `read_u8` [fn-body] x1: tu/dbinit.rs:105
+- `Replay_ControlsRaw` [ext_fns!] x1: tu/controller.rs:60
+- `set_HSD_Synth_804D6018` [todo_fns!] x1: tu/initialize.rs:371
+- `Snap_SfxAdd` [todo_fns!] x1: tu/axdriver.rs:76
+- `Snap_SfxPut` [todo_fns!] x1: tu/axdriver.rs:75
+- `Snap_SfxTake` [todo_fns!] x1: tu/axdriver.rs:74
+- `Snap_SuppressSfx` [todo_fns!] x1: tu/axdriver.rs:72
+- `splArcLengthPoint` [fn-body] x1: tu/jobj.rs:64
+- `stack_addr` [fn-body] x1: tu/dbinit.rs:103
+- `stack_end` [fn-body] x1: tu/dbinit.rs:104
+- `stdout_set_write_proc_clear_error` [ext_fns!] x1: tu/debug.rs:32
+- `stdout_write_proc` [ext_fns!] x1: tu/debug.rs:30
+- `Ucf_PadLatch` [ext_fns!] x1: tu/controller.rs:53
+- `userfunc_hook_create` [fn-body] x1: particle.rs:470
+- `userfunc_hook_delete` [fn-body] x1: particle.rs:473
+- `userfunc_set_user_data` [fn-body] x1: particle.rs:477
+- `View_AspectBits` [ext_fns!] x1: tu/sislib.rs:742
+- `View_ProjectionScaleBits` [ext_fns!] x1: tu/cobj.rs:100
+- `VIGetNextField` [ext_fns!] x1: tu/cobj.rs:91
+- `VIWaitForRetrace` [fn-body/todo_fns!] x2: tu/dbinit.rs:94, tu/initialize.rs:350
+- `wait_idle` [ext_fns!] x3: tu/lbarq.rs:40, tu/lbcardgame.rs:61, tu/lbcardnew.rs:59
+
+### melee_runtime - SIGNATURE (466 sites, 344 names)
+
+- `__assert` [fn-body] x2: tu/particle.rs:1662, tu/texp.rs:26 -> port `melee_runtime::tu/debug.rs:91`
+- `_HSD_AObjForgetMemory` [todo_fns!] x1: tu/initialize.rs:373 -> port `melee_runtime::tu/aobj.rs:471`
+- `_HSD_ObjAllocForgetMemory` [todo_fns!] x1: tu/initialize.rs:375 -> port `melee_runtime::tu/objalloc.rs:156`
+- `_HSD_RandForgetMemory` [todo_fns!] x1: tu/initialize.rs:376 -> port `melee_runtime::tu/random.rs:36`
+- `_HSD_RObjForgetMemory` [todo_fns!] x1: tu/initialize.rs:377 -> port `melee_runtime::tu/robj.rs:88`
+- `AXDriver_8038DA70` [ext_fns!] x1: tu/lbaudio_ax.rs:42 -> port `melee_runtime::tu/axdriver.rs:812`
+- `AXDriver_8038DCFC` [ext_fns!] x1: tu/lbaudio_ax.rs:41 -> port `melee_runtime::tu/axdriver.rs:894`
+- `AXDriver_8038E5D4` [ext_fns!] x1: tu/lbaudio_ax.rs:43 -> port `melee_runtime::tu/axdriver.rs:1309`
+- `AXDriver_8038E5DC` [ext_fns!] x1: tu/lbaudio_ax.rs:44 -> port `melee_runtime::tu/axdriver.rs:1313`
+- `AXDriverCheck` [ext_fns!] x1: tu/lbaudio_ax.rs:38 -> port `melee_runtime::tu/axdriver.rs:1296`
+- `AXDriverPause` [ext_fns!] x1: tu/lbaudio_ax.rs:39 -> port `melee_runtime::tu/axdriver.rs:1223`
+- `AXDriverResume` [ext_fns!] x1: tu/lbaudio_ax.rs:40 -> port `melee_runtime::tu/axdriver.rs:1231`
+- `AXDriverStop` [ext_fns!] x1: tu/lbaudio_ax.rs:37 -> port `melee_runtime::tu/axdriver.rs:1214`
+- `db_ButtonsDown` [fn-body] x9: tu/dballoc.rs:40, tu/dbanim.rs:54, tu/dbbonus.rs:33, tu/dbcamera.rs:90, tu/dbcpu.rs:78, tu/dbeffect.rs:34, tu/dbitem.rs:68, tu/dbscreenshot.rs:37, tu/dbsound.rs:45 -> port `melee_runtime::tu/dbinit.rs:245`
+- `db_ButtonsPressed` [fn-body] x9: tu/dballoc.rs:41, tu/dbanim.rs:55, tu/dbbonus.rs:34, tu/dbcamera.rs:91, tu/dbcpu.rs:79, tu/dbeffect.rs:35, tu/dbitem.rs:69, tu/dbscreenshot.rs:38, tu/dbsound.rs:46 -> port `melee_runtime::tu/dbinit.rs:250`
+- `db_ButtonsRepeat` [fn-body] x1: tu/dbitem.rs:70 -> port `melee_runtime::tu/dbinit.rs:255`
+- `Exception_ReportCodeline` [fn-body] x1: tu/dberror.rs:58 -> port `melee_runtime::tu/debugconsole_main.rs:483`
+- `Exception_ReportStackTrace` [fn-body] x1: tu/dberror.rs:57 -> port `melee_runtime::tu/debugconsole_main.rs:458`
+- `Exception_StoreDebugLevel` [fn-body] x1: tu/dberror.rs:60 -> port `melee_runtime::tu/debugconsole_main.rs:597`
+- `fn_80225E6C` [fn-body] x1: tu/dbanim.rs:71 -> port `melee_runtime::tu/dbitem.rs:353`
+- `fn_8022697C` [fn-body] x1: tu/dbitem.rs:76 -> port `melee_runtime::tu/dbanim.rs:241`
+- `fn_80392934` [fn-body] x1: tu/hsd_3982.rs:18 -> port `melee_runtime::tu/hsd_392A.rs:87`
+- `fn_80392A08` [fn-body] x1: tu/hsd_3982.rs:26 -> port `melee_runtime::tu/hsd_392A.rs:120`
+- `fn_80392A3C` [fn-body] x1: tu/hsd_3982.rs:25 -> port `melee_runtime::tu/hsd_392A.rs:135`
+- `fn_Check5xSpeed` [fn-body] x1: tu/dbinit.rs:126 -> port `melee_runtime::tu/dbscreenshot.rs:81`
+- `fn_CheckItemAndPokemonMenu` [fn-body] x1: tu/dbinit.rs:119 -> port `melee_runtime::tu/dbitem.rs:525`
+- `fn_CheckSoundInfo` [fn-body] x1: tu/dbinit.rs:117 -> port `melee_runtime::tu/dbsound.rs:185`
+- `fn_DisableShowCoinPickupRange` [fn-body] x1: tu/dbanim.rs:68 -> port `melee_runtime::tu/dbitem.rs:245`
+- `fn_DisableShowEnemyStompRange` [fn-body] x1: tu/dbanim.rs:64 -> port `melee_runtime::tu/dbitem.rs:269`
+- `fn_DisableShowItemPickupRange` [fn-body] x1: tu/dbanim.rs:66 -> port `melee_runtime::tu/dbitem.rs:285`
+- `fn_EnableShowCoinPickupRange` [fn-body] x1: tu/dbanim.rs:67 -> port `melee_runtime::tu/dbitem.rs:233`
+- `fn_EnableShowEnemyStompRange` [fn-body] x1: tu/dbanim.rs:63 -> port `melee_runtime::tu/dbitem.rs:257`
+- `fn_EnableShowItemPickupRange` [fn-body] x1: tu/dbanim.rs:65 -> port `melee_runtime::tu/dbitem.rs:277`
+- `fn_Setup5xSpeed` [fn-body] x1: tu/dbinit.rs:114 -> port `melee_runtime::tu/dbscreenshot.rs:76`
+- `fn_SetupItemAndPokemonMenu` [fn-body] x1: tu/dbinit.rs:108 -> port `melee_runtime::tu/dbitem.rs:181`
+- `fn_SetupSoundInfo` [fn-body] x1: tu/dbinit.rs:109 -> port `melee_runtime::tu/dbsound.rs:121`
+- `GObj_Create` [ext_fns!/fn-body] x5: tu/hsd_3982.rs:20, tu/lbaudio_ax.rs:82, tu/lbbgflash.rs:29, tu/lbcardgame.rs:30, tu/sislib.rs:726 -> port `melee_runtime::gobj.rs:528`
+- `GObj_SetupGXLink` [ext_fns!] x3: tu/lbbgflash.rs:30, tu/lbcardgame.rs:31, tu/sislib.rs:728 -> port `melee_runtime::tu/gobjgxlink.rs:14`
+- `GObj_SetupGXLinkMax` [ext_fns!/fn-body] x5: tu/hsd_3982.rs:23, tu/lbbgflash.rs:31, tu/lbcardgame.rs:32, tu/sislib.rs:729, tu/sobjlib.rs:912 -> port `melee_runtime::tu/gobjgxlink.rs:19`
+- `GXEnd` [fn-body/lb_hook!] x2: tu/hsd_3A76.rs:72, tu/lbshadow.rs:23 -> port `melee_runtime::tu/sobjlib.rs:13`
+- `hsd_80391A04` [ext_fns!] x1: tu/lbbgflash.rs:41 -> port `melee_runtime::tu/hsd_3915.rs:238`
+- `hsd_803921B8` [ext_fns!] x1: tu/debugconsole_main.rs:58 -> port `melee_runtime::tu/hsd_3915.rs:434`
+- `hsd_803922FC` [ext_fns!] x1: tu/debugconsole_main.rs:59 -> port `melee_runtime::tu/hsd_3915.rs:463`
+- `hsd_80392528` [fn-body] x1: tu/hsd_3982.rs:24 -> port `melee_runtime::tu/hsd_3924.rs:132`
+- `hsd_8039254C` [fn-body] x1: tu/hsd_3982.rs:19 -> port `melee_runtime::tu/hsd_3924.rs:141`
+- `hsd_80392E80` [fn-body] x1: tu/hsd_3933.rs:64 -> port `melee_runtime::tu/hsd_392C.rs:179`
+- `hsd_80393328` [fn-body] x1: tu/hsd_392C.rs:72 -> port `melee_runtime::tu/hsd_3933.rs:179`
+- `hsd_80393844` [fn-body] x1: tu/hsd_392C.rs:73 -> port `melee_runtime::tu/hsd_3933.rs:280`
+- `hsd_80393A54` [fn-body] x1: tu/hsd_392C.rs:74 -> port `melee_runtime::tu/hsd_3933.rs:345`
+- `hsd_80393A5C` [fn-body] x1: tu/dbscreenshot.rs:49 -> port `melee_runtime::tu/hsd_3933.rs:352`
+- `hsd_80393DA0` [fn-body] x1: tu/dberror.rs:65 -> port `melee_runtime::tu/hsd_393C.rs:113`
+- `hsd_80393E68` [ext_fns!] x1: tu/debugconsole_main.rs:60 -> port `melee_runtime::tu/hsd_393C.rs:140`
+- `hsd_80394068` [ext_fns!] x1: tu/debugconsole_main.rs:61 -> port `melee_runtime::tu/hsd_393C.rs:252`
+- `hsd_80397DA4` [fn-body] x1: tu/dberror.rs:61 -> port `melee_runtime::tu/debugconsole_main.rs:592`
+- `hsd_80397DFC` [fn-body] x1: tu/dberror.rs:59 -> port `melee_runtime::tu/debugconsole_main.rs:602`
+- `hsd_8039D1EC` [ext_fns!] x1: tu/particle.rs:1695 -> port `melee_runtime::tu/generator.rs:14`
+- `hsd_8039F05C` [ext_fns!] x1: tu/particle.rs:1696 -> port `melee_runtime::tu/generator.rs:62`
+- `hsd_803AAA48` [ext_fns!] x1: tu/lbcardnew.rs:47 -> port `melee_runtime::tu/card.rs:1578`
+- `hsd_803AC3E0` [ext_fns!] x1: tu/lbcardnew.rs:48 -> port `melee_runtime::tu/card.rs:2714`
+- `hsd_803B2374` [ext_fns!] x1: tu/lbcardnew.rs:49 -> port `melee_runtime::tu/card.rs:8079`
+- `hsd_803B24E4` [ext_fns!] x1: tu/lbcardnew.rs:50 -> port `melee_runtime::tu/card.rs:8107`
+- `hsd_803B2550` [ext_fns!] x1: tu/lbcardnew.rs:51 -> port `melee_runtime::tu/card.rs:8123`
+- `hsd_803B2674` [ext_fns!] x1: tu/lbcardnew.rs:52 -> port `melee_runtime::tu/card.rs:8177`
+- `hsd_803B27F4` [ext_fns!] x1: tu/lbcardnew.rs:53 -> port `melee_runtime::tu/card.rs:8211`
+- `hsd_803B286C` [ext_fns!] x1: tu/lbcardnew.rs:54 -> port `melee_runtime::tu/card.rs:8237`
+- `hsd_803B2928` [ext_fns!] x1: tu/lbcardnew.rs:55 -> port `melee_runtime::tu/card.rs:8271`
+- `hsd_803B29D8` [ext_fns!] x1: tu/lbcardnew.rs:56 -> port `melee_runtime::tu/card.rs:8303`
+- `hsd_803B2A4C` [ext_fns!] x1: tu/lbcardnew.rs:57 -> port `melee_runtime::tu/card.rs:8327`
+- `HSD_AObjGetAllocData` [todo_fns!] x1: tu/initialize.rs:389 -> port `melee_runtime::tu/aobj.rs:72`
+- `HSD_AObjInitAllocData` [todo_fns!] x1: tu/initialize.rs:381 -> port `melee_runtime::tu/aobj.rs:68`
+- `HSD_AObjInterpretAnim` [ext_fns!] x3: tu/cobj.rs:63, tu/mobj.rs:645, tu/tobj.rs:744 -> port `melee_runtime::tu/aobj.rs:146`
+- `HSD_AObjLoadDesc` [ext_fns!] x3: tu/cobj.rs:62, tu/mobj.rs:646, tu/tobj.rs:745 -> port `melee_runtime::tu/aobj.rs:195`
+- `HSD_AObjRemove` [ext_fns!] x3: tu/cobj.rs:60, tu/mobj.rs:647, tu/tobj.rs:746 -> port `melee_runtime::tu/aobj.rs:226`
+- `HSD_AObjReqAnim` [ext_fns!] x3: tu/cobj.rs:64, tu/mobj.rs:648, tu/tobj.rs:747 -> port `melee_runtime::tu/aobj.rs:128`
+- `HSD_ArchiveGetPublicAddress` [ext_fns!] x1: tu/sislib.rs:730 -> port `melee_runtime::tu/archive.rs:84`
+- `HSD_AudioFree` [todo_fns!] x1: tu/axdriver.rs:56 -> port `melee_runtime::tu/synth.rs:74`
+- `HSD_AudioGetAuxHeapSize` [ext_fns!] x1: tu/lbaudio_ax.rs:58 -> port `melee_runtime::tu/axdriver.rs:995`
+- `HSD_AudioInitMultiPStream` [ext_fns!] x1: tu/lbaudio_ax.rs:60 -> port `melee_runtime::tu/axdriver.rs:1097`
+- `HSD_AudioMalloc` [ext_fns!/todo_fns!] x2: tu/axdriver.rs:54, tu/devcom.rs:45 -> port `melee_runtime::tu/synth.rs:73`
+- `HSD_AudioPStreamPauseCh` [ext_fns!] x1: tu/lbaudio_ax.rs:62 -> port `melee_runtime::tu/axdriver.rs:1150`
+- `HSD_AudioPStreamResumeCh` [ext_fns!] x1: tu/lbaudio_ax.rs:63 -> port `melee_runtime::tu/axdriver.rs:1187`
+- `HSD_AudioPStreamStartChParam` [ext_fns!] x1: tu/lbaudio_ax.rs:61 -> port `melee_runtime::tu/axdriver.rs:1204`
+- `HSD_AudioSFXGetDefaultAuxParam` [ext_fns!] x1: tu/lbaudio_ax.rs:57 -> port `melee_runtime::tu/axdriver.rs:1050`
+- `HSD_AudioSFXKeyOff` [ext_fns!] x1: tu/lbaudio_ax.rs:49 -> port `melee_runtime::tu/axdriver.rs:1261`
+- `HSD_AudioSFXKeyOffAll` [ext_fns!] x1: tu/lbaudio_ax.rs:48 -> port `melee_runtime::tu/axdriver.rs:244`
+- `HSD_AudioSFXKeyOffTrack` [ext_fns!] x1: tu/lbaudio_ax.rs:50 -> port `melee_runtime::tu/axdriver.rs:257`
+- `HSD_AudioSFXSetMixGroup` [ext_fns!] x1: tu/lbaudio_ax.rs:56 -> port `melee_runtime::tu/axdriver.rs:771`
+- `HSD_AudioSFXSetupAux` [ext_fns!] x1: tu/lbaudio_ax.rs:59 -> port `melee_runtime::tu/axdriver.rs:1037`
+- `HSD_AudioSFXStartParam` [ext_fns!] x1: tu/lbaudio_ax.rs:52 -> port `melee_runtime::tu/axdriver.rs:647`
+- `HSD_ByteCodeEval` [fn-body] x1: tu/jobj.rs:59 -> port `melee_runtime::tu/bytecode.rs:9`
+- `HSD_ChanGetAllocData` [todo_fns!] x1: tu/initialize.rs:397 -> port `melee_runtime::tu/tev.rs:136`
+- `HSD_ClearVtxDesc` [ext_fns!/fn-body/lb_hook!] x4: tu/hsd_3915.rs:50, tu/lbcollision.rs:44, tu/lbshadow.rs:26, tu/sobjlib.rs:964 -> port `melee_runtime::tu/pobj.rs:156`
+- `HSD_CObjAlloc` [ext_fns!] x1: tu/sobjlib.rs:950 -> port `melee_runtime::tu/cobj.rs:692`
+- `HSD_CObjEndCurrent` [ext_fns!] x1: tu/sobjlib.rs:951 -> port `melee_runtime::tu/cobj.rs:672`
+- `HSD_CObjGetCurrent` [ext_fns!/fn-body/lb_hook!] x7: tu/hsd_3915.rs:52, tu/hsd_3A76.rs:39, tu/lbbgflash.rs:36, tu/lbcollision.rs:42, tu/lbgx.rs:37, tu/sobjlib.rs:952, tu/tobj.rs:748 -> port `melee_runtime::tu/cobj.rs:678`
+- `HSD_CObjGetNear` [lb_hook!] x1: tu/lbshadow.rs:32 -> port `melee_runtime::tu/cobj.rs:168`
+- `HSD_CObjGetProjectionType` [lb_hook!] x1: tu/lbrefract.rs:30 -> port `melee_runtime::tu/cobj.rs:200`
+- `HSD_CObjLoadDesc` [ext_fns!/fn-body] x4: tu/hsd_3982.rs:21, tu/lbbgflash.rs:37, tu/lbcardgame.rs:33, tu/sislib.rs:731 -> port `melee_runtime::tu/cobj.rs:760`
+- `HSD_CObjSetCurrent` [ext_fns!/fn-body] x2: tu/hsd_3982.rs:17, tu/sobjlib.rs:954 -> port `melee_runtime::tu/cobj.rs:645`
+- `HSD_CObjSetFar` [ext_fns!/lb_hook!] x2: tu/lbshadow.rs:34, tu/sobjlib.rs:956 -> port `melee_runtime::tu/cobj.rs:185`
+- `HSD_CObjSetFlags` [lb_hook!] x1: tu/lbshadow.rs:36 -> port `melee_runtime::tu/cobj.rs:266`
+- `HSD_CObjSetNear` [ext_fns!/lb_hook!] x2: tu/lbshadow.rs:33, tu/sobjlib.rs:958 -> port `melee_runtime::tu/cobj.rs:173`
+- `HSD_CObjSetOrtho` [ext_fns!/lb_hook!] x3: tu/lbshadow.rs:40, tu/sislib.rs:732, tu/sobjlib.rs:959 -> port `melee_runtime::tu/cobj.rs:254`
+- `HSD_CObjSetScissor` [ext_fns!] x1: tu/sobjlib.rs:962 -> port `melee_runtime::tu/cobj.rs:220`
+- `HSD_CObjSetViewport` [ext_fns!] x1: tu/sobjlib.rs:963 -> port `melee_runtime::tu/cobj.rs:209`
+- `HSD_CreateMainHeap` [lb_hook!] x1: tu/lbheap.rs:23 -> port `melee_runtime::tu/initialize.rs:193`
+- `HSD_DevComRequest` [lb_hook!] x2: tu/lbfile.rs:20, tu/lbmemory.rs:28 -> port `melee_runtime::tu/devcom.rs:456`
+- `HSD_DObjAddAnimAll` [fn-body] x1: tu/jobj.rs:62 -> port `melee_runtime::tu/dobj.rs:222`
+- `HSD_DObjAnimAll` [fn-body] x1: tu/jobj.rs:63 -> port `melee_runtime::tu/dobj.rs:259`
+- `HSD_DObjRemoveAnimAllByFlags` [fn-body] x1: tu/jobj.rs:60 -> port `melee_runtime::tu/dobj.rs:206`
+- `HSD_DObjReqAnimAllByFlags` [fn-body] x1: tu/jobj.rs:61 -> port `melee_runtime::tu/dobj.rs:242`
+- `HSD_EraseRect` [ext_fns!] x1: tu/cobj.rs:83 -> port `melee_runtime::tu/displayfunc.rs:524`
+- `HSD_FObjGetAllocData` [todo_fns!] x1: tu/initialize.rs:390 -> port `melee_runtime::tu/fobj.rs:39`
+- `HSD_FObjInitAllocData` [todo_fns!] x1: tu/initialize.rs:382 -> port `melee_runtime::tu/fobj.rs:44`
+- `HSD_FObjLoadDesc` [todo_fns!] x1: tu/aobj.rs:36 -> port `melee_runtime::tu/fobj.rs:95`
+- `HSD_FObjRemoveAll` [todo_fns!] x1: tu/aobj.rs:32 -> port `melee_runtime::tu/fobj.rs:73`
+- `HSD_Free` [ext_fns!/lb_hook!] x4: tu/lbcardnew.rs:43, tu/lbheap.rs:27, tu/sislib.rs:733, tu/tobj.rs:750 -> port `melee_runtime::tu/memory.rs:96`
+- `HSD_GetCurrentRenderPass` [ext_fns!] x1: tu/cobj.rs:90 -> port `melee_runtime::tu/initialize.rs:223`
+- `HSD_GetHeap` [lb_hook!] x1: tu/lbheap.rs:24 -> port `melee_runtime::tu/initialize.rs:180`
+- `HSD_GetNextArena` [lb_hook!] x1: tu/lbheap.rs:29 -> port `melee_runtime::tu/initialize.rs:188`
+- `HSD_GObj_80390ED0` [ext_fns!] x1: tu/sobjlib.rs:967 -> port `melee_runtime::gobj.rs:1047`
+- `HSD_GObj_803910D8` [ext_fns!] x3: tu/lbbgflash.rs:39, tu/lbcardgame.rs:35, tu/sislib.rs:736 -> port `melee_runtime::tu/gobj.rs:86`
+- `HSD_GObj_JObjCallback` [ext_fns!] x1: tu/lbcardgame.rs:36 -> port `melee_runtime::tu/gobj.rs:74`
+- `HSD_GObjGetUserData` [fn-body] x1: tu/hsd_3A76.rs:36 -> port `melee_types::inline.rs:83`
+- `HSD_GObjObject_80390A70` [ext_fns!/fn-body] x5: tu/hsd_3982.rs:22, tu/lbbgflash.rs:38, tu/lbcardgame.rs:34, tu/sislib.rs:735, tu/sobjlib.rs:965 -> port `melee_runtime::tu/gobjobject.rs:14`
+- `HSD_GObjObject_80390ADC` [ext_fns!] x1: tu/sobjlib.rs:966 -> port `melee_runtime::tu/gobjobject.rs:19`
+- `HSD_HashSearch` [ext_fns!] x1: tu/class.rs:46 -> port `melee_runtime::tu/hash.rs:52`
+- `HSD_IDGetDataFromTable` [todo_fns!] x1: tu/aobj.rs:37 -> port `melee_runtime::tu/id.rs:84`
+- `HSD_Index2LightID` [todo_fns!] x1: tu/initialize.rs:363 -> port `melee_runtime::tu/lobj.rs:210`
+- `HSD_Index2TevStage` [hooks!] x1: tu/texp.rs:57 -> port `melee_runtime::tu/tev.rs:113`
+- `HSD_Init_803755A8` [lb_hook!] x1: tu/lbshadow.rs:55 -> port `melee_runtime::tu/initialize.rs:242`
+- `HSD_JObjAlloc` [ext_fns!] x1: tu/particle.rs:1683 -> port `melee_runtime::tu/jobj.rs:79`
+- `HSD_JObjAnimAll` [ext_fns!] x1: tu/lbcardgame.rs:38 -> port `melee_runtime::tu/jobj.rs:325`
+- `HSD_JObjClearFlags` [hook!] x1: tu/lbanim.rs:89 -> port `melee_runtime::tu/jobj.rs:305`
+- `HSD_JObjLoadJoint` [ext_fns!/todo_fns!] x2: tu/aobj.rs:38, tu/lbcardgame.rs:39 -> port `melee_runtime::tu/jobj.rs:105`
+- `HSD_JObjReqAnimAll` [ext_fns!] x1: tu/lbcardgame.rs:40 -> port `melee_runtime::tu/jobj.rs:322`
+- `HSD_JObjSetFlags` [hook!] x1: tu/lbanim.rs:88 -> port `melee_runtime::tu/jobj.rs:303`
+- `HSD_JObjSetMtxDirtySub` [ext_fns!] x2: tu/lbcardgame.rs:41, tu/particle.rs:1684 -> port `melee_runtime::tu/jobj.rs:291`
+- `HSD_JObjSetupMatrix` [ext_fns!] x1: tu/lbcollision.rs:39 -> port `melee_runtime::tu/lb_00B0.rs:164`
+- `HSD_JObjSetupMatrixSub` [ext_fns!] x1: tu/particle.rs:1685 -> port `melee_runtime::tu/jobj.rs:312`
+- `HSD_JObjUnref` [ext_fns!/todo_fns!] x2: tu/aobj.rs:39, tu/particle.rs:1686 -> port `melee_runtime::tu/jobj.rs:124`
+- `HSD_LObjGetCurrentByType` [ext_fns!] x1: tu/tobj.rs:751 -> port `melee_runtime::tu/lobj.rs:858`
+- `HSD_LObjGetFlags` [lb_hook!] x1: tu/lbshadow.rs:56 -> port `melee_runtime::tu/lobj.rs:213`
+- `HSD_LObjGetInterest` [lb_hook!] x1: tu/lbshadow.rs:58 -> port `melee_runtime::tu/lobj.rs:392`
+- `HSD_LObjGetLightMaskDiffuse` [ext_fns!] x1: tu/tobj.rs:752 -> port `melee_runtime::tu/lobj.rs:197`
+- `HSD_LObjGetLightVector` [ext_fns!] x1: tu/tobj.rs:753 -> port `melee_runtime::tu/lobj.rs:423`
+- `HSD_LObjGetPosition` [lb_hook!] x1: tu/lbshadow.rs:57 -> port `melee_runtime::tu/lobj.rs:381`
+- `HSD_LogInit` [todo_fns!] x1: tu/initialize.rs:351 -> port `melee_runtime::tu/debug.rs:78`
+- `HSD_MemAlloc` [ext_fns!/fn-body/lb_hook!] x6: tu/class.rs:45, tu/hsd_3924.rs:27, tu/lbcardnew.rs:44, tu/lbheap.rs:26, tu/sislib.rs:737, tu/tobj.rs:754 -> port `melee_runtime::tu/memory.rs:103`
+- `HSD_MtxFree` [ext_fns!] x1: tu/cobj.rs:97 -> port `melee_runtime::tu/mtx.rs:27`
+- `HSD_MtxGetAllocData` [todo_fns!] x1: tu/initialize.rs:392 -> port `melee_runtime::tu/mtx.rs:29`
+- `HSD_MtxInitAllocData` [todo_fns!] x1: tu/initialize.rs:384 -> port `melee_runtime::tu/mtx.rs:31`
+- `HSD_ObjAlloc` [ext_fns!/todo_fns!] x4: tu/aobj.rs:30, tu/lbaudio_ax.rs:78, tu/particle.rs:1689, tu/sobjlib.rs:968 -> port `melee_runtime::tu/objalloc.rs:108`
+- `HSD_ObjAllocDisableNumLimit` [fn-body] x1: tu/dballoc.rs:45 -> port `melee_types::inline.rs:80`
+- `HSD_ObjAllocEnableNumLimit` [fn-body] x1: tu/dballoc.rs:44 -> port `melee_types::inline.rs:79`
+- `HSD_ObjAllocGetFreed` [todo_fns!] x1: tu/initialize.rs:400 -> port `melee_types::inline.rs:76`
+- `HSD_ObjAllocGetPeak` [fn-body/todo_fns!] x2: tu/dballoc.rs:42, tu/initialize.rs:401 -> port `melee_types::inline.rs:77`
+- `HSD_ObjAllocGetUsing` [todo_fns!] x1: tu/initialize.rs:399 -> port `melee_types::inline.rs:75`
+- `HSD_ObjAllocInit` [ext_fns!/todo_fns!] x4: tu/aobj.rs:29, tu/lbaudio_ax.rs:77, tu/particle.rs:1690, tu/sobjlib.rs:969 -> port `melee_runtime::tu/objalloc.rs:145`
+- `HSD_ObjAllocReport` [lb_hook!] x1: tu/lbheap.rs:32 -> port `melee_runtime::tu/objalloc.rs:49`
+- `HSD_ObjAllocSetNumLimit` [fn-body] x1: tu/dballoc.rs:43 -> port `melee_types::inline.rs:78`
+- `HSD_ObjFree` [ext_fns!/todo_fns!] x4: tu/aobj.rs:31, tu/lbaudio_ax.rs:79, tu/particle.rs:1691, tu/sobjlib.rs:970 -> port `melee_runtime::tu/objalloc.rs:130`
+- `HSD_ObjSetHeap` [todo_fns!] x1: tu/initialize.rs:370 -> port `melee_runtime::tu/objalloc.rs:56`
+- `HSD_PadRumbleInit` [ext_fns!] x1: tu/controller.rs:51 -> port `melee_runtime::tu/rumble.rs:229`
+- `HSD_PadRumbleInterpret` [ext_fns!] x1: tu/controller.rs:48 -> port `melee_runtime::tu/rumble.rs:197`
+- `HSD_PadRumbleOffN` [ext_fns!] x1: tu/controller.rs:50 -> port `melee_runtime::tu/rumble.rs:36`
+- `HSD_PadRumbleRemoveAll` [ext_fns!] x1: tu/controller.rs:49 -> port `melee_runtime::tu/rumble.rs:66`
+- `HSD_Panic` [ext_fns!/todo_fns!] x3: tu/aobj.rs:40, tu/initialize.rs:357, tu/tobj.rs:755 -> port `melee_runtime::tu/debug.rs:100`
+- `HSD_Rand` [fn-body] x1: tu/hsd_3933.rs:63 -> port `melee_runtime::tu/random.rs:27`
+- `HSD_Randf` [ext_fns!] x1: tu/particle.rs:1692 -> port `melee_runtime::tu/random.rs:30`
+- `HSD_Randi` [ext_fns!] x1: tu/lbaudio_ax.rs:80 -> port `melee_runtime::tu/random.rs:33`
+- `HSD_RenderGetAllocData` [todo_fns!] x1: tu/initialize.rs:396 -> port `melee_runtime::tu/tev.rs:134`
+- `HSD_RenderInitAllocData` [todo_fns!] x1: tu/initialize.rs:386 -> port `melee_runtime::tu/tev.rs:127`
+- `HSD_RObjGetAllocData` [todo_fns!] x1: tu/initialize.rs:393 -> port `melee_runtime::tu/robj.rs:68`
+- `HSD_RObjInitAllocData` [todo_fns!] x1: tu/initialize.rs:385 -> port `melee_runtime::tu/robj.rs:51`
+- `HSD_RvalueObjGetAllocData` [todo_fns!] x1: tu/initialize.rs:394 -> port `melee_runtime::tu/robj.rs:73`
+- `hsd_SetCardIconInfo` [ext_fns!] x1: tu/lbcardnew.rs:58 -> port `melee_runtime::tu/card.rs:8356`
+- `HSD_SetHeap` [lb_hook!] x1: tu/lbheap.rs:25 -> port `melee_runtime::tu/initialize.rs:184`
+- `HSD_SetMaterialColor` [ext_fns!] x1: tu/mobj.rs:649 -> port `melee_runtime::tu/state.rs:647`
+- `HSD_SetMaterialShininess` [ext_fns!] x1: tu/mobj.rs:650 -> port `melee_runtime::tu/state.rs:650`
+- `HSD_SetPanicCallback` [fn-body] x1: tu/dberror.rs:66 -> port `melee_runtime::tu/debug.rs:115`
+- `HSD_SetReportCallback` [fn-body] x1: tu/hsd_393C.rs:31 -> port `melee_runtime::tu/debug.rs:110`
+- `HSD_SetupChannel` [ext_fns!] x1: tu/sobjlib.rs:971 -> port `melee_runtime::tu/tev.rs:137`
+- `HSD_SetupChannelAll` [lb_hook!] x1: tu/lbshadow.rs:25 -> port `melee_runtime::tu/tev.rs:140`
+- `HSD_SetupRenderMode` [fn-body] x1: tu/hsd_3915.rs:57 -> port `melee_runtime::tu/state.rs:646`
+- `HSD_SetupRenderModeWithCustomPE` [ext_fns!] x1: tu/mobj.rs:651 -> port `melee_runtime::tu/state.rs:643`
+- `HSD_SetupTevStage` [ext_fns!/hooks!] x2: tu/texp.rs:56, tu/tobj.rs:756 -> port `melee_runtime::tu/tev.rs:164`
+- `HSD_ShadowAddObject` [lb_hook!] x1: tu/lbshadow.rs:43 -> port `melee_runtime::tu/shadow.rs:227`
+- `HSD_ShadowAlloc` [lb_hook!] x1: tu/lbshadow.rs:41 -> port `melee_runtime::tu/shadow.rs:43`
+- `HSD_ShadowDeleteObject` [lb_hook!] x1: tu/lbshadow.rs:44 -> port `melee_runtime::tu/shadow.rs:241`
+- `HSD_ShadowEndRender` [lb_hook!] x1: tu/lbshadow.rs:49 -> port `melee_runtime::tu/shadow.rs:200`
+- `HSD_ShadowGetAllocData` [todo_fns!] x1: tu/initialize.rs:395 -> port `melee_runtime::tu/shadow.rs:24`
+- `HSD_ShadowInit` [lb_hook!] x1: tu/lbshadow.rs:47 -> port `melee_runtime::tu/shadow.rs:88`
+- `HSD_ShadowInitAllocData` [todo_fns!] x1: tu/initialize.rs:387 -> port `melee_runtime::tu/shadow.rs:27`
+- `HSD_ShadowRemove` [lb_hook!] x1: tu/lbshadow.rs:46 -> port `melee_runtime::tu/shadow.rs:60`
+- `HSD_ShadowSetActive` [lb_hook!] x1: tu/lbshadow.rs:45 -> port `melee_runtime::tu/shadow.rs:211`
+- `HSD_ShadowSetSize` [lb_hook!] x1: tu/lbshadow.rs:42 -> port `melee_runtime::tu/shadow.rs:94`
+- `HSD_ShadowStartRender` [lb_hook!] x1: tu/lbshadow.rs:48 -> port `melee_runtime::tu/shadow.rs:135`
+- `HSD_SisLib_803A5ACC` [fn-body] x1: tu/hsd_3A64.rs:25 -> port `melee_runtime::tu/sislib.rs:246`
+- `HSD_SisLib_803A6368` [fn-body] x1: tu/hsd_3A64.rs:28 -> port `melee_runtime::tu/sislib.rs:670`
+- `HSD_SisLib_803A84BC` [ext_fns!] x1: tu/sislib.rs:738 -> port `melee_runtime::tu/hsd_3A76.rs:400`
+- `HSD_SisLib_803A945C` [ext_fns!] x1: tu/sislib.rs:739 -> port `melee_runtime::tu/hsd_3A76.rs:895`
+- `HSD_SisLib_803A947C` [ext_fns!] x1: tu/sislib.rs:740 -> port `melee_runtime::tu/hsd_3A76.rs:900`
+- `HSD_SisLib_Free` [fn-body] x1: tu/hsd_3A64.rs:24 -> port `melee_runtime::tu/sislib.rs:161`
+- `HSD_SListAllocAndAppend` [fn-body] x1: tu/hsd_3924.rs:28 -> port `melee_runtime::tu/list.rs:30`
+- `HSD_SListAllocAndPrepend` [fn-body] x1: tu/hsd_3924.rs:29 -> port `melee_runtime::tu/list.rs:36`
+- `HSD_SObjLib_803A49E0` [lb_hook!] x1: tu/lbmthp.rs:37 -> port `melee_runtime::tu/sobjlib.rs:252`
+- `HSD_StartRender` [lb_hook!] x1: tu/lbshadow.rs:54 -> port `melee_runtime::tu/initialize.rs:227`
+- `HSD_StateAssignTev` [ext_fns!/hooks!] x2: tu/texp.rs:55, tu/tobj.rs:757 -> port `melee_runtime::tu/tev.rs:162`
+- `HSD_StateInitTev` [ext_fns!] x3: tu/lbcollision.rs:41, tu/mobj.rs:652, tu/sobjlib.rs:972 -> port `melee_runtime::tu/tev.rs:159`
+- `HSD_StateInvalidate` [ext_fns!/fn-body/hooks!/lb_hook!/todo_fns!] x6: tu/hsd_3A76.rs:75, tu/initialize.rs:364, tu/lbcollision.rs:40, tu/lbrefract.rs:38, tu/sobjlib.rs:973, tu/texp.rs:54 -> port `melee_runtime::tu/state.rs:665`
+- `HSD_StateRegisterTexGen` [ext_fns!] x1: tu/tobj.rs:758 -> port `melee_runtime::tu/tev.rs:157`
+- `HSD_StateSetCullMode` [fn-body/lb_hook!] x2: tu/hsd_3915.rs:60, tu/lbshadow.rs:27 -> port `melee_runtime::tu/state.rs:653`
+- `HSD_StateSetLineWidth` [fn-body] x1: tu/hsd_3915.rs:55 -> port `melee_runtime::tu/state.rs:651`
+- `HSD_StateSetNumChans` [ext_fns!/fn-body] x2: tu/hsd_3A76.rs:49, tu/sobjlib.rs:974 -> port `melee_runtime::tu/tev.rs:156`
+- `HSD_StateSetPointSize` [fn-body] x1: tu/hsd_3915.rs:56 -> port `melee_runtime::tu/state.rs:652`
+- `HSD_StateSetZCompLoc` [ext_fns!] x1: tu/sobjlib.rs:975 -> port `melee_runtime::tu/state.rs:660`
+- `HSD_StateSetZMode` [ext_fns!/fn-body] x3: tu/hsd_3A76.rs:38, tu/sobjlib.rs:976, tu/tobj.rs:759 -> port `melee_runtime::tu/state.rs:655`
+- `HSD_SynthGetSoundMode` [ext_fns!] x1: tu/lbaudio_ax.rs:66 -> port `melee_runtime::tu/synth.rs:100`
+- `HSD_SynthInit` [todo_fns!] x1: tu/axdriver.rs:57 -> port `melee_runtime::tu/synth.rs:202`
+- `HSD_SynthPStreamStart` [todo_fns!] x1: tu/axdriver.rs:70 -> port `melee_runtime::tu/synth.rs:200`
+- `HSD_SynthSetSoundMode` [ext_fns!] x1: tu/lbaudio_ax.rs:67 -> port `melee_runtime::tu/synth.rs:101`
+- `HSD_SynthSFXAllocateBank` [ext_fns!] x1: tu/lbaudio_ax.rs:76 -> port `melee_runtime::tu/synth.rs:97`
+- `HSD_SynthSFXBankDeflag` [ext_fns!] x1: tu/lbaudio_ax.rs:72 -> port `melee_runtime::tu/synth.rs:214`
+- `HSD_SynthSFXBankDeflagSync` [ext_fns!] x1: tu/lbaudio_ax.rs:73 -> port `melee_runtime::tu/synth.rs:99`
+- `HSD_SynthSFXCancelLoad` [ext_fns!] x1: tu/lbaudio_ax.rs:75 -> port `melee_runtime::tu/synth.rs:91`
+- `HSD_SynthSFXCheck` [todo_fns!] x1: tu/axdriver.rs:61 -> port `melee_runtime::tu/synth.rs:110`
+- `HSD_SynthSFXGetPendingLoadCount` [ext_fns!] x1: tu/lbaudio_ax.rs:74 -> port `melee_runtime::tu/synth.rs:90`
+- `HSD_SynthSFXGroupDataRemove` [ext_fns!] x1: tu/lbaudio_ax.rs:71 -> port `melee_runtime::tu/synth.rs:209`
+- `HSD_SynthSFXKeyOff` [todo_fns!] x1: tu/axdriver.rs:58 -> port `melee_runtime::tu/synth.rs:105`
+- `HSD_SynthSFXLoad` [ext_fns!] x1: tu/lbaudio_ax.rs:69 -> port `melee_runtime::tu/synth.rs:82`
+- `HSD_SynthSFXPause` [todo_fns!] x1: tu/axdriver.rs:59 -> port `melee_runtime::tu/synth.rs:108`
+- `HSD_SynthSFXPlayWithGroup` [todo_fns!] x1: tu/axdriver.rs:71 -> port `melee_runtime::tu/synth.rs:181`
+- `HSD_SynthSFXResume` [todo_fns!] x1: tu/axdriver.rs:60 -> port `melee_runtime::tu/synth.rs:109`
+- `HSD_SynthSFXSetDriverInactivatedCallback` [todo_fns!] x1: tu/axdriver.rs:67 -> port `melee_runtime::tu/synth.rs:122`
+- `HSD_SynthSFXSetDriverMasterClockCallback` [todo_fns!] x1: tu/axdriver.rs:68 -> port `melee_runtime::tu/synth.rs:123`
+- `HSD_SynthSFXSetDriverPauseCallback` [todo_fns!] x1: tu/axdriver.rs:69 -> port `melee_runtime::tu/synth.rs:124`
+- `HSD_SynthSFXSetMix` [todo_fns!] x1: tu/axdriver.rs:63 -> port `melee_runtime::tu/synth.rs:113`
+- `HSD_SynthSFXSetPan` [todo_fns!] x1: tu/axdriver.rs:62 -> port `melee_runtime::tu/synth.rs:112`
+- `HSD_SynthSFXSetPitchRatio` [todo_fns!] x1: tu/axdriver.rs:64 -> port `melee_runtime::tu/synth.rs:115`
+- `HSD_SynthSFXSetPriority` [todo_fns!] x1: tu/axdriver.rs:65 -> port `melee_runtime::tu/synth.rs:116`
+- `HSD_SynthSFXSetVolumeFade` [todo_fns!] x1: tu/axdriver.rs:66 -> port `melee_runtime::tu/synth.rs:111`
+- `HSD_SynthSFXUnloadBank` [ext_fns!] x1: tu/lbaudio_ax.rs:68 -> port `melee_runtime::tu/synth.rs:207`
+- `HSD_SynthSFXUpdateAllVolume` [ext_fns!] x1: tu/lbaudio_ax.rs:65 -> port `melee_runtime::tu/synth.rs:121`
+- `HSD_SynthSFXWaitForLoadCompletion` [ext_fns!] x1: tu/lbaudio_ax.rs:70 -> port `melee_runtime::tu/synth.rs:89`
+- `HSD_SynthStreamSetVolume` [ext_fns!] x1: tu/lbaudio_ax.rs:64 -> port `melee_runtime::tu/synth.rs:201`
+- `HSD_TevRegGetAllocData` [todo_fns!] x1: tu/initialize.rs:398 -> port `melee_runtime::tu/tev.rs:135`
+- `HSD_TExpAlphaIn` [ext_fns!] x2: tu/mobj.rs:653, tu/tobj.rs:760 -> port `melee_runtime::tu/texp.rs:1063`
+- `HSD_TExpAlphaOp` [ext_fns!] x2: tu/mobj.rs:654, tu/tobj.rs:761 -> port `melee_runtime::tu/texp.rs:431`
+- `HSD_TExpCnst` [ext_fns!] x2: tu/mobj.rs:655, tu/tobj.rs:762 -> port `melee_runtime::tu/texp.rs:334`
+- `HSD_TExpColorIn` [ext_fns!] x2: tu/mobj.rs:656, tu/tobj.rs:763 -> port `melee_runtime::tu/texp.rs:827`
+- `HSD_TExpColorOp` [ext_fns!] x2: tu/mobj.rs:657, tu/tobj.rs:764 -> port `melee_runtime::tu/texp.rs:389`
+- `HSD_TExpCompile` [ext_fns!] x1: tu/mobj.rs:658 -> port `melee_runtime::tu/texp.rs:2247`
+- `HSD_TExpFreeList` [ext_fns!] x1: tu/mobj.rs:659 -> port `melee_runtime::tu/texp.rs:192`
+- `HSD_TExpFreeTevDesc` [ext_fns!] x1: tu/mobj.rs:660 -> port `melee_runtime::tu/texp.rs:2357`
+- `HSD_TExpGetType` [ext_fns!/fn-body] x2: tu/mobj.rs:661, tu/texpdag.rs:22 -> port `melee_runtime::tu/texp.rs:73`
+- `HSD_TExpMakeDag` [hooks!] x1: tu/texp.rs:58 -> port `melee_runtime::tu/texpdag.rs:199`
+- `HSD_TExpOrder` [ext_fns!] x2: tu/mobj.rs:662, tu/tobj.rs:765 -> port `melee_runtime::tu/texp.rs:1102`
+- `HSD_TExpRef` [fn-body] x1: tu/texpdag.rs:25 -> port `melee_runtime::tu/texp.rs:132`
+- `HSD_TExpSchedule` [hooks!] x1: tu/texp.rs:59 -> port `melee_runtime::tu/texpdag.rs:315`
+- `HSD_TExpSetupTev` [ext_fns!] x1: tu/mobj.rs:663 -> port `melee_runtime::tu/texp.rs:2232`
+- `HSD_TExpSimplify` [hooks!] x1: tu/texp.rs:60 -> port `melee_runtime::tu/texpdag.rs:844`
+- `HSD_TExpSimplify2` [hooks!] x1: tu/texp.rs:61 -> port `melee_runtime::tu/texpdag.rs:857`
+- `HSD_TExpTev` [ext_fns!] x2: tu/mobj.rs:664, tu/tobj.rs:766 -> port `melee_runtime::tu/texp.rs:302`
+- `HSD_TExpUnref` [fn-body] x1: tu/texpdag.rs:28 -> port `melee_runtime::tu/texp.rs:152`
+- `HSD_TObjAddAnimAll` [ext_fns!] x1: tu/mobj.rs:665 -> port `melee_runtime::tu/tobj.rs:384`
+- `HSD_TObjAnimAll` [ext_fns!] x1: tu/mobj.rs:666 -> port `melee_runtime::tu/tobj.rs:437`
+- `HSD_TObjAssignResources` [ext_fns!] x1: tu/mobj.rs:667 -> port `melee_runtime::tu/tobj.rs:630`
+- `HSD_TObjLoadDesc` [ext_fns!/lb_hook!] x2: tu/lbrefract.rs:28, tu/mobj.rs:668 -> port `melee_runtime::tu/tobj.rs:448`
+- `HSD_TObjRemoveAll` [ext_fns!] x1: tu/mobj.rs:669 -> port `melee_runtime::tu/tobj.rs:678`
+- `HSD_TObjRemoveAnimAll` [ext_fns!] x1: tu/mobj.rs:670 -> port `melee_runtime::tu/tobj.rs:358`
+- `HSD_TObjReqAnimAllByFlags` [ext_fns!] x1: tu/mobj.rs:671 -> port `melee_runtime::tu/tobj.rs:390`
+- `HSD_TObjSetupTextureCoordGen` [ext_fns!] x1: tu/mobj.rs:673 -> port `melee_runtime::tu/tobj.rs:514`
+- `HSD_TObjSetupVolatileTev` [ext_fns!] x1: tu/mobj.rs:674 -> port `melee_runtime::tu/tobj.rs:548`
+- `HSD_VecGetAllocData` [todo_fns!] x1: tu/initialize.rs:391 -> port `melee_runtime::tu/mtx.rs:28`
+- `HSD_VecInitAllocData` [todo_fns!] x1: tu/initialize.rs:383 -> port `melee_runtime::tu/mtx.rs:30`
+- `HSD_ViewingRectAddRect` [lb_hook!] x1: tu/lbshadow.rs:52 -> port `melee_runtime::tu/shadow.rs:352`
+- `HSD_ViewingRectCheck` [lb_hook!] x1: tu/lbshadow.rs:53 -> port `melee_runtime::tu/shadow.rs:348`
+- `HSD_ViewingRectInit` [lb_hook!] x1: tu/lbshadow.rs:51 -> port `melee_runtime::tu/shadow.rs:327`
+- `HSD_VIGetRenderMode` [ext_fns!/todo_fns!] x2: tu/cobj.rs:88, tu/initialize.rs:378 -> port `melee_runtime::tu/video.rs:223`
+- `HSD_VIGetXFBLastDrawDone` [fn-body] x2: tu/dbscreenshot.rs:44, tu/hsd_393C.rs:33 -> port `melee_runtime::tu/video.rs:195`
+- `HSD_VIInit` [todo_fns!] x1: tu/initialize.rs:349 -> port `melee_runtime::tu/video.rs:204`
+- `HSD_VISetUserPostRetraceCallback` [fn-body] x1: tu/dberror.rs:54 -> port `melee_runtime::tu/video.rs:48`
+- `HSD_VISetUserPreRetraceCallback` [fn-body] x1: tu/dberror.rs:53 -> port `melee_runtime::tu/video.rs:44`
+- `HSD_VIWaitXFBFlush` [fn-body/lb_hook!] x2: tu/dbscreenshot.rs:43, tu/lbmthp.rs:38 -> port `melee_runtime::tu/video.rs:189`
+- `HSD_VIWaitXFBFlushNoYield` [fn-body] x1: tu/hsd_393C.rs:32 -> port `melee_runtime::tu/video.rs:192`
+- `HSD_WObjAddAnim` [ext_fns!] x1: tu/cobj.rs:70 -> port `melee_runtime::tu/wobj.rs:99`
+- `HSD_WObjAlloc` [ext_fns!] x1: tu/cobj.rs:65 -> port `melee_runtime::tu/wobj.rs:239`
+- `HSD_WObjClearFlags` [ext_fns!] x1: tu/cobj.rs:73 -> port `melee_runtime::tu/wobj.rs:296`
+- `HSD_WObjInit` [ext_fns!] x1: tu/cobj.rs:68 -> port `melee_runtime::tu/wobj.rs:155`
+- `HSD_WObjInterpretAnim` [ext_fns!] x1: tu/cobj.rs:71 -> port `melee_runtime::tu/wobj.rs:138`
+- `HSD_WObjRemoveAnim` [ext_fns!] x1: tu/cobj.rs:69 -> port `melee_runtime::tu/wobj.rs:84`
+- `HSD_WObjReqAnim` [ext_fns!] x1: tu/cobj.rs:72 -> port `melee_runtime::tu/wobj.rs:92`
+- `HSD_WObjUnref` [ext_fns!] x1: tu/cobj.rs:67 -> port `melee_runtime::tu/wobj.rs:277`
+- `HSD_ZListInitAllocData` [todo_fns!] x1: tu/initialize.rs:388 -> port `melee_runtime::tu/displayfunc.rs:371`
+- `hsdAllocMemPiece` [ext_fns!/hooks!] x3: tu/mobj.rs:675, tu/texp.rs:49, tu/tobj.rs:767 -> port `melee_runtime::tu/class.rs:227`
+- `hsdForgetClassLibrary` [todo_fns!] x1: tu/initialize.rs:372 -> port `melee_runtime::tu/class.rs:481`
+- `hsdFreeMemPiece` [ext_fns!/hooks!] x3: tu/mobj.rs:676, tu/texp.rs:50, tu/tobj.rs:768 -> port `melee_runtime::tu/class.rs:285`
+- `hsdInitClassInfo` [ext_fns!/lb_hook!] x3: tu/lbrefract.rs:41, tu/mobj.rs:677, tu/tobj.rs:769 -> port `melee_runtime::tu/class.rs:106`
+- `hsdIsDescendantOf` [ext_fns!] x1: tu/tobj.rs:770 -> port `melee_runtime::tu/class.rs:407`
+- `hsdNew` [ext_fns!] x2: tu/mobj.rs:678, tu/tobj.rs:771 -> port `melee_runtime::tu/class.rs:351`
+- `hsdSearchClassInfo` [ext_fns!] x2: tu/mobj.rs:679, tu/tobj.rs:772 -> port `melee_runtime::tu/class.rs:497`
+- `lb_8000B1CC` [ext_fns!] x1: tu/lbcollision.rs:38 -> port `melee_runtime::tu/lb_00B0.rs:245`
+- `lb_8001B7E0` [ext_fns!] x1: tu/lbcardgame.rs:55 -> port `melee_runtime::tu/lbcardnew.rs:864`
+- `lb_8001BA44` [ext_fns!] x1: tu/lbcardgame.rs:56 -> port `melee_runtime::tu/lbcardnew.rs:897`
+- `lb_8001BC18` [ext_fns!] x1: tu/lbcardgame.rs:57 -> port `melee_runtime::tu/lbcardnew.rs:941`
+- `lb_8001BD34` [ext_fns!] x1: tu/lbcardgame.rs:58 -> port `melee_runtime::tu/lbcardnew.rs:966`
+- `lb_8001BE30` [ext_fns!] x1: tu/lbcardgame.rs:59 -> port `melee_runtime::tu/lbcardnew.rs:978`
+- `lbArchive_80016DBC` [ext_fns!] x1: tu/lbcardgame.rs:51 -> port `melee_runtime::tu/lbarchive.rs:216`
+- `lbArchive_80016EFC` [fn-body] x1: tu/hsd_3A76.rs:77 -> port `melee_runtime::tu/lbarchive.rs:223`
+- `lbArchive_InitializeDAT` [ext_fns!] x1: tu/lbdvd.rs:42 -> port `melee_runtime::tu/lbarchive.rs:150`
+- `lbArchive_LoadArchive` [fn-body] x1: tu/hsd_3A76.rs:76 -> port `melee_runtime::tu/lbarchive.rs:203`
+- `lbArchive_LoadSymbols` [ext_fns!/fn-body/lb_hook!] x3: tu/dbinit.rs:97, tu/lbaudio_ax.rs:34, tu/lbrefract.rs:26 -> port `melee_runtime::tu/lbarchive.rs:209`
+- `lbAudioAx_80025064` [fn-body] x1: tu/dbsound.rs:64 -> port `melee_runtime::tu/lbaudio_ax.rs:2405`
+- `lbAudioAx_80025098` [fn-body] x1: tu/dbsound.rs:61 -> port `melee_runtime::tu/lbaudio_ax.rs:2410`
+- `lbAudioAx_80028B2C` [fn-body] x1: tu/dbsound.rs:62 -> port `melee_runtime::tu/lbaudio_ax.rs:3555`
+- `lbAudioAx_80028B4C` [fn-body] x1: tu/dbsound.rs:63 -> port `melee_runtime::tu/lbaudio_ax.rs:3559`
+- `lbCardNew_CompleteNextTask` [ext_fns!] x1: tu/lbcardgame.rs:52 -> port `melee_runtime::tu/lbcardnew.rs:811`
+- `lbCardNew_ProbeEx` [ext_fns!] x1: tu/lbcardgame.rs:53 -> port `melee_runtime::tu/lbcardnew.rs:1134`
+- `lbFile_800161C4` [ext_fns!] x1: tu/lbdvd.rs:44 -> port `melee_runtime::tu/lbfile.rs:64`
+- `lbFile_8001634C` [ext_fns!] x1: tu/lbdvd.rs:45 -> port `melee_runtime::tu/lbfile.rs:127`
+- `lbFile_800164A4` [ext_fns!] x1: tu/lbdvd.rs:46 -> port `melee_runtime::tu/lbfile.rs:165`
+- `lbFileGetFullName` [ext_fns!] x1: tu/lbdvd.rs:43 -> port `melee_runtime::tu/lbfile.rs:95`
+- `lbHeap_800158D0` [ext_fns!] x1: tu/lbdvd.rs:47 -> port `melee_runtime::tu/lbheap.rs:127`
+- `lbHeap_800158E8` [ext_fns!] x1: tu/lbdvd.rs:48 -> port `melee_runtime::tu/lbheap.rs:135`
+- `lbHeap_80015900` [ext_fns!] x1: tu/lbdvd.rs:49 -> port `melee_runtime::tu/lbheap.rs:144`
+- `lbHeap_80015BB8` [ext_fns!] x1: tu/lbdvd.rs:50 -> port `melee_runtime::tu/lbheap.rs:211`
+- `lbHeap_80015BD0` [ext_fns!/lb_hook!] x2: tu/lbdvd.rs:51, tu/lbfile.rs:27 -> port `melee_runtime::tu/lbheap.rs:219`
+- `lbHeap_80015CA8` [ext_fns!] x1: tu/lbdvd.rs:52 -> port `melee_runtime::tu/lbheap.rs:253`
+- `lbHeap_80015D6C` [ext_fns!] x1: tu/lbdvd.rs:53 -> port `melee_runtime::tu/lbheap.rs:276`
+- `lbHeap_Capacity` [ext_fns!] x1: tu/lbdvd.rs:54 -> port `melee_runtime::tu/lbheap.rs:406`
+- `lbHeap_Free` [ext_fns!] x1: tu/lbdvd.rs:55 -> port `melee_runtime::tu/lbheap.rs:415`
+- `lbLang_IsSavedLanguageUS` [ext_fns!/lb_hook!] x2: tu/lbaudio_ax.rs:36, tu/lbfile.rs:29 -> port `melee_runtime::tu/lblanguage.rs:66`
+- `lbLang_IsSettingJP` [ext_fns!] x1: tu/lbcardgame.rs:54 -> port `melee_runtime::tu/lblanguage.rs:39`
+- `lbLang_IsSettingUS` [ext_fns!/lb_hook!] x2: tu/lbaudio_ax.rs:35, tu/lbfile.rs:28 -> port `melee_runtime::tu/lblanguage.rs:44`
+- `OS_TIMER_CLOCK` [fn-body] x1: tu/hsd_3933.rs:60 -> port `melee_runtime::tu/lbsnap.rs:118`
+- `powf` [todo_fns!] x1: tu/axdriver.rs:31 -> port `melee_runtime::lb_00ce.rs:41`
+- `psAttachParticleAppSRT` [ext_fns!] x1: tu/particle.rs:1698 -> port `melee_runtime::tu/psappsrt.rs:48`
+- `psRemoveParticleAppSRT` [ext_fns!] x1: tu/particle.rs:1699 -> port `melee_runtime::tu/psappsrt.rs:56`
+- `THPDec_8032FD40` [lb_hook!] x1: tu/lbmthp.rs:27 -> port `melee_runtime::tu/THPDec.rs:760`
+- `THPDec_80331340` [lb_hook!] x1: tu/lbmthp.rs:29 -> port `melee_runtime::tu/THPDec.rs:1473`
+- `THPDec_803313D0` [lb_hook!] x1: tu/lbmthp.rs:30 -> port `melee_runtime::tu/THPDec.rs:1491`
+- `THPInit` [lb_hook!] x1: tu/lbmthp.rs:26 -> port `melee_runtime::tu/THPDec.rs:1736`
+- `THPVideoDecode` [lb_hook!] x1: tu/lbmthp.rs:28 -> port `melee_runtime::tu/THPDec.rs:777`
+
+### melee_runtime - CYCLE (177 sites, 84 names)
+
+- `Camera_800300F0` [fn-body] x1: tu/dbcamera.rs:105 -> port `melee_world::cm/camera.rs:611`
+- `Camera_80030154` [fn-body] x1: tu/dbcamera.rs:101 -> port `melee_world::cm/camera.rs:620`
+- `Camera_80030178` [fn-body] x1: tu/dbcamera.rs:102 -> port `melee_world::cm/camera.rs:623`
+- `Camera_80030A60` [fn-body] x1: tu/dbcamera.rs:93 -> port `melee_world::cm/camera.rs:818`
+- `Camera_80030A8C` [fn-body] x1: tu/dbcamera.rs:94 -> port `melee_world::cm/camera.rs:826`
+- `Camera_80030B0C` [fn-body] x1: tu/dbcamera.rs:95 -> port `melee_world::cm/camera.rs:846`
+- `Camera_80030B38` [fn-body] x1: tu/dbcamera.rs:96 -> port `melee_world::cm/camera.rs:854`
+- `Camera_80030B64` [fn-body] x1: tu/dbcamera.rs:97 -> port `melee_world::cm/camera.rs:862`
+- `Camera_80030B90` [fn-body] x1: tu/dbcamera.rs:98 -> port `melee_world::cm/camera.rs:870`
+- `DevText_Erase` [fn-body] x6: tu/dbanim.rs:85, tu/dbbonus.rs:50, tu/dbcamera.rs:125, tu/dbcpu.rs:68, tu/dbitem.rs:88, tu/dbsound.rs:58 -> port `melee_world::hud/textlib.rs:122`
+- `DevText_GetGObj` [fn-body] x6: tu/dbanim.rs:78, tu/dbbonus.rs:43, tu/dbcamera.rs:118, tu/dbcpu.rs:61, tu/dbitem.rs:77, tu/dbsound.rs:47 -> port `melee_world::tu/textdraw.rs:167`
+- `DevText_HideBackground` [fn-body] x6: tu/dbanim.rs:90, tu/dbbonus.rs:55, tu/dbcamera.rs:130, tu/dbcpu.rs:73, tu/dbitem.rs:86, tu/dbsound.rs:56 -> port `melee_world::tu/textlib.rs:355`
+- `DevText_HideCursor` [fn-body] x6: tu/dbanim.rs:81, tu/dbbonus.rs:46, tu/dbcamera.rs:121, tu/dbcpu.rs:64, tu/dbitem.rs:80, tu/dbsound.rs:50 -> port `melee_world::tu/textlib.rs:340`
+- `DevText_HideText` [fn-body] x6: tu/dbanim.rs:92, tu/dbbonus.rs:57, tu/dbcamera.rs:132, tu/dbcpu.rs:75, tu/dbitem.rs:87, tu/dbsound.rs:57 -> port `melee_world::tu/textlib.rs:365`
+- `DevText_Printf` [fn-body] x6: tu/dbanim.rs:88, tu/dbbonus.rs:53, tu/dbcamera.rs:128, tu/dbcpu.rs:71, tu/dbitem.rs:90, tu/dbsound.rs:60 -> port `melee_world::tu/textlib.rs:459`
+- `DevText_SetBGColor` [fn-body] x6: tu/dbanim.rs:82, tu/dbbonus.rs:47, tu/dbcamera.rs:122, tu/dbcpu.rs:65, tu/dbitem.rs:81, tu/dbsound.rs:51 -> port `melee_world::tu/textlib.rs:403`
+- `DevText_SetCursorX` [fn-body] x4: tu/dbanim.rs:87, tu/dbbonus.rs:52, tu/dbcamera.rs:127, tu/dbcpu.rs:70 -> port `melee_world::tu/textlib.rs:335`
+- `DevText_SetCursorXY` [fn-body] x6: tu/dbanim.rs:86, tu/dbbonus.rs:51, tu/dbcamera.rs:126, tu/dbcpu.rs:69, tu/dbitem.rs:89, tu/dbsound.rs:59 -> port `melee_world::tu/textlib.rs:318`
+- `DevText_SetScale` [fn-body] x6: tu/dbanim.rs:84, tu/dbbonus.rs:49, tu/dbcamera.rs:124, tu/dbcpu.rs:67, tu/dbitem.rs:83, tu/dbsound.rs:53 -> port `melee_world::tu/textlib.rs:370`
+- `DevText_SetTextColor` [fn-body] x6: tu/dbanim.rs:83, tu/dbbonus.rs:48, tu/dbcamera.rs:123, tu/dbcpu.rs:66, tu/dbitem.rs:82, tu/dbsound.rs:52 -> port `melee_world::tu/textlib.rs:395`
+- `DevText_Show` [fn-body] x6: tu/dbanim.rs:80, tu/dbbonus.rs:45, tu/dbcamera.rs:120, tu/dbcpu.rs:63, tu/dbitem.rs:79, tu/dbsound.rs:49 -> port `melee_world::tu/textdraw.rs:418`
+- `DevText_ShowBackground` [fn-body] x6: tu/dbanim.rs:89, tu/dbbonus.rs:54, tu/dbcamera.rs:129, tu/dbcpu.rs:72, tu/dbitem.rs:84, tu/dbsound.rs:54 -> port `melee_world::tu/textlib.rs:350`
+- `DevText_ShowText` [fn-body] x6: tu/dbanim.rs:91, tu/dbbonus.rs:56, tu/dbcamera.rs:131, tu/dbcpu.rs:74, tu/dbitem.rs:85, tu/dbsound.rs:55 -> port `melee_world::tu/textlib.rs:360`
+- `efAsync_OnLoad` [ext_fns!] x1: tu/lbdvd.rs:39 -> port `melee_world::tu/efasync.rs:948`
+- `efSync_Spawn` [fn-body] x1: tu/dbitem.rs:97 -> port `melee_world::tu/efsync.rs:251`
+- `Fighter_PoisonMushroomApply` [fn-body] x1: tu/dbanim.rs:72 -> port `melee_fighter::tu/ftCo_KinokoSmallStart.rs:68`
+- `Fighter_PoisonMushroomEnd` [fn-body] x1: tu/dbanim.rs:74 -> port `melee_fighter::tu/ftCo_KinokoSmallEnd.rs:66`
+- `Fighter_SuperMushroomApply` [fn-body] x1: tu/dbanim.rs:73 -> port `melee_fighter::tu/ftCo_KinokoGiantStart.rs:67`
+- `Fighter_SuperMushroomEnd` [fn-body] x1: tu/dbanim.rs:75 -> port `melee_fighter::tu/ftCo_KinokoGiantEnd.rs:53`
+- `ftDrawCommon_80081168` [lb_hook!] x1: tu/lbshadow.rs:62 -> port `melee_fighter::tu/ftdrawcommon.rs:385`
+- `ftDrawCommon_80081200` [lb_hook!] x1: tu/lbshadow.rs:63 -> port `melee_fighter::tu/ftdrawcommon.rs:387`
+- `ftLib_80086644` [ext_fns!] x1: tu/lbaudio_ax.rs:85 -> port `melee_fighter::ftlib.rs:182`
+- `ftLib_80086960` [fn-body/lb_hook!] x3: tu/dbanim.rs:62, tu/dbitem.rs:75, tu/lbshadow.rs:59 -> port `melee_fighter::ftlib.rs:246`
+- `ftLib_800872B0` [lb_hook!] x1: tu/lbshadow.rs:60 -> port `melee_fighter::ftlib.rs:409`
+- `ftLib_800872BC` [lb_hook!] x1: tu/lbshadow.rs:61 -> port `melee_fighter::ftlib.rs:410`
+- `gm_801603B0` [ext_fns!] x1: tu/lbaudio_ax.rs:90 -> port `melee_modes::tu/gm_1601.rs:550`
+- `gm_80164ABC` [ext_fns!] x1: tu/lbcardgame.rs:48 -> port `melee_modes::tu/gm_1601.rs:1862`
+- `gm_8016895C` [ext_fns!] x1: tu/lbcardgame.rs:49 -> port `melee_modes::tu/gm_1601.rs:2880`
+- `gm_80169370` [ext_fns!] x1: tu/lbaudio_ax.rs:92 -> port `melee_modes::tu/gm_16A2.rs:99`
+- `gm_8016B184` [ext_fns!] x1: tu/lbaudio_ax.rs:91 -> port `melee_modes::tu/gmvs.rs:399`
+- `gm_8018841C` [fn-body] x1: tu/dbcamera.rs:110 -> port `melee_modes::tu/gm_1879.rs:409`
+- `gm_801B23F0` [ext_fns!] x1: tu/lbdvd.rs:40 -> port `melee_modes::tu/gmcameramode.rs:110`
+- `gm_GetCurrentGameMode` [fn-body] x1: tu/dbcamera.rs:111 -> port `melee_modes::tu/gm_1A3F.rs:574`
+- `gm_GetDbPauseFlag` [fn-body] x1: tu/dbitem.rs:91 -> port `melee_modes::tu/gmscene.rs:224`
+- `gm_GetMatchEndPlayerScore` [fn-body] x1: tu/dbbonus.rs:35 -> port `melee_modes::tu/gmvs.rs:974`
+- `gm_GetPowerTime` [ext_fns!] x1: tu/lbcardgame.rs:50 -> port `melee_modes::tu/gmmain_lib.rs:241`
+- `gm_MexVanillaKind` [ext_fns!] x1: tu/lbaudio_ax.rs:99 -> port `melee_modes::tu/gm_1601.rs:468`
+- `gm_ResetGameSpeed` [fn-body] x1: tu/dbscreenshot.rs:40 -> port `melee_modes::tu/gmvs.rs:452`
+- `gm_SetGameSpeed` [fn-body] x1: tu/dbscreenshot.rs:39 -> port `melee_modes::tu/gmvs.rs:448`
+- `gmDecisionGetType` [fn-body] x1: tu/dbbonus.rs:38 -> port `melee_modes::tu/gm_16f1.rs:231`
+- `gmMainLib_8015FC74` [ext_fns!] x1: tu/lbcardgame.rs:45 -> port `melee_modes::tu/gmmain_lib.rs:1169`
+- `gmMainLib_GetCardData` [ext_fns!] x1: tu/lbcardgame.rs:46 -> port `melee_modes::tu/gmmain_lib.rs:149`
+- `gmMainLib_GetGamePrefs` [lb_hook!] x1: tu/lblanguage.rs:22 -> port `melee_modes::tu/gmmain_lib.rs:157`
+- `gmMainLib_GetNameTagDataBanks` [ext_fns!] x1: tu/lbcardgame.rs:47 -> port `melee_modes::tu/gmmain_lib.rs:153`
+- `grDatFiles_801C5FC0` [ext_fns!] x1: tu/lbdvd.rs:41 -> port `melee_world::tu/grdatfiles.rs:127`
+- `Ground_801C0508` [lb_hook!] x1: tu/lbshadow.rs:64 -> port `melee_world::gr/ground.rs:150`
+- `Ground_ApplyStageBackgroundColor` [fn-body] x1: tu/dbcamera.rs:109 -> port `melee_world::tu/ground.rs:1493`
+- `ifAll_HideHUD` [fn-body] x1: tu/dbeffect.rs:38 -> port `melee_world::tu/ifall.rs:566`
+- `ifAll_IsHUDHidden` [fn-body] x1: tu/dbeffect.rs:37 -> port `melee_world::tu/ifall.rs:574`
+- `ifAll_ShowHUD` [fn-body] x1: tu/dbeffect.rs:36 -> port `melee_world::tu/ifall.rs:570`
+- `it_8026B294` [ext_fns!] x1: tu/lbaudio_ax.rs:86 -> port `melee_items::itlib.rs:37`
+- `it_8026B684` [fn-body] x1: tu/dbitem.rs:94 -> port `melee_items::tu/it_26B1.rs:323`
+- `it_8026C704` [fn-body] x1: tu/dbitem.rs:95 -> port `melee_items::tu/itspawn.rs:148`
+- `Item_80266F3C` [fn-body] x1: tu/dbitem.rs:92 -> port `melee_items::tu/item.rs:307`
+- `Item_80268B18` [fn-body] x1: tu/dbitem.rs:96 -> port `melee_items::tu/item.rs:1156`
+- `lb_800195D0` [ext_fns!/lb_hook!] x3: tu/lbaudio_ax.rs:33, tu/lbdvd.rs:56, tu/lbfile.rs:19 -> port `melee_modes::tu/lb_0195.rs:129`
+- `lb_80019A48` [fn-body] x1: tu/dberror.rs:55 -> port `melee_modes::tu/lb_0195.rs:248`
+- `lbBgFlash_80021C48` [ext_fns!] x1: tu/lbcommand.rs:32 -> port `melee_modes::tu/lb_0219.rs:134`
+- `OSReport` [ext_fns!/fn-body/hook!/lb_hook!] x20: tu/archive.rs:19, tu/axdriver.rs:88, tu/class.rs:47, tu/dberror.rs:56, tu/dbinit.rs:98, tu/dbitem.rs:98, tu/debug.rs:27, tu/debugconsole_main.rs:44, tu/devcom.rs:39, tu/dobj.rs:153, tu/hsd_392C.rs:60, tu/hsd_3933.rs:52, tu/hsd_397E.rs:18, tu/initialize.rs:404, tu/lbarchive.rs:109, tu/lbaudio_ax.rs:32, tu/lbdvd.rs:35, tu/lbext.rs:46, tu/sislib.rs:741, tu/sobjlib.rs:977 -> port `melee_modes::tu/gm_17c0.rs:246`
+- `pl_80039418` [fn-body] x1: tu/dbbonus.rs:36 -> port `melee_fighter::plbonus3.rs:201`
+- `pl_80039450` [fn-body] x1: tu/dbbonus.rs:37 -> port `melee_fighter::tu/plbonus.rs:434`
+- `Player_80031CB0` [ext_fns!] x1: tu/lbdvd.rs:36 -> port `melee_fighter::tu/player.rs:258`
+- `Player_80031D2C` [ext_fns!] x1: tu/lbdvd.rs:37 -> port `melee_fighter::tu/player.rs:271`
+- `Player_GetEntity` [fn-body] x2: tu/dbanim.rs:70, tu/dbbonus.rs:40 -> port `melee_fighter::tu/player.rs:689`
+- `Player_GetPlayerCharacter` [ext_fns!] x1: tu/lbaudio_ax.rs:93 -> port `melee_fighter::tu/player.rs:368`
+- `Player_GetPlayerSlotType` [ext_fns!/fn-body] x2: tu/dbanim.rs:69, tu/lbaudio_ax.rs:94 -> port `melee_fighter::tu/player.rs:376`
+- `Player_GetPtrForSlot` [fn-body] x1: tu/dbcpu.rs:80 -> port `melee_fighter::tu/player.rs:144`
+- `Player_LoadPlayerCoords` [fn-body] x1: tu/dbitem.rs:93 -> port `melee_fighter::tu/player.rs:419`
+- `ScriptGame_StageSlotParticleBegin` [ext_fns!] x1: tu/particle.rs:1693 -> port `melee_modes::tu/script_game.rs:32989`
+- `ScriptGame_StageSlotProcEnd` [ext_fns!] x1: tu/particle.rs:1694 -> port `melee_modes::tu/script_game.rs:33011`
+- `Stage_80225194` [ext_fns!] x1: tu/lbaudio_ax.rs:88 -> port `melee_world::gr/stage.rs:362`
+- `Stage_8022519C` [ext_fns!] x1: tu/lbaudio_ax.rs:89 -> port `melee_world::gr/stage.rs:384`
+- `Stage_802251B4` [ext_fns!] x1: tu/lbdvd.rs:38 -> port `melee_world::gr/stage.rs:389`
+- `un_80304470` [ext_fns!] x1: tu/lbcardgame.rs:60 -> port `melee_items::tu/toy.rs:561`
+
+## melee_world
+
+NO_PORT: 318 sites / 171 names, SIGNATURE: 1242 sites / 460 names, CYCLE: 282 sites / 182 names
+
+### melee_world - NO_PORT (318 sites, 171 names)
+
+- `Camera_80029044` [hook!] x1: tu/grcastle.rs:30
+- `Camera_8002A4AC` [hook!] x1: tu/grizumi.rs:41
+- `Camera_8002F3AC` [fn+panic/hook!] x3: tu/grbigblueroute.rs:28, tu/grkinokoroute.rs:39, tu_ext.rs:10
+- `Camera_80030A50` [ext_fns!/hook!] x4: tu/grdisplay.rs:31, tu/grhomerun.rs:48, tu/grizumi.rs:42, tu/grpstadium.rs:42
+- `Camera_GetTransformInterest` [ext_fns!/hook!] x2: tu/grcorneria.rs:32, tu/grhomerun.rs:49
+- `Camera_GetTransformPosition` [ext_fns!] x1: tu/grmutecity.rs:38
+- `Camera_LogicBounds` [ext_fns!] x3: tu/groldkongo.rs:34, tu/groldpupupu.rs:34, tu/gronett.rs:34
+- `Camera_RequestQuake` [ext_fns!/fn-body/hook!] x15: tu/efasync.rs:147, tu/grbigblueroute.rs:30, tu/grcastle.rs:32, tu/grcorneria.rs:33, tu/grgreens.rs:44, tu/gricemt.rs:51, tu/grinishie1.rs:44, tu/grkinokoroute.rs:41, tu/grkraid.rs:30, tu/grlast.rs:45, tu/grmutecity.rs:39, tu/groldpupupu.rs:35, tu/grpstadium.rs:43, tu/grzebes.rs:288, tu/grzebesroute.rs:120
+- `Camera_SetBackgroundColor` [ext_fns!/hook!] x3: tu/grlast.rs:46, tu/ground.rs:43, tu/grpura.rs:35
+- `Camera_SetModeToFixed` [ext_fns!] x1: tu/ground.rs:44
+- `Camera_SetModeToStandard` [ext_fns!] x1: tu/ground.rs:45
+- `Camera_SetQuakeOffset` [hook!] x1: tu/grlib.rs:19
+- `create_snap_gobj` [fn-body] x1: tu/cmsnap.rs:37
+- `DevText_Create` [ext_fns!] x1: tu/textlib_1.rs:38
+- `efAsync_DatEntries_clear` [fn-body] x1: tu/eflib.rs:55
+- `efAsync_DatEntries_data` [fn-body] x1: tu/eflib.rs:54
+- `efLib_AnimQueue` [fn-body] x1: tu/efasync.rs:135
+- `fighter_colls` [fn-body] x1: gr/grlib.rs:124
+- `ftCo_8009F4A4` [ext_fns!] x1: tu/ground.rs:138
+- `ftCo_800C06E8` [ext_fns!/hook!] x4: tu/grcastle.rs:125, tu/grgarden.rs:54, tu/grgreens.rs:71, tu/groldpupupu.rs:52
+- `ftCo_800C0764` [ext_fns!/hook!] x2: tu/grkongo.rs:138, tu/groldkongo.rs:56
+- `ftCo_800C07F8` [ext_fns!/fn+panic/hook!] x4: tu/grgreatbay.rs:65, tu/grkinokoroute.rs:209, tu/grzebes.rs:280, tu_ext.rs:399
+- `ftData_UnkBytePerCharacter` [fn-body] x1: tu/efasync.rs:164
+- `generator_list_head` [fn-body] x1: gr/grlib.rs:52
+- `gobj_add_jobj` [fn-body] x1: gr/grlib.rs:104
+- `gobj_free` [fn-body] x1: gr/grlib.rs:92
+- `GObj_InitUserData` [ext_fns!/fn-body/hook!] x4: tu/eflib.rs:67, tu/grizumi.rs:46, tu/ground.rs:47, tu/grpstadium.rs:45
+- `gobj_setup_proc` [fn-body] x1: gr/grlib.rs:108
+- `GObj_SetupGXLink_JObjCallback` [fn-body] x1: tu/eflib.rs:65
+- `grDynamicAttr_801CA0F8` [ext_fns!] x1: tu/grflatzone.rs:73
+- `Ground_801C10B8` [ext_fns!] x7: tu/grflatzone.rs:52, tu/grgarden.rs:39, tu/grgreatbay.rs:45, tu/grgreens.rs:47, tu/gricemt.rs:54, tu/gronett.rs:36, tu/grpstadium.rs:50
+- `GXBegin` [ext_fns!] x1: tu/mplib.rs:56
+- `GXClearVtxDesc` [ext_fns!] x1: tu/mplib.rs:57
+- `GXGetTexBufferSize` [ext_fns!/hook!] x2: tu/grizumi.rs:48, tu/grpstadium.rs:48
+- `GXLoadPosMtxImm` [ext_fns!] x1: tu/mplib.rs:59
+- `GXPosition3f32` [ext_fns!] x1: tu/mplib.rs:60
+- `GXSetCullMode` [ext_fns!] x1: tu/mplib.rs:61
+- `GXSetCurrentMtx` [ext_fns!] x1: tu/mplib.rs:62
+- `GXSetLineWidth` [ext_fns!] x1: tu/mplib.rs:63
+- `GXSetVtxAttrFmt` [ext_fns!] x1: tu/mplib.rs:64
+- `GXSetVtxDesc` [ext_fns!] x1: tu/mplib.rs:65
+- `GXSetZMode` [ext_fns!] x1: tu/mplib.rs:66
+- `hsd_8039D1E4` [fn-body] x1: tu/eflib.rs:97
+- `HSD_CObjGetAuthoredAspect` [hook!] x1: tu/grizumi.rs:104
+- `HSD_CObjGetEyePosition` [ext_fns!/hook!] x3: tu/grhomerun.rs:70, tu/grizumi.rs:105, tu/ground.rs:53
+- `HSD_CObjGetEyeVector` [ext_fns!] x2: tu/grfourside.rs:57, tu/ground.rs:54
+- `HSD_CObjGetFlags` [ext_fns!] x1: tu/grhomerun.rs:72
+- `HSD_CObjGetFov` [hook!] x1: tu/grizumi.rs:111
+- `HSD_CObjGetInterest` [ext_fns!/hook!] x2: tu/grhomerun.rs:73, tu/grizumi.rs:112
+- `HSD_CObjGetPerspective` [ext_fns!] x1: tu/grhomerun.rs:75
+- `HSD_CObjGetScissor` [ext_fns!] x1: tu/grhomerun.rs:76
+- `HSD_CObjGetViewingMtx` [ext_fns!] x1: tu/mplib.rs:70
+- `HSD_CObjGetViewingMtxPtr` [hook!] x1: tu/grizumi.rs:118
+- `HSD_CObjGetViewportf` [ext_fns!] x1: tu/grhomerun.rs:77
+- `HSD_CObjSetAspect` [hook!] x1: tu/grizumi.rs:119
+- `HSD_CObjSetEyePosition` [ext_fns!/hook!] x3: tu/grhomerun.rs:79, tu/grizumi.rs:125, tu/textdraw.rs:41
+- `HSD_CObjSetFov` [hook!] x1: tu/grizumi.rs:131
+- `HSD_CObjSetInterest` [ext_fns!/hook!] x3: tu/grhomerun.rs:82, tu/grizumi.rs:132, tu/textdraw.rs:43
+- `HSD_CObjSetProjectionType` [ext_fns!] x1: tu/textdraw.rs:46
+- `HSD_CObjSetRoll` [ext_fns!] x1: tu/textdraw.rs:47
+- `HSD_CObjSetViewportf` [ext_fns!] x1: tu/grhomerun.rs:86
+- `HSD_FogLoadDesc` [ext_fns!] x1: tu/ground.rs:55
+- `HSD_FogSet` [ext_fns!/hook!] x6: tu/grdisplay.rs:43, tu/grhomerun.rs:87, tu/grizumi.rs:138, tu/ground.rs:56, tu/grpstadium.rs:67, tu/textdraw.rs:50
+- `HSD_GObj_CurrentInvokedProc` [fn-body] x1: tu/efasync.rs:152
+- `HSD_GObj_JObjKind` [fn-body] x1: tu/eflib.rs:53
+- `HSD_GObj_SetupProc` [ext_fns!/fn+panic/fn-body/hook!] x41: tu/eflib.rs:66, tu/grbattle.rs:72, tu/grbigblue.rs:122, tu/grbigblueroute.rs:137, tu/grcastle.rs:114, tu/grcorneria.rs:279, tu/grfigure1.rs:44, tu/grfigure2.rs:45, tu/grfigure3.rs:44, tu/grfigureget.rs:45, tu/grflatzone.rs:61, tu/grfourside.rs:58, tu/grgarden.rs:47, tu/grgreatbay.rs:57, tu/grgreens.rs:61, tu/grheal.rs:50, tu/grhomerun.rs:90, tu/gricemt.rs:77, tu/grinishie1.rs:60, tu/grinl2.rs:29, tu/grlib.rs:39, tu/grmutecity.rs:65, tu/groldkongo.rs:47, tu/groldpupupu.rs:46, tu/groldyoshi.rs:41, tu/gronett.rs:50, tu/ground.rs:62, tu/grpstadium.rs:71, tu/grpura.rs:51, tu/grvenom.rs:142, tu/gryorster.rs:242, tu/grzakogenerator.rs:160, tu/grzebes.rs:357, tu/grzebesroute.rs:217, tu/if_2F72.rs:41, tu/if_2FD9.rs:38, tu/if_2FF2.rs:42, tu/ifcoget.rs:86, tu/mplib.rs:71, tu/textlib_1.rs:59, tu_ext.rs:210
+- `HSD_GObjFree` [ext_fns!/fn-body/hook!] x9: tu/eflib.rs:69, tu/grlib.rs:37, tu/ground.rs:59, tu/if_2F72.rs:38, tu/if_2FD9.rs:35, tu/if_2FF2.rs:38, tu/ifall.rs:326, tu/soundtest.rs:41, tu/textdraw.rs:51
+- `HSD_GObjPLinkHead` [fn-body/hook!] x3: tu/eflib.rs:52, tu/grcastle.rs:276, tu/grcorneria.rs:278
+- `HSD_GObjProc_RemoveAllProcs` [ext_fns!] x1: tu/ground.rs:61
+- `HSD_JObjDisp` [ext_fns!] x1: tu/grdisplay.rs:47
+- `HSD_JObjWalkTree_8039D688` [fn-body] x1: tu/eflib.rs:73
+- `HSD_MtxGetScale` [fn-body] x1: tu/eflib.rs:76
+- `HSD_MtxInverseConcat` [ext_fns!] x1: tu/grdisplay.rs:49
+- `HSD_PadMasterStatus` [hook!] x1: tu/grcorneria.rs:286
+- `HSD_SisLib_804D1124` [hook!] x1: tu/grcorneria.rs:309
+- `HSD_SObjLib_803A477C` [ext_fns!] x1: tu/soundtest.rs:43
+- `Item_8026A8EC` [hook!] x2: tu/grmaterial.rs:67, tu/grzakogenerator.rs:162
+- `item_colls` [fn-body] x1: gr/grlib.rs:128
+- `jobj_add_anim_all` [fn-body] x1: gr/grlib.rs:112
+- `jobj_anim_all` [fn-body] x1: gr/grlib.rs:76
+- `jobj_load_joint` [fn-body] x1: gr/grlib.rs:100
+- `jobj_req_anim_all` [fn-body] x1: gr/grlib.rs:116
+- `lb_8001044c_zero` [fn-body] x1: gr/grlib.rs:72
+- `lbDvd_80017740` [ext_fns!] x1: tu/grpstadium.rs:124
+- `lbDvd_GetPreloadedArchive` [ext_fns!] x1: tu/grpstadium.rs:125
+- `Mex_EffectCount` [fn-body] x1: tu/efasync.rs:161
+- `Mex_EffectString` [fn-body] x1: tu/efasync.rs:162
+- `Mex_Enabled` [ext_fns!] x1: tu/ground.rs:86
+- `Mex_GrBgmChance` [ext_fns!] x1: tu/ground.rs:87
+- `Mex_GrBgmCount` [ext_fns!] x1: tu/ground.rs:88
+- `Mex_GrBgmId` [ext_fns!] x1: tu/ground.rs:89
+- `Mex_GrBind` [ext_fns!/fn+panic] x11: tu/grfigure1.rs:45, tu/grfigure2.rs:46, tu/grfigure3.rs:45, tu/grfigureget.rs:47, tu/grflatzone.rs:67, tu/grfourside.rs:63, tu/grgarden.rs:52, tu/groldkongo.rs:53, tu/groldyoshi.rs:48, tu/gronett.rs:57, tu_ext.rs:315
+- `Mex_GrCallback4` [ext_fns!] x1: tu/ground.rs:90
+- `Mex_GrCallbacks` [ext_fns!] x1: tu/ground.rs:91
+- `Mex_GrExternalCount` [hook!] x1: tu/stage.rs:106
+- `Mex_GrFile` [ext_fns!] x1: tu/ground.rs:92
+- `Mex_GrFlags2` [ext_fns!] x1: tu/ground.rs:93
+- `Mex_GrFunctionInit` [ext_fns!] x1: tu/ground.rs:94
+- `Mex_GrInternalCount` [ext_fns!] x1: tu/ground.rs:95
+- `Mex_GrIsMex` [ext_fns!] x1: tu/ground.rs:96
+- `Mex_GrKindForExt` [hook!] x1: tu/stage.rs:109
+- `Mex_GrLineTypeRow` [ext_fns!] x1: tu/mplib.rs:87
+- `Mex_GrOnCheckShadowRender` [ext_fns!] x1: tu/ground.rs:97
+- `Mex_GrOnDemoInit` [ext_fns!] x1: tu/ground.rs:98
+- `Mex_GrOnInit` [ext_fns!] x1: tu/ground.rs:99
+- `Mex_GrOnLoad` [ext_fns!] x1: tu/ground.rs:100
+- `Mex_GrOnStart` [ext_fns!] x1: tu/ground.rs:101
+- `Mex_GrOnTouchLine` [ext_fns!] x1: tu/ground.rs:102
+- `Mex_GrRowCallbacks` [ext_fns!] x1: tu/ground.rs:103
+- `Mex_GrSelect` [ext_fns!] x1: tu/ground.rs:104
+- `Mex_GrTrace` [ext_fns!] x1: tu/ground.rs:105
+- `Mex_GuestLr` [ext_fns!] x1: tu/ground.rs:106
+- `mpJointFromLine` [ext_fns!] x1: tu/grinishie1.rs:88
+- `mpLib_80054D68` [ext_fns!] x1: tu/grmutecity.rs:122
+- `mpLib_80058820` [ext_fns!] x1: tu/ground.rs:196
+- `mpLibLoad` [ext_fns!] x1: tu/ground.rs:191
+- `mpLinesConnected` [ext_fns!] x1: tu/grdynamicattr.rs:29
+- `MTXLightPerspective` [hook!] x1: tu/grizumi.rs:160
+- `panicMissingStageParam` [fn-body] x1: tu/ground.rs:1873
+- `player_get_entity` [fn-body] x1: gr/ground.rs:89
+- `player_get_entity_at_index` [fn-body] x1: gr/ground.rs:93
+- `ps_add_generator_app_srt_begin` [fn-body] x1: gr/grlib.rs:32
+- `psAddGeneratorAppSRT_begin` [ext_fns!/fn-body/hook!] x3: tu/eflib.rs:98, tu/grlib.rs:92, tu/grmutecity.rs:128
+- `PSMTXConcat` [ext_fns!/hook!] x2: tu/grdisplay.rs:51, tu/grizumi.rs:162
+- `PSMTXIdentity` [ext_fns!] x2: tu/grfzerocar.rs:40, tu/ground.rs:107
+- `PSVECAdd` [ext_fns!] x1: tu/ground.rs:108
+- `PSVECCrossProduct` [ext_fns!/hook!] x3: tu/grbigblueroute.rs:149, tu/grcastle.rs:123, tu/grmutecity.rs:80
+- `ptclref_cmdList` [fn-body] x1: tu/eflib.rs:101
+- `set_hsd_804D7900` [fn-body] x1: tu/eflib.rs:62
+- `Slippi_FrozenStadium` [ext_fns!] x1: tu/grpstadium.rs:96
+- `spl_get_spline_point` [fn-body] x1: gr/ground.rs:51
+- `splArcLengthPoint` [hook!] x1: tu/grkongo.rs:245
+- `splGetSplinePoint` [ext_fns!/hook!] x3: tu/grbigblueroute.rs:242, tu/grmutecity.rs:129, tu/ground.rs:198
+- `stage_info` [hook!] x1: tu/grinl.rs:23
+- `StageSkin_ApplyForLoad` [ext_fns!] x1: tu/ground.rs:123
+- `SurfaceBegin` [ext_fns!] x1: tu/grdisplay.rs:54
+- `SurfaceEnd` [ext_fns!] x1: tu/grdisplay.rs:55
+- `todo_anim` [fn-body] x1: gr/forward.rs:35
+- `todo_Camera_RequestQuake` [fn-body] x1: tu/grticeclimber.rs:57
+- `todo_efSync_Spawn` [fn-body] x1: tu/grticeclimber.rs:58
+- `todo_ftCo_800C07F8` [fn-body] x1: tu/grtmario.rs:46
+- `todo_ftLib_80086644` [fn-body] x1: tu/grtmario.rs:49
+- `todo_ftLib_80086684` [fn-body] x1: tu/grtmario.rs:50
+- `todo_ftLib_80086B80` [fn-body] x1: tu/grtmario.rs:51
+- `todo_GObj_SetupGXLink` [fn-body] x1: gr/inlines.rs:49
+- `todo_grMaterial_801C8CFC` [fn-body] x1: tu/grticeclimber.rs:52
+- `todo_HSD_GObj_SetupProc` [fn-body] x1: gr/inlines.rs:51
+- `todo_HSD_JObjClearFlags` [fn-body] x1: tu/grtest.rs:47
+- `todo_HSD_JObjGetFlags` [fn-body] x1: tu/grtest.rs:45
+- `todo_HSD_JObjSetFlags` [fn-body] x1: tu/grtest.rs:46
+- `todo_HSD_JObjSetFlagsAll` [fn-body] x1: tu/grticeclimber.rs:50
+- `todo_HSD_JObjSetMtxDirtySub` [fn-body] x1: tu/grtest.rs:48
+- `todo_HSD_PadMasterStatus` [fn-body] x1: tu/grtest.rs:43
+- `todo_imc` [fn-body] x1: gr/forward.rs:34
+- `todo_lb` [fn-body] x1: gr/forward.rs:36
+- `todo_Mex_GrBind` [fn-body] x1: gr/inlines.rs:50
+- `todo_Mex_GrCallbacks` [fn-body] x1: tu/grtseak.rs:40
+- `todo_Mex_GrTrace` [fn-body] x1: tu/grtseak.rs:41
+- `todo_OSReport` [fn-body] x24: tu/grtdrmario.rs:34, tu/grtemblem.rs:34, tu/grtest.rs:40, tu/grtfalco.rs:37, tu/grtfox.rs:37, tu/grtgamewatch.rs:34, tu/grtganon.rs:37, tu/grticeclimber.rs:46, tu/grtkirby.rs:34, tu/grtkoopa.rs:34, tu/grtlink.rs:34, tu/grtluigi.rs:34, tu/grtmario.rs:42, tu/grtmars.rs:34, tu/grtmewtwo.rs:37, tu/grtness.rs:34, tu/grtpeach.rs:34, tu/grtpichu.rs:34, tu/grtpikachu.rs:34, tu/grtpurin.rs:42, tu/grtsamus.rs:34, tu/grtseak.rs:37, tu/grtyoshi.rs:34, tu/grtzelda.rs:34
+- `todo_OSReport_grtrace` [fn-body] x1: tu/grtseak.rs:42
+- `todo_stage_info` [fn-body] x1: gr/inlines.rs:52
+- `todo_umc` [fn-body] x1: gr/forward.rs:33
+- `todo_zako` [fn-body] x1: gr/forward.rs:32
+- `TTMod_ForCharacter` [ext_fns!] x1: tu/ground.rs:127
+- `TTMod_Platform` [ext_fns!] x1: tu/ground.rs:128
+- `TTMod_PlatformCount` [ext_fns!] x1: tu/ground.rs:129
+- `TTMod_Target` [ext_fns!] x1: tu/ground.rs:130
+- `TTMod_TargetCount` [ext_fns!] x1: tu/ground.rs:131
+- `Ui_RetailHidden` [hook!] x1: tu/ifcoget.rs:97
+- `Wb_RenderActive` [ext_fns!] x1: tu/textdraw.rs:54
+- `Wb_RenderOption` [ext_fns!/hook!] x2: tu/grdisplay.rs:56, tu/ifall.rs:148
+
+### melee_world - SIGNATURE (1242 sites, 460 names)
+
+- `asinf` [ext_fns!] x1: tu/ground.rs:137 -> port `melee_runtime::lbtrigf.rs:171`
+- `atan2f` [ext_fns!] x2: tu/grfourside.rs:65, tu/grmutecity.rs:90 -> port `melee_runtime::lbtrigf.rs:113`
+- `Camera_80029020` [ext_fns!] x4: tu/grfourside.rs:43, tu/gronett.rs:33, tu/grpstadium.rs:41, tu/grpura.rs:34 -> port `melee_world::tu/camera.rs:46`
+- `Camera_800290D4` [ext_fns!/hook!] x2: tu/grcastle.rs:31, tu/grfourside.rs:44 -> port `melee_world::tu/camera.rs:69`
+- `Camera_8002928C` [ext_fns!] x1: tu/mplib.rs:52 -> port `melee_world::cm/camera.rs:186`
+- `Camera_8003010C` [fn+panic/hook!] x3: tu/grbigblue.rs:40, tu/grcorneria.rs:29, tu_ext.rs:15 -> port `melee_world::cm/camera.rs:614`
+- `Camera_80030154` [hook!] x1: tu/grcorneria.rs:30 -> port `melee_world::cm/camera.rs:620`
+- `Camera_80030178` [hook!] x1: tu/grcorneria.rs:31 -> port `melee_world::cm/camera.rs:623`
+- `Camera_80030A78` [ext_fns!] x2: tu/grdisplay.rs:32, tu/ground.rs:42 -> port `melee_world::cm/camera.rs:822`
+- `Camera_80030AC4` [ext_fns!] x1: tu/grdisplay.rs:33 -> port `melee_world::cm/camera.rs:834`
+- `Camera_80030AE0` [fn+panic/hook!] x3: tu/grbigblueroute.rs:29, tu/grkinokoroute.rs:40, tu_ext.rs:20 -> port `melee_world::cm/camera.rs:838`
+- `Camera_80030B24` [ext_fns!] x1: tu/grdisplay.rs:34 -> port `melee_world::cm/camera.rs:850`
+- `Camera_80030B50` [ext_fns!] x1: tu/mplib.rs:53 -> port `melee_world::cm/camera.rs:858`
+- `Camera_80030B7C` [ext_fns!] x1: tu/mplib.rs:54 -> port `melee_world::cm/camera.rs:866`
+- `Camera_80031074` [hook!] x1: tu/grizumi.rs:43 -> port `melee_world::cm/camera.rs:661`
+- `Camera_8003108C` [ext_fns!] x1: tu/grdisplay.rs:35 -> port `melee_world::cm/camera.rs:664`
+- `Camera_800310A0` [ext_fns!/hook!] x2: tu/grdisplay.rs:36, tu/grizumi.rs:44 -> port `melee_world::cm/camera.rs:667`
+- `Camera_8003118C` [fn+panic] x1: tu_ext.rs:25 -> port `melee_world::cm/camera.rs:687`
+- `Camera_800311CC` [ext_fns!/hook!] x4: tu/grflatzone.rs:49, tu/grinishie1.rs:42, tu/grinishie2.rs:32, tu/grlast.rs:43 -> port `melee_world::cm/camera.rs:690`
+- `Camera_800311DC` [ext_fns!/hook!] x4: tu/grflatzone.rs:50, tu/grinishie1.rs:43, tu/grinishie2.rs:33, tu/grlast.rs:44 -> port `melee_world::cm/camera.rs:693`
+- `camera_set_mode_to_fixed` [fn-body] x1: gr/ground.rs:81 -> port `melee_world::cm/camera.rs:608`
+- `camera_set_mode_to_standard` [fn-body] x1: gr/ground.rs:85 -> port `melee_world::cm/camera.rs:605`
+- `camera_set_quake_offset` [fn-body] x1: gr/grlib.rs:88 -> port `melee_world::cm/camera.rs:514`
+- `DevText_Erase` [ext_fns!] x1: tu/textlib_1.rs:39 -> port `melee_world::hud/textlib.rs:122`
+- `DevText_GetGObj` [ext_fns!] x1: tu/textlib_1.rs:40 -> port `melee_world::tu/textdraw.rs:167`
+- `DevText_HideBackground` [ext_fns!] x1: tu/textlib_1.rs:41 -> port `melee_world::tu/textlib.rs:355`
+- `DevText_HideCursor` [ext_fns!] x1: tu/textlib_1.rs:42 -> port `melee_world::tu/textlib.rs:340`
+- `DevText_HideText` [ext_fns!] x1: tu/textlib_1.rs:43 -> port `melee_world::tu/textlib.rs:365`
+- `DevText_NumToStr` [ext_fns!] x1: tu/textlib.rs:38 -> port `melee_world::tu/textdraw.rs:135`
+- `DevText_Print` [ext_fns!] x1: tu/textlib_1.rs:44 -> port `melee_world::hud/textlib.rs:138`
+- `DevText_Printf` [ext_fns!] x1: tu/textlib_1.rs:46 -> port `melee_world::tu/textlib.rs:459`
+- `DevText_PrintInt` [ext_fns!] x1: tu/textlib_1.rs:45 -> port `melee_world::tu/textlib.rs:452`
+- `DevText_Remove` [ext_fns!] x1: tu/textlib_1.rs:47 -> port `melee_world::tu/textdraw.rs:185`
+- `DevText_SetBGColor` [ext_fns!] x1: tu/textlib_1.rs:48 -> port `melee_world::tu/textlib.rs:403`
+- `DevText_SetCursorXY` [ext_fns!] x1: tu/textlib_1.rs:49 -> port `melee_world::tu/textlib.rs:318`
+- `DevText_SetScale` [ext_fns!] x1: tu/textlib_1.rs:50 -> port `melee_world::tu/textlib.rs:370`
+- `DevText_SetTextColor` [ext_fns!] x1: tu/textlib_1.rs:51 -> port `melee_world::tu/textlib.rs:395`
+- `DevText_Setup` [ext_fns!] x1: tu/if_2FF2.rs:33 -> port `melee_world::tu/textdraw.rs:356`
+- `DevText_Show` [ext_fns!] x1: tu/textlib_1.rs:52 -> port `melee_world::tu/textdraw.rs:418`
+- `DevText_ShowBackground` [ext_fns!] x1: tu/textlib_1.rs:53 -> port `melee_world::tu/textlib.rs:350`
+- `DevText_ShowText` [ext_fns!] x1: tu/textlib_1.rs:54 -> port `melee_world::tu/textlib.rs:360`
+- `DevText_StoreColorIndex` [ext_fns!] x1: tu/textlib_1.rs:55 -> port `melee_world::tu/textlib.rs:388`
+- `DevText_StrLen` [ext_fns!] x1: tu/textlib_1.rs:56 -> port `melee_world::hud/leaves.rs:8`
+- `DrawASCII` [ext_fns!] x1: tu/textdraw.rs:33 -> port `melee_runtime::tu/hsd_3915.rs:174`
+- `DrawRectangle` [ext_fns!] x1: tu/textdraw.rs:34 -> port `melee_runtime::tu/hsd_3915.rs:152`
+- `efAlt_Spawn` [fn-body] x1: tu/efsync.rs:45 -> port `melee_world::tu/efalt.rs:49`
+- `efAsync_Dispatch` [fn-body] x1: tu/efsync.rs:44 -> port `melee_world::tu/efasync.rs:474`
+- `efAsync_MexResolve` [fn-body] x1: tu/efsync.rs:47 -> port `melee_world::tu/efasync.rs:1175`
+- `efAsync_QueueInit` [fn-body] x1: tu/eflib.rs:56 -> port `melee_world::tu/efasync.rs:1096`
+- `efLib_CreateGenerator_AppSRT_SetFacingDir` [fn-body] x1: tu/efalt.rs:22 -> port `melee_world::tu/eflib.rs:587`
+- `efLib_CreateGenerator_AppSRT_SetFacingDirScale` [fn-body] x1: tu/efasync.rs:130 -> port `melee_world::tu/eflib.rs:596`
+- `efLib_CreateGenerator_AppSRT_SetScale` [fn-body] x1: tu/efasync.rs:129 -> port `melee_world::tu/eflib.rs:571`
+- `efLib_CreateGenerator_Attach_Scale` [fn-body] x1: tu/efalt.rs:23 -> port `melee_world::tu/eflib.rs:558`
+- `efSync_Spawn` [ext_fns!/fn-body] x5: tu/efasync.rs:146, tu/grgreens.rs:70, tu/gricemt.rs:84, tu/grinishie1.rs:69, tu/groldkongo.rs:54 -> port `melee_world::tu/efsync.rs:251`
+- `foreach_anim_set_loop` [fn-body] x1: gr/grlib.rs:120 -> port `melee_world::tu/grvenom.rs:634`
+- `gm_8016B238` [ext_fns!/hook!] x6: tu/grcastle.rs:133, tu/grgarden.rs:58, tu/grinishie1.rs:71, tu/grkongo.rs:141, tu/ground.rs:144, tu/stage.rs:76 -> port `melee_world::gr/stage.rs:548`
+- `gm_8016B3A0` [hook!] x1: tu/stage.rs:77 -> port `melee_world::gr/stage.rs:549`
+- `gobj_create` [fn-body] x1: gr/grlib.rs:96 -> port `melee_runtime::gobj.rs:528`
+- `GObj_Create` [ext_fns!/fn-body/hook!] x16: tu/eflib.rs:63, tu/grhomerun.rs:50, tu/grizumi.rs:45, tu/grlib.rs:20, tu/ground.rs:46, tu/grpstadium.rs:44, tu/grzakogenerator.rs:157, tu/if_2F72.rs:36, tu/if_2FD9.rs:33, tu/if_2FF2.rs:34, tu/ifall.rs:157, tu/ifcoget.rs:53, tu/mplib.rs:55, tu/soundtest.rs:39, tu/textdraw.rs:35, tu/textlib_1.rs:57 -> port `melee_runtime::gobj.rs:528`
+- `GObj_SetupGXLink` [ext_fns!/fn+panic/fn-body/hook!] x40: tu/eflib.rs:64, tu/grbattle.rs:26, tu/grbigblue.rs:41, tu/grbigblueroute.rs:31, tu/grcastle.rs:33, tu/grcorneria.rs:38, tu/grfigure1.rs:37, tu/grfigure2.rs:38, tu/grfigure3.rs:37, tu/grfigureget.rs:39, tu/grflatzone.rs:51, tu/grfourside.rs:45, tu/grgarden.rs:38, tu/grgreatbay.rs:44, tu/grgreens.rs:45, tu/grheal.rs:38, tu/grhomerun.rs:51, tu/gricemt.rs:52, tu/grinishie1.rs:45, tu/grinl2.rs:17, tu/grmutecity.rs:40, tu/groldkongo.rs:35, tu/groldpupupu.rs:36, tu/groldyoshi.rs:33, tu/gronett.rs:35, tu/ground.rs:48, tu/grpstadium.rs:46, tu/grpura.rs:36, tu/grvenom.rs:134, tu/gryorster.rs:232, tu/grzebes.rs:349, tu/grzebesroute.rs:207, tu/if_2F72.rs:37, tu/if_2FD9.rs:34, tu/if_2FF2.rs:35, tu/ifall.rs:178, tu/ifcoget.rs:71, tu/soundtest.rs:40, tu/textdraw.rs:36, tu_ext.rs:30 -> port `melee_runtime::tu/gobjgxlink.rs:14`
+- `GObj_SetupGXLinkMax` [ext_fns!/hook!] x7: tu/grhomerun.rs:52, tu/ground.rs:49, tu/grpstadium.rs:47, tu/if_2FF2.rs:36, tu/ifall.rs:166, tu/ifcoget.rs:62, tu/textdraw.rs:37 -> port `melee_runtime::tu/gobjgxlink.rs:19`
+- `GObj_SetupGXLinkMaxSorted` [hook!] x1: tu/grizumi.rs:47 -> port `melee_runtime::tu/gobjgxlink.rs:24`
+- `grAnime_801C65B0` [ext_fns!] x1: tu/grpstadium.rs:110 -> port `melee_world::tu/granime.rs:162`
+- `grAnime_801C6C0C` [ext_fns!] x1: tu/grfzerocar.rs:41 -> port `melee_world::tu/granime.rs:432`
+- `grAnime_801C775C` [ext_fns!] x1: tu/grmutecity.rs:91 -> port `melee_world::tu/granime.rs:628`
+- `grAnime_801C77FC` [ext_fns!] x3: tu/grgreatbay.rs:70, tu/gricemt.rs:88, tu/grpstadium.rs:111 -> port `melee_world::tu/granime.rs:639`
+- `grAnime_801C78FC` [ext_fns!] x1: tu/gricemt.rs:89 -> port `melee_world::tu/granime.rs:655`
+- `grAnime_801C7A04` [ext_fns!] x6: tu/grfourside.rs:66, tu/grgreatbay.rs:71, tu/gricemt.rs:90, tu/grmutecity.rs:92, tu/groldkongo.rs:59, tu/grpstadium.rs:112 -> port `melee_world::tu/granime.rs:671`
+- `grAnime_801C7B24` [ext_fns!] x2: tu/grfourside.rs:67, tu/gricemt.rs:91 -> port `melee_world::tu/granime.rs:703`
+- `grAnime_801C7FF8` [ext_fns!] x7: tu/grfourside.rs:68, tu/grheal.rs:55, tu/grmutecity.rs:93, tu/groldkongo.rs:60, tu/groldpupupu.rs:55, tu/groldyoshi.rs:49, tu/gronett.rs:60 -> port `melee_world::tu/granime.rs:777`
+- `grAnime_801C8138` [ext_fns!] x20: tu/grfigure1.rs:46, tu/grfigure2.rs:47, tu/grfigure3.rs:46, tu/grfigureget.rs:52, tu/grflatzone.rs:70, tu/grfourside.rs:69, tu/grgarden.rs:59, tu/grgreatbay.rs:72, tu/grgreens.rs:74, tu/grheal.rs:56, tu/grhomerun.rs:103, tu/gricemt.rs:92, tu/grinishie1.rs:72, tu/grmutecity.rs:94, tu/groldkongo.rs:61, tu/groldpupupu.rs:56, tu/groldyoshi.rs:50, tu/gronett.rs:61, tu/grpstadium.rs:113, tu/grpura.rs:64 -> port `melee_world::gr/forward.rs:49`
+- `grAnime_801C83D0` [ext_fns!] x10: tu/grflatzone.rs:71, tu/grfourside.rs:70, tu/grgarden.rs:60, tu/grgreatbay.rs:73, tu/grgreens.rs:75, tu/gricemt.rs:93, tu/groldkongo.rs:62, tu/groldpupupu.rs:57, tu/groldyoshi.rs:51, tu/gronett.rs:62 -> port `melee_world::tu/granime.rs:879`
+- `grAnime_801C84A4` [ext_fns!] x4: tu/grfourside.rs:71, tu/grgarden.rs:61, tu/grgreatbay.rs:74, tu/grgreens.rs:76 -> port `melee_world::tu/granime.rs:884`
+- `grCorneria_801E2A6C` [ext_fns!] x1: tu/ground.rs:149 -> port `melee_world::tu/grcorneria.rs:2637`
+- `grDatFiles_801C6038` [ext_fns!] x1: tu/ground.rs:150 -> port `melee_world::tu/grdatfiles.rs:137`
+- `grDatFiles_801C6288` [ext_fns!] x1: tu/ground.rs:151 -> port `melee_world::tu/grdatfiles.rs:202`
+- `grDatFiles_801C6330` [ext_fns!] x5: tu/grfzerocar.rs:42, tu/grmutecity.rs:95, tu/gronett.rs:63, tu/ground.rs:152, tu/grpstadium.rs:114 -> port `melee_world::tu/grdatfiles.rs:227`
+- `grDatFiles_801C6478` [ext_fns!] x1: tu/grpstadium.rs:115 -> port `melee_world::tu/grdatfiles.rs:250`
+- `grDatFiles_GetArchive` [ext_fns!] x4: tu/grhomerun.rs:104, tu/gricemt.rs:94, tu/ground.rs:153, tu/grpstadium.rs:116 -> port `melee_world::tu/grdatfiles.rs:219`
+- `grDatFiles_StageSlotInstall` [ext_fns!] x1: tu/ground.rs:154 -> port `melee_world::tu/grdatfiles.rs:265`
+- `grDisplay_801C5DB0` [ext_fns!] x20: tu/grfigure1.rs:47, tu/grfigure2.rs:48, tu/grfigure3.rs:47, tu/grfigureget.rs:53, tu/grflatzone.rs:72, tu/grfourside.rs:72, tu/grgarden.rs:62, tu/grgreatbay.rs:75, tu/grgreens.rs:77, tu/grheal.rs:57, tu/grhomerun.rs:105, tu/gricemt.rs:95, tu/grinishie1.rs:73, tu/grmutecity.rs:96, tu/groldkongo.rs:63, tu/groldpupupu.rs:58, tu/groldyoshi.rs:52, tu/gronett.rs:64, tu/grpstadium.rs:117, tu/grpura.rs:65 -> port `melee_world::tu/grdisplay.rs:223`
+- `grDisplay_801C5F60` [ext_fns!] x1: tu/ground.rs:155 -> port `melee_world::tu/grdisplay.rs:230`
+- `grDynamicAttr_801CA0B4` [ext_fns!] x1: tu/mplib.rs:102 -> port `melee_world::tu/grdynamicattr.rs:51`
+- `grDynamicAttr_801CA1C0` [ext_fns!] x1: tu/grflatzone.rs:74 -> port `melee_world::tu/grdynamicattr.rs:91`
+- `grDynamicAttr_801CA224` [ext_fns!] x1: tu/mplib.rs:103 -> port `melee_world::tu/grdynamicattr.rs:119`
+- `grDynamicAttr_801CA284` [ext_fns!] x1: tu/mpcoll.rs:75 -> port `melee_world::tu/grdynamicattr.rs:140`
+- `grFigure1_8020E270` [ext_fns!] x1: tu/grfigure2.rs:49 -> port `melee_world::tu/grfigure1.rs:218`
+- `grFZeroCar_801CAFBC` [ext_fns!] x1: tu/grmutecity.rs:97 -> port `melee_world::tu/grfzerocar.rs:138`
+- `grIzumi_801CD2D4` [ext_fns!] x1: tu/ground.rs:156 -> port `melee_world::tu/grizumi.rs:922`
+- `grKongo_801D8270` [ext_fns!] x1: tu/ground.rs:157 -> port `melee_world::gr/ground.rs:63`
+- `grkongo_801d828c` [fn-body] x1: gr/ground.rs:68 -> port `melee_world::tu/grkongo.rs:1411`
+- `grKongo_801D828C` [ext_fns!] x1: tu/ground.rs:158 -> port `melee_world::tu/grkongo.rs:1411`
+- `grLib_801C96E8` [ext_fns!] x1: tu/grmutecity.rs:98 -> port `melee_world::gr/grlib.rs:141`
+- `grLib_801C96F8` [ext_fns!] x6: tu/grgarden.rs:63, tu/grgreatbay.rs:76, tu/gricemt.rs:96, tu/grmutecity.rs:99, tu/gronett.rs:65, tu/grpstadium.rs:118 -> port `melee_world::gr/grlib.rs:146`
+- `grLib_801C97DC` [ext_fns!] x2: tu/grgreatbay.rs:77, tu/groldyoshi.rs:53 -> port `melee_world::gr/grlib.rs:174`
+- `grLib_801C9808` [ext_fns!] x3: tu/grmutecity.rs:100, tu/gronett.rs:66, tu/grpstadium.rs:119 -> port `melee_world::gr/grlib.rs:178`
+- `grLib_801C9834` [ext_fns!] x2: tu/gronett.rs:67, tu/grpstadium.rs:120 -> port `melee_world::gr/grlib.rs:182`
+- `grLib_801C9874` [ext_fns!] x2: tu/grgreatbay.rs:78, tu/grpstadium.rs:121 -> port `melee_world::gr/grlib.rs:190`
+- `grLib_801C98A0` [ext_fns!] x1: tu/grmutecity.rs:101 -> port `melee_world::gr/grlib.rs:208`
+- `grLib_801C9908` [ext_fns!] x1: tu/grpstadium.rs:122 -> port `melee_world::gr/grlib.rs:216`
+- `grLib_801C99C0` [fn-body] x1: tu/eflib.rs:102 -> port `melee_world::gr/grlib.rs:232`
+- `grLib_801C9A10` [ext_fns!] x1: tu/grgreens.rs:78 -> port `melee_world::tu/grlib.rs:203`
+- `grLib_801C9A70` [ext_fns!] x1: tu/grgreens.rs:79 -> port `melee_world::gr/grlib.rs:251`
+- `grLib_801C9EE8` [ext_fns!] x1: tu/grinishie1.rs:74 -> port `melee_world::gr/grlib.rs:379`
+- `grMaterial_801C8858` [ext_fns!] x4: tu/grflatzone.rs:75, tu/grinishie1.rs:75, tu/groldpupupu.rs:59, tu/groldyoshi.rs:54 -> port `melee_world::tu/grmaterial.rs:212`
+- `grMaterial_801C8CDC` [ext_fns!] x3: tu/grgreens.rs:80, tu/gricemt.rs:97, tu/grmutecity.rs:102 -> port `melee_world::tu/grmaterial.rs:305`
+- `grMaterial_801C8CFC` [ext_fns!] x6: tu/grgarden.rs:64, tu/grgreens.rs:81, tu/gricemt.rs:98, tu/grinishie1.rs:76, tu/grmutecity.rs:103, tu/gronett.rs:68 -> port `melee_world::tu/grmaterial.rs:309`
+- `grMaterial_801C8D98` [ext_fns!] x1: tu/grgreens.rs:82 -> port `melee_world::tu/grmaterial.rs:334`
+- `grMaterial_801C8DE0` [ext_fns!] x4: tu/grgreens.rs:83, tu/gricemt.rs:99, tu/grinishie1.rs:77, tu/grmutecity.rs:104 -> port `melee_world::tu/grmaterial.rs:340`
+- `grMaterial_801C8E08` [ext_fns!] x5: tu/grgreens.rs:84, tu/gricemt.rs:100, tu/grinishie1.rs:78, tu/grmutecity.rs:105, tu/gronett.rs:69 -> port `melee_world::tu/grmaterial.rs:352`
+- `grMaterial_801C8E28` [ext_fns!] x3: tu/grgreens.rs:85, tu/gricemt.rs:101, tu/grinishie1.rs:79 -> port `melee_world::tu/grmaterial.rs:356`
+- `grMaterial_801C8E48` [ext_fns!] x1: tu/grgreens.rs:86 -> port `melee_world::tu/grmaterial.rs:360`
+- `grMaterial_801C8E68` [ext_fns!] x3: tu/grgreens.rs:87, tu/gricemt.rs:102, tu/grinishie1.rs:80 -> port `melee_world::tu/grmaterial.rs:368`
+- `grMaterial_801C94D8` [ext_fns!] x2: tu/grmutecity.rs:106, tu/groldkongo.rs:64 -> port `melee_world::tu/grmaterial.rs:577`
+- `grMaterial_801C95C4` [ext_fns!] x3: tu/grmutecity.rs:107, tu/groldkongo.rs:65, tu/ground.rs:159 -> port `melee_world::tu/grmaterial.rs:589`
+- `grMaterial_801C9604` [ext_fns!] x2: tu/grmutecity.rs:108, tu/groldkongo.rs:66 -> port `melee_world::tu/grmaterial.rs:595`
+- `grMaterial_801C9698` [ext_fns!] x1: tu/ground.rs:160 -> port `melee_world::tu/grmaterial.rs:613`
+- `grOldKongo_802105AC` [ext_fns!] x1: tu/ground.rs:161 -> port `melee_world::gr/ground.rs:72`
+- `groldkongo_802105c8` [fn-body] x1: gr/ground.rs:77 -> port `melee_world::tu/groldkongo.rs:637`
+- `grOldKongo_802105C8` [ext_fns!] x1: tu/ground.rs:162 -> port `melee_world::tu/groldkongo.rs:637`
+- `Ground_801C0498` [ext_fns!] x8: tu/grfzerocar.rs:30, tu/grgreens.rs:46, tu/grhomerun.rs:53, tu/gricemt.rs:53, tu/grmutecity.rs:41, tu/groldpupupu.rs:37, tu/grpstadium.rs:49, tu/mplib.rs:67 -> port `melee_world::gr/ground.rs:141`
+- `Ground_801C13D0` [ext_fns!] x2: tu/grfzerocar.rs:31, tu/grmutecity.rs:42 -> port `melee_world::tu/ground.rs:1164`
+- `Ground_801C1D6C` [ext_fns!] x1: tu/gricemt.rs:55 -> port `melee_world::gr/ground.rs:183`
+- `Ground_801C1E18` [ext_fns!] x1: tu/grdisplay.rs:37 -> port `melee_world::gr/ground.rs:201`
+- `Ground_801C1E84` [ext_fns!] x1: tu/grdisplay.rs:38 -> port `melee_world::gr/ground.rs:203`
+- `Ground_801C205C` [ext_fns!] x1: tu/grpura.rs:37 -> port `melee_world::gr/ground.rs:518`
+- `Ground_801C2C8C` [ext_fns!] x1: tu/grdisplay.rs:39 -> port `melee_world::gr/ground.rs:456`
+- `Ground_801C2CF4` [ext_fns!] x2: tu/grgreens.rs:48, tu/grhomerun.rs:54 -> port `melee_world::gr/ground.rs:460`
+- `Ground_801C2D0C` [ext_fns!] x1: tu/gricemt.rs:56 -> port `melee_world::gr/ground.rs:462`
+- `ground_801c2d24` [fn-body] x1: gr/grlib.rs:56 -> port `melee_world::gr/stage.rs:539`
+- `Ground_801C2D24` [ext_fns!] x2: tu/grheal.rs:39, tu/mplib.rs:68 -> port `melee_world::gr/stage.rs:539`
+- `Ground_801C3214` [ext_fns!] x2: tu/gricemt.rs:57, tu/grpstadium.rs:51 -> port `melee_world::tu/ground.rs:2131`
+- `Ground_801C3260` [ext_fns!] x1: tu/gricemt.rs:58 -> port `melee_world::tu/ground.rs:2139`
+- `Ground_801C32AC` [ext_fns!] x1: tu/gricemt.rs:59 -> port `melee_world::tu/ground.rs:2147`
+- `Ground_801C32D4` [ext_fns!] x1: tu/grgreens.rs:49 -> port `melee_world::tu/ground.rs:2151`
+- `Ground_801C33C0` [ext_fns!] x1: tu/grpura.rs:38 -> port `melee_world::tu/ground.rs:2177`
+- `Ground_801C3880` [ext_fns!] x2: tu/grmutecity.rs:43, tu/grpura.rs:39 -> port `melee_world::gr/ground.rs:206`
+- `Ground_801C3890` [ext_fns!] x2: tu/grmutecity.rs:44, tu/grpura.rs:40 -> port `melee_world::gr/ground.rs:208`
+- `Ground_801C38A0` [ext_fns!] x2: tu/grmutecity.rs:45, tu/grpura.rs:41 -> port `melee_world::gr/ground.rs:210`
+- `Ground_801C38AC` [ext_fns!] x3: tu/grhomerun.rs:55, tu/grmutecity.rs:46, tu/grpura.rs:42 -> port `melee_world::gr/ground.rs:212`
+- `Ground_801C3980` [ext_fns!] x2: tu/grheal.rs:40, tu/grmutecity.rs:47 -> port `melee_world::gr/ground.rs:263`
+- `Ground_801C3990` [ext_fns!] x2: tu/grflatzone.rs:53, tu/grmutecity.rs:48 -> port `melee_world::gr/ground.rs:265`
+- `Ground_801C39A0` [ext_fns!] x1: tu/grmutecity.rs:49 -> port `melee_world::gr/ground.rs:267`
+- `Ground_801C39B0` [ext_fns!] x2: tu/grhomerun.rs:56, tu/grmutecity.rs:50 -> port `melee_world::gr/ground.rs:269`
+- `Ground_801C39C0` [ext_fns!] x20: tu/grfigure1.rs:38, tu/grfigure2.rs:39, tu/grfigure3.rs:38, tu/grfigureget.rs:40, tu/grflatzone.rs:54, tu/grfourside.rs:46, tu/grgarden.rs:40, tu/grgreatbay.rs:46, tu/grgreens.rs:50, tu/grheal.rs:41, tu/grhomerun.rs:57, tu/gricemt.rs:60, tu/grinishie1.rs:47, tu/grmutecity.rs:51, tu/groldkongo.rs:36, tu/groldpupupu.rs:38, tu/groldyoshi.rs:34, tu/gronett.rs:37, tu/grpstadium.rs:52, tu/grpura.rs:43 -> port `melee_world::tu/ground.rs:2408`
+- `Ground_801C3BB4` [ext_fns!] x20: tu/grfigure1.rs:39, tu/grfigure2.rs:40, tu/grfigure3.rs:39, tu/grfigureget.rs:41, tu/grflatzone.rs:55, tu/grfourside.rs:47, tu/grgarden.rs:41, tu/grgreatbay.rs:47, tu/grgreens.rs:51, tu/grheal.rs:42, tu/grhomerun.rs:58, tu/gricemt.rs:61, tu/grinishie1.rs:48, tu/grmutecity.rs:52, tu/groldkongo.rs:37, tu/groldpupupu.rs:39, tu/groldyoshi.rs:35, tu/gronett.rs:38, tu/grpstadium.rs:53, tu/grpura.rs:44 -> port `melee_world::tu/ground.rs:2512`
+- `Ground_801C3D44` [ext_fns!] x1: tu/grheal.rs:43 -> port `melee_world::gr/ground.rs:272`
+- `Ground_801C3F20` [ext_fns!] x2: tu/grgreatbay.rs:48, tu/grmutecity.rs:53 -> port `melee_world::tu/ground.rs:2640`
+- `Ground_801C3FA4` [ext_fns!] x15: tu/grfourside.rs:48, tu/grgarden.rs:42, tu/grgreatbay.rs:49, tu/grgreens.rs:52, tu/grheal.rs:44, tu/grhomerun.rs:59, tu/gricemt.rs:62, tu/grinishie1.rs:49, tu/grmutecity.rs:54, tu/groldkongo.rs:38, tu/groldpupupu.rs:40, tu/groldyoshi.rs:36, tu/gronett.rs:39, tu/grpstadium.rs:54, tu/grpura.rs:45 -> port `melee_world::tu/ground.rs:2648`
+- `Ground_801C4100` [ext_fns!] x1: tu/grfzerocar.rs:32 -> port `melee_world::tu/ground.rs:2683`
+- `Ground_801C498C` [ext_fns!] x1: tu/grmutecity.rs:55 -> port `melee_world::gr/ground.rs:552`
+- `Ground_801C4A08` [ext_fns!] x7: tu/grgreens.rs:53, tu/grheal.rs:45, tu/grhomerun.rs:60, tu/gricemt.rs:63, tu/grinishie1.rs:50, tu/groldpupupu.rs:41, tu/grpstadium.rs:55 -> port `melee_world::tu/ground.rs:3188`
+- `Ground_801C4D70` [ext_fns!] x1: tu/groldkongo.rs:39 -> port `melee_world::gr/ground.rs:322`
+- `Ground_801C4DA0` [ext_fns!] x1: tu/groldkongo.rs:40 -> port `melee_world::gr/ground.rs:329`
+- `Ground_801C4E70` [ext_fns!] x5: tu/grfourside.rs:49, tu/grgarden.rs:43, tu/grgreatbay.rs:50, tu/gricemt.rs:64, tu/gronett.rs:40 -> port `melee_world::tu/ground.rs:3307`
+- `Ground_801C53EC` [ext_fns!] x7: tu/grfourside.rs:50, tu/grgarden.rs:44, tu/grgreatbay.rs:51, tu/gricemt.rs:65, tu/grmutecity.rs:56, tu/gronett.rs:41, tu/grpstadium.rs:56 -> port `melee_world::gr/ground.rs:579`
+- `Ground_801C5414` [ext_fns!] x2: tu/grgreens.rs:54, tu/grinishie1.rs:51 -> port `melee_world::gr/ground.rs:581`
+- `Ground_801C5440` [ext_fns!] x3: tu/grmutecity.rs:57, tu/groldkongo.rs:41, tu/gronett.rs:42 -> port `melee_world::gr/ground.rs:592`
+- `Ground_801C5544` [ext_fns!] x1: tu/gronett.rs:43 -> port `melee_world::gr/ground.rs:617`
+- `Ground_801C5630` [ext_fns!] x1: tu/grmutecity.rs:58 -> port `melee_world::gr/ground.rs:649`
+- `Ground_801C5740` [ext_fns!] x1: tu/gricemt.rs:66 -> port `melee_world::gr/ground.rs:360`
+- `Ground_801C5750` [ext_fns!] x1: tu/gricemt.rs:67 -> port `melee_world::gr/ground.rs:362`
+- `Ground_801C5764` [ext_fns!] x1: tu/gricemt.rs:68 -> port `melee_world::gr/ground.rs:364`
+- `Ground_801C5784` [ext_fns!] x1: tu/gronett.rs:44 -> port `melee_world::gr/ground.rs:368`
+- `Ground_801C5794` [ext_fns!] x1: tu/gronett.rs:45 -> port `melee_world::gr/ground.rs:370`
+- `Ground_801C5840` [ext_fns!] x3: tu/grfigureget.rs:42, tu/grheal.rs:46, tu/gricemt.rs:69 -> port `melee_world::gr/ground.rs:384`
+- `Ground_801C5940` [ext_fns!] x1: tu/gricemt.rs:70 -> port `melee_world::tu/ground.rs:3579`
+- `Ground_801C5A94` [ext_fns!] x1: tu/grinishie1.rs:52 -> port `melee_world::gr/ground.rs:391`
+- `Ground_801C5AEC` [ext_fns!] x1: tu/grmutecity.rs:59 -> port `melee_world::gr/ground.rs:722`
+- `Ground_GetMapGObj` [ext_fns!] x13: tu/grflatzone.rs:56, tu/grfourside.rs:51, tu/grgreatbay.rs:52, tu/grgreens.rs:55, tu/grheal.rs:47, tu/grhomerun.rs:61, tu/gricemt.rs:71, tu/grinishie1.rs:53, tu/grmutecity.rs:60, tu/groldkongo.rs:42, tu/groldpupupu.rs:42, tu/grpstadium.rs:57, tu/grpura.rs:46 -> port `melee_world::tu/ground.rs:1936`
+- `Ground_GetP1Fighter` [ext_fns!] x2: tu/grhomerun.rs:62, tu/gricemt.rs:72 -> port `melee_world::tu/ground.rs:3521`
+- `Ground_GetP1Fighter2` [ext_fns!] x1: tu/grhomerun.rs:63 -> port `melee_world::tu/ground.rs:3525`
+- `Ground_GetStageGObj` [ext_fns!] x20: tu/grfigure1.rs:40, tu/grfigure2.rs:41, tu/grfigure3.rs:40, tu/grfigureget.rs:43, tu/grflatzone.rs:57, tu/grfourside.rs:52, tu/grgarden.rs:45, tu/grgreatbay.rs:53, tu/grgreens.rs:56, tu/grheal.rs:48, tu/grhomerun.rs:64, tu/gricemt.rs:73, tu/grinishie1.rs:54, tu/grmutecity.rs:61, tu/groldkongo.rs:43, tu/groldpupupu.rs:43, tu/groldyoshi.rs:37, tu/gronett.rs:46, tu/grpstadium.rs:58, tu/grpura.rs:47 -> port `melee_world::tu/ground.rs:1195`
+- `Ground_GetYakumonoParam` [ext_fns!] x20: tu/grfigure1.rs:41, tu/grfigure2.rs:42, tu/grfigure3.rs:41, tu/grfigureget.rs:44, tu/grflatzone.rs:58, tu/grfourside.rs:53, tu/grgarden.rs:46, tu/grgreatbay.rs:54, tu/grgreens.rs:57, tu/grheal.rs:49, tu/grhomerun.rs:65, tu/gricemt.rs:74, tu/grinishie1.rs:55, tu/grmutecity.rs:62, tu/groldkongo.rs:44, tu/groldpupupu.rs:44, tu/groldyoshi.rs:38, tu/gronett.rs:47, tu/grpstadium.rs:59, tu/grpura.rs:48 -> port `melee_world::tu/ground.rs:3171`
+- `Ground_InitMapColl` [ext_fns!] x17: tu/grfigure1.rs:42, tu/grfigure2.rs:43, tu/grfigure3.rs:42, tu/grflatzone.rs:59, tu/grfourside.rs:54, tu/grgreatbay.rs:55, tu/grgreens.rs:58, tu/grhomerun.rs:66, tu/gricemt.rs:75, tu/grinishie1.rs:56, tu/grmutecity.rs:63, tu/groldkongo.rs:45, tu/groldpupupu.rs:45, tu/groldyoshi.rs:39, tu/gronett.rs:48, tu/grpstadium.rs:60, tu/grpura.rs:49 -> port `melee_world::tu/ground.rs:2023`
+- `Ground_UpdateMapColl` [ext_fns!] x16: tu/grfigure1.rs:43, tu/grfigure2.rs:44, tu/grfigure3.rs:43, tu/grflatzone.rs:60, tu/grfourside.rs:55, tu/grgreatbay.rs:56, tu/grgreens.rs:59, tu/grhomerun.rs:67, tu/gricemt.rs:76, tu/grinishie1.rs:57, tu/grmutecity.rs:64, tu/groldkongo.rs:46, tu/groldyoshi.rs:40, tu/gronett.rs:49, tu/grpstadium.rs:61, tu/grpura.rs:50 -> port `melee_world::tu/ground.rs:2058`
+- `grStadium_801D39A0` [ext_fns!] x1: tu/ground.rs:163 -> port `melee_world::tu/grpstadium.rs:1488`
+- `grStadium_801D511C` [ext_fns!] x1: tu/ground.rs:164 -> port `melee_world::tu/grpstadium.rs:2085`
+- `grZakoGenerator_801CADE0` [ext_fns!] x1: tu/gricemt.rs:103 -> port `melee_world::tu/grzakogenerator.rs:508`
+- `grZakoGenerator_801CAE04` [ext_fns!] x19: tu/grfigure1.rs:48, tu/grfigure2.rs:50, tu/grfigure3.rs:48, tu/grfigureget.rs:54, tu/grfourside.rs:73, tu/grgarden.rs:65, tu/grgreatbay.rs:79, tu/grgreens.rs:88, tu/grheal.rs:58, tu/grhomerun.rs:106, tu/gricemt.rs:104, tu/grinishie1.rs:81, tu/grmutecity.rs:109, tu/groldkongo.rs:67, tu/groldpupupu.rs:60, tu/groldyoshi.rs:55, tu/gronett.rs:70, tu/grpstadium.rs:123, tu/grpura.rs:66 -> port `melee_world::gr/forward.rs:46`
+- `grZakoGenerator_801CAEB0` [ext_fns!] x1: tu/gricemt.rs:105 -> port `melee_world::tu/grzakogenerator.rs:528`
+- `grZakoGenerator_801CAF08` [ext_fns!] x1: tu/gricemt.rs:106 -> port `melee_world::tu/grzakogenerator.rs:545`
+- `grzebes_801da3f4` [fn-body] x1: gr/ground.rs:59 -> port `melee_world::tu/grzebes.rs:1660`
+- `grZebes_801DA3F4` [ext_fns!] x1: tu/ground.rs:165 -> port `melee_world::tu/grzebes.rs:1660`
+- `GXEnd` [ext_fns!] x1: tu/mplib.rs:58 -> port `melee_runtime::tu/sobjlib.rs:13`
+- `hsd_80391A04` [ext_fns!] x1: tu/textdraw.rs:55 -> port `melee_runtime::tu/hsd_3915.rs:238`
+- `hsd_80398A08` [fn-body] x1: tu/eflib.rs:61 -> port `melee_runtime::tu/particle.rs:233`
+- `hsd_8039CEAC` [fn-body] x1: tu/eflib.rs:91 -> port `melee_runtime::tu/particle.rs:546`
+- `hsd_8039D354` [fn-body] x1: tu/eflib.rs:60 -> port `melee_runtime::tu/generator.rs:22`
+- `hsd_8039d4dc` [fn-body] x1: gr/grlib.rs:36 -> port `melee_runtime::tu/generator.rs:30`
+- `hsd_8039D4DC` [fn-body/hook!] x2: tu/eflib.rs:96, tu/grlib.rs:63 -> port `melee_runtime::tu/generator.rs:30`
+- `hsd_8039D580` [hook!] x1: tu/grcorneria.rs:310 -> port `melee_runtime::tu/generator.rs:34`
+- `hsd_8039d5dc` [fn-body] x1: gr/grlib.rs:40 -> port `melee_runtime::tu/generator.rs:38`
+- `hsd_8039D5DC` [hook!] x1: tu/grlib.rs:64 -> port `melee_runtime::tu/generator.rs:38`
+- `hsd_8039EE24` [fn-body] x1: tu/eflib.rs:92 -> port `melee_runtime::tu/generator.rs:54`
+- `hsd_8039efac` [fn-body] x1: gr/grlib.rs:44 -> port `melee_runtime::tu/generator.rs:58`
+- `hsd_8039EFAC` [fn-body/hook!] x3: tu/efasync.rs:140, tu/eflib.rs:94, tu/grlib.rs:65 -> port `melee_runtime::tu/generator.rs:58`
+- `hsd_8039f05c` [fn-body] x1: gr/grlib.rs:28 -> port `melee_runtime::tu/generator.rs:62`
+- `hsd_8039F05C` [fn-body/hook!] x2: tu/eflib.rs:93, tu/grlib.rs:66 -> port `melee_runtime::tu/generator.rs:62`
+- `hsd_8039f6cc` [fn-body] x1: gr/grlib.rs:48 -> port `melee_runtime::tu/generator.rs:66`
+- `hsd_8039F6CC` [fn-body/hook!] x2: tu/eflib.rs:95, tu/grlib.rs:67 -> port `melee_runtime::tu/generator.rs:66`
+- `HSD_AObjSetFlags` [ext_fns!] x1: tu/ground.rs:50 -> port `melee_runtime::tu/aobj.rs:84`
+- `HSD_AObjSetRate` [ext_fns!] x2: tu/grfzerocar.rs:33, tu/ground.rs:51 -> port `melee_runtime::tu/aobj.rs:433`
+- `HSD_ArchiveGetPublicAddress` [ext_fns!] x2: tu/grhomerun.rs:68, tu/grpstadium.rs:62 -> port `melee_runtime::tu/archive.rs:84`
+- `HSD_ASSERT` [fn-body] x1: tu/cmsnap.rs:34 -> port `melee_runtime::tu/lbarchive.rs:124`
+- `HSD_CObjAlloc` [ext_fns!] x1: tu/textdraw.rs:38 -> port `melee_runtime::tu/cobj.rs:692`
+- `HSD_CObjEndCurrent` [ext_fns!] x3: tu/grdisplay.rs:40, tu/grhomerun.rs:69, tu/grpstadium.rs:63 -> port `melee_runtime::tu/cobj.rs:672`
+- `HSD_CObjEraseScreen` [ext_fns!] x1: tu/grpstadium.rs:64 -> port `melee_runtime::tu/cobj.rs:306`
+- `HSD_CObjGetCurrent` [ext_fns!] x4: tu/grdisplay.rs:41, tu/grfourside.rs:56, tu/ground.rs:52, tu/mplib.rs:69 -> port `melee_runtime::tu/cobj.rs:678`
+- `HSD_CObjGetFar` [ext_fns!] x1: tu/grhomerun.rs:71 -> port `melee_runtime::tu/cobj.rs:180`
+- `HSD_CObjGetNear` [ext_fns!] x1: tu/grhomerun.rs:74 -> port `melee_runtime::tu/cobj.rs:168`
+- `HSD_CObjLoadDesc` [ext_fns!] x2: tu/if_2FF2.rs:37, tu/textdraw.rs:39 -> port `melee_runtime::tu/cobj.rs:760`
+- `HSD_CObjSetCurrent` [ext_fns!] x4: tu/grdisplay.rs:42, tu/grhomerun.rs:78, tu/grpstadium.rs:65, tu/textdraw.rs:40 -> port `melee_runtime::tu/cobj.rs:645`
+- `HSD_CObjSetFar` [ext_fns!] x2: tu/grhomerun.rs:80, tu/textdraw.rs:42 -> port `melee_runtime::tu/cobj.rs:185`
+- `HSD_CObjSetFlags` [ext_fns!] x1: tu/grhomerun.rs:81 -> port `melee_runtime::tu/cobj.rs:266`
+- `HSD_CObjSetNear` [ext_fns!] x2: tu/grhomerun.rs:83, tu/textdraw.rs:44 -> port `melee_runtime::tu/cobj.rs:173`
+- `HSD_CObjSetOrtho` [ext_fns!] x2: tu/grpstadium.rs:66, tu/textdraw.rs:45 -> port `melee_runtime::tu/cobj.rs:254`
+- `HSD_CObjSetPerspective` [ext_fns!] x1: tu/grhomerun.rs:84 -> port `melee_runtime::tu/cobj.rs:228`
+- `HSD_CObjSetScissor` [ext_fns!] x2: tu/grhomerun.rs:85, tu/textdraw.rs:48 -> port `melee_runtime::tu/cobj.rs:220`
+- `HSD_CObjSetViewport` [ext_fns!] x1: tu/textdraw.rs:49 -> port `melee_runtime::tu/cobj.rs:209`
+- `HSD_DObjClearFlags` [ext_fns!/fn+panic] x2: tu/grinishie1.rs:58, tu_ext.rs:200 -> port `melee_runtime::tu/dobj.rs:183`
+- `HSD_DObjSetFlags` [ext_fns!/fn+panic] x2: tu/grinishie1.rs:59, tu_ext.rs:205 -> port `melee_runtime::tu/dobj.rs:178`
+- `HSD_ForeachAnim` [ext_fns!/fn+panic/hook!] x6: tu/granime.rs:82, tu/grfzerocar.rs:34, tu/grizumi.rs:139, tu/grlib.rs:36, tu/ground.rs:57, tu/grvenom.rs:119 -> port `melee_runtime::tu/aobj.rs:398`
+- `HSD_Free` [ext_fns!] x5: tu/grgreens.rs:60, tu/ground.rs:58, tu/grpstadium.rs:68, tu/mpisland.rs:31, tu/textlib_1.rs:58 -> port `melee_runtime::tu/memory.rs:96`
+- `HSD_GObj_80390EB8` [ext_fns!] x1: tu/grdisplay.rs:44 -> port `melee_runtime::gobj.rs:266`
+- `HSD_GObj_80390ED0` [ext_fns!/hook!] x5: tu/grdisplay.rs:45, tu/grhomerun.rs:89, tu/grizumi.rs:142, tu/grpstadium.rs:70, tu/ifall.rs:369 -> port `melee_runtime::gobj.rs:1047`
+- `HSD_GObj_803910D8` [ext_fns!/hook!] x3: tu/if_2FF2.rs:40, tu/ifcoget.rs:63, tu/textdraw.rs:53 -> port `melee_runtime::tu/gobj.rs:86`
+- `HSD_GObj_JObjCallback` [ext_fns!] x3: tu/grdisplay.rs:46, tu/if_2F72.rs:40, tu/if_2FD9.rs:37 -> port `melee_runtime::tu/gobj.rs:74`
+- `HSD_GObj_LObjCallback` [ext_fns!] x1: tu/if_2FF2.rs:41 -> port `melee_runtime::tu/gobj.rs:68`
+- `HSD_GObjGXLink_8039084C` [hook!] x1: tu/grizumi.rs:140 -> port `melee_runtime::tu/gobjgxlink.rs:29`
+- `HSD_GObjGXLink_80390908` [hook!] x1: tu/grcorneria.rs:277 -> port `melee_runtime::tu/gobjgxlink.rs:34`
+- `HSD_GObjGXLink_803909D8` [hook!] x1: tu/grlast.rs:147 -> port `melee_runtime::tu/gobjgxlink.rs:39`
+- `HSD_GObjObject_80390A70` [ext_fns!/fn-body/hook!] x12: tu/eflib.rs:68, tu/grhomerun.rs:88, tu/grizumi.rs:141, tu/grlib.rs:38, tu/ground.rs:60, tu/grpstadium.rs:69, tu/if_2F72.rs:39, tu/if_2FD9.rs:36, tu/if_2FF2.rs:39, tu/ifall.rs:165, tu/ifcoget.rs:54, tu/textdraw.rs:52 -> port `melee_runtime::tu/gobjobject.rs:14`
+- `HSD_JObjAddAnimAll` [fn-body/hook!] x4: tu/eflib.rs:79, tu/granime.rs:83, tu/grlib.rs:40, tu/grzebes.rs:400 -> port `melee_runtime::tu/jobj.rs:327`
+- `HSD_JObjAddChild` [ext_fns!/hook!] x5: tu/grfzerocar.rs:35, tu/gricemt.rs:78, tu/grmutecity.rs:66, tu/ground.rs:63, tu/grzebes.rs:392 -> port `melee_runtime::tu/jobj.rs:294`
+- `HSD_JObjAddNext` [ext_fns!] x2: tu/grfzerocar.rs:36, tu/ground.rs:64 -> port `melee_runtime::tu/jobj.rs:296`
+- `HSD_JObjAlloc` [ext_fns!] x2: tu/grfzerocar.rs:37, tu/ground.rs:65 -> port `melee_runtime::tu/jobj.rs:79`
+- `HSD_JObjAnimAll` [ext_fns!/fn-body/hook!] x10: tu/efasync.rs:143, tu/eflib.rs:77, tu/granime.rs:84, tu/grcorneria.rs:280, tu/grlib.rs:41, tu/ground.rs:66, tu/grzebes.rs:402, tu/if_2F72.rs:42, tu/if_2FD9.rs:39, tu/ifcoget.rs:52 -> port `melee_runtime::tu/jobj.rs:325`
+- `HSD_JObjClearFlags` [ext_fns!/hook!] x4: tu/grcastle.rs:115, tu/grcorneria.rs:281, tu/grgreens.rs:62, tu/grpstadium.rs:72 -> port `melee_runtime::tu/jobj.rs:305`
+- `HSD_JObjClearFlagsAll` [ext_fns!/fn+panic/fn-body/hook!] x23: tu/eflib.rs:82, tu/grbattle.rs:73, tu/grbigblue.rs:123, tu/grbigblueroute.rs:138, tu/grcastle.rs:116, tu/grcorneria.rs:282, tu/grfourside.rs:59, tu/grgreatbay.rs:58, tu/grheal.rs:51, tu/grinishie1.rs:61, tu/grizumi.rs:143, tu/grkinokoroute.rs:172, tu/grkraid.rs:86, tu/grmutecity.rs:67, tu/groldkongo.rs:48, tu/groldpupupu.rs:47, tu/groldyoshi.rs:42, tu/gronett.rs:51, tu/grpura.rs:52, tu/grvenom.rs:251, tu/grzebes.rs:311, tu/ifcoget.rs:43, tu_ext.rs:215 -> port `melee_runtime::tu/jobj.rs:306`
+- `HSD_JObjGetDObj` [ext_fns!/fn+panic/fn-body/hook!] x4: tu/eflib.rs:83, tu/grinishie1.rs:62, tu/grmaterial.rs:26, tu_ext.rs:220 -> port `melee_runtime::tu/jobj.rs:298`
+- `HSD_JObjGetFlags` [ext_fns!/fn+panic/hook!] x9: tu/grbattle.rs:74, tu/grcastle.rs:117, tu/grinishie1.rs:63, tu/grizumi.rs:144, tu/groldyoshi.rs:43, tu/grpura.rs:53, tu/grvenom.rs:250, tu/mplib.rs:72, tu_ext.rs:225 -> port `melee_runtime::tu/jobj.rs:302`
+- `HSD_JObjLoadJoint` [ext_fns!/fn-body] x5: tu/eflib.rs:78, tu/gricemt.rs:79, tu/ground.rs:67, tu/if_2F72.rs:43, tu/if_2FD9.rs:40 -> port `melee_runtime::tu/jobj.rs:105`
+- `HSD_JObjRemoveAll` [hook!] x1: tu/grzebes.rs:310 -> port `melee_runtime::tu/jobj.rs:314`
+- `HSD_JObjRemoveAnimAll` [ext_fns!/hook!] x5: tu/granime.rs:85, tu/grcorneria.rs:283, tu/grflatzone.rs:62, tu/grgarden.rs:48, tu/grizumi.rs:145 -> port `melee_runtime::tu/jobj.rs:318`
+- `HSD_JObjReparent` [ext_fns!/hook!] x3: tu/grbigblue.rs:124, tu/grbigblueroute.rs:139, tu/grheal.rs:52 -> port `melee_runtime::tu/jobj.rs:295`
+- `HSD_JObjReqAnimAll` [ext_fns!/fn-body/hook!] x8: tu/eflib.rs:80, tu/granime.rs:86, tu/grlib.rs:47, tu/grmutecity.rs:68, tu/grzebes.rs:401, tu/if_2F72.rs:44, tu/if_2FD9.rs:41, tu/ifcoget.rs:51 -> port `melee_runtime::tu/jobj.rs:322`
+- `HSD_JObjReqAnimAllByFlags` [ext_fns!/hook!] x2: tu/granime.rs:87, tu/grfzerocar.rs:38 -> port `melee_runtime::tu/jobj.rs:320`
+- `HSD_JObjReqAnimByFlags` [hook!] x1: tu/granime.rs:88 -> port `melee_runtime::tu/jobj.rs:319`
+- `HSD_JObjResetRST` [hook!] x1: tu/granime.rs:89 -> port `melee_runtime::tu/jobj.rs:310`
+- `HSD_JObjSetDPtclCallback` [fn-body] x1: tu/eflib.rs:71 -> port `melee_runtime::tu/jobj.rs:332`
+- `HSD_JObjSetFlags` [ext_fns!/hook!] x4: tu/grcastle.rs:118, tu/grcorneria.rs:284, tu/grgreens.rs:63, tu/grpstadium.rs:73 -> port `melee_runtime::tu/jobj.rs:303`
+- `HSD_JObjSetFlagsAll` [ext_fns!/fn+panic/fn-body/hook!] x26: tu/eflib.rs:81, tu/grbattle.rs:75, tu/grbigblue.rs:125, tu/grbigblueroute.rs:140, tu/grcastle.rs:119, tu/grcorneria.rs:285, tu/grflatzone.rs:63, tu/grfourside.rs:60, tu/grgreatbay.rs:59, tu/grgreens.rs:64, tu/gricemt.rs:80, tu/grinishie1.rs:64, tu/grizumi.rs:146, tu/grkinokoroute.rs:173, tu/grkraid.rs:87, tu/grmutecity.rs:69, tu/groldkongo.rs:49, tu/groldpupupu.rs:48, tu/groldyoshi.rs:44, tu/gronett.rs:52, tu/grpstadium.rs:74, tu/grpura.rs:54, tu/grvenom.rs:252, tu/grzebes.rs:391, tu/ifcoget.rs:42, tu_ext.rs:230 -> port `melee_runtime::tu/jobj.rs:304`
+- `HSD_JObjSetMtxDirtySub` [ext_fns!/fn+panic/fn-body/hook!] x26: tu/efasync.rs:144, tu/eflib.rs:74, tu/grflatzone.rs:64, tu/grfourside.rs:61, tu/grfzerocar.rs:39, tu/grgarden.rs:49, tu/grgreatbay.rs:60, tu/grgreens.rs:65, tu/grhomerun.rs:91, tu/gricemt.rs:81, tu/grinishie1.rs:65, tu/grinl.rs:16, tu/grmutecity.rs:70, tu/groldkongo.rs:50, tu/groldpupupu.rs:49, tu/groldyoshi.rs:45, tu/gronett.rs:53, tu/ground.rs:68, tu/grpstadium.rs:75, tu/grpura.rs:55, tu/grvenom.rs:432, tu/grzebes.rs:360, tu/if_2F72.rs:45, tu/if_2FD9.rs:42, tu/ifcoget.rs:96, tu_ext.rs:235 -> port `melee_runtime::tu/jobj.rs:291`
+- `HSD_JObjSetSPtclCallback` [fn-body] x1: tu/eflib.rs:70 -> port `melee_runtime::tu/displayfunc.rs:463`
+- `HSD_JObjSetupMatrixSub` [ext_fns!/fn-body/hook!] x4: tu/eflib.rs:75, tu/grdisplay.rs:48, tu/grinl.rs:21, tu/mplib.rs:73 -> port `melee_runtime::tu/jobj.rs:312`
+- `HSD_JObjUnref` [ext_fns!] x1: tu/grmutecity.rs:71 -> port `melee_runtime::tu/jobj.rs:124`
+- `HSD_LObj_803668EC` [ext_fns!] x1: tu/ground.rs:80 -> port `melee_runtime::tu/lobj.rs:855`
+- `HSD_LObjAnim` [ext_fns!] x1: tu/ground.rs:69 -> port `melee_runtime::tu/lobj.rs:436`
+- `HSD_LObjAnimAll` [ext_fns!] x1: tu/ground.rs:70 -> port `melee_runtime::tu/lobj.rs:443`
+- `HSD_LObjClearFlags` [ext_fns!/fn+panic] x2: tu/grmutecity.rs:72, tu_ext.rs:240 -> port `melee_runtime::tu/lobj.rs:225`
+- `HSD_LObjDeleteCurrentAll` [ext_fns!] x1: tu/ground.rs:71 -> port `melee_runtime::tu/lobj.rs:834`
+- `HSD_LObjGetColor` [ext_fns!/fn+panic] x2: tu/grmutecity.rs:73, tu_ext.rs:245 -> port `melee_runtime::tu/lobj.rs:302`
+- `HSD_LObjGetFlags` [ext_fns!/fn+panic] x2: tu/grmutecity.rs:74, tu_ext.rs:250 -> port `melee_runtime::tu/lobj.rs:213`
+- `HSD_LObjGetInterest` [ext_fns!/fn+panic] x2: tu/ground.rs:72, tu_ext.rs:255 -> port `melee_runtime::tu/lobj.rs:392`
+- `HSD_LObjGetInterestWObj` [ext_fns!] x1: tu/ground.rs:73 -> port `melee_runtime::tu/lobj.rs:340`
+- `HSD_LObjGetPosition` [ext_fns!/fn+panic] x2: tu/ground.rs:74, tu_ext.rs:260 -> port `melee_runtime::tu/lobj.rs:381`
+- `HSD_LObjGetPositionWObj` [ext_fns!] x1: tu/ground.rs:75 -> port `melee_runtime::tu/lobj.rs:333`
+- `HSD_LObjLoadDesc` [ext_fns!/fn+panic] x2: tu/if_2FF2.rs:43, tu_ext.rs:265 -> port `melee_runtime::tu/lobj.rs:951`
+- `HSD_LObjReqAnimAll` [ext_fns!] x1: tu/ground.rs:76 -> port `melee_runtime::tu/lobj.rs:456`
+- `HSD_LObjSetColor` [ext_fns!/fn+panic/hook!] x4: tu/grmutecity.rs:75, tu/grzebes.rs:375, tu/grzebesroute.rs:153, tu_ext.rs:270 -> port `melee_runtime::tu/lobj.rs:299`
+- `HSD_LObjSetDistAttn` [ext_fns!/fn+panic] x2: tu/grmutecity.rs:76, tu_ext.rs:275 -> port `melee_runtime::tu/lobj.rs:308`
+- `HSD_LObjSetFlags` [ext_fns!/fn+panic] x2: tu/grmutecity.rs:77, tu_ext.rs:280 -> port `melee_runtime::tu/lobj.rs:220`
+- `HSD_LObjSetInterest` [ext_fns!/fn+panic] x2: tu/ground.rs:77, tu_ext.rs:285 -> port `melee_runtime::tu/lobj.rs:370`
+- `HSD_LObjSetPosition` [ext_fns!/fn+panic] x2: tu/ground.rs:78, tu_ext.rs:290 -> port `melee_runtime::tu/lobj.rs:359`
+- `HSD_LObjSetSpot` [fn+panic] x1: tu_ext.rs:295 -> port `melee_runtime::tu/lobj.rs:305`
+- `HSD_LObjSetupInit` [ext_fns!] x2: tu/ground.rs:79, tu/mplib.rs:74 -> port `melee_runtime::tu/lobj.rs:688`
+- `HSD_MemAlloc` [ext_fns!] x9: tu/grgreens.rs:66, tu/grhomerun.rs:92, tu/grinishie1.rs:66, tu/ground.rs:81, tu/grpstadium.rs:80, tu/mpisland.rs:32, tu/mplib.rs:75, tu/soundtest.rs:42, tu/textlib_1.rs:60 -> port `melee_runtime::tu/memory.rs:103`
+- `HSD_MObjClearFlags` [ext_fns!] x1: tu/grpstadium.rs:76 -> port `melee_runtime::tu/mobj.rs:65`
+- `HSD_MObjCompileTev` [ext_fns!] x2: tu/grpstadium.rs:77, tu/grpura.rs:56 -> port `melee_runtime::tu/mobj.rs:199`
+- `HSD_MObjGetTObj` [fn-body] x1: tu/eflib.rs:84 -> port `melee_runtime::tu/mobj.rs:320`
+- `HSD_MObjSetDiffuseColor` [ext_fns!] x1: tu/grpstadium.rs:78 -> port `melee_runtime::tu/mobj.rs:307`
+- `HSD_MObjSetFlags` [ext_fns!] x1: tu/grpstadium.rs:79 -> port `melee_runtime::tu/mobj.rs:60`
+- `HSD_MObjSetToonTextureImage` [ext_fns!] x1: tu/grpura.rs:57 -> port `melee_runtime::tu/mobj.rs:297`
+- `HSD_ObjAlloc` [ext_fns!/fn-body] x2: tu/eflib.rs:58, tu/textlib_1.rs:61 -> port `melee_runtime::tu/objalloc.rs:108`
+- `HSD_ObjAllocInit` [ext_fns!/fn-body] x2: tu/eflib.rs:57, tu/textlib_1.rs:62 -> port `melee_runtime::tu/objalloc.rs:145`
+- `HSD_ObjFree` [ext_fns!/fn-body] x2: tu/eflib.rs:59, tu/textlib_1.rs:63 -> port `melee_runtime::tu/objalloc.rs:130`
+- `HSD_Randf` [ext_fns!/fn+panic/fn-body/hook!] x22: tu/efasync.rs:141, tu/efsync.rs:48, tu/grbigblue.rs:131, tu/grbigblueroute.rs:146, tu/grcastle.rs:120, tu/grcorneria.rs:287, tu/grflatzone.rs:65, tu/grgreatbay.rs:61, tu/grgreens.rs:67, tu/grizumi.rs:156, tu/grkongo.rs:121, tu/grlast.rs:148, tu/grmutecity.rs:78, tu/groldkongo.rs:51, tu/groldpupupu.rs:50, tu/groldyoshi.rs:46, tu/gronett.rs:54, tu/grpstadium.rs:81, tu/grvenom.rs:60, tu/grzakogenerator.rs:65, tu/grzebes.rs:173, tu_ext.rs:305 -> port `melee_runtime::tu/random.rs:30`
+- `HSD_Randi` [ext_fns!/fn+panic/fn-body/hook!] x29: tu/efasync.rs:142, tu/grbattle.rs:76, tu/grbigblue.rs:132, tu/grbigblueroute.rs:147, tu/grcastle.rs:121, tu/grcorneria.rs:288, tu/grfigureget.rs:46, tu/grflatzone.rs:66, tu/grfourside.rs:62, tu/grgarden.rs:50, tu/grgreatbay.rs:62, tu/grgreens.rs:68, tu/gricemt.rs:82, tu/grinishie1.rs:67, tu/grinl2.rs:50, tu/grizumi.rs:157, tu/grmutecity.rs:79, tu/groldkongo.rs:52, tu/groldpupupu.rs:51, tu/groldyoshi.rs:47, tu/gronett.rs:55, tu/ground.rs:82, tu/grpstadium.rs:82, tu/grpura.rs:58, tu/grvenom.rs:59, tu/grzebes.rs:272, tu/grzebesroute.rs:69, tu/stage.rs:75, tu_ext.rs:310 -> port `melee_runtime::tu/random.rs:33`
+- `hsd_randi` [fn-body] x1: gr/ground.rs:47 -> port `melee_runtime::tu/random.rs:33`
+- `HSD_SetEraseColor` [ext_fns!/hook!] x2: tu/grizumi.rs:158, tu/grpstadium.rs:83 -> port `melee_runtime::tu/displayfunc.rs:468`
+- `HSD_SetMaterialColor` [hook!] x1: tu/grmaterial.rs:35 -> port `melee_runtime::tu/state.rs:647`
+- `HSD_SetMaterialShininess` [hook!] x1: tu/grmaterial.rs:36 -> port `melee_runtime::tu/state.rs:650`
+- `HSD_SetTevRegAll` [ext_fns!] x1: tu/mplib.rs:76 -> port `melee_runtime::tu/tev.rs:165`
+- `HSD_SetupChannel` [ext_fns!] x1: tu/mplib.rs:77 -> port `melee_runtime::tu/tev.rs:137`
+- `HSD_SetupPEMode` [ext_fns!] x1: tu/mplib.rs:78 -> port `melee_runtime::tu/state.rs:636`
+- `HSD_SetupRenderModeWithCustomPE` [hook!] x1: tu/grmaterial.rs:37 -> port `melee_runtime::tu/state.rs:643`
+- `HSD_SetupTevStage` [ext_fns!/hook!] x2: tu/grmaterial.rs:38, tu/mplib.rs:79 -> port `melee_runtime::tu/tev.rs:164`
+- `HSD_SisLib_803A5ACC` [ext_fns!] x1: tu/grpstadium.rs:84 -> port `melee_runtime::tu/sislib.rs:246`
+- `HSD_SisLib_803A5CC4` [ext_fns!] x2: tu/grhomerun.rs:93, tu/if_2FF2.rs:44 -> port `melee_runtime::tu/sislib.rs:360`
+- `HSD_SisLib_803A611C` [ext_fns!] x3: tu/grhomerun.rs:94, tu/grpstadium.rs:85, tu/if_2FF2.rs:45 -> port `melee_runtime::tu/sislib.rs:553`
+- `HSD_SisLib_803A6368` [ext_fns!] x1: tu/grpstadium.rs:86 -> port `melee_runtime::tu/sislib.rs:670`
+- `HSD_SisLib_803A6530` [ext_fns!] x1: tu/grpstadium.rs:87 -> port `melee_runtime::tu/hsd_3A64.rs:72`
+- `HSD_SisLib_803A660C` [ext_fns!] x1: tu/grpstadium.rs:88 -> port `melee_runtime::tu/hsd_3A64.rs:78`
+- `HSD_SisLib_803A6754` [ext_fns!] x3: tu/grhomerun.rs:95, tu/grpstadium.rs:89, tu/if_2FF2.rs:46 -> port `melee_runtime::tu/hsd_3A64.rs:102`
+- `HSD_SisLib_803A6B98` [ext_fns!] x3: tu/grhomerun.rs:96, tu/grpstadium.rs:90, tu/if_2FF2.rs:47 -> port `melee_runtime::tu/hsd_3A64.rs:260`
+- `HSD_SisLib_803A70A0` [ext_fns!] x1: tu/if_2FF2.rs:48 -> port `melee_runtime::tu/hsd_3A64.rs:359`
+- `HSD_SisLib_803A7548` [ext_fns!] x1: tu/if_2FF2.rs:49 -> port `melee_runtime::tu/hsd_3A64.rs:438`
+- `HSD_SisLib_803A7664` [ext_fns!] x1: tu/grpstadium.rs:91 -> port `melee_runtime::tu/hsd_3A64.rs:465`
+- `HSD_SObjLib_803A49E0` [ext_fns!] x1: tu/soundtest.rs:44 -> port `melee_runtime::tu/sobjlib.rs:252`
+- `HSD_SObjLib_803A55DC` [ext_fns!] x1: tu/soundtest.rs:45 -> port `melee_runtime::tu/sobjlib.rs:827`
+- `HSD_StateAssignTev` [ext_fns!/hook!] x2: tu/grmaterial.rs:39, tu/mplib.rs:80 -> port `melee_runtime::tu/tev.rs:162`
+- `HSD_StateInitTev` [ext_fns!/hook!] x2: tu/grmaterial.rs:40, tu/mplib.rs:81 -> port `melee_runtime::tu/tev.rs:159`
+- `HSD_StateInvalidate` [ext_fns!] x3: tu/grdisplay.rs:50, tu/ground.rs:83, tu/mplib.rs:82 -> port `melee_runtime::tu/state.rs:665`
+- `HSD_StateSetColorUpdate` [fn-body] x1: tu/eflib.rs:89 -> port `melee_runtime::tu/state.rs:657`
+- `HSD_StateSetCullMode` [ext_fns!] x1: tu/mplib.rs:83 -> port `melee_runtime::tu/state.rs:653`
+- `HSD_StateSetNumChans` [ext_fns!] x1: tu/mplib.rs:84 -> port `melee_runtime::tu/tev.rs:156`
+- `HSD_StateSetNumTevStages` [ext_fns!] x1: tu/mplib.rs:85 -> port `melee_runtime::tu/tev.rs:163`
+- `HSD_StateSetNumTexGens` [ext_fns!] x1: tu/mplib.rs:86 -> port `melee_runtime::tu/tev.rs:158`
+- `HSD_StateSetPointSize` [hook!] x1: tu/grizumi.rs:159 -> port `melee_runtime::tu/state.rs:652`
+- `HSD_WObjGetPosition` [ext_fns!] x1: tu/ground.rs:84 -> port `melee_runtime::tu/wobj.rs:231`
+- `HSD_WObjSetPosition` [ext_fns!] x1: tu/ground.rs:85 -> port `melee_runtime::tu/wobj.rs:198`
+- `ifAll_GetArchive` [ext_fns!] x2: tu/if_2F72.rs:49, tu/if_2FD9.rs:46 -> port `melee_world::tu/ifall.rs:562`
+- `ifAll_GetHUDGObj` [ext_fns!] x1: tu/if_2FF2.rs:52 -> port `melee_world::tu/ifall.rs:448`
+- `ifAll_GetPlayerHUDPosition` [ext_fns!] x2: tu/if_2F72.rs:50, tu/if_2FF2.rs:53 -> port `melee_world::tu/ifall.rs:456`
+- `ifStatus_GetHUDInfo` [ext_fns!] x1: tu/if_2F72.rs:51 -> port `melee_world::tu/ifstatus.rs:147`
+- `lb_8000B09C` [ext_fns!] x1: tu/if_2F72.rs:55 -> port `melee_runtime::tu/lb_00B0.rs:237`
+- `lb_8000B134` [ext_fns!] x2: tu/grgreatbay.rs:88, tu/grmutecity.rs:116 -> port `melee_runtime::tu/lb_00B0.rs:241`
+- `lb_8000B1CC` [ext_fns!/fn-body] x17: tu/eflib.rs:88, tu/grfourside.rs:74, tu/grgarden.rs:66, tu/grgreatbay.rs:89, tu/grgreens.rs:92, tu/grheal.rs:61, tu/grhomerun.rs:110, tu/grinishie1.rs:86, tu/grmutecity.rs:117, tu/groldkongo.rs:68, tu/groldpupupu.rs:62, tu/groldyoshi.rs:56, tu/gronett.rs:72, tu/ground.rs:184, tu/grpstadium.rs:131, tu/grpura.rs:67, tu/mpcoll.rs:77 -> port `melee_runtime::tu/lb_00B0.rs:245`
+- `lb_8000C1C0` [fn-body] x1: tu/eflib.rs:86 -> port `melee_runtime::tu/lb_00B0.rs:506`
+- `lb_8000C290` [fn-body] x1: tu/eflib.rs:87 -> port `melee_runtime::tu/lb_00B0.rs:520`
+- `lb_8000F9F8` [ext_fns!] x2: tu/grfzerocar.rs:43, tu/ground.rs:185 -> port `melee_runtime::tu/lb_00F9.rs:206`
+- `lb_8000fd18` [fn-body] x1: gr/grlib.rs:68 -> port `melee_runtime::tu/lb_00F9.rs:232`
+- `lb_8000fd48` [fn-body] x1: gr/grlib.rs:60 -> port `melee_runtime::tu/lb_00F9.rs:249`
+- `lb_800115F4` [ext_fns!] x19: tu/grfigure1.rs:49, tu/grfigure2.rs:51, tu/grfigure3.rs:49, tu/grfigureget.rs:59, tu/grflatzone.rs:77, tu/grfourside.rs:75, tu/grgarden.rs:67, tu/grgreatbay.rs:90, tu/grgreens.rs:93, tu/grheal.rs:62, tu/grhomerun.rs:111, tu/grinishie1.rs:87, tu/grmutecity.rs:118, tu/groldkongo.rs:69, tu/groldpupupu.rs:63, tu/groldyoshi.rs:57, tu/gronett.rs:73, tu/grpstadium.rs:132, tu/grpura.rs:68 -> port `melee_runtime::tu/lb_00F9.rs:773`
+- `lb_80011710` [fn-body] x1: gr/grlib.rs:64 -> port `melee_runtime::tu/lb_00F9.rs:799`
+- `lb_80011A50` [ext_fns!] x2: tu/grgreens.rs:94, tu/groldpupupu.rs:64 -> port `melee_runtime::tu/lb_00F9.rs:849`
+- `lb_80011AC4` [ext_fns!] x1: tu/ground.rs:186 -> port `melee_runtime::tu/lbspdisplay.rs:296`
+- `lb_80011C18` [ext_fns!/fn-body] x2: tu/eflib.rs:85, tu/grpura.rs:69 -> port `melee_runtime::tu/lbspdisplay.rs:329`
+- `lb_80011E24` [hook!] x1: tu/ifall.rs:140 -> port `melee_runtime::tu/lbspdisplay.rs:441`
+- `lb_800121FC` [ext_fns!/fn-body] x2: tu/cmsnap.rs:36, tu/grpstadium.rs:133 -> port `melee_runtime::tu/lbspdisplay.rs:462`
+- `lb_800122C8` [ext_fns!/fn-body] x2: tu/cmsnap.rs:35, tu/grpstadium.rs:134 -> port `melee_runtime::tu/lbspdisplay.rs:477`
+- `lb_80013B14` [ext_fns!] x3: tu/grhomerun.rs:112, tu/ground.rs:187, tu/grpstadium.rs:135 -> port `melee_runtime::tu/lbspdisplay.rs:853`
+- `lb_8001B8C8` [ext_fns!] x1: tu/soundtest.rs:103 -> port `melee_runtime::tu/lbcardnew.rs:875`
+- `lb_8001C87C` [ext_fns!] x1: tu/soundtest.rs:104 -> port `melee_runtime::tu/lbcardgame.rs:227`
+- `lb_8001C8BC` [ext_fns!] x1: tu/soundtest.rs:105 -> port `melee_runtime::tu/lbcardgame.rs:238`
+- `lb_8001CBBC` [ext_fns!] x1: tu/soundtest.rs:106 -> port `melee_runtime::tu/lbcardgame.rs:285`
+- `lb_8001CC4C` [ext_fns!] x1: tu/soundtest.rs:107 -> port `melee_runtime::tu/lbcardgame.rs:309`
+- `lbArchive_80016DBC` [hook!] x2: tu/grdatfiles.rs:26, tu/ifcoget.rs:88 -> port `melee_runtime::tu/lbarchive.rs:216`
+- `lbArchive_80017040` [fn-body] x1: tu/efasync.rs:156 -> port `melee_runtime::tu/lbarchive.rs:251`
+- `lbArchive_800171CC` [hook!] x1: tu/grdatfiles.rs:27 -> port `melee_runtime::tu/lbarchive.rs:261`
+- `lbArchive_LoadSections` [ext_fns!/hook!] x3: tu/if_2F72.rs:52, tu/if_2FD9.rs:47, tu/ifall.rs:156 -> port `melee_runtime::tu/lbarchive.rs:187`
+- `lbArchive_LoadSymbols` [ext_fns!] x1: tu/soundtest.rs:76 -> port `melee_runtime::tu/lbarchive.rs:209`
+- `lbAudioAx_8002305C` [ext_fns!] x1: tu/ground.rs:171 -> port `melee_runtime::tu/lbaudio_ax.rs:1612`
+- `lbAudioAx_80023694` [ext_fns!] x1: tu/soundtest.rs:77 -> port `melee_runtime::tu/lbaudio_ax.rs:1736`
+- `lbaudioax_800236b8` [fn-body] x1: gr/ground.rs:31 -> port `melee_runtime::tu/lbaudio_ax.rs:1741`
+- `lbAudioAx_800236B8` [ext_fns!] x1: tu/ground.rs:172 -> port `melee_runtime::tu/lbaudio_ax.rs:1741`
+- `lbAudioAx_800236DC` [ext_fns!] x1: tu/soundtest.rs:78 -> port `melee_runtime::tu/lbaudio_ax.rs:1746`
+- `lbaudioax_80023710` [fn-body] x1: gr/ground.rs:35 -> port `melee_runtime::tu/lbaudio_ax.rs:1753`
+- `lbAudioAx_80023710` [ext_fns!] x1: tu/ground.rs:173 -> port `melee_runtime::tu/lbaudio_ax.rs:1753`
+- `lbaudioax_800237a8` [fn-body] x1: gr/ground.rs:23 -> port `melee_runtime::tu/lbaudio_ax.rs:1789`
+- `lbAudioAx_800237A8` [ext_fns!] x4: tu/grgreens.rs:91, tu/groldpupupu.rs:61, tu/ground.rs:174, tu/if_2F72.rs:53 -> port `melee_runtime::tu/lbaudio_ax.rs:1789`
+- `lbaudioax_80023870` [fn-body] x1: gr/ground.rs:27 -> port `melee_runtime::tu/lbaudio_ax.rs:1800`
+- `lbAudioAx_80023870` [ext_fns!] x1: tu/ground.rs:175 -> port `melee_runtime::tu/lbaudio_ax.rs:1800`
+- `lbAudioAx_80023B24` [ext_fns!] x1: tu/soundtest.rs:79 -> port `melee_runtime::tu/lbaudio_ax.rs:1860`
+- `lbAudioAx_80023F28` [ext_fns!] x2: tu/grinishie1.rs:85, tu/soundtest.rs:80 -> port `melee_runtime::tu/lbaudio_ax.rs:1930`
+- `lbAudioAx_80024030` [ext_fns!] x3: tu/if_2FD9.rs:48, tu/soundtest.rs:81, tu/textlib_1.rs:64 -> port `melee_runtime::tu/lbaudio_ax.rs:1941`
+- `lbAudioAx_800245D4` [ext_fns!] x1: tu/soundtest.rs:82 -> port `melee_runtime::tu/lbaudio_ax.rs:2078`
+- `lbAudioAx_800245F4` [ext_fns!] x1: tu/soundtest.rs:83 -> port `melee_runtime::tu/lbaudio_ax.rs:2088`
+- `lbAudioAx_80024614` [ext_fns!] x1: tu/soundtest.rs:84 -> port `melee_runtime::tu/lbaudio_ax.rs:2099`
+- `lbAudioAx_80024634` [ext_fns!] x1: tu/soundtest.rs:85 -> port `melee_runtime::tu/lbaudio_ax.rs:2109`
+- `lbaudioax_80024b1c` [fn-body] x1: gr/ground.rs:43 -> port `melee_runtime::tu/lbaudio_ax.rs:2197`
+- `lbAudioAx_80024B1C` [ext_fns!] x1: tu/ground.rs:176 -> port `melee_runtime::tu/lbaudio_ax.rs:2197`
+- `lbaudioax_80024b58` [fn-body] x1: gr/ground.rs:39 -> port `melee_runtime::tu/lbaudio_ax.rs:2207`
+- `lbAudioAx_80024B58` [ext_fns!] x1: tu/ground.rs:177 -> port `melee_runtime::tu/lbaudio_ax.rs:2207`
+- `lbAudioAx_80024BD0` [ext_fns!] x1: tu/soundtest.rs:86 -> port `melee_runtime::tu/lbaudio_ax.rs:2228`
+- `lbAudioAx_80024C08` [ext_fns!] x1: tu/soundtest.rs:87 -> port `melee_runtime::tu/lbaudio_ax.rs:2235`
+- `lbAudioAx_80024D78` [ext_fns!] x1: tu/grmutecity.rs:110 -> port `melee_runtime::tu/lbaudio_ax.rs:2308`
+- `lbAudioAx_80024E50` [ext_fns!] x1: tu/soundtest.rs:88 -> port `melee_runtime::tu/lbaudio_ax.rs:2328`
+- `lbCardGame_LoadArchive` [ext_fns!] x1: tu/soundtest.rs:89 -> port `melee_runtime::tu/lbcardgame.rs:464`
+- `lbCardGame_SaveChanges` [ext_fns!] x1: tu/soundtest.rs:90 -> port `melee_runtime::tu/lbcardgame.rs:374`
+- `lbCardGame_SetCardStatus` [ext_fns!] x1: tu/soundtest.rs:91 -> port `melee_runtime::tu/lbcardgame.rs:280`
+- `lbCardNew_AllocWorkArea` [ext_fns!] x1: tu/soundtest.rs:92 -> port `melee_runtime::tu/lbcardnew.rs:1158`
+- `lbCardNew_CompleteNextTask` [ext_fns!] x1: tu/soundtest.rs:93 -> port `melee_runtime::tu/lbcardnew.rs:811`
+- `lbDvd_800178E8` [ext_fns!] x1: tu/ground.rs:178 -> port `melee_runtime::tu/lbdvd.rs:371`
+- `lbFile_80016580` [ext_fns!] x1: tu/grpstadium.rs:126 -> port `melee_runtime::tu/lbfile.rs:176`
+- `lbGetJObjCurrFrame` [ext_fns!] x1: tu/if_2F72.rs:54 -> port `melee_runtime::tu/lb_00B0.rs:444`
+- `lbLang_IsSavedLanguageJP` [ext_fns!] x2: tu/grhomerun.rs:108, tu/grpstadium.rs:127 -> port `melee_runtime::tu/lblanguage.rs:61`
+- `lbLang_IsSavedLanguageUS` [ext_fns!] x1: tu/grhomerun.rs:109 -> port `melee_runtime::tu/lblanguage.rs:66`
+- `lbLang_SetSavedLanguage` [ext_fns!] x1: tu/soundtest.rs:94 -> port `melee_runtime::tu/lblanguage.rs:54`
+- `lbshadow_8000e9f0` [fn-body] x1: gr/ground.rs:55 -> port `melee_runtime::tu/lbshadow.rs:122`
+- `lbShadow_8000E9F0` [ext_fns!] x2: tu/grmutecity.rs:111, tu/ground.rs:179 -> port `melee_runtime::tu/lbshadow.rs:122`
+- `lbShadow_8000EEE0` [ext_fns!] x1: tu/grdisplay.rs:59 -> port `melee_runtime::tu/lbshadow.rs:209`
+- `lbShadow_8000EFEC` [ext_fns!] x1: tu/grdisplay.rs:60 -> port `melee_runtime::tu/lbshadow.rs:227`
+- `lbSnap_8001D40C` [ext_fns!] x1: tu/soundtest.rs:95 -> port `melee_runtime::tu/lbsnap.rs:181`
+- `lbSnap_8001D5FC` [ext_fns!] x1: tu/soundtest.rs:96 -> port `melee_runtime::tu/lbsnap.rs:244`
+- `lbSnap_8001D7B0` [ext_fns!] x1: tu/soundtest.rs:97 -> port `melee_runtime::tu/lbsnap.rs:259`
+- `lbSnap_8001DE8C` [ext_fns!] x1: tu/soundtest.rs:98 -> port `melee_runtime::tu/lbsnap.rs:400`
+- `lbSnap_8001E058` [ext_fns!] x1: tu/soundtest.rs:99 -> port `melee_runtime::tu/lbsnap.rs:458`
+- `lbSnap_8001E204` [ext_fns!] x1: tu/soundtest.rs:100 -> port `melee_runtime::tu/lbsnap.rs:481`
+- `lbSnap_8001E210` [ext_fns!] x1: tu/soundtest.rs:101 -> port `melee_runtime::tu/lbsnap.rs:485`
+- `lbSnap_8001E218` [ext_fns!] x1: tu/soundtest.rs:102 -> port `melee_runtime::tu/lbsnap.rs:489`
+- `lbVector_Add` [ext_fns!] x3: tu/grmutecity.rs:112, tu/ground.rs:180, tu/grpstadium.rs:128 -> port `melee_runtime::tu/lbvector.rs:149`
+- `lbVector_CrossprodNormalized` [ext_fns!] x1: tu/ground.rs:181 -> port `melee_runtime::tu/lbvector.rs:176`
+- `lbVector_Diff` [ext_fns!] x2: tu/grmutecity.rs:113, tu/grpstadium.rs:129 -> port `melee_runtime::tu/lbvector.rs:169`
+- `lbVector_EulerAnglesFromONB` [ext_fns!] x1: tu/ground.rs:182 -> port `melee_runtime::tu/lbvector.rs:339`
+- `lbVector_Normalize` [ext_fns!] x2: tu/grmutecity.rs:114, tu/ground.rs:183 -> port `melee_runtime::tu/lbvector.rs:126`
+- `lbVector_Sub` [ext_fns!] x1: tu/grmutecity.rs:115 -> port `melee_runtime::tu/lbvector.rs:162`
+- `lbVector_WorldToScreen` [ext_fns!] x1: tu/grpstadium.rs:130 -> port `melee_runtime::tu/lbvector.rs:383`
+- `memzero` [ext_fns!] x4: tu/grfigureget.rs:60, tu/grgreens.rs:95, tu/gricemt.rs:108, tu/grpstadium.rs:136 -> port `melee_runtime::tu/lb_00B0.rs:497`
+- `mpCheckMultiple` [ext_fns!] x1: tu/grflatzone.rs:78 -> port `melee_world::tu/mplib.rs:2674`
+- `mpGetGroundCollJoint` [ext_fns!] x1: tu/ground.rs:188 -> port `melee_world::tu/mplib.rs:344`
+- `mpGetGroundCollLine` [ext_fns!] x1: tu/ground.rs:189 -> port `melee_world::tu/mplib.rs:339`
+- `mpJointGetCb1` [ext_fns!] x1: tu/gricemt.rs:109 -> port `melee_world::tu/mplib.rs:4806`
+- `mpJointListAdd` [ext_fns!] x8: tu/grfourside.rs:76, tu/grgreatbay.rs:91, tu/gricemt.rs:110, tu/grmutecity.rs:119, tu/groldyoshi.rs:58, tu/gronett.rs:74, tu/ground.rs:190, tu/grpstadium.rs:137 -> port `melee_world::tu/mplib.rs:4616`
+- `mpJointSetB10` [ext_fns!] x1: tu/grmutecity.rs:120 -> port `melee_world::tu/mplib.rs:4786`
+- `mpJointSetCb1` [ext_fns!] x10: tu/grfigureget.rs:61, tu/grfourside.rs:77, tu/grgreatbay.rs:92, tu/grheal.rs:63, tu/grhomerun.rs:113, tu/gricemt.rs:111, tu/grinishie1.rs:89, tu/grmutecity.rs:121, tu/groldyoshi.rs:59, tu/gronett.rs:75 -> port `melee_world::tu/mplib.rs:4792`
+- `mpJointSetCb2` [ext_fns!] x2: tu/grgreens.rs:96, tu/grinishie1.rs:90 -> port `melee_world::tu/mplib.rs:4827`
+- `mpJointUpdateBounding` [ext_fns!] x2: tu/grhomerun.rs:114, tu/grpura.rs:70 -> port `melee_world::tu/mplib.rs:4245`
+- `mpLib_800552B0` [ext_fns!] x1: tu/ground.rs:192 -> port `melee_world::tu/mplib.rs:3858`
+- `mpLib_80055E24` [ext_fns!] x3: tu/grgreatbay.rs:93, tu/grmutecity.rs:123, tu/grpura.rs:71 -> port `melee_world::tu/mplib.rs:4045`
+- `mpLib_80055E9C` [ext_fns!] x4: tu/grfourside.rs:78, tu/grgreens.rs:97, tu/grinishie1.rs:91, tu/ground.rs:193 -> port `melee_world::tu/mplib.rs:4057`
+- `mpLib_8005667C` [ext_fns!] x2: tu/grmutecity.rs:124, tu/grpstadium.rs:138 -> port `melee_world::tu/mplib.rs:4272`
+- `mpLib_80056758` [ext_fns!] x1: tu/grhomerun.rs:115 -> port `melee_world::tu/mplib.rs:4303`
+- `mpLib_80057424` [ext_fns!] x6: tu/grfourside.rs:79, tu/grgreatbay.rs:94, tu/grgreens.rs:98, tu/grinishie1.rs:92, tu/grmutecity.rs:125, tu/ground.rs:194 -> port `melee_world::tu/mplib.rs:4574`
+- `mpLib_80057528` [ext_fns!] x1: tu/grpstadium.rs:139 -> port `melee_world::tu/mplib.rs:4592`
+- `mpLib_800575B0` [ext_fns!] x1: tu/grpstadium.rs:140 -> port `melee_world::tu/mplib.rs:4604`
+- `mpLib_80057BC0` [ext_fns!] x8: tu/grfourside.rs:80, tu/grgreatbay.rs:95, tu/gricemt.rs:112, tu/grmutecity.rs:126, tu/groldyoshi.rs:60, tu/gronett.rs:76, tu/ground.rs:195, tu/grpstadium.rs:141 -> port `melee_world::tu/mplib.rs:4702`
+- `mpLib_80057FDC` [ext_fns!] x1: tu/grgreatbay.rs:96 -> port `melee_world::tu/mplib.rs:4760`
+- `mpLib_80058044` [ext_fns!] x1: tu/grgreatbay.rs:97 -> port `melee_world::tu/mplib.rs:4773`
+- `mpLib_800581DC` [ext_fns!] x2: tu/grgreens.rs:99, tu/grpstadium.rs:142 -> port `melee_world::tu/mplib.rs:4848`
+- `mpLib_80058560` [ext_fns!] x2: tu/grflatzone.rs:79, tu/grpstadium.rs:143 -> port `melee_world::tu/mplib.rs:5023`
+- `mpLineSetPos` [ext_fns!] x1: tu/grmutecity.rs:127 -> port `melee_world::tu/mplib.rs:4296`
+- `mpVtxSetPos` [ext_fns!] x2: tu/grgreatbay.rs:98, tu/grpura.rs:72 -> port `melee_world::tu/mplib.rs:4289`
+- `psAddParticleAppSRT_begin` [fn-body] x1: tu/eflib.rs:99 -> port `melee_runtime::tu/psappsrt.rs:39`
+- `psDispParticles` [fn-body] x1: tu/eflib.rs:90 -> port `melee_runtime::tu/psdisp.rs:3034`
+- `psInitAppSRT` [fn-body] x1: tu/eflib.rs:72 -> port `melee_runtime::tu/psappsrt.rs:20`
+- `psInitDataBankLoad` [ext_fns!] x1: tu/ground.rs:197 -> port `melee_world::tu/efasync.rs:206`
+- `PSMTXCopy` [hook!] x1: tu/grizumi.rs:163 -> port `melee_runtime::tu/mtx_pc.rs:18`
+- `psRemoveParticleAppSRT` [fn-body] x1: tu/eflib.rs:100 -> port `melee_runtime::tu/psappsrt.rs:56`
+- `Stage_80224FDC` [ext_fns!] x1: tu/ground.rs:124 -> port `melee_world::gr/stage.rs:312`
+- `Stage_80225194` [ext_fns!] x3: tu/grgarden.rs:53, tu/gricemt.rs:83, tu/grpstadium.rs:97 -> port `melee_world::gr/stage.rs:362`
+- `Stage_GetBlastZoneBottomOffset` [ext_fns!] x5: tu/grflatzone.rs:68, tu/grgreatbay.rs:64, tu/grinishie1.rs:68, tu/grmutecity.rs:81, tu/mplib.rs:93 -> port `melee_world::tu/stage.rs:349`
+- `Stage_GetBlastZoneLeftOffset` [ext_fns!] x2: tu/grmutecity.rs:82, tu/mplib.rs:94 -> port `melee_world::tu/stage.rs:340`
+- `Stage_GetBlastZoneRightOffset` [ext_fns!] x3: tu/grhomerun.rs:97, tu/grmutecity.rs:83, tu/mplib.rs:95 -> port `melee_world::tu/stage.rs:336`
+- `Stage_GetBlastZoneTopOffset` [ext_fns!] x6: tu/grflatzone.rs:69, tu/grgreens.rs:69, tu/grheal.rs:53, tu/grmutecity.rs:84, tu/ground.rs:125, tu/mplib.rs:96 -> port `melee_world::tu/stage.rs:345`
+- `Stage_GetCamBoundsBottomOffset` [ext_fns!] x3: tu/grmutecity.rs:85, tu/grpura.rs:59, tu/mplib.rs:97 -> port `melee_world::tu/stage.rs:300`
+- `Stage_GetCamBoundsLeftOffset` [ext_fns!] x3: tu/grmutecity.rs:86, tu/grpura.rs:60, tu/mplib.rs:98 -> port `melee_world::tu/stage.rs:288`
+- `Stage_GetCamBoundsRightOffset` [ext_fns!] x4: tu/grhomerun.rs:98, tu/grmutecity.rs:87, tu/grpura.rs:61, tu/mplib.rs:99 -> port `melee_world::tu/stage.rs:292`
+- `Stage_GetCamBoundsTopOffset` [ext_fns!] x5: tu/grfigureget.rs:48, tu/grfourside.rs:64, tu/grmutecity.rs:88, tu/grpura.rs:62, tu/mplib.rs:100 -> port `melee_world::tu/stage.rs:296`
+- `Stage_UnkSetVec3TCam_Offset` [ext_fns!] x4: tu/grhomerun.rs:99, tu/grmutecity.rs:89, tu/ground.rs:126, tu/grpura.rs:63 -> port `melee_world::tu/stage.rs:365`
+- `un_802FD604` [ext_fns!] x2: tu/grmutecity.rs:130, tu/gronett.rs:77 -> port `melee_world::tu/ifhazard.rs:76`
+- `un_802FD65C` [ext_fns!] x2: tu/grmutecity.rs:131, tu/gronett.rs:78 -> port `melee_world::tu/ifhazard.rs:84`
+- `un_802FD8A0` [ext_fns!] x1: tu/gronett.rs:79 -> port `melee_world::tu/ifhazard.rs:142`
+- `un_802FD8C4` [ext_fns!] x1: tu/grmutecity.rs:132 -> port `melee_world::tu/ifhazard.rs:146`
+- `un_80302DF0` [ext_fns!] x1: tu/soundtest.rs:108 -> port `melee_world::tu/textlib.rs:470`
+- `un_80302DF8` [ext_fns!] x1: tu/soundtest.rs:109 -> port `melee_world::tu/textlib.rs:475`
+- `un_80304138` [ext_fns!] x1: tu/if_2FF2.rs:54 -> port `melee_world::tu/textlib_1.rs:602`
+- `un_80304210` [ext_fns!] x1: tu/soundtest.rs:110 -> port `melee_world::tu/textlib_1.rs:624`
+- `un_80304334` [ext_fns!] x1: tu/soundtest.rs:111 -> port `melee_world::tu/textlib_1.rs:654`
+
+### melee_world - CYCLE (282 sites, 182 names)
+
+- `ft_80087838` [ext_fns!] x1: tu/grgreatbay.rs:69 -> port `melee_fighter::ft0877.rs:30`
+- `ftCo_8009EC70` [ext_fns!/hook!] x2: tu/grkongo.rs:137, tu/groldkongo.rs:55 -> port `melee_fighter::tu/ftCo_BarrelWait.rs:100`
+- `ftCo_800C06C0` [ext_fns!] x1: tu/ground.rs:139 -> port `melee_fighter::tu/ftdevice.rs:25`
+- `ftCo_800C0FCC` [fn-body] x1: tu/eflib.rs:103 -> port `melee_fighter::tu/ftCo_Bury.rs:286`
+- `ftDrawCommon_80081118` [hook!] x1: tu/grizumi.rs:168 -> port `melee_fighter::tu/ftdrawcommon.rs:359`
+- `ftDrawCommon_80081140` [hook!] x1: tu/grizumi.rs:169 -> port `melee_fighter::tu/ftdrawcommon.rs:364`
+- `ftKb_MexKirbyLike` [fn-body] x1: tu/efasync.rs:165 -> port `melee_chara::tu/ftkirby.rs:2478`
+- `ftLib_800864A8` [ext_fns!] x2: tu/grgreens.rs:72, tu/groldpupupu.rs:53 -> port `melee_fighter::ftlib.rs:140`
+- `ftLib_80086644` [ext_fns!/fn+panic/hook!] x18: tu/grbigblueroute.rs:151, tu/grcastle.rs:126, tu/grcorneria.rs:34, tu/grdisplay.rs:57, tu/grgarden.rs:55, tu/grgreatbay.rs:66, tu/grgreens.rs:73, tu/grhomerun.rs:100, tu/gricemt.rs:85, tu/grkinokoroute.rs:210, tu/grkongo.rs:139, tu/groldkongo.rs:57, tu/groldpupupu.rs:54, tu/gronett.rs:58, tu/ground.rs:140, tu/grzebes.rs:333, tu/grzebesroute.rs:112, tu_ext.rs:404 -> port `melee_fighter::ftlib.rs:182`
+- `ftLib_80086684` [ext_fns!/hook!] x5: tu/grcastle.rs:127, tu/grgarden.rs:56, tu/grgreatbay.rs:67, tu/grkinokoroute.rs:211, tu/grzebes.rs:334 -> port `melee_fighter::ftlib.rs:184`
+- `ftLib_80086960` [ext_fns!/hook!] x3: tu/grcastle.rs:128, tu/gryorster.rs:174, tu/mpcoll.rs:72 -> port `melee_fighter::ftlib.rs:246`
+- `ftLib_80086984` [ext_fns!] x2: tu/grfigureget.rs:50, tu/mplib.rs:101 -> port `melee_fighter::ftlib.rs:249`
+- `ftLib_80086A4C` [hook!] x2: tu/grcastle.rs:129, tu/gryorster.rs:175 -> port `melee_fighter::ftlib.rs:263`
+- `ftLib_80086B74` [ext_fns!] x1: tu/grhomerun.rs:101 -> port `melee_fighter::ftlib.rs:287`
+- `ftLib_80086B80` [ext_fns!/hook!] x4: tu/grcastle.rs:130, tu/grgarden.rs:57, tu/grgreatbay.rs:68, tu/grkinokoroute.rs:212 -> port `melee_fighter::ftlib.rs:288`
+- `ftLib_80086B90` [ext_fns!] x1: tu/grpstadium.rs:98 -> port `melee_fighter::ftlib.rs:289`
+- `ftLib_80086BE0` [ext_fns!/fn+panic] x2: tu/mpcoll.rs:73, tu_ext.rs:409 -> port `melee_fighter::ftlib.rs:294`
+- `ftLib_80086BEC` [hook!] x2: tu/grcastle.rs:131, tu/gryorster.rs:251 -> port `melee_fighter::ftlib.rs:295`
+- `ftLib_80086C18` [ext_fns!/fn+panic/hook!] x3: tu/grkongo.rs:140, tu/groldkongo.rs:58, tu_ext.rs:414 -> port `melee_fighter::ftlib.rs:308`
+- `ftLib_80086C9C` [hook!] x2: tu/grkraid.rs:89, tu/grzebes.rs:376 -> port `melee_fighter::ftlib.rs:309`
+- `ftLib_80086EC0` [ext_fns!/fn+panic/hook!] x4: tu/grbigblueroute.rs:152, tu/gricemt.rs:86, tu/grkinokoroute.rs:213, tu_ext.rs:419 -> port `melee_fighter::ftlib.rs:329`
+- `ftLib_8008701C` [ext_fns!] x1: tu/ground.rs:141 -> port `melee_fighter::ftlib.rs:366`
+- `ftLib_800872B0` [ext_fns!] x1: tu/grdisplay.rs:58 -> port `melee_fighter::ftlib.rs:409`
+- `ftLib_8008731C` [fn+panic] x1: tu_ext.rs:424 -> port `melee_fighter::ftlib.rs:416`
+- `ftLib_8008732C` [fn+panic/hook!] x2: tu/grkinokoroute.rs:214, tu_ext.rs:429 -> port `melee_fighter::ftlib.rs:422`
+- `ftLib_800873F4` [hook!] x1: tu/gryorster.rs:250 -> port `melee_fighter::ftlib.rs:427`
+- `ftLib_800874BC` [ext_fns!] x1: tu/mpcoll.rs:74 -> port `melee_fighter::ftlib.rs:448`
+- `GetMatchTimer` [ext_fns!/hook!] x2: tu/grinishie1.rs:46, tu/grinishie2.rs:34 -> port `melee_modes::tu/gmvs.rs:325`
+- `gm_80160854` [ext_fns!] x1: tu/grpstadium.rs:99 -> port `melee_modes::gm.rs:197`
+- `gm_80160968` [ext_fns!] x1: tu/grpstadium.rs:100 -> port `melee_modes::gm.rs:489`
+- `gm_80160A60` [ext_fns!] x1: tu/grpstadium.rs:101 -> port `melee_modes::tu/gm_1601.rs:643`
+- `gm_80164600` [ext_fns!] x1: tu/ground.rs:142 -> port `melee_modes::tu/gm_1601.rs:1775`
+- `gm_8016468C` [ext_fns!] x1: tu/soundtest.rs:63 -> port `melee_modes::tu/gm_1601.rs:1789`
+- `gm_80164ABC` [ext_fns!] x1: tu/ground.rs:143 -> port `melee_modes::tu/gm_1601.rs:1862`
+- `gm_80164F18` [ext_fns!] x1: tu/soundtest.rs:64 -> port `melee_modes::tu/gm_1601.rs:1886`
+- `gm_801674C4` [ext_fns!/fn+panic/hook!] x3: tu/gricemt.rs:87, tu/grkinokoroute.rs:215, tu_ext.rs:434 -> port `melee_modes::tu/gm_1601.rs:2480`
+- `gm_8016895C` [ext_fns!/hook!] x3: tu/if_2F72.rs:47, tu/if_2FD9.rs:44, tu/ifcoget.rs:87 -> port `melee_modes::tu/gm_1601.rs:2880`
+- `gm_801694A0` [ext_fns!] x1: tu/grpstadium.rs:102 -> port `melee_modes::tu/gm_16A2.rs:140`
+- `gm_8016AE80` [ext_fns!/hook!] x2: tu/grcastle.rs:132, tu/grinishie1.rs:70 -> port `melee_modes::tu/gmvs.rs:284`
+- `gm_8016AEC8` [ext_fns!] x1: tu/if_2F72.rs:48 -> port `melee_modes::tu/gmvs.rs:300`
+- `gm_8016AEEC` [ext_fns!] x1: tu/grpstadium.rs:103 -> port `melee_modes::tu/gmvs.rs:308`
+- `gm_8016AF0C` [ext_fns!] x1: tu/grpstadium.rs:104 -> port `melee_modes::tu/gmvs.rs:316`
+- `gm_8016B124` [ext_fns!] x1: tu/if_2FD9.rs:45 -> port `melee_modes::tu/gmvs.rs:383`
+- `gm_8016B168` [ext_fns!] x1: tu/grpstadium.rs:105 -> port `melee_modes::tu/gmvs.rs:395`
+- `gm_8016B184` [ext_fns!] x1: tu/grpstadium.rs:106 -> port `melee_modes::tu/gmvs.rs:399`
+- `gm_8016B3D8` [hook!] x2: tu/grbattle.rs:83, tu/grbigblueroute.rs:153 -> port `melee_modes::tu/gmvs.rs:487`
+- `gm_8016B774` [ext_fns!] x1: tu/if_2FF2.rs:50 -> port `melee_modes::tu/gmvs.rs:594`
+- `gm_8016C6C0` [ext_fns!] x2: tu/gronett.rs:59, tu/grpstadium.rs:107 -> port `melee_modes::tu/gmvs.rs:980`
+- `gm_8016ECE8` [hook!] x1: tu/grlast.rs:157 -> port `melee_modes::tu/gmvs.rs:2160`
+- `gm_8017E280` [ext_fns!] x1: tu/grfigureget.rs:51 -> port `melee_modes::tu/gm_17c0.rs:1455`
+- `gm_8017E7E0` [hook!] x1: tu/grcorneria.rs:35 -> port `melee_modes::tu/gm_17e4.rs:151`
+- `gm_80180AF4` [ext_fns!] x1: tu/grhomerun.rs:102 -> port `melee_modes::tu/gm_180A.rs:73`
+- `gm_801883C0` [hook!] x1: tu/grcorneria.rs:36 -> port `melee_modes::tu/gm_1879.rs:387`
+- `gm_8018841C` [ext_fns!] x1: tu/grpstadium.rs:108 -> port `melee_modes::tu/gm_1879.rs:409`
+- `gm_801A4B60` [ext_fns!] x1: tu/soundtest.rs:65 -> port `melee_modes::tu/gmscene.rs:348`
+- `gm_801B6320` [ext_fns!] x1: tu/ground.rs:145 -> port `melee_modes::tu/gmmultiman.rs:767`
+- `gm_801BEB74` [ext_fns!] x1: tu/soundtest.rs:66 -> port `melee_modes::tu/gmevent.rs:2214`
+- `gm_801BEFA4` [ext_fns!] x1: tu/soundtest.rs:67 -> port `melee_modes::tu/gmgover.rs:106`
+- `gm_801BEFC0` [ext_fns!] x1: tu/soundtest.rs:68 -> port `melee_modes::tu/gmgover.rs:116`
+- `gm_801BF040` [ext_fns!] x1: tu/soundtest.rs:69 -> port `melee_modes::tu/gmgover.rs:156`
+- `gm_801BF708` [ext_fns!] x1: tu/soundtest.rs:70 -> port `melee_modes::tu/gmopeningmode.rs:675`
+- `gm_ChangeGameModeAfterCurrentScene` [ext_fns!] x1: tu/soundtest.rs:71 -> port `melee_modes::tu/gm_1A3F.rs:566`
+- `gm_GetAllStarData` [ext_fns!] x1: tu/soundtest.rs:72 -> port `melee_modes::tu/gm_17eb.rs:50`
+- `gm_GetDbPauseFlag` [fn+panic/hook!] x3: tu/grbigblue.rs:165, tu/grcorneria.rs:37, tu_ext.rs:439 -> port `melee_modes::tu/gmscene.rs:224`
+- `gm_GetFrameCount` [ext_fns!] x1: tu/ground.rs:146 -> port `melee_modes::tu/gmvs.rs:304`
+- `gm_GetMatchEndPlayerScore` [ext_fns!] x1: tu/if_2FF2.rs:51 -> port `melee_modes::tu/gmvs.rs:974`
+- `gm_GetStartMeleeRules` [ext_fns!] x1: tu/grpstadium.rs:109 -> port `melee_modes::tu/gmvs.rs:275`
+- `gm_IsCKindUnlocked` [ext_fns!] x1: tu/ground.rs:147 -> port `melee_modes::tu/gm_1601.rs:1820`
+- `gm_IsCurrently1PMode` [ext_fns!] x1: tu/ground.rs:148 -> port `melee_modes::tu/gmvs.rs:519`
+- `gm_MexVanillaKind` [fn+panic] x1: tu_ext.rs:444 -> port `melee_modes::tu/gm_1601.rs:468`
+- `gm_SetNextGameModeStateId` [ext_fns!] x1: tu/soundtest.rs:73 -> port `melee_modes::tu/gm_1A3F.rs:535`
+- `gm_SetupAllPlayerDefaults` [ext_fns!] x1: tu/soundtest.rs:74 -> port `melee_modes::tu/gm_1601.rs:2604`
+- `gm_SetupRulesDefaults` [ext_fns!] x1: tu/soundtest.rs:75 -> port `melee_modes::tu/gm_1601.rs:2610`
+- `gmMainLib_8015CCF0` [ext_fns!] x1: tu/soundtest.rs:49 -> port `melee_modes::tu/gmmain_lib.rs:185`
+- `gmMainLib_8015CDC8` [ext_fns!] x1: tu/soundtest.rs:50 -> port `melee_modes::tu/gmmain_lib.rs:257`
+- `gmMainLib_8015CDD4` [ext_fns!] x1: tu/soundtest.rs:51 -> port `melee_modes::tu/gmmain_lib.rs:261`
+- `gmMainLib_8015CDE0` [ext_fns!] x1: tu/soundtest.rs:52 -> port `melee_modes::tu/gmmain_lib.rs:265`
+- `gmMainLib_8015D06C` [ext_fns!] x1: tu/soundtest.rs:53 -> port `melee_modes::tu/gmmain_lib.rs:335`
+- `gmMainLib_8015D48C` [ext_fns!] x1: tu/soundtest.rs:54 -> port `melee_modes::tu/gmmain_lib.rs:438`
+- `gmMainLib_8015D4E8` [ext_fns!] x1: tu/soundtest.rs:55 -> port `melee_modes::tu/gmmain_lib.rs:446`
+- `gmMainLib_8015FA34` [ext_fns!] x1: tu/soundtest.rs:56 -> port `melee_modes::tu/gmmain_lib.rs:1099`
+- `gmMainLib_8015FB68` [ext_fns!] x1: tu/soundtest.rs:57 -> port `melee_modes::tu/gmmain_lib.rs:1118`
+- `gmMainLib_GetBonusMatchTotal` [ext_fns!] x1: tu/soundtest.rs:58 -> port `melee_modes::tu/gmmain_lib.rs:217`
+- `gmMainLib_GetCoinMatchTotal` [ext_fns!] x1: tu/soundtest.rs:59 -> port `melee_modes::tu/gmmain_lib.rs:213`
+- `gmMainLib_GetKOTotal` [ext_fns!] x1: tu/soundtest.rs:60 -> port `melee_modes::tu/gmmain_lib.rs:249`
+- `gmMainLib_GetStockMatchTotal` [ext_fns!] x1: tu/soundtest.rs:61 -> port `melee_modes::tu/gmmain_lib.rs:209`
+- `gmMainLib_GetTimeMatchTotal` [ext_fns!] x1: tu/soundtest.rs:62 -> port `melee_modes::tu/gmmain_lib.rs:205`
+- `it_8026B294` [ext_fns!/hook!] x3: tu/gricemt.rs:107, tu/grinishie1.rs:82, tu/grkongo.rs:189 -> port `melee_items::itlib.rs:37`
+- `it_8026B3C0` [fn+panic] x1: tu_ext.rs:560 -> port `melee_items::itlib3.rs:161`
+- `it_8026B40C` [ext_fns!] x1: tu/ground.rs:166 -> port `melee_items::tu/it_26B1.rs:247`
+- `it_8026B718` [hook!] x1: tu/gryorster.rs:252 -> port `melee_items::itlib.rs:190`
+- `it_8026BE84` [ext_fns!/hook!] x4: tu/grbigblue.rs:196, tu/grheal.rs:59, tu/grhomerun.rs:107, tu/ground.rs:167 -> port `melee_items::tu/it_26B1.rs:662`
+- `it_8026C1E8` [hook!] x1: tu/grzakogenerator.rs:161 -> port `melee_items::itlib.rs:384`
+- `it_8026D324` [ext_fns!/hook!] x4: tu/grbigblue.rs:197, tu/grgreatbay.rs:80, tu/grinishie1.rs:83, tu/grkongo.rs:190 -> port `melee_items::tu/itspawn.rs:512`
+- `it_8026F7C8` [ext_fns!/hook!] x2: tu/grcastle.rs:213, tu/grinishie1.rs:84 -> port `melee_items::tu/itdrop.rs:187`
+- `it_802725D4` [hook!] x1: tu/grmaterial.rs:79 -> port `melee_items::tu/it_2725.rs:305`
+- `it_80274C60` [ext_fns!] x1: tu/gronett.rs:71 -> port `melee_items::itlib.rs:442`
+- `it_80275414` [ext_fns!/hook!] x2: tu/grcastle.rs:214, tu/grgreens.rs:89 -> port `melee_items::itlib.rs:571`
+- `it_802756D0` [hook!] x1: tu/grmaterial.rs:80 -> port `melee_items::itlib.rs:654`
+- `it_802756E0` [hook!] x1: tu/grmaterial.rs:81 -> port `melee_items::itlib3.rs:379`
+- `it_8027B5B0` [ext_fns!/hook!] x2: tu/ground.rs:168, tu/grzakogenerator.rs:150 -> port `melee_items::tu/itzako.rs:188`
+- `it_8027CE18` [hook!] x1: tu/grzakogenerator.rs:156 -> port `melee_items::tu/itzako.rs:751`
+- `it_80286088` [hook!] x1: tu/grkongo.rs:191 -> port `melee_items::tu/itbox.rs:116`
+- `it_802D8618` [fn+panic] x1: tu_ext.rs:565 -> port `melee_items::tu/itheiho.rs:103`
+- `it_802DC4BC` [hook!] x1: tu/grzakogenerator.rs:154 -> port `melee_items::tu/itlikelike.rs:1245`
+- `it_802DD7F0` [hook!] x1: tu/grzakogenerator.rs:152 -> port `melee_items::tu/itnokonoko.rs:528`
+- `it_802E16F8` [hook!] x1: tu/grzakogenerator.rs:153 -> port `melee_items::tu/itpatapata.rs:532`
+- `it_802E18B4` [hook!] x1: tu/grkongo.rs:192 -> port `melee_items::tu/itklap.rs:197`
+- `it_802E20D8` [hook!] x1: tu/grkongo.rs:193 -> port `melee_items::tu/itklap.rs:360`
+- `it_802E2330` [hook!] x1: tu/grkongo.rs:194 -> port `melee_items::tu/itklap.rs:413`
+- `it_802E6AEC` [hook!] x1: tu/grmaterial.rs:82 -> port `melee_items::tu/ityaku.rs:100`
+- `it_802E72E0` [hook!] x1: tu/grcorneria.rs:322 -> port `melee_items::tu/itarwinglaser.rs:163`
+- `it_802E7654` [hook!] x2: tu/grcorneria.rs:323, tu/grvenom.rs:388 -> port `melee_items::tu/itarwinglaser.rs:263`
+- `it_802EA9FC` [hook!] x1: tu/grzakogenerator.rs:151 -> port `melee_items::tu/itleadead.rs:984`
+- `it_802EAF34` [hook!] x1: tu/grcorneria.rs:324 -> port `melee_items::tu/itgreatfoxlaser.rs:81`
+- `it_802EBD14` [ext_fns!] x1: tu/grgreatbay.rs:81 -> port `melee_items::tu/ittincle.rs:323`
+- `it_802EBFAC` [ext_fns!] x1: tu/grgreatbay.rs:82 -> port `melee_items::tu/ittincle.rs:402`
+- `it_802EC830` [ext_fns!] x1: tu/grgreatbay.rs:83 -> port `melee_items::tu/ittincle.rs:659`
+- `it_802ECA70` [ext_fns!] x1: tu/grgreatbay.rs:84 -> port `melee_items::tu/ittincle.rs:716`
+- `it_802ECC8C` [ext_fns!] x1: tu/grgreatbay.rs:85 -> port `melee_items::itkinds5.rs:88`
+- `it_802ECC98` [ext_fns!] x1: tu/grgreatbay.rs:86 -> port `melee_items::itkinds5.rs:93`
+- `it_802ECCA4` [ext_fns!] x1: tu/grgreatbay.rs:87 -> port `melee_items::itkinds5.rs:190`
+- `it_802ECD1C` [hook!] x1: tu/grinishie2.rs:111 -> port `melee_items::itkinds5.rs:98`
+- `it_802ECD3C` [hook!] x1: tu/grinishie2.rs:112 -> port `melee_items::tu/itkyasarin.rs:167`
+- `it_802EE200` [ext_fns!] x1: tu/grgreens.rs:90 -> port `melee_items::tu/itwhispyapple.rs:116`
+- `it_802EEFA8` [ext_fns!] x1: tu/grflatzone.rs:76 -> port `melee_items::tu/ittools.rs:104`
+- `it_802F2014` [ext_fns!] x1: tu/grfigureget.rs:55 -> port `melee_items::itkinds5.rs:103`
+- `it_802F2020` [ext_fns!] x1: tu/grfigureget.rs:56 -> port `melee_items::itkinds.rs:1775`
+- `it_802F202C` [ext_fns!] x1: tu/grfigureget.rs:57 -> port `melee_items::tu/itcoin.rs:380`
+- `it_802F2094` [ext_fns!] x3: tu/grfigureget.rs:58, tu/grheal.rs:60, tu/ground.rs:169 -> port `melee_items::tu/itcoin.rs:392`
+- `it_ResetStageArticleTable` [ext_fns!] x1: tu/ground.rs:170 -> port `melee_items::tu/it_26B1.rs:195`
+- `Item_80268B18` [ext_fns!] x1: tu/grgreatbay.rs:63 -> port `melee_items::tu/item.rs:1156`
+- `Item_80268E5C` [ext_fns!/hook!] x4: tu/grcorneria.rs:321, tu/grgarden.rs:51, tu/grmaterial.rs:66, tu/gronett.rs:56 -> port `melee_items::tu/item.rs:1274`
+- `itGetKind` [ext_fns!/hook!] x7: tu/grcastle.rs:212, tu/grkinokoroute.rs:248, tu/grkongo.rs:188, tu/grlib.rs:68, tu/grzakogenerator.rs:155, tu/mpcoll.rs:76, tu/mplib.rs:104 -> port `melee_items::tu/it_26B1.rs:887`
+- `lb_80014258` [hook!] x1: tu/grmaterial.rs:108 -> port `melee_modes::tu/lb_013B.rs:186`
+- `lb_80014498` [hook!] x1: tu/grmaterial.rs:109 -> port `melee_modes::tu/lb_013B.rs:241`
+- `OSReport` [ext_fns!/fn+panic/fn-body/hook!] x17: tu/efasync.rs:166, tu/granime.rs:90, tu/grbattle.rs:77, tu/grbigblue.rs:133, tu/grbigblueroute.rs:148, tu/grcastle.rs:122, tu/grcorneria.rs:370, tu/grinishie2.rs:75, tu/grizumi.rs:161, tu/grkinokoroute.rs:174, tu/grkongo.rs:122, tu/grkraid.rs:88, tu/grlast.rs:149, tu/grmaterial.rs:68, tu/mpcoll.rs:78, tu/mplib.rs:105, tu_ext.rs:323 -> port `melee_modes::tu/gm_17c0.rs:246`
+- `Player_80031790` [fn+panic] x1: tu_ext.rs:328 -> port `melee_fighter::player.rs:80`
+- `Player_80031900` [fn+panic] x1: tu_ext.rs:333 -> port `melee_fighter::player.rs:110`
+- `Player_8003219C` [ext_fns!] x1: tu/grpstadium.rs:92 -> port `melee_fighter::player.rs:185`
+- `Player_80036428` [ext_fns!] x1: tu/if_2F72.rs:46 -> port `melee_fighter::player.rs:740`
+- `Player_GetEntity` [ext_fns!/fn+panic] x3: tu/ground.rs:109, tu/grpstadium.rs:93, tu_ext.rs:338 -> port `melee_fighter::tu/player.rs:689`
+- `Player_GetEntityAtIndex` [ext_fns!/fn+panic] x2: tu/ground.rs:110, tu_ext.rs:343 -> port `melee_fighter::tu/player.rs:694`
+- `Player_GetPlayerCharacter` [ext_fns!] x1: tu/ground.rs:111 -> port `melee_fighter::tu/player.rs:368`
+- `Player_GetPlayerSlotType` [ext_fns!/hook!] x4: tu/grcorneria.rs:371, tu/grpstadium.rs:94, tu/grvenom.rs:386, tu/if_2FD9.rs:43 -> port `melee_fighter::tu/player.rs:376`
+- `Player_GetTeam` [ext_fns!] x1: tu/grpstadium.rs:95 -> port `melee_fighter::tu/player.rs:550`
+- `Player_LoadPlayerCoords` [ext_fns!/hook!] x3: tu/grcorneria.rs:372, tu/ground.rs:112, tu/grvenom.rs:387 -> port `melee_fighter::tu/player.rs:419`
+- `ScriptGame_ArenaBound` [hook!] x1: tu/stage.rs:46 -> port `melee_modes::tu/script_game.rs:1805`
+- `ScriptGame_RefsGroundBorn` [ext_fns!] x1: tu/ground.rs:113 -> port `melee_modes::tu/script_game.rs:21021`
+- `ScriptGame_StageJoint` [ext_fns!] x1: tu/mplib.rs:88 -> port `melee_modes::tu/script_game.rs:9969`
+- `ScriptGame_StageJointActive` [ext_fns!] x1: tu/mplib.rs:89 -> port `melee_modes::tu/script_game.rs:1298`
+- `ScriptGame_StageJointCapacity` [ext_fns!] x1: tu/mplib.rs:90 -> port `melee_modes::tu/script_game.rs:28489`
+- `ScriptGame_StageLineActive` [ext_fns!] x1: tu/mplib.rs:91 -> port `melee_modes::tu/script_game.rs:1311`
+- `ScriptGame_StageOriginalVisible` [ext_fns!] x1: tu/grdisplay.rs:52 -> port `melee_modes::tu/script_game.rs:1609`
+- `ScriptGame_StagePrepare` [ext_fns!] x1: tu/ground.rs:114 -> port `melee_modes::tu/script_game.rs:6856`
+- `ScriptGame_StageReady` [ext_fns!] x1: tu/ground.rs:115 -> port `melee_modes::tu/script_game.rs:7708`
+- `ScriptGame_StageSlotArchive` [hook!] x1: tu/grdatfiles.rs:25 -> port `melee_modes::tu/script_game.rs:31862`
+- `ScriptGame_StageSlotCollision` [ext_fns!] x1: tu/ground.rs:116 -> port `melee_modes::tu/script_game.rs:32593`
+- `ScriptGame_StageSlotGround` [ext_fns!] x1: tu/ground.rs:117 -> port `melee_modes::tu/script_game.rs:32536`
+- `ScriptGame_StageSlotJointUpdate` [ext_fns!] x1: tu/mplib.rs:92 -> port `melee_modes::tu/script_game.rs:32896`
+- `ScriptGame_StageSlotOwned` [ext_fns!] x1: tu/grdisplay.rs:53 -> port `melee_modes::tu/script_game.rs:32458`
+- `ScriptGame_StageSlotRetailCaptureBegin` [ext_fns!] x1: tu/ground.rs:118 -> port `melee_modes::tu/script_game.rs:33264`
+- `ScriptGame_StageSlotRetailCaptureEnd` [ext_fns!] x1: tu/ground.rs:119 -> port `melee_modes::tu/script_game.rs:33288`
+- `ScriptGame_StageSlotRetailCaptureResume` [ext_fns!] x1: tu/ground.rs:120 -> port `melee_modes::tu/script_game.rs:33284`
+- `ScriptGame_StageSlotRetailCollision` [ext_fns!] x1: tu/ground.rs:121 -> port `melee_modes::tu/script_game.rs:33793`
+- `ScriptGame_StageSlotRetailLoading` [ext_fns!] x1: tu/ground.rs:122 -> port `melee_modes::tu/script_game.rs:33299`
+- `ScriptGame_StageSlotSameJoint` [ext_fns!] x1: tu/mpcoll.rs:71 -> port `melee_modes::tu/script_game.rs:31818`
+- `Toy_803048C0` [ext_fns!] x1: tu/ground.rs:132 -> port `melee_items::tu/toy.rs:641`
+- `Toy_80304A58` [ext_fns!] x2: tu/grheal.rs:54, tu/ground.rs:133 -> port `melee_items::tu/toy.rs:663`
+- `Toy_80305058` [ext_fns!] x1: tu/grfigureget.rs:49 -> port `melee_items::tu/toy.rs:798`
+- `toy_80305918` [fn-body] x1: gr/ground.rs:105 -> port `melee_items::tu/toy.rs:1050`
+- `Toy_80305918` [ext_fns!] x1: tu/ground.rs:134 -> port `melee_items::tu/toy.rs:1050`
+- `Toy_80311680` [ext_fns!] x1: tu/soundtest.rs:46 -> port `melee_items::tu/toy.rs:4376`
+- `toy_8031234c` [fn-body] x1: gr/ground.rs:101 -> port `melee_items::tu/toy.rs:4609`
+- `Toy_8031234C` [ext_fns!] x1: tu/ground.rs:135 -> port `melee_items::tu/toy.rs:4609`
+- `toy_803124bc` [fn-body] x1: gr/ground.rs:97 -> port `melee_items::tu/toy.rs:4667`
+- `Toy_803124BC` [ext_fns!] x2: tu/ground.rs:136, tu/soundtest.rs:47 -> port `melee_items::tu/toy.rs:4667`
+- `Toy_SetUnlockState` [ext_fns!] x1: tu/soundtest.rs:48 -> port `melee_items::tu/toy.rs:978`
+- `tyDisplay_8031C2CC` [ext_fns!] x2: tu/grfigureget.rs:62, tu/ground.rs:199 -> port `melee_items::tu/tydisplay.rs:1589`
+- `tyDisplay_8031C2EC` [ext_fns!] x1: tu/ground.rs:200 -> port `melee_items::tu/tydisplay.rs:1593`
+- `tyDisplay_8031C354` [ext_fns!] x1: tu/grfigureget.rs:63 -> port `melee_items::tu/tydisplay.rs:1603`
+- `tyDisplay_8031C454` [ext_fns!] x2: tu/grfigureget.rs:64, tu/ground.rs:201 -> port `melee_items::tu/tydisplay.rs:1644`
+
+## melee_items
+
+NO_PORT: 311 sites / 106 names, SIGNATURE: 4321 sites / 882 names, CYCLE: 471 sites / 280 names
+
+### melee_items - NO_PORT (311 sites, 106 names)
+
+- `Camera_80029044` [ext_fns!] x1: tu/item.rs:29
+- `Camera_800313E0` [ext_fns!] x1: tu/vi.rs:28
+- `Camera_GetBackgroundColor` [ext_fns!] x1: tu/vi0601.rs:32
+- `Camera_GetTransformInterest` [ext_fns!] x1: tu/itunknown.rs:31
+- `Camera_GetTransformPosition` [ext_fns!] x1: tu/itzako.rs:33
+- `Camera_Init` [ext_fns!] x5: tu/vi0102.rs:31, tu/vi0401.rs:34, tu/vi0501.rs:36, tu/vi0502.rs:35, tu/vi0601.rs:34
+- `Camera_RequestQuake` [ext_fns!] x18: tu/itbox.rs:36, tu/itentei.rs:34, tu/itkabigon.rs:30, tu/itleadead.rs:33, tu/itlikelike.rs:33, tu/itnesspkflashexplode.rs:32, tu/itnokonoko.rs:32, tu/itoctarock.rs:31, tu/itoldkuri.rs:31, tu/itoldottosea.rs:31, tu/itpatapata.rs:32, tu/itraikou.rs:30, tu/itsuikun.rs:32, tu/ittaru.rs:33, tu/ittarucann.rs:35, tu/itwhitebea.rs:37, tu/itzeldadinfireexplode.rs:34, tu/itzgshell.rs:35
+- `Camera_StopQuake` [ext_fns!] x1: tu/itkabigon.rs:31
+- `DevText_Create` [ext_fns!] x2: tu/toy.rs:61, tu/tydisplay.rs:61
+- `efAsync_Spawn` [ext_fns!] x12: tu/itclimbersice.rs:49, tu/iteffect.rs:44, tu/itkirbyhammer.rs:37, tu/itluigifireball.rs:35, tu/itmariocape.rs:38, tu/itmariofireball.rs:37, tu/itmball.rs:34, tu/itrshell.rs:36, tu/itwstar.rs:39, tu/ityoshiegglay.rs:39, tu/ityoshieggthrow.rs:40, tu/itzgshell.rs:41
+- `efSync_Spawn_N` [ext_fns!] x9: tu/itegg.rs:39, tu/itentei.rs:41, tu/itevyoshiegg.rs:38, tu/itfflower.rs:38, tu/itkoopaflame.rs:50, tu/itkusudama.rs:49, tu/itlinkhookshot.rs:62, tu/itlipstickspore.rs:36, tu/itlizardon.rs:40
+- `ft_80089228` [ext_fns!] x1: tu/itcoll.rs:45
+- `ftCo_800A4A40` [ext_fns!] x1: tu/itsamusgrapple.rs:66
+- `ftCo_CalcYScaledKnockback` [ext_fns!] x1: tu/itcoll.rs:39
+- `ftColl_80076808` [ext_fns!] x1: tu/itcoll.rs:40
+- `ftColl_800768A0` [ext_fns!] x1: tu/itsamusgrapple.rs:69
+- `ftColl_8007ABD0` [ext_fns!] x1: tu/itsamusgrapple.rs:70
+- `ftColl_8007AC9C` [ext_fns!] x1: tu/itsamusgrapple.rs:71
+- `ftColl_8007AFF8` [ext_fns!] x3: tu/itlinkhookshot.rs:68, tu/itsamusgrapple.rs:72, tu/itseakchain.rs:54
+- `ftDemo_ObjAllocInit` [ext_fns!/todo_fns!] x7: tu/vi0102.rs:69, tu/vi0401.rs:73, tu/vi0501.rs:80, tu/vi0502.rs:75, tu/vi1101.rs:31, tu/vi1201v1.rs:38, tu/vi1201v2.rs:37
+- `ftLib_GetKind` [ext_fns!] x2: tu/item.rs:84, tu/itlinkboomerang.rs:54
+- `ftLib_GetMotionId` [ext_fns!] x4: tu/itclimbersstring.rs:55, tu/itnessyoyo.rs:54, tu/itseakchain.rs:55, tu/itzako.rs:47
+- `ftParts_GetBoneIndex` [ext_fns!] x2: tu/itlinkhookshot.rs:70, tu/itsamusgrapple.rs:75
+- `ftSs_Init_80128944` [ext_fns!] x1: tu/itsamusbomb.rs:36
+- `ftSs_Init_80128A1C` [ext_fns!] x1: tu/itsamusbomb.rs:37
+- `ftSs_SpecialLw_80129100` [ext_fns!] x1: tu/itsamuschargeshot.rs:50
+- `ftSs_SpecialN_801291F0` [ext_fns!] x1: tu/itsamuschargeshot.rs:53
+- `ftSs_SpecialS_8012A068` [ext_fns!] x1: tu/itsamusmissile.rs:39
+- `GObj_InitUserData` [ext_fns!] x7: tu/itclimbersstring.rs:39, tu/item.rs:32, tu/itlinkhookshot.rs:44, tu/itnessyoyo.rs:33, tu/itsamusgrapple.rs:41, tu/itseakchain.rs:38, tu/tyfigupon.rs:60
+- `GObj_RemoveUserData` [ext_fns!] x1: tu/tyfigupon.rs:61
+- `Ground_801C2AE8` [ext_fns!] x1: tu/itspawn.rs:44
+- `Ground_SetParamY` [ext_fns!] x2: tu/vi0501.rs:42, tu/vi0502.rs:40
+- `GXBegin` [ext_fns!] x1: tu/toy.rs:79
+- `GXColor4u8` [ext_fns!] x1: tu/toy.rs:80
+- `GXLoadPosMtxImm` [ext_fns!] x1: tu/toy.rs:81
+- `GXPosition3f32` [ext_fns!] x1: tu/toy.rs:82
+- `GXSetPipelineWaitAURORA` [ext_fns!] x1: tu/itdraw.rs:30
+- `hsd_assert_fail` [fn-body] x3: tu/itgamewatchjudge.rs:95, tu/toy.rs:556, tu/tydisplay.rs:153
+- `HSD_CObjGetBottom` [ext_fns!] x1: tu/toy.rs:86
+- `HSD_CObjGetEyeDistance` [ext_fns!] x2: tu/toy.rs:88, tu/tyfigupon.rs:68
+- `HSD_CObjGetEyePosition` [ext_fns!] x2: tu/toy.rs:89, tu/tydisplay.rs:77
+- `HSD_CObjGetEyeVector` [ext_fns!] x2: tu/toy.rs:90, tu/tyfigupon.rs:69
+- `HSD_CObjGetFov` [ext_fns!] x1: tu/tydisplay.rs:78
+- `HSD_CObjGetInterest` [ext_fns!] x3: tu/toy.rs:91, tu/tydisplay.rs:79, tu/tyfigupon.rs:70
+- `HSD_CObjGetLeft` [ext_fns!] x1: tu/toy.rs:92
+- `HSD_CObjGetLeftVector` [ext_fns!] x1: tu/toy.rs:93
+- `HSD_CObjGetRight` [ext_fns!] x1: tu/toy.rs:94
+- `HSD_CObjGetTop` [ext_fns!] x1: tu/toy.rs:95
+- `HSD_CObjGetUpVector` [ext_fns!] x1: tu/toy.rs:96
+- `HSD_CObjGetViewingMtx` [ext_fns!] x1: tu/toy.rs:97
+- `HSD_CObjSetBottom` [ext_fns!] x1: tu/toy.rs:98
+- `HSD_CObjSetEyePosition` [ext_fns!] x4: tu/toy.rs:100, tu/tydisplay.rs:80, tu/tyfigupon.rs:73, tu/tylist.rs:53
+- `HSD_CObjSetFov` [ext_fns!] x1: tu/tydisplay.rs:81
+- `HSD_CObjSetInterest` [ext_fns!] x3: tu/toy.rs:102, tu/tydisplay.rs:82, tu/tylist.rs:54
+- `HSD_CObjSetLeft` [ext_fns!] x1: tu/toy.rs:103
+- `HSD_CObjSetRight` [ext_fns!] x1: tu/toy.rs:104
+- `HSD_CObjSetTop` [ext_fns!] x1: tu/toy.rs:105
+- `HSD_FogInterpretAnim` [todo_fns!] x1: tu/vi1201v2.rs:87
+- `HSD_FogLoadDesc` [ext_fns!/todo_fns!] x9: tu/toy.rs:106, tu/tydisplay.rs:83, tu/vi0102.rs:42, tu/vi0401.rs:45, tu/vi0501.rs:49, tu/vi0502.rs:47, tu/vi0801.rs:64, tu/vi1201v1.rs:88, tu/vi1201v2.rs:88
+- `HSD_FogReqAnim` [todo_fns!] x1: tu/vi1201v2.rs:89
+- `HSD_FogSet` [ext_fns!] x3: tu/toy.rs:107, tu/tyfigupon.rs:74, tu/tylist.rs:57
+- `HSD_GObj_SetupProc` [ext_fns!/todo_fns!] x17: tu/item.rs:44, tu/itspawn.rs:45, tu/toy.rs:118, tu/tydisplay.rs:90, tu/tyfigupon.rs:83, tu/tylist.rs:66, tu/vi0102.rs:48, tu/vi0401.rs:52, tu/vi0402.rs:41, tu/vi0501.rs:55, tu/vi0502.rs:53, tu/vi0601.rs:49, tu/vi0801.rs:69, tu/vi1101.rs:81, tu/vi1201v1.rs:93, tu/vi1201v2.rs:95, tu/vi1202.rs:59
+- `HSD_GObjFree` [ext_fns!/todo_fns!] x12: tu/itclimbersstring.rs:41, tu/item.rs:42, tu/itlinkhookshot.rs:46, tu/itnessyoyo.rs:35, tu/itsamusgrapple.rs:43, tu/itseakchain.rs:40, tu/toy.rs:109, tu/tydisplay.rs:84, tu/tyfigupon.rs:75, tu/tylist.rs:58, tu/vi1201v1.rs:94, tu/vi1201v2.rs:96
+- `HSD_GObjProc_RemoveAllProcs` [ext_fns!] x4: tu/toy.rs:111, tu/tydisplay.rs:86, tu/tyfigupon.rs:77, tu/tylist.rs:60
+- `HSD_GObjProc_RemoveProc` [ext_fns!] x3: tu/toy.rs:112, tu/tyfigupon.rs:78, tu/tylist.rs:61
+- `HSD_JObjSetScaleXWithMtxDirty` [todo_fns!] x3: tu/vi1201v1.rs:104, tu/vi1201v2.rs:105, tu/vi1202.rs:68
+- `HSD_JObjSetScaleYWithMtxDirty` [todo_fns!] x3: tu/vi1201v1.rs:105, tu/vi1201v2.rs:106, tu/vi1202.rs:69
+- `HSD_JObjSetScaleZWithMtxDirty` [todo_fns!] x3: tu/vi1201v1.rs:106, tu/vi1201v2.rs:107, tu/vi1202.rs:70
+- `HSD_JObjSetTranslateXWithMtxDirty` [todo_fns!] x3: tu/vi1201v1.rs:107, tu/vi1201v2.rs:108, tu/vi1202.rs:71
+- `HSD_JObjSetTranslateZWithMtxDirty` [todo_fns!] x3: tu/vi1201v1.rs:109, tu/vi1201v2.rs:110, tu/vi1202.rs:73
+- `HSD_MtxGetRotation` [ext_fns!] x4: tu/itlinkarrow.rs:42, tu/itlinkboomerang.rs:45, tu/itmewtwoshadowball.rs:47, tu/itsamuschargeshot.rs:35
+- `HSD_SisLib_803A62A0` [ext_fns!] x2: tu/toy.rs:151, tu/tyfigupon.rs:99
+- `HSD_SObjLib_803A477C` [ext_fns!] x1: tu/toy.rs:143
+- `HSD_TObjSetup` [ext_fns!] x1: tu/itmaterial.rs:38
+- `it_8027163C` [ext_fns!] x2: tu/itcoin.rs:59, tu/item.rs:107
+- `it_80275BC8` [ext_fns!] x1: tu/it_2725.rs:85
+- `Item_80267978` [ext_fns!] x1: tu/it_26B1.rs:36
+- `Item_8026A8EC` [ext_fns!] x42: tu/it_26B1.rs:38, tu/it_2E5A.rs:46, tu/it_2F28.rs:36, tu/itclimbersice.rs:47, tu/itclimbersstring.rs:50, tu/itclinkmilk.rs:41, tu/itdrmariopill.rs:49, tu/itfoxblaster.rs:45, tu/itfreeze.rs:40, tu/itgamewatchbreath.rs:37, tu/itgamewatchfire.rs:31, tu/itgamewatchgreenhouse.rs:31, tu/itgamewatchjudge.rs:31, tu/itgamewatchmanhole.rs:31, tu/itgamewatchpanic.rs:31, tu/itgamewatchparachute.rs:31, tu/itgamewatchrescue.rs:31, tu/itgamewatchturtle.rs:31, tu/itgroundcoll.rs:32, tu/itkirbygamewatchchefpan.rs:32, tu/itkirbyhammer.rs:34, tu/itkirbyyoshispecialn.rs:31, tu/itlinkarrow.rs:47, tu/itlinkboomerang.rs:48, tu/itlinkbow.rs:35, tu/itlinkhookshot.rs:56, tu/itmariocape.rs:35, tu/itmewtwodisable.rs:33, tu/itmewtwoshadowball.rs:52, tu/itnessbat.rs:37, tu/itnessyoyo.rs:48, tu/itnokonoko.rs:36, tu/itpatapata.rs:39, tu/itpeachparasol.rs:34, tu/itpeachtoad.rs:35, tu/itpeachturnip.rs:37, tu/itsamuschargeshot.rs:38, tu/itsamusgrapple.rs:55, tu/itseakchain.rs:49, tu/ittincle.rs:38, tu/ityoshieggthrow.rs:37, tu/ityoshitongue.rs:32
+- `lb_800149E0` [ext_fns!] x1: tu/itdraw.rs:50
+- `lbAudioAx_80027168` [ext_fns!/todo_fns!] x11: tu/vi0102.rs:77, tu/vi0401.rs:83, tu/vi0402.rs:55, tu/vi0501.rs:88, tu/vi0502.rs:83, tu/vi0601.rs:71, tu/vi0801.rs:50, tu/vi1101.rs:51, tu/vi1201v1.rs:60, tu/vi1201v2.rs:55, tu/vi1202.rs:44
+- `Mex_Enabled` [ext_fns!] x1: tu/toy.rs:156
+- `Mex_IndexStageItem` [ext_fns!] x1: tu/it_26B1.rs:39
+- `Mex_ItemCustomDesc` [ext_fns!] x1: tu/item.rs:56
+- `Mex_ItemCustomLogic` [ext_fns!] x1: tu/item.rs:57
+- `Mex_ItemNotInitialized` [ext_fns!] x1: tu/item.rs:58
+- `Mex_ItRecord` [ext_fns!] x1: tu/it_26B1.rs:40
+- `Mex_SpawnArticleKind` [ext_fns!] x1: tu/item.rs:59
+- `Mex_SsmForPortKind` [ext_fns!] x1: tu/item.rs:60
+- `mpGetSpeed` [ext_fns!] x6: tu/itarwinglaser.rs:59, tu/item.rs:171, tu/ithouou.rs:51, tu/itlinkarrow.rs:76, tu/itlinkhookshot.rs:81, tu/itseakneedlethrown.rs:57
+- `mpLib_8004DD90_Floor` [ext_fns!] x1: tu/itmaplib.rs:59
+- `mpLineGetFlags` [ext_fns!] x2: tu/itarwinglaser.rs:60, tu/itwhitebea.rs:87
+- `mpLineGetNormal` [ext_fns!] x3: tu/itlinkarrow.rs:78, tu/itmaplib.rs:62, tu/itseakneedlethrown.rs:59
+- `mpLinesConnected` [ext_fns!] x1: tu/itmaplib.rs:63
+- `MTXRotRad` [ext_fns!] x1: tu/toy.rs:155
+- `panic_at` [fn-body] x2: tu/tyfigupon.rs:166, tu/tylist.rs:153
+- `plStale_IncrementAttackInstance` [ext_fns!] x1: tu/it_279C.rs:203
+- `PSMTXConcat` [ext_fns!] x6: tu/itclimbersstring.rs:52, tu/itdraw.rs:38, tu/itlinkhookshot.rs:58, tu/itnessyoyo.rs:50, tu/itsamusgrapple.rs:57, tu/itseakchain.rs:51
+- `PSMTXIdentity` [ext_fns!] x7: tu/itclimbersstring.rs:54, tu/itdraw.rs:39, tu/item.rs:61, tu/itlinkhookshot.rs:60, tu/itnessyoyo.rs:52, tu/itsamusgrapple.rs:59, tu/itseakchain.rs:53
+- `PSMTXMultVec` [ext_fns!] x1: tu/tyfigupon.rs:101
+- `PSMTXMultVecSR` [ext_fns!] x1: tu/toy.rs:157
+- `PSMTXRotAxisRad` [ext_fns!] x1: tu/tyfigupon.rs:102
+- `PSVECAdd` [ext_fns!] x3: tu/item.rs:62, tu/itmaplib.rs:29, tu/toy.rs:158
+- `PSVECCrossProduct` [ext_fns!] x2: tu/itlinkhookshot.rs:61, tu/tyfigupon.rs:103
+- `PSVECScale` [ext_fns!] x2: tu/toy.rs:159, tu/tyfigupon.rs:104
+- `PSVECSubtract` [ext_fns!] x1: tu/tyfigupon.rs:105
+- `Ui_RetailHidden` [ext_fns!] x1: tu/toy.rs:160
+
+### melee_items - SIGNATURE (4321 sites, 882 names)
+
+- `atan2f` [ext_fns!] x22: tu/itarwinglaser.rs:45, tu/iteffect.rs:42, tu/itfoxblaster.rs:48, tu/itfoxlaser.rs:42, tu/itkoopaflame.rs:47, tu/itleadead.rs:40, tu/itlgunbeam.rs:38, tu/itlgunray.rs:35, tu/itlinkarrow.rs:50, tu/itlinkboomerang.rs:51, tu/itlipstickspore.rs:34, tu/itmewtwoshadowball.rs:56, tu/itnesspkthunderball.rs:38, tu/itnesspkthundertrail.rs:36, tu/itpikachutjoltair.rs:38, tu/itpikachutjoltground.rs:37, tu/itsamuschargeshot.rs:40, tu/itsamusmissile.rs:35, tu/itseakneedlethrown.rs:42, tu/itsscopebeam.rs:37, tu/itstarrodstar.rs:36, tu/itunknown.rs:44 -> port `melee_runtime::lbtrigf.rs:113`
+- `Camera_800290D4` [ext_fns!] x1: tu/item.rs:30 -> port `melee_world::tu/camera.rs:69`
+- `Camera_80031060` [ext_fns!] x1: tu/itdraw.rs:29 -> port `melee_world::cm/camera.rs:658`
+- `Camera_800310A0` [ext_fns!/todo_fns!] x3: tu/vi.rs:27, tu/vi0601.rs:33, tu/vi0801.rs:30 -> port `melee_world::cm/camera.rs:667`
+- `Camera_80031144` [ext_fns!] x1: tu/itcoin.rs:35 -> port `melee_world::cm/camera.rs:679`
+- `Command_Execute` [ext_fns!] x1: tu/itanimlist.rs:42 -> port `melee_runtime::tu/lbcommand.rs:145`
+- `db_80225D64` [ext_fns!] x1: tu/item.rs:70 -> port `melee_runtime::tu/dbitem.rs:311`
+- `db_80225DD8` [ext_fns!] x55: tu/it_2725.rs:62, tu/it_279C.rs:50, tu/it_2E5A.rs:47, tu/itclimbersblizzard.rs:36, tu/itclimbersice.rs:48, tu/itcrazyhandbomb.rs:43, tu/itdrmariopill.rs:52, tu/item.rs:71, tu/itfoxillusion.rs:43, tu/itfoxlaser.rs:43, tu/itgamewatchbreath.rs:39, tu/itgamewatchchef.rs:41, tu/itgamewatchfire.rs:33, tu/itgamewatchgreenhouse.rs:33, tu/itgamewatchjudge.rs:33, tu/itgamewatchmanhole.rs:33, tu/itgamewatchpanic.rs:33, tu/itgamewatchparachute.rs:33, tu/itgamewatchturtle.rs:33, tu/itkirbycutterbeam.rs:44, tu/itkirbygamewatchchefpan.rs:34, tu/itkirbyhammer.rs:36, tu/itkoopaflame.rs:48, tu/itlgunbeam.rs:39, tu/itlgunray.rs:36, tu/itlinkarrow.rs:51, tu/itlipstickspore.rs:35, tu/itluigifireball.rs:34, tu/itmariocape.rs:37, tu/itmariofireball.rs:36, tu/itmasterhandbullet.rs:36, tu/itmasterhandlaser.rs:38, tu/itmewtwodisable.rs:34, tu/itnesspkfire.rs:34, tu/itnesspkfirepillar.rs:35, tu/itnesspkflash.rs:38, tu/itnesspkflashexplode.rs:37, tu/itnesspkthunderball.rs:39, tu/itnesspkthundertrail.rs:37, tu/itpeachexplode.rs:32, tu/itpeachparasol.rs:37, tu/itpeachtoad.rs:37, tu/itpeachtoadspore.rs:37, tu/itpikachuthunder.rs:37, tu/itpikachutjoltair.rs:39, tu/itpikachutjoltground.rs:38, tu/itsamusbomb.rs:35, tu/itsamusmissile.rs:36, tu/itseakneedlethrown.rs:43, tu/itseakvanish.rs:33, tu/itsscopebeam.rs:38, tu/itstarrodstar.rs:37, tu/ityoshistar.rs:37, tu/itzeldadinfire.rs:39, tu/itzeldadinfireexplode.rs:39 -> port `melee_runtime::tu/dbitem.rs:336`
+- `db_AreItemSpawnsEnabled` [ext_fns!] x1: tu/itspawn.rs:53 -> port `melee_runtime::tu/dbitem.rs:303`
+- `db_GetCurrentlySelectedPokemon` [ext_fns!] x1: tu/it_279C.rs:51 -> port `melee_runtime::tu/dbitem.rs:291`
+- `db_ShowCoinPickupRange` [ext_fns!] x1: tu/it_2E5A.rs:48 -> port `melee_runtime::tu/dbitem.rs:225`
+- `db_ShowEnemyStompRange` [ext_fns!] x1: tu/it_2725.rs:63 -> port `melee_runtime::tu/dbitem.rs:217`
+- `db_ShowItemPickupRange` [ext_fns!] x1: tu/item.rs:72 -> port `melee_runtime::tu/dbitem.rs:221`
+- `DevText_80302AC0` [ext_fns!] x2: tu/toy.rs:60, tu/tydisplay.rs:60 -> port `melee_world::hud/textlib.rs:61`
+- `DevText_Erase` [ext_fns!] x2: tu/toy.rs:62, tu/tydisplay.rs:62 -> port `melee_world::hud/textlib.rs:122`
+- `DevText_GetGObj` [ext_fns!] x2: tu/toy.rs:63, tu/tydisplay.rs:63 -> port `melee_world::tu/textdraw.rs:167`
+- `DevText_HideBackground` [ext_fns!] x1: tu/toy.rs:64 -> port `melee_world::tu/textlib.rs:355`
+- `DevText_HideCursor` [ext_fns!] x2: tu/toy.rs:65, tu/tydisplay.rs:64 -> port `melee_world::tu/textlib.rs:340`
+- `DevText_HideText` [ext_fns!] x1: tu/toy.rs:66 -> port `melee_world::tu/textlib.rs:365`
+- `DevText_Print` [ext_fns!] x2: tu/toy.rs:67, tu/tydisplay.rs:65 -> port `melee_world::hud/textlib.rs:138`
+- `DevText_Printf` [ext_fns!] x3: tu/toy.rs:182, tu/tydisplay.rs:113, tu/tyfigupon.rs:126 -> port `melee_world::tu/textlib.rs:459`
+- `DevText_Remove` [ext_fns!] x2: tu/toy.rs:68, tu/tydisplay.rs:66 -> port `melee_world::tu/textdraw.rs:185`
+- `DevText_SetBGColor` [ext_fns!] x2: tu/toy.rs:69, tu/tydisplay.rs:67 -> port `melee_world::tu/textlib.rs:403`
+- `DevText_SetCursorXY` [ext_fns!] x2: tu/toy.rs:70, tu/tydisplay.rs:68 -> port `melee_world::tu/textlib.rs:318`
+- `DevText_SetScale` [ext_fns!] x2: tu/toy.rs:71, tu/tydisplay.rs:69 -> port `melee_world::tu/textlib.rs:370`
+- `DevText_SetTextColor` [ext_fns!] x2: tu/toy.rs:72, tu/tydisplay.rs:70 -> port `melee_world::tu/textlib.rs:395`
+- `DevText_SetXY` [ext_fns!] x1: tu/toy.rs:73 -> port `melee_world::tu/textlib.rs:376`
+- `DevText_Show` [ext_fns!] x2: tu/toy.rs:74, tu/tydisplay.rs:71 -> port `melee_world::tu/textdraw.rs:418`
+- `DevText_StoreColorIndex` [ext_fns!] x2: tu/toy.rs:75, tu/tydisplay.rs:72 -> port `melee_world::tu/textlib.rs:388`
+- `efAsync_LoadSync` [ext_fns!/todo_fns!] x11: tu/vi0102.rs:67, tu/vi0401.rs:71, tu/vi0402.rs:46, tu/vi0501.rs:78, tu/vi0502.rs:73, tu/vi0601.rs:61, tu/vi0801.rs:31, tu/vi1101.rs:29, tu/vi1201v1.rs:35, tu/vi1201v2.rs:35, tu/vi1202.rs:28 -> port `melee_world::tu/efasync.rs:959`
+- `efAsync_MexSpawn` [ext_fns!] x1: tu/iteffect.rs:43 -> port `melee_world::tu/efasync.rs:1243`
+- `efAsync_QueueClear` [ext_fns!] x1: tu/item.rs:73 -> port `melee_world::tu/efasync.rs:1041`
+- `efAsync_QueueFlush` [ext_fns!] x1: tu/item.rs:74 -> port `melee_world::tu/efasync.rs:1030`
+- `efLib_DestroyAll` [ext_fns!] x19: tu/itclimbersice.rs:50, tu/item.rs:75, tu/itentei.rs:38, tu/itfflower.rs:37, tu/itfoxblaster.rs:49, tu/ithinoarashi.rs:49, tu/itkoopaflame.rs:49, tu/itlgunbeam.rs:40, tu/itmaril.rs:36, tu/itmewtwoshadowball.rs:57, tu/itpeachtoadspore.rs:38, tu/itpikachutjoltground.rs:39, tu/itraikou.rs:34, tu/itsamuschargeshot.rs:41, tu/itsamusmissile.rs:37, tu/itsuikun.rs:36, tu/itwstar.rs:40, tu/itzeldadinfire.rs:40, tu/itzeldadinfireexplode.rs:40 -> port `melee_world::tu/eflib.rs:236`
+- `efLib_Init` [ext_fns!/todo_fns!] x11: tu/vi0102.rs:68, tu/vi0401.rs:72, tu/vi0402.rs:47, tu/vi0501.rs:79, tu/vi0502.rs:74, tu/vi0601.rs:62, tu/vi0801.rs:32, tu/vi1101.rs:30, tu/vi1201v1.rs:36, tu/vi1201v2.rs:36, tu/vi1202.rs:29 -> port `melee_world::tu/eflib.rs:178`
+- `efLib_PauseAll` [ext_fns!] x24: tu/itcerebi.rs:34, tu/itentei.rs:39, tu/itfire.rs:35, tu/itfreezer.rs:35, tu/itfushigibana.rs:35, tu/ithinoarashi.rs:50, tu/ithitodeman.rs:44, tu/ithouou.rs:33, tu/itkabigon.rs:40, tu/itkamex.rs:35, tu/itkireihana.rs:37, tu/itlizardon.rs:38, tu/itlucky.rs:36, tu/itlugia.rs:43, tu/itmaril.rs:37, tu/itmarumine.rs:35, tu/itmatadogas.rs:39, tu/itmew.rs:35, tu/itporygon2.rs:33, tu/itraikou.rs:35, tu/itsonans.rs:34, tu/itsuikun.rs:37, tu/itthunder.rs:33, tu/itunknown.rs:45 -> port `melee_world::tu/eflib.rs:215`
+- `efLib_ResumeAll` [ext_fns!] x24: tu/itcerebi.rs:35, tu/itentei.rs:40, tu/itfire.rs:36, tu/itfreezer.rs:36, tu/itfushigibana.rs:36, tu/ithinoarashi.rs:51, tu/ithitodeman.rs:45, tu/ithouou.rs:34, tu/itkabigon.rs:41, tu/itkamex.rs:36, tu/itkireihana.rs:38, tu/itlizardon.rs:39, tu/itlucky.rs:37, tu/itlugia.rs:44, tu/itmaril.rs:38, tu/itmarumine.rs:36, tu/itmatadogas.rs:40, tu/itmew.rs:36, tu/itporygon2.rs:34, tu/itraikou.rs:36, tu/itsonans.rs:35, tu/itsuikun.rs:38, tu/itthunder.rs:34, tu/itunknown.rs:46 -> port `melee_world::tu/eflib.rs:217`
+- `efSync_Spawn` [ext_fns!/todo_fns!] x33: tu/it_2725.rs:64, tu/it_279C.rs:52, tu/itarwinglaser.rs:46, tu/itbox.rs:44, tu/itcerebi.rs:36, tu/itcoll.rs:37, tu/iteffect.rs:45, tu/itfoxblaster.rs:50, tu/ithinoarashi.rs:52, tu/ithitodeman.rs:46, tu/itkabigon.rs:42, tu/itkyasarinegg.rs:35, tu/itlgunbeam.rs:41, tu/itlinkarrow.rs:52, tu/itmarumine.rs:37, tu/itmasterhandbullet.rs:37, tu/itmasterhandlaser.rs:39, tu/itmatadogas.rs:41, tu/itmewtwoshadowball.rs:58, tu/itpeachtoadspore.rs:39, tu/itpikachutjoltground.rs:40, tu/itraikou.rs:37, tu/itsamuschargeshot.rs:42, tu/itsamusgrapple.rs:62, tu/itsamusmissile.rs:38, tu/itspawn.rs:54, tu/itsuikun.rs:39, tu/ittaru.rs:40, tu/ittarucann.rs:42, tu/itthunder.rs:35, tu/itzeldadinfire.rs:41, tu/itzeldadinfireexplode.rs:41, tu/vi1201v1.rs:37 -> port `melee_world::tu/efsync.rs:251`
+- `gm_8016B238` [ext_fns!] x3: tu/it_26B1.rs:51, tu/itdrop.rs:35, tu/itspawn.rs:58 -> port `melee_world::gr/stage.rs:548`
+- `GObj_Create` [ext_fns!/todo_fns!] x22: tu/itclimbersstring.rs:38, tu/item.rs:31, tu/itlinkhookshot.rs:43, tu/itnessyoyo.rs:32, tu/itsamusgrapple.rs:40, tu/itseakchain.rs:37, tu/itspawn.rs:42, tu/toy.rs:76, tu/tydisplay.rs:73, tu/tyfigupon.rs:59, tu/tylist.rs:45, tu/vi0102.rs:32, tu/vi0401.rs:35, tu/vi0402.rs:31, tu/vi0501.rs:37, tu/vi0502.rs:36, tu/vi0601.rs:35, tu/vi0801.rs:55, tu/vi1101.rs:69, tu/vi1201v1.rs:79, tu/vi1201v2.rs:78, tu/vi1202.rs:50 -> port `melee_runtime::gobj.rs:528`
+- `GObj_SetupGXLink` [ext_fns!/todo_fns!] x21: tu/itclimbersstring.rs:40, tu/item.rs:33, tu/itlinkhookshot.rs:45, tu/itnessyoyo.rs:34, tu/itsamusgrapple.rs:42, tu/itseakchain.rs:39, tu/toy.rs:77, tu/tydisplay.rs:74, tu/tyfigupon.rs:62, tu/tylist.rs:46, tu/vi0102.rs:33, tu/vi0401.rs:36, tu/vi0402.rs:32, tu/vi0501.rs:38, tu/vi0502.rs:37, tu/vi0601.rs:36, tu/vi0801.rs:56, tu/vi1101.rs:70, tu/vi1201v1.rs:80, tu/vi1201v2.rs:79, tu/vi1202.rs:51 -> port `melee_runtime::tu/gobjgxlink.rs:14`
+- `GObj_SetupGXLinkMax` [ext_fns!/todo_fns!] x15: tu/toy.rs:78, tu/tydisplay.rs:75, tu/tyfigupon.rs:63, tu/tylist.rs:47, tu/vi0102.rs:34, tu/vi0401.rs:37, tu/vi0402.rs:33, tu/vi0501.rs:39, tu/vi0502.rs:38, tu/vi0601.rs:37, tu/vi0801.rs:57, tu/vi1101.rs:71, tu/vi1201v1.rs:81, tu/vi1201v2.rs:80, tu/vi1202.rs:52 -> port `melee_runtime::tu/gobjgxlink.rs:19`
+- `grBigBlueRoute_8020DAB4` [todo_fns!] x1: tu/vi0801.rs:35 -> port `melee_world::tu/grbigblueroute.rs:1086`
+- `grCorneria_801DDCF0` [ext_fns!] x1: tu/itarwinglaser.rs:48 -> port `melee_world::tu/grcorneria.rs:984`
+- `grCorneria_801E1BF0` [ext_fns!] x1: tu/vi0601.rs:65 -> port `melee_world::tu/grcorneria.rs:2344`
+- `grFigureGet_80219C34` [ext_fns!] x1: tu/itcoin.rs:48 -> port `melee_world::tu/grfigureget.rs:352`
+- `grFigureGet_80219C50` [ext_fns!] x1: tu/itcoin.rs:49 -> port `melee_world::tu/grfigureget.rs:361`
+- `grIceMt_801FA6D8` [ext_fns!] x1: tu/itwhitebea.rs:46 -> port `melee_world::tu/gricemt.rs:1615`
+- `grInishie2_801FD448` [ext_fns!] x1: tu/itkyasarin.rs:44 -> port `melee_world::tu/grinishie2.rs:476`
+- `grInishie2_801FD4CC` [ext_fns!] x1: tu/itkyasarin.rs:45 -> port `melee_world::tu/grinishie2.rs:490`
+- `grKongo_801D8058` [ext_fns!] x2: tu/itbox.rs:45, tu/itklap.rs:47 -> port `melee_world::tu/grkongo.rs:1338`
+- `grLib_801C9A10` [ext_fns!/todo_fns!] x3: tu/vi0501.rs:83, tu/vi0502.rs:78, tu/vi1101.rs:35 -> port `melee_world::tu/grlib.rs:203`
+- `grLib_801C9E40` [ext_fns!] x1: tu/itzako.rs:49 -> port `melee_world::gr/grlib.rs:318`
+- `grLib_801C9E50` [ext_fns!] x1: tu/itzako.rs:50 -> port `melee_world::gr/grlib.rs:322`
+- `grLib_801C9E60` [ext_fns!] x1: tu/item.rs:88 -> port `melee_world::gr/grlib.rs:326`
+- `Ground_801C0378` [ext_fns!] x5: tu/vi0102.rs:35, tu/vi0401.rs:38, tu/vi0501.rs:40, tu/vi0502.rs:39, tu/vi0601.rs:38 -> port `melee_world::tu/ground.rs:586`
+- `Ground_801C0498` [ext_fns!] x4: tu/itarwinglaser.rs:37, tu/itcoin.rs:36, tu/ittincle.rs:31, tu/vi0501.rs:41 -> port `melee_world::gr/ground.rs:141`
+- `Ground_801C1D84` [ext_fns!] x1: tu/itcoin.rs:37 -> port `melee_world::gr/ground.rs:185`
+- `Ground_801C2AD8` [ext_fns!] x1: tu/itspawn.rs:43 -> port `melee_world::gr/ground.rs:400`
+- `Ground_801C4338` [ext_fns!] x1: tu/itmato.rs:32 -> port `melee_world::gr/ground.rs:301`
+- `Ground_801C4DA0` [ext_fns!] x1: tu/itklap.rs:41 -> port `melee_world::gr/ground.rs:329`
+- `Ground_801C5840` [ext_fns!] x1: tu/itzako.rs:34 -> port `melee_world::gr/ground.rs:384`
+- `Ground_InitScene` [todo_fns!] x1: tu/vi1201v1.rs:42 -> port `melee_items::tu/vi0102.rs:121`
+- `grZakoGenerator_801CAC14` [ext_fns!] x1: tu/itzako.rs:51 -> port `melee_world::tu/grzakogenerator.rs:451`
+- `grZakoGenerator_801CACB8` [ext_fns!] x3: tu/itzako.rs:52, tu/itzgshell.rs:42, tu/itzrshell.rs:36 -> port `melee_world::tu/grzakogenerator.rs:473`
+- `HSD_AObjSetRate` [ext_fns!] x2: tu/tyfigupon.rs:64, tu/tylist.rs:48 -> port `melee_runtime::tu/aobj.rs:433`
+- `HSD_ArchiveGetPublicAddress` [ext_fns!] x4: tu/toy.rs:83, tu/tydisplay.rs:76, tu/tyfigupon.rs:65, tu/tylist.rs:49 -> port `melee_runtime::tu/archive.rs:84`
+- `HSD_ClearVtxDesc` [ext_fns!] x1: tu/itdraw.rs:32 -> port `melee_runtime::tu/pobj.rs:156`
+- `HSD_CObjAddAnim` [ext_fns!/todo_fns!] x11: tu/vi0102.rs:36, tu/vi0401.rs:39, tu/vi0402.rs:34, tu/vi0501.rs:43, tu/vi0502.rs:41, tu/vi0601.rs:39, tu/vi0801.rs:58, tu/vi1101.rs:72, tu/vi1201v1.rs:82, tu/vi1201v2.rs:81, tu/vi1202.rs:53 -> port `melee_runtime::tu/cobj.rs:360`
+- `HSD_CObjAnim` [ext_fns!/todo_fns!] x11: tu/vi0102.rs:37, tu/vi0401.rs:40, tu/vi0402.rs:35, tu/vi0501.rs:44, tu/vi0502.rs:42, tu/vi0601.rs:40, tu/vi0801.rs:59, tu/vi1101.rs:73, tu/vi1201v1.rs:83, tu/vi1201v2.rs:82, tu/vi1202.rs:54 -> port `melee_runtime::tu/cobj.rs:409`
+- `HSD_CObjEndCurrent` [ext_fns!/todo_fns!] x12: tu/toy.rs:84, tu/tyfigupon.rs:66, tu/tylist.rs:50, tu/vi0102.rs:38, tu/vi0401.rs:41, tu/vi0501.rs:45, tu/vi0502.rs:43, tu/vi0601.rs:41, tu/vi0801.rs:60, tu/vi1101.rs:74, tu/vi1201v1.rs:84, tu/vi1201v2.rs:83 -> port `melee_runtime::tu/cobj.rs:672`
+- `HSD_CObjEraseScreen` [ext_fns!/todo_fns!] x12: tu/toy.rs:85, tu/tyfigupon.rs:67, tu/tylist.rs:51, tu/vi0102.rs:39, tu/vi0401.rs:42, tu/vi0501.rs:46, tu/vi0502.rs:44, tu/vi0601.rs:42, tu/vi0801.rs:61, tu/vi1101.rs:75, tu/vi1201v1.rs:85, tu/vi1201v2.rs:84 -> port `melee_runtime::tu/cobj.rs:306`
+- `HSD_CObjGetCurrent` [ext_fns!] x2: tu/itdraw.rs:31, tu/toy.rs:87 -> port `melee_runtime::tu/cobj.rs:678`
+- `HSD_CObjInit` [ext_fns!] x1: tu/tyfigupon.rs:71 -> port `melee_runtime::tu/cobj.rs:752`
+- `HSD_CObjReqAnim` [ext_fns!/todo_fns!] x11: tu/vi0102.rs:40, tu/vi0401.rs:43, tu/vi0402.rs:36, tu/vi0501.rs:47, tu/vi0502.rs:45, tu/vi0601.rs:43, tu/vi0801.rs:62, tu/vi1101.rs:76, tu/vi1201v1.rs:86, tu/vi1201v2.rs:85, tu/vi1202.rs:55 -> port `melee_runtime::tu/cobj.rs:419`
+- `HSD_CObjSetCurrent` [ext_fns!/todo_fns!] x12: tu/toy.rs:99, tu/tyfigupon.rs:72, tu/tylist.rs:52, tu/vi0102.rs:41, tu/vi0401.rs:44, tu/vi0501.rs:48, tu/vi0502.rs:46, tu/vi0601.rs:44, tu/vi0801.rs:63, tu/vi1101.rs:77, tu/vi1201v1.rs:87, tu/vi1201v2.rs:86 -> port `melee_runtime::tu/cobj.rs:645`
+- `HSD_CObjSetFrustum` [ext_fns!] x1: tu/toy.rs:101 -> port `melee_runtime::tu/cobj.rs:242`
+- `HSD_CObjSetScissor` [ext_fns!] x1: tu/tylist.rs:55 -> port `melee_runtime::tu/cobj.rs:220`
+- `HSD_CObjSetViewport` [ext_fns!] x1: tu/tylist.rs:56 -> port `melee_runtime::tu/cobj.rs:209`
+- `HSD_Fog_8037DE7C` [todo_fns!] x1: tu/vi1201v2.rs:90 -> port `melee_runtime::tu/fog.rs:69`
+- `HSD_Free` [ext_fns!] x1: tu/toy.rs:108 -> port `melee_runtime::tu/memory.rs:96`
+- `HSD_GObj_80390CD4` [ext_fns!] x4: tu/toy.rs:113, tu/tydisplay.rs:87, tu/tyfigupon.rs:79, tu/tylist.rs:62 -> port `melee_runtime::gobj.rs:984`
+- `HSD_GObj_80390EB8` [ext_fns!] x4: tu/itdraw.rs:33, tu/itfoxillusion.rs:36, tu/itlinkarrow.rs:36, tu/itlinkboomerang.rs:36 -> port `melee_runtime::gobj.rs:266`
+- `HSD_GObj_80390ED0` [ext_fns!/todo_fns!] x13: tu/toy.rs:114, tu/tyfigupon.rs:80, tu/tylist.rs:63, tu/vi.rs:29, tu/vi0102.rs:44, tu/vi0401.rs:47, tu/vi0501.rs:51, tu/vi0502.rs:49, tu/vi0601.rs:46, tu/vi0801.rs:65, tu/vi1101.rs:78, tu/vi1201v1.rs:89, tu/vi1201v2.rs:91 -> port `melee_runtime::gobj.rs:1047`
+- `HSD_GObj_803910D8` [ext_fns!/todo_fns!] x4: tu/toy.rs:115, tu/vi0401.rs:48, tu/vi0402.rs:38, tu/vi1202.rs:56 -> port `melee_runtime::tu/gobj.rs:86`
+- `HSD_GObj_FogCallback` [ext_fns!/todo_fns!] x7: tu/vi0102.rs:45, tu/vi0401.rs:49, tu/vi0501.rs:52, tu/vi0502.rs:50, tu/vi0801.rs:66, tu/vi1201v1.rs:90, tu/vi1201v2.rs:92 -> port `melee_runtime::tu/gobj.rs:80`
+- `HSD_GObj_JObjCallback` [ext_fns!/todo_fns!] x19: tu/itclimbersstring.rs:43, tu/itlinkhookshot.rs:48, tu/itnessyoyo.rs:37, tu/itseakchain.rs:42, tu/toy.rs:116, tu/tydisplay.rs:88, tu/tyfigupon.rs:81, tu/tylist.rs:64, tu/vi0102.rs:46, tu/vi0401.rs:50, tu/vi0402.rs:39, tu/vi0501.rs:53, tu/vi0502.rs:51, tu/vi0601.rs:47, tu/vi0801.rs:67, tu/vi1101.rs:80, tu/vi1201v1.rs:91, tu/vi1201v2.rs:93, tu/vi1202.rs:57 -> port `melee_runtime::tu/gobj.rs:74`
+- `HSD_GObj_LObjCallback` [ext_fns!/todo_fns!] x15: tu/toy.rs:117, tu/tydisplay.rs:89, tu/tyfigupon.rs:82, tu/tylist.rs:65, tu/vi0102.rs:47, tu/vi0401.rs:51, tu/vi0402.rs:40, tu/vi0501.rs:54, tu/vi0502.rs:52, tu/vi0601.rs:48, tu/vi0801.rs:68, tu/vi1101.rs:79, tu/vi1201v1.rs:92, tu/vi1201v2.rs:94, tu/vi1202.rs:58 -> port `melee_runtime::tu/gobj.rs:68`
+- `HSD_GObjObject_80390A70` [ext_fns!/todo_fns!] x22: tu/itclimbersstring.rs:42, tu/itcoin.rs:38, tu/item.rs:43, tu/itlinkhookshot.rs:47, tu/itnessyoyo.rs:36, tu/itsamusgrapple.rs:44, tu/itseakchain.rs:41, tu/toy.rs:110, tu/tydisplay.rs:85, tu/tyfigupon.rs:76, tu/tylist.rs:59, tu/vi0102.rs:43, tu/vi0401.rs:46, tu/vi0402.rs:37, tu/vi0501.rs:50, tu/vi0502.rs:48, tu/vi0601.rs:45, tu/vi0801.rs:70, tu/vi1101.rs:82, tu/vi1201v1.rs:95, tu/vi1201v2.rs:97, tu/vi1202.rs:60 -> port `melee_runtime::tu/gobjobject.rs:14`
+- `HSD_GObjObject_80390B0C` [ext_fns!] x2: tu/it_2725.rs:44, tu/itcoin.rs:39 -> port `melee_runtime::tu/gobjobject.rs:24`
+- `HSD_JObjAddAnim` [ext_fns!] x1: tu/item.rs:45 -> port `melee_runtime::tu/jobj.rs:326`
+- `HSD_JObjAddAnimAll` [ext_fns!] x7: tu/it_26B1.rs:32, tu/it_2725.rs:45, tu/itlinkboomerang.rs:37, tu/itnessyoyo.rs:38, tu/itsamusgrapple.rs:45, tu/toy.rs:119, tu/tyfigupon.rs:84 -> port `melee_runtime::tu/jobj.rs:327`
+- `HSD_JObjAddChild` [ext_fns!] x4: tu/toy.rs:120, tu/tydisplay.rs:91, tu/tyfigupon.rs:85, tu/tylist.rs:67 -> port `melee_runtime::tu/jobj.rs:294`
+- `HSD_JObjAlloc` [ext_fns!] x3: tu/item.rs:46, tu/toy.rs:121, tu/tydisplay.rs:92 -> port `melee_runtime::tu/jobj.rs:79`
+- `HSD_JObjAnim` [ext_fns!] x2: tu/toy.rs:122, tu/tylist.rs:68 -> port `melee_runtime::tu/jobj.rs:323`
+- `HSD_JObjAnimAll` [ext_fns!/todo_fns!] x27: tu/it_26B1.rs:33, tu/it_2725.rs:46, tu/it_2E5A.rs:41, tu/item.rs:47, tu/itleadead.rs:34, tu/itlinkbomb.rs:34, tu/itlinkboomerang.rs:38, tu/itnessyoyo.rs:39, tu/itnokonoko.rs:33, tu/itpatapata.rs:33, tu/itpeachtoad.rs:31, tu/itsamusgrapple.rs:46, tu/itzrshell.rs:34, tu/toy.rs:123, tu/tyfigupon.rs:86, tu/tylist.rs:69, tu/vi0102.rs:49, tu/vi0401.rs:53, tu/vi0402.rs:42, tu/vi0501.rs:56, tu/vi0502.rs:54, tu/vi0601.rs:50, tu/vi0801.rs:71, tu/vi1101.rs:83, tu/vi1201v1.rs:96, tu/vi1201v2.rs:98, tu/vi1202.rs:61 -> port `melee_runtime::tu/jobj.rs:325`
+- `HSD_JObjClearFlags` [ext_fns!] x2: tu/itclinkmilk.rs:35, tu/itdrmariopill.rs:44 -> port `melee_runtime::tu/jobj.rs:305`
+- `HSD_JObjClearFlagsAll` [ext_fns!] x21: tu/it_2725.rs:47, tu/itbat.rs:31, tu/itcoin.rs:40, tu/itdosei.rs:46, tu/itfoods.rs:37, tu/itfoxblaster.rs:39, tu/itkabigon.rs:32, tu/itkirbycutterbeam.rs:39, tu/itnessbat.rs:31, tu/itnesspkthundertrail.rs:31, tu/itpatapata.rs:34, tu/itseakneedleheld.rs:31, tu/itsword.rs:35, tu/ittarucann.rs:36, tu/ittincle.rs:32, tu/ittomato.rs:31, tu/itwhispyapple.rs:31, tu/toy.rs:124, tu/tydisplay.rs:93, tu/tyfigupon.rs:87, tu/tylist.rs:70 -> port `melee_runtime::tu/jobj.rs:306`
+- `HSD_JObjDispAll` [ext_fns!] x4: tu/itdraw.rs:34, tu/itfoxillusion.rs:37, tu/itlinkarrow.rs:37, tu/itlinkboomerang.rs:39 -> port `melee_runtime::tu/jobj.rs:232`
+- `HSD_JObjGetDObj` [ext_fns!] x2: tu/item.rs:48, tu/itmaterial.rs:30 -> port `melee_runtime::tu/jobj.rs:298`
+- `HSD_JObjGetFlags` [ext_fns!] x1: tu/itdraw.rs:35 -> port `melee_runtime::tu/jobj.rs:302`
+- `HSD_JObjGetTranslation2` [todo_fns!] x1: tu/vi1201v1.rs:97 -> port `melee_types::inline.rs:190`
+- `HSD_JObjLoadJoint` [ext_fns!/todo_fns!] x24: tu/itclimbersstring.rs:44, tu/item.rs:49, tu/itfoxillusion.rs:38, tu/itlinkarrow.rs:38, tu/itlinkboomerang.rs:40, tu/itlinkhookshot.rs:49, tu/itnessyoyo.rs:40, tu/itsamusgrapple.rs:47, tu/itseakchain.rs:43, tu/toy.rs:125, tu/tydisplay.rs:94, tu/tyfigupon.rs:88, tu/tylist.rs:71, tu/vi0102.rs:50, tu/vi0401.rs:54, tu/vi0402.rs:43, tu/vi0501.rs:57, tu/vi0502.rs:55, tu/vi0601.rs:51, tu/vi0801.rs:72, tu/vi1101.rs:84, tu/vi1201v1.rs:98, tu/vi1201v2.rs:99, tu/vi1202.rs:62 -> port `melee_runtime::tu/jobj.rs:105`
+- `HSD_JObjRemoveAll` [ext_fns!] x3: tu/itfoxillusion.rs:39, tu/itlinkarrow.rs:39, tu/itlinkboomerang.rs:41 -> port `melee_runtime::tu/jobj.rs:314`
+- `HSD_JObjRemoveAnimAll` [ext_fns!] x7: tu/it_26B1.rs:34, tu/it_2725.rs:48, tu/item.rs:50, tu/itlinkboomerang.rs:42, tu/itnessyoyo.rs:41, tu/toy.rs:126, tu/tydisplay.rs:95 -> port `melee_runtime::tu/jobj.rs:318`
+- `HSD_JObjReqAnim` [ext_fns!] x2: tu/toy.rs:127, tu/tylist.rs:72 -> port `melee_runtime::tu/jobj.rs:321`
+- `HSD_JObjReqAnimAll` [ext_fns!/todo_fns!] x19: tu/it_26B1.rs:35, tu/it_2725.rs:49, tu/item.rs:51, tu/itlinkboomerang.rs:43, tu/itnessyoyo.rs:42, tu/itsamusgrapple.rs:48, tu/toy.rs:128, tu/tyfigupon.rs:89, tu/vi0102.rs:51, tu/vi0401.rs:55, tu/vi0402.rs:44, tu/vi0501.rs:58, tu/vi0502.rs:56, tu/vi0601.rs:52, tu/vi0801.rs:73, tu/vi1101.rs:85, tu/vi1201v1.rs:99, tu/vi1201v2.rs:100, tu/vi1202.rs:63 -> port `melee_runtime::tu/jobj.rs:322`
+- `HSD_JObjSetFlags` [ext_fns!] x2: tu/itclinkmilk.rs:36, tu/itdrmariopill.rs:45 -> port `melee_runtime::tu/jobj.rs:303`
+- `HSD_JObjSetFlagsAll` [ext_fns!] x31: tu/it_2725.rs:50, tu/itarwinglaser.rs:38, tu/itbombhei.rs:35, tu/itbox.rs:37, tu/itcapsule.rs:32, tu/itcoin.rs:41, tu/itcrazyhandbomb.rs:38, tu/itegg.rs:34, tu/itevyoshiegg.rs:34, tu/itfoxblaster.rs:40, tu/itkabigon.rs:33, tu/itkirbycutterbeam.rs:40, tu/itlinkbomb.rs:35, tu/itmarumine.rs:32, tu/itmewtwoshadowball.rs:45, tu/itmsbomb.rs:34, tu/itnessbat.rs:32, tu/itnesspkthundertrail.rs:32, tu/itpatapata.rs:35, tu/itseakneedleheld.rs:32, tu/ittaru.rs:34, tu/ittarucann.rs:37, tu/ittincle.rs:33, tu/itunknown.rs:32, tu/itwhispyapple.rs:32, tu/itwstar.rs:34, tu/ityoshiegglay.rs:35, tu/toy.rs:129, tu/tydisplay.rs:96, tu/tyfigupon.rs:90, tu/tylist.rs:73 -> port `melee_runtime::tu/jobj.rs:304`
+- `HSD_JObjSetMtxDirty` [ext_fns!] x7: tu/it_2725.rs:51, tu/itbombhei.rs:36, tu/itdosei.rs:47, tu/itkyasarin.rs:39, tu/itlinkarrow.rs:40, tu/itlinkbomb.rs:36, tu/itmatadogas.rs:33 -> port `melee_runtime::tu/lb_00B0.rs:173`
+- `HSD_JObjSetMtxDirtySub` [ext_fns!] x92: tu/it_2725.rs:52, tu/it_279C.rs:47, tu/itarwinglaser.rs:39, tu/itbombhei.rs:37, tu/itbox.rs:38, tu/itclimbersstring.rs:45, tu/itclinkmilk.rs:37, tu/itcoin.rs:42, tu/itcrazyhandbomb.rs:39, tu/itdosei.rs:48, tu/itdrmariopill.rs:46, tu/item.rs:52, tu/itfflowerflame.rs:34, tu/itflipper.rs:41, tu/itfoods.rs:38, tu/itfoxblaster.rs:41, tu/itfoxillusion.rs:40, tu/itfoxlaser.rs:39, tu/itfreeze.rs:37, tu/itgamewatchchef.rs:38, tu/itgamewatchjudge.rs:28, tu/ithitodeman.rs:38, tu/itkabigon.rs:34, tu/itkamex.rs:31, tu/itkirby_2F23.rs:39, tu/itkirbycutterbeam.rs:41, tu/itklap.rs:42, tu/itkoopaflame.rs:42, tu/itkusudama.rs:43, tu/itkyasarin.rs:40, tu/itleadead.rs:35, tu/itlgunray.rs:32, tu/itlikelike.rs:34, tu/itlinkarrow.rs:41, tu/itlinkbomb.rs:37, tu/itlinkboomerang.rs:44, tu/itlinkbow.rs:30, tu/itlinkhookshot.rs:50, tu/itlipstickspore.rs:31, tu/itmaplib.rs:28, tu/itmaril.rs:33, tu/itmasterhandbullet.rs:32, tu/itmasterhandlaser.rs:34, tu/itmatadogas.rs:34, tu/itmewtwoshadowball.rs:46, tu/itmsbomb.rs:35, tu/itnessbat.rs:33, tu/itnesspkfire.rs:31, tu/itnesspkfirepillar.rs:32, tu/itnesspkflash.rs:33, tu/itnesspkflashexplode.rs:33, tu/itnesspkthundertrail.rs:33, tu/itnessyoyo.rs:43, tu/itnokonoko.rs:34, tu/itoctarock.rs:32, tu/itparasol.rs:31, tu/itpatapata.rs:36, tu/itpikachuthunder.rs:33, tu/itpikachutjoltair.rs:33, tu/itpikachutjoltground.rs:34, tu/itrabbitc.rs:31, tu/itrshell.rs:32, tu/itsamusbomb.rs:32, tu/itsamuschargeshot.rs:34, tu/itsamusgrapple.rs:49, tu/itsamusmissile.rs:32, tu/itseakchain.rs:44, tu/itseakneedleheld.rs:33, tu/itseakneedlethrown.rs:37, tu/itsonans.rs:31, tu/itsscopebeam.rs:33, tu/itstarrodstar.rs:33, tu/itsword.rs:36, tu/ittaru.rs:35, tu/ittarucann.rs:38, tu/ittincle.rs:34, tu/ittools.rs:31, tu/ittosakinto.rs:31, tu/itunknown.rs:33, tu/itwstar.rs:35, tu/ityaku.rs:34, tu/ityoshieggthrow.rs:34, tu/ityoshistar.rs:34, tu/itzako.rs:35, tu/itzeldadinfire.rs:36, tu/itzeldadinfireexplode.rs:35, tu/itzgshell.rs:36, tu/toy.rs:130, tu/tydisplay.rs:97, tu/tyfigupon.rs:91, tu/tylist.rs:74, tu/vi0601.rs:53 -> port `melee_runtime::tu/jobj.rs:291`
+- `HSD_JObjSetRotationYWithMtxDirty` [todo_fns!] x3: tu/vi1201v1.rs:100, tu/vi1201v2.rs:101, tu/vi1202.rs:64 -> port `melee_items::tu/itdosei.rs:100`
+- `HSD_JObjSetScaleX` [todo_fns!] x3: tu/vi1201v1.rs:101, tu/vi1201v2.rs:102, tu/vi1202.rs:65 -> port `melee_world::hud/jobj_inl.rs:46`
+- `HSD_JObjSetScaleY` [todo_fns!] x3: tu/vi1201v1.rs:102, tu/vi1201v2.rs:103, tu/vi1202.rs:66 -> port `melee_world::hud/jobj_inl.rs:54`
+- `HSD_JObjSetScaleZ` [todo_fns!] x3: tu/vi1201v1.rs:103, tu/vi1201v2.rs:104, tu/vi1202.rs:67 -> port `melee_world::hud/jobj_inl.rs:62`
+- `HSD_JObjSetTranslateYWithMtxDirty` [todo_fns!] x3: tu/vi1201v1.rs:108, tu/vi1201v2.rs:109, tu/vi1202.rs:72 -> port `melee_items::tu/kinds_inl.rs:353`
+- `HSD_JObjSetupMatrixSub` [ext_fns!] x5: tu/itclimbersstring.rs:46, tu/itlinkhookshot.rs:51, tu/itnessyoyo.rs:44, tu/itsamusgrapple.rs:50, tu/itseakchain.rs:45 -> port `melee_runtime::tu/jobj.rs:312`
+- `HSD_JObjUnref` [ext_fns!] x1: tu/tylist.rs:75 -> port `melee_runtime::tu/jobj.rs:124`
+- `HSD_LObjAddAnimAll` [ext_fns!] x1: tu/toy.rs:131 -> port `melee_runtime::tu/lobj.rs:473`
+- `HSD_LObjAnimAll` [ext_fns!] x1: tu/toy.rs:132 -> port `melee_runtime::tu/lobj.rs:443`
+- `HSD_LObjGetInterest` [ext_fns!] x1: tu/toy.rs:133 -> port `melee_runtime::tu/lobj.rs:392`
+- `HSD_LObjGetPosition` [ext_fns!] x1: tu/toy.rs:134 -> port `melee_runtime::tu/lobj.rs:381`
+- `HSD_LObjLoadDesc` [ext_fns!] x1: tu/toy.rs:135 -> port `melee_runtime::tu/lobj.rs:951`
+- `HSD_LObjReqAnimAll` [ext_fns!] x1: tu/toy.rs:136 -> port `melee_runtime::tu/lobj.rs:456`
+- `HSD_LObjSetColor` [ext_fns!] x1: tu/tydisplay.rs:98 -> port `melee_runtime::tu/lobj.rs:299`
+- `HSD_LObjSetInterest` [ext_fns!] x1: tu/toy.rs:137 -> port `melee_runtime::tu/lobj.rs:370`
+- `HSD_LObjSetPosition` [ext_fns!] x1: tu/toy.rs:138 -> port `melee_runtime::tu/lobj.rs:359`
+- `HSD_MemAlloc` [ext_fns!] x4: tu/itspawn.rs:46, tu/toy.rs:139, tu/tydisplay.rs:99, tu/tyfigupon.rs:92 -> port `melee_runtime::tu/memory.rs:103`
+- `HSD_ObjAlloc` [ext_fns!] x6: tu/itclimbersstring.rs:47, tu/item.rs:53, tu/itlinkhookshot.rs:52, tu/itnessyoyo.rs:45, tu/itsamusgrapple.rs:51, tu/itseakchain.rs:46 -> port `melee_runtime::tu/objalloc.rs:108`
+- `HSD_ObjAllocInit` [ext_fns!] x1: tu/item.rs:54 -> port `melee_runtime::tu/objalloc.rs:145`
+- `HSD_ObjFree` [ext_fns!] x2: tu/item.rs:55, tu/itlinkhookshot.rs:53 -> port `melee_runtime::tu/objalloc.rs:130`
+- `HSD_PadRenewStatus` [ext_fns!] x3: tu/toy.rs:140, tu/tyfigupon.rs:93, tu/tylist.rs:76 -> port `melee_runtime::tu/controller.rs:611`
+- `HSD_Rand` [ext_fns!] x1: tu/itlugia.rs:37 -> port `melee_runtime::tu/random.rs:27`
+- `HSD_Randf` [ext_fns!] x37: tu/it_2E5A.rs:42, tu/itbox.rs:39, tu/itclimbersblizzard.rs:33, tu/itdrop.rs:29, tu/iteffect.rs:41, tu/ithinoarashi.rs:43, tu/ithitodeman.rs:39, tu/itkabigon.rs:35, tu/itklap.rs:43, tu/itkoopaflame.rs:43, tu/itkusudama.rs:44, tu/itkyasarin.rs:41, tu/itleadead.rs:36, tu/itlgunbeam.rs:33, tu/itlikelike.rs:35, tu/itlinkarrow.rs:43, tu/itlinkbomb.rs:38, tu/itlucky.rs:31, tu/itmewtwoshadowball.rs:48, tu/itoctarock.rs:33, tu/itoctarockstone.rs:32, tu/itoldkuri.rs:32, tu/itoldottosea.rs:32, tu/itpeachtoadspore.rs:34, tu/itsamusgrapple.rs:52, tu/itspawn.rs:47, tu/itsscopebeam.rs:34, tu/ittaru.rs:36, tu/ittarucann.rs:39, tu/ittincle.rs:35, tu/itwhispyapple.rs:33, tu/itwhitebea.rs:38, tu/itzako.rs:36, tu/itzgshell.rs:37, tu/toy.rs:141, tu/tydisplay.rs:100, tu/tyfigupon.rs:94 -> port `melee_runtime::tu/random.rs:30`
+- `HSD_Randi` [ext_fns!] x53: tu/it_2725.rs:53, tu/it_279C.rs:48, tu/itbox.rs:40, tu/itcapsule.rs:33, tu/itcerebi.rs:31, tu/itcoll.rs:33, tu/itcrazyhandbomb.rs:40, tu/itdosei.rs:49, tu/itdrop.rs:30, tu/itegg.rs:35, tu/itentei.rs:35, tu/itfoods.rs:39, tu/itgroundcoll.rs:31, tu/ithinoarashi.rs:44, tu/ithitodeman.rs:40, tu/itkireihana.rs:34, tu/itklap.rs:44, tu/itkusudama.rs:45, tu/itkyasarin.rs:42, tu/itkyasarinegg.rs:32, tu/itleadead.rs:37, tu/itlgunbeam.rs:34, tu/itlikelike.rs:36, tu/itlinkarrow.rs:44, tu/itlizardon.rs:34, tu/itlucky.rs:32, tu/itlugia.rs:38, tu/itmatadogas.rs:35, tu/itmew.rs:31, tu/itmewtwoshadowball.rs:49, tu/itoldottosea.rs:33, tu/itpatapata.rs:37, tu/itpeachturnip.rs:33, tu/itpippi.rs:32, tu/itraikou.rs:31, tu/itrshell.rs:33, tu/itseakneedlethrown.rs:38, tu/itspawn.rs:48, tu/itstar.rs:31, tu/itsuikun.rs:33, tu/ittaru.rs:37, tu/ittincle.rs:36, tu/ittogepy.rs:31, tu/ittosakinto.rs:32, tu/itunknown.rs:34, tu/itwhispyapple.rs:34, tu/itwhitebea.rs:39, tu/itwstar.rs:36, tu/itzako.rs:37, tu/itzgshell.rs:38, tu/toy.rs:142, tu/tydisplay.rs:101, tu/tyfigupon.rs:95 -> port `melee_runtime::tu/random.rs:33`
+- `HSD_SetEraseColor` [ext_fns!/todo_fns!] x12: tu/toy.rs:146, tu/tyfigupon.rs:96, tu/tylist.rs:77, tu/vi0102.rs:52, tu/vi0401.rs:56, tu/vi0501.rs:59, tu/vi0502.rs:57, tu/vi0601.rs:54, tu/vi0801.rs:74, tu/vi1101.rs:86, tu/vi1201v1.rs:110, tu/vi1201v2.rs:111 -> port `melee_runtime::tu/displayfunc.rs:468`
+- `HSD_SetMaterialColor` [ext_fns!] x1: tu/itmaterial.rs:31 -> port `melee_runtime::tu/state.rs:647`
+- `HSD_SetMaterialShininess` [ext_fns!] x1: tu/itmaterial.rs:32 -> port `melee_runtime::tu/state.rs:650`
+- `HSD_SetupRenderMode` [ext_fns!] x1: tu/toy.rs:147 -> port `melee_runtime::tu/state.rs:646`
+- `HSD_SetupRenderModeWithCustomPE` [ext_fns!] x1: tu/itmaterial.rs:33 -> port `melee_runtime::tu/state.rs:643`
+- `HSD_SetupTevStage` [ext_fns!] x1: tu/itmaterial.rs:34 -> port `melee_runtime::tu/tev.rs:164`
+- `HSD_SisLib_803A5ACC` [ext_fns!] x3: tu/toy.rs:148, tu/tyfigupon.rs:97, tu/tylist.rs:78 -> port `melee_runtime::tu/sislib.rs:246`
+- `HSD_SisLib_803A5E70` [ext_fns!] x2: tu/toy.rs:149, tu/tylist.rs:79 -> port `melee_runtime::tu/sislib.rs:430`
+- `HSD_SisLib_803A611C` [ext_fns!] x3: tu/toy.rs:150, tu/tyfigupon.rs:98, tu/tylist.rs:80 -> port `melee_runtime::tu/sislib.rs:553`
+- `HSD_SisLib_803A6368` [ext_fns!] x3: tu/toy.rs:152, tu/tyfigupon.rs:100, tu/tylist.rs:81 -> port `melee_runtime::tu/sislib.rs:670`
+- `HSD_SisLib_803A6754` [ext_fns!] x1: tu/tylist.rs:82 -> port `melee_runtime::tu/hsd_3A64.rs:102`
+- `HSD_SisLib_803A6B98` [ext_fns!] x1: tu/tylist.rs:44 -> port `melee_runtime::tu/hsd_3A64.rs:260`
+- `HSD_SObjLib_803A49E0` [ext_fns!] x1: tu/toy.rs:144 -> port `melee_runtime::tu/sobjlib.rs:252`
+- `HSD_SObjLib_803A55DC` [ext_fns!] x1: tu/toy.rs:145 -> port `melee_runtime::tu/sobjlib.rs:827`
+- `HSD_StateAssignTev` [ext_fns!] x1: tu/itmaterial.rs:35 -> port `melee_runtime::tu/tev.rs:162`
+- `HSD_StateInitDirect` [ext_fns!] x1: tu/toy.rs:153 -> port `melee_runtime::tu/displayfunc.rs:492`
+- `HSD_StateInitTev` [ext_fns!] x2: tu/itdraw.rs:36, tu/itmaterial.rs:36 -> port `melee_runtime::tu/tev.rs:159`
+- `HSD_StateInvalidate` [ext_fns!] x1: tu/itdraw.rs:37 -> port `melee_runtime::tu/state.rs:665`
+- `HSD_StateSetLineWidth` [ext_fns!] x1: tu/toy.rs:154 -> port `melee_runtime::tu/state.rs:651`
+- `HSD_TExpSetReg` [ext_fns!] x1: tu/itmaterial.rs:37 -> port `melee_runtime::tu/texp.rs:1972`
+- `HSD_TObjSetupTextureCoordGen` [ext_fns!] x1: tu/itmaterial.rs:39 -> port `melee_runtime::tu/tobj.rs:514`
+- `hsdChangeClass` [ext_fns!] x1: tu/item.rs:89 -> port `melee_runtime::tu/class.rs:402`
+- `hsdInitClassInfo` [ext_fns!] x1: tu/itmaterial.rs:41 -> port `melee_runtime::tu/class.rs:106`
+- `it_2725_Logic11_Clanked` [ext_fns!] x1: tu/itzrshell.rs:72 -> port `melee_items::tu/itzgshell.rs:931`
+- `it_2725_Logic11_EnteredAir` [ext_fns!] x1: tu/itzrshell.rs:73 -> port `melee_items::tu/itzgshell.rs:666`
+- `it_2725_Logic11_HitShield` [ext_fns!] x1: tu/itzrshell.rs:74 -> port `melee_items::tu/itzgshell.rs:946`
+- `it_2725_Logic11_PickedUp` [ext_fns!] x1: tu/itzrshell.rs:75 -> port `melee_items::tu/itzgshell.rs:420`
+- `it_2725_Logic17_Spawned` [ext_fns!] x1: tu/it_279C.rs:122 -> port `melee_items::tu/itlugia.rs:110`
+- `it_2725_Logic18_Spawned` [ext_fns!] x1: tu/it_279C.rs:123 -> port `melee_items::tu/ithouou.rs:105`
+- `it_2725_Logic24_Spawned` [ext_fns!] x1: tu/it_279C.rs:124 -> port `melee_items::tu/ithitodeman.rs:150`
+- `it_2725_Logic27_DmgReceived` [ext_fns!] x1: tu/it_279C.rs:125 -> port `melee_items::tu/ithinoarashi.rs:299`
+- `it_2725_Logic31_Spawned` [ext_fns!] x1: tu/it_279C.rs:126 -> port `melee_items::tu/itkamex.rs:334`
+- `it_2725_Logic32_Spawned` [ext_fns!] x1: tu/it_279C.rs:127 -> port `melee_items::tu/itmatadogas.rs:243`
+- `it_2725_Logic33_Spawned` [ext_fns!] x1: tu/it_279C.rs:128 -> port `melee_items::tu/itmatadogas.rs:251`
+- `it_2725_Logic38_Spawned` [ext_fns!] x1: tu/it_279C.rs:129 -> port `melee_items::tu/itunknown.rs:318`
+- `it_2725_Logic42_Spawned` [ext_fns!] x1: tu/it_279C.rs:130 -> port `melee_items::tu/ithouou.rs:398`
+- `it_2725_Logic43_Spawned` [ext_fns!] x1: tu/it_279C.rs:131 -> port `melee_items::tu/ithitodeman.rs:473`
+- `it_2725_Logic9_Destroyed` [ext_fns!] x4: tu/itcoin.rs:50, tu/itleadead.rs:45, tu/itlikelike.rs:44, tu/itwhitebea.rs:47 -> port `melee_items::tu/itzako.rs:582`
+- `it_8026B390` [ext_fns!] x39: tu/it_2725.rs:74, tu/itbat.rs:36, tu/itbombhei.rs:41, tu/itbox.rs:46, tu/itcapsule.rs:36, tu/itcoin.rs:51, tu/itdkinoko.rs:37, tu/itdosei.rs:55, tu/itegg.rs:40, tu/item.rs:91, tu/itevyoshiegg.rs:40, tu/itfflower.rs:41, tu/itflipper.rs:50, tu/itfreeze.rs:42, tu/itkinoko.rs:32, tu/itkusudama.rs:52, tu/itkyasarinegg.rs:37, tu/itlgun.rs:34, tu/itlipstick.rs:33, tu/itlucky.rs:38, tu/itmarumine.rs:38, tu/itmball.rs:37, tu/itmetalb.rs:35, tu/itmsbomb.rs:40, tu/itparasol.rs:36, tu/itrabbitc.rs:35, tu/itrshell.rs:39, tu/itscball.rs:33, tu/itspycloak.rs:32, tu/itsscope.rs:35, tu/itstar.rs:34, tu/itstarrod.rs:34, tu/itsword.rs:42, tu/ittaru.rs:41, tu/ittarucann.rs:46, tu/ittomato.rs:34, tu/itwhispyapple.rs:40, tu/itwstar.rs:41, tu/itzgshell.rs:45 -> port `melee_items::itlib.rs:99`
+- `it_8026B3A8` [ext_fns!] x71: tu/it_2725.rs:75, tu/it_279C.rs:132, tu/it_2ADA.rs:33, tu/it_2F28.rs:37, tu/itarwinglaser.rs:49, tu/itbombhei.rs:42, tu/itbox.rs:47, tu/itcapsule.rs:37, tu/itchicorita.rs:37, tu/itclimbersblizzard.rs:37, tu/itclimbersice.rs:55, tu/itcoin.rs:52, tu/itdrmariopill.rs:59, tu/itegg.rs:41, tu/itevyoshiegg.rs:41, tu/itfflowerflame.rs:38, tu/itflipper.rs:51, tu/itfoxillusion.rs:49, tu/itfreeze.rs:43, tu/itgamewatchchef.rs:43, tu/ithinoarashi.rs:53, tu/ithitodeman.rs:49, tu/ithouou.rs:35, tu/itkamex.rs:37, tu/itkoopaflame.rs:55, tu/itkusudama.rs:53, tu/itkyasarin.rs:46, tu/itkyasarinegg.rs:38, tu/itlgunbeam.rs:42, tu/itlgunray.rs:37, tu/itlinkarrow.rs:62, tu/itlinkbomb.rs:46, tu/itlinkboomerang.rs:63, tu/itlipstickspore.rs:38, tu/itlizardon.rs:41, tu/itlugia.rs:45, tu/itmarumine.rs:39, tu/itmatadogas.rs:42, tu/itmball.rs:38, tu/itmewtwodisable.rs:37, tu/itmewtwoshadowball.rs:70, tu/itmsbomb.rs:41, tu/itnesspkflash.rs:44, tu/itnesspkflashexplode.rs:38, tu/itnesspkthunderball.rs:44, tu/itnesspkthundertrail.rs:38, tu/itpeachexplode.rs:33, tu/itpeachtoadspore.rs:41, tu/itpikachutjoltair.rs:40, tu/itpikachutjoltground.rs:41, tu/itrshell.rs:40, tu/itsamusbomb.rs:39, tu/itsamuschargeshot.rs:54, tu/itsamusmissile.rs:41, tu/itseakneedlethrown.rs:45, tu/itseakvanish.rs:34, tu/itsscopebeam.rs:40, tu/itstarrodstar.rs:39, tu/ittaru.rs:42, tu/ittarucann.rs:47, tu/ittools.rs:37, tu/itunknown.rs:47, tu/itwhispyapple.rs:41, tu/itwstar.rs:42, tu/ityoshiegglay.rs:40, tu/ityoshieggthrow.rs:42, tu/ityoshistar.rs:39, tu/itzako.rs:53, tu/itzeldadinfire.rs:46, tu/itzeldadinfireexplode.rs:42, tu/itzgshell.rs:46 -> port `melee_items::itlib.rs:104`
+- `it_8026B3C0` [ext_fns!] x1: tu/it_279C.rs:133 -> port `melee_items::itlib3.rs:161`
+- `it_8026B424` [ext_fns!] x1: tu/item.rs:92 -> port `melee_items::itlib.rs:110`
+- `it_8026B5E4` [ext_fns!] x1: tu/itrshell.rs:41 -> port `melee_items::tu/it_26B1.rs:305`
+- `it_8026B634` [ext_fns!] x1: tu/itsamusmissile.rs:42 -> port `melee_items::tu/it_26B1.rs:314`
+- `it_8026B684` [ext_fns!] x11: tu/itbombhei.rs:43, tu/itdrop.rs:36, tu/itleadead.rs:46, tu/itlikelike.rs:45, tu/itoctarock.rs:38, tu/itoldkuri.rs:36, tu/itoldottosea.rs:47, tu/itpatapata.rs:42, tu/itspawn.rs:59, tu/itwhitebea.rs:48, tu/itzako.rs:54 -> port `melee_items::tu/it_26B1.rs:323`
+- `it_8026B6A8` [ext_fns!] x1: tu/it_279C.rs:134 -> port `melee_items::tu/it_26B1.rs:328`
+- `it_8026B6C8` [ext_fns!] x3: tu/it_2725.rs:76, tu/it_279C.rs:135, tu/item.rs:93 -> port `melee_items::itlib.rs:177`
+- `it_8026B724` [ext_fns!] x15: tu/itgamewatchbreath.rs:42, tu/itgamewatchfire.rs:37, tu/itgamewatchgreenhouse.rs:37, tu/itgamewatchjudge.rs:37, tu/itgamewatchmanhole.rs:36, tu/itgamewatchpanic.rs:37, tu/itgamewatchparachute.rs:36, tu/itgamewatchrescue.rs:34, tu/itgamewatchturtle.rs:36, tu/itkirbygamewatchchefpan.rs:37, tu/itmariocape.rs:42, tu/itnessyoyo.rs:56, tu/itpeachparasol.rs:40, tu/itpeachtoad.rs:42, tu/itseakchain.rs:60 -> port `melee_items::itlib.rs:195`
+- `it_8026B73C` [ext_fns!] x15: tu/itgamewatchbreath.rs:43, tu/itgamewatchfire.rs:38, tu/itgamewatchgreenhouse.rs:38, tu/itgamewatchjudge.rs:38, tu/itgamewatchmanhole.rs:37, tu/itgamewatchpanic.rs:38, tu/itgamewatchparachute.rs:37, tu/itgamewatchrescue.rs:35, tu/itgamewatchturtle.rs:37, tu/itkirbygamewatchchefpan.rs:38, tu/itmariocape.rs:43, tu/itnessyoyo.rs:57, tu/itpeachparasol.rs:41, tu/itpeachtoad.rs:43, tu/itseakchain.rs:61 -> port `melee_items::itlib.rs:200`
+- `it_8026B894` [ext_fns!] x147: tu/it_2ADA.rs:34, tu/it_2E5A.rs:50, tu/it_2F28.rs:38, tu/itbat.rs:37, tu/itbombhei.rs:44, tu/itbox.rs:48, tu/itcapsule.rs:38, tu/itcerebi.rs:37, tu/itchicorita.rs:38, tu/itclimbersblizzard.rs:38, tu/itclimbersice.rs:56, tu/itclimbersstring.rs:57, tu/itclinkmilk.rs:47, tu/itcoin.rs:53, tu/itcrazyhandbomb.rs:44, tu/itdkinoko.rs:38, tu/itdosei.rs:56, tu/itdrmariopill.rs:60, tu/itegg.rs:42, tu/itentei.rs:42, tu/itevyoshiegg.rs:42, tu/itfflower.rs:42, tu/itfflowerflame.rs:39, tu/itfire.rs:37, tu/itflipper.rs:52, tu/itfoods.rs:43, tu/itfoxblaster.rs:66, tu/itfoxillusion.rs:50, tu/itfoxlaser.rs:44, tu/itfreeze.rs:44, tu/itfreezer.rs:37, tu/itgamewatchbreath.rs:44, tu/itgamewatchchef.rs:44, tu/itgamewatchfire.rs:39, tu/itgamewatchgreenhouse.rs:39, tu/itgamewatchjudge.rs:39, tu/itgamewatchmanhole.rs:38, tu/itgamewatchpanic.rs:39, tu/itgamewatchparachute.rs:38, tu/itgamewatchrescue.rs:36, tu/itgamewatchturtle.rs:38, tu/ithinoarashi.rs:54, tu/ithitodeman.rs:50, tu/ithouou.rs:36, tu/itkabigon.rs:43, tu/itkamex.rs:38, tu/itkinoko.rs:33, tu/itkirbycutterbeam.rs:46, tu/itkirbygamewatchchefpan.rs:39, tu/itkirbyhammer.rs:39, tu/itkireihana.rs:39, tu/itklap.rs:48, tu/itkoopaflame.rs:56, tu/itkusudama.rs:54, tu/itkyasarin.rs:47, tu/itkyasarinegg.rs:39, tu/itlgun.rs:35, tu/itlgunbeam.rs:43, tu/itlgunray.rs:38, tu/itlinkarrow.rs:63, tu/itlinkbomb.rs:47, tu/itlinkboomerang.rs:64, tu/itlinkbow.rs:44, tu/itlinkhookshot.rs:72, tu/itlipstick.rs:34, tu/itlipstickspore.rs:39, tu/itlizardon.rs:42, tu/itlucky.rs:39, tu/itlugia.rs:46, tu/itluigifireball.rs:37, tu/itmaril.rs:39, tu/itmariocape.rs:44, tu/itmariofireball.rs:39, tu/itmarumine.rs:40, tu/itmasterhandbullet.rs:38, tu/itmasterhandlaser.rs:40, tu/itmatadogas.rs:43, tu/itmball.rs:39, tu/itmetalb.rs:36, tu/itmetamon.rs:33, tu/itmew.rs:37, tu/itmewtwodisable.rs:38, tu/itmewtwoshadowball.rs:71, tu/itmsbomb.rs:42, tu/itnessbat.rs:44, tu/itnesspkfire.rs:37, tu/itnesspkfirepillar.rs:36, tu/itnesspkflash.rs:45, tu/itnesspkflashexplode.rs:39, tu/itnesspkthunderball.rs:45, tu/itnessyoyo.rs:58, tu/itnokonoko.rs:40, tu/itoctarock.rs:39, tu/itoctarockstone.rs:39, tu/itoldkuri.rs:37, tu/itparasol.rs:37, tu/itpatapata.rs:43, tu/itpeachexplode.rs:34, tu/itpeachparasol.rs:42, tu/itpeachtoad.rs:44, tu/itpeachtoadspore.rs:42, tu/itpeachturnip.rs:42, tu/itpikachuthunder.rs:41, tu/itpikachutjoltair.rs:41, tu/itpikachutjoltground.rs:42, tu/itpippi.rs:36, tu/itporygon2.rs:35, tu/itrabbitc.rs:36, tu/itraikou.rs:38, tu/itrshell.rs:42, tu/itsamusbomb.rs:40, tu/itsamuschargeshot.rs:55, tu/itsamusgrapple.rs:77, tu/itsamusmissile.rs:43, tu/itseakchain.rs:62, tu/itseakneedleheld.rs:42, tu/itseakneedlethrown.rs:46, tu/itseakvanish.rs:35, tu/itsonans.rs:36, tu/itspycloak.rs:33, tu/itsscope.rs:36, tu/itsscopebeam.rs:41, tu/itstar.rs:35, tu/itstarrod.rs:35, tu/itstarrodstar.rs:40, tu/itsuikun.rs:40, tu/itsword.rs:43, tu/ittaru.rs:43, tu/ittarucann.rs:48, tu/itthunder.rs:36, tu/ittincle.rs:39, tu/ittogepy.rs:35, tu/ittomato.rs:35, tu/ittools.rs:38, tu/ittosakinto.rs:36, tu/itunknown.rs:48, tu/itwhispyapple.rs:42, tu/itwhitebea.rs:49, tu/itwstar.rs:43, tu/ityaku.rs:37, tu/ityoshiegglay.rs:41, tu/ityoshieggthrow.rs:43, tu/ityoshistar.rs:40, tu/itzeldadinfire.rs:47, tu/itzeldadinfireexplode.rs:43, tu/itzgshell.rs:47, tu/itzrshell.rs:76 -> port `melee_items::itlib.rs:242`
+- `it_8026BB20` [ext_fns!] x8: tu/itclimbersstring.rs:58, tu/itgamewatchchef.rs:45, tu/itgamewatchfire.rs:40, tu/itgamewatchmanhole.rs:39, tu/itkusudama.rs:55, tu/itpeachtoad.rs:45, tu/itpikachuthunder.rs:42, tu/ittools.rs:39 -> port `melee_items::tu/it_26B1.rs:531`
+- `it_8026BB44` [ext_fns!] x19: tu/itbox.rs:49, tu/itclimbersstring.rs:59, tu/itegg.rs:43, tu/itgamewatchchef.rs:46, tu/itgamewatchfire.rs:41, tu/itgamewatchmanhole.rs:40, tu/itgamewatchparachute.rs:39, tu/itkirby_2F23.rs:47, tu/itkyasarinegg.rs:40, tu/itlinkarrow.rs:64, tu/itpeachexplode.rs:35, tu/itpeachtoad.rs:46, tu/itpikachuthunder.rs:43, tu/itsamusbomb.rs:41, tu/itsamusmissile.rs:44, tu/itseakvanish.rs:36, tu/ittaru.rs:44, tu/ittools.rs:40, tu/ityoshieggthrow.rs:44 -> port `melee_items::tu/it_26B1.rs:536`
+- `it_8026BB68` [ext_fns!] x34: tu/itclimbersblizzard.rs:39, tu/itclimbersice.rs:57, tu/itdrmariopill.rs:61, tu/itfflowerflame.rs:40, tu/itfoods.rs:44, tu/itfoxlaser.rs:45, tu/itgamewatchchef.rs:47, tu/itkirbycutterbeam.rs:47, tu/itkirbyhammer.rs:40, tu/itkoopaflame.rs:57, tu/itlgunbeam.rs:44, tu/itlgunray.rs:39, tu/itlinkbomb.rs:48, tu/itlinkboomerang.rs:65, tu/itlipstickspore.rs:40, tu/itluigifireball.rs:38, tu/itmaplib.rs:30, tu/itmariofireball.rs:40, tu/itmewtwodisable.rs:39, tu/itmewtwoshadowball.rs:72, tu/itnesspkfire.rs:38, tu/itnesspkflash.rs:46, tu/itnesspkthunderball.rs:46, tu/itpikachutjoltground.rs:43, tu/itsamusbomb.rs:42, tu/itsamuschargeshot.rs:56, tu/itsamusmissile.rs:45, tu/itseakchain.rs:63, tu/itseakneedlethrown.rs:47, tu/itsscopebeam.rs:42, tu/itstarrodstar.rs:41, tu/ityoshieggthrow.rs:45, tu/ityoshistar.rs:41, tu/itzeldadinfire.rs:48 -> port `melee_items::tu/it_26B1.rs:541`
+- `it_8026BB88` [ext_fns!] x15: tu/it_2725.rs:77, tu/it_279C.rs:136, tu/itchicorita.rs:39, tu/itdrop.rs:37, tu/ithinoarashi.rs:55, tu/ithitodeman.rs:51, tu/itkamex.rs:39, tu/itlizardon.rs:43, tu/itlugia.rs:47, tu/itmaplib.rs:31, tu/itmatadogas.rs:44, tu/itoctarockstone.rs:40, tu/itsamusmissile.rs:46, tu/itunknown.rs:49, tu/itzako.rs:55 -> port `melee_items::itlib.rs:295`
+- `it_8026BBCC` [ext_fns!] x1: tu/it_2725.rs:78 -> port `melee_items::itlib.rs:305`
+- `it_8026BC90` [ext_fns!] x1: tu/itmaplib.rs:32 -> port `melee_items::tu/it_26B1.rs:587`
+- `it_8026BCF4` [ext_fns!] x2: tu/itlinkbomb.rs:49, tu/itpeachturnip.rs:43 -> port `melee_items::itlib.rs:326`
+- `it_8026BD0C` [ext_fns!] x2: tu/itlinkbomb.rs:50, tu/itpeachturnip.rs:44 -> port `melee_items::itlib.rs:331`
+- `it_8026BD24` [ext_fns!] x18: tu/itbombhei.rs:45, tu/itbox.rs:50, tu/itcapsule.rs:39, tu/itcrazyhandbomb.rs:45, tu/itegg.rs:44, tu/itkusudama.rs:56, tu/itkyasarinegg.rs:41, tu/itlinkbomb.rs:51, tu/itmarumine.rs:41, tu/itmsbomb.rs:43, tu/itpeachexplode.rs:36, tu/itsamusbomb.rs:43, tu/itsamusmissile.rs:47, tu/itseakvanish.rs:37, tu/ittaru.rs:45, tu/itwhispyapple.rs:43, tu/itwstar.rs:44, tu/ityoshieggthrow.rs:46 -> port `melee_items::itlib.rs:336`
+- `it_8026BD3C` [ext_fns!] x1: tu/itleadead.rs:47 -> port `melee_items::itlib.rs:341`
+- `it_8026BD54` [ext_fns!] x4: tu/itkirby_2F23.rs:48, tu/itkirbyyoshispecialn.rs:34, tu/itleadead.rs:48, tu/ityoshitongue.rs:35 -> port `melee_items::itlib.rs:346`
+- `it_8026BD6C` [ext_fns!] x2: tu/itclimbersice.rs:58, tu/itseakneedlethrown.rs:48 -> port `melee_items::itlib.rs:351`
+- `it_8026BD84` [ext_fns!] x1: tu/itclimbersice.rs:59 -> port `melee_items::itlib.rs:356`
+- `it_8026BD9C` [ext_fns!] x2: tu/itmaril.rs:40, tu/itoldottosea.rs:48 -> port `melee_items::itlib.rs:361`
+- `it_8026BDB4` [ext_fns!] x10: tu/it_2725.rs:79, tu/it_279C.rs:137, tu/itbox.rs:51, tu/itfushigibana.rs:37, tu/ithinoarashi.rs:56, tu/itklap.rs:49, tu/itlucky.rs:40, tu/itmaril.rs:41, tu/itoldottosea.rs:49, tu/itwhispyapple.rs:44 -> port `melee_items::tu/it_26B1.rs:637`
+- `it_8026BDCC` [ext_fns!] x1: tu/item.rs:94 -> port `melee_items::itlib.rs:366`
+- `it_8026BE28` [ext_fns!] x1: tu/itfflower.rs:43 -> port `melee_items::itlib.rs:375`
+- `it_8026C100` [ext_fns!] x1: tu/itmaplib.rs:33 -> port `melee_items::tu/it_26B1.rs:759`
+- `it_8026C220` [ext_fns!] x4: tu/itkirby_2F23.rs:49, tu/itkirbyyoshispecialn.rs:35, tu/ityoshitongue.rs:36, tu/itzako.rs:56 -> port `melee_items::tu/it_26B1.rs:807`
+- `it_8026C258` [ext_fns!] x1: tu/itsamusmissile.rs:48 -> port `melee_items::itkinds12.rs:78`
+- `it_8026C368` [ext_fns!] x1: tu/item.rs:95 -> port `melee_items::tu/it_26B1.rs:850`
+- `it_8026C65C` [ext_fns!] x1: tu/itdrop.rs:38 -> port `melee_items::itkinds9.rs:145`
+- `it_8026C704` [ext_fns!] x2: tu/itdrop.rs:39, tu/itkusudama.rs:57 -> port `melee_items::tu/itspawn.rs:148`
+- `it_8026C75C` [ext_fns!] x1: tu/itdrop.rs:40 -> port `melee_items::tu/itspawn.rs:158`
+- `it_8026D324` [ext_fns!] x4: tu/it_26B1.rs:54, tu/itfoods.rs:45, tu/itkusudama.rs:58, tu/itoldottosea.rs:50 -> port `melee_items::tu/itspawn.rs:512`
+- `it_8026D3CC` [ext_fns!] x2: tu/itlucky.rs:41, tu/itwhispyapple.rs:45 -> port `melee_items::tu/itspawn.rs:528`
+- `it_8026D564` [ext_fns!] x6: tu/itkirbycutterbeam.rs:48, tu/itleadead.rs:49, tu/itlikelike.rs:46, tu/itpatapata.rs:44, tu/ittaru.rs:46, tu/ittarucann.rs:49 -> port `melee_items::tu/itgroundcoll.rs:90`
+- `it_8026D5CC` [ext_fns!] x3: tu/itlikelike.rs:47, tu/itnokonoko.rs:41, tu/itoctarock.rs:40 -> port `melee_items::tu/itgroundcoll.rs:102`
+- `it_8026D604` [ext_fns!] x2: tu/item.rs:96, tu/itmsbomb.rs:44 -> port `melee_items::tu/itgroundcoll.rs:109`
+- `it_8026D62C` [ext_fns!] x57: tu/itbat.rs:38, tu/itbombhei.rs:46, tu/itbox.rs:52, tu/itcapsule.rs:40, tu/itchicorita.rs:40, tu/itclimbersice.rs:60, tu/itcoin.rs:54, tu/itdosei.rs:57, tu/itegg.rs:45, tu/itentei.rs:43, tu/itevyoshiegg.rs:43, tu/itfflower.rs:44, tu/itfflowerflame.rs:41, tu/itflipper.rs:53, tu/itfoods.rs:46, tu/itfreeze.rs:45, tu/itfushigibana.rs:38, tu/itkabigon.rs:44, tu/itkamex.rs:40, tu/itkusudama.rs:59, tu/itleadead.rs:50, tu/itlgun.rs:36, tu/itlinkbomb.rs:52, tu/itlipstick.rs:35, tu/itlizardon.rs:44, tu/itlucky.rs:42, tu/itmarumine.rs:42, tu/itmball.rs:40, tu/itmetalb.rs:37, tu/itmsbomb.rs:45, tu/itnokonoko.rs:42, tu/itoctarock.rs:41, tu/itoldkuri.rs:38, tu/itoldottosea.rs:51, tu/itparasol.rs:38, tu/itpippi.rs:37, tu/itrabbitc.rs:37, tu/itraikou.rs:39, tu/itrshell.rs:43, tu/itsamusbomb.rs:44, tu/itscball.rs:34, tu/itsonans.rs:37, tu/itspycloak.rs:34, tu/itsscope.rs:37, tu/itstarrod.rs:36, tu/itsuikun.rs:41, tu/itsword.rs:44, tu/ittaru.rs:47, tu/ittarucann.rs:50, tu/ittincle.rs:40, tu/ittogepy.rs:36, tu/ittomato.rs:36, tu/itwhispyapple.rs:46, tu/itwhitebea.rs:50, tu/itwstar.rs:45, tu/ityoshiegglay.rs:42, tu/itzgshell.rs:48 -> port `melee_items::tu/itgroundcoll.rs:114`
+- `it_8026D6F4` [ext_fns!] x4: tu/itleadead.rs:51, tu/itlikelike.rs:48, tu/ittincle.rs:41, tu/itwhitebea.rs:51 -> port `melee_items::tu/itgroundcoll.rs:133`
+- `it_8026D78C` [ext_fns!] x2: tu/itdkinoko.rs:39, tu/itkinoko.rs:34 -> port `melee_items::tu/itgroundcoll.rs:147`
+- `it_8026D82C` [ext_fns!] x3: tu/itleadead.rs:52, tu/itnesspkfirepillar.rs:37, tu/itnokonoko.rs:43 -> port `melee_items::tu/itgroundcoll.rs:162`
+- `it_8026D8A4` [ext_fns!] x8: tu/itbombhei.rs:47, tu/itdosei.rs:58, tu/itleadead.rs:53, tu/itlikelike.rs:49, tu/itnokonoko.rs:44, tu/itoldottosea.rs:52, tu/itrshell.rs:44, tu/itwhitebea.rs:52 -> port `melee_items::tu/itgroundcoll.rs:176`
+- `it_8026D938` [ext_fns!] x1: tu/itmsbomb.rs:46 -> port `melee_items::tu/itgroundcoll.rs:195`
+- `it_8026D9A0` [ext_fns!] x9: tu/itclimbersblizzard.rs:40, tu/itdrmariopill.rs:62, tu/itkoopaflame.rs:58, tu/itlgunbeam.rs:45, tu/itluigifireball.rs:39, tu/itmaril.rs:42, tu/itmariofireball.rs:41, tu/itmewtwodisable.rs:40, tu/itsscopebeam.rs:43 -> port `melee_items::tu/itgroundcoll.rs:203`
+- `it_8026DA08` [ext_fns!] x29: tu/itbox.rs:53, tu/itegg.rs:46, tu/itevyoshiegg.rs:44, tu/itfflowerflame.rs:42, tu/ithinoarashi.rs:57, tu/ithouou.rs:37, tu/itkirbycutterbeam.rs:49, tu/itkireihana.rs:40, tu/itkusudama.rs:60, tu/itkyasarinegg.rs:42, tu/itlikelike.rs:50, tu/itlugia.rs:48, tu/itmarumine.rs:43, tu/itmetalb.rs:38, tu/itmewtwoshadowball.rs:73, tu/itnesspkflash.rs:47, tu/itnesspkthunderball.rs:47, tu/itoctarock.rs:42, tu/itpatapata.rs:45, tu/itporygon2.rs:36, tu/itrabbitc.rs:38, tu/itsamuschargeshot.rs:57, tu/itspycloak.rs:35, tu/itstar.rs:36, tu/ittaru.rs:48, tu/ittarucann.rs:51, tu/ittincle.rs:42, tu/ittosakinto.rs:37, tu/itzeldadinfire.rs:49 -> port `melee_items::tu/itgroundcoll.rs:215`
+- `it_8026DA70` [ext_fns!] x2: tu/itoctarock.rs:43, tu/itpikachuthunder.rs:44 -> port `melee_items::tu/itgroundcoll.rs:227`
+- `it_8026DAA8` [ext_fns!] x16: tu/itclimbersice.rs:61, tu/itflipper.rs:54, tu/itfreeze.rs:46, tu/itgamewatchchef.rs:48, tu/itkyasarinegg.rs:43, tu/itlinkbomb.rs:53, tu/itlipstick.rs:36, tu/itnokonoko.rs:45, tu/itoctarockstone.rs:41, tu/itpatapata.rs:46, tu/itpeachturnip.rs:45, tu/itsscopebeam.rs:44, tu/ittincle.rs:43, tu/ittools.rs:41, tu/itwhispyapple.rs:47, tu/itzako.rs:57 -> port `melee_items::tu/itgroundcoll.rs:234`
+- `it_8026DB40` [ext_fns!] x4: tu/itleadead.rs:54, tu/itmaril.rs:43, tu/itnokonoko.rs:46, tu/itzgshell.rs:49 -> port `melee_items::tu/itgroundcoll.rs:248`
+- `it_8026DBC8` [ext_fns!] x2: tu/itlipstick.rs:37, tu/itwhispyapple.rs:48 -> port `melee_items::tu/itgroundcoll.rs:261`
+- `it_8026DF34` [ext_fns!] x7: tu/itfflower.rs:45, tu/itfflowerflame.rs:43, tu/itlgun.rs:37, tu/itlipstick.rs:38, tu/itrshell.rs:45, tu/itsscope.rs:38, tu/itstarrod.rs:37 -> port `melee_items::tu/itgroundcoll.rs:330`
+- `it_8026DFB0` [ext_fns!] x11: tu/it_2ADA.rs:35, tu/it_2F28.rs:39, tu/itchicorita.rs:41, tu/itkamex.rs:41, tu/itkyasarinegg.rs:44, tu/itleadead.rs:55, tu/itlipstickspore.rs:41, tu/itlizardon.rs:45, tu/itoctarockstone.rs:42, tu/itoldkuri.rs:39, tu/itstarrodstar.rs:42 -> port `melee_items::tu/itgroundcoll.rs:345`
+- `it_8026E058` [ext_fns!] x1: tu/itnesspkfire.rs:39 -> port `melee_items::tu/itgroundcoll.rs:362`
+- `it_8026E0F4` [ext_fns!] x3: tu/itflipper.rs:55, tu/itlinkboomerang.rs:66, tu/ityoshistar.rs:42 -> port `melee_items::tu/itgroundcoll.rs:378`
+- `it_8026E15C` [ext_fns!] x45: tu/itbat.rs:39, tu/itbombhei.rs:48, tu/itbox.rs:54, tu/itcapsule.rs:41, tu/itchicorita.rs:42, tu/itclimbersice.rs:62, tu/itcoin.rs:55, tu/itdosei.rs:59, tu/itegg.rs:47, tu/itfflower.rs:46, tu/itflipper.rs:56, tu/itfreezer.rs:38, tu/itfushigibana.rs:39, tu/itkabigon.rs:45, tu/itkamex.rs:42, tu/itkusudama.rs:61, tu/itlgun.rs:38, tu/itlinkbomb.rs:54, tu/itlipstick.rs:39, tu/itlizardon.rs:46, tu/itlucky.rs:43, tu/itmaril.rs:44, tu/itmarumine.rs:44, tu/itmasterhandbullet.rs:39, tu/itmatadogas.rs:45, tu/itmball.rs:41, tu/itmetalb.rs:39, tu/itmetamon.rs:34, tu/itmsbomb.rs:47, tu/itparasol.rs:39, tu/itpippi.rs:38, tu/itrabbitc.rs:39, tu/itscball.rs:35, tu/itsonans.rs:38, tu/itspycloak.rs:36, tu/itsscope.rs:39, tu/itstarrod.rs:38, tu/itsword.rs:45, tu/itthunder.rs:37, tu/ittogepy.rs:37, tu/ittomato.rs:37, tu/ittosakinto.rs:38, tu/itwhispyapple.rs:49, tu/itwstar.rs:46, tu/ityoshiegglay.rs:43 -> port `melee_items::tu/itgroundcoll.rs:414`
+- `it_8026E248` [ext_fns!] x5: tu/itentei.rs:44, tu/itkireihana.rs:41, tu/itraikou.rs:40, tu/itsamusbomb.rs:45, tu/itsuikun.rs:42 -> port `melee_items::tu/itgroundcoll.rs:451`
+- `it_8026E32C` [ext_fns!] x3: tu/itevyoshiegg.rs:45, tu/itrshell.rs:46, tu/itzgshell.rs:50 -> port `melee_items::tu/itgroundcoll.rs:478`
+- `it_8026E414` [ext_fns!] x18: tu/itbombhei.rs:49, tu/itcapsule.rs:42, tu/itcoin.rs:56, tu/itdkinoko.rs:40, tu/itfoods.rs:47, tu/itfreeze.rs:47, tu/itleadead.rs:56, tu/itlikelike.rs:51, tu/itmball.rs:42, tu/itnesspkfirepillar.rs:38, tu/itnokonoko.rs:47, tu/itoctarock.rs:44, tu/itoldkuri.rs:40, tu/itoldottosea.rs:53, tu/itrshell.rs:47, tu/ittincle.rs:44, tu/itwhitebea.rs:53, tu/itzgshell.rs:51 -> port `melee_items::tu/itgroundcoll.rs:491`
+- `it_8026E4D0` [ext_fns!] x1: tu/it_279C.rs:138 -> port `melee_items::tu/itgroundcoll.rs:513`
+- `it_8026E5A0` [ext_fns!] x1: tu/ityoshieggthrow.rs:47 -> port `melee_items::tu/itgroundcoll.rs:537`
+- `it_8026E664` [ext_fns!] x1: tu/itoldottosea.rs:54 -> port `melee_items::tu/itgroundcoll.rs:561`
+- `it_8026E71C` [ext_fns!] x5: tu/itcrazyhandbomb.rs:46, tu/itlikelike.rs:52, tu/itmarumine.rs:45, tu/itmsbomb.rs:48, tu/itsamusmissile.rs:49 -> port `melee_items::tu/itgroundcoll.rs:584`
+- `it_8026E7E0` [ext_fns!] x2: tu/itfire.rs:38, tu/itkinoko.rs:35 -> port `melee_items::tu/itgroundcoll.rs:608`
+- `it_8026E8C4` [ext_fns!] x31: tu/itbat.rs:40, tu/itbombhei.rs:50, tu/itbox.rs:55, tu/itcapsule.rs:43, tu/itcoin.rs:57, tu/itdosei.rs:60, tu/itegg.rs:48, tu/itevyoshiegg.rs:46, tu/itfflower.rs:47, tu/itfflowerflame.rs:44, tu/itflipper.rs:57, tu/itlgun.rs:39, tu/itlinkbomb.rs:55, tu/itlipstick.rs:40, tu/itlucky.rs:44, tu/itmball.rs:43, tu/itmetalb.rs:40, tu/itmsbomb.rs:49, tu/itparasol.rs:40, tu/itrabbitc.rs:40, tu/itrshell.rs:48, tu/itsamusbomb.rs:46, tu/itscball.rs:36, tu/itspycloak.rs:37, tu/itsscope.rs:40, tu/itstarrod.rs:39, tu/itsword.rs:46, tu/ittomato.rs:38, tu/itwhispyapple.rs:50, tu/itwstar.rs:47, tu/itzgshell.rs:52 -> port `melee_items::tu/itgroundcoll.rs:635`
+- `it_8026E9A4` [ext_fns!] x2: tu/itfoxlaser.rs:46, tu/itpikachutjoltground.rs:44 -> port `melee_items::tu/itgroundcoll.rs:659`
+- `it_8026EA20` [ext_fns!] x3: tu/itarwinglaser.rs:50, tu/itlinkarrow.rs:65, tu/itseakneedlethrown.rs:49 -> port `melee_items::tu/itgroundcoll.rs:668`
+- `it_8026EA9C` [ext_fns!] x1: tu/itarwinglaser.rs:51 -> port `melee_items::tu/itgroundcoll.rs:677`
+- `it_8026EECC` [ext_fns!] x7: tu/it_279C.rs:139, tu/itcoin.rs:58, tu/item.rs:97, tu/itfoxillusion.rs:51, tu/itlinkarrow.rs:66, tu/itlinkboomerang.rs:67, tu/itsword.rs:47 -> port `melee_items::tu/itdraw.rs:251`
+- `it_8026F3AC` [ext_fns!] x1: tu/itkusudama.rs:62 -> port `melee_items::tu/itdrop.rs:66`
+- `it_8026F3D4` [ext_fns!] x5: tu/itbox.rs:56, tu/itcapsule.rs:44, tu/itegg.rs:49, tu/itkyasarinegg.rs:45, tu/ittaru.rs:49 -> port `melee_items::tu/itdrop.rs:79`
+- `it_8026F53C` [ext_fns!] x1: tu/itkusudama.rs:63 -> port `melee_items::itkinds9.rs:218`
+- `it_8026F5C8` [ext_fns!] x1: tu/itkusudama.rs:64 -> port `melee_items::tu/itdrop.rs:135`
+- `it_8026F6BC` [ext_fns!] x3: tu/itbox.rs:57, tu/itkusudama.rs:65, tu/ittaru.rs:50 -> port `melee_items::tu/itdrop.rs:163`
+- `it_8026F8B4` [ext_fns!] x5: tu/itbox.rs:58, tu/itcapsule.rs:45, tu/itegg.rs:50, tu/itkusudama.rs:66, tu/ittaru.rs:51 -> port `melee_items::tu/itdrop.rs:209`
+- `it_8026F9A0` [ext_fns!] x1: tu/item.rs:98 -> port `melee_items::itkinds12.rs:134`
+- `it_8026FCF8` [ext_fns!] x1: tu/itanimlist.rs:50 -> port `melee_items::tu/itcoll.rs:224`
+- `it_802701BC` [ext_fns!] x1: tu/item.rs:99 -> port `melee_items::tu/itcoll.rs:314`
+- `it_802703E8` [ext_fns!] x1: tu/item.rs:100 -> port `melee_items::tu/itcoll.rs:375`
+- `it_802706D0` [ext_fns!] x1: tu/item.rs:101 -> port `melee_items::tu/itcoll.rs:485`
+- `it_80270CD8` [ext_fns!] x1: tu/itklap.rs:50 -> port `melee_items::itlib3.rs:289`
+- `it_80270E30` [ext_fns!] x1: tu/item.rs:102 -> port `melee_items::tu/itcoll.rs:610`
+- `it_8027129C` [ext_fns!] x2: tu/it_2725.rs:80, tu/itanimlist.rs:51 -> port `melee_items::tu/itcoll.rs:723`
+- `it_8027137C` [ext_fns!] x1: tu/item.rs:103 -> port `melee_items::tu/itcoll.rs:747`
+- `it_8027146C` [ext_fns!] x1: tu/item.rs:104 -> port `melee_items::tu/itcoll.rs:774`
+- `it_802714C0` [ext_fns!] x2: tu/item.rs:105, tu/ithitbox.rs:30 -> port `melee_items::itlib.rs:776`
+- `it_80271508` [ext_fns!] x1: tu/item.rs:106 -> port `melee_items::itlib.rs:784`
+- `it_80271534` [ext_fns!] x1: tu/itzgshell.rs:53 -> port `melee_items::itlib.rs:793`
+- `it_80271590` [ext_fns!] x3: tu/itleadead.rs:57, tu/itlikelike.rs:53, tu/itzgshell.rs:54 -> port `melee_items::itlib.rs:805`
+- `it_80271A58` [ext_fns!] x1: tu/item.rs:108 -> port `melee_items::tu/itcoll.rs:924`
+- `it_802721B8` [ext_fns!] x1: tu/item.rs:109 -> port `melee_items::tu/itcoll.rs:1051`
+- `it_80272280` [ext_fns!] x1: tu/item.rs:110 -> port `melee_items::itlib.rs:820`
+- `it_80272298` [ext_fns!] x1: tu/item.rs:111 -> port `melee_items::itlib.rs:825`
+- `it_802722B0` [ext_fns!] x1: tu/item.rs:112 -> port `melee_items::tu/itcoll.rs:1080`
+- `it_80272304` [ext_fns!] x1: tu/item.rs:113 -> port `melee_items::tu/itcoll.rs:1087`
+- `it_8027236C` [ext_fns!] x4: tu/itmetalb.rs:41, tu/itrshell.rs:49, tu/ittaru.rs:52, tu/itzgshell.rs:55 -> port `melee_items::tu/itcoll.rs:1097`
+- `it_802723FC` [ext_fns!] x2: tu/itrshell.rs:50, tu/itzgshell.rs:56 -> port `melee_items::tu/itcoll.rs:1117`
+- `it_80272460` [ext_fns!] x12: tu/itanimlist.rs:52, tu/itclimbersice.rs:63, tu/item.rs:114, tu/ithitbox.rs:31, tu/itlinkarrow.rs:67, tu/itlipstickspore.rs:42, tu/itnesspkflashexplode.rs:40, tu/itpeachturnip.rs:46, tu/itsonans.rs:39, tu/itstarrodstar.rs:43, tu/ittools.rs:42, tu/itzeldadinfireexplode.rs:44 -> port `melee_items::tu/itcoll.rs:1129`
+- `it_80272560` [ext_fns!] x3: tu/itanimlist.rs:53, tu/itflipper.rs:58, tu/itseakneedlethrown.rs:50 -> port `melee_items::tu/it_2725.rs:297`
+- `it_802725D4` [ext_fns!] x20: tu/it_26B1.rs:55, tu/itanimlist.rs:54, tu/itdosei.rs:61, tu/item.rs:115, tu/itflipper.rs:59, tu/itgroundcoll.rs:34, tu/itkoopaflame.rs:59, tu/itmball.rs:44, tu/itmsbomb.rs:50, tu/itnesspkflash.rs:48, tu/itnesspkflashexplode.rs:41, tu/itnesspkthunderball.rs:48, tu/itnesspkthundertrail.rs:39, tu/itpikachutjoltair.rs:42, tu/itpikachutjoltground.rs:45, tu/itrshell.rs:51, tu/itwhispyapple.rs:51, tu/itzeldadinfire.rs:50, tu/itzeldadinfireexplode.rs:45, tu/itzgshell.rs:57 -> port `melee_items::tu/it_2725.rs:305`
+- `it_80272674` [ext_fns!] x2: tu/itflipper.rs:60, tu/itrshell.rs:52 -> port `melee_items::tu/it_2725.rs:318`
+- `it_80272784` [ext_fns!] x1: tu/it_26B1.rs:56 -> port `melee_items::tu/it_2725.rs:354`
+- `it_80272828` [ext_fns!] x2: tu/it_2E5A.rs:51, tu/itspawn.rs:60 -> port `melee_items::itlib3.rs:47`
+- `it_80272860` [ext_fns!] x80: tu/it_279C.rs:140, tu/it_2ADA.rs:36, tu/it_2E5A.rs:52, tu/itbat.rs:41, tu/itbombhei.rs:51, tu/itbox.rs:59, tu/itcapsule.rs:46, tu/itclimbersice.rs:64, tu/itcoin.rs:60, tu/itcrazyhandbomb.rs:47, tu/itdkinoko.rs:41, tu/itdosei.rs:62, tu/itdrmariopill.rs:63, tu/itegg.rs:51, tu/itentei.rs:45, tu/itevyoshiegg.rs:47, tu/itfflower.rs:48, tu/itfflowerflame.rs:45, tu/itflipper.rs:61, tu/itfoods.rs:48, tu/itfreeze.rs:48, tu/itfushigibana.rs:40, tu/itgamewatchchef.rs:49, tu/ithinoarashi.rs:58, tu/itkabigon.rs:46, tu/itkamex.rs:43, tu/itkinoko.rs:36, tu/itkusudama.rs:67, tu/itkyasarinegg.rs:46, tu/itleadead.rs:58, tu/itlgun.rs:40, tu/itlikelike.rs:54, tu/itlinkbomb.rs:56, tu/itlipstick.rs:41, tu/itlizardon.rs:47, tu/itlucky.rs:45, tu/itluigifireball.rs:40, tu/itmaril.rs:45, tu/itmariofireball.rs:42, tu/itmarumine.rs:46, tu/itmball.rs:45, tu/itmetalb.rs:42, tu/itmsbomb.rs:51, tu/itnesspkfirepillar.rs:39, tu/itnokonoko.rs:48, tu/itoctarock.rs:45, tu/itoctarockstone.rs:43, tu/itoldkuri.rs:41, tu/itoldottosea.rs:55, tu/itparasol.rs:41, tu/itpatapata.rs:47, tu/itpeachturnip.rs:47, tu/itpippi.rs:39, tu/itrabbitc.rs:41, tu/itraikou.rs:41, tu/itrshell.rs:53, tu/itsamusbomb.rs:47, tu/itscball.rs:37, tu/itsonans.rs:40, tu/itspycloak.rs:38, tu/itsscope.rs:41, tu/itstar.rs:37, tu/itstarrod.rs:40, tu/itsuikun.rs:43, tu/itsword.rs:48, tu/ittaru.rs:53, tu/ittarucann.rs:52, tu/ittincle.rs:45, tu/ittogepy.rs:38, tu/ittomato.rs:39, tu/ittools.rs:43, tu/ittosakinto.rs:39, tu/itunknown.rs:50, tu/itwhispyapple.rs:52, tu/itwhitebea.rs:54, tu/itwstar.rs:48, tu/ityoshiegglay.rs:44, tu/ityoshieggthrow.rs:48, tu/ityoshistar.rs:43, tu/itzgshell.rs:58 -> port `melee_items::itlib3.rs:60`
+- `it_802728C8` [ext_fns!] x5: tu/item.rs:116, tu/itflipper.rs:62, tu/ittaru.rs:54, tu/ittarucann.rs:53, tu/itwhispyapple.rs:53 -> port `melee_items::tu/it_2725.rs:1141`
+- `it_80272940` [ext_fns!] x13: tu/itkoopaflame.rs:60, tu/itlgunbeam.rs:46, tu/itnesspkflash.rs:49, tu/itnesspkflashexplode.rs:42, tu/itnesspkthunderball.rs:49, tu/itnesspkthundertrail.rs:40, tu/itpikachutjoltair.rs:43, tu/itpikachutjoltground.rs:46, tu/itrshell.rs:54, tu/itseakneedlethrown.rs:51, tu/itzeldadinfire.rs:51, tu/itzeldadinfireexplode.rs:46, tu/itzgshell.rs:59 -> port `melee_items::tu/it_2725.rs:1155`
+- `it_80272980` [ext_fns!] x8: tu/it_279C.rs:141, tu/itclimbersice.rs:65, tu/itlinkbomb.rs:57, tu/itmball.rs:46, tu/itrshell.rs:55, tu/itsamusbomb.rs:48, tu/itunknown.rs:51, tu/itzgshell.rs:60 -> port `melee_items::tu/it_2725.rs:1162`
+- `it_80272A18` [ext_fns!] x5: tu/it_26B1.rs:57, tu/itdraw.rs:43, tu/itlinkarrow.rs:68, tu/itlinkboomerang.rs:68, tu/itrabbitc.rs:42 -> port `melee_items::tu/it_2725.rs:1177`
+- `it_80272A3C` [ext_fns!] x8: tu/it_26B1.rs:58, tu/itdraw.rs:44, tu/itfoxillusion.rs:52, tu/itkusudama.rs:68, tu/itlinkboomerang.rs:69, tu/itpeachtoadspore.rs:43, tu/itrabbitc.rs:43, tu/itseakchain.rs:64 -> port `melee_items::tu/it_2725.rs:1182`
+- `it_80272A60` [ext_fns!] x2: tu/itlinkbomb.rs:58, tu/itsamusmissile.rs:50 -> port `melee_items::tu/it_2725.rs:1187`
+- `it_80272AC4` [ext_fns!] x1: tu/itpikachuthunder.rs:45 -> port `melee_items::tu/it_2725.rs:1195`
+- `it_80272B40` [ext_fns!] x2: tu/itsamusbomb.rs:49, tu/itsamusmissile.rs:51 -> port `melee_items::tu/it_2725.rs:1204`
+- `it_80272BA4` [ext_fns!] x1: tu/ityoshistar.rs:44 -> port `melee_items::tu/it_2725.rs:1212`
+- `it_80272C08` [ext_fns!] x12: tu/itbombhei.rs:52, tu/itbox.rs:60, tu/itcapsule.rs:47, tu/itcrazyhandbomb.rs:48, tu/itegg.rs:52, tu/itkusudama.rs:69, tu/itkyasarinegg.rs:47, tu/itmsbomb.rs:52, tu/itpeachexplode.rs:37, tu/ittaru.rs:55, tu/itwhispyapple.rs:54, tu/itwstar.rs:49 -> port `melee_items::tu/it_2725.rs:1220`
+- `it_80272C6C` [ext_fns!] x49: tu/itarwinglaser.rs:52, tu/itbombhei.rs:53, tu/itcerebi.rs:38, tu/itchicorita.rs:43, tu/itdosei.rs:63, tu/itentei.rs:46, tu/itfflower.rs:49, tu/itfire.rs:39, tu/itfreezer.rs:39, tu/itfushigibana.rs:41, tu/itgamewatchgreenhouse.rs:40, tu/ithinoarashi.rs:59, tu/ithitodeman.rs:52, tu/ithouou.rs:38, tu/itkabigon.rs:47, tu/itkamex.rs:44, tu/itkireihana.rs:42, tu/itkyasarin.rs:48, tu/itleadead.rs:59, tu/itlikelike.rs:55, tu/itlinkbomb.rs:59, tu/itlizardon.rs:48, tu/itlucky.rs:46, tu/itlugia.rs:49, tu/itmaril.rs:46, tu/itmarumine.rs:47, tu/itmasterhandlaser.rs:41, tu/itmatadogas.rs:46, tu/itmetamon.rs:35, tu/itmew.rs:38, tu/itnesspkflash.rs:50, tu/itnesspkflashexplode.rs:43, tu/itnokonoko.rs:49, tu/itoctarock.rs:46, tu/itoldkuri.rs:42, tu/itoldottosea.rs:56, tu/itpatapata.rs:48, tu/itpippi.rs:40, tu/itporygon2.rs:37, tu/itraikou.rs:42, tu/itsonans.rs:41, tu/itsuikun.rs:44, tu/itthunder.rs:38, tu/ittincle.rs:46, tu/ittogepy.rs:39, tu/ittosakinto.rs:40, tu/itwhitebea.rs:55, tu/ityoshistar.rs:45, tu/itzgshell.rs:61 -> port `melee_items::tu/it_2725.rs:1228`
+- `it_80272C90` [ext_fns!] x2: tu/itkirbyhammer.rs:41, tu/itwstar.rs:50 -> port `melee_items::itkinds12.rs:143`
+- `it_80272CC0` [ext_fns!] x8: tu/iteffect.rs:46, tu/itfflowerflame.rs:46, tu/itleadead.rs:60, tu/itlikelike.rs:56, tu/itmaplib.rs:34, tu/itrabbitc.rs:44, tu/itsword.rs:49, tu/itwstar.rs:51 -> port `melee_items::itkinds11.rs:47`
+- `it_80272D1C` [ext_fns!] x1: tu/item.rs:117 -> port `melee_items::itlib3.rs:79`
+- `it_80272D40` [ext_fns!] x3: tu/it_26B1.rs:59, tu/itlinkarrow.rs:69, tu/itmaplib.rs:35 -> port `melee_items::tu/it_2725.rs:375`
+- `it_80272DE4` [ext_fns!] x1: tu/it_279C.rs:142 -> port `melee_items::tu/it_2725.rs:395`
+- `it_80272F7C` [ext_fns!] x9: tu/it_26B1.rs:60, tu/it_279C.rs:143, tu/itclimbersice.rs:66, tu/itfflowerflame.rs:47, tu/itfoxillusion.rs:53, tu/itgroundcoll.rs:35, tu/itlinkhookshot.rs:73, tu/itrabbitc.rs:45, tu/itwstar.rs:52 -> port `melee_items::tu/it_2725.rs:402`
+- `it_80273030` [ext_fns!] x42: tu/itbat.rs:42, tu/itbombhei.rs:54, tu/itchicorita.rs:44, tu/itclimbersblizzard.rs:41, tu/itclimbersice.rs:67, tu/itcrazyhandbomb.rs:49, tu/itdosei.rs:64, tu/itdrmariopill.rs:64, tu/itfflower.rs:50, tu/itflipper.rs:63, tu/itfreeze.rs:49, tu/itgamewatchchef.rs:50, tu/itlgun.rs:41, tu/itlinkbomb.rs:60, tu/itlipstick.rs:42, tu/itlipstickspore.rs:43, tu/itlizardon.rs:49, tu/itluigifireball.rs:41, tu/itmaril.rs:47, tu/itmariofireball.rs:43, tu/itmball.rs:47, tu/itmewtwodisable.rs:41, tu/itmsbomb.rs:53, tu/itnesspkfire.rs:40, tu/itoctarockstone.rs:44, tu/itparasol.rs:42, tu/itpeachtoadspore.rs:44, tu/itpeachturnip.rs:48, tu/itrshell.rs:56, tu/itsamusbomb.rs:50, tu/itsamusmissile.rs:52, tu/itscball.rs:38, tu/itsscope.rs:42, tu/itsscopebeam.rs:45, tu/itstarrod.rs:41, tu/itstarrodstar.rs:44, tu/itsword.rs:50, tu/ittools.rs:44, tu/itwhispyapple.rs:55, tu/ityoshieggthrow.rs:49, tu/ityoshistar.rs:46, tu/itzgshell.rs:62 -> port `melee_items::itlib.rs:400`
+- `it_80273130` [ext_fns!] x19: tu/itarwinglaser.rs:53, tu/itdosei.rs:65, tu/itfflowerflame.rs:48, tu/itfoxlaser.rs:47, tu/itkirbycutterbeam.rs:50, tu/itkoopaflame.rs:61, tu/itlgunbeam.rs:47, tu/itlgunray.rs:40, tu/itlinkarrow.rs:70, tu/itlipstickspore.rs:44, tu/itmaril.rs:48, tu/itmewtwoshadowball.rs:74, tu/itnesspkflash.rs:51, tu/itnesspkthunderball.rs:50, tu/itpikachutjoltground.rs:47, tu/itsamuschargeshot.rs:58, tu/itseakneedlethrown.rs:52, tu/itzeldadinfire.rs:52, tu/itzeldadinfireexplode.rs:47 -> port `melee_items::itlib.rs:409`
+- `it_80273168` [ext_fns!] x1: tu/item.rs:118 -> port `melee_items::tu/it_2725.rs:429`
+- `it_802731A4` [ext_fns!] x1: tu/item.rs:119 -> port `melee_items::tu/it_2725.rs:437`
+- `it_802731E0` [ext_fns!] x1: tu/item.rs:120 -> port `melee_items::tu/it_2725.rs:445`
+- `it_8027321C` [ext_fns!] x2: tu/it_2E5A.rs:53, tu/itmaplib.rs:36 -> port `melee_items::tu/it_2725.rs:453`
+- `it_8027327C` [ext_fns!] x3: tu/item.rs:121, tu/itnokonoko.rs:50, tu/itpatapata.rs:49 -> port `melee_items::tu/it_2725.rs:465`
+- `it_80273318` [ext_fns!] x3: tu/it_2E5A.rs:54, tu/itfoods.rs:49, tu/itunknown.rs:52 -> port `melee_items::tu/it_2725.rs:486`
+- `it_80273408` [ext_fns!] x3: tu/itkirby_2F23.rs:50, tu/itkirbyyoshispecialn.rs:36, tu/ityoshitongue.rs:37 -> port `melee_items::tu/it_2725.rs:496`
+- `it_80273454` [ext_fns!] x40: tu/itbombhei.rs:55, tu/itcapsule.rs:48, tu/itcerebi.rs:39, tu/itchicorita.rs:45, tu/itcrazyhandbomb.rs:50, tu/itentei.rs:47, tu/itfire.rs:40, tu/itfreeze.rs:50, tu/itfreezer.rs:40, tu/itfushigibana.rs:42, tu/ithinoarashi.rs:60, tu/ithitodeman.rs:53, tu/ithouou.rs:39, tu/itkabigon.rs:48, tu/itkamex.rs:45, tu/itkireihana.rs:43, tu/itkyasarin.rs:49, tu/itlikelike.rs:57, tu/itlinkbomb.rs:61, tu/itlizardon.rs:50, tu/itlucky.rs:47, tu/itlugia.rs:50, tu/itmaril.rs:49, tu/itmarumine.rs:48, tu/itmatadogas.rs:47, tu/itmetamon.rs:36, tu/itmew.rs:39, tu/itmsbomb.rs:54, tu/itnesspkfirepillar.rs:40, tu/itpippi.rs:41, tu/itraikou.rs:43, tu/itsamusbomb.rs:51, tu/itsamusmissile.rs:53, tu/itsonans.rs:42, tu/itsuikun.rs:45, tu/itthunder.rs:39, tu/ittogepy.rs:40, tu/ittosakinto.rs:41, tu/itunknown.rs:53, tu/ityoshieggthrow.rs:50 -> port `melee_items::tu/it_2725.rs:505`
+- `it_8027346C` [ext_fns!] x1: tu/item.rs:122 -> port `melee_items::itlib.rs:415`
+- `it_80273484` [ext_fns!] x1: tu/item.rs:123 -> port `melee_items::itlib.rs:420`
+- `it_802734B4` [ext_fns!] x1: tu/itgroundcoll.rs:36 -> port `melee_items::itlib.rs:430`
+- `it_80273500` [ext_fns!] x1: tu/item.rs:124 -> port `melee_items::itlib3.rs:90`
+- `it_80273598` [ext_fns!] x4: tu/itanimlist.rs:55, tu/itnesspkflashexplode.rs:44, tu/ityoshieggthrow.rs:51, tu/itzeldadinfireexplode.rs:48 -> port `melee_items::tu/it_2725.rs:549`
+- `it_80273600` [ext_fns!] x1: tu/itanimlist.rs:56 -> port `melee_items::tu/it_2725.rs:557`
+- `it_80273648` [ext_fns!] x1: tu/itanimlist.rs:57 -> port `melee_items::tu/it_2725.rs:565`
+- `it_80273670` [ext_fns!] x17: tu/itcerebi.rs:40, tu/itdrmariopill.rs:65, tu/itfire.rs:41, tu/itfreezer.rs:41, tu/itfushigibana.rs:43, tu/itgamewatchjudge.rs:40, tu/ithinoarashi.rs:61, tu/ithouou.rs:40, tu/itkireihana.rs:44, tu/itlizardon.rs:51, tu/itlucky.rs:48, tu/itlugia.rs:51, tu/itmaril.rs:50, tu/itmew.rs:40, tu/itpeachturnip.rs:49, tu/itthunder.rs:40, tu/ittools.rs:45 -> port `melee_items::tu/it_2725.rs:571`
+- `it_80273748` [ext_fns!] x1: tu/item.rs:125 -> port `melee_items::tu/it_2725.rs:594`
+- `it_80273B50` [ext_fns!] x1: tu/item.rs:126 -> port `melee_items::tu/it_2725.rs:666`
+- `it_80274198` [ext_fns!] x1: tu/item.rs:127 -> port `melee_items::tu/it_2725.rs:765`
+- `it_802741F4` [ext_fns!] x1: tu/item.rs:128 -> port `melee_items::tu/it_2725.rs:782`
+- `it_80274250` [ext_fns!] x1: tu/itmarumine.rs:49 -> port `melee_items::tu/it_2725.rs:799`
+- `it_8027429C` [ext_fns!] x11: tu/it_26B1.rs:61, tu/itbombhei.rs:56, tu/itlinkarrow.rs:71, tu/itlinkbomb.rs:62, tu/itlinkboomerang.rs:70, tu/itmewtwoshadowball.rs:75, tu/itsamuschargeshot.rs:59, tu/itwhispyapple.rs:56, tu/itwstar.rs:53, tu/ityoshieggthrow.rs:52, tu/itzgshell.rs:63 -> port `melee_items::tu/it_2725.rs:810`
+- `it_802742F4` [ext_fns!] x2: tu/it_26B1.rs:62, tu/item.rs:129 -> port `melee_items::tu/it_2725.rs:824`
+- `it_80274484` [ext_fns!] x3: tu/itbombhei.rs:57, tu/itdosei.rs:66, tu/itpeachturnip.rs:50 -> port `melee_items::tu/it_2725.rs:860`
+- `it_80274574` [ext_fns!] x3: tu/itmariocape.rs:45, tu/itpeachexplode.rs:38, tu/itpeachtoad.rs:47 -> port `melee_items::tu/it_2725.rs:871`
+- `it_80274594` [ext_fns!] x3: tu/itfoxillusion.rs:54, tu/itpeachturnip.rs:51, tu/itzako.rs:58 -> port `melee_items::tu/it_2725.rs:884`
+- `it_80274658` [ext_fns!] x29: tu/itbat.rs:43, tu/itbombhei.rs:58, tu/itbox.rs:61, tu/itcapsule.rs:49, tu/itclimbersice.rs:68, tu/itdosei.rs:67, tu/itdrmariopill.rs:66, tu/itdrop.rs:41, tu/itegg.rs:53, tu/item.rs:130, tu/itevyoshiegg.rs:48, tu/itflipper.rs:64, tu/itgroundcoll.rs:37, tu/itkusudama.rs:70, tu/itkyasarinegg.rs:48, tu/itlgun.rs:42, tu/itlinkbomb.rs:63, tu/itlipstick.rs:43, tu/itluigifireball.rs:42, tu/itmariofireball.rs:44, tu/itmball.rs:48, tu/itmsbomb.rs:55, tu/itpeachturnip.rs:52, tu/itscball.rs:39, tu/itsscope.rs:43, tu/itstarrod.rs:42, tu/itsword.rs:51, tu/itwstar.rs:54, tu/ityoshieggthrow.rs:53 -> port `melee_items::itlib3.rs:102`
+- `it_802746F8` [ext_fns!] x1: tu/itcoll.rs:49 -> port `melee_items::itkinds12.rs:152`
+- `it_80274740` [ext_fns!] x20: tu/itbombhei.rs:59, tu/itchicorita.rs:46, tu/itdrmariopill.rs:67, tu/item.rs:131, tu/itgroundcoll.rs:38, tu/ithitodeman.rs:54, tu/ithouou.rs:41, tu/itkamex.rs:46, tu/itlipstickspore.rs:45, tu/itlizardon.rs:52, tu/itlugia.rs:52, tu/itmatadogas.rs:48, tu/itmball.rs:49, tu/itmsbomb.rs:56, tu/itnokonoko.rs:51, tu/itoldkuri.rs:43, tu/itstarrodstar.rs:45, tu/itunknown.rs:54, tu/itwhitebea.rs:56, tu/itzako.rs:59 -> port `melee_items::tu/it_2725.rs:914`
+- `it_80274990` [ext_fns!] x1: tu/itmaplib.rs:37 -> port `melee_items::itkinds11.rs:66`
+- `it_80274A64` [ext_fns!] x3: tu/item.rs:132, tu/itmaplib.rs:38, tu/itwstar.rs:55 -> port `melee_items::tu/it_2725.rs:933`
+- `it_80274C60` [ext_fns!] x2: tu/itchicorita.rs:47, tu/itmasterhandbullet.rs:40 -> port `melee_items::itlib.rs:442`
+- `it_80274C78` [ext_fns!] x1: tu/item.rs:133 -> port `melee_items::itlib.rs:447`
+- `it_80274C88` [ext_fns!] x8: tu/itkirby_2F23.rs:51, tu/itkirbyyoshispecialn.rs:37, tu/itnokonoko.rs:52, tu/itoldkuri.rs:44, tu/itpatapata.rs:50, tu/itrshell.rs:57, tu/ityoshitongue.rs:38, tu/itzgshell.rs:64 -> port `melee_items::itlib.rs:452`
+- `it_80274CAC` [ext_fns!] x5: tu/itnokonoko.rs:53, tu/itoldkuri.rs:45, tu/itpatapata.rs:51, tu/itrshell.rs:58, tu/itzgshell.rs:65 -> port `melee_items::tu/it_2725.rs:968`
+- `it_80274D04` [ext_fns!] x1: tu/ithitbox.rs:32 -> port `melee_items::itlib3.rs:121`
+- `it_80274D6C` [ext_fns!] x1: tu/ithitbox.rs:33 -> port `melee_items::itlib.rs:460`
+- `it_80274DAC` [ext_fns!] x1: tu/item.rs:134 -> port `melee_items::itlib.rs:469`
+- `it_80274ECC` [ext_fns!] x6: tu/itkirby_2F23.rs:52, tu/itkirbyyoshispecialn.rs:38, tu/itleadead.rs:61, tu/itlikelike.rs:58, tu/ittarucann.rs:54, tu/ityoshitongue.rs:39 -> port `melee_items::itlib.rs:497`
+- `it_80274ED8` [ext_fns!] x6: tu/itdrop.rs:42, tu/itfoods.rs:50, tu/itkusudama.rs:71, tu/itlucky.rs:49, tu/itspawn.rs:61, tu/itwhispyapple.rs:57 -> port `melee_items::itkinds12.rs:164`
+- `it_80274EE8` [ext_fns!] x1: tu/item.rs:135 -> port `melee_items::itkinds12.rs:169`
+- `it_80274EF8` [ext_fns!] x1: tu/item.rs:136 -> port `melee_items::itlib.rs:502`
+- `it_80274F10` [ext_fns!] x2: tu/it_26B1.rs:63, tu/itfflower.rs:51 -> port `melee_items::itlib.rs:507`
+- `it_80274F28` [ext_fns!] x2: tu/itlikelike.rs:59, tu/ittarucann.rs:55 -> port `melee_items::item.rs:39`
+- `it_80274F48` [ext_fns!] x2: tu/itkirbyyoshispecialn.rs:39, tu/ityoshitongue.rs:40 -> port `melee_items::tu/it_2725.rs:1086`
+- `it_80274FDC` [ext_fns!] x1: tu/itleadead.rs:62 -> port `melee_items::tu/it_2725.rs:1092`
+- `it_80275070` [ext_fns!] x3: tu/itkirbyyoshispecialn.rs:40, tu/itleadead.rs:63, tu/ityoshitongue.rs:41 -> port `melee_items::tu/it_2725.rs:1098`
+- `it_802750E8` [ext_fns!] x5: tu/itnokonoko.rs:54, tu/itoldkuri.rs:46, tu/itoldottosea.rs:57, tu/itpatapata.rs:52, tu/itwhitebea.rs:57 -> port `melee_items::itlib.rs:513`
+- `it_802750F8` [ext_fns!] x13: tu/it_2E5A.rs:55, tu/itarwinglaser.rs:54, tu/itclimbersblizzard.rs:42, tu/itclimbersice.rs:69, tu/itcrazyhandbomb.rs:51, tu/itdrmariopill.rs:68, tu/itfoxillusion.rs:55, tu/itkirbycutterbeam.rs:51, tu/itluigifireball.rs:43, tu/itmariofireball.rs:45, tu/itmasterhandbullet.rs:41, tu/itmasterhandlaser.rs:42, tu/itwhispyapple.rs:58 -> port `melee_items::tu/it_2725.rs:1109`
+- `it_80275158` [ext_fns!] x55: tu/it_2ADA.rs:37, tu/it_2E5A.rs:56, tu/it_2F28.rs:40, tu/itarwinglaser.rs:55, tu/itclimbersblizzard.rs:43, tu/itclimbersice.rs:70, tu/itdrmariopill.rs:69, tu/item.rs:137, tu/itfflowerflame.rs:49, tu/itfoxlaser.rs:48, tu/itfreeze.rs:51, tu/itfushigibana.rs:44, tu/itgamewatchchef.rs:51, tu/ithinoarashi.rs:62, tu/ithitodeman.rs:55, tu/itkirbycutterbeam.rs:52, tu/itkoopaflame.rs:62, tu/itlgunbeam.rs:48, tu/itlgunray.rs:41, tu/itlinkarrow.rs:72, tu/itlinkbomb.rs:64, tu/itlinkboomerang.rs:71, tu/itlipstickspore.rs:46, tu/itlizardon.rs:53, tu/itlucky.rs:50, tu/itluigifireball.rs:44, tu/itmaril.rs:51, tu/itmariofireball.rs:46, tu/itmewtwodisable.rs:42, tu/itmewtwoshadowball.rs:76, tu/itnessbat.rs:45, tu/itnesspkfire.rs:41, tu/itnesspkfirepillar.rs:41, tu/itnesspkflash.rs:52, tu/itnesspkflashexplode.rs:45, tu/itnesspkthunderball.rs:51, tu/itpeachtoadspore.rs:45, tu/itpeachturnip.rs:53, tu/itpikachuthunder.rs:46, tu/itpikachutjoltground.rs:48, tu/itrshell.rs:59, tu/itsamusbomb.rs:52, tu/itsamuschargeshot.rs:60, tu/itsamusmissile.rs:54, tu/itseakneedlethrown.rs:53, tu/itsscopebeam.rs:46, tu/itstarrodstar.rs:46, tu/ittarucann.rs:56, tu/ittools.rs:46, tu/itwhispyapple.rs:59, tu/ityoshiegglay.rs:45, tu/ityoshieggthrow.rs:54, tu/itzeldadinfire.rs:53, tu/itzeldadinfireexplode.rs:49, tu/itzgshell.rs:66 -> port `melee_items::helpers.rs:207`
+- `it_80275174` [ext_fns!] x1: tu/itrshell.rs:60 -> port `melee_items::itlib3.rs:131`
+- `it_8027518C` [ext_fns!] x17: tu/itbombhei.rs:60, tu/itbox.rs:62, tu/itcapsule.rs:50, tu/itcrazyhandbomb.rs:52, tu/itegg.rs:54, tu/itkusudama.rs:72, tu/itkyasarinegg.rs:49, tu/itlinkbomb.rs:65, tu/itmarumine.rs:50, tu/itmsbomb.rs:57, tu/itpeachexplode.rs:39, tu/itsamusbomb.rs:53, tu/itsamusmissile.rs:55, tu/itseakvanish.rs:38, tu/ittaru.rs:56, tu/itwstar.rs:56, tu/ityoshieggthrow.rs:55 -> port `melee_items::tu/it_2725.rs:1256`
+- `it_802751D8` [ext_fns!] x17: tu/itbombhei.rs:61, tu/itbox.rs:63, tu/itcapsule.rs:51, tu/itcrazyhandbomb.rs:53, tu/itegg.rs:55, tu/itkusudama.rs:73, tu/itkyasarinegg.rs:50, tu/itlinkbomb.rs:66, tu/itmarumine.rs:51, tu/itmsbomb.rs:58, tu/itpeachexplode.rs:40, tu/itsamusbomb.rs:54, tu/itsamusmissile.rs:56, tu/itseakvanish.rs:39, tu/ittaru.rs:57, tu/itwstar.rs:57, tu/ityoshieggthrow.rs:56 -> port `melee_items::itlib.rs:518`
+- `it_80275210` [ext_fns!] x1: tu/itzgshell.rs:67 -> port `melee_items::itlib.rs:524`
+- `it_80275228` [ext_fns!] x1: tu/itzako.rs:60 -> port `melee_items::itlib.rs:529`
+- `it_80275240` [ext_fns!] x1: tu/itzako.rs:61 -> port `melee_items::itlib.rs:534`
+- `it_80275258` [ext_fns!] x3: tu/itleadead.rs:64, tu/itlikelike.rs:60, tu/itwhitebea.rs:58 -> port `melee_items::itlib.rs:539`
+- `it_80275270` [ext_fns!] x9: tu/itleadead.rs:65, tu/itlikelike.rs:61, tu/itnokonoko.rs:55, tu/itoctarock.rs:47, tu/itoldkuri.rs:47, tu/itoldottosea.rs:58, tu/itpatapata.rs:53, tu/itwhitebea.rs:59, tu/itzako.rs:62 -> port `melee_items::itlib.rs:544`
+- `it_80275288` [ext_fns!] x1: tu/itfushigibana.rs:45 -> port `melee_items::tu/it_2725.rs:1118`
+- `it_802752D8` [ext_fns!] x1: tu/ithinoarashi.rs:63 -> port `melee_items::tu/it_2725.rs:1125`
+- `it_80275328` [ext_fns!] x3: tu/itclimbersstring.rs:60, tu/itnessyoyo.rs:59, tu/itseakchain.rs:65 -> port `melee_items::itlib3.rs:136`
+- `it_80275390` [ext_fns!] x1: tu/item.rs:138 -> port `melee_items::itlib3.rs:151`
+- `it_802753BC` [ext_fns!] x1: tu/item.rs:139 -> port `melee_items::itlib.rs:549`
+- `it_802753DC` [ext_fns!] x1: tu/item.rs:140 -> port `melee_items::itlib.rs:559`
+- `it_80275414` [ext_fns!] x4: tu/itlinkbomb.rs:67, tu/itrshell.rs:61, tu/itzako.rs:63, tu/itzgshell.rs:68 -> port `melee_items::itlib.rs:571`
+- `it_8027542C` [ext_fns!] x11: tu/itflipper.rs:65, tu/itleadead.rs:66, tu/itlikelike.rs:62, tu/itnokonoko.rs:56, tu/itoctarock.rs:48, tu/itoldkuri.rs:48, tu/itoldottosea.rs:59, tu/itpatapata.rs:54, tu/ittincle.rs:47, tu/itwhitebea.rs:60, tu/itzako.rs:64 -> port `melee_items::itlib.rs:576`
+- `it_80275444` [ext_fns!] x16: tu/it_2E5A.rs:57, tu/itbombhei.rs:62, tu/itbox.rs:64, tu/itcapsule.rs:52, tu/itflipper.rs:66, tu/itkusudama.rs:74, tu/itlinkbomb.rs:68, tu/itmarumine.rs:52, tu/itmsbomb.rs:59, tu/itrshell.rs:62, tu/itsonans.rs:43, tu/ittaru.rs:58, tu/ittarucann.rs:57, tu/itwhispyapple.rs:60, tu/itzako.rs:65, tu/itzgshell.rs:69 -> port `melee_items::itlib.rs:581`
+- `it_80275474` [ext_fns!] x13: tu/itbombhei.rs:63, tu/item.rs:141, tu/itlikelike.rs:63, tu/itnokonoko.rs:57, tu/itoctarock.rs:49, tu/itoctarockstone.rs:45, tu/itoldkuri.rs:49, tu/itoldottosea.rs:60, tu/itpatapata.rs:55, tu/itrshell.rs:63, tu/itwhitebea.rs:61, tu/itzako.rs:66, tu/itzgshell.rs:70 -> port `melee_items::itlib.rs:589`
+- `it_802754A4` [ext_fns!] x1: tu/itlinkbomb.rs:69 -> port `melee_items::itlib.rs:597`
+- `it_802754BC` [ext_fns!] x4: tu/ithinoarashi.rs:64, tu/itlucky.rs:51, tu/itmaril.rs:52, tu/itsonans.rs:44 -> port `melee_items::itlib.rs:602`
+- `it_802754D4` [ext_fns!] x8: tu/item.rs:142, tu/ithinoarashi.rs:65, tu/itlucky.rs:52, tu/itmaril.rs:53, tu/itmsbomb.rs:60, tu/itsonans.rs:45, tu/itzako.rs:67, tu/itzgshell.rs:71 -> port `melee_items::itlib.rs:607`
+- `it_80275504` [ext_fns!] x1: tu/item.rs:143 -> port `melee_items::itlib.rs:617`
+- `it_80275534` [ext_fns!] x1: tu/it_2725.rs:81 -> port `melee_items::itlib.rs:627`
+- `it_80275594` [ext_fns!] x2: tu/itanimlist.rs:58, tu/itpikachuthunder.rs:47 -> port `melee_items::itlib.rs:637`
+- `it_802755C0` [ext_fns!] x2: tu/itmewtwodisable.rs:43, tu/itwstar.rs:58 -> port `melee_items::itlib.rs:645`
+- `it_80275640` [ext_fns!] x2: tu/it_2E5A.rs:58, tu/itmaplib.rs:39 -> port `melee_items::tu/ithitbox.rs:137`
+- `it_802756D0` [ext_fns!] x44: tu/it_2725.rs:82, tu/it_279C.rs:144, tu/itbombhei.rs:64, tu/itbox.rs:65, tu/itcapsule.rs:53, tu/itcoin.rs:61, tu/itcrazyhandbomb.rs:54, tu/itdrmariopill.rs:70, tu/itegg.rs:56, tu/item.rs:144, tu/itevyoshiegg.rs:49, tu/itflipper.rs:67, tu/ithinoarashi.rs:66, tu/itkirby_2F23.rs:53, tu/itkirbyyoshispecialn.rs:41, tu/itklap.rs:51, tu/itkusudama.rs:75, tu/itkyasarin.rs:50, tu/itkyasarinegg.rs:51, tu/itleadead.rs:67, tu/itlikelike.rs:64, tu/itlinkarrow.rs:73, tu/itlinkbomb.rs:70, tu/itlucky.rs:53, tu/itmaril.rs:54, tu/itmarumine.rs:53, tu/itmsbomb.rs:61, tu/itnokonoko.rs:58, tu/itoctarock.rs:50, tu/itoldkuri.rs:50, tu/itoldottosea.rs:61, tu/itpatapata.rs:56, tu/itpikachuthunder.rs:48, tu/itrshell.rs:64, tu/ittaru.rs:59, tu/ittarucann.rs:58, tu/ittincle.rs:48, tu/ittools.rs:47, tu/itwhispyapple.rs:61, tu/itwhitebea.rs:62, tu/ityaku.rs:38, tu/ityoshiegglay.rs:46, tu/ityoshitongue.rs:42, tu/itzgshell.rs:72 -> port `melee_items::itlib.rs:654`
+- `it_802756E0` [ext_fns!] x22: tu/it_2725.rs:83, tu/itcoin.rs:62, tu/itegg.rs:57, tu/item.rs:145, tu/itflipper.rs:68, tu/ithinoarashi.rs:67, tu/itkyasarin.rs:51, tu/itkyasarinegg.rs:52, tu/itleadead.rs:68, tu/itlikelike.rs:65, tu/itlucky.rs:54, tu/itmaril.rs:55, tu/itmsbomb.rs:62, tu/itnokonoko.rs:59, tu/itoldkuri.rs:51, tu/itoldottosea.rs:62, tu/itpatapata.rs:57, tu/itrshell.rs:65, tu/itsonans.rs:46, tu/ittincle.rs:49, tu/itwhitebea.rs:63, tu/itzgshell.rs:73 -> port `melee_items::itlib3.rs:379`
+- `it_8027570C` [ext_fns!] x1: tu/itzgshell.rs:74 -> port `melee_items::itlib.rs:659`
+- `it_8027572C` [ext_fns!] x1: tu/itzgshell.rs:75 -> port `melee_items::itlib.rs:664`
+- `it_8027574C` [ext_fns!] x1: tu/item.rs:146 -> port `melee_items::itkinds6.rs:54`
+- `it_80275788` [ext_fns!] x1: tu/itmasterhandlaser.rs:43 -> port `melee_items::itlib.rs:669`
+- `it_80275820` [ext_fns!] x1: tu/itmasterhandlaser.rs:44 -> port `melee_items::itlib.rs:679`
+- `it_80275870` [ext_fns!] x1: tu/it_26B1.rs:64 -> port `melee_items::itlib.rs:688`
+- `it_802758D4` [ext_fns!] x2: tu/it_2725.rs:84, tu/it_2F28.rs:41 -> port `melee_items::itlib.rs:694`
+- `it_802759DC` [ext_fns!] x1: tu/itleadead.rs:69 -> port `melee_items::tu/itmaplib.rs:182`
+- `it_80275D5C` [ext_fns!] x10: tu/it_2E5A.rs:59, tu/itleadead.rs:70, tu/itlikelike.rs:66, tu/itlinkbomb.rs:71, tu/itmball.rs:50, tu/itmsbomb.rs:63, tu/itnokonoko.rs:60, tu/itrshell.rs:66, tu/ittincle.rs:50, tu/itzgshell.rs:76 -> port `melee_items::tu/itmaplib.rs:264`
+- `it_80275DFC` [ext_fns!] x1: tu/itgroundcoll.rs:39 -> port `melee_items::tu/itmaplib.rs:271`
+- `it_80275E98` [ext_fns!] x1: tu/item.rs:147 -> port `melee_items::tu/itmaplib.rs:278`
+- `it_80276100` [ext_fns!] x2: tu/itfreeze.rs:52, tu/itkyasarin.rs:52 -> port `melee_items::tu/itmaplib.rs:317`
+- `it_80276214` [ext_fns!] x3: tu/it_2E5A.rs:60, tu/itgroundcoll.rs:40, tu/itlikelike.rs:67 -> port `melee_items::tu/itmaplib.rs:338`
+- `it_802762B0` [ext_fns!] x22: tu/itbombhei.rs:65, tu/itbox.rs:66, tu/itdosei.rs:68, tu/item.rs:148, tu/itfreeze.rs:53, tu/itgroundcoll.rs:41, tu/itkirbycutterbeam.rs:53, tu/itkusudama.rs:76, tu/itleadead.rs:71, tu/itlikelike.rs:68, tu/itlinkbomb.rs:72, tu/itmsbomb.rs:64, tu/itnokonoko.rs:61, tu/itoctarock.rs:51, tu/itoctarockstone.rs:46, tu/itoldkuri.rs:52, tu/itoldottosea.rs:63, tu/ittaru.rs:60, tu/ittarucann.rs:59, tu/itwhitebea.rs:64, tu/itzgshell.rs:77, tu/itzrshell.rs:77 -> port `melee_items::item.rs:28`
+- `it_802762BC` [ext_fns!] x60: tu/it_2725.rs:86, tu/itcerebi.rs:41, tu/itchicorita.rs:48, tu/itcoin.rs:63, tu/itcrazyhandbomb.rs:55, tu/itdosei.rs:69, tu/item.rs:149, tu/itentei.rs:48, tu/itfire.rs:42, tu/itfreezer.rs:42, tu/itfushigibana.rs:46, tu/itgroundcoll.rs:42, tu/ithinoarashi.rs:68, tu/ithitodeman.rs:56, tu/ithouou.rs:42, tu/itkabigon.rs:49, tu/itkamex.rs:47, tu/itkirby_2F23.rs:54, tu/itkirbycutterbeam.rs:54, tu/itkirbyyoshispecialn.rs:42, tu/itkireihana.rs:45, tu/itklap.rs:52, tu/itkusudama.rs:77, tu/itkyasarin.rs:53, tu/itleadead.rs:72, tu/itlikelike.rs:69, tu/itlinkboomerang.rs:72, tu/itlizardon.rs:54, tu/itlucky.rs:55, tu/itlugia.rs:53, tu/itmaril.rs:56, tu/itmarumine.rs:54, tu/itmatadogas.rs:49, tu/itmetamon.rs:37, tu/itmew.rs:41, tu/itmsbomb.rs:65, tu/itnokonoko.rs:62, tu/itoctarock.rs:52, tu/itoctarockstone.rs:47, tu/itoldkuri.rs:53, tu/itoldottosea.rs:64, tu/itpatapata.rs:58, tu/itpippi.rs:42, tu/itraikou.rs:44, tu/itrshell.rs:67, tu/itseakneedlethrown.rs:54, tu/itsonans.rs:47, tu/itsuikun.rs:46, tu/ittaru.rs:61, tu/ittarucann.rs:60, tu/itthunder.rs:41, tu/ittincle.rs:51, tu/ittogepy.rs:41, tu/ittosakinto.rs:42, tu/itunknown.rs:55, tu/itwhitebea.rs:65, tu/ityoshitongue.rs:43, tu/itzako.rs:68, tu/itzgshell.rs:78, tu/itzrshell.rs:78 -> port `melee_items::item.rs:33`
+- `it_802762D8` [ext_fns!] x2: tu/itgroundcoll.rs:43, tu/itlikelike.rs:70 -> port `melee_items::itlib.rs:709`
+- `it_80276308` [ext_fns!] x19: tu/itbombhei.rs:66, tu/itbox.rs:67, tu/itclimbersblizzard.rs:44, tu/itclimbersice.rs:71, tu/itdosei.rs:70, tu/itgroundcoll.rs:44, tu/itkusudama.rs:78, tu/itleadead.rs:73, tu/itlikelike.rs:71, tu/itmaril.rs:57, tu/itmewtwodisable.rs:44, tu/itmsbomb.rs:66, tu/itnokonoko.rs:63, tu/itoldkuri.rs:54, tu/itoldottosea.rs:65, tu/itpatapata.rs:59, tu/itstar.rs:38, tu/ittaru.rs:62, tu/itwhitebea.rs:66 -> port `melee_items::itlib.rs:715`
+- `it_80276348` [ext_fns!] x1: tu/itrshell.rs:68 -> port `melee_items::itlib.rs:730`
+- `it_802763B8` [ext_fns!] x1: tu/itmsbomb.rs:67 -> port `melee_items::itlib.rs:747`
+- `it_802763E0` [ext_fns!] x10: tu/itbox.rs:68, tu/itclimbersblizzard.rs:45, tu/itgroundcoll.rs:45, tu/itkusudama.rs:79, tu/itmaril.rs:58, tu/itmewtwodisable.rs:45, tu/itmsbomb.rs:68, tu/itoctarock.rs:53, tu/itstar.rs:39, tu/ittaru.rs:63 -> port `melee_items::helpers.rs:188`
+- `it_80276408` [ext_fns!] x6: tu/itbox.rs:69, tu/itdkinoko.rs:42, tu/itfreeze.rs:54, tu/itkinoko.rs:37, tu/ittaru.rs:64, tu/ittarucann.rs:61 -> port `melee_items::itlib.rs:757`
+- `it_8027649C` [ext_fns!] x3: tu/itfreeze.rs:55, tu/ittaru.rs:65, tu/ittarucann.rs:62 -> port `melee_items::itkinds10.rs:119`
+- `it_802765BC` [ext_fns!] x1: tu/itmsbomb.rs:69 -> port `melee_items::tu/itmaplib.rs:474`
+- `it_80276934` [ext_fns!] x1: tu/itmsbomb.rs:70 -> port `melee_items::tu/itmaplib.rs:493`
+- `it_80276CB8` [ext_fns!] x9: tu/itbombhei.rs:67, tu/itbox.rs:70, tu/itclimbersice.rs:72, tu/itdosei.rs:71, tu/itfushigibana.rs:47, tu/itmetalb.rs:43, tu/itrshell.rs:69, tu/itspycloak.rs:39, tu/itzgshell.rs:79 -> port `melee_items::tu/itmaplib.rs:518`
+- `it_80276CEC` [ext_fns!] x1: tu/itgroundcoll.rs:46 -> port `melee_items::itlib3.rs:389`
+- `it_80276D9C` [ext_fns!] x2: tu/it_2E5A.rs:61, tu/itgroundcoll.rs:47 -> port `melee_items::tu/itmaplib.rs:548`
+- `it_80276FC4` [ext_fns!] x4: tu/itgroundcoll.rs:48, tu/itlipstick.rs:44, tu/itpeachturnip.rs:54, tu/itwhispyapple.rs:62 -> port `melee_items::tu/itmaplib.rs:591`
+- `it_80277040` [ext_fns!] x3: tu/itgroundcoll.rs:49, tu/itzgshell.rs:80, tu/itzrshell.rs:79 -> port `melee_items::itkinds10.rs:128`
+- `it_8027737C` [ext_fns!] x1: tu/item.rs:150 -> port `melee_items::tu/itmaplib.rs:691`
+- `it_80277544` [ext_fns!] x1: tu/itgroundcoll.rs:50 -> port `melee_items::itkinds12.rs:189`
+- `it_8027770C` [ext_fns!] x2: tu/itclimbersice.rs:73, tu/itzgshell.rs:81 -> port `melee_items::itkinds10.rs:203`
+- `it_8027781C` [ext_fns!] x6: tu/itdrmariopill.rs:71, tu/itleadead.rs:74, tu/itluigifireball.rs:45, tu/itmariofireball.rs:47, tu/itoctarockstone.rs:48, tu/itzako.rs:69 -> port `melee_items::tu/itmaplib.rs:780`
+- `it_80277C40` [ext_fns!] x1: tu/it_2E5A.rs:62 -> port `melee_items::tu/itmaplib.rs:842`
+- `it_80278574` [ext_fns!] x1: tu/itzako.rs:70 -> port `melee_items::tu/itmaterial.rs:396`
+- `it_8027870C` [ext_fns!] x1: tu/item.rs:151 -> port `melee_items::tu/iteffect.rs:70`
+- `it_802787B4` [ext_fns!] x5: tu/it_2725.rs:87, tu/itbox.rs:71, tu/itlinkarrow.rs:74, tu/ittaru.rs:66, tu/ittarucann.rs:63 -> port `melee_items::tu/iteffect.rs:84`
+- `it_80278800` [ext_fns!] x2: tu/itanimlist.rs:59, tu/itmaplib.rs:40 -> port `melee_items::tu/iteffect.rs:263`
+- `it_802799E4` [ext_fns!] x2: tu/it_26B1.rs:65, tu/item.rs:152 -> port `melee_items::tu/itanimlist.rs:375`
+- `it_80279B64` [ext_fns!] x1: tu/item.rs:153 -> port `melee_items::tu/itanimlist.rs:428`
+- `it_80279B88` [ext_fns!] x1: tu/item.rs:154 -> port `melee_items::tu/itanimlist.rs:433`
+- `it_80279BBC` [ext_fns!] x4: tu/it_2725.rs:88, tu/itegg.rs:58, tu/item.rs:155, tu/itkyasarinegg.rs:53 -> port `melee_items::tu/itanimlist.rs:438`
+- `it_80279BE0` [ext_fns!] x2: tu/it_26B1.rs:66, tu/item.rs:156 -> port `melee_items::tu/itanimlist.rs:443`
+- `it_80279C48` [ext_fns!] x6: tu/itchicorita.rs:49, tu/itentei.rs:49, tu/ithitodeman.rs:57, tu/itkamex.rs:48, tu/itraikou.rs:45, tu/itsuikun.rs:47 -> port `melee_items::tu/it_279C.rs:459`
+- `it_80279CDC` [ext_fns!] x29: tu/itcerebi.rs:42, tu/itchicorita.rs:50, tu/itentei.rs:50, tu/itfire.rs:43, tu/itfreezer.rs:43, tu/itfushigibana.rs:48, tu/ithinoarashi.rs:69, tu/ithitodeman.rs:58, tu/ithouou.rs:43, tu/itkabigon.rs:50, tu/itkamex.rs:49, tu/itkireihana.rs:46, tu/itlizardon.rs:55, tu/itlucky.rs:56, tu/itlugia.rs:54, tu/itmaril.rs:59, tu/itmarumine.rs:55, tu/itmatadogas.rs:50, tu/itmetamon.rs:38, tu/itmew.rs:42, tu/itpippi.rs:43, tu/itporygon2.rs:38, tu/itraikou.rs:46, tu/itsonans.rs:48, tu/itsuikun.rs:48, tu/itthunder.rs:42, tu/ittogepy.rs:42, tu/ittosakinto.rs:43, tu/itunknown.rs:56 -> port `melee_items::tu/it_279C.rs:477`
+- `it_80279D38` [ext_fns!] x3: tu/ithinoarashi.rs:70, tu/itlucky.rs:57, tu/itmaril.rs:60 -> port `melee_items::tu/it_279C.rs:486`
+- `it_80279FF8` [ext_fns!] x28: tu/itcerebi.rs:43, tu/itchicorita.rs:51, tu/itentei.rs:51, tu/itfire.rs:44, tu/itfreezer.rs:44, tu/itfushigibana.rs:49, tu/ithinoarashi.rs:71, tu/ithitodeman.rs:59, tu/ithouou.rs:44, tu/itkabigon.rs:51, tu/itkamex.rs:50, tu/itkireihana.rs:47, tu/itlizardon.rs:56, tu/itlucky.rs:58, tu/itlugia.rs:55, tu/itmaril.rs:61, tu/itmarumine.rs:56, tu/itmatadogas.rs:51, tu/itmetamon.rs:39, tu/itmew.rs:43, tu/itpippi.rs:44, tu/itraikou.rs:47, tu/itsonans.rs:49, tu/itsuikun.rs:49, tu/itthunder.rs:43, tu/ittogepy.rs:43, tu/ittosakinto.rs:44, tu/itunknown.rs:57 -> port `melee_items::tu/it_279C.rs:537`
+- `it_8027A09C` [ext_fns!] x28: tu/itcerebi.rs:44, tu/itchicorita.rs:52, tu/itentei.rs:52, tu/itfire.rs:45, tu/itfreezer.rs:45, tu/itfushigibana.rs:50, tu/ithinoarashi.rs:72, tu/ithitodeman.rs:60, tu/ithouou.rs:45, tu/itkabigon.rs:52, tu/itkamex.rs:51, tu/itkireihana.rs:48, tu/itlizardon.rs:57, tu/itlucky.rs:59, tu/itlugia.rs:56, tu/itmaril.rs:62, tu/itmarumine.rs:57, tu/itmatadogas.rs:52, tu/itmetamon.rs:40, tu/itmew.rs:44, tu/itpippi.rs:45, tu/itraikou.rs:48, tu/itsonans.rs:50, tu/itsuikun.rs:50, tu/itthunder.rs:44, tu/ittogepy.rs:44, tu/ittosakinto.rs:45, tu/itunknown.rs:58 -> port `melee_items::tu/it_279C.rs:555`
+- `it_8027A118` [ext_fns!] x28: tu/itcerebi.rs:45, tu/itchicorita.rs:53, tu/itentei.rs:53, tu/itfire.rs:46, tu/itfreezer.rs:46, tu/itfushigibana.rs:51, tu/ithinoarashi.rs:73, tu/ithitodeman.rs:61, tu/ithouou.rs:46, tu/itkabigon.rs:53, tu/itkamex.rs:52, tu/itkireihana.rs:49, tu/itlizardon.rs:58, tu/itlucky.rs:60, tu/itlugia.rs:57, tu/itmaril.rs:63, tu/itmarumine.rs:58, tu/itmatadogas.rs:53, tu/itmetamon.rs:41, tu/itmew.rs:45, tu/itpippi.rs:46, tu/itraikou.rs:49, tu/itsonans.rs:51, tu/itsuikun.rs:51, tu/itthunder.rs:45, tu/ittogepy.rs:45, tu/ittosakinto.rs:46, tu/itunknown.rs:59 -> port `melee_items::tu/it_279C.rs:567`
+- `it_8027A160` [ext_fns!] x9: tu/itchicorita.rs:54, tu/ithinoarashi.rs:74, tu/ithouou.rs:47, tu/itkireihana.rs:50, tu/itlugia.rs:58, tu/itmaril.rs:64, tu/itporygon2.rs:39, tu/itthunder.rs:46, tu/ittosakinto.rs:47 -> port `melee_items::tu/it_279C.rs:580`
+- `it_8027A344` [ext_fns!] x9: tu/itchicorita.rs:55, tu/ithinoarashi.rs:75, tu/ithouou.rs:48, tu/itkireihana.rs:51, tu/itlugia.rs:59, tu/itmaril.rs:65, tu/itporygon2.rs:40, tu/itthunder.rs:47, tu/ittosakinto.rs:48 -> port `melee_items::itlib3.rs:207`
+- `it_8027AB64` [ext_fns!] x1: tu/itmball.rs:51 -> port `melee_items::tu/it_279C.rs:798`
+- `it_8027ADEC` [ext_fns!] x9: tu/itfire.rs:47, tu/itfreezer.rs:47, tu/ithouou.rs:49, tu/itkamex.rs:53, tu/itkireihana.rs:52, tu/itlizardon.rs:59, tu/itlugia.rs:60, tu/itmew.rs:46, tu/ittosakinto.rs:49 -> port `melee_items::tu/it_279C.rs:863`
+- `it_8027AE34` [ext_fns!] x2: tu/ithitodeman.rs:62, tu/itmasterhandbullet.rs:42 -> port `melee_items::tu/it_279C.rs:870`
+- `it_8027AF50` [ext_fns!] x2: tu/ithitodeman.rs:63, tu/itmasterhandbullet.rs:43 -> port `melee_items::tu/it_279C.rs:883`
+- `it_8027B070` [ext_fns!] x1: tu/it_2725.rs:89 -> port `melee_items::itkinds12.rs:227`
+- `it_8027B0C4` [ext_fns!] x1: tu/item.rs:157 -> port `melee_items::tu/it_279C.rs:908`
+- `it_8027B1F4` [ext_fns!] x1: tu/itcoll.rs:50 -> port `melee_items::tu/it_279C.rs:936`
+- `it_8027B288` [ext_fns!] x2: tu/itmsbomb.rs:71, tu/itwstar.rs:59 -> port `melee_items::tu/it_279C.rs:955`
+- `it_8027B330` [ext_fns!] x1: tu/itwstar.rs:60 -> port `melee_items::tu/it_279C.rs:974`
+- `it_8027B378` [ext_fns!] x5: tu/it_2725.rs:90, tu/it_2F28.rs:42, tu/itcoll.rs:51, tu/itkirbyyoshispecialn.rs:43, tu/ityoshitongue.rs:44 -> port `melee_items::tu/it_279C.rs:983`
+- `it_8027B408` [ext_fns!] x1: tu/itcoll.rs:52 -> port `melee_items::tu/it_279C.rs:993`
+- `it_8027B4A4` [ext_fns!] x5: tu/it_2725.rs:91, tu/it_2F28.rs:43, tu/itcoll.rs:53, tu/itkirbyyoshispecialn.rs:44, tu/ityoshitongue.rs:45 -> port `melee_items::tu/it_279C.rs:1006`
+- `it_8027B508` [ext_fns!] x1: tu/itcoll.rs:54 -> port `melee_items::tu/it_279C.rs:1014`
+- `it_8027B564` [ext_fns!] x1: tu/itmsbomb.rs:72 -> port `melee_items::tu/it_279C.rs:1024`
+- `it_8027B5B0` [ext_fns!] x10: tu/itklap.rs:53, tu/itkyasarin.rs:54, tu/itkyasarinegg.rs:54, tu/itleadead.rs:75, tu/itlikelike.rs:72, tu/itnokonoko.rs:64, tu/itpatapata.rs:60, tu/ittincle.rs:52, tu/itzgshell.rs:82, tu/itzrshell.rs:80 -> port `melee_items::tu/itzako.rs:188`
+- `it_8027B730` [ext_fns!] x13: tu/itklap.rs:54, tu/itkyasarin.rs:55, tu/itleadead.rs:76, tu/itlikelike.rs:73, tu/itmato.rs:36, tu/itnokonoko.rs:65, tu/itoctarock.rs:54, tu/itoldkuri.rs:55, tu/itoldottosea.rs:66, tu/itpatapata.rs:61, tu/ittincle.rs:53, tu/itwhitebea.rs:67, tu/itzgshell.rs:83 -> port `melee_items::itlib3.rs:444`
+- `it_8027B798` [ext_fns!] x10: tu/itcoin.rs:64, tu/itklap.rs:55, tu/itleadead.rs:77, tu/itnokonoko.rs:66, tu/itoctarock.rs:55, tu/itoldkuri.rs:56, tu/itoldottosea.rs:67, tu/itpatapata.rs:62, tu/itwhitebea.rs:68, tu/ityaku.rs:39 -> port `melee_items::itkinds10.rs:236`
+- `it_8027B964` [ext_fns!] x7: tu/it_279C.rs:145, tu/itkyasarin.rs:56, tu/itleadead.rs:78, tu/itlikelike.rs:74, tu/itoctarock.rs:56, tu/itoldkuri.rs:57, tu/itwhitebea.rs:69 -> port `melee_items::tu/itzako.rs:302`
+- `it_8027BA54` [ext_fns!] x6: tu/itkyasarin.rs:57, tu/itleadead.rs:79, tu/itlikelike.rs:75, tu/itoctarock.rs:57, tu/itoldkuri.rs:58, tu/itwhitebea.rs:70 -> port `melee_items::tu/itzako.rs:328`
+- `it_8027C0A8` [ext_fns!] x6: tu/itleadead.rs:80, tu/itlikelike.rs:76, tu/itnokonoko.rs:67, tu/itoctarock.rs:58, tu/itoldkuri.rs:59, tu/itoldottosea.rs:68 -> port `melee_items::tu/itzako.rs:453`
+- `it_8027C0CC` [ext_fns!] x1: tu/itlikelike.rs:77 -> port `melee_items::tu/itzako.rs:458`
+- `it_8027C0F0` [ext_fns!] x1: tu/itleadead.rs:81 -> port `melee_items::tu/itzako.rs:463`
+- `it_8027C56C` [ext_fns!] x10: tu/itleadead.rs:82, tu/itlikelike.rs:78, tu/itnokonoko.rs:68, tu/itoctarock.rs:59, tu/itoldkuri.rs:60, tu/itoldottosea.rs:69, tu/itpatapata.rs:63, tu/itwhitebea.rs:71, tu/itzgshell.rs:84, tu/itzrshell.rs:81 -> port `melee_items::tu/itzako.rs:528`
+- `it_8027C794` [ext_fns!] x8: tu/itkyasarin.rs:58, tu/itleadead.rs:83, tu/itlikelike.rs:79, tu/itnokonoko.rs:69, tu/itoctarock.rs:60, tu/itoldkuri.rs:61, tu/itwhitebea.rs:72, tu/itzgshell.rs:85 -> port `melee_items::itfwd8.rs:14`
+- `it_8027C79C` [ext_fns!] x6: tu/itkyasarin.rs:59, tu/itleadead.rs:84, tu/itlikelike.rs:80, tu/itoctarock.rs:61, tu/itoldkuri.rs:62, tu/itwhitebea.rs:73 -> port `melee_items::tu/itzako.rs:549`
+- `it_8027C824` [ext_fns!] x5: tu/itleadead.rs:85, tu/itlikelike.rs:81, tu/itoctarock.rs:62, tu/itoldkuri.rs:63, tu/itwhitebea.rs:74 -> port `melee_items::tu/itzako.rs:565`
+- `it_8027C8D0` [ext_fns!] x7: tu/itleadead.rs:86, tu/itlikelike.rs:82, tu/itnokonoko.rs:70, tu/itoctarock.rs:63, tu/itoldkuri.rs:64, tu/itoldottosea.rs:70, tu/itwhitebea.rs:75 -> port `melee_items::tu/itzako.rs:617`
+- `it_8027C9D8` [ext_fns!] x6: tu/itleadead.rs:87, tu/itlikelike.rs:83, tu/itoctarock.rs:64, tu/itoldkuri.rs:65, tu/itoldottosea.rs:71, tu/itwhitebea.rs:76 -> port `melee_items::tu/itzako.rs:640`
+- `it_8027CA7C` [ext_fns!] x2: tu/itleadead.rs:88, tu/itlikelike.rs:84 -> port `melee_items::tu/itzako.rs:651`
+- `it_8027CAD8` [ext_fns!] x8: tu/itleadead.rs:89, tu/itlikelike.rs:85, tu/itnokonoko.rs:71, tu/itoctarock.rs:65, tu/itoldkuri.rs:66, tu/itoldottosea.rs:72, tu/itpatapata.rs:64, tu/itwhitebea.rs:77 -> port `melee_items::tu/itzako.rs:663`
+- `it_8027CB3C` [ext_fns!] x7: tu/itleadead.rs:90, tu/itlikelike.rs:86, tu/itnokonoko.rs:72, tu/itoctarock.rs:66, tu/itoldkuri.rs:67, tu/itpatapata.rs:65, tu/itwhitebea.rs:78 -> port `melee_items::tu/itzako.rs:675`
+- `it_8027CBA4` [ext_fns!] x7: tu/itleadead.rs:91, tu/itlikelike.rs:87, tu/itnokonoko.rs:73, tu/itoctarock.rs:67, tu/itoldkuri.rs:68, tu/itpatapata.rs:66, tu/itwhitebea.rs:79 -> port `melee_items::tu/itzako.rs:686`
+- `it_8027CBFC` [ext_fns!] x8: tu/itcoin.rs:65, tu/itleadead.rs:92, tu/itlikelike.rs:88, tu/itnokonoko.rs:74, tu/itoctarock.rs:68, tu/itoldkuri.rs:69, tu/itoldottosea.rs:73, tu/itwhitebea.rs:80 -> port `melee_items::itlib3.rs:461`
+- `it_8027CC88` [ext_fns!] x1: tu/itoldkuri.rs:70 -> port `melee_items::tu/itzako.rs:707`
+- `it_8027CE44` [ext_fns!] x12: tu/it_2F28.rs:44, tu/itcoin.rs:66, tu/itkirbyyoshispecialn.rs:45, tu/itleadead.rs:93, tu/itlikelike.rs:89, tu/itnokonoko.rs:75, tu/itoctarock.rs:69, tu/itoldkuri.rs:71, tu/itoldottosea.rs:74, tu/itpatapata.rs:67, tu/itwhitebea.rs:81, tu/ityoshitongue.rs:46 -> port `melee_items::tu/itzako.rs:758`
+- `it_8027CE64` [ext_fns!] x11: tu/itgamewatchbreath.rs:45, tu/itgamewatchchef.rs:52, tu/itgamewatchfire.rs:42, tu/itgamewatchgreenhouse.rs:41, tu/itgamewatchjudge.rs:41, tu/itgamewatchmanhole.rs:41, tu/itgamewatchpanic.rs:40, tu/itgamewatchparachute.rs:40, tu/itgamewatchrescue.rs:37, tu/itgamewatchturtle.rs:39, tu/itkirbygamewatchchefpan.rs:40 -> port `melee_items::tu/itzako.rs:771`
+- `it_8027D670` [ext_fns!] x1: tu/it_26B1.rs:67 -> port `melee_items::tu/itbombhei.rs:235`
+- `it_8027D730` [ext_fns!] x1: tu/it_26B1.rs:68 -> port `melee_items::tu/itbombhei.rs:253`
+- `it_80283AE4` [ext_fns!] x1: tu/it_26B1.rs:69 -> port `melee_items::tu/itheart.rs:74`
+- `it_80283BD4` [ext_fns!] x1: tu/it_26B1.rs:70 -> port `melee_items::itkinds.rs:1760`
+- `it_802841B4` [ext_fns!] x1: tu/it_26B1.rs:71 -> port `melee_items::tu/ittomato.rs:85`
+- `it_8028428C` [ext_fns!] x1: tu/it_26B1.rs:72 -> port `melee_items::itkinds5.rs:132`
+- `it_80284854` [ext_fns!] x1: tu/it_26B1.rs:73 -> port `melee_items::tu/itbat.rs:65`
+- `it_80286088` [ext_fns!] x1: tu/it_26B1.rs:74 -> port `melee_items::tu/itbox.rs:116`
+- `it_80288C88` [ext_fns!] x1: tu/itlucky.rs:61 -> port `melee_items::tu/itegg.rs:111`
+- `it_802896CC` [ext_fns!] x1: tu/it_26B1.rs:75 -> port `melee_items::tu/itkusudama.rs:236`
+- `it_8028EB88` [ext_fns!] x1: tu/itoldottosea.rs:75 -> port `melee_items::tu/itfreeze.rs:150`
+- `it_8028EC98` [ext_fns!] x2: tu/itoldottosea.rs:76, tu/itwhitebea.rs:82 -> port `melee_items::itkinds5.rs:455`
+- `it_8028ECE0` [ext_fns!] x2: tu/itoldottosea.rs:77, tu/itwhitebea.rs:83 -> port `melee_items::itkinds5.rs:68`
+- `it_8028ECF0` [ext_fns!] x1: tu/itwhitebea.rs:84 -> port `melee_items::itkinds5.rs:197`
+- `it_8028FE90` [ext_fns!] x1: tu/it_26B1.rs:76 -> port `melee_items::tu/itmsbomb.rs:119`
+- `it_80291BE0` [ext_fns!] x1: tu/it_26B1.rs:77 -> port `melee_items::tu/itsscope.rs:110`
+- `it_80292D48` [ext_fns!] x1: tu/it_26B1.rs:78 -> port `melee_items::tu/itfflower.rs:135`
+- `it_80294DC0` [ext_fns!] x1: tu/it_26B1.rs:79 -> port `melee_items::tu/itrabbitc.rs:72`
+- `it_80298168` [ext_fns!] x1: tu/itlgun.rs:43 -> port `melee_items::tu/itlgunray.rs:148`
+- `it_802988E4` [ext_fns!] x1: tu/itstarrod.rs:43 -> port `melee_items::tu/itstarrodstar.rs:102`
+- `it_80298DEC` [ext_fns!] x1: tu/itsscope.rs:44 -> port `melee_items::tu/itsscopebeam.rs:98`
+- `it_802996D0` [ext_fns!] x1: tu/itfflower.rs:52 -> port `melee_items::tu/itlgunbeam.rs:182`
+- `it_8029A114` [ext_fns!] x1: tu/itlipstick.rs:45 -> port `melee_items::tu/itlipstickspore.rs:84`
+- `it_8029A218` [ext_fns!] x1: tu/itlipstick.rs:46 -> port `melee_items::tu/itlipstickspore.rs:108`
+- `it_8029C4D4` [ext_fns!] x1: tu/itlgunray.rs:42 -> port `melee_items::tu/itfoxlaser.rs:196`
+- `it_8029D968` [ext_fns!] x1: tu/it_26B1.rs:80 -> port `melee_items::tu/itlinkbomb.rs:139`
+- `it_802A2428` [ext_fns!] x1: tu/itsamusgrapple.rs:78 -> port `melee_items::tu/itlinkhookshot.rs:148`
+- `it_802A2474` [ext_fns!] x4: tu/itclimbersstring.rs:61, tu/itnessyoyo.rs:60, tu/itsamusgrapple.rs:79, tu/itseakchain.rs:66 -> port `melee_items::tu/itlinkhookshot.rs:159`
+- `it_802A24A0` [ext_fns!] x4: tu/itclimbersstring.rs:62, tu/itnessyoyo.rs:61, tu/itsamusgrapple.rs:80, tu/itseakchain.rs:67 -> port `melee_items::tu/itlinkhookshot.rs:163`
+- `it_802A24D0` [ext_fns!] x2: tu/itnessyoyo.rs:62, tu/itseakchain.rs:68 -> port `melee_items::tu/itlinkhookshot.rs:170`
+- `it_802A3C98` [ext_fns!] x4: tu/itclimbersstring.rs:63, tu/itnessyoyo.rs:63, tu/itsamusgrapple.rs:81, tu/itseakchain.rs:69 -> port `melee_items::itkinds7.rs:26`
+- `it_802A3D90` [ext_fns!] x2: tu/itnessyoyo.rs:64, tu/itsamusgrapple.rs:82 -> port `melee_items::tu/itlinkhookshot.rs:765`
+- `it_802A42F4` [ext_fns!] x1: tu/itnessyoyo.rs:65 -> port `melee_items::tu/itlinkhookshot.rs:876`
+- `it_802A43B8` [ext_fns!] x3: tu/itnessyoyo.rs:66, tu/itsamusgrapple.rs:83, tu/itseakchain.rs:70 -> port `melee_items::itkinds6.rs:560`
+- `it_802A43EC` [ext_fns!] x3: tu/itnessyoyo.rs:67, tu/itsamusgrapple.rs:84, tu/itseakchain.rs:71 -> port `melee_items::itkinds6.rs:566`
+- `it_802A4420` [ext_fns!] x4: tu/itclimbersstring.rs:64, tu/itnessyoyo.rs:68, tu/itsamusgrapple.rs:85, tu/itseakchain.rs:72 -> port `melee_items::itkinds6.rs:572`
+- `it_802A4454` [ext_fns!] x1: tu/itsamusgrapple.rs:86 -> port `melee_items::tu/itlinkhookshot.rs:906`
+- `it_802A6DC8` [ext_fns!] x3: tu/itclimbersstring.rs:65, tu/itnessyoyo.rs:69, tu/itseakchain.rs:73 -> port `melee_items::tu/itlinkhookshot.rs:1547`
+- `it_802A7168` [ext_fns!] x1: tu/itsamusgrapple.rs:87 -> port `melee_items::tu/itlinkhookshot.rs:1615`
+- `it_802AB3F0` [ext_fns!] x1: tu/itnesspkthundertrail.rs:41 -> port `melee_items::itkinds5.rs:271`
+- `it_802AB468` [ext_fns!] x1: tu/itnesspkthundertrail.rs:42 -> port `melee_items::itkinds5.rs:284`
+- `it_802AC43C` [ext_fns!] x1: tu/itnesspkthunderball.rs:52 -> port `melee_items::tu/itnesspkthundertrail.rs:76`
+- `it_802AC58C` [ext_fns!] x1: tu/itnesspkthunderball.rs:53 -> port `melee_items::tu/itnesspkthundertrail.rs:117`
+- `it_802AC5D8` [ext_fns!] x1: tu/itnesspkthunderball.rs:54 -> port `melee_items::itkinds5.rs:212`
+- `it_802AF940` [ext_fns!] x1: tu/itnesspkflash.rs:53 -> port `melee_items::tu/itnesspkflashexplode.rs:75`
+- `it_802B3368` [ext_fns!] x1: tu/itpikachutjoltair.rs:44 -> port `melee_items::itkinds5.rs:245`
+- `it_802B3544` [ext_fns!] x1: tu/itpikachutjoltair.rs:45 -> port `melee_items::itkinds5.rs:78`
+- `it_802B3EFC` [ext_fns!] x1: tu/itpikachutjoltground.rs:49 -> port `melee_items::itkinds5.rs:220`
+- `it_802B3F20` [ext_fns!] x1: tu/itpikachutjoltground.rs:50 -> port `melee_items::tu/itpikachutjoltair.rs:86`
+- `it_802B3F88` [ext_fns!] x1: tu/itpikachutjoltground.rs:51 -> port `melee_items::tu/itpikachutjoltair.rs:99`
+- `it_802B4224` [ext_fns!] x1: tu/itpikachutjoltground.rs:52 -> port `melee_items::tu/itpikachutjoltair.rs:129`
+- `it_802B43B0` [ext_fns!] x1: tu/itpikachutjoltground.rs:53 -> port `melee_items::itkinds5.rs:205`
+- `it_802C4580` [ext_fns!] x1: tu/itzeldadinfire.rs:54 -> port `melee_items::tu/itzeldadinfireexplode.rs:97`
+- `it_802C8F4C` [ext_fns!] x1: tu/it_279C.rs:146 -> port `melee_items::tu/ittosakinto.rs:92`
+- `it_802C8FC4` [ext_fns!] x1: tu/it_279C.rs:147 -> port `melee_items::itfwd.rs:1216`
+- `it_802C9588` [ext_fns!] x1: tu/it_279C.rs:148 -> port `melee_items::tu/itchicorita.rs:79`
+- `it_802C9D40` [ext_fns!] x1: tu/it_279C.rs:149 -> port `melee_items::tu/itkabigon.rs:102`
+- `it_802C9E24` [ext_fns!] x1: tu/it_279C.rs:150 -> port `melee_items::itfwd.rs:495`
+- `it_802CA49C` [ext_fns!] x1: tu/it_279C.rs:151 -> port `melee_items::tu/itkamex.rs:113`
+- `it_802CA538` [ext_fns!] x1: tu/it_279C.rs:152 -> port `melee_items::itfwd.rs:505`
+- `it_802CAFD4` [ext_fns!] x1: tu/it_279C.rs:153 -> port `melee_items::tu/itmatadogas.rs:108`
+- `it_802CB0F8` [ext_fns!] x1: tu/it_279C.rs:154 -> port `melee_items::itfwd.rs:816`
+- `it_802CB8AC` [ext_fns!] x1: tu/it_279C.rs:155 -> port `melee_items::tu/itlizardon.rs:94`
+- `it_802CB940` [ext_fns!] x1: tu/it_279C.rs:156 -> port `melee_items::itfwd.rs:684`
+- `it_802CCB14` [ext_fns!] x1: tu/it_279C.rs:157 -> port `melee_items::itfwd.rs:1191`
+- `it_802CD44C` [ext_fns!] x1: tu/it_279C.rs:158 -> port `melee_items::tu/itsonans.rs:96`
+- `it_802CD4DC` [ext_fns!] x1: tu/it_279C.rs:159 -> port `melee_items::itfwd.rs:1106`
+- `it_802CD7D4` [ext_fns!] x1: tu/it_279C.rs:160 -> port `melee_items::itkinds.rs:1910`
+- `it_802CE710` [ext_fns!] x1: tu/it_279C.rs:161 -> port `melee_items::tu/itunknown.rs:125`
+- `it_802CE7D0` [ext_fns!] x1: tu/it_279C.rs:162 -> port `melee_items::itfwd.rs:1226`
+- `it_802CF3E0` [ext_fns!] x1: tu/it_279C.rs:163 -> port `melee_items::tu/itentei.rs:92`
+- `it_802CF450` [ext_fns!] x1: tu/it_279C.rs:164 -> port `melee_items::itfwd.rs:195`
+- `it_802CF814` [ext_fns!] x1: tu/it_279C.rs:165 -> port `melee_items::tu/itraikou.rs:85`
+- `it_802CF884` [ext_fns!] x1: tu/it_279C.rs:166 -> port `melee_items::itfwd.rs:1041`
+- `it_802CFCB8` [ext_fns!] x1: tu/it_279C.rs:167 -> port `melee_items::itfwd.rs:1156`
+- `it_802D09D0` [ext_fns!] x1: tu/it_26B1.rs:81 -> port `melee_items::tu/itmarumine.rs:105`
+- `it_802D0AB0` [ext_fns!] x1: tu/it_279C.rs:168 -> port `melee_items::itfwd.rs:796`
+- `it_802D0AD0` [ext_fns!] x1: tu/it_279C.rs:169 -> port `melee_items::tu/itmarumine.rs:135`
+- `it_802D0D18` [ext_fns!] x1: tu/it_279C.rs:170 -> port `melee_items::tu/itmarumine.rs:199`
+- `it_802D0E30` [ext_fns!] x1: tu/it_279C.rs:171 -> port `melee_items::tu/itmarumine.rs:233`
+- `it_802D0E90` [ext_fns!] x1: tu/it_279C.rs:172 -> port `melee_items::tu/itmarumine.rs:241`
+- `it_802D23D4` [ext_fns!] x1: tu/it_279C.rs:173 -> port `melee_items::itfwd.rs:724`
+- `it_802D25BC` [ext_fns!] x1: tu/it_279C.rs:174 -> port `melee_items::itfwd.rs:485`
+- `it_802D2ED0` [ext_fns!] x1: tu/it_279C.rs:175 -> port `melee_items::itfwd.rs:490`
+- `it_802D3008` [ext_fns!] x1: tu/it_279C.rs:176 -> port `melee_items::tu/itmetamon.rs:68`
+- `it_802D32DC` [ext_fns!] x1: tu/it_279C.rs:177 -> port `melee_items::itfwd.rs:1016`
+- `it_802D3B6C` [ext_fns!] x1: tu/it_279C.rs:178 -> port `melee_items::itfwd.rs:836`
+- `it_802D3F4C` [ext_fns!] x1: tu/it_279C.rs:179 -> port `melee_items::itfwd.rs:86`
+- `it_802D43B0` [ext_fns!] x1: tu/it_279C.rs:180 -> port `melee_items::itkinds5.rs:302`
+- `it_802D4EF4` [ext_fns!] x1: tu/it_279C.rs:181 -> port `melee_items::itkinds.rs:1482`
+- `it_802D4F08` [ext_fns!] x1: tu/it_279C.rs:182 -> port `melee_items::tu/ithitodeman.rs:493`
+- `it_802D4F28` [ext_fns!] x1: tu/it_279C.rs:183 -> port `melee_items::tu/ithitodeman.rs:498`
+- `it_802D4F50` [ext_fns!] x1: tu/it_279C.rs:184 -> port `melee_items::itfwd6.rs:162`
+- `it_802D4F58` [ext_fns!] x1: tu/it_279C.rs:185 -> port `melee_items::itfwd.rs:470`
+- `it_802D5050` [ext_fns!] x1: tu/it_279C.rs:186 -> port `melee_items::tu/itlucky.rs:97`
+- `it_802D5648` [ext_fns!] x1: tu/it_279C.rs:187 -> port `melee_items::tu/itlucky.rs:265`
+- `it_802D56F0` [ext_fns!] x1: tu/it_279C.rs:188 -> port `melee_items::itfwd.rs:699`
+- `it_802D5CD8` [ext_fns!] x1: tu/it_279C.rs:189 -> port `melee_items::itfwd.rs:1031`
+- `it_802D5CF8` [ext_fns!] x1: tu/it_279C.rs:190 -> port `melee_items::tu/ithinoarashi.rs:182`
+- `it_802D61A8` [ext_fns!] x1: tu/it_279C.rs:191 -> port `melee_items::itfwd.rs:465`
+- `it_802D61C8` [ext_fns!] x1: tu/itmaril.rs:66 -> port `melee_items::itkinds10.rs:381`
+- `it_802D6310` [ext_fns!] x1: tu/itmaril.rs:67 -> port `melee_items::tu/ithinoarashi.rs:356`
+- `it_802D66F8` [ext_fns!] x1: tu/ithinoarashi.rs:76 -> port `melee_items::tu/itmaril.rs:117`
+- `it_802D6740` [ext_fns!] x1: tu/ithinoarashi.rs:77 -> port `melee_items::itkinds10.rs:511`
+- `it_802D6798` [ext_fns!] x1: tu/ithinoarashi.rs:78 -> port `melee_items::tu/itmaril.rs:135`
+- `it_802D6808` [ext_fns!] x1: tu/it_279C.rs:192 -> port `melee_items::itfwd8.rs:1204`
+- `it_802D6810` [ext_fns!] x1: tu/it_279C.rs:193 -> port `melee_items::itfwd.rs:751`
+- `it_802D6830` [ext_fns!] x1: tu/it_279C.rs:194 -> port `melee_items::itfwd6.rs:311`
+- `it_802D6838` [ext_fns!] x1: tu/it_279C.rs:195 -> port `melee_items::itfwd8.rs:1209`
+- `it_802D6840` [ext_fns!] x1: tu/it_279C.rs:196 -> port `melee_items::itfwd6.rs:316`
+- `it_802D6848` [ext_fns!] x1: tu/it_279C.rs:197 -> port `melee_items::itfwd6.rs:321`
+- `it_802D6850` [ext_fns!] x1: tu/it_279C.rs:198 -> port `melee_items::itfwd.rs:756`
+- `it_802D6F00` [ext_fns!] x1: tu/it_279C.rs:199 -> port `melee_items::tu/itmaril.rs:326`
+- `it_802D6FB0` [ext_fns!] x1: tu/it_279C.rs:200 -> port `melee_items::itfwd.rs:761`
+- `it_802DCE00` [ext_fns!] x1: tu/itpatapata.rs:68 -> port `melee_items::tu/itnokonoko.rs:292`
+- `it_802DD7F0` [ext_fns!] x2: tu/itpatapata.rs:69, tu/itzgshell.rs:86 -> port `melee_items::tu/itnokonoko.rs:528`
+- `it_802DDA84` [ext_fns!] x2: tu/itzgshell.rs:87, tu/itzrshell.rs:82 -> port `melee_items::tu/itnokonoko.rs:553`
+- `it_802DE040` [ext_fns!] x1: tu/itzrshell.rs:83 -> port `melee_items::tu/itzgshell.rs:331`
+- `it_802DE0F0` [ext_fns!] x1: tu/itzrshell.rs:84 -> port `melee_items::tu/itzgshell.rs:349`
+- `it_802DE320` [ext_fns!] x1: tu/itzrshell.rs:85 -> port `melee_items::tu/itzgshell.rs:391`
+- `it_802E0100` [ext_fns!] x1: tu/itnokonoko.rs:76 -> port `melee_items::tu/itzgshell.rs:1007`
+- `it_802E0488` [ext_fns!] x1: tu/itnokonoko.rs:77 -> port `melee_items::tu/itzrshell.rs:186`
+- `it_802E3400` [ext_fns!] x1: tu/itoldottosea.rs:78 -> port `melee_items::tu/itwhitebea.rs:207`
+- `it_802E3528` [ext_fns!] x1: tu/itoldottosea.rs:79 -> port `melee_items::tu/itwhitebea.rs:238`
+- `it_802E35CC` [ext_fns!] x1: tu/itoldottosea.rs:80 -> port `melee_items::tu/itwhitebea.rs:257`
+- `it_802E37A4` [ext_fns!] x2: tu/itfreeze.rs:56, tu/itoldottosea.rs:81 -> port `melee_items::itkinds5.rs:159`
+- `it_802E5F00` [ext_fns!] x1: tu/itdrop.rs:43 -> port `melee_items::tu/it_2E5A.rs:213`
+- `it_802E8ADC` [ext_fns!] x1: tu/itoctarock.rs:70 -> port `melee_items::tu/itoctarockstone.rs:190`
+- `it_802EFA44` [ext_fns!] x1: tu/itkyasarin.rs:60 -> port `melee_items::tu/itkyasarinegg.rs:85`
+- `it_802F2094` [ext_fns!] x1: tu/itzako.rs:71 -> port `melee_items::tu/itcoin.rs:392`
+- `itCerebi_Logic23_Spawned` [ext_fns!] x1: tu/it_279C.rs:70 -> port `melee_items::tu/itcerebi.rs:83`
+- `itChicorita_Logic1_EvtUnk` [ext_fns!] x1: tu/it_279C.rs:75 -> port `melee_items::tu/itchicorita.rs:94`
+- `itChicoritaLeaf_Logic30_EvtUnk` [ext_fns!] x1: tu/it_279C.rs:71 -> port `melee_items::tu/itchicorita.rs:281`
+- `itChicoritaLeaf_Logic30_HitShield` [ext_fns!] x1: tu/it_279C.rs:72 -> port `melee_items::tu/itchicorita.rs:277`
+- `itChicoritaLeaf_Logic30_Reflected` [ext_fns!] x1: tu/it_279C.rs:73 -> port `melee_items::tu/itchicorita.rs:285`
+- `itChicoritaLeaf_Logic30_Spawned` [ext_fns!] x1: tu/it_279C.rs:74 -> port `melee_items::tu/itchicorita.rs:268`
+- `itColl_BounceOffShield` [ext_fns!] x36: tu/itbat.rs:34, tu/itcapsule.rs:35, tu/itclimbersice.rs:53, tu/itdosei.rs:53, tu/itfflower.rs:39, tu/itflipper.rs:48, tu/itfreeze.rs:41, tu/itgamewatchchef.rs:42, tu/itkyasarinegg.rs:36, tu/itlgun.rs:32, tu/itlinkbomb.rs:44, tu/itlipstick.rs:31, tu/itlipstickspore.rs:37, tu/itluigifireball.rs:36, tu/itmariofireball.rs:38, tu/itmball.rs:35, tu/itmsbomb.rs:38, tu/itnesspkfire.rs:35, tu/itoctarockstone.rs:38, tu/itparasol.rs:34, tu/itpeachtoadspore.rs:40, tu/itpeachturnip.rs:40, tu/itrabbitc.rs:34, tu/itrshell.rs:37, tu/itsamusbomb.rs:38, tu/itsamusmissile.rs:40, tu/itsscope.rs:33, tu/itsscopebeam.rs:39, tu/itstarrod.rs:32, tu/itstarrodstar.rs:38, tu/itsword.rs:40, tu/ittools.rs:36, tu/itwhispyapple.rs:38, tu/ityoshieggthrow.rs:41, tu/ityoshistar.rs:38, tu/itzgshell.rs:43 -> port `melee_items::tu/it_2725.rs:408`
+- `itColl_BounceOffVictim` [ext_fns!] x19: tu/itbat.rs:35, tu/itclimbersice.rs:54, tu/itdosei.rs:54, tu/itfflower.rs:40, tu/itflipper.rs:49, tu/itlgun.rs:33, tu/itlinkbomb.rs:45, tu/itlipstick.rs:32, tu/itmball.rs:36, tu/itmsbomb.rs:39, tu/itparasol.rs:35, tu/itpeachturnip.rs:41, tu/itrshell.rs:38, tu/itscball.rs:32, tu/itsscope.rs:34, tu/itstarrod.rs:33, tu/itsword.rs:41, tu/itwhispyapple.rs:39, tu/itzgshell.rs:44 -> port `melee_items::tu/it_2725.rs:387`
+- `Item_80266FA8` [ext_fns!/todo_fns!] x9: tu/vi0102.rs:53, tu/vi0401.rs:57, tu/vi0501.rs:60, tu/vi0502.rs:58, tu/vi0601.rs:55, tu/vi0801.rs:36, tu/vi1101.rs:36, tu/vi1201v1.rs:43, tu/vi1201v2.rs:40 -> port `melee_items::tu/item.rs:320`
+- `Item_80266FCC` [ext_fns!/todo_fns!] x9: tu/vi0102.rs:54, tu/vi0401.rs:58, tu/vi0501.rs:61, tu/vi0502.rs:59, tu/vi0601.rs:56, tu/vi0801.rs:37, tu/vi1101.rs:37, tu/vi1201v1.rs:44, tu/vi1201v2.rs:41 -> port `melee_items::tu/item.rs:325`
+- `Item_80267454` [ext_fns!] x2: tu/itcoin.rs:43, tu/itnesspkthunderball.rs:33 -> port `melee_items::tu/item.rs:473`
+- `Item_802680CC` [ext_fns!] x1: tu/it_2725.rs:54 -> port `melee_items::tu/item.rs:871`
+- `Item_8026849C` [ext_fns!] x1: tu/it_2725.rs:55 -> port `melee_items::tu/item.rs:957`
+- `Item_80268B18` [ext_fns!] x102: tu/it_279C.rs:49, tu/it_2ADA.rs:31, tu/it_2E5A.rs:43, tu/it_2F28.rs:34, tu/itarwinglaser.rs:40, tu/itbombhei.rs:38, tu/itbox.rs:41, tu/itchicorita.rs:34, tu/itclimbersblizzard.rs:34, tu/itclimbersice.rs:45, tu/itclimbersstring.rs:48, tu/itclinkmilk.rs:38, tu/itcoin.rs:44, tu/itcrazyhandbomb.rs:41, tu/itdrmariopill.rs:47, tu/itdrop.rs:31, tu/itegg.rs:36, tu/itevyoshiegg.rs:35, tu/itfflower.rs:34, tu/itfflowerflame.rs:35, tu/itflipper.rs:42, tu/itfoods.rs:40, tu/itfoxblaster.rs:42, tu/itfoxillusion.rs:41, tu/itfoxlaser.rs:40, tu/itfreeze.rs:38, tu/itgamewatchbreath.rs:34, tu/itgamewatchchef.rs:39, tu/itgamewatchfire.rs:28, tu/itgamewatchgreenhouse.rs:28, tu/itgamewatchjudge.rs:29, tu/itgamewatchmanhole.rs:28, tu/itgamewatchpanic.rs:28, tu/itgamewatchparachute.rs:28, tu/itgamewatchrescue.rs:28, tu/itgamewatchturtle.rs:28, tu/ithinoarashi.rs:45, tu/ithitodeman.rs:41, tu/ithouou.rs:29, tu/itkamex.rs:32, tu/itkirbycutterbeam.rs:42, tu/itkirbygamewatchchefpan.rs:29, tu/itkirbyhammer.rs:32, tu/itkoopaflame.rs:44, tu/itlgunbeam.rs:35, tu/itlgunray.rs:33, tu/itlinkarrow.rs:45, tu/itlinkbomb.rs:39, tu/itlinkboomerang.rs:46, tu/itlinkbow.rs:31, tu/itlinkhookshot.rs:54, tu/itlipstickspore.rs:32, tu/itlizardon.rs:35, tu/itlucky.rs:33, tu/itlugia.rs:39, tu/itluigifireball.rs:32, tu/itmariocape.rs:32, tu/itmariofireball.rs:33, tu/itmasterhandbullet.rs:33, tu/itmasterhandlaser.rs:35, tu/itmatadogas.rs:36, tu/itmewtwodisable.rs:31, tu/itmewtwoshadowball.rs:50, tu/itnessbat.rs:34, tu/itnesspkfire.rs:32, tu/itnesspkfirepillar.rs:33, tu/itnesspkflash.rs:34, tu/itnesspkflashexplode.rs:34, tu/itnesspkthunderball.rs:34, tu/itnesspkthundertrail.rs:34, tu/itnessyoyo.rs:46, tu/itoctarockstone.rs:33, tu/itpeachexplode.rs:30, tu/itpeachparasol.rs:31, tu/itpeachtoad.rs:32, tu/itpeachtoadspore.rs:35, tu/itpeachturnip.rs:34, tu/itpikachuthunder.rs:34, tu/itpikachutjoltair.rs:34, tu/itpikachutjoltground.rs:35, tu/itsamusbomb.rs:33, tu/itsamuschargeshot.rs:36, tu/itsamusgrapple.rs:53, tu/itsamusmissile.rs:33, tu/itseakchain.rs:47, tu/itseakneedleheld.rs:34, tu/itseakneedlethrown.rs:39, tu/itseakvanish.rs:31, tu/itspawn.rs:49, tu/itsscopebeam.rs:35, tu/itstarrodstar.rs:34, tu/ittomato.rs:32, tu/ittools.rs:32, tu/itunknown.rs:35, tu/itwhispyapple.rs:35, tu/ityaku.rs:35, tu/ityoshiegglay.rs:36, tu/ityoshieggthrow.rs:35, tu/ityoshistar.rs:35, tu/itzako.rs:38, tu/itzeldadinfire.rs:37, tu/itzeldadinfireexplode.rs:36 -> port `melee_items::tu/item.rs:1156`
+- `Item_80268B5C` [ext_fns!] x6: tu/itbat.rs:32, tu/itkusudama.rs:46, tu/itrabbitc.rs:32, tu/itsscope.rs:31, tu/itsword.rs:37, tu/itzako.rs:39 -> port `melee_items::tu/item.rs:1164`
+- `Item_80268B9C` [ext_fns!] x1: tu/itspawn.rs:50 -> port `melee_items::tu/item.rs:1172`
+- `Item_80268D34` [ext_fns!] x4: tu/it_2E5A.rs:44, tu/itlinkbomb.rs:40, tu/itpippi.rs:33, tu/ittogepy.rs:32 -> port `melee_items::tu/item.rs:1243`
+- `Item_80268DD4` [ext_fns!] x2: tu/itdosei.rs:50, tu/itlinkbow.rs:32 -> port `melee_items::tu/item.rs:1257`
+- `Item_80268E40` [ext_fns!] x1: tu/it_26B1.rs:37 -> port `melee_items::itlib3.rs:310`
+- `Item_80268E5C` [ext_fns!] x158: tu/it_2ADA.rs:32, tu/it_2E5A.rs:45, tu/it_2F28.rs:35, tu/itarwinglaser.rs:41, tu/itbat.rs:33, tu/itbombhei.rs:39, tu/itbox.rs:42, tu/itcapsule.rs:34, tu/itcerebi.rs:32, tu/itchicorita.rs:35, tu/itclimbersblizzard.rs:35, tu/itclimbersice.rs:46, tu/itclimbersstring.rs:49, tu/itclinkmilk.rs:39, tu/itcoin.rs:45, tu/itcrazyhandbomb.rs:42, tu/itdkinoko.rs:35, tu/itdosei.rs:51, tu/itdrmariopill.rs:48, tu/itegg.rs:37, tu/itentei.rs:36, tu/itevyoshiegg.rs:36, tu/itfflower.rs:35, tu/itfflowerflame.rs:36, tu/itfire.rs:33, tu/itflipper.rs:43, tu/itfoods.rs:41, tu/itfoxblaster.rs:43, tu/itfoxillusion.rs:42, tu/itfoxlaser.rs:41, tu/itfreeze.rs:39, tu/itfreezer.rs:33, tu/itfushigibana.rs:33, tu/itgamewatchbreath.rs:35, tu/itgamewatchchef.rs:40, tu/itgamewatchfire.rs:29, tu/itgamewatchgreenhouse.rs:29, tu/itgamewatchjudge.rs:30, tu/itgamewatchmanhole.rs:29, tu/itgamewatchpanic.rs:29, tu/itgamewatchparachute.rs:29, tu/itgamewatchrescue.rs:29, tu/itgamewatchturtle.rs:29, tu/ithinoarashi.rs:46, tu/ithitodeman.rs:42, tu/ithouou.rs:30, tu/itkabigon.rs:36, tu/itkamex.rs:33, tu/itkinoko.rs:30, tu/itkirby_2F23.rs:40, tu/itkirbycutterbeam.rs:43, tu/itkirbygamewatchchefpan.rs:30, tu/itkirbyhammer.rs:33, tu/itkirbyyoshispecialn.rs:30, tu/itkireihana.rs:35, tu/itklap.rs:45, tu/itkoopaflame.rs:45, tu/itkusudama.rs:47, tu/itkyasarin.rs:43, tu/itkyasarinegg.rs:33, tu/itleadead.rs:38, tu/itlgun.rs:31, tu/itlgunbeam.rs:36, tu/itlgunray.rs:34, tu/itlikelike.rs:37, tu/itlinkarrow.rs:46, tu/itlinkbomb.rs:41, tu/itlinkboomerang.rs:47, tu/itlinkbow.rs:33, tu/itlinkhookshot.rs:55, tu/itlipstick.rs:30, tu/itlipstickspore.rs:33, tu/itlizardon.rs:36, tu/itlucky.rs:34, tu/itlugia.rs:40, tu/itluigifireball.rs:33, tu/itmaril.rs:34, tu/itmariocape.rs:33, tu/itmariofireball.rs:34, tu/itmarumine.rs:33, tu/itmasterhandbullet.rs:34, tu/itmasterhandlaser.rs:36, tu/itmatadogas.rs:37, tu/itmato.rs:33, tu/itmball.rs:32, tu/itmetalb.rs:31, tu/itmetamon.rs:31, tu/itmew.rs:32, tu/itmewtwodisable.rs:32, tu/itmewtwoshadowball.rs:51, tu/itmsbomb.rs:36, tu/itnessbat.rs:35, tu/itnesspkfire.rs:33, tu/itnesspkfirepillar.rs:34, tu/itnesspkflash.rs:35, tu/itnesspkflashexplode.rs:35, tu/itnesspkthunderball.rs:35, tu/itnesspkthundertrail.rs:35, tu/itnessyoyo.rs:47, tu/itnokonoko.rs:35, tu/itoctarock.rs:34, tu/itoctarockstone.rs:34, tu/itoldkuri.rs:33, tu/itoldottosea.rs:34, tu/itparasol.rs:32, tu/itpatapata.rs:38, tu/itpeachexplode.rs:31, tu/itpeachparasol.rs:32, tu/itpeachtoad.rs:33, tu/itpeachtoadspore.rs:36, tu/itpeachturnip.rs:35, tu/itpikachuthunder.rs:35, tu/itpikachutjoltair.rs:35, tu/itpikachutjoltground.rs:36, tu/itpippi.rs:34, tu/itporygon2.rs:31, tu/itrabbitc.rs:33, tu/itraikou.rs:32, tu/itrshell.rs:34, tu/itsamusbomb.rs:34, tu/itsamuschargeshot.rs:37, tu/itsamusgrapple.rs:54, tu/itsamusmissile.rs:34, tu/itscball.rs:31, tu/itseakchain.rs:48, tu/itseakneedleheld.rs:35, tu/itseakneedlethrown.rs:40, tu/itseakvanish.rs:32, tu/itsonans.rs:32, tu/itspycloak.rs:31, tu/itsscope.rs:32, tu/itsscopebeam.rs:36, tu/itstar.rs:32, tu/itstarrod.rs:31, tu/itstarrodstar.rs:35, tu/itsuikun.rs:34, tu/itsword.rs:38, tu/ittaru.rs:38, tu/ittarucann.rs:40, tu/itthunder.rs:31, tu/ittincle.rs:37, tu/ittogepy.rs:33, tu/ittomato.rs:33, tu/ittools.rs:33, tu/ittosakinto.rs:33, tu/itunknown.rs:36, tu/itwhispyapple.rs:36, tu/itwhitebea.rs:40, tu/itwstar.rs:37, tu/ityaku.rs:36, tu/ityoshiegglay.rs:37, tu/ityoshieggthrow.rs:36, tu/ityoshistar.rs:36, tu/ityoshitongue.rs:31, tu/itzeldadinfire.rs:38, tu/itzeldadinfireexplode.rs:37, tu/itzgshell.rs:39, tu/itzrshell.rs:35 -> port `melee_items::tu/item.rs:1274`
+- `Item_802694CC` [ext_fns!] x23: tu/itclinkmilk.rs:40, tu/itfoxblaster.rs:44, tu/itgamewatchbreath.rs:36, tu/itgamewatchfire.rs:30, tu/itgamewatchgreenhouse.rs:30, tu/itgamewatchmanhole.rs:30, tu/itgamewatchpanic.rs:30, tu/itgamewatchparachute.rs:30, tu/itgamewatchrescue.rs:30, tu/itgamewatchturtle.rs:30, tu/itkirbygamewatchchefpan.rs:31, tu/itkoopaflame.rs:46, tu/itlgunbeam.rs:37, tu/itlinkbow.rs:34, tu/itmariocape.rs:34, tu/itmasterhandlaser.rs:37, tu/itnessbat.rs:36, tu/itnesspkflashexplode.rs:36, tu/itpeachparasol.rs:33, tu/itpeachtoad.rs:34, tu/itpeachturnip.rs:36, tu/itpikachutjoltair.rs:36, tu/itzeldadinfireexplode.rs:38 -> port `melee_items::tu/item.rs:1402`
+- `Item_802697D4` [ext_fns!] x1: tu/it_2725.rs:56 -> port `melee_items::tu/item.rs:1478`
+- `Item_80269978` [ext_fns!] x1: tu/it_2725.rs:57 -> port `melee_items::tu/item.rs:1519`
+- `Item_80269CA0` [ext_fns!] x1: tu/itklap.rs:46 -> port `melee_items::item.rs:12`
+- `Item_8026A848` [ext_fns!] x1: tu/it_2725.rs:58 -> port `melee_items::tu/item.rs:1945`
+- `Item_8026AB54` [ext_fns!] x32: tu/itclimbersstring.rs:51, tu/itclinkmilk.rs:42, tu/itdrmariopill.rs:50, tu/itfflowerflame.rs:37, tu/itfoxblaster.rs:46, tu/itgamewatchbreath.rs:38, tu/itgamewatchfire.rs:32, tu/itgamewatchgreenhouse.rs:32, tu/itgamewatchjudge.rs:32, tu/itgamewatchmanhole.rs:32, tu/itgamewatchpanic.rs:32, tu/itgamewatchparachute.rs:32, tu/itgamewatchturtle.rs:32, tu/itkirbygamewatchchefpan.rs:33, tu/itkirbyhammer.rs:35, tu/itlinkarrow.rs:48, tu/itlinkbomb.rs:42, tu/itlinkboomerang.rs:49, tu/itlinkbow.rs:36, tu/itlinkhookshot.rs:57, tu/itmariocape.rs:36, tu/itmewtwoshadowball.rs:53, tu/itnessbat.rs:38, tu/itnessyoyo.rs:49, tu/itpeachparasol.rs:35, tu/itpeachtoad.rs:36, tu/itpeachturnip.rs:38, tu/itsamuschargeshot.rs:39, tu/itsamusgrapple.rs:56, tu/itseakchain.rs:50, tu/itseakneedleheld.rs:36, tu/ityoshieggthrow.rs:38 -> port `melee_items::tu/item.rs:2059`
+- `Item_8026ADC0` [ext_fns!] x1: tu/itgroundcoll.rs:33 -> port `melee_items::tu/item.rs:2108`
+- `Item_8026AE60` [ext_fns!] x5: tu/itfflower.rs:36, tu/ithinoarashi.rs:47, tu/itmasterhandbullet.rs:35, tu/itnesspkthunderball.rs:36, tu/itpikachuthunder.rs:36 -> port `melee_items::itlib3.rs:360`
+- `Item_8026AE84` [ext_fns!] x65: tu/it_2725.rs:59, tu/itanimlist.rs:43, tu/itarwinglaser.rs:42, tu/itbombhei.rs:40, tu/itbox.rs:43, tu/itchicorita.rs:36, tu/itdkinoko.rs:36, tu/itdrmariopill.rs:51, tu/itegg.rs:38, tu/itentei.rs:37, tu/itevyoshiegg.rs:37, tu/itfoods.rs:42, tu/itfoxblaster.rs:47, tu/itfushigibana.rs:34, tu/ithinoarashi.rs:48, tu/ithitodeman.rs:43, tu/itkabigon.rs:37, tu/itkamex.rs:34, tu/itkinoko.rs:31, tu/itkireihana.rs:36, tu/itkusudama.rs:48, tu/itkyasarinegg.rs:34, tu/itleadead.rs:39, tu/itlikelike.rs:38, tu/itlinkarrow.rs:49, tu/itlizardon.rs:37, tu/itlucky.rs:35, tu/itlugia.rs:41, tu/itmaril.rs:35, tu/itmariofireball.rs:35, tu/itmarumine.rs:34, tu/itmatadogas.rs:38, tu/itmball.rs:33, tu/itmetamon.rs:32, tu/itmew.rs:33, tu/itmewtwoshadowball.rs:54, tu/itmsbomb.rs:37, tu/itnesspkflash.rs:36, tu/itnokonoko.rs:37, tu/itoctarock.rs:35, tu/itoctarockstone.rs:35, tu/itoldkuri.rs:34, tu/itparasol.rs:33, tu/itpatapata.rs:40, tu/itpeachparasol.rs:36, tu/itpippi.rs:35, tu/itporygon2.rs:32, tu/itraikou.rs:33, tu/itrshell.rs:35, tu/itseakneedlethrown.rs:41, tu/itsonans.rs:33, tu/itstar.rs:33, tu/itsuikun.rs:35, tu/ittaru.rs:39, tu/ittarucann.rs:41, tu/ittogepy.rs:34, tu/ittosakinto.rs:34, tu/itunknown.rs:37, tu/itwhispyapple.rs:37, tu/itwhitebea.rs:41, tu/itwstar.rs:38, tu/ityoshiegglay.rs:38, tu/ityoshieggthrow.rs:39, tu/itzako.rs:40, tu/itzgshell.rs:40 -> port `melee_items::tu/item.rs:2147`
+- `Item_8026AF0C` [ext_fns!] x5: tu/itanimlist.rs:44, tu/itdosei.rs:52, tu/itlinkboomerang.rs:50, tu/itmewtwoshadowball.rs:55, tu/itpikachutjoltair.rs:37 -> port `melee_items::tu/item.rs:2158`
+- `Item_8026AFA0` [ext_fns!] x2: tu/it_2725.rs:60, tu/itanimlist.rs:45 -> port `melee_items::tu/item.rs:2172`
+- `Item_8026B034` [ext_fns!] x1: tu/itanimlist.rs:46 -> port `melee_items::tu/item.rs:2186`
+- `Item_8026B074` [ext_fns!] x3: tu/it_2725.rs:61, tu/itanimlist.rs:47, tu/itnesspkflash.rs:37 -> port `melee_items::tu/item.rs:2193`
+- `itFire_Logic6_EvtUnk` [ext_fns!] x1: tu/it_279C.rs:76 -> port `melee_items::tu/itfire.rs:104`
+- `itFire_Logic6_Spawned` [ext_fns!] x1: tu/it_279C.rs:77 -> port `melee_items::tu/itfire.rs:93`
+- `itFlipper_Spawn` [ext_fns!] x1: tu/it_26B1.rs:52 -> port `melee_items::tu/itflipper.rs:197`
+- `itFreezer_802CCF9C` [ext_fns!] x1: tu/it_279C.rs:78 -> port `melee_items::tu/itfreezer.rs:91`
+- `itFreezer_802CD000` [ext_fns!] x1: tu/it_279C.rs:79 -> port `melee_items::tu/itfreezer.rs:105`
+- `itFushigibana_Logic29_Spawned` [ext_fns!] x1: tu/it_279C.rs:80 -> port `melee_items::tu/itfushigibana.rs:114`
+- `itGetTeamId` [ext_fns!] x1: tu/item.rs:90 -> port `melee_items::tu/it_26B1.rs:380`
+- `itHassam_802CDBE0` [ext_fns!] x1: tu/it_279C.rs:81 -> port `melee_items::tu/ithassam.rs:111`
+- `itHassam_802CDC60` [ext_fns!] x1: tu/it_279C.rs:82 -> port `melee_items::tu/ithassam.rs:124`
+- `itHitodeman_Logic43_Absorbed` [ext_fns!] x1: tu/it_279C.rs:83 -> port `melee_items::tu/ithitodeman.rs:503`
+- `itIsHeavy` [ext_fns!] x2: tu/it_2725.rs:73, tu/itcoll.rs:48 -> port `melee_items::tu/it_26B1.rs:881`
+- `itKabigon_Logic2_Destroyed` [ext_fns!] x1: tu/it_279C.rs:84 -> port `melee_items::tu/itkabigon.rs:124`
+- `itKamex_Logic31_DmgDealt` [ext_fns!] x1: tu/it_279C.rs:85 -> port `melee_items::tu/itkamex.rs:353`
+- `itKamex_Logic31_EvtUnk` [ext_fns!] x1: tu/it_279C.rs:86 -> port `melee_items::tu/itkamex.rs:358`
+- `itKamex_Logic31_HitShield` [ext_fns!] x1: tu/it_279C.rs:87 -> port `melee_items::tu/itkamex.rs:348`
+- `itKireihana_Logic15_EvtUnk` [ext_fns!] x1: tu/it_279C.rs:88 -> port `melee_items::tu/itkireihana.rs:110`
+- `itKireihana_Logic15_Spawned` [ext_fns!] x1: tu/it_279C.rs:89 -> port `melee_items::tu/itkireihana.rs:95`
+- `itLizardon_Logic34_Spawned` [ext_fns!] x1: tu/it_279C.rs:90 -> port `melee_items::tu/itlizardon.rs:364`
+- `itLizardon_Logic35_Spawned` [ext_fns!] x1: tu/it_279C.rs:91 -> port `melee_items::tu/itlizardon.rs:373`
+- `itLizardon_Logic36_Spawned` [ext_fns!] x1: tu/it_279C.rs:92 -> port `melee_items::tu/itlizardon.rs:382`
+- `itLizardon_Logic37_Absorbed` [ext_fns!] x1: tu/it_279C.rs:93 -> port `melee_items::tu/itlizardon.rs:412`
+- `itLizardon_Logic37_EvtUnk` [ext_fns!] x1: tu/it_279C.rs:94 -> port `melee_items::tu/itlizardon.rs:400`
+- `itLizardon_Logic37_HitShield` [ext_fns!] x1: tu/it_279C.rs:95 -> port `melee_items::tu/itlizardon.rs:408`
+- `itLizardon_Logic37_Reflected` [ext_fns!] x1: tu/it_279C.rs:96 -> port `melee_items::tu/itlizardon.rs:404`
+- `itLizardon_Logic37_Spawned` [ext_fns!] x1: tu/it_279C.rs:97 -> port `melee_items::tu/itlizardon.rs:391`
+- `itLucky_Logic44_Dropped` [ext_fns!] x1: tu/it_279C.rs:98 -> port `melee_items::tu/itlucky.rs:373`
+- `itLucky_Logic44_EnteredAir` [ext_fns!] x1: tu/it_279C.rs:99 -> port `melee_items::tu/itlucky.rs:377`
+- `itLucky_Logic44_EvtUnk` [ext_fns!] x1: tu/it_279C.rs:100 -> port `melee_items::tu/itlucky.rs:392`
+- `itLucky_Logic44_PickedUp` [ext_fns!] x1: tu/it_279C.rs:101 -> port `melee_items::tu/itlucky.rs:363`
+- `itLucky_Logic44_Spawned` [ext_fns!] x1: tu/it_279C.rs:102 -> port `melee_items::tu/itlucky.rs:313`
+- `itLugia_Logic17_EvtUnk` [ext_fns!] x1: tu/it_279C.rs:103 -> port `melee_items::tu/itlugia.rs:125`
+- `itLugia_Logic39_Spawned` [ext_fns!] x1: tu/it_279C.rs:104 -> port `melee_items::tu/itlugia.rs:458`
+- `itLugia_Logic40_Spawned` [ext_fns!] x1: tu/it_279C.rs:105 -> port `melee_items::tu/itlugia.rs:463`
+- `itLugia_Logic41_Spawned` [ext_fns!] x1: tu/it_279C.rs:106 -> port `melee_items::tu/itlugia.rs:468`
+- `itMaril_Logic28_Spawned` [ext_fns!] x1: tu/it_279C.rs:107 -> port `melee_items::tu/itmaril.rs:181`
+- `itMarumine_Logic16_Spawned` [ext_fns!] x1: tu/it_279C.rs:108 -> port `melee_items::tu/itmarumine.rs:112`
+- `itMatadogas_Logic33_EvtUnk` [ext_fns!] x1: tu/it_279C.rs:109 -> port `melee_items::tu/itmatadogas.rs:259`
+- `itMetamon_Logic19_EvtUnk` [ext_fns!] x1: tu/it_279C.rs:110 -> port `melee_items::tu/itmetamon.rs:79`
+- `itMew_Logic22_Spawned` [ext_fns!] x1: tu/it_279C.rs:111 -> port `melee_items::tu/itmew.rs:84`
+- `itNesspkfirepillar_802AA494` [ext_fns!] x1: tu/itnesspkfire.rs:36 -> port `melee_items::tu/itnesspkfirepillar.rs:86`
+- `itOldKuri_Logic29_EvtUnk` [ext_fns!] x1: tu/it_279C.rs:112 -> port `melee_items::tu/itoldkuri.rs:122`
+- `itOldottosea_UnkMotion10_Anim` [ext_fns!] x1: tu/itoldottosea.rs:36 -> port `melee_items::tu/itwhitebea.rs:216`
+- `itOldottosea_UnkMotion10_Coll` [ext_fns!] x1: tu/itoldottosea.rs:37 -> port `melee_items::tu/itwhitebea.rs:225`
+- `itOldottosea_UnkMotion10_Phys` [ext_fns!] x1: tu/itoldottosea.rs:38 -> port `melee_items::tu/itwhitebea.rs:223`
+- `itOldottosea_UnkMotion11_Anim` [ext_fns!] x1: tu/itoldottosea.rs:39 -> port `melee_items::tu/itwhitebea.rs:244`
+- `itOldottosea_UnkMotion11_Coll` [ext_fns!] x1: tu/itoldottosea.rs:40 -> port `melee_items::tu/itwhitebea.rs:253`
+- `itOldottosea_UnkMotion11_Phys` [ext_fns!] x1: tu/itoldottosea.rs:41 -> port `melee_items::tu/itwhitebea.rs:248`
+- `itOldottosea_UnkMotion8_Anim` [ext_fns!] x1: tu/itoldottosea.rs:42 -> port `melee_items::tu/itwhitebea.rs:160`
+- `itOldottosea_UnkMotion8_Phys` [ext_fns!] x1: tu/itoldottosea.rs:43 -> port `melee_items::tu/itwhitebea.rs:172`
+- `itOldottosea_UnkMotion9_Anim` [ext_fns!] x1: tu/itoldottosea.rs:44 -> port `melee_items::tu/itwhitebea.rs:190`
+- `itOldottosea_UnkMotion9_Coll` [ext_fns!] x1: tu/itoldottosea.rs:45 -> port `melee_items::tu/itwhitebea.rs:203`
+- `itOldottosea_UnkMotion9_Phys` [ext_fns!] x1: tu/itoldottosea.rs:46 -> port `melee_items::tu/itwhitebea.rs:197`
+- `itPippi_Logic20_Spawned` [ext_fns!] x1: tu/it_279C.rs:113 -> port `melee_items::tu/itpippi.rs:67`
+- `itPorygon2_Logic26_Spawned` [ext_fns!] x1: tu/it_279C.rs:114 -> port `melee_items::tu/itporygon2.rs:66`
+- `itSonans_Logic9_DmgDealt` [ext_fns!] x1: tu/it_279C.rs:115 -> port `melee_items::tu/itsonans.rs:163`
+- `itSuikun_Logic14_Spawned` [ext_fns!] x1: tu/it_279C.rs:116 -> port `melee_items::tu/itsuikun.rs:87`
+- `itSword_Spawn` [ext_fns!] x1: tu/it_26B1.rs:53 -> port `melee_items::tu/itsword.rs:107`
+- `itThunder_Logic7_Spawned` [ext_fns!] x1: tu/it_279C.rs:117 -> port `melee_items::tu/itthunder.rs:103`
+- `itTogepy_Logic21_EvtUnk` [ext_fns!] x1: tu/it_279C.rs:118 -> port `melee_items::tu/ittogepy.rs:83`
+- `itTogepy_Logic21_Spawned` [ext_fns!] x1: tu/it_279C.rs:119 -> port `melee_items::tu/ittogepy.rs:67`
+- `itTosakinto_Logic0_Destroyed` [ext_fns!] x1: tu/it_279C.rs:120 -> port `melee_items::tu/ittosakinto.rs:208`
+- `itUnknown_Logic38_EvtUnk` [ext_fns!] x1: tu/it_279C.rs:121 -> port `melee_items::tu/itunknown.rs:348`
+- `itZGShell_Logic11_DmgDealt` [ext_fns!] x1: tu/itzrshell.rs:37 -> port `melee_items::tu/itzgshell.rs:916`
+- `itZGShell_Logic11_DmgReceived` [ext_fns!] x1: tu/itzrshell.rs:38 -> port `melee_items::tu/itzgshell.rs:921`
+- `itZGShell_Logic11_Dropped` [ext_fns!] x1: tu/itzrshell.rs:39 -> port `melee_items::tu/itzgshell.rs:477`
+- `itZGShell_Logic11_Reflected` [ext_fns!] x1: tu/itzrshell.rs:40 -> port `melee_items::tu/itzgshell.rs:927`
+- `itZGShell_Logic11_ShieldBounced` [ext_fns!] x1: tu/itzrshell.rs:41 -> port `melee_items::tu/itzgshell.rs:956`
+- `itZGShell_Logic11_Thrown` [ext_fns!] x1: tu/itzrshell.rs:42 -> port `melee_items::tu/itzgshell.rs:443`
+- `itZrshell_UnkMotion0_Anim` [ext_fns!] x1: tu/itzrshell.rs:43 -> port `melee_items::tu/itzgshell.rs:365`
+- `itZrshell_UnkMotion0_Coll` [ext_fns!] x1: tu/itzrshell.rs:44 -> port `melee_items::tu/itzgshell.rs:380`
+- `itZrshell_UnkMotion0_Phys` [ext_fns!] x1: tu/itzrshell.rs:45 -> port `melee_items::tu/itzgshell.rs:369`
+- `itZrshell_UnkMotion10_Anim` [ext_fns!] x1: tu/itzrshell.rs:46 -> port `melee_items::tu/itzgshell.rs:866`
+- `itZrshell_UnkMotion10_Coll` [ext_fns!] x1: tu/itzrshell.rs:47 -> port `melee_items::tu/itzgshell.rs:901`
+- `itZrshell_UnkMotion10_Phys` [ext_fns!] x1: tu/itzrshell.rs:48 -> port `melee_items::tu/itzgshell.rs:896`
+- `itZrshell_UnkMotion11_Anim` [ext_fns!] x1: tu/itzrshell.rs:49 -> port `melee_items::tu/itzgshell.rs:794`
+- `itZrshell_UnkMotion11_Coll` [ext_fns!] x1: tu/itzrshell.rs:50 -> port `melee_items::tu/itzgshell.rs:842`
+- `itZrshell_UnkMotion11_Phys` [ext_fns!] x1: tu/itzrshell.rs:51 -> port `melee_items::tu/itzgshell.rs:835`
+- `itZrshell_UnkMotion1_Anim` [ext_fns!] x1: tu/itzrshell.rs:52 -> port `melee_items::tu/itzgshell.rs:396`
+- `itZrshell_UnkMotion1_Coll` [ext_fns!] x1: tu/itzrshell.rs:53 -> port `melee_items::tu/itzgshell.rs:415`
+- `itZrshell_UnkMotion1_Phys` [ext_fns!] x1: tu/itzrshell.rs:54 -> port `melee_items::tu/itzgshell.rs:409`
+- `itZrshell_UnkMotion2_Anim` [ext_fns!] x1: tu/itzrshell.rs:55 -> port `melee_items::tu/itzgshell.rs:428`
+- `itZrshell_UnkMotion2_Phys` [ext_fns!] x1: tu/itzrshell.rs:56 -> port `melee_items::tu/itzgshell.rs:432`
+- `itZrshell_UnkMotion3_Anim` [ext_fns!] x1: tu/itzrshell.rs:57 -> port `melee_items::tu/itzgshell.rs:449`
+- `itZrshell_UnkMotion3_Coll` [ext_fns!] x1: tu/itzrshell.rs:58 -> port `melee_items::tu/itzgshell.rs:472`
+- `itZrshell_UnkMotion3_Phys` [ext_fns!] x1: tu/itzrshell.rs:59 -> port `melee_items::tu/itzgshell.rs:466`
+- `itZrshell_UnkMotion4_Anim` [ext_fns!] x1: tu/itzrshell.rs:60 -> port `melee_items::tu/itzgshell.rs:481`
+- `itZrshell_UnkMotion4_Coll` [ext_fns!] x1: tu/itzrshell.rs:61 -> port `melee_items::tu/itzgshell.rs:492`
+- `itZrshell_UnkMotion4_Phys` [ext_fns!] x1: tu/itzrshell.rs:62 -> port `melee_items::tu/itzgshell.rs:486`
+- `itZrshell_UnkMotion6_Anim` [ext_fns!] x1: tu/itzrshell.rs:63 -> port `melee_items::tu/itzgshell.rs:544`
+- `itZrshell_UnkMotion6_Coll` [ext_fns!] x1: tu/itzrshell.rs:64 -> port `melee_items::tu/itzgshell.rs:596`
+- `itZrshell_UnkMotion6_Phys` [ext_fns!] x1: tu/itzrshell.rs:65 -> port `melee_items::tu/itzgshell.rs:561`
+- `itZrshell_UnkMotion8_Anim` [ext_fns!] x1: tu/itzrshell.rs:66 -> port `melee_items::tu/itzgshell.rs:639`
+- `itZrshell_UnkMotion8_Coll` [ext_fns!] x1: tu/itzrshell.rs:67 -> port `melee_items::tu/itzgshell.rs:661`
+- `itZrshell_UnkMotion8_Phys` [ext_fns!] x1: tu/itzrshell.rs:68 -> port `melee_items::tu/itzgshell.rs:655`
+- `itZrshell_UnkMotion9_Anim` [ext_fns!] x1: tu/itzrshell.rs:69 -> port `melee_items::tu/itzgshell.rs:677`
+- `itZrshell_UnkMotion9_Coll` [ext_fns!] x1: tu/itzrshell.rs:70 -> port `melee_items::tu/itzgshell.rs:718`
+- `itZrshell_UnkMotion9_Phys` [ext_fns!] x1: tu/itzrshell.rs:71 -> port `melee_items::tu/itzgshell.rs:698`
+- `lb_8000B09C` [ext_fns!] x2: tu/it_2725.rs:98, tu/toy.rs:184 -> port `melee_runtime::tu/lb_00B0.rs:237`
+- `lb_8000B134` [ext_fns!] x1: tu/itklap.rs:57 -> port `melee_runtime::tu/lb_00B0.rs:241`
+- `lb_8000B1CC` [ext_fns!] x27: tu/it_2725.rs:99, tu/it_2E5A.rs:67, tu/itarwinglaser.rs:58, tu/itbox.rs:74, tu/itcoll.rs:68, tu/iteffect.rs:49, tu/itflipper.rs:71, tu/itgamewatchmanhole.rs:42, tu/ithinoarashi.rs:79, tu/itkirbyyoshispecialn.rs:46, tu/itklap.rs:58, tu/itleadead.rs:94, tu/itlikelike.rs:90, tu/itlizardon.rs:60, tu/itlucky.rs:62, tu/itlugia.rs:62, tu/itmasterhandlaser.rs:45, tu/itmato.rs:37, tu/itmewtwoshadowball.rs:78, tu/itoctarock.rs:71, tu/itpatapata.rs:70, tu/itpikachutjoltair.rs:46, tu/ittincle.rs:54, tu/ityaku.rs:40, tu/ityoshitongue.rs:47, tu/itzako.rs:79, tu/itzgshell.rs:88 -> port `melee_runtime::tu/lb_00B0.rs:245`
+- `lb_8000B804` [ext_fns!] x6: tu/it_26B1.rs:82, tu/it_2725.rs:100, tu/item.rs:164, tu/itmasterhandlaser.rs:46, tu/ittaru.rs:68, tu/ittarucann.rs:65 -> port `melee_runtime::tu/lb_00B0.rs:330`
+- `lb_8000BA0C` [ext_fns!] x10: tu/it_26B1.rs:83, tu/it_2725.rs:101, tu/itdosei.rs:72, tu/item.rs:165, tu/itgamewatchfire.rs:43, tu/itlinkboomerang.rs:75, tu/itmarumine.rs:59, tu/itnessyoyo.rs:71, tu/itpeachtoad.rs:48, tu/itsamusbomb.rs:56 -> port `melee_runtime::tu/lb_00B0.rs:354`
+- `lb_8000C1C0` [ext_fns!/todo_fns!] x4: tu/it_2725.rs:102, tu/vi1201v1.rs:48, tu/vi1201v2.rs:45, tu/vi1202.rs:32 -> port `melee_runtime::tu/lb_00B0.rs:506`
+- `lb_8000C290` [todo_fns!] x3: tu/vi1201v1.rs:49, tu/vi1201v2.rs:46, tu/vi1202.rs:33 -> port `melee_runtime::tu/lb_00B0.rs:520`
+- `lb_8000C2F8` [ext_fns!] x2: tu/it_2725.rs:103, tu/itmasterhandlaser.rs:47 -> port `melee_runtime::tu/lb_00B0.rs:527`
+- `lb_8000C390` [ext_fns!] x2: tu/it_2725.rs:104, tu/itmasterhandlaser.rs:48 -> port `melee_runtime::tu/lb_00B0.rs:539`
+- `lb_8000CC8C` [ext_fns!] x1: tu/itmaterial.rs:43 -> port `melee_runtime::tu/lb_00B0.rs:738`
+- `lb_8000CCA4` [ext_fns!] x1: tu/itmaterial.rs:44 -> port `melee_runtime::tu/lb_00B0.rs:742`
+- `lb_8000CD90` [ext_fns!] x1: tu/itmaterial.rs:45 -> port `melee_runtime::tu/lb_00B0.rs:767`
+- `lb_8000CDA8` [ext_fns!] x1: tu/itmaterial.rs:46 -> port `melee_runtime::tu/lb_00B0.rs:771`
+- `lb_8000D008` [ext_fns!] x2: tu/toy.rs:185, tu/tydisplay.rs:108 -> port `melee_runtime::tu/lb_00CE.rs:36`
+- `lb_8000FCDC` [ext_fns!] x5: tu/vi0102.rs:80, tu/vi0401.rs:85, tu/vi0501.rs:91, tu/vi0502.rs:86, tu/vi0601.rs:73 -> port `melee_runtime::tu/lb_00F9.rs:227`
+- `lb_8000FD18` [ext_fns!] x1: tu/item.rs:166 -> port `melee_runtime::tu/lb_00F9.rs:232`
+- `lb_8000FD48` [ext_fns!] x1: tu/item.rs:167 -> port `melee_runtime::tu/lb_00F9.rs:249`
+- `lb_8001044C` [ext_fns!] x1: tu/item.rs:168 -> port `melee_runtime::tu/lb_00F9.rs:389`
+- `lb_80011710` [ext_fns!] x1: tu/item.rs:169 -> port `melee_runtime::tu/lb_00F9.rs:799`
+- `lb_800119DC` [ext_fns!] x9: tu/itbombhei.rs:68, tu/itbox.rs:75, tu/itcapsule.rs:54, tu/itgamewatchmanhole.rs:43, tu/itlinkbomb.rs:73, tu/itmsbomb.rs:73, tu/ittaru.rs:69, tu/itwhispyapple.rs:63, tu/itwstar.rs:61 -> port `melee_runtime::tu/lb_00F9.rs:842`
+- `lb_80011AC4` [ext_fns!/todo_fns!] x11: tu/vi0102.rs:81, tu/vi0401.rs:86, tu/vi0402.rs:57, tu/vi0501.rs:92, tu/vi0502.rs:87, tu/vi0601.rs:74, tu/vi0801.rs:41, tu/vi1101.rs:41, tu/vi1201v1.rs:50, tu/vi1201v2.rs:47, tu/vi1202.rs:34 -> port `melee_runtime::tu/lbspdisplay.rs:296`
+- `lb_80011E24` [ext_fns!/todo_fns!] x5: tu/vi0401.rs:33, tu/vi0801.rs:42, tu/vi1201v1.rs:51, tu/vi1201v2.rs:48, tu/vi1202.rs:35 -> port `melee_runtime::tu/lbspdisplay.rs:441`
+- `lb_8001204C` [ext_fns!] x3: tu/toy.rs:186, tu/tydisplay.rs:109, tu/tyfigupon.rs:122 -> port `melee_runtime::tu/lbspdisplay.rs:447`
+- `lb_80013B14` [ext_fns!/todo_fns!] x15: tu/toy.rs:187, tu/tydisplay.rs:110, tu/tyfigupon.rs:123, tu/tylist.rs:103, tu/vi0102.rs:82, tu/vi0401.rs:87, tu/vi0402.rs:58, tu/vi0501.rs:93, tu/vi0502.rs:88, tu/vi0601.rs:75, tu/vi0801.rs:43, tu/vi1101.rs:42, tu/vi1201v1.rs:52, tu/vi1201v2.rs:49, tu/vi1202.rs:36 -> port `melee_runtime::tu/lbspdisplay.rs:853`
+- `lbArchive_80016DBC` [ext_fns!] x3: tu/toy.rs:181, tu/tydisplay.rs:112, tu/tyfigupon.rs:125 -> port `melee_runtime::tu/lbarchive.rs:216`
+- `lbArchive_80016EFC` [ext_fns!] x3: tu/toy.rs:172, tu/tydisplay.rs:103, tu/tyfigupon.rs:111 -> port `melee_runtime::tu/lbarchive.rs:223`
+- `lbArchive_80017040` [ext_fns!] x1: tu/iteffect.rs:47 -> port `melee_runtime::tu/lbarchive.rs:251`
+- `lbArchive_LoadSymbols` [ext_fns!] x9: tu/toy.rs:180, tu/tydisplay.rs:111, tu/tyfigupon.rs:124, tu/vi0102.rs:30, tu/vi0401.rs:32, tu/vi0402.rs:30, tu/vi0501.rs:35, tu/vi0502.rs:34, tu/vi0601.rs:31 -> port `melee_runtime::tu/lbarchive.rs:209`
+- `lbAudioAx_800233EC` [ext_fns!] x1: tu/item.rs:158 -> port `melee_runtime::tu/lbaudio_ax.rs:1710`
+- `lbAudioAx_80023694` [ext_fns!/todo_fns!] x3: tu/tyfigupon.rs:112, tu/vi.rs:35, tu/vi1202.rs:38 -> port `melee_runtime::tu/lbaudio_ax.rs:1736`
+- `lbAudioAx_800236B8` [ext_fns!] x1: tu/item.rs:159 -> port `melee_runtime::tu/lbaudio_ax.rs:1741`
+- `lbAudioAx_800236DC` [ext_fns!/todo_fns!] x12: tu/tyfigupon.rs:113, tu/vi.rs:36, tu/vi0102.rs:72, tu/vi0401.rs:78, tu/vi0402.rs:50, tu/vi0501.rs:84, tu/vi0502.rs:79, tu/vi0601.rs:66, tu/vi0801.rs:45, tu/vi1101.rs:44, tu/vi1201v1.rs:54, tu/vi1202.rs:39 -> port `melee_runtime::tu/lbaudio_ax.rs:1746`
+- `lbAudioAx_800237A8` [ext_fns!/todo_fns!] x12: tu/itcoin.rs:67, tu/itcoll.rs:55, tu/item.rs:160, tu/itlinkhookshot.rs:74, tu/itseakchain.rs:74, tu/toy.rs:173, tu/tyfigupon.rs:114, tu/vi0401.rs:79, tu/vi0501.rs:85, tu/vi0502.rs:80, tu/vi1101.rs:45, tu/vi1201v1.rs:55 -> port `melee_runtime::tu/lbaudio_ax.rs:1789`
+- `lbAudioAx_80023870` [ext_fns!] x3: tu/it_2725.rs:92, tu/it_2E5A.rs:63, tu/tyfigupon.rs:115 -> port `melee_runtime::tu/lbaudio_ax.rs:1800`
+- `lbAudioAx_80023F28` [ext_fns!/todo_fns!] x10: tu/toy.rs:174, tu/tyfigupon.rs:116, tu/vi0102.rs:73, tu/vi0402.rs:51, tu/vi0601.rs:67, tu/vi0801.rs:46, tu/vi1101.rs:46, tu/vi1201v1.rs:56, tu/vi1201v2.rs:51, tu/vi1202.rs:40 -> port `melee_runtime::tu/lbaudio_ax.rs:1930`
+- `lbAudioAx_80024030` [ext_fns!] x4: tu/toy.rs:175, tu/tydisplay.rs:104, tu/tyfigupon.rs:117, tu/tylist.rs:102 -> port `melee_runtime::tu/lbaudio_ax.rs:1941`
+- `lbAudioAx_80024634` [ext_fns!] x1: tu/vi0401.rs:80 -> port `melee_runtime::tu/lbaudio_ax.rs:2109`
+- `lbAudioAx_80024DC4` [ext_fns!] x1: tu/it_2725.rs:93 -> port `melee_runtime::tu/lbaudio_ax.rs:2312`
+- `lbAudioAx_80024E50` [ext_fns!/todo_fns!] x8: tu/vi0102.rs:74, tu/vi0402.rs:52, tu/vi0601.rs:68, tu/vi0801.rs:47, tu/vi1101.rs:47, tu/vi1201v1.rs:57, tu/vi1201v2.rs:52, tu/vi1202.rs:41 -> port `melee_runtime::tu/lbaudio_ax.rs:2328`
+- `lbAudioAx_800263E8` [ext_fns!] x3: tu/ithitodeman.rs:64, tu/itkamex.rs:54, tu/ittosakinto.rs:50 -> port `melee_runtime::tu/lbaudio_ax.rs:2709`
+- `lbAudioAx_80026510` [ext_fns!] x1: tu/item.rs:161 -> port `melee_runtime::tu/lbaudio_ax.rs:2769`
+- `lbAudioAx_800265C4` [ext_fns!] x1: tu/item.rs:162 -> port `melee_runtime::tu/lbaudio_ax.rs:2791`
+- `lbAudioAx_80026E84` [todo_fns!] x1: tu/vi1101.rs:48 -> port `melee_runtime::tu/lbaudio_ax.rs:2923`
+- `lbAudioAx_80026F2C` [ext_fns!/todo_fns!] x11: tu/vi0102.rs:75, tu/vi0401.rs:81, tu/vi0402.rs:53, tu/vi0501.rs:86, tu/vi0502.rs:81, tu/vi0601.rs:69, tu/vi0801.rs:48, tu/vi1101.rs:49, tu/vi1201v1.rs:58, tu/vi1201v2.rs:53, tu/vi1202.rs:42 -> port `melee_runtime::tu/lbaudio_ax.rs:2962`
+- `lbAudioAx_8002702C` [ext_fns!/todo_fns!] x11: tu/vi0102.rs:76, tu/vi0401.rs:82, tu/vi0402.rs:54, tu/vi0501.rs:87, tu/vi0502.rs:82, tu/vi0601.rs:70, tu/vi0801.rs:49, tu/vi1101.rs:50, tu/vi1201v1.rs:59, tu/vi1201v2.rs:54, tu/vi1202.rs:43 -> port `melee_runtime::tu/lbaudio_ax.rs:3003`
+- `lbAudioAx_80027648` [ext_fns!/todo_fns!] x11: tu/vi0102.rs:78, tu/vi0401.rs:84, tu/vi0402.rs:56, tu/vi0501.rs:89, tu/vi0502.rs:84, tu/vi0601.rs:72, tu/vi0801.rs:51, tu/vi1101.rs:52, tu/vi1201v1.rs:61, tu/vi1201v2.rs:56, tu/vi1202.rs:45 -> port `melee_runtime::tu/lbaudio_ax.rs:3106`
+- `lbCardGame_SaveChanges` [ext_fns!] x1: tu/tyfigupon.rs:118 -> port `melee_runtime::tu/lbcardgame.rs:374`
+- `lbColl_80005BB0` [ext_fns!] x1: tu/itcoll.rs:56 -> port `melee_runtime::tu/lbcollision.rs:321`
+- `lbColl_80007AFC` [ext_fns!] x1: tu/itcoll.rs:57 -> port `melee_runtime::tu/lbcollision.rs:904`
+- `lbColl_80007ECC` [ext_fns!] x1: tu/itcoll.rs:58 -> port `melee_runtime::tu/lbcollision.rs:978`
+- `lbColl_8000805C` [ext_fns!] x1: tu/itcoll.rs:59 -> port `melee_runtime::tu/lbcollision.rs:1008`
+- `lbColl_80008248` [ext_fns!] x1: tu/itcoll.rs:60 -> port `melee_runtime::tu/lbcollision.rs:1045`
+- `lbColl_80008428` [ext_fns!] x1: tu/it_2725.rs:94 -> port `melee_runtime::tu/lbcollision.rs:1081`
+- `lbColl_80008434` [ext_fns!] x1: tu/it_2725.rs:95 -> port `melee_runtime::tu/lbcollision.rs:1085`
+- `lbColl_80008440` [ext_fns!] x2: tu/itcoll.rs:61, tu/itflipper.rs:69 -> port `melee_runtime::tu/lbcollision.rs:1089`
+- `lbColl_80008688` [ext_fns!] x1: tu/itcoll.rs:62 -> port `melee_runtime::tu/lbcollision.rs:1109`
+- `lbColl_80008820` [ext_fns!] x1: tu/itcoll.rs:63 -> port `melee_runtime::tu/lbcollision.rs:1147`
+- `lbColl_80008A5C` [ext_fns!] x1: tu/itcoll.rs:64 -> port `melee_runtime::tu/lbcollision.rs:1193`
+- `lbColl_80008D30` [ext_fns!] x1: tu/itklap.rs:56 -> port `melee_runtime::tu/lbcollision.rs:1220`
+- `lbColl_80009F54` [ext_fns!] x1: tu/itdraw.rs:45 -> port `melee_runtime::tu/lbcollision.rs:1460`
+- `lbColl_8000A10C` [ext_fns!] x1: tu/itdraw.rs:46 -> port `melee_runtime::tu/lbcollision.rs:1495`
+- `lbColl_8000A244` [ext_fns!] x1: tu/itdraw.rs:47 -> port `melee_runtime::tu/lbcollision.rs:1512`
+- `lbColl_8000A584` [ext_fns!] x1: tu/itdraw.rs:48 -> port `melee_runtime::tu/lbcollision.rs:1542`
+- `lbColl_8000ACFC` [ext_fns!] x1: tu/itcoll.rs:65 -> port `melee_runtime::tu/lbcollision.rs:1600`
+- `lbColl_CopyHitCapsule` [ext_fns!] x1: tu/itcoll.rs:66 -> port `melee_runtime::tu/lbcollision.rs:1100`
+- `lbGetFreeColorRegister` [ext_fns!] x1: tu/itmaterial.rs:42 -> port `melee_runtime::tu/lb_00B0.rs:734`
+- `lbGetJObjCurrFrame` [ext_fns!] x1: tu/item.rs:163 -> port `melee_runtime::tu/lb_00B0.rs:444`
+- `lbGx_8001E2F8` [ext_fns!] x1: tu/itdraw.rs:49 -> port `melee_runtime::tu/lbgx.rs:47`
+- `lbLang_IsSavedLanguageJP` [ext_fns!] x3: tu/toy.rs:176, tu/tydisplay.rs:105, tu/tyfigupon.rs:119 -> port `melee_runtime::tu/lblanguage.rs:61`
+- `lbLang_IsSavedLanguageUS` [ext_fns!] x2: tu/toy.rs:177, tu/tyfigupon.rs:120 -> port `melee_runtime::tu/lblanguage.rs:66`
+- `lbLang_IsSettingJP` [ext_fns!] x2: tu/itoldottosea.rs:82, tu/toy.rs:178 -> port `melee_runtime::tu/lblanguage.rs:39`
+- `lbLang_IsSettingUS` [ext_fns!] x4: tu/iteffect.rs:48, tu/itoldottosea.rs:83, tu/toy.rs:179, tu/tydisplay.rs:106 -> port `melee_runtime::tu/lblanguage.rs:44`
+- `lbShadow_8000F38C` [ext_fns!/todo_fns!] x6: tu/vi0102.rs:79, tu/vi0501.rs:90, tu/vi0502.rs:85, tu/vi1101.rs:53, tu/vi1201v1.rs:62, tu/vi1201v2.rs:57 -> port `melee_runtime::tu/lbshadow.rs:312`
+- `lbVector_Add` [ext_fns!] x1: tu/it_2725.rs:96 -> port `melee_runtime::tu/lbvector.rs:149`
+- `lbVector_Add_xy` [ext_fns!] x2: tu/it_2E5A.rs:64, tu/itmaplib.rs:41 -> port `melee_runtime::tu/lbvector.rs:156`
+- `lbVector_Angle` [ext_fns!] x6: tu/itkoopaflame.rs:63, tu/itlgunbeam.rs:49, tu/itmaplib.rs:42, tu/itnesspkthunderball.rs:55, tu/itpikachutjoltground.rs:54, tu/itzako.rs:72 -> port `melee_runtime::tu/lbvector.rs:194`
+- `lbVector_AngleXY` [ext_fns!] x6: tu/itbox.rs:72, tu/itmaplib.rs:43, tu/itsamusmissile.rs:57, tu/ittaru.rs:67, tu/ittarucann.rs:64, tu/itzako.rs:73 -> port `melee_runtime::tu/lbvector.rs:204`
+- `lbVector_ApplyEulerRotation` [ext_fns!] x2: tu/toy.rs:183, tu/tydisplay.rs:107 -> port `melee_runtime::tu/lbvector.rs:369`
+- `lbVector_CosAngle` [ext_fns!] x1: tu/itlinkboomerang.rs:73 -> port `melee_runtime::tu/lbvector.rs:304`
+- `lbVector_CrossprodNormalized` [ext_fns!] x3: tu/itmaplib.rs:44, tu/itnesspkthunderball.rs:56, tu/itzako.rs:74 -> port `melee_runtime::tu/lbvector.rs:176`
+- `lbVector_Diff` [ext_fns!] x4: tu/itbox.rs:73, tu/itlugia.rs:61, tu/itunknown.rs:60, tu/itzako.rs:75 -> port `melee_runtime::tu/lbvector.rs:169`
+- `lbVector_EulerAnglesFromONB` [ext_fns!] x1: tu/itzako.rs:76 -> port `melee_runtime::tu/lbvector.rs:339`
+- `lbVector_Mirror` [ext_fns!] x15: tu/it_2725.rs:97, tu/it_279C.rs:201, tu/it_2E5A.rs:65, tu/itarwinglaser.rs:56, tu/itfoxlaser.rs:49, tu/itkoopaflame.rs:64, tu/itlgunray.rs:43, tu/itlinkboomerang.rs:74, tu/itmaplib.rs:45, tu/itmewtwoshadowball.rs:77, tu/itnesspkthunderball.rs:57, tu/itpikachutjoltground.rs:55, tu/itsamuschargeshot.rs:61, tu/itsamusgrapple.rs:88, tu/itseakneedlethrown.rs:55 -> port `melee_runtime::tu/lbvector.rs:296`
+- `lbVector_Normalize` [ext_fns!] x12: tu/itarwinglaser.rs:57, tu/itclimbersstring.rs:66, tu/itcoin.rs:68, tu/itkoopaflame.rs:65, tu/itlgunbeam.rs:50, tu/itlinkhookshot.rs:75, tu/itmaril.rs:68, tu/itnessyoyo.rs:70, tu/itsamusgrapple.rs:89, tu/itseakchain.rs:75, tu/itzako.rs:77, tu/tyfigupon.rs:121 -> port `melee_runtime::tu/lbvector.rs:126`
+- `lbVector_NormalizeXY` [ext_fns!] x5: tu/it_2E5A.rs:66, tu/itflipper.rs:70, tu/itmaplib.rs:46, tu/itsamusbomb.rs:55, tu/itsamusmissile.rs:58 -> port `melee_runtime::tu/lbvector.rs:138`
+- `lbVector_Rotate` [ext_fns!] x3: tu/itsamusmissile.rs:59, tu/itunknown.rs:61, tu/itzako.rs:78 -> port `melee_runtime::tu/lbvector.rs:280`
+- `lbVector_RotateAboutUnitAxis` [ext_fns!] x2: tu/itcoll.rs:67, tu/itsscopebeam.rs:47 -> port `melee_runtime::tu/lbvector.rs:242`
+- `lbVector_Sub` [ext_fns!] x1: tu/itsamusmissile.rs:60 -> port `melee_runtime::tu/lbvector.rs:162`
+- `memzero` [ext_fns!] x4: tu/toy.rs:188, tu/tydisplay.rs:114, tu/tyfigupon.rs:127, tu/tylist.rs:104 -> port `melee_runtime::tu/lb_00B0.rs:497`
+- `mpCheckAllRemap` [ext_fns!] x4: tu/itgroundcoll.rs:51, tu/ithouou.rs:50, tu/itlinkhookshot.rs:76, tu/itsamusgrapple.rs:90 -> port `melee_world::tu/mplib.rs:2801`
+- `mpCheckMultiple` [ext_fns!] x2: tu/itmaplib.rs:47, tu/itmasterhandlaser.rs:49 -> port `melee_world::tu/mplib.rs:2674`
+- `mpColl_80041C78` [ext_fns!] x5: tu/vi0102.rs:84, tu/vi0401.rs:89, tu/vi0501.rs:96, tu/vi0502.rs:90, tu/vi0601.rs:77 -> port `melee_world::tu/mpcoll.rs:111`
+- `mpColl_80041EE4` [ext_fns!] x3: tu/itlinkhookshot.rs:77, tu/itmaplib.rs:53, tu/itsamusgrapple.rs:91 -> port `melee_world::tu/mpcoll.rs:182`
+- `mpColl_80043558` [ext_fns!] x3: tu/itlinkarrow.rs:75, tu/itmsbomb.rs:74, tu/itseakneedlethrown.rs:56 -> port `melee_world::tu/mpcoll.rs:783`
+- `mpColl_80043670` [ext_fns!] x1: tu/itmaplib.rs:54 -> port `melee_world::tu/mpcoll.rs:811`
+- `mpColl_80043680` [ext_fns!] x2: tu/itbox.rs:76, tu/itmaplib.rs:55 -> port `melee_world::tu/mpcoll.rs:816`
+- `mpColl_800436E4` [ext_fns!] x1: tu/itmaplib.rs:56 -> port `melee_world::tu/mpcoll.rs:829`
+- `mpColl_800471F8` [ext_fns!] x5: tu/itgroundcoll.rs:52, tu/itlinkhookshot.rs:78, tu/itmaplib.rs:57, tu/itnessyoyo.rs:72, tu/itnokonoko.rs:79 -> port `melee_world::tu/mpcoll.rs:2281`
+- `mpColl_800477E0` [ext_fns!] x1: tu/itgroundcoll.rs:53 -> port `melee_world::tu/mpcoll.rs:2323`
+- `mpColl_80048844` [ext_fns!] x2: tu/it_2E5A.rs:69, tu/itseakchain.rs:76 -> port `melee_world::tu/mpcoll.rs:2460`
+- `mpColl_8004B108` [ext_fns!] x2: tu/itgroundcoll.rs:54, tu/itlinkhookshot.rs:79 -> port `melee_world::tu/mpcoll.rs:3357`
+- `mpColl_8004B2DC` [ext_fns!] x1: tu/itgroundcoll.rs:55 -> port `melee_world::tu/mpcoll.rs:3371`
+- `mpColl_8004C750` [ext_fns!] x1: tu/itlikelike.rs:91 -> port `melee_world::tu/mpcoll.rs:3678`
+- `mpColl_8004D024` [ext_fns!] x1: tu/itspawn.rs:62 -> port `melee_world::tu/mpcoll.rs:3843`
+- `mpColl_SetECBSource_Fixed` [ext_fns!] x3: tu/itlinkhookshot.rs:80, tu/itmaplib.rs:58, tu/itsamusgrapple.rs:92 -> port `melee_world::tu/mpcoll.rs:266`
+- `mpCollGetSpeedCeiling` [ext_fns!] x1: tu/itmaplib.rs:48 -> port `melee_world::tu/mpcoll.rs:3741`
+- `mpCollGetSpeedFloor` [ext_fns!] x2: tu/it_2E5A.rs:68, tu/itmaplib.rs:49 -> port `melee_world::tu/mpcoll.rs:3771`
+- `mpCollGetSpeedLeftWall` [ext_fns!] x1: tu/itmaplib.rs:50 -> port `melee_world::tu/mpcoll.rs:3751`
+- `mpCollGetSpeedRightWall` [ext_fns!] x1: tu/itmaplib.rs:51 -> port `melee_world::tu/mpcoll.rs:3761`
+- `mpCollSetFacingDir` [ext_fns!] x14: tu/it_2725.rs:105, tu/itcoin.rs:69, tu/item.rs:170, tu/itkyasarinegg.rs:55, tu/itleadead.rs:95, tu/itlinkbomb.rs:74, tu/itmaplib.rs:52, tu/itmball.rs:52, tu/itnokonoko.rs:78, tu/itoctarock.rs:72, tu/itoldottosea.rs:84, tu/itpatapata.rs:71, tu/itwhitebea.rs:85, tu/itzgshell.rs:89 -> port `melee_world::tu/mpcoll.rs:824`
+- `mpIsland_8005AB54` [ext_fns!] x1: tu/itlinkhookshot.rs:82 -> port `melee_world::tu/mpisland.rs:205`
+- `mpLib_8005199C_Floor` [ext_fns!] x1: tu/itmaplib.rs:60 -> port `melee_world::tu/mplib.rs:2462`
+- `mpLib_80054ED8` [ext_fns!] x6: tu/itgroundcoll.rs:56, tu/ithouou.rs:52, tu/itlinkarrow.rs:77, tu/itlinkhookshot.rs:83, tu/itmaplib.rs:61, tu/itseakneedlethrown.rs:58 -> port `melee_world::tu/mplib.rs:3768`
+- `mpLib_80056A1C` [ext_fns!] x1: tu/itwhitebea.rs:86 -> port `melee_world::tu/mplib.rs:4362`
+- `mpLib_80056C54` [ext_fns!] x1: tu/itleadead.rs:96 -> port `melee_world::tu/mplib.rs:4448`
+- `PSMTXCopy` [ext_fns!] x5: tu/itclimbersstring.rs:53, tu/itlinkhookshot.rs:59, tu/itnessyoyo.rs:51, tu/itsamusgrapple.rs:58, tu/itseakchain.rs:52 -> port `melee_runtime::tu/mtx_pc.rs:18`
+- `Stage_80224FDC` [ext_fns!] x1: tu/itspawn.rs:51 -> port `melee_world::gr/stage.rs:312`
+- `Stage_80225194` [ext_fns!] x3: tu/itarwinglaser.rs:43, tu/itnesspkthunderball.rs:37, tu/itspawn.rs:52 -> port `melee_world::gr/stage.rs:362`
+- `Stage_8022519C` [ext_fns!] x1: tu/itarwinglaser.rs:44 -> port `melee_world::gr/stage.rs:384`
+- `Stage_802251E8` [ext_fns!/todo_fns!] x6: tu/vi0102.rs:64, tu/vi0401.rs:68, tu/vi0501.rs:75, tu/vi0502.rs:70, tu/vi0601.rs:58, tu/vi1201v1.rs:45 -> port `melee_world::gr/stage.rs:399`
+- `Stage_8022524C` [ext_fns!/todo_fns!] x9: tu/vi0102.rs:65, tu/vi0401.rs:69, tu/vi0501.rs:76, tu/vi0502.rs:71, tu/vi0601.rs:59, tu/vi0801.rs:38, tu/vi1101.rs:38, tu/vi1201v1.rs:46, tu/vi1201v2.rs:42 -> port `melee_world::gr/stage.rs:407`
+- `Stage_8022532C` [ext_fns!/todo_fns!] x9: tu/vi0102.rs:66, tu/vi0401.rs:70, tu/vi0501.rs:77, tu/vi0502.rs:72, tu/vi0601.rs:60, tu/vi0801.rs:39, tu/vi1101.rs:39, tu/vi1201v1.rs:47, tu/vi1201v2.rs:43 -> port `melee_world::gr/stage.rs:422`
+- `Stage_GetBlastZoneBottomOffset` [ext_fns!] x6: tu/item.rs:67, tu/ithouou.rs:31, tu/itkabigon.rs:38, tu/ittosakinto.rs:35, tu/itunknown.rs:38, tu/itwhitebea.rs:42 -> port `melee_world::tu/stage.rs:349`
+- `Stage_GetBlastZoneLeftOffset` [ext_fns!] x3: tu/item.rs:68, tu/itunknown.rs:39, tu/itwhitebea.rs:43 -> port `melee_world::tu/stage.rs:340`
+- `Stage_GetBlastZoneRightOffset` [ext_fns!] x3: tu/item.rs:69, tu/itunknown.rs:40, tu/itwhitebea.rs:44 -> port `melee_world::tu/stage.rs:336`
+- `Stage_GetBlastZoneTopOffset` [ext_fns!] x10: tu/itcerebi.rs:33, tu/itfire.rs:34, tu/itfreezer.rs:34, tu/ithouou.rs:32, tu/itkabigon.rs:39, tu/itlugia.rs:42, tu/itmew.rs:34, tu/itthunder.rs:32, tu/itunknown.rs:41, tu/itwhitebea.rs:45 -> port `melee_world::tu/stage.rs:345`
+- `Stage_GetCamBoundsBottomOffset` [ext_fns!] x1: tu/itunknown.rs:42 -> port `melee_world::tu/stage.rs:300`
+- `Stage_GetCamBoundsTopOffset` [ext_fns!] x1: tu/itunknown.rs:43 -> port `melee_world::tu/stage.rs:296`
+- `Stage_InitScene` [todo_fns!] x3: tu/vi0801.rs:40, tu/vi1101.rs:40, tu/vi1201v2.rs:44 -> port `melee_items::tu/vi0102.rs:130`
+- `Toy_803048C0` [ext_fns!] x1: tu/tylist.rs:83 -> port `melee_items::tu/toy.rs:641`
+- `Toy_80304924` [ext_fns!] x1: tu/tylist.rs:84 -> port `melee_items::tu/toy.rs:650`
+- `Toy_80304988` [ext_fns!] x1: tu/tylist.rs:85 -> port `melee_items::tu/toy.rs:654`
+- `Toy_80305B88` [ext_fns!] x1: tu/tylist.rs:86 -> port `melee_items::tu/toy.rs:1108`
+- `Toy_80305C44` [ext_fns!] x1: tu/tylist.rs:87 -> port `melee_items::tu/toy.rs:1120`
+- `Toy_80305D00` [ext_fns!] x1: tu/tylist.rs:88 -> port `melee_items::tu/toy.rs:1132`
+- `Toy_80305DB0` [ext_fns!] x1: tu/tylist.rs:89 -> port `melee_items::tu/toy.rs:1152`
+- `Toy_803060BC` [todo_fns!] x3: tu/vi1201v1.rs:74, tu/vi1201v2.rs:72, tu/vi1202.rs:46 -> port `melee_items::tu/toy.rs:1193`
+- `Toy_803062BC` [ext_fns!] x1: tu/tylist.rs:90 -> port `melee_items::tu/toy.rs:1234`
+- `Toy_803067BC` [ext_fns!] x1: tu/tylist.rs:91 -> port `melee_items::tu/toy.rs:1411`
+- `Toy_80306954` [ext_fns!] x1: tu/tylist.rs:92 -> port `melee_items::tu/toy.rs:1449`
+- `Toy_80306A48` [ext_fns!] x1: tu/tylist.rs:93 -> port `melee_items::tu/toy.rs:1475`
+- `Toy_80307470` [ext_fns!] x1: tu/tylist.rs:94 -> port `melee_items::tu/toy.rs:1767`
+- `Toy_803082F8` [ext_fns!] x1: tu/tylist.rs:95 -> port `melee_items::tu/toy.rs:2095`
+- `Toy_80308354` [ext_fns!] x1: tu/tylist.rs:96 -> port `melee_items::tu/toy.rs:2104`
+- `Toy_803083D8` [ext_fns!] x1: tu/tylist.rs:97 -> port `melee_items::tu/toy.rs:2122`
+- `Toy_80310324` [ext_fns!] x1: tu/tylist.rs:98 -> port `melee_items::tu/toy.rs:4012`
+- `Toy_80310660` [ext_fns!] x1: tu/tylist.rs:99 -> port `melee_items::tu/toy.rs:4080`
+- `Toy_803124BC` [todo_fns!] x3: tu/vi1201v1.rs:75, tu/vi1201v2.rs:73, tu/vi1202.rs:47 -> port `melee_items::tu/toy.rs:4667`
+- `Toy_GetTrophyTotal` [ext_fns!] x1: tu/tylist.rs:100 -> port `melee_items::tu/toy.rs:625`
+- `Toy_LoadLObjList` [ext_fns!] x1: tu/tylist.rs:101 -> port `melee_items::tu/toy.rs:1589`
+- `tyDisplay_8031C354` [ext_fns!] x1: tu/itzako.rs:81 -> port `melee_items::tu/tydisplay.rs:1603`
+- `tyDisplay_8031C5E4` [ext_fns!] x1: tu/itcoin.rs:70 -> port `melee_items::tu/tydisplay.rs:1675`
+- `tyList_803147C4` [ext_fns!] x1: tu/toy.rs:191 -> port `melee_items::tu/tylist.rs:1106`
+- `tyList_PcActive` [ext_fns!] x1: tu/toy.rs:192 -> port `melee_items::tu/tylist.rs:197`
+- `tyList_PcSetActive` [ext_fns!] x1: tu/toy.rs:193 -> port `melee_items::tu/tylist.rs:202`
+- `vi_8031C9B4` [todo_fns!] x5: tu/vi0801.rs:53, tu/vi1101.rs:66, tu/vi1201v1.rs:76, tu/vi1201v2.rs:75, tu/vi1202.rs:48 -> port `melee_items::tu/vi.rs:76`
+- `vi_8031CA04` [todo_fns!] x3: tu/vi1101.rs:67, tu/vi1201v1.rs:77, tu/vi1201v2.rs:76 -> port `melee_items::tu/vi.rs:84`
+- `vi_8031CAAC` [todo_fns!] x5: tu/vi0801.rs:54, tu/vi1101.rs:68, tu/vi1201v1.rs:78, tu/vi1201v2.rs:77, tu/vi1202.rs:49 -> port `melee_items::tu/vi.rs:98`
+- `viGetCharAnimByIndex` [todo_fns!] x2: tu/vi1101.rs:65, tu/vi1201v2.rs:74 -> port `melee_items::tu/vi.rs:71`
+
+### melee_items - CYCLE (471 sites, 280 names)
+
+- `ft_80082E3C` [ext_fns!] x2: tu/itlinkhookshot.rs:71, tu/itsamusgrapple.rs:76 -> port `melee_fighter::tu/ft_081b.rs:430`
+- `ft_80089768` [ext_fns!] x1: tu/it_279C.rs:59 -> port `melee_fighter::ft0892.rs:155`
+- `ft_80089884` [ext_fns!] x1: tu/it_279C.rs:60 -> port `melee_fighter::ft0892.rs:185`
+- `ft_800898A8` [ext_fns!] x1: tu/it_279C.rs:61 -> port `melee_fighter::ft0892.rs:194`
+- `ftCl_Init_8014920C` [ext_fns!] x1: tu/itclinkmilk.rs:43 -> port `melee_chara::tu/ftclink.rs:248`
+- `ftCl_Init_801492C4` [ext_fns!] x1: tu/itclinkmilk.rs:44 -> port `melee_chara::tu/ftclink.rs:272`
+- `ftCl_Init_801492F4` [ext_fns!] x1: tu/itclinkmilk.rs:45 -> port `melee_chara::tu/ftclink.rs:284`
+- `ftCliffCommon_80081370` [ext_fns!] x2: tu/itlinkhookshot.rs:63, tu/itsamusgrapple.rs:63 -> port `melee_fighter::tu/ftcliffcommon.rs:79`
+- `ftCo_80090780` [ext_fns!] x2: tu/itlinkhookshot.rs:64, tu/itsamusgrapple.rs:64 -> port `melee_fighter::tu/ftCo_DamageFall.rs:66`
+- `ftCo_80094098` [ext_fns!] x1: tu/itlinkarrow.rs:53 -> port `melee_fighter::tu/ftCo_Guard.rs:958`
+- `ftCo_80098634` [ext_fns!] x1: tu/itcoll.rs:38 -> port `melee_fighter::tu/ftCo_DownAttack.rs:88`
+- `ftCo_8009B390` [ext_fns!] x2: tu/itlinkhookshot.rs:65, tu/itsamusgrapple.rs:65 -> port `melee_fighter::tu/ftCo_CliffJump.rs:96`
+- `ftCo_800BF228` [ext_fns!] x3: tu/itdrmariopill.rs:53, tu/itfoxblaster.rs:51, tu/itnessbat.rs:39 -> port `melee_fighter::tu/ft_0bf0.rs:96`
+- `ftCo_800C0674` [ext_fns!] x1: tu/itmaterial.rs:40 -> port `melee_fighter::ft0df.rs:259`
+- `ftCo_800C3A14` [ext_fns!] x2: tu/itlinkhookshot.rs:66, tu/itsamusgrapple.rs:67 -> port `melee_fighter::tu/ftco_aircatch.rs:67`
+- `ftCo_800C3CC0` [ext_fns!] x2: tu/itlinkhookshot.rs:67, tu/itsamusgrapple.rs:68 -> port `melee_fighter::tu/ftco_aircatch.rs:142`
+- `ftCo_800C7800` [ext_fns!] x1: tu/itleadead.rs:41 -> port `melee_fighter::tu/ftco_800c7590.rs:82`
+- `ftCo_800C78B0` [ext_fns!] x1: tu/itlikelike.rs:39 -> port `melee_fighter::tu/ftco_800c78b0.rs:15`
+- `ftCo_800C7B0C` [ext_fns!] x1: tu/itlikelike.rs:40 -> port `melee_fighter::tu/ftco_800c78b0.rs:79`
+- `ftCo_800C7C60` [ext_fns!] x1: tu/itlikelike.rs:41 -> port `melee_fighter::tu/ftco_800c78b0.rs:111`
+- `ftCo_800C92E4` [ext_fns!] x1: tu/ittarucann.rs:43 -> port `melee_fighter::tu/ftCo_Barrel.rs:155`
+- `ftCo_Barrel_Enter` [ext_fns!] x1: tu/ittarucann.rs:44 -> port `melee_fighter::tu/ftCo_Barrel.rs:86`
+- `ftCommon_8007E2F4` [ext_fns!] x2: tu/itlinkhookshot.rs:69, tu/itsamusgrapple.rs:73 -> port `melee_fighter::ftcommon2.rs:179`
+- `ftCommon_8007F804` [ext_fns!] x1: tu/itcoll.rs:41 -> port `melee_fighter::ftcommon2.rs:260`
+- `ftDr_Init_80149844` [ext_fns!] x1: tu/itdrmariopill.rs:54 -> port `melee_chara::tu/ftdrmario.rs:152`
+- `ftDr_Init_801498A0` [ext_fns!] x1: tu/itdrmariopill.rs:55 -> port `melee_chara::tu/ftdrmario.rs:173`
+- `ftDr_Init_801498EC` [ext_fns!] x1: tu/itdrmariopill.rs:56 -> port `melee_chara::tu/ftdrmario.rs:192`
+- `ftFx_SpecialN_CheckBlasterAction` [ext_fns!] x1: tu/itfoxblaster.rs:52 -> port `melee_chara::tu/ftfoxspecialn.rs:260`
+- `ftFx_SpecialN_CheckRemoveBlaster` [ext_fns!] x1: tu/itfoxblaster.rs:53 -> port `melee_chara::tu/ftfoxspecialn.rs:236`
+- `ftFx_SpecialN_ClearBlaster` [ext_fns!] x1: tu/itfoxblaster.rs:54 -> port `melee_chara::chars/r14/ftFox.rs:12`
+- `ftFx_SpecialN_FtGetHoldJoint` [ext_fns!] x1: tu/itfoxblaster.rs:55 -> port `melee_chara::tu/ftfoxspecialn.rs:222`
+- `ftFx_SpecialN_GetBlasterAction` [ext_fns!] x1: tu/itfoxblaster.rs:56 -> port `melee_chara::tu/ftfoxspecialn.rs:241`
+- `ftFx_SpecialN_ItGetHoldJoint` [ext_fns!] x1: tu/itfoxblaster.rs:57 -> port `melee_chara::tu/ftfoxspecialn.rs:226`
+- `ftFx_SpecialS_CheckGhostRemove` [ext_fns!] x1: tu/itfoxillusion.rs:44 -> port `melee_chara::chars/ftFox.rs:38`
+- `ftFx_SpecialS_CopyGhostPosIndexed` [ext_fns!] x1: tu/itfoxillusion.rs:45 -> port `melee_chara::chars/ftFox.rs:44`
+- `ftFx_SpecialS_GetCmdVar2` [ext_fns!] x1: tu/itfoxillusion.rs:46 -> port `melee_chara::chars/ftFox.rs:48`
+- `ftFx_SpecialS_ReturnFloatVarIndexed` [ext_fns!] x1: tu/itfoxillusion.rs:47 -> port `melee_chara::tu/ftfoxspecials.rs:123`
+- `ftGw_Attack11_ItemGreenhouse_CheckAll` [ext_fns!] x1: tu/itgamewatchgreenhouse.rs:35 -> port `melee_chara::chars/ftGameWatch.rs:12`
+- `ftGw_Attack11_ItemGreenhouse_CheckAttack11` [ext_fns!] x1: tu/itgamewatchgreenhouse.rs:36 -> port `melee_chara::chars/ftGameWatch.rs:15`
+- `ftGw_Attack11_ItemGreenhouseSetFlag` [ext_fns!] x1: tu/itgamewatchgreenhouse.rs:34 -> port `melee_chara::tu/ftgamewatchattack11.rs:179`
+- `ftGw_AttackAirN_ItemCheckParachuteRemove` [ext_fns!] x1: tu/itgamewatchparachute.rs:34 -> port `melee_chara::chars/ftGameWatch.rs:22`
+- `ftGw_AttackAirN_ItemCheckSparkyRemove` [ext_fns!] x1: tu/itgamewatchbreath.rs:40 -> port `melee_chara::chars/ftGameWatch.rs:25`
+- `ftGw_AttackAirN_ItemCheckTurtleRemove` [ext_fns!] x1: tu/itgamewatchturtle.rs:34 -> port `melee_chara::chars/ftGameWatch.rs:28`
+- `ftGw_AttackAirN_ItemParachuteSetFlag` [ext_fns!] x1: tu/itgamewatchparachute.rs:35 -> port `melee_chara::tu/ftgamewatchattackair.rs:244`
+- `ftGw_AttackAirN_ItemSparkySetFlag` [ext_fns!] x1: tu/itgamewatchbreath.rs:41 -> port `melee_chara::tu/ftgamewatchattackair.rs:355`
+- `ftGw_AttackAirN_ItemTurtleSetFlag` [ext_fns!] x1: tu/itgamewatchturtle.rs:35 -> port `melee_chara::tu/ftgamewatchattackair.rs:300`
+- `ftGw_AttackLw3_ItemCheckManholeRemove` [ext_fns!] x1: tu/itgamewatchmanhole.rs:34 -> port `melee_chara::chars/ftGameWatch.rs:35`
+- `ftGw_AttackLw3_ItemManholeRemove` [ext_fns!] x1: tu/itgamewatchmanhole.rs:35 -> port `melee_chara::tu/ftgamewatchattacklw3.rs:152`
+- `ftGw_AttackS4_ItemCheckTorchRemove` [ext_fns!] x1: tu/itgamewatchfire.rs:34 -> port `melee_chara::chars/ftGameWatch.rs:42`
+- `ftGw_AttackS4_ItemTorchSetFlag` [ext_fns!] x1: tu/itgamewatchfire.rs:35 -> port `melee_chara::tu/ftgamewatchattacks4.rs:107`
+- `ftGw_SpecialHi_ItemCheckRescueRemove` [ext_fns!] x1: tu/itgamewatchrescue.rs:32 -> port `melee_chara::tu/ftgamewatchspecialhi.rs:131`
+- `ftGw_SpecialHi_ItemRescueSetNULL` [ext_fns!] x1: tu/itgamewatchrescue.rs:33 -> port `melee_chara::chars/r3/ftGameWatch.rs:47`
+- `ftGw_SpecialLw_ItemCheckPanicRemove` [ext_fns!] x1: tu/itgamewatchpanic.rs:34 -> port `melee_chara::chars/ftGameWatch.rs:49`
+- `ftGw_SpecialLw_ItemPanicSetFlag` [ext_fns!] x1: tu/itgamewatchpanic.rs:35 -> port `melee_chara::tu/ftgamewatchspeciallw.rs:159`
+- `ftGw_SpecialS_ItemCheckJudgementRemove` [ext_fns!] x1: tu/itgamewatchjudge.rs:34 -> port `melee_chara::chars/ftGameWatch.rs:56`
+- `ftGw_SpecialS_ItemJudgementSetFlag` [ext_fns!] x1: tu/itgamewatchjudge.rs:35 -> port `melee_chara::tu/ftgamewatchspecials.rs:144`
+- `ftKb_AttackDashAir_800F21C0` [ext_fns!] x1: tu/itkirbycutterbeam.rs:45 -> port `melee_chara::tu/ftkirbyattackdash.rs:44`
+- `ftKb_SpecialAirLw_800F539C` [ext_fns!] x1: tu/itkirbyhammer.rs:38 -> port `melee_chara::tu/ftkirbyspecials.rs:86`
+- `ftKb_SpecialN_800F5800` [ext_fns!] x1: tu/itkirby_2F23.rs:41 -> port `melee_chara::chars/ftKirby.rs:225`
+- `ftKb_SpecialN_800F5AF0` [ext_fns!] x1: tu/itkirby_2F23.rs:42 -> port `melee_chara::chars/ftKirby.rs:107`
+- `ftKb_SpecialN_800F5B20` [ext_fns!] x1: tu/itkirby_2F23.rs:43 -> port `melee_chara::chars/ftKirby.rs:116`
+- `ftKb_SpecialN_800F5B3C` [ext_fns!] x1: tu/itkirby_2F23.rs:44 -> port `melee_chara::chars/ftKirby.rs:121`
+- `ftKb_SpecialN_800F5B4C` [ext_fns!] x1: tu/itkirby_2F23.rs:45 -> port `melee_chara::chars/ftKirby.rs:124`
+- `ftKb_SpecialN_800F5B5C` [ext_fns!] x1: tu/itkirby_2F23.rs:46 -> port `melee_chara::chars/ftKirby.rs:130`
+- `ftKb_SpecialNFx_800FDC00` [ext_fns!] x1: tu/itfoxblaster.rs:58 -> port `melee_chara::tu/ftkirbyspecialfox.rs:169`
+- `ftKb_SpecialNFx_800FDC70` [ext_fns!] x1: tu/itfoxblaster.rs:59 -> port `melee_chara::tu/ftkirbyspecialfox.rs:186`
+- `ftKb_SpecialNFx_800FDD14` [ext_fns!] x1: tu/itfoxblaster.rs:60 -> port `melee_chara::tu/ftkirbyspecialfox.rs:208`
+- `ftKb_SpecialNFx_800FDD4C` [ext_fns!] x1: tu/itfoxblaster.rs:61 -> port `melee_chara::tu/ftkirbyspecialfox.rs:224`
+- `ftKb_SpecialNFx_800FDDF4` [ext_fns!] x1: tu/itfoxblaster.rs:62 -> port `melee_chara::tu/ftkirbyspecialfox.rs:266`
+- `ftKb_SpecialNFx_800FDEB4` [ext_fns!] x1: tu/itfoxblaster.rs:63 -> port `melee_chara::tu/ftkirbyspecialfox.rs:321`
+- `ftKb_SpecialNGw_8010D074` [ext_fns!] x1: tu/itkirbygamewatchchefpan.rs:35 -> port `melee_chara::tu/ftkirbyspecialgamewatch.rs:158`
+- `ftKb_SpecialNGw_8010D160` [ext_fns!] x1: tu/itkirbygamewatchchefpan.rs:36 -> port `melee_chara::chars/ftKirby.rs:24`
+- `ftKb_SpecialNIc_80108CE8` [ext_fns!] x1: tu/itclimbersice.rs:51 -> port `melee_chara::tu/ftkirbyspecialiceclimber.rs:91`
+- `ftKb_SpecialNKp_800FA83C` [ext_fns!] x1: tu/itkoopaflame.rs:51 -> port `melee_chara::tu/ftkirbyspecialkoopa.rs:190`
+- `ftKb_SpecialNKp_800FA878` [ext_fns!] x1: tu/itkoopaflame.rs:52 -> port `melee_chara::tu/ftkirbyspecialkoopa.rs:202`
+- `ftKb_SpecialNLk800FB394` [ext_fns!] x1: tu/itlinkbow.rs:37 -> port `melee_chara::tu/ftkirbyspeciallink.rs:174`
+- `ftKb_SpecialNLk800FB418` [ext_fns!] x1: tu/itlinkarrow.rs:54 -> port `melee_chara::tu/ftkirbyspeciallink.rs:197`
+- `ftKb_SpecialNLk800FB444` [ext_fns!] x1: tu/itlinkbow.rs:38 -> port `melee_chara::tu/ftkirbyspeciallink.rs:201`
+- `ftKb_SpecialNLk800FB470` [ext_fns!] x2: tu/itlinkarrow.rs:55, tu/itlinkbow.rs:39 -> port `melee_chara::tu/ftkirbyspeciallink.rs:205`
+- `ftKb_SpecialNMt_80106F44` [ext_fns!] x1: tu/itmewtwoshadowball.rs:59 -> port `melee_chara::tu/ftkirbyspecialmewtwo.rs:123`
+- `ftKb_SpecialNMt_80106F9C` [ext_fns!] x1: tu/itmewtwoshadowball.rs:60 -> port `melee_chara::tu/ftkirbyspecialmewtwo.rs:155`
+- `ftKb_SpecialNMt_80106FEC` [ext_fns!] x1: tu/itmewtwoshadowball.rs:61 -> port `melee_chara::tu/ftkirbyspecialmewtwo.rs:168`
+- `ftKb_SpecialNMt_80107040` [ext_fns!] x1: tu/itmewtwoshadowball.rs:62 -> port `melee_chara::tu/ftkirbyspecialmewtwo.rs:188`
+- `ftKb_SpecialNNs_800FEC78` [ext_fns!] x1: tu/itnesspkflash.rs:39 -> port `melee_chara::tu/ftkirbyspecialfox.rs:701`
+- `ftKb_SpecialNNs_800FECBC` [ext_fns!] x1: tu/itnesspkflash.rs:40 -> port `melee_chara::tu/ftkirbyspecialfox.rs:717`
+- `ftKb_SpecialNPe_8010C3C0` [ext_fns!] x1: tu/itpeachtoad.rs:38 -> port `melee_chara::tu/ftkirbyspecialpeach.rs:151`
+- `ftKb_SpecialNPe_8010C4AC` [ext_fns!] x1: tu/itpeachtoad.rs:39 -> port `melee_chara::chars/ftKirby.rs:168`
+- `ftKb_SpecialNSk_80105FF0` [ext_fns!] x1: tu/itseakneedleheld.rs:37 -> port `melee_chara::tu/ftkirbyspecialseak.rs:121`
+- `ftKb_SpecialNSk_80106020` [ext_fns!] x1: tu/itseakneedleheld.rs:38 -> port `melee_chara::tu/ftkirbyspecialseak.rs:135`
+- `ftKb_SpecialNSs_800FCC14` [ext_fns!] x1: tu/itsamuschargeshot.rs:43 -> port `melee_chara::tu/ftkirbyspecialsamus.rs:73`
+- `ftKb_SpecialNSs_800FCC6C` [ext_fns!] x1: tu/itsamuschargeshot.rs:44 -> port `melee_chara::tu/ftkirbyspecialsamus.rs:89`
+- `ftKb_SpecialNSs_800FCCBC` [ext_fns!] x1: tu/itsamuschargeshot.rs:45 -> port `melee_chara::tu/ftkirbyspecialsamus.rs:102`
+- `ftKb_SpecialNSs_800FCD04` [ext_fns!] x1: tu/itsamuschargeshot.rs:46 -> port `melee_chara::tu/ftkirbyspecialsamus.rs:142`
+- `ftKb_SpecialNYs_80109238` [ext_fns!] x1: tu/itkirbyyoshispecialn.rs:32 -> port `melee_chara::tu/ftkirbyspecialiceclimber.rs:241`
+- `ftKp_SpecialLw_80134DE0` [ext_fns!] x1: tu/itkoopaflame.rs:53 -> port `melee_chara::tu/ftkoopaspecialn.rs:190`
+- `ftKp_SpecialLw_80134E1C` [ext_fns!] x1: tu/itkoopaflame.rs:54 -> port `melee_chara::tu/ftkoopaspecialn.rs:202`
+- `ftLib_800860C4` [ext_fns!] x1: tu/it_279C.rs:53 -> port `melee_fighter::ftlib.rs:44`
+- `ftLib_80086198` [ext_fns!] x1: tu/ithitodeman.rs:47 -> port `melee_fighter::ftlib.rs:67`
+- `ftLib_8008627C` [ext_fns!] x6: tu/it_26B1.rs:41, tu/it_279C.rs:54, tu/itleadead.rs:42, tu/itlikelike.rs:42, tu/itoctarock.rs:36, tu/itoctarockstone.rs:36 -> port `melee_fighter::ftlib.rs:91`
+- `ftLib_80086368` [ext_fns!] x1: tu/it_26B1.rs:42 -> port `melee_fighter::ftlib.rs:114`
+- `ftLib_800864A8` [ext_fns!] x1: tu/it_26B1.rs:43 -> port `melee_fighter::ftlib.rs:140`
+- `ftLib_800865C0` [ext_fns!] x9: tu/itarwinglaser.rs:47, tu/itfoxblaster.rs:64, tu/itgamewatchjudge.rs:36, tu/itlinkarrow.rs:56, tu/itmewtwoshadowball.rs:63, tu/itnessbat.rs:40, tu/itsamuschargeshot.rs:47, tu/ittarucann.rs:45, tu/itzako.rs:43 -> port `melee_fighter::ftlib.rs:166`
+- `ftLib_800865CC` [ext_fns!] x4: tu/itfoxillusion.rs:48, tu/itgamewatchpanic.rs:36, tu/itmariocape.rs:39, tu/itseakneedlethrown.rs:44 -> port `melee_fighter::ftlib.rs:167`
+- `ftLib_800865D8` [ext_fns!] x3: tu/itnesspkflash.rs:41, tu/itnesspkthunderball.rs:40, tu/itzeldadinfire.rs:42 -> port `melee_fighter::ftlib.rs:168`
+- `ftLib_80086630` [ext_fns!] x9: tu/it_2725.rs:65, tu/itkirbyyoshispecialn.rs:33, tu/itleadead.rs:43, tu/itlinkarrow.rs:57, tu/itlinkboomerang.rs:52, tu/itmewtwoshadowball.rs:64, tu/itsamuschargeshot.rs:48, tu/itsamusgrapple.rs:74, tu/ityoshitongue.rs:33 -> port `melee_fighter::ftlib.rs:179`
+- `ftLib_80086644` [ext_fns!] x9: tu/it_26B1.rs:44, tu/it_279C.rs:55, tu/itdrmariopill.rs:57, tu/itfoxblaster.rs:65, tu/ithitodeman.rs:48, tu/itleadead.rs:44, tu/itlikelike.rs:43, tu/itnessbat.rs:41, tu/itoctarock.rs:37 -> port `melee_fighter::ftlib.rs:182`
+- `ftLib_800866DC` [ext_fns!] x5: tu/it_26B1.rs:45, tu/itflipper.rs:44, tu/itlinkboomerang.rs:53, tu/itoctarockstone.rs:37, tu/ittools.rs:34 -> port `melee_fighter::ftlib.rs:193`
+- `ftLib_80086724` [ext_fns!] x1: tu/item.rs:76 -> port `melee_fighter::ftlib.rs:201`
+- `ftLib_80086764` [ext_fns!] x1: tu/item.rs:77 -> port `melee_fighter::ftlib.rs:207`
+- `ftLib_800867A0` [ext_fns!] x1: tu/item.rs:78 -> port `melee_fighter::ftlib.rs:213`
+- `ftLib_800867CC` [ext_fns!] x1: tu/item.rs:79 -> port `melee_fighter::ftlib.rs:214`
+- `ftLib_800868D4` [ext_fns!] x1: tu/itdraw.rs:40 -> port `melee_fighter::ftlib.rs:234`
+- `ftLib_80086960` [ext_fns!] x10: tu/it_26B1.rs:46, tu/it_2725.rs:66, tu/it_279C.rs:56, tu/itcoll.rs:42, tu/itdraw.rs:41, tu/itdrop.rs:32, tu/item.rs:80, tu/itflipper.rs:45, tu/itkusudama.rs:50, tu/ittools.rs:35 -> port `melee_fighter::ftlib.rs:246`
+- `ftLib_80086984` [ext_fns!] x1: tu/it_26B1.rs:47 -> port `melee_fighter::ftlib.rs:249`
+- `ftLib_80086990` [ext_fns!] x1: tu/it_26B1.rs:48 -> port `melee_fighter::ftlib.rs:250`
+- `ftLib_800869D4` [ext_fns!] x7: tu/itclinkmilk.rs:46, tu/itdrmariopill.rs:58, tu/itlinkarrow.rs:58, tu/itlinkbow.rs:40, tu/itmewtwoshadowball.rs:65, tu/itsamuschargeshot.rs:49, tu/itseakneedleheld.rs:39 -> port `melee_fighter::ftlib.rs:257`
+- `ftLib_80086A0C` [ext_fns!] x3: tu/it_2725.rs:67, tu/itmewtwodisable.rs:35, tu/itnessyoyo.rs:53 -> port `melee_fighter::ftlib.rs:259`
+- `ftLib_80086A18` [ext_fns!] x1: tu/itlinkarrow.rs:59 -> port `melee_fighter::ftlib.rs:260`
+- `ftLib_80086A4C` [ext_fns!] x1: tu/it_26B1.rs:49 -> port `melee_fighter::ftlib.rs:263`
+- `ftLib_80086BE0` [ext_fns!] x4: tu/it_26B1.rs:50, tu/it_2725.rs:68, tu/it_279C.rs:57, tu/itmetalb.rs:32 -> port `melee_fighter::ftlib.rs:294`
+- `ftLib_80086BEC` [ext_fns!] x1: tu/itflipper.rs:46 -> port `melee_fighter::ftlib.rs:295`
+- `ftLib_80086D40` [ext_fns!] x4: tu/it_2725.rs:69, tu/itnokonoko.rs:39, tu/itoldkuri.rs:35, tu/itpatapata.rs:41 -> port `melee_fighter::ftlib.rs:315`
+- `ftLib_80086DC4` [ext_fns!] x1: tu/it_2725.rs:70 -> port `melee_fighter::ftlib.rs:316`
+- `ftLib_80086E68` [ext_fns!] x1: tu/it_2725.rs:71 -> port `melee_fighter::ftlib.rs:322`
+- `ftLib_80086EB4` [ext_fns!] x3: tu/it_2725.rs:72, tu/itcoll.rs:43, tu/item.rs:81 -> port `melee_fighter::ftlib.rs:328`
+- `ftLib_80086FA8` [ext_fns!] x1: tu/itsword.rs:39 -> port `melee_fighter::ftlib.rs:350`
+- `ftLib_80086FD4` [ext_fns!] x1: tu/itcoll.rs:44 -> port `melee_fighter::ftlib.rs:355`
+- `ftLib_8008702C` [ext_fns!] x1: tu/item.rs:82 -> port `melee_fighter::ftlib.rs:367`
+- `ftLib_80087050` [ext_fns!] x1: tu/item.rs:83 -> port `melee_fighter::ftlib.rs:368`
+- `ftLib_80087074` [ext_fns!] x1: tu/itdraw.rs:42 -> port `melee_fighter::ftlib.rs:369`
+- `ftLib_800870BC` [ext_fns!] x1: tu/itzako.rs:44 -> port `melee_fighter::ftlib.rs:380`
+- `ftLib_800871A8` [ext_fns!] x1: tu/itmetalb.rs:33 -> port `melee_fighter::tu/ftlib.rs:49`
+- `ftLib_80087284` [ext_fns!] x1: tu/itflipper.rs:47 -> port `melee_fighter::ftlib.rs:400`
+- `ftLib_800874BC` [ext_fns!] x2: tu/it_279C.rs:58, tu/itmetalb.rs:34 -> port `melee_fighter::ftlib.rs:448`
+- `ftLib_800874CC` [ext_fns!] x2: tu/itdrop.rs:33, tu/itkusudama.rs:51 -> port `melee_fighter::ftlib.rs:449`
+- `ftLib_800876D4` [ext_fns!] x1: tu/itgamewatchfire.rs:36 -> port `melee_fighter::ftlib.rs:454`
+- `ftLib_8008770C` [ext_fns!] x1: tu/itzako.rs:45 -> port `melee_fighter::ftlib.rs:457`
+- `ftLib_80087744` [ext_fns!] x1: tu/itzako.rs:46 -> port `melee_fighter::ftlib.rs:460`
+- `ftLk_AttackAir_SetupParts` [ext_fns!] x1: tu/itlinkbomb.rs:43 -> port `melee_chara::chars/r5/ftLink.rs:51`
+- `ftLk_SepcialS_Get2219b5` [ext_fns!] x1: tu/itlinkboomerang.rs:55 -> port `melee_chara::chars/ftLink.rs:48`
+- `ftLk_SpecialHi_GetFv4` [ext_fns!] x1: tu/itlinkboomerang.rs:56 -> port `melee_chara::tu/ftlinkspecialhi.rs:154`
+- `ftLk_SpecialHi_GetPosWithAdjustedY` [ext_fns!] x1: tu/itlinkboomerang.rs:57 -> port `melee_chara::chars/ftLink.rs:19`
+- `ftLk_SpecialHi_ProcessPartLThumbNb` [ext_fns!] x1: tu/itlinkboomerang.rs:58 -> port `melee_chara::tu/ftlinkspecialhi.rs:143`
+- `ftLk_SpecialN_GetIndex` [ext_fns!] x1: tu/itlinkbow.rs:41 -> port `melee_chara::tu/ftlinkspecialn.rs:99`
+- `ftLk_SpecialN_IsActiveAnd2071b6` [ext_fns!] x2: tu/itlinkarrow.rs:60, tu/itlinkbow.rs:42 -> port `melee_chara::chars/ftLink.rs:29`
+- `ftLk_SpecialN_UnsetArrow` [ext_fns!] x1: tu/itlinkarrow.rs:61 -> port `melee_chara::tu/ftlinkspecialn.rs:121`
+- `ftLk_SpecialN_UnsetFv14` [ext_fns!] x1: tu/itlinkbow.rs:43 -> port `melee_chara::tu/ftlinkspecialn.rs:135`
+- `ftLk_SpecialS2_Enter` [ext_fns!] x1: tu/itlinkboomerang.rs:59 -> port `melee_chara::chars/r4/ftLink.rs:32`
+- `ftLk_SpecialS_Is2071b0_1to13` [ext_fns!] x1: tu/itlinkboomerang.rs:60 -> port `melee_chara::tu/ftlinkspecials.rs:101`
+- `ftLk_SpecialS_Is2071b0_5to13` [ext_fns!] x1: tu/itlinkboomerang.rs:61 -> port `melee_chara::tu/ftlinkspecials.rs:97`
+- `ftLk_SpecialS_RemoveBoomerang0` [ext_fns!] x1: tu/itlinkboomerang.rs:62 -> port `melee_chara::tu/ftlinkspecials.rs:105`
+- `ftMr_SpecialS_CheckItemCapeRemove` [ext_fns!] x1: tu/itmariocape.rs:40 -> port `melee_chara::chars/ftMario.rs:23`
+- `ftMr_SpecialS_Reset` [ext_fns!] x1: tu/itmariocape.rs:41 -> port `melee_chara::tu/ftmariospecials.rs:142`
+- `ftMt_SpecialLw_ClearDisableGObj` [ext_fns!] x1: tu/itmewtwodisable.rs:36 -> port `melee_chara::tu/ftmewtwospeciallw.rs:68`
+- `ftMt_SpecialN_CheckShadowBallCancel` [ext_fns!] x1: tu/itmewtwoshadowball.rs:66 -> port `melee_chara::tu/ftmewtwospecialn.rs:184`
+- `ftMt_SpecialN_CheckShadowBallRemove` [ext_fns!] x1: tu/itmewtwoshadowball.rs:67 -> port `melee_chara::tu/ftmewtwospecialn.rs:155`
+- `ftMt_SpecialN_GetChargeLevel` [ext_fns!] x1: tu/itmewtwoshadowball.rs:68 -> port `melee_chara::tu/ftmewtwospecialn.rs:139`
+- `ftMt_SpecialN_SetNULL` [ext_fns!] x1: tu/itmewtwoshadowball.rs:69 -> port `melee_chara::tu/ftmewtwospecialn.rs:218`
+- `ftNs_AttackHi4_YoyoItemSetFlag` [ext_fns!] x1: tu/itnessyoyo.rs:55 -> port `melee_chara::tu/ftnessattackhi4.rs:526`
+- `ftNs_AttackS4_CheckNessBatRemove` [ext_fns!] x1: tu/itnessbat.rs:42 -> port `melee_chara::tu/ftnessattacks4.rs:76`
+- `ftNs_AttackS4_ItemNessBatSetNULL` [ext_fns!] x1: tu/itnessbat.rs:43 -> port `melee_chara::tu/ftnessattacks4.rs:96`
+- `ftNs_SpecialHi_CheckSpecialHiHold` [ext_fns!] x1: tu/itnesspkthunderball.rs:41 -> port `melee_chara::tu/ftnessspecialhi.rs:260`
+- `ftNs_SpecialHi_ItemPKThunderCheckOwn` [ext_fns!] x1: tu/itnesspkthunderball.rs:42 -> port `melee_chara::tu/ftnessspecialhi.rs:295`
+- `ftNs_SpecialHi_ItemPKThunderRemove` [ext_fns!] x1: tu/itnesspkthunderball.rs:43 -> port `melee_chara::tu/ftnessspecialhi.rs:267`
+- `ftNs_SpecialN_CheckSpecialNHold` [ext_fns!] x1: tu/itnesspkflash.rs:42 -> port `melee_chara::tu/ftnessspecialn.rs:106`
+- `ftNs_SpecialN_SetNULL` [ext_fns!] x1: tu/itnesspkflash.rs:43 -> port `melee_chara::tu/ftnessspecialn.rs:122`
+- `ftPe_8011D518` [ext_fns!] x1: tu/itpeachparasol.rs:38 -> port `melee_chara::tu/ftpeachspecialhi.rs:237`
+- `ftPe_SpecialHi_NotActive` [ext_fns!] x1: tu/itpeachparasol.rs:39 -> port `melee_chara::tu/ftpeachspecialhi.rs:304`
+- `ftPe_SpecialLw_UnsetVeg` [ext_fns!] x1: tu/itpeachturnip.rs:39 -> port `melee_chara::chars/r4/ftPeach.rs:12`
+- `ftPe_SpecialN_DoDeath2` [ext_fns!] x1: tu/itpeachtoad.rs:40 -> port `melee_chara::tu/ftpeachspecialn.rs:183`
+- `ftPe_SpecialN_IsActive` [ext_fns!] x1: tu/itpeachtoad.rs:41 -> port `melee_chara::chars/ftPeach.rs:50`
+- `ftPk_SpecialLw_80127608` [ext_fns!] x1: tu/itpikachuthunder.rs:38 -> port `melee_chara::tu/ftpikachuspeciallw.rs:131`
+- `ftPk_SpecialLw_CheckProperty` [ext_fns!] x1: tu/itpikachuthunder.rs:39 -> port `melee_chara::tu/ftpikachuspeciallw.rs:123`
+- `ftPk_SpecialLw_SetState_Unk0` [ext_fns!] x1: tu/itpikachuthunder.rs:40 -> port `melee_chara::chars/ftPikachu.rs:57`
+- `ftPp_Init_8011F16C` [ext_fns!] x1: tu/itclimbersice.rs:52 -> port `melee_chara::tu/ftpopo.rs:152`
+- `ftPp_SpecialS_8012114C` [ext_fns!] x1: tu/itclimbersstring.rs:56 -> port `melee_chara::chars/r3/ftPopo.rs:12`
+- `ftSk_SpecialS_80110E4C` [ext_fns!] x1: tu/itseakchain.rs:56 -> port `melee_chara::tu/ftseakspecials.rs:612`
+- `ftSk_SpecialS_80110F58` [ext_fns!] x1: tu/itseakchain.rs:57 -> port `melee_chara::chars/ftSeak.rs:61`
+- `ftSk_SpecialS_80110F64` [ext_fns!] x1: tu/itseakchain.rs:58 -> port `melee_chara::chars/ftSeak.rs:65`
+- `ftSk_SpecialS_80111F70` [ext_fns!] x1: tu/itseakneedleheld.rs:40 -> port `melee_chara::tu/ftseakspecials.rs:1045`
+- `ftSk_SpecialS_80111FA0` [ext_fns!] x1: tu/itseakneedleheld.rs:41 -> port `melee_chara::tu/ftseakspecials.rs:1060`
+- `ftSk_SpecialS_UpdateHitboxes` [ext_fns!] x1: tu/itseakchain.rs:59 -> port `melee_chara::tu/ftseakspecials.rs:477`
+- `ftSs_SpecialLw_80129158` [ext_fns!] x1: tu/itsamuschargeshot.rs:51 -> port `melee_chara::chars/ftSamus.rs:20`
+- `ftSs_SpecialN_801291A8` [ext_fns!] x1: tu/itsamuschargeshot.rs:52 -> port `melee_chara::chars/ftSamus.rs:31`
+- `ftYs_SpecialN_GetBoneIndex` [ext_fns!] x1: tu/ityoshitongue.rs:34 -> port `melee_chara::tu/ftyoshispecialn.rs:132`
+- `ftZd_SpecialLw_8013B540` [ext_fns!] x1: tu/itzeldadinfire.rs:43 -> port `melee_chara::tu/ftzeldaspeciallw.rs:209`
+- `ftZd_SpecialLw_8013B574` [ext_fns!] x1: tu/itzeldadinfire.rs:44 -> port `melee_chara::tu/ftzeldaspeciallw.rs:221`
+- `ftZd_SpecialLw_8013B5C4` [ext_fns!] x1: tu/itzeldadinfire.rs:45 -> port `melee_chara::chars/r4/ftZelda.rs:140`
+- `Geno_ArticleDesc` [ext_fns!] x1: tu/item.rs:34 -> port `melee_modes::tu/geno_game.rs:9983`
+- `Geno_ArticleLogic` [ext_fns!] x1: tu/item.rs:35 -> port `melee_modes::tu/geno_game.rs:9996`
+- `Geno_ItemActive` [ext_fns!] x1: tu/item.rs:36 -> port `melee_modes::tu/geno_game.rs:11321`
+- `Geno_ItemCap` [ext_fns!] x1: tu/item.rs:37 -> port `melee_modes::tu/geno_game.rs:11770`
+- `Geno_ItemDesc` [ext_fns!] x1: tu/item.rs:38 -> port `melee_modes::tu/geno_game.rs:11720`
+- `Geno_ItemDraw` [ext_fns!] x1: tu/item.rs:39 -> port `melee_modes::tu/geno_game.rs:12335`
+- `Geno_ItemFamilyEvent` [ext_fns!] x1: tu/item.rs:40 -> port `melee_modes::tu/geno_game.rs:12242`
+- `Geno_ItemLogic` [ext_fns!] x1: tu/item.rs:41 -> port `melee_modes::tu/geno_game.rs:11764`
+- `gm_80160438` [todo_fns!] x1: tu/vi1201v1.rs:41 -> port `melee_modes::tu/gm_1601.rs:572`
+- `gm_801623D8` [ext_fns!] x1: tu/tyfigupon.rs:106 -> port `melee_modes::tu/gm_1601.rs:1083`
+- `gm_801623FC` [ext_fns!] x1: tu/tyfigupon.rs:107 -> port `melee_modes::tu/gm_1601.rs:1087`
+- `gm_80164430` [ext_fns!] x1: tu/toy.rs:165 -> port `melee_modes::tu/gm_1601.rs:1749`
+- `gm_80164504` [ext_fns!] x1: tu/toy.rs:166 -> port `melee_modes::tu/gm_1601.rs:1763`
+- `gm_80164ABC` [ext_fns!] x1: tu/it_279C.rs:62 -> port `melee_modes::tu/gm_1601.rs:1862`
+- `gm_80165084` [ext_fns!] x1: tu/it_279C.rs:63 -> port `melee_modes::tu/gm_1601.rs:1898`
+- `gm_801677E8` [ext_fns!] x1: tu/toy.rs:167 -> port `melee_modes::tu/gm_1601.rs:2548`
+- `gm_801677F0` [ext_fns!] x1: tu/tyfigupon.rs:108 -> port `melee_modes::tu/gm_1601.rs:2552`
+- `gm_801678F8` [ext_fns!] x2: tu/tyfigupon.rs:109, tu/vi.rs:30 -> port `melee_modes::tu/gm_1601.rs:2574`
+- `gm_8016895C` [ext_fns!/todo_fns!] x11: tu/vi0102.rs:70, tu/vi0401.rs:74, tu/vi0402.rs:48, tu/vi0501.rs:81, tu/vi0502.rs:76, tu/vi0601.rs:63, tu/vi0801.rs:34, tu/vi1101.rs:33, tu/vi1201v1.rs:40, tu/vi1201v2.rs:39, tu/vi1202.rs:31 -> port `melee_modes::tu/gm_1601.rs:2880`
+- `gm_8016AE80` [ext_fns!] x3: tu/item.rs:85, tu/itoldottosea.rs:35, tu/itspawn.rs:55 -> port `melee_modes::tu/gmvs.rs:284`
+- `gm_8016AE94` [ext_fns!] x1: tu/itspawn.rs:56 -> port `melee_modes::tu/gmvs.rs:288`
+- `gm_8016AEA4` [ext_fns!] x1: tu/itspawn.rs:57 -> port `melee_modes::tu/gmvs.rs:292`
+- `gm_8016AEB8` [ext_fns!] x1: tu/it_279C.rs:64 -> port `melee_modes::tu/gmvs.rs:296`
+- `gm_8016B0B4` [ext_fns!] x1: tu/itdrop.rs:34 -> port `melee_modes::tu/gmvs.rs:363`
+- `gm_8016B0D4` [ext_fns!] x1: tu/itcoll.rs:46 -> port `melee_modes::tu/gmvs.rs:367`
+- `gm_8016B168` [ext_fns!] x1: tu/itcoll.rs:47 -> port `melee_modes::tu/gmvs.rs:395`
+- `gm_8016C6C0` [ext_fns!] x1: tu/it_2E5A.rs:49 -> port `melee_modes::tu/gmvs.rs:980`
+- `gm_80172BC4` [ext_fns!] x1: tu/it_279C.rs:65 -> port `melee_modes::tu/gm_16f1.rs:1437`
+- `gm_80172C04` [ext_fns!] x1: tu/it_279C.rs:66 -> port `melee_modes::tu/gm_16f1.rs:1445`
+- `gm_80172C44` [ext_fns!] x1: tu/toy.rs:168 -> port `melee_modes::tu/gm_16f1.rs:1453`
+- `gm_8017E068` [ext_fns!] x1: tu/item.rs:86 -> port `melee_modes::tu/gm_17c0.rs:1420`
+- `gm_8017E280` [ext_fns!] x1: tu/itcoin.rs:46 -> port `melee_modes::tu/gm_17c0.rs:1455`
+- `gm_8017E430` [ext_fns!] x2: tu/vi.rs:31, tu/vi0401.rs:75 -> port `melee_modes::tu/gm_17e4.rs:56`
+- `gm_8017E440` [ext_fns!] x1: tu/vi.rs:32 -> port `melee_modes::tu/gm_17e4.rs:60`
+- `gm_8018841C` [ext_fns!] x2: tu/it_279C.rs:67, tu/item.rs:87 -> port `melee_modes::tu/gm_1879.rs:409`
+- `gm_801A4B60` [ext_fns!/todo_fns!] x15: tu/toy.rs:169, tu/tydisplay.rs:102, tu/tyfigupon.rs:110, tu/vi.rs:33, tu/vi0102.rs:71, tu/vi0401.rs:76, tu/vi0402.rs:49, tu/vi0501.rs:82, tu/vi0502.rs:77, tu/vi0601.rs:64, tu/vi0801.rs:33, tu/vi1101.rs:32, tu/vi1201v1.rs:39, tu/vi1201v2.rs:38, tu/vi1202.rs:30 -> port `melee_modes::tu/gmscene.rs:348`
+- `gm_801BEB68` [ext_fns!] x1: tu/itevyoshiegg.rs:39 -> port `melee_modes::tu/gmevent.rs:2209`
+- `gm_801BEC54` [ext_fns!] x1: tu/it_279C.rs:68 -> port `melee_modes::tu/gmevent.rs:2270`
+- `gm_GetButtonsTriggered` [ext_fns!] x2: tu/vi.rs:34, tu/vi0401.rs:77 -> port `melee_modes::tu/gm_1A36.rs:129`
+- `gm_GetCurrentGameMode` [ext_fns!] x2: tu/it_279C.rs:69, tu/toy.rs:170 -> port `melee_modes::tu/gm_1A3F.rs:574`
+- `gm_GetDbPauseFlag` [ext_fns!] x1: tu/itcoin.rs:47 -> port `melee_modes::tu/gmscene.rs:224`
+- `gm_IsCKindUnlocked` [todo_fns!] x1: tu/vi1101.rs:34 -> port `melee_modes::tu/gm_1601.rs:1820`
+- `gm_IsCurrently1PMode` [ext_fns!] x2: tu/itzako.rs:48, tu/toy.rs:171 -> port `melee_modes::tu/gmvs.rs:519`
+- `gmMainLib_8015ED5C` [ext_fns!] x1: tu/toy.rs:161 -> port `melee_modes::tu/gmmain_lib.rs:791`
+- `gmMainLib_GetTrophyCategoryFlags` [ext_fns!] x1: tu/toy.rs:162 -> port `melee_modes::tu/gmmain_lib.rs:169`
+- `gmMainLib_GetTrophyCount` [ext_fns!] x1: tu/toy.rs:163 -> port `melee_modes::tu/gmmain_lib.rs:173`
+- `gmMainLib_GetTrophyFlags` [ext_fns!] x1: tu/toy.rs:164 -> port `melee_modes::tu/gmmain_lib.rs:165`
+- `lb_80014258` [ext_fns!] x1: tu/itanimlist.rs:60 -> port `melee_modes::tu/lb_013B.rs:186`
+- `lb_80014498` [ext_fns!] x1: tu/itanimlist.rs:61 -> port `melee_modes::tu/lb_013B.rs:241`
+- `lb_800144C8` [ext_fns!] x1: tu/itanimlist.rs:62 -> port `melee_modes::tu/lb_013B.rs:250`
+- `lb_800145F4` [ext_fns!/todo_fns!] x12: tu/vi.rs:37, tu/vi0102.rs:83, tu/vi0401.rs:88, tu/vi0402.rs:59, tu/vi0501.rs:94, tu/vi0502.rs:89, tu/vi0601.rs:76, tu/vi0801.rs:44, tu/vi1101.rs:43, tu/vi1201v1.rs:53, tu/vi1201v2.rs:50, tu/vi1202.rs:37 -> port `melee_modes::tu/lb_013B.rs:283`
+- `mn_8022EAE0` [ext_fns!/todo_fns!] x2: tu/vi0501.rs:95, tu/vi1201v2.rs:58 -> port `melee_modes::tu/mnmain.rs:4843`
+- `mn_8022F218` [ext_fns!] x4: tu/toy.rs:189, tu/tydisplay.rs:115, tu/tyfigupon.rs:128, tu/tylist.rs:105 -> port `melee_modes::tu/mn_22EC.rs:249`
+- `mn_8022F268` [ext_fns!] x4: tu/toy.rs:190, tu/tydisplay.rs:116, tu/tyfigupon.rs:129, tu/tylist.rs:106 -> port `melee_modes::tu/mn_22EC.rs:257`
+- `mn_8022F298` [todo_fns!] x2: tu/vi1201v1.rs:63, tu/vi1201v2.rs:59 -> port `melee_modes::tu/mn_22EC.rs:262`
+- `pl_80037DF4` [ext_fns!] x1: tu/it_279C.rs:204 -> port `melee_fighter::pltrick.rs:115`
+- `pl_800384DC` [ext_fns!] x1: tu/it_279C.rs:205 -> port `melee_fighter::pltrick.rs:131`
+- `pl_8003E17C` [ext_fns!] x1: tu/itmetalb.rs:44 -> port `melee_fighter::plbonus2.rs:71`
+- `pl_8003E70C` [ext_fns!] x1: tu/it_279C.rs:206 -> port `melee_fighter::tu/plbonuslib.rs:592`
+- `pl_8003EB30` [ext_fns!] x1: tu/it_279C.rs:207 -> port `melee_fighter::plbonus2.rs:243`
+- `pl_8004049C` [ext_fns!] x1: tu/itzako.rs:80 -> port `melee_fighter::plbonus.rs:558`
+- `plAttack_80037B08` [ext_fns!] x1: tu/it_279C.rs:202 -> port `melee_fighter::tu/plattack.rs:63`
+- `Player_80031DA8` [ext_fns!] x1: tu/vi0501.rs:62 -> port `melee_fighter::player.rs:126`
+- `Player_80032768` [ext_fns!/todo_fns!] x7: tu/vi0102.rs:55, tu/vi0401.rs:59, tu/vi0501.rs:63, tu/vi0502.rs:60, tu/vi1101.rs:54, tu/vi1201v1.rs:64, tu/vi1201v2.rs:60 -> port `melee_fighter::player.rs:245`
+- `Player_80032BB0` [todo_fns!] x1: tu/vi1201v2.rs:61 -> port `melee_fighter::player.rs:292`
+- `Player_80036E20` [ext_fns!/todo_fns!] x7: tu/vi0102.rs:56, tu/vi0401.rs:60, tu/vi0501.rs:64, tu/vi0502.rs:61, tu/vi1101.rs:55, tu/vi1201v1.rs:65, tu/vi1201v2.rs:62 -> port `melee_fighter::tu/player.rs:1280`
+- `Player_80036F34` [ext_fns!/todo_fns!] x7: tu/vi0102.rs:57, tu/vi0401.rs:61, tu/vi0501.rs:65, tu/vi0502.rs:62, tu/vi1101.rs:56, tu/vi1201v1.rs:66, tu/vi1201v2.rs:63 -> port `melee_fighter::tu/player.rs:1296`
+- `Player_GetEntity` [ext_fns!/todo_fns!] x4: tu/vi0501.rs:66, tu/vi0502.rs:63, tu/vi1101.rs:57, tu/vi1201v1.rs:67 -> port `melee_fighter::tu/player.rs:689`
+- `Player_InitAllPlayers` [ext_fns!/todo_fns!] x10: tu/vi0102.rs:58, tu/vi0401.rs:62, tu/vi0402.rs:45, tu/vi0501.rs:67, tu/vi0502.rs:64, tu/vi0601.rs:57, tu/vi0801.rs:52, tu/vi1101.rs:58, tu/vi1201v1.rs:68, tu/vi1201v2.rs:64 -> port `melee_fighter::tu/player.rs:1252`
+- `Player_SetCostumeId` [ext_fns!/todo_fns!] x7: tu/vi0102.rs:59, tu/vi0401.rs:63, tu/vi0501.rs:68, tu/vi0502.rs:65, tu/vi1101.rs:59, tu/vi1201v1.rs:69, tu/vi1201v2.rs:65 -> port `melee_fighter::tu/player.rs:538`
+- `Player_SetFacingDirection` [ext_fns!/todo_fns!] x7: tu/vi0102.rs:60, tu/vi0401.rs:64, tu/vi0501.rs:69, tu/vi0502.rs:66, tu/vi1101.rs:60, tu/vi1201v1.rs:70, tu/vi1201v2.rs:66 -> port `melee_fighter::tu/player.rs:524`
+- `Player_SetFlagsBit1` [ext_fns!] x1: tu/vi0501.rs:70 -> port `melee_fighter::tu/player.rs:937`
+- `Player_SetFlagsBit5` [todo_fns!] x1: tu/vi1101.rs:61 -> port `melee_fighter::tu/player.rs:961`
+- `Player_SetPlayerAndEntityFacingDirection` [todo_fns!] x1: tu/vi1201v2.rs:67 -> port `melee_fighter::tu/player.rs:466`
+- `Player_SetPlayerCharacter` [ext_fns!/todo_fns!] x7: tu/vi0102.rs:61, tu/vi0401.rs:65, tu/vi0501.rs:71, tu/vi0502.rs:67, tu/vi1101.rs:62, tu/vi1201v1.rs:71, tu/vi1201v2.rs:68 -> port `melee_fighter::tu/player.rs:372`
+- `Player_SetPlayerId` [ext_fns!/todo_fns!] x7: tu/vi0102.rs:62, tu/vi0401.rs:66, tu/vi0501.rs:72, tu/vi0502.rs:68, tu/vi1101.rs:63, tu/vi1201v1.rs:72, tu/vi1201v2.rs:69 -> port `melee_fighter::tu/player.rs:562`
+- `Player_SetScale` [todo_fns!] x1: tu/vi1201v2.rs:70 -> port `melee_fighter::tu/player.rs:482`
+- `Player_SetSlottype` [ext_fns!/todo_fns!] x7: tu/vi0102.rs:63, tu/vi0401.rs:67, tu/vi0501.rs:73, tu/vi0502.rs:69, tu/vi1101.rs:64, tu/vi1201v1.rs:73, tu/vi1201v2.rs:71 -> port `melee_fighter::tu/player.rs:393`
+- `Player_SetUnk4D` [ext_fns!] x1: tu/vi0501.rs:74 -> port `melee_fighter::tu/player.rs:997`
+- `ScriptGame_EnemyDefeated` [ext_fns!] x2: tu/itnokonoko.rs:38, tu/itzako.rs:41 -> port `melee_modes::tu/script_game.rs:10440`
+- `ScriptGame_EnemyDestroyed` [ext_fns!] x2: tu/item.rs:63, tu/itzako.rs:42 -> port `melee_modes::tu/script_game.rs:10461`
+- `ScriptGame_EnemyReceived` [ext_fns!] x1: tu/item.rs:64 -> port `melee_modes::tu/script_game.rs:10381`
+- `ScriptGame_FighterDealtDamage` [ext_fns!] x1: tu/itcoll.rs:34 -> port `melee_modes::tu/script_game.rs:21309`
+- `ScriptGame_HitRuleBaseDamage` [ext_fns!] x2: tu/item.rs:65, tu/ithitbox.rs:29 -> port `melee_modes::tu/script_game.rs:4693`
+- `ScriptGame_HitRuleCreate` [ext_fns!] x1: tu/itsamusgrapple.rs:60 -> port `melee_modes::tu/script_game.rs:4114`
+- `ScriptGame_HitRuleDamage` [ext_fns!] x1: tu/itcoll.rs:35 -> port `melee_modes::tu/script_game.rs:4651`
+- `ScriptGame_HitRuleForget` [ext_fns!] x2: tu/itanimlist.rs:48, tu/itsamusgrapple.rs:61 -> port `melee_modes::tu/script_game.rs:4092`
+- `ScriptGame_HitRuleItemCreate` [ext_fns!] x1: tu/itanimlist.rs:49 -> port `melee_modes::tu/script_game.rs:4237`
+- `ScriptGame_HitRuleRetire` [ext_fns!] x1: tu/item.rs:66 -> port `melee_modes::tu/script_game.rs:4671`
+- `ScriptGame_ItemModDamage` [ext_fns!] x1: tu/itcoll.rs:36 -> port `melee_modes::tu/script_game.rs:21329`
+- `ScriptGame_TargetDestroyed` [ext_fns!] x1: tu/itmato.rs:34 -> port `melee_modes::tu/script_game.rs:10066`
+- `ScriptGame_TargetPin` [ext_fns!] x1: tu/itmato.rs:35 -> port `melee_modes::tu/script_game.rs:10042`
+
+## melee_fighter
+
+NO_PORT: 395 sites / 276 names, SIGNATURE: 376 sites / 302 names, CYCLE: 244 sites / 188 names
+
+### melee_fighter - NO_PORT (395 sites, 276 names)
+
+- `Camera_8002E818` [fn-body] x1: tu/ftbosslib.rs:32
+- `Camera_8002EA64` [fn-body] x1: tu/ftbosslib.rs:33
+- `Camera_8002F0E4` [fn-body] x1: tu/ftbosslib.rs:34
+- `Camera_RequestQuake` [ext_fns!/fn+panic] x6: tu/ftCo_Damage.rs:110, tu/ftCo_DamageIce.rs:80, tu/ftCo_DownBound.rs:41, tu/ftCo_FlyReflect.rs:37, tu/ftCo_WarpStar.rs:68, tu/ft_0d31.rs:38
+- `Camera_ScriptState` [fn-body] x1: tu/fighter.rs:236
+- `Camera_SetModeToStandard` [fn-body] x1: tu/ftbosslib.rs:35
+- `costume_count` [fn-body] x1: tu/fighter.rs:141
+- `costume_joint` [fn-body] x1: tu/fighter.rs:140
+- `costume_matanim` [fn-body] x1: tu/ftanim.rs:76
+- `DbLevel` [ext_fns!] x1: tu/ftCo_AppealS.rs:38
+- `DbLevel_at_least_DebugRom` [fn-body] x1: tu/fighter.rs:330
+- `DbLevel_below_DebugRom` [fn-body] x1: tu/fighter.rs:287
+- `diag_geno_stun` [ext_fns!] x1: tu/ftCo_Damage.rs:86
+- `efAsync_Spawn` [ext_fns!/fn+panic/fn-body] x16: tu/ftCo_Attack100.rs:69, tu/ftCo_CatchWait.rs:30, tu/ftCo_Damage.rs:95, tu/ftCo_DamageIce.rs:48, tu/ftCo_DownBound.rs:36, tu/ftCo_FlyReflect.rs:35, tu/ftCo_Passive.rs:36, tu/ftCo_PassiveCeil.rs:35, tu/ftCo_PassiveStand.rs:36, tu/ftCo_PassiveWall.rs:35, tu/ftCo_ShieldBreakFly.rs:38, tu/ftCo_WarpStar.rs:66, tu/ftCo_YoshiEgg.rs:63, tu/ft_0d31.rs:58, tu/ftlipstickswing.rs:22, tu/ftstarrodswing.rs:22
+- `efLib_PauseAll_fn` [ext_fns!] x1: tu/ftCo_AttackS4.rs:49
+- `efLib_ResumeAll_fn` [ext_fns!] x1: tu/ftCo_AttackS4.rs:50
+- `efSync_Spawn_dir` [fn-body] x1: tu/ft_0cdf.rs:26
+- `efSync_Spawn_dir_f` [fn-body] x1: tu/ft_0cdf.rs:28
+- `ext_ft_80081dd4` [fn+panic] x1: tu/ftco_800c7ca0.rs:140
+- `Fighter_804D650C` [ext_fns!] x1: tu/ftCo_Guard.rs:59
+- `Fighter_804D6550` [ext_fns!] x1: tu/ftCo_ItemThrow.rs:59
+- `Fighter_Create` [ext_fns!] x1: tu/player.rs:40
+- `fighter_dobj_list_alloc_data` [fn-body] x1: tu/ftparts.rs:31
+- `fighter_parts_alloc_data` [fn-body] x1: tu/ftparts.rs:30
+- `Fighter_UnkSetFlag_8006CFBC` [ext_fns!] x1: tu/ftCo_CaptureCut.rs:53
+- `FighterControls_TapJumpOff` [ext_fns!] x1: tu/ftCo_Jump.rs:34
+- `ft_800890BC` [fn-body] x1: tu/fighter.rs:119
+- `ft_800890D0` [fn-body] x1: tu/fighter.rs:215
+- `ft_800892A0` [ext_fns!/fn-body] x6: tu/ftCo_Attack1.rs:34, tu/ftCo_Attack100.rs:57, tu/ftCo_AttackLw3.rs:37, tu/ftCo_HammerWait.rs:35, tu/ftCo_ItemScopeRapid.rs:45, tu/ft_0ce3.rs:23
+- `FT_COSTUME_VIS_IDX` [fn-body] x1: tu/ftanim.rs:78
+- `ft_GetGroundFrictionMultiplier` [ext_fns!] x3: tu/ftCo_Dash.rs:57, tu/ftCo_Run.rs:36, tu/ftCo_SpecialS.rs:45
+- `ft_PlaySFX` [ext_fns!/fn-body] x15: tu/fighter.rs:327, tu/ftCo_DamageIce.rs:81, tu/ftCo_Dash.rs:40, tu/ftCo_DownBound.rs:38, tu/ftCo_Guard.rs:63, tu/ftCo_Jump.rs:43, tu/ftCo_JumpAerial.rs:48, tu/ftCo_Passive.rs:34, tu/ftCo_PassiveCeil.rs:38, tu/ftCo_PassiveStand.rs:35, tu/ftCo_PassiveWall.rs:39, tu/ftCo_RunBrake.rs:35, tu/ftCo_ShieldBreakFly.rs:39, tu/ftCo_TurnRun.rs:40, tu/ftaction.rs:68
+- `ft_sfx_stop` [fn-body] x1: tu/ftaction.rs:70
+- `ft_sfx_variant` [fn-body] x1: tu/ftaction.rs:69
+- `ftAnim_GetNextJointInTree` [fn-body] x1: tu/ftmetal.rs:20
+- `ftCamera_UpdateCameraBox` [ext_fns!] x2: tu/ftCo_Throw.rs:75, tu/ftCo_Thrown.rs:54
+- `ftCo_8009EAF8_fn` [ext_fns!] x1: tu/ftCo_BarrelWait.rs:37
+- `ftCo_8009F4A4` [fn-body] x1: tu/fighter.rs:76
+- `ftCo_8009F578` [fn-body] x1: tu/fighter.rs:173
+- `ftCo_800A0DA4` [fn-body] x1: tu/fighter.rs:413
+- `ftCo_800A101C` [fn-body] x1: tu/fighter.rs:135
+- `ftCo_800B3900` [fn-body] x1: tu/fighter.rs:274
+- `ftCo_800C0200` [fn-body] x1: tu/ftaction.rs:82
+- `ftCo_800DB464_fn` [ext_fns!] x1: tu/ftCo_CaptureCaptain.rs:36
+- `ftCo_AirCatchHit_Coll` [ext_fns!] x3: tu/ftCo_Bury.rs:87, tu/ftCo_CaptureJump.rs:47, tu/ftCo_DamageScrew.rs:36
+- `ftCo_GetCpuButtons` [fn-body] x1: tu/fighter.rs:286
+- `ftCo_GetCpuCStickX` [fn-body] x1: tu/fighter.rs:282
+- `ftCo_GetCpuCStickY` [fn-body] x1: tu/fighter.rs:283
+- `ftCo_GetCpuLStickX` [fn-body] x1: tu/fighter.rs:280
+- `ftCo_GetCpuLStickY` [fn-body] x1: tu/fighter.rs:281
+- `ftCo_GetCpuLTrigger` [fn-body] x1: tu/fighter.rs:284
+- `ftCo_GetCpuRTrigger` [fn-body] x1: tu/fighter.rs:285
+- `ftCo_IsCpuControlled` [ext_fns!/fn-body] x2: tu/fighter.rs:273, tu/ftpickupitem.rs:46
+- `ftColl_800764DC` [fn-body] x1: tu/fighter.rs:265
+- `ftColl_80076528` [fn-body] x1: tu/fighter.rs:322
+- `ftColl_800765AC` [fn-body] x1: tu/fighter.rs:424
+- `ftColl_800765F0` [ext_fns!] x1: tu/ftCo_Bury.rs:42
+- `ftColl_80076640` [ext_fns!] x2: tu/ftCo_Bury.rs:43, tu/ftCo_Throw.rs:83
+- `ftColl_80076764` [ext_fns!] x1: tu/ftCo_Bury.rs:44
+- `ftColl_800768A0` [fn-body] x1: tu/ftaction.rs:45
+- `ftColl_80078384` [ext_fns!] x1: tu/ftCo_Bury.rs:46
+- `ftColl_80078710` [ext_fns!] x3: tu/ftCo_CaptureCut.rs:78, tu/ftCo_Shouldered.rs:44, tu/ftCo_Throw.rs:91
+- `ftColl_80078754` [fn-body] x1: tu/fighter.rs:360
+- `ftColl_800787B4` [ext_fns!] x1: tu/ftCo_Barrel.rs:46
+- `ftColl_800788D4` [ext_fns!] x2: tu/ftCo_BarrelWait.rs:50, tu/ftCo_Throw.rs:103
+- `ftColl_8007891C` [ext_fns!] x3: tu/ftCo_CaptureCut.rs:76, tu/ftCo_Throw.rs:76, tu/ftCo_Thrown.rs:64
+- `ftColl_80078A2C` [fn-body] x1: tu/fighter.rs:359
+- `ftColl_80078C70` [fn-body] x1: tu/fighter.rs:364
+- `ftColl_8007925C` [fn-body] x1: tu/fighter.rs:366
+- `ftColl_80079AB0` [ext_fns!] x1: tu/ftCo_Throw.rs:88
+- `ftColl_80079C70` [ext_fns!] x3: tu/ftCo_CaptureCut.rs:77, tu/ftCo_Shouldered.rs:43, tu/ftCo_Thrown.rs:58
+- `ftColl_80079EA8` [ext_fns!] x1: tu/ftCo_Barrel.rs:54
+- `ftColl_8007AB48` [fn-body] x1: tu/fighter.rs:369
+- `ftColl_8007AB80` [fn-body] x1: tu/fighter.rs:370
+- `ftColl_8007ABD0` [ext_fns!/fn-body] x2: tu/ftCo_ThrownKirby.rs:58, tu/ftaction.rs:46
+- `ftColl_8007AC68` [ext_fns!] x1: tu/ftCo_Damage.rs:90
+- `ftColl_8007AC9C` [fn-body] x1: tu/ftaction.rs:47
+- `ftColl_8007AD18` [fn-body] x1: tu/ftaction.rs:48
+- `ftColl_8007AE80` [fn-body] x1: tu/fighter.rs:351
+- `ftColl_8007AFC8` [fn-body] x1: tu/ftaction.rs:49
+- `ftColl_8007AFF8` [ext_fns!/fn-body] x5: tu/fighter.rs:132, tu/ftCo_Damage.rs:160, tu/ftCo_HammerWait.rs:34, tu/ftCo_ThrownKirby.rs:59, tu/ftaction.rs:50
+- `ftColl_8007B0C0` [ext_fns!/fn-body] x5: tu/fighter.rs:133, tu/ftCo_CaptureWait.rs:36, tu/ftCo_DamageIce.rs:67, tu/ftCo_YoshiEgg.rs:37, tu/ftaction.rs:52
+- `ftColl_8007B128` [fn-body] x1: tu/ftaction.rs:53
+- `ftColl_8007B1B8` [ext_fns!] x1: tu/ftCo_Guard.rs:62
+- `ftColl_8007B320` [fn-body] x1: tu/fighter.rs:175
+- `ftColl_8007B4E0` [fn-body] x1: tu/fighter.rs:196
+- `ftColl_8007B62C` [ext_fns!/fn-body] x9: tu/fighter.rs:195, tu/ftCo_CaptureCut.rs:75, tu/ftCo_CaptureWaitKirby.rs:36, tu/ftCo_ShieldBreakFly.rs:41, tu/ftCo_Throw.rs:77, tu/ftCo_Thrown.rs:39, tu/ftCo_ThrownKirby.rs:48, tu/ftCo_YoshiEgg.rs:34, tu/ftaction.rs:51
+- `ftColl_8007B6A0` [ext_fns!] x2: tu/ftCo_Damage.rs:108, tu/ftCo_WarpStar.rs:50
+- `ftColl_8007B6EC` [ext_fns!/fn-body] x2: tu/fighter.rs:197, tu/ftCo_WarpStar.rs:51
+- `ftColl_8007B760` [ext_fns!/fn-body] x5: tu/fighter.rs:198, tu/ftCo_CliffWait.rs:34, tu/ftCo_FlyReflect.rs:45, tu/ftCo_PassiveWall.rs:41, tu/ftCo_YoshiEgg.rs:65
+- `ftColl_8007B7A4` [ext_fns!/fn+panic] x4: tu/ftCo_Bury.rs:73, tu/ftCo_Damage.rs:114, tu/ftCo_Throw.rs:52, tu/ft_0d4d.rs:47
+- `ftColl_8007B868` [ext_fns!] x1: tu/ftCo_Throw.rs:80
+- `ftColl_8007B8E8` [fn-body] x1: tu/fighter.rs:420
+- `ftColl_8007BA0C` [fn-body] x1: tu/fighter.rs:358
+- `ftColl_8007BAC0` [fn-body] x1: tu/fighter.rs:367
+- `ftColl_8007BBCC` [fn-body] x1: tu/fighter.rs:371
+- `ftColl_8007BC90` [fn-body] x1: tu/fighter.rs:361
+- `ftColl_8007BE3C` [fn-body] x1: tu/fighter.rs:388
+- `ftColl_CreateReflectHit` [ext_fns!] x1: tu/ftCo_Guard.rs:108
+- `ftColl_GetWindOffsetVec` [fn-body] x1: tu/fighter.rs:321
+- `ftColl_HurtboxInit` [ext_fns!] x3: tu/ftCo_CaptureWait.rs:40, tu/ftCo_DamageIce.rs:68, tu/ftCo_YoshiEgg.rs:39
+- `ftCommon_CalcSelfAccel_AccelToVelClamped` [ext_fns!] x1: tu/ftCo_PassiveWall.rs:58
+- `ftCommon_CalcSelfAccel_DeaccelAir` [ext_fns!] x1: tu/ftCo_DamageIce.rs:72
+- `ftCommon_CalcSelfAccel_Drift` [ext_fns!] x2: tu/ftCo_Bury.rs:85, tu/ftCo_JumpAerial.rs:64
+- `ftCommon_CalcSelfAccel_DriftFrom` [ext_fns!] x1: tu/ftCo_JumpAerial.rs:63
+- `ftCommon_ClampAirDrift` [ext_fns!] x1: tu/ftCo_Pass.rs:41
+- `ftCommon_Fall` [ext_fns!] x4: tu/ftCo_Bury.rs:84, tu/ftCo_DamageIce.rs:73, tu/ftCo_PassiveWall.rs:57, tu/ftCo_WarpStar.rs:61
+- `ftCommon_GetModelScale` [fn-body] x1: tu/ftanim.rs:65
+- `ftCommon_GrabMash` [ext_fns!] x4: tu/ftCo_Bury.rs:62, tu/ftCo_DamageBind.rs:44, tu/ftCo_Thrown.rs:49, tu/ftCo_ThrownKirby.rs:72
+- `ftCommon_InitGrab` [ext_fns!] x3: tu/ftCo_Bury.rs:54, tu/ftCo_DamageBind.rs:43, tu/ftCo_ThrownKirby.rs:50
+- `ftCommon_SetAccessory` [ext_fns!] x2: tu/ftCo_ThrownKirby.rs:53, tu/ftCo_YoshiEgg.rs:44
+- `ftCommon_SetGroundedKnockbackIfLanded` [ext_fns!] x1: tu/ftCo_Passive.rs:35
+- `ftCommon_UpdateFacing` [ext_fns!] x1: tu/ftCo_SpecialS.rs:44
+- `ftData_MotionStateList` [fn-body] x1: tu/fighter.rs:153
+- `ftData_OnItemPickupExt` [ext_fns!] x1: tu/ftpickupitem.rs:67
+- `ftData_SpecialAirHi` [ext_fns!] x1: tu/ftCo_Attack100.rs:46
+- `ftData_SpecialHi` [ext_fns!] x1: tu/ftCo_Attack100.rs:45
+- `ftData_SpecialLw` [ext_fns!] x1: tu/ftCo_Attack100.rs:44
+- `ftData_SpecialN` [ext_fns!] x1: tu/ftCo_Attack100.rs:42
+- `ftData_SpecialS` [ext_fns!] x1: tu/ftCo_SpecialS.rs:42
+- `ftData_Table_Unk1` [fn-body] x1: tu/fighter.rs:79
+- `ftData_UnkBytePerCharacter` [fn-body] x1: tu/fighter.rs:165
+- `ftData_UnkCallbackPairs0_x0` [fn-body] x1: tu/ftanim.rs:73
+- `ftData_UnkCallbackPairs0_x4` [fn-body] x1: tu/ftanim.rs:74
+- `ftDemo_CreateFighter` [ext_fns!] x1: tu/player.rs:53
+- `ftDemo_SetArchiveData` [ext_fns!] x1: tu/player.rs:54
+- `ftDemo_SetFacingDirection` [ext_fns!] x1: tu/player.rs:55
+- `ftLib_GetItem` [ext_fns!] x1: tu/plbonuslib.rs:63
+- `ftLib_GetKind` [ext_fns!] x2: tu/ftCo_Fall.rs:42, tu/player.rs:73
+- `ftLib_GetMotionId` [ext_fns!] x2: tu/plbonus.rs:39, tu/plbonuslib.rs:78
+- `ftLib_SetScale` [ext_fns!] x1: tu/player.rs:74
+- `ftMObj` [fn-body] x1: tu/ftmetal.rs:24
+- `ftParts_80073758` [fn-body] x1: tu/fighter.rs:145
+- `ftParts_8007462C` [fn-body] x1: tu/ftanim.rs:68
+- `ftParts_8007482C` [fn-body] x1: tu/ftanim.rs:67
+- `ftParts_800749CC` [fn-body] x1: tu/fighter.rs:171
+- `ftParts_80075240` [fn-body] x1: tu/ftanim.rs:69
+- `ftParts_GetBoneIndex` [ext_fns!] x3: tu/ftCo_Bury.rs:60, tu/ftCo_HammerTurn.rs:40, tu/ftCo_ThrownKirby.rs:57
+- `ftParts_SetupParts` [fn-body] x1: tu/fighter.rs:169
+- `ftPartsPObjClearDefaultClass` [fn-body] x2: tu/fighter.rs:143, tu/ft_0c88.rs:24
+- `ftPartsPObjSetDefaultClass` [fn-body] x2: tu/fighter.rs:142, tu/ft_0c88.rs:23
+- `ftSs_Init_CreateThrowGrappleBeam` [ext_fns!] x1: tu/ftCo_Throw.rs:51
+- `ftSs_SpecialLw_8012AEBC` [ext_fns!] x1: tu/ftCo_Escape.rs:50
+- `ftSs_SpecialLw_8012AF38` [ext_fns!] x1: tu/ftCo_Escape.rs:51
+- `ftUcf_FlickCounter` [ext_fns!] x1: tu/ftCo_Pass.rs:39
+- `ftUcf_PadRaw` [ext_fns!] x2: tu/ftCo_Guard.rs:107, tu/ftCo_Turn.rs:59
+- `Geno_AnimBankBeforeSpawn` [fn-body] x1: tu/fighter.rs:159
+- `Geno_DefineAiLike` [fn-body] x1: tu/fighter.rs:87
+- `Geno_DefineBaseKind` [ext_fns!/fn-body] x5: tu/fighter.rs:81, tu/ftCo_Guard.rs:65, tu/ftCo_Landing.rs:33, tu/ftCo_Throw.rs:54, tu/ftafterimage.rs:49
+- `Geno_DefineIsNone` [fn-body] x3: tu/fighter.rs:188, tu/ft_0c88.rs:22, tu/ftanim.rs:81
+- `Geno_DefineKirbyCopy` [ext_fns!] x1: tu/ftCo_ThrownKirby.rs:40
+- `Geno_DefineTemplateSkeleton` [ext_fns!] x2: tu/ftCo_Guard.rs:64, tu/ftCo_Landing.rs:31
+- `Geno_DefineThrownAs` [fn-body] x1: tu/fighter.rs:189
+- `Geno_DefineThrownAsRow` [fn-body] x1: tu/fighter.rs:190
+- `Geno_ToonUnlit` [fn-body] x1: tu/fighter.rs:146
+- `GenoDefine_BindFighter` [fn-body] x1: tu/fighter.rs:155
+- `GenoDefine_InitKinds` [ext_fns!/fn-body] x2: tu/fighter.rs:73, tu/player.rs:42
+- `GenoDefine_PartsTable` [fn-body] x1: tu/fighter.rs:82
+- `GenoDefine_RestPoseTree` [ext_fns!] x1: tu/ftCo_Guard.rs:44
+- `gFtDataList` [fn-body] x1: tu/fighter.rs:151
+- `gm_CStickSmashTargetTest` [fn-body] x1: tu/fighter.rs:294
+- `GObj_InitUserData_Fighter` [fn-body] x1: tu/fighter.rs:162
+- `GObj_SetupGXLink_ftDrawCommon` [fn-body] x1: tu/fighter.rs:161
+- `GXBegin` [fn-body] x1: tu/ftafterimage.rs:75
+- `GXClearVtxDesc` [fn-body] x1: tu/ftafterimage.rs:70
+- `GXColor4u8` [fn-body] x1: tu/ftafterimage.rs:77
+- `GXLoadPosMtxImm` [fn-body] x1: tu/ftafterimage.rs:73
+- `GXPosition3f32` [fn-body] x1: tu/ftafterimage.rs:76
+- `GXSetAlphaCompare` [fn-body] x1: tu/ftafterimage.rs:59
+- `GXSetAlphaUpdate` [fn-body] x1: tu/ftafterimage.rs:57
+- `GXSetBlendMode` [fn-body] x1: tu/ftafterimage.rs:58
+- `GXSetChanCtrl` [fn-body] x1: tu/ftafterimage.rs:68
+- `GXSetColorUpdate` [fn-body] x1: tu/ftafterimage.rs:56
+- `GXSetCullMode` [fn-body] x1: tu/ftafterimage.rs:69
+- `GXSetCurrentMtx` [fn-body] x1: tu/ftafterimage.rs:74
+- `GXSetNumChans` [fn-body] x1: tu/ftafterimage.rs:67
+- `GXSetNumTevStages` [fn-body] x1: tu/ftafterimage.rs:64
+- `GXSetNumTexGens` [fn-body] x1: tu/ftafterimage.rs:62
+- `GXSetTevClampMode` [fn-body] x1: tu/ftafterimage.rs:63
+- `GXSetTevOp` [fn-body] x1: tu/ftafterimage.rs:66
+- `GXSetTevOrder` [fn-body] x1: tu/ftafterimage.rs:65
+- `GXSetVtxAttrFmt` [fn-body] x1: tu/ftafterimage.rs:71
+- `GXSetVtxDesc` [fn-body] x1: tu/ftafterimage.rs:72
+- `GXSetZCompLoc` [fn-body] x1: tu/ftafterimage.rs:61
+- `GXSetZMode` [fn-body] x1: tu/ftafterimage.rs:60
+- `HSD_ForeachAnim_SetLoop` [fn-body] x1: tu/ftanim.rs:45
+- `HSD_ForeachAnim_SetRate` [fn-body] x1: tu/ftanim.rs:47
+- `HSD_GObj_CurrentInvokedProc` [fn-body] x1: tu/ftaction.rs:93
+- `HSD_GObj_JObjKind` [fn-body] x1: tu/fighter.rs:148
+- `HSD_GObj_SetupProc` [ext_fns!/fn-body] x2: tu/crowdsfx.rs:36, tu/fighter.rs:178
+- `HSD_GObjFree` [ext_fns!] x1: tu/player.rs:43
+- `HSD_JObjGetDObj_LoadJoint_Fighter_804D6504` [fn-body] x1: tu/ft_0c8c.rs:32
+- `HSD_MtxInverse` [fn-body] x2: tu/fighter.rs:332, tu/ftanim.rs:48
+- `HSD_MtxSRT` [fn-body] x1: tu/fighter.rs:333
+- `HSD_ObjAlloc_fighter_x2040_alloc_data` [fn-body] x1: tu/ft_0c88.rs:19
+- `HSD_RandSeedPtr` [fn-body] x1: tu/fighter.rs:436
+- `Item_8026A8EC` [fn-body] x1: tu/fighter.rs:248
+- `lbArchive_LoadSymbols_PlCo` [fn-body] x1: tu/fighter.rs:80
+- `Mex_Enabled` [ext_fns!/fn-body] x4: tu/fighter.rs:288, tu/ftCo_CaptureCut.rs:73, tu/ftCo_Damage.rs:89, tu/ftCo_SquatRv.rs:37
+- `Mex_FighterCallbackDispatch` [fn-body] x1: tu/fighter.rs:350
+- `Mex_FtBaseKind` [fn-body] x1: tu/fighter.rs:85
+- `Mex_FtPartsTable` [fn-body] x1: tu/fighter.rs:86
+- `Mex_FtSynth` [fn-body] x1: tu/fighter.rs:84
+- `Mex_FtTrailData` [fn-body] x1: tu/ftafterimage.rs:48
+- `Mex_HasFSmashHook` [ext_fns!] x1: tu/ftCo_AttackS4.rs:44
+- `Mex_InternalForPortKind` [fn-body] x1: tu/fighter.rs:83
+- `Mex_MoveLogicTable` [fn-body] x1: tu/fighter.rs:154
+- `Mex_OnAbsorbDispatch` [fn-body] x1: tu/fighter.rs:406
+- `Mex_OnCatchDispatch` [ext_fns!] x1: tu/ftCo_Catch.rs:47
+- `Mex_OnDeathDispatch` [fn-body] x1: tu/fighter.rs:134
+- `Mex_OnDestroyDispatch` [fn-body] x1: tu/fighter.rs:419
+- `Mex_OnDoubleJumpDispatch` [ext_fns!] x1: tu/ftCo_JumpAerial.rs:39
+- `Mex_OnDSmashDispatch` [ext_fns!] x1: tu/ftCo_AttackLw4.rs:39
+- `Mex_OnFrameDispatch` [fn-body] x1: tu/fighter.rs:262
+- `Mex_OnFSmashDispatch` [ext_fns!] x1: tu/ftCo_AttackS4.rs:45
+- `Mex_OnItemPickupDispatch` [ext_fns!] x1: tu/ftpickupitem.rs:69
+- `Mex_OnLandingDispatch` [fn-body] x1: tu/fighter.rs:209
+- `Mex_OnLoadDispatch` [fn-body] x1: tu/fighter.rs:174
+- `Mex_OnTauntDispatch` [ext_fns!] x1: tu/ftCo_AppealS.rs:44
+- `Mex_OnUSmashDispatch` [ext_fns!] x1: tu/ftCo_AttackHi4.rs:39
+- `Mex_SpecialHiAirDispatch` [ext_fns!] x2: tu/ftCo_Attack100.rs:51, tu/ftCo_SpecialAir.rs:42
+- `Mex_SpecialHiDispatch` [ext_fns!] x1: tu/ftCo_Attack100.rs:50
+- `Mex_SpecialLwAirDispatch` [ext_fns!] x1: tu/ftCo_SpecialAir.rs:43
+- `Mex_SpecialLwDispatch` [ext_fns!] x1: tu/ftCo_Attack100.rs:49
+- `Mex_SpecialNAirDispatch` [ext_fns!] x1: tu/ftCo_SpecialAir.rs:45
+- `Mex_SpecialNDispatch` [ext_fns!] x1: tu/ftCo_Attack100.rs:48
+- `Mex_SpecialSAirDispatch` [ext_fns!] x1: tu/ftCo_SpecialAir.rs:44
+- `Mex_SpecialSDispatch` [ext_fns!] x1: tu/ftCo_SpecialS.rs:47
+- `mpFloorGetLeft` [fn-body] x1: tu/ftbosslib.rs:29
+- `mpFloorGetRight` [fn-body] x1: tu/ftbosslib.rs:28
+- `mpGetSpeed` [ext_fns!/fn-body] x2: tu/fighter.rs:323, tu/ftCo_Bury.rs:67
+- `mpLib_8004DD90_Floor` [ext_fns!] x1: tu/ftCo_CaptureCut.rs:63
+- `mpLib_80458868` [ext_fns!] x1: tu/crowdsfx.rs:42
+- `mpLineGetFlags` [ext_fns!] x2: tu/ftCo_FallSpecial.rs:56, tu/ftCo_Throw.rs:60
+- `mpLineGetNormal` [ext_fns!] x1: tu/ftCo_Bury.rs:64
+- `mpLinesConnected` [ext_fns!] x1: tu/ftCo_CaptureCut.rs:62
+- `Netplay_Enabled` [fn-body] x1: tu/fighter.rs:443
+- `pad_button` [fn-body] x1: tu/fighter.rs:292
+- `PcTraceMotionEnabled` [fn-body] x1: tu/fighter.rs:186
+- `plStale_InitAttackInstance` [ext_fns!] x1: tu/player.rs:88
+- `plStale_ResetStaleMoveTableForPlayer` [ext_fns!] x1: tu/plbonus.rs:63
+- `PSMTXConcat` [fn-body] x1: tu/fighter.rs:334
+- `PSMTXMultVec` [fn-body] x1: tu/ftanim.rs:49
+- `PSVECAdd` [ext_fns!] x1: tu/ftCo_Bury.rs:68
+- `RB_Enabled` [fn-body] x1: tu/fighter.rs:444
+- `RbHashLegacyEnv` [fn-body] x1: tu/fighter.rs:441
+- `RbHashRegion` [fn-body] x1: tu/fighter.rs:439
+- `RbHashSeed` [fn-body] x1: tu/fighter.rs:440
+- `RbHashWord` [fn-body] x1: tu/fighter.rs:438
+- `Replay_Active` [fn-body] x1: tu/fighter.rs:445
+- `Replay_Buttons` [fn-body] x1: tu/fighter.rs:303
+- `Replay_ChecksumSeed` [fn-body] x1: tu/fighter.rs:437
+- `Replay_CStickX` [fn-body] x1: tu/fighter.rs:300
+- `Replay_CStickY` [fn-body] x1: tu/fighter.rs:301
+- `Replay_HasInput` [fn-body] x1: tu/fighter.rs:297
+- `Replay_RawStick` [fn-body] x1: tu/fighter.rs:306
+- `Replay_RawStickBack` [ext_fns!] x1: tu/ftCo_Turn.rs:58
+- `Replay_RecordInput` [fn-body] x1: tu/fighter.rs:304
+- `Replay_StickX` [fn-body] x1: tu/fighter.rs:298
+- `Replay_StickY` [fn-body] x1: tu/fighter.rs:299
+- `Replay_TraceAtProcMap` [fn-body] x1: tu/fighter.rs:343
+- `Replay_TraceFighter` [fn-body] x1: tu/fighter.rs:336
+- `Replay_Tracing` [fn-body] x1: tu/fighter.rs:335
+- `Replay_Trigger` [fn-body] x1: tu/fighter.rs:302
+- `Replay_UcfCardinals` [fn-body] x1: tu/fighter.rs:305
+- `Replay_UcfVersion` [ext_fns!] x6: tu/ftCo_Damage.rs:87, tu/ftCo_DamageFall.rs:47, tu/ftCo_Escape.rs:60, tu/ftCo_Guard.rs:106, tu/ftCo_Pass.rs:38, tu/ftCo_Turn.rs:57
+- `Script_GameEvent` [fn-body] x1: tu/fighter.rs:192
+- `Settings_Int` [fn-body] x1: tu/fighter.rs:293
+- `Slippi_Codes` [fn-body] x1: tu/fighter.rs:235
+- `Snap_Curated` [fn-body] x1: tu/fighter.rs:344
+- `Snap_CuratedMix` [fn-body] x1: tu/fighter.rs:345
+- `Snap_CuratedRegion` [fn-body] x1: tu/fighter.rs:348
+- `Snap_InputHook` [fn-body] x1: tu/fighter.rs:296
+- `Snap_XRegion` [fn-body] x1: tu/fighter.rs:442
+- `stage_grkind` [fn-body] x1: tu/fighter.rs:156
+- `stage_info_grkind` [ext_fns!] x1: tu/ftCo_Bury.rs:48
+
+### melee_fighter - SIGNATURE (376 sites, 302 names)
+
+- `Camera_80029020` [fn-body] x1: tu/fighter.rs:176 -> port `melee_world::tu/camera.rs:46`
+- `Camera_800290D4` [fn-body] x1: tu/fighter.rs:422 -> port `melee_world::tu/camera.rs:69`
+- `Camera_8003010C` [fn+panic] x1: tu/ft_0d31.rs:36 -> port `melee_world::cm/camera.rs:614`
+- `Camera_80030E10` [ext_fns!] x1: tu/plbonus.rs:33 -> port `melee_world::cm/camera.rs:652`
+- `Camera_80031144` [fn-body] x1: tu/fighter.rs:258 -> port `melee_world::cm/camera.rs:679`
+- `Command_Execute` [fn-body] x1: tu/ftaction.rs:88 -> port `melee_runtime::tu/lbcommand.rs:145`
+- `efAsync_LoadSync` [fn-body] x1: tu/fighter.rs:164 -> port `melee_world::tu/efasync.rs:959`
+- `efAsync_QueueClear` [fn-body] x1: tu/fighter.rs:136 -> port `melee_world::tu/efasync.rs:1041`
+- `efAsync_QueueFlush` [fn-body] x1: tu/fighter.rs:137 -> port `melee_world::tu/efasync.rs:1030`
+- `efLib_SetParamAlpha` [ext_fns!] x1: tu/ftCo_Guard.rs:43 -> port `melee_world::tu/eflib.rs:947`
+- `efSync_Spawn` [ext_fns!/fn+panic/fn-body] x5: tu/ftCo_Bury.rs:61, tu/ftCo_Guard.rs:60, tu/ftCo_ItemScopeFire.rs:46, tu/ft_0cdf.rs:24, tu/ft_0d4d.rs:35 -> port `melee_world::tu/efsync.rs:251`
+- `Fighter_ChangeMotionState` [fn-body] x1: tu/ftattacks4combo.rs:17 -> port `melee_fighter::tu/fighter.rs:1110`
+- `Fighter_FirstInitialize_80067A84` [ext_fns!] x1: tu/player.rs:41 -> port `melee_fighter::tu/fighter.rs:495`
+- `Fighter_TakeDamage_8006CC7C` [fn-body] x1: tu/ftaction.rs:84 -> port `melee_fighter::tu/fighter.rs:2495`
+- `ft_80082C74` [ext_fns!/fn-body] x5: tu/ftCo_AttackAir.rs:51, tu/ftCo_CargoFall.rs:40, tu/ftCo_CargoThrow.rs:63, tu/ftCo_EscapeAir.rs:51, tu/ft_0cdf.rs:22 -> port `melee_fighter::tu/ft_081b.rs:416`
+- `ft_80083090` [ext_fns!] x1: tu/ftCo_FallSpecial.rs:55 -> port `melee_fighter::tu/ft_081b.rs:498`
+- `ft_800831CC` [ext_fns!] x1: tu/ftCo_Fall.rs:64 -> port `melee_fighter::tu/ft_081b.rs:519`
+- `ft_80083464` [ext_fns!] x1: tu/ftCo_StopCeil.rs:34 -> port `melee_fighter::tu/ft_081b.rs:531`
+- `ft_8008370C` [ext_fns!] x1: tu/ftCo_CatchCut.rs:36 -> port `melee_fighter::tu/ft_081b.rs:562`
+- `ft_80083844` [fn+panic] x1: tu/ft_0d4d.rs:43 -> port `melee_fighter::tu/ft_081b.rs:568`
+- `ft_80083910` [ext_fns!] x1: tu/ftCo_CaptureCut.rs:49 -> port `melee_fighter::tu/ft_081b.rs:575`
+- `ft_80083C00` [ext_fns!/fn-body] x4: tu/ftCo_CapturePulled.rs:53, tu/ftCo_CaptureWait.rs:52, tu/ftCo_Throw.rs:69, tu/ftco_0dc2.rs:24 -> port `melee_fighter::tu/ft_081b.rs:592`
+- `ft_80083CE4` [ext_fns!] x1: tu/ftCo_Throw.rs:70 -> port `melee_fighter::tu/ft_081b.rs:599`
+- `ft_80083E64` [ext_fns!] x1: tu/ftCo_WarpStar.rs:64 -> port `melee_fighter::tu/ft_081b.rs:616`
+- `ft_8008403C` [ext_fns!/fn-body] x5: tu/ftCo_CapturePulled.rs:54, tu/ftCo_CaptureWait.rs:53, tu/ftCo_CargoThrow.rs:61, tu/ftCo_CargoWait.rs:38, tu/ftco_0dc2.rs:25 -> port `melee_fighter::tu/ft_081b.rs:630`
+- `ft_80084104` [ext_fns!] x1: tu/ftCo_AttackS4.rs:57 -> port `melee_fighter::tu/ft_081b.rs:637`
+- `ft_800841B8` [ext_fns!/fn-body] x7: tu/ftCo_CaptureCut.rs:48, tu/ftCo_Catch.rs:53, tu/ftCo_CatchAttack.rs:35, tu/ftCo_CatchPull.rs:45, tu/ftCo_CatchWait.rs:41, tu/ftCo_Throw.rs:72, tu/ft_0cdf.rs:21 -> port `melee_fighter::tu/ft_081b.rs:644`
+- `ft_80084BFC` [fn-body] x1: tu/ftaction.rs:73 -> port `melee_fighter::tu/ft_081b.rs:795`
+- `ft_80084C38` [fn-body] x1: tu/ftaction.rs:74 -> port `melee_fighter::tu/ft_081b.rs:799`
+- `ft_800877F8` [ext_fns!] x1: tu/plbonuslib.rs:41 -> port `melee_fighter::ft0877.rs:24`
+- `ft_80087818` [ext_fns!] x1: tu/plbonuslib.rs:42 -> port `melee_fighter::ft0877.rs:27`
+- `ft_80087858` [ext_fns!] x1: tu/plbonuslib.rs:43 -> port `melee_fighter::ft0877.rs:33`
+- `ft_80087878` [ext_fns!] x1: tu/plbonuslib.rs:44 -> port `melee_fighter::ft0877.rs:36`
+- `ft_800878BC` [ext_fns!] x1: tu/plbonuslib.rs:45 -> port `melee_fighter::ft0877.rs:40`
+- `ft_80087900` [ext_fns!] x1: tu/plbonuslib.rs:46 -> port `melee_fighter::ft0877.rs:44`
+- `ft_80087944` [ext_fns!] x1: tu/plbonuslib.rs:47 -> port `melee_fighter::ft0877.rs:48`
+- `ft_80087988` [ext_fns!] x1: tu/plbonus.rs:34 -> port `melee_fighter::ft0877.rs:53`
+- `ft_800879D8` [ext_fns!] x1: tu/plbonus.rs:35 -> port `melee_fighter::ft0877.rs:56`
+- `ft_800879F8` [ext_fns!] x1: tu/plbonus.rs:36 -> port `melee_fighter::ft0877.rs:59`
+- `ft_80087A8C` [ext_fns!] x1: tu/plbonuslib.rs:48 -> port `melee_fighter::ft0877.rs:73`
+- `ft_80087A98` [ext_fns!] x1: tu/plbonuslib.rs:49 -> port `melee_fighter::ft0877.rs:76`
+- `ft_80087AA4` [ext_fns!] x1: tu/plbonuslib.rs:50 -> port `melee_fighter::ft0877.rs:79`
+- `ft_80087AB4` [ext_fns!] x1: tu/plbonuslib.rs:51 -> port `melee_fighter::ft0877.rs:82`
+- `ft_80087AC0` [ext_fns!] x1: tu/player.rs:45 -> port `melee_fighter::ft0877.rs:85`
+- `ft_80087AEC` [ext_fns!] x1: tu/plbonuslib.rs:52 -> port `melee_fighter::ft0877.rs:88`
+- `ft_80087B34` [ext_fns!] x1: tu/plbonuslib.rs:53 -> port `melee_fighter::ft0877.rs:93`
+- `ft_80087BAC` [ext_fns!] x1: tu/player.rs:46 -> port `melee_fighter::ft0877.rs:111`
+- `ft_80087BC0` [ext_fns!] x1: tu/player.rs:47 -> port `melee_fighter::ft0877.rs:114`
+- `ft_80087BEC` [ext_fns!] x1: tu/player.rs:48 -> port `melee_fighter::ft0877.rs:119`
+- `ft_80087D0C` [fn-body] x1: tu/ftaction.rs:72 -> port `melee_fighter::ft0877.rs:175`
+- `ft_800889F4` [fn-body] x1: tu/ftaction.rs:71 -> port `melee_fighter::ft0881.rs:107`
+- `ft_80089884` [ext_fns!] x1: tu/plbonuslib.rs:54 -> port `melee_fighter::ft0892.rs:185`
+- `ft_80089890` [ext_fns!] x1: tu/plbonuslib.rs:55 -> port `melee_fighter::ft0892.rs:188`
+- `ft_8008989C` [ext_fns!] x1: tu/plbonuslib.rs:56 -> port `melee_fighter::ft0892.rs:191`
+- `ft_800898A8` [ext_fns!] x1: tu/plbonuslib.rs:57 -> port `melee_fighter::ft0892.rs:194`
+- `ft_800898B4` [ext_fns!] x1: tu/plbonuslib.rs:58 -> port `melee_fighter::ft0892.rs:197`
+- `ft_800898C0` [ext_fns!] x1: tu/plbonus.rs:37 -> port `melee_fighter::ft0892.rs:202`
+- `ft_8008A1B8` [fn-body] x1: tu/ftaction.rs:75 -> port `melee_fighter::tu/ft_0899.rs:198`
+- `ftAction_80073240` [fn-body] x1: tu/ftanim.rs:79 -> port `melee_fighter::tu/ftaction.rs:797`
+- `ftAnim_8006EBA4` [ext_fns!/fn-body] x2: tu/ftCo_AttackS4.rs:53, tu/ftattacks4combo.rs:20 -> port `melee_fighter::tu/ftanim.rs:356`
+- `ftCamera_80076018` [fn+panic] x1: tu/ft_0d4d.rs:30 -> port `melee_fighter::tu/ftcamera.rs:39`
+- `ftCo_8008E908` [fn-body] x1: tu/fighter.rs:394 -> port `melee_fighter::tu/ftCo_Damage.rs:655`
+- `ftCo_8008E984` [fn-body] x1: tu/fighter.rs:379 -> port `melee_fighter::tu/ftCo_Damage.rs:668`
+- `ftCo_8008E9D0` [fn-body] x1: tu/fighter.rs:395 -> port `melee_fighter::tu/ftCo_Damage.rs:685`
+- `ftCo_8008EB58` [fn-body] x1: tu/fighter.rs:396 -> port `melee_fighter::tu/ftCo_Damage.rs:703`
+- `ftCo_8008EC90` [fn-body] x1: tu/fighter.rs:392 -> port `melee_fighter::tu/ftCo_Damage.rs:779`
+- `ftCo_80091A4C` [ext_fns!] x1: tu/ftCo_AttackS4.rs:70 -> port `melee_fighter::tu/ftCo_Guard.rs:188`
+- `ftCo_80094E54` [ext_fns!] x4: tu/ftCo_AttackHi3.rs:35, tu/ftCo_AttackHi4.rs:35, tu/ftCo_AttackLw3.rs:35, tu/ftCo_AttackLw4.rs:35 -> port `melee_fighter::tu/ftCo_ItemThrow.rs:98`
+- `ftCo_80099A58` [ext_fns!] x1: tu/ftCo_Bury.rs:80 -> port `melee_fighter::tu/ftCo_EscapeAir.rs:60`
+- `ftCo_8009E318` [fn-body] x1: tu/ftaction.rs:83 -> port `melee_fighter::tu/ftdynamics.rs:424`
+- `ftCo_8009E714` [fn-body] x1: tu/ftaction.rs:87 -> port `melee_fighter::tu/ftdynamics.rs:528`
+- `ftCo_800BFFD0` [fn-body] x1: tu/ftaction.rs:81 -> port `melee_fighter::tu/ftcolanim.rs:135`
+- `ftCo_800C3B10` [ext_fns!] x1: tu/ftCo_Bury.rs:79 -> port `melee_fighter::tu/ftco_aircatch.rs:95`
+- `ftCo_800C5240` [ext_fns!] x1: tu/ftCo_Bury.rs:70 -> port `melee_fighter::tu/ftCo_HammerWait.rs:160`
+- `ftCo_800C5A98` [ext_fns!] x1: tu/ftCo_Bury.rs:71 -> port `melee_fighter::tu/ftCo_HammerJump.rs:57`
+- `ftCo_800C88D4` [ext_fns!] x1: tu/ftpickupitem.rs:59 -> port `melee_fighter::tu/ft_0c88.rs:71`
+- `ftCo_800C8B60` [fn-body] x1: tu/ftaction.rs:86 -> port `melee_fighter::tu/ft_0c88.rs:131`
+- `ftCo_800CB870` [ext_fns!] x1: tu/ftCo_Bury.rs:83 -> port `melee_fighter::tu/ftCo_JumpAerial.rs:122`
+- `ftCo_800CD2C4` [fn-body] x2: tu/ftlipstickswing.rs:17, tu/ftstarrodswing.rs:17 -> port `melee_fighter::tu/ft_0cd1.rs:117`
+- `ftCo_800CECE8` [ext_fns!] x1: tu/ftCo_AttackS4.rs:63 -> port `melee_fighter::tu/ftattacks4combo.rs:28`
+- `ftCo_800D105C` [fn-body] x1: tu/ft_0d27.rs:15 -> port `melee_fighter::tu/ftchangeparam.rs:159`
+- `ftCo_800D4F24` [ext_fns!] x1: tu/player.rs:49 -> port `melee_fighter::tu/ft_0d4d.rs:119`
+- `ftCo_800D4FF4` [ext_fns!] x1: tu/player.rs:50 -> port `melee_fighter::tu/ft_0d4d.rs:141`
+- `ftCo_800D5FB0` [ext_fns!] x1: tu/ftCo_AttackS4.rs:74 -> port `melee_fighter::tu/ftCo_Squat.rs:71`
+- `ftCo_800D6824` [ext_fns!] x1: tu/ftCo_AttackS4.rs:60 -> port `melee_fighter::tu/ftCo_Attack100.rs:90`
+- `ftCo_800D68C0` [ext_fns!] x1: tu/ftCo_AttackS4.rs:61 -> port `melee_fighter::tu/ftCo_Attack100.rs:117`
+- `ftCo_800D705C` [ext_fns!] x1: tu/ftCo_Bury.rs:82 -> port `melee_fighter::tu/ftCo_Attack100.rs:335`
+- `ftCo_800D7100` [ext_fns!] x1: tu/ftCo_Bury.rs:78 -> port `melee_fighter::tu/ftCo_Attack100.rs:345`
+- `ftCo_800DB500` [fn-body] x1: tu/ftanim.rs:80 -> port `melee_fighter::tu/ftCo_CapturePulled.rs:281`
+- `ftCo_800DE9D8` [ext_fns!] x1: tu/ftCo_AttackS4.rs:71 -> port `melee_fighter::tu/ftCo_AppealS.rs:79`
+- `ftCo_800DEE84` [fn-body] x1: tu/ftaction.rs:85 -> port `melee_fighter::ft0df.rs:34`
+- `ftCo_Attack100_CheckInput` [ext_fns!] x1: tu/ftCo_AttackS4.rs:59 -> port `melee_fighter::tu/ftCo_Attack100.rs:144`
+- `ftCo_Attack1_CheckInput` [ext_fns!] x1: tu/ftCo_AttackS4.rs:69 -> port `melee_fighter::tu/ftCo_Attack1.rs:63`
+- `ftCo_Attack_800CDD14` [ext_fns!] x1: tu/ftCo_AttackS4.rs:43 -> port `melee_fighter::tu/ft_0cdd.rs:25`
+- `ftCo_AttackAir_CheckItemThrowInput` [ext_fns!] x1: tu/ftCo_Bury.rs:81 -> port `melee_fighter::tu/ftCo_AttackAir.rs:93`
+- `ftCo_AttackHi3_CheckInput` [ext_fns!] x1: tu/ftCo_AttackS4.rs:67 -> port `melee_fighter::tu/ftCo_AttackHi3.rs:49`
+- `ftCo_AttackHi4_CheckInput` [ext_fns!] x1: tu/ftCo_AttackS4.rs:64 -> port `melee_fighter::tu/ftCo_AttackHi4.rs:73`
+- `ftCo_AttackLw3_CheckInput` [ext_fns!] x1: tu/ftCo_AttackS4.rs:68 -> port `melee_fighter::tu/ftCo_AttackLw3.rs:70`
+- `ftCo_AttackS4_Anim` [fn-body] x1: tu/ftattacks4combo.rs:21 -> port `melee_fighter::tu/ftCo_AttackS4.rs:220`
+- `ftCo_AttackS4_Coll` [fn-body] x1: tu/ftattacks4combo.rs:23 -> port `melee_fighter::tu/ftCo_AttackS4.rs:262`
+- `ftCo_AttackS4_Phys` [fn-body] x1: tu/ftattacks4combo.rs:22 -> port `melee_fighter::tu/ftCo_AttackS4.rs:258`
+- `ftCo_Catch_CheckInput` [ext_fns!] x1: tu/ftCo_AttackS4.rs:62 -> port `melee_fighter::tu/ftCo_Catch.rs:81`
+- `ftCo_Damage_CalcKnockback` [fn-body] x1: tu/fighter.rs:389 -> port `melee_fighter::tu/ftCo_Damage.rs:223`
+- `ftCo_Dash_CheckInput` [ext_fns!] x1: tu/ftCo_AttackS4.rs:73 -> port `melee_fighter::tu/ftCo_Dash.rs:65`
+- `ftCo_Fall_Enter` [ext_fns!] x1: tu/ftCo_Bury.rs:75 -> port `melee_fighter::tu/ftCo_Fall.rs:86`
+- `ftCo_Jump_CheckInput` [ext_fns!] x1: tu/ftCo_AttackS4.rs:72 -> port `melee_fighter::tu/ftCo_Jump.rs:86`
+- `ftCo_LandingFallSpecial_Enter` [ext_fns!] x2: tu/ftCo_EscapeAir.rs:52, tu/ftCo_FallSpecial.rs:58 -> port `melee_fighter::tu/ftCo_Landing.rs:131`
+- `ftCo_SpecialAir_CheckInput` [ext_fns!] x1: tu/ftCo_Bury.rs:76 -> port `melee_fighter::tu/ftCo_SpecialAir.rs:51`
+- `ftCo_SpecialS_CheckInput` [ext_fns!] x1: tu/ftCo_AttackS4.rs:58 -> port `melee_fighter::tu/ftCo_SpecialS.rs:65`
+- `ftCo_Turn_CheckInput` [ext_fns!] x1: tu/ftCo_AttackS4.rs:75 -> port `melee_fighter::tu/ftCo_Turn.rs:71`
+- `ftCo_Wait_IASA` [fn-body] x1: tu/ftattacks4combo.rs:24 -> port `melee_fighter::tu/ftCo_Wait.rs:69`
+- `ftCo_Walk_CheckInput` [ext_fns!] x1: tu/ftCo_AttackS4.rs:76 -> port `melee_fighter::tu/ftCo_Walk.rs:62`
+- `ftColl_8007B8CC` [ext_fns!] x1: tu/ftCo_Barrel.rs:48 -> port `melee_fighter::ft0df.rs:245`
+- `ftCommon_8007D5D4` [fn-body] x1: tu/ftaction.rs:56 -> port `melee_fighter::ftcommon2.rs:48`
+- `ftCommon_8007D60C` [fn-body] x1: tu/ftaction.rs:57 -> port `melee_fighter::ftcommon2.rs:64`
+- `ftCommon_8007D7FC` [fn-body] x1: tu/ftaction.rs:55 -> port `melee_fighter::ftcommon3.rs:97`
+- `ftCommon_8007E2FC` [ext_fns!] x3: tu/ftCo_KinokoGiantEnd.rs:32, tu/ftCo_PassiveCeil.rs:32, tu/ftCo_PassiveWall.rs:32 -> port `melee_fighter::ftcommon2.rs:184`
+- `ftCommon_8007E83C` [fn-body] x1: tu/ftaction.rs:59 -> port `melee_fighter::ftcommon3.rs:326`
+- `ftCommon_8007EBAC` [fn-body] x1: tu/ftaction.rs:61 -> port `melee_fighter::ftcommon2.rs:199`
+- `ftCommon_8007EC30` [fn-body] x1: tu/ftaction.rs:60 -> port `melee_fighter::ftcommon3.rs:404`
+- `ftCommon_8007ECD4` [fn-body] x1: tu/ftaction.rs:62 -> port `melee_fighter::ftcommon2.rs:206`
+- `ftCommon_8007EEC8` [fn-body] x1: tu/ftaction.rs:63 -> port `melee_fighter::ftcommon3.rs:419`
+- `ftCommon_8007EF5C` [fn-body] x1: tu/ftaction.rs:64 -> port `melee_fighter::ftcommon3.rs:426`
+- `ftCommon_8007F5CC` [fn-body] x1: tu/ftaction.rs:58 -> port `melee_fighter::ftcommon3.rs:441`
+- `ftCommon_8007F6A4` [fn-body] x1: tu/ftanim.rs:66 -> port `melee_fighter::ftcommon3.rs:455`
+- `ftCommon_80080484` [fn-body] x1: tu/ftaction.rs:54 -> port `melee_fighter::ftcommon2.rs:399`
+- `ftData_800855C8` [ext_fns!] x1: tu/player.rs:51 -> port `melee_fighter::tu/ftdata.rs:644`
+- `ftData_8008578C` [ext_fns!] x1: tu/player.rs:52 -> port `melee_fighter::tu/ftdata.rs:774`
+- `ftData_80085E50` [fn-body] x1: tu/ftanim.rs:70 -> port `melee_fighter::tu/ftdata.rs:1284`
+- `ftData_80085FD4` [fn-body] x1: tu/ftanim.rs:71 -> port `melee_fighter::tu/ftdata.rs:1300`
+- `ftLib_800865C0` [ext_fns!] x1: tu/plbonuslib.rs:60 -> port `melee_fighter::ftlib.rs:166`
+- `ftLib_800865CC` [ext_fns!] x1: tu/plbonuslib.rs:61 -> port `melee_fighter::ftlib.rs:167`
+- `ftLib_800865F0` [ext_fns!] x1: tu/player.rs:57 -> port `melee_fighter::ftlib.rs:174`
+- `ftLib_80086644` [ext_fns!] x1: tu/plbonuslib.rs:59 -> port `melee_fighter::ftlib.rs:182`
+- `ftLib_80086664` [ext_fns!] x1: tu/player.rs:58 -> port `melee_fighter::ftlib.rs:183`
+- `ftLib_800867D8` [ext_fns!] x1: tu/plbonuslib.rs:62 -> port `melee_fighter::ftlib.rs:215`
+- `ftLib_800867E8` [ext_fns!] x1: tu/player.rs:59 -> port `melee_fighter::ftlib.rs:216`
+- `ftLib_8008688C` [ext_fns!] x1: tu/player.rs:60 -> port `melee_fighter::ftlib.rs:226`
+- `ftLib_80086960` [ext_fns!] x1: tu/plbonuslib.rs:64 -> port `melee_fighter::ftlib.rs:246`
+- `ftLib_800869F8` [ext_fns!] x1: tu/player.rs:61 -> port `melee_fighter::ftlib.rs:258`
+- `ftLib_80086A4C` [ext_fns!] x1: tu/player.rs:62 -> port `melee_fighter::ftlib.rs:263`
+- `ftLib_80086B90` [ext_fns!] x1: tu/player.rs:63 -> port `melee_fighter::ftlib.rs:289`
+- `ftLib_80086BB4` [ext_fns!] x1: tu/player.rs:64 -> port `melee_fighter::ftlib.rs:290`
+- `ftLib_80086BE0` [ext_fns!] x1: tu/plbonuslib.rs:65 -> port `melee_fighter::ftlib.rs:294`
+- `ftLib_80086F4C` [ext_fns!] x1: tu/player.rs:65 -> port `melee_fighter::ftlib.rs:339`
+- `ftLib_80086F80` [ext_fns!] x1: tu/player.rs:66 -> port `melee_fighter::ftlib.rs:343`
+- `ftLib_8008701C` [ext_fns!] x1: tu/player.rs:67 -> port `melee_fighter::ftlib.rs:366`
+- `ftLib_800870F0` [ext_fns!] x1: tu/player.rs:68 -> port `melee_fighter::ftlib.rs:389`
+- `ftLib_80087120` [ext_fns!] x1: tu/plbonuslib.rs:66 -> port `melee_fighter::ftlib.rs:391`
+- `ftLib_80087140` [ext_fns!] x1: tu/player.rs:69 -> port `melee_fighter::ftlib.rs:392`
+- `ftLib_80087300` [ext_fns!] x2: tu/player.rs:70, tu/plbonuslib.rs:68 -> port `melee_fighter::ftlib.rs:414`
+- `ftLib_8008730C` [ext_fns!] x1: tu/plbonuslib.rs:67 -> port `melee_fighter::ftlib.rs:415`
+- `ftLib_8008732C` [ext_fns!] x2: tu/plbonus.rs:38, tu/plbonuslib.rs:69 -> port `melee_fighter::ftlib.rs:422`
+- `ftLib_80087354` [ext_fns!] x1: tu/plbonuslib.rs:70 -> port `melee_fighter::ftlib.rs:423`
+- `ftLib_8008737C` [ext_fns!] x1: tu/plbonuslib.rs:71 -> port `melee_fighter::ftlib.rs:424`
+- `ftLib_800873A4` [ext_fns!] x1: tu/plbonuslib.rs:72 -> port `melee_fighter::ftlib.rs:425`
+- `ftLib_800873CC` [ext_fns!] x1: tu/player.rs:71 -> port `melee_fighter::ftlib.rs:426`
+- `ftLib_800874BC` [ext_fns!] x1: tu/plbonuslib.rs:73 -> port `melee_fighter::ftlib.rs:448`
+- `ftLib_80087610` [ext_fns!] x1: tu/player.rs:72 -> port `melee_fighter::tu/ftlib.rs:85`
+- `ftLib_800876F4` [ext_fns!] x1: tu/plbonuslib.rs:74 -> port `melee_fighter::ftlib.rs:455`
+- `ftLib_80087700` [ext_fns!] x1: tu/plbonuslib.rs:75 -> port `melee_fighter::ftlib.rs:456`
+- `ftLib_8008777C` [ext_fns!] x1: tu/plbonuslib.rs:76 -> port `melee_fighter::tu/ftlib.rs:95`
+- `ftLib_800877D4` [ext_fns!] x1: tu/plbonuslib.rs:77 -> port `melee_fighter::ftlib.rs:463`
+- `ftParts_80074B0C` [fn-body] x1: tu/ftaction.rs:65 -> port `melee_fighter::tu/ftparts.rs:108`
+- `gm_8016B3A0` [ext_fns!] x1: tu/plbonus.rs:46 -> port `melee_world::gr/stage.rs:549`
+- `GObj_Create` [ext_fns!/fn-body] x2: tu/crowdsfx.rs:35, tu/fighter.rs:160 -> port `melee_runtime::gobj.rs:528`
+- `Ground_801C4DA0` [ext_fns!] x1: tu/ftCo_BarrelWait.rs:42 -> port `melee_world::gr/ground.rs:329`
+- `Ground_801C4DD0` [ext_fns!] x1: tu/ftCo_BarrelWait.rs:41 -> port `melee_world::gr/ground.rs:334`
+- `Ground_801C5700` [ext_fns!] x1: tu/ftCo_Bury.rs:49 -> port `melee_world::gr/ground.rs:352`
+- `HSD_AObjInitEndCallBack` [fn-body] x1: tu/ftanim.rs:28 -> port `melee_runtime::tu/aobj.rs:112`
+- `HSD_AObjInvokeCallBacks` [fn-body] x1: tu/ftanim.rs:29 -> port `melee_runtime::tu/aobj.rs:117`
+- `HSD_AObjReqAnim` [fn-body] x1: tu/ftanim.rs:31 -> port `melee_runtime::tu/aobj.rs:128`
+- `HSD_AObjSetRate` [fn-body] x1: tu/ftanim.rs:30 -> port `melee_runtime::tu/aobj.rs:433`
+- `HSD_CObjGetCurrent` [fn-body] x1: tu/ftafterimage.rs:51 -> port `melee_runtime::tu/cobj.rs:678`
+- `HSD_DObjClearFlags` [fn-body] x1: tu/ftparts.rs:23 -> port `melee_runtime::tu/dobj.rs:183`
+- `HSD_DObjLoadDesc` [fn-body] x1: tu/ftmetal.rs:17 -> port `melee_runtime::tu/dobj.rs:287`
+- `HSD_DObjModifyFlags` [fn-body] x1: tu/ftmetal.rs:16 -> port `melee_runtime::tu/dobj.rs:188`
+- `HSD_DObjResolveRefsAll` [fn-body] x1: tu/ftmetal.rs:18 -> port `melee_runtime::tu/dobj.rs:334`
+- `HSD_DObjSetFlags` [fn-body] x1: tu/ftparts.rs:22 -> port `melee_runtime::tu/dobj.rs:178`
+- `HSD_GObjObject_80390A70` [fn-body] x1: tu/fighter.rs:147 -> port `melee_runtime::tu/gobjobject.rs:14`
+- `HSD_JObjAddAnim` [ext_fns!/fn-body] x3: tu/ftCo_WarpStar.rs:53, tu/ft_0d27.rs:21, tu/ftanim.rs:38 -> port `melee_runtime::tu/jobj.rs:326`
+- `HSD_JObjAddAnimAll` [fn-body] x1: tu/ftanim.rs:39 -> port `melee_runtime::tu/jobj.rs:327`
+- `HSD_JObjAddDObj` [fn-body] x1: tu/ftmetal.rs:15 -> port `melee_runtime::tu/jobj.rs:299`
+- `HSD_JObjAnim` [ext_fns!/fn-body] x2: tu/ftCo_WarpStar.rs:55, tu/ftanim.rs:33 -> port `melee_runtime::tu/jobj.rs:323`
+- `HSD_JObjAnimAll` [ext_fns!/fn-body] x4: tu/fighter.rs:354, tu/ftCo_Fall.rs:48, tu/ftCo_Guard.rs:50, tu/ftanim.rs:34 -> port `melee_runtime::tu/jobj.rs:325`
+- `HSD_JObjClearFlags` [fn-body] x3: tu/ftanim.rs:36, tu/ftmetal.rs:14, tu/ftparts.rs:25 -> port `melee_runtime::tu/jobj.rs:305`
+- `HSD_JObjClearFlagsAll` [fn-body] x1: tu/ftanim.rs:37 -> port `melee_runtime::tu/jobj.rs:306`
+- `HSD_JObjGetDObj` [fn-body] x1: tu/ftmetal.rs:12 -> port `melee_runtime::tu/jobj.rs:298`
+- `HSD_JObjLoadJoint` [fn-body] x1: tu/fighter.rs:144 -> port `melee_runtime::tu/jobj.rs:105`
+- `HSD_JObjRemoveAll` [fn-body] x1: tu/fighter.rs:208 -> port `melee_runtime::tu/jobj.rs:314`
+- `HSD_JObjRemoveAnimAllByFlags` [fn-body] x1: tu/ftanim.rs:43 -> port `melee_runtime::tu/jobj.rs:316`
+- `HSD_JObjReqAnimAll` [fn-body] x1: tu/ftanim.rs:40 -> port `melee_runtime::tu/jobj.rs:322`
+- `HSD_JObjReqAnimAllByFlags` [fn-body] x1: tu/ftanim.rs:41 -> port `melee_runtime::tu/jobj.rs:320`
+- `HSD_JObjReqAnimByFlags` [fn-body] x1: tu/ftanim.rs:42 -> port `melee_runtime::tu/jobj.rs:319`
+- `HSD_JObjSetFlags` [fn-body] x1: tu/ftmetal.rs:13 -> port `melee_runtime::tu/jobj.rs:303`
+- `HSD_JObjSetMtxDirtySub` [ext_fns!/fn+panic/fn-body] x16: tu/ftCo_Bury.rs:66, tu/ftCo_CaptureCut.rs:59, tu/ftCo_CaptureKirby.rs:50, tu/ftCo_CaptureKoopa.rs:42, tu/ftCo_CaptureWaitKirby.rs:50, tu/ftCo_DamageIce.rs:62, tu/ftCo_Guard.rs:42, tu/ftCo_HammerTurn.rs:42, tu/ftCo_JumpAerial.rs:40, tu/ftCo_Throw.rs:96, tu/ftCo_ThrownKirby.rs:55, tu/ftCo_WarpStar.rs:56, tu/ftCo_YoshiEgg.rs:36, tu/ft_0d31.rs:63, tu/ftanim.rs:35, tu/ftco_0c35.rs:36 -> port `melee_runtime::tu/jobj.rs:291`
+- `HSD_JObjSetRotation` [fn-body] x1: tu/ftbosslib.rs:27 -> port `melee_world::tu/grinl.rs:86`
+- `HSD_JObjSetRotationZ` [fn-body] x1: tu/ftparts.rs:28 -> port `melee_world::hud/jobj_inl.rs:37`
+- `HSD_JObjSetupMatrix` [fn-body] x1: tu/fighter.rs:331 -> port `melee_runtime::tu/lb_00B0.rs:164`
+- `HSD_JObjSetupMatrixSub` [ext_fns!] x1: tu/ftCo_DownBound.rs:34 -> port `melee_runtime::tu/jobj.rs:312`
+- `HSD_JObjUnref` [fn-body] x1: tu/fighter.rs:427 -> port `melee_runtime::tu/jobj.rs:124`
+- `HSD_LObjRemoveAll` [fn-body] x1: tu/fighter.rs:429 -> port `melee_runtime::tu/lobj.rs:864`
+- `HSD_ObjAlloc` [fn-body] x1: tu/fighter.rs:70 -> port `melee_runtime::tu/objalloc.rs:108`
+- `HSD_ObjAllocInit` [ext_fns!/fn-body] x2: tu/fighter.rs:69, tu/player.rs:44 -> port `melee_runtime::tu/objalloc.rs:145`
+- `HSD_ObjFree` [fn-body] x1: tu/fighter.rs:71 -> port `melee_runtime::tu/objalloc.rs:130`
+- `HSD_Randf` [ext_fns!] x2: tu/ftCo_Damage.rs:102, tu/ftCo_DamageIce.rs:66 -> port `melee_runtime::tu/random.rs:30`
+- `HSD_Randi` [fn-body] x3: tu/fighter.rs:380, tu/ftaction.rs:76, tu/ftwaitanim.rs:16 -> port `melee_runtime::tu/random.rs:33`
+- `HSD_StateInvalidate` [fn-body] x1: tu/ftafterimage.rs:54 -> port `melee_runtime::tu/state.rs:665`
+- `HSD_TObjAnim` [fn-body] x1: tu/ftanim.rs:32 -> port `melee_runtime::tu/tobj.rs:434`
+- `ifMagnify_802FB6E8` [ext_fns!/fn-body] x3: tu/fighter.rs:355, tu/plbonuslib.rs:86, tu/pltrick.rs:37 -> port `melee_world::tu/ifmagnify.rs:219`
+- `ifMagnify_802FC998` [fn-body] x1: tu/fighter.rs:237 -> port `melee_world::tu/ifmagnify.rs:730`
+- `ifStatus_802F69C0` [ext_fns!] x1: tu/player.rs:78 -> port `melee_world::tu/ifstatus.rs:903`
+- `ifStatus_802F6AF8` [ext_fns!] x1: tu/player.rs:79 -> port `melee_world::tu/ifstatus.rs:911`
+- `ifStatus_802F6C04` [ext_fns!] x1: tu/player.rs:80 -> port `melee_world::tu/ifstatus.rs:915`
+- `ifStatus_802F6D10` [ext_fns!] x1: tu/player.rs:81 -> port `melee_world::tu/ifstatus.rs:919`
+- `ifStatus_802F6E1C` [ext_fns!] x1: tu/player.rs:82 -> port `melee_world::tu/ifstatus.rs:923`
+- `it_8026B30C` [ext_fns!] x1: tu/plbonuslib.rs:89 -> port `melee_items::itlib.rs:63`
+- `it_8026B588` [fn-body] x1: tu/fighter.rs:245 -> port `melee_items::itlib.rs:161`
+- `it_8026B774` [ext_fns!] x1: tu/plbonuslib.rs:90 -> port `melee_items::itlib.rs:212`
+- `it_8026B7BC` [ext_fns!] x1: tu/plbonuslib.rs:91 -> port `melee_items::itlib.rs:227`
+- `it_8026B7CC` [ext_fns!] x1: tu/plbonuslib.rs:92 -> port `melee_items::itlib.rs:232`
+- `it_8026B7D8` [ext_fns!] x1: tu/plbonus.rs:53 -> port `melee_items::itkinds12.rs:57`
+- `it_8026B7E0` [ext_fns!] x1: tu/plbonus.rs:54 -> port `melee_items::itkinds12.rs:62`
+- `it_8026B7E8` [ext_fns!] x1: tu/plbonuslib.rs:93 -> port `melee_items::itlib.rs:237`
+- `it_8026B7F8` [fn-body] x1: tu/fighter.rs:421 -> port `melee_items::tu/it_26B1.rs:933`
+- `it_8026B960` [ext_fns!] x1: tu/plbonuslib.rs:94 -> port `melee_items::itlib.rs:276`
+- `it_8026C1D4` [ext_fns!] x1: tu/plbonuslib.rs:95 -> port `melee_items::itkinds12.rs:69`
+- `it_8026C3FC` [fn-body] x1: tu/ftbosslib.rs:30 -> port `melee_items::itlib3.rs:176`
+- `it_8026C42C` [fn-body] x1: tu/ftbosslib.rs:31 -> port `melee_items::itlib3.rs:187`
+- `it_8027B4A4` [fn-body] x1: tu/fighter.rs:362 -> port `melee_items::tu/it_279C.rs:1006`
+- `it_802852B8` [fn-body] x1: tu/ftafterimage.rs:46 -> port `melee_items::itkinds5.rs:747`
+- `it_80285300` [fn-body] x1: tu/ftafterimage.rs:45 -> port `melee_items::itkinds13.rs:227`
+- `it_80285314` [fn-body] x1: tu/ftafterimage.rs:47 -> port `melee_items::itkinds14.rs:297`
+- `it_8028E79C` [fn-body] x1: tu/ft_0cdf.rs:20 -> port `melee_items::tu/itlgun.rs:97`
+- `it_802923BC` [fn-body] x1: tu/ftstarrodswing.rs:20 -> port `melee_items::tu/itstarrod.rs:96`
+- `it_80292F14` [fn-body] x1: tu/ft_0ce3.rs:20 -> port `melee_items::tu/itfflower.rs:179`
+- `it_80295770` [fn-body] x1: tu/ftlipstickswing.rs:20 -> port `melee_items::tu/itlipstick.rs:87`
+- `Item_8026ABD8` [fn-body] x1: tu/fighter.rs:252 -> port `melee_items::tu/item.rs:2069`
+- `itGetKind` [ext_fns!] x1: tu/plbonuslib.rs:87 -> port `melee_items::tu/it_26B1.rs:887`
+- `itGetOwner` [ext_fns!] x1: tu/plbonuslib.rs:88 -> port `melee_items::tu/it_26B1.rs:577`
+- `itIsHeavy` [fn-body] x1: tu/fighter.rs:378 -> port `melee_items::tu/it_26B1.rs:881`
+- `lb_8000B074` [fn-body] x1: tu/ftanim.rs:51 -> port `melee_runtime::tu/lb_00B0.rs:205`
+- `lb_8000B1CC` [fn-body] x4: tu/fighter.rs:149, tu/ft_0ce3.rs:22, tu/ftafterimage.rs:50, tu/ftanim.rs:50 -> port `melee_runtime::tu/lb_00B0.rs:245`
+- `lb_8000B4FC` [fn-body] x1: tu/ftanim.rs:52 -> port `melee_runtime::tu/lb_00B0.rs:280`
+- `lb_8000B5DC` [fn-body] x1: tu/ftanim.rs:53 -> port `melee_runtime::tu/lb_00B0.rs:295`
+- `lb_8000B6A4` [fn-body] x1: tu/ftanim.rs:54 -> port `melee_runtime::tu/lb_00B0.rs:309`
+- `lb_8000B760` [fn-body] x1: tu/ftanim.rs:55 -> port `melee_runtime::tu/lb_00B0.rs:320`
+- `lb_8000BFF0` [fn-body] x1: tu/ftanim.rs:56 -> port `melee_runtime::tu/lb_00B0.rs:478`
+- `lb_8000C490` [fn-body] x1: tu/ftanim.rs:57 -> port `melee_runtime::tu/lb_00B0.rs:562`
+- `lb_8000C868` [fn-body] x1: tu/ftanim.rs:58 -> port `melee_runtime::tu/lb_00B0.rs:643`
+- `lb_8000D148` [fn-body] x1: tu/fighter.rs:307 -> port `melee_runtime::tu/lb_00CE.rs:61`
+- `lbAnim_8001E6D8` [fn-body] x1: tu/ftanim.rs:63 -> port `melee_runtime::tu/lbanim.rs:195`
+- `lbAnim_8001E7E8` [fn-body] x1: tu/ftanim.rs:64 -> port `melee_runtime::tu/lbanim.rs:200`
+- `lbAnim_8001E8F8` [fn-body] x1: tu/fighter.rs:157 -> port `melee_runtime::tu/lbanim.rs:205`
+- `lbArchive_LoadSymbols` [ext_fns!] x1: tu/player.rs:83 -> port `melee_runtime::tu/lbarchive.rs:209`
+- `lbAudioAx_800263E8` [fn-body] x1: tu/ftaction.rs:77 -> port `melee_runtime::tu/lbaudio_ax.rs:2709`
+- `lbAudioAx_800264E4` [fn-body] x1: tu/ftaction.rs:78 -> port `melee_runtime::tu/lbaudio_ax.rs:2758`
+- `lbCopyJObjSRT` [fn-body] x1: tu/ftanim.rs:59 -> port `melee_runtime::tu/lb_00B0.rs:631`
+- `lbDvd_IsPlanningSixSlot` [ext_fns!] x1: tu/player.rs:84 -> port `melee_runtime::tu/lbdvd.rs:127`
+- `lbGetJObjCurrFrame` [fn-body] x1: tu/ftanim.rs:61 -> port `melee_runtime::tu/lb_00B0.rs:444`
+- `lbGetJObjEndFrame` [fn-body] x1: tu/ftanim.rs:62 -> port `melee_runtime::tu/lb_00B0.rs:452`
+- `lbGetJObjFramerate` [fn-body] x1: tu/ftanim.rs:60 -> port `melee_runtime::tu/lb_00B0.rs:436`
+- `lbShadow_8000ED54` [fn-body] x1: tu/fighter.rs:177 -> port `melee_runtime::tu/lbshadow.rs:154`
+- `lbShadow_8000EE8C` [fn-body] x1: tu/fighter.rs:426 -> port `melee_runtime::tu/lbshadow.rs:183`
+- `lbVector_Mirror` [ext_fns!] x2: tu/ftCo_DamageIce.rs:83, tu/ftCo_FlyReflect.rs:40 -> port `melee_runtime::tu/lbvector.rs:296`
+- `mpCheckFloor` [fn-body] x1: tu/fighter.rs:448 -> port `melee_world::tu/mplib.rs:1072`
+- `mpClearFloorSkip` [fn-body] x1: tu/fighter.rs:204 -> port `melee_world::tu/mpcoll.rs:3791`
+- `mpColl_80043680` [ext_fns!/fn+panic] x2: tu/ftCo_CaptureCut.rs:64, tu/ft_0d4d.rs:45 -> port `melee_world::tu/mpcoll.rs:816`
+- `mpColl_800471F8` [ext_fns!] x1: tu/ftCo_Throw.rs:101 -> port `melee_world::tu/mpcoll.rs:2281`
+- `mpColl_IsOnPlatform` [ext_fns!] x2: tu/ftCo_Pass.rs:32, tu/ftCo_Squat.rs:39 -> port `melee_world::tu/mpcoll.rs:3781`
+- `mpLib_8005199C_Floor` [ext_fns!] x1: tu/ftCo_CaptureCut.rs:61 -> port `melee_world::tu/mplib.rs:2462`
+- `mpLib_80054ED8` [ext_fns!] x3: tu/ftCo_Bury.rs:63, tu/ftCo_CaptureCut.rs:60, tu/ftCo_CliffClimb.rs:45 -> port `melee_world::tu/mplib.rs:3768`
+- `pl_80037B2C` [ext_fns!] x1: tu/plbonus.rs:55 -> port `melee_fighter::pltrick.rs:23`
+- `pl_80038628` [ext_fns!] x1: tu/plbonus.rs:56 -> port `melee_fighter::pltrick.rs:159`
+- `pl_8003891C` [ext_fns!] x1: tu/player.rs:85 -> port `melee_fighter::tu/plbonus.rs:172`
+- `pl_80038F10` [ext_fns!] x1: tu/player.rs:86 -> port `melee_fighter::plbonus3.rs:100`
+- `pl_8003FAA8` [fn-body] x1: tu/fighter.rs:418 -> port `melee_fighter::tu/plbonuslib.rs:1080`
+- `pl_80040DDC` [ext_fns!] x1: tu/plbonus.rs:58 -> port `melee_fighter::plbonus.rs:62`
+- `pl_80040ED4` [ext_fns!] x1: tu/plbonuslib.rs:96 -> port `melee_fighter::plbonus.rs:79`
+- `pl_800414C0` [ext_fns!] x1: tu/plbonus.rs:57 -> port `melee_fighter::plbonus.rs:200`
+- `pl_80041524` [ext_fns!] x1: tu/plbonus.rs:59 -> port `melee_fighter::plbonus.rs:209`
+- `pl_80041720` [ext_fns!] x1: tu/plbonuslib.rs:97 -> port `melee_fighter::plbonus.rs:249`
+- `pl_80041744` [ext_fns!] x1: tu/plbonuslib.rs:98 -> port `melee_fighter::plbonus.rs:254`
+- `pl_8004182C` [ext_fns!] x1: tu/plbonus.rs:60 -> port `melee_fighter::plbonus.rs:277`
+- `pl_800418F4` [ext_fns!] x1: tu/plbonus.rs:61 -> port `melee_fighter::plbonus.rs:286`
+- `pl_800419AC` [ext_fns!] x1: tu/plbonuslib.rs:99 -> port `melee_fighter::plbonus.rs:297`
+- `pl_80041BFC` [ext_fns!] x1: tu/plbonus.rs:62 -> port `melee_fighter::plbonus.rs:328`
+- `plAttack_80037590` [ext_fns!] x1: tu/player.rs:87 -> port `melee_fighter::tu/plattack.rs:11`
+- `Player_GetPlayerSlotType` [fn-body] x2: tu/fighter.rs:446, tu/ftbosslib.rs:26 -> port `melee_fighter::tu/player.rs:376`
+- `Stage_80224E38` [fn+panic] x1: tu/ft_0d4d.rs:26 -> port `melee_world::gr/stage.rs:272`
+- `Stage_CalcUnkCamY` [fn-body] x1: tu/fighter.rs:326 -> port `melee_world::tu/stage.rs:353`
+- `Stage_CalcUnkCamYBounds` [fn-body] x1: tu/fighter.rs:325 -> port `melee_world::tu/stage.rs:359`
+- `Stage_GetBlastZoneBottomOffset` [fn+panic] x1: tu/ft_0d31.rs:29 -> port `melee_world::tu/stage.rs:349`
+- `Stage_GetBlastZoneLeftOffset` [fn+panic] x1: tu/ft_0d31.rs:25 -> port `melee_world::tu/stage.rs:340`
+- `Stage_GetBlastZoneRightOffset` [fn+panic] x1: tu/ft_0d31.rs:23 -> port `melee_world::tu/stage.rs:336`
+- `Stage_GetBlastZoneTopOffset` [ext_fns!/fn+panic] x2: tu/ftCo_WarpStar.rs:57, tu/ft_0d31.rs:27 -> port `melee_world::tu/stage.rs:345`
+- `Stage_GetCamBoundsBottomOffset` [fn+panic/fn-body] x2: tu/fighter.rs:242, tu/ft_0d4d.rs:24 -> port `melee_world::tu/stage.rs:300`
+- `Stage_GetCamBoundsLeftOffset` [fn-body] x1: tu/fighter.rs:239 -> port `melee_world::tu/stage.rs:288`
+- `Stage_GetCamBoundsRightOffset` [fn-body] x1: tu/fighter.rs:240 -> port `melee_world::tu/stage.rs:292`
+- `Stage_GetCamBoundsTopOffset` [fn+panic/fn-body] x2: tu/fighter.rs:241, tu/ft_0d31.rs:31 -> port `melee_world::tu/stage.rs:296`
+- `Stage_UnkSetVec3TCam_Offset` [ext_fns!/fn-body] x2: tu/fighter.rs:356, tu/plbonuslib.rs:40 -> port `melee_world::tu/stage.rs:365`
+- `un_80322258` [fn-body] x1: tu/fighter.rs:328 -> port `melee_fighter::tu/crowdsfx.rs:314`
+
+### melee_fighter - CYCLE (244 sites, 188 names)
+
+- `ftCh_GrabUnk1_8015ADD0` [fn-body] x1: tu/ft_0c8c.rs:30 -> port `melee_chara::tu/ftcrazyhandtaggrab.rs:85`
+- `ftCh_GrabUnk1_8015BC88` [ext_fns!] x1: tu/ftCo_Fall.rs:44 -> port `melee_chara::tu/ftcrazyhandtagcancel.rs:85`
+- `ftCh_Init_80155FCC` [fn-body] x1: tu/fighter.rs:180 -> port `melee_chara::tu/ftcrazyhandwait10.rs:145`
+- `ftCh_Init_80156014` [fn-body] x1: tu/fighter.rs:401 -> port `melee_chara::tu/ftcrazyhandwait10.rs:153`
+- `ftCl_Init_8014919C` [ext_fns!] x1: tu/ftCo_SquatWait.rs:41 -> port `melee_chara::tu/ftclink.rs:235`
+- `ftCl_Init_80149318` [ext_fns!] x1: tu/ftCo_AppealS.rs:30 -> port `melee_chara::tu/ftclink.rs:296`
+- `ftCo_8009F834` [ext_fns!/fn-body] x2: tu/ftCo_DownBound.rs:40, tu/ftaction.rs:44 -> port `melee::vs_match.rs:2645`
+- `ftDk_MS_341_800DF980` [ext_fns!] x1: tu/ftpickupitem.rs:75 -> port `melee_chara::tu/ftdonkeyheavywait0.rs:34`
+- `ftDk_MS_349_800E06D8` [ext_fns!] x1: tu/ftCo_Damage.rs:131 -> port `melee_chara::tu/ftdonkeyheavylanding.rs:93`
+- `ftDr_Init_80149910` [ext_fns!] x1: tu/ftCo_AppealS.rs:31 -> port `melee_chara::tu/ftdrmario.rs:204`
+- `ftFx_AppealS_CheckInput` [ext_fns!] x1: tu/ftCo_Wait.rs:43 -> port `melee_chara::tu/ftfoxappeals.rs:154`
+- `ftFx_Throw_Anim` [ext_fns!] x1: tu/ftCo_Throw.rs:73 -> port `melee_chara::tu/ftfoxspecialn.rs:608`
+- `ftGw_Attack100Start_Enter` [ext_fns!] x1: tu/ftCo_Attack100.rs:52 -> port `melee_chara::tu/ftgamewatchattack100.rs:27`
+- `ftGw_Attack11_Enter` [ext_fns!] x1: tu/ftCo_Attack1.rs:36 -> port `melee_chara::tu/ftgamewatchattack11.rs:219`
+- `ftGw_AttackAirN_DecideAction` [ext_fns!] x1: tu/ftCo_AttackAir.rs:38 -> port `melee_chara::tu/ftgamewatchattackair.rs:409`
+- `ftGw_AttackLw3_Enter` [ext_fns!] x1: tu/ftCo_AttackLw3.rs:39 -> port `melee_chara::tu/ftgamewatchattacklw3.rs:200`
+- `ftGw_AttackS4_Enter` [ext_fns!] x1: tu/ftCo_AttackS4.rs:48 -> port `melee_chara::chars/r4/ftGameWatch.rs:12`
+- `ftKb_MexKirbyLike` [ext_fns!/fn+panic] x9: tu/ftCo_AppealS.rs:42, tu/ftCo_Attack100.rs:71, tu/ftCo_AttackDash.rs:37, tu/ftCo_CaptureCut.rs:55, tu/ftCo_Landing.rs:34, tu/ftCo_Throw.rs:50, tu/ftCo_Thrown.rs:40, tu/ftCo_ThrownKirby.rs:43, tu/ftco_800c7220.rs:50 -> port `melee_chara::tu/ftkirby.rs:2478`
+- `ftKb_SpecialN_800EED50` [ext_fns!] x1: tu/player.rs:56 -> port `melee_chara::tu/ftkirby.rs:1473`
+- `ftKb_SpecialN_800EEEC4` [ext_fns!] x1: tu/ftCo_ThrownKirby.rs:69 -> port `melee_chara::tu/ftkirby.rs:1527`
+- `ftKb_SpecialN_800F190C` [ext_fns!] x1: tu/ftCo_ThrownKirby.rs:68 -> port `melee_chara::tu/ftkirby.rs:2334`
+- `ftKb_SpecialN_800F1CD8` [ext_fns!] x1: tu/ftCo_Attack100.rs:72 -> port `melee_chara::tu/ftkirby.rs:2468`
+- `ftKb_SpecialN_800F1D24` [fn-body] x1: tu/fighter.rs:341 -> port `melee_chara::tu/ftkirby.rs:2505`
+- `ftKb_SpecialN_800F1F1C` [ext_fns!] x6: tu/ftCo_DamageIce.rs:77, tu/ftCo_FlyReflect.rs:34, tu/ftCo_PassiveCeil.rs:33, tu/ftCo_PassiveWall.rs:33, tu/ftCo_StopCeil.rs:30, tu/ftCo_StopWall.rs:36 -> port `melee_chara::tu/ftkirby.rs:2562`
+- `ftKb_SpecialN_800F1F68` [ext_fns!] x1: tu/ftCo_AttackDash.rs:38 -> port `melee_chara::chars/r3/ftKirby.rs:12`
+- `ftKb_SpecialN_800F5820` [ext_fns!] x1: tu/ftCo_ThrownKirby.rs:60 -> port `melee_chara::tu/ftkirbyspecials.rs:194`
+- `ftKb_SpecialN_800F5874` [ext_fns!] x1: tu/ftCo_ThrownKirby.rs:67 -> port `melee_chara::tu/ftkirbyspecials.rs:208`
+- `ftKb_SpecialN_800F5898` [ext_fns!] x1: tu/ftCo_ThrownKirby.rs:54 -> port `melee_chara::tu/ftkirbyspecials.rs:217`
+- `ftKb_SpecialN_800F58AC` [ext_fns!] x1: tu/ftCo_ThrownKirby.rs:61 -> port `melee_chara::chars/ftKirby.rs:71`
+- `ftKb_SpecialN_800F58D8` [ext_fns!] x1: tu/ftCo_ThrownKirby.rs:62 -> port `melee_chara::tu/ftkirbyspecialn.rs:327`
+- `ftKb_SpecialN_800F5954` [ext_fns!] x1: tu/ftCo_CaptureWaitKirby.rs:43 -> port `melee_chara::tu/ftkirbyspecialn.rs:340`
+- `ftKb_SpecialN_800F597C` [ext_fns!] x1: tu/ftCo_CaptureWaitKirby.rs:42 -> port `melee_chara::chars/ftKirby.rs:80`
+- `ftKb_SpecialN_800F598C` [ext_fns!] x1: tu/ftCo_CaptureWaitKirby.rs:41 -> port `melee_chara::tu/ftkirbyspecialn.rs:347`
+- `ftKb_SpecialN_800F5A04` [ext_fns!] x1: tu/ftCo_CaptureWaitKirby.rs:44 -> port `melee_chara::chars/ftKirby.rs:84`
+- `ftKb_SpecialN_800F5A38` [ext_fns!] x1: tu/ftCo_CaptureWaitKirby.rs:45 -> port `melee_chara::chars/ftKirby.rs:93`
+- `ftKb_SpecialN_800F5A60` [ext_fns!] x1: tu/ftCo_CaptureWaitKirby.rs:48 -> port `melee_chara::chars/ftKirby.rs:98`
+- `ftKb_SpecialN_800F5A70` [ext_fns!] x1: tu/ftCo_ThrownKirby.rs:71 -> port `melee_chara::tu/ftkirbyspecialn.rs:381`
+- `ftKb_SpecialN_800F5A88` [ext_fns!] x1: tu/ftCo_ThrownKirby.rs:63 -> port `melee_chara::chars/ftKirby.rs:101`
+- `ftKb_SpecialN_800F5A98` [ext_fns!] x1: tu/ftCo_ThrownKirby.rs:70 -> port `melee_chara::tu/ftkirbyspecialn.rs:384`
+- `ftKb_SpecialN_800F5AB0` [ext_fns!] x1: tu/ftCo_ThrownKirby.rs:64 -> port `melee_chara::chars/ftKirby.rs:104`
+- `ftKb_SpecialN_800F5AC0` [ext_fns!] x1: tu/ftCo_ThrownKirby.rs:65 -> port `melee_chara::tu/ftkirbyspecialn.rs:387`
+- `ftKb_SpecialN_800F5AD8` [ext_fns!] x1: tu/ftCo_ThrownKirby.rs:66 -> port `melee_chara::tu/ftkirbyspecialn.rs:390`
+- `ftKb_SpecialN_800F5AF0` [ext_fns!] x1: tu/ftCo_CaptureKirby.rs:37 -> port `melee_chara::chars/ftKirby.rs:107`
+- `ftKb_SpecialN_800F5B00` [ext_fns!] x1: tu/ftCo_CaptureWaitKirby.rs:46 -> port `melee_chara::chars/ftKirby.rs:110`
+- `ftKb_SpecialN_800F5B10` [ext_fns!] x1: tu/ftCo_CaptureWaitKirby.rs:47 -> port `melee_chara::chars/ftKirby.rs:113`
+- `ftKb_SpecialN_800F5B20` [ext_fns!] x1: tu/ftCo_CaptureKirby.rs:38 -> port `melee_chara::chars/ftKirby.rs:116`
+- `ftKb_SpecialN_800F5B3C` [ext_fns!] x1: tu/ftCo_CaptureKirby.rs:39 -> port `melee_chara::chars/ftKirby.rs:121`
+- `ftKb_SpecialN_800F5B4C` [ext_fns!] x1: tu/ftCo_CaptureKirby.rs:40 -> port `melee_chara::chars/ftKirby.rs:124`
+- `ftKb_SpecialN_800F5B5C` [ext_fns!] x1: tu/ftCo_CaptureKirby.rs:41 -> port `melee_chara::chars/ftKirby.rs:130`
+- `ftKb_SpecialN_800F5BA4` [fn-body] x1: tu/fighter.rs:390 -> port `melee_chara::tu/ftkirbyspecialn.rs:407`
+- `ftKb_SpecialN_800F5C34` [fn-body] x1: tu/fighter.rs:391 -> port `melee_chara::tu/ftkirbyspecialn.rs:422`
+- `ftKb_SpecialN_800F5D04` [ext_fns!] x1: tu/ftCo_AppealS.rs:43 -> port `melee_chara::tu/ftkirbyspecialn.rs:448`
+- `ftKp_SpecialS_80132DC0` [ext_fns!] x1: tu/ftCo_CaptureKoopa.rs:31 -> port `melee_chara::chars/ftKoopa.rs:7`
+- `ftKp_SpecialS_80132DD0` [ext_fns!] x1: tu/ftCo_CaptureKoopa.rs:32 -> port `melee_chara::chars/ftKoopa.rs:10`
+- `ftKp_SpecialS_80132DE0` [ext_fns!] x1: tu/ftCo_CaptureKoopa.rs:33 -> port `melee_chara::chars/ftKoopa.rs:13`
+- `ftKp_SpecialS_80132DF0` [ext_fns!] x1: tu/ftCo_CaptureKoopa.rs:34 -> port `melee_chara::chars/ftKoopa.rs:16`
+- `ftKp_SpecialS_80132E00` [ext_fns!] x1: tu/ftCo_CaptureKoopa.rs:35 -> port `melee_chara::chars/ftKoopa.rs:19`
+- `ftKp_SpecialS_80132E10` [ext_fns!] x1: tu/ftCo_CaptureKoopa.rs:36 -> port `melee_chara::chars/ftKoopa.rs:22`
+- `ftKp_SpecialS_80132E20` [ext_fns!] x1: tu/ftCo_CaptureKoopa.rs:37 -> port `melee_chara::chars/ftKoopa.rs:25`
+- `ftLk_AttackAir_800EB3BC` [ext_fns!] x1: tu/ftCo_SquatWait.rs:40 -> port `melee_chara::tu/ftlinkattackair.rs:47`
+- `ftLk_AttackAir_Enter` [ext_fns!] x1: tu/ftCo_AttackAir.rs:37 -> port `melee_chara::tu/ftlinkattackair.rs:60`
+- `ftMh_MS_341_8014FE10` [fn-body] x1: tu/fighter.rs:179 -> port `melee_chara::tu/ftmasterhandwait10.rs:200`
+- `ftMh_MS_341_8014FE58` [fn-body] x1: tu/fighter.rs:400 -> port `melee_chara::tu/ftmasterhandwait10.rs:208`
+- `ftMh_MS_343_80151484` [fn-body] x1: tu/ft_0c8c.rs:29 -> port `melee_chara::tu/ftmasterhanddamage0.rs:151`
+- `ftMh_MS_389_80151018` [ext_fns!] x1: tu/ftCo_Fall.rs:43 -> port `melee_chara::tu/ftmasterhandwait12.rs:76`
+- `ftMt_SpecialN_Shoot` [ext_fns!] x1: tu/ftCo_Throw.rs:64 -> port `melee_chara::tu/ftmewtwospecialn.rs:766`
+- `ftNs_AttackHi4_Enter` [ext_fns!] x1: tu/ftCo_AttackHi4.rs:38 -> port `melee_chara::tu/ftnessattackhi4.rs:571`
+- `ftNs_AttackLw4_Enter` [ext_fns!] x1: tu/ftCo_AttackLw4.rs:38 -> port `melee_chara::tu/ftnessattacklw4.rs:20`
+- `ftNs_AttackS4_Enter` [ext_fns!] x1: tu/ftCo_AttackS4.rs:46 -> port `melee_chara::tu/ftnessattacks4.rs:58`
+- `ftPe_8011BA54` [ext_fns!] x3: tu/ftCo_Fall.rs:60, tu/ftCo_Jump.rs:56, tu/ftCo_JumpAerial.rs:59 -> port `melee_chara::tu/ftpeachfloat.rs:98`
+- `ftPe_8011BAD8` [ext_fns!] x3: tu/ftCo_Fall.rs:62, tu/ftCo_Jump.rs:58, tu/ftCo_JumpAerial.rs:60 -> port `melee_chara::tu/ftpeachfloat.rs:114`
+- `ftPe_8011D598` [ext_fns!] x1: tu/ftCo_Landing.rs:35 -> port `melee_chara::tu/ftpeachspecialhi.rs:256`
+- `ftPe_AttackS4_Enter` [ext_fns!] x1: tu/ftCo_AttackS4.rs:47 -> port `melee_chara::tu/ftpeachattacks4.rs:26`
+- `ftPe_Init_8011B93C` [ext_fns!] x1: tu/ftCo_AppealS.rs:40 -> port `melee_chara::tu/ftpeach.rs:177`
+- `ftSb_Init_8014FBA4` [ext_fns!] x1: tu/ftCo_DownBound.rs:48 -> port `melee_chara::tu/ftsandbag.rs:124`
+- `ftYs_Init_8012B8A4` [ext_fns!] x1: tu/ftCo_Escape.rs:54 -> port `melee_chara::tu/ftyoshi.rs:187`
+- `ftYs_Init_8012BAC0` [ext_fns!] x1: tu/ftCo_CaptureWait.rs:38 -> port `melee_chara::chars/ftYoshi.rs:7`
+- `ftYs_Init_8012BDA0` [ext_fns!] x1: tu/ftCo_Escape.rs:47 -> port `melee_chara::tu/ftyoshiguard.rs:83`
+- `ftYs_Init_8012BE3C` [ext_fns!] x1: tu/ftCo_Escape.rs:53 -> port `melee_chara::tu/ftyoshiguard.rs:99`
+- `ftYs_Init_8012BECC` [ext_fns!] x1: tu/ftCo_Guard.rs:66 -> port `melee_chara::tu/ftyoshiguard.rs:142`
+- `ftYs_Shield_8012C1D4` [ext_fns!] x1: tu/ftCo_Guard.rs:67 -> port `melee_chara::tu/ftyoshiguard.rs:225`
+- `ftYs_Shield_8012C49C` [ext_fns!] x1: tu/ftCo_Guard.rs:68 -> port `melee_chara::tu/ftyoshiguard.rs:278`
+- `ftYs_Shield_8012C600` [ext_fns!] x1: tu/ftCo_Guard.rs:69 -> port `melee_chara::tu/ftyoshiguard.rs:312`
+- `ftYs_Shield_8012C850` [ext_fns!] x1: tu/ftCo_Guard.rs:70 -> port `melee_chara::tu/ftyoshiguard.rs:365`
+- `ftYs_Shield_8012C914` [ext_fns!] x1: tu/ftCo_Guard.rs:71 -> port `melee_chara::tu/ftyoshiguard.rs:401`
+- `ftYs_Shield_8012CC1C` [ext_fns!] x1: tu/ftCo_Escape.rs:52 -> port `melee_chara::tu/ftyoshiguard.rs:458`
+- `ftYs_SpecialN_8012CD40` [ext_fns!] x1: tu/ftCo_YoshiEgg.rs:57 -> port `melee_chara::tu/ftyoshispecialn.rs:150`
+- `ftYs_SpecialN_8012CD88` [ext_fns!] x1: tu/ftCo_YoshiEgg.rs:64 -> port `melee_chara::tu/ftyoshispecialn.rs:162`
+- `ftYs_SpecialN_8012CDB4` [ext_fns!] x1: tu/ftCo_YoshiEgg.rs:59 -> port `melee_chara::tu/ftyoshispecialn.rs:171`
+- `ftYs_SpecialN_8012CDD4` [ext_fns!] x1: tu/ftCo_YoshiEgg.rs:45 -> port `melee_chara::tu/ftyoshispecialn.rs:178`
+- `ftYs_SpecialN_GetDatAttr18` [ext_fns!] x1: tu/ftCo_YoshiEgg.rs:49 -> port `melee_chara::chars/ftYoshi.rs:16`
+- `ftYs_SpecialN_GetDatAttr1C` [ext_fns!] x1: tu/ftCo_YoshiEgg.rs:50 -> port `melee_chara::chars/ftYoshi.rs:19`
+- `ftYs_SpecialN_GetDatAttr20` [ext_fns!] x1: tu/ftCo_YoshiEgg.rs:51 -> port `melee_chara::chars/ftYoshi.rs:22`
+- `ftYs_SpecialN_GetDatAttr24` [ext_fns!] x1: tu/ftCo_YoshiEgg.rs:52 -> port `melee_chara::chars/ftYoshi.rs:25`
+- `ftYs_SpecialN_GetExtAttr28` [ext_fns!] x1: tu/ftCo_YoshiEgg.rs:55 -> port `melee_chara::tu/ftyoshispecialn.rs:142`
+- `ftYs_SpecialN_GetExtAttr2C` [ext_fns!] x1: tu/ftCo_YoshiEgg.rs:56 -> port `melee_chara::tu/ftyoshispecialn.rs:146`
+- `ftYs_SpecialN_GetExtAttr34` [ext_fns!] x1: tu/ftCo_YoshiEgg.rs:58 -> port `melee_chara::tu/ftyoshispecialn.rs:154`
+- `ftYs_SpecialN_GetExtAttr38` [ext_fns!] x1: tu/ftCo_YoshiEgg.rs:60 -> port `melee_chara::tu/ftyoshispecialn.rs:158`
+- `ftYs_SpecialN_GetFacingDir` [ext_fns!] x1: tu/ftCo_YoshiEgg.rs:48 -> port `melee_chara::chars/ftYoshi.rs:28`
+- `ftYs_SpecialN_SetupItemVel` [ext_fns!] x1: tu/ftCo_YoshiEgg.rs:47 -> port `melee_chara::chars/ftYoshi.rs:31`
+- `ftZd_Init_801395C8` [ext_fns!] x1: tu/ftCo_AppealS.rs:41 -> port `melee_chara::tu/ftzelda.rs:97`
+- `Geno_ArtStableKind` [fn-body] x1: tu/fighter.rs:435 -> port `melee_modes::tu/geno_game.rs:10029`
+- `Geno_CollBegin` [fn-body] x1: tu/fighter.rs:339 -> port `melee_modes::tu/geno_game.rs:5392`
+- `Geno_CollEnd` [fn-body] x1: tu/fighter.rs:340 -> port `melee_modes::tu/geno_game.rs:5403`
+- `Geno_ComboInput` [fn-body] x1: tu/fighter.rs:308 -> port `melee_modes::tu/geno_game.rs:13210`
+- `Geno_ComboTick` [fn-body] x1: tu/fighter.rs:309 -> port `melee_modes::tu/geno_game.rs:13620`
+- `Geno_FallSpecialColl` [ext_fns!] x1: tu/ftCo_FallSpecial.rs:54 -> port `melee_modes::tu/geno_game.rs:7193`
+- `Geno_FighterReset` [fn-body] x1: tu/fighter.rs:114 -> port `melee_modes::tu/geno_game.rs:3950`
+- `Geno_FighterScale` [fn-body] x1: tu/fighter.rs:150 -> port `melee_modes::tu/geno_game.rs:4221`
+- `Geno_FtCmd` [fn-body] x1: tu/ftaction.rs:89 -> port `melee_modes::tu/geno_game.rs:5567`
+- `Geno_HitReact` [fn-body] x1: tu/fighter.rs:386 -> port `melee_modes::tu/geno_game.rs:6001`
+- `Geno_ItemFamilyEvent` [ext_fns!] x1: tu/ftpickupitem.rs:51 -> port `melee_modes::tu/geno_game.rs:12242`
+- `Geno_ItemPressCollect` [ext_fns!] x2: tu/ftCo_Attack100.rs:63, tu/ftpickupitem.rs:73 -> port `melee_modes::tu/geno_game.rs:11480`
+- `Geno_ItemPressDist` [ext_fns!] x2: tu/ftCo_Attack100.rs:62, tu/ftpickupitem.rs:49 -> port `melee_modes::tu/geno_game.rs:11415`
+- `Geno_MotionAnimRow` [ext_fns!/fn-body] x3: tu/fighter.rs:221, tu/ftCo_CatchPull.rs:38, tu/ftCo_Guard.rs:45 -> port `melee_modes::tu/geno_game.rs:3336`
+- `Geno_MotionRow` [fn-body] x1: tu/fighter.rs:220 -> port `melee_modes::tu/geno_game.rs:6567`
+- `Geno_MultiJump` [ext_fns!] x1: tu/ftCo_JumpAerialF1.rs:36 -> port `melee_modes::tu/geno_game.rs:4230`
+- `Geno_NoHitlag` [fn-body] x1: tu/fighter.rs:410 -> port `melee_modes::tu/geno_game.rs:6017`
+- `Geno_OnActionChange` [fn-body] x1: tu/fighter.rs:193 -> port `melee_modes::tu/geno_game.rs:4035`
+- `Geno_OnFrame` [fn-body] x1: tu/fighter.rs:263 -> port `melee_modes::tu/geno_game.rs:4086`
+- `Geno_OnHit` [fn-body] x1: tu/fighter.rs:385 -> port `melee_modes::tu/geno_game.rs:11191`
+- `Geno_PreAnim` [fn-body] x1: tu/fighter.rs:268 -> port `melee_modes::tu/geno_game.rs:5335`
+- `Geno_SpecialEnter` [ext_fns!] x3: tu/ftCo_Attack100.rs:47, tu/ftCo_SpecialAir.rs:41, tu/ftCo_SpecialS.rs:46 -> port `melee_modes::tu/geno_game.rs:9343`
+- `Geno_TakeStunBonus` [ext_fns!] x1: tu/ftCo_Damage.rs:85 -> port `melee_modes::tu/geno_game.rs:6037`
+- `GenoDefine_StateDigest` [fn-body] x1: tu/fighter.rs:434 -> port `melee_modes::tu/geno_game.rs:6069`
+- `GenoFly_Fighter` [fn+panic] x1: tu/ft_0d31.rs:34 -> port `melee_modes::tu/geno_lab_mode.rs:323`
+- `gm_80167470` [fn-body] x1: tu/ft_0c8c.rs:23 -> port `melee_modes::tu/gm_1601.rs:2474`
+- `gm_801693BC` [fn+panic] x1: tu/ft_0d31.rs:50 -> port `melee_modes::tu/gm_16A2.rs:116`
+- `gm_8016AEEC` [ext_fns!] x2: tu/plbonus.rs:41, tu/plbonuslib.rs:79 -> port `melee_modes::tu/gmvs.rs:308`
+- `gm_8016B014` [ext_fns!] x1: tu/ftCo_Damage.rs:107 -> port `melee_modes::tu/gmvs.rs:342`
+- `gm_8016B094` [fn+panic] x1: tu/ft_0d31.rs:46 -> port `melee_modes::tu/gmvs.rs:359`
+- `gm_8016B0D4` [ext_fns!] x1: tu/pltrick.rs:38 -> port `melee_modes::tu/gmvs.rs:367`
+- `gm_8016B0E8` [fn+panic] x1: tu/ft_0d31.rs:48 -> port `melee_modes::tu/gmvs.rs:371`
+- `gm_8016B0FC` [ext_fns!] x1: tu/plbonus.rs:42 -> port `melee_modes::tu/gmvs.rs:375`
+- `gm_8016B110` [ext_fns!] x2: tu/plbonus.rs:43, tu/plbonuslib.rs:80 -> port `melee_modes::tu/gmvs.rs:379`
+- `gm_8016B168` [ext_fns!] x2: tu/player.rs:75, tu/plbonuslib.rs:81 -> port `melee_modes::tu/gmvs.rs:395`
+- `gm_8016B1C4` [fn-body] x1: tu/fighter.rs:357 -> port `melee_modes::tu/gmvs.rs:410`
+- `gm_8016B1EC` [ext_fns!] x1: tu/plbonus.rs:44 -> port `melee_modes::tu/gmvs.rs:418`
+- `gm_8016B204` [ext_fns!] x2: tu/plbonus.rs:45, tu/plbonuslib.rs:82 -> port `melee_modes::tu/gmvs.rs:422`
+- `gm_8016B248` [ext_fns!] x1: tu/ftCo_Throw.rs:85 -> port `melee_modes::tu/gmvs.rs:434`
+- `gm_8016B3D8` [ext_fns!] x1: tu/plbonus.rs:47 -> port `melee_modes::tu/gmvs.rs:487`
+- `gm_8016B558` [ext_fns!] x1: tu/plbonus.rs:48 -> port `melee_modes::tu/gmvs.rs:542`
+- `gm_8016B6E8` [ext_fns!] x1: tu/plbonuslib.rs:83 -> port `melee_modes::tu/gmvs.rs:578`
+- `gm_8016C5C0` [ext_fns!] x1: tu/player.rs:76 -> port `melee_modes::tu/gmvs.rs:965`
+- `gm_8016F2F8` [ext_fns!] x1: tu/plbonuslib.rs:84 -> port `melee_modes::tu/gm_16f1.rs:264`
+- `gm_801720B4` [ext_fns!] x1: tu/plbonus.rs:49 -> port `melee_modes::tu/gm_16f1.rs:1075`
+- `gm_801720F8` [ext_fns!] x1: tu/plbonus.rs:50 -> port `melee_modes::tu/gm_16f1.rs:1082`
+- `gm_80172140` [ext_fns!] x1: tu/plbonus.rs:51 -> port `melee_modes::tu/gm_16f1.rs:1089`
+- `gm_GetCurrentGameMode` [fn-body] x1: tu/fighter.rs:238 -> port `melee_modes::tu/gm_1A3F.rs:574`
+- `gm_GetDbPauseFlag` [fn-body] x1: tu/fighter.rs:295 -> port `melee_modes::tu/gmscene.rs:224`
+- `gm_GetFrameCount` [ext_fns!] x3: tu/player.rs:77, tu/plbonus.rs:52, tu/plbonuslib.rs:85 -> port `melee_modes::tu/gmvs.rs:304`
+- `gm_IsCurrently1PMode_inline` [fn-body] x1: tu/fighter.rs:290 -> port `melee_modes::tu/gmvs.rs:494`
+- `gm_MexVanillaKind` [fn-body] x1: tu/fighter.rs:88 -> port `melee_modes::tu/gm_1601.rs:468`
+- `gmDecisionGetType` [ext_fns!] x1: tu/plbonus.rs:40 -> port `melee_modes::tu/gm_16f1.rs:231`
+- `lbBgFlash_80021C48` [ext_fns!/fn-body] x2: tu/ftCo_Damage.rs:94, tu/ft_0c8c.rs:22 -> port `melee_modes::tu/lb_0219.rs:134`
+- `OSReport` [fn-body] x1: tu/fighter.rs:187 -> port `melee_modes::tu/gm_17c0.rs:246`
+- `ScriptGame_ArmorAbsorbed` [fn-body] x1: tu/fighter.rs:397 -> port `melee_modes::tu/script_game.rs:13105`
+- `ScriptGame_ArmorReact` [ext_fns!] x1: tu/ftCo_Damage.rs:82 -> port `melee_modes::tu/script_game.rs:13027`
+- `ScriptGame_ArmorResetReaction` [ext_fns!] x1: tu/ftCo_Damage.rs:80 -> port `melee_modes::tu/script_game.rs:12999`
+- `ScriptGame_ArmorSubtract` [ext_fns!] x1: tu/ftCo_Damage.rs:81 -> port `melee_modes::tu/script_game.rs:13005`
+- `ScriptGame_BuildHashWord` [fn-body] x1: tu/fighter.rs:347 -> port `melee_modes::tu/script_game.rs:19725`
+- `ScriptGame_CapsActionAllowed` [ext_fns!] x10: tu/ftCo_Attack100.rs:40, tu/ftCo_Catch.rs:32, tu/ftCo_Dash.rs:32, tu/ftCo_EscapeAir.rs:38, tu/ftCo_Guard.rs:38, tu/ftCo_Run.rs:31, tu/ftCo_SpecialAir.rs:34, tu/ftCo_SpecialS.rs:40, tu/ftCo_Turn.rs:55, tu/ftCo_TurnRun.rs:35 -> port `melee_modes::tu/script_game.rs:12363`
+- `ScriptGame_CapsMaxJumps` [ext_fns!] x1: tu/ftCo_JumpAerial.rs:37 -> port `melee_modes::tu/script_game.rs:12358`
+- `ScriptGame_CapsNoFlinch` [ext_fns!] x1: tu/ftCo_Damage.rs:83 -> port `melee_modes::tu/script_game.rs:14077`
+- `ScriptGame_CpuStanding` [fn-body] x1: tu/fighter.rs:289 -> port `melee_modes::tu/script_game.rs:25617`
+- `ScriptGame_FighterBenchTick` [fn-body] x1: tu/fighter.rs:270 -> port `melee_modes::tu/script_game.rs:11106`
+- `ScriptGame_FighterDealtDamage` [ext_fns!] x4: tu/ftCo_CaptureCut.rs:79, tu/ftCo_Shouldered.rs:45, tu/ftCo_Throw.rs:81, tu/ftCo_Thrown.rs:59 -> port `melee_modes::tu/script_game.rs:21309`
+- `ScriptGame_HitRuleContact` [ext_fns!] x4: tu/ftCo_CaptureCut.rs:80, tu/ftCo_Shouldered.rs:47, tu/ftCo_Throw.rs:82, tu/ftCo_Thrown.rs:60 -> port `melee_modes::tu/script_game.rs:4299`
+- `ScriptGame_HitRuleCreate` [fn-body] x1: tu/ftaction.rs:91 -> port `melee_modes::tu/script_game.rs:4114`
+- `ScriptGame_HitRuleForget` [fn-body] x1: tu/ftaction.rs:90 -> port `melee_modes::tu/script_game.rs:4092`
+- `ScriptGame_HitRulePercentClear` [fn-body] x1: tu/fighter.rs:111 -> port `melee_modes::tu/script_game.rs:4505`
+- `ScriptGame_HitRulePercentCommit` [fn-body] x1: tu/fighter.rs:373 -> port `melee_modes::tu/script_game.rs:4469`
+- `ScriptGame_HitRulePercentQueue` [ext_fns!] x4: tu/ftCo_CaptureCut.rs:82, tu/ftCo_Shouldered.rs:49, tu/ftCo_Throw.rs:84, tu/ftCo_Thrown.rs:62 -> port `melee_modes::tu/script_game.rs:4434`
+- `ScriptGame_HitRuleReport` [ext_fns!] x4: tu/ftCo_CaptureCut.rs:81, tu/ftCo_Shouldered.rs:48, tu/ftCo_Throw.rs:90, tu/ftCo_Thrown.rs:61 -> port `melee_modes::tu/script_game.rs:4712`
+- `ScriptGame_HitRuleRetire` [fn-body] x1: tu/fighter.rs:431 -> port `melee_modes::tu/script_game.rs:4671`
+- `ScriptGame_HitRuleWon` [ext_fns!] x1: tu/ftCo_Throw.rs:89 -> port `melee_modes::tu/script_game.rs:4514`
+- `ScriptGame_IntrWinHashWord` [fn-body] x1: tu/fighter.rs:346 -> port `melee_modes::tu/script_game.rs:17223`
+- `ScriptGame_IntrWinTick` [fn-body] x1: tu/fighter.rs:310 -> port `melee_modes::tu/script_game.rs:17037`
+- `ScriptGame_LabPreviewRow` [fn-body] x1: tu/fighter.rs:222 -> port `melee_modes::tu/script_game.rs:23375`
+- `ScriptGame_ModDamage` [fn-body] x1: tu/fighter.rs:375 -> port `melee_modes::tu/script_game.rs:2406`
+- `ScriptGame_ModJump` [ext_fns!] x1: tu/ftCo_Jump.rs:36 -> port `melee_modes::tu/script_game.rs:2399`
+- `ScriptGame_ModValue` [ext_fns!] x5: tu/ftCo_Dash.rs:34, tu/ftCo_Guard.rs:40, tu/ftCo_Run.rs:33, tu/ftCo_Throw.rs:104, tu/ftCo_TurnRun.rs:37 -> port `melee_modes::tu/script_game.rs:2386`
+- `ScriptGame_NoteMotion` [fn-body] x1: tu/fighter.rs:219 -> port `melee_modes::tu/script_game.rs:3233`
+- `ScriptGame_OnePSpawn` [fn-body] x1: tu/fighter.rs:185 -> port `melee_modes::tu/script_game.rs:6250`
+- `ScriptGame_ShockTake` [ext_fns!] x1: tu/ftCo_Damage.rs:84 -> port `melee_modes::tu/script_game.rs:16125`
+- `ScriptGame_SkillLanding` [ext_fns!] x1: tu/ftCo_LandingAir.rs:29 -> port `melee_modes::tu/script_game.rs:14648`
+- `ScriptGame_VirtualPadApply` [fn-body] x1: tu/fighter.rs:271 -> port `melee_modes::tu/script_game.rs:20581`
+- `ScriptGame_VirtualPadObserve` [fn-body] x1: tu/fighter.rs:272 -> port `melee_modes::tu/script_game.rs:20481`
+
+## melee_chara
+
+NO_PORT: 164 sites / 92 names, SIGNATURE: 149 sites / 91 names, CYCLE: 6 sites / 5 names
+
+### melee_chara - NO_PORT (164 sites, 92 names)
+
+- `blaster_assert` [fn-body] x1: tu/ftkirbyspecialfox.rs:422
+- `Camera_8002E6FC` [ch_hook!] x2: tu/ftcrazyhandgrabunk1b174.rs:16, tu/ftmasterhandentry.rs:19
+- `Camera_8002E948` [ch_hook!] x2: tu/ftcrazyhandgrabunk1b174.rs:17, tu/ftmasterhandentry.rs:28
+- `Camera_8002EB5C` [ch_hook!] x2: tu/ftcrazyhandgrabunk1b174.rs:18, tu/ftmasterhandentry.rs:23
+- `Camera_8002EC7C` [ch_hook!] x2: tu/ftcrazyhandgrabunk1b174.rs:19, tu/ftmasterhandentry.rs:22
+- `Camera_8002ED9C` [ch_hook!] x2: tu/ftcrazyhandgrabunk1b174.rs:20, tu/ftmasterhandentry.rs:20
+- `Camera_8002EF14` [ch_hook!] x2: tu/ftcrazyhandgrabunk1b174.rs:22, tu/ftmasterhandentry.rs:24
+- `Camera_8002F0E4` [ch_hook!] x2: tu/ftcrazyhandgrabunk1b174.rs:23, tu/ftmasterhandentry.rs:25
+- `Camera_8002F274` [ch_hook!] x2: tu/ftcrazyhandgrabunk1b174.rs:25, tu/ftmasterhandentry.rs:27
+- `Camera_RequestQuake` [hook!] x6: tu/ftkirbyspecialkoopa.rs:76, tu/ftkirbyspeciallw.rs:62, tu/ftkirbyspecialpurin.rs:85, tu/ftkoopaspecialn.rs:71, tu/ftpikachuspeciallw.rs:50, tu/ftyoshispecials.rs:112
+- `Camera_SetModeToStandard` [ch_hook!] x2: tu/ftcrazyhandgrabunk1b174.rs:26, tu/ftmasterhandentry.rs:29
+- `CostumeListsForeachCharacter_costume_list` [hook!] x1: tu/ftpurin.rs:84
+- `efAsync_Spawn` [hook!] x9: tu/ftcaptainspeciallw.rs:46, tu/ftdonkeyspeciallw.rs:43, tu/ftkirby.rs:182, tu/ftkirbyspecialn.rs:173, tu/ftkirbyyoshiegg.rs:68, tu/ftnessspeciallw.rs:33, tu/ftpeachfloat.rs:46, tu/ftpikachuspeciallw.rs:53, tu/ftyoshiguard.rs:54
+- `ext__efLib_PauseAll` [fn-body] x1: chars/cb.rs:8
+- `ext__efLib_ResumeAll` [fn-body] x1: chars/cb.rs:13
+- `fighter_x2040_alloc_data` [hook!] x2: tu/ftkirby.rs:142, tu/ftpurin.rs:87
+- `ft_800892A0` [fn+panic/hook!] x8: tu/ftdonkeyspeciallw.rs:44, tu/ftfoxspecialn.rs:59, tu/ftkirbyspecialfox.rs:43, tu/ftkirbyspecialkoopa.rs:75, tu/ftkirbyspecialpurin.rs:86, tu/ftkoopaspecialn.rs:70, tu/ftmarsspecials.rs:24, tu/ftyoshispecials.rs:87
+- `ft_80459B88_hat` [hook!] x3: tu/ftkirbyspecialiceclimber.rs:69, tu/ftkirbyspecialmars.rs:53, tu/ftkirbyspecialyoshi.rs:50
+- `ft_CheckGroundAndLedge` [stub!] x1: stubs.rs:180
+- `ft_PlaySFX` [hook!] x5: tu/ftkirbyspecialiceclimber.rs:46, tu/ftkirbyspecialkoopa.rs:73, tu/ftkirbyspeciallw.rs:61, tu/ftnessattacks4.rs:24, tu/ftpopospecialn.rs:55
+- `ftAnim_GetNextJointInTree` [hook!] x1: tu/ftkirby.rs:208
+- `ftAnim_GetNextMatAnimJointInTree` [hook!] x1: tu/ftkirby.rs:209
+- `ftcaptainspeciallw__ftCa_SpecialHi_800E400C` [fn-body] x1: chars/cb.rs:23
+- `ftCh_GrabUnk1_8015B800` [ch_hook!/hook!] x2: tu/ftcrazyhandslam.rs:18, tu/ftcrazyhandtaggrab.rs:51
+- `ftCh_Init_80158B3C` [hook!] x1: tu/ftcrazyhandwait10.rs:59
+- `ftCh_Init_8015A030` [ch_hook!] x1: tu/ftcrazyhandgrab.rs:14
+- `ftCo_AirCatchHit_Coll` [stub!] x1: stubs.rs:273
+- `ftCo_CapturePulled__ftCo_800DB464` [fn-body] x1: chars/cb.rs:28
+- `ftCo_LandingAir__ftCo_LandingAir_EnterWithLag` [fn-body] x1: chars/cb.rs:33
+- `ftColl_8007ABD0` [fn+panic/hook!] x11: tu/ftdonkeyspecialn.rs:62, tu/ftgamewatchspeciallw.rs:73, tu/ftkirbyspecialdonkey.rs:45, tu/ftkirbyspecialmars.rs:83, tu/ftkirbyspecialpurin.rs:76, tu/ftlinkattackair.rs:33, tu/ftluigispecials.rs:61, tu/ftmarsspeciallw.rs:26, tu/ftnessattackhi4.rs:53, tu/ftpikachuspecials.rs:48, tu/ftyoshispecials.rs:89
+- `ftColl_8007AFF8` [hook!] x3: tu/ftkirbyspecialpurin.rs:75, tu/ftlinkattackair.rs:31, tu/ftyoshispecials.rs:88
+- `ftColl_8007B064` [hook!] x1: tu/ftlinkattackair.rs:32
+- `ftColl_8007B0C0` [hook!] x3: tu/ftkirbyyoshiegg.rs:61, tu/ftkoopaspecialn.rs:73, tu/ftyoshiguard.rs:51
+- `ftColl_8007B128` [hook!] x1: tu/ftkoopaspecialn.rs:72
+- `ftColl_8007B1B8` [hook!] x3: tu/ftclink.rs:95, tu/ftkirbyspecialpeach.rs:94, tu/ftpeachspecialn.rs:89
+- `ftColl_8007B62C` [hook!] x4: tu/ftkirbycaptureyoshi.rs:24, tu/ftmewtwospecialhi.rs:76, tu/ftseakspecialhi.rs:76, tu/ftzeldaspecialhi.rs:71
+- `ftColl_8007B760` [hook!] x1: tu/ftkirbyyoshiegg.rs:63
+- `ftColl_CreateAbsorbHit` [hook!] x2: tu/ftgamewatchspeciallw.rs:72, tu/ftnessspeciallw.rs:34
+- `ftColl_CreateReflectHit` [hook!] x6: tu/ftfoxspeciallw.rs:79, tu/ftkirbyspecialzelda.rs:36, tu/ftmariospecials.rs:65, tu/ftmewtwospecials.rs:63, tu/ftnessattacks4.rs:41, tu/ftzeldaspecialn.rs:54
+- `ftColl_HurtboxInit` [hook!] x2: tu/ftkirbyyoshiegg.rs:62, tu/ftyoshiguard.rs:52
+- `ftCommon_8007DA24` [hook!] x2: tu/ftmewtwospecialhi.rs:77, tu/ftseakspecialhi.rs:75
+- `ftCommon_GrabMash` [hook!] x1: tu/ftkirbyyoshiegg.rs:66
+- `ftCommon_InitGrab` [hook!] x1: tu/ftkirbyyoshiegg.rs:65
+- `ftCommon_SetAccessory` [hook!] x3: tu/ftkirbyspecialiceclimber.rs:51, tu/ftkirbyspecialmars.rs:54, tu/ftkirbyyoshiegg.rs:64
+- `ftKb_Init_803B7548` [hook!] x1: tu/ftkirbyspeciallink.rs:96
+- `ftluigispecialn__ftLg_SpecialN_FireSpawn` [fn-body] x1: chars/cb.rs:443
+- `ftmariospeciallw__updateRot` [fn-body] x1: chars/cb.rs:448
+- `ftmariospecialn__ftMr_SpecialN_ItemFireSpawn` [fn-body] x1: chars/cb.rs:453
+- `ftMaterial_800BFB4C` [hook!] x1: tu/ftgamewatch.rs:86
+- `ftmewtwo__ftMt_Init_OnDeath2` [fn-body] x1: chars/cb.rs:463
+- `ftmewtwo__ftMt_Init_OnTakeDamage` [fn-body] x1: chars/cb.rs:468
+- `ftmewtwospecialhi__ftMt_SpecialHi_CreateGFX` [fn-body] x1: chars/cb.rs:473
+- `ftmewtwospecialhi__ftMt_SpecialHi_SetEndGFX` [fn-body] x1: chars/cb.rs:478
+- `ftmewtwospeciallw__ftMt_SpecialLw_CreateDisable` [fn-body] x1: chars/cb.rs:488
+- `ftmewtwospecials__ftMt_SpecialAirS_AirToGround` [fn-body] x1: chars/cb.rs:498
+- `ftmewtwospecials__ftMt_SpecialS_GroundToAir` [fn-body] x1: chars/cb.rs:503
+- `ftnana__ftNn_Init_80122FAC` [fn-body] x1: chars/cb.rs:508
+- `ftnanaspecialhi__fn_80123218` [fn-body] x1: chars/cb.rs:513
+- `ftParts_8007487C` [hook!] x2: tu/ftkirby.rs:215, tu/ftpurin.rs:116
+- `ftParts_800753D4` [hook!] x2: tu/ftclink.rs:78, tu/ftkirby.rs:212
+- `ftParts_800755E8` [hook!] x1: tu/ftkirby.rs:213
+- `ftParts_80075650` [hook!] x2: tu/ftkirby.rs:214, tu/ftpurin.rs:115
+- `ftParts_GetBoneIndex` [hook!] x1: tu/ftyoshiguard.rs:53
+- `ftPartsPObjClearDefaultClass` [hook!] x2: tu/ftkirby.rs:211, tu/ftpurin.rs:105
+- `ftPartsPObjSetDefaultClass` [hook!] x2: tu/ftkirby.rs:210, tu/ftpurin.rs:104
+- `ftpeach__ftPe_Init_OnDeath2` [fn-body] x1: chars/cb.rs:518
+- `ftpeachspeciallw__spawnVeg` [fn-body] x1: chars/cb.rs:533
+- `ftsamus__ftSs_Init_80128428` [fn-body] x1: chars/cb.rs:618
+- `ftsamusspeciallw1__ftSs_SpecialLw_8012ADF0` [fn-body] x1: chars/cb.rs:623
+- `ftsamusspecialn__ftSs_SpecialS_8012A074` [fn-body] x1: chars/cb.rs:628
+- `ftseak__ftSk_Init_80110198` [fn-body] x1: chars/cb.rs:633
+- `ftseakspecialhi__fn_80113038` [fn-body] x1: chars/cb.rs:638
+- `ftseakspeciallw__fn_80114034` [fn-body] x1: chars/cb.rs:643
+- `ftseakspeciallw__fn_801140B0` [fn-body] x1: chars/cb.rs:648
+- `ftseakspeciallw__fn_8011412C` [fn-body] x1: chars/cb.rs:653
+- `ftseakspecials__ftSk_SpecialS_80110EE8` [fn-body] x1: chars/cb.rs:663
+- `ftseakspecials__ftSk_SpecialS_ChainSomething` [fn-body] x1: chars/cb.rs:668
+- `ftyoshi__ftYs_Init_8012BA8C` [fn-body] x1: chars/cb.rs:673
+- `HSD_AObjGetEndFrame` [hook!] x1: tu/ftyoshi.rs:42
+- `HSD_PadMasterStatus_button` [hook!] x2: tu/ftcrazyhandwait10.rs:79, tu/ftmasterhandwait10.rs:53
+- `hsdChangeClass_ftMObj` [hook!] x1: tu/ftkirby.rs:112
+- `Mex_CostumeVisIdx` [hook!] x1: tu/ftkirby.rs:60
+- `Mex_FtBaseKind` [hook!] x1: tu/ftkirby.rs:62
+- `Mex_InternalForPortKind` [hook!] x1: tu/ftkirby.rs:61
+- `Mex_KirbyCapFile` [hook!] x1: tu/ftkirbydata.rs:25
+- `Mex_KirbyCapSymbol` [hook!] x1: tu/ftkirbydata.rs:26
+- `Mex_KirbyCostumes` [hook!] x1: tu/ftkirby.rs:64
+- `Mex_KirbyEffectId` [hook!] x1: tu/ftkirbydata.rs:27
+- `Mex_KirbyFunc` [hook!] x1: tu/ftkirby.rs:63
+- `Mex_OnFloatDispatch` [hook!] x1: tu/ftpeachfloat.rs:44
+- `Skins_KirbyRow` [hook!] x1: tu/ftkirby.rs:59
+- `Slippi_Version` [hook!] x1: tu/ftnanaspecials.rs:95
+
+### melee_chara - SIGNATURE (149 sites, 91 names)
+
+- `Camera_8002EEC8` [ch_hook!] x2: tu/ftcrazyhandgrabunk1b174.rs:21, tu/ftmasterhandentry.rs:21 -> port `melee_world::cm/camera.rs:895`
+- `Camera_8002F260` [ch_hook!] x2: tu/ftcrazyhandgrabunk1b174.rs:24, tu/ftmasterhandentry.rs:26 -> port `melee_world::cm/camera.rs:602`
+- `efAsync_LoadAsync` [hook!] x1: tu/ftkirby.rs:180 -> port `melee_world::tu/efasync.rs:935`
+- `efAsync_LoadSync` [hook!] x1: tu/ftkirby.rs:181 -> port `melee_world::tu/efasync.rs:959`
+- `efSync_Spawn` [fn+panic/hook!] x30: tu/ftcaptainspecialn.rs:40, tu/ftfoxspecialhi.rs:60, tu/ftfoxspeciallw.rs:62, tu/ftfoxspecials.rs:51, tu/ftkirbyspecialcaptain.rs:31, tu/ftkirbyspecialdonkey.rs:44, tu/ftkirbyspecialhi.rs:79, tu/ftkirbyspecialluigi.rs:64, tu/ftkirbyspeciallw.rs:73, tu/ftkirbyspecialmario.rs:66, tu/ftkirbyspecialmars.rs:46, tu/ftkirbyspecialseak.rs:45, tu/ftkirbyspecialzelda.rs:35, tu/ftkoopaspecialhi.rs:29, tu/ftkoopaspeciallw.rs:37, tu/ftluigispeciallw.rs:40, tu/ftluigispecialn.rs:63, tu/ftluigispecials.rs:60, tu/ftmariospeciallw.rs:44, tu/ftmariospecialn.rs:66, tu/ftnessspecialhi.rs:69, tu/ftpikachuspecialhi.rs:80, tu/ftpikachuspeciallw.rs:52, tu/ftpikachuspecialn.rs:43, tu/ftpopospeciallw.rs:70, tu/ftpurin.rs:180, tu/ftseakspecialhi.rs:74, tu/ftseakspecialn.rs:60, tu/ftyoshispecials.rs:79, tu/ftzeldaspecialhi.rs:53 -> port `melee_world::tu/efsync.rs:251`
+- `ft_80082C74` [hook!/stub!] x2: stubs.rs:158, tu/ftinl.rs:66 -> port `melee_fighter::tu/ft_081b.rs:416`
+- `ft_800831CC` [hook!] x1: tu/ftpeachfloat.rs:57 -> port `melee_fighter::tu/ft_081b.rs:519`
+- `ft_80083A48` [hook!] x1: tu/ftinl.rs:67 -> port `melee_fighter::tu/ft_081b.rs:581`
+- `ft_8008403C` [hook!/stub!] x2: stubs.rs:160, tu/ftinl.rs:65 -> port `melee_fighter::tu/ft_081b.rs:630`
+- `ft_800841B8` [stub!] x1: stubs.rs:162 -> port `melee_fighter::tu/ft_081b.rs:644`
+- `ftCo_8008D8E8` [hook!] x1: tu/ftdonkeyheavylanding.rs:40 -> port `melee_fighter::tu/ftCo_Damage.rs:209`
+- `ftCo_8008E908` [hook!] x1: tu/ftdonkeyheavylanding.rs:30 -> port `melee_fighter::tu/ftCo_Damage.rs:655`
+- `ftCo_ScaleBy154` [hook!] x1: tu/ftdonkeyheavylanding.rs:42 -> port `melee_fighter::tu/ftCo_Damage.rs:204`
+- `ftCommon_8007EFC8` [hook!] x1: tu/ftseakspeciallw.rs:59 -> port `melee_fighter::tu/ftcommon.rs:70`
+- `ftKb_SpecialN_800F5F68` [todo_cb!] x1: tu/ftkirby.rs:553 -> port `melee_chara::tu/ftkirbyspecialn.rs:528`
+- `ftKb_SpecialN_800F6070` [todo_cb!] x1: tu/ftkirby.rs:567 -> port `melee_chara::tu/ftkirbyspecialn.rs:532`
+- `ftKb_SpecialN_800F9110` [todo_cb!] x1: tu/ftkirby.rs:552 -> port `melee_chara::tu/ftkirbyspecialmario.rs:86`
+- `ftKb_SpecialNIc_80108D64` [todo_cb!] x1: tu/ftkirby.rs:559 -> port `melee_chara::tu/ftkirbyspecialiceclimber.rs:131`
+- `ftKb_SpecialNIc_80108E14` [todo_cb!] x1: tu/ftkirby.rs:573 -> port `melee_chara::tu/ftkirbyspecialiceclimber.rs:144`
+- `ftKb_SpecialNKp_800FA8B4` [todo_cb!] x1: tu/ftkirby.rs:554 -> port `melee_chara::tu/ftkirbyspecialkoopa.rs:226`
+- `ftKb_SpecialNKp_800FA958` [todo_cb!] x1: tu/ftkirby.rs:568 -> port `melee_chara::tu/ftkirbyspecialkoopa.rs:234`
+- `ftKb_SpecialNLk800FB880` [todo_cb!] x1: tu/ftkirby.rs:555 -> port `melee_chara::tu/ftkirbyspeciallink.rs:320`
+- `ftKb_SpecialNLk800FBA00` [todo_cb!] x1: tu/ftkirby.rs:569 -> port `melee_chara::tu/ftkirbyspeciallink.rs:344`
+- `ftKb_SpecialNMr_800F93CC` [todo_cb!] x1: tu/ftkirby.rs:566 -> port `melee_chara::tu/ftkirbyspecialmario.rs:152`
+- `ftKb_SpecialNMs_8010B2FC` [todo_cb!] x1: tu/ftkirby.rs:564 -> port `melee_chara::tu/ftkirbyspecialmars.rs:190`
+- `ftKb_SpecialNMs_8010B4A0` [todo_cb!] x1: tu/ftkirby.rs:578 -> port `melee_chara::tu/ftkirbyspecialmars.rs:209`
+- `ftKb_SpecialNMt_80107568` [todo_cb!] x1: tu/ftkirby.rs:563 -> port `melee_chara::tu/ftkirbyspecialmewtwo.rs:332`
+- `ftKb_SpecialNMt_80107638` [todo_cb!] x1: tu/ftkirby.rs:577 -> port `melee_chara::tu/ftkirbyspecialmewtwo.rs:350`
+- `ftKb_SpecialNNs_800FED38` [todo_cb!] x1: tu/ftkirby.rs:557 -> port `melee_chara::tu/ftkirbyspecialness.rs:100`
+- `ftKb_SpecialNNs_800FEDD0` [todo_cb!] x1: tu/ftkirby.rs:571 -> port `melee_chara::tu/ftkirbyspecialness.rs:111`
+- `ftKb_SpecialNPe_8010C4D4` [todo_cb!] x1: tu/ftkirby.rs:558 -> port `melee_chara::tu/ftkirbyspecialpeach.rs:211`
+- `ftKb_SpecialNPe_8010C560` [todo_cb!] x1: tu/ftkirby.rs:572 -> port `melee_chara::tu/ftkirbyspecialpeach.rs:219`
+- `ftKb_SpecialNPk_800F9FD4` [todo_cb!] x1: tu/ftkirby.rs:560 -> port `melee_chara::tu/ftkirbyspecialpikachu.rs:71`
+- `ftKb_SpecialNPk_800FA064` [todo_cb!] x1: tu/ftkirby.rs:574 -> port `melee_chara::tu/ftkirbyspecialpikachu.rs:75`
+- `ftKb_SpecialNPr_80100DE0` [hook!] x1: tu/ftkirby.rs:353 -> port `melee_chara::chars/r6/ftKirby.rs:27`
+- `ftKb_SpecialNPr_80101560` [todo_cb!] x1: tu/ftkirby.rs:562 -> port `melee_chara::tu/ftkirbyspecialpurin.rs:455`
+- `ftKb_SpecialNPr_80101618` [todo_cb!] x1: tu/ftkirby.rs:576 -> port `melee_chara::tu/ftkirbyspecialpurin.rs:472`
+- `ftKb_SpecialNSk_8010612C` [todo_cb!] x1: tu/ftkirby.rs:556 -> port `melee_chara::tu/ftkirbyspecialseak.rs:186`
+- `ftKb_SpecialNSk_801061E4` [todo_cb!] x1: tu/ftkirby.rs:570 -> port `melee_chara::tu/ftkirbyspecialseak.rs:194`
+- `ftKb_SpecialNYs_8010941C` [todo_cb!] x1: tu/ftkirby.rs:561 -> port `melee_chara::tu/ftkirbyspecialyoshi.rs:255`
+- `ftKb_SpecialNYs_801094FC` [todo_cb!] x1: tu/ftkirby.rs:575 -> port `melee_chara::tu/ftkirbyspecialyoshi.rs:272`
+- `ftKb_SpecialNZd_80105B2C` [todo_cb!] x1: tu/ftkirby.rs:565 -> port `melee_chara::tu/ftkirbyspecialzelda.rs:102`
+- `ftKb_SpecialNZd_80105BA8` [todo_cb!] x1: tu/ftkirby.rs:579 -> port `melee_chara::tu/ftkirbyspecialzelda.rs:112`
+- `HSD_ArchiveGetPublicAddress` [hook!] x1: tu/ftpurin.rs:85 -> port `melee_runtime::tu/archive.rs:84`
+- `HSD_DObjAddAnimAll` [hook!] x1: tu/ftkirby.rs:107 -> port `melee_runtime::tu/dobj.rs:222`
+- `HSD_DObjLoadDesc` [hook!] x1: tu/ftkirby.rs:101 -> port `melee_runtime::tu/dobj.rs:287`
+- `HSD_DObjRemoveAll` [hook!] x1: tu/ftkirby.rs:109 -> port `melee_runtime::tu/dobj.rs:307`
+- `HSD_DObjResolveRefsAll` [hook!] x1: tu/ftkirby.rs:104 -> port `melee_runtime::tu/dobj.rs:334`
+- `HSD_JObjAddAnimAll` [hook!] x1: tu/ftkirbyspecialyoshi.rs:60 -> port `melee_runtime::tu/jobj.rs:327`
+- `HSD_JObjAddDObj` [hook!] x1: tu/ftkirby.rs:106 -> port `melee_runtime::tu/jobj.rs:299`
+- `HSD_JObjAnimAll` [hook!] x2: tu/ftkirbyspecialyoshi.rs:62, tu/ftseakspecials.rs:98 -> port `melee_runtime::tu/jobj.rs:325`
+- `HSD_JObjClearFlagsAll` [hook!] x1: tu/ftpopospecials.rs:100 -> port `melee_runtime::tu/jobj.rs:306`
+- `HSD_JObjCopyMtx` [hook!] x2: tu/ftkirby.rs:123, tu/ftpurin.rs:143 -> port `melee_items::tu/inl_it.rs:259`
+- `HSD_JObjDispAll` [hook!] x1: tu/ftkirby.rs:132 -> port `melee_runtime::tu/jobj.rs:232`
+- `HSD_JObjGetDObj` [hook!] x1: tu/ftkirby.rs:103 -> port `melee_runtime::tu/jobj.rs:298`
+- `HSD_JObjRemoveAll` [hook!] x2: tu/ftkirby.rs:121, tu/ftpurin.rs:114 -> port `melee_runtime::tu/jobj.rs:314`
+- `HSD_JObjReqAnimAll` [hook!] x1: tu/ftkirbyspecialyoshi.rs:61 -> port `melee_runtime::tu/jobj.rs:322`
+- `HSD_JObjSetFlagsAll` [hook!] x1: tu/ftpopospecials.rs:101 -> port `melee_runtime::tu/jobj.rs:304`
+- `HSD_JObjSetMtxDirtySub` [fn+panic/hook!] x4: tu/ftcrazyhandwait11.rs:37, tu/ftinl.rs:35, tu/ftmasterhandbackcrush0.rs:20, tu/ftpurin.rs:145 -> port `melee_runtime::tu/jobj.rs:291`
+- `HSD_JObjSetRotationZ` [hook!] x1: tu/ftpopospecials.rs:102 -> port `melee_world::hud/jobj_inl.rs:37`
+- `HSD_JObjSetTranslate` [hook!] x2: tu/ftyoshi.rs:65, tu/ftyoshiguard.rs:55 -> port `melee_world::hud/jobj_inl.rs:70`
+- `HSD_Randf` [hook!] x3: tu/ftcrazyhandwait10.rs:81, tu/ftmasterhandwait10.rs:55, tu/ftpikachuspecialhi.rs:70 -> port `melee_runtime::tu/random.rs:30`
+- `HSD_Randi` [hook!] x10: tu/ftcrazyhandwait10.rs:80, tu/ftgamewatchspecialn.rs:30, tu/ftkirby.rs:92, tu/ftkirbyspecialgamewatch.rs:40, tu/ftkirbyspecialkoopa.rs:56, tu/ftkirbyspeciallw.rs:45, tu/ftkirbyspecialmario.rs:53, tu/ftkirbyspecialn.rs:88, tu/ftmasterhandwait10.rs:54, tu/ftseakspecialn.rs:47 -> port `melee_runtime::tu/random.rs:33`
+- `it_8029DD58` [hook!] x1: tu/ftlinkspeciallw.rs:31 -> port `melee_items::tu/itlinkbomb.rs:248`
+- `it_802A013C` [hook!] x1: tu/ftlinkspecials.rs:49 -> port `melee_items::tu/itlinkboomerang.rs:207`
+- `it_802A0534` [hook!] x1: tu/ftlinkspecials.rs:58 -> port `melee_items::tu/itlinkboomerang.rs:269`
+- `it_802A8398` [hook!] x1: tu/ftlinkspecialn.rs:53 -> port `melee_items::itkinds5.rs:262`
+- `it_802A83E0` [hook!] x1: tu/ftlinkspecialn.rs:52 -> port `melee_items::tu/itlinkarrow.rs:288`
+- `it_802AF1A4` [hook!] x1: tu/ftlinkspecialn.rs:51 -> port `melee_items::tu/itlinkbow.rs:72`
+- `it_802C1590` [hook!] x2: tu/ftkirbyspecialiceclimber.rs:45, tu/ftpopospecialn.rs:46 -> port `melee_items::tu/itclimbersice.rs:186`
+- `it_802C16F8` [hook!] x2: tu/ftkirbyspecialiceclimber.rs:44, tu/ftpopospecialn.rs:45 -> port `melee_items::tu/itclimbersice.rs:207`
+- `it_802C17DC` [hook!] x3: tu/ftkirbyspecialiceclimber.rs:43, tu/ftpopo.rs:60, tu/ftpopospecialn.rs:44 -> port `melee_items::tu/itclimbersice.rs:221`
+- `it_802C2750` [hook!] x1: tu/ftpopospecialhi.rs:87 -> port `melee_items::tu/itclimbersstring.rs:274`
+- `it_802C27D4` [hook!] x1: tu/ftpopospecialhi.rs:88 -> port `melee_items::tu/itclimbersstring.rs:295`
+- `it_802C3810` [hook!] x1: tu/ftpopospecialhi.rs:85 -> port `melee_items::tu/itclimbersstring.rs:646`
+- `it_802C3864` [hook!] x1: tu/ftpopospecialhi.rs:86 -> port `melee_items::tu/itclimbersstring.rs:654`
+- `it_802C3950` [hook!] x1: tu/ftpopospecialhi.rs:84 -> port `melee_items::tu/itclimbersstring.rs:670`
+- `it_802C8B28` [hook!] x1: tu/ftclinkappeals.rs:27 -> port `melee_items::tu/itclinkmilk.rs:86`
+- `it_802C8C34` [hook!] x1: tu/ftclink.rs:104 -> port `melee_items::tu/itclinkmilk.rs:106`
+- `it_802F0F6C` [ch_hook!] x1: tu/ftcrazyhandfingerbeam0.rs:47 -> port `melee_items::tu/itcrazyhandbomb.rs:96`
+- `it_802F28C8` [hook!] x1: tu/ftkirbyspecialn.rs:153 -> port `melee_items::tu/it_2F28.rs:71`
+- `itDrMarioPill_802C0DBC` [hook!] x1: tu/ftdrmario.rs:89 -> port `melee_items::tu/itdrmariopill.rs:287`
+- `itDrMarioPill_Appeal_Spawn` [hook!] x1: tu/ftdrmarioappeals.rs:56 -> port `melee_items::tu/itdrmariopill.rs:175`
+- `itDrMarioPill_Spawn` [hook!] x2: tu/ftkirbyspecialmario.rs:62, tu/ftmariospecialn.rs:67 -> port `melee_items::tu/itdrmariopill.rs:144`
+- `Item_8026ABD8` [hook!] x1: tu/ftdonkeyheavylanding.rs:28 -> port `melee_items::tu/item.rs:2069`
+- `itLinkArrow_802A850C` [hook!] x1: tu/ftlinkspecialn.rs:54 -> port `melee_items::tu/itlinkarrow.rs:345`
+- `lb_8000B1CC` [hook!] x1: tu/ftlinkspeciallw.rs:29 -> port `melee_runtime::tu/lb_00B0.rs:245`
+- `lbAnim_8001E8F8` [hook!] x3: tu/ftclink.rs:53, tu/ftkirbyspecialn.rs:163, tu/ftpeach.rs:66 -> port `melee_runtime::tu/lbanim.rs:205`
+- `lbArchive_80017040` [hook!] x1: tu/ftkirby.rs:179 -> port `melee_runtime::tu/lbarchive.rs:251`
+- `lbDvd_800178E8` [hook!] x1: tu/ftkirby.rs:176 -> port `melee_runtime::tu/lbdvd.rs:371`
+- `Player_80031DC8` [hook!] x1: tu/ftkirby.rs:90 -> port `melee_fighter::player.rs:131`
+
+### melee_chara - CYCLE (6 sites, 5 names)
+
+- `gm_8016B1D8` [hook!] x1: tu/ftpurinspecialhi.rs:27 -> port `melee_modes::tu/gmvs.rs:414`
+- `HSD_JObjGetMtxPtr` [hook!] x2: tu/ftkirby.rs:122, tu/ftpurin.rs:142 -> port `melee_modes::tu/lb_020A.rs:89`
+- `OSReport` [hook!] x1: tu/ftkirbyspecials.rs:57 -> port `melee_modes::tu/gm_17c0.rs:246`
+- `ScriptGame_CapsMaxJumps` [hook!] x1: tu/ftseakspecialhi.rs:77 -> port `melee_modes::tu/script_game.rs:12358`
+- `ScriptGame_HitRuleSpecial` [hook!] x1: tu/ftpurinspecialhi.rs:36 -> port `melee_modes::tu/script_game.rs:4103`
+
+## melee_modes
+
+NO_PORT: 912 sites / 608 names, SIGNATURE: 2428 sites / 1249 names, CYCLE: 0 sites / 0 names
+
+### melee_modes - NO_PORT (912 sites, 608 names)
+
+- `__frsqrte` [hooks!/oext_fns!] x3: tu/geno_game.rs:220, tu/geno_tests.rs:182, tu/script_game.rs:333
+- `_HSD_mkEnvelopeModelNodeMtx` [oext_fns!] x1: tu/script_game.rs:299
+- `Camera_8002E6FC` [fn+panic] x1: tu_ext.rs:10
+- `Camera_8002EB5C` [fn+panic] x1: tu_ext.rs:15
+- `Camera_8002EC7C` [fn+panic] x1: tu_ext.rs:20
+- `Camera_8002ED9C` [fn+panic] x1: tu_ext.rs:25
+- `Camera_8002F3AC` [ext_fns!] x2: tu/gm_1601.rs:171, tu/gmvs.rs:208
+- `Camera_8002F760` [ext_fns!] x1: tu/gm_1601.rs:107
+- `Camera_8002F784` [ext_fns!] x1: tu/gm_1601.rs:108
+- `Camera_8002F7AC` [oext_fns!] x1: tu/gmregclear.rs:37
+- `Camera_8002F9E4` [ext_fns!] x1: tu/gm_1601.rs:111
+- `Camera_8002FC7C` [ext_fns!] x1: tu/gm_1601.rs:109
+- `Camera_800304E0` [fn+panic] x1: tu_ext.rs:35
+- `Camera_80030A50` [oext_fns!] x1: tu/script_game.rs:19
+- `Camera_800310B8` [hooks!] x1: tu/geno_game.rs:178
+- `Camera_800313E0` [ext_fns!/fn+panic/oext_fns!] x3: tu/gm_1798.rs:215, tu/gmregtyfall.rs:39, tu_ext.rs:40
+- `Camera_Create` [ext_fns!] x1: tu/gmvs.rs:190
+- `Camera_Init` [ext_fns!/fn+panic/oext_fns!] x4: tu/gm_1798.rs:216, tu/gmvs.rs:189, tu/hsd.rs:26, tu_ext.rs:45
+- `Camera_LargeMapRestore` [oext_fns!] x1: tu/script_game.rs:347
+- `Camera_PCMainCObj` [oext_fns!] x1: tu/script_game.rs:374
+- `Camera_RequestQuake` [ext_fns!] x3: tu/gm_17c0.rs:97, tu/gmevent.rs:34, tu/gmvs.rs:84
+- `Camera_SetModeToFixed` [ext_fns!] x1: tu/gm_1601.rs:110
+- `Camera_SetModeToStandard` [fn+panic] x1: tu_ext.rs:50
+- `Camera_SetQuakeScale` [ext_fns!] x3: tu/gm_17c0.rs:98, tu/gmevent.rs:35, tu/gmvs.rs:162
+- `Camera_SetUpPauseCameraWithDefaultZoom` [ext_fns!] x1: tu/gm_1601.rs:105
+- `Camera_StageSlotClipGet` [oext_fns!] x1: tu/script_game.rs:32
+- `ContentProbeName` [hook!] x1: tu/gmboot.rs:134
+- `ContentProbeResult` [hook!] x1: tu/gmboot.rs:136
+- `Controls_Menu` [oext_fns!] x1: tu/gmfrontend.rs:290
+- `db_804D6B20` [hook!] x1: tu/gmmain_lib.rs:1431
+- `db_gameLaunchButtonState` [hook!] x2: tu/gm_1A3F.rs:306, tu/gmmain.rs:104
+- `DbLevel` [hook!] x3: tu/gmmain.rs:105, tu/gmmain_lib.rs:1429, tu/gmscmemcard.rs:242
+- `DbLKind_DebugDevelop` [hook!] x1: tu/gmmain_lib.rs:1430
+- `DCInvalidateRange` [ext_fns!] x1: tu/lb_01F8.rs:28
+- `diag_fx_cam` [hooks!] x1: tu/geno_game.rs:197
+- `diag_geno_stun` [hooks!] x1: tu/geno_game.rs:34
+- `DVDCheckDisk` [hook!] x1: tu/gm_1A3F.rs:248
+- `DVDConvertPathToEntrynum` [hook!/oext_fns!] x4: tu/gmmain.rs:102, tu/gmmain_lib.rs:1410, tu/gmopening.rs:179, tu/script_game.rs:13
+- `DVDGetDriveStatus` [ext_fns!] x1: tu/lb_0192.rs:28
+- `efAsync_Spawn` [hooks!] x1: tu/geno_game.rs:222
+- `fa_room_end` [oext_fns!] x1: tu/gmfrontend.rs:372
+- `fa_room_leaving` [oext_fns!] x1: tu/gmfrontend.rs:373
+- `fa_room_on` [oext_fns!] x1: tu/gmfrontend.rs:374
+- `fabsf` [hooks!/oext_fns!] x2: tu/geno_tests.rs:61, tu/script_game.rs:66
+- `Fad_OverlayWrap` [hook!] x1: tu/gm_1A3F.rs:315
+- `Fad_ToyWindowKnown` [hook!] x1: tu/gm_1A3F.rs:312
+- `fas_active` [oext_fns!] x1: tu/gmfrontend.rs:375
+- `fcr_back` [oext_fns!] x1: tu/gmfrontend.rs:376
+- `fcr_frame` [oext_fns!] x1: tu/gmfrontend.rs:377
+- `fe_is_controls_help` [oext_fns!] x1: tu/gmfrontend.rs:378
+- `fe_is_settings` [oext_fns!] x1: tu/gmfrontend.rs:379
+- `fe_panel_art_frame` [oext_fns!] x1: tu/gmfrontend.rs:380
+- `fe_panel_art_image` [oext_fns!] x1: tu/gmfrontend.rs:381
+- `fe_panel_rect` [oext_fns!] x1: tu/gmfrontend.rs:382
+- `fe_panel_solid` [oext_fns!] x1: tu/gmfrontend.rs:383
+- `fe_rules_resume` [oext_fns!] x1: tu/gmfrontend.rs:384
+- `fe_settings_apply_online` [oext_fns!] x1: tu/gmfrontend.rs:385
+- `ff_load` [oext_fns!] x1: tu/gmfrontend.rs:386
+- `Fighter_ProcessHit_8006D1EC` [oext_fns!] x1: tu/script_game.rs:76
+- `FighterControls_MatchBegin` [ext_fns!] x1: tu/gmvs.rs:182
+- `FighterControls_MatchClear` [hook!] x1: tu/gm_1A3F.rs:313
+- `fk_build` [oext_fns!] x1: tu/gmfrontend.rs:387
+- `fk_bump` [oext_fns!] x1: tu/gmfrontend.rs:388
+- `fk_exit` [oext_fns!] x1: tu/gmfrontend.rs:389
+- `fk_frame` [oext_fns!] x1: tu/gmfrontend.rs:390
+- `fk_note_dir` [oext_fns!] x1: tu/gmfrontend.rs:391
+- `fl_code_reset` [oext_fns!] x1: tu/gmfrontend.rs:392
+- `fl_exit` [oext_fns!] x1: tu/gmfrontend.rs:393
+- `fl_frame` [oext_fns!] x1: tu/gmfrontend.rs:394
+- `fl_frame_anim` [oext_fns!] x1: tu/gmfrontend.rs:395
+- `fl_lobby_notice` [oext_fns!] x1: tu/gmfrontend.rs:396
+- `fl_open` [oext_fns!] x1: tu/gmfrontend.rs:397
+- `fl_rejoin_reset` [oext_fns!] x1: tu/gmfrontend.rs:398
+- `fm_leave_scene` [oext_fns!] x1: tu/gmfrontend.rs:399
+- `fm_position_for` [oext_fns!] x1: tu/gmfrontend.rs:400
+- `fm_replaced` [oext_fns!] x1: tu/gmfrontend.rs:401
+- `fm_scene_enter` [oext_fns!] x1: tu/gmfrontend.rs:402
+- `fm_scene_exit` [oext_fns!] x1: tu/gmfrontend.rs:403
+- `fm_scene_frame` [oext_fns!] x1: tu/gmfrontend.rs:404
+- `fms_in_quad` [oext_fns!] x1: tu/gmfrontend.rs:405
+- `fms_menu_bits` [oext_fns!] x1: tu/gmfrontend.rs:406
+- `fms_poll` [oext_fns!] x1: tu/gmfrontend.rs:407
+- `fn_80168A6C` [oext_fns!] x1: tu/gmregclear.rs:68
+- `fn_8017ADA8` [oext_fns!] x1: tu/gmresult.rs:87
+- `fn_8017AE0C` [oext_fns!] x1: tu/gmresult.rs:88
+- `fn_8017AE70` [oext_fns!] x1: tu/gmresult.rs:89
+- `fn_8017AED8` [oext_fns!] x1: tu/gmresult.rs:90
+- `fn_8017AF40` [oext_fns!] x1: tu/gmresult.rs:91
+- `fn_8017AFA8` [oext_fns!] x1: tu/gmresult.rs:92
+- `fn_8017B07C` [oext_fns!] x1: tu/gmresult.rs:94
+- `fn_8017B0E4` [oext_fns!] x1: tu/gmresult.rs:95
+- `fn_8017B14C` [oext_fns!] x1: tu/gmresult.rs:96
+- `fn_8017B1B4` [oext_fns!] x1: tu/gmresult.rs:97
+- `fn_8017B21C` [oext_fns!] x1: tu/gmresult.rs:98
+- `fn_8017B280` [oext_fns!] x1: tu/gmresult.rs:99
+- `fn_8017B2E4` [oext_fns!] x1: tu/gmresult.rs:100
+- `fn_8017B348` [oext_fns!] x1: tu/gmresult.rs:101
+- `fn_8017B3AC` [oext_fns!] x1: tu/gmresult.rs:102
+- `fn_8017B4D0` [oext_fns!] x1: tu/gmresult.rs:104
+- `fn_8017B534` [oext_fns!] x1: tu/gmresult.rs:105
+- `fn_8017B598` [oext_fns!] x1: tu/gmresult.rs:106
+- `fn_8017B5FC` [oext_fns!] x1: tu/gmresult.rs:107
+- `fn_8017B660` [oext_fns!] x1: tu/gmresult.rs:108
+- `fn_8017B6C4` [oext_fns!] x1: tu/gmresult.rs:109
+- `fn_8017B728` [oext_fns!] x1: tu/gmresult.rs:110
+- `fn_8017B78C` [oext_fns!] x1: tu/gmresult.rs:111
+- `fn_8017B7F0` [oext_fns!] x1: tu/gmresult.rs:112
+- `fn_8017B854` [oext_fns!] x1: tu/gmresult.rs:113
+- `fn_8017B8B8` [oext_fns!] x1: tu/gmresult.rs:114
+- `fp_draw` [oext_fns!] x1: tu/gmfrontend.rs:408
+- `fp_evaluate` [oext_fns!] x1: tu/gmfrontend.rs:409
+- `fp_free_textures` [oext_fns!] x1: tu/gmfrontend.rs:410
+- `fp_scroll_cue` [oext_fns!] x1: tu/gmfrontend.rs:411
+- `Frontend_NativeSelect` [oext_fns!] x1: tu/gmfrontend.rs:291
+- `Frontend_TrainingSelect` [oext_fns!] x1: tu/gmfrontend.rs:292
+- `fsm_fill` [oext_fns!] x1: tu/gmfrontend.rs:412
+- `fss_close` [oext_fns!] x1: tu/gmfrontend.rs:413
+- `fss_exit` [oext_fns!] x1: tu/gmfrontend.rs:414
+- `fss_frame` [oext_fns!] x1: tu/gmfrontend.rs:415
+- `fss_intercepts` [oext_fns!] x1: tu/gmfrontend.rs:416
+- `fss_switch` [oext_fns!] x1: tu/gmfrontend.rs:417
+- `ft_PlaySFX` [hooks!] x1: tu/geno_game.rs:168
+- `ftBossLib_8015C74C` [ext_fns!] x2: tu/gm_17c0.rs:141, tu/gmevent.rs:59
+- `ftBossLib_8015C7EC` [ext_fns!] x2: tu/gm_17c0.rs:142, tu/gmevent.rs:60
+- `ftBossLib_8015C88C` [ext_fns!] x1: tu/gm_17c0.rs:143
+- `ftBossLib_8015C92C` [ext_fns!] x1: tu/gmevent.rs:61
+- `ftBossLib_8015C9CC` [ext_fns!] x1: tu/gm_17c0.rs:144
+- `ftCo_800A101C` [oext_fns!] x1: tu/script_game.rs:116
+- `ftCo_800B3E04` [oext_fns!] x1: tu/script_game.rs:77
+- `ftCo_800C0200` [oext_fns!] x1: tu/script_game.rs:255
+- `ftCo_GetLStickAngle` [oext_fns!] x1: tu/script_game.rs:87
+- `ftCo_IsCpuControlled` [hooks!] x1: tu/geno_game.rs:210
+- `ftColl_80076640` [oext_fns!] x1: tu/script_game.rs:244
+- `ftColl_8007891C` [oext_fns!] x1: tu/script_game.rs:345
+- `ftColl_80079AB0` [oext_fns!] x1: tu/script_game.rs:245
+- `ftColl_8007A06C` [oext_fns!] x1: tu/script_game.rs:360
+- `ftColl_8007B760` [oext_fns!] x1: tu/script_game.rs:246
+- `ftColl_8007B7A4` [oext_fns!] x1: tu/script_game.rs:247
+- `ftCommon_CalcHitlag` [oext_fns!] x1: tu/script_game.rs:88
+- `ftCommon_CalcSelfAccel_DeaccelAir` [hooks!] x1: tu/geno_game.rs:63
+- `ftCommon_CalcSelfAccel_DeaccelQuickAir` [oext_fns!] x1: tu/script_game.rs:81
+- `ftCommon_CalcSelfAccel_Drift` [hooks!] x1: tu/geno_game.rs:64
+- `ftCommon_Fall` [hooks!] x1: tu/geno_game.rs:65
+- `ftCommon_SetSelfMovementFromGroundedMovement` [hooks!] x1: tu/geno_game.rs:62
+- `ftCommon_UnlockECB` [oext_fns!] x1: tu/script_game.rs:82
+- `ftCommon_UseAllJumps` [hooks!] x1: tu/geno_game.rs:67
+- `ftDemo_ObjAllocInit` [ext_fns!/fn+panic/oext_fns!] x3: tu/gm_1798.rs:259, tu/gmregtyfall.rs:71, tu_ext.rs:730
+- `fte_frame` [oext_fns!] x1: tu/gmfrontend.rs:418
+- `ftLib_GetKind` [ext_fns!] x1: tu/gmevent.rs:66
+- `ftLib_SetScale` [oext_fns!] x1: tu/script_game.rs:93
+- `ftParts_GetBoneIndex` [oext_fns!] x1: tu/script_game.rs:80
+- `Fx_Attach` [hooks!] x1: tu/geno_game.rs:190
+- `Fx_Detach` [hooks!] x1: tu/geno_game.rs:191
+- `Fx_Draw` [hooks!] x1: tu/geno_game.rs:194
+- `Fx_Drive` [hooks!] x1: tu/geno_game.rs:199
+- `Fx_Frame` [hooks!] x1: tu/geno_game.rs:193
+- `Fx_Owner` [hooks!] x1: tu/geno_game.rs:201
+- `Fx_SetOwner` [hooks!] x1: tu/geno_game.rs:196
+- `Fx_SetOwnerPort` [hooks!] x1: tu/geno_game.rs:192
+- `Fx_Stat` [hooks!] x1: tu/geno_game.rs:195
+- `Geno_ArticleCount` [hooks!] x2: tu/geno_game.rs:138, tu/geno_tests.rs:136
+- `Geno_ArticleHitCount` [hooks!] x2: tu/geno_game.rs:185, tu/geno_tests.rs:138
+- `Geno_ArticleHitParam` [hooks!] x2: tu/geno_game.rs:186, tu/geno_tests.rs:139
+- `Geno_ArticleJoint` [hooks!] x1: tu/geno_game.rs:187
+- `Geno_ArticleParam` [hooks!] x2: tu/geno_game.rs:184, tu/geno_tests.rs:137
+- `Geno_AttrBits` [hooks!] x1: tu/geno_game.rs:97
+- `Geno_AttrCount` [hooks!] x1: tu/geno_game.rs:95
+- `Geno_AttrIndex` [hooks!] x1: tu/geno_game.rs:96
+- `Geno_ComboNote` [hooks!] x1: tu/geno_game.rs:216
+- `Geno_ComboParam` [hooks!] x2: tu/geno_game.rs:137, tu/geno_tests.rs:168
+- `Geno_ComboWord` [hooks!] x2: tu/geno_game.rs:215, tu/geno_tests.rs:170
+- `Geno_CommonMoveTag` [oext_fns!] x1: tu/script_game.rs:338
+- `Geno_DefineArtBaseCK` [ext_fns!/oext_fns!] x3: tu/gm_1601.rs:214, tu/gmresultplayer.rs:108, tu/mncharsel.rs:55
+- `Geno_DefineArtOpen` [oext_fns!] x1: tu/gmresultplayer.rs:110
+- `Geno_DefineAudioPlay` [ext_fns!] x1: tu/gm_1601.rs:217
+- `Geno_DefineBaseCK` [ext_fns!/oext_fns!] x3: tu/gm_1601.rs:36, tu/gmresultplayer.rs:107, tu/mncharsel.rs:56
+- `Geno_DefineBaseKind` [ext_fns!/hooks!/oext_fns!] x3: tu/geno_game.rs:58, tu/gm_1601.rs:37, tu/script_game.rs:72
+- `Geno_DefineCKAt` [hooks!] x1: tu/geno_tests.rs:157
+- `Geno_DefineCostumeCountCK` [ext_fns!] x1: tu/gm_1601.rs:227
+- `Geno_DefineCount` [hooks!] x1: tu/geno_tests.rs:156
+- `Geno_DefineHasArt` [ext_fns!] x1: tu/gm_1601.rs:213
+- `Geno_DefineIsNone` [oext_fns!] x1: tu/script_game.rs:357
+- `Geno_DefineName` [ext_fns!/oext_fns!] x2: tu/gm_1601.rs:232, tu/gmresultplayer.rs:109
+- `Geno_DefineOverrideCount` [hooks!] x1: tu/geno_game.rs:157
+- `Geno_DefineOverrideField` [hooks!] x1: tu/geno_game.rs:158
+- `Geno_DefinePlanInt` [oext_fns!] x1: tu/script_game.rs:358
+- `Geno_DefineTeamCostume` [ext_fns!] x1: tu/gm_1601.rs:230
+- `Geno_DefineVoiceState` [hooks!] x1: tu/geno_game.rs:221
+- `Geno_Event` [hooks!] x1: tu/geno_game.rs:101
+- `Geno_FxBindings` [hooks!] x1: tu/geno_game.rs:198
+- `Geno_Hook` [hooks!] x1: tu/geno_game.rs:99
+- `Geno_HookArg` [hooks!] x1: tu/geno_game.rs:100
+- `Geno_HookCount` [hooks!] x2: tu/geno_game.rs:98, tu/geno_tests.rs:141
+- `Geno_ItemParam` [hooks!] x1: tu/geno_game.rs:206
+- `Geno_JumpVyBits` [hooks!] x1: tu/geno_game.rs:94
+- `Geno_JumpVyCount` [hooks!] x1: tu/geno_game.rs:93
+- `Geno_LuaCall` [hooks!] x1: tu/geno_game.rs:156
+- `Geno_LuaFn` [hooks!] x1: tu/geno_game.rs:154
+- `Geno_LuaSlots` [hooks!] x1: tu/geno_game.rs:155
+- `Geno_MaxJumps` [hooks!] x1: tu/geno_game.rs:91
+- `Geno_MeterParam` [hooks!] x1: tu/geno_tests.rs:169
+- `Geno_MotionAnim` [hooks!] x1: tu/geno_game.rs:106
+- `Geno_OnLandCount` [hooks!] x1: tu/geno_game.rs:105
+- `Geno_OnLandFrom` [hooks!] x1: tu/geno_game.rs:107
+- `Geno_OnLandTo` [hooks!] x1: tu/geno_game.rs:108
+- `Geno_OverlayAnim` [hooks!/oext_fns!] x2: tu/geno_game.rs:110, tu/script_game.rs:337
+- `Geno_OverlayCount` [hooks!/oext_fns!] x2: tu/geno_game.rs:109, tu/script_game.rs:336
+- `Geno_OverlayMoveTag` [oext_fns!] x1: tu/script_game.rs:335
+- `Geno_OverlaySlot` [hooks!] x1: tu/geno_game.rs:111
+- `Geno_ParamBits` [hooks!] x1: tu/geno_game.rs:135
+- `Geno_ParamCount` [hooks!] x1: tu/geno_game.rs:133
+- `Geno_ParamId` [hooks!] x1: tu/geno_game.rs:134
+- `Geno_PoolGen` [hooks!] x1: tu/geno_game.rs:118
+- `Geno_PoolWord` [hooks!] x1: tu/geno_game.rs:117
+- `Geno_PoolWords` [hooks!] x1: tu/geno_game.rs:116
+- `Geno_ProfileCount` [hooks!] x1: tu/geno_game.rs:152
+- `Geno_ProfileForKind` [hooks!/oext_fns!] x2: tu/geno_game.rs:90, tu/script_game.rs:339
+- `Geno_ProfileIdWord` [hooks!] x1: tu/geno_game.rs:202
+- `Geno_RecordAdd` [ext_fns!] x1: tu/gm_1601.rs:235
+- `Geno_RecordCommit` [ext_fns!] x1: tu/gm_1601.rs:236
+- `Geno_Scale` [hooks!] x1: tu/geno_game.rs:92
+- `Geno_ScriptAddressValid` [hooks!] x1: tu/geno_game.rs:39
+- `Geno_SlotCount` [hooks!] x1: tu/geno_game.rs:112
+- `Geno_SlotLen` [hooks!] x1: tu/geno_game.rs:114
+- `Geno_SlotOffset` [hooks!] x1: tu/geno_game.rs:113
+- `Geno_SlotRelative` [hooks!] x1: tu/geno_game.rs:115
+- `Geno_Special` [hooks!] x1: tu/geno_game.rs:136
+- `Geno_SpecialBits` [hooks!] x1: tu/geno_game.rs:104
+- `Geno_SpecialCount` [hooks!] x1: tu/geno_game.rs:102
+- `Geno_SpecialIndex` [hooks!] x1: tu/geno_game.rs:103
+- `Geno_SpecialSelect` [hooks!] x2: tu/geno_game.rs:28, tu/geno_tests.rs:146
+- `Geno_StateAnim` [hooks!] x1: tu/geno_game.rs:122
+- `Geno_StateAnimFrom` [hooks!] x1: tu/geno_game.rs:123
+- `Geno_StateBehavior` [hooks!] x1: tu/geno_game.rs:120
+- `Geno_StateCb` [hooks!] x1: tu/geno_game.rs:121
+- `Geno_StateCount` [hooks!] x1: tu/geno_game.rs:119
+- `Geno_StateCounter` [hooks!] x2: tu/geno_game.rs:188, tu/geno_tests.rs:140
+- `Geno_StateFlags` [hooks!] x1: tu/geno_game.rs:126
+- `Geno_StateFlagsSet` [hooks!] x1: tu/geno_game.rs:125
+- `Geno_StateGravityBits` [hooks!] x1: tu/geno_game.rs:132
+- `Geno_StateHasCounter` [hooks!] x1: tu/geno_game.rs:189
+- `Geno_StateLagBits` [hooks!] x1: tu/geno_game.rs:130
+- `Geno_StateLand` [hooks!] x1: tu/geno_game.rs:129
+- `Geno_StateLike` [hooks!] x1: tu/geno_game.rs:124
+- `Geno_StateMotion` [hooks!] x1: tu/geno_game.rs:131
+- `Geno_StateMoveId` [hooks!] x1: tu/geno_game.rs:127
+- `Geno_StateMoveTag` [oext_fns!] x1: tu/script_game.rs:334
+- `Geno_StateNext` [hooks!] x1: tu/geno_game.rs:128
+- `Geno_TestInstall` [hooks!] x1: tu/geno_tests.rs:86
+- `Geno_TestReloadLayout` [hooks!] x1: tu/geno_tests.rs:83
+- `Geno_TestRestore` [hooks!] x1: tu/geno_tests.rs:87
+- `Geno_WarnIasa` [hooks!] x1: tu/geno_game.rs:153
+- `GenoDefine_FtDataFieldName` [hooks!] x1: tu/geno_tests.rs:181
+- `GenoDefine_FtDataSharedMask` [hooks!] x1: tu/geno_tests.rs:180
+- `GenoGame_DefinePPCViolation` [hooks!] x1: tu/geno_tests.rs:154
+- `Gfx_LoadScreenEnabled` [oext_fns!] x1: tu/gmfrontend.rs:321
+- `Gfx_PipelinesCreated` [oext_fns!] x1: tu/gmfrontend.rs:322
+- `Gfx_PipelinesPending` [oext_fns!] x1: tu/gmfrontend.rs:323
+- `Gfx_PipelinesUrgent` [oext_fns!] x1: tu/gmfrontend.rs:324
+- `Gfx_SeedCoreCount` [oext_fns!] x1: tu/gmfrontend.rs:325
+- `Gfx_SeedCorePending` [oext_fns!] x1: tu/gmfrontend.rs:326
+- `Gfx_SeedPipelinesBuilt` [oext_fns!] x1: tu/gmfrontend.rs:327
+- `gm_8017CE34` [ext_fns!] x1: tu/gmclassic.rs:71
+- `gm_8017DB88` [ext_fns!] x1: tu/gmclassic.rs:76
+- `gm_80473A18` [hook!] x1: tu/gmmenu.rs:89
+- `gm_804D6798` [hook!] x1: tu/gm_1A7A.rs:32
+- `gm_804D67A8` [hook!] x1: tu/gm_1A7A.rs:33
+- `gm_804D67AC` [hook!] x1: tu/gm_1A7A.rs:34
+- `gm_main_lib_skip_intro` [hook!] x1: tu/gmboot.rs:63
+- `gmFrontend_AtlasStandIn` [hook!] x1: tu/gm_1A3F.rs:310
+- `gmMainLib_803D4A80` [hook!] x1: tu/gmmain_lib.rs:1423
+- `gmMainLib_8046B0F0_resetting` [hook!] x1: tu/gm_1A3F.rs:302
+- `gmVsMelee_ApproachData` [hook!] x1: tu/gm_1BFA.rs:327
+- `gmVsMelee_StartData` [hook!] x1: tu/gm_1BFA.rs:328
+- `gmVsMelee_VsExitInfo` [hook!] x1: tu/gm_1BFA.rs:329
+- `GObj_InitUserData` [ext_fns!/hook!/oext_fns!] x25: tu/lb_0219.rs:30, tu/mncharsel.rs:43, tu/mncount.rs:37, tu/mndatadel.rs:62, tu/mndeflicker.rs:28, tu/mndiagram.rs:52, tu/mndiagram2.rs:69, tu/mndiagram3.rs:55, tu/mnevent.rs:47, tu/mngallery.rs:32, tu/mnhyaku.rs:469, tu/mninfo.rs:920, tu/mnitemsw.rs:1478, tu/mnlanguage.rs:425, tu/mnmain.rs:5337, tu/mnmainrule.rs:2393, tu/mnname.rs:2764, tu/mnnamenew.rs:132, tu/mnruleplus.rs:100, tu/mnsound.rs:40, tu/mnsoundtest.rs:84, tu/mnstagesel.rs:209, tu/mnstagesw.rs:76, tu/mnvibration.rs:143, tu/script_game.rs:315
+- `grPushOn_80219230` [ext_fns!] x1: tu/gm_17c0.rs:209
+- `GXBegin` [ext_fns!/fn+panic/oext_fns!] x4: tu/gmfrontend.rs:295, tu/lb_0146.rs:28, tu/script_game.rs:45, tu_ext.rs:70
+- `GXClearVtxDesc` [ext_fns!/fn+panic/oext_fns!] x4: tu/gmfrontend.rs:296, tu/lb_0146.rs:29, tu/script_game.rs:42, tu_ext.rs:75
+- `GXColor4u8` [ext_fns!/oext_fns!] x3: tu/gmfrontend.rs:297, tu/lb_0146.rs:30, tu/script_game.rs:62
+- `GXFlush` [oext_fns!] x1: tu/script_game.rs:46
+- `GXGetTexBufferSize` [ext_fns!/oext_fns!] x2: tu/gmcameramode.rs:29, tu/gmfrontend.rs:298
+- `GXInitTexObj` [ext_fns!/oext_fns!] x2: tu/gmfrontend.rs:299, tu/lb_01F8.rs:29
+- `GXInitTexObjCI` [oext_fns!] x1: tu/gmfrontend.rs:300
+- `GXInitTexObjLOD` [ext_fns!/oext_fns!] x2: tu/gmfrontend.rs:301, tu/lb_01F8.rs:30
+- `GXInitTlutObj` [oext_fns!] x1: tu/gmfrontend.rs:302
+- `GXInvalidateTexAll` [ext_fns!] x1: tu/lb_0192.rs:29
+- `GXInvalidateVtxCache` [ext_fns!] x1: tu/lb_0192.rs:30
+- `GXLoadPosMtxImm` [ext_fns!/fn+panic/oext_fns!] x4: tu/lb_0146.rs:31, tu/mncharsel.rs:46, tu/script_game.rs:58, tu_ext.rs:80
+- `GXLoadTexObj` [ext_fns!/oext_fns!] x2: tu/gmfrontend.rs:303, tu/lb_01F8.rs:31
+- `GXLoadTlut` [oext_fns!] x1: tu/gmfrontend.rs:304
+- `GXNtsc480Int` [hook!] x1: tu/gmmain_lib.rs:1422
+- `GXNtsc480IntDf` [hook!] x1: tu/gmmain_lib.rs:1421
+- `GXNtsc480Prog` [hook!] x1: tu/gmmain_lib.rs:1420
+- `GXPosition1x8` [oext_fns!] x1: tu/script_game.rs:61
+- `GXPosition2f32` [oext_fns!] x1: tu/gmfrontend.rs:305
+- `GXPosition3f32` [ext_fns!/fn+panic/oext_fns!] x3: tu/lb_0146.rs:32, tu/script_game.rs:60, tu_ext.rs:85
+- `GXSetAlphaCompare` [ext_fns!/fn+panic/oext_fns!] x3: tu/gmfrontend.rs:306, tu/lb_0146.rs:33, tu_ext.rs:90
+- `GXSetAlphaUpdate` [ext_fns!] x1: tu/lb_0146.rs:34
+- `GXSetArray` [oext_fns!] x1: tu/script_game.rs:44
+- `GXSetBlendMode` [ext_fns!/fn+panic/oext_fns!] x3: tu/gmfrontend.rs:307, tu/lb_0146.rs:35, tu_ext.rs:95
+- `GXSetChanCtrl` [ext_fns!/fn+panic/oext_fns!] x4: tu/gmfrontend.rs:308, tu/lb_0146.rs:36, tu/mncharsel.rs:47, tu_ext.rs:100
+- `GXSetChanMatColor` [oext_fns!] x1: tu/mncharsel.rs:48
+- `GXSetColorUpdate` [ext_fns!/fn+panic] x2: tu/lb_0146.rs:37, tu_ext.rs:105
+- `GXSetCullMode` [ext_fns!/fn+panic/oext_fns!] x4: tu/gmfrontend.rs:309, tu/lb_0146.rs:38, tu/script_game.rs:40, tu_ext.rs:110
+- `GXSetCurrentMtx` [ext_fns!/fn+panic/oext_fns!] x4: tu/lb_0146.rs:39, tu/mncharsel.rs:49, tu/script_game.rs:59, tu_ext.rs:115
+- `GXSetLineWidth` [ext_fns!] x1: tu/lb_0146.rs:40
+- `GXSetNumChans` [ext_fns!/fn+panic/oext_fns!] x4: tu/gmfrontend.rs:310, tu/lb_0146.rs:41, tu/mncharsel.rs:50, tu_ext.rs:120
+- `GXSetNumIndStages` [oext_fns!] x1: tu/gmfrontend.rs:311
+- `GXSetNumTevStages` [ext_fns!/fn+panic/oext_fns!] x4: tu/gmfrontend.rs:312, tu/lb_0146.rs:42, tu/script_game.rs:57, tu_ext.rs:125
+- `GXSetNumTexGens` [ext_fns!/fn+panic/oext_fns!] x3: tu/gmfrontend.rs:313, tu/lb_0146.rs:43, tu_ext.rs:130
+- `GXSetProjection` [fn+panic/oext_fns!] x2: tu/mncharsel.rs:51, tu_ext.rs:135
+- `GXSetScissor` [oext_fns!] x2: tu/gmresult.rs:39, tu/mncharsel.rs:52
+- `GXSetTevAlphaIn` [oext_fns!] x1: tu/script_game.rs:49
+- `GXSetTevAlphaOp` [oext_fns!] x1: tu/script_game.rs:51
+- `GXSetTevClampMode` [ext_fns!] x1: tu/lb_0146.rs:44
+- `GXSetTevColor` [oext_fns!] x1: tu/script_game.rs:52
+- `GXSetTevColorIn` [oext_fns!] x1: tu/script_game.rs:48
+- `GXSetTevColorOp` [oext_fns!] x1: tu/script_game.rs:50
+- `GXSetTevKColor` [oext_fns!] x1: tu/script_game.rs:53
+- `GXSetTevKColorSel` [oext_fns!] x1: tu/script_game.rs:54
+- `GXSetTevOp` [ext_fns!/fn+panic/oext_fns!] x3: tu/gmfrontend.rs:314, tu/lb_0146.rs:45, tu_ext.rs:140
+- `GXSetTevOrder` [ext_fns!/fn+panic/oext_fns!] x4: tu/gmfrontend.rs:315, tu/lb_0146.rs:46, tu/script_game.rs:56, tu_ext.rs:145
+- `GXSetTevSwapMode` [oext_fns!] x1: tu/script_game.rs:55
+- `GXSetTexCoordGen2` [oext_fns!] x2: tu/gmfrontend.rs:316, tu/mncharsel.rs:53
+- `GXSetViewport` [oext_fns!] x1: tu/mncharsel.rs:54
+- `GXSetVtxAttrFmt` [ext_fns!/fn+panic/oext_fns!] x4: tu/gmfrontend.rs:317, tu/lb_0146.rs:47, tu/script_game.rs:43, tu_ext.rs:150
+- `GXSetVtxDesc` [ext_fns!/fn+panic/oext_fns!] x4: tu/gmfrontend.rs:318, tu/lb_0146.rs:48, tu/script_game.rs:41, tu_ext.rs:155
+- `GXSetZCompLoc` [ext_fns!] x1: tu/lb_0146.rs:49
+- `GXSetZMode` [ext_fns!/fn+panic/oext_fns!] x4: tu/gmfrontend.rs:319, tu/lb_0146.rs:50, tu/script_game.rs:47, tu_ext.rs:160
+- `GxTex_Close` [oext_fns!] x3: tu/gmfrontend.rs:328, tu/gmresultplayer.rs:116, tu/mncharsel.rs:58
+- `GxTex_CopyImage` [oext_fns!] x3: tu/gmfrontend.rs:329, tu/gmresultplayer.rs:115, tu/mncharsel.rs:59
+- `GxTex_CopyTlut` [oext_fns!] x2: tu/gmfrontend.rs:330, tu/mncharsel.rs:60
+- `GxTex_Format` [oext_fns!] x3: tu/gmfrontend.rs:331, tu/gmresultplayer.rs:113, tu/mncharsel.rs:61
+- `GxTex_Height` [oext_fns!] x3: tu/gmfrontend.rs:332, tu/gmresultplayer.rs:112, tu/mncharsel.rs:62
+- `GxTex_ImageSize` [oext_fns!] x3: tu/gmfrontend.rs:333, tu/gmresultplayer.rs:114, tu/mncharsel.rs:63
+- `GxTex_OpenEnv` [oext_fns!] x1: tu/mncharsel.rs:64
+- `GxTex_OpenUI` [oext_fns!] x1: tu/gmfrontend.rs:334
+- `GxTex_TlutEntries` [oext_fns!] x2: tu/gmfrontend.rs:335, tu/mncharsel.rs:65
+- `GxTex_TlutFormat` [oext_fns!] x2: tu/gmfrontend.rs:336, tu/mncharsel.rs:66
+- `GxTex_TlutSize` [oext_fns!] x2: tu/gmfrontend.rs:337, tu/mncharsel.rs:67
+- `GxTex_Width` [oext_fns!] x3: tu/gmfrontend.rs:338, tu/gmresultplayer.rs:111, tu/mncharsel.rs:68
+- `GXTexCoord2f32` [oext_fns!] x1: tu/gmfrontend.rs:320
+- `HeapCheckFull` [oext_fns!] x1: tu/script_game.rs:373
+- `HSD_CObjGetEyeDistance` [hook!] x1: tu/mnmain.rs:5058
+- `HSD_CObjGetEyePosition` [fn+panic/hook!/hooks!] x3: tu/geno_game.rs:164, tu/mnmain.rs:5055, tu_ext.rs:210
+- `HSD_CObjGetEyeVector` [hook!] x1: tu/mnmain.rs:5056
+- `HSD_CObjGetInterest` [fn+panic/hook!] x2: tu/mnmain.rs:5057, tu_ext.rs:215
+- `HSD_CObjGetViewingMtx` [oext_fns!] x1: tu/script_game.rs:16
+- `HSD_CObjGetViewingMtxPtr` [hooks!] x1: tu/geno_game.rs:165
+- `HSD_CObjSetEyePosition` [ext_fns!/fn+panic/hook!/oext_fns!] x5: tu/gm_1798.rs:225, tu/gmopening.rs:67, tu/mngallery.rs:39, tu/mnmain.rs:5040, tu_ext.rs:240
+- `HSD_CObjSetInterest` [ext_fns!/fn+panic/hook!/oext_fns!] x4: tu/gm_1798.rs:226, tu/gmopening.rs:68, tu/mngallery.rs:41, tu_ext.rs:245
+- `HSD_CObjSetProjectionType` [hook!/oext_fns!] x2: tu/gmopening.rs:52, tu/mngallery.rs:44
+- `HSD_CObjSetRoll` [hook!/oext_fns!] x2: tu/gmopening.rs:69, tu/mngallery.rs:45
+- `HSD_FObjStopAnim` [ext_fns!] x1: tu/mn_22EC.rs:29
+- `HSD_FogInterpretAnim` [oext_fns!] x1: tu/gmregenddisp.rs:36
+- `HSD_FogLoadDesc` [ext_fns!/fn+panic/hook!/oext_fns!] x5: tu/gmregenddisp.rs:37, tu/mncharsel.rs:74, tu/mnmain.rs:5333, tu/mnstagesel.rs:203, tu_ext.rs:250
+- `HSD_FogReqAnim` [oext_fns!] x1: tu/gmregenddisp.rs:38
+- `HSD_FogSet` [ext_fns!/hook!/oext_fns!] x3: tu/mncharsel.rs:75, tu/mnmain.rs:5332, tu/mnstagesel.rs:202
+- `hsd_gobj_camera_kind` [hook!] x3: tu/gm_1A7A.rs:45, tu/gm_1ADD.rs:173, tu/gmapproach.rs:158
+- `hsd_gobj_jobj_kind` [hook!] x4: tu/gm_1A7A.rs:44, tu/gm_1ADD.rs:172, tu/gmapproach.rs:156, tu/gmcamera.rs:358
+- `hsd_gobj_light_kind` [hook!] x2: tu/gm_1A7A.rs:43, tu/gmapproach.rs:157
+- `HSD_GObj_SetupProc` [ext_fns!/fn+panic/hook!/oext_fns!] x39: tu/gm_17c0.rs:103, tu/gm_1A7A.rs:40, tu/gm_1ADD.rs:169, tu/gmapproach.rs:108, tu/gmcamera.rs:356, tu/gmevent.rs:39, tu/gmpause.rs:96, tu/gmregclear.rs:50, tu/gmregenddisp.rs:45, tu/gmregtyfall.rs:56, tu/gmresult.rs:48, tu/gmvs.rs:215, tu/lb_0219.rs:32, tu/mncharsel.rs:82, tu/mncount.rs:46, tu/mndatadel.rs:60, tu/mndeflicker.rs:35, tu/mndiagram.rs:50, tu/mndiagram2.rs:67, tu/mndiagram3.rs:53, tu/mnevent.rs:45, tu/mngallery.rs:52, tu/mnhyaku.rs:370, tu/mninfo.rs:918, tu/mninfobonus.rs:796, tu/mnitemsw.rs:1477, tu/mnlanguage.rs:423, tu/mnmain.rs:5160, tu/mnmainrule.rs:2392, tu/mnname.rs:2763, tu/mnnamenew.rs:130, tu/mnruleplus.rs:99, tu/mnsnap.rs:235, tu/mnsound.rs:39, tu/mnsoundtest.rs:82, tu/mnstagesel.rs:208, tu/mnstagesw.rs:75, tu/mnvibration.rs:141, tu_ext.rs:295
+- `HSD_GObjFree` [ext_fns!/fn+panic/hook!/oext_fns!] x34: tu/gm_1601.rs:115, tu/gm_1A7A.rs:41, tu/gm_1ADD.rs:170, tu/gmevent.rs:38, tu/gmopening.rs:303, tu/gmregtyfall.rs:50, tu/lb_0219.rs:31, tu/mn_22EC.rs:31, tu/mncount.rs:42, tu/mndatadel.rs:59, tu/mndeflicker.rs:31, tu/mndiagram.rs:49, tu/mndiagram2.rs:66, tu/mndiagram3.rs:52, tu/mnevent.rs:44, tu/mngallery.rs:49, tu/mnhyaku.rs:468, tu/mninfo.rs:917, tu/mninfobonus.rs:795, tu/mnitemsw.rs:1476, tu/mnlanguage.rs:422, tu/mnmain.rs:5336, tu/mnmainrule.rs:2391, tu/mnname.rs:2762, tu/mnnamenew.rs:129, tu/mnruleplus.rs:98, tu/mnsnap.rs:234, tu/mnsound.rs:38, tu/mnsoundtest.rs:81, tu/mnstagesel.rs:207, tu/mnstagesw.rs:74, tu/mnvibration.rs:140, tu/script_game.rs:206, tu_ext.rs:255
+- `HSD_GObjPLinkHead_get` [todo_ext!] x1: tu/mex_tests.rs:34
+- `HSD_GObjPLinkHead_set` [todo_ext!] x1: tu/mex_tests.rs:35
+- `HSD_GObjProc_RemoveAllProcs` [oext_fns!] x1: tu/script_game.rs:316
+- `HSD_GObjProc_RemoveProc` [ext_fns!/hook!/oext_fns!] x14: tu/mncount.rs:44, tu/mndatadel.rs:61, tu/mndeflicker.rs:33, tu/mndiagram.rs:51, tu/mndiagram2.rs:68, tu/mndiagram3.rs:54, tu/mnevent.rs:46, tu/mnhyaku.rs:371, tu/mninfo.rs:919, tu/mnlanguage.rs:424, tu/mnmain.rs:5161, tu/mnnamenew.rs:131, tu/mnsoundtest.rs:83, tu/mnvibration.rs:142
+- `HSD_MkRotationMtx` [ext_fns!] x1: tu/lb_020A.rs:34
+- `HSD_MtxInverseConcat` [ext_fns!] x1: tu/lb_020A.rs:35
+- `HSD_MtxQuat` [ext_fns!] x1: tu/lb_020A.rs:36
+- `hsd_pad_copy_status0_button` [hook!] x1: tu/gmscmemcard.rs:244
+- `hsd_pad_copy_status0_trigger` [hook!] x1: tu/gmscmemcard.rs:245
+- `hsd_pad_copy_status_trigger` [hook!] x3: tu/gm_1ADD.rs:194, tu/gmapproach.rs:154, tu/gmcamera.rs:360
+- `hsd_pad_master_status_err` [hook!] x1: tu/gm_1ADD.rs:193
+- `HSD_PadCopyStatus` [hook!] x1: tu/gm_1A36.rs:111
+- `HSD_PadLibData` [hook!] x1: tu/gmmain.rs:101
+- `HSD_QuatLib_8037EB28` [ext_fns!] x1: tu/lb_020A.rs:37
+- `HSD_RObjAlloc` [ext_fns!] x1: tu/mnstagesel.rs:214
+- `HSD_RObjSetConstraintObj` [ext_fns!] x1: tu/mnstagesel.rs:216
+- `HSD_RObjSetFlags` [ext_fns!] x1: tu/mnstagesel.rs:215
+- `HSD_SisLib_803A62A0` [hook!/oext_fns!] x5: tu/gm_1ADD.rs:134, tu/gmcamera.rs:151, tu/gmregclear.rs:61, tu/gmresult.rs:58, tu/mncharsel.rs:105
+- `HSD_SisLib_804D1124_arr` [hook!] x1: tu/gmcamera.rs:117
+- `HSD_SObjLib_803A477C` [ext_fns!/oext_fns!] x3: tu/gmregtyfall.rs:61, tu/lb_01F8.rs:34, tu/mncharsel.rs:99
+- `HSD_SObjLib_804D7960` [hook!] x1: tu/gmhowto.rs:105
+- `hsd_sobjlib_804d7960` [hook!] x1: tu/gm_1A9B.rs:58
+- `if_Scene_Prize_EnterData` [hook!] x1: tu/gm_1BFA.rs:331
+- `it_8026F9AC` [oext_fns!] x1: tu/script_game.rs:181
+- `Item_80267978` [hooks!] x1: tu/geno_game.rs:174
+- `Item_8026A8EC` [hooks!/oext_fns!] x2: tu/geno_game.rs:177, tu/script_game.rs:161
+- `ItemDraw` [hooks!] x1: tu/geno_game.rs:211
+- `ItemEvent` [hooks!] x1: tu/geno_game.rs:208
+- `kit_load` [oext_fns!] x1: tu/gmfrontend.rs:425
+- `lbAudioAx_80027168` [ext_fns!/oext_fns!] x6: tu/gmcameramode.rs:56, tu/gmclassic.rs:105, tu/gmdebugmode.rs:45, tu/gmevent.rs:135, tu/gmregtyfall.rs:98, tu/mncharsel.rs:194
+- `lbDvd_80017740` [ext_fns!] x1: tu/gmcameramode.rs:58
+- `lbDvd_8001819C` [oext_fns!] x2: tu/gmresultplayer.rs:99, tu/mncharsel.rs:198
+- `lbDvd_GetPreloadedArchive` [ext_fns!] x1: tu/gmcameramode.rs:61
+- `lbHeap_803BA380_ptr` [todo_ext!] x1: tu/mex_tests.rs:32
+- `MatchTurboColAnim` [oext_fns!] x1: tu/script_game.rs:296
+- `MatchTurboNote` [oext_fns!] x1: tu/script_game.rs:297
+- `MatchTurboRules` [oext_fns!] x1: tu/script_game.rs:295
+- `MatToQuat` [ext_fns!] x1: tu/lb_020A.rs:39
+- `Mex_AnnouncerForPortCKind` [ext_fns!] x1: tu/gm_1601.rs:215
+- `Mex_CostumeInfo` [ext_fns!] x1: tu/gm_1601.rs:228
+- `Mex_CssCursorScaleEnabled` [oext_fns!] x1: tu/mncharsel.rs:115
+- `Mex_CssIconCount` [oext_fns!] x1: tu/mncharsel.rs:116
+- `Mex_CssIconTable` [oext_fns!] x1: tu/mncharsel.rs:117
+- `Mex_CssTraceEnabled` [oext_fns!] x1: tu/mncharsel.rs:118
+- `Mex_Enabled` [ext_fns!/fn+panic/hook!/oext_fns!] x10: tu/gm_1601.rs:100, tu/gm_16f1.rs:116, tu/gm_1736.rs:36, tu/gm_1798.rs:237, tu/gmmain_lib.rs:1424, tu/gmscmemcard.rs:250, tu/gmvs.rs:30, tu/gmvsmelee.rs:24, tu/mncharsel.rs:119, tu_ext.rs:460
+- `Mex_ExtToPortCKind` [oext_fns!] x1: tu/mncharsel.rs:120
+- `Mex_FighterName` [ext_fns!/oext_fns!] x2: tu/gm_1601.rs:233, tu/gmresultplayer.rs:103
+- `Mex_FtBaseKind` [ext_fns!] x1: tu/gm_1601.rs:39
+- `Mex_GObjPredDispatch` [todo_ext!] x1: tu/mex_tests.rs:25
+- `Mex_GrFile` [ext_fns!] x1: tu/mnstagesel.rs:220
+- `Mex_GrKindForExt` [ext_fns!] x1: tu/mnstagesel.rs:219
+- `Mex_HookRegister` [todo_ext!] x1: tu/mex_tests.rs:22
+- `Mex_InsigniaForExt` [oext_fns!] x3: tu/gmresult.rs:64, tu/gmresultplayer.rs:101, tu/mncharsel.rs:121
+- `Mex_InternalCount` [ext_fns!] x1: tu/gm_1601.rs:212
+- `Mex_InternalForPortKind` [ext_fns!] x1: tu/gm_1601.rs:38
+- `Mex_ItemCustomDesc` [oext_fns!] x1: tu/script_game.rs:365
+- `Mex_ItemRangeAvailable` [hooks!] x1: tu/geno_game.rs:207
+- `Mex_ItemReady` [hooks!/oext_fns!] x2: tu/geno_game.rs:209, tu/script_game.rs:364
+- `Mex_MenuParamF` [oext_fns!] x1: tu/mncharsel.rs:122
+- `Mex_MenuPlaylistBgm` [hook!] x1: tu/gmmain_lib.rs:1427
+- `Mex_MenuPlaylistChance` [hook!] x1: tu/gmmain_lib.rs:1428
+- `Mex_MenuPlaylistCount` [hook!] x1: tu/gmmain_lib.rs:1426
+- `Mex_OnFrameDispatch` [todo_ext!] x1: tu/mex_tests.rs:23
+- `Mex_PortCKindToExt` [ext_fns!/oext_fns!] x4: tu/gm_1601.rs:234, tu/gmresult.rs:65, tu/gmresultplayer.rs:100, tu/mncharsel.rs:123
+- `Mex_PredicateRegister` [todo_ext!] x1: tu/mex_tests.rs:24
+- `Mex_ResultArtIsOwn` [oext_fns!] x1: tu/gmresultplayer.rs:102
+- `Mex_ResultFileForPortCKind` [ext_fns!] x1: tu/gm_1601.rs:34
+- `Mex_ResultScaleForPortCKind` [ext_fns!] x1: tu/gm_1798.rs:238
+- `Mex_SssIconCount` [ext_fns!] x1: tu/mnstagesel.rs:217
+- `Mex_VictoryThemeForPortCKind` [ext_fns!] x1: tu/gm_1601.rs:33
+- `mnDiagram2_GetStatValue` [oext_fns!] x1: tu/mndiagram3.rs:40
+- `mpGetSpeed` [hooks!] x1: tu/geno_game.rs:183
+- `mpLibLoad` [oext_fns!] x1: tu/script_game.rs:169
+- `mpLineGetV0Pos` [oext_fns!] x1: tu/script_game.rs:172
+- `mpLineGetV1Pos` [oext_fns!] x1: tu/script_game.rs:171
+- `mpScriptStageIsolationActive` [oext_fns!] x1: tu/script_game.rs:225
+- `mpScriptStageIsolationSet` [oext_fns!] x1: tu/script_game.rs:224
+- `MTXOrtho` [oext_fns!] x1: tu/mncharsel.rs:114
+- `MTXRotRad` [ext_fns!] x1: tu/lb_020A.rs:38
+- `Netplay_Enabled` [ext_fns!/oext_fns!] x3: tu/gmvs.rs:135, tu/gmvsmelee.rs:59, tu/script_game.rs:228
+- `Netplay_EnvoyAvailable` [oext_fns!] x1: tu/gmfrontend.rs:347
+- `Netplay_EnvoyPref` [oext_fns!] x1: tu/gmfrontend.rs:348
+- `Netplay_FighterAvailable` [oext_fns!] x1: tu/gmfrontend.rs:349
+- `Netplay_FighterWhy` [oext_fns!] x1: tu/gmfrontend.rs:350
+- `Netplay_GameResult` [ext_fns!] x1: tu/gmvsmelee.rs:58
+- `Netplay_LobbyActive` [oext_fns!] x1: tu/gmfrontend.rs:351
+- `Netplay_LobbyChar` [oext_fns!] x1: tu/gmfrontend.rs:352
+- `Netplay_MenuBegin` [oext_fns!] x1: tu/gmfrontend.rs:353
+- `Netplay_MenuHasServer` [oext_fns!] x1: tu/gmfrontend.rs:354
+- `Netplay_MenuStatus` [oext_fns!] x1: tu/gmfrontend.rs:355
+- `Netplay_NoteTie` [ext_fns!] x1: tu/gmvsmelee.rs:60
+- `Netplay_RandomBegin` [oext_fns!] x1: tu/gmfrontend.rs:356
+- `Netplay_RematchPending` [ext_fns!] x1: tu/gmvsmelee.rs:61
+- `Netplay_RunActive` [ext_fns!] x1: tu/gmvsmelee.rs:57
+- `Netplay_SetEnvoy` [oext_fns!] x1: tu/gmfrontend.rs:357
+- `Netplay_SetStageMode` [oext_fns!] x1: tu/gmfrontend.rs:358
+- `Netplay_SetTurbo` [oext_fns!] x1: tu/gmfrontend.rs:359
+- `Netplay_StageEnd` [ext_fns!] x1: tu/gmvsmelee.rs:56
+- `Netplay_StageMode` [oext_fns!] x1: tu/gmfrontend.rs:360
+- `Netplay_TurboPref` [oext_fns!] x1: tu/gmfrontend.rs:361
+- `OSCancelAlarm` [ext_fns!] x1: tu/lb_0195.rs:34
+- `OSCheckHeap` [oext_fns!] x1: tu/script_game.rs:12
+- `OSCreateAlarm` [ext_fns!] x1: tu/lb_0195.rs:35
+- `OSCreateHeap` [hooks!] x1: tu/geno_tests.rs:64
+- `OSDisableInterrupts` [ext_fns!] x1: tu/lb_0195.rs:36
+- `OSGetProgressiveMode` [hook!] x1: tu/gm_1A3F.rs:251
+- `OSGetResetCode` [hook!] x1: tu/gmmain_lib.rs:1411
+- `OSInitAlloc` [hooks!] x1: tu/geno_tests.rs:63
+- `OSReport` [ext_fns!] x1: tu/gm_17c0.rs:105
+- `OSResetSystem` [ext_fns!/hook!] x2: tu/gm_1A3F.rs:249, tu/lb_0195.rs:37
+- `OSRestoreInterrupts` [ext_fns!] x1: tu/lb_0195.rs:38
+- `OSSetPeriodicAlarm` [ext_fns!] x1: tu/lb_0195.rs:39
+- `OSSetProgressiveMode` [hook!] x1: tu/gmprogressive.rs:80
+- `p_ftCommonData_get` [todo_ext!] x1: tu/mex_tests.rs:36
+- `p_ftCommonData_set` [todo_ext!] x1: tu/mex_tests.rs:37
+- `PADSetSamplingRate` [ext_fns!] x1: tu/lb_0195.rs:40
+- `PADSetSpec` [hook!] x1: tu/gmmain.rs:92
+- `PcFrontendEnabled` [oext_fns!] x1: tu/gmfrontend.rs:362
+- `PcFrontendMenusEnabled` [oext_fns!] x1: tu/gmfrontend.rs:363
+- `PcUnlockAll` [hook!] x1: tu/gmmain_lib.rs:1425
+- `player_slots_ptr` [todo_ext!] x1: tu/mex_tests.rs:33
+- `plStale_IncrementAttackInstance` [oext_fns!] x1: tu/script_game.rs:236
+- `ProfActive` [hooks!/oext_fns!] x2: tu/geno_game.rs:46, tu/script_game.rs:7
+- `ProfBegin` [hooks!/oext_fns!] x2: tu/geno_game.rs:44, tu/script_game.rs:5
+- `ProfEnd` [hooks!/oext_fns!] x2: tu/geno_game.rs:45, tu/script_game.rs:6
+- `PSMTXConcat` [ext_fns!/oext_fns!/todo_ext!] x3: tu/lb_020A.rs:40, tu/mex_tests.rs:29, tu/script_game.rs:9
+- `PSMTXInverse` [oext_fns!] x1: tu/script_game.rs:10
+- `PSMTXMultVec` [ext_fns!/hook!/oext_fns!] x3: tu/lb_020A.rs:42, tu/mnmain.rs:4893, tu/script_game.rs:11
+- `PSMTXQuat` [ext_fns!] x1: tu/lb_020A.rs:43
+- `PSMTXRotAxisRad` [ext_fns!/hook!] x2: tu/lb_020A.rs:44, tu/mnmain.rs:4892
+- `PSMTXTranspose` [ext_fns!] x1: tu/lb_020A.rs:45
+- `PSVECCrossProduct` [hook!] x1: tu/mnmain.rs:4897
+- `PSVECMag` [ext_fns!] x1: tu/lb_020A.rs:46
+- `PSVECNormalize` [hook!] x1: tu/mnmain.rs:4896
+- `PSVECScale` [hook!] x1: tu/mnmain.rs:4895
+- `PSVECSubtract` [hook!] x1: tu/mnmain.rs:4894
+- `RB_Enabled` [oext_fns!] x1: tu/script_game.rs:229
+- `Replay_Active` [ext_fns!/oext_fns!] x2: tu/gmvs.rs:180, tu/script_game.rs:230
+- `Replay_ApplyMatch` [ext_fns!] x1: tu/gmvs.rs:181
+- `Replay_RecordMatch` [ext_fns!] x1: tu/gmvs.rs:183
+- `SceneLaunch_Active` [ext_fns!/hook!] x2: tu/gm_1B03.rs:47, tu/gmvsmelee.rs:26
+- `SceneLaunch_BootGameMode` [hook!/hooks!] x2: tu/geno_tests.rs:114, tu/gmboot.rs:132
+- `SceneLaunch_EnemyTeamColors` [hook!] x1: tu/gm_1B03.rs:48
+- `SceneLaunch_EntryStateId` [ext_fns!/hooks!] x2: tu/geno_tests.rs:115, tu/gmvsmelee.rs:27
+- `SceneLaunch_ItemFreq` [hooks!] x1: tu/geno_tests.rs:117
+- `SceneLaunch_LoadForTest` [hooks!] x1: tu/geno_tests.rs:130
+- `SceneLaunch_OnePDirect` [ext_fns!] x1: tu/gmclassic.rs:42
+- `SceneLaunch_OnePLevel` [ext_fns!] x1: tu/gmclassic.rs:43
+- `SceneLaunch_OnePStep` [ext_fns!] x1: tu/gmclassic.rs:44
+- `SceneLaunch_PlayerCKind` [ext_fns!/hooks!] x2: tu/geno_tests.rs:118, tu/gmclassic.rs:45
+- `SceneLaunch_PlayerColor` [ext_fns!] x1: tu/gmclassic.rs:46
+- `SceneLaunch_PlayerSlotType` [hooks!] x1: tu/geno_tests.rs:119
+- `SceneLaunch_PlayerStocks` [ext_fns!] x2: tu/gmclassic.rs:47, tu/gmvsmelee.rs:28
+- `SceneLaunch_SeedVs` [ext_fns!] x2: tu/gmtrainingmode.rs:61, tu/gmvsmelee.rs:25
+- `SceneLaunch_SetText` [oext_fns!] x1: tu/gmfrontend.rs:364
+- `SceneLaunch_SkipMemcard` [hook!] x1: tu/gmscmemcard.rs:249
+- `SceneLaunch_StageExternal` [hooks!] x1: tu/geno_tests.rs:116
+- `SceneReport_Cursor` [hook!] x1: tu/gmscmemcard.rs:248
+- `SceneReport_Memcard` [hook!] x1: tu/gmscmemcard.rs:247
+- `SceneReport_State` [hook!] x1: tu/gm_1A3F.rs:308
+- `Script_AreaNameByte` [oext_fns!] x1: tu/script_game.rs:308
+- `Script_ArmorEvent` [oext_fns!] x1: tu/script_game.rs:250
+- `Script_BossHookEnabled` [ext_fns!] x1: tu/gm_17c0.rs:120
+- `Script_CpuIdleDefault` [oext_fns!] x1: tu/script_game.rs:300
+- `Script_CritEvent` [oext_fns!] x1: tu/script_game.rs:264
+- `Script_EchoInput` [oext_fns!] x1: tu/script_game.rs:234
+- `Script_EchoOwnerAlive` [oext_fns!] x1: tu/script_game.rs:235
+- `Script_EnemyDefeated` [oext_fns!] x1: tu/script_game.rs:352
+- `Script_EnemyGameEvent` [oext_fns!] x1: tu/script_game.rs:361
+- `Script_EnemyHit` [oext_fns!] x1: tu/script_game.rs:354
+- `Script_EnemyRemoved` [oext_fns!] x1: tu/script_game.rs:353
+- `Script_GameEvent` [ext_fns!/oext_fns!] x2: tu/gm_17c0.rs:121, tu/script_game.rs:344
+- `Script_HitContext` [oext_fns!] x1: tu/script_game.rs:340
+- `Script_HitOriginalElement` [oext_fns!] x1: tu/script_game.rs:343
+- `Script_HitRuleContext` [oext_fns!] x1: tu/script_game.rs:342
+- `Script_HitRulesInput` [oext_fns!] x1: tu/script_game.rs:233
+- `Script_ModelDraw` [oext_fns!] x1: tu/script_game.rs:220
+- `Script_ModelInput` [oext_fns!] x1: tu/script_game.rs:219
+- `Script_NetModsVariant` [oext_fns!] x1: tu/script_game.rs:298
+- `Script_OnePBarrierPending` [hook!] x1: tu/gm_1A3F.rs:316
+- `Script_OnePClear` [ext_fns!] x1: tu/gm_17c0.rs:122
+- `Script_OnePComplete` [ext_fns!] x1: tu/gm_17c0.rs:123
+- `Script_OnePGameOver` [ext_fns!] x1: tu/gm_17c0.rs:124
+- `Script_OnePOffline` [oext_fns!] x1: tu/script_game.rs:240
+- `Script_OnePScripted` [ext_fns!] x3: tu/gm_17c0.rs:125, tu/gmclassic.rs:48, tu/gmvs.rs:221
+- `Script_OnePSpawn` [oext_fns!] x1: tu/script_game.rs:239
+- `Script_OnePStage` [ext_fns!] x1: tu/gm_17c0.rs:126
+- `Script_SimByte` [oext_fns!] x1: tu/script_game.rs:232
+- `Script_SkillEvent` [oext_fns!] x1: tu/script_game.rs:262
+- `Script_StageArchiveInput` [oext_fns!] x1: tu/script_game.rs:348
+- `Script_StageIsolationAllowed` [oext_fns!] x1: tu/script_game.rs:226
+- `Script_StageIsolationReleased` [oext_fns!] x1: tu/script_game.rs:227
+- `Script_StageModelDraw` [oext_fns!] x1: tu/script_game.rs:242
+- `Script_StageModelFor` [oext_fns!] x1: tu/script_game.rs:241
+- `Script_StageModelsReset` [oext_fns!] x1: tu/script_game.rs:221
+- `Script_StageRawStash` [oext_fns!] x1: tu/script_game.rs:311
+- `Script_StageResourceOwner` [oext_fns!] x1: tu/script_game.rs:222
+- `Script_StageResourceOwnerAlive` [oext_fns!] x1: tu/script_game.rs:223
+- `Script_StageSlotMissionInput` [oext_fns!] x1: tu/script_game.rs:371
+- `Script_StageSlotsEnded` [oext_fns!] x1: tu/script_game.rs:346
+- `Script_StageSlotVisual` [oext_fns!] x1: tu/script_game.rs:370
+- `Script_StageTextByte` [oext_fns!] x1: tu/script_game.rs:350
+- `Script_StageWanted` [oext_fns!] x1: tu/script_game.rs:349
+- `Script_TargetBroken` [oext_fns!] x1: tu/script_game.rs:351
+- `Script_WarmModelDraw` [oext_fns!] x1: tu/script_game.rs:369
+- `Script_WarmSync` [oext_fns!] x1: tu/script_game.rs:366
+- `set_db_804D6B20` [hook!] x1: tu/gmmain.rs:103
+- `set_DbLevel` [hook!] x1: tu/gmmain.rs:106
+- `set_gm_804D6724` [hook!] x1: tu/gmhowto.rs:237
+- `set_gmMainLib_8046B0F0_resetting` [hook!] x1: tu/gm_1A3F.rs:303
+- `set_gmMainLib_8046B0F0_skip_intro` [hook!] x1: tu/gm_1A3F.rs:304
+- `Settings_Int` [hook!/oext_fns!] x2: tu/gmfrontend.rs:365, tu/gmscmemcard.rs:251
+- `Settings_SetInt` [oext_fns!] x1: tu/gmfrontend.rs:366
+- `Skins255_TestCount` [ext_fns!] x1: tu/gm_1601.rs:225
+- `Skins_CostumeCountCK` [ext_fns!] x1: tu/gm_1601.rs:224
+- `Skins_TeamCostumeCK` [ext_fns!] x1: tu/gm_1601.rs:229
+- `snap_load` [hooks!] x2: tu/geno_game.rs:214, tu/geno_tests.rs:90
+- `snap_open` [hooks!] x2: tu/geno_game.rs:212, tu/geno_tests.rs:88
+- `snap_save` [hooks!] x2: tu/geno_game.rs:213, tu/geno_tests.rs:89
+- `SurfaceBegin` [oext_fns!] x1: tu/script_game.rs:367
+- `SurfaceEnd` [oext_fns!] x1: tu/script_game.rs:368
+- `TestFail` [hooks!/todo_ext!] x2: tu/geno_tests.rs:74, tu/mex_tests.rs:21
+- `TestRegister` [hooks!/todo_ext!] x2: tu/geno_tests.rs:73, tu/mex_tests.rs:20
+- `TestTargetTestCKind` [hook!] x1: tu/gmmultiman.rs:128
+- `Ui_CssKnown` [oext_fns!] x1: tu/gmfrontend.rs:367
+- `Ui_Ready` [oext_fns!] x1: tu/gmfrontend.rs:368
+- `Ui_RetailHidden` [hook!] x1: tu/gmpause.rs:65
+- `Ui_RetailPause` [ext_fns!] x1: tu/gmvs.rs:102
+- `Ui_ScenePolicy` [hook!] x1: tu/gm_1A3F.rs:309
+- `Ui_ScenePolicyMask` [hook!] x1: tu/gm_1A3F.rs:311
+- `Ui_SelCanOpen` [oext_fns!] x1: tu/gmfrontend.rs:369
+- `Ui_SelNextScene` [oext_fns!] x1: tu/gmfrontend.rs:370
+- `Ui_TakeUnpause` [ext_fns!] x1: tu/gmvs.rs:103
+- `UI_TextI4` [oext_fns!] x1: tu/gmresultplayer.rs:104
+- `Ui_ToyProbe` [hook!] x1: tu/gm_1A3F.rs:314
+- `View_AspectBits` [oext_fns!] x1: tu/gmfrontend.rs:371
+- `VIFlush` [ext_fns!] x1: tu/lb_0195.rs:41
+- `VIGetDTVStatus` [hook!] x1: tu/gm_1A3F.rs:250
+- `VISetBlack` [ext_fns!] x1: tu/lb_0195.rs:42
+- `VISetPostRetraceCallback` [ext_fns!] x1: tu/lb_0195.rs:43
+- `VISetPreRetraceCallback` [ext_fns!] x1: tu/lb_0195.rs:44
+- `VIWaitForRetrace` [ext_fns!] x1: tu/lb_0195.rs:45
+- `Wb_RenderActive` [oext_fns!] x1: tu/script_game.rs:114
+- `Wb_RenderOption` [oext_fns!] x1: tu/script_game.rs:115
+
+### melee_modes - SIGNATURE (2428 sites, 1249 names)
+
+- `__assert` [ext_fns!/fn-body/hook!/oext_fns!] x22: mn_inl.rs:89, tu/geno_game.rs:14, tu/geno_tests.rs:14, tu/gm_1798.rs:253, tu/gmregcommon.rs:13, tu/hsd.rs:24, tu/mncount.rs:58, tu/mndatadel.rs:10, tu/mndeflicker.rs:44, tu/mndiagram.rs:10, tu/mndiagram2.rs:12, tu/mndiagram3.rs:9, tu/mnevent.rs:9, tu/mngallery.rs:67, tu/mnhyaku.rs:360, tu/mninfo.rs:801, tu/mnitemsw.rs:1350, tu/mnlanguage.rs:322, tu/mnmain.rs:4899, tu/mnmainrule.rs:2243, tu/mnname.rs:2611, tu/script_game.rs:15 -> port `melee_runtime::tu/debug.rs:91`
+- `acosf` [ext_fns!] x1: tu/lb_020A.rs:47 -> port `melee_runtime::lbtrigf.rs:139`
+- `atan2f` [ext_fns!/hooks!/oext_fns!] x4: tu/geno_game.rs:47, tu/geno_tests.rs:60, tu/lb_020A.rs:48, tu/mncharsel.rs:125 -> port `melee_runtime::lbtrigf.rs:113`
+- `atanf` [oext_fns!] x1: tu/mncharsel.rs:126 -> port `melee_runtime::lbtrigf.rs:49`
+- `Camera_8002EEC8` [fn+panic] x1: tu_ext.rs:30 -> port `melee_world::cm/camera.rs:895`
+- `Camera_80030730` [ext_fns!/oext_fns!] x2: tu/gmvs.rs:205, tu/script_game.rs:18 -> port `melee_world::cm/camera.rs:626`
+- `Camera_80030A60` [oext_fns!] x1: tu/script_game.rs:20 -> port `melee_world::cm/camera.rs:818`
+- `Camera_80030A78` [oext_fns!] x1: tu/script_game.rs:21 -> port `melee_world::cm/camera.rs:822`
+- `Camera_80030A8C` [oext_fns!] x1: tu/script_game.rs:22 -> port `melee_world::cm/camera.rs:826`
+- `Camera_80030B38` [oext_fns!] x1: tu/script_game.rs:23 -> port `melee_world::cm/camera.rs:854`
+- `Camera_80030B50` [oext_fns!] x1: tu/script_game.rs:24 -> port `melee_world::cm/camera.rs:858`
+- `Camera_80030B64` [oext_fns!] x1: tu/script_game.rs:25 -> port `melee_world::cm/camera.rs:862`
+- `Camera_80030B7C` [oext_fns!] x1: tu/script_game.rs:26 -> port `melee_world::cm/camera.rs:866`
+- `Camera_80030B90` [oext_fns!] x1: tu/script_game.rs:27 -> port `melee_world::cm/camera.rs:870`
+- `Camera_80030BA8` [oext_fns!] x1: tu/script_game.rs:28 -> port `melee_world::cm/camera.rs:874`
+- `Camera_80031060` [oext_fns!] x1: tu/script_game.rs:29 -> port `melee_world::cm/camera.rs:658`
+- `Camera_8003108C` [oext_fns!] x1: tu/script_game.rs:30 -> port `melee_world::cm/camera.rs:664`
+- `Camera_800310E8` [ext_fns!] x1: tu/gm_1601.rs:182 -> port `melee_world::cm/camera.rs:670`
+- `Camera_800311CC` [oext_fns!] x1: tu/script_game.rs:31 -> port `melee_world::cm/camera.rs:690`
+- `Camera_800311DC` [oext_fns!] x1: tu/script_game.rs:33 -> port `melee_world::cm/camera.rs:693`
+- `cmSnap_800315C8` [hook!] x1: tu/gmcamera.rs:316 -> port `melee_world::tu/cmsnap.rs:51`
+- `cmSnap_80031618` [hook!] x1: tu/gmcamera.rs:317 -> port `melee_world::tu/cmsnap.rs:57`
+- `cmSnap_800316B4` [hook!] x1: tu/gmcamera.rs:318 -> port `melee_world::tu/cmsnap.rs:78`
+- `Command_Execute` [ext_fns!] x1: tu/lb_013B.rs:29 -> port `melee_runtime::tu/lbcommand.rs:145`
+- `cosf` [hooks!/oext_fns!] x3: tu/geno_game.rs:48, tu/mncharsel.rs:127, tu/script_game.rs:65 -> port `melee_runtime::gekko.rs:88`
+- `CreateNameAtIndex` [ext_fns!] x1: tu/mnnamenew.rs:114 -> port `melee_modes::tu/mnname.rs:642`
+- `db_80225DD8` [hooks!] x1: tu/geno_game.rs:159 -> port `melee_runtime::tu/dbitem.rs:336`
+- `db_RunEveryFrame` [ext_fns!] x1: tu/gmvs.rs:187 -> port `melee_runtime::tu/dbinit.rs:303`
+- `db_Setup` [ext_fns!] x1: tu/gmvs.rs:184 -> port `melee_runtime::tu/dbinit.rs:217`
+- `efAsync_LoadSync` [ext_fns!/fn+panic/oext_fns!] x4: tu/gm_1798.rs:254, tu/gmregtyfall.rs:69, tu/gmvs.rs:194, tu_ext.rs:665 -> port `melee_world::tu/efasync.rs:959`
+- `efAsync_MexSpawn` [hooks!] x1: tu/geno_game.rs:161 -> port `melee_world::tu/efasync.rs:1243`
+- `efAsync_QueueFlush` [hooks!] x1: tu/geno_game.rs:160 -> port `melee_world::tu/efasync.rs:1030`
+- `efLib_DestroyAll` [oext_fns!] x1: tu/script_game.rs:39 -> port `melee_world::tu/eflib.rs:236`
+- `efLib_Init` [ext_fns!/oext_fns!] x2: tu/gm_1798.rs:255, tu/gmregtyfall.rs:70 -> port `melee_world::tu/eflib.rs:178`
+- `Fighter_ChangeMotionState` [hooks!/oext_fns!] x2: tu/geno_game.rs:59, tu/script_game.rs:75 -> port `melee_fighter::tu/fighter.rs:1110`
+- `Fighter_ResetInputData_80068854` [oext_fns!] x1: tu/script_game.rs:74 -> port `melee_fighter::tu/fighter.rs:902`
+- `Fighter_UnkProcessDeath_80068354` [oext_fns!] x1: tu/script_game.rs:73 -> port `melee_fighter::tu/fighter.rs:791`
+- `fn_800208B0` [ext_fns!] x1: tu/lb_0219.rs:36 -> port `melee_runtime::tu/lbbgflash.rs:328`
+- `fn_80160400` [oext_fns!] x1: tu/gmresult.rs:67 -> port `melee_modes::tu/gm_1601.rs:557`
+- `fn_80160710` [ext_fns!] x1: tu/gm_16f1.rs:130 -> port `melee_modes::gm.rs:449`
+- `fn_801607A8` [ext_fns!] x1: tu/gm_16f1.rs:131 -> port `melee_modes::gm.rs:469`
+- `fn_801607F4` [ext_fns!] x1: tu/gm_16f1.rs:132 -> port `melee_modes::gm.rs:479`
+- `fn_80162BFC` [ext_fns!] x1: tu/gm_17c0.rs:130 -> port `melee_modes::tu/gm_1601.rs:1287`
+- `fn_80162CCC` [ext_fns!] x2: tu/gm_16f1.rs:124, tu/gm_1736.rs:38 -> port `melee_modes::tu/gm_1601.rs:1307`
+- `fn_80162DF8` [ext_fns!] x1: tu/gm_17c0.rs:131 -> port `melee_modes::tu/gm_1601.rs:1339`
+- `fn_80162FF4` [ext_fns!] x1: tu/gm_17c0.rs:132 -> port `melee_modes::tu/gm_1601.rs:1390`
+- `fn_801630C4` [ext_fns!] x1: tu/gm_16f1.rs:125 -> port `melee_modes::tu/gm_1601.rs:1409`
+- `fn_80163D24` [ext_fns!] x1: tu/gm_16f1.rs:126 -> port `melee_modes::tu/gm_1601.rs:1600`
+- `fn_80163D74` [ext_fns!] x1: tu/gm_16f1.rs:127 -> port `melee_modes::tu/gm_1601.rs:1609`
+- `fn_80163FA4` [ext_fns!] x1: tu/gm_16f1.rs:128 -> port `melee_modes::tu/gm_1601.rs:1667`
+- `fn_80164B48` [ext_fns!] x1: tu/gm_1736.rs:39 -> port `melee_modes::tu/gm_1601.rs:1876`
+- `fn_80165418` [oext_fns!] x1: tu/gmresult.rs:68 -> port `melee_modes::gm_ptr.rs:244`
+- `fn_801654A0` [oext_fns!] x1: tu/gmresult.rs:69 -> port `melee_modes::gm_ptr.rs:256`
+- `fn_801689E4` [oext_fns!] x1: tu/gmregclear.rs:67 -> port `melee_modes::tu/gm_1601.rs:2884`
+- `fn_80168E54` [oext_fns!] x1: tu/gmresultplayer.rs:42 -> port `melee_modes::tu/gm_1601.rs:3054`
+- `fn_80168F2C` [oext_fns!] x1: tu/gmregclear.rs:69 -> port `melee_modes::tu/gm_1601.rs:3079`
+- `fn_80168F7C` [oext_fns!] x1: tu/gmregclear.rs:70 -> port `melee_modes::tu/gm_1601.rs:3088`
+- `fn_8016A450` [ext_fns!] x1: tu/gm_17c0.rs:133 -> port `melee_modes::tu/gm_16A2.rs:638`
+- `fn_8016A46C` [ext_fns!] x1: tu/gm_17c0.rs:134 -> port `melee_modes::tu/gm_16A2.rs:642`
+- `fn_8016B4BC` [ext_fns!] x1: tu/gm_17c0.rs:135 -> port `melee_modes::tu/gmvs.rs:523`
+- `fn_8016B510` [ext_fns!] x1: tu/gm_17c0.rs:136 -> port `melee_modes::tu/gmvs.rs:535`
+- `fn_8016F030` [ext_fns!] x1: tu/gm_17c0.rs:137 -> port `melee_modes::tu/gmvs.rs:2224`
+- `fn_8016F140` [oext_fns!] x2: tu/gmregclear.rs:71, tu/gmresult.rs:70 -> port `melee_modes::tu/gmvs.rs:2255`
+- `fn_8016F160` [ext_fns!/oext_fns!] x2: tu/gm_16f1.rs:129, tu/gmregclear.rs:72 -> port `melee_modes::tu/gmvs.rs:2259`
+- `fn_8016F180` [oext_fns!] x1: tu/gmregclear.rs:73 -> port `melee_modes::tu/gm_16f1.rs:220`
+- `fn_8016F1F0` [oext_fns!] x2: tu/gmregclear.rs:74, tu/gmresult.rs:71 -> port `melee_modes::tu/gm_16f1.rs:242`
+- `fn_8016F280` [oext_fns!] x1: tu/gmresult.rs:72 -> port `melee_modes::tu/gm_16f1.rs:260`
+- `fn_8016F344` [oext_fns!] x1: tu/gmregclear.rs:75 -> port `melee_modes::tu/gm_16f1.rs:275`
+- `fn_8016F39C` [oext_fns!] x1: tu/gmregclear.rs:76 -> port `melee_modes::tu/gm_16f1.rs:298`
+- `fn_8016F548` [oext_fns!] x1: tu/gmregclear.rs:77 -> port `melee_modes::tu/gm_16f1.rs:332`
+- `fn_8016F740` [oext_fns!] x1: tu/gmregclear.rs:78 -> port `melee_modes::tu/gm_16f1.rs:364`
+- `fn_8016F870` [oext_fns!] x1: tu/gmregclear.rs:79 -> port `melee_modes::tu/gm_16f1.rs:389`
+- `fn_8016F9A8` [oext_fns!] x1: tu/gmregclear.rs:80 -> port `melee_modes::tu/gm_16f1.rs:415`
+- `fn_8016FAD4` [oext_fns!] x1: tu/gmregclear.rs:81 -> port `melee_modes::tu/gm_16f1.rs:468`
+- `fn_8016FFD4` [oext_fns!] x1: tu/gmregclear.rs:82 -> port `melee_modes::tu/gm_16f1.rs:514`
+- `fn_801701AC` [oext_fns!] x1: tu/gmresult.rs:73 -> port `melee_modes::tu/gm_16f1.rs:548`
+- `fn_801701B8` [oext_fns!] x1: tu/gmresult.rs:74 -> port `melee_modes::tu/gm_16f1.rs:552`
+- `fn_801701C0` [oext_fns!] x1: tu/gmregclear.rs:83 -> port `melee_modes::tu/gm_16f1.rs:572`
+- `fn_80171A88` [oext_fns!] x1: tu/gmregclear.rs:84 -> port `melee_modes::tu/gm_16f1.rs:939`
+- `fn_80172C78` [ext_fns!] x1: tu/gm_1736.rs:40 -> port `melee_modes::tu/gm_16f1.rs:1458`
+- `fn_80174274` [ext_fns!/oext_fns!] x4: tu/gm_1798.rs:256, tu/gm_17ad.rs:14, tu/gm_17ba.rs:14, tu/gmresultplayer.rs:54 -> port `melee_modes::tu/gmresult.rs:330`
+- `fn_80174338` [oext_fns!] x1: tu/gmresultplayer.rs:56 -> port `melee_modes::tu/gmresult.rs:357`
+- `fn_8017435C` [oext_fns!] x1: tu/gmresultplayer.rs:57 -> port `melee_modes::tu/gmresult.rs:361`
+- `fn_80174380` [oext_fns!] x1: tu/gmresultplayer.rs:58 -> port `melee_modes::tu/gmresult.rs:365`
+- `fn_801748EC` [oext_fns!] x1: tu/gmresultplayer.rs:61 -> port `melee_modes::tu/gmresult.rs:494`
+- `fn_80174920` [oext_fns!] x1: tu/gmresultplayer.rs:62 -> port `melee_modes::tu/gmresult.rs:506`
+- `fn_80174A60` [oext_fns!] x1: tu/gmresultplayer.rs:63 -> port `melee_modes::tu/gmresult.rs:536`
+- `fn_80174B4C` [oext_fns!] x1: tu/gmresultplayer.rs:64 -> port `melee_modes::tu/gmresult.rs:569`
+- `fn_80174FD0` [oext_fns!] x1: tu/gmresultplayer.rs:65 -> port `melee_modes::tu/gmresult.rs:673`
+- `fn_80175C5C` [oext_fns!] x1: tu/gmresultplayer.rs:66 -> port `melee_modes::tu/gmresult.rs:975`
+- `fn_80175D34` [oext_fns!] x1: tu/gmresultplayer.rs:67 -> port `melee_modes::tu/gmresult.rs:994`
+- `fn_80175DC8` [oext_fns!] x1: tu/gmresultplayer.rs:68 -> port `melee_modes::tu/gmresult.rs:1033`
+- `fn_801785B0` [oext_fns!] x1: tu/gmresult.rs:75 -> port `melee_modes::tu/gmresultplayer.rs:1292`
+- `fn_80179350` [oext_fns!] x1: tu/gmresult.rs:76 -> port `melee_modes::tu/gmresultplayer.rs:1581`
+- `fn_801795D4` [ext_fns!] x1: tu/gm_1798.rs:257 -> port `melee_modes::tu/gmresultplayer.rs:1597`
+- `fn_801796F0` [ext_fns!] x1: tu/gm_1798.rs:258 -> port `melee_modes::tu/gmresultplayer.rs:1621`
+- `fn_80179854` [oext_fns!] x1: tu/gmresultplayer.rs:43 -> port `melee_modes::tu/gm_1798.rs:382`
+- `fn_80179D3C` [oext_fns!] x1: tu/gmresultplayer.rs:44 -> port `melee_modes::tu/gm_1798.rs:510`
+- `fn_80179D60` [oext_fns!] x1: tu/gmresultplayer.rs:45 -> port `melee_modes::tu/gm_1798.rs:514`
+- `fn_80179D84` [oext_fns!] x1: tu/gmresultplayer.rs:46 -> port `melee_modes::tu/gm_1798.rs:518`
+- `fn_80179DA8` [oext_fns!] x1: tu/gmresultplayer.rs:47 -> port `melee_modes::tu/gm_1798.rs:522`
+- `fn_80179DCC` [oext_fns!] x1: tu/gmresultplayer.rs:48 -> port `melee_modes::tu/gm_1798.rs:540`
+- `fn_80179E34` [oext_fns!] x1: tu/gmresultplayer.rs:49 -> port `melee_modes::tu/gm_1798.rs:544`
+- `fn_80179E9C` [oext_fns!] x1: tu/gmresultplayer.rs:50 -> port `melee_modes::tu/gm_1798.rs:548`
+- `fn_80179F04` [oext_fns!] x1: tu/gmresultplayer.rs:51 -> port `melee_modes::tu/gm_1798.rs:552`
+- `fn_80179F6C` [oext_fns!] x1: tu/gmresult.rs:77 -> port `melee_modes::tu/gm_1798.rs:556`
+- `fn_80179F84` [oext_fns!] x1: tu/gmresult.rs:78 -> port `melee_modes::tu/gm_1798.rs:560`
+- `fn_8017A004` [oext_fns!] x1: tu/gmresult.rs:79 -> port `melee_modes::tu/gm_1798.rs:571`
+- `fn_8017A318` [oext_fns!] x1: tu/gmresult.rs:80 -> port `melee_modes::tu/gm_1798.rs:618`
+- `fn_8017A67C` [oext_fns!] x1: tu/gmresult.rs:81 -> port `melee_modes::tu/gm_1798.rs:691`
+- `fn_8017A9B4` [oext_fns!] x1: tu/gmresult.rs:82 -> port `melee_modes::tu/gm_1798.rs:779`
+- `fn_8017AA78` [oext_fns!] x1: tu/gmresult.rs:83 -> port `melee_modes::tu/gm_1798.rs:800`
+- `fn_8017AD04` [ext_fns!] x1: tu/gm_17ba.rs:15 -> port `melee_modes::gm.rs:242`
+- `fn_8017AD28` [oext_fns!] x1: tu/gmresult.rs:84 -> port `melee_modes::gm.rs:264`
+- `fn_8017AD48` [oext_fns!] x1: tu/gmresult.rs:85 -> port `melee_modes::gm.rs:269`
+- `fn_8017AD78` [oext_fns!] x1: tu/gmresult.rs:86 -> port `melee_modes::gm.rs:274`
+- `fn_8017B010` [oext_fns!] x1: tu/gmresult.rs:93 -> port `melee_modes::tu/gm_17ad.rs:117`
+- `fn_8017B410` [oext_fns!] x1: tu/gmresult.rs:103 -> port `melee_modes::tu/gm_17ad.rs:122`
+- `fn_8017B91C` [oext_fns!] x1: tu/gmresult.rs:115 -> port `melee_modes::tu/gm_17ad.rs:133`
+- `fn_8017B9F4` [oext_fns!] x1: tu/gmresult.rs:116 -> port `melee_modes::tu/gm_17ad.rs:144`
+- `fn_8017BACC` [oext_fns!] x1: tu/gmresult.rs:117 -> port `melee_modes::tu/gm_17ba.rs:37`
+- `fn_8017BB30` [oext_fns!] x1: tu/gmresult.rs:118 -> port `melee_modes::tu/gm_17ba.rs:42`
+- `fn_8017BB94` [oext_fns!] x1: tu/gmresult.rs:119 -> port `melee_modes::tu/gm_17ba.rs:73`
+- `fn_8017BC50` [oext_fns!] x1: tu/gmresult.rs:120 -> port `melee_modes::tu/gm_17ba.rs:77`
+- `fn_8017BD0C` [oext_fns!] x1: tu/gmresult.rs:121 -> port `melee_modes::tu/gm_17ba.rs:81`
+- `fn_8017BDC8` [oext_fns!] x1: tu/gmresult.rs:122 -> port `melee_modes::tu/gm_17ba.rs:85`
+- `fn_8017DEC8` [ext_fns!] x2: tu/gm_16f1.rs:133, tu/gm_1736.rs:41 -> port `melee_modes::tu/gm_17c0.rs:1385`
+- `fn_8017DF28` [ext_fns!] x1: tu/gm_16f1.rs:134 -> port `melee_modes::tu/gm_17c0.rs:1394`
+- `fn_8017E0E4` [ext_fns!] x1: tu/gm_16f1.rs:135 -> port `melee_modes::tu/gm_17c0.rs:1428`
+- `fn_8017E160` [ext_fns!] x1: tu/gm_16f1.rs:136 -> port `melee_modes::tu/gm_17c0.rs:1436`
+- `fn_8017E318` [ext_fns!] x2: tu/gm_17e4.rs:37, tu/gm_17eb.rs:36 -> port `melee_modes::tu/gm_17c0.rs:1473`
+- `fn_8017EDDC` [ext_fns!] x1: tu/gm_17c0.rs:138 -> port `melee_modes::tu/gm_17eb.rs:98`
+- `fn_80218678` [oext_fns!] x1: tu/script_game.rs:266 -> port `melee_world::tu/grpushon.rs:249`
+- `Frontend_CaptureCharIcon` [oext_fns!] x1: tu/mncharsel.rs:39 -> port `melee_modes::tu/gmfrontend.rs:844`
+- `Frontend_CaptureIcon` [oext_fns!] x1: tu/mncharsel.rs:40 -> port `melee_modes::tu/gmfrontend.rs:872`
+- `Frontend_OnlinePick` [oext_fns!] x1: tu/mncharsel.rs:41 -> port `melee_modes::tu/gmfrontend.rs:712`
+- `ft_80081A00` [hooks!] x1: tu/geno_game.rs:150 -> port `melee_fighter::tu/ft_0819.rs:88`
+- `ft_80081C88` [oext_fns!] x1: tu/script_game.rs:95 -> port `melee_fighter::tu/ft_081b.rs:172`
+- `ft_80082C74` [hooks!] x1: tu/geno_game.rs:139 -> port `melee_fighter::tu/ft_081b.rs:416`
+- `ft_80083090` [hooks!] x1: tu/geno_game.rs:140 -> port `melee_fighter::tu/ft_081b.rs:498`
+- `ft_8008403C` [hooks!] x1: tu/geno_game.rs:141 -> port `melee_fighter::tu/ft_081b.rs:630`
+- `ft_80084104` [hooks!] x1: tu/geno_game.rs:142 -> port `melee_fighter::tu/ft_081b.rs:637`
+- `ft_80084280` [hooks!] x1: tu/geno_game.rs:143 -> port `melee_fighter::tu/ft_081b.rs:662`
+- `ft_80084DB0` [hooks!] x1: tu/geno_game.rs:144 -> port `melee_fighter::ft084e.rs:179`
+- `ft_80084F3C` [hooks!] x1: tu/geno_game.rs:145 -> port `melee_fighter::ft084e.rs:59`
+- `ft_80087C58` [ext_fns!] x1: tu/gm_17c0.rs:156 -> port `melee_fighter::ft0877.rs:137`
+- `ft_80087C64` [ext_fns!] x1: tu/gm_17c0.rs:157 -> port `melee_fighter::ft0877.rs:140`
+- `ft_8008A2BC` [hooks!/oext_fns!] x2: tu/geno_game.rs:60, tu/script_game.rs:243 -> port `melee_fighter::tu/ft_08a1.rs:52`
+- `ft_did_jump` [hooks!] x1: tu/geno_tests.rs:55 -> port `melee_fighter::tu/ftCo_JumpAerial.rs:109`
+- `ftAction_80073240` [hooks!] x1: tu/geno_tests.rs:66 -> port `melee_fighter::tu/ftaction.rs:797`
+- `ftAction_80073354` [hooks!] x1: tu/geno_tests.rs:67 -> port `melee_fighter::tu/ftaction.rs:830`
+- `ftAction_8007349C` [hooks!] x1: tu/geno_tests.rs:68 -> port `melee_fighter::tu/ftaction.rs:867`
+- `ftAnim_8006F0FC` [hooks!] x1: tu/geno_game.rs:50 -> port `melee_fighter::tu/ftanim.rs:442`
+- `ftAnim_8006F484` [oext_fns!] x1: tu/script_game.rs:63 -> port `melee_fighter::tu/ftanim.rs:499`
+- `ftAnim_8006FA58` [hooks!] x1: tu/geno_tests.rs:65 -> port `melee_fighter::tu/ftanim.rs:702`
+- `ftAnim_IsFramesRemaining` [hooks!] x1: tu/geno_game.rs:52 -> port `melee_fighter::tu/ftanim.rs:460`
+- `ftAnim_SetAnimRate` [hooks!] x1: tu/geno_game.rs:51 -> port `melee_fighter::tu/ftanim.rs:450`
+- `ftBossLib_8015C2A8` [ext_fns!] x1: tu/gm_17c0.rs:139 -> port `melee_fighter::tu/ftbosslib.rs:172`
+- `ftBossLib_8015C530` [ext_fns!] x1: tu/gm_17c0.rs:140 -> port `melee_fighter::tu/ftbosslib.rs:214`
+- `ftBossLib_8015CA6C` [ext_fns!] x1: tu/gm_17c0.rs:145 -> port `melee_fighter::tu/ftbosslib.rs:269`
+- `ftBossLib_8015CB7C` [ext_fns!] x1: tu/gm_17c0.rs:146 -> port `melee_fighter::tu/ftbosslib.rs:282`
+- `ftBossLib_8015CB9C` [ext_fns!] x2: tu/gm_17c0.rs:147, tu/gmevent.rs:62 -> port `melee_fighter::tu/ftbosslib.rs:286`
+- `ftBossLib_8015CC14` [ext_fns!] x2: tu/gm_17c0.rs:148, tu/gmevent.rs:63 -> port `melee_fighter::tu/ftbosslib.rs:296`
+- `ftBossLib_IsMasterHandEntry` [ext_fns!] x1: tu/gm_17c0.rs:149 -> port `melee_fighter::tu/ftbosslib.rs:169`
+- `ftCamera_80076064` [oext_fns!] x1: tu/script_game.rs:91 -> port `melee_fighter::tu/ftcamera.rs:62`
+- `ftCliffCommon_80081298` [hooks!] x1: tu/geno_game.rs:151 -> port `melee_fighter::tu/ftcliffcommon.rs:57`
+- `ftCo_8008D8E8` [oext_fns!] x1: tu/script_game.rs:251 -> port `melee_fighter::tu/ftCo_Damage.rs:209`
+- `ftCo_80091A4C` [oext_fns!] x1: tu/script_game.rs:284 -> port `melee_fighter::tu/ftCo_Guard.rs:188`
+- `ftCo_80091E78` [hooks!] x1: tu/geno_tests.rs:176 -> port `melee_fighter::tu/ftCo_Guard.rs:374`
+- `ftCo_800968C8` [hooks!] x1: tu/geno_game.rs:74 -> port `melee_fighter::tu/ftCo_FallSpecial.rs:64`
+- `ftCo_80096CC8` [hooks!] x1: tu/geno_game.rs:75 -> port `melee_fighter::tu/ftCo_FallSpecial.rs:165`
+- `ftCo_80096D28` [hooks!] x1: tu/geno_game.rs:76 -> port `melee_fighter::tu/ftCo_FallSpecial.rs:172`
+- `ftCo_8009917C` [hooks!] x1: tu/geno_game.rs:71 -> port `melee_fighter::tu/ftCo_Escape.rs:70`
+- `ftCo_80099794` [oext_fns!] x1: tu/script_game.rs:282 -> port `melee_fighter::tu/ftCo_Escape.rs:274`
+- `ftCo_80099A58` [oext_fns!] x1: tu/script_game.rs:283 -> port `melee_fighter::tu/ftCo_EscapeAir.rs:60`
+- `ftCo_800B49F4` [oext_fns!] x1: tu/script_game.rs:78 -> port `melee_fighter::tu/ftcmdscript.rs:272`
+- `ftCo_800B4A78` [oext_fns!] x1: tu/script_game.rs:79 -> port `melee_fighter::tu/ftcmdscript.rs:279`
+- `ftCo_800BFFD0` [oext_fns!] x1: tu/script_game.rs:253 -> port `melee_fighter::tu/ftcolanim.rs:135`
+- `ftCo_800C0074` [oext_fns!] x1: tu/script_game.rs:254 -> port `melee_fighter::tu/ftcolanim.rs:151`
+- `ftCo_800C3B10` [oext_fns!] x1: tu/script_game.rs:267 -> port `melee_fighter::tu/ftco_aircatch.rs:95`
+- `ftCo_800C8348` [oext_fns!] x1: tu/script_game.rs:256 -> port `melee_fighter::tu/ftmetal.rs:93`
+- `ftCo_800C8540` [oext_fns!] x1: tu/script_game.rs:257 -> port `melee_fighter::tu/ftmetal.rs:120`
+- `ftCo_800C8C84` [ext_fns!] x1: tu/gm_17c0.rs:150 -> port `melee_fighter::tu/ft_0c8c.rs:51`
+- `ftCo_800CB870` [oext_fns!] x1: tu/script_game.rs:286 -> port `melee_fighter::tu/ftCo_JumpAerial.rs:122`
+- `ftCo_800D105C` [hooks!/oext_fns!] x2: tu/geno_game.rs:61, tu/script_game.rs:92 -> port `melee_fighter::tu/ftchangeparam.rs:159`
+- `ftCo_800D3158` [hooks!] x1: tu/geno_tests.rs:153 -> port `melee_fighter::tu/ft_0d31.rs:113`
+- `ftCo_800D5FB0` [oext_fns!] x1: tu/script_game.rs:289 -> port `melee_fighter::tu/ftCo_Squat.rs:71`
+- `ftCo_800D6824` [oext_fns!] x1: tu/script_game.rs:269 -> port `melee_fighter::tu/ftCo_Attack100.rs:90`
+- `ftCo_800D68C0` [oext_fns!] x1: tu/script_game.rs:270 -> port `melee_fighter::tu/ftCo_Attack100.rs:117`
+- `ftCo_800D72A0` [hooks!] x1: tu/geno_game.rs:146 -> port `melee_fighter::tu/ftco_0d72.rs:8`
+- `ftCo_800DCE34` [oext_fns!] x1: tu/script_game.rs:355 -> port `melee_fighter::tu/ftCo_CaptureCut.rs:265`
+- `ftCo_800DF1C8` [oext_fns!] x1: tu/script_game.rs:292 -> port `melee_fighter::ft0df.rs:154`
+- `ftCo_800DF2D8` [oext_fns!] x1: tu/script_game.rs:293 -> port `melee_fighter::ft0df.rs:160`
+- `ftCo_800DF3A8` [oext_fns!] x1: tu/script_game.rs:294 -> port `melee_fighter::ft0df.rs:166`
+- `ftCo_Attack100_CheckInput` [oext_fns!] x1: tu/script_game.rs:271 -> port `melee_fighter::tu/ftCo_Attack100.rs:144`
+- `ftCo_Attack1_CheckInput` [oext_fns!] x1: tu/script_game.rs:268 -> port `melee_fighter::tu/ftCo_Attack1.rs:63`
+- `ftCo_AttackAir_CheckItemThrowInput` [oext_fns!] x1: tu/script_game.rs:273 -> port `melee_fighter::tu/ftCo_AttackAir.rs:93`
+- `ftCo_AttackAir_EnterFromMsid` [hooks!] x1: tu/geno_game.rs:217 -> port `melee_fighter::tu/ftCo_AttackAir.rs:139`
+- `ftCo_AttackAir_GetMsidFromCStick` [oext_fns!] x1: tu/script_game.rs:274 -> port `melee_fighter::tu/ftCo_AttackAir.rs:107`
+- `ftCo_AttackHi3_CheckInput` [oext_fns!] x1: tu/script_game.rs:275 -> port `melee_fighter::tu/ftCo_AttackHi3.rs:49`
+- `ftCo_AttackHi4_CheckInput` [oext_fns!] x1: tu/script_game.rs:276 -> port `melee_fighter::tu/ftCo_AttackHi4.rs:73`
+- `ftCo_AttackLw3_CheckInput` [oext_fns!] x1: tu/script_game.rs:277 -> port `melee_fighter::tu/ftCo_AttackLw3.rs:70`
+- `ftCo_AttackLw4_CheckInput` [oext_fns!] x1: tu/script_game.rs:278 -> port `melee_fighter::tu/ftCo_AttackLw4.rs:59`
+- `ftCo_AttackS3_CheckInput` [oext_fns!] x1: tu/script_game.rs:279 -> port `melee_fighter::tu/ftCo_AttackS3.rs:54`
+- `ftCo_AttackS4_CheckInput` [oext_fns!] x1: tu/script_game.rs:280 -> port `melee_fighter::tu/ftCo_AttackS4.rs:96`
+- `ftCo_Catch_CheckInput` [oext_fns!] x1: tu/script_game.rs:272 -> port `melee_fighter::tu/ftCo_Catch.rs:81`
+- `ftCo_Damage_CalcKnockback` [oext_fns!] x1: tu/script_game.rs:252 -> port `melee_fighter::tu/ftCo_Damage.rs:223`
+- `ftCo_Dash_CheckInput` [oext_fns!] x1: tu/script_game.rs:281 -> port `melee_fighter::tu/ftCo_Dash.rs:65`
+- `ftCo_Fall_Enter` [hooks!/oext_fns!] x2: tu/geno_game.rs:72, tu/script_game.rs:248 -> port `melee_fighter::tu/ftCo_Fall.rs:86`
+- `ftCo_Fall_IASA` [hooks!] x1: tu/geno_game.rs:73 -> port `melee_fighter::tu/ftCo_Fall.rs:193`
+- `ftCo_Jump_CheckInput` [oext_fns!] x1: tu/script_game.rs:285 -> port `melee_fighter::tu/ftCo_Jump.rs:86`
+- `ftCo_Jump_Enter` [hooks!] x1: tu/geno_game.rs:219 -> port `melee_fighter::tu/ftCo_Jump.rs:165`
+- `ftCo_JumpAerial_Enter_Basic` [hooks!] x1: tu/geno_game.rs:218 -> port `melee_fighter::tu/ftCo_JumpAerial.rs:215`
+- `ftCo_Landing_Enter_Basic` [hooks!] x1: tu/geno_game.rs:77 -> port `melee_fighter::tu/ftCo_Landing.rs:115`
+- `ftCo_LandingFallSpecial_Enter` [hooks!] x1: tu/geno_game.rs:79 -> port `melee_fighter::tu/ftCo_Landing.rs:131`
+- `ftCo_LandingFallSpecial_Enter_Basic` [hooks!] x1: tu/geno_game.rs:78 -> port `melee_fighter::tu/ftCo_Landing.rs:123`
+- `ftCo_SpecialAir_CheckInput` [oext_fns!] x1: tu/script_game.rs:287 -> port `melee_fighter::tu/ftCo_SpecialAir.rs:51`
+- `ftCo_SpecialS_CheckInput` [oext_fns!] x1: tu/script_game.rs:288 -> port `melee_fighter::tu/ftCo_SpecialS.rs:65`
+- `ftCo_Turn_CheckInput` [oext_fns!] x1: tu/script_game.rs:290 -> port `melee_fighter::tu/ftCo_Turn.rs:71`
+- `ftCo_Wait_IASA` [hooks!] x1: tu/geno_game.rs:80 -> port `melee_fighter::tu/ftCo_Wait.rs:69`
+- `ftCo_Walk_CheckInput` [oext_fns!] x1: tu/script_game.rs:291 -> port `melee_fighter::tu/ftCo_Walk.rs:62`
+- `ftCommon_8007D5D4` [hooks!/oext_fns!] x2: tu/geno_game.rs:66, tu/script_game.rs:83 -> port `melee_fighter::ftcommon2.rs:48`
+- `ftCommon_8007D6A4` [oext_fns!] x1: tu/script_game.rs:84 -> port `melee_fighter::ftcommon3.rs:71`
+- `ftCommon_8007D7FC` [hooks!/oext_fns!] x2: tu/geno_game.rs:68, tu/script_game.rs:85 -> port `melee_fighter::ftcommon3.rs:97`
+- `ftCommon_8007D92C` [oext_fns!] x1: tu/script_game.rs:86 -> port `melee_fighter::ftcommon3.rs:110`
+- `ftCommon_8007E2FC` [oext_fns!] x1: tu/script_game.rs:89 -> port `melee_fighter::ftcommon2.rs:184`
+- `ftCommon_8007F804` [oext_fns!] x1: tu/script_game.rs:90 -> port `melee_fighter::ftcommon2.rs:260`
+- `ftKb_MexKirbyLike` [oext_fns!] x1: tu/script_game.rs:38 -> port `melee_chara::tu/ftkirby.rs:2478`
+- `ftLib_80086824` [ext_fns!] x1: tu/gm_17c0.rs:151 -> port `melee_fighter::ftlib.rs:220`
+- `ftLib_800868A4` [ext_fns!] x1: tu/gm_17c0.rs:152 -> port `melee_fighter::ftlib.rs:227`
+- `ftLib_80086960` [oext_fns!] x1: tu/script_game.rs:94 -> port `melee_fighter::ftlib.rs:246`
+- `ftLib_8008731C` [ext_fns!] x1: tu/gmevent.rs:64 -> port `melee_fighter::ftlib.rs:416`
+- `ftLib_80087508` [ext_fns!] x2: tu/gm_17c0.rs:153, tu/gmevent.rs:65 -> port `melee_fighter::tu/ftlib.rs:61`
+- `ftLib_80087574` [ext_fns!] x1: tu/gm_17c0.rs:154 -> port `melee_fighter::tu/ftlib.rs:71`
+- `ftLib_80087610` [ext_fns!] x1: tu/gm_17c0.rs:155 -> port `melee_fighter::tu/ftlib.rs:85`
+- `ftLib_800876B4` [ext_fns!] x1: tu/gm_1798.rs:260 -> port `melee_fighter::ftlib.rs:453`
+- `ftPartSetRotX` [hooks!] x1: tu/geno_game.rs:69 -> port `melee_fighter::tu/ftparts.rs:159`
+- `ftPartSetRotY` [hooks!] x1: tu/geno_game.rs:70 -> port `melee_fighter::tu/ftparts.rs:160`
+- `ftPe_8011BA54` [todo_ext!] x1: tu/mex_tests.rs:30 -> port `melee_chara::tu/ftpeachfloat.rs:98`
+- `ftPe_8011BAD8` [todo_ext!] x1: tu/mex_tests.rs:31 -> port `melee_chara::tu/ftpeachfloat.rs:114`
+- `ftpickupitem_80094150` [oext_fns!] x1: tu/script_game.rs:258 -> port `melee_fighter::tu/ftpickupitem.rs:143`
+- `ftpickupitem_800948A8` [oext_fns!] x1: tu/script_game.rs:259 -> port `melee_fighter::tu/ftpickupitem.rs:330`
+- `Geno_ApplyAttrs` [hooks!] x1: tu/geno_tests.rs:81 -> port `melee_modes::tu/geno_game.rs:4184`
+- `Geno_ArticleDesc` [hooks!] x1: tu/geno_tests.rs:142 -> port `melee_modes::tu/geno_game.rs:9983`
+- `Geno_ArticleLogic` [hooks!] x1: tu/geno_tests.rs:143 -> port `melee_modes::tu/geno_game.rs:9996`
+- `Geno_Autolink` [hooks!] x1: tu/geno_tests.rs:99 -> port `melee_modes::tu/geno_game.rs:5490`
+- `Geno_CollBegin` [hooks!] x1: tu/geno_tests.rs:96 -> port `melee_modes::tu/geno_game.rs:5392`
+- `Geno_CollEnd` [hooks!] x1: tu/geno_tests.rs:97 -> port `melee_modes::tu/geno_game.rs:5403`
+- `Geno_ComboContact` [hooks!] x1: tu/geno_tests.rs:167 -> port `melee_modes::tu/geno_game.rs:13042`
+- `Geno_ComboInput` [hooks!] x1: tu/geno_tests.rs:165 -> port `melee_modes::tu/geno_game.rs:13210`
+- `Geno_ComboTick` [hooks!] x1: tu/geno_tests.rs:166 -> port `melee_modes::tu/geno_game.rs:13620`
+- `Geno_FighterReset` [hooks!] x1: tu/geno_tests.rs:79 -> port `melee_modes::tu/geno_game.rs:3950`
+- `Geno_GiveStunBonus` [oext_fns!] x1: tu/script_game.rs:341 -> port `melee_modes::tu/geno_game.rs:6022`
+- `Geno_GroundEdge` [hooks!] x1: tu/geno_tests.rs:98 -> port `melee_modes::tu/geno_game.rs:5417`
+- `Geno_HitFlags` [hooks!] x1: tu/geno_tests.rs:44 -> port `melee_modes::tu/geno_game.rs:5953`
+- `Geno_HitReact` [hooks!] x1: tu/geno_tests.rs:43 -> port `melee_modes::tu/geno_game.rs:6001`
+- `Geno_HitStunBonus` [hooks!] x1: tu/geno_tests.rs:50 -> port `melee_modes::tu/geno_game.rs:5936`
+- `Geno_ItemDesc` [oext_fns!] x1: tu/script_game.rs:363 -> port `melee_modes::tu/geno_game.rs:11720`
+- `Geno_LabEnterState` [oext_fns!] x1: tu/script_game.rs:359 -> port `melee_modes::tu/geno_game.rs:9395`
+- `Geno_MotionRow` [hooks!] x1: tu/geno_tests.rs:100 -> port `melee_modes::tu/geno_game.rs:6567`
+- `Geno_MotionRowIfAny` [oext_fns!] x1: tu/script_game.rs:356 -> port `melee_modes::tu/geno_game.rs:9414`
+- `Geno_MultiJump` [hooks!] x1: tu/geno_tests.rs:82 -> port `melee_modes::tu/geno_game.rs:4230`
+- `Geno_NoHitlag` [hooks!] x1: tu/geno_tests.rs:42 -> port `melee_modes::tu/geno_game.rs:6017`
+- `Geno_OnActionChange` [hooks!] x1: tu/geno_tests.rs:80 -> port `melee_modes::tu/geno_game.rs:4035`
+- `Geno_OnHit` [hooks!] x1: tu/geno_tests.rs:144 -> port `melee_modes::tu/geno_game.rs:11191`
+- `Geno_PreAnim` [hooks!] x1: tu/geno_tests.rs:95 -> port `melee_modes::tu/geno_game.rs:5335`
+- `Geno_SpecialEnter` [hooks!] x1: tu/geno_tests.rs:101 -> port `melee_modes::tu/geno_game.rs:9343`
+- `Geno_TakeStunBonus` [hooks!] x1: tu/geno_tests.rs:49 -> port `melee_modes::tu/geno_game.rs:6037`
+- `GenoDefine_StateDigest` [hooks!] x1: tu/geno_tests.rs:158 -> port `melee_modes::tu/geno_game.rs:6069`
+- `GenoFly_CursorTest` [hooks!] x1: tu/geno_tests.rs:28 -> port `melee_modes::tu/geno_lab_mode.rs:468`
+- `GenoFly_Fighter` [hooks!] x1: tu/geno_tests.rs:152 -> port `melee_modes::tu/geno_lab_mode.rs:323`
+- `GenoFly_SetSolid` [hooks!] x1: tu/geno_tests.rs:129 -> port `melee_modes::tu/geno_lab_mode.rs:462`
+- `GenoFly_SetSpeed` [hooks!] x1: tu/geno_tests.rs:127 -> port `melee_modes::tu/geno_lab_mode.rs:460`
+- `GenoFly_Speed` [hooks!] x1: tu/geno_tests.rs:128 -> port `melee_modes::tu/geno_lab_mode.rs:461`
+- `GenoFly_TestArm` [hooks!] x1: tu/geno_tests.rs:151 -> port `melee_modes::tu/geno_lab_mode.rs:464`
+- `GenoGame_AimStick` [hooks!] x1: tu/geno_tests.rs:29 -> port `melee_modes::tu/geno_game.rs:2893`
+- `GenoGame_ArticleStep` [hooks!] x1: tu/geno_tests.rs:145 -> port `melee_modes::tu/geno_game.rs:10263`
+- `GenoGame_AttrFind` [hooks!] x1: tu/geno_tests.rs:75 -> port `melee_modes::tu/geno_game.rs:4107`
+- `GenoGame_AttrIsInt` [hooks!] x1: tu/geno_tests.rs:91 -> port `melee_modes::tu/geno_game.rs:4121`
+- `GenoGame_AttrOffset` [hooks!] x1: tu/geno_tests.rs:76 -> port `melee_modes::tu/geno_game.rs:4131`
+- `GenoGame_Brake` [hooks!] x1: tu/geno_tests.rs:149 -> port `melee_modes::tu/geno_game.rs:3132`
+- `GenoGame_ComboBlockOf` [hooks!] x1: tu/geno_tests.rs:164 -> port `melee_modes::tu/geno_game.rs:12955`
+- `GenoGame_DashAim` [hooks!] x1: tu/geno_tests.rs:148 -> port `melee_modes::tu/geno_game.rs:3079`
+- `GenoGame_DashStick` [hooks!] x1: tu/geno_tests.rs:147 -> port `melee_modes::tu/geno_game.rs:3062`
+- `GenoGame_HookFind` [hooks!] x1: tu/geno_tests.rs:77 -> port `melee_modes::tu/geno_game.rs:3372`
+- `GenoGame_LockonAim` [hooks!] x1: tu/geno_tests.rs:150 -> port `melee_modes::tu/geno_game.rs:2855`
+- `GenoGame_LuaBlockOf` [hooks!] x1: tu/geno_tests.rs:163 -> port `melee_modes::tu/geno_game.rs:8871`
+- `GenoGame_ScriptHasIasa` [hooks!] x1: tu/geno_tests.rs:85 -> port `melee_modes::tu/geno_game.rs:3645`
+- `GenoGame_ScriptRange` [hooks!] x1: tu/geno_tests.rs:84 -> port `melee_modes::tu/geno_game.rs:3600`
+- `GenoGame_StateFieldBase` [hooks!] x1: tu/geno_tests.rs:133 -> port `melee_modes::tu/geno_game.rs:11314`
+- `GenoGame_StateFieldName` [hooks!] x1: tu/geno_tests.rs:132 -> port `melee_modes::tu/geno_game.rs:11303`
+- `GenoGame_StateOf` [hooks!] x1: tu/geno_tests.rs:78 -> port `melee_modes::tu/geno_game.rs:6050`
+- `GenoGame_StateSize` [hooks!] x1: tu/geno_tests.rs:131 -> port `melee_modes::tu/geno_game.rs:11299`
+- `GenoGame_TestCapture` [hooks!] x1: tu/geno_tests.rs:92 -> port `melee_modes::tu/geno_game.rs:4907`
+- `GenoGame_TestChanges` [hooks!] x1: tu/geno_tests.rs:93 -> port `melee_modes::tu/geno_game.rs:4917`
+- `GenoGame_TestJointRate` [hooks!] x1: tu/geno_tests.rs:106 -> port `melee_modes::tu/geno_game.rs:7808`
+- `GenoGame_TestLastTarget` [hooks!] x1: tu/geno_tests.rs:94 -> port `melee_modes::tu/geno_game.rs:4921`
+- `GenoGame_TestLedgeMode` [hooks!] x1: tu/geno_tests.rs:102 -> port `melee_modes::tu/geno_game.rs:7225`
+- `GenoGame_TestModelRotX` [hooks!] x1: tu/geno_tests.rs:105 -> port `melee_modes::tu/geno_game.rs:7804`
+- `GenoGame_TestPairSwap` [hooks!] x1: tu/geno_tests.rs:104 -> port `melee_modes::tu/geno_game.rs:8820`
+- `GenoGame_TestPoseReset` [hooks!] x1: tu/geno_tests.rs:107 -> port `melee_modes::tu/geno_game.rs:7812`
+- `GenoGame_TestStartFrame` [hooks!] x1: tu/geno_tests.rs:103 -> port `melee_modes::tu/geno_game.rs:7231`
+- `GenoLab_ApplyRules` [hooks!] x1: tu/geno_tests.rs:125 -> port `melee_modes::tu/geno_lab_mode.rs:113`
+- `GenoLab_Leave` [hooks!] x1: tu/geno_tests.rs:124 -> port `melee_modes::tu/geno_lab_mode.rs:167`
+- `GenoLab_ModeActive` [hooks!] x1: tu/geno_tests.rs:123 -> port `melee_modes::tu/geno_lab_mode.rs:165`
+- `GenoLab_NextAfterMatch` [hooks!] x1: tu/geno_tests.rs:126 -> port `melee_modes::tu/geno_lab_mode.rs:138`
+- `GetNameCount` [ext_fns!/oext_fns!] x6: tu/mncount.rs:39, tu/mndiagram.rs:37, tu/mndiagram2.rs:73, tu/mndiagram3.rs:47, tu/mnnamenew.rs:112, tu/mnvibration.rs:147 -> port `melee_modes::tu/mnname.rs:396`
+- `GetNameText` [ext_fns!/oext_fns!] x5: tu/mncharsel.rs:57, tu/mndiagram.rs:36, tu/mndiagram2.rs:72, tu/mndiagram3.rs:46, tu/mnvibration.rs:146 -> port `melee_modes::tu/mnname.rs:382`
+- `GetPersistentFighterData` [oext_fns!] x3: tu/mncount.rs:40, tu/mndiagram.rs:42, tu/mndiagram2.rs:61 -> port `melee_modes::tu/gmmain_lib.rs:161`
+- `GetPersistentNameData` [ext_fns!/oext_fns!] x5: tu/gm_17ba.rs:13, tu/mndiagram.rs:43, tu/mndiagram2.rs:62, tu/mnnamenew.rs:120, tu/mnvibration.rs:131 -> port `melee_modes::tu/gmmain_lib.rs:177`
+- `GetRumbleSettingOfPort` [ext_fns!] x2: tu/mnnamenew.rs:122, tu/mnvibration.rs:132 -> port `melee_modes::tu/gmmain_lib.rs:783`
+- `gm_801601C4` [ext_fns!] x1: tu/mnsoundtest.rs:73 -> port `melee_modes::gm.rs:165`
+- `gm_80160244` [ext_fns!] x1: tu/mnsoundtest.rs:74 -> port `melee_modes::gm.rs:178`
+- `gm_801602C0` [ext_fns!] x1: tu/mnsound.rs:31 -> port `melee_modes::tu/gm_1601.rs:543`
+- `gm_801603B0` [ext_fns!/oext_fns!] x2: tu/mndatadel.rs:32, tu/mnsoundtest.rs:75 -> port `melee_modes::tu/gm_1601.rs:550`
+- `gm_80160438` [ext_fns!] x1: tu/gm_1798.rs:261 -> port `melee_modes::tu/gm_1601.rs:572`
+- `gm_80160474` [ext_fns!/oext_fns!] x2: tu/gm_1736.rs:51, tu/gmregtyfall.rs:25 -> port `melee_modes::tu/gm_1601.rs:597`
+- `gm_801604DC` [oext_fns!] x1: tu/gmregtyfall.rs:27 -> port `melee_modes::tu/gm_1601.rs:602`
+- `gm_80160564` [oext_fns!] x1: tu/gmregtyfall.rs:28 -> port `melee_modes::tu/gm_1601.rs:608`
+- `gm_80160854` [ext_fns!/oext_fns!] x3: tu/gm_1798.rs:262, tu/gmresult.rs:125, tu/gmresultplayer.rs:40 -> port `melee_modes::gm.rs:197`
+- `gm_80160968` [ext_fns!/oext_fns!] x2: tu/gm_1798.rs:263, tu/gmresult.rs:126 -> port `melee_modes::gm.rs:489`
+- `gm_80160980` [oext_fns!] x1: tu/mncharsel.rs:137 -> port `melee_modes::tu/gm_1601.rs:615`
+- `gm_80160B40` [oext_fns!] x2: tu/mncount.rs:72, tu/mndiagram2.rs:58 -> port `melee_modes::tu/gm_1601.rs:673`
+- `gm_80160C90` [oext_fns!] x1: tu/mndiagram.rs:38 -> port `melee_modes::tu/gm_1601.rs:720`
+- `gm_801623D8` [ext_fns!] x1: tu/gm_17c0.rs:173 -> port `melee_modes::tu/gm_1601.rs:1083`
+- `gm_801623FC` [ext_fns!] x1: tu/gm_17c0.rs:174 -> port `melee_modes::tu/gm_1601.rs:1087`
+- `gm_8016247C` [ext_fns!] x3: tu/gm_17c0.rs:175, tu/gmcameramode.rs:36, tu/gmevent.rs:74 -> port `melee_modes::tu/gm_1601.rs:1104`
+- `gm_80162968` [ext_fns!] x2: tu/gm_17c0.rs:176, tu/gmevent.rs:75 -> port `melee_modes::tu/gm_1601.rs:1231`
+- `gm_80162BD8` [oext_fns!] x1: tu/mncharsel.rs:138 -> port `melee_modes::tu/gm_1601.rs:1283`
+- `gm_80162C48` [oext_fns!] x1: tu/mncharsel.rs:139 -> port `melee_modes::tu/gm_1601.rs:1296`
+- `gm_80162D1C` [ext_fns!/oext_fns!] x2: tu/gm_16f1.rs:174, tu/mncharsel.rs:140 -> port `melee_modes::tu/gm_1601.rs:1316`
+- `gm_80162D6C` [oext_fns!] x1: tu/mncharsel.rs:141 -> port `melee_modes::tu/gm_1601.rs:1325`
+- `gm_80162DD4` [oext_fns!] x1: tu/mncharsel.rs:142 -> port `melee_modes::tu/gm_1601.rs:1335`
+- `gm_80162E44` [oext_fns!] x1: tu/mncharsel.rs:143 -> port `melee_modes::tu/gm_1601.rs:1348`
+- `gm_80162EC8` [ext_fns!/oext_fns!] x3: tu/gm_16f1.rs:175, tu/gm_1736.rs:52, tu/mnevent.rs:31 -> port `melee_modes::tu/gm_1601.rs:1358`
+- `gm_80162F18` [ext_fns!/oext_fns!] x2: tu/gm_16f1.rs:176, tu/mncharsel.rs:144 -> port `melee_modes::tu/gm_1601.rs:1367`
+- `gm_80162F68` [oext_fns!] x1: tu/mncharsel.rs:145 -> port `melee_modes::tu/gm_1601.rs:1376`
+- `gm_80162FD0` [oext_fns!] x1: tu/mncharsel.rs:146 -> port `melee_modes::tu/gm_1601.rs:1386`
+- `gm_80163040` [oext_fns!] x1: tu/mncharsel.rs:147 -> port `melee_modes::tu/gm_1601.rs:1399`
+- `gm_80163114` [ext_fns!/oext_fns!] x2: tu/gm_16f1.rs:177, tu/mncharsel.rs:148 -> port `melee_modes::tu/gm_1601.rs:1418`
+- `gm_80163164` [oext_fns!] x1: tu/mncharsel.rs:149 -> port `melee_modes::tu/gm_1601.rs:1427`
+- `gm_801631CC` [oext_fns!] x1: tu/mncharsel.rs:150 -> port `melee_modes::tu/gm_1601.rs:1437`
+- `gm_801631F0` [oext_fns!] x1: tu/mncharsel.rs:151 -> port `melee_modes::tu/gm_1601.rs:1441`
+- `gm_80163274` [oext_fns!] x1: tu/mncharsel.rs:152 -> port `melee_modes::tu/gm_1601.rs:1452`
+- `gm_8016332C` [oext_fns!] x1: tu/mncharsel.rs:153 -> port `melee_modes::tu/gm_1601.rs:1470`
+- `gm_80163374` [oext_fns!] x1: tu/mncharsel.rs:154 -> port `melee_modes::tu/gm_1601.rs:1494`
+- `gm_801634D4` [oext_fns!] x1: tu/mncharsel.rs:155 -> port `melee_modes::tu/gm_1601.rs:1546`
+- `gm_8016365C` [oext_fns!] x1: tu/mncharsel.rs:156 -> port `melee_modes::tu/gm_1601.rs:1550`
+- `gm_80163690` [oext_fns!] x1: tu/mncharsel.rs:157 -> port `melee_modes::tu/gm_1601.rs:1557`
+- `gm_801636D8` [oext_fns!] x1: tu/mncharsel.rs:158 -> port `melee_modes::tu/gm_1601.rs:1564`
+- `gm_80163838` [oext_fns!] x1: tu/mncharsel.rs:159 -> port `melee_modes::tu/gm_1601.rs:1571`
+- `gm_801639C0` [oext_fns!] x1: tu/mncharsel.rs:160 -> port `melee_modes::tu/gm_1601.rs:1575`
+- `gm_801639F4` [oext_fns!] x1: tu/mncharsel.rs:161 -> port `melee_modes::tu/gm_1601.rs:1582`
+- `gm_80163A3C` [oext_fns!] x1: tu/mncharsel.rs:162 -> port `melee_modes::tu/gm_1601.rs:1589`
+- `gm_80163B9C` [oext_fns!] x1: tu/mncharsel.rs:163 -> port `melee_modes::tu/gm_1601.rs:1596`
+- `gm_801641CC` [ext_fns!/oext_fns!] x3: tu/mncount.rs:73, tu/mndatadel.rs:33, tu/mnstagesw.rs:66 -> port `melee_modes::gm.rs:520`
+- `gm_801641E4` [ext_fns!/oext_fns!] x2: tu/mndatadel.rs:34, tu/mnstagesw.rs:67 -> port `melee_modes::tu/gm_1601.rs:1701`
+- `gm_80164330` [ext_fns!] x1: tu/mnstagesel.rs:188 -> port `melee_modes::tu/gm_1601.rs:1731`
+- `gm_80164430` [ext_fns!/oext_fns!] x8: tu/gm_16f1.rs:178, tu/gm_17c0.rs:177, tu/gmclassic.rs:60, tu/gmgover.rs:30, tu/mncount.rs:74, tu/mndatadel.rs:36, tu/mnstagesel.rs:189, tu/mnstagesw.rs:69 -> port `melee_modes::tu/gm_1601.rs:1749`
+- `gm_80164504` [ext_fns!] x3: tu/gm_17c0.rs:178, tu/gmevent.rs:76, tu/gmgover.rs:31 -> port `melee_modes::tu/gm_1601.rs:1763`
+- `gm_80164600` [ext_fns!] x1: tu/gm_16f1.rs:179 -> port `melee_modes::tu/gm_1601.rs:1775`
+- `gm_801647D0` [oext_fns!] x1: tu/mndatadel.rs:37 -> port `melee_modes::tu/gm_1601.rs:1796`
+- `gm_801647F8` [ext_fns!] x1: tu/gmclassic.rs:61 -> port `melee_modes::tu/gm_1601.rs:1803`
+- `gm_80164A0C` [ext_fns!] x1: tu/gmhanyucss.rs:30 -> port `melee_modes::tu/gm_1601.rs:1852`
+- `gm_80164ABC` [ext_fns!] x2: tu/gm_16f1.rs:180, tu/gm_1736.rs:53 -> port `melee_modes::tu/gm_1601.rs:1862`
+- `gm_80164F18` [ext_fns!] x1: tu/gmhanyucss.rs:31 -> port `melee_modes::tu/gm_1601.rs:1886`
+- `gm_8016505C` [oext_fns!] x1: tu/mndatadel.rs:38 -> port `melee_modes::tu/gm_1601.rs:1893`
+- `gm_80165268` [ext_fns!] x1: tu/gmcameramode.rs:37 -> port `melee_modes::tu/gm_1601.rs:1941`
+- `gm_80165290` [ext_fns!] x1: tu/gmfixedcamera.rs:41 -> port `melee_modes::tu/gm_1601.rs:1945`
+- `gm_80166378` [ext_fns!] x1: tu/gmevent.rs:77 -> port `melee_modes::tu/gm_1601.rs:2164`
+- `gm_80166A98` [ext_fns!] x1: tu/gmdebugmode.rs:30 -> port `melee_modes::tu/gm_1601.rs:2291`
+- `gm_801677E8` [hook!/oext_fns!] x2: tu/mnevent.rs:34, tu/mnhyaku.rs:484 -> port `melee_modes::tu/gm_1601.rs:2548`
+- `gm_801677F0` [ext_fns!] x2: tu/gmclassic.rs:62, tu/gmevent.rs:78 -> port `melee_modes::tu/gm_1601.rs:2552`
+- `gm_80167858` [ext_fns!] x2: tu/gm_17c0.rs:180, tu/gmevent.rs:79 -> port `melee_modes::tu/gm_1601.rs:2568`
+- `gm_80167BC8` [ext_fns!] x1: tu/gmcameramode.rs:38 -> port `melee_modes::tu/gm_1601.rs:2651`
+- `gm_80167FC4` [ext_fns!] x1: tu/gmcameramode.rs:39 -> port `melee_modes::tu/gm_1601.rs:2770`
+- `gm_801685D4` [oext_fns!] x1: tu/mncharsel.rs:164 -> port `melee_modes::tu/gm_1601.rs:2816`
+- `gm_80168638` [ext_fns!] x1: tu/gmcameramode.rs:40 -> port `melee_modes::tu/gm_1601.rs:2826`
+- `gm_80168710` [ext_fns!] x1: tu/gmcameramode.rs:41 -> port `melee_modes::tu/gm_1601.rs:2849`
+- `gm_801688AC` [ext_fns!] x1: tu/gmcameramode.rs:42 -> port `melee_modes::gm_r10.rs:26`
+- `gm_80168940` [ext_fns!] x1: tu/gmevent.rs:80 -> port `melee_modes::gm_ptr.rs:414`
+- `gm_8016895C` [oext_fns!] x2: tu/gmregenddisp.rs:59, tu/gmresult.rs:127 -> port `melee_modes::tu/gm_1601.rs:2880`
+- `gm_80168B34` [oext_fns!] x1: tu/gmresultplayer.rs:41 -> port `melee_modes::tu/gm_1601.rs:2942`
+- `gm_80168C5C` [oext_fns!] x1: tu/mncharsel.rs:165 -> port `melee_modes::tu/gm_1601.rs:3009`
+- `gm_80168F88` [ext_fns!] x3: tu/gmclassic.rs:63, tu/gmdebugmode.rs:31, tu/gmevent.rs:81 -> port `melee_modes::tu/gm_1601.rs:3092`
+- `gm_80169264` [oext_fns!] x1: tu/mncharsel.rs:166 -> port `melee_modes::tu/gm_1601.rs:3205`
+- `gm_80169290` [oext_fns!] x1: tu/mncharsel.rs:167 -> port `melee_modes::tu/gm_1601.rs:3209`
+- `gm_801692BC` [oext_fns!] x1: tu/mncharsel.rs:168 -> port `melee_modes::tu/gm_1601.rs:3213`
+- `gm_80169384` [ext_fns!] x1: tu/gmevent.rs:82 -> port `melee_modes::tu/gm_16A2.rs:103`
+- `gm_8016A164` [ext_fns!] x1: tu/gmevent.rs:83 -> port `melee_modes::tu/gm_16A2.rs:502`
+- `gm_8016A21C` [ext_fns!] x2: tu/gm_17c0.rs:181, tu/gmevent.rs:84 -> port `melee_modes::tu/gm_16A2.rs:526`
+- `gm_8016A22C` [ext_fns!] x2: tu/gm_17c0.rs:182, tu/gmevent.rs:85 -> port `melee_modes::tu/gm_16A2.rs:531`
+- `gm_8016A404` [ext_fns!] x1: tu/gmevent.rs:86 -> port `melee_modes::tu/gm_16A2.rs:622`
+- `gm_8016A414` [ext_fns!] x1: tu/gmevent.rs:87 -> port `melee_modes::tu/gm_16A2.rs:626`
+- `gm_8016A424` [ext_fns!] x1: tu/gmevent.rs:88 -> port `melee_modes::tu/gm_16A2.rs:630`
+- `gm_8016A434` [ext_fns!] x1: tu/gmevent.rs:89 -> port `melee_modes::tu/gm_16A2.rs:634`
+- `gm_8016A92C` [ext_fns!] x1: tu/gmevent.rs:90 -> port `melee_modes::tu/gm_16A2.rs:805`
+- `gm_8016A9E8` [ext_fns!] x1: tu/gmevent.rs:91 -> port `melee_modes::tu/gm_16A2.rs:839`
+- `gm_8016AC44` [ext_fns!] x1: tu/gmevent.rs:92 -> port `melee_modes::tu/gm_16A2.rs:865`
+- `gm_8016AE80` [hooks!] x1: tu/geno_tests.rs:113 -> port `melee_modes::tu/gmvs.rs:284`
+- `gm_8016AEEC` [ext_fns!] x1: tu/gmevent.rs:93 -> port `melee_modes::tu/gmvs.rs:308`
+- `gm_8016AEFC` [ext_fns!] x1: tu/gmevent.rs:94 -> port `melee_modes::tu/gmvs.rs:312`
+- `gm_8016B0D4` [oext_fns!] x1: tu/script_game.rs:238 -> port `melee_modes::tu/gmvs.rs:367`
+- `gm_8016B168` [oext_fns!] x1: tu/script_game.rs:237 -> port `melee_modes::tu/gmvs.rs:395`
+- `gm_8016B248` [oext_fns!] x1: tu/script_game.rs:249 -> port `melee_modes::tu/gmvs.rs:434`
+- `gm_8016B328` [ext_fns!] x2: tu/gm_17c0.rs:183, tu/gmevent.rs:95 -> port `melee_modes::tu/gmvs.rs:456`
+- `gm_8016B33C` [ext_fns!] x2: tu/gm_17c0.rs:184, tu/gmevent.rs:96 -> port `melee_modes::tu/gmvs.rs:460`
+- `gm_8016B350` [ext_fns!] x2: tu/gm_17c0.rs:185, tu/gmevent.rs:97 -> port `melee_modes::tu/gmvs.rs:464`
+- `gm_8016B364` [ext_fns!] x1: tu/gmevent.rs:98 -> port `melee_modes::tu/gmvs.rs:468`
+- `gm_8016B378` [ext_fns!] x1: tu/gmevent.rs:99 -> port `melee_modes::tu/gmvs.rs:472`
+- `gm_8016B3D8` [ext_fns!] x1: tu/gm_16f1.rs:181 -> port `melee_modes::tu/gmvs.rs:487`
+- `gm_8016B774` [ext_fns!/oext_fns!] x3: tu/gm_16f1.rs:182, tu/gmevent.rs:100, tu/gmregclear.rs:86 -> port `melee_modes::tu/gmvs.rs:594`
+- `gm_8016EDDC` [ext_fns!] x2: tu/gm_17c0.rs:186, tu/gmevent.rs:101 -> port `melee_modes::tu/gmvs.rs:2178`
+- `gm_8016F00C` [ext_fns!] x1: tu/gmevent.rs:102 -> port `melee_modes::tu/gmvs.rs:2220`
+- `gm_801701A0` [ext_fns!] x1: tu/gmdebugmode.rs:32 -> port `melee_modes::tu/gm_16f1.rs:544`
+- `gm_80172174` [ext_fns!] x1: tu/gmclassic.rs:64 -> port `melee_modes::tu/gm_16f1.rs:1097`
+- `gm_801721EC` [ext_fns!] x1: tu/gm_1736.rs:54 -> port `melee_modes::tu/gm_16f1.rs:1138`
+- `gm_80172898` [ext_fns!] x3: tu/gm_17c0.rs:187, tu/gmevent.rs:103, tu/gmgover.rs:32 -> port `melee_modes::tu/gm_16f1.rs:1339`
+- `gm_801729EC` [oext_fns!] x1: tu/mndatadel.rs:39 -> port `melee_modes::tu/gm_16f1.rs:1392`
+- `gm_80173224` [ext_fns!] x2: tu/gm_17c0.rs:188, tu/gmgover.rs:33 -> port `melee_modes::tu/gm_16f1.rs:1633`
+- `gm_801732D8` [ext_fns!] x1: tu/gmevent.rs:104 -> port `melee_modes::tu/gm_16f1.rs:1645`
+- `gm_8017335C` [ext_fns!] x1: tu/gmevent.rs:105 -> port `melee_modes::tu/gm_16f1.rs:1655`
+- `gm_80173754` [ext_fns!] x3: tu/gm_17c0.rs:189, tu/gmevent.rs:106, tu/gmgover.rs:34 -> port `melee_modes::tu/gm_1736.rs:100`
+- `gm_8017390C` [ext_fns!] x2: tu/gm_17c0.rs:190, tu/gmgover.rs:35 -> port `melee_modes::tu/gm_1736.rs:157`
+- `gm_80173D3C` [ext_fns!] x1: tu/gmevent.rs:107 -> port `melee_modes::tu/gm_1736.rs:290`
+- `gm_80173EEC` [ext_fns!] x3: tu/gm_17c0.rs:191, tu/gmevent.rs:108, tu/gmgover.rs:36 -> port `melee_modes::tu/gm_1736.rs:328`
+- `gm_80174238` [oext_fns!] x1: tu/mndatadel.rs:40 -> port `melee_modes::tu/gm_1736.rs:438`
+- `gm_80177724` [ext_fns!] x1: tu/gmdebugmode.rs:33 -> port `melee_modes::gm_r7.rs:71`
+- `gm_8017BE84` [ext_fns!] x1: tu/gmclassic.rs:65 -> port `melee_modes::gm.rs:76`
+- `gm_8017C984` [ext_fns!] x1: tu/gmclassic.rs:66 -> port `melee_modes::gm_r7.rs:77`
+- `gm_8017C9A8` [ext_fns!] x1: tu/gmclassic.rs:67 -> port `melee_modes::tu/gm_17c0.rs:676`
+- `gm_8017CA38` [ext_fns!] x1: tu/gmclassic.rs:68 -> port `melee_modes::tu/gm_17c0.rs:686`
+- `gm_8017CBAC` [ext_fns!] x1: tu/gmclassic.rs:69 -> port `melee_modes::tu/gm_17c0.rs:730`
+- `gm_8017CD94` [ext_fns!] x1: tu/gmclassic.rs:70 -> port `melee_modes::tu/gm_17c0.rs:789`
+- `gm_8017D7AC` [ext_fns!] x1: tu/gmclassic.rs:72 -> port `melee_modes::tu/gm_17c0.rs:1130`
+- `gm_8017DB58` [ext_fns!] x1: tu/gmclassic.rs:73 -> port `melee_modes::gm_ptr.rs:437`
+- `gm_8017DB6C` [ext_fns!] x1: tu/gmclassic.rs:74 -> port `melee_modes::gm_ptr.rs:444`
+- `gm_8017DB78` [ext_fns!] x1: tu/gmclassic.rs:75 -> port `melee_modes::gm_ptr.rs:449`
+- `gm_8017EB3C` [ext_fns!] x1: tu/gmclassic.rs:77 -> port `melee_modes::tu/gm_17eb.rs:54`
+- `gm_8017EB64` [ext_fns!] x1: tu/gmclassic.rs:78 -> port `melee_modes::tu/gm_17eb.rs:58`
+- `gm_8017EB98` [ext_fns!] x1: tu/gmclassic.rs:79 -> port `melee_modes::tu/gm_17eb.rs:62`
+- `gm_8017EBCC` [ext_fns!] x1: tu/gmclassic.rs:80 -> port `melee_modes::tu/gm_17eb.rs:66`
+- `gm_8017EC00` [ext_fns!] x1: tu/gmclassic.rs:81 -> port `melee_modes::tu/gm_17eb.rs:70`
+- `gm_8017EC50` [ext_fns!] x1: tu/gmclassic.rs:82 -> port `melee_modes::tu/gm_17eb.rs:74`
+- `gm_8017ECA0` [ext_fns!] x1: tu/gmclassic.rs:83 -> port `melee_modes::tu/gm_17eb.rs:78`
+- `gm_8017ECD4` [ext_fns!] x1: tu/gmclassic.rs:84 -> port `melee_modes::tu/gm_17eb.rs:82`
+- `gm_8017ED08` [ext_fns!] x1: tu/gmclassic.rs:85 -> port `melee_modes::tu/gm_17eb.rs:86`
+- `gm_8017ED3C` [ext_fns!] x1: tu/gmclassic.rs:86 -> port `melee_modes::tu/gm_17eb.rs:90`
+- `gm_8017ED8C` [ext_fns!] x1: tu/gmclassic.rs:87 -> port `melee_modes::tu/gm_17eb.rs:94`
+- `gm_80190EA4` [ext_fns!] x1: tu/mn_22EC.rs:39 -> port `melee_modes::tu/gmtou_0.rs:296`
+- `gm_80190FE4` [ext_fns!] x1: tu/mnnamenew.rs:123 -> port `melee_modes::tu/gmtou_0.rs:334`
+- `gm_801A36C0` [ext_fns!/oext_fns!] x2: tu/gmregclear.rs:87, tu/mnvibration.rs:130 -> port `melee_modes::tu/gm_1A36.rs:134`
+- `gm_801A3EF4` [oext_fns!] x1: tu/mndatadel.rs:41 -> port `melee_modes::tu/gm_1A36.rs:290`
+- `gm_801A4B60` [ext_fns!/oext_fns!] x8: tu/gmdebugmode.rs:34, tu/gmfrontend.rs:421, tu/gmregenddisp.rs:60, tu/gmregtyfall.rs:29, tu/gmresultplayer.rs:53, tu/mncharsel.rs:169, tu/mnstagesel.rs:191, tu/script_game.rs:119 -> port `melee_modes::tu/gmscene.rs:348`
+- `gm_801A4BA8` [oext_fns!] x1: tu/gmregenddisp.rs:61 -> port `melee_modes::tu/gmscene.rs:372`
+- `gm_801A659C` [oext_fns!] x1: tu/gmregenddisp.rs:62 -> port `melee_modes::tu/gmregtyfall.rs:191`
+- `gm_801A7B00` [oext_fns!] x1: tu/gmregtyfall.rs:30 -> port `melee_modes::tu/gm_1A7A.rs:334`
+- `gm_801ACC94` [oext_fns!] x1: tu/mngallery.rs:69 -> port `melee_modes::tu/gmhowto.rs:27`
+- `gm_801B05F4` [ext_fns!] x1: tu/gmevent.rs:109 -> port `melee_modes::gm_ptr.rs:508`
+- `gm_801B06B0` [ext_fns!/hook!] x3: tu/gmclassic.rs:88, tu/gmevent.rs:110, tu/gmhomerun.rs:218 -> port `melee_modes::tu/gm_1B03.rs:204`
+- `gm_801B0730` [ext_fns!/hook!] x3: tu/gmclassic.rs:89, tu/gmevent.rs:111, tu/gmmultiman.rs:119 -> port `melee_modes::gm_ptr.rs:519`
+- `gm_801BEB74` [oext_fns!] x1: tu/mnevent.rs:35 -> port `melee_modes::tu/gmevent.rs:2214`
+- `gm_801BEB8C` [oext_fns!] x1: tu/mnevent.rs:36 -> port `melee_modes::tu/gmevent.rs:2224`
+- `gm_801BEBA8` [oext_fns!] x1: tu/mnevent.rs:37 -> port `melee_modes::tu/gmevent.rs:2229`
+- `gm_801BEBC0` [ext_fns!/oext_fns!] x3: tu/gm_16f1.rs:183, tu/gm_1736.rs:55, tu/mnevent.rs:38 -> port `melee_modes::tu/gmevent.rs:2234`
+- `gm_801BEBF8` [oext_fns!] x1: tu/mnevent.rs:39 -> port `melee_modes::tu/gmevent.rs:2247`
+- `gm_801BEFB0` [oext_fns!] x2: tu/gmregenddisp.rs:64, tu/gmregtyfall.rs:31 -> port `melee_modes::tu/gmgover.rs:111`
+- `gm_801BEFD0` [oext_fns!] x1: tu/gmregtyfall.rs:32 -> port `melee_modes::tu/gmgover.rs:121`
+- `gm_801BF010` [oext_fns!] x1: tu/gmregtyfall.rs:33 -> port `melee_modes::tu/gmgover.rs:141`
+- `gm_801BF050` [oext_fns!] x1: tu/gmregtyfall.rs:34 -> port `melee_modes::tu/gmgover.rs:161`
+- `gm_CameraModeVSGetPauser` [ext_fns!] x1: tu/gmcameramode.rs:43 -> port `melee_modes::tu/gmvs.rs:750`
+- `gm_ChangeGameModeAfterCurrentScene` [ext_fns!/oext_fns!] x9: tu/gm_17c0.rs:193, tu/gmcameramode.rs:44, tu/gmclassic.rs:91, tu/gmdebugmode.rs:35, tu/gmevent.rs:112, tu/gmfrontend.rs:422, tu/gmprogressivemode.rs:16, tu/mncharsel.rs:170, tu/mnstagesel.rs:190 -> port `melee_modes::tu/gm_1A3F.rs:566`
+- `gm_CKindToSelKind` [ext_fns!/oext_fns!] x4: tu/gm_1736.rs:56, tu/gm_17c0.rs:192, tu/gmclassic.rs:90, tu/mnevent.rs:32 -> port `melee_modes::gm.rs:500`
+- `gm_CKindToUnlockIndex` [ext_fns!] x1: tu/gm_16f1.rs:184 -> port `melee_modes::gm.rs:428`
+- `gm_ClearDbPauseFlag` [ext_fns!] x2: tu/gm_17c0.rs:194, tu/gmevent.rs:113 -> port `melee_modes::tu/gmscene.rs:236`
+- `gm_Get15MinMultimanHighscore` [oext_fns!] x1: tu/mncharsel.rs:171 -> port `melee_modes::tu/gm_1601.rs:1631`
+- `gm_Get15MinMultimanTotalHighscore` [oext_fns!] x1: tu/mncharsel.rs:172 -> port `melee_modes::tu/gm_1601.rs:1635`
+- `gm_Get3MinMultimanHighscore` [oext_fns!] x1: tu/mncharsel.rs:173 -> port `melee_modes::tu/gm_1601.rs:1618`
+- `gm_Get3MinMultimanTotalHighscore` [oext_fns!] x1: tu/mncharsel.rs:174 -> port `melee_modes::tu/gm_1601.rs:1623`
+- `gm_GetAdventureData` [ext_fns!] x3: tu/gm_16f1.rs:185, tu/gm_1736.rs:57, tu/gm_17c0.rs:195 -> port `melee_modes::tu/gm_17e4.rs:52`
+- `gm_GetAllGameModes` [hooks!] x1: tu/geno_tests.rs:111 -> port `melee_modes::tu/gmscdata.rs:324`
+- `gm_GetAllStarData` [ext_fns!] x2: tu/gm_17c0.rs:196, tu/gmclassic.rs:92 -> port `melee_modes::tu/gm_17eb.rs:50`
+- `gm_GetButtonsTriggered` [ext_fns!/oext_fns!] x4: tu/gmregclear.rs:88, tu/gmregtyfall.rs:35, tu/mn_22EC.rs:40, tu/mnvibration.rs:129 -> port `melee_modes::tu/gm_1A36.rs:129`
+- `gm_GetCKindByUnlockIndex` [ext_fns!] x1: tu/gm_16f1.rs:186 -> port `melee_modes::gm.rs:444`
+- `gm_GetCruelHighscore` [oext_fns!] x1: tu/mncharsel.rs:175 -> port `melee_modes::tu/gm_1601.rs:1655`
+- `gm_GetCruelTotalHighscore` [oext_fns!] x1: tu/mncharsel.rs:176 -> port `melee_modes::tu/gm_1601.rs:1659`
+- `gm_GetCurrentGameMode` [ext_fns!/oext_fns!] x12: tu/gm_1736.rs:58, tu/gm_17c0.rs:197, tu/gm_17e4.rs:40, tu/gm_17eb.rs:38, tu/gmevent.rs:114, tu/gmregenddisp.rs:65, tu/gmregtyfall.rs:36, tu/mn_22EC.rs:41, tu/mnnamenew.rs:119, tu/mnruleplus.rs:92, tu/mnstagesw.rs:70, tu/script_game.rs:118 -> port `melee_modes::tu/gm_1A3F.rs:574`
+- `gm_GetCurrentSceneEnterData` [oext_fns!] x2: tu/gmregenddisp.rs:66, tu/gmregtyfall.rs:37 -> port `melee_modes::tu/gmscene.rs:363`
+- `gm_GetCurrentSceneExitData` [oext_fns!] x1: tu/gmregtyfall.rs:38 -> port `melee_modes::tu/gmscene.rs:368`
+- `gm_GetCurrentSceneIndex` [ext_fns!/oext_fns!] x3: tu/gm_17c0.rs:198, tu/gm_17e4.rs:41, tu/script_game.rs:117 -> port `melee_modes::tu/gm_1A3F.rs:547`
+- `gm_GetEndlessHighscore` [oext_fns!] x1: tu/mncharsel.rs:177 -> port `melee_modes::tu/gm_1601.rs:1643`
+- `gm_GetEndlessTotalHighscore` [oext_fns!] x1: tu/mncharsel.rs:178 -> port `melee_modes::tu/gm_1601.rs:1647`
+- `gm_GetFrameCount` [ext_fns!] x3: tu/gm_17e4.rs:42, tu/gm_17eb.rs:39, tu/gmevent.rs:115 -> port `melee_modes::tu/gmvs.rs:304`
+- `gm_GetGameModeStateEnterData` [ext_fns!/oext_fns!] x7: tu/gmcameramode.rs:45, tu/gmclassic.rs:93, tu/gmdebugmode.rs:36, tu/gmevent.rs:116, tu/gmfrontend.rs:423, tu/gmhanyucss.rs:32, tu/gmprogressivemode.rs:12 -> port `melee_modes::tu/gm_1A3F.rs:517`
+- `gm_GetGameModeStateExitData` [ext_fns!/oext_fns!] x5: tu/gmcameramode.rs:46, tu/gmclassic.rs:94, tu/gmdebugmode.rs:37, tu/gmevent.rs:117, tu/gmprogressivemode.rs:14 -> port `melee_modes::tu/gm_1A3F.rs:522`
+- `gm_GetNumCostumesForCKind` [ext_fns!/oext_fns!] x3: tu/gm_17c0.rs:199, tu/gmregcommon.rs:11, tu/mncharsel.rs:179 -> port `melee_modes::tu/gm_1601.rs:3151`
+- `gm_GetPlayTime` [oext_fns!] x1: tu/mncount.rs:75 -> port `melee_modes::tu/gm_1601.rs:1243`
+- `gm_GetPowerTime` [oext_fns!] x1: tu/mncount.rs:76 -> port `melee_modes::tu/gmmain_lib.rs:241`
+- `gm_GetPreviousGameMode` [ext_fns!] x1: tu/gm_1736.rs:59 -> port `melee_modes::tu/gm_1A3F.rs:579`
+- `gm_GetStartMeleeRules` [ext_fns!/hooks!/oext_fns!] x5: tu/geno_tests.rs:112, tu/gm_16f1.rs:187, tu/gm_17e4.rs:43, tu/gm_17eb.rs:40, tu/gmregclear.rs:89 -> port `melee_modes::tu/gmvs.rs:275`
+- `gm_GetVsPlayMatchTotal` [ext_fns!/oext_fns!] x3: tu/gm_16f1.rs:188, tu/gm_1736.rs:60, tu/mncount.rs:77 -> port `melee_modes::tu/gm_1601.rs:1199`
+- `gm_InitChallengerData` [ext_fns!] x3: tu/gm_17c0.rs:200, tu/gmevent.rs:118, tu/gmgover.rs:37 -> port `melee_modes::tu/gm_1736.rs:82`
+- `gm_InitVsMode` [ext_fns!] x3: tu/gmcameramode.rs:47, tu/gmfixedcamera.rs:42, tu/gmgiant.rs:42 -> port `melee_modes::tu/gm_1601.rs:2643`
+- `gm_IsCKindUnlocked` [ext_fns!/oext_fns!] x7: tu/gm_16f1.rs:189, tu/gm_17c0.rs:201, tu/gmclassic.rs:95, tu/mncharsel.rs:180, tu/mncount.rs:78, tu/mndiagram.rs:40, tu/mnevent.rs:33 -> port `melee_modes::tu/gm_1601.rs:1820`
+- `gm_IsCurrently1PMode_inline` [ext_fns!] x1: tu/gm_16f1.rs:190 -> port `melee_modes::tu/gmvs.rs:494`
+- `gm_IsStageUnlocked` [ext_fns!/oext_fns!] x2: tu/mndatadel.rs:35, tu/mnstagesw.rs:68 -> port `melee_modes::tu/gm_1601.rs:1709`
+- `gm_LoadAnnouncer` [ext_fns!] x2: tu/gmcameramode.rs:48, tu/gmdebugmode.rs:38 -> port `melee_modes::tu/gm_1601.rs:3100`
+- `gm_LoadRumbleEnabled` [ext_fns!] x3: tu/gmcameramode.rs:49, tu/gmclassic.rs:96, tu/gmevent.rs:119 -> port `melee_modes::tu/gmvs.rs:2240`
+- `gm_MexStockFrame` [oext_fns!] x2: tu/gmresultplayer.rs:106, tu/mncharsel.rs:181 -> port `melee_modes::tu/gm_1601.rs:2920`
+- `gm_MexStockMatAnim` [oext_fns!] x2: tu/gmresultplayer.rs:105, tu/mncharsel.rs:182 -> port `melee_modes::tu/gm_1601.rs:2910`
+- `gm_MexVanillaKind` [ext_fns!] x1: tu/gm_1798.rs:264 -> port `melee_modes::tu/gm_1601.rs:468`
+- `gm_Mode_Lab_OnLoad` [hooks!] x1: tu/geno_tests.rs:122 -> port `melee_modes::tu/geno_lab_mode.rs:159`
+- `gm_ModeState_Approach_OnEnter` [ext_fns!] x2: tu/gmfixedcamera.rs:45, tu/gmgiant.rs:45 -> port `melee_modes::tu/gmvsmode.rs:61`
+- `gm_ModeState_ApproachVs_OnEnter` [ext_fns!] x2: tu/gmfixedcamera.rs:43, tu/gmgiant.rs:43 -> port `melee_modes::tu/gmvsmode.rs:64`
+- `gm_ModeState_ApproachVs_OnExit` [ext_fns!] x2: tu/gmfixedcamera.rs:44, tu/gmgiant.rs:44 -> port `melee_modes::tu/gmmovieend.rs:272`
+- `gm_ModeState_Prize_OnEnter` [ext_fns!] x2: tu/gmfixedcamera.rs:46, tu/gmgiant.rs:46 -> port `melee_modes::tu/gmvsmode.rs:70`
+- `gm_ModeState_Prize_OnExit` [ext_fns!] x2: tu/gmfixedcamera.rs:47, tu/gmgiant.rs:47 -> port `melee_modes::tu/gmmovieend.rs:294`
+- `gm_RumbleEnabledForPlayer` [ext_fns!/oext_fns!] x3: tu/gm_17e4.rs:44, tu/gmevent.rs:120, tu/mncharsel.rs:183 -> port `melee_modes::tu/gm_1601.rs:2556`
+- `gm_SelKindToCKind` [ext_fns!/oext_fns!] x4: tu/gm_1736.rs:61, tu/mncount.rs:79, tu/mndiagram.rs:39, tu/mndiagram2.rs:59 -> port `melee_modes::gm.rs:494`
+- `gm_SelKindToUnlockIndex` [ext_fns!] x1: tu/gm_16f1.rs:191 -> port `melee_modes::gm.rs:418`
+- `gm_SetDbPauseFlag` [ext_fns!/oext_fns!] x3: tu/gm_17c0.rs:202, tu/gmevent.rs:121, tu/gmresultplayer.rs:52 -> port `melee_modes::tu/gmscene.rs:232`
+- `gm_SetGameModeOverride` [hook!] x1: tu/gmboot.rs:121 -> port `melee_modes::tu/gm_1A3F.rs:584`
+- `gm_SetGameModeStateId` [ext_fns!] x3: tu/gm_1736.rs:62, tu/gmclassic.rs:97, tu/gmevent.rs:122 -> port `melee_modes::tu/gm_1A3F.rs:527`
+- `gm_SetGameSpeed` [ext_fns!] x2: tu/gm_17c0.rs:203, tu/gmevent.rs:123 -> port `melee_modes::tu/gmvs.rs:448`
+- `gm_SetNewGameModePending` [ext_fns!] x4: tu/gm_1736.rs:63, tu/gm_17c0.rs:204, tu/gmclassic.rs:98, tu/gmgover.rs:38 -> port `melee_modes::tu/gm_1A3F.rs:552`
+- `gm_SetNextGameModeStateId` [ext_fns!] x6: tu/gm_17c0.rs:205, tu/gm_17e4.rs:45, tu/gmcameramode.rs:50, tu/gmclassic.rs:99, tu/gmdebugmode.rs:39, tu/gmevent.rs:124 -> port `melee_modes::tu/gm_1A3F.rs:535`
+- `gm_SetPendingGameMode` [ext_fns!] x4: tu/gm_1736.rs:64, tu/gm_17c0.rs:206, tu/gmclassic.rs:100, tu/gmgover.rs:39 -> port `melee_modes::tu/gm_1A3F.rs:559`
+- `gm_SetupHumanPlayer` [ext_fns!] x1: tu/gm_17c0.rs:207 -> port `melee_modes::gm_r4.rs:36`
+- `gm_SetupPlayerDefaults` [ext_fns!] x2: tu/gm_17c0.rs:208, tu/gmevent.rs:125 -> port `melee_modes::tu/gm_1601.rs:2578`
+- `gm_SetupRulesDefaults` [ext_fns!] x1: tu/gmevent.rs:126 -> port `melee_modes::tu/gm_1601.rs:2610`
+- `gm_SetupSubColors` [ext_fns!] x1: tu/gmcameramode.rs:51 -> port `melee_modes::tu/gm_1B03.rs:112`
+- `gm_WasMatchCanceled` [oext_fns!] x1: tu/gmresultplayer.rs:59 -> port `melee_modes::gm.rs:81`
+- `gmCamera_801A3098` [ext_fns!] x1: tu/gmcameramode.rs:30 -> port `melee_modes::tu/gmcamera.rs:824`
+- `gmCamera_801A30E4` [ext_fns!] x1: tu/gmcameramode.rs:31 -> port `melee_modes::tu/gmcamera.rs:831`
+- `gmCamera_801A31FC` [ext_fns!] x1: tu/gmcameramode.rs:32 -> port `melee_modes::tu/gmcamera.rs:877`
+- `gmFrontend_AtlasSelect` [ext_fns!] x5: tu/gmcameramode.rs:33, tu/gmclassic.rs:50, tu/gmevent.rs:67, tu/gmfixedcamera.rs:29, tu/gmgiant.rs:30 -> port `melee_modes::tu/gmfrontend.rs:1090`
+- `gmFrontend_ModeSelect` [hooks!] x1: tu/geno_tests.rs:110 -> port `melee_modes::tu/gmfrontend.rs:1080`
+- `gmMainLib_8015CCE4` [ext_fns!] x1: tu/gm_16f1.rs:137 -> port `melee_modes::tu/gmmain_lib.rs:181`
+- `gmMainLib_8015CDC8` [ext_fns!] x2: tu/gm_17eb.rs:37, tu/gmclassic.rs:51 -> port `melee_modes::tu/gmmain_lib.rs:257`
+- `gmMainLib_8015CDD4` [ext_fns!] x1: tu/gm_17e4.rs:38 -> port `melee_modes::tu/gmmain_lib.rs:261`
+- `gmMainLib_8015CEB4` [ext_fns!] x1: tu/gmevent.rs:68 -> port `melee_modes::tu/gmmain_lib.rs:291`
+- `gmMainLib_8015CEFC` [ext_fns!/oext_fns!] x2: tu/gm_16f1.rs:138, tu/mnevent.rs:40 -> port `melee_modes::tu/gmmain_lib.rs:296`
+- `gmMainLib_8015CF5C` [ext_fns!/oext_fns!] x2: tu/gmevent.rs:69, tu/mnevent.rs:41 -> port `melee_modes::tu/gmmain_lib.rs:300`
+- `gmMainLib_8015CF70` [ext_fns!] x1: tu/gmevent.rs:70 -> port `melee_modes::tu/gmmain_lib.rs:304`
+- `gmMainLib_8015CF84` [ext_fns!] x1: tu/gmevent.rs:71 -> port `melee_modes::tu/gmmain_lib.rs:308`
+- `gmMainLib_8015CF94` [ext_fns!] x1: tu/gm_16f1.rs:139 -> port `melee_modes::tu/gmmain_lib.rs:312`
+- `gmMainLib_8015CFCC` [ext_fns!] x1: tu/gm_16f1.rs:140 -> port `melee_modes::tu/gmmain_lib.rs:320`
+- `gmMainLib_8015D084` [ext_fns!] x1: tu/gm_1736.rs:42 -> port `melee_modes::tu/gmmain_lib.rs:339`
+- `gmMainLib_8015D0D8` [oext_fns!] x1: tu/mncharsel.rs:128 -> port `melee_modes::tu/gmmain_lib.rs:347`
+- `gmMainLib_8015D0F4` [ext_fns!] x1: tu/gm_16f1.rs:141 -> port `melee_modes::tu/gmmain_lib.rs:351`
+- `gmMainLib_8015D134` [ext_fns!] x1: tu/gm_17c0.rs:158 -> port `melee_modes::tu/gmmain_lib.rs:355`
+- `gmMainLib_8015D194` [ext_fns!/oext_fns!] x3: tu/gm_16f1.rs:142, tu/gm_17c0.rs:159, tu/mncharsel.rs:129 -> port `melee_modes::tu/gmmain_lib.rs:360`
+- `gmMainLib_8015D1AC` [ext_fns!] x2: tu/gm_16f1.rs:143, tu/gm_17c0.rs:160 -> port `melee_modes::tu/gmmain_lib.rs:364`
+- `gmMainLib_8015D1C8` [ext_fns!] x1: tu/gm_17c0.rs:161 -> port `melee_modes::tu/gmmain_lib.rs:368`
+- `gmMainLib_8015D200` [oext_fns!] x1: tu/mncharsel.rs:130 -> port `melee_modes::tu/gmmain_lib.rs:376`
+- `gmMainLib_8015D21C` [ext_fns!] x1: tu/gm_16f1.rs:144 -> port `melee_modes::tu/gmmain_lib.rs:380`
+- `gmMainLib_8015D25C` [ext_fns!] x1: tu/gm_17c0.rs:162 -> port `melee_modes::tu/gmmain_lib.rs:384`
+- `gmMainLib_8015D2BC` [ext_fns!/oext_fns!] x3: tu/gm_16f1.rs:145, tu/gm_17c0.rs:163, tu/mncharsel.rs:131 -> port `melee_modes::tu/gmmain_lib.rs:389`
+- `gmMainLib_8015D2D4` [ext_fns!] x2: tu/gm_16f1.rs:146, tu/gm_17c0.rs:164 -> port `melee_modes::tu/gmmain_lib.rs:393`
+- `gmMainLib_8015D2F0` [ext_fns!] x1: tu/gm_17c0.rs:165 -> port `melee_modes::tu/gmmain_lib.rs:397`
+- `gmMainLib_8015D328` [oext_fns!] x1: tu/mncharsel.rs:132 -> port `melee_modes::tu/gmmain_lib.rs:405`
+- `gmMainLib_8015D344` [ext_fns!] x1: tu/gm_16f1.rs:147 -> port `melee_modes::tu/gmmain_lib.rs:409`
+- `gmMainLib_8015D384` [ext_fns!] x1: tu/gm_17c0.rs:166 -> port `melee_modes::tu/gmmain_lib.rs:413`
+- `gmMainLib_8015D3E4` [ext_fns!/oext_fns!] x3: tu/gm_16f1.rs:148, tu/gm_17c0.rs:167, tu/mncharsel.rs:133 -> port `melee_modes::tu/gmmain_lib.rs:418`
+- `gmMainLib_8015D3FC` [ext_fns!] x1: tu/gm_17c0.rs:168 -> port `melee_modes::tu/gmmain_lib.rs:422`
+- `gmMainLib_8015D418` [ext_fns!] x1: tu/gm_17c0.rs:169 -> port `melee_modes::tu/gmmain_lib.rs:426`
+- `gmMainLib_8015D438` [ext_fns!] x1: tu/gmclassic.rs:52 -> port `melee_modes::tu/gmmain_lib.rs:430`
+- `gmMainLib_8015D450` [ext_fns!] x2: tu/gm_1736.rs:43, tu/gmclassic.rs:53 -> port `melee_modes::tu/gmmain_lib.rs:434`
+- `gmMainLib_8015D48C` [ext_fns!] x1: tu/gmclassic.rs:54 -> port `melee_modes::tu/gmmain_lib.rs:438`
+- `gmMainLib_8015D4A8` [ext_fns!] x1: tu/gm_16f1.rs:149 -> port `melee_modes::tu/gmmain_lib.rs:442`
+- `gmMainLib_8015D4E8` [ext_fns!] x1: tu/gmclassic.rs:55 -> port `melee_modes::tu/gmmain_lib.rs:446`
+- `gmMainLib_8015D508` [ext_fns!] x1: tu/gm_16f1.rs:150 -> port `melee_modes::tu/gmmain_lib.rs:450`
+- `gmMainLib_8015D5DC` [ext_fns!] x1: tu/gm_16f1.rs:151 -> port `melee_modes::tu/gmmain_lib.rs:459`
+- `gmMainLib_8015D640` [ext_fns!] x1: tu/gm_1736.rs:44 -> port `melee_modes::tu/gmmain_lib.rs:468`
+- `gmMainLib_8015D804` [ext_fns!] x1: tu/gm_16f1.rs:152 -> port `melee_modes::tu/gmmain_lib.rs:529`
+- `gmMainLib_8015D818` [ext_fns!] x1: tu/gm_16f1.rs:153 -> port `melee_modes::tu/gmmain_lib.rs:533`
+- `gmMainLib_8015D8B0` [ext_fns!] x1: tu/gm_16f1.rs:154 -> port `melee_modes::tu/gmmain_lib.rs:547`
+- `gmMainLib_8015D8D8` [ext_fns!] x1: tu/gm_16f1.rs:155 -> port `melee_modes::tu/gmmain_lib.rs:551`
+- `gmMainLib_8015D8FC` [ext_fns!] x1: tu/gm_16f1.rs:156 -> port `melee_modes::tu/gmmain_lib.rs:555`
+- `gmMainLib_8015D924` [ext_fns!] x1: tu/gm_16f1.rs:157 -> port `melee_modes::tu/gmmain_lib.rs:559`
+- `gmMainLib_8015D94C` [ext_fns!] x2: tu/gm_16f1.rs:158, tu/gm_1736.rs:45 -> port `melee_modes::tu/gmmain_lib.rs:563`
+- `gmMainLib_8015D984` [ext_fns!] x1: tu/gm_16f1.rs:159 -> port `melee_modes::tu/gmmain_lib.rs:574`
+- `gmMainLib_8015DA1C` [ext_fns!] x1: tu/gm_16f1.rs:160 -> port `melee_modes::tu/gmmain_lib.rs:591`
+- `gmMainLib_8015DA40` [ext_fns!] x1: tu/gm_1736.rs:46 -> port `melee_modes::tu/gmmain_lib.rs:595`
+- `gmMainLib_8015DA68` [ext_fns!] x2: tu/gm_16f1.rs:161, tu/gm_1736.rs:47 -> port `melee_modes::tu/gmmain_lib.rs:599`
+- `gmMainLib_8015DADC` [ext_fns!] x1: tu/gm_1736.rs:48 -> port `melee_modes::tu/gmmain_lib.rs:611`
+- `gmMainLib_8015DB6C` [ext_fns!] x1: tu/gm_16f1.rs:162 -> port `melee_modes::tu/gmmain_lib.rs:632`
+- `gmMainLib_8015DB80` [oext_fns!] x1: tu/mndatadel.rs:42 -> port `melee_modes::tu/gmmain_lib.rs:636`
+- `gmMainLib_8015ECB0` [ext_fns!/oext_fns!] x5: tu/mncharsel.rs:134, tu/mngallery.rs:68, tu/mnnamenew.rs:121, tu/mnsoundtest.rs:76, tu/mnstagesel.rs:192 -> port `melee_modes::tu/gmmain_lib.rs:738`
+- `gmMainLib_8015ED68` [ext_fns!] x1: tu/mnsoundtest.rs:77 -> port `melee_modes::tu/gmmain_lib.rs:795`
+- `gmMainLib_8015ED74` [ext_fns!] x2: tu/mnsound.rs:33, tu/mnsoundtest.rs:78 -> port `melee_modes::tu/gmmain_lib.rs:799`
+- `gmMainLib_8015ED80` [ext_fns!] x1: tu/mnsound.rs:34 -> port `melee_modes::tu/gmmain_lib.rs:803`
+- `gmMainLib_8015ED98` [ext_fns!] x2: tu/gm_16f1.rs:165, tu/gmclassic.rs:56 -> port `melee_modes::tu/gmmain_lib.rs:820`
+- `gmMainLib_8015EDA4` [ext_fns!] x1: tu/gm_16f1.rs:163 -> port `melee_modes::tu/gmmain_lib.rs:824`
+- `gmMainLib_8015EDB0` [ext_fns!] x1: tu/gmclassic.rs:57 -> port `melee_modes::tu/gmmain_lib.rs:832`
+- `gmMainLib_8015EDBC` [ext_fns!] x2: tu/gm_1736.rs:49, tu/gmclassic.rs:58 -> port `melee_modes::tu/gmmain_lib.rs:836`
+- `gmMainLib_8015EDC8` [ext_fns!] x1: tu/gm_16f1.rs:164 -> port `melee_modes::tu/gmmain_lib.rs:840`
+- `gmMainLib_8015EDE4` [ext_fns!] x1: tu/gm_16f1.rs:166 -> port `melee_modes::tu/gmmain_lib.rs:851`
+- `gmMainLib_8015EDF8` [ext_fns!] x1: tu/gm_16f1.rs:167 -> port `melee_modes::tu/gmmain_lib.rs:855`
+- `gmMainLib_8015EE0C` [ext_fns!] x1: tu/mnruleplus.rs:94 -> port `melee_modes::tu/gmmain_lib.rs:859`
+- `gmMainLib_8015EE1C` [ext_fns!] x1: tu/gm_16f1.rs:168 -> port `melee_modes::tu/gmmain_lib.rs:866`
+- `gmMainLib_8015EE30` [ext_fns!] x1: tu/gm_16f1.rs:169 -> port `melee_modes::tu/gmmain_lib.rs:870`
+- `gmMainLib_8015EE44` [ext_fns!] x1: tu/mnruleplus.rs:95 -> port `melee_modes::tu/gmmain_lib.rs:874`
+- `gmMainLib_8015EE54` [ext_fns!] x1: tu/gm_16f1.rs:170 -> port `melee_modes::tu/gmmain_lib.rs:881`
+- `gmMainLib_8015EE68` [ext_fns!] x1: tu/gm_16f1.rs:171 -> port `melee_modes::tu/gmmain_lib.rs:885`
+- `gmMainLib_8015EE90` [ext_fns!] x1: tu/gm_1736.rs:50 -> port `melee_modes::tu/gmmain_lib.rs:890`
+- `gmMainLib_8015EEA0` [ext_fns!] x1: tu/gm_16f1.rs:172 -> port `melee_modes::tu/gmmain_lib.rs:897`
+- `gmMainLib_8015EEB4` [ext_fns!] x1: tu/gm_16f1.rs:173 -> port `melee_modes::tu/gmmain_lib.rs:901`
+- `gmMainLib_8015EEC8` [oext_fns!] x1: tu/mndatadel.rs:43 -> port `melee_modes::tu/gmmain_lib.rs:905`
+- `gmMainLib_8015F150` [oext_fns!] x1: tu/mndatadel.rs:44 -> port `melee_modes::tu/gmmain_lib.rs:977`
+- `gmMainLib_8015F260` [oext_fns!] x1: tu/mndatadel.rs:45 -> port `melee_modes::tu/gmmain_lib.rs:983`
+- `gmMainLib_8015F464` [oext_fns!] x1: tu/mndatadel.rs:46 -> port `melee_modes::tu/gmmain_lib.rs:989`
+- `gmMainLib_8015F490` [oext_fns!] x1: tu/mndatadel.rs:47 -> port `melee_modes::tu/gmmain_lib.rs:993`
+- `gmMainLib_8015F4BC` [oext_fns!] x1: tu/mndatadel.rs:48 -> port `melee_modes::tu/gmmain_lib.rs:997`
+- `gmMainLib_8015F4E8` [oext_fns!] x2: tu/mndatadel.rs:49, tu/mndeflicker.rs:45 -> port `melee_modes::tu/gmmain_lib.rs:1001`
+- `gmMainLib_8015F4F4` [oext_fns!] x1: tu/mndeflicker.rs:46 -> port `melee_modes::tu/gmmain_lib.rs:1005`
+- `gmMainLib_8015F588` [oext_fns!] x2: tu/mndatadel.rs:50, tu/mndeflicker.rs:47 -> port `melee_modes::tu/gmmain_lib.rs:1020`
+- `gmMainLib_8015FBA4` [oext_fns!] x1: tu/mndatadel.rs:51 -> port `melee_modes::tu/gmmain_lib.rs:1149`
+- `gmMainLib_GetBonusMatchTotal` [oext_fns!] x1: tu/mncount.rs:59 -> port `melee_modes::tu/gmmain_lib.rs:217`
+- `gmMainLib_GetCoinMatchTotal` [oext_fns!] x1: tu/mncount.rs:60 -> port `melee_modes::tu/gmmain_lib.rs:213`
+- `gmMainLib_GetCombinedVSPlayTime` [oext_fns!] x1: tu/mncount.rs:61 -> port `melee_modes::tu/gmmain_lib.rs:201`
+- `gmMainLib_GetGamePrefs` [oext_fns!] x2: tu/gmfrontend.rs:419, tu/mncharsel.rs:135 -> port `melee_modes::tu/gmmain_lib.rs:157`
+- `gmMainLib_GetGameRules` [ext_fns!/oext_fns!] x8: tu/gmfrontend.rs:420, tu/mn_22EC.rs:38, tu/mncharsel.rs:136, tu/mndiagram.rs:41, tu/mndiagram2.rs:60, tu/mndiagram3.rs:48, tu/mnruleplus.rs:93, tu/mnsound.rs:32 -> port `melee_modes::tu/gmmain_lib.rs:145`
+- `gmMainLib_GetKOTotal` [oext_fns!] x1: tu/mncount.rs:62 -> port `melee_modes::tu/gmmain_lib.rs:249`
+- `gmMainLib_GetMatchResetCounter` [oext_fns!] x1: tu/mncount.rs:63 -> port `melee_modes::tu/gmmain_lib.rs:225`
+- `gmMainLib_GetPowerCount` [oext_fns!] x1: tu/mncount.rs:64 -> port `melee_modes::tu/gmmain_lib.rs:237`
+- `gmMainLib_GetSelfDestructTotal` [oext_fns!] x1: tu/mncount.rs:65 -> port `melee_modes::tu/gmmain_lib.rs:253`
+- `gmMainLib_GetSingleplayerTime` [oext_fns!] x1: tu/mncount.rs:66 -> port `melee_modes::tu/gmmain_lib.rs:229`
+- `gmMainLib_GetStockMatchTotal` [oext_fns!] x1: tu/mncount.rs:67 -> port `melee_modes::tu/gmmain_lib.rs:209`
+- `gmMainLib_GetTimeMatchTotal` [oext_fns!] x1: tu/mncount.rs:68 -> port `melee_modes::tu/gmmain_lib.rs:205`
+- `gmMainLib_GetTotalDamage` [oext_fns!] x1: tu/mncount.rs:69 -> port `melee_modes::tu/gmmain_lib.rs:245`
+- `gmMainLib_GetVsPlayContestants` [oext_fns!] x1: tu/mncount.rs:70 -> port `melee_modes::tu/gmmain_lib.rs:193`
+- `gmMainLib_GetVsPlayTime` [oext_fns!] x1: tu/mncount.rs:71 -> port `melee_modes::tu/gmmain_lib.rs:197`
+- `gmMainLib_SetRumbleEnabled` [ext_fns!] x1: tu/mnvibration.rs:133 -> port `melee_modes::tu/gmmain_lib.rs:787`
+- `gmRegSetupEnemyColorTable` [ext_fns!] x2: tu/gm_17c0.rs:170, tu/gmclassic.rs:59 -> port `melee_modes::tu/gmregcommon.rs:35`
+- `gmRst_GenoArtClose` [oext_fns!] x1: tu/gmresult.rs:123 -> port `melee_modes::tu/gmresultplayer.rs:794`
+- `gmRst_GenoArtReset` [oext_fns!] x1: tu/gmresult.rs:124 -> port `melee_modes::tu/gmresultplayer.rs:788`
+- `gmVs_GetHeldOutcome` [oext_fns!] x1: tu/script_game.rs:306 -> port `melee_modes::tu/gmvs.rs:869`
+- `gmVs_GetSceneController` [ext_fns!/oext_fns!] x4: tu/gm_17c0.rs:171, tu/gm_17e4.rs:39, tu/gmevent.rs:72, tu/gmregclear.rs:85 -> port `melee_modes::tu/gmvs.rs:267`
+- `gmVs_GetSceneState` [ext_fns!] x2: tu/gm_17c0.rs:172, tu/gmevent.rs:73 -> port `melee_modes::tu/gmvs.rs:271`
+- `gmVs_SetEndHold` [oext_fns!] x1: tu/script_game.rs:305 -> port `melee_modes::tu/gmvs.rs:862`
+- `gmVsMelee_EnterCss` [ext_fns!] x2: tu/gmfixedcamera.rs:30, tu/gmgiant.rs:31 -> port `melee_modes::tu/gmvsmelee.rs:197`
+- `gmVsMelee_EnterResults` [ext_fns!] x2: tu/gmfixedcamera.rs:31, tu/gmgiant.rs:32 -> port `melee_modes::tu/gmvsmelee.rs:399`
+- `gmVsMelee_EnterSss` [ext_fns!] x2: tu/gmfixedcamera.rs:32, tu/gmgiant.rs:33 -> port `melee_modes::tu/gmvsmelee.rs:254`
+- `gmVsMelee_EnterSuddenDeath` [ext_fns!/hook!] x4: tu/gmfixedcamera.rs:33, tu/gmgiant.rs:34, tu/gminvisible.rs:146, tu/gmlightning.rs:150 -> port `melee_modes::tu/gmvsmelee.rs:370`
+- `gmVsMelee_EnterVs` [ext_fns!/hook!] x4: tu/gmfixedcamera.rs:34, tu/gmgiant.rs:35, tu/gminvisible.rs:145, tu/gmlightning.rs:141 -> port `melee_modes::tu/gmvsmelee.rs:280`
+- `gmVsMelee_ExitCss` [ext_fns!] x2: tu/gmfixedcamera.rs:35, tu/gmgiant.rs:36 -> port `melee_modes::tu/gmvsmelee.rs:217`
+- `gmVsMelee_ExitResults` [ext_fns!] x2: tu/gmfixedcamera.rs:36, tu/gmgiant.rs:37 -> port `melee_modes::tu/gmvsmelee.rs:406`
+- `gmVsMelee_ExitSss` [ext_fns!] x2: tu/gmfixedcamera.rs:37, tu/gmgiant.rs:38 -> port `melee_modes::tu/gmvsmelee.rs:261`
+- `gmVsMelee_ExitSuddenDeath` [ext_fns!] x2: tu/gmfixedcamera.rs:38, tu/gmgiant.rs:39 -> port `melee_modes::tu/gmvsmelee.rs:393`
+- `gmVsMelee_ExitVs` [ext_fns!] x2: tu/gmfixedcamera.rs:39, tu/gmgiant.rs:40 -> port `melee_modes::tu/gmvsmelee.rs:320`
+- `gmVsMelee_GetKOCounts` [ext_fns!] x1: tu/gmcameramode.rs:34 -> port `melee_modes::tu/gmvsmelee.rs:124`
+- `gmVsMelee_GetVsData` [ext_fns!] x1: tu/gmhanyucss.rs:29 -> port `melee_modes::tu/gmvsmelee.rs:119`
+- `gmVsMelee_ResetKOCounts` [ext_fns!] x2: tu/gmfixedcamera.rs:40, tu/gmgiant.rs:41 -> port `melee_modes::tu/gmvsmelee.rs:178`
+- `gmVsMelee_UpdateKOCounts` [ext_fns!] x1: tu/gmcameramode.rs:35 -> port `melee_modes::gm_r4.rs:73`
+- `GObj_Create` [ext_fns!/fn+panic/hook!/hooks!/oext_fns!] x48: tu/geno_game.rs:40, tu/gm_1798.rs:217, tu/gm_17c0.rs:99, tu/gm_1A7A.rs:36, tu/gm_1A9B.rs:46, tu/gm_1ADD.rs:165, tu/gmapproach.rs:60, tu/gmcamera.rs:335, tu/gmevent.rs:36, tu/gmfrontend.rs:293, tu/gmhowto.rs:95, tu/gmmovieend.rs:155, tu/gmomake15.rs:42, tu/gmopening.rs:180, tu/gmpause.rs:71, tu/gmprogressive.rs:129, tu/gmregclear.rs:38, tu/gmregenddisp.rs:29, tu/gmregtyfall.rs:41, tu/gmresult.rs:36, tu/lb_0219.rs:29, tu/mncharsel.rs:42, tu/mncount.rs:36, tu/mndatadel.rs:11, tu/mndeflicker.rs:27, tu/mndiagram.rs:11, tu/mndiagram2.rs:13, tu/mndiagram3.rs:10, tu/mnevent.rs:10, tu/mngallery.rs:31, tu/mnhyaku.rs:361, tu/mninfo.rs:802, tu/mninfobonus.rs:723, tu/mnitemsw.rs:1351, tu/mnlanguage.rs:323, tu/mnmain.rs:4950, tu/mnmainrule.rs:2244, tu/mnname.rs:2612, tu/mnnamenew.rs:85, tu/mnruleplus.rs:72, tu/mnsnap.rs:196, tu/mnsound.rs:15, tu/mnsoundtest.rs:45, tu/mnstagesel.rs:168, tu/mnstagesw.rs:48, tu/mnvibration.rs:121, tu/script_game.rs:36, tu_ext.rs:55 -> port `melee_runtime::gobj.rs:528`
+- `GObj_SetupGXLink` [ext_fns!/fn+panic/hook!/hooks!/oext_fns!] x45: tu/geno_game.rs:167, tu/gm_1798.rs:218, tu/gm_1A7A.rs:38, tu/gm_1A9B.rs:56, tu/gm_1ADD.rs:167, tu/gmapproach.rs:84, tu/gmcamera.rs:345, tu/gmfrontend.rs:294, tu/gmhowto.rs:106, tu/gmmovieend.rs:158, tu/gmomake15.rs:45, tu/gmopening.rs:188, tu/gmpause.rs:81, tu/gmprogressive.rs:175, tu/gmregclear.rs:39, tu/gmregenddisp.rs:30, tu/gmregtyfall.rs:42, tu/gmresult.rs:37, tu/mncharsel.rs:44, tu/mncount.rs:38, tu/mndatadel.rs:57, tu/mndeflicker.rs:29, tu/mndiagram.rs:47, tu/mndiagram2.rs:64, tu/mndiagram3.rs:50, tu/mnevent.rs:42, tu/mngallery.rs:33, tu/mnhyaku.rs:467, tu/mninfo.rs:915, tu/mninfobonus.rs:793, tu/mnitemsw.rs:1474, tu/mnlanguage.rs:420, tu/mnmain.rs:5334, tu/mnmainrule.rs:2389, tu/mnname.rs:2760, tu/mnnamenew.rs:127, tu/mnruleplus.rs:96, tu/mnsnap.rs:232, tu/mnsound.rs:36, tu/mnsoundtest.rs:79, tu/mnstagesel.rs:204, tu/mnstagesw.rs:72, tu/mnvibration.rs:138, tu/script_game.rs:204, tu_ext.rs:60 -> port `melee_runtime::tu/gobjgxlink.rs:14`
+- `GObj_SetupGXLinkMax` [ext_fns!/fn+panic/hook!/oext_fns!] x15: tu/gm_1798.rs:219, tu/gm_1A7A.rs:39, tu/gm_1ADD.rs:168, tu/gmapproach.rs:73, tu/gmopening.rs:92, tu/gmprogressive.rs:138, tu/gmregclear.rs:40, tu/gmregenddisp.rs:31, tu/gmregtyfall.rs:43, tu/gmresult.rs:38, tu/mncharsel.rs:45, tu/mngallery.rs:34, tu/mnmain.rs:5335, tu/mnstagesel.rs:205, tu_ext.rs:65 -> port `melee_runtime::tu/gobjgxlink.rs:19`
+- `grAnime_801C7FF8` [oext_fns!] x1: tu/script_game.rs:313 -> port `melee_world::tu/granime.rs:777`
+- `grAnime_801C8138` [oext_fns!] x1: tu/script_game.rs:314 -> port `melee_world::gr/forward.rs:49`
+- `grIzumi_801CBB88` [oext_fns!] x1: tu/script_game.rs:319 -> port `melee_world::tu/grizumi.rs:375`
+- `grIzumi_801CD280` [oext_fns!] x1: tu/script_game.rs:320 -> port `melee_world::tu/grizumi.rs:912`
+- `grIzumi_StageSlotParamSwap` [oext_fns!] x1: tu/script_game.rs:324 -> port `melee_world::tu/grizumi.rs:294`
+- `Ground_801C0378` [ext_fns!/oext_fns!] x2: tu/gm_1798.rs:220, tu/hsd.rs:30 -> port `melee_world::tu/ground.rs:586`
+- `Ground_801C0498` [oext_fns!] x1: tu/script_game.rs:123 -> port `melee_world::gr/ground.rs:141`
+- `Ground_801C1D84` [ext_fns!] x1: tu/gmevent.rs:37 -> port `melee_world::gr/ground.rs:185`
+- `Ground_801C1DAC` [ext_fns!] x1: tu/gm_17c0.rs:100 -> port `melee_world::gr/ground.rs:189`
+- `Ground_801C1DD4` [oext_fns!] x2: tu/gmregclear.rs:41, tu/script_game.rs:125 -> port `melee_world::gr/ground.rs:193`
+- `Ground_801C1DE4` [ext_fns!/oext_fns!] x2: tu/gmclassic.rs:39, tu/gmregclear.rs:42 -> port `melee_world::gr/ground.rs:195`
+- `Ground_801C20D0` [oext_fns!] x1: tu/script_game.rs:126 -> port `melee_world::gr/ground.rs:515`
+- `Ground_801C2CF4` [oext_fns!] x1: tu/script_game.rs:127 -> port `melee_world::gr/ground.rs:460`
+- `Ground_801C2D24` [oext_fns!] x1: tu/script_game.rs:128 -> port `melee_world::gr/stage.rs:539`
+- `Ground_801C38BC` [oext_fns!] x1: tu/script_game.rs:129 -> port `melee_world::gr/ground.rs:214`
+- `Ground_801C38D0` [oext_fns!] x1: tu/script_game.rs:130 -> port `melee_world::gr/ground.rs:220`
+- `Ground_801C38EC` [oext_fns!] x1: tu/script_game.rs:131 -> port `melee_world::gr/ground.rs:228`
+- `Ground_801C3900` [oext_fns!] x1: tu/script_game.rs:132 -> port `melee_world::gr/ground.rs:235`
+- `Ground_801C392C` [oext_fns!] x1: tu/script_game.rs:133 -> port `melee_world::gr/ground.rs:247`
+- `Ground_801C3950` [oext_fns!] x1: tu/script_game.rs:134 -> port `melee_world::gr/ground.rs:257`
+- `Ground_801C3960` [oext_fns!] x1: tu/script_game.rs:135 -> port `melee_world::gr/ground.rs:259`
+- `Ground_801C3970` [oext_fns!] x1: tu/script_game.rs:136 -> port `melee_world::gr/ground.rs:261`
+- `Ground_801C39C0` [oext_fns!] x1: tu/script_game.rs:137 -> port `melee_world::tu/ground.rs:2408`
+- `Ground_801C3BB4` [oext_fns!] x1: tu/script_game.rs:138 -> port `melee_world::tu/ground.rs:2512`
+- `Ground_801C4A08` [oext_fns!] x1: tu/script_game.rs:139 -> port `melee_world::tu/ground.rs:3188`
+- `Ground_801C5A28` [ext_fns!] x1: tu/gmclassic.rs:40 -> port `melee_world::gr/ground.rs:583`
+- `Ground_801C5A60` [ext_fns!] x1: tu/gm_17c0.rs:101 -> port `melee_world::gr/ground.rs:589`
+- `Ground_801C5AD0` [ext_fns!] x1: tu/gm_17c0.rs:102 -> port `melee_world::tu/ground.rs:3635`
+- `Ground_EnableMatchCamera` [oext_fns!] x1: tu/script_game.rs:140 -> port `melee_world::tu/ground.rs:3534`
+- `Ground_GetStageGObj` [oext_fns!] x1: tu/script_game.rs:124 -> port `melee_world::tu/ground.rs:1195`
+- `Ground_StageSlotDataFile` [oext_fns!] x1: tu/script_game.rs:120 -> port `melee_world::tu/ground.rs:3655`
+- `Ground_StageSlotFDBackdrop` [oext_fns!] x1: tu/script_game.rs:372 -> port `melee_world::tu/grlast.rs:1068`
+- `Ground_StageSlotFighterLightingClear` [oext_fns!] x1: tu/script_game.rs:330 -> port `melee_world::tu/ground.rs:3672`
+- `Ground_StageSlotJoints` [oext_fns!] x1: tu/script_game.rs:122 -> port `melee_world::tu/ground.rs:3663`
+- `Ground_StageSlotPrepare` [oext_fns!] x1: tu/script_game.rs:321 -> port `melee_world::tu/ground.rs:1367`
+- `Ground_StageSlotProofCallbacks` [oext_fns!] x1: tu/script_game.rs:121 -> port `melee_world::tu/grlast.rs:1062`
+- `Ground_StageSlotRetailInstall` [oext_fns!] x1: tu/script_game.rs:329 -> port `melee_world::tu/ground.rs:3698`
+- `grPushOn_80219204` [oext_fns!] x2: tu/gmregclear.rs:90, tu/script_game.rs:265 -> port `melee_world::tu/grpushon.rs:568`
+- `grShrineRoute_ScriptQuery` [oext_fns!] x1: tu/script_game.rs:263 -> port `melee_world::tu/grshrineroute.rs:1159`
+- `grStory_801E3030` [oext_fns!] x1: tu/script_game.rs:317 -> port `melee_world::tu/grstory.rs:49`
+- `grStory_801E36D8` [oext_fns!] x1: tu/script_game.rs:318 -> port `melee_world::tu/grstory.rs:193`
+- `grStory_StageSlotParamSwap` [oext_fns!] x1: tu/script_game.rs:323 -> port `melee_world::tu/grstory.rs:41`
+- `grZakoGenerator_StageSlotRelease` [oext_fns!] x1: tu/script_game.rs:332 -> port `melee_world::tu/grzakogenerator.rs:230`
+- `hsd_80391A04` [oext_fns!] x1: tu/gmfrontend.rs:424 -> port `melee_runtime::tu/hsd_3915.rs:238`
+- `hsd_80392528` [ext_fns!/hook!] x2: tu/gm_1601.rs:114, tu/gmopening.rs:121 -> port `melee_runtime::tu/hsd_3924.rs:132`
+- `hsd_8039D048` [oext_fns!] x1: tu/script_game.rs:325 -> port `melee_runtime::tu/particle.rs:617`
+- `hsd_8039D3AC` [oext_fns!] x1: tu/script_game.rs:326 -> port `melee_runtime::tu/generator.rs:26`
+- `hsd_8039D5DC` [hooks!] x1: tu/geno_game.rs:163 -> port `melee_runtime::tu/generator.rs:38`
+- `HSD_AObjInitAllocData` [hooks!] x1: tu/geno_tests.rs:70 -> port `melee_runtime::tu/aobj.rs:68`
+- `HSD_AObjReqAnim` [oext_fns!] x2: tu/gmresultplayer.rs:69, tu/mncharsel.rs:69 -> port `melee_runtime::tu/aobj.rs:128`
+- `HSD_AObjSetCurrentFrame` [oext_fns!] x3: tu/gmregclear.rs:43, tu/gmresult.rs:40, tu/gmresultplayer.rs:72 -> port `melee_runtime::tu/aobj.rs:460`
+- `HSD_AObjSetEndFrame` [hooks!/oext_fns!] x2: tu/geno_game.rs:83, tu/gmresultplayer.rs:71 -> port `melee_runtime::tu/aobj.rs:450`
+- `HSD_AObjSetFlags` [ext_fns!/hooks!] x2: tu/geno_game.rs:81, tu/mnsnap.rs:199 -> port `melee_runtime::tu/aobj.rs:84`
+- `HSD_AObjSetRate` [hooks!/oext_fns!] x4: tu/geno_game.rs:82, tu/gmregclear.rs:44, tu/gmresult.rs:41, tu/gmresultplayer.rs:70 -> port `melee_runtime::tu/aobj.rs:433`
+- `HSD_AObjStopAnim` [fn-body/oext_fns!] x2: tu/gmcamera.rs:367, tu/mncharsel.rs:70 -> port `melee_runtime::tu/aobj.rs:138`
+- `HSD_ArchiveGetExtern` [oext_fns!] x1: tu/script_game.rs:70 -> port `melee_runtime::tu/archive.rs:99`
+- `HSD_ArchiveGetPublicAddress` [ext_fns!/hook!/oext_fns!] x6: tu/gmcamera.rs:334, tu/gmregenddisp.rs:32, tu/gmresultplayer.rs:93, tu/mncharsel.rs:71, tu/mnstagesel.rs:186, tu/script_game.rs:69 -> port `melee_runtime::tu/archive.rs:84`
+- `HSD_ArchiveLocateExtern` [oext_fns!] x1: tu/script_game.rs:71 -> port `melee_runtime::tu/archive.rs:107`
+- `HSD_ArchiveParse` [oext_fns!] x1: tu/script_game.rs:68 -> port `melee_runtime::tu/archive.rs:38`
+- `HSD_ASSERT` [hook!] x1: tu/gmmain.rs:107 -> port `melee_runtime::tu/lbarchive.rs:124`
+- `HSD_CObjAddAnim` [oext_fns!] x2: tu/gmregenddisp.rs:33, tu/gmregtyfall.rs:44 -> port `melee_runtime::tu/cobj.rs:360`
+- `HSD_CObjAlloc` [oext_fns!] x1: tu/mngallery.rs:35 -> port `melee_runtime::tu/cobj.rs:692`
+- `HSD_CObjAnim` [oext_fns!] x2: tu/gmregenddisp.rs:34, tu/gmregtyfall.rs:45 -> port `melee_runtime::tu/cobj.rs:409`
+- `HSD_CObjEndCurrent` [ext_fns!/oext_fns!] x3: tu/gm_1798.rs:221, tu/gmregtyfall.rs:46, tu/mngallery.rs:36 -> port `melee_runtime::tu/cobj.rs:672`
+- `HSD_CObjEraseScreen` [ext_fns!/oext_fns!] x2: tu/gm_1798.rs:222, tu/mngallery.rs:37 -> port `melee_runtime::tu/cobj.rs:306`
+- `HSD_CObjGetCurrent` [ext_fns!/hooks!/oext_fns!] x3: tu/geno_game.rs:166, tu/lb_0146.rs:51, tu/script_game.rs:17 -> port `melee_runtime::tu/cobj.rs:678`
+- `HSD_CObjLoadDesc` [ext_fns!/oext_fns!] x5: tu/gm_1798.rs:223, tu/gmregclear.rs:45, tu/gmresult.rs:42, tu/mncharsel.rs:72, tu/mnstagesel.rs:187 -> port `melee_runtime::tu/cobj.rs:760`
+- `HSD_CObjReqAnim` [oext_fns!] x2: tu/gmregenddisp.rs:35, tu/gmregtyfall.rs:47 -> port `melee_runtime::tu/cobj.rs:419`
+- `HSD_CObjSetCurrent` [ext_fns!/oext_fns!] x3: tu/gm_1798.rs:224, tu/gmregtyfall.rs:48, tu/mngallery.rs:38 -> port `melee_runtime::tu/cobj.rs:645`
+- `HSD_CObjSetFar` [oext_fns!] x1: tu/mngallery.rs:40 -> port `melee_runtime::tu/cobj.rs:185`
+- `HSD_CObjSetNear` [oext_fns!] x1: tu/mngallery.rs:42 -> port `melee_runtime::tu/cobj.rs:173`
+- `HSD_CObjSetOrtho` [oext_fns!] x1: tu/mngallery.rs:43 -> port `melee_runtime::tu/cobj.rs:254`
+- `HSD_CObjSetScissor` [ext_fns!/oext_fns!] x2: tu/gm_1798.rs:227, tu/mngallery.rs:46 -> port `melee_runtime::tu/cobj.rs:220`
+- `HSD_CObjSetViewport` [oext_fns!] x1: tu/mngallery.rs:47 -> port `melee_runtime::tu/cobj.rs:209`
+- `HSD_DObjAddAnimAll` [oext_fns!] x2: tu/gmresultplayer.rs:91, tu/mncharsel.rs:73 -> port `melee_runtime::tu/dobj.rs:222`
+- `HSD_DObjClearFlags` [ext_fns!] x1: tu/mnsnap.rs:231 -> port `melee_runtime::tu/dobj.rs:183`
+- `HSD_DObjReqAnimAll` [oext_fns!] x1: tu/gmresultplayer.rs:92 -> port `melee_runtime::tu/dobj.rs:249`
+- `HSD_DObjSetFlags` [ext_fns!/hooks!] x2: tu/geno_game.rs:57, tu/mnsnap.rs:230 -> port `melee_runtime::tu/dobj.rs:178`
+- `HSD_FObjInitAllocData` [hooks!] x1: tu/geno_tests.rs:69 -> port `melee_runtime::tu/fobj.rs:44`
+- `HSD_Fog_8037DE7C` [oext_fns!] x1: tu/gmregenddisp.rs:39 -> port `melee_runtime::tu/fog.rs:69`
+- `HSD_ForeachAnim` [ext_fns!/hook!/hooks!] x3: tu/geno_game.rs:223, tu/gmcamera.rs:324, tu/mn_22EC.rs:30 -> port `melee_runtime::tu/aobj.rs:398`
+- `HSD_Free` [ext_fns!/oext_fns!] x13: tu/gmregtyfall.rs:49, tu/gmresultplayer.rs:94, tu/lb_01F8.rs:32, tu/mncharsel.rs:76, tu/mncount.rs:41, tu/mndatadel.rs:63, tu/mndeflicker.rs:30, tu/mndiagram.rs:53, tu/mndiagram2.rs:70, tu/mndiagram3.rs:56, tu/mnevent.rs:48, tu/mngallery.rs:48, tu/script_game.rs:196 -> port `melee_runtime::tu/memory.rs:96`
+- `HSD_GetHeap` [hooks!/oext_fns!] x2: tu/geno_tests.rs:172, tu/script_game.rs:307 -> port `melee_runtime::tu/initialize.rs:180`
+- `HSD_GObj_80390CD4` [ext_fns!/hook!] x5: tu/mn_22EC.rs:32, tu/mnmain.rs:4958, tu/mnmainrule.rs:2252, tu/mnname.rs:2620, tu/mnstagesw.rs:50 -> port `melee_runtime::gobj.rs:984`
+- `HSD_GObj_80390EB8` [oext_fns!] x2: tu/gmresult.rs:44, tu/script_game.rs:35 -> port `melee_runtime::gobj.rs:266`
+- `HSD_GObj_80390ED0` [ext_fns!/fn+panic/hook!/oext_fns!] x4: tu/gm_1798.rs:229, tu/gmregtyfall.rs:53, tu/mnmain.rs:4966, tu_ext.rs:270 -> port `melee_runtime::gobj.rs:1047`
+- `HSD_GObj_803910D8` [fn+panic/fn-body/hook!/oext_fns!] x10: tu/gm_1A7A.rs:185, tu/gm_1ADD.rs:197, tu/gmapproach.rs:161, tu/gmprogressive.rs:139, tu/gmregclear.rs:47, tu/gmregenddisp.rs:41, tu/gmresult.rs:45, tu/mncharsel.rs:79, tu/mnmain.rs:4949, tu_ext.rs:275 -> port `melee_runtime::tu/gobj.rs:86`
+- `HSD_GObj_FogCallback` [oext_fns!] x1: tu/gmregenddisp.rs:42 -> port `melee_runtime::tu/gobj.rs:80`
+- `HSD_GObj_JObjCallback` [ext_fns!/oext_fns!] x15: tu/gmregclear.rs:48, tu/gmregenddisp.rs:43, tu/gmregtyfall.rs:54, tu/gmresult.rs:46, tu/mncharsel.rs:80, tu/mncount.rs:45, tu/mndatadel.rs:12, tu/mndeflicker.rs:34, tu/mndiagram.rs:12, tu/mndiagram2.rs:14, tu/mndiagram3.rs:11, tu/mnevent.rs:11, tu/mngallery.rs:51, tu/mnsnap.rs:197, tu/script_game.rs:37 -> port `melee_runtime::tu/gobj.rs:74`
+- `HSD_GObj_LObjCallback` [oext_fns!] x5: tu/gmregclear.rs:49, tu/gmregenddisp.rs:44, tu/gmregtyfall.rs:55, tu/gmresult.rs:47, tu/mncharsel.rs:81 -> port `melee_runtime::tu/gobj.rs:68`
+- `HSD_GObjGXLink_8039084C` [fn+panic/oext_fns!] x3: tu/gmregtyfall.rs:51, tu/script_game.rs:205, tu_ext.rs:260 -> port `melee_runtime::tu/gobjgxlink.rs:29`
+- `HSD_GObjGXLink_803909D8` [oext_fns!] x1: tu/mncharsel.rs:77 -> port `melee_runtime::tu/gobjgxlink.rs:39`
+- `HSD_GObjObject_80390A70` [ext_fns!/fn+panic/hook!/oext_fns!] x43: tu/gm_1798.rs:228, tu/gm_1A7A.rs:37, tu/gm_1A9B.rs:55, tu/gm_1ADD.rs:166, tu/gmapproach.rs:71, tu/gmcamera.rs:344, tu/gmhowto.rs:104, tu/gmmovieend.rs:157, tu/gmomake15.rs:44, tu/gmopening.rs:91, tu/gmpause.rs:80, tu/gmprogressive.rs:137, tu/gmregclear.rs:46, tu/gmregenddisp.rs:40, tu/gmregtyfall.rs:52, tu/gmresult.rs:43, tu/mncharsel.rs:78, tu/mncount.rs:43, tu/mndatadel.rs:58, tu/mndeflicker.rs:32, tu/mndiagram.rs:48, tu/mndiagram2.rs:65, tu/mndiagram3.rs:51, tu/mnevent.rs:43, tu/mngallery.rs:50, tu/mnhyaku.rs:369, tu/mninfo.rs:916, tu/mninfobonus.rs:794, tu/mnitemsw.rs:1475, tu/mnlanguage.rs:421, tu/mnmain.rs:5159, tu/mnmainrule.rs:2390, tu/mnname.rs:2761, tu/mnnamenew.rs:128, tu/mnruleplus.rs:97, tu/mnsnap.rs:233, tu/mnsound.rs:37, tu/mnsoundtest.rs:80, tu/mnstagesel.rs:206, tu/mnstagesw.rs:73, tu/mnvibration.rs:139, tu/script_game.rs:195, tu_ext.rs:265 -> port `melee_runtime::tu/gobjobject.rs:14`
+- `HSD_IDInitAllocData` [hooks!] x1: tu/geno_tests.rs:174 -> port `melee_runtime::tu/id.rs:14`
+- `HSD_IDSetup` [hooks!] x1: tu/geno_tests.rs:175 -> port `melee_runtime::tu/id.rs:18`
+- `HSD_ImageDescCopyFromEFB` [ext_fns!/oext_fns!] x2: tu/gm_1798.rs:231, tu/gmregtyfall.rs:57 -> port `melee_runtime::tu/tobj.rs:694`
+- `HSD_Init_803755A8` [ext_fns!] x1: tu/lb_0192.rs:31 -> port `melee_runtime::tu/initialize.rs:242`
+- `HSD_JObjAddAnimAll` [ext_fns!/hook!/oext_fns!] x27: tu/gm_1601.rs:211, tu/gmregenddisp.rs:46, tu/mncharsel.rs:83, tu/mncount.rs:47, tu/mndatadel.rs:24, tu/mndeflicker.rs:36, tu/mndiagram.rs:26, tu/mndiagram2.rs:23, tu/mndiagram3.rs:20, tu/mnevent.rs:15, tu/mngallery.rs:53, tu/mnhyaku.rs:443, tu/mninfo.rs:833, tu/mninfobonus.rs:746, tu/mnitemsw.rs:1368, tu/mnlanguage.rs:375, tu/mnmain.rs:5026, tu/mnmainrule.rs:2297, tu/mnname.rs:2631, tu/mnnamenew.rs:101, tu/mnruleplus.rs:81, tu/mnsnap.rs:202, tu/mnsound.rs:26, tu/mnsoundtest.rs:65, tu/mnstagesel.rs:180, tu/mnstagesw.rs:57, tu/mnvibration.rs:116 -> port `melee_runtime::tu/jobj.rs:327`
+- `HSD_JObjAddChild` [ext_fns!/hook!/oext_fns!] x15: tu/gmregenddisp.rs:47, tu/mndatadel.rs:27, tu/mndiagram.rs:30, tu/mndiagram2.rs:26, tu/mndiagram3.rs:24, tu/mnitemsw.rs:1372, tu/mnmain.rs:5030, tu/mnmainrule.rs:2301, tu/mnname.rs:2635, tu/mnnamenew.rs:104, tu/mnruleplus.rs:85, tu/mnsnap.rs:208, tu/mnstagesw.rs:61, tu/mnvibration.rs:120, tu/script_game.rs:109 -> port `melee_runtime::tu/jobj.rs:294`
+- `HSD_JObjAlloc` [oext_fns!] x2: tu/gmregenddisp.rs:48, tu/script_game.rs:106 -> port `melee_runtime::tu/jobj.rs:79`
+- `HSD_JObjAnim` [ext_fns!/hook!/oext_fns!] x11: tu/mn_22EC.rs:33, tu/mndiagram.rs:31, tu/mnitemsw.rs:1374, tu/mnmain.rs:5032, tu/mnmainrule.rs:2303, tu/mnname.rs:2637, tu/mnnamenew.rs:106, tu/mnruleplus.rs:87, tu/mnsnap.rs:210, tu/mnsoundtest.rs:70, tu/mnstagesw.rs:63 -> port `melee_runtime::tu/jobj.rs:323`
+- `HSD_JObjAnimAll` [ext_fns!/fn+panic/hook!/oext_fns!] x36: tu/gm_1A7A.rs:56, tu/gm_1ADD.rs:156, tu/gmapproach.rs:106, tu/gmcamera.rs:355, tu/gmpause.rs:69, tu/gmprogressive.rs:112, tu/gmregclear.rs:51, tu/gmregenddisp.rs:49, tu/gmregtyfall.rs:58, tu/gmresult.rs:49, tu/gmresultplayer.rs:74, tu/mn_22EC.rs:34, tu/mncharsel.rs:84, tu/mndatadel.rs:25, tu/mndeflicker.rs:37, tu/mndiagram.rs:27, tu/mndiagram3.rs:21, tu/mnevent.rs:16, tu/mngallery.rs:54, tu/mnhyaku.rs:444, tu/mninfobonus.rs:747, tu/mnitemsw.rs:1369, tu/mnlanguage.rs:376, tu/mnmain.rs:5027, tu/mnmainrule.rs:2298, tu/mnname.rs:2632, tu/mnnamenew.rs:102, tu/mnruleplus.rs:82, tu/mnsnap.rs:203, tu/mnsound.rs:27, tu/mnsoundtest.rs:66, tu/mnstagesel.rs:181, tu/mnstagesw.rs:58, tu/mnvibration.rs:117, tu/script_game.rs:103, tu_ext.rs:305 -> port `melee_runtime::tu/jobj.rs:325`
+- `HSD_JObjClearFlags` [ext_fns!/fn+panic/hook!/oext_fns!] x5: tu/mncharsel.rs:85, tu/mninfobonus.rs:749, tu/mnsnap.rs:206, tu/script_game.rs:105, tu_ext.rs:310 -> port `melee_runtime::tu/jobj.rs:305`
+- `HSD_JObjClearFlagsAll` [ext_fns!/fn+panic/hook!/oext_fns!] x23: tu/gmcamera.rs:322, tu/gmpause.rs:67, tu/gmprogressive.rs:103, tu/gmregclear.rs:52, tu/gmresultplayer.rs:76, tu/mncharsel.rs:86, tu/mncount.rs:48, tu/mndiagram.rs:29, tu/mndiagram2.rs:25, tu/mndiagram3.rs:23, tu/mnevent.rs:18, tu/mninfo.rs:835, tu/mnitemsw.rs:1371, tu/mnmain.rs:5029, tu/mnmainrule.rs:2300, tu/mnname.rs:2634, tu/mnruleplus.rs:84, tu/mnsnap.rs:207, tu/mnsound.rs:29, tu/mnsoundtest.rs:68, tu/mnstagesw.rs:60, tu/mnvibration.rs:119, tu_ext.rs:315 -> port `melee_runtime::tu/jobj.rs:306`
+- `HSD_JObjDispAll` [oext_fns!] x2: tu/gmresult.rs:50, tu/script_game.rs:107 -> port `melee_runtime::tu/jobj.rs:232`
+- `HSD_JObjGetDObj` [ext_fns!/hooks!/oext_fns!] x5: tu/geno_game.rs:86, tu/gmfrontend.rs:339, tu/gmresultplayer.rs:73, tu/mncharsel.rs:87, tu/mnstagesel.rs:178 -> port `melee_runtime::tu/jobj.rs:298`
+- `HSD_JObjGetFlags` [oext_fns!] x2: tu/gmregclear.rs:53, tu/script_game.rs:97 -> port `melee_runtime::tu/jobj.rs:302`
+- `HSD_JObjLoadJoint` [ext_fns!/hooks!/oext_fns!] x23: tu/geno_tests.rs:72, tu/gmregclear.rs:54, tu/gmregenddisp.rs:50, tu/gmregtyfall.rs:59, tu/gmresult.rs:51, tu/mncharsel.rs:88, tu/mncount.rs:49, tu/mndatadel.rs:23, tu/mndeflicker.rs:38, tu/mndiagram.rs:25, tu/mndiagram2.rs:22, tu/mndiagram3.rs:19, tu/mnevent.rs:14, tu/mngallery.rs:55, tu/mnnamenew.rs:100, tu/mnruleplus.rs:80, tu/mnsnap.rs:201, tu/mnsound.rs:25, tu/mnsoundtest.rs:64, tu/mnstagesel.rs:179, tu/mnstagesw.rs:56, tu/mnvibration.rs:115, tu/script_game.rs:102 -> port `melee_runtime::tu/jobj.rs:105`
+- `HSD_JObjPrependRObj` [ext_fns!] x1: tu/mnstagesel.rs:184 -> port `melee_runtime::tu/jobj.rs:300`
+- `HSD_JObjRemoveAll` [ext_fns!/hook!/hooks!/oext_fns!] x7: tu/geno_tests.rs:71, tu/mncharsel.rs:89, tu/mndiagram.rs:24, tu/mndiagram2.rs:21, tu/mnname.rs:2623, tu/mnvibration.rs:114, tu/script_game.rs:101 -> port `melee_runtime::tu/jobj.rs:314`
+- `HSD_JObjRemoveAnimAll` [oext_fns!] x2: tu/gmresultplayer.rs:77, tu/script_game.rs:108 -> port `melee_runtime::tu/jobj.rs:318`
+- `HSD_JObjReqAnim` [ext_fns!/hook!] x10: tu/mn_22EC.rs:35, tu/mnitemsw.rs:1373, tu/mnmain.rs:5031, tu/mnmainrule.rs:2302, tu/mnname.rs:2636, tu/mnnamenew.rs:105, tu/mnruleplus.rs:86, tu/mnsnap.rs:209, tu/mnsoundtest.rs:69, tu/mnstagesw.rs:62 -> port `melee_runtime::tu/jobj.rs:321`
+- `HSD_JObjReqAnimAll` [ext_fns!/fn+panic/hook!/oext_fns!] x36: tu/gm_1A7A.rs:55, tu/gm_1ADD.rs:155, tu/gmapproach.rs:104, tu/gmcamera.rs:354, tu/gmpause.rs:66, tu/gmprogressive.rs:111, tu/gmregclear.rs:55, tu/gmregenddisp.rs:51, tu/gmresult.rs:52, tu/mn_22EC.rs:36, tu/mncharsel.rs:90, tu/mncount.rs:50, tu/mndatadel.rs:22, tu/mndeflicker.rs:39, tu/mndiagram.rs:22, tu/mndiagram2.rs:20, tu/mndiagram3.rs:16, tu/mnevent.rs:12, tu/mngallery.rs:56, tu/mnhyaku.rs:435, tu/mninfo.rs:825, tu/mninfobonus.rs:738, tu/mnitemsw.rs:1359, tu/mnlanguage.rs:367, tu/mnmain.rs:5017, tu/mnmainrule.rs:2289, tu/mnname.rs:2621, tu/mnnamenew.rs:99, tu/mnruleplus.rs:79, tu/mnsnap.rs:200, tu/mnsound.rs:24, tu/mnsoundtest.rs:63, tu/mnstagesel.rs:177, tu/mnstagesw.rs:55, tu/mnvibration.rs:113, tu_ext.rs:325 -> port `melee_runtime::tu/jobj.rs:322`
+- `HSD_JObjReqAnimAllByFlags` [ext_fns!] x1: tu/mnstagesel.rs:185 -> port `melee_runtime::tu/jobj.rs:320`
+- `HSD_JObjSetFlags` [ext_fns!/fn+panic/hook!/oext_fns!] x6: tu/mncharsel.rs:91, tu/mninfobonus.rs:748, tu/mnsnap.rs:204, tu/mnstagesel.rs:182, tu/script_game.rs:104, tu_ext.rs:330 -> port `melee_runtime::tu/jobj.rs:303`
+- `HSD_JObjSetFlagsAll` [ext_fns!/fn+panic/hook!/oext_fns!] x28: tu/gm_1ADD.rs:146, tu/gmcamera.rs:321, tu/gmpause.rs:68, tu/gmprogressive.rs:88, tu/gmregclear.rs:56, tu/gmresult.rs:53, tu/gmresultplayer.rs:75, tu/mncharsel.rs:92, tu/mncount.rs:51, tu/mndatadel.rs:26, tu/mndiagram.rs:28, tu/mndiagram2.rs:24, tu/mndiagram3.rs:22, tu/mnevent.rs:17, tu/mninfo.rs:834, tu/mnitemsw.rs:1370, tu/mnmain.rs:5028, tu/mnmainrule.rs:2299, tu/mnname.rs:2633, tu/mnnamenew.rs:103, tu/mnruleplus.rs:83, tu/mnsnap.rs:205, tu/mnsound.rs:28, tu/mnsoundtest.rs:67, tu/mnstagesel.rs:183, tu/mnstagesw.rs:59, tu/mnvibration.rs:118, tu_ext.rs:335 -> port `melee_runtime::tu/jobj.rs:304`
+- `HSD_JObjSetMtxDirty` [ext_fns!/oext_fns!] x3: mn_inl.rs:25, tu/hsd.rs:22, tu/mndiagram3.rs:18 -> port `melee_runtime::tu/lb_00B0.rs:173`
+- `HSD_JObjSetMtxDirtySub` [ext_fns!/fn+panic/hook!/hooks!/oext_fns!] x18: mn_inl.rs:24, tu/geno_game.rs:85, tu/gm_1798.rs:232, tu/gm_1ADD.rs:145, tu/gmcamera.rs:323, tu/gmpause.rs:104, tu/gmprogressive.rs:120, tu/hsd.rs:20, tu/lb_020A.rs:32, tu/mncharsel.rs:93, tu/mndiagram.rs:23, tu/mndiagram3.rs:17, tu/mnevent.rs:13, tu/mnitemsw.rs:1360, tu/mnmain.rs:5018, tu/mnname.rs:2622, tu/script_game.rs:99, tu_ext.rs:340 -> port `melee_runtime::tu/jobj.rs:291`
+- `HSD_JObjSetupMatrixSub` [ext_fns!/hooks!/oext_fns!] x3: tu/geno_game.rs:84, tu/lb_020A.rs:33, tu/script_game.rs:98 -> port `melee_runtime::tu/jobj.rs:312`
+- `HSD_JObjUnref` [oext_fns!] x1: tu/script_game.rs:100 -> port `melee_runtime::tu/jobj.rs:124`
+- `HSD_LObjAddAnimAll` [oext_fns!] x1: tu/gmregenddisp.rs:52 -> port `melee_runtime::tu/lobj.rs:473`
+- `HSD_LObjAnimAll` [oext_fns!] x1: tu/gmregenddisp.rs:53 -> port `melee_runtime::tu/lobj.rs:443`
+- `HSD_LObjLoadDesc` [ext_fns!/oext_fns!] x2: tu/mncharsel.rs:94, tu/mnstagesel.rs:210 -> port `melee_runtime::tu/lobj.rs:951`
+- `HSD_LObjReqAnimAll` [oext_fns!] x1: tu/gmregenddisp.rs:54 -> port `melee_runtime::tu/lobj.rs:456`
+- `HSD_MemAlloc` [ext_fns!/oext_fns!] x20: tu/gmfrontend.rs:340, tu/gmresultplayer.rs:95, tu/lb_01F8.rs:33, tu/mncharsel.rs:96, tu/mncount.rs:52, tu/mndatadel.rs:64, tu/mndeflicker.rs:40, tu/mndiagram.rs:54, tu/mndiagram2.rs:71, tu/mndiagram3.rs:57, tu/mnevent.rs:49, tu/mngallery.rs:59, tu/mnnamenew.rs:134, tu/mnruleplus.rs:102, tu/mnsound.rs:42, tu/mnsoundtest.rs:86, tu/mnstagesel.rs:212, tu/mnstagesw.rs:78, tu/mnvibration.rs:145, tu/script_game.rs:197 -> port `melee_runtime::tu/memory.rs:103`
+- `HSD_MObjAnim` [fn+panic/oext_fns!] x3: tu/gmresult.rs:54, tu/mngallery.rs:57, tu_ext.rs:345 -> port `melee_runtime::tu/mobj.rs:153`
+- `HSD_MObjReqAnim` [fn+panic/oext_fns!] x2: tu/mngallery.rs:58, tu_ext.rs:350 -> port `melee_runtime::tu/mobj.rs:111`
+- `HSD_MObjSetAlpha` [oext_fns!] x1: tu/mncharsel.rs:95 -> port `melee_runtime::tu/mobj.rs:317`
+- `HSD_MtxInitAllocData` [hooks!] x1: tu/geno_tests.rs:178 -> port `melee_runtime::tu/mtx.rs:31`
+- `HSD_ObjAlloc` [ext_fns!] x1: tu/lb_0219.rs:33 -> port `melee_runtime::tu/objalloc.rs:108`
+- `HSD_ObjAllocInit` [ext_fns!] x1: tu/lb_0219.rs:34 -> port `melee_runtime::tu/objalloc.rs:145`
+- `HSD_ObjFree` [ext_fns!/oext_fns!] x2: tu/lb_0219.rs:35, tu/script_game.rs:34 -> port `melee_runtime::tu/objalloc.rs:130`
+- `HSD_PadGetRawQueueCount` [ext_fns!] x1: tu/lb_0195.rs:28 -> port `melee_runtime::tu/controller.rs:107`
+- `HSD_PadGetResetSwitch` [ext_fns!] x1: tu/lb_0195.rs:29 -> port `melee_runtime::tu/controller.rs:117`
+- `HSD_PadRenewCopyStatus` [ext_fns!] x1: tu/lb_0195.rs:30 -> port `melee_runtime::tu/controller.rs:601`
+- `HSD_PadRenewGameStatus` [ext_fns!] x1: tu/lb_0195.rs:31 -> port `melee_runtime::tu/controller.rs:606`
+- `HSD_PadRenewMasterStatus` [ext_fns!] x1: tu/lb_0195.rs:32 -> port `melee_runtime::tu/controller.rs:407`
+- `HSD_PadRenewRawStatus` [ext_fns!] x1: tu/lb_0195.rs:33 -> port `melee_runtime::tu/controller.rs:139`
+- `HSD_PadRumbleAdd` [ext_fns!] x2: tu/lb_013B.rs:30, tu/mnvibration.rs:136 -> port `melee_runtime::tu/rumble.rs:114`
+- `HSD_PadRumbleOffN` [ext_fns!] x1: tu/mnvibration.rs:137 -> port `melee_runtime::tu/rumble.rs:36`
+- `HSD_PadRumbleOn` [ext_fns!] x1: tu/lb_013B.rs:31 -> port `melee_runtime::tu/rumble.rs:31`
+- `HSD_PadRumbleRemove` [ext_fns!] x1: tu/lb_013B.rs:32 -> port `melee_runtime::tu/rumble.rs:55`
+- `HSD_PadRumbleRemoveAll` [ext_fns!] x1: tu/mnvibration.rs:135 -> port `melee_runtime::tu/rumble.rs:66`
+- `HSD_Randf` [fn+panic/hooks!/oext_fns!] x4: tu/geno_game.rs:88, tu/gmregenddisp.rs:55, tu/mncharsel.rs:97, tu_ext.rs:355 -> port `melee_runtime::tu/random.rs:30`
+- `HSD_Randi` [ext_fns!/fn+panic/hook!/hooks!/oext_fns!] x17: tu/geno_game.rs:89, tu/gm_1601.rs:210, tu/gm_16A2.rs:66, tu/gm_1798.rs:233, tu/gm_17c0.rs:104, tu/gmclassic.rs:41, tu/gmdebugmode.rs:29, tu/gmevent.rs:40, tu/gmmain_lib.rs:1369, tu/gmopeningmode.rs:74, tu/gmregclear.rs:57, tu/gmregenddisp.rs:56, tu/mncharsel.rs:98, tu/mnnamenew.rs:135, tu/mnstagesel.rs:213, tu/script_game.rs:261, tu_ext.rs:360 -> port `melee_runtime::tu/random.rs:33`
+- `HSD_RObjInitAllocData` [hooks!] x1: tu/geno_tests.rs:179 -> port `melee_runtime::tu/robj.rs:51`
+- `HSD_Rumble_80378524` [ext_fns!] x1: tu/lb_0192.rs:32 -> port `melee_runtime::tu/rumble.rs:145`
+- `HSD_SetEraseColor` [ext_fns!/hook!/oext_fns!] x3: tu/gm_1798.rs:234, tu/mngallery.rs:61, tu/mnmain.rs:5331 -> port `melee_runtime::tu/displayfunc.rs:468`
+- `HSD_SetHeap` [hooks!] x1: tu/geno_tests.rs:173 -> port `melee_runtime::tu/initialize.rs:184`
+- `HSD_SetTevRegAll` [oext_fns!] x1: tu/script_game.rs:218 -> port `melee_runtime::tu/tev.rs:165`
+- `HSD_SetupChannel` [oext_fns!] x1: tu/script_game.rs:210 -> port `melee_runtime::tu/tev.rs:137`
+- `HSD_SetupPEMode` [oext_fns!] x1: tu/script_game.rs:207 -> port `melee_runtime::tu/state.rs:636`
+- `HSD_SetupRenderMode` [oext_fns!] x1: tu/script_game.rs:208 -> port `melee_runtime::tu/state.rs:646`
+- `HSD_SetupTevStage` [oext_fns!] x1: tu/script_game.rs:217 -> port `melee_runtime::tu/tev.rs:164`
+- `HSD_SisLib_803A5ACC` [ext_fns!/oext_fns!] x11: mn_inl.rs:26, tu/gmregclear.rs:58, tu/gmresult.rs:55, tu/mncharsel.rs:101, tu/mncount.rs:53, tu/mndatadel.rs:29, tu/mndeflicker.rs:42, tu/mndiagram2.rs:29, tu/mndiagram3.rs:27, tu/mnevent.rs:29, tu/mngallery.rs:62 -> port `melee_runtime::tu/sislib.rs:246`
+- `HSD_SisLib_803A5CC4` [ext_fns!/oext_fns!] x19: tu/gmfrontend.rs:341, tu/gmregclear.rs:59, tu/gmresult.rs:56, tu/lb_0192.rs:33, tu/mncount.rs:54, tu/mndatadel.rs:30, tu/mndeflicker.rs:41, tu/mndiagram.rs:33, tu/mndiagram2.rs:30, tu/mndiagram3.rs:28, tu/mnevent.rs:30, tu/mngallery.rs:63, tu/mnnamenew.rs:109, tu/mnruleplus.rs:88, tu/mnsnap.rs:213, tu/mnsound.rs:30, tu/mnsoundtest.rs:72, tu/mnstagesw.rs:64, tu/mnvibration.rs:128 -> port `melee_runtime::tu/sislib.rs:360`
+- `HSD_SisLib_803A5E70` [ext_fns!/oext_fns!] x3: tu/mn_22EC.rs:37, tu/mncharsel.rs:102, tu/mnnamenew.rs:110 -> port `melee_runtime::tu/sislib.rs:430`
+- `HSD_SisLib_803A5FBC` [oext_fns!] x1: tu/mncharsel.rs:103 -> port `melee_runtime::tu/sislib.rs:465`
+- `HSD_SisLib_803A611C` [hook!/oext_fns!] x6: tu/gm_1ADD.rs:135, tu/gmcamera.rs:152, tu/gmfrontend.rs:342, tu/gmregclear.rs:60, tu/gmresult.rs:57, tu/mncharsel.rs:104 -> port `melee_runtime::tu/sislib.rs:553`
+- `HSD_SisLib_803A6368` [ext_fns!/oext_fns!] x12: mn_inl.rs:27, tu/gm_16f1.rs:115, tu/gmregclear.rs:62, tu/gmresult.rs:59, tu/mncharsel.rs:106, tu/mncount.rs:55, tu/mndatadel.rs:28, tu/mndeflicker.rs:43, tu/mndiagram2.rs:28, tu/mndiagram3.rs:26, tu/mnevent.rs:28, tu/mngallery.rs:64 -> port `melee_runtime::tu/sislib.rs:670`
+- `HSD_SisLib_803A6478` [oext_fns!] x1: tu/mncharsel.rs:107 -> port `melee_runtime::tu/hsd_3A64.rs:39`
+- `HSD_SisLib_803A6530` [oext_fns!] x1: tu/mncharsel.rs:108 -> port `melee_runtime::tu/hsd_3A64.rs:72`
+- `HSD_SisLib_803A660C` [oext_fns!] x1: tu/mncharsel.rs:109 -> port `melee_runtime::tu/hsd_3A64.rs:78`
+- `HSD_SisLib_803A6754` [ext_fns!/oext_fns!] x14: tu/gmfrontend.rs:343, tu/gmregclear.rs:63, tu/gmresult.rs:60, tu/lb_0192.rs:34, tu/mncharsel.rs:110, tu/mncount.rs:56, tu/mndiagram.rs:32, tu/mndiagram2.rs:27, tu/mndiagram3.rs:25, tu/mnevent.rs:27, tu/mnnamenew.rs:108, tu/mnsnap.rs:212, tu/mnsoundtest.rs:71, tu/mnvibration.rs:127 -> port `melee_runtime::tu/hsd_3A64.rs:102`
+- `HSD_SisLib_803A6B98` [ext_fns!/fn+panic/hook!] x5: tu/gm_1601.rs:45, tu/lb_0192.rs:35, tu/mninfo.rs:836, tu/mnname.rs:2674, tu_ext.rs:410 -> port `melee_runtime::tu/hsd_3A64.rs:260`
+- `HSD_SisLib_803A70A0` [ext_fns!/fn+panic] x3: tu/gm_1601.rs:47, tu/lb_0192.rs:36, tu_ext.rs:415 -> port `melee_runtime::tu/hsd_3A64.rs:359`
+- `HSD_SisLib_803A746C` [oext_fns!] x1: tu/mncharsel.rs:111 -> port `melee_runtime::tu/hsd_3A64.rs:413`
+- `HSD_SisLib_803A74F0` [ext_fns!/oext_fns!] x4: tu/gmfrontend.rs:344, tu/gmresult.rs:61, tu/mncharsel.rs:112, tu/mnnamenew.rs:107 -> port `melee_runtime::tu/hsd_3A64.rs:427`
+- `HSD_SisLib_803A7548` [oext_fns!] x2: tu/gmregclear.rs:64, tu/gmresult.rs:62 -> port `melee_runtime::tu/hsd_3A64.rs:438`
+- `HSD_SisLib_803A7664` [ext_fns!] x1: tu/mnsnap.rs:211 -> port `melee_runtime::tu/hsd_3A64.rs:465`
+- `HSD_SisLib_803A84BC` [ext_fns!] x1: tu/lb_0192.rs:37 -> port `melee_runtime::tu/hsd_3A76.rs:400`
+- `HSD_SisLib_SetWideCanvas` [oext_fns!] x1: tu/gmfrontend.rs:345 -> port `melee_runtime::tu/sislib.rs:528`
+- `HSD_SListRemove` [oext_fns!] x1: tu/script_game.rs:96 -> port `melee_runtime::tu/list.rs:60`
+- `HSD_SObjLib_803A4740` [oext_fns!] x1: tu/gmregtyfall.rs:60 -> port `melee_runtime::tu/sobjlib.rs:141`
+- `HSD_SObjLib_803A49E0` [ext_fns!/oext_fns!] x3: tu/gmregtyfall.rs:62, tu/lb_01F8.rs:35, tu/mncharsel.rs:100 -> port `melee_runtime::tu/sobjlib.rs:252`
+- `HSD_SObjLib_803A54EC` [oext_fns!] x2: tu/gmregtyfall.rs:63, tu/mngallery.rs:60 -> port `melee_runtime::tu/sobjlib.rs:784`
+- `HSD_SObjLib_803A55DC` [oext_fns!] x1: tu/gmregtyfall.rs:64 -> port `melee_runtime::tu/sobjlib.rs:827`
+- `HSD_StageSlotParticlesClear` [oext_fns!] x1: tu/script_game.rs:322 -> port `melee_runtime::tu/generator.rs:70`
+- `HSD_StartRender` [ext_fns!] x1: tu/lb_0192.rs:38 -> port `melee_runtime::tu/initialize.rs:227`
+- `HSD_StateAssignTev` [oext_fns!] x1: tu/script_game.rs:215 -> port `melee_runtime::tu/tev.rs:162`
+- `HSD_StateGetCommittedTevStages` [oext_fns!] x1: tu/script_game.rs:214 -> port `melee_runtime::tu/tev.rs:161`
+- `HSD_StateInitDirect` [ext_fns!] x1: tu/lb_0146.rs:52 -> port `melee_runtime::tu/displayfunc.rs:492`
+- `HSD_StateInitTev` [oext_fns!] x1: tu/script_game.rs:213 -> port `melee_runtime::tu/tev.rs:159`
+- `HSD_StateInvalidate` [fn+panic/hooks!/oext_fns!] x4: tu/geno_game.rs:205, tu/gmfrontend.rs:346, tu/script_game.rs:209, tu_ext.rs:430 -> port `melee_runtime::tu/state.rs:665`
+- `HSD_StateSetNumChans` [oext_fns!] x1: tu/script_game.rs:211 -> port `melee_runtime::tu/tev.rs:156`
+- `HSD_StateSetNumTevStages` [oext_fns!] x1: tu/script_game.rs:216 -> port `melee_runtime::tu/tev.rs:163`
+- `HSD_StateSetNumTexGens` [oext_fns!] x1: tu/script_game.rs:212 -> port `melee_runtime::tu/tev.rs:158`
+- `HSD_TlutLoadDesc` [oext_fns!] x1: tu/gmresultplayer.rs:80 -> port `melee_runtime::tu/tobj.rs:456`
+- `HSD_TlutRemove` [oext_fns!] x1: tu/gmresultplayer.rs:81 -> port `melee_runtime::tu/tobj.rs:688`
+- `HSD_TObjAnim` [oext_fns!] x3: tu/gmresult.rs:63, tu/gmresultplayer.rs:79, tu/mngallery.rs:65 -> port `melee_runtime::tu/tobj.rs:434`
+- `HSD_TObjReqAnim` [oext_fns!] x2: tu/gmresultplayer.rs:78, tu/mngallery.rs:66 -> port `melee_runtime::tu/tobj.rs:393`
+- `HSD_VecInitAllocData` [hooks!] x1: tu/geno_tests.rs:177 -> port `melee_runtime::tu/mtx.rs:30`
+- `HSD_VICopyXFBAsync` [ext_fns!] x1: tu/lb_0192.rs:39 -> port `melee_runtime::tu/video.rs:173`
+- `ifStatus_802F6948` [ext_fns!] x1: tu/gm_17e4.rs:46 -> port `melee_world::tu/ifstatus.rs:863`
+- `ifStatus_802F6E3C` [ext_fns!] x1: tu/gm_17e4.rs:47 -> port `melee_world::tu/ifstatus.rs:927`
+- `ifStock_802FA2D0` [ext_fns!] x1: tu/gmevent.rs:127 -> port `melee_world::tu/ifstock.rs:1179`
+- `IsNameListFull` [oext_fns!] x1: tu/mncharsel.rs:113 -> port `melee_modes::tu/mnname.rs:420`
+- `IsNameNotAllowed` [ext_fns!] x1: tu/mnnamenew.rs:118 -> port `melee_modes::tu/mnname.rs:2580`
+- `IsNameUnique` [ext_fns!] x1: tu/mnnamenew.rs:113 -> port `melee_modes::tu/mnname.rs:523`
+- `it_8026B40C` [hooks!/oext_fns!] x2: tu/geno_game.rs:54, tu/script_game.rs:64 -> port `melee_items::tu/it_26B1.rs:247`
+- `it_8026B894` [hooks!] x1: tu/geno_game.rs:55 -> port `melee_items::itlib.rs:242`
+- `it_8026BB68` [hooks!] x1: tu/geno_game.rs:56 -> port `melee_items::tu/it_26B1.rs:541`
+- `it_8026D018` [hooks!] x1: tu/geno_tests.rs:120 -> port `melee_items::tu/itspawn.rs:470`
+- `it_8026D324` [hooks!/oext_fns!] x2: tu/geno_tests.rs:121, tu/script_game.rs:260 -> port `melee_items::tu/itspawn.rs:512`
+- `it_8026E9A4` [hooks!] x1: tu/geno_game.rs:172 -> port `melee_items::tu/itgroundcoll.rs:659`
+- `it_8026FCF8` [hooks!] x1: tu/geno_game.rs:169 -> port `melee_items::tu/itcoll.rs:224`
+- `it_80270CD8` [oext_fns!] x1: tu/script_game.rs:182 -> port `melee_items::itlib3.rs:289`
+- `it_80270E30` [oext_fns!] x1: tu/script_game.rs:183 -> port `melee_items::tu/itcoll.rs:610`
+- `it_8027129C` [hooks!] x1: tu/geno_game.rs:170 -> port `melee_items::tu/itcoll.rs:723`
+- `it_80272460` [hooks!] x1: tu/geno_game.rs:171 -> port `melee_items::tu/itcoll.rs:1129`
+- `it_80275594` [hooks!] x1: tu/geno_game.rs:173 -> port `melee_items::itlib.rs:637`
+- `it_8027B5B0` [oext_fns!] x1: tu/script_game.rs:184 -> port `melee_items::tu/itzako.rs:188`
+- `it_8027C56C` [oext_fns!] x1: tu/script_game.rs:185 -> port `melee_items::tu/itzako.rs:528`
+- `it_802DC4BC` [oext_fns!] x1: tu/script_game.rs:187 -> port `melee_items::tu/itlikelike.rs:1245`
+- `it_802DD7F0` [oext_fns!] x1: tu/script_game.rs:188 -> port `melee_items::tu/itnokonoko.rs:528`
+- `it_802EA9FC` [oext_fns!] x1: tu/script_game.rs:186 -> port `melee_items::tu/itleadead.rs:984`
+- `it_ResetStageArticleTable` [hooks!] x1: tu/geno_game.rs:53 -> port `melee_items::tu/it_26B1.rs:195`
+- `Item_80266F3C` [oext_fns!] x1: tu/script_game.rs:158 -> port `melee_items::tu/item.rs:307`
+- `Item_80266FA8` [ext_fns!/oext_fns!] x2: tu/gm_1798.rs:235, tu/gmregtyfall.rs:65 -> port `melee_items::tu/item.rs:320`
+- `Item_80266FCC` [ext_fns!/oext_fns!] x2: tu/gm_1798.rs:236, tu/gmregtyfall.rs:67 -> port `melee_items::tu/item.rs:325`
+- `Item_80268B18` [hooks!/oext_fns!] x2: tu/geno_game.rs:175, tu/script_game.rs:159 -> port `melee_items::tu/item.rs:1156`
+- `Item_80268E5C` [hooks!] x1: tu/geno_game.rs:176 -> port `melee_items::tu/item.rs:1274`
+- `Item_80269CA0` [oext_fns!] x1: tu/script_game.rs:160 -> port `melee_items::item.rs:12`
+- `Item_ScriptCommitDamage` [oext_fns!] x1: tu/script_game.rs:362 -> port `melee_items::tu/item.rs:1913`
+- `Item_ScriptSpawnAtCap` [hooks!] x1: tu/geno_game.rs:203 -> port `melee_items::tu/item.rs:1126`
+- `Item_ScriptSpawnCapTest` [hooks!] x1: tu/geno_game.rs:204 -> port `melee_items::tu/item.rs:1136`
+- `itEvYoshiEgg_Spawn` [ext_fns!] x1: tu/gmevent.rs:128 -> port `melee_items::tu/itevyoshiegg.rs:105`
+- `lb_8000B1CC` [ext_fns!/hooks!/oext_fns!] x12: tu/geno_game.rs:162, tu/gmregclear.rs:93, tu/gmresult.rs:131, tu/gmresultplayer.rs:83, tu/mncharsel.rs:203, tu/mndiagram.rs:44, tu/mndiagram2.rs:63, tu/mndiagram3.rs:49, tu/mnnamenew.rs:124, tu/mnstagesel.rs:193, tu/mnvibration.rs:134, tu/script_game.rs:231 -> port `melee_runtime::tu/lb_00B0.rs:245`
+- `lb_8000BA0C` [oext_fns!] x2: tu/gmregtyfall.rs:100, tu/gmresultplayer.rs:84 -> port `melee_runtime::tu/lb_00B0.rs:354`
+- `lb_8000C07C` [oext_fns!] x1: tu/gmresult.rs:132 -> port `melee_runtime::tu/lb_00B0.rs:486`
+- `lb_8000C0E8` [oext_fns!] x1: tu/gmresult.rs:133 -> port `melee_runtime::tu/lb_00B0.rs:493`
+- `lb_8000C1C0` [ext_fns!/oext_fns!] x3: tu/gmregenddisp.rs:68, tu/gmregtyfall.rs:101, tu/mnstagesel.rs:194 -> port `melee_runtime::tu/lb_00B0.rs:506`
+- `lb_8000C290` [oext_fns!] x2: tu/gmregenddisp.rs:69, tu/gmregtyfall.rs:102 -> port `melee_runtime::tu/lb_00B0.rs:520`
+- `lb_8000C2F8` [ext_fns!] x1: tu/mnstagesel.rs:195 -> port `melee_runtime::tu/lb_00B0.rs:527`
+- `lb_8000FCDC` [ext_fns!/oext_fns!] x2: tu/gm_1798.rs:268, tu/hsd.rs:28 -> port `melee_runtime::tu/lb_00F9.rs:227`
+- `lb_80011AC4` [ext_fns!/oext_fns!] x5: tu/gm_1798.rs:269, tu/gmregclear.rs:94, tu/gmregenddisp.rs:70, tu/gmregtyfall.rs:103, tu/gmresult.rs:134 -> port `melee_runtime::tu/lbspdisplay.rs:296`
+- `lb_80011E24` [fn+panic/hook!] x9: tu/gmcamera.rs:320, tu/gmpause.rs:79, tu/mninfo.rs:817, tu/mnitemsw.rs:1382, tu/mnlanguage.rs:345, tu/mnmain.rs:5009, tu/mnmainrule.rs:2267, tu/mnname.rs:2645, tu_ext.rs:1106 -> port `melee_runtime::tu/lbspdisplay.rs:441`
+- `lb_8001204C` [ext_fns!/oext_fns!] x2: tu/gmregclear.rs:95, tu/mnruleplus.rs:74 -> port `melee_runtime::tu/lbspdisplay.rs:447`
+- `lb_800121FC` [ext_fns!/oext_fns!] x3: tu/gm_1798.rs:270, tu/gmregclear.rs:96, tu/gmregtyfall.rs:104 -> port `melee_runtime::tu/lbspdisplay.rs:462`
+- `lb_800122C8` [oext_fns!] x1: tu/gmregclear.rs:97 -> port `melee_runtime::tu/lbspdisplay.rs:477`
+- `lb_800138CC` [oext_fns!] x1: tu/gmregclear.rs:98 -> port `melee_runtime::tu/lbspdisplay.rs:791`
+- `lb_800138D8` [oext_fns!] x1: tu/gmregclear.rs:99 -> port `melee_runtime::tu/lbspdisplay.rs:796`
+- `lb_800138EC` [oext_fns!] x1: tu/gmregclear.rs:100 -> port `melee_runtime::tu/lbspdisplay.rs:805`
+- `lb_80013B14` [oext_fns!] x2: tu/gmregenddisp.rs:71, tu/gmregtyfall.rs:105 -> port `melee_runtime::tu/lbspdisplay.rs:853`
+- `lb_80014258` [ext_fns!] x1: tu/lb_0219.rs:40 -> port `melee_modes::tu/lb_013B.rs:186`
+- `lb_80014498` [ext_fns!] x1: tu/lb_0219.rs:41 -> port `melee_modes::tu/lb_013B.rs:241`
+- `lb_800144C8` [ext_fns!] x1: tu/lb_0219.rs:42 -> port `melee_modes::tu/lb_013B.rs:250`
+- `lb_80014574` [oext_fns!] x2: tu/gmresult.rs:135, tu/mncharsel.rs:204 -> port `melee_modes::tu/lb_013B.rs:271`
+- `lb_800145F4` [ext_fns!/oext_fns!] x2: tu/mncharsel.rs:205, tu/mnstagesel.rs:196 -> port `melee_modes::tu/lb_013B.rs:283`
+- `lb_800192A8` [ext_fns!] x1: tu/lb_0195.rs:49 -> port `melee_modes::tu/lb_0192.rs:119`
+- `lb_8001C2D8` [hook!] x1: tu/gmboot.rs:101 -> port `melee_runtime::tu/lbcardnew.rs:1119`
+- `lb_8001C600` [ext_fns!] x1: tu/lb_0195.rs:50 -> port `melee_runtime::tu/lbcardgame.rs:178`
+- `lb_8001CC84` [ext_fns!] x1: tu/lb_0195.rs:51 -> port `melee_runtime::tu/lbcardgame.rs:333`
+- `lb_8001CDB4` [ext_fns!] x1: tu/mnsnap.rs:216 -> port `melee_runtime::tu/lbcardgame.rs:366`
+- `lbArchive_80016DBC` [hook!] x4: tu/gm_1ADD.rs:175, tu/gmapproach.rs:49, tu/gmpause.rs:70, tu/gmprogressive.rs:128 -> port `melee_runtime::tu/lbarchive.rs:216`
+- `lbArchive_80016EFC` [ext_fns!/oext_fns!] x3: tu/gmresultplayer.rs:97, tu/mncharsel.rs:184, tu/mnstagesel.rs:198 -> port `melee_runtime::tu/lbarchive.rs:223`
+- `lbArchive_80017040` [ext_fns!] x1: tu/lb_013B.rs:33 -> port `melee_runtime::tu/lbarchive.rs:251`
+- `lbArchive_LoadArchive` [ext_fns!/hook!/oext_fns!] x6: tu/gm_1798.rs:265, tu/gmboot.rs:138, tu/gmcamera.rs:333, tu/gmresultplayer.rs:96, tu/mncharsel.rs:185, tu/mnstagesel.rs:197 -> port `melee_runtime::tu/lbarchive.rs:203`
+- `lbArchive_LoadSections` [hook!] x6: tu/mnhyaku.rs:466, tu/mninfo.rs:893, tu/mninfobonus.rs:792, tu/mnlanguage.rs:398, tu/mnmainrule.rs:2388, tu/mnname.rs:2752 -> port `melee_runtime::tu/lbarchive.rs:187`
+- `lbArchive_LoadSymbols` [ext_fns!/hook!] x3: tu/gmevent.rs:129, tu/lb_0219.rs:37, tu/mnmain.rs:5302 -> port `melee_runtime::tu/lbarchive.rs:209`
+- `lbAudioAx_80023090` [ext_fns!] x1: tu/mnsoundtest.rs:47 -> port `melee_runtime::tu/lbaudio_ax.rs:1624`
+- `lbAudioAx_80023694` [ext_fns!/oext_fns!] x2: tu/gmregtyfall.rs:94, tu/mnsoundtest.rs:48 -> port `melee_runtime::tu/lbaudio_ax.rs:1736`
+- `lbAudioAx_800236DC` [ext_fns!/oext_fns!] x4: tu/gm_17c0.rs:210, tu/gmdebugmode.rs:40, tu/mngallery.rs:70, tu/mnsoundtest.rs:49 -> port `melee_runtime::tu/lbaudio_ax.rs:1746`
+- `lbAudioAx_800237A8` [ext_fns!/oext_fns!] x7: tu/gm_17c0.rs:211, tu/gmregenddisp.rs:67, tu/gmregtyfall.rs:95, tu/gmresultplayer.rs:89, tu/mncharsel.rs:186, tu/mndatadel.rs:13, tu/script_game.rs:190 -> port `melee_runtime::tu/lbaudio_ax.rs:1789`
+- `lbAudioAx_80023870` [oext_fns!] x1: tu/mncharsel.rs:187 -> port `melee_runtime::tu/lbaudio_ax.rs:1800`
+- `lbAudioAx_80023968` [ext_fns!] x1: tu/mnsoundtest.rs:50 -> port `melee_runtime::tu/lbaudio_ax.rs:1829`
+- `lbAudioAx_80023A44` [ext_fns!] x1: tu/mnsoundtest.rs:51 -> port `melee_runtime::tu/lbaudio_ax.rs:1839`
+- `lbAudioAx_80023B24` [ext_fns!] x1: tu/mnsoundtest.rs:52 -> port `melee_runtime::tu/lbaudio_ax.rs:1860`
+- `lbAudioAx_80023F28` [ext_fns!/oext_fns!] x8: tu/gmregclear.rs:91, tu/gmresult.rs:128, tu/mncharsel.rs:188, tu/mngallery.rs:71, tu/mnnamenew.rs:87, tu/mnsoundtest.rs:53, tu/mnstagesel.rs:171, tu/script_game.rs:191 -> port `melee_runtime::tu/lbaudio_ax.rs:1930`
+- `lbAudioAx_80024030` [ext_fns!/oext_fns!] x10: mn_inl.rs:22, tu/gmdebugmode.rs:41, tu/hsd.rs:32, tu/mncharsel.rs:189, tu/mncount.rs:80, tu/mndiagram.rs:13, tu/mndiagram2.rs:15, tu/mndiagram3.rs:12, tu/mnevent.rs:19, tu/mngallery.rs:79 -> port `melee_runtime::tu/lbaudio_ax.rs:1941`
+- `lbAudioAx_8002411C` [oext_fns!] x1: tu/mncharsel.rs:190 -> port `melee_runtime::tu/lbaudio_ax.rs:1965`
+- `lbAudioAx_8002438C` [ext_fns!] x2: tu/gm_17c0.rs:212, tu/gmevent.rs:130 -> port `melee_runtime::tu/lbaudio_ax.rs:2009`
+- `lbAudioAx_800245F4` [ext_fns!] x1: tu/mnsoundtest.rs:54 -> port `melee_runtime::tu/lbaudio_ax.rs:2088`
+- `lbAudioAx_80024614` [ext_fns!] x1: tu/mnsoundtest.rs:55 -> port `melee_runtime::tu/lbaudio_ax.rs:2099`
+- `lbAudioAx_80024B94` [oext_fns!] x1: tu/script_game.rs:192 -> port `melee_runtime::tu/lbaudio_ax.rs:2217`
+- `lbAudioAx_80024BD0` [ext_fns!] x1: tu/mnsound.rs:17 -> port `melee_runtime::tu/lbaudio_ax.rs:2228`
+- `lbAudioAx_80024C08` [ext_fns!] x1: tu/mnsound.rs:18 -> port `melee_runtime::tu/lbaudio_ax.rs:2235`
+- `lbAudioAx_80024E50` [oext_fns!] x1: tu/mngallery.rs:72 -> port `melee_runtime::tu/lbaudio_ax.rs:2328`
+- `lbAudioAx_80024F08` [ext_fns!] x1: tu/lb_0192.rs:40 -> port `melee_runtime::tu/lbaudio_ax.rs:2356`
+- `lbAudioAx_80024F6C` [ext_fns!] x1: tu/lb_0192.rs:41 -> port `melee_runtime::tu/lbaudio_ax.rs:2363`
+- `lbAudioAx_80026E84` [ext_fns!/oext_fns!] x5: tu/gmcameramode.rs:52, tu/gmclassic.rs:101, tu/gmdebugmode.rs:42, tu/gmevent.rs:131, tu/mncharsel.rs:191 -> port `melee_runtime::tu/lbaudio_ax.rs:2923`
+- `lbAudioAx_80026EBC` [ext_fns!] x3: tu/gmcameramode.rs:53, tu/gmclassic.rs:102, tu/gmevent.rs:132 -> port `melee_runtime::tu/lbaudio_ax.rs:2941`
+- `lbAudioAx_80026F2C` [ext_fns!/oext_fns!] x6: tu/gmcameramode.rs:54, tu/gmclassic.rs:103, tu/gmdebugmode.rs:43, tu/gmevent.rs:133, tu/gmregtyfall.rs:96, tu/mncharsel.rs:192 -> port `melee_runtime::tu/lbaudio_ax.rs:2962`
+- `lbAudioAx_8002702C` [ext_fns!/oext_fns!] x6: tu/gmcameramode.rs:55, tu/gmclassic.rs:104, tu/gmdebugmode.rs:44, tu/gmevent.rs:134, tu/gmregtyfall.rs:97, tu/mncharsel.rs:193 -> port `melee_runtime::tu/lbaudio_ax.rs:3003`
+- `lbAudioAx_80027648` [ext_fns!/oext_fns!] x4: tu/gmdebugmode.rs:46, tu/gmevent.rs:136, tu/gmregtyfall.rs:99, tu/mncharsel.rs:195 -> port `melee_runtime::tu/lbaudio_ax.rs:3106`
+- `lbAudioAx_80027AB0` [oext_fns!] x1: tu/mndatadel.rs:14 -> port `melee_runtime::tu/lbaudio_ax.rs:3200`
+- `lbAudioAx_80027DBC` [ext_fns!] x1: tu/lb_0195.rs:46 -> port `melee_runtime::tu/lbaudio_ax.rs:3233`
+- `lbAudioAx_80028B6C` [ext_fns!] x2: tu/gm_17c0.rs:213, tu/gmevent.rs:137 -> port `melee_runtime::tu/lbaudio_ax.rs:3563`
+- `lbAudioAx_80028B90` [ext_fns!] x2: tu/gm_17c0.rs:214, tu/gmevent.rs:138 -> port `melee_runtime::tu/lbaudio_ax.rs:3570`
+- `lbAudioAx_StageSlotMusic` [oext_fns!] x1: tu/script_game.rs:312 -> port `melee_runtime::tu/lbaudio_ax.rs:3575`
+- `lbBgFlash_800205F0` [ext_fns!] x1: tu/gm_17c0.rs:215 -> port `melee_runtime::tu/lbbgflash.rs:270`
+- `lbBgFlash_8002063C` [ext_fns!] x2: tu/gm_17c0.rs:216, tu/gmevent.rs:139 -> port `melee_runtime::tu/lbbgflash.rs:279`
+- `lbBgFlash_80020688` [ext_fns!] x2: tu/gm_17c0.rs:217, tu/gmevent.rs:140 -> port `melee_runtime::tu/lbbgflash.rs:288`
+- `lbBgFlash_800206D4` [ext_fns!] x2: tu/gm_1798.rs:266, tu/gm_17c0.rs:218 -> port `melee_runtime::tu/lbbgflash.rs:297`
+- `lbBgFlash_800208EC` [ext_fns!] x2: tu/gm_1798.rs:267, tu/lb_0219.rs:38 -> port `melee_runtime::tu/lbbgflash.rs:339`
+- `lbBgFlash_InitState` [ext_fns!] x1: tu/lb_0219.rs:39 -> port `melee_runtime::tu/lbbgflash.rs:321`
+- `lbBgFlash_SetFlashScale` [ext_fns!] x1: tu/gmevent.rs:141 -> port `melee_modes::tu/lb_0219.rs:77`
+- `lbCardGame_LoadArchive` [ext_fns!/oext_fns!] x3: tu/gm_17c0.rs:219, tu/gmfrontend.rs:426, tu/mncharsel.rs:196 -> port `melee_runtime::tu/lbcardgame.rs:464`
+- `lbCardGame_SaveChanges` [ext_fns!/oext_fns!] x7: tu/gm_17c0.rs:220, tu/mndatadel.rs:52, tu/mndeflicker.rs:48, tu/mnnamenew.rs:125, tu/mnsound.rs:35, tu/mnstagesw.rs:71, tu/mnvibration.rs:148 -> port `melee_runtime::tu/lbcardgame.rs:374`
+- `lbCardNew_AllocWorkArea` [ext_fns!/oext_fns!] x4: tu/gm_17c0.rs:221, tu/gmcameramode.rs:57, tu/gmfrontend.rs:427, tu/mncharsel.rs:197 -> port `melee_runtime::tu/lbcardnew.rs:1158`
+- `lbCardNew_CompleteNextTask` [ext_fns!] x2: tu/lb_0195.rs:47, tu/mnsnap.rs:215 -> port `melee_runtime::tu/lbcardnew.rs:811`
+- `lbColl_80007BCC` [hooks!] x1: tu/geno_tests.rs:171 -> port `melee_runtime::tu/lbcollision.rs:914`
+- `lbColl_80008440` [hooks!] x1: tu/geno_game.rs:87 -> port `melee_runtime::tu/lbcollision.rs:1089`
+- `lbColl_80008688` [oext_fns!] x1: tu/script_game.rs:110 -> port `melee_runtime::tu/lbcollision.rs:1109`
+- `lbColl_80009F54` [oext_fns!] x1: tu/script_game.rs:111 -> port `melee_runtime::tu/lbcollision.rs:1460`
+- `lbColl_8000A244` [oext_fns!] x1: tu/script_game.rs:112 -> port `melee_runtime::tu/lbcollision.rs:1512`
+- `lbColl_8000A584` [oext_fns!] x1: tu/script_game.rs:113 -> port `melee_runtime::tu/lbcollision.rs:1542`
+- `lbDObjReqAnimAll` [oext_fns!] x1: tu/gmresultplayer.rs:86 -> port `melee_runtime::tu/lb_00B0.rs:389`
+- `lbDObjSetRateAll` [oext_fns!] x1: tu/gmresultplayer.rs:85 -> port `melee_runtime::tu/lb_00B0.rs:359`
+- `lbDvd_80017700` [ext_fns!] x2: tu/gmclassic.rs:106, tu/gmevent.rs:142 -> port `melee_runtime::tu/lbdvd.rs:308`
+- `lbDvd_8001823C` [oext_fns!] x1: tu/gmfrontend.rs:428 -> port `melee_runtime::tu/lbdvd.rs:691`
+- `lbDvd_80018254` [ext_fns!/oext_fns!] x6: tu/gmcameramode.rs:59, tu/gmclassic.rs:107, tu/gmevent.rs:143, tu/gmfrontend.rs:429, tu/mncharsel.rs:199, tu/mnstagesel.rs:200 -> port `melee_runtime::tu/lbdvd.rs:695`
+- `lbDvd_80018C2C` [ext_fns!] x2: tu/gmclassic.rs:108, tu/gmevent.rs:144 -> port `melee_runtime::tu/lbdvd.rs:887`
+- `lbDvd_80018C6C` [ext_fns!/oext_fns!] x3: tu/gmclassic.rs:109, tu/gmevent.rs:145, tu/gmfrontend.rs:430 -> port `melee_runtime::tu/lbdvd.rs:893`
+- `lbDvd_GetPreloadCacheScene` [ext_fns!/oext_fns!] x5: tu/gmcameramode.rs:60, tu/gmclassic.rs:110, tu/gmevent.rs:146, tu/mncharsel.rs:200, tu/mnstagesel.rs:199 -> port `melee_runtime::tu/lbdvd.rs:687`
+- `lbDvd_SetupVsPreloadCache` [ext_fns!] x2: tu/gmcameramode.rs:62, tu/gmclassic.rs:111 -> port `melee_runtime::tu/lbdvd.rs:250`
+- `lbFile_8001634C` [oext_fns!] x1: tu/script_game.rs:198 -> port `melee_runtime::tu/lbfile.rs:127`
+- `lbFile_8001668C` [oext_fns!] x1: tu/script_game.rs:199 -> port `melee_runtime::tu/lbfile.rs:190`
+- `lbFile_80016760` [ext_fns!] x1: tu/lb_01F8.rs:42 -> port `melee_runtime::tu/lbfile.rs:209`
+- `lbGetJObjCurrFrame` [oext_fns!] x1: tu/gmresultplayer.rs:87 -> port `melee_runtime::tu/lb_00B0.rs:444`
+- `lbHeap_80015BD0` [oext_fns!] x1: tu/script_game.rs:200 -> port `melee_runtime::tu/lbheap.rs:219`
+- `lbHeap_80015CA8` [oext_fns!] x1: tu/script_game.rs:201 -> port `melee_runtime::tu/lbheap.rs:253`
+- `lbHeap_Capacity` [oext_fns!] x1: tu/script_game.rs:202 -> port `melee_runtime::tu/lbheap.rs:406`
+- `lbHeap_Free` [oext_fns!] x1: tu/script_game.rs:203 -> port `melee_runtime::tu/lbheap.rs:415`
+- `lbHeap_StageSlotDump` [oext_fns!] x1: tu/script_game.rs:310 -> port `melee_runtime::tu/lbheap.rs:445`
+- `lbHeap_StageSlotTryAlloc` [oext_fns!] x1: tu/script_game.rs:309 -> port `melee_runtime::tu/lbheap.rs:436`
+- `lbLang_GetLanguageSetting` [ext_fns!] x2: tu/gm_16f1.rs:192, tu/gm_1736.rs:65 -> port `melee_runtime::tu/lblanguage.rs:26`
+- `lbLang_GetSavedLanguage` [oext_fns!] x1: tu/mndatadel.rs:53 -> port `melee_runtime::tu/lblanguage.rs:49`
+- `lbLang_IsSavedLanguageJP` [ext_fns!/oext_fns!] x3: tu/lb_0192.rs:42, tu/mncharsel.rs:201, tu/mnsnap.rs:217 -> port `melee_runtime::tu/lblanguage.rs:61`
+- `lbLang_IsSavedLanguageUS` [ext_fns!/oext_fns!] x10: tu/gm_17ad.rs:15, tu/gm_17ba.rs:16, tu/gmregclear.rs:92, tu/gmresult.rs:129, tu/gmresultplayer.rs:98, tu/mncharsel.rs:202, tu/mndatadel.rs:55, tu/mndiagram.rs:46, tu/mnnamenew.rs:126, tu/mnstagesel.rs:201 -> port `melee_runtime::tu/lblanguage.rs:66`
+- `lbLang_IsSettingUS` [ext_fns!] x1: tu/gm_16f1.rs:193 -> port `melee_runtime::tu/lblanguage.rs:44`
+- `lbLang_SetSavedLanguage` [oext_fns!] x1: tu/mndatadel.rs:54 -> port `melee_runtime::tu/lblanguage.rs:54`
+- `lbMthp8001FAA0` [hook!] x1: tu/gm_1A9B.rs:140 -> port `melee_modes::tu/lb_01F8.rs:146`
+- `lbMthp_8001F410` [hook!/oext_fns!] x2: tu/gmhowto.rs:132, tu/mngallery.rs:73 -> port `melee_runtime::tu/lbmthp.rs:484`
+- `lbMthp_8001F578` [oext_fns!] x1: tu/mngallery.rs:74 -> port `melee_runtime::tu/lbmthp.rs:520`
+- `lbMthp_8001F604` [oext_fns!] x1: tu/mngallery.rs:75 -> port `melee_runtime::tu/lbmthp.rs:550`
+- `lbMthp_8001F624` [oext_fns!] x1: tu/mngallery.rs:76 -> port `melee_runtime::tu/lbmthp.rs:564`
+- `lbMthp_8001F67C` [hook!/oext_fns!] x2: tu/gmhowto.rs:107, tu/mngallery.rs:77 -> port `melee_runtime::tu/lbmthp.rs:579`
+- `lbMthp_8001F800` [ext_fns!/oext_fns!] x2: tu/gmgover.rs:40, tu/mngallery.rs:78 -> port `melee_runtime::tu/lbmthp.rs:603`
+- `lbSnap_8001D2BC` [ext_fns!] x1: tu/lb_0195.rs:48 -> port `melee_runtime::tu/lbsnap.rs:143`
+- `lbSnap_8001D338` [ext_fns!] x1: tu/mnsnap.rs:218 -> port `melee_runtime::tu/lbsnap.rs:153`
+- `lbSnap_8001D350` [ext_fns!] x1: tu/mnsnap.rs:219 -> port `melee_runtime::tu/lbsnap.rs:157`
+- `lbSnap_8001D394` [ext_fns!] x1: tu/mnsnap.rs:220 -> port `melee_runtime::tu/lbsnap.rs:165`
+- `lbSnap_8001D3B0` [ext_fns!] x1: tu/mnsnap.rs:221 -> port `melee_runtime::tu/lbsnap.rs:169`
+- `lbSnap_8001D3CC` [ext_fns!] x1: tu/mnsnap.rs:222 -> port `melee_runtime::tu/lbsnap.rs:173`
+- `lbSnap_8001D3E8` [ext_fns!] x1: tu/mnsnap.rs:223 -> port `melee_runtime::tu/lbsnap.rs:177`
+- `lbSnap_8001D40C` [ext_fns!] x1: tu/mnsnap.rs:224 -> port `melee_runtime::tu/lbsnap.rs:181`
+- `lbSnap_8001D5FC` [ext_fns!] x1: tu/mnsnap.rs:225 -> port `melee_runtime::tu/lbsnap.rs:244`
+- `lbSnap_8001D7B0` [ext_fns!] x1: tu/mnsnap.rs:226 -> port `melee_runtime::tu/lbsnap.rs:259`
+- `lbSnap_8001DE8C` [ext_fns!] x1: tu/mnsnap.rs:227 -> port `melee_runtime::tu/lbsnap.rs:400`
+- `lbSnap_8001DF6C` [ext_fns!] x1: tu/mnsnap.rs:228 -> port `melee_runtime::tu/lbsnap.rs:431`
+- `lbSnap_8001E058` [ext_fns!] x1: tu/mnsnap.rs:229 -> port `melee_runtime::tu/lbsnap.rs:458`
+- `lbSnap_8001E204` [ext_fns!] x1: tu/gmcameramode.rs:63 -> port `melee_runtime::tu/lbsnap.rs:481`
+- `lbSnap_8001E210` [ext_fns!] x1: tu/gmcameramode.rs:64 -> port `melee_runtime::tu/lbsnap.rs:485`
+- `lbSnap_8001E218` [ext_fns!] x1: tu/gmcameramode.rs:65 -> port `melee_runtime::tu/lbsnap.rs:489`
+- `lbTime_8000AEC8` [ext_fns!] x2: tu/gm_1736.rs:66, tu/gm_17c0.rs:222 -> port `melee_runtime::tu/lbtime.rs:41`
+- `lbTime_8000AEE4` [ext_fns!] x1: tu/gm_1736.rs:67 -> port `melee_runtime::tu/lbtime.rs:45`
+- `lbTime_8000AF74` [ext_fns!] x1: tu/gm_17c0.rs:223 -> port `melee_runtime::tu/lbtime.rs:66`
+- `lbTime_GetTimeInSeconds` [ext_fns!] x1: tu/gm_16f1.rs:194 -> port `melee_runtime::tu/lbtime.rs:76`
+- `lbVector_Angle` [ext_fns!] x1: tu/lb_020A.rs:49 -> port `melee_runtime::tu/lbvector.rs:194`
+- `lbVector_Diff` [ext_fns!] x1: tu/lb_020A.rs:50 -> port `melee_runtime::tu/lbvector.rs:169`
+- `lbVector_Normalize` [ext_fns!] x1: tu/lb_020A.rs:51 -> port `melee_runtime::tu/lbvector.rs:126`
+- `lbVector_WorldToScreen` [oext_fns!] x1: tu/gmresult.rs:130 -> port `melee_runtime::tu/lbvector.rs:383`
+- `memcmp` [hooks!] x1: tu/geno_tests.rs:57 -> port `melee_runtime::tu/card.rs:37`
+- `memcpy` [hooks!] x1: tu/geno_tests.rs:59 -> port `melee_runtime::tu/card.rs:29`
+- `memset` [hooks!] x1: tu/geno_tests.rs:58 -> port `melee_runtime::tu/card.rs:33`
+- `memzero` [ext_fns!/oext_fns!] x8: tu/gm_16f1.rs:195, tu/gm_1736.rs:68, tu/gm_1798.rs:271, tu/gm_17c0.rs:224, tu/gmregclear.rs:101, tu/gmresult.rs:136, tu/gmresultplayer.rs:88, tu/mnsnap.rs:214 -> port `melee_runtime::tu/lb_00B0.rs:497`
+- `mn_802295AC` [ext_fns!/oext_fns!] x2: tu/mnevent.rs:20, tu/mnnamenew.rs:88 -> port `melee_modes::tu/mnmain.rs:1725`
+- `mn_80229624` [ext_fns!/oext_fns!] x10: mn_inl.rs:23, tu/gmfrontend.rs:431, tu/mncount.rs:83, tu/mndatadel.rs:15, tu/mndeflicker.rs:49, tu/mndiagram.rs:14, tu/mndiagram2.rs:16, tu/mndiagram3.rs:13, tu/mnevent.rs:21, tu/mngallery.rs:80 -> port `melee_modes::tu/mnmain.rs:1736`
+- `mn_80229860` [ext_fns!/oext_fns!] x3: tu/mnevent.rs:22, tu/mnruleplus.rs:75, tu/mnstagesw.rs:51 -> port `melee_modes::tu/mnmain.rs:1784`
+- `mn_80229894` [ext_fns!/oext_fns!] x13: tu/mn_22EC.rs:43, tu/mncount.rs:84, tu/mndatadel.rs:16, tu/mndeflicker.rs:50, tu/mndiagram.rs:15, tu/mndiagram2.rs:17, tu/mndiagram3.rs:14, tu/mnevent.rs:23, tu/mngallery.rs:81, tu/mnsnap.rs:198, tu/mnsound.rs:19, tu/mnsoundtest.rs:56, tu/mnvibration.rs:123 -> port `melee_modes::tu/mnmain.rs:1789`
+- `mn_80229B2C` [ext_fns!] x1: tu/mnnamenew.rs:89 -> port `melee_modes::tu/mnmain.rs:1926`
+- `mn_80229DC0` [ext_fns!] x1: tu/mnnamenew.rs:90 -> port `melee_modes::tu/mnmain.rs:2143`
+- `mn_8022BA1C` [oext_fns!] x1: tu/mncharsel.rs:207 -> port `melee_modes::tu/mnmain.rs:3070`
+- `mn_8022BCF8` [ext_fns!] x1: tu/mnnamenew.rs:91 -> port `melee_modes::tu/mnmain.rs:3150`
+- `mn_8022BD6C` [oext_fns!] x1: tu/mngallery.rs:82 -> port `melee_modes::tu/mnmain.rs:3171`
+- `mn_8022BD8C` [oext_fns!] x1: tu/mngallery.rs:83 -> port `melee_modes::tu/mnmain.rs:3175`
+- `mn_8022BE34` [ext_fns!] x1: tu/mnnamenew.rs:92 -> port `melee_modes::tu/mnmain.rs:3203`
+- `mn_8022BEDC` [ext_fns!] x1: tu/mnnamenew.rs:93 -> port `melee_modes::tu/mnmain.rs:3249`
+- `mn_8022C304` [ext_fns!] x1: tu/mnnamenew.rs:94 -> port `melee_modes::tu/mnmain.rs:3410`
+- `mn_8022EA08` [ext_fns!] x1: tu/mnsoundtest.rs:57 -> port `melee_modes::tu/mnmain.rs:4813`
+- `mn_8022EA78` [oext_fns!] x2: tu/mncount.rs:85, tu/mnevent.rs:24 -> port `melee_modes::tu/mnmain.rs:4827`
+- `mn_8022EBDC` [ext_fns!] x2: tu/mn_22EC.rs:44, tu/mnnamenew.rs:95 -> port `melee_modes::tu/mnmain.rs:4866`
+- `mn_8022EC18` [ext_fns!/oext_fns!] x6: tu/mndatadel.rs:17, tu/mndeflicker.rs:51, tu/mnevent.rs:25, tu/mnsound.rs:20, tu/mnsoundtest.rs:58, tu/mnvibration.rs:124 -> port `melee_modes::tu/mn_22EC.rs:57`
+- `mn_8022ED6C` [ext_fns!/oext_fns!] x11: tu/mncount.rs:86, tu/mndeflicker.rs:52, tu/mndiagram.rs:19, tu/mndiagram2.rs:19, tu/mndiagram3.rs:15, tu/mnevent.rs:26, tu/mnnamenew.rs:96, tu/mnruleplus.rs:76, tu/mnsound.rs:21, tu/mnstagesw.rs:52, tu/mnvibration.rs:125 -> port `melee_modes::tu/mn_22EC.rs:96`
+- `mn_8022EE84` [ext_fns!/oext_fns!] x2: tu/mndatadel.rs:18, tu/mnsoundtest.rs:59 -> port `melee_modes::tu/mn_22EC.rs:130`
+- `mn_8022EFD8` [ext_fns!/oext_fns!] x4: tu/mndatadel.rs:19, tu/mndiagram.rs:20, tu/mnnamenew.rs:97, tu/mnsoundtest.rs:60 -> port `melee_modes::tu/mn_22EC.rs:171`
+- `mn_8022F0F0` [oext_fns!] x1: tu/gmregtyfall.rs:106 -> port `melee_modes::tu/mn_22EC.rs:207`
+- `mn_8022F138` [oext_fns!] x1: tu/mncharsel.rs:208 -> port `melee_modes::tu/mn_22EC.rs:219`
+- `mn_8022F218` [ext_fns!/oext_fns!] x2: tu/mncharsel.rs:209, tu/mnstagesel.rs:174 -> port `melee_modes::tu/mn_22EC.rs:249`
+- `mn_8022F268` [ext_fns!/oext_fns!] x2: tu/mncharsel.rs:210, tu/mnstagesel.rs:175 -> port `melee_modes::tu/mn_22EC.rs:257`
+- `mn_8022F298` [ext_fns!/oext_fns!] x6: tu/mndatadel.rs:20, tu/mnnamenew.rs:98, tu/mnruleplus.rs:77, tu/mnsound.rs:22, tu/mnsoundtest.rs:61, tu/mnstagesw.rs:53 -> port `melee_modes::tu/mn_22EC.rs:262`
+- `mn_8022F3D8` [ext_fns!/oext_fns!] x8: tu/gmresult.rs:137, tu/gmresultplayer.rs:90, tu/mndatadel.rs:21, tu/mndeflicker.rs:53, tu/mndiagram.rs:21, tu/mnsound.rs:23, tu/mnsoundtest.rs:62, tu/mnvibration.rs:126 -> port `melee_modes::tu/mn_22EC.rs:312`
+- `mn_8022F4CC` [ext_fns!] x2: tu/mnruleplus.rs:78, tu/mnstagesw.rs:54 -> port `melee_modes::tu/mn_22EC.rs:354`
+- `mn_80231634` [oext_fns!] x1: tu/mndatadel.rs:31 -> port `melee_modes::tu/mnmainrule.rs:2080`
+- `mn_8023164C` [ext_fns!] x1: tu/mnruleplus.rs:89 -> port `melee_modes::tu/mnmainrule.rs:2088`
+- `mn_80231804` [oext_fns!] x1: tu/mncharsel.rs:211 -> port `melee_modes::tu/mnmainrule.rs:2149`
+- `mn_80231F80` [ext_fns!] x1: tu/mnruleplus.rs:90 -> port `melee_modes::tu/mnmainrule.rs:2203`
+- `mn_802339FC` [ext_fns!] x1: tu/mnstagesw.rs:65 -> port `melee_modes::tu/mnruleplus.rs:1487`
+- `mn_GetDigitAt` [oext_fns!] x1: tu/mndiagram.rs:17 -> port `melee_modes::mn.rs:109`
+- `mn_GetDigitCount` [oext_fns!] x1: tu/mndiagram.rs:18 -> port `melee_modes::mn.rs:114`
+- `mn_IsFighterUnlocked` [oext_fns!] x2: tu/mndiagram.rs:16, tu/mndiagram2.rs:18 -> port `melee_modes::tu/mnmain.rs:4799`
+- `mnCharSel_802640A0` [ext_fns!] x2: tu/mn_22EC.rs:42, tu/mnnamenew.rs:111 -> port `melee_modes::tu/mncharsel.rs:4426`
+- `mnCharSel_PcArtClose` [oext_fns!] x1: tu/gmresultplayer.rs:118 -> port `melee_modes::tu/mncharsel.rs:5674`
+- `mnCharSel_PcArtOpen` [oext_fns!] x1: tu/gmresultplayer.rs:117 -> port `melee_modes::tu/mncharsel.rs:5845`
+- `mnCharSel_PcArtPortrait` [oext_fns!] x1: tu/gmresultplayer.rs:119 -> port `melee_modes::tu/mncharsel.rs:5943`
+- `mnDiagram2_ClearDetailView` [oext_fns!] x1: tu/mndiagram3.rs:45 -> port `melee_modes::tu/mndiagram2.rs:1614`
+- `mnDiagram2_GetAggregatedFighterRank` [oext_fns!] x1: tu/mndiagram3.rs:44 -> port `melee_modes::tu/mndiagram2.rs:1443`
+- `mnDiagram2_GetRankedFighter` [oext_fns!] x1: tu/mndiagram3.rs:42 -> port `melee_modes::tu/mndiagram2.rs:1286`
+- `mnDiagram2_GetRankedName` [oext_fns!] x1: tu/mndiagram3.rs:43 -> port `melee_modes::tu/mndiagram2.rs:1364`
+- `mnDiagram2_Init` [oext_fns!] x2: tu/mndiagram.rs:34, tu/mndiagram3.rs:41 -> port `melee_modes::tu/mndiagram2.rs:1273`
+- `mnDiagram2_IsDistanceStat` [oext_fns!] x1: tu/mndiagram3.rs:37 -> port `melee_modes::mn.rs:46`
+- `mnDiagram2_IsIconOnlyStat` [oext_fns!] x1: tu/mndiagram3.rs:39 -> port `melee_modes::mn.rs:56`
+- `mnDiagram2_IsPercentageStat` [oext_fns!] x1: tu/mndiagram3.rs:38 -> port `melee_modes::mn.rs:51`
+- `mnDiagram2_IsTimeStat` [oext_fns!] x1: tu/mndiagram3.rs:36 -> port `melee_modes::mn.rs:41`
+- `mnDiagram3_Init` [oext_fns!] x2: tu/mndiagram.rs:35, tu/mndiagram2.rs:57 -> port `melee_modes::tu/mndiagram3.rs:997`
+- `mnDiagram_ConvertDistanceForDisplay` [oext_fns!] x2: tu/mndiagram2.rs:34, tu/mndiagram3.rs:30 -> port `melee_modes::tu/mndiagram.rs:323`
+- `mnDiagram_CountUnlockedFighters` [oext_fns!] x1: tu/mndiagram2.rs:54 -> port `melee_modes::tu/mndiagram.rs:1102`
+- `mnDiagram_CreateFighterIcon` [oext_fns!] x2: tu/mndiagram2.rs:55, tu/mndiagram3.rs:34 -> port `melee_modes::tu/mndiagram.rs:3283`
+- `mnDiagram_FormatDecimalNumber` [oext_fns!] x2: tu/mndiagram2.rs:42, tu/mndiagram3.rs:31 -> port `melee_modes::tu/mndiagram.rs:573`
+- `mnDiagram_FormatTime` [oext_fns!] x2: tu/mndiagram2.rs:43, tu/mndiagram3.rs:32 -> port `melee_modes::tu/mndiagram.rs:613`
+- `mnDiagram_GetAveragePlayerCount` [oext_fns!] x1: tu/mndiagram2.rs:37 -> port `melee_modes::tu/mndiagram.rs:416`
+- `mnDiagram_GetFighterByIndex` [oext_fns!] x1: tu/mndiagram2.rs:31 -> port `melee_modes::tu/mndiagram.rs:298`
+- `mnDiagram_GetFighterTotalFalls` [oext_fns!] x2: tu/mncount.rs:81, tu/mndiagram2.rs:41 -> port `melee_modes::tu/mndiagram.rs:553`
+- `mnDiagram_GetFighterTotalKOs` [oext_fns!] x2: tu/mncount.rs:82, tu/mndiagram2.rs:40 -> port `melee_modes::tu/mndiagram.rs:497`
+- `mnDiagram_GetHitPercentage` [oext_fns!] x1: tu/mndiagram2.rs:35 -> port `melee_modes::tu/mndiagram.rs:338`
+- `mnDiagram_GetLeastPlayedFighter` [oext_fns!] x1: tu/mndiagram2.rs:53 -> port `melee_modes::tu/mndiagram.rs:901`
+- `mnDiagram_GetNameByIndex` [oext_fns!] x1: tu/mndiagram2.rs:32 -> port `melee_modes::tu/mndiagram.rs:305`
+- `mnDiagram_GetNamePlayTimeByFighter` [oext_fns!] x1: tu/mndiagram2.rs:49 -> port `melee_modes::tu/mndiagram.rs:744`
+- `mnDiagram_GetNameTotalFalls` [oext_fns!] x1: tu/mndiagram2.rs:39 -> port `melee_modes::tu/mndiagram.rs:490`
+- `mnDiagram_GetNameTotalKOs` [oext_fns!] x1: tu/mndiagram2.rs:38 -> port `melee_modes::tu/mndiagram.rs:453`
+- `mnDiagram_GetNextFighterIndex` [oext_fns!] x1: tu/mndiagram2.rs:48 -> port `melee_modes::tu/mndiagram.rs:722`
+- `mnDiagram_GetNextNameIndex` [oext_fns!] x1: tu/mndiagram2.rs:46 -> port `melee_modes::tu/mndiagram.rs:683`
+- `mnDiagram_GetPlayPercentage` [oext_fns!] x1: tu/mndiagram2.rs:36 -> port `melee_modes::tu/mndiagram.rs:376`
+- `mnDiagram_GetPrevFighterIndex` [oext_fns!] x1: tu/mndiagram2.rs:47 -> port `melee_modes::tu/mndiagram.rs:700`
+- `mnDiagram_GetPrevNameIndex` [oext_fns!] x1: tu/mndiagram2.rs:45 -> port `melee_modes::tu/mndiagram.rs:666`
+- `mnDiagram_GetRankedFighterForName` [oext_fns!] x1: tu/mndiagram2.rs:50 -> port `melee_modes::tu/mndiagram.rs:771`
+- `mnDiagram_Init` [oext_fns!] x2: tu/mndiagram2.rs:56, tu/mndiagram3.rs:35 -> port `melee_modes::tu/mndiagram.rs:3722`
+- `mnDiagram_IntToStr` [oext_fns!] x2: tu/mndiagram2.rs:44, tu/mndiagram3.rs:33 -> port `melee_modes::tu/mndiagram.rs:647`
+- `mnDiagram_IsDistanceOverflow` [oext_fns!] x2: tu/mndiagram2.rs:33, tu/mndiagram3.rs:29 -> port `melee_modes::tu/mndiagram.rs:309`
+- `mnName_80239EBC` [ext_fns!] x1: tu/mnnamenew.rs:115 -> port `melee_modes::tu/mnname.rs:2049`
+- `mnName_80239F5C` [ext_fns!] x1: tu/mnnamenew.rs:116 -> port `melee_modes::tu/mnname.rs:2052`
+- `mnName_8023A9B4` [ext_fns!] x1: tu/mnnamenew.rs:117 -> port `melee_modes::tu/mnname.rs:2447`
+- `mnNameNew_EnterFromMnCharSel` [oext_fns!] x1: tu/mncharsel.rs:206 -> port `melee_modes::tu/mnnamenew.rs:3401`
+- `mnStageSw_80237410` [ext_fns!] x1: tu/mnruleplus.rs:91 -> port `melee_modes::tu/mnstagesw.rs:1012`
+- `mpCheckCeiling` [hooks!] x1: tu/geno_game.rs:180 -> port `melee_world::tu/mplib.rs:1355`
+- `mpCheckFloor` [hooks!/oext_fns!] x2: tu/geno_game.rs:179, tu/script_game.rs:170 -> port `melee_world::tu/mplib.rs:1072`
+- `mpCheckLeftWall` [hooks!] x1: tu/geno_game.rs:181 -> port `melee_world::tu/mplib.rs:1672`
+- `mpCheckRightWall` [hooks!] x1: tu/geno_game.rs:182 -> port `melee_world::tu/mplib.rs:1943`
+- `mpColl_80041C78` [ext_fns!/oext_fns!] x2: tu/gm_1798.rs:272, tu/hsd.rs:29 -> port `melee_world::tu/mpcoll.rs:111`
+- `mpColl_80043680` [oext_fns!] x1: tu/script_game.rs:193 -> port `melee_world::tu/mpcoll.rs:816`
+- `mpColl_80047AC8` [hooks!] x1: tu/geno_game.rs:148 -> port `melee_world::tu/mpcoll.rs:2344`
+- `mpColl_80047E14` [hooks!] x1: tu/geno_game.rs:149 -> port `melee_world::tu/mpcoll.rs:2370`
+- `mpCollSetFacingDir` [hooks!/oext_fns!] x2: tu/geno_game.rs:147, tu/script_game.rs:194 -> port `melee_world::tu/mpcoll.rs:824`
+- `mpGetGroundCollJoint` [oext_fns!] x1: tu/script_game.rs:168 -> port `melee_world::tu/mplib.rs:344`
+- `mpGetGroundCollLine` [oext_fns!] x1: tu/script_game.rs:167 -> port `melee_world::tu/mplib.rs:339`
+- `mpGetGroundCollVtx` [oext_fns!] x1: tu/script_game.rs:166 -> port `melee_world::tu/mplib.rs:334`
+- `mpIsland_StageSlotFree` [oext_fns!] x1: tu/script_game.rs:331 -> port `melee_world::tu/mpisland.rs:574`
+- `mpJointListAdd` [oext_fns!] x1: tu/script_game.rs:178 -> port `melee_world::tu/mplib.rs:4616`
+- `mpLib_8004D164` [oext_fns!] x1: tu/script_game.rs:162 -> port `melee_world::tu/mplib.rs:329`
+- `mpLib_80055E9C` [oext_fns!] x1: tu/script_game.rs:173 -> port `melee_world::tu/mplib.rs:4057`
+- `mpLib_8005667C` [oext_fns!] x1: tu/script_game.rs:174 -> port `melee_world::tu/mplib.rs:4272`
+- `mpLib_80057424` [oext_fns!] x1: tu/script_game.rs:175 -> port `melee_world::tu/mplib.rs:4574`
+- `mpLib_80057528` [oext_fns!] x1: tu/script_game.rs:176 -> port `melee_world::tu/mplib.rs:4592`
+- `mpLib_800575B0` [oext_fns!] x1: tu/script_game.rs:177 -> port `melee_world::tu/mplib.rs:4604`
+- `mpLib_80057BC0` [oext_fns!] x1: tu/script_game.rs:179 -> port `melee_world::tu/mplib.rs:4702`
+- `mpScriptBatchBegin` [oext_fns!] x1: tu/script_game.rs:163 -> port `melee_world::tu/mplib.rs:303`
+- `mpScriptBatchEnd` [oext_fns!] x1: tu/script_game.rs:164 -> port `melee_world::tu/mplib.rs:308`
+- `mpScriptInvalidateBounding` [oext_fns!] x1: tu/script_game.rs:165 -> port `melee_world::tu/mplib.rs:298`
+- `mpUncheckBounding` [oext_fns!] x1: tu/script_game.rs:180 -> port `melee_world::tu/mplib.rs:5281`
+- `OSReport` [ext_fns!/hook!/oext_fns!] x11: mn_inl.rs:28, tu/gmmultiman.rs:129, tu/gmregcommon.rs:15, tu/gmvsmelee.rs:31, tu/mnhyaku.rs:359, tu/mninfo.rs:800, tu/mnitemsw.rs:1349, tu/mnlanguage.rs:321, tu/mnmain.rs:4898, tu/mnmainrule.rs:2242, tu/mnname.rs:2610 -> port `melee_modes::tu/gm_17c0.rs:246`
+- `pl_80038914` [ext_fns!] x1: tu/gm_16f1.rs:196 -> port `melee_fighter::plbonus3.rs:95`
+- `pl_80039418` [ext_fns!] x1: tu/gm_16f1.rs:197 -> port `melee_fighter::plbonus3.rs:201`
+- `pl_80039450` [ext_fns!] x1: tu/gm_16f1.rs:198 -> port `melee_fighter::tu/plbonus.rs:434`
+- `pl_8003FBFC` [ext_fns!] x1: tu/gmevent.rs:147 -> port `melee_fighter::plbonus.rs:339`
+- `pl_8003FC20` [ext_fns!] x1: tu/gmevent.rs:148 -> port `melee_fighter::plbonus.rs:343`
+- `pl_800407C8` [ext_fns!] x1: tu/gm_16f1.rs:199 -> port `melee_fighter::plbonus.rs:621`
+- `pl_80040870` [ext_fns!] x1: tu/gm_16f1.rs:200 -> port `melee_fighter::plbonus.rs:632`
+- `pl_80040894` [ext_fns!] x1: tu/gm_16f1.rs:201 -> port `melee_fighter::plbonus.rs:636`
+- `pl_800408B8` [ext_fns!] x1: tu/gm_16f1.rs:202 -> port `melee_fighter::plbonus.rs:640`
+- `pl_800408DC` [ext_fns!] x1: tu/gm_16f1.rs:203 -> port `melee_fighter::plbonus.rs:644`
+- `Player_80031790` [ext_fns!] x2: tu/gm_17c0.rs:106, tu/gmevent.rs:41 -> port `melee_fighter::player.rs:80`
+- `Player_80031848` [ext_fns!] x1: tu/gm_17c0.rs:107 -> port `melee_fighter::player.rs:105`
+- `Player_80031DA8` [ext_fns!] x1: tu/gmevent.rs:42 -> port `melee_fighter::player.rs:126`
+- `Player_80031EBC` [oext_fns!] x1: tu/gmregtyfall.rs:72 -> port `melee_fighter::player.rs:145`
+- `Player_800325C8` [ext_fns!/oext_fns!] x2: tu/gmevent.rs:43, tu/mncharsel.rs:124 -> port `melee_fighter::player.rs:214`
+- `Player_80032768` [oext_fns!] x1: tu/gmregtyfall.rs:74 -> port `melee_fighter::player.rs:245`
+- `Player_80032A04` [ext_fns!/oext_fns!] x2: tu/gm_1798.rs:239, tu/gmregtyfall.rs:75 -> port `melee_fighter::player.rs:269`
+- `Player_80032BB0` [oext_fns!] x1: tu/gmregtyfall.rs:76 -> port `melee_fighter::player.rs:292`
+- `Player_800360D8` [ext_fns!] x1: tu/gm_1798.rs:240 -> port `melee_fighter::player.rs:719`
+- `Player_80036394` [ext_fns!] x1: tu/gmevent.rs:44 -> port `melee_fighter::player.rs:735`
+- `Player_80036844` [ext_fns!] x2: tu/gm_17c0.rs:108, tu/gmevent.rs:45 -> port `melee_fighter::player.rs:783`
+- `Player_80036CF0` [oext_fns!] x1: tu/gmregtyfall.rs:77 -> port `melee_fighter::tu/player.rs:1242`
+- `Player_80036E20` [ext_fns!/oext_fns!] x2: tu/gm_1798.rs:241, tu/gmregtyfall.rs:78 -> port `melee_fighter::tu/player.rs:1280`
+- `Player_80036EA0` [oext_fns!] x1: tu/gmregtyfall.rs:79 -> port `melee_fighter::tu/player.rs:1287`
+- `Player_80036F34` [ext_fns!/oext_fns!] x2: tu/gm_1798.rs:242, tu/gmregtyfall.rs:80 -> port `melee_fighter::tu/player.rs:1296`
+- `Player_ForgetEntities` [todo_ext!] x1: tu/mex_tests.rs:28 -> port `melee_fighter::tu/player.rs:1348`
+- `Player_GetAttackRatio` [ext_fns!/oext_fns!] x2: tu/gm_17c0.rs:109, tu/script_game.rs:147 -> port `melee_fighter::tu/player.rs:606`
+- `Player_GetCoins` [ext_fns!] x1: tu/gmevent.rs:46 -> port `melee_fighter::tu/player.rs:657`
+- `Player_GetCostumeId` [oext_fns!] x1: tu/script_game.rs:143 -> port `melee_fighter::tu/player.rs:534`
+- `Player_GetCpuLevel` [ext_fns!] x1: tu/gm_17c0.rs:110 -> port `melee_fighter::tu/player.rs:566`
+- `Player_GetCpuType` [ext_fns!/oext_fns!] x2: tu/gm_17c0.rs:111, tu/script_game.rs:145 -> port `melee_fighter::tu/player.rs:580`
+- `Player_GetDefenseRatio` [oext_fns!] x1: tu/script_game.rs:148 -> port `melee_fighter::tu/player.rs:616`
+- `Player_GetEntity` [ext_fns!/hooks!/oext_fns!] x6: tu/geno_game.rs:200, tu/gm_1798.rs:243, tu/gm_17c0.rs:112, tu/gmevent.rs:47, tu/gmregtyfall.rs:81, tu/script_game.rs:151 -> port `melee_fighter::tu/player.rs:689`
+- `Player_GetEntityAtIndex` [ext_fns!/oext_fns!] x3: tu/gmevent.rs:48, tu/gmregtyfall.rs:82, tu/script_game.rs:152 -> port `melee_fighter::tu/player.rs:694`
+- `Player_GetFalls` [ext_fns!/oext_fns!] x2: tu/gm_16f1.rs:117, tu/script_game.rs:156 -> port `melee_fighter::tu/player.rs:812`
+- `Player_GetFallsByIndex` [oext_fns!] x1: tu/script_game.rs:157 -> port `melee_fighter::tu/player.rs:822`
+- `Player_GetKOsByPlayerIndex` [ext_fns!] x2: tu/gm_16f1.rs:118, tu/gmevent.rs:49 -> port `melee_fighter::tu/player.rs:837`
+- `Player_GetNametagSlotID` [ext_fns!] x2: tu/gm_17c0.rs:113, tu/gmevent.rs:50 -> port `melee_fighter::tu/player.rs:925`
+- `Player_GetOtherStamina` [oext_fns!] x1: tu/script_game.rs:154 -> port `melee_fighter::tu/player.rs:728`
+- `Player_GetP1Stock` [ext_fns!] x1: tu/gmevent.rs:51 -> port `melee_fighter::tu/player.rs:642`
+- `Player_GetPlayerCharacter` [ext_fns!/oext_fns!] x4: tu/gm_17e4.rs:34, tu/gm_17eb.rs:34, tu/gmevent.rs:52, tu/script_game.rs:141 -> port `melee_fighter::tu/player.rs:368`
+- `Player_GetPlayerId` [ext_fns!/oext_fns!] x2: tu/gm_17c0.rs:114, tu/gmregclear.rs:65 -> port `melee_fighter::tu/player.rs:558`
+- `Player_GetPlayerSlotType` [ext_fns!/oext_fns!] x6: tu/gm_16f1.rs:119, tu/gm_17e4.rs:35, tu/gm_17eb.rs:35, tu/gmevent.rs:53, tu/gmregclear.rs:66, tu/script_game.rs:142 -> port `melee_fighter::tu/player.rs:376`
+- `Player_GetRemainingHP` [ext_fns!/oext_fns!] x3: tu/gm_17c0.rs:115, tu/gmevent.rs:54, tu/script_game.rs:155 -> port `melee_fighter::tu/player.rs:738`
+- `Player_GetSelfDestructs` [ext_fns!] x1: tu/gm_16f1.rs:120 -> port `melee_fighter::tu/player.rs:883`
+- `Player_GetStocks` [ext_fns!/oext_fns!] x2: tu/gmevent.rs:55, tu/script_game.rs:149 -> port `melee_fighter::tu/player.rs:638`
+- `Player_GetTeam` [ext_fns!/oext_fns!] x3: tu/gm_16f1.rs:121, tu/gmresult.rs:66, tu/script_game.rs:144 -> port `melee_fighter::tu/player.rs:550`
+- `Player_GetUnk50` [ext_fns!] x1: tu/gm_17c0.rs:116 -> port `melee_fighter::tu/player.rs:602`
+- `Player_InitAllPlayers` [ext_fns!] x1: tu/gm_1798.rs:244 -> port `melee_fighter::tu/player.rs:1252`
+- `Player_LoadPlayerCoords` [oext_fns!] x1: tu/gmregtyfall.rs:83 -> port `melee_fighter::tu/player.rs:419`
+- `Player_LoseStock` [ext_fns!] x1: tu/gm_17e4.rs:36 -> port `melee_fighter::tu/player.rs:650`
+- `Player_SetCostumeId` [ext_fns!/oext_fns!] x2: tu/gm_1798.rs:245, tu/gmregtyfall.rs:84 -> port `melee_fighter::tu/player.rs:538`
+- `Player_SetFacingDirection` [ext_fns!/oext_fns!] x2: tu/gm_1798.rs:246, tu/gmregtyfall.rs:85 -> port `melee_fighter::tu/player.rs:524`
+- `Player_SetFlagsAEBit1` [ext_fns!] x1: tu/gm_16A2.rs:60 -> port `melee_fighter::tu/player.rs:1006`
+- `Player_SetHUDDamage` [oext_fns!] x1: tu/script_game.rs:153 -> port `melee_fighter::tu/player.rs:712`
+- `Player_SetModelScale` [ext_fns!] x1: tu/gmevent.rs:56 -> port `melee_fighter::tu/player.rs:630`
+- `Player_SetMoreFlagsBit3` [ext_fns!] x1: tu/gm_17c0.rs:117 -> port `melee_fighter::tu/player.rs:762`
+- `Player_SetMoreFlagsBit4` [ext_fns!] x1: tu/gm_17c0.rs:118 -> port `melee_fighter::tu/player.rs:766`
+- `Player_SetOtherStamina` [ext_fns!] x1: tu/gm_17c0.rs:119 -> port `melee_fighter::tu/player.rs:733`
+- `Player_SetPlayerAndEntityCpuType` [ext_fns!/oext_fns!] x2: tu/gmevent.rs:57, tu/script_game.rs:146 -> port `melee_fighter::tu/player.rs:584`
+- `Player_SetPlayerCharacter` [ext_fns!/oext_fns!] x2: tu/gm_1798.rs:247, tu/gmregtyfall.rs:86 -> port `melee_fighter::tu/player.rs:372`
+- `Player_SetPlayerId` [ext_fns!/oext_fns!] x2: tu/gm_1798.rs:248, tu/gmregtyfall.rs:87 -> port `melee_fighter::tu/player.rs:562`
+- `Player_SetScale` [ext_fns!/oext_fns!] x2: tu/gm_1798.rs:249, tu/gmregtyfall.rs:88 -> port `melee_fighter::tu/player.rs:482`
+- `Player_SetSlottype` [ext_fns!/oext_fns!] x2: tu/gm_1798.rs:250, tu/gmregtyfall.rs:89 -> port `melee_fighter::tu/player.rs:393`
+- `Player_SetStocks` [ext_fns!/oext_fns!] x2: tu/gmevent.rs:58, tu/script_game.rs:150 -> port `melee_fighter::tu/player.rs:646`
+- `powi` [oext_fns!] x1: tu/mndiagram.rs:45 -> port `melee_runtime::lb_00ce.rs:62`
+- `PSMTXCopy` [ext_fns!/oext_fns!] x2: tu/lb_020A.rs:41, tu/script_game.rs:8 -> port `melee_runtime::tu/mtx_pc.rs:18`
+- `psRemoveParticleAppSRT` [oext_fns!] x1: tu/script_game.rs:327 -> port `melee_runtime::tu/psappsrt.rs:56`
+- `RB_FighterHash` [hooks!] x1: tu/geno_tests.rs:160 -> port `melee_fighter::tu/fighter.rs:2946`
+- `RB_GameHash` [hooks!] x1: tu/geno_tests.rs:159 -> port `melee_fighter::tu/fighter.rs:3105`
+- `RB_HashSetLegacy` [hooks!] x1: tu/geno_tests.rs:161 -> port `melee_fighter::tu/fighter.rs:2934`
+- `RB_ItemHash` [hooks!] x1: tu/geno_tests.rs:162 -> port `melee_fighter::tu/fighter.rs:3031`
+- `ScriptGame_FighterF` [hooks!/todo_ext!] x2: tu/geno_tests.rs:109, tu/mex_tests.rs:27 -> port `melee_modes::tu/script_game.rs:21370`
+- `ScriptGame_FighterI` [hooks!/todo_ext!] x2: tu/geno_tests.rs:108, tu/mex_tests.rs:26 -> port `melee_modes::tu/script_game.rs:21391`
+- `ScriptGame_HitFamilyMove` [hooks!] x1: tu/geno_tests.rs:155 -> port `melee_modes::tu/script_game.rs:3488`
+- `ScriptGame_HitRuleDamageOnly` [hooks!] x1: tu/geno_game.rs:42 -> port `melee_modes::tu/script_game.rs:4699`
+- `ScriptGame_HitRuleForget` [hooks!] x1: tu/geno_game.rs:43 -> port `melee_modes::tu/script_game.rs:4092`
+- `ScriptGame_HitRuleItemCreate` [hooks!] x1: tu/geno_game.rs:41 -> port `melee_modes::tu/script_game.rs:4237`
+- `ScriptGame_LabFighterFieldBase` [hooks!] x1: tu/geno_tests.rs:135 -> port `melee_modes::tu/script_game.rs:28483`
+- `ScriptGame_LabFighterFieldName` [hooks!] x1: tu/geno_tests.rs:134 -> port `melee_modes::tu/script_game.rs:28473`
+- `ScriptGame_NoteSpecialInput` [hooks!] x1: tu/geno_game.rs:33 -> port `melee_modes::tu/script_game.rs:3227`
+- `sinf` [hooks!/oext_fns!] x4: tu/geno_game.rs:49, tu/geno_tests.rs:62, tu/mncharsel.rs:212, tu/script_game.rs:67 -> port `melee_runtime::gekko.rs:72`
+- `Stage_80225074` [ext_fns!] x1: tu/gm_17c0.rs:127 -> port `melee_world::tu/stage.rs:512`
+- `Stage_8022519C` [ext_fns!] x2: tu/gm_17c0.rs:128, tu/gmclassic.rs:49 -> port `melee_world::gr/stage.rs:384`
+- `Stage_802251E8` [ext_fns!/oext_fns!] x2: tu/gm_1798.rs:251, tu/hsd.rs:31 -> port `melee_world::gr/stage.rs:399`
+- `Stage_8022524C` [ext_fns!/oext_fns!] x2: tu/gm_1798.rs:252, tu/gmregtyfall.rs:68 -> port `melee_world::gr/stage.rs:407`
+- `Stage_GetBlastZoneBottomOffset` [oext_fns!] x1: tu/script_game.rs:304 -> port `melee_world::tu/stage.rs:349`
+- `Stage_GetBlastZoneLeftOffset` [oext_fns!] x1: tu/script_game.rs:302 -> port `melee_world::tu/stage.rs:340`
+- `Stage_GetBlastZoneRightOffset` [oext_fns!] x1: tu/script_game.rs:301 -> port `melee_world::tu/stage.rs:336`
+- `Stage_GetBlastZoneTopOffset` [oext_fns!] x1: tu/script_game.rs:303 -> port `melee_world::tu/stage.rs:345`
+- `Stage_StageSlotSelect` [oext_fns!] x1: tu/script_game.rs:328 -> port `melee_world::tu/stage.rs:642`
+- `strcmp` [hooks!] x1: tu/geno_tests.rs:56 -> port `melee_runtime::tu/lbcardnew.rs:241`
+- `THPDec_8032F8D4` [ext_fns!] x1: tu/lb_01F8.rs:36 -> port `melee_runtime::tu/THPDec.rs:599`
+- `THPDec_8032FD40` [ext_fns!] x1: tu/lb_01F8.rs:37 -> port `melee_runtime::tu/THPDec.rs:760`
+- `THPDec_80331340` [ext_fns!] x1: tu/lb_01F8.rs:38 -> port `melee_runtime::tu/THPDec.rs:1473`
+- `THPDec_803313D0` [ext_fns!] x1: tu/lb_01F8.rs:39 -> port `melee_runtime::tu/THPDec.rs:1491`
+- `THPInit` [ext_fns!] x1: tu/lb_01F8.rs:40 -> port `melee_runtime::tu/THPDec.rs:1736`
+- `THPVideoDecode` [ext_fns!] x1: tu/lb_01F8.rs:41 -> port `melee_runtime::tu/THPDec.rs:777`
+- `Toy_803048C0` [ext_fns!/oext_fns!] x2: tu/gm_16f1.rs:122, tu/gmregenddisp.rs:57 -> port `melee_items::tu/toy.rs:641`
+- `Toy_80305918` [ext_fns!] x1: tu/gm_1736.rs:37 -> port `melee_items::tu/toy.rs:1050`
+- `Toy_803060BC` [oext_fns!] x2: tu/gmregenddisp.rs:58, tu/gmregtyfall.rs:90 -> port `melee_items::tu/toy.rs:1193`
+- `Toy_803102D0` [oext_fns!] x1: tu/gmregtyfall.rs:92 -> port `melee_items::tu/toy.rs:3961`
+- `Toy_80311960` [oext_fns!] x1: tu/mndatadel.rs:56 -> port `melee_items::tu/toy.rs:4430`
+- `Toy_803124BC` [oext_fns!] x1: tu/gmregtyfall.rs:93 -> port `melee_items::tu/toy.rs:4667`
+- `Toy_GetTrophyTotal` [ext_fns!/oext_fns!] x2: tu/gm_16f1.rs:123, tu/mncount.rs:57 -> port `melee_items::tu/toy.rs:625`
+- `Toy_SetUnlockState` [ext_fns!] x1: tu/gm_17c0.rs:129 -> port `melee_items::tu/toy.rs:978`
+- `tyDisplay_8031B9DC` [oext_fns!] x1: tu/gmregenddisp.rs:72 -> port `melee_items::tu/tydisplay.rs:1444`
+- `tyDisplay_8031BB34` [oext_fns!] x1: tu/gmregenddisp.rs:73 -> port `melee_items::tu/tydisplay.rs:1496`
+- `tyDisplay_8031BB94` [oext_fns!] x1: tu/gmregenddisp.rs:74 -> port `melee_items::tu/tydisplay.rs:1501`
+- `un_802FF128` [oext_fns!] x2: tu/gmregclear.rs:102, tu/gmresultplayer.rs:82 -> port `melee_world::tu/ifcoget.rs:229`
+- `un_802FF1B4` [oext_fns!] x1: tu/gmresult.rs:138 -> port `melee_world::tu/ifcoget.rs:251`
+- `un_802FFEE0` [ext_fns!] x1: tu/gmdebugmode.rs:47 -> port `melee_world::tu/soundtest.rs:1038`
+- `un_802FFF2C` [ext_fns!] x1: tu/gmdebugmode.rs:48 -> port `melee_world::tu/soundtest.rs:1049`
+- `un_80301BA8` [ext_fns!] x1: tu/gmdebugmode.rs:49 -> port `melee_world::tu/soundtest.rs:1746`
+- `un_80301C64` [ext_fns!] x1: tu/gmdebugmode.rs:50 -> port `melee_world::tu/soundtest.rs:1776`
+- `un_80304470` [ext_fns!] x1: tu/gm_16f1.rs:204 -> port `melee_items::tu/toy.rs:561`
+- `un_80304510` [ext_fns!] x1: tu/gm_16f1.rs:205 -> port `melee_items::tu/toy.rs:584`
+- `un_803045A0` [ext_fns!] x1: tu/gm_1736.rs:69 -> port `melee_items::tu/toy.rs:608`
+- `un_80304690` [ext_fns!] x1: tu/gm_1736.rs:70 -> port `melee_items::tu/toy.rs:614`
+- `un_80304780` [ext_fns!] x1: tu/gm_1736.rs:71 -> port `melee_items::tu/toy.rs:620`
+
+## melee
+
+NO_PORT: 1 sites / 1 names, SIGNATURE: 3 sites / 3 names, CYCLE: 0 sites / 0 names
+
+### melee - NO_PORT (1 sites, 1 names)
+
+- `toy_11a` [fn-body] x1: vs_match.rs:346
+
+### melee - SIGNATURE (3 sites, 3 names)
+
+- `gm_80164600` [fn-body] x1: vs_match.rs:352 -> port `melee_modes::tu/gm_1601.rs:1775`
+- `resolve_ik_joint1` [fn-body] x1: skeleton.rs:142 -> port `melee_runtime::jobj_rt.rs:680`
+- `resolve_ik_joint2` [fn-body] x1: skeleton.rs:145 -> port `melee_runtime::jobj_rt.rs:797`
+

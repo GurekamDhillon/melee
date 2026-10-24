@@ -47,3 +47,6 @@ pub mod lbsnap;
 #[allow(non_snake_case)]
 pub mod lb_00F9;
 pub mod lbspdisplay;
+pub mod archive;
+pub mod aobj;
+pub mod axdriver;

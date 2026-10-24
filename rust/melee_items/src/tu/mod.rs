@@ -210,3 +210,8 @@ pub mod vi0501;
 pub mod vi0502;
 pub mod vi0601;
 pub mod tylist;
+pub mod vi0801;
+pub mod vi1101;
+pub mod vi1201v1;
+pub mod vi1201v2;
+pub mod vi1202;

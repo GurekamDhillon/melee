@@ -73,13 +73,13 @@ pub mod ext {
     fn HSD_WObjReqAnim(wobj: *mut HSD_WObj, startframe: f32) = crate::tu::wobj::HSD_WObjReqAnim(wobj, startframe);
     fn HSD_WObjClearFlags(wobj: *mut HSD_WObj, flags: u32) = crate::tu::wobj::HSD_WObjClearFlags(wobj, flags);
     // cobj.c on the native model (positions walk the WObj's JObj target)
-    fn HSD_CObjGetEyePosition(cobj: *mut HSD_CObj) -> Vec3;
-    fn HSD_CObjSetEyePosition(cobj: *mut HSD_CObj, v: Vec3);
-    fn HSD_CObjGetInterest(cobj: *mut HSD_CObj) -> Vec3;
-    fn HSD_CObjSetInterest(cobj: *mut HSD_CObj, v: Vec3);
-    fn HSD_CObjGetUpVector(cobj: *mut HSD_CObj) -> Vec3;
-    fn HSD_CObjSetUpVector(cobj: *mut HSD_CObj, v: Vec3);
-    fn HSD_CObjSetRoll(cobj: *mut HSD_CObj, roll: f32);
+    fn HSD_CObjGetEyePosition(cobj: *mut HSD_CObj) -> Vec3 = { let mut v = melee_types::Vec { x: 0.0, y: 0.0, z: 0.0 }; crate::tu::cobj_world::HSD_CObjGetEyePosition(cobj, &mut v); Vec3 { x: v.x, y: v.y, z: v.z } };
+    fn HSD_CObjSetEyePosition(cobj: *mut HSD_CObj, v: Vec3) = crate::tu::cobj_world::HSD_CObjSetEyePosition(cobj, &mut melee_types::Vec { x: v.x, y: v.y, z: v.z });
+    fn HSD_CObjGetInterest(cobj: *mut HSD_CObj) -> Vec3 = { let mut v = melee_types::Vec { x: 0.0, y: 0.0, z: 0.0 }; crate::tu::cobj_world::HSD_CObjGetInterest(cobj, &mut v); Vec3 { x: v.x, y: v.y, z: v.z } };
+    fn HSD_CObjSetInterest(cobj: *mut HSD_CObj, v: Vec3) = crate::tu::cobj_world::HSD_CObjSetInterest(cobj, &mut melee_types::Vec { x: v.x, y: v.y, z: v.z });
+    fn HSD_CObjGetUpVector(cobj: *mut HSD_CObj) -> Vec3 = { let mut v = melee_types::Vec { x: 0.0, y: 0.0, z: 0.0 }; crate::tu::cobj_world::HSD_CObjGetUpVector(cobj, &mut v); Vec3 { x: v.x, y: v.y, z: v.z } };
+    fn HSD_CObjSetUpVector(cobj: *mut HSD_CObj, v: Vec3) = crate::tu::cobj_world::HSD_CObjSetUpVector(cobj, &mut melee_types::Vec { x: v.x, y: v.y, z: v.z });
+    fn HSD_CObjSetRoll(cobj: *mut HSD_CObj, roll: f32) = crate::tu::cobj_world::HSD_CObjSetRoll(cobj, roll);
     fn HSD_CObjSetFov(cobj: *mut HSD_CObj, fov: f32);
     // displayfunc.c
     fn HSD_EraseRect(top: f32, bottom: f32, left: f32, right: f32, z: f32, enable_color: i32, enable_alpha: i32, enable_depth: i32);

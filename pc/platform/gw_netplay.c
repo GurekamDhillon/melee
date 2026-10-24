@@ -3342,6 +3342,7 @@ static int np_start_session(const gw_net_addr *peer_in, uint32_t bind_ip) {
     }
     cfg.hold_start = 1;
     cfg.handshake_timeout_ms = 180000u; /* the host may be waiting on a friend's router */
+    gw_log("netplay: handshake words exe=%016llx mods=%016llx", (unsigned long long) cfg.exe_hash, (unsigned long long) cfg.mods_hash);
     cfg.cb.remote_input = np_cb_remote;
     cfg.cb.local_input = np_cb_local;
     cfg.cb.checksum = np_cb_checksum;

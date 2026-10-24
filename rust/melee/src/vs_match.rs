@@ -33,6 +33,8 @@
 #[path = "input.rs"]
 pub mod input;
 
+mod attackair;
+mod dashrun;
 mod fox;
 mod rebirth;
 use fox::{ItemCmd, FoxVars, SimItem};
@@ -225,6 +227,8 @@ pub struct Player {
     guard: GuardVars,
     /// `fp->mv.co.kneebend` / `fp->mv.co.jump`.
     jump: JumpVars,
+    dash: dashrun::DashVars,
+    run: dashrun::RunVars,
     /// Fox's blaster state (fox.rs) and the item work he hands to the item procs.
     fx: FoxVars,
     item_cmds: Vec<ItemCmd>,
@@ -875,6 +879,8 @@ impl VsMatch {
                 hud_randomize: false,
                 guard: GuardVars::default(),
                 jump: JumpVars::default(),
+                dash: dashrun::DashVars::default(),
+                run: dashrun::RunVars::default(),
                 fx: FoxVars::default(),
                 item_cmds: Vec::new(),
                 keep_gfx: false,
@@ -1130,6 +1136,9 @@ impl VsMatch {
                     }
                 }
                 FTCO_MS_FALL_AERIAL => fall_anim(p)?,
+                m if attackair::is_attack_air(m) => attackair::anim(p, &mut self.rand)?,
+                dashrun::FTCO_MS_DASH => dashrun::dash_anim(p, &mut self.rand)?,
+                dashrun::FTCO_MS_RUN => dashrun::run_anim(p),
                 FTCO_MS_DEAD_DOWN => {
                     // ftCo_DeadDown_Anim: the countdown, then ftCo_800BFD9C (Sleep + the respawn).
                     p.dead_timer -= 1;
@@ -1201,6 +1210,9 @@ impl VsMatch {
                     e.x28 = e.x20 * t;
                     p.fp.cur_pos.y = e.x4 + e.x28;
                 }
+                m if attackair::is_attack_air(m) => attackair::phys(p),
+                dashrun::FTCO_MS_DASH => dashrun::dash_phys(p),
+                dashrun::FTCO_MS_RUN => dashrun::run_phys(p),
                 FTCO_MS_FALL | FTCO_MS_FALL_AERIAL | FTCO_MS_JUMP_AERIAL_F | FTCO_MS_JUMP_AERIAL_B => {
                     // ftCo_Fall_Phys / FallAerial_Phys / JumpAerial_Phys -> ft_80084DB0: fall-fast check, fall, air drift.
                     let f = &mut *p.fp;
@@ -1373,6 +1385,8 @@ impl VsMatch {
                         }
                     }
                 }
+                m if dashrun::is_dash_or_run(m) => dashrun::coll(&mut self.ground, &mut self.cg, p, &mut self.rand)?,
+                m if attackair::is_attack_air(m) => attackair::coll(&mut self.ground, &mut self.cg, p, c_common, &mut self.rand)?,
                 FTCO_MS_FALL | FTCO_MS_FALL_AERIAL => {
                     // ftCo_Fall_Coll: ft_800831CC(gobj, ftCo_80096CC8, ft_80082B1C).
                     if ft_800831cc(&mut self.ground, &mut self.cg, p)? {
@@ -2103,6 +2117,9 @@ fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     match p.fp.motion_id {
         FTCO_MS_ENTRY | FTCO_MS_ENTRY_START | FTCO_MS_ENTRY_END => Ok(()), // empty IASAs
         FTCO_MS_FALL => fall_iasa(p, rand),
+        m if attackair::is_attack_air(m) => attackair::iasa(p, rand),
+        dashrun::FTCO_MS_DASH => dashrun::dash_iasa(p, rand),
+        dashrun::FTCO_MS_RUN => dashrun::run_iasa(p, rand),
         FTCO_MS_LANDING => landing_iasa(p, rand),
         FTCO_MS_TURN => turn_iasa(p, rand),
         FTCO_MS_WAIT => wait_iasa(p, rand),
@@ -2141,8 +2158,16 @@ fn fall_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     if !fp.item_gobj.is_null() {
         return Err("ftCo_Fall_IASA with an item not ported".into());
     }
+    if i.pressed_buttons & !(PAD_STICK_DIRS | input::HSD_PAD_XY | input::HSD_PAD_A) != 0 || i.triggers[0] != 0.0 {
+        return Err(format!("player {}: ftCo_Fall_IASA with a press {:#x}: not ported", p.slot + 1, i.pressed_buttons));
+    }
+    if attackair::check_input(p, rand)? {
+        return Ok(());
+    }
+    let fp = &*p.fp;
+    let i = &fp.input;
     if i.pressed_buttons & !(PAD_STICK_DIRS | input::HSD_PAD_XY) != 0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 {
-        return Err(format!("player {}: ftCo_Fall_IASA with a press / C-stick: not ported", p.slot + 1));
+        return Err(format!("player {}: ftCo_Fall_IASA with a press {:#x} / C-stick ({}, {}): not ported", p.slot + 1, i.pressed_buttons, i.cstick[0].x, i.cstick[0].y));
     }
     // ftCo_800CB870: the double jump.
     ftco_800cb870(p, rand).map(|_| ())
@@ -2160,8 +2185,8 @@ fn landing_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     // SpecialS / Attack100 (up-B) / 800D6824 / 800D68C0 (down-B) / Catch / smash and tilt
     // attacks / jab / 80091A4C (guard) / 800DE9D8: each needs a press, the C-stick or the
     // trigger; none is wired.
-    if i.pressed_buttons != 0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 || i.triggers[0] != 0.0 || i.held_buttons[0] & (input::HSD_PAD_A | input::HSD_PAD_B | input::HSD_PAD_Z) != 0 {
-        return Err(format!("player {}: ftCo_Landing_IASA with a button / C-stick / trigger: not ported", p.slot + 1));
+    if i.pressed_buttons & !PAD_STICK_DIRS != 0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 || i.triggers[0] != 0.0 || i.held_buttons[0] & (input::HSD_PAD_A | input::HSD_PAD_B | input::HSD_PAD_Z) != 0 {
+        return Err(format!("player {}: ftCo_Landing_IASA with a button / C-stick / trigger: not ported (pressed {:#x} held {:#x} c ({}, {}) l ({}, {}) trig {})", p.slot + 1, i.pressed_buttons, i.held_buttons[0], i.cstick[0].x, i.cstick[0].y, i.lstick[0].x, i.lstick[0].y, i.triggers[0]));
     }
     // ftCo_Jump_CheckInput (tap jump).
     if jump_get_input(fp) {
@@ -2170,7 +2195,8 @@ fn landing_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     }
     // ftCo_Dash_CheckInput.
     if fc::abs_c(i.lstick[0].x) >= cd.dash_smash_stick_threshold && (fp.active_timer.lstick.x as i32) < cd.dash_smash_window as i32 {
-        return Err(format!("player {}: ftCo_Dash_CheckInput (Dash / smash turn) not ported", p.slot + 1));
+        dashrun::dash_check_input(p, rand)?;
+        return Ok(());
     }
     // ftCo_SquatWait_CheckInput (only in the first frame past the lag).
     if fp.cur_anim_frame < fp.frame_speed_mul + lag && i.lstick[0].y < -cd.x90 {
@@ -2205,7 +2231,8 @@ fn ground_stick_gate(p: &mut Player, rand: &mut HsdRand, what: &str) -> Result<b
         return Ok(true);
     }
     if fc::abs_c(i.lstick[0].x) >= cd.dash_smash_stick_threshold && (fp.active_timer.lstick.x as i32) < cd.dash_smash_window as i32 {
-        return Err(format!("player {}: ftCo_Dash_CheckInput (Dash / smash turn) not ported", p.slot + 1));
+        dashrun::dash_check_input(p, rand)?;
+        return Ok(true);
     }
     if i.lstick[0].y < -cd.x90 {
         return Err(format!("player {}: ftCo_800D5FB0 (Squat) not ported", p.slot + 1));
@@ -2563,6 +2590,14 @@ fn jump_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     if !fp.item_gobj.is_null() {
         return Err("ftCo_Jump_IASA with an item not ported".into());
     }
+    if i.pressed_buttons & !(PAD_STICK_DIRS | input::HSD_PAD_XY | input::HSD_PAD_A) != 0 || i.triggers[0] != 0.0 {
+        return Err(format!("player {who}: ftCo_Jump_IASA with a press / trigger: not ported"));
+    }
+    if attackair::check_input(p, rand)? {
+        return Ok(());
+    }
+    let fp = &*p.fp;
+    let i = &fp.input;
     if i.pressed_buttons & !(PAD_STICK_DIRS | input::HSD_PAD_XY) != 0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 || i.triggers[0] != 0.0 {
         return Err(format!("player {who}: ftCo_Jump_IASA with a press / C-stick / trigger: not ported"));
     }
@@ -3266,7 +3301,7 @@ fn turn_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         p.fp.facing_dir = -p.fp.facing_dir;
     }
     let i = &p.fp.input;
-    if i.pressed_buttons != 0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 || i.triggers[0] != 0.0 || i.held_buttons[0] & (input::HSD_PAD_A | input::HSD_PAD_B | input::HSD_PAD_Z) != 0 {
+    if i.pressed_buttons & !PAD_STICK_DIRS != 0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 || i.triggers[0] != 0.0 || i.held_buttons[0] & (input::HSD_PAD_A | input::HSD_PAD_B | input::HSD_PAD_Z) != 0 {
         return Err(format!("player {}: ftCo_Turn_IASA with a button / C-stick / trigger: not ported", p.slot + 1));
     }
     if !p.turn.has_turned {
@@ -3980,7 +4015,12 @@ fn ft_80082b1c(g: &mut GroundColl, p: &mut Player, c: EntryCommon, rand: &mut Hs
     if p.fp.self_vel.y > thr {
         return Err(format!("player {}: soft landing -> ft_8008A2BC (Wait) not ported", p.slot + 1));
     }
-    // ftCo_Landing_Enter_Basic: no hammer (ftCo_800C5240) -> ftCo_Landing_Enter(Landing, true, 0, 0, 1).
+    landing_enter_basic(g, p, c, rand)
+}
+
+/// `ftCo_Landing_Enter_Basic`.
+fn landing_enter_basic(g: &mut GroundColl, p: &mut Player, c: EntryCommon, rand: &mut HsdRand) -> Result<(), String> {
+    // No hammer (ftCo_800C5240) -> ftCo_Landing_Enter(Landing, true, 0, 0, 1).
     if p.fp.item_gobj != core::ptr::null_mut() {
         return Err("ftCo_800C5240 with an item: not ported".into());
     }

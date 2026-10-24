@@ -1,0 +1,57 @@
+// BEGIN GENERATED EXT (rust/melee_world/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32);
+    fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32);
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
+    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj;
+    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
+    fn Item_802694CC(a0: *mut HSD_GObj);
+    fn Item_8026A8EC(a0: *mut HSD_GObj);
+    fn Item_8026AB54(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: u32);
+    fn Item_8026AE84(a0: *mut Item, a1: i32, a2: u8, a3: u8);
+    fn atan2f(a0: f32, a1: f32) -> f32;
+    fn efLib_DestroyAll(a0: *mut HSD_GObj);
+    fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut Vec, a3: *mut f32) -> *mut c_void;
+    fn ftCo_800BF228(a0: *mut HSD_GObj) -> i32;
+    fn ftFx_SpecialN_CheckBlasterAction(a0: *mut HSD_GObj) -> i32;
+    fn ftFx_SpecialN_CheckRemoveBlaster(a0: *mut HSD_GObj) -> i32;
+    fn ftFx_SpecialN_ClearBlaster(a0: *mut HSD_GObj);
+    fn ftFx_SpecialN_FtGetHoldJoint(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftFx_SpecialN_GetBlasterAction(a0: *mut HSD_GObj) -> i32;
+    fn ftFx_SpecialN_ItGetHoldJoint(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftKb_SpecialNFx_800FDC00(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftKb_SpecialNFx_800FDC70(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftKb_SpecialNFx_800FDD14(a0: *mut HSD_GObj) -> i32;
+    fn ftKb_SpecialNFx_800FDD4C(a0: *mut HSD_GObj) -> u32;
+    fn ftKb_SpecialNFx_800FDDF4(a0: *mut HSD_GObj) -> i32;
+    fn ftKb_SpecialNFx_800FDEB4(a0: *mut HSD_GObj);
+    fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32;
+    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+    }
+    // Data defined in other TUs (the tests set them).
+}
+// END GENERATED EXT

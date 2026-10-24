@@ -643,3 +643,117 @@ port every function (131 incl. statics) with the shard 657-664 oracle (`bash rus
 `peachturnip.xDD4.b0` is hashed by value (native bitfield order differs); `it_802BDA40` with state row -1 would index
 `it_804D5518[-1]` (UB, unknown sdata neighbour): the port returns 0 and the oracle only asks rows 1 and 2; `bool` is
 MSL `int`, so the ports return Rust `bool` and the oracle's stubs for int-returning callees used as booleans return 0/1.
+
+## melee_items::tu: it/kinds set (shard 673-680)
+`rust/melee_items/src/tu/{itegg,itentei,itevyoshiegg,itfflower,itfflowerflame,itfire,itflipper,itfoods}.rs`
+port every function of those `src/melee/it/kinds` files (220 incl. the static-inline helpers) plus their
+`ItemStateTable` data. Callees of other TUs are `ext` hooks (unset: panics "TODO").
+- Oracle: `bash rust/melee_items/gen/mtu/go.sh <stem>` (`gen_it.py` = melee_world's `gen_tu.py` retargeted, plus
+  `UnkFlagStruct` filled / hashed bit by bit by value; `mk_it_driver.py` + `cfg_it.py` write the C driver and the
+  Rust test from one description; `run_it.py` compiles the game's `.c` verbatim with shipping contraction + gwtool
+  lowering). One fixture item (gobj, Item, Article + 1 KiB attribute buffer, ItemAttr, 4 joints, bone table, second
+  item for spawns, owner, ICD `it_804D6D28`), 150 seeded states per function, state hashed field by field, every
+  call traced. Spawn records are hashed inside the `Item_80268B18` stub. Mutation checks: fma sites (foods
+  `fmadds`, flipper `sqrtf(vx*vx+vy*vy)`), a boundary compare and a swapped spawn parent each fail the test.
+- Variadic `efSync_Spawn`: the compiled copy of the TU counts the arguments (`patch` in specs_it.py), the port
+  calls `ext::efSync_Spawn_N(gfx, gobj, &[args])`; pointees of the stack args (`&val`, `&v`) are not compared.
+- Traps: (1) `UnkFlagStruct` raw bytes differ between native (LSB-first) and GC bit order; compare by value.
+  (2) the flipper's `xDEC_stageAnchor` pointer lives in the item-var union: normalised to its region id before the
+  hash. (3) `itFoodsAttributes[]` is indexed with the native 24-byte stride (GC: 16); the port mirrors the native
+  struct like the rest of melee_types. (4) `ABS(x)` is `x < 0 ? -x : x`; `-1.0f * y + c` is a (non-discriminating)
+  fma site, kept as `fmadds`.
+
+## melee_items::tu: it TUs with a stateful C oracle (shard 649-656)
+`rust/melee_items/src/tu/{itspawn,itmaterial,itzako,it_26B1,it_2725,it_279C}.rs` (271 functions incl. 18 static inlines, all
+present; it_3F14 / it_3F2F hold only data tables and have no functions; their tables are not ported). Oracle (generator copy kept in gen/mtu649, since gen/mtu was taken by another shard's variant; the generated gen/mtu/tu files stay where they are): `python
+rust/melee_items/gen/mtu649/{gen_tu,mk_driver,run_tu}.py <stem>` (same design as melee_world's gen/mtu: the game `.c` verbatim,
+shipping contraction, recording stubs, seeded synthetic state, field-by-field hash) -> `tests/data/mtu_<stem>.txt`,
+`tests/tu_<stem>.rs`. Per-TU fixtures live in `gen/mtu/stems.py` / `specs.py`; the shared world is `tests/mtu_w/world.rs`.
+New generator features: `xpools` (stem-private record pools), `gen_extra`, `paren_stubs`, `skip_freg`, `post_all`, `noret`.
+- Bugs the oracle found in the first-pass ports: invented RENDER_* constants (itmaterial); missed fused multiply-adds
+  (itzako product_xyz/sqrt structure, it_26B1 it_8026B344); `M_PI_2` is a double (it_2725); `1 << n` with n >= 32 needs
+  `cabi::shl`; C `bool` is int (parameters and pass-through returns are i32); dropped TARGET_PC paths (Mex_ItRecord);
+  argument evaluation order (itspawn: HSD_Randf before gm_8016AE80); calls into sibling TUs must go through `ext`;
+  header inlines must be local, not `ext`; 27 functions the first pass left to itlib were missing from the TU files.
+- Oracle traps: unions with pointers or bitfield views (xDD4_itemVar, xD90) alias differently native vs GC bit order, so
+  fixtures normalise them (`post_all`); `HM_LINE` (MTU_DBG builds) prints the gen.h line of each hashed word.
+- Not measured: branch coverage (llvm-cov profile versions do not match rustc's); `chars_ref` (melee_chara) does not
+  terminate in this checkout, unrelated.
+## melee_items::tu: it/kinds set (shard 681-688)
+`itfoxblaster itfoxillusion itfoxlaser itfreeze itfreezer itfushigibana itgamewatchbreath itgamewatchchef`
+(`rust/melee_items/src/tu/`, 163 functions incl. the static-inline helpers and the TU's `ItemStateTable` /
+float / int data tables; header inlines the TUs use are copied into each file). Callees of unported TUs are
+`ext` hooks (unset: panic "TODO"); `cosf` / `sinf` are `melee_runtime::gekko` (the oracle links the real
+`gekko_fp.c`), `atan2f` is an ext hook.
+- Oracle: `python rust/melee_world/gen/mtu/mk_itkinds.py` writes, from the one description in
+  `gen/mtu/specs_it.py` (`CFG`), the C driver `gen/mtu/tu/<stem>.c` and the Rust test
+  `rust/melee_items/tests/tu_<stem>.rs`; `python rust/melee_world/gen/mtu/run_tu.py <stem>` builds the C
+  (shipping contraction + gwtool lowering) and writes `tests/data/mtu_<stem>.txt`. Each case (300 per
+  function, seeded) builds a synthetic world (item gobj + Item, owner / reference / parent / spawn-result
+  gobjs and Items, a JObj chain, article / attribute / dynamic-bone records, the kind's item-var union
+  member) and hashes every field of every record after the call (generated `fill_` / `hash_` walkers,
+  `skip_fields` + by-value bitfield views added to `gen_tu.py`), the return value, and the call trace of
+  every stub (the `SpawnItem` a spawn stub receives is hashed at the call).
+- Traps found: (1) `-1.0f * x` is folded to a negation by LLVM, which flips a NaN's sign; the console
+  `fmuls` keeps it (`itfreeze.rs` `mul_m1`); (2) `attrs->entries[i]` on a one-element array type: index
+  through a raw pointer; (3) a float local read before init (`it_8028EB88` `ip`) is 0 in the game build;
+  (4) `HSD_ASSERT(jobj)` in the jobj.h setters hangs on NULL: the oracle never passes NULL, the port asserts;
+  (5) `it_8029CD78` loops forever when the ghost jobj exists (kept as `loop {}`).
+- Mutation checks (flip a fused site, a table value, a state constant, a flag, an index) are caught in all
+  eight TUs; equivalent mutants only at float-equality boundaries.
+
+## melee_items::tu: it/kinds set (shard 705-712)
+`ithinoarashi ithitodeman ithouou itkabigon itkamex itkinoko itkirbycutterbeam itkirbygamewatchchefpan`
+(`rust/melee_items/src/tu/`, 133 functions incl. the static-inline helpers and the 8 state tables; the older leaf-style
+ports in itkinds*.rs / itfwd*.rs keep their own signatures). State oracle: `python rust/melee_world/gen/mtu/mk_itk.py all <stem>`
+generates the C driver (the game `.c` included verbatim, shipping contraction + gwtool lowering, `gekko_fp.c`, `lb/lbtrigf.c`,
+`lb/lbvector.c` linked for sinf/cosf/atan2f/lbVector_*), the recording stubs for every other callee, and the Rust test
+`tests/tu_<stem>.rs`; 400 seeded cases per function, each hashing every field of Item + the spawned Item + JObjs + attribute
+records. Bitfield unions (UnkFlagStruct, flag32) are hashed by value; the item-var union is walked as the TU's variant;
+hinoarashi's Vec3-over-flags pun (`it_802D61C8` / `it_802D6310`) is compared as raw bytes. `efSync_Spawn` (variadic) is an
+ext taking `&[*const c_void]`, its extras traced by gfx id. Mutation checks (flipping fused sites, boundaries, constants) fail
+the tests; `-1.0 * x + z` fused vs unfused is bit-equal, so that site is not distinguishable.
+## melee_items::tu: it/kinds set 721-728 (itkyasarinegg itleadead itlgun itlgunbeam itlgunray itlikelike itlinkarrow itlinkbomb)
+`rust/melee_items/src/tu/<stem>.rs` ports all 344 functions of those `src/melee/it/kinds` files (static inlines included; header inlines are
+local `#[inline]` copies) with the C names and signatures, checked by the shard 657-664 kinds oracle (`bash rust/melee_items/gen/kinds/regen.sh
+<stem>`, tests `kinds_<stem>.rs`, 400 seeded cases per function, whole world hashed after every call, call trace hashed).
+- Raw-int `bool`s: `bool` is the MSL `int`, so a callback that `return`s a callee's int (`return it_8027C794(gobj);`) must return that
+  value unnormalised: those ports return `i32` (state-table slot `Some(f)` instead of `pred_b(f)`), found by the oracle (random stub returns).
+- Fused sites (checked in the IR, every one caught by an unfused mutation unless noted): `itlgunbeam` `diff * r + lo` x2; `itlinkarrow`
+  `arg4 * ((x8-x4)/arg5) + x4` x2, the `lookup[8] * rand + lookup[0]` terms (cases 0/2/4/6 and 1/3/5, both in `802A81C4` and `Motion4_Anim`),
+  `xD4 * cosf/sinf + xC8/xCC` (`Motion2_Phys`, `Logic98_HitShield`); `itlinkbomb` `Motion4_Phys`; `itleadead` `neg_dot` is
+  `fmuladd(-ax, bx, -(ay*by))` then `fmuladd(-az, bz, .)` (clang folds the negated products; IR-checked, the branch outcome it feeds is
+  not sensitive to the rounding in the random cases, so no mutation of it is caught). Use `melee_core::fp::fmadds` (f64 multiply-add), never `mul_add`.
+- Oracle additions: `all3()` in `specs_cfg.py` fills the special-attribute block of all three items (spawned items read `ART[2]`);
+  `deep_ecb` spec flag traces the pointee of `itECB*` stub arguments (`TECB` / `tecb`; off for the older TUs so their data files stay valid);
+  bitfield words inside an item-var union are zeroed before their bits are set and hashed by value (native C is LSB-first, melee_types MSB-first).
+- No `return` in the C (UB, PPC leaves r3): `itKyasarinegg_UnkMotion4_Anim` (returns the `it_802751D8` int), `itLinkArrow_802A81C4`
+  (returns the new `x9C`) and the fall-off path of `itLinkArrow_802A850C` (returns 0); the oracle skips those return values (state, trace
+  and the defined path of 802A850C are compared). Boundary constants that random stub returns never straddle (for example `dx <= x10`,
+  `ad > 3.0` in leadead, `var_f1 < 15.0` in likelike) are matched by reading, not by mutation.
+- 274 callee hooks across the eight files are `ext` TODO stubs (unset: panic "TODO: name is not ported").
+## melee_items::tu: it/kinds itluigifireball, itmaril, itmariocape, itmariofireball, itmarumine, itmasterhandbullet, itmasterhandlaser, itmatadogas (shard 737-744)
+Same layout and oracle (`bash rust/melee_items/gen/kinds/regen.sh <stem>...`) as the 657-664 shard: every function of the
+eight files (150 incl. statics, e.g. `calc_dist_2d_accurate`, `sqrtf_store`) in `rust/melee_items/src/tu/<stem>.rs`, 400 seeded cases each.
+- Driver additions: `double` returns are hashed (`mk_driver.py`); variadic `efAsync_Spawn` / `efSync_Spawn` are fixed-arity custom stubs;
+  `itmasterhandlaser` adds a fake `Fighter` (`parts` -> `FighterBone[8]`) as GO[1]'s user data, a 2-entry `HSD_Joint` chain for `xC8_joint`,
+  and `mpCheckMultiple` writes its `Vec3` out-parameter; bool-returning stubs of the bullet return 0/1.
+- Fused sites (IR-checked): f32 `fmadds` in `calc_dist_2d_accurate` (luigi / mario fireball) and 4 in `it_802F063C`; f64 Newton steps of
+  `sqrtf_accurate` / `sqrtf_store` (`3.0 - g*g*x` as fma; un-fusing them is not caught, the f32 rounding hides it). Mutations of the f32 sites,
+  the `M_PI` negation in `itmaril` and the `MTXDegToRad` constant in `itmatadogas` fail the tests.
+## melee_items::tu: it/kinds nokonoko ... peachexplode (shard 761-768)
+`rust/melee_items/src/tu/{itnokonoko,itoctarock,itoctarockstone,itoldkuri,itoldottosea,itparasol,itpatapata,itpeachexplode}.rs`
+port every function of those `src/melee/it/kinds` files (257, statics and the two `*_inline` helpers of itnokonoko included),
+checked with the same whole-TU C state oracle as shard 657-664 (`bash rust/melee_items/gen/kinds/regen.sh [stem...]`,
+400 seeded cases per function, tests `kinds_<stem>`). New specs live in `specs.py` (`MY_RET` / `MY_EFF`: pass-through `bool`
+callees return 0/1, `it_80276308` returns 0/4/8, `ftLib_8008627C` returns an owner gobj or NULL, `Vec3` out-parameters are
+written) and `specs_cfg.py` (typed `x4_specialAttributes` with a pointee block at +64, the `it_804D6D40` data, the
+ptr slot of `oldottosea.x20` cleared after hashing, bones 14..18 of the dynamic bone table for patapata).
+- Fused sites (checked in the IR): parasol `deg_to_rad * fm + ry`, octarockstone `Randf * ((pos.y - y) / 10) + vel.y`,
+  oldottosea `pos.x += x14 * facing` and `vel.x += -facing * xC`; octarock / oldkuri / patapata / nokonoko / peachexplode have none.
+  Mutations of each fused site, constants and state ids fail the tests.
+- `x40_vel.y <= 0.2` (oldkuri, nokonoko) is a double comparison in the C (`0.2` unsuffixed); the port compares as f64.
+- `itParasol it_8028B08C(item, statenum)` indexes a 8-entry table by `anim_id`, which is -1 for states 0 and 3 (C reads out
+  of bounds); the oracle only draws the states 1, 2, 4..10 that the game uses. `bool` parameters of the C are `int`: ports take `i32`.
+- Not in these files (itwhitebea.c): `itOldottosea_UnkMotion8..11`, `it_802E3400/3528/35CC/37A4`; the state table names the former
+  through `ext::cb`.

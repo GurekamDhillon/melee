@@ -1,0 +1,40 @@
+// BEGIN GENERATED EXT (rust/melee_world/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj;
+    fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
+    fn Item_802694CC(a0: *mut HSD_GObj);
+    fn Item_8026A8EC(a0: *mut HSD_GObj);
+    fn Item_8026AB54(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: u32);
+    fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn ftKb_SpecialNGw_8010D074(a0: *mut HSD_GObj);
+    fn ftKb_SpecialNGw_8010D160(a0: *mut HSD_GObj) -> i32;
+    fn it_8026B724(a0: *mut HSD_GObj);
+    fn it_8026B73C(a0: *mut HSD_GObj);
+    fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
+    fn it_8027CE64(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: *mut c_void);
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+}
+// END GENERATED EXT

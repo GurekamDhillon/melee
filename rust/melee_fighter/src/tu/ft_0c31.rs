@@ -205,13 +205,13 @@ fn coll(g: G) {
     let x28 = if f.is_sub_fighter() == 0 { entry(f).x28 } else { entry(fp(leader(f, 0))).x28 };
     let f = fp(g);
     entry(f).x2C.bottom = -x28;
-    let mut bx = entry(f).x2C;
+    // the C passes `&fp->mv.co.entry.x2C`: the callee sees (and may read through) the fighter's own box
+    let bx: &mut ftCollisionBox = unsafe { &mut *(&mut entry(f).x2C as *mut ftCollisionBox) };
     if f.ground_or_air == GA_Air {
-        ext::ft_80083E64(g, &mut bx, fn_800C63BC);
+        ext::ft_80083E64(g, bx, fn_800C63BC);
     } else {
-        ext::ft_800846B0(g, &mut bx, fn_800C63E0);
+        ext::ft_800846B0(g, bx, fn_800C63E0);
     }
-    entry(fp(g)).x2C = bx;
 }
 
 /// `ftCo_EntryStart_Coll`: the ECB bottom follows the stand (the leader's for Nana).

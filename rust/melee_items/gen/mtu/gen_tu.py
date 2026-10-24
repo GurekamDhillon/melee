@@ -643,6 +643,8 @@ def build(stem, spec, want_ext):
     # the function table: stubs address-taken + the TU's own functions, sorted by name
     fpn = [n for n in names if stubs[n][2] and not stubs[n][0].type.is_function_variadic()]
     own = sorted(n for n in tu.defs if not tu.defs[n].storage_class == ci.StorageClass.NONE or True)
+    if spec.get("no_freg"):  # callbacks are never reached by the driver (big UI TUs with private / renamed ports)
+        fpn, own = [], []
     c_out.append("static void freg_all(void)\n{")
     for n in fpn:
         c_out.append(f"    freg((const void*) {n});")

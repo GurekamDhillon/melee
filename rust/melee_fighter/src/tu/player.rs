@@ -51,9 +51,9 @@ pub mod ext {
     fn ftCo_800D4FF4(a0: *mut HSD_GObj) => unsafe { let _ = crate::tu::ft_0d4d::ftCo_800D4FF4(a0 as _); };
     fn ftData_800855C8(a0: FighterKind, a1: u8);
     fn ftData_8008578C(a0: i32, a1: u8) => unsafe { let _ = crate::tu::ftdata::ftData_8008578C(a0 as _, a1 as _); };
-    fn ftDemo_CreateFighter(a0: *mut plAllocInfo2) -> *mut HSD_GObj;
-    fn ftDemo_SetArchiveData(a0: i32, a1: *mut HSD_Archive, a2: i32);
-    fn ftDemo_SetFacingDirection(a0: *mut HSD_GObj, a1: f32);
+    fn ftDemo_CreateFighter(a0: *mut plAllocInfo2) -> *mut HSD_GObj => unsafe { crate::tu::ftdemo::ftdemo_create_fighter(&*(a0 as *const _)) as _ };
+    fn ftDemo_SetArchiveData(a0: i32, a1: *mut HSD_Archive, a2: i32) => unsafe { let _ = crate::tu::ftdemo::ftdemo_set_archive_data(a0 as _, a1 as _, a2 as _); };
+    fn ftDemo_SetFacingDirection(a0: *mut HSD_GObj, a1: f32) => unsafe { let _ = crate::tu::ftdemo::ftdemo_set_facing_direction(a0 as _, a1 as _); };
     fn ftKb_SpecialN_800EED50(a0: i32, a1: i32);
     fn ftLib_800865F0(a0: *mut HSD_GObj) -> *mut HSD_JObj => unsafe { crate::ftlib::ftlib_800865f0(a0 as _) as _ };
     fn ftLib_80086664(a0: *mut HSD_GObj, a1: *mut Vec3) => unsafe { let _ = crate::ftlib::ftlib_80086664(a0 as _, &*(a1 as *const _)); };
@@ -71,8 +71,8 @@ pub mod ext {
     fn ftLib_80087300(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_80087300(a0 as _) };
     fn ftLib_800873CC(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_800873cc(a0 as _) };
     fn ftLib_80087610(a0: u8) => unsafe { let _ = crate::tu::ftlib::ftlib_80087610(a0 as _); };
-    fn ftLib_GetKind(a0: *mut HSD_GObj) -> FighterKind;
-    fn ftLib_SetScale(a0: *mut HSD_GObj, a1: f32);
+    fn ftLib_GetKind(a0: *mut HSD_GObj) -> FighterKind => unsafe { crate::ftlib::get_kind(a0 as _) };
+    fn ftLib_SetScale(a0: *mut HSD_GObj, a1: f32) => unsafe { let _ = crate::ftlib::set_scale(a0 as _, a1 as _); };
     fn gm_8016B168() -> bool;
     fn gm_8016C5C0(a0: i32) -> i32;
     fn gm_GetFrameCount() -> u32;
@@ -86,7 +86,7 @@ pub mod ext {
     fn pl_8003891C(a0: i32) => unsafe { let _ = crate::tu::plbonus::pl_8003891C(a0 as _); };
     fn pl_80038F10(a0: i32) => unsafe { let _ = crate::plbonus3::pl_80038f10(a0 as _); };
     fn plAttack_80037590() => unsafe { let _ = crate::tu::plattack::plAttack_80037590(); };
-    fn plStale_InitAttackInstance();
+    fn plStale_InitAttackInstance() => unsafe { let _ = crate::stale::init_attack_instance(); };
     }
     /// `ScriptGame_ModValue(slot, field, base)` (TARGET_PC): the crate's `SCRIPT_MOD_VALUE` hook,
     /// vanilla-neutral (returns `base`) when none is installed.

@@ -65,7 +65,7 @@ pub mod ext {
     pub fn ftParts_80074B0C(_g: G, _i: i32, _v: i32) { unsafe { let _ = crate::tu::ftparts::ftParts_80074B0C(_g as _, _i as _, _v as _); } }
     pub fn ftParts_80074A8C(_g: G) { crate::ft0df::ftparts_80074a8c(_g) }
     pub fn ftParts_80074ACC(_g: G) { crate::ft0df::ftparts_80074acc(_g) }
-    pub fn ft_PlaySFX(_fp: F, _sfx: i32, _vol: i32, _pan: i32) { todo!("ft_PlaySFX (ft/ft_0877.c)") }
+    pub fn ft_PlaySFX(_fp: F, _sfx: i32, _vol: i32, _pan: i32) { unsafe { let _ = crate::ft0877::play_sfx(&mut *(_fp as *mut _), _sfx as _, _vol as _, _pan as _); } }
     pub fn ft_sfx_variant(_which: u32, _fp: F, _sfx: i32, _vol: i32, _pan: i32) { todo!("ft_80088478/800881D8/80088510/800885A8/80088640/80088328 (ft/ft_0877.c)") }
     pub fn ft_sfx_stop(_which: u32, _fp: F) { todo!("ft_80088828/80088770/80088884/800888E0/8008893C/800887CC (ft/ft_0877.c)") }
     pub fn ft_800889F4(_fp: F, _s: *mut FtSFXArr) { unsafe { let _ = crate::ft0881::ft_800889f4(&mut *(_fp as *mut _), _s as _); } }

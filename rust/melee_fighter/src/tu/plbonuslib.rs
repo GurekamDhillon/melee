@@ -61,7 +61,7 @@ pub mod ext {
     fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32 => unsafe { crate::ftlib::ftlib_800865c0(a0 as _) };
     fn ftLib_800865CC(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_800865cc(a0 as _) };
     fn ftLib_800867D8(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_800867d8(a0 as _) };
-    fn ftLib_GetItem(a0: *mut HSD_GObj) -> *mut HSD_GObj;
+    fn ftLib_GetItem(a0: *mut HSD_GObj) -> *mut HSD_GObj => unsafe { crate::ftlib::get_item(a0 as _) as _ };
     fn ftLib_80086960(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_80086960(a0 as _) };
     fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8 => unsafe { crate::ftlib::ftlib_80086be0(a0 as _) };
     fn ftLib_80087120(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_80087120(a0 as _) };
@@ -76,7 +76,7 @@ pub mod ext {
     fn ftLib_80087700(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_80087700(a0 as _) };
     fn ftLib_8008777C(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftlib_8008777c(a0 as _) };
     fn ftLib_800877D4(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_800877d4(a0 as _) };
-    fn ftLib_GetMotionId(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_GetMotionId(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::get_motion_id(a0 as _) };
     fn gm_8016AEEC() -> u32;
     fn gm_8016B110() -> bool;
     fn gm_8016B168() -> bool;

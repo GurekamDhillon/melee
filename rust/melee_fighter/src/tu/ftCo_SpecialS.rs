@@ -42,8 +42,8 @@ pub mod ext {
         ScriptGame_CapsActionAllowed(fp: &Fighter, flag: i32) -> i32 = |_, _| todo!("TODO(port) ScriptGame_CapsActionAllowed (pc/gameworld/script_game.c)");
         // `ftData_SpecialS[kind]` (ftdata.c table).
         ftData_SpecialS(kind: u32) -> HSD_GObjEvent = |_| todo!("TODO(port) ftData_SpecialS (ftdata.c)");
-        ftCommon_UpdateFacing(fp: &mut Fighter) = |_| todo!("TODO(port) ftCommon_UpdateFacing (ftcommon.c)");
-        ft_GetGroundFrictionMultiplier(fp: &mut Fighter) -> f32 = |_| todo!("TODO(port) ft_GetGroundFrictionMultiplier (ft_0877.c)");
+        ftCommon_UpdateFacing(fp: &mut Fighter) = |fp: &mut Fighter| { unsafe { let _ = crate::ftcommon::update_facing(fp); } };
+        ft_GetGroundFrictionMultiplier(fp: &mut Fighter) -> f32 = |fp: &mut Fighter| -> f32 { unsafe { crate::tu::ft_081b::ft_get_ground_friction_multiplier(fp) } };
         Geno_SpecialEnter(g: G, which: i32) -> i32 = |_, _| todo!("TODO(pc geno) Geno_SpecialEnter");
         Mex_SpecialSDispatch(kind: i32, g: G, vanilla: HSD_GObjEvent) = |_, _, _| todo!("TODO(pc mex) Mex_SpecialSDispatch");
     }

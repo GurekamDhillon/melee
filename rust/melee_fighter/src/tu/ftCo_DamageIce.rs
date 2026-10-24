@@ -70,8 +70,8 @@ pub mod ext {
         ftCommon_8007EBAC(fp: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
         ftCo_800886D8(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |fp: &mut Fighter, id: i32, vol: u8, pan: u8| { unsafe { let _ = crate::ft0881::ftco_800886d8(fp as _, id as _, vol as _, pan as _); } };
         ftCommon_GrabMash(fp: &mut Fighter, v: f32) -> bool = crate::ftcommon2::grab_mash;
-        ftCommon_CalcSelfAccel_DeaccelAir(fp: &mut Fighter) = |_| todo!("TODO(port) ftCommon_CalcSelfAccel_DeaccelAir (ftcommon.c)");
-        ftCommon_Fall(fp: &mut Fighter, grav: f32, term: f32) = |_, _, _| todo!("TODO(port) ftCommon_Fall (ftcommon.c)");
+        ftCommon_CalcSelfAccel_DeaccelAir(fp: &mut Fighter) = |fp: &mut Fighter| { unsafe { let _ = crate::ftcommon::calc_self_accel_deaccel_air(fp); } };
+        ftCommon_Fall(fp: &mut Fighter, grav: f32, term: f32) = |fp: &mut Fighter, grav: f32, term: f32| { unsafe { let _ = crate::ftcommon::fall(fp, grav as _, term as _); } };
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         ft_800824A0(g: G, b: *mut ftCollisionBox) -> bool = |g: G, b: *mut ftCollisionBox| -> bool { unsafe { crate::tu::ft_081b::ft_800824a0(g as _, b as _) as _ } };
@@ -79,7 +79,7 @@ pub mod ext {
         ftCommon_8007D7FC(fp: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
         atan2f(y: f32, x: f32) -> f32 = melee_runtime::lbtrigf::atan2f;
         Camera_RequestQuake(kind: i32, pos: *mut Vec) = |_, _| todo!("TODO(port) Camera_RequestQuake (cm/camera.c)");
-        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("TODO(port) ft_PlaySFX (ft_0881.c)");
+        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |fp: &mut Fighter, id: i32, vol: u8, pan: u8| { unsafe { let _ = crate::ft0877::play_sfx(fp, id as _, vol as _, pan as _); } };
         ftCo_80090780(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_DamageFall::ftCo_80090780(g as _); } };
         lbVector_Mirror(a: &mut Vec3, n: &Vec3) = |a: &mut Vec3, n: &Vec3| { unsafe { let _ = melee_runtime::tu::lbvector::lbVector_Mirror(a as *mut _ as *mut _, n as *const _ as *mut _); } };
         ft_80081D0C(g: G) -> i32 = |g: G| -> i32 { unsafe { crate::tu::ft_081b::ft_80081d0c(g as _) as _ } };

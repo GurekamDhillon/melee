@@ -62,7 +62,7 @@ pub mod ext {
     pub fn lbGetJObjEndFrame(_j: J) -> f32 { unsafe { melee_runtime::tu::lb_00B0::lbGetJObjEndFrame(_j as _) } }
     pub fn lbAnim_8001E6D8(_j: J, _t: *mut FigaTree, _tr: *mut FigaTrack, _n: i8) { unsafe { let _ = melee_runtime::tu::lbanim::lbAnim_8001E6D8(_j as _, _t as _, _tr as _, _n as _); } }
     pub fn lbAnim_8001E7E8(_j: J, _t: *mut FigaTree, _tr: *mut FigaTrack, _n: i8) { unsafe { let _ = melee_runtime::tu::lbanim::lbAnim_8001E7E8(_j as _, _t as _, _tr as _, _n as _); } }
-    pub fn ftCommon_GetModelScale(_fp: *mut Fighter) -> f32 { todo!("ftCommon_GetModelScale (ft/ftcommon.c)") }
+    pub fn ftCommon_GetModelScale(_fp: *mut Fighter) -> f32 { unsafe { crate::ftcommon2::get_model_scale(&*(_fp as *const _)) } }
     pub fn ftCommon_8007F6A4(_fp: *mut Fighter, _j: J) { unsafe { let _ = crate::ftcommon3::ftcommon_8007f6a4(&mut *(_fp as *mut _), _j as _); } }
     pub fn ftParts_8007482C(_joint: *mut HSD_Joint) -> J { todo!("ftParts_8007482C (ft/ftparts.c)") }
     pub fn ftParts_8007462C(_g: G) { todo!("ftParts_8007462C (ft/ftparts.c)") }

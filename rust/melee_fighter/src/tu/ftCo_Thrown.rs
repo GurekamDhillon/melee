@@ -47,12 +47,12 @@ pub mod ext {
         lb_8000B1CC(j: *mut HSD_JObj, off: *const Vec3, out: &mut Vec3) = |j: *mut HSD_JObj, off: *const Vec3, out: &mut Vec3| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, off as _, out as _); } };
         ftAnim_SetAnimRate(g: G, rate: f32) = |g: G, rate: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_SetAnimRate(g as _, rate as _); } };
         ftCommon_8007E3EC(g: G) = |g: G| { unsafe { let _ = crate::ftcommon3::ftcommon_8007e3ec(g as _); } };
-        ftCommon_GrabMash(f: &mut Fighter, v: f32) -> bool = |_, _| todo!("TODO(port) ftCommon_GrabMash (ftcommon.c)");
+        ftCommon_GrabMash(f: &mut Fighter, v: f32) -> bool = |f: &mut Fighter, v: f32| -> bool { unsafe { crate::ftcommon2::grab_mash(f, v as _) } };
         fn_800DC044(g: G) -> bool = crate::tu::ftCo_CaptureWait::fn_800DC044;
         fn_800DC070(g: G) = crate::tu::ftCo_CaptureJump::fn_800DC070;
         ftCo_CaptureCut_Enter(g: G) = crate::tu::ftCo_CaptureCut::ftCo_CaptureCut_Enter;
         ftCamera_800762F4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftcamera::ftcamera_800762f4(g as _); } };
-        ftCamera_UpdateCameraBox(g: G) = |_| todo!("TODO(port) ftCamera_UpdateCameraBox (ftcamera.c)");
+        ftCamera_UpdateCameraBox(g: G) = |g: G| { unsafe { let _ = crate::tu::ftcamera::ftcamera_update_camera_box(g as _); } };
         ftColl_8007B8CC(f: &mut Fighter, victim: G) = |f: &mut Fighter, victim: G| { unsafe { let _ = crate::ft0df::ftcoll_8007b8cc(f as _, victim as _); } };
         ftCo_8008DCE0(g: G, angle: i32, facing: f32) = |g: G, angle: i32, facing: f32| { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_8008DCE0(g as _, angle as _, facing as _); } };
         ftCo_8008E5A4(f: &mut Fighter) = |f: &mut Fighter| { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_8008E5A4(f as _); } };

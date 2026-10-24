@@ -324,7 +324,7 @@ pub mod ext {
     pub fn ftCo_800D3158(g: G) { unsafe { let _ = crate::tu::ft_0d31::ftCo_800D3158(g); } }
     pub fn Stage_CalcUnkCamYBounds() -> f32 { unsafe { melee_world::tu::stage::Stage_CalcUnkCamYBounds() } }
     pub fn Stage_CalcUnkCamY() -> f32 { unsafe { melee_world::tu::stage::Stage_CalcUnkCamY() } }
-    pub fn ft_PlaySFX(fp: F, sfx: i32, vol: i32, pan: i32) { todo!("ft_PlaySFX (ft/ft_0877.c)") }
+    pub fn ft_PlaySFX(fp: F, sfx: i32, vol: i32, pan: i32) { unsafe { let _ = crate::ft0877::play_sfx(&mut *(fp as *mut _), sfx as _, vol as _, pan as _); } }
     pub fn un_80322258(x: f32) -> bool { unsafe { crate::tu::crowdsfx::un_80322258(x as _) } }
     pub fn ftColl_8007AF28(g: G) { unsafe { let _ = crate::ft0df::ftcoll_8007af28(g); } }
     pub fn DbLevel_at_least_DebugRom() -> bool { todo!("DbLevel_at_least_DebugRom (db/db.c)") }

@@ -61,7 +61,7 @@ pub mod ext {
         // `efSync_Spawn(gfx_id, gobj, jobj, color)` (variadic in C).
         efSync_Spawn(id: i32, g: G, j: *mut HSD_JObj, color: i32) = |_, _, _, _| todo!("TODO(port) efSync_Spawn (ef/efsync.c)");
         ftColl_8007B1B8(g: G, desc: &mut AbsorbDesc, cb: HSD_GObjEvent) = |_, _, _| todo!("TODO(port) ftColl_8007B1B8 (ftcoll.c)");
-        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("TODO(port) ft_PlaySFX (ft_0881.c)");
+        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |fp: &mut Fighter, id: i32, vol: u8, pan: u8| { unsafe { let _ = crate::ft0877::play_sfx(fp, id as _, vol as _, pan as _); } };
         Geno_DefineTemplateSkeleton(kind: i32) -> i32 = |_| todo!("TODO(port) Geno_DefineTemplateSkeleton (pc/geno)");
         Geno_DefineBaseKind(kind: i32) -> i32 = |_| todo!("TODO(port) Geno_DefineBaseKind (pc/geno)");
         ftYs_Init_8012BECC(g: G) = |_| todo!("TODO(port) ftYs_Init_8012BECC (ftYoshi)");
@@ -105,7 +105,7 @@ pub mod ext {
         ftAnim_SetAnimRate(g: G, v: f32) = |g: G, v: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_SetAnimRate(g as _, v as _); } };
         lbGetJObjEndFrame(j: *mut HSD_JObj) -> f32 = |j: *mut HSD_JObj| -> f32 { unsafe { melee_runtime::tu::lb_00B0::lbGetJObjEndFrame(j as _) as _ } };
         Replay_UcfVersion(port: i32) -> i32 = |_| todo!("TODO(port) Replay_UcfVersion (pc/platform)");
-        ftUcf_PadRaw(port: i32, which_y: i32, back: i32) -> i32 = |_, _, _| todo!("TODO(port) ftUcf_PadRaw (fighter.c)");
+        ftUcf_PadRaw(port: i32, which_y: i32, back: i32) -> i32 = |port: i32, which_y: i32, back: i32| -> i32 { unsafe { crate::fighter::ftucf_pad_raw(port as _, which_y as _, back as _) } };
         ftColl_CreateReflectHit(g: G, desc: &mut ReflectDesc, cb: HSD_GObjEvent) = |_, _, _| todo!("TODO(port) ftColl_CreateReflectHit (ftcoll.c)");
         ftCommon_8007DB24(g: G) = |g: G| { unsafe { let _ = crate::ftcommon3::ftcommon_8007db24(g as _); } };
         lb_8000B1CC(j: *mut HSD_JObj, p0: *mut Vec3, p1: *mut Vec3) = |j: *mut HSD_JObj, p0: *mut Vec3, p1: *mut Vec3| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, p0 as _, p1 as _); } };

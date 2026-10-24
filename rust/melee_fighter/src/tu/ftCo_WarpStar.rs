@@ -60,7 +60,7 @@ pub mod ext {
         // rp3 mpColl_80043680
         mpColl_80043680(c: *mut CollData, pos: *mut Vec3) = |c: *mut CollData, pos: *mut Vec3| unsafe { melee_world::tu::mpcoll::mpColl_80043680(c, pos as _); };
         // rp3-end
-        ftCommon_Fall(f: &mut Fighter, a: f32, b: f32) = |_, _, _| todo!("TODO(port) ftCommon_Fall (ftcommon.c)");
+        ftCommon_Fall(f: &mut Fighter, a: f32, b: f32) = |f: &mut Fighter, a: f32, b: f32| { unsafe { let _ = crate::ftcommon::fall(f, a as _, b as _); } };
         ftCommon_CalcSelfAccel_AccelToVelClampedFrom(f: &mut Fighter, vel: f32, accel: f32, target: f32, fr: f32) = crate::ftcommon::calc_self_accel_accel_to_vel_clamped_from;
         ft_80083E64(g: G, ecb: *mut ftCollisionBox, cb: HSD_GObjEvent) = |_, _, _| todo!("TODO(port) ft_80083E64 (ft_081B.c)");
         atan2f(y: f32, x: f32) -> f32 = melee_runtime::lbtrigf::atan2f;

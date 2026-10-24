@@ -48,10 +48,10 @@ pub mod ext {
         ftCommon_8007E2F4(f: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         ftColl_8007B62C(g: G, v: i32) = |g: G, v: i32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b62c(g as _, v as _); } };
         ftCommon_8007EFC0(f: &mut Fighter, v: u32) = crate::ftcommon2::ftcommon_8007efc0;
-        ftCommon_InitGrab(f: &mut Fighter, a: i32, v: f32) = |_, _, _| todo!("TODO(port) ftCommon_InitGrab (ftcommon.c)");
+        ftCommon_InitGrab(f: &mut Fighter, a: i32, v: f32) = |f: &mut Fighter, a: i32, v: f32| { unsafe { let _ = crate::ftcommon2::init_grab(f, a as _, v as _); } };
         ftAnim_8006EBA4(g: G) = |g| unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g) };
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
-        ftCommon_SetAccessory(f: &mut Fighter, j: *mut HSD_Joint) = |_, _| todo!("TODO(port) ftCommon_SetAccessory (ftcommon.c)");
+        ftCommon_SetAccessory(f: &mut Fighter, j: *mut HSD_Joint) = |f: &mut Fighter, j: *mut HSD_Joint| { unsafe { let _ = crate::ftcommon3::set_accessory(f, j as _); } };
         ftKb_SpecialN_800F5898(g: G) -> *mut HSD_Joint = |_| todo!("TODO(port) ftKb_SpecialN_800F5898 (ftKb_Init.c)");
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
         lb_8000C2F8(a: *mut HSD_JObj, b: *mut HSD_JObj) = |a: *mut HSD_JObj, b: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C2F8(a as _, b as _); } };
@@ -70,7 +70,7 @@ pub mod ext {
         ftKb_SpecialN_800EEEC4(g: G, kind: i32) = |_, _| todo!("TODO(port) ftKb_SpecialN_800EEEC4 (ftKb_Init.c)");
         ftKb_SpecialN_800F5A98() -> f32 = || todo!("TODO(port) ftKb_SpecialN_800F5A98 (ftKb_Init.c)");
         ftKb_SpecialN_800F5A70() -> f32 = || todo!("TODO(port) ftKb_SpecialN_800F5A70 (ftKb_Init.c)");
-        ftCommon_GrabMash(f: &mut Fighter, v: f32) -> bool = |_, _| todo!("TODO(port) ftCommon_GrabMash (ftcommon.c)");
+        ftCommon_GrabMash(f: &mut Fighter, v: f32) -> bool = |f: &mut Fighter, v: f32| -> bool { unsafe { crate::ftcommon2::grab_mash(f, v as _) } };
         lbVector_Mirror(a: *mut Vec3, b: *mut Vec3) = |a: *mut Vec3, b: *mut Vec3| { unsafe { let _ = melee_runtime::tu::lbvector::lbVector_Mirror(a as _, b as _); } };
         ftCo_Fall_Enter(g: G) = crate::tu::ftCo_Fall::ftCo_Fall_Enter;
     }

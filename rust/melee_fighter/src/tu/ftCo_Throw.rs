@@ -73,7 +73,7 @@ pub mod ext {
         ft_800841B8(g: G, cb: HSD_GObjEvent) = |_, _| todo!("TODO(port) ft_800841B8 (ft_081B.c)");
         ftFx_Throw_Anim(g: G) = |_| todo!("TODO(port) ftFx_Throw_Anim (ftfoxspecialn.c)");
         ftCamera_800762F4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftcamera::ftcamera_800762f4(g as _); } };
-        ftCamera_UpdateCameraBox(g: G) = |_| todo!("TODO(port) ftCamera_UpdateCameraBox (ftcamera.c)");
+        ftCamera_UpdateCameraBox(g: G) = |g: G| { unsafe { let _ = crate::tu::ftcamera::ftcamera_update_camera_box(g as _); } };
         ftColl_8007891C(g: G, victim: G, damage: f32) = |g: G, victim: G, damage: f32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007891c(g as _, victim as _, damage as _); } };
         ftColl_8007B62C(g: G, n: i32) = |g: G, n: i32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b62c(g as _, n as _); } };
         ftParts_GetBoneIndex(f: &Fighter, part: i32) -> i32 = crate::ftdmgfall::ftparts_get_bone_index;

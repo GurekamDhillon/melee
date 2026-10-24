@@ -251,7 +251,7 @@ pub unsafe extern "C" fn JObjUpdateFunc(obj: *mut c_void, ty: i32, val: *mut HSD
         1 => {
             // HSD_A_J_ROTX
             if (*jobj).flags & JOBJ_JOINT1 as u32 != 0 {
-                let robj = ext::HSD_RObjGetByType((*jobj).robj, 4, 0);
+                let robj = ext::HSD_RObjGetByType((*jobj).robj, 0x4000_0000, 0);
                 if !robj.is_null() {
                     (*robj).u.ik_hint.rotate_x = (*val).fv;
                 }

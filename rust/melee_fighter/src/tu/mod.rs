@@ -15,6 +15,7 @@ pub mod ftco_800c703c;
 pub mod ftcamera;
 pub mod ft_0c8c;
 pub mod ftattacks4combo;
+pub mod ft_0881;
 pub mod ft_0899;
 pub mod ftmetal;
 pub mod ftco_0c35;

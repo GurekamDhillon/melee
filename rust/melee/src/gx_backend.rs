@@ -33,6 +33,17 @@ fn col(c: Rgba) -> GxColor {
 }
 
 impl GxBackend for ShimBackend<'_> {
+    fn set_line_width(&mut self, width: u8, offsets: i32) {
+        self.shim.set_line_width(width, offsets as u32)
+    }
+    fn set_point_size(&mut self, size: u8, offsets: i32) {
+        self.shim.set_point_size(size, offsets as u32)
+    }
+    fn set_tev_color_s10(&mut self, reg: u32, c: [i16; 4]) {
+        self.shim.set_tev_color_s10(reg, melee_gx::api::GxColorS10 { r: c[0], g: c[1], b: c[2], a: c[3] })
+    }
+    /// The diffuse light is loaded once by `lobj_setup_init` (no colour change, no specular).
+    fn setup_lobj(&mut self, _light: &melee_runtime::tu::state::ActiveLight, _color: Rgba, _shininess: f32) {}
     fn set_cull_mode(&mut self, mode: u32) {
         self.shim.set_cull_mode(mode)
     }

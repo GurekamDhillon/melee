@@ -215,6 +215,8 @@ pub mod ext {
     crate::ext_va! {
         /// hsd_3A64.c `HSD_SisLib_803A70A0(text, kind, fmt, ...)`: set a text's string (printf-style).
         fn HSD_SisLib_803A70A0(text: *mut HSD_Text, kind: i32, fmt: *const i8) va 2 -> i32;
+        /// hsd_3A64.c `HSD_SisLib_803A6B98(text, x, y, fmt, ...)`: append a string to a text (printf-style).
+        fn HSD_SisLib_803A6B98(text: *mut HSD_Text, x: f32, y: f32, fmt: *const i8) va 3 -> i32;
         /// debug `OSReport(fmt, ...)`.
         fn OSReport(fmt: *const i8) va 0 -> ();
     }
@@ -4369,5 +4371,1028 @@ unsafe fn mnCharSel_MexScaleCursor(jobj: *mut HSD_JObj, is_hand: i32) {
         (*target).translate.y = (1.0f32 - s) * -2.0f32;
         ext::HSD_JObjSetMtxDirtySub(jobj);
     }
+}
+
+
+// ------------------------------------------------------------------------------------------
+// building the scene
+// ------------------------------------------------------------------------------------------
+
+/// `HSD_LObjSetNext` (lobj.h).
+unsafe fn HSD_LObjSetNext(lobj: *mut HSD_LObj, next: *mut HSD_LObj) {
+    if lobj.is_null() {
+        super::hsd::ext::__assert(c"lobj.h".as_ptr(), 0x136, c"lobj".as_ptr());
+    }
+    (*lobj).next = next;
+}
+
+/// `text->pos_x/y/z = x, y, z`.
+#[inline]
+unsafe fn text_pos(text: *mut HSD_Text, x: f32, y: f32, z: f32) {
+    (*text).pos_x = x;
+    (*text).pos_y = y;
+    (*text).pos_z = z;
+}
+/// `text->font_size.x/y = x, y`.
+#[inline]
+unsafe fn text_font(text: *mut HSD_Text, x: f32, y: f32) {
+    (*text).font_size.x = x;
+    (*text).font_size.y = y;
+}
+/// `HSD_SisLib_803A6B98(text, x, y, fmt)`.
+#[inline]
+unsafe fn text_add(text: *mut HSD_Text, x: f32, y: f32, fmt: *const i8) {
+    ext::HSD_SisLib_803A6B98(text, x, y, fmt, &[]);
+}
+/// `HSD_JObjAddAnimAll(jobj, m.animjoint, m.matanim_joint, m.shapeanim_joint)` for a model.
+#[inline]
+unsafe fn add_model_anims(jobj: *mut HSD_JObj, m: *const StaticModelDesc) {
+    ext::HSD_JObjAddAnimAll(jobj, (*m).animjoint, (*m).matanim_joint, (*m).shapeanim_joint);
+}
+/// The `HSD_ForeachAnim(j, JOBJ_TYPE, JOBJ_MASK, HSD_AObjReqAnim, AOBJ_ARG_AF, frame)` pair of the tag boxes.
+#[inline]
+unsafe fn req_anim_jobj_mask(j: *mut HSD_JObj, frame: f32) {
+    req_anim(j, JOBJ_MASK, frame);
+}
+/// The "clear the K.O. counts" decision shared by the tag overflow and the stars: modes 0 and 3..0xA.
+#[inline]
+fn clears_kos(mt: u8) -> bool {
+    tag_clears_kos(mt)
+}
+
+/// Builds the character select screen (cameras, light, fog, backgrounds, menus, icons, cursors,
+/// tokens, name tags, the mode's high-score texts and the start banner) and returns the result of
+/// `lbAudioAx_80023F28(gmMainLib_8015ECB0())`.
+pub unsafe fn mnCharSel_802640A0() -> i32 {
+    let mut sp108: *mut HSD_JObj = null_mut();
+    let mut spEC: Vec3 = core::mem::zeroed();
+    let spE8: _GXColor;
+    let spE4: _GXColor;
+    let spE0: _GXColor;
+    let spDC: _GXColor;
+    let hard_color: _GXColor;
+    let spD4: _GXColor;
+    let row_b: i32;
+    let row_a: i32;
+    let mut gobj: *mut HSD_GObj;
+    let mut jobj: *mut HSD_JObj;
+    let mut text: *mut HSD_Text = null_mut();
+    let ctx: i32;
+    let mut found: i32;
+    let mut num_players: i32;
+    let mut i: i32;
+    let mut slot: i32;
+    let mut icon: i32;
+    let match_type: u8 = (*mnCharSel_804D6CB0).match_type;
+
+    if match_type != 0 {
+        ext::lbAudioAx_800237A8((*(addr_of!(mnCharSel_803F0A48.mode_info) as *const CSSModeInfo).add(match_type as usize)).enter_sfx, 0x7F, 0x40);
+    } else {
+        match (*ext::gmMainLib_GetGameRules()).mode as i32 {
+            0 => {
+                ext::lbAudioAx_800237A8(0x7535, 0x7F, 0x40);
+            }
+            1 => {
+                ext::lbAudioAx_800237A8(0x7538, 0x7F, 0x40);
+            }
+            2 => {
+                ext::lbAudioAx_800237A8(0x7537, 0x7F, 0x40);
+            }
+            3 => {
+                ext::lbAudioAx_800237A8(0x7536, 0x7F, 0x40);
+            }
+            _ => {}
+        }
+    }
+
+    mnCharSel_804D6CE0 = null_mut();
+    mnCharSel_804D6CDC = null_mut();
+    mnCharSel_804D6CE8 = null_mut();
+    mnCharSel_804D6CE4 = null_mut();
+    mnCharSel_CStickText = null_mut();
+    mnCharSel_804D6CF2 = 0x1E;
+    mnCharSel_804D6CF3 = 0;
+    {
+        let mt_p = addr_of_mut!((*mnCharSel_804D6CB0).match_type);
+
+        if *mt_p as u32 >= 0xB {
+            mnCharSel_804D6CF5 = 1;
+            num_players = 1;
+        } else {
+            mnCharSel_804D6CF5 = 4;
+            num_players = 4;
+        }
+        if *mt_p as u32 == TRAINING_MODE {
+            num_players = 2;
+        }
+    }
+    mnCharSel_804D6CF6 = 0;
+    if mnCharSel_804D6CF5 == 1 && mnCharSel_804D6CF0 < 0 {
+        mnCharSel_804D6CF0 = 0;
+    }
+    if mnCharSel_804D6CF0 == 0 {
+        mnCharSel_804D6CF1 = 1;
+    } else {
+        mnCharSel_804D6CF1 = 0;
+    }
+
+    if (mnCharSel_804D6CF4 as u8) != 0 {
+        mnCharSel_804D6CF4 = 0;
+        i = 0;
+        while i < num_players {
+            (*player_at(mnCharSel_804D6CB0, i as usize)).handicap = 9;
+            i += 1;
+        }
+    }
+
+    mnCharSel_804D6CB8 = ext::GObj_Create(2, 3, 0x80);
+    gobj = mnCharSel_804D6CB8;
+    {
+        MenMain_cam = (*css_data_table).cam;
+        let cobj = ext::HSD_CObjLoadDesc(MenMain_cam);
+        ext::HSD_GObjObject_80390A70(gobj, HSD_GObj_CameraKind, cobj.cast());
+    }
+    ext::GObj_SetupGXLinkMax(gobj, Some(ext::HSD_GObj_803910D8), 0);
+    (*gobj).gxlink_prios = 0x1F;
+    ext::HSD_GObj_SetupProc(gobj, Some(ext::mn_8022BA1C), 5);
+    ctx = ext::HSD_SisLib_803A611C(0, gobj, 7, 8, 0x80, 1, 0x80, 0);
+
+    gobj = ext::GObj_Create(3, 4, 0x80);
+    {
+        let lobj0 = ext::HSD_LObjLoadDesc((*css_data_table).light0);
+        let lobj1 = ext::HSD_LObjLoadDesc((*css_data_table).light1);
+        HSD_LObjSetNext(lobj0, lobj1);
+        ext::HSD_GObjObject_80390A70(gobj, HSD_GObj_LightKind as u8, lobj0.cast());
+    }
+    ext::GObj_SetupGXLink(gobj, Some(ext::HSD_GObj_LObjCallback), 0, 0x80);
+
+    gobj = ext::GObj_Create(0xE, 2, 0);
+    {
+        let fog = ext::HSD_FogLoadDesc((*css_data_table).fog);
+        ext::HSD_GObjObject_80390A70(gobj, HSD_GObj_FogKind as u8, fog.cast());
+    }
+    ext::GObj_SetupGXLink(
+        gobj,
+        Some(core::mem::transmute::<unsafe extern "C" fn(*mut HSD_GObj), unsafe extern "C" fn(*mut HSD_GObj, i32)>(fn_8026407C)),
+        0,
+        0x80,
+    );
+
+    gobj = ext::GObj_Create(4, 5, 0x80);
+    jobj = ext::HSD_JObjLoadJoint((*css_models).background.joint);
+    add_model_anims(jobj, addr_of!((*css_models).background));
+    ext::HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj.cast());
+    ext::GObj_SetupGXLink(gobj, Some(ext::HSD_GObj_JObjCallback), 1, 0x80);
+    ext::HSD_GObj_SetupProc(gobj, Some(fn_80263354), 4);
+    ext::HSD_JObjReqAnimAll(jobj, 0.0f32);
+    ext::HSD_JObjAnimAll(jobj);
+
+    mnCharSel_804D6CBC = ext::GObj_Create(4, 5, 0x80);
+    if mnCharSel_804D6CF5 == 1 {
+        mnCharSel_804D6CC0 = ext::HSD_JObjLoadJoint((*css_models).regend_menu.joint);
+        add_model_anims(mnCharSel_804D6CC0, addr_of!((*css_models).regend_menu));
+    } else {
+        mnCharSel_804D6CC0 = ext::HSD_JObjLoadJoint((*css_models).menu.joint);
+        add_model_anims(mnCharSel_804D6CC0, addr_of!((*css_models).menu));
+    }
+    {
+        let obj_kind: u8 = HSD_GObj_JObjKind;
+        ext::HSD_GObjObject_80390A70(mnCharSel_804D6CBC, obj_kind, mnCharSel_804D6CC0.cast());
+    }
+    ext::GObj_SetupGXLink(mnCharSel_804D6CBC, Some(ext::HSD_GObj_JObjCallback), 1, 0x80);
+    ext::HSD_GObj_SetupProc(mnCharSel_804D6CBC, Some(fn_8025F0E0), 4);
+    ext::HSD_JObjReqAnimAll(mnCharSel_804D6CC0, 0.0f32);
+    ext::HSD_JObjAnimAll(mnCharSel_804D6CC0);
+    stop_anim(mnCharSel_804D6CC0, ALL_TYPE_MASK);
+
+    mnCharSel_MexSetup();
+    mnCharSel_MenuTexSetup();
+    // The retail Luigi-row relocation moves retail icon joints and rewrites two retail rows' bounds;
+    // with an m-ex CSS the layout and bounds come from mexData instead.
+    if mnCharSel_Mex.is_null() {
+        if ext::gm_IsCKindUnlocked(CKind_Luigi as u8) == 0 {
+            row_a = 2;
+            row_b = 0x13;
+        } else {
+            row_a = 0x13;
+            row_b = 2;
+        }
+        if mnCharSel_804D6CF5 == 1 {
+            lb_find(MNCS_ICON_ROOT(mnCharSel_804D6CC0), &mut sp108, (*icon_at(row_a as usize)).joint_id_1p as i32);
+        } else {
+            lb_find(MNCS_ICON_ROOT(mnCharSel_804D6CC0), &mut sp108, (*icon_at(row_a as usize)).joint_id_vs as i32);
+        }
+        super::hsd::HSD_JObjSetTranslateY(sp108, ICONROWY_BTM);
+        (*icon_at(row_a as usize)).bound_u = ICONROWHT_BTM_TOP;
+        (*icon_at(row_a as usize)).bound_d = ICONROWHT_BTM_BTM;
+        if mnCharSel_804D6CF5 == 1 {
+            lb_find(MNCS_ICON_ROOT(mnCharSel_804D6CC0), &mut sp108, (*icon_at(row_b as usize)).joint_id_1p as i32);
+        } else {
+            lb_find(MNCS_ICON_ROOT(mnCharSel_804D6CC0), &mut sp108, (*icon_at(row_b as usize)).joint_id_vs as i32);
+        }
+        super::hsd::HSD_JObjSetTranslateY(sp108, ICONROWY_TOP);
+        (*icon_at(row_b as usize)).bound_u = ICONROWHT_TOP_TOP;
+        (*icon_at(row_b as usize)).bound_d = ICONROWHT_MID_TOP;
+    }
+
+    icon = 0;
+    while icon < MNCS_NUM() {
+        let ic = icon_at(icon as usize);
+        (*ic).state = ext::gm_IsCKindUnlocked((*ic).char_kind) as u8;
+        (*ic).anim_timer = 0;
+        if mnCharSel_804D6CF5 == 1 {
+            lb_find(MNCS_ICON_ROOT(mnCharSel_804D6CC0), &mut sp108, (*ic).joint_id_1p as i32);
+        } else {
+            lb_find(MNCS_ICON_ROOT(mnCharSel_804D6CC0), &mut sp108, (*ic).joint_id_vs as i32);
+        }
+        if !mnCharSel_Mex.is_null() {
+            // The retail switch below keys off RETAIL icon indices (0, 8, 9... = the unlockable
+            // fighters) and retail-only anims. With an m-ex layout: an icon whose fighter the port
+            // lacks, or that is still locked on this save, is hidden and dead; the rest are
+            // selectable.
+            if mnCharSel_IconUnavail[icon as usize] != 0 || (*ic).state == 0 {
+                (*ic).state = 0;
+                if !sp108.is_null() {
+                    ext::HSD_JObjSetFlagsAll(sp108, JOBJ_HIDDEN as u32);
+                }
+            } else {
+                (*ic).state = 2;
+            }
+            if trace_on() {
+                ext::OSReport(
+                    c"mexcss: final icon %2d CKind %3d state %d %s joint %s\n".as_ptr(),
+                    &[
+                        Va::I32(icon),
+                        Va::I32((*ic).char_kind as i32),
+                        Va::I32((*ic).state as i32),
+                        Va::P(if (*ic).state == 0 { c"HIDDEN ".as_ptr() } else { c"visible".as_ptr() }.cast()),
+                        Va::P(if !sp108.is_null() { c"ok".as_ptr() } else { c"MISSING".as_ptr() }.cast()),
+                    ],
+                );
+            }
+            icon += 1;
+            continue;
+        }
+        match icon {
+            0 | 8 | 9 | 17 | 18 | 24 => {
+                if (*ic).state == 0 {
+                    ext::HSD_JObjSetFlags(sp108, JOBJ_HIDDEN as u32);
+                } else {
+                    sp108 = jobj_parent(sp108);
+                    (*ic).state = 2;
+                    {
+                        let anim_jobj = sp108;
+                        req_anim(anim_jobj, ALL_TYPE_MASK, 20.0f32);
+                    }
+                    ext::HSD_JObjAnimAll(sp108);
+                }
+            }
+            _ => {
+                if (*ic).state == 0 {
+                    req_anim(sp108, ALL_TYPE_MASK, 30.0f32);
+                    ext::HSD_JObjAnimAll(sp108);
+                } else {
+                    (*ic).state = 2;
+                }
+            }
+        }
+        icon += 1;
+    }
+
+    {
+        let mt: u8 = (*mnCharSel_804D6CB0).match_type;
+        if mt >= 0xF && mt <= 0x16 {
+            gobj = ext::GObj_Create(4, 5, 0x80);
+            mnCharSel_804D6CC8 = ext::HSD_JObjLoadJoint((*css_models).regend_options.joint);
+            ext::HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, mnCharSel_804D6CC8.cast());
+            ext::GObj_SetupGXLink(gobj, Some(ext::HSD_GObj_JObjCallback), 1, 0x80);
+            ext::HSD_GObj_SetupProc(gobj, Some(fn_8025FB2C), 4);
+            add_model_anims(mnCharSel_804D6CC8, addr_of!((*css_models).regend_options));
+            ext::HSD_JObjReqAnimAll(mnCharSel_804D6CC8, 0.0f32);
+            stop_anim(mnCharSel_804D6CC8, ALL_TYPE_MASK);
+        }
+    }
+
+    if (*mnCharSel_804D6CB0).match_type == 0x17 {
+        let ck: u8;
+        gobj = ext::GObj_Create(4, 5, 0x80);
+        mnCharSel_804D6CC4 = ext::HSD_JObjLoadJoint((*css_models).door.joint);
+        ext::HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, mnCharSel_804D6CC4.cast());
+        ext::GObj_SetupGXLink(gobj, Some(ext::HSD_GObj_JObjCallback), 1, 0x80);
+        ext::HSD_GObj_SetupProc(gobj, Some(fn_8025FB2C), 4);
+        add_model_anims(mnCharSel_804D6CC4, addr_of!((*css_models).door));
+        // m-ex "Replace CSS Training Emblem": the CPU door's portrait is joint 6, emblem 4
+        if !mnCharSel_Mex.is_null() {
+            mnCharSel_MexAttach(mnCharSel_Mex, mnCharSel_804D6CC4, 6, 4);
+        }
+        ext::HSD_JObjReqAnimAll(mnCharSel_804D6CC4, 0.0f32);
+        stop_anim(mnCharSel_804D6CC4, ALL_TYPE_MASK);
+        ck = (*player_at(mnCharSel_804D6CB0, mnCharSel_804D6CF1 as usize)).ckind as u8;
+        // m-ex fighters' character kinds are past CKind_Playable_Count but playable
+        if (((ck as i8) as i32 >= CKind_Playable_Count as i32) && (ck as u32) < ChKind_Mex0) || ext::gm_IsCKindUnlocked(ck) == 0 {
+            loop {
+                i = ext::HSD_Randi(MNCS_NUM());
+                if (*icon_at(i as usize)).state != 0 {
+                    break;
+                }
+            }
+            let icon_off = getIconOffset(i as u32);
+            (*player_at(mnCharSel_804D6CB0, mnCharSel_804D6CF1 as usize)).ckind = (*icon_at(i as usize)).char_kind as i8;
+            (*player_at(mnCharSel_804D6CB0, mnCharSel_804D6CF1 as usize)).color =
+                ext::HSD_Randi(ext::gm_GetNumCostumesForCKind((*icon_at(i as usize)).char_kind) as i32) as u8;
+            let _ = icon_off;
+        }
+    }
+
+    if (*mnCharSel_804D6CB0).match_type == 1 {
+        gobj = ext::GObj_Create(4, 5, 0x80);
+        mnCharSel_804D6CCC = ext::HSD_JObjLoadJoint((*css_models).debug_camera.joint);
+        ext::HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, mnCharSel_804D6CCC.cast());
+        ext::GObj_SetupGXLink(gobj, Some(ext::HSD_GObj_JObjCallback), 4, 0x80);
+        ext::HSD_GObj_SetupProc(gobj, Some(fn_8025FAC0), 4);
+        add_model_anims(mnCharSel_804D6CCC, addr_of!((*css_models).debug_camera));
+        ext::HSD_JObjReqAnimAll(mnCharSel_804D6CCC, 0.0f32);
+    }
+
+    i = mnCharSel_804D6CF5 as i32 - 1;
+    while i >= 0 {
+        let cursor_gobj = ext::GObj_Create(4, 5, 0x80);
+        jobj = ext::HSD_JObjLoadJoint((*css_models).hand.joint);
+        mnCharSel_MexScaleCursor(jobj, 1);
+        let cursor = ext::HSD_MemAlloc(core::mem::size_of::<CSSCursorData>() as i32) as *mut CSSCursorData;
+        ext::HSD_GObjObject_80390A70(cursor_gobj, HSD_GObj_JObjKind, jobj.cast());
+        ext::GObj_SetupGXLink(cursor_gobj, Some(ext::HSD_GObj_JObjCallback), 3, 0x80);
+        ext::HSD_GObj_SetupProc(cursor_gobj, Some(mnCharSel_CursorThink), 1);
+        ext::GObj_InitUserData(cursor_gobj, 4, Some(ext::HSD_Free), cursor.cast());
+        add_model_anims(jobj, addr_of!((*css_models).hand));
+        ext::HSD_JObjReqAnimAll(jobj, 0.0f32);
+        ext::HSD_JObjAnimAll(jobj);
+        stop_anim(jobj, ALL_TYPE_MASK);
+        mnCharSel_804A0BC0[i as usize] = cursor;
+        (*cursor).gobj = cursor_gobj;
+        (*cursor).x4 = i as u8;
+        (*cursor).x8 = 0;
+        (*cursor).xA = 0;
+        (*cursor).x7 = 0;
+        (*cursor).x6 = 0;
+        (*cursor).x5 = 2;
+        (*cursor).xC = fmadds(15.0f32, i as f32, -31.0f32);
+        (*cursor).x10 = -21.5f32;
+        i -= 1;
+    }
+
+    i = 0;
+    slot = 0;
+    while i < num_players {
+        {
+            let model_gobj = ext::GObj_Create(4, 5, 0x80);
+            jobj = ext::HSD_JObjLoadJoint((*css_models).token.joint);
+            mnCharSel_MexScaleCursor(jobj, 0);
+            {
+                let player: i32;
+                let model = ext::HSD_MemAlloc(core::mem::size_of::<CSSCharModel>() as i32) as *mut CSSCharModel;
+                ext::HSD_GObjObject_80390A70(model_gobj, HSD_GObj_JObjKind, jobj.cast());
+                ext::GObj_InitUserData(model_gobj, 4, Some(ext::HSD_Free), model.cast());
+                ext::GObj_SetupGXLink(model_gobj, Some(ext::HSD_GObj_JObjCallback), 2, 0x80);
+                ext::HSD_GObj_SetupProc(model_gobj, Some(fn_80262648), 2);
+                add_model_anims(jobj, addr_of!((*css_models).token));
+                ext::HSD_JObjReqAnimAll(jobj, 0.0f32);
+                {
+                    let anim_jobj = jobj;
+                    stop_anim(anim_jobj, TOBJ_MASK);
+                }
+                mnCharSel_804A0BD0[slot as usize] = model;
+                (*model).gobj = model_gobj;
+                (*model).x4 = i as u8;
+                (*model).x5 = 0;
+                (*model).x6 = 0xFF;
+                (*model).x7 = 0;
+                if mnCharSel_804D6CF5 == 1 {
+                    if i != 0 {
+                        player = mnCharSel_804D6CF1 as i32;
+                    } else {
+                        player = mnCharSel_804D6CF0 as i32;
+                    }
+                } else {
+                    player = i;
+                }
+                found = 0;
+                while found < MNCS_NUM() {
+                    if (*player_at(mnCharSel_804D6CB0, player as usize)).ckind as i32 == (*icon_at(found as usize)).char_kind as i32
+                        && ext::gm_IsCKindUnlocked((*player_at(mnCharSel_804D6CB0, player as usize)).ckind as u8) != 0
+                    {
+                        break;
+                    }
+                    found += 1;
+                }
+                if found >= MNCS_NUM() {
+                    (*player_at(mnCharSel_804D6CB0, player as usize)).ckind = CKind_Playable_Count as i8;
+                    let slot_type = addr_of_mut!((*player_at(mnCharSel_804D6CB0, player as usize)).slot_type);
+                    if *slot_type == 1 {
+                        *slot_type = 3;
+                    }
+                }
+                (*door(slot as usize)).sel_icon = found as u8;
+                (*model).x10 = 3.4f32 + (*icon_at(found as usize)).bound_l;
+                (*model).x8 = (*model).x10;
+                (*model).x14 = -3.0f32 + (*icon_at(found as usize)).bound_u;
+                (*model).xC = (*model).x14;
+            }
+        }
+        i += 1;
+        slot += 1;
+    }
+
+    spE8 = mnCharSel_804DC580;
+    i = 0;
+    while i < num_players {
+        let td: *mut CSSTagData;
+        let player: i32;
+        gobj = ext::GObj_Create(4, 5, 0x80);
+        td = ext::HSD_MemAlloc(core::mem::size_of::<CSSTagData>() as i32) as *mut CSSTagData;
+        (*tag_at(i as usize)).data = td;
+        ext::GObj_InitUserData(gobj, 4, Some(ext::HSD_Free), td.cast());
+        ext::HSD_GObj_SetupProc(gobj, Some(fn_802633B0), 4);
+        (*td).use_tag = 0;
+        (*td).timer = 0;
+        (*td).state = 0;
+        (*td).x8 = 0.0f32;
+        (*td).scroll_amt = 0.0f32;
+        (*td).scroll_force = 0.0f32;
+        (*td).port = i as u8;
+        (*td).text = ext::HSD_SisLib_803A6754(0, ctx);
+        (*(*td).text).x4C = 1;
+        (*(*td).text).default_fitting = 1;
+        (*(*td).text).default_alignment = 1;
+        text = (*td).text;
+        text_font(text, 0.058f32, 0.055f32);
+        if mnCharSel_804D6CF5 == 1 {
+            if i != 0 {
+                text = (*td).text;
+                text_pos(text, 15.6f32, 20.2f32, 0.0f32);
+            } else {
+                let mut spA4: *mut HSD_JObj = null_mut();
+                let tag_box_joint: u8 = mnCharSel_803F0EBC.tag_box_joint;
+                lb_find(mnCharSel_804D6CC0, &mut spA4, tag_box_joint as i32);
+                {
+                    let anim_jobj = spA4;
+                    req_anim_jobj_mask(anim_jobj, 2.0f32);
+                }
+                ext::HSD_JObjAnimAll(spA4);
+                {
+                    let anim_jobj = spA4;
+                    stop_anim(anim_jobj, JOBJ_MASK);
+                }
+                sp108 = spA4;
+                ext::lb_8000B1CC(sp108, null_mut(), &mut spEC);
+                text = (*td).text;
+                text_pos(text, spEC.x - 0.1f32, 20.2f32, 0.0f32);
+            }
+            text = (*td).text;
+            (*text).box_size_x = 200.0f32;
+            (*text).box_size_y = 32.0f32;
+            text_add((*td).text, 100.0f32, 0.0f32, c"\x81\x45\x81\x45\x81\x45\x81\x45".as_ptr());
+        } else {
+            let mut tag_name_jobj: *mut HSD_JObj = null_mut();
+            let name_joint: u8 = (*tag_at(i as usize)).name_jointl;
+            lb_find(mnCharSel_804D6CC0, &mut tag_name_jobj, name_joint as i32);
+            {
+                let anim_jobj = tag_name_jobj;
+                req_anim_jobj_mask(anim_jobj, 2.0f32);
+            }
+            ext::HSD_JObjAnimAll(tag_name_jobj);
+            {
+                let anim_jobj = tag_name_jobj;
+                stop_anim(anim_jobj, JOBJ_MASK);
+            }
+            sp108 = tag_name_jobj;
+            ext::lb_8000B1CC(sp108, null_mut(), &mut spEC);
+            {
+                let sx = 0.5f32 + spEC.x;
+                let sy = -0.4f32 - spEC.y;
+                let sz = spEC.z;
+                text = (*td).text;
+                text_pos(text, sx, sy, sz);
+            }
+            text = (*td).text;
+            (*text).box_size_x = 160.0f32;
+            (*text).box_size_y = 32.0f32;
+            text_add((*td).text, 80.0f32, 0.0f32, c"\x81\x45\x81\x45\x81\x45\x81\x45".as_ptr());
+        }
+        if mnCharSel_804D6CF5 == 1 {
+            lb_find(mnCharSel_804D6CC0, &mut sp108, mnCharSel_803F0EBC.name_list_joint as i32);
+        } else {
+            lb_find(mnCharSel_804D6CC0, &mut sp108, (*tag_at(i as usize)).list_joint as i32);
+            if i == 3 {
+                super::hsd::HSD_JObjSetTranslateX(sp108, 16.7f32);
+            }
+        }
+        ext::lb_8000B1CC(sp108, null_mut(), &mut spEC);
+        (*td).name_ls = ext::HSD_SisLib_803A6754(0, ctx);
+        (*(*td).name_ls).default_fitting = 1;
+        text = (*td).name_ls;
+        (*text).box_size_x = 154.0f32;
+        (*text).box_size_y = 256.0f32;
+        {
+            let sy = (0.8f32 - spEC.y) - 1.0f32;
+            let sx = spEC.x - 0.6f32;
+            let sz = spEC.z;
+            text = (*td).name_ls;
+            text_pos(text, sx, sy, sz);
+        }
+        text = (*td).name_ls;
+        text_font(text, 0.065f32, 0.065f32);
+        (*(*td).name_ls).x4E = 1;
+        (*(*td).name_ls).hidden = 1;
+        text_add(
+            (*td).name_ls,
+            0.0f32,
+            0.0f32,
+            c"\x81\x45\x81\x45\x81\x45\x81\x45\x81\x45\x81\x45\x81\x45\x81\x45\x81\x45\x81\x45\x81\x45".as_ptr(),
+        );
+        let mut color = spE8;
+        ext::HSD_SisLib_803A74F0((*td).name_ls, 0, &mut color);
+        text_add((*td).name_ls, 0.0f32, 0.0f32, c"\x82\x6d\x82\x60\x82\x6c\x82\x64\x20\x82\x64\x82\x6d\x82\x73\x82\x71\x82\x78".as_ptr());
+        let mut color2 = spE8;
+        ext::HSD_SisLib_803A74F0((*td).name_ls, 1, &mut color2);
+        found = 0;
+        while found < 9 {
+            text_add((*td).name_ls, 10.0f32, 0.0f32, c"\x81\x45\x81\x45\x81\x45\x81\x45".as_ptr());
+            found += 1;
+        }
+        found = 0;
+        while found < 0x78 {
+            if ext::GetNameText((found as u8) as i32).is_null() {
+                break;
+            }
+            found += 1;
+        }
+        (*td).next_tag = (found + 1) as u8;
+        lb_find(mnCharSel_804D6CC0, &mut sp108, (*tag_at(i as usize)).x7 as i32);
+        ext::HSD_JObjSetFlags(sp108, JOBJ_HIDDEN as u32);
+        lb_find(mnCharSel_804D6CC0, &mut sp108, (*tag_at(i as usize)).kostar_text_joint as i32);
+        if (*td).next_tag > 7 {
+            ext::HSD_JObjClearFlags(sp108, JOBJ_HIDDEN as u32);
+        } else {
+            ext::HSD_JObjSetFlags(sp108, JOBJ_HIDDEN as u32);
+        }
+        if mnCharSel_804D6CF5 == 1 {
+            if i != 0 {
+                player = mnCharSel_804D6CF1 as i32;
+            } else {
+                player = mnCharSel_804D6CF0 as i32;
+            }
+        } else {
+            player = i;
+        }
+        if player == mnCharSel_804D6CF9 as i32 && mnCharSel_804D6CF8 < (*td).next_tag {
+            let mt: u8 = (*mnCharSel_804D6CB0).match_type;
+            if clears_kos(mt) {
+                *(*mnCharSel_804D6CB0).ko_counts.add(player as usize) = 0;
+            }
+            (*player_at(mnCharSel_804D6CB0, player as usize)).nametag = mnCharSel_804D6CF8.wrapping_sub(1);
+            mnCharSel_804D6CF8 = (*td).next_tag;
+        }
+        if (*player_at(mnCharSel_804D6CB0, player as usize)).nametag != 0x78 {
+            (*td).use_tag = 1;
+            ext::HSD_SisLib_803A70A0((*td).text, 0, ext::GetNameText((*player_at(mnCharSel_804D6CB0, player as usize)).nametag as i32), &[]);
+            (*(*td).text).default_kerning = 0;
+        }
+        i += 1;
+    }
+
+    if mnCharSel_804D6CF5 == 1 {
+        let mut hide_extra = false;
+        match (*mnCharSel_804D6CB0).match_type as u32 {
+            REG_CLASSIC | REG_ADVENTURE | REG_ALLSTAR => {
+                spE4 = mnCharSel_804DC584;
+                spE0 = mnCharSel_804DC588;
+                spDC = mnCharSel_804DC58C;
+                hard_color = mnCharSel_804DC590;
+                spD4 = mnCharSel_804DC594;
+                {
+                    let cpu_level: u8 = (*player_at(mnCharSel_804D6CB0, mnCharSel_804D6CF0 as usize)).cpu_level;
+                    mnCharSel_803F0EBC.cpu_level_shown = cpu_level;
+                    mnCharSel_803F0EBC.cpu_level = cpu_level;
+                }
+                mnCharSel_803F0EBC.cpu_slider_x = 124.0f32;
+                mnCharSel_803F0EBC.xd3 = ext::HSD_SisLib_803A6754(0, ctx);
+                mnCharSel_803F0EBC.scroll_flag = 1;
+                let xd3 = mnCharSel_803F0EBC.xd3;
+                text = xd3;
+                text_pos(text, -0.5f32, 9.0f32, 0.0f32);
+                text = xd3;
+                (*text).box_size_x = 248.0f32;
+                (*text).box_size_y = 32.0f32;
+                text = xd3;
+                text_font(text, 0.08f32, 0.09f32);
+                (*xd3).x4E = 1;
+                (*xd3).default_kerning = 1;
+                (*xd3).default_alignment = 1;
+                (*xd3).x4C = 1;
+                text_add(xd3, 0.0f32, 0.0f32, c"\x82\x75\x82\x64\x82\x71\x82\x78\x20\x82\x64\x82\x60\x82\x72\x82\x78".as_ptr());
+                let mut color3 = spE4;
+                ext::HSD_SisLib_803A74F0(xd3, 0, &mut color3);
+                text_add(xd3, 0.0f32, 0.0f32, c"\x82\x64\x82\x60\x82\x72\x82\x78".as_ptr());
+                let mut color4 = spE0;
+                ext::HSD_SisLib_803A74F0(xd3, 1, &mut color4);
+                text_add(xd3, 0.0f32, 0.0f32, c"\x82\x6d\x82\x6e\x82\x71\x82\x6c\x82\x60\x82\x6b".as_ptr());
+                let mut color5 = spDC;
+                ext::HSD_SisLib_803A74F0(xd3, 2, &mut color5);
+                text_add(xd3, 0.0f32, 0.0f32, c"\x82\x67\x82\x60\x82\x71\x82\x63".as_ptr());
+                let mut color6 = hard_color;
+                ext::HSD_SisLib_803A74F0(xd3, 3, &mut color6);
+                text_add(xd3, 0.0f32, 0.0f32, c"\x82\x75\x82\x64\x82\x71\x82\x78\x20\x82\x67\x82\x60\x82\x71\x82\x63".as_ptr());
+                let mut color7 = spD4;
+                ext::HSD_SisLib_803A74F0(xd3, 4, &mut color7);
+                ext::HSD_GObjGXLink_803909D8((*xd3).entity, mnCharSel_804D6CBC);
+                {
+                    let css = mnCharSel_804D6CB0;
+                    if (*css).match_type == 0xD {
+                        lb_find(mnCharSel_804D6CC0, &mut sp108, 0x34);
+                        ext::HSD_JObjSetFlagsAll(sp108, JOBJ_HIDDEN as u32);
+                        lb_find(mnCharSel_804D6CC0, &mut sp108, 0x3D);
+                        ext::HSD_JObjSetFlagsAll(sp108, JOBJ_HIDDEN as u32);
+                        lb_find(mnCharSel_804D6CC0, &mut sp108, 0x45);
+                        ext::HSD_JObjSetFlagsAll(sp108, JOBJ_HIDDEN as u32);
+                        lb_find(mnCharSel_804D6CC0, &mut sp108, 0x46);
+                        {
+                            let hide_jobj = sp108;
+                            ext::HSD_JObjSetFlagsAll(hide_jobj, JOBJ_HIDDEN as u32);
+                        }
+                    } else {
+                        let mut sp70: *mut HSD_JObj = null_mut();
+                        data2.stocks = (*player_at(css, mnCharSel_804D6CF0 as usize)).stocks as u8;
+                        updateStockIcons(addr_of_mut!(data2), &mut sp70, 1);
+                        num_players = data2.stocks as i32;
+                        (*player_at(mnCharSel_804D6CB0, mnCharSel_804D6CF0 as usize)).stocks = data2.stocks as i8;
+                    }
+                }
+                lb_find(mnCharSel_804D6CC0, &mut sp108, 0x40);
+                ext::lb_8000B1CC(sp108, null_mut(), &mut spEC);
+                text = ext::HSD_SisLib_803A6754(0, ctx);
+                mnCharSel_804D6CDC = text;
+                {
+                    let sx = 13.5f32 + spEC.x;
+                    let sz = spEC.z;
+                    let sy = -spEC.y;
+                    text_pos(text, sx, sy, sz);
+                }
+                text_font(text, 0.07f32, 0.055f32);
+                (*text).default_alignment = 2;
+                ext::HSD_SisLib_803A6B98(text, 0.0f32, 0.0f32, null(), &[]);
+                lb_find(mnCharSel_804D6CC0, &mut sp108, 0x42);
+                ext::HSD_JObjSetFlags(sp108, JOBJ_HIDDEN as u32);
+                lb_find(mnCharSel_804D6CC0, &mut sp108, 0x41);
+                ext::lb_8000B1CC(sp108, null_mut(), &mut spEC);
+                text = ext::HSD_SisLib_803A6754(0, ctx);
+                mnCharSel_804D6CE4 = text;
+                {
+                    let sx = 13.5f32 + spEC.x;
+                    let sz = spEC.z;
+                    let sy = -spEC.y;
+                    text_pos(text, sx, sy, sz);
+                }
+                text_font(text, 0.07f32, 0.055f32);
+                (*text).default_alignment = 2;
+                ext::HSD_SisLib_803A6B98(text, 0.0f32, 0.0f32, null(), &[]);
+                {
+                    let mut jobj43: *mut HSD_JObj = null_mut();
+                    lb_find(mnCharSel_804D6CC0, &mut jobj43, 0x43);
+                    req_anim(jobj43, TOBJ_MASK, 0.0f32);
+                    ext::HSD_JObjAnimAll(jobj43);
+                    stop_anim(jobj43, TOBJ_MASK);
+                    sp108 = jobj43;
+                }
+                ext::HSD_JObjSetFlags(sp108, JOBJ_HIDDEN as u32);
+            }
+            STADIUM_TARGET => {
+                lb_find(mnCharSel_804D6CC8, &mut sp108, 4);
+                ext::lb_8000B1CC(sp108, null_mut(), &mut spEC);
+                text = ext::HSD_SisLib_803A6754(0, ctx);
+                mnCharSel_804D6CDC = text;
+                {
+                    let sx = 10.9f32 + spEC.x;
+                    let sz = spEC.z;
+                    let sy = -spEC.y;
+                    text_pos(text, sx, sy, sz);
+                }
+                (*text).default_alignment = 2;
+                text_font(text, 0.07f32, 0.055f32);
+                ext::HSD_SisLib_803A6B98(text, 0.0f32, 0.0f32, null(), &[]);
+                text = ext::HSD_SisLib_803A6754(0, ctx);
+                mnCharSel_804D6CE0 = text;
+                {
+                    let sx = 11.6f32 + spEC.x;
+                    let sz = spEC.z;
+                    let sy = 0.3f32 - spEC.y;
+                    text_pos(text, sx, sy, sz);
+                }
+                text_font(text, 0.06f32, 0.045f32);
+                ext::HSD_SisLib_803A6B98(text, 0.0f32, 0.0f32, null(), &[]);
+                lb_find(mnCharSel_804D6CC8, &mut sp108, 5);
+                ext::lb_8000B1CC(sp108, null_mut(), &mut spEC);
+                text = ext::HSD_SisLib_803A6754(0, ctx);
+                mnCharSel_804D6CE4 = text;
+                {
+                    let sx = 10.9f32 + spEC.x;
+                    let sz = spEC.z;
+                    let sy = -spEC.y;
+                    text_pos(text, sx, sy, sz);
+                }
+                text_font(text, 0.07f32, 0.055f32);
+                (*text).default_alignment = 2;
+                ext::HSD_SisLib_803A6B98(text, 0.0f32, 0.0f32, null(), &[]);
+                text = ext::HSD_SisLib_803A6754(0, ctx);
+                mnCharSel_804D6CE8 = text;
+                {
+                    let sx = 11.6f32 + spEC.x;
+                    let sz = spEC.z;
+                    let sy = 0.3f32 - spEC.y;
+                    text_pos(text, sx, sy, sz);
+                }
+                text_font(text, 0.06f32, 0.045f32);
+                ext::HSD_SisLib_803A6B98(text, 0.0f32, 0.0f32, null(), &[]);
+                lb_find(mnCharSel_804D6CC8, &mut sp108, 5);
+                ext::lb_8000B1CC(sp108, null_mut(), &mut spEC);
+                text = ext::HSD_SisLib_803A6754(0, ctx);
+                mnCharSel_CStickText = text;
+                {
+                    let sx = 10.9f32 + spEC.x;
+                    let sz = spEC.z;
+                    let sy = -spEC.y - 0.6f32;
+                    text_pos(text, sx, sy, sz);
+                }
+                text_font(text, 0.06f32, 0.045f32);
+                (*text).default_alignment = 2;
+                ext::HSD_SisLib_803A6B98(text, 0.0f32, 0.0f32, null(), &[]);
+                lb_find(mnCharSel_804D6CC8, &mut sp108, 3);
+                ext::HSD_JObjSetFlagsAll(sp108, JOBJ_HIDDEN as u32);
+                hide_extra = true;
+            }
+            STADIUM_HOMERUN => {
+                lb_find(mnCharSel_804D6CC8, &mut sp108, 4);
+                ext::lb_8000B1CC(sp108, null_mut(), &mut spEC);
+                text = ext::HSD_SisLib_803A6754(0, ctx);
+                mnCharSel_804D6CDC = text;
+                {
+                    let sx = 11.0f32 + spEC.x;
+                    let sz = spEC.z;
+                    let sy = -spEC.y;
+                    text_pos(text, sx, sy, sz);
+                }
+                text_font(text, 0.07f32, 0.055f32);
+                (*text).default_alignment = 2;
+                ext::HSD_SisLib_803A6B98(text, 0.0f32, 0.0f32, null(), &[]);
+                text = ext::HSD_SisLib_803A6754(0, ctx);
+                {
+                    let sx = 12.0f32 + spEC.x;
+                    let sz = spEC.z;
+                    let sy = -spEC.y;
+                    text_pos(text, sx, sy, sz);
+                }
+                text_font(text, 0.07f32, 0.055f32);
+                (*text).default_kerning = 1;
+                if ext::lbLang_IsSavedLanguageJP() != 0 {
+                    text_add(text, 0.0f32, 0.0f32, c"\x82\x8d".as_ptr());
+                    text_add(text, 0.0f32, 35.0f32, c"\x82\x8d".as_ptr());
+                } else {
+                    text_add(text, 0.0f32, 0.0f32, c"\x82\x65\x82\x94\x81\x44".as_ptr());
+                    text_add(text, 0.0f32, 35.0f32, c"\x82\x65\x82\x94\x81\x44".as_ptr());
+                }
+                lb_find(mnCharSel_804D6CC8, &mut sp108, 5);
+                ext::lb_8000B1CC(sp108, null_mut(), &mut spEC);
+                text = ext::HSD_SisLib_803A6754(0, ctx);
+                mnCharSel_804D6CE4 = text;
+                {
+                    let sx = 11.0f32 + spEC.x;
+                    let sz = spEC.z;
+                    let sy = -spEC.y;
+                    text_pos(text, sx, sy, sz);
+                }
+                text_font(text, 0.07f32, 0.055f32);
+                (*text).default_alignment = 2;
+                ext::HSD_SisLib_803A6B98(text, 0.0f32, 0.0f32, null(), &[]);
+                hide_extra = true;
+            }
+            STADIUM_MULTIMAN_10 | STADIUM_MULTIMAN_100 => {
+                lb_find(mnCharSel_804D6CC8, &mut sp108, 4);
+                ext::lb_8000B1CC(sp108, null_mut(), &mut spEC);
+                text = ext::HSD_SisLib_803A6754(0, ctx);
+                mnCharSel_804D6CDC = text;
+                {
+                    let sx = 10.9f32 + spEC.x;
+                    let sz = spEC.z;
+                    let sy = -spEC.y;
+                    text_pos(text, sx, sy, sz);
+                }
+                text_font(text, 0.07f32, 0.055f32);
+                (*text).default_alignment = 2;
+                ext::HSD_SisLib_803A6B98(text, 0.0f32, 0.0f32, null(), &[]);
+                text = ext::HSD_SisLib_803A6754(0, ctx);
+                mnCharSel_804D6CE0 = text;
+                {
+                    let sx = 11.6f32 + spEC.x;
+                    let sz = spEC.z;
+                    let sy = 0.3f32 - spEC.y;
+                    text_pos(text, sx, sy, sz);
+                }
+                text_font(text, 0.06f32, 0.045f32);
+                ext::HSD_SisLib_803A6B98(text, 0.0f32, 0.0f32, null(), &[]);
+                lb_find(mnCharSel_804D6CC8, &mut sp108, 5);
+                ext::lb_8000B1CC(sp108, null_mut(), &mut spEC);
+                text = ext::HSD_SisLib_803A6754(0, ctx);
+                mnCharSel_804D6CE4 = text;
+                {
+                    let sx = 10.9f32 + spEC.x;
+                    let sz = spEC.z;
+                    let sy = -spEC.y;
+                    text_pos(text, sx, sy, sz);
+                }
+                text_font(text, 0.07f32, 0.055f32);
+                (*text).default_alignment = 2;
+                ext::HSD_SisLib_803A6B98(text, 0.0f32, 0.0f32, null(), &[]);
+                text = ext::HSD_SisLib_803A6754(0, ctx);
+                mnCharSel_804D6CE8 = text;
+                {
+                    let sx = 11.6f32 + spEC.x;
+                    let sz = spEC.z;
+                    let sy = 0.3f32 - spEC.y;
+                    text_pos(text, sx, sy, sz);
+                }
+                text_font(text, 0.06f32, 0.045f32);
+                ext::HSD_SisLib_803A6B98(text, 0.0f32, 0.0f32, null(), &[]);
+                lb_find(mnCharSel_804D6CC8, &mut sp108, 3);
+                ext::HSD_JObjSetFlagsAll(sp108, JOBJ_HIDDEN as u32);
+                hide_extra = true;
+            }
+            STADIUM_3_MIN_MELEE | STADIUM_15_MIN_MELEE | STADIUM_ENDLESS_MELEE | STADIUM_CRUEL_MELEE => {
+                lb_find(mnCharSel_804D6CC8, &mut sp108, 4);
+                ext::lb_8000B1CC(sp108, null_mut(), &mut spEC);
+                text = ext::HSD_SisLib_803A6754(0, ctx);
+                mnCharSel_804D6CDC = text;
+                {
+                    let sx = 16.0f32 + spEC.x;
+                    let sz = spEC.z;
+                    let sy = -spEC.y;
+                    text_pos(text, sx, sy, sz);
+                }
+                text_font(text, 0.07f32, 0.055f32);
+                (*text).default_alignment = 2;
+                ext::HSD_SisLib_803A6B98(text, 0.0f32, 0.0f32, null(), &[]);
+                lb_find(mnCharSel_804D6CC8, &mut sp108, 5);
+                ext::lb_8000B1CC(sp108, null_mut(), &mut spEC);
+                text = ext::HSD_SisLib_803A6754(0, ctx);
+                mnCharSel_804D6CE4 = text;
+                {
+                    let sx = 16.0f32 + spEC.x;
+                    let sz = spEC.z;
+                    let sy = -spEC.y;
+                    text_pos(text, sx, sy, sz);
+                }
+                text_font(text, 0.07f32, 0.055f32);
+                (*text).default_alignment = 2;
+                ext::HSD_SisLib_803A6B98(text, 0.0f32, 0.0f32, null(), &[]);
+                hide_extra = true;
+            }
+            TRAINING_MODE => {
+                lb_find(mnCharSel_804D6CC4, &mut sp108, 9);
+                ext::lb_8000B1CC(sp108, null_mut(), &mut spEC);
+                text = ext::HSD_SisLib_803A6754(0, ctx);
+                mnCharSel_804D6CDC = text;
+                {
+                    let sx = 10.0f32 + spEC.x;
+                    let sz = spEC.z;
+                    let sy = -spEC.y;
+                    text_pos(text, sx, sy, sz);
+                }
+                text_font(text, 0.13f32, 0.055f32);
+                (*text).default_alignment = 2;
+                ext::HSD_SisLib_803A6B98(text, 0.0f32, 0.0f32, null(), &[]);
+                // fallthrough
+                hide_extra = true;
+            }
+            EVENT_MATCH => {
+                hide_extra = true;
+            }
+            _ => {}
+        }
+        if hide_extra {
+            lb_find(mnCharSel_804D6CC0, &mut sp108, 0x2E);
+            ext::HSD_JObjSetFlagsAll(sp108, JOBJ_HIDDEN as u32);
+            lb_find(mnCharSel_804D6CC0, &mut sp108, 0x34);
+            ext::HSD_JObjSetFlagsAll(sp108, JOBJ_HIDDEN as u32);
+            lb_find(mnCharSel_804D6CC0, &mut sp108, 0x3A);
+            ext::HSD_JObjSetFlagsAll(sp108, JOBJ_HIDDEN as u32);
+            lb_find(mnCharSel_804D6CC0, &mut sp108, 0x44);
+            ext::HSD_JObjSetFlagsAll(sp108, JOBJ_HIDDEN as u32);
+        }
+    } else {
+        let mt: u8;
+        mnCharSel_803F0EBC.scroll_flag = 0;
+        text = ext::HSD_SisLib_803A5ACC(0, ctx, -12.0f32, -23.3f32, 0.0f32, 450.0f32, 32.0f32);
+        (*text).default_alignment = 1;
+        (*text).default_kerning = 1;
+        (*text).default_fitting = 1;
+        text_font(text, 0.07f32, 0.07f32);
+        ext::HSD_SisLib_803A6368(text, 0x4A);
+        mnCharSel_8025BD30();
+        mt = (*mnCharSel_804D6CB0).match_type;
+        if clears_kos(mt) {
+            i = 0;
+            while i < mnCharSel_804D6CF5 as i32 {
+                lb_find(mnCharSel_804D6CC0, &mut sp108, (*ko_star_at(i as usize)).joint as i32);
+                ext::lb_8000B1CC(sp108, null_mut(), &mut spEC);
+                text = ext::HSD_SisLib_803A5ACC(0, ctx, spEC.x, -spEC.y - 0.9f32, spEC.z, 32.0f32, 32.0f32);
+                (*ko_star_at(i as usize)).text = text;
+                text_font(text, 0.07f32, 0.07f32);
+                mnCharSel_8025D1C4(i, 0);
+                i += 1;
+            }
+        } else {
+            i = 0;
+            while i < mnCharSel_804D6CF5 as i32 {
+                lb_find(mnCharSel_804D6CC0, &mut sp108, (*ko_star_at(i as usize)).joint as i32);
+                ext::HSD_JObjSetFlagsAll(sp108, JOBJ_HIDDEN as u32);
+                i += 1;
+            }
+        }
+    }
+
+    gobj = ext::GObj_Create(4, 5, 0x80);
+    jobj = ext::HSD_JObjLoadJoint((*css_models).press_start.joint);
+    ext::HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj.cast());
+    ext::GObj_SetupGXLink(gobj, Some(ext::HSD_GObj_JObjCallback), 4, 0x80);
+    ext::HSD_GObj_SetupProc(gobj, Some(fn_80262F44), 3);
+    add_model_anims(jobj, addr_of!((*css_models).press_start));
+    ext::HSD_JObjReqAnimAll(jobj, 0.0f32);
+    stop_anim(jobj, ALL_TYPE_MASK);
+
+    mnCharSel_804D6CF7 = 0;
+    if mnCharSel_804D6CF5 == 1 {
+        (*player_at(mnCharSel_804D6CB0, 3)).slot_type = 3;
+        (*player_at(mnCharSel_804D6CB0, 2)).slot_type = 3;
+        (*player_at(mnCharSel_804D6CB0, 1)).slot_type = 3;
+        (*player_at(mnCharSel_804D6CB0, 0)).slot_type = 3;
+        (*player_at(mnCharSel_804D6CB0, mnCharSel_804D6CF0 as usize)).slot_type = 0;
+        (*door(0)).p_kind = 0;
+        'doors_done: {
+            let css = mnCharSel_804D6CB0;
+            (*door(0)).costume = (*player_at(css, mnCharSel_804D6CF0 as usize)).color;
+            (*door(0)).sel_icon_prev = (*door(0)).sel_icon;
+            if (*css).match_type != 0x17 {
+                break 'doors_done;
+            }
+            (*player_at(css, mnCharSel_804D6CF1 as usize)).slot_type = 1;
+            (*door(1)).p_kind = 1;
+            (*door(1)).costume = (*player_at(mnCharSel_804D6CB0, mnCharSel_804D6CF1 as usize)).color;
+            (*door(1)).sel_icon_prev = (*door(1)).sel_icon;
+        }
+    } else {
+        i = 0;
+        while i < mnCharSel_804D6CF5 as i32 {
+            let iu = i as usize;
+            (*door(iu)).p_kind = (*player_at(mnCharSel_804D6CB0, iu)).slot_type;
+            (*door(iu)).costume = (*player_at(mnCharSel_804D6CB0, iu)).color;
+            (*door(iu)).p_kind_prev = 3;
+            (*door(iu)).slideranim_timer = 0;
+            (*door(iu)).dooranim_timer = 0;
+            (*door(iu)).is_hold_handicap_slider = 0;
+            (*door(iu)).is_hold_cpu_slider = 0;
+            (*door(iu)).sel_icon_prev = (*door(iu)).sel_icon;
+            let rules = ext::gmMainLib_GetGameRules();
+            if (*rules).handicap != 0 {
+                let mut hval: i32;
+                lb_find(mnCharSel_804D6CC0, &mut sp108, (*door(iu)).cpuslider_joint as i32);
+                if (*ext::gmMainLib_GetGameRules()).handicap == 1 {
+                    hval = (ext::gm_801685D4(i as u8, (*player_at(mnCharSel_804D6CB0, iu)).nametag) as u8) as i32;
+                } else {
+                    hval = ((*player_at(mnCharSel_804D6CB0, iu)).handicap as u8) as i32;
+                }
+                // switch forces MWCC beq/b double-branch (not bne)
+                if hval == 0 {
+                    hval = 1;
+                }
+                {
+                    let slider_x = 1.25f32 * (hval - 1) as f32;
+                    super::hsd::HSD_JObjSetTranslateX(sp108, slider_x);
+                }
+                lb_find(mnCharSel_804D6CC0, &mut sp108, (*door(iu)).cpuslider2_joint as i32);
+            } else {
+                lb_find(mnCharSel_804D6CC0, &mut sp108, (*door(iu)).cpuslider_joint as i32);
+            }
+            {
+                let cpu_level = addr_of_mut!((*player_at(mnCharSel_804D6CB0, iu)).cpu_level);
+                if *cpu_level == 0 {
+                    *cpu_level = 1;
+                }
+            }
+            super::hsd::HSD_JObjSetTranslateX(sp108, 1.25f32 * ((*player_at(mnCharSel_804D6CB0, iu)).cpu_level as i32 - 1) as f32);
+            i += 1;
+        }
+    }
+
+    mnCharSel_8025EE8C((*mnCharSel_804D6CB0).match_type);
+    ext::lbAudioAx_80023F28(ext::gmMainLib_8015ECB0())
 }
 

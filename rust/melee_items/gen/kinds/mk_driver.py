@@ -299,8 +299,12 @@ def emit(stem):
     ops = build_ops(tu, cfg)
     _stubs, _inl, _data = tu.uses()
     icd = "it_804D6D28" in _data
-    global C_SETUP, RS_SETUP
-    cs0, rs0 = C_SETUP, RS_SETUP
+    global C_SETUP, RS_SETUP, C_WORLD_DECL, RS_WORLD_DECL
+    cs0, rs0, cw0, rw0 = C_SETUP, RS_SETUP, C_WORLD_DECL, RS_WORLD_DECL
+    NS = cfg.get("spec_size", 128)  # bytes of each item's typed special-attribute buffer
+    C_WORLD_DECL = C_WORLD_DECL.replace("128", str(NS))
+    RS_WORLD_DECL = RS_WORLD_DECL.replace("128", str(NS))
+    RS_SETUP = RS_SETUP.replace("128", str(NS))
     C_SETUP = C_SETUP.replace("@ICD_C@", "    it_804D6D28 = &ICD;" if icd else "")
     RS_SETUP = RS_SETUP.replace("@ICD_R@", "    m::ext::it_804D6D28 = &raw mut ICD;" if icd else "")
     tc, tr = table_hashes(tu)
@@ -357,7 +361,7 @@ def emit(stem):
           "        preg(&raw const GO, core::mem::size_of_val(&GO)); preg(&raw const IT, core::mem::size_of_val(&IT));",
           "        preg(&raw const JO, core::mem::size_of_val(&JO)); preg(&raw const DBT, core::mem::size_of_val(&DBT));",
           "        preg(&raw const ART, core::mem::size_of_val(&ART)); preg(&raw const ATTR, core::mem::size_of_val(&ATTR));",
-          "        preg(&raw const ICD, core::mem::size_of_val(&ICD)); preg(&raw const SPECB, 3 * 128); preg(&raw const VA, core::mem::size_of_val(&VA));"]
+          f"        preg(&raw const ICD, core::mem::size_of_val(&ICD)); preg(&raw const SPECB, 3 * {NS}); preg(&raw const VA, core::mem::size_of_val(&VA));"]
     for extra in cfg.get("rs_preg", []):
         r.append("        " + extra)
     r.append("        g::freg_all();")
@@ -372,7 +376,7 @@ def emit(stem):
     r += ["                    _ => unreachable!(),", "                }", "                hash_all();", "                c.line(op, k, ret);",
           "            }", "        }", f"        assert_eq!(c.done(), {nops * N_CASES});", "    }", "}", ""]
     (ROOT / "rust/melee_items/tests" / f"kinds_{stem}.rs").write_text("\n".join(r), encoding="utf-8", newline="\n")
-    C_SETUP, RS_SETUP = cs0, rs0
+    C_SETUP, RS_SETUP, C_WORLD_DECL, RS_WORLD_DECL = cs0, rs0, cw0, rw0
     print(f"mk_driver: {stem}: {nops} ops x {N_CASES} cases")
 
 

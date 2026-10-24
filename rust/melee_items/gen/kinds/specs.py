@@ -75,6 +75,10 @@ for _n in ("itarwinglaser", "itbat", "itbombhei", "itbox", "itcapsule", "itcereb
     SPECS[_n] = dict(src=f"{K}{_n}.c", types=_T, ret=dict(COMMON_RET), effects=dict(COMMON_EFF),
                      null_ret_ok=["Item_80268B18", "Item_80268B5C", "it_8026F6BC", "HSD_Randi"])
 
+for _n in ("itthunder", "ittogepy", "ittomato", "ittosakinto", "ittools", "itunknown", "itwhispyapple", "ittincle"):
+    SPECS[_n] = dict(src=f"{K}{_n}.c", types=_T, ret=dict(COMMON_RET), effects=dict(COMMON_EFF),
+                     null_ret_ok=["Item_80268B18", "Item_80268B5C", "it_8026F6BC", "HSD_Randi"])
+
 SPECS["itarwinglaser"]["skip_stubs"] = ["sinf", "cosf"]
 SPECS["itclimbersblizzard"]["skip_stubs"] = ["sinf", "cosf"]
 _EFS3 = dict(
@@ -451,3 +455,17 @@ SPECS["ittarucann"]["skip_stubs"] = ["sinf", "cosf"]
 SPECS["ittarucann"]["effects"]["ftCo_800C92E4"] = (
     "if (a3) { T((u32) a3->state); T(a3->damage); T((u32) a3->kb_angle); T(a3->unkC); T(a3->unk10); T(a3->unk14); T(a3->element); T((u32) a3->sfx_severity); T((u32) a3->sfx_kind); }",
     "if !a3.is_null() { t((*a3).state as u32); t((*a3).damage); t((*a3).kb_angle as u32); t((*a3).unkC); t((*a3).unk10); t((*a3).unk14); t((*a3).element); t((*a3).sfx_severity as u32); t((*a3).sfx_kind as u32); }")
+SPECS["itthunder"]["custom_stubs"] = {"efSync_Spawn": _EFS4}
+SPECS["ittools"]["effects"]["ftLib_800866DC"] = _V("a1")
+SPECS["ittools"]["ret"]["ftLib_80086960"] = _P
+SPECS["itunknown"]["effects"]["Camera_GetTransformInterest"] = _V("a0")
+SPECS["itunknown"]["effects"]["it_8026BB88"] = _V("a1")
+SPECS["itunknown"]["effects"]["lbVector_Rotate"] = _V("a0")
+SPECS["itwhispyapple"]["ret"]["it_8026D3CC"] = _P
+SPECS["itwhispyapple"]["ret"]["it_8026DBC8"] = _P
+SPECS["itwhispyapple"]["ret"]["it_8026DAA8"] = ("(int) (fv() & 0x1F)", "(fv() & 0x1F) as i32")
+SPECS["ittincle"]["ret"]["it_8027B5B0"] = _GO2
+SPECS["ittincle"]["null_ret_ok"].append("it_8027B5B0")
+SPECS["ittincle"]["effects"]["it_80275D5C"] = (
+    "T(B(a1->top)); T(B(a1->bottom)); T(B(a1->right)); T(B(a1->left));",
+    "t((*a1).top.to_bits()); t((*a1).bottom.to_bits()); t((*a1).right.to_bits()); t((*a1).left.to_bits());")

@@ -1668,3 +1668,5 @@ CFG["ittarucann"] = dict(
           """    for k in 0..3 { hm(pi(IT[k].xDD4_itemVar.tarucann.x20)); IT[k].xDD4_itemVar.tarucann.x20 = null_mut(); hm(pi(IT[k].grab_victim)); IT[k].grab_victim = null_mut(); }"""),
     c_decl=MD_CDECL, rs_decl=MD_RDECL, c_preg=MD_CPREG, rs_preg=MD_RPREG,
 )
+
+from specs_cfg_801 import *  # noqa: E402,F401,F403  (shard 801-808 entries)

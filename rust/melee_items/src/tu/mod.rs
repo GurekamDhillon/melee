@@ -174,3 +174,12 @@ pub mod itsuikun;
 pub mod itsword;
 pub mod ittaru;
 pub mod ittarucann;
+// Shard 801-808.
+pub mod itthunder;
+pub mod ittogepy;
+pub mod ittomato;
+pub mod ittosakinto;
+pub mod ittools;
+pub mod itunknown;
+pub mod itwhispyapple;
+pub mod ittincle;

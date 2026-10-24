@@ -254,6 +254,14 @@ pub trait ScriptGame {
     fn geno_state_name(&self, _profile: i32, _n: i32) -> Option<String> {
         None
     }
+    // ---- virtual pads of CPU fighter slots 5-6 (ScriptGame_VirtualPadField / Seen / Release)
+    fn virtual_pad_field(&mut self, _slot: i32, _k: i32, _v: i32, _set: bool) -> i32 {
+        0
+    }
+    fn virtual_pad_seen(&self, _slot: i32, _k: i32) -> i32 {
+        0
+    }
+    fn virtual_pad_release(&mut self, _slot: i32, _owner: i32) {}
     // ---- scene
     fn stage_kind(&self) -> i32 {
         0

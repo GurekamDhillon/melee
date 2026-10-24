@@ -127,6 +127,7 @@ pub struct State {
     pub step: i32,
     /// `gs.stage_zones`: LAB_STAGE_ZONES has no getter, so the last write is remembered
     pub stage_zones: bool,
+    pub pads: crate::pad::ScriptPads,
     /// error sentinel + wrapper factory (see Engine::native)
     pub err_sentinel: Option<Table>,
     pub wrapper: Option<Function>,
@@ -265,6 +266,31 @@ impl State {
         self.scripts.iter().position(|s| s.used && s.id.eq_ignore_ascii_case(id))
     }
 
+    /// `gs_pad_owner`: the identity a pad claim is made under.
+    pub fn pad_owner(&self) -> i32 {
+        let cur = self.cur.map_or(0, |c| c as i32 + 1);
+        if self.input_owner > (GS_MAX_SCRIPTS + GS_CLIENTS) as i32 || (self.cur == Some(self.console) && self.input_owner > 0) {
+            return self.input_owner;
+        }
+        cur
+    }
+
+    /// `gw_script_pad_release` for any of the six slots (5-6 are the game's virtual pads), then the pad log.
+    pub fn pad_release(&mut self, ch: i32, owner: i32) {
+        if (4..6).contains(&ch) && owner > 0 {
+            self.game.virtual_pad_release(ch, owner);
+            return;
+        }
+        self.pads.release(ch, owner);
+        let log: Vec<String> = self.pads.log.drain(..).collect();
+        for l in log {
+            self.log(&l);
+        }
+    }
+
+    /// `gs_rw_branch`: a gameplay write forks the rewind timeline (the long rewind is not ported yet, so nothing to drop).
+    pub fn rw_branch(&mut self) {}
+
     /// `gs_require_gameplay`
     pub fn require_gameplay(&mut self, fname: &str) -> LuaResult<()> {
         let session = self.host.borrow().session();
@@ -331,6 +357,7 @@ impl Engine {
             paused: false,
             step: 0,
             stage_zones: false,
+            pads: Default::default(),
             err_sentinel: None,
             wrapper: None,
             draw: [Vec::new(), Vec::new()],
@@ -1034,6 +1061,18 @@ impl Engine {
         s.build = 1 - s.build;
     }
 
+    /// `gw_Script_PadApply`: the script layer over the four pad samples just read; returns the driven-port mask.
+    pub fn pad_apply(&self, st: &mut [crate::pad::PadSample; 4], driven: u32) -> u32 {
+        let mut s = self.st.borrow_mut();
+        let session = s.host.borrow().session();
+        let d = s.pads.apply(st, driven, session);
+        let log: Vec<String> = s.pads.log.drain(..).collect();
+        for l in log {
+            s.log(&l);
+        }
+        d
+    }
+
     /// `gw_Script_FramePre`
     pub fn frame_pre(&self) {
         self.hook_all("on_frame_pre", &[]);
@@ -1043,6 +1082,7 @@ impl Engine {
     pub fn frame_post(&self) {
         let (any, start) = {
             let mut s = self.st.borrow_mut();
+            s.pads.frame_consumed();
             s.frame += 1;
             let mut any = false;
             for slot in 0..6 {

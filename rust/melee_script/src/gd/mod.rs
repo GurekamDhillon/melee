@@ -7,6 +7,7 @@ use mlua::{IntoLuaMulti, Lua, Result as LuaResult, Table, Value};
 pub mod core;
 pub mod lab;
 pub mod mods;
+pub mod pad;
 pub mod players;
 
 /// `gs_buttons` (only these twelve appear in `gd.buttons`).
@@ -31,6 +32,7 @@ where
 pub fn register_all(e: &Engine, gd: &Table) -> LuaResult<()> {
     core::register(e, gd)?;
     mods::register(e, gd)?;
+    pad::register(e, gd)?;
     players::register(e, gd)?;
     lab::register(e, gd)?;
     Ok(())

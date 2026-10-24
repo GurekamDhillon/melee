@@ -221,8 +221,8 @@ crate::oext_fns! {fn Script_ModelDraw(a0 : :: core :: ffi :: c_int, a1 : * mut [
 crate::oext_fns! {fn Script_StageModelsReset() -> ();}
 crate::oext_fns! {fn Script_StageResourceOwner() -> :: core :: ffi :: c_int;}
 crate::oext_fns! {fn Script_StageResourceOwnerAlive(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn mpScriptStageIsolationSet(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::oext_fns! {fn mpScriptStageIsolationActive() -> :: core :: ffi :: c_int;}
+crate::oext_fns! {fn mpScriptStageIsolationSet(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = melee_world::tu::mplib::mpScriptStageIsolationSet;}
+crate::oext_fns! {fn mpScriptStageIsolationActive() -> :: core :: ffi :: c_int = melee_world::tu::mplib::mpScriptStageIsolationActive;}
 crate::oext_fns! {fn Script_StageIsolationAllowed(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
 crate::oext_fns! {fn Script_StageIsolationReleased(a0 : :: core :: ffi :: c_int) -> ();}
 crate::oext_fns! {fn Netplay_Enabled() -> :: core :: ffi :: c_int;}

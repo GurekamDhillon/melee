@@ -128,7 +128,7 @@ static void setup(void)
     zero(&mpColl_80458810, sizeof mpColl_80458810); mpColl_804D6488 = 0; mpColl_804D648C = 0; mpColl_804D6490_max_x = 0.0f; mpColl_804D6494_line_id = 0; mpColl_804D6498_flags = 0;
     mpColl_IsEcbTiny = 0; mpColl_804D64A0 = 0; mpColl_804D64A4 = 0; mpColl_804D64A8 = 0; mpColl_804D64AC = 0; mpColl_LedgeLevelOK = 0;
     mpLib_804D64CC = 0; mpLib_804D64D0 = 0; mpLib_804D64D4 = 0; mpLib_804D64D8 = 0; mpLib_804D64DC = 0; mpLib_804D64E0 = 0; mpLib_804D64E4 = 0;
-    zero(mpLib_80458868, sizeof mpLib_80458868); scriptBatchDepth = 0;
+    zero(mpLib_80458868, sizeof mpLib_80458868); scriptBatchDepth = 0; zero(&mp_script_isolation, sizeof mp_script_isolation);
     build_world();
     mpLibLoad(&M);
     for (j = 0; j < NJ; j++) {
@@ -205,6 +205,10 @@ static void hash_all(void)
     hash_HSD_GObj(&GO);
     HM(PI(groundCollVtx)); HM(PI(groundCollLine)); HM(PI(groundCollJoint)); HM(PI(jointListStart)); HM(PI(jointListEnd)); HM(PI(mpLib_804D64B4));
     HM((u32) didCheckBounding); HM((u32) scriptBatchDepth);
+    HM(PI(mp_script_isolation.map)); HM(PI(mp_script_isolation.lines)); HM(PI(mp_script_isolation.joints)); HM((u32) mp_script_isolation.nlines); HM((u32) mp_script_isolation.njoints);
+    for (i = 0; i < NLN; i++) HM(mp_script_isolation.line_flags[i]);
+    for (i = 0; i < 8; i++) HM(mp_script_isolation.joint_flags[i]);
+    for (i = 0; i < 3; i++) { int kk; for (kk = 0; kk < 5; kk++) HM((u32) (u16) mp_script_isolation.ranges[i][kk].start | ((u32) (u16) mp_script_isolation.ranges[i][kk].count << 16)); }
     HM((u32) mpLib_804D64CC); HM((u32) mpLib_804D64D0); HM((u32) mpLib_804D64D4); HM((u32) mpLib_804D64D8); HM((u32) mpLib_804D64DC); HM((u32) mpLib_804D64E0); HM((u32) mpLib_804D64E4);
     for (i = 0; i < 2; i++) { HM(B(mpLib_80458868[i].top)); HM(B(mpLib_80458868[i].bottom)); HM(B(mpLib_80458868[i].left)); HM(B(mpLib_80458868[i].right)); }
     for (i = 0; i < 9; i++) { HM((u32) mpColl_80458810.right[i]); HM((u32) mpColl_80458810.left[i]); }
@@ -228,7 +232,7 @@ int main(void)
     preg(&CD, sizeof CD); preg(&GO, sizeof GO); preg(JO, sizeof JO); preg(OUTI, sizeof OUTI); preg(V3, sizeof V3);
     freg((const void*) jcbA); freg((const void*) jcbB); freg((const void*) cbPipe); freg((const void*) cbFloor);
     freg_all();
-    for (op = 0; op < 93; op++) {
+    for (op = 0; op < 95; op++) {
         for (k = 0; k < 600; k++) {
             u32 ret = 0;
             if (getenv_only && !(op == DBG_OP && k == DBG_K)) continue;
@@ -275,67 +279,69 @@ int main(void)
             case 35: { ret = PI(mpLib_8004D164()); } break;
             case 36: { mpLib_80058614_Floor(); } break;
             case 37: { mpLib_800587FC(&GO); } break;
-            case 38: { { int a = (int) (rnd() % 20); stage_info.grkind = (int) (rnd() % 80); ret = (u32) mpLib_80056A54(a, &OUTI[0]); HM((u32) OUTI[0]); } } break;
-            case 39: { { int a = (int) (rnd() % 20); stage_info.grkind = (int) (rnd() % 80); ret = (u32) mpLib_80056AC4(a, &OUTI[0]); HM((u32) OUTI[0]); } } break;
-            case 40: { { int a = (int) (rnd() % 20); int* p; stage_info.grkind = (int) (rnd() % 80); p = mpLib_80056A8C(a, &OUTI[0]); HM((u32) OUTI[0]); HM((u32) p[0]); HM((u32) p[1]); HM((u32) p[2]); HM((u32) p[3]); } } break;
-            case 41: { { float a = RI(), b = RI(), c = RI(), d = RI(), e = RI(), f = RI(), g = RI(), h = RI(); ret = (u32) mpLineIntersection(a, b, c, d, e, f, g, h, &OUTF[0], &OUTF[1]); HM(B(OUTF[0])); HM(B(OUTF[1])); } } break;
-            case 42: { { float a = RI(), b = RI(), c = RI(), d = RI(), e = RI(), f = RI(), g = RI(); ret = (u32) mpLineIntersectionH(&OUTF[0], &OUTF[1], a, b, c, d, e, f, g); HM(B(OUTF[0])); HM(B(OUTF[1])); } } break;
-            case 43: { { float a = RI(), b = RI(), c = RI(), d = RI(), e = RI(), f = RI(), g = RI(); ret = (u32) mpLineIntersectionV(&OUTF[0], &OUTF[1], a, b, c, d, e, f, g); HM(B(OUTF[0])); HM(B(OUTF[1])); } } break;
-            case 44: { mpIsland_8005A728(); } break;
-            case 45: { { int s = (int) (rnd() % 30); int c = (int) (rnd() % 12); int b = (int) (fv() & 1); mpIsland_8005AE1C(&mpIsland_80458E88.next, &mpIsland_80458E88.x18, s, c, b); } } break;
-            case 46: { { int j = (int) (rnd() % 3); int k = (int) (1 + (rnd() & 1)); int s = (int) (rnd() % 30); int c = (int) (rnd() % 12); int b = (int) (fv() & 1); mpIsland_8005B004((k == 1) ? &mpIsland_80458E88.x10 : &mpIsland_80458E88.x14, &mpIsland_80458E88.x20, j, k, s, c, b); } } break;
-            case 47: { { int j = (int) (rnd() % 3); int s = (int) (rnd() % 30); int c = (int) (rnd() % 12); int b = (int) (fv() & 1); mpIsland_8005B334(j, s, c, b); } } break;
-            case 48: { { int id = RVID(); ret = (u32) mpLineGetNext(id); } } break;
-            case 49: { { int id = RVID(); ret = (u32) mpLineGetPrev(id); } } break;
-            case 50: { { int id = RVID(); ret = (u32) mpLineNextNonFloor(id); } } break;
-            case 51: { { int id = RVID(); ret = (u32) mpLinePrevNonFloor(id); } } break;
-            case 52: { { int id = RVID(); ret = (u32) mpLinePrevNonCeiling(id); } } break;
-            case 53: { { int id = RVID(); ret = (u32) mpLineNextNonCeiling(id); } } break;
-            case 54: { { int id = RVID(); ret = (u32) mpLineNextNonLeftWall(id); } } break;
-            case 55: { { int id = RVID(); ret = (u32) mpLinePrevNonLeftWall(id); } } break;
-            case 56: { { int id = RVID(); ret = (u32) mpLinePrevNonRightWall(id); } } break;
-            case 57: { { int id = RVID(); ret = (u32) mpLineNextNonRightWall(id); } } break;
-            case 58: { { int id = RVID(); ret = (u32) mpLib_80053394_Floor(id); } } break;
-            case 59: { { int id = RVID(); ret = (u32) mpLib_80053448_Floor(id); } } break;
-            case 60: { { int id = RVID(); ret = (u32) mpLib_800534FC_Floor(id); } } break;
-            case 61: { { int id = RVID(); ret = (u32) mpLib_800536CC_Floor(id); } } break;
-            case 62: { { int id = RVID(); ret = (u32) mpLib_8005389C_Ceiling(id); } } break;
-            case 63: { { int id = RVID(); ret = (u32) mpLib_80053950_Ceiling(id); } } break;
-            case 64: { { int id = RVID(); ret = (u32) mpLib_80053A04_Ceiling(id); } } break;
-            case 65: { { int id = RVID(); ret = (u32) mpLib_80053BD4_Ceiling(id); } } break;
-            case 66: { { int id = RVID(); ret = (u32) mpLineGetKind(id); } } break;
-            case 67: { { int id = RVID(); ret = (u32) mpLineGetFlags(id); } } break;
-            case 68: { { int id = RVID(); ret = (u32) mpLib_80054ED8(id); } } break;
-            case 69: { { int id = RVID(); ret = (u32) mpJointFromLine(id); } } break;
-            case 70: { { int id = RVID(); mpLib_80053DA4_Floor(id, &V3[0]); } } break;
-            case 71: { { int id = RVID(); mpLib_80053ECC_Floor(id, &V3[0]); } } break;
-            case 72: { { int id = RVID(); mpFloorGetRight(id, &V3[0]); } } break;
-            case 73: { { int id = RVID(); mpFloorGetLeft(id, &V3[0]); } } break;
-            case 74: { { int id = RVID(); mpCeilingGetRight(id, &V3[0]); } } break;
-            case 75: { { int id = RVID(); mpCeilingGetLeft(id, &V3[0]); } } break;
-            case 76: { { int id = RVID(); mpLeftWallGetTop(id, &V3[0]); } } break;
-            case 77: { { int id = RVID(); mpLeftWallGetBottom(id, &V3[0]); } } break;
-            case 78: { { int id = RVID(); mpRightWallGetTop(id, &V3[0]); } } break;
-            case 79: { { int id = RVID(); mpRightWallGetBottom(id, &V3[0]); } } break;
-            case 80: { { int id = RVID(); mpLineGetV1Pos(id, &V3[0]); } } break;
-            case 81: { { int id = RVID(); mpLineGetV0Pos(id, &V3[0]); } } break;
-            case 82: { { int id = RVID(); V3[0].x = RC(); V3[0].y = RC(); V3[0].z = 0.0f; ret = (u32) mpLib_8004DD90_Floor(id, &V3[0], &OUTF[0], &OUTU[0], &V3[1]); } } break;
-            case 83: { { int id = RVID(); V3[0].x = RC(); V3[0].y = RC(); V3[0].z = 0.0f; ret = (u32) mpLib_8004E090_Ceiling(id, &V3[0], &OUTF[0], &OUTU[0], &V3[1]); } } break;
-            case 84: { { int id = RVID(); V3[0].x = RC(); V3[0].y = RC(); V3[0].z = 0.0f; ret = (u32) mpLib_8004E398_LeftWall(id, &V3[0], &OUTF[0], &OUTU[0], &V3[1]); } } break;
-            case 85: { { int id = RVID(); V3[0].x = RC(); V3[0].y = RC(); V3[0].z = 0.0f; ret = (u32) mpLib_8004E684_RightWall(id, &V3[0], &OUTF[0], &OUTU[0], &V3[1]); } } break;
-            case 86: { { int a = RVID(), b = RVID(); ret = (u32) mpLinesConnected(a, b); } } break;
-            case 87: { { int id = RVID(); V3[0].x = RC(); V3[0].y = RC(); V3[0].z = 0.0f; ret = (u32) mpGetSpeed(id, &V3[0], &V3[1]); } } break;
-            case 88: { { int id = RVID(); ret = PI(mpLineGetNormal(id, &V3[0])); } } break;
-            case 89: { { float a = RC(), b = RC(), c = RC(), d = RC(); int s = (int) (fv() & 3); ret = (u32) mpCheckFloor(a, b, c, d, 0.0f, &V3[0], &OUTI[0], &OUTU[0], &V3[1], (s == 0) ? RLID() : -1, (int) (rnd() % 4) - 1, (int) (rnd() % 4) - 1, 0, 0); } } break;
-            case 90: { { float a = RC(), b = RC(), c = RC(), d = RC(); int js = (int) (rnd() % 4) - 1; int jo = (int) (rnd() % 4) - 1; ret = (u32) mpCheckCeiling(a, b, c, d, &V3[0], &OUTI[0], &OUTU[0], &V3[1], js, jo); } } break;
-            case 91: { { float a = RC(), b = RC(), c = RC(), d = RC(); int js = (int) (rnd() % 4) - 1; int jo = (int) (rnd() % 4) - 1; ret = (u32) mpCheckLeftWall(a, b, c, d, &V3[0], &OUTI[0], &OUTU[0], &V3[1], js, jo); } } break;
-            case 92: { { float a = RC(), b = RC(), c = RC(), d = RC(); int js = (int) (rnd() % 4) - 1; int jo = (int) (rnd() % 4) - 1; ret = (u32) mpCheckRightWall(a, b, c, d, &V3[0], &OUTI[0], &OUTU[0], &V3[1], js, jo); } } break;
+            case 38: { { int l = (int) (rnd() % (u32) (NLN_ + 4)) - 1; int j = (int) (rnd() % 6) - 1; int iso = (rnd() % 4) != 0; int bad = (int) (rnd() % 6); int bj = (int) (rnd() % NJ); int bk = (int) (rnd() % 5); int bc = (int) (rnd() % 5) - 1; if (bad == 0) JOINTS[bj].ranges[bk].count = (s16) bc; ret = (u32) mpScriptStageIsolationSet(l, j, iso); ret = ret * 3 + (u32) mpScriptStageIsolationActive(); } } break;
+            case 39: { { int j = (int) (NJ); int a, b, c; a = mpScriptStageIsolationSet(NLN_, j, 1); if (rnd() & 1) { u32 li = rnd() % (u32) NLN_; u32 fx = fv() & 0xFF; LINEA[li].flags ^= fx; } if (rnd() % 4 == 0) { u32 ji = rnd() % NJ; u32 fx = fv() & 0xFF00; JOINTA[ji].flags ^= fx; } if (rnd() % 5 == 0) mpLib_804D64B4 = (rnd() & 1) ? 0 : (MapCollData*) &GO; b = mpScriptStageIsolationActive(); c = mpScriptStageIsolationSet(0, 0, 0); ret = (u32) (a * 4 + b * 2 + c); } } break;
+            case 40: { { int a = (int) (rnd() % 20); stage_info.grkind = (int) (rnd() % 80); ret = (u32) mpLib_80056A54(a, &OUTI[0]); HM((u32) OUTI[0]); } } break;
+            case 41: { { int a = (int) (rnd() % 20); stage_info.grkind = (int) (rnd() % 80); ret = (u32) mpLib_80056AC4(a, &OUTI[0]); HM((u32) OUTI[0]); } } break;
+            case 42: { { int a = (int) (rnd() % 20); int* p; stage_info.grkind = (int) (rnd() % 80); p = mpLib_80056A8C(a, &OUTI[0]); HM((u32) OUTI[0]); HM((u32) p[0]); HM((u32) p[1]); HM((u32) p[2]); HM((u32) p[3]); } } break;
+            case 43: { { float a = RI(), b = RI(), c = RI(), d = RI(), e = RI(), f = RI(), g = RI(), h = RI(); ret = (u32) mpLineIntersection(a, b, c, d, e, f, g, h, &OUTF[0], &OUTF[1]); HM(B(OUTF[0])); HM(B(OUTF[1])); } } break;
+            case 44: { { float a = RI(), b = RI(), c = RI(), d = RI(), e = RI(), f = RI(), g = RI(); ret = (u32) mpLineIntersectionH(&OUTF[0], &OUTF[1], a, b, c, d, e, f, g); HM(B(OUTF[0])); HM(B(OUTF[1])); } } break;
+            case 45: { { float a = RI(), b = RI(), c = RI(), d = RI(), e = RI(), f = RI(), g = RI(); ret = (u32) mpLineIntersectionV(&OUTF[0], &OUTF[1], a, b, c, d, e, f, g); HM(B(OUTF[0])); HM(B(OUTF[1])); } } break;
+            case 46: { mpIsland_8005A728(); } break;
+            case 47: { { int s = (int) (rnd() % 30); int c = (int) (rnd() % 12); int b = (int) (fv() & 1); mpIsland_8005AE1C(&mpIsland_80458E88.next, &mpIsland_80458E88.x18, s, c, b); } } break;
+            case 48: { { int j = (int) (rnd() % 3); int k = (int) (1 + (rnd() & 1)); int s = (int) (rnd() % 30); int c = (int) (rnd() % 12); int b = (int) (fv() & 1); mpIsland_8005B004((k == 1) ? &mpIsland_80458E88.x10 : &mpIsland_80458E88.x14, &mpIsland_80458E88.x20, j, k, s, c, b); } } break;
+            case 49: { { int j = (int) (rnd() % 3); int s = (int) (rnd() % 30); int c = (int) (rnd() % 12); int b = (int) (fv() & 1); mpIsland_8005B334(j, s, c, b); } } break;
+            case 50: { { int id = RVID(); ret = (u32) mpLineGetNext(id); } } break;
+            case 51: { { int id = RVID(); ret = (u32) mpLineGetPrev(id); } } break;
+            case 52: { { int id = RVID(); ret = (u32) mpLineNextNonFloor(id); } } break;
+            case 53: { { int id = RVID(); ret = (u32) mpLinePrevNonFloor(id); } } break;
+            case 54: { { int id = RVID(); ret = (u32) mpLinePrevNonCeiling(id); } } break;
+            case 55: { { int id = RVID(); ret = (u32) mpLineNextNonCeiling(id); } } break;
+            case 56: { { int id = RVID(); ret = (u32) mpLineNextNonLeftWall(id); } } break;
+            case 57: { { int id = RVID(); ret = (u32) mpLinePrevNonLeftWall(id); } } break;
+            case 58: { { int id = RVID(); ret = (u32) mpLinePrevNonRightWall(id); } } break;
+            case 59: { { int id = RVID(); ret = (u32) mpLineNextNonRightWall(id); } } break;
+            case 60: { { int id = RVID(); ret = (u32) mpLib_80053394_Floor(id); } } break;
+            case 61: { { int id = RVID(); ret = (u32) mpLib_80053448_Floor(id); } } break;
+            case 62: { { int id = RVID(); ret = (u32) mpLib_800534FC_Floor(id); } } break;
+            case 63: { { int id = RVID(); ret = (u32) mpLib_800536CC_Floor(id); } } break;
+            case 64: { { int id = RVID(); ret = (u32) mpLib_8005389C_Ceiling(id); } } break;
+            case 65: { { int id = RVID(); ret = (u32) mpLib_80053950_Ceiling(id); } } break;
+            case 66: { { int id = RVID(); ret = (u32) mpLib_80053A04_Ceiling(id); } } break;
+            case 67: { { int id = RVID(); ret = (u32) mpLib_80053BD4_Ceiling(id); } } break;
+            case 68: { { int id = RVID(); ret = (u32) mpLineGetKind(id); } } break;
+            case 69: { { int id = RVID(); ret = (u32) mpLineGetFlags(id); } } break;
+            case 70: { { int id = RVID(); ret = (u32) mpLib_80054ED8(id); } } break;
+            case 71: { { int id = RVID(); ret = (u32) mpJointFromLine(id); } } break;
+            case 72: { { int id = RVID(); mpLib_80053DA4_Floor(id, &V3[0]); } } break;
+            case 73: { { int id = RVID(); mpLib_80053ECC_Floor(id, &V3[0]); } } break;
+            case 74: { { int id = RVID(); mpFloorGetRight(id, &V3[0]); } } break;
+            case 75: { { int id = RVID(); mpFloorGetLeft(id, &V3[0]); } } break;
+            case 76: { { int id = RVID(); mpCeilingGetRight(id, &V3[0]); } } break;
+            case 77: { { int id = RVID(); mpCeilingGetLeft(id, &V3[0]); } } break;
+            case 78: { { int id = RVID(); mpLeftWallGetTop(id, &V3[0]); } } break;
+            case 79: { { int id = RVID(); mpLeftWallGetBottom(id, &V3[0]); } } break;
+            case 80: { { int id = RVID(); mpRightWallGetTop(id, &V3[0]); } } break;
+            case 81: { { int id = RVID(); mpRightWallGetBottom(id, &V3[0]); } } break;
+            case 82: { { int id = RVID(); mpLineGetV1Pos(id, &V3[0]); } } break;
+            case 83: { { int id = RVID(); mpLineGetV0Pos(id, &V3[0]); } } break;
+            case 84: { { int id = RVID(); V3[0].x = RC(); V3[0].y = RC(); V3[0].z = 0.0f; ret = (u32) mpLib_8004DD90_Floor(id, &V3[0], &OUTF[0], &OUTU[0], &V3[1]); } } break;
+            case 85: { { int id = RVID(); V3[0].x = RC(); V3[0].y = RC(); V3[0].z = 0.0f; ret = (u32) mpLib_8004E090_Ceiling(id, &V3[0], &OUTF[0], &OUTU[0], &V3[1]); } } break;
+            case 86: { { int id = RVID(); V3[0].x = RC(); V3[0].y = RC(); V3[0].z = 0.0f; ret = (u32) mpLib_8004E398_LeftWall(id, &V3[0], &OUTF[0], &OUTU[0], &V3[1]); } } break;
+            case 87: { { int id = RVID(); V3[0].x = RC(); V3[0].y = RC(); V3[0].z = 0.0f; ret = (u32) mpLib_8004E684_RightWall(id, &V3[0], &OUTF[0], &OUTU[0], &V3[1]); } } break;
+            case 88: { { int a = RVID(), b = RVID(); ret = (u32) mpLinesConnected(a, b); } } break;
+            case 89: { { int id = RVID(); V3[0].x = RC(); V3[0].y = RC(); V3[0].z = 0.0f; ret = (u32) mpGetSpeed(id, &V3[0], &V3[1]); } } break;
+            case 90: { { int id = RVID(); ret = PI(mpLineGetNormal(id, &V3[0])); } } break;
+            case 91: { { float a = RC(), b = RC(), c = RC(), d = RC(); int s = (int) (fv() & 3); ret = (u32) mpCheckFloor(a, b, c, d, 0.0f, &V3[0], &OUTI[0], &OUTU[0], &V3[1], (s == 0) ? RLID() : -1, (int) (rnd() % 4) - 1, (int) (rnd() % 4) - 1, 0, 0); } } break;
+            case 92: { { float a = RC(), b = RC(), c = RC(), d = RC(); int js = (int) (rnd() % 4) - 1; int jo = (int) (rnd() % 4) - 1; ret = (u32) mpCheckCeiling(a, b, c, d, &V3[0], &OUTI[0], &OUTU[0], &V3[1], js, jo); } } break;
+            case 93: { { float a = RC(), b = RC(), c = RC(), d = RC(); int js = (int) (rnd() % 4) - 1; int jo = (int) (rnd() % 4) - 1; ret = (u32) mpCheckLeftWall(a, b, c, d, &V3[0], &OUTI[0], &OUTU[0], &V3[1], js, jo); } } break;
+            case 94: { { float a = RC(), b = RC(), c = RC(), d = RC(); int js = (int) (rnd() % 4) - 1; int jo = (int) (rnd() % 4) - 1; ret = (u32) mpCheckRightWall(a, b, c, d, &V3[0], &OUTI[0], &OUTU[0], &V3[1], js, jo); } } break;
             }
             } __except (_exception_code() == 0xE0A55E87ul) { HM(0xA55E87u); ASSN[op]++; }
             hash_all();
             printf("%d %d %08X %08X %08X\n", op, k, ret, H, TR);
         }
     }
-    if (getenv("MTU_STAT")) { for (op = 0; op < 93; op++) fprintf_stub(op); }
+    if (getenv("MTU_STAT")) { for (op = 0; op < 95; op++) fprintf_stub(op); }
     return 0;
 }

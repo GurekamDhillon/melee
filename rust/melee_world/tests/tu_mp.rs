@@ -159,7 +159,7 @@ unsafe fn setup() {
     pc::mpColl_80458810 = core::mem::zeroed(); pc::mpColl_804D6488 = 0; pc::mpColl_804D648C = 0; pc::mpColl_804D6490_max_x = 0.0; pc::mpColl_804D6494_line_id = 0; pc::mpColl_804D6498_flags = 0;
     pc::mpColl_IsEcbTiny = 0; pc::mpColl_804D64A0 = None; pc::mpColl_804D64A4 = null_mut(); pc::mpColl_804D64A8 = None; pc::mpColl_804D64AC = 0; pc::mpColl_LedgeLevelOK = 0;
     pl::mpLib_804D64CC = 0; pl::mpLib_804D64D0 = 0; pl::mpLib_804D64D4 = 0; pl::mpLib_804D64D8 = 0; pl::mpLib_804D64DC = 0; pl::mpLib_804D64E0 = 0; pl::mpLib_804D64E4 = 0;
-    pl::mpLib_80458868 = core::mem::zeroed(); pl::scriptBatchDepth = 0;
+    pl::mpLib_80458868 = core::mem::zeroed(); pl::scriptBatchDepth = 0; pl::mp_script_isolation = core::mem::zeroed();
     build_world();
     pl::mpLibLoad(&raw mut M);
     for j in 0..NJ {
@@ -247,6 +247,10 @@ unsafe fn hash_all() {
     g::hash_HSD_GObj(&GO);
     hm(pi(pl::groundCollVtx)); hm(pi(pl::groundCollLine)); hm(pi(pl::groundCollJoint)); hm(pi(pl::jointListStart)); hm(pi(pl::jointListEnd)); hm(pi(pl::mpLib_804D64B4));
     hm(pl::didCheckBounding as u32); hm(pl::scriptBatchDepth as u32);
+    hm(pi(pl::mp_script_isolation.map)); hm(pi(pl::mp_script_isolation.lines)); hm(pi(pl::mp_script_isolation.joints)); hm(pl::mp_script_isolation.nlines as u32); hm(pl::mp_script_isolation.njoints as u32);
+    for i in 0..NLN { hm(pl::mp_script_isolation.line_flags[i]); }
+    for i in 0..8 { hm(pl::mp_script_isolation.joint_flags[i]); }
+    for i in 0..3 { for kk in 0..5 { hm((pl::mp_script_isolation.ranges[i][kk].start as u16 as u32) | ((pl::mp_script_isolation.ranges[i][kk].count as u16 as u32) << 16)); } }
     hm(pl::mpLib_804D64CC as u32); hm(pl::mpLib_804D64D0 as u32); hm(pl::mpLib_804D64D4 as u32); hm(pl::mpLib_804D64D8 as u32); hm(pl::mpLib_804D64DC as u32); hm(pl::mpLib_804D64E0 as u32); hm(pl::mpLib_804D64E4 as u32);
     for i in 0..2 { hm(pl::mpLib_80458868[i].top.to_bits()); hm(pl::mpLib_80458868[i].bottom.to_bits()); hm(pl::mpLib_80458868[i].left.to_bits()); hm(pl::mpLib_80458868[i].right.to_bits()); }
     for i in 0..9 { hm(pc::mpColl_80458810.right[i] as u32); hm(pc::mpColl_80458810.left[i] as u32); }
@@ -283,7 +287,7 @@ fn mp_matches_c() {
         freg(jcb_a as *const () as usize); freg(jcb_b as *const () as usize); freg(cb_pipe as *const () as usize); freg(cb_floor as *const () as usize);
         g::freg_all();
         let mut c = Check::new(include_str!("data/mtu_mp.txt"));
-        for op in 0..93u32 {
+        for op in 0..95u32 {
             for k in 0..600u32 {
                 case(op, k);
                 setup();
@@ -328,61 +332,63 @@ fn mp_matches_c() {
                     35 => { ret = pi(pl::mpLib_8004D164()); }
                     36 => { pl::mpLib_80058614_Floor(); }
                     37 => { pl::mpLib_800587FC(&raw mut GO); }
-                    38 => { { let a = (rnd() % 20) as i32; pl::ext::stage_info.grkind = (rnd() % 80) as _; ret = pl::mpLib_80056A54(a, &raw mut OUTI[0]) as u32; hm(OUTI[0] as u32); } }
-                    39 => { { let a = (rnd() % 20) as i32; pl::ext::stage_info.grkind = (rnd() % 80) as _; ret = pl::mpLib_80056AC4(a, &raw mut OUTI[0]) as u32; hm(OUTI[0] as u32); } }
-                    40 => { { let a = (rnd() % 20) as i32; pl::ext::stage_info.grkind = (rnd() % 80) as _; let p = pl::mpLib_80056A8C(a, &raw mut OUTI[0]); hm(OUTI[0] as u32); hm(*p as u32); hm(*p.add(1) as u32); hm(*p.add(2) as u32); hm(*p.add(3) as u32); } }
-                    41 => { { let (a, b, c, d, e, f, g, h) = (ri(), ri(), ri(), ri(), ri(), ri(), ri(), ri()); ret = pl::mpLineIntersection(a, b, c, d, e, f, g, h, &raw mut OUTF[0], &raw mut OUTF[1]) as u32; hm(OUTF[0].to_bits()); hm(OUTF[1].to_bits()); } }
-                    42 => { { let (a, b, c, d, e, f, g) = (ri(), ri(), ri(), ri(), ri(), ri(), ri()); ret = pl::mpLineIntersectionH(&raw mut OUTF[0], &raw mut OUTF[1], a, b, c, d, e, f, g) as u32; hm(OUTF[0].to_bits()); hm(OUTF[1].to_bits()); } }
-                    43 => { { let (a, b, c, d, e, f, g) = (ri(), ri(), ri(), ri(), ri(), ri(), ri()); ret = pl::mpLineIntersectionV(&raw mut OUTF[0], &raw mut OUTF[1], a, b, c, d, e, f, g) as u32; hm(OUTF[0].to_bits()); hm(OUTF[1].to_bits()); } }
-                    44 => { pi_::mpIsland_8005A728(); }
-                    45 => { { let s = (rnd() % 30) as i32; let c = (rnd() % 12) as i32; let b = (fv() & 1) as i32; pi_::mpIsland_8005AE1C(&raw mut pi_::mpIsland_80458E88.next, &raw mut pi_::mpIsland_80458E88.x18, s, c, b); } }
-                    46 => { { let j = (rnd() % 3) as i32; let k = (1 + (rnd() & 1)) as i32; let s = (rnd() % 30) as i32; let c = (rnd() % 12) as i32; let b = (fv() & 1) as i32; pi_::mpIsland_8005B004(if k == 1 { &raw mut pi_::mpIsland_80458E88.x10 } else { &raw mut pi_::mpIsland_80458E88.x14 }, &raw mut pi_::mpIsland_80458E88.x20, j, k, s, c, b); } }
-                    47 => { { let j = (rnd() % 3) as i32; let s = (rnd() % 30) as i32; let c = (rnd() % 12) as i32; let b = (fv() & 1) as i32; pi_::mpIsland_8005B334(j, s, c, b); } }
-                    48 => { { let id = rvid(); ret = pl::mpLineGetNext(id) as u32; } }
-                    49 => { { let id = rvid(); ret = pl::mpLineGetPrev(id) as u32; } }
-                    50 => { { let id = rvid(); ret = pl::mpLineNextNonFloor(id) as u32; } }
-                    51 => { { let id = rvid(); ret = pl::mpLinePrevNonFloor(id) as u32; } }
-                    52 => { { let id = rvid(); ret = pl::mpLinePrevNonCeiling(id) as u32; } }
-                    53 => { { let id = rvid(); ret = pl::mpLineNextNonCeiling(id) as u32; } }
-                    54 => { { let id = rvid(); ret = pl::mpLineNextNonLeftWall(id) as u32; } }
-                    55 => { { let id = rvid(); ret = pl::mpLinePrevNonLeftWall(id) as u32; } }
-                    56 => { { let id = rvid(); ret = pl::mpLinePrevNonRightWall(id) as u32; } }
-                    57 => { { let id = rvid(); ret = pl::mpLineNextNonRightWall(id) as u32; } }
-                    58 => { { let id = rvid(); ret = pl::mpLib_80053394_Floor(id) as u32; } }
-                    59 => { { let id = rvid(); ret = pl::mpLib_80053448_Floor(id) as u32; } }
-                    60 => { { let id = rvid(); ret = pl::mpLib_800534FC_Floor(id) as u32; } }
-                    61 => { { let id = rvid(); ret = pl::mpLib_800536CC_Floor(id) as u32; } }
-                    62 => { { let id = rvid(); ret = pl::mpLib_8005389C_Ceiling(id) as u32; } }
-                    63 => { { let id = rvid(); ret = pl::mpLib_80053950_Ceiling(id) as u32; } }
-                    64 => { { let id = rvid(); ret = pl::mpLib_80053A04_Ceiling(id) as u32; } }
-                    65 => { { let id = rvid(); ret = pl::mpLib_80053BD4_Ceiling(id) as u32; } }
-                    66 => { { let id = rvid(); ret = pl::mpLineGetKind(id) as u32; } }
-                    67 => { { let id = rvid(); ret = pl::mpLineGetFlags(id) as u32; } }
-                    68 => { { let id = rvid(); ret = pl::mpLib_80054ED8(id) as u32; } }
-                    69 => { { let id = rvid(); ret = pl::mpJointFromLine(id) as u32; } }
-                    70 => { { let id = rvid(); pl::mpLib_80053DA4_Floor(id, &raw mut V3[0]); } }
-                    71 => { { let id = rvid(); pl::mpLib_80053ECC_Floor(id, &raw mut V3[0]); } }
-                    72 => { { let id = rvid(); pl::mpFloorGetRight(id, &raw mut V3[0]); } }
-                    73 => { { let id = rvid(); pl::mpFloorGetLeft(id, &raw mut V3[0]); } }
-                    74 => { { let id = rvid(); pl::mpCeilingGetRight(id, &raw mut V3[0]); } }
-                    75 => { { let id = rvid(); pl::mpCeilingGetLeft(id, &raw mut V3[0]); } }
-                    76 => { { let id = rvid(); pl::mpLeftWallGetTop(id, &raw mut V3[0]); } }
-                    77 => { { let id = rvid(); pl::mpLeftWallGetBottom(id, &raw mut V3[0]); } }
-                    78 => { { let id = rvid(); pl::mpRightWallGetTop(id, &raw mut V3[0]); } }
-                    79 => { { let id = rvid(); pl::mpRightWallGetBottom(id, &raw mut V3[0]); } }
-                    80 => { { let id = rvid(); pl::mpLineGetV1Pos(id, &raw mut V3[0]); } }
-                    81 => { { let id = rvid(); pl::mpLineGetV0Pos(id, &raw mut V3[0]); } }
-                    82 => { { let id = rvid(); V3[0].x = rc(); V3[0].y = rc(); V3[0].z = 0.0; ret = pl::mpLib_8004DD90_Floor(id, &raw mut V3[0], &raw mut OUTF[0], &raw mut OUTU[0], &raw mut V3[1]) as u32; } }
-                    83 => { { let id = rvid(); V3[0].x = rc(); V3[0].y = rc(); V3[0].z = 0.0; ret = pl::mpLib_8004E090_Ceiling(id, &raw mut V3[0], &raw mut OUTF[0], &raw mut OUTU[0], &raw mut V3[1]) as u32; } }
-                    84 => { { let id = rvid(); V3[0].x = rc(); V3[0].y = rc(); V3[0].z = 0.0; ret = pl::mpLib_8004E398_LeftWall(id, &raw mut V3[0], &raw mut OUTF[0], &raw mut OUTU[0], &raw mut V3[1]) as u32; } }
-                    85 => { { let id = rvid(); V3[0].x = rc(); V3[0].y = rc(); V3[0].z = 0.0; ret = pl::mpLib_8004E684_RightWall(id, &raw mut V3[0], &raw mut OUTF[0], &raw mut OUTU[0], &raw mut V3[1]) as u32; } }
-                    86 => { { let a = rvid(); let b = rvid(); ret = pl::mpLinesConnected(a, b) as u32; } }
-                    87 => { { let id = rvid(); V3[0].x = rc(); V3[0].y = rc(); V3[0].z = 0.0; ret = pl::mpGetSpeed(id, &raw mut V3[0], &raw mut V3[1]) as u32; } }
-                    88 => { { let id = rvid(); ret = pi(pl::mpLineGetNormal(id, &raw mut V3[0])); } }
-                    89 => { { let a = rc(); let b = rc(); let c = rc(); let d = rc(); let s = fv() & 3; let sk = if s == 0 { rlid() } else { -1 }; let js = (rnd() % 4) as i32 - 1; let jo = (rnd() % 4) as i32 - 1; ret = pl::mpCheckFloor(a, b, c, d, 0.0, &raw mut V3[0], &raw mut OUTI[0], &raw mut OUTU[0], &raw mut V3[1], sk, js, jo, None, null_mut()) as u32; } }
-                    90 => { { let a = rc(); let b = rc(); let c = rc(); let d = rc(); let js = (rnd() % 4) as i32 - 1; let jo = (rnd() % 4) as i32 - 1; ret = pl::mpCheckCeiling(a, b, c, d, &raw mut V3[0], &raw mut OUTI[0], &raw mut OUTU[0], &raw mut V3[1], js, jo) as u32; } }
-                    91 => { { let a = rc(); let b = rc(); let c = rc(); let d = rc(); let js = (rnd() % 4) as i32 - 1; let jo = (rnd() % 4) as i32 - 1; ret = pl::mpCheckLeftWall(a, b, c, d, &raw mut V3[0], &raw mut OUTI[0], &raw mut OUTU[0], &raw mut V3[1], js, jo) as u32; } }
-                    92 => { { let a = rc(); let b = rc(); let c = rc(); let d = rc(); let js = (rnd() % 4) as i32 - 1; let jo = (rnd() % 4) as i32 - 1; ret = pl::mpCheckRightWall(a, b, c, d, &raw mut V3[0], &raw mut OUTI[0], &raw mut OUTU[0], &raw mut V3[1], js, jo) as u32; } }
+                    38 => { { let l = (rnd() % (NLN_ + 4) as u32) as i32 - 1; let j = (rnd() % 6) as i32 - 1; let iso = (rnd() % 4 != 0) as i32; let bad = (rnd() % 6) as i32; let bj = (rnd() % NJ as u32) as usize; let bk = (rnd() % 5) as usize; let bc = (rnd() % 5) as i32 - 1; if bad == 0 { JOINTS[bj].ranges[bk].count = bc as i16; } ret = (pl::mpScriptStageIsolationSet(l, j, iso) as u32).wrapping_mul(3).wrapping_add(pl::mpScriptStageIsolationActive() as u32); } }
+                    39 => { { let j = NJ as i32; let a = pl::mpScriptStageIsolationSet(NLN_, j, 1); if rnd() & 1 != 0 { let i = (rnd() % NLN_ as u32) as usize; let fx = fv() & 0xFF; LINEA[i].flags ^= fx; } if rnd() % 4 == 0 { let i = (rnd() % NJ as u32) as usize; let fx = fv() & 0xFF00; JOINTA[i].flags ^= fx; } if rnd() % 5 == 0 { pl::mpLib_804D64B4 = if rnd() & 1 != 0 { null_mut() } else { &raw mut GO as *mut MapCollData }; } let b = pl::mpScriptStageIsolationActive(); let c = pl::mpScriptStageIsolationSet(0, 0, 0); ret = (a * 4 + b * 2 + c) as u32; } }
+                    40 => { { let a = (rnd() % 20) as i32; pl::ext::stage_info.grkind = (rnd() % 80) as _; ret = pl::mpLib_80056A54(a, &raw mut OUTI[0]) as u32; hm(OUTI[0] as u32); } }
+                    41 => { { let a = (rnd() % 20) as i32; pl::ext::stage_info.grkind = (rnd() % 80) as _; ret = pl::mpLib_80056AC4(a, &raw mut OUTI[0]) as u32; hm(OUTI[0] as u32); } }
+                    42 => { { let a = (rnd() % 20) as i32; pl::ext::stage_info.grkind = (rnd() % 80) as _; let p = pl::mpLib_80056A8C(a, &raw mut OUTI[0]); hm(OUTI[0] as u32); hm(*p as u32); hm(*p.add(1) as u32); hm(*p.add(2) as u32); hm(*p.add(3) as u32); } }
+                    43 => { { let (a, b, c, d, e, f, g, h) = (ri(), ri(), ri(), ri(), ri(), ri(), ri(), ri()); ret = pl::mpLineIntersection(a, b, c, d, e, f, g, h, &raw mut OUTF[0], &raw mut OUTF[1]) as u32; hm(OUTF[0].to_bits()); hm(OUTF[1].to_bits()); } }
+                    44 => { { let (a, b, c, d, e, f, g) = (ri(), ri(), ri(), ri(), ri(), ri(), ri()); ret = pl::mpLineIntersectionH(&raw mut OUTF[0], &raw mut OUTF[1], a, b, c, d, e, f, g) as u32; hm(OUTF[0].to_bits()); hm(OUTF[1].to_bits()); } }
+                    45 => { { let (a, b, c, d, e, f, g) = (ri(), ri(), ri(), ri(), ri(), ri(), ri()); ret = pl::mpLineIntersectionV(&raw mut OUTF[0], &raw mut OUTF[1], a, b, c, d, e, f, g) as u32; hm(OUTF[0].to_bits()); hm(OUTF[1].to_bits()); } }
+                    46 => { pi_::mpIsland_8005A728(); }
+                    47 => { { let s = (rnd() % 30) as i32; let c = (rnd() % 12) as i32; let b = (fv() & 1) as i32; pi_::mpIsland_8005AE1C(&raw mut pi_::mpIsland_80458E88.next, &raw mut pi_::mpIsland_80458E88.x18, s, c, b); } }
+                    48 => { { let j = (rnd() % 3) as i32; let k = (1 + (rnd() & 1)) as i32; let s = (rnd() % 30) as i32; let c = (rnd() % 12) as i32; let b = (fv() & 1) as i32; pi_::mpIsland_8005B004(if k == 1 { &raw mut pi_::mpIsland_80458E88.x10 } else { &raw mut pi_::mpIsland_80458E88.x14 }, &raw mut pi_::mpIsland_80458E88.x20, j, k, s, c, b); } }
+                    49 => { { let j = (rnd() % 3) as i32; let s = (rnd() % 30) as i32; let c = (rnd() % 12) as i32; let b = (fv() & 1) as i32; pi_::mpIsland_8005B334(j, s, c, b); } }
+                    50 => { { let id = rvid(); ret = pl::mpLineGetNext(id) as u32; } }
+                    51 => { { let id = rvid(); ret = pl::mpLineGetPrev(id) as u32; } }
+                    52 => { { let id = rvid(); ret = pl::mpLineNextNonFloor(id) as u32; } }
+                    53 => { { let id = rvid(); ret = pl::mpLinePrevNonFloor(id) as u32; } }
+                    54 => { { let id = rvid(); ret = pl::mpLinePrevNonCeiling(id) as u32; } }
+                    55 => { { let id = rvid(); ret = pl::mpLineNextNonCeiling(id) as u32; } }
+                    56 => { { let id = rvid(); ret = pl::mpLineNextNonLeftWall(id) as u32; } }
+                    57 => { { let id = rvid(); ret = pl::mpLinePrevNonLeftWall(id) as u32; } }
+                    58 => { { let id = rvid(); ret = pl::mpLinePrevNonRightWall(id) as u32; } }
+                    59 => { { let id = rvid(); ret = pl::mpLineNextNonRightWall(id) as u32; } }
+                    60 => { { let id = rvid(); ret = pl::mpLib_80053394_Floor(id) as u32; } }
+                    61 => { { let id = rvid(); ret = pl::mpLib_80053448_Floor(id) as u32; } }
+                    62 => { { let id = rvid(); ret = pl::mpLib_800534FC_Floor(id) as u32; } }
+                    63 => { { let id = rvid(); ret = pl::mpLib_800536CC_Floor(id) as u32; } }
+                    64 => { { let id = rvid(); ret = pl::mpLib_8005389C_Ceiling(id) as u32; } }
+                    65 => { { let id = rvid(); ret = pl::mpLib_80053950_Ceiling(id) as u32; } }
+                    66 => { { let id = rvid(); ret = pl::mpLib_80053A04_Ceiling(id) as u32; } }
+                    67 => { { let id = rvid(); ret = pl::mpLib_80053BD4_Ceiling(id) as u32; } }
+                    68 => { { let id = rvid(); ret = pl::mpLineGetKind(id) as u32; } }
+                    69 => { { let id = rvid(); ret = pl::mpLineGetFlags(id) as u32; } }
+                    70 => { { let id = rvid(); ret = pl::mpLib_80054ED8(id) as u32; } }
+                    71 => { { let id = rvid(); ret = pl::mpJointFromLine(id) as u32; } }
+                    72 => { { let id = rvid(); pl::mpLib_80053DA4_Floor(id, &raw mut V3[0]); } }
+                    73 => { { let id = rvid(); pl::mpLib_80053ECC_Floor(id, &raw mut V3[0]); } }
+                    74 => { { let id = rvid(); pl::mpFloorGetRight(id, &raw mut V3[0]); } }
+                    75 => { { let id = rvid(); pl::mpFloorGetLeft(id, &raw mut V3[0]); } }
+                    76 => { { let id = rvid(); pl::mpCeilingGetRight(id, &raw mut V3[0]); } }
+                    77 => { { let id = rvid(); pl::mpCeilingGetLeft(id, &raw mut V3[0]); } }
+                    78 => { { let id = rvid(); pl::mpLeftWallGetTop(id, &raw mut V3[0]); } }
+                    79 => { { let id = rvid(); pl::mpLeftWallGetBottom(id, &raw mut V3[0]); } }
+                    80 => { { let id = rvid(); pl::mpRightWallGetTop(id, &raw mut V3[0]); } }
+                    81 => { { let id = rvid(); pl::mpRightWallGetBottom(id, &raw mut V3[0]); } }
+                    82 => { { let id = rvid(); pl::mpLineGetV1Pos(id, &raw mut V3[0]); } }
+                    83 => { { let id = rvid(); pl::mpLineGetV0Pos(id, &raw mut V3[0]); } }
+                    84 => { { let id = rvid(); V3[0].x = rc(); V3[0].y = rc(); V3[0].z = 0.0; ret = pl::mpLib_8004DD90_Floor(id, &raw mut V3[0], &raw mut OUTF[0], &raw mut OUTU[0], &raw mut V3[1]) as u32; } }
+                    85 => { { let id = rvid(); V3[0].x = rc(); V3[0].y = rc(); V3[0].z = 0.0; ret = pl::mpLib_8004E090_Ceiling(id, &raw mut V3[0], &raw mut OUTF[0], &raw mut OUTU[0], &raw mut V3[1]) as u32; } }
+                    86 => { { let id = rvid(); V3[0].x = rc(); V3[0].y = rc(); V3[0].z = 0.0; ret = pl::mpLib_8004E398_LeftWall(id, &raw mut V3[0], &raw mut OUTF[0], &raw mut OUTU[0], &raw mut V3[1]) as u32; } }
+                    87 => { { let id = rvid(); V3[0].x = rc(); V3[0].y = rc(); V3[0].z = 0.0; ret = pl::mpLib_8004E684_RightWall(id, &raw mut V3[0], &raw mut OUTF[0], &raw mut OUTU[0], &raw mut V3[1]) as u32; } }
+                    88 => { { let a = rvid(); let b = rvid(); ret = pl::mpLinesConnected(a, b) as u32; } }
+                    89 => { { let id = rvid(); V3[0].x = rc(); V3[0].y = rc(); V3[0].z = 0.0; ret = pl::mpGetSpeed(id, &raw mut V3[0], &raw mut V3[1]) as u32; } }
+                    90 => { { let id = rvid(); ret = pi(pl::mpLineGetNormal(id, &raw mut V3[0])); } }
+                    91 => { { let a = rc(); let b = rc(); let c = rc(); let d = rc(); let s = fv() & 3; let sk = if s == 0 { rlid() } else { -1 }; let js = (rnd() % 4) as i32 - 1; let jo = (rnd() % 4) as i32 - 1; ret = pl::mpCheckFloor(a, b, c, d, 0.0, &raw mut V3[0], &raw mut OUTI[0], &raw mut OUTU[0], &raw mut V3[1], sk, js, jo, None, null_mut()) as u32; } }
+                    92 => { { let a = rc(); let b = rc(); let c = rc(); let d = rc(); let js = (rnd() % 4) as i32 - 1; let jo = (rnd() % 4) as i32 - 1; ret = pl::mpCheckCeiling(a, b, c, d, &raw mut V3[0], &raw mut OUTI[0], &raw mut OUTU[0], &raw mut V3[1], js, jo) as u32; } }
+                    93 => { { let a = rc(); let b = rc(); let c = rc(); let d = rc(); let js = (rnd() % 4) as i32 - 1; let jo = (rnd() % 4) as i32 - 1; ret = pl::mpCheckLeftWall(a, b, c, d, &raw mut V3[0], &raw mut OUTI[0], &raw mut OUTU[0], &raw mut V3[1], js, jo) as u32; } }
+                    94 => { { let a = rc(); let b = rc(); let c = rc(); let d = rc(); let js = (rnd() % 4) as i32 - 1; let jo = (rnd() % 4) as i32 - 1; ret = pl::mpCheckRightWall(a, b, c, d, &raw mut V3[0], &raw mut OUTI[0], &raw mut OUTU[0], &raw mut V3[1], js, jo) as u32; } }
                     _ => unreachable!(),
                 }
                 }));
@@ -395,6 +401,6 @@ fn mp_matches_c() {
                 c.line(op, k, ret);
             }
         }
-        assert_eq!(c.done(), 93 * 600);
+        assert_eq!(c.done(), 95 * 600);
     }
 }

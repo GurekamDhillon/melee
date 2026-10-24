@@ -1,0 +1,92 @@
+// BEGIN GENERATED EXT (rust/melee_world/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn Camera_8002928C(a0: *mut CmSubject) -> i32;
+    fn Camera_80030B50() -> i32;
+    fn Camera_80030B7C() -> i32;
+    fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
+    fn GXBegin(a0: u32, a1: u32, a2: u16);
+    fn GXClearVtxDesc();
+    fn GXLoadPosMtxImm(a0: *mut c_void, a1: u32);
+    fn GXPosition3f32(a0: f32, a1: f32, a2: f32);
+    fn GXSetCullMode(a0: u32);
+    fn GXSetCurrentMtx(a0: u32);
+    fn GXSetLineWidth(a0: u8, a1: u32);
+    fn GXSetVtxAttrFmt(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8);
+    fn GXSetVtxDesc(a0: u32, a1: u32);
+    fn GXSetZMode(a0: u8, a1: u32, a2: u8);
+    fn Ground_801C0498() -> f32;
+    fn Ground_801C2D24(a0: i32, a1: *mut Vec) -> i32;
+    fn HSD_CObjGetCurrent() -> *mut HSD_CObj;
+    fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut c_void);
+    fn HSD_Free(a0: *mut c_void);
+    fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
+    fn HSD_JObjGetFlags(a0: *mut HSD_JObj) -> u32;
+    fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);
+    fn HSD_LObjSetupInit(a0: *mut HSD_CObj);
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void;
+    fn HSD_SetTevRegAll();
+    fn HSD_SetupChannel(a0: *mut HSD_Chan);
+    fn HSD_SetupPEMode(a0: u32, a1: *mut HSD_PEDesc);
+    fn HSD_SetupTevStage(a0: *mut _HSD_TevDesc);
+    fn HSD_StateAssignTev() -> i32;
+    fn HSD_StateInitTev();
+    fn HSD_StateInvalidate(a0: i32);
+    fn HSD_StateSetCullMode(a0: i32);
+    fn HSD_StateSetNumChans(a0: i32);
+    fn HSD_StateSetNumTevStages();
+    fn HSD_StateSetNumTexGens();
+    fn Mex_GrLineTypeRow(a0: i32) -> i32;
+    fn ScriptGame_StageJoint(a0: i32) -> i32;
+    fn ScriptGame_StageJointActive(a0: i32) -> i32;
+    fn ScriptGame_StageJointCapacity() -> i32;
+    fn ScriptGame_StageLineActive(a0: i32) -> i32;
+    fn ScriptGame_StageSlotJointUpdate(a0: i32) -> i32;
+    fn ScriptGame_StageSlotSameJoint(a0: i32, a1: i32) -> i32;
+    fn Stage_GetBlastZoneBottomOffset() -> f32;
+    fn Stage_GetBlastZoneLeftOffset() -> f32;
+    fn Stage_GetBlastZoneRightOffset() -> f32;
+    fn Stage_GetBlastZoneTopOffset() -> f32;
+    fn Stage_GetCamBoundsBottomOffset() -> f32;
+    fn Stage_GetCamBoundsLeftOffset() -> f32;
+    fn Stage_GetCamBoundsRightOffset() -> f32;
+    fn Stage_GetCamBoundsTopOffset() -> f32;
+    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_80086984(a0: *mut HSD_GObj) -> *mut CollData;
+    fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8;
+    fn ftLib_800874BC(a0: *mut HSD_GObj) -> i32;
+    fn grDynamicAttr_801CA0B4();
+    fn grDynamicAttr_801CA224();
+    fn grDynamicAttr_801CA284(a0: *mut Vec, a1: i32) -> i32;
+    fn itGetKind(a0: *mut HSD_GObj) -> i32;
+    fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec);
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec) { super::lb_8000B1CC(a0, a1, a2) }
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut DbLevel: DbLKind = unsafe { core::mem::zeroed() };
+    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
+    pub static mut cm_804D6468: *mut CmSubject = unsafe { core::mem::zeroed() };
+    pub static mut stage_info: StageInfo = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

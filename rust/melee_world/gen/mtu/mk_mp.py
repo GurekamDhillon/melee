@@ -91,6 +91,14 @@ op("{ int j = (int) (rnd() % 3); mpJointUpdateDynamics(j); }", "{ let j = (rnd()
 op("ret = PI(mpLib_8004D164());", "ret = pi(pl::mpLib_8004D164());", "p", "mpLib_8004D164")
 op("mpLib_80058614_Floor();", "pl::mpLib_80058614_Floor();")
 op("mpLib_800587FC(&GO);", "pl::mpLib_800587FC(&raw mut GO);")
+op("{ int l = (int) (rnd() % (u32) (NLN_ + 4)) - 1; int j = (int) (rnd() % 6) - 1; int iso = (rnd() % 4) != 0; int bad = (int) (rnd() % 6); int bj = (int) (rnd() % NJ); int bk = (int) (rnd() % 5); int bc = (int) (rnd() % 5) - 1; "
+   "if (bad == 0) JOINTS[bj].ranges[bk].count = (s16) bc; ret = (u32) mpScriptStageIsolationSet(l, j, iso); ret = ret * 3 + (u32) mpScriptStageIsolationActive(); }",
+   "{ let l = (rnd() % (NLN_ + 4) as u32) as i32 - 1; let j = (rnd() % 6) as i32 - 1; let iso = (rnd() % 4 != 0) as i32; let bad = (rnd() % 6) as i32; let bj = (rnd() % NJ as u32) as usize; let bk = (rnd() % 5) as usize; let bc = (rnd() % 5) as i32 - 1; "
+   "if bad == 0 { JOINTS[bj].ranges[bk].count = bc as i16; } ret = (pl::mpScriptStageIsolationSet(l, j, iso) as u32).wrapping_mul(3).wrapping_add(pl::mpScriptStageIsolationActive() as u32); }", "i", "mpScriptStageIsolationSet")
+op("{ int j = (int) (NJ); int a, b, c; a = mpScriptStageIsolationSet(NLN_, j, 1); if (rnd() & 1) { u32 li = rnd() % (u32) NLN_; u32 fx = fv() & 0xFF; LINEA[li].flags ^= fx; } if (rnd() % 4 == 0) { u32 ji = rnd() % NJ; u32 fx = fv() & 0xFF00; JOINTA[ji].flags ^= fx; } "
+   "if (rnd() % 5 == 0) mpLib_804D64B4 = (rnd() & 1) ? 0 : (MapCollData*) &GO; b = mpScriptStageIsolationActive(); c = mpScriptStageIsolationSet(0, 0, 0); ret = (u32) (a * 4 + b * 2 + c); }",
+   "{ let j = NJ as i32; let a = pl::mpScriptStageIsolationSet(NLN_, j, 1); if rnd() & 1 != 0 { let i = (rnd() % NLN_ as u32) as usize; let fx = fv() & 0xFF; LINEA[i].flags ^= fx; } if rnd() % 4 == 0 { let i = (rnd() % NJ as u32) as usize; let fx = fv() & 0xFF00; JOINTA[i].flags ^= fx; } "
+   "if rnd() % 5 == 0 { pl::mpLib_804D64B4 = if rnd() & 1 != 0 { null_mut() } else { &raw mut GO as *mut MapCollData }; } let b = pl::mpScriptStageIsolationActive(); let c = pl::mpScriptStageIsolationSet(0, 0, 0); ret = (a * 4 + b * 2 + c) as u32; }", "i", "mpScriptStageIsolation_cycle")
 for fn in ["mpLib_80056A54", "mpLib_80056AC4"]:
     op(f"{{ int a = (int) (rnd() % 20); stage_info.grkind = (int) (rnd() % 80); ret = (u32) {fn}(a, &OUTI[0]); HM((u32) OUTI[0]); }}",
        f"{{ let a = (rnd() % 20) as i32; pl::ext::stage_info.grkind = (rnd() % 80) as _; ret = pl::{fn}(a, &raw mut OUTI[0]) as u32; hm(OUTI[0] as u32); }}", "i", fn)
@@ -268,7 +276,7 @@ static void setup(void)
     zero(&mpColl_80458810, sizeof mpColl_80458810); mpColl_804D6488 = 0; mpColl_804D648C = 0; mpColl_804D6490_max_x = 0.0f; mpColl_804D6494_line_id = 0; mpColl_804D6498_flags = 0;
     mpColl_IsEcbTiny = 0; mpColl_804D64A0 = 0; mpColl_804D64A4 = 0; mpColl_804D64A8 = 0; mpColl_804D64AC = 0; mpColl_LedgeLevelOK = 0;
     mpLib_804D64CC = 0; mpLib_804D64D0 = 0; mpLib_804D64D4 = 0; mpLib_804D64D8 = 0; mpLib_804D64DC = 0; mpLib_804D64E0 = 0; mpLib_804D64E4 = 0;
-    zero(mpLib_80458868, sizeof mpLib_80458868); scriptBatchDepth = 0;
+    zero(mpLib_80458868, sizeof mpLib_80458868); scriptBatchDepth = 0; zero(&mp_script_isolation, sizeof mp_script_isolation);
     build_world();
     mpLibLoad(&M);
     for (j = 0; j < NJ; j++) {
@@ -345,6 +353,10 @@ static void hash_all(void)
     hash_HSD_GObj(&GO);
     HM(PI(groundCollVtx)); HM(PI(groundCollLine)); HM(PI(groundCollJoint)); HM(PI(jointListStart)); HM(PI(jointListEnd)); HM(PI(mpLib_804D64B4));
     HM((u32) didCheckBounding); HM((u32) scriptBatchDepth);
+    HM(PI(mp_script_isolation.map)); HM(PI(mp_script_isolation.lines)); HM(PI(mp_script_isolation.joints)); HM((u32) mp_script_isolation.nlines); HM((u32) mp_script_isolation.njoints);
+    for (i = 0; i < NLN; i++) HM(mp_script_isolation.line_flags[i]);
+    for (i = 0; i < 8; i++) HM(mp_script_isolation.joint_flags[i]);
+    for (i = 0; i < 3; i++) { int kk; for (kk = 0; kk < 5; kk++) HM((u32) (u16) mp_script_isolation.ranges[i][kk].start | ((u32) (u16) mp_script_isolation.ranges[i][kk].count << 16)); }
     HM((u32) mpLib_804D64CC); HM((u32) mpLib_804D64D0); HM((u32) mpLib_804D64D4); HM((u32) mpLib_804D64D8); HM((u32) mpLib_804D64DC); HM((u32) mpLib_804D64E0); HM((u32) mpLib_804D64E4);
     for (i = 0; i < 2; i++) { HM(B(mpLib_80458868[i].top)); HM(B(mpLib_80458868[i].bottom)); HM(B(mpLib_80458868[i].left)); HM(B(mpLib_80458868[i].right)); }
     for (i = 0; i < 9; i++) { HM((u32) mpColl_80458810.right[i]); HM((u32) mpColl_80458810.left[i]); }
@@ -551,7 +563,7 @@ unsafe fn setup() {
     pc::mpColl_80458810 = core::mem::zeroed(); pc::mpColl_804D6488 = 0; pc::mpColl_804D648C = 0; pc::mpColl_804D6490_max_x = 0.0; pc::mpColl_804D6494_line_id = 0; pc::mpColl_804D6498_flags = 0;
     pc::mpColl_IsEcbTiny = 0; pc::mpColl_804D64A0 = None; pc::mpColl_804D64A4 = null_mut(); pc::mpColl_804D64A8 = None; pc::mpColl_804D64AC = 0; pc::mpColl_LedgeLevelOK = 0;
     pl::mpLib_804D64CC = 0; pl::mpLib_804D64D0 = 0; pl::mpLib_804D64D4 = 0; pl::mpLib_804D64D8 = 0; pl::mpLib_804D64DC = 0; pl::mpLib_804D64E0 = 0; pl::mpLib_804D64E4 = 0;
-    pl::mpLib_80458868 = core::mem::zeroed(); pl::scriptBatchDepth = 0;
+    pl::mpLib_80458868 = core::mem::zeroed(); pl::scriptBatchDepth = 0; pl::mp_script_isolation = core::mem::zeroed();
     build_world();
     pl::mpLibLoad(&raw mut M);
     for j in 0..NJ {
@@ -639,6 +651,10 @@ unsafe fn hash_all() {
     g::hash_HSD_GObj(&GO);
     hm(pi(pl::groundCollVtx)); hm(pi(pl::groundCollLine)); hm(pi(pl::groundCollJoint)); hm(pi(pl::jointListStart)); hm(pi(pl::jointListEnd)); hm(pi(pl::mpLib_804D64B4));
     hm(pl::didCheckBounding as u32); hm(pl::scriptBatchDepth as u32);
+    hm(pi(pl::mp_script_isolation.map)); hm(pi(pl::mp_script_isolation.lines)); hm(pi(pl::mp_script_isolation.joints)); hm(pl::mp_script_isolation.nlines as u32); hm(pl::mp_script_isolation.njoints as u32);
+    for i in 0..NLN { hm(pl::mp_script_isolation.line_flags[i]); }
+    for i in 0..8 { hm(pl::mp_script_isolation.joint_flags[i]); }
+    for i in 0..3 { for kk in 0..5 { hm((pl::mp_script_isolation.ranges[i][kk].start as u16 as u32) | ((pl::mp_script_isolation.ranges[i][kk].count as u16 as u32) << 16)); } }
     hm(pl::mpLib_804D64CC as u32); hm(pl::mpLib_804D64D0 as u32); hm(pl::mpLib_804D64D4 as u32); hm(pl::mpLib_804D64D8 as u32); hm(pl::mpLib_804D64DC as u32); hm(pl::mpLib_804D64E0 as u32); hm(pl::mpLib_804D64E4 as u32);
     for i in 0..2 { hm(pl::mpLib_80458868[i].top.to_bits()); hm(pl::mpLib_80458868[i].bottom.to_bits()); hm(pl::mpLib_80458868[i].left.to_bits()); hm(pl::mpLib_80458868[i].right.to_bits()); }
     for i in 0..9 { hm(pc::mpColl_80458810.right[i] as u32); hm(pc::mpColl_80458810.left[i] as u32); }

@@ -63,7 +63,7 @@ pub mod ext {
     fn ftKb_SpecialNMt_80107040(a0: *mut HSD_GObj);
     fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_800865C0(a0) };
     fn ftLib_80086630(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj => unsafe { crate::tu::ftlib::ftLib_80086630(a0, a1) };
-    fn ftLib_800869D4(a0: *mut HSD_GObj) -> f32;
+    fn ftLib_800869D4(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_800869D4(a0) };
     fn ftMt_SpecialN_CheckShadowBallCancel(a0: *mut HSD_GObj) -> i32;
     fn ftMt_SpecialN_CheckShadowBallRemove(a0: *mut HSD_GObj) -> i32;
     fn ftMt_SpecialN_GetChargeLevel(a0: *mut HSD_GObj, a1: *mut i32, a2: *mut i32) -> i32;

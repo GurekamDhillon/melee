@@ -37,7 +37,7 @@ pub mod ext {
     fn Item_8026AE60() -> u32 => unsafe { crate::tu::item::Item_8026AE60() };
     fn Stage_80225194() -> u32 => unsafe { melee_world::tu::stage::Stage_80225194() };
     fn atan2f(a0: f32, a1: f32) -> f32 => unsafe { melee_runtime::lbtrigf::atan2f(a0, a1) };
-    fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::dbitem::db_80225DD8(a0, a1) };
     fn ftLib_800865D8(a0: *mut HSD_GObj, a1: *mut f32, a2: *mut f32) => unsafe { crate::tu::ftlib::ftLib_800865D8(a0, a1, a2) };
     fn ftNs_SpecialHi_CheckSpecialHiHold(a0: *mut HSD_GObj) -> i32;
     fn ftNs_SpecialHi_ItemPKThunderCheckOwn(a0: *mut HSD_GObj, a1: *mut HSD_GObj);

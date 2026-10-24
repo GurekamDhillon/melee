@@ -53,7 +53,7 @@ pub mod ext {
     fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void) => unsafe { *(a2 as *mut melee_types::Mtx) = melee_runtime::tu::mtx_pc::PSMTXConcat(&*(a0 as *const _), &*(a1 as *const _)) };
     fn PSMTXCopy(a0: *mut c_void, a1: *mut c_void) => unsafe { *(a1 as *mut melee_types::Mtx) = melee_runtime::tu::mtx_pc::PSMTXCopy(&*(a0 as *const _)) };
     fn PSMTXIdentity(a0: *mut c_void) => unsafe { *(a0 as *mut melee_types::Mtx) = melee_runtime::tu::mtx_pc::PSMTXIdentity() };
-    fn ftLib_GetMotionId(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_GetMotionId(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_GetMotionId(a0) };
     fn ftPp_SpecialS_8012114C(a0: *mut HSD_GObj);
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
     fn it_8026BB20(a0: *mut HSD_GObj) => unsafe { crate::tu::it_26B1::it_8026BB20(a0) };

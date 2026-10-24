@@ -53,7 +53,7 @@ pub mod ext {
     fn PSMTXCopy(a0: *mut c_void, a1: *mut c_void) => unsafe { *(a1 as *mut melee_types::Mtx) = melee_runtime::tu::mtx_pc::PSMTXCopy(&*(a0 as *const _)) };
     fn PSMTXIdentity(a0: *mut c_void) => unsafe { *(a0 as *mut melee_types::Mtx) = melee_runtime::tu::mtx_pc::PSMTXIdentity() };
     fn ftColl_8007AFF8(a0: *mut HSD_GObj);
-    fn ftLib_GetMotionId(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_GetMotionId(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_GetMotionId(a0) };
     fn ftSk_SpecialS_80110E4C(a0: *mut HSD_GObj);
     fn ftSk_SpecialS_80110F58(a0: *mut HSD_GObj) -> f32;
     fn ftSk_SpecialS_80110F64(a0: *mut HSD_GObj) -> f32;

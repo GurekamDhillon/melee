@@ -52,7 +52,7 @@ pub mod ext {
     fn PSMTXCopy(a0: *mut c_void, a1: *mut c_void) => unsafe { *(a1 as *mut melee_types::Mtx) = melee_runtime::tu::mtx_pc::PSMTXCopy(&*(a0 as *const _)) };
     fn PSMTXIdentity(a0: *mut c_void) => unsafe { *(a0 as *mut melee_types::Mtx) = melee_runtime::tu::mtx_pc::PSMTXIdentity() };
     fn ftLib_80086A0C(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_80086A0C(a0) };
-    fn ftLib_GetMotionId(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_GetMotionId(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_GetMotionId(a0) };
     fn ftNs_AttackHi4_YoyoItemSetFlag(a0: *mut HSD_GObj);
     fn it_8026B724(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b724(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026B73C(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b73c(&mut *((*a0).user_data as *mut Item)) };

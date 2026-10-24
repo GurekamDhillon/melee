@@ -69,7 +69,7 @@ pub mod ext {
     fn Stage_GetBlastZoneLeftOffset() -> f32 => unsafe { melee_world::tu::stage::Stage_GetBlastZoneLeftOffset() };
     fn Stage_GetBlastZoneRightOffset() -> f32 => unsafe { melee_world::tu::stage::Stage_GetBlastZoneRightOffset() };
     fn db_80225D64(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
-    fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::dbitem::db_80225DD8(a0, a1) };
     fn db_ShowItemPickupRange() -> u32;
     fn efAsync_QueueClear(a0: *mut c_void);
     fn efAsync_QueueFlush(a0: *mut HSD_GObj, a1: *mut c_void);

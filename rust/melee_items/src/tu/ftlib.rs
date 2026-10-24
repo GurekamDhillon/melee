@@ -61,3 +61,16 @@ pub unsafe fn ftLib_800867CC(gobj: *mut HSD_GObj) -> *mut HSD_GObj {
 pub unsafe fn ftLib_80086BEC(gobj: *mut HSD_GObj, v: *mut Vec) {
     *v = (*GET_FIGHTER(gobj)).pos_delta;
 }
+
+pub unsafe fn ftLib_GetMotionId(gobj: *mut HSD_GObj) -> i32 {
+    (*GET_FIGHTER(gobj)).motion_id as i32
+}
+
+/// `ftCommon_GetModelScale` (ftcommon.c): `fp->x34_scale.y * fp->co_attrs.model_scaling`.
+pub unsafe fn ftCommon_GetModelScale(fp: *mut Fighter) -> f32 {
+    (*fp).x34_scale.y * (*fp).co_attrs.model_scaling
+}
+
+pub unsafe fn ftLib_800869D4(gobj: *mut HSD_GObj) -> f32 {
+    ftCommon_GetModelScale(GET_FIGHTER(gobj))
+}

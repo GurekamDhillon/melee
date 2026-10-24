@@ -31,7 +31,7 @@ pub mod ext {
     fn Item_802694CC(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_802694CC(a0) };
     fn Item_8026A8EC(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_8026A8EC(a0) };
     fn Item_8026AB54(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: u32) => unsafe { crate::tu::item::Item_8026AB54(a0, a1, a2) };
-    fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::dbitem::db_80225DD8(a0, a1) };
     fn ftGw_Attack11_ItemGreenhouseSetFlag(a0: *mut HSD_GObj);
     fn ftGw_Attack11_ItemGreenhouse_CheckAll(a0: *mut HSD_GObj) -> i32;
     fn ftGw_Attack11_ItemGreenhouse_CheckAttack11(a0: *mut HSD_GObj) -> i32;

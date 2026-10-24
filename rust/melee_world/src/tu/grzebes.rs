@@ -308,7 +308,8 @@ pub mod ext {
                 }
             }
     hook!(H_HSD_JObjRemoveAll, HSD_JObjRemoveAll, (a0: *mut melee_types::HSD_JObj));
-    hook!(H_HSD_JObjClearFlagsAll, HSD_JObjClearFlagsAll, (a0: *mut melee_types::HSD_JObj, a1: u32));
+    pub static mut H_HSD_JObjClearFlagsAll: Option<unsafe extern "C" fn(*mut melee_types::HSD_JObj, u32)> = None;
+    pub unsafe extern "C" fn HSD_JObjClearFlagsAll(a0: *mut melee_types::HSD_JObj, a1: u32) { match H_HSD_JObjClearFlagsAll { Some(f) => f(a0, a1), None => unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjClearFlagsAll(a0 as _, a1 as _); } } }
     pub static mut H_grMaterial_801C8CDC: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj) > = None;
             pub unsafe extern "C" fn grMaterial_801C8CDC(a0: *mut melee_types::HSD_GObj)  {
                 match H_grMaterial_801C8CDC {
@@ -357,7 +358,8 @@ pub mod ext {
     hook!(H_HSD_GObj_SetupProc, HSD_GObj_SetupProc, (a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj)>, a2: u8) -> *mut melee_types::HSD_GObjProc);
     pub static mut H_OSReport: Option<unsafe fn(*const i8, &[u64])> = None;
     pub unsafe fn OSReport(f: *const i8, a: &[u64]) { match H_OSReport { Some(h) => h(f, a), None => panic!("TODO: OSReport is not ported") } }
-    hook!(H_HSD_JObjSetMtxDirtySub, HSD_JObjSetMtxDirtySub, (a0: *mut melee_types::HSD_JObj));
+    pub static mut H_HSD_JObjSetMtxDirtySub: Option<unsafe extern "C" fn(*mut melee_types::HSD_JObj)> = None;
+    pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut melee_types::HSD_JObj) { match H_HSD_JObjSetMtxDirtySub { Some(f) => f(a0), None => unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(a0 as _); } } }
     pub static mut H_Ground_801C2090: Option<unsafe extern "C" fn(*mut melee_types::_GXColor) -> i32> = None;
             pub unsafe extern "C" fn Ground_801C2090(a0: *mut melee_types::_GXColor) -> i32 {
                 match H_Ground_801C2090 {
@@ -389,8 +391,10 @@ pub mod ext {
                     None => { return unsafe { crate::tu::ground::Ground_801C13D0(a0 as _, a1 as _) as _ }; },
                 }
             }
-    hook!(H_HSD_JObjSetFlagsAll, HSD_JObjSetFlagsAll, (a0: *mut melee_types::HSD_JObj, a1: u32));
-    hook!(H_HSD_JObjAddChild, HSD_JObjAddChild, (a0: *mut melee_types::HSD_JObj, a1: *mut melee_types::HSD_JObj));
+    pub static mut H_HSD_JObjSetFlagsAll: Option<unsafe extern "C" fn(*mut melee_types::HSD_JObj, u32)> = None;
+    pub unsafe extern "C" fn HSD_JObjSetFlagsAll(a0: *mut melee_types::HSD_JObj, a1: u32) { match H_HSD_JObjSetFlagsAll { Some(f) => f(a0, a1), None => unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetFlagsAll(a0 as _, a1 as _); } } }
+    pub static mut H_HSD_JObjAddChild: Option<unsafe extern "C" fn(*mut melee_types::HSD_JObj, *mut melee_types::HSD_JObj)> = None;
+    pub unsafe extern "C" fn HSD_JObjAddChild(a0: *mut melee_types::HSD_JObj, a1: *mut melee_types::HSD_JObj) { match H_HSD_JObjAddChild { Some(f) => f(a0, a1), None => unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjAddChild(a0 as _, a1 as _); } } }
     pub static mut H_grDatFiles_801C6330: Option<unsafe extern "C" fn(i32) -> *mut melee_types::UnkArchiveStruct> = None;
             pub unsafe extern "C" fn grDatFiles_801C6330(a0: i32) -> *mut melee_types::UnkArchiveStruct {
                 match H_grDatFiles_801C6330 {

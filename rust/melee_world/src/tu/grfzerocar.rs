@@ -37,11 +37,11 @@ pub mod ext {
     fn Ground_801C4100(a0: *mut HSD_JObj) -> *mut HSD_JObj = |a0: *mut HSD_JObj| unsafe { crate::tu::ground::Ground_801C4100(a0 as _) as _ };
     fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32) = |a0: *mut HSD_AObj, a1: f32| { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetRate(a0 as _, a1 as _); } };
     fn HSD_ForeachAnim(a0: *mut c_void, a1: i32, a2: u32, a3: *mut c_void, a4: i32, a5: f64);
-    fn HSD_JObjAddChild(a0: *mut HSD_JObj, a1: *mut HSD_JObj);
-    fn HSD_JObjAddNext(a0: *mut HSD_JObj, a1: *mut HSD_JObj);
+    fn HSD_JObjAddChild(a0: *mut HSD_JObj, a1: *mut HSD_JObj) = |a0: *mut HSD_JObj, a1: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjAddChild(a0 as _, a1 as _); } };
+    fn HSD_JObjAddNext(a0: *mut HSD_JObj, a1: *mut HSD_JObj) = |a0: *mut HSD_JObj, a1: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjAddNext(a0 as _, a1 as _); } };
     fn HSD_JObjAlloc() -> *mut HSD_JObj = || unsafe { melee_runtime::tu::jobj::HSD_JObjAlloc() as _ };
     fn HSD_JObjReqAnimAllByFlags(a0: *mut HSD_JObj, a1: u32, a2: f32);
-    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) = |a0: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(a0 as _); } };
     fn PSMTXIdentity(a0: *mut c_void) = |a0: *mut c_void| { unsafe { let _ = melee_runtime::tu::mtx_pc::raw::PSMTXIdentity(a0 as _); } };
     fn grAnime_801C6C0C(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint) = |a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint| { unsafe { let _ = crate::tu::granime::grAnime_801C6C0C(a0 as _, a1 as _, a2 as _, a3 as _); } };
     fn grDatFiles_801C6330(a0: i32) -> *mut UnkArchiveStruct = |a0: i32| unsafe { crate::tu::grdatfiles::grDatFiles_801C6330(a0 as _) as _ };

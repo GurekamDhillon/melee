@@ -65,12 +65,12 @@ pub mod ext {
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
     fn HSD_GObjProc_RemoveAllProcs(a0: *mut HSD_GObj);
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
-    fn HSD_JObjAddChild(a0: *mut HSD_JObj, a1: *mut HSD_JObj);
-    fn HSD_JObjAddNext(a0: *mut HSD_JObj, a1: *mut HSD_JObj);
+    fn HSD_JObjAddChild(a0: *mut HSD_JObj, a1: *mut HSD_JObj) = |a0: *mut HSD_JObj, a1: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjAddChild(a0 as _, a1 as _); } };
+    fn HSD_JObjAddNext(a0: *mut HSD_JObj, a1: *mut HSD_JObj) = |a0: *mut HSD_JObj, a1: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjAddNext(a0 as _, a1 as _); } };
     fn HSD_JObjAlloc() -> *mut HSD_JObj = || unsafe { melee_runtime::tu::jobj::HSD_JObjAlloc() as _ };
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
     fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj = |a0: *mut HSD_Joint| unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0 as _) as _ };
-    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) = |a0: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(a0 as _); } };
     fn HSD_LObjAnim(a0: *mut HSD_LObj) = |a0: *mut HSD_LObj| { unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjAnim(a0 as _); } };
     fn HSD_LObjAnimAll(a0: *mut HSD_LObj) = |a0: *mut HSD_LObj| { unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjAnimAll(a0 as _); } };
     fn HSD_LObjDeleteCurrentAll(a0: *mut HSD_LObj) = |a0: *mut HSD_LObj| { unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjDeleteCurrentAll(a0 as _); } };

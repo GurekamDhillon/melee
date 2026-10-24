@@ -209,28 +209,23 @@ pub fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut 
 }
 pub static mut HOOK_HSD_JObjClearFlagsAll: Option<fn(*mut HSD_JObj, u32)> = None;
 /// C `HSD_JObjClearFlagsAll` (sysdolphin/baselib/jobj.h).
-pub fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32) {
-    match unsafe { HOOK_HSD_JObjClearFlagsAll } { Some(f) => f(a0, a1), None => panic!("TODO: HSD_JObjClearFlagsAll is not ported") }
+pub fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32) { match unsafe { HOOK_HSD_JObjClearFlagsAll } { Some(f) => f(a0, a1), None => unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjClearFlagsAll(a0 as _, a1 as _); } }
 }
 pub static mut HOOK_HSD_JObjGetDObj: Option<fn(*mut HSD_JObj) -> *mut HSD_DObj> = None;
 /// C `HSD_JObjGetDObj` (sysdolphin/baselib/jobj.h).
-pub fn HSD_JObjGetDObj(a0: *mut HSD_JObj) -> *mut HSD_DObj {
-    match unsafe { HOOK_HSD_JObjGetDObj } { Some(f) => f(a0), None => panic!("TODO: HSD_JObjGetDObj is not ported") }
+pub fn HSD_JObjGetDObj(a0: *mut HSD_JObj) -> *mut HSD_DObj { match unsafe { HOOK_HSD_JObjGetDObj } { Some(f) => f(a0), None => unsafe { melee_runtime::tu::jobj_world::HSD_JObjGetDObj(a0 as _) as _ } }
 }
 pub static mut HOOK_HSD_JObjGetFlags: Option<fn(*mut HSD_JObj) -> u32> = None;
 /// C `HSD_JObjGetFlags` (sysdolphin/baselib/jobj.h).
-pub fn HSD_JObjGetFlags(a0: *mut HSD_JObj) -> u32 {
-    match unsafe { HOOK_HSD_JObjGetFlags } { Some(f) => f(a0), None => panic!("TODO: HSD_JObjGetFlags is not ported") }
+pub fn HSD_JObjGetFlags(a0: *mut HSD_JObj) -> u32 { match unsafe { HOOK_HSD_JObjGetFlags } { Some(f) => f(a0), None => unsafe { melee_runtime::tu::jobj_world::HSD_JObjGetFlags(a0 as _) as _ } }
 }
 pub static mut HOOK_HSD_JObjSetFlagsAll: Option<fn(*mut HSD_JObj, u32)> = None;
 /// C `HSD_JObjSetFlagsAll` (sysdolphin/baselib/jobj.h).
-pub fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32) {
-    match unsafe { HOOK_HSD_JObjSetFlagsAll } { Some(f) => f(a0, a1), None => panic!("TODO: HSD_JObjSetFlagsAll is not ported") }
+pub fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32) { match unsafe { HOOK_HSD_JObjSetFlagsAll } { Some(f) => f(a0, a1), None => unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetFlagsAll(a0 as _, a1 as _); } }
 }
 pub static mut HOOK_HSD_JObjSetMtxDirtySub: Option<fn(*mut HSD_JObj)> = None;
 /// C `HSD_JObjSetMtxDirtySub` (sysdolphin/baselib/jobj.h).
-pub fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) {
-    match unsafe { HOOK_HSD_JObjSetMtxDirtySub } { Some(f) => f(a0), None => panic!("TODO: HSD_JObjSetMtxDirtySub is not ported") }
+pub fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { match unsafe { HOOK_HSD_JObjSetMtxDirtySub } { Some(f) => f(a0), None => unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(a0 as _); } }
 }
 pub static mut HOOK_HSD_LObjClearFlags: Option<fn(*mut HSD_LObj, u32)> = None;
 /// C `HSD_LObjClearFlags` (sysdolphin/baselib/lobj.h).

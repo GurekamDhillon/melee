@@ -74,10 +74,10 @@ pub mod ext {
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
     fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u32);
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
-    fn HSD_JObjClearFlags(a0: *mut HSD_JObj, a1: u32);
-    fn HSD_JObjSetFlags(a0: *mut HSD_JObj, a1: u32);
-    fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32);
-    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
+    fn HSD_JObjClearFlags(a0: *mut HSD_JObj, a1: u32) = |a0: *mut HSD_JObj, a1: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjClearFlags(a0 as _, a1 as _); } };
+    fn HSD_JObjSetFlags(a0: *mut HSD_JObj, a1: u32) = |a0: *mut HSD_JObj, a1: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetFlags(a0 as _, a1 as _); } };
+    fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32) = |a0: *mut HSD_JObj, a1: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetFlagsAll(a0 as _, a1 as _); } };
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) = |a0: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(a0 as _); } };
     fn HSD_MObjClearFlags(a0: *mut HSD_MObj, a1: u32) = |a0: *mut HSD_MObj, a1: u32| { unsafe { let _ = melee_runtime::tu::mobj::HSD_MObjClearFlags(a0 as _, a1 as _); } };
     fn HSD_MObjCompileTev(a0: *mut HSD_MObj) = |a0: *mut HSD_MObj| { unsafe { let _ = melee_runtime::tu::mobj::HSD_MObjCompileTev(a0 as _); } };
     fn HSD_MObjSetDiffuseColor(a0: *mut HSD_MObj, a1: u8, a2: u8, a3: u8) = |a0: *mut HSD_MObj, a1: u8, a2: u8, a3: u8| { unsafe { let _ = melee_runtime::tu::mobj::HSD_MObjSetDiffuseColor(a0 as _, a1 as _, a2 as _, a3 as _); } };

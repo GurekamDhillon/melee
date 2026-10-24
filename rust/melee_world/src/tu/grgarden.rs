@@ -51,7 +51,7 @@ pub mod ext {
     fn Ground_GetYakumonoParam() -> *mut c_void = || unsafe { crate::tu::ground::Ground_GetYakumonoParam() as _ };
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
     fn HSD_JObjRemoveAnimAll(a0: *mut HSD_JObj);
-    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) = |a0: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(a0 as _); } };
     fn HSD_Randi(a0: i32) -> i32;
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
     fn Mex_GrBind(a0: *mut c_void) -> *mut c_void;

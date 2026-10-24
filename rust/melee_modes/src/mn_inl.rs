@@ -204,3 +204,12 @@ pub unsafe fn Menu_InitCenterText(menu: *mut Menu, val: i32) {
 pub const fn cstr(s: &'static str) -> *const c_char {
     s.as_ptr() as *const c_char
 }
+
+// dolphin/pad.h
+pub const PAD_MAX_CONTROLLERS: i32 = 4;
+pub const PAD_CONFIRM: u64 = 1 << 32;
+pub const PAD_CANCEL: u64 = 1 << 33;
+pub const PAD_ANY_UP: u64 = 1 << 36;
+pub const PAD_ANY_DOWN: u64 = 1 << 37;
+pub const PAD_ANY_LEFT: u64 = 1 << 38;
+pub const PAD_ANY_RIGHT: u64 = 1 << 39;

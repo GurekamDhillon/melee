@@ -72,3 +72,12 @@ pub mod itharisen;
 pub mod itgshell;
 pub mod ithassam;
 pub mod itheiho;
+
+pub mod ithinoarashi;
+pub mod ithitodeman;
+pub mod ithouou;
+pub mod itkabigon;
+pub mod itkamex;
+pub mod itkinoko;
+pub mod itkirbycutterbeam;
+pub mod itkirbygamewatchchefpan;

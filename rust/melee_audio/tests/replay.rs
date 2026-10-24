@@ -22,3 +22,30 @@ fn scripted_match_mix_equals_c() {
     assert_eq!(mix.len(), C_SUB_FRAMES as usize * 320);
     assert_eq!(mix_hash(&mix), C_MIX_HASH);
 }
+
+/// One recorded scenario: boot the VS scene for `ckinds` / `stkind` / `grkind`, replay, compare.
+fn check(trace: &str, ckinds: &[i32], stkind: i32, grkind: i32, sub_frames: u32, hash: u64, starts: u32) {
+    let Ok(iso) = std::env::var("GW_ISO_VANILLA") else {
+        eprintln!("skipped: no GW_ISO_VANILLA");
+        return;
+    };
+    let mut s = boot_vs(&iso, ckinds, stkind, grkind).unwrap();
+    let (mix, st) = replay(&mut s, trace, sub_frames);
+    assert_eq!(st.handles_different, 0);
+    assert_eq!(st.handles_equal, starts);
+    assert_eq!(mix.len(), sub_frames as usize * 320);
+    assert_eq!(mix_hash(&mix), hash);
+}
+
+/// CPU Fox v Falco, Dreamland (pad_idle.lua, 3600 frames, 66 s): 670 voices, KOs, reverb.
+#[test]
+fn cpu_fox_falco_dreamland_mix_equals_c() {
+    check(include_str!("data/cpu_fox_falco_dl.trace"), &[2, 20], 17, 13, 13283, 0x4e6630b75131f376, 670);
+}
+
+/// CPU Peach v Samus, Yoshi's Story, items on: 2075 VOL / PAN updates (positional item and
+/// fighter sounds), 11 key-offs.
+#[test]
+fn cpu_peach_samus_ys_items_mix_equals_c() {
+    check(include_str!("data/cpu_peach_samus_ys.trace"), &[12, 16], 8, 10, 12106, 0x6300687c704396b5, 652);
+}

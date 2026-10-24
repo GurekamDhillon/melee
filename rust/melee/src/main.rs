@@ -247,7 +247,8 @@ fn install_audio(iso: &str) -> Result<(), String> {
 /// MELEE_TURBO): scene init and the bank loads at DSP sub-frame 0, the BGM at sub-frame 10 (3
 /// video frames in), the first logic frame (Ready call) at sub-frame 106 (29 frames later). The
 /// mix of those sub-frames is appended to `pre` when a capture is on.
-fn start_match_audio(sim: &vs_match::VsMatch, ckinds: &[i32], mut pre: Option<&mut Vec<i16>>) {
+fn start_match_audio(sim: &vs_match::VsMatch, ckinds: &[i32], stage: &str, preroll: u32, mut pre: Option<&mut Vec<i16>>) {
+    let (stkind, grkind) = audio::stage_kinds(stage);
     let mut frames = |n: u32, pre: &mut Option<&mut Vec<i16>>| {
         for _ in 0..n {
             melee_audio::sim::game_frame();
@@ -263,10 +264,10 @@ fn start_match_audio(sim: &vs_match::VsMatch, ckinds: &[i32], mut pre: Option<&m
     };
     melee_audio::sim::scene_init();
     melee_audio::sim::load_announcer();
-    melee_audio::sim::load_match_banks(ckinds, vs_match::STKIND_FD, melee_types::Gr_Kind_Last as i32);
+    melee_audio::sim::load_match_banks(ckinds, stkind, grkind);
     frames(3, &mut pre);
     let r = melee_audio::sim::play_bgm_id(sim.bgm);
-    frames(29, &mut pre);
+    frames(preroll, &mut pre);
     let loaded = melee_audio::sim::with(|s| s.lb.state.iter().enumerate().filter(|(_, &x)| x == 2).map(|(i, _)| melee_audio::lbaudio::SSM_FILES[i]).collect::<Vec<_>>());
     eprintln!("melee: match audio: banks {:?}, bgm {} ({}) {}", loaded.unwrap_or_default(), sim.bgm,
         melee_audio::lbaudio::HPS_FILES.get(sim.bgm as usize).unwrap_or(&"?"), if r == 0 { "started" } else { "not started" });
@@ -425,8 +426,9 @@ fn golden(args: &[String]) -> ExitCode {
         if get("--audio-trace").is_some() {
             melee_audio::sim::with(|s| s.trace = Some(Vec::new()));
         }
+        let ckinds: Vec<i32> = fighters.iter().map(|f| audio::ckind_of(f)).collect();
         let mut v = Vec::new();
-        start_match_audio(&sim, &[melee_types::CKind_Captain as i32, melee_types::CKind_Fox as i32], if get("--audio-wav").is_some() { Some(&mut v) } else { None });
+        start_match_audio(&sim, &ckinds, stage, get("--audio-preroll").and_then(|v| v.parse().ok()).unwrap_or(29), if get("--audio-wav").is_some() { Some(&mut v) } else { None });
         pre_wav = v;
     }
     impl Sim for SeedFrom<'_> {

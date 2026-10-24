@@ -1152,6 +1152,10 @@ name = "melee_core"
 version = "0.1.0"
 
 [[package]]
+name = "melee_data"
+version = "0.1.0"
+
+[[package]]
 name = "melee_fighter"
 version = "0.1.0"
 dependencies = [

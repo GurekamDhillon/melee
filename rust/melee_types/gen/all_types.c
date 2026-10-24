@@ -803,3 +803,18 @@
 #include <melee/gm/gmresultplayer.static.h>
 #include <melee/gm/gmfrontend_items.h>
 #include <melee/gm/gmtoulib.static.h>
+#line 21 "src/sysdolphin/baselib/psdisp.c"
+typedef struct {
+    HSD_Particle* head;
+    HSD_Particle* tail;
+} psdisp_ParticleSortBucket;
+#line 26 "src/sysdolphin/baselib/psdisp.c"
+typedef struct {
+    GXTlutFmt fmt;
+    u32 tlut_name;
+    u16 n_entries;
+} psdisp_Tlut;
+#line 32 "src/sysdolphin/baselib/psdisp.c"
+typedef struct {
+    Mtx mtx;
+} psdisp_Mtx;

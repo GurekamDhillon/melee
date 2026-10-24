@@ -91221,6 +91221,102 @@ impl GcLayout for lbl_803D9DD0_t {
 }
 const _: () = assert!(core::mem::size_of::<lbl_803D9DD0_t>() == 40);
 
+/// C `psdisp_ParticleSortBucket` (rust/melee_types/gen/all_types.c:807); GameCube size 0x8, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct psdisp_ParticleSortBucket {
+    pub head: *mut HSD_Particle,
+    pub tail: *mut HSD_Particle,
+}
+impl psdisp_ParticleSortBucket { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for psdisp_ParticleSortBucket {
+    const GC_BYTES: u32 = 0x8;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.head = <*mut HSD_Particle as GcDecode>::gc_decode(d, at + 0x0);
+        v.tail = <*mut HSD_Particle as GcDecode>::gc_decode(d, at + 0x4);
+        v
+    }
+}
+impl GcPointee for psdisp_ParticleSortBucket { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<psdisp_ParticleSortBucket>(t) } }
+impl GcLayout for psdisp_ParticleSortBucket {
+    const GC_NAME: &'static str = "psdisp_ParticleSortBucket";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("head", 0x0, 4, "HSD_Particle *"),
+        GcField::new("tail", 0x4, 4, "HSD_Particle *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<psdisp_ParticleSortBucket>() == 16);
+
+/// C `psdisp_Tlut` (rust/melee_types/gen/all_types.c:812); GameCube size 0xC, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct psdisp_Tlut {
+    pub fmt: _GXTlutFmt,
+    pub tlut_name: u32,
+    pub n_entries: u16,
+}
+impl psdisp_Tlut { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for psdisp_Tlut {
+    const GC_BYTES: u32 = 0xC;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.fmt = <_GXTlutFmt as GcDecode>::gc_decode(d, at + 0x0);
+        v.tlut_name = <u32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.n_entries = <u16 as GcDecode>::gc_decode(d, at + 0x8);
+        v
+    }
+}
+impl GcPointee for psdisp_Tlut { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<psdisp_Tlut>(t) } }
+impl GcLayout for psdisp_Tlut {
+    const GC_NAME: &'static str = "psdisp_Tlut";
+    const GC_SIZE: u32 = 0xC;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("fmt", 0x0, 4, "GXTlutFmt"),
+        GcField::new("tlut_name", 0x4, 4, "u32"),
+        GcField::new("n_entries", 0x8, 2, "u16"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<psdisp_Tlut>() == 12);
+
+/// C `psdisp_Mtx` (rust/melee_types/gen/all_types.c:818); GameCube size 0x30, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct psdisp_Mtx {
+    pub mtx: Mtx,
+}
+impl psdisp_Mtx { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for psdisp_Mtx {
+    const GC_BYTES: u32 = 0x30;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.mtx = <Mtx as GcDecode>::gc_decode(d, at + 0x0);
+        v
+    }
+}
+impl GcPointee for psdisp_Mtx { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<psdisp_Mtx>(t) } }
+impl GcLayout for psdisp_Mtx {
+    const GC_NAME: &'static str = "psdisp_Mtx";
+    const GC_SIZE: u32 = 0x30;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("mtx", 0x0, 48, "Mtx"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<psdisp_Mtx>() == 48);
+
 /// Every generated GameCube record layout, for the DAT loader, serialisers and the m-ex map.
 pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<__file_modes as GcLayout>::GC_NAME, <__file_modes as GcLayout>::GC_SIZE, <__file_modes as GcLayout>::GC_ALIGN, <__file_modes as GcLayout>::GC_FIELDS),
@@ -92859,6 +92955,9 @@ pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<BracketSrcEntry as GcLayout>::GC_NAME, <BracketSrcEntry as GcLayout>::GC_SIZE, <BracketSrcEntry as GcLayout>::GC_ALIGN, <BracketSrcEntry as GcLayout>::GC_FIELDS),
     (<lbl_803D9DAC_t as GcLayout>::GC_NAME, <lbl_803D9DAC_t as GcLayout>::GC_SIZE, <lbl_803D9DAC_t as GcLayout>::GC_ALIGN, <lbl_803D9DAC_t as GcLayout>::GC_FIELDS),
     (<lbl_803D9DD0_t as GcLayout>::GC_NAME, <lbl_803D9DD0_t as GcLayout>::GC_SIZE, <lbl_803D9DD0_t as GcLayout>::GC_ALIGN, <lbl_803D9DD0_t as GcLayout>::GC_FIELDS),
+    (<psdisp_ParticleSortBucket as GcLayout>::GC_NAME, <psdisp_ParticleSortBucket as GcLayout>::GC_SIZE, <psdisp_ParticleSortBucket as GcLayout>::GC_ALIGN, <psdisp_ParticleSortBucket as GcLayout>::GC_FIELDS),
+    (<psdisp_Tlut as GcLayout>::GC_NAME, <psdisp_Tlut as GcLayout>::GC_SIZE, <psdisp_Tlut as GcLayout>::GC_ALIGN, <psdisp_Tlut as GcLayout>::GC_FIELDS),
+    (<psdisp_Mtx as GcLayout>::GC_NAME, <psdisp_Mtx as GcLayout>::GC_SIZE, <psdisp_Mtx as GcLayout>::GC_ALIGN, <psdisp_Mtx as GcLayout>::GC_FIELDS),
 ];
 
 /// Read `w` bits of a GameCube big-endian bitfield byte run, `shift` bits up from its LSB.

@@ -21,3 +21,6 @@ pub mod gekko_fp;
 pub mod mtx44;
 pub mod mtx_pc;
 pub mod util;
+pub mod video;
+pub mod wobj;
+pub mod texpdag;

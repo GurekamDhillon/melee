@@ -58,3 +58,13 @@ pub mod gobj;
 pub mod gobjgxlink;
 pub mod gobjinit;
 pub mod gobjobject;
+pub mod gobjplink;
+pub mod gobjproc;
+pub mod gobjuserdata;
+pub mod hash;
+pub mod hsd_3915;
+pub mod hsd_3924;
+#[allow(non_snake_case)]
+pub mod hsd_392A;
+#[allow(non_snake_case)]
+pub mod hsd_392C;

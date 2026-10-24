@@ -20,9 +20,15 @@ MINE = {
     "tu_ftcaptainspeciallw": [("src/melee/ft/ftparts.c", "fn:ftParts_GetBoneIndex", None),
                               ("src/melee/ft/ftlib.c", "fn:ftLib_GetKind", None)],
     "tu_ftfoxspecialn": [],
+    "tu_mpcoll": [("pc/gameworld/mtx_pc.c", "fn:gekko_force25", None),
+                  ("pc/gameworld/mtx_pc.c", "fn:PSVECNormalize", None),
+                  ("src/melee/lb/lbvector.c", "fn:lbVector_Diff", None),
+                  ("src/melee/lb/lbvector.c", "fn:lbVector_Add", None)],
     "tu_ftpurin": [("src/melee/ft/kinds/ftPurin/ftpurin.c", "fn:ftPr_Init_8013C2F8", None)],
 }
 run.EXTRACTS.update(MINE)
+# mpcoll.c / mplib.c route pointers through `int` (PPC-ism): keep the image, and so the static heap, below 4 GB
+run.LINK_EXTRA["tu_mpcoll"] = ["-Wl,/base:0x10000000", "-Wl,/dynamicbase:no"]
 run.HERE = HERE
 run.DATA = ROOT / "rust/melee_chara/tests/data"
 

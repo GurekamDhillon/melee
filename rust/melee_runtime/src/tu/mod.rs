@@ -97,6 +97,7 @@ pub mod robj;
 pub mod rumble;
 pub mod quatlib;
 pub mod random;
+pub mod globals;
 pub mod shadow;
 pub mod psdisp;
 pub mod psdisptev;

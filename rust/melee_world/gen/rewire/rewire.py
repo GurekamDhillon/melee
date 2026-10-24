@@ -158,8 +158,15 @@ def load_specs(p):
             ar, _, ft = var.partition(":")
             specs.setdefault(name, []).append((int(ar) if ar else None, [x.replace(" ", "") or None for x in ft.split(":")], sp))
         else:
-            specs[name] = sp
-    return specs
+            specs.setdefault(name, []).append((None, [None], sp))
+    out = {}
+    for name, vs in specs.items():
+        if len(vs) == 1 and vs[0][0] is None and vs[0][1] == [None]:
+            out[name] = vs[0][2]
+        else:
+            vs.sort(key=lambda v: -((v[0] is not None) + sum(1 for x in v[1] if x)))
+            out[name] = vs
+    return out
 
 
 def match_paren(s, i):
@@ -231,7 +238,7 @@ def rewire_line(line, name, spec, in_ext_fns, counter, local_extern=False):
         counter[0] += 1
         return ind + st.replace("None => panic!(\"TODO: " + name + " is not ported\")", "None => " + body_for(spec, params_of(plist), bool(ret)))
     # F4: a one-line function whose whole body is panic!/unimplemented!/todo!
-    m = re.search(r"fn " + re.escape(name) + r"\(", st)
+    m = re.search(r"fn " + re.escape(name) + r"\(", st)
     if m:
         op = m.end() - 1
         cp = match_paren(st, op)
@@ -239,9 +246,12 @@ def rewire_line(line, name, spec, in_ext_fns, counter, local_extern=False):
         if cp > 0 and rm:
             plist = st[op + 1:cp]
             ret = rm.group(1)
-            head = st[: cp + 1] + (f" -> {ret}" if ret else "")
+            if "self" in plist or "&" in plist.split(":")[0]:
+                return None
+            ps = [(n if n != "_" else f"_p{i}", ty) for i, (n, ty) in enumerate(params_of(plist))]
+            head = st[: op + 1] + ", ".join(f"{n}: {ty}" for n, ty in ps) + ")" + (f" -> {ret}" if ret else "")
             counter[0] += 1
-            return f"{ind}{head} {{ {body_for(spec, params_of(plist), bool(ret))} }}"
+            return f"{ind}{head} {{ {body_for(spec, ps, bool(ret))} }}"
     return None
 
 

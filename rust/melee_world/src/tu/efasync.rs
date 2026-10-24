@@ -138,13 +138,13 @@ pub mod ext {
     pub unsafe extern "C" fn efLib_Cb_SetScale_FromParamX(_e: *mut EF_Effect) { { unsafe { let _ = crate::tu::eflib::efLib_Cb_SetScale_FromParamX(_e as _); } return; } }
     pub unsafe extern "C" fn efLib_Cb_ftCo_Bury(_e: *mut EF_Effect) { { unsafe { let _ = crate::tu::eflib::efLib_Cb_ftCo_Bury(_e as _); } return; } }
     pub unsafe fn hsd_8039EFAC(_link: i32, _bank: i32, _gfx_id: i32, _jobj: *mut HSD_JObj) -> *mut HSD_Generator { panic!("TODO(group1 generator) hsd_8039EFAC") }
-    pub unsafe fn HSD_Randf() -> f32 { panic!("TODO(group1 random) HSD_Randf") }
-    pub unsafe fn HSD_Randi(_max: i32) -> i32 { panic!("TODO(group1 random) HSD_Randi") }
+    pub unsafe fn HSD_Randf() -> f32 { melee_runtime::tu::random::HSD_Randf(melee_runtime::tu::globals::rand()) }
+    pub unsafe fn HSD_Randi(_max: i32) -> i32 { melee_runtime::tu::random::HSD_Randi(melee_runtime::tu::globals::rand(), _max) }
     pub unsafe fn HSD_JObjAnimAll(_jobj: *mut HSD_JObj) { panic!("TODO(group1 jobj) HSD_JObjAnimAll") }
-    pub unsafe fn HSD_JObjSetMtxDirtySub(_jobj: *mut HSD_JObj) { panic!("TODO(group1 jobj) HSD_JObjSetMtxDirtySub") }
+    pub unsafe fn HSD_JObjSetMtxDirtySub(_jobj: *mut HSD_JObj) { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(_jobj as _); } }
     pub unsafe fn lb_8000B1CC(_jobj: *mut HSD_JObj, _ofs: *const Vec3, _out: *mut Vec3) { { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(_jobj as _, _ofs as _, _out as _); } return; } }
     pub unsafe fn efSync_Spawn(_gfx_id: i32, _gobj: *mut HSD_GObj, _args: &[VaArg]) -> *mut c_void { panic!("TODO(group2 efsync) efSync_Spawn") }
-    pub unsafe fn Camera_RequestQuake(_kind: u32, _pos: *mut Vec3) { panic!("TODO(group2 camera) Camera_RequestQuake") }
+    pub unsafe fn Camera_RequestQuake(_kind: u32, _pos: *mut Vec3) { unsafe { crate::cm::camera::Camera_RequestQuake(_kind as _, _pos as _) } }
     pub unsafe fn HSD_ObjAlloc(_d: *mut HSD_ObjAllocData) -> *mut c_void { { return unsafe { melee_runtime::tu::objalloc::HSD_ObjAlloc(_d as _) as _ }; } }
     pub unsafe fn HSD_ObjFree(_d: *mut HSD_ObjAllocData, _p: *mut c_void) { { unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjFree(_d as _, _p as _); } return; } }
     pub unsafe fn HSD_ObjAllocInit(_d: *mut HSD_ObjAllocData, _size: u32, _align: u32) { { unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjAllocInit(_d as _, _size as _, _align as _); } return; } }

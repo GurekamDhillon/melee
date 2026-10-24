@@ -56,8 +56,10 @@ pub mod ext {
                     None => { return unsafe { crate::tu::ground::Ground_GetMapGObj(a0 as _) as _ }; },
                 }
             }
-    hook!(H_HSD_Randi, HSD_Randi, (a0: i32) -> i32);
-    hook!(H_HSD_Randf, HSD_Randf, () -> f32);
+    pub static mut H_HSD_Randi: Option<unsafe extern "C" fn(i32) -> i32> = None;
+    pub unsafe extern "C" fn HSD_Randi(a0: i32) -> i32 { match H_HSD_Randi { Some(f) => f(a0), None => melee_runtime::tu::random::HSD_Randi(melee_runtime::tu::globals::rand(), a0) } }
+    pub static mut H_HSD_Randf: Option<unsafe extern "C" fn() -> f32> = None;
+    pub unsafe extern "C" fn HSD_Randf() -> f32 { match H_HSD_Randf { Some(f) => f(), None => melee_runtime::tu::random::HSD_Randf(melee_runtime::tu::globals::rand()) } }
     pub static mut H_Ground_GetYakumonoParam: Option<unsafe extern "C" fn() -> *mut core::ffi::c_void> = None;
             pub unsafe extern "C" fn Ground_GetYakumonoParam() -> *mut core::ffi::c_void {
                 match H_Ground_GetYakumonoParam {

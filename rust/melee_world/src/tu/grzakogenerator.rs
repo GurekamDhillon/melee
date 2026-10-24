@@ -62,7 +62,8 @@ pub mod ext {
                     None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(a0 as _, a1 as _, a2 as _); } return; },
                 }
             }
-    hook!(H_HSD_Randf, HSD_Randf, () -> f32);
+    pub static mut H_HSD_Randf: Option<unsafe extern "C" fn() -> f32> = None;
+    pub unsafe extern "C" fn HSD_Randf() -> f32 { match H_HSD_Randf { Some(f) => f(), None => melee_runtime::tu::random::HSD_Randf(melee_runtime::tu::globals::rand()) } }
     pub static mut H_grLib_801C9874: Option<unsafe extern "C" fn(*mut melee_types::HSD_Generator) > = None;
             pub unsafe extern "C" fn grLib_801C9874(a0: *mut melee_types::HSD_Generator)  {
                 match H_grLib_801C9874 {

@@ -46,9 +46,9 @@ pub mod ext {
     unsafe fn todo_ftCo_800C07F8(_g: *mut HSD_GObj, _k: u32, _f: *const c_void) { panic!("TODO(group3: ft/ftdevice.c) ftCo_800C07F8") }
     unsafe fn todo_Ground_801C10B8(_g: *mut HSD_GObj, _f: HSD_GObjEvent) { { unsafe { let _ = crate::tu::ground::Ground_801C10B8(_g as _, _f as _); } return; } }
     unsafe fn todo_Ground_801C0498() -> f32 { { return unsafe { crate::tu::ground::Ground_801C0498() as _ }; } }
-    unsafe fn todo_ftLib_80086644(_g: *mut HSD_GObj, _out: *mut Vec3) { panic!("TODO(group3: ft/ftlib.c) ftLib_80086644") }
-    unsafe fn todo_ftLib_80086684(_g: *mut HSD_GObj, _out: *mut Vec3) { panic!("TODO(group3: ft/ftlib.c) ftLib_80086684") }
-    unsafe fn todo_ftLib_80086B80(_g: *mut HSD_GObj) -> f32 { panic!("TODO(group3: ft/ftlib.c) ftLib_80086B80") }
+    unsafe fn todo_ftLib_80086644(_g: *mut HSD_GObj, _out: *mut Vec3) { unsafe { let _ = crate::ftlib::ftLib_80086644(_g as _, _out as _); } }
+    unsafe fn todo_ftLib_80086684(_g: *mut HSD_GObj, _out: *mut Vec3) { unsafe { let _ = crate::ftlib::ftLib_80086684(_g as _, _out as _); } }
+    unsafe fn todo_ftLib_80086B80(_g: *mut HSD_GObj) -> f32 { unsafe { crate::ftlib::ftLib_80086B80(_g as _) as _ } }
     unsafe fn todo_grLib_801C96F8(_a: i32, _b: i32, _p: *mut Vec3) -> *mut HSD_Generator { { return unsafe { crate::tu::grlib::grLib_801C96F8(_a as _, _b as _, _p as _) as _ }; } }
     impl Hooks {
         pub const fn todo() -> Hooks {

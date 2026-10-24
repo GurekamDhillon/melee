@@ -170,7 +170,8 @@ pub mod ext {
                     None => { unsafe { let _ = crate::tu::granime::grAnime_801C78FC(a0 as _, a1 as _, a2 as _); } return; },
                 }
             }
-    hook!(H_HSD_Randf, HSD_Randf, () -> f32);
+    pub static mut H_HSD_Randf: Option<unsafe extern "C" fn() -> f32> = None;
+    pub unsafe extern "C" fn HSD_Randf() -> f32 { match H_HSD_Randf { Some(f) => f(), None => melee_runtime::tu::random::HSD_Randf(melee_runtime::tu::globals::rand()) } }
     pub static mut H_grAnime_801C8098: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32, i32, i32, f32, f32) > = None;
             pub unsafe extern "C" fn grAnime_801C8098(a0: *mut melee_types::HSD_GObj, a1: i32, a2: i32, a3: i32, a4: f32, a5: f32)  {
                 match H_grAnime_801C8098 {
@@ -269,7 +270,8 @@ pub mod ext {
                     None => { return unsafe { crate::tu::ground::Ground_GetMapGObj(a0 as _) as _ }; },
                 }
             }
-    hook!(H_HSD_Randi, HSD_Randi, (a0: i32) -> i32);
+    pub static mut H_HSD_Randi: Option<unsafe extern "C" fn(i32) -> i32> = None;
+    pub unsafe extern "C" fn HSD_Randi(a0: i32) -> i32 { match H_HSD_Randi { Some(f) => f(a0), None => melee_runtime::tu::random::HSD_Randi(melee_runtime::tu::globals::rand(), a0) } }
     pub static mut H_Ground_801C10B8: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj)>) > = None;
             pub unsafe extern "C" fn Ground_801C10B8(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj)>)  {
                 match H_Ground_801C10B8 {
@@ -277,7 +279,8 @@ pub mod ext {
                     None => { unsafe { let _ = crate::tu::ground::Ground_801C10B8(a0 as _, a1 as _); } return; },
                 }
             }
-    hook!(H_ftCo_800C07F8, ftCo_800C07F8, (a0: *mut melee_types::HSD_GObj, a1: u32, a2: *mut core::ffi::c_void));
+    pub static mut H_ftCo_800C07F8: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, u32, *mut core::ffi::c_void)> = None;
+    pub unsafe extern "C" fn ftCo_800C07F8(a0: *mut melee_types::HSD_GObj, a1: u32, a2: *mut core::ffi::c_void) { match H_ftCo_800C07F8 { Some(f) => f(a0, a1, a2), None => unsafe { crate::ftdevice::ftCo_800C07F8(a0 as _, a1 as _, core::mem::transmute(a2)); } } }
     pub static mut H_Ground_801C438C: Option<unsafe extern "C" fn(f32) > = None;
             pub unsafe extern "C" fn Ground_801C438C(a0: f32)  {
                 match H_Ground_801C438C {
@@ -285,7 +288,8 @@ pub mod ext {
                     None => { unsafe { let _ = crate::tu::ground::Ground_801C438C(a0 as _); } return; },
                 }
             }
-    hook!(H_Camera_RequestQuake, Camera_RequestQuake, (a0: u32, a1: *mut melee_types::Vec));
+    pub static mut H_Camera_RequestQuake: Option<unsafe extern "C" fn(u32, *mut melee_types::Vec)> = None;
+    pub unsafe extern "C" fn Camera_RequestQuake(a0: u32, a1: *mut melee_types::Vec) { match H_Camera_RequestQuake { Some(f) => f(a0, a1), None => unsafe { crate::cm::camera::Camera_RequestQuake(a0 as _, a1 as _) } } }
     pub static mut H_Ground_801C53EC: Option<unsafe extern "C" fn(u32) > = None;
             pub unsafe extern "C" fn Ground_801C53EC(a0: u32)  {
                 match H_Ground_801C53EC {

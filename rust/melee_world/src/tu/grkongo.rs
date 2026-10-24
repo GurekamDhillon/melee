@@ -118,7 +118,7 @@ pub mod ext {
     pub fn Ground_GetYakumonoParam() -> *mut c_void {
         match unsafe { GROUND_GETYAKUMONOPARAM } { Some(f) => f(), None => { return unsafe { crate::tu::ground::Ground_GetYakumonoParam() as _ }; } }
     }
-    hook!(HSD_RANDF, HSD_Randf, () -> f32);
+    hook_or!(HSD_RANDF, HSD_Randf, () -> f32, || melee_runtime::tu::random::HSD_Randf(melee_runtime::tu::globals::rand()));
     hook_or!(OSREPORT, OSReport, (a0: *mut i8), |a0: *mut i8| unsafe { melee_runtime::tu::os_error::OSReport(a0 as _, &[]) });
     pub static mut STAGE_80225194: Option<fn() -> StKind> = None;
     #[allow(non_snake_case)]
@@ -135,7 +135,7 @@ pub mod ext {
         }
     }
     hook!(FTCO_8009EC70, ftCo_8009EC70, (gobj: *mut HSD_GObj, pos: *mut Vec3, arg2: *mut lbColl_80008D30_arg1, kb_angle: f32));
-    hook!(FTCO_800C0764, ftCo_800C0764, (a0: *mut HSD_GObj, a1: u32, a2: *mut c_void));
+    hook_or!(FTCO_800C0764, ftCo_800C0764, (a0: *mut HSD_GObj, a1: u32, a2: *mut c_void), |a0: *mut HSD_GObj, a1: u32, a2: *mut c_void| { unsafe { crate::ftdevice::ftCo_800C0764(a0 as _, a1 as _, core::mem::transmute(a2)); } });
     hook_or!(FTLIB_80086644, ftLib_80086644, (a0: *mut HSD_GObj, a1: *mut Vec3), |a0: *mut HSD_GObj, a1: *mut Vec3| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } });
     hook!(FTLIB_80086C18, ftLib_80086C18, (a0: *mut HSD_GObj, a1: s32, a2: s32));
     hook_or!(GM_8016B238, gm_8016B238, () -> i32, || unsafe { crate::gm::gm_8016B238() as _ });

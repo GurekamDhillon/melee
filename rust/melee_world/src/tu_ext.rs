@@ -280,13 +280,11 @@ pub fn HSD_MemAlloc(a0: i32) -> *mut core::ffi::c_void {
 }
 pub static mut HOOK_HSD_Randf: Option<fn() -> f32> = None;
 /// C `HSD_Randf` (sysdolphin/baselib/random.h).
-pub fn HSD_Randf() -> f32 {
-    match unsafe { HOOK_HSD_Randf } { Some(f) => f(), None => panic!("TODO: HSD_Randf is not ported") }
+pub fn HSD_Randf() -> f32 { match unsafe { HOOK_HSD_Randf } { Some(f) => f(), None => melee_runtime::tu::random::HSD_Randf(melee_runtime::tu::globals::rand()) }
 }
 pub static mut HOOK_HSD_Randi: Option<fn(i32) -> i32> = None;
 /// C `HSD_Randi` (sysdolphin/baselib/random.h).
-pub fn HSD_Randi(a0: i32) -> i32 {
-    match unsafe { HOOK_HSD_Randi } { Some(f) => f(a0), None => panic!("TODO: HSD_Randi is not ported") }
+pub fn HSD_Randi(a0: i32) -> i32 { match unsafe { HOOK_HSD_Randi } { Some(f) => f(a0), None => melee_runtime::tu::random::HSD_Randi(melee_runtime::tu::globals::rand(), a0) }
 }
 pub static mut HOOK_Mex_GrBind: Option<fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void> = None;
 /// C `Mex_GrBind` (melee/gr/inlines.h).
@@ -371,8 +369,7 @@ pub fn efSync_Spawn(gfx_id: i32, gobj: *mut HSD_GObj, jobj: *mut HSD_JObj, scale
 }
 pub static mut HOOK_ftCo_800C07F8: Option<fn(*mut Ground_GObj, u32, *mut core::ffi::c_void)> = None;
 /// C `ftCo_800C07F8` (melee/ft/ftdevice.h).
-pub fn ftCo_800C07F8(a0: *mut Ground_GObj, a1: u32, a2: *mut core::ffi::c_void) {
-    match unsafe { HOOK_ftCo_800C07F8 } { Some(f) => f(a0, a1, a2), None => panic!("TODO: ftCo_800C07F8 is not ported") }
+pub fn ftCo_800C07F8(a0: *mut Ground_GObj, a1: u32, a2: *mut core::ffi::c_void) { match unsafe { HOOK_ftCo_800C07F8 } { Some(f) => f(a0, a1, a2), None => unsafe { crate::ftdevice::ftCo_800C07F8(a0 as _, a1 as _, core::mem::transmute(a2)); } }
 }
 pub static mut HOOK_ftLib_80086644: Option<fn(*mut Fighter_GObj, *mut Vec3)> = None;
 /// C `ftLib_80086644` (melee/ft/ftlib.h).

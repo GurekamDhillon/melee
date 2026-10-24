@@ -33,7 +33,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn Camera_80030A50() -> *mut HSD_GObj;
+    fn Camera_80030A50() -> *mut HSD_GObj = || unsafe { crate::cm::camera::Camera_80030A50() as _ };
     fn Camera_80030A78() -> i32 = || crate::cm::camera::world().camera_80030a78() as i32;
     fn Camera_80030AC4() -> i32 = || crate::cm::camera::world().camera_80030ac4() as i32;
     fn Camera_80030B24() -> i32 = || crate::cm::camera::world().camera_80030b24() as i32;

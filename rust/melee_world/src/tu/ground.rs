@@ -84,7 +84,7 @@ pub mod ext {
     fn HSD_LObjSetupInit(a0: *mut HSD_CObj) = |a0: *mut HSD_CObj| { unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjSetupInit(a0 as _); } };
     fn HSD_LObj_803668EC(a0: *mut HSD_LObj) = |a0: *mut HSD_LObj| { unsafe { let _ = melee_runtime::tu::lobj::HSD_LObj_803668EC(a0 as _); } };
     fn HSD_MemAlloc(a0: i32) -> *mut c_void = |a0: i32| unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ };
-    fn HSD_Randi(a0: i32) -> i32;
+    fn HSD_Randi(a0: i32) -> i32 = |a0: i32| melee_runtime::tu::random::HSD_Randi(melee_runtime::tu::globals::rand(), a0);
     fn HSD_StateInvalidate(a0: i32);
     fn HSD_WObjGetPosition(a0: *mut HSD_WObj, a1: *mut Vec) = |a0: *mut HSD_WObj, a1: *mut Vec| { unsafe { let _ = melee_runtime::tu::wobj::HSD_WObjGetPosition(a0 as _, a1 as _); } };
     fn HSD_WObjSetPosition(a0: *mut HSD_WObj, a1: *mut Vec) = |a0: *mut HSD_WObj, a1: *mut Vec| { unsafe { let _ = melee_runtime::tu::wobj::HSD_WObjSetPosition(a0 as _, a1 as _); } };
@@ -141,7 +141,7 @@ pub mod ext {
     fn Toy_803124BC();
     fn asinf(a0: f32) -> f32 = |a0: f32| unsafe { melee_runtime::lbtrigf::asinf(a0 as _) as _ };
     fn ftCo_8009F4A4();
-    fn ftCo_800C06C0();
+    fn ftCo_800C06C0() = || { unsafe { let _ = crate::ftdevice::ftCo_800C06C0(); } };
     fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } };
     fn ftLib_8008701C(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_8008701C(a0 as _) as _ };
     fn gm_80164600() -> i32;

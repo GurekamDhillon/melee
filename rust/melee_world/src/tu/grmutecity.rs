@@ -41,7 +41,7 @@ pub mod ext {
     }
     ext_fns! {
     fn Camera_GetTransformPosition(a0: *mut Vec) = |a0: *mut Vec| { unsafe { *a0 = crate::cm::camera::world().camera_get_transform_position(); } };
-    fn Camera_RequestQuake(a0: u32, a1: *mut Vec);
+    fn Camera_RequestQuake(a0: u32, a1: *mut Vec) = |a0: u32, a1: *mut Vec| unsafe { crate::cm::camera::Camera_RequestQuake(a0 as _, a1 as _) };
     fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32| { unsafe { let _ = melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
     fn Ground_801C0498() -> f32 = || unsafe { crate::tu::ground::Ground_801C0498() as _ };
     fn Ground_801C13D0(a0: i32, a1: i32) -> *mut HSD_JObj = |a0: i32, a1: i32| unsafe { crate::tu::ground::Ground_801C13D0(a0 as _, a1 as _) as _ };
@@ -80,8 +80,8 @@ pub mod ext {
     fn HSD_LObjSetColor(a0: *mut HSD_LObj, a1: _GXColor) = |a0: *mut HSD_LObj, a1: _GXColor| { unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjSetColor(a0 as _, a1 as _); } };
     fn HSD_LObjSetDistAttn(a0: *mut HSD_LObj, a1: f32, a2: f32, a3: i32) = |a0: *mut HSD_LObj, a1: f32, a2: f32, a3: i32| { unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjSetDistAttn(a0 as _, a1 as _, a2 as _, a3 as _); } };
     fn HSD_LObjSetFlags(a0: *mut HSD_LObj, a1: u32) = |a0: *mut HSD_LObj, a1: u32| { unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjSetFlags(a0 as _, a1 as _); } };
-    fn HSD_Randf() -> f32;
-    fn HSD_Randi(a0: i32) -> i32;
+    fn HSD_Randf() -> f32 = || melee_runtime::tu::random::HSD_Randf(melee_runtime::tu::globals::rand());
+    fn HSD_Randi(a0: i32) -> i32 = |a0: i32| melee_runtime::tu::random::HSD_Randi(melee_runtime::tu::globals::rand(), a0);
     fn PSVECCrossProduct(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) = |a0: *mut Vec, a1: *mut Vec, a2: *mut Vec| { unsafe { let _ = melee_runtime::tu::mtx_pc::raw::PSVECCrossProduct(a0 as _, a1 as _, a2 as _); } };
     fn Stage_GetBlastZoneBottomOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetBlastZoneBottomOffset() as _ };
     fn Stage_GetBlastZoneLeftOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetBlastZoneLeftOffset() as _ };

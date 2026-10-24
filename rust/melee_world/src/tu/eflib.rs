@@ -54,41 +54,41 @@ pub mod ext {
     pub fn efAsync_DatEntries_data(_bank: i32) -> *mut core::ffi::c_void { todo!("efAsync_DatEntries (ef/efasync.c)") }
     pub fn efAsync_DatEntries_clear() { todo!("efAsync_DatEntries (ef/efasync.c)") }
     pub fn efAsync_QueueInit() { todo!("efAsync_QueueInit (ef/efasync.c)") }
-    pub fn HSD_ObjAllocInit(_d: *mut HSD_ObjAllocData, _size: u32, _align: u32) { todo!("HSD_ObjAllocInit (baselib/objalloc.c)") }
-    pub fn HSD_ObjAlloc(_d: *mut HSD_ObjAllocData) -> *mut core::ffi::c_void { todo!("HSD_ObjAlloc (baselib/objalloc.c)") }
-    pub fn HSD_ObjFree(_d: *mut HSD_ObjAllocData, _p: *mut core::ffi::c_void) { todo!("HSD_ObjFree (baselib/objalloc.c)") }
+    pub fn HSD_ObjAllocInit(_d: *mut HSD_ObjAllocData, _size: u32, _align: u32) { unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjAllocInit(_d as _, _size as _, _align as _); } }
+    pub fn HSD_ObjAlloc(_d: *mut HSD_ObjAllocData) -> *mut core::ffi::c_void { unsafe { melee_runtime::tu::objalloc::HSD_ObjAlloc(_d as _) as _ } }
+    pub fn HSD_ObjFree(_d: *mut HSD_ObjAllocData, _p: *mut core::ffi::c_void) { unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjFree(_d as _, _p as _); } }
     pub fn hsd_8039D354(_a: i32) { todo!("hsd_8039D354 (baselib/particle.c)") }
-    pub fn hsd_80398A08(_a: i32) { todo!("hsd_80398A08 (baselib/particle.c)") }
+    pub fn hsd_80398A08(_a: i32) { unsafe { let _ = melee_runtime::tu::particle::hsd_80398A08(_a as _); } }
     pub fn set_hsd_804D7900(_f: unsafe extern "C" fn(Gen)) { todo!("hsd_804D7900 (baselib/particle.c)") }
-    pub fn GObj_Create(_class: u16, _p_link: u8, _prio: u8) -> G { todo!("GObj_Create (baselib/gobj.c)") }
-    pub fn GObj_SetupGXLink(_g: G, _f: unsafe extern "C" fn(G, i32), _link: u8, _prio: u32) { todo!("GObj_SetupGXLink (baselib/gobjgxlink.c)") }
+    pub fn GObj_Create(_class: u16, _p_link: u8, _prio: u8) -> G { unsafe { melee_runtime::tu::gobj_native::GObj_Create(_class as _, _p_link as _, _prio as _) as _ } }
+    pub fn GObj_SetupGXLink(_g: G, _f: unsafe extern "C" fn(G, i32), _link: u8, _prio: u32) { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(_g as _, Some(_f), _link as _, _prio as _); } }
     pub fn GObj_SetupGXLink_JObjCallback(_g: G, _link: u8, _prio: u32) { todo!("GObj_SetupGXLink(HSD_GObj_JObjCallback) (baselib/gobjgxlink.c)") }
-    pub fn HSD_GObj_SetupProc(_g: G, _f: unsafe extern "C" fn(G), _prio: u8) { todo!("HSD_GObj_SetupProc (baselib/gobjproc.c)") }
-    pub fn GObj_InitUserData(_g: G, _kind: u8, _free: unsafe extern "C" fn(*mut core::ffi::c_void), _ud: *mut core::ffi::c_void) { todo!("GObj_InitUserData (baselib/gobjuserdata.c)") }
-    pub fn HSD_GObjObject_80390A70(_g: G, _kind: u8, _obj: *mut core::ffi::c_void) { todo!("HSD_GObjObject_80390A70 (baselib/gobjobject.c)") }
-    pub fn HSD_GObjFree(_g: G) { todo!("HSD_GObjFree (baselib/gobj.c)") }
+    pub fn HSD_GObj_SetupProc(_g: G, _f: unsafe extern "C" fn(G), _prio: u8) { unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(_g as _, Some(_f), _prio as _); } }
+    pub fn GObj_InitUserData(_g: G, _kind: u8, _free: unsafe extern "C" fn(*mut core::ffi::c_void), _ud: *mut core::ffi::c_void) { unsafe { melee_runtime::tu::gobj_native::GObj_InitUserData(_g as _, _kind as _, Some(_free), _ud as _); } }
+    pub fn HSD_GObjObject_80390A70(_g: G, _kind: u8, _obj: *mut core::ffi::c_void) { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(_g as _, _kind as _, _obj as _); } }
+    pub fn HSD_GObjFree(_g: G) { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObjFree(_g as _); } }
     pub fn HSD_JObjSetSPtclCallback(_f: unsafe extern "C" fn(i32, i32, i32, J)) { todo!("HSD_JObjSetSPtclCallback (baselib/jobj.c)") }
     pub fn HSD_JObjSetDPtclCallback(_f: unsafe extern "C" fn(i32, i32, i32, J)) { todo!("HSD_JObjSetDPtclCallback (baselib/jobj.c)") }
     pub fn psInitAppSRT(_a: i32, _b: i32) { todo!("psInitAppSRT (baselib/psappsrt.c)") }
     pub fn HSD_JObjWalkTree_8039D688(_j: J) { todo!("HSD_JObjWalkTree(jobj, hsd_8039D688, NULL) (baselib/jobj.c)") }
-    pub fn HSD_JObjSetMtxDirtySub(_j: J) { todo!("HSD_JObjSetMtxDirtySub (baselib/jobj.c)") }
+    pub fn HSD_JObjSetMtxDirtySub(_j: J) { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(_j as _); } }
     pub fn HSD_JObjSetupMatrixSub(_j: J) { todo!("HSD_JObjSetupMatrixSub (baselib/jobj.c)") }
     pub fn HSD_MtxGetScale(_m: *mut Mtx, _s: *mut Vec3) { todo!("HSD_MtxGetScale (baselib/mtx.c)") }
     pub fn HSD_JObjAnimAll(_j: J) { todo!("HSD_JObjAnimAll (baselib/jobj.c)") }
-    pub fn HSD_JObjLoadJoint(_j: *mut HSD_Joint) -> J { todo!("HSD_JObjLoadJoint (baselib/jobj.c)") }
+    pub fn HSD_JObjLoadJoint(_j: *mut HSD_Joint) -> J { unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(_j as _) as _ } }
     pub fn HSD_JObjAddAnimAll(_j: J, _a: *mut HSD_AnimJoint, _m: *mut HSD_MatAnimJoint, _s: *mut HSD_ShapeAnimJoint) { todo!("HSD_JObjAddAnimAll (baselib/jobj.c)") }
     pub fn HSD_JObjReqAnimAll(_j: J, _f: f32) { todo!("HSD_JObjReqAnimAll (baselib/jobj.c)") }
-    pub fn HSD_JObjSetFlagsAll(_j: J, _f: u32) { todo!("HSD_JObjSetFlagsAll (baselib/jobj.c)") }
-    pub fn HSD_JObjClearFlagsAll(_j: J, _f: u32) { todo!("HSD_JObjClearFlagsAll (baselib/jobj.c)") }
-    pub fn HSD_JObjGetDObj(_j: J) -> *mut HSD_DObj { todo!("HSD_JObjGetDObj (baselib/jobj.c)") }
-    pub fn HSD_MObjGetTObj(_m: *mut HSD_MObj) -> *mut HSD_TObj { todo!("HSD_MObjGetTObj (baselib/mobj.c)") }
-    pub fn lb_80011C18(_j: J, _f: u32) { todo!("lb_80011C18 (lb/lb_00B0.c)") }
-    pub fn lb_8000C1C0(_a: J, _b: J) { todo!("lb_8000C1C0 (lb/lb_00B0.c)") }
-    pub fn lb_8000C290(_a: J, _b: J) { todo!("lb_8000C290 (lb/lb_00B0.c)") }
-    pub fn lb_8000B1CC(_j: J, _off: *const Vec3, _out: *mut Vec3) { todo!("lb_8000B1CC (lb/lb_00B0.c)") }
+    pub fn HSD_JObjSetFlagsAll(_j: J, _f: u32) { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetFlagsAll(_j as _, _f as _); } }
+    pub fn HSD_JObjClearFlagsAll(_j: J, _f: u32) { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjClearFlagsAll(_j as _, _f as _); } }
+    pub fn HSD_JObjGetDObj(_j: J) -> *mut HSD_DObj { unsafe { melee_runtime::tu::jobj_world::HSD_JObjGetDObj(_j as _) as _ } }
+    pub fn HSD_MObjGetTObj(_m: *mut HSD_MObj) -> *mut HSD_TObj { unsafe { melee_runtime::tu::mobj::HSD_MObjGetTObj(_m as _) as _ } }
+    pub fn lb_80011C18(_j: J, _f: u32) { unsafe { let _ = melee_runtime::tu::lbspdisplay::lb_80011C18(_j as _, _f as _); } }
+    pub fn lb_8000C1C0(_a: J, _b: J) { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C1C0(_a as _, _b as _); } }
+    pub fn lb_8000C290(_a: J, _b: J) { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C290(_a as _, _b as _); } }
+    pub fn lb_8000B1CC(_j: J, _off: *const Vec3, _out: *mut Vec3) { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(_j as _, _off as _, _out as _); } }
     pub fn HSD_StateSetColorUpdate(_a: i32) { todo!("HSD_StateSetColorUpdate (baselib/state.c)") }
-    pub fn psDispParticles(_mask: u32, _code: u32) { todo!("psDispParticles (baselib/psdisp.c)") }
-    pub fn hsd_8039CEAC(_mask: u32) { todo!("hsd_8039CEAC (baselib/particle.c)") }
+    pub fn psDispParticles(_mask: u32, _code: u32) { unsafe { let _ = melee_runtime::tu::psdisp::psDispParticles(_mask as _, _code as _); } }
+    pub fn hsd_8039CEAC(_mask: u32) { unsafe { let _ = melee_runtime::tu::particle::hsd_8039CEAC(_mask as _); } }
     pub fn hsd_8039EE24(_mask: u32) { todo!("hsd_8039EE24 (baselib/particle.c)") }
     pub fn hsd_8039F05C(_link: i32, _bank: i32, _id: i32) -> Gen { todo!("hsd_8039F05C (baselib/particle.c)") }
     pub fn hsd_8039EFAC(_link: i32, _bank: i32, _id: i32, _j: J) -> Gen { todo!("hsd_8039EFAC (baselib/particle.c)") }
@@ -99,7 +99,7 @@ pub mod ext {
     pub fn psAddParticleAppSRT_begin(_p: *mut HSD_Particle, _s: i32) -> *mut HSD_psAppSRT { todo!("psAddParticleAppSRT_begin (baselib/psappsrt.c)") }
     pub fn psRemoveParticleAppSRT(_p: *mut HSD_Particle) { todo!("psRemoveParticleAppSRT (baselib/psappsrt.c)") }
     pub fn ptclref_cmdList(_bank: usize, _idx: usize) -> *mut u8 { todo!("ptclref_804D0E5C (baselib/particle.c)") }
-    pub fn grLib_801C99C0(_bank: i32, _id: i32, _j: J, _f: i32) { todo!("grLib_801C99C0 (gr/grlib.c)") }
+    pub fn grLib_801C99C0(_bank: i32, _id: i32, _j: J, _f: i32) { unsafe { let _ = crate::tu::grlib::grLib_801C99C0(_bank as _, _id as _, _j as _, _f as _); } }
     pub fn ftCo_800C0FCC(_a: G, _b: G) { todo!("ftCo_800C0FCC (ftCommon/ftCo_Bury.c)") }
     pub fn OSReport(_s: &str) {}
 }

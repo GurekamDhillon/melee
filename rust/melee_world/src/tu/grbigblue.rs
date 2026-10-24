@@ -128,8 +128,8 @@ pub mod ext {
     pub fn HSD_MemAlloc(size: ssize_t) -> *mut c_void {
         match unsafe { HSD_MEMALLOC } { Some(f) => f(size), None => { return unsafe { melee_runtime::tu::memory::HSD_MemAlloc(size as _) as _ }; } }
     }
-    hook!(HSD_RANDF, HSD_Randf, () -> f32);
-    hook!(HSD_RANDI, HSD_Randi, (max_val: s32) -> s32);
+    hook_or!(HSD_RANDF, HSD_Randf, () -> f32, || melee_runtime::tu::random::HSD_Randf(melee_runtime::tu::globals::rand()));
+    hook_or!(HSD_RANDI, HSD_Randi, (max_val: s32) -> s32, |max_val: s32| melee_runtime::tu::random::HSD_Randi(melee_runtime::tu::globals::rand(), max_val));
     hook_or!(OSREPORT, OSReport, (a0: *const i8, va: &[usize]), |a0: *const i8, va: &[usize]| unsafe { melee_runtime::tu::os_error::OSReport(a0, va) });
     pub static mut STAGE_GETBLASTZONELEFTOFFSET: Option<fn() -> f32> = None;
     #[allow(non_snake_case)]

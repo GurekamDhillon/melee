@@ -30,7 +30,7 @@ pub mod ext {
     hook_or!(CAMERA_80030154, Camera_80030154, () -> i32, || crate::cm::camera::world().camera_80030154() as i32);
     hook_or!(CAMERA_80030178, Camera_80030178, () -> i32, || crate::cm::camera::world().camera_80030178() as i32);
     hook_or!(CAMERA_GETTRANSFORMINTEREST, Camera_GetTransformInterest, (a0: *mut Vec), |a0: *mut Vec| { unsafe { *a0 = crate::cm::camera::world().camera_get_transform_interest(); } });
-    hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (a0: CmQuakeKind, a1: *mut Vec));
+    hook_or!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (a0: CmQuakeKind, a1: *mut Vec), |a0: CmQuakeKind, a1: *mut Vec| unsafe { crate::cm::camera::Camera_RequestQuake(a0 as _, a1 as _) });
     hook_or!(FTLIB_80086644, ftLib_80086644, (gobj: *mut HSD_GObj, pos: *mut Vec), |gobj: *mut HSD_GObj, pos: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(gobj as _, pos as _); } });
     hook!(GM_8017E7E0, gm_8017E7E0, () -> i32);
     hook!(GM_801883C0, gm_801883C0, () -> f32);
@@ -284,8 +284,8 @@ pub mod ext {
     hook_or!(HSD_JOBJSETFLAGS, HSD_JObjSetFlags, (a0: *mut HSD_JObj, flags: u32), |a0: *mut HSD_JObj, flags: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetFlags(a0 as _, flags as _); } });
     hook_or!(HSD_JOBJSETFLAGSALL, HSD_JObjSetFlagsAll, (a0: *mut HSD_JObj, flags: u32), |a0: *mut HSD_JObj, flags: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetFlagsAll(a0 as _, flags as _); } });
     hook!(HSD_PADMASTERSTATUS, HSD_PadMasterStatus, () -> *mut HSD_PadStatus);
-    hook!(HSD_RANDF, HSD_Randf, () -> f32);
-    hook!(HSD_RANDI, HSD_Randi, (max_val: s32) -> s32);
+    hook_or!(HSD_RANDF, HSD_Randf, () -> f32, || melee_runtime::tu::random::HSD_Randf(melee_runtime::tu::globals::rand()));
+    hook_or!(HSD_RANDI, HSD_Randi, (max_val: s32) -> s32, |max_val: s32| melee_runtime::tu::random::HSD_Randi(melee_runtime::tu::globals::rand(), max_val));
     pub static mut HSD_SISLIB_803A5ACC: Option<fn(i32, i32, f32, f32, f32, f32, f32) -> *mut HSD_Text> = None;
     #[allow(non_snake_case)]
     pub fn HSD_SisLib_803A5ACC(a0: i32, a1: i32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) -> *mut HSD_Text {

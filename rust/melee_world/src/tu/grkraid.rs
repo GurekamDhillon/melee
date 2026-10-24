@@ -27,7 +27,7 @@ pub mod ext {
         grAnime_801C8138, grDisplay_801C5DB0, GObj_SetupGXLink, Ground_UpdateMapColl, HSD_GObj_SetupProc, HSD_Randi,
         lb_800115F4,
     };
-    hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (a0: CmQuakeKind, a1: *mut Vec3));
+    hook_or!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (a0: CmQuakeKind, a1: *mut Vec3), |a0: CmQuakeKind, a1: *mut Vec3| unsafe { crate::cm::camera::Camera_RequestQuake(a0 as _, a1 as _) });
     pub static mut GROUND_801C0498: Option<fn() -> f32> = None;
     #[allow(non_snake_case)]
     pub fn Ground_801C0498() -> f32 {

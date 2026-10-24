@@ -48,7 +48,7 @@ pub mod ext {
     fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
     fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32) = |a0: *mut HSD_JObj, a1: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetFlagsAll(a0 as _, a1 as _); } };
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) = |a0: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(a0 as _); } };
-    fn HSD_Randf() -> f32;
+    fn HSD_Randf() -> f32 = || melee_runtime::tu::random::HSD_Randf(melee_runtime::tu::globals::rand());
     fn HSD_TObjAddAnimAll(a0: *mut HSD_TObj, a1: *mut _HSD_TexAnim) = |a0: *mut HSD_TObj, a1: *mut _HSD_TexAnim| { unsafe { let _ = melee_runtime::tu::tobj::HSD_TObjAddAnimAll(a0 as _, a1 as _); } };
     fn HSD_TObjAnim(a0: *mut HSD_TObj) = |a0: *mut HSD_TObj| { unsafe { let _ = melee_runtime::tu::tobj::HSD_TObjAnim(a0 as _); } };
     fn HSD_TObjReqAnimAll(a0: *mut HSD_TObj, a1: f32) = |a0: *mut HSD_TObj, a1: f32| { unsafe { let _ = melee_runtime::tu::tobj::HSD_TObjReqAnimAll(a0 as _, a1 as _); } };

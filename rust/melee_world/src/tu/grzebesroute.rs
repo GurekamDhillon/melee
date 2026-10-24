@@ -66,7 +66,8 @@ pub mod ext {
                     None => { return unsafe { crate::tu::grzakogenerator::grZakoGenerator_801CAE04(a0 as _) as _ }; },
                 }
             }
-    hook!(H_HSD_Randi, HSD_Randi, (a0: i32) -> i32);
+    pub static mut H_HSD_Randi: Option<unsafe extern "C" fn(i32) -> i32> = None;
+    pub unsafe extern "C" fn HSD_Randi(a0: i32) -> i32 { match H_HSD_Randi { Some(f) => f(a0), None => melee_runtime::tu::random::HSD_Randi(melee_runtime::tu::globals::rand(), a0) } }
     pub static mut H_grZakoGenerator_801CAEB0: Option<unsafe extern "C" fn(i32, i32) > = None;
             pub unsafe extern "C" fn grZakoGenerator_801CAEB0(a0: i32, a1: i32)  {
                 match H_grZakoGenerator_801CAEB0 {
@@ -118,7 +119,8 @@ pub mod ext {
                     None => { unsafe { let _ = crate::tu::ground::Ground_801C38BC(a0 as _, a1 as _); } return; },
                 }
             }
-    hook!(H_Camera_RequestQuake, Camera_RequestQuake, (a0: u32, a1: *mut melee_types::Vec));
+    pub static mut H_Camera_RequestQuake: Option<unsafe extern "C" fn(u32, *mut melee_types::Vec)> = None;
+    pub unsafe extern "C" fn Camera_RequestQuake(a0: u32, a1: *mut melee_types::Vec) { match H_Camera_RequestQuake { Some(f) => f(a0, a1), None => unsafe { crate::cm::camera::Camera_RequestQuake(a0 as _, a1 as _) } } }
     pub static mut H_lb_800115F4: Option<unsafe extern "C" fn() > = None;
             pub unsafe extern "C" fn lb_800115F4()  {
                 match H_lb_800115F4 {

@@ -45,7 +45,7 @@ pub mod ext {
     pub fn efAlt_Spawn(_gfx_id: i32, _gobj: G, _va: &mut Va) -> Obj { todo!("efAlt_Spawn (ef/efalt.c)") }
     /// `efAsync_MexResolve(gobj, gfx_id, &id, &is_ptcl, &owner)` -> (type, id, is_ptcl, owner).
     pub fn efAsync_MexResolve(_gobj: G, _gfx_id: i32) -> (i32, i32, bool, G) { todo!("efAsync_MexResolve (ef/efasync.c)") }
-    pub fn HSD_Randf() -> f32 { todo!("HSD_Randf (baselib/random.c)") }
+    pub fn HSD_Randf() -> f32 { melee_runtime::tu::random::HSD_Randf(melee_runtime::tu::globals::rand()) }
 }
 
 struct Dirty;

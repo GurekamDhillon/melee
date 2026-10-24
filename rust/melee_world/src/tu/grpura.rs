@@ -60,7 +60,7 @@ pub mod ext {
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) = |a0: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(a0 as _); } };
     fn HSD_MObjCompileTev(a0: *mut HSD_MObj) = |a0: *mut HSD_MObj| { unsafe { let _ = melee_runtime::tu::mobj::HSD_MObjCompileTev(a0 as _); } };
     fn HSD_MObjSetToonTextureImage(a0: *mut HSD_ImageDesc) = |a0: *mut HSD_ImageDesc| { unsafe { let _ = melee_runtime::tu::mobj::HSD_MObjSetToonTextureImage(a0 as _); } };
-    fn HSD_Randi(a0: i32) -> i32;
+    fn HSD_Randi(a0: i32) -> i32 = |a0: i32| melee_runtime::tu::random::HSD_Randi(melee_runtime::tu::globals::rand(), a0);
     fn Stage_GetCamBoundsBottomOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsBottomOffset() as _ };
     fn Stage_GetCamBoundsLeftOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsLeftOffset() as _ };
     fn Stage_GetCamBoundsRightOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsRightOffset() as _ };

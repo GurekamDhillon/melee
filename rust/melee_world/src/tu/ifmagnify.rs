@@ -33,7 +33,7 @@ pub mod ext {
     ext_fns! {
     fn Camera_8002A4AC(a0: *mut HSD_GObj);
     fn Camera_80030130() -> i32 = || crate::cm::camera::world().camera_80030130() as i32;
-    fn Camera_80030A50() -> *mut HSD_GObj;
+    fn Camera_80030A50() -> *mut HSD_GObj = || unsafe { crate::cm::camera::Camera_80030A50() as _ };
     fn Camera_80030BBC(a0: *mut Vec, a1: *mut S32Vec2) -> i32;
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj = |a0: u16, a1: u8, a2: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ };
     fn GObj_InitUserData(a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void) = |a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void| { unsafe { let _ = melee_runtime::tu::gobj_native::GObj_InitUserData(a0 as _, a1 as _, a2 as _, a3 as _); } };

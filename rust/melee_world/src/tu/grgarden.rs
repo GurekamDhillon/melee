@@ -52,11 +52,11 @@ pub mod ext {
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8| unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(a0 as _, a1 as _, a2 as _) as _ };
     fn HSD_JObjRemoveAnimAll(a0: *mut HSD_JObj);
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) = |a0: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(a0 as _); } };
-    fn HSD_Randi(a0: i32) -> i32;
+    fn HSD_Randi(a0: i32) -> i32 = |a0: i32| melee_runtime::tu::random::HSD_Randi(melee_runtime::tu::globals::rand(), a0);
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
     fn Mex_GrBind(a0: *mut c_void) -> *mut c_void;
     fn Stage_80225194() -> u32 = || unsafe { crate::tu::stage::Stage_80225194() as _ };
-    fn ftCo_800C06E8(a0: *mut HSD_GObj, a1: i32, a2: *mut c_void);
+    fn ftCo_800C06E8(a0: *mut HSD_GObj, a1: i32, a2: *mut c_void) = |a0: *mut HSD_GObj, a1: i32, a2: *mut c_void| { unsafe { crate::ftdevice::ftCo_800C06E8(a0 as _, a1 as _, core::mem::transmute(a2)); } };
     fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } };
     fn ftLib_80086684(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086684(a0 as _, a1 as _); } };
     fn ftLib_80086B80(a0: *mut HSD_GObj) -> f32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086B80(a0 as _) as _ };

@@ -15,6 +15,7 @@ pub mod hud;
 pub mod gekko;
 pub mod mp;
 pub mod pl;
+pub mod ftdevice;
 pub mod ftlib;
 pub mod gm;
 pub mod vec;

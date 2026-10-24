@@ -3,3 +3,4 @@
 
 pub mod lobby;
 pub mod scene;
+pub mod room;

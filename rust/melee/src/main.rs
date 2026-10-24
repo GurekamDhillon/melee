@@ -39,6 +39,7 @@ mod snap;
 mod fighter_fields;
 mod netmatch;
 mod netplay;
+mod np_env;
 
 /// What the frame driver needs from a simulation, per frame.
 pub(crate) trait Sim {

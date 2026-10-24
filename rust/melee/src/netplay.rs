@@ -11,7 +11,10 @@
 //! `--lag-ms` / `--loss-pct` degrade this peer's INBOUND datagrams (a deterministic LCG), so the
 //! predictions miss and the session rolls back.
 
-use crate::netmatch::{golden_hashes, open_match, NetMatch};
+use crate::netmatch::{golden_hashes, open_match_for, NetMatch};
+use crate::np_env::{ck_name, lobby_bot, NativeEnv};
+use melee_net::app::room::{Phase, Room, RoomEnv, RoomSettings};
+use melee_net::app::scene::parse_scene;
 use crate::vs_match::rollback::script_input;
 use melee_net::net::{Config, Net};
 use melee_net::rollback::{NetAdapter, NetLog};
@@ -94,7 +97,86 @@ pub fn netplay(args: &[String]) -> std::process::ExitCode {
             return ExitCode::from(2);
         }
     };
-    let mut game = match open_match(args) {
+    let use_lobby = args.iter().any(|a| a == "--lobby");
+    let ck = num("--ck", if host { 0 } else { 2 }) as i32;
+    let stocks = num("--stocks", 3) as i32;
+    let minutes = num("--minutes", 0) as i32;
+    let lag = Duration::from_millis(num("--lag-ms", 0) as u64);
+    let loss = num("--loss-pct", 0) as u32;
+    let rcfg = RbConfig { net: true, local_port, delay, src: InputSource::Live, ..RbConfig::default() };
+    let sess: Rc<RefCell<Sess>> = Rc::new(RefCell::new(Sess::new(rcfg)));
+    sess.borrow_mut().scene_begin(2);
+    let log = Rc::new(RefCell::new(NetLog::default()));
+    let inner = Box::new(NetAdapter::new(sess.clone(), log.clone(), None));
+    let mk = |bind_port: u16| -> std::io::Result<Box<dyn Transport>> {
+        let inner = UdpTransport::open(0x7F000001, bind_port)?;
+        Ok(Box::new(Degraded { inner, lag, loss_pct: loss, rng: 0x1234_5678 ^ local_port as u32, q: VecDeque::new() }))
+    };
+    let settings = RoomSettings {
+        host,
+        ck,
+        stocks,
+        minutes,
+        delay,
+        stage_ext: num("--stage", 32) as i32,
+        use_lobby,
+        peer: join.as_deref().and_then(|j| addr_parse(j, 51500)),
+        name: arg(args, "--name").unwrap_or_default(),
+        exe_hash: u64::from_str_radix(arg(args, "--exe-hash").as_deref().unwrap_or("0"), 16).unwrap_or(0),
+        seed: arg(args, "--seed").and_then(|s| s.parse().ok()),
+        ..RoomSettings::default()
+    };
+    let tp = match mk(if host { num("--port", 51500) as u16 } else { 0 }) {
+        Ok(t) => t,
+        Err(e) => {
+            eprintln!("melee: bind: {e}");
+            return ExitCode::FAILURE;
+        }
+    };
+    let mut room = match Room::begin(settings, Box::new(NativeEnv), inner, tp) {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("melee: {e}");
+            return ExitCode::FAILURE;
+        }
+    };
+    let t0 = Instant::now();
+    if host {
+        eprintln!("melee: {tag} listening on 127.0.0.1:{}", num("--port", 51500));
+    }
+    // connect (and, with --lobby, play the pick/ban lobby with a bot) until the match is agreed
+    loop {
+        if t0.elapsed().as_secs() > max_s {
+            eprintln!("melee: {tag}: timeout before the match was agreed: {}", room.sh.borrow().status);
+            return ExitCode::FAILURE;
+        }
+        match room.phase() {
+            Phase::Working => {
+                room.poll();
+            }
+            Phase::Lobby => {
+                room.lobby_tick();
+                lobby_bot(&mut room, ck, host);
+            }
+            Phase::Connected => break,
+            _ => {
+                eprintln!("melee: {tag}: {}", room.sh.borrow().status);
+                return ExitCode::FAILURE;
+            }
+        }
+        std::thread::sleep(Duration::from_millis(2));
+    }
+    let (scene_str, agreed_seed, agreed_delay) = {
+        let b = room.sh.borrow();
+        (b.scene.clone(), b.seed, b.s.delay)
+    };
+    eprintln!("melee: {tag}: match agreed after {:.2}s - \"{scene_str}\" (seed {agreed_seed}, delay {agreed_delay})", t0.elapsed().as_secs_f32());
+    let Some(ps) = parse_scene(&scene_str) else {
+        eprintln!("melee: {tag}: the agreed scene does not parse");
+        return ExitCode::FAILURE;
+    };
+    let names: Vec<&str> = [&ps.host_tok, &ps.guest_tok].iter().map(|t| ck_name(NativeEnv.ck_for_token(t)).unwrap_or("falcon")).collect();
+    let mut game = match open_match_for(args, "GrNLa.dat", &names, agreed_seed, ps.stocks) {
         Ok(g) => g,
         Err(e) => {
             eprintln!("melee: {e}");
@@ -102,56 +184,10 @@ pub fn netplay(args: &[String]) -> std::process::ExitCode {
         }
     };
     game.live = true;
-
-    let rcfg = RbConfig { net: true, local_port, delay, src: InputSource::Live, ..RbConfig::default() };
-    let sess: Rc<RefCell<Sess>> = Rc::new(RefCell::new(Sess::new(rcfg)));
-    sess.borrow_mut().scene_begin(2);
-    let log = Rc::new(RefCell::new(NetLog::default()));
-    let cb = Box::new(NetAdapter::new(sess.clone(), log.clone(), None));
-    let ncfg = Config {
-        first_frame: FIRST,
-        payload_bytes: NP_PAYLOAD as u8,
-        input_delay: delay as u8,
-        host_slots: 0x01,
-        guest_slots: 0x04,
-        seed: 12345,
-        frame_us: 16667,
-        ..Config::default()
-    };
-    let lag = Duration::from_millis(num("--lag-ms", 0) as u64);
-    let mk = |bind_port: u16| -> std::io::Result<Box<dyn Transport>> {
-        let inner = UdpTransport::open(0x7F000001, bind_port)?;
-        Ok(Box::new(Degraded { inner, lag, loss_pct: num("--loss-pct", 0) as u32, rng: 0x1234_5678 ^ local_port as u32, q: VecDeque::new() }))
-    };
-    let net = if host {
-        let p = num("--port", 51500) as u16;
-        match mk(p) {
-            Ok(tp) => {
-                eprintln!("melee: {tag} listening on 127.0.0.1:{p}");
-                Net::host(&ncfg, cb, tp)
-            }
-            Err(e) => {
-                eprintln!("melee: bind: {e}");
-                return ExitCode::FAILURE;
-            }
-        }
-    } else {
-        let Some(addr) = addr_parse(join.as_deref().unwrap(), 51500) else {
-            eprintln!("melee: bad --join address");
-            return ExitCode::from(2);
-        };
-        match mk(0) {
-            Ok(tp) => Net::join(&ncfg, cb, tp, addr),
-            Err(e) => {
-                eprintln!("melee: bind: {e}");
-                return ExitCode::FAILURE;
-            }
-        }
-    };
-    let Some(mut net) = net else {
-        eprintln!("melee: could not open the session");
-        return ExitCode::FAILURE;
-    };
+    sess.borrow_mut().set_delay(agreed_delay);
+    room.release(); // gw_Netplay_Handshake: loaded, ready to start
+    let mut net = room.net.take().expect("room has a connection");
+    let _ = (&log, minutes);
 
     let last_final = FIRST + golden_frames + 1; // the checksum at the START of this frame = golden frame `golden_frames`
     let mut finals: Vec<(i32, u32)> = Vec::new();

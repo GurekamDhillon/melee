@@ -85,6 +85,14 @@ pub fn open_match(args: &[String]) -> Result<NetMatch, String> {
     Ok(NetMatch::new(vs))
 }
 
+/// A match built for an agreed scene: fighters by name, the agreed seed and stock count.
+pub fn open_match_for(args: &[String], stage_file: &str, fighters: &[&str], seed: u32, stocks: i32) -> Result<NetMatch, String> {
+    let iso = arg(args, "--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok()).ok_or("no --iso / GW_ISO_VANILLA")?;
+    let mut d = crate::disc::Disc::open(&iso)?;
+    let vs = VsMatch::new(&mut d, stage_file, fighters, seed, stocks)?;
+    Ok(NetMatch::new(vs))
+}
+
 /// The golden CSV's hash column by frame.
 pub fn golden_hashes(path: &str) -> Result<std::collections::HashMap<i32, u32>, String> {
     let text = std::fs::read_to_string(path).map_err(|e| format!("{path}: {e}"))?;

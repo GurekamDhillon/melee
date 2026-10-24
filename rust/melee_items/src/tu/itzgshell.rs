@@ -101,13 +101,6 @@ pub mod ext {
 
 crate::kinds_jobj_inl!();
 
-/// `HSD_JObjGetRotationY` (baselib/jobj.h, static inline)
-#[inline]
-unsafe fn HSD_JObjGetRotationY(jobj: *mut HSD_JObj) -> f32 {
-    hsd_assert(!jobj.is_null(), "(jobj)");
-    (*jobj).rotate.y
-}
-
 /// `typedef struct itGShell_Attrs` (the `.c` file's own record of `Article.x4_specialAttributes`;
 /// `itZGShell_Attrs` is the same block seen as `{ pad[0x38]; x38; Vec x3C }`).
 #[repr(C)]

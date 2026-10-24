@@ -29,6 +29,28 @@ fn __fpclassifyd(x: f64) -> i32 {
     }
 }
 
+/// `lbVector_Add` (lb/lbvector.c; ported in melee_runtime)
+unsafe fn lbVector_Add(a: *mut Vec, b: *mut Vec) -> *mut Vec {
+    let mut x = melee_core::vec::Vec3 { x: (*a).x, y: (*a).y, z: (*a).z };
+    melee_runtime::lbvector::add(&mut x, &melee_core::vec::Vec3 { x: (*b).x, y: (*b).y, z: (*b).z });
+    (*a).x = x.x;
+    (*a).y = x.y;
+    (*a).z = x.z;
+    a
+}
+
+/// `lbVector_Diff` (lb/lbvector.c; ported in melee_runtime): `*out = *a - *b`
+unsafe fn lbVector_Diff(a: *mut Vec, b: *mut Vec, out: *mut Vec) -> *mut Vec {
+    let r = melee_runtime::lbvector::diff(
+        &melee_core::vec::Vec3 { x: (*a).x, y: (*a).y, z: (*a).z },
+        &melee_core::vec::Vec3 { x: (*b).x, y: (*b).y, z: (*b).z },
+    );
+    (*out).x = r.x;
+    (*out).y = r.y;
+    (*out).z = r.z;
+    out
+}
+
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
@@ -48,16 +70,13 @@ pub mod ext {
     }
     ext_fns! {
     fn ScriptGame_StageSlotSameJoint(a0: i32, a1: i32) -> i32;
-    fn cosf(a0: f32) -> f32;
     fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
     fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8;
     fn ftLib_800874BC(a0: *mut HSD_GObj) -> i32;
     fn grDynamicAttr_801CA284(a0: *mut Vec, a1: i32) -> i32;
     fn itGetKind(a0: *mut HSD_GObj) -> ItemKind;
-    fn lbVector_Add(a0: *mut Vec, a1: *mut Vec) -> *mut Vec;
-    fn lbVector_Diff(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec;
     fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec);
-    fn sinf(a0: f32) -> f32;
+    fn OSReport(a0: &str);
     }
     pub static mut DbLevel: DbLKind = unsafe { core::mem::zeroed() };
 }
@@ -99,11 +118,11 @@ pub unsafe fn mpCollPrev(mut cd: *mut CollData) {
     if ext::DbLevel >= ((DbLKind_DebugRom as i32) as u32) {
         if (((!((*cd).cur_pos.x < 4.5e+04f32)) || (!((*cd).cur_pos.x > (-4.5e+04f32)))) || (!((*cd).cur_pos.y < 4.5e+04f32))) || (!((*cd).cur_pos.y > (-4.5e+04f32))) {
             if ext::ftLib_80086960((*cd).x0_gobj) != 0 {
-                ();
+                ext::OSReport(&format!("{}:{}: Error: mpCollPrev() pos({:.6},{:.6}) player={} ms={}\n", core::ffi::CStr::from_ptr((c"mpcoll.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 203, (*cd).cur_pos.x as f64, (*cd).cur_pos.y as f64, ext::ftLib_80086BE0((*cd).x0_gobj) as i32, ext::ftLib_800874BC((*cd).x0_gobj)));
             } else {
-                ();
+                ext::OSReport(&format!("{}:{}: Error: mpCollPrev() pos({:.6},{:.6}) gobj_id={}\n", core::ffi::CStr::from_ptr((c"mpcoll.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 212, (*(*cd).x0_gobj).classifier as i32, (*cd).cur_pos.x as f64, (*cd).cur_pos.y as f64));
                 if ((*(*cd).x0_gobj).p_link as i32) == 9 {
-                    ();
+                    ext::OSReport(&format!("itkind={}\n", ext::itGetKind((*cd).x0_gobj)));
                 }
             }
             if 0 != 0 { (); } else { panic!("mpCollPrev: assertion failed"); }
@@ -495,8 +514,8 @@ pub unsafe fn mpColl_LoadECB_Fixed(mut coll: *mut CollData) {
         left_x = -(*coll).ecb_source.anon_4.anon_0_0.front;
     }
     if angle != 0.0f32 {
-        sin = ext::sinf(angle);
-        cos = ext::cosf(angle);
+        sin = melee_runtime::gekko::sinf(angle);
+        cos = melee_runtime::gekko::cosf(angle);
         orig_top_y = top_y;
         orig_bottom_y = bottom_y;
         orig_right_x = right_x;
@@ -628,11 +647,11 @@ pub unsafe fn mpCollInterpolateECB(mut coll: *mut CollData, mut time: f32) {
     Vec2_Interpolate(time, core::ptr::addr_of_mut!((*coll).ecb.left) as *mut Vec2, core::ptr::addr_of_mut!((*coll).desired_ecb.left) as *mut Vec2);
     Vec2_Interpolate(time, core::ptr::addr_of_mut!((*coll).ecb.right) as *mut Vec2, core::ptr::addr_of_mut!((*coll).desired_ecb.right) as *mut Vec2);
     if ((((((((if 1 != 0 { __fpclassifyf((*coll).ecb.top.x) } else { __fpclassifyd((*coll).ecb.top.x as f64) }) == (FP_NAN as i32)) || ((if 1 != 0 { __fpclassifyf((*coll).ecb.top.y) } else { __fpclassifyd((*coll).ecb.top.y as f64) }) == (FP_NAN as i32))) || ((if 1 != 0 { __fpclassifyf((*coll).ecb.bottom.x) } else { __fpclassifyd((*coll).ecb.bottom.x as f64) }) == (FP_NAN as i32))) || ((if 1 != 0 { __fpclassifyf((*coll).ecb.bottom.y) } else { __fpclassifyd((*coll).ecb.bottom.y as f64) }) == (FP_NAN as i32))) || ((if 1 != 0 { __fpclassifyf((*coll).ecb.left.x) } else { __fpclassifyd((*coll).ecb.left.x as f64) }) == (FP_NAN as i32))) || ((if 1 != 0 { __fpclassifyf((*coll).ecb.left.y) } else { __fpclassifyd((*coll).ecb.left.y as f64) }) == (FP_NAN as i32))) || ((if 1 != 0 { __fpclassifyf((*coll).ecb.right.x) } else { __fpclassifyd((*coll).ecb.right.x as f64) }) == (FP_NAN as i32))) || ((if 1 != 0 { __fpclassifyf((*coll).ecb.right.y) } else { __fpclassifyd((*coll).ecb.right.y as f64) }) == (FP_NAN as i32)) {
-        ();
-        ();
-        ();
-        ();
-        if 0 != 0 { (); } else { (); panic!("mpCollInterpolateECB: assertion failed"); }
+        ext::OSReport(&format!("mpcoll: ECB NaN: gobj={:p} classifier={} p_link={} itkind={} time={:.6}\n", (*coll).x0_gobj as *mut c_void, if !(*coll).x0_gobj.is_null() { (*(*coll).x0_gobj).classifier as i32 } else { (-1_i32) }, if !(*coll).x0_gobj.is_null() { (*(*coll).x0_gobj).p_link as i32 } else { (-1_i32) }, if (!(*coll).x0_gobj.is_null()) && (((*(*coll).x0_gobj).p_link as i32) == 9) { ext::itGetKind((*coll).x0_gobj) } else { (-1_i32) }, time as f64));
+        ext::OSReport(&format!("mpcoll:   pos({:.6},{:.6}) ecb T({:.6},{:.6}) B({:.6},{:.6}) L({:.6},{:.6}) R({:.6},{:.6})\n", (*coll).cur_pos.x as f64, (*coll).cur_pos.y as f64, (*coll).ecb.top.x as f64, (*coll).ecb.top.y as f64, (*coll).ecb.bottom.x as f64, (*coll).ecb.bottom.y as f64, (*coll).ecb.left.x as f64, (*coll).ecb.left.y as f64, (*coll).ecb.right.x as f64, (*coll).ecb.right.y as f64));
+        ext::OSReport(&format!("mpcoll:   desired T({:.6},{:.6}) B({:.6},{:.6}) L({:.6},{:.6}) R({:.6},{:.6})\n", (*coll).desired_ecb.top.x as f64, (*coll).desired_ecb.top.y as f64, (*coll).desired_ecb.bottom.x as f64, (*coll).desired_ecb.bottom.y as f64, (*coll).desired_ecb.left.x as f64, (*coll).desired_ecb.left.y as f64, (*coll).desired_ecb.right.x as f64, (*coll).desired_ecb.right.y as f64));
+        ext::OSReport(&format!("mpcoll:   prev    T({:.6},{:.6}) B({:.6},{:.6}) L({:.6},{:.6}) R({:.6},{:.6})\n", (*coll).prev_ecb.top.x as f64, (*coll).prev_ecb.top.y as f64, (*coll).prev_ecb.bottom.x as f64, (*coll).prev_ecb.bottom.y as f64, (*coll).prev_ecb.left.x as f64, (*coll).prev_ecb.left.y as f64, (*coll).prev_ecb.right.x as f64, (*coll).prev_ecb.right.y as f64));
+        if 0 != 0 { (); } else { ext::OSReport(&format!("error\n")); panic!("mpCollInterpolateECB: assertion failed"); }
     }
 }
 
@@ -743,12 +762,12 @@ pub unsafe fn mpCollEnd(mut coll: *mut CollData, mut arg1: i32, mut arg2: i32) {
     if ext::DbLevel >= ((DbLKind_DebugRom as i32) as u32) {
         if !(((((*coll).cur_pos.x < 4.5e+04f32) && ((*coll).cur_pos.x > (-4.5e+04f32))) && ((*coll).cur_pos.y < 4.5e+04f32)) && ((*coll).cur_pos.y > (-4.5e+04f32))) {
             if ext::ftLib_80086960((*coll).x0_gobj) != 0 {
-                ();
+                ext::OSReport(&format!("{}:{}: Error: mpCollEnd() last({:.6},{:.6}) pos({:.6},{:.6}) ply={} ms={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mpcoll.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 1350, (*coll).last_pos.x as f64, (*coll).last_pos.y as f64, (*coll).cur_pos.x as f64, (*coll).cur_pos.y as f64, ext::ftLib_80086BE0((*coll).x0_gobj) as i32, ext::ftLib_800874BC((*coll).x0_gobj)));
             } else {
                 let mut gobjid: i32 = (*(*coll).x0_gobj).classifier as i32;
-                ();
+                ext::OSReport(&format!("{}:{}: Error: mpCollEnd() last({:.6},{:.6}) pos({:.6},{:.6}) gobjid={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mpcoll.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 1358, (*coll).last_pos.x as f64, (*coll).last_pos.y as f64, (*coll).cur_pos.x as f64, (*coll).cur_pos.y as f64, gobjid));
                 if ((*(*coll).x0_gobj).p_link as i32) == 9 {
-                    ();
+                    ext::OSReport(&format!("itkind={}\n", ext::itGetKind((*coll).x0_gobj)));
                 }
             }
             if 0 != 0 { (); } else { panic!("mpCollEnd: assertion failed"); }
@@ -814,7 +833,7 @@ pub unsafe fn mpColl_800436E4(mut coll: *mut CollData, mut arg1: f32) {
         }
         (*coll).ecb_source.anon_4.anon_0_0.angle = var_f1;
     } else {
-        ();
+        ext::OSReport(&format!("not support rotate at JObj type coll\n"));
         'l23: while 1 != 0 {
         }
     }
@@ -838,7 +857,7 @@ pub unsafe fn mpColl_80043754(mut cb: Option<unsafe extern "C" fn(*mut CollData,
     let mut step: i32 = 0;
     let mut steps: i32 = 0;
     let mut ret: i32 = 0;
-    let _ = ext::lbVector_Diff(core::ptr::addr_of_mut!((*coll).cur_pos) as *mut Vec, core::ptr::addr_of_mut!((*coll).last_pos) as *mut Vec, core::ptr::addr_of_mut!(vel) as *mut Vec);
+    let _ = lbVector_Diff(core::ptr::addr_of_mut!((*coll).cur_pos) as *mut Vec, core::ptr::addr_of_mut!((*coll).last_pos) as *mut Vec, core::ptr::addr_of_mut!(vel) as *mut Vec);
     x = if vel.x < (0 as f32) { -vel.x } else { vel.x };
     y = if vel.y < (0 as f32) { -vel.y } else { vel.y };
     dist_left_x = (*coll).desired_ecb.left.x - (*coll).ecb.left.x;
@@ -877,7 +896,7 @@ pub unsafe fn mpColl_80043754(mut cb: Option<unsafe extern "C" fn(*mut CollData,
     'l24: while (step < steps) && (!((*coll).x34_flags.b5() != 0)) {
         mpCollInterpolateECB(coll, 1.0f32 / ((steps - step) as f32));
         (*coll).prev_pos = (*coll).cur_pos;
-        let _ = ext::lbVector_Add(core::ptr::addr_of_mut!((*coll).cur_pos) as *mut Vec, core::ptr::addr_of_mut!(vel) as *mut Vec);
+        let _ = lbVector_Add(core::ptr::addr_of_mut!((*coll).cur_pos) as *mut Vec, core::ptr::addr_of_mut!(vel) as *mut Vec);
         mpCollCheckBounding(coll, flags);
         ret = cb.unwrap()(coll, flags);
         super::mplib::mpUncheckBounding();
@@ -1273,7 +1292,7 @@ pub unsafe fn mpColl_80044948_Floor(mut coll: *mut CollData) -> i32 {
             if line_id != (-1_i32) {
                 (*coll).floor.index = line_id;
             } else {
-                ();
+                ext::OSReport(&format!("{}:{}: Error:oioi... id={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mpcoll.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 2488, (*coll).floor.index));
             }
         }
     }
@@ -1348,7 +1367,7 @@ pub unsafe fn mpColl_80044C74_Ceiling(mut coll: *mut CollData) -> i32 {
             if line_id != (-1_i32) {
                 (*coll).ceiling.index = line_id;
             } else {
-                ();
+                ext::OSReport(&format!("{}:{}: oioi...\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mpcoll.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 2620));
             }
         }
     }
@@ -3189,7 +3208,7 @@ pub unsafe fn mpColl_8004AB80(mut coll: *mut CollData) -> i32 {
             if line_id != (-1_i32) {
                 (*coll).ceiling.index = line_id;
             } else {
-                ();
+                ext::OSReport(&format!("{}:{}: oioi...\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mpcoll.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 5745));
             }
         }
     }

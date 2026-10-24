@@ -377,10 +377,10 @@ pub fn Player_GetPlayerSlotType(slot: i32) -> Gm_PKind {
     sp(slot).pkind
 }
 
-pub fn Player_8003248C(slot: i32, arg1: bool) -> Gm_PKind {
+pub fn Player_8003248C(slot: i32, arg1: i32) -> Gm_PKind {
     let player = sp(slot);
 
-    if arg1 {
+    if arg1 == 1 {
         if map(player.ckind).has_transformation == 0 {
             if player.pkind == Gm_PKind_Human || player.pkind == Gm_PKind_Cpu {
                 return 1;
@@ -394,23 +394,23 @@ pub fn Player_SetSlottype(slot: i32, value: Gm_PKind) {
     sp(slot).pkind = value;
 }
 
-pub fn Player_800325C8(kind: CharacterKind, b: bool) -> i8 {
-    if !b {
+pub fn Player_800325C8(kind: CharacterKind, b: i32) -> i8 {
+    if b == 0 {
         return map(kind).internal_id;
-    } else if b {
+    } else if b == 1 {
         return map(kind).extra_internal_id;
     }
     -1
 }
 
-pub fn Player_80032610(slot: i32, arg1: bool) -> i8 {
+pub fn Player_80032610(slot: i32, arg1: i32) -> i8 {
     let error_value: i32 = -1;
     let player = sp(slot);
 
-    if !arg1 {
+    if arg1 == 0 {
         return map(player.ckind).internal_id;
     }
-    if arg1 {
+    if arg1 == 1 {
         return map(player.ckind).extra_internal_id;
     }
     error_value as i8
@@ -779,8 +779,9 @@ pub fn Player_SetMoreFlagsBit5(slot: i32, bit5: u8) {
     sp(slot).more_flags.set_b5(bit5);
 }
 
-pub fn Player_GetMoreFlagsBit6(slot: i32) -> bool {
-    sp(slot).more_flags.b6() != 0
+/// `bool` is MSL `int`: the 2-bit field comes back as 0..=3
+pub fn Player_GetMoreFlagsBit6(slot: i32) -> i32 {
+    sp(slot).more_flags.b6() as i32
 }
 
 pub fn Player_SetMoreFlagsBit6(slot: i32, bit6: u8) {

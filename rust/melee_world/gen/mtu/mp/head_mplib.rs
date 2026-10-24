@@ -20,3 +20,14 @@ unsafe fn lineid_check(line: u32, line_id: i32) {
         panic!("src/melee/mp/mplib.c:{}:not found lineID={}", line, line_id);
     }
 }
+
+/// `PSMTXMultVec` (dolphin/mtx; ported in melee_runtime::mtx): `*dst = m * *src`
+unsafe fn PSMTXMultVec(m: *mut [f32; 4], src: *mut Vec, dst: *mut Vec) {
+    let r = melee_runtime::mtx::mult_vec(
+        core::slice::from_raw_parts(m as *const [f32; 4], 3),
+        &melee_core::vec::Vec3 { x: (*src).x, y: (*src).y, z: (*src).z },
+    );
+    (*dst).x = r.x;
+    (*dst).y = r.y;
+    (*dst).z = r.z;
+}

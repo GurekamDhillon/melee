@@ -285,6 +285,11 @@ class Tr:
         self.ALIAS = {
             "sqrtf": "melee_runtime::gekko::sqrtf",
             "__frsqrte": "melee_core::fp::frsqrte",
+            "sinf": "melee_runtime::gekko::sinf",
+            "cosf": "melee_runtime::gekko::cosf",
+            "lbVector_Add": "lbVector_Add",
+            "lbVector_Diff": "lbVector_Diff",
+            "PSMTXMultVec": "PSMTXMultVec",
             "__fpclassifyf": "__fpclassifyf",
             "__fpclassifyd": "__fpclassifyd",
         }
@@ -358,6 +363,8 @@ class Tr:
         if fk == T.POINTER and tk in INT_KINDS:
             warn(f"{self.cur}: pointer->int cast {ex.code!r} (hand check)")
             return Ex(f"{ex.p()} as usize as {INT_KINDS[tk][0]}", to, False)
+        if fk in (T.CONSTANTARRAY, T.INCOMPLETEARRAY) and tk == T.POINTER and ex.code.startswith('c"'):
+            return Ex(ex.code, to, False)
         if fk in (T.CONSTANTARRAY, T.INCOMPLETEARRAY) and tk == T.POINTER:
             ep = "*mut " + rty(f.element_type)
             if ep == rty(to):
@@ -428,8 +435,7 @@ class Tr:
             s = (f32lit(v[1]) + ("f32" if f32lit(v[1]) != "f32::MAX" else "")) if prim(t) == "f32" else f64lit(v[1]) + "f64"
             return Ex(s, t, True)
         if k == K.STRING_LITERAL:
-            v = evaluate(c)
-            return Ex(f'c"{v[1].decode("latin1") if v else ""}".as_ptr()', c.type, True)
+            return Ex(f'c"{c.spelling[1:-1]}".as_ptr() as *mut i8', c.type, True)
         if k == K.DECL_REF_EXPR:
             return self.declref(c)
         if k == K.MEMBER_REF_EXPR:
@@ -959,8 +965,7 @@ class Tr:
         while a0.kind == K.UNEXPOSED_EXPR:
             a0 = strip(expr_children(a0)[0])
         if a0.kind == K.STRING_LITERAL:
-            ev = evaluate(a0)
-            fmt = ev[1].decode("latin1") if ev else None
+            fmt = a0.spelling[1:-1]
         rest = [self.E(a) for a in args[1:]]
         if fmt is None:
             return Ex("()", c.type, True)
@@ -998,7 +1003,7 @@ class Tr:
                 argc.append(e.code)
                 out += "{:p}"
             else:
-                argc.append(f"core::ffi::CStr::from_ptr({e.code}).to_string_lossy()")
+                argc.append(f"core::ffi::CStr::from_ptr({e.p()} as *const core::ffi::c_char).to_string_lossy()")
                 out += "{}"
         out += fmt[pos:].replace("{", "{{").replace("}", "}}")
         out = out.replace("\n", "\\n")

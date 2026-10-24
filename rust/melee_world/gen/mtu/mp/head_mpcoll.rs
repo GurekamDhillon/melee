@@ -28,3 +28,25 @@ fn __fpclassifyd(x: f64) -> i32 {
         _ => 4,
     }
 }
+
+/// `lbVector_Add` (lb/lbvector.c; ported in melee_runtime)
+unsafe fn lbVector_Add(a: *mut Vec, b: *mut Vec) -> *mut Vec {
+    let mut x = melee_core::vec::Vec3 { x: (*a).x, y: (*a).y, z: (*a).z };
+    melee_runtime::lbvector::add(&mut x, &melee_core::vec::Vec3 { x: (*b).x, y: (*b).y, z: (*b).z });
+    (*a).x = x.x;
+    (*a).y = x.y;
+    (*a).z = x.z;
+    a
+}
+
+/// `lbVector_Diff` (lb/lbvector.c; ported in melee_runtime): `*out = *a - *b`
+unsafe fn lbVector_Diff(a: *mut Vec, b: *mut Vec, out: *mut Vec) -> *mut Vec {
+    let r = melee_runtime::lbvector::diff(
+        &melee_core::vec::Vec3 { x: (*a).x, y: (*a).y, z: (*a).z },
+        &melee_core::vec::Vec3 { x: (*b).x, y: (*b).y, z: (*b).z },
+    );
+    (*out).x = r.x;
+    (*out).y = r.y;
+    (*out).z = r.z;
+    out
+}

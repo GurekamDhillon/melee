@@ -21,6 +21,17 @@ unsafe fn lineid_check(line: u32, line_id: i32) {
     }
 }
 
+/// `PSMTXMultVec` (dolphin/mtx; ported in melee_runtime::mtx): `*dst = m * *src`
+unsafe fn PSMTXMultVec(m: *mut [f32; 4], src: *mut Vec, dst: *mut Vec) {
+    let r = melee_runtime::mtx::mult_vec(
+        core::slice::from_raw_parts(m as *const [f32; 4], 3),
+        &melee_core::vec::Vec3 { x: (*src).x, y: (*src).y, z: (*src).z },
+    );
+    (*dst).x = r.x;
+    (*dst).y = r.y;
+    (*dst).z = r.z;
+}
+
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
@@ -75,7 +86,6 @@ pub mod ext {
     fn HSD_StateSetNumTevStages();
     fn HSD_StateSetNumTexGens();
     fn Mex_GrLineTypeRow(a0: i32) -> i32;
-    fn PSMTXMultVec(a0: *mut [f32; 4], a1: *mut Vec, a2: *mut Vec);
     fn ScriptGame_StageJoint(a0: i32) -> i32;
     fn ScriptGame_StageJointActive(a0: i32) -> i32;
     fn ScriptGame_StageJointCapacity() -> i32;
@@ -93,6 +103,7 @@ pub mod ext {
     fn grDynamicAttr_801CA0B4();
     fn grDynamicAttr_801CA224();
     fn itGetKind(a0: *mut HSD_GObj) -> ItemKind;
+    fn OSReport(a0: &str);
     }
     pub static mut DbLevel: DbLKind = unsafe { core::mem::zeroed() };
     pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
@@ -594,7 +605,7 @@ pub unsafe fn mpLib_8004DD90_Floor(mut line_id: i32, mut vec: *mut Vec, mut y_ou
     let mut y: f32 = 0.0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLib_8004DD90_Floor: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 774, line_id)); panic!("mpLib_8004DD90_Floor: assertion failed"); }
         }
     }
     'l181: while 1 != 0 {
@@ -665,7 +676,7 @@ pub unsafe fn mpLib_8004E090_Ceiling(mut line_id: i32, mut vec: *mut Vec, mut y_
     let mut x: f32 = 0.0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLib_8004E090_Ceiling: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 893, line_id)); panic!("mpLib_8004E090_Ceiling: assertion failed"); }
         }
     }
     x = (*vec).x;
@@ -735,7 +746,7 @@ pub unsafe fn mpLib_8004E398_LeftWall(mut line_id: i32, mut vec: *mut Vec, mut x
     let mut y: f32 = 0.0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLib_8004E398_LeftWall: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 1014, line_id)); panic!("mpLib_8004E398_LeftWall: assertion failed"); }
         }
     }
     y = (*vec).y;
@@ -803,7 +814,7 @@ pub unsafe fn mpLib_8004E684_RightWall(mut line_id: i32, mut vec: *mut Vec, mut 
     let mut y: f32 = 0.0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLib_8004E684_RightWall: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 1134, line_id)); panic!("mpLib_8004E684_RightWall: assertion failed"); }
         }
     }
     y = (*vec).y;
@@ -2869,7 +2880,7 @@ pub unsafe fn mpLineNextNonFloor(mut line_id: i32) -> i32 {
     let mut new_id: i32 = 0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLineNextNonFloor: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4139, line_id)); panic!("mpLineNextNonFloor: assertion failed"); }
         }
     }
     first_line = (*groundCollLine.offset(line_id as isize)).x0;
@@ -2889,7 +2900,7 @@ pub unsafe fn mpLinePrevNonFloor(mut line_id: i32) -> i32 {
     let mut new_id: i32 = 0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLinePrevNonFloor: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4148, line_id)); panic!("mpLinePrevNonFloor: assertion failed"); }
         }
     }
     first_line = (*groundCollLine.offset(line_id as isize)).x0;
@@ -2909,7 +2920,7 @@ pub unsafe fn mpLinePrevNonCeiling(mut line_id: i32) -> i32 {
     let mut new_id: i32 = 0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLinePrevNonCeiling: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4157, line_id)); panic!("mpLinePrevNonCeiling: assertion failed"); }
         }
     }
     first_line = (*groundCollLine.offset(line_id as isize)).x0;
@@ -2929,7 +2940,7 @@ pub unsafe fn mpLineNextNonCeiling(mut line_id: i32) -> i32 {
     let mut new_id: i32 = 0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLineNextNonCeiling: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4166, line_id)); panic!("mpLineNextNonCeiling: assertion failed"); }
         }
     }
     first_line = (*groundCollLine.offset(line_id as isize)).x0;
@@ -2949,7 +2960,7 @@ pub unsafe fn mpLineNextNonLeftWall(mut line_id: i32) -> i32 {
     let mut new_id: i32 = 0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLineNextNonLeftWall: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4175, line_id)); panic!("mpLineNextNonLeftWall: assertion failed"); }
         }
     }
     first_line = (*groundCollLine.offset(line_id as isize)).x0;
@@ -2969,7 +2980,7 @@ pub unsafe fn mpLinePrevNonLeftWall(mut line_id: i32) -> i32 {
     let mut new_id: i32 = 0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLinePrevNonLeftWall: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4184, line_id)); panic!("mpLinePrevNonLeftWall: assertion failed"); }
         }
     }
     first_line = (*groundCollLine.offset(line_id as isize)).x0;
@@ -2989,7 +3000,7 @@ pub unsafe fn mpLinePrevNonRightWall(mut line_id: i32) -> i32 {
     let mut new_id: i32 = 0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLinePrevNonRightWall: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4193, line_id)); panic!("mpLinePrevNonRightWall: assertion failed"); }
         }
     }
     first_line = (*groundCollLine.offset(line_id as isize)).x0;
@@ -3009,7 +3020,7 @@ pub unsafe fn mpLineNextNonRightWall(mut line_id: i32) -> i32 {
     let mut new_id: i32 = 0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLineNextNonRightWall: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4202, line_id)); panic!("mpLineNextNonRightWall: assertion failed"); }
         }
     }
     first_line = (*groundCollLine.offset(line_id as isize)).x0;
@@ -3046,7 +3057,7 @@ unsafe fn mpLineWalkNon(mut line_id: i32, mut kind: i32, mut next: i32) -> i32 {
 pub unsafe fn mpLib_80053394_Floor(mut line_id: i32) -> i32 {
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLib_80053394_Floor: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4252, line_id)); panic!("mpLib_80053394_Floor: assertion failed"); }
         }
     }
     return mpLineWalkNon(line_id, CollLine_Floor as i32, 1);
@@ -3056,7 +3067,7 @@ pub unsafe fn mpLib_80053394_Floor(mut line_id: i32) -> i32 {
 pub unsafe fn mpLib_80053448_Floor(mut line_id: i32) -> i32 {
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLib_80053448_Floor: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4261, line_id)); panic!("mpLib_80053448_Floor: assertion failed"); }
         }
     }
     return mpLineWalkNon(line_id, CollLine_Floor as i32, 0);
@@ -3117,7 +3128,7 @@ pub unsafe fn mpLib_800534FC_Floor(mut line_id: i32) -> i32 {
     let mut new_id: i32 = 0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLib_800534FC_Floor: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4272, line_id)); panic!("mpLib_800534FC_Floor: assertion failed"); }
         }
     }
     new_id = mpLineGetNextCachedInline(line_id);
@@ -3181,7 +3192,7 @@ pub unsafe fn mpLib_800536CC_Floor(mut line_id: i32) -> i32 {
     let mut result: i32 = 0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLib_800536CC_Floor: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4293, line_id)); panic!("mpLib_800536CC_Floor: assertion failed"); }
         }
     }
     new_id = mpLineGetPrevInline(line_id);
@@ -3210,7 +3221,7 @@ pub unsafe fn mpLib_800536CC_Floor(mut line_id: i32) -> i32 {
 pub unsafe fn mpLib_8005389C_Ceiling(mut line_id: i32) -> i32 {
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLib_8005389C_Ceiling: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4314, line_id)); panic!("mpLib_8005389C_Ceiling: assertion failed"); }
         }
     }
     return mpLineWalkNon(line_id, CollLine_Ceiling as i32, 0);
@@ -3220,7 +3231,7 @@ pub unsafe fn mpLib_8005389C_Ceiling(mut line_id: i32) -> i32 {
 pub unsafe fn mpLib_80053950_Ceiling(mut line_id: i32) -> i32 {
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLib_80053950_Ceiling: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4323, line_id)); panic!("mpLib_80053950_Ceiling: assertion failed"); }
         }
     }
     return mpLineWalkNon(line_id, CollLine_Ceiling as i32, 1);
@@ -3233,7 +3244,7 @@ pub unsafe fn mpLib_80053A04_Ceiling(mut line_id: i32) -> i32 {
     let mut new_id: i32 = 0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLib_80053A04_Ceiling: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4334, line_id)); panic!("mpLib_80053A04_Ceiling: assertion failed"); }
         }
     }
     new_id = mpLineGetPrevInline(line_id);
@@ -3264,7 +3275,7 @@ pub unsafe fn mpLib_80053BD4_Ceiling(mut line_id: i32) -> i32 {
     let mut new_id: i32 = 0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLib_80053BD4_Ceiling: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4355, line_id)); panic!("mpLib_80053BD4_Ceiling: assertion failed"); }
         }
     }
     new_id = mpLineGetNextInline(line_id);
@@ -3345,7 +3356,7 @@ pub unsafe fn mpFloorGetRight(mut line_id: i32, mut pos_out: *mut Vec) {
     let mut line_offset: i32 = 0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpFloorGetRight: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4465, line_id)); panic!("mpFloorGetRight: assertion failed"); }
         }
     }
     w.id = line_id;
@@ -3384,7 +3395,7 @@ pub unsafe fn mpFloorGetLeft(mut line_id: i32, mut pos_out: *mut Vec) {
     let mut line_offset: i32 = 0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpFloorGetLeft: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4474, line_id)); panic!("mpFloorGetLeft: assertion failed"); }
         }
     }
     w.id = line_id;
@@ -3423,7 +3434,7 @@ pub unsafe fn mpCeilingGetRight(mut line_id: i32, mut pos_out: *mut Vec) {
     let mut line_offset: i32 = 0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpCeilingGetRight: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4483, line_id)); panic!("mpCeilingGetRight: assertion failed"); }
         }
     }
     if line_id != (-1_i32) {
@@ -3464,7 +3475,7 @@ pub unsafe fn mpCeilingGetLeft(mut line_id: i32, mut pos_out: *mut Vec) {
     let mut line_offset: i32 = 0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpCeilingGetLeft: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4492, line_id)); panic!("mpCeilingGetLeft: assertion failed"); }
         }
     }
     if line_id != (-1_i32) {
@@ -3505,7 +3516,7 @@ pub unsafe fn mpLeftWallGetTop(mut line_id: i32, mut pos_out: *mut Vec) {
     let mut line_offset: i32 = 0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLeftWallGetTop: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4501, line_id)); panic!("mpLeftWallGetTop: assertion failed"); }
         }
     }
     if line_id != (-1_i32) {
@@ -3546,7 +3557,7 @@ pub unsafe fn mpLeftWallGetBottom(mut line_id: i32, mut pos_out: *mut Vec) {
     let mut line_offset: i32 = 0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLeftWallGetBottom: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4510, line_id)); panic!("mpLeftWallGetBottom: assertion failed"); }
         }
     }
     if line_id != (-1_i32) {
@@ -3587,7 +3598,7 @@ pub unsafe fn mpRightWallGetTop(mut line_id: i32, mut pos_out: *mut Vec) {
     let mut line_offset: i32 = 0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpRightWallGetTop: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4519, line_id)); panic!("mpRightWallGetTop: assertion failed"); }
         }
     }
     if line_id != (-1_i32) {
@@ -3628,7 +3639,7 @@ pub unsafe fn mpRightWallGetBottom(mut line_id: i32, mut pos_out: *mut Vec) {
     let mut kind: u32 = 0;
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpRightWallGetBottom: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4528, line_id)); panic!("mpRightWallGetBottom: assertion failed"); }
         }
     }
     if line_id != (-1_i32) {
@@ -3666,7 +3677,7 @@ pub unsafe fn mpLineGetV1Pos(mut line_id: i32, mut pos_out: *mut Vec) {
     let mut v1: *mut CollVtx = null_mut();
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLineGetV1Pos: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4540, line_id)); panic!("mpLineGetV1Pos: assertion failed"); }
         }
     }
     v1 = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).x0).v1_idx as isize)) as *mut CollVtx;
@@ -3680,7 +3691,7 @@ pub unsafe fn mpLineGetV0Pos(mut line_id: i32, mut pos_out: *mut Vec) {
     let mut v0: *mut CollVtx = null_mut();
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLineGetV0Pos: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4555, line_id)); panic!("mpLineGetV0Pos: assertion failed"); }
         }
     }
     v0 = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).x0).v0_idx as isize)) as *mut CollVtx;
@@ -3693,7 +3704,7 @@ pub unsafe fn mpLineGetV0Pos(mut line_id: i32, mut pos_out: *mut Vec) {
 pub unsafe fn mpLineGetKind(mut line_id: i32) -> i32 {
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLineGetKind: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4573, line_id)); panic!("mpLineGetKind: assertion failed"); }
         }
     }
     return ((*groundCollLine.offset(line_id as isize)).flags & (15 as u32)) as i32;
@@ -3703,7 +3714,7 @@ pub unsafe fn mpLineGetKind(mut line_id: i32) -> i32 {
 pub unsafe fn mpLineGetFlags(mut line_id: i32) -> u32 {
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLineGetFlags: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4583, line_id)); panic!("mpLineGetFlags: assertion failed"); }
         }
     }
     return (*(*groundCollLine.offset(line_id as isize)).x0).lo_flags as u32;
@@ -3713,7 +3724,7 @@ pub unsafe fn mpLineGetFlags(mut line_id: i32) -> u32 {
 pub unsafe fn mpLib_80054D68(mut line_id: i32, mut flags: u32) {
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLib_80054D68: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4595, line_id)); panic!("mpLib_80054D68: assertion failed"); }
         }
     }
     {
@@ -3728,7 +3739,7 @@ pub unsafe fn mpLineGetNormal(mut line_id: i32, mut normal_out: *mut Vec) -> *mu
     let mut line: *mut MapLine = null_mut();
     {
         if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLineGetNormal: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4609, line_id)); panic!("mpLineGetNormal: assertion failed"); }
         }
     }
     line = (*groundCollLine.offset(line_id as isize)).x0;
@@ -3754,7 +3765,7 @@ pub unsafe fn mpLib_80054ED8(mut line_id: i32) -> i32 {
         return 0;
     }
     if (line_id < 0) || (line_id >= (*mpLib_804D64B4).line_count) {
-        ();
+        ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4636, line_id));
         'l245: while 1 != 0 {
         }
     }
@@ -3804,12 +3815,12 @@ pub unsafe fn mpLinesConnected(mut start_id: i32, mut target_id: i32) -> i32 {
     let mut flags_base: *mut u32 = null_mut();
     {
         if (start_id == (-1_i32)) || (start_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLinesConnected: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4656, start_id)); panic!("mpLinesConnected: assertion failed"); }
         }
     }
     {
         if (target_id == (-1_i32)) || (target_id >= (*mpLib_804D64B4).line_count) {
-            if 0 != 0 { (); } else { (); panic!("mpLinesConnected: assertion failed"); }
+            if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4657, target_id)); panic!("mpLinesConnected: assertion failed"); }
         }
     }
     if start_id == target_id {
@@ -4119,7 +4130,7 @@ pub unsafe fn mpLib_80055E9C(mut joint_id: i32) {
                 sp28.x = (*v_r26).x0;
                 sp28.y = (*v_r26).x4;
                 sp28.z = f31;
-                ext::PSMTXMultVec((*jobj).mtx.as_mut_ptr(), core::ptr::addr_of_mut!(sp28) as *mut Vec, core::ptr::addr_of_mut!(sp28) as *mut Vec);
+                PSMTXMultVec((*jobj).mtx.as_mut_ptr(), core::ptr::addr_of_mut!(sp28) as *mut Vec, core::ptr::addr_of_mut!(sp28) as *mut Vec);
                 (*v_r26).pos.x = sp28.x;
                 (*v_r26).pos.y = sp28.y;
                 if (((mpLib_804D64CC == 0) || ((*v_r26).pos.x != (*v_r26).x10)) || ((*v_r26).pos.y != (*v_r26).x14)) || ({ var_r25 = var_r25 + 1; var_r25 } <= 1) {
@@ -4140,26 +4151,26 @@ pub unsafe fn mpLib_80055E9C(mut joint_id: i32) {
                     sp28.x = (*(*joint).inner).left_bound;
                     sp28.y = (*(*joint).inner).bottom_bound;
                     sp28.z = 0.0f32;
-                    ext::PSMTXMultVec((*jobj).mtx.as_mut_ptr(), core::ptr::addr_of_mut!(sp28) as *mut Vec, core::ptr::addr_of_mut!(sp28) as *mut Vec);
+                    PSMTXMultVec((*jobj).mtx.as_mut_ptr(), core::ptr::addr_of_mut!(sp28) as *mut Vec, core::ptr::addr_of_mut!(sp28) as *mut Vec);
                     (*joint).bounding_min.x = sp28.x;
                     (*joint).bounding_min.y = sp28.y;
                     sp28.x = (*(*joint).inner).right_bound;
                     sp28.y = (*(*joint).inner).top_bound;
                     sp28.z = 0.0f32;
-                    ext::PSMTXMultVec((*jobj).mtx.as_mut_ptr(), core::ptr::addr_of_mut!(sp28) as *mut Vec, core::ptr::addr_of_mut!(sp28) as *mut Vec);
+                    PSMTXMultVec((*jobj).mtx.as_mut_ptr(), core::ptr::addr_of_mut!(sp28) as *mut Vec, core::ptr::addr_of_mut!(sp28) as *mut Vec);
                     (*joint).bounding_max.x = sp28.x;
                     (*joint).bounding_max.y = sp28.y;
                     if ((*joint).flags & ((CollJoint_B9 as i32) as u32)) != 0 {
                         sp28.x = (*(*joint).inner).right_bound;
                         sp28.y = (*(*joint).inner).bottom_bound;
                         sp28.z = 0.0f32;
-                        ext::PSMTXMultVec((*jobj).mtx.as_mut_ptr(), core::ptr::addr_of_mut!(sp28) as *mut Vec, core::ptr::addr_of_mut!(sp28) as *mut Vec);
+                        PSMTXMultVec((*jobj).mtx.as_mut_ptr(), core::ptr::addr_of_mut!(sp28) as *mut Vec, core::ptr::addr_of_mut!(sp28) as *mut Vec);
                         f30 = sp28.x;
                         f31 = sp28.y;
                         sp28.x = (*(*joint).inner).left_bound;
                         sp28.y = (*(*joint).inner).top_bound;
                         sp28.z = 0.0f32;
-                        ext::PSMTXMultVec((*jobj).mtx.as_mut_ptr(), core::ptr::addr_of_mut!(sp28) as *mut Vec, core::ptr::addr_of_mut!(sp28) as *mut Vec);
+                        PSMTXMultVec((*jobj).mtx.as_mut_ptr(), core::ptr::addr_of_mut!(sp28) as *mut Vec, core::ptr::addr_of_mut!(sp28) as *mut Vec);
                         f1 = (*joint).bounding_min.x;
                         f0 = (*joint).bounding_max.x;
                         f2 = sp28.x;
@@ -4308,7 +4319,7 @@ pub unsafe fn mpGetSpeed(mut line_id: i32, mut pos: *mut Vec, mut speed: *mut Ve
     (*speed).z = 0.0f32;
     if ext::DbLevel >= ((DbLKind_DebugRom as i32) as u32) {
         if ((if (*speed).x < (0 as f32) { -(*speed).x } else { (*speed).x }) > 1e+04f32) || ((if (*speed).y < (0 as f32) { -(*speed).y } else { (*speed).y }) > 1e+04f32) {
-            ();
+            ext::OSReport(&format!("{}:{}: Error: mpGetSpeed() x={:.6} y={:.6}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 5333, (*speed).x as f64, (*speed).y as f64));
             if !(((if (*speed).x < (0 as f32) { -(*speed).x } else { (*speed).x }) > 1e+04f32) || ((if (*speed).y < (0 as f32) { -(*speed).y } else { (*speed).y }) > 1e+04f32)) { (); } else { panic!("mpGetSpeed: assertion failed"); }
             if 0 != 0 { (); } else { panic!("mpGetSpeed: assertion failed"); }
         }
@@ -4329,7 +4340,7 @@ unsafe fn mpLib_StageRow() -> i32 {
     }
     if mpLib_StageRow_warned != grkind {
         mpLib_StageRow_warned = grkind;
-        ();
+        ext::OSReport(&format!("mpLib: stage grkind={} has no row in mpLib_803BF248[{}] and mexData gave {} - using row 0\n", grkind, 71_u64 as i32, row));
     }
     return 0;
 }
@@ -4403,7 +4414,7 @@ pub unsafe fn mpJointFromLine(mut line_id: i32) -> i32 {
         let mut count: i32 = 0;
         {
             if (line_id == (-1_i32)) || (line_id >= (*mpLib_804D64B4).line_count) {
-                if 0 != 0 { (); } else { (); panic!("mpJointFromLine: assertion failed"); }
+                if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 5459, line_id)); panic!("mpJointFromLine: assertion failed"); }
             }
         }
         v0_idx = (*(*groundCollLine.offset(line_id as isize)).x0).v0_idx as i32;

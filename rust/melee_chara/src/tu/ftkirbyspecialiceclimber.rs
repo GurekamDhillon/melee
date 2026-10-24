@@ -66,7 +66,7 @@ pub mod ext {
                 }
             }
     // `ft_80459B88.hats[kind]`, or NULL when `hats` is NULL.
-    hook!(FT_80459B88_HAT, ft_80459B88_hat, (kind: i32) -> *mut KirbyHatStruct);
+    crate::port_hook!(FT_80459B88_HAT, ft_80459B88_hat, crate::adapt::ft_80459B88_hat, (kind: i32) -> *mut KirbyHatStruct);
 }
 
 type G = *mut HSD_GObj;

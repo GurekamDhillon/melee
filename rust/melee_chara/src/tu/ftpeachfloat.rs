@@ -41,7 +41,7 @@ pub mod ext {
         };
     }
     /// `Mex_OnFloatDispatch(kind, gobj)` (pc/mex, TARGET_PC): the m-ex onFloat callback.
-    hook!(MEX_ONFLOATDISPATCH, Mex_OnFloatDispatch, (kind: i32, gobj: *mut HSD_GObj) -> i32);
+    crate::port_hook!(MEX_ONFLOATDISPATCH, Mex_OnFloatDispatch, crate::adapt::Mex_OnFloatDispatch, (kind: i32, gobj: *mut HSD_GObj) -> i32);
     /// `efAsync_Spawn(gobj, queue_head, spawn_kind, gfx_id, jobj, ...)` (ef/efasync.c).
     crate::port_hook!(EFASYNC_SPAWN, efAsync_Spawn, crate::adapt::efAsync_Spawn_plain, (gobj: *mut HSD_GObj, q: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj));
     /// `ftCo_SpecialAir_CheckInput(gobj)` (ftCommon/ftCo_SpecialAir.c).

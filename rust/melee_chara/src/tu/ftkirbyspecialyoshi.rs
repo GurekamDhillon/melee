@@ -47,7 +47,7 @@ pub mod ext {
         };
     }
     // `ft_80459B88.hats[kind]` (ftdata.c global): null when the hat table is not loaded.
-    hook!(FT_80459B88_HAT, ft_80459B88_hat, (kind: i32) -> *mut KirbyHatStruct);
+    crate::port_hook!(FT_80459B88_HAT, ft_80459B88_hat, crate::adapt::ft_80459B88_hat, (kind: i32) -> *mut KirbyHatStruct);
     // `ftKb_KirbyFtData()->ext_attr` (ftdata.c): Kirby's ftData extension attributes.
     pub static mut FTKB_KIRBYFTDATA: Option<fn() -> *mut ftData> = None;
             #[allow(non_snake_case)]

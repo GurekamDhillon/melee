@@ -56,12 +56,12 @@ pub mod ext {
         };
     }
     // m-ex / skin lookups (pc/platform).
-    hook!(SKINS_KIRBYROW, Skins_KirbyRow, (fk: i32, costume: i32) -> i32);
-    hook!(MEX_COSTUMEVISIDX, Mex_CostumeVisIdx, (fk: i32, costume: i32) -> i32);
-    hook!(MEX_INTERNALFORPORTKIND, Mex_InternalForPortKind, (fk: i32) -> i32);
-    hook!(MEX_FTBASEKIND, Mex_FtBaseKind, (k: i32) -> i32);
-    hook!(MEX_KIRBYFUNC, Mex_KirbyFunc, (slot: i32, internal: i32) -> *mut c_void);
-    hook!(MEX_KIRBYCOSTUMES, Mex_KirbyCostumes, (internal: i32) -> *mut c_void);
+    crate::port_hook!(SKINS_KIRBYROW, Skins_KirbyRow, melee_runtime::tu::mex_data::Skins_KirbyRow, (fk: i32, costume: i32) -> i32);
+    crate::port_hook!(MEX_COSTUMEVISIDX, Mex_CostumeVisIdx, melee_runtime::tu::mex_data::Mex_CostumeVisIdx, (fk: i32, costume: i32) -> i32);
+    crate::port_hook!(MEX_INTERNALFORPORTKIND, Mex_InternalForPortKind, melee_runtime::tu::mex_data::Mex_InternalForPortKind, (fk: i32) -> i32);
+    crate::port_hook!(MEX_FTBASEKIND, Mex_FtBaseKind, melee_runtime::tu::mex_data::Mex_FtBaseKind, (k: i32) -> i32);
+    crate::port_hook!(MEX_KIRBYFUNC, Mex_KirbyFunc, melee_runtime::tu::mex_data::Mex_KirbyFunc, (slot: i32, internal: i32) -> *mut c_void);
+    crate::port_hook!(MEX_KIRBYCOSTUMES, Mex_KirbyCostumes, melee_runtime::tu::mex_data::Mex_KirbyCostumes, (internal: i32) -> *mut c_void);
     // pl/player.c
     pub static mut PLAYER_GETFLAGSBIT1: Option<fn(i32) -> i32> = None;
             #[allow(non_snake_case)]
@@ -457,7 +457,7 @@ unsafe fn hat_slot(k: usize) -> *mut *mut c_void {
 
 /// `ftKb_hatTable` (`ft_80459B88.hats`, an array: never NULL).
 #[inline(always)]
-unsafe fn hat_table(kind: usize) -> *mut KirbyHatStruct {
+pub unsafe fn hat_table(kind: usize) -> *mut KirbyHatStruct {
     ft_80459B88.hats[kind]
 }
 

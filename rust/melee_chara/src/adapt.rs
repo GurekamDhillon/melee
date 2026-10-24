@@ -393,3 +393,15 @@ pub unsafe fn ScriptGame_CapsMaxJumps(fp: &Fighter) -> i32 {
 pub unsafe fn ScriptGame_HitRuleSpecial(hit: *mut HitCapsule) {
     melee_runtime::tu::script_hit::ScriptGame_HitRuleSpecial(hit)
 }
+pub fn Mex_OnFloatDispatch(kind: i32, gobj: G) -> i32 {
+    melee_runtime::tu::mex_data::Mex_OnFloatDispatch(kind, gobj as *mut c_void)
+}
+
+/// `ft_80459B88_hat(kind)`: `ft_80459B88.hats[kind]` (ftkirby.c data).
+pub unsafe fn ft_80459B88_hat(kind: i32) -> *mut KirbyHatStruct {
+    crate::tu::ftkirby::hat_table(kind as usize)
+}
+/// `CostumeListsForeachCharacter[kind].costume_list` (ftdata.c data, owned by melee_fighter).
+pub unsafe fn CostumeListsForeachCharacter_costume_list(kind: i32) -> *mut UnkCostumeStruct {
+    (*(&raw const melee_fighter::tu::ftdata::CostumeListsForeachCharacter))[kind as usize].costume_list
+}

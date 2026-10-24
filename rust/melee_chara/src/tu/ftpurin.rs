@@ -81,7 +81,7 @@ pub mod ext {
         }
     }
     /// `CostumeListsForeachCharacter[kind].costume_list`.
-    hook!(COSTUMELIST, CostumeListsForeachCharacter_costume_list, (kind: i32) -> *mut UnkCostumeStruct);
+    crate::port_hook!(COSTUMELIST, CostumeListsForeachCharacter_costume_list, crate::adapt::CostumeListsForeachCharacter_costume_list, (kind: i32) -> *mut UnkCostumeStruct);
     crate::port_hook!(HSD_ARCHIVEGETPUBLICADDRESS, HSD_ArchiveGetPublicAddress, crate::adapt::HSD_ArchiveGetPublicAddress, (archive: *mut HSD_Archive, name: &str) -> *mut c_void);
     /// `&fighter_x2040_alloc_data`.
     hook!(FIGHTER_X2040_ALLOC_DATA, fighter_x2040_alloc_data, () -> *mut c_void);

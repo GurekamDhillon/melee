@@ -50,7 +50,7 @@ pub mod ext {
         }
     }
     // `ft_80459B88.hats[index]`, or NULL when `hats` is NULL.
-    hook!(FT_80459B88_HAT, ft_80459B88_hat, (index: i32) -> *mut KirbyHatStruct);
+    crate::port_hook!(FT_80459B88_HAT, ft_80459B88_hat, crate::adapt::ft_80459B88_hat, (index: i32) -> *mut KirbyHatStruct);
     hook!(FTCOMMON_SETACCESSORY, ftCommon_SetAccessory, (fp: *mut Fighter, joint: *mut HSD_Joint));
     hook_or!(FTCOMMON_GETMODELSCALE, ftCommon_GetModelScale, ftcommon_get_model_scale_port, (fp: *mut Fighter) -> f32);
     fn ftcommon_get_model_scale_port(fp: *mut Fighter) -> f32 {

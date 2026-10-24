@@ -78,6 +78,7 @@ pub mod leak;
 pub mod jobj;
 pub mod jobj_ptr;
 pub mod script_hit;
+pub mod mex_data;
 pub mod os_report;
 pub mod gmvs_state;
 pub mod hsd_3B34;

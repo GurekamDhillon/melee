@@ -128,3 +128,9 @@ SPECS["gmevent"] = dict(
 )
 for _s in SPECS.values():
     _s["common_ret"] = COMMON_RET
+# shard 849-856 (lb_013B ... mncharsel): kept in their own file
+try:
+    from specs_s849 import SPECS as _S849
+    SPECS.update(_S849)
+except ImportError:
+    pass

@@ -604,6 +604,9 @@ pub fn ext_call_vk(name: &'static str, args: &[Arg], kinds: &str, va: &[Va], ret
     if REC.lock().unwrap_or_else(|e| e.into_inner()).is_none() {
         return None;
     }
+    // `kinds` may list alternatives (`"d|ii"`) for a callee whose call sites pass different vararg
+    // shapes (HSD_ForeachAnim: one double, or two ints); the one with `va.len()` kinds applies.
+    let kinds = kinds.split('|').find(|k| k.chars().count() == va.len()).unwrap_or(kinds);
     ext_call_convs(name, args, kinds.chars().collect(), va, ret)
 }
 

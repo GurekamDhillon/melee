@@ -1061,3 +1061,109 @@ struct lb_Collider {
     /* 0x18 */ Vec3 position;
     /* 0x24 */ char pad_24[0x04];
 };
+/* Extracted from src/melee/lb/lb_0192.c:13; do not edit. */
+struct strings {
+    const char* x0;
+    const char* x4;
+    const char* x8;
+};
+typedef struct strings strings;
+/* Extracted from src/melee/lb/lb_0195.c:12; do not edit. */
+struct UnkArrElem {
+    /* 0x00 */ s64 x0;
+    /* 0x08 */ s64 x8;
+    /* 0x10 */ int x10;
+};
+typedef struct UnkArrElem UnkArrElem;
+/* Extracted from src/melee/lb/lb_0195.c:18; do not edit. */
+struct lb_804329F0_t {
+    struct UnkArrElem x0[2];
+    u32 x4;
+    u64 x38;
+    OSTime x40;
+    int x48;
+    OSAlarm alarm;
+};
+typedef struct lb_804329F0_t lb_804329F0_t;
+/* Extracted from src/melee/lb/lb_01F8.c:10; do not edit. */
+struct lbl_804335B8_t {
+    /* 0x00 */ GXTexObj tex0; /* 0x00-0x20 (size 0x20) */
+    /* 0x20 */ void* x20;     /* image ptr for tex0 */
+    /* 0x24 */ GXTexObj tex1; /* 0x24-0x44 (size 0x20) */
+    /* 0x44 */ void* x44;     /* image ptr for tex1 */
+    /* 0x48 */ GXTexObj tex2; /* 0x48-0x68 (size 0x20) */
+    /* 0x68 */ void* x68;     /* image ptr for tex2 */
+    /* 0x6C */ u16 x6C;       /* width */
+    /* 0x6E */ u16 x6E;       /* height */
+    /* 0x70 */ struct HSD_ImageDesc x70;
+    /* 0x88 */ struct HSD_SObjDesc x88;
+    /* 0x90 */ struct HSD_SObj* x90;
+    /* 0x94 */ void* unk94;
+    /* 0x98 */ size_t unk98;
+    /* 0x9C */ char pad_9C[0xA0 - 0x9C];
+};
+typedef struct lbl_804335B8_t lbl_804335B8_t;
+/* Extracted from src/melee/lb/lb_0219.c:27; do not edit. */
+struct BgFlashUserData {
+    u8 x0;
+    u8 pad_01[3];
+    ColorOverlay x4;
+};
+typedef struct BgFlashUserData BgFlashUserData;
+/* Extracted from src/melee/mn/mncharsel.c:58; do not edit. */
+struct MnSelectChrModels {
+    /* 0x0 */ StaticModelDesc background;
+    /* 0x10 */ StaticModelDesc hand;
+    /* 0x20 */ StaticModelDesc token;
+    /* 0x30 */ StaticModelDesc menu;
+    /* 0x40 */ StaticModelDesc press_start;
+    /* 0x50 */ StaticModelDesc debug_camera;
+    /* 0x60 */ StaticModelDesc regend_menu;
+    /* 0x70 */ StaticModelDesc regend_options;
+    /* 0x80 */ StaticModelDesc door;
+};
+typedef struct MnSelectChrModels MnSelectChrModels;
+/* Extracted from src/melee/mn/mncharsel.c:70; do not edit. */
+struct MnSelectChrDataTable {
+    /* 0x00 */ HSD_CObjDesc* cam;
+    /* 0x04 */ HSD_LightDesc* light0;
+    /* 0x08 */ HSD_LightDesc* light1;
+    /* 0x0C */ HSD_FogDesc* fog;
+    /* 0x10 */ MnSelectChrModels models;
+};
+typedef struct MnSelectChrDataTable MnSelectChrDataTable;
+/* Extracted from src/melee/mn/mncharsel.c:198; do not edit. */
+struct MexSelectChr {
+    HSD_Joint* icon_joint;
+    HSD_AnimJoint* icon_animjoint;
+    HSD_MatAnimJoint* icon_matanim;
+    HSD_MatAnim* csp_matanim; /* one material anim, not a joint tree: 221 CSP images */
+    int csp_stride;
+};
+typedef struct MexSelectChr MexSelectChr;
+/* Extracted from src/melee/mn/mncharsel.c:837; do not edit. */
+struct CSSCursorData {
+    /* 0x00 */ HSD_GObj* gobj;
+    /* 0x04 */ u8 x4;
+    /* 0x05 */ u8 x5;
+    /* 0x06 */ u8 x6;
+    /* 0x07 */ u8 x7;
+    /* 0x08 */ u16 x8;
+    /* 0x0A */ u16 xA;
+    /* 0x0C */ f32 xC;
+    /* 0x10 */ f32 x10;
+};
+typedef struct CSSCursorData CSSCursorData;
+/* Extracted from src/melee/mn/mncharsel.c:1844; do not edit. */
+struct CSSCharModel {
+    /* 0x00 */ HSD_GObj* gobj;
+    /* 0x04 */ u8 x4;
+    /* 0x05 */ u8 x5;
+    /* 0x06 */ u8 x6;
+    /* 0x07 */ u8 x7;
+    /* 0x08 */ float x8;
+    /* 0x0C */ float xC;
+    /* 0x10 */ float x10;
+    /* 0x14 */ float x14;
+};
+typedef struct CSSCharModel CSSCharModel;

@@ -115,9 +115,9 @@ pub mod ext {
         fn GxTex_ImageSize(h: i32) -> i32;
         fn GxTex_CopyImage(h: i32, dst: *mut c_void) -> ();
         fn GxTex_Close(h: i32) -> ();
-        fn mnCharSel_PcArtOpen(archive: *mut HSD_Archive) -> i32;
-        fn mnCharSel_PcArtClose() -> ();
-        fn mnCharSel_PcArtPortrait(ck: i32, costume: i32, img: *mut *mut HSD_ImageDesc, tlut: *mut *mut HSD_Tlut) -> i32;
+        fn mnCharSel_PcArtOpen(archive: *mut HSD_Archive) -> i32 = crate::tu::mncharsel::mnCharSel_PcArtOpen;
+        fn mnCharSel_PcArtClose() -> () = crate::tu::mncharsel::mnCharSel_PcArtClose;
+        fn mnCharSel_PcArtPortrait(ck: i32, costume: i32, img: *mut *mut HSD_ImageDesc, tlut: *mut *mut HSD_Tlut) -> i32 = crate::tu::mncharsel::mnCharSel_PcArtPortrait;
     }
     crate::ext_va! {
         /// os: `(fmt, ...)`

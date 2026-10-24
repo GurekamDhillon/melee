@@ -39,3 +39,24 @@ fn db_80225dd8_matches_c() {
         }
     }
 }
+
+#[test]
+fn db_menu_accessors_and_80225d64() {
+    unsafe {
+        db_ItemAndPokemonMenu.ShowEnemyStompRange = 1;
+        db_ItemAndPokemonMenu.ShowItemPickupRange = 0;
+        db_ItemAndPokemonMenu.ShowCoinPickupRange = 1;
+        db_ItemAndPokemonMenu.CurrentlySelectedPokemon = 17;
+        db_ItemAndPokemonMenu.ItemSpawnsEnabled = -1;
+        assert_eq!((db_ShowEnemyStompRange(), db_ShowItemPickupRange(), db_ShowCoinPickupRange()), (1, 0, 1));
+        assert_eq!(db_GetCurrentlySelectedPokemon(), 17);
+        assert_eq!(db_AreItemSpawnsEnabled(), -1);
+        db_ShowItemCollisionBubbles = 2;
+        let mut it: Box<Item> = Box::new(core::mem::zeroed());
+        it.anon_daa.xDAA_byte = 0x11;
+        let mut ig: HSD_GObj = core::mem::zeroed();
+        ig.user_data = &mut *it as *mut Item as *mut _;
+        db_80225D64(&mut ig, core::ptr::null_mut());
+        assert_eq!(it.anon_daa.xDAA_byte, 0x13);
+    }
+}

@@ -31,3 +31,59 @@ pub unsafe fn db_80225DD8(item: *mut HSD_GObj, owner: *mut HSD_GObj) {
         }
     }
 }
+
+/// dbitem.static.h's `static struct { ... } db_ItemAndPokemonMenu` (the three `u32 : 1` bitfields kept as `u32`s,
+/// only this module reads them).
+#[repr(C)]
+pub struct DbItemAndPokemonMenu {
+    pub DisplayStatus: u32,
+    pub DisplayFadeTimer: u32,
+    pub ItemSpawnsEnabled: i32,
+    pub Player: i32,
+    pub CurrentlySelectedItem: i32,
+    pub CurrentlySelectedPokemon: i32,
+    pub LastSelectedItem: i32,
+    pub LastSelectedPokemon: i32,
+    pub ShowEnemyStompRange: u32,
+    pub ShowItemPickupRange: u32,
+    pub ShowCoinPickupRange: u32,
+}
+
+pub static mut db_ItemAndPokemonMenu: DbItemAndPokemonMenu = DbItemAndPokemonMenu {
+    DisplayStatus: 0,
+    DisplayFadeTimer: 0,
+    ItemSpawnsEnabled: 0,
+    Player: 0,
+    CurrentlySelectedItem: 0,
+    CurrentlySelectedPokemon: 0,
+    LastSelectedItem: 0,
+    LastSelectedPokemon: 0,
+    ShowEnemyStompRange: 0,
+    ShowItemPickupRange: 0,
+    ShowCoinPickupRange: 0,
+};
+
+pub unsafe fn db_ShowEnemyStompRange() -> u32 {
+    db_ItemAndPokemonMenu.ShowEnemyStompRange
+}
+
+pub unsafe fn db_ShowItemPickupRange() -> u32 {
+    db_ItemAndPokemonMenu.ShowItemPickupRange
+}
+
+pub unsafe fn db_ShowCoinPickupRange() -> u32 {
+    db_ItemAndPokemonMenu.ShowCoinPickupRange
+}
+
+pub unsafe fn db_GetCurrentlySelectedPokemon() -> i32 {
+    db_ItemAndPokemonMenu.CurrentlySelectedPokemon
+}
+
+pub unsafe fn db_AreItemSpawnsEnabled() -> i32 {
+    db_ItemAndPokemonMenu.ItemSpawnsEnabled
+}
+
+pub unsafe fn db_80225D64(item: *mut HSD_GObj, _owner: *mut HSD_GObj) {
+    let it = (*item).user_data as *mut Item;
+    (*it).anon_daa.xDAA_byte |= db_ShowItemCollisionBubbles as u8;
+}

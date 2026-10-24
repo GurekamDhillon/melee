@@ -46,7 +46,7 @@ pub mod ext {
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
     fn Item_8026A8EC(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_8026A8EC(a0) };
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::dbitem::db_80225DD8(a0, a1) };
-    fn db_ShowCoinPickupRange() -> u32;
+    fn db_ShowCoinPickupRange() -> u32 => unsafe { crate::tu::dbitem::db_ShowCoinPickupRange() };
     fn gm_8016C6C0(a0: *mut HSD_GObj) -> i32;
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
     fn it_80272828(a0: i32) -> *mut HSD_GObj => unsafe { crate::tu::it_2725::it_80272828(a0) };

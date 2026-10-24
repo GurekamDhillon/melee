@@ -43,8 +43,8 @@ pub mod ext {
         fn lb_80011E24(a0: *mut HSD_JObj, a1: *mut *mut HSD_JObj, a2: i32, a3: i32) -> i32;
         fn lb_80013B14(a0: *mut HSD_CameraDescPerspective) -> *mut HSD_CObj => unsafe { melee_runtime::tu::lbspdisplay::lb_80013B14(a0) };
         fn lb_800145F4();
-        fn lbAudioAx_800236DC();
-        fn lbAudioAx_80023F28(a0: i32);
+        fn lbAudioAx_800236DC() => unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_800236DC(); };
+        fn lbAudioAx_80023F28(a0: i32) => unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80023F28(a0); };
         fn lbAudioAx_80024E50(a0: i32) => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024E50(a0 != 0) };
         fn lbAudioAx_80026F2C(a0: i32) => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80026F2C(a0 as _) };
         fn lbAudioAx_8002702C(a0: u32, a1: u64) => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_8002702C(a0, a1) };

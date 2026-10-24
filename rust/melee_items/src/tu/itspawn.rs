@@ -51,7 +51,7 @@ pub mod ext {
     fn Item_80268B9C(a0: *mut SpawnItem) => unsafe { crate::tu::item::Item_80268B9C(a0) };
     fn Stage_80224FDC(a0: *mut Vec) -> i32 => unsafe { melee_world::tu::stage::Stage_80224FDC(a0 as _) };
     fn Stage_80225194() -> u32 => unsafe { melee_world::tu::stage::Stage_80225194() };
-    fn db_AreItemSpawnsEnabled() -> i32;
+    fn db_AreItemSpawnsEnabled() -> i32 => unsafe { crate::tu::dbitem::db_AreItemSpawnsEnabled() };
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: &[EfArg]) -> *mut c_void;
     fn gm_8016AE80() -> i32;
     fn gm_8016AE94() -> f32;

@@ -64,9 +64,9 @@ pub mod ext {
     pub fn lbAnim_8001E7E8(_j: J, _t: *mut FigaTree, _tr: *mut FigaTrack, _n: i8) { unsafe { let _ = melee_runtime::tu::lbanim::lbAnim_8001E7E8(_j as _, _t as _, _tr as _, _n as _); } }
     pub fn ftCommon_GetModelScale(_fp: *mut Fighter) -> f32 { unsafe { crate::ftcommon2::get_model_scale(&*(_fp as *const _)) } }
     pub fn ftCommon_8007F6A4(_fp: *mut Fighter, _j: J) { unsafe { let _ = crate::ftcommon3::ftcommon_8007f6a4(&mut *(_fp as *mut _), _j as _); } }
-    pub fn ftParts_8007482C(_joint: *mut HSD_Joint) -> J { todo!("ftParts_8007482C (ft/ftparts.c)") }
-    pub fn ftParts_8007462C(_g: G) { todo!("ftParts_8007462C (ft/ftparts.c)") }
-    pub fn ftParts_80075240(_d: *mut DObjList, _idx: u16) -> *mut HSD_TObj { todo!("ftParts_80075240 (ft/ftparts.c)") }
+    pub fn ftParts_8007482C(_joint: *mut HSD_Joint) -> J { unsafe { crate::tu::ftparts_render::ftParts_8007482C(_joint) } }
+    pub fn ftParts_8007462C(_g: G) { unsafe { crate::tu::ftparts::ftParts_8007462C(_g) } }
+    pub fn ftParts_80075240(_d: *mut DObjList, _idx: u16) -> *mut HSD_TObj { unsafe { crate::tu::ftparts::ftParts_80075240(_d, _idx as i32) } }
     pub fn ftData_80085E50(_fp: *mut Fighter, _id: i32) -> *mut FigaTree { unsafe { crate::tu::ftdata::ftData_80085E50(_fp as _, _id as _) as _ } }
     pub fn ftData_80085FD4(_fp: *mut Fighter, _id: i32) -> *mut ftData_80085FD4_ret { unsafe { crate::tu::ftdata::ftData_80085FD4(&mut *(_fp as *mut _), _id as _) as _ } }
     /// `ftData_UnkCallbackPairs0[kind].x0` / `.x4`.
@@ -75,7 +75,7 @@ pub mod ext {
     /// `CostumeListsForeachCharacter[kind].costume_list[costume].x4`.
     pub fn costume_matanim(_kind: i32, _costume: u8) -> *mut HSD_MatAnimJoint { unsafe { (*crate::tu::ftdata::CostumeListsForeachCharacter[_kind as usize].costume_list.add(_costume as usize)).x4 } }
     /// `FT_COSTUME_VIS_IDX(fp)`.
-    pub fn FT_COSTUME_VIS_IDX(_fp: *mut Fighter) -> u32 { unsafe { (*_fp).x619_costume_id as u32 } }
+    pub fn FT_COSTUME_VIS_IDX(_fp: *mut Fighter) -> u32 { unsafe { melee_runtime::tu::mex_data::Mex_CostumeVisIdx((*_fp).kind as i32, (*_fp).x619_costume_id as i32) as u32 } }
     pub fn ftAction_80073240(_g: G) { unsafe { let _ = crate::tu::ftaction::ftAction_80073240(_g as _); } }
     pub fn ftCo_800DB500(_g: G) { unsafe { let _ = crate::tu::ftCo_CapturePulled::ftCo_800DB500(_g as _); } }
     pub fn Geno_DefineIsNone(_kind: i32) -> i32 { unsafe { crate::platform::Geno_DefineIsNone(_kind) } }

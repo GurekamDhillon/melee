@@ -14,21 +14,39 @@ use crate::types::*;
 pub use crate::ft0df::{ftparts_80074a4c, ftparts_80074a74, ftparts_80074a8c, ftparts_80074acc};
 pub use crate::ftdmgfall::{ftparts_8007506c, ftparts_get_bone_index, ftparts_remap};
 
-/// Calls into TUs that are not ported yet (TODO: rewire when they are).
+/// Callees outside this TU: settable hooks (the C oracle in tests/tu_ftparts_vs_c.rs installs recording
+/// stubs); unset they run the runtime / world port.
 #[allow(non_snake_case, unused_variables)]
 pub mod ext {
     use crate::types::*;
     use core::ffi::c_void;
-    pub fn HSD_DObjSetFlags(dobj: *mut HSD_DObj, flags: u32) { panic!("TODO(group1 dobj) HSD_DObjSetFlags") }
-    pub fn HSD_DObjClearFlags(dobj: *mut HSD_DObj, flags: u32) { panic!("TODO(group1 dobj) HSD_DObjClearFlags") }
-    pub fn HSD_JObjSetRotation(jobj: *mut HSD_JObj, q: *const Vec4) { unsafe { let _ = melee_world::tu::grinl::HSD_JObjSetRotation(jobj as _, q as _); } }
-    pub fn HSD_JObjClearFlags(jobj: *mut HSD_JObj, flags: u32) { panic!("TODO(group1 jobj) HSD_JObjClearFlags") }
-    pub fn HSD_JObjSetRotationX(jobj: *mut HSD_JObj, v: f32) { unsafe { let _ = melee_world::tu::grinl::HSD_JObjSetRotationX(jobj as _, v as _); } }
-    pub fn HSD_JObjSetRotationY(jobj: *mut HSD_JObj, v: f32) { { unsafe { let _ = crate::tu::ftCo_Lift::HSD_JObjSetRotationY(jobj as _, v as _); } return; } }
-    pub fn HSD_JObjSetRotationZ(jobj: *mut HSD_JObj, v: f32) { panic!("TODO(group1 jobj) HSD_JObjSetRotationZ") }
-    pub fn HSD_ObjAlloc(data: *mut c_void) -> *mut c_void { { return unsafe { melee_runtime::tu::objalloc::HSD_ObjAlloc(data as _) as _ }; } }
-    pub fn fighter_parts_alloc_data() -> *mut c_void { panic!("TODO(fighter.c) fighter_parts_alloc_data") }
-    pub fn fighter_dobj_list_alloc_data() -> *mut c_void { panic!("TODO(fighter.c) fighter_dobj_list_alloc_data") }
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? = $d:expr;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => $d,
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+        fn HSD_DObjSetFlags(dobj: *mut HSD_DObj, flags: u32) = unsafe { melee_runtime::tu::dobj::hsd::HSD_DObjSetFlags(dobj as _, flags) };
+        fn HSD_DObjClearFlags(dobj: *mut HSD_DObj, flags: u32) = unsafe { melee_runtime::tu::dobj::hsd::HSD_DObjClearFlags(dobj as _, flags) };
+        fn HSD_JObjSetRotation(jobj: *mut HSD_JObj, q: *const Vec4) = unsafe { let _ = melee_world::tu::grinl::HSD_JObjSetRotation(jobj as _, q as _); };
+        fn HSD_JObjClearFlags(jobj: *mut HSD_JObj, flags: u32) = unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjClearFlags(jobj as _, flags) };
+        fn HSD_JObjSetRotationX(jobj: *mut HSD_JObj, v: f32) = unsafe { let _ = melee_world::tu::grinl::HSD_JObjSetRotationX(jobj as _, v as _); };
+        fn HSD_JObjSetRotationY(jobj: *mut HSD_JObj, v: f32) = unsafe { let _ = crate::tu::ftCo_Lift::HSD_JObjSetRotationY(jobj as _, v as _); };
+        fn HSD_JObjSetRotationZ(jobj: *mut HSD_JObj, v: f32) = unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetRotationZ(jobj as _, v) };
+        fn Mex_CostumeVisIdx(fk: i32, costume: i32) -> i32 = melee_runtime::tu::mex_data::Mex_CostumeVisIdx(fk, costume);
+        fn HSD_ObjAlloc(data: *mut c_void) -> *mut c_void = unsafe { melee_runtime::tu::objalloc::HSD_ObjAlloc(data as _) as _ };
+    }
+    pub fn fighter_parts_alloc_data() -> *mut c_void { unsafe { (&raw mut crate::tu::fighter::fighter_parts_alloc_data) as *mut c_void } }
+    pub fn fighter_dobj_list_alloc_data() -> *mut c_void { unsafe { (&raw mut crate::tu::fighter::fighter_dobj_list_alloc_data) as *mut c_void } }
 }
 
 #[inline]
@@ -170,3 +188,167 @@ pub fn ftPartGetRotZ(f: &Fighter, part_idx: i32) -> f32 {
 }
 
 pub use super::ftparts_render::*;
+
+// ---- the part setup (SetupParts, 8007462C), the visibility init (800749CC), ftParts_800750C8, 80075240
+
+/// `ftParts_SetupParts(gobj)`: walk the model's joint tree in the fighter's part order, filling
+/// `parts[]` (model joint, flags, tree depth, DObj ranges) and the DObj list.
+pub unsafe fn ftParts_SetupParts(fighter_obj: *mut HSD_GObj) {
+    let mut jobj = (*fighter_obj).hsd_obj as *mut HSD_JObj;
+    let fp = (*fighter_obj).user_data as *mut Fighter;
+    let mut part: u32 = 0;
+    let mut tree_depth: u32 = 0;
+    let mut dobj_count: i32 = 0;
+    let parts_num = (**crate::hooks::ft_parts_table().add((*fp).kind as usize)).parts_num;
+
+    if parts_num as i32 > MAX_FT_PARTS {
+        panic!("fighter parts num over! player {}\n", (*fp).player_id);
+    }
+    while !jobj.is_null() {
+        if crate::ftdmgfall::ftparts_8007506c((*fp).kind as i32, part as i32) != 0 {
+            (*(*fp).parts.add(part as usize)).joint = core::ptr::null_mut();
+            part += 1;
+            continue;
+        }
+        crate::tu::ftparts_render::ftParts_80074194(fp, (*fp).parts.add(part as usize), jobj, &mut dobj_count, tree_depth);
+        part += 1;
+        if (*jobj).flags & JOBJ_INSTANCE as u32 == 0 && !(*jobj).child.is_null() {
+            // descend the left side of the tree
+            jobj = (*jobj).child;
+            tree_depth += 1;
+            continue;
+        }
+        if !(*jobj).next.is_null() {
+            // visit bottom nodes from left to right
+            jobj = (*jobj).next;
+            continue;
+        }
+        loop {
+            if (*jobj).parent.is_null() {
+                jobj = core::ptr::null_mut(); // finished
+                break;
+            }
+            // go back up the tree until we can continue to the right
+            if !(*(*jobj).parent).next.is_null() {
+                jobj = (*(*jobj).parent).next;
+                tree_depth = tree_depth.wrapping_sub(1);
+                break;
+            }
+            jobj = (*jobj).parent;
+            tree_depth = tree_depth.wrapping_sub(1);
+        }
+    }
+    (*fp).dobj_list.count = dobj_count as u32;
+    if part != parts_num {
+        panic!("fighter parts num not match! player {}\n", (*fp).player_id);
+    }
+}
+
+/// `ftParts_8007462C(gobj)`: the same walk over the animation skeleton, filling `parts[].x4_jobj2`.
+pub unsafe fn ftParts_8007462C(gobj: *mut HSD_GObj) {
+    let fp = (*gobj).user_data as *mut Fighter;
+    let mut i: u32 = 0;
+    let mut jobj = (*fp).x8AC_animSkeleton;
+    while !jobj.is_null() {
+        if crate::ftdmgfall::ftparts_8007506c((*fp).kind as i32, i as i32) != 0 {
+            (*(*fp).parts.add(i as usize)).x4_jobj2 = core::ptr::null_mut();
+            i += 1;
+            continue;
+        }
+        (*(*fp).parts.add(i as usize)).x4_jobj2 = jobj;
+        i += 1;
+        if (*jobj).flags & JOBJ_INSTANCE as u32 == 0 && !(*jobj).child.is_null() {
+            jobj = (*jobj).child;
+            continue;
+        }
+        if !(*jobj).next.is_null() {
+            jobj = (*jobj).next;
+            continue;
+        }
+        loop {
+            if (*jobj).parent.is_null() {
+                jobj = core::ptr::null_mut();
+                break;
+            }
+            if !(*(*jobj).parent).next.is_null() {
+                jobj = (*(*jobj).parent).next;
+                break;
+            }
+            jobj = (*jobj).parent;
+        }
+    }
+    if i != (**crate::hooks::ft_parts_table().add((*fp).kind as usize)).parts_num {
+        panic!("fighter parts num not match! player {}\n", (*fp).player_id);
+    }
+}
+
+/// `ftParts_800749CC(gobj)`: initialise the fighter's part-visibility state (`x5AC`) for its costume.
+pub unsafe fn ftParts_800749CC(gobj: *mut HSD_GObj) {
+    let fp = (*gobj).user_data as *mut Fighter;
+    // the visibility rows are indexed by the costume's visibility row (FT_COSTUME_VIS_IDX = Mex_CostumeVisIdx)
+    crate::tu::ftparts_render::ftParts_8007487C(
+        &mut (*(*(*fp).ft_data).x8).x0,
+        &mut (*fp).x5AC,
+        ext::Mex_CostumeVisIdx((*fp).kind as i32, (*fp).x619_costume_id as i32) as u32,
+        &mut (*fp).dobj_list,
+        &mut (*fp).x203C,
+    );
+    for i in 0..(*fp).x5AC.model_num as usize {
+        (*fp).x5F4_arr[i].prev = -1;
+    }
+    crate::ft0df::ftparts_80074acc(gobj);
+}
+
+/// `ftParts_800750C8(fp, arg1, arg2)`: show (`arg2`) or hide model `arg1`, then the per-kind model event.
+pub unsafe fn ftParts_800750C8(fp: *mut Fighter, arg1: u32, arg2: bool) {
+    let kind = (*fp).kind as usize;
+    let vis: *mut FtPartsVis = &mut (*fp).x5AC;
+    let ev = |model: u32| {
+        if let Some(f) = crate::tu::ftdata::ftData_UnkIntBoolFunc0.model_events[kind] {
+            f(fp, model as i32, arg2 as i32);
+        }
+    };
+    if arg1 == 2 {
+        if arg2 {
+            ftParts_80074B6C(&*fp, &mut *vis, 2, &(*fp).x203C);
+        } else {
+            ftParts_80074D7C(&mut *vis, 2, &(*fp).x203C);
+        }
+        ev(2);
+        if arg2 {
+            ftParts_80074B6C(&*fp, &mut *vis, 3, &(*fp).dobj_list);
+        } else {
+            ftParts_80074D7C(&mut *vis, 3, &(*fp).dobj_list);
+        }
+        ev(3);
+    } else {
+        if arg2 {
+            ftParts_80074B6C(&*fp, &mut *vis, arg1 as i32, &(*fp).dobj_list);
+        } else {
+            ftParts_80074D7C(&mut *vis, arg1 as i32, &(*fp).dobj_list);
+        }
+        ev(arg1);
+    }
+}
+
+/// `ftParts_80075240(list, n)`: the n-th TObj over the DObj list's materials.
+pub unsafe fn ftParts_80075240(list: *mut DObjList, n: i32) -> *mut HSD_TObj {
+    let mut tobj_i = 0;
+    for i in 0..(*list).count as usize {
+        let dobj = *(*list).data.add(i);
+        if !dobj.is_null() {
+            let mobj = (*dobj).mobj;
+            if !mobj.is_null() {
+                let mut tobj = (*mobj).tobj;
+                while !tobj.is_null() {
+                    if tobj_i == n {
+                        return tobj;
+                    }
+                    tobj_i += 1;
+                    tobj = (*tobj).next;
+                }
+            }
+        }
+    }
+    panic!("cannot find tobj!\n");
+}

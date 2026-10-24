@@ -198,3 +198,13 @@ add("itclimbersstring", "src/melee/it/kinds/itclimbersstring.c", xpools=[("ItemL
 
 add("itdosei", "src/melee/it/kinds/itdosei.c", manual_data=[],
     ret={})
+
+_GXC = ("((GXColor) { (u8) fv(), (u8) fv(), (u8) fv(), (u8) fv() })", "_GXColor { r: fv() as u8, g: fv() as u8, b: fv() as u8, a: fv() as u8 }")
+SPECS["toy"] = dict(
+    src="src/melee/ty/toy.c", types=[], skip_stubs=["__frsqrte", "sinf", "cosf", "memcpy"], skip_data=["result"], no_freg=True, pools=POOL_TYPES, common_ret=COMMON_RET, manual_data=[],
+    ret={"Mex_Enabled": ("(int) ((rnd() & 15) == 0)", "((rnd() & 15) == 0) as i32"), "DevText_SetBGColor": _GXC, "DevText_SetTextColor": _GXC,
+         "gmMainLib_GetTrophyFlags": ("SAVEF", "&raw mut crate::SAVEF as *mut _"),
+         "gmMainLib_GetTrophyCategoryFlags": ("&CATF", "&raw mut crate::CATF as *mut _"),
+         "gmMainLib_GetTrophyCount": ("&TCNT", "&raw mut crate::TCNT")},
+    effects={"memzero": ("zero(a0, (unsigned) a1);", "core::ptr::write_bytes(a0 as *mut u8, 0, a1 as usize);")},
+)

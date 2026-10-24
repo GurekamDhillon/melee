@@ -49,6 +49,9 @@ pub enum ItemClass {
     /// `flash`: `it_802AE1D0` armed the muzzle-flash accessory (`item->xDD4.foxblaster.gfx_spawn_var`).
     FoxGun { owner: usize, flash: bool },
     FoxLaser { angle: f32, speed: f32, life: f32 },
+    /// A stage-owned item the sim does not step (Green Greens' blocks, kind 160): loaded from a
+    /// snapshot, held unchanged, hashed.
+    Static,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -291,6 +294,7 @@ impl VsMatch {
                         flashes.push(([ft_hold.x, ft_hold.y, ft_hold.z], angle, owner));
                     }
                 }
+                ItemClass::Static => {}
                 ItemClass::FoxLaser { angle, speed, life } => {
                     // itFoxlaser_UnkMotion1_Anim -> Item_UpdateRayAnimation: velocity from the angle.
                     it.vel.x = *speed * melee_runtime::gekko::cosf(*angle);

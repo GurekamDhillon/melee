@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+"""C references for the melee_chara functions the call trace listed as ported-unverified
+(pre-melee_chara pass).
+
+  python rust/melee_chara/gen/turef/tu_pre.py [name ...]     (worktree root)
+
+Same mechanism as tu_shard89.py (group 3's rust/melee_fighter/gen/cref/run.py build: shipping
+contraction + gwtool's lowering, game source cut verbatim through EXTRACTS), pointed at this
+directory's <name>_ref.c drivers and at rust/melee_chara/tests/data.
+"""
+import sys
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[3]
+sys.path.insert(0, str(ROOT / "rust/melee_fighter/gen/cref"))
+import run  # noqa: E402
+
+MINE = {
+    "tu_ftcaptainspeciallw": [("src/melee/ft/ftparts.c", "fn:ftParts_GetBoneIndex", None),
+                              ("src/melee/ft/ftlib.c", "fn:ftLib_GetKind", None)],
+    "tu_ftfoxspecialn": [],
+    "tu_mpcoll": [("pc/gameworld/mtx_pc.c", "fn:gekko_force25", None),
+                  ("pc/gameworld/mtx_pc.c", "fn:PSVECNormalize", None),
+                  ("src/melee/lb/lbvector.c", "fn:lbVector_Diff", None),
+                  ("src/melee/lb/lbvector.c", "fn:lbVector_Add", None)],
+    "tu_ftpurin": [("src/melee/ft/kinds/ftPurin/ftpurin.c", "fn:ftPr_Init_8013C2F8", None)],
+}
+run.EXTRACTS.update(MINE)
+# mpcoll.c / mplib.c route pointers through `int` (PPC-ism): keep the image, and so the static heap, below 4 GB
+run.LINK_EXTRA["tu_mpcoll"] = ["-Wl,/base:0x10000000", "-Wl,/dynamicbase:no"]
+run.HERE = HERE
+run.DATA = ROOT / "rust/melee_chara/tests/data"
+
+if __name__ == "__main__":
+    sys.argv = [sys.argv[0], *(sys.argv[1:] or sorted(MINE))]
+    run.main()

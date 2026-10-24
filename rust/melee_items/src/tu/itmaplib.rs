@@ -26,8 +26,8 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
-    fn PSVECAdd(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec);
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) => unsafe { crate::tu::jobj::HSD_JObjSetMtxDirtySub(a0) };
+    fn PSVECAdd(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) => unsafe { *(a2 as *mut _) = melee_runtime::tu::mtx_pc::PSVECAdd(&*(a0 as *const _), &*(a1 as *const _)) };
     fn it_8026BB68(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_26B1::it_8026BB68(a0, a1 as _) };
     fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_26B1::it_8026BB88(a0, a1 as _) };
     fn it_8026BC90(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_26B1::it_8026BC90(a0, a1 as _) };

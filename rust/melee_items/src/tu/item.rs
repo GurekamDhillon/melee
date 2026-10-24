@@ -46,11 +46,11 @@ pub mod ext {
     fn HSD_JObjAddAnim(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint);
     fn HSD_JObjAlloc() -> *mut HSD_JObj => unsafe { melee_runtime::tu::jobj::HSD_JObjAlloc() };
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
-    fn HSD_JObjGetDObj(a0: *mut HSD_JObj) -> *mut HSD_DObj;
+    fn HSD_JObjGetDObj(a0: *mut HSD_JObj) -> *mut HSD_DObj => unsafe { crate::tu::jobj::HSD_JObjGetDObj(a0) as _ };
     fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj => unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0) };
     fn HSD_JObjRemoveAnimAll(a0: *mut HSD_JObj);
     fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
-    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) => unsafe { crate::tu::jobj::HSD_JObjSetMtxDirtySub(a0) };
     fn HSD_ObjAlloc(a0: *mut _HSD_ObjAllocData) -> *mut c_void => unsafe { melee_runtime::tu::objalloc::HSD_ObjAlloc(a0 as _) };
     fn HSD_ObjAllocInit(a0: *mut _HSD_ObjAllocData, a1: u32, a2: u32) => unsafe { melee_runtime::tu::objalloc::HSD_ObjAllocInit(a0 as _, a1 as _, a2) };
     fn HSD_ObjFree(a0: *mut _HSD_ObjAllocData, a1: *mut c_void) => unsafe { melee_runtime::tu::objalloc::HSD_ObjFree(a0 as _, a1) };
@@ -59,8 +59,8 @@ pub mod ext {
     fn Mex_ItemNotInitialized(a0: i32);
     fn Mex_SpawnArticleKind(a0: i32, a1: i32, a2: i32) -> i32;
     fn Mex_SsmForPortKind(a0: i32) -> i32;
-    fn PSMTXIdentity(a0: *mut c_void);
-    fn PSVECAdd(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec);
+    fn PSMTXIdentity(a0: *mut c_void) => unsafe { *(a0 as *mut melee_types::Mtx) = melee_runtime::tu::mtx_pc::PSMTXIdentity() };
+    fn PSVECAdd(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) => unsafe { *(a2 as *mut _) = melee_runtime::tu::mtx_pc::PSVECAdd(&*(a0 as *const _), &*(a1 as *const _)) };
     fn ScriptGame_EnemyDestroyed(a0: *mut HSD_GObj) -> i32;
     fn ScriptGame_EnemyReceived(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: i32);
     fn ScriptGame_HitRuleBaseDamage(a0: *mut HitCapsule) -> f32;

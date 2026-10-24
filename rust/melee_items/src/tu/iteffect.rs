@@ -39,7 +39,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn HSD_Randf() -> f32;
+    fn HSD_Randf() -> f32 => unsafe { melee_runtime::tu::random::global::HSD_Randf() };
     fn atan2f(a0: f32, a1: f32) -> f32 => unsafe { melee_runtime::lbtrigf::atan2f(a0, a1) };
     fn efAsync_MexSpawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: i32, a3: *mut HSD_JObj, a4: *mut Vec, a5: f32, a6: f32);
     fn efAsync_Spawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: u32, a3: u32, a4: *mut HSD_JObj, a5: &[EfArg]);

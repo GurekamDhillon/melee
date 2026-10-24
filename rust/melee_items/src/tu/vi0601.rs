@@ -51,7 +51,7 @@ pub mod ext {
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
     fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj => unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0) };
     fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
-    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) => unsafe { crate::tu::jobj::HSD_JObjSetMtxDirtySub(a0) };
     fn HSD_SetEraseColor(a0: u8, a1: u8, a2: u8, a3: u8);
     fn Item_80266FA8() => unsafe { crate::tu::item::Item_80266FA8() };
     fn Item_80266FCC() => unsafe { crate::tu::item::Item_80266FCC() };

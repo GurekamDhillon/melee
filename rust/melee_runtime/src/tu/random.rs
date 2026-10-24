@@ -44,3 +44,33 @@ pub fn _HSD_RandForgetMemory(
 pub fn randi(state: &mut HsdRand, max_val: i32) -> i32 {
     state.randi_safe(max_val)
 }
+
+/// random.c's file statics (`seed`, `HSD_RandSeedPtr`, `render_seed`, `render_depth`) as the one
+/// process-wide state, for the native TUs that call `HSD_Rand` / `HSD_Randf` / `HSD_Randi` with the
+/// C signatures (no state argument). The arithmetic is `HsdRand`'s (checked by `oracle_*`).
+pub mod global {
+    use super::*;
+    pub static mut STATE: HsdRand =
+        HsdRand { seed: 1, seed_ptr: SeedSlot::Default, render_seed: 0, render_depth: 0, trace: None };
+
+    #[allow(static_mut_refs)]
+    #[inline]
+    pub fn state() -> &'static mut HsdRand {
+        unsafe { &mut *core::ptr::addr_of_mut!(STATE) }
+    }
+    pub fn HSD_Rand() -> i32 {
+        state().rand()
+    }
+    pub fn HSD_Randf() -> f32 {
+        state().randf()
+    }
+    pub fn HSD_Randi(max_val: i32) -> i32 {
+        state().randi(max_val)
+    }
+    pub fn HSD_RandRenderBegin() {
+        state().render_begin()
+    }
+    pub fn HSD_RandRenderEnd() {
+        state().render_end()
+    }
+}

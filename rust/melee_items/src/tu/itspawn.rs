@@ -45,8 +45,8 @@ pub mod ext {
     fn Ground_801C2AE8(a0: u32) -> f32 => unsafe { melee_world::tu::ground::Ground_801C2AE8(a0) };
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc => unsafe { melee_world::tu_ext::HSD_GObj_SetupProc(a0, a1, a2) };
     fn HSD_MemAlloc(a0: i32) -> *mut c_void => unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0) };
-    fn HSD_Randf() -> f32;
-    fn HSD_Randi(a0: i32) -> i32;
+    fn HSD_Randf() -> f32 => unsafe { melee_runtime::tu::random::global::HSD_Randf() };
+    fn HSD_Randi(a0: i32) -> i32 => unsafe { melee_runtime::tu::random::global::HSD_Randi(a0) };
     fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
     fn Item_80268B9C(a0: *mut SpawnItem) => unsafe { crate::tu::item::Item_80268B9C(a0) };
     fn Stage_80224FDC(a0: *mut Vec) -> i32 => unsafe { melee_world::tu::stage::Stage_80224FDC(a0 as _) };

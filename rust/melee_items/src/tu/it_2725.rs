@@ -45,13 +45,13 @@ pub mod ext {
     fn HSD_GObjObject_80390B0C(a0: *mut HSD_GObj);
     fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint);
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
-    fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32);
+    fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32) => unsafe { crate::tu::jobj::HSD_JObjClearFlagsAll(a0, a1) };
     fn HSD_JObjRemoveAnimAll(a0: *mut HSD_JObj);
     fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
-    fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32);
+    fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32) => unsafe { crate::tu::jobj::HSD_JObjSetFlagsAll(a0, a1) };
     fn HSD_JObjSetMtxDirty(a0: *mut HSD_JObj) => unsafe { crate::tu::item::HSD_JObjSetMtxDirty(a0) };
-    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
-    fn HSD_Randi(a0: i32) -> i32;
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) => unsafe { crate::tu::jobj::HSD_JObjSetMtxDirtySub(a0) };
+    fn HSD_Randi(a0: i32) -> i32 => unsafe { melee_runtime::tu::random::global::HSD_Randi(a0) };
     fn Item_802680CC(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_802680CC(a0) };
     fn Item_8026849C(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_8026849C(a0) };
     fn Item_802697D4(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_802697D4(a0) };

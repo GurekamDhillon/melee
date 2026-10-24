@@ -29,7 +29,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn HSD_Randi(a0: i32) -> i32;
+    fn HSD_Randi(a0: i32) -> i32 => unsafe { melee_runtime::tu::random::global::HSD_Randi(a0) };
     fn Item_8026A8EC(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_8026A8EC(a0) };
     fn Item_8026ADC0(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_8026ADC0(a0) };
     fn it_802725D4(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_802725D4(a0) };

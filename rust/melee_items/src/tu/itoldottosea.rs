@@ -30,8 +30,8 @@ pub mod ext {
     }
     ext_fns! {
     fn Camera_RequestQuake(a0: u32, a1: *mut Vec);
-    fn HSD_Randf() -> f32;
-    fn HSD_Randi(a0: i32) -> i32;
+    fn HSD_Randf() -> f32 => unsafe { melee_runtime::tu::random::global::HSD_Randf() };
+    fn HSD_Randi(a0: i32) -> i32 => unsafe { melee_runtime::tu::random::global::HSD_Randi(a0) };
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
     fn gm_8016AE80() -> i32;
     fn itOldottosea_UnkMotion10_Anim(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itwhitebea::itOldottosea_UnkMotion10_Anim(a0 as _) as _ };

@@ -40,9 +40,9 @@ pub mod ext {
     }
     ext_fns! {
     fn Ground_801C4DA0(a0: *mut Vec, a1: *mut f32) -> i32 => unsafe { melee_world::tu::ground::Ground_801C4DA0(a0 as _, a1) };
-    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
-    fn HSD_Randf() -> f32;
-    fn HSD_Randi(a0: i32) -> i32;
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) => unsafe { crate::tu::jobj::HSD_JObjSetMtxDirtySub(a0) };
+    fn HSD_Randf() -> f32 => unsafe { melee_runtime::tu::random::global::HSD_Randf() };
+    fn HSD_Randi(a0: i32) -> i32 => unsafe { melee_runtime::tu::random::global::HSD_Randi(a0) };
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
     fn Item_80269CA0(a0: *mut Item, a1: i32) => unsafe { crate::item::item_80269ca0(&mut *a0, a1) };
     fn grKongo_801D8058(a0: *mut HSD_GObj) => unsafe { melee_world::tu::grkongo::grKongo_801D8058(a0) };

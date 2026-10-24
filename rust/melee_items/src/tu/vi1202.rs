@@ -66,12 +66,12 @@ pub mod ext {
         fn HSD_JObjSetScaleX(a0: *mut HSD_JObj, a1: f32) => unsafe { crate::tu::ittincle::HSD_JObjSetScaleX(a0, a1) };
         fn HSD_JObjSetScaleY(a0: *mut HSD_JObj, a1: f32) => unsafe { melee_world::tu::grinl::HSD_JObjSetScaleY(a0, a1) };
         fn HSD_JObjSetScaleZ(a0: *mut HSD_JObj, a1: f32) => unsafe { melee_world::tu::grinl::HSD_JObjSetScaleZ(a0, a1) };
-        fn HSD_JObjSetScaleXWithMtxDirty(a0: *mut HSD_JObj, a1: f32);
-        fn HSD_JObjSetScaleYWithMtxDirty(a0: *mut HSD_JObj, a1: f32);
-        fn HSD_JObjSetScaleZWithMtxDirty(a0: *mut HSD_JObj, a1: f32);
-        fn HSD_JObjSetTranslateXWithMtxDirty(a0: *mut HSD_JObj, a1: f32);
-        fn HSD_JObjSetTranslateYWithMtxDirty(a0: *mut HSD_JObj, a1: f32);
-        fn HSD_JObjSetTranslateZWithMtxDirty(a0: *mut HSD_JObj, a1: f32);
+        fn HSD_JObjSetScaleXWithMtxDirty(a0: *mut HSD_JObj, a1: f32) => unsafe { crate::tu::jobj::HSD_JObjSetScaleXWithMtxDirty(a0, a1) };
+        fn HSD_JObjSetScaleYWithMtxDirty(a0: *mut HSD_JObj, a1: f32) => unsafe { crate::tu::jobj::HSD_JObjSetScaleYWithMtxDirty(a0, a1) };
+        fn HSD_JObjSetScaleZWithMtxDirty(a0: *mut HSD_JObj, a1: f32) => unsafe { crate::tu::jobj::HSD_JObjSetScaleZWithMtxDirty(a0, a1) };
+        fn HSD_JObjSetTranslateXWithMtxDirty(a0: *mut HSD_JObj, a1: f32) => unsafe { crate::tu::jobj::HSD_JObjSetTranslateXWithMtxDirty(a0, a1) };
+        fn HSD_JObjSetTranslateYWithMtxDirty(a0: *mut HSD_JObj, a1: f32) => unsafe { crate::tu::jobj::HSD_JObjSetTranslateYWithMtxDirty(a0, a1) };
+        fn HSD_JObjSetTranslateZWithMtxDirty(a0: *mut HSD_JObj, a1: f32) => unsafe { crate::tu::jobj::HSD_JObjSetTranslateZWithMtxDirty(a0, a1) };
     }
     /// Variadic in C: `(filename, (void** out, const char* name)..., NULL)`; `args` follows `filename`.
     pub unsafe fn lbArchive_LoadSymbols(filename: *const i8, args: &[*mut c_void]) -> *mut HSD_Archive {

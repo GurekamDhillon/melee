@@ -31,7 +31,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn HSD_Randi(a0: i32) -> i32;
+    fn HSD_Randi(a0: i32) -> i32 => unsafe { melee_runtime::tu::random::global::HSD_Randi(a0) };
     fn ScriptGame_FighterDealtDamage(a0: *mut Fighter, a1: f32) -> f32;
     fn ScriptGame_HitRuleDamage(a0: *mut HitCapsule);
     fn ScriptGame_ItemModDamage(a0: *mut Item, a1: f32) -> f32;

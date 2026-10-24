@@ -33,11 +33,11 @@ pub mod ext {
     fn HSD_ClearVtxDesc() => unsafe { melee_runtime::tu::pobj::HSD_ClearVtxDesc() };
     fn HSD_GObj_80390EB8(a0: i32) -> u32 => unsafe { melee_runtime::gobj::hsd_gobj_80390eb8(a0) };
     fn HSD_JObjDispAll(a0: *mut HSD_JObj, a1: *mut c_void, a2: u32, a3: u32);
-    fn HSD_JObjGetFlags(a0: *mut HSD_JObj) -> u32;
+    fn HSD_JObjGetFlags(a0: *mut HSD_JObj) -> u32 => unsafe { crate::tu::jobj::HSD_JObjGetFlags(a0) as _ };
     fn HSD_StateInitTev();
     fn HSD_StateInvalidate(a0: i32);
-    fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void);
-    fn PSMTXIdentity(a0: *mut c_void);
+    fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void) => unsafe { *(a2 as *mut melee_types::Mtx) = melee_runtime::tu::mtx_pc::PSMTXConcat(&*(a0 as *const _), &*(a1 as *const _)) };
+    fn PSMTXIdentity(a0: *mut c_void) => unsafe { *(a0 as *mut melee_types::Mtx) = melee_runtime::tu::mtx_pc::PSMTXIdentity() };
     fn ftLib_800868D4(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
     fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
     fn ftLib_80087074(a0: *mut HSD_GObj, a1: *mut Vec) -> i32;

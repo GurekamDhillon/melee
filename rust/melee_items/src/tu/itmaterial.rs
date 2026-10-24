@@ -28,7 +28,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn HSD_JObjGetDObj(a0: *mut HSD_JObj) -> *mut HSD_DObj;
+    fn HSD_JObjGetDObj(a0: *mut HSD_JObj) -> *mut HSD_DObj => unsafe { crate::tu::jobj::HSD_JObjGetDObj(a0) as _ };
     fn HSD_SetMaterialColor(a0: _GXColor, a1: _GXColor, a2: _GXColor, a3: f32);
     fn HSD_SetMaterialShininess(a0: f32);
     fn HSD_SetupRenderModeWithCustomPE(a0: u32, a1: *mut HSD_PEDesc);

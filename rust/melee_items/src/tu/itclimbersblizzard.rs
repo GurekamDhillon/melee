@@ -31,7 +31,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn HSD_Randf() -> f32;
+    fn HSD_Randf() -> f32 => unsafe { melee_runtime::tu::random::global::HSD_Randf() };
     fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);

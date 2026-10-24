@@ -1,0 +1,3 @@
+HSD_GObj_CameraKind
+HSD_GObj_JObjKind
+OS_BusClock

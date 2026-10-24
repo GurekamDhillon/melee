@@ -5278,6 +5278,11 @@ pub const FE_DO_CONTINUE: FrontendAction = 0;
 pub const FE_DO_BACK: FrontendAction = 1;
 pub const FE_DO_CALL: FrontendAction = 2;
 
+/// C enum `LbHeapStatus` (src/melee/lb/lbheap.h:7)
+pub type LbHeapStatus = u32;
+pub const LbHeapStatus_Create: LbHeapStatus = 0;
+pub const LbHeapStatus_Destroy: LbHeapStatus = 1;
+
 // ---- #define / static const constants (group-0 headers) ----
 pub const HSD_A_S_W0: i32 = 2;  // src/sysdolphin/baselib/forward.h:120
 pub const HSD_DEFAULT_MAX_SHAPE_VERTICES: i32 = 2000;  // src/sysdolphin/baselib/forward.h:121
@@ -5725,8 +5730,6 @@ pub const Ft_MF_Unk31: MotionFlags = 2147483648;  // src/melee/ft/forward.h:308
 
 // ---- typedefs ----
 pub type wchar_t = u16;
-pub type intptr_t = i32;
-pub type uintptr_t = u32;
 pub type vf32 = f32;
 pub type vf64 = f64;
 pub type Ptr = *mut i8;
@@ -5743,10 +5746,10 @@ pub type enum_t = i32;
 pub type ssize_t = i32;
 pub type Event = Option<unsafe extern "C" fn()>;
 pub type Predicate = Option<unsafe extern "C" fn() -> i32>;
-pub type HSD_IDKey = uintptr_t;
+pub type HSD_IDKey = usize;
 pub type GObj_RenderFunc = Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>;
 pub type HSD_ObjUpdateFunc = Option<unsafe extern "C" fn(*mut c_void, enum_t, *mut HSD_ObjData)>;
-pub type HSD_DevComCallback = Option<unsafe extern "C" fn(i32, uintptr_t, *mut c_void, i32)>;
+pub type HSD_DevComCallback = Option<unsafe extern "C" fn(i32, usize, *mut c_void, i32)>;
 pub type HSD_GObjEvent = Option<unsafe extern "C" fn(*mut HSD_GObj)>;
 pub type HSD_UserDataEvent = Option<unsafe extern "C" fn(*mut c_void)>;
 pub type HSD_GObjPredicate = Option<unsafe extern "C" fn(*mut HSD_GObj) -> i32>;
@@ -6069,6 +6072,12 @@ pub type ftPichuAttributes = _ftPichuAttributes;
 pub type ftSs_Fighter = Fighter;
 pub type StaticPlayer = _StaticPlayer;
 pub type it_MObjSetupFunc = Option<unsafe extern "C" fn(*mut HSD_MObj, u32, u32)>;
+pub type THPSample = u8;
+pub type THPCoeff = i16;
+pub type THPQuantTab = [f32; 64];
+pub type THPHuffmanTab = _THPHuffmanTab;
+pub type THPComponent = _THPComponent;
+pub type THPFileInfo = _THPFileInfo;
 
 /// C `__file_modes` (src/MSL/stdio.h:44); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
@@ -12373,13 +12382,13 @@ pub struct HSD_DevCom {
     pub next: *mut HSD_DevCom,
     pub dcReq: i32,
     pub file: i32,
-    pub src: uintptr_t,
-    pub dest: uintptr_t,
+    pub src: usize,
+    pub dest: usize,
     pub size: usize,
     pub r#type: u16,
     pub cancelflag: u16,
     pub callback: HSD_DevComCallback,
-    pub args: uintptr_t,
+    pub args: usize,
 }
 impl HSD_DevCom { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
@@ -12392,13 +12401,13 @@ impl GcDecode for HSD_DevCom {
         v.next = <*mut HSD_DevCom as GcDecode>::gc_decode(d, at + 0x0);
         v.dcReq = <i32 as GcDecode>::gc_decode(d, at + 0x4);
         v.file = <i32 as GcDecode>::gc_decode(d, at + 0x8);
-        v.src = <uintptr_t as GcDecode>::gc_decode(d, at + 0xC);
-        v.dest = <uintptr_t as GcDecode>::gc_decode(d, at + 0x10);
+        v.src = <usize as GcDecode>::gc_decode(d, at + 0xC);
+        v.dest = <usize as GcDecode>::gc_decode(d, at + 0x10);
         v.size = <usize as GcDecode>::gc_decode(d, at + 0x14);
         v.r#type = <u16 as GcDecode>::gc_decode(d, at + 0x18);
         v.cancelflag = <u16 as GcDecode>::gc_decode(d, at + 0x1A);
         v.callback = <HSD_DevComCallback as GcDecode>::gc_decode(d, at + 0x1C);
-        v.args = <uintptr_t as GcDecode>::gc_decode(d, at + 0x20);
+        v.args = <usize as GcDecode>::gc_decode(d, at + 0x20);
         v
     }
 }
@@ -91221,6 +91230,464 @@ impl GcLayout for lbl_803D9DD0_t {
 }
 const _: () = assert!(core::mem::size_of::<lbl_803D9DD0_t>() == 40);
 
+/// C `Handle` (src/melee/lb/lbmemory.h:6); GameCube size 0x10, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct Handle {
+    pub x0_next: *mut Handle,
+    pub x4_lo: *mut c_void,
+    pub x8_hi: *mut c_void,
+    pub xC_prev: *mut Handle,
+}
+impl Handle { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for Handle {
+    const GC_BYTES: u32 = 0x10;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x0_next = <*mut Handle as GcDecode>::gc_decode(d, at + 0x0);
+        v.x4_lo = <*mut c_void as GcDecode>::gc_decode(d, at + 0x4);
+        v.x8_hi = <*mut c_void as GcDecode>::gc_decode(d, at + 0x8);
+        v.xC_prev = <*mut Handle as GcDecode>::gc_decode(d, at + 0xC);
+        v
+    }
+}
+impl GcPointee for Handle { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Handle>(t) } }
+impl GcLayout for Handle {
+    const GC_NAME: &'static str = "Handle";
+    const GC_SIZE: u32 = 0x10;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0_next", 0x0, 4, "struct Handle *"),
+        GcField::new("x4_lo", 0x4, 4, "void *"),
+        GcField::new("x8_hi", 0x8, 4, "void *"),
+        GcField::new("xC_prev", 0xC, 4, "struct Handle *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<Handle>() == 32);
+
+/// C `Heap` (src/melee/lb/lbheap.static.h:17); GameCube size 0x1C, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct Heap {
+    pub id: i32,
+    pub handle: *mut Handle,
+    pub start: usize,
+    pub size: u32,
+    pub r#type: i32,
+    pub transient: i32,
+    pub status: LbHeapStatus,
+}
+impl Heap { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for Heap {
+    const GC_BYTES: u32 = 0x1C;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.id = <i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.handle = <*mut Handle as GcDecode>::gc_decode(d, at + 0x4);
+        v.start = <usize as GcDecode>::gc_decode(d, at + 0x8);
+        v.size = <u32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.r#type = <i32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.transient = <i32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.status = <LbHeapStatus as GcDecode>::gc_decode(d, at + 0x18);
+        v
+    }
+}
+impl GcPointee for Heap { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Heap>(t) } }
+impl GcLayout for Heap {
+    const GC_NAME: &'static str = "Heap";
+    const GC_SIZE: u32 = 0x1C;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("id", 0x0, 4, "s32"),
+        GcField::new("handle", 0x4, 4, "Handle *"),
+        GcField::new("start", 0x8, 4, "uintptr_t"),
+        GcField::new("size", 0xC, 4, "u32"),
+        GcField::new("type", 0x10, 4, "s32"),
+        GcField::new("transient", 0x14, 4, "s32"),
+        GcField::new("status", 0x18, 4, "LbHeapStatus"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<Heap>() == 40);
+
+/// C `lbHeap_HeapState` (src/melee/lb/lbheap.static.h:30); GameCube size 0xD4, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct lbHeap_HeapState {
+    pub arena_lo: *mut c_void,
+    pub arena_hi: *mut c_void,
+    pub aram_lo: usize,
+    pub aram_hi: usize,
+    pub heap_array: [Heap; 7],
+}
+impl lbHeap_HeapState { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for lbHeap_HeapState {
+    const GC_BYTES: u32 = 0xD4;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.arena_lo = <*mut c_void as GcDecode>::gc_decode(d, at + 0x0);
+        v.arena_hi = <*mut c_void as GcDecode>::gc_decode(d, at + 0x4);
+        v.aram_lo = <usize as GcDecode>::gc_decode(d, at + 0x8);
+        v.aram_hi = <usize as GcDecode>::gc_decode(d, at + 0xC);
+        v.heap_array = <[Heap; 7] as GcDecode>::gc_decode(d, at + 0x10);
+        v
+    }
+}
+impl GcPointee for lbHeap_HeapState { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<lbHeap_HeapState>(t) } }
+impl GcLayout for lbHeap_HeapState {
+    const GC_NAME: &'static str = "lbHeap_HeapState";
+    const GC_SIZE: u32 = 0xD4;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("arena_lo", 0x0, 4, "void *"),
+        GcField::new("arena_hi", 0x4, 4, "void *"),
+        GcField::new("aram_lo", 0x8, 4, "uintptr_t"),
+        GcField::new("aram_hi", 0xC, 4, "uintptr_t"),
+        GcField::new("heap_array", 0x10, 196, "struct Heap[7]"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<lbHeap_HeapState>() == 312);
+
+/// C `_THPHuffmanTab` (libs/dolphin/include/dolphin/thp/thp.h:14); GameCube size 0xEC, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct _THPHuffmanTab {
+    pub quick: [u8; 32],
+    pub increment: [u8; 32],
+    pub Vij: *mut u8,
+    pub maxCode: [i32; 18],
+    pub valPtr: [i32; 18],
+    pub Vij1: u8,
+    pub padD5: [u8; 3],
+    pub bits: *mut u8,
+    pub sizeTab: *mut i8,
+    pub codeTab: *mut u32,
+    pub numCodes: u32,
+    pub numVij: u16,
+    pub padEA: u16,
+}
+impl _THPHuffmanTab { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for _THPHuffmanTab {
+    const GC_BYTES: u32 = 0xEC;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.quick = <[u8; 32] as GcDecode>::gc_decode(d, at + 0x0);
+        v.increment = <[u8; 32] as GcDecode>::gc_decode(d, at + 0x20);
+        v.Vij = <*mut u8 as GcDecode>::gc_decode(d, at + 0x40);
+        v.maxCode = <[i32; 18] as GcDecode>::gc_decode(d, at + 0x44);
+        v.valPtr = <[i32; 18] as GcDecode>::gc_decode(d, at + 0x8C);
+        v.Vij1 = <u8 as GcDecode>::gc_decode(d, at + 0xD4);
+        v.padD5 = <[u8; 3] as GcDecode>::gc_decode(d, at + 0xD5);
+        v.bits = <*mut u8 as GcDecode>::gc_decode(d, at + 0xD8);
+        v.sizeTab = <*mut i8 as GcDecode>::gc_decode(d, at + 0xDC);
+        v.codeTab = <*mut u32 as GcDecode>::gc_decode(d, at + 0xE0);
+        v.numCodes = <u32 as GcDecode>::gc_decode(d, at + 0xE4);
+        v.numVij = <u16 as GcDecode>::gc_decode(d, at + 0xE8);
+        v.padEA = <u16 as GcDecode>::gc_decode(d, at + 0xEA);
+        v
+    }
+}
+impl GcPointee for _THPHuffmanTab { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<_THPHuffmanTab>(t) } }
+impl GcLayout for _THPHuffmanTab {
+    const GC_NAME: &'static str = "_THPHuffmanTab";
+    const GC_SIZE: u32 = 0xEC;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("quick", 0x0, 32, "u8[32]"),
+        GcField::new("increment", 0x20, 32, "u8[32]"),
+        GcField::new("Vij", 0x40, 4, "u8 *"),
+        GcField::new("maxCode", 0x44, 72, "s32[18]"),
+        GcField::new("valPtr", 0x8C, 72, "s32[18]"),
+        GcField::new("Vij1", 0xD4, 1, "u8"),
+        GcField::new("padD5", 0xD5, 3, "u8[3]"),
+        GcField::new("bits", 0xD8, 4, "u8 *"),
+        GcField::new("sizeTab", 0xDC, 4, "s8 *"),
+        GcField::new("codeTab", 0xE0, 4, "u32 *"),
+        GcField::new("numCodes", 0xE4, 4, "u32"),
+        GcField::new("numVij", 0xE8, 2, "u16"),
+        GcField::new("padEA", 0xEA, 2, "u16"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_THPHuffmanTab>() == 256);
+
+/// C `_THPComponent` (libs/dolphin/include/dolphin/thp/thp.h:30); GameCube size 0x2C, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct _THPComponent {
+    pub componentID: u8,
+    pub samplingH: u8,
+    pub samplingV: u8,
+    pub quantizationTableSelector: u8,
+    pub DCTableSelector: u8,
+    pub ACTableSelector: u8,
+    pub predDC: THPCoeff,
+    pub x08: u32,
+    pub x0C: u32,
+    pub x10: u32,
+    pub x14: i32,
+    pub x18: i32,
+    pub x1C: i32,
+    pub x20: i32,
+    pub x24: i32,
+    pub x28: i32,
+}
+impl _THPComponent { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for _THPComponent {
+    const GC_BYTES: u32 = 0x2C;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.componentID = <u8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.samplingH = <u8 as GcDecode>::gc_decode(d, at + 0x1);
+        v.samplingV = <u8 as GcDecode>::gc_decode(d, at + 0x2);
+        v.quantizationTableSelector = <u8 as GcDecode>::gc_decode(d, at + 0x3);
+        v.DCTableSelector = <u8 as GcDecode>::gc_decode(d, at + 0x4);
+        v.ACTableSelector = <u8 as GcDecode>::gc_decode(d, at + 0x5);
+        v.predDC = <THPCoeff as GcDecode>::gc_decode(d, at + 0x6);
+        v.x08 = <u32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.x0C = <u32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.x10 = <u32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.x14 = <i32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.x18 = <i32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.x1C = <i32 as GcDecode>::gc_decode(d, at + 0x1C);
+        v.x20 = <i32 as GcDecode>::gc_decode(d, at + 0x20);
+        v.x24 = <i32 as GcDecode>::gc_decode(d, at + 0x24);
+        v.x28 = <i32 as GcDecode>::gc_decode(d, at + 0x28);
+        v
+    }
+}
+impl GcPointee for _THPComponent { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<_THPComponent>(t) } }
+impl GcLayout for _THPComponent {
+    const GC_NAME: &'static str = "_THPComponent";
+    const GC_SIZE: u32 = 0x2C;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("componentID", 0x0, 1, "u8"),
+        GcField::new("samplingH", 0x1, 1, "u8"),
+        GcField::new("samplingV", 0x2, 1, "u8"),
+        GcField::new("quantizationTableSelector", 0x3, 1, "u8"),
+        GcField::new("DCTableSelector", 0x4, 1, "u8"),
+        GcField::new("ACTableSelector", 0x5, 1, "u8"),
+        GcField::new("predDC", 0x6, 2, "THPCoeff"),
+        GcField::new("x08", 0x8, 4, "u32"),
+        GcField::new("x0C", 0xC, 4, "u32"),
+        GcField::new("x10", 0x10, 4, "u32"),
+        GcField::new("x14", 0x14, 4, "s32"),
+        GcField::new("x18", 0x18, 4, "s32"),
+        GcField::new("x1C", 0x1C, 4, "s32"),
+        GcField::new("x20", 0x20, 4, "s32"),
+        GcField::new("x24", 0x24, 4, "s32"),
+        GcField::new("x28", 0x28, 4, "s32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_THPComponent>() == 44);
+
+/// C `_THPFileInfo` (libs/dolphin/include/dolphin/thp/thp.h:54); GameCube size 0x908, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct _THPFileInfo {
+    pub file: *mut u8,
+    pub currByte: u32,
+    pub cnt: u32,
+    pub dataStart: *mut u8,
+    pub mcuBuffer: [*mut THPCoeff; 16],
+    pub xSize: u16,
+    pub ySize: u16,
+    pub pad54: [u8; 24],
+    pub scanStart: *mut u8,
+    pub xPixelSize: u16,
+    pub yPixelSize: u16,
+    pub x74: u16,
+    pub decompressedY: u16,
+    pub validHuffmanTabs: u8,
+    pub validQuantTabs: u8,
+    pub samplingHMax: u8,
+    pub samplingVMax: u8,
+    pub nComponents: u8,
+    pub x7D: u8,
+    pub pad7E: [u8; 10],
+    pub huffmanTabs: [_THPHuffmanTab; 4],
+    pub quantTabs: [THPQuantTab; 3],
+    pub pad738: [u8; 256],
+    pub components: [_THPComponent; 3],
+    pub x8BC: [u8; 16],
+    pub MCUsPerRow: u16,
+    pub x8CE: u16,
+    pub x8D0: u16,
+    pub x8D2: u16,
+    pub x8D4: u16,
+    pub pad8D6: [u8; 18],
+    pub x8E8: u16,
+    pub x8EA: u16,
+    pub x8EC: u16,
+    pub x8EE: u16,
+    pub tileY: *mut u8,
+    pub tileU: *mut u8,
+    pub tileV: *mut u8,
+    pub nMCU: u16,
+    pub currMCU: u16,
+    pub RST: u8,
+    pub pad901: [u8; 3],
+    pub scratch: *mut u8,
+}
+impl _THPFileInfo { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for _THPFileInfo {
+    const GC_BYTES: u32 = 0x908;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.file = <*mut u8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.currByte = <u32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.cnt = <u32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.dataStart = <*mut u8 as GcDecode>::gc_decode(d, at + 0xC);
+        v.mcuBuffer = <[*mut THPCoeff; 16] as GcDecode>::gc_decode(d, at + 0x10);
+        v.xSize = <u16 as GcDecode>::gc_decode(d, at + 0x50);
+        v.ySize = <u16 as GcDecode>::gc_decode(d, at + 0x52);
+        v.pad54 = <[u8; 24] as GcDecode>::gc_decode(d, at + 0x54);
+        v.scanStart = <*mut u8 as GcDecode>::gc_decode(d, at + 0x6C);
+        v.xPixelSize = <u16 as GcDecode>::gc_decode(d, at + 0x70);
+        v.yPixelSize = <u16 as GcDecode>::gc_decode(d, at + 0x72);
+        v.x74 = <u16 as GcDecode>::gc_decode(d, at + 0x74);
+        v.decompressedY = <u16 as GcDecode>::gc_decode(d, at + 0x76);
+        v.validHuffmanTabs = <u8 as GcDecode>::gc_decode(d, at + 0x78);
+        v.validQuantTabs = <u8 as GcDecode>::gc_decode(d, at + 0x79);
+        v.samplingHMax = <u8 as GcDecode>::gc_decode(d, at + 0x7A);
+        v.samplingVMax = <u8 as GcDecode>::gc_decode(d, at + 0x7B);
+        v.nComponents = <u8 as GcDecode>::gc_decode(d, at + 0x7C);
+        v.x7D = <u8 as GcDecode>::gc_decode(d, at + 0x7D);
+        v.pad7E = <[u8; 10] as GcDecode>::gc_decode(d, at + 0x7E);
+        v.huffmanTabs = <[_THPHuffmanTab; 4] as GcDecode>::gc_decode(d, at + 0x88);
+        v.quantTabs = <[THPQuantTab; 3] as GcDecode>::gc_decode(d, at + 0x438);
+        v.pad738 = <[u8; 256] as GcDecode>::gc_decode(d, at + 0x738);
+        v.components = <[_THPComponent; 3] as GcDecode>::gc_decode(d, at + 0x838);
+        v.x8BC = <[u8; 16] as GcDecode>::gc_decode(d, at + 0x8BC);
+        v.MCUsPerRow = <u16 as GcDecode>::gc_decode(d, at + 0x8CC);
+        v.x8CE = <u16 as GcDecode>::gc_decode(d, at + 0x8CE);
+        v.x8D0 = <u16 as GcDecode>::gc_decode(d, at + 0x8D0);
+        v.x8D2 = <u16 as GcDecode>::gc_decode(d, at + 0x8D2);
+        v.x8D4 = <u16 as GcDecode>::gc_decode(d, at + 0x8D4);
+        v.pad8D6 = <[u8; 18] as GcDecode>::gc_decode(d, at + 0x8D6);
+        v.x8E8 = <u16 as GcDecode>::gc_decode(d, at + 0x8E8);
+        v.x8EA = <u16 as GcDecode>::gc_decode(d, at + 0x8EA);
+        v.x8EC = <u16 as GcDecode>::gc_decode(d, at + 0x8EC);
+        v.x8EE = <u16 as GcDecode>::gc_decode(d, at + 0x8EE);
+        v.tileY = <*mut u8 as GcDecode>::gc_decode(d, at + 0x8F0);
+        v.tileU = <*mut u8 as GcDecode>::gc_decode(d, at + 0x8F4);
+        v.tileV = <*mut u8 as GcDecode>::gc_decode(d, at + 0x8F8);
+        v.nMCU = <u16 as GcDecode>::gc_decode(d, at + 0x8FC);
+        v.currMCU = <u16 as GcDecode>::gc_decode(d, at + 0x8FE);
+        v.RST = <u8 as GcDecode>::gc_decode(d, at + 0x900);
+        v.pad901 = <[u8; 3] as GcDecode>::gc_decode(d, at + 0x901);
+        v.scratch = <*mut u8 as GcDecode>::gc_decode(d, at + 0x904);
+        v
+    }
+}
+impl GcPointee for _THPFileInfo { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<_THPFileInfo>(t) } }
+impl GcLayout for _THPFileInfo {
+    const GC_NAME: &'static str = "_THPFileInfo";
+    const GC_SIZE: u32 = 0x908;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("file", 0x0, 4, "u8 *"),
+        GcField::new("currByte", 0x4, 4, "u32"),
+        GcField::new("cnt", 0x8, 4, "u32"),
+        GcField::new("dataStart", 0xC, 4, "u8 *"),
+        GcField::new("mcuBuffer", 0x10, 64, "THPCoeff *[16]"),
+        GcField::new("xSize", 0x50, 2, "u16"),
+        GcField::new("ySize", 0x52, 2, "u16"),
+        GcField::new("pad54", 0x54, 24, "u8[24]"),
+        GcField::new("scanStart", 0x6C, 4, "u8 *"),
+        GcField::new("xPixelSize", 0x70, 2, "u16"),
+        GcField::new("yPixelSize", 0x72, 2, "u16"),
+        GcField::new("x74", 0x74, 2, "u16"),
+        GcField::new("decompressedY", 0x76, 2, "u16"),
+        GcField::new("validHuffmanTabs", 0x78, 1, "u8"),
+        GcField::new("validQuantTabs", 0x79, 1, "u8"),
+        GcField::new("samplingHMax", 0x7A, 1, "u8"),
+        GcField::new("samplingVMax", 0x7B, 1, "u8"),
+        GcField::new("nComponents", 0x7C, 1, "u8"),
+        GcField::new("x7D", 0x7D, 1, "u8"),
+        GcField::new("pad7E", 0x7E, 10, "u8[10]"),
+        GcField::new("huffmanTabs", 0x88, 944, "THPHuffmanTab[4]"),
+        GcField::new("quantTabs", 0x438, 768, "THPQuantTab[3]"),
+        GcField::new("pad738", 0x738, 256, "u8[256]"),
+        GcField::new("components", 0x838, 132, "THPComponent[3]"),
+        GcField::new("x8BC", 0x8BC, 16, "u8[16]"),
+        GcField::new("MCUsPerRow", 0x8CC, 2, "u16"),
+        GcField::new("x8CE", 0x8CE, 2, "u16"),
+        GcField::new("x8D0", 0x8D0, 2, "u16"),
+        GcField::new("x8D2", 0x8D2, 2, "u16"),
+        GcField::new("x8D4", 0x8D4, 2, "u16"),
+        GcField::new("pad8D6", 0x8D6, 18, "u8[18]"),
+        GcField::new("x8E8", 0x8E8, 2, "u16"),
+        GcField::new("x8EA", 0x8EA, 2, "u16"),
+        GcField::new("x8EC", 0x8EC, 2, "u16"),
+        GcField::new("x8EE", 0x8EE, 2, "u16"),
+        GcField::new("tileY", 0x8F0, 4, "u8 *"),
+        GcField::new("tileU", 0x8F4, 4, "u8 *"),
+        GcField::new("tileV", 0x8F8, 4, "u8 *"),
+        GcField::new("nMCU", 0x8FC, 2, "u16"),
+        GcField::new("currMCU", 0x8FE, 2, "u16"),
+        GcField::new("RST", 0x900, 1, "u8"),
+        GcField::new("pad901", 0x901, 3, "u8[3]"),
+        GcField::new("scratch", 0x904, 4, "u8 *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<_THPFileInfo>() == 2488);
+
+/// C `THPDec_8032FD40_Data` (libs/dolphin/include/dolphin/thp/thp.h:100); GameCube size 0xC, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct THPDec_8032FD40_Data {
+    pub val0: i32,
+    pub val1: u16,
+    pub _pad: u16,
+    pub val2: u8,
+}
+impl THPDec_8032FD40_Data { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for THPDec_8032FD40_Data {
+    const GC_BYTES: u32 = 0xC;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.val0 = <i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.val1 = <u16 as GcDecode>::gc_decode(d, at + 0x4);
+        v._pad = <u16 as GcDecode>::gc_decode(d, at + 0x6);
+        v.val2 = <u8 as GcDecode>::gc_decode(d, at + 0x8);
+        v
+    }
+}
+impl GcPointee for THPDec_8032FD40_Data { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<THPDec_8032FD40_Data>(t) } }
+impl GcLayout for THPDec_8032FD40_Data {
+    const GC_NAME: &'static str = "THPDec_8032FD40_Data";
+    const GC_SIZE: u32 = 0xC;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("val0", 0x0, 4, "s32"),
+        GcField::new("val1", 0x4, 2, "u16"),
+        GcField::new("_pad", 0x6, 2, "u16"),
+        GcField::new("val2", 0x8, 1, "u8"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<THPDec_8032FD40_Data>() == 12);
+
 /// Every generated GameCube record layout, for the DAT loader, serialisers and the m-ex map.
 pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<__file_modes as GcLayout>::GC_NAME, <__file_modes as GcLayout>::GC_SIZE, <__file_modes as GcLayout>::GC_ALIGN, <__file_modes as GcLayout>::GC_FIELDS),
@@ -92859,6 +93326,13 @@ pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<BracketSrcEntry as GcLayout>::GC_NAME, <BracketSrcEntry as GcLayout>::GC_SIZE, <BracketSrcEntry as GcLayout>::GC_ALIGN, <BracketSrcEntry as GcLayout>::GC_FIELDS),
     (<lbl_803D9DAC_t as GcLayout>::GC_NAME, <lbl_803D9DAC_t as GcLayout>::GC_SIZE, <lbl_803D9DAC_t as GcLayout>::GC_ALIGN, <lbl_803D9DAC_t as GcLayout>::GC_FIELDS),
     (<lbl_803D9DD0_t as GcLayout>::GC_NAME, <lbl_803D9DD0_t as GcLayout>::GC_SIZE, <lbl_803D9DD0_t as GcLayout>::GC_ALIGN, <lbl_803D9DD0_t as GcLayout>::GC_FIELDS),
+    (<Handle as GcLayout>::GC_NAME, <Handle as GcLayout>::GC_SIZE, <Handle as GcLayout>::GC_ALIGN, <Handle as GcLayout>::GC_FIELDS),
+    (<Heap as GcLayout>::GC_NAME, <Heap as GcLayout>::GC_SIZE, <Heap as GcLayout>::GC_ALIGN, <Heap as GcLayout>::GC_FIELDS),
+    (<lbHeap_HeapState as GcLayout>::GC_NAME, <lbHeap_HeapState as GcLayout>::GC_SIZE, <lbHeap_HeapState as GcLayout>::GC_ALIGN, <lbHeap_HeapState as GcLayout>::GC_FIELDS),
+    (<_THPHuffmanTab as GcLayout>::GC_NAME, <_THPHuffmanTab as GcLayout>::GC_SIZE, <_THPHuffmanTab as GcLayout>::GC_ALIGN, <_THPHuffmanTab as GcLayout>::GC_FIELDS),
+    (<_THPComponent as GcLayout>::GC_NAME, <_THPComponent as GcLayout>::GC_SIZE, <_THPComponent as GcLayout>::GC_ALIGN, <_THPComponent as GcLayout>::GC_FIELDS),
+    (<_THPFileInfo as GcLayout>::GC_NAME, <_THPFileInfo as GcLayout>::GC_SIZE, <_THPFileInfo as GcLayout>::GC_ALIGN, <_THPFileInfo as GcLayout>::GC_FIELDS),
+    (<THPDec_8032FD40_Data as GcLayout>::GC_NAME, <THPDec_8032FD40_Data as GcLayout>::GC_SIZE, <THPDec_8032FD40_Data as GcLayout>::GC_ALIGN, <THPDec_8032FD40_Data as GcLayout>::GC_FIELDS),
 ];
 
 /// Read `w` bits of a GameCube big-endian bitfield byte run, `shift` bits up from its LSB.

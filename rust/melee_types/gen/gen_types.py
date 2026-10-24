@@ -65,7 +65,7 @@ def write_probe():
     ft = g("src/melee/ft/*.h") + g("src/melee/ft/kinds/**/*.h") + g("src/melee/pl/*.h")
     it = g("src/melee/it/**/*.h") + g("src/melee/ty/**/*.h") + g("src/melee/vi/**/*.h")
     # Single headers whose records other groups' TU ports need (appended, never removed).
-    extra = ["melee/lb/lbanim.h", "melee/gm/gmresultplayer.static.h", "melee/gm/gmfrontend_items.h", "melee/gm/gmtoulib.static.h"]
+    extra = ["melee/lb/lbanim.h", "melee/gm/gmresultplayer.static.h", "melee/gm/gmfrontend_items.h", "melee/gm/gmtoulib.static.h", "melee/lb/lbmemory.h", "melee/lb/lbheap.static.h", "dolphin/thp/thp.h"]
     seen, lines = set(), []
     for h in base + fwd + tys + ft + it + extra:
         if h not in seen:
@@ -80,7 +80,7 @@ RUST_KW = set("as break const continue crate else enum extern false fn for if im
 NORAW = {"self", "Self", "super", "crate", "_"}
 PRIM_TYPEDEFS = {"u8": "u8", "s8": "i8", "u16": "u16", "s16": "i16", "u32": "u32", "s32": "i32",
                  "u64": "u64", "s64": "i64", "f32": "f32", "f64": "f64", "bool": "i32",
-                 "size_t": "usize", "gc_size_t": "usize", "ptrdiff_t": "isize", "char": "i8",
+                 "size_t": "usize", "gc_size_t": "usize", "uintptr_t": "usize", "intptr_t": "isize", "ptrdiff_t": "isize", "char": "i8",
                  "f128": "f64", "i8": "i8", "i16": "i16", "i32": "i32", "i64": "i64", "usize": "usize",
                  "isize": "isize", "str": "str"}
 PRIM = {T.CHAR_S: "i8", T.SCHAR: "i8", T.CHAR_U: "u8", T.UCHAR: "u8", T.SHORT: "i16", T.USHORT: "u16",

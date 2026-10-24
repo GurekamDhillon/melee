@@ -803,3 +803,6 @@
 #include <melee/gm/gmresultplayer.static.h>
 #include <melee/gm/gmfrontend_items.h>
 #include <melee/gm/gmtoulib.static.h>
+#include <melee/lb/lbmemory.h>
+#include <melee/lb/lbheap.static.h>
+#include <dolphin/thp/thp.h>

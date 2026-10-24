@@ -52,6 +52,11 @@ SPECS["lb_0192"] = dict(
             hook="|a0, a1| { t(@ID@); t(pi(a0)); t((a1 == (&raw mut super::TXT)) as u32); }"),
     },
 )
+SPECS["lb_0195"] = dict(
+    src="src/melee/lb/lb_0195.c",
+    types=["UnkArrElem", "lb_804329F0_t"],
+    ret={"lbCardNew_CompleteNextTask": ("(int) (fv() % 14)", "(fv() % 14) as i32")},
+)
 for _s in SPECS.values():
     _s.setdefault("narrow_si", True)
     _s.setdefault("common_ret", {})

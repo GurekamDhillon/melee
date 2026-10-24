@@ -74,9 +74,9 @@ pub mod ext {
     }
     ext_fns! {
     fn ScriptGame_StageSlotSameJoint(a0: i32, a1: i32) -> i32;
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8;
-    fn ftLib_800874BC(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086960(a0 as _) as _ };
+    fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086BE0(a0 as _) as _ };
+    fn ftLib_800874BC(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_800874BC(a0 as _) as _ };
     fn grDynamicAttr_801CA284(a0: *mut Vec, a1: i32) -> i32 = |a0: *mut Vec, a1: i32| unsafe { crate::tu::grdynamicattr::grDynamicAttr_801CA284(a0 as _, a1 as _) as _ };
     fn itGetKind(a0: *mut HSD_GObj) -> ItemKind;
     fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec) = |a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(a0 as _, a1 as _, a2 as _); } };

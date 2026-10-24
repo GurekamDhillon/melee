@@ -331,8 +331,10 @@ pub mod ext {
                     None => { unsafe { let _ = crate::tu::ground::Ground_801C5440(a0 as _, a1 as _, a2 as _); } return; },
                 }
             }
-    hook!(H_ftLib_80086644, ftLib_80086644, (a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::Vec));
-    hook!(H_ftLib_80086684, ftLib_80086684, (a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::Vec));
+    pub static mut H_ftLib_80086644: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, *mut melee_types::Vec)> = None;
+    pub unsafe extern "C" fn ftLib_80086644(a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::Vec) { match H_ftLib_80086644 { Some(f) => f(a0, a1), None => unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } } }
+    pub static mut H_ftLib_80086684: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, *mut melee_types::Vec)> = None;
+    pub unsafe extern "C" fn ftLib_80086684(a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::Vec) { match H_ftLib_80086684 { Some(f) => f(a0, a1), None => unsafe { let _ = crate::ftlib::ftLib_80086684(a0 as _, a1 as _); } } }
     pub static mut H_Ground_801C43A4: Option<unsafe extern "C" fn(*mut core::ffi::c_void) > = None;
             pub unsafe extern "C" fn Ground_801C43A4(a0: *mut core::ffi::c_void)  {
                 match H_Ground_801C43A4 {

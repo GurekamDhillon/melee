@@ -87,8 +87,8 @@ pub mod ext {
     fn HSD_Randi(a0: i32) -> i32;
     fn Stage_80225194() -> u32 = || unsafe { crate::tu::stage::Stage_80225194() as _ };
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut Vec) -> *mut c_void;
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn ftLib_80086EC0(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } };
+    fn ftLib_80086EC0(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086EC0(a0 as _) as _ };
     fn gm_801674C4(a0: i8, a1: u8, a2: i8, a3: i8, a4: Option<unsafe extern "C" fn(i32) -> i32>);
     fn grAnime_801C77FC(a0: *mut HSD_GObj, a1: i32, a2: u32) = |a0: *mut HSD_GObj, a1: i32, a2: u32| { unsafe { let _ = crate::tu::granime::grAnime_801C77FC(a0 as _, a1 as _, a2 as _); } };
     fn grAnime_801C78FC(a0: *mut HSD_GObj, a1: i32, a2: u32) = |a0: *mut HSD_GObj, a1: i32, a2: u32| { unsafe { let _ = crate::tu::granime::grAnime_801C78FC(a0 as _, a1 as _, a2 as _); } };

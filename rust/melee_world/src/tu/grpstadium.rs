@@ -95,12 +95,12 @@ pub mod ext {
     fn HSD_SisLib_803A6B98(a0: *mut HSD_Text, a1: f32, a2: f32, a3: *const i8, a4: usize, a5: usize, a6: usize) -> i32;
     fn HSD_SisLib_803A7664(a0: *mut HSD_Text) = |a0: *mut HSD_Text| { unsafe { let _ = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A7664(a0 as _); } };
     fn Player_8003219C(a0: i32) -> i32;
-    fn Player_GetEntity(a0: i32) -> *mut HSD_GObj;
-    fn Player_GetPlayerSlotType(a0: i32) -> Gm_PKind;
-    fn Player_GetTeam(a0: i32) -> i32;
+    fn Player_GetEntity(a0: i32) -> *mut HSD_GObj = |a0: i32| unsafe { crate::pl::Player_GetEntity(a0 as _) as _ };
+    fn Player_GetPlayerSlotType(a0: i32) -> Gm_PKind = |a0: i32| unsafe { crate::pl::Player_GetPlayerSlotType(a0 as _) as _ };
+    fn Player_GetTeam(a0: i32) -> i32 = |a0: i32| unsafe { crate::pl::Player_GetTeam(a0 as _) as _ };
     fn Slippi_FrozenStadium() -> i32;
     fn Stage_80225194() -> u32 = || unsafe { crate::tu::stage::Stage_80225194() as _ };
-    fn ftLib_80086B90(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_80086B90(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086B90(a0 as _, a1 as _); } };
     fn gm_80160854(a0: u8, a1: u8, a2: u8, a3: u8) -> u32;
     fn gm_80160968(a0: u32) -> _GXColor;
     fn gm_80160A60(a0: i32) -> *const i8;

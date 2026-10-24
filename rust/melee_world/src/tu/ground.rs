@@ -111,10 +111,10 @@ pub mod ext {
     fn Mex_GuestLr() -> u32;
     fn PSMTXIdentity(a0: *mut c_void) = |a0: *mut c_void| { unsafe { let _ = melee_runtime::tu::mtx_pc::raw::PSMTXIdentity(a0 as _); } };
     fn PSVECAdd(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) = |a0: *mut Vec, a1: *mut Vec, a2: *mut Vec| { unsafe { let _ = melee_runtime::tu::mtx_pc::raw::PSVECAdd(a0 as _, a1 as _, a2 as _); } };
-    fn Player_GetEntity(a0: i32) -> *mut HSD_GObj;
-    fn Player_GetEntityAtIndex(a0: i32, a1: i32) -> *mut HSD_GObj;
-    fn Player_GetPlayerCharacter(a0: i32) -> u32;
-    fn Player_LoadPlayerCoords(a0: i32, a1: *mut Vec);
+    fn Player_GetEntity(a0: i32) -> *mut HSD_GObj = |a0: i32| unsafe { crate::pl::Player_GetEntity(a0 as _) as _ };
+    fn Player_GetEntityAtIndex(a0: i32, a1: i32) -> *mut HSD_GObj = |a0: i32, a1: i32| unsafe { crate::pl::Player_GetEntityAtIndex(a0 as _, a1 as _) as _ };
+    fn Player_GetPlayerCharacter(a0: i32) -> u32 = |a0: i32| unsafe { crate::pl::Player_GetPlayerCharacter(a0 as _) as _ };
+    fn Player_LoadPlayerCoords(a0: i32, a1: *mut Vec) = |a0: i32, a1: *mut Vec| { unsafe { let _ = crate::pl::Player_LoadPlayerCoords(a0 as _, a1 as _); } };
     fn ScriptGame_RefsGroundBorn(a0: i32, a1: i32);
     fn ScriptGame_StagePrepare(a0: *mut MapCollData) -> *mut MapCollData;
     fn ScriptGame_StageReady();
@@ -142,8 +142,8 @@ pub mod ext {
     fn asinf(a0: f32) -> f32 = |a0: f32| unsafe { melee_runtime::lbtrigf::asinf(a0 as _) as _ };
     fn ftCo_8009F4A4();
     fn ftCo_800C06C0();
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn ftLib_8008701C(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } };
+    fn ftLib_8008701C(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_8008701C(a0 as _) as _ };
     fn gm_80164600() -> i32;
     fn gm_80164ABC() -> i32;
     fn gm_8016B238() -> i32;

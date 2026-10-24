@@ -388,8 +388,10 @@ pub mod ext {
                     None => { unsafe { let _ = crate::tu::ground::Ground_801C4A08(a0 as _); } return; },
                 }
             }
-    hook!(H_Player_GetPlayerSlotType, Player_GetPlayerSlotType, (a0: i32) -> u32);
-    hook!(H_Player_LoadPlayerCoords, Player_LoadPlayerCoords, (a0: i32, a1: *mut melee_types::Vec));
+    pub static mut H_Player_GetPlayerSlotType: Option<unsafe extern "C" fn(i32) -> u32> = None;
+    pub unsafe extern "C" fn Player_GetPlayerSlotType(a0: i32) -> u32 { match H_Player_GetPlayerSlotType { Some(f) => f(a0), None => unsafe { crate::pl::Player_GetPlayerSlotType(a0 as _) as _ } } }
+    pub static mut H_Player_LoadPlayerCoords: Option<unsafe extern "C" fn(i32, *mut melee_types::Vec)> = None;
+    pub unsafe extern "C" fn Player_LoadPlayerCoords(a0: i32, a1: *mut melee_types::Vec) { match H_Player_LoadPlayerCoords { Some(f) => f(a0, a1), None => unsafe { let _ = crate::pl::Player_LoadPlayerCoords(a0 as _, a1 as _); } } }
     hook!(H_it_802E7654, it_802E7654, (a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::HSD_JObj, a2: *mut melee_types::Vec, a3: i32, a4: i32, a5: f32) -> *mut melee_types::HSD_GObj);
     pub static mut H_grMaterial_801C9604: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, *mut core::ffi::c_void, i32)> = None;
     #[allow(non_snake_case)]

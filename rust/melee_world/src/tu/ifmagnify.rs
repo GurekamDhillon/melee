@@ -67,9 +67,9 @@ pub mod ext {
     fn HSD_MemAlloc(a0: i32) -> *mut c_void = |a0: i32| unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ };
     fn HSD_SetEraseColor(a0: u8, a1: u8, a2: u8, a3: u8);
     fn Player_80036978(a0: i32, a1: *mut Vec);
-    fn Player_GetEntity(a0: i32) -> *mut HSD_GObj;
-    fn Player_GetPlayerSlotType(a0: i32) -> Gm_PKind;
-    fn Player_GetTeam(a0: i32) -> i32;
+    fn Player_GetEntity(a0: i32) -> *mut HSD_GObj = |a0: i32| unsafe { crate::pl::Player_GetEntity(a0 as _) as _ };
+    fn Player_GetPlayerSlotType(a0: i32) -> Gm_PKind = |a0: i32| unsafe { crate::pl::Player_GetPlayerSlotType(a0 as _) as _ };
+    fn Player_GetTeam(a0: i32) -> i32 = |a0: i32| unsafe { crate::pl::Player_GetTeam(a0 as _) as _ };
     fn Stage_GetCamBoundsBottomOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsBottomOffset() as _ };
     fn Stage_GetCamBoundsLeftOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsLeftOffset() as _ };
     fn Stage_GetCamBoundsRightOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsRightOffset() as _ };
@@ -79,9 +79,9 @@ pub mod ext {
     fn Wb_RenderActive() -> i32;
     fn atan2f(a0: f32, a1: f32) -> f32 = |a0: f32, a1: f32| unsafe { melee_runtime::lbtrigf::atan2f(a0 as _, a1 as _) as _ };
     fn ftDrawCommon_80080C28(a0: *mut HSD_GObj, a1: i32);
-    fn ftLib_80086B64(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_80086B80(a0: *mut HSD_GObj) -> f32;
-    fn ftLib_80086B90(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_80086B64(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086B64(a0 as _) as _ };
+    fn ftLib_80086B80(a0: *mut HSD_GObj) -> f32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086B80(a0 as _) as _ };
+    fn ftLib_80086B90(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086B90(a0 as _, a1 as _); } };
     fn ftLib_80086ED0(a0: *mut HSD_GObj) -> i32;
     fn ftLib_UpdateLogicOffCamera(a0: *mut HSD_GObj);
     fn gmVs_GetSceneController() -> *mut VsSceneController;

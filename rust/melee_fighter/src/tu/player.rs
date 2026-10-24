@@ -17,6 +17,24 @@ use melee_types::*;
 
 pub use crate::player::FT_MAPPING_LIST as ftMapping_list;
 pub use crate::stale::FtMapping;
+/// The plain table accessors live in `melee_world::pl` (the world TUs call them too).
+pub use melee_world::pl::{
+    Player_GetPlayerSlotType,
+    Player_GetEntity,
+    Player_LoadPlayerCoords,
+    Player_GetTeam,
+    Player_GetStocks,
+    Player_GetEntityAtIndex,
+    Player_GetPlayerCharacter,
+    Player_GetPlayerId,
+    Player_GetNametagSlotID,
+    Player_GetPlayerState,
+    Player_GetDamage,
+    Player_GetMoreFlagsBit2,
+    Player_GetRemainingHP,
+    Player_800325C8,
+    Player_GetCoins,
+};
 pub use crate::stale::PLAYER_SLOTS as player_slots;
 
 // BEGIN EXT (callees of the C TU that live in unported TUs)
@@ -361,21 +379,12 @@ pub fn Player_8003221C(slot: i32) -> bool {
     false
 }
 
-pub fn Player_GetPlayerState(slot: i32) -> i32 {
-    sp(slot).player_state
-}
 
-pub fn Player_GetPlayerCharacter(slot: i32) -> CharacterKind {
-    sp(slot).ckind
-}
 
 pub fn Player_SetPlayerCharacter(slot: i32, value: CharacterKind) {
     sp(slot).ckind = value;
 }
 
-pub fn Player_GetPlayerSlotType(slot: i32) -> Gm_PKind {
-    sp(slot).pkind
-}
 
 pub fn Player_8003248C(slot: i32, arg1: i32) -> Gm_PKind {
     let player = sp(slot);
@@ -394,14 +403,6 @@ pub fn Player_SetSlottype(slot: i32, value: Gm_PKind) {
     sp(slot).pkind = value;
 }
 
-pub fn Player_800325C8(kind: CharacterKind, b: i32) -> i8 {
-    if b == 0 {
-        return map(kind).internal_id;
-    } else if b == 1 {
-        return map(kind).extra_internal_id;
-    }
-    -1
-}
 
 pub fn Player_80032610(slot: i32, arg1: i32) -> i8 {
     let error_value: i32 = -1;
@@ -416,10 +417,6 @@ pub fn Player_80032610(slot: i32, arg1: i32) -> i8 {
     error_value as i8
 }
 
-pub fn Player_LoadPlayerCoords(slot: i32, arg_vec: *mut Vec3) {
-    let player = sp(slot);
-    unsafe { *arg_vec = player.player_poses.byIndex[player.transformed[0] as usize] };
-}
 
 pub fn Player_80032768(slot: i32, arg_vec: *mut Vec3) {
     let player = sp(slot);
@@ -547,17 +544,11 @@ pub fn Player_SetControllerIndex(slot: i32, controller_index: i8) {
     sp(slot).controller_index = controller_index;
 }
 
-pub fn Player_GetTeam(slot: i32) -> i32 {
-    sp(slot).team as i32
-}
 
 pub fn Player_SetTeam(slot: i32, team: i8) {
     sp(slot).team = team as u8;
 }
 
-pub fn Player_GetPlayerId(slot: i32) -> i32 {
-    sp(slot).player_id as i32
-}
 
 pub fn Player_SetPlayerId(slot: i32, player_id: i32) {
     sp(slot).player_id = player_id as u8;
@@ -635,9 +626,6 @@ pub fn Player_80033BB8(slot: i32) -> i32 {
     ext::gm_8016C5C0(slot)
 }
 
-pub fn Player_GetStocks(slot: i32) -> i32 {
-    sp(slot).stocks as i32
-}
 
 pub fn Player_GetP1Stock() -> i32 {
     unsafe { player_slots[0].stocks as i32 }
@@ -654,9 +642,6 @@ pub fn Player_LoseStock(slot: i32) {
     }
 }
 
-pub fn Player_GetCoins(slot: i32) -> i32 {
-    sp(slot).current_coins
-}
 
 pub fn Player_SetCoins(slot: i32, current_coins: i32) {
     sp(slot).current_coins = current_coins;
@@ -686,16 +671,7 @@ pub fn Player_SetUnk9C(slot: i32, unk9C: i32) {
     sp(slot).unk9C = unk9C;
 }
 
-pub fn Player_GetEntity(slot: i32) -> *mut HSD_GObj {
-    let player = sp(slot);
-    ent(player, 0)
-}
 
-pub fn Player_GetEntityAtIndex(slot: i32, index: i32) -> *mut HSD_GObj {
-    let player = sp(slot);
-    let entity_index = player.transformed[index as usize] as usize;
-    player.player_entity[entity_index]
-}
 
 pub fn Player_SwapTransformedStates(slot: i32, arg1: i32, arg2: i32) {
     let player = sp(slot);
@@ -704,10 +680,6 @@ pub fn Player_SwapTransformedStates(slot: i32, arg1: i32, arg2: i32) {
     player.transformed[arg2 as usize] = temp_r5;
 }
 
-pub fn Player_GetDamage(slot: i32) -> i32 {
-    let player = sp(slot);
-    unsafe { player.staminas.byIndex[player.transformed[0] as usize] as i32 }
-}
 
 pub fn Player_SetHUDDamage(slot: i32, arg1: i32) {
     Player_CheckSlot(slot);
@@ -735,21 +707,7 @@ pub fn Player_SetOtherStamina(slot: i32, stamina: i32) {
     unsafe { player.staminas.byName.stamina = stamina as i16 };
 }
 
-pub fn Player_GetRemainingHP(slot: i32) -> i32 {
-    let player = sp(slot);
-    let result: i32 = unsafe {
-        player.staminas.byName.stamina as i32 - player.staminas.byIndex[player.transformed[0] as usize] as i32
-    };
-    let mut result2 = result as u32;
-    if result < 0 {
-        result2 = 0;
-    }
-    result2 as i32
-}
 
-pub fn Player_GetMoreFlagsBit2(slot: i32) -> bool {
-    sp(slot).more_flags.b2() != 0
-}
 
 pub fn Player_SetMoreFlagsBit2(slot: i32, bit2: u8) {
     sp(slot).more_flags.set_b2(bit2);
@@ -922,9 +880,6 @@ pub fn Player_SetFlagsBit0(slot: i32, bit0: bool) {
     sp(slot).flags.set_b0(bit0 as u8);
 }
 
-pub fn Player_GetNametagSlotID(slot: i32) -> u8 {
-    sp(slot).nametag_slot_id as u8
-}
 
 pub fn Player_SetNametagSlotID(slot: i32, nametag_slot_id: i32) {
     sp(slot).nametag_slot_id = nametag_slot_id;

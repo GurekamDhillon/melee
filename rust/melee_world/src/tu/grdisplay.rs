@@ -59,8 +59,8 @@ pub mod ext {
     fn SurfaceBegin(a0: i32);
     fn SurfaceEnd();
     fn Wb_RenderOption(a0: i32, a1: i32) -> i32;
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn ftLib_800872B0(a0: *mut HSD_GObj) -> *mut LbShadow;
+    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } };
+    fn ftLib_800872B0(a0: *mut HSD_GObj) -> *mut LbShadow = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_800872B0(a0 as _) as _ };
     fn lbShadow_8000EEE0(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { let _ = melee_runtime::tu::lbshadow::lbShadow_8000EEE0(a0 as _); } };
     fn lbShadow_8000EFEC() = || { unsafe { let _ = melee_runtime::tu::lbshadow::lbShadow_8000EFEC(); } };
     }

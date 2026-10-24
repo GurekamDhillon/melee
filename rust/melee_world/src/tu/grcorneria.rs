@@ -31,7 +31,7 @@ pub mod ext {
     hook_or!(CAMERA_80030178, Camera_80030178, () -> i32, || crate::cm::camera::world().camera_80030178() as i32);
     hook_or!(CAMERA_GETTRANSFORMINTEREST, Camera_GetTransformInterest, (a0: *mut Vec), |a0: *mut Vec| { unsafe { *a0 = crate::cm::camera::world().camera_get_transform_interest(); } });
     hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (a0: CmQuakeKind, a1: *mut Vec));
-    hook!(FTLIB_80086644, ftLib_80086644, (gobj: *mut HSD_GObj, pos: *mut Vec));
+    hook_or!(FTLIB_80086644, ftLib_80086644, (gobj: *mut HSD_GObj, pos: *mut Vec), |gobj: *mut HSD_GObj, pos: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(gobj as _, pos as _); } });
     hook!(GM_8017E7E0, gm_8017E7E0, () -> i32);
     hook!(GM_801883C0, gm_801883C0, () -> f32);
     hook!(GM_GETDBPAUSEFLAG, gm_GetDbPauseFlag, (bit: i32) -> i32);
@@ -368,8 +368,8 @@ pub mod ext {
         match unsafe { MPLIB_80057BC0 } { Some(f) => f(joint_id), None => { unsafe { let _ = crate::tu::mplib::mpLib_80057BC0(joint_id as _); } return; } }
     }
     hook!(OSREPORT, OSReport, (a0: *const i8, va: &[usize]));
-    hook!(PLAYER_GETPLAYERSLOTTYPE, Player_GetPlayerSlotType, (slot: s32) -> Gm_PKind);
-    hook!(PLAYER_LOADPLAYERCOORDS, Player_LoadPlayerCoords, (slot: s32, out_vec: *mut Vec));
+    hook_or!(PLAYER_GETPLAYERSLOTTYPE, Player_GetPlayerSlotType, (slot: s32) -> Gm_PKind, |slot: s32| unsafe { crate::pl::Player_GetPlayerSlotType(slot as _) as _ });
+    hook_or!(PLAYER_LOADPLAYERCOORDS, Player_LoadPlayerCoords, (slot: s32, out_vec: *mut Vec), |slot: s32, out_vec: *mut Vec| { unsafe { let _ = crate::pl::Player_LoadPlayerCoords(slot as _, out_vec as _); } });
     pub static mut STAGE_80225194: Option<fn() -> StKind> = None;
     #[allow(non_snake_case)]
     pub fn Stage_80225194() -> StKind {

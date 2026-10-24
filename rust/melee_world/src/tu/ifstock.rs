@@ -61,9 +61,9 @@ pub mod ext {
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) = |a0: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(a0 as _); } };
     fn HSD_MemAlloc(a0: i32) -> *mut c_void = |a0: i32| unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ };
     fn HSD_TObjReqAnimAll(a0: *mut HSD_TObj, a1: f32) = |a0: *mut HSD_TObj, a1: f32| { unsafe { let _ = melee_runtime::tu::tobj::HSD_TObjReqAnimAll(a0 as _, a1 as _); } };
-    fn Player_800325C8(a0: u32, a1: i32) -> i8;
-    fn Player_GetCoins(a0: i32) -> i32;
-    fn Player_GetStocks(a0: i32) -> i32;
+    fn Player_800325C8(a0: u32, a1: i32) -> i8 = |a0: u32, a1: i32| unsafe { crate::pl::Player_800325C8(a0 as _, a1 as _) as _ };
+    fn Player_GetCoins(a0: i32) -> i32 = |a0: i32| unsafe { crate::pl::Player_GetCoins(a0 as _) as _ };
+    fn Player_GetStocks(a0: i32) -> i32 = |a0: i32| unsafe { crate::pl::Player_GetStocks(a0 as _) as _ };
     fn Script_StatusHUDVisible() -> i32;
     fn UI_TextI4(a0: *const i8, a1: i32, a2: i32, a3: i32, a4: *mut c_void) -> i32;
     fn Ui_RetailHidden(a0: i32) -> i32;

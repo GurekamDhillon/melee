@@ -179,9 +179,9 @@ pub fn ftlib_800865f0(g: G) -> *mut HSD_JObj {
 pub fn ftlib_80086630(g: G, part: i32) -> *mut HSD_JObj {
     unsafe { (*fp(g).parts.offset(part as isize)).joint }
 }
-pub fn ftlib_80086644(g: G, pos: &mut Vec3) { *pos = fp(g).cur_pos; }
+pub fn ftlib_80086644(g: G, pos: &mut Vec3) { unsafe { melee_world::ftlib::ftLib_80086644(g, pos) } }
 pub fn ftlib_80086664(g: G, pos: &Vec3) { fp(g).cur_pos = *pos; }
-pub fn ftlib_80086684(g: G, pos: &mut Vec3) { *pos = fp(g).prev_pos; }
+pub fn ftlib_80086684(g: G, pos: &mut Vec3) { unsafe { melee_world::ftlib::ftLib_80086684(g, pos) } }
 
 pub fn set_scale(g: G, val: f32) {
     fp(g).x34_scale.y = val;
@@ -243,10 +243,8 @@ pub fn ftlib_800868d4(g: G, arg1: G) -> bool {
 }
 
 /// `ftLib_80086960`: is `arg` a fighter gobj.
-pub fn ftlib_80086960(arg: G) -> bool {
-    !arg.is_null() && unsafe { (*arg).classifier } as i32 == HSD_GOBJ_CLASS_FIGHTER
-}
-pub fn ftlib_80086984(g: G) -> *mut CollData { &mut fp(g).coll_data }
+pub fn ftlib_80086960(arg: G) -> bool { unsafe { melee_world::ftlib::ftLib_80086960(arg) } }
+pub fn ftlib_80086984(g: G) -> *mut CollData { unsafe { melee_world::ftlib::ftLib_80086984(g) } }
 pub fn ftlib_80086990(g: G, v: &mut Vec3) {
     let f = fp(g);
     let tmp = 0.5f32 * (f.coll_data.ecb.top.y + f.coll_data.ecb.bottom.y);
@@ -260,7 +258,7 @@ pub fn ftlib_80086a0c(g: G) -> f32 { fp(g).x34_scale.y }
 pub fn ftlib_80086a18(g: G) -> bool {
     matches!(fp(g).motion_id as i32, ftCo_MS_GuardOn | ftCo_MS_Guard | ftCo_MS_GuardSetOff)
 }
-pub fn ftlib_80086a4c(g: G, val: f32) { fp(g).dmg.x1958 = val; }
+pub fn ftlib_80086a4c(g: G, val: f32) { unsafe { melee_world::ftlib::ftLib_80086A4C(g, val) } }
 pub fn ftlib_80086a58(g: G, x: &mut S32Vec2) -> bool {
     let f = fp(g);
     if f.x2229_b3() == 0 && f.x2220_b7() == 0 {
@@ -283,16 +281,16 @@ pub fn update_logic_off_camera(g: G) {
         f.set_x221F_b0(0);
     }
 }
-pub fn ftlib_80086b64(g: G) -> bool { fp(g).x221F_b0() != 0 }
-pub fn ftlib_80086b74(g: G) -> *mut CmSubject { fp(g).x890_cameraBox }
-pub fn ftlib_80086b80(g: G) -> f32 { unsafe { (*ftlib_80086b74(g)).target_ext.v.z } }
-pub fn ftlib_80086b90(g: G, v: &mut Vec3) { *v = unsafe { (*ftlib_80086b74(g)).bone_pos }; }
+pub fn ftlib_80086b64(g: G) -> bool { unsafe { melee_world::ftlib::ftLib_80086B64(g) } }
+pub fn ftlib_80086b74(g: G) -> *mut CmSubject { unsafe { melee_world::ftlib::ftLib_80086B74(g) } }
+pub fn ftlib_80086b80(g: G) -> f32 { unsafe { melee_world::ftlib::ftLib_80086B80(g) } }
+pub fn ftlib_80086b90(g: G, v: &mut Vec3) { unsafe { melee_world::ftlib::ftLib_80086B90(g, v) } }
 pub fn ftlib_80086bb4(g: G) -> bool {
     let cam = ftlib_80086b74(g);
     h::camera_80031154(unsafe { &mut (*cam).pos })
 }
-pub fn ftlib_80086be0(g: G) -> u8 { fp(g).player_id }
-pub fn ftlib_80086bec(g: G, v: &mut Vec3) { *v = fp(g).pos_delta; }
+pub fn ftlib_80086be0(g: G) -> u8 { unsafe { melee_world::ftlib::ftLib_80086BE0(g) } }
+pub fn ftlib_80086bec(g: G, v: &mut Vec3) { unsafe { melee_world::ftlib::ftLib_80086BEC(g, v) } }
 pub fn get_motion_id(g: G) -> i32 { fp(g).motion_id as i32 }
 
 #[inline]
@@ -326,7 +324,7 @@ pub fn ftlib_80086e68(g: G) {
     }
 }
 pub fn ftlib_80086eb4(g: G) -> i32 { fp(g).team as i32 }
-pub fn ftlib_80086ec0(g: G) -> bool { fp(g).x221C_b6() != 0 }
+pub fn ftlib_80086ec0(g: G) -> bool { unsafe { melee_world::ftlib::ftLib_80086EC0(g) } }
 pub fn ftlib_80086ed0(g: G) -> bool {
     let f = fp(g);
     !(f.invisible() != 0
@@ -363,7 +361,7 @@ pub fn ftlib_80086fd4(g0: G, g1: G) -> bool {
     }
     false
 }
-pub fn ftlib_8008701c(g: G) -> bool { fp(g).x221F_b3() != 0 }
+pub fn ftlib_8008701c(g: G) -> bool { unsafe { melee_world::ftlib::ftLib_8008701C(g) } }
 pub fn ftlib_8008702c(a: i32) { h::ftdata_80085560(a, 1); }
 pub fn ftlib_80087050(a: i32) { h::ftdata_80085560(a, -1); }
 pub fn ftlib_80087074(g: G, v: &mut Vec3) -> bool {
@@ -406,25 +404,25 @@ pub fn get_kind(g: G) -> FighterKind {
     }
     k
 }
-pub fn ftlib_800872b0(g: G) -> *mut LbShadow { &mut fp(g).x20A4 }
+pub fn ftlib_800872b0(g: G) -> *mut LbShadow { unsafe { melee_world::ftlib::ftLib_800872B0(g) } }
 pub fn ftlib_800872bc(g: G) -> bool {
     let f = fp(g);
     f.x221E_b1() == 0 && f.x2226_b4() == 0 && f.is_sub_fighter() == 0
 }
 pub fn ftlib_80087300(g: G) -> i32 { fp(g).dmg.x18c4_source_ply }
 pub fn ftlib_8008730c(g: G) -> i32 { fp(g).x221F_b5() as i32 }
-pub fn ftlib_8008731c(g: G) -> i32 { ftlib_8008701c(g) as i32 }
+pub fn ftlib_8008731c(g: G) -> i32 { unsafe { melee_world::ftlib::ftLib_8008731C(g) } }
 #[inline]
 fn msid_in(g: G, lo: i32, hi: i32) -> bool {
     let m = get_motion_id(g);
     m >= lo && m <= hi
 }
-pub fn ftlib_8008732c(g: G) -> bool { msid_in(g, ftCo_MS_DeadDown, ftCo_MS_DeadUpFallHitCameraIce) }
+pub fn ftlib_8008732c(g: G) -> bool { unsafe { melee_world::ftlib::ftLib_8008732C(g) } }
 pub fn ftlib_80087354(g: G) -> bool { msid_in(g, ftCo_MS_DeadUp, ftCo_MS_DeadUpFallHitCameraIce) }
 pub fn ftlib_8008737c(g: G) -> bool { msid_in(g, ftCo_MS_DeadUpStar, ftCo_MS_DeadUpStarIce) }
 pub fn ftlib_800873a4(g: G) -> bool { msid_in(g, ftCo_MS_DeadUpFall, ftCo_MS_DeadUpFallHitCameraIce) }
 pub fn ftlib_800873cc(g: G) -> bool { msid_in(g, ftCo_MS_Rebirth, ftCo_MS_RebirthWait) }
-pub fn ftlib_800873f4(g: G) -> bool { msid_in(g, ftCo_MS_Entry, ftCo_MS_EntryEnd) }
+pub fn ftlib_800873f4(g: G) -> bool { unsafe { melee_world::ftlib::ftLib_800873F4(g) } }
 /// `ftLib_8008741C`: the fighter gobj with spawn number `i`.
 pub fn ftlib_8008741c(i: u32) -> G { each(|c| fp(c).x8_spawnNum as u32 == i) }
 pub fn ftlib_80087454(g: G) -> f32 { fp(g).dmg.x18A4_knockbackMagnitude }
@@ -445,7 +443,7 @@ pub fn ftlib_8008746c(g: G) -> i32 {
     }
     id
 }
-pub fn ftlib_800874bc(g: G) -> i32 { fp(g).is_sub_fighter() as i32 }
+pub fn ftlib_800874bc(g: G) -> i32 { unsafe { melee_world::ftlib::ftLib_800874BC(g) } }
 pub fn ftlib_800874cc(g: G, arg1: *mut core::ffi::c_void, arg2: i32) {
     let f = fp(g);
     h::pl_8003e4a4(f.player_id as i32, f.is_sub_fighter() as i32, arg1, arg2);

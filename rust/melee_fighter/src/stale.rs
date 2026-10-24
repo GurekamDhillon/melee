@@ -12,13 +12,12 @@ use crate::types::{
     Gm_PKind_Cpu, Gm_PKind_Human, StatsAttack_Count,
 };
 
-/// `Gm_Player_NumMax`.
-pub const PLAYER_NUM_MAX: usize = 6;
+pub use melee_world::pl::{FtMapping, PLAYER_NUM_MAX};
 /// Entries in `StaleMoveTable::StaleMoves`.
 const STALE_LEN: i32 = 10;
 
-/// `player_slots` (player.c .bss).
-pub static mut PLAYER_SLOTS: [StaticPlayer; PLAYER_NUM_MAX] = unsafe { core::mem::zeroed() };
+/// `player_slots` (player.c .bss): owned by `melee_world::pl` (the world TUs read it too).
+pub use melee_world::pl::player_slots as PLAYER_SLOTS;
 /// `staleAttackInstance` (plstale.c).
 pub static mut STALE_ATTACK_INSTANCE: u16 = 0;
 /// `unk_804D6480` (plattack.c).
@@ -29,14 +28,6 @@ pub static mut STALE_DECREMENTS: *const f32 = core::ptr::null();
 /// `DbLevel` (db.c, group 1); at `DbLKind_DebugRom` (3) and above staling is off.
 pub static mut DB_LEVEL: i32 = 0;
 pub const DBL_KIND_DEBUG_ROM: i32 = 3;
-
-/// `ftMapping` (player.c), one row per CharacterKind.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct FtMapping {
-    pub internal_id: i8,
-    pub extra_internal_id: i8,
-    pub has_transformation: i8,
-}
 
 /// `Player_CheckSlot`: the C reports through HSD_ASSERTREPORT and carries on; an out-of-range
 /// slot is a bug either way, so this panics.

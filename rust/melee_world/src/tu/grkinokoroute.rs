@@ -207,11 +207,11 @@ pub mod ext {
         }
     }
     hook!(FTCO_800C07F8, ftCo_800C07F8, (a0: *mut HSD_GObj, a1: u32, a2: *mut c_void));
-    hook!(FTLIB_80086644, ftLib_80086644, (a0: *mut HSD_GObj, a1: *mut Vec3));
-    hook!(FTLIB_80086684, ftLib_80086684, (a0: *mut HSD_GObj, a1: *mut Vec3));
-    hook!(FTLIB_80086B80, ftLib_80086B80, (a0: *mut HSD_GObj) -> f32);
-    hook!(FTLIB_80086EC0, ftLib_80086EC0, (a0: *mut HSD_GObj) -> i32);
-    hook!(FTLIB_8008732C, ftLib_8008732C, (a0: *mut HSD_GObj) -> i32);
+    hook_or!(FTLIB_80086644, ftLib_80086644, (a0: *mut HSD_GObj, a1: *mut Vec3), |a0: *mut HSD_GObj, a1: *mut Vec3| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } });
+    hook_or!(FTLIB_80086684, ftLib_80086684, (a0: *mut HSD_GObj, a1: *mut Vec3), |a0: *mut HSD_GObj, a1: *mut Vec3| { unsafe { let _ = crate::ftlib::ftLib_80086684(a0 as _, a1 as _); } });
+    hook_or!(FTLIB_80086B80, ftLib_80086B80, (a0: *mut HSD_GObj) -> f32, |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086B80(a0 as _) as _ });
+    hook_or!(FTLIB_80086EC0, ftLib_80086EC0, (a0: *mut HSD_GObj) -> i32, |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086EC0(a0 as _) as _ });
+    hook_or!(FTLIB_8008732C, ftLib_8008732C, (a0: *mut HSD_GObj) -> i32, |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_8008732C(a0 as _) as _ });
     hook!(GM_801674C4, gm_801674C4, (a0: s8, a1: u8, a2: s8, a3: s8, a4: GmRouteCallback));
     hook_or!(GRLIB_801C96F8, grLib_801C96F8, (a0: s32, a1: s32, a2: *mut Vec3) -> *mut HSD_Generator, |a0: s32, a1: s32, a2: *mut Vec3| unsafe { crate::tu::grlib::grLib_801C96F8(a0, a1, a2) });
     hook_or!(GRMATERIAL_801C8CDC, grMaterial_801C8CDC, (a0: *mut HSD_GObj), |a0: *mut HSD_GObj| unsafe { crate::tu::grmaterial::grMaterial_801C8CDC(a0) });

@@ -313,13 +313,11 @@ pub fn Player_80031900() {
 }
 pub static mut HOOK_Player_GetEntity: Option<fn(i32) -> *mut HSD_GObj> = None;
 /// C `Player_GetEntity` (melee/pl/player.h).
-pub fn Player_GetEntity(a0: i32) -> *mut HSD_GObj {
-    match unsafe { HOOK_Player_GetEntity } { Some(f) => f(a0), None => panic!("TODO: Player_GetEntity is not ported") }
+pub fn Player_GetEntity(a0: i32) -> *mut HSD_GObj { match unsafe { HOOK_Player_GetEntity } { Some(f) => f(a0), None => unsafe { crate::pl::Player_GetEntity(a0 as _) as _ } }
 }
 pub static mut HOOK_Player_GetEntityAtIndex: Option<fn(i32, i32) -> *mut HSD_GObj> = None;
 /// C `Player_GetEntityAtIndex` (melee/pl/player.h).
-pub fn Player_GetEntityAtIndex(a0: i32, a1: i32) -> *mut HSD_GObj {
-    match unsafe { HOOK_Player_GetEntityAtIndex } { Some(f) => f(a0, a1), None => panic!("TODO: Player_GetEntityAtIndex is not ported") }
+pub fn Player_GetEntityAtIndex(a0: i32, a1: i32) -> *mut HSD_GObj { match unsafe { HOOK_Player_GetEntityAtIndex } { Some(f) => f(a0, a1), None => unsafe { crate::pl::Player_GetEntityAtIndex(a0 as _, a1 as _) as _ } }
 }
 pub static mut HOOK_Stage_GetBlastZoneBottomOffset: Option<fn() -> f32> = None;
 /// C `Stage_GetBlastZoneBottomOffset` (melee/gr/stage.h).
@@ -379,13 +377,11 @@ pub fn ftCo_800C07F8(a0: *mut Ground_GObj, a1: u32, a2: *mut core::ffi::c_void) 
 }
 pub static mut HOOK_ftLib_80086644: Option<fn(*mut Fighter_GObj, *mut Vec3)> = None;
 /// C `ftLib_80086644` (melee/ft/ftlib.h).
-pub fn ftLib_80086644(a0: *mut Fighter_GObj, a1: *mut Vec3) {
-    match unsafe { HOOK_ftLib_80086644 } { Some(f) => f(a0, a1), None => panic!("TODO: ftLib_80086644 is not ported") }
+pub fn ftLib_80086644(a0: *mut Fighter_GObj, a1: *mut Vec3) { match unsafe { HOOK_ftLib_80086644 } { Some(f) => f(a0, a1), None => unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } }
 }
 pub static mut HOOK_ftLib_80086BE0: Option<fn(*mut HSD_GObj) -> u8> = None;
 /// C `ftLib_80086BE0` (melee/ft/ftlib.h).
-pub fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8 {
-    match unsafe { HOOK_ftLib_80086BE0 } { Some(f) => f(a0), None => panic!("TODO: ftLib_80086BE0 is not ported") }
+pub fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8 { match unsafe { HOOK_ftLib_80086BE0 } { Some(f) => f(a0), None => unsafe { crate::ftlib::ftLib_80086BE0(a0 as _) as _ } }
 }
 pub static mut HOOK_ftLib_80086C18: Option<fn(*mut HSD_GObj, i32, i32)> = None;
 /// C `ftLib_80086C18` (melee/ft/ftlib.h).
@@ -394,18 +390,15 @@ pub fn ftLib_80086C18(a0: *mut HSD_GObj, a1: i32, a2: i32) {
 }
 pub static mut HOOK_ftLib_80086EC0: Option<fn(*mut HSD_GObj) -> i32> = None;
 /// C `ftLib_80086EC0` (melee/ft/ftlib.h).
-pub fn ftLib_80086EC0(a0: *mut HSD_GObj) -> i32 {
-    match unsafe { HOOK_ftLib_80086EC0 } { Some(f) => f(a0), None => panic!("TODO: ftLib_80086EC0 is not ported") }
+pub fn ftLib_80086EC0(a0: *mut HSD_GObj) -> i32 { match unsafe { HOOK_ftLib_80086EC0 } { Some(f) => f(a0), None => unsafe { crate::ftlib::ftLib_80086EC0(a0 as _) as _ } }
 }
 pub static mut HOOK_ftLib_8008731C: Option<fn(*mut HSD_GObj) -> i32> = None;
 /// C `ftLib_8008731C` (melee/ft/ftlib.h).
-pub fn ftLib_8008731C(a0: *mut HSD_GObj) -> i32 {
-    match unsafe { HOOK_ftLib_8008731C } { Some(f) => f(a0), None => panic!("TODO: ftLib_8008731C is not ported") }
+pub fn ftLib_8008731C(a0: *mut HSD_GObj) -> i32 { match unsafe { HOOK_ftLib_8008731C } { Some(f) => f(a0), None => unsafe { crate::ftlib::ftLib_8008731C(a0 as _) as _ } }
 }
 pub static mut HOOK_ftLib_8008732C: Option<fn(*mut HSD_GObj) -> i32> = None;
 /// C `ftLib_8008732C` (melee/ft/ftlib.h).
-pub fn ftLib_8008732C(a0: *mut HSD_GObj) -> i32 {
-    match unsafe { HOOK_ftLib_8008732C } { Some(f) => f(a0), None => panic!("TODO: ftLib_8008732C is not ported") }
+pub fn ftLib_8008732C(a0: *mut HSD_GObj) -> i32 { match unsafe { HOOK_ftLib_8008732C } { Some(f) => f(a0), None => unsafe { crate::ftlib::ftLib_8008732C(a0 as _) as _ } }
 }
 pub static mut HOOK_gm_801674C4: Option<fn(i8, u8, i8, i8, GmRouteCallback)> = None;
 /// C `gm_801674C4` (melee/gm/gm_1601.h).

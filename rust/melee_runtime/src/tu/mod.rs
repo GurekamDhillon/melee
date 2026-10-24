@@ -75,3 +75,12 @@ pub mod controller;
 pub mod devcom;
 pub mod cobj;
 pub mod debugconsole_main;
+pub mod id;
+pub mod list;
+pub mod initialize;
+pub mod leak;
+pub mod jobj;
+#[allow(non_snake_case)]
+pub mod hsd_3B34;
+#[allow(non_snake_case)]
+pub mod hsd_3B5C;

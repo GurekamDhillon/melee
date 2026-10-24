@@ -190,7 +190,7 @@ impl CameraWorld {
 
     /// Camera_8002E234: ease `position` to the target (modes 0/1/3) or rebuild both positions from
     /// the spherical (mode 2) script values; true when done.
-    fn camera_8002e234(&mut self) -> bool {
+    pub fn camera_8002e234(&mut self) -> bool {
         let mut ret = false;
         match self.game_camera.x341_b3_b4() {
             0 | 1 | 3 => {

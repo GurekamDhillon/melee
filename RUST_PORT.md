@@ -933,3 +933,13 @@ told apart from unfused ones through the f32 result.
   recursive targets are genuine tree walks). 149 rewired names also have another port; the clear pure duplicates (7 legacy melee_modes
   ports, 1 melee_fighter port) now forward to the TU port; the rest differ in signature (`efSync_Spawn`, `efAsync_Spawn`, ...) and stay.
 - `docs/rust-port/missing.md` lists every remaining panicking stub with its NO_PORT / SIGNATURE / CYCLE tag.
+
+## melee_chara stub fill (port/fill-melee_chara, 2026-10-24)
+
+`docs/rust-port/missing.md` lists no panicking stub for `melee_chara` any more (was 319 sites / 188 names).
+
+- Adapters: `melee_chara::adapt` converts the call shapes the character TUs declare to the ports below them; `port_hook!` (lib.rs) is a settable hook that runs the adapter when unset. Rust-`fn` callbacks go through a trampoline slot (the ports call them before returning).
+- New ports: `melee_runtime::tu::jobj_ptr` (jobj.c on raw `HSD_JObj*`: dirty/flags/DObj list/JObjUpdateFunc/anim walkers/inlines), `tu::mex_data` (m-ex/skins/replay data services; vanilla answers until the host installs `MEX`/`SKINS`), `tu::random::GLOBAL` (the C's one `seed` for callers with no state argument; the sim must use it, or sync it, to stay on one stream), `tu::os_report`; `melee_fighter::tu::{ftcoll, ftmaterial, ftCo_09f4, ftparts_render}`; `melee_world::cm::camera_boss` + `NativeEfHost`; six chara TUs (Samus x3, Crazy Hand x3).
+- Moved below `melee_modes` (re-exported there): the hit-rule capsule table, the movement-caps jump limit, the VS scene controller global.
+- Verified against the C (shipping contraction): `melee_fighter/tests/ftcollset_ref.rs` (ftcoll setters + hit-rule table, 4400 cases), `melee_world/tests/camera_boss_vs_c.rs` (5500), `melee_runtime/tests/jobjptr_vs_c.rs` (6000; found a wrong RObj type constant), six state oracles in `melee_chara/tests/oracle_ft{samus,samusspeciallw1,samusspecialn,crazyhandcancel,crazyhandcapturewaitcrazyhand,crazyhandfingerbeam}.rs`, `melee_runtime/tests/mex_data.rs` (the C's branches, no in-process C). Not verified: GX-bound code (`ftparts_render`, `ftmaterial`, light overlay), the jobj anim walkers' RObj/AObj/DObj legs, `NativeEfHost`, `script_caps`, the adapters (type conversions only).
+- Traps: C evaluates call arguments right to left on the MSVC target (draw into temporaries in a C reference); a union aliasing a bitfield differs natively from the GC (hash only the members the function wrote); a pointer stored in a union occupies 8 bytes natively.

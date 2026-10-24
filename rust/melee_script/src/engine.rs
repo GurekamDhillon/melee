@@ -131,6 +131,7 @@ pub struct State {
     pub pending_save: i32,
     pub pending_load: i32,
     pub snap_ready: bool,
+    pub rw: crate::rewind::Rewind,
     pub slot: [crate::gd::savestate::SaveSlot; crate::gd::savestate::GS_SAVE_SLOTS],
     /// `gd.set_motion` / `gd.anim_preview` requests: motion + 1 to enter at the next frame boundary, per slot
     pub set_motion: [i32; 6],
@@ -354,8 +355,8 @@ impl State {
         }
     }
 
-    /// `gs_rw_branch`: a gameplay write forks the rewind timeline (the long rewind is not ported yet, so nothing to drop).
-    pub fn rw_branch(&mut self) {}
+    /// `gs.nev = 0`: queued engine events are not ported yet
+    pub fn nev_reset(&mut self) {}
 
     /// `gs_require_gameplay`
     pub fn require_gameplay(&mut self, fname: &str) -> LuaResult<()> {
@@ -427,6 +428,7 @@ impl Engine {
             pending_save: 0,
             pending_load: 0,
             snap_ready: false,
+            rw: Default::default(),
             slot: Default::default(),
             set_motion: [0; 6],
             set_rate: [0.0; 6],
@@ -1153,7 +1155,9 @@ impl Engine {
             let b = s.build;
             s.draw[b].clear();
         }
+        self.rw_tick_top();
         self.hook_all("on_tick", &[]);
+        // (gs_rw_tick_top comes before on_tick in the C build's loop; see below)
         // paused: no logic frame will run this tick, so there is no frame boundary for a pending savestate to wait for
         let apply = {
             let s = self.st.borrow();
@@ -1217,18 +1221,57 @@ impl Engine {
         d
     }
 
+    /// `gw_Script_Iterations`: logic frames this tick runs (rewind bursts, pause, step)
+    pub fn iterations(&self, count: i32) -> i32 {
+        self.st.borrow_mut().iterations(count)
+    }
+
     /// `gw_Script_FramePre`
     pub fn frame_pre(&self) {
-        self.apply_pending(false);
-        self.st.borrow_mut().apply_set_motion();
-        self.hook_all("on_frame_pre", &[]);
+        let resim = {
+            let mut s = self.st.borrow_mut();
+            s.rw.frame_kind = 0;
+            s.rw.sfx_claimed = 0;
+            s.rw.q_pos = 0;
+            s.rw.in_frame = true;
+            let mut resim = false;
+            if s.rw.resim_run > 0 {
+                resim = s.rw.resim_run > 1;
+                s.rw.frame_kind = if resim { 1 } else { 2 };
+                s.game.snap_lab_resim(resim);
+                s.rw.resim_run -= 1;
+            }
+            resim
+        };
+        if !resim {
+            self.st.borrow_mut().rwt_frame();
+            self.apply_pending(false);
+            self.st.borrow_mut().apply_set_motion();
+        }
+        self.st.borrow_mut().rw_frame();
+        if !resim {
+            self.hook_all("on_frame_pre", &[]);
+        }
     }
 
     /// `gw_Script_FramePost` (the script-visible bookkeeping): per-slot action tracking, match start, `on_frame`, tasks.
     pub fn frame_post(&self) {
-        let (any, start) = {
+        let (start, kind) = {
             let mut s = self.st.borrow_mut();
-            s.pads.frame_consumed();
+            let kind = s.rw.frame_kind;
+            s.rw.in_frame = false;
+            if s.rw.began {
+                // the frame's sounds are all in the log now
+                let tag = s.ring_now();
+                let e = s.log_entry_mut(tag);
+                if e.tag == tag {
+                    e.sfx_open = false;
+                }
+            }
+            if kind != 1 {
+                s.pads.frame_consumed();
+            }
+            s.rw.frame_kind = 0;
             s.frame += 1;
             let mut any = false;
             for slot in 0..6 {
@@ -1246,6 +1289,13 @@ impl Engine {
                     s.state_frame[slot] = 0;
                 }
             }
+            if kind == 1 {
+                // a frame the Lab re-simulates: its bookkeeping, none of its hooks
+                if s.match_active {
+                    s.match_frame += 1;
+                }
+                return;
+            }
             let start = any && !s.match_active;
             if start {
                 s.match_active = true;
@@ -1253,9 +1303,17 @@ impl Engine {
             } else if s.match_active {
                 s.match_frame += 1;
             }
-            (any, start)
+            if kind == 2 {
+                let now_ms = s.host.borrow().now_ms();
+                s.rw.last_ms = now_ms - s.rw.t0;
+                let (now, lm, pages, lf, ms) = (s.ring_now(), s.rw.last_load_ms, s.game.rw_last_load_pages(), s.rw.last_frames, s.rw.last_ms);
+                s.log(&format!(
+                    "rewind: to frame {now}: keyframe load {lm:.2} ms ({pages} pages), {lf} frame(s) re-simulated, {ms:.1} ms in all"
+                ));
+            }
+            (start, kind)
         };
-        let _ = any;
+        let _ = kind;
         self.camera_tick();
         if start {
             self.hook_all("on_match_start", &[]);

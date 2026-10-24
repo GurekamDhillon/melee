@@ -7,6 +7,7 @@ use mlua::{IntoLuaMulti, Lua, Result as LuaResult, Table, Value};
 pub mod camera;
 pub mod core;
 pub mod fighter;
+pub mod history;
 pub mod lab;
 pub mod labmisc;
 pub mod labstate;
@@ -45,6 +46,7 @@ pub fn register_all(e: &Engine, gd: &Table) -> LuaResult<()> {
     labmisc::register(e, gd)?;
     labstate::register(e, gd)?;
     savestate::register(e, gd)?;
+    history::register(e, gd)?;
     Ok(())
 }
 

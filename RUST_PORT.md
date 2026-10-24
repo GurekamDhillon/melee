@@ -1057,7 +1057,8 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   hitboxes/hurtboxes/joints/dobjs/project/attrs/motion_name/debug_draw/debug_stage, camera_* (9), set_percent/set_damage/set_stocks/hit/
   impulse/cpu_mode(s)/fly/teleport/fly_speed/fly_solid/hold_hitbox/play_sound, timeline/motion_list/set_motion/anim_rows/anim_preview,
   lab_request/lab_mode/lab_leave/lab_now/lab_common/lab_env/floor_below/set_shield/set_scale/rollbacks(_clear).
-- **Not ported yet** (next rounds, in order): history/step_back/rewind_* (savestate/loadstate slots are done), state_* library, rec_* (gw_script_rec.inc),
+- Round 2: `rewind.rs` + `gd/history.rs` port the long rewind (gd.history/step_back/rewind_to/rewind_live/rewind_test(_result), input log with pad/sfx/audio replay, keyframe cadence, `iterations`, FramePre/Post kinds 0/1/2), hot_reload(_status), the `gd.state_*` library (own 384-byte header, index.txt) and gd.kb_preview. Keyframes/snapshot files are `ScriptGame::rw_*`/`snap_file_*` (the game half does not exist in Rust yet; tests/history.rs uses an in-memory mock, 9 tests). Found+fixed: gd.set_percent lacked rw_branch.
+- **Not ported yet** (next rounds, in order): rec_* (gw_script_rec.inc),
   hot_reload, kb_preview, combo, perf/prof, `gd.kit` / `gd.ui` (tables are empty), entity refs (`entity_ref` is nil), items/fx/echo/
   afterimage/tracer, stage_*/model_*/shader/area/warm/launch/1P/netplay/modsync/sim/hit_rules/enemy*, the Geno registry (geno_registry.c,
   geno_lua_core.h, fighter Lua), `lab.lua`'s remaining calls. `gdscript pc/geno/mods/geno-lab` lists what lab.lua still lacks at load.

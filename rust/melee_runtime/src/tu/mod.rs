@@ -23,3 +23,4 @@ pub mod bytecode;
 pub mod controller;
 pub mod devcom;
 pub mod cobj;
+pub mod debugconsole_main;

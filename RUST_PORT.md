@@ -1139,3 +1139,7 @@ rows now have C oracles (all equal, rows flipped to `ported+verified`): `ftPr_In
   Rust effect code does not make on that path), and at index 211 Falcon's landing word differs (5715B485 vs
   5615B536). This is a sim gap found by netplay (different input timing from the offline golden), not a
   transport problem; fixing it belongs to the fighter / effect ports.
+
+- Round 4 (plat-play, re-verify after merging port/platform-integ): full_loop.txt (1359 ticks, to results, time-up draw) and
+  pause_quit_rematch.txt (1563 ticks, two matches) re-run hands-off with MELEE_PAD_IGNORE_ADAPTER=1, unfocused window, `--shots`; all
+  screens captured (build/r2, disc art, not committed). Still stand-ins: ui.rs menus, 7 fighters, 4 stages, sim halts on unported fighter states.

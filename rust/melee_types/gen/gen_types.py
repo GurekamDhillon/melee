@@ -50,6 +50,44 @@ SRC = GEN / "all_types.c"
 # member); the hand impl calls it and then fixes the union.
 HAND_DECODE = {"HSD_Joint", "HSD_RObjDesc"}
 
+# TU-local records needed by native ports. Parse the original declarations on both
+# targets rather than copying their fields into Rust or a second layout generator.
+# Selector is a record/typedef name, or a variable whose element type is the record.
+TU_RECORDS = {
+    "src/melee/lb/lbdvd.c": {"lbDvd_803B72C0_t": "lbDvd_803B72C0_t"},
+    "src/melee/lb/lbcollision.c": {"lbColl_803B9928": "LbCollColorPair"},
+    "src/melee/lb/lbaudio_ax.c": {
+        "lbAudioAx_UserData": "lbAudioAx_UserData", "SoundParams": "SoundParams",
+        "lbl_804D6454": "LbAudioAxHeapData", "lbl_803BB3C0": "LbAudioAxBankMask",
+        "lbl_803BC918_t": "lbl_803BC918_t",
+    },
+}
+
+
+def local_records(args):
+    out = []
+    for source, selectors in TU_RECORDS.items():
+        tu = ci.Index.create().parse(source, args=args)
+        errors = [d for d in tu.diagnostics if d.severity >= ci.Diagnostic.Error]
+        if errors:
+            raise SystemExit("clang local records: " + "\n".join(map(str, errors)))
+        found = {}
+        for c in tu.cursor.walk_preorder():
+            if c.spelling not in selectors:
+                continue
+            t = c.type.get_canonical()
+            while t.kind in (T.CONSTANTARRAY, T.INCOMPLETEARRAY, T.POINTER):
+                t = (t.get_pointee() if t.kind == T.POINTER else t.element_type).get_canonical()
+            if t.kind == T.RECORD:
+                record = t.get_declaration().get_definition()
+                if record is not None:
+                    found[c.spelling] = record
+        missing = selectors.keys() - found.keys()
+        if missing:
+            raise SystemExit(f"{source}: missing local records {missing}")
+        out.extend((found[n], name, tu) for n, name in selectors.items())
+    return out
+
 
 def write_probe():
     """Regenerate gen/all_types.c: group 0's headers plus every header the fighter (g3),
@@ -125,8 +163,9 @@ def parse(args):
 
 
 class Gen:
-    def __init__(self, tu, native):
+    def __init__(self, tu, native, locals=()):
         self.tu = tu
+        self.locals = locals
         self.native_size = native          # loc -> (size, has_bitfields)
         self.rec_name = {}                 # canonical decl loc -> rust name
         self.records = OrderedDict()       # loc -> cursor (definitions)
@@ -150,6 +189,10 @@ class Gen:
                 elif ch.kind == K.FIELD_DECL:
                     pass
         walk(self.tu.cursor)
+        for c, name, owner_tu in self.locals:
+            self.records.setdefault(loc(c), c)
+            self.rec_name[loc(c)] = name
+            self.used_names.add(name)
         # typedef names for anonymous records/enums
         anon_td = {}
         for n, td in self.typedefs.items():
@@ -714,8 +757,18 @@ def dump_check(records):
     clang = str(LLVM / "bin" / "clang.exe")
     r = subprocess.run([clang, *PPC, "-fsyntax-only", "-Xclang", "-fdump-record-layouts-complete",
                         str(SRC.relative_to(ROOT))], cwd=ROOT, capture_output=True, text=True)
-    (GEN / "ppc32_layouts.txt").write_text(r.stdout, newline="\n")
-    sizes = re.findall(r"\| \[sizeof=(\d+), align=(\d+)", r.stdout)
+    if r.returncode:
+        raise SystemExit(r.stderr)
+    dumps = [r.stdout]
+    for source in TU_RECORDS:
+        extra = subprocess.run([clang, *PPC, "-fsyntax-only", "-Xclang", "-fdump-record-layouts-complete", source],
+                               cwd=ROOT, capture_output=True, text=True)
+        if extra.returncode:
+            raise SystemExit(extra.stderr)
+        dumps.append(extra.stdout)
+    dump = "\n".join(dumps)
+    (GEN / "ppc32_layouts.txt").write_text(dump, newline="\n")
+    sizes = re.findall(r"\| \[sizeof=(\d+), align=(\d+)", dump)
     want = sorted((c.type.get_size(), c.type.get_align()) for c in records.values())
     got = sorted((int(a), int(b)) for a, b in sizes)
     missing = [w for w in want if w not in got]
@@ -725,8 +778,10 @@ def dump_check(records):
 def main():
     nprobe = write_probe()
     nat = native_sizes()
+    for c, name, owner_tu in local_records(NAT):
+        nat[loc(c)] = (c.type.get_size(), c.type.get_align())
     tu = parse(PPC)
-    g = Gen(tu, nat)
+    g = Gen(tu, nat, local_records(PPC))
     txt = g.gen()
     n_dump, miss = dump_check(g.records)
     helpers = (

@@ -92256,6 +92256,316 @@ impl GcLayout for lbRefract_DataLayout {
 }
 const _: () = assert!(core::mem::size_of::<lbRefract_DataLayout>() == 104);
 
+/// C `lbDvd_803B72C0_t` (src/melee/lb/lbdvd.c:553); GameCube size 0xC, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct lbDvd_803B72C0_t {
+    pub x0: u8,
+    pub x4: *mut i8,
+    pub x8: i32,
+}
+impl lbDvd_803B72C0_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for lbDvd_803B72C0_t {
+    const GC_BYTES: u32 = 0xC;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x0 = <u8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.x4 = <*mut i8 as GcDecode>::gc_decode(d, at + 0x4);
+        v.x8 = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v
+    }
+}
+impl GcPointee for lbDvd_803B72C0_t { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<lbDvd_803B72C0_t>(t) } }
+impl GcLayout for lbDvd_803B72C0_t {
+    const GC_NAME: &'static str = "lbDvd_803B72C0_t";
+    const GC_SIZE: u32 = 0xC;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 1, "u8"),
+        GcField::new("x4", 0x4, 4, "char *"),
+        GcField::new("x8", 0x8, 4, "int"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<lbDvd_803B72C0_t>() == 24);
+
+/// C `unk` (src/melee/lb/lbcollision.c:66); GameCube size 0x8, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct LbCollColorPair {
+    pub pad: *mut _GXColor,
+    pub pad_x: *mut _GXColor,
+}
+impl LbCollColorPair { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for LbCollColorPair {
+    const GC_BYTES: u32 = 0x8;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.pad = <*mut _GXColor as GcDecode>::gc_decode(d, at + 0x0);
+        v.pad_x = <*mut _GXColor as GcDecode>::gc_decode(d, at + 0x4);
+        v
+    }
+}
+impl GcPointee for LbCollColorPair { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<LbCollColorPair>(t) } }
+impl GcLayout for LbCollColorPair {
+    const GC_NAME: &'static str = "unk";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("pad", 0x0, 4, "GXColor *"),
+        GcField::new("pad_x", 0x4, 4, "GXColor *"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<LbCollColorPair>() == 16);
+
+/// C `lbAudioAx_UserData` (src/melee/lb/lbaudio_ax.static.h:12); GameCube size 0x48, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct lbAudioAx_UserData {
+    pub x0: i32,
+    pub gobj: *mut HSD_GObj,
+    pub owner: *mut HSD_GObj,
+    pub xC: i32,
+    pub x10: Option<unsafe extern "C" fn(*mut HSD_GObj) -> i32>,
+    pub id: i32,
+    pub start_vol: i32,
+    pub end_vol: i32,
+    pub vol: i32,
+    pub pan_left: i32,
+    pub pan_right: i32,
+    pub pan: i32,
+    pub voice_id: i32,
+    pub current_frame: i32,
+    pub end_frame: i32,
+    pub x3C: f32,
+    pub track: i32,
+    pub x44: i32,
+}
+impl lbAudioAx_UserData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for lbAudioAx_UserData {
+    const GC_BYTES: u32 = 0x48;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x0 = <i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.gobj = <*mut HSD_GObj as GcDecode>::gc_decode(d, at + 0x4);
+        v.owner = <*mut HSD_GObj as GcDecode>::gc_decode(d, at + 0x8);
+        v.xC = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.id = <i32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.start_vol = <i32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.end_vol = <i32 as GcDecode>::gc_decode(d, at + 0x1C);
+        v.vol = <i32 as GcDecode>::gc_decode(d, at + 0x20);
+        v.pan_left = <i32 as GcDecode>::gc_decode(d, at + 0x24);
+        v.pan_right = <i32 as GcDecode>::gc_decode(d, at + 0x28);
+        v.pan = <i32 as GcDecode>::gc_decode(d, at + 0x2C);
+        v.voice_id = <i32 as GcDecode>::gc_decode(d, at + 0x30);
+        v.current_frame = <i32 as GcDecode>::gc_decode(d, at + 0x34);
+        v.end_frame = <i32 as GcDecode>::gc_decode(d, at + 0x38);
+        v.x3C = <f32 as GcDecode>::gc_decode(d, at + 0x3C);
+        v.track = <i32 as GcDecode>::gc_decode(d, at + 0x40);
+        v.x44 = <i32 as GcDecode>::gc_decode(d, at + 0x44);
+        v
+    }
+}
+impl GcPointee for lbAudioAx_UserData { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<lbAudioAx_UserData>(t) } }
+impl GcLayout for lbAudioAx_UserData {
+    const GC_NAME: &'static str = "lbAudioAx_UserData";
+    const GC_SIZE: u32 = 0x48;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "int"),
+        GcField::new("gobj", 0x4, 4, "HSD_GObj *"),
+        GcField::new("owner", 0x8, 4, "HSD_GObj *"),
+        GcField::new("xC", 0xC, 4, "int"),
+        GcField::new("x10", 0x10, 4, "bool (*)(HSD_GObj *)"),
+        GcField::new("id", 0x14, 4, "int"),
+        GcField::new("start_vol", 0x18, 4, "int"),
+        GcField::new("end_vol", 0x1C, 4, "int"),
+        GcField::new("vol", 0x20, 4, "int"),
+        GcField::new("pan_left", 0x24, 4, "int"),
+        GcField::new("pan_right", 0x28, 4, "int"),
+        GcField::new("pan", 0x2C, 4, "int"),
+        GcField::new("voice_id", 0x30, 4, "int"),
+        GcField::new("current_frame", 0x34, 4, "int"),
+        GcField::new("end_frame", 0x38, 4, "int"),
+        GcField::new("x3C", 0x3C, 4, "float"),
+        GcField::new("track", 0x40, 4, "int"),
+        GcField::new("x44", 0x44, 4, "bool"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<lbAudioAx_UserData>() == 96);
+
+/// C `SoundParams` (src/melee/lb/lbaudio_ax.c:1319); GameCube size 0x2C, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct SoundParams {
+    pub owner: *mut HSD_GObj,
+    pub x4: i32,
+    pub sfx_id: i32,
+    pub start_vol: i32,
+    pub end_vol: i32,
+    pub pan_left: i32,
+    pub pan_right: i32,
+    pub end_frame: i32,
+    pub x20: f32,
+    pub x24: i32,
+    pub voice: i32,
+}
+impl SoundParams { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for SoundParams {
+    const GC_BYTES: u32 = 0x2C;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.owner = <*mut HSD_GObj as GcDecode>::gc_decode(d, at + 0x0);
+        v.x4 = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.sfx_id = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.start_vol = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.end_vol = <i32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.pan_left = <i32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.pan_right = <i32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.end_frame = <i32 as GcDecode>::gc_decode(d, at + 0x1C);
+        v.x20 = <f32 as GcDecode>::gc_decode(d, at + 0x20);
+        v.x24 = <i32 as GcDecode>::gc_decode(d, at + 0x24);
+        v.voice = <i32 as GcDecode>::gc_decode(d, at + 0x28);
+        v
+    }
+}
+impl GcPointee for SoundParams { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<SoundParams>(t) } }
+impl GcLayout for SoundParams {
+    const GC_NAME: &'static str = "SoundParams";
+    const GC_SIZE: u32 = 0x2C;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("owner", 0x0, 4, "HSD_GObj *"),
+        GcField::new("x4", 0x4, 4, "int"),
+        GcField::new("sfx_id", 0x8, 4, "int"),
+        GcField::new("start_vol", 0xC, 4, "int"),
+        GcField::new("end_vol", 0x10, 4, "int"),
+        GcField::new("pan_left", 0x14, 4, "int"),
+        GcField::new("pan_right", 0x18, 4, "int"),
+        GcField::new("end_frame", 0x1C, 4, "int"),
+        GcField::new("x20", 0x20, 4, "float"),
+        GcField::new("x24", 0x24, 4, "int"),
+        GcField::new("voice", 0x28, 4, "int"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<SoundParams>() == 48);
+
+/// C `struct (unnamed at src/melee/lb/lbaudio_ax.c:303:8)` (src/melee/lb/lbaudio_ax.c:303); GameCube size 0x10, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct LbAudioAxHeapData {
+    pub x0: *mut *mut i32,
+    pub x4: *mut *mut i32,
+    pub x8: *mut *mut i32,
+    pub xC: *mut *mut i32,
+}
+impl LbAudioAxHeapData { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for LbAudioAxHeapData {
+    const GC_BYTES: u32 = 0x10;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x0 = <*mut *mut i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.x4 = <*mut *mut i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.x8 = <*mut *mut i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.xC = <*mut *mut i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v
+    }
+}
+impl GcPointee for LbAudioAxHeapData { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<LbAudioAxHeapData>(t) } }
+impl GcLayout for LbAudioAxHeapData {
+    const GC_NAME: &'static str = "struct (unnamed at src/melee/lb/lbaudio_ax.c:303:8)";
+    const GC_SIZE: u32 = 0x10;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 4, "int **"),
+        GcField::new("x4", 0x4, 4, "int **"),
+        GcField::new("x8", 0x8, 4, "int **"),
+        GcField::new("xC", 0xC, 4, "int **"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<LbAudioAxHeapData>() == 32);
+
+/// C `struct (unnamed at src/melee/lb/lbaudio_ax.static.h:119:8)` (src/melee/lb/lbaudio_ax.static.h:119); GameCube size 0x10, align 8.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct LbAudioAxBankMask {
+    pub x0: u8,
+    pub x8: u64,
+}
+impl LbAudioAxBankMask { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for LbAudioAxBankMask {
+    const GC_BYTES: u32 = 0x10;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.x0 = <u8 as GcDecode>::gc_decode(d, at + 0x0);
+        v.x8 = <u64 as GcDecode>::gc_decode(d, at + 0x8);
+        v
+    }
+}
+impl GcPointee for LbAudioAxBankMask { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<LbAudioAxBankMask>(t) } }
+impl GcLayout for LbAudioAxBankMask {
+    const GC_NAME: &'static str = "struct (unnamed at src/melee/lb/lbaudio_ax.static.h:119:8)";
+    const GC_SIZE: u32 = 0x10;
+    const GC_ALIGN: u32 = 8;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("x0", 0x0, 1, "u8"),
+        GcField::new("x8", 0x8, 8, "u64"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<LbAudioAxBankMask>() == 16);
+
+/// C `lbl_803BC918_t` (src/melee/lb/lbaudio_ax.c:478); GameCube size 0xC, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct lbl_803BC918_t {
+    pub id: i32,
+    pub track: i32,
+    pub channel: i32,
+}
+impl lbl_803BC918_t { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for lbl_803BC918_t {
+    const GC_BYTES: u32 = 0xC;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.id = <i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.track = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.channel = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v
+    }
+}
+impl GcPointee for lbl_803BC918_t { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<lbl_803BC918_t>(t) } }
+impl GcLayout for lbl_803BC918_t {
+    const GC_NAME: &'static str = "lbl_803BC918_t";
+    const GC_SIZE: u32 = 0xC;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("id", 0x0, 4, "int"),
+        GcField::new("track", 0x4, 4, "int"),
+        GcField::new("channel", 0x8, 4, "int"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<lbl_803BC918_t>() == 12);
+
 /// Every generated GameCube record layout, for the DAT loader, serialisers and the m-ex map.
 pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<__file_modes as GcLayout>::GC_NAME, <__file_modes as GcLayout>::GC_SIZE, <__file_modes as GcLayout>::GC_ALIGN, <__file_modes as GcLayout>::GC_FIELDS),
@@ -93911,6 +94221,13 @@ pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<lbRefract_State as GcLayout>::GC_NAME, <lbRefract_State as GcLayout>::GC_SIZE, <lbRefract_State as GcLayout>::GC_ALIGN, <lbRefract_State as GcLayout>::GC_FIELDS),
     (<lbRefract_Data as GcLayout>::GC_NAME, <lbRefract_Data as GcLayout>::GC_SIZE, <lbRefract_Data as GcLayout>::GC_ALIGN, <lbRefract_Data as GcLayout>::GC_FIELDS),
     (<lbRefract_DataLayout as GcLayout>::GC_NAME, <lbRefract_DataLayout as GcLayout>::GC_SIZE, <lbRefract_DataLayout as GcLayout>::GC_ALIGN, <lbRefract_DataLayout as GcLayout>::GC_FIELDS),
+    (<lbDvd_803B72C0_t as GcLayout>::GC_NAME, <lbDvd_803B72C0_t as GcLayout>::GC_SIZE, <lbDvd_803B72C0_t as GcLayout>::GC_ALIGN, <lbDvd_803B72C0_t as GcLayout>::GC_FIELDS),
+    (<LbCollColorPair as GcLayout>::GC_NAME, <LbCollColorPair as GcLayout>::GC_SIZE, <LbCollColorPair as GcLayout>::GC_ALIGN, <LbCollColorPair as GcLayout>::GC_FIELDS),
+    (<lbAudioAx_UserData as GcLayout>::GC_NAME, <lbAudioAx_UserData as GcLayout>::GC_SIZE, <lbAudioAx_UserData as GcLayout>::GC_ALIGN, <lbAudioAx_UserData as GcLayout>::GC_FIELDS),
+    (<SoundParams as GcLayout>::GC_NAME, <SoundParams as GcLayout>::GC_SIZE, <SoundParams as GcLayout>::GC_ALIGN, <SoundParams as GcLayout>::GC_FIELDS),
+    (<LbAudioAxHeapData as GcLayout>::GC_NAME, <LbAudioAxHeapData as GcLayout>::GC_SIZE, <LbAudioAxHeapData as GcLayout>::GC_ALIGN, <LbAudioAxHeapData as GcLayout>::GC_FIELDS),
+    (<LbAudioAxBankMask as GcLayout>::GC_NAME, <LbAudioAxBankMask as GcLayout>::GC_SIZE, <LbAudioAxBankMask as GcLayout>::GC_ALIGN, <LbAudioAxBankMask as GcLayout>::GC_FIELDS),
+    (<lbl_803BC918_t as GcLayout>::GC_NAME, <lbl_803BC918_t as GcLayout>::GC_SIZE, <lbl_803BC918_t as GcLayout>::GC_ALIGN, <lbl_803BC918_t as GcLayout>::GC_FIELDS),
 ];
 
 /// Read `w` bits of a GameCube big-endian bitfield byte run, `shift` bits up from its LSB.

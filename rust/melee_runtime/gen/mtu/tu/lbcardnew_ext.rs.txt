@@ -1,0 +1,57 @@
+// BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn CARDCheckAsync(a0: i32, a1: Option<unsafe extern "C" fn(i32, i32)>) -> i32;
+    fn CARDClose(a0: *mut CARDFileInfo) -> i32;
+    fn CARDDeleteAsync(a0: i32, a1: *mut i8, a2: Option<unsafe extern "C" fn(i32, i32)>) -> i32;
+    fn CARDFormatAsync(a0: i32, a1: Option<unsafe extern "C" fn(i32, i32)>) -> i32;
+    fn CARDFreeBlocks(a0: i32, a1: *mut i32, a2: *mut i32) -> i32;
+    fn CARDGetStatus(a0: i32, a1: i32, a2: *mut CARDStat) -> i32;
+    fn CARDMountAsync(a0: i32, a1: *mut c_void, a2: Option<unsafe extern "C" fn(i32, i32)>, a3: Option<unsafe extern "C" fn(i32, i32)>) -> i32;
+    fn CARDOpen(a0: i32, a1: *const i8, a2: *mut CARDFileInfo) -> i32;
+    fn CARDProbeEx(a0: i32, a1: *mut i32, a2: *mut i32) -> i32;
+    fn CARDRenameAsync(a0: i32, a1: *const i8, a2: *const i8, a3: Option<unsafe extern "C" fn(i32, i32)>) -> i32;
+    fn CARDUnmount(a0: i32) -> i32;
+    fn DVDGetCurrentDiskID() -> *mut DVDDiskID;
+    fn HSD_Free(a0: *mut c_void);
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void;
+    fn OSDisableInterrupts() -> i32;
+    fn OSRestoreInterrupts(a0: i32) -> i32;
+    fn hsd_803AAA48();
+    fn hsd_803AC3E0(a0: *mut CardState, a1: i32, a2: i32, a3: i32, a4: *mut u8);
+    fn hsd_803B2374();
+    fn hsd_803B24E4(a0: *mut CardState, a1: i32, a2: i32, a3: *mut c_void);
+    fn hsd_803B2550(a0: *mut CardState, a1: *const i8, a2: Option<unsafe extern "C" fn(i32, i32)>) -> i32;
+    fn hsd_803B2674(a0: *mut CardState) -> i32;
+    fn hsd_803B27F4(a0: *mut CardState, a1: *mut c_void, a2: *mut c_void, a3: *mut c_void, a4: Option<unsafe extern "C" fn(i32, i32)>) -> i32;
+    fn hsd_803B286C(a0: *mut CardState, a1: *const i8, a2: *const i8, a3: *mut c_void, a4: *mut c_void, a5: Option<unsafe extern "C" fn(i32, i32)>) -> i32;
+    fn hsd_803B2928(a0: *mut CardState, a1: *const i8, a2: *mut c_void, a3: *mut c_void, a4: Option<unsafe extern "C" fn(i32, i32)>) -> i32;
+    fn hsd_803B29D8(a0: *mut CardState, a1: i32, a2: *mut u8, a3: Option<unsafe extern "C" fn(i32, i32)>) -> i32;
+    fn hsd_803B2A4C(a0: *mut CardState, a1: i32, a2: *mut u8, a3: Option<unsafe extern "C" fn(i32, i32)>) -> i32;
+    fn hsd_SetCardIconInfo(a0: *mut CardState, a1: *mut CardIconInfo) -> i32;
+    fn wait_idle();
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+    }
+    // Data defined in other TUs (the tests set them).
+}
+// END GENERATED EXT

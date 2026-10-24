@@ -19,21 +19,20 @@ pub mod pobj;
 pub mod displayfunc;
 pub mod lbanim;
 pub mod lbarchive;
-
 pub mod lbext;
-
 pub mod lblanguage;
-
 pub mod lbfile;
-
 pub mod lbgx;
-
 pub mod lbheap;
-
 pub mod lbmemory;
-
 pub mod lbshadow;
-
 pub mod lbmthp;
-
 pub mod lbrefract;
+pub mod lbbgflash;
+pub mod lbcardgame;
+pub mod lbcardnew;
+pub mod lbarq;
+pub mod lbcommand;
+pub mod lbdvd;
+pub mod lbcollision;
+pub mod lbaudio_ax;

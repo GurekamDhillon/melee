@@ -234,11 +234,18 @@ fn golden(args: &[String]) -> ExitCode {
         // (`mex-import import`, then --mods DIR or MELEE_MODS_DIR). No C golden exists for it.
         "pad_marth_sheik_bf" => ("GrNBa.dat", &["marth", "sheik"]),
         "pad_falcon_wolf_fd" => ("GrNLa.dat", &["falcon", "wolf"]),
+        // CPU level 9 Fox (P1) v Falco (P2); the scene's "dreamland" is StKind 17 (GrGr.dat).
+        "cpu_fox_falco_dl" => ("GrGr.dat", &["fox", "falco"]),
         s => {
             eprintln!("melee: scenario {s:?} not wired (pad_falcon_fox_fd)");
             return ExitCode::from(2);
         }
     };
+    // The scene's `p1=fox/cpu9;p2=falco/cpu9`: slot types and levels, before the match is built.
+    if scenario.starts_with("cpu_") {
+        vs_match::set_cpu_player(0, 9);
+        vs_match::set_cpu_player(1, 9);
+    }
     let frames = get("--frames").and_then(|s| s.parse().ok());
     // gdmods over the disc: --mods DIR [--enable id,id] (else MELEE_MODS_DIR / enabled.txt).
     let mods = match get("--mods") {

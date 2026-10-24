@@ -197,6 +197,13 @@ impl VsMatch {
             m.frame = -1;
         }
         m.load_snapshot(snap)?;
+        if std::env::var_os("MELEE_SNAP_FIELDS").is_some() {
+            for p in &m.players {
+                let f = &p.fp;
+                eprintln!("slot {} motion {} pos {:?} vel {:?} pct {} facing {} ga {} kb {:?} gr {} hitlag {} shield {} frame {} jumps {} x67f {} x680 {} cpu.level {} kind {} cpuflags {:#x}",
+                    p.slot, f.motion_id, (f.cur_pos.x, f.cur_pos.y, f.cur_pos.z), (f.self_vel.x, f.self_vel.y), f.dmg.x1830_percent, f.facing_dir, f.ground_or_air as i32, (f.x8c_kb_vel.x, f.x8c_kb_vel.y), f.gr_vel, f.dmg.x195c_hitlag_frames, f.shield_health, f.x3E4_fighterCmdScript.frame_count, f.x1968_jumpsUsed, f.x67F, f.x680, f.cpu.level, f.cpu.kind as i32, f.cpu.xF8_b0());
+            }
+        }
         Ok(m)
     }
 
@@ -236,7 +243,9 @@ impl VsMatch {
         for i in 0..6u32 {
             self.respawn_busy[i as usize] = snap.u8(ctl + 0x38 + 14 * i + 8) as i32;
         }
-        self.load_stage(snap)?;
+        if std::env::var_os("MELEE_SNAP_SKIP_STAGE").is_none() {
+            self.load_stage(snap)?;
+        }
         self.load_items(snap)?;
         // The fighters (p_link 8): Fighter_Create's GObj list.
         let gobjs = snap.plink(8)?;
@@ -256,7 +265,26 @@ impl VsMatch {
         let before = if self.keep_ref.is_empty() { raw(&*p.fp).to_vec() } else { self.keep_ref[i].clone() };
         let p = &mut self.players[i];
         *p.fp = snap.decode_flat::<Fighter>(fp_va);
+        // CpuFighter::csP is a pointer into its own `buffer`: rebase the guest address onto the native
+        // buffer (the hash word is `csP - buffer`; a pointer outside it hashes 0).
+        {
+            let cpu_va = fp_va + gc_off::<Fighter>("cpu");
+            let buf_va = cpu_va + gc_off::<melee_types::CpuFighter>("buffer");
+            let c = snap.u32(cpu_va + 0x450);
+            if std::env::var_os("MELEE_SNAP_FIELDS").is_some() {
+                eprintln!("slot {} csP {c:#x} raw csP {:#x} buffer {buf_va:#x} cpu_va {cpu_va:#x} write_pos {:#x} cmd_dur {}", p.slot, snap.u32(cpu_va + 0x450), snap.u32(cpu_va + 0x454), p.fp.cpu.command_duration);
+            }
+            p.fp.cpu.csP = if c >= buf_va && c <= buf_va + 256 {
+                // SAFETY: inside (or one past) the fighter's own native buffer.
+                unsafe { (p.fp.cpu.buffer.as_mut_ptr() as *mut i8).add((c - buf_va) as usize) }
+            } else {
+                core::ptr::null_mut()
+            };
+        }
         let c_fp = p.fp.clone();
+        if std::env::var_os("MELEE_SNAP_FIELDS").is_some() {
+            eprintln!("raw decode word slot {}: {:08X}", p.slot, melee_types::neutral_hash::nh_fighter(&p.fp, p.slot * 2, snap.u8(snap.must_sym("_player_slots").unwrap() + 0xE90 * p.slot as u32 + gc_off::<melee_types::_StaticPlayer>("stocks")) as i8 as i32, true));
+        }
         // MODEL QUIRK. `Fighter_UnkInit` leaves smash_attrs.x2135 = -1 in the C build; `VsMatch::new`
         // leaves 0 until the first respawn writes -1 (rebirth_enter). With -1 the ported respawn
         // probe (ft_80082A68 in Fighter_UnkProcessDeath, rebirth.rs) runs and lands a Rebirth 1 ulp
@@ -427,6 +455,9 @@ pub fn c_aobj<O>(snap: &Snap, va: u32, only_type: Option<u8>) -> HsdAObj<O> {
     HsdAObj { flags: snap.u32(va), curr_frame: snap.f32(va + 4), rewind_frame: snap.f32(va + 8), end_frame: snap.f32(va + 0xC), framerate: snap.f32(va + 0x10), fobj, hsd_obj: None }
 }
 
+/// The stage-owned item kind of Green Greens' blocks (never stepped by the sim).
+const STAGE_BLOCK_ITKIND: i32 = 160;
+
 impl VsMatch {
     /// The live items (p_link 9): the Fox blaster gun and its laser shots, the only items the sim models.
     fn load_items(&mut self, snap: &Snap) -> Result<(), String> {
@@ -447,6 +478,10 @@ impl VsMatch {
             let (kind, msid) = (snap.s32(it + 0x10), snap.s32(it + 0x24));
             let pos = Vec3 { x: snap.f32(it + 0x4C), y: snap.f32(it + 0x50), z: snap.f32(it + 0x54) };
             let vel = Vec3 { x: snap.f32(it + 0x40), y: snap.f32(it + 0x44), z: snap.f32(it + 0x48) };
+            if kind == STAGE_BLOCK_ITKIND {
+                self.items.push(SimItem { kind, msid, pos, vel, class: ItemClass::Static });
+                continue;
+            }
             let owner = owner_of(snap.u32(it + 0x518))?;
             let da = self.players.get(owner).and_then(|p| p.fx_attrs).ok_or(format!("snapshot: item kind {kind} belongs to a fighter without Fox attributes"))?;
             let var = it + 0xDD4;

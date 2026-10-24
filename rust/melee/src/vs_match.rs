@@ -128,6 +128,7 @@ const EF_ENTRY_BEAM: u32 = 0x24;
 /// `Gr_Kind_Last`'s StKind in a VS match (`grGroundParam->stage_params[0].stkind`).
 pub const STKIND_FD: i32 = 0x20;
 pub const STKIND_BF: i32 = 0x1F;
+pub const STKIND_GREENS: i32 = 0x11;
 /// efLib's particle procs (eflib.c `efLib_particles_proc_main` / `_aux`, TARGET_PC masks).
 const PTCL_MASK_MAIN: u32 = 0x20000 | 0x40000;
 const PTCL_MASK_AUX: u32 = 0x10000 | 0x80000;
@@ -521,10 +522,21 @@ fn direction(x: f32) -> f32 {
     }
 }
 
+/// `p1=fox/cpu9` of the scene string: the player table's slot type, CPU kind (4 = the retail
+/// level-select CPU) and level, set before the match is built (Player_GetCpuType / GetCpuLevel
+/// feed `ftCo_800A101C`, `ftCo_IsCpuControlled`).
+pub fn set_cpu_player(slot: i32, level: i32) {
+    stale::set_slot_type(slot, melee_types::Gm_PKind_Cpu);
+    let p = stale::player(slot);
+    p.cpu_type = 4;
+    p.cpu_level = level as u8;
+}
+
 fn fighter_kind(name: &str) -> Result<FighterKind, String> {
     match name {
         "falcon" => Ok(Ft_Kind_Captain),
         "fox" => Ok(Ft_Kind_Fox),
+        "falco" => Ok(melee_types::Ft_Kind_Falco),
         "marth" => Ok(melee_types::Ft_Kind_Mars),
         "sheik" => Ok(melee_types::Ft_Kind_Seak),
         "zelda" => Ok(melee_types::Ft_Kind_Zelda),
@@ -541,6 +553,7 @@ impl VsMatch {
         let stkind = match stage_file {
             "GrNLa.dat" => STKIND_FD,
             "GrNBa.dat" => STKIND_BF,
+            "GrGr.dat" => STKIND_GREENS,
             _ => return Err(format!("{stage_file}: only Final Destination's and Battlefield's stage code is wired")),
         };
         let stage_bytes = disc.read(stage_file)?;
@@ -631,6 +644,13 @@ impl VsMatch {
                 "sheik" => ("EfZdData.dat", "effZeldaDataTable", 17),
                 // Wolf's own bank takes Fox's index: a match here has one Fox-kind fighter.
                 "wolf" => ("EfWfData.dat", "effWolfDataTable", 3),
+                // Falco shares Fox's effect bank (already registered by Fox).
+                "falco" => {
+                    if effect_banks[3].is_some() {
+                        continue;
+                    }
+                    ("EfFxData.dat", "effFoxDataTable", 3)
+                }
                 n => return Err(format!("effect bank of {n:?} not wired")),
             };
             let b = crate::effect::EffectBank::load(&disc.read(file)?, file, table)?;
@@ -666,7 +686,10 @@ impl VsMatch {
 
         // grLast_OnInit -> grLast_8021A9C4 (map gobj 3) -> grLast_8021B920(1): the level gobjs
         // 4..8 are created in order; gobj 7's on_init is grLast_8021AC30.
-        let last_bg = if stkind == STKIND_BF {
+        let last_bg = if stkind == STKIND_GREENS {
+            // Green Greens: no grLast sway; its own stage logic (Whispy, blocks) is not ported.
+            None
+        } else if stkind == STKIND_BF {
             // grBattle_OnInit: grBattle_80219D84(3) -> grBattle_BG_Callback0: reset_bg_timer,
             // `HSD_Randi(1200) + 2400` (the first background change is 2400+ frames away).
             let _ = rand.randi(1200);
@@ -686,7 +709,7 @@ impl VsMatch {
         let mut seen = std::collections::HashSet::new();
         // FD's grLast animation table; Battlefield's grBattle_OnInit starts gobj 0 and 1's anim 0
         // (grBattle_GObj0/1_Callback0 -> grAnime_801C8138), whose particle tracks are the 4 stage gens.
-        let dptcl_rows: &[(u32, u32)] = if stkind == STKIND_BF { &[(0, 0), (1, 0)] } else { &[(4, 0), (5, 4), (6, 6), (7, 8), (8, 10), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0)] };
+        let dptcl_rows: &[(u32, u32)] = if stkind == STKIND_GREENS { &[] } else if stkind == STKIND_BF { &[(0, 0), (1, 0)] } else { &[(4, 0), (5, 4), (6, 6), (7, 8), (8, 10), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0)] };
         for &(g, anim) in dptcl_rows {
             if !seen.insert((g, anim)) {
                 continue;
@@ -1042,7 +1065,8 @@ impl VsMatch {
         for p in &self.players {
             // Slot = player*2 + follower; is_cpu false (human scenario).
             let s = p.slot * 2 + p.follower as i32;
-            w.slots[s as usize] = Some(nh_fighter(&p.fp, s, stale::stocks(p.slot), false));
+            let is_cpu = !p.follower && melee_fighter::tu::ftCo_0A01::ftCo_IsCpuControlled(&p.fp);
+            w.slots[s as usize] = Some(nh_fighter(&p.fp, s, stale::stocks(p.slot), is_cpu));
             if std::env::var_os("MELEE_GOLDEN_FRAMES").is_some() {
                 let f = &p.fp;
                 eprintln!("NHD f{} s{} m{} pos {:08X} {:08X} {:08X} vel {:08X} {:08X} ga {} fc {:08X} j {} 67F {} 680 {} shield {:08X}",

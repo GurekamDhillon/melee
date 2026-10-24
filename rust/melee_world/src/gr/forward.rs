@@ -29,11 +29,11 @@ pub struct Callees {
     pub lb_800115f4: unsafe fn(),
 }
 
-unsafe fn todo_zako(_: *mut core::ffi::c_void) { unimplemented!("TODO(group2): grZakoGenerator_801CAE04") }
-unsafe fn todo_umc(_: *mut HSD_GObj) { unimplemented!("TODO(group2): Ground_UpdateMapColl") }
-unsafe fn todo_imc(_: *mut HSD_JObj, _: i32) { unimplemented!("TODO(group2): Ground_InitMapColl") }
-unsafe fn todo_anim(_: *mut HSD_GObj, _: i32, _: i32) { unimplemented!("TODO(group2): grAnime_801C8138") }
-unsafe fn todo_lb() { unimplemented!("TODO(group1): lb_800115F4") }
+unsafe fn todo_zako(_p0: *mut core::ffi::c_void) { unsafe { let _ = crate::tu::grzakogenerator::grZakoGenerator_801CAE04(_p0 as _); } }
+unsafe fn todo_umc(_p0: *mut HSD_GObj) { unsafe { let _ = crate::tu::ground::Ground_UpdateMapColl(_p0 as _); } }
+unsafe fn todo_imc(_p0: *mut HSD_JObj, _p1: i32) { unsafe { let _ = crate::tu::ground::Ground_InitMapColl(_p0 as _, _p1 as _); } }
+unsafe fn todo_anim(_p0: *mut HSD_GObj, _p1: i32, _p2: i32) { unsafe { let _ = crate::tu::granime::grAnime_801C8138(_p0 as _, _p1 as _, _p2 as _); } }
+unsafe fn todo_lb() { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800115F4(); } }
 
 /// The callee table the forwarders call through (C callbacks carry no context).
 pub static CALLEES: RwLock<Callees> = RwLock::new(Callees {

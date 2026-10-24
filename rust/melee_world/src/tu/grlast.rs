@@ -40,10 +40,10 @@ pub mod ext {
         grAnime_801C8138, grDisplay_801C5DB0, GObj_SetupGXLink, Ground_InitMapColl, Ground_UpdateMapColl,
         HSD_GObj_SetupProc, HSD_Randi, lb_800115F4,
     };
-    hook!(CAMERA_800311CC, Camera_800311CC, (a0: f32));
-    hook!(CAMERA_800311DC, Camera_800311DC, (a0: f32));
-    hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (a0: CmQuakeKind, a1: *mut Vec3));
-    hook!(CAMERA_SETBACKGROUNDCOLOR, Camera_SetBackgroundColor, (r: u8, g: u8, b: u8));
+    hook_or!(CAMERA_800311CC, Camera_800311CC, (a0: f32), |a0: f32| crate::cm::camera::world().camera_800311cc(a0));
+    hook_or!(CAMERA_800311DC, Camera_800311DC, (a0: f32), |a0: f32| crate::cm::camera::world().camera_800311dc(a0));
+    hook_or!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (a0: CmQuakeKind, a1: *mut Vec3), |a0: CmQuakeKind, a1: *mut Vec3| unsafe { crate::cm::camera::Camera_RequestQuake(a0 as _, a1 as _) });
+    hook_or!(CAMERA_SETBACKGROUNDCOLOR, Camera_SetBackgroundColor, (r: u8, g: u8, b: u8), |r: u8, g: u8, b: u8| crate::cm::camera::world().camera_set_background_color(r, g, b));
     pub static mut GROUND_801C052C: Option<fn(*mut GXColor)> = None;
     #[allow(non_snake_case)]
     pub fn Ground_801C052C(a0: *mut GXColor) {
@@ -144,9 +144,9 @@ pub mod ext {
     pub fn Ground_GetYakumonoParam() -> *mut c_void {
         match unsafe { GROUND_GETYAKUMONOPARAM } { Some(f) => f(), None => { return unsafe { crate::tu::ground::Ground_GetYakumonoParam() as _ }; } }
     }
-    hook!(HSD_GOBJGXLINK_803909D8, HSD_GObjGXLink_803909D8, (a0: *mut HSD_GObj, a1: *mut HSD_GObj));
-    hook!(HSD_RANDF, HSD_Randf, () -> f32);
-    hook!(OSREPORT, OSReport, (a0: *mut i8));
+    hook_or!(HSD_GOBJGXLINK_803909D8, HSD_GObjGXLink_803909D8, (a0: *mut HSD_GObj, a1: *mut HSD_GObj), |a0: *mut HSD_GObj, a1: *mut HSD_GObj| { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObjGXLink_803909D8(a0 as _, a1 as _); } });
+    hook_or!(HSD_RANDF, HSD_Randf, () -> f32, || melee_runtime::tu::random::HSD_Randf(melee_runtime::tu::globals::rand()));
+    hook_or!(OSREPORT, OSReport, (a0: *mut i8), |a0: *mut i8| unsafe { melee_runtime::tu::os_error::OSReport(a0 as _, &[]) });
     /// `extern int Slippi_Codes(void)` (TARGET_PC): no Slippi online in the native build, so 0.
     hook_or!(SLIPPI_CODES, Slippi_Codes, () -> i32, || 0);
     pub static mut STAGE_80225194: Option<fn() -> StKind> = None;

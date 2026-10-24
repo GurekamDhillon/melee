@@ -23,54 +23,9 @@ const GM_COUNT_U8: u8 = GM_COUNT as u8;
 const U8_MAX: i32 = 255;
 pub const HSD_PAD_B: u32 = 1 << 9;
 
-/// `struct routingInfo` (gm_1A3F.c), GameCube size 6.
-#[repr(C)]
-#[derive(Clone, Copy, Default, PartialEq, Debug)]
-pub struct routingInfo {
-    /// `::GameModeKind`
-    pub curr_mode: u8,
-    /// `::GameModeKind`
-    pub pending_mode: u8,
-    /// `::GameModeKind`
-    pub prev_mode: u8,
-    /// from `::GameModeState::id`
-    pub curr_state_id: u8,
-    pub prev_state_id: u8,
-    pub next_state_id: u8,
-}
-melee_core::gc_layout!(routingInfo, "routingInfo", size 6, align 1, [
-    curr_mode @ 0x0: 1 "u8",
-    pending_mode @ 0x1: 1 "u8",
-    prev_mode @ 0x2: 1 "u8",
-    curr_state_id @ 0x3: 1 "u8",
-    prev_state_id @ 0x4: 1 "u8",
-    next_state_id @ 0x5: 1 "u8",
-]);
-
-/// `struct stateMachine` (gm_1A3F.c), GameCube size 0x14.
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct stateMachine {
-    pub routing: routingInfo,
-    pub backup_routing: routingInfo,
-    /// `::bool`
-    pub pending_mode_change: u8,
-    pub get_override: Option<unsafe extern "C" fn() -> u8>,
-}
-melee_core::gc_layout!(stateMachine, "stateMachine", size 0x14, align 4, [
-    routing @ 0x0: 6 "struct routingInfo",
-    backup_routing @ 0x6: 6 "struct routingInfo",
-    pending_mode_change @ 0xC: 1 "u8",
-    get_override @ 0x10: 4 "u8 (*)(void)",
-]);
-
-/// `static struct stateMachine state_machine;`
-pub static mut state_machine: stateMachine = stateMachine {
-    routing: routingInfo { curr_mode: 0, pending_mode: 0, prev_mode: 0, curr_state_id: 0, prev_state_id: 0, next_state_id: 0 },
-    backup_routing: routingInfo { curr_mode: 0, pending_mode: 0, prev_mode: 0, curr_state_id: 0, prev_state_id: 0, next_state_id: 0 },
-    pending_mode_change: 0,
-    get_override: None,
-};
+/// `routingInfo`, `stateMachine`, the `state_machine` global and the two mode accessors: owned by
+/// `melee_world::gm` (the world TUs read them too).
+pub use melee_world::gm::{gm_GetCurrentGameMode, gm_GetPreviousGameMode, routingInfo, stateMachine, state_machine};
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; an unset hook panics, except
 /// `gm_801A3EF4` (gm_1A36.c, ported), which defaults to this crate's port.
@@ -581,14 +536,8 @@ pub fn gm_ChangeGameModeAfterCurrentScene(pending_mode: i32) {
 }
 
 /// `gm_GetCurrentGameMode()`.
-pub fn gm_GetCurrentGameMode() -> u8 {
-    unsafe { state_machine.routing.curr_mode }
-}
 
 /// `gm_GetPreviousGameMode()`.
-pub fn gm_GetPreviousGameMode() -> u8 {
-    unsafe { state_machine.routing.prev_mode }
-}
 
 /// `gm_SetGameModeOverride(mode)`: the callback that may name a mode to run a single scene of.
 pub fn gm_SetGameModeOverride(mode: Option<unsafe extern "C" fn() -> u8>) {

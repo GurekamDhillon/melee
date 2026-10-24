@@ -13,14 +13,14 @@ use melee_types::*;
 pub mod ext {
     use crate::tu::hookmac::{hook, hook_or};
     use melee_types::*;
-    hook!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, (jobj: *mut HSD_JObj));
+    hook_or!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, (jobj: *mut HSD_JObj), |jobj: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(jobj as _); } });
     // rp3 HSD_JObjSetMtxDirty
     hook_or!(HSD_JOBJSETMTXDIRTY, HSD_JObjSetMtxDirty, (jobj: *mut HSD_JObj), |jobj: *mut HSD_JObj| unsafe { crate::tu::grinl::HSD_JObjSetMtxDirty(jobj); });
     // rp3-end
 
     hook!(HSD_JOBJSETUPMATRIXSUB, HSD_JObjSetupMatrixSub, (jobj: *mut HSD_JObj));
     // The C global `stage_info` (gr/ground.c, 49E6C8): its address.
-    hook!(STAGE_INFO, stage_info, () -> *mut StageInfo);
+    hook_or!(STAGE_INFO, stage_info, () -> *mut StageInfo, || unsafe { core::ptr::addr_of_mut!(crate::tu::ground::stage_info) });
 }
 
 /// `HSD_ASSERT(line, cond)` (the string is what the C prints).

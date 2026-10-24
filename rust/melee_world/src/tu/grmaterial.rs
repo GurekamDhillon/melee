@@ -23,7 +23,7 @@ pub mod ext {
     pub fn HSD_IDInsertToTable(table: *mut HSD_IDTable, id: HSD_IDKey, data: *mut c_void) {
         match unsafe { HSD_IDINSERTTOTABLE } { Some(f) => f(table, id, data), None => { unsafe { let _ = melee_runtime::tu::id::HSD_IDInsertToTable(table as _, id as _, data as _); } return; } }
     }
-    hook!(HSD_JOBJGETDOBJ, HSD_JObjGetDObj, (jobj: *mut HSD_JObj) -> *mut HSD_DObj);
+    hook_or!(HSD_JOBJGETDOBJ, HSD_JObjGetDObj, (jobj: *mut HSD_JObj) -> *mut HSD_DObj, |jobj: *mut HSD_JObj| unsafe { melee_runtime::tu::jobj_world::HSD_JObjGetDObj(jobj as _) as _ });
     // rp3 HSD_MObjClearFlags
     hook_or!(HSD_MOBJCLEARFLAGS, HSD_MObjClearFlags, (mobj: *mut HSD_MObj, flags: u32), |mobj: *mut HSD_MObj, flags: u32| unsafe { melee_runtime::tu::mobj::HSD_MObjClearFlags(mobj, flags); });
     // rp3-end
@@ -65,7 +65,7 @@ pub mod ext {
     }
     hook!(ITEM_80268E5C, Item_80268E5C, (gobj: *mut HSD_GObj, msid: enum_t, flags: Item_StateChangeFlags));
     hook!(ITEM_8026A8EC, Item_8026A8EC, (gobj: *mut HSD_GObj));
-    hook!(OSREPORT, OSReport, (a0: *mut i8));
+    hook_or!(OSREPORT, OSReport, (a0: *mut i8), |a0: *mut i8| unsafe { melee_runtime::tu::os_error::OSReport(a0 as _, &[]) });
     pub static mut HSDCHANGECLASS: Option<fn(*mut c_void, *mut c_void) -> i32> = None;
     #[allow(non_snake_case)]
     pub fn hsdChangeClass(object: *mut c_void, class_info: *mut c_void) -> i32 {
@@ -77,8 +77,8 @@ pub mod ext {
         match unsafe { HSDINITCLASSINFO } { Some(f) => f(class_info, parent_info, base_class_library, ty, info_size, class_size), None => { unsafe { let _ = melee_runtime::tu::class::hsdInitClassInfo(class_info as _, parent_info as _, base_class_library as _, ty as _, info_size as _, class_size as _); } return; } }
     }
     hook!(IT_802725D4, it_802725D4, (a0: *mut HSD_GObj));
-    hook!(IT_802756D0, it_802756D0, (a0: *mut HSD_GObj));
-    hook!(IT_802756E0, it_802756E0, (a0: *mut HSD_GObj));
+    hook_or!(IT_802756D0, it_802756D0, (a0: *mut HSD_GObj), |a0: *mut HSD_GObj| { unsafe { let _ = crate::itacc::it_802756D0(a0 as _); } });
+    hook_or!(IT_802756E0, it_802756E0, (a0: *mut HSD_GObj), |a0: *mut HSD_GObj| { unsafe { let _ = crate::itacc::it_802756E0(a0 as _); } });
     hook!(IT_802E6AEC, it_802E6AEC, (a0: *mut Ground, a1: i32, a2: i32, a3: *mut HSD_JObj, a4: *mut Vec3, a5: i32, a6: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground)>, a7: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut Vec3, *mut HSD_GObj, f32)>, a8: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut HSD_GObj)>) -> *mut HSD_GObj);
     pub static mut LBGETFREEALPHAREGISTER: Option<fn(s32, *mut HSD_MObj, *mut HSD_TExp) -> s32> = None;
     #[allow(non_snake_case)]

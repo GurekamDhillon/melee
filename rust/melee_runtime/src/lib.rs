@@ -17,6 +17,7 @@ pub mod aobj;
 pub mod bytecode;
 pub mod dobj;
 pub mod cabi;
+pub mod cformat;
 pub mod cobj;
 pub mod dat;
 pub mod fobj;

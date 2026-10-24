@@ -13,8 +13,12 @@ pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
+    macro_rules! ext_none {
+        ($name:ident, ($($a:ident),*)) => { panic!(concat!("TODO: ", stringify!($name), " is not ported")) };
+        ($name:ident, ($($a:ident),*), $def:expr) => { ($def)($($a),*) };
+    }
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -22,26 +26,26 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => ext_none!($name, ($($a),*) $(, $def)?),
                 }
             } )*
         };
     }
     ext_fns! {
-    fn Ground_801C0498() -> f32;
-    fn Ground_801C13D0(a0: i32, a1: i32) -> *mut HSD_JObj;
-    fn Ground_801C4100(a0: *mut HSD_JObj) -> *mut HSD_JObj;
-    fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32);
+    fn Ground_801C0498() -> f32 = || unsafe { crate::tu::ground::Ground_801C0498() as _ };
+    fn Ground_801C13D0(a0: i32, a1: i32) -> *mut HSD_JObj = |a0: i32, a1: i32| unsafe { crate::tu::ground::Ground_801C13D0(a0 as _, a1 as _) as _ };
+    fn Ground_801C4100(a0: *mut HSD_JObj) -> *mut HSD_JObj = |a0: *mut HSD_JObj| unsafe { crate::tu::ground::Ground_801C4100(a0 as _) as _ };
+    fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32) = |a0: *mut HSD_AObj, a1: f32| { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetRate(a0 as _, a1 as _); } };
     fn HSD_ForeachAnim(a0: *mut c_void, a1: i32, a2: u32, a3: *mut c_void, a4: i32, a5: f64);
-    fn HSD_JObjAddChild(a0: *mut HSD_JObj, a1: *mut HSD_JObj);
-    fn HSD_JObjAddNext(a0: *mut HSD_JObj, a1: *mut HSD_JObj);
-    fn HSD_JObjAlloc() -> *mut HSD_JObj;
+    fn HSD_JObjAddChild(a0: *mut HSD_JObj, a1: *mut HSD_JObj) = |a0: *mut HSD_JObj, a1: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjAddChild(a0 as _, a1 as _); } };
+    fn HSD_JObjAddNext(a0: *mut HSD_JObj, a1: *mut HSD_JObj) = |a0: *mut HSD_JObj, a1: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjAddNext(a0 as _, a1 as _); } };
+    fn HSD_JObjAlloc() -> *mut HSD_JObj = || unsafe { melee_runtime::tu::jobj::HSD_JObjAlloc() as _ };
     fn HSD_JObjReqAnimAllByFlags(a0: *mut HSD_JObj, a1: u32, a2: f32);
-    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
-    fn PSMTXIdentity(a0: *mut c_void);
-    fn grAnime_801C6C0C(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint);
-    fn grDatFiles_801C6330(a0: i32) -> *mut UnkArchiveStruct;
-    fn lb_8000F9F8(a0: *mut HSD_JObj);
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) = |a0: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(a0 as _); } };
+    fn PSMTXIdentity(a0: *mut c_void) = |a0: *mut c_void| { unsafe { let _ = melee_runtime::tu::mtx_pc::raw::PSMTXIdentity(a0 as _); } };
+    fn grAnime_801C6C0C(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint) = |a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint| { unsafe { let _ = crate::tu::granime::grAnime_801C6C0C(a0 as _, a1 as _, a2 as _, a3 as _); } };
+    fn grDatFiles_801C6330(a0: i32) -> *mut UnkArchiveStruct = |a0: i32| unsafe { crate::tu::grdatfiles::grDatFiles_801C6330(a0 as _) as _ };
+    fn lb_8000F9F8(a0: *mut HSD_JObj) = |a0: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_8000F9F8(a0 as _); } };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

@@ -72,8 +72,10 @@ pub mod ext {
                     None => { return unsafe { crate::tu::mplib::mpCheckMultiple(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _, a7 as _, a8 as _, a9 as _, a10 as _) as _ }; },
                 }
             }
-    hook!(H_HSD_Randi, HSD_Randi, (a0: i32) -> i32);
-    hook!(H_gm_8016B238, gm_8016B238, () -> i32);
+    pub static mut H_HSD_Randi: Option<unsafe extern "C" fn(i32) -> i32> = None;
+    pub unsafe extern "C" fn HSD_Randi(a0: i32) -> i32 { match H_HSD_Randi { Some(f) => f(a0), None => melee_runtime::tu::random::HSD_Randi(melee_runtime::tu::globals::rand(), a0) } }
+    pub static mut H_gm_8016B238: Option<unsafe extern "C" fn() -> i32> = None;
+    pub unsafe extern "C" fn gm_8016B238() -> i32 { match H_gm_8016B238 { Some(f) => f(), None => unsafe { crate::gm::gm_8016B238() as _ } } }
     hook!(H_gm_8016B3A0, gm_8016B3A0, () -> i32);
     pub static mut H_Ground_801C28AC: Option<unsafe extern "C" fn(u32, u32, *mut i32) -> i32> = None;
             pub unsafe extern "C" fn Ground_801C28AC(a0: u32, a1: u32, a2: *mut i32) -> i32 {
@@ -105,7 +107,7 @@ pub mod ext {
             }
     hook!(H_Mex_GrExternalCount, Mex_GrExternalCount, () -> i32);
     pub static mut H_OSReport: Option<unsafe fn(*const i8, &[u64])> = None;
-    pub unsafe fn OSReport(f: *const i8, a: &[u64]) { match H_OSReport { Some(h) => h(f, a), None => panic!("TODO: OSReport is not ported") } }
+    pub unsafe fn OSReport(f: *const i8, a: &[u64]) { match H_OSReport { Some(h) => h(f, a), None => unsafe { melee_runtime::tu::os_error::OSReport(f, &a.iter().map(|x| *x as usize).collect::<std::vec::Vec<usize>>()) } } }
     hook!(H_Mex_GrKindForExt, Mex_GrKindForExt, (a0: i32) -> i32);
     pub static mut H_Ground_801C06B8: Option<unsafe extern "C" fn(u32) > = None;
             pub unsafe extern "C" fn Ground_801C06B8(a0: u32)  {

@@ -43,11 +43,11 @@ pub mod ext {
         pub lb_8000B1CC: unsafe fn(j: *mut HSD_JObj, a: *const Vec3, out: *mut Vec3),
         pub grAnime_801C7FF8: unsafe fn(g: *mut HSD_GObj, a: i32, b: i32, c: i32, d: f32, e: f32),
     }
-    unsafe fn todo_OSReport(_fmt: &CStr, _file: &CStr, _line: i32, _id: i32) { panic!("TODO(os: OSReport (varargs: fmt, __FILE__, line, id)) OSReport") }
+    unsafe fn todo_OSReport(_fmt: &CStr, _file: &CStr, _line: i32, _id: i32) { melee_runtime::tu::os_error::OSReport(_fmt.as_ptr(), &[_file.as_ptr() as usize, _line as usize, _id as usize]) }
     unsafe fn todo_Ground_GetStageGObj(_id: i32) -> *mut HSD_GObj { { return unsafe { crate::tu::ground::Ground_GetStageGObj(_id as _) as _ }; } }
     unsafe fn todo_grZakoGenerator_801CAE04(_d: *mut c_void) { { unsafe { let _ = crate::tu::grzakogenerator::grZakoGenerator_801CAE04(_d as _); } return; } }
     unsafe fn todo_Ground_801C3FA4(_g: *mut HSD_GObj, _depth: i32) -> *mut HSD_JObj { { return unsafe { crate::tu::ground::Ground_801C3FA4(_g as _, _depth as _) as _ }; } }
-    unsafe fn todo_HSD_JObjSetFlagsAll(_j: *mut HSD_JObj, _f: u32) { panic!("TODO(group1: baselib/jobj.c) HSD_JObjSetFlagsAll") }
+    unsafe fn todo_HSD_JObjSetFlagsAll(_j: *mut HSD_JObj, _f: u32) { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetFlagsAll(_j as _, _f as _); } }
     unsafe fn todo_Ground_801C33C0(_a: i32, _b: i32) -> i32 { { return unsafe { crate::tu::ground::Ground_801C33C0(_a as _, _b as _) as _ }; } }
     unsafe fn todo_grMaterial_801C8CFC(_a: i32, _b: i32, _gp: *mut Ground, _j: *mut HSD_JObj, _cb4: *const c_void, _cb5: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut Vec3, *mut HSD_GObj, f32)>, _cb6: *const c_void) -> *mut HSD_GObj { panic!("TODO(group2: gr/grmaterial.c) grMaterial_801C8CFC") }
     unsafe fn todo_grMaterial_801C8DE0(_g: *mut HSD_GObj, _a: f32, _b: f32, _c: f32, _d: f32, _e: f32, _f: f32, _h: f32) { { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C8DE0(_g as _, _a as _, _b as _, _c as _, _d as _, _e as _, _f as _, _h as _); } return; } }

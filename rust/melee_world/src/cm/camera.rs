@@ -138,6 +138,38 @@ impl Default for CameraWorld {
     }
 }
 
+static mut WORLD: Option<CameraWorld> = None;
+
+/// The one camera world of the process: the C globals of camera.c (`game_camera`, `cm_803BCCA0`,
+/// the stage camera info, ...) behind the C-named entry points the TU ports call
+/// (`Camera_SetModeToFixed`, `Camera_8003010C`, ...). Single-threaded game state.
+#[allow(static_mut_refs)]
+pub fn world() -> &'static mut CameraWorld {
+    unsafe { WORLD.get_or_insert_with(CameraWorld::default) }
+}
+
+/// `Camera_80030A50`: the camera GObj, after an auto-view refresh of its CObj (TARGET_PC).
+///
+/// # Safety
+/// `game_camera.gobj` is NULL or a live camera GObj.
+pub unsafe fn Camera_80030A50() -> *mut melee_types::HSD_GObj {
+    let gobj = world().game_camera.gobj;
+    if !gobj.is_null() {
+        melee_runtime::tu::cobj::HSD_CObjUpdateView((*gobj).hsd_obj.cast());
+    }
+    gobj
+}
+
+/// `Camera_RequestQuake(kind, pos)` on the process camera world, with the real `grLib_801C9CEC`.
+///
+/// # Safety
+/// `pos` is NULL or points to a `Vec3`.
+pub unsafe fn Camera_RequestQuake(kind: CmQuakeKind, pos: *mut Vec3) {
+    world().camera_request_quake_with(kind, if pos.is_null() { None } else { Some(*pos) }, |k| unsafe {
+        crate::tu::grlib::grLib_801C9CEC(k)
+    });
+}
+
 impl CameraWorld {
     #[inline]
     fn lifted(&self) -> bool {
@@ -543,17 +575,30 @@ impl CameraWorld {
     /// QuakeKind_Loop its returned GObj is `quake_gobj_token`. An unknown kind leaves
     /// `quake_length` at the shipping build's zero-initialised 0.
     pub fn camera_request_quake(&mut self, kind: CmQuakeKind, pos: Option<Vec3>) {
+        let token = self.quake_gobj_token as *mut _;
+        let mut log = std::mem::take(&mut self.stubs.grlib_quake);
+        self.camera_request_quake_with(kind, pos, |k| {
+            log.push(k);
+            token
+        });
+        self.stubs.grlib_quake = log;
+    }
+
+    /// Camera_RequestQuake with `grLib_801C9CEC(kind)` supplied by the caller (the native one for
+    /// the TU entry point [`Camera_RequestQuake`], a recording stub for the model tests).
+    pub fn camera_request_quake_with(
+        &mut self, kind: CmQuakeKind, pos: Option<Vec3>, mut grlib_801c9cec: impl FnMut(CmQuakeKind) -> *mut melee_types::HSD_GObj,
+    ) {
         let mut len = 0i32;
         match kind {
             QuakeKind_Loop => {
                 if self.game_camera.quake_gobj.is_null() {
-                    self.stubs.grlib_quake.push(kind);
-                    self.game_camera.quake_gobj = self.quake_gobj_token as *mut _;
+                    self.game_camera.quake_gobj = grlib_801c9cec(kind);
                 }
                 len = 10;
             }
             QuakeKind_Small | QuakeKind_Medium | QuakeKind_Large => {
-                self.stubs.grlib_quake.push(kind);
+                let _ = grlib_801c9cec(kind);
                 len = 22;
             }
             _ => {}

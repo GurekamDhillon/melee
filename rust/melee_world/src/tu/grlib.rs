@@ -12,12 +12,12 @@ use melee_types::*;
 
 /// Callees in TUs that are not ported yet. An unset hook panics.
 pub mod ext {
-    use crate::tu::hookmac::hook;
+    use crate::tu::hookmac::{hook, hook_or};
     use core::ffi::c_void;
     use melee_types::*;
     pub use crate::tu::grinl::ext::stage_info;
-    hook!(CAMERA_SETQUAKEOFFSET, Camera_SetQuakeOffset, (x: f32, y: f32));
-    hook!(GOBJ_CREATE, GObj_Create, (classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj);
+    hook_or!(CAMERA_SETQUAKEOFFSET, Camera_SetQuakeOffset, (x: f32, y: f32), |x: f32, y: f32| crate::cm::camera::world().camera_set_quake_offset(x, y));
+    hook_or!(GOBJ_CREATE, GObj_Create, (classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj, |classifier: u16, p_link: u8, priority: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(classifier as _, p_link as _, priority as _) as _ });
     pub static mut GROUND_801C0498: Option<fn() -> f32> = None;
     #[allow(non_snake_case)]
     pub fn Ground_801C0498() -> f32 {
@@ -34,9 +34,9 @@ pub mod ext {
         match unsafe { HSD_AOBJSETFLAGS } { Some(f) => f(aobj, flags), None => { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetFlags(aobj as _, flags as _); } return; } }
     }
     hook!(HSD_FOREACHANIM, HSD_ForeachAnim, (obj: *mut c_void, ty: HSD_Type, mask: HSD_TypeMask, func: *mut c_void, arg_type: AObj_Arg_Type));
-    hook!(HSD_GOBJFREE, HSD_GObjFree, (a0: *mut HSD_GObj));
-    hook!(HSD_GOBJOBJECT_80390A70, HSD_GObjObject_80390A70, (gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void));
-    hook!(HSD_GOBJ_SETUPPROC, HSD_GObj_SetupProc, (a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc);
+    hook_or!(HSD_GOBJFREE, HSD_GObjFree, (a0: *mut HSD_GObj), |a0: *mut HSD_GObj| { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObjFree(a0 as _); } });
+    hook_or!(HSD_GOBJOBJECT_80390A70, HSD_GObjObject_80390A70, (gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void), |gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void| { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(gobj as _, kind as _, obj as _); } });
+    hook_or!(HSD_GOBJ_SETUPPROC, HSD_GObj_SetupProc, (a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc, |a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8| unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(a0 as _, a1 as _, a2 as _) as _ });
     hook!(HSD_JOBJADDANIMALL, HSD_JObjAddAnimAll, (a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint));
     hook!(HSD_JOBJANIMALL, HSD_JObjAnimAll, (a0: *mut HSD_JObj));
     pub static mut HSD_JOBJLOADJOINT: Option<fn(*mut HSD_Joint) -> *mut HSD_JObj> = None;
@@ -65,7 +65,7 @@ pub mod ext {
     hook!(HSD_8039EFAC, hsd_8039EFAC, (linkNo: s32, bank: s32, gfx_id: s32, a3: *mut HSD_JObj) -> *mut HSD_Generator);
     hook!(HSD_8039F05C, hsd_8039F05C, (linkNo: s32, bank: s32, idx: s32) -> *mut HSD_Generator);
     hook!(HSD_8039F6CC, hsd_8039F6CC, (linkNo: s32, bank: s32, gfx_id: s32, a3: *mut HSD_JObj) -> *mut HSD_Generator);
-    hook!(ITGETKIND, itGetKind, (gobj: *mut HSD_GObj) -> ItemKind);
+    hook_or!(ITGETKIND, itGetKind, (gobj: *mut HSD_GObj) -> ItemKind, |gobj: *mut HSD_GObj| unsafe { crate::itacc::itGetKind(gobj as _) as _ });
     pub static mut LB_8000FD18: Option<fn(*mut DynamicsDesc)> = None;
     #[allow(non_snake_case)]
     pub fn lb_8000FD18(a0: *mut DynamicsDesc) {

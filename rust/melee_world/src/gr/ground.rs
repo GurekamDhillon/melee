@@ -21,43 +21,47 @@ const M_PI: f64 = 3.14159265358979323846;
 pub trait GroundHooks {
     /// TODO(group1: lb/lbaudio_ax.c)
     fn lbaudioax_800237a8(&mut self, sfx: i32, vol: i32, pan: i32) -> i32 {
-        unimplemented!("TODO(group1): lbAudioAx_800237A8")
+        unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800237A8(sfx, vol, pan) }
     }
     /// TODO(group1: lb/lbaudio_ax.c)
     fn lbaudioax_80023870(&mut self, a: i32, vol: i32, pan: i32, d: i32) -> i32 {
-        unimplemented!("TODO(group1): lbAudioAx_80023870")
+        unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023870(a, vol, pan, d) }
     }
     /// TODO(group1: lb/lbaudio_ax.c)
     fn lbaudioax_800236b8(&mut self, id: i32) -> i32 {
-        unimplemented!("TODO(group1): lbAudioAx_800236B8")
+        unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800236B8(id) }
     }
     /// TODO(group1: lb/lbaudio_ax.c)
     fn lbaudioax_80023710(&mut self, id: i32) -> bool {
-        unimplemented!("TODO(group1): lbAudioAx_80023710")
+        unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023710(id) }
     }
     /// TODO(group1: lb/lbaudio_ax.c) volume
     fn lbaudioax_80024b58(&mut self, id: i32, v: i32) {
-        unimplemented!("TODO(group1): lbAudioAx_80024B58")
+        unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024B58(id, v) }
     }
     /// TODO(group1: lb/lbaudio_ax.c) pan
     fn lbaudioax_80024b1c(&mut self, id: i32, v: i32) {
-        unimplemented!("TODO(group1): lbAudioAx_80024B1C")
+        unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024B1C(id, v) }
     }
     /// TODO(group1: baselib/random.c)
     fn hsd_randi(&mut self, n: i32) -> i32 {
-        unimplemented!("TODO(group1): HSD_Randi")
+        melee_runtime::tu::random::HSD_Randi(melee_runtime::tu::globals::rand(), n)
     }
     /// TODO(group1: baselib/spline.c)
     fn spl_get_spline_point(&mut self, spline: *mut HSD_Spline, t: f32) -> Vec3 {
-        unimplemented!("TODO(group1): splGetSplinePoint")
+        let mut p = melee_types::Vec { x: 0.0, y: 0.0, z: 0.0 };
+        unsafe { melee_runtime::tu::spline_world::splGetSplinePoint(&mut p, spline, t) };
+        Vec3 { x: p.x, y: p.y, z: p.z }
     }
     /// TODO(group1: lb/lbshadow.c)
     fn lbshadow_8000e9f0(&mut self, spline: *mut HSD_Spline, t: f32) -> Vec3 {
-        unimplemented!("TODO(group1): lbShadow_8000E9F0")
+        let mut p = melee_types::Vec { x: 0.0, y: 0.0, z: 0.0 };
+        unsafe { melee_runtime::tu::lbshadow::lbShadow_8000E9F0(&mut p, &*spline, t) };
+        Vec3 { x: p.x, y: p.y, z: p.z }
     }
     /// TODO(group2: gr/grzebes.c)
     fn grzebes_801da3f4(&mut self, arg: *mut core::ffi::c_void) {
-        unimplemented!("TODO(group2): grZebes_801DA3F4")
+        unsafe { crate::tu::grzebes::grZebes_801DA3F4(arg as _) }
     }
     /// grKongo_801D8270 (gr/grkongo.c): ported in `gr::leaves`.
     fn grkongo_801d8270(&mut self, g: *mut HSD_GObj) {
@@ -66,7 +70,7 @@ pub trait GroundHooks {
     }
     /// TODO(group2: gr/grkongo.c)
     fn grkongo_801d828c(&mut self, g: *mut HSD_GObj) {
-        unimplemented!("TODO(group2): grKongo_801D828C")
+        unsafe { crate::tu::grkongo::grKongo_801D828C(g) }
     }
     /// grOldKongo_802105AC (gr/groldkongo.c): ported in `gr::leaves`.
     fn groldkongo_802105ac(&mut self, g: *mut HSD_GObj) {
@@ -75,23 +79,23 @@ pub trait GroundHooks {
     }
     /// TODO(group2: gr/groldkongo.c)
     fn groldkongo_802105c8(&mut self, g: *mut HSD_GObj) {
-        unimplemented!("TODO(group2): grOldKongo_802105C8")
+        unsafe { crate::tu::groldkongo::grOldKongo_802105C8(g) }
     }
     /// Camera_SetModeToFixed: `CameraWorld` implements it (cm::camera).
     fn camera_set_mode_to_fixed(&mut self) {
-        unimplemented!("Camera_SetModeToFixed: forward to cm::camera::CameraWorld")
+        crate::cm::camera::world().camera_set_mode_to_fixed()
     }
     /// Camera_SetModeToStandard: `CameraWorld` implements it (cm::camera).
     fn camera_set_mode_to_standard(&mut self) {
-        unimplemented!("Camera_SetModeToStandard: forward to cm::camera::CameraWorld")
+        crate::cm::camera::world().camera_set_mode_to_standard()
     }
     /// TODO(group3: pl/player.c)
     fn player_get_entity(&mut self, slot: i32) -> *mut HSD_GObj {
-        unimplemented!("TODO(group3): Player_GetEntity")
+        crate::pl::Player_GetEntity(slot)
     }
     /// TODO(group3: pl/player.c)
     fn player_get_entity_at_index(&mut self, slot: i32, i: i32) -> *mut HSD_GObj {
-        unimplemented!("TODO(group3): Player_GetEntityAtIndex")
+        crate::pl::Player_GetEntityAtIndex(slot, i)
     }
     /// TODO(group5: ty/toy.c)
     fn toy_803124bc(&mut self) {

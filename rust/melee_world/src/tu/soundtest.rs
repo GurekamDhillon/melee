@@ -22,8 +22,12 @@ pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
+    macro_rules! ext_none {
+        ($name:ident, ($($a:ident),*)) => { panic!(concat!("TODO: ", stringify!($name), " is not ported")) };
+        ($name:ident, ($($a:ident),*), $def:expr) => { ($def)($($a),*) };
+    }
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -31,36 +35,36 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => ext_none!($name, ($($a),*) $(, $def)?),
                 }
             } )*
         };
     }
     ext_fns! {
-    fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
-    fn HSD_GObjFree(a0: *mut HSD_GObj);
-    fn HSD_MemAlloc(a0: i32) -> *mut c_void;
-    fn HSD_SObjLib_803A477C(a0: *mut HSD_GObj, a1: *mut HSD_SObjDesc, a2: u32, a3: u32, a4: u8, a5: u8) -> *mut HSD_SObj;
-    fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: i32);
-    fn HSD_SObjLib_803A55DC(a0: *mut HSD_GObj, a1: u16, a2: u16, a3: i32);
+    fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj = |a0: u16, a1: u8, a2: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ };
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32| { unsafe { let _ = melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
+    fn HSD_GObjFree(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObjFree(a0 as _); } };
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void = |a0: i32| unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ };
+    fn HSD_SObjLib_803A477C(a0: *mut HSD_GObj, a1: *mut HSD_SObjDesc, a2: u32, a3: u32, a4: u8, a5: u8) -> *mut HSD_SObj = |a0: *mut HSD_GObj, a1: *mut HSD_SObjDesc, a2: u32, a3: u32, a4: u8, a5: u8| unsafe { melee_runtime::tu::sobjlib::HSD_SObjLib_803A477C(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _) as _ };
+    fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { let _ = melee_runtime::tu::sobjlib::HSD_SObjLib_803A49E0(a0 as _, a1 as _); } };
+    fn HSD_SObjLib_803A55DC(a0: *mut HSD_GObj, a1: u16, a2: u16, a3: i32) = |a0: *mut HSD_GObj, a1: u16, a2: u16, a3: i32| { unsafe { let _ = melee_runtime::tu::sobjlib::HSD_SObjLib_803A55DC(a0 as _, a1 as _, a2 as _, a3 as _); } };
     fn Toy_80311680();
     fn Toy_803124BC();
     fn Toy_SetUnlockState(a0: i32, a1: i32);
-    fn gmMainLib_8015CCF0() -> *mut u32;
-    fn gmMainLib_8015CDC8() -> *mut gmm_x0_528_t;
-    fn gmMainLib_8015CDD4() -> *mut gmm_x0_528_t;
-    fn gmMainLib_8015CDE0() -> *mut gmm_x0_528_t;
-    fn gmMainLib_8015D06C(a0: u8) -> *mut i32;
-    fn gmMainLib_8015D48C(a0: u8) -> i32;
-    fn gmMainLib_8015D4E8(a0: u8, a1: i32);
+    fn gmMainLib_8015CCF0() -> *mut u32 = || unsafe { crate::gmmain::gmMainLib_8015CCF0() as _ };
+    fn gmMainLib_8015CDC8() -> *mut gmm_x0_528_t = || unsafe { crate::gmmain::gmMainLib_8015CDC8() as _ };
+    fn gmMainLib_8015CDD4() -> *mut gmm_x0_528_t = || unsafe { crate::gmmain::gmMainLib_8015CDD4() as _ };
+    fn gmMainLib_8015CDE0() -> *mut gmm_x0_528_t = || unsafe { crate::gmmain::gmMainLib_8015CDE0() as _ };
+    fn gmMainLib_8015D06C(a0: u8) -> *mut i32 = |a0: u8| unsafe { crate::gmmain::gmMainLib_8015D06C(a0 as _) as _ };
+    fn gmMainLib_8015D48C(a0: u8) -> i32 = |a0: u8| unsafe { crate::gmmain::gmMainLib_8015D48C(a0 as _) as _ };
+    fn gmMainLib_8015D4E8(a0: u8, a1: i32) = |a0: u8, a1: i32| { unsafe { let _ = crate::gmmain::gmMainLib_8015D4E8(a0 as _, a1 as _); } };
     fn gmMainLib_8015FA34(a0: i32);
     fn gmMainLib_8015FB68();
-    fn gmMainLib_GetBonusMatchTotal() -> *mut u32;
-    fn gmMainLib_GetCoinMatchTotal() -> *mut u32;
-    fn gmMainLib_GetKOTotal() -> *mut i32;
-    fn gmMainLib_GetStockMatchTotal() -> *mut u32;
-    fn gmMainLib_GetTimeMatchTotal() -> *mut u32;
+    fn gmMainLib_GetBonusMatchTotal() -> *mut u32 = || unsafe { crate::gmmain::gmMainLib_GetBonusMatchTotal() as _ };
+    fn gmMainLib_GetCoinMatchTotal() -> *mut u32 = || unsafe { crate::gmmain::gmMainLib_GetCoinMatchTotal() as _ };
+    fn gmMainLib_GetKOTotal() -> *mut i32 = || unsafe { crate::gmmain::gmMainLib_GetKOTotal() as _ };
+    fn gmMainLib_GetStockMatchTotal() -> *mut u32 = || unsafe { crate::gmmain::gmMainLib_GetStockMatchTotal() as _ };
+    fn gmMainLib_GetTimeMatchTotal() -> *mut u32 = || unsafe { crate::gmmain::gmMainLib_GetTimeMatchTotal() as _ };
     fn gm_8016468C();
     fn gm_80164F18();
     fn gm_801A4B60();
@@ -74,42 +78,42 @@ pub mod ext {
     fn gm_SetNextGameModeStateId(a0: u8);
     fn gm_SetupAllPlayerDefaults(a0: *mut PlayerInitData);
     fn gm_SetupRulesDefaults(a0: *mut StartMeleeRules);
-    fn lbArchive_LoadSymbols(a0: *const i8, a1: *mut c_void, a2: *const i8);
-    fn lbAudioAx_80023694() -> i32;
-    fn lbAudioAx_800236DC() -> i32;
-    fn lbAudioAx_80023B24(a0: i32) -> i32;
-    fn lbAudioAx_80023F28(a0: i32) -> i32;
-    fn lbAudioAx_80024030(a0: i32);
-    fn lbAudioAx_800245D4(a0: i32);
-    fn lbAudioAx_800245F4(a0: i32) -> i32;
-    fn lbAudioAx_80024614(a0: i32);
-    fn lbAudioAx_80024634(a0: i32);
-    fn lbAudioAx_80024BD0() -> i32;
-    fn lbAudioAx_80024C08(a0: i32) -> i32;
-    fn lbAudioAx_80024E50(a0: i32);
-    fn lbCardGame_LoadArchive(a0: i32);
-    fn lbCardGame_SaveChanges();
-    fn lbCardGame_SetCardStatus(a0: u32);
-    fn lbCardNew_AllocWorkArea();
-    fn lbCardNew_CompleteNextTask() -> i32;
-    fn lbLang_SetSavedLanguage(a0: i32);
-    fn lbSnap_8001D40C(a0: i32) -> i32;
-    fn lbSnap_8001D5FC(a0: i32, a1: i32) -> i32;
-    fn lbSnap_8001D7B0(a0: i32, a1: i32, a2: i32) -> i32;
-    fn lbSnap_8001DE8C(a0: *mut c_void) -> i32;
-    fn lbSnap_8001E058(a0: i32, a1: i32) -> i32;
-    fn lbSnap_8001E204() -> i32;
-    fn lbSnap_8001E210() -> i32;
-    fn lbSnap_8001E218(a0: *mut c_void, a1: *mut c_void /* Unk80433380_48 */);
-    fn lb_8001B8C8(a0: i32) -> i32;
-    fn lb_8001C87C() -> u32;
-    fn lb_8001C8BC() -> i32;
-    fn lb_8001CBBC() -> u32;
-    fn lb_8001CC4C() -> i32;
-    fn un_80302DF0() -> *mut un_80304138_objalloc_t;
-    fn un_80302DF8(a0: *mut un_80304138_objalloc_t, a1: Option<unsafe extern "C" fn(u32) -> i32>);
-    fn un_80304210(a0: *mut un_80304138_objalloc_t, a1: *mut c_void, a2: i32, a3: i32, a4: i32) -> *mut un_80304138_objalloc_t;
-    fn un_80304334(a0: *mut un_80304138_objalloc_t);
+    fn lbArchive_LoadSymbols(a0: *const i8, a1: *mut c_void, a2: *const i8) = |a0: *const i8, a1: *mut c_void, a2: *const i8| { unsafe { let v: std::vec::Vec<*mut core::ffi::c_void> = std::vec![a1 as *mut core::ffi::c_void, a2 as *mut core::ffi::c_void, core::ptr::null_mut()]; let _ = melee_runtime::tu::lbarchive::lbArchive_LoadSymbols(a0 as _, &v); } };
+    fn lbAudioAx_80023694() -> i32 = || unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023694() as _ };
+    fn lbAudioAx_800236DC() -> i32 = || unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800236DC() as _ };
+    fn lbAudioAx_80023B24(a0: i32) -> i32 = |a0: i32| unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023B24(a0 as _) as _ };
+    fn lbAudioAx_80023F28(a0: i32) -> i32 = |a0: i32| unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023F28(a0 as _) as _ };
+    fn lbAudioAx_80024030(a0: i32) = |a0: i32| { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(a0 as _); } };
+    fn lbAudioAx_800245D4(a0: i32) = |a0: i32| { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_800245D4(a0 as _); } };
+    fn lbAudioAx_800245F4(a0: i32) -> i32 = |a0: i32| unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800245F4(a0 as _) as _ };
+    fn lbAudioAx_80024614(a0: i32) = |a0: i32| { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024614(a0 as _); } };
+    fn lbAudioAx_80024634(a0: i32) = |a0: i32| { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024634(a0 as _); } };
+    fn lbAudioAx_80024BD0() -> i32 = || unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024BD0() as _ };
+    fn lbAudioAx_80024C08(a0: i32) -> i32 = |a0: i32| unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024C08(a0 as _) as _ };
+    fn lbAudioAx_80024E50(a0: i32) = |a0: i32| unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024E50(a0 != 0) };
+    fn lbCardGame_LoadArchive(a0: i32) = |a0: i32| { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_LoadArchive(a0 as _); } };
+    fn lbCardGame_SaveChanges() = || { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_SaveChanges(); } };
+    fn lbCardGame_SetCardStatus(a0: u32) = |a0: u32| { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_SetCardStatus(a0 as _); } };
+    fn lbCardNew_AllocWorkArea() = || { unsafe { let _ = melee_runtime::tu::lbcardnew::lbCardNew_AllocWorkArea(); } };
+    fn lbCardNew_CompleteNextTask() -> i32 = || unsafe { melee_runtime::tu::lbcardnew::lbCardNew_CompleteNextTask() as _ };
+    fn lbLang_SetSavedLanguage(a0: i32) = |a0: i32| { unsafe { let _ = melee_runtime::tu::lblanguage::lbLang_SetSavedLanguage(a0 as _); } };
+    fn lbSnap_8001D40C(a0: i32) -> i32 = |a0: i32| unsafe { melee_runtime::tu::lbsnap::lbSnap_8001D40C(a0 as _) as _ };
+    fn lbSnap_8001D5FC(a0: i32, a1: i32) -> i32 = |a0: i32, a1: i32| unsafe { melee_runtime::tu::lbsnap::lbSnap_8001D5FC(a0 as _, a1 as _) as _ };
+    fn lbSnap_8001D7B0(a0: i32, a1: i32, a2: i32) -> i32 = |a0: i32, a1: i32, a2: i32| unsafe { melee_runtime::tu::lbsnap::lbSnap_8001D7B0(a0 as _, a1 as _, a2 as _) as _ };
+    fn lbSnap_8001DE8C(a0: *mut c_void) -> i32 = |a0: *mut c_void| unsafe { melee_runtime::tu::lbsnap::lbSnap_8001DE8C(a0 as _) as _ };
+    fn lbSnap_8001E058(a0: i32, a1: i32) -> i32 = |a0: i32, a1: i32| unsafe { melee_runtime::tu::lbsnap::lbSnap_8001E058(a0 as _, a1 as _) as _ };
+    fn lbSnap_8001E204() -> i32 = || unsafe { melee_runtime::tu::lbsnap::lbSnap_8001E204() as _ };
+    fn lbSnap_8001E210() -> i32 = || unsafe { melee_runtime::tu::lbsnap::lbSnap_8001E210() as _ };
+    fn lbSnap_8001E218(a0: *mut c_void, a1: *mut c_void /* Unk80433380_48 */) = |a0: *mut c_void, a1: *mut c_void /* Unk80433380_48 */| { unsafe { let _ = melee_runtime::tu::lbsnap::lbSnap_8001E218(a0 as _, a1 as _); } };
+    fn lb_8001B8C8(a0: i32) -> i32 = |a0: i32| unsafe { melee_runtime::tu::lbcardnew::lb_8001B8C8(a0 as _) as _ };
+    fn lb_8001C87C() -> u32 = || unsafe { melee_runtime::tu::lbcardgame::lb_8001C87C() as _ };
+    fn lb_8001C8BC() -> i32 = || unsafe { melee_runtime::tu::lbcardgame::lb_8001C8BC() as _ };
+    fn lb_8001CBBC() -> u32 = || unsafe { melee_runtime::tu::lbcardgame::lb_8001CBBC() as _ };
+    fn lb_8001CC4C() -> i32 = || unsafe { melee_runtime::tu::lbcardgame::lb_8001CC4C() as _ };
+    fn un_80302DF0() -> *mut un_80304138_objalloc_t = || unsafe { crate::tu::textlib::un_80302DF0() as _ };
+    fn un_80302DF8(a0: *mut un_80304138_objalloc_t, a1: Option<unsafe extern "C" fn(u32) -> i32>) = |a0: *mut un_80304138_objalloc_t, a1: Option<unsafe extern "C" fn(u32) -> i32>| { unsafe { let _ = crate::tu::textlib::un_80302DF8(a0 as _, a1 as _); } };
+    fn un_80304210(a0: *mut un_80304138_objalloc_t, a1: *mut c_void, a2: i32, a3: i32, a4: i32) -> *mut un_80304138_objalloc_t = |a0: *mut un_80304138_objalloc_t, a1: *mut c_void, a2: i32, a3: i32, a4: i32| unsafe { crate::tu::textlib_1::un_80304210(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _) as _ };
+    fn un_80304334(a0: *mut un_80304138_objalloc_t) = |a0: *mut un_80304138_objalloc_t| { unsafe { let _ = crate::tu::textlib_1::un_80304334(a0 as _); } };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

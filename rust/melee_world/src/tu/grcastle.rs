@@ -29,8 +29,8 @@ pub mod ext {
     pub use crate::tu::grinl::ext::{stage_info, HSD_JObjSetMtxDirty, HSD_JObjSetMtxDirtySub, HSD_JObjSetupMatrixSub};
     hook!(CAMERA_80029044, Camera_80029044, (a0: i32) -> *mut CmSubject);
     hook!(CAMERA_800290D4, Camera_800290D4, (a0: *mut CmSubject));
-    hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (a0: CmQuakeKind, a1: *mut Vec));
-    hook!(GOBJ_SETUPGXLINK, GObj_SetupGXLink, (gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, gx_link: u8, priority: u32));
+    hook_or!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (a0: CmQuakeKind, a1: *mut Vec), |a0: CmQuakeKind, a1: *mut Vec| unsafe { crate::cm::camera::Camera_RequestQuake(a0 as _, a1 as _) });
+    hook_or!(GOBJ_SETUPGXLINK, GObj_SetupGXLink, (gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, gx_link: u8, priority: u32), |gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, gx_link: u8, priority: u32| { unsafe { let _ = melee_runtime::tu::gobj_native::GObj_SetupGXLink(gobj as _, render_cb as _, gx_link as _, priority as _); } });
     pub static mut GROUND_801C0498: Option<fn() -> f32> = None;
     #[allow(non_snake_case)]
     pub fn Ground_801C0498() -> f32 {
@@ -111,26 +111,26 @@ pub mod ext {
     pub fn HSD_ArchiveGetPublicAddress(a0: *mut HSD_Archive, a1: *const i8) -> *mut c_void {
         match unsafe { HSD_ARCHIVEGETPUBLICADDRESS } { Some(f) => f(a0, a1), None => { return unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(a0 as _, a1 as _) as _ }; } }
     }
-    hook!(HSD_GOBJ_SETUPPROC, HSD_GObj_SetupProc, (a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc);
-    hook!(HSD_JOBJCLEARFLAGS, HSD_JObjClearFlags, (a0: *mut HSD_JObj, flags: u32));
-    hook!(HSD_JOBJCLEARFLAGSALL, HSD_JObjClearFlagsAll, (a0: *mut HSD_JObj, flags: u32));
-    hook!(HSD_JOBJGETFLAGS, HSD_JObjGetFlags, (jobj: *mut HSD_JObj) -> u32);
-    hook!(HSD_JOBJSETFLAGS, HSD_JObjSetFlags, (a0: *mut HSD_JObj, flags: u32));
-    hook!(HSD_JOBJSETFLAGSALL, HSD_JObjSetFlagsAll, (a0: *mut HSD_JObj, flags: u32));
-    hook!(HSD_RANDF, HSD_Randf, () -> f32);
-    hook!(HSD_RANDI, HSD_Randi, (max_val: s32) -> s32);
-    hook!(OSREPORT, OSReport, (a0: *const i8, va: &[usize]));
-    hook!(PSVECCROSSPRODUCT, PSVECCrossProduct, (vec1: *mut Vec, vec2: *mut Vec, dst: *mut Vec));
+    hook_or!(HSD_GOBJ_SETUPPROC, HSD_GObj_SetupProc, (a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc, |a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8| unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(a0 as _, a1 as _, a2 as _) as _ });
+    hook_or!(HSD_JOBJCLEARFLAGS, HSD_JObjClearFlags, (a0: *mut HSD_JObj, flags: u32), |a0: *mut HSD_JObj, flags: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjClearFlags(a0 as _, flags as _); } });
+    hook_or!(HSD_JOBJCLEARFLAGSALL, HSD_JObjClearFlagsAll, (a0: *mut HSD_JObj, flags: u32), |a0: *mut HSD_JObj, flags: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjClearFlagsAll(a0 as _, flags as _); } });
+    hook_or!(HSD_JOBJGETFLAGS, HSD_JObjGetFlags, (jobj: *mut HSD_JObj) -> u32, |jobj: *mut HSD_JObj| unsafe { melee_runtime::tu::jobj_world::HSD_JObjGetFlags(jobj as _) as _ });
+    hook_or!(HSD_JOBJSETFLAGS, HSD_JObjSetFlags, (a0: *mut HSD_JObj, flags: u32), |a0: *mut HSD_JObj, flags: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetFlags(a0 as _, flags as _); } });
+    hook_or!(HSD_JOBJSETFLAGSALL, HSD_JObjSetFlagsAll, (a0: *mut HSD_JObj, flags: u32), |a0: *mut HSD_JObj, flags: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetFlagsAll(a0 as _, flags as _); } });
+    hook_or!(HSD_RANDF, HSD_Randf, () -> f32, || melee_runtime::tu::random::HSD_Randf(melee_runtime::tu::globals::rand()));
+    hook_or!(HSD_RANDI, HSD_Randi, (max_val: s32) -> s32, |max_val: s32| melee_runtime::tu::random::HSD_Randi(melee_runtime::tu::globals::rand(), max_val));
+    hook_or!(OSREPORT, OSReport, (a0: *const i8, va: &[usize]), |a0: *const i8, va: &[usize]| unsafe { melee_runtime::tu::os_error::OSReport(a0, va) });
+    hook_or!(PSVECCROSSPRODUCT, PSVECCrossProduct, (vec1: *mut Vec, vec2: *mut Vec, dst: *mut Vec), |vec1: *mut Vec, vec2: *mut Vec, dst: *mut Vec| { unsafe { let _ = melee_runtime::tu::mtx_pc::raw::PSVECCrossProduct(vec1 as _, vec2 as _, dst as _); } });
     hook_or!(ATAN2F, atan2f, (y: f32, x: f32) -> f32, melee_runtime::lbtrigf::atan2f);
-    hook!(FTCO_800C06E8, ftCo_800C06E8, (a0: *mut HSD_GObj, a1: i32, a2: *mut c_void));
-    hook!(FTLIB_80086644, ftLib_80086644, (a0: *mut HSD_GObj, a1: *mut Vec));
-    hook!(FTLIB_80086684, ftLib_80086684, (a0: *mut HSD_GObj, a1: *mut Vec));
-    hook!(FTLIB_80086960, ftLib_80086960, (gobj: *mut HSD_GObj) -> i32);
-    hook!(FTLIB_80086A4C, ftLib_80086A4C, (a0: *mut HSD_GObj, a1: f32));
-    hook!(FTLIB_80086B80, ftLib_80086B80, (a0: *mut HSD_GObj) -> f32);
-    hook!(FTLIB_80086BEC, ftLib_80086BEC, (a0: *mut HSD_GObj, a1: *mut Vec));
-    hook!(GM_8016AE80, gm_8016AE80, () -> i32);
-    hook!(GM_8016B238, gm_8016B238, () -> i32);
+    hook_or!(FTCO_800C06E8, ftCo_800C06E8, (a0: *mut HSD_GObj, a1: i32, a2: *mut c_void), |a0: *mut HSD_GObj, a1: i32, a2: *mut c_void| { unsafe { crate::ftdevice::ftCo_800C06E8(a0 as _, a1 as _, core::mem::transmute(a2)); } });
+    hook_or!(FTLIB_80086644, ftLib_80086644, (a0: *mut HSD_GObj, a1: *mut Vec), |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } });
+    hook_or!(FTLIB_80086684, ftLib_80086684, (a0: *mut HSD_GObj, a1: *mut Vec), |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086684(a0 as _, a1 as _); } });
+    hook_or!(FTLIB_80086960, ftLib_80086960, (gobj: *mut HSD_GObj) -> i32, |gobj: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086960(gobj as _) as _ });
+    hook_or!(FTLIB_80086A4C, ftLib_80086A4C, (a0: *mut HSD_GObj, a1: f32), |a0: *mut HSD_GObj, a1: f32| { unsafe { let _ = crate::ftlib::ftLib_80086A4C(a0 as _, a1 as _); } });
+    hook_or!(FTLIB_80086B80, ftLib_80086B80, (a0: *mut HSD_GObj) -> f32, |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086B80(a0 as _) as _ });
+    hook_or!(FTLIB_80086BEC, ftLib_80086BEC, (a0: *mut HSD_GObj, a1: *mut Vec), |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086BEC(a0 as _, a1 as _); } });
+    hook_or!(GM_8016AE80, gm_8016AE80, () -> i32, || unsafe { crate::gm::gm_8016AE80() as _ });
+    hook_or!(GM_8016B238, gm_8016B238, () -> i32, || unsafe { crate::gm::gm_8016B238() as _ });
     pub static mut GRANIME_801C8138: Option<fn(*mut HSD_GObj, enum_t, i32)> = None;
     #[allow(non_snake_case)]
     pub fn grAnime_801C8138(a0: *mut HSD_GObj, a1: enum_t, a2: i32) {
@@ -209,9 +209,9 @@ pub mod ext {
     pub fn grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj {
         match unsafe { GRZAKOGENERATOR_801CAE04 } { Some(f) => f(a0), None => { return unsafe { crate::tu::grzakogenerator::grZakoGenerator_801CAE04(a0 as _) as _ }; } }
     }
-    hook!(ITGETKIND, itGetKind, (gobj: *mut HSD_GObj) -> ItemKind);
+    hook_or!(ITGETKIND, itGetKind, (gobj: *mut HSD_GObj) -> ItemKind, |gobj: *mut HSD_GObj| unsafe { crate::itacc::itGetKind(gobj as _) as _ });
     hook!(IT_8026F7C8, it_8026F7C8, (a0: *mut Vec, a1: *mut Vec, a2: i32) -> *mut HSD_GObj);
-    hook!(IT_80275414, it_80275414, (a0: *mut HSD_GObj));
+    hook_or!(IT_80275414, it_80275414, (a0: *mut HSD_GObj), |a0: *mut HSD_GObj| { unsafe { let _ = crate::itacc::it_80275414(a0 as _); } });
     pub static mut LBVECTOR_ANGLE: Option<fn(*mut Vec, *mut Vec) -> f32> = None;
     #[allow(non_snake_case)]
     pub fn lbVector_Angle(a: *mut Vec, b: *mut Vec) -> f32 {
@@ -273,7 +273,7 @@ pub mod ext {
         match unsafe { MPLIB_80057BC0 } { Some(f) => f(joint_id), None => { unsafe { let _ = crate::tu::mplib::mpLib_80057BC0(joint_id as _); } return; } }
     }
     /// The head of the ground gobj link (`HSD_GObjPLinkHead[HSD_GOBJ_PLINK_GROUND]`, a global of gobj.c).
-    hook!(HSD_GOBJPLINKHEAD, HSD_GObjPLinkHead, (link: i32) -> *mut HSD_GObj);
+    hook_or!(HSD_GOBJPLINKHEAD, HSD_GObjPLinkHead, (link: i32) -> *mut HSD_GObj, |link: i32| unsafe { *melee_runtime::tu::gobj_native::HSD_GObjPLinkHead.add(link as usize) });
     /// `grDisplay_801C5DB0` is only ever passed as a render callback (its address is the argument).
     pub static mut GRDISPLAY_801C5DB0: Option<fn(*mut HSD_GObj, i32)> = None;
     /// Called by `grCastle_801D0520` and passed as a render callback (its address is the argument).

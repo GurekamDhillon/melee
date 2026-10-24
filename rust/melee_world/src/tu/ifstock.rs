@@ -14,10 +14,10 @@ pub mod ext {
     use core::ffi::c_void;
     macro_rules! ext_none {
         ($name:ident, ($($a:ident),*)) => { panic!(concat!("TODO: ", stringify!($name), " is not ported")) };
-        ($name:ident, ($($a:ident),*), $def:path) => { $def($($a),*) };
+        ($name:ident, ($($a:ident),*), $def:expr) => { ($def)($($a),*) };
     }
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:path)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -31,66 +31,66 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
+    fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj = |a0: u16, a1: u8, a2: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ };
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32| { unsafe { let _ = melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
     fn Geno_DefineArtBaseCK(a0: i32) -> i32;
     fn Geno_DefineArtOpen(a0: i32, a1: i32, a2: i32) -> i32;
     fn Geno_DefineBaseCK(a0: i32) -> i32;
     fn Geno_DefineName(a0: i32, a1: *mut i8, a2: i32) -> i32;
-    fn Ground_801C1DE4(a0: *mut i32, a1: *mut i32);
+    fn Ground_801C1DE4(a0: *mut i32, a1: *mut i32) = |a0: *mut i32, a1: *mut i32| { unsafe { let _ = crate::tu::ground::Ground_801C1DE4(a0 as _, a1 as _); } };
     fn GxTex_Close(a0: i32);
     fn GxTex_CopyImage(a0: i32, a1: *mut c_void);
     fn GxTex_Format(a0: i32) -> i32;
     fn GxTex_Height(a0: i32) -> i32;
     fn GxTex_ImageSize(a0: i32) -> i32;
     fn GxTex_Width(a0: i32) -> i32;
-    fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32);
-    fn HSD_Free(a0: *mut c_void);
-    fn HSD_GObjFree(a0: *mut HSD_GObj);
-    fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
-    fn HSD_GObj_80390CAC(a0: *mut HSD_GObj);
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32);
-    fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
+    fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32) = |a0: *mut HSD_AObj, a1: f32| { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetRate(a0 as _, a1 as _); } };
+    fn HSD_Free(a0: *mut c_void) = |a0: *mut c_void| { unsafe { let _ = melee_runtime::tu::memory::HSD_Free(a0 as _); } };
+    fn HSD_GObjFree(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObjFree(a0 as _); } };
+    fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void) = |a0: *mut HSD_GObj, a1: u8, a2: *mut c_void| { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(a0 as _, a1 as _, a2 as _); } };
+    fn HSD_GObj_80390CAC(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObj_80390CAC(a0 as _); } };
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
+    fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8| unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(a0 as _, a1 as _, a2 as _) as _ };
     fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint);
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
-    fn HSD_JObjClearFlags(a0: *mut HSD_JObj, a1: u32);
-    fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32);
-    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj;
+    fn HSD_JObjClearFlags(a0: *mut HSD_JObj, a1: u32) = |a0: *mut HSD_JObj, a1: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjClearFlags(a0 as _, a1 as _); } };
+    fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32) = |a0: *mut HSD_JObj, a1: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjClearFlagsAll(a0 as _, a1 as _); } };
+    fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj = |a0: *mut HSD_Joint| unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0 as _) as _ };
     fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
-    fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32);
-    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
-    fn HSD_MemAlloc(a0: i32) -> *mut c_void;
-    fn HSD_TObjReqAnimAll(a0: *mut HSD_TObj, a1: f32);
-    fn Player_800325C8(a0: u32, a1: i32) -> i8;
-    fn Player_GetCoins(a0: i32) -> i32;
-    fn Player_GetStocks(a0: i32) -> i32;
+    fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32) = |a0: *mut HSD_JObj, a1: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetFlagsAll(a0 as _, a1 as _); } };
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) = |a0: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(a0 as _); } };
+    fn HSD_MemAlloc(a0: i32) -> *mut c_void = |a0: i32| unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ };
+    fn HSD_TObjReqAnimAll(a0: *mut HSD_TObj, a1: f32) = |a0: *mut HSD_TObj, a1: f32| { unsafe { let _ = melee_runtime::tu::tobj::HSD_TObjReqAnimAll(a0 as _, a1 as _); } };
+    fn Player_800325C8(a0: u32, a1: i32) -> i8 = |a0: u32, a1: i32| unsafe { crate::pl::Player_800325C8(a0 as _, a1 as _) as _ };
+    fn Player_GetCoins(a0: i32) -> i32 = |a0: i32| unsafe { crate::pl::Player_GetCoins(a0 as _) as _ };
+    fn Player_GetStocks(a0: i32) -> i32 = |a0: i32| unsafe { crate::pl::Player_GetStocks(a0 as _) as _ };
     fn Script_StatusHUDVisible() -> i32;
     fn UI_TextI4(a0: *const i8, a1: i32, a2: i32, a3: i32, a4: *mut c_void) -> i32;
     fn Ui_RetailHidden(a0: i32) -> i32;
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut Vec3) -> *mut c_void;
-    fn gmVs_GetSceneState() -> *mut VsSceneState;
+    fn gmVs_GetSceneState() -> *mut VsSceneState = || unsafe { crate::gm::gmVs_GetSceneState() as _ };
     fn gm_8016895C(a0: *mut HSD_JObj, a1: *mut DynamicModelDesc, a2: i32);
     fn gm_80168B34(a0: u32, a1: i32, a2: i32) -> f32;
     fn gm_80168BF8(a0: i32) -> f32;
-    fn gm_80169394() -> i32;
+    fn gm_80169394() -> i32 = || unsafe { crate::gm::gm_80169394() as _ };
     fn gm_801694A0(a0: *mut HSD_GObj) -> i32;
-    fn gm_80169520() -> *mut c_void;
-    fn gm_80169530() -> *mut c_void;
-    fn gm_8016A1F8() -> i32;
+    fn gm_80169520() -> *mut c_void = || unsafe { crate::gm::gm_80169520() as _ };
+    fn gm_80169530() -> *mut c_void = || unsafe { crate::gm::gm_80169530() as _ };
+    fn gm_8016A1F8() -> i32 = || unsafe { crate::gm::gm_8016A1F8() as _ };
     fn gm_8016A944() -> i32;
-    fn gm_8016A97C() -> *mut c_void;
-    fn gm_8016A98C() -> *mut lbl_8046B668_t;
-    fn gm_8016B184() -> i32;
-    fn gm_8016B1A8() -> i32;
+    fn gm_8016A97C() -> *mut c_void = || unsafe { crate::gm::gm_8016A97C() as _ };
+    fn gm_8016A98C() -> *mut lbl_8046B668_t = || unsafe { crate::gm::gm_8016A98C() as _ };
+    fn gm_8016B184() -> i32 = || unsafe { crate::gm::gm_8016B184() as _ };
+    fn gm_8016B1A8() -> i32 = || unsafe { crate::gm::gm_8016B1A8() as _ };
     fn gm_GenoStockFrame(a0: i32, a1: i32) -> f32;
     fn gm_IsMultimanSmashMode() -> i32;
     fn gm_MexStockFrame(a0: i32, a1: i32) -> f32;
     fn gm_MexStockMatAnim() -> *mut HSD_MatAnimJoint;
-    fn ifAll_GetArchive() -> *mut *mut HSD_Archive;
-    fn ifAll_GetPlayerHUDPosition(a0: i32) -> *mut Vec;
+    fn ifAll_GetArchive() -> *mut *mut HSD_Archive = || unsafe { crate::tu::ifall::ifAll_GetArchive() as _ };
+    fn ifAll_GetPlayerHUDPosition(a0: i32) -> *mut Vec = |a0: i32| unsafe { crate::tu::ifall::ifAll_GetPlayerHUDPosition(a0 as _) as _ };
     fn ifStatus_GetHUDInfo() -> *mut HudIndex = super::hud_info_default;
-    fn lbArchive_LoadSections(a0: *mut HSD_Archive, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]);
-    fn lbVector_8000DE38(a0: *mut c_void, a1: *mut Vec, a2: f32) -> *mut Vec;
+    fn lbArchive_LoadSections(a0: *mut HSD_Archive, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]) = |a0: *mut HSD_Archive, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]| { unsafe { let mut v: std::vec::Vec<*mut core::ffi::c_void> = std::vec![a1 as *mut core::ffi::c_void, a2 as *mut core::ffi::c_void]; for (s, n) in rest.iter() { v.push(*s as *mut core::ffi::c_void); v.push(*n as *mut core::ffi::c_void); } v.push(core::ptr::null_mut()); melee_runtime::tu::lbarchive::lbArchive_LoadSections(a0 as _, &v); } };
+    fn lbVector_8000DE38(a0: *mut c_void, a1: *mut Vec, a2: f32) -> *mut Vec = |a0: *mut c_void, a1: *mut Vec, a2: f32| unsafe { melee_runtime::tu::lbvector::lbVector_8000DE38(a0 as _, a1 as _, a2 as _) as _ };
     fn lb_80011E24(a0: *mut HSD_JObj, a1: *mut *mut HSD_JObj, ids: &[i32]) -> i32;
     fn memzero(a0: *mut c_void, a1: i32) = super::memzero_default;
     }

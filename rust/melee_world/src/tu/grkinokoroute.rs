@@ -37,8 +37,8 @@ pub mod ext {
     };
     pub use crate::tu::grinl2::ext::Ground_InitMapColl;
     hook!(CAMERA_8002F3AC, Camera_8002F3AC, ());
-    hook!(CAMERA_80030AE0, Camera_80030AE0, (a0: i32));
-    hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (a0: CmQuakeKind, a1: *mut Vec3));
+    hook_or!(CAMERA_80030AE0, Camera_80030AE0, (a0: i32), |a0: i32| crate::cm::camera::world().camera_80030ae0(a0));
+    hook_or!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (a0: CmQuakeKind, a1: *mut Vec3), |a0: CmQuakeKind, a1: *mut Vec3| unsafe { crate::cm::camera::Camera_RequestQuake(a0 as _, a1 as _) });
     pub static mut GROUND_801C0498: Option<fn() -> f32> = None;
     #[allow(non_snake_case)]
     pub fn Ground_801C0498() -> f32 {
@@ -169,9 +169,9 @@ pub mod ext {
     pub fn Ground_GetYakumonoParam() -> *mut c_void {
         match unsafe { GROUND_GETYAKUMONOPARAM } { Some(f) => f(), None => { return unsafe { crate::tu::ground::Ground_GetYakumonoParam() as _ }; } }
     }
-    hook!(HSD_JOBJCLEARFLAGSALL, HSD_JObjClearFlagsAll, (a0: *mut HSD_JObj, flags: u32));
-    hook!(HSD_JOBJSETFLAGSALL, HSD_JObjSetFlagsAll, (a0: *mut HSD_JObj, flags: u32));
-    hook!(OSREPORT, OSReport, (a0: *mut i8));
+    hook_or!(HSD_JOBJCLEARFLAGSALL, HSD_JObjClearFlagsAll, (a0: *mut HSD_JObj, flags: u32), |a0: *mut HSD_JObj, flags: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjClearFlagsAll(a0 as _, flags as _); } });
+    hook_or!(HSD_JOBJSETFLAGSALL, HSD_JObjSetFlagsAll, (a0: *mut HSD_JObj, flags: u32), |a0: *mut HSD_JObj, flags: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetFlagsAll(a0 as _, flags as _); } });
+    hook_or!(OSREPORT, OSReport, (a0: *mut i8), |a0: *mut i8| unsafe { melee_runtime::tu::os_error::OSReport(a0 as _, &[]) });
     pub static mut STAGE_GETCAMBOUNDSBOTTOMOFFSET: Option<fn() -> f32> = None;
     #[allow(non_snake_case)]
     pub fn Stage_GetCamBoundsBottomOffset() -> f32 {
@@ -206,12 +206,12 @@ pub mod ext {
             None => { unsafe { crate::tu::efsync::efSync_Spawn(gfx_id as _, arg_gobj as _, &mut *(pos as *mut _)) as _ } },
         }
     }
-    hook!(FTCO_800C07F8, ftCo_800C07F8, (a0: *mut HSD_GObj, a1: u32, a2: *mut c_void));
-    hook!(FTLIB_80086644, ftLib_80086644, (a0: *mut HSD_GObj, a1: *mut Vec3));
-    hook!(FTLIB_80086684, ftLib_80086684, (a0: *mut HSD_GObj, a1: *mut Vec3));
-    hook!(FTLIB_80086B80, ftLib_80086B80, (a0: *mut HSD_GObj) -> f32);
-    hook!(FTLIB_80086EC0, ftLib_80086EC0, (a0: *mut HSD_GObj) -> i32);
-    hook!(FTLIB_8008732C, ftLib_8008732C, (a0: *mut HSD_GObj) -> i32);
+    hook_or!(FTCO_800C07F8, ftCo_800C07F8, (a0: *mut HSD_GObj, a1: u32, a2: *mut c_void), |a0: *mut HSD_GObj, a1: u32, a2: *mut c_void| { unsafe { crate::ftdevice::ftCo_800C07F8(a0 as _, a1 as _, core::mem::transmute(a2)); } });
+    hook_or!(FTLIB_80086644, ftLib_80086644, (a0: *mut HSD_GObj, a1: *mut Vec3), |a0: *mut HSD_GObj, a1: *mut Vec3| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } });
+    hook_or!(FTLIB_80086684, ftLib_80086684, (a0: *mut HSD_GObj, a1: *mut Vec3), |a0: *mut HSD_GObj, a1: *mut Vec3| { unsafe { let _ = crate::ftlib::ftLib_80086684(a0 as _, a1 as _); } });
+    hook_or!(FTLIB_80086B80, ftLib_80086B80, (a0: *mut HSD_GObj) -> f32, |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086B80(a0 as _) as _ });
+    hook_or!(FTLIB_80086EC0, ftLib_80086EC0, (a0: *mut HSD_GObj) -> i32, |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086EC0(a0 as _) as _ });
+    hook_or!(FTLIB_8008732C, ftLib_8008732C, (a0: *mut HSD_GObj) -> i32, |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_8008732C(a0 as _) as _ });
     hook!(GM_801674C4, gm_801674C4, (a0: s8, a1: u8, a2: s8, a3: s8, a4: GmRouteCallback));
     hook_or!(GRLIB_801C96F8, grLib_801C96F8, (a0: s32, a1: s32, a2: *mut Vec3) -> *mut HSD_Generator, |a0: s32, a1: s32, a2: *mut Vec3| unsafe { crate::tu::grlib::grLib_801C96F8(a0, a1, a2) });
     hook_or!(GRMATERIAL_801C8CDC, grMaterial_801C8CDC, (a0: *mut HSD_GObj), |a0: *mut HSD_GObj| unsafe { crate::tu::grmaterial::grMaterial_801C8CDC(a0) });
@@ -245,7 +245,7 @@ pub mod ext {
     pub fn grZakoGenerator_801CAF08() {
         match unsafe { GRZAKOGENERATOR_801CAF08 } { Some(f) => f(), None => { unsafe { let _ = crate::tu::grzakogenerator::grZakoGenerator_801CAF08(); } return; } }
     }
-    hook!(ITGETKIND, itGetKind, (gobj: *mut HSD_GObj) -> ItemKind);
+    hook_or!(ITGETKIND, itGetKind, (gobj: *mut HSD_GObj) -> ItemKind, |gobj: *mut HSD_GObj| unsafe { crate::itacc::itGetKind(gobj as _) as _ });
     pub static mut LBVECTOR_ADD: Option<fn(*mut Vec3, *mut Vec3) -> *mut Vec3> = None;
     #[allow(non_snake_case)]
     pub fn lbVector_Add(a: *mut Vec3, b: *mut Vec3) -> *mut Vec3 {

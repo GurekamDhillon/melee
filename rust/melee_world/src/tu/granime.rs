@@ -24,7 +24,7 @@ pub type AnimCallback = unsafe extern "C" fn(*mut HSD_AObj, *mut c_void, u32, u3
 
 /// Callees in TUs that are not ported yet. An unset hook panics.
 pub mod ext {
-    use crate::tu::hookmac::hook;
+    use crate::tu::hookmac::{hook, hook_or};
     use core::ffi::c_void;
     use melee_types::*;
     pub use crate::tu::grinl::ext::HSD_JObjSetMtxDirtySub;
@@ -87,7 +87,7 @@ pub mod ext {
     hook!(HSD_JOBJREQANIMALLBYFLAGS, HSD_JObjReqAnimAllByFlags, (jobj: *mut HSD_JObj, flags: u32, frame: f32));
     hook!(HSD_JOBJREQANIMBYFLAGS, HSD_JObjReqAnimByFlags, (jobj: *mut HSD_JObj, flags: u32, frame: f32));
     hook!(HSD_JOBJRESETRST, HSD_JObjResetRST, (jobj: *mut HSD_JObj, joint: *mut HSD_Joint));
-    hook!(OSREPORT, OSReport, (a0: *const i8, va: &[usize]));
+    hook_or!(OSREPORT, OSReport, (a0: *const i8, va: &[usize]), |a0: *const i8, va: &[usize]| unsafe { melee_runtime::tu::os_error::OSReport(a0, va) });
     pub static mut GRDATFILES_801C6330: Option<fn(s32) -> *mut UnkArchiveStruct> = None;
     #[allow(non_snake_case)]
     pub fn grDatFiles_801C6330(a0: s32) -> *mut UnkArchiveStruct {

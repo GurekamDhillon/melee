@@ -22,16 +22,16 @@ pub use crate::gr::trivial::grinishie2::{
 
 /// Callees in TUs that are not ported yet. An unset hook panics.
 pub mod ext {
-    use crate::tu::hookmac::hook;
+    use crate::tu::hookmac::{hook, hook_or};
     use melee_types::*;
     pub use crate::tu::grinl::ext::{stage_info, HSD_JObjSetMtxDirtySub};
     pub use crate::tu::grinl2::ext::{
         grAnime_801C8138, grDisplay_801C5DB0, GObj_SetupGXLink, Ground_InitMapColl, Ground_UpdateMapColl,
         HSD_GObj_SetupProc, HSD_Randi, lb_800115F4,
     };
-    hook!(CAMERA_800311CC, Camera_800311CC, (a0: f32));
-    hook!(CAMERA_800311DC, Camera_800311DC, (a0: f32));
-    hook!(GETMATCHTIMER, GetMatchTimer, (a0: *mut i32) -> i32);
+    hook_or!(CAMERA_800311CC, Camera_800311CC, (a0: f32), |a0: f32| crate::cm::camera::world().camera_800311cc(a0));
+    hook_or!(CAMERA_800311DC, Camera_800311DC, (a0: f32), |a0: f32| crate::cm::camera::world().camera_800311dc(a0));
+    hook_or!(GETMATCHTIMER, GetMatchTimer, (a0: *mut i32) -> i32, |a0: *mut i32| unsafe { crate::gm::GetMatchTimer(a0 as _) as _ });
     pub static mut GROUND_801C39C0: Option<fn()> = None;
     #[allow(non_snake_case)]
     pub fn Ground_801C39C0() {
@@ -72,7 +72,7 @@ pub mod ext {
     pub fn Ground_GetYakumonoParam() -> *mut core::ffi::c_void {
         match unsafe { GROUND_GETYAKUMONOPARAM } { Some(f) => f(), None => { return unsafe { crate::tu::ground::Ground_GetYakumonoParam() as _ }; } }
     }
-    hook!(OSREPORT, OSReport, (a0: *mut i8));
+    hook_or!(OSREPORT, OSReport, (a0: *mut i8), |a0: *mut i8| unsafe { melee_runtime::tu::os_error::OSReport(a0 as _, &[]) });
     pub static mut STAGE_GETBLASTZONELEFTOFFSET: Option<fn() -> f32> = None;
     #[allow(non_snake_case)]
     pub fn Stage_GetBlastZoneLeftOffset() -> f32 {
@@ -108,7 +108,7 @@ pub mod ext {
     pub fn grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj {
         match unsafe { GRZAKOGENERATOR_801CAE04 } { Some(f) => f(a0), None => { return unsafe { crate::tu::grzakogenerator::grZakoGenerator_801CAE04(a0 as _) as _ }; } }
     }
-    hook!(IT_802ECD1C, it_802ECD1C, (a0: *mut HSD_GObj, a1: *mut Vec3));
+    hook_or!(IT_802ECD1C, it_802ECD1C, (a0: *mut HSD_GObj, a1: *mut Vec3), |a0: *mut HSD_GObj, a1: *mut Vec3| { unsafe { let _ = crate::itacc::it_802ECD1C(a0 as _, a1 as _); } });
     hook!(IT_802ECD3C, it_802ECD3C, (a0: *mut HSD_GObj, a1: *mut Vec3, a2: f32) -> *mut HSD_GObj);
     pub static mut LBAUDIOAX_80023F28: Option<fn(i32) -> i32> = None;
     #[allow(non_snake_case)]

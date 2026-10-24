@@ -26,9 +26,9 @@ pub mod ext {
     use melee_types::*;
     pub use crate::tu::grinl::ext::stage_info;
     hook!(CAMERA_8002F3AC, Camera_8002F3AC, ());
-    hook!(CAMERA_80030AE0, Camera_80030AE0, (a0: i32));
-    hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (a0: CmQuakeKind, a1: *mut Vec));
-    hook!(GOBJ_SETUPGXLINK, GObj_SetupGXLink, (gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, gx_link: u8, priority: u32));
+    hook_or!(CAMERA_80030AE0, Camera_80030AE0, (a0: i32), |a0: i32| crate::cm::camera::world().camera_80030ae0(a0));
+    hook_or!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (a0: CmQuakeKind, a1: *mut Vec), |a0: CmQuakeKind, a1: *mut Vec| unsafe { crate::cm::camera::Camera_RequestQuake(a0 as _, a1 as _) });
+    hook_or!(GOBJ_SETUPGXLINK, GObj_SetupGXLink, (gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, gx_link: u8, priority: u32), |gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, gx_link: u8, priority: u32| { unsafe { let _ = melee_runtime::tu::gobj_native::GObj_SetupGXLink(gobj as _, render_cb as _, gx_link as _, priority as _); } });
     pub static mut GROUND_801C0498: Option<fn() -> f32> = None;
     #[allow(non_snake_case)]
     pub fn Ground_801C0498() -> f32 {
@@ -134,22 +134,22 @@ pub mod ext {
     pub fn HSD_Free(ptr: *mut c_void) {
         match unsafe { HSD_FREE } { Some(f) => f(ptr), None => { unsafe { let _ = melee_runtime::tu::memory::HSD_Free(ptr as _); } return; } }
     }
-    hook!(HSD_GOBJ_SETUPPROC, HSD_GObj_SetupProc, (a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc);
-    hook!(HSD_JOBJCLEARFLAGSALL, HSD_JObjClearFlagsAll, (a0: *mut HSD_JObj, flags: u32));
-    hook!(HSD_JOBJREPARENT, HSD_JObjReparent, (jobj: *mut HSD_JObj, parent: *mut HSD_JObj) -> *mut HSD_JObj);
-    hook!(HSD_JOBJSETFLAGSALL, HSD_JObjSetFlagsAll, (a0: *mut HSD_JObj, flags: u32));
+    hook_or!(HSD_GOBJ_SETUPPROC, HSD_GObj_SetupProc, (a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc, |a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8| unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(a0 as _, a1 as _, a2 as _) as _ });
+    hook_or!(HSD_JOBJCLEARFLAGSALL, HSD_JObjClearFlagsAll, (a0: *mut HSD_JObj, flags: u32), |a0: *mut HSD_JObj, flags: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjClearFlagsAll(a0 as _, flags as _); } });
+    hook_or!(HSD_JOBJREPARENT, HSD_JObjReparent, (jobj: *mut HSD_JObj, parent: *mut HSD_JObj) -> *mut HSD_JObj, |jobj: *mut HSD_JObj, parent: *mut HSD_JObj| unsafe { melee_runtime::tu::jobj_world::HSD_JObjReparent(jobj as _, parent as _) as _ });
+    hook_or!(HSD_JOBJSETFLAGSALL, HSD_JObjSetFlagsAll, (a0: *mut HSD_JObj, flags: u32), |a0: *mut HSD_JObj, flags: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetFlagsAll(a0 as _, flags as _); } });
     pub static mut HSD_MEMALLOC: Option<fn(ssize_t) -> *mut c_void> = None;
     #[allow(non_snake_case)]
     pub fn HSD_MemAlloc(size: ssize_t) -> *mut c_void {
         match unsafe { HSD_MEMALLOC } { Some(f) => f(size), None => { return unsafe { melee_runtime::tu::memory::HSD_MemAlloc(size as _) as _ }; } }
     }
-    hook!(HSD_RANDF, HSD_Randf, () -> f32);
-    hook!(HSD_RANDI, HSD_Randi, (max_val: s32) -> s32);
-    hook!(OSREPORT, OSReport, (a0: *const i8, va: &[usize]));
-    hook!(PSVECCROSSPRODUCT, PSVECCrossProduct, (vec1: *mut Vec, vec2: *mut Vec, dst: *mut Vec));
+    hook_or!(HSD_RANDF, HSD_Randf, () -> f32, || melee_runtime::tu::random::HSD_Randf(melee_runtime::tu::globals::rand()));
+    hook_or!(HSD_RANDI, HSD_Randi, (max_val: s32) -> s32, |max_val: s32| melee_runtime::tu::random::HSD_Randi(melee_runtime::tu::globals::rand(), max_val));
+    hook_or!(OSREPORT, OSReport, (a0: *const i8, va: &[usize]), |a0: *const i8, va: &[usize]| unsafe { melee_runtime::tu::os_error::OSReport(a0, va) });
+    hook_or!(PSVECCROSSPRODUCT, PSVECCrossProduct, (vec1: *mut Vec, vec2: *mut Vec, dst: *mut Vec), |vec1: *mut Vec, vec2: *mut Vec, dst: *mut Vec| { unsafe { let _ = melee_runtime::tu::mtx_pc::raw::PSVECCrossProduct(vec1 as _, vec2 as _, dst as _); } });
     hook_or!(ATAN2F, atan2f, (y: f32, x: f32) -> f32, melee_runtime::lbtrigf::atan2f);
-    hook!(FTLIB_80086644, ftLib_80086644, (a0: *mut HSD_GObj, a1: *mut Vec));
-    hook!(FTLIB_80086EC0, ftLib_80086EC0, (a0: *mut HSD_GObj) -> i32);
+    hook_or!(FTLIB_80086644, ftLib_80086644, (a0: *mut HSD_GObj, a1: *mut Vec), |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } });
+    hook_or!(FTLIB_80086EC0, ftLib_80086EC0, (a0: *mut HSD_GObj) -> i32, |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086EC0(a0 as _) as _ });
     hook!(GM_8016B3D8, gm_8016B3D8, () -> i32);
     pub static mut GRANIME_801C77FC: Option<fn(*mut HSD_GObj, i32, u32)> = None;
     #[allow(non_snake_case)]
@@ -239,7 +239,7 @@ pub mod ext {
     pub fn memzero(mem: *mut c_void, size: ssize_t) {
         match unsafe { MEMZERO } { Some(f) => f(mem, size), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::memzero(mem as _, size as _); } return; } }
     }
-    hook!(SPLGETSPLINEPOINT, splGetSplinePoint, (a0: *mut Vec, a1: *mut HSD_Spline, a2: f32));
+    hook_or!(SPLGETSPLINEPOINT, splGetSplinePoint, (a0: *mut Vec, a1: *mut HSD_Spline, a2: f32), |a0: *mut Vec, a1: *mut HSD_Spline, a2: f32| { unsafe { let _ = melee_runtime::tu::spline_world::splGetSplinePoint(a0 as _, a1 as _, a2 as _); } });
     pub static mut UN_802FD604: Option<fn(i32)> = None;
     #[allow(non_snake_case)]
     pub fn un_802FD604(a0: i32) {

@@ -20,40 +20,11 @@ use crate::hooks as h;
 use crate::stale::{player, FtMapping, PLAYER_NUM_MAX};
 use crate::types::*;
 
-const NONE: i8 = -1;
-const fn m(a: FighterKind, b: i8, t: i8) -> FtMapping {
-    FtMapping { internal_id: a as i8, extra_internal_id: b, has_transformation: t }
-}
-const fn one(a: FighterKind) -> FtMapping {
-    m(a, NONE, 0)
-}
-
-const fn mapping_init() -> [FtMapping; ChKind_Cap as usize] {
-    let mut t = [FtMapping { internal_id: 0, extra_internal_id: 0, has_transformation: 0 }; ChKind_Cap as usize];
-    let rows = [
-        one(Ft_Kind_Captain), one(Ft_Kind_Donkey), one(Ft_Kind_Fox), one(Ft_Kind_GameWatch),
-        one(Ft_Kind_Kirby), one(Ft_Kind_Koopa), one(Ft_Kind_Link), one(Ft_Kind_Luigi),
-        one(Ft_Kind_Mario), one(Ft_Kind_Mars), one(Ft_Kind_Mewtwo), one(Ft_Kind_Ness),
-        one(Ft_Kind_Peach), one(Ft_Kind_Pikachu), m(Ft_Kind_Popo, Ft_Kind_Nana as i8, 0),
-        one(Ft_Kind_Purin), one(Ft_Kind_Samus), one(Ft_Kind_Yoshi),
-        m(Ft_Kind_Zelda, Ft_Kind_Seak as i8, 1), m(Ft_Kind_Seak, Ft_Kind_Zelda as i8, 1),
-        one(Ft_Kind_Falco), one(Ft_Kind_CLink), one(Ft_Kind_DrMario), one(Ft_Kind_Emblem),
-        one(Ft_Kind_Pichu), one(Ft_Kind_Ganon), one(Ft_Kind_MasterH), one(Ft_Kind_Boy),
-        one(Ft_Kind_Girl), one(Ft_Kind_GKoops), one(Ft_Kind_CrezyH), one(Ft_Kind_Sandbag),
-        one(Ft_Kind_Popo),
-    ];
-    let mut i = 0;
-    while i < rows.len() {
-        t[i] = rows[i];
-        i += 1;
-    }
-    t
-}
-
-/// `ftMapping_list[ChKind_Cap]` (TARGET_PC size; m-ex rows are written by `mex_set_mapping`).
-pub static mut FT_MAPPING_LIST: [FtMapping; ChKind_Cap as usize] = mapping_init();
+/// `ftMapping_list[ChKind_Cap]` (TARGET_PC size; m-ex rows are written by `mex_set_mapping`):
+/// owned by `melee_world::pl`, which the world TUs read too.
+pub use melee_world::pl::ftMapping_list as FT_MAPPING_LIST;
 /// The retail initial value of `FT_MAPPING_LIST`.
-pub const FT_MAPPING_INIT: [FtMapping; ChKind_Cap as usize] = mapping_init();
+pub use melee_world::pl::FT_MAPPING_INIT;
 
 #[inline]
 fn mapping(ckind: CharacterKind) -> &'static mut FtMapping {

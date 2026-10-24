@@ -5619,3 +5619,46 @@ NO_PORT: 1 sites / 1 names, SIGNATURE: 3 sites / 3 names, CYCLE: 0 sites / 0 nam
 - `resolve_ik_joint1` [fn-body] x1: skeleton.rs:142 -> port `melee_runtime::jobj_rt.rs:680`
 - `resolve_ik_joint2` [fn-body] x1: skeleton.rs:145 -> port `melee_runtime::jobj_rt.rs:797`
 
+## melee_world fill status
+
+Counts against the original melee_world section (813 names / 1842 sites): NO_PORT fixed 84, remaining 87; SIGNATURE fixed 391, remaining 69; CYCLE fixed 65, remaining 117. Total fixed 540, remaining 273 (plus 41 names the original list missed, 314 names / 470 sites in all).
+
+Tools: `rust/melee_world/gen/rewire/rewire.py` (+ports.txt) rewires stubs; `rust/melee_runtime/gen/pure/run_pure.py <stem>` builds shipping-contraction C oracles (EXTRACT headers supported).
+Verified natively against C: mtx_pc, cobj_world, jobj_world, gobj_native (state oracle), os_error, spline_world, mtx_world, itacc, gmmain (about 115 functions). Adapters over earlier verified ports are covered by the crate suites only.
+Merge notes: tu/globals.rs is byte-identical to the runtime sibling's; the runtime sibling may also port GObj/JObj/CObj raw.
+
+Remaining by reason:
+
+### pc platform / mod / script layer (guest memory, Lua host, m-ex importer; no Rust model yet) (77)
+`Geno_DefineArtBaseCK`, `Geno_DefineArtOpen`, `Geno_DefineBaseCK`, `Geno_DefineName`, `GetNameText`, `GxTex_Close`, `GxTex_CopyImage`, `GxTex_Format`, `GxTex_Height`, `GxTex_ImageSize`, `GxTex_Width`, `Mex_EffectCount`, `Mex_EffectString`, `Mex_Enabled` x2, `Mex_GrBgmChance`, `Mex_GrBgmCount`, `Mex_GrBgmId`, `Mex_GrBind` x11, `Mex_GrCallback4`, `Mex_GrCallbacks`, `Mex_GrExternalCount`, `Mex_GrFile`, `Mex_GrFlags2`, `Mex_GrFunctionInit`, `Mex_GrInternalCount`, `Mex_GrIsMex`, `Mex_GrKindForExt`, `Mex_GrLineTypeRow`, `Mex_GrOnCheckShadowRender`, `Mex_GrOnDemoInit`, `Mex_GrOnInit`, `Mex_GrOnLoad`, `Mex_GrOnStart`, `Mex_GrOnTouchLine`, `Mex_GrRowCallbacks`, `Mex_GrSelect`, `Mex_GrTrace`, `Mex_GuestLr`, `Mex_InsigniaForExt`, `Mex_PortCKindToExt`, `ScriptGame_ArenaBound`, `ScriptGame_RefsGroundBorn`, `ScriptGame_StageJoint`, `ScriptGame_StageJointActive`, `ScriptGame_StageJointCapacity`, `ScriptGame_StageLineActive`, `ScriptGame_StageOriginalVisible`, `ScriptGame_StagePrepare`, `ScriptGame_StageReady`, `ScriptGame_StageSlotArchive`, `ScriptGame_StageSlotCollision`, `ScriptGame_StageSlotGround`, `ScriptGame_StageSlotJointUpdate`, `ScriptGame_StageSlotOwned`, `ScriptGame_StageSlotRetailCaptureBegin`, `ScriptGame_StageSlotRetailCaptureEnd`, `ScriptGame_StageSlotRetailCaptureResume`, `ScriptGame_StageSlotRetailCollision`, `ScriptGame_StageSlotRetailLoading`, `ScriptGame_StageSlotSameJoint`, `Script_StatusHUDVisible` x2, `Slippi_FrozenStadium`, `StageSkin_ApplyForLoad`, `TTMod_ForCharacter`, `TTMod_Platform`, `TTMod_PlatformCount`, `TTMod_Target`, `TTMod_TargetCount`, `UI_TextI4`, `Ui_RetailHidden` x8, `View_AspectBits`, `Wb_RenderActive` x3, `Wb_RenderOption` x2, `todo_Mex_GrBind`, `todo_Mex_GrCallbacks`, `todo_Mex_GrTrace`, `todo_OSReport_grtrace`
+
+### melee_modes state or callees (gm/mn): CYCLE, deeper state than the accessors moved down (50)
+`gmMainLib_8015FA34`, `gmMainLib_8015FB68`, `gm_80160854` x3, `gm_80160968` x3, `gm_80160A60`, `gm_80164600`, `gm_8016468C`, `gm_80164ABC`, `gm_80164F18`, `gm_801674C4` x3, `gm_8016895C` x6, `gm_80168B34` x2, `gm_80168BF8`, `gm_801692E8`, `gm_801694A0` x2, `gm_8016A944`, `gm_8016B3A0`, `gm_8016B3D8` x2, `gm_8016B8D4`, `gm_8016C6C0` x2, `gm_8016ECE8`, `gm_8017E280`, `gm_8017E7E0`, `gm_80180AF4`, `gm_801883C0`, `gm_8018841C`, `gm_801A4B60` x2, `gm_801B6320`, `gm_801BEB74`, `gm_801BEFA4`, `gm_801BEFC0`, `gm_801BF040`, `gm_801BF708`, `gm_ChangeGameModeAfterCurrentScene`, `gm_GenoStockFrame`, `gm_GetAllStarData`, `gm_GetButtonsTriggered`, `gm_GetDbPauseFlag` x3, `gm_GetMatchEndPlayerScore`, `gm_IsCKindUnlocked`, `gm_IsCurrently1PMode`, `gm_IsMultimanSmashMode`, `gm_MexStockFrame`, `gm_MexStockMatAnim`, `gm_MexVanillaKind`, `gm_SetNextGameModeStateId`, `gm_SetupAllPlayerDefaults`, `gm_SetupRulesDefaults`, `mn_8022EB04`, `mn_8022F3D8`
+
+### melee_items state or callees (it/ty): CYCLE (47)
+`Item_80268B18`, `Item_80268E5C` x4, `Item_8026A8EC` x2, `Toy_803048C0`, `Toy_80304A58` x2, `Toy_80305058`, `Toy_80305918`, `Toy_803063D4`, `Toy_80311680`, `Toy_8031234C`, `Toy_803124BC` x3, `Toy_SetUnlockState`, `it_8026BE84` x4, `it_8026D324` x4, `it_8026F7C8` x2, `it_802725D4`, `it_8027B5B0` x2, `it_8027CE18`, `it_80286088`, `it_802D8618`, `it_802DC4BC`, `it_802DD7F0`, `it_802E16F8`, `it_802E18B4`, `it_802E20D8`, `it_802E2330`, `it_802E6AEC`, `it_802E72E0`, `it_802E7654` x2, `it_802EA9FC`, `it_802EAF34`, `it_802EBD14`, `it_802EBFAC`, `it_802EC830`, `it_802ECA70`, `it_802ECD3C`, `it_802EE200`, `it_802EEFA8`, `it_802F202C`, `it_802F2094` x3, `toy_80305918`, `toy_8031234c`, `toy_803124bc`, `tyDisplay_8031C2CC` x2, `tyDisplay_8031C2EC`, `tyDisplay_8031C354`, `tyDisplay_8031C454` x2
+
+### GX / video backend or the CObj view-matrix family (needs a global GX backend) (42)
+`Camera_80030BBC`, `DrawASCII`, `DrawRectangle`, `GXBegin`, `GXClearVtxDesc`, `GXGetTexBufferSize` x3, `GXLoadPosMtxImm`, `GXPosition3f32`, `GXSetCullMode`, `GXSetCurrentMtx`, `GXSetLineWidth`, `GXSetVtxAttrFmt`, `GXSetVtxDesc`, `GXSetZMode`, `HSD_CObjGetOrtho`, `HSD_CObjGetViewingMtx`, `HSD_CObjGetViewingMtxPtr`, `HSD_CObjSetFov`, `HSD_CObjSetRoll`, `HSD_CObjSetScissorx4`, `HSD_FogLoadDesc`, `HSD_FogSet` x6, `HSD_SetEraseColor` x3, `HSD_SetMaterialColor`, `HSD_SetMaterialShininess`, `HSD_SetTevRegAll`, `HSD_SetupChannel`, `HSD_SetupPEMode`, `HSD_SetupRenderModeWithCustomPE`, `HSD_SetupTevStage` x2, `HSD_StateAssignTev` x2, `HSD_StateInitTev` x2, `HSD_StateInvalidate` x3, `HSD_StateSetColorUpdate`, `HSD_StateSetCullMode`, `HSD_StateSetNumChans`, `HSD_StateSetNumTevStages`, `HSD_StateSetNumTexGens`, `HSD_StateSetPointSize`, `SurfaceBegin`, `SurfaceEnd`, `hsd_80391A04`
+
+### baselib animation family (AObj / RObj / JObj / DObj anim) not ported on raw records (23)
+`HSD_DObjClearFlags` x2, `HSD_DObjReqAnimAll`, `HSD_DObjSetFlags` x2, `HSD_ForeachAnim` x6, `HSD_JObjAddAnimAll` x7, `HSD_JObjAnimAll` x17, `HSD_JObjDisp`, `HSD_JObjRemoveAll`, `HSD_JObjRemoveAnim`, `HSD_JObjRemoveAnimAll` x6, `HSD_JObjReqAnimAll` x15, `HSD_JObjReqAnimAllByFlags` x2, `HSD_JObjReqAnimByFlags`, `HSD_JObjResetRST`, `HSD_JObjSetDPtclCallback`, `HSD_JObjSetSPtclCallback`, `HSD_JObjSetupMatrixSub` x4, `HSD_JObjWalkTree_8039D688`, `foreach_anim_set_loop`, `grAnime_801C752C`, `jobj_add_anim_all`, `jobj_anim_all`, `jobj_req_anim_all`
+
+### particle / generator system (only a model with ids and a host exists) (22)
+`generator_list_head`, `hsd_8039D1E4`, `hsd_8039D354`, `hsd_8039D4DC` x2, `hsd_8039D580`, `hsd_8039D5DC`, `hsd_8039EE24`, `hsd_8039EFAC` x3, `hsd_8039F05C` x2, `hsd_8039F6CC` x2, `hsd_8039d4dc`, `hsd_8039d5dc`, `hsd_8039efac`, `hsd_8039f05c`, `hsd_8039f6cc`, `psAddGeneratorAppSRT_begin` x3, `psAddParticleAppSRT_begin`, `psInitAppSRT`, `psRemoveParticleAppSRT`, `ps_add_generator_app_srt_begin`, `ptclref_cmdList`, `set_hsd_804D7900`
+
+### melee_fighter / melee_chara callees (ft/pl): CYCLE (21)
+`Player_80031790`, `Player_80031900`, `Player_8003219C`, `Player_80036058`, `Player_800360D8`, `Player_80036428`, `Player_80036978`, `ftCo_8009EC70` x2, `ftCo_8009F4A4`, `ftCo_800C0FCC`, `ftData_UnkBytePerCharacter`, `ftDrawCommon_80080C28`, `ftDrawCommon_80081118`, `ftDrawCommon_80081140`, `ftKb_MexKirbyLike`, `ftLib_800864A8` x2, `ftLib_80086C18` x3, `ftLib_80086C9C` x2, `ftLib_80086ED0`, `ftLib_UpdateLogicOffCamera`, `ft_80087838`
+
+### effect host API (efSync / efAsync / efLib spawn with C varargs and a Host trait) (12)
+`efAlt_Spawn`, `efAsync_DatEntries_clear`, `efAsync_DatEntries_data`, `efAsync_Dispatch`, `efAsync_MexResolve`, `efAsync_QueueInit`, `efLib_AnimQueue`, `efLib_CreateGenerator_AppSRT_SetFacingDir`, `efLib_CreateGenerator_AppSRT_SetFacingDirScale`, `efLib_CreateGenerator_AppSRT_SetScale`, `efLib_CreateGenerator_Attach_Scale`, `efSync_Spawn` x7
+
+### camera.c subject pool / callbacks / projection (model has no raw equivalent) (7)
+`Camera_80029020` x4, `Camera_80029044`, `Camera_800290D4` x2, `Camera_8002928C`, `Camera_8002A4AC` x2, `Camera_8002F3AC` x3, `Camera_LogicBounds` x3
+
+### other (see the list) (7)
+`GObj_SetupGXLink_JObjCallback`, `HSD_ASSERT`, `create_snap_gobj`, `todo_Camera_RequestQuake`, `todo_efSync_Spawn`, `todo_ftCo_800C07F8`, `todo_grMaterial_801C8CFC`
+
+### lb callees with C varargs or slice-shaped runtime ports (6)
+`lbFile_80016580`, `lb_80011E24` x4, `lb_800121FC`, `lb_800122C8`, `lb_80014258`, `lb_80014498`
+

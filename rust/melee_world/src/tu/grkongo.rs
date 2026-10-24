@@ -35,7 +35,7 @@ pub use crate::gr::trivial::grkongo::{
 
 /// Callees in TUs that are not ported yet. An unset hook panics.
 pub mod ext {
-    use crate::tu::hookmac::hook;
+    use crate::tu::hookmac::{hook, hook_or};
     use core::ffi::c_void;
     use melee_types::*;
     pub use crate::tu::grinl::ext::{stage_info, HSD_JObjSetMtxDirtySub};
@@ -118,8 +118,8 @@ pub mod ext {
     pub fn Ground_GetYakumonoParam() -> *mut c_void {
         match unsafe { GROUND_GETYAKUMONOPARAM } { Some(f) => f(), None => { return unsafe { crate::tu::ground::Ground_GetYakumonoParam() as _ }; } }
     }
-    hook!(HSD_RANDF, HSD_Randf, () -> f32);
-    hook!(OSREPORT, OSReport, (a0: *mut i8));
+    hook_or!(HSD_RANDF, HSD_Randf, () -> f32, || melee_runtime::tu::random::HSD_Randf(melee_runtime::tu::globals::rand()));
+    hook_or!(OSREPORT, OSReport, (a0: *mut i8), |a0: *mut i8| unsafe { melee_runtime::tu::os_error::OSReport(a0 as _, &[]) });
     pub static mut STAGE_80225194: Option<fn() -> StKind> = None;
     #[allow(non_snake_case)]
     pub fn Stage_80225194() -> StKind {
@@ -135,10 +135,10 @@ pub mod ext {
         }
     }
     hook!(FTCO_8009EC70, ftCo_8009EC70, (gobj: *mut HSD_GObj, pos: *mut Vec3, arg2: *mut lbColl_80008D30_arg1, kb_angle: f32));
-    hook!(FTCO_800C0764, ftCo_800C0764, (a0: *mut HSD_GObj, a1: u32, a2: *mut c_void));
-    hook!(FTLIB_80086644, ftLib_80086644, (a0: *mut HSD_GObj, a1: *mut Vec3));
+    hook_or!(FTCO_800C0764, ftCo_800C0764, (a0: *mut HSD_GObj, a1: u32, a2: *mut c_void), |a0: *mut HSD_GObj, a1: u32, a2: *mut c_void| { unsafe { crate::ftdevice::ftCo_800C0764(a0 as _, a1 as _, core::mem::transmute(a2)); } });
+    hook_or!(FTLIB_80086644, ftLib_80086644, (a0: *mut HSD_GObj, a1: *mut Vec3), |a0: *mut HSD_GObj, a1: *mut Vec3| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } });
     hook!(FTLIB_80086C18, ftLib_80086C18, (a0: *mut HSD_GObj, a1: s32, a2: s32));
-    hook!(GM_8016B238, gm_8016B238, () -> i32);
+    hook_or!(GM_8016B238, gm_8016B238, () -> i32, || unsafe { crate::gm::gm_8016B238() as _ });
     pub static mut GRANIME_801C78FC: Option<fn(*mut HSD_GObj, i32, u32)> = None;
     #[allow(non_snake_case)]
     pub fn grAnime_801C78FC(a0: *mut HSD_GObj, a1: i32, a2: u32) {
@@ -185,8 +185,8 @@ pub mod ext {
             None => { unsafe { crate::tu::grzakogenerator::grZakoGenerator_801CAE04(a0 as _) as _ } },
         }
     }
-    hook!(ITGETKIND, itGetKind, (gobj: *mut HSD_GObj) -> ItemKind);
-    hook!(IT_8026B294, it_8026B294, (gobj: *mut HSD_GObj, pos: *mut Vec3));
+    hook_or!(ITGETKIND, itGetKind, (gobj: *mut HSD_GObj) -> ItemKind, |gobj: *mut HSD_GObj| unsafe { crate::itacc::itGetKind(gobj as _) as _ });
+    hook_or!(IT_8026B294, it_8026B294, (gobj: *mut HSD_GObj, pos: *mut Vec3), |gobj: *mut HSD_GObj, pos: *mut Vec3| { unsafe { let _ = crate::itacc::it_8026B294(gobj as _, pos as _); } });
     hook!(IT_8026D324, it_8026D324, (a0: ItemKind) -> i32);
     hook!(IT_80286088, it_80286088, (a0: *mut HSD_GObj) -> *mut HSD_GObj);
     hook!(IT_802E18B4, it_802E18B4, (gobj: *mut HSD_GObj) -> *mut HSD_GObj);
@@ -242,7 +242,7 @@ pub mod ext {
     pub fn mpVtxGetPos(vtx_id: i32, x_out: *mut f32, y_out: *mut f32) {
         match unsafe { MPVTXGETPOS } { Some(f) => f(vtx_id, x_out, y_out), None => { unsafe { let _ = crate::tu::mplib::mpVtxGetPos(vtx_id as _, x_out as _, y_out as _); } return; } }
     }
-    hook!(SPLARCLENGTHPOINT, splArcLengthPoint, (a0: *mut Vec3, a1: *mut HSD_Spline, a2: f32));
+    hook_or!(SPLARCLENGTHPOINT, splArcLengthPoint, (a0: *mut Vec3, a1: *mut HSD_Spline, a2: f32), |a0: *mut Vec3, a1: *mut HSD_Spline, a2: f32| { unsafe { let _ = melee_runtime::tu::spline_world::splArcLengthPoint(a0 as _, a1 as _, a2 as _); } });
     /// `HSD_GObj** HSD_GObjPLinkHead`.
     pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = core::ptr::null_mut();
 }

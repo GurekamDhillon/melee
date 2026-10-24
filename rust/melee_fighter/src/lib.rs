@@ -20,6 +20,7 @@ pub mod platform;
 pub mod rng;
 pub mod hooks;
 pub mod ftcommon;
+pub mod ftcommon_c;
 pub mod ftcommon2;
 pub mod stale;
 pub mod player;

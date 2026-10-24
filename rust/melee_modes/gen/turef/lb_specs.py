@@ -1,7 +1,35 @@
 """Callee specs of the lb* TU drivers (see lbgen.py for the grammar)."""
-DRIVERS = ["lblanguage", "lbgx", "lbfile"]
-GROUPS = {}  # driver -> the TU ports it covers (default: itself)
+DRIVERS = ["lblanguage", "lbgx", "lbfile", "lbheap"]
+GROUPS = {"lbheap": ["lbheap", "lbmemory"]}  # driver -> the TU ports it covers (default: itself)
 SPECS = {
+    "lbheap": [
+        "void OSDestroyHeap(int/i32)",
+        "int/i32 OSCreateHeap(void*/*mut~c_void, void*/*mut~c_void) = rnd",
+        "OSHeapHandle/i32 HSD_CreateMainHeap(void*/*mut~c_void, void*/*mut~c_void) = rnd",
+        "OSHeapHandle/i32 HSD_GetHeap() = rnd",
+        "void HSD_SetHeap(OSHeapHandle/i32)",
+        "void*/*mut~c_void !HSD_MemAlloc(ssize_t/i32)",
+        "void HSD_Free(void*/*mut~c_void)",
+        "long/i32 OSCheckHeap(int/i32) = (s32) (rnd() % 4000000) - 100 ## (rnd() % 4000000) as i32 - 100",
+        "void !HSD_GetNextArena(void**/*mut~*mut~c_void, void**/*mut~*mut~c_void)",
+        "void*/*mut~c_void !OSAllocFromHeap(int/i32, unsigned~long/u32)",
+        "void OSDumpHeap(int/i32)",
+        "void HSD_ObjAllocReport()",
+        "void OSAllocTrack(int/i32)",
+        "int/i32 Env1(const~char*/*const~c_char) = 1",
+        "BOOL/i32 OSDisableInterrupts() = (rnd() & 1) ## (rnd() & 1) as i32",
+        "BOOL/i32 OSRestoreInterrupts(BOOL/i32) = 0",
+    ],
+    "lbmemory": [
+        "u32/u32 ARAlloc(u32/u32) = 0x4000 + (rnd() % 8) * 0x20 ## 0x4000 + (rnd() % 8) * 0x20",
+        "u32/u32 ARFree(u32*/*mut~u32) = 0",
+        "u32/u32 ARGetSize() = ((rnd() & 15) == 0 ? 0x1000000 : 0x2000000) ## if rnd() & 15 == 0 { 0x1000000 } else { 0x2000000 }",
+        "void OSCreateAlarm(OSAlarm*/*mut~OSAlarm)",
+        "void !OSSetAlarm(OSAlarm*/*mut~OSAlarm, OSTime/i64, OSAlarmHandler/OSAlarmHandler)",
+        "int/i32 !HSD_DevComRequest(int/i32, uintptr_t/addr, uintptr_t/addr, gc_size_t/usize, int/i32, int/i32, HSD_DevComCallback/HSD_DevComCallback, uintptr_t/addr)",
+        "BOOL/i32 OSDisableInterrupts() = (rnd() & 1) ## (rnd() & 1) as i32",
+        "BOOL/i32 OSRestoreInterrupts(BOOL/i32) = 0",
+    ],
     "lbfile": [
         "void !lb_800195D0()",
         "int/i32 !HSD_DevComRequest(int/i32, uintptr_t/addr, uintptr_t/addr, gc_size_t/usize, int/i32, int/i32, HSD_DevComCallback/HSD_DevComCallback, uintptr_t/addr)",

@@ -117,3 +117,5 @@ pub mod lblanguage;
 pub mod lbgx;
 pub mod lbext;
 pub mod lbfile;
+pub mod lbheap;
+pub mod lbmemory;

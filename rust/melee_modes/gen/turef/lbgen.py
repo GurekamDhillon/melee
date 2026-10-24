@@ -13,7 +13,7 @@ hook but writes no stub body (the driver and the test define it by hand, as `h_<
 import re, sys
 from pathlib import Path
 
-INT = {"i8", "i16", "i32", "isize", "enum_t"}
+INT = {"i8", "i16", "i32", "i64", "isize", "enum_t"}
 UINT = {"u8", "u16", "u32", "usize"}
 
 

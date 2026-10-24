@@ -219,3 +219,18 @@ pub fn az(n: usize) -> *mut u8 {
 pub fn arena_at(off: usize) -> *mut u8 {
     unsafe { ARENA_P.add(off) }
 }
+
+static mut MEM2_P: *mut u8 = core::ptr::null_mut();
+/// Mirror of `mem2_init`: 0x80000000 + 33 MiB (the bus clock word is not read by the port).
+pub fn mem2_init() {
+    unsafe {
+        if MEM2_P.is_null() {
+            MEM2_P = VirtualAlloc(0x8000_0000usize as *mut u8, 0x210_0000, 0x3000, 4);
+            assert!(!MEM2_P.is_null(), "mem2_init failed");
+        }
+        core::ptr::write_bytes(MEM2_P, 0, 0x210_0000);
+    }
+}
+pub fn mem2_at(off: usize) -> *mut u8 {
+    unsafe { MEM2_P.add(off) }
+}

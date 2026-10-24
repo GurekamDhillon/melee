@@ -25,6 +25,15 @@ static void* AZ(unsigned long long n)
     ARENA_USED += (n + 15) & ~15ull;
     return p;
 }
+/* main RAM window: 0x80000000 + 33 MiB (the bus clock at 0x800000F8, heap memory from 0x80100000) */
+static unsigned char* MEM2_P;
+static void mem2_init(void)
+{
+    if (!MEM2_P) MEM2_P = (unsigned char*) VirtualAlloc((void*) 0x80000000ull, 0x2100000ull, 0x3000, 4);
+    if (!MEM2_P) { printf("mem2_init failed"); for (;;) {} }
+    memset(MEM2_P, 0, 0x2100000);
+    *(unsigned*) (MEM2_P + 0xF8) = 162000000u;
+}
 typedef struct { const char* name; unsigned long long base, n; } PReg;
 static PReg PREGS[64];
 static int NPREG;

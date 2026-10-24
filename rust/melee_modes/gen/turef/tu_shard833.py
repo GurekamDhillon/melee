@@ -22,6 +22,7 @@ from lb_specs import SPECS, DRIVERS, GROUPS  # noqa: E402
 run.HERE = HERE
 run.DATA = ROOT / "rust/melee_modes/tests/data"
 run.FLAGS += ["-I", str(HERE)]
+run.LINK_EXTRA["tu_lbheap"] = ["-Wl,/base:0x10000000", "-Wl,/dynamicbase:no"]
 run.EXTRACTS.update({f"tu_{k}": [] for k in DRIVERS})
 
 

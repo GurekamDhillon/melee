@@ -188,6 +188,10 @@ def run(cmd, n):
         raise SystemExit(f"cref: {n} failed to build")
 
 
+# per reference extra link flags (e.g. an image base below 4 GB)
+LINK_EXTRA = {}
+
+
 def main():
     BUILD.mkdir(parents=True, exist_ok=True)
     DATA.mkdir(parents=True, exist_ok=True)
@@ -203,7 +207,7 @@ def main():
             run([CLANG, *FLAGS, str(src), "-o", str(ll)], n)
             run([sys.executable, str(LOWER), str(ll), str(lo)], n)
             lls.append(str(lo))
-        run([CLANG, "-O0", "-w", *lls, "-o", str(exe)], n)
+        run([CLANG, "-O0", "-w", *lls, *LINK_EXTRA.get(n, []), "-o", str(exe)], n)
         out = subprocess.run([str(exe)], capture_output=True, text=True, check=True).stdout
         (DATA / f"{n}.txt").write_text(out, encoding="utf-8", newline="\n")
         print(f"cref: {n}: {len(out.splitlines())} lines -> {DATA / (n + '.txt')}")

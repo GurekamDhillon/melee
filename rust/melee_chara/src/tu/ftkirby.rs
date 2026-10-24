@@ -350,7 +350,7 @@ pub mod ext {
                     None => { unsafe { let _ = crate::tu::ftkirbyspecialyoshi::ftKb_SpecialNYs_8010A8BC(gobj as _); } return; },
                 }
             }
-    hook!(FTKB_SPECIALNPR_80100DE0, ftKb_SpecialNPr_80100DE0, (gobj: *mut HSD_GObj));
+    crate::port_hook!(FTKB_SPECIALNPR_80100DE0, ftKb_SpecialNPr_80100DE0, crate::adapt::ftKb_SpecialNPr_80100DE0, (gobj: *mut HSD_GObj));
 
     pub static mut FTKB_SPECIALNKP_800FA7D4: Option<fn(*mut HSD_GObj) > = None;
             #[allow(non_snake_case)]

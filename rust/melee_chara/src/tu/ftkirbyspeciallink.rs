@@ -93,7 +93,7 @@ pub mod ext {
                 }
             }
     // `ftKb_Init_803B7548` (ftkirby.c data): the bow's three-point group.
-    hook!(FTKB_INIT_803B7548, ftKb_Init_803B7548, () -> *const ftLk_SpecialN_Vec3Group);
+    crate::port_hook!(FTKB_INIT_803B7548, ftKb_Init_803B7548, crate::adapt::ftKb_Init_803B7548, () -> *const ftLk_SpecialN_Vec3Group);
 }
 
 type G = *mut HSD_GObj;

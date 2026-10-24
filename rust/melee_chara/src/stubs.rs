@@ -177,8 +177,8 @@ pub static mut FTPARTS_80074B0C: Option<fn(G, i32, i32)> = None;
     pub fn ftParts_80074B0C(g: G, model_idx: i32, val: i32) {
         match unsafe { FTPARTS_80074B0C } { Some(f) => f(g, model_idx, val), None => { unsafe { let _ = melee_fighter::tu::ftparts::ftParts_80074B0C(g as _, model_idx as _, val as _); } return; } }
     }
-stub!(/// TODO(group3): `ft_CheckGroundAndLedge(gobj, direction)` (ft/ftcoll.c; returns bool).
-    FT_CHECKGROUNDANDLEDGE, ft_CheckGroundAndLedge, (g: G, direction: i32) -> i32);
+stub_or!(/// TODO(group3): `ft_CheckGroundAndLedge(gobj, direction)` (ft/ftcoll.c; returns bool).
+    FT_CHECKGROUNDANDLEDGE, ft_CheckGroundAndLedge, crate::adapt::ft_CheckGroundAndLedge, (g: G, direction: i32) -> i32);
 stub_or!(/// `ftCommon_8007DB24(gobj)`: group 3's verified port (night 3) when the hook is unset.
     FTCOMMON_8007DB24, ftCommon_8007DB24, melee_fighter::ftcommon3::ftcommon_8007db24, (g: G));
 stub_or!(/// `ftCommon_8007D92C(gobj)`: group 3's verified port (night 3) when the hook is unset.
@@ -270,8 +270,8 @@ pub fn ftCommon_UpdateFacing(fp: &mut Fighter) {
 
 stub_or!(/// `ftColl_8007AEF8(gobj)` (ft/ftcoll.c): group 3's verified port (round 13, ft0df.rs) when the hook is unset.
     FTCOLL_8007AEF8, ftColl_8007AEF8, melee_fighter::ft0df::ftcoll_8007aef8, (g: G));
-stub!(/// TODO(group3): `ftCo_AirCatchHit_Coll(gobj)` (ft/ftcoll.c / ftCommon AirCatch).
-    FTCO_AIRCATCHHIT_COLL, ftCo_AirCatchHit_Coll, (g: G));
+stub_or!(/// TODO(group3): `ftCo_AirCatchHit_Coll(gobj)` (ft/ftcoll.c / ftCommon AirCatch).
+    FTCO_AIRCATCHHIT_COLL, ftCo_AirCatchHit_Coll, crate::adapt::ftCo_AirCatchHit_Coll, (g: G));
     /// TODO(group3): `ftAnim_ApplyPartAnim(gobj, a, b, frame)` (ft/ftanim.c).
 pub static mut FTANIM_APPLYPARTANIM: Option<fn(G, i32, i32, f32)> = None;
         /// TODO(group3): `ftAnim_ApplyPartAnim(gobj, a, b, frame)` (ft/ftanim.c).

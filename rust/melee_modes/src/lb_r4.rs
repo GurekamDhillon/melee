@@ -7,11 +7,10 @@
 #![allow(non_snake_case)]
 
 use crate::lb::{absf, calcPan};
-use crate::lb_ptr::{splGetBSplineTangent, splGetBezierTangent, splGetCardinalTangent};
 use melee_core::fp::fmadds;
 use melee_runtime::gekko::sqrtf;
 use melee_types as mt;
-use mt::{CameraBlurData, DynamicsData, HSD_GObj, HSD_GObjEvent, HSD_JObj, HSD_Spline, Vec as Vec3};
+use mt::{CameraBlurData, DynamicsData, HSD_GObj, HSD_GObjEvent, HSD_JObj, Vec as Vec3};
 
 /// `lbAudioAx_UserData` (lb/lbaudio_ax.static.h, 0x48 bytes on the GC). melee_types does not
 /// scan `.static.h` headers. TODO(group0): generate it.
@@ -285,31 +284,5 @@ pub fn calc_acos(value: f32) -> f32 {
     melee_runtime::lbtrigf::acosf(value)
 }
 
-/// lbshadow.c `lbShadow_8000E9F0`: the tangent of `spline` at `u` in [0, 1] (no-op outside),
-/// by type: 0 linear, 1 Bezier, 2 B-spline, 3 cardinal; any other type leaves `p` alone.
-pub fn lbShadow_8000E9F0(p: &mut Vec3, spline: &HSD_Spline, mut u: f32) {
-    if u < 0.0 || u > 1.0 {
-        return;
-    }
-    let orig_u = u;
-    u *= (spline.numcv as i32 - 1) as f32;
-    let mut idx = u as i16; // (s16) u: u is in [0, numcv - 1] here
-    u -= idx as f32;
-    // SAFETY: cv holds numcv control points (3*numcv-2 for Bezier); the C indexes it unchecked.
-    let cps = |at: isize| unsafe { core::slice::from_raw_parts(spline.cv.offset(at), 4) };
-    match spline.r#type {
-        0 => {
-            if orig_u == 1.0 {
-                idx -= 1;
-            }
-            let cp = unsafe { core::slice::from_raw_parts(spline.cv.offset(idx as isize), 2) };
-            p.x = cp[1].x - cp[0].x;
-            p.y = cp[1].y - cp[0].y;
-            p.z = cp[1].z - cp[0].z;
-        }
-        1 => splGetBezierTangent(p, cps(idx as isize * 3), u),
-        2 => splGetBSplineTangent(p, cps(idx as isize), u),
-        3 => splGetCardinalTangent(p, cps(idx as isize), spline.tension, u),
-        _ => {}
-    }
-}
+// Compatibility export: the implementation lives with its TU in runtime.
+pub use melee_runtime::tu::lbshadow::lbShadow_8000E9F0;

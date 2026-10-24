@@ -168,56 +168,8 @@ pub fn Command_08(info: &mut CommandInfo) {
     info.timer = 3.4028235e38f32;
 }
 
-/// lbshadow.c `splGetCardinalTangent` (14 fused sites).
-pub fn splGetCardinalTangent(p: &mut Vec3, cp: &[Vec3], tension: f32, u: f32) {
-    let u2 = u * u;
-    let car0 = tension * (fmadds(-3.0, u2, 4.0 * u) - 1.0);
-    let car1 = fmadds(3.0 * (2.0 - tension), u2, 2.0 * (tension - 3.0) * u);
-    let car2 = tension + fmadds(3.0 * (tension - 2.0), u2, 2.0 * -fmadds(2.0, tension, -3.0) * u);
-    let car3 = tension * fmadds(3.0, u2, -(2.0 * u));
-    let c = [car0, car1, car2, car3];
-    let comb = |f: fn(&Vec3) -> f32| {
-        fmadds(f(&cp[3]), c[3], fmadds(f(&cp[2]), c[2], fmadds(f(&cp[0]), c[0], f(&cp[1]) * c[1])))
-    };
-    p.x = comb(|v| v.x);
-    p.y = comb(|v| v.y);
-    p.z = comb(|v| v.z);
-}
-
-/// lbshadow.c `splGetBSplineTangent` (11 fused sites).
-pub fn splGetBSplineTangent(p: &mut Vec3, cp: &[Vec3], u: f32) {
-    let u2 = u * u;
-    let u_1 = 1.0 - u;
-    let half = 0.5f32;
-    let b0 = u_1 * (-half * u_1);
-    let b1 = half * fmadds(3.0, u2, -(4.0 * u));
-    let b2 = half * (1.0 + fmadds(-3.0, u2, 2.0 * u));
-    let b3 = half * u2;
-    let c = [b0, b1, b2, b3];
-    let comb = |f: fn(&Vec3) -> f32| {
-        fmadds(f(&cp[3]), c[3], fmadds(f(&cp[2]), c[2], fmadds(f(&cp[0]), c[0], f(&cp[1]) * c[1])))
-    };
-    p.x = comb(|v| v.x);
-    p.y = comb(|v| v.y);
-    p.z = comb(|v| v.z);
-}
-
-/// lbshadow.c `splGetBezierTangent` (12 fused sites).
-pub fn splGetBezierTangent(p: &mut Vec3, cp: &[Vec3], u: f32) {
-    let u_1 = u - 1.0;
-    let u2 = u * u;
-    let bez0 = -3.0 * u_1 * u_1;
-    let bez1 = 3.0 * fmadds(3.0, u2, fmadds(-4.0, u, 1.0));
-    let bez2 = 3.0 * fmadds(2.0, u, -(3.0 * u2));
-    let bez3 = 3.0 * u2;
-    let c = [bez0, bez1, bez2, bez3];
-    let comb = |f: fn(&Vec3) -> f32| {
-        fmadds(f(&cp[3]), c[3], fmadds(f(&cp[2]), c[2], fmadds(f(&cp[0]), c[0], f(&cp[1]) * c[1])))
-    };
-    p.x = comb(|v| v.x);
-    p.y = comb(|v| v.y);
-    p.z = comb(|v| v.z);
-}
+// Compatibility exports: lbshadow belongs to runtime (inventory group 1).
+pub use melee_runtime::tu::lbshadow::{splGetCardinalTangent, splGetBSplineTangent, splGetBezierTangent};
 
 /// lbsnap.c `lbSnap_ClearText`: 0x21 NULs.
 pub fn lbSnap_ClearText(text: &mut [i8]) {

@@ -803,3 +803,130 @@
 #include <melee/gm/gmresultplayer.static.h>
 #include <melee/gm/gmfrontend_items.h>
 #include <melee/gm/gmtoulib.static.h>
+#include <melee/lb/lbmemory.h>
+#include <melee/lb/lbheap.static.h>
+#include <dolphin/thp/thp.h>
+/* TU-local records extracted by gen/local_records.py. */
+struct MemEntry {
+    struct MemEntry* x0_next;
+    void* x4_lo;
+    void* x8_hi;
+};
+struct LBMgr {
+    OSAlarm alarm; // 0x00
+    u8* src;       // 0x28
+    u8* dst;       // 0x2C
+    u32 size;      // 0x30
+    u32 offset;    // 0x34
+    uintptr_t cb_arg;    // 0x38
+    HSD_DevComCallback cb;
+};
+struct Allocator {
+    void* a_arenaLo;
+    void* a_arenaHi;
+    struct MemEntry x8_mem[0x83];
+    Handle* free_mem;
+    s32 x630_num_allocs;
+    s32 x634_max_num_allocs;
+    Handle x638_heap[6];
+    Handle* free_heap;
+    Handle* x69C;
+    struct LBMgr x6A0_mgr;
+    u32 x6E0;
+    void* x6E4;
+    void (*x6E8)(u32);
+    u8 x6EC[0x6F0 - 0x6EC];
+};
+struct lbHeap_HeapDesc {
+    u32 idx;
+    u32 type;
+    u32 prev_idx;
+    u32 size;
+};
+struct lbHeap_HeapOffsetView {
+    u8 pad[0x10];
+    struct Heap heap;
+};
+typedef struct THPFrameBuffer {
+    /* 0x00 */ u32 next_packed_size;
+    /* 0x04 */ u8 data[];
+} THPFrameBuffer;
+typedef struct THPDecComp {
+    /* 0x00 */ u8 pad0[0x08];
+    /* 0x08 */ u32 version;
+    /* 0x0C */ u32 buf_size;
+    /* 0x10 */ u32 x_size;
+    /* 0x14 */ u32 y_size;
+    /* 0x18 */ u32 frame_rate;
+    /* 0x1C */ u32 num_frames;
+    /* 0x20 */ u32 first_frame;
+    /* 0x24 */ u32 frame_offsets;
+    /* 0x28 */ u32 first_frame_size;
+    /* 0x2C */ u8 pad2C[0x40 - 0x2C];
+    /* 0x40 */ u32 unk_40;
+    /* 0x44 */ u32 width;
+    /* 0x48 */ u32 height;
+    /* 0x4C */ THPFrameBuffer** frame_buffers;
+    /* 0x50 */ void* unk_50;
+    /* 0x54 */ void* unk_54;
+    /* 0x58 */ void* unk_58;
+    /* 0x5C */ u8 pad5C[0x64 - 0x5C];
+    /* 0x64 */ u32 unk_64;
+    /* 0x68 */ s32 unk_68;
+    /* 0x6C */ s32 unk_6C;
+    /* 0x70 */ s32 unk_70;
+    /* 0x74 */ u32 unk_74;
+    /* 0x78 */ u32 unk_78;
+    /* 0x7C */ u32 unk_7C;
+    /* 0x80 */ u32 unk_80;
+    /* 0x84 */ u32 unk_84;
+    /* 0x88 */ u32 unk_88;
+    /* 0x8C */ u32 unk_8C;
+    /* 0x90 */ u32 unk_90;
+    /* 0x94 */ s32 unk_94;
+    /* 0x98 */ THPFileInfo* unk_98;
+    /* 0x9C */ THPDec_8032FD40_Data unk_9C;
+    /* 0xA8 */ u16 unk_A8;
+    /* 0xAA */ u16 unk_AA;
+    /* 0xAC */ u8 unk_AC;
+    /* 0xAD */ u8 padAD[0x100 - 0xAD];
+    /* 0x100 */ u32 unk_100;
+    /* 0x104 */ u32 unk_104;
+    /* 0x108 */ s32 unk_108;
+    /* 0x10C */ s32 unk_10C;
+    /* 0x110 */ s32 unk_110;
+    /* 0x114 */ u8 pad114[0x11C - 0x114];
+    /* 0x11C */ s32 unk_11C;
+    /* 0x120 */ u32 curr_file_offset;
+    /* 0x124 */ u32 currPackedSize;
+    /* 0x128 */ s32 file_entrynum;
+    /* 0x12C */ u32* rate_table;
+    /* 0x130 */ s32 unk_130;
+    /* 0x134 */ s32 unk_134;
+    /* 0x138 */ u32 unk_138;
+    /* 0x13C */ u32 unk_13C;
+    /* 0x140 */ void* unk_140;
+    /* 0x144 */ s32 unk_144;
+    /* 0x148 */ s32 unk_148;
+    /* 0x14C */ s32 power;
+    /* 0x150 */ OSAlarm alarm;
+    /* 0x178 */ GXTexObj unk_178;
+    /* 0x198 */ GXTexObj unk_198;
+    /* 0x1B8 */ GXTexObj unk_1B8;
+} THPDecComp;
+struct lbRefract_State {
+    int refractionUserCount;
+    void* image_ptr;
+    HSD_ImageDesc* imagedesc;
+    HSD_TObj** tobj_list;
+    Mtx texture_mtx;
+};
+struct lbRefract_Data {
+    u8 x0;
+    f32* x4;
+};
+struct lbRefract_DataLayout {
+        Mtx texture_mtx;
+        f32 texture_offset[6];
+        HSD_ImageDesc imagedesc0;
+    };

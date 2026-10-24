@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+"""Stub generator for the lb* TU state oracles (shard 833-840).
+
+A spec line `RET_C/RET_RS name(C/RS, C/RS, ...) [= ret]` (RET `void` for no result) yields:
+  * a C stub  `RET_C name(C a0, ...) { LG("name(%d,%u,%x,%s);", ...); return ...; }`
+  * a Rust ext hook (`hook!` in the TU's `mod ext`, panics "TODO" when unset)
+  * a Rust test hook that logs the same text and returns the same value.
+Argument class comes from the Rust type: i8..i32/isize -> %d, u8..u32/usize -> %u, f32 -> bits as %x,
+pointers (`*...`) -> `pid(p)` (%s, defined by each driver / test). `= rnd` returns rnd() cast to the
+result type, `= 0` zero, `= expr:C|RS` a verbatim expression pair. A leading `!` on the name keeps the
+hook but writes no stub body (the driver and the test define it by hand, as `h_<name>`).
+"""
+import re, sys
+from pathlib import Path
+
+INT = {"i8", "i16", "i32", "i64", "isize", "enum_t"}
+UINT = {"u8", "u16", "u32", "usize"}
+
+
+def parse(line):
+    m = re.match(r"^\s*(\S+)\s+(!?)(\w+)\((.*?)\)\s*(?:=\s*(.*))?$", line)
+    if not m:
+        raise SystemExit("bad spec: " + line)
+    ret, custom, name, args, rv = m.groups()
+    rv = rv or ""
+    default = ""
+    if "@" in rv:
+        rv, _, default = rv.partition("@")
+        rv = rv.strip()
+        default = default.strip()
+    rc, _, rr = ret.replace("~", " ").partition("/")
+    a = []
+    for s in [x.strip() for x in args.split(",") if x.strip()]:
+        c, _, r = s.replace("~", " ").rpartition("/")
+        a.append((c, r))
+    return dict(rc=rc, rr=rr or rc, name=name, custom=bool(custom), args=a, rv=(rv or "").strip(), default=default)
+
+
+def cls(r):
+    if r == "addr":
+        return "q"
+    if r == "*const c_char":
+        return "s"
+    if r.startswith("*") or r.startswith("Option"):
+        return "p"
+    if r in INT:
+        return "i"
+    if r in UINT:
+        return "u"
+    if r == "f32":
+        return "f"
+    raise SystemExit("class of " + r)
+
+
+def c_stub(s):
+    args = ", ".join(f"{c} a{i}" for i, (c, r) in enumerate(s["args"])) or "void"
+    fmt, vals = [], []
+    for i, (c, r) in enumerate(s["args"]):
+        k = cls(r)
+        fmt.append({"i": "%d", "u": "%u", "f": "%x", "p": "%s", "q": "%s", "s": "%s"}[k])
+        vals.append({"i": f"(int) a{i}", "u": f"(unsigned) a{i}", "f": f"bits(a{i})", "p": f"pid((const void*) a{i})",
+                     "q": f"pidu((unsigned long long) a{i})", "s": f"pids((const char*) a{i})"}[k])
+    log = f'LG("{s["name"]}({",".join(fmt)});"' + "".join(", " + v for v in vals) + ");"
+    body = log
+    if s["rc"] != "void":
+        rv = s["rv"] or "0"
+        if rv == "rnd":
+            rv = f"({s['rc']}) rnd()"
+        elif "##" in rv:
+            rv = rv.split("##")[0].strip()
+        body += f" return {rv};"
+    return f"{s['rc']} {s['name']}({args}) {{ {body} }}"
+
+
+def rs_log(s):
+    fmt, vals = [], []
+    for i, (c, r) in enumerate(s["args"]):
+        k = cls(r)
+        fmt.append("{:x}" if k == "f" else "{}")
+        if k == "p" and r.startswith("Option"):
+            vals.append(f"pidf(a{i}.map_or(0usize, |f| f as usize))")
+        else:
+            vals.append({"i": f"a{i} as i32", "u": f"a{i} as u32", "f": f"a{i}.to_bits()", "p": f"pid(a{i} as *const core::ffi::c_void)",
+                         "q": f"pidu(a{i} as u64)", "s": f"pids(a{i})"}[k])
+    return f'lg(&format!("{s["name"]}({",".join(fmt)});"' + "".join(", " + v for v in vals) + "));"
+
+
+def rs_stub(s):
+    args = ", ".join(f"a{i}: {r.replace('addr', 'usize')}" for i, (c, r) in enumerate(s["args"]))
+    rt = "" if s["rc"] == "void" else f" -> {s['rr']}"
+    body = rs_log(s)
+    if s["rc"] != "void":
+        rv = s["rv"] or "0"
+        if rv == "rnd":
+            rv = f"rnd() as {s['rr']}"
+        elif "##" in rv:
+            rv = rv.split("##", 1)[1].strip()
+        body += f" {rv}"
+    return f"    fn h_{s['name']}({args}){rt} {{ {body} }}"
+
+
+def rs_hook(s):
+    args = ", ".join(f"{chr(97 + i)}: {r.replace('addr', 'usize')}" for i, (c, r) in enumerate(s["args"]))
+    rt = "" if s["rc"] == "void" else f" -> {s['rr']}"
+    return f"    lb_hook!(H_{s['name']}, {s['name']}, ({args}){rt}{' = ' + s['default'] if s.get('default') else ''});"
+
+
+def build(specs_by_stem, driver, stems, root):
+    """Generate the stubs of one driver over the TU ports `stems` (callees shared by several TUs are
+    stubbed once), and the `ext` block of each TU."""
+    parsed = {st: [parse(l) for l in specs_by_stem.get(st, []) if l.strip() and not l.strip().startswith("#")] for st in stems}
+    uniq = {}
+    for st in stems:
+        for s in parsed[st]:
+            if s["name"] in uniq:
+                a, b = uniq[s["name"]], s
+                assert (a["args"], a["rc"], a["rr"], a["rv"], a["custom"]) == (b["args"], b["rc"], b["rr"], b["rv"], b["custom"]), s["name"]
+            else:
+                uniq[s["name"]] = s
+    ss = list(uniq.values())
+    (root / f"rust/melee_modes/gen/turef/tu_{driver}_stubs.inc").write_text(
+        "/* generated by lbgen.py */\n" + "\n".join(c_stub(s) for s in ss if not s["custom"]) + "\n", encoding="utf-8", newline="\n")
+    inst = []
+    for st in stems:
+        inst.append(f"        {{\n            use melee_modes::tu::{st}::ext as e;\n")
+        inst += [f"            unsafe {{ e::H_{s['name']} = Some(h_{s['name']}); }}\n" for s in parsed[st] if not s["custom"]]
+        inst.append("        }\n")
+    (root / f"rust/melee_modes/tests/lbtest/{driver}_stubs.rs").write_text(
+        "// generated by lbgen.py: trace hooks mirroring gen/turef/tu_%s_stubs.inc\n" % driver
+        + "\n".join(rs_stub(s) for s in ss if not s["custom"]) + "\n"
+        + "    pub fn install_generated() {\n" + "".join(inst) + "    }\n",
+        encoding="utf-8", newline="\n")
+    for st in stems:
+        ext = "\n".join(rs_hook(s) for s in parsed[st])
+        p = root / f"rust/melee_modes/src/tu/{st}.rs"
+        tx = p.read_text(encoding="utf-8")
+        tx = re.sub(r"(    // BEGIN GENERATED ext\n).*?(    // END GENERATED ext)", lambda m: m.group(1) + ext + "\n" + m.group(2), tx, flags=re.S)
+        p.write_text(tx, encoding="utf-8", newline="\n")

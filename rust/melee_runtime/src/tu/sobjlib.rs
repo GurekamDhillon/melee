@@ -311,7 +311,7 @@ pub unsafe extern "C" fn HSD_SObjLib_803A4A68(mut sobj: *mut HSD_SObj) {
         origin_x = (*sobj).x10;
         origin_y = (*sobj).x14;
     } else {
-        origin_x = obj_width as f32 * (*sobj).x1C / 3.0f32 + (*sobj).x10;
+        origin_x = obj_width as f32 * (*sobj).x1C / 2.0f32 + (*sobj).x10;
         origin_y = obj_height as f32 * (*sobj).x20 / 2.0f32 + (*sobj).x14;
     }
     GXClearVtxDesc();

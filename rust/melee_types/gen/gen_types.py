@@ -66,6 +66,9 @@ def write_probe():
     it = g("src/melee/it/**/*.h") + g("src/melee/ty/**/*.h") + g("src/melee/vi/**/*.h")
     # Single headers whose records other groups' TU ports need (appended, never removed).
     extra = ["melee/lb/lbanim.h", "melee/gm/gmresultplayer.static.h", "melee/gm/gmfrontend_items.h", "melee/gm/gmtoulib.static.h"]
+    # shard 857-864 (mn/ menus): records of the mn headers the TU ports use
+    extra += ["melee/mn/mnmain.h", "melee/mn/mncount.h", "melee/mn/mndatadel.static.h", "melee/mn/mndiagram2.h",
+              "melee/mn/mndiagram3.static.h", "melee/mn/mnevent.h"]
     seen, lines = set(), []
     for h in base + fwd + tys + ft + it + extra:
         if h not in seen:

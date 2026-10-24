@@ -803,3 +803,9 @@
 #include <melee/gm/gmresultplayer.static.h>
 #include <melee/gm/gmfrontend_items.h>
 #include <melee/gm/gmtoulib.static.h>
+#include <melee/mn/mnmain.h>
+#include <melee/mn/mncount.h>
+#include <melee/mn/mndatadel.static.h>
+#include <melee/mn/mndiagram2.h>
+#include <melee/mn/mndiagram3.static.h>
+#include <melee/mn/mnevent.h>

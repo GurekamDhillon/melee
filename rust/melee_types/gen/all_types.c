@@ -803,3 +803,68 @@
 #include <melee/gm/gmresultplayer.static.h>
 #include <melee/gm/gmfrontend_items.h>
 #include <melee/gm/gmtoulib.static.h>
+// From src/sysdolphin/baselib/hsd_3915.c
+typedef void (*GlyphFn)(u8* dst, s32 flags, s32 unused1, s32 unused2,
+                        const u8* src);
+
+typedef struct {
+    /* 0x00 */ s32 x0;
+    /* 0x04 */ GlyphFn callback;
+} GlyphEntry;
+// From src/sysdolphin/baselib/hsd_3924.c
+struct EventPriority {
+    Event event;
+    int priority;
+};
+// From src/sysdolphin/baselib/hsd_3924.c
+typedef struct {
+    s32 count;
+    GXColor color;
+} DispBar;
+
+typedef struct _DispItem {
+    /* 0x00 */ struct _DispItem* next;
+    /* 0x04 */ s32 type;
+    /* 0x08 */ union {
+        char text[128];
+        DispBar bars[1];
+        u8 gradient[8];
+    } content;
+} DispItem;
+
+typedef DispItem* (*DispCallback)(void*);
+// From src/sysdolphin/baselib/hsd_392A.c
+typedef struct {
+    /* 0x00 */ void* next;
+    /* 0x04 */ s32 type;
+    /* 0x08 */ union {
+        u8 bytes[0x80];
+        char text[0x80];
+        struct {
+            s32 count;
+            u32 color;
+        } bars[16];
+        struct {
+            f32 pos;
+            u32 color;
+        } gradient[16];
+    } content;
+} PerfDispItem;
+// From src/sysdolphin/baselib/hsd_392C.c
+struct ParticleConsoleState {
+    /* 00 */ u8 x0_b0 : 1;
+    /* 00 */ u8 x0_b1 : 1;
+    /* 04 */ u8* out_buf;
+    /* 08 */ u32 buf_size;
+    /* 0C */ int xC;
+    /* 10 */ u8 x10;
+    /* 11 */ u8 x11;
+    /* 12 */ u8 x12;
+    /* 13 */ u8 x13;
+    /* 14 */ int x14;
+    /* 18 */ int x18;
+    /* 1C */ int x1C;
+    /* 20 */ int x20;
+    /* 20 */ UNK_T x24;
+};
+ASSERT_SIZE(struct ParticleConsoleState, 0x28);

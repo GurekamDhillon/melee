@@ -108,6 +108,12 @@ const FTCO_SM_TURN: u32 = 10;
 /// `ftCo_MS_Landing` (42) and its row `ftCo_SM_Landing` (35).
 const FTCO_MS_LANDING: i32 = 42;
 const FTCO_SM_LANDING: u32 = 35;
+/// `ftCo_MS_LandingAirN..Lw` (the submotions follow at `ftCo_SM_LandingAirN` = 73).
+const FTCO_MS_LANDING_AIR_N: i32 = 70;
+const FTCO_SM_LANDING_AIR_N: u32 = 73;
+fn is_landing_air(m: i32) -> bool {
+    (FTCO_MS_LANDING_AIR_N..FTCO_MS_LANDING_AIR_N + 5).contains(&m)
+}
 /// Final Destination's floor materials (mplib.c `mpLib_803BF248[Gr_Kind_Last]` = `mpLib_803BE7A8`,
 /// each entry's `x0`): the friction multiplier `mpLib_800569EC(floor.flags)` returns.
 const FD_MATERIAL_FRICTION: [f32; 20] =
@@ -335,6 +341,8 @@ pub enum EfOp {
 /// `EF_SPAWN_ATTACH_PARAM` / `EF_SPAWN_POS_OFFSET_PARAM` (ef/types.h spawn kinds 3 and 5).
 const EF_SPAWN_ATTACH_PARAM: u8 = 3;
 const EF_SPAWN_POS_OFFSET_PARAM: u8 = 5;
+/// `EF_SPAWN_POS_OFFSET`: `(jobj, &ofs)`.
+const EF_SPAWN_POS_OFFSET: u8 = 2;
 /// `EF_SPAWN_POS_OFFSET_PARAM2`.
 const EF_SPAWN_POS_OFFSET_PARAM2: u8 = 6;
 /// A direct `efSync_Spawn` (not queued): kind 0 here.
@@ -385,6 +393,8 @@ struct EffectRoot {
 struct DptclAnim {
     joint: JObjRef,
     aobj: HsdAObj<()>,
+    /// The init-time first step has run.
+    started: bool,
 }
 
 pub struct VsMatch {
@@ -575,6 +585,13 @@ impl VsMatch {
         // Leaked: it lives as long as the process, as the C's archive does.
         let cd: melee_types::ftCommonData = *plco.load_at::<melee_types::ftCommonData>(ft_common).get();
         unsafe { melee_fighter::hooks::P_FT_COMMON_DATA = Box::leak(Box::new(cd)) };
+        // ft_PlaySFX from the ported fighter code (fast fall, ...): no audio here. Only the voice
+        // ids 332..=370 draw (HSD_Randi(200) pitch), which the sim does not model.
+        unsafe {
+            melee_fighter::hooks::PLAY_SFX = Some(|_fp, id, _vol, _pan| {
+                assert!(!(332..=370).contains(&id), "ft_PlaySFX {id}: the pitch draw is not modelled");
+            })
+        };
         let common = EntryCommon {
             x6bc: be(ft_common + 0x6BC) as i32,
             x6c0: be(ft_common + 0x6C0) as i32,
@@ -692,7 +709,7 @@ impl VsMatch {
                 a.req_anim(0.0);
                 a.set_rate(1.0);
                 joint_mtx.insert(t.joint, crate::stage::bind_pose_matrix(&stage.data, &t.chain));
-                dptcl.push(DptclAnim { joint: t.joint, aobj: a });
+                dptcl.push(DptclAnim { joint: t.joint, aobj: a, started: false });
             }
         }
 
@@ -1074,6 +1091,13 @@ impl VsMatch {
                 }
             };
             let mut upd: melee_runtime::fobj::ObjUpdate<'_> = Some(&mut cb);
+            // grAnime_801C8138 ends with HSD_JObjAnimAll: the first interpretation (the
+            // FIRST_PLAY hold at frame 0, which spawns the frame-0 particle tracks) happens at
+            // init, so the animation is one frame ahead of the match frame from frame 0 on.
+            if !t.started {
+                t.started = true;
+                t.aobj.interpret_anim(&mut self.aobj_globals, &mut upd);
+            }
             t.aobj.interpret_anim(&mut self.aobj_globals, &mut upd);
         }
         self.dptcl_spawns(spawns, None)
@@ -1163,8 +1187,8 @@ impl VsMatch {
                         ft_8008a2bc(p, &mut self.rand)?;
                     }
                 }
-                FTCO_MS_LANDING => {
-                    // ftCo_Landing_Anim: when the animation ends, ft_8008A2BC (Wait).
+                m if m == FTCO_MS_LANDING || is_landing_air(m) => {
+                    // ftCo_Landing_Anim / ftCo_LandingAir_Anim: when the animation ends, ft_8008A2BC (Wait).
                     if !p.skel.frames_remaining() {
                         ft_8008a2bc(p, &mut self.rand)?;
                     }
@@ -1479,7 +1503,7 @@ impl VsMatch {
                     }
                     fc::calc_self_accel_drift(f);
                 }
-                m if m == FTCO_MS_LANDING || m == FTCO_MS_TURN || m == FTCO_MS_WAIT || is_guard_motion(m) || m == FTCO_MS_KNEE_BEND || (p.fp.kind == Ft_Kind_Fox && (fox::FX_MS_SPECIAL_N_START..=fox::FX_MS_SPECIAL_N_END).contains(&m)) => {
+                m if m == FTCO_MS_LANDING || is_landing_air(m) || m == FTCO_MS_TURN || m == FTCO_MS_WAIT || is_guard_motion(m) || m == FTCO_MS_KNEE_BEND || (p.fp.kind == Ft_Kind_Fox && (fox::FX_MS_SPECIAL_N_START..=fox::FX_MS_SPECIAL_N_END).contains(&m)) => {
                     // (Wait: then ftColl_8007AEE0, a hurtbox reset; not hashed.)
                     // ftCo_Landing_Phys / ftCo_Turn_Phys -> ft_80084F3C: ground friction, then the
                     // self velocity along the floor.
@@ -1701,7 +1725,7 @@ impl VsMatch {
                         fall_enter(p, &mut self.rand)?;
                     }
                 }
-                m if m == FTCO_MS_LANDING || m == FTCO_MS_WAIT || (FTCO_MS_WALK_SLOW..=FTCO_MS_WALK_FAST).contains(&m) => {
+                m if m == FTCO_MS_LANDING || is_landing_air(m) || m == FTCO_MS_WAIT || (FTCO_MS_WALK_SLOW..=FTCO_MS_WALK_FAST).contains(&m) => {
                     // ftCo_Landing_Coll / ftCo_Wait_Coll / ftCo_Walk_Coll -> ft_80084280.
                     if p.fp.xF8_playerNudgeVel.x != 0.0 && p.fp.xF8_playerNudgeVel.x * p.fp.facing_dir < 0.0 {
                         return Err("ft_800827A0 (pushed by another fighter) not ported".into());
@@ -1840,6 +1864,18 @@ impl VsMatch {
                     if dir < 0.0 {
                         self.ps.gen_mut(gen).kind |= 0x40000;
                     }
+                }
+                Ok(())
+            }
+            (EF_SPAWN_POS_OFFSET, 0x407) => {
+                // lb_8000B1CC(jobj, &params, &pos), then efAsync_Dispatch 0x407:
+                // efLib_CreateGenerator(0x3C, &pos).
+                let p = &mut self.players[i];
+                let j = p.skel.part(q.part);
+                let pos = p.skel.world_point(j, q.params);
+                let mut host = Host { rand: &mut self.rand, joint_mtx: &self.joint_mtx, appsrt_hook_lists: &self.appsrt_hook_lists };
+                if let Some(gen) = self.ps.gen_create(&mut host, 0, 0, 0x3C) {
+                    self.ps.gen_mut(gen).pos = pos;
                 }
                 Ok(())
             }
@@ -2324,6 +2360,7 @@ fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         dashrun::FTCO_MS_DASH => dashrun::dash_iasa(p, rand),
         dashrun::FTCO_MS_RUN => dashrun::run_iasa(p, rand),
         FTCO_MS_LANDING => landing_iasa(p, rand),
+        m if is_landing_air(m) => Ok(()), // ftCo_LandingAir_IASA is empty
         FTCO_MS_TURN => turn_iasa(p, rand),
         FTCO_MS_WAIT => wait_iasa(p, rand),
         m if (FTCO_MS_WALK_SLOW..=FTCO_MS_WALK_FAST).contains(&m) => walk_iasa(p, rand),
@@ -4134,6 +4171,11 @@ fn ftco_8009f834(p: &mut Player, rand: &mut HsdRand, gfx_id: u32, part: usize, o
             p.ef_queue.push(QueuedEffect { kind: EF_SPAWN_POS_OFFSET_PARAM, gfx: gfx_id, part, params: sp84, extra1, extra2: 0.0 });
             Ok(())
         }
+        0x407 => {
+            // efAsync_Spawn(gobj, &x60C, EF_SPAWN_POS_OFFSET, gfx_id, joint, &sp84).
+            p.ef_queue.push(QueuedEffect { kind: EF_SPAWN_POS_OFFSET, gfx: gfx_id, part, params: sp84, extra1: 0.0, extra2: 0.0 });
+            Ok(())
+        }
         // efAsync_Spawn(.., EF_SPAWN_CAMERA_SHAKE, 2 / 3 / 4, joint, &sp84): a camera quake at
         // s_link 9 (Camera_RequestQuake). The camera is not simulated; the C trace shows it
         // draws nothing from the RNG.
@@ -4582,6 +4624,11 @@ impl Sim for VsMatch {
         if let Err(e) = r {
             self.stopped = Some(format!("frame {}: {e}", self.frame + 1));
             return false;
+        }
+        if std::env::var_os("MELEE_GOLDEN_RAND").is_some() {
+            for p in &self.players {
+                eprintln!("R {} MOTION slot {} {} id {} frame {}", unsafe { TRACE_FRAME }, p.slot, p.follower, p.fp.motion_id, p.fp.cur_anim_frame);
+            }
         }
         for k in 0..self.effects.len() {
             self.effect_matrices(k);

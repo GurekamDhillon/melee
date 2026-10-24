@@ -136,9 +136,45 @@ pub fn coll(g: &mut GroundColl, cg: &mut CollGlobals, p: &mut Player, c: EntryCo
     if ft_80081a00(fp) || !r {
         return Ok(());
     }
-    // ftCo_LandingAir_EnterWithLag with cmd_vars[0] == 0: ftCo_Landing_Enter_Basic.
+    landing_air_enter_with_lag(g, p, c, rand)
+}
+
+/// `ftCo_LandingAir_EnterWithLag`: after the L-cancel window (`cmd_vars[0]`) the aerial's own
+/// landing state, its lag halved by an L-cancel (`x67F < p_ftCommonData->xE4`).
+fn landing_air_enter_with_lag(g: &mut GroundColl, p: &mut Player, c: EntryCommon, rand: &mut HsdRand) -> Result<(), String> {
+    let cd = melee_fighter::hooks::common_data();
+    let mut lag = 0.0f32;
+    let mut which: Option<i32> = None;
     if p.fp.cmd_vars[0] != 0 {
-        return Err(format!("player {}: ftCo_LandingAir_EnterWithLag (L-cancel window) not ported", p.slot + 1));
+        let a = &p.fp.co_attrs;
+        let m = p.fp.motion_id - FTCO_MS_ATTACK_AIR_N;
+        which = match m {
+            0 => { lag = a.landingairn_lag; Some(0) }
+            1 => { lag = a.landingairf_lag; Some(1) }
+            2 => { lag = a.landingairb_lag; Some(2) }
+            3 => { lag = a.landingairhi_lag; Some(3) }
+            4 => { lag = a.landingairlw_lag; Some(4) }
+            _ => None,
+        };
+        if which.is_some() && (p.fp.x67F as i32) < cd.xE4 {
+            let div = lag / cd.xE8;
+            let mut int_lag = div as i32;
+            if int_lag == 0 {
+                int_lag = 1;
+            }
+            lag = int_lag as f32;
+        }
     }
-    landing_enter_basic(g, p, c, rand)
+    match which {
+        Some(k) => {
+            ftcommon_8007d7fc(g, p, c)?;
+            let msid = FTCO_MS_LANDING_AIR_N + k;
+            let row = load_row(p, FTCO_SM_LANDING_AIR_N + k as u32)?;
+            change_motion_state(p, msid, row.as_ref(), rand)?;
+            let end = p.skel.end_frame();
+            set_anim_rate(p, (end + 0.1) / lag);
+            Ok(())
+        }
+        None => landing_enter_basic(g, p, c, rand),
+    }
 }

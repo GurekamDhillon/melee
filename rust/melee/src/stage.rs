@@ -140,7 +140,16 @@ pub fn dptcl_tracks(a: &DatArchive, gobj: u32, anim: u32) -> Vec<DptclTrack> {
         return Vec::new();
     }
     let aj_root = be32(d, anims + 4 * anim);
-    dptcl_tracks_of(a, root, aj_root)
+    let mut tracks = dptcl_tracks_of(a, root, aj_root);
+    // grAnime_801C8138: `unk8[gobj].x28` is a per-animation loop table; a nonzero entry sets
+    // AOBJ_LOOP (0x20000000, grAnime_801C752C) on every AObj of the animation.
+    let flags = be32(d, e + 0x28);
+    if flags != 0 && d[(flags + anim) as usize] != 0 {
+        for t in &mut tracks {
+            t.aobj.flags |= 0x2000_0000;
+        }
+    }
+    tracks
 }
 
 /// Every particle track (FObj 0x28) of animjoint tree `aj_root` walked in parallel with joint tree

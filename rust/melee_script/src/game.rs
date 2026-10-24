@@ -438,6 +438,107 @@ pub trait ScriptGame {
         0
     }
     fn set_percent(&mut self, _slot: i32, _percent: i32) {}
+
+    // ---- the long rewind's keyframe store (gw_snap.c `gw_rw_*`); `user` is the script bookkeeping saved beside a keyframe
+    fn rw_begin(&mut self, _tag: i32, _user: &[u8]) -> i32 {
+        -1
+    }
+    fn rw_save(&mut self, _tag: i32, _user: &[u8]) -> i32 {
+        -1
+    }
+    /// `gw_rw_load(k)`: the keyframe `k` (a tag from `rw_find_le`), its `user` bytes back
+    fn rw_load(&mut self, _k: i32) -> Option<Vec<u8>> {
+        None
+    }
+    fn rw_drop_from(&mut self, _tag: i32) -> i32 {
+        0
+    }
+    fn rw_trim(&mut self, _limit: i32) {}
+    fn rw_end(&mut self) {}
+    /// the newest keyframe at or before `tag`
+    fn rw_find_le(&self, _tag: i32) -> Option<i32> {
+        None
+    }
+    fn rw_base_tag(&self) -> i32 {
+        0
+    }
+    fn rw_latest(&self) -> i32 {
+        0
+    }
+    fn rw_count(&self) -> i32 {
+        0
+    }
+    fn rw_bytes(&self) -> f64 {
+        0.0
+    }
+    fn rw_delta_bytes(&self) -> f64 {
+        0.0
+    }
+    fn rw_ms_last_load(&self) -> f64 {
+        0.0
+    }
+    fn rw_ms_save_avg(&self) -> f64 {
+        0.0
+    }
+    fn rw_last_load_pages(&self) -> u32 {
+        0
+    }
+    /// `gw_rw_capture`: copy the whole state for the exactness self-test (0 on success)
+    fn rw_capture(&mut self) -> i32 {
+        -1
+    }
+    /// `gw_rw_compare`: ([diff incl. render-owned, diff of the simulation], [hash then, hash now]); frees the copy
+    fn rw_compare(&mut self) -> Option<([f64; 2], [u64; 2])> {
+        None
+    }
+    fn rw_measure(&mut self, _on: bool) {}
+    fn snap_slot_bytes(&self) -> u64 {
+        0
+    }
+    /// `gw_Snap_LabResim`: a silent re-simulation frame is running
+    fn snap_lab_resim(&mut self, _on: bool) {}
+    // ---- the persistent state library (`gw_snap_file_*`); `hdr` is the script's fixed-size header
+    fn snap_file_save(&mut self, _path: &str, _hdr: &[u8]) -> i32 {
+        -1
+    }
+    fn snap_file_header(&self, _path: &str, _len: usize) -> Option<Vec<u8>> {
+        None
+    }
+    fn snap_file_rewrite_header(&mut self, _path: &str, _hdr: &[u8]) -> i32 {
+        -1
+    }
+    /// 0 ok, -2 another memory layout, -3 damaged, other: unreadable
+    fn snap_file_load(&mut self, _path: &str) -> i32 {
+        -1
+    }
+    /// `gs_identity`: exe hash, disc hash, mods hash, Geno data hash
+    fn identity(&self) -> [u64; 4] {
+        [0; 4]
+    }
+    /// `gw_Geno_Reload`: <0 refused (msg says why), 0 the layout changed (restart), >0 re-apply
+    fn geno_reload(&mut self, _msg: &mut String) -> i32 {
+        -1
+    }
+    /// `gw_GenoGame_LabReload`: fighters re-applied
+    fn geno_lab_reload(&mut self) -> i32 {
+        0
+    }
+    /// `gw_ScriptGame_ModeActive`: a Lua mode director runs the match
+    fn mode_active(&self) -> bool {
+        false
+    }
+    /// `gw_ScriptGame_LabKnockback`
+    #[allow(clippy::too_many_arguments)]
+    fn lab_knockback(&self, _slot: i32, _attacker: i32, _dmg_bits: i32, _kbg: i32, _wbk: i32, _bkb: i32, _pct_bits: i32, _post: i32) -> f32 {
+        0.0
+    }
+    fn lab_kb_level(&self, _kb_bits: i32) -> i32 {
+        0
+    }
+    /// `gw_ScriptGame_LabFlightF`: 0 gravity, 1 terminal, 2 friction, 3 facing, 4 air, 5 weight, 6 percent
+    fn lab_flight_f(&self, _slot: i32, _which: i32) -> f32 {
+        0.0
+    }
 }
 
 /// No game: nothing is present (the C build before a scene).

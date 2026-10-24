@@ -38,7 +38,7 @@ impl State {
     }
 
     /// `gs_stage_state_refuse`
-    fn stage_state_refuse(&mut self, lua: &mlua::Lua, op: &str) -> LuaResult<MultiValue> {
+    pub(crate) fn stage_state_refuse(&mut self, lua: &mlua::Lua, op: &str) -> LuaResult<MultiValue> {
         let why = "stage slots active: savestate/rewind cannot restore the native director and cache";
         self.log(&format!("{op} refused: {why}"));
         Ok(MultiValue::from_iter([Value::Boolean(false), Value::String(lua.create_string(why)?)]))
@@ -46,13 +46,20 @@ impl State {
 }
 
 impl Engine {
-    /// `gs_apply_pending` (quick slots): at a frame boundary, save or load what was requested.
-    pub fn apply_pending(&self, _at_tick: bool) {
+    /// `gs_apply_pending`: pending savestate / loadstate / rewind / library save and load, at a frame boundary:
+    /// FramePre, or the loop top when paused (`at_tick`). A rewind starts a re-simulation burst, so it only happens at the loop top.
+    pub fn apply_pending(&self, at_tick: bool) {
         let mut hooks: Vec<(&'static str, i64)> = Vec::new();
         {
             let mut s = self.st.borrow_mut();
-            let session = s.host.borrow().session();
-            if (s.pending_save != 0 || s.pending_load != 0) && s.game.stage_slots_active() {
+            let any = |s: &State| {
+                s.pending_save != 0
+                    || s.pending_load != 0
+                    || s.rw.pending_on
+                    || !s.rw.st_pending_save.is_empty()
+                    || !s.rw.st_pending_load.is_empty()
+            };
+            if any(&s) && s.game.stage_slots_active() {
                 s.print(
                     crate::engine::GS_RED,
                     "stage slot session active: savestate/rewind is refused (native queue/cache lifetime)",
@@ -60,11 +67,18 @@ impl Engine {
                 s.log("pending savestate/rewind refused: stage slots active; pending requests cleared");
                 s.pending_save = 0;
                 s.pending_load = 0;
+                s.rw.pending_on = false;
+                s.rw.st_pending_save.clear();
+                s.rw.st_pending_load.clear();
             }
-            if (s.pending_save != 0 || s.pending_load != 0) && session {
+            let session = s.host.borrow().session();
+            if any(&s) && session {
                 s.print(crate::engine::GS_RED, "savestates are off during a netplay/rollback session");
                 s.pending_save = 0;
                 s.pending_load = 0;
+                s.rw.pending_on = false;
+                s.rw.st_pending_save.clear();
+                s.rw.st_pending_load.clear();
             }
             if s.pending_save != 0 {
                 let slot = (s.pending_save - 1) as usize;
@@ -88,15 +102,103 @@ impl Engine {
                 let sl = s.slot[slot];
                 if sl.used && sl.scene_epoch == s.scene_epoch && s.game.snap_load_index(slot as i32) == 0 {
                     s.slot_restore(sl);
+                    s.rw.began = false; // the history belongs to the timeline we just left: start over
                     s.print(crate::engine::GS_GREEN, &format!("loaded state {}", slot + 1));
                     hooks.push(("on_loadstate", slot as i64 + 1));
                 } else {
                     s.print(crate::engine::GS_RED, &format!("could not load state {}", slot + 1));
                 }
             }
+            if !s.rw.st_pending_save.is_empty() {
+                let path = std::mem::take(&mut s.rw.st_pending_save);
+                let t0 = s.host.borrow().now_ms();
+                let h = s.state_fill(&s.rw.st_save_name, &s.rw.st_save_desc);
+                if s.game.snap_file_save(&path, &h.to_bytes()) == 0 {
+                    if let Some(dir) = std::path::Path::new(&path).parent() {
+                        s.state_index(dir);
+                    }
+                    s.rw.st_gen += 1;
+                    let ms = s.host.borrow().now_ms() - t0;
+                    s.print(
+                        crate::engine::GS_GREEN,
+                        &format!("state saved: {} (frame {}, {:.0} ms)", h.name, h.match_frame, ms),
+                    );
+                    s.log(&format!("lab: state saved to {path} in {ms:.0} ms"));
+                } else {
+                    s.print(crate::engine::GS_RED, &format!("state could not be saved ({path})"));
+                }
+            }
+            if !s.rw.st_pending_load.is_empty() {
+                let path = std::mem::take(&mut s.rw.st_pending_load);
+                let h = s.read_state_hdr(std::path::Path::new(&path));
+                match s.state_check(h.as_ref()) {
+                    Err(why) => s.print(crate::engine::GS_RED, &format!("state refused: {why}")),
+                    Ok(()) => {
+                        let h = h.unwrap();
+                        let rc = s.game.snap_file_load(&path);
+                        if rc != 0 {
+                            let why = if rc == -2 {
+                                "made for another memory layout"
+                            } else if rc == -3 {
+                                "the file is damaged"
+                            } else {
+                                "unreadable"
+                            };
+                            s.print(crate::engine::GS_RED, &format!("state not loaded: {why}"));
+                        } else {
+                            s.slot_restore(h.slot);
+                            s.nev_reset();
+                            s.rw.began = false; // a new timeline
+                            s.print(
+                                crate::engine::GS_GREEN,
+                                &format!("state loaded: {} (frame {})", h.name, h.match_frame),
+                            );
+                            hooks.push(("on_loadstate", 9)); // slot 9 = the library
+                        }
+                    }
+                }
+            }
+            if s.rw.pending_on && at_tick {
+                let target = s.rw.pending_to;
+                s.rw.pending_on = false;
+                let k = s.game.rw_find_le(target);
+                let u = match k {
+                    Some(k) if s.rw.began && target <= s.rw.head => {
+                        s.game.rw_load(k).and_then(|b| crate::rewind::slot_from_bytes(&b)).map(|u| (k, u))
+                    }
+                    _ => None,
+                };
+                match u {
+                    None => {
+                        s.print(crate::engine::GS_RED, &format!("rewind: frame {target} is no longer in the history"));
+                        if s.rw.hot_phase == 1 {
+                            s.rw.hot_phase = 0;
+                        }
+                        if s.rw.rwt_phase == 3 {
+                            s.rwt_fail_pub("the target left the history");
+                        }
+                    }
+                    Some((k, u)) => {
+                        s.slot_restore(u);
+                        s.nev_reset();
+                        s.rw.last_load_ms = s.game.rw_ms_last_load();
+                        let now_ms = s.host.borrow().now_ms();
+                        s.rw.t0 = now_ms - s.rw.last_load_ms;
+                        s.rw.last_frames = target - k;
+                        s.rw.resim = target - k;
+                        s.rw.notify = true;
+                        if s.rw.resim == 0 {
+                            s.rw.last_ms = s.rw.last_load_ms;
+                        }
+                        if s.rw.hot_phase == 1 {
+                            s.rw.hot_phase = 2;
+                        }
+                    }
+                }
+            }
         }
         for (name, slot) in hooks {
-            self.hook_all(name, &[Value::Integer(slot), Value::Integer(0)][..1]);
+            self.hook_all(name, &[Value::Integer(slot)]);
         }
     }
 }

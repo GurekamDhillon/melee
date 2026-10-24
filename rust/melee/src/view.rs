@@ -149,18 +149,24 @@ struct Stage {
     lights: Vec<u32>,
 }
 
-fn load_stage(file: &[u8]) -> Result<Stage, String> {
+fn load_stage(file: &[u8], is_fd: bool) -> Result<Stage, String> {
     let a = DatArchive::parse(file).map_err(|e| format!("stage: {e}"))?;
     let head = a.public_offset("map_head").ok_or("no map_head")?;
     let dat = Arc::new(a.data);
     let d = &dat[..];
     let table = be32(d, head + 8);
     let want: Option<Vec<u32>> = std::env::var("MELEE_VIEW_GROUPS").ok().map(|v| v.split(',').filter_map(|x| x.trim().parse().ok()).collect());
-    let groups: Vec<(u32, u32)> = FD_GROUPS.iter().copied().filter(|(g, _)| want.as_ref().map_or(true, |w| w.contains(g))).collect();
+    let fd_groups: Vec<(u32, u32)> = if is_fd {
+        FD_GROUPS.to_vec()
+    } else {
+        // Any other stage: every map group with a root, all in the default camera pass (no stage-specific callbacks yet).
+        (0..be32(d, head + 0xC).min(64)).filter(|g| be32(d, table + g * 0x34) != 0).map(|g| (g, 0)).collect()
+    };
+    let groups: Vec<(u32, u32)> = fd_groups.iter().copied().filter(|(g, _)| want.as_ref().map_or(true, |w| w.contains(g))).collect();
     let ids: Vec<u32> = groups.iter().map(|g| g.0).collect();
     let mut anim = crate::stage_anim::StageAnim::new(dat.clone(), head, &ids);
     // FD only: StageCallbacks.flags_b0 is the MSB of the table's flags word (PPC bitfield order).
-    let light_group = (0..10u32).find(|&i| unsafe { melee_world::tu::grlast::grLast_StageCallbacks[i as usize].anon_10.flags } & 0x8000_0000 != 0).unwrap_or(0);
+    let light_group = (0..10u32).find(|&i| is_fd && unsafe { melee_world::tu::grlast::grLast_StageCallbacks[i as usize].anon_10.flags } & 0x8000_0000 != 0).unwrap_or(0);
     let mut lights = Vec::new();
     let ll = be32(d, table + light_group * 0x34 + 0x18);
     if ll != 0 {
@@ -176,12 +182,12 @@ fn load_stage(file: &[u8]) -> Result<Stage, String> {
     }
     // grLast_OnInit: stage gobjs 0-3 on_init (grAnime_801C8138 set 0), then backdrop case 1 of grLast_8021B920.
     for &g in &ids {
-        if g <= 3 {
+        if is_fd && g <= 3 {
             anim.start_map_anim(g, 0);
         }
     }
     for &(map, i1, i2, set) in &FD_BACKDROP {
-        if !ids.contains(&map) {
+        if !is_fd || !ids.contains(&map) {
             continue;
         }
         if i2 != -1 {
@@ -190,7 +196,7 @@ fn load_stage(file: &[u8]) -> Result<Stage, String> {
         anim.grdo_anim(map, i1, 7, 0, false, 0.0, 1.0);
         anim.grdo_clear_loop(map, i1, 7);
     }
-    if ids.contains(&4) {
+    if is_fd && ids.contains(&4) {
         anim.grdo_anim(4, 0x10, 7, 0, false, 0.0, 1.0);
     }
     if let (Ok(v), Err(_)) = (std::env::var("MELEE_VIEW_DUMP"), std::env::var("MELEE_VIEW_DUMP_FRAME")) {
@@ -269,7 +275,7 @@ fn camera(p: &crate::cm_drive::CamPose) -> (Mtx, [[f32; 4]; 4]) {
 impl MatchRender {
     pub fn new(disc: &mut crate::disc::Disc, stage_file: &str, names: &[&str], sim: &mut VsMatch) -> Result<Self, String> {
         let stage_bytes = disc.read(stage_file)?;
-        let stage = load_stage(&stage_bytes)?;
+        let stage = load_stage(&stage_bytes, stage_file.ends_with("GrNLa.dat") || stage_file.ends_with("GrNLa.usd"))?;
         let cm = {
             let a = DatArchive::parse(&stage_bytes).map_err(|e| format!("{stage_file}: {e}"))?;
             let gp = crate::stage::ground_param(&a).ok_or("stage dat: no grGroundParam")?;
@@ -512,7 +518,7 @@ pub fn view_golden(args: &[String]) -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
-    let cfg = WindowConfig { title: format!("melee view-golden - {scenario}"), width: 1280, height: 960 };
+    let cfg = WindowConfig { title: format!("melee view-golden - {scenario}"), width: 1280, height: 960, active: std::env::var_os("MELEE_PAD_SCRIPT").is_none() };
     match run_windowed(view, PadSystem::headless(), cfg) {
         Ok((ticks, _)) => {
             eprintln!("view-golden: closed after {ticks} ticks");

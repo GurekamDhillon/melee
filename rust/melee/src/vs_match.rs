@@ -37,6 +37,7 @@ mod attackair;
 mod dashrun;
 mod fox;
 mod rebirth;
+pub mod rollback;
 mod snapshot;
 mod snapshot_ps;
 mod snapshot_fx;
@@ -358,6 +359,7 @@ struct EntryCommon {
 }
 
 /// One live effect from `efLib_Create` (EF_Effect + its JObj tree): only its particle tracks.
+#[derive(Clone)]
 struct Effect {
     lifetime: u16,
     /// Owner fighter slot (the RObj position constraint follows its root JObj).
@@ -373,6 +375,7 @@ struct Effect {
     rot_z: Option<f32>,
 }
 
+#[derive(Clone)]
 struct EffectTrack {
     joint: JObjRef,
     chain: Vec<u32>,
@@ -388,6 +391,7 @@ struct EffectRoot {
 }
 
 /// A stage particle track and its AObj (see `stage::dptcl_tracks`).
+#[derive(Clone)]
 struct DptclAnim {
     /// The map gobj (stage `map_head` entry) whose animation this track belongs to.
     map_gobj: u32,
@@ -402,9 +406,9 @@ pub struct VsMatch {
     pub cg: CollGlobals,
     /// `HSD_PadGameStatus[4]`.
     pub pads: [input::PadStatus; 4],
-    /// Live play (`melee play`): the raw pad samples the platform layer read for the next frame.
-    /// `None` = the golden harness's scripted pads (`input::pad_fixed`).
-    pub live_pads: Option<[input::RawPad; 4]>,
+    /// Platform input (netplay / rollback): the raw samples the next frame's `HSD_PadRenewStatus`
+    /// reads instead of the scenario's pad script. `None`: the script (`input::pad_fixed`).
+    pub pad_feed: Option<[input::RawPad; 4]>,
     /// The golden frame whose s_link 0 runs the GO callback (input unlock).
     go_frame: i32,
     pub rand: HsdRand,
@@ -1165,7 +1169,7 @@ impl VsMatch {
                 }
             });
         }
-        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], live_pads: None, go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: Vec::new(), respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, stage_data: Arc::new(stage.data.clone()), stage_map_head: stage.public_offset("map_head").unwrap_or(0), keep_ref: Vec::new() })
+        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], pad_feed: None, go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: Vec::new(), respawn_points: (4..8).filter_map(|id| points.iter().find(|p| p.id == id).map(|p| Vec3 { x: p.pos[0], y: p.pos[1], z: p.pos[2] })).collect(), respawn_busy: [0; 6], start_shield, stage_data: Arc::new(stage.data.clone()), stage_map_head: stage.public_offset("map_head").unwrap_or(0), keep_ref: Vec::new() })
     }
 
     /// The m-ex fighters' code-run report (crate::mex), one block per such fighter.
@@ -1227,8 +1231,8 @@ impl VsMatch {
         // The frame's HSD_PadRenewStatus (the pad script's sample for this frame).
         let g = self.frame + 1;
         for port in 0..4 {
-            let raw = match &self.live_pads {
-                Some(l) => l[port],
+            let raw = match &self.pad_feed {
+                Some(f) => f[port],
                 None => input::pad_fixed(port, g),
             };
             self.pads[port].renew(&raw);

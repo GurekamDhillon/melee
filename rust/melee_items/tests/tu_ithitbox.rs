@@ -2,6 +2,7 @@
 //! src/tu/ithitbox.rs vs the C (the whole TU, shipping contraction; regenerate the expected file
 //! with `python rust/melee_items/gen/mtu/run_tu.py ithitbox`).
 #![allow(static_mut_refs, non_snake_case, non_upper_case_globals, unused_imports, unused_mut, unused_assignments, unused_variables, unused_unsafe)]
+#[path = "mtu_harness_world/mod.rs"]
 mod mtu_harness;
 use core::ffi::c_void;
 use core::ptr::null_mut;

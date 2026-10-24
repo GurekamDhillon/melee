@@ -33,6 +33,9 @@
 #[path = "input.rs"]
 pub mod input;
 
+mod fox;
+use fox::{ItemCmd, FoxVars, SimItem};
+
 use crate::fighter_data::skeleton::{FigaTree, Skeleton};
 use crate::fighter_data::{AnimRow, EcbDesc};
 use crate::{FrameWords, Sim};
@@ -65,6 +68,9 @@ const FTCO_MS_JUMP_AERIAL_F: i32 = 27;
 const FTCO_MS_JUMP_AERIAL_B: i32 = 28;
 const FTCO_MS_FALL_AERIAL: i32 = 32;
 const FTCO_SM_JUMP_AERIAL_F: u32 = 18;
+const FOX_AIR_N_START: i32 = fox::FX_MS_SPECIAL_AIR_N_START;
+const FOX_AIR_N_LOOP: i32 = fox::FX_MS_SPECIAL_AIR_N_LOOP;
+const FOX_AIR_N_END: i32 = fox::FX_MS_SPECIAL_AIR_N_END;
 const FTCO_SM_FALL_AERIAL: u32 = 23;
 /// `ftCo_MS_GuardOn` .. `GuardReflect` (ftmotionstates.c 178-182) and their rows
 /// (`ftCo_SM_GuardOn` 37, `Guard` 38, `GuardOff` 39).
@@ -217,6 +223,13 @@ pub struct Player {
     guard: GuardVars,
     /// `fp->mv.co.kneebend` / `fp->mv.co.jump`.
     jump: JumpVars,
+    /// Fox's blaster state (fox.rs) and the item work he hands to the item procs.
+    fx: FoxVars,
+    item_cmds: Vec<ItemCmd>,
+    /// `fp->dat_attrs` for Fox.
+    fx_attrs: Option<melee_types::ftFox_DatAttrs>,
+    /// The next `Fighter_ChangeMotionState` has `Ft_MF_KeepGfx`.
+    keep_gfx: bool,
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -382,6 +395,8 @@ pub struct VsMatch {
     /// Fighter parts that generators follow: (`JObjRef`, player index, part). Their matrices in
     /// `joint_mtx` are the part's world translation (no rotation: particle positions are not hashed).
     fighter_jobjs: Vec<(JObjRef, usize, usize)>,
+    /// The live items (fox.rs).
+    items: Vec<SimItem>,
 }
 
 /// `Stage_GetBlastZone*Offset()`: `stage_info.blast_zone.* + cam_info.cam_{x,y}_offset`
@@ -803,6 +818,12 @@ impl VsMatch {
                 } else {
                     None
                 },
+                fx_attrs: if kind == Ft_Kind_Fox {
+                    let x4 = be32(&files.dat.data, files.ft_data + 4);
+                    Some(*files.dat.load_at::<melee_types::ftFox_DatAttrs>(x4).get())
+                } else {
+                    None
+                },
                 files: Arc::new(files),
                 rows: HashMap::new(),
                 part_to_joint,
@@ -814,6 +835,9 @@ impl VsMatch {
                 hud_randomize: false,
                 guard: GuardVars::default(),
                 jump: JumpVars::default(),
+                fx: FoxVars::default(),
+                item_cmds: Vec::new(),
+                keep_gfx: false,
             });
             // ... Fighter_ChangeMotionState(Entry): no animation, cur_anim_frame -1;
             // ftaction.c:1408 frame_count = cur_anim_frame + x898_unk. Then ft_80084CB0: the
@@ -857,7 +881,7 @@ impl VsMatch {
                 }
             });
         }
-        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new() })
+        Ok(Self { players, ground, cg, pads: [input::PadStatus::default(); 4], go_frame, rand, ps, frame: -1, stopped: None, bgm: pick.bgm as i32, last_bg, dptcl, aobj_globals: AObjGlobals::default(), joint_mtx, common, effect_banks, effects: Vec::new(), next_effect_instance: 1, appsrt_hook_lists, blast, fighter_jobjs: Vec::new(), items: Vec::new() })
     }
 
     /// The m-ex fighters' code-run report (crate::mex), one block per such fighter.
@@ -866,7 +890,8 @@ impl VsMatch {
     }
 
     fn words(&self) -> FrameWords {
-        let mut w = FrameWords { frame: self.frame as u32, seed: self.rand.logic_seed(), ..Default::default() };
+        let (n_items, item_sum) = self.item_words();
+        let mut w = FrameWords { frame: self.frame as u32, seed: self.rand.logic_seed(), items: n_items, itemsum: item_sum, ..Default::default() };
         for p in &self.players {
             // Slot = player*2 + follower; is_cpu false (human scenario).
             let s = p.slot * 2;
@@ -1050,6 +1075,7 @@ impl VsMatch {
                 }
                 m if is_guard_motion(m) => guard_anim(p, &mut self.rand)?,
                 FTCO_MS_KNEE_BEND => kneebend_anim(p, &mut self.rand)?,
+                m if fox::is_fox_special_n(m) => fox::anim(p, &mut self.rand)?,
                 m if is_jump_motion(m) => {
                     // ftCo_Jump_Anim.
                     if !p.skel.frames_remaining() {
@@ -1227,7 +1253,19 @@ impl VsMatch {
                     }
                 }
                 m if is_jump_motion(m) => jump_phys(p),
-                m if m == FTCO_MS_LANDING || m == FTCO_MS_TURN || m == FTCO_MS_WAIT || is_guard_motion(m) || m == FTCO_MS_KNEE_BEND => {
+                FOX_AIR_N_START | FOX_AIR_N_LOOP | FOX_AIR_N_END => {
+                    // ftFx_SpecialAirN*_Phys -> ft_80084DB0.
+                    let f = &mut *p.fp;
+                    fc::check_fall_fast(f);
+                    if f.fall_fast() != 0 {
+                        fc::fall_fast(f);
+                    } else {
+                        let (g, t) = (f.co_attrs.gravity, f.co_attrs.terminal_velocity);
+                        fc::fall(f, g, t);
+                    }
+                    fc::calc_self_accel_drift(f);
+                }
+                m if m == FTCO_MS_LANDING || m == FTCO_MS_TURN || m == FTCO_MS_WAIT || is_guard_motion(m) || m == FTCO_MS_KNEE_BEND || (fox::FX_MS_SPECIAL_N_START..=fox::FX_MS_SPECIAL_N_END).contains(&m) => {
                     // (Wait: then ftColl_8007AEE0, a hurtbox reset; not hashed.)
                     // ftCo_Landing_Phys / ftCo_Turn_Phys -> ft_80084F3C: ground friction, then the
                     // self velocity along the floor.
@@ -1369,7 +1407,13 @@ impl VsMatch {
                         return Err("ftCo_8009EF68 (StopCeil) not ported".into());
                     }
                 }
-                m if m == FTCO_MS_TURN || m == FTCO_MS_KNEE_BEND || is_guard_motion(m) => {
+                FOX_AIR_N_START | FOX_AIR_N_LOOP | FOX_AIR_N_END => {
+                    // ftCo_AirCatchHit_Coll -> ft_80083090(gobj, ftCo_80096CC8, ftCo_80096D28).
+                    if ft_800831cc(&mut self.ground, &mut self.cg, p)? {
+                        return Err("ftCo_80096D28 (SpecialAirN landing) not ported".into());
+                    }
+                }
+                m if m == FTCO_MS_TURN || m == FTCO_MS_KNEE_BEND || is_guard_motion(m) || (fox::FX_MS_SPECIAL_N_START..=fox::FX_MS_SPECIAL_N_END).contains(&m) => {
                     // ftCo_Turn_Coll -> ft_80083F88 / the guard states' ft_800845B4: ft_80082708
                     // (mpColl_8004B108); no floor -> Fall (a ledge slip -> ftCo_8009F39C).
                     let joints = {
@@ -1435,6 +1479,10 @@ impl VsMatch {
             for e in q.into_iter().rev() {
                 self.ef_dispatch(i, e)?;
             }
+            // Fighter_8006C80C: accessory4_cb (ftFx_SpecialN_CreateBlasterShot).
+            if self.players[i].fp.x221F_b3() == 0 && self.players[i].fp.x2219_b5() == 0 {
+                fox::accessory4(&mut self.players[i])?;
+            }
         }
         // s_link 14, Fighter_ProcessHit_8006D1EC: the shield's regeneration / upkeep (no hit is
         // ported: hit_guard stops the run before one lands).
@@ -1461,6 +1509,8 @@ impl VsMatch {
                 }
             }
         }
+        // The item procs.
+        self.items_update()?;
         Ok(())
     }
 
@@ -1985,6 +2035,10 @@ fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         FTCO_MS_DEAD_DOWN => Ok(()), // input_cb NULL
         m if is_guard_motion(m) => guard_iasa(p, rand),
         FTCO_MS_KNEE_BEND => kneebend_iasa(p),
+        m if fox::is_fox_special_n(m) => {
+            fox::iasa(p);
+            Ok(())
+        }
         m if is_jump_motion(m) || is_jump_aerial_motion(m) => jump_iasa(p, rand),
         FTCO_MS_FALL_AERIAL => fall_iasa(p, rand),
         m => Err(format!("player {}: input_cb of motion {m} not ported", p.slot + 1)),
@@ -1996,13 +2050,16 @@ fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
 /// jump) or the C-stick (`ftCo_800DF478`); the jump also fires on a tap of the stick up
 /// (`ftCo_JumpAerial_CheckInput`). Any of those stops the run.
 fn fall_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    if !p.fp.item_gobj.is_null() {
+        return Err("ftCo_Fall_IASA with an item not ported".into());
+    }
+    if special_air_check(p, rand)? {
+        return Ok(());
+    }
     let fp = &*p.fp;
     let i = &fp.input;
     if !fp.item_gobj.is_null() {
         return Err("ftCo_Fall_IASA with an item not ported".into());
-    }
-    if fp.x686 == 0 || fp.x687 == 0 || fp.x688 == 0 || fp.x689 == 0 {
-        return Err(format!("player {}: ftCo_SpecialAir_CheckInput not ported", p.slot + 1));
     }
     if i.pressed_buttons & !(PAD_STICK_DIRS | input::HSD_PAD_XY) != 0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 {
         return Err(format!("player {}: ftCo_Fall_IASA with a press / C-stick: not ported", p.slot + 1));
@@ -2414,14 +2471,17 @@ fn jump_enter(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
 /// `ftCo_Jump_IASA` / `ftCo_JumpAerial_IASA`: the air checks (specials, air dodge, air attack)
 /// are refused when an input would fire; then the double jump (`ftCo_800CB870`).
 fn jump_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    if !p.fp.item_gobj.is_null() {
+        return Err("ftCo_Jump_IASA with an item not ported".into());
+    }
+    if special_air_check(p, rand)? {
+        return Ok(());
+    }
     let who = p.slot + 1;
     let fp = &*p.fp;
     let i = &fp.input;
     if !fp.item_gobj.is_null() {
         return Err("ftCo_Jump_IASA with an item not ported".into());
-    }
-    if fp.x686 == 0 || fp.x687 == 0 || fp.x688 == 0 || fp.x689 == 0 {
-        return Err(format!("player {who}: ftCo_SpecialAir_CheckInput not ported"));
     }
     if i.pressed_buttons & !(PAD_STICK_DIRS | input::HSD_PAD_XY) != 0 || i.cstick[0].x != 0.0 || i.cstick[0].y != 0.0 || i.triggers[0] != 0.0 {
         return Err(format!("player {who}: ftCo_Jump_IASA with a press / C-stick / trigger: not ported"));
@@ -2482,6 +2542,36 @@ fn fall_aerial_enter(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     p.fall_smid = FTCO_SM_FALL_AERIAL as i32;
     p.fall_x4 = 0.0;
     Ok(())
+}
+
+/// `ftCo_SpecialAir_CheckInput`: B in the air.
+fn special_air_check(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
+    let cd = melee_fighter::hooks::common_data();
+    let fp = &*p.fp;
+    if fp.input.pressed_buttons & input::HSD_PAD_B == 0 {
+        return Ok(false);
+    }
+    let who = p.slot + 1;
+    if fp.input.lstick[0].y >= cd.x21C {
+        return Err(format!("player {who}: up-B in the air (ftData_SpecialAirHi) not ported"));
+    }
+    if fp.input.lstick[0].y <= -cd.x21C {
+        return Err(format!("player {who}: down-B in the air (ftData_SpecialAirLw) not ported"));
+    }
+    if fc::abs_c(fp.input.lstick[0].x) >= cd.x218 {
+        return Err(format!("player {who}: side-B in the air (ftData_SpecialAirS) not ported"));
+    }
+    if fp.kind != Ft_Kind_Fox {
+        return Err(format!("player {who}: neutral B in the air (kind {}) not ported", fp.kind));
+    }
+    // The turnaround on a fresh stick flick.
+    let fp = &mut *p.fp;
+    if (fp.active_duration.lstick.x as i32) < cd.x224 as i32 && ((fp.facing_dir == -1.0 && fp.x2228_b7() == 1) || (fp.facing_dir == 1.0 && fp.x2228_b7() == 0)) {
+        fp.facing_dir = -fp.facing_dir;
+    }
+    fox::special_n_enter(p, true, rand)?;
+    p.fp.set_x2227_b5(1);
+    Ok(true)
 }
 
 /// `ftCo_Jump_Phys`: the first frame only arms `x4`; then `ft_80084DB0`.
@@ -3344,6 +3434,12 @@ fn ftaction_run(p: &mut Player, rand: &mut HsdRand, skip: bool) -> Result<(), St
             0x22 => p.script += 12,
             // ftAction_80071D40 / 80071D94 / 80071DCC: model part / DObj visibility (render).
             0x1F | 0x20 | 0x21 => p.script += 4,
+            // ftAction_80071F34: ftCommon_8007F5CC(gobj, unk27.value): the held item's visibility
+            // (fp->item_gobj is NULL here), x221E_b3.
+            0x23 => {
+                p.fp.set_x221E_b3((value != 0) as u8);
+                p.script += 4;
+            }
             // ftAction_80071F78 / 80071FA0: x221E_b4 / x221E_b5.
             0x24 => {
                 p.fp.set_x221E_b4((value & 1) as u8);
@@ -3659,7 +3755,8 @@ fn change_motion_state_ext(p: &mut Player, msid: i32, row: Option<&(AnimRow, Fig
     for q in std::mem::take(&mut p.ef_queue).into_iter().rev() {
         p.ef_ops.push(EfOp::Spawn(q));
     }
-    if p.fp.x2219_b0() != 0 {
+    let keep_gfx = std::mem::take(&mut p.keep_gfx);
+    if p.fp.x2219_b0() != 0 && !keep_gfx {
         ftcommon_8007db24(p);
     }
     if p.fp.x2219_b3() != 0 {

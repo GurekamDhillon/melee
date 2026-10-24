@@ -42,11 +42,11 @@ pub mod ext {
     fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
     fn gmVs_GetSceneController() -> *mut VsSceneController;
     fn ifAll_GetArchive() -> *mut *mut HSD_Archive = || unsafe { crate::tu::ifall::ifAll_GetArchive() as _ };
-    fn if_802F73C4(a0: *mut HSD_GObj);
-    fn if_802F74D0(a0: *mut HSD_GObj);
+    fn if_802F73C4(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { let _ = crate::tu::if_2F72::if_802F73C4(a0 as _); } };
+    fn if_802F74D0(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { let _ = crate::tu::if_2F72::if_802F74D0(a0 as _); } };
     fn lbArchive_LoadSections(a0: *mut HSD_Archive, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]);
     fn lbAudioAx_800237A8(a0: i32, a1: i32, a2: i32) -> i32 = |a0: i32, a1: i32, a2: i32| unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800237A8(a0 as _, a1 as _, a2 as _) as _ };
-    fn lb_8000C0E8(a0: *mut HSD_JObj, a1: i32, a2: *mut DynamicModelDesc);
+    fn lb_8000C0E8(a0: *mut HSD_JObj, a1: i32, a2: *mut DynamicModelDesc) = |a0: *mut HSD_JObj, a1: i32, a2: *mut DynamicModelDesc| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C0E8(a0 as _, a1 as _, a2 as _); } };
     fn lb_80011C18(a0: *mut HSD_JObj, a1: u32) = |a0: *mut HSD_JObj, a1: u32| { unsafe { let _ = melee_runtime::tu::lbspdisplay::lb_80011C18(a0 as _, a1 as _); } };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.

@@ -37,7 +37,7 @@ pub mod ext {
     fn Geno_DefineArtOpen(a0: i32, a1: i32, a2: i32) -> i32;
     fn Geno_DefineBaseCK(a0: i32) -> i32;
     fn Geno_DefineName(a0: i32, a1: *mut i8, a2: i32) -> i32;
-    fn Ground_801C1DE4(a0: *mut i32, a1: *mut i32);
+    fn Ground_801C1DE4(a0: *mut i32, a1: *mut i32) = |a0: *mut i32, a1: *mut i32| { unsafe { let _ = crate::tu::ground::Ground_801C1DE4(a0 as _, a1 as _); } };
     fn GxTex_Close(a0: i32);
     fn GxTex_CopyImage(a0: i32, a1: *mut c_void);
     fn GxTex_Format(a0: i32) -> i32;
@@ -60,7 +60,7 @@ pub mod ext {
     fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32);
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn HSD_MemAlloc(a0: i32) -> *mut c_void = |a0: i32| unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ };
-    fn HSD_TObjReqAnimAll(a0: *mut HSD_TObj, a1: f32);
+    fn HSD_TObjReqAnimAll(a0: *mut HSD_TObj, a1: f32) = |a0: *mut HSD_TObj, a1: f32| { unsafe { let _ = melee_runtime::tu::tobj::HSD_TObjReqAnimAll(a0 as _, a1 as _); } };
     fn Player_800325C8(a0: u32, a1: i32) -> i8;
     fn Player_GetCoins(a0: i32) -> i32;
     fn Player_GetStocks(a0: i32) -> i32;
@@ -90,7 +90,7 @@ pub mod ext {
     fn ifAll_GetPlayerHUDPosition(a0: i32) -> *mut Vec = |a0: i32| unsafe { crate::tu::ifall::ifAll_GetPlayerHUDPosition(a0 as _) as _ };
     fn ifStatus_GetHUDInfo() -> *mut HudIndex = super::hud_info_default;
     fn lbArchive_LoadSections(a0: *mut HSD_Archive, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]);
-    fn lbVector_8000DE38(a0: *mut c_void, a1: *mut Vec, a2: f32) -> *mut Vec;
+    fn lbVector_8000DE38(a0: *mut c_void, a1: *mut Vec, a2: f32) -> *mut Vec = |a0: *mut c_void, a1: *mut Vec, a2: f32| unsafe { melee_runtime::tu::lbvector::lbVector_8000DE38(a0 as _, a1 as _, a2 as _) as _ };
     fn lb_80011E24(a0: *mut HSD_JObj, a1: *mut *mut HSD_JObj, ids: &[i32]) -> i32;
     fn memzero(a0: *mut c_void, a1: i32) = super::memzero_default;
     }

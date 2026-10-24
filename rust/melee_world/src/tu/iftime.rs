@@ -33,7 +33,7 @@ pub mod ext {
     ext_fns! {
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
     fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
-    fn HSD_AObjReqAnim(a0: *mut HSD_AObj, a1: f32);
+    fn HSD_AObjReqAnim(a0: *mut HSD_AObj, a1: f32) = |a0: *mut HSD_AObj, a1: f32| { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjReqAnim(a0 as _, a1 as _); } };
     fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32) = |a0: *mut HSD_AObj, a1: f32| { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetRate(a0 as _, a1 as _); } };
     fn HSD_GObjFree(a0: *mut HSD_GObj);
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
@@ -55,10 +55,10 @@ pub mod ext {
     fn gm_8016B110() -> i32;
     fn gm_GetStartMeleeRules() -> *mut StartMeleeRules;
     fn ifAll_GetArchive() -> *mut *mut HSD_Archive = || unsafe { crate::tu::ifall::ifAll_GetArchive() as _ };
-    fn ifAll_GetTimerPosition() -> *mut Vec;
+    fn ifAll_GetTimerPosition() -> *mut Vec = || unsafe { crate::tu::ifall::ifAll_GetTimerPosition() as _ };
     fn lbArchive_LoadSections(a0: *mut HSD_Archive, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]);
-    fn lb_8000C07C(a0: *mut HSD_JObj, a1: i32, a2: *mut *mut HSD_AnimJoint, a3: *mut *mut HSD_MatAnimJoint, a4: *mut *mut HSD_ShapeAnimJoint);
-    fn lb_8000C0E8(a0: *mut HSD_JObj, a1: i32, a2: *mut DynamicModelDesc);
+    fn lb_8000C07C(a0: *mut HSD_JObj, a1: i32, a2: *mut *mut HSD_AnimJoint, a3: *mut *mut HSD_MatAnimJoint, a4: *mut *mut HSD_ShapeAnimJoint) = |a0: *mut HSD_JObj, a1: i32, a2: *mut *mut HSD_AnimJoint, a3: *mut *mut HSD_MatAnimJoint, a4: *mut *mut HSD_ShapeAnimJoint| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C07C(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } };
+    fn lb_8000C0E8(a0: *mut HSD_JObj, a1: i32, a2: *mut DynamicModelDesc) = |a0: *mut HSD_JObj, a1: i32, a2: *mut DynamicModelDesc| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C0E8(a0 as _, a1 as _, a2 as _); } };
     fn memzero(a0: *mut c_void, a1: i32) = super::memzero_default;
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.

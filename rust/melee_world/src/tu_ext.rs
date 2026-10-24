@@ -12,18 +12,15 @@ pub fn Camera_8002F3AC() {
 }
 pub static mut HOOK_Camera_8003010C: Option<fn() -> i32> = None;
 /// C `Camera_8003010C` (melee/cm/camera.h).
-pub fn Camera_8003010C() -> i32 {
-    match unsafe { HOOK_Camera_8003010C } { Some(f) => f(), None => panic!("TODO: Camera_8003010C is not ported") }
+pub fn Camera_8003010C() -> i32 { match unsafe { HOOK_Camera_8003010C } { Some(f) => f(), None => crate::cm::camera::world().camera_8003010c() as i32 }
 }
 pub static mut HOOK_Camera_80030AE0: Option<fn(i32)> = None;
 /// C `Camera_80030AE0` (melee/cm/camera.h).
-pub fn Camera_80030AE0(a0: i32) {
-    match unsafe { HOOK_Camera_80030AE0 } { Some(f) => f(a0), None => panic!("TODO: Camera_80030AE0 is not ported") }
+pub fn Camera_80030AE0(a0: i32) { match unsafe { HOOK_Camera_80030AE0 } { Some(f) => f(a0), None => crate::cm::camera::world().camera_80030ae0(a0) }
 }
 pub static mut HOOK_Camera_8003118C: Option<fn(*mut Vec3, f32) -> i32> = None;
 /// C `Camera_8003118C` (melee/cm/camera.h).
-pub fn Camera_8003118C(a0: *mut Vec3, a1: f32) -> i32 {
-    match unsafe { HOOK_Camera_8003118C } { Some(f) => f(a0, a1), None => panic!("TODO: Camera_8003118C is not ported") }
+pub fn Camera_8003118C(a0: *mut Vec3, a1: f32) -> i32 { match unsafe { HOOK_Camera_8003118C } { Some(f) => f(a0, a1), None => unsafe { crate::cm::camera::world().camera_8003118c(&*a0, a1) as i32 } }
 }
 pub static mut HOOK_GObj_SetupGXLink: Option<fn(*mut HSD_GObj, GObj_RenderFunc, u8, u32)> = None;
 /// C `GObj_SetupGXLink` (sysdolphin/baselib/gobjgxlink.h).
@@ -237,63 +234,51 @@ pub fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) {
 }
 pub static mut HOOK_HSD_LObjClearFlags: Option<fn(*mut HSD_LObj, u32)> = None;
 /// C `HSD_LObjClearFlags` (sysdolphin/baselib/lobj.h).
-pub fn HSD_LObjClearFlags(a0: *mut HSD_LObj, a1: u32) {
-    match unsafe { HOOK_HSD_LObjClearFlags } { Some(f) => f(a0, a1), None => panic!("TODO: HSD_LObjClearFlags is not ported") }
+pub fn HSD_LObjClearFlags(a0: *mut HSD_LObj, a1: u32) { match unsafe { HOOK_HSD_LObjClearFlags } { Some(f) => f(a0, a1), None => unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjClearFlags(a0 as _, a1 as _); } }
 }
 pub static mut HOOK_HSD_LObjGetColor: Option<fn(*mut HSD_LObj, *mut GXColor)> = None;
 /// C `HSD_LObjGetColor` (sysdolphin/baselib/lobj.h).
-pub fn HSD_LObjGetColor(a0: *mut HSD_LObj, a1: *mut GXColor) {
-    match unsafe { HOOK_HSD_LObjGetColor } { Some(f) => f(a0, a1), None => panic!("TODO: HSD_LObjGetColor is not ported") }
+pub fn HSD_LObjGetColor(a0: *mut HSD_LObj, a1: *mut GXColor) { match unsafe { HOOK_HSD_LObjGetColor } { Some(f) => f(a0, a1), None => unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjGetColor(a0 as _, a1 as _); } }
 }
 pub static mut HOOK_HSD_LObjGetFlags: Option<fn(*mut HSD_LObj) -> u32> = None;
 /// C `HSD_LObjGetFlags` (sysdolphin/baselib/lobj.h).
-pub fn HSD_LObjGetFlags(a0: *mut HSD_LObj) -> u32 {
-    match unsafe { HOOK_HSD_LObjGetFlags } { Some(f) => f(a0), None => panic!("TODO: HSD_LObjGetFlags is not ported") }
+pub fn HSD_LObjGetFlags(a0: *mut HSD_LObj) -> u32 { match unsafe { HOOK_HSD_LObjGetFlags } { Some(f) => f(a0), None => unsafe { melee_runtime::tu::lobj::HSD_LObjGetFlags(a0 as _) as _ } }
 }
 pub static mut HOOK_HSD_LObjGetInterest: Option<fn(*mut HSD_LObj, *mut Vec3) -> i32> = None;
 /// C `HSD_LObjGetInterest` (sysdolphin/baselib/lobj.h).
-pub fn HSD_LObjGetInterest(a0: *mut HSD_LObj, a1: *mut Vec3) -> i32 {
-    match unsafe { HOOK_HSD_LObjGetInterest } { Some(f) => f(a0, a1), None => panic!("TODO: HSD_LObjGetInterest is not ported") }
+pub fn HSD_LObjGetInterest(a0: *mut HSD_LObj, a1: *mut Vec3) -> i32 { match unsafe { HOOK_HSD_LObjGetInterest } { Some(f) => f(a0, a1), None => unsafe { melee_runtime::tu::lobj::HSD_LObjGetInterest(a0 as _, a1 as _) as _ } }
 }
 pub static mut HOOK_HSD_LObjGetPosition: Option<fn(*mut HSD_LObj, *mut Vec3) -> i32> = None;
 /// C `HSD_LObjGetPosition` (sysdolphin/baselib/lobj.h).
-pub fn HSD_LObjGetPosition(a0: *mut HSD_LObj, a1: *mut Vec3) -> i32 {
-    match unsafe { HOOK_HSD_LObjGetPosition } { Some(f) => f(a0, a1), None => panic!("TODO: HSD_LObjGetPosition is not ported") }
+pub fn HSD_LObjGetPosition(a0: *mut HSD_LObj, a1: *mut Vec3) -> i32 { match unsafe { HOOK_HSD_LObjGetPosition } { Some(f) => f(a0, a1), None => unsafe { melee_runtime::tu::lobj::HSD_LObjGetPosition(a0 as _, a1 as _) as _ } }
 }
 pub static mut HOOK_HSD_LObjLoadDesc: Option<fn(*mut HSD_LightDesc) -> *mut HSD_LObj> = None;
 /// C `HSD_LObjLoadDesc` (sysdolphin/baselib/lobj.h).
-pub fn HSD_LObjLoadDesc(a0: *mut HSD_LightDesc) -> *mut HSD_LObj {
-    match unsafe { HOOK_HSD_LObjLoadDesc } { Some(f) => f(a0), None => panic!("TODO: HSD_LObjLoadDesc is not ported") }
+pub fn HSD_LObjLoadDesc(a0: *mut HSD_LightDesc) -> *mut HSD_LObj { match unsafe { HOOK_HSD_LObjLoadDesc } { Some(f) => f(a0), None => unsafe { melee_runtime::tu::lobj::HSD_LObjLoadDesc(a0 as _) as _ } }
 }
 pub static mut HOOK_HSD_LObjSetColor: Option<fn(*mut HSD_LObj, GXColor)> = None;
 /// C `HSD_LObjSetColor` (sysdolphin/baselib/lobj.h).
-pub fn HSD_LObjSetColor(a0: *mut HSD_LObj, a1: GXColor) {
-    match unsafe { HOOK_HSD_LObjSetColor } { Some(f) => f(a0, a1), None => panic!("TODO: HSD_LObjSetColor is not ported") }
+pub fn HSD_LObjSetColor(a0: *mut HSD_LObj, a1: GXColor) { match unsafe { HOOK_HSD_LObjSetColor } { Some(f) => f(a0, a1), None => unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjSetColor(a0 as _, a1 as _); } }
 }
 pub static mut HOOK_HSD_LObjSetDistAttn: Option<fn(*mut HSD_LObj, f32, f32, i32)> = None;
 /// C `HSD_LObjSetDistAttn` (sysdolphin/baselib/lobj.h).
-pub fn HSD_LObjSetDistAttn(a0: *mut HSD_LObj, a1: f32, a2: f32, a3: i32) {
-    match unsafe { HOOK_HSD_LObjSetDistAttn } { Some(f) => f(a0, a1, a2, a3), None => panic!("TODO: HSD_LObjSetDistAttn is not ported") }
+pub fn HSD_LObjSetDistAttn(a0: *mut HSD_LObj, a1: f32, a2: f32, a3: i32) { match unsafe { HOOK_HSD_LObjSetDistAttn } { Some(f) => f(a0, a1, a2, a3), None => unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjSetDistAttn(a0 as _, a1 as _, a2 as _, a3 as _); } }
 }
 pub static mut HOOK_HSD_LObjSetFlags: Option<fn(*mut HSD_LObj, u32)> = None;
 /// C `HSD_LObjSetFlags` (sysdolphin/baselib/lobj.h).
-pub fn HSD_LObjSetFlags(a0: *mut HSD_LObj, a1: u32) {
-    match unsafe { HOOK_HSD_LObjSetFlags } { Some(f) => f(a0, a1), None => panic!("TODO: HSD_LObjSetFlags is not ported") }
+pub fn HSD_LObjSetFlags(a0: *mut HSD_LObj, a1: u32) { match unsafe { HOOK_HSD_LObjSetFlags } { Some(f) => f(a0, a1), None => unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjSetFlags(a0 as _, a1 as _); } }
 }
 pub static mut HOOK_HSD_LObjSetInterest: Option<fn(*mut HSD_LObj, *mut Vec3)> = None;
 /// C `HSD_LObjSetInterest` (sysdolphin/baselib/lobj.h).
-pub fn HSD_LObjSetInterest(a0: *mut HSD_LObj, a1: *mut Vec3) {
-    match unsafe { HOOK_HSD_LObjSetInterest } { Some(f) => f(a0, a1), None => panic!("TODO: HSD_LObjSetInterest is not ported") }
+pub fn HSD_LObjSetInterest(a0: *mut HSD_LObj, a1: *mut Vec3) { match unsafe { HOOK_HSD_LObjSetInterest } { Some(f) => f(a0, a1), None => unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjSetInterest(a0 as _, a1 as _); } }
 }
 pub static mut HOOK_HSD_LObjSetPosition: Option<fn(*mut HSD_LObj, *mut Vec3)> = None;
 /// C `HSD_LObjSetPosition` (sysdolphin/baselib/lobj.h).
-pub fn HSD_LObjSetPosition(a0: *mut HSD_LObj, a1: *mut Vec3) {
-    match unsafe { HOOK_HSD_LObjSetPosition } { Some(f) => f(a0, a1), None => panic!("TODO: HSD_LObjSetPosition is not ported") }
+pub fn HSD_LObjSetPosition(a0: *mut HSD_LObj, a1: *mut Vec3) { match unsafe { HOOK_HSD_LObjSetPosition } { Some(f) => f(a0, a1), None => unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjSetPosition(a0 as _, a1 as _); } }
 }
 pub static mut HOOK_HSD_LObjSetSpot: Option<fn(*mut HSD_LObj, f32, i32)> = None;
 /// C `HSD_LObjSetSpot` (sysdolphin/baselib/lobj.h).
-pub fn HSD_LObjSetSpot(a0: *mut HSD_LObj, a1: f32, a2: i32) {
-    match unsafe { HOOK_HSD_LObjSetSpot } { Some(f) => f(a0, a1, a2), None => panic!("TODO: HSD_LObjSetSpot is not ported") }
+pub fn HSD_LObjSetSpot(a0: *mut HSD_LObj, a1: f32, a2: i32) { match unsafe { HOOK_HSD_LObjSetSpot } { Some(f) => f(a0, a1, a2), None => unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjSetSpot(a0 as _, a1 as _, a2 as _); } }
 }
 pub static mut HOOK_HSD_MemAlloc: Option<fn(i32) -> *mut core::ffi::c_void> = None;
 /// C `HSD_MemAlloc` (sysdolphin/baselib/memory.h).

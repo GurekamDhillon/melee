@@ -49,9 +49,9 @@ pub mod ext {
     fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32);
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn HSD_Randf() -> f32;
-    fn HSD_TObjAddAnimAll(a0: *mut HSD_TObj, a1: *mut _HSD_TexAnim);
-    fn HSD_TObjAnim(a0: *mut HSD_TObj);
-    fn HSD_TObjReqAnimAll(a0: *mut HSD_TObj, a1: f32);
+    fn HSD_TObjAddAnimAll(a0: *mut HSD_TObj, a1: *mut _HSD_TexAnim) = |a0: *mut HSD_TObj, a1: *mut _HSD_TexAnim| { unsafe { let _ = melee_runtime::tu::tobj::HSD_TObjAddAnimAll(a0 as _, a1 as _); } };
+    fn HSD_TObjAnim(a0: *mut HSD_TObj) = |a0: *mut HSD_TObj| { unsafe { let _ = melee_runtime::tu::tobj::HSD_TObjAnim(a0 as _); } };
+    fn HSD_TObjReqAnimAll(a0: *mut HSD_TObj, a1: f32) = |a0: *mut HSD_TObj, a1: f32| { unsafe { let _ = melee_runtime::tu::tobj::HSD_TObjReqAnimAll(a0 as _, a1 as _); } };
     fn Mex_InsigniaForExt(a0: i32) -> i32;
     fn Mex_PortCKindToExt(a0: i32) -> i32;
     fn Player_GetDamage(a0: i32) -> i32;
@@ -74,23 +74,23 @@ pub mod ext {
     fn gm_8016B238() -> i32;
     fn gm_8016B8D4(a0: i32, a1: u8);
     fn gm_GetStartMeleeRules() -> *mut StartMeleeRules;
-    fn ifAll_802F343C(a0: i32);
+    fn ifAll_802F343C(a0: i32) = |a0: i32| { unsafe { let _ = crate::tu::ifall::ifAll_802F343C(a0 as _); } };
     fn ifAll_GetArchive() -> *mut *mut HSD_Archive = || unsafe { crate::tu::ifall::ifAll_GetArchive() as _ };
     fn ifAll_GetPlayerHUDPosition(a0: i32) -> *mut Vec = |a0: i32| unsafe { crate::tu::ifall::ifAll_GetPlayerHUDPosition(a0 as _) as _ };
-    fn ifStock_802F98E8(a0: u8, a1: u8);
-    fn ifStock_802FB650(a0: i32);
-    fn ifStock_802FB6AC(a0: i32);
-    fn if_802F7AF8(a0: i32);
-    fn if_802F7BB4(a0: i32);
-    fn if_802F7C30(a0: i32);
-    fn if_802F7D08(a0: i32);
+    fn ifStock_802F98E8(a0: u8, a1: u8) = |a0: u8, a1: u8| { unsafe { let _ = crate::tu::ifstock::ifStock_802F98E8(a0 as _, a1 as _); } };
+    fn ifStock_802FB650(a0: i32) = |a0: i32| { unsafe { let _ = crate::tu::ifstock::ifStock_802FB650(a0 as _); } };
+    fn ifStock_802FB6AC(a0: i32) = |a0: i32| { unsafe { let _ = crate::tu::ifstock::ifStock_802FB6AC(a0 as _); } };
+    fn if_802F7AF8(a0: i32) = |a0: i32| { unsafe { let _ = crate::tu::if_2F72::if_802F7AF8(a0 as _); } };
+    fn if_802F7BB4(a0: i32) = |a0: i32| { unsafe { let _ = crate::tu::if_2F72::if_802F7BB4(a0 as _); } };
+    fn if_802F7C30(a0: i32) = |a0: i32| { unsafe { let _ = crate::tu::if_2F72::if_802F7C30(a0 as _); } };
+    fn if_802F7D08(a0: i32) = |a0: i32| { unsafe { let _ = crate::tu::if_2F72::if_802F7D08(a0 as _); } };
     fn lbArchive_LoadSections(a0: *mut HSD_Archive, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]);
-    fn lbDvd_8001819C(a0: *const i8) -> *mut HSD_Archive;
+    fn lbDvd_8001819C(a0: *const i8) -> *mut HSD_Archive = |a0: *const i8| unsafe { melee_runtime::tu::lbdvd::lbDvd_8001819C(a0 as _) as _ };
     fn lb_8000B09C(a0: *mut HSD_JObj) -> i32 = |a0: *mut HSD_JObj| unsafe { melee_runtime::tu::lb_00B0::lb_8000B09C(a0 as _) as _ };
-    fn lb_8000C07C(a0: *mut HSD_JObj, a1: i32, a2: *mut *mut HSD_AnimJoint, a3: *mut *mut HSD_MatAnimJoint, a4: *mut *mut HSD_ShapeAnimJoint);
+    fn lb_8000C07C(a0: *mut HSD_JObj, a1: i32, a2: *mut *mut HSD_AnimJoint, a3: *mut *mut HSD_MatAnimJoint, a4: *mut *mut HSD_ShapeAnimJoint) = |a0: *mut HSD_JObj, a1: i32, a2: *mut *mut HSD_AnimJoint, a3: *mut *mut HSD_MatAnimJoint, a4: *mut *mut HSD_ShapeAnimJoint| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C07C(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } };
     fn memzero(a0: *mut c_void, a1: i32) = super::memzero_default;
     fn mn_8022F3D8(a0: *mut HSD_JObj, a1: u8, a2: u32);
-    fn un_802FF364(a0: i32);
+    fn un_802FF364(a0: i32) = |a0: i32| { unsafe { let _ = crate::tu::if_2FF2::un_802FF364(a0 as _); } };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

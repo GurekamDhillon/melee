@@ -40,15 +40,15 @@ pub mod ext {
     fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
     fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32);
     fn GXGetTexBufferSize(a0: u16, a1: u16, a2: u32, a3: u8, a4: u8) -> u32;
-    fn Ground_801C0604() -> *mut _GXColor;
-    fn Ground_801C0618() -> *mut _GXColor;
-    fn Ground_801C062C() -> *mut _GXColor;
-    fn Ground_801C0640() -> *mut _GXColor;
-    fn Ground_801C0654() -> *mut _GXColor;
-    fn Ground_801C0668() -> *mut _GXColor;
-    fn Ground_801C067C() -> *mut _GXColor;
-    fn Ground_801C0690() -> *mut _GXColor;
-    fn Ground_801C06A4() -> *mut _GXColor;
+    fn Ground_801C0604() -> *mut _GXColor = || unsafe { crate::tu::ground::Ground_801C0604() as _ };
+    fn Ground_801C0618() -> *mut _GXColor = || unsafe { crate::tu::ground::Ground_801C0618() as _ };
+    fn Ground_801C062C() -> *mut _GXColor = || unsafe { crate::tu::ground::Ground_801C062C() as _ };
+    fn Ground_801C0640() -> *mut _GXColor = || unsafe { crate::tu::ground::Ground_801C0640() as _ };
+    fn Ground_801C0654() -> *mut _GXColor = || unsafe { crate::tu::ground::Ground_801C0654() as _ };
+    fn Ground_801C0668() -> *mut _GXColor = || unsafe { crate::tu::ground::Ground_801C0668() as _ };
+    fn Ground_801C067C() -> *mut _GXColor = || unsafe { crate::tu::ground::Ground_801C067C() as _ };
+    fn Ground_801C0690() -> *mut _GXColor = || unsafe { crate::tu::ground::Ground_801C0690() as _ };
+    fn Ground_801C06A4() -> *mut _GXColor = || unsafe { crate::tu::ground::Ground_801C06A4() as _ };
     fn HSD_CObjEndCurrent() = || { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjEndCurrent(); } };
     fn HSD_CObjEraseScreen(a0: *mut HSD_CObj, a1: i32, a2: i32, a3: i32) = |a0: *mut HSD_CObj, a1: i32, a2: i32, a3: i32| { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjEraseScreen(a0 as _, a1 as _, a2 as _, a3 as _); } };
     fn HSD_CObjGetOrtho(a0: *mut HSD_CObj, a1: *mut f32, a2: *mut f32, a3: *mut f32, a4: *mut f32);
@@ -89,14 +89,14 @@ pub mod ext {
     fn gm_80160968(a0: u32) -> _GXColor;
     fn gm_8016B168() -> i32;
     fn ifAll_GetArchive() -> *mut *mut HSD_Archive = || unsafe { crate::tu::ifall::ifAll_GetArchive() as _ };
-    fn ifAll_IsHUDHidden() -> i32;
+    fn ifAll_IsHUDHidden() -> i32 = || unsafe { crate::tu::ifall::ifAll_IsHUDHidden() as _ };
     fn lbArchive_LoadSections(a0: *mut HSD_Archive, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]);
     fn lb_80011E24(a0: *mut HSD_JObj, a1: *mut *mut HSD_JObj, ids: &[i32]) -> i32;
     fn lb_800122C8(a0: *mut HSD_ImageDesc, a1: u16, a2: u16, a3: i32) = |a0: *mut HSD_ImageDesc, a1: u16, a2: u16, a3: i32| unsafe { melee_runtime::tu::lbspdisplay::lb_800122C8(a0 as _, a1 as _, a2 as _, a3 != 0) };
     fn lb_80013B14(a0: *mut HSD_CameraDescPerspective) -> *mut HSD_CObj = |a0: *mut HSD_CameraDescPerspective| unsafe { melee_runtime::tu::lbspdisplay::lb_80013B14(a0 as _) as _ };
     fn memzero(a0: *mut c_void, a1: i32) = super::memzero_default;
-    fn un_802FD928(a0: u8, a1: u8, a2: *mut _GXColor);
-    fn un_802FD9D8(a0: u8);
+    fn un_802FD928(a0: u8, a1: u8, a2: *mut _GXColor) = |a0: u8, a1: u8, a2: *mut _GXColor| { unsafe { let _ = crate::tu::if_2FD9::un_802FD928(a0 as _, a1 as _, a2 as _); } };
+    fn un_802FD9D8(a0: u8) = |a0: u8| { unsafe { let _ = crate::tu::if_2FD9::un_802FD9D8(a0 as _); } };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

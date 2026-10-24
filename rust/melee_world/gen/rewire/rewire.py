@@ -233,12 +233,20 @@ def main():
             for name, spec in specs.items():
                 if name not in s:
                     continue
+                if "is not ported" in s and "fn " not in s and i > 0 and ("fn " + name + "(") in lines[i - 1] and lines[i - 1].rstrip().endswith("{"):
+                    joined = lines[i - 1].rstrip() + " " + s
+                    r = rewire_line(joined, name, spec, in_ext, total[name], local_extern)
+                    if r is not None:
+                        lines[i - 1] = r
+                        lines[i] = None
+                        break
+                    continue
                 r = rewire_line(line, name, spec, in_ext, total[name], local_extern)
                 if r is not None:
                     lines[i] = r
                     break
         if True:
-            t = LF.join(lines)
+            t = LF.join(l for l in lines if l is not None)
             if "hook_or!(" in t and "macro_rules! hook_or" not in t and not re.search(r"hookmac::(\{[^}]*\bhook_or\b[^}]*\}|hook_or\b)", t):
                 t2 = re.sub(r"use crate::tu::hookmac::hook;", "use crate::tu::hookmac::{hook, hook_or};", t, count=1)
                 if t2 == t:

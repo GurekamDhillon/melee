@@ -47,9 +47,9 @@ pub mod ext {
     fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
     fn HSD_Randi(a0: i32) -> i32;
     fn HSD_SisLib_803A5ACC(a0: i32, a1: i32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) -> *mut HSD_Text = |a0: i32, a1: i32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32| unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A5ACC(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _) as _ };
-    fn HSD_SisLib_803A5F50(a0: i32);
+    fn HSD_SisLib_803A5F50(a0: i32) = |a0: i32| { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A5F50(a0 as _); } };
     fn HSD_SisLib_803A611C(a0: i32, a1: *mut HSD_GObj, a2: u16, a3: u8, a4: u8, a5: u8, a6: u8, a7: u32) -> i32 = |a0: i32, a1: *mut HSD_GObj, a2: u16, a3: u8, a4: u8, a5: u8, a6: u8, a7: u32| unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A611C(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _, a7 as _) as _ };
-    fn HSD_SisLib_803A62A0(a0: i32, a1: *mut i8, a2: *mut i8);
+    fn HSD_SisLib_803A62A0(a0: i32, a1: *mut i8, a2: *mut i8) = |a0: i32, a1: *mut i8, a2: *mut i8| { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A62A0(a0 as _, a1 as _, a2 as _); } };
     fn HSD_SisLib_803A6368(a0: *mut HSD_Text, a1: i32) = |a0: *mut HSD_Text, a1: i32| { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A6368(a0 as _, a1 as _); } };
     fn HSD_SisLib_803A6530(a0: i32, a1: i32, a2: i32) -> *mut u8 = |a0: i32, a1: i32, a2: i32| unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6530(a0 as _, a1 as _, a2 as _) as _ };
     fn HSD_SisLib_803A660C(a0: i32, a1: i32, a2: i32) = |a0: i32, a1: i32, a2: i32| { unsafe { let _ = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A660C(a0 as _, a1 as _, a2 as _); } };
@@ -65,7 +65,7 @@ pub mod ext {
     fn gm_801A4B60();
     fn gm_GetButtonsTriggered(a0: u8) -> u64;
     fn lbArchive_80016DBC(a0: *const u8, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]) -> *mut HSD_Archive;
-    fn lbArchive_80016EFC(a0: *mut HSD_Archive);
+    fn lbArchive_80016EFC(a0: *mut HSD_Archive) = |a0: *mut HSD_Archive| { unsafe { let _ = melee_runtime::tu::lbarchive::lbArchive_80016EFC(a0 as _); } };
     fn lbAudioAx_800236DC() -> i32 = || unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800236DC() as _ };
     fn lbAudioAx_80023F28(a0: i32) -> i32 = |a0: i32| unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023F28(a0 as _) as _ };
     fn lbLang_IsSavedLanguageUS() -> i32 = || unsafe { melee_runtime::tu::lblanguage::lbLang_IsSavedLanguageUS() as _ };

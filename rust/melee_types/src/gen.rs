@@ -85953,7 +85953,7 @@ pub struct TyFiguponData {
     pub x4: *mut HSD_GObj,
     pub x8: *mut HSD_GObj,
     pub pad_0C: [u8; 4],
-    pub x10: i32,
+    pub x10: usize,
     pub x14: *mut HSD_Text,
     pub x18: *mut HSD_Text,
     pub pad_1C: [u8; 4],
@@ -85974,7 +85974,7 @@ impl GcDecode for TyFiguponData {
         v.x4 = <*mut HSD_GObj as GcDecode>::gc_decode(d, at + 0x4);
         v.x8 = <*mut HSD_GObj as GcDecode>::gc_decode(d, at + 0x8);
         v.pad_0C = <[u8; 4] as GcDecode>::gc_decode(d, at + 0xC);
-        v.x10 = <i32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.x10 = <usize as GcDecode>::gc_decode(d, at + 0x10);
         v.x14 = <*mut HSD_Text as GcDecode>::gc_decode(d, at + 0x14);
         v.x18 = <*mut HSD_Text as GcDecode>::gc_decode(d, at + 0x18);
         v.pad_1C = <[u8; 4] as GcDecode>::gc_decode(d, at + 0x1C);
@@ -86005,7 +86005,6 @@ impl GcLayout for TyFiguponData {
         GcField::new("x29", 0x29, 1, "u8"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<TyFiguponData>() == 64);
 
 /// C `TyDspPos` (src/melee/ty/types.h:220); GameCube size 0x8, align 4.
 #[repr(C, align(4))]

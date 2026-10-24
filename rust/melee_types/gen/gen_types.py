@@ -60,6 +60,7 @@ NATIVE_FIELD_TYPES = {
     ("ToyED8Data", "x54"): "usize",
     ("TyDisplayData", "pad_144"): "[*mut HSD_Text; 4]",
     ("Toy6E68", "pad10"): "[*mut c_void; 2]",
+    ("TyFiguponData", "x10"): "usize",
 }
 # Native names for slots the C code declares as padding but uses as a view's fields.
 NATIVE_FIELD_NAMES = {

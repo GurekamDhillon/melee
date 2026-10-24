@@ -2,9 +2,11 @@
 #![allow(non_snake_case, static_mut_refs)]
 use melee_items::tu::dbitem::*;
 use melee_types::*;
+static LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 #[test]
 fn db_80225dd8_matches_c() {
+    let _g = LOCK.lock().unwrap();
     unsafe {
         for bubbles in 0..4 {
             for is_ft in [false, true] {
@@ -42,6 +44,7 @@ fn db_80225dd8_matches_c() {
 
 #[test]
 fn db_menu_accessors_and_80225d64() {
+    let _g = LOCK.lock().unwrap();
     unsafe {
         db_ItemAndPokemonMenu.ShowEnemyStompRange = 1;
         db_ItemAndPokemonMenu.ShowItemPickupRange = 0;

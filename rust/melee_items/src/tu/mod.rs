@@ -198,3 +198,6 @@ pub mod itzrshell;
 pub mod it_2ADA;
 pub mod it_2E5A;
 pub mod it_2F28;
+pub mod toy;
+pub mod tydisplay;
+pub mod tyfigupon;

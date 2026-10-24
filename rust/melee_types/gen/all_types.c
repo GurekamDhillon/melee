@@ -817,6 +817,7 @@
 #include <melee/mn/inlines.h>
 #include <melee/mn/mnruleplus.h>
 #include <melee/mn/mnstagesel.static.h>
+#include <melee/sfx/crowdsfx.h>
 #line 29 "src/melee/mn/mngallery.c"
 struct mnGallery_804D6C88_userdata {
     u8 unk0;
@@ -1170,3 +1171,37 @@ struct CSSCharModel {
     /* 0x14 */ float x14;
 };
 typedef struct CSSCharModel CSSCharModel;
+#define TY_SORT_KEY_COUNT 3
+/* Extracted verbatim from src/melee/ty/toy.c. */
+typedef struct ToyUnkJObjData {
+    /* 0x00 */ u8 pad_00[0x10];
+    /* 0x10 */ HSD_JObj* jobj;
+} ToyUnkJObjData;
+/* Extracted verbatim from src/melee/ty/toy.c. */
+typedef struct TySortRow {
+    /* 0x0 */ s16 key[TY_SORT_KEY_COUNT];
+} TySortRow;
+/* Extracted verbatim from src/melee/ty/toy.c. */
+struct ModelNamesDesc {
+    char* animjoint;
+    char* matanim_joint;
+    char* shapeanim_joint;
+};
+/* Extracted verbatim from src/melee/ty/toy.c. */
+typedef union ToyPanelLabelData {
+    char bytes[1];
+    char* ptrs[1];
+} ToyPanelLabelData;
+/* Extracted verbatim from src/melee/ty/tyfigupon.c. */
+typedef union {
+    struct {
+        s32 x0, x4, x8, xC;
+    } s;
+    s32 digits[4];
+} TyFiguponDigitInit;
+/* Extracted verbatim from src/melee/ty/tydisplay.c. */
+typedef struct TySortElemInt {
+    s32 key;
+    s32 val;
+} TySortElemInt;
+#undef TY_SORT_KEY_COUNT

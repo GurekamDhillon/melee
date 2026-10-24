@@ -211,6 +211,9 @@ pub struct Renderer {
     pub adapter_info: wgpu::AdapterInfo,
     pub width: u32,
     pub height: u32,
+    /// Internal resolution multiplier over the 640x480 EFB (`MELEE_RENDER_SCALE`): GX viewport / scissor
+    /// coordinates are scaled by it.
+    pub scale: u32,
     color: wgpu::Texture,
     depth: wgpu::Texture,
     bgl_storage: wgpu::BindGroupLayout,
@@ -258,6 +261,8 @@ impl Renderer {
         width: u32,
         height: u32,
     ) -> Result<Self, String> {
+        let scale = std::env::var("MELEE_RENDER_SCALE").ok().and_then(|v| v.parse::<u32>().ok()).unwrap_or(1).clamp(1, 4);
+        let (width, height) = (width * scale, height * scale);
         let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::HighPerformance,
             force_fallback_adapter: false,
@@ -367,6 +372,7 @@ impl Renderer {
             adapter_info,
             width,
             height,
+            scale,
             color,
             depth,
             bgl_storage,
@@ -704,6 +710,8 @@ impl Renderer {
             for (i, d) in draws.iter().enumerate() {
                 let (Some(p), tex_bg) = &per_draw[i] else { continue };
                 let vp = d.render_viewport;
+                let k = self.scale as f32;
+                let vp = crate::state::Viewport { left: vp.left * k, top: vp.top * k, width: vp.width * k, height: vp.height * k, ..vp };
                 let (w, h) = (self.width as f32, self.height as f32);
                 let left = vp.left.clamp(0.0, w);
                 let top = vp.top.clamp(0.0, h);
@@ -716,6 +724,8 @@ impl Renderer {
                     1.0 - vp.znear,
                 );
                 let sc = d.render_scissor;
+                let ki = self.scale as i32;
+                let sc = crate::state::ClipRect { x: sc.x * ki, y: sc.y * ki, width: sc.width * ki, height: sc.height * ki, ..sc };
                 let sx = sc.x.clamp(0, self.width as i32) as u32;
                 let sy = sc.y.clamp(0, self.height as i32) as u32;
                 let sw = (sc.width.max(0) as u32).min(self.width - sx);

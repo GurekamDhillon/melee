@@ -383,7 +383,7 @@ impl Game for View {
         if self.shots.contains(&self.frame) {
             let px = p.screenshot();
             let path = self.shot_dir.join(format!("native_{:04}.png", self.frame));
-            match write_png(&path, EFB_WIDTH, EFB_HEIGHT, &px) {
+            match write_png(&path, p.renderer.width, p.renderer.height, &px) {
                 Ok(()) => eprintln!("view-golden: frame {} (sim frame {}) -> {}", self.frame, self.sim.frame, path.display()),
                 Err(e) => eprintln!("view-golden: screenshot: {e}"),
             }
@@ -455,8 +455,8 @@ pub fn view_golden(args: &[String]) -> ExitCode {
             d
         };
         let mut fighters = Vec::new();
-        for n in names {
-            let (nr, sym) = crate::fighter_data::costume_for(n).ok_or("no costume")?;
+        for (slot, n) in names.iter().enumerate() {
+            let (nr, sym) = crate::fighter_data::costume_for_slot(n, slot).ok_or("no costume")?;
             let a = DatArchive::parse(&disc.read(nr)?).map_err(|e| format!("{nr}: {e}"))?;
             let at = a.public_offset(sym).ok_or(format!("{nr}: no {sym}"))?;
             let mut descs = Vec::new();

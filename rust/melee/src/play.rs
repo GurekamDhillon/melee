@@ -460,7 +460,7 @@ impl Play {
         for r in raws.iter_mut() {
             r.button &= !HSD_PAD_START;
         }
-        m.sim.live_pads = Some(raws);
+        m.sim.pad_feed = Some(raws);
         let alive = m.sim.step();
         if alive {
             m.mr.step(&mut m.sim);

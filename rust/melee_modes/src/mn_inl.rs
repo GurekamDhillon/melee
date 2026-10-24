@@ -238,3 +238,17 @@ pub const PAD_ANY_UP: u64 = 1 << 36;
 pub const PAD_ANY_DOWN: u64 = 1 << 37;
 pub const PAD_ANY_LEFT: u64 = 1 << 38;
 pub const PAD_ANY_RIGHT: u64 = 1 << 39;
+
+// Ported callees whose C `bool` is an `i32` here (the menus compare it with 0).
+pub(crate) unsafe fn gm_80164330_i32(a: i32) -> i32 {
+    crate::tu::gm_1601::gm_80164330(a) as i32
+}
+pub(crate) unsafe fn gm_80164430_i32(a: u16) -> i32 {
+    crate::tu::gm_1601::gm_80164430(a) as i32
+}
+pub(crate) unsafe fn gm_IsStageUnlocked_i32(a: u16) -> i32 {
+    crate::tu::gm_1601::gm_IsStageUnlocked(a) as i32
+}
+pub(crate) unsafe fn gmMainLib_SetRumbleEnabled_i32(port: isize, enabled: i32) {
+    crate::tu::gmmain_lib::gmMainLib_SetRumbleEnabled(port, enabled != 0)
+}

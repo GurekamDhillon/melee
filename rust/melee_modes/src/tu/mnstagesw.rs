@@ -63,11 +63,11 @@ pub mod ext {
         fn HSD_JObjReqAnim(jobj: *mut HSD_JObj, frame: f32);
         fn HSD_JObjAnim(jobj: *mut HSD_JObj);
         fn HSD_SisLib_803A5CC4(a0: *mut HSD_Text);
-        fn mn_802339FC();
-        fn gm_801641CC(a0: u8) -> u16;
-        fn gm_801641E4(stage: u8, enable: u8);
-        fn gm_IsStageUnlocked(stkind: u16) -> i32;
-        fn gm_80164430(a0: u16) -> i32;
+        fn mn_802339FC() = crate::tu::mnruleplus::mn_802339FC;
+        fn gm_801641CC(a0: u8) -> u16 = crate::gm::gm_801641CC;
+        fn gm_801641E4(stage: u8, enable: u8) = crate::tu::gm_1601::gm_801641E4;
+        fn gm_IsStageUnlocked(stkind: u16) -> i32 = crate::mn_inl::gm_IsStageUnlocked_i32;
+        fn gm_80164430(a0: u16) -> i32 = crate::mn_inl::gm_80164430_i32;
         fn gm_GetCurrentGameMode() -> u8;
         fn lbCardGame_SaveChanges();
         fn GObj_SetupGXLink(gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, gx_link: u8, priority: u32);

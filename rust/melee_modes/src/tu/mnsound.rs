@@ -29,10 +29,10 @@ pub mod ext {
         fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, flags: u32);
         fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, flags: u32);
         fn HSD_SisLib_803A5CC4(a0: *mut HSD_Text);
-        fn gm_801602C0(a0: i8);
-        fn gmMainLib_GetGameRules() -> *mut GameRules;
-        fn gmMainLib_8015ED74() -> u8;
-        fn gmMainLib_8015ED80(a0: i8);
+        fn gm_801602C0(a0: i8) = crate::tu::gm_1601::gm_801602C0;
+        fn gmMainLib_GetGameRules() -> *mut GameRules = crate::tu::gmmain_lib::gmMainLib_GetGameRules;
+        fn gmMainLib_8015ED74() -> u8 = crate::tu::gmmain_lib::gmMainLib_8015ED74;
+        fn gmMainLib_8015ED80(a0: i8) = crate::tu::gmmain_lib::gmMainLib_8015ED80;
         fn lbCardGame_SaveChanges();
         fn GObj_SetupGXLink(gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, gx_link: u8, priority: u32);
         fn HSD_GObjObject_80390A70(gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void);

@@ -186,11 +186,11 @@ pub mod ext {
         fn HSD_JObjReqAnimAllByFlags(jobj: *mut HSD_JObj, flags: u32, frame: f32);
         fn HSD_ArchiveGetPublicAddress(a0: *mut HSD_Archive, a1: *const c_char) -> *mut c_void;
         fn HSD_CObjLoadDesc(desc: *mut HSD_CObjDesc) -> *mut HSD_CObj;
-        fn gm_80164330(a0: i32) -> i32;
-        fn gm_80164430(a0: u16) -> i32;
+        fn gm_80164330(a0: i32) -> i32 = crate::mn_inl::gm_80164330_i32;
+        fn gm_80164430(a0: u16) -> i32 = crate::mn_inl::gm_80164430_i32;
         fn gm_ChangeGameModeAfterCurrentScene(pending_mode: i32);
         fn gm_801A4B60();
-        fn gmMainLib_8015ECB0() -> i32;
+        fn gmMainLib_8015ECB0() -> i32 = crate::tu::gmmain_lib::gmMainLib_8015ECB0;
         fn lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *mut Vec3, pos1: *mut Vec3);
         fn lb_8000C1C0(a0: *mut HSD_JObj, constraint: *mut HSD_JObj);
         fn lb_8000C2F8(a0: *mut HSD_JObj, constraint: *mut HSD_JObj);
@@ -3902,14 +3902,14 @@ pub unsafe extern "C" fn fn_8025A310(mut gobj: *mut HSD_GObj) {
         return;
     }
     HSD_JObjGetTranslation(jobj, &raw mut sp1C);
-    sp1C.x = 0.03_f32 * mnStageSel_804D6CAC as i32 as f32 + sp1C.x;
+    sp1C.x = fmadds(0.03_f32, mnStageSel_804D6CAC as i32 as f32, sp1C.x);
     if -27.0_f32 > sp1C.x {
         sp1C.x = -27.0_f32 as f32;
     }
     if 27.0_f32 < sp1C.x {
         sp1C.x = 27.0_f32 as f32;
     }
-    sp1C.y = 0.03_f32 * mnStageSel_804D6CAD as i32 as f32 + sp1C.y;
+    sp1C.y = fmadds(0.03_f32, mnStageSel_804D6CAD as i32 as f32, sp1C.y);
     if -19.0_f32 > sp1C.y {
         sp1C.y = -19.0_f32 as f32;
     }
@@ -4803,11 +4803,7 @@ pub unsafe extern "C" fn mnStageSel_Scene_OnFrame() {
         (*sss_data).vs.start.rules.stkind = mnStageSel_803F06D0[mnStageSel_804D6CAE
                 as usize]
             .stkind as u16;
-        extern "C" {
-            #[link_name = "Frontend_CaptureIcon"]
-            fn Frontend_CaptureIcon_0(which: i32, root: *mut HSD_JObj);
-        }
-        Frontend_CaptureIcon_0(
+        super::gmfrontend::Frontend_CaptureIcon(
             1,
             mnStageSel_803F06D0[mnStageSel_804D6CAE as usize].x0,
         );

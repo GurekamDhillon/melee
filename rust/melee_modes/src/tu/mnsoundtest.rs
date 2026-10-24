@@ -71,12 +71,12 @@ pub mod ext {
         fn HSD_JObjAnim(jobj: *mut HSD_JObj);
         fn HSD_SisLib_803A6754(arg0: i32, arg1: i32) -> *mut HSD_Text;
         fn HSD_SisLib_803A5CC4(a0: *mut HSD_Text);
-        fn gm_801601C4(a0: i8) -> i32;
-        fn gm_80160244(a0: i8) -> i32;
-        fn gm_801603B0();
-        fn gmMainLib_8015ECB0() -> i32;
-        fn gmMainLib_8015ED68(port: isize);
-        fn gmMainLib_8015ED74() -> u8;
+        fn gm_801601C4(a0: i8) -> i32 = crate::gm::gm_801601C4;
+        fn gm_80160244(a0: i8) -> i32 = crate::gm::gm_80160244;
+        fn gm_801603B0() = crate::tu::gm_1601::gm_801603B0;
+        fn gmMainLib_8015ECB0() -> i32 = crate::tu::gmmain_lib::gmMainLib_8015ECB0;
+        fn gmMainLib_8015ED68(port: isize) = crate::tu::gmmain_lib::gmMainLib_8015ED68;
+        fn gmMainLib_8015ED74() -> u8 = crate::tu::gmmain_lib::gmMainLib_8015ED74;
         fn GObj_SetupGXLink(gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, gx_link: u8, priority: u32);
         fn HSD_GObjObject_80390A70(gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void);
         fn HSD_GObjFree(a0: *mut HSD_GObj);

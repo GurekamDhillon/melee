@@ -89,11 +89,11 @@ pub mod ext {
         fn HSD_SisLib_803A5CC4(a0: *mut HSD_Text);
         fn mn_8023164C();
         fn mn_80231F80(a0: u8) -> i32;
-        fn mnStageSw_80237410();
+        fn mnStageSw_80237410() = crate::tu::mnstagesw::mnStageSw_80237410;
         fn gm_GetCurrentGameMode() -> u8;
-        fn gmMainLib_GetGameRules() -> *mut GameRules;
-        fn gmMainLib_8015EE0C() -> i32;
-        fn gmMainLib_8015EE44() -> i32;
+        fn gmMainLib_GetGameRules() -> *mut GameRules = crate::tu::gmmain_lib::gmMainLib_GetGameRules;
+        fn gmMainLib_8015EE0C() -> i32 = crate::tu::gmmain_lib::gmMainLib_8015EE0C;
+        fn gmMainLib_8015EE44() -> i32 = crate::tu::gmmain_lib::gmMainLib_8015EE44;
         fn GObj_SetupGXLink(gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, gx_link: u8, priority: u32);
         fn HSD_GObjObject_80390A70(gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void);
         fn HSD_GObjFree(a0: *mut HSD_GObj);

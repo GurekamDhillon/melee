@@ -118,9 +118,9 @@ pub mod ext {
         fn mnName_8023A9B4(a0: u8);
         fn IsNameNotAllowed(name_idx: *mut c_char) -> i32;
         fn gm_GetCurrentGameMode() -> u8;
-        fn GetPersistentNameData(a0: i32) -> *mut NameTagData;
-        fn gmMainLib_8015ECB0() -> i32;
-        fn GetRumbleSettingOfPort(port: isize) -> i32;
+        fn GetPersistentNameData(a0: i32) -> *mut NameTagData = crate::tu::gmmain_lib::GetPersistentNameData;
+        fn gmMainLib_8015ECB0() -> i32 = crate::tu::gmmain_lib::gmMainLib_8015ECB0;
+        fn GetRumbleSettingOfPort(port: isize) -> i32 = crate::tu::gmmain_lib::GetRumbleSettingOfPort;
         fn gm_80190FE4(a0: i32);
         fn lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *mut Vec3, pos1: *mut Vec3);
         fn lbCardGame_SaveChanges();

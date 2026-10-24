@@ -129,9 +129,9 @@ pub mod ext {
         fn HSD_SisLib_803A5CC4(a0: *mut HSD_Text);
         fn gm_GetButtonsTriggered(a0: u8) -> u64;
         fn gm_801A36C0(a0: u8) -> u64;
-        fn GetPersistentNameData(a0: i32) -> *mut NameTagData;
-        fn GetRumbleSettingOfPort(port: isize) -> i32;
-        fn gmMainLib_SetRumbleEnabled(port: isize, enabled: i32);
+        fn GetPersistentNameData(a0: i32) -> *mut NameTagData = crate::tu::gmmain_lib::GetPersistentNameData;
+        fn GetRumbleSettingOfPort(port: isize) -> i32 = crate::tu::gmmain_lib::GetRumbleSettingOfPort;
+        fn gmMainLib_SetRumbleEnabled(port: isize, enabled: i32) = crate::mn_inl::gmMainLib_SetRumbleEnabled_i32;
         fn lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *mut Vec3, pos1: *mut Vec3);
         fn HSD_PadRumbleRemoveAll();
         fn HSD_PadRumbleAdd(no: u8, id: i32, frame: i32, pri: i32, listp: *mut c_void) -> i32;

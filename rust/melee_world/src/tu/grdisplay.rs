@@ -51,7 +51,7 @@ pub mod ext {
     fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
     fn HSD_JObjDisp(a0: *mut HSD_JObj, a1: *mut c_void, a2: u32, a3: u32);
     fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);
-    fn HSD_MtxInverseConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void);
+    fn HSD_MtxInverseConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void) = |a0: *mut c_void, a1: *mut c_void, a2: *mut c_void| { unsafe { let _ = melee_runtime::tu::mtx_world::HSD_MtxInverseConcat(a0 as _, a1 as _, a2 as _); } };
     fn HSD_StateInvalidate(a0: i32);
     fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void) = |a0: *mut c_void, a1: *mut c_void, a2: *mut c_void| { unsafe { let _ = melee_runtime::tu::mtx_pc::raw::PSMTXConcat(a0 as _, a1 as _, a2 as _); } };
     fn ScriptGame_StageOriginalVisible() -> i32;

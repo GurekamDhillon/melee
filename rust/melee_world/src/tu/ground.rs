@@ -200,7 +200,7 @@ pub mod ext {
     fn mpLib_80057BC0(a0: i32) = |a0: i32| { unsafe { let _ = crate::tu::mplib::mpLib_80057BC0(a0 as _); } };
     fn mpLib_80058820() = || { unsafe { let _ = crate::tu::mplib::mpLib_80058820(); } };
     fn psInitDataBankLoad(a0: i32, a1: *const i32, a2: *const i32, a3: *const u32, a4: *const i32) = |a0: i32, a1: *const i32, a2: *const i32, a3: *const u32, a4: *const i32| { unsafe { let _ = melee_runtime::tu::particle::psInitDataBankLoad(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } };
-    fn splGetSplinePoint(a0: *mut Vec, a1: *mut HSD_Spline, a2: f32);
+    fn splGetSplinePoint(a0: *mut Vec, a1: *mut HSD_Spline, a2: f32) = |a0: *mut Vec, a1: *mut HSD_Spline, a2: f32| { unsafe { let _ = melee_runtime::tu::spline_world::splGetSplinePoint(a0 as _, a1 as _, a2 as _); } };
     fn tyDisplay_8031C2CC();
     fn tyDisplay_8031C2EC() -> i32;
     fn tyDisplay_8031C454(a0: i32) -> i32;

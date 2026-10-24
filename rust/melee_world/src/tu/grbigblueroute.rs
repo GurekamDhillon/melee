@@ -239,7 +239,7 @@ pub mod ext {
     pub fn memzero(mem: *mut c_void, size: ssize_t) {
         match unsafe { MEMZERO } { Some(f) => f(mem, size), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::memzero(mem as _, size as _); } return; } }
     }
-    hook!(SPLGETSPLINEPOINT, splGetSplinePoint, (a0: *mut Vec, a1: *mut HSD_Spline, a2: f32));
+    hook_or!(SPLGETSPLINEPOINT, splGetSplinePoint, (a0: *mut Vec, a1: *mut HSD_Spline, a2: f32), |a0: *mut Vec, a1: *mut HSD_Spline, a2: f32| { unsafe { let _ = melee_runtime::tu::spline_world::splGetSplinePoint(a0 as _, a1 as _, a2 as _); } });
     pub static mut UN_802FD604: Option<fn(i32)> = None;
     #[allow(non_snake_case)]
     pub fn un_802FD604(a0: i32) {

@@ -1,0 +1,42 @@
+//! `splGetSplinePoint` / `splArcLengthPoint` of `src/sysdolphin/baselib/spline.c` on a raw
+//! `HSD_Spline` (the GameCube-layout record the stage TUs hold): a borrowed view over its control
+//! point / segment arrays, then the verified math of [`crate::spline`]. An out-of-range `u` or an
+//! unknown spline type leaves `*p` untouched, as in the C. The slices are sized for what the C
+//! reads (`3 * numcv + 4` control points, `numcv + 1` segments). Checked bit for bit against
+//! spline.c (shipping contraction) by `tests/pure_spline_world.rs`
+//! (`python rust/melee_runtime/gen/pure/run_pure.py spline_world`).
+#![allow(non_snake_case, clippy::missing_safety_doc)]
+
+use crate::spline::{self, Spline};
+use melee_types::{HSD_Spline, Vec};
+
+unsafe fn view<'a>(s: *mut HSD_Spline) -> Spline<'a> {
+    let n = ((*s).numcv.max(0) as usize).max(1);
+    Spline {
+        ty: (*s).r#type,
+        numcv: (*s).numcv,
+        tension: (*s).tension,
+        cv: core::slice::from_raw_parts((*s).cv as *const crate::mtx::Vec3, n * 3 + 4),
+        total_length: (*s).totalLength,
+        seg_length: core::slice::from_raw_parts((*s).segLength, n + 1),
+        seg_poly: core::slice::from_raw_parts((*s).segPoly as *const [f32; 5], n + 1),
+    }
+}
+
+unsafe fn put(p: *mut Vec, v: Option<crate::mtx::Vec3>) {
+    if let Some(v) = v {
+        (*p).x = v.x;
+        (*p).y = v.y;
+        (*p).z = v.z;
+    }
+}
+
+/// `splGetSplinePoint(p, spline, u)`.
+pub unsafe fn splGetSplinePoint(p: *mut Vec, s: *mut HSD_Spline, u: f32) {
+    put(p, spline::get_spline_point(&view(s), u));
+}
+
+/// `splArcLengthPoint(p, spline, s)`: the point at arc length `s`.
+pub unsafe fn splArcLengthPoint(p: *mut Vec, s: *mut HSD_Spline, len: f32) {
+    put(p, spline::arc_length_point(&view(s), len));
+}

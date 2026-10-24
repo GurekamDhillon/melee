@@ -54,23 +54,23 @@ pub trait GrLibHooks {
     }
     /// TODO(group2: gr/ground.c) Ground_801C2D24
     fn ground_801c2d24(&mut self, i: i32, out: &mut Vec) -> bool {
-        unimplemented!("TODO(group2): Ground_801C2D24")
+        unsafe { crate::tu::ground::Ground_801C2D24(i, out as *mut Vec as _) != 0 }
     }
     /// TODO(group1: lb/lb_00F9.c) lb_8000FD48
     fn lb_8000fd48(&mut self, j: *mut HSD_JObj, d: *mut DynamicsDesc, count: i32) {
-        unimplemented!("TODO(group1): lb_8000FD48")
+        unsafe { melee_runtime::tu::lb_00F9::lb_8000FD48(j, d, count as usize) }
     }
     /// TODO(group1: lb/lb_00F9.c) lb_80011710
     fn lb_80011710(&mut self, a: *mut DynamicsDesc, b: *mut DynamicsDesc) {
-        unimplemented!("TODO(group1): lb_80011710")
+        unsafe { melee_runtime::tu::lb_00F9::lb_80011710(a, b) }
     }
     /// TODO(group1: lb/lb_00F9.c) lb_8000FD18
     fn lb_8000fd18(&mut self, a: *mut core::ffi::c_void) {
-        unimplemented!("TODO(group1): lb_8000FD18")
+        unsafe { melee_runtime::tu::lb_00F9::lb_8000FD18(a as _) }
     }
     /// TODO(group1: lb/lb_00F9.c) lb_8001044C(arg0, 0, 0, 0.0f, 0, 0, 0, 0)
     fn lb_8001044c_zero(&mut self, a: *mut core::ffi::c_void) {
-        unimplemented!("TODO(group1): lb_8001044C")
+        unsafe { melee_runtime::tu::lb_00F9::lb_8001044C(a as _, core::ptr::null_mut(), 0, 0.0, false, 0 as _, 0, false) }
     }
     /// TODO(group1: baselib/jobj.c) HSD_JObjAnimAll
     fn jobj_anim_all(&mut self, j: *mut HSD_JObj) {
@@ -86,27 +86,31 @@ pub trait GrLibHooks {
     }
     /// Camera_SetQuakeOffset: `CameraWorld` implements it (cm::camera).
     fn camera_set_quake_offset(&mut self, x: f32, y: f32) {
-        unimplemented!("Camera_SetQuakeOffset: forward to cm::camera::CameraWorld")
+        crate::cm::camera::world().camera_set_quake_offset(x, y)
     }
     /// TODO(group1: baselib/gobj.c) HSD_GObjFree
     fn gobj_free(&mut self, g: *mut HSD_GObj) {
-        unimplemented!("TODO(group1): HSD_GObjFree")
+        unsafe { melee_runtime::tu::gobj_native::HSD_GObjFree(g) }
     }
     /// TODO(group1: baselib/gobj.c) GObj_Create
     fn gobj_create(&mut self, class: i32, plink: i32, prio: u8) -> *mut HSD_GObj {
-        unimplemented!("TODO(group1): GObj_Create")
+        unsafe { melee_runtime::tu::gobj_native::GObj_Create(class as u16, plink as u8, prio) }
     }
     /// TODO(group1: baselib/jobj.c) HSD_JObjLoadJoint
     fn jobj_load_joint(&mut self, j: *mut HSD_Joint) -> *mut HSD_JObj {
-        unimplemented!("TODO(group1): HSD_JObjLoadJoint")
+        unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(j) }
     }
     /// TODO(group1: baselib/gobjobject.c) HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj)
     fn gobj_add_jobj(&mut self, g: *mut HSD_GObj, j: *mut HSD_JObj) {
-        unimplemented!("TODO(group1): HSD_GObjObject_80390A70")
+        unsafe { melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(g, melee_runtime::tu::gobj_native::HSD_GObj_JObjKind, j as _) }
     }
     /// TODO(group1: baselib/gobjproc.c) HSD_GObj_SetupProc(gobj, proc, 1)
     fn gobj_setup_proc(&mut self, g: *mut HSD_GObj, p: QuakeProc) {
-        unimplemented!("TODO(group1): HSD_GObj_SetupProc")
+        let f: unsafe extern "C" fn(*mut HSD_GObj) = match p {
+            QuakeProc::Loop => crate::tu::grlib::grLib_801C9BC8,
+            QuakeProc::OneShot => crate::tu::grlib::grLib_801C9C40,
+        };
+        unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(g, Some(f), 1) };
     }
     /// TODO(group1: baselib/jobj.c) HSD_JObjAddAnimAll(jobj, anim, NULL, NULL)
     fn jobj_add_anim_all(&mut self, j: *mut HSD_JObj, a: *mut HSD_AnimJoint) {
@@ -122,11 +126,28 @@ pub trait GrLibHooks {
     }
     /// TODO(group3: the HSD_GOBJ_PLINK_FIGHTER list) each fighter's `coll_data`, in list order
     fn fighter_colls(&mut self) -> std::vec::Vec<*const CollData> {
-        unimplemented!("TODO(group3): fighter plink")
+        let mut v = std::vec::Vec::new();
+        unsafe {
+            let mut cur = *melee_runtime::tu::gobj_native::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_FIGHTER as usize);
+            while !cur.is_null() {
+                v.push(&(*((*cur).user_data as *mut Fighter)).coll_data as *const CollData);
+                cur = (*cur).next;
+            }
+        }
+        v
     }
     /// TODO(group5: the HSD_GOBJ_PLINK_ITEM list) each item's (itGetKind, `x378_itemColl`)
     fn item_colls(&mut self) -> std::vec::Vec<(ItemKind, *const CollData)> {
-        unimplemented!("TODO(group5): item plink")
+        let mut v = std::vec::Vec::new();
+        unsafe {
+            let mut cur = *melee_runtime::tu::gobj_native::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_ITEM as usize);
+            while !cur.is_null() {
+                let ip = (*cur).user_data as *mut Item;
+                v.push(((*ip).kind, &(*ip).x378_itemColl as *const CollData));
+                cur = (*cur).next;
+            }
+        }
+        v
     }
 }
 

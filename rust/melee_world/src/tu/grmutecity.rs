@@ -131,7 +131,7 @@ pub mod ext {
     fn mpLib_80057BC0(a0: i32) = |a0: i32| { unsafe { let _ = crate::tu::mplib::mpLib_80057BC0(a0 as _); } };
     fn mpLineSetPos(a0: i32, a1: f32, a2: f32, a3: f32, a4: f32) = |a0: i32, a1: f32, a2: f32, a3: f32, a4: f32| { unsafe { let _ = crate::tu::mplib::mpLineSetPos(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } };
     fn psAddGeneratorAppSRT_begin(a0: *mut HSD_Generator, a1: i32) -> *mut HSD_psAppSRT;
-    fn splGetSplinePoint(a0: *mut Vec, a1: *mut HSD_Spline, a2: f32);
+    fn splGetSplinePoint(a0: *mut Vec, a1: *mut HSD_Spline, a2: f32) = |a0: *mut Vec, a1: *mut HSD_Spline, a2: f32| { unsafe { let _ = melee_runtime::tu::spline_world::splGetSplinePoint(a0 as _, a1 as _, a2 as _); } };
     fn un_802FD604(a0: i32) = |a0: i32| { unsafe { let _ = crate::tu::ifhazard::un_802FD604(a0 as _); } };
     fn un_802FD65C() = || { unsafe { let _ = crate::tu::ifhazard::un_802FD65C(); } };
     fn un_802FD8C4(a0: *mut DynamicModelDesc) = |a0: *mut DynamicModelDesc| { unsafe { let _ = crate::tu::ifhazard::un_802FD8C4(a0 as _); } };

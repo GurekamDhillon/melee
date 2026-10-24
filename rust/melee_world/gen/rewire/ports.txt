@@ -572,3 +572,8 @@ gmMainLib_GetCoinMatchTotal = crate::gmmain::gmMainLib_GetCoinMatchTotal
 gmMainLib_GetKOTotal = crate::gmmain::gmMainLib_GetKOTotal
 gmMainLib_GetStockMatchTotal = crate::gmmain::gmMainLib_GetStockMatchTotal
 gmMainLib_GetTimeMatchTotal = crate::gmmain::gmMainLib_GetTimeMatchTotal
+# --- spline.c / mtx.c on raw records (melee_runtime::tu::{spline_world, mtx_world})
+splGetSplinePoint = melee_runtime::tu::spline_world::splGetSplinePoint
+splArcLengthPoint = melee_runtime::tu::spline_world::splArcLengthPoint
+HSD_MtxGetScale = melee_runtime::tu::mtx_world::HSD_MtxGetScale
+HSD_MtxInverseConcat = melee_runtime::tu::mtx_world::HSD_MtxInverseConcat

@@ -114,6 +114,8 @@ pub mod cobj_world;
 pub mod jobj_world;
 pub mod gobj_native;
 pub mod os_error;
+pub mod spline_world;
+pub mod mtx_world;
 pub mod util;
 pub mod video;
 pub mod wobj;

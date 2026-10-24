@@ -73,7 +73,7 @@ pub mod ext {
     pub fn HSD_JObjWalkTree_8039D688(_j: J) { todo!("HSD_JObjWalkTree(jobj, hsd_8039D688, NULL) (baselib/jobj.c)") }
     pub fn HSD_JObjSetMtxDirtySub(_j: J) { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(_j as _); } }
     pub fn HSD_JObjSetupMatrixSub(_j: J) { todo!("HSD_JObjSetupMatrixSub (baselib/jobj.c)") }
-    pub fn HSD_MtxGetScale(_m: *mut Mtx, _s: *mut Vec3) { todo!("HSD_MtxGetScale (baselib/mtx.c)") }
+    pub fn HSD_MtxGetScale(_m: *mut Mtx, _s: *mut Vec3) { unsafe { let _ = melee_runtime::tu::mtx_world::HSD_MtxGetScale(_m as _, _s as _); } }
     pub fn HSD_JObjAnimAll(_j: J) { todo!("HSD_JObjAnimAll (baselib/jobj.c)") }
     pub fn HSD_JObjLoadJoint(_j: *mut HSD_Joint) -> J { unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(_j as _) as _ } }
     pub fn HSD_JObjAddAnimAll(_j: J, _a: *mut HSD_AnimJoint, _m: *mut HSD_MatAnimJoint, _s: *mut HSD_ShapeAnimJoint) { todo!("HSD_JObjAddAnimAll (baselib/jobj.c)") }

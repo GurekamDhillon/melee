@@ -242,7 +242,7 @@ pub mod ext {
     pub fn mpVtxGetPos(vtx_id: i32, x_out: *mut f32, y_out: *mut f32) {
         match unsafe { MPVTXGETPOS } { Some(f) => f(vtx_id, x_out, y_out), None => { unsafe { let _ = crate::tu::mplib::mpVtxGetPos(vtx_id as _, x_out as _, y_out as _); } return; } }
     }
-    hook!(SPLARCLENGTHPOINT, splArcLengthPoint, (a0: *mut Vec3, a1: *mut HSD_Spline, a2: f32));
+    hook_or!(SPLARCLENGTHPOINT, splArcLengthPoint, (a0: *mut Vec3, a1: *mut HSD_Spline, a2: f32), |a0: *mut Vec3, a1: *mut HSD_Spline, a2: f32| { unsafe { let _ = melee_runtime::tu::spline_world::splArcLengthPoint(a0 as _, a1 as _, a2 as _); } });
     /// `HSD_GObj** HSD_GObjPLinkHead`.
     pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = core::ptr::null_mut();
 }

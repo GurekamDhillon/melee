@@ -221,7 +221,7 @@ fn ftCo_Jump_Enter(a0: *mut Fighter_GObj) = crate::tu::adapt::ftCo_Jump_Enter__2
 fn __frsqrte(a0: f64) -> f64;
 fn Geno_DefineVoiceState(a0: i32, a1: u32, a2: i32) -> i32;
 fn efAsync_Spawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: u32, a3: u32, a4: *mut HSD_JObj);
-fn HSD_ForeachAnim(a0: *mut c_void, a1: HSD_Type, a2: HSD_TypeMask, a3: *mut c_void, a4: AObj_Arg_Type, a5: u64);
+fn HSD_ForeachAnim(a0: *mut c_void, a1: HSD_Type, a2: HSD_TypeMask, a3: *mut c_void, a4: AObj_Arg_Type, a5: u64) = crate::tu::adapt::HSD_ForeachAnim__175c67;
 }
 pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
 pub static mut HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = unsafe { core::mem::zeroed() };

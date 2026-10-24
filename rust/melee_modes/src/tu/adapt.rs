@@ -1167,3 +1167,16 @@ pub fn mn_8022EA08__998c76(a0: *mut c_char, a1: u32) { unsafe { crate::tu::mnmai
 pub fn HSD_ArchiveGetPublicAddress__6d6399(a0: *mut HSD_Archive, a1: *const c_char) -> *mut c_void { unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(a0, a1 as _) } }
 pub fn lbArchive_LoadArchive__992527(a0: *const c_char) -> *mut HSD_Archive { unsafe { melee_runtime::tu::lbarchive::lbArchive_LoadArchive(a0) } }
 pub fn GetNameText__e732d9(a0: u8) -> *mut c_char { unsafe { crate::tu::mnname::GetNameText(a0 as _) } }
+pub fn HSD_ForeachAnim__175c67(a0: *mut c_void, a1: HSD_Type, a2: HSD_TypeMask, a3: *mut c_void, a4: AObj_Arg_Type, a5: u64) { unsafe { melee_runtime::tu::aobj::HSD_ForeachAnim(a0, a1, a2, a3, a4, core::mem::transmute(a5)) } }
+pub fn Stage_8022519C__a93aca(a0: u32) -> u32 { unsafe { core::mem::transmute(melee_world::tu::stage::Stage_8022519C(core::mem::transmute(a0))) } }
+pub fn gm_8017CE34__75f422(a0: *mut StartMeleeData, a1: *mut Unk1PData, a2: *mut i8, a3: u8, a4: u8, a5: u8, a6: i32, a7: u32, a8: i32, a9: i32) { unsafe { crate::tu::gm_17c0::gm_8017CE34(a0, a1, a2, a3, a4, a5, a6, core::mem::transmute(a7), a8, a9) } }
+pub fn Player_800325C8__4ace7f(a0: u32, a1: i32) -> i8 { unsafe { melee_fighter::player::player_800325c8(core::mem::transmute(a0), a1) } }
+pub fn gmVsMelee_EnterCss__44afc7(a0: *mut GameModeState, a1: *mut VsModeData, a2: u32) { unsafe { crate::tu::gmvsmelee::gmVsMelee_EnterCss(a0, a1, core::mem::transmute(a2)) } }
+pub fn HSD_SObjLib_803A477C__a0c4ae(a0: *mut HSD_GObj, a1: *mut HSD_SObjDesc, a2: u32, a3: u32, a4: u8, a5: u8) -> *mut HSD_SObj { unsafe { melee_runtime::tu::sobjlib::HSD_SObjLib_803A477C(a0, a1, core::mem::transmute(a2), core::mem::transmute(a3), a4, a5) } }
+pub fn Player_SetSlottype__6536f1(a0: i32, a1: u32) { unsafe { melee_fighter::tu::player::Player_SetSlottype(a0, core::mem::transmute(a1)) } }
+pub fn mn_8022F3D8__5703af(a0: *mut HSD_JObj, a1: u8, a2: u32) { unsafe { crate::tu::mn_22EC::mn_8022F3D8(a0, a1, core::mem::transmute(a2)) } }
+pub fn Stage_802251E8__211944(a0: u32, a1: *mut i32) { unsafe { melee_world::tu::stage::Stage_802251E8(core::mem::transmute(a0), a1) } }
+pub fn HSD_StartRender__c91577(a0: u32) { unsafe { melee_runtime::tu::initialize::HSD_StartRender(core::mem::transmute(a0)) } }
+pub fn HSD_VICopyXFBAsync__35ed8e(a0: u32) { unsafe { melee_runtime::tu::video::HSD_VICopyXFBAsync(core::mem::transmute(a0)) } }
+pub fn lbCardNew_CompleteNextTask__ebb0f7() -> enum_t { unsafe { core::mem::transmute(melee_runtime::tu::lbcardnew::lbCardNew_CompleteNextTask()) } }
+pub fn ftCo_AttackAir_GetMsidFromCStick__a36195(a0: * mut Fighter) -> FtMotionId { unsafe { core::mem::transmute(melee_fighter::tu::ftCo_AttackAir::ftCo_AttackAir_GetMsidFromCStick(&*a0)) } }

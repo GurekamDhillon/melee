@@ -29,7 +29,7 @@ pub mod ext {
         fn lb_8000FCDC() -> () = crate::tu::adapt::lb_8000FCDC__a0c24e;
         fn mpColl_80041C78() -> () = crate::tu::adapt::mpColl_80041C78__63449b;
         fn Ground_801C0378(a0: i32) -> () = crate::tu::adapt::Ground_801C0378__874334;
-        fn Stage_802251E8(stkind: u32, a1: *mut i32) -> ();
+        fn Stage_802251E8(stkind: u32, a1: *mut i32) -> () = crate::tu::adapt::Stage_802251E8__211944;
         // ---- mn/inlines.h: the menu sounds
         fn lbAudioAx_80024030(a0: i32) -> () = crate::tu::adapt::lbAudioAx_80024030__36458a;
     }

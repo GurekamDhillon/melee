@@ -88,7 +88,7 @@ pub mod ext {
         fn lbGetJObjCurrFrame(jobj: *mut HSD_JObj) -> f32 = crate::tu::adapt::lbGetJObjCurrFrame__0391a5;
         fn memzero(mem: *mut c_void, size: i32) -> ();
         fn lbAudioAx_800237A8(sfx_id: i32, sfx_vol: i32, sfx_pan: i32) -> i32 = crate::tu::adapt::lbAudioAx_800237A8__95b1fa;
-        fn mn_8022F3D8(jobj: *mut HSD_JObj, a: u8, mask: u32) -> ();
+        fn mn_8022F3D8(jobj: *mut HSD_JObj, a: u8, mask: u32) -> () = crate::tu::adapt::mn_8022F3D8__5703af;
         fn HSD_DObjAddAnimAll(dobj: *mut HSD_DObj, matanim: *mut HSD_MatAnim, shape: *mut HSD_ShapeAnimDObj) -> ();
         fn HSD_DObjReqAnimAll(dobj: *mut HSD_DObj, startframe: f32) -> ();
         fn HSD_ArchiveGetPublicAddress(archive: *mut HSD_Archive, name: *const i8) -> *mut c_void = crate::tu::adapt::HSD_ArchiveGetPublicAddress__1a942f;

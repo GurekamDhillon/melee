@@ -97,7 +97,7 @@ pub mod ext {
         fn HSD_MemAlloc(a0: i32) -> *mut c_void = crate::tu::adapt::HSD_MemAlloc__c2b3bc;
         fn HSD_Randf() -> f32;
         fn HSD_Randi(a0: i32) -> i32;
-        fn HSD_SObjLib_803A477C(a0: *mut HSD_GObj, a1: *mut HSD_SObjDesc, a2: u32, a3: u32, a4: u8, a5: u8) -> *mut HSD_SObj;
+        fn HSD_SObjLib_803A477C(a0: *mut HSD_GObj, a1: *mut HSD_SObjDesc, a2: u32, a3: u32, a4: u8, a5: u8) -> *mut HSD_SObj = crate::tu::adapt::HSD_SObjLib_803A477C__a0c4ae;
         fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: i32) -> () = crate::tu::adapt::HSD_SObjLib_803A49E0__00f645;
         fn HSD_SisLib_803A5ACC(a0: i32, a1: i32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) -> *mut HSD_Text = crate::tu::adapt::HSD_SisLib_803A5ACC__27fcb1;
         fn HSD_SisLib_803A5E70() -> () = crate::tu::adapt::HSD_SisLib_803A5E70__5f9c7d;
@@ -122,7 +122,7 @@ pub mod ext {
         fn Mex_InsigniaForExt(a0: i32) -> i32;
         fn Mex_MenuParamF(a0: i32) -> f32;
         fn Mex_PortCKindToExt(a0: i32) -> i32;
-        fn Player_800325C8(a0: u32, a1: i32) -> i8;
+        fn Player_800325C8(a0: u32, a1: i32) -> i8 = crate::tu::adapt::Player_800325C8__4ace7f;
         fn atan2f(a0: f32, a1: f32) -> f32 = crate::tu::adapt::atan2f__2f62eb;
         fn atanf(a0: f32) -> f32 = crate::tu::adapt::atanf__3acb52;
         fn cosf(a0: f32) -> f32 = crate::tu::adapt::cosf__b177e0;

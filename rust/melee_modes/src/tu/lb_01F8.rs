@@ -32,7 +32,7 @@ pub mod ext {
     fn GXLoadTexObj(a0: *mut _GXTexObj, a1: u32);
     fn HSD_Free(a0: *mut c_void) = crate::tu::adapt::HSD_Free__3ee311;
     fn HSD_MemAlloc(a0: i32) -> *mut c_void = crate::tu::adapt::HSD_MemAlloc__c2b3bc;
-    fn HSD_SObjLib_803A477C(a0: *mut HSD_GObj, a1: *mut HSD_SObjDesc, a2: u32, a3: u32, a4: u8, a5: u8) -> *mut HSD_SObj;
+    fn HSD_SObjLib_803A477C(a0: *mut HSD_GObj, a1: *mut HSD_SObjDesc, a2: u32, a3: u32, a4: u8, a5: u8) -> *mut HSD_SObj = crate::tu::adapt::HSD_SObjLib_803A477C__a0c4ae;
     fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: i32) = crate::tu::adapt::HSD_SObjLib_803A49E0__00f645;
     fn THPDec_8032F8D4(a0: *mut u8, a1: *mut c_void /* THPDec_8032FD40_Data */) -> i32 = crate::tu::adapt::THPDec_8032F8D4__2fd84b;
     fn THPDec_8032FD40(a0: *mut c_void /* THPDec_8032FD40_Data */, a1: u16) -> i32 = crate::tu::adapt::THPDec_8032FD40__cc10c1;

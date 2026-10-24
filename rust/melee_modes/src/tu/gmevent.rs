@@ -41,7 +41,7 @@ pub mod ext {
     fn HSD_Randi(a0: i32) -> i32;
     fn Player_80031790(a0: i32) = crate::tu::adapt::Player_80031790__11821c;
     fn Player_80031DA8(a0: i32, a1: i32) = crate::tu::adapt::Player_80031DA8__fbecc7;
-    fn Player_800325C8(a0: u32, a1: i32) -> i8;
+    fn Player_800325C8(a0: u32, a1: i32) -> i8 = crate::tu::adapt::Player_800325C8__4ace7f;
     fn Player_80036394(a0: i32) -> u32 = crate::tu::adapt::Player_80036394__f86559;
     fn Player_80036844(a0: i32, a1: i32) = crate::tu::adapt::Player_80036844__2d424f;
     fn Player_GetCoins(a0: i32) -> i32 = crate::tu::adapt::Player_GetCoins__c7d98f;

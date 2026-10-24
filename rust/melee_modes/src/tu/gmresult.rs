@@ -135,7 +135,7 @@ pub mod ext {
         fn lb_80011AC4(a0: *mut *mut LightList) -> *mut HSD_LObj = crate::tu::adapt::lb_80011AC4__8bc38c;
         fn lb_80014574(a0: u8, a1: i32, a2: i32, a3: i32) -> () = crate::tu::adapt::lb_80014574__7435d0;
         fn memzero(mem: *mut c_void, size: isize) -> ();
-        fn mn_8022F3D8(a0: *mut HSD_JObj, a1: u8, a2: u32) -> ();
+        fn mn_8022F3D8(a0: *mut HSD_JObj, a1: u8, a2: u32) -> () = crate::tu::adapt::mn_8022F3D8__5703af;
         fn un_802FF1B4() -> () = crate::tu::adapt::un_802FF1B4__2022ae;
     }
     crate::ext_va! {

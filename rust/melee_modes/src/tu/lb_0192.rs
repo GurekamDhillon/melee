@@ -36,8 +36,8 @@ pub mod ext {
     fn HSD_SisLib_803A6B98(a0: *mut HSD_Text, a1: f32, a2: f32, a3: *const i8, a4: *const i8) -> i32;
     fn HSD_SisLib_803A70A0(a0: *mut HSD_Text, a1: i32, a2: *const i8, a3: *const i8) -> i32;
     fn HSD_SisLib_803A84BC(a0: *mut HSD_GObj, a1: *mut HSD_Text) = crate::tu::adapt::HSD_SisLib_803A84BC__b2aa0b;
-    fn HSD_StartRender(a0: u32);
-    fn HSD_VICopyXFBAsync(a0: u32);
+    fn HSD_StartRender(a0: u32) = crate::tu::adapt::HSD_StartRender__c91577;
+    fn HSD_VICopyXFBAsync(a0: u32) = crate::tu::adapt::HSD_VICopyXFBAsync__35ed8e;
     fn lbAudioAx_80024F08() = crate::tu::adapt::lbAudioAx_80024F08__08bb8a;
     fn lbAudioAx_80024F6C() = crate::tu::adapt::lbAudioAx_80024F6C__7ce9bf;
     fn lbLang_IsSavedLanguageJP() -> i32 = crate::tu::adapt::lbLang_IsSavedLanguageJP__e2b095;

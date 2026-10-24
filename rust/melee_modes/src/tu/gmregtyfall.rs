@@ -59,7 +59,7 @@ pub mod ext {
         fn HSD_JObjAnimAll(jobj: *mut HSD_JObj) -> ();
         fn HSD_JObjLoadJoint(joint: *mut HSD_Joint) -> *mut HSD_JObj = crate::tu::adapt::HSD_JObjLoadJoint__3efee1;
         fn HSD_SObjLib_803A4740(sobj: *mut HSD_SObj) -> () = crate::tu::adapt::HSD_SObjLib_803A4740__344956;
-        fn HSD_SObjLib_803A477C(gobj: *mut HSD_GObj, desc: *mut HSD_SObjDesc, a2: u32, a3: u32, a4: u8, a5: u8) -> *mut HSD_SObj;
+        fn HSD_SObjLib_803A477C(gobj: *mut HSD_GObj, desc: *mut HSD_SObjDesc, a2: u32, a3: u32, a4: u8, a5: u8) -> *mut HSD_SObj = crate::tu::adapt::HSD_SObjLib_803A477C__a0c4ae;
         fn HSD_SObjLib_803A49E0(gobj: *mut HSD_GObj, pass: i32) -> () = crate::tu::adapt::HSD_SObjLib_803A49E0__00f645;
         fn HSD_SObjLib_803A54EC(gobj: *mut HSD_GObj, pass: i32) -> () = crate::tu::adapt::HSD_SObjLib_803A54EC__11e875;
         fn HSD_SObjLib_803A55DC(gobj: *mut HSD_GObj, w: u16, h: u16, a3: i32) -> () = crate::tu::adapt::HSD_SObjLib_803A55DC__ba9596;
@@ -87,7 +87,7 @@ pub mod ext {
         fn Player_SetPlayerCharacter(slot: i32, ckind: CharacterKind) -> () = crate::tu::adapt::Player_SetPlayerCharacter__d99f81;
         fn Player_SetPlayerId(slot: i32, id: i32) -> () = crate::tu::adapt::Player_SetPlayerId__dba656;
         fn Player_SetScale(slot: i32, scale: f32) -> () = crate::tu::adapt::Player_SetScale__3c042c;
-        fn Player_SetSlottype(slot: i32, kind: u32) -> ();
+        fn Player_SetSlottype(slot: i32, kind: u32) -> () = crate::tu::adapt::Player_SetSlottype__6536f1;
         // ---- lb / mn / ty / sfx
         fn Toy_803060BC(trophy: i32, what: i32) -> f32 = crate::tu::adapt::Toy_803060BC__946c5c;
         fn Toy_803102D0() -> () = crate::tu::adapt::Toy_803102D0__0dcc17;

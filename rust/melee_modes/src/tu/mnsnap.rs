@@ -213,7 +213,7 @@ pub mod ext {
         fn HSD_SisLib_803A6754(arg0: i32, arg1: i32) -> *mut HSD_Text = crate::tu::adapt::HSD_SisLib_803A6754__02fb41;
         fn HSD_SisLib_803A5CC4(a0: *mut HSD_Text) = crate::tu::adapt::HSD_SisLib_803A5CC4__6c7e38;
         fn memzero(mem: *mut c_void, size: isize);
-        fn lbCardNew_CompleteNextTask() -> enum_t;
+        fn lbCardNew_CompleteNextTask() -> enum_t = crate::tu::adapt::lbCardNew_CompleteNextTask__ebb0f7;
         fn lb_8001CDB4() = crate::tu::adapt::lb_8001CDB4__c8eb69;
         fn lbLang_IsSavedLanguageJP() -> i32 = crate::tu::adapt::lbLang_IsSavedLanguageJP__e2b095;
         fn lbSnap_8001D338(a0: i32) -> i32 = crate::tu::adapt::lbSnap_8001D338__5d6cf2;

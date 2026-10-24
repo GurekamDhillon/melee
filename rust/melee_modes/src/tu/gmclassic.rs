@@ -47,7 +47,7 @@ pub mod ext {
     fn SceneLaunch_PlayerColor(a0: i32) -> i32;
     fn SceneLaunch_PlayerStocks(a0: i32) -> i32;
     fn Script_OnePScripted() -> i32;
-    fn Stage_8022519C(a0: u32) -> u32;
+    fn Stage_8022519C(a0: u32) -> u32 = crate::tu::adapt::Stage_8022519C__a93aca;
     fn gmFrontend_AtlasSelect(a0: *mut GameModeState, a1: i32, a2: *const i8) = crate::tu::adapt::gmFrontend_AtlasSelect__26b7fc;
     fn gmMainLib_8015CDC8() -> *mut gmm_x0_528_t = crate::tu::adapt::gmMainLib_8015CDC8__ddba5a;
     fn gmMainLib_8015D438(a0: u8) -> *mut u32 = crate::tu::adapt::gmMainLib_8015D438__7caf41;
@@ -69,7 +69,7 @@ pub mod ext {
     fn gm_8017CA38(a0: *mut DebugGameOverData, a1: *mut Unk1PData, a2: *mut gmm_x0_528_t, a3: u8) = crate::tu::adapt::gm_8017CA38__442d2c;
     fn gm_8017CBAC(a0: *mut UnkAdventureData, a1: *mut gmm_x0_528_t, a2: u8) = crate::tu::adapt::gm_8017CBAC__33592d;
     fn gm_8017CD94(a0: *mut UnkAdventureData, a1: i32, a2: i32, a3: i32) -> u8 = crate::tu::adapt::gm_8017CD94__09d838;
-    fn gm_8017CE34(a0: *mut StartMeleeData, a1: *mut Unk1PData, a2: *mut i8, a3: u8, a4: u8, a5: u8, a6: i32, a7: u32, a8: i32, a9: i32);
+    fn gm_8017CE34(a0: *mut StartMeleeData, a1: *mut Unk1PData, a2: *mut i8, a3: u8, a4: u8, a5: u8, a6: i32, a7: u32, a8: i32, a9: i32) = crate::tu::adapt::gm_8017CE34__75f422;
     fn gm_8017D7AC(a0: *mut MatchExitInfo, a1: *mut Unk1PData, a2: u8) -> i32 = crate::tu::adapt::gm_8017D7AC__84cd0d;
     fn gm_8017DB58(a0: *mut Unk1PData_x24);
     fn gm_8017DB6C(a0: *mut gm_8017DB6C_arg0_t, a1: i32) -> u8;

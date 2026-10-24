@@ -271,7 +271,7 @@ crate::oext_fns! {fn ftCo_800D68C0(a0 : * mut Fighter_GObj) -> :: core :: ffi ::
 crate::oext_fns! {fn ftCo_Attack100_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Attack100_CheckInput__61aa80;}
 crate::oext_fns! {fn ftCo_Catch_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_Catch_CheckInput__e60751;}
 crate::oext_fns! {fn ftCo_AttackAir_CheckItemThrowInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackAir_CheckItemThrowInput__1e285e;}
-crate::oext_fns! {fn ftCo_AttackAir_GetMsidFromCStick(a0 : * mut Fighter) -> FtMotionId;}
+crate::oext_fns! {fn ftCo_AttackAir_GetMsidFromCStick(a0 : * mut Fighter) -> FtMotionId = crate::tu::adapt::ftCo_AttackAir_GetMsidFromCStick__a36195;}
 crate::oext_fns! {fn ftCo_AttackHi3_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackHi3_CheckInput__5d742f;}
 crate::oext_fns! {fn ftCo_AttackHi4_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackHi4_CheckInput__ebfa65;}
 crate::oext_fns! {fn ftCo_AttackLw3_CheckInput(a0 : * mut Fighter_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftCo_AttackLw3_CheckInput__132bbd;}

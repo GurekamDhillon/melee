@@ -28,7 +28,7 @@ pub mod ext {
     }
     ext_fns! {
     fn gmFrontend_AtlasSelect(a0: *mut GameModeState, a1: i32, a2: *const i8) = crate::tu::adapt::gmFrontend_AtlasSelect__26b7fc;
-    fn gmVsMelee_EnterCss(a0: *mut GameModeState, a1: *mut VsModeData, a2: u32);
+    fn gmVsMelee_EnterCss(a0: *mut GameModeState, a1: *mut VsModeData, a2: u32) = crate::tu::adapt::gmVsMelee_EnterCss__44afc7;
     fn gmVsMelee_EnterResults(a0: *mut GameModeState) = crate::tu::adapt::gmVsMelee_EnterResults__e8d931;
     fn gmVsMelee_EnterSss(a0: *mut GameModeState, a1: *mut VsModeData) = crate::tu::adapt::gmVsMelee_EnterSss__1e7fb2;
     fn gmVsMelee_EnterSuddenDeath(a0: *mut GameModeState, a1: *mut VsModeData, a2: Option<unsafe extern "C" fn(*mut StartMeleeData, *mut StartMeleeData)>, a3: Option<unsafe extern "C" fn(*mut PlayerInitData, *mut PlayerInitData)>) = crate::tu::adapt::gmVsMelee_EnterSuddenDeath__883e46;

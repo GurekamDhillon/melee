@@ -184,11 +184,11 @@ pub mod ext {
                     None => { return unsafe { crate::tu::gmgover::gm_801BEFB0() as _ }; },
                 }
             }
-    pub static mut H_lbAudioAx_80024E50: Option<fn(i32)> = None;
+    pub static mut H_lbAudioAx_80024E50: Option<unsafe extern "C" fn(i32)> = None;
     #[allow(non_snake_case)]
     pub fn lbAudioAx_80024E50(a0: i32) {
         match unsafe { H_lbAudioAx_80024E50 } {
-            Some(f) => f(a0),
+            Some(f) => unsafe { f(a0) },
             None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024E50((a0 != 0)); } },
         }
     }

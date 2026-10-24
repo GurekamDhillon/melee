@@ -29,7 +29,7 @@ fn coll_reaches_ft_80083c00() {
 }
 
 #[test]
-#[should_panic(expected = "Fighter_ChangeMotionState")]
+#[should_panic(expected = "PcTraceMotionEnabled")]
 fn enter_reaches_motion_change() {
     let (_f, mut go) = world();
     t::ftco_800dc284(&mut *go);

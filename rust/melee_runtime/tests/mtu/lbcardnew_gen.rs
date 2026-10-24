@@ -5,6 +5,7 @@ use super::m;
 use super::*;
 use melee_types::*;
 use super::m::*;
+use super::m::LbCardEntry;
 use core::ffi::c_void;
 
 

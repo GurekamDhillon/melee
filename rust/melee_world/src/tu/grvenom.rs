@@ -386,11 +386,11 @@ pub mod ext {
     hook!(H_Player_GetPlayerSlotType, Player_GetPlayerSlotType, (a0: i32) -> u32);
     hook!(H_Player_LoadPlayerCoords, Player_LoadPlayerCoords, (a0: i32, a1: *mut melee_types::Vec));
     hook!(H_it_802E7654, it_802E7654, (a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::HSD_JObj, a2: *mut melee_types::Vec, a3: i32, a4: i32, a5: f32) -> *mut melee_types::HSD_GObj);
-    pub static mut H_grMaterial_801C9604: Option<fn(*mut melee_types::HSD_GObj, *mut core::ffi::c_void, i32)> = None;
+    pub static mut H_grMaterial_801C9604: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, *mut core::ffi::c_void, i32)> = None;
     #[allow(non_snake_case)]
     pub fn grMaterial_801C9604(a0: *mut melee_types::HSD_GObj, a1: *mut core::ffi::c_void, a2: i32) {
         match unsafe { H_grMaterial_801C9604 } {
-            Some(f) => f(a0, a1, a2),
+            Some(f) => unsafe { f(a0, a1, a2) },
             None => { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C9604(a0 as _, a1 as _, (a2 != 0)); } },
         }
     }

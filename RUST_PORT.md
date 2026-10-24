@@ -843,3 +843,67 @@ No oracle was run for this shard (no C oracle, no cargo test): the ports are che
   like every other callee outside the three files (unset: panic "TODO"); `ScriptGame_ModValue` (player.c) falls back to
   the crate's neutral `SCRIPT_MOD_VALUE` hook. (5) `lbVector_Add/Diff`, `PSMTXMultVec`, `sinf`, `cosf`, `sqrtf` and
   `PSVECNormalize` call the existing `melee_runtime` ports.
+
+## Status recount and next plan (2026-10-24, after shard merge, platform nights 3/4 and resolve passes 1-3)
+
+State: `rust-port` has ~1000 shard merges, platform-2/3 (audio wiring, Akaneia Wolf over gdmods) and three stub-resolve
+passes (4041 + 155 + 50 stub sites rewired to existing ports, compile-checked). `port/shard-665-672` is the only
+unmerged shard branch (conflicts in `melee_items/gen/mtu/stems.py` and `src/tu/mod.rs`); rebase it onto rust-port and
+redo the generated parts with `gen/mtu`. The earlier "unmerged" shard list was a stale merge-in-progress that no longer exists.
+
+### Recount of ported functions per group (name-level, supersedes the older table rows)
+Method (`recount.py`, scratchpad): distinct C function-definition names in the group's `src/` dirs (regex) intersected with
+distinct Rust `fn` names in the crate's `src/` (excluding `raw/`, `c2r/`, and bodies containing `todo!`/`TODO(`). A name
+match is an upper bound: it counts hook-wrapper stubs that forward to a port or to an unset hook, and duplicate ports
+count once. "Verified" (bit-for-bit vs the C via a per-shard oracle) is not recounted here; every `tu/` shard port has a
+stateful oracle except shards 881-888 (checked by construction) and the resolve rewires (no test run, per their rule).
+
+| group | crate | C defs | name-matched ports | share |
+|---|---|---:|---:|---:|
+| 1 runtime/HSD/lb/db/sfx | melee_runtime | 2175 | 1778 | 82% |
+| 2 world (mp cm ef gr if) | melee_world | 3511 | 3208 | 91% |
+| 3 fighter engine + ftCommon + pl | melee_fighter | 3242 | 2135 | 66% |
+| 4 characters (ft/kinds) | melee_chara | 6075 | 4202 | 69% |
+| 5 items/ty/vi | melee_items | 4966 | 4704 | 95% |
+| 6 modes (gm mn sc) | melee_modes | 2802 | 2647 | 94% |
+
+Caveats: g3/g4 definition counts include static inlines and per-char duplicates, so their share is soft; ~1,420 hook/ext
+stubs still panic when called (about 930 `hook!`, 440 `ext_fns!` TODO(port), 58 TODO(pc script)); the ported-name figures
+above include some stubs forwarding to those. Resolve passes did NOT dedupe duplicate ports (e.g. `Ground_*` in `tu_ext` and
+`tu::ground`) and did not run tests or goldens, so behaviour of the 4,200+ rewired sites is unconfirmed until the
+checklist below is done.
+
+### Build/test state at this commit
+`cargo build --workspace` passes. `cargo test --workspace --no-fail-fast`: ~791 test binaries, ~990 tests; fixed here:
+(1) every `melee_modes` test binary and the `melee` bin exited 255 before main: `tu/script_game.rs` (c2rust leftover) put its
+static initializer in `.CRT$XIB` (an int-returning C initializer list on MSVC), now `.CRT$XCU`; (2) three `lbAudioAx`/`gmMainLib`/`lbMthp`
+hooks in gmmovieend/gmomake15/gmopening/gmmultiman/grvenom had become safe `fn` types after the resolve rewire (back to
+`unsafe extern "C" fn`); (3) shard 985-992 left `thp_state/`, `tu_card.rs` and its oracle scripts untracked (copied in);
+(4) `tu_ftco_0c60`/`0dc2` should_panic strings updated (rewired stubs now stop at `p_ftCommonData not loaded` /
+`PcTraceMotionEnabled`); (5) `lbtu_lbspdisplay` disabled with `#![cfg(any())]` (its expected file was never generated; `run_tu.py` fails on `__builtin_va_arg`).
+Still failing (checked: not caused by the resolve passes, `tu_grfourside` fails identically at 7d3fb0087; the rest not bisected):
+`melee_modes` `oracle_ptr` and `oracle_r5` (native sizeof of `un_804D6EF4_t` 184 vs C 176, `TyDisplayData` 688 vs 672: oracle C
+uses 4-byte pointer slots where the generated type has `*mut HSD_Text`), `tu_gm_1798`, `tu_lb_020A`, `mngallery_vs_c`;
+`melee_world` `tu_grfourside`, `tuo_grvenom` (388/5736), `tuo_grzakogenerator`; `melee_runtime` `tu_sobjlib`. Fix these first.
+
+### Platform status
+Audio runs inside the native sim (banks + BGM by id, `golden --audio`); mods mount over the disc and Akaneia Wolf runs as P2
+(onLoad/onFrame only). Golden `pad_falcon_fox_fd` and `pad_falcon_wolf_fd` write 216 frames then stop at `ftCo_Walk_IASA`
+with a button (not ported). Known issue: `mex_import` `tests/ppc_oracle.rs` fails 4/6000 cases in `--release` (passes debug);
+not confirmed whether pre-existing.
+
+### Next plan, in order
+1. Run the checks the resolve passes skipped: `cargo test --workspace` (this commit fixes the one compile break found:
+   three `lbAudioAx_80024E50`/`gmMainLib`/`lbMthp` hooks in `melee_modes::tu::{gmmovieend,gmomake15,gmopening}` had become
+   safe `fn` types), then `melee golden` on all scenarios against `docs/rust-port/golden/*.csv`. Bisect any divergence
+   against the rewire commits `fa3889307`, `455fb1b42`, `4f50a2dd3`.
+2. Recursion/loop audit of rewired sites (27 same-name candidates found in pass 1) and dedupe duplicate ports
+   (pick one per C name, delete the rest).
+3. Port `ftCo_Walk_IASA` and what follows it so the golden runs past frame 216; extend to the other three goldens.
+4. Unblock the ~300 wrong-arity and ~95 cross-crate stubs: global `HSD_Randi/Randf` state, `GObj_Create` host API,
+   `efSync_Spawn`; the dependency cycle fighter/chara/world/modes needs a trait/hook layer or merged crate.
+5. Merge `port/shard-665-672`.
+6. Mod track: bind the 536 unbound vanilla calls and 6 m-ex helpers, give r2/r13 backing memory, wire Wolf's remaining
+   callbacks; fix the GrSv/GrBx/GrMVb/PlSn type-guess blockers; investigate the release-mode ppc_oracle diff.
+7. Audio leftovers (ducking, positional SFX, boot banks, 1P branches) and the user-only checks (visuals, audio by ear, adapter,
+   netplay).

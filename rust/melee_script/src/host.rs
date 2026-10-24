@@ -40,6 +40,21 @@ pub trait Host {
     fn local_time(&self) -> (u32, u32, u32, u32, u32, u32) {
         (1970, 1, 1, 0, 0, 0)
     }
+    /// `localtime` + `strftime("%Y-%m-%d %H:%M")` of a unix time (UTC by default)
+    fn format_time(&self, unix: i64) -> String {
+        let days = unix.div_euclid(86400);
+        let rem = unix.rem_euclid(86400);
+        let z = days + 719468;
+        let era = z.div_euclid(146097);
+        let doe = z.rem_euclid(146097);
+        let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+        let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+        let mp = (5 * doy + 2) / 153;
+        let d = doy - (153 * mp + 2) / 5 + 1;
+        let m = if mp < 10 { mp + 3 } else { mp - 9 };
+        let y = yoe + era * 400 + (m <= 2) as i64;
+        format!("{y:04}-{m:02}-{d:02} {:02}:{:02}", rem / 3600, rem % 3600 / 60)
+    }
     /// `gw_SceneReport_SceneName`
     fn scene_name(&self, kind: i32) -> String {
         format!("scene {kind}")

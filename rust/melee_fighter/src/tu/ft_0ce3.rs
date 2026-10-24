@@ -20,7 +20,7 @@ pub mod ext {
     pub fn it_80292F14(_i: G, _v: &Vec3, _dir: f32) { unsafe { let _ = melee_items::tu::itfflower::it_80292F14(_i as _, _v as *const _ as *mut _, _dir as _); } }
     /// `lb_8000B1CC(jobj, NULL, out)`.
     pub fn lb_8000B1CC(_j: *mut HSD_JObj, _out: &mut Vec3) { todo!("TODO(group1 lb) lb_8000B1CC") }
-    pub fn ft_800892A0(_g: G) { todo!("TODO(group3 ft_0892) ft_800892A0") }
+    pub fn ft_800892A0(_g: G) { unsafe { let _ = crate::stale::renew_attack_instance(&mut *((*_g).user_data as *mut Fighter)); } }
 }
 
 fn reset_vars(f: &mut Fighter) {

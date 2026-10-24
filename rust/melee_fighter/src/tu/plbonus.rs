@@ -61,7 +61,7 @@ pub mod ext {
     fn pl_8004182C(a0: i32) => unsafe { let _ = crate::plbonus::pl_8004182c(a0 as _); };
     fn pl_800418F4(a0: i32) => unsafe { let _ = crate::plbonus::pl_800418f4(a0 as _); };
     fn pl_80041BFC(a0: i32) => unsafe { let _ = crate::plbonus::pl_80041bfc(a0 as _); };
-    fn plStale_ResetStaleMoveTableForPlayer(a0: i32);
+    fn plStale_ResetStaleMoveTableForPlayer(a0: i32) => unsafe { let _ = crate::stale::reset_stale_move_table(a0 as i32); };
     }
 }
 

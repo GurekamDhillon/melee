@@ -150,6 +150,7 @@ pub mod ftCo_EscapeAir;
 pub mod ftCo_Fall;
 pub mod ftCo_FallAerial;
 pub mod ftCo_FallSpecial;
+pub mod ftCo_0A01;
 pub mod ftCo_Wait;
 pub mod ftCo_Walk;
 pub mod ftCo_Turn;

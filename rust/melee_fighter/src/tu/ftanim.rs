@@ -75,7 +75,7 @@ pub mod ext {
     /// `CostumeListsForeachCharacter[kind].costume_list[costume].x4`.
     pub fn costume_matanim(_kind: i32, _costume: u8) -> *mut HSD_MatAnimJoint { unsafe { (*crate::tu::ftdata::CostumeListsForeachCharacter[_kind as usize].costume_list.add(_costume as usize)).x4 } }
     /// `FT_COSTUME_VIS_IDX(fp)`.
-    pub fn FT_COSTUME_VIS_IDX(_fp: *mut Fighter) -> u32 { todo!("FT_COSTUME_VIS_IDX (ft/ftparts.h)") }
+    pub fn FT_COSTUME_VIS_IDX(_fp: *mut Fighter) -> u32 { unsafe { (*_fp).x619_costume_id as u32 } }
     pub fn ftAction_80073240(_g: G) { unsafe { let _ = crate::tu::ftaction::ftAction_80073240(_g as _); } }
     pub fn ftCo_800DB500(_g: G) { unsafe { let _ = crate::tu::ftCo_CapturePulled::ftCo_800DB500(_g as _); } }
     pub fn Geno_DefineIsNone(_kind: i32) -> i32 { unsafe { crate::platform::Geno_DefineIsNone(_kind) } }

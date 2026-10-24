@@ -17,7 +17,7 @@ pub mod ext {
     pub fn HSD_DObjLoadDesc(desc: *mut HSD_DObjDesc) -> *mut HSD_DObj { panic!("TODO(group1 dobj) HSD_DObjLoadDesc") }
     pub fn HSD_DObjResolveRefsAll(dobj: *mut HSD_DObj, desc: *mut HSD_DObjDesc) { panic!("TODO(group1 dobj) HSD_DObjResolveRefsAll") }
     pub fn HSD_IDInsertToTable(table: *mut c_void, key: usize, data: *mut c_void) { { unsafe { let _ = melee_runtime::tu::id::HSD_IDInsertToTable(table as _, key as _, data as _); } return; } }
-    pub fn ftAnim_GetNextJointInTree(joint: &mut *mut HSD_Joint, depth: &mut i32) { panic!("TODO(ftanim) ftAnim_GetNextJointInTree") }
+    pub fn ftAnim_GetNextJointInTree(joint: &mut *mut HSD_Joint, depth: &mut i32) { unsafe { let _ = crate::tu::ftanim::ftAnim_GetNextJointInTree(joint, depth); } }
     pub fn lb_8000CE30(a: *mut HSD_DObj, b: *mut HSD_DObj) { { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000CE30(a as _, b as _); } return; } }
     pub fn hsdChangeClass(obj: *mut c_void, info: *mut c_void) { { unsafe { let _ = melee_runtime::tu::class::hsdChangeClass(obj as _, info as _); } return; } }
     /// `&ftMObj` (ftmaterial.c class info).

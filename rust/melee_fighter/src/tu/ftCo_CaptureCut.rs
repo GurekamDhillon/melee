@@ -51,7 +51,7 @@ pub mod ext {
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         ftCommon_8007D7FC(f: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
         ftCommon_UnlockECB(f: &mut Fighter) = crate::ftcommon2::unlock_ecb;
-        Fighter_UnkSetFlag_8006CFBC(g: G) = |_| todo!("TODO(port) Fighter_UnkSetFlag_8006CFBC (fighter.c)");
+        Fighter_UnkSetFlag_8006CFBC(g: G) = |g: G| { unsafe { let _ = crate::tu::fighter::Fighter_UnkSetFlag_8006CFBC(g); } };
         Fighter_UpdateModelScale(g: G) = |g: G| { unsafe { let _ = crate::tu::fighter::Fighter_UpdateModelScale(g as _); } };
         ftKb_MexKirbyLike(kind: i32) -> i32 = |_| todo!("TODO(port) ftKb_MexKirbyLike (ftkirby.c)");
         ftParts_GetBoneIndex(f: &Fighter, part: i32) -> i32 = crate::ftdmgfall::ftparts_get_bone_index;

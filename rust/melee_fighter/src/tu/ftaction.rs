@@ -74,8 +74,8 @@ pub mod ext {
     pub fn ft_80084C38(_g: G, _a: &mut i32, _b: &mut i32, _c: &mut i32) -> bool { unsafe { crate::tu::ft_081b::ft_80084c38(_g as _, _a as *mut _ as *mut _, _b as *mut _ as *mut _, _c as *mut _ as *mut _) } }
     pub fn ft_8008A1B8(_g: G, _a: u32) { unsafe { let _ = crate::tu::ft_0899::ft_8008A1B8(_g as _, _a as _); } }
     pub fn HSD_Randi(_n: i32) -> i32 { unsafe { crate::rng::HSD_Randi(_n) } }
-    pub fn lbAudioAx_800263E8(_dir: f32, _g: G, _beh: u32, _sfx: i32, _a: i32, _b: i32, _p0: i32, _p1: i32, _p2: i32, _s8: i32, _sc: i32) -> i32 { todo!("lbAudioAx_800263E8 (lb/lbaudio_ax.c)") }
-    pub fn lbAudioAx_800264E4(_h: i32) -> i32 { todo!("lbAudioAx_800264E4 (lb/lbaudio_ax.c)") }
+    pub fn lbAudioAx_800263E8(_dir: f32, _g: G, _beh: u32, _sfx: i32, _a: i32, _b: i32, _p0: i32, _p1: i32, _p2: i32, _s8: i32, _sc: i32) -> i32 { crate::hooks::lbaudioax_800263e8(_dir, _g as _, _beh, _sfx, _a, _b, _p0, _p1, _p2, _s8, _sc) }
+    pub fn lbAudioAx_800264E4(_h: i32) -> i32 { crate::hooks::lbaudioax_800264e4(_h) }
     pub fn ftAnim_800704F0(g: G, idx: i32, frame: f32) { unsafe { crate::tu::ftanim::ftAnim_800704F0(g, idx, frame) } }
     pub fn ftAnim_ApplyPartAnim(g: G, a: i32, b: i32, c: f32) { unsafe { crate::tu::ftanim::ftAnim_ApplyPartAnim(g, a, b, c) } }
     pub fn ftCo_800BFFD0(_fp: F, _a: u32, _b: u32) { unsafe { let _ = crate::tu::ftcolanim::ftco_800bffd0(&mut *(_fp as *mut _), _a as _, _b as _); } }

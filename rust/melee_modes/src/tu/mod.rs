@@ -153,3 +153,4 @@ pub mod mnsnap;
 pub mod mnnamenew;
 pub mod mnstagesel;
 pub mod mn_22EC;
+pub mod geno_lab_mode;

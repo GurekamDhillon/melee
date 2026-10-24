@@ -347,7 +347,13 @@ def write_probe():
                 found.add(name)
         if found != wanted:
             raise SystemExit(f"missing private records in {source}: {wanted - found}")
-    SRC.write_text(hdr + nl.join(lines) + nl + source_records(ROOT) + nl.join(local_record_declarations()) + nl + tu_record_declarations() + nl + ty_record_declarations() + nl + nl.join(synth_local) + nl, newline=nl)
+
+    # TU-private records also belong to the one type generator. Extract the exact
+    # declaration rather than maintaining a second description of its fields.
+    lab_source = (ROOT / "pc/geno/geno_lab_mode.c").read_text(encoding="utf-8")
+    fly_cursor = re.search(r"typedef struct \{\s*Fighter\* fighter;.*?\} FlyCursor;", lab_source, re.S)
+    assert fly_cursor, "geno_lab_mode.c FlyCursor declaration moved"
+    SRC.write_text(hdr + nl.join(lines) + nl + source_records(ROOT) + nl.join(local_record_declarations()) + nl + tu_record_declarations() + nl + ty_record_declarations() + nl + nl.join(synth_local) + nl + fly_cursor.group(0) + nl, newline=nl)
     return len(lines)
 
 RUST_KW = set("as break const continue crate else enum extern false fn for if impl in let loop match mod move mut pub ref return self Self static struct super trait true type unsafe use where while async await dyn abstract become box do final macro override priv typeof unsized virtual yield try gen".split())

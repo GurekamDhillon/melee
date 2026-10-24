@@ -245,7 +245,7 @@ pub mod ext {
     pub fn grZakoGenerator_801CAF08() {
         match unsafe { GRZAKOGENERATOR_801CAF08 } { Some(f) => f(), None => { unsafe { let _ = crate::tu::grzakogenerator::grZakoGenerator_801CAF08(); } return; } }
     }
-    hook!(ITGETKIND, itGetKind, (gobj: *mut HSD_GObj) -> ItemKind);
+    hook_or!(ITGETKIND, itGetKind, (gobj: *mut HSD_GObj) -> ItemKind, |gobj: *mut HSD_GObj| unsafe { crate::itacc::itGetKind(gobj as _) as _ });
     pub static mut LBVECTOR_ADD: Option<fn(*mut Vec3, *mut Vec3) -> *mut Vec3> = None;
     #[allow(non_snake_case)]
     pub fn lbVector_Add(a: *mut Vec3, b: *mut Vec3) -> *mut Vec3 {

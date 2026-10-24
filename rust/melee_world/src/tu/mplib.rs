@@ -106,7 +106,7 @@ pub mod ext {
     fn ftLib_80086984(a0: *mut HSD_GObj) -> *mut CollData = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086984(a0 as _) as _ };
     fn grDynamicAttr_801CA0B4() = || { unsafe { let _ = crate::tu::grdynamicattr::grDynamicAttr_801CA0B4(); } };
     fn grDynamicAttr_801CA224() = || { unsafe { let _ = crate::tu::grdynamicattr::grDynamicAttr_801CA224(); } };
-    fn itGetKind(a0: *mut HSD_GObj) -> ItemKind;
+    fn itGetKind(a0: *mut HSD_GObj) -> ItemKind = |a0: *mut HSD_GObj| unsafe { crate::itacc::itGetKind(a0 as _) as _ };
     fn OSReport(a0: &str) = |a0: &str| melee_runtime::tu::os_error::OSReport_str(a0);
     }
     pub static mut DbLevel: DbLKind = unsafe { core::mem::zeroed() };

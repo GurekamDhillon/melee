@@ -57,8 +57,8 @@ pub mod ext {
     fn grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32) = |a0: *mut HSD_GObj, a1: i32, a2: i32| { unsafe { let _ = crate::tu::granime::grAnime_801C8138(a0 as _, a1 as _, a2 as _); } };
     fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { let _ = crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } };
     fn grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj = |a0: *mut grZakoGenerator_SpawnDesc| unsafe { crate::tu::grzakogenerator::grZakoGenerator_801CAE04(a0 as _) as _ };
-    fn it_802F2014(a0: *mut HSD_GObj, a1: i32);
-    fn it_802F2020(a0: *mut HSD_GObj) -> i32;
+    fn it_802F2014(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { let _ = crate::itacc::it_802F2014(a0 as _, a1 as _); } };
+    fn it_802F2020(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::itacc::it_802F2020(a0 as _) as _ };
     fn it_802F202C(a0: *mut HSD_GObj);
     fn it_802F2094(a0: *mut HSD_GObj, a1: *mut Vec, a2: i32, a3: i32) -> *mut HSD_GObj;
     fn lb_800115F4() = || { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800115F4(); } };

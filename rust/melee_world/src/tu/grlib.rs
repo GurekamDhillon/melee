@@ -65,7 +65,7 @@ pub mod ext {
     hook!(HSD_8039EFAC, hsd_8039EFAC, (linkNo: s32, bank: s32, gfx_id: s32, a3: *mut HSD_JObj) -> *mut HSD_Generator);
     hook!(HSD_8039F05C, hsd_8039F05C, (linkNo: s32, bank: s32, idx: s32) -> *mut HSD_Generator);
     hook!(HSD_8039F6CC, hsd_8039F6CC, (linkNo: s32, bank: s32, gfx_id: s32, a3: *mut HSD_JObj) -> *mut HSD_Generator);
-    hook!(ITGETKIND, itGetKind, (gobj: *mut HSD_GObj) -> ItemKind);
+    hook_or!(ITGETKIND, itGetKind, (gobj: *mut HSD_GObj) -> ItemKind, |gobj: *mut HSD_GObj| unsafe { crate::itacc::itGetKind(gobj as _) as _ });
     pub static mut LB_8000FD18: Option<fn(*mut DynamicsDesc)> = None;
     #[allow(non_snake_case)]
     pub fn lb_8000FD18(a0: *mut DynamicsDesc) {

@@ -7,7 +7,7 @@ Compiles rust/melee_runtime/gen/pure/drv_<stem>.c (it #includes the game's .c ve
 (clang -ffp-contract=on -O2 -Xclang -disable-llvm-passes, as gen/cref/run_tu.py), applies gwtool's IR
 rewrites (oracle/lower.py), links, runs; writes rust/melee_runtime/tests/data/pure_<stem>.txt.
 """
-import os, subprocess, sys
+import os, re, subprocess, sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -51,6 +51,20 @@ def main():
                 link += ln.split("LINK:")[1].replace("*/", "").split()
             if "PLAIN:" in ln:
                 plain += ln.split("PLAIN:")[1].replace("*/", "").split()
+        # `/* EXTRACT: <c file> <name> ... */` lines: the verbatim definitions of those functions are
+        # written to extract_<stem>.h (which the driver includes), for files that cannot be compiled whole.
+        ext_txt = ""
+        for ln in drv.read_text().splitlines()[:16]:
+            if "EXTRACT:" in ln:
+                toks = ln.split("EXTRACT:")[1].replace("*/", "").split()
+                src_t = (ROOT / toks[0]).read_text(encoding="latin1")
+                for nm in toks[1:]:
+                    m = re.search(r"^[A-Za-z_][\w \*]*?" + re.escape(nm) + r"\s*\([^;{}]*\)\s*\n?\{", src_t, re.M)
+                    if not m:
+                        raise SystemExit(f"pure: {nm} not found in {toks[0]}")
+                    end = src_t.find("\n}\n", m.start())
+                    ext_txt += src_t[m.start(): end + 3] + "\n"
+        (HERE / f"extract_{n}.h").write_text(ext_txt, encoding="utf-8")
         lls = []
         for s in (drv, ROOT / "pc/gameworld/gekko_fp.c", *[ROOT / x for x in link]):
             ll = BUILD / f"pure_{n}__{s.parent.name}_{s.stem}.ll"

@@ -87,9 +87,9 @@ pub mod ext {
     fn it_802EBFAC(a0: *mut HSD_GObj);
     fn it_802EC830(a0: *mut HSD_GObj);
     fn it_802ECA70(a0: *mut HSD_GObj) -> *mut HSD_GObj;
-    fn it_802ECC8C(a0: *mut HSD_GObj) -> i32;
-    fn it_802ECC98(a0: *mut HSD_GObj, a1: f32);
-    fn it_802ECCA4(a0: *mut HSD_GObj, a1: *mut i32, a2: *mut Vec);
+    fn it_802ECC8C(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::itacc::it_802ECC8C(a0 as _) as _ };
+    fn it_802ECC98(a0: *mut HSD_GObj, a1: f32) = |a0: *mut HSD_GObj, a1: f32| { unsafe { let _ = crate::itacc::it_802ECC98(a0 as _, a1 as _); } };
+    fn it_802ECCA4(a0: *mut HSD_GObj, a1: *mut i32, a2: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut i32, a2: *mut Vec| { unsafe { let _ = crate::itacc::it_802ECCA4(a0 as _, a1 as _, a2 as _); } };
     fn lb_8000B134(a0: *mut HSD_JObj) -> i32 = |a0: *mut HSD_JObj| unsafe { melee_runtime::tu::lb_00B0::lb_8000B134(a0 as _) as _ };
     fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec) = |a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(a0 as _, a1 as _, a2 as _); } };
     fn lb_800115F4() = || { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800115F4(); } };

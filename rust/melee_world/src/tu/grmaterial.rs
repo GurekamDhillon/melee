@@ -77,8 +77,8 @@ pub mod ext {
         match unsafe { HSDINITCLASSINFO } { Some(f) => f(class_info, parent_info, base_class_library, ty, info_size, class_size), None => { unsafe { let _ = melee_runtime::tu::class::hsdInitClassInfo(class_info as _, parent_info as _, base_class_library as _, ty as _, info_size as _, class_size as _); } return; } }
     }
     hook!(IT_802725D4, it_802725D4, (a0: *mut HSD_GObj));
-    hook!(IT_802756D0, it_802756D0, (a0: *mut HSD_GObj));
-    hook!(IT_802756E0, it_802756E0, (a0: *mut HSD_GObj));
+    hook_or!(IT_802756D0, it_802756D0, (a0: *mut HSD_GObj), |a0: *mut HSD_GObj| { unsafe { let _ = crate::itacc::it_802756D0(a0 as _); } });
+    hook_or!(IT_802756E0, it_802756E0, (a0: *mut HSD_GObj), |a0: *mut HSD_GObj| { unsafe { let _ = crate::itacc::it_802756E0(a0 as _); } });
     hook!(IT_802E6AEC, it_802E6AEC, (a0: *mut Ground, a1: i32, a2: i32, a3: *mut HSD_JObj, a4: *mut Vec3, a5: i32, a6: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground)>, a7: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut Vec3, *mut HSD_GObj, f32)>, a8: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut HSD_GObj)>) -> *mut HSD_GObj);
     pub static mut LBGETFREEALPHAREGISTER: Option<fn(s32, *mut HSD_MObj, *mut HSD_TExp) -> s32> = None;
     #[allow(non_snake_case)]

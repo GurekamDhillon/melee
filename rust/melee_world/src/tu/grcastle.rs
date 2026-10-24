@@ -209,9 +209,9 @@ pub mod ext {
     pub fn grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj {
         match unsafe { GRZAKOGENERATOR_801CAE04 } { Some(f) => f(a0), None => { return unsafe { crate::tu::grzakogenerator::grZakoGenerator_801CAE04(a0 as _) as _ }; } }
     }
-    hook!(ITGETKIND, itGetKind, (gobj: *mut HSD_GObj) -> ItemKind);
+    hook_or!(ITGETKIND, itGetKind, (gobj: *mut HSD_GObj) -> ItemKind, |gobj: *mut HSD_GObj| unsafe { crate::itacc::itGetKind(gobj as _) as _ });
     hook!(IT_8026F7C8, it_8026F7C8, (a0: *mut Vec, a1: *mut Vec, a2: i32) -> *mut HSD_GObj);
-    hook!(IT_80275414, it_80275414, (a0: *mut HSD_GObj));
+    hook_or!(IT_80275414, it_80275414, (a0: *mut HSD_GObj), |a0: *mut HSD_GObj| { unsafe { let _ = crate::itacc::it_80275414(a0 as _); } });
     pub static mut LBVECTOR_ANGLE: Option<fn(*mut Vec, *mut Vec) -> f32> = None;
     #[allow(non_snake_case)]
     pub fn lbVector_Angle(a: *mut Vec, b: *mut Vec) -> f32 {

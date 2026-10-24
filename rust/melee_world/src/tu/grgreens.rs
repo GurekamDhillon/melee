@@ -91,7 +91,7 @@ pub mod ext {
     fn grMaterial_801C8E48(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::tu::grmaterial::grMaterial_801C8E48(a0 as _) as _ };
     fn grMaterial_801C8E68(a0: *mut HSD_GObj, a1: u32) = |a0: *mut HSD_GObj, a1: u32| { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C8E68(a0 as _, a1 as _); } };
     fn grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj = |a0: *mut grZakoGenerator_SpawnDesc| unsafe { crate::tu::grzakogenerator::grZakoGenerator_801CAE04(a0 as _) as _ };
-    fn it_80275414(a0: *mut HSD_GObj);
+    fn it_80275414(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { let _ = crate::itacc::it_80275414(a0 as _); } };
     fn it_802EE200(a0: *mut HSD_GObj, a1: *mut Vec, a2: f32, a3: f32) -> *mut HSD_GObj;
     fn lbAudioAx_800237A8(a0: i32, a1: i32, a2: i32) -> i32 = |a0: i32, a1: i32, a2: i32| unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800237A8(a0 as _, a1 as _, a2 as _) as _ };
     fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec) = |a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(a0 as _, a1 as _, a2 as _); } };

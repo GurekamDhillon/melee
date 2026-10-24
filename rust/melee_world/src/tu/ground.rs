@@ -168,11 +168,11 @@ pub mod ext {
     fn grStadium_801D39A0(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { let _ = crate::tu::grpstadium::grStadium_801D39A0(a0 as _); } };
     fn grStadium_801D511C() = || { unsafe { let _ = crate::tu::grpstadium::grStadium_801D511C(); } };
     fn grZebes_801DA3F4(a0: *mut Vec) = |a0: *mut Vec| { unsafe { let _ = crate::tu::grzebes::grZebes_801DA3F4(a0 as _); } };
-    fn it_8026B40C(a0: *mut Article, a1: i32);
+    fn it_8026B40C(a0: *mut Article, a1: i32) = |a0: *mut Article, a1: i32| { unsafe { let _ = crate::itacc::it_8026B40C(a0 as _, a1 as _); } };
     fn it_8026BE84(a0: *mut BobOmbRain) -> *mut HSD_GObj;
     fn it_8027B5B0(a0: i32, a1: *mut Vec, a2: *mut HSD_JObj, a3: *mut Vec, a4: i32) -> *mut HSD_GObj;
     fn it_802F2094(a0: *mut HSD_GObj, a1: *mut Vec, a2: i32, a3: i32) -> *mut HSD_GObj;
-    fn it_ResetStageArticleTable();
+    fn it_ResetStageArticleTable() = || { unsafe { let _ = crate::itacc::it_ResetStageArticleTable(); } };
     fn lbAudioAx_8002305C(a0: i32, a1: i32) -> i32 = |a0: i32, a1: i32| unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_8002305C(a0 as _, a1 as _) as _ };
     fn lbAudioAx_800236B8(a0: i32) -> i32 = |a0: i32| unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800236B8(a0 as _) as _ };
     fn lbAudioAx_80023710(a0: i32) -> i32 = |a0: i32| unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023710(a0 as _) as _ };

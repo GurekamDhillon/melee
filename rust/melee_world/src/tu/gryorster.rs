@@ -255,7 +255,8 @@ pub mod ext {
     pub unsafe extern "C" fn ftLib_800873F4(a0: *mut melee_types::HSD_GObj) -> i32 { match H_ftLib_800873F4 { Some(f) => f(a0), None => unsafe { crate::ftlib::ftLib_800873F4(a0 as _) as _ } } }
     pub static mut H_ftLib_80086BEC: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, *mut melee_types::Vec)> = None;
     pub unsafe extern "C" fn ftLib_80086BEC(a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::Vec) { match H_ftLib_80086BEC { Some(f) => f(a0, a1), None => unsafe { let _ = crate::ftlib::ftLib_80086BEC(a0 as _, a1 as _); } } }
-    hook!(H_it_8026B718, it_8026B718, (a0: *mut melee_types::HSD_GObj, a1: f32));
+    pub static mut H_it_8026B718: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, f32)> = None;
+    pub unsafe extern "C" fn it_8026B718(a0: *mut melee_types::HSD_GObj, a1: f32) { match H_it_8026B718 { Some(f) => f(a0, a1), None => unsafe { let _ = crate::itacc::it_8026B718(a0 as _, a1 as _); } } }
     pub static mut H___assert: Option<unsafe extern "C" fn(*const i8, u32, *const i8) > = None;
             pub unsafe extern "C" fn __assert(a0: *const i8, a1: u32, a2: *const i8)  {
                 match H___assert {

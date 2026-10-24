@@ -41,7 +41,15 @@ pub fn line(op: &str, k: i32, h: u64) -> String {
 }
 pub fn compare(stem: &str, got: &str) {
     let p = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/data").join(format!("pure_{stem}.txt"));
-    let want = std::fs::read_to_string(&p).unwrap().replace("\r\n", "\n");
+    compare_file(&p, got)
+}
+/// Same, for a test of another crate whose expected data lives in melee_runtime/tests/data.
+pub fn compare_runtime_data(stem: &str, got: &str) {
+    let p = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../melee_runtime/tests/data").join(format!("pure_{stem}.txt"));
+    compare_file(&p, got)
+}
+fn compare_file(p: &std::path::Path, got: &str) {
+    let want = std::fs::read_to_string(p).unwrap().replace("\r\n", "\n");
     let (g, w): (Vec<&str>, Vec<&str>) = (got.lines().collect(), want.lines().collect());
     assert_eq!(g.len(), w.len(), "line count");
     let bad: Vec<_> = g.iter().zip(&w).filter(|(a, b)| a != b).take(5).collect();

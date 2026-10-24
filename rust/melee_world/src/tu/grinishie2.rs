@@ -108,7 +108,7 @@ pub mod ext {
     pub fn grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj {
         match unsafe { GRZAKOGENERATOR_801CAE04 } { Some(f) => f(a0), None => { return unsafe { crate::tu::grzakogenerator::grZakoGenerator_801CAE04(a0 as _) as _ }; } }
     }
-    hook!(IT_802ECD1C, it_802ECD1C, (a0: *mut HSD_GObj, a1: *mut Vec3));
+    hook_or!(IT_802ECD1C, it_802ECD1C, (a0: *mut HSD_GObj, a1: *mut Vec3), |a0: *mut HSD_GObj, a1: *mut Vec3| { unsafe { let _ = crate::itacc::it_802ECD1C(a0 as _, a1 as _); } });
     hook!(IT_802ECD3C, it_802ECD3C, (a0: *mut HSD_GObj, a1: *mut Vec3, a2: f32) -> *mut HSD_GObj);
     pub static mut LBAUDIOAX_80023F28: Option<fn(i32) -> i32> = None;
     #[allow(non_snake_case)]

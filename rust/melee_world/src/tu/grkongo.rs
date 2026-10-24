@@ -185,8 +185,8 @@ pub mod ext {
             None => { unsafe { crate::tu::grzakogenerator::grZakoGenerator_801CAE04(a0 as _) as _ } },
         }
     }
-    hook!(ITGETKIND, itGetKind, (gobj: *mut HSD_GObj) -> ItemKind);
-    hook!(IT_8026B294, it_8026B294, (gobj: *mut HSD_GObj, pos: *mut Vec3));
+    hook_or!(ITGETKIND, itGetKind, (gobj: *mut HSD_GObj) -> ItemKind, |gobj: *mut HSD_GObj| unsafe { crate::itacc::itGetKind(gobj as _) as _ });
+    hook_or!(IT_8026B294, it_8026B294, (gobj: *mut HSD_GObj, pos: *mut Vec3), |gobj: *mut HSD_GObj, pos: *mut Vec3| { unsafe { let _ = crate::itacc::it_8026B294(gobj as _, pos as _); } });
     hook!(IT_8026D324, it_8026D324, (a0: ItemKind) -> i32);
     hook!(IT_80286088, it_80286088, (a0: *mut HSD_GObj) -> *mut HSD_GObj);
     hook!(IT_802E18B4, it_802E18B4, (gobj: *mut HSD_GObj) -> *mut HSD_GObj);

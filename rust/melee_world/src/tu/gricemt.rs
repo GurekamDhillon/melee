@@ -109,7 +109,7 @@ pub mod ext {
     fn grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj = |a0: *mut grZakoGenerator_SpawnDesc| unsafe { crate::tu::grzakogenerator::grZakoGenerator_801CAE04(a0 as _) as _ };
     fn grZakoGenerator_801CAEB0(a0: i32, a1: i32) = |a0: i32, a1: i32| { unsafe { let _ = crate::tu::grzakogenerator::grZakoGenerator_801CAEB0(a0 as _, a1 as _); } };
     fn grZakoGenerator_801CAF08() = || { unsafe { let _ = crate::tu::grzakogenerator::grZakoGenerator_801CAF08(); } };
-    fn it_8026B294(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn it_8026B294(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::itacc::it_8026B294(a0 as _, a1 as _); } };
     fn memzero(a0: *mut c_void, a1: i32) = |a0: *mut c_void, a1: i32| { unsafe { let _ = melee_runtime::tu::lb_00B0::memzero(a0 as _, a1 as _); } };
     fn mpJointGetCb1(a0: i32, a1: *mut Option<unsafe extern "C" fn(*mut c_void, i32, *mut CollData, i32, u32, f32)>, a2: *mut *mut c_void) = |a0: i32, a1: *mut Option<unsafe extern "C" fn(*mut c_void, i32, *mut CollData, i32, u32, f32)>, a2: *mut *mut c_void| { unsafe { let _ = crate::tu::mplib::mpJointGetCb1(a0 as _, a1 as _, a2 as _); } };
     fn mpJointListAdd(a0: i32) = |a0: i32| { unsafe { let _ = crate::tu::mplib::mpJointListAdd(a0 as _); } };

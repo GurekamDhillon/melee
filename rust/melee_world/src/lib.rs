@@ -17,6 +17,7 @@ pub mod mp;
 pub mod pl;
 pub mod ftdevice;
 pub mod ftlib;
+pub mod itacc;
 pub mod gm;
 pub mod vec;
 pub mod tu;

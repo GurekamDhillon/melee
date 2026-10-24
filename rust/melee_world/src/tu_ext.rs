@@ -524,8 +524,7 @@ pub fn grZakoGenerator_801CAF08() {
 }
 pub static mut HOOK_it_8026B3C0: Option<fn(i32) -> i32> = None;
 /// C `it_8026B3C0` (melee/it/it_26B1.h).
-pub fn it_8026B3C0(a0: i32) -> i32 {
-    match unsafe { HOOK_it_8026B3C0 } { Some(f) => f(a0), None => panic!("TODO: it_8026B3C0 is not ported") }
+pub fn it_8026B3C0(a0: i32) -> i32 { match unsafe { HOOK_it_8026B3C0 } { Some(f) => f(a0), None => unsafe { crate::itacc::it_8026B3C0(a0 as _) as _ } }
 }
 pub static mut HOOK_it_802D8618: Option<fn(i32, *mut Vec3, i32, i32)> = None;
 /// C `it_802D8618` (melee/it/kinds/itheiho.h).

@@ -73,7 +73,7 @@ pub mod ext {
     pub fn GenoDefine_InitKinds() { unsafe { let _ = crate::platform::GenoDefine_InitKinds(); } }
     pub fn ft_800852B0() { unsafe { let _ = crate::tu::ftdata::ft_800852B0(); } }
     pub fn ft_8008549C() { unsafe { let _ = crate::tu::ftdata::ft_8008549C(); } }
-    pub fn ftCo_8009F4A4() { todo!("ftCo_8009F4A4 (ftCommon/ftCo_09F4.c)") }
+    pub fn ftCo_8009F4A4() { unsafe { crate::tu::ftCo_09f4::ftCo_8009F4A4() } }
     pub fn ftCo_800C8064() { unsafe { let _ = crate::tu::ftco_800c7ca0::ftco_800c8064(); } }
     pub fn ftCo_800C8F6C() { unsafe { let _ = crate::tu::ft_0c8c::ftco_800c8f6c(); } }
     pub fn ftData_Table_Unk1(kind: i32) -> Option<unsafe extern "C" fn()> { unsafe { crate::tu::ftdata::ftData_Table_Unk1[kind as usize] } }
@@ -170,7 +170,7 @@ pub mod ext {
     pub fn ftCo_800C884C(g: G) { unsafe { let _ = crate::tu::ft_0c88::ftco_800c884c(g); } }
     pub fn ftParts_800749CC(g: G) { todo!("ftParts_800749CC (ft/ftparts.c)") }
     pub fn ftCo_8009CF84(fp: F) { unsafe { let _ = crate::tu::ftdynamics::ftCo_8009CF84(&mut *fp); } }
-    pub fn ftCo_8009F578(fp: F) { todo!("ftCo_8009F578 (ftCommon/ftCo_09F4.c)") }
+    pub fn ftCo_8009F578(fp: F) { unsafe { crate::tu::ftCo_09f4::ftCo_8009F578(fp) } }
     pub fn Mex_OnLoadDispatch(kind: i32, g: G) { unsafe { let _ = crate::platform::Mex_OnLoadDispatch(kind, g); } }
     pub fn ftColl_8007B320(g: G) { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b320(g as _); } }
     pub fn Camera_80029020() -> *mut core::ffi::c_void { todo!("Camera_80029020 (cm/camera.c)") }

@@ -22,12 +22,13 @@ pub mod ext {
     use crate::types::*;
     use core::ffi::c_void;
     macro_rules! stubs {
-        ($($stat:ident $name:ident ($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {$(
+        ($($stat:ident $name:ident ($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $d:expr)?;)*) => {$(
             pub static mut $stat: Option<fn($($t),*) $(-> $r)?> = None;
+            #[allow(unreachable_code)]
             pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { $stat } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO stub: ", stringify!($name))),
+                    None => { $( return $d; )? panic!(concat!("TODO stub: ", stringify!($name))) }
                 }
             }
         )*};
@@ -58,8 +59,8 @@ pub mod ext {
         LBGX_8001E2F8 lbGx_8001E2F8(q: *mut Quaternion, pos: *mut Vec3, c: *const U8Vec4, arg: i32, facing: f32) -> i32;
         HSD_STATE_INVALIDATE HSD_StateInvalidate(s: i32);
         FTPARTS_800750C8 ftParts_800750C8(fp: *mut Fighter, i: i32, b: i32);
-        FTCO_8009F5AC ftCo_8009F5AC(fp: *mut Fighter);
-        FTCO_8009F7F8 ftCo_8009F7F8(fp: *mut Fighter);
+        FTCO_8009F5AC ftCo_8009F5AC(fp: *mut Fighter) = unsafe { crate::tu::ftCo_09f4::ftCo_8009F5AC(fp) };
+        FTCO_8009F7F8 ftCo_8009F7F8(fp: *mut Fighter) = unsafe { crate::tu::ftCo_09f4::ftCo_8009F7F8(fp) };
         FTCO_800C8AF0 ftCo_800C8AF0(fp: *mut Fighter);
         FTCO_800C2600 ftCo_800C2600(g: G, arg: i32);
         HSD_JOBJ_DISP_ALL HSD_JObjDispAll(j: *mut HSD_JObj, mtx: *mut [f32; 4], flags: u32, rendermode: u32);

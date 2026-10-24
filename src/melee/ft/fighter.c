@@ -4521,6 +4521,8 @@ u32 RB_NeutralHashWord(int i)
     return i >= 0 && i < 16 ? nh_out[i] : 0;
 }
 
+u32 RB_NeutralHash(void);
+u32 RB_NeutralHashForFrame(int frame);
 u32 RB_NeutralHash(void)
 {
     extern u32* HSD_RandSeedPtr;
@@ -4695,5 +4697,21 @@ void RB_XRegions(void)
         Snap_XRegion(0x050000 + n * 0x100, (u32) g, 0x40);
         ftRb_XTree(0x060000 + n * 0x1000, g);
     }
+}
+#endif
+
+#if defined(TARGET_PC)
+/* The NHV1 hash with the seed the frame will consume (the online rule of RB_GameHashForFrame), for the
+ * netplay checksum when both peers run with MELEE_RB_NEUTRAL_HASH=1 (a native port that computes only
+ * the neutral hash can then play this build). The seed word is restored: nothing else changes. */
+u32 RB_NeutralHashForFrame(int frame)
+{
+    extern u32* HSD_RandSeedPtr;
+    extern u32 Replay_ChecksumSeed(u32 arrived, int frame);
+    u32 saved = *HSD_RandSeedPtr, h;
+    *HSD_RandSeedPtr = Replay_ChecksumSeed(saved, frame);
+    h = RB_NeutralHash();
+    *HSD_RandSeedPtr = saved;
+    return h;
 }
 #endif

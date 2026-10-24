@@ -16,6 +16,7 @@
 //! Like the C, nothing here touches game memory and everything runs from one `poll` per logic
 //! iteration on the caller's thread: no threads, no blocking.
 
+pub mod app;
 pub mod hash;
 pub mod net;
 pub mod pad;

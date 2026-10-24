@@ -210,6 +210,7 @@ pub struct Play {
     shot_dir: Option<PathBuf>,
     shots: bool,
     shot_pending: Option<String>,
+    pause_age: u32,
     quit_at_results: bool,
     max_frames: Option<u64>,
     skip_intro: bool,
@@ -395,8 +396,8 @@ impl Play {
                 disc.mods = Some(crate::mods::Mods::open(std::path::Path::new(d), None)?);
             }
             let seed = 12345 + self.matches_played;
-            let sim = VsMatch::new(&mut disc, stage_file, &names, seed, 3)?;
-            let mr = MatchRender::new(&mut disc, stage_file, &names)?;
+            let mut sim = VsMatch::new(&mut disc, stage_file, &names, seed, 3)?;
+            let mr = MatchRender::new(&mut disc, stage_file, &names, &mut sim)?;
             Ok(Match { sim, mr, setup_names: names, paused: None, end_timer: None, quit_hold: 0 })
         })();
         match built {
@@ -459,8 +460,12 @@ impl Play {
         for r in raws.iter_mut() {
             r.button &= !HSD_PAD_START;
         }
-        m.sim.live_pads = Some(raws);
-        if !m.sim.step() {
+        m.sim.pad_feed = Some(raws);
+        let alive = m.sim.step();
+        if alive {
+            m.mr.step(&mut m.sim);
+        }
+        if !alive {
             log(&format!("simulation halted: {:?}", m.sim.stopped));
             m.end_timer = Some(0);
         } else if m.sim.frame >= self.time_secs * 60 {
@@ -689,7 +694,7 @@ impl Play {
         self.shim.set_copy_clear(GxColor::new(0, 0, 0, 255), 0xFF_FFFF);
         if self.scene == Scene::Match {
             if let Some(m) = self.m.as_mut() {
-                m.mr.draw(&mut self.shim, &m.sim, true);
+                m.mr.draw(&mut self.shim, &m.sim);
             }
             self.ui.clear();
             self.draw_match_hud();
@@ -717,6 +722,16 @@ impl Game for Play {
         }
         if self.shots && self.age == 30 && self.shot_pending.is_none() {
             self.shot_pending = Some(format!("m{}_{}", self.matches_played, self.scene.name()));
+        }
+        // Match: one shot well into the fight and one 10 ticks into a pause.
+        let paused = self.scene == Scene::Match && self.m.as_ref().is_some_and(|m| m.paused.is_some());
+        self.pause_age = if paused { self.pause_age + 1 } else { 0 };
+        if self.shots && self.shot_pending.is_none() {
+            if paused && self.pause_age == 10 {
+                self.shot_pending = Some(format!("m{}_pause", self.matches_played));
+            } else if self.scene == Scene::Match && self.age == 420 {
+                self.shot_pending = Some(format!("m{}_live", self.matches_played));
+            }
         }
     }
 
@@ -801,14 +816,30 @@ pub fn play(args: &[String]) -> ExitCode {
         shots: shot_dir.is_some(),
         shot_dir,
         shot_pending: None,
+        pause_age: 0,
         quit_at_results: has("--quit-at-results"),
         max_frames: get("--max-frames").and_then(|s| s.parse().ok()),
         skip_intro: has("--skip-intro") || std::env::var("MELEE_SKIP_INTRO").is_ok_and(|v| v == "1"),
         quit: false,
         failed: None,
     };
-    let cfg = WindowConfig { title: "GD's Melee (native)".into(), width: 1280, height: 960 };
-    match run_windowed(game, PadSystem::interactive(), cfg) {
+    let scripted = std::env::var_os("MELEE_PAD_SCRIPT").is_some_and(|v| !v.is_empty());
+    let cfg = WindowConfig { title: "GD's Melee (native)".into(), width: 1280, height: 960, active: !scripted };
+    if scripted {
+        std::env::set_var("MELEE_PAD_IGNORE_ADAPTER", "1");
+    }
+    let mut pads = PadSystem::interactive();
+    if scripted {
+        // Deterministic and hands-off: no keyboard, adapter or gamepad can leak into a scripted run, and the window never takes focus.
+        pads.set_ignore_adapter(true);
+        pads.gamepads = melee_platform::pad_read::GamepadSource::Fixed(Default::default());
+    }
+    // Port 1 on the keyboard (WASD stick, IJKL C-stick, Space A, Shift B, F/G X/Y, Q/E L/R, Z, Enter START, arrows d-pad)
+    // unless MELEE_KEYBOARD=0; an adapter or gamepad on port 1 still wins, a pad script wins over both.
+    if !scripted && std::env::var("MELEE_KEYBOARD").map_or(true, |v| v != "0") {
+        pads.keyboard[0] = melee_platform::aurora::KeyboardBindings::preset_default();
+    }
+    match run_windowed(game, pads, cfg) {
         Ok((ticks, _)) => {
             log(&format!("closed after {ticks} ticks"));
             ExitCode::SUCCESS

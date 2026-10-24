@@ -133,6 +133,21 @@ pub fn virtual_frame() -> u32 {
     n
 }
 
+/// [`virtual_frame`] that also appends each sub-frame's 160 interleaved s16 stereo samples (the
+/// mix `shim_ax.c` clips and writes to `MELEE_AUDIO_DUMP`) to `out`.
+pub fn virtual_frame_into(out: &mut Vec<i16>) -> u32 {
+    let mut c = VCLOCK.lock().unwrap_or_else(|e| e.into_inner());
+    *c += 10;
+    let n = *c / 3;
+    *c %= 3;
+    with(|s| {
+        for _ in 0..n {
+            out.extend_from_slice(&s.sub_frame());
+        }
+    });
+    n
+}
+
 /// The output side: the frame driver (device clock, WAV dump, turbo mute) over the installed
 /// sound. Call [`Output::tick`] once per video frame on the game thread.
 pub struct Output {

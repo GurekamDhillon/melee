@@ -240,12 +240,34 @@ fn start_match_audio(sim: &vs_match::VsMatch, ckinds: &[i32]) {
         melee_audio::lbaudio::HPS_FILES.get(sim.bgm as usize).unwrap_or(&"?"), if r == 0 { "started" } else { "not started" });
 }
 
+/// A 32 kHz s16 stereo WAV, like `shim_ax.c`'s `MELEE_AUDIO_DUMP`.
+fn write_wav(path: &str, samples: &[i16]) -> std::io::Result<()> {
+    let bytes = (samples.len() * 2) as u32;
+    let mut b = Vec::with_capacity(44 + bytes as usize);
+    b.extend_from_slice(b"RIFF");
+    b.extend_from_slice(&(36 + bytes).to_le_bytes());
+    b.extend_from_slice(b"WAVEfmt ");
+    b.extend_from_slice(&16u32.to_le_bytes());
+    b.extend_from_slice(&1u16.to_le_bytes());
+    b.extend_from_slice(&2u16.to_le_bytes());
+    b.extend_from_slice(&32000u32.to_le_bytes());
+    b.extend_from_slice(&(32000u32 * 4).to_le_bytes());
+    b.extend_from_slice(&4u16.to_le_bytes());
+    b.extend_from_slice(&16u16.to_le_bytes());
+    b.extend_from_slice(b"data");
+    b.extend_from_slice(&bytes.to_le_bytes());
+    for s in samples {
+        b.extend_from_slice(&s.to_le_bytes());
+    }
+    std::fs::write(path, b)
+}
+
 /// `melee golden`: the native VS match for a golden scenario (vs_match.rs).
 fn golden(args: &[String]) -> ExitCode {
     let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
     let iso = get("--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok());
     let (Some(iso), Some(out)) = (iso, get("--out")) else {
-        eprintln!("usage: melee golden --iso DISC.iso --out CANDIDATE.csv [--scenario pad_falcon_fox_fd|pad_falcon_wolf_fd] [--mods DIR [--enable id,id]] [--frames N] [--audio] [--from-snapshot FILE [--start N]] [--dump-state N:FILE]");
+        eprintln!("usage: melee golden --iso DISC.iso --out CANDIDATE.csv [--scenario pad_falcon_fox_fd|pad_falcon_wolf_fd] [--mods DIR [--enable id,id]] [--frames N] [--audio [--audio-wav OUT.wav]] [--from-snapshot FILE [--start N]] [--dump-state N:FILE]");
         return ExitCode::from(2);
     };
     let scenario = get("--scenario").unwrap_or_else(|| "pad_falcon_fox_fd".into());
@@ -346,6 +368,8 @@ fn golden(args: &[String]) -> ExitCode {
         /// A resumed run: the first row is the loaded state itself, not a step.
         resumed: bool,
         dump_state: Option<(i32, String)>,
+        /// `--audio-wav`: every sub-frame's s16 stereo mix.
+        wav: Option<Vec<i16>>,
     }
     impl SeedFrom<'_> {
         fn maybe_dump(&self) {
@@ -376,7 +400,14 @@ fn golden(args: &[String]) -> ExitCode {
             }
             let r = self.sim.step();
             melee_audio::sim::game_frame();
-            melee_audio::sim::virtual_frame();
+            match &mut self.wav {
+                Some(w) => {
+                    melee_audio::sim::virtual_frame_into(w);
+                }
+                None => {
+                    melee_audio::sim::virtual_frame();
+                }
+            }
             if r {
                 self.maybe_dump();
             }
@@ -392,11 +423,17 @@ fn golden(args: &[String]) -> ExitCode {
             w
         }
     }
+    let wav_path = get("--audio-wav");
     let injected = seed_from.is_some();
     let res = std::fs::File::create(&out).and_then(|f| {
         let mut w = std::io::BufWriter::new(f);
-        let n = run(&mut SeedFrom { sim: &mut sim, golden: seed_from, resumed, dump_state }, &mut w, frames)?;
+        let mut sf = SeedFrom { sim: &mut sim, golden: seed_from, resumed, dump_state, wav: wav_path.as_ref().map(|_| Vec::new()) };
+        let n = run(&mut sf, &mut w, frames)?;
         w.flush()?;
+        if let (Some(p), Some(samples)) = (&wav_path, &sf.wav) {
+            write_wav(p, samples)?;
+            eprintln!("melee: audio mix of {} sub-frames written to {p}", samples.len() / 320);
+        }
         Ok(n)
     });
     match res {

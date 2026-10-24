@@ -770,6 +770,16 @@ static void gw_ax_open_device(void) {
         /* Keep the 5 ms synth/DSP callbacks and voice progression, but never open an output
          * device: its ring occupancy is paced by real time and would stall accelerated frames. */
         gw_log("gw: AX: turbo mute (virtual 5 ms DSP clock, no output device)");
+        /* A scripted capture (tools/rust-port audio proof): the mix is deterministic on the
+         * virtual clock, so MELEE_AUDIO_DUMP still records it; no device is opened. */
+        env = getenv("MELEE_AUDIO_DUMP");
+        if (env != NULL && *env != ' ') {
+            gw_ax_wav = fopen(env, "wb");
+            if (gw_ax_wav != NULL) {
+                gw_ax_wav_header(gw_ax_wav, 0);
+                gw_log("gw: AX: turbo capture of the mix to %s", env);
+            }
+        }
         return;
     }
 
@@ -1268,7 +1278,7 @@ static void gw_ax_run_frame(void) {
         gw_ax_peak = 0;
     }
 
-    if (gw_turbo_enabled()) return; /* the voice writeback above is game-visible */
+    if (gw_turbo_enabled() && gw_ax_wav == NULL) return; /* the voice writeback above is game-visible */
 
     /* Clip to s16 and hand the sub-frame to the output ring. */
     for (i = 0; i < GW_AX_FRAME_SAMPLES; i++) {

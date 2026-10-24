@@ -113,3 +113,5 @@ pub mod gmtoulib;
 pub mod gmtoumode;
 pub mod gmtoycollection;
 pub mod gm_1BFA;
+
+pub mod geno_lab_mode;

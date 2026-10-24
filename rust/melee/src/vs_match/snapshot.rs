@@ -10,6 +10,8 @@
 
 use super::*;
 use crate::snap::{Snap, MEM1_BASE};
+use super::fox::ItemClass;
+use melee_runtime::mtx::Mtx;
 use std::collections::HashMap;
 use std::fmt::Write as _;
 use melee_runtime::aobj::HsdAObj;
@@ -229,7 +231,13 @@ impl VsMatch {
             q.nml_analog_l = c.nml_analogL;
             q.nml_analog_r = c.nml_analogR;
         }
+        // gmVs_GetSceneState()->fighters[i].x8: the respawn spots' countdowns.
+        let ctl = snap.must_sym("_controller")?;
+        for i in 0..6u32 {
+            self.respawn_busy[i as usize] = snap.u8(ctl + 0x38 + 14 * i + 8) as i32;
+        }
         self.load_stage(snap)?;
+        self.load_items(snap)?;
         // The fighters (p_link 8): Fighter_Create's GObj list.
         let gobjs = snap.plink(8)?;
         let fp_player_id = gc_off::<Fighter>("player_id");
@@ -304,6 +312,8 @@ impl VsMatch {
                 return Err(format!("snapshot: player {n}: live hitbox {k}: HitCapsule -> Hitbox not wired"));
             }
         }
+        self.players[i].load_skeleton(snap, fp_va, &c_fp)?;
+        let p = &mut self.players[i];
         // fp->mv, by the motion state that owns it (the union is only meaningful for that state).
         let mv = fp_va + gc_off::<Fighter>("mv");
         let (mf, mi) = (|o: u32| snap.f32(mv + o), |o: u32| snap.s32(mv + o));
@@ -370,12 +380,12 @@ impl VsMatch {
 }
 
 /// GameCube offset of a top-level field.
-fn gc_off<T: melee_core::gc::GcLayout>(field: &str) -> u32 {
+pub fn gc_off<T: melee_core::gc::GcLayout>(field: &str) -> u32 {
     T::gc_field(field).unwrap_or_else(|| panic!("{}: no field {field}", T::GC_NAME)).offset
 }
 
-fn be32s(d: &[u8], at: u32) -> u32 {
-    u32::from_be_bytes(d[at as usize..at as usize + 4].try_into().unwrap())
+pub fn be32s(d: &[u8], at: u32) -> u32 {
+    d.get(at as usize..at as usize + 4).map_or(0, |b| u32::from_be_bytes(b.try_into().unwrap()))
 }
 
 /// `HSD_FObj` at `va` -> the native track (its byte stream copied out of the image).
@@ -383,7 +393,8 @@ pub fn c_fobj(snap: &Snap, va: u32) -> melee_runtime::fobj::HsdFObj {
     let (ad, head, len) = (snap.u32(va + 4), snap.u32(va + 8), snap.u32(va + 0xC));
     melee_runtime::fobj::HsdFObj {
         ad: ad.wrapping_sub(head) as usize,
-        ad_head: Arc::from(snap.bytes(head, len as usize).unwrap_or(&[])),
+        // The C interpreter may read a little past `length` (the next track's bytes): keep them.
+        ad_head: Arc::from(snap.bytes(head, len as usize + 64).or_else(|| snap.bytes(head, len as usize)).unwrap_or(&[])),
         length: len,
         flags: snap.u8(va + 0x10),
         op: snap.u8(va + 0x11),
@@ -417,6 +428,40 @@ pub fn c_aobj<O>(snap: &Snap, va: u32, only_type: Option<u8>) -> HsdAObj<O> {
 }
 
 impl VsMatch {
+    /// The live items (p_link 9): the Fox blaster gun and its laser shots, the only items the sim models.
+    fn load_items(&mut self, snap: &Snap) -> Result<(), String> {
+        self.items.clear();
+        let fighters = snap.plink(8)?;
+        let fp_player_id = gc_off::<Fighter>("player_id");
+        let owner_of = |gobj: u32| -> Result<usize, String> {
+            if !fighters.contains(&gobj) {
+                return Err(format!("snapshot: item owner {gobj:#x} is not a fighter"));
+            }
+            Ok(snap.u8(snap.u32(gobj + 0x2C) + fp_player_id) as usize)
+        };
+        for g in snap.plink(9)? {
+            let it = snap.u32(g + 0x2C);
+            if it == 0 {
+                continue;
+            }
+            let (kind, msid) = (snap.s32(it + 0x10), snap.s32(it + 0x24));
+            let pos = Vec3 { x: snap.f32(it + 0x4C), y: snap.f32(it + 0x50), z: snap.f32(it + 0x54) };
+            let vel = Vec3 { x: snap.f32(it + 0x40), y: snap.f32(it + 0x44), z: snap.f32(it + 0x48) };
+            let owner = owner_of(snap.u32(it + 0x518))?;
+            let da = self.players.get(owner).and_then(|p| p.fx_attrs).ok_or(format!("snapshot: item kind {kind} belongs to a fighter without Fox attributes"))?;
+            let var = it + 0xDD4;
+            let class = if kind == da.x20_FOX_BLASTER_GUN_ITKIND as i32 {
+                ItemClass::FoxGun { owner, flash: snap.u32(var + 0xA0) != 0 }
+            } else if kind == da.x1C_FOX_BLASTER_SHOT_ITKIND as i32 {
+                ItemClass::FoxLaser { angle: snap.f32(var + 4), speed: snap.f32(var + 8), life: snap.f32(it + 0xD44) }
+            } else {
+                return Err(format!("snapshot: item kind {kind}: only the Fox blaster gun and laser are modelled"));
+            };
+            self.items.push(SimItem { kind, msid, pos, vel, class });
+        }
+        Ok(())
+    }
+
     /// The stage's joint descriptor (DAT offset) -> the C JObj of map gobj `g`, by walking the
     /// descriptor tree and the live JObj tree together.
     fn stage_jobj_map(&self, snap: &Snap) -> Result<HashMap<u32, u32>, String> {
@@ -437,17 +482,7 @@ impl VsMatch {
                 .into_iter()
                 .find(|&c| c != 0 && tree_shapes_match(snap, d, root_j, c))
                 .ok_or(format!("snapshot: map gobj {map_id}'s JObj tree does not have its joint tree's shape"))?;
-            let mut stack = vec![(root_j, root_c)];
-            while let Some((j, c)) = stack.pop() {
-                if j == 0 || c == 0 {
-                    continue;
-                }
-                out.insert(j, c);
-                stack.push((be32s(d, j + 0xC), snap.u32(c + 8)));
-                if be32s(d, j + 4) & melee_runtime::jobj::JOBJ_INSTANCE == 0 {
-                    stack.push((be32s(d, j + 8), snap.u32(c + 0x10)));
-                }
-            }
+            out.extend(pair_trees(snap, d, root_j, root_c));
         }
         Ok(out)
     }
@@ -479,16 +514,72 @@ impl VsMatch {
         }
         self.aobj_globals.n_stopped = snap.s32(snapshot_ps::global(snap, "HSD_AObj_804D762C")?);
         self.aobj_globals.n_running = snap.s32(snapshot_ps::global(snap, "HSD_AObj_804D7630")?);
-        let rev: HashMap<u32, u32> = jm.iter().map(|(j, c)| (*c, *j)).collect();
+        // Guest JObj -> the sim's synthetic handle, for what generators follow: stage joints, effect
+        // joints, fighter parts; anything else (an effect already freed, its JObjs kept alive by a
+        // generator) becomes an orphan handle with the JObj's last matrix.
+        let mut refs: HashMap<u32, JObjRef> = jm.iter().map(|(j, c)| (*c, *j)).collect();
+        self.load_effects(snap, &mut refs)?;
+        for (pi, p) in self.players.iter().enumerate() {
+            let parts_va = p_parts_va(snap, pi)?;
+            for k in 0..p.skel.parts.len() {
+                refs.entry(snap.u32(parts_va + 0x10 * k as u32)).or_insert(((0x80 + pi as u32) << 24) | k as u32);
+            }
+        }
+        let mut orphans: Vec<(JObjRef, Mtx)> = Vec::new();
+        let mut used_fighter: Vec<JObjRef> = Vec::new();
         let mut jobj_ref = |c: u32| -> Result<JObjRef, String> {
-            rev.get(&c).copied().ok_or(format!("snapshot: a generator follows JObj {c:#x}, which is not a stage joint (effect/fighter joints: not wired yet)"))
+            if let Some(&r) = refs.get(&c) {
+                if r >> 24 >= 0x80 && r >> 24 < 0x90 {
+                    used_fighter.push(r);
+                }
+                return Ok(r);
+            }
+            let r = 0xF000_0000 | orphans.len() as u32;
+            let mut m = [[0f32; 4]; 3];
+            for (rw, row) in m.iter_mut().enumerate() {
+                for (cl, v) in row.iter_mut().enumerate() {
+                    *v = snap.f32(c + 0x44 + 16 * rw as u32 + 4 * cl as u32);
+                }
+            }
+            orphans.push((r, m));
+            refs.insert(c, r);
+            Ok(r)
         };
-        self.load_particles(snap, &mut jobj_ref)
+        self.load_particles(snap, &mut jobj_ref)?;
+        for (r, m) in orphans {
+            self.joint_mtx.insert(r, m);
+        }
+        used_fighter.sort();
+        used_fighter.dedup();
+        self.fighter_jobjs.clear();
+        for r in used_fighter {
+            let (pi, part) = (((r >> 24) - 0x80) as usize, (r & 0xFFFF) as usize);
+            self.fighter_jobjs.push((r, pi, part));
+            self.refresh_fighter_jobj(r, pi, part);
+        }
+        Ok(())
     }
 }
 
 /// Do the descriptor tree at `j` and the live JObj tree at `c` have the same child/next shape?
-fn tree_shapes_match(snap: &Snap, d: &[u8], j: u32, c: u32) -> bool {
+/// Pair a joint descriptor tree (DAT offsets) with the live JObj tree built from it (guest addresses).
+pub fn pair_trees(snap: &Snap, d: &[u8], root_j: u32, root_c: u32) -> HashMap<u32, u32> {
+    let mut out = HashMap::new();
+    let mut stack = vec![(root_j, root_c)];
+    while let Some((j, c)) = stack.pop() {
+        if j == 0 || c == 0 {
+            continue;
+        }
+        out.insert(j, c);
+        stack.push((be32s(d, j + 0xC), snap.u32(c + 8)));
+        if be32s(d, j + 4) & melee_runtime::jobj::JOBJ_INSTANCE == 0 {
+            stack.push((be32s(d, j + 8), snap.u32(c + 0x10)));
+        }
+    }
+    out
+}
+
+pub fn tree_shapes_match(snap: &Snap, d: &[u8], j: u32, c: u32) -> bool {
     let mut stack = vec![(j, c)];
     while let Some((j, c)) = stack.pop() {
         if (j == 0) != (c == 0) {
@@ -505,4 +596,81 @@ fn tree_shapes_match(snap: &Snap, d: &[u8], j: u32, c: u32) -> bool {
         }
     }
     true
+}
+
+/// Overlay the dynamic fields of the live `HSD_JObj` at `c` onto the native node `n`.
+fn overlay_jobj(snap: &Snap, tree: &mut crate::fighter_data::skeleton::Tree, n: melee_runtime::jobj::JObjId, c: u32, ids: &HashMap<u32, melee_runtime::jobj::JObjId>) -> Result<(), String> {
+    if snap.u32(c + 0x80) != 0 {
+        return Err(format!("snapshot: JObj {c:#x} has an RObj: not wired"));
+    }
+    let o = tree.get_mut(n);
+    o.flags = snap.u32(c + 0x14);
+    o.rotate = melee_runtime::mtx::Quaternion { x: snap.f32(c + 0x1C), y: snap.f32(c + 0x20), z: snap.f32(c + 0x24), w: snap.f32(c + 0x28) };
+    o.scale = Vec3 { x: snap.f32(c + 0x2C), y: snap.f32(c + 0x30), z: snap.f32(c + 0x34) };
+    o.translate = Vec3 { x: snap.f32(c + 0x38), y: snap.f32(c + 0x3C), z: snap.f32(c + 0x40) };
+    for r in 0..3 {
+        for k in 0..4 {
+            o.mtx[r][k] = snap.f32(c + 0x44 + 16 * r as u32 + 4 * k as u32);
+        }
+    }
+    o.scl = match snap.u32(c + 0x74) {
+        0 => None,
+        s => Some(Vec3 { x: snap.f32(s), y: snap.f32(s + 4), z: snap.f32(s + 8) }),
+    };
+    o.aobj = match snap.u32(c + 0x7C) {
+        0 => None,
+        a => {
+            let mut x: HsdAObj<melee_runtime::jobj::JObjId> = c_aobj(snap, a, None);
+            x.hsd_obj = match snap.u32(a + 0x18) {
+                0 => None,
+                h => Some(*ids.get(&h).ok_or(format!("snapshot: AObj {a:#x} targets JObj {h:#x}, which is not a fighter part"))?),
+            };
+            if snap.u32(a + 0x14) != 0 && x.fobj.is_empty() {
+                return Err("snapshot: AObj without readable FObjs".into());
+            }
+            Some(x)
+        }
+    };
+    Ok(())
+}
+
+impl Player {
+    /// The fighter's JObj trees (`fp->parts[i].joint` / `.x4_jobj2`) and part-animation slots.
+    fn load_skeleton(&mut self, snap: &Snap, fp_va: u32, c_fp: &Fighter) -> Result<(), String> {
+        let parts_va = snap.u32(fp_va + gc_off::<Fighter>("parts"));
+        let n = self.skel.parts.len();
+        let mut ids = HashMap::new();
+        let mut ids2 = HashMap::new();
+        for k in 0..n {
+            ids.insert(snap.u32(parts_va + 0x10 * k as u32), self.skel.parts[k].joint);
+            ids2.insert(snap.u32(parts_va + 0x10 * k as u32 + 4), self.skel.parts2[k]);
+        }
+        let (parts, parts2) = (self.skel.parts.clone(), self.skel.parts2.clone());
+        for k in 0..n {
+            let b = parts_va + 0x10 * k as u32;
+            overlay_jobj(snap, &mut self.skel.tree, parts[k].joint, snap.u32(b), &ids)?;
+            let j2 = snap.u32(b + 4);
+            if j2 != 0 {
+                overlay_jobj(snap, &mut self.skel.tree2, parts2[k], j2, &ids2)?;
+            }
+        }
+        for (s, x) in self.skel.x8b0.iter_mut().zip(c_fp.x8B0.iter()) {
+            *s = crate::fighter_data::skeleton::PartSlot { x4: x.x4, x8: x.x8, xc: x.xC, x10: x.x10, x11: x.x11 };
+        }
+        self.skel.blend_frames = c_fp.x8A4_animBlendFrames;
+        self.skel.blend_frame = c_fp.x8A8_anim_frame;
+        Ok(())
+    }
+}
+
+/// `fp->parts` of player index `pi` (the fighter list is searched again by player id).
+fn p_parts_va(snap: &Snap, pi: usize) -> Result<u32, String> {
+    let fp_player_id = gc_off::<Fighter>("player_id");
+    for g in snap.plink(8)? {
+        let fp = snap.u32(g + 0x2C);
+        if fp != 0 && snap.u8(fp + fp_player_id) as usize == pi {
+            return Ok(snap.u32(fp + gc_off::<Fighter>("parts")));
+        }
+    }
+    Err(format!("snapshot: no fighter {pi}"))
 }

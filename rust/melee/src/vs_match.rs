@@ -39,6 +39,7 @@ mod fox;
 mod rebirth;
 mod snapshot;
 mod snapshot_ps;
+mod snapshot_fx;
 use fox::{ItemCmd, FoxVars, SimItem};
 use rebirth::{PlayerRespawn, RespawnCtx};
 

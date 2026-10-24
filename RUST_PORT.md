@@ -958,3 +958,9 @@ Stub names in `docs/rust-port/missing.md` for melee_fighter: NO_PORT 276 -> ~71,
   lives in melee_modes), ftMh/ftCh/ftSs/ftKb chara functions that need chara internals.
 - Oracle drivers: `__assert` no longer hangs (`asrt_hit`), `-Wl,/force:unresolved` link; clang evaluates call arguments right to left in some cases
   (see tests/tu_ftcoll.rs), mirror it in test fills.
+
+## State snapshots (resume the golden sim mid-match)
+`MELEE_SNAP_DUMP=<frame>[,..]:<file>` makes the C build dump its gameplay state after a match frame;
+`melee golden --from-snapshot FILE --start N` resumes the native sim from it and compares the hash from N
+on. Dump/resume/proof commands, what is loaded from where, and the model differences found:
+`tools/rust-port/snap/README.md`. Proven on `pad_falcon_fox_fd` at frames 0 and 300.

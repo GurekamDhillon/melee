@@ -9,6 +9,7 @@
 //! melee selftest
 //! melee hashlog --words GOLDEN.csv --out CANDIDATE.csv [--frames N]
 //! melee golden --iso DISC.iso --out CANDIDATE.csv [--scenario pad_falcon_fox_fd|pad_falcon_wolf_fd] [--mods DIR [--enable id,id]] [--frames N] [--seed-from GOLDEN.csv] [--audio]
+//!              [--from-snapshot FILE.snap [--start N]] [--dump-state N:FILE]
 //! ```
 //!
 //! `hashlog --words` is a PLUMBING check, not a simulation: the per-fighter and item words
@@ -221,7 +222,7 @@ fn golden(args: &[String]) -> ExitCode {
     let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
     let iso = get("--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok());
     let (Some(iso), Some(out)) = (iso, get("--out")) else {
-        eprintln!("usage: melee golden --iso DISC.iso --out CANDIDATE.csv [--scenario pad_falcon_fox_fd|pad_falcon_wolf_fd] [--mods DIR [--enable id,id]] [--frames N] [--audio]");
+        eprintln!("usage: melee golden --iso DISC.iso --out CANDIDATE.csv [--scenario pad_falcon_fox_fd|pad_falcon_wolf_fd] [--mods DIR [--enable id,id]] [--frames N] [--audio] [--from-snapshot FILE [--start N]] [--dump-state N:FILE]");
         return ExitCode::from(2);
     };
     let scenario = get("--scenario").unwrap_or_else(|| "pad_falcon_fox_fd".into());

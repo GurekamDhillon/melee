@@ -20,6 +20,7 @@ MINE = {
     "tu_ftcaptainspeciallw": [("src/melee/ft/ftparts.c", "fn:ftParts_GetBoneIndex", None),
                               ("src/melee/ft/ftlib.c", "fn:ftLib_GetKind", None)],
     "tu_ftfoxspecialn": [],
+    "tu_ftpurin": [("src/melee/ft/kinds/ftPurin/ftpurin.c", "fn:ftPr_Init_8013C2F8", None)],
 }
 run.EXTRACTS.update(MINE)
 run.HERE = HERE

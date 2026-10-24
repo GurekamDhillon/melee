@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+"""python gen/mtu/convert_ext.py <stem>: replaces the port's hand-written `pub mod ext { .. }` with the generated-ext
+markers, harvesting the old `= default` expressions into gen/mtu/defaults_<stem>.json. Prints the old block's
+non-hook items (statics, uses) so they can be re-added by hand."""
+import json, re, sys
+from pathlib import Path
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[3]
+stem = sys.argv[1]
+p = ROOT / "rust/melee_runtime/src/tu" / f"{stem}.rs"
+txt = p.read_text(encoding="utf-8").replace("\r\n", "\n")
+if "// BEGIN GENERATED EXT" in txt:
+    a = txt.index("// BEGIN GENERATED EXT"); b = txt.index("// END GENERATED EXT") + len("// END GENERATED EXT")
+    old = txt[a:b]
+else:
+    m = re.search(r"(?m)^(\s*)pub mod ext\s*\{", txt)
+    if not m:
+        raise SystemExit("no ext module")
+    i = m.end(); d = 1
+    while d:
+        c = txt[i]
+        if c == "{": d += 1
+        elif c == "}": d -= 1
+        i += 1
+    a, b = m.start(), i
+    old = txt[a:b]
+
+
+def split_params(s):
+    out, d, cur = [], 0, ""
+    for ch in s:
+        if ch in "(<[": d += 1
+        elif ch in ")>]": d -= 1
+        if ch == "," and d == 0:
+            out.append(cur); cur = ""
+        else:
+            cur += ch
+    if cur.strip(): out.append(cur)
+    return [x.split(":")[0].strip() for x in out]
+
+
+def upto_semi(s, i):
+    d = 0
+    j = i
+    while j < len(s):
+        c = s[j]
+        if c in "({[": d += 1
+        elif c in ")}]": d -= 1
+        elif c == ";" and d == 0: return j
+        j += 1
+    return len(s)
+
+
+defaults = {}
+for m in re.finditer(r"fn\s+(\w+)\s*\(([^)]*)\)\s*(?:->\s*[^=;{]+?)?\s*=\s*", old):
+    name = m.group(1)
+    j = upto_semi(old, m.end())
+    expr = old[m.end():j].strip()
+    names = split_params(m.group(2))
+    args = ", ".join(f"a{i}" for i in range(len(names)))
+    defaults[name] = "{ let (" + ", ".join(names) + ("," if len(names) == 1 else "") + ") = (" + args + ("," if len(names) == 1 else "") + "); " + expr + " }" if names else expr
+for m in re.finditer(r"hook_or!\(\s*\w+\s*,\s*(\w+)\s*,\s*\(([^)]*)\)[^,]*,\s*([^;]+?)\)\s*;", old):
+    name, ps, port = m.group(1), m.group(2), m.group(3).strip()
+    names = split_params(ps)
+    defaults[name] = f"{port}({', '.join(f'a{i}' for i in range(len(names)))})"
+if defaults:
+    (HERE / f"defaults_{stem}.json").write_text(json.dumps(defaults, indent=1), encoding="utf-8")
+new = "// BEGIN GENERATED EXT\n// END GENERATED EXT"
+txt = txt[:a] + new + txt[b:]
+p.write_text(txt, encoding="utf-8", newline="\n")
+print(f"{len(defaults)} defaults harvested")
+print("---- old ext (non-fn lines) ----")
+for l in old.splitlines():
+    if re.search(r"static|pub use|const |type |struct", l):
+        print(l)

@@ -38,6 +38,7 @@ from blkindex import build_index  # noqa: E402
 _BLK = build_index(GEN_RS)
 
 PRIM = g.PRIM
+_DEFAULTS = {}
 INTS = {T.CHAR_S, T.SCHAR, T.CHAR_U, T.UCHAR, T.SHORT, T.USHORT, T.INT, T.UINT, T.LONG, T.ULONG,
         T.LONGLONG, T.ULONGLONG, T.BOOL}
 
@@ -514,6 +515,12 @@ class Walk:
 # ---------------------------------------------------------------------------- output
 
 def build(stem, spec, want_ext):
+    global _DEFAULTS
+    _DEFAULTS = {}
+    dj = HERE / f"defaults_{stem}.json"
+    if dj.exists():
+        import json
+        _DEFAULTS = json.loads(dj.read_text(encoding="utf-8"))
     tu = Tu(patched_source(stem, spec), spec.get("args", ()), (ROOT / spec["src"]).parent)
     stubs, inlines, data = tu.uses()
     for n in ("__assert", "OSReport", "printf", "HSD_Panic", "OSPanic"):
@@ -598,7 +605,8 @@ def build(stem, spec, want_ext):
         argl = ", ".join(f"a{i}" for i in range(len(ptys)))
         r_out_hook = f"        m::ext::hook::{n} = Some(|{argl}| {{ " + " ".join(body_r) + " });"
         r_out.append(("@@HOOK@@", r_out_hook))
-        ext_fns.append(f"    fn {n}({rparams}){rret};")
+        dflt = _DEFAULTS.get(n)
+        ext_fns.append(f"    fn {n}({rparams}){rret}" + (f" = {dflt.replace('@ARGS@', argl)};" if dflt else ";"))
         if addr and n not in realcb:
             ext_cb.append((n, rparams, rret, argnames))
     # fill / hash
@@ -710,7 +718,7 @@ def build(stem, spec, want_ext):
            "    use super::*;",
            "    use core::ffi::c_void;",
            "    macro_rules! ext_fns {",
-           "        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {",
+           "        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {",
            "            pub mod hook {",
            "                use super::*;",
            "                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*",
@@ -718,7 +726,7 @@ def build(stem, spec, want_ext):
            "            $( pub fn $name($($a: $t),*) $(-> $r)? {",
            "                match unsafe { hook::$name } {",
            "                    Some(f) => f($($a),*),",
-           "                    None => panic!(concat!(\"TODO: \", stringify!($name), \" is not ported\")),",
+           "                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),",
            "                }",
            "            } )*",
            "        };",

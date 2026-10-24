@@ -37,6 +37,7 @@ def world_c(tu, pools):
         c.append(f"static {ctype(tu, t)}* pick_{t}(void) {{ u32 r = rnd(); return &{a}[(r >> 8) % {n}]; }}")
         c.append(f"static {ctype(tu, t)}* picko_{t}(void) {{ u32 r = rnd(); return (r % 6) == 0 ? 0 : &{a}[(r >> 8) % {n}]; }}")
     c += [
+        "struct HSD_GObj; typedef struct HSD_GObj HSD_GObj;",
         "static void cbev1(HSD_GObj* g) { T(7001); T(PI(g)); }",
         "static void cbev2(HSD_GObj* g) { T(7002); T(PI(g)); }",
         "static int cbp1(HSD_GObj* g) { T(7003); T(PI(g)); return (int) (fv() & 1); }",

@@ -22,8 +22,8 @@ pub static mut hold_hits:[i32;6]=[0;6];
 /// Hooks let the C oracle observe the same dependency boundary and side effects.
 pub mod ext {
     use super::*;
-    use crate::tu::ext_fns_c;
-    ext_fns_c! {
+    use crate::tu::ext_fns_h;
+    ext_fns_h! {
         Fighter_ChangeMotionState(a0: *mut HSD_GObj, a1: i32, a2: u32, a3: f32, a4: f32, a5: f32, a6: *mut HSD_GObj) = |a0, a1, a2, a3, a4, a5, a6| unsafe { melee_fighter::tu::fighter::Fighter_ChangeMotionState(a0, a1, a2, a3, a4, a5, a6) };
         Netplay_Enabled() -> i32 = || todo!("TODO(port): Netplay_Enabled");
         Player_GetEntity(a0: i32) -> *mut HSD_GObj = |a0| melee_fighter::player::get_entity(a0);

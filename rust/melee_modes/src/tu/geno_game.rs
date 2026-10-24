@@ -5,8 +5,10 @@ use melee_core::fp::fmadds;
 pub use melee_types::*;
 pub use melee_runtime::gekko::sqrtf;
 macro_rules! OSReport { ($f:expr $(,$a:expr)* $(,)?) => {{
+    if let Some(h) = unsafe { crate::tu::ext_hook::EXT_HOOK } { unsafe { h("OSReport", &[$f as usize as u64]); } } else {
     let text=unsafe { core::ffi::CStr::from_ptr($f) }.to_string_lossy();
     eprintln!("{} {:?}",text, &[$(crate::tu::ext_hook::Val::to_u64($a)),*] as &[u64]);
+    }
 }}; }
 macro_rules! HSD_ForeachAnim { ($a:expr,$b:expr,$c:expr,$d:expr,$e:expr,$f:expr $(,)?) => {
     ext::HSD_ForeachAnim($a,$b,$c,$d,$e,crate::tu::ext_hook::Val::to_u64($f))
@@ -20,6 +22,10 @@ pub mod ext {
         ($(fn $n:ident($($a:ident:$t:ty),* $(,)?) $(->$r:ty)? $(= $def:path)?;)*) => {
             pub mod hook { use super::*; $(pub static mut $n: Option<fn($($t),*) $(->$r)?> = None;)* }
             $(pub unsafe extern "C" fn $n($($a:$t),*) $(->$r)? {
+                if let Some(h) = $crate::tu::ext_hook::EXT_HOOK {
+                    return <$crate::ext_rty!($($r)?) as $crate::tu::ext_hook::Val>::from_u64(
+                        h(stringify!($n), &[$($crate::tu::ext_hook::Val::to_u64($a)),*]));
+                }
                 match hook::$n { Some(f)=>f($($a),*), None=>{ $crate::ext_dflt!([$($def)?] ($($a),*) $n) } }
             })*
             pub mod cb { pub use super::*; }

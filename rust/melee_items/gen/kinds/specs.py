@@ -69,7 +69,8 @@ for _n in ("itarwinglaser", "itbat", "itbombhei", "itbox", "itcapsule", "itcereb
            "itmasterhandlaser", "itmatadogas",
            "itnessbat", "itnesspkfire", "itnesspkfirepillar", "itnesspkflash", "itnesspkflashexplode",
            "itnesspkthunderball", "itnesspkthundertrail", "itnessyoyo",
-           "itmato", "itmball", "itmetalb", "itmetamon", "itmew", "itmewtwodisable", "itmewtwoshadowball", "itmsbomb"):
+           "itmato", "itmball", "itmetalb", "itmetamon", "itmew", "itmewtwodisable", "itmewtwoshadowball", "itmsbomb",
+           "itscball", "itseakchain", "itseakneedleheld", "itseakneedlethrown", "itseakvanish", "itsonans", "itspycloak", "itsscope"):
     SPECS[_n] = dict(src=f"{K}{_n}.c", types=_T, ret=dict(COMMON_RET), effects=dict(COMMON_EFF),
                      null_ret_ok=["Item_80268B18", "Item_80268B5C", "it_8026F6BC", "HSD_Randi"])
 
@@ -401,3 +402,37 @@ _G["ret"]["it_802A3D90"] = ("((fv() % 3) == 0 ? 0 : (int) (fv() & 0x1FFF))", "if
 _G["effects"]["it_802A3C98"] = _V("a2")
 _G["effects"]["GObj_InitUserData"] = ("if (a0) { a0->user_data = a3; }", "if !a0.is_null() { (*a0).user_data = a3; }")
 _G["effects"]["HSD_GObjObject_80390A70"] = ("if (a0) { a0->hsd_obj = a2; }", "if !a0.is_null() { (*a0).hsd_obj = a2; }")
+_I = lambda e: (f"(int) ({e[0]})", f"({e[1]}) as i32")
+_SMALL9 = ("(int) (fv() % 9)", "(fv() % 9) as i32")
+_ONEISH = ("(int) (fv() % 3)", "(fv() % 3) as i32")
+SPECS["itseakneedleheld"]["ret"].update({
+    "ftSk_SpecialS_80111FA0": _SMALL9, "ftKb_SpecialNSk_80106020": _SMALL9,
+    "ftSk_SpecialS_80111F70": _ONEISH, "ftKb_SpecialNSk_80105FF0": _ONEISH,
+})
+SPECS["itseakneedlethrown"]["skip_stubs"] = ["sinf", "cosf"]
+SPECS["itsscope"]["ret"]["it_8026DF34"] = _P  # a bool-returning callee: the stub returns 0 / 1 like the real one
+
+# ---- itseakchain: a 16-link pool (LK / LGO / LJO), one Fighter (FP) behind GO[2]
+SPECS["itseakchain"]["types"] = _T + ["ItemLink"]
+SPECS["itseakchain"]["ret"].update({
+    "Item_80268B18": _GO1,
+    "GObj_Create": ("((fv() % 7) == 0 ? 0 : &LGO[LGC++ % 16])",
+                    "if fv() % 7 == 0 { core::ptr::null_mut() } else { let i = crate::LGC; crate::LGC += 1; &raw mut crate::LGO[i % 16] }"),
+    "HSD_ObjAlloc": ("(void*) &LK[LKC++ % 16]",
+                     "{ let i = crate::LKC; crate::LKC += 1; &raw mut crate::LK[i % 16] as *mut c_void }"),
+    "HSD_JObjLoadJoint": ("(HSD_JObj*) &LJO[fv() % 32]", "&raw mut crate::LJO[(fv() % 32) as usize]"),
+    "it_802A3C98": ("(float) (fv() % 12)", "(fv() % 12) as f32"),
+    "mpColl_80048844": _P,
+    "ftLib_GetMotionId": ("(int) (344 + fv() % 16)", "(344 + fv() % 16) as i32"),
+})
+SPECS["itseakchain"]["effects"].update({
+    "it_802A3C98": _V("a2"),
+    "it_8026BB68": _V("a1"),
+    "PSMTXConcat": ("if (a2) { int q; for (q = 0; q < 12; q++) ((float*) a2)[q] = rw(); }",
+                    "if !a2.is_null() { for q in 0..12 { *(a2 as *mut f32).add(q) = rw(); } }"),
+    "PSMTXCopy": ("if (a0 && a1) { int q; for (q = 0; q < 12; q++) ((float*) a1)[q] = ((float*) a0)[q]; }",
+                  "if !a0.is_null() && !a1.is_null() { for q in 0..12 { *(a1 as *mut f32).add(q) = *(a0 as *mut f32).add(q); } }"),
+    "PSMTXIdentity": ("if (a0) { int q; for (q = 0; q < 12; q++) ((float*) a0)[q] = (q % 5 == 0) ? 1.0f : 0.0f; }",
+                      "if !a0.is_null() { for q in 0..12 { *(a0 as *mut f32).add(q) = if q % 5 == 0 { 1.0 } else { 0.0 }; } }"),
+})
+SPECS["itseakchain"]["null_ret_ok"] += ["GObj_Create", "HSD_ObjAlloc", "HSD_JObjLoadJoint"]

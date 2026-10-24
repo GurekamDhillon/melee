@@ -787,3 +787,12 @@ seeded cases per function, every function of each TU incl. the state tables).
   record; the pool stubs (`GObj_Create`, `HSD_ObjAlloc`, `HSD_JObjLoadJoint`) hand out pool entries.
 - Fusion: each contracted `a*b + c` is `fmadds` (f32) or `mul_add` (f64); mutating the sites in missile/bomb/
   chargeshot/rshell/grapple fails the tests except where the product is exact (`1.0f * x`).
+## melee_items::tu: it/kinds set 2 (shard 785-792)
+`rust/melee_items/src/tu/{itscball,itseakchain,itseakneedleheld,itseakneedlethrown,itseakvanish,itsonans,itspycloak,itsscope}.rs`
+port every function of those `src/melee/it/kinds` files (static inlines included) with the C names and signatures, using the
+shard 657-664 oracle (`bash rust/melee_items/gen/kinds/regen.sh itscball ...`, tests `tests/kinds_<stem>.rs`, 400 seeded cases
+per function). New fixtures: a 16-link `ItemLink` pool + `Fighter` behind `GO[2]` for itseakchain (`ptrargs` in `mk_driver.py`
+maps `ItemLink*` / attribute-buffer parameters; pool allocators `GObj_Create` / `HSD_ObjAlloc` / `HSD_JObjLoadJoint` are stubs
+returning pool entries; `PSMTX*` stubs have matrix effects). Notes: `ABS(table[HSD_Randi(8)])` evaluates its argument twice
+(two draws); the `it_802BAF2C` result is `(int) pointer` and is not compared; float-to-int of `xC[]` in itsscope follows
+gwtool's saturating cast. A mutation of the fused comparison `v < -x18 * s - x28` in `it_802BC080` is not caught.

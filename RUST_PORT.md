@@ -796,3 +796,15 @@ maps `ItemLink*` / attribute-buffer parameters; pool allocators `GObj_Create` / 
 returning pool entries; `PSMTX*` stubs have matrix effects). Notes: `ABS(table[HSD_Randi(8)])` evaluates its argument twice
 (two draws); the `it_802BAF2C` result is `(int) pointer` and is not compared; float-to-int of `xC[]` in itsscope follows
 gwtool's saturating cast. A mutation of the fused comparison `v < -x18 * s - x28` in `it_802BC080` is not caught.
+## melee_items::tu: it/kinds set B (shard 793-800)
+`rust/melee_items/src/tu/{itsscopebeam,itstar,itstarrod,itstarrodstar,itsuikun,itsword,ittaru,ittarucann}.rs` port every
+function of those `src/melee/it/kinds` files (the same pipeline and `ext` convention as shard 657-664; `gen/kinds/splice.py <stem>`
+pastes the generated `ext` block into a port). State oracle per file (`bash rust/melee_items/gen/kinds/regen.sh <stem>`, then
+`cargo test -p melee_items --test kinds_<stem>`), 400 cases per function plus the state tables.
+- MSL `bool` is `int`: a C function that `return`s a callee's int gives the raw value (e.g. 12), the port a Rust `bool`; mk_driver
+  now compares `(call) != 0` for functions declared `bool`.
+- `ittarucann` / `ittaru` / `itsscopebeam` fused sites (checked by mutation): `+=` of a product, `a*b + c` (`fmadds`); the product stored
+  to `temp` first in the `*_Spawned` functions is NOT fused. `8.0f * cosf/sinf + x` and `2.0f * angle + y` are exact either way.
+  `itTarucann_UnkMotion7_Phys` returns a `float` (state-table slot is cast); `itTarucann` stubs `sinf`/`cosf` are the real gekko ports.
+- Oracle additions: `facing_dir` also drawn as an arbitrary float; a fake `ItemModelDesc`/`HSD_Joint` (`MD`, `JNT`) for the
+  `x10_modelDesc->x0_joint` reads; `ftCo_800C92E4`'s `lbColl_80008D30_arg1` pointee is traced.

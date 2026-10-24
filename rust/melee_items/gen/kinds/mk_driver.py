@@ -233,3 +233,149 @@ def build_ops(tu, cfg):
                     decl_r.append(dr)
             elif kind.startswith("ptr:") and kind[4:] in cfg.get("ptrargs", {}):
                 a_c, a_r = [x.replace("{n}", str(n)) for x in cfg["ptrargs"][kind[4:]]]
+            else:
+                ct = p.type.spelling
+                if pn in hints:
+                    d_c, d_r = hints[pn]
+                elif kind == "int":
+                    d_c, d_r = "(int) fv()", "fv() as i32"
+                elif kind == "uint":
+                    d_c, d_r = "fv()", "fv()"
+                elif kind == "f32":
+                    d_c, d_r = "rw()", "rw()"
+                elif kind == "bool":
+                    d_c, d_r = "(fv() & 1)", "fv() & 1 != 0"
+                else:
+                    raise SystemExit(f"{name}: parameter {pn} ({kind}) needs an override")
+                rty = gen_tu.rust_ty(p.type)
+                decl_c.append(f"{ct} v{i} = ({ct}) ({d_c});")
+                decl_r.append(f"let v{i}: {rty} = {d_r} as {rty};" if kind != "bool" else f"let v{i}: bool = {d_r};")
+                a_c, a_r = f"v{i}", f"v{i}"
+            args.append((a_c, a_r))
+        rk = classify(ft.get_result())
+        call_c = f"{name}({', '.join(a[0] for a in args)})"
+        call_r = f"m::{name}({', '.join(a[1] for a in args)})"
+        if name in cfg.get("noret", ()) or rk == "void":
+            sc, sr = f"{call_c};", f"{call_r};"
+        elif rk in ("int", "uint", "bool"):
+            if fn.type.get_result().spelling == "bool":
+                # MSL `bool` is `int`: the C returns the callee's raw value, the port a Rust bool (nonzero == true)
+                sc, sr = f"ret = (u32) (({call_c}) != 0);", f"ret = {call_r} as u32;"
+            else:
+                sc, sr = f"ret = (u32) {call_c};", f"ret = {call_r} as u32;"
+        elif rk == "f32":
+            sc, sr = f"ret = B({call_c});", f"ret = ({call_r}).to_bits();"
+        elif rk.startswith("ptr") or rk in ("gobj", "item", "jobj", "vec"):
+            sc, sr = f"ret = PI({call_c});", f"ret = pi({call_r});"
+        else:
+            raise SystemExit(f"{name}: return {rk}")
+        ops.append((name, " ".join(decl_c) + " " + sc, " ".join(decl_r) + " " + sr))
+    ops.extend(cfg.get("extra_ops", []))
+    return ops
+
+
+def table_hashes(tu):
+    """Hash ops for the file's ItemStateTable arrays."""
+    c, r = [], []
+    for c_ in tu.tu.cursor.get_children():
+        if c_.kind == K.VAR_DECL and tu.in_main(c_) and c_.type.get_canonical().kind == T.CONSTANTARRAY:
+            et = c_.type.get_canonical().element_type
+            if et.spelling.endswith("ItemStateTable"):
+                n = c_.type.get_canonical().element_count
+                nm = c_.spelling
+                c.append(f"{{ int j; for (j = 0; j < {n}; j++) {{ HM((u32) {nm}[j].anim_id); HM(FI((const void*) {nm}[j].animated)); "
+                         f"HM(FI((const void*) {nm}[j].physics_updated)); HM(FI((const void*) {nm}[j].collided)); }} }}")
+                r.append(f"for j in 0..{n} {{ let row = &m::{nm}[j]; hm(row.anim_id as u32); hm(fi(row.animated)); "
+                         f"hm(fi(row.physics_updated)); hm(fi(row.collided)); }}")
+    return c, r
+
+
+def emit(stem):
+    from specs import SPECS
+    from specs_cfg import CFG
+    spec = SPECS[stem]
+    cfg = CFG[stem]
+    tu = Tu(gen_tu.patched_source(stem, spec), spec.get("args", ()), (ROOT / spec["src"]).parent)
+    ops = build_ops(tu, cfg)
+    _stubs, _inl, _data = tu.uses()
+    icd = "it_804D6D28" in _data
+    global C_SETUP, RS_SETUP
+    cs0, rs0 = C_SETUP, RS_SETUP
+    C_SETUP = C_SETUP.replace("@ICD_C@", "    it_804D6D28 = &ICD;" if icd else "")
+    RS_SETUP = RS_SETUP.replace("@ICD_R@", "    m::ext::it_804D6D28 = &raw mut ICD;" if icd else "")
+    tc, tr = table_hashes(tu)
+    nt = 1 if tc else 0
+    nops = len(ops) + nt
+    prof = cfg.get("prof", lambda n: 0)
+    specs_c = cfg["spec"]
+    c = [f"/* TU: {spec['src']} */",
+         "/* C oracle for the Rust port of this TU: the whole TU included verbatim; every callee out of it is a",
+         " * recording stub. Written by gen/kinds/mk_driver.py. Each line: op case ret state-hash trace-hash. */",
+         "#include TU_SRC", '#include "mtu_common.h"', '#include "kinds_common.h"', C_WORLD_DECL, cfg.get("c_decl", ""),
+         f'#include "{stem}_gen.h"', ""]
+    # profiles
+    c.append("static void spec_fill(int prof)\n{\n    int i;\n    (void) i;\n    switch (prof) {")
+    for pi_, (sc, sr) in enumerate(specs_c):
+        c.append("    case " + str(pi_) + ": {\n" + sc + "\n    } break;")
+    c.append("    }\n}")
+    c.append(C_SETUP.replace("@TWEAK@", "    spec_fill(prof);\n" + cfg["tweak"][0]))
+    c.append(C_HASH.replace("@PTRS@", cfg["ptrs"][0]))
+    c += ["int main(void)", "{", "    int op, k;", "    preg(GO, sizeof GO); preg(IT, sizeof IT); preg(JO, sizeof JO); preg(DBT, sizeof DBT);",
+          "    preg(ART, sizeof ART); preg(ATTR, sizeof ATTR); preg(&ICD, sizeof ICD); preg(SPEC, sizeof SPEC); preg(VA, sizeof VA);"]
+    for extra in cfg.get("c_preg", []):
+        c.append("    " + extra)
+    c.append("    freg_all();")
+    c += [f"    for (op = 0; op < {nops}; op++) {{", f"        for (k = 0; k < {N_CASES}; k++) {{", "            u32 ret = 0;",
+          "            int prof = 0;", "            tu_case(op, k);",
+          "            prof = PROFTAB[op];", "            setup(prof);", "            switch (op) {"]
+    for i, (n, sc, sr) in enumerate(ops):
+        c.append(f"            case {i}: {{ {sc} }} break; /* {n} */")
+    if nt:
+        c.append(f"            case {len(ops)}: {{ " + " ".join(tc) + " } break; /* state tables */")
+    c += ["            }", "            hash_all();", '            printf("%d %d %08X %08X %08X\\n", op, k, ret, H, TR);',
+          "        }", "    }", "    return 0;", "}", ""]
+    proftab = [prof(n) for n, _, _ in ops] + ([0] if nt else [])
+    # PROFTAB must precede main: insert before 'int main'
+    i_main = c.index("int main(void)")
+    c.insert(i_main, "static const unsigned char PROFTAB[] = { " + ", ".join(map(str, proftab)) + " };\n")
+    (HERE / "tu" / f"{stem}.c").write_text("\n".join(c), encoding="utf-8", newline="\n")
+
+    r = [f"//! Written by gen/kinds/mk_driver.py from the same description as gen/kinds/tu/{stem}.c.",
+         f"//! src/tu/{stem}.rs vs the C (the whole TU, shipping contraction; regenerate the expected file",
+         f"//! with `python rust/melee_items/gen/kinds/run_tu.py {stem}`).",
+         "#![allow(static_mut_refs, non_snake_case, non_upper_case_globals, unused_imports, unused_mut, unused_assignments, unused_variables, unused_unsafe)]",
+         '#[path = "kinds_harness/mod.rs"]', "mod mtu_harness;", "use core::ptr::null_mut;", "use melee_types::*;",
+         f"use melee_items::tu::{stem} as m;", "use mtu_harness::*;", f'#[path = "kinds_gen/{stem}_gen.rs"]', "mod g;", "",
+         RS_WORLD_DECL, cfg.get("rs_decl", ""), ""]
+    r.append("unsafe fn spec_fill(prof: i32) {\n    match prof {")
+    for pi_, (sc, sr) in enumerate(specs_c):
+        r.append("        " + str(pi_) + " => {\n" + sr + "\n        }")
+    r.append("        _ => unreachable!(),\n    }\n}")
+    r.append(RS_SETUP.replace("@TWEAK@", "    spec_fill(prof);\n" + cfg["tweak"][1]))
+    r.append(RS_HASH.replace("@PTRS@", cfg["ptrs"][1]))
+    r += ["#[test]", f"fn {stem}_matches_c() {{", "    unsafe {", "        g::install();",
+          "        preg(&raw const GO, core::mem::size_of_val(&GO)); preg(&raw const IT, core::mem::size_of_val(&IT));",
+          "        preg(&raw const JO, core::mem::size_of_val(&JO)); preg(&raw const DBT, core::mem::size_of_val(&DBT));",
+          "        preg(&raw const ART, core::mem::size_of_val(&ART)); preg(&raw const ATTR, core::mem::size_of_val(&ATTR));",
+          "        preg(&raw const ICD, core::mem::size_of_val(&ICD)); preg(&raw const SPECB, 3 * 128); preg(&raw const VA, core::mem::size_of_val(&VA));"]
+    for extra in cfg.get("rs_preg", []):
+        r.append("        " + extra)
+    r.append("        g::freg_all();")
+    r.append("        const PROFTAB: [u8; %d] = [%s];" % (len(proftab), ", ".join(map(str, proftab))))
+    r += [f'        let mut c = Check::new(include_str!("data/kinds_{stem}.txt"));', f"        for op in 0..{nops}u32 {{",
+          f"            for k in 0..{N_CASES}u32 {{", "                case(op, k);", "                setup(PROFTAB[op as usize] as i32);",
+          "                let mut ret = 0u32;", "                match op {"]
+    for i, (n, sc, sr) in enumerate(ops):
+        r.append(f"                    {i} => {{ {sr} }} // {n}")
+    if nt:
+        r.append(f"                    {len(ops)} => {{ " + " ".join(tr) + " }")
+    r += ["                    _ => unreachable!(),", "                }", "                hash_all();", "                c.line(op, k, ret);",
+          "            }", "        }", f"        assert_eq!(c.done(), {nops * N_CASES});", "    }", "}", ""]
+    (ROOT / "rust/melee_items/tests" / f"kinds_{stem}.rs").write_text("\n".join(r), encoding="utf-8", newline="\n")
+    C_SETUP, RS_SETUP = cs0, rs0
+    print(f"mk_driver: {stem}: {nops} ops x {N_CASES} cases")
+
+
+if __name__ == "__main__":
+    for s in sys.argv[1:]:
+        emit(s)

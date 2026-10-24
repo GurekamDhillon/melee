@@ -59,16 +59,6 @@ pub mod ext {
 
 crate::kinds_jobj_inl!();
 
-/// `HSD_JObjSetScaleY` (baselib/jobj.h, static inline)
-#[inline]
-unsafe fn HSD_JObjSetScaleY(jobj: *mut HSD_JObj, y: f32) {
-    hsd_assert(!jobj.is_null(), "(jobj)");
-    (*jobj).scale.y = y;
-    if (*jobj).flags & JOBJ_MTX_INDEP_SRT as u32 == 0 {
-        HSD_JObjSetMtxDirty(jobj);
-    }
-}
-
 /// `ItemStateTable it_803F70C8[]`
 pub static mut it_803F70C8: [ItemStateTable; 3] = [
     st_row(-1, pred_b(itPikachuthunder_UnkMotion0_Anim), None, None),

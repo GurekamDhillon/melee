@@ -70,7 +70,8 @@ for _n in ("itarwinglaser", "itbat", "itbombhei", "itbox", "itcapsule", "itcereb
            "itnessbat", "itnesspkfire", "itnesspkfirepillar", "itnesspkflash", "itnesspkflashexplode",
            "itnesspkthunderball", "itnesspkthundertrail", "itnessyoyo",
            "itmato", "itmball", "itmetalb", "itmetamon", "itmew", "itmewtwodisable", "itmewtwoshadowball", "itmsbomb",
-           "itscball", "itseakchain", "itseakneedleheld", "itseakneedlethrown", "itseakvanish", "itsonans", "itspycloak", "itsscope"):
+           "itscball", "itseakchain", "itseakneedleheld", "itseakneedlethrown", "itseakvanish", "itsonans", "itspycloak", "itsscope",
+           "itsscopebeam", "itstar", "itstarrod", "itstarrodstar", "itsuikun", "itsword", "ittaru", "ittarucann"):
     SPECS[_n] = dict(src=f"{K}{_n}.c", types=_T, ret=dict(COMMON_RET), effects=dict(COMMON_EFF),
                      null_ret_ok=["Item_80268B18", "Item_80268B5C", "it_8026F6BC", "HSD_Randi"])
 
@@ -436,3 +437,17 @@ SPECS["itseakchain"]["effects"].update({
                       "if !a0.is_null() { for q in 0..12 { *(a0 as *mut f32).add(q) = if q % 5 == 0 { 1.0 } else { 0.0 }; } }"),
 })
 SPECS["itseakchain"]["null_ret_ok"] += ["GObj_Create", "HSD_ObjAlloc", "HSD_JObjLoadJoint"]
+SPECS["itsscopebeam"]["ret"]["it_8026DAA8"] = ("(int) (fv() & 3)", "(fv() & 3) as i32")
+SPECS["itsscopebeam"]["ret"]["atan2f"] = ("((float) ((int) (rnd() % 82) - 41) * 0.01f)", "((rnd() % 82) as i32 - 41) as f32 * 0.01")
+
+SPECS["itsuikun"]["custom_stubs"] = {"efSync_Spawn": _EFS4}
+SPECS["itsword"]["ret"]["ftLib_80086FA8"] = ("(int) (fv() & 1)", "(fv() & 1) as i32")
+SPECS["itsword"]["ret"]["it_80272CC0"] = ("(&JO[3 + (fv() % 3)])", "&raw mut crate::JO[3 + (fv() % 3) as usize]")
+
+SPECS["ittaru"]["custom_stubs"] = {"efSync_Spawn": _EFS3}
+SPECS["ittarucann"]["custom_stubs"] = {"efSync_Spawn": _EFS3}
+SPECS["ittarucann"]["skip_stubs"] = ["sinf", "cosf"]
+
+SPECS["ittarucann"]["effects"]["ftCo_800C92E4"] = (
+    "if (a3) { T((u32) a3->state); T(a3->damage); T((u32) a3->kb_angle); T(a3->unkC); T(a3->unk10); T(a3->unk14); T(a3->element); T((u32) a3->sfx_severity); T((u32) a3->sfx_kind); }",
+    "if !a3.is_null() { t((*a3).state as u32); t((*a3).damage); t((*a3).kb_angle as u32); t((*a3).unkC); t((*a3).unk10); t((*a3).unk14); t((*a3).element); t((*a3).sfx_severity as u32); t((*a3).sfx_kind as u32); }")

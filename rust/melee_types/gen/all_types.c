@@ -814,6 +814,9 @@
 #include <melee/mn/mndiagram3.static.h>
 #include <melee/mn/mnevent.h>
 #include <melee/mn/mnmainrule.h>
+#include <melee/mn/inlines.h>
+#include <melee/mn/mnruleplus.h>
+#include <melee/mn/mnstagesel.static.h>
 #line 29 "src/melee/mn/mngallery.c"
 struct mnGallery_804D6C88_userdata {
     u8 unk0;

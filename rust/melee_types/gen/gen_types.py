@@ -178,7 +178,8 @@ def write_probe():
     extra = ["melee/lb/lbanim.h", "melee/lb/lbcardnew.h", "melee/gm/gmresultplayer.static.h", "melee/gm/gmfrontend_items.h", "melee/gm/gmtoulib.static.h", "melee/lb/lbmemory.h", "melee/lb/lbheap.static.h", "dolphin/thp/thp.h"]
     # shard 857-864 (mn/ menus): records of the mn headers the TU ports use
     extra += ["melee/mn/mnmain.h", "melee/mn/mncount.h", "melee/mn/mndatadel.static.h", "melee/mn/mndiagram2.h",
-              "melee/mn/mndiagram3.static.h", "melee/mn/mnevent.h", "melee/mn/mnmainrule.h"]
+              "melee/mn/mndiagram3.static.h", "melee/mn/mnevent.h", "melee/mn/mnmainrule.h",
+              "melee/mn/inlines.h", "melee/mn/mnruleplus.h", "melee/mn/mnstagesel.static.h"]
     seen, lines = set(), []
     for h in base + fwd + tys + ft + it + extra:
         if h not in seen:

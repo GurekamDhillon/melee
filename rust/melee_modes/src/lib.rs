@@ -20,6 +20,7 @@ pub mod tu;
 pub mod hud;
 pub mod lb;
 pub mod mn;
+pub mod mn_inl;
 /// Round 3: leaf functions over game structs (pointer arguments), `tests/oracle_ptr.rs`.
 pub mod gm_ptr;
 pub mod hud_ptr;

@@ -648,9 +648,9 @@ pub mod native {
         fn HSD_AObjRemove(a0: *mut HSD_AObj) = crate::tu::aobj::HSD_AObjRemove(a0);
         fn HSD_AObjReqAnim(a0: *mut HSD_AObj, a1: f32) = crate::tu::aobj::HSD_AObjReqAnim(a0, a1);
         fn HSD_SetMaterialColor(a0: _GXColor, a1: _GXColor, a2: _GXColor, a3: f32);
-        fn HSD_SetMaterialShininess(a0: f32);
+        fn HSD_SetMaterialShininess(a0: f32) = crate::tu::state::HSD_SetMaterialShininess(crate::tu::globals::render(), a0);
         fn HSD_SetupRenderModeWithCustomPE(a0: u32, a1: *mut HSD_PEDesc);
-        fn HSD_StateInitTev();
+        fn HSD_StateInitTev() = crate::tu::tev::HSD_StateInitTev(crate::tu::globals::render());
         fn HSD_TExpAlphaIn(a0: *mut HSD_TExp, a1: u32, a2: *mut HSD_TExp, a3: u32, a4: *mut HSD_TExp, a5: u32, a6: *mut HSD_TExp, a7: u32, a8: *mut HSD_TExp);
         fn HSD_TExpAlphaOp(a0: *mut HSD_TExp, a1: u32, a2: u32, a3: u32, a4: u8);
         fn HSD_TExpCnst(a0: *mut c_void, a1: u32, a2: u32, a3: *mut *mut HSD_TExp) -> *mut HSD_TExp;

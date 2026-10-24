@@ -970,7 +970,7 @@ pub mod ext {
     fn HSD_ObjAllocInit(a0: *mut _HSD_ObjAllocData, a1: u32, a2: u32) = crate::tu::objalloc::HSD_ObjAllocInit(a0 as _, a1 as _, a2);
     fn HSD_ObjFree(a0: *mut _HSD_ObjAllocData, a1: *mut c_void) = crate::tu::objalloc::HSD_ObjFree(a0 as _, a1);
     fn HSD_SetupChannel(a0: *mut HSD_Chan);
-    fn HSD_StateInitTev();
+    fn HSD_StateInitTev() = crate::tu::tev::HSD_StateInitTev(crate::tu::globals::render());
     fn HSD_StateInvalidate(a0: i32);
     fn HSD_StateSetNumChans(a0: i32);
     fn HSD_StateSetZCompLoc(a0: i32);

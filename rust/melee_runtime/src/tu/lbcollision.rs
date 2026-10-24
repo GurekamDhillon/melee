@@ -39,7 +39,7 @@ pub mod ext {
     fn lb_8000B1CC(jobj: *mut HSD_JObj, offset: *const Vec3, out: *mut Vec3) = crate::tu::lb_00B0::lb_8000B1CC(jobj, offset as _, out as _);
     fn HSD_JObjSetupMatrix(jobj: *mut HSD_JObj);
     fn HSD_StateInvalidate(a0: i32);
-    fn HSD_StateInitTev();
+    fn HSD_StateInitTev() = crate::tu::tev::HSD_StateInitTev(crate::tu::globals::render());
     fn HSD_CObjGetCurrent() -> *mut HSD_CObj = crate::tu::cobj::HSD_CObjGetCurrent();
     fn HSD_CObjGetViewingMtx(cobj: *mut HSD_CObj, mtx: *mut Mtx);
     fn HSD_ClearVtxDesc() = crate::tu::pobj::HSD_ClearVtxDesc();

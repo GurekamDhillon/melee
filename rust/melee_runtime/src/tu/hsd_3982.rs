@@ -14,11 +14,11 @@ pub mod ext {
     use super::*;
     /// `HSD_GObj_CameraKind` (gobj.c: assigned at `HSD_GObjInit`; the test harness sets it).
     pub static mut HSD_GObj_CameraKind: u8 = 0;
-    pub fn HSD_CObjSetCurrent(_cobj: *mut HSD_CObj) { todo!("HSD_CObjSetCurrent (baselib/cobj.c)") }
+    pub fn HSD_CObjSetCurrent(cobj: *mut HSD_CObj) { unsafe { { let _ = crate::tu::cobj::HSD_CObjSetCurrent(cobj); } } }
     pub fn fn_80392934() { todo!("fn_80392934 (baselib/hsd_392A.c)") }
     pub fn hsd_8039254C() { todo!("hsd_8039254C (baselib/hsd_3924.c)") }
     pub fn GObj_Create(_class_id: u16, _p_link: u8, _obj_kind: u8) -> *mut HSD_GObj { todo!("GObj_Create (baselib/gobjplink.c)") }
-    pub fn HSD_CObjLoadDesc(_desc: *mut HSD_CObjDesc) -> *mut HSD_CObj { todo!("HSD_CObjLoadDesc (baselib/cobj.c)") }
+    pub fn HSD_CObjLoadDesc(desc: *mut HSD_CObjDesc) -> *mut HSD_CObj { unsafe { crate::tu::cobj::HSD_CObjLoadDesc(desc) } }
     pub fn HSD_GObjObject_80390A70(_gobj: *mut HSD_GObj, _kind: u8, _obj: *mut c_void) { todo!("HSD_GObjObject_80390A70 (baselib/gobjobject.c)") }
     pub fn GObj_SetupGXLinkMax(_gobj: *mut HSD_GObj, _cb: GObj_RenderFunc, _gx_link: u32) { todo!("GObj_SetupGXLinkMax (baselib/gobjgxlink.c)") }
     pub fn hsd_80392528(_event: Event) { todo!("hsd_80392528 (baselib/hsd_3924.c)") }

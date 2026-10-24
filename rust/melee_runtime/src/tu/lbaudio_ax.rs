@@ -78,7 +78,7 @@ pub mod ext {
     fn HSD_ObjAllocInit(data: *mut HSD_ObjAllocData, size: u32, align: u32) = crate::tu::objalloc::HSD_ObjAllocInit(data, size as _, align);
     fn HSD_ObjAlloc(data: *mut HSD_ObjAllocData) -> *mut c_void = crate::tu::objalloc::HSD_ObjAlloc(data);
     fn HSD_ObjFree(data: *mut HSD_ObjAllocData, obj: *mut c_void) = crate::tu::objalloc::HSD_ObjFree(data, obj);
-    fn HSD_Randi(n: i32) -> i32;
+    fn HSD_Randi(n: i32) -> i32 = crate::tu::random::HSD_Randi(crate::tu::globals::rand(), n);
     fn HSD_GObjFree(gobj: *mut HSD_GObj);
     fn GObj_Create(class: u16, plink: u8, prio: u8) -> *mut HSD_GObj;
     fn GObj_InitUserData(gobj: *mut HSD_GObj, kind: u8, free: Option<unsafe extern "C" fn(*mut c_void)>, data: *mut c_void);

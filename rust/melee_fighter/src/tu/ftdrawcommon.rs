@@ -58,7 +58,7 @@ pub mod ext {
         LB_80014770 lb_80014770(v: *mut Vec3, arg: i32) -> i32;
         LBGX_8001E2F8 lbGx_8001E2F8(q: *mut Quaternion, pos: *mut Vec3, c: *const U8Vec4, arg: i32, facing: f32) -> i32;
         HSD_STATE_INVALIDATE HSD_StateInvalidate(s: i32);
-        FTPARTS_800750C8 ftParts_800750C8(fp: *mut Fighter, i: i32, b: i32);
+        FTPARTS_800750C8 ftParts_800750C8(fp: *mut Fighter, i: i32, b: i32) = unsafe { crate::tu::ftparts::ftParts_800750C8(fp, i as u32, b != 0) };
         FTCO_8009F5AC ftCo_8009F5AC(fp: *mut Fighter) = unsafe { crate::tu::ftCo_09f4::ftCo_8009F5AC(fp) };
         FTCO_8009F7F8 ftCo_8009F7F8(fp: *mut Fighter) = unsafe { crate::tu::ftCo_09f4::ftCo_8009F7F8(fp) };
         FTCO_800C8AF0 ftCo_800C8AF0(fp: *mut Fighter);

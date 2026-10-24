@@ -139,10 +139,10 @@ pub mod ext {
     pub fn ft_8007C630(g: G) { unsafe { let _ = crate::tu::ft_07c6::ft_8007c630(g); } }
     pub fn costume_joint(kind: i32, costume: u8) -> *mut HSD_Joint { unsafe { (*crate::tu::ftdata::CostumeListsForeachCharacter[kind as usize].costume_list.add(costume as usize)).joint } }
     pub fn costume_count(kind: i32) -> i32 { unsafe { crate::tu::ftdata::CostumeListsForeachCharacter[kind as usize].numCostumes as i32 } }
-    pub fn ftPartsPObjSetDefaultClass() { todo!("ftPartsPObjSetDefaultClass (ft/ftparts.c)") }
-    pub fn ftPartsPObjClearDefaultClass() { todo!("ftPartsPObjClearDefaultClass (ft/ftparts.c)") }
+    pub fn ftPartsPObjSetDefaultClass() { unsafe { crate::tu::ftparts_render::ftPartsPObjSetDefaultClass() } }
+    pub fn ftPartsPObjClearDefaultClass() { unsafe { crate::tu::ftparts_render::ftPartsPObjClearDefaultClass() } }
     pub fn HSD_JObjLoadJoint(j: *mut HSD_Joint) -> J { unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(j as _) as _ } }
-    pub fn ftParts_80073758(j: J) { todo!("ftParts_80073758 (ft/ftparts.c)") }
+    pub fn ftParts_80073758(j: J) { unsafe { crate::tu::ftparts_render::ftParts_80073758(j as _) } }
     pub fn Geno_ToonUnlit(kind: i32) -> i32 { unsafe { crate::platform::Geno_ToonUnlit(kind) } }
     pub fn HSD_GObjObject_80390A70(g: G, kind: u8, o: *mut core::ffi::c_void) { todo!("HSD_GObjObject_80390A70 (baselib/gobjobject.c)") }
     pub fn HSD_GObj_JObjKind() -> u8 { todo!("HSD_GObj_JObjKind (baselib/gobj.c)") }
@@ -166,9 +166,9 @@ pub mod ext {
     pub fn ftData_80085820(kind: i32, costume: u8) { unsafe { let _ = crate::tu::ftdata::ftData_80085820(kind, costume as i32); } }
     pub fn ftData_80085B10(fp: F) { unsafe { let _ = crate::tu::ftdata::ftData_80085B10(&mut *fp); } }
     pub fn ftParts_80074E58(fp: F) { unsafe { let _ = crate::tu::ftparts::ftParts_80074E58(&mut *fp); } }
-    pub fn ftParts_SetupParts(g: G) { todo!("ftParts_SetupParts (ft/ftparts.c)") }
+    pub fn ftParts_SetupParts(g: G) { unsafe { crate::tu::ftparts::ftParts_SetupParts(g) } }
     pub fn ftCo_800C884C(g: G) { unsafe { let _ = crate::tu::ft_0c88::ftco_800c884c(g); } }
-    pub fn ftParts_800749CC(g: G) { todo!("ftParts_800749CC (ft/ftparts.c)") }
+    pub fn ftParts_800749CC(g: G) { unsafe { crate::tu::ftparts::ftParts_800749CC(g) } }
     pub fn ftCo_8009CF84(fp: F) { unsafe { let _ = crate::tu::ftdynamics::ftCo_8009CF84(&mut *fp); } }
     pub fn ftCo_8009F578(fp: F) { unsafe { crate::tu::ftCo_09f4::ftCo_8009F578(fp) } }
     pub fn Mex_OnLoadDispatch(kind: i32, g: G) { unsafe { let _ = crate::platform::Mex_OnLoadDispatch(kind, g); } }

@@ -34,7 +34,7 @@ pub mod ext {
         ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |g| crate::ftcommon::set_self_movement_from_grounded_movement(fp(g));
         ft_80084DB0(g: G) = crate::ft084e::ft_80084db0;
         ft_80084104(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80084104(g as _); } };
-        ft_8008370C(g: G, cb: HSD_GObjEvent) = |_, _| todo!("TODO(port) ft_8008370C (ft_081B.c)");
+        ft_8008370C(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_8008370c(g as _, ev)); } };
         ft_80082B1C(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80082b1c(g as _); } };
     }
 }

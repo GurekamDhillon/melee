@@ -943,3 +943,18 @@ told apart from unfused ones through the f32 result.
 - Moved below `melee_modes` (re-exported there): the hit-rule capsule table, the movement-caps jump limit, the VS scene controller global.
 - Verified against the C (shipping contraction): `melee_fighter/tests/ftcollset_ref.rs` (ftcoll setters + hit-rule table, 4400 cases), `melee_world/tests/camera_boss_vs_c.rs` (5500), `melee_runtime/tests/jobjptr_vs_c.rs` (6000; found a wrong RObj type constant), six state oracles in `melee_chara/tests/oracle_ft{samus,samusspeciallw1,samusspecialn,crazyhandcancel,crazyhandcapturewaitcrazyhand,crazyhandfingerbeam}.rs`, `melee_runtime/tests/mex_data.rs` (the C's branches, no in-process C). Not verified: GX-bound code (`ftparts_render`, `ftmaterial`, light overlay), the jobj anim walkers' RObj/AObj/DObj legs, `NativeEfHost`, `script_caps`, the adapters (type conversions only).
 - Traps: C evaluates call arguments right to left on the MSVC target (draw into temporaries in a C reference); a union aliasing a bitfield differs natively from the GC (hash only the members the function wrote); a pointer stored in a union occupies 8 bytes natively.
+
+## melee_fighter stub fill (port/fill-melee_fighter, 2026-10-24)
+
+Stub names in `docs/rust-port/missing.md` for melee_fighter: NO_PORT 276 -> ~71, SIGNATURE 302 -> ~55, CYCLE 188 -> ~151 left.
+- New ports with C oracles: `tu/ftcoll.rs` (ftcoll.c; ops 0-9 = ftColl_80079AB0/80079EA8/80079C70/80076528/800765F0/80076640/8007AC68/8007A06C/8007699C/80076CBC,
+  20000 cases, `tests/tu_ftcoll.rs`; ftColl_80076ED8 is ported but its C driver crashes on the stubbed callees, so unverified), `tu/ftCo_0A01.rs`
+  (CPU stick/trigger/buttons, IsCpuControlled, 800A0DA4; 18000 cases).
+- `platform.rs`: the pc/platform layer (replay, snap, rollback, m-ex dispatch tables, Geno registry, UCF history, settings) in its
+  default configuration, hook-overridable; no oracle (read off the C). `bridge.rs`: native-pointer adapters over runtime baselib math and
+  C-callback trampolines. `chardata.rs`: kirby/koopa/yoshi attribute accessors moved down from melee_chara (chara still has its copies).
+  `rng.rs`: global HSD rand state.
+- Left: GX calls (ftafterimage), ftParts/ftCo_09F4/ftCo_800B3900 (CPU AI, JObj class setup), Camera/efAsync/GObj world calls, ScriptGame_*/Geno_*/gm_* (state
+  lives in melee_modes), ftMh/ftCh/ftSs/ftKb chara functions that need chara internals.
+- Oracle drivers: `__assert` no longer hangs (`asrt_hit`), `-Wl,/force:unresolved` link; clang evaluates call arguments right to left in some cases
+  (see tests/tu_ftcoll.rs), mirror it in test fills.

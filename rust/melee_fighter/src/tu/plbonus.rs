@@ -17,27 +17,27 @@ pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
             }
-            $( pub fn $name($($a: $t),*) $(-> $r)? {
+            $( #[allow(unreachable_code)] pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $( return $fb; )? #[allow(unreachable_code)] { panic!(concat!("TODO: ", stringify!($name), " is not ported")) } }
                 }
             } )*
         };
     }
     ext_fns! {
     fn Camera_80030E10() -> f32;
-    fn ft_80087988(a0: *mut HSD_GObj) -> bool;
-    fn ft_800879D8(a0: *mut HSD_GObj) -> bool;
-    fn ft_800879F8(a0: *mut HSD_GObj) -> bool;
-    fn ft_800898C0(a0: *mut HSD_GObj) -> bool;
-    fn ftLib_8008732C(a0: *mut HSD_GObj) -> bool;
-    fn ftLib_GetMotionId(a0: *mut HSD_GObj) -> i32;
+    fn ft_80087988(a0: *mut HSD_GObj) -> bool => unsafe { crate::ft0877::ft_80087988(a0 as _) };
+    fn ft_800879D8(a0: *mut HSD_GObj) -> bool => unsafe { crate::ft0877::ft_800879d8(a0 as _) };
+    fn ft_800879F8(a0: *mut HSD_GObj) -> bool => unsafe { crate::ft0877::ft_800879f8(a0 as _) };
+    fn ft_800898C0(a0: *mut HSD_GObj) -> bool => unsafe { crate::ft0892::ft_800898c0(a0 as _) };
+    fn ftLib_8008732C(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_8008732c(a0 as _) };
+    fn ftLib_GetMotionId(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::get_motion_id(a0 as _) };
     fn gmDecisionGetType(a0: i32) -> u32;
     fn gm_8016AEEC() -> u32;
     fn gm_8016B0FC() -> bool;
@@ -53,15 +53,15 @@ pub mod ext {
     fn gm_GetFrameCount() -> u32;
     fn it_8026B7D8() -> i32;
     fn it_8026B7E0() -> i32;
-    fn pl_80037B2C(a0: *mut plActionStats, a1: i32, a2: i32) -> i32;
-    fn pl_80038628(a0: *mut HSD_GObj, a1: i32) -> bool;
-    fn pl_800414C0(a0: i32) -> f32;
-    fn pl_80040DDC(a0: i32);
-    fn pl_80041524(a0: i32);
-    fn pl_8004182C(a0: i32);
-    fn pl_800418F4(a0: i32);
-    fn pl_80041BFC(a0: i32);
-    fn plStale_ResetStaleMoveTableForPlayer(a0: i32);
+    fn pl_80037B2C(a0: *mut plActionStats, a1: i32, a2: i32) -> i32 => unsafe { crate::pltrick::pl_80037b2c(&*(a0 as *const _), a1 as _, a2 as _) };
+    fn pl_80038628(a0: *mut HSD_GObj, a1: i32) -> bool => unsafe { crate::pltrick::pl_80038628(a0 as _, a1 as _) };
+    fn pl_800414C0(a0: i32) -> f32 => unsafe { crate::plbonus::pl_800414c0(a0 as _) };
+    fn pl_80040DDC(a0: i32) => unsafe { let _ = crate::plbonus::pl_80040ddc(a0 as _); };
+    fn pl_80041524(a0: i32) => unsafe { let _ = crate::plbonus::pl_80041524(a0 as _); };
+    fn pl_8004182C(a0: i32) => unsafe { let _ = crate::plbonus::pl_8004182c(a0 as _); };
+    fn pl_800418F4(a0: i32) => unsafe { let _ = crate::plbonus::pl_800418f4(a0 as _); };
+    fn pl_80041BFC(a0: i32) => unsafe { let _ = crate::plbonus::pl_80041bfc(a0 as _); };
+    fn plStale_ResetStaleMoveTableForPlayer(a0: i32) => unsafe { let _ = crate::stale::reset_stale_move_table(a0 as i32); };
     }
 }
 

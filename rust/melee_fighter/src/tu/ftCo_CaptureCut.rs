@@ -46,23 +46,23 @@ pub mod ext {
         ftCommon_CalcGroundAccel_Deaccel(f: &mut Fighter, friction: f32) = crate::ftcommon::calc_ground_accel_deaccel;
         ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |g| crate::ftcommon::set_self_movement_from_grounded_movement(super::fp(g));
         ft_80084DB0(g: G) = |g: G| { unsafe { let _ = crate::ft084e::ft_80084db0(g as _); } };
-        ft_800841B8(g: G, cb: HSD_GObjEvent) = |_, _| todo!("TODO(port) ft_800841B8 (ft_081B.c)");
-        ft_80083910(g: G, cb: HSD_GObjEvent) = |_, _| todo!("TODO(port) ft_80083910 (ft_081B.c)");
+        ft_800841B8(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_800841b8(g as _, ev)); } };
+        ft_80083910(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_80083910(g as _, ev)); } };
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         ftCommon_8007D7FC(f: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
         ftCommon_UnlockECB(f: &mut Fighter) = crate::ftcommon2::unlock_ecb;
-        Fighter_UnkSetFlag_8006CFBC(g: G) = |_| todo!("TODO(port) Fighter_UnkSetFlag_8006CFBC (fighter.c)");
+        Fighter_UnkSetFlag_8006CFBC(g: G) = |g: G| { unsafe { let _ = crate::tu::fighter::Fighter_UnkSetFlag_8006CFBC(g); } };
         Fighter_UpdateModelScale(g: G) = |g: G| { unsafe { let _ = crate::tu::fighter::Fighter_UpdateModelScale(g as _); } };
         ftKb_MexKirbyLike(kind: i32) -> i32 = |_| todo!("TODO(port) ftKb_MexKirbyLike (ftkirby.c)");
         ftParts_GetBoneIndex(f: &Fighter, part: i32) -> i32 = crate::ftdmgfall::ftparts_get_bone_index;
         lb_8000B1CC(j: *mut HSD_JObj, off: *const Vec3, out: &mut Vec3) = |j: *mut HSD_JObj, off: *const Vec3, out: &mut Vec3| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, off as _, out as _); } };
         lb_8000C390(j: *mut HSD_JObj) = |j: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C390(j as _); } };
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
-        mpLib_80054ED8(index: i32) -> i32 = |_| todo!("TODO(port) mpLib_80054ED8 (mplib.c)");
-        mpLib_8005199C_Floor(pos: &mut Vec3, a: i32, b: i32) -> i32 = |_, _, _| todo!("TODO(port) mpLib_8005199C_Floor (mplib.c)");
-        mpLinesConnected(a: i32, b: i32) -> bool = |_, _| todo!("TODO(port) mpLinesConnected (mplib.c)");
+        mpLib_80054ED8(index: i32) -> i32 = |index: i32| -> i32 { unsafe { melee_world::tu::mplib::mpLib_80054ED8(index as _) } };
+        mpLib_8005199C_Floor(pos: &mut Vec3, a: i32, b: i32) -> i32 = |pos: &mut Vec3, a: i32, b: i32| -> i32 { unsafe { melee_world::tu::mplib::mpLib_8005199C_Floor(pos as *mut _ as *mut _, a as _, b as _) } };
+        mpLinesConnected(a: i32, b: i32) -> bool = |a: i32, b: i32| -> bool { unsafe { (melee_world::tu::mplib::mpLinesConnected(a as _, b as _) != 0 as _) } };
         mpLib_8004DD90_Floor(index: i32, pos: &mut Vec3, out: &mut f32, a: i32, b: *mut Vec3) -> bool = |_, _, _, _, _| todo!("TODO(port) mpLib_8004DD90_Floor (mplib.c)");
-        mpColl_80043680(coll: &mut CollData, pos: &Vec3) = |_, _| todo!("TODO(port) mpColl_80043680 (mpcoll.c)");
+        mpColl_80043680(coll: &mut CollData, pos: &Vec3) = |coll: &mut CollData, pos: &Vec3| { unsafe { let _ = melee_world::tu::mpcoll::mpColl_80043680(coll as *mut _ as *mut _, pos as *const _ as *mut _); } };
         // rp3 mpColl_80043670
         mpColl_80043670(coll: &mut CollData) = |coll: &mut CollData| unsafe { melee_world::tu::mpcoll::mpColl_80043670(coll as _); };
         // rp3-end
@@ -72,11 +72,11 @@ pub mod ext {
         // rp3 mpColl_800477E0
         mpColl_800477E0(coll: &mut CollData) -> bool = |coll: &mut CollData| -> bool { unsafe { (melee_world::tu::mpcoll::mpColl_800477E0(coll as _) != 0) } };
         // rp3-end
-        Mex_Enabled(name: &str) -> i32 = |_| todo!("TODO(pc mex) Mex_Enabled");
-        ftColl_8007B62C(g: G, n: i32) = |_, _| todo!("TODO(port) ftColl_8007B62C (ftcoll.c)");
-        ftColl_8007891C(victim: G, g: G, damage: f32) = |_, _, _| todo!("TODO(port) ftColl_8007891C (ftcoll.c)");
-        ftColl_80079C70(f: &mut Fighter, victim: &mut Fighter, hit: *mut HitCapsule, count: i32) -> f32 = |_, _, _, _| todo!("TODO(port) ftColl_80079C70 (ftcoll.c)");
-        ftColl_80078710(victim: G, g: G, facing: *mut f32) = |_, _, _| todo!("TODO(port) ftColl_80078710 (ftcoll.c)");
+        Mex_Enabled(name: &str) -> i32 = |name: &str| -> i32 { unsafe { crate::platform::Mex_Enabled(name) as i32 } };
+        ftColl_8007B62C(g: G, n: i32) = |g: G, n: i32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b62c(g as _, n as _); } };
+        ftColl_8007891C(victim: G, g: G, damage: f32) = |victim: G, g: G, damage: f32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007891c(victim as _, g as _, damage as _); } };
+        ftColl_80079C70(f: &mut Fighter, victim: &mut Fighter, hit: *mut HitCapsule, count: i32) -> f32 = |f: &mut Fighter, victim: &mut Fighter, hit: *mut HitCapsule, count: i32| -> f32 { unsafe { crate::tu::ftcoll::ftcoll_80079c70(f as *mut _ as *mut _, victim as *mut _ as *mut _, hit as _, count as _) } };
+        ftColl_80078710(victim: G, g: G, facing: *mut f32) = |victim: G, g: G, facing: *mut f32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_80078710(victim as _, g as _, facing as _); } };
         ScriptGame_FighterDealtDamage(f: *mut Fighter, damage: f32) -> f32 = |_, _| todo!("TODO(pc script) ScriptGame_FighterDealtDamage");
         ScriptGame_HitRuleContact(hit: *mut HitCapsule, f: *mut Fighter, value: f32, kb: i32) -> f32 = |_, _, _, _| todo!("TODO(pc script) ScriptGame_HitRuleContact");
         ScriptGame_HitRuleReport(att: *mut Fighter, vic: *mut Fighter, hit: *mut HitCapsule, damage: f32) = |_, _, _, _| todo!("TODO(pc script) ScriptGame_HitRuleReport");

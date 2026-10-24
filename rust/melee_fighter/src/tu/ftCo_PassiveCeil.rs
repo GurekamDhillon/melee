@@ -30,13 +30,13 @@ pub mod ext {
     }
     ext_fns! {
         ftCo_800986B0(g: G) -> bool = crate::tu::ftCo_DownAttack::ftCo_800986B0;
-        ftCommon_8007E2FC(g: G) = |_| todo!("TODO(port) ftCommon_8007E2FC (ftcommon.c)");
+        ftCommon_8007E2FC(g: G) = |g: G| { unsafe { let _ = crate::ftcommon2::ftcommon_8007e2fc(&mut *(g as *mut _)); } };
         ftKb_SpecialN_800F1F1C(g: G, ofs: &mut Vec3) = |_, _| todo!("TODO(port) ftKb_SpecialN_800F1F1C (ftKb_SpecialN.c)");
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         efAsync_Spawn(g: G, queue: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj, pos: *mut Vec3) = |_, _, _, _, _, _| todo!("TODO(port) efAsync_Spawn (efasync.c)");
         ftCo_80090574(g: G) = |g: G| { unsafe { let _ = crate::ftdmgfall::ftco_80090574(g as _); } };
         ft_800881D8(fp: &mut Fighter, sfx: i32, vol: u8, pan: u8) = |fp: &mut Fighter, sfx: i32, vol: u8, pan: u8| { unsafe { let _ = crate::ft0881::ft_800881d8(fp as _, sfx as _, vol as _, pan as _); } };
-        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("TODO(port) ft_PlaySFX (ft_0881.c)");
+        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |fp: &mut Fighter, id: i32, vol: u8, pan: u8| { unsafe { let _ = crate::ft0877::play_sfx(fp, id as _, vol as _, pan as _); } };
         ftCommon_8007EBAC(fp: &mut Fighter, a: u32, b: u32) = |fp: &mut Fighter, a: u32, b: u32| { unsafe { let _ = crate::ftcommon2::ftcommon_8007ebac(fp as _, a as _, b as _); } };
         ftCo_800BFFD0(fp: &mut Fighter, a: i32, b: bool) -> bool = |fp: &mut Fighter, a: i32, b: bool| -> bool { unsafe { crate::tu::ftcolanim::ftco_800bffd0(fp as _, a as _, b as _) as _ } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;

@@ -41,21 +41,21 @@ pub mod ext {
         // TARGET_PC `FT_CAPS_ACTION_ALLOWED(fp, flag)` = `ScriptGame_CapsActionAllowed`.
         ScriptGame_CapsActionAllowed(fp: &Fighter, flag: i32) -> i32 = |_, _| todo!("TODO(port) ScriptGame_CapsActionAllowed (pc/gameworld/script_game.c)");
         // `ftData_SpecialN[kind]` (ftdata.c table).
-        ftData_SpecialN(kind: u32) -> HSD_GObjEvent = |_| todo!("TODO(port) ftData_SpecialN (ftdata.c)");
-        ftData_SpecialLw(kind: u32) -> HSD_GObjEvent = |_| todo!("TODO(port) ftData_SpecialLw (ftdata.c)");
-        ftData_SpecialHi(kind: u32) -> HSD_GObjEvent = |_| todo!("TODO(port) ftData_SpecialHi (ftdata.c)");
-        ftData_SpecialAirHi(kind: u32) -> HSD_GObjEvent = |_| todo!("TODO(port) ftData_SpecialAirHi (ftdata.c)");
+        ftData_SpecialN(kind: u32) -> HSD_GObjEvent = |kind: u32| -> HSD_GObjEvent { unsafe { crate::tu::ftdata::ftData_SpecialN[kind as usize] } };
+        ftData_SpecialLw(kind: u32) -> HSD_GObjEvent = |kind: u32| -> HSD_GObjEvent { unsafe { crate::tu::ftdata::ftData_SpecialLw[kind as usize] } };
+        ftData_SpecialHi(kind: u32) -> HSD_GObjEvent = |kind: u32| -> HSD_GObjEvent { unsafe { crate::tu::ftdata::ftData_SpecialHi[kind as usize] } };
+        ftData_SpecialAirHi(kind: u32) -> HSD_GObjEvent = |kind: u32| -> HSD_GObjEvent { unsafe { crate::tu::ftdata::ftData_SpecialAirHi[kind as usize] } };
         Geno_SpecialEnter(g: G, which: i32) -> i32 = |_, _| todo!("TODO(pc geno) Geno_SpecialEnter");
-        Mex_SpecialNDispatch(kind: i32, g: G, vanilla: HSD_GObjEvent) = |_, _, _| todo!("TODO(pc mex) Mex_SpecialNDispatch");
-        Mex_SpecialLwDispatch(kind: i32, g: G, vanilla: HSD_GObjEvent) = |_, _, _| todo!("TODO(pc mex) Mex_SpecialLwDispatch");
-        Mex_SpecialHiDispatch(kind: i32, g: G, vanilla: HSD_GObjEvent) = |_, _, _| todo!("TODO(pc mex) Mex_SpecialHiDispatch");
-        Mex_SpecialHiAirDispatch(kind: i32, g: G, vanilla: HSD_GObjEvent) = |_, _, _| todo!("TODO(pc mex) Mex_SpecialHiAirDispatch");
+        Mex_SpecialNDispatch(kind: i32, g: G, vanilla: HSD_GObjEvent) = |kind: i32, g: G, vanilla: HSD_GObjEvent| { unsafe { let _ = crate::platform::mex_dispatch_ev(crate::platform::MEX_EVENT_SPECIAL_N, kind, g, vanilla); } };
+        Mex_SpecialLwDispatch(kind: i32, g: G, vanilla: HSD_GObjEvent) = |kind: i32, g: G, vanilla: HSD_GObjEvent| { unsafe { let _ = crate::platform::mex_dispatch_ev(crate::platform::MEX_EVENT_SPECIAL_LW, kind, g, vanilla); } };
+        Mex_SpecialHiDispatch(kind: i32, g: G, vanilla: HSD_GObjEvent) = |kind: i32, g: G, vanilla: HSD_GObjEvent| { unsafe { let _ = crate::platform::mex_dispatch_ev(crate::platform::MEX_EVENT_SPECIAL_HI, kind, g, vanilla); } };
+        Mex_SpecialHiAirDispatch(kind: i32, g: G, vanilla: HSD_GObjEvent) = |kind: i32, g: G, vanilla: HSD_GObjEvent| { unsafe { let _ = crate::platform::mex_dispatch_ev(crate::platform::MEX_EVENT_SPECIAL_HI_AIR, kind, g, vanilla); } };
         ftGw_Attack100Start_Enter(g: G) = |_| todo!("TODO(port) ftGw_Attack100Start_Enter (ftgamewatch)");
         ftpickupitem_80094790(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftpickupitem::ftpickupitem_80094790(g as _) as _ } };
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
-        ft_800892A0(g: G) = |_| todo!("TODO(port) ft_800892A0 (ft_0881.c)");
+        ft_800892A0(g: G) = |g: G| { unsafe { let _ = crate::stale::renew_attack_instance(&mut *((*g).user_data as *mut Fighter)); } };
         ft_80089824(g: G) = crate::ft0892::ft_80089824;
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;
         ft_80084FA8(g: G) = crate::ft084e::ft_80084fa8;

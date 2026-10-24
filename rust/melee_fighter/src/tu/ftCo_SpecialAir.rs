@@ -40,10 +40,10 @@ pub mod ext {
         ftData_SpecialAirS(kind: u32) -> HSD_GObjEvent = |k: u32| unsafe { crate::tu::ftdata::ftData_SpecialAirS[k as usize] };
         ftData_SpecialAirN(kind: u32) -> HSD_GObjEvent = |k: u32| unsafe { crate::tu::ftdata::ftData_SpecialAirN[k as usize] };
         Geno_SpecialEnter(g: G, which: i32) -> i32 = |_, _| todo!("TODO(pc geno) Geno_SpecialEnter");
-        Mex_SpecialHiAirDispatch(kind: i32, g: G, vanilla: HSD_GObjEvent) = |_, _, _| todo!("TODO(pc mex) Mex_SpecialHiAirDispatch");
-        Mex_SpecialLwAirDispatch(kind: i32, g: G, vanilla: HSD_GObjEvent) = |_, _, _| todo!("TODO(pc mex) Mex_SpecialLwAirDispatch");
-        Mex_SpecialSAirDispatch(kind: i32, g: G, vanilla: HSD_GObjEvent) = |_, _, _| todo!("TODO(pc mex) Mex_SpecialSAirDispatch");
-        Mex_SpecialNAirDispatch(kind: i32, g: G, vanilla: HSD_GObjEvent) = |_, _, _| todo!("TODO(pc mex) Mex_SpecialNAirDispatch");
+        Mex_SpecialHiAirDispatch(kind: i32, g: G, vanilla: HSD_GObjEvent) = |kind: i32, g: G, vanilla: HSD_GObjEvent| { unsafe { let _ = crate::platform::mex_dispatch_ev(crate::platform::MEX_EVENT_SPECIAL_HI_AIR, kind, g, vanilla); } };
+        Mex_SpecialLwAirDispatch(kind: i32, g: G, vanilla: HSD_GObjEvent) = |kind: i32, g: G, vanilla: HSD_GObjEvent| { unsafe { let _ = crate::platform::mex_dispatch_ev(crate::platform::MEX_EVENT_SPECIAL_LW_AIR, kind, g, vanilla); } };
+        Mex_SpecialSAirDispatch(kind: i32, g: G, vanilla: HSD_GObjEvent) = |kind: i32, g: G, vanilla: HSD_GObjEvent| { unsafe { let _ = crate::platform::mex_dispatch_ev(crate::platform::MEX_EVENT_SPECIAL_S_AIR, kind, g, vanilla); } };
+        Mex_SpecialNAirDispatch(kind: i32, g: G, vanilla: HSD_GObjEvent) = |kind: i32, g: G, vanilla: HSD_GObjEvent| { unsafe { let _ = crate::platform::mex_dispatch_ev(crate::platform::MEX_EVENT_SPECIAL_N_AIR, kind, g, vanilla); } };
         ftCommon_UpdateFacing(f: &mut Fighter) = crate::ftcommon::update_facing;
     }
 }

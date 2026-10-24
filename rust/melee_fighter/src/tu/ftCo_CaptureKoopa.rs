@@ -29,13 +29,13 @@ pub mod ext {
     }
     ext_fns! {
         Fighter_UpdateModelScale(g: G) = |g: G| { unsafe { let _ = crate::tu::fighter::Fighter_UpdateModelScale(g as _); } };
-        ftKp_SpecialS_80132DC0(g: G) -> f32 = |_| todo!("TODO(port) ftKp_SpecialS_80132DC0 (ftkoopaspecials.c)");
-        ftKp_SpecialS_80132DD0(g: G) -> f32 = |_| todo!("TODO(port) ftKp_SpecialS_80132DD0 (ftkoopaspecials.c)");
-        ftKp_SpecialS_80132DE0(g: G) -> f32 = |_| todo!("TODO(port) ftKp_SpecialS_80132DE0 (ftkoopaspecials.c)");
-        ftKp_SpecialS_80132DF0(g: G) -> f32 = |_| todo!("TODO(port) ftKp_SpecialS_80132DF0 (ftkoopaspecials.c)");
-        ftKp_SpecialS_80132E00(g: G) -> f32 = |_| todo!("TODO(port) ftKp_SpecialS_80132E00 (ftkoopaspecials.c)");
-        ftKp_SpecialS_80132E10(g: G) -> f32 = |_| todo!("TODO(port) ftKp_SpecialS_80132E10 (ftkoopaspecials.c)");
-        ftKp_SpecialS_80132E20(g: G) -> f32 = |_| todo!("TODO(port) ftKp_SpecialS_80132E20 (ftkoopaspecials.c)");
+        ftKp_SpecialS_80132DC0(g: G) -> f32 = |g: G| -> f32 { unsafe { crate::chardata::ftKp_SpecialS_80132DC0(&*(g as *const _)) } };
+        ftKp_SpecialS_80132DD0(g: G) -> f32 = |g: G| -> f32 { unsafe { crate::chardata::ftKp_SpecialS_80132DD0(&*(g as *const _)) } };
+        ftKp_SpecialS_80132DE0(g: G) -> f32 = |g: G| -> f32 { unsafe { crate::chardata::ftKp_SpecialS_80132DE0(&*(g as *const _)) } };
+        ftKp_SpecialS_80132DF0(g: G) -> f32 = |g: G| -> f32 { unsafe { crate::chardata::ftKp_SpecialS_80132DF0(&*(g as *const _)) } };
+        ftKp_SpecialS_80132E00(g: G) -> f32 = |g: G| -> f32 { unsafe { crate::chardata::ftKp_SpecialS_80132E00(&*(g as *const _)) } };
+        ftKp_SpecialS_80132E10(g: G) -> f32 = |g: G| -> f32 { unsafe { crate::chardata::ftKp_SpecialS_80132E10(&*(g as *const _)) } };
+        ftKp_SpecialS_80132E20(g: G) -> f32 = |g: G| -> f32 { unsafe { crate::chardata::ftKp_SpecialS_80132E20(&*(g as *const _)) } };
         ftCommon_GrabMash(f: &mut Fighter, v: f32) -> bool = crate::ftcommon2::grab_mash;
         ftCommon_InitGrab(f: &mut Fighter, a: i32, timer: f32) = crate::ftcommon2::init_grab;
         ftParts_GetBoneIndex(f: &Fighter, part: i32) -> i32 = crate::ftdmgfall::ftparts_get_bone_index;

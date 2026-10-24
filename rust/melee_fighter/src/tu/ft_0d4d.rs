@@ -21,13 +21,13 @@ pub mod ext {
     /// fighter.c globals (set by Fighter_LoadCommonData).
     pub static mut Fighter_804D6534: *mut *mut c_void = core::ptr::null_mut();
     pub static mut H_Stage_GetCamBoundsBottomOffset: Option<fn() -> f32> = None;
-    pub fn Stage_GetCamBoundsBottomOffset() -> f32 { match unsafe { H_Stage_GetCamBoundsBottomOffset } { Some(f) => f(), None => panic!("TODO(group2 stage) Stage_GetCamBoundsBottomOffset") } }
+    pub fn Stage_GetCamBoundsBottomOffset() -> f32 { match unsafe { H_Stage_GetCamBoundsBottomOffset } { Some(f) => f(), None => unsafe { melee_world::tu::stage::Stage_GetCamBoundsBottomOffset() } } }
     pub static mut H_Stage_80224E38: Option<fn(&mut Vec3, i32)> = None;
     pub fn Stage_80224E38(out: &mut Vec3, i: i32) { match unsafe { H_Stage_80224E38 } { Some(f) => f(out, i), None => panic!("TODO(group2 stage) Stage_80224E38") } }
     pub static mut H_ftCamera_80076320: Option<fn(*mut HSD_GObj)> = None;
     pub fn ftCamera_80076320(g: *mut HSD_GObj) { match unsafe { H_ftCamera_80076320 } { Some(f) => f(g), None => { unsafe { let _ = crate::tu::ftcamera::ftcamera_80076320(g as _); } return; } } }
     pub static mut H_ftCamera_80076018: Option<fn(*mut UnkFloat6_Camera, &mut UnkFloat6_Camera, f32)> = None;
-    pub fn ftCamera_80076018(inp: *mut UnkFloat6_Camera, out: &mut UnkFloat6_Camera, mul: f32) { match unsafe { H_ftCamera_80076018 } { Some(f) => f(inp, out, mul), None => panic!("TODO(group3 ftcamera) ftCamera_80076018") } }
+    pub fn ftCamera_80076018(inp: *mut UnkFloat6_Camera, out: &mut UnkFloat6_Camera, mul: f32) { match unsafe { H_ftCamera_80076018 } { Some(f) => f(inp, out, mul), None => unsafe { crate::tu::ftcamera::ftcamera_80076018(&*(inp as *const _), out, mul as _) } } }
     pub static mut H_ftCo_800BFD04: Option<fn(*mut HSD_GObj)> = None;
     pub fn ftCo_800BFD04(g: *mut HSD_GObj) { match unsafe { H_ftCo_800BFD04 } { Some(f) => f(g), None => { unsafe { let _ = crate::tu::ftcolanim::ftco_800bfd04(g as _); } return; } } }
     /// efsync.c `efSync_Spawn(kind, gobj, ...)`; the variadic tail as raw words.
@@ -40,11 +40,11 @@ pub mod ext {
     pub static mut H_ft_80083DCC: Option<fn(*mut HSD_GObj)> = None;
     pub fn ft_80083DCC(g: *mut HSD_GObj) { match unsafe { H_ft_80083DCC } { Some(f) => f(g), None => { unsafe { let _ = crate::tu::ft_081b::ft_80083dcc(g as _); } return; } } }
     pub static mut H_ft_80083844: Option<fn(*mut HSD_GObj, HSD_GObjEvent)> = None;
-    pub fn ft_80083844(g: *mut HSD_GObj, cb: HSD_GObjEvent) { match unsafe { H_ft_80083844 } { Some(f) => f(g, cb), None => panic!("TODO(group3 ft_081B) ft_80083844") } }
+    pub fn ft_80083844(g: *mut HSD_GObj, cb: HSD_GObjEvent) { match unsafe { H_ft_80083844 } { Some(f) => f(g, cb), None => unsafe { crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_80083844(g as _, ev)) } } }
     pub static mut H_mpColl_80043680: Option<fn(&mut CollData, &Vec3)> = None;
-    pub fn mpColl_80043680(c: &mut CollData, v: &Vec3) { match unsafe { H_mpColl_80043680 } { Some(f) => f(c, v), None => panic!("TODO(group2 mpcoll) mpColl_80043680") } }
+    pub fn mpColl_80043680(c: &mut CollData, v: &Vec3) { match unsafe { H_mpColl_80043680 } { Some(f) => f(c, v), None => unsafe { melee_world::tu::mpcoll::mpColl_80043680(c as *mut _ as *mut _, v as *const _ as *mut _) } } }
     pub static mut H_ftColl_8007B7A4: Option<fn(*mut HSD_GObj, i32)> = None;
-    pub fn ftColl_8007B7A4(g: *mut HSD_GObj, n: i32) { match unsafe { H_ftColl_8007B7A4 } { Some(f) => f(g, n), None => panic!("TODO(group3 ftcoll) ftColl_8007B7A4") } }
+    pub fn ftColl_8007B7A4(g: *mut HSD_GObj, n: i32) { match unsafe { H_ftColl_8007B7A4 } { Some(f) => f(g, n), None => unsafe { crate::tu::ftcoll::ftcoll_8007b7a4(g as _, n as _) } } }
     pub static mut H_ftCo_SpecialAir_CheckInput: Option<fn(*mut HSD_GObj) -> bool> = None;
     pub fn ftCo_SpecialAir_CheckInput(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_SpecialAir_CheckInput } { Some(f) => f(g), None => { return unsafe { crate::tu::ftCo_SpecialAir::ftCo_SpecialAir_CheckInput(g as _) as _ }; } } }
     pub static mut H_ftCo_800D7100: Option<fn(*mut HSD_GObj) -> bool> = None;

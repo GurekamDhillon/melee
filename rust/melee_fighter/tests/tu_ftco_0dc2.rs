@@ -22,14 +22,14 @@ fn coll_skips_when_flagged() {
 }
 
 #[test]
-#[should_panic(expected = "ft_80083C00")]
+#[should_panic(expected = "mpColl_800477E0")]
 fn coll_reaches_ft_80083c00() {
     let (_f, mut go) = world();
     t::ftco_capturedamagehi_coll(&mut *go);
 }
 
 #[test]
-#[should_panic(expected = "PcTraceMotionEnabled")]
+#[should_panic(expected = "Geno_OnActionChange")]
 fn enter_reaches_motion_change() {
     let (_f, mut go) = world();
     t::ftco_800dc284(&mut *go);

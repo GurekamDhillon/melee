@@ -30,8 +30,8 @@ pub mod ext {
         ftCommon_8007D7FC(fp: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         // TARGET_PC `ftGetTemplateKind` / `FTKB_IS_KIRBY` (inlines.h, ft/forward.h).
-        Geno_DefineTemplateSkeleton(kind: i32) -> i32 = |_| todo!("TODO(port) Geno_DefineTemplateSkeleton (pc/gameworld)");
-        Geno_DefineBaseKind(kind: i32) -> i32 = |_| todo!("TODO(port) Geno_DefineBaseKind (pc/gameworld)");
+        Geno_DefineTemplateSkeleton(kind: i32) -> i32 = |kind: i32| -> i32 { unsafe { crate::platform::Geno_DefineTemplateSkeleton(kind) } };
+        Geno_DefineBaseKind(kind: i32) -> i32 = |kind: i32| -> i32 { unsafe { crate::platform::Geno_DefineBaseKind(kind) } };
         ftKb_MexKirbyLike(kind: i32) -> i32 = |_| todo!("TODO(port) ftKb_MexKirbyLike (ftkirby.c)");
         ftPe_8011D598(g: G) = |_| todo!("TODO(port) ftPe_8011D598 (ftpeachspecialhi.c)");
         ftCo_800C5240(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_HammerWait::ftCo_800C5240(g as _) as _ } };

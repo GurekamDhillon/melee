@@ -34,7 +34,7 @@ pub mod ext {
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCo_800968C8(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_FallSpecial::ftCo_800968C8(g as _); } };
         ft_80084DB0(g: G) = crate::ft084e::ft_80084db0;
-        ftCo_AirCatchHit_Coll(g: G) = |_| todo!("TODO(port) ftCo_AirCatchHit_Coll (ftCo_AirCatchHit.c)");
+        ftCo_AirCatchHit_Coll(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ftco_air_catch_hit_coll(g as _); } };
         ft_80083B68(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80083b68(g as _); } };
     }
 }

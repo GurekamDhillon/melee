@@ -44,7 +44,7 @@ pub mod ext {
         it_8026B344(i: I, pos: &mut Vec3) = |i: I, pos: &mut Vec3| { unsafe { let _ = melee_items::tu::it_26B1::it_8026B344(i as _, pos as _); } };
         itGetGrabRangeX(i: I) -> f32 = |i| melee_items::itlib::it_get_grab_range_x(ip(i));
         itGetGrabRangeY(i: I) -> f32 = |i| melee_items::itlib::it_get_grab_range_y(ip(i));
-        ftCo_IsCpuControlled(f: &mut Fighter) -> bool = |_| todo!("TODO(port) ftCo_IsCpuControlled (ftCo_0A01.c)");
+        ftCo_IsCpuControlled(f: &mut Fighter) -> bool = |f: &mut Fighter| -> bool { unsafe { crate::tu::ftCo_0A01::ftCo_IsCpuControlled(&*(f as *const Fighter)) } };
         // `HSD_GObjPLinkHead[link]`.
         HSD_GObjPLinkHead(link: i32) -> G = crate::hooks::plink_head;
         Geno_ItemPressDist(i: I, f: &mut Fighter) -> f32 = |_, _| todo!("TODO(pc/geno) Geno_ItemPressDist (geno_game_items.inc)");
@@ -57,7 +57,7 @@ pub mod ext {
         ftCo_800C52F4(g: G) = crate::tu::ftCo_HammerWait::ftCo_800C52F4;
         ftCommon_8007FA58(g: G, i: I) = crate::ftcommon3::ftcommon_8007fa58;
         ftLib_800871A8(g: G, i: I) = crate::tu::ftlib::ftlib_800871a8;
-        ftCo_800C88D4(g: G, v: i32, b: i32) = |_, _, _| todo!("TODO(port) ftCo_800C88D4 (ftCo_0C88.c)");
+        ftCo_800C88D4(g: G, v: i32, b: i32) = |g: G, v: i32, b: i32| { unsafe { let _ = crate::tu::ft_0c88::ftco_800c88d4(g as _, v as _, (b != 0 as _)); } };
         ftCo_CalcYScaledKnockback(a: f32, b: f32, c: f32) -> f32 = crate::tu::ftchangeparam::ftco_calc_y_scaled_knockback;
         // `Fighter_804D6524->x8` (PlCo size-scaling exponent).
         Fighter_804D6524_x8() -> f32 = || crate::tu::ftchangeparam::ext::d6524().x8;
@@ -66,8 +66,8 @@ pub mod ext {
         ftCo_800974C4(g: G) = crate::tu::ftCo_Lift::ftCo_800974C4;
         pl_8003E17C(slot: i32, sub: i32, i: I) = |slot: i32, sub: i32, i: I| { unsafe { let _ = crate::tu::plbonuslib::pl_8003E17C(slot as _, sub as _, i as _); } };
         // `ftData_OnItemPickupExt[kind]`.
-        ftData_OnItemPickupExt(kind: i32) -> Option<fn(G, i32)> = |_| todo!("TODO(port) ftData_OnItemPickupExt (ftdata.c table)");
-        Mex_OnItemPickupDispatch(kind: i32, g: *mut c_void, i: *mut c_void, vanilla: *mut c_void) = |_, _, _, _| todo!("TODO(pc mex) Mex_OnItemPickupDispatch");
+        ftData_OnItemPickupExt(kind: i32) -> Option<unsafe extern "C" fn(G, i32)> = |kind: i32| -> Option<unsafe extern "C" fn(G, i32)> { unsafe { crate::tu::ftdata::ftData_OnItemPickupExt[kind as usize] } };
+        Mex_OnItemPickupDispatch(kind: i32, g: *mut c_void, i: *mut c_void, vanilla: *mut c_void) = |kind: i32, g: *mut c_void, i: *mut c_void, vanilla: *mut c_void| { unsafe { let _ = crate::platform::mex_dispatch2(crate::platform::MEX_EVENT_ON_ITEM_PICKUP, kind, g as _, i, vanilla); } };
         pl_8003E854(slot: i32, sub: i32, i: I) = |slot: i32, sub: i32, i: I| { unsafe { let _ = crate::tu::plbonuslib::pl_8003E854(slot as _, sub as _, i as _); } };
         Item_8026AB54(i: I, owner: G, part: i32) = crate::hooks::item_8026ab54;
         ft_800881D8(f: &mut Fighter, id: i32, vol: u8, pan: u8) = crate::ft0881::ft_800881d8;
@@ -319,7 +319,7 @@ pub fn ftpickupitem_80094818(g: G, arg1: bool) {
         ext::pl_8003E17C(f.player_id as i32, f.is_sub_fighter() as i32, f.x1978);
     } else if !f.item_gobj.is_null() {
         if let Some(cb) = ext::ftData_OnItemPickupExt(f.kind as i32) {
-            cb(g, arg1 as i32);
+            unsafe { cb(g, arg1 as i32) };
         }
         let f = fp(g);
         ext::pl_8003E17C(f.player_id as i32, f.is_sub_fighter() as i32, f.item_gobj);

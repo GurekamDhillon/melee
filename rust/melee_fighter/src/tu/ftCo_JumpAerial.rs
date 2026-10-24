@@ -37,7 +37,7 @@ pub mod ext {
         ScriptGame_ModValue(slot: i32, field: i32, base: f32) -> f32 = crate::hooks::script_mod_value;
         // TARGET_PC `FT_CAPS_MAX_JUMPS(fp)` (pc/gameworld/script_fighter_caps.h).
         ScriptGame_CapsMaxJumps(fp: &Fighter) -> i32 = |_| todo!("TODO(port) ScriptGame_CapsMaxJumps (pc/gameworld/script_game.c)");
-        Mex_OnDoubleJumpDispatch(kind: i32, g: G, vanilla: *mut core::ffi::c_void) = |_, _, _| todo!("TODO(port) Mex_OnDoubleJumpDispatch (pc/platform m-ex)");
+        Mex_OnDoubleJumpDispatch(kind: i32, g: G, vanilla: *mut core::ffi::c_void) = |kind: i32, g: G, vanilla: *mut core::ffi::c_void| { unsafe { let _ = crate::platform::mex_dispatch(crate::platform::MEX_EVENT_ON_DOUBLE_JUMP, kind, g, vanilla); } };
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(group1 jobj) HSD_JObjSetMtxDirtySub");
         ftCo_800C5240(g: G) -> bool = |g| crate::tu::ftCo_Jump::ext::ftCo_800C5240(g);
         ftCo_800D730C(g: G, arg1: bool) -> bool = crate::tu::ftCo_JumpAerialF1::ftCo_800D730C;
@@ -46,7 +46,7 @@ pub mod ext {
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ft_80088770(fp: &mut Fighter) = crate::ft0881::ft_80088770;
         ft_80088328(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |fp: &mut Fighter, id: i32, vol: u8, pan: u8| { unsafe { let _ = crate::ft0881::ft_80088328(fp as _, id as _, vol as _, pan as _); } };
-        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("TODO(port) ft_PlaySFX (ft_0881.c)");
+        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |fp: &mut Fighter, id: i32, vol: u8, pan: u8| { unsafe { let _ = crate::ft0877::play_sfx(fp, id as _, vol as _, pan as _); } };
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCo_FallAerial_Enter(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_FallAerial::ftCo_FallAerial_Enter(g as _); } };
@@ -61,8 +61,8 @@ pub mod ext {
         ftPe_8011BAD8(g: G) -> bool = |_| todo!("TODO(port) ftPe_8011BAD8 (ftpeachfloat.c)");
         ftCo_800CEE70(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_ItemParasolOpen::ftCo_800CEE70(g as _) as _ } };
         ft_80084DB0(g: G) = crate::ft084e::ft_80084db0;
-        ftCommon_CalcSelfAccel_DriftFrom(fp: &mut Fighter, v: f32) = |_, _| todo!("TODO(port) ftCommon_CalcSelfAccel_DriftFrom (ftcommon.c)");
-        ftCommon_CalcSelfAccel_Drift(fp: &mut Fighter) = |_| todo!("TODO(port) ftCommon_CalcSelfAccel_Drift (ftcommon.c)");
+        ftCommon_CalcSelfAccel_DriftFrom(fp: &mut Fighter, v: f32) = |fp: &mut Fighter, v: f32| { unsafe { let _ = crate::ftcommon::calc_self_accel_drift_from(fp, v as _); } };
+        ftCommon_CalcSelfAccel_Drift(fp: &mut Fighter) = |fp: &mut Fighter| { unsafe { let _ = crate::ftcommon::calc_self_accel_drift(fp); } };
         ft_800851D0(g: G) = crate::ft084e::ft_800851d0;
         ft_800835B0(g: G, a: fn(G, i32) -> bool, b: fn(G)) = |g: G, a: fn(G, i32) -> bool, b: fn(G)| { unsafe { let _ = crate::tu::ft_081b::ft_800835b0(g as _, a as _, b as _); } };
         ftCo_80096CC8(g: G, line: i32) -> bool = |g: G, line: i32| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line as _) as _ } };

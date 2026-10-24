@@ -38,7 +38,7 @@ macro_rules! ext_fns {
 pub mod ext {
     use super::*;
     ext_fns! {
-        Geno_DefineKirbyCopy(kind: i32) -> i32 = |_| todo!("TODO(port) Geno_DefineKirbyCopy (pc/geno)");
+        Geno_DefineKirbyCopy(kind: i32) -> i32 = |kind: i32| -> i32 { unsafe { crate::platform::Geno_DefineKirbyCopy(kind) } };
         // `OSReport("geno: Kirby inhales define kind ...")`: log only.
         OSReport_GenoKirbyCopy(kind: i32, copy: i32) = |_, _| {};
         ftKb_MexKirbyLike(kind: i32) -> i32 = |_| todo!("TODO(port) ftKb_MexKirbyLike (ftkirby.c)");
@@ -46,23 +46,23 @@ pub mod ext {
         Fighter_UpdateModelScale(g: G) = |g: G| { unsafe { let _ = crate::tu::fighter::Fighter_UpdateModelScale(g as _); } };
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCommon_8007E2F4(f: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
-        ftColl_8007B62C(g: G, v: i32) = |_, _| todo!("TODO(port) ftColl_8007B62C (ftcoll.c)");
+        ftColl_8007B62C(g: G, v: i32) = |g: G, v: i32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b62c(g as _, v as _); } };
         ftCommon_8007EFC0(f: &mut Fighter, v: u32) = crate::ftcommon2::ftcommon_8007efc0;
-        ftCommon_InitGrab(f: &mut Fighter, a: i32, v: f32) = |_, _, _| todo!("TODO(port) ftCommon_InitGrab (ftcommon.c)");
+        ftCommon_InitGrab(f: &mut Fighter, a: i32, v: f32) = |f: &mut Fighter, a: i32, v: f32| { unsafe { let _ = crate::ftcommon2::init_grab(f, a as _, v as _); } };
         ftAnim_8006EBA4(g: G) = |g| unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g) };
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
-        ftCommon_SetAccessory(f: &mut Fighter, j: *mut HSD_Joint) = |_, _| todo!("TODO(port) ftCommon_SetAccessory (ftcommon.c)");
+        ftCommon_SetAccessory(f: &mut Fighter, j: *mut HSD_Joint) = |f: &mut Fighter, j: *mut HSD_Joint| { unsafe { let _ = crate::ftcommon3::set_accessory(f, j as _); } };
         ftKb_SpecialN_800F5898(g: G) -> *mut HSD_Joint = |_| todo!("TODO(port) ftKb_SpecialN_800F5898 (ftKb_Init.c)");
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
         lb_8000C2F8(a: *mut HSD_JObj, b: *mut HSD_JObj) = |a: *mut HSD_JObj, b: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C2F8(a as _, b as _); } };
-        ftParts_GetBoneIndex(f: &mut Fighter, part: i32) -> i32 = |_, _| todo!("TODO(port) ftParts_GetBoneIndex (ftparts.c)");
-        ftColl_8007ABD0(hit: *mut HitCapsule, dmg: u32, g: G) = |_, _, _| todo!("TODO(port) ftColl_8007ABD0 (ftcoll.c)");
-        ftColl_8007AFF8(g: G) = |_| todo!("TODO(port) ftColl_8007AFF8 (ftcoll.c)");
+        ftParts_GetBoneIndex(f: &mut Fighter, part: i32) -> i32 = |f: &mut Fighter, part: i32| -> i32 { unsafe { crate::ftdmgfall::ftparts_get_bone_index(f, part as _) } };
+        ftColl_8007ABD0(hit: *mut HitCapsule, dmg: u32, g: G) = |hit: *mut HitCapsule, dmg: u32, g: G| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007abd0(hit as _, dmg as _, g as _); } };
+        ftColl_8007AFF8(g: G) = |g: G| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007aff8(g as _); } };
         ftKb_SpecialN_800F5820(g: G, b: *mut ftCollisionBox, s: f32) = |_, _, _| todo!("TODO(port) ftKb_SpecialN_800F5820 (ftKb_Init.c)");
-        ftKb_SpecialN_800F58AC(g: G, v: *mut Vec3, facing: f32) -> f32 = |_, _, _| todo!("TODO(port) ftKb_SpecialN_800F58AC (ftKb_Init.c)");
+        ftKb_SpecialN_800F58AC(g: G, v: *mut Vec3, facing: f32) -> f32 = |g: G, v: *mut Vec3, facing: f32| -> f32 { unsafe { crate::chardata::ftKb_SpecialN_800F58AC(&*(g as *const _), &mut *(v as *mut _), facing as _) } };
         ftKb_SpecialN_800F58D8(g: G, v: *mut Vec3, facing: f32) -> f32 = |_, _, _| todo!("TODO(port) ftKb_SpecialN_800F58D8 (ftKb_Init.c)");
-        ftKb_SpecialN_800F5A88(g: G) -> f32 = |_| todo!("TODO(port) ftKb_SpecialN_800F5A88 (ftKb_Init.c)");
-        ftKb_SpecialN_800F5AB0(g: G) -> f32 = |_| todo!("TODO(port) ftKb_SpecialN_800F5AB0 (ftKb_Init.c)");
+        ftKb_SpecialN_800F5A88(g: G) -> f32 = |g: G| -> f32 { unsafe { crate::chardata::ftKb_SpecialN_800F5A88(&*(g as *const _)) } };
+        ftKb_SpecialN_800F5AB0(g: G) -> f32 = |g: G| -> f32 { unsafe { crate::chardata::ftKb_SpecialN_800F5AB0(&*(g as *const _)) } };
         ftKb_SpecialN_800F5AC0() -> f32 = || todo!("TODO(port) ftKb_SpecialN_800F5AC0 (ftKb_Init.c)");
         ftKb_SpecialN_800F5AD8() -> f32 = || todo!("TODO(port) ftKb_SpecialN_800F5AD8 (ftKb_Init.c)");
         ftKb_SpecialN_800F5874(v: *mut Vec2) = |_| todo!("TODO(port) ftKb_SpecialN_800F5874 (ftKb_Init.c)");
@@ -70,7 +70,7 @@ pub mod ext {
         ftKb_SpecialN_800EEEC4(g: G, kind: i32) = |_, _| todo!("TODO(port) ftKb_SpecialN_800EEEC4 (ftKb_Init.c)");
         ftKb_SpecialN_800F5A98() -> f32 = || todo!("TODO(port) ftKb_SpecialN_800F5A98 (ftKb_Init.c)");
         ftKb_SpecialN_800F5A70() -> f32 = || todo!("TODO(port) ftKb_SpecialN_800F5A70 (ftKb_Init.c)");
-        ftCommon_GrabMash(f: &mut Fighter, v: f32) -> bool = |_, _| todo!("TODO(port) ftCommon_GrabMash (ftcommon.c)");
+        ftCommon_GrabMash(f: &mut Fighter, v: f32) -> bool = |f: &mut Fighter, v: f32| -> bool { unsafe { crate::ftcommon2::grab_mash(f, v as _) } };
         lbVector_Mirror(a: *mut Vec3, b: *mut Vec3) = |a: *mut Vec3, b: *mut Vec3| { unsafe { let _ = melee_runtime::tu::lbvector::lbVector_Mirror(a as _, b as _); } };
         ftCo_Fall_Enter(g: G) = crate::tu::ftCo_Fall::ftCo_Fall_Enter;
     }

@@ -35,11 +35,11 @@ pub mod ext {
         };
     }
     ext_fns! {
-        ftKb_SpecialN_800F5AF0(g: G) -> f32 = |_| todo!("TODO(port) ftKb_SpecialN_800F5AF0 (ftkirbyspecialn.c)");
-        ftKb_SpecialN_800F5B20(g: G, out: &mut Vec2) = |_, _| todo!("TODO(port) ftKb_SpecialN_800F5B20 (ftkirbyspecialn.c)");
-        ftKb_SpecialN_800F5B3C(g: G) -> f32 = |_| todo!("TODO(port) ftKb_SpecialN_800F5B3C (ftkirbyspecialn.c)");
-        ftKb_SpecialN_800F5B4C(g: G) -> f32 = |_| todo!("TODO(port) ftKb_SpecialN_800F5B4C (ftkirbyspecialn.c)");
-        ftKb_SpecialN_800F5B5C(g: G, out: &mut Vec3) = |_, _| todo!("TODO(port) ftKb_SpecialN_800F5B5C (ftkirbyspecialn.c)");
+        ftKb_SpecialN_800F5AF0(g: G) -> f32 = |g: G| -> f32 { unsafe { crate::chardata::ftKb_SpecialN_800F5AF0(&*(g as *const _)) } };
+        ftKb_SpecialN_800F5B20(g: G, out: &mut Vec2) = |g: G, out: &mut Vec2| { unsafe { let _ = crate::chardata::ftKb_SpecialN_800F5B20(&*(g as *const _), out); } };
+        ftKb_SpecialN_800F5B3C(g: G) -> f32 = |g: G| -> f32 { unsafe { crate::chardata::ftKb_SpecialN_800F5B3C(&*(g as *const _)) } };
+        ftKb_SpecialN_800F5B4C(g: G) -> f32 = |g: G| -> f32 { unsafe { crate::chardata::ftKb_SpecialN_800F5B4C(&*(g as *const _)) } };
+        ftKb_SpecialN_800F5B5C(g: G, out: &mut Vec3) = |g: G, out: &mut Vec3| { unsafe { let _ = crate::chardata::ftKb_SpecialN_800F5B5C(&*(g as *const _), out); } };
         ftCo_ReleaseItemAndVictim(g: G) = crate::tu::ftco_800c7590::ftco_release_item_and_victim;
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;

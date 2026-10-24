@@ -21,8 +21,8 @@ pub mod ext {
     pub fn fn_800DBAE4(_g: G) { { unsafe { let _ = crate::tu::ftCo_CaptureWait::fn_800DBAE4(_g as _); } return; } }
     pub fn fn_800DAD18(_g: G) -> bool { { return unsafe { crate::tu::ftCo_CapturePulled::fn_800DAD18(_g as _) as _ }; } }
     pub fn fn_800DAA40(_g: G, _victim: G) { { unsafe { let _ = crate::tu::ftCo_CapturePulled::fn_800DAA40(_g as _, _victim as _); } return; } }
-    pub fn ft_80083C00(_g: G, _cb: HSD_GObjEvent) { panic!("TODO(group3 ft_081B) ft_80083C00") }
-    pub fn ft_8008403C(_g: G, _cb: HSD_GObjEvent) { panic!("TODO(group3 ft_081B) ft_8008403C") }
+    pub fn ft_80083C00(_g: G, _cb: HSD_GObjEvent) { unsafe { let _ = crate::bridge::with_ev(_cb, |ev| crate::tu::ft_081b::ft_80083c00(_g as _, ev)); } }
+    pub fn ft_8008403C(_g: G, _cb: HSD_GObjEvent) { unsafe { let _ = crate::bridge::with_ev(_cb, |ev| crate::tu::ft_081b::ft_8008403c(_g as _, ev)); } }
 }
 
 #[inline(always)]

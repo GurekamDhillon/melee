@@ -24,59 +24,59 @@ pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
             }
-            $( pub fn $name($($a: $t),*) $(-> $r)? {
+            $( #[allow(unreachable_code)] pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $( return $fb; )? #[allow(unreachable_code)] { panic!(concat!("TODO: ", stringify!($name), " is not ported")) } }
                 }
             } )*
         };
     }
     ext_fns! {
-    fn Stage_UnkSetVec3TCam_Offset(a0: *mut Vec3);
-    fn ft_800877F8(a0: *mut HSD_GObj, a1: i32) -> bool;
-    fn ft_80087818(a0: *mut HSD_GObj, a1: i32) -> bool;
-    fn ft_80087858(a0: *mut HSD_GObj) -> bool;
-    fn ft_80087878(a0: *mut HSD_GObj, a1: i32) -> bool;
-    fn ft_800878BC(a0: *mut HSD_GObj) -> bool;
-    fn ft_80087900(a0: *mut HSD_GObj) -> bool;
-    fn ft_80087944(a0: *mut HSD_GObj) -> bool;
-    fn ft_80087A8C(a0: *mut HSD_GObj) -> f32;
-    fn ft_80087A98(a0: *mut HSD_GObj) -> i32;
-    fn ft_80087AA4(a0: *mut HSD_GObj) -> bool;
-    fn ft_80087AB4(a0: *mut HSD_GObj) -> u8;
-    fn ft_80087AEC(a0: *mut HSD_GObj) -> bool;
-    fn ft_80087B34(a0: *mut HSD_GObj) -> i32;
-    fn ft_80089884(a0: *mut HSD_GObj) -> *mut Struct2070;
-    fn ft_80089890(a0: *mut HSD_GObj) -> *mut UnkPlBonusBits;
-    fn ft_8008989C(a0: *mut HSD_GObj) -> u16;
-    fn ft_800898A8(a0: *mut HSD_GObj) -> *mut Struct2074;
-    fn ft_800898B4(a0: *mut HSD_GObj) -> *mut ft_800898B4_t;
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec3);
-    fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32;
-    fn ftLib_800865CC(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_800867D8(a0: *mut HSD_GObj) -> bool;
-    fn ftLib_GetItem(a0: *mut HSD_GObj) -> *mut HSD_GObj;
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> bool;
-    fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8;
-    fn ftLib_80087120(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_8008730C(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_80087300(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_8008732C(a0: *mut HSD_GObj) -> bool;
-    fn ftLib_80087354(a0: *mut HSD_GObj) -> bool;
-    fn ftLib_8008737C(a0: *mut HSD_GObj) -> bool;
-    fn ftLib_800873A4(a0: *mut HSD_GObj) -> bool;
-    fn ftLib_800874BC(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_800876F4(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_80087700(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_8008777C(a0: *mut HSD_GObj) -> f32;
-    fn ftLib_800877D4(a0: *mut HSD_GObj) -> bool;
-    fn ftLib_GetMotionId(a0: *mut HSD_GObj) -> i32;
+    fn Stage_UnkSetVec3TCam_Offset(a0: *mut Vec3) => unsafe { let _ = melee_world::tu::stage::Stage_UnkSetVec3TCam_Offset(a0 as _); };
+    fn ft_800877F8(a0: *mut HSD_GObj, a1: i32) -> bool => unsafe { crate::ft0877::ft_800877f8(a0 as _, a1 as _) };
+    fn ft_80087818(a0: *mut HSD_GObj, a1: i32) -> bool => unsafe { crate::ft0877::ft_80087818(a0 as _, a1 as _) };
+    fn ft_80087858(a0: *mut HSD_GObj) -> bool => unsafe { crate::ft0877::ft_80087858(a0 as _) };
+    fn ft_80087878(a0: *mut HSD_GObj, a1: i32) -> bool => unsafe { crate::ft0877::ft_80087878(a0 as _, a1 as _) };
+    fn ft_800878BC(a0: *mut HSD_GObj) -> bool => unsafe { crate::ft0877::ft_800878bc(a0 as _) };
+    fn ft_80087900(a0: *mut HSD_GObj) -> bool => unsafe { crate::ft0877::ft_80087900(a0 as _) };
+    fn ft_80087944(a0: *mut HSD_GObj) -> bool => unsafe { crate::ft0877::ft_80087944(a0 as _) };
+    fn ft_80087A8C(a0: *mut HSD_GObj) -> f32 => unsafe { crate::ft0877::ft_80087a8c(a0 as _) };
+    fn ft_80087A98(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ft0877::ft_80087a98(a0 as _) };
+    fn ft_80087AA4(a0: *mut HSD_GObj) -> bool => unsafe { crate::ft0877::ft_80087aa4(a0 as _) };
+    fn ft_80087AB4(a0: *mut HSD_GObj) -> u8 => unsafe { crate::ft0877::ft_80087ab4(a0 as _) };
+    fn ft_80087AEC(a0: *mut HSD_GObj) -> bool => unsafe { crate::ft0877::ft_80087aec(a0 as _) };
+    fn ft_80087B34(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ft0877::ft_80087b34(a0 as _) };
+    fn ft_80089884(a0: *mut HSD_GObj) -> *mut Struct2070 => unsafe { crate::ft0892::ft_80089884(a0 as _) as _ };
+    fn ft_80089890(a0: *mut HSD_GObj) -> *mut UnkPlBonusBits => unsafe { crate::ft0892::ft_80089890(a0 as _) as _ };
+    fn ft_8008989C(a0: *mut HSD_GObj) -> u16 => unsafe { crate::ft0892::ft_8008989c(a0 as _) };
+    fn ft_800898A8(a0: *mut HSD_GObj) -> *mut Struct2074 => unsafe { crate::ft0892::ft_800898a8(a0 as _) as _ };
+    fn ft_800898B4(a0: *mut HSD_GObj) -> *mut ft_800898B4_t => unsafe { crate::ft0892::ft_800898b4(a0 as _) as _ };
+    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec3) => unsafe { let _ = crate::ftlib::ftlib_80086644(a0 as _, &mut *(a1 as *mut _)); };
+    fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32 => unsafe { crate::ftlib::ftlib_800865c0(a0 as _) };
+    fn ftLib_800865CC(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_800865cc(a0 as _) };
+    fn ftLib_800867D8(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_800867d8(a0 as _) };
+    fn ftLib_GetItem(a0: *mut HSD_GObj) -> *mut HSD_GObj => unsafe { crate::ftlib::get_item(a0 as _) as _ };
+    fn ftLib_80086960(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_80086960(a0 as _) };
+    fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8 => unsafe { crate::ftlib::ftlib_80086be0(a0 as _) };
+    fn ftLib_80087120(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_80087120(a0 as _) };
+    fn ftLib_8008730C(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_8008730c(a0 as _) };
+    fn ftLib_80087300(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_80087300(a0 as _) };
+    fn ftLib_8008732C(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_8008732c(a0 as _) };
+    fn ftLib_80087354(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_80087354(a0 as _) };
+    fn ftLib_8008737C(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_8008737c(a0 as _) };
+    fn ftLib_800873A4(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_800873a4(a0 as _) };
+    fn ftLib_800874BC(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_800874bc(a0 as _) };
+    fn ftLib_800876F4(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_800876f4(a0 as _) };
+    fn ftLib_80087700(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_80087700(a0 as _) };
+    fn ftLib_8008777C(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftlib_8008777c(a0 as _) };
+    fn ftLib_800877D4(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_800877d4(a0 as _) };
+    fn ftLib_GetMotionId(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::get_motion_id(a0 as _) };
     fn gm_8016AEEC() -> u32;
     fn gm_8016B110() -> bool;
     fn gm_8016B168() -> bool;
@@ -84,20 +84,20 @@ pub mod ext {
     fn gm_8016B6E8(a0: i32, a1: i32);
     fn gm_8016F2F8(a0: i32, a1: u8) -> i32;
     fn gm_GetFrameCount() -> u32;
-    fn ifMagnify_802FB6E8(a0: i32) -> i32;
-    fn itGetKind(a0: *mut HSD_GObj) -> i32;
-    fn itGetOwner(a0: *mut HSD_GObj) -> *mut HSD_GObj;
-    fn it_8026B30C(a0: *mut HSD_GObj) -> i32;
-    fn it_8026B774(a0: *mut HSD_GObj, a1: u8) -> bool;
-    fn it_8026B7BC(a0: *mut HSD_GObj) -> i32;
-    fn it_8026B7CC(a0: *mut HSD_GObj) -> i32;
-    fn it_8026B7E8(a0: *mut HSD_GObj) -> i32;
-    fn it_8026B960(a0: *mut HSD_GObj) -> f32;
+    fn ifMagnify_802FB6E8(a0: i32) -> i32 => unsafe { melee_world::tu::ifmagnify::ifMagnify_802FB6E8(a0 as _) };
+    fn itGetKind(a0: *mut HSD_GObj) -> i32 => unsafe { melee_items::tu::it_26B1::itGetKind(a0 as _) as _ };
+    fn itGetOwner(a0: *mut HSD_GObj) -> *mut HSD_GObj => unsafe { melee_items::tu::it_26B1::itGetOwner(a0 as _) as _ };
+    fn it_8026B30C(a0: *mut HSD_GObj) -> i32 => unsafe { melee_items::itlib::it_8026b30c(&*(a0 as *const _)) };
+    fn it_8026B774(a0: *mut HSD_GObj, a1: u8) -> bool => unsafe { melee_items::itlib::it_8026b774(&*(a0 as *const _), a1 as _) };
+    fn it_8026B7BC(a0: *mut HSD_GObj) -> i32 => unsafe { melee_items::itlib::it_8026b7bc(&*(a0 as *const _)) };
+    fn it_8026B7CC(a0: *mut HSD_GObj) -> i32 => unsafe { melee_items::itlib::it_8026b7cc(&*(a0 as *const _)) };
+    fn it_8026B7E8(a0: *mut HSD_GObj) -> i32 => unsafe { melee_items::itlib::it_8026b7e8(&*(a0 as *const _)) };
+    fn it_8026B960(a0: *mut HSD_GObj) -> f32 => unsafe { melee_items::itlib::it_8026b960(&*(a0 as *const _)) };
     fn it_8026C1D4() -> u32;
-    fn pl_80040ED4(a0: i32, a1: i32, a2: i32, a3: i32, a4: i32, a5: f32);
-    fn pl_80041720(a0: i32, a1: i32, a2: u16);
-    fn pl_80041744(a0: i32, a1: i32, a2: u16);
-    fn pl_800419AC(a0: i32, a1: i32, a2: u16);
+    fn pl_80040ED4(a0: i32, a1: i32, a2: i32, a3: i32, a4: i32, a5: f32) => unsafe { let _ = crate::plbonus::pl_80040ed4(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _); };
+    fn pl_80041720(a0: i32, a1: i32, a2: u16) => unsafe { let _ = crate::plbonus::pl_80041720(a0 as _, a1 as _, a2 as _); };
+    fn pl_80041744(a0: i32, a1: i32, a2: u16) => unsafe { let _ = crate::plbonus::pl_80041744(a0 as _, a1 as _, a2 as _); };
+    fn pl_800419AC(a0: i32, a1: i32, a2: u16) => unsafe { let _ = crate::plbonus::pl_800419ac(a0 as _, a1 as _, a2 as _); };
     }
 }
 

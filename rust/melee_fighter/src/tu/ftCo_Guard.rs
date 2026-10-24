@@ -41,8 +41,8 @@ pub mod ext {
         ScriptGame_ModValue(slot: i32, field: i32, base: f32) -> f32 = |_, _, _| todo!("TODO(port) ScriptGame_ModValue (pc/gameworld/script_game.c)");
         lb_8000D008(y: f32, x: f32) -> f32 = |y: f32, x: f32| -> f32 { unsafe { melee_runtime::tu::lb_00CE::lb_8000D008(y as _, x as _) as _ } };
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (baselib/jobj.c)");
-        efLib_SetParamAlpha(g: G, a: u8) = |_, _| todo!("TODO(port) efLib_SetParamAlpha (ef/eflib.c)");
-        GenoDefine_RestPoseTree(fp: &mut Fighter) -> *mut HSD_Joint = |_| todo!("TODO(port) GenoDefine_RestPoseTree (pc/geno)");
+        efLib_SetParamAlpha(g: G, a: u8) = |g: G, a: u8| { unsafe { let _ = melee_world::tu::eflib::efLib_SetParamAlpha(g as _, a as _); } };
+        GenoDefine_RestPoseTree(fp: &mut Fighter) -> *mut HSD_Joint = |fp: &mut Fighter| -> *mut HSD_Joint { unsafe { crate::platform::GenoDefine_RestPoseTree(fp) } };
         Geno_MotionAnimRow(fp: &mut Fighter, motion: i32) -> i32 = |_, _| todo!("TODO(port) Geno_MotionAnimRow (pc/geno)");
         ftData_80085E50(fp: &mut Fighter, msid: i32) -> *mut FigaTree = |fp: &mut Fighter, msid: i32| -> *mut FigaTree { unsafe { crate::tu::ftdata::ftData_80085E50(fp as _, msid as _) as _ } };
         ftAnim_8006F4C8(fp: &mut Fighter, b: bool, tree: *mut FigaTree) = |fp: &mut Fighter, b: bool, tree: *mut FigaTree| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006F4C8(fp as _, b as _, tree as _); } };
@@ -61,9 +61,9 @@ pub mod ext {
         // `efSync_Spawn(gfx_id, gobj, jobj, color)` (variadic in C).
         efSync_Spawn(id: i32, g: G, j: *mut HSD_JObj, color: i32) = |_, _, _, _| todo!("TODO(port) efSync_Spawn (ef/efsync.c)");
         ftColl_8007B1B8(g: G, desc: &mut AbsorbDesc, cb: HSD_GObjEvent) = |_, _, _| todo!("TODO(port) ftColl_8007B1B8 (ftcoll.c)");
-        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("TODO(port) ft_PlaySFX (ft_0881.c)");
-        Geno_DefineTemplateSkeleton(kind: i32) -> i32 = |_| todo!("TODO(port) Geno_DefineTemplateSkeleton (pc/geno)");
-        Geno_DefineBaseKind(kind: i32) -> i32 = |_| todo!("TODO(port) Geno_DefineBaseKind (pc/geno)");
+        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |fp: &mut Fighter, id: i32, vol: u8, pan: u8| { unsafe { let _ = crate::ft0877::play_sfx(fp, id as _, vol as _, pan as _); } };
+        Geno_DefineTemplateSkeleton(kind: i32) -> i32 = |kind: i32| -> i32 { unsafe { crate::platform::Geno_DefineTemplateSkeleton(kind) } };
+        Geno_DefineBaseKind(kind: i32) -> i32 = |kind: i32| -> i32 { unsafe { crate::platform::Geno_DefineBaseKind(kind) } };
         ftYs_Init_8012BECC(g: G) = |_| todo!("TODO(port) ftYs_Init_8012BECC (ftYoshi)");
         ftYs_Shield_8012C1D4(g: G) = |_| todo!("TODO(port) ftYs_Shield_8012C1D4 (ftYoshi)");
         ftYs_Shield_8012C49C(g: G) = |_| todo!("TODO(port) ftYs_Shield_8012C49C (ftYoshi)");
@@ -104,9 +104,9 @@ pub mod ext {
         ftCo_800C36DC(g: G) = |g: G| { unsafe { let _ = crate::tu::ftco_0c35::ftco_800c36dc(g as _); } };
         ftAnim_SetAnimRate(g: G, v: f32) = |g: G, v: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_SetAnimRate(g as _, v as _); } };
         lbGetJObjEndFrame(j: *mut HSD_JObj) -> f32 = |j: *mut HSD_JObj| -> f32 { unsafe { melee_runtime::tu::lb_00B0::lbGetJObjEndFrame(j as _) as _ } };
-        Replay_UcfVersion(port: i32) -> i32 = |_| todo!("TODO(port) Replay_UcfVersion (pc/platform)");
-        ftUcf_PadRaw(port: i32, which_y: i32, back: i32) -> i32 = |_, _, _| todo!("TODO(port) ftUcf_PadRaw (fighter.c)");
-        ftColl_CreateReflectHit(g: G, desc: &mut ReflectDesc, cb: HSD_GObjEvent) = |_, _, _| todo!("TODO(port) ftColl_CreateReflectHit (ftcoll.c)");
+        Replay_UcfVersion(port: i32) -> i32 = |port: i32| -> i32 { unsafe { crate::platform::Replay_UcfVersion(port) } };
+        ftUcf_PadRaw(port: i32, which_y: i32, back: i32) -> i32 = |port: i32, which_y: i32, back: i32| -> i32 { unsafe { crate::fighter::ftucf_pad_raw(port as _, which_y as _, back as _) } };
+        ftColl_CreateReflectHit(g: G, desc: &mut ReflectDesc, cb: HSD_GObjEvent) = |g: G, desc: &mut ReflectDesc, cb: HSD_GObjEvent| { unsafe { let _ = crate::tu::ftcoll::ftcoll_create_reflect_hit(g as _, desc, cb); } };
         ftCommon_8007DB24(g: G) = |g: G| { unsafe { let _ = crate::ftcommon3::ftcommon_8007db24(g as _); } };
         lb_8000B1CC(j: *mut HSD_JObj, p0: *mut Vec3, p1: *mut Vec3) = |j: *mut HSD_JObj, p0: *mut Vec3, p1: *mut Vec3| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, p0 as _, p1 as _); } };
     }

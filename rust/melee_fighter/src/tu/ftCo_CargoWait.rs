@@ -36,7 +36,7 @@ pub mod ext {
         ftCo_8009B818(g: G) -> bool = crate::tu::ftCo_CargoTurn::ftCo_8009B818;
         ftCo_8009B67C(g: G) -> bool = crate::tu::ftCo_CargoWalk::ftCo_8009B67C;
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
-        ft_8008403C(g: G, cb: HSD_GObjEvent) = |_, _| todo!("TODO(port) ft_8008403C (ft_081B.c)");
+        ft_8008403C(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_8008403c(g as _, ev)); } };
         ftCo_8009BC58(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_CargoFall::ftCo_8009BC58(g as _); } };
     }
 }

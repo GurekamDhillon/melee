@@ -45,7 +45,7 @@ pub mod ext {
         ftCo_800CB870(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_JumpAerial::ftCo_800CB870(g as _) as _ } };
         ftCommon_Fall(f: &mut Fighter, gravity: f32, terminal: f32) = crate::ftcommon::fall;
         ftCommon_CalcSelfAccel_Drift(f: &mut Fighter) = crate::ftcommon::calc_self_accel_drift;
-        ftCo_AirCatchHit_Coll(g: G) = |_| todo!("TODO(port) ftCo_AirCatchHit_Coll (ftCo_AirCatch.c)");
+        ftCo_AirCatchHit_Coll(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ftco_air_catch_hit_coll(g as _); } };
     }
 }
 

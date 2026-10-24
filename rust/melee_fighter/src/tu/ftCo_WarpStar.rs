@@ -48,21 +48,21 @@ pub mod ext {
         Item_8026ABD8(item: *mut Item_GObj, pos: *mut Vec3, v: f32) = |item: *mut Item_GObj, pos: *mut Vec3, v: f32| { unsafe { let _ = melee_items::tu::item::Item_8026ABD8(item as _, pos as _, v as _); } };
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
-        ftColl_8007B6A0(g: G) = |_| todo!("TODO(port) ftColl_8007B6A0 (ftcoll.c)");
-        ftColl_8007B6EC(g: G) = |_| todo!("TODO(port) ftColl_8007B6EC (ftcoll.c)");
+        ftColl_8007B6A0(g: G) = |g: G| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b6a0(g as _); } };
+        ftColl_8007B6EC(g: G) = |g: G| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b6ec(g as _); } };
         ftCommon_8007E2FC(g: G) = |g| crate::ftcommon2::ftcommon_8007e2fc(super::fp(g));
         HSD_JObjAddAnim(j: *mut HSD_JObj, an: *mut HSD_AnimJoint, mat: *mut HSD_MatAnimJoint, sh: *mut HSD_ShapeAnimJoint) = |_, _, _, _| todo!("TODO(port) HSD_JObjAddAnim (jobj.c)");
         ftAnim_80070734(j: *mut HSD_JObj, frame: f32) = |j: *mut HSD_JObj, frame: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_80070734(j as _, frame as _); } };
         HSD_JObjAnim(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjAnim (jobj.c)");
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
-        Stage_GetBlastZoneTopOffset() -> f32 = || todo!("TODO(port) Stage_GetBlastZoneTopOffset (stage.c)");
+        Stage_GetBlastZoneTopOffset() -> f32 = || -> f32 { unsafe { melee_world::tu::stage::Stage_GetBlastZoneTopOffset() } };
         ftCamera_800762F4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftcamera::ftcamera_800762f4(g as _); } };
         // rp3 mpColl_80043680
         mpColl_80043680(c: *mut CollData, pos: *mut Vec3) = |c: *mut CollData, pos: *mut Vec3| unsafe { melee_world::tu::mpcoll::mpColl_80043680(c, pos as _); };
         // rp3-end
-        ftCommon_Fall(f: &mut Fighter, a: f32, b: f32) = |_, _, _| todo!("TODO(port) ftCommon_Fall (ftcommon.c)");
+        ftCommon_Fall(f: &mut Fighter, a: f32, b: f32) = |f: &mut Fighter, a: f32, b: f32| { unsafe { let _ = crate::ftcommon::fall(f, a as _, b as _); } };
         ftCommon_CalcSelfAccel_AccelToVelClampedFrom(f: &mut Fighter, vel: f32, accel: f32, target: f32, fr: f32) = crate::ftcommon::calc_self_accel_accel_to_vel_clamped_from;
-        ft_80083E64(g: G, ecb: *mut ftCollisionBox, cb: HSD_GObjEvent) = |_, _, _| todo!("TODO(port) ft_80083E64 (ft_081B.c)");
+        ft_80083E64(g: G, ecb: *mut ftCollisionBox, cb: HSD_GObjEvent) = |g: G, ecb: *mut ftCollisionBox, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_80083e64(g as _, ecb as _, ev)); } };
         atan2f(y: f32, x: f32) -> f32 = melee_runtime::lbtrigf::atan2f;
         // `efAsync_Spawn(gobj, queue, kind, gfx_id, jobj, ...)` with (pos, param) as the varargs.
         efAsync_Spawn(g: G, queue: *mut core::ffi::c_void, kind: u32, id: u32, j: *mut HSD_JObj, pos: *mut Vec3, param: *mut f32) = |_, _, _, _, _, _, _| todo!("TODO(port) efAsync_Spawn (efasync.c)");

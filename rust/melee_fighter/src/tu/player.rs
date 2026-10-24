@@ -24,69 +24,69 @@ pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
             }
-            $( pub fn $name($($a: $t),*) $(-> $r)? {
+            $( #[allow(unreachable_code)] pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => { $( return $fb; )? #[allow(unreachable_code)] { panic!(concat!("TODO: ", stringify!($name), " is not ported")) } }
                 }
             } )*
         };
     }
     ext_fns! {
-    fn Fighter_Create(a0: *mut plAllocInfo) -> *mut HSD_GObj;
-    fn Fighter_FirstInitialize_80067A84();
-    fn GenoDefine_InitKinds();
+    fn Fighter_Create(a0: *mut plAllocInfo) -> *mut HSD_GObj => unsafe { crate::tu::fighter::Fighter_Create(&*(a0 as *const _)) as _ };
+    fn Fighter_FirstInitialize_80067A84() => unsafe { let _ = crate::tu::fighter::Fighter_FirstInitialize_80067A84(); };
+    fn GenoDefine_InitKinds() => unsafe { let _ = crate::platform::GenoDefine_InitKinds(); };
     fn HSD_GObjFree(a0: *mut HSD_GObj);
-    fn HSD_ObjAllocInit(a0: *mut HSD_ObjAllocData, a1: usize, a2: u32);
-    fn ft_80087AC0(a0: *mut HSD_GObj, a1: i32);
-    fn ft_80087BAC(a0: *mut HSD_GObj, a1: i32);
-    fn ft_80087BC0(a0: *mut HSD_GObj, a1: i32);
-    fn ft_80087BEC(a0: *mut HSD_GObj, a1: i32);
-    fn ftCo_800D4F24(a0: *mut HSD_GObj, a1: i32);
-    fn ftCo_800D4FF4(a0: *mut HSD_GObj);
-    fn ftData_800855C8(a0: FighterKind, a1: u8);
-    fn ftData_8008578C(a0: i32, a1: u8);
-    fn ftDemo_CreateFighter(a0: *mut plAllocInfo2) -> *mut HSD_GObj;
-    fn ftDemo_SetArchiveData(a0: i32, a1: *mut HSD_Archive, a2: i32);
-    fn ftDemo_SetFacingDirection(a0: *mut HSD_GObj, a1: f32);
+    fn HSD_ObjAllocInit(a0: *mut HSD_ObjAllocData, a1: usize, a2: u32) => unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjAllocInit(a0 as _, a1 as _, a2 as _); };
+    fn ft_80087AC0(a0: *mut HSD_GObj, a1: i32) => unsafe { let _ = crate::ft0877::ft_80087ac0(a0 as _, a1 as _); };
+    fn ft_80087BAC(a0: *mut HSD_GObj, a1: i32) => unsafe { let _ = crate::ft0877::ft_80087bac(a0 as _, a1 as _); };
+    fn ft_80087BC0(a0: *mut HSD_GObj, a1: i32) => unsafe { let _ = crate::ft0877::ft_80087bc0(a0 as _, a1 as _); };
+    fn ft_80087BEC(a0: *mut HSD_GObj, a1: i32) => unsafe { let _ = crate::ft0877::ft_80087bec(a0 as _, a1 as _); };
+    fn ftCo_800D4F24(a0: *mut HSD_GObj, a1: i32) => unsafe { let _ = crate::tu::ft_0d4d::ftCo_800D4F24(a0 as _, a1 as _); };
+    fn ftCo_800D4FF4(a0: *mut HSD_GObj) => unsafe { let _ = crate::tu::ft_0d4d::ftCo_800D4FF4(a0 as _); };
+    fn ftData_800855C8(a0: FighterKind, a1: u8) => unsafe { let _ = crate::tu::ftdata::ftData_800855C8(a0 as _, a1 as _); };
+    fn ftData_8008578C(a0: i32, a1: u8) => unsafe { let _ = crate::tu::ftdata::ftData_8008578C(a0 as _, a1 as _); };
+    fn ftDemo_CreateFighter(a0: *mut plAllocInfo2) -> *mut HSD_GObj => unsafe { crate::tu::ftdemo::ftdemo_create_fighter(&*(a0 as *const _)) as _ };
+    fn ftDemo_SetArchiveData(a0: i32, a1: *mut HSD_Archive, a2: i32) => unsafe { let _ = crate::tu::ftdemo::ftdemo_set_archive_data(a0 as _, a1 as _, a2 as _); };
+    fn ftDemo_SetFacingDirection(a0: *mut HSD_GObj, a1: f32) => unsafe { let _ = crate::tu::ftdemo::ftdemo_set_facing_direction(a0 as _, a1 as _); };
     fn ftKb_SpecialN_800EED50(a0: i32, a1: i32);
-    fn ftLib_800865F0(a0: *mut HSD_GObj) -> *mut HSD_JObj;
-    fn ftLib_80086664(a0: *mut HSD_GObj, a1: *mut Vec3);
-    fn ftLib_800867E8(a0: *mut HSD_GObj);
-    fn ftLib_8008688C(a0: *mut HSD_GObj);
-    fn ftLib_800869F8(a0: *mut HSD_GObj) -> f32;
-    fn ftLib_80086A4C(a0: *mut HSD_GObj, a1: f32);
-    fn ftLib_80086B90(a0: *mut HSD_GObj, a1: *mut Vec3);
-    fn ftLib_80086BB4(a0: *mut HSD_GObj) -> bool;
-    fn ftLib_80086F4C(a0: *mut HSD_GObj) -> bool;
-    fn ftLib_80086F80(a0: *mut HSD_GObj) -> f32;
-    fn ftLib_8008701C(a0: *mut HSD_GObj) -> bool;
-    fn ftLib_800870F0(a0: *mut HSD_GObj, a1: i32);
-    fn ftLib_80087140(a0: *mut HSD_GObj);
-    fn ftLib_80087300(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_800873CC(a0: *mut HSD_GObj) -> bool;
-    fn ftLib_80087610(a0: u8);
-    fn ftLib_GetKind(a0: *mut HSD_GObj) -> FighterKind;
-    fn ftLib_SetScale(a0: *mut HSD_GObj, a1: f32);
+    fn ftLib_800865F0(a0: *mut HSD_GObj) -> *mut HSD_JObj => unsafe { crate::ftlib::ftlib_800865f0(a0 as _) as _ };
+    fn ftLib_80086664(a0: *mut HSD_GObj, a1: *mut Vec3) => unsafe { let _ = crate::ftlib::ftlib_80086664(a0 as _, &*(a1 as *const _)); };
+    fn ftLib_800867E8(a0: *mut HSD_GObj) => unsafe { let _ = crate::ftlib::ftlib_800867e8(a0 as _); };
+    fn ftLib_8008688C(a0: *mut HSD_GObj) => unsafe { let _ = crate::ftlib::ftlib_8008688c(a0 as _); };
+    fn ftLib_800869F8(a0: *mut HSD_GObj) -> f32 => unsafe { crate::ftlib::ftlib_800869f8(a0 as _) };
+    fn ftLib_80086A4C(a0: *mut HSD_GObj, a1: f32) => unsafe { let _ = crate::ftlib::ftlib_80086a4c(a0 as _, a1 as _); };
+    fn ftLib_80086B90(a0: *mut HSD_GObj, a1: *mut Vec3) => unsafe { let _ = crate::ftlib::ftlib_80086b90(a0 as _, &mut *(a1 as *mut _)); };
+    fn ftLib_80086BB4(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_80086bb4(a0 as _) };
+    fn ftLib_80086F4C(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_80086f4c(a0 as _) };
+    fn ftLib_80086F80(a0: *mut HSD_GObj) -> f32 => unsafe { crate::ftlib::ftlib_80086f80(a0 as _) };
+    fn ftLib_8008701C(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_8008701c(a0 as _) };
+    fn ftLib_800870F0(a0: *mut HSD_GObj, a1: i32) => unsafe { let _ = crate::ftlib::ftlib_800870f0(a0 as _, a1 as _); };
+    fn ftLib_80087140(a0: *mut HSD_GObj) => unsafe { let _ = crate::ftlib::ftlib_80087140(a0 as _); };
+    fn ftLib_80087300(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_80087300(a0 as _) };
+    fn ftLib_800873CC(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_800873cc(a0 as _) };
+    fn ftLib_80087610(a0: u8) => unsafe { let _ = crate::tu::ftlib::ftlib_80087610(a0 as _); };
+    fn ftLib_GetKind(a0: *mut HSD_GObj) -> FighterKind => unsafe { crate::ftlib::get_kind(a0 as _) };
+    fn ftLib_SetScale(a0: *mut HSD_GObj, a1: f32) => unsafe { let _ = crate::ftlib::set_scale(a0 as _, a1 as _); };
     fn gm_8016B168() -> bool;
     fn gm_8016C5C0(a0: i32) -> i32;
     fn gm_GetFrameCount() -> u32;
-    fn ifStatus_802F69C0(a0: i32, a1: i32);
-    fn ifStatus_802F6AF8(a0: i32);
-    fn ifStatus_802F6C04(a0: i32);
-    fn ifStatus_802F6D10(a0: i32);
-    fn ifStatus_802F6E1C(a0: i32);
+    fn ifStatus_802F69C0(a0: i32, a1: i32) => unsafe { let _ = melee_world::tu::ifstatus::ifStatus_802F69C0(a0 as _, a1 as _); };
+    fn ifStatus_802F6AF8(a0: i32) => unsafe { let _ = melee_world::tu::ifstatus::ifStatus_802F6AF8(a0 as _); };
+    fn ifStatus_802F6C04(a0: i32) => unsafe { let _ = melee_world::tu::ifstatus::ifStatus_802F6C04(a0 as _); };
+    fn ifStatus_802F6D10(a0: i32) => unsafe { let _ = melee_world::tu::ifstatus::ifStatus_802F6D10(a0 as _); };
+    fn ifStatus_802F6E1C(a0: i32) => unsafe { let _ = melee_world::tu::ifstatus::ifStatus_802F6E1C(a0 as _); };
     fn lbArchive_LoadSymbols(a0: *const c_char, a1: *mut c_void, a2: *const c_char, a3: i32) -> *mut HSD_Archive;
-    fn lbDvd_IsPlanningSixSlot() -> i32;
-    fn pl_8003891C(a0: i32);
-    fn pl_80038F10(a0: i32);
-    fn plAttack_80037590();
-    fn plStale_InitAttackInstance();
+    fn lbDvd_IsPlanningSixSlot() -> i32 => unsafe { melee_runtime::tu::lbdvd::lbDvd_IsPlanningSixSlot() };
+    fn pl_8003891C(a0: i32) => unsafe { let _ = crate::tu::plbonus::pl_8003891C(a0 as _); };
+    fn pl_80038F10(a0: i32) => unsafe { let _ = crate::plbonus3::pl_80038f10(a0 as _); };
+    fn plAttack_80037590() => unsafe { let _ = crate::tu::plattack::plAttack_80037590(); };
+    fn plStale_InitAttackInstance() => unsafe { let _ = crate::stale::init_attack_instance(); };
     }
     /// `ScriptGame_ModValue(slot, field, base)` (TARGET_PC): the crate's `SCRIPT_MOD_VALUE` hook,
     /// vanilla-neutral (returns `base`) when none is installed.

@@ -41,8 +41,8 @@ pub mod ext {
         ftCo_800DC920(a: G, b: G) = crate::tu::ftCo_CaptureCut::ftCo_800DC920;
         ftParts_GetBoneIndex(f: *mut Fighter, part: i32) -> i32 = |f: *mut Fighter, p| crate::ftdmgfall::ftparts_get_bone_index(unsafe { &*f }, p);
         lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *const Vec3, out: &mut Vec3) = |jobj: *mut HSD_JObj, pos0: *const Vec3, out: &mut Vec3| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, out as _); } };
-        ftColl_80079C70(f: *mut Fighter, victim: *mut Fighter, hit: *mut HitCapsule, count: i32) -> f32 = |_, _, _, _| todo!("TODO(port) ftColl_80079C70 (ftcoll.c)");
-        ftColl_80078710(victim: G, g: G, facing: *mut f32) = |_, _, _| todo!("TODO(port) ftColl_80078710 (ftcoll.c)");
+        ftColl_80079C70(f: *mut Fighter, victim: *mut Fighter, hit: *mut HitCapsule, count: i32) -> f32 = |f: *mut Fighter, victim: *mut Fighter, hit: *mut HitCapsule, count: i32| -> f32 { unsafe { crate::tu::ftcoll::ftcoll_80079c70(f as _, victim as _, hit as _, count as _) } };
+        ftColl_80078710(victim: G, g: G, facing: *mut f32) = |victim: G, g: G, facing: *mut f32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_80078710(victim as _, g as _, facing as _); } };
         // TARGET_PC `FT_SCRIPT_DEALT(fp, base)`.
         ScriptGame_FighterDealtDamage(f: *mut Fighter, damage: f32) -> f32 = |_, _| todo!("TODO(pc script) ScriptGame_FighterDealtDamage");
         ScriptGame_HitRuleContact(hit: *mut HitCapsule, f: *mut Fighter, value: f32, kb: i32) -> f32 = |_, _, _, _| todo!("TODO(pc script) ScriptGame_HitRuleContact");

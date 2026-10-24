@@ -35,7 +35,7 @@ def main():
                    str(s), "-o", str(ll)], n)
             R.run([sys.executable, str(R.LOWER), str(ll), str(lo)], n)
             lls.append(str(lo))
-        R.run([R.CLANG, "-O0", "-w", *lls, "-o", str(exe)], n)
+        R.run([R.CLANG, "-O0", "-w", *lls, "-o", str(exe), "-Wl,/force:unresolved"], n)
         out = subprocess.run([str(exe)], capture_output=True, text=True, check=True).stdout
         (R.DATA / f"tu_{n}.txt").write_text(out, encoding="utf-8", newline="\n")
         print(f"cref tu: {n}: {len(out.splitlines())} lines")

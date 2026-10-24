@@ -55,9 +55,9 @@ pub mod ext {
         ft_80083F88(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80083f88(g as _); } };
         // TARGET_PC `FT_CAPS_ACTION_ALLOWED(fp, flag)` = `ScriptGame_CapsActionAllowed`.
         ScriptGame_CapsActionAllowed(fp: &Fighter, flag: i32) -> i32 = |_, _| todo!("TODO(port) ScriptGame_CapsActionAllowed (pc/gameworld/script_game.c)");
-        Replay_UcfVersion(port: i32) -> i32 = |_| todo!("TODO(port) Replay_UcfVersion (pc replay)");
-        Replay_RawStickBack(port: i32, which: i32, back: i32) -> i32 = |_, _, _| todo!("TODO(port) Replay_RawStickBack (pc replay)");
-        ftUcf_PadRaw(port: i32, which_y: i32, back: i32) -> i32 = |_, _, _| todo!("TODO(port) ftUcf_PadRaw (pc ucf)");
+        Replay_UcfVersion(port: i32) -> i32 = |port: i32| -> i32 { unsafe { crate::platform::Replay_UcfVersion(port) } };
+        Replay_RawStickBack(port: i32, which: i32, back: i32) -> i32 = |port: i32, which: i32, back: i32| -> i32 { unsafe { crate::platform::Replay_RawStickBack(port, which, back) } };
+        ftUcf_PadRaw(port: i32, which_y: i32, back: i32) -> i32 = |port: i32, which_y: i32, back: i32| -> i32 { unsafe { crate::fighter::ftucf_pad_raw(port as _, which_y as _, back as _) } };
     }
 }
 

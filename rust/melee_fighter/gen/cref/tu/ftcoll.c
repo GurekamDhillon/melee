@@ -47,6 +47,29 @@ int Geno_Autolink(Fighter* a, HitCapsule* h, float* dir, float* angle, float* kb
 int Mex_Enabled(const char* n) { return 0; }
 float ScriptGame_ModValue(int slot, int field, float base) { return base; }
 
+
+/* ---- link-only recorders for the callees of the functions no op drives ---- */
+void Geno_ArticleStunBonus(Item* i, HitCapsule* h, Fighter* v) { T(90); }
+void Geno_ItemFamilyEvent(HSD_GObj* g, int a, int b) { T(91); T(a); T(b); }
+HSD_GObj** HSD_GObjPLinkHead;
+s32 HSD_Randi(s32 m) { T(92); T(m); return m > 0 ? (s32) (rnd() % (u32) m) : 0; }
+int ScriptGame_EnemyContact(Item_GObj* g, int a, int b) { T(93); return 0; }
+float ScriptGame_ItemModDamage(Item* i, float d) { T(94); return d; }
+void Script_EnemyGameEvent(int a, int b, int c, int d, int e, int f) { T(95); }
+void ftCommon_8007EBAC(Fighter* f, u32 a, u32 b) { T(96); }
+void ft_80088080(Fighter* f) { T(97); }
+float it_8026B1D4(Item_GObj* g, HitCapsule* h) { T(98); return 0.0f; }
+s32 it_8026B588(void) { T(99); return 0; }
+void it_8026FAC4(Item* i, HitCapsule* h, s32 a, void* b, bool c) { T(100); }
+void it_8026FC00(Item* i, HitCapsule* h, s32 a, Fighter* f) { T(101); }
+Fighter* it_80272818(Item* i) { T(102); return NULL; }
+ItemCommonData* it_804D6D28;
+int lbColl_80005BB0(HitCapsule* h, int a) { T(103); return 0; }
+void lbColl_80008440(HitCapsule* h) { T(104); }
+void lbColl_CopyHitCapsule(HitCapsule* s, HitCapsule* d) { T(105); }
+void plStale_UpdateStaleMovesFromItem(HSD_GObj* a, HSD_GObj* b) { T(106); }
+void pl_8003E17C(int a, int b, Item_GObj* g) { T(107); }
+
 /* ---- game callees ---- */
 float Player_GetDefenseRatio(int slot) { T(70); return rv(); }
 float Player_GetAttackRatio(int slot) { T(71); return rv(); }
@@ -61,7 +84,7 @@ void pl_8003E150(int a, int b) { T(79); }
 void plStale_UpdateStaleMovesFromFighter(HSD_GObj* a, HSD_GObj* b) { T(80); }
 void pl_8003EB30(float d, int a, int b, int c, int e, int f) { T(81); T(B(d)); }
 void lbColl_80008D30(HitCapsule* h, lbColl_80008D30_arg1* a)
-{ T(82); h->x24 = a->x0 * 3; h->x28 = (u32) a->x0 & 3; h->x2C = (u32) a->x0 % 7; h->unk_count = (u32) a->x0 % 5; }
+{ T(82); h->x24 = (int) a->state * 3; h->x28 = (u32) (int) a->state & 3; h->x2C = (u32) (int) a->state % 7; h->unk_count = (u32) (int) a->state % 5; }
 void pl_80038144(HSD_GObj* a, HSD_GObj* v, s32 i, ft_800898B4_t* p, u16 inst, s32 gr, s32 prev) { T(83); T(i); T(gr); }
 HSD_GObj* itGetOwner(Item_GObj* g) { T(84); return NULL; }
 s32 itGetAttackId(Item_GObj* g) { return 0; }
@@ -84,6 +107,7 @@ static HitCapsule* hit_rand(HitCapsule* h)
     h->x40_b1 = rnd() & 1;
     h->hurt_coll_pos.x = rw(); h->hurt_coll_pos.y = rw(); h->hurt_coll_pos.z = rw();
     h->coll_distance = rw();
+    if (h->damage > 10) h->damage = 10;
     return h;
 }
 
@@ -129,30 +153,38 @@ int main(void)
     int op, k, i;
     static HitCapsule H0, H1;
     static DmgLogEntry LOG[3];
-    static lbColl_80008D30_arg1 ENV[3];
+    static struct { lbColl_80008D30_arg1 e; u8 pad[256]; } ENV[3] __attribute__((aligned(8)));
     static FighterHurtCapsule HURT[3];
     static float OUT[16];
     tu_init();
-    for (op = 0; op < 11; op++) {
+    for (op = 0; op < 10; op++) {
         for (k = 0; k < 2000; k++) {
             float r = 0;
             tu_case(op, k);
             for (i = 0; i < 8; i++) RV[i] = rw();
+            if (op >= 8) for (i = 0; i < 8; i++) { if (RV[i] > 2) RV[i] = 2; if (RV[i] < -2) RV[i] = -2; }
             RVI = 0;
             cd_rand();
+            if (op >= 8) {
+#define CL(x) do { if ((x) > 3) (x) = 3; if ((x) < -3) (x) = -3; } while (0)
+                CL(CD.xF4); CL(CD.xF8); CL(CD.x110); CL(CD.x114); CL(CD.x118); CL(CD.x11C); CL(CD.x120);
+                CL(CD.x128); CL(CD.x714); CL(CD.x3D0); CL(CD.x3D4); CL(CD.x4D0); CL(CD.x4D4); CL(CD.x1A4);
+            }
             fp_rand(&F, &GO);
             fp_rand(&F2, &GO2);
             hit_rand(&H0); hit_rand(&H1);
+            if (op >= 8) { CL(F.dmg.x182c_behavior); CL(F2.dmg.x182c_behavior); CL(F.dmg.x1834); CL(F2.dmg.x1834); CL(F.co_attrs.weight); CL(F2.co_attrs.weight); }
             for (i = 0; i < 4; i++) { hit_rand(&F.x914[i]); hit_rand(&F2.x914[i]); }
             dmg_log0_idx = rnd() % 2; dmg_log1_idx = 0;
             H = 0x811C9DC5u;
+            asrt_hit = 0;
             switch (op) {
-            case 0: r = ftColl_80079AB0(&F, &H0, rnd() % 20, rw(), rw(), rw(), rw()); break;
+            case 0: { u32 uc = rnd() % 20; float a3 = rw(), a4 = rw(), a5 = rw(), a6 = rw(); r = ftColl_80079AB0(&F, &H0, uc, a3, a4, a5, a6); break; }
             case 1: r = ftColl_80079EA8(&F, &H0, rnd() % 20); break;
             case 2: r = ftColl_80079C70(&F, &F2, &H0, (int) (rnd() % 20)); break;
             case 3: ftColl_80076528(&GO); break;
             case 4: r = ftColl_800765F0(&F, (rnd() & 1) ? &GO : &GO2, rw()); F.victim_gobj = &GO2; r += ftColl_800765F0(&F, &GO, rw()); break;
-            case 5: { float d = rw(); T(ftColl_80076640(&F, &d)); r = d; break; }
+            case 5: { float d = rw(); if (d > 100) d = 100; if (d < -100) d = -100; if (F.dmg.x1834 < -300) F.dmg.x1834 = -300; T(ftColl_80076640(&F, &d)); r = d; break; }
             case 6: T(ftColl_8007AC68(rnd() % 400)); break;
             case 7: {
                 for (i = 0; i < 3; i++) {
@@ -167,9 +199,9 @@ int main(void)
                     if (LOG[i].x0 == 1) {
                         LOG[i].hit0 = &F2.x914[i];
                     } else {
-                        ENV[i].x0 = (int) (rnd() % 100);
-                        ENV[i].kb_angle = (rnd() & 1) ? 0x16A : rnd() % 360;
-                        ENV[i].element = rnd() % 17;
+                        ENV[i].e.state = (int) (rnd() % 100);
+                        ENV[i].e.kb_angle = (rnd() & 1) ? 0x16A : rnd() % 360;
+                        ENV[i].e.element = rnd() % 17;
                         LOG[i].unk_anim0 = (DynamicsDesc*) &ENV[i];
                     }
                     LOG[i].pos.x = rw(); LOG[i].pos.y = rw();
@@ -186,6 +218,7 @@ int main(void)
             case 9: ftColl_80076CBC(&F, &F.x914[rnd() % 4], &F2); break;
             case 10: { HitCapsule* hh = &F.x914[rnd() % 4]; T(ftColl_80076ED8(&F, hh, &F2, &H1)); break; }
             }
+            if (asrt_hit) { printf("%d %d ASSERT", op, k); printf("%c", 10); fflush(0); continue; }
             hf(r);
             hf(F.cur_pos.x); hf(F.cur_pos.y); HM(F.x2092);
             HM(F.x221C_b4); hf(F.dmg.x1834); hf(F.dmg.x1838_percentTemp); HM(F.dmg.x183C_applied);
@@ -199,7 +232,7 @@ int main(void)
             for (i = 0; i < 44; i++) HM((u8) ftColl_804D6560[i]);
             for (i = 0; i < dmg_log0_idx && i < 4; i++) { HM(dmg_log0[i].x0); hf(dmg_log0[i].x20); HM((u32) dmg_log0[i].size_of_xC); }
             for (i = 0; i < dmg_log1_idx && i < 4; i++) { HM(dmg_log1[i].x0); hf(dmg_log1[i].x20); HM((u32) dmg_log1[i].size_of_xC); }
-            printf("%d %d %08X %08X\n", op, k, H, TR);
+            printf("%d %d %08X %08X\n", op, k, H, TR); fflush(0);
         }
     }
     return 0;

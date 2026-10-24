@@ -30,7 +30,7 @@ pub mod ext {
         fn_800D2818(fp: &mut Fighter) -> bool = |fp: &mut Fighter| -> bool { unsafe { crate::tu::ft_0d27::fn_800d2818(fp as _) as _ } };
         fn_800D2BF8(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_0d27::fn_800d2bf8(g as _); } };
         ftCo_800D2770(g: G, s: f32) = |g: G, s: f32| { unsafe { let _ = crate::tu::ft_0d27::ftco_800d2770(g as _, s as _); } };
-        ftCommon_8007E2FC(g: G) = |_| todo!("TODO(port) ftCommon_8007E2FC (ftcommon.c)");
+        ftCommon_8007E2FC(g: G) = |g: G| { unsafe { let _ = crate::ftcommon2::ftcommon_8007e2fc(&mut *(g as *mut _)); } };
         ft_8008A324(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_08a1::ft_8008A324(g as _); } };
         fn_800D2B30(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_0d27::fn_800d2b30(g as _); } };
         fn_800D2890(g: G, id: i32) = |g: G, id: i32| { unsafe { let _ = crate::tu::ft_0d27::fn_800d2890(g as _, id as _); } };

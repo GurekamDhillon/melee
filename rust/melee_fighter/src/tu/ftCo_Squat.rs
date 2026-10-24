@@ -37,7 +37,7 @@ pub mod ext {
         ftCommon_8007EFC0(f: &mut Fighter, val: u32) = |f: &mut Fighter, val: u32| { unsafe { let _ = crate::ftcommon2::ftcommon_8007efc0(f as _, val as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCo_800D638C(g: G) = crate::tu::ftCo_SquatWait::ftCo_800D638C;
-        mpColl_IsOnPlatform(coll: &mut CollData) -> bool = |_| todo!("TODO(port) mpColl_IsOnPlatform (mpcoll.c)");
+        mpColl_IsOnPlatform(coll: &mut CollData) -> bool = |coll: &mut CollData| -> bool { unsafe { (melee_world::tu::mpcoll::mpColl_IsOnPlatform(coll as *mut _ as *mut _) != 0 as _) } };
         ftCo_8009A228(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Pass::ftCo_8009A228(g as _); } };
         ftCo_SpecialS_CheckInput(g: G) -> bool = crate::tu::ftCo_SpecialS::ftCo_SpecialS_CheckInput;
         ftCo_Attack100_CheckInput(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_Attack100_CheckInput;

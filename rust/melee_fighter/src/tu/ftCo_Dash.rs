@@ -38,7 +38,7 @@ pub mod ext {
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftCommon_800804A0(fp: &mut Fighter, v: f32) = crate::ftcommon2::ftcommon_800804a0;
-        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("TODO(port) ft_PlaySFX (ft_0881.c)");
+        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |fp: &mut Fighter, id: i32, vol: u8, pan: u8| { unsafe { let _ = crate::ft0877::play_sfx(fp, id as _, vol as _, pan as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;
         ftCo_SpecialS_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_SpecialS::ftCo_SpecialS_CheckInput(g as _) as _ } };
@@ -55,7 +55,7 @@ pub mod ext {
         ftCo_800DE9D8(g: G) -> bool = crate::tu::ftCo_AppealS::ftCo_800DE9D8;
         fn_800CAF78(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Jump::fn_800CAF78(g as _) as _ } };
         fn_800CA5F0(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Run::fn_800CA5F0(g as _) as _ } };
-        ft_GetGroundFrictionMultiplier(fp: &mut Fighter) -> f32 = |_| todo!("TODO(port) ft_GetGroundFrictionMultiplier (ft_081B.c)");
+        ft_GetGroundFrictionMultiplier(fp: &mut Fighter) -> f32 = |fp: &mut Fighter| -> f32 { unsafe { crate::tu::ft_081b::ft_get_ground_friction_multiplier(fp) } };
         ftCommon_CalcGroundAccel_DashRun(fp: &mut Fighter, accel: f32, target: f32, friction: f32) = crate::ftcommon::calc_ground_accel_dash_run;
         ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |g| crate::ftcommon::set_self_movement_from_grounded_movement(super::fp(g));
         ft_800844EC(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_800844ec(g as _); } };

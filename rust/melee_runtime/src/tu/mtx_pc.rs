@@ -69,6 +69,49 @@ pub mod raw {
         let r = mtx::concat(&rd(a), &rd(b));
         ab.cast::<Mtx>().write(r);
     }
+    /// `PSMTXTrans(m, x, y, z)`.
+    pub unsafe fn PSMTXTrans(m: *mut [f32; 4], x: f32, y: f32, z: f32) {
+        m.cast::<Mtx>().write(mtx::trans(x, y, z));
+    }
+    /// `PSMTXTranspose(src, xPose)` (the 3x3 part; the translation column is cleared).
+    pub unsafe fn PSMTXTranspose(src: *mut [f32; 4], x_pose: *mut [f32; 4]) {
+        let r = mtx::transpose(&rd(src));
+        x_pose.cast::<Mtx>().write(r);
+    }
+    /// `PSMTXQuat(m, q)`.
+    pub unsafe fn PSMTXQuat(m: *mut [f32; 4], q: *mut melee_types::Quaternion) {
+        let q = mtx::Quaternion { x: (*q).x, y: (*q).y, z: (*q).z, w: (*q).w };
+        m.cast::<Mtx>().write(mtx::quat(&q));
+    }
+    /// `mtx_rot_trig(m, axis, sinA, cosA)` (static in the C; an unknown axis leaves `m` alone).
+    pub unsafe fn mtx_rot_trig(m: *mut [f32; 4], axis: i8, sin_a: f32, cos_a: f32) {
+        let mut t = rd(m);
+        mtx::rot_trig(&mut t, axis as u8, sin_a, cos_a);
+        m.cast::<Mtx>().write(t);
+    }
+    /// `PSVECNormalize(vec1, dst)`.
+    pub unsafe fn PSVECNormalize(vec1: *mut Vec, dst: *mut Vec) {
+        let r = mtx::vec_normalize(&v3(vec1));
+        put(dst, r);
+    }
+    /// `PSVECMag(v)`.
+    pub unsafe fn PSVECMag(v: *mut Vec) -> f32 {
+        mtx::vec_mag(&v3(v))
+    }
+    /// `PSVECDotProduct(vec1, vec2)`.
+    pub unsafe fn PSVECDotProduct(vec1: *mut Vec, vec2: *mut Vec) -> f32 {
+        mtx::vec_dot(&v3(vec1), &v3(vec2))
+    }
+    /// `C_MTXLookAt(m, camPos, camUp, target)`.
+    pub unsafe fn C_MTXLookAt(m: *mut [f32; 4], cam_pos: *mut Vec, cam_up: *mut Vec, target: *mut Vec) {
+        m.cast::<Mtx>().write(mtx::look_at(&v3(cam_pos), &v3(cam_up), &v3(target)));
+    }
+    /// `MTXLightOrtho(m, t, b, l, r, scaleS, scaleT, transS, transT)`.
+    pub unsafe fn MTXLightOrtho(
+        m: *mut [f32; 4], t: f32, b: f32, l: f32, r: f32, scale_s: f32, scale_t: f32, trans_s: f32, trans_t: f32,
+    ) {
+        m.cast::<Mtx>().write(mtx::light_ortho(t, b, l, r, scale_s, scale_t, trans_s, trans_t));
+    }
     /// `MTXLightPerspective(m, fovY, aspect, scaleS, scaleT, transS, transT)`.
     pub unsafe fn MTXLightPerspective(
         m: *mut [f32; 4], fov_y: f32, aspect: f32, scale_s: f32, scale_t: f32, trans_s: f32, trans_t: f32,

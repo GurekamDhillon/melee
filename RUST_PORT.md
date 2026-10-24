@@ -933,3 +933,18 @@ told apart from unfused ones through the f32 result.
   recursive targets are genuine tree walks). 149 rewired names also have another port; the clear pure duplicates (7 legacy melee_modes
   ports, 1 melee_fighter port) now forward to the TU port; the rest differ in signature (`efSync_Spawn`, `efAsync_Spawn`, ...) and stay.
 - `docs/rust-port/missing.md` lists every remaining panicking stub with its NO_PORT / SIGNATURE / CYCLE tag.
+
+## melee_fighter stub fill (port/fill-melee_fighter, 2026-10-24)
+
+Stub names in `docs/rust-port/missing.md` for melee_fighter: NO_PORT 276 -> ~71, SIGNATURE 302 -> ~55, CYCLE 188 -> ~151 left.
+- New ports with C oracles: `tu/ftcoll.rs` (ftcoll.c; ops 0-9 = ftColl_80079AB0/80079EA8/80079C70/80076528/800765F0/80076640/8007AC68/8007A06C/8007699C/80076CBC,
+  20000 cases, `tests/tu_ftcoll.rs`; ftColl_80076ED8 is ported but its C driver crashes on the stubbed callees, so unverified), `tu/ftCo_0A01.rs`
+  (CPU stick/trigger/buttons, IsCpuControlled, 800A0DA4; 18000 cases).
+- `platform.rs`: the pc/platform layer (replay, snap, rollback, m-ex dispatch tables, Geno registry, UCF history, settings) in its
+  default configuration, hook-overridable; no oracle (read off the C). `bridge.rs`: native-pointer adapters over runtime baselib math and
+  C-callback trampolines. `chardata.rs`: kirby/koopa/yoshi attribute accessors moved down from melee_chara (chara still has its copies).
+  `rng.rs`: global HSD rand state.
+- Left: GX calls (ftafterimage), ftParts/ftCo_09F4/ftCo_800B3900 (CPU AI, JObj class setup), Camera/efAsync/GObj world calls, ScriptGame_*/Geno_*/gm_* (state
+  lives in melee_modes), ftMh/ftCh/ftSs/ftKb chara functions that need chara internals.
+- Oracle drivers: `__assert` no longer hangs (`asrt_hit`), `-Wl,/force:unresolved` link; clang evaluates call arguments right to left in some cases
+  (see tests/tu_ftcoll.rs), mirror it in test fills.

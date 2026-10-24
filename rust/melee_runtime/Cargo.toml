@@ -37,3 +37,15 @@ harness = false
 [[test]]
 name = "tu_objalloc"
 harness = false
+
+[[test]]
+name = "tu_mtx"
+harness = false
+
+[[test]]
+name = "tu_object"
+harness = false
+
+[[test]]
+name = "tu_archive"
+harness = false

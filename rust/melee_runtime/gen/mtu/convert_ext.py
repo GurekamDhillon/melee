@@ -15,7 +15,16 @@ if "// BEGIN GENERATED EXT" in txt:
 else:
     m = re.search(r"(?m)^(\s*)pub mod ext\s*\{", txt)
     if not m:
-        raise SystemExit("no ext module")
+        NL = chr(10)
+        ls = txt.split(NL)
+        last = max(i for i, l in enumerate(ls[:40]) if l.startswith("use ") or l.startswith("pub use "))
+        # a multi-line use: advance to its terminating ';'
+        while not ls[last].rstrip().endswith(";"):
+            last += 1
+        ls.insert(last + 1, "// BEGIN GENERATED EXT" + NL + "// END GENERATED EXT")
+        p.write_text(NL.join(ls), encoding="utf-8", newline=NL)
+        print("no ext module: markers inserted after line", last + 1)
+        raise SystemExit(0)
     i = m.end(); d = 1
     while d:
         c = txt[i]

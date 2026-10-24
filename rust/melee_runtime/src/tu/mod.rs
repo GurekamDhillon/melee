@@ -17,3 +17,10 @@ pub mod mobj;
 pub mod dobj;
 pub mod pobj;
 pub mod displayfunc;
+pub mod lbtime;
+#[allow(non_snake_case)]
+pub mod lb_00CE;
+pub mod lbtrigf;
+pub mod lbvector;
+#[allow(non_snake_case)]
+pub mod lb_00B0;

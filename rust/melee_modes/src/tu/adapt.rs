@@ -317,7 +317,6 @@ pub fn gm_ModeState_Prize_OnExit__253ddf(a0: *mut GameModeState) { unsafe { crat
 pub fn HSD_MemAlloc__c2b3bc(a0: i32) -> *mut c_void { unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0) } }
 pub fn HSD_SisLib_803A5CC4__6c7e38(a0: *mut HSD_Text) { unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A5CC4(a0) } }
 pub fn HSD_SisLib_803A6754__02fb41(a0: i32, a1: i32) -> *mut HSD_Text { unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6754(a0, a1) } }
-pub fn HSD_SisLib_803A74F0__d8e5f3(a0: *mut HSD_Text, a1: i32, a2: *mut GXColor) { unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A74F0(a0, a1, a2 as _) } }
 pub fn HSD_SisLib_SetWideCanvas__9bb4fb(a0: i32, a1: i32) { unsafe { melee_runtime::tu::sislib::HSD_SisLib_SetWideCanvas(a0, a1) } }
 pub fn gmMainLib_GetGamePrefs__12f16c() -> *mut GamePrefs { unsafe { crate::tu::gmmain_lib::gmMainLib_GetGamePrefs() } }
 pub fn gmMainLib_GetGameRules__34f6cb() -> *mut GameRules { unsafe { crate::tu::gmmain_lib::gmMainLib_GetGameRules() } }

@@ -54,7 +54,7 @@ pub mod ext {
     fn HSD_SisLib_803A6530(a0: i32, a1: i32, a2: i32) -> *mut u8 = |a0: i32, a1: i32, a2: i32| unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6530(a0 as _, a1 as _, a2 as _) as _ };
     fn HSD_SisLib_803A660C(a0: i32, a1: i32, a2: i32) = |a0: i32, a1: i32, a2: i32| { unsafe { let _ = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A660C(a0 as _, a1 as _, a2 as _); } };
     fn HSD_SisLib_803A6754(a0: i32, a1: i32) -> *mut HSD_Text = |a0: i32, a1: i32| unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6754(a0 as _, a1 as _) as _ };
-    fn HSD_SisLib_803A6B98(a0: *mut HSD_Text, a1: f32, a2: f32, a3: *const u8) -> i32;
+    fn HSD_SisLib_803A6B98(a0: *mut HSD_Text, a1: f32, a2: f32, a3: *const u8) -> i32 = |a0: *mut HSD_Text, a1: f32, a2: f32, a3: *const u8| { unsafe { let s = String::from_utf8_lossy(&melee_runtime::cformat::c_format(a3 as *const i8, &[])).into_owned(); melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98(a0, a1, a2, if a3.is_null() { None } else { Some(&s) }) } };
     fn HSD_SisLib_803A7664(a0: *mut HSD_Text) = |a0: *mut HSD_Text| { unsafe { let _ = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A7664(a0 as _); } };
     fn Toy_803063D4(a0: i32, a1: i32, a2: i32) -> i32;
     fn Toy_803124BC();
@@ -64,7 +64,7 @@ pub mod ext {
     fn gm_801692E8(a0: u32, a1: *mut datetime);
     fn gm_801A4B60();
     fn gm_GetButtonsTriggered(a0: u8) -> u64;
-    fn lbArchive_80016DBC(a0: *const u8, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]) -> *mut HSD_Archive;
+    fn lbArchive_80016DBC(a0: *const u8, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]) -> *mut HSD_Archive = |a0: *const u8, a1: *mut c_void, a2: *const u8, rest: &[(*mut c_void, *const u8)]| { unsafe { let v: std::vec::Vec<*mut core::ffi::c_void> = std::vec![a1 as *mut core::ffi::c_void, a2 as *mut core::ffi::c_void, core::ptr::null_mut()]; melee_runtime::tu::lbarchive::lbArchive_80016DBC(a0 as _, &v) as _ } };
     fn lbArchive_80016EFC(a0: *mut HSD_Archive) = |a0: *mut HSD_Archive| { unsafe { let _ = melee_runtime::tu::lbarchive::lbArchive_80016EFC(a0 as _); } };
     fn lbAudioAx_800236DC() -> i32 = || unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800236DC() as _ };
     fn lbAudioAx_80023F28(a0: i32) -> i32 = |a0: i32| unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023F28(a0 as _) as _ };

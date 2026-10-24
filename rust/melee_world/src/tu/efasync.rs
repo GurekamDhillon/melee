@@ -149,7 +149,7 @@ pub mod ext {
     pub unsafe fn HSD_ObjFree(_d: *mut HSD_ObjAllocData, _p: *mut c_void) { { unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjFree(_d as _, _p as _); } return; } }
     pub unsafe fn HSD_ObjAllocInit(_d: *mut HSD_ObjAllocData, _size: u32, _align: u32) { { unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjAllocInit(_d as _, _size as _, _align as _); } return; } }
     /// The global `HSD_GObj_CurrentInvokedProc` (gobj.c).
-    pub unsafe fn HSD_GObj_CurrentInvokedProc() -> *mut HSD_GObjProc { panic!("TODO(group1 gobj) HSD_GObj_CurrentInvokedProc") }
+    pub unsafe fn HSD_GObj_CurrentInvokedProc() -> *mut HSD_GObjProc { unsafe { melee_runtime::tu::gobj_native::HSD_GObj_CurrentInvokedProc } }
     pub unsafe fn lbDvd_800178E8(_a: i32, _name: *const c_char, _b: i32, _c: i32, _d: i32, _e: i32, _f: i32, _g: u8, _idx: i32) { { unsafe { let _ = melee_runtime::tu::lbdvd::lbDvd_800178E8(_a as _, _name as _, _b as _, _c as _, _d as _, _e as _, _f as _, _g as _, _idx as _); } return; } }
     pub unsafe fn lbArchive_InitializeDAT(_ar: *mut c_void, _data: *mut u8, _len: u32) { { unsafe { let _ = melee_runtime::tu::lbarchive::lbArchive_InitializeDAT(_ar as _, _data as _, _len as _); } return; } }
     /// `lbArchive_80017040(dst, filename, &out, symbol, 0)`: one (out, symbol) pair.

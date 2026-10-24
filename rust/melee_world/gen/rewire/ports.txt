@@ -593,3 +593,17 @@ HSD_SisLib_803A6B98/5 = - | expr:unsafe { let s = String::from_utf8_lossy(&melee
 HSD_SisLib_803A6B98/7 = - | expr:unsafe { let s = String::from_utf8_lossy(&melee_runtime::cformat::c_format({3}, &[melee_runtime::cformat::PrintfArg::Int({4} as i32), melee_runtime::cformat::PrintfArg::Int({5} as i32), melee_runtime::cformat::PrintfArg::Int({6} as i32)])).into_owned(); melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98({0}, {1}, {2}, if {3}.is_null() { None } else { Some(&s) }) }
 HSD_SisLib_803A70A0/4 = - | expr:unsafe { let args: std::vec::Vec<melee_runtime::cformat::PrintfArg> = {3}.iter().map(|x| melee_runtime::cformat::PrintfArg::Int(*x as i32)).collect(); let s = String::from_utf8_lossy(&melee_runtime::cformat::c_format({2}, &args)).into_owned(); melee_runtime::tu::hsd_3A64::HSD_SisLib_803A70A0({0}, {1}, if {2}.is_null() { None } else { Some(&s) }) }
 HSD_SisLib_803A6B98/5:::::&[i32] = - | expr:unsafe { let args: std::vec::Vec<melee_runtime::cformat::PrintfArg> = {4}.iter().map(|x| melee_runtime::cformat::PrintfArg::Int(*x as i32)).collect(); let s = String::from_utf8_lossy(&melee_runtime::cformat::c_format({3}, &args)).into_owned(); melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98({0}, {1}, {2}, if {3}.is_null() { None } else { Some(&s) }) }
+# --- gobj.c / ground.c / controller.c / sislib.c globals reached through accessor stubs
+HSD_GObjPLinkHead/1:usize = - | expr:unsafe { *melee_runtime::tu::gobj_native::HSD_GObjPLinkHead.add({0}) }
+HSD_GObjPLinkHead/1:i32 = - | expr:unsafe { *melee_runtime::tu::gobj_native::HSD_GObjPLinkHead.add({0} as usize) }
+HSD_GObj_JObjKind = - | expr:unsafe { melee_runtime::tu::gobj_native::HSD_GObj_JObjKind }
+HSD_GObj_CurrentInvokedProc = - | expr:unsafe { melee_runtime::tu::gobj_native::HSD_GObj_CurrentInvokedProc }
+stage_info = - | expr:unsafe { core::ptr::addr_of_mut!(crate::tu::ground::stage_info) }
+todo_stage_info = - | expr:unsafe { core::ptr::addr_of_mut!(crate::tu::ground::stage_info) }
+HSD_PadMasterStatus = - | expr:unsafe { melee_runtime::tu::controller::HSD_PadMasterStatus.as_mut_ptr() }
+todo_HSD_PadMasterStatus = - | expr:unsafe { melee_runtime::tu::controller::HSD_PadMasterStatus.as_mut_ptr() }
+HSD_SisLib_804D1124 = - | expr:unsafe { melee_runtime::tu::sislib::HSD_SisLib_804D1124.as_mut_ptr() }
+Ground_801C498C = crate::tu::ground::Ground_801C498C
+lbShadow_8000E9F0 = - | expr:unsafe { melee_runtime::tu::lbshadow::lbShadow_8000E9F0(&mut *{0}, &*{1}, {2}); }
+lbArchive_80016DBC/4 = - | expr:unsafe { let v: std::vec::Vec<*mut core::ffi::c_void> = std::vec![{1} as *mut core::ffi::c_void, {2} as *mut core::ffi::c_void, core::ptr::null_mut()]; melee_runtime::tu::lbarchive::lbArchive_80016DBC({0} as _, &v) as _ }
+HSD_SisLib_803A6B98/4 = - | expr:unsafe { let s = String::from_utf8_lossy(&melee_runtime::cformat::c_format({3} as *const i8, &[])).into_owned(); melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98({0}, {1}, {2}, if {3}.is_null() { None } else { Some(&s) }) }

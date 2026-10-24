@@ -20,7 +20,7 @@ pub mod ext {
 
     hook!(HSD_JOBJSETUPMATRIXSUB, HSD_JObjSetupMatrixSub, (jobj: *mut HSD_JObj));
     // The C global `stage_info` (gr/ground.c, 49E6C8): its address.
-    hook!(STAGE_INFO, stage_info, () -> *mut StageInfo);
+    hook_or!(STAGE_INFO, stage_info, () -> *mut StageInfo, || unsafe { core::ptr::addr_of_mut!(crate::tu::ground::stage_info) });
 }
 
 /// `HSD_ASSERT(line, cond)` (the string is what the C prints).

@@ -49,8 +49,8 @@ pub mod ext {
     pub type G = *mut HSD_GObj;
     pub type J = *mut HSD_JObj;
     pub type Gen = *mut HSD_Generator;
-    pub fn HSD_GObjPLinkHead(_i: usize) -> G { todo!("HSD_GObjPLinkHead (baselib/gobj.c)") }
-    pub fn HSD_GObj_JObjKind() -> u8 { todo!("HSD_GObj_JObjKind (baselib/gobj.c)") }
+    pub fn HSD_GObjPLinkHead(_i: usize) -> G { unsafe { *melee_runtime::tu::gobj_native::HSD_GObjPLinkHead.add(_i) } }
+    pub fn HSD_GObj_JObjKind() -> u8 { unsafe { melee_runtime::tu::gobj_native::HSD_GObj_JObjKind } }
     pub fn efAsync_DatEntries_data(_bank: i32) -> *mut core::ffi::c_void { todo!("efAsync_DatEntries (ef/efasync.c)") }
     pub fn efAsync_DatEntries_clear() { todo!("efAsync_DatEntries (ef/efasync.c)") }
     pub fn efAsync_QueueInit() { todo!("efAsync_QueueInit (ef/efasync.c)") }

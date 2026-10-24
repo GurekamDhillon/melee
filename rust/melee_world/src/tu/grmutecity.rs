@@ -57,7 +57,7 @@ pub mod ext {
     fn Ground_801C3BB4() = || { unsafe { let _ = crate::tu::ground::Ground_801C3BB4(); } };
     fn Ground_801C3F20(a0: *mut HSD_JObj) -> f32 = |a0: *mut HSD_JObj| unsafe { crate::tu::ground::Ground_801C3F20(a0 as _) as _ };
     fn Ground_801C3FA4(a0: *mut HSD_GObj, a1: i32) -> *mut HSD_JObj = |a0: *mut HSD_GObj, a1: i32| unsafe { crate::tu::ground::Ground_801C3FA4(a0 as _, a1 as _) as _ };
-    fn Ground_801C498C() -> *mut HSD_GObj;
+    fn Ground_801C498C() -> *mut HSD_GObj = || unsafe { crate::tu::ground::Ground_801C498C() as _ };
     fn Ground_801C53EC(a0: u32) = |a0: u32| { unsafe { let _ = crate::tu::ground::Ground_801C53EC(a0 as _); } };
     fn Ground_801C5440(a0: *mut Ground, a1: i32, a2: u32) = |a0: *mut Ground, a1: i32, a2: u32| { unsafe { let _ = crate::tu::ground::Ground_801C5440(a0 as _, a1 as _, a2 as _); } };
     fn Ground_801C5630(a0: *mut Ground, a1: i32, a2: f32) = |a0: *mut Ground, a1: i32, a2: f32| { unsafe { let _ = crate::tu::ground::Ground_801C5630(a0 as _, a1 as _, a2 as _); } };
@@ -113,7 +113,7 @@ pub mod ext {
     fn grMaterial_801C9604(a0: *mut HSD_GObj, a1: *mut c_void, a2: i32) = |a0: *mut HSD_GObj, a1: *mut c_void, a2: i32| unsafe { crate::tu::grmaterial::grMaterial_801C9604(a0 as _, a1 as _, a2 != 0) };
     fn grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj = |a0: *mut grZakoGenerator_SpawnDesc| unsafe { crate::tu::grzakogenerator::grZakoGenerator_801CAE04(a0 as _) as _ };
     fn lbAudioAx_80024D78(a0: i32) = |a0: i32| { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024D78(a0 as _); } };
-    fn lbShadow_8000E9F0(a0: *mut Vec, a1: *mut HSD_Spline, a2: f32);
+    fn lbShadow_8000E9F0(a0: *mut Vec, a1: *mut HSD_Spline, a2: f32) = |a0: *mut Vec, a1: *mut HSD_Spline, a2: f32| { unsafe { melee_runtime::tu::lbshadow::lbShadow_8000E9F0(&mut *a0, &*a1, a2); } };
     fn lbVector_Add(a0: *mut Vec, a1: *mut Vec) -> *mut Vec = |a0: *mut Vec, a1: *mut Vec| unsafe { melee_runtime::tu::lbvector::lbVector_Add(a0 as _, a1 as _) as _ };
     fn lbVector_Diff(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec = |a0: *mut Vec, a1: *mut Vec, a2: *mut Vec| unsafe { melee_runtime::tu::lbvector::lbVector_Diff(a0 as _, a1 as _, a2 as _) as _ };
     fn lbVector_Normalize(a0: *mut Vec) -> f32 = |a0: *mut Vec| unsafe { melee_runtime::tu::lbvector::lbVector_Normalize(a0 as _) as _ };

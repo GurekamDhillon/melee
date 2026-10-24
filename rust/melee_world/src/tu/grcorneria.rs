@@ -275,7 +275,7 @@ pub mod ext {
         match unsafe { HSD_ARCHIVEGETPUBLICADDRESS } { Some(f) => f(a0, a1), None => { return unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(a0 as _, a1 as _) as _ }; } }
     }
     hook_or!(HSD_GOBJGXLINK_80390908, HSD_GObjGXLink_80390908, (a0: *mut HSD_GObj, gx_link: u8, priority: u8), |a0: *mut HSD_GObj, gx_link: u8, priority: u8| { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObjGXLink_80390908(a0 as _, gx_link as _, priority as _); } });
-    hook!(HSD_GOBJPLINKHEAD, HSD_GObjPLinkHead, (link: i32) -> *mut HSD_GObj);
+    hook_or!(HSD_GOBJPLINKHEAD, HSD_GObjPLinkHead, (link: i32) -> *mut HSD_GObj, |link: i32| unsafe { *melee_runtime::tu::gobj_native::HSD_GObjPLinkHead.add(link as usize) });
     hook_or!(HSD_GOBJ_SETUPPROC, HSD_GObj_SetupProc, (a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc, |a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8| unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(a0 as _, a1 as _, a2 as _) as _ });
     hook!(HSD_JOBJANIMALL, HSD_JObjAnimAll, (a0: *mut HSD_JObj));
     hook_or!(HSD_JOBJCLEARFLAGS, HSD_JObjClearFlags, (a0: *mut HSD_JObj, flags: u32), |a0: *mut HSD_JObj, flags: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjClearFlags(a0 as _, flags as _); } });
@@ -283,7 +283,7 @@ pub mod ext {
     hook!(HSD_JOBJREMOVEANIMALL, HSD_JObjRemoveAnimAll, (a0: *mut HSD_JObj));
     hook_or!(HSD_JOBJSETFLAGS, HSD_JObjSetFlags, (a0: *mut HSD_JObj, flags: u32), |a0: *mut HSD_JObj, flags: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetFlags(a0 as _, flags as _); } });
     hook_or!(HSD_JOBJSETFLAGSALL, HSD_JObjSetFlagsAll, (a0: *mut HSD_JObj, flags: u32), |a0: *mut HSD_JObj, flags: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetFlagsAll(a0 as _, flags as _); } });
-    hook!(HSD_PADMASTERSTATUS, HSD_PadMasterStatus, () -> *mut HSD_PadStatus);
+    hook_or!(HSD_PADMASTERSTATUS, HSD_PadMasterStatus, () -> *mut HSD_PadStatus, || unsafe { melee_runtime::tu::controller::HSD_PadMasterStatus.as_mut_ptr() });
     hook_or!(HSD_RANDF, HSD_Randf, () -> f32, || melee_runtime::tu::random::HSD_Randf(melee_runtime::tu::globals::rand()));
     hook_or!(HSD_RANDI, HSD_Randi, (max_val: s32) -> s32, |max_val: s32| melee_runtime::tu::random::HSD_Randi(melee_runtime::tu::globals::rand(), max_val));
     pub static mut HSD_SISLIB_803A5ACC: Option<fn(i32, i32, f32, f32, f32, f32, f32) -> *mut HSD_Text> = None;
@@ -306,7 +306,7 @@ pub mod ext {
     pub fn HSD_SisLib_803A6368(a0: *mut HSD_Text, a1: i32) {
         match unsafe { HSD_SISLIB_803A6368 } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A6368(a0 as _, a1 as _); } return; } }
     }
-    hook!(HSD_SISLIB_804D1124, HSD_SisLib_804D1124, () -> *mut *mut SIS);
+    hook_or!(HSD_SISLIB_804D1124, HSD_SisLib_804D1124, () -> *mut *mut SIS, || unsafe { melee_runtime::tu::sislib::HSD_SisLib_804D1124.as_mut_ptr() });
     hook!(HSD_8039D580, hsd_8039D580, (a0: *mut HSD_JObj));
     pub static mut IFSTATUS_802F6898: Option<fn()> = None;
     #[allow(non_snake_case)]

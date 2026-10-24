@@ -273,7 +273,7 @@ pub mod ext {
         match unsafe { MPLIB_80057BC0 } { Some(f) => f(joint_id), None => { unsafe { let _ = crate::tu::mplib::mpLib_80057BC0(joint_id as _); } return; } }
     }
     /// The head of the ground gobj link (`HSD_GObjPLinkHead[HSD_GOBJ_PLINK_GROUND]`, a global of gobj.c).
-    hook!(HSD_GOBJPLINKHEAD, HSD_GObjPLinkHead, (link: i32) -> *mut HSD_GObj);
+    hook_or!(HSD_GOBJPLINKHEAD, HSD_GObjPLinkHead, (link: i32) -> *mut HSD_GObj, |link: i32| unsafe { *melee_runtime::tu::gobj_native::HSD_GObjPLinkHead.add(link as usize) });
     /// `grDisplay_801C5DB0` is only ever passed as a render callback (its address is the argument).
     pub static mut GRDISPLAY_801C5DB0: Option<fn(*mut HSD_GObj, i32)> = None;
     /// Called by `grCastle_801D0520` and passed as a render callback (its address is the argument).

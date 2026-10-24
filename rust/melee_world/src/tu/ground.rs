@@ -181,7 +181,7 @@ pub mod ext {
     fn lbAudioAx_80024B1C(a0: i32, a1: i32) = |a0: i32, a1: i32| { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024B1C(a0 as _, a1 as _); } };
     fn lbAudioAx_80024B58(a0: i32, a1: i32) = |a0: i32, a1: i32| { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024B58(a0 as _, a1 as _); } };
     fn lbDvd_800178E8(a0: i32, a1: *const i8, a2: i32, a3: i32, a4: i32, a5: i32, a6: i32, a7: u8, a8: i32) = |a0: i32, a1: *const i8, a2: i32, a3: i32, a4: i32, a5: i32, a6: i32, a7: u8, a8: i32| { unsafe { let _ = melee_runtime::tu::lbdvd::lbDvd_800178E8(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _, a7 as _, a8 as _); } };
-    fn lbShadow_8000E9F0(a0: *mut Vec, a1: *mut HSD_Spline, a2: f32);
+    fn lbShadow_8000E9F0(a0: *mut Vec, a1: *mut HSD_Spline, a2: f32) = |a0: *mut Vec, a1: *mut HSD_Spline, a2: f32| { unsafe { melee_runtime::tu::lbshadow::lbShadow_8000E9F0(&mut *a0, &*a1, a2); } };
     fn lbVector_Add(a0: *mut Vec, a1: *mut Vec) -> *mut Vec = |a0: *mut Vec, a1: *mut Vec| unsafe { melee_runtime::tu::lbvector::lbVector_Add(a0 as _, a1 as _) as _ };
     fn lbVector_CrossprodNormalized(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec = |a0: *mut Vec, a1: *mut Vec, a2: *mut Vec| unsafe { melee_runtime::tu::lbvector::lbVector_CrossprodNormalized(a0 as _, a1 as _, a2 as _) as _ };
     fn lbVector_EulerAnglesFromONB(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec, a3: *mut Vec) -> *mut Vec = |a0: *mut Vec, a1: *mut Vec, a2: *mut Vec, a3: *mut Vec| unsafe { melee_runtime::tu::lbvector::lbVector_EulerAnglesFromONB(a0 as _, a1 as _, a2 as _, a3 as _) as _ };

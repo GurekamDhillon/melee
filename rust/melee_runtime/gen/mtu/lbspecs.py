@@ -6,6 +6,19 @@ COMMON_RET = {
 }
 
 
+_GCSZ = None
+
+
+def gc_sizeof_subs(*names):
+    """spec `sub` entries replacing `sizeof(NAME)` by the console's size of the record (melee_types GC_BYTES)."""
+    import re, pathlib
+    global _GCSZ
+    if _GCSZ is None:
+        gen = (pathlib.Path(__file__).resolve().parents[4] / "rust/melee_types/src/gen.rs").read_text(encoding="utf-8")
+        _GCSZ = {m.group(1): int(m.group(2), 16) for m in re.finditer(r"impl GcDecode for (\w+) \{\s*const GC_BYTES: u32 = (0x[0-9A-Fa-f]+);", gen)}
+    return [(r"sizeof\s*\(\s*(?:struct\s+)?_?" + n + r"\s*\)", f"{_GCSZ[n]:#x}") for n in names]
+
+
 def add(stem, src, cfg=None, **kw):
     SPECS[stem] = dict(src=src, common_ret=COMMON_RET, **kw)
     CFG[stem] = cfg or {}

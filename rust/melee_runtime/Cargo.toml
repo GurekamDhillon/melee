@@ -49,3 +49,7 @@ harness = false
 [[test]]
 name = "tu_archive"
 harness = false
+
+[[test]]
+name = "tu_wobj"
+harness = false

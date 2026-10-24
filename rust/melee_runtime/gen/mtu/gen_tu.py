@@ -51,12 +51,14 @@ def patched_source(stem, spec):
     """The TU source the oracle compiles: the game's file verbatim, except for the literal
     replacements the spec lists (each must match exactly once; documented in the spec)."""
     src = spec["src"]
-    if not spec.get("patch"):
+    if not spec.get("patch") and not spec.get("sub"):
         return src
     txt = (ROOT / src).read_bytes().decode("utf-8").replace(chr(13) + chr(10), chr(10))
-    for a, b in spec["patch"]:
+    for a, b in spec.get("patch", ()):
         assert txt.count(a) == 1, f"{stem}: patch text {a!r} matches {txt.count(a)} times"
         txt = txt.replace(a, b)
+    for pat, rep in spec.get("sub", ()):
+        txt = re.sub(pat, rep, txt)
     out = ROOT / "rust/target/mtu" / f"{stem}_tu.c"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes(txt.encode("utf-8"))
@@ -370,10 +372,18 @@ class Walk:
     def raw_bytes(self, cf, ch, rf, rh, cpar, rpar, off, sz, depth):
         j = f"j{depth}"
         cf.append(f"for ({j} = 0; {j} < {sz}; {j}++) ((unsigned char*) &{cpar})[{off} + {j}] = (unsigned char) rnd();")
-        ch.append(f"for ({j} = 0; {j} < {sz}; {j}++) HM(((const unsigned char*) &{cpar})[{off} + {j}]);")
         barg = rpar if rpar == "p" else "&" + rpar  # `p` is already a reference to the record
+        if sz % 8 == 0 and off % 8 == 0:
+            # 8-byte slots that may hold a native pointer (a union's pointer view): a slot inside a registered region is hashed
+            # as its region id, anything else byte by byte
+            ch.append(f"for ({j} = 0; {j} < {sz}; {j} += 8) {{ unsigned long long v8 = *(const unsigned long long*) (((const unsigned char*) &{cpar}) + {off} + {j}); u32 t8 = PI((const void*) v8); "
+                      f"if (t8 != 0xFFFFFFFFu) HM(t8); else {{ int b8; for (b8 = 0; b8 < 8; b8++) HM((u32) ((v8 >> (8 * b8)) & 0xFF)); }} }}")
+            rh.append(f"for {j} in (0..{sz}).step_by(8) {{ unsafe {{ let v8 = (base({barg}).add({off} + {j}) as *const u64).read_unaligned(); let t8 = pi(v8 as usize as *const u8); "
+                      f"if t8 != 0xFFFF_FFFF {{ hm(t8); }} else {{ for b8 in 0..8 {{ hm(((v8 >> (8 * b8)) & 0xFF) as u32); }} }} }} }}")
+        else:
+            ch.append(f"for ({j} = 0; {j} < {sz}; {j}++) HM(((const unsigned char*) &{cpar})[{off} + {j}]);")
+            rh.append(f"for {j} in 0..{sz} {{ unsafe {{ hm(*base({barg}).add({off} + {j}) as u32); }} }}")
         rf.append(f"for {j} in 0..{sz} {{ unsafe {{ *(base({barg}) as *mut u8).add({off} + {j}) = rnd() as u8; }} }}")
-        rh.append(f"for {j} in 0..{sz} {{ unsafe {{ hm(*base({barg}).add({off} + {j}) as u32); }} }}")
 
     def fields(self, decl, cp, rp, base_off, cf, ch, rf, rh, rootc, depth):
         names = self.rust_names(decl)
@@ -452,9 +462,16 @@ class Walk:
             if d.kind == K.UNION_DECL:
                 sz = c.get_size()
                 cf.append(f"for (i{depth} = 0; i{depth} < {sz}; i{depth}++) ((unsigned char*) &{cexpr})[i{depth}] = (unsigned char) rnd();")
-                ch.append(f"for (i{depth} = 0; i{depth} < {sz}; i{depth}++) HM(((const unsigned char*) &{cexpr})[i{depth}]);")
                 rf.append(f"for i{depth} in 0..{sz} {{ unsafe {{ *(&mut {rexpr} as *mut _ as *mut u8).add(i{depth}) = rnd() as u8; }} }}")
-                rh.append(f"for i{depth} in 0..{sz} {{ unsafe {{ hm(*(&{rexpr} as *const _ as *const u8).add(i{depth}) as u32); }} }}")
+                if sz % 8 == 0:
+                    # 8-byte slots that may hold a native pointer (a union's pointer view): inside a registered region -> region id
+                    ch.append(f"for (i{depth} = 0; i{depth} < {sz}; i{depth} += 8) {{ unsigned long long v8 = *(const unsigned long long*) (((const unsigned char*) &{cexpr}) + i{depth}); u32 t8 = PI((const void*) v8); "
+                              f"if (t8 != 0xFFFFFFFFu) HM(t8); else {{ int b8; for (b8 = 0; b8 < 8; b8++) HM((u32) ((v8 >> (8 * b8)) & 0xFF)); }} }}")
+                    rh.append(f"for i{depth} in (0..{sz}).step_by(8) {{ unsafe {{ let v8 = ((&{rexpr} as *const _ as *const u8).add(i{depth}) as *const u64).read_unaligned(); let t8 = pi(v8 as usize as *const u8); "
+                              f"if t8 != 0xFFFF_FFFF {{ hm(t8); }} else {{ for b8 in 0..8 {{ hm(((v8 >> (8 * b8)) & 0xFF) as u32); }} }} }} }}")
+                else:
+                    ch.append(f"for (i{depth} = 0; i{depth} < {sz}; i{depth}++) HM(((const unsigned char*) &{cexpr})[i{depth}]);")
+                    rh.append(f"for i{depth} in 0..{sz} {{ unsafe {{ hm(*(&{rexpr} as *const _ as *const u8).add(i{depth}) as u32); }} }}")
                 return
             self.fields(d, cexpr + ".", rexpr + ".", 0, cf, ch, rf, rh, None, depth)
             return

@@ -72,10 +72,15 @@ for m in re.finditer(r"hook_or!\(\s*\w+\s*,\s*(\w+)\s*,\s*\(([^)]*)\)[^,]*,\s*([
     name, ps, port = m.group(1), m.group(2), m.group(3).strip()
     names = split_params(ps)
     defaults[name] = f"{port}({', '.join(f'a{i}' for i in range(len(names)))})"
+for m in re.finditer(r"pub static mut (\w+)\s*:\s*(?:unsafe\s+)?fn\s*\([^=]*?=\s*([A-Za-z_][\w:]*)\s*;", old):
+    defaults.setdefault(m.group(1), m.group(2) + "(@ARGS@)")
 if defaults:
     (HERE / f"defaults_{stem}.json").write_text(json.dumps(defaults, indent=1), encoding="utf-8")
 new = "// BEGIN GENERATED EXT\n// END GENERATED EXT"
 txt = txt[:a] + new + txt[b:]
+# the old statics were fn pointers called as `(ext::X)(args)`: the generated ext has plain fns
+txt, nsites = re.subn(r"\(ext::(\w+)\)\(", r"ext::\1(", txt)
+print("rewrote", nsites, "call sites")
 p.write_text(txt, encoding="utf-8", newline="\n")
 print(f"{len(defaults)} defaults harvested")
 print("---- old ext (non-fn lines) ----")

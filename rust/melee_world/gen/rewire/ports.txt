@@ -1,0 +1,5 @@
+mpLibLoad = crate::tu::mplib::mpLibLoad
+mpLib_80054D68 = crate::tu::mplib::mpLib_80054D68
+mpLib_80058820 = crate::tu::mplib::mpLib_80058820
+mpLinesConnected = crate::tu::mplib::mpLinesConnected
+lbDvd_GetPreloadedArchive = melee_runtime::tu::lbdvd::lbDvd_GetPreloadedArchive

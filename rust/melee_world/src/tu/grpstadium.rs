@@ -24,8 +24,12 @@ pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
+    macro_rules! ext_none {
+        ($name:ident, ($($a:ident),*)) => { panic!(concat!("TODO: ", stringify!($name), " is not ported")) };
+        ($name:ident, ($($a:ident),*), $def:expr) => { ($def)($($a),*) };
+    }
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -33,7 +37,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => ext_none!($name, ($($a),*) $(, $def)?),
                 }
             } )*
         };
@@ -123,7 +127,7 @@ pub mod ext {
     fn grLib_801C9908(a0: *mut HSD_JObj);
     fn grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj;
     fn lbDvd_80017740(a0: i32, a1: i32, a2: i32, a3: i32, a4: u32, a5: i32, a6: i32, a7: u8, a8: i32) -> *mut c_void;
-    fn lbDvd_GetPreloadedArchive(a0: i32) -> *mut c_void;
+    fn lbDvd_GetPreloadedArchive(a0: i32) -> *mut c_void = |a0: i32| unsafe { melee_runtime::tu::lbdvd::lbDvd_GetPreloadedArchive(a0 as _) as _ };
     fn lbFile_80016580(a0: *const i8, a1: *mut c_void, a2: *mut u32, a3: Option<unsafe extern "C" fn(i32, u32, *mut c_void, i32)>, a4: u32);
     fn lbLang_IsSavedLanguageJP() -> i32;
     fn lbVector_Add(a0: *mut Vec, a1: *mut Vec) -> *mut Vec;

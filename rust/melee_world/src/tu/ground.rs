@@ -25,8 +25,12 @@ pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
+    macro_rules! ext_none {
+        ($name:ident, ($($a:ident),*)) => { panic!(concat!("TODO: ", stringify!($name), " is not ported")) };
+        ($name:ident, ($($a:ident),*), $def:expr) => { ($def)($($a),*) };
+    }
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -34,7 +38,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => ext_none!($name, ($($a),*) $(, $def)?),
                 }
             } )*
         };
@@ -189,12 +193,12 @@ pub mod ext {
     fn mpGetGroundCollJoint() -> *mut CollJoint;
     fn mpGetGroundCollLine() -> *mut CollLine;
     fn mpJointListAdd(a0: i32);
-    fn mpLibLoad(a0: *mut MapCollData);
+    fn mpLibLoad(a0: *mut MapCollData) = |a0: *mut MapCollData| { unsafe { let _ = crate::tu::mplib::mpLibLoad(a0 as _); } };
     fn mpLib_800552B0(a0: i32, a1: *mut HSD_JObj, a2: i32);
     fn mpLib_80055E9C(a0: i32);
     fn mpLib_80057424(a0: i32);
     fn mpLib_80057BC0(a0: i32);
-    fn mpLib_80058820();
+    fn mpLib_80058820() = || { unsafe { let _ = crate::tu::mplib::mpLib_80058820(); } };
     fn psInitDataBankLoad(a0: i32, a1: *const i32, a2: *const i32, a3: *const u32, a4: *const i32);
     fn splGetSplinePoint(a0: *mut Vec, a1: *mut HSD_Spline, a2: f32);
     fn tyDisplay_8031C2CC();

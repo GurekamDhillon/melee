@@ -21,8 +21,12 @@ pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
     use super::*;
     use core::ffi::c_void;
+    macro_rules! ext_none {
+        ($name:ident, ($($a:ident),*)) => { panic!(concat!("TODO: ", stringify!($name), " is not ported")) };
+        ($name:ident, ($($a:ident),*), $def:expr) => { ($def)($($a),*) };
+    }
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -30,7 +34,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => ext_none!($name, ($($a),*) $(, $def)?),
                 }
             } )*
         };
@@ -120,7 +124,7 @@ pub mod ext {
     fn mpJointListAdd(a0: i32);
     fn mpJointSetB10(a0: i32);
     fn mpJointSetCb1(a0: i32, a1: *mut c_void, a2: Option<unsafe extern "C" fn(*mut c_void, i32, *mut CollData, i32, u32, f32)>);
-    fn mpLib_80054D68(a0: i32, a1: u32);
+    fn mpLib_80054D68(a0: i32, a1: u32) = |a0: i32, a1: u32| { unsafe { let _ = crate::tu::mplib::mpLib_80054D68(a0 as _, a1 as _); } };
     fn mpLib_80055E24(a0: i32);
     fn mpLib_8005667C(a0: i32);
     fn mpLib_80057424(a0: i32);

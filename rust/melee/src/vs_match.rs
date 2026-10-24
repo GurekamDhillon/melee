@@ -715,6 +715,8 @@ impl VsMatch {
             fp.kind = kind;
             // Fighter_UnkInitLoad: fp->co_attrs = *ft_data->x0.
             fp.co_attrs = files.attrs();
+            let (n0, n1) = files.x2c4();
+            fp.x2C4 = melee_types::Vec2 { x: n0, y: n1 };
             fp.player_id = slot as u8;
             // fighter.c Fighter_UnkInitReset/Fighter_ResetInputData_80068854 defaults that the hash reads.
             fp.shield_health = start_shield;
@@ -984,6 +986,12 @@ impl VsMatch {
             let raw = input::pad_fixed(port, g);
             self.pads[port].renew(&raw);
         }
+        // fn_8016758C (the VS scene's per-frame proc): the respawn spots' countdowns.
+        for b in &mut self.respawn_busy {
+            if *b != 0 {
+                *b -= 1;
+            }
+        }
         // s_link 0, the Ready HUD's proc (p_link 14, after the fighters' s_link 0 proc
         // Fighter_8006A1BC, which has nothing to do here): at its end, GO.
         if g == self.go_frame {
@@ -993,7 +1001,8 @@ impl VsMatch {
         }
         // s_link 1, Fighter_8006A360: the animation step (ftAnim_8006EBA4: AObj frame, then
         // ftAction_80073240's frame_count = cur_anim_frame + x898), then the state's anim_cb.
-        for p in &mut self.players {
+        for pi in 0..self.players.len() {
+            let p = &mut self.players[pi];
             if p.animating {
                 // ftAnim_8006E9B4, no blend (x8A4 == 0), x594_b0 / x594_b2 clear.
                 body_anim(p)?;
@@ -1159,6 +1168,8 @@ impl VsMatch {
             if let Some(m) = &mut p.mex {
                 m.run(crate::mex::SLOT_ON_FRAME, p.slot, &mut p.fp);
             }
+            // ftCommon_8007E0E4 (the end of Fighter_8006A360, outside hitlag): the player nudge.
+            player_nudge(&mut self.players, pi, &self.ground);
         }
         // s_link 2, Fighter_8006ABA0: input_cb. ftCo_Fall_IASA's checks all read pad input, and
         // the C applies none before GO (self_vel.x stays 0 in the golden with the stick held):
@@ -3913,6 +3924,7 @@ fn change_motion_state_ext(p: &mut Player, msid: i32, row: Option<&(AnimRow, Fig
     fp.set_reflecting(0);
     fp.set_x221C_b4(0);
     fp.set_x2218_b6(0);
+    fp.set_x221D_b5(0);
     let root = p.skel.root;
     p.skel.set_translate(root, melee_runtime::mtx::Vec3 { x: fp.cur_pos.x, y: fp.cur_pos.y, z: fp.cur_pos.z });
     // ftAnim_80070F28 (end the hand poses), ftAnim_80070E74 (restart the slots with a default
@@ -4004,6 +4016,80 @@ fn change_motion_state_ext(p: &mut Player, msid: i32, row: Option<&(AnimRow, Fig
         }
     }
     Ok(())
+}
+
+/// `ftCommon_8007E0E4` (with 8007DD7C): grounded fighters on the same / adjacent floor line push
+/// each other apart; the result is `xF8_playerNudgeVel`, applied by the integration.
+fn player_nudge(players: &mut [Player], i: usize, g: &GroundColl) {
+    let cd = melee_fighter::hooks::common_data();
+    {
+        let f = &mut players[i].fp;
+        f.xF8_playerNudgeVel.y = 0.0;
+        f.xF8_playerNudgeVel.x = 0.0;
+    }
+    let f = &players[i].fp;
+    if !(f.x2219_b1() == 0 && f.x2219_b5() == 0 && f.ground_or_air == melee_types::GA_Ground) {
+        return;
+    }
+    if f.is_sub_fighter() != 0 {
+        return; // (Nana's 8007DFD0 branch: not wired)
+    }
+    let (phi_f30, phi_f31) = (cd.x454, cd.x458);
+    // ftCommon_8007F8B4.
+    let mut sp10 = Vec3 { x: f.cur_pos.x + f.xD4_unk_vel.x, y: f.cur_pos.y + f.xD4_unk_vel.y, z: f.cur_pos.z + f.xD4_unk_vel.z };
+    let (a2c4, a_dir, arg_gnd) = (f.x2C4, f.facing_dir, f.coll_data.floor.index);
+    let mut nx = 0.0f32;
+    let mut ny = 0.0f32;
+    if f.x221D_b5() == 0 {
+        let mut phi_r28 = false;
+        for (j, o) in players.iter().enumerate() {
+            if j == i {
+                phi_r28 = true;
+                continue;
+            }
+            let c = &o.fp;
+            if c.x221F_b3() != 0 || c.ground_or_air != melee_types::GA_Ground || !c.victim_gobj.is_null() || c.is_sub_fighter() != 0 {
+                continue;
+            }
+            let cur_gnd = c.coll_data.floor.index;
+            if !(arg_gnd == cur_gnd || cur_gnd == g.mp_line_get_next(arg_gnd) || cur_gnd == g.mp_line_get_prev(arg_gnd)) {
+                continue;
+            }
+            let sp24 = Vec3 { x: c.cur_pos.x + c.xD4_unk_vel.x, y: c.cur_pos.y + c.xD4_unk_vel.y, z: c.cur_pos.z + c.xD4_unk_vel.z };
+            let vt = c.x2C4;
+            let f0 = melee_core::fp::fmadds(a2c4.x, a_dir, sp10.x) - melee_core::fp::fmadds(c.facing_dir, vt.x, sp24.x);
+            if fc::abs_c(f0) < a2c4.y + vt.y {
+                let sgn = |neg: bool, x: f32| if neg { -x } else { x };
+                if f0 != 0.0 {
+                    nx += sgn(f0 < 0.0, cd.x450);
+                } else {
+                    nx += sgn(phi_r28, cd.x450);
+                }
+                if sp10.z - sp24.z != 0.0 {
+                    ny += sgn(sp10.z - sp24.z < 0.0, cd.x454);
+                } else if f0 != 0.0 {
+                    ny += sgn(f0 < 0.0, cd.x454);
+                } else {
+                    ny += sgn(phi_r28, cd.x454);
+                }
+            }
+        }
+    }
+    if ny == 0.0 && sp10.z != 0.0 {
+        ny = if sp10.z < 0.0 { phi_f30 } else { -phi_f30 };
+    }
+    if (ny > 0.0 && sp10.z < 0.0 && sp10.z + ny >= 0.0) || (ny < 0.0 && sp10.z > 0.0 && sp10.z + ny <= 0.0) {
+        ny = -sp10.z;
+        sp10.z = 0.0;
+    }
+    if sp10.z + ny > phi_f31 {
+        ny = phi_f31 - sp10.z;
+    } else if sp10.z + ny < -phi_f31 {
+        ny = -phi_f31 - sp10.z;
+    }
+    let f = &mut players[i].fp;
+    f.xF8_playerNudgeVel.x = nx;
+    f.xF8_playerNudgeVel.y = ny;
 }
 
 /// `ft_80082B1C`: the Fall landing callback. Below `ftCo_800D0EC8` (the heavy-landing speed)
@@ -4124,6 +4210,12 @@ fn fall_anim(p: &mut Player) -> Result<(), String> {
         let x4 = p.fall_x4;
         p.skel.blend_from2(x4, 1.0 - x4, x4 != 1.0);
         p.fall_smid = smid;
+    }
+    // ftCo_800CC988(gobj, x4): the same blend again, every frame the mix is nonzero.
+    if p.fall_x4 != 0.0 {
+        p.skel.anim_all2(&mut AObjGlobals::default())?;
+        let x4 = p.fall_x4;
+        p.skel.blend_from2(x4, 1.0 - x4, x4 != 1.0);
     }
     Ok(())
 }

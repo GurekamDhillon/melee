@@ -108,6 +108,14 @@ impl FighterFiles {
         *self.dat.load_at::<ftCo_DatAttrs>(be32(&self.dat.data, self.ft_data)).get()
     }
 
+    /// `*ftData->x50` (two floats; `Fighter_UnkInitLoad` -> `ftCo_800D105C` copies it to `fp->x2C4`,
+    /// the player-nudge radii).
+    pub fn x2c4(&self) -> (f32, f32) {
+        let d = &self.dat.data;
+        let at = be32(d, self.ft_data + 0x50);
+        (f32::from_bits(be32(d, at)), f32::from_bits(be32(d, at + 4)))
+    }
+
     /// Animation row `anim_id`: its figatree length (`HSD_AObj.end_frame`) and the row's
     /// `x10_animCurrFlags` (`fp->x594`; MSB-first bits: b1 = 0x40000000 loop). None: no figatree.
     pub fn anim_row(&self, anim_id: u32) -> Result<Option<AnimRow>, String> {

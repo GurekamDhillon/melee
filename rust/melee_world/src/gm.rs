@@ -180,3 +180,43 @@ pub unsafe fn GetMatchTimer(arg0: *mut i32) -> bool {
     }
     false
 }
+
+/// `lbl_8046B488` (gm_16A2.c): the unlock / scene flags record (`gm_1601_GetUnkData`).
+pub static mut lbl_8046B488: lbl_8046B488_t = unsafe { core::mem::zeroed() };
+/// `lbl_8046B668` (gm_16A2.c).
+pub static mut lbl_8046B668: lbl_8046B668_t = unsafe { core::mem::zeroed() };
+
+/// `gm_1601_GetUnkData`.
+pub unsafe fn gm_1601_GetUnkData() -> *mut lbl_8046B488_t {
+    addr_of_mut!(lbl_8046B488)
+}
+
+/// `gm_80169394`.
+pub unsafe fn gm_80169394() -> i32 {
+    (*gm_1601_GetUnkData()).unk_10_b3() as i32
+}
+
+/// `gm_80169520`.
+pub unsafe fn gm_80169520() -> *mut core::ffi::c_void {
+    (*gm_1601_GetUnkData()).x20.as_mut_ptr() as *mut core::ffi::c_void
+}
+
+/// `gm_80169530`.
+pub unsafe fn gm_80169530() -> *mut core::ffi::c_void {
+    (*gm_1601_GetUnkData()).xA2.as_mut_ptr() as *mut core::ffi::c_void
+}
+
+/// `gm_8016A1F8`.
+pub unsafe fn gm_8016A1F8() -> bool {
+    (*gm_1601_GetUnkData()).unk_10_b1() != 0
+}
+
+/// `gm_8016A97C`.
+pub unsafe fn gm_8016A97C() -> *mut core::ffi::c_void {
+    lbl_8046B668.arr2.as_mut_ptr() as *mut core::ffi::c_void
+}
+
+/// `gm_8016A98C`.
+pub unsafe fn gm_8016A98C() -> *mut lbl_8046B668_t {
+    addr_of_mut!(lbl_8046B668)
+}

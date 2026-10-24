@@ -59,7 +59,7 @@ pub mod ext {
     fn Toy_803063D4(a0: i32, a1: i32, a2: i32) -> i32;
     fn Toy_803124BC();
     fn Ui_RetailHidden(a0: i32) -> i32;
-    fn gmMainLib_8015D8B0(a0: u32);
+    fn gmMainLib_8015D8B0(a0: u32) = |a0: u32| { unsafe { let _ = crate::gmmain::gmMainLib_8015D8B0(a0 as _); } };
     fn gm_8016895C(a0: *mut HSD_JObj, a1: *mut DynamicModelDesc, a2: i32);
     fn gm_801692E8(a0: u32, a1: *mut datetime);
     fn gm_801A4B60();

@@ -20,10 +20,27 @@ use melee_types as mt;
 use mt::*;
 
 pub use crate::gm::{bitset64_mask, bitset_mask, selkind_mask};
+/// The plain save-data accessors are owned by `melee_world::gmmain`.
+pub use melee_world::gmmain::{
+    gmMainLib_8015D8B0,
+    gmMainLib_8015CCF0,
+    gmMainLib_8015CDC8,
+    gmMainLib_8015CDD4,
+    gmMainLib_8015CDE0,
+    gmMainLib_8015D06C,
+    gmMainLib_8015D48C,
+    gmMainLib_8015D4E8,
+    gmMainLib_GetBonusMatchTotal,
+    gmMainLib_GetCoinMatchTotal,
+    gmMainLib_GetKOTotal,
+    gmMainLib_GetStockMatchTotal,
+    gmMainLib_GetTimeMatchTotal,
+};
 use crate::gm_ptr::GM_NAMETAG_COUNT;
 
 /// `gmm_x0` record pointer. C: `struct gmm_x0* gmMainLib_804D3EE0 = &gmMainLib_8045A6C0;`
-pub static mut gmMainLib_804D3EE0: *mut gmm_x0 = core::ptr::null_mut();
+/// Owned by `melee_world::gmmain` (the world TUs read the match totals too); set in `gmMainLib_init_statics`.
+pub use melee_world::gmmain::gmMainLib_804D3EE0;
 /// C: `struct gmMainLib_8046B0F0_t gmMainLib_8046B0F0;`
 pub static mut gmMainLib_8046B0F0: gmMainLib_8046B0F0_t = unsafe { core::mem::zeroed() };
 /// C: `struct gmm_x0 gmMainLib_8045A6C0;`
@@ -182,9 +199,6 @@ pub unsafe fn gmMainLib_8015CCE4() -> *mut gmm_x0_44_t {
     addr_of_mut!((*gmMainLib_804D3EE0).unk_44)
 }
 
-pub unsafe fn gmMainLib_8015CCF0() -> *mut u32 {
-    addr_of_mut!((*save()).x1A48)
-}
 
 pub unsafe fn gmMainLib_8015CCFC() -> *mut i32 {
     addr_of_mut!((*save()).x1A4C)
@@ -202,21 +216,9 @@ pub unsafe fn gmMainLib_GetCombinedVSPlayTime() -> *mut i32 {
     addr_of_mut!((*save()).x1A38)
 }
 
-pub unsafe fn gmMainLib_GetTimeMatchTotal() -> *mut u32 {
-    addr_of_mut!((*save()).time_matches)
-}
 
-pub unsafe fn gmMainLib_GetStockMatchTotal() -> *mut u32 {
-    addr_of_mut!((*save()).stock_matches)
-}
 
-pub unsafe fn gmMainLib_GetCoinMatchTotal() -> *mut u32 {
-    addr_of_mut!((*save()).coin_matches)
-}
 
-pub unsafe fn gmMainLib_GetBonusMatchTotal() -> *mut u32 {
-    addr_of_mut!((*save()).bonus_matches)
-}
 
 pub unsafe fn gmMainLib_GetStaminaMatchTotal() -> *mut u32 {
     addr_of_mut!((*save()).stamina_matches)
@@ -246,25 +248,13 @@ pub unsafe fn gmMainLib_GetTotalDamage() -> *mut i32 {
     addr_of_mut!((*save()).x1A58)
 }
 
-pub unsafe fn gmMainLib_GetKOTotal() -> *mut i32 {
-    addr_of_mut!((*save()).x1A5C)
-}
 
 pub unsafe fn gmMainLib_GetSelfDestructTotal() -> *mut i32 {
     addr_of_mut!((*save()).x1A60)
 }
 
-pub unsafe fn gmMainLib_8015CDC8() -> *mut gmm_x0_528_t {
-    addr_of_mut!((*gmMainLib_804D3EE0).vs.unk_51C)
-}
 
-pub unsafe fn gmMainLib_8015CDD4() -> *mut gmm_x0_528_t {
-    addr_of_mut!((*gmMainLib_804D3EE0).vs.unk_522)
-}
 
-pub unsafe fn gmMainLib_8015CDE0() -> *mut gmm_x0_528_t {
-    addr_of_mut!((*gmMainLib_804D3EE0).vs.unk_528)
-}
 
 pub unsafe fn gmMainLib_8015CDEC() {
     for i in 0..Gm_Player_NumMax as i32 {
@@ -332,9 +322,6 @@ unsafe fn persistent_fighter_base_x7a(arg0: u8) -> *mut UnkFlagStruct {
     addr_of_mut!((*persistent_fighter(arg0)).x7A)
 }
 
-pub unsafe fn gmMainLib_8015D06C(arg0: u8) -> *mut i32 {
-    addr_of_mut!((*persistent_fighter(arg0)).x7C.x84)
-}
 
 pub unsafe fn gmMainLib_8015D084(selkind: u8) -> *mut i32 {
     addr_of_mut!((*gmMainLib_8015EDBC()).xB0[selkind as usize])
@@ -435,17 +422,11 @@ pub unsafe fn gmMainLib_8015D450(arg0: u8) -> *mut i32 {
     addr_of_mut!((*gmMainLib_8015EDBC()).x4C[arg0 as usize])
 }
 
-pub unsafe fn gmMainLib_8015D48C(arg0: u8) -> bool {
-    (*persistent_fighter(arg0)).x7C.b0() != 0
-}
 
 pub unsafe fn gmMainLib_8015D4A8(arg0: u8) -> i32 {
     selkind_bit((*gmMainLib_8015ED98()).x1C, arg0)
 }
 
-pub unsafe fn gmMainLib_8015D4E8(arg0: u8, arg1: i32) {
-    (*persistent_fighter(arg0)).x7C.set_b0(arg1 as u16);
-}
 
 pub unsafe fn gmMainLib_8015D508() -> bool {
     for i in 0..SELKIND_COUNT as usize {
@@ -544,9 +525,6 @@ pub unsafe fn gmMainLib_8015D888(arg0: u32) {
     bitset_set(&mut (*save()).x1B40, arg0);
 }
 
-pub unsafe fn gmMainLib_8015D8B0(arg0: u32) {
-    bitset_clear(&mut (*save()).x1B40, arg0);
-}
 
 pub unsafe fn gmMainLib_8015D8D8(arg0: u32) -> i32 {
     bitset_test(&(*save()).x1B40, arg0) as i32
